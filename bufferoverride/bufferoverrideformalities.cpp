@@ -1,8 +1,10 @@
 /*------------------- by Marc Poirier  ][  March 2001 -------------------*/
 
-#ifndef __bufferOverride
-#include "bufferOverride.hpp"
+#ifndef __bufferoverride
+#include "bufferoverride.hpp"
 #endif
+
+#include "bufferoverrideeditor.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,6 +78,8 @@ BufferOverride::BufferOverride(audioMasterCallback audioMaster)
 		setParameter( kTempo, tempoUnscaled(120.0f) );
 		currentTempoBPS = tempoScaled(fTempo) / 60.0f;
 	}
+
+	editor = new BufferOverrideEditor(this);
 }
 
 //-------------------------------------------------------------------------
@@ -597,6 +601,9 @@ void BufferOverride::setParameter(long index, float value)
 
 	if ( (index >= 0) && (index < NUM_PARAMETERS) )
 		programs[curProgram].param[index] = value;
+
+	if (editor)
+		((AEffGUIEditor*)editor)->setParameter(index, value);
 }
 
 //-------------------------------------------------------------------------
@@ -791,3 +798,41 @@ void BufferOverride::getParameterLabel(long index, char *label)
 		default: strcpy(label, " ");	break;
 	}
 }
+
+
+
+#pragma mark _________main_________
+
+//-----------------------------------------------------------------------------
+//                                   main()                                   |
+//-----------------------------------------------------------------------------
+
+// prototype of the export function main
+#if BEOS
+#define main main_plugin
+extern "C" __declspec(dllexport) AEffect *main_plugin(audioMasterCallback audioMaster);
+
+#else
+AEffect *main(audioMasterCallback audioMaster);
+#endif
+
+AEffect *main(audioMasterCallback audioMaster)
+{
+	// get vst version
+	if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
+		return 0;  // old version
+
+	AudioEffect* effect = new BufferOverride(audioMaster);
+	if (!effect)
+		return 0;
+	return effect->getAeffect();
+}
+
+#if WIN32
+void* hInstance;
+BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved)
+{
+	hInstance = hInst;
+	return 1;
+}
+#endif
