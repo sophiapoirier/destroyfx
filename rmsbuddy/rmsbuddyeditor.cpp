@@ -58,10 +58,6 @@ RMSControl::RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, 
 		#if USE_AUCVCONTROL
 			AUCarbonViewControl *auvc = new AUCarbonViewControl(ownerEditor, ownerEditor->GetParameterListener(), 
 															AUCarbonViewControl::kTypeContinuous, auvParam, carbonControl);
-		#else
-			SetControlReference(carbonControl, (SInt32)this);
-		#endif
-		#if USE_AUCVCONTROL
 			auvc->Bind();
 			ownerEditor->AddAUCVControl(auvc);
 			// make sure that the control reflects the current parameter value
@@ -70,7 +66,10 @@ RMSControl::RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, 
 			AUListenerAddParameter(ownerEditor->GetParameterListener(), ownerEditor, &auvParam);
 		#endif
 		}
+
 #endif
+		// this is done in the AUCarbonViewControl constructor, and we override it here
+		SetControlReference(carbonControl, (SInt32)this);
 	}
 
 	// the child control class can override this if it needs to be clipped
@@ -774,7 +773,7 @@ OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	long sliderWidth = kBackgroundWidth + (kXinc*numChannels) - (kSliderX*2);
 	windowSizeSlider = new RMSSlider(this, kAnalysisFrameSize, kSliderX, kSliderY, sliderWidth, kSliderHeight, 
 										kSliderBackgroundColor, kSliderActiveColor);
-	updateWindowSize(windowSizeSlider->getAUVP()->GetValue());
+	updateWindowSize(windowSizeSlider->getAUVP()->GetValue(), windowSizeSlider);
 
 	sliderWidth -= kSliderLabelOffsetX * 2;
 	// the words "analysis window size"
@@ -929,10 +928,14 @@ static pascal OSStatus ControlEventHandler(EventHandlerCallRef myHandler, EventR
 
 	// get the Carbon Control reference event parameter
 	ControlRef ourCarbonControl = NULL;
-	GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &ourCarbonControl);
+	if (GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &ourCarbonControl) != noErr)
+		return eventNotHandledErr;
+	if (ourCarbonControl == NULL)
+		return eventNotHandledErr;
 	// now try to get a pointer to one of our control objects from that ControlRef
 	RMSbuddyEditor *ourOwnerEditor = (RMSbuddyEditor*) inUserData;
-	RMSControl *ourRMSControl = ourOwnerEditor->getRMSControl(ourCarbonControl);
+//	RMSControl *ourRMSControl = ourOwnerEditor->getRMSControl(ourCarbonControl);
+	RMSControl *ourRMSControl = (RMSControl*) GetControlReference(ourCarbonControl);
 	if (ourRMSControl == NULL)
 		return eventNotHandledErr;
 
@@ -1036,7 +1039,7 @@ static void ParameterListenerProc(void *inRefCon, void *inObject, const AudioUni
 		switch (inParameter->mParameterID)
 		{
 			case kAnalysisFrameSize:
-				bud->updateWindowSize(inValue);
+				bud->updateWindowSize(inValue, (RMSControl*)inObject);
 				break;
 			case kTimeToUpdate:
 				bud->updateDisplays();	// refresh the value displays
@@ -1080,8 +1083,15 @@ void RMSbuddyEditor::updateDisplays()
 
 //-----------------------------------------------------------------------------
 // update analysis window size parameter controls
-void RMSbuddyEditor::updateWindowSize(Float32 inParamValue)
+void RMSbuddyEditor::updateWindowSize(Float32 inParamValue, RMSControl *inRMSControl)
 {
+/*
+if (inRMSControl == windowSizeSlider) printf("object = slider\n");
+else if (inRMSControl == windowSizeDisplay) printf("object = display\n");
+else if (inRMSControl == NULL) printf("object = NULL\n");
+else printf("object = %lu\n", (unsigned long)inRMSControl);
+*/
+//	if ( (windowSizeSlider != NULL) && (inRMSControl == windowSizeSlider) )
 	if (windowSizeSlider != NULL)
 	{
 		float fmin = windowSizeSlider->getAUVP()->ParamInfo().minValue;
@@ -1094,29 +1104,11 @@ void RMSbuddyEditor::updateWindowSize(Float32 inParamValue)
 		SInt32 cmax = GetControl32BitMaximum(carbonControl);
 		SInt32 cval = (SInt32) (valueNorm * (float)((cmax - cmin) + cmin) + 0.5f);
 		SetControl32BitValue(carbonControl, cval);
-
-//		if (windowSizeDisplay != NULL)
-//			SetControl32BitValue(windowSizeDisplay->getCarbonControl(), cval);
 	}
 
+//	if ( (windowSizeDisplay != NULL) && (inRMSControl == windowSizeDisplay) )
 	if (windowSizeDisplay != NULL)
 		Draw1Control(windowSizeDisplay->getCarbonControl());
-}
-
-//-----------------------------------------------------------------------------
-// send a message to the DSP component to reset average RMS
-void RMSbuddyEditor::resetRMS()
-{
-	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
-	AudioUnitSetProperty(GetEditAudioUnit(), kResetRMSProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
-}
-
-//-----------------------------------------------------------------------------
-// send a message to the DSP component to reset absolute peak
-void RMSbuddyEditor::resetPeak()
-{
-	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
-	AudioUnitSetProperty(GetEditAudioUnit(), kResetPeakProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
 }
 
 //-----------------------------------------------------------------------------
@@ -1154,47 +1146,22 @@ void RMSbuddyEditor::handleControlValueChange(RMSControl *inControl, SInt32 inCo
 		Float32 fmin = windowSizeSlider->getAUVP()->ParamInfo().minValue;
 		Float32 fmax = windowSizeSlider->getAUVP()->ParamInfo().maxValue;
 		Float32 paramValue = ( controlValue*controlValue * (fmax - fmin) ) + fmin;
-		windowSizeSlider->getAUVP()->SetValue(parameterListener, windowSizeSlider, paramValue);	// XXX what should the 2nd argument be?
+		windowSizeSlider->getAUVP()->SetValue(parameterListener, windowSizeSlider, paramValue);
 	}
 }
 
 //-----------------------------------------------------------------------------
-// get the RMSControl object for a given CarbonControl reference
-RMSControl * RMSbuddyEditor::getRMSControl(ControlRef inCarbonControl)
+// send a message to the DSP component to reset average RMS
+void RMSbuddyEditor::resetRMS()
 {
-#define CHECK_RMS_CONTROL(ctrl)	\
-	{	\
-		if (ctrl != NULL)	\
-		{	\
-			if (ctrl->getCarbonControl() == inCarbonControl)	\
-				return ctrl;	\
-		}	\
-	}
+	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
+	AudioUnitSetProperty(GetEditAudioUnit(), kResetRMSProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
+}
 
-	CHECK_RMS_CONTROL(resetRMSbutton)
-	CHECK_RMS_CONTROL(resetPeakButton)
-	for (unsigned long ch=0; ch < numChannels; ch++)
-	{
-		if (averageRMSDisplays != NULL)
-			CHECK_RMS_CONTROL(averageRMSDisplays[ch])
-		if (continualRMSDisplays != NULL)
-			CHECK_RMS_CONTROL(continualRMSDisplays[ch])
-		if (absolutePeakDisplays != NULL)
-			CHECK_RMS_CONTROL(absolutePeakDisplays[ch])
-		if (continualPeakDisplays != NULL)
-			CHECK_RMS_CONTROL(continualPeakDisplays[ch])
-		if (channelLabels != NULL)
-			CHECK_RMS_CONTROL(channelLabels[ch])
-	}
-	CHECK_RMS_CONTROL(averageRMSLabel)
-	CHECK_RMS_CONTROL(continualRMSLabel)
-	CHECK_RMS_CONTROL(absolutePeakLabel)
-	CHECK_RMS_CONTROL(continualPeakLabel)
-	CHECK_RMS_CONTROL(windowSizeSlider)
-	CHECK_RMS_CONTROL(windowSizeLabel)
-	CHECK_RMS_CONTROL(windowSizeDisplay)
-
-#undef CHECK_RMS_CONTROL
-
-	return NULL;
+//-----------------------------------------------------------------------------
+// send a message to the DSP component to reset absolute peak
+void RMSbuddyEditor::resetPeak()
+{
+	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
+	AudioUnitSetProperty(GetEditAudioUnit(), kResetPeakProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
 }
