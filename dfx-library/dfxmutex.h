@@ -6,7 +6,8 @@ This is our mutex shit.
 #ifndef __DFXMUTEX_H
 #define __DFXMUTEX_H
 
-#if WIN32
+/* mutexes broken with DfxPlugin??? need help! */
+#if 0 // WIN32
 
 struct dfxmutex {
 	CRITICAL_SECTION c;
