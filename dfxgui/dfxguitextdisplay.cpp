@@ -34,9 +34,14 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	else
 		textProcUserData = inUserData;
 
+	isSnootPixel10 = false;
 	fontName = (char*) malloc(256);
 	if (inFontName != NULL)
+	{
 		strcpy(fontName, inFontName);
+		if (strcmp(fontName, "snoot.org pixel10") == 0)
+			isSnootPixel10 = true;
+	}
 	else
 	{
 		// get the application font from the system "theme"
@@ -58,6 +63,35 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 
 	mouseAxis = kDGTextDisplayMouseAxis_vertical;
 	mouseDragRange = 333.0f;	// pixels
+
+	if (fontName != NULL)
+	{
+		CFStringRef fontCFName = CFStringCreateWithCString(kCFAllocatorDefault, fontName, CFStringGetSystemEncoding());
+		if (fontCFName != NULL)
+		{
+			ATSFontRef atsfont = ATSFontFindFromName(fontCFName, kATSOptionFlagsDefault);
+			ATSFontMetrics horizontalMetrics;
+			OSStatus metstat = ATSFontGetHorizontalMetrics(atsfont, kATSOptionFlagsDefault, &horizontalMetrics);
+			if (metstat == noErr)
+			{
+				fontAscent = horizontalMetrics.ascent;
+				fontDescent = horizontalMetrics.descent;
+/*
+printf("ascent = %.3f\n", horizontalMetrics.ascent);
+printf("descent = %.3f\n", horizontalMetrics.descent);
+printf("caps height = %.3f\n", horizontalMetrics.capHeight);
+printf("littles height = %.3f\n", horizontalMetrics.xHeight);
+*/
+			}
+			ATSFontMetrics verticalMetrics;
+			metstat = ATSFontGetVerticalMetrics(atsfont, kATSOptionFlagsDefault, &verticalMetrics);
+			CFRelease(fontCFName);
+		}
+	}
+
+	shouldAntiAlias = true;
+	if (isSnootPixel10)
+		shouldAntiAlias = false;
 
 	setControlContinuous(true);
 }
@@ -112,15 +146,10 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRe
 	CGContextTranslateCTM(inContext, 0.0f, -bounds.size.height);
 #endif
 
-	bool drawSmoothText = true;
 	if (fontName != NULL)
-	{
 		CGContextSelectFont(inContext, fontName, fontSize, kCGEncodingMacRoman);
-		if (strcmp(fontName, "snoot.org pixel10") == 0)
-			drawSmoothText = false;
-	}
-	CGContextSetShouldSmoothFonts(inContext, drawSmoothText);
-	CGContextSetShouldAntialias(inContext, drawSmoothText);	// it appears that I gotta do this, too
+	CGContextSetShouldSmoothFonts(inContext, shouldAntiAlias);
+	CGContextSetShouldAntialias(inContext, shouldAntiAlias);	// it appears that I gotta do this, too
 	CGContextSetRGBFillColor(inContext, fontColor.r, fontColor.g, fontColor.b, 1.0f);
 
 	if (alignment != kDGTextAlign_left)
