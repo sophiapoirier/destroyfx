@@ -107,6 +107,10 @@ SOURCE=..\vstsdk\audioeffectx.cpp
 
 SOURCE="..\decimate\decimate.cpp"
 # End Source File
+# Begin Source File
+
+SOURCE=.\decimate.def
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
