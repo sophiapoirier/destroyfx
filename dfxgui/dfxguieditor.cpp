@@ -670,7 +670,7 @@ return false;
 		if ( ourControl->isParameterAttached() )
 		{
 			TellListener(ourControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
-//			printf("DGControlMouseHandler -> TellListener(MouseUp, %lu)\n", ourControl->getParameterID());
+//			printf("DGControlMouseHandler -> TellListener(MouseUp, %ld)\n", ourControl->getParameterID());
 		}
 
 		return false;	// let it fall through in case the host needs the event
@@ -788,6 +788,9 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 		{
 			case kEventControlDraw:
 				{
+//CGContextRef econtext = NULL;
+//OSStatus cgstat = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &econtext);
+//printf("GetEventParameter(kEventParamCGContextRef) = %ld\n", cgstat);
 					CGrafPtr oldPort = NULL;
 					CGrafPtr windowPort;
 					// if we received a graphics port parameter, use that...
@@ -914,6 +917,14 @@ printf("kEventControlHit\n");
 						keyModifiers |= kDGKeyModifier_shift;
 					if ( (modifiers & controlKey) || (modifiers & rightControlKey) )
 						keyModifiers |= kDGKeyModifier_extra;
+
+					// do this to make Logic's touch automation work
+					// AUCarbonViewControl::HandleEvent will catch ControlClick but not ControlContextualMenuClick
+					if ( ourDGControl->isParameterAttached() && (inEventKind == kEventControlContextualMenuClick) )
+					{
+						TellListener(ourDGControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
+//						printf("DGControlEventHandler -> TellListener(MouseDown, %ld)\n", ourDGControl->getParameterID());
+					}
 
 					ourDGControl->mouseDown(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
 					currentControl_clicked = ourDGControl;
