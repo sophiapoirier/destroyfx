@@ -6,6 +6,7 @@ written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #include "dfxplugin.h"
+#include "dfx-au-utilities.h"
 
 
 
@@ -917,7 +918,7 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 		// in case the min is not 0, get the total count of items in the array
 		long numStrings = getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1;
 		// create a CFArray of the strings (the host will destroy the CFArray)
-		*outStrings = CFArrayCreate(kCFAllocatorDefault, (const void**)paramValueStrings, numStrings, NULL);
+		*outStrings = CFArrayCreate(kCFAllocatorDefault, (const void**)paramValueStrings, numStrings, &kCFTypeArrayCallBacks);
 		return noErr;
 	}
 
@@ -938,7 +939,7 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 
 	setparameter_f(inParameterID, inValue);
 	return noErr;
-//	return AUBase::SetParameter(inID, inScope, inElement, inValue, inBufferOffsetInFrames);
+//	return AUBase::SetParameter(inParameterID, inScope, inElement, inValue, inBufferOffsetInFrames);
 }
 
 
@@ -965,8 +966,11 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 	}
 	if (outNumPresets <= 0)	// woops, looks like we don't actually have any presets
 		return kAudioUnitErr_InvalidProperty;
+	// setup up the callbacks for the CFArray's value handling
+	CFArrayCallBacks arrayCallbacks;
+	auPresetCFArrayCallbacks_Init(&arrayCallbacks);
 	// ...and then allocate a mutable array large enough to hold them all
-	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, NULL);
+	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, &arrayCallbacks);
 
 	// add the preset data (name and number) into the array
 	for (long i=0; i < numPresets; i++)
@@ -974,12 +978,13 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 //		if (presetnameisvalid(i))
 		if ( (presets[i].getname_ptr() != NULL) && (presets[i].getname_ptr()[0] != 0) )
 		{
+			AUPreset aupreset;
 			// set the data as it should be
-			aupresets[i].presetNumber = i;
-//			aupresets[i].presetName = getpresetcfname(i);
-			aupresets[i].presetName = presets[i].getcfname();
+			aupreset.presetNumber = i;
+//			aupreset.presetName = getpresetcfname(i);
+			aupreset.presetName = presets[i].getcfname();
 			// insert the AUPreset into the output array
-			CFArrayAppendValue( outArray, &(aupresets[i]) );
+			CFArrayAppendValue(outArray, &aupreset);
 		}
 	}
 
@@ -1025,19 +1030,22 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
 #if TARGET_PLUGIN_USES_MIDI
 	// create a CF data storage thingy for our special data
 	CFMutableDataRef cfdata = CFDataCreateMutable(kCFAllocatorDefault, 0);
-	void * dfxdata = NULL;	// a pointer to our special data
-	unsigned long dfxdatasize;	// the number of bytes of our data
-	// fetch our special data
-	dfxdatasize = dfxsettings->save(&dfxdata, true);
-	if ( (dfxdatasize > 0) && (dfxdata != NULL) )
+	if (cfdata != NULL)
 	{
-		// put our special data into the CF data storage thingy
-		CFDataAppendBytes(cfdata, (UInt8*)dfxdata, (signed)dfxdatasize);
-		// put the CF data storage thingy into the dfx-data section of the CF dictionary
-		CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
+		void * dfxdata = NULL;	// a pointer to our special data
+		unsigned long dfxdatasize;	// the number of bytes of our data
+		// fetch our special data
+		dfxdatasize = dfxsettings->save(&dfxdata, true);
+		if ( (dfxdatasize > 0) && (dfxdata != NULL) )
+		{
+			// put our special data into the CF data storage thingy
+			CFDataAppendBytes(cfdata, (UInt8*)dfxdata, (signed)dfxdatasize);
+			// put the CF data storage thingy into the dfx-data section of the CF dictionary
+			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
+		}
+		// cfdata belongs to us no more, bye bye...
+		CFRelease(cfdata);
 	}
-	// cfdata belongs to us no more, bye bye...
-	CFRelease(cfdata);
 #endif
 
 	return noErr;
@@ -1048,12 +1056,15 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 {
+#if DEBUG_VST_SETTINGS_IMPORT
+fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
+#endif
 	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
 	// abort if the base implementation of RestoreState failed
 	if (result != noErr)
 	{
 	#if DEBUG_VST_SETTINGS_IMPORT
-		printf("AUBase::RestoreState failed with error %ld, not attempting destroyfx-data\n", result);
+		fprintf(stderr, "AUBase::RestoreState failed with error %ld, not attempting destroyfx-data\n", result);
 	#endif
 		return result;
 	}
@@ -1064,11 +1075,11 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 	Boolean dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, kDfxDataDictionaryKeyString, (const void**)&cfdata);
 
 	#if DEBUG_VST_SETTINGS_IMPORT
-	printf("AUBase::RestoreState succeeded\n");
+	fprintf(stderr, "AUBase::RestoreState succeeded\n");
 	if ( !dataFound || (cfdata == NULL) )
-		printf("but destroyfx-data was not found\n");
+		fprintf(stderr, "but destroyfx-data was not found\n");
 	else
-		printf("destroyfx-data successfully found\n");
+		fprintf(stderr, "destroyfx-data successfully found\n");
 	#endif
 
 	// there was an error in AUBas::RestoreState or trying to find "destroyfx-data", 
@@ -1079,11 +1090,11 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 		dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, CFSTR("vstdata"), (const void**)&cfdata);
 
 	#if DEBUG_VST_SETTINGS_IMPORT
-	printf("trying vstdata...\n");
+	fprintf(stderr, "trying vstdata...\n");
 	if ( !dataFound || (cfdata == NULL) )
-		printf("vstdata was not found\n");
+		fprintf(stderr, "vstdata was not found\n");
 	else
-		printf("vstdata was found, attempting to load...\n");
+		fprintf(stderr, "vstdata was found, attempting to load...\n");
 	#endif
 	}
 
@@ -1100,9 +1111,9 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 
 	#if DEBUG_VST_SETTINGS_IMPORT
 	if (success)
-		printf("settings data was successfully loaded\n");
+		fprintf(stderr, "settings data was successfully loaded\n");
 	else
-		printf("settings data failed to load\n");
+		fprintf(stderr, "settings data failed to load\n");
 	#endif
 
 	if (!success)
@@ -1117,6 +1128,10 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 
 #endif
 // TARGET_PLUGIN_USES_MIDI
+
+	// make any listeners aware of the changes in the parameter values
+	for (long i=0; i < numParameters; i++)
+		postupdate_parameter(i);
 
 
 	return noErr;

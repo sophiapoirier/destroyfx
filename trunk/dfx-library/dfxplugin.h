@@ -620,9 +620,6 @@ protected:
 		// just for the sake of making processaudio(float**, float**, etc.) possible
 		float ** inputsP;
 		float ** outputsP;
-		// an array of the plugin's presets in AUPreset form (number and CFString name)
-		// the preset array needs to survive throughout the Audio Unit's life
-		AUPreset * aupresets;
 		#if TARGET_PLUGIN_USES_MIDI
 			// an array of how MIDI CCs and NRPNs map to parameters (if at all)
 			// the map needs to survive throughout the Audio Unit's life
