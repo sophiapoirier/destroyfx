@@ -14,6 +14,8 @@ struct PANELVERTEX
 
 #define D3DFVF_PANELVERTEX (D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_TEX1)
 #define SURFACE_FORMAT D3DFMT_A8R8G8B8
+#define FILTER_HOW D3DX_FILTER_NONE
+
 
 #define DXTEST(c) do { int err; if ((err=(c)) != D3D_OK) \
                        MessageBox(0, #c, "ERROR", MB_OK); } while(0)
@@ -26,22 +28,21 @@ LPDIRECT3DVERTEXBUFFER8 verts;
 
   LPDIRECT3DDEVICE8 device;
 
-  static int surfaceheight(LPDIRECT3DSURFACE8 s) {
-    D3DSURFACE_DESC d;
-    s->GetDesc(&d);
-    return d.Height;
-  }
+  int height;
+  int width;
 
-  static int surfacewidth(LPDIRECT3DSURFACE8 s) {
-    D3DSURFACE_DESC d;
-    s->GetDesc(&d);
-    return d.Width;
-  }
-
+  /* the texture may have a larger size.
+     (many video cards make you round up
+     to the nearest power-of-two.) */
+  unsigned int theight;
+  unsigned int twidth;
+  
+  /* load and set height/width */
   void CreateSurfaceFromFile(LPDIRECT3DSURFACE8* ppSurface, 
-			     const char * filename,
-			     D3DXIMAGE_INFO * srcInfo) {
+			     const char * filename) {
     
+    D3DXIMAGE_INFO srcInfo;
+
     /* I use alpha from file, no color key */
     D3DCOLOR colourKey = 0; // 0xFF000000
     
@@ -52,29 +53,41 @@ LPDIRECT3DVERTEXBUFFER8 verts;
     DXTEST(device->CreateImageSurface(1, 1, 
 				      SURFACE_FORMAT, &pSurface));
     DXTEST(D3DXLoadSurfaceFromFile(pSurface, NULL, NULL, filename, 
-				   NULL, D3DX_FILTER_NONE, 0, srcInfo));
+				   NULL, FILTER_HOW, 0, &srcInfo));
     pSurface->Release();
     
+    height = srcInfo.Height;
+    width = srcInfo.Width;
+    
     // Create a surface to hold the entire file
-    DXTEST(device->CreateImageSurface(srcInfo->Width, srcInfo->Height, 
+    DXTEST(device->CreateImageSurface(width, height, 
 				      SURFACE_FORMAT, ppSurface));
     pSurface = *ppSurface;
     
     // The default colour key is 0xFF000000 (opaque black). Magenta 
     // (0xFFFF00FF) is another common colour used for transparency.
     DXTEST(D3DXLoadSurfaceFromFile(pSurface, palette, NULL, filename, 
-				   NULL, D3DX_FILTER_NONE,
-				   colourKey, srcInfo));
+				   NULL, FILTER_HOW,
+				   colourKey, &srcInfo));
   }
 
+  /* height and width have to be set */
   void CreateTextureFromSurface(LPDIRECT3DSURFACE8 surf,
-				int width, int height,
 				LPDIRECT3DTEXTURE8* ppTexture) {
     RECT SrcRect;
     SrcRect.top = 0;
     SrcRect.left = 0;
-    SrcRect.right = width - 1; /* +/- 1? */
-    SrcRect.bottom = height - 1;
+    SrcRect.right = width; // - 1;
+    SrcRect.bottom = height; // - 1;
+
+    unsigned int dummy_mip = 1;
+    theight = height;
+    twidth = width;
+    D3DXCheckTextureRequirements(device,
+				 &twidth,
+				 &theight,
+				 &dummy_mip,
+				 0, 0, D3DPOOL_DEFAULT);
 
     D3DSURFACE_DESC surfDesc;
     DXTEST( surf->GetDesc(&surfDesc) );
@@ -116,27 +129,18 @@ LPDIRECT3DVERTEXBUFFER8 verts;
     device = dev;
 
     LPDIRECT3DSURFACE8 surf = 0;
-    D3DXIMAGE_INFO surfinfo;
 
-    CreateSurfaceFromFile(&surf, path, &surfinfo);
+    CreateSurfaceFromFile(&surf, path);
 
     /* initialize a single rectangle. */
-#if 1
-    int pw = surfinfo.Width;
-    int ph = surfinfo.Height;
-#else
 
-    int pw = 150;
-    int ph = 150;
-#endif
-
-#if 1
+#if 0
     char mess[256];
-    sprintf(mess, "width: %d height: %d", pw, ph);
+    sprintf(mess, "width: %d height: %d", width, height);
     MessageBox(0, mess, "HEY", MB_OK);
 #endif
 
-    CreateTextureFromSurface(surf, pw, ph, &texture);
+    CreateTextureFromSurface(surf, &texture);
 
     dev->CreateVertexBuffer(4 * sizeof(PANELVERTEX), D3DUSAGE_WRITEONLY,
 			    D3DFVF_PANELVERTEX, D3DPOOL_MANAGED, &verts);
@@ -147,23 +151,22 @@ LPDIRECT3DVERTEXBUFFER8 verts;
     // Set all the colors to white
     /* apparently changing these will change the alpha of the texture. */
     pVertices[0].color = pVertices[1].color = 
-      pVertices[2].color = pVertices[3].color = 0x77ff77ff;
+      pVertices[2].color = pVertices[3].color = 0xe0ffffff;
 
-    /* Set positions and texture coordinate. */
-    pVertices[0].x = pVertices[3].x = -pw / 2.0;
-    pVertices[1].x = pVertices[2].x = pw / 2.0;
+    pVertices[0].x = pVertices[3].x = 0.0;
+    pVertices[1].x = pVertices[2].x = (float)width;
 
-    pVertices[2].y = pVertices[3].y = - ph / 2.0;
-    pVertices[0].y = pVertices[1].y = ph / 2.0;
+    pVertices[2].y = pVertices[3].y = 0.0;
+    pVertices[0].y = pVertices[1].y = (float)height;
 
 
     pVertices[0].z = pVertices[1].z = pVertices[2].z = pVertices[3].z = 1.0f;
 
-    pVertices[1].u = pVertices[2].u = 1.0f;
+    pVertices[1].u = pVertices[2].u = ((float)width + 1.0)/(float)twidth;
     pVertices[0].u = pVertices[3].u = 0.0f;
 
     pVertices[0].v = pVertices[1].v = 0.0f;
-    pVertices[2].v = pVertices[3].v = 1.0f;
+    pVertices[2].v = pVertices[3].v = ((float)height + 1.0)/(float)theight;
 
     verts->Unlock();
 
