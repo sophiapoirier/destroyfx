@@ -26,6 +26,29 @@ void DfxPlugin::PostConstructor()
 	// this must happen after AUBase::PostConstructor because the elements are created there
 	for (long i=0; i < numParameters; i++)
 		AUBase::SetParameter(i, kAudioUnitScope_Global, (AudioUnitElement)0, getparameter_f(i), 0);
+
+
+// XXX some stuff that might worth adding an accessor for at some point or something...
+#if 0
+	unsigned char * appname = LMGetCurApName();
+	if (appname != NULL)
+		printf( "app name = %.*s\n", appname[0], (char*)&(appname[1]) );
+
+	ProcessSerialNumber currentProcess = { 0, kCurrentProcess };
+	CFStringRef processName = NULL;
+	OSStatus status = CopyProcessName(&currentProcess, &processName);
+	if ( (status == noErr) && (processName != NULL) )
+	{
+		CFIndex stringsize = (CFStringGetLength(processName) * 2) + 1;
+		char * cname = (char*) malloc(stringsize * sizeof(char));
+		cname[0] = 0;
+		Boolean success = CFStringGetCString(processName, cname, stringsize, CFStringGetSystemEncoding());
+		if (success)
+			printf("process name = %s\n", cname);
+		free(cname);
+		CFRelease(processName);
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
