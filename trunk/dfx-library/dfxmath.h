@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our math shit.
-written by Tom Murphy 7 and Marc Poirier, 2001 - 2002
+written by Tom Murphy 7 and Marc Poirier, 2001 - 2003
 ------------------------------------------------------------------------*/
 
 
@@ -13,17 +13,11 @@ written by Tom Murphy 7 and Marc Poirier, 2001 - 2002
 
 
 // XXX figure out another way
-#ifndef sqrtf
-#define sqrtf (float)sqrt
-#endif
-#ifndef powf
-#define powf (float)pow
-#endif
-#ifndef sinf
-#define sinf (float)sin
-#endif
-#ifndef cosf
-#define cosf (float)cos
+#ifdef __APPLE_CC__
+	#define sqrtf	(float)sqrt
+	#define powf	(float)pow
+	#define sinf	(float)sin
+	#define cosf	(float)cos
 #endif
 
 
@@ -31,7 +25,10 @@ written by Tom Murphy 7 and Marc Poirier, 2001 - 2002
 //-----------------------------------------------------------------------------
 // constants & macros
 
-#define dBconvert(fval) ( 20.0f * log10f((fval)) )
+float linear2dB(float linearValue)
+{
+	return 20.0f * log10f(linearValue);
+}
 
 #ifndef PI
 #define PI 3.1415926535897932384626433832795f
@@ -50,9 +47,10 @@ const double ONE_DIV_RAND_MAX_D = 1.0 / (double)RAND_MAX;
 #define clip(fval)   (if (fval < -1.0f) fval = -1.0f; else if (fval > 1.0f) fval = 1.0f)
 #endif
 
-#ifndef fsign
-#define fsign(fval) (((fval)<0.0f)?-1.0f:1.0f)
-#endif
+inline float fsign(float fval)
+{
+	return (fval < 0.0f) ? -1.0f : 1.0f;
+}
 
 #ifndef undenormalize
 #define undenormalize(dval)   if (fabs(dval) < 1.0e-15)   dval = 0.0
