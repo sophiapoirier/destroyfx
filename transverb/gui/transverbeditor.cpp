@@ -1,7 +1,7 @@
 /*--------- by Tom Murphy 7 & Marc Poirier  ][  September 2001 ---------*/
 
-#ifndef __transverbEditor
-#include "transverbEditor.hpp"
+#ifndef __transverbeditor
+#include "transverbeditor.hpp"
 #endif
 
 
