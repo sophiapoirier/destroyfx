@@ -224,3 +224,8 @@ stub-plugin/
 
         Sources for starting a new plugin. Much nicer than the
         Steinberg examples (in my opinion).
+
+docs/
+
+        The documentation for users.  We include these in the 
+        binary distributions of our plugins.
