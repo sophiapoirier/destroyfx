@@ -41,14 +41,30 @@ public:
 	virtual void draw(CGContextRef inContext, long inPortHeight)
 		{ }
 	// *** mouse position is relative to controlBounds for ultra convenience
+	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 		{ }
+	void do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 		{ }
+	void do_mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
 	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 		{ }
-	virtual bool mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
-		{	return false;	}
+	bool do_mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers);
+	virtual bool mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers);
+
+	void setRespondToMouse(bool inMousePolicy)
+		{	shouldRespondToMouse = inMousePolicy;	}
+	bool getRespondToMouse()
+		{	return shouldRespondToMouse;	}
+	void setRespondToMouseWheel(bool inMouseWheelPolicy)
+		{	shouldRespondToMouseWheel = inMouseWheelPolicy;	}
+	bool getRespondToMouseWheel()
+		{	return shouldRespondToMouseWheel;	}
+	void setWraparoundValues(bool inWraparoundPolicy)
+		{	shouldWraparoundValues = inWraparoundPolicy;	}
+	bool getWraparoundValues()
+		{	return shouldWraparoundValues;	}
 
 	// *** this will get called regularly by an idle timer
 	virtual void idle()
@@ -72,6 +88,15 @@ public:
 		if (inFineTuneFactor != 0.0f)	// to prevent division by zero
 			fineTuneFactor = inFineTuneFactor;
 	}
+	float getFineTuneFactor()
+		{	return fineTuneFactor;	}
+	void setMouseDragRange(float inMouseDragRange)
+	{
+		if (inMouseDragRange != 0.0f)	// to prevent division by zero
+			mouseDragRange = inMouseDragRange;
+	}
+	float getMouseDragRange()
+		{	return mouseDragRange;	}
 
 	bool isParameterAttached()
 		{	return parameterAttached;	}
@@ -108,16 +133,11 @@ public:
 	OSStatus setHelpText(CFStringRef inHelpText);
 #endif
 
-private:
-	// common constructor stuff
-	void init(DGRect * inRegion);
-
 protected:
 	DfxGuiEditor *		ownerEditor;
 	float				Range;
 	bool				parameterAttached;
 	bool				isContinuous;
-	float				fineTuneFactor;	// slow-down factor for fine-tune control (if the control supports that)
 
 	DGRect				where;		// the control's area
 	DGRect				vizArea; 	// where the foreground displays
@@ -129,6 +149,21 @@ protected:
 #endif
 #if MAC
 	ControlRef			carbonControl;
+#endif
+
+private:
+	// common constructor stuff
+	void init(DGRect * inRegion);
+
+	float				fineTuneFactor;	// slow-down factor for fine-tune control (if the control supports that)
+	float				mouseDragRange;	// the range of pixels over which you can drag the mouse to adjust the control value
+
+	bool				shouldRespondToMouse;
+	bool				shouldRespondToMouseWheel;
+	bool				currentlyIgnoringMouseTracking;
+	bool				shouldWraparoundValues;
+
+#if MAC
 	CFStringRef			helpText;
 	MouseTrackingRef	mouseTrackingRegion;
 	bool				isFirstDraw;
