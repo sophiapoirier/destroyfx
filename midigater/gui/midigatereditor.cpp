@@ -10,16 +10,19 @@
 enum {
 	// positions
 	kSliderX = 13,
-	kSlopeSliderY = 37,
-	kVelInfluenceSliderY = 77,
-	kFloorSliderY = 116,
+	kAttackSlopeSliderY = 37,
+	kReleaseSlopeSliderY = 77,
+	kVelInfluenceSliderY = 117,
+	kFloorSliderY = 156,
 	kSliderWidth = 289 - kSliderX,
 
 	kDisplayX = 333+1,
-	kSlopeDisplayY = kSlopeSliderY + 1,
+	kAttackSlopeDisplayY = kAttackSlopeSliderY + 1,
+	kReleaseSlopeDisplayY = kReleaseSlopeSliderY + 1,
 	kVelInfluenceDisplayY = kVelInfluenceSliderY + 1,
 	kFloorDisplayY = kFloorSliderY + 2,
 	kDisplayWidth = 114,
+	kDisplayWidthHalf = kDisplayWidth / 2,
 	kDisplayHeight = 12,
 	kVelInfluenceLabelWidth = kDisplayWidth - 33,
 
@@ -86,8 +89,8 @@ long MidiGaterEditor::open()
 	SetBackgroundImage(gBackground);
 
 	DGImage * gSlopeSliderHandle = new DGImage("slider-handle-slope.png", this);
-	DGImage * gVelInfluenceSliderHandle = new DGImage("slider-handle-velocity-influence.png", this);
 	DGImage * gFloorSliderHandle = new DGImage("slider-handle-floor.png", this);
+	DGImage * gVelInfluenceSliderHandle = new DGImage("slider-handle-velocity-influence.png", this);
 
 	DGImage * gDestroyFXlinkButton = new DGImage("destroy-fx-link-button.png", this);
 
@@ -97,9 +100,13 @@ long MidiGaterEditor::open()
 	//--initialize the horizontal faders-------------------------------------
 	DGSlider * slider;
 
-	// slope
-	pos.set(kSliderX, kSlopeSliderY, kSliderWidth, gSlopeSliderHandle->getHeight());
-	slider = new DGSlider(this, kSlope, &pos, kDGSliderAxis_horizontal, gSlopeSliderHandle, NULL);
+	// attack slope
+	pos.set(kSliderX, kAttackSlopeSliderY, kSliderWidth, gSlopeSliderHandle->getHeight());
+	slider = new DGSlider(this, kAttackSlope, &pos, kDGSliderAxis_horizontal, gSlopeSliderHandle, NULL);
+
+	// release slope
+	pos.set(kSliderX, kReleaseSlopeSliderY, kSliderWidth, gSlopeSliderHandle->getHeight());
+	slider = new DGSlider(this, kReleaseSlope, &pos, kDGSliderAxis_horizontal, gSlopeSliderHandle, NULL);
 
 	// velocity influence
 	pos.set(kSliderX, kVelInfluenceSliderY, kSliderWidth, gVelInfluenceSliderHandle->getHeight());
@@ -115,14 +122,26 @@ long MidiGaterEditor::open()
 	DGStaticTextDisplay * label;
 	CAAUParameter auvp;
 
-	// slope
-	pos.set(kDisplayX, kSlopeDisplayY, kDisplayWidth/2, kDisplayHeight);
+	// attack slope
+//	const long kAttackSlopeDisplayWidth = kDisplayWidthHalf + 2;
+	pos.set(kDisplayX, kAttackSlopeDisplayY, kDisplayWidthHalf, kDisplayHeight);
 	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize, kValueTextColor, kValueTextFont);
-	auvp = CAAUParameter(GetEditAudioUnit(), kSlope, kAudioUnitScope_Global, (AudioUnitElement)0);
+	auvp = CAAUParameter(GetEditAudioUnit(), kAttackSlope, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
 	//
-	pos.offset(kDisplayWidth/2, 0);
-	display = new DGTextDisplay(this, kSlope, &pos, slopeDisplayProc, NULL, NULL, kDGTextAlign_right, 
+	pos.offset(kDisplayWidthHalf, 0);
+	display = new DGTextDisplay(this, kAttackSlope, &pos, slopeDisplayProc, NULL, NULL, kDGTextAlign_right, 
+								kValueTextSize, kValueTextColor, kValueTextFont);
+
+	// release slope
+//	const long kReleaseSlopeDisplayWidth = kDisplayWidthHalf + 5;
+	pos.set(kDisplayX, kReleaseSlopeDisplayY, kDisplayWidthHalf, kDisplayHeight);
+	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize, kValueTextColor, kValueTextFont);
+	auvp = CAAUParameter(GetEditAudioUnit(), kReleaseSlope, kAudioUnitScope_Global, (AudioUnitElement)0);
+	label->setText(auvp.ParamInfo().name);
+	//
+	pos.offset(kDisplayWidthHalf, 0);
+	display = new DGTextDisplay(this, kReleaseSlope, &pos, slopeDisplayProc, NULL, NULL, kDGTextAlign_right, 
 								kValueTextSize, kValueTextColor, kValueTextFont);
 
 	// velocity influence
@@ -136,12 +155,12 @@ long MidiGaterEditor::open()
 								kDGTextAlign_right, kValueTextSize, kValueTextColor, kValueTextFont);
 
 	// floor
-	pos.set(kDisplayX, kFloorDisplayY, kDisplayWidth/2, kDisplayHeight);
+	pos.set(kDisplayX, kFloorDisplayY, kDisplayWidthHalf, kDisplayHeight);
 	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize, kValueTextColor, kValueTextFont);
 	auvp = CAAUParameter(GetEditAudioUnit(), kFloor, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
 	//
-	pos.offset(kDisplayWidth/2, 0);
+	pos.offset(kDisplayWidthHalf, 0);
 	display = new DGTextDisplay(this, kFloor, &pos, floorDisplayProc, NULL, NULL, kDGTextAlign_right, 
 								kValueTextSize, kValueTextColor, kValueTextFont);
 
