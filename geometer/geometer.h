@@ -145,12 +145,12 @@ public:
   */
   long bufsize, framesize, third;
 
-  /* must grab this before calling processw */
-  dfxmutex * cs;
-
   int processw(float * in, float * out, long samples,
 	       int * px, float * py, int maxpts,
 	       int * tx, float * ty);
+
+  /* must grab this before calling processw */
+  dfxmutex * cs;
 
 private:
 
