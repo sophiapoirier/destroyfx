@@ -133,7 +133,7 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 	{
 		{"Scrubby randomly zips around through an audio delay buffer."}, 
 		{"Scrubby will, at a given seek rate, find random target destinations within a "}, 
-		{"certain time range and then make its way over to that destination."}, 
+		{"certain time range and then travel to those destinations."}, 
 	}, 
 	// speed mode
 	{
@@ -162,18 +162,18 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 	// pitch constraint
 	{
 		{"pitch constraint:  - only for robot mode -"}, 
-		{"With this turned on (\"notes\"), the playback speeds for each seek will always be "}, 
-		{"semitone increments from the original pitch.  (see keyboard and octaves help)"}, 
+		{"With this set to \"notes,\" the playback speeds for each seek will always be "}, 
+		{"semitone increments from the original pitch.  (see also the keyboard help)"}, 
 	}, 
 	// notes
 	{
 		{"notes:  - only for robot mode with pitch constraint turned on -"}, 
 		{"You can choose which semitone steps within an octave are allowable when "}, 
-		{"pitch constraint mode is on.  There are preset & transposition buttons, too."}, 
+		{"pitch constraint mode is on.  There are preset and transposition buttons, too."}, 
 	}, 
 	// octaves
 	{
-		{"octave limits:  - only for robot mode with pitch constraint turned on -"}, 
+		{"octave limits:  limit Scrubby's speeds within a range of octaves"}, 
 		{"You can limit how low or how high Scrubby's playback speeds can go in terms "}, 
 		{"of octaves, or move these to their outer points if you want no limits."}, 
 	}, 
@@ -192,8 +192,8 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 	// seek duration
 	{
 		{"seek duration:  amount of a seek cycle spent moving to the target"}, 
-		{"Scrubby finds a new target to move towards at each seek cycle.  You can make "}, 
-		{"it reach the target early by lowering this value.  This produces gaps."}, 
+		{"Scrubby finds a new target to move towards at each seek cycle.  You can "}, 
+		{"make it reach the target early by lowering this value.  This produces gaps."}, 
 	}, 
 	// seek range
 	{
@@ -204,8 +204,8 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 	// tempo
 	{
 		{"tempo:  sets the tempo that Scrubby uses when tempo sync is on"}, 
-		{"If the your host sends time info to plugins, you can slide this all the way "}, 
-		{"to the left & use the host's tempo in \"auto\" mode.  You can click & type, too."}, 
+		{"If your host app doesn't send tempo info to plugins, you'll need to adjust this "}, 
+		{"parameter in order to specify a tempo for Scrubby to use."}, 
 	}, 
 	// predelay
 	{
@@ -223,7 +223,7 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 	{
 		{"MIDI reset:  erase CC assignments"}, 
 		{"Click this button to erase all of your MIDI CC -> parameter assignments.  "}, 
-		{"Now CCs won't affect any of the parameters & you can start over if you want."}, 
+		{"Then CCs won't affect any parameters and you can start over if you want."}, 
 	}, 
 };
 

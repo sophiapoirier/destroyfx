@@ -6,7 +6,7 @@
 //-----------------------------------------------------------------------------------------
 inline double calculateTargetSpeed(double a, double n, double k)
 {
-  double b;	// the target speed
+	double b;	// the target speed
 
 	a = fabs(a);
 	n = fabs(n);
@@ -102,9 +102,9 @@ void Scrubby::checkTempoSyncStuff()
 //-----------------------------------------------------------------------------------------
 void Scrubby::generateNewTarget(unsigned long channel)
 {
-  float currentSeekRate, currentSeekDur;
-//  double readStep, portamentoStep;
-//  long seekcount, movecount;
+	float currentSeekRate, currentSeekDur;
+//	double readStep, portamentoStep;
+//	long seekcount, movecount;
 
 
 // CALCULATE THE SEEK CYCLE LENGTH
@@ -195,6 +195,25 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	// constrain the speed to a semitone step, if that's what we want to do
 	if ( pitchConstraint && (speedMode == kSpeedMode_robot) )
 		newReadStep = processPitchConstraint(newReadStep);
+	// still constrain to octave ranges, even when pitch constraint is disabled
+	else
+	{
+		double fdirection = (newReadStep < 0.0) ? -1.0 : 1.0;	// direction scalar
+		double newReadStep_abs = fabs(newReadStep);
+		// constrain to octaves range, if we're doing that
+		if ( (octaveMin > OCTAVE_MIN) && (newReadStep_abs < 1.0) )
+		{
+			double minstep = pow(2.0, (double)octaveMin);
+			if (newReadStep_abs < minstep)
+				newReadStep = minstep * fdirection;
+		}
+		else if ( (octaveMax < OCTAVE_MAX) && (newReadStep_abs > 1.0) )
+		{
+			double maxstep = pow(2.0, (double)octaveMax);
+			if (newReadStep_abs > maxstep)
+				newReadStep = maxstep * fdirection;
+		}
+	}
 	//
 	// calculate the step size of portamento playback incrementation
 //	if ( (speedMode == kSpeedMode_dj) && !(needResync[channel]) )
@@ -252,9 +271,6 @@ void Scrubby::generateNewTarget(unsigned long channel)
 //-----------------------------------------------------------------------------------------
 double Scrubby::processPitchConstraint(double readStep)
 {
-  long i;
-
-
 	bool backwards = (readStep < 0.0);	// traveling backwards through the buffer?
 	double fdirection = backwards ? -1.0 : 1.0;	// direction scalar
 
@@ -262,7 +278,7 @@ double Scrubby::processPitchConstraint(double readStep)
 	// in which case we act like they are all enabled.
 	// no we don't, we become silent, I changed my mind
 	bool noNotesActive = true;
-	for (i=0; i < NUM_PITCH_STEPS; i++)
+	for (long i=0; i < NUM_PITCH_STEPS; i++)
 	{
 		if (pitchSteps[i])
 			noNotesActive = false;
@@ -289,7 +305,7 @@ double Scrubby::processPitchConstraint(double readStep)
 	semitone = remainder;
 	// start searching for an active pitchStep with the current pitchStep (remainder) 
 	// & then all those below it
-	i = remainder;
+	long i = remainder;
 	// if no notes are active, then don't play back anything (this basically means silence)
 	if (noNotesActive)
 		return 0.0f;
@@ -356,10 +372,9 @@ void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFra
 	// if we're using pitch constraint & the previous block had no notes active, 
 	// then check to see if new notes have begun and, if so, begin new seeks 
 	// so that we start producing sound again immediately
-	int i;
 	if ( (pitchConstraint && (speedMode == kSpeedMode_robot)) && !notesWereAlreadyActive )
 	{
-		for (i=0; i < NUM_PITCH_STEPS; i++)
+		for (int i=0; i < NUM_PITCH_STEPS; i++)
 		{
 			if (pitchSteps[i])
 			{
@@ -371,7 +386,7 @@ void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFra
 	}
 	// now remember the current situation for informing the next processing block
 	notesWereAlreadyActive = false;
-	for (i=0; i < NUM_PITCH_STEPS; i++)
+	for (int i=0; i < NUM_PITCH_STEPS; i++)
 	{
 		if (pitchSteps[i])
 			notesWereAlreadyActive = true;
