@@ -7,7 +7,7 @@
 DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 					AudioUnitParameterID inParamID, 
 					DGRect *			inRegion,
-					DGGraphic *			inImage, 
+					DGImage *			inImage, 
 					long				inNumStates, 
 					DfxGuiBottonMode	inMode, 
 					bool				inDrawMomentaryState)
@@ -20,14 +20,13 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 	userReleaseProcData = NULL;
 
 	mouseIsDown = false;
-	setType(kDfxGuiType_button);
 	setContinuousControl(false);
 }
 
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 					DGRect *			inRegion,
-					DGGraphic *			inImage, 
+					DGImage *			inImage, 
 					long				inNumStates, 
 					DfxGuiBottonMode	inMode, 
 					bool				inDrawMomentaryState)
@@ -40,7 +39,6 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 	userReleaseProcData = NULL;
 
 	mouseIsDown = false;
-	setType(kDfxGuiType_button);
 	setContinuousControl(false);
 }
 
@@ -217,7 +215,7 @@ void DGButton::setUserReleaseProcedure(buttonUserProcedure inProc, void *inUserD
 //-----------------------------------------------------------------------------
 // Web Link
 //-----------------------------------------------------------------------------
-DGWebLink::DGWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGGraphic *inImage, const char *inURL)
+DGWebLink::DGWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inImage, const char *inURL)
 :	DGButton(inOwnerEditor, inRegion, inImage, 2, kDGButtonType_pushbutton), 
 	urlString(NULL)
 {

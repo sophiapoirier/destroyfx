@@ -14,8 +14,8 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData);
 DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 :	AUCarbonViewBase(inInstance)
 {
-  cleanme = 0;
-
+	controlsList = NULL;
+	imagesList = NULL;
   
 	idleTimer = NULL;
 	idleTimerUPP = NULL;
@@ -66,10 +66,17 @@ DfxGuiEditor::~DfxGuiEditor()
 
 	/* deleting a list item also calls the destroy
 	   method for its Destructible data. */
-	while (cleanme) {
-	  CleanupList * tmp = cleanme->next;
-	  delete cleanme;
-	  cleanme = tmp;
+	while (controlsList != NULL)
+	{
+		DGControlsList * tempcl = controlsList->next;
+		delete controlsList;
+		controlsList = tempcl;
+	}
+	while (imagesList != NULL)
+	{
+		DGImagesList * tempcl = imagesList->next;
+		delete imagesList;
+		imagesList = tempcl;
 	}
 
 	if (windowEventEventHandlerRef != NULL)
@@ -172,11 +179,6 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
 
 
-	idleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
-	InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, 
-							idleTimerUPP, this, &idleTimer);
-
-
 	// XXX this is not a good thing to do, hmmm, maybe I should not do it...
 	UInt32 dataSize = sizeof(dfxplugin);
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_PluginPtr, 
@@ -192,6 +194,9 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		// set the size of the embedding pane
 		if (backgroundImage != NULL)
 			SizeControl(mCarbonPane, (SInt16) (backgroundImage->getWidth()), (SInt16) (backgroundImage->getHeight()));
+
+		idleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
+		InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, idleTimerUPP, this, &idleTimer);
 	}
 
 	return openErr;
@@ -265,8 +270,12 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::idle()
 {
-	if (Controls != NULL)
-		Controls->idle();
+	DGControlsList * tempcl = controlsList;
+	while (tempcl != NULL)
+	{
+		tempcl->control->idle();
+		tempcl = tempcl->next;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -277,8 +286,12 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::addImage(DGGraphic *inImage) {
-	cleanme = new CleanupList(inImage, cleanme);
+void DfxGuiEditor::addImage(DGImage *inImage)
+{
+	if (inImage == NULL)
+		return;
+
+	imagesList = new DGImagesList(inImage, imagesList);
 }
 
 //-----------------------------------------------------------------------------
@@ -287,15 +300,15 @@ void DfxGuiEditor::addControl(DGControl *inControl)
 	if (inControl == NULL)
 		return;
 
-	if (inControl->getDaddy() == NULL)
-	{
-	        cleanme = new CleanupList(inControl, cleanme);
-		inControl->setOffset((long)GetXOffset(), (long)GetYOffset());
-	}
+	controlsList = new DGControlsList(inControl, controlsList);
 
-	ControlRef newCarbonControl;
+	// XXX   ???
+	if (inControl->getDaddy() == NULL)
+		inControl->setOffset((long)GetXOffset(), (long)GetYOffset());
+
 	Rect r;
 	inControl->getBounds()->copyToRect(&r);
+	ControlRef newCarbonControl;
 	verify_noerr( CreateCustomControl(GetCarbonWindow(), &r, &dgControlSpec, NULL, &newCarbonControl) );
 	SetControl32BitMinimum(newCarbonControl, 0);
 	if (inControl->isContinuousControl())
@@ -332,19 +345,15 @@ if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
 //-----------------------------------------------------------------------------
 DGControl * DfxGuiEditor::getDGControlByPlatformControlRef(PlatformControlRef inControl)
 {
-	DGControl * current = Controls;
-
-	while (current != NULL)
+	DGControlsList * tempcl = controlsList;
+	while (tempcl != NULL)
 	{
-		if (current->isControlRef(inControl))
-		{
-			current = current->getChild(inControl);
-			break;
-		}
-		current = (DGControl*) current->getNext();
+		if ( tempcl->control->isControlRef(inControl) )
+			return tempcl->control;
+		tempcl = tempcl->next;
 	}
-	
-	return current;
+
+	return NULL;
 }
 
 //-----------------------------------------------------------------------------

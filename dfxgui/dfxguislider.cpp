@@ -6,8 +6,8 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 					AudioUnitParameterID inParamID, 
 					DGRect *			inRegion,
 					DfxGuiSliderStyle	inOrientation,
-					DGGraphic *			inForeGround, 
-					DGGraphic *			inBackground)
+					DGImage *			inForeGround, 
+					DGImage *			inBackground)
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
 	orientation(inOrientation), ForeGround(inForeGround), BackGround(inBackground)
 {
@@ -50,7 +50,6 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 
 	fineTuneFactor = 12.0f;
 	setContinuousControl(true);
-	setType(kDfxGuiType_slider);
 }
 
 //-----------------------------------------------------------------------------

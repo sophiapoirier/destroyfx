@@ -60,14 +60,14 @@ class EQSyncSlider : public DGSlider
 {
 public:
 	EQSyncSlider(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inRegion, 
-					DfxGuiSliderStyle inOrientation, DGGraphic *inHandle, DGGraphic *inHandleClicked, DGGraphic *inBackground)
+					DfxGuiSliderStyle inOrientation, DGImage *inHandle, DGImage *inHandleClicked, DGImage *inBackground)
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandle, inBackground), 
 		regularHandle(inHandle), clickedHandle(inHandleClicked)
 	{
 	}
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
 	{
-//		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 		DGSlider::draw(inContext, inPortHeight);
 	}
 	virtual void mouseDown(Point inPos, bool with_option, bool with_shift)
@@ -107,8 +107,8 @@ public:
 		redraw();	// make sure that the change in slider handle is reflected
 	}
 private:
-	DGGraphic * regularHandle;
-	DGGraphic * clickedHandle;
+	DGImage * regularHandle;
+	DGImage * clickedHandle;
 	long lastX, lastY;
 	long lastXchange, lastYchange;
 };
@@ -118,11 +118,10 @@ private:
 class EQSyncWebLink : public DGControl
 {
 public:
-	EQSyncWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGGraphic *inImage)
+	EQSyncWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inImage)
 	:	DGControl(inOwnerEditor, inRegion, 1.0f), 
 		buttonImage(inImage)
 	{
-		setType(kDfxGuiType_button);
 		setContinuousControl(false);
 	}
 
@@ -172,7 +171,7 @@ public:
 	}
 
 private:
-	DGGraphic * buttonImage;
+	DGImage * buttonImage;
 	long lastX, lastY;
 	long lastXchange, lastYchange;
 };
@@ -194,22 +193,22 @@ OSStatus EQSyncEditor::open(float inXOffset, float inYOffset)
 	// load some graphics
 
 	// background image
-	DGGraphic *gBackground = new DGGraphic("eq-sync-background.png");
+	DGImage *gBackground = new DGImage("eq-sync-background.png");
 	addImage(gBackground);
 	SetBackgroundImage(gBackground);
 	//
-	DGGraphic *gHorizontalSliderBackground = new DGGraphic("horizontal-slider-background.png");
+	DGImage *gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png");
 	addImage(gHorizontalSliderBackground);
-	DGGraphic *gVerticalSliderBackground = new DGGraphic("vertical-slider-background.png");
+	DGImage *gVerticalSliderBackground = new DGImage("vertical-slider-background.png");
 	addImage(gVerticalSliderBackground);
-	DGGraphic *gSliderHandle = new DGGraphic("slider-handle.png");
+	DGImage *gSliderHandle = new DGImage("slider-handle.png");
 	addImage(gSliderHandle);
-	DGGraphic *gSliderHandleClicked = new DGGraphic("slider-handle-clicked.png");
+	DGImage *gSliderHandleClicked = new DGImage("slider-handle-clicked.png");
 	addImage(gSliderHandleClicked);
 	//
-//	DGGraphic *gHostSyncButton = new DGGraphic("host-sync-button.png");
+//	DGImage *gHostSyncButton = new DGImage("host-sync-button.png");
 //	addImage(gHostSyncButton);
-	DGGraphic *gDestroyFXlinkTab = new DGGraphic("destroy-fx-link-tab.png");
+	DGImage *gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png");
 	addImage(gDestroyFXlinkTab);
 
 

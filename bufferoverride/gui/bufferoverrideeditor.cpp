@@ -312,58 +312,58 @@ OSStatus BufferOverrideEditor::open(float inXOffset, float inYOffset)
 ***************************************/
 
 	// background image
-	DGGraphic *gBackground = new DGGraphic("buffer-override-background.png");
+	DGImage *gBackground = new DGImage("buffer-override-background.png");
 	addImage(gBackground);
 	SetBackgroundImage(gBackground);
 
 	// these move across the drawing rectangle
-	DGGraphic *gSliderHandle = new DGGraphic("slider-handle.png");
+	DGImage *gSliderHandle = new DGImage("slider-handle.png");
 	addImage(gSliderHandle);
-	DGGraphic *gXYboxHandle = new DGGraphic("xy-box-handle.png");
+	DGImage *gXYboxHandle = new DGImage("xy-box-handle.png");
 	addImage(gXYboxHandle);
 
 	// buttons
-	DGGraphic *gBufferTempoSyncButton = new DGGraphic("buffer-tempo-sync-button.png");
+	DGImage *gBufferTempoSyncButton = new DGImage("buffer-tempo-sync-button.png");
 	addImage(gBufferTempoSyncButton);
-	DGGraphic *gBufferTempoSyncButtonCorner = new DGGraphic("buffer-tempo-sync-button-corner.png");
+	DGImage *gBufferTempoSyncButtonCorner = new DGImage("buffer-tempo-sync-button-corner.png");
 	addImage(gBufferTempoSyncButtonCorner);
 	//
-	DGGraphic *gBufferSizeLabel = new DGGraphic("buffer-size-label.png");
+	DGImage *gBufferSizeLabel = new DGImage("buffer-size-label.png");
 	addImage(gBufferSizeLabel);
 
-	DGGraphic *gBufferInterruptButton = new DGGraphic("buffer-interrupt-button.png");
+	DGImage *gBufferInterruptButton = new DGImage("buffer-interrupt-button.png");
 	addImage(gBufferInterruptButton);
-	DGGraphic *gBufferInterruptButtonCorner = new DGGraphic("buffer-interrupt-button-corner.png");
+	DGImage *gBufferInterruptButtonCorner = new DGImage("buffer-interrupt-button-corner.png");
 	addImage(gBufferInterruptButtonCorner);
 
-	DGGraphic *gDivisorLFOtempoSyncButton = new DGGraphic("divisor-lfo-tempo-sync-button.png");
+	DGImage *gDivisorLFOtempoSyncButton = new DGImage("divisor-lfo-tempo-sync-button.png");
 	addImage(gDivisorLFOtempoSyncButton);
 	//
-	DGGraphic *gDivisorLFOrateLabel = new DGGraphic("divisor-lfo-rate-label.png");
+	DGImage *gDivisorLFOrateLabel = new DGImage("divisor-lfo-rate-label.png");
 	addImage(gDivisorLFOrateLabel);
 
-	DGGraphic *gBufferLFOtempoSyncButton = new DGGraphic("buffer-lfo-tempo-sync-button.png");
+	DGImage *gBufferLFOtempoSyncButton = new DGImage("buffer-lfo-tempo-sync-button.png");
 	addImage(gBufferLFOtempoSyncButton);
 	//
-	DGGraphic *gBufferLFOrateLabel = new DGGraphic("buffer-lfo-rate-label.png");
+	DGImage *gBufferLFOrateLabel = new DGImage("buffer-lfo-rate-label.png");
 	addImage(gBufferLFOrateLabel);
 
-	DGGraphic *gDivisorLFOshapeSwitch = new DGGraphic("divisor-lfo-shape-switch.png");
+	DGImage *gDivisorLFOshapeSwitch = new DGImage("divisor-lfo-shape-switch.png");
 	addImage(gDivisorLFOshapeSwitch);
 
-	DGGraphic *gBufferLFOshapeSwitch = new DGGraphic("buffer-lfo-shape-switch.png");
+	DGImage *gBufferLFOshapeSwitch = new DGImage("buffer-lfo-shape-switch.png");
 	addImage(gBufferLFOshapeSwitch);
 
-	DGGraphic *gMidiModeButton = new DGGraphic("midi-mode-button.png");
+	DGImage *gMidiModeButton = new DGImage("midi-mode-button.png");
 	addImage(gMidiModeButton);
 
-	DGGraphic *gMidiLearnButton = new DGGraphic("midi-learn-button.png");
+	DGImage *gMidiLearnButton = new DGImage("midi-learn-button.png");
 	addImage(gMidiLearnButton);
 
-	DGGraphic *gMidiResetButton = new DGGraphic("midi-reset-button.png");
+	DGImage *gMidiResetButton = new DGImage("midi-reset-button.png");
 	addImage(gMidiResetButton);
 
-	DGGraphic *gGoButton = new DGGraphic("go-button.png");
+	DGImage *gGoButton = new DGImage("go-button.png");
 	addImage(gGoButton);
 
 

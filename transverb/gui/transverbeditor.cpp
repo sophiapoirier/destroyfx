@@ -218,53 +218,53 @@ printf("       creating Transverb GUI\n");
 printf("--------------------------------------------------\n\n");
 
 	// Background image
-	DGGraphic *gBackground = new DGGraphic("transverb-background.png");
+	DGImage *gBackground = new DGImage("transverb-background.png");
 	addImage(gBackground);
 	SetBackgroundImage(gBackground);
 
 	// these move across the drawing rectangle
-	DGGraphic *gHorizontalSliderHandle = new DGGraphic("purple-wide-fader-handle.png");
+	DGImage *gHorizontalSliderHandle = new DGImage("purple-wide-fader-handle.png");
 	addImage(gHorizontalSliderHandle);
 
-	DGGraphic *gGreyHorizontalSliderHandle = new DGGraphic("grey-wide-fader-handle.png");
+	DGImage *gGreyHorizontalSliderHandle = new DGImage("grey-wide-fader-handle.png");
 	addImage(gGreyHorizontalSliderHandle);
 
-	DGGraphic *gVerticalSliderHandle = new DGGraphic("tall-fader-handle.png");
+	DGImage *gVerticalSliderHandle = new DGImage("tall-fader-handle.png");
 	addImage(gVerticalSliderHandle);
 
 	// Backgrounds for Controls
-	DGGraphic *gHorizontalSliderBackground = new DGGraphic("purple-wide-fader-slide.png");
+	DGImage *gHorizontalSliderBackground = new DGImage("purple-wide-fader-slide.png");
 	addImage(gHorizontalSliderBackground);
 
-	DGGraphic *gGreyHorizontalSliderBackground = new DGGraphic("grey-wide-fader-slide.png");
+	DGImage *gGreyHorizontalSliderBackground = new DGImage("grey-wide-fader-slide.png");
 	addImage(gGreyHorizontalSliderBackground);
 	
-	DGGraphic *gVerticalSliderBackground = new DGGraphic("tall-fader-slide.png");
+	DGImage *gVerticalSliderBackground = new DGImage("tall-fader-slide.png");
 	addImage(gVerticalSliderBackground);
 	
 	// buttons
-	DGGraphic *gQualityButton = new DGGraphic("quality-button.png");
+	DGImage *gQualityButton = new DGImage("quality-button.png");
 	addImage(gQualityButton);
 
-	DGGraphic *gTomsoundButton = new DGGraphic("tomsound-button.png");
+	DGImage *gTomsoundButton = new DGImage("tomsound-button.png");
 	addImage(gTomsoundButton);
 
-	DGGraphic *gRandomizeButton = new DGGraphic("randomize-button.png");
+	DGImage *gRandomizeButton = new DGImage("randomize-button.png");
 	addImage(gRandomizeButton);
 
-	DGGraphic *gMidiLearnButton = new DGGraphic("midi-learn-button.png");
+	DGImage *gMidiLearnButton = new DGImage("midi-learn-button.png");
 	addImage(gMidiLearnButton);
 
-	DGGraphic *gMidiResetButton = new DGGraphic("midi-reset-button.png");
+	DGImage *gMidiResetButton = new DGImage("midi-reset-button.png");
 	addImage(gMidiResetButton);
 
-	DGGraphic *gDfxLinkButton = new DGGraphic("dfx-link.png");
+	DGImage *gDfxLinkButton = new DGImage("dfx-link.png");
 	addImage(gDfxLinkButton);
 
-	DGGraphic *gSuperDestroyFXlinkButton = new DGGraphic("super-destroy-fx-link.png");
+	DGImage *gSuperDestroyFXlinkButton = new DGImage("super-destroy-fx-link.png");
 	addImage(gSuperDestroyFXlinkButton);
 
-	DGGraphic *gSmartElectronixLinkButton = new DGGraphic("smart-electronix-link.png");
+	DGImage *gSmartElectronixLinkButton = new DGImage("smart-electronix-link.png");
 	addImage(gSmartElectronixLinkButton);
 
 

@@ -21,8 +21,8 @@ typedef void (*buttonUserProcedure) (SInt32 value, void *userData);
 class DGButton : public DGControl
 {
 public:
-	DGButton(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DGGraphic*, long inNumStates, DfxGuiBottonMode, bool inDrawMomentaryState = false);
-	DGButton(DfxGuiEditor*, DGRect*, DGGraphic*, long inNumStates, DfxGuiBottonMode, bool inDrawMomentaryState = false);
+	DGButton(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DGImage*, long inNumStates, DfxGuiBottonMode, bool inDrawMomentaryState = false);
+	DGButton(DfxGuiEditor*, DGRect*, DGImage*, long inNumStates, DfxGuiBottonMode, bool inDrawMomentaryState = false);
 	virtual ~DGButton();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
@@ -37,7 +37,7 @@ public:
 	virtual void setUserReleaseProcedure(buttonUserProcedure inProc, void *inUserData);
 
 protected:
-	DGGraphic * buttonImage;
+	DGImage * buttonImage;
 
 	buttonUserProcedure userProcedure;
 	buttonUserProcedure userReleaseProcedure;
@@ -56,7 +56,7 @@ protected:
 class DGWebLink : public DGButton
 {
 public:
-	DGWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGGraphic *inImage, const char *inURL);
+	DGWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inImage, const char *inURL);
 	virtual ~DGWebLink();
 
 	virtual void mouseUp(Point inPos, bool, bool);

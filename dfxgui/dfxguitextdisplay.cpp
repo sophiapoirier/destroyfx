@@ -17,7 +17,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							DGRect *				inRegion,
 							displayTextProcedure	inTextProc, 
 							void *					inUserData,
-							DGGraphic *				inBackground, 
+							DGImage *				inBackground, 
 							const char *			inFontName)
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
 	BackGround(inBackground)
@@ -56,7 +56,6 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	fontSize = 14.0f;
 	fontColor(103, 161, 215);
 
-	setType(kDfxGuiType_display);
 	setContinuousControl(true);
 	alignment = kDGTextAlign_right;
 }
@@ -189,7 +188,7 @@ void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const cha
 
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGGraphic *inBackground, const char *inFontName)
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inBackground, const char *inFontName)
 :	DGTextDisplay(inOwnerEditor, 0xFFFFFFFF, inRegion, NULL, NULL, inBackground, inFontName), 
 	displayString(NULL)
 {
