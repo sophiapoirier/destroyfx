@@ -3,7 +3,12 @@ Wavelab (reasonably) has trouble starting up a plugin with latency
 while the song is playing -- the output will have clicks. (In fact, in
 Wavelab 3.0 you may get no sound at all because of a bug in that host
 that's corrected in Wavelab 4.) Simply restart playing in order to fix
-this, or add Geometer when the song is not playing.
+this, or add Geometer when the song is not playing. You may find that
+the same thing happens with other hosts as well.
+
+Also, most hosts do not support changing the buffer size while the
+sound is playing. In that case, you'll need to restart playing to hear
+your changes.
 
 'span' was suggested by Bram of Smartelectronix.
 'friends' was suggested by Jason Reed, sort of.
