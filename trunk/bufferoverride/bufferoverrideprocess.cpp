@@ -9,10 +9,8 @@
 //-----------------------------------------------------------------------------
 void BufferOverride::updateBuffer(unsigned long samplePos)
 {
-  bool doSmoothing = true;	// but in some situations, we shouldn't
-  bool barSync = false;	// true if we need to sync up with the next bar start
-  float divisorLFOvalue, bufferLFOvalue;	// the current output values of the LFOs
-  long prevForcedBufferSize;	// the previous forced buffer size
+	bool doSmoothing = true;	// but in some situations, we shouldn't
+	bool barSync = false;	// true if we need to sync up with the next bar start
 
 
 	// take care of MIDI
@@ -20,7 +18,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 
 	readPos = 0;	// reset for starting a new minibuffer
 	prevMinibufferSize = minibufferSize;
-	prevForcedBufferSize = currentForcedBufferSize;
+	long prevForcedBufferSize = currentForcedBufferSize;
 
 	//--------------------------PROCESS THE LFOs----------------------------
 	// update the LFOs' positions to the current position
@@ -28,8 +26,8 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	bufferLFO->updatePosition(prevMinibufferSize);
 	// Then get the current output values of the LFOs, which also updates their positions once more.  
 	// Scale the 0.0 - 1.0 LFO output values to 0.0 - 2.0 (oscillating around 1.0).
-	divisorLFOvalue = processLFOzero2two(divisorLFO);
-	bufferLFOvalue = 2.0f - processLFOzero2two(bufferLFO);	// inverting it makes more pitch sense
+	float divisorLFOvalue = processLFOzero2two(divisorLFO);
+	float bufferLFOvalue = 2.0f - processLFOzero2two(bufferLFO);	// inverting it makes more pitch sense
 	// & then update the stepSize for each LFO, in case the LFO parameters have changed
 	if (divisorLFO->bTempoSync)
 		divisorLFO->stepSize = currentTempoBPS * divisorLFO->fTempoRate * numLFOpointsDivSR;
@@ -137,6 +135,9 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 			}
 		}
 	}
+	// avoid madness such as 0-sized minibuffers
+	if (minibufferSize < 1)
+		minibufferSize = 1;
 
 	//-----------------------CALCULATE SMOOTHING DURATION-------------------------
 	// no smoothing if the previous forced buffer wasn't divided
