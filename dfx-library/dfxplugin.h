@@ -676,8 +676,7 @@ public:
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					const void * inData, UInt32 inDataSize);
 
-	virtual ComponentResult	Version()
-		{	return PLUGIN_VERSION;	}
+	virtual ComponentResult	Version();
 	virtual UInt32 SupportedNumChannels(const AUChannelInfo ** outInfo);
 	virtual Float64 GetLatency();
 	virtual Float64 GetTailTime();
