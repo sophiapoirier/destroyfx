@@ -101,7 +101,11 @@ enum {
   pos_geometerviewx = 20,
   pos_geometerviewy = 14,
   pos_geometervieww = 476,
-  pos_geometerviewh = 133
+  pos_geometerviewh = 133,
+
+  /* parameter tags for the buttons that are not real parameters */
+  tag_midilearn = id_midilearnbutton + 30000,
+  tag_midireset = id_midiresetbutton + 30000
 
 };
 
@@ -517,7 +521,7 @@ long GeometerEditor::open(void *ptr) {
   size (pos_midilearnbuttonX, pos_midilearnbuttonY, 
         pos_midilearnbuttonX + g_midilearnbutton->getWidth(), 
         pos_midilearnbuttonY + (g_midilearnbutton->getHeight())/4);
-  midilearnbutton = new MultiKick (size, this, id_midilearnbutton, 2, 
+  midilearnbutton = new MultiKick (size, this, tag_midilearn, 2, 
                                    (g_midilearnbutton->getHeight())/4, g_midilearnbutton, zero);
   midilearnbutton->setValue(0.0f);
   frame->addView(midilearnbutton);
@@ -526,7 +530,7 @@ long GeometerEditor::open(void *ptr) {
   size (pos_midiresetbuttonX, pos_midiresetbuttonY, 
         pos_midiresetbuttonX + g_midiresetbutton->getWidth(), 
         pos_midiresetbuttonY + (g_midiresetbutton->getHeight())/2);
-  midiresetbutton = new CKickButton (size, this, id_midiresetbutton, 
+  midiresetbutton = new CKickButton (size, this, tag_midireset, 
                                    (g_midiresetbutton->getHeight())/2, g_midiresetbutton, zero);
   midiresetbutton->setValue(0.0f);
   frame->addView(midiresetbutton);
@@ -1022,9 +1026,9 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
   long tag = control->getTag();
 
 
-  if (tag == id_midilearnbutton)
+  if (tag == tag_midilearn)
     chunk->setParameterMidiLearn(control->getValue());
-  else if (tag == id_midiresetbutton)
+  else if (tag == tag_midireset)
     chunk->setParameterMidiReset(control->getValue());
 
   else if (tag < NUM_PARAMS) {
