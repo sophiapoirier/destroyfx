@@ -1,0 +1,26 @@
+/* localized strings for DFX Audio Unit utilities */
+/* Dutch version, translated by Koen Tanghe */
+
+/* window title of the regular (simple) save AU preset dialog */
+/* (note:  the code will append the name of the AU after this string) */
+"Save preset file for" = "Preset bestand opslaan voor";
+
+/* title of the alert window when a save file file-already-exists conflict arises */
+"Save" = "Opslaan";
+/* text for the button that will over-write an existing file when a */
+/* save file file-already-exists conflict arises */
+"Replace" = "Vervangen";
+/* the message in the alert, specifying file name and location, */
+/* for when file name and path are available as CFStrings */
+"A file named \"%@\" already exists in \"%@\".  Do you want to replace it with the file that you are saving?" = "Er bestaat al een bestand met de naam \"%@\" in \"%@\".  Wilt u het vervangen door het bestand dat u nu opslaat?";
+/* the message in the alert, general, for when file name and path are not available */
+"A file with the same name already exists in this location.  Do you want to replace it with the file that you are saving?" = "Er bestaat al een bestand met dezelfde naam op deze locatie. Wilt u het vervangen door het bestand dat u nu opslaat?";
+
+/* the alert window title for when an access privileges error occurs */
+/* while trying to save a file */
+"Save access error" = "Toegangsfout bij het opslaan";
+/* the content of the alert message text for an access privileges error */
+"You do not have sufficient privileges to save files in that location.  Try saving your file in the User domain." = "U hebt niet voldoende toegangsrechten om een bestand op die locatie op te slaan. Probeer uw bestand op te slaan in het Gebruiker domein.";
+
+/* the default preset file name for the Nav Services save file dialog */
+"untitled" = "onbenoemd";
