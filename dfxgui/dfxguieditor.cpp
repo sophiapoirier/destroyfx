@@ -126,7 +126,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		{ kEventClassControl, kEventControlHitTest },
 		{ kEventClassControl, kEventControlTrack },
 //		{ kEventClassControl, kEventControlHit }, 
-		{ kEventClassControl, kEventControlClick }, 
+//		{ kEventClassControl, kEventControlClick }, 
 		{ kEventClassControl, kEventControlContextualMenuClick } 
 	};
 
@@ -845,7 +845,7 @@ printf("kEventControlHit\n");
 					ControlPartCode whatPart = kControlNoPart;	// cuz otherwise we get a Hit event which triggers AUCVControl automation end
 					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(whatPart), &whatPart);
 				}
-			case kEventControlClick:
+//			case kEventControlClick:
 //if (inEventKind == kEventControlClick) printf("kEventControlClick\n");
 			case kEventControlContextualMenuClick:
 //if (inEventKind == kEventControlContextualMenuClick) printf("kEventControlContextualMenuClick\n");
@@ -860,17 +860,18 @@ printf("kEventControlHit\n");
 //					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &buttons);
 
 					HIPoint mouseLocation_f;
-OSStatus fug = 
+//OSStatus fug = 
 					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation_f);
-printf("typeHIPoint result = %ld\n", fug);
-printf("mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation_f.x, mouseLocation_f.y);
+//printf("typeHIPoint result = %ld\n", fug);
+//printf("mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation_f.x, mouseLocation_f.y);
 					Point mouseLocation;
 					mouseLocation.h = (short) mouseLocation_f.x;
 					mouseLocation.v = (short) mouseLocation_f.y;
-if (inEventKind == kEventControlContextualMenuClick)
-GetGlobalMouse(&mouseLocation);	// Logic 5 workaround
-printf("mouse.x = %d, mouse.y = %d\n", mouseLocation.h, mouseLocation.v);
-printf("\n");
+					// XXX only kEventControlClick gives global mouse coordinates for kEventParamMouseLocation?
+					if ( (inEventKind == kEventControlContextualMenuClick) || (inEventKind == kEventControlTrack) )
+						GetGlobalMouse(&mouseLocation);
+//printf("mouse.x = %d, mouse.y = %d\n", mouseLocation.h, mouseLocation.v);
+//printf("\n");
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 					// the content area of the window (i.e. not the title bar or any borders)
