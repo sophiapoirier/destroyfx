@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  June 2001 + February 2003 --------------*/
+/*--------------- by Marc Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
 
 #include "rmsbuddyeditor.h"
 #include "rmsbuddy.h"
@@ -88,6 +88,19 @@ CGRect RMSControl::getBoundsRect()
 			return controlRect;
 	}
 	return CGRectMake(0.0f, 0.0f, 0.0f, 0.0f);
+}
+
+//-----------------------------------------------------------------------------
+// force a redraw of the control to occur
+void RMSControl::redraw()
+{
+	if (carbonControl != NULL)
+	{
+		if ( ownerEditor->IsWindowCompositing() )
+			HIViewSetNeedsDisplay(carbonControl, true);
+		else
+			Draw1Control(carbonControl);
+	}
 }
 
 
@@ -194,7 +207,7 @@ void RMSTextDisplay::setText(const char * inText)
 	if (inText != NULL)
 	{
 		strcpy(text, inText);
-		Draw1Control(carbonControl);	// redraw the control
+		redraw();
 	}
 }
 
@@ -221,7 +234,7 @@ void RMSTextDisplay::setText_dB(float inLinearValue)
 	// append the units to the string
 	strcat(text, " dB");
 
-	Draw1Control(carbonControl);	// redraw the control
+	redraw();
 }
 
 //-----------------------------------------------------------------------------
@@ -229,7 +242,7 @@ void RMSTextDisplay::setText_dB(float inLinearValue)
 void RMSTextDisplay::setText_int(long inValue)
 {
 	sprintf(text, "%ld", inValue);
-	Draw1Control(carbonControl);	// redraw the control
+	redraw();
 }
 
 
@@ -440,9 +453,11 @@ enum {
 
 //-----------------------------------------------------------------------------
 // static function prototypes
-static pascal OSStatus ControlEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
-static pascal OSStatus WindowEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
-static void ParameterListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter *, Float32);
+static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
+static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
+static void RmsParameterListenerProc(void * inUserData, void * inObject, const AudioUnitParameter *, Float32);
+static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, 
+									AudioUnitScope inScope, AudioUnitElement inElement);
 
 
 //-----------------------------------------------------------------------------
@@ -491,6 +506,96 @@ RMSbuddyEditor::RMSbuddyEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
+// this is where we actually construct the GUI
+OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
+{
+	// register for draw events for our embedding pane so that we can draw the background
+	EventTypeSpec paneEvents[] = {
+		{ kEventClassControl, kEventControlDraw }
+	};
+	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
+
+
+// create our HIToolbox object class for common event handling amongst our custom Carbon Controls
+
+	EventTypeSpec toolboxClassEvents[] = {
+		{ kEventClassControl, kEventControlDraw }, 
+		{ kEventClassControl, kEventControlClick }, 
+		{ kEventClassControl, kEventControlValueFieldChanged }, 
+	};
+
+	ToolboxObjectClassRef newControlClass = NULL;
+	controlHandlerUPP = NewEventHandlerUPP(RmsControlEventHandler);
+	// this is sort of a hack to come up with a unique class ID name, so that we can instanciate multiple plugin instances
+	unsigned long instanceAddress = (unsigned long) this;
+	bool noSuccessYet = true;
+	while (noSuccessYet)
+	{
+		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.ControlClass%lu"), 
+																		RMS_BUDDY_BUNDLE_ID, instanceAddress);
+		if ( RegisterToolboxObjectClass(toolboxClassIDcfstring, NULL, GetEventTypeCount(toolboxClassEvents), toolboxClassEvents, 
+										controlHandlerUPP, this, &newControlClass) == noErr )
+			noSuccessYet = false;
+		CFRelease(toolboxClassIDcfstring);
+		instanceAddress++;
+	}
+
+	// success
+	controlClassSpec.u.classRef = newControlClass;
+
+
+// create the window event handler that supplements the control event handler by tracking mouse dragging, mouseover controls, etc.
+	setCurrentControl(NULL);	// make sure that it ain't nuthin
+	EventTypeSpec controlMouseEvents[] = {
+								  { kEventClassMouse, kEventMouseDragged }, 
+								  { kEventClassMouse, kEventMouseUp }, 
+								};
+	windowEventHandlerUPP = NewEventHandlerUPP(RmsWindowEventHandler);
+	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), windowEventHandlerUPP, 
+						GetEventTypeCount(controlMouseEvents), controlMouseEvents, this, &windowEventEventHandlerRef);
+
+
+
+	// load our graphics resource from a PNG file in our plugin bundle's Resources sub-directory
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(RMS_BUDDY_BUNDLE_ID));
+	if (pluginBundleRef != NULL)
+	{
+		CFURLRef resourceURL = CFBundleCopyResourceURL(pluginBundleRef, CFSTR("reset-button.png"), NULL, NULL);
+		if (resourceURL != NULL)
+		{
+			CGDataProviderRef provider = CGDataProviderCreateWithURL(resourceURL);
+			if (provider != NULL)
+			{
+				gResetButton = CGImageCreateWithPNGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
+				CGDataProviderRelease(provider);
+			}
+			CFRelease(resourceURL);
+		}
+	}
+
+
+	// create the parameter listener
+	AUListenerCreate(RmsParameterListenerProc, this,
+		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.010f, // 10 ms
+		&parameterListener);
+
+	// install a parameter listener on the fake refresh-notification parameter
+	timeToUpdateAUP.mAudioUnit = GetEditAudioUnit();
+	timeToUpdateAUP.mScope = kAudioUnitScope_Global;
+	timeToUpdateAUP.mElement = 0;
+	timeToUpdateAUP.mParameterID = kTimeToUpdate;
+	AUListenerAddParameter(parameterListener, this, &timeToUpdateAUP);
+
+
+	// install AU property listeners for all of the special properties that we need to know about when they change
+	AudioUnitAddPropertyListener(GetEditAudioUnit(), kNumChannelsProperty, RmsPropertyListenerProc, this);
+
+
+	// setup creates and adds all of the UI content
+	return setup();
+}
+
+//-----------------------------------------------------------------------------
 RMSbuddyEditor::~RMSbuddyEditor()
 {
 	// free the graphics resource
@@ -498,45 +603,17 @@ RMSbuddyEditor::~RMSbuddyEditor()
 		CGImageRelease(gResetButton);
 	gResetButton = NULL;
 
-	// free the controls
-#define SAFE_DELETE_CONTROL(ctrl)	{ if (ctrl != NULL)   delete ctrl;   ctrl = NULL; }
-#define SAFE_FREE_ARRAY(array)	{ if (array != NULL)   free(array);   array = NULL; }
-	SAFE_DELETE_CONTROL(resetRMSbutton)
-	SAFE_DELETE_CONTROL(resetPeakButton)
-	for (unsigned long ch=0; ch < numChannels; ch++)
-	{
-		if (averageRMSDisplays != NULL)
-			SAFE_DELETE_CONTROL(averageRMSDisplays[ch])
-		if (continualRMSDisplays != NULL)
-			SAFE_DELETE_CONTROL(continualRMSDisplays[ch])
-		if (absolutePeakDisplays != NULL)
-			SAFE_DELETE_CONTROL(absolutePeakDisplays[ch])
-		if (continualPeakDisplays != NULL)
-			SAFE_DELETE_CONTROL(continualPeakDisplays[ch])
-		if (channelLabels != NULL)
-			SAFE_DELETE_CONTROL(channelLabels[ch])
-	}
-	SAFE_FREE_ARRAY(averageRMSDisplays)
-	SAFE_FREE_ARRAY(continualRMSDisplays)
-	SAFE_FREE_ARRAY(absolutePeakDisplays)
-	SAFE_FREE_ARRAY(continualPeakDisplays)
-	SAFE_FREE_ARRAY(channelLabels)
-	SAFE_DELETE_CONTROL(averageRMSLabel)
-	SAFE_DELETE_CONTROL(continualRMSLabel)
-	SAFE_DELETE_CONTROL(absolutePeakLabel)
-	SAFE_DELETE_CONTROL(continualPeakLabel)
-	SAFE_DELETE_CONTROL(windowSizeSlider)
-	SAFE_DELETE_CONTROL(windowSizeLabel)
-	SAFE_DELETE_CONTROL(windowSizeDisplay)
-#undef SAFE_DELETE_CONTROL
-
-	// if we created and installe the parameter listener, remove and dispose it now
+	// if we created and installed the parameter listener, remove and dispose it now
 	if (parameterListener != NULL)
 	{
 		AUListenerRemoveParameter(parameterListener, this, &timeToUpdateAUP);
 		AUListenerDispose(parameterListener);
 	}
 	parameterListener = NULL;
+
+	// if we created and installed the property listener, remove and dispose it now
+	if (GetEditAudioUnit() != NULL)
+		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kNumChannelsProperty, RmsPropertyListenerProc);
 
 	// remove our event handlers if we created them
 	if (windowEventEventHandlerRef != NULL)
@@ -565,15 +642,14 @@ RMSbuddyEditor::~RMSbuddyEditor()
 }
 
 //-----------------------------------------------------------------------------
-// this is where we actually construct the GUI
-OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
+// this function creates all of the controls for the UI and embeds them into the root pane control
+OSStatus RMSbuddyEditor::setup()
 {
 	// first figure out how many channels of analysis data we will be displaying
 	UInt32 dataSize = sizeof(numChannels);
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kNumChannelsProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &numChannels, &dataSize) 
 			!= noErr)
 		numChannels = 0;
-
 	// there's not really anything for us to do in this situation (which is crazy and shouldn't happen anyway)
 	if (numChannels == 0)
 		return kAudioUnitErr_FailedInitialization;
@@ -593,84 +669,6 @@ OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		continualPeakDisplays[ch] = NULL;
 		channelLabels[ch] = NULL;
 	}
-
-
-	// register for draw events for our embedding pane so that we can draw the background
-	EventTypeSpec paneEvents[] = {
-		{ kEventClassControl, kEventControlDraw }
-	};
-	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
-
-
-// create our HIToolbox object class for common event handling amongst our custom Carbon Controls
-
-	EventTypeSpec toolboxClassEvents[] = {
-		{ kEventClassControl, kEventControlDraw }, 
-		{ kEventClassControl, kEventControlClick }, 
-		{ kEventClassControl, kEventControlValueFieldChanged }, 
-	};
-
-	ToolboxObjectClassRef newControlClass = NULL;
-	controlHandlerUPP = NewEventHandlerUPP(ControlEventHandler);
-	// this is sort of a hack to come up with a unique class ID name, so that we can instanciate multiple plugin instances
-	unsigned long instanceAddress = (unsigned long) this;
-	bool noSuccessYet = true;
-	while (noSuccessYet)
-	{
-		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.ControlClass%lu"), 
-																		RMS_BUDDY_BUNDLE_ID, instanceAddress);
-		if ( RegisterToolboxObjectClass(toolboxClassIDcfstring, NULL, GetEventTypeCount(toolboxClassEvents), toolboxClassEvents, 
-										controlHandlerUPP, this, &newControlClass) == noErr )
-			noSuccessYet = false;
-		CFRelease(toolboxClassIDcfstring);
-		instanceAddress++;
-	}
-
-	// success
-	controlClassSpec.u.classRef = newControlClass;
-
-
-// create the window event handler that supplements the control event handler by tracking mouse dragging, mouseover controls, etc.
-	setCurrentControl(NULL);	// make sure that it ain't nuthin
-	EventTypeSpec controlMouseEvents[] = {
-								  { kEventClassMouse, kEventMouseDragged }, 
-								  { kEventClassMouse, kEventMouseUp }, 
-								};
-	windowEventHandlerUPP = NewEventHandlerUPP(WindowEventHandler);
-	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), windowEventHandlerUPP, 
-						GetEventTypeCount(controlMouseEvents), controlMouseEvents, this, &windowEventEventHandlerRef);
-
-
-
-	// load our graphics resource from a PNG file in our plugin bundle's Resources sub-directory
-	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(RMS_BUDDY_BUNDLE_ID));
-	if (pluginBundleRef != NULL)
-	{
-		CFURLRef resourceURL = CFBundleCopyResourceURL(pluginBundleRef, CFSTR("reset-button.png"), NULL, NULL);
-		if (resourceURL != NULL)
-		{
-			CGDataProviderRef provider = CGDataProviderCreateWithURL(resourceURL);
-			if (provider != NULL)
-			{
-				gResetButton = CGImageCreateWithPNGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
-				CGDataProviderRelease(provider);
-			}
-			CFRelease(resourceURL);
-		}
-	}
-
-
-	// create the parameter listener
-	AUListenerCreate(ParameterListenerProc, this,
-		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.010f, // 10 ms
-		&parameterListener);
-
-	// install a parameter listener on the fake refresh-notification parameter
-	timeToUpdateAUP.mAudioUnit = GetEditAudioUnit();
-	timeToUpdateAUP.mScope = kAudioUnitScope_Global;
-	timeToUpdateAUP.mElement = 0;
-	timeToUpdateAUP.mParameterID = kTimeToUpdate;
-	AUListenerAddParameter(parameterListener, this, &timeToUpdateAUP);
 
 
 //--initialize the text displays---------------------------------------------
@@ -792,13 +790,50 @@ OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 										SLIDER_LABEL_DISPLAY_FONT, SLIDER_LABEL_DISPLAY_FONT_SIZE, kTextAlign_right, kAnalysisFrameSize);
 
 
-
-	// set size of the background embedding pane
+	// set size of the background embedding pane control to fit the entire UI display
 	SizeControl(mCarbonPane, kBackgroundWidth + (kXinc*numChannels), kBackgroundHeight);
 
 
 	return noErr;
 }
+
+//-----------------------------------------------------------------------------
+// this cleans up what setup() creates, which is basically just all of the UI controls
+void RMSbuddyEditor::cleanup()
+{
+	// free the controls
+#define SAFE_DELETE_CONTROL(ctrl)	{ if (ctrl != NULL)   delete ctrl;   ctrl = NULL; }
+#define SAFE_FREE_ARRAY(array)	{ if (array != NULL)   free(array);   array = NULL; }
+	SAFE_DELETE_CONTROL(resetRMSbutton)
+	SAFE_DELETE_CONTROL(resetPeakButton)
+	for (unsigned long ch=0; ch < numChannels; ch++)
+	{
+		if (averageRMSDisplays != NULL)
+			SAFE_DELETE_CONTROL(averageRMSDisplays[ch])
+		if (continualRMSDisplays != NULL)
+			SAFE_DELETE_CONTROL(continualRMSDisplays[ch])
+		if (absolutePeakDisplays != NULL)
+			SAFE_DELETE_CONTROL(absolutePeakDisplays[ch])
+		if (continualPeakDisplays != NULL)
+			SAFE_DELETE_CONTROL(continualPeakDisplays[ch])
+		if (channelLabels != NULL)
+			SAFE_DELETE_CONTROL(channelLabels[ch])
+	}
+	SAFE_FREE_ARRAY(averageRMSDisplays)
+	SAFE_FREE_ARRAY(continualRMSDisplays)
+	SAFE_FREE_ARRAY(absolutePeakDisplays)
+	SAFE_FREE_ARRAY(continualPeakDisplays)
+	SAFE_FREE_ARRAY(channelLabels)
+	SAFE_DELETE_CONTROL(averageRMSLabel)
+	SAFE_DELETE_CONTROL(continualRMSLabel)
+	SAFE_DELETE_CONTROL(absolutePeakLabel)
+	SAFE_DELETE_CONTROL(continualPeakLabel)
+	SAFE_DELETE_CONTROL(windowSizeSlider)
+	SAFE_DELETE_CONTROL(windowSizeLabel)
+	SAFE_DELETE_CONTROL(windowSizeDisplay)
+#undef SAFE_DELETE_CONTROL
+}
+
 
 //-----------------------------------------------------------------------------
 // inEvent is expected to be an event of the class kEventClassControl.  
@@ -882,6 +917,7 @@ void CleanupControlDrawingContext(CGContextRef & inContext, bool inGotAutoContex
 //-----------------------------------------------------------------------------
 bool RMSbuddyEditor::HandleEvent(EventRef inEvent)
 {
+	// we redraw the background when we catch a draw event for the root pane control
 	if ( (GetEventClass(inEvent) == kEventClassControl) && (GetEventKind(inEvent) == kEventControlDraw) )
 	{
 		ControlRef carbonControl = NULL;
@@ -931,7 +967,7 @@ bool RMSbuddyEditor::HandleEvent(EventRef inEvent)
 }
 
 //-----------------------------------------------------------------------------
-static pascal OSStatus WindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
+static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
 	// make sure that it's the correct event class
 	if (GetEventClass(inEvent) != kEventClassMouse)
@@ -992,7 +1028,7 @@ static pascal OSStatus WindowEventHandler(EventHandlerCallRef myHandler, EventRe
 }
 
 //-----------------------------------------------------------------------------
-static pascal OSStatus ControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
+static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
 	// make sure that it's the correct event class
 	if (GetEventClass(inEvent) != kEventClassControl)
@@ -1067,7 +1103,7 @@ static pascal OSStatus ControlEventHandler(EventHandlerCallRef myHandler, EventR
 		case kEventControlValueFieldChanged:
 			ourOwnerEditor->handleControlValueChange(ourRMSControl, GetControl32BitValue(ourCarbonControl));
 			if ( ourOwnerEditor->IsWindowCompositing() )
-				Draw1Control(ourCarbonControl);
+				ourRMSControl->redraw();
 			return noErr;
 
 		default:
@@ -1077,9 +1113,9 @@ static pascal OSStatus ControlEventHandler(EventHandlerCallRef myHandler, EventR
 
 //-----------------------------------------------------------------------------
 // this gets called when the DSP component sends notification via the kTimeToUpdate parameter
-static void ParameterListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
+static void RmsParameterListenerProc(void * inUserData, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
-	RMSbuddyEditor * bud = (RMSbuddyEditor*) inObject;
+	RMSbuddyEditor * bud = (RMSbuddyEditor*) inUserData;
 	if ( (bud != NULL) && (inParameter != NULL) )
 	{
 		switch (inParameter->mParameterID)
@@ -1093,6 +1129,21 @@ static void ParameterListenerProc(void * inRefCon, void * inObject, const AudioU
 			default:
 				break;
 		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// this gets called when the DSP component sends a property-changed notification of the kNumChannelsProperty property
+static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, 
+									AudioUnitScope inScope, AudioUnitElement inElement)
+{
+	RMSbuddyEditor * bud = (RMSbuddyEditor*) inUserData;
+	// when the number of channels changes, we tear down the existing GUI layout and 
+	// then recreate it according to the new number of channels
+	if ( (bud != NULL) && (inPropertyID == kNumChannelsProperty) )
+	{
+		bud->cleanup();	// tear it down
+		bud->setup();	// rebuild
 	}
 }
 
@@ -1156,7 +1207,7 @@ else fprintf(stderr, "object = %lu\n", (unsigned long)inRMSControl);
 
 //	if ( (windowSizeDisplay != NULL) && (inRMSControl == windowSizeDisplay) )
 	if (windowSizeDisplay != NULL)
-		Draw1Control(windowSizeDisplay->getCarbonControl());
+		windowSizeDisplay->redraw();
 }
 
 //-----------------------------------------------------------------------------
