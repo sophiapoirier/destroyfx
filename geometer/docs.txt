@@ -2,7 +2,7 @@
                            DFX : GEOMETER
 
                      From the Destroy FX Labs!
-              http://www.smartelectronix.com/~destroyfx/
+                      http://destroyfx.org/
 
 
    -- Geometer: Introduction --
@@ -249,4 +249,4 @@
 
 
    Geometer is Copyright (c) 2002 Tom Murphy 7 and Marc Poirier
-   Super Destroy FX: http://www.smartelectronix.com/~destroyfx/
+   Super Destroy FX: http://destroyfx.org/
