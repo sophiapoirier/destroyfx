@@ -320,7 +320,9 @@ void DfxPlugin::initparameter_f(long parameterIndex, const char * initName, floa
 	if (parameterisvalid(parameterIndex))
 	{
 		parameters[parameterIndex].init_f(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
-		update_parameter(parameterIndex);	// make the host aware of the parameter change
+// XXX hmmm... maybe not here?
+//		if (getparameterattributes(parameterIndex) & kDfxParamAttribute_unused)	// XXX should we do it like this?
+//			update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 		// set the custom unit string, if there is one
 		if (initCustomUnitString != NULL)

@@ -25,7 +25,10 @@ void DfxPlugin::PostConstructor()
 	// make the global-scope element aware of the parameters' values
 	// this must happen after AUBase::PostConstructor because the elements are created there
 	for (long i=0; i < numParameters; i++)
-		AUBase::SetParameter(i, kAudioUnitScope_Global, (AudioUnitElement)0, getparameter_f(i), 0);
+	{
+		if ( !(getparameterattributes(i) & kDfxParamAttribute_unused) )	// XXX should we do it like this, or override GetParameterList?
+			AUBase::SetParameter(i, kAudioUnitScope_Global, (AudioUnitElement)0, getparameter_f(i), 0);
+	}
 
 
 // XXX some stuff that might worth adding an accessor for at some point or something...
@@ -704,7 +707,10 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	outParameterInfo.maxValue = getparametermax_f(inParameterID);
 	outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
 	// if the parameter is hidden, then indicate that it's not readable or writable...
-	if (getparameterhidden(inParameterID))
+	if (getparameterattributes(inParameterID) & kDfxParamAttribute_hidden)
+		outParameterInfo.flags = 0;
+	else if (getparameterattributes(inParameterID) & kDfxParamAttribute_unused)
+//		return kAudioUnitErr_InvalidParameter;	// XXX ey?
 		outParameterInfo.flags = 0;
 	// ...otherwise all parameters are readable and writable
 	else
