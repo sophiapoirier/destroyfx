@@ -57,11 +57,6 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 EQSync::~EQSync()
 {
-#ifdef TARGET_API_VST
-	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
-	// so we need to call this manually here
-	do_cleanup();
-#endif
 }
 
 //-----------------------------------------------------------------------------------------
@@ -130,7 +125,7 @@ void EQSync::processparameters()
 
 
 //-----------------------------------------------------------------------------
-void EQSync::processaudio(const float **inputs, float **outputs, unsigned long inNumFrames, bool replacing)
+void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long inNumFrames, bool replacing)
 {
 	unsigned long numChannels = getnumoutputs();
 	bool eqchanged = false;

@@ -236,7 +236,7 @@ void DfxPlugin::dfxplugin_predestructor()
 	#ifdef TARGET_API_VST
 		// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 		// so we need to call this manually here
-		do_cleanup();	// XXX need to actually implement predestructor for VST!!!
+		do_cleanup();
 	#endif
 }
 
