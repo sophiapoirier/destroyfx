@@ -654,18 +654,9 @@ float DfxParam::get_gen()
 #pragma mark _________setting_values_________
 
 //-----------------------------------------------------------------------------
-// set the parameter's current value using a DfxParamValue
-void DfxParam::set(DfxParamValue newValue)
-{
-	value = newValue;
-	limit();
-	changed = true;	// XXX do this smarter?
-}
-
-//-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a float type
 // perform type conversion if float is not the parameter's "native" type
-void DfxParam::accept_f(float inValue, DfxParamValue &outValue)
+bool DfxParam::accept_f(float inValue, DfxParamValue &outValue)
 {
 	switch (valueType)
 	{
@@ -706,12 +697,14 @@ void DfxParam::accept_f(float inValue, DfxParamValue &outValue)
 		default:
 			break;
 	}
+
+	return true;	// XXX do this smarter?
 }
 
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a double type
 // perform type conversion if double is not the parameter's "native" type
-void DfxParam::accept_d(double inValue, DfxParamValue &outValue)
+bool DfxParam::accept_d(double inValue, DfxParamValue &outValue)
 {
 	switch (valueType)
 	{
@@ -752,12 +745,14 @@ void DfxParam::accept_d(double inValue, DfxParamValue &outValue)
 		default:
 			break;
 	}
+
+	return true;	// XXX do this smarter?
 }
 
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a int type
 // perform type conversion if int is not the parameter's "native" type
-void DfxParam::accept_i(long inValue, DfxParamValue &outValue)
+bool DfxParam::accept_i(long inValue, DfxParamValue &outValue)
 {
 	switch (valueType)
 	{
@@ -786,12 +781,14 @@ void DfxParam::accept_i(long inValue, DfxParamValue &outValue)
 		default:
 			break;
 	}
+
+	return true;	// XXX do this smarter?
 }
 
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a boolean type
 // perform type conversion if boolean is not the parameter's "native" type
-void DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
+bool DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
 {
 	switch (valueType)
 	{
@@ -820,6 +817,8 @@ void DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
 		default:
 			break;
 	}
+
+	return true;	// XXX do this smarter?
 }
 
 //-----------------------------------------------------------------------------
@@ -867,39 +866,52 @@ double DfxParam::expand(float genValue)
 }
 
 //-----------------------------------------------------------------------------
+// set the parameter's current value using a DfxParamValue
+void DfxParam::set(DfxParamValue newValue)
+{
+	value = newValue;
+	limit();
+	setchanged(true);	// XXX do this smarter?
+}
+
+//-----------------------------------------------------------------------------
 // set the current parameter value using a float type value
 void DfxParam::set_f(float newValue)
 {
-	accept_f(newValue, value);
-	limit();
-	changed = true;	// XXX do this smarter?
+	bool changed_1 = accept_f(newValue, value);
+	bool changed_2 = limit();
+	if (changed_1 || changed_2)
+		setchanged(true);
 }
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using a double type value
 void DfxParam::set_d(double newValue)
 {
-	accept_d(newValue, value);
-	limit();
-	changed = true;	// XXX do this smarter?
+	bool changed_1 = accept_d(newValue, value);
+	bool changed_2 = limit();
+	if (changed_1 || changed_2)
+		setchanged(true);
 }
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using an int type value
 void DfxParam::set_i(long newValue)
 {
-	accept_i(newValue, value);
-	limit();
-	changed = true;	// XXX do this smarter?
+	bool changed_1 = accept_i(newValue, value);
+	bool changed_2 = limit();
+	if (changed_1 || changed_2)
+		setchanged(true);
 }
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using a boolean type value
 void DfxParam::set_b(bool newValue)
 {
-	accept_b(newValue, value);
-	limit();
-	changed = true;	// XXX do this smarter?
+	bool changed_1 = accept_b(newValue, value);
+	bool changed_2 = limit();
+	if (changed_1 || changed_2)
+		setchanged(true);
 }
 
 //-----------------------------------------------------------------------------
