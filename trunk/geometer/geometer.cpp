@@ -37,6 +37,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(pointparam[2], P_POINTPARAMS + 2, "point:rand", 0.20f, "%");
   FPARAM(pointparam[3], P_POINTPARAMS + 3, "point:span", 0.20f, "width");
   FPARAM(pointparam[4], P_POINTPARAMS + 4, "point:dydx", 0.50f, "gap");
+  FPARAM(pointparam[5], P_POINTPARAMS + 5, "point:level", 0.50f, "level");
 
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
     FPARAM(pointparam[pp], P_POINTPARAMS + pp, 
@@ -268,6 +269,9 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     switch(MKPOINTSTYLE(pointstyle)) {
     case POINT_EXTNCROSS:
       strcpy(text, "ext 'n cross");
+      break;
+    case POINT_LEVEL:
+      strcpy(text, "at level");
       break;
     case POINT_FREQ:
       strcpy(text, "at freq");
@@ -698,12 +702,58 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     break;
 
+  case POINT_LEVEL: {
 
+    enum { ABOVE, BETWEEN, BELOW, };
+
+    int state = BETWEEN;
+    float level = (pointparam[POINT_LEVEL] * .9999f) + .00005f;
+    numpts = 1;
+
+    px[0] = 0;
+    py[0] = in[0];
+
+    for(i = 0; i < samples; i ++) {
+
+      if (in[i] > pointparam[POINT_LEVEL]) {
+	if (state != ABOVE) {
+	  px[numpts] = i;
+	  py[numpts] = in[i];
+	  numpts ++;
+	  state = ABOVE;
+	}
+      } else if (in[i] < -pointparam[POINT_LEVEL]) {
+	if (state != BELOW) {
+	  px[numpts] = i;
+	  py[numpts] = in[i];
+	  numpts ++;
+	  state = BELOW;
+	}
+      } else {
+	if (state != BETWEEN) {
+	  px[numpts] = i;
+	  py[numpts] = in[i];
+	  numpts++;
+	  state = BETWEEN;
+	}
+      }
+
+      if (numpts > samples - 2) break;
+
+    }
+
+    px[numpts] = samples - 1;
+    py[numpts] = in[samples - 1];
+
+    numpts ++;
+
+    break;
+  }
   case POINT_FREQ:
     /* at frequency */
 
     /* XXX let the user choose hz, do conversion */
-    nth = (pointparam[1] * pointparam[1]) * samples;
+    nth = (pointparam[POINT_LEVEL] * pointparam[POINT_FREQ]) * samples;
     ctr = nth;
   
     for(i = 0; i < samples; i ++) {

@@ -38,6 +38,7 @@ enum { POINT_EXTNCROSS,
        POINT_RANDOM, 
        POINT_SPAN, 
        POINT_DYDX, 
+       POINT_LEVEL,
        NUM_POINTSTYLES,
        MAX_POINTSTYLES=48
 };
