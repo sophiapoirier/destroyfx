@@ -22,9 +22,8 @@ DFX_ENTRY(BufferOverride);
 
 //-----------------------------------------------------------------------------
 // initializations & such
-
 BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 16 presets, 20 parameters
+	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 21 parameters, 16 presets
 {
 	buffers = NULL;
 	outval = NULL;
@@ -56,7 +55,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kDryWetMix, "dry/wet mix", 100.0f, 50.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_drywetmix);
 	initparameter_d(kPitchbend, "pitchbend range", 6.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamCurve_linear, kDfxParamUnit_semitones);
 	initparameter_indexed(kMidiMode, "MIDI mode", kMidiModeNudge, kMidiModeNudge, kNumMidiModes);
-	initparameter_f(kTempo, "tempo", 57.0f, 57.0f, 57.0f, 480.0f, kDfxParamCurve_linear, kDfxParamUnit_bpm);
+	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 57.0f, 480.0f, kDfxParamCurve_linear, kDfxParamUnit_bpm);
+	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 
 	// initial the value names for the LFO shape parameters
 	char *shapename = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH);
@@ -83,7 +83,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
-	currentTempoBPS = 2.0f;
+	currentTempoBPS = getparameter_f(kTempo) / 60.0f;
 
 	setpresetname(0, "self-determined");	// default preset name
 	initPresets();
@@ -160,7 +160,7 @@ bool BufferOverride::createbuffers()
 
 	// if the sampling rate (& therefore the max buffer size) has changed, 
 	// then delete & reallocate the buffers according to the sampling rate
-	if ( (SUPER_MAX_BUFFER != oldmax) || (numBuffers != (signed)getnumoutputs()) )
+	if ( (SUPER_MAX_BUFFER != oldmax) || (numBuffers != getnumoutputs()) )
 		releasebuffers();
 
 	numBuffers = getnumoutputs();
@@ -173,10 +173,10 @@ bool BufferOverride::createbuffers()
 		// out of memory or something
 		if (buffers == NULL)
 			return false;
-		for (long i=0; i < numBuffers; i++)
+		for (unsigned long i=0; i < numBuffers; i++)
 			buffers[i] = NULL;
 	}
-	for (long i=0; i < numBuffers; i++)
+	for (unsigned long i=0; i < numBuffers; i++)
 	{
 		if (buffers[i] == NULL)
 			buffers[i] = (float*) malloc(SUPER_MAX_BUFFER * sizeof(float));
@@ -185,7 +185,7 @@ bool BufferOverride::createbuffers()
 		outval = (float*) malloc(numBuffers * sizeof(float));
 
 	// check if allocations were successful
-	for (long i=0; i < numBuffers; i++)
+	for (unsigned long i=0; i < numBuffers; i++)
 	{
 		if (buffers[i] == NULL)
 			return false;
@@ -203,7 +203,7 @@ void BufferOverride::releasebuffers()
 {
 	if (buffers != NULL)
 	{
-		for (long i=0; i < numBuffers; i++)
+		for (unsigned long i=0; i < numBuffers; i++)
 		{
 			if (buffers[i] != NULL)
 				free(buffers[i]);
@@ -230,12 +230,12 @@ void BufferOverride::initPresets()
 
 	setpresetname(i, "drum roll");
 	setpresetparameter_f(i, kDivisor, 4.0f);
-// XXX fix
 	setpresetparameter_i(i, kBufferSize_sync, tempoRateTable->getNearestTempoRateIndex(4.0f));
 	setpresetparameter_b(i, kBufferTempoSync, true);
 	setpresetparameter_f(i, kSmooth, 9.0f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
 	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
 
 	setpresetname(i, "arpeggio");
@@ -333,7 +333,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_f(i, kSmooth, 6.0f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
 	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
-	setpresetparameter_f(i, kTempo, getparametermin_f(kTempo));	// auto
+	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
 
 /*
@@ -358,6 +358,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_d(i, kPitchbend, );
 	setpresetparameter_i(i, kMidiMode, kMidiMode__);
 	setpresetparameter_f(i, kTempo, f);
+	setpresetparameter_b(i, kTempoAuto, );
 	i++;
 */
 }
@@ -388,6 +389,7 @@ void BufferOverride::processparameters()
 	pitchbendRange = getparameter_d(kPitchbend);
 	midiMode = getparameter_i(kMidiMode);
 	userTempo = getparameter_f(kTempo);
+	useHostTempo = getparameter_b(kTempoAuto);
 
 	if (getparameterchanged(kDivisor))
 		// tell MIDI trigger mode to respect this change
@@ -411,5 +413,11 @@ void BufferOverride::processparameters()
 			midistuff->removeAllNotes();
 			divisorWasChangedByHand = false;
 		}
+	}
+	if (getparameterchanged(kTempoAuto))
+	{
+		// set needResync true if host sync has just been switched on
+		if (useHostTempo)
+			needResync = true;
 	}
 }

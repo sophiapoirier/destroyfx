@@ -308,6 +308,9 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_uc();   else return 0;	}
 	float getparameter_gen(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_gen();   else return 0.0f;	}
+	// return a (hopefully) 0 to 1 scalar version of the parameter's current value
+	float getparameter_scalar(long parameterIndex)
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_f() / parameters[parameterIndex].getmax_f();	}
 
 	float getparametermin_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmin_f();   else return 0.0f;	}
@@ -754,7 +757,7 @@ public:
 	#elif MACX
 		#define main main_macho
 		extern "C" AEffect *main_macho(audioMasterCallback audioMaster);
- 	#else
+	#else
 		AEffect *main(audioMasterCallback audioMaster);
 	#endif
 
