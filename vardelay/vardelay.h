@@ -6,6 +6,7 @@
 #define __DFX_VARDELAY_H
 
 #include <audioeffectx.h>
+#include <vstgui.h>
 
 #ifdef WIN32
 /* turn off warnings about default but no cases in switch, etc. */
