@@ -1,33 +1,27 @@
 /*-------------- by Marc Poirier  ][  December 2000 -------------*/
 
-#ifndef __skidder
+#ifndef __SKIDDER_H
 #include "skidder.hpp"
 #endif
-
-#include <stdlib.h>
-#include <math.h>
 
 
 //-----------------------------------------------------------------------------------------
 void Skidder::processSlopeIn()
 {
 	// dividing the growing slopeDur-slopeSamples by slopeDur makes ascending values
-#ifdef MSKIDDER
 	if (MIDIin)
 	{
-		if (midiModeScaled(fMidiMode) == kMidiTrigger)
+		if (midiMode == kMidiMode_trigger)
 			// start from a 0.0 floor if we are coming in from silence
-			amp = ((float)(slopeDur-slopeSamples)) * slopeStep;
-		else if (midiModeScaled(fMidiMode) == kMidiApply)
+			sampleAmp = ((float)(slopeDur-slopeSamples)) * slopeStep;
+		else if (midiMode == kMidiMode_apply)
 			// no fade-in for the first entry of MIDI apply
-			amp = 1.0f;
+			sampleAmp = 1.0f;
 	}
+	else if (useRandomFloor)
+		sampleAmp = ( ((float)(slopeDur-slopeSamples)) * slopeStep * randomGainRange ) + randomFloor;
 	else
-#endif
-	if (useRandomFloor)
-		amp = ( ((float)(slopeDur-slopeSamples)) * slopeStep * randomGainRange ) + randomFloor;
-	else
-		amp = ( ((float)(slopeDur-slopeSamples)) * slopeStep * gainRange ) + floor;
+		sampleAmp = ( ((float)(slopeDur-slopeSamples)) * slopeStep * gainRange ) + floor;
 
 	slopeSamples--;
 
@@ -41,12 +35,10 @@ void Skidder::processSlopeIn()
 //-----------------------------------------------------------------------------------------
 void Skidder::processPlateau()
 {
-#ifdef MSKIDDER
 	MIDIin = false;	// in case there was no slope-in
-#endif
 
-	// amp in the plateau is 1.0, i.e. this sample is unaffected
-	amp = 1.0f;
+	// sampleAmp in the plateau is 1.0, i.e. this sample is unaffected
+	sampleAmp = 1.0f;
 
 	plateauSamples--;
 
@@ -62,9 +54,7 @@ void Skidder::processPlateau()
 		rmscount = 0;	// reset the RMS counter
 		//
 		// set up the random floor values
-		useRandomFloor = fFloorRandMin < fFloor;
-		randomFloor = ( ((float)rand()*ONE_DIV_RAND_MAX) * gainScaled(fFloor-fFloorRandMin) ) 
-							+ gainScaled(fFloorRandMin);
+		randomFloor = (float) parameters[kFloor].expand(interpolateRandom(floorRandMin_gen, floor_gen));
 		randomGainRange = 1.0f - randomFloor;	// the range of the skidding on/off gain
 		//
 		if (slopeDur > 0)
@@ -83,16 +73,13 @@ void Skidder::processPlateau()
 void Skidder::processSlopeOut()
 {
 	// dividing the decrementing slopeSamples by slopeDur makes descending values
-#ifdef MSKIDDER
-	if ( (MIDIout) && (midiModeScaled(fMidiMode) == kMidiTrigger) )
+	if ( MIDIout && (midiMode == kMidiMode_trigger) )
 		// start from a 0.0 floor if we are coming in from silence
-		amp = ((float)slopeSamples) * slopeStep;
+		sampleAmp = ((float)slopeSamples) * slopeStep;
+	else if (useRandomFloor)
+		sampleAmp = ( ((float)slopeSamples) * slopeStep * randomGainRange ) + randomFloor;
 	else
-#endif
-	if (useRandomFloor)
-		amp = ( ((float)slopeSamples) * slopeStep * randomGainRange ) + randomFloor;
-	else
-		amp = ( ((float)slopeSamples) * slopeStep * gainRange ) + floor;
+		sampleAmp = ( ((float)slopeSamples) * slopeStep * gainRange ) + floor;
 
 	slopeSamples--;
 
@@ -104,33 +91,27 @@ void Skidder::processSlopeOut()
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processValley(float SAMPLERATE)
+void Skidder::processValley()
 {
-  float rateRandFactor = rateRandFactorScaled(fRateRandFactor);	// stores the real value
-  float cycleRate;	// the base current skid rate value
-  float randFloat, randomRate;	// the current randomized rate value
-  float fPulsewidthRandomized;	// stores the latest randomized pulsewidth 0.0 - 1.0 value
-  bool barSync = false;	// true if we need to sync up with the next bar start
-  long countdown;
+	float cycleRate;	// the base current skid rate value
+	bool barSync = false;	// true if we need to sync up with the next bar start
+	float SAMPLERATE = getsamplerate_f();
 
 
-#ifdef MSKIDDER
 	if (MIDIin)
 	{
-		if (midiModeScaled(fMidiMode) == kMidiTrigger)
+		if (midiMode == kMidiMode_trigger)
 			// there's one sample of valley when trigger mode begins, so silence that one
-			amp = 0.0f;
-		else if (midiModeScaled(fMidiMode) == kMidiApply)
+			sampleAmp = 0.0f;
+		else if (midiMode == kMidiMode_apply)
 			// there's one sample of valley when apply mode begins, so keep it at full gain
-			amp = 1.0f;
+			sampleAmp = 1.0f;
 	}
-	// otherwise amp in the valley is whatever the floor gain is, the lowest gain value
+	// otherwise sampleAmp in the valley is whatever the floor gain is, the lowest gain value
+	else if (useRandomFloor)
+		sampleAmp = randomFloor;
 	else
-#endif
-	if (useRandomFloor)
-		amp = randomFloor;
-	else
-		amp = floor;
+		sampleAmp = floor;
 
 	valleySamples--;
 
@@ -141,40 +122,39 @@ void Skidder::processValley(float SAMPLERATE)
 		// This is where we figure out how many samples long each 
 		// envelope section is for the next skid cycle.
 		//
-		if (onOffTest(fTempoSync))	// the user wants to do tempo sync / beat division rate
+		if (tempoSync)	// the user wants to do tempo sync / beat division rate
 		{
-			cycleRate = currentTempoBPS * (tempoRateTable->getScalar(fTempoRate));
+			// randomize the tempo rate if the random min scalar is lower than the upper bound
+			if (useRandomRate)
+			{
+				cycleRate = tempoRateTable->getScalar((long)interpolateRandom((float)rateRandMinIndex,(float)rateIndex+0.99f));
+				// we can't do the bar sync if the skids durations are random
+				needResync = false;
+			}
+			else
+				cycleRate = rateSync;
+			// convert the tempo rate into rate in terms of Hz
+			cycleRate *= currentTempoBPS;
 			// set this true so that we make sure to do the measure syncronisation later on
-			if ( needResync && (midiModeScaled(fMidiMode) == kNoMidiMode) )
+			if ( needResync && (midiMode == kMidiMode_none) )
 				barSync = true;
 		}
 		else
-			cycleRate = rateScaled(fRate);
+		{
+			if (useRandomRate)
+				cycleRate = parameters[kRate_abs].expand(interpolateRandom(rateRandMinHz_gen, rateHz_gen));
+			else
+				cycleRate = rateHz;
+		}
 		needResync = false;	// reset this so that we don't have any trouble
+		cycleSamples = (long) (SAMPLERATE / cycleRate);
 		//
-		if (fRateRandFactor > 0.0f)
-		{
-			// get a random value from 0.0 to 1.0
-			randFloat = (float)rand() * ONE_DIV_RAND_MAX;
-			// square-scale the random value & then scale it with the random rate range
-			randomRate = ( randFloat * randFloat * 
-							((cycleRate*rateRandFactor)-(cycleRate/rateRandFactor)) ) + 
-							(cycleRate/rateRandFactor);
-			cycleSamples = (long) (SAMPLERATE / randomRate);
-			barSync = false;	// we can't do the bar sync if the skids durations are random
-		}
+		if (useRandomPulsewidth)
+			pulseSamples = (long) ( (float)cycleSamples * interpolateRandom(pulsewidthRandMin, pulsewidth) );
 		else
-			cycleSamples = (long) (SAMPLERATE / cycleRate);
-		//
-		if (fPulsewidth > fPulsewidthRandMin)
-		{
-			fPulsewidthRandomized = ( ((float)rand()*ONE_DIV_RAND_MAX) * (fPulsewidth-fPulsewidthRandMin) ) + fPulsewidthRandMin;
-			pulseSamples = (long) ( ((float)cycleSamples) * pulsewidthScaled(fPulsewidthRandomized) );
-		}
-		else
-			pulseSamples = (long) ( ((float)cycleSamples) * pulsewidthScaled(fPulsewidth) );
+			pulseSamples = (long) ( (float)cycleSamples * pulsewidth );
 		valleySamples = cycleSamples - pulseSamples;
-		slopeSamples = (long) ((SAMPLERATE/1000.0f)*(fSlope*(SLOPEMAX)));
+		slopeSamples = (long) (getsamplerate() * slopeSeconds);
 		slopeDur = slopeSamples;
 		slopeStep = 1.0f / (float)slopeDur;	// calculate the fade increment scalar
 		plateauSamples = pulseSamples - (slopeSamples * 2);
@@ -195,7 +175,7 @@ void Skidder::processValley(float SAMPLERATE)
 		if (barSync)	// we need to adjust this cycle so that a skid syncs with the next bar
 		{
 			// calculate how long this skid cycle needs to be
-			countdown = samplesToNextBar(timeInfo) % cycleSamples;
+			long countdown = timeinfo.samplesToNextBar % cycleSamples;
 			// skip straight to the valley & adjust its length
 			if ( countdown <= (valleySamples+(slopeSamples*2)) )
 			{
@@ -207,70 +187,56 @@ void Skidder::processValley(float SAMPLERATE)
 				plateauSamples -= cycleSamples - countdown;
 		}
 
-	#ifdef MSKIDDER
 		// if MIDI apply mode is just beginning, make things smooth with no panning
-		if ( (MIDIin) && (midiModeScaled(fMidiMode) == kMidiApply) )
-			panRander = 0.0f;
+		if ( (MIDIin) && (midiMode == kMidiMode_apply) )
+			panGainL = panGainR = 1.0f;
 		else
-	#endif
-		// this puts random float values from -1.0 to 1.0 into panRander
-		panRander = ( ((float)rand()*ONE_DIV_RAND_MAX) * 2.0f ) - 1.0f;
+		{
+			// this calculates a random float value from -1.0 to 1.0
+			float panRander = (randFloat() * 2.0f) - 1.0f;
+			// ((panRander*panWidth)+1.0) ranges from 0.0 to 2.0
+			panGainL = (panRander*panWidth) + 1.0f;
+			panGainR = 2.0f - ((panRander*panWidth) + 1.0f);
+		}
 
 	} //end of the "valley is over" if-statement
 }
 
 //-----------------------------------------------------------------------------------------
-float Skidder::processOutput(float in1, float in2, float pan)
+float Skidder::processOutput(float in1, float in2, float panGain)
 {
 	// output noise
-	if ( (state == valley) && (fNoise != 0.0f) )
+	if ( (state == valley) && (noise != 0.0f) )
 		// out gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
-		return ((((float)rand()*ONE_DIV_RAND_MAX)*2.0f)-1.0f) * pan * fNoise_squared * rms;
+		return ((randFloat()*2.0f)-1.0f) * panGain * noise * rms;
 
 	// do regular skidding output
 	else
 	{
 		// only output a bit of the first input
-		if (pan <= 1.0f)
-			return in1 * pan * amp;
+		if (panGain <= 1.0f)
+			return in1 * panGain * sampleAmp;
 		// output all of the first input & a bit of the second input
 		else
-			return ( in1 + (in2*(pan-1.0f)) ) * amp;
+			return ( in1 + (in2*(panGain-1.0f)) ) * sampleAmp;
 	}
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, bool replacing)
+void Skidder::processaudio(const float **inputs, float **outputs, unsigned long inNumFrames, bool replacing)
 {
-/* begin inter-plugin audio sharing stuff */
-#ifdef HUNGRY
-	if ( ! (foodEater->setupProcess(inputs, sampleFrames)) )
-		return;
-#endif
-/* end inter-plugin audio sharing stuff */
-
-  float *in1  = inputs[0];
-  float *in2  = inputs[1];
+  const float *in1  = inputs[0];
+  const float *in2  = (getnuminputs() < 2) ? inputs[0] : inputs[1];	// support 1 or 2 inputs
   float *out1 = outputs[0];
   float *out2 = outputs[1];
-
-  float SAMPLERATE = getSampleRate();
-	// just in case the host responds with something wacky
-	if (SAMPLERATE <= 0.0f)   SAMPLERATE = 44100.0f;
-
-  long samplecount;
-
-
-	floor = gainScaled(fFloor);	// the parameter scaled real value
-	gainRange = 1.0f - floor;	// the range of the skidding on/off gain
-	useRandomFloor = (fFloorRandMin < fFloor);
+  unsigned long samplecount;
 
 
 // ---------- begin MIDI stuff --------------
-#ifdef MSKIDDER
-  bool noteIsOn = false;
+	processMidiNotes();
+	bool noteIsOn = false;
 
-	for (int notecount=0; (notecount < NUM_NOTES); notecount++)
+	for (int notecount=0; notecount < NUM_NOTES; notecount++)
 	{
 		if (noteTable[notecount])
 		{
@@ -279,14 +245,14 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 		}
 	}
 
-	switch (midiModeScaled(fMidiMode))
+	switch (midiMode)
 	{
-		case kMidiTrigger:
+		case kMidiMode_trigger:
 			// check waitSamples also because, if it's zero, we can just move ahead normally
-			if ( (noteIsOn) && (waitSamples) )
+			if ( noteIsOn && (waitSamples != 0) )
 			{
 				// cut back the number of samples outputted
-				sampleFrames -= waitSamples;
+				inNumFrames -= waitSamples;
 				// & jump ahead accordingly in the i/o streams
 				in1 += waitSamples;
 				in2 += waitSamples;
@@ -296,9 +262,9 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 				// need to make sure that the skipped part is silent if we're processReplacing
 				if (replacing)
 				{
-					for (samplecount = 0; (samplecount < waitSamples); samplecount++)
+					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
 						outputs[0][samplecount] = 0.0f;
-					for (samplecount = 0; (samplecount < waitSamples); samplecount++)
+					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
 						outputs[1][samplecount] = 0.0f;
 				}
 
@@ -309,38 +275,38 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 			else if (!noteIsOn)
 			{
 				// if Skidder currently is in the plateau & has a slow cycle, this could happen
-				if (waitSamples > sampleFrames)
-					waitSamples -= sampleFrames;
+				if ((unsigned)waitSamples > inNumFrames)
+					waitSamples -= (signed)inNumFrames;
 				else
 				{
 					if (replacing)
 					{
-						for (samplecount = waitSamples; (samplecount < sampleFrames); samplecount++)
+						for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
 							outputs[0][samplecount] = 0.0f;
-						for (samplecount = waitSamples; (samplecount < sampleFrames); samplecount++)
+						for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
 							outputs[1][samplecount] = 0.0f;
 					}
-					sampleFrames = waitSamples;
+					inNumFrames = (unsigned)waitSamples;
 					waitSamples = 0;
 				}
 			}
 
 			// adjust the floor according to note velocity if velocity mode is on
-			if (onOffTest(fVelocity))
+			if (useVelocity)
 			{
-				floor = gainScaled((float)(127-mostRecentVelocity)/127.0f);
+				floor = (float) parameters[kFloor].expand((float)(127-mostRecentVelocity)/127.0f);
 				gainRange = 1.0f - floor;	// the range of the skidding on/off gain
 				useRandomFloor = false;
 			}
 
 			break;
 
-		case kMidiApply:
+		case kMidiMode_apply:
 			// check waitSamples also because, if it's zero, we can just move ahead normally
-			if ( (noteIsOn) && (waitSamples) )
+			if ( noteIsOn && (waitSamples != 0) )
 			{
 				// cut back the number of samples outputted
-				sampleFrames -= waitSamples;
+				inNumFrames -= (unsigned)waitSamples;
 				// & jump ahead accordingly in the i/o streams
 				in1 += waitSamples;
 				in2 += waitSamples;
@@ -350,16 +316,16 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 				// need to make sure that the skipped part is unprocessed audio
 				if (replacing)
 				{
-					for (samplecount = 0; (samplecount < waitSamples); samplecount++)
+					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
 						outputs[0][samplecount] = inputs[0][samplecount];
-					for (samplecount = 0; (samplecount < waitSamples); samplecount++)
+					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
 						outputs[1][samplecount] = inputs[1][samplecount];
 				}
 				else
 				{
-					for (samplecount = 0; (samplecount < waitSamples); samplecount++)
+					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
 						outputs[0][samplecount] += inputs[0][samplecount];
-					for (samplecount = 0; (samplecount < waitSamples); samplecount++)
+					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
 						outputs[1][samplecount] += inputs[1][samplecount];
 				}
 
@@ -370,27 +336,27 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 			else if (!noteIsOn)
 			{
 				// if Skidder currently is in the plateau & has a slow cycle, this could happen
-				if (waitSamples)
+				if (waitSamples != 0)
 				{
-					if (waitSamples > sampleFrames)
-						waitSamples -= sampleFrames;
+					if ((unsigned)waitSamples > inNumFrames)
+						waitSamples -= (signed)inNumFrames;
 					else
 					{
 						if (replacing)
 						{
-							for (samplecount = waitSamples; (samplecount < sampleFrames); samplecount++)
+							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
 								outputs[0][samplecount] = inputs[0][samplecount];
-							for (samplecount = waitSamples; (samplecount < sampleFrames); samplecount++)
+							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
 								outputs[1][samplecount] = inputs[1][samplecount];
 						}
 						else
 						{
-							for (samplecount = waitSamples; (samplecount < sampleFrames); samplecount++)
+							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
 								outputs[0][samplecount] += inputs[0][samplecount];
-							for (samplecount = waitSamples; (samplecount < sampleFrames); samplecount++)
+							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
 								outputs[1][samplecount] += inputs[1][samplecount];
 						}
-						sampleFrames = waitSamples;
+						inNumFrames = (unsigned)waitSamples;
 						waitSamples = 0;
 					}
 				}
@@ -398,16 +364,16 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 				{
 					if (replacing)
 					{
-						for (samplecount = 0; (samplecount < sampleFrames); samplecount++)
+						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
 							outputs[0][samplecount] = inputs[0][samplecount];
-						for (samplecount = 0; (samplecount < sampleFrames); samplecount++)
+						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
 							outputs[1][samplecount] = inputs[1][samplecount];
 					}
 					else
 					{
-						for (samplecount = 0; (samplecount < sampleFrames); samplecount++)
+						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
 							outputs[0][samplecount] += inputs[0][samplecount];
-						for (samplecount = 0; (samplecount < sampleFrames); samplecount++)
+						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
 							outputs[1][samplecount] += inputs[1][samplecount];
 					}
 					// that's all we need to do if there are no notes, 
@@ -417,9 +383,9 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 			}
 
 			// adjust the floor according to note velocity if velocity mode is on
-			if (onOffTest(fVelocity))
+			if (useVelocity)
 			{
-				floor = gainScaled((float)(127-mostRecentVelocity)/127.0f);
+				floor = (float) parameters[kFloor].expand((float)(127-mostRecentVelocity)/127.0f);
 				gainRange = 1.0f - floor;	// the range of the skidding on/off gain
 				useRandomFloor = false;
 			}
@@ -429,58 +395,44 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 		default:
 			break;
 	}
-#endif
 // ---------- end MIDI stuff --------------
 
 
 	// figure out the current tempo if we're doing tempo sync
-	if (onOffTest(fTempoSync))
+	if (tempoSync)
 	{
 		// calculate the tempo at the current processing buffer
-		if ( (fTempo > 0.0f) || (hostCanDoTempo != 1) )	// get the tempo from the user parameter
+		if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
 		{
-			currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-			needResync = false;	// we don't want it true if we're not syncing to host tempo
+			currentTempoBPS = timeinfo.tempo_bps;
+			// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
+			if (timeinfo.playbackChanged)
+			{
+				needResync = true;
+				state = valley;
+				valleySamples = 0;
+			}
 		}
-		else	// get the tempo from the host
+		else	// get the tempo from the user parameter
 		{
-			timeInfo = getTimeInfo(kBeatSyncTimeInfoFlags);
-			if (timeInfo)
-			{
-				if (kVstTempoValid & timeInfo->flags)
-					currentTempoBPS = (float)timeInfo->tempo / 60.0f;
-//					currentTempoBPS = ((float)tempoAt(reportCurrentPosition())) / 600000.0f;
-				else
-					currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-				// but zero & negative tempos are bad, so get the user tempo value instead if that happens
-				if (currentTempoBPS <= 0.0f)
-					currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-				//
-				// check if audio playback has just restarted & reset cycle state stuff if it has (for measure sync)
-				if (timeInfo->flags & kVstTransportChanged)
-				{
-					needResync = true;
-					state = valley;
-					valleySamples = 0;
-				}
-			}
-			else	// do the same stuff as above if the timeInfo gets a null pointer
-			{
-				currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-				needResync = false;	// we don't want it true if we're not syncing to host tempo
-			}
+			currentTempoBPS = userTempo / 60.0f;
+			needResync = false;	// we don't want it true if we're not syncing to host tempo
 		}
 		//
 		// this is for notifying the GUI about updating the rate random range display
-		if ( (currentTempoBPS != oldTempoBPS) || (mustUpdateTempoHasChanged) )
+		if ( (currentTempoBPS != oldTempoBPS) || mustUpdateTempoHasChanged )
 		{
 			tempoHasChanged = true;
 			mustUpdateTempoHasChanged = false;	// reset it now
 		}
 		oldTempoBPS = currentTempoBPS;
 	}
+	else
+		needResync = false;	// we don't want it true if we're not syncing to host tempo
 
-	for (samplecount=0; (samplecount < sampleFrames); samplecount++)
+
+	// this is the per-sample audio processing loop
+	for (samplecount=0; samplecount < inNumFrames; samplecount++)
 	{
 		switch (state)
 		{
@@ -499,37 +451,28 @@ void Skidder::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 				processSlopeOut();
 				break;
 			case valley:
-				processValley(SAMPLERATE);
+				processValley();
 				break;
 		}
 
-		// ((panRander*fPan)+1.0) ranges from 0.0 to 2.0
+	#if TARGET_API_VST
 		if (replacing)
 		{
-			*out1 = processOutput( *in1, *in2, ((panRander*fPan)+1.0f) );
-			*out2 = processOutput( *in2, *in1, (2.0f - ((panRander*fPan)+1.0f)) );
+	#endif
+			*out1 = processOutput(*in1, *in2, panGainL);
+			*out2 = processOutput(*in2, *in1, panGainR);
+	#if TARGET_API_VST
 		}
 		else
 		{
-			*out1 += processOutput( *in1, *in2, ((panRander*fPan)+1.0f) );
-			*out2 += processOutput( *in2, *in1, (2.0f - ((panRander*fPan)+1.0f)) );
+			*out1 += processOutput(*in1, *in2, panGainL);
+			*out2 += processOutput(*in2, *in1, panGainR);
 		}
+	#endif
 		// move forward in the i/o sample streams
 		in1++;
 		in2++;
 		out1++;
 		out2++;
 	}
-}
-
-//-----------------------------------------------------------------------------------------
-void Skidder::process(float **inputs, float **outputs, long sampleFrames)
-{
-	doTheProcess(inputs, outputs, sampleFrames, false);
-}
-
-//-----------------------------------------------------------------------------------------
-void Skidder::processReplacing(float **inputs, float **outputs, long sampleFrames)
-{
-	doTheProcess(inputs, outputs, sampleFrames, true);
 }

@@ -1,6 +1,6 @@
 /*-------------- by Marc Poirier  ][  December 2000 -------------*/
 
-#ifndef __skidder
+#ifndef __SKIDDER_H
 #include "skidder.hpp"
 #endif
 
@@ -9,7 +9,7 @@
 void Skidder::resetMidi()
 {
 	// & zero out the whole note table
-	for (int i=0; (i < NUM_NOTES); i++)
+	for (int i=0; i < NUM_NOTES; i++)
 		noteTable[i] = 0;
 
 	waitSamples = 0;
@@ -18,107 +18,64 @@ void Skidder::resetMidi()
 }
 
 //-----------------------------------------------------------------------------
-long Skidder::processEvents(VstEvents* newEvents)
+void Skidder::processMidiNotes()
 {
-  VstMidiEvent *midiEvent;
-  int status, currentNote, velocity;
-  char *midiData;
-  bool noteIsOn = false;
-  long newProgramNumber = -1, newProgramDelta = 0;
+	bool noteIsOn = false;
 
-
-	for (long i = 0; (i < newEvents->numEvents); i++)
+	for (long i=0; i < midistuff->numBlockEvents; i++)
 	{
-		// check to see if this event is MIDI; if no, then we try the for-loop again
-		if ( ((newEvents->events[i])->type) != kVstMidiType )
-			continue;
+		int currentNote = midistuff->blockEvents[i].byte1;
+		int velocity = midistuff->blockEvents[i].byte2;
 
-		// it's okay, so cast the incoming event as a VstMidiEvent
-		midiEvent = (VstMidiEvent*)newEvents->events[i];
-
-		// address the midiData[4] string from the event to this temp data pointer
-		midiData = midiEvent->midiData;
-
-		// ignore the channel (lower 4 bits)
-		status = midiData[0] & 0xf0;
-		currentNote = midiData[1] & 0x7f;
-		velocity = midiData[2] & 0x7f;
-
-		// note-on status was received
-		if (status == 0x90)
+		switch (midistuff->blockEvents[i].status)
 		{
-			if (velocity > 0)
-			{
+			// note-on status was received
+			case kMidiNoteOn:
 				noteTable[currentNote] = mostRecentVelocity = velocity;
 				// This is not very accurate.
 				// If more than one note-on happens this block, only the last one is effective.
 				// This is good enough for this effect, though.
-				noteOn(midiEvent->deltaFrames);
-			}
-			// this is actually a note-off message if velocity is 0
-			else
+				noteOn(midistuff->blockEvents[i].delta);
+				break;
+
+			// note-off status was received
+			case kMidiNoteOff:
 				noteTable[currentNote] = 0;	// turn off the note
-		}
+				break;
 
-		// note-off status was received
-		if (status == 0x80)
-			noteTable[currentNote] = 0;	// turn off the note
-
-		// all notes off
-		if ( (status == 0xb0) && (midiData[1] == 0x7b) )
-		{
-			for (currentNote = 0; (currentNote < NUM_NOTES); currentNote++)
-				noteTable[currentNote] = 0;	// turn off all notes
-			noteOff();	// do the notes off Skidder stuff
-		}
-
-		midiEvent++;
-
-		// program change was received
-		if (status == 0xC0)
-		{
-			if (midiEvent->deltaFrames >= newProgramDelta)
-			{
-				newProgramNumber = midiData[1] & 0x7F;	// program number
-				newProgramDelta = midiEvent->deltaFrames;	// timing offset
-			}
+			// all notes off
+			case kMidiCC_AllNotesOff:
+				for (currentNote = 0; currentNote < NUM_NOTES; currentNote++)
+					noteTable[currentNote] = 0;	// turn off all notes
+				noteOff();	// do the notes off Skidder stuff
+				break;
 		}
 	}
 
-	// change the current Skidder preset if a program change message was received
-	if (newProgramNumber >= 0)
-		setProgram(newProgramNumber);
-
-	// check every note to see any are still on or if they all got turned off during this block
-	for (currentNote=0; (currentNote < NUM_NOTES); currentNote++)
+	// check every note to see any are still on or if they all got turned off during this block...
+	for (int currentNote=0; currentNote < NUM_NOTES; currentNote++)
 	{
 		if (noteTable[currentNote])
 			noteIsOn = true;
 	}
-	// & do the Skidder notes off stuff if we have no notes remaining on
+	// ...and do the Skidder notes-off stuff if we have no notes remaining on
 	if (!noteIsOn)
 			noteOff();
-
-	// process CC parameter automation
-	chunk->processParameterEvents(newEvents);
-
-	// says that we want more events; 0 means stop sending them
-	return 1;
 }
 
 //-----------------------------------------------------------------------------------------
 void Skidder::noteOn(long delta)
 {
-	switch (midiModeScaled(fMidiMode))
+	switch (midiMode)
 	{
-		case kMidiTrigger:
+		case kMidiMode_trigger:
 			waitSamples = delta;
 			state = valley;
 			valleySamples = 0;
 			MIDIin = true;
 			break;
 
-		case kMidiApply:
+		case kMidiMode_apply:
 			waitSamples = delta;
 			state = valley;
 			valleySamples = 0;
@@ -133,9 +90,9 @@ void Skidder::noteOn(long delta)
 //-----------------------------------------------------------------------------------------
 void Skidder::noteOff()
 {
-	switch (midiModeScaled(fMidiMode))
+	switch (midiMode)
 	{
-		case kMidiTrigger:
+		case kMidiMode_trigger:
 			switch (state)
 			{
 				case slopeIn:
@@ -178,7 +135,7 @@ void Skidder::noteOff()
 
 			break;
 
-		case kMidiApply:
+		case kMidiMode_apply:
 			switch (state)
 			{
 				case slopeIn:
@@ -220,15 +177,7 @@ void Skidder::noteOff()
 }
 
 
-//-----------------------------------------------------------------------------
-long Skidder::getChunk(void **data, bool isPreset)
-{	return chunk->getChunk(data, isPreset);	}
-
-//-----------------------------------------------------------------------------
-long Skidder::setChunk(void *data, long byteSize, bool isPreset)
-{	return chunk->setChunk(data, byteSize, isPreset);	}
-
-
+/*
 //----------------------------------------------------------------------------- 
 SkidderChunk::SkidderChunk(long numParameters, long numPrograms, long magic, AudioEffectX *effect)
 	: VstChunk (numParameters, numPrograms, magic, effect)
@@ -301,3 +250,4 @@ void SkidderChunk::unassignParam(long tag)
 			break;
 	}
 }
+*/

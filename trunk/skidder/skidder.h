@@ -1,26 +1,13 @@
 /*---------------------------------------------------------------
-
    © 2000, Marcberg Soft und Hardware GmbH, All Rights Reserved
-
 ---------------------------------------------------------------*/
 
-#ifndef __skidder
-#define __skidder
+#ifndef __SKIDDER_H
+#define __SKIDDER_H
 
-#include <math.h>
-#include <stdlib.h>
 
-#include "dfxmisc.h"
-#include "vstchunk.h"
-#include "temporatetable.h"
-
-#ifdef MSKIDDER
-/* begin inter-plugin audio sharing stuff */
-#ifdef HUNGRY
-	#include "FoodEater.h"
-	const OSType magic = 'Mfud';
-#endif
-/* end inter-plugin audio sharing stuff */
+#ifndef __DFXPLUGIN_H
+#include "dfxplugin.h"
 #endif
 
 
@@ -28,30 +15,22 @@
 // these are the plugin parameters:
 enum
 {
-	kRate,
-	kTempoSync,
-	kTempoRate,
-	kRateRandFactor,
-	kTempo,
+	kRate_abs,
+	kRate_sync,
+	kRateRandMin_abs,
+	kRateRandMin_sync,
 	kPulsewidth,
 	kPulsewidthRandMin,
 	kSlope,
 	kPan,
 	kNoise,
-
-#ifdef MSKIDDER
 	kMidiMode,
 	kVelocity,
-#endif
-
 	kFloor,
 	kFloorRandMin,
-
-#ifdef MSKIDDER
-#ifdef HUNGRY
-	kConnect,
-#endif
-#endif
+	kTempoSync,
+	kTempo,
+	kTempoAuto,
 
 	NUM_PARAMETERS
 };
@@ -60,10 +39,10 @@ enum
 // these are the 3 MIDI note control modes:
 enum
 {
-	kNoMidiMode,
-	kMidiTrigger,
-	kMidiApply,
-	NUM_MIDI_MODES
+	kMidiMode_none,
+	kMidiMode_trigger,
+	kMidiMode_apply,
+	kNumMidiModes
 };
 
 //----------------------------------------------------------------------------- 
@@ -85,11 +64,6 @@ enum
 #define rateScaled(A)   ( paramRangePowScaled((A), RATEMIN, RATEMAX, 1.65f) )
 #define rateUnscaled(A)   ( paramRangePowUnscaled((A), RATEMIN, RATEMAX, 1.65f) )
 
-#define RATE_RAND_FACTOR_MIN 1.0f
-#define RATE_RAND_FACTOR_MAX 9.0f
-#define rateRandFactorScaled(A)   ( paramRangeSquaredScaled((A), RATE_RAND_FACTOR_MIN, RATE_RAND_FACTOR_MAX) )
-#define rateRandFactorUnscaled(A)   ( paramRangeSquaredUnscaled((A), RATE_RAND_FACTOR_MIN, RATE_RAND_FACTOR_MAX) )
-
 #define PULSEMIN 0.001f
 #define PULSEMAX 0.999f
 #define pulsewidthScaled(A)   ( paramRangeScaled((A), PULSEMIN, PULSEMAX) )
@@ -107,32 +81,13 @@ enum
 
 #define gainScaled(A) ((A)*(A)*(A))
 
-#ifdef MSKIDDER
-#define midiModeScaled(A)   ( paramSteppedScaled((A), NUM_MIDI_MODES) )
-#define midiModeUnscaled(A)   ( paramSteppedUnscaled((A), NUM_MIDI_MODES) )
-// 128 midi notes
-#define NUM_NOTES 128
-#endif
+#define midiModeScaled(A)   ( paramSteppedScaled((A), kNumMidiModes) )
+#define midiModeUnscaled(A)   ( paramSteppedUnscaled((A), kNumMidiModes) )
 
-#define NUM_PROGRAMS 16
-#define PLUGIN_VERSION 1400
-#define PLUGIN_ID 'skid'
+#define NUM_PRESETS 16
 
 
-//----------------------------------------------------------------------------- 
-class SkidderProgram
-{
-friend class Skidder;
-public:
-	SkidderProgram();
-	~SkidderProgram();
-private:
-	float *param;
-	char *name;
-};
-
-
-#ifdef MSKIDDER
+/*
 //----------------------------------------------------------------------------- 
 class SkidderChunk : public VstChunk
 {
@@ -149,71 +104,47 @@ public:
 	// true for unified single-point automation of both parameter range values
 	bool pulsewidthDoubleAutomate, floorDoubleAutomate;
 };
-#endif
+*/
 
 
 //----------------------------------------------------------------------------- 
-
-class Skidder : public AudioEffectX
+class Skidder : public DfxPlugin
 {
 friend class SkidderEditor;
 public:
-	Skidder(audioMasterCallback audioMaster);
-	~Skidder();
+	Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	virtual ~Skidder();
 
-	virtual void process(float **inputs, float **outputs, long sampleFrames);
-	virtual void processReplacing(float **inputs, float **outputs, long sampleFrames);
-
-	virtual void suspend();
-	virtual void resume();
-#ifdef MSKIDDER
-	virtual long getChunk(void **data, bool isPreset);
-	virtual long setChunk(void *data, long byteSize, bool isPreset);
-	virtual long processEvents(VstEvents* events);
-#endif
-
-	virtual void setProgram(long programNum);
-	virtual void setProgramName(char *name);
-	virtual void getProgramName(char *name);
-	virtual bool getProgramNameIndexed(long category, long index, char *text);
-	virtual bool copyProgram(long destination);
-
-	virtual void setParameter(long index, float value);
-	virtual float getParameter(long index);
-	virtual void getParameterName(long index, char *text);
-	virtual void getParameterDisplay(long index, char *text);
-	virtual void getParameterLabel(long index, char *label);
-
-	virtual bool getEffectName(char *name);
-	virtual long getVendorVersion();
-	virtual bool getErrorText(char *text);
-	virtual bool getVendorString(char *text);
-	virtual bool getProductString(char *text);
-
-	virtual bool getInputProperties(long index, VstPinProperties* properties);
-	virtual bool getOutputProperties(long index, VstPinProperties* properties);
-	virtual long canDo(char* text);
+	virtual void reset();
+	virtual void processparameters();
+	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
 
 
-protected:
+private:
 	void processSlopeIn();
 	void processPlateau();
 	void processSlopeOut();
-	void processValley(float SAMPLERATE);
-	float processOutput(float in1, float in2, float pan);
-	void doTheProcess(float **inputs, float **outputs, long sampleFrames, bool replacing);
+	void processValley();
+	float processOutput(float in1, float in2, float panGain);
+	void processMidiNotes();
 
 	// the parameters
-	float fRate, fTempoSync, fTempoRate, fRateRandFactor, fTempo;
-	float fPulsewidth, fPulsewidthRandMin, fSlope, fPan, fNoise, fFloor, fFloorRandMin;
-	float floor, gainRange;	// a scaled version of fFloor & the difference between that & 1.0
+	float rateHz, rateSync, rateRandMinHz, rateRandMinSync, pulsewidth, pulsewidthRandMin;
+	long rateIndex, rateRandMinIndex;
+	float panWidth, floor, floorRandMin, noise, userTempo;
+	double slopeSeconds;
+	long midiMode;
+	bool tempoSync, useHostTempo, useVelocity;
+
+	float gainRange;	// a scaled version of fFloor & the difference between that & 1.0
 	float randomFloor, randomGainRange;
-	bool useRandomFloor;
-	SkidderProgram *programs;
-	float amp; // output sample scalar
+	// generic versions of these parameters for curved randomization
+	float rateHz_gen, rateRandMinHz_gen, floor_gen, floorRandMin_gen;
+	bool useRandomRate, useRandomPulsewidth, useRandomFloor;
+	float sampleAmp; // output sample scalar
 	long cycleSamples, pulseSamples, slopeSamples, slopeDur, plateauSamples, valleySamples;	// sample counters
 	float slopeStep;	// the scalar for each step of the fade during a slope in or out
-	float panRander;	// the actual pan value for each cycle
+	float panGainL, panGainR;	// the actual pan gain values for each stereo channel during each cycle
 	int state;	// the state of the process
 	float rms;
 	long rmscount;
@@ -224,12 +155,8 @@ protected:
 	// this allows tempoHasChanged to be updated after the tempo gets recalulated 
 	// after switching to auto tempo, all of which is for the sake of the GUI
 	bool mustUpdateTempoHasChanged;
-	TempoRateTable *tempoRateTable;	// a table of tempo rate values
-	long hostCanDoTempo;	// my semi-booly dude who knows something about the host's VstTimeInfo implementation
-	VstTimeInfo *timeInfo;
 	bool needResync;	// true when playback has just started up again
 
-#ifdef MSKIDDER
 	float fMidiMode;	// the MIDI note control mode parameter
 	float fVelocity;	// the use-note-velocity parameter
 	int mostRecentVelocity;	// the velocity of the most recently played note
@@ -239,11 +166,6 @@ protected:
 	int *noteTable;
 	long waitSamples;
 	bool MIDIin, MIDIout;	// set when notes start or stop so that the floor goes to 0.0
-	SkidderChunk *chunk;
-#ifdef HUNGRY
-	FoodEater *foodEater;
-#endif
-#endif	// end of mSkidder-specific stuff
 };
 
 #endif
