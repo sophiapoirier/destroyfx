@@ -54,10 +54,6 @@ written by Marc Poirier, October 2002
 //----------------------------------------------------------------------------- 
 // resources for the plugin editor component
 
-#ifndef __AUDIOUNITCARBONVIEW_R__
-	#include <AudioUnit/AudioUnitCarbonView.r>
-#endif
-
 #ifdef PLUGIN_EDITOR_RES_ID
 	#define RES_ID	PLUGIN_EDITOR_RES_ID
 #else

@@ -149,7 +149,17 @@ Developer Tools CD comes with the OS X 10.2 CDs and the CoreAudio SDK
 is available at http://connect.apple.com/   Currently, you need to be 
 an Apple Developer Connection member to download it (I don't know 
 why), but the minimum membership is free.  Project Builder (if you 
-care to use that IDE) is included with the Developer Tools.
+care to use that IDE) is included with the Developer Tools.  Note 
+that the Project Builder projects files here assume use absolute 
+paths for the Apple-provided base API files; they assume that the 
+files are located in the places where the CoreAudio SDK installer 
+places them.  If you've moved those files, you'll have to change the 
+paths in the project settings.  Also note that Marc works with a 
+rather modified set of the CoreAudio SDK files.  All of the changes 
+that Marc has made will make it into the next SDK revision, so 
+they're kind of legit, but just so that you know...  All of the 
+modifications are things that have been discussed/proposed/etc. on 
+the CoreAudio API listserv.
 
 for building VST Mac versions:
 Some plugins have plugin_mac directories with *def.h "prefix" files.  
