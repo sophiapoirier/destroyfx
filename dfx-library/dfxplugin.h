@@ -224,16 +224,16 @@ SUPPORT_AU_VERSION_1
 //-----------------------------------------------------------------------------
 // constants & types
 
-#ifdef kAudioUnitErr_FailedInitialization
-#define kDfxErr_InitializationFailed	kAudioUnitErr_FailedInitialization
+#ifdef TARGET_API_AUDIOUNIT
+	enum {
+		kDfxErr_NoError = noErr,
+		kDfxErr_InitializationFailed = kAudioUnitErr_FailedInitialization,
+	};
 #else
-#define kDfxErr_InitializationFailed	-10875
-#endif
-
-#ifdef noErr
-#define kDfxErr_NoError	noErr
-#else
-#define kDfxErr_NoError	0
+	enum {
+		kDfxErr_NoError = 0,
+		kDfxErr_InitializationFailed = -10875,
+	};
 #endif
 
 
@@ -256,8 +256,7 @@ typedef struct {
 
 #ifdef TARGET_API_AUDIOUNIT
 	// the Audio Unit API already has an i/o configurations structure
-//	typedef struct DfxChannelConfig AUChannelInfo;
-	#define DfxChannelConfig AUChannelInfo
+	typedef AUChannelInfo DfxChannelConfig;
 #else
 	// immitate AUChannelInfo from the Audio Unit API for other APIs
 	typedef struct {

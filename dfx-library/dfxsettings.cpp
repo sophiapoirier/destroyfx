@@ -35,7 +35,7 @@ DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExte
 	if (numParameters < 1)
 		numParameters = 1;	// come on now, what are you trying to do?
 
-	paramAssignments = (ParameterAssignment*) malloc(numParameters * sizeof(ParameterAssignment));
+	paramAssignments = (DfxParameterAssignment*) malloc(numParameters * sizeof(DfxParameterAssignment));
 	parameterIDs = (long*) malloc(numParameters * sizeof(long));
 
 	// default to each parameter having its ID equal its index
@@ -44,16 +44,16 @@ DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExte
 		parameterIDs[i] = i;
 
 	// calculate some data sizes that are useful to know
-	sizeofPreset = sizeof(GenPreset) + (sizeof(float) * (numParameters-2));
+	sizeofPreset = sizeof(DfxGenPreset) + (sizeof(float) * (numParameters-2));
 	sizeofParameterIDs = sizeof(long) * numParameters;
 	sizeofPresetChunk = sizeofPreset 			// 1 preset
 						+ sizeof(DfxSettingsInfo) 	// the special data header info
 						+ sizeofParameterIDs	// the table of parameter IDs
-						+ (sizeof(ParameterAssignment)*numParameters);	// the MIDI events assignment array
+						+ (sizeof(DfxParameterAssignment)*numParameters);	// the MIDI events assignment array
 	sizeofChunk = (sizeofPreset*numPresets)		// all of the presets
 					+ sizeof(DfxSettingsInfo)		// the special data header info
 					+ sizeofParameterIDs			// the table of parameter IDs
-					+ (sizeof(ParameterAssignment)*numParameters);	// the MIDI events assignment array
+					+ (sizeof(DfxParameterAssignment)*numParameters);	// the MIDI events assignment array
 
 	// increase the allocation sizes if extra data must be stored
 	sizeofChunk += sizeofExtendedData;
@@ -63,8 +63,8 @@ DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExte
 	sharedChunk = (DfxSettingsInfo*) malloc(sizeofChunk);
 	// and a few pointers to elements within that data, just for ease of use
 	firstSharedParameterID = (long*) ((char*)sharedChunk + sizeof(DfxSettingsInfo));
-	firstSharedPreset = (GenPreset*) ((char*)firstSharedParameterID + sizeofParameterIDs);
-	firstSharedParamAssignment = (ParameterAssignment*) 
+	firstSharedPreset = (DfxGenPreset*) ((char*)firstSharedParameterID + sizeofParameterIDs);
+	firstSharedParamAssignment = (DfxParameterAssignment*) 
 									((char*)firstSharedPreset + (sizeofPreset*numPresets));
 
 	// set all of the header infos
@@ -74,7 +74,7 @@ DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExte
 	settingsInfo.storedHeaderSize = sizeof(DfxSettingsInfo);
 	settingsInfo.numStoredParameters = numParameters;
 	settingsInfo.numStoredPresets = numPresets;
-	settingsInfo.storedParameterAssignmentSize = sizeof(ParameterAssignment);
+	settingsInfo.storedParameterAssignmentSize = sizeof(DfxParameterAssignment);
 	settingsInfo.storedExtendedDataSize = sizeofExtendedData;
 
 	clearAssignments();	// initialize all of the parameters to have no MIDI event assignments
@@ -194,7 +194,7 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 		for (i=0; i < numParameters; i++)
 			firstSharedPreset->params[i] = plugin->getparameter_f(i);
 
-		ParameterAssignment *tempSharedParamAssignment = (ParameterAssignment*) ((char*)firstSharedPreset + sizeofPreset);
+		DfxParameterAssignment *tempSharedParamAssignment = (DfxParameterAssignment*) ((char*)firstSharedPreset + sizeofPreset);
 		// store the parameters' MIDI event assignments
 		for (i=0; i < numParameters; i++)
 			tempSharedParamAssignment[i] = paramAssignments[i];
@@ -210,7 +210,7 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 	// otherwise store the entire bank of presets and the MIDI event assignments
 	else
 	{
-		GenPreset *tempSharedPresets = firstSharedPreset;
+		DfxGenPreset *tempSharedPresets = firstSharedPreset;
 		for (j=0; j < numPresets; j++)
 		{
 			// copy the preset name to the chunk
@@ -219,7 +219,7 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 			for (i=0; i < numParameters; i++)
 				tempSharedPresets->params[i] = plugin->getpresetparameter_f(j, i);
 			// point to the next preset in the data array for the host
-			tempSharedPresets = (GenPreset*) ((char*)tempSharedPresets + sizeofPreset);
+			tempSharedPresets = (DfxGenPreset*) ((char*)tempSharedPresets + sizeofPreset);
 		}
 
 		// store the parameters' MIDI event assignments
@@ -247,7 +247,7 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 {
   DfxSettingsInfo *newSettingsInfo;
-  GenPreset *newPreset;
+  DfxGenPreset *newPreset;
   long *newParameterIDs;
   long i, j;
 
@@ -292,7 +292,7 @@ bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 	// irregardless, only restore one preset if we're loading a single preset
 	if (isPreset)
 		copyPresets = 1;
-	// figure out how much of the ParameterAssignment structure we can import
+	// figure out how much of the DfxParameterAssignment structure we can import
 	unsigned long copyParameterAssignmentSize = (newSettingsInfo->storedParameterAssignmentSize < settingsInfo.storedParameterAssignmentSize) ? 
 									newSettingsInfo->storedParameterAssignmentSize : settingsInfo.storedParameterAssignmentSize;
 
@@ -339,9 +339,9 @@ bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 		paramMap[tag] = getParameterTagFromID(parameterIDs[tag], numStoredParameters, newParameterIDs);
 
 	// point to the next data element after the parameter IDs:  the first preset name
-	newPreset = (GenPreset*) ((char*)newParameterIDs + (sizeof(long)*numStoredParameters));
+	newPreset = (DfxGenPreset*) ((char*)newParameterIDs + (sizeof(long)*numStoredParameters));
 	// handy for incrementing the data pointer
-	unsigned long sizeofStoredPreset = sizeof(GenPreset) + (sizeof(float)*(numStoredParameters-2));
+	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(float)*(numStoredParameters-2));
 
 	// the chunk being received only contains one preset
 	if (isPreset)
@@ -356,7 +356,7 @@ bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 	#if DFX_SUPPORT_OLD_VST_SETTINGS
 		// back up the pointer to account for shorter preset names
 		if (oldvst)
-			newPreset = (GenPreset*) ((char*)newPreset + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+			newPreset = (DfxGenPreset*) ((char*)newPreset + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 	#endif
 		// copy all of the parameters that we can for this preset from the chunk
 		for (i=0; i < numParameters; i++)
@@ -376,7 +376,7 @@ bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 			}
 		}
 		// point to the next preset in the received data array
-		newPreset = (GenPreset*) ((char*)newPreset + sizeofStoredPreset);
+		newPreset = (DfxGenPreset*) ((char*)newPreset + sizeofStoredPreset);
 	}
 
 	// the chunk being received has all of the presets plus the MIDI event assignments
@@ -391,7 +391,7 @@ bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 		#if DFX_SUPPORT_OLD_VST_SETTINGS
 			// back up the pointer to account for shorter preset names
 			if (oldvst)
-				newPreset = (GenPreset*) ((char*)newPreset + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+				newPreset = (DfxGenPreset*) ((char*)newPreset + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 		#endif
 			// copy all of the parameters that we can for this preset from the chunk
 			for (i=0; i < numParameters; i++)
@@ -411,7 +411,7 @@ bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 				}
 			}
 			// point to the next preset in the received data array
-			newPreset = (GenPreset*) ((char*)newPreset + sizeofStoredPreset);
+			newPreset = (DfxGenPreset*) ((char*)newPreset + sizeofStoredPreset);
 		}
 	}
 
@@ -421,14 +421,14 @@ if ( !(oldvst && isPreset) )
 #endif
 	// completely clear our table of parameter assignments before loading the new 
 	// table since the new one might not have all of the data members
-	memset(paramAssignments, 0, sizeof(ParameterAssignment)*numParameters);
+	memset(paramAssignments, 0, sizeof(DfxParameterAssignment)*numParameters);
 	// then point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
-	ParameterAssignment *newParamAssignments;
+	DfxParameterAssignment *newParamAssignments;
 //	if (isPreset)
-//		newParamAssignments = (ParameterAssignment*) ((char*)newPreset + sizeofStoredPreset);
+//		newParamAssignments = (DfxParameterAssignment*) ((char*)newPreset + sizeofStoredPreset);
 //	else
-		newParamAssignments = (ParameterAssignment*) ((char*)newPreset + 
+		newParamAssignments = (DfxParameterAssignment*) ((char*)newPreset + 
 								((numStoredPresets-copyPresets) * sizeofStoredPreset));
 	// and load up as many of them as we can
 	for (i=0; i < numParameters; i++)
@@ -603,7 +603,7 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 	// if any are found, automate them with the event message's value
 	for (long tag = 0; tag < numParameters; tag++)
 	{
-		ParameterAssignment *pa = &(paramAssignments[tag]);
+		DfxParameterAssignment *pa = &(paramAssignments[tag]);
 
 		// if the event type doesn't match what this parameter has assigned to it, 
 		// skip to the next parameter parameter
@@ -740,7 +740,7 @@ void DfxSettings::assignParam(long tag, long eventType, long eventChannel, long 
 	{
 		for (long i=0; i < numParameters; i++)
 		{
-			ParameterAssignment *pa = &(paramAssignments[i]);
+			DfxParameterAssignment *pa = &(paramAssignments[i]);
 			// skip this parameter if the event type doesn't match
 			if (pa->eventType != eventType)
 				continue;
@@ -1033,13 +1033,13 @@ void DfxSettings::correctEndian(void *data, bool isReversed, bool isPreset)
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char strings
-	GenPreset *dataPresets = (GenPreset*) ((char*)dataParameterIDs + (sizeof(long)*numStoredParameters));
-	unsigned long sizeofStoredPreset = sizeof(GenPreset) + (sizeof(float) * (numStoredParameters-2));
+	DfxGenPreset *dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(long)*numStoredParameters));
+	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(float) * (numStoredParameters-2));
 #if DFX_SUPPORT_OLD_VST_SETTINGS
 	if (IS_OLD_VST_VERSION(storedVersion))
 	{
 		// back up the pointer to account for shorter preset names
-		dataPresets = (GenPreset*) ((char*)dataPresets + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+		dataPresets = (DfxGenPreset*) ((char*)dataPresets + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 		// and shrink the size to account for shorter preset names
 		sizeofStoredPreset += OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH;
 	}
@@ -1048,12 +1048,12 @@ void DfxSettings::correctEndian(void *data, bool isReversed, bool isPreset)
 	{
 		reversebytes(dataPresets->params, sizeof(float), (unsigned)numStoredParameters);
 		// point to the next preset in the data array
-		dataPresets = (GenPreset*) ((char*)dataPresets + sizeofStoredPreset);
+		dataPresets = (DfxGenPreset*) ((char*)dataPresets + sizeofStoredPreset);
 	}
 #if DFX_SUPPORT_OLD_VST_SETTINGS
 	if (IS_OLD_VST_VERSION(storedVersion))
 		// advance the pointer to compensate for backing up earlier
-		dataPresets = (GenPreset*) ((char*)dataPresets - (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+		dataPresets = (DfxGenPreset*) ((char*)dataPresets - (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 #endif
 
 #if DFX_SUPPORT_OLD_VST_SETTINGS
@@ -1061,7 +1061,7 @@ if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
 {
 #endif
 	// and reverse the byte order of each event assignment
-	ParameterAssignment *dataParameterAssignments = (ParameterAssignment*) dataPresets;
+	DfxParameterAssignment *dataParameterAssignments = (DfxParameterAssignment*) dataPresets;
 	for (long i=0; i < numStoredParameters; i++)
 	{
 		reversebytes( &(dataParameterAssignments->eventType), sizeof(long) );

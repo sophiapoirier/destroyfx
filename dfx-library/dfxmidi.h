@@ -101,42 +101,45 @@ enum
 //----------------------------------------------------------------------------- 
 // constants & macros
 
-#define NUM_FADE_POINTS	30000
-#define FADE_CURVE	2.7
+const long NUM_FADE_POINTS = 30000;
+const double FADE_CURVE = 2.7;
 
-#define PITCHBEND_MAX	36.0
+const double PITCHBEND_MAX = 36.0;
 
 // 128 midi notes
-#define NUM_NOTES	128
+const long NUM_NOTES = 128;
 // 12th root of 2
-#define NOTE_UP_SCALAR	1.059463094359295264561825294946
-#define NOTE_DOWN_SCALAR	0.94387431268169349664191315666792
+const double NOTE_UP_SCALAR = 1.059463094359295264561825294946;
+const double NOTE_DOWN_SCALAR = 0.94387431268169349664191315666792;
 const float MIDI_SCALAR = 1.0f / 127.0f;
 
-#define STOLEN_NOTE_FADE_DUR	48
+const long STOLEN_NOTE_FADE_DUR = 48;
 const float STOLEN_NOTE_FADE_STEP = 1.0f / (float)STOLEN_NOTE_FADE_DUR;
-#define LEGATO_FADE_DUR	39
+const long LEGATO_FADE_DUR = 39;
 const float LEGATO_FADE_STEP = 1.0f / LEGATO_FADE_DUR;
 
-#define EVENTS_QUEUE_SIZE	12000
+const long EVENTS_QUEUE_SIZE = 12000;
 
-#define isNote(A)	( ((A) == kMidiNoteOn) || ((A) == kMidiNoteOff) )
+inline bool isNote(int midiStatus)
+{
+	return (midiStatus == kMidiNoteOn) || (midiStatus == kMidiNoteOff);
+}
 
 
 //----------------------------------------------------------------------------- 
 // types
 
 // this holds MIDI event information
-struct DfxMidiEvent {
+typedef struct {
 	int status;	// the event status MIDI byte
 	int byte1;	// the first MIDI data byte
 	int byte2;	// the second MIDI data byte
 	long delta;	// the delta offset (the sample position in the current block where the event occurs)
 	int channel;	// the MIDI channel
-};
+} DfxMidiEvent;
 
 // this holds information for each MIDI note
-struct NoteTable {
+typedef struct {
 	int velocity;	// note velocity - 7-bit MIDI value
 	float noteAmp;	// the gain for the note, scaled with velocity, curve, & influence
 	long attackDur;	// duration, in samples, of the attack phase
@@ -149,7 +152,7 @@ struct NoteTable {
 	long smoothSamples;	// counter for quickly fading cut-off notes, for smoothity
 	float *tail1;	// a little buffer of output samples for smoothing a cut-off note (left channel)
 	float *tail2;	// (right channel)
-};
+} NoteTable;
 
 
 //-----------------------------------------------------------------------------
