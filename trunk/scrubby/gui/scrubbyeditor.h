@@ -19,8 +19,6 @@ public:
 	virtual void mouseDown(float, float, unsigned long, DGKeyModifiers) { }
 	virtual void mouseTrack(float, float, unsigned long, DGKeyModifiers) { }
 	virtual void mouseUp(float, float, DGKeyModifiers) { }
-	virtual bool mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
-		{	return false;	}
 
 	void setDisplayItem(long inItemNum);
 
