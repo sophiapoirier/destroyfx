@@ -153,7 +153,9 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	EventTypeSpec controlMouseEvents[] = {
 								  { kEventClassMouse, kEventMouseDragged }, 
 								  { kEventClassMouse, kEventMouseUp }, 
-//								  { kEventClassMouse, kEventMouseMoved } 
+//								  { kEventClassMouse, kEventMouseMoved }, 
+								  { kEventClassKeyboard, kEventRawKeyDown }, 
+								  { kEventClassKeyboard, kEventRawKeyRepeat }, 
 								};
 	windowEventHandlerUPP = NewEventHandlerUPP(DGWindowEventHandler);
 	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), windowEventHandlerUPP, 
@@ -347,6 +349,27 @@ UInt32 DfxGuiEditor::requestItemID()
 }
 
 //-----------------------------------------------------------------------------
+OSStatus loadManualFile()
+{
+	// no assumptions can be made about how long the reference is valid, 
+	// and the caller should not attempt to release the CFBundleRef object
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	if (pluginBundleRef != NULL)
+	{
+		CFStringRef fileCFName = CFSTR( PLUGIN_NAME_STRING" manual.html" );
+		CFURLRef fileURL = CFBundleCopyResourceURL(pluginBundleRef, fileCFName, NULL, NULL);
+		if (fileURL != NULL)
+		{
+			OSStatus status = LSOpenCFURLRef(fileURL, NULL);
+			CFRelease(fileURL);
+			return status;
+		}
+	}
+
+	return fnfErr;	// file not found error
+}
+
+//-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool writeAutomation)
 {
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameters, 
@@ -503,6 +526,32 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 //-----------------------------------------------------------------------------
 static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void *inUserData)
 {
+	if (GetEventClass(inEvent) == kEventClassKeyboard)
+	{
+		if ( (GetEventKind(inEvent) == kEventRawKeyDown) || (GetEventKind(inEvent) == kEventRawKeyRepeat) )
+		{
+			UInt32 keyCode;
+			GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &keyCode);
+			unsigned char charCode;
+			GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
+			UInt32 modifiers;
+			GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+//printf("keyCode = %lu,  charCode = %c\n", keyCode, charCode);
+
+			if ( (keyCode == 44) && (modifiers & cmdKey) )
+			{
+				if (loadManualFile() == noErr)
+					return noErr;
+			}
+
+			return eventNotHandledErr;
+		}
+
+		return eventKindIncorrectErr;
+	}
+
+
+
 	if (GetEventClass(inEvent) != kEventClassMouse)
 		return eventClassIncorrectErr;
 
