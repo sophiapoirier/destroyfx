@@ -38,44 +38,15 @@ first. If you want to get your feet wet making your own VST effects,
 this might be a good place to start. (You can also see and play with
 our effects before they're finished!)
 
-Here's a description of each of the plugins included:
-
-brokenfft/
-
-        My favorite plugin; this converts to the frequency domain
-        using the FFT, and then does a number of crazy effects. This
-        one has an almost limitless variety of sounds that will come
-        out of it...
+Here's a description of each of the plugins included. First, we have
+our "premiere" plugins; these have been released, have fancy GUIs,
+and are pretty thoroughly tested:
 
 transverb/
 
         Fun simple plugin; sort of like a tape-loop with
         independently-moving read/write heads. Lots of great effects
         in this one.
-
-trans/
-
-        Converts to and from other domains (sin, tan, derivative, e^x,
-        fft); the idea is that you run this and its inverse with some
-        other plugins in-between.
-
-decimate/
-
-        Reduces bit depth and sample rate in order to produce
-        artifacting. Extreme settings. Also includes a bonus "DESTROY"
-        effect.
-
-intercom/
-
-        Adds noise to your sound based on its RMS volume; can also
-        swap samples around.
-
-geometer/
-
-        A laboratory for waveform geometry. All sorts of crazy
-        effects are possible with this thing, and sports a neat
-        visual display of what's happening to your sound.
-
 
 scrubby/
 
@@ -84,14 +55,86 @@ scrubby/
         to control the scratch speeds using a MIDI keyboard,
         among other advanced features.
 
+bufferoverride/
+
+        Reads data into a buffer that might be smaller or larger
+        than the host buffer size, and then keeps repeating that
+        buffer over and over. Gives a sort of robotic or
+        stuttering effect to your sound, though many twisted
+        uses are possible.
+
+skidder/
+
+        Turns your sound on and off at regular or random intervals.
+        Practically every facet is controllable by a parameter.
+        Skidder also features the possibility for extreme settings
+        and MIDI control.
+
+
+The following plugins aren't released yet, but have GUIs and are
+usable. You can think of these like Alpha or Beta tests:
+
+geometer/
+
+        A laboratory for waveform geometry. All sorts of crazy
+        effects are possible with this thing, and sports a neat
+        visual display of what's happening to your sound.
+
+
+These plugins are somewhat mature, but are lacking GUIs and thorough
+testing:
+
+brokenfft/
+
+        One of my favorite plugins; this converts to the frequency
+        domain using the FFT, and then does a number of crazy effects. 
+	This one has an almost limitless variety of sounds that will come
+        out of it...
+
+
+These plugins are in the beginning stages, may be buggy, but we plan
+on finishing them eventually:
+
+trans/
+
+        Converts to and from other domains (sin, tan, derivative, e^x,
+        fft); the idea is that you run this and its inverse with some
+        other plugins in-between.
+
+
+These plugins are not in development, perhaps because their functionality
+has been subsumed by another plugin:
+
+decimate/
+
+        Reduces bit depth and sample rate in order to produce
+        artifacting. Extreme settings. Also includes a bonus "DESTROY"
+        effect. Geometer is much more flexible and beautiful than
+        this oldie.
+
+intercom/
+
+        Adds noise to your sound based on its RMS volume; can also
+        swap samples around. Again, Geometer probably has more
+        flexible effects that are similar in sound.
+
+
+
 In the source package, each plugin has a corresponding directory, as
 well as a corresponding plugin_win32 directory containing MS VC++
-project files. Some day we will probably have Codewarrior build files
-for the Mac, too. Some day after that we may have all of the media for
-building the plugins with GUIs.
+project files. In these directories, a batch file called "make.bat"
+can be used from the command line to build the plugin, provided that
+the Visual Studio tools are in your path. Some directories have
+Visual Studio project files, but these are no longer supported.
 
-Here is a description of each of the directories in the source
-distribution:
+Some plugins have plugin_mac directories with .h "entry" files. You
+can use these to set various #defines in your Codewarrior projects to
+build the plugins in different ways. Maybe some day Marc will read
+this text and replace it with instructions on how to build with
+CodeWarrior -- otherwise, you're on your own!
+
+Here is a description of each of the remaining directories in the
+source distribution:
 
 windowingstub/
 
@@ -119,6 +162,12 @@ vstsdk/
         SDK from Steinberg for creating VST plugins. There is no code
         in this directory; you should get the headers and class stubs
         from Steinberg's site.
+
+vstsdk_win32/
+
+        Binary libraries for the VST GUI. There's nothing in here
+        except for directions on where to get the library from Steinberg's
+        site.
 
 stub-plugin/
 
