@@ -1,0 +1,30 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+128                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/geometer-background.bmp"
+129                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/regular-scrollthing.bmp"
+130                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/learning-scrollthing.bmp"
+131                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/fine-tune-down136.bmp"
+132                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/fine-tune-up137.bmp"
+133                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/window-shape.bmp"
+134                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/window-size.bmp"
+135                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/landmarks-how.bmp"
+136                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/how-to-mess-them-up.bmp"
+137                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/how-to-recreate-buttons.bmp"
+138                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/one-at-19-250.bmp"
+139                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/two-at-19-285.bmp"
+140                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/op1-at-258-250.bmp"
+141                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/op2-at-258-285.bmp"
+142                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/op3-at-258-320.bmp"
+143                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/help-general.bmp"
+144                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/help-windowshape.bmp"
+145                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/help-landmarks.bmp"
+146                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/help-ops.bmp"
+147                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/help-recreate.bmp"
+148                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/midi-learn-at-228-324.bmp"
+149                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/destroy-fx-link149.bmp"
+150                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/smart-electronix-link150.bmp"
+
