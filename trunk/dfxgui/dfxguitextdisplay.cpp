@@ -4,15 +4,17 @@
 const size_t kDGTextDisplay_stringSize = 256;
 
 //-----------------------------------------------------------------------------
-void genericDisplayTextProcedure(float value, char * outText, void * userData);
-void genericDisplayTextProcedure(float value, char * outText, void * userData)
+void genericDisplayTextProcedure(float inValue, char * outText, void * inUserData);
+void genericDisplayTextProcedure(float inValue, char * outText, void * inUserData)
 {
 	if (outText != NULL)
-		sprintf(outText, "%.1f", value);
+		sprintf(outText, "%.2f", inValue);
 }
 
 
 
+//-----------------------------------------------------------------------------
+// Text Display
 //-----------------------------------------------------------------------------
 DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							long					inParamID, 
@@ -188,11 +190,77 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRe
 #endif
 }
 
+#if MAC
+//-----------------------------------------------------------------------------
+OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, CGContextRef inContext, long inPortHeight)
+{
+	if ( (inText == NULL) || (inRegion == NULL) )
+		return paramErr;
+
+	CGContextSetShouldSmoothFonts(inContext, shouldAntiAlias);
+	CGContextSetShouldAntialias(inContext, shouldAntiAlias);	// it appears that I gotta do this, too
+	CGContextSetRGBFillColor(inContext, fontColor.r, fontColor.g, fontColor.b, 1.0f);
+
+// XXX do something to actually allow you to set the font ID and the font size and the font color
+	ThemeFontID themeFontID = kThemeLabelFont;
+//kThemeSystemFont kThemeSystemFontDetail kThemeMiniSystemFont kThemeLabelFont
+
+	// this function is only available in Mac OS X 10.3 or higher
+	if (HIThemeDrawTextBox != NULL)
+	{
+		HIRect bounds = inRegion->convertToCGRect(inPortHeight);
+
+		HIThemeTextInfo textInfo;
+		memset(&textInfo, 0, sizeof(textInfo));
+		textInfo.version = 0;
+		textInfo.state = kThemeStateActive;
+		textInfo.fontID = themeFontID;
+		textInfo.truncationPosition = kHIThemeTextTruncationEnd;
+		textInfo.truncationMaxLines = 1;
+		textInfo.verticalFlushness = kHIThemeTextVerticalFlushCenter;
+		textInfo.options = 0;
+
+		textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushLeft;
+		if (alignment == kDGTextAlign_center)
+			textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushCenter;
+		else if (alignment == kDGTextAlign_right)
+			textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushRight;
+
+	#ifdef FLIP_CG_COORDINATES
+		HIThemeOrientation contextOrientation = kHIThemeOrientationNormal;
+	#else
+		HIThemeOrientation contextOrientation = kHIThemeOrientationInverted;
+	#endif
+
+		return HIThemeDrawTextBox(inText, &bounds, &textInfo, inContext, contextOrientation);
+	}
+	else
+	{
+		Rect bounds = inRegion->convertToRect();
+
+		SetThemeTextColor(kThemeTextColorWhite, 32, true);	// XXX eh, is there a real way to get the graphics device bit-depth value?
+
+		SInt16 justification = teFlushLeft;
+		if (alignment == kDGTextAlign_center)
+			justification = teCenter;
+		else if (alignment == kDGTextAlign_right)
+			justification = teFlushRight;
+
+		return DrawThemeTextBox(inText, themeFontID, kThemeStateActive, false, &bounds, justification, NULL);
+	}
+}
+#endif
+
 //-----------------------------------------------------------------------------
 void DGTextDisplay::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 {
 	lastX = inXpos;
 	lastY = inYpos;
+
+	#if TARGET_PLUGIN_USES_MIDI
+		if (isParameterAttached())
+			getDfxGuiEditor()->setmidilearner(getParameterID());
+	#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -239,6 +307,9 @@ DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * 
 	displayString = (char*) malloc(kDGTextDisplay_stringSize);
 	displayString[0] = 0;
 	parameterAttached = false;	// XXX good enough?
+#if MAC
+	displayCFString = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -247,6 +318,12 @@ DGStaticTextDisplay::~DGStaticTextDisplay()
 	if (displayString != NULL)
 		free(displayString);
 	displayString = NULL;
+
+#if MAC
+	if (displayCFString != NULL)
+		CFRelease(displayCFString);
+	displayCFString = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -264,8 +341,13 @@ void DGStaticTextDisplay::setCFText(CFStringRef inNewText)
 {
 	if (inNewText == NULL)
 		return;
+
+	if (displayCFString != NULL)
+		CFRelease(displayCFString);
+	displayCFString = CFStringCreateCopy(kCFAllocatorDefault, inNewText);
+
 	Boolean success = CFStringGetCString(inNewText, displayString, kDGTextDisplay_stringSize, kCFStringEncodingUTF8);
-	if (success)
+//	if (success)
 		redraw();
 }
 #endif
@@ -286,6 +368,11 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 //		backgroundImage->draw(getBounds(), inContext, inPortHeight, getBounds()->x - (long)(getDfxGuiEditor()->GetXOffset()), getBounds()->y - (long)(getDfxGuiEditor()->GetYOffset()));	// draw underneath-style
 		backgroundImage->draw(getBounds(), inContext, inPortHeight);
 
+#if MAC
+	if (displayCFString != NULL)
+		drawCFText(getBounds(), displayCFString, inContext, inPortHeight);
+	else
+#endif
 	drawText(getBounds(), displayString, inContext, inPortHeight);
 }
 
@@ -294,6 +381,8 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 
 
 
+//-----------------------------------------------------------------------------
+// Static Text Display
 //-----------------------------------------------------------------------------
 DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
 						long inNumStrings, DfxGuiTextAlignment inTextAlignment, DGImage * inBackground, 
@@ -368,4 +457,45 @@ void DGTextArrayDisplay::draw(CGContextRef inContext, long inPortHeight)
 	long stringIndex = GetControl32BitValue(carbonControl) - GetControl32BitMinimum(carbonControl);
 	if ( (stringIndex >= 0) && (stringIndex < numStrings) )
 		drawText(getBounds(), displayStrings[stringIndex], inContext, inPortHeight);
+}
+
+
+
+
+
+
+// XXX Yeah, I know that it's weird to have this be sub-classed from DGTextDisplay since 
+// it involves no text, but the mouse handling in DGTextDisplay is exactly what I want here.  
+// I should think of a better abstraction scheme, though...
+//-----------------------------------------------------------------------------
+// Animation
+//-----------------------------------------------------------------------------
+DGAnimation::DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+						DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground)
+:   DGTextDisplay(inOwnerEditor, inParamID, inRegion, NULL, NULL, inBackground), 
+	animationImage(inAnimationImage), numAnimationFrames(inNumAnimationFrames)
+{
+	if (numAnimationFrames < 1)
+		numAnimationFrames = 1;
+
+	setMouseDragRange(120.0f);  // number of pixels
+}
+
+//-----------------------------------------------------------------------------
+void DGAnimation::draw(CGContextRef inContext, long inPortHeight)
+{
+	if (backgroundImage != NULL)
+		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+
+	if (animationImage != NULL)
+	{
+		SInt32 min = GetControl32BitMinimum(carbonControl);
+		SInt32 max = GetControl32BitMaximum(carbonControl);
+		SInt32 val = GetControl32BitValue(carbonControl);
+		float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
+		long frameIndex = (long) ( valNorm * (float)(numAnimationFrames-1) );
+
+		long yoff = frameIndex * (animationImage->getHeight() / numAnimationFrames);
+		animationImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
+	}
 }
