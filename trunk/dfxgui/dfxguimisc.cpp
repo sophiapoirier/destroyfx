@@ -36,6 +36,7 @@ DGImage::DGImage(const char * inFileName, DfxGuiEditor * inEditor)
 						cgImage = CGImageCreateWithPNGDataProvider(provider, NULL, shouldInterpolate, kCGRenderingIntentDefault);
 					else if ( (CFStringCompare(fileCFExtension, CFSTR("jpg"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) || 
 							(CFStringCompare(fileCFExtension, CFSTR("jpeg"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) || 
+							(CFStringCompare(fileCFExtension, CFSTR("jfif"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) || 
 							(CFStringCompare(fileCFExtension, CFSTR("jpe"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) )
 						cgImage = CGImageCreateWithJPEGDataProvider(provider, NULL, shouldInterpolate, kCGRenderingIntentDefault);
 					CFRelease(fileCFExtension);
