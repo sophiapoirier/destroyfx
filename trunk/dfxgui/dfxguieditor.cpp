@@ -649,7 +649,7 @@ return false;
 
 		ourControl->mouseTrack(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
 
-		return true;
+		return false;	// let it fall through in case the host needs the event
 	}
 
 	if (inEventKind == kEventMouseUp)
@@ -665,7 +665,7 @@ return false;
 //			printf("DGControlMouseHandler -> TellListener(MouseUp, %lu)\n", ourControl->getAUVP().mParameterID);
 		}
 
-		return true;
+		return false;	// let it fall through in case the host needs the event
 	}
 
 	return false;

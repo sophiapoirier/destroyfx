@@ -89,6 +89,12 @@ void DGImage::draw(CGContextRef inContext, UInt32 inPortHeight, DGRect * inRect)
 }
 
 //-----------------------------------------------------------------------------
+void ReleasePreRenderedCGImageBuffer(void *info, const void *data, size_t size)
+{
+	free((void*)data);
+}
+
+//-----------------------------------------------------------------------------
 // create an uncompressed, alpha-premultiplied bitmap image in memory
 // so far as I can tell, this makes drawing PNG files with CGContextDrawImage about 25 times faster
 CGImageRef PreRenderCGImageBuffer(CGImageRef inImage)
@@ -126,7 +132,7 @@ CGImageRef PreRenderCGImageBuffer(CGImageRef inImage)
 			CGContextRelease(context);
 
 			// create data provider for this image buffer
-			CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, buffer, dataSize, NULL);
+			CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, buffer, dataSize, ReleasePreRenderedCGImageBuffer);
 			if (provider != NULL)
 			{
 				// create a CGImage with the data provider

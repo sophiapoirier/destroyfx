@@ -766,8 +766,6 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 						break;
 					case kDfxParamValueType_int:
 					case kDfxParamValueType_uint:
-					case kDfxParamValueType_char:
-					case kDfxParamValueType_uchar:
 						outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
 						break;
 					default:
