@@ -30,12 +30,13 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   setup();
 
   in0 = (float*)malloc(maxframe * sizeof (float));
-  out0 = (float*)malloc(maxbufsize * sizeof (float));
+  out0 = (float*)malloc(maxframe * 2 * sizeof (float));
 
   /* prevmix is only a single third long */
   prevmix = (float*)malloc(maxframe / 2 * sizeof (float));
 
   /* resume sets up buffers and sizes */
+  changed = 1;
   resume ();
 }
 
@@ -49,21 +50,30 @@ PLUGIN::~PLUGIN() {
 
 void PLUGIN::resume() {
 
+  if (changed) ioChanged();
+
   framesize = MKBUFSIZE(bufsizep);
   third = framesize / 2;
   bufsize = third * 3;
 
-  /* set up buffers. Prevmix and first third of output are always filled with zeros. */
+  /* set up buffers. Prevmix and first frame of output are always filled with zeros. */
 
   for (int i = 0; i < third; i ++) {
     prevmix[i] = 0.0;
+  }
+
+  for (int j = 0; i < framesize; i ++) {
     out0[i] = 0.0;
   }
   
-  /* start input at beginning. Output has a third of silence. */
+  /* start input at beginning. Output has a frame of silence. */
   insize = 0;
   outstart = 0;
   outsize = framesize;
+
+  if (changed) setInitialDelay(framesize);
+
+  changed = 0;
 
 }
 
@@ -72,8 +82,14 @@ void PLUGIN::suspend () {
 
 }
 
+/* tail is the same as delay, of course */
+long PLUGIN::getTailSize() { return framesize; }
+
 void PLUGIN::setParameter(long index, float value) {
   switch (index) {
+  case 0:
+    changed = 1;
+    /* fallthrough */
   default:
     if (index >= 0 && index < NUM_PARAMS)
       *paramptrs[index].ptr = value;
@@ -145,7 +161,8 @@ void PLUGIN::processw(float * in, float * out, long samples) {
   ss = !ss;
 
 #if 1
-  for (int i =0 ; i < samples; i++) out[i] = (float)ss;
+  /*  for (int i =0 ; i < samples; i++) out[i] = (float)ss; */
+  for (int i = 0; i < samples; i ++) out[i] = in[i];
 
 #else
 
