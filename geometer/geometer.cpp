@@ -75,6 +75,9 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
 
   /* resume sets up buffers and sizes */
   changed = 1;
+  
+  cs = new dfxmutex();
+
   resume ();
 }
 
@@ -88,6 +91,8 @@ PLUGIN::~PLUGIN() {
   free(pointy);
   free(tempx);
   free(tempy);
+
+  delete cs;
 
   if (chunk) delete chunk;
 
@@ -845,7 +850,9 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      processw(in0, out0+outstart+outsize, framesize);
+      cs->grab();
+	  processw(in0, out0+outstart+outsize, framesize);
+	  cs->release();
 
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */

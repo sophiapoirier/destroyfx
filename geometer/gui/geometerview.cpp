@@ -76,18 +76,21 @@ void GeometerView::reflect() {
 
 #endif
 
+  geom->cs->grab();
   int npts = geom->processw(inputs, outputs, samples);
+  geom->cs->release();
 
   if (npts >= samples) npts = samples - 1;
 
   for(int k=0; k < npts; k++) {
-    pointsx[k] = geom->pointx[k];
-    pointsy[k] = geom->pointy[k];
+	pointsx[k] = geom->pointx[k];
+	pointsy[k] = geom->pointy[k];
   }
 
   numpts = npts;
 
   setDirty();
+  
 }
 
 void GeometerView::init() {
