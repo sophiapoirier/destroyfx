@@ -175,8 +175,8 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 //---------------------------------------------------------------------------------------------------
 void BufferOverride::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
 {
-	long numChannels = getnumoutputs();
-	long ch;
+	unsigned long numChannels = getnumoutputs();
+	unsigned long ch;
 	float oldDivisor = divisor;
 
 //-------------------------SAFETY CHECK----------------------
@@ -215,33 +215,24 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 			(divisorLFO->bTempoSync || bufferLFO->bTempoSync) )
 	{
 		// calculate the tempo at the current processing buffer
-		if ( (userTempo > getparametermin_f(kTempo)) || !hostCanDoTempo )	// get the tempo from the user parameter
+		if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
+		{
+			currentTempoBPS = timeinfo.tempo_bps;
+			// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
+			if (timeinfo.playbackChanged)
+			{
+				needResync = true;
+				currentForcedBufferSize = 1;
+				writePos = 1;
+				minibufferSize = 1;
+				prevMinibufferSize = 0;
+				smoothcount = smoothDur = 0;
+			}
+		}
+		else	// get the tempo from the user parameter
 		{
 			currentTempoBPS = userTempo / 60.0f;
 			needResync = false;	// we don't want it true if we're not syncing to host tempo
-		}
-		else	// get the tempo from the host
-		{
-			if (timeinfo.tempoIsValid)
-			{
-				currentTempoBPS = timeinfo.tempo_bps;
-				//
-				// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
-				if (timeinfo.playbackChanged)
-				{
-					needResync = true;
-					currentForcedBufferSize = 1;
-					writePos = 1;
-					minibufferSize = 1;
-					prevMinibufferSize = 0;
-					smoothcount = smoothDur = 0;
-				}
-			}
-			else	// do the same stuff as above if the host tempo is not valid
-			{
-				currentTempoBPS = userTempo / 60.0f;
-				needResync = false;	// we don't want it true if we're not syncing to host tempo
-			}
 		}
 	}
 

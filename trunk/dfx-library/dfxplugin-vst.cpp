@@ -28,6 +28,8 @@ void DfxPlugin::resume()
 	setInitialDelay(getlatency_samples());
 	updatesamplerate();
 
+	latencychanged = false;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		wantEvents();
 	#endif
