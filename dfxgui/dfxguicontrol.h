@@ -75,7 +75,7 @@ public:
 	long getParameterID();
 	void setParameterID(long inParameterID);
 #ifdef TARGET_API_AUDIOUNIT
-	AUVParameter & getAUVP()
+	CAAUParameter & getAUVP()
 		{	return auvp;	}
 	void createAUVcontrol();
 	AUCarbonViewControl * getAUVcontrol()
@@ -117,7 +117,7 @@ protected:
 	float				drawAlpha;	// level of overall transparency to draw with (0.0 to 1.0)
 
 #ifdef TARGET_API_AUDIOUNIT
-	AUVParameter 		auvp;
+	CAAUParameter 		auvp;
 	AUCarbonViewControl * auv_control;
 #endif
 #if MAC
@@ -139,7 +139,7 @@ void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEd
 class DGCarbonViewControl : public AUCarbonViewControl
 {
 public:
-	DGCarbonViewControl(AUCarbonViewBase * ownerView, AUParameterListenerRef listener, ControlType type, const AUVParameter &param, ControlRef control);
+	DGCarbonViewControl(AUCarbonViewBase * ownerView, AUParameterListenerRef listener, ControlType type, const CAAUParameter & param, ControlRef control);
 
 	virtual void ControlToParameter();
 	virtual void ParameterToControl(Float32 newValue);

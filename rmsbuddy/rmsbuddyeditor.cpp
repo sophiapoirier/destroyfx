@@ -48,8 +48,8 @@ RMSControl::RMSControl(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos,
 		if (inParamID >= 0)
 		{
 			hasParameter = true;
-			// create AUVParameter andn AUCarbonViewControl convenience objects for this
-			auvParam = AUVParameter(ownerEditor->GetEditAudioUnit(), inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
+			// create an AUCarbonViewControl convenience object for this
+			auvParam = CAAUParameter(ownerEditor->GetEditAudioUnit(), inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
 		#if USE_AUCVCONTROL
 			AUCarbonViewControl * auvc = new AUCarbonViewControl(ownerEditor, ownerEditor->GetParameterListener(), 
 															AUCarbonViewControl::kTypeContinuous, auvParam, carbonControl);
@@ -1020,7 +1020,7 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 		// do this to make Logic's touch automation work
 		if ( ourRMSControl->isParameterAttached() )
 		{
-			AUVParameter * ourAUVP = ourRMSControl->getAUVP();
+			CAAUParameter * ourAUVP = ourRMSControl->getAUVP();
 			// do the new-fangled way, if it's available on the user's system
 			if (AUEventListenerNotify != NULL)
 			{
@@ -1105,7 +1105,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 				// do this to make Logic's touch automation work
 				if ( ourRMSControl->isParameterAttached() )
 				{
-					AUVParameter * ourAUVP = ourRMSControl->getAUVP();
+					CAAUParameter * ourAUVP = ourRMSControl->getAUVP();
 					// do the new-fangled way, if it's available on the user's system
 					if (AUEventListenerNotify != NULL)
 					{

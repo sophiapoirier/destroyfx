@@ -46,14 +46,14 @@ public:
 	// says whether or not this control is connected to an AU parameter
 	bool isParameterAttached()
 		{	return hasParameter;	}
-	AUVParameter * getAUVP()
+	CAAUParameter * getAUVP()
 		{	return &auvParam;	}
 
 protected:
 	RMSBuddyEditor * ownerEditor;
 	long width, height;
 	ControlRef carbonControl;
-	AUVParameter auvParam;
+	CAAUParameter auvParam;
 	bool hasParameter;
 };
 
