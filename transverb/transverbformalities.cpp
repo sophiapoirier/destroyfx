@@ -362,7 +362,7 @@ bool Transverb::loadpreset(long index)
 
 	if (strcmp(getpresetname_ptr(index), "random") == 0)
 	{
-		randomizeParameters(false);
+		randomizeparameters(false);
 		return true;
 	}
 
@@ -374,7 +374,7 @@ bool Transverb::loadpreset(long index)
 
 
 /* this randomizes the values of all of Transverb's parameters, sometimes in smart ways */
-void Transverb::randomizeParameters(bool writeAutomation)
+void Transverb::randomizeparameters(bool writeAutomation)
 {
 // randomize the first 7 parameters
 

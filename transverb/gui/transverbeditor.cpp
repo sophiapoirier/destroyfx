@@ -47,10 +47,10 @@ enum {
 	kTallFaderY = 265,
 	kTallFaderInc = 28,
 
-	kQualityButtonX = kWideFaderX,
+	kButtonX = kWideFaderX,
 	kRandomButtonX = 185,
 	kTomsoundButtonX = 425,
-	kButtonY = 236,
+	kQualityButtonY = 236,
 
 	kFineDownButtonX = 503,
 	kFineUpButtonX = 512,
@@ -59,9 +59,9 @@ enum {
 	kSpeedModeButtonY = 22,
 
 	kMidiLearnButtonX = 237,
-	kMidiLearnButtonY = 249 + 5,
+	kMidiLearnButtonY = 254,
 	kMidiResetButtonX = 288,
-	kMidiResetButtonY = 249 + 5,
+	kMidiResetButtonY = 254,
 
 	kDFXlinkX = 107,
 	kDFXlinkY = 281,
@@ -70,9 +70,9 @@ enum {
 	kSmartElectronixLinkX = 306,
 	kSmartElectronixLinkY = kSuperDFXlinkY,
 
-	kDisplayX = 324,
+	kDisplayX = 318,
 	kDisplayY = 23,
-	kDisplayWidth = 174,
+	kDisplayWidth = 180,
 	kDisplayHeight = 11,
 
 	kFineDownOffset = 3333,
@@ -489,19 +489,19 @@ long TransverbEditor::open(void *ptr)
 	//--initialize the buttons----------------------------------------------
 
 	// quality button
-	size (kQualityButtonX, kButtonY, kQualityButtonX + gQualityButton->getWidth(), kButtonY + (gQualityButton->getHeight())/(numQualities*2));
+	size (kButtonX, kQualityButtonY, kButtonX + gQualityButton->getWidth(), kQualityButtonY + (gQualityButton->getHeight())/(numQualities*2));
 	qualityButton = new MultiKick (size, this, kQuality, numQualities, gQualityButton->getHeight()/(numQualities*2), gQualityButton, point);
 	qualityButton->setValue(effect->getParameter(kQuality));
 	frame->addView(qualityButton);
 
 	// random button
-	size (kRandomButtonX, kButtonY, kRandomButtonX + gRandomButton->getWidth(), kButtonY + (gRandomButton->getHeight())/2);
+	size (kRandomButtonX, kQualityButtonY, kRandomButtonX + gRandomButton->getWidth(), kQualityButtonY + (gRandomButton->getHeight())/2);
 	randomButton = new CKickButton (size, this, kRandomButton, (gRandomButton->getHeight())/2, gRandomButton, point);
 	randomButton->setValue(0.0f);
 	frame->addView(randomButton);
 
 	// TOMSOUND button
-	size (kTomsoundButtonX, kButtonY, kTomsoundButtonX + gOnOffButton->getWidth(), kButtonY + (gOnOffButton->getHeight())/4);
+	size (kTomsoundButtonX, kQualityButtonY, kTomsoundButtonX + gOnOffButton->getWidth(), kQualityButtonY + (gOnOffButton->getHeight())/4);
 	tomsoundButton = new MultiKick (size, this, kTomsound, 2, gOnOffButton->getHeight()/4, gOnOffButton, point);
 	tomsoundButton->setValue(effect->getParameter(kTomsound));
 	frame->addView(tomsoundButton);
@@ -1034,7 +1034,7 @@ void TransverbEditor::valueChanged(CDrawContext* context, CControl* control)
 		case kRandomButton:
 			// only if the button has just been pressed down, not released
 			if (control->getValue() >= 0.5f)
-				((Transverb*)effect)->randomizeParameters(true);
+				((DfxPlugin*)effect)->randomizeparameters(true);
 			break;
 
 		// clicking on these parts of the GUI takes you to Destroy FX or SE web pages

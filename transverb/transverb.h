@@ -120,8 +120,7 @@ public:
   virtual ~Transverb();
 
   virtual bool loadpreset(long index);	// overriden to support the random preset
-// the GUI needs to be able to look at these, so they are public
-  void randomizeParameters(bool writeAutomation = false);
+  virtual void randomizeparameters(bool writeAutomation = false);
 
   long addcore();	// add a DSP core instance to the counter
   void subtractcore();	// subtract one

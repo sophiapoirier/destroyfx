@@ -826,6 +826,12 @@ bool DfxSettings::isLearner(long tag)
 void DfxSettings::setLearner(long tag, long eventBehaviourFlags, 
 							long data1, long data2, float fdata1, float fdata2)
 {
+	// allow this invalid parameter tag, and then exit
+	if (tag == kNoLearner)
+	{
+		learner = kNoLearner;
+		return;
+	}
 	// return if what we got is not a valid parameter index
 	if (paramTagIsValid(tag) == false)
 		return;
@@ -855,17 +861,17 @@ void DfxSettings::setLearner(long tag, long eventBehaviourFlags,
 //-----------------------------------------------------------------------------
 // a plugin editor should call this during valueChanged from a control 
 // to turn MIDI learning on and off, VST parameter style
-void DfxSettings::setParameterMidiLearn(float value)
+void DfxSettings::setParameterMidiLearn(bool value)
 {
-	setLearning(FBOOL(value));
+	setLearning(value);
 }
 
 //-----------------------------------------------------------------------------
 // a plugin editor should call this during valueChanged from a control 
 // to clear MIDI event assignments, VST parameter style
-void DfxSettings::setParameterMidiReset(float value)
+void DfxSettings::setParameterMidiReset(bool value)
 {
-	if (FBOOL(value))
+	if (value)
 	{
 		// if we're in MIDI learn mode and a parameter has been selected, 
 		// then erase its MIDI event assigment (if it has one)
