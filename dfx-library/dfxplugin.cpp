@@ -66,16 +66,6 @@ DfxPlugin::DfxPlugin(
 
 	inputsP = outputsP = NULL;
 
-	aupresets = NULL;
-	if (numPresets > 0)
-	{
-		aupresets = (AUPreset*) malloc(numPresets * sizeof(AUPreset));
-		for (long i=0; i < numPresets; i++)
-		{
-			aupresets[i].presetNumber = i;
-			aupresets[i].presetName = NULL;
-		}
-	}
 	#if TARGET_PLUGIN_USES_MIDI
 		aumidicontrolmap = NULL;
 		if (numParameters > 0)
@@ -195,9 +185,6 @@ DfxPlugin::~DfxPlugin()
 	#endif
 
 	#ifdef TARGET_API_AUDIOUNIT
-		if (aupresets != NULL)
-			free(aupresets);
-		aupresets = NULL;
 		#if TARGET_PLUGIN_USES_MIDI
 			if (aumidicontrolmap != NULL)
 				free(aumidicontrolmap);
