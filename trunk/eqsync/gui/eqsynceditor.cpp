@@ -28,8 +28,10 @@ enum {
 	kDisplayWidth = 81,
 	kDisplayHeight = 12,
 
-	kHostSyncButtonX = 56,
-	kHostSyncButtonY = 160,
+	kHostSyncButtonX = 53,
+	kHostSyncButtonY = 164,
+	kHostSyncButtonX_panther = 56,
+	kHostSyncButtonY_panther = 160,
 	
 	kDestroyFXlinkX = 158,
 	kDestroyFXlinkY = 12,
@@ -196,6 +198,8 @@ long EQSyncEditor::open()
 	long wideFaderY = kWideFaderY;
 	long tallFaderX = kTallFaderX;
 	long tallFaderY = kTallFaderY;
+	long hostSyncButtonX = kHostSyncButtonX;
+	long hostSyncButtonY = kHostSyncButtonY;
 	long destroyFXlinkX = kDestroyFXlinkX;
 	long destroyFXlinkY = kDestroyFXlinkY;
 
@@ -210,11 +214,14 @@ long EQSyncEditor::open()
 	long macOS = GetMacOSVersion() & 0xFFF0;
 	switch (macOS)
 	{
+		// Panther (Mac OS X 10.3)
 		case 0x1030:
 			wideFaderX = kWideFaderX_panther;
 			wideFaderY = kWideFaderY_panther;
 			tallFaderX = kTallFaderX_panther;
 			tallFaderY = kTallFaderY_panther;
+			hostSyncButtonX = kHostSyncButtonX_panther;
+			hostSyncButtonY = kHostSyncButtonY_panther;
 			destroyFXlinkX = kDestroyFXlinkX_panther;
 			destroyFXlinkY = kDestroyFXlinkY_panther;
 			gBackground = new DGImage("eq-sync-background-panther.png", this);
@@ -225,12 +232,14 @@ long EQSyncEditor::open()
 			gHostSyncButton = new DGImage("host-sync-button-panther.png", this);
 			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab-panther.png", this);
 			break;
+		// Jaguar (Mac OS X 10.2)
 		default:
 			gBackground = new DGImage("eq-sync-background.png", this);
 			gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", this);
 			gVerticalSliderBackground = new DGImage("vertical-slider-background.png", this);
 			gSliderHandle = new DGImage("slider-handle.png", this);
 			gSliderHandleClicked = new DGImage("slider-handle-clicked.png", this);
+			gHostSyncButton = new DGImage("host-sync-button-panther.png", this);	// it's the same widget image in Panther and Jaguar
 			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png", this);
 			break;
 	}
@@ -267,11 +276,8 @@ long EQSyncEditor::open()
 
 
 	// create the host sync button
-	if (gHostSyncButton != NULL)
-	{
-		pos.set(kHostSyncButtonX, kHostSyncButtonY, gHostSyncButton->getWidth()/2, gHostSyncButton->getHeight()/2);
-		DGButton * hostSyncButton = new DGButton(this, kTempoAuto, &pos, gHostSyncButton, 2, kDGButtonType_incbutton, true);
-	}
+	pos.set(hostSyncButtonX, hostSyncButtonY, gHostSyncButton->getWidth()/2, gHostSyncButton->getHeight()/2);
+	DGButton * hostSyncButton = new DGButton(this, kTempoAuto, &pos, gHostSyncButton, 2, kDGButtonType_incbutton, true);
 
 	// create the Destroy FX web page link tab
 	pos.set(destroyFXlinkX, destroyFXlinkY, gDestroyFXlinkTab->getWidth(), gDestroyFXlinkTab->getHeight()/2);
