@@ -134,12 +134,6 @@ enum
 };
 
 
-// for backwerds compaxibilitee
-#define IS_OLD_VST_VERSION(version)	((version) < 0x00010000)
-#define OLD_PRESET_MAX_NAME_LENGTH 32
-#ifndef DFX_PRESET_MAX_NAME_LENGTH
-#define DFX_PRESET_MAX_NAME_LENGTH 64
-#endif
 //------------------------------------------------------
 // structure of an API-generic preset
 struct GenPreset
