@@ -40,6 +40,8 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
     FPARAM(interparam[ip], P_INTERPARAM0 + ip, "interparam", 0.0, "???");
   }
 
+  interparam[INTERP_SMOOTHIE] = 0.5;
+
   FPARAM(pointop1, P_POINTOP1, "pointop1", 1.0f, "choose");
   FPARAM(pointop2, P_POINTOP2, "pointop2", 1.0f, "choose");
   FPARAM(pointop3, P_POINTOP3, "pointop3", 1.0f, "choose");
@@ -268,8 +270,12 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
       case INTERP_PULSE:
         strcpy(text, "pulse-debug");
         break;
-      case INTERP_UNSUP1:
-      case INTERP_UNSUP2:
+      case INTERP_FRIENDS:
+	strcpy(text, "friends");
+	break;
+      case INTERP_SING:
+	strcpy(text, "sing");
+	break;
       case INTERP_UNSUP3:
       default:
         strcpy(text, "unsup");
@@ -465,7 +471,9 @@ int PLUGIN::processw(float * in, float * out, long samples,
   switch(MKPOINTSTYLE(pointstyle)) {
 
   case POINT_EXTNCROSS:
-    /* extremities and crossings */
+    /* extremities and crossings 
+       FIXME: this is broken. It generates points out of order!
+    */
 
     ext = 0.0;
     extx = 0;
@@ -620,7 +628,10 @@ int PLUGIN::processw(float * in, float * out, long samples,
   }
   
   case POINT_SPAN:
-    /* bram. next x determined by sample magnitude */
+    /* next x determined by sample magnitude
+       
+    suggested by bram.
+    */
 
     span = (pointparam[3] * pointparam[3]) * samples;
 
@@ -698,6 +709,60 @@ int PLUGIN::processw(float * in, float * out, long samples,
   int u=1, z=0;
   switch(MKINTERPSTYLE(interpstyle)) {
 
+  case INTERP_FRIENDS: {
+    /* bleed each segment into next segment. interparam
+       controls the amount of bleeding, between 0 samples
+       and next-segment-size samples.
+       suggestion by jcreed.
+    */
+
+    /* copy last block verbatim. */
+    if (numpts > 2)
+      for(int s=px[numpts-2]; s < px[numpts-1]; s++)
+	out[s] = in[s];
+
+    /* steady state */
+    int x = numpts - 2;
+    for(; x > 0; x--) {
+      /* x points at the beginning of the segment we'll be bleeding
+	 into. */
+      int sizeright = px[x+1] - px[x];
+      int sizeleft = px[x] - px[x-1];
+      int sizetotal = sizeleft + sizeright;
+
+      int tgtlen = sizeleft + (sizeright * interparam[INTERP_FRIENDS]);
+
+      if (tgtlen > 0) {
+	/* to avoid using temporary storage, copy from end of target
+	   towards beginning, overwriting already used source parts on
+	   the way. */
+	for (int j = tgtlen - 1;
+	     j >= 0;
+	     j--) {
+
+	  /* XXX. use interpolated sampling for these */
+	  if ((j + px[x-1]) > px[x]) {
+	    /* HERE */
+#if 0
+	    float wet = (j - sizeleft) / (float)(tgtlen - sizeleft);
+	    wet = 1.0;
+	      
+	    out[j + px[x-1]] = (in[(int)(px[x-1]] + sizeleft * 
+				                    (j/(float)tgtlen))) * wet
+	      + out[j + px[x-1]] * (1.0f - wet);
+#endif      
+	  } else {
+	    /* no mix */
+	    out[j + px[x-1]] = in[(int)(px[x-1] + sizeleft * 
+					          (j/(float)tgtlen))];
+	  }
+
+	}
+      }
+    }
+
+    break;
+  }
   case INTERP_POLYGON:
     /* linear interpolation - "polygon" 
        interparam causes dimming effect -- at 1.0 it just does
@@ -706,12 +771,13 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     for(u=1; u < numpts; u ++) {
       float denom = (px[u] - px[u-1]);
-      float minterparam = interparam[0] * (py[u-1] + py[u]) * 0.5f;
+      float minterparam = interparam[INTERP_POLYGON] * (py[u-1] + py[u]) * 
+	0.5f;
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) / denom;
         float s = py[u-1] * (1.0f - pct) +
           py[u]   * pct;
-        out[z] = minterparam + (1.0f - interparam[0]) * s;
+        out[z] = minterparam + (1.0f - interparam[INTERP_POLYGON]) * s;
       }
     }
 
@@ -727,12 +793,13 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     for(u=1; u < numpts; u ++) {
       float denom = (px[u] - px[u-1]);
-      float minterparam = interparam[1] * (py[u-1] + py[u]) * 0.5f;
+      float minterparam = interparam[INTERP_WRONGYGON] * (py[u-1] + py[u]) 
+	* 0.5f;
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) / denom;
         float s = py[u-1] * pct +
           py[u]   * (1.0f - pct);
-        out[z] = minterparam + (1.0f - interparam[1]) * s;
+        out[z] = minterparam + (1.0f - interparam[INTERP_WRONGYGON]) * s;
       }
     }
 
@@ -751,12 +818,10 @@ int PLUGIN::processw(float * in, float * out, long samples,
         
         float p = 0.5f * (-cos(float(pi * pct)) + 1.0f);
         
-        /* XXX param should control exponent */
-
-        if (interparam[2] > 0.5f) {
-          p = powf(p, (interparam[2] - 0.16666667f) * 3.0f);
+        if (interparam[INTERP_SMOOTHIE] > 0.5f) {
+          p = powf(p, (interparam[INTERP_SMOOTHIE] - 0.16666667f) * 3.0f);
         } else {
-          p = powf(p, interparam[2] * 2.0f);
+          p = powf(p, interparam[INTERP_SMOOTHIE] * 2.0f);
         }
 
         float s = py[u-1] * (1.0f - p) + py[u]   * p;
@@ -796,8 +861,27 @@ int PLUGIN::processw(float * in, float * out, long samples,
     break;
 
 
-  case INTERP_UNSUP1:
-  case INTERP_UNSUP2:
+  case INTERP_SING:
+
+    for(u=1; u < numpts; u ++) {
+      float oodenom = 1.0 / (px[u] - px[u-1]);
+
+      for(z=px[u-1]; z < px[u]; z++) {
+        float pct = (float)(z-px[u-1]) * oodenom;
+        
+	float wand = sin(float(2.0f * pi * pct));
+	out[z] = wand * 
+	         interparam[INTERP_SING] + 
+	         ((1.0f-interparam[INTERP_SING]) * 
+		  in[z] *
+		  wand);
+      }
+    }
+
+    out[samples-1] = in[samples-1];
+
+
+    break;
   case INTERP_UNSUP3:
   default:
 
