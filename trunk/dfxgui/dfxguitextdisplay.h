@@ -13,7 +13,7 @@ typedef enum {
 
 typedef enum {
 	kDGTextDisplayMouseAxis_horizontal = 1,
-	kDGTextDisplayMouseAxis_vertical = 1 << 1,
+	kDGTextDisplayMouseAxis_vertical = 1 << 1
 } DfxGuiTextDisplayMouseAxis;
 
 
@@ -90,6 +90,9 @@ public:
 		{ }
 
 	void setText(const char * inNewText);
+#if MAC
+	void setCFText(CFStringRef inNewText);
+#endif
 
 protected:
 	char * displayString;
