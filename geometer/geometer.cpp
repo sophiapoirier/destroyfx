@@ -831,20 +831,23 @@ int PLUGIN::processw(float * in, float * out, long samples,
     numpts = 1;
 
     float pp;
-    if (pointparam[POINT_DYDX] > 0.5f) 
+    int above;
+    if (pointparam[POINT_DYDX] > 0.5f) {
       pp = pointparam[POINT_DYDX] - 0.5f;
-    else
+      above = 1;
+    } else {
       pp = 0.5f - pointparam[POINT_DYDX];
+      above = 0;
+    }
 
-    pp *= pp;
-    //    pp *= pp;
+    pp = powf(pp, 2.7f);
 
     for(i = 1; i < samples; i++) {
       
-      if (pointparam[POINT_DYDX] > 0.5f)
+      if (above)
         sign = (in[i] - lasts) > pp;
       else
-	sign = (in[i] - lasts) < pp;
+        sign = (in[i] - lasts) < pp;
 
       lasts = in[i];
 
@@ -1375,7 +1378,7 @@ void PLUGIN::makepresets() {
   programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
   programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
   programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
-  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.234f;
+  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.1250387420637675f;//0.234f;
   programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
   programs[i].param[P_INTERPARAMS + INTERP_SING] = 1.0f;
   programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_FAST);
@@ -1386,7 +1389,7 @@ void PLUGIN::makepresets() {
   programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
   programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
   programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
-  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.528f;
+  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.5707532982591033;//0.528f;
   programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
   programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.2921348f;
   programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_QUARTER);
@@ -1403,7 +1406,7 @@ void PLUGIN::makepresets() {
   programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_LONGPASS);
   programs[i].param[P_OPPAR2S + OP_LONGPASS] = 0.1404494f;
   programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
-  programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.8258427;
+  programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.8258427f;
   i++;
 
   strcpy(programs[i].name, "slower");
