@@ -588,6 +588,20 @@ printf("--------------------------------------------------\n\n");
 	mainPane->addControl(divisorLFOrateLabel);
 
 
+/*
+HMHelpContentRec helptag;
+helptag.version = kMacHelpVersion;
+SetRect(&(helptag.absHotRect), 0, 0, 0, 0);
+helptag.tagSide = kHMInsideTopCenterAligned;
+helptag.content[0].contentType = kHMCFStringContent;
+helptag.content[0].u.tagCFString = CFSTR("ooo yeah, MIDI mode shitz");
+helptag.content[1].contentType = kHMCFStringContent;
+helptag.content[1].u.tagCFString = CFSTR("who deh fuck yoo lookin' at?");
+HMSetControlHelpContent(midiModeButton->getCarbonControl(), &helptag);
+HMSetHelpTagsDisplayed(true);
+*/
+
+
 	// the help mouseover hint thingy
 	pos.set (kHelpDisplayX, kHelpDisplayY, gBackground->getWidth(), kDisplayHeight);
 	helpDisplay = new DGStaticTextDisplay(this, &pos, gBackground, HELP_DISPLAY_FONT);
