@@ -35,6 +35,7 @@ public:
 	// these are part of the AUCarbonViewBase interface
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventRef inEvent);
+	virtual ComponentResult Version();
 
 	AUParameterListenerRef getParameterListener()
 		{	return mParameterListener;	}
@@ -60,6 +61,9 @@ public:
 
 	void automationgesture_begin(long inParameterID);
 	void automationgesture_end(long inParameterID);
+#ifdef TARGET_API_AUDIOUNIT
+	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
+#endif
 
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()

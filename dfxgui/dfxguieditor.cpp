@@ -1,6 +1,7 @@
 #include "dfxgui.h"
 
 #include "dfxplugin.h"
+#include "dfx-au-utilities.h"
 
 
 
@@ -13,9 +14,29 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
 
 
 //-----------------------------------------------------------------------------
-DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
-:	AUCarbonViewBase(inInstance)
+DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
+:	AUCarbonViewBase(inInstance, 0.015f)	// 15 ms parameter notification update interval
 {
+/*
+CFStringRef text = CFSTR("yo dude let's go");
+CFRange foundRange = CFStringFind(text, CFSTR(" "), 0);
+if (foundRange.length != 0)
+{
+CFMutableStringRef mut = CFStringCreateMutableCopy(kCFAllocatorDefault, 0, text);
+if (mut != NULL)
+{
+fprintf(stderr, "\n\tbefore:\n");
+CFShow(mut);
+CFStringFindAndReplace(mut, CFSTR(" "), CFSTR(""), CFRangeMake(0, CFStringGetLength(mut)), 0);
+fprintf(stderr, "\treplaced:\n");
+CFShow(mut);
+CFRelease(mut);
+}
+}
+*/
+
+
+
 	controlsList = NULL;
 	imagesList = NULL;
   
@@ -72,8 +93,7 @@ DfxGuiEditor::~DfxGuiEditor()
 	windowEventHandlerUPP = NULL;
 
 	// only unregister in Mac OS X version 10.2.3 or higher, otherwise this will cause a crash
-	long systemVersion = 0;
-	if ( (Gestalt(gestaltSystemVersion, &systemVersion) == noErr) && ((systemVersion & 0xFFFF) >= 0x1023) )
+	if ( GetMacOSVersion() >= 0x1023 )
 	{
 //fprintf(stderr, "using Mac OS X version 10.2.3 or higher, so our control toolbox class will be unregistered\n");
 		if (dgControlSpec.u.classRef != NULL)
@@ -128,10 +148,13 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	{
 		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.DfxGuiControlClass%lu"), 
 																		PLUGIN_BUNDLE_IDENTIFIER, instanceAddress);
-		if ( RegisterToolboxObjectClass(toolboxClassIDcfstring, NULL, GetEventTypeCount(toolboxClassEvents), toolboxClassEvents, 
-										controlHandlerUPP, this, &newControlClass) == noErr )
-			noSuccessYet = false;
-		CFRelease(toolboxClassIDcfstring);
+		if (toolboxClassIDcfstring != NULL)
+		{
+			if ( RegisterToolboxObjectClass(toolboxClassIDcfstring, NULL, GetEventTypeCount(toolboxClassEvents), toolboxClassEvents, 
+											controlHandlerUPP, this, &newControlClass) == noErr )
+				noSuccessYet = false;
+			CFRelease(toolboxClassIDcfstring);
+		}
 		instanceAddress++;
 	}
 	dgControlSpec.u.classRef = newControlClass;
@@ -153,7 +176,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 						GetEventTypeCount(windowEvents), windowEvents, this, &windowEventHandlerRef);
 
 
-// register for HitTest events on the background embedding pane so that we now when the mouse hovers over it
+// register for HitTest events on the background embedding pane so that we know when the mouse hovers over it
 	EventTypeSpec paneEvents[] = {
 								{ kEventClassControl, kEventControlDraw }, 
 								{ kEventClassControl, kEventControlApplyBackground },
@@ -215,6 +238,15 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	}
 
 	return openErr;
+}
+#endif
+// TARGET_API_AUDIOUNIT
+
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+ComponentResult DfxGuiEditor::Version()
+{
+	return PLUGIN_VERSION;
 }
 #endif
 // TARGET_API_AUDIOUNIT
@@ -474,12 +506,44 @@ long launch_documentation()
 }
 
 
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType)
+{
+	// we're not actually prepared to do anything at this point if we don't yet know which AU we are controlling
+	if (GetEditAudioUnit() == NULL)
+		return kAudioUnitErr_Uninitialized;
+
+	OSStatus result = noErr;
+
+	// do the new-fangled way, if it's available on the user's system
+	if ( IsAvailable_AU2rev1() )
+	{
+		AudioUnitEvent paramEvent;
+		paramEvent.mEventType = inEventType;
+		paramEvent.mArgument.mParameter.mParameterID = inParameterID;
+		paramEvent.mArgument.mParameter.mAudioUnit = GetEditAudioUnit();
+		paramEvent.mArgument.mParameter.mScope = kAudioUnitScope_Global;
+		paramEvent.mArgument.mParameter.mElement = 0;
+		result = AUEventListenerNotify(NULL, NULL, &paramEvent);
+	}
+
+	// as a back-up, also still do the old way, until it's enough obsolete
+	AUVParameter auvp(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
+	if (inEventType == kAudioUnitEvent_BeginParameterChangeGesture)
+		TellListener(auvp, kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
+	else if (inEventType == kAudioUnitEvent_EndParameterChangeGesture)
+		TellListener(auvp, kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+
+	return result;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::automationgesture_begin(long inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	AUVParameter auvp(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
-	TellListener(auvp, kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
+	SendAUParameterEvent((AudioUnitParameterID)inParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
 #endif
 }
 
@@ -487,8 +551,7 @@ void DfxGuiEditor::automationgesture_begin(long inParameterID)
 void DfxGuiEditor::automationgesture_end(long inParameterID)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	AUVParameter auvp(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
-	TellListener(auvp, kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+	SendAUParameterEvent((AudioUnitParameterID)inParameterID, kAudioUnitEvent_EndParameterChangeGesture);
 #endif
 }
 
@@ -720,12 +783,12 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 {
 	UInt32 inEventKind = GetEventKind(inEvent);
+	OSStatus error;
 
 	HIPoint mouseLocation;
-	GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
-	Point mouseLocation_i;
-	mouseLocation_i.h = (short) mouseLocation.x;
-	mouseLocation_i.v = (short) mouseLocation.y;
+	error = GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
+	if (error != noErr)
+		return false;
 
 
 // follow the mouse around, see if it falls over any of our hot spots
@@ -737,10 +800,15 @@ return false;
 		CGrafPtr oldport;
 		GetPort(&oldport);
 		// switch to our window's port
-		WindowRef window;
-		GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
-		SetPort( GetWindowPort(window) );
+		WindowRef window = NULL;
+		error = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
+		if ( (error != noErr) || (window == NULL) )
+			return false;
+		SetPortWindowPort(window);
 
+		Point mouseLocation_i;
+		mouseLocation_i.h = (short) mouseLocation.x;
+		mouseLocation_i.v = (short) mouseLocation.y;
 		// figure out which control is currently under the mouse, if any
 		GlobalToLocal(&mouseLocation_i);
 		ControlRef underCarbonControl = FindControlUnderMouse(mouseLocation_i, window, NULL);
@@ -752,7 +820,7 @@ return false;
 		// restore the original port
 		SetPort(oldport);
 
-		return true;
+		return false;
 	}
 */
 
@@ -762,8 +830,10 @@ return false;
 	if (ourControl == NULL)
 		return false;
 
-	UInt32 modifiers;
-	GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+	UInt32 modifiers = 0;
+	error = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+	if (error != noErr)
+		modifiers = GetCurrentEventKeyModifiers();
 	unsigned long keyModifiers = 0;
 	if (modifiers & cmdKey)
 		keyModifiers |= kDGKeyModifier_accel;
@@ -775,29 +845,33 @@ return false;
 		keyModifiers |= kDGKeyModifier_extra;
 
 // orient the mouse coordinates as though the control were at 0, 0 (for convenience)
-	WindowRef window;
-	GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
-	// the content area of the window (i.e. not the title bar or any borders)
-	Rect windowBounds;
-	GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
-	if ( IsWindowCompositing() )
+	WindowRef window = NULL;
+	error = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
+	// XXX should we bail if this fails?
+	if ( (error == noErr) && (window != NULL) )
 	{
-		Rect paneBounds;
-		GetControlBounds(mCarbonPane, &paneBounds);
-		OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
+		// the content area of the window (i.e. not the title bar or any borders)
+		Rect windowBounds;
+		GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
+		if ( IsWindowCompositing() )
+		{
+			Rect paneBounds;
+			GetControlBounds(mCarbonPane, &paneBounds);
+			OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
+		}
+		// the position of the control relative to the top left corner of the window content area
+		Rect controlBounds;
+		GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
+		mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
+		mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
 	}
-	// the position of the control relative to the top left corner of the window content area
-	Rect controlBounds;
-	GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
-	mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
-	mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
 
 
 	if (inEventKind == kEventMouseDragged)
 	{
 		UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-		OSStatus paramstatus = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
-		if (paramstatus != noErr)
+		error = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
+		if (error != noErr)
 			mouseButtons = GetCurrentEventButtonState();
 
 		ourControl->mouseTrack(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
@@ -814,7 +888,7 @@ return false;
 		// do this to make Logic's touch automation work
 		if ( ourControl->isParameterAttached() )
 		{
-			TellListener(ourControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+			automationgesture_end( ourControl->getParameterID() );
 //			fprintf(stderr, "DGControlMouseHandler -> TellListener(MouseUp, %ld)\n", ourControl->getParameterID());
 		}
 
@@ -834,12 +908,14 @@ bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 
 	if ( (inEventKind == kEventRawKeyDown) || (inEventKind == kEventRawKeyRepeat) )
 	{
-		UInt32 keyCode;
+		UInt32 keyCode = 0;
 		GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &keyCode);
-		unsigned char charCode;
+		unsigned char charCode = 0;
 		GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
-		UInt32 modifiers;
-		GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+		UInt32 modifiers = 0;
+		OSStatus error = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+		if (error != noErr)
+			modifiers = GetCurrentEventKeyModifiers();
 //fprintf(stderr, "keyCode = %lu,  charCode = ", keyCode);
 //if ( (charCode > 0x7F) || iscntrl(charCode) ) fprintf(stderr, "0x%.2X\n", charCode);
 //else fprintf(stderr, "%c\n", charCode);
@@ -868,10 +944,10 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 	if (inEventKind == kEventCommandProcess)
 	{
 		HICommand hiCommand;
-		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
-		if (status != noErr)
-			status = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
-		if (status != noErr)
+		OSStatus error = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+		if (error != noErr)
+			error = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+		if (error != noErr)
 			return false;
 
 		if (hiCommand.commandID == kHICommandAppHelp)
@@ -1028,8 +1104,10 @@ fprintf(stderr, "kEventControlHit\n");
 					mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
 					mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
 
-					UInt32 modifiers;
-					GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+					UInt32 modifiers = 0;
+					OSStatus error = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+					if (error != noErr)
+						modifiers = GetCurrentEventKeyModifiers();
 					unsigned long keyModifiers = 0;
 					if (modifiers & cmdKey)
 						keyModifiers |= kDGKeyModifier_accel;
@@ -1044,7 +1122,7 @@ fprintf(stderr, "kEventControlHit\n");
 					// AUCarbonViewControl::HandleEvent will catch ControlClick but not ControlContextualMenuClick
 					if ( ourDGControl->isParameterAttached() && (inEventKind == kEventControlContextualMenuClick) )
 					{
-						TellListener(ourDGControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
+						automationgesture_begin( ourDGControl->getParameterID() );
 //						fprintf(stderr, "DGControlEventHandler -> TellListener(MouseDown, %ld)\n", ourDGControl->getParameterID());
 					}
 
