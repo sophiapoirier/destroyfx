@@ -34,6 +34,11 @@ DfxParam::DfxParam()
 	#if TARGET_API_AUDIOUNIT
 		valueCFStrings = NULL;
 	#endif
+	numAllocatedValueStrings = 0;
+	customUnitString = NULL;
+
+	// default to not using any custom value display
+	useValueStrings = false;
 
 	// default to allowing values outside of the min/max range
 	enforceValueLimits = false;
@@ -50,38 +55,18 @@ DfxParam::DfxParam()
 //-----------------------------------------------------------------------------
 DfxParam::~DfxParam()
 {
+	// release the parameter value strings, if any
+	releaseValueStrings();
+
 	// release the parameter name
 	if (name != NULL)
 		free(name);
 	name = NULL;
 
-	// release the parameter value strings, if any
-	if (valueStrings != NULL)
-	{
-		for (long i=0; i <= (max.i-min.i); i++)
-		{
-			if (valueStrings[i] != NULL)
-				free(valueStrings[i]);
-			valueStrings[i] = NULL;
-		}
-		free(valueStrings);
-	}
-	valueStrings = NULL;
-
-	#if TARGET_API_AUDIOUNIT
-		// release the CFString versions of the parameter value strings, if any
-		if (valueCFStrings != NULL)
-		{
-			for (long i=0; i <= (max.i-min.i); i++)
-			{
-				if (valueCFStrings[i] != NULL)
-					CFRelease(valueCFStrings[i]);
-				valueCFStrings[i] = NULL;
-			}
-			free(valueCFStrings);
-		}
-		valueCFStrings = NULL;
-	#endif
+	// release the custom unit name string, if there is one
+	if (customUnitString != NULL)
+		free(customUnitString);
+	customUnitString = NULL;
 }
 
 
@@ -101,7 +86,7 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 		strcpy(name, initName);
 	curve = initCurve;
 	unit = initUnit;
-	if ( (unit == kDfxParamUnit_strings) || (unit == kDfxParamUnit_index) )
+	if (unit == kDfxParamUnit_index)
 		SetEnforceValueLimits(true);	// make sure not to go out of any array bounds
 	changed = true;
 
@@ -184,27 +169,6 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 
 	// now squeeze the current value within range, if necessary/desired
 	limit();
-
-	// if we're using value strings, initialize
-	if (unit == kDfxParamUnit_strings)
-	{
-		if (valueStrings)
-			free(valueStrings);
-		long numValueStrings = getmax_i() - getmin_i() + 1;
-		valueStrings = (char**) malloc(numValueStrings * sizeof(char*));
-		for (long i=0; i < numValueStrings; i++)
-			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(char));
-
-		#if TARGET_API_AUDIOUNIT
-			if (valueCFStrings != NULL)
-				free(valueCFStrings);
-			// XXX release each CFString?
-			valueCFStrings = (CFStringRef*) malloc(numValueStrings * sizeof(CFStringRef));
-			for (long i=0; i < numValueStrings; i++)
-				valueCFStrings[i] = NULL;
-		#endif
-
-	}
 }
 
 
@@ -263,14 +227,75 @@ void DfxParam::init_ui(const char *initName, unsigned long initValue, unsigned l
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with boolean variable type
 void DfxParam::init_b(const char *initName, bool initValue, bool initDefaultValue, 
-							DfxParamUnit initUnit, DfxParamCurve initCurve)
+							DfxParamUnit initUnit)
 {
 	DfxParamValue val, def, mn, mx;
 	val.b = initValue;
 	def.b = initDefaultValue;
 	mn.b = false;
 	mx.b = true;
-	init(initName, kDfxParamValueType_boolean, val, def, mn, mx, initUnit, initCurve);
+	init(initName, kDfxParamValueType_boolean, val, def, mn, mx, initUnit, kDfxParamCurve_linear);
+}
+
+//-----------------------------------------------------------------------------
+void DfxParam::releaseValueStrings()
+{
+	// release the parameter value strings, if any
+	if (valueStrings != NULL)
+	{
+		for (long i=0; i < numAllocatedValueStrings; i++)
+		{
+			if (valueStrings[i] != NULL)
+				free(valueStrings[i]);
+			valueStrings[i] = NULL;
+		}
+		free(valueStrings);
+	}
+	valueStrings = NULL;
+
+	#if TARGET_API_AUDIOUNIT
+		// release the CFString versions of the parameter value strings, if any
+		if (valueCFStrings != NULL)
+		{
+			for (long i=0; i < numAllocatedValueStrings; i++)
+			{
+				if (valueCFStrings[i] != NULL)
+					CFRelease(valueCFStrings[i]);
+				valueCFStrings[i] = NULL;
+			}
+			free(valueCFStrings);
+		}
+		valueCFStrings = NULL;
+	#endif
+}
+
+//-----------------------------------------------------------------------------
+// set a value string's text contents
+void DfxParam::setusevaluestrings(bool newMode)
+{
+	useValueStrings = newMode;
+
+	// if we're using value strings, initialize
+	if (newMode)
+	{
+		// release any value strings arrays that may have previously been allocated
+		releaseValueStrings();
+
+		// determine how many items there are in the array from the parameter value range
+		numAllocatedValueStrings = getmax_i() - getmin_i() + 1;
+		valueStrings = (char**) malloc(numAllocatedValueStrings * sizeof(char*));
+		for (long i=0; i < numAllocatedValueStrings; i++)
+		{
+			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(char));
+			valueStrings[i][0] = 0;	// default to empty strings
+		}
+
+		#if TARGET_API_AUDIOUNIT
+			valueCFStrings = (CFStringRef*) malloc(numAllocatedValueStrings * sizeof(CFStringRef));
+			for (long i=0; i < numAllocatedValueStrings; i++)
+				valueCFStrings[i] = NULL;
+		#endif
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -325,10 +350,13 @@ char * DfxParam::getvaluestring_ptr(long index)
 // safety check for an index into the value strings array
 bool DfxParam::ValueStringIndexIsValid(long index)
 {
-	if (unit != kDfxParamUnit_strings)
+	if ( !useValueStrings )
 		return false;
-
+	if (valueStrings == NULL)
+		return false;
 	if ( (index < getmin_i()) || (index > getmax_i()) )
+		return false;
+	if (valueStrings[index] == NULL)
 		return false;
 
 	return true;
@@ -1013,10 +1041,111 @@ void DfxParam::sethidden(bool newHide)
 
 //-----------------------------------------------------------------------------
 // get a copy of the text of the parameter name
-void DfxParam::getname(char *text)
+void DfxParam::getname(char *outText)
 {
-	if (name && text)
-		strcpy(text, name);
+	if (name && outText)
+		strcpy(outText, name);
+}
+
+//-----------------------------------------------------------------------------
+// get a text string of the unit type
+void DfxParam::getunitstring(char *outText)
+{
+	if (outText == NULL)
+		return;
+
+	switch (unit)
+	{
+		case kDfxParamUnit_generic:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_quantity:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_percent:
+			strcpy(outText, "%%");
+			break;
+		case kDfxParamUnit_portion:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_lineargain:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_decibles:
+			strcpy(outText, "dB");
+			break;
+		case kDfxParamUnit_drywetmix:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_hz:
+			strcpy(outText, "Hz");
+			break;
+		case kDfxParamUnit_seconds:
+			strcpy(outText, "seconds");
+			break;
+		case kDfxParamUnit_ms:
+			strcpy(outText, "ms");
+			break;
+		case kDfxParamUnit_samples:
+			strcpy(outText, "samples");
+			break;
+		case kDfxParamUnit_scalar:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_divisor:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_exponent:
+			strcpy(outText, "exponent");
+			break;
+		case kDfxParamUnit_semitones:
+			strcpy(outText, "semitones");
+			break;
+		case kDfxParamUnit_octaves:
+			strcpy(outText, "octaves");
+			break;
+		case kDfxParamUnit_cents:
+			strcpy(outText, "cents");
+			break;
+		case kDfxParamUnit_notes:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_pan:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_bpm:
+			strcpy(outText, "bpm");
+			break;
+		case kDfxParamUnit_beats:
+			strcpy(outText, "beats");
+			break;
+		case kDfxParamUnit_index:
+			strcpy(outText, "");
+			break;
+		case kDfxParamUnit_custom:
+			if (customUnitString == NULL)
+				strcpy(outText, "");
+			else
+				strcpy(outText, customUnitString);
+			break;
+		case kDfxParamUnit_undefined:
+		default:
+			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// set the text for a custom unit type display
+void DfxParam::setcustomunitstring(const char *inText)
+{
+	if (inText == NULL)
+		return;
+
+	// allocate for the custom unit type string if we haven't yet
+	if (customUnitString == NULL)
+		customUnitString = (char*) malloc(DFX_PARAM_MAX_UNIT_STRING_LENGTH * sizeof(char));
+
+	strcpy(customUnitString, inText);
 }
 
 

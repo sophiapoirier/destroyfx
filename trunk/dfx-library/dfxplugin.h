@@ -368,26 +368,38 @@ public:
 	void initparameter_f(long parameterIndex, const char *initName, float initValue, float initDefaultValue, 
 						float initMin, float initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear);
+						DfxParamCurve initCurve = kDfxParamCurve_linear, 
+						const char *initCustomUnitString = NULL);
 	void initparameter_d(long parameterIndex, const char *initName, double initValue, double initDefaultValue, 
 						double initMin, double initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear);
+						DfxParamCurve initCurve = kDfxParamCurve_linear, 
+						const char *initCustomUnitString = NULL);
 	void initparameter_i(long parameterIndex, const char *initName, long initValue, long initDefaultValue, 
 						long initMin, long initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-						DfxParamCurve initCurve = kDfxParamCurve_stepped);
+						DfxParamCurve initCurve = kDfxParamCurve_stepped, 
+						const char *initCustomUnitString = NULL);
 	void initparameter_ui(long parameterIndex, const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
 						unsigned long initMin, unsigned long initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear);
+						DfxParamCurve initCurve = kDfxParamCurve_linear, 
+						const char *initCustomUnitString = NULL);
 	void initparameter_b(long parameterIndex, const char *initName, bool initValue, bool initDefaultValue, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear);
-	void initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, long initNumItems);
+						DfxParamUnit initUnit = kDfxParamUnit_undefined);
+	void initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, 
+						long initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index);
 
+	void setparameterusevaluestrings(long parameterIndex, bool newMode=true)
+		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setusevaluestrings(newMode);	}
+	bool getparameterusevaluestrings(long parameterIndex)
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getusevaluestrings();	else return false;	}
 	bool setparametervaluestring(long parameterIndex, long stringIndex, const char *inText);
 	bool getparametervaluestring(long parameterIndex, long stringIndex, char *outText);
+	void getparameterunitstring(long parameterIndex, char *outText)
+		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].getunitstring(outText);	}
+	void setcustomunitstring(long parameterIndex, const char *inText)
+		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcustomunitstring(inText);	}
 	char * getparametervaluestring_ptr(long parameterIndex, long stringIndex);
 #if TARGET_API_AUDIOUNIT
 	CFStringRef * getparametervaluecfstrings(long parameterIndex)

@@ -291,62 +291,78 @@ void DfxPlugin::do_reset()
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_f(long parameterIndex, const char *initName, float initValue, 
 						float initDefaultValue, float initMin, float initMax, 
-						DfxParamUnit initUnit, DfxParamCurve initCurve)
+						DfxParamUnit initUnit, DfxParamCurve initCurve, 
+						const char *initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
 		parameters[parameterIndex].init_f(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
+		// set the custom unit string, if there is one
+		if (initCustomUnitString != NULL)
+			parameters[parameterIndex].setcustomunitstring(initCustomUnitString);
 	}
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_d(long parameterIndex, const char *initName, double initValue, 
 						double initDefaultValue, double initMin, double initMax, 
-						DfxParamUnit initUnit, DfxParamCurve initCurve)
+						DfxParamUnit initUnit, DfxParamCurve initCurve, 
+						const char *initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
 		parameters[parameterIndex].init_d(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
+		// set the custom unit string, if there is one
+		if (initCustomUnitString != NULL)
+			parameters[parameterIndex].setcustomunitstring(initCustomUnitString);
 	}
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_i(long parameterIndex, const char *initName, long initValue, 
 						long initDefaultValue, long initMin, long initMax, 
-						DfxParamUnit initUnit, DfxParamCurve initCurve)
+						DfxParamUnit initUnit, DfxParamCurve initCurve, 
+						const char *initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
 		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
+		// set the custom unit string, if there is one
+		if (initCustomUnitString != NULL)
+			parameters[parameterIndex].setcustomunitstring(initCustomUnitString);
 	}
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_ui(long parameterIndex, const char *initName, unsigned long initValue, 
 						unsigned long initDefaultValue, unsigned long initMin, unsigned long initMax, 
-						DfxParamUnit initUnit, DfxParamCurve initCurve)
+						DfxParamUnit initUnit, DfxParamCurve initCurve, 
+						const char *initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
 		parameters[parameterIndex].init_ui(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
+		// set the custom unit string, if there is one
+		if (initCustomUnitString != NULL)
+			parameters[parameterIndex].setcustomunitstring(initCustomUnitString);
 	}
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_b(long parameterIndex, const char *initName, bool initValue, bool initDefaultValue, 
-						DfxParamUnit initUnit, DfxParamCurve initCurve)
+						DfxParamUnit initUnit)
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_b(initName, initValue, initDefaultValue, initUnit, initCurve);
+		parameters[parameterIndex].init_b(initName, initValue, initDefaultValue, initUnit);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -355,11 +371,12 @@ void DfxPlugin::initparameter_b(long parameterIndex, const char *initName, bool 
 //-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
-void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, long initNumItems)
+void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, long initNumItems, DfxParamUnit initUnit)
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, kDfxParamUnit_strings, kDfxParamCurve_stepped);
+		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, initUnit, kDfxParamCurve_stepped);
+		setparameterusevaluestrings(parameterIndex, true);	// indicate that we will use custom value display strings
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -631,8 +648,9 @@ void DfxPlugin::update_preset(long presetIndex)
 		au_preset.presetName = getpresetcfname(presetIndex);
 		SetAFactoryPresetAsCurrent(au_preset);
 		PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, (AudioUnitElement)0);
+	#endif
 
-	#elif TARGET_API_VST
+	#if TARGET_API_VST
 		TARGET_API_BASE_CLASS::setProgram(presetIndex);
 		// tell the host to update the generic editor display with the new settings
 		AudioEffectX::updateDisplay();

@@ -235,94 +235,102 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
 								| kAudioUnitParameterFlag_IsWritable;
 
-	// the complicated part:  getting the unit type
-	switch (getparameterunit(inParameterID))
+	// the complicated part:  getting the unit type, 
+	// but easy if we use value strings for value display
+	if (getparameterusevaluestrings(inParameterID))
+		outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
+	else
 	{
-		case kDfxParamUnit_generic:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-			break;
-		case kDfxParamUnit_quantity:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;	// XXX assume it's an integer?
-			break;
-		case kDfxParamUnit_percent:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Percent;
-			break;
-		case kDfxParamUnit_portion:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-			break;
-		case kDfxParamUnit_lineargain:
-			outParameterInfo.unit = kAudioUnitParameterUnit_LinearGain;
-			break;
-		case kDfxParamUnit_decibles:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Decibels;
-			break;
-		case kDfxParamUnit_drywetmix:
-			outParameterInfo.unit = kAudioUnitParameterUnit_EqualPowerCrossfade;
-			break;
-		case kDfxParamUnit_hz:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Hertz;
-			break;
-		case kDfxParamUnit_seconds:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Seconds;
-			break;
-		case kDfxParamUnit_ms:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Milliseconds;
-			break;
-		case kDfxParamUnit_samples:
-			outParameterInfo.unit = kAudioUnitParameterUnit_SampleFrames;
-			break;
-		case kDfxParamUnit_scalar:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Rate;
-			break;
-		case kDfxParamUnit_divisor:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-			break;
-		case kDfxParamUnit_exponent:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-			break;
-		case kDfxParamUnit_semitones:
-			outParameterInfo.unit = kAudioUnitParameterUnit_RelativeSemiTones;
-			break;
-		case kDfxParamUnit_octaves:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Octaves;
-			break;
-		case kDfxParamUnit_cents:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Cents;
-			break;
-		case kDfxParamUnit_notes:
-			outParameterInfo.unit = kAudioUnitParameterUnit_MIDINoteNumber;
-			break;
-		case kDfxParamUnit_pan:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Pan;
-			break;
-		case kDfxParamUnit_bpm:
-			outParameterInfo.unit = kAudioUnitParameterUnit_BPM;
-			break;
-		case kDfxParamUnit_beats:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Beats;
-			break;
-		case kDfxParamUnit_index:
-		case kDfxParamUnit_strings:
-			outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
-			break;
+		switch (getparameterunit(inParameterID))
+		{
+			case kDfxParamUnit_generic:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+				break;
+			case kDfxParamUnit_quantity:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;	// XXX assume it's an integer?
+				break;
+			case kDfxParamUnit_percent:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Percent;
+				break;
+			case kDfxParamUnit_portion:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+				break;
+			case kDfxParamUnit_lineargain:
+				outParameterInfo.unit = kAudioUnitParameterUnit_LinearGain;
+				break;
+			case kDfxParamUnit_decibles:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Decibels;
+				break;
+			case kDfxParamUnit_drywetmix:
+				outParameterInfo.unit = kAudioUnitParameterUnit_EqualPowerCrossfade;
+				break;
+			case kDfxParamUnit_hz:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Hertz;
+				break;
+			case kDfxParamUnit_seconds:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Seconds;
+				break;
+			case kDfxParamUnit_ms:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Milliseconds;
+				break;
+			case kDfxParamUnit_samples:
+				outParameterInfo.unit = kAudioUnitParameterUnit_SampleFrames;
+				break;
+			case kDfxParamUnit_scalar:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Rate;
+				break;
+			case kDfxParamUnit_divisor:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+				break;
+			case kDfxParamUnit_exponent:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+				break;
+			case kDfxParamUnit_semitones:
+				outParameterInfo.unit = kAudioUnitParameterUnit_RelativeSemiTones;
+				break;
+			case kDfxParamUnit_octaves:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Octaves;
+				break;
+			case kDfxParamUnit_cents:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Cents;
+				break;
+			case kDfxParamUnit_notes:
+				outParameterInfo.unit = kAudioUnitParameterUnit_MIDINoteNumber;
+				break;
+			case kDfxParamUnit_pan:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Pan;
+				break;
+			case kDfxParamUnit_bpm:
+				outParameterInfo.unit = kAudioUnitParameterUnit_BPM;
+				break;
+			case kDfxParamUnit_beats:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Beats;
+				break;
+			case kDfxParamUnit_index:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
+				break;
+			case kDfxParamUnit_custom:
+				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+				break;
 
-		default:
-			// if we got to this point, try using the value type to determine the unit type
-			switch (getparametervaluetype(inParameterID))
-			{
-				case kDfxParamValueType_boolean:
-					outParameterInfo.unit = kAudioUnitParameterUnit_Boolean;
-					break;
-				case kDfxParamValueType_int:
-				case kDfxParamValueType_uint:
-				case kDfxParamValueType_char:
-				case kDfxParamValueType_uchar:
-					outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
-					break;
-				default:
-					outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-					break;
-			}
+			default:
+				// if we got to this point, try using the value type to determine the unit type
+				switch (getparametervaluetype(inParameterID))
+				{
+					case kDfxParamValueType_boolean:
+						outParameterInfo.unit = kAudioUnitParameterUnit_Boolean;
+						break;
+					case kDfxParamValueType_int:
+					case kDfxParamValueType_uint:
+					case kDfxParamValueType_char:
+					case kDfxParamValueType_uchar:
+						outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
+						break;
+					default:
+						outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+						break;
+				}
+		}
 	}
 
 
@@ -341,7 +349,7 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 	if (!parameterisvalid(inParameterID))
 		return kAudioUnitErr_InvalidProperty;
 
-	if (getparameterunit(inParameterID) == kDfxParamUnit_strings)
+	if (getparameterusevaluestrings(inParameterID))
 	{
 		CFStringRef * outArray = getparametervaluecfstrings(inParameterID);
 		// if we don't actually have strings set, exit with an error
