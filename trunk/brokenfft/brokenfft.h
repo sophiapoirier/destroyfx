@@ -44,8 +44,13 @@ enum { P_BUFSIZE, P_SHAPE,
        P_ECHOLOW,
        P_ECHOHI,
        P_POSTROT,
+       P_LOWP,
        P_MOMENTS,
        P_BRIDE,
+       P_BLOW,
+       P_CONV,
+       P_ALOW,
+       P_NORM,
        NUM_PARAMS};
 
 struct param {
@@ -104,6 +109,8 @@ public:
   virtual long fxIdle();
 
   virtual void processw(float * in, float * out, long samples);
+
+  void normalize(long, float);
 
   bool getVendorString(char *text) {
     strcpy (text, "Destroy FX");
@@ -224,6 +231,12 @@ protected:
   float bride;
 
   float moments;
+
+  float lowpass;
+  float blow;
+  float convolve;
+  float afterlow;
+  float norm;
 
 };
 
