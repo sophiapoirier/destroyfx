@@ -1,0 +1,12 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+128                     BITMAP  DISCARDABLE     "background.bmp"
+129                     BITMAP  DISCARDABLE     "fader-slide.bmp"
+130                     BITMAP  DISCARDABLE     "fader-handle.bmp"
+131                     BITMAP  DISCARDABLE     "implode-button.bmp"
+132                     BITMAP  DISCARDABLE     "destroy-fx-link.bmp"
+
