@@ -30,14 +30,14 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
 
   FPARAM(pointstyle, P_POINTSTYLE, "points where", 0.0, "choose");
 
-  for(int pp = 0; pp < NUM_POINTSTYLES; pp++) {
-    FPARAM(pointparam[pp], P_POINTPARAM0 + pp, "pointparam", 0.04f, "??");
+  for(int pp = 0; pp < MAX_POINTSTYLES; pp++) {
+    FPARAM(pointparam[pp], P_POINTPARAMS + pp, "pointparam", 0.04f, "??");
   }
 
   FPARAM(interpstyle, P_INTERPSTYLE, "interp how", 0.0, "choose");
 
-  for(int ip = 0; ip < NUM_INTERPSTYLES; ip++) {
-    FPARAM(interparam[ip], P_INTERPARAM0 + ip, "interparam", 0.0, "???");
+  for(int ip = 0; ip < MAX_INTERPSTYLES; ip++) {
+    FPARAM(interparam[ip], P_INTERPARAMS + ip, "interparam", 0.0, "???");
   }
 
   interparam[INTERP_SMOOTHIE] = 0.5;
@@ -219,9 +219,6 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
         strcpy(text, "best");
         break;
       case WINDOW_COS2:
-      case WINDOW_UNSUP1:
-      case WINDOW_UNSUP2:
-      case WINDOW_UNSUP3:
       default:
         strcpy(text, "cos^2");
         break;
@@ -245,9 +242,6 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
       case POINT_DYDX:
         strcpy(text, "dy/dx");
         break;
-      case POINT_UNSUP1:
-      case POINT_UNSUP2:
-      case POINT_UNSUP3:
       default:
         strcpy(text, "unsup");
         break;
@@ -276,7 +270,6 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
       case INTERP_SING:
 	strcpy(text, "sing");
 	break;
-      case INTERP_UNSUP3:
       default:
         strcpy(text, "unsup");
         break;
@@ -301,8 +294,12 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
       case OP_SHORTPASS:
         strcpy(text, "shortpass");
         break;
-      case OP_UNSUP1:
-      case OP_UNSUP2:
+      case OP_SLOW:
+	strcpy(text, "slow");
+	break;
+      case OP_FAST:
+	strcpy(text, "fast");
+	break;
       case OP_UNSUP3:
       default:
         strcpy(text, "unsup");
@@ -352,7 +349,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
            my idea is to double the frequency ...
         */
 
-        tempy[t] = (op_param[0] * 2.0f - 1.0f) * py[i];
+        tempy[t] = (op_param[OP_DOUBLE] * 2.0f - 1.0f) * py[i];
         tempx[t] = (px[i] + px[i+1]) >> 1;
 
         t++;
@@ -398,7 +395,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
     tempx[0] = px[0];
     tempy[0] = py[0];
 
-    int stretch = (op_param[3] * op_param[3]) * samples;
+    int stretch = (op_param[OP_LONGPASS] * op_param[OP_LONGPASS]) * samples;
     int np = 1;
 
     for(int i=1; i < (npts-1); i ++) {
@@ -428,22 +425,49 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
        specified amount, zero the 2nd endpoint.
     */
 
-    int stretch = (op_param[4] * op_param[4]) * samples;
+    int stretch = (op_param[OP_SHORTPASS] * op_param[OP_SHORTPASS]) * samples;
 
-    for (int i=1; i < samples; i ++) {
+    for (int i=1; i < npts; i ++) {
       if (px[i] - px[i-1] > stretch) py[i] = 0.0f;
     }
 
     break;
   }
-  case OP_UNSUP1:
-  case OP_UNSUP2:
+  case OP_SLOW: {
+    /* slow points down. stretches the points out so that
+       the tail is lost, but preserves their y values. */
+    
+    float factor = 1.0 + op_param[OP_SLOW];
+
+    int i;
+    for(i = 0; i < (npts-1); i ++) {
+      px[i] *= factor;
+      if (px[i] > samples) {
+	/* this sample can't stay. */
+	i --;
+	break;
+      }
+    }
+    /* but save last point */
+    px[i] = px[npts-1];
+    py[i] = py[npts-1];
+    
+    npts = i + 1;
+
+    break;
+  }
+  case OP_FAST: {
+    
+
+
+    break;
+  }
   case OP_UNSUP3:
   default:
     /* nothing ... */
     break;
 
-  } /* end of main switch statement */
+  } /* end of main switch(op) statement */
 
   return npts;
 }
@@ -683,9 +707,6 @@ int PLUGIN::processw(float * in, float * out, long samples,
     break;
 
 
-  case POINT_UNSUP1:
-  case POINT_UNSUP2:
-  case POINT_UNSUP3:
   default:
     /* nothing, unsupported... */
     numpts = 1;
@@ -748,13 +769,13 @@ int PLUGIN::processw(float * in, float * out, long samples,
 	    wet = 1.0;
 	      
 	    out[j + px[x-1]] = (in[(int)(px[x-1]] + sizeleft * 
-				                    (j/(float)tgtlen))) * wet
+				   (j/(float)tgtlen))) * wet
 	      + out[j + px[x-1]] * (1.0f - wet);
 #endif      
 	  } else {
 	    /* no mix */
 	    out[j + px[x-1]] = in[(int)(px[x-1] + sizeleft * 
-					          (j/(float)tgtlen))];
+					(j/(float)tgtlen))];
 	  }
 
 	}
@@ -849,18 +870,41 @@ int PLUGIN::processw(float * in, float * out, long samples,
     break;
 
 
-  case INTERP_PULSE:
+  case INTERP_PULSE: {
 
     /* FIXME - generalize this to a shaped pulse of 
        constant width */
 
+    int wid = (int)(100.0 * interparam[INTERP_PULSE]);
+    
     for(i = 0; i < samples; i++) out[i] = 0.0f;
 
-    for(z = 0; z < numpts; z ++) { out[px[z]] += py[z]; }
+    for(z = 0; z < numpts; z ++) { 
+      out[px[z]] = magmax(out[px[z]], py[z]);
+
+      if (wid > 0) {
+	/* put w samples on the left, stopping if we hit a sample
+	   greater than what we're placing */
+	int w = wid;
+	float onedivwid = 1.0f / (float)(wid + 1);
+	for(int i=px[z]-1; i >= 0 && w > 0; i--, w--) {
+	  float sam = py[z] * (w * onedivwid);
+	  if ((out[i] + sam) * (out[i] + sam) > (sam * sam)) out[i] = sam;
+	  else out[i] += sam;
+	}
+
+	w = wid;
+	for(int ii=px[z]+1; ii < samples && w > 0; ii++, w--) {
+	  float sam = py[z] * (w * onedivwid);
+	  out[ii] = sam;
+	}
+
+      }
+    }
 
     break;
 
-
+  }
   case INTERP_SING:
 
     for(u=1; u < numpts; u ++) {
@@ -871,10 +915,10 @@ int PLUGIN::processw(float * in, float * out, long samples,
         
 	float wand = sin(float(2.0f * pi * pct));
 	out[z] = wand * 
-	         interparam[INTERP_SING] + 
-	         ((1.0f-interparam[INTERP_SING]) * 
-		  in[z] *
-		  wand);
+	  interparam[INTERP_SING] + 
+	  ((1.0f-interparam[INTERP_SING]) * 
+	   in[z] *
+	   wand);
       }
     }
 
@@ -882,7 +926,6 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
 
     break;
-  case INTERP_UNSUP3:
   default:
 
     /* unsupported ... ! */
@@ -985,9 +1028,6 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
           }
           break;
         case WINDOW_COS2:
-        case WINDOW_UNSUP1:
-        case WINDOW_UNSUP2:
-        case WINDOW_UNSUP3:
         default:
           for(z = 0; z < third; z ++) {
             float p = 0.5f * (-cos(float(pi * ((float)z * oneDivThird))) + 1.0f);

@@ -26,6 +26,11 @@
 
 #define GUI
 
+/* MAX_THING gives the maximum number of things I
+   ever expect to have; this affects the way the
+   parameter is stored by the host.
+*/
+
 
 /* the types of landmark generation operations */
 enum { POINT_EXTNCROSS, 
@@ -33,10 +38,8 @@ enum { POINT_EXTNCROSS,
        POINT_RANDOM, 
        POINT_SPAN, 
        POINT_DYDX, 
-       POINT_UNSUP1, 
-       POINT_UNSUP2, 
-       POINT_UNSUP3, 
-       NUM_POINTSTYLES
+       NUM_POINTSTYLES,
+       MAX_POINTSTYLES=64,
 };
 
 /* the types of waveform regeneration operations */
@@ -47,8 +50,8 @@ enum { INTERP_POLYGON,
        INTERP_PULSE, 
        INTERP_FRIENDS, 
        INTERP_SING,
-       INTERP_UNSUP3, 
-       NUM_INTERPSTYLES
+       NUM_INTERPSTYLES,
+       MAX_INTERPSTYLES=64,
 };
 
 /* the types of operations on points */
@@ -57,10 +60,10 @@ enum { OP_DOUBLE,
        OP_QUARTER, 
        OP_LONGPASS, 
        OP_SHORTPASS, 
-       OP_UNSUP1, 
-       OP_UNSUP2, 
+       OP_SLOW, 
+       OP_FAST, 
        OP_UNSUP3, 
-       NUM_OPS
+       NUM_OPS,
 };
 
 /* the types of window shapes available for smoothity */
@@ -69,43 +72,27 @@ enum { WINDOW_TRIANGLE,
        WINDOW_WEDGE, 
        WINDOW_COS, 
        WINDOW_COS2, 
-       WINDOW_UNSUP1, 
-       WINDOW_UNSUP2, 
-       WINDOW_UNSUP3, 
-       NUM_WINDOWSHAPES
+       NUM_WINDOWSHAPES,
+       MAX_WINDOWSHAPES=16,
 };
 
-#define MKPOINTSTYLE(f)   ( paramSteppedScaled((f), NUM_POINTSTYLES) )
-#define UNMKPOINTSTYLE(i)   ( paramSteppedUnscaled((i), NUM_POINTSTYLES) )
-#define MKINTERPSTYLE(f)   ( paramSteppedScaled((f), NUM_INTERPSTYLES) )
-#define UNMKINTERPSTYLE(i)   ( paramSteppedUnscaled((i), NUM_INTERPSTYLES) )
-#define MKPOINTOP(f)   ( paramSteppedScaled((f), NUM_OPS) )
-#define UNMKPOINTOP(i)   ( paramSteppedUnscaled((i), NUM_OPS) )
-#define MKWINDOWSHAPE(f)   ( paramSteppedScaled((f), NUM_WINDOWSHAPES) )
-#define UNMKWINDOWSHAPE(i)   ( paramSteppedUnscaled((i), NUM_WINDOWSHAPES) )
+#define MKPOINTSTYLE(f)      ( paramSteppedScaled((f),   MAX_POINTSTYLES) )
+#define UNMKPOINTSTYLE(i)    ( paramSteppedUnscaled((i), MAX_POINTSTYLES) )
+#define MKINTERPSTYLE(f)     ( paramSteppedScaled((f),   MAX_INTERPSTYLES) )
+#define UNMKINTERPSTYLE(i)   ( paramSteppedUnscaled((i), MAX_INTERPSTYLES) )
+#define MKPOINTOP(f)         ( paramSteppedScaled((f),   NUM_OPS) )
+#define UNMKPOINTOP(i)       ( paramSteppedUnscaled((i), NUM_OPS) )
+#define MKWINDOWSHAPE(f)     ( paramSteppedScaled((f),   MAX_WINDOWSHAPES) )
+#define UNMKWINDOWSHAPE(i)   ( paramSteppedUnscaled((i), MAX_WINDOWSHAPES) )
 
 
 /* the names of the parameters */
 enum { P_BUFSIZE, P_SHAPE, 
        P_POINTSTYLE, 
-        P_POINTPARAM0,
-        P_POINTPARAM1,
-        P_POINTPARAM2,
-        P_POINTPARAM3,
-        P_POINTPARAM4,
-        P_POINTPARAM5,
-        P_POINTPARAM6,
-        P_POINTPARAM7,
-       P_INTERPSTYLE,
-        P_INTERPARAM0,
-        P_INTERPARAM1,
-        P_INTERPARAM2,
-        P_INTERPARAM3,
-        P_INTERPARAM4,
-        P_INTERPARAM5,
-        P_INTERPARAM6,
-        P_INTERPARAM7,
-       P_POINTOP1, 
+        P_POINTPARAMS,
+       P_INTERPSTYLE = P_POINTPARAMS + MAX_POINTSTYLES,
+        P_INTERPARAMS,
+       P_POINTOP1 = P_INTERPARAMS + MAX_INTERPSTYLES,
         P_OPPAR1_0, 
         P_OPPAR1_1, 
         P_OPPAR1_2, 
@@ -275,10 +262,10 @@ private:
 		      int * tempx, float * tempy);
 
   float pointstyle;
-  float pointparam[NUM_POINTSTYLES];
+  float pointparam[MAX_POINTSTYLES];
 
   float interpstyle;
-  float interparam[NUM_INTERPSTYLES];
+  float interparam[MAX_INTERPSTYLES];
 
   float pointop1;
   float pointop2;
