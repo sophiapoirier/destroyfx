@@ -1,0 +1,20 @@
+<STYLE TYPE="text/css">
+
+	H1 { text-indent: 0em }
+	h1.title { font: 45px Charcoal,Verdana,Trebuchet MS,Helvetica ; font-weight: bold ; text-align: center ; color: #000000 }
+
+	P { text-indent: 0em }
+	p.intro { font: 13px Geneva,Arial,Verdana ; text-indent: 0em ; text-align: justify ; color: #000000 }
+	p.label { font: 13px Geneva,Arial,Verdana ; font-weight: bold }
+	p.desc { font: 13px Geneva,Arial,Verdana ;  text-indent: 0em ; text-align: justify }
+	p.footer { font: 12px Geneva,Arial,Verdana ; text-align: center }
+
+	A { text-decoration: none }
+	A:link { color: #750927 ; font-weight: bold }
+	A:hover { color: #b00939 ; font-weight: bold }
+	A:visited { color: #753027 ; font-weight: bold }
+	A:active { color: #DD4444 ; font-weight: bold }
+
+	div.line { border: 1px; border-style: solid; border-color: black; width: 100% }
+
+</STYLE>
