@@ -603,7 +603,7 @@ float DfxParam::contract(double realValue)
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
-inline double contractparametervalue(double realValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
+double contractparametervalue(double realValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
 {
 	double valueRange = maxValue - minValue;
 
@@ -824,7 +824,7 @@ double DfxParam::expand(float genValue)
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-inline double expandparametervalue(double genValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
+double expandparametervalue(double genValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
 {
 	double valueRange = maxValue - minValue;
 
