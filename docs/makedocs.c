@@ -40,10 +40,8 @@ enum {
 	kNumArgs
 };
 
-// strcasestr doesn't appear to be included with BSD or Darwin
-// XXX this is not a valid way to check if strcasestr is available
-#ifndef strcasestr
-char * strcasestr(const char *big, const char *little)
+// hmmm, strcasestr doesn't appear to be included with BSD or Darwin...
+char * dfx_strcasestr(const char *big, const char *little)
 {
 	if ( (big == NULL) || (little == NULL) )
 		return NULL;
@@ -56,7 +54,6 @@ char * strcasestr(const char *big, const char *little)
 	}
 	return NULL;
 }
-#endif
 
 
 
@@ -174,6 +171,7 @@ int main(int argc, char **argv)
 						rootstrpos++;
 					}
 					cvsrootpathstr[rootstrpos] = 0;	// terminate the string
+					strcat(cvsrootpathstr, ":");
 				}
 				fclose(cvsrootf);
 			}
@@ -195,15 +193,13 @@ int main(int argc, char **argv)
 					for (linepos2=0; linepos2 < (linesize2-1); linepos2++)
 						cvsrepositorypathstr[linepos2] = linestr2[linepos2];
 					cvsrepositorypathstr[linepos2] = 0;	// terminate the string
+					strcat(cvsrepositorypathstr, "/");
 				}
 				fclose(cvsrepositoryf);
 			}
 
 			fprintf(destf, "<!--\n");
-			fprintf(destf, "\tthis file built from:  ");
-			if ( (strlen(cvsrootpathstr) > 0) && (strlen(cvsrepositorypathstr) > 0) )
-				fprintf(destf, "%s:%s/", cvsrootpathstr, cvsrepositorypathstr);
-			fprintf(destf, "%s\n", sourcefilebase);
+			fprintf(destf, "\tthis file built from:  %s%s%s\n", cvsrootpathstr, cvsrepositorypathstr, sourcefilebase);
 			if (strlen(versionstr) > 0)
 				fprintf(destf, "\tfile version:  %s\n", versionstr);
 			if (strlen(datestr) > 0)
@@ -246,7 +242,7 @@ int main(int argc, char **argv)
 					if (strncasecmp(firstword, LINK_TAG, strlen(LINK_TAG)) == 0)
 					{
 						// find where the source filename tag attribute begins
-						char *linksource = strcasestr(linestr_copy + i, LINK_SOURCE);
+						char *linksource = dfx_strcasestr(linestr_copy + i, LINK_SOURCE);
 						// looks like we found a linked filename attribute
 						if (linksource != NULL)
 						{
