@@ -50,9 +50,9 @@ ComponentResult DfxPlugin::Initialize()
 // any DSP-specific resources should be released here
 void DfxPlugin::Cleanup()
 {
-	TARGET_API_BASE_CLASS::Cleanup();	// XXX doesn't actually do anything now, but maybe at some point?
-
 	do_cleanup();
+
+	TARGET_API_BASE_CLASS::Cleanup();	// XXX doesn't actually do anything now, but maybe at some point?
 }
 
 //-----------------------------------------------------------------------------
