@@ -1,19 +1,23 @@
-<style type="text/css">
+	B { font-weight: bold }
 
 	H1 { text-indent: 0em }
-	h1.title { font: 39px Charcoal,Verdana,Trebuchet MS,Helvetica ; font-weight: bold ; text-align: center ; color: #000000 }
+	H1.title
+	{
+		font: 39px Charcoal, Verdana, "Trebuchet MS", Helvetica, sans-serif ;
+		font-weight: bold ;
+		text-align: center ;
+		color: #000000 ;
+	}
 
-	P { text-indent: 0em }
-	p.intro { font: 13px Geneva,Arial,Verdana ; text-indent: 0em ; text-align: justify ; color: #000000 }
-	p.declaration { font: 13px Geneva,Arial,Verdana ; text-indent: 0em ; text-align: center }
-	p.label { font: 13px Geneva,Arial,Verdana ; font-weight: bold }
-	p.desc { font: 13px Geneva,Arial,Verdana ;  text-indent: 0em ; text-align: justify }
-	p.footer { font: 12px Geneva,Arial,Verdana ; text-align: center }
+	P { font: 13px Geneva, Arial, Verdana, sans-serif ; text-indent: 0em }
+	P.intro { text-indent: 0em ; text-align: justify ; color: #000000 }
+	P.declaration { text-align: center ; text-indent: 0em }
+	P.label { font-weight: bold }
+	P.desc { text-align: justify ; text-indent: 0em }
+	P.footer { font-size: 12px ; text-align: center }
 
 	A { text-decoration: none }
-	a:link { color: #750927 ; font-weight: bold }
-	a:hover { color: #b00939 ; font-weight: bold }
-	a:visited { color: #753027 ; font-weight: bold }
-	a:active { color: #DD4444 ; font-weight: bold }
-
-</style>
+	A:link { color: #750927 ; font-weight: bold }
+	A:hover { color: #b00939 ; font-weight: bold }
+	A:visited { color: #753027 ; font-weight: bold }
+	A:active { color: #DD4444 ; font-weight: bold }
