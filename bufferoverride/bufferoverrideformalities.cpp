@@ -4,7 +4,7 @@
 #include "bufferoverride.hpp"
 #endif
 
-#include "bufferoverrideeditor.hpp"
+#include "vstgui.h"		// for AEffGuiEditor::setParameter()
 
 #include <stdio.h>
 #include <stdlib.h>

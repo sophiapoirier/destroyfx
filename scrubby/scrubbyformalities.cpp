@@ -4,9 +4,7 @@
 #include "scrubby.hpp"
 #endif
 
-#ifndef __scrubbyeditor
-#include "scrubbyeditor.hpp"
-#endif
+#include "vstgui.h"		// for AEffGuiEditor::setParameter()
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -811,8 +809,10 @@ void Scrubby::getRealValues()
 
 
 
+#pragma mark _________main_________
+
 //-----------------------------------------------------------------------------
-//                                    main()                                  |
+//                                   main()                                   |
 //-----------------------------------------------------------------------------
 
 // prototype of the export function main
