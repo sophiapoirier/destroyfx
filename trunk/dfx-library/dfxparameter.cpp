@@ -937,7 +937,7 @@ bool DfxParam::limit()
 		return false;
 
 	// remember the old value in order to later see if it changed
-	DfxParamValue oldValue = value;
+	DfxParamValue tempold = value;
 
 	switch (valueType)
 	{

@@ -11,19 +11,12 @@
 #endif
 
 // only necessary if using a custom GUI
-#if TARGET_PLUGIN_HAS_GUI
-	#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Transverb editor"
-	#define PLUGIN_EDITOR_ENTRY_POINT	"TransverbEditorEntry"
-#endif
+#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Transverb editor"
+#define PLUGIN_EDITOR_ENTRY_POINT	"TransverbEditorEntry"
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"like a delay that can play back the delay buffer at different speeds"
-#define PLUGIN_RES_ID	3000
-#if TARGET_PLUGIN_HAS_GUI
-	#define PLUGIN_EDITOR_ID	'DFtV'
-	#define PLUGIN_EDITOR_DESCRIPTION_STRING	"pretty blue interface for DFX TRANSVERB"
-	#define PLUGIN_EDITOR_RES_ID	9000
-#endif
+#define PLUGIN_EDITOR_DESCRIPTION_STRING	"pretty blue interface for DFX TRANSVERB"
 
 
 #define USING_HERMITE	1

@@ -1,8 +1,8 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
-This is our Audio Unit resource stuff that, so far, serves no purpose.
-(Can you help me make Rez (the Mac OS X resource compiler) see header defines?)
+This is our Audio Unit resource stuff.
 written by Marc Poirier, October 2002
+(Can you help me make Rez (the Mac OS X resource compiler) see header defines?)
 ------------------------------------------------------------------------*/
 
 #include "AudioUnit.r"
@@ -17,7 +17,7 @@ written by Marc Poirier, October 2002
 #else
 	#define RES_ID	3000
 #endif
-	
+
 #if TARGET_PLUGIN_IS_INSTRUMENT
 	#define COMP_TYPE	kAudioUnitType_MusicDevice
 #elif TARGET_PLUGIN_USES_MIDI
@@ -53,6 +53,10 @@ written by Marc Poirier, October 2002
 #if TARGET_PLUGIN_HAS_GUI
 //----------------------------------------------------------------------------- 
 // resources for the plugin editor component
+
+#ifndef __AUDIOUNITCARBONVIEW_R__
+	#include <AudioUnit/AudioUnitCarbonView.r>
+#endif
 
 #ifdef PLUGIN_EDITOR_RES_ID
 	#define RES_ID	PLUGIN_EDITOR_RES_ID

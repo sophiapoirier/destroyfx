@@ -11,19 +11,12 @@
 #endif
 
 // only necessary if using a custom GUI
-#if TARGET_PLUGIN_HAS_GUI
-	#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Monomaker editor"
-	#define PLUGIN_EDITOR_ENTRY_POINT	"MonomakerEditorEntry"
-#endif
+#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Monomaker editor"
+#define PLUGIN_EDITOR_ENTRY_POINT	"MonomakerEditorEntry"
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"a simple mono-merging and stereo-recentering utility"
-#define PLUGIN_RES_ID	3000
-#if TARGET_PLUGIN_HAS_GUI
-	#define PLUGIN_EDITOR_ID	'monV'
-	#define PLUGIN_EDITOR_DESCRIPTION_STRING	"virtual reality interface for DFX Monomaker"
-	#define PLUGIN_EDITOR_RES_ID	9000
-#endif
+#define PLUGIN_EDITOR_DESCRIPTION_STRING	"virtual reality interface for DFX Monomaker"
 
 
 #define DFX_SUPPORT_OLD_VST_SETTINGS 1

@@ -30,11 +30,6 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	needResync = NULL;
 	numBuffers = 0;
 
-	// allocate memory for these arrays
-	pitchSteps = (bool*) malloc(NUM_PITCH_STEPS * sizeof(bool));
-	activeNotesTable = (long*) malloc(NUM_PITCH_STEPS * sizeof(long));
-	for (int i=0; i < NUM_PITCH_STEPS; i++)
-		activeNotesTable[i] = 0;
 	tempoRateTable = new TempoRateTable;
 
 
@@ -124,25 +119,14 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		update_preset(0);	// make host see that current preset is 0
 	#endif
 
-	#if TARGET_API_VST
-		#if TARGET_PLUGIN_HAS_GUI
-			editor = new ScrubbyEditor(this);
-		#endif
-
+	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+		editor = new ScrubbyEditor(this);
 	#endif
 }
 
 //-----------------------------------------------------------------------------------------
 Scrubby::~Scrubby()
 {
-	// deallocate the memory from these arrays
-	if (pitchSteps != NULL)
-		free(pitchSteps);
-	pitchSteps = NULL;
-	if (activeNotesTable != NULL)
-		free(activeNotesTable);
-	activeNotesTable = NULL;
-
 #if TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
@@ -153,12 +137,28 @@ Scrubby::~Scrubby()
 //-------------------------------------------------------------------------
 long Scrubby::initialize()
 {
+	// allocate memory for these arrays
+	if (pitchSteps == NULL)
+		pitchSteps = (bool*) malloc(NUM_PITCH_STEPS * sizeof(bool));
+	if (activeNotesTable == NULL)
+		activeNotesTable = (long*) malloc(NUM_PITCH_STEPS * sizeof(long));
+
+	if ( (pitchSteps == NULL) || (activeNotesTable == NULL) )
+		return -10875;	// AUFailedInitialization error code
+
 	return 0;
 }
 
 //-------------------------------------------------------------------------
 void Scrubby::cleanup()
 {
+	// deallocate the memory from these arrays
+	if (pitchSteps != NULL)
+		free(pitchSteps);
+	pitchSteps = NULL;
+	if (activeNotesTable != NULL)
+		free(activeNotesTable);
+	activeNotesTable = NULL;
 }
 
 //-----------------------------------------------------------------------------------------

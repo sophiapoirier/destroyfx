@@ -54,7 +54,7 @@ void Monomaker::processaudio(const float **inputs, float **outputs, unsigned lon
 	float in1, in2, out1, out2;
 	// input signal pointers, in order to support mono or stereo input
 	const float *input1 = inputs[0], *input2 = (getnuminputs() < 2) ? inputs[0] : inputs[1];
-	// parameter values
+	// fetch the current parameter values
 	float monomerge = getparameter_scalar(kMonomerge);
 	long monomergemode = getparameter_i(kMonomergeMode);
 	float pan = getparameter_f(kPan);
