@@ -46,21 +46,21 @@ CFTreeRef AddFileItemToTree(const FSRef * inItemRef, CFTreeRef inParentTree);
 void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree);
 void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparatorFunction, void * inContext);
 CFComparisonResult FileURLsTreeComparatorFunction(const void * inTree1, const void * inTree2, void * inContext);
-void FileURLsCFTreeContext_Init(const CFURLRef inUrl, CFTreeContext * outTreeContext);
+void FileURLsCFTreeContext_Init(const CFURLRef inURL, CFTreeContext * outTreeContext);
 
 // restoring preset files
-CFPropertyListRef CreatePropertyListFromXMLFile(const CFURLRef inFileURL);
+CFPropertyListRef CreatePropertyListFromXMLFile(const CFURLRef inXMLFileURL, SInt32 * outErrorCode);
 pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
-Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode);
+pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode);
 OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAUComponent, Boolean inShouldCreateFolder);
 
 // saving preset files
-OSStatus WritePropertyListToXMLFile(const CFPropertyListRef inPropertyList, const CFURLRef inFileURL);
-OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist, CFBundleRef inBundle);
+OSStatus WritePropertyListToXMLFile(const CFPropertyListRef inPropertyList, const CFURLRef inXMLFileURL);
+OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist);
 pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData);
 OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
 								CFStringRef inPresetNameString, short inFileSystemDomain);
-Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inFileUrl);
+Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL);
 Boolean IsFileAccessError(OSStatus inErrorCode);
 OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl);
 OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent);
