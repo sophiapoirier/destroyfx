@@ -312,7 +312,7 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
       strcpy(text, "reversi");
       break;
     case INTERP_PULSE:
-      strcpy(text, "pulse-debug");
+      strcpy(text, "pulse");
       break;
     case INTERP_FRIENDS:
       strcpy(text, "friends");
@@ -598,8 +598,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
   case POINT_EXTNCROSS:
     /* extremities and crossings 
-       FIXME: this is broken. It generates points out of order!
-       XXX: really? Am I sure?
+       XXX: Can this generate points out of order? Don't think so...
     */
 
     ext = 0.0f;
