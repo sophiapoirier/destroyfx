@@ -98,7 +98,6 @@ void Skidder::processValley()
 {
 	float cycleRate;	// the base current skid rate value
 	bool barSync = false;	// true if we need to sync up with the next bar start
-	float SAMPLERATE = getsamplerate_f();
 
 
 	if (MIDIin)
@@ -130,7 +129,8 @@ void Skidder::processValley()
 			// randomize the tempo rate if the random min scalar is lower than the upper bound
 			if (useRandomRate)
 			{
-				cycleRate = tempoRateTable->getScalar((long)interpolateRandom((float)rateRandMinIndex,(float)rateIndex+0.99f));
+				long randomizedTempoRateIndex = (long) interpolateRandom((float)rateRandMinIndex, (float)rateIndex+0.99f);
+				cycleRate = tempoRateTable->getScalar(randomizedTempoRateIndex);
 				// we can't do the bar sync if the skids durations are random
 				needResync = false;
 			}
@@ -150,7 +150,7 @@ void Skidder::processValley()
 				cycleRate = rateHz;
 		}
 		needResync = false;	// reset this so that we don't have any trouble
-		cycleSamples = (long) (SAMPLERATE / cycleRate);
+		cycleSamples = (long) (getsamplerate_f() / cycleRate);
 		//
 		if (useRandomPulsewidth)
 			pulseSamples = (long) ( (float)cycleSamples * interpolateRandom(pulsewidthRandMin, pulsewidth) );
@@ -179,7 +179,7 @@ void Skidder::processValley()
 		{
 			// calculate how long this skid cycle needs to be
 			long countdown = timeinfo.samplesToNextBar % cycleSamples;
-			// skip straight to the valley & adjust its length
+			// skip straight to the valley and adjust its length
 			if ( countdown <= (valleySamples+(slopeSamples*2)) )
 			{
 				valleySamples = countdown;
@@ -219,7 +219,7 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 		// only output a bit of the first input
 		if (panGain <= 1.0f)
 			return in1 * panGain * sampleAmp;
-		// output all of the first input & a bit of the second input
+		// output all of the first input and a bit of the second input
 		else
 			return ( in1 + (in2*(panGain-1.0f)) ) * sampleAmp;
 	}
@@ -281,7 +281,7 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 
 			else if (!noteIsOn)
 			{
-				// if Skidder currently is in the plateau & has a slow cycle, this could happen
+				// if Skidder currently is in the plateau and has a slow cycle, this could happen
 				if ((unsigned)waitSamples > inNumFrames)
 					waitSamples -= (signed)inNumFrames;
 				else
@@ -347,7 +347,7 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 
 			else if (!noteIsOn)
 			{
-				// if Skidder currently is in the plateau & has a slow cycle, this could happen
+				// if Skidder currently is in the plateau and has a slow cycle, this could happen
 				if (waitSamples != 0)
 				{
 					if ((unsigned)waitSamples > inNumFrames)
@@ -420,8 +420,8 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 		// calculate the tempo at the current processing buffer
 		if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
 		{
-			currentTempoBPS = (float) timeinfo.tempo_bps;
-			// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
+			currentTempoBPS = timeinfo.tempo_bps;
+			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (timeinfo.playbackChanged)
 			{
 				needResync = true;
@@ -431,7 +431,7 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 		}
 		else	// get the tempo from the user parameter
 		{
-			currentTempoBPS = userTempo / 60.0f;
+			currentTempoBPS = userTempo / 60.0;
 			needResync = false;	// we don't want it true if we're not syncing to host tempo
 		}
 		oldTempoBPS = currentTempoBPS;

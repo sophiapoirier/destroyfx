@@ -1,6 +1,4 @@
-/*---------------------------------------------------------------
-   © 2000, Marcberg Soft und Hardware GmbH, All Rights Reserved
----------------------------------------------------------------*/
+/*-------------- by Marc Poirier  ][  December 2000 -------------*/
 
 #ifndef __SKIDDER_H
 #define __SKIDDER_H
@@ -54,35 +52,9 @@ enum
 };
 
 //----------------------------------------------------------------------------- 
-// constants & macros
+// constants
 
-#define RATEMIN 0.3f
-#define RATEMAX 21.0f
-// this is for converting from parameter entries to the real values
-#define rateScaled(A)   ( paramRangePowScaled((A), RATEMIN, RATEMAX, 1.65f) )
-#define rateUnscaled(A)   ( paramRangePowUnscaled((A), RATEMIN, RATEMAX, 1.65f) )
-
-#define PULSEMIN 0.001f
-#define PULSEMAX 0.999f
-#define pulsewidthScaled(A)   ( paramRangeScaled((A), PULSEMIN, PULSEMAX) )
-#define pulsewidthUnscaled(A)   ( paramRangeUnscaled((A), PULSEMIN, PULSEMAX) )
-
-#define TEMPO_MIN 39.0f
-#define TEMPO_MAX 480.0f
-#define tempoScaled(A)   ( paramRangeScaled((A), TEMPO_MIN, TEMPO_MAX) )
-#define tempoUnscaled(A)   ( paramRangeUnscaled((A), TEMPO_MIN, TEMPO_MAX) )
-
-#define SLOPEMAX 15.0f
-
-// this is for scaling the slider values of rupture (more emphasis on lower values, dB-style)
-#define fNoise_squared (fNoise*fNoise)
-
-#define gainScaled(A) ((A)*(A)*(A))
-
-#define midiModeScaled(A)   ( paramSteppedScaled((A), kNumMidiModes) )
-#define midiModeUnscaled(A)   ( paramSteppedUnscaled((A), kNumMidiModes) )
-
-#define NUM_PRESETS 16
+const long NUM_PRESETS = 16;
 
 
 //----------------------------------------------------------------------------- 
@@ -95,7 +67,7 @@ public:
 
 	virtual void reset();
 	virtual void processparameters();
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
 
 	// stuff for extending DfxSettings
 	virtual void settings_doLearningAssignStuff(long tag, long eventType, long eventChannel, 
@@ -118,12 +90,12 @@ private:
 	// the parameters
 	float rateHz, rateSync, rateRandMinHz, rateRandMinSync, pulsewidth, pulsewidthRandMin;
 	long rateIndex, rateRandMinIndex;
-	float panWidth, floor, floorRandMin, noise, userTempo;
-	double slopeSeconds;
+	float panWidth, floor, floorRandMin, noise;
+	double slopeSeconds, userTempo;
 	long midiMode;
 	bool tempoSync, useHostTempo, useVelocity;
 
-	float gainRange;	// a scaled version of fFloor & the difference between that & 1.0
+	float gainRange;	// a scaled version of fFloor and the difference between that and 1.0
 	float randomFloor, randomGainRange;
 	// generic versions of these parameters for curved randomization
 	float rateHz_gen, rateRandMinHz_gen, floor_gen, floorRandMin_gen;
@@ -136,8 +108,8 @@ private:
 	float rms;
 	long rmscount;
 
-	float currentTempoBPS;	// tempo in beats per second
-	float oldTempoBPS;	// holds the previous value of currentTempoBPS for comparison
+	double currentTempoBPS;	// tempo in beats per second
+	double oldTempoBPS;	// holds the previous value of currentTempoBPS for comparison
 	bool needResync;	// true when playback has just started up again
 
 	float fMidiMode;	// the MIDI note control mode parameter
@@ -146,7 +118,7 @@ private:
 	void noteOn(long delta);
 	void noteOff();
 	void resetMidi();
-	int *noteTable;
+	int * noteTable;
 	long waitSamples;
 	bool MIDIin, MIDIout;	// set when notes start or stop so that the floor goes to 0.0
 };

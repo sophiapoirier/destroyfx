@@ -8,7 +8,7 @@
 double RezSynth::processAmpEvener(int numBands, int currentNote)
 {
 	double baseFreq = midistuff->freqTable[currentNote] * midistuff->pitchbend;
-	double ampEvener;
+	double ampEvener = 1.0;
 
 	if (scaleMode <= kScaleMode_none)	// no scaling
 //		ampEvener = 0.0000000000009 * pow(((double)fBandwidth+0.72), 1.8) * baseFreq * baseFreq / sqrt((double)numBands*0.0000003);
@@ -16,7 +16,7 @@ double RezSynth::processAmpEvener(int numBands, int currentNote)
 	else if (scaleMode == kScaleMode_rms)	// RMS scaling
 		ampEvener = 0.0003 * baseFreq / sqrt((double)numBands*0.39);
 	else if (scaleMode >= kScaleMode_peak)	// peak scaling
-		ampEvener = 0.0072 * baseFreq / ((bandwidth-BANDWIDTH_MIN+10.0)/3.0) / ((double)numBands*0.03);
+		ampEvener = 0.0072 * baseFreq / ((bandwidth-getparametermin_f(kBandwidth)+10.0)/3.0) / ((double)numBands*0.03);
 	return ampEvener;
 }
 

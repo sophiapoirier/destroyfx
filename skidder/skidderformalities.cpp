@@ -11,7 +11,7 @@
 DFX_ENTRY(Skidder);
 
 //-----------------------------------------------------------------------------
-// initializations & such
+// initializations and such
 Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 16 parameters, 16 presets
 {
@@ -23,27 +23,27 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// initialize the parameters
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
 	long numTempoRates = tempoRateTable->getNumTempoRates();
-	initparameter_f(kRate_abs, "rate (free)", 3.0f, 3.0f, 0.3f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
+	initparameter_f(kRate_abs, "rate (free)", 3.0, 3.0, 0.3, 21.0, kDfxParamUnit_hz, kDfxParamCurve_log);
 	initparameter_indexed(kRate_sync, "rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
-	initparameter_f(kRateRandMin_abs, "rate random min (free)", 3.0f, 3.0f, 0.3f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
+	initparameter_f(kRateRandMin_abs, "rate random min (free)", 3.0, 3.0, 0.3, 21.0, kDfxParamUnit_hz, kDfxParamCurve_log);
 	initparameter_indexed(kRateRandMin_sync, "rate random min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kTempoSync, "tempo sync", false, false);
-	initparameter_f(kPulsewidth, "pulsewidth", 0.5f, 0.5f, 0.001f, 0.999f, kDfxParamUnit_portion);
-	initparameter_f(kPulsewidthRandMin, "pulsewidth random min", 0.5f, 0.5f, 0.001f, 0.999f, kDfxParamUnit_portion);
-	initparameter_f(kSlope, "slope", 3.0f, 3.0f, 0.0f, 15.0f, kDfxParamUnit_ms);
-	initparameter_f(kPan, "stereo spread", 0.0f, 0.6f, 0.0f, 1.0f, kDfxParamUnit_portion);
-	initparameter_f(kFloor, "floor", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
-	initparameter_f(kFloorRandMin, "floor random min", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
-	initparameter_f(kNoise, "rupture", 0.0f, 18732.0f, 0.0f, 18732.0f, kDfxParamUnit_lineargain, kDfxParamCurve_squared);
+	initparameter_f(kPulsewidth, "pulsewidth", 0.5, 0.5, 0.001, 0.999, kDfxParamUnit_portion);
+	initparameter_f(kPulsewidthRandMin, "pulsewidth random min", 0.5, 0.5, 0.001, 0.999, kDfxParamUnit_portion);
+	initparameter_f(kSlope, "slope", 3.0, 3.0, 0.0, 15.0, kDfxParamUnit_ms);
+	initparameter_f(kPan, "stereo spread", 0.0, 0.6, 0.0, 1.0, kDfxParamUnit_portion);
+	initparameter_f(kFloor, "floor", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
+	initparameter_f(kFloorRandMin, "floor random min", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
+	initparameter_f(kNoise, "rupture", 0.0, 18732.0, 0.0, 18732.0, kDfxParamUnit_lineargain, kDfxParamCurve_squared);
 	initparameter_indexed(kMidiMode, "MIDI mode", kMidiMode_none, kMidiMode_none, kNumMidiModes);
 	initparameter_b(kVelocity, "velocity", false, false);
-	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
+	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
 	{
-		const char *tname = tempoRateTable->getDisplay(i);
+		const char * tname = tempoRateTable->getDisplay(i);
 		setparametervaluestring(kRate_sync, i, tname);
 		setparametervaluestring(kRateRandMin_sync, i, tname);
 	}
@@ -67,7 +67,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addchannelconfig(1, 1);	// 1-in/1-out
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
-	currentTempoBPS = getparameter_f(kTempo) / 60.0f;
+	currentTempoBPS = getparameter_f(kTempo) / 60.0;
 
 	// start off with split CC automation of both range slider points
 	rateDoubleAutomate = pulsewidthDoubleAutomate = floorDoubleAutomate = false;
@@ -116,7 +116,7 @@ void Skidder::processparameters()
 	tempoSync = getparameter_b(kTempoSync);
 	pulsewidth = getparameter_f(kPulsewidth);
 	pulsewidthRandMin = getparameter_f(kPulsewidthRandMin);
-	slopeSeconds = getparameter_d(kSlope) * 0.001;
+	slopeSeconds = getparameter_f(kSlope) * 0.001;
 	panWidth = getparameter_f(kPan);
 	noise = getparameter_scalar(kNoise);
 	midiMode = getparameter_i(kMidiMode);
@@ -139,7 +139,7 @@ void Skidder::processparameters()
 		needResync = true;
 	if (getparameterchanged(kMidiMode))
 	{
-		// if we've just entered a MIDI mode, zero out all notes & reset waitSamples
+		// if we've just entered a MIDI mode, zero out all notes and reset waitSamples
 // XXX fetch old value
 //		if ( (oldMidiMode == kMidiMode_none) && 
 //				(midiMode != kMidiMode_none) )

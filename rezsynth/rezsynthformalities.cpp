@@ -23,24 +23,24 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	numBuffers = 0;
 
 
-	initparameter_d(kBandwidth, "bandwidth", 3.0, 3.0, 0.1, 300.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
-	initparameter_i(kNumBands, "bands per note", 1, 1, 1, 30, kDfxParamUnit_quantity, kDfxParamCurve_stepped);
-	initparameter_d(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
-	initparameter_d(kSepAmount_linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, kDfxParamUnit_scalar);	// % of center frequency
+	initparameter_f(kBandwidth, "bandwidth", 3.0, 3.0, 0.1, 300.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
+	initparameter_i(kNumBands, "bands per note", 1, 1, 1, MAX_BANDS, kDfxParamUnit_quantity, kDfxParamCurve_stepped);
+	initparameter_f(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
+	initparameter_f(kSepAmount_linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, kDfxParamUnit_scalar);	// % of center frequency
 	initparameter_indexed(kSepMode, "separation mode", kSepMode_octaval, kSepMode_octaval, kNumSepModes);
 	initparameter_b(kFoldover, "mistakes", true, false);
-	initparameter_f(kAttack, "attack", 3.0f, 3.0f, 0.0f, 3000.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
-	initparameter_f(kRelease, "release", 300.0f, 300.0f, 0.0f, 3000.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
+	initparameter_f(kAttack, "attack", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
+	initparameter_f(kRelease, "release", 300.0, 300.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_b(kFades, "nicer fades", false, false);
 	initparameter_b(kLegato, "legato", false, false);
-//	initparameter_f(kVelInfluence, "velocity influence", 0.6f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_portion);
-	initparameter_f(kVelInfluence, "velocity influence", 60.0f, 100.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
-	initparameter_f(kVelCurve, "velocity curve", 2.0f, 1.0f, 0.3f, 3.0f, kDfxParamUnit_exponent);
-	initparameter_d(kPitchbendRange, "pitchbend range", 3.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamUnit_semitones);
+//	initparameter_f(kVelInfluence, "velocity influence", 0.6, 1.0, 0.0, 1.0, kDfxParamUnit_portion);
+	initparameter_f(kVelInfluence, "velocity influence", 60.0, 100.0, 0.0, 100.0, kDfxParamUnit_percent);
+	initparameter_f(kVelCurve, "velocity curve", 2.0, 1.0, 0.3, 3.0, kDfxParamUnit_exponent);
+	initparameter_f(kPitchbendRange, "pitchbend range", 3.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamUnit_semitones);
 	initparameter_indexed(kScaleMode, "input gain scaling mode", kScaleMode_rms, kScaleMode_none, kNumScaleModes);
-	initparameter_f(kGain, "output gain", 1.0f, 1.0f, 0.0f, 3.981f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
-	initparameter_f(kBetweenGain, "between gain", 0.0f, 1.0f, 0.0f, 3.981f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
-	initparameter_f(kDryWetMix, "dry/wet mix", 100.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_drywetmix);
+	initparameter_f(kGain, "output gain", 1.0, 1.0, 0.0, 3.981, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
+	initparameter_f(kBetweenGain, "between gain", 0.0, 1.0, 0.0, 3.981, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
+	initparameter_f(kDryWetMix, "dry/wet mix", 100.0, 50.0, 0.0, 100.0, kDfxParamUnit_drywetmix);
 	initparameter_indexed(kDryWetMixMode, "dry/wet mix mode", kDryWetMixMode_equalpower, kDryWetMixMode_linear, kNumDryWetMixModes);
 	initparameter_b(kWiseAmp, "careful", true, true);
 
@@ -57,7 +57,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //	setparametervaluestring(kFoldover, 1, "allow");
 
 
-	settailsize_seconds(RELEASE_MAX);
+	settailsize_seconds(getparametermax_f(kRelease) * 0.001);
 	midistuff->setLazyAttack();	// this enables the lazy note attack mode
 
 	setpresetname(0, "feminist synth");	// default preset name
@@ -139,17 +139,17 @@ int oldNumBands = numBands;
 
 	bandwidth = getparameter_f(kBandwidth);
 	numBands = getparameter_i(kNumBands);
-	sepAmount_octaval = getparameter_d(kSepAmount_octaval) / 12.0;
-	sepAmount_linear = getparameter_d(kSepAmount_linear);
+	sepAmount_octaval = getparameter_f(kSepAmount_octaval) / 12.0;
+	sepAmount_linear = getparameter_f(kSepAmount_linear);
 	sepMode = getparameter_i(kSepMode);	// true for octaval, false for linear
 	foldover = getparameter_b(kFoldover);	// true for allow, false for resist
-	attack = getparameter_f(kAttack) * 0.001f;
-	release = getparameter_f(kRelease) * 0.001f;
+	attack = getparameter_f(kAttack) * 0.001;
+	release = getparameter_f(kRelease) * 0.001;
 	fades = getparameter_b(kFades);	// true for nicer, false for cheap
 	legato = getparameter_b(kLegato);
 	velInfluence = getparameter_scalar(kVelInfluence);
 	velCurve = getparameter_f(kVelCurve);
-	pitchbendRange = getparameter_d(kPitchbendRange);
+	pitchbendRange = getparameter_f(kPitchbendRange);
 	scaleMode = getparameter_i(kScaleMode);
 	gain = getparameter_f(kGain);	// max gain is +12 dB
 	betweenGain = getparameter_f(kBetweenGain);	// max betweenGain is +12 dB

@@ -15,9 +15,9 @@ DFX_ENTRY(MidiGater);
 MidiGater::MidiGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 3 parameters, 1 preset
 {
-	initparameter_f(kSlope, "slope", 3.0f, 3.0f, 0.0f, 3000.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
-	initparameter_f(kVelInfluence, "velocity influence", 0.0f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_scalar);
-	initparameter_f(kFloor, "floor", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
+	initparameter_f(kSlope, "slope", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
+	initparameter_f(kVelInfluence, "velocity influence", 0.0, 1.0, 0.0, 1.0, kDfxParamUnit_scalar);
+	initparameter_f(kFloor, "floor", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 
 	setpresetname(0, "push the button");	// default preset name
 
@@ -49,18 +49,17 @@ void MidiGater::reset()
 //-----------------------------------------------------------------------------------------
 void MidiGater::processparameters()
 {
-	slope_seconds = getparameter_f(kSlope) * 0.001f;
+	slope_seconds = getparameter_f(kSlope) * 0.001;
 	velInfluence = getparameter_f(kVelInfluence);
 	floor = getparameter_f(kFloor);
 }
 
 
 //-----------------------------------------------------------------------------------------
-void MidiGater::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
+void MidiGater::processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing)
 {
 	unsigned long numChannels = getnumoutputs();
 	long numFramesToProcess = (signed)inNumFrames, totalSampleFrames = (signed)inNumFrames;	// for dividing up the block accoring to events
-	float SAMPLERATE = getsamplerate_f();
 
 
 #ifndef TARGET_API_VST
@@ -95,7 +94,7 @@ void MidiGater::processaudio(const float **in, float **out, unsigned long inNumF
 		{
 			eventcount++;
 			// take in the effects of the next event
-			midistuff->heedEvents(eventcount, SAMPLERATE, 0.0f, slope_seconds, 
+			midistuff->heedEvents(eventcount, getsamplerate_f(), 0.0f, slope_seconds, 
 									slope_seconds, false, 1.0f, velInfluence);
 			continue;
 		}
@@ -140,7 +139,7 @@ void MidiGater::processaudio(const float **in, float **out, unsigned long inNumF
 		currentBlockPosition = midistuff->blockEvents[eventcount].delta;
 
 		// take in the effects of the next event
-		midistuff->heedEvents(eventcount, SAMPLERATE, 0.0f, slope_seconds, 
+		midistuff->heedEvents(eventcount, getsamplerate_f(), 0.0f, slope_seconds, 
 								slope_seconds, false, 1.0f, velInfluence);
 
 	} while (eventcount < midistuff->numBlockEvents);
@@ -148,7 +147,7 @@ void MidiGater::processaudio(const float **in, float **out, unsigned long inNumF
 
 //-----------------------------------------------------------------------------------------
 // this function outputs the unprocessed audio input between notes, if desired
-void MidiGater::processUnaffected(const float **in, float **out, long numFramesToProcess, long offset, unsigned long numChannels)
+void MidiGater::processUnaffected(const float ** in, float ** out, long numFramesToProcess, long offset, unsigned long numChannels)
 {
 	long endPos = numFramesToProcess + offset;
 	for (long samplecount=offset; samplecount < endPos; samplecount++)

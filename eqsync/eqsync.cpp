@@ -20,23 +20,23 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	prevprevOut = NULL;
 	numBuffers = 0;
 
-	tempoRateTable = new TempoRateTable;
+	tempoRateTable = new TempoRateTable();
 
 
 	long numTempoRates = tempoRateTable->getNumTempoRates();
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
 	initparameter_indexed(kRate_sync, "rate", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
-	initparameter_f(kSmooth, "smooth", 3.0f, 33.333f, 0.0f, 100.0f, kDfxParamUnit_percent);	// % of cycle
-	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
+	initparameter_f(kSmooth, "smooth", 3.0, 33.333, 0.0, 100.0, kDfxParamUnit_percent);	// % of cycle
+	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 //	for (long i=ka0; i <= kb2; i++)
-//		initparameter_f(i, " ", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
+//		initparameter_f(i, " ", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
 	// okay, giving in and providing actual parameter names because Final Cut Pro folks say that it was causing problems...
-	initparameter_f(ka0, "a0", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
-	initparameter_f(ka1, "a1", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
-	initparameter_f(ka2, "a2", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
-	initparameter_f(kb1, "b1", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
-	initparameter_f(kb2, "b2", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
+	initparameter_f(ka0, "a0", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
+	initparameter_f(ka1, "a1", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
+	initparameter_f(ka2, "a2", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
+	initparameter_f(kb1, "b1", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
+	initparameter_f(kb2, "b2", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
 
 	// set the value strings for the sync rate parameters
 	for (long i=0; i < numTempoRates; i++)
@@ -46,7 +46,7 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setpresetname(0, "with motors");	// default preset name
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
-	currentTempoBPS = getparameter_f(kTempo) / 60.0f;
+	currentTempoBPS = getparameter_f(kTempo) / 60.0;
 
 
 	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
@@ -135,7 +135,7 @@ void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long
 	if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
 	{
 		currentTempoBPS = timeinfo.tempo_bps;
-		// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
+		// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 		if (timeinfo.playbackChanged)
 		{
 			needResync = true;
@@ -144,10 +144,10 @@ void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long
 	}
 	else	// get the tempo from the user parameter
 	{
-		currentTempoBPS = userTempo / 60.0f;
+		currentTempoBPS = userTempo / 60.0;
 		needResync = false;	// we don't want it true if we're not syncing to host tempo
 	}
-	long latestCycleDur = (long) ( (getsamplerate_f()/currentTempoBPS) / rate );
+	long latestCycleDur = (long) ( (getsamplerate()/currentTempoBPS) / rate );
 
 
 	for (unsigned long samplecount=0; samplecount < inNumFrames; samplecount++)
@@ -155,14 +155,14 @@ void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long
 		cycleSamples--;	// decrement our EQ cycle counter
 		if (cycleSamples <= 0)
 		{
-			// calculate the lengths of the next cycle & smooth portion
+			// calculate the lengths of the next cycle and smooth portion
 			cycleSamples = latestCycleDur;
 			// see if we need to adjust this cycle so that an EQ change syncs with the next measure
 			if (needResync)
 				cycleSamples = timeinfo.samplesToNextBar % cycleSamples;
 			needResync = false;	// set it false now that we're done with it
 			
-			smoothSamples = (long) ((float)cycleSamples*smooth);
+			smoothSamples = (long) ((double)cycleSamples*smooth);
 			// if smoothSamples is 0, make smoothDur = 1 to avoid dividing by zero later on
 			smoothDur = (smoothSamples <= 0) ? 1 : smoothSamples;
 
@@ -196,7 +196,7 @@ void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long
 			b1 = (curb1*smoothIn) + (prevb1*smoothOut);
 			b2 = (curb2*smoothIn) + (prevb2*smoothOut);
 
-			smoothSamples--;	// & decrement the counter
+			smoothSamples--;	// and decrement the counter
 			eqchanged = true;
 		}
 
@@ -217,7 +217,7 @@ void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long
 			// ...doing the complex filter thing here
 			outputs[ch][samplecount] = outval;
 
-			// update the previous sample holders & increment the i/o streams
+			// update the previous sample holders and increment the i/o streams
 			prevprevIn[ch] = prevIn[ch];
 			prevIn[ch] = inval;
 			prevprevOut[ch] = prevOut[ch];
