@@ -42,17 +42,17 @@ struct PLUGIN : public AudioEffectX {
 
   virtual void suspend();
 
-  bool PLUGIN::getVendorString(char *text) {
+  bool getVendorString(char *text) {
     strcpy (text, "Destroy FX");
     return true; 
   }
 
-  bool PLUGIN::getProductString(char *text) {
+  bool getProductString(char *text) {
     strcpy (text, "Super Destroy FX bipolar VST plugin pack");
     return true; 
   }
 
-  bool PLUGIN::getEffectName(char *name) {
+  bool getEffectName(char *name) {
     strcpy (name, PLUGINNAME);
     return true; 
   }
