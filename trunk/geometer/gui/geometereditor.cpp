@@ -1313,7 +1313,7 @@ void GeometerEditor::idle() {
                                ( (float)((PLUGIN*)effect)->getwindowsize() * 
                                  1000.0f / effect->getSampleRate() );
   unsigned long elapsedms = currentms - prevms;
-  if ( (elapsedms > windowsizems) || (currentms < prevms) || chunk->isLearning()) {
+  if ( (elapsedms > windowsizems) || (currentms < prevms) ) {
     if (gview) {
       gview->reflect();
       gviewchanged = true;
@@ -1323,7 +1323,7 @@ void GeometerEditor::idle() {
 #endif
 
   // some hosts need this call otherwise stuff doesn't redraw
-  if (helpchanged || glowingchanged || gviewchanged) /* <-  XXX Tom, why the || 1?  */
+  if (helpchanged || glowingchanged || gviewchanged)
     postUpdate();
 
   // this is called so that idle() actually happens
