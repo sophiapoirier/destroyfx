@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
-written by Marc Poirier, October 2002
+written by Marc Poirier, October 2002 - 2004
 ------------------------------------------------------------------------*/
 
 #include "dfxplugin.h"
@@ -63,8 +63,8 @@ DfxPlugin::DfxPlugin(
 
 #ifdef TARGET_API_AUDIOUNIT
 	auElementsHaveBeenCreated = false;
-
 	inputsP = outputsP = NULL;
+	auContextName = NULL;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		aumidicontrolmap = NULL;
@@ -185,6 +185,10 @@ DfxPlugin::~DfxPlugin()
 	#endif
 
 	#ifdef TARGET_API_AUDIOUNIT
+		if (auContextName != NULL)
+			CFRelease(auContextName);
+		auContextName = NULL;
+
 		#if TARGET_PLUGIN_USES_MIDI
 			if (aumidicontrolmap != NULL)
 				free(aumidicontrolmap);
@@ -279,16 +283,20 @@ void DfxPlugin::do_cleanup()
 // non-virtual function that calls reset() and insures that some stuff happens
 void DfxPlugin::do_reset()
 {
-	#if TARGET_PLUGIN_USES_MIDI
-		if (midistuff != NULL)
-			midistuff->reset();
-	#endif
-
 	#ifdef TARGET_API_AUDIOUNIT
+		// no need to do this if we're not even in Initialized state 
+		// because this will basically happen when we become initialized
+		if (! IsInitialized() )
+			return;
 		#if !TARGET_PLUGIN_IS_INSTRUMENT
 			// resets the kernels, if any
 			AUEffectBase::Reset(kAudioUnitScope_Global, (AudioUnitElement)0);
 		#endif
+	#endif
+
+	#if TARGET_PLUGIN_USES_MIDI
+		if (midistuff != NULL)
+			midistuff->reset();
 	#endif
 
 	reset();
@@ -1023,6 +1031,11 @@ void DfxPlugin::update_tailsize()
 
 #pragma mark _________processing_________
 
+#ifdef TARGET_API_AUDIOUNIT
+	// check if the host is a buggy one that will crash TransportStateProc
+	static const bool gAUTransportStateIsSafe = IsTransportStateProcSafe();
+#endif
+
 //-----------------------------------------------------------------------------
 // this is called once per audio processing block (before doing the processing) 
 // in order to try to get musical tempo/time/location information from the host
@@ -1041,13 +1054,14 @@ void DfxPlugin::processtimeinfo()
 	timeinfo.samplesToNextBar = 0;
 	timeinfo.samplesToNextBarIsValid = false;
 	timeinfo.playbackChanged = false;
-	timeinfo.playbackIsOccurring = false;
+	timeinfo.playbackIsOccurring = true;
 
 
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus status;
 
-	Float64 tempo, beat;
+	Float64 tempo = 120.0;
+	Float64 beat = 0.0;
 	status = CallHostBeatAndTempo(&beat, &tempo);
 	if (status == noErr)
 	{
@@ -1059,16 +1073,16 @@ void DfxPlugin::processtimeinfo()
 
 		hostCanDoTempo = true;
 	}
-//else fprintf("CallHostBeatAndTempo() error %ld\n", status);
+//else fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
 
 	// the number of samples until the next beat from the start sample of the current rendering buffer
-//	UInt32 sampleOffsetToNextBeat;	// XXX should I just send NULL since we don't use this?
+//	UInt32 sampleOffsetToNextBeat = 0;	// XXX should I just send NULL since we don't use this?
 	// the number of beats of the denominator value that contained in the current measure
-	Float32 timeSigNumerator;
+	Float32 timeSigNumerator = 4.0f;
 	// music notational conventions (4 is a quarter note, 8 an eigth note, etc)
-	UInt32 timeSigDenominator;
+	UInt32 timeSigDenominator = 4;
 	// the beat that corresponds to the downbeat (first beat) of the current measure
-	Float64 currentMeasureDownBeat;
+	Float64 currentMeasureDownBeat = 0.0;
 	status = CallHostMusicalTimeLocation(NULL, &timeSigNumerator, &timeSigDenominator, &currentMeasureDownBeat);
 	if (status == noErr)
 	{
@@ -1083,21 +1097,22 @@ void DfxPlugin::processtimeinfo()
 	}
 //else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 
-/*
-	Boolean isPlaying;
-	Boolean transportStateChanged;
-//	Float64 currentSampleInTimeLine;
-//	Boolean isCycling;
-//	Float64 cycleStartBeat, cycleEndBeat;
-//	status = CallHostTransportState(&isPlaying, &transportStateChanged, &currentSampleInTimeLine, &isCycling, &cycleStartBeat, &cycleEndBeat);
-	status = CallHostTransportState(&isPlaying, &transportStateChanged, NULL, NULL, NULL, NULL);
-	// determine whether the playback position or state has just changed
-	if (status == noErr)
+	if (gAUTransportStateIsSafe)
 	{
-		timeinfo.playbackChanged = transportStateChanged;
-		timeinfo.playbackIsOccurring = isPlaying;
+		Boolean isPlaying = true;
+		Boolean transportStateChanged = false;
+//		Float64 currentSampleInTimeLine = 0.0;
+//		Boolean isCycling = false;
+//		Float64 cycleStartBeat = 0.0, cycleEndBeat = 0.0;
+//		status = CallHostTransportState(&isPlaying, &transportStateChanged, &currentSampleInTimeLine, &isCycling, &cycleStartBeat, &cycleEndBeat);
+		status = CallHostTransportState(&isPlaying, &transportStateChanged, NULL, NULL, NULL, NULL);
+		// determine whether the playback position or state has just changed
+		if (status == noErr)
+		{
+			timeinfo.playbackChanged = transportStateChanged;
+			timeinfo.playbackIsOccurring = isPlaying;
+		}
 	}
-*/
 #endif
 // TARGET_API_AUDIOUNIT
  
