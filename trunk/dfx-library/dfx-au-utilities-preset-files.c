@@ -576,7 +576,7 @@ ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 	NavObjectFilterUPP filterProc;
 	NavDialogRef dialog;
 
-	if ( (inAUComponentInstance == NULL) )
+	if (inAUComponentInstance == NULL)
 		return paramErr;
 
 	error = NavGetDefaultDialogCreationOptions(&dialogOptions);
@@ -590,8 +590,8 @@ ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 	dialogOptions.preferenceKey = kAUPresetOpenNavDialogKey;
 //	dialogOptions.modality = kWindowModalityNone;	// XXX is this a good option, or just weird?
 
-	// create and run the standard Navigation Services GetFile dialog to allow the user to 
-	// /find and choose an AU preset file to load
+	// create and run a standard Navigation Services GetFile dialog to allow the user to 
+	// find and choose an AU preset file to load
 	eventProc = NewNavEventUPP(CustomOpenAUPresetNavEventHandler);
 	filterProc = NewNavObjectFilterUPP(CustomOpenAUPresetNavFilterProc);
 	error = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)inAUComponentInstance, &dialog);
@@ -643,9 +643,12 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 		{
 			OSStatus error;
 			NavReplyRecord reply;
+			NavUserAction userAction;
 
+			if (dialog == NULL)
+				break;
 			// we're only interested in file open actions
-			NavUserAction userAction = NavDialogGetUserAction(dialog);
+			userAction = NavDialogGetUserAction(dialog);
 			// and I guess cancel, too
 			if (userAction == kNavUserActionCancel)
 			{
