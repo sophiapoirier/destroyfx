@@ -12,9 +12,8 @@ written by Marc Poirier, October 2002
 #include <math.h>
 
 
-// these are twiddly values for when casting with decimal types
-const float twiddle_f = 0.001f;
-const double twiddle_d = 0.001;
+// this is a twiddly value for when casting with decimal types
+const double twiddle = 0.001;
 
 
 
@@ -112,27 +111,17 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 		case kDfxParamValueType_float:
 			if (min.f > max.f)
 			{
-				float swap = max.f;
+				double swap = max.f;
 				max.f = min.f;
 				min.f = swap;
 			}
 			if ( (defaultValue.f > max.f)  || (defaultValue.f < min.f) )
-				defaultValue.f = ((max.f - min.f) * 0.5f) + min.f;
-			break;
-		case kDfxParamValueType_double:
-			if (min.d > max.d)
-			{
-				double swap = max.d;
-				max.d = min.d;
-				min.d = swap;
-			}
-			if ( (defaultValue.d > max.d)  || (defaultValue.d < min.d) )
-				defaultValue.d = ((max.d - min.d) * 0.5) + min.d;
+				defaultValue.f = ((max.f - min.f) * 0.5) + min.f;
 			break;
 		case kDfxParamValueType_int:
 			if (min.i > max.i)
 			{
-				long swap = max.i;
+				sint64 swap = max.i;
 				max.i = min.i;
 				min.i = swap;
 			}
@@ -156,8 +145,8 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with float variable type
-void DfxParam::init_f(const char * initName, float initValue, float initDefaultValue, 
-							float initMin, float initMax, 
+void DfxParam::init_f(const char * initName, double initValue, double initDefaultValue, 
+							double initMin, double initMax, 
 							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	DfxParamValue val, def, mn, mx;
@@ -168,22 +157,9 @@ void DfxParam::init_f(const char * initName, float initValue, float initDefaultV
 	init(initName, kDfxParamValueType_float, val, def, mn, mx, initUnit, initCurve);
 }
 //-----------------------------------------------------------------------------
-// convenience wrapper of init() for initializing with double variable type
-void DfxParam::init_d(const char * initName, double initValue, double initDefaultValue, 
-							double initMin, double initMax, 
-							DfxParamUnit initUnit, DfxParamCurve initCurve)
-{
-	DfxParamValue val, def, mn, mx;
-	val.d = initValue;
-	def.d = initDefaultValue;
-	mn.d = initMin;
-	mx.d = initMax;
-	init(initName, kDfxParamValueType_double, val, def, mn, mx, initUnit, initCurve);
-}
-//-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
-void DfxParam::init_i(const char * initName, long initValue, long initDefaultValue, 
-							long initMin, long initMax, 
+void DfxParam::init_i(const char * initName, sint64 initValue, sint64 initDefaultValue, 
+							sint64 initMin, sint64 initMax, 
 							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	DfxParamValue val, def, mn, mx;
@@ -212,7 +188,7 @@ void DfxParam::releaseValueStrings()
 	// release the parameter value strings, if any
 	if (valueStrings != NULL)
 	{
-		for (long i=0; i < numAllocatedValueStrings; i++)
+		for (sint64 i=0; i < numAllocatedValueStrings; i++)
 		{
 			if (valueStrings[i] != NULL)
 				free(valueStrings[i]);
@@ -226,7 +202,7 @@ void DfxParam::releaseValueStrings()
 		// release the CFString versions of the parameter value strings, if any
 		if (valueCFStrings != NULL)
 		{
-			for (long i=0; i < numAllocatedValueStrings; i++)
+			for (sint64 i=0; i < numAllocatedValueStrings; i++)
 			{
 				if (valueCFStrings[i] != NULL)
 					CFRelease(valueCFStrings[i]);
@@ -253,7 +229,7 @@ void DfxParam::setusevaluestrings(bool newMode)
 		// determine how many items there are in the array from the parameter value range
 		numAllocatedValueStrings = getmax_i() - getmin_i() + 1;
 		valueStrings = (char**) malloc(numAllocatedValueStrings * sizeof(char*));
-		for (long i=0; i < numAllocatedValueStrings; i++)
+		for (sint64 i=0; i < numAllocatedValueStrings; i++)
 		{
 			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(char));
 			valueStrings[i][0] = 0;	// default to empty strings
@@ -261,7 +237,7 @@ void DfxParam::setusevaluestrings(bool newMode)
 
 		#ifdef TARGET_API_AUDIOUNIT
 			valueCFStrings = (CFStringRef*) malloc(numAllocatedValueStrings * sizeof(CFStringRef));
-			for (long i=0; i < numAllocatedValueStrings; i++)
+			for (sint64 i=0; i < numAllocatedValueStrings; i++)
 				valueCFStrings[i] = NULL;
 		#endif
 
@@ -271,7 +247,7 @@ void DfxParam::setusevaluestrings(bool newMode)
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-bool DfxParam::setvaluestring(long index, const char * inText)
+bool DfxParam::setvaluestring(sint64 index, const char * inText)
 {
 	if (!ValueStringIndexIsValid(index))
 		return false;
@@ -281,7 +257,7 @@ bool DfxParam::setvaluestring(long index, const char * inText)
 
 	// the actual index of the array is the incoming index 
 	// minus the parameter's minimum value
-	long arrayIndex = index - getmin_i();
+	sint64 arrayIndex = index - getmin_i();
 	strncpy(valueStrings[arrayIndex], inText, DFX_PARAM_MAX_VALUE_STRING_LENGTH);
 	valueStrings[arrayIndex][DFX_PARAM_MAX_VALUE_STRING_LENGTH-1] = 0;
 
@@ -297,7 +273,7 @@ bool DfxParam::setvaluestring(long index, const char * inText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the contents of a specific value string
-bool DfxParam::getvaluestring(long index, char * outText)
+bool DfxParam::getvaluestring(sint64 index, char * outText)
 {
 	char * text = getvaluestring_ptr(index);
 
@@ -310,7 +286,7 @@ bool DfxParam::getvaluestring(long index, char * outText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the pointer to a specific value string
-char * DfxParam::getvaluestring_ptr(long index)
+char * DfxParam::getvaluestring_ptr(sint64 index)
 {
 	if (!ValueStringIndexIsValid(index))
 		return NULL;
@@ -320,7 +296,7 @@ char * DfxParam::getvaluestring_ptr(long index)
 
 //-----------------------------------------------------------------------------
 // safety check for an index into the value strings array
-bool DfxParam::ValueStringIndexIsValid(long index)
+bool DfxParam::ValueStringIndexIsValid(sint64 index)
 {
 	if ( !useValueStrings )
 		return false;
@@ -342,35 +318,12 @@ bool DfxParam::ValueStringIndexIsValid(long index)
 //-----------------------------------------------------------------------------
 // figure out the value of a DfxParamValue as float type value
 // perform type conversion if float is not the parameter's "native" type
-float DfxParam::derive_f(DfxParamValue inValue)
+double DfxParam::derive_f(DfxParamValue inValue)
 {
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
 			return inValue.f;
-		case kDfxParamValueType_double:
-			return (float) inValue.d;
-		case kDfxParamValueType_int:
-			return (float) inValue.i;
-		case kDfxParamValueType_boolean:
-			return (inValue.b != 0) ? 1.0f : 0.0f;
-		case kDfxParamValueType_undefined:
-		default:
-			return 0.0f;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// figure out the value of a DfxParamValue as double type value
-// perform type conversion if double is not the parameter's "native" type
-double DfxParam::derive_d(DfxParamValue inValue)
-{
-	switch (valueType)
-	{
-		case kDfxParamValueType_float:
-			return (double) inValue.f;
-		case kDfxParamValueType_double:
-			return inValue.d;
 		case kDfxParamValueType_int:
 			return (double) inValue.i;
 		case kDfxParamValueType_boolean:
@@ -384,20 +337,15 @@ double DfxParam::derive_d(DfxParamValue inValue)
 //-----------------------------------------------------------------------------
 // figure out the value of a DfxParamValue as int type value
 // perform type conversion if int is not the parameter's "native" type
-long DfxParam::derive_i(DfxParamValue inValue)
+sint64 DfxParam::derive_i(DfxParamValue inValue)
 {
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
-			if (inValue.d < 0.0f)
-				return (long) (inValue.f - twiddle_f);
+			if (inValue.f < 0.0)
+				return (sint64) (inValue.f - twiddle);
 			else
-				return (long) (inValue.f + twiddle_f);
-		case kDfxParamValueType_double:
-			if (inValue.d < 0.0)
-				return (long) (inValue.d - twiddle_d);
-			else
-				return (long) (inValue.d + twiddle_d);
+				return (sint64) (inValue.f + twiddle);
 		case kDfxParamValueType_int:
 			return inValue.i;
 		case kDfxParamValueType_boolean:
@@ -416,9 +364,7 @@ bool DfxParam::derive_b(DfxParamValue inValue)
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
-			return FBOOL(inValue.f);
-		case kDfxParamValueType_double:
-			return DBOOL(inValue.d);
+			return DBOOL(inValue.f);
 		case kDfxParamValueType_int:
 			return (inValue.i != 0);
 		case kDfxParamValueType_boolean:
@@ -433,9 +379,9 @@ bool DfxParam::derive_b(DfxParamValue inValue)
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
 // XXX this is being obsoleted by the non-class contractparametervalue() function
-float DfxParam::contract(double realValue)
+double DfxParam::contract(double realValue)
 {
-	return (float) contractparametervalue(realValue, getmin_d(), getmax_d(), curve, curvespec);
+	return contractparametervalue(realValue, getmin_f(), getmax_f(), curve, curvespec);
 }
 
 //-----------------------------------------------------------------------------
@@ -474,9 +420,9 @@ double contractparametervalue(double realValue, double minValue, double maxValue
 
 //-----------------------------------------------------------------------------
 // get the parameter's current value scaled into a generic 0...1 float value
-float DfxParam::get_gen()
+double DfxParam::get_gen()
 {
-	return (float) contractparametervalue(get_d(), getmin_d(), getmax_d(), curve, curvespec);
+	return contractparametervalue(get_f(), getmin_f(), getmax_f(), curve, curvespec);
 }
 
 
@@ -486,63 +432,20 @@ float DfxParam::get_gen()
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a float type
 // perform type conversion if float is not the parameter's "native" type
-bool DfxParam::accept_f(float inValue, DfxParamValue & outValue)
+bool DfxParam::accept_f(double inValue, DfxParamValue & outValue)
 {
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
 			outValue.f = inValue;
 			break;
-		case kDfxParamValueType_double:
-			outValue.d = (double) inValue;
-			break;
 		case kDfxParamValueType_int:
 			{
-				long oldvalue = outValue.i;
-				if (inValue < 0.0f)
-					outValue.i = (long) (inValue - twiddle_f);
-				else
-					outValue.i = (long) (inValue + twiddle_f);
-				if (outValue.i == oldvalue)
-					return false;
-			}
-			break;
-		case kDfxParamValueType_boolean:
-			{
-				unsigned char oldvalue = outValue.b;
-				outValue.b = FBOOL(inValue) ? 1 : 0;
-				if (outValue.b == oldvalue)
-					return false;
-			}
-			break;
-		case kDfxParamValueType_undefined:
-		default:
-			return false;
-	}
-
-	return true;	// XXX do this smarter?
-}
-
-//-----------------------------------------------------------------------------
-// set a DfxParamValue with a value of a double type
-// perform type conversion if double is not the parameter's "native" type
-bool DfxParam::accept_d(double inValue, DfxParamValue & outValue)
-{
-	switch (valueType)
-	{
-		case kDfxParamValueType_float:
-			outValue.f = (float) inValue;
-			break;
-		case kDfxParamValueType_double:
-			outValue.d = inValue;
-			break;
-		case kDfxParamValueType_int:
-			{
-				long oldvalue = outValue.i;
+				sint64 oldvalue = outValue.i;
 				if (inValue < 0.0)
-					outValue.i = (long) (inValue - twiddle_d);
+					outValue.i = (sint64) (inValue - twiddle);
 				else
-					outValue.i = (long) (inValue + twiddle_d);
+					outValue.i = (sint64) (inValue + twiddle);
 				if (outValue.i == oldvalue)
 					return false;
 			}
@@ -566,19 +469,16 @@ bool DfxParam::accept_d(double inValue, DfxParamValue & outValue)
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a int type
 // perform type conversion if int is not the parameter's "native" type
-bool DfxParam::accept_i(long inValue, DfxParamValue & outValue)
+bool DfxParam::accept_i(sint64 inValue, DfxParamValue & outValue)
 {
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
-			outValue.f = (float)inValue;
-			break;
-		case kDfxParamValueType_double:
-			outValue.d = (double)inValue;
+			outValue.f = (double)inValue;
 			break;
 		case kDfxParamValueType_int:
 			{
-				long oldvalue = outValue.i;
+				sint64 oldvalue = outValue.i;
 				outValue.i = inValue;
 				if (outValue.i == oldvalue)
 					return false;
@@ -608,14 +508,11 @@ bool DfxParam::accept_b(bool inValue, DfxParamValue & outValue)
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
-			outValue.f = (inValue ? 1.0f : 0.0f);
-			break;
-		case kDfxParamValueType_double:
-			outValue.d = (inValue ? 1.0 : 0.0);
+			outValue.f = (inValue ? 1.0 : 0.0);
 			break;
 		case kDfxParamValueType_int:
 			{
-				long oldvalue = outValue.i;
+				sint64 oldvalue = outValue.i;
 				outValue.i = (inValue ? 1 : 0);
 				if (outValue.i == oldvalue)
 					return false;
@@ -640,9 +537,9 @@ bool DfxParam::accept_b(bool inValue, DfxParamValue & outValue)
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double DfxParam::expand(float genValue)
+double DfxParam::expand(double genValue)
 {
-	return expandparametervalue((double)genValue, getmin_d(), getmax_d(), curve, curvespec);
+	return expandparametervalue(genValue, getmin_f(), getmax_f(), curve, curvespec);
 }
 
 //-----------------------------------------------------------------------------
@@ -660,11 +557,11 @@ double expandparametervalue(double genValue, double minValue, double maxValue, D
 			{
 				double tempval = (genValue * valueRange) + minValue;
 				if (tempval < 0.0)
-					tempval -= twiddle_d;
+					tempval -= twiddle;
 				else
-					tempval += twiddle_d;
+					tempval += twiddle;
 				// XXX is this a good way to do this?
-				return (double) ((long)tempval);
+				return (double) ((sint64)tempval);
 			}
 		case kDfxParamCurve_sqrt:
 			return (sqrt(genValue) * valueRange) + minValue;
@@ -697,7 +594,7 @@ void DfxParam::set(DfxParamValue newValue)
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using a float type value
-void DfxParam::set_f(float newValue)
+void DfxParam::set_f(double newValue)
 {
 	bool changed_1 = accept_f(newValue, value);
 	bool changed_2 = limit();
@@ -706,18 +603,8 @@ void DfxParam::set_f(float newValue)
 }
 
 //-----------------------------------------------------------------------------
-// set the current parameter value using a double type value
-void DfxParam::set_d(double newValue)
-{
-	bool changed_1 = accept_d(newValue, value);
-	bool changed_2 = limit();
-	if (changed_1 || changed_2)
-		setchanged(true);
-}
-
-//-----------------------------------------------------------------------------
 // set the current parameter value using an int type value
-void DfxParam::set_i(long newValue)
+void DfxParam::set_i(sint64 newValue)
 {
 	bool changed_1 = accept_i(newValue, value);
 	bool changed_2 = limit();
@@ -737,9 +624,9 @@ void DfxParam::set_b(bool newValue)
 
 //-----------------------------------------------------------------------------
 // set the parameter's current value with a generic 0...1 float value
-void DfxParam::set_gen(float genValue)
+void DfxParam::set_gen(double genValue)
 {
-	set_d( expandparametervalue((double)genValue, getmin_d(), getmax_d(), curve, curvespec) );
+	set_f( expandparametervalue(genValue, getmin_f(), getmax_f(), curve, curvespec) );
 }
 
 
@@ -756,10 +643,10 @@ DfxParamValue DfxParam::randomize()
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
-		case kDfxParamValueType_double:
 		case kDfxParamValueType_int:
-//			value.i = (rand() % (long)(max.i-min.i)) + min.i;
-			set_gen( (float)rand() / (float)RAND_MAX );
+// XXX is this better for int?
+//			value.i = (rand() % (max.i-min.i)) + min.i;
+			set_gen( (double)rand() / (double)RAND_MAX );
 			break;
 		case kDfxParamValueType_boolean:
 			// but we don't really need to worry about the curve for boolean values
@@ -789,13 +676,6 @@ bool DfxParam::limit()
 				value.f = max.f;
 			else if (value.f < min.f)
 				value.f = min.f;
-			else return false;
-			break;
-		case kDfxParamValueType_double:
-			if (value.d > max.d)
-				value.d = max.d;
-			else if (value.d < min.d)
-				value.d = min.d;
 			else return false;
 			break;
 		case kDfxParamValueType_int:
