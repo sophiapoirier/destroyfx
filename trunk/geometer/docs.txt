@@ -196,6 +196,18 @@
    large intervals and window sizes.
 
 
+   -- Geometer : Other --
+
+   Wavelab can't start a plugin that has delay while the audio is
+   playing. You'll need to stop and restart the sound to hear
+   any output. (This is a good troubleshooting step for any
+   host!)
+
+   When using really large buffer sizes (ie, 32k), processing
+   happens infrequently but takes longer each time. This can
+   max out your CPU. Use smaller buffer sizes if you have
+   this problem.
+
    -- Geometer : Info --
 
    Geometer was mostly made by Tom 7, though Marc did most of
