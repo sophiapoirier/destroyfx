@@ -1,5 +1,5 @@
-#ifndef __ScrubbyEditor
-#include "ScrubbyEditor.hpp"
+#ifndef __scrubbyeditor
+#include "scrubbyeditor.hpp"
 #endif
 
 #include <stdio.h>
