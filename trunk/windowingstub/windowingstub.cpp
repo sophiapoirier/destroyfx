@@ -83,7 +83,7 @@ void PLUGIN::suspend () {
 }
 
 /* tail is the same as delay, of course */
-long PLUGIN::getTailSize() { return framesize; }
+long PLUGIN::getGetTailSize() { return framesize; }
 
 void PLUGIN::setParameter(long index, float value) {
   switch (index) {
