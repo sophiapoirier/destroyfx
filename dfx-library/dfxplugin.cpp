@@ -45,7 +45,7 @@ DfxPlugin::DfxPlugin(
 
 #if TARGET_API_VST
 	: TARGET_API_BASE_CLASS(inInstance, numPresets, numParameters), 
-	numInputs(NUM_INPUTS), numOutputs(NUM_OUTPUTS), 
+	numInputs(VST_NUM_INPUTS), numOutputs(VST_NUM_OUTPUTS), 
 #endif
 // end API-specific base constructors
 
@@ -121,9 +121,9 @@ DfxPlugin::DfxPlugin(
 
 #if TARGET_API_VST
 	setUniqueID(PLUGIN_ID);	// identify
-	setNumInputs(NUM_INPUTS);
-	setNumOutputs(NUM_OUTPUTS);
-	#if NUM_INPUTS == 2
+	setNumInputs(VST_NUM_INPUTS);
+	setNumOutputs(VST_NUM_OUTPUTS);
+	#if VST_NUM_INPUTS == 2
 		canMono();	// it's okay to feed a double-mono (fake stereo) input
 	#endif
 
