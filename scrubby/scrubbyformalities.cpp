@@ -4,6 +4,10 @@
 #include "scrubby.hpp"
 #endif
 
+#ifndef __scrubbyeditor
+#include "scrubbyeditor.hpp"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -61,6 +65,8 @@ Scrubby::Scrubby(audioMasterCallback audioMaster)
 	srand((unsigned int)time(NULL));	// sets a seed value for rand() from the system clock
 
 	suspend();
+
+	editor = new ScrubbyEditor(this);
 
 /*
 #if CALL_NOT_IN_CARBON
@@ -537,6 +543,9 @@ long Scrubby::setChunk(void *data, long byteSize, bool isPreset)
 //-----------------------------------------------------------------------------------------
 void Scrubby::setParameter(long index, float value)
 {
+	if ( (index < 0) && (index >= NUM_PARAMETERS) )
+		return;
+
 	switch (index)
 	{
 		case kSeekRange       : fSeekRange = value;			break;
@@ -577,8 +586,10 @@ void Scrubby::setParameter(long index, float value)
 		activeNotesTable[index-kPitchStep0] = 0;
 	}
 
-	if ( (index >= 0) && (index < NUM_PARAMETERS) )
-		programs[curProgram].param[index] = value;
+	programs[curProgram].param[index] = value;
+
+	if (editor)
+		((AEffGUIEditor*)editor)->setParameter(index, value);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -797,3 +808,39 @@ void Scrubby::getRealValues()
 	for (int i=0; i < NUM_PITCH_STEPS; i++)
 		pitchSteps[i] = onOffTest(fPitchSteps[i]);
 }
+
+
+
+//-----------------------------------------------------------------------------
+//                                    main()                                  |
+//-----------------------------------------------------------------------------
+
+// prototype of the export function main
+#if BEOS
+#define main main_plugin
+extern "C" __declspec(dllexport) AEffect *main_plugin(audioMasterCallback audioMaster);
+
+#else
+AEffect *main(audioMasterCallback audioMaster);
+#endif
+
+AEffect *main(audioMasterCallback audioMaster)
+{
+	// get vst version
+	if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
+		return 0;  // old version
+
+	AudioEffect* effect = new Scrubby(audioMaster);
+	if (!effect)
+		return 0;
+	return effect->getAeffect();
+}
+
+#if WIN32
+void* hInstance;
+BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved)
+{
+	hInstance = hInst;
+	return 1;
+}
+#endif
