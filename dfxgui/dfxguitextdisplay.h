@@ -19,8 +19,10 @@ typedef void (*displayTextProcedure) (Float32 value, char * outText, void * user
 class DGTextDisplay : public DGControl
 {
 public:
-	DGTextDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, displayTextProcedure inTextProc, 
-					void * inUserData, DGImage * inBackground, const char * inFontName = NULL);
+	DGTextDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+					displayTextProcedure inTextProc, void * inUserData, DGImage * inBackground, 
+					float inFontSize = 12.0f, DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, 
+					DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGTextDisplay();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
@@ -41,8 +43,8 @@ protected:
 	void *					textProcUserData;
 	char *					fontName;
 	float					fontSize;
-	DGColor					fontColor;
 	DfxGuiTextAlignment		alignment;
+	DGColor					fontColor;
 };
 
 
@@ -50,7 +52,9 @@ protected:
 class DGStaticTextDisplay : public DGTextDisplay
 {
 public:
-	DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, const char * inFontName = NULL);
+	DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
+						float inFontSize = 12.0f, DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, 
+						DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);

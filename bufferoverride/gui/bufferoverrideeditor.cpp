@@ -380,65 +380,37 @@ long BufferOverrideEditor::open(float inXOffset, float inYOffset)
 
 
 
+	DGTextDisplay * display;
+
 	pos.set (kDivisorDisplayX, kDivisorDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay * divisorDisplay = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
-	divisorDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	divisorDisplay->setTextAlignment(kDGTextAlign_right);
-	divisorDisplay->setFontColor(kWhiteDGColor);
+	display = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, NULL, VALUE_DISPLAY_REGULAR_FONT_SIZE, kDGTextAlign_right, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kBufferDisplayX, kBufferDisplayY, kDisplayWidth, kDisplayHeight);
-	bufferSizeDisplay = new DGTextDisplay(this, bufferSizeTag, &pos, bufferSizeDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
-	bufferSizeDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	bufferSizeDisplay->setFontColor(kWhiteDGColor);
-	bufferSizeDisplay->setTextAlignment(kDGTextAlign_center);
+	bufferSizeDisplay = new DGTextDisplay(this, bufferSizeTag, &pos, bufferSizeDisplayProc, this, NULL, VALUE_DISPLAY_REGULAR_FONT_SIZE, kDGTextAlign_center, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kDivisorLFOrateDisplayX, kDivisorLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
-	divisorLFOrateDisplay = new DGTextDisplay(this, divisorLFOrateTag, &pos, divisorLFOrateDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
-	divisorLFOrateDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	divisorLFOrateDisplay->setTextAlignment(kDGTextAlign_right);
-	divisorLFOrateDisplay->setFontColor(kWhiteDGColor);
+	divisorLFOrateDisplay = new DGTextDisplay(this, divisorLFOrateTag, &pos, divisorLFOrateDisplayProc, this, NULL, VALUE_DISPLAY_TINY_FONT_SIZE, kDGTextAlign_right, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kDivisorLFOdepthDisplayX, kDivisorLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay * divisorLFOdepthDisplay = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
-	divisorLFOdepthDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	divisorLFOdepthDisplay->setTextAlignment(kDGTextAlign_right);
-	divisorLFOdepthDisplay->setFontColor(kWhiteDGColor);
+	display = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_TINY_FONT_SIZE, kDGTextAlign_right, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kBufferLFOrateDisplayX, kBufferLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
-	bufferLFOrateDisplay = new DGTextDisplay(this, bufferLFOrateTag, &pos, bufferLFOrateDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
-	bufferLFOrateDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	bufferLFOrateDisplay->setTextAlignment(kDGTextAlign_right);
-	bufferLFOrateDisplay->setFontColor(kWhiteDGColor);
+	bufferLFOrateDisplay = new DGTextDisplay(this, bufferLFOrateTag, &pos, bufferLFOrateDisplayProc, this, NULL, VALUE_DISPLAY_TINY_FONT_SIZE, kDGTextAlign_right, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kBufferLFOdepthDisplayX, kBufferLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay * bufferLFOdepthDisplay = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
-	bufferLFOdepthDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	bufferLFOdepthDisplay->setTextAlignment(kDGTextAlign_right);
-	bufferLFOdepthDisplay->setFontColor(kWhiteDGColor);
+	display = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_TINY_FONT_SIZE, kDGTextAlign_right, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kSmoothDisplayX, kSmoothDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay * smoothDisplay = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
-	smoothDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	smoothDisplay->setTextAlignment(kDGTextAlign_right);
-	smoothDisplay->setFontColor(kWhiteDGColor);
+	display = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, NULL, VALUE_DISPLAY_REGULAR_FONT_SIZE, kDGTextAlign_right, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kDryWetMixDisplayX, kDryWetMixDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay * dryWetMixDisplay = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
-	dryWetMixDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	dryWetMixDisplay->setTextAlignment(kDGTextAlign_right);
-	dryWetMixDisplay->setFontColor(kWhiteDGColor);
+	display = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, NULL, VALUE_DISPLAY_REGULAR_FONT_SIZE, kDGTextAlign_right, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kPitchbendDisplayX, kPitchbendDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay * pitchbendDisplay = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
-	pitchbendDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	pitchbendDisplay->setTextAlignment(kDGTextAlign_right);
-	pitchbendDisplay->setFontColor(kWhiteDGColor);
+	display = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, NULL, VALUE_DISPLAY_REGULAR_FONT_SIZE, kDGTextAlign_right, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 	pos.set (kTempoDisplayX, kTempoDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay * tempoDisplay = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
-	tempoDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	tempoDisplay->setTextAlignment(kDGTextAlign_left);
-	tempoDisplay->setFontColor(kWhiteDGColor);
+	display = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, VALUE_DISPLAY_TINY_FONT_SIZE, kDGTextAlign_left, kWhiteDGColor, VALUE_DISPLAY_FONT);
 
 
 	DGButton *button;
@@ -532,10 +504,7 @@ HMSetHelpTagsDisplayed(true);
 
 	// the help mouseover hint thingy
 	pos.set (kHelpDisplayX, kHelpDisplayY, gBackground->getWidth(), kDisplayHeight);
-	helpDisplay = new DGStaticTextDisplay(this, &pos, NULL, HELP_DISPLAY_FONT);
-	helpDisplay->setFontSize(HELP_DISPLAY_FONT_SIZE);
-	helpDisplay->setTextAlignment(kDGTextAlign_center);
-	helpDisplay->setFontColor(HELP_DISPLAY_TEXT_COLOR);
+	helpDisplay = new DGStaticTextDisplay(this, &pos, NULL, HELP_DISPLAY_FONT_SIZE, kDGTextAlign_center, HELP_DISPLAY_TEXT_COLOR, HELP_DISPLAY_FONT);
 
 
 	AUListenerAddParameter(parameterListener, bufferSizeSlider, &bufferSizeTempoSyncAUP);
