@@ -46,55 +46,7 @@ DGImage::DGImage(const char *inFileName)
 
 				// create an uncompressed, alpha-premultiplied bitmap image in memory
 				if (cgImage != NULL)
-				{
-					// get image info
-					size_t width = CGImageGetWidth(cgImage);
-					size_t height = CGImageGetHeight(cgImage);
-
-//					CGColorSpaceRef colorSpace = CGImageGetColorSpace(cgImage);
-					CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-//					CGImageAlphaInfo alphaInfo = CGImageGetAlphaInfo(cgImage);
-					const CGImageAlphaInfo alphaInfo = kCGImageAlphaPremultipliedFirst;
-
-					const size_t bitsPerComponent = 8;	// number of bits per color component in a pixel
-					const size_t bitsPerPixel = bitsPerComponent * 4;	// total number of bits in a pixel
-					const size_t bytesPerRow = ((width * bitsPerPixel) + 7) / 8;
-
-					if (colorSpace != NULL)
-					{
-						// create a bitmap graphic context pointing at a data buffer that is 
-						// large enough to hold an uncompressed rendered version of the image
-						size_t dataSize = bytesPerRow * height;
-						void *buffer = malloc(dataSize);
-						memset(buffer, 0, dataSize);
-						CGContextRef context = CGBitmapContextCreate(buffer, width, height, bitsPerComponent, 
-																	bytesPerRow, colorSpace, alphaInfo);
-						if (context != NULL)
-						{
-							// draw image into context
-							CGRect drawRect = CGRectMake(0, 0, width, height);
-							CGContextDrawImage(context, drawRect, cgImage);
-							CGContextRelease(context);
-
-							// create data provider for this image buffer
-							CGDataProviderRef preProvider = CGDataProviderCreateWithData(NULL, buffer, dataSize, NULL);
-							if (preProvider != NULL)
-							{
-								// create a CGImage with the data provider
-								CGImageRef prerenderedImage = CGImageCreate(width, height, bitsPerComponent, bitsPerPixel, bytesPerRow, 
-													colorSpace, alphaInfo, preProvider, NULL, shouldInterpolate, kCGRenderingIntentDefault);
-								if (prerenderedImage != NULL)
-								{
-									CGImageRelease(cgImage);
-									cgImage = prerenderedImage;
-								}
-								CGDataProviderRelease(preProvider);
-							}
-						}
-						CGColorSpaceRelease(colorSpace);
-					}
-				}
-
+					cgImage = PreRenderCGImageBuffer(cgImage);
 			}
 			CFRelease(imageResourceURL);
 		}
@@ -134,4 +86,61 @@ void DGImage::draw(CGContextRef context, UInt32 portHeight, DGRect *inRect, floa
 {
 	if (cgImage != NULL)
 		CGContextDrawImage(context, inRect->convertToCGRect(portHeight), cgImage);
+}
+
+//-----------------------------------------------------------------------------
+// create an uncompressed, alpha-premultiplied bitmap image in memory
+CGImageRef PreRenderCGImageBuffer(CGImageRef inImage)
+{
+	if (inImage == NULL)
+		return NULL;
+
+	// get image info
+	size_t width = CGImageGetWidth(inImage);
+	size_t height = CGImageGetHeight(inImage);
+
+//	CGColorSpaceRef colorSpace = CGImageGetColorSpace(inImage);
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+//	CGImageAlphaInfo alphaInfo = CGImageGetAlphaInfo(inImage);
+	const CGImageAlphaInfo alphaInfo = kCGImageAlphaPremultipliedFirst;
+	const bool shouldInterpolate = true;
+
+	const size_t bitsPerComponent = 8;	// number of bits per color component in a pixel
+	const size_t bitsPerPixel = bitsPerComponent * 4;	// total number of bits in a pixel
+	const size_t bytesPerRow = ((width * bitsPerPixel) + 7) / 8;
+
+	if (colorSpace != NULL)
+	{
+		// create a bitmap graphic context pointing at a data buffer that is 
+		// large enough to hold an uncompressed rendered version of the image
+		size_t dataSize = bytesPerRow * height;
+		void *buffer = malloc(dataSize);
+		memset(buffer, 0, dataSize);
+		CGContextRef context = CGBitmapContextCreate(buffer, width, height, bitsPerComponent, bytesPerRow, colorSpace, alphaInfo);
+		if (context != NULL)
+		{
+			// draw image into context
+			CGRect drawRect = CGRectMake(0, 0, width, height);
+			CGContextDrawImage(context, drawRect, inImage);
+			CGContextRelease(context);
+
+			// create data provider for this image buffer
+			CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, buffer, dataSize, NULL);
+			if (provider != NULL)
+			{
+				// create a CGImage with the data provider
+				CGImageRef prerenderedImage = CGImageCreate(width, height, bitsPerComponent, bitsPerPixel, bytesPerRow, 
+									colorSpace, alphaInfo, provider, NULL, shouldInterpolate, kCGRenderingIntentDefault);
+				if (prerenderedImage != NULL)
+				{
+					CGImageRelease(inImage);
+					inImage = prerenderedImage;
+				}
+				CGDataProviderRelease(provider);
+			}
+		}
+		CGColorSpaceRelease(colorSpace);
+	}
+
+	return inImage;
 }
