@@ -1297,4 +1297,17 @@ void PLUGIN::makepresets() {
   setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 0.7303371f);
   i++;
 
+  setpresetname(i, "time shuffle echo");
+  setpresetparameter_i(i, P_BUFSIZE, 13);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_DYDX);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.81f);
+  setpresetparameter_i(i, P_POINTOP1, OP_LONGPASS);
+  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.183f);
+  setpresetparameter_i(i, P_POINTOP2, OP_NONE);
+  setpresetparameter_i(i, P_POINTOP3, OP_NONE);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SHUFFLE);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SHUFFLE, 0.84f);
+  i++;
+
 }
