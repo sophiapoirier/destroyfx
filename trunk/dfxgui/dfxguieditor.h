@@ -24,7 +24,7 @@ public:
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventRef inEvent);
 	// *** this one is for the child class to override
-	virtual OSStatus open(Float32 inXOffset, Float32 inYOffset) = 0;
+	virtual OSStatus open(float inXOffset, float inYOffset) = 0;
 
 	UInt32			requestItemID();
 	// Images

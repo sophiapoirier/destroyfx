@@ -122,7 +122,7 @@ private:
 
 class PLUGINCORE : public DfxPluginCore {
 public:
-  PLUGINCORE(TARGET_API_CORE_INSTANCE_TYPE *inInstance);
+  PLUGINCORE(DfxPlugin *inDfxPlugin);
   virtual ~PLUGINCORE();
 
   virtual void reset();

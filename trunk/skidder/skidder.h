@@ -6,9 +6,7 @@
 #define __SKIDDER_H
 
 
-#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
-#endif
 
 
 //----------------------------------------------------------------------------- 

@@ -12,7 +12,7 @@ public:
 	TransverbEditor(AudioUnitCarbonView inInstance);
 	virtual ~TransverbEditor();
 	
-	virtual OSStatus open(Float32 inXOffset, Float32 inYOffset);
+	virtual OSStatus open(float inXOffset, float inYOffset);
 };
 
 

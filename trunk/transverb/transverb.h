@@ -67,7 +67,7 @@ enum { useNothing, useHighpass, useLowpassIIR, useLowpassFIR, numFilterModes };
 class TransverbDSP : public DfxPluginCore {
 
 public:
-  TransverbDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance);
+  TransverbDSP(DfxPlugin *inDfxPlugin);
   virtual ~TransverbDSP();
 
   virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);

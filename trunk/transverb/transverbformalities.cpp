@@ -99,8 +99,8 @@ void Transverb::subtractcore() {
 
 
 
-TransverbDSP::TransverbDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
-  : DfxPluginCore(inInstance) {
+TransverbDSP::TransverbDSP(DfxPlugin *inDfxPlugin)
+  : DfxPluginCore(inDfxPlugin) {
 
   buf1 = 0;
   buf2 = 0;
@@ -112,7 +112,7 @@ TransverbDSP::TransverbDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
   firCoefficients2 = (float*) malloc(NUM_FIR_TAPS * sizeof(float));
 
   // increment the DSP core instance counter and fetch the current count
-  tomsound_sampoffset = ((Transverb*)inInstance)->addcore();
+  tomsound_sampoffset = ((Transverb*)inDfxPlugin)->addcore();
 }
 
 TransverbDSP::~TransverbDSP() {

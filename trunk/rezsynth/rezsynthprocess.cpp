@@ -1,8 +1,6 @@
 /*-------------- by Marc Poirier  ][  January - March 2001 -------------*/
 
-#ifndef __REZSYNTH_H
 #include "rezsynth.hpp"
-#endif
 
 
 void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
