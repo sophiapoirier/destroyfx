@@ -125,7 +125,7 @@ void floorDisplayConvert(float value, char *string)
 	if (value <= 0.0f)
 		strcpy(string, "-oo  dB");
 	else
-		sprintf(string, "%.2f  dB", dBconvert(gainScaled(value)));
+		sprintf(string, "%.2f  dB", linear2dB(gainScaled(value)));
 }
 
 void floorRandMinDisplayConvert(float value, char *string, void *ffloor);

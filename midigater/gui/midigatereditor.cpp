@@ -74,7 +74,7 @@ void floorDisplayConvert(float value, char *string)
 	if (value <= 0.0f)
 		sprintf(string, "-oo  dB");
 	else
-		sprintf(string, "%.1f  dB", dBconvert(value*value*value));
+		sprintf(string, "%.1f  dB", linear2dB(value*value*value));
 }
 
 
