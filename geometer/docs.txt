@@ -16,6 +16,7 @@
    text, but it would be a good idea to read the "basic operation"
    section that follows before jumping in.
 
+
    -- Geometer: Basic Operation --
 
    The basic operation of Geometer is as follows:
@@ -196,27 +197,29 @@
    large intervals and window sizes.
 
 
-   -- Geometer : Other --
+   -- Geometer : Trouble --
 
-   Wavelab can't start a plugin that has delay while the audio is
-   playing. You'll need to stop and restart the sound to hear
-   any output. (This is a good troubleshooting step for any
-   host!)
+   Due to a bug in Wavelab, if you add Geometer to a track while it is
+   playing, you won't hear any output until you stop and restart
+   playing. It will work fine from then on. Other hosts may have this
+   problem too, so try the same solution.
 
-   When using really large buffer sizes (ie, 32k), processing
-   happens infrequently but takes longer each time. This can
-   max out your CPU. Use smaller buffer sizes if you have
-   this problem.
+   When using really large window sizes (like 2^12 or bigger),
+   Geometer's processing might occur less frequently than the rate at
+   which the host processes audio buffers. This can cause an uneven
+   processing load (spikes) that might max out your CPU. Use a smaller
+   window size if you have this problem.
+
 
    -- Geometer : Info --
 
-   Geometer was mostly made by Tom 7, though Marc did most of
-   the painful GUI, MIDI learn, and chunk code. He also offered
-   valuable suggestions and debugging help. (Thanks Marc!) 
+   Geometer was mostly made by Tom 7, though Marc did most of the
+   painful GUI, MIDI learn, and chunk code. He also offered valuable
+   suggestions and debugging help. (Thanks Marc!)
 
    'span' was suggested by Bram of Smartelectron:x.
    'friends' was invented when Jason Reed misunderstood what
-       I meant by Windowing.
+       I meant by windowing.
    'some other effect' will be invented by you! Suggest away!
    
 
