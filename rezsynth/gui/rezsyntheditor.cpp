@@ -36,14 +36,16 @@ kTallDisplayWidener = 8,
 	kSepModeButtonY = 121,
 	kScaleButtonX = 400,
 	kScaleButtonY = 33,
-	kLegatoButtonX = 435,
+	kLegatoButtonX = 435 - 15,
 	kLegatoButtonY = 296,
 	kFadesButtonX = 274,
 	kFadesButtonY = 176,
 	kFoldoverButtonX = 274,
 	kFoldoverButtonY = 87,
-	kWiseAmpButtonX = 368,
+	kWiseAmpButtonX = 368 - 1,
 	kWiseAmpButtonY = 296,
+	kDryWetMixModeButtonX = 471,
+	kDryWetMixModeButtonY = kWiseAmpButtonY,
 
 	kMidiLearnButtonX = 189,
 	kMidiLearnButtonY = 331,
@@ -219,6 +221,7 @@ long RezSynthEditor::open()
 	DGImage * gLegatoButton = new DGImage("legato-button.png", this);
 	DGImage * gFoldoverButton = new DGImage("foldover-button.png", this);
 	DGImage * gWiseAmpButton = new DGImage("wise-amp-button.png", this);
+	DGImage * gDryWetMixModeButton = new DGImage("dry-wet-mix-mode-button.png", this);
 	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", this);
 	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", this);
 	DGImage * gGoButton = new DGImage("go-button.png", this);
@@ -376,6 +379,10 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 	// wisely lower the output gain to accomodate for resonance or no
 	pos.set(kWiseAmpButtonX, kWiseAmpButtonY, gWiseAmpButton->getWidth(), (gWiseAmpButton->getHeight())/2);
 	button = new DGButton(this, kWiseAmp, &pos, gWiseAmpButton, 2, kDGButtonType_incbutton);
+
+	// dry/wet mix mode (linear or equal power)
+	pos.set(kDryWetMixModeButtonX, kDryWetMixModeButtonY, gDryWetMixModeButton->getWidth(), (gDryWetMixModeButton->getHeight())/kNumDryWetMixModes);
+	button = new DGButton(this, kDryWetMixMode, &pos, gDryWetMixModeButton, kNumDryWetMixModes, kDGButtonType_incbutton);
 
 	// turn on/off MIDI learn mode for CC parameter automation
 	pos.set(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth(), (gMidiLearnButton->getHeight())/2);
