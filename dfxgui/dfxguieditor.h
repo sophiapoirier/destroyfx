@@ -84,7 +84,6 @@ private:
 	DGGraphic *				Images;
 	DGControl *				Controls;
 	ControlDefSpec 			dgControlSpec;
-	ToolboxObjectClassRef	dgControlClass;
 	bool					relaxed;
 	EventLoopTimerRef		timer;
 
