@@ -17,6 +17,7 @@
 #define PLUGINNAME "DFX STUBPLUG"
 
 #define NUM_PARAMS 0
+#define NUM_PROGRAMS 1
 
 struct param {
   float * ptr;
