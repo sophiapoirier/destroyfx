@@ -247,8 +247,8 @@ typedef struct {
 		bool timeSigIsValid;
 	long samplesToNextBar;
 		bool samplesToNextBarIsValid;
-	// XXX implement this for Audio Unit
 	bool playbackChanged;	// whether or not the playback state or position just changed
+	bool playbackIsOccurring;
 } DfxTimeInfo;
 
 
