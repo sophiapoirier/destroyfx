@@ -183,7 +183,7 @@ struct DfxParamValue {
 	unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
 	char c;
 	unsigned char uc;
-	DfxParamValue() {} /* suppress compiler warnings */
+	DfxParamValue() {}	// suppress compiler warnings
 };
 typedef struct DfxParamValue DfxParamValue;
 
@@ -256,29 +256,29 @@ public:
 	virtual ~DfxParam();
 	
 	// initialize a parameter with values, value types, curve types, etc.
-	void init(const char *initName, DfxParamValueType initType, 
+	void init(const char * initName, DfxParamValueType initType, 
 					DfxParamValue initValue, DfxParamValue initDefaultValue, 
 					DfxParamValue initMin, DfxParamValue initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_linear);
 	// the rest of these are just convenience wrappers for initializing with a certain variable type
-	void init_f(const char *initName, float initValue, float initDefaultValue, 
+	void init_f(const char * initName, float initValue, float initDefaultValue, 
 					float initMin, float initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_linear);
-	void init_d(const char *initName, double initValue, double initDefaultValue, 
+	void init_d(const char * initName, double initValue, double initDefaultValue, 
 					double initMin, double initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_linear);
-	void init_i(const char *initName, long initValue, long initDefaultValue, 
+	void init_i(const char * initName, long initValue, long initDefaultValue, 
 					long initMin, long initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_stepped);
-	void init_ui(const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
+	void init_ui(const char * initName, unsigned long initValue, unsigned long initDefaultValue, 
 					unsigned long initMin, unsigned long initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_linear);
-	void init_b(const char *initName, bool initValue, bool initDefaultValue, 
+	void init_b(const char * initName, bool initValue, bool initDefaultValue, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined);
 
 	// release memory for the value strings arrays
@@ -290,9 +290,9 @@ public:
 	// safety check for an index into the value strings array
 	bool ValueStringIndexIsValid(long index);
 	// set a value string's text contents
-	bool setvaluestring(long index, const char *inText);
+	bool setvaluestring(long index, const char * inText);
 	// get a copy of the contents of a specific value string...
-	bool getvaluestring(long index, char *outText);
+	bool getvaluestring(long index, char * outText);
 	// ...or get a copy of the pointer to the value string
 	char * getvaluestring_ptr(long index);
 #ifdef TARGET_API_AUDIOUNIT
@@ -396,7 +396,7 @@ public:
 		{	return enforceValueLimits;	}
 
 	// get a copy of the text of the parameter name
-	void getname(char *outText);
+	void getname(char * outText);
 
 	// set/get the variable type of the parameter values
 	void setvaluetype(DfxParamValueType newType);
@@ -407,8 +407,8 @@ public:
 	void setunit(DfxParamUnit newUnit);
 	DfxParamUnit getunit()
 		{	return unit;	}
-	void getunitstring(char *outText);
-	void setcustomunitstring(const char *inText);
+	void getunitstring(char * outText);
+	void setcustomunitstring(const char * inText);
 
 	// set/get the value distribution curve
 	void setcurve(DfxParamCurve newcurve)
@@ -441,22 +441,22 @@ protected:
 
 	// when this is enabled, out of range values are "bounced" into range
 	bool enforceValueLimits;
-	char *name;
+	char * name;
 	DfxParamValue value, defaultValue, min, max, oldValue;
 	DfxParamValueType valueType;	// the variable type of the parameter values
 	DfxParamUnit unit;	// the unit type of the parameter
 	DfxParamCurve curve;	// the shape of the distribution of parameter values
 	double curvespec;	// special specification, like the exponent in kDfxParamCurve_pow
 	bool useValueStrings;	// whether or not to use an array of custom strings to display the parameter's value
-	char **valueStrings;	// an array of strings for when useValueStrings is true
+	char ** valueStrings;	// an array of strings for when useValueStrings is true
 	long numAllocatedValueStrings;	// just to remember how many we allocated
-	char *customUnitString;	// a text string display for parameters using custom unit types
+	char * customUnitString;	// a text string display for parameters using custom unit types
 	bool changed;	// indicates if the value has changed
 	bool hidden;	// indicates if the parameter might be only for internal use
 
 	#ifdef TARGET_API_AUDIOUNIT
 		// array of CoreFoundation-style versions of the indexed value strings
-		CFStringRef *valueCFStrings;
+		CFStringRef * valueCFStrings;
 	#endif
 
 };
@@ -489,18 +489,18 @@ public:
 
 //	void setvalue(long parameterIndex, DfxParamValue newValue);
 //	DfxParamValue getvalue(long parameterIndex);
-	void setname(const char *inText);
-	void getname(char *outText);
+	void setname(const char * inText);
+	void getname(char * outText);
 	char * getname_ptr();
 	#ifdef TARGET_API_AUDIOUNIT
 		CFStringRef getcfname()
 			{	return cfname;	}
 	#endif
 
-	DfxParamValue *values;
+	DfxParamValue * values;
 
 protected:
-	char *name;
+	char * name;
 	long numParameters;
 	#ifdef TARGET_API_AUDIOUNIT
 		CFStringRef cfname;

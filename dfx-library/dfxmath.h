@@ -64,7 +64,7 @@ inline float fsign(float fval)
 //-----------------------------------------------------------------------------
 // inline functions
 
-inline float interpolateHermite(float *data, double address, long arraysize)
+inline float interpolateHermite(float * data, double address, long arraysize)
 {
 	long pos = (long)address;
 	float posFract = (float) (address - (double)pos);
@@ -102,7 +102,7 @@ inline float interpolateHermite(float *data, double address, long arraysize)
 #endif
 }
 
-inline float interpolateLinear(float *data, double address, long arraysize)
+inline float interpolateLinear(float * data, double address, long arraysize)
 {
 	long pos = (long)address;
 	float posFract = (float) (address - (double)pos);
@@ -121,7 +121,7 @@ inline float interpolateLinear2values(float point1, float point2, double address
 	return (point1 * (1.0f-posFract)) + (point2 * posFract);
 }
 
-/* return the parameter with larger magnitude */
+// return the parameter with larger magnitude
 inline float magmax(float a, float b) {
   if (fabsf(a) > fabsf(b)) return a;
   else return b;
