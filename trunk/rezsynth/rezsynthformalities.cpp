@@ -28,7 +28,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
 	initparameter_f(kSepAmount_linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, kDfxParamUnit_scalar);	// % of center frequency
 	initparameter_indexed(kSepMode, "separation mode", kSepMode_octaval, kSepMode_octaval, kNumSepModes);
-	initparameter_b(kFoldover, "mistakes", true, false);
+	initparameter_b(kFoldover, "filter frequency aliasing", true, false);
 	initparameter_f(kAttack, "attack", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_f(kRelease, "release", 300.0, 300.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_b(kFades, "nicer fades", false, false);
