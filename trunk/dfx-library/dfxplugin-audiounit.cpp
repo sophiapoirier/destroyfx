@@ -644,7 +644,7 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
 
 #if TARGET_PLUGIN_USES_MIDI
-//printf("\nresult from AUBase::RestoreState was %ld\n", result);
+printf("\nresult from AUBase::RestoreState was %ld\n", result);
 	CFDataRef cfdata = NULL;
 
 	if (result == noErr)
@@ -655,18 +655,18 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 		if (cfdata == NULL)
 {
 			cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
-//printf("destroyfx-data was not there, trying vstdata...\n");
-//if (cfdata == NULL) printf("vstdata was not there\n");
-//else printf("vstdata was there, loading...\n");
+printf("destroyfx-data was not there, trying vstdata...\n");
+if (cfdata == NULL) printf("vstdata was not there\n");
+else printf("vstdata was there, loading...\n");
 }
 	}
 	// there was an error in AUBas::RestoreState, but maybe some keys were missing and "vstdata" is there...
 	else
 {
 		cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
-//printf("AUBase::RestoreState failed, trying vstdata...\n");
-//if (cfdata == NULL) printf("vstdata was not there\n");
-//else printf("vstdata was there, loading...\n");
+printf("AUBase::RestoreState failed, trying vstdata...\n");
+if (cfdata == NULL) printf("vstdata was not there\n");
+else printf("vstdata was there, loading...\n");
 }
 
 	// if we couldn't get any data, abort with an error
@@ -679,8 +679,8 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 	unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
 	// try to restore the saved settings data
 	bool success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
-//if (success) printf("settings data was successfully loaded\n");
-//else printf("settings data failed to load\n");
+if (success) printf("settings data was successfully loaded\n");
+else printf("settings data failed to load\n");
 	if (!success)
 		return kAudioUnitErr_InvalidPropertyValue;
 	

@@ -253,8 +253,7 @@ long EQsyncEditor::open(void *ptr)
 
 	//--initialize the displays---------------------------------------------
 
-//	tempoRateString = ((EQsync*)effect)->tempoRateTable->getDisplay(effect->getParameter(kRate_sync));
-	strcpy( tempoRateString, ((EQsync*)effect)->tempoRateTable->getDisplay(effect->getParameter(kRate_sync)) );
+	strcpy( tempoRateString, ((EQsync*)effect)->tempoRateTable->getDisplay(((DfxPlugin*)effect)->getparameter_i(kRate_sync)) );
 
 	// tempo rate (cycles per beat)
 	size (kDisplayX, kDisplayY, kDisplayX + kDisplayWidth, kDisplayY + kDisplayHeight);
@@ -332,8 +331,7 @@ void EQsyncEditor::setParameter(long index, float value)
 	switch (index)
 	{
 		case kRate_sync:
-//			tempoRateString = ((EQsync*)effect)->tempoRateTable->getDisplay(effect->getParameter(kRate_sync));
-			strcpy(tempoRateString, ((EQsync*)effect)->tempoRateTable->getDisplay(effect->getParameter(kRate_sync)));
+			strcpy(tempoRateString, ((EQsync*)effect)->tempoRateTable->getDisplay(((DfxPlugin*)effect)->getparameter_i(kRate_sync)));
 			if (tempoRateFader)
 				tempoRateFader->setValue(effect->getParameter(index));
 			if (tempoRateDisplay)
