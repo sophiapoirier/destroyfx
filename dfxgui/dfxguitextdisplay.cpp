@@ -56,6 +56,9 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 		}
 	}
 
+	mouseAxis = kDGTextDisplayMouseAxis_vertical;
+	mouseDragRange = 333.0f;	// pixels
+
 	setControlContinuous(true);
 }
 
@@ -139,6 +142,41 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRe
 	CGContextTranslateCTM(inContext, 0.0f, bounds.size.height);
 	CGContextScaleCTM(inContext, 1.0f, -1.0f);
 #endif
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+{
+	lastX = inXpos;
+	lastY = inYpos;
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+{
+	SInt32 min = GetControl32BitMinimum(carbonControl);
+	SInt32 max = GetControl32BitMaximum(carbonControl);
+	SInt32 val = GetControl32BitValue(carbonControl);
+	SInt32 oldval = val;
+
+	float diff = 0.0f;
+	if (mouseAxis & kDGTextDisplayMouseAxis_horizontal)
+		diff += inXpos - lastX;
+	if (mouseAxis & kDGTextDisplayMouseAxis_vertical)
+		diff += lastY - inYpos;
+	if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
+		diff /= fineTuneFactor;
+	val += (SInt32) (diff * (float)(max-min) / mouseDragRange);
+
+	if (val > max)
+		val = max;
+	if (val < min)
+		val = min;
+	if (val != oldval)
+		SetControl32BitValue(carbonControl, val);
+
+	lastX = inXpos;
+	lastY = inYpos;
 }
 
 
