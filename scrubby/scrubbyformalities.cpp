@@ -166,15 +166,18 @@ void Scrubby::reset()
 	writePos = 0;
 
 	// delete any stored active notes
-	for (int i=0; i < NUM_PITCH_STEPS; i++)
+	if (activeNotesTable != NULL)
 	{
-		if (activeNotesTable[i] > 0)
+		for (int i=0; i < NUM_PITCH_STEPS; i++)
 		{
-			setparameter_b(i+kPitchStep0, false);
-			postupdate_parameter(i+kPitchStep0);
+			if (activeNotesTable[i] > 0)
+			{
+				setparameter_b(i+kPitchStep0, false);
+				postupdate_parameter(i+kPitchStep0);
+			}
+	
+			activeNotesTable[i] = 0;
 		}
-
-		activeNotesTable[i] = 0;
 	}
 
 sinecount = 0;
