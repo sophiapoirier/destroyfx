@@ -4,28 +4,19 @@
 #include "bufferoverride.hpp"
 #endif
 
-#include <math.h>
-#include <stdlib.h>
-#if MAC
-	#include <fp.h>
-#endif
-#if WIN32
-	#include <float.h>
-#endif
+//#include <float.h>	// for isnan
 
 
 //-----------------------------------------------------------------------------
 float BufferOverride::getDivisorParameterFromNote(int currentNote)
 {
-  float newDivisor;	// just a temporary value holder used in breaking down a computation into 2 steps
-
 	// tell the GUI to update the divisor parameter's slider & value display
 	divisorWasChangedByMIDI = true;
 	// this isn't true anymore - it's MIDI's turn
 	divisorWasChangedByHand = false;
 
 	// this step gets the literal value for the new divisor
-	newDivisor = (float) ((double)bufferSizeMs*0.001 * midistuff->freqTable[currentNote] * pitchbend);
+	float newDivisor = (float) ((double)bufferSizeMs*0.001 * midistuff->freqTable[currentNote] * pitchbend);
 /*
 	// this step scales that literal value into the appropriate value for fDivisor, 
 	// the value that will rescale correctly (back to newDivisor) in the bufferDivisorScaled() macro
@@ -41,15 +32,12 @@ float BufferOverride::getDivisorParameterFromNote(int currentNote)
 	else
 		return 0.0f;
 */
-		return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
+	return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
 }
 
 //-----------------------------------------------------------------------------
 float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 {
-  float newDivisor;	// just a temporary value holder
-
-
 	oldPitchbend = pitchbend;
 
 	// bend pitch up
@@ -78,7 +66,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 
 		// this step gets the literal value for the new divisor
 		// you need to take into account where pitchbend is coming from, hence the division by oldPitchbend
-		newDivisor = (float) ((double)divisor * pitchbend/oldPitchbend);
+		float newDivisor = (float) ((double)divisor * pitchbend/oldPitchbend);
 /*
 		// these step scale that literal value into the appropriate value for fDivisor, 
 		// the value that will rescale correctly (back to newDivisor) in the bufferDivisorScaled() macro
