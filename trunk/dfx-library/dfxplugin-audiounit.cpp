@@ -227,9 +227,13 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	outParameterInfo.minValue = getparametermin_f(inParameterID);
 	outParameterInfo.maxValue = getparametermax_f(inParameterID);
 	outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
-	// all parameters are readable and writable
-	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
-							| kAudioUnitParameterFlag_IsWritable;
+	// if the parameter is hidden, then indicate that it's not readable or writable...
+	if (getparameterhidden(inParameterID))
+		outParameterInfo.flags = 0;
+	// ...otherwise all parameters are readable and writable
+	else
+		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
+								| kAudioUnitParameterFlag_IsWritable;
 
 	// the complicated part:  getting the unit type
 	switch (getparameterunit(inParameterID))

@@ -4,13 +4,12 @@
 #ifndef __DFX_GEOMETER_H
 #define __DFX_GEOMETER_H
 
-#include "dfxmisc.h"
-#include "vstchunk.h"
+#ifndef __DFXPLUGIN_H
+#include "dfxplugin.h"
+#endif
 
-#ifdef WIN32
-/* turn off warnings about default but no cases in switch, etc. */
-   #pragma warning( disable : 4065 57 4200 4244 )
-   #include <windows.h>
+#ifndef __DFXMUTEX_H
+#include "dfxmutex.h"
 #endif
 
 #define fsign(f) ((f<0.0)?-1.0:1.0)
@@ -18,19 +17,14 @@
 
 /* change these for your plugins */
 #define PLUGIN Geometer
-#define PLUGINID 'DFgr'
-#define PLUGINNAME "DFX GEOMETER"
-#define PLUGINPROGRAM GeometerProg
 
-#define NUM_PROGRAMS 16
+#define NUM_PRESETS 16
 
-#define GUI
 
 /* MAX_THING gives the maximum number of things I
    ever expect to have; this affects the way the
    parameter is stored by the host.
 */
-
 
 /* the types of landmark generation operations */
 enum { POINT_EXTNCROSS, 
@@ -111,104 +105,25 @@ struct param {
   float def;
 };
 
-class PLUGINPROGRAM {
-  friend class PLUGIN;
-public:
-  PLUGINPROGRAM() { strcpy(name, "default"); }
-  ~PLUGINPROGRAM() { }
-  void init(class PLUGIN *);
-
-private:
-
-  char name[32];
-  float param[NUM_PARAMS];
-};
-
-class PLUGIN : public AudioEffectX {
-  friend class PLUGINPROGRAM;
+class PLUGIN : public DfxPlugin {
   friend class GeometerEditor;
 public:
-  PLUGIN(audioMasterCallback audioMaster);
-  ~PLUGIN();
+  PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+  virtual ~PLUGIN();
 
-  virtual void processX(float **inputs, float **outputs, long sampleFrames,
-                       int replacing);
-  virtual void process(float **inputs, float **outputs, long sampleFrames);
-  virtual void processReplacing(float **inputs, float **outputs, 
-                                long sampleFrames);
+  virtual long initialize();
+  virtual void cleanup();
+  virtual void reset();
 
-  virtual void setParameter(long index, float value);
-  virtual float getParameter(long index);
-  virtual void getParameterLabel(long index, char *label);
-  virtual void getParameterDisplay(long index, char *text);
-  virtual void getParameterName(long index, char *text);
-
-  virtual void setProgram(long programNum);
-  virtual void setProgramName(char *name);
-  virtual void getProgramName(char *name);
-  virtual bool getProgramNameIndexed(long category, long index, char *text);
-  virtual bool copyProgram(long destination);
-
-  virtual long getTailSize();
-  /* there was a typo in the VST header files versions 2.0 through 2.2, 
-     so some hosts will still call this incorrectly named version... */
-  virtual long getGetTailSize() { return getTailSize(); }
-
-  virtual long canDo(char* text);
-
-  virtual void suspend();
-  virtual void resume();
-  virtual long fxIdle();
-
-  virtual long processEvents(VstEvents* events);
-  virtual long getChunk(void **data, bool isPreset);
-  virtual long setChunk(void *data, long byteSize, bool isPreset);
-
-  bool getVendorString(char *text) {
-    strcpy (text, "Destroy FX");
-    return true; 
-  }
-
-  bool getProductString(char *text) {
-    strcpy (text, "Super Destroy FX bipolar VST plugin pack");
-    return true; 
-  }
-
-  bool getEffectName(char *name) {
-    strcpy (name, PLUGINNAME);
-    return true; 
-  }
-
-  void setup() {
-    programs = new PLUGINPROGRAM[NUM_PROGRAMS];
-    for(int i = 0; i < NUM_PROGRAMS; i++) programs[i].init(this);
-    setProgram(0);
-    strcpy(programs[0].name, "Geometer LoFi");
-    makepresets();
-
-    setNumInputs(1);            /* mono in/out */
-    setNumOutputs(1);
-    setUniqueID(PLUGINID);
-
-    canProcessReplacing();
-  }
+  virtual void processparameters();
+  virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
 
   /* this stuff is public so that the GUI can see it */
   long getwindowsize() { return third; }
-  VstChunk *chunk; /* chunky data full of parameter settings & stuff */
 
 protected:
-  /* stores info for each parameter */
-  param paramptrs[NUM_PARAMS];
-
-  /* stores programs */
-  PLUGINPROGRAM *programs;
-
   /* shape of envelope */
-  float shape;
-
-  /* size of buffer (param) */
-  float bufsizep;
+  long shape;
 
 public:
   /* several of these are needed by geometerview. Maybe should use accessors... */
@@ -221,7 +136,7 @@ public:
   /* buffersize is 3 * third, framesize is 2 * third 
      buffersize is used for outbuf.
   */
-  long bufsize, framesize, third;
+  long bufsize, framesize, third, maxframe;
 
 
   /* must grab this before calling processw */
@@ -242,33 +157,33 @@ private:
   int outstart;
 
   #define BUFFERSIZESSIZE 14
-  static const int buffersizes[BUFFERSIZESSIZE];
+  static const long buffersizes[BUFFERSIZESSIZE];
 
   /* 1 if need to do ioChanged since buffer settings are different now */
   int changed;
 
   /* ---------- geometer stuff ----------- */
 
-  static int pointops(float pop, int npts, float * op_param, int samps,
+  static int pointops(long pop, int npts, float op_param, int samps,
 		      int * px, float * py, int maxpts,
 		      int * tempx, float * tempy);
 
   /* set up the built-in presets */
   void makepresets();
 
-  float pointstyle;
-  float pointparam[MAX_POINTSTYLES];
+  long pointstyle;
+  float pointparam;
 
-  float interpstyle;
-  float interparam[MAX_INTERPSTYLES];
+  long interpstyle;
+  float interparam;
 
-  float pointop1;
-  float pointop2;
-  float pointop3;
+  long pointop1;
+  long pointop2;
+  long pointop3;
 
-  float oppar1[MAX_OPS];
-  float oppar2[MAX_OPS];
-  float oppar3[MAX_OPS];
+  float oppar1;
+  float oppar2;
+  float oppar3;
 
   int lastx;
   float lasty;
@@ -285,7 +200,5 @@ public:
 	       int * px, float * py, int maxpts,
 	       int * tx, float * ty);
 };
-
-#define FPARAM(pname, idx, nm, init, un) do { paramptrs[idx].ptr = &pname; paramptrs[idx].name = (nm); paramptrs[idx].units = (un); paramptrs[idx].def = (init); pname = paramptrs[idx].def; } while (0)
 
 #endif
