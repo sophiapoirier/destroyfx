@@ -260,7 +260,9 @@ SUPPORT_AU_VERSION_1
 
 // property IDs for Audio Unit property stuff
 enum DfxPluginProperties {
-	kDfxPluginProperty_PluginPtr = 64000	// get a pointer to the DfxPlugin
+	kDfxPluginProperty_PluginPtr = 64000,	// get a pointer to the DfxPlugin
+	kDfxPluginProperty_MidiLearn,			// get/set the MIDI learn state
+	kDfxPluginProperty_MidiLearner			// get/set the current MIDI learner parameter
 };
 
 
@@ -690,9 +692,9 @@ public:
 	virtual ComponentResult GetProperty(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					void *outData);
-//	virtual ComponentResult SetProperty(AudioUnitPropertyID inID, 
-//					AudioUnitScope inScope, AudioUnitElement inElement, 
-//					const void *inData, UInt32 inDataSize);
+	virtual ComponentResult SetProperty(AudioUnitPropertyID inID, 
+					AudioUnitScope inScope, AudioUnitElement inElement, 
+					const void *inData, UInt32 inDataSize);
 
 	virtual UInt32 SupportedNumChannels(const AUChannelInfo **outInfo);
 	virtual Float64 GetLatency();
