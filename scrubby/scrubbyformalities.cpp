@@ -38,8 +38,11 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kFreeze, "freeze", false, false);
 	initparameter_f(kSeekRate_abs, "seek rate (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
 	initparameter_indexed(kSeekRate_sync, "seek rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
-	initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
-	initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+//	initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
+//	initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+// XXX temporary while implementing range sliders in DFX GUI
+initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 810.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
+initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTempoRates-1, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kTempoSync, "tempo sync", false, false);
 	initparameter_f(kSeekDur, "seek duration", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
 	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
@@ -68,8 +71,6 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 	initparameter_f(kPredelay, "predelay", 0.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
-setparameter_f(kSeekRateRandMin_abs, getparametermax_f(kSeekRateRandMin_abs));
-setparameter_i(kSeekRateRandMin_sync, getparametermax_i(kSeekRateRandMin_sync));
 
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < numTempoRates; i++)
@@ -135,6 +136,13 @@ long Scrubby::initialize()
 	if (activeNotesTable == NULL)
 		activeNotesTable = (long*) malloc(NUM_PITCH_STEPS * sizeof(long));
 
+	// initialize the active notes table
+	if (activeNotesTable != NULL)
+	{
+		for (int i=0; i < NUM_PITCH_STEPS; i++)
+			activeNotesTable[i] = 0;
+	}
+
 	if ( (pitchSteps == NULL) || (activeNotesTable == NULL) )
 		return kDfxErr_InitializationFailed;
 	return kDfxErr_NoError;
@@ -158,12 +166,15 @@ void Scrubby::reset()
 	// reset these position trackers thingies & whatnot
 	writePos = 0;
 
-	keyboardWasPlayedByMidi = true;
 	// delete any stored active notes
 	for (int i=0; i < NUM_PITCH_STEPS; i++)
 	{
 		if (activeNotesTable[i] > 0)
+		{
 			setparameter_b(i+kPitchStep0, false);
+			postupdate_parameter(i+kPitchStep0);
+		}
+
 		activeNotesTable[i] = 0;
 	}
 
