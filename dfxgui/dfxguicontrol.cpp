@@ -5,6 +5,8 @@
 
 
 const SInt32 kContinuousControlMaxValue = 0x0FFFFFFF - 1;
+const float kDefaultFineTuneFactor = 12.0f;
+const float kDefaultMouseDragRange = 333.0f;	// pixels
 
 //-----------------------------------------------------------------------------
 DGControl::DGControl(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion)
@@ -45,7 +47,13 @@ void DGControl::init(DGRect * inRegion)
 #endif
 
 	isContinuous = false;
-	fineTuneFactor = 12.0f;
+	fineTuneFactor = kDefaultFineTuneFactor;
+	mouseDragRange = kDefaultMouseDragRange;
+
+	shouldRespondToMouse = true;
+	shouldRespondToMouseWheel = true;
+	currentlyIgnoringMouseTracking = false;
+	shouldWraparoundValues = false;
 
 	drawAlpha = 1.0f;
 
@@ -243,6 +251,106 @@ void DGControl::initMouseTrackingRegion()
 	}
 }
 #endif
+
+//-----------------------------------------------------------------------------
+void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+{
+	if (! getRespondToMouse() )
+		return;
+
+	currentlyIgnoringMouseTracking = false;
+
+	#if TARGET_PLUGIN_USES_MIDI
+		if ( isParameterAttached() )
+			getDfxGuiEditor()->setmidilearner( getParameterID() );
+	#endif
+
+	// set the defaul value of the parameter
+	if ( (inKeyModifiers & kDGKeyModifier_accel) && isParameterAttached() )
+	{
+		getDfxGuiEditor()->setparameter_default( getParameterID() );
+		currentlyIgnoringMouseTracking = true;
+		return;
+	}
+
+	mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+{
+	if (! getRespondToMouse() )
+		return;
+
+	if (!currentlyIgnoringMouseTracking)
+		mouseTrack(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::do_mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
+{
+	if (! getRespondToMouse() )
+		return;
+
+	if (!currentlyIgnoringMouseTracking)
+		mouseUp(inXpos, inYpos, inKeyModifiers);
+
+	currentlyIgnoringMouseTracking = false;
+}
+
+//-----------------------------------------------------------------------------
+bool DGControl::do_mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+{
+	if (! getRespondToMouseWheel() )
+		return false;
+	if (! getRespondToMouse() )
+		return false;
+
+	return mouseWheel(inDelta, inAxis, inKeyModifiers);
+}
+
+//-----------------------------------------------------------------------------
+// a default implementation of mouse wheel handling that should work for most controls
+bool DGControl::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+{
+	SInt32 min = GetControl32BitMinimum(carbonControl);
+	SInt32 max = GetControl32BitMaximum(carbonControl);
+	SInt32 oldValue = GetControl32BitValue(carbonControl);
+	SInt32 newValue = oldValue;
+
+	if ( isContinuousControl() )
+	{
+		float diff = (float)inDelta;
+		if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
+			diff /= getFineTuneFactor();
+		newValue = oldValue + (SInt32)(diff * (float)(max-min) / getMouseDragRange());
+	}
+	else
+	{
+		if (inDelta > 0)
+			newValue = oldValue + 1;
+		else if (inDelta < 0)
+			newValue = oldValue - 1;
+
+		// wrap around
+		if ( getWraparoundValues() )
+		{
+			if (newValue > max)
+				newValue = min;
+			else if (newValue < min)
+				newValue = max;
+		}
+	}
+
+	if (newValue > max)
+		newValue = max;
+	if (newValue < min)
+		newValue = min;
+	if (newValue != oldValue)
+		SetControl32BitValue(carbonControl, newValue);
+
+	return true;
+}
 
 //-----------------------------------------------------------------------------
 void DGControl::setParameterID(long inParameterID)
