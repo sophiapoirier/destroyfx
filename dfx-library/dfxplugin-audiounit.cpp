@@ -21,6 +21,11 @@ void DfxPlugin::PostConstructor()
 
 	// make host see that current preset is 0
 	update_preset(0);
+
+	// make the global-scope element aware of the parameters' values
+	// this must happen after AUBase::PostConstructor because the elements are created there
+	for (long i=0; i < numParameters; i++)
+		AUBase::SetParameter(i, kAudioUnitScope_Global, (AudioUnitElement)0, getparameter_f(i), 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -29,8 +34,12 @@ void DfxPlugin::PostConstructor()
 // this is where DSP-specific resources should be allocated
 ComponentResult DfxPlugin::Initialize()
 {
-	// call the inherited class' Initialize routine
-	ComponentResult result = TARGET_API_BASE_CLASS::Initialize();
+	ComponentResult result = noErr;
+
+	#if TARGET_PLUGIN_USES_DSPCORE
+		// call the inherited class' Initialize routine
+		result = TARGET_API_BASE_CLASS::Initialize();
+	#endif
 
 	// call our initialize routine
 	if (result == noErr)
@@ -739,14 +748,18 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 
 	if (getparameterusevaluestrings(inParameterID))
 	{
-		CFStringRef * outArray = getparametervaluecfstrings(inParameterID);
+		// this is just to say that the property is supported (GetPropertyInfo needs this)
+		if (outStrings == NULL)
+			return noErr;
+
+		CFStringRef * paramValueStrings = getparametervaluecfstrings(inParameterID);
 		// if we don't actually have strings set, exit with an error
-		if (outArray == NULL)
+		if (paramValueStrings == NULL)
 			return kAudioUnitErr_InvalidProperty;
 		// in case the min is not 0, get the total count of items in the array
 		long numStrings = getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1;
 		// create a CFArray of the strings (the host will destroy the CFArray)
-		*outStrings = CFArrayCreate(kCFAllocatorDefault, (const void**)outArray, numStrings, NULL);
+		*outStrings = CFArrayCreate(kCFAllocatorDefault, (const void**)paramValueStrings, numStrings, NULL);
 		return noErr;
 	}
 
@@ -780,6 +793,10 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 // The CFArrayRef should be released by the caller.
 ComponentResult DfxPlugin::GetPresets(CFArrayRef *outData) const
 {
+	// this is just to say that the property is supported (GetPropertyInfo needs this)
+	if (outData == NULL)
+		return noErr;
+
 	// figure out how many valid (loaded) presets we actually have...
 	long outNumPresets = 0;
 	for (long i=0; i < numPresets; i++)
@@ -868,15 +885,19 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 {
 	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
+	// abort if the base implementation of RestoreState failed
+	if (result != noErr)
+	{
+	#if DEBUG_VST_SETTINGS_IMPORT
+		printf("AUBase::RestoreState failed with error %ld, not attempting destroyfx-data\n", result);
+	#endif
+		return result;
+	}
 
 #if TARGET_PLUGIN_USES_MIDI
+	// look for a data section keyed with our custom data key
 	CFDataRef cfdata = NULL;
-	Boolean dataFound = false;
-
-	if (result == noErr)
-	{
-		// look for a data section keyed with our custom data key
-		dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, kDfxDataDictionaryKeyString, (const void**)&cfdata);
+	Boolean dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, kDfxDataDictionaryKeyString, (const void**)&cfdata);
 
 	#if DEBUG_VST_SETTINGS_IMPORT
 	printf("AUBase::RestoreState succeeded\n");
@@ -884,13 +905,6 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 		printf("but destroyfx-data was not found\n");
 	else
 		printf("destroyfx-data successfully found\n");
-	#endif
-
-	}
-
-	#if DEBUG_VST_SETTINGS_IMPORT
-	else
-		printf("AUBase::RestoreState failed with error %ld, not attempting destroyfx-data\n", result);
 	#endif
 
 	// there was an error in AUBas::RestoreState or trying to find "destroyfx-data", 
@@ -907,7 +921,6 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 	else
 		printf("vstdata was found, attempting to load...\n");
 	#endif
-
 	}
 
 	// if we couldn't get any data, abort with an error
@@ -932,9 +945,6 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 		return kAudioUnitErr_InvalidPropertyValue;
 
 #else
-	// abort if the base implementation of RestoreState failed
-	if (result != noErr)
-		return result;
 // XXX should we rethink this and load parameter settings if dfxsettings->restore() fails, or always before dfxsettings->restore()?
 	// load the parameter settings that were restored 
 	// by the inherited base class implementation of RestoreState
@@ -959,24 +969,38 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 				const CAStreamBasicDescription &inPrevFormat, const CAStreamBasicDescription &inNewFormat)
 {
 //printf("\nDfxPlugin::ChangeStreamFormat,   new sr = %.3lf,   old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
-//printf("\nDfxPlugin::ChangeStreamFormat,   new num channels = %ld,   old num channels = %ld\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
-	// just use the inherited base class implementation
-	ComponentResult result = TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
-
-	if ( (result == noErr) && IsInitialized() )
+//printf("\nDfxPlugin::ChangeStreamFormat,   new num channels = %lu,   old num channels = %lu\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
+	const AUChannelInfo *auChannelConfigs = NULL;
+	UInt32 numIOconfigs = SupportedNumChannels(&auChannelConfigs);
+	if ( (numIOconfigs > 0) && (auChannelConfigs != NULL) )
 	{
-		// react to changes in the number of channels or sampling rate
-		if ( (inNewFormat.mSampleRate != inPrevFormat.mSampleRate) || 
-//		if ( (inNewFormat.mSampleRate != getsamplerate()) || 
-				(inNewFormat.mChannelsPerFrame != inPrevFormat.mChannelsPerFrame) )
+		SInt16 newNumChannels = (SInt16) (inNewFormat.mChannelsPerFrame);
+		bool knownScope = true;
+		for (UInt32 i=0; i < numIOconfigs; i++)
 		{
-			updatesamplerate();
-			updatenumchannels();
-			createbuffers();
+			switch (inScope)
+			{
+				case kAudioUnitScope_Input:
+					if (newNumChannels == auChannelConfigs[i].inChannels)
+						return noErr;
+					break;
+				case kAudioUnitScope_Output:
+				case kAudioUnitScope_Global:
+					if (newNumChannels == auChannelConfigs[i].outChannels)
+						return noErr;
+					break;
+				default:
+					knownScope = false;
+					break;
+			}
 		}
+		// if we've reached this point, then we did not find this channel number in the list of supported i/o configs
+		if (knownScope)
+			return kAudioUnitErr_FormatNotSupported;
 	}
 
-	return result;
+	// use the inherited base class implementation
+	return TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
 }
 
 //-----------------------------------------------------------------------------
