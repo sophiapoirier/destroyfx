@@ -161,12 +161,12 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 #endif
 
   #if TARGET_API_VST
-    #if TARGET_PLUGIN_HAS_GUI
-      editor = new GeometerEditor(this);
-	#endif
     #if TARGET_PLUGIN_USES_DSPCORE
       DFX_INIT_CORE(GeometerDSP);	/* we need to manage DSP cores manually in VST */
     #endif
+    #if TARGET_PLUGIN_HAS_GUI
+      editor = new GeometerEditor(this);
+	#endif
   #endif
 }
 
@@ -284,7 +284,11 @@ void PLUGINCORE::processparameters() {
   if (getparameterchanged(P_BUFSIZE))
     /* this tells the host to call a suspend()-resume() pair, 
       which updates initialDelay value */
-    latencychanged = true;
+    #if TARGET_PLUGIN_USES_DSPCORE
+    dfxplugin->setlatencychanged(true);
+    #else
+    setlatencychanged(true);
+    #endif
   #endif
 }
 

@@ -1310,7 +1310,11 @@ void GeometerEditor::idle() {
   /* maybe I don't need to do this every frame... */
   unsigned long currentms = getTicks();
   unsigned long windowsizems = (unsigned long) 
-                               ( (float)((PLUGIN*)effect)->getwindowsize() * 
+                             #if TARGET_PLUGIN_USES_DSPCORE
+                               ( (float)(((PLUGINCORE*)(((PLUGIN*)effect)->getplugincore(0)))->getwindowsize()) * 
+                             #else
+                               ( (float)(((PLUGIN*)effect)->getwindowsize()) * 
+                             #endif
                                  1000.0f / effect->getSampleRate() );
   unsigned long elapsedms = currentms - prevms;
   if ( (elapsedms > windowsizems) || (currentms < prevms) ) {
