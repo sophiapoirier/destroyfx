@@ -301,7 +301,7 @@ void DfxPlugin::initparameter_f(long parameterIndex, const char *initName, float
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 		// set the custom unit string, if there is one
 		if (initCustomUnitString != NULL)
-			parameters[parameterIndex].setcustomunitstring(initCustomUnitString);
+			setparametercustomunitstring(parameterIndex, initCustomUnitString);
 	}
 }
 
@@ -318,7 +318,7 @@ void DfxPlugin::initparameter_d(long parameterIndex, const char *initName, doubl
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 		// set the custom unit string, if there is one
 		if (initCustomUnitString != NULL)
-			parameters[parameterIndex].setcustomunitstring(initCustomUnitString);
+			setparametercustomunitstring(parameterIndex, initCustomUnitString);
 	}
 }
 
@@ -335,7 +335,7 @@ void DfxPlugin::initparameter_i(long parameterIndex, const char *initName, long 
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 		// set the custom unit string, if there is one
 		if (initCustomUnitString != NULL)
-			parameters[parameterIndex].setcustomunitstring(initCustomUnitString);
+			setparametercustomunitstring(parameterIndex, initCustomUnitString);
 	}
 }
 
@@ -352,7 +352,7 @@ void DfxPlugin::initparameter_ui(long parameterIndex, const char *initName, unsi
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 		// set the custom unit string, if there is one
 		if (initCustomUnitString != NULL)
-			parameters[parameterIndex].setcustomunitstring(initCustomUnitString);
+			setparametercustomunitstring(parameterIndex, initCustomUnitString);
 	}
 }
 
@@ -371,7 +371,8 @@ void DfxPlugin::initparameter_b(long parameterIndex, const char *initName, bool 
 //-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
-void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, long initNumItems, DfxParamUnit initUnit)
+void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, long initNumItems, 
+						DfxParamUnit initUnit, const char *initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -379,6 +380,9 @@ void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName,
 		setparameterusevaluestrings(parameterIndex, true);	// indicate that we will use custom value display strings
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
+		// set the custom unit string, if there is one
+		if (initCustomUnitString != NULL)
+			setparametercustomunitstring(parameterIndex, initCustomUnitString);
 	}
 }
 
