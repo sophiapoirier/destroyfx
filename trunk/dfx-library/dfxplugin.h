@@ -652,6 +652,7 @@ public:
 
 #ifdef TARGET_API_AUDIOUNIT
 	virtual void PostConstructor();
+	virtual void PreDestructor();
 	virtual ComponentResult Initialize();
 	virtual void Cleanup();
 	virtual ComponentResult Reset(AudioUnitScope inScope, AudioUnitElement inElement);
@@ -737,6 +738,8 @@ public:
 
 
 #ifdef TARGET_API_VST
+	virtual void close();
+
 	virtual void process(float ** inputs, float ** outputs, long sampleFrames);
 	virtual void processReplacing(float ** inputs, float ** outputs, long sampleFrames);
 

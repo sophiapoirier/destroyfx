@@ -13,8 +13,8 @@
 #if 1
 DFX_ENTRY(BufferOverride);
 #else
-extern "C" ComponentResult BufferOverrideEntry(ComponentParameters *params, BufferOverride *obj);
-extern "C" ComponentResult BufferOverrideEntry(ComponentParameters *params, BufferOverride *obj)
+extern "C" ComponentResult BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj);
+extern "C" ComponentResult BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj)
 {
 	struct AudioUnitSetPropertyGluePB {
 		unsigned char                  componentFlags;
@@ -28,7 +28,7 @@ extern "C" ComponentResult BufferOverrideEntry(ComponentParameters *params, Buff
 		AudioUnit                      ci;
 	};
 
-	AudioUnitSetPropertyGluePB *sp = (AudioUnitSetPropertyGluePB *) params;
+	AudioUnitSetPropertyGluePB * sp = (AudioUnitSetPropertyGluePB *) params;
 
 	if ( (params->what == kAudioUnitSetPropertySelect) && (sp->inID == kAudioUnitProperty_CurrentPreset) )
 		printf("<BufferOverrideEntry>SetCurrentPreset ( %ld )\n", ((AUPreset*)sp->inData)->presetNumber);
@@ -78,14 +78,14 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// set the value strings for the LFO shape parameters
 	for (int i=0; i < numLFOshapes; i++)
 	{
-		const char *shapename = divisorLFO->getShapeNameIndexed_ptr(i);
+		const char * shapename = divisorLFO->getShapeNameIndexed_ptr(i);
 		setparametervaluestring(kDivisorLFOshape, i, shapename);
 		setparametervaluestring(kBufferLFOshape, i, shapename);
 	}
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
 	{
-		const char *tname = tempoRateTable->getDisplay(i);
+		const char * tname = tempoRateTable->getDisplay(i);
 		setparametervaluestring(kBufferSize_sync, i, tname);
 		setparametervaluestring(kDivisorLFOrate_sync, i, tname);
 		setparametervaluestring(kBufferLFOrate_sync, i, tname);
@@ -112,16 +112,10 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-------------------------------------------------------------------------
 BufferOverride::~BufferOverride()
 {
-	if (divisorLFO)
+	if (divisorLFO != NULL)
 		delete divisorLFO;
-	if (bufferLFO)
+	if (bufferLFO != NULL)
 		delete bufferLFO;
-
-#ifdef TARGET_API_VST
-	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
-	// so we need to call this manually here
-	do_cleanup();
-#endif
 }
 
 //-------------------------------------------------------------------------
@@ -346,7 +340,7 @@ void BufferOverride::initPresets()
 	i++;
 
 /*
-char *mook = (char*) malloc(DFX_PRESET_MAX_NAME_LENGTH);
+char * mook = (char*) malloc(DFX_PRESET_MAX_NAME_LENGTH);
 for (i=0; i < 396; i++)
 {
 	sprintf(mook, "%03d => %s", i, getpresetname_ptr(i));

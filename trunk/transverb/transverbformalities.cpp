@@ -77,11 +77,6 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 Transverb::~Transverb() {
-#ifdef TARGET_API_VST
-  // VST doesn't have initialize and cleanup methods like Audio Unit does, 
-  // so we need to call this manually here
-  do_cleanup();
-#endif
 }
 
 // add a DSP core instance to the counter
@@ -99,7 +94,7 @@ void Transverb::subtractcore() {
 
 
 
-TransverbDSP::TransverbDSP(DfxPlugin *inDfxPlugin)
+TransverbDSP::TransverbDSP(DfxPlugin * inDfxPlugin)
   : DfxPluginCore(inDfxPlugin) {
 
   buf1 = 0;

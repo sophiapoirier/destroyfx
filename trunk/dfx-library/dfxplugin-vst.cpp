@@ -14,6 +14,14 @@ written by Marc Poirier, October 2002
 #pragma mark _________init_________
 
 //-----------------------------------------------------------------------------
+// this is called right before our plugin instance is destroyed
+// XXX test and make sure that this is working in various hosts!
+void DfxPlugin::close()
+{
+	dfxplugin_predestructor();
+}
+
+//-----------------------------------------------------------------------------
 // this gets called when the plugin is de-activated
 void DfxPlugin::suspend()
 {
