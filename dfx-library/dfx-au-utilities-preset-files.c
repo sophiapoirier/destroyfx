@@ -162,7 +162,7 @@ Boolean FSRefIsAUPreset(const FSRef * inFileRef)
 // in the parent directory.
 // If the child item does not already exist and inCreateItem is true, 
 // then this function will attempt to create the item.  
-// XXX note:  implementation not finished, file items will be created as directories!
+// XXX note:  implementation not finished, file items will only be created as directories!
 // If the child item does not already exist and inCreateItem is false, 
 // then this function will fail.  
 // Upon successful return, outItemRef points to a valid FSRef of the requested 
@@ -1130,13 +1130,8 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 	if (CFStringGetLength(inPresetNameString) <= 0)
 		return errFSMissingName;
 
-// XXX this isn't defined in the current release headers yet, only the Mac OS X 10.3 pre-release headers
-#ifndef kAUPresetNameKey
-#define kAUPresetNameKey	"name"
-#endif
 	// set the state data's name value to the requested name
 	// do this before we mess around with the file name string (truncating, adding extension, etc.)
-	// XXX is this really a good idea?  I think so, but I'm not totally sure...
 	if (CFGetTypeID(inAUStateData) == CFDictionaryGetTypeID())
 		CFDictionarySetValue((CFMutableDictionaryRef)inAUStateData, CFSTR(kAUPresetNameKey), inPresetNameString);
 
