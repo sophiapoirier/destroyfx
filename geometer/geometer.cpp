@@ -86,7 +86,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparameterhidden(P_OPPAR2S + op, true);
 	setparameterhidden(P_OPPAR3S + op, true);
   }
-
+#undef ALLOP
 
   long i;
   /* windowing */
@@ -141,7 +141,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   ALLOPSTR(OP_NONE, "none");
   for (i=NUM_OPS; i < MAX_OPS; i++)
     ALLOPSTR(i, "unsup");
-
+#undef ALLOPSTR
 
   long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
   setlatency_samples(delay_samples);
