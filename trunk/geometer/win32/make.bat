@@ -9,7 +9,7 @@ rc geometer.rc
 
 echo -------------- compile.
 
-cl  /FD  /MD /nologo /O2 /Ot /Og /Oi /Oy /Gs /GD /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I..\geometer\gui\ /I..\geometer\ /I..\vstsdk\ /I..\dfx-library\ /LD /D "GEOMETER_EXPORTS" /D "TARGET_API_VST=1" /D "TARGET_API_AUDIOUNIT=0" /FI "..\geometer\geometerdef.h" /D "VST_NUM_CHANNELS=2" ..\geometer\geometer.cpp ..\dfx-library\dfxgui.cpp ..\dfx-library\multikick.cpp ..\dfx-library\indexbitmap.cpp ..\geometer\gui\geometereditor.cpp ..\geometer\gui\geometerview.cpp ..\vstsdk\AudioEffect.cpp ..\vstsdk\audioeffectx.cpp ..\dfx-library\dfxplugin.cpp ..\dfx-library\dfxparameter.cpp ..\dfx-library\dfxsettings.cpp ..\dfx-library\dfxmidi.cpp ..\dfx-library\dfxplugin-vst.cpp /c
+cl  /FD  /MD /nologo /O2 /Ot /Og /Oi /Oy /Gs /GD /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I..\geometer\gui\ /I..\geometer\ /I..\vstsdk\ /I..\dfx-library\ /LD /D "GEOMETER_EXPORTS" /D "TARGET_API_VST" /FI "..\geometer\geometerdef.h" /D "VST_NUM_CHANNELS=2" ..\geometer\geometer.cpp ..\dfx-library\dfxgui.cpp ..\dfx-library\multikick.cpp ..\dfx-library\indexbitmap.cpp ..\geometer\gui\geometereditor.cpp ..\geometer\gui\geometerview.cpp ..\vstsdk\AudioEffect.cpp ..\vstsdk\audioeffectx.cpp ..\dfx-library\dfxplugin.cpp ..\dfx-library\dfxparameter.cpp ..\dfx-library\dfxsettings.cpp ..\dfx-library\dfxmidi.cpp ..\dfx-library\dfxplugin-vst.cpp /c
 
 echo -------------- link.
 
