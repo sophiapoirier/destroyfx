@@ -7,7 +7,7 @@
 #include "vstmidi.h"
 #include "dfxmisc.h"
 #include "lfo.h"
-#include "TempoRateTable.h"
+#include "temporatetable.h"
 #include "vstchunk.h"
 
 /* begin inter-plugin audio sharing stuff */
