@@ -232,7 +232,7 @@ bool getenvBool(const char *var, bool def);
 class DfxSettings
 {
 public:
-	DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExtendedData = 0);
+	DfxSettings(long inMagic, DfxPlugin *inPlugin, unsigned long inSizeofExtendedData = 0);
 	~DfxSettings();
 
 
