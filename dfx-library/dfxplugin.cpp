@@ -17,11 +17,23 @@ written by Marc Poirier, October 2002
 	#endif
 #endif
 
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
 /* If using the VST GUI interface, we need the class definition
    for AEffGUIEditor so we can send it parameter changes.
  */
 	#include "aeffguieditor.h"
+// XXX Tom, shouldn't that be "vstgui.h" like it was before?
+//     I don't see any aeffguieditor.h file.
+#endif
+
+#if WIN32
+	// for ShellExecute
+	#ifndef __shlobj
+	#include <shlobj.h>
+	#endif
+	#ifndef __shellapi
+	#include <shellapi.h>
+	#endif
 #endif
 
 
@@ -467,6 +479,22 @@ void DfxPlugin::randomizeparameter(long parameterIndex)
 }
 
 //-----------------------------------------------------------------------------
+// randomize all of the parameters at once
+void DfxPlugin::randomizeparameters(bool writeAutomation)
+{
+	for (long i=0; i < numParameters; i++)
+	{
+		randomizeparameter(i);
+		postupdate_parameter(i);	// inform any parameter listeners of the changes
+
+	#ifdef TARGET_API_VST
+		if (writeAutomation)
+			setParameterAutomated(i, getparameter_gen(i));
+	#endif
+	}
+}
+
+//-----------------------------------------------------------------------------
 // do stuff necessary to inform the host of changes, etc.
 void DfxPlugin::update_parameter(long parameterIndex)
 {
@@ -479,8 +507,8 @@ void DfxPlugin::update_parameter(long parameterIndex)
 		long vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
 		if (presetisvalid(vstpresetnum))
 			setpresetparameter(vstpresetnum, parameterIndex, getparameter(parameterIndex));
-		#if TARGET_PLUGIN_HAS_GUI
-		if (editor && PLUGIN_USES_VSTGUI) /* XXX can't assume it's a GUI (ie, vstgui) editor! */
+		#if TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
+		if (editor != NULL)	/* XXX can't assume it's a GUI (ie, vstgui) editor! */
 			((AEffGUIEditor*)editor)->setParameter(parameterIndex, getparameter_gen(parameterIndex));
 		#endif
 
@@ -1613,4 +1641,49 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 			}
 		}
 	}
+}
+
+
+//-----------------------------------------------------------------------------
+// handy function to open up an URL in the user's default web browser
+long launch_url(const char *urlstring)
+{
+#if MAC
+	ICInstance ICconnection;
+	OSStatus error;
+	#if CALL_NOT_IN_CARBON
+	long gestaltResponse;
+	error = Gestalt('ICAp', &gestaltResponse);
+	if (error == noErr)
+	#endif
+	error = ICStart(&ICconnection, '????');
+	if ( (error == noErr) && (ICconnection == (void*)kUnresolvedCFragSymbolAddress) )
+		error = noErr + 3;
+	#if CALL_NOT_IN_CARBON
+	if (error == noErr)
+		error = ICFindConfigFile(ICconnection, 0, nil);
+	#endif
+	if (error == noErr)
+	{
+		// get this info for the ICLaunchURL function
+		long urlStart = 1, urlEnd, urlLength;
+		urlEnd = urlLength = (long)strlen(urlstring) + urlStart;
+		if (urlLength > 255)
+			urlEnd = urlLength = 255;
+		// convert the URL string into a Pascal string for the ICLaunchURL function
+		char *pascalURL = (char*) malloc(256);
+		for (int i=1; i < urlLength; i++)
+			pascalURL[i] = urlstring[i-1];	// move each char up one spot in the string array...
+		pascalURL[0] = (char) urlLength;	// ... & set the Pascal string length byte
+		// now launch the URL in a web browser
+		error = ICLaunchURL(ICconnection, "\phttp", pascalURL, urlLength, &urlStart, &urlEnd);
+		free(pascalURL);
+	}
+	if (error == noErr)
+		error = ICStop(ICconnection);
+	return error;
+#endif
+#if WIN32
+	return ShellExecute(NULL, "open", urlstring, NULL, NULL, SW_SHOWNORMAL);
+#endif
 }
