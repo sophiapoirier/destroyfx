@@ -496,15 +496,19 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 							{
 								case kDfxParamValueType_float:
 									setparameter_f(paramID, value->f);
+									postupdate_parameter(paramID);
 									break;
 								case kDfxParamValueType_double:
 									setparameter_d(paramID, value->d);
+									postupdate_parameter(paramID);
 									break;
 								case kDfxParamValueType_int:
 									setparameter_i(paramID, value->i);
+									postupdate_parameter(paramID);
 									break;
 								case kDfxParamValueType_boolean:
 									setparameter_b(paramID, value->b);
+									postupdate_parameter(paramID);
 									break;
 								default:
 									result = paramErr;
