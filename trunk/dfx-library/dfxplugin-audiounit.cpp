@@ -10,7 +10,9 @@ written by Marc Poirier, October 2002
 
 
 
-#pragma mark _________init_________
+#pragma mark -
+#pragma mark init
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // this is called immediately after an instance of the plugin class is created
@@ -193,7 +195,9 @@ ComponentResult DfxPlugin::Reset(AudioUnitScope inScope, AudioUnitElement inElem
 
 
 
-#pragma mark _________info_________
+#pragma mark -
+#pragma mark info
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // get basic information about Audio Unit Properties 
@@ -207,6 +211,12 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 
 	switch (inPropertyID)
 	{
+		case kAudioUnitProperty_ParameterClumpName:
+			outDataSize = sizeof(AudioUnitParameterNameInfo);
+			outWritable = false;
+			result = noErr;
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
 //		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
 //		MIDI controls and/or NRPN's to AudioUnit scopes/elements/parameters.
@@ -289,6 +299,27 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 
 	switch (inPropertyID)
 	{
+		case kAudioUnitProperty_ParameterClumpName:
+			{
+				if (inScope != kAudioUnitScope_Global)
+					result = kAudioUnitErr_InvalidScope;
+				else if (inElement != 0)
+					result = kAudioUnitErr_InvalidElement;
+				else
+				{
+					AudioUnitParameterNameInfo * ioClumpInfo = (AudioUnitParameterNameInfo*) outData;
+					if (ioClumpInfo->inID == kAudioUnitClumpID_System)	// this ID value is reserved
+						result = kAudioUnitErr_InvalidPropertyValue;
+					else
+					{
+						ioClumpInfo->outName = CopyClumpName(ioClumpInfo->inID);
+						if (ioClumpInfo->outName == NULL)
+							result = kAudioUnitErr_InvalidPropertyValue;
+					}
+				}
+			}
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
 			if (inScope != kAudioUnitScope_Global)
@@ -472,6 +503,10 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 
 	switch (inPropertyID)
 	{
+		case kAudioUnitProperty_ParameterClumpName:
+			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
 			result = kAudioUnitErr_PropertyNotWritable;
@@ -688,7 +723,9 @@ void DfxPlugin::GetUIComponentDescs(ComponentDescription * inDescArray)
 
 
 
-#pragma mark _________parameters_________
+#pragma mark -
+#pragma mark parameters
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // get specific information about the properties of a parameter
@@ -931,7 +968,9 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 
 
 
-#pragma mark _________presets_________
+#pragma mark -
+#pragma mark presets
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // Returns an array of AUPreset that contain a number and name for each of the presets.  
@@ -1007,10 +1046,12 @@ OSStatus DfxPlugin::NewFactoryPresetSet(const AUPreset & inNewFactoryPreset)
 
 
 
-#pragma mark _________state_________
+#pragma mark -
+#pragma mark state
+#pragma mark -
 
 // XXX I really should change this to something more like "DFX!-settings-data"
-static const CFStringRef kDfxDataDictionaryKeyString = CFSTR("destroyfx-data");
+static const CFStringRef kDfxDataClassInfoKeyString = CFSTR("destroyfx-data");
 
 //-----------------------------------------------------------------------------
 // stores the values of all parameters values, state info, etc. into a CFPropertyListRef
@@ -1032,7 +1073,7 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
 		if (cfdata != NULL)
 		{
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary
-			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
+			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataClassInfoKeyString, cfdata);
 			// cfdata belongs to us no more, bye bye...
 			CFRelease(cfdata);
 		}
@@ -1063,7 +1104,7 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 #if TARGET_PLUGIN_USES_MIDI
 	// look for a data section keyed with our custom data key
 	CFDataRef cfdata = NULL;
-	Boolean dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, kDfxDataDictionaryKeyString, (const void**)&cfdata);
+	Boolean dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, kDfxDataClassInfoKeyString, (const void**)&cfdata);
 
 	#if DEBUG_VST_SETTINGS_IMPORT
 	fprintf(stderr, "AUBase::RestoreState succeeded\n");
@@ -1090,6 +1131,7 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 	}
 
 	// if we couldn't get any data, abort with an error
+	// XXX really?  couldn't we just restore the regular parameter values and that would be good enough?
 	if ( !dataFound || (cfdata == NULL) )
 		return kAudioUnitErr_InvalidPropertyValue;
 
@@ -1130,7 +1172,9 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 
 
 
-#pragma mark _________dsp_________
+#pragma mark -
+#pragma mark dsp
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // the host calls this to inform the plugin that it wants to start using 
@@ -1278,7 +1322,9 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 
 
 
-#pragma mark _________MIDI_________
+#pragma mark -
+#pragma mark MIDI
+#pragma mark -
 
 #if TARGET_PLUGIN_USES_MIDI
 
