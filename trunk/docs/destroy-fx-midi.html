@@ -1,5 +1,5 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-	"http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+	"http://www.w3.org/TR/html4/strict.dtd">
 
 <html>
 
@@ -9,12 +9,9 @@
 <link REL=STYLESHEET TYPE="text/css" HREF="dfx-docs.css">
 </head>
 
-<body bgcolor="#1D561E">
+<body style="background-color: #1D561E">
 
-<center>
-<table class=border cellpadding=4 cellspacing=0>
-<tr><td>
-<table class=inside cellpadding=9 cellspacing=0>
+<table class=mainbox>
 <tr><td>
 
 
@@ -26,7 +23,7 @@ Most of our Destroy FX plugins can be controlled, at least to some degree, with 
 </p>
 
 <p class=intro>
-All DFX MIDI is handled omni-style.  Being able to use MIDI with VST effects depends on whether your VST host software supports that (see the notes about compatibility below).
+All DFX MIDI is handled omni-style.  Being able to use MIDI with effect plugins depends on whether your host software supports that (see the notes about compatibility below).
 </p>
 
 <br>
@@ -56,7 +53,7 @@ By default, Destroy FX plugins don't care on which MIDI channels the events are 
 </p>
 
 <p class=desc>
-CC assignments are saved in VST host song files and also in exported VST bank files, so you don't need to reconfigure them each time you open your song or load a bank settings file.  Also, the CC assignments that you configure stay the same when you switch between programs in a plugin.
+CC assignments are saved in host song files and also in exported preset files (in VST, though, only with "bank" files, not "program" files), so you don't need to reconfigure them each time you open your song or load a preset settings file.  Also, the CC assignments that you configure stay the same when you switch between presets in a plugin.
 </p>
 
 <p class=desc>
@@ -88,11 +85,10 @@ If you want to play it safe, CCs 12-63 and 70-119 are probably good ranges to wo
 </p>
 
 <p class=desc>
-Some VST hosts (like Live and AudioMulch, for example) can manage CC control of VST plugin parameters on their own.  So if you use software like that, then you can just decide whether you want to use our plugin's built-in CC control system or use your host's system.
+Some host apps (like Live and AudioMulch, for example) can manage CC control of plugin parameters on their own.  So if you use software like that, then you can just decide whether you want to use our plugin's built-in CC control system or use your host's system.
 </p>
 
-<p class=desc>
-<a name="advanced"></a>
+<p class=desc id="advanced">
 <i><b>* * * advanced stuff (fancy) * * *</b></i>
 </p>
 
@@ -105,13 +101,13 @@ If the plugin is already using either of those things for special purposes (see 
 <p class=desc>
 enabling or disabling parameter assignment stealing:
 <br>
-When assigning MIDI stuff to control parameters, the default behaviour in Destroy FX plugins is that you can assign the same MIDI events to more than one parameter.  If you dislike that, you can turn on "stealing" mode.  In stealing mode, if you try to assign an already assigned MIDI event to a parameter, the new parameter gets the assignment and the old parameter loses it.  If you are using csh or tcsh in a UNIX environment (for example, Terminal in Mac OS X), you can set the variable by entering the command <code>setenv DFX_PARAM_STEALMIDI true</code>  &nbsp; If you are using bash, then enter <code>export DFX_PARAM_STEALMIDI=true</code>  &nbsp; To return to the default, just do the same thing with "false" rather than "true" (0 and 1 also work in place of false and true, if you prefer).
+When assigning MIDI stuff to control parameters, the default behaviour in Destroy FX plugins is that you can assign the same MIDI events to more than one parameter.  If you dislike that, you can turn on "stealing" mode.  In stealing mode, if you try to assign an already assigned MIDI event to a parameter, the new parameter gets the assignment and the old parameter loses it.  To do this, you need to set an environment variable <code>DFX_PARAM_STEALMIDI</code> to <code>TRUE</code>.  In Mac OS X, you can set environment variables in the file ~/.MacOSX/environment.plist.
 </p>
 
 <p class=desc>
 enabling or disabling omni operation:
 <br>
-The default behaviour in Destroy FX plugins is to ignore the MIDI channel on which events are received.  If instead you want our plugins to pay attention to MIDI channel when distinguishing between events, set the environment variable DFX_PARAM_USECHANNEL to true (see the above section for more details about setting environment variables).
+The default behaviour in Destroy FX plugins is to ignore the MIDI channel on which events are received.  If instead you want our plugins to pay attention to MIDI channel when distinguishing between events, set the environment variable <code>DFX_PARAM_USECHANNEL</code> to <code>TRUE</code> (see the above section for more info about setting environment variables).
 </p>
 
 <br>
@@ -134,38 +130,49 @@ Transverb has a special program:  15.  Sending that program change message will 
 
 <p class=desc>
 Right now 
-<a href="http://www.emagic.de/">Logic</a> 5, 
+<a href="http://www.emagic.de/">Logic</a> (5.0 or higher), 
 <a href="http://www.cycling74.com/">Max/MSP</a>, 
-<a href="http://www.tcworks.de/">Spark</a> 2, 
+<a href="http://www.tcworks.de/">Spark</a> (2.0 or higher), 
 <a href="http://plogue.com/">Plogue Bidule</a>, 
-<a href="http://steinberg.net/">Cubase</a>, 
-<a href="http://steinberg.net/">Nuendo</a>, 
+<a href="http://www.steinberg.net/">Cubase</a>, 
+<a href="http://www.steinberg.net/">Nuendo</a>, 
+<a href="http://www.five12.com/">Numerology</a>, 
+<a href="http://www.sagantech.biz/">Metro</a>, 
+<a href="http://www.grantedsw.com/">Rax</a>, 
 <a href="http://www.audiomulch.com/">AudioMulch</a>, 
 <a href="http://www.synthedit.com/">SynthEdit</a>, 
 <a href="http://www.fruityloops.com/">Fruity Loops</a>, 
-<a href="http://synapse-audio.com/">Orion</a>, and 
+<a href="http://synapse-audio.com/">Orion</a> (2.7 or higher), and 
 <a href="http://buzzmachines.com/">Buzz</a> 
-are, to the best of my knowledge, are the only VST hosts that support sending MIDI notes to non-synth audio-processor plugins.
+are, to the best of my knowledge, are the only hosts that support sending MIDI notes to non-instrument audio-processor plugins.
 </p>
 
 <p class=desc>
-In <a href="http://www.emagic.de/">Logic</a>, the way to make a Destroy FX plug work with MIDI is to first insert it as an audio instrument.  Then use the sidechain menu in the plugin window to choose an audio track to route into the plugin.  The MIDI will come from the sequences on the audio instrument track (or live MIDI input if that track is selected in the Arrange window) and the audio to be processed will come from the sidechain track.  I've also made workaround that let you use Rez Synth, Buffer Override, and Skidder in Logic 4 with MIDI notes, but it's not multi-CPU compatible and now Logic 5 is available, so I've decided to stop distributing those versions.  Let us know if you'd like those versions, though.
+In <a href="http://www.emagic.de/">Logic</a>, the way to make a Destroy FX plug work with MIDI is to first insert it as an audio instrument.  Then use the sidechain menu in the plugin window to choose an audio track to route into the plugin.  The MIDI will come from the sequences on the audio instrument track (or live MIDI input if that track is selected in the Arrange window) and the audio to be processed will come from the sidechain track.  I've also made workaround that let you use Rez Synth, Buffer Override, and Skidder in Logic 4 with MIDI notes, but it's not multi-CPU compatible and now Logic 5 is available, so I've decided to stop distributing those versions.  They are still available at our <a href="http://destroyfx.org/museum.html">museum</a>, though.
 </p>
 
 <p class=desc>
-In <a href="http://steinberg.net/">Cubase</a> and <a href="http://steinberg.net/">Nuendo</a>, the way to make a Destroy FX plugin work with MIDI is to first insert it as an effect and activate it.  Now it will be included as a MIDI device in Cubase's MIDI output devices list.  In the output device menu for the MIDI tracks, you will see the plugin's name listed.  Select the plugin as the output device for one of your MIDI tracks and now that MIDI track's output will be fed into the plugin and allow you to send MIDI to the effect.  You can either do that with a prearranged MIDI track or live with a keyboard when that particular MIDI track is selected.
+In <a href="http://www.steinberg.net/">Cubase</a>, <a href="http://www.steinberg.net/">Nuendo</a>, and <a href="http://www.sagantech.biz/">Metro</a>, the way to make a Destroy FX plugin work with MIDI is to first insert it as an effect.  In Cubase and Nuendo, you must also &quot;activate&quot; it before doing anything else.  Now it will be included as a MIDI device/destination in the app's MIDI output devices list.  In the output device menu for the MIDI tracks, you will now see the plugin's name listed as an available option.  Select the plugin as the output device for one of your MIDI tracks and now that MIDI track's output will be fed into the plugin and allow you to send MIDI to the effect.  You can either do that with a prearranged MIDI track or live with a keyboard when that particular MIDI track is selected.
 </p>
 
 <p class=desc>
-In <a href="http://www.cycling74.com/">Max/MSP</a>, all you have to do is send the the vst~ object midievent messages in the left inlet just like you would for a VST instrument.  But unlike VST instruments, be sure to feed audio into the inlets as well.  Also be sure to activate your dac~ before sending any midievent messages, otherwise the messages will be ignored (this is the case with all MIDI-enabled VST plugins in Max/MSP).
+In <a href="http://www.cycling74.com/">Max/MSP</a>, all you have to do is send the the vst~ object midievent messages in the left inlet just like you would for an instrument plugin.  But unlike instruments, be sure to feed audio into the inlets as well.  Also be sure to activate your dac~ before sending any midievent messages, otherwise the messages will be ignored (this is the case with all MIDI-enabled VST plugins in Max/MSP).
 </p>
 
 <p class=desc>
-In <a href="http://www.tcworks.de/">Spark</a>, just open the preferences, go to the MIDI panel, and select the port that your MIDI instrument is plugged into as the "MIDI Input."  Spark LE, however, only uses MIDI that is generated by other VST plugins.
+In <a href="http://www.tcworks.de/">Spark</a>, just open the preferences, go to the MIDI panel, and select the port that your MIDI instrument is plugged into as the &quot;MIDI Input&quot;.  Spark LE, however, only uses MIDI that is generated by other plugins.
 </p>
 
 <p class=desc>
-In <a href="http://plogue.com/">Plogue Bidule</a> or <a href="http://www.synthedit.com/">SynthEdit</a>, just patch MIDI into the effect.  Bidule and SynthEdit make no distinctions between synths and effects.
+In <a href="http://plogue.com/">Plogue Bidule</a> or <a href="http://www.synthedit.com/">SynthEdit</a>, just patch MIDI into the effect.  Bidule and SynthEdit make no distinctions between instruments and effects.
+</p>
+
+<p class=desc>
+In <a href="http://www.five12.com/">Numerology</a>, make sure that you have some MIDI generator module inserted before the effect plugin module, and then you can choose MIDI sources to route into the effect from the effect module's &quot;MIDI Input&quot; menus.
+</p>
+
+<p class=desc>
+In <a href="http://www.grantedsw.com/">Rax</a>, the rack slots for MIDI-enabled effects include a &quot;MIDI source&quot; pop-up menu and MIDI &quot;channel&quot; pop-up menu.  You configure the effect to receive MIDI by setting those options.  Just be aware to choose something different from what you have configured at the top of Rax's main window for the instrument's MIDI input (unless you do want the same MIDI data to be going to both the effect and the instrument).
 </p>
 
 <p class=desc>
@@ -183,9 +190,8 @@ Marc Poirier and Tom Murphy 7
 </p>
 
 
-</td></tr></table>
-</td></tr></table>
-</center>
+</td></tr>
+</table>
 
 </body>
 
