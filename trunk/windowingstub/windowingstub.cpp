@@ -1,4 +1,6 @@
 
+
+
 /* Super Destroy FX Windowing System! */
 
 #include "windowingstub.hpp"
@@ -26,7 +28,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   long maxframe = 0;
   for (long i=0; i<BUFFERSIZESSIZE; i++)
     maxframe = ( buffersizes[i] > maxframe ? buffersizes[i] : maxframe );
-  int maxbufsize = (maxframe / 2) * 3;
+
   setup();
 
   in0 = (float*)malloc(maxframe * sizeof (float));
@@ -41,11 +43,12 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
 }
 
 PLUGIN::~PLUGIN() {
-
   free (in0);
   free (out0);
 
   free (prevmix);
+
+  if (programs) delete[] programs;
 }
 
 void PLUGIN::resume() {
@@ -62,8 +65,8 @@ void PLUGIN::resume() {
     prevmix[i] = 0.0;
   }
 
-  for (int j = 0; i < framesize; i ++) {
-    out0[i] = 0.0;
+  for (int j = 0; j < framesize; j ++) {
+    out0[j] = 0.0;
   }
   
   /* start input at beginning. Output has a frame of silence. */
@@ -96,6 +99,10 @@ void PLUGIN::setParameter(long index, float value) {
     /* otherwise, ??? */
     break;
   }
+
+  /* copy the new value to the active program's corresponding parameter value */
+  if ( (index >= 0) && (index < NUM_PARAMS) )
+    programs[curProgram].param[index] = value;
 }
 
 float PLUGIN::getParameter(long index) {
@@ -304,7 +311,56 @@ void PLUGIN::process(float **inputs, float **outputs, long samples) {
 }
 
 
+/* program stuff. Should never need to mess with this, hopefully.. */
 
+void PLUGINPROGRAM::init(PLUGIN * p) {
+  /* copy defaults from paramptrs */
+  for (int i=0; i < NUM_PARAMS; i++)
+    param[i] = p->paramptrs[i].def;
+}
+
+void PLUGIN::setProgram(long programNum) {
+  if ( (programNum < NUM_PROGRAMS) && (programNum >= 0) ) {
+      AudioEffectX::setProgram(programNum);
+
+      curProgram = programNum;
+      for (int i=0; i < NUM_PARAMS; i++)
+	setParameter(i, programs[programNum].param[i]);
+    }
+  // tell the host to update the editor display with the new settings
+  AudioEffectX::updateDisplay();
+}
+
+void PLUGIN::setProgramName(char *name) {
+  strcpy(programs[curProgram].name, name);
+}
+
+void PLUGIN::getProgramName(char *name) {
+  if ( !strcmp(programs[curProgram].name, "default") )
+    sprintf(name, "default %ld", curProgram+1);
+  else
+    strcpy(name, programs[curProgram].name);
+}
+
+bool PLUGIN::getProgramNameIndexed(long category, long index, char * text) {
+  if ( (index < NUM_PROGRAMS) && (index >= 0) ) {
+    strcpy(text, programs[index].name);
+    return true;
+  }
+  return false;
+}
+
+bool PLUGIN::copyProgram(long destination) {
+  if ( (destination < NUM_PROGRAMS) && (destination >= 0) ) {
+    programs[destination] = programs[curProgram];
+    return true;
+  }
+  return false;
+}
+
+
+/* this is only compiled if not building the GUI version */
+#ifndef GUI
 
 /* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
 /* ---------- boring stuff below this line ----------- */
@@ -352,4 +408,5 @@ AEffect *main (audioMasterCallback audioMaster) {
     hInstance = hInst;
     return 1;
   }
+#endif
 #endif
