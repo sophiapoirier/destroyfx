@@ -371,6 +371,8 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef * getparametervaluecfstrings(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getvaluecfstrings();   else return NULL;	}
+	virtual CFStringRef CopyClumpName(UInt32 inClumpID)
+		{	return NULL;	}
 #endif
 
 	void setparameter(long parameterIndex, DfxParamValue newValue);
