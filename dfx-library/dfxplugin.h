@@ -460,6 +460,10 @@ public:
 	DfxParamUnit getparameterunit(long parameterIndex);
 	bool getparameterchanged(long parameterIndex);
 	void setparameterchanged(long parameterIndex, bool newChanged = true);
+	DfxParamCurve getparametercurve(long parameterIndex)
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurve();   else return kDfxParamCurve_undefined;	}
+	void setparametercurve(long parameterIndex, DfxParamCurve newcurve)
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].setcurve(newcurve);	}
 	double getparametercurvespec(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurvespec();   else return 0.0;	}
 	void setparametercurvespec(long parameterIndex, double newcurvespec)
@@ -468,6 +472,11 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].gethidden();   else return false;	}
 	void setparameterhidden(long parameterIndex, bool newhide = true)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].sethidden(newhide);	}
+
+	// convenience methods for expanding and contracting parameter values 
+	// using the min/max/curvetype/curvespec/etc. settings of a given parameter
+	double expandparametervalue_index(long parameterIndex, float genValue);
+	float contractparametervalue_index(long parameterIndex, double realValue);
 
 	// whether or not the index is a valid preset
 	bool presetisvalid(long presetIndex);

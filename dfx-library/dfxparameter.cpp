@@ -601,52 +601,51 @@ unsigned char DfxParam::derive_uc(DfxParamValue inValue)
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
+// XXX this is being obsoleted by the non-class contractparametervalue() function
 float DfxParam::contract(double realValue)
 {
-	double dvalue = realValue;
-	double dmin = getmin_d(), dmax = getmax_d();
-	double drange = dmax - dmin;
+	return (float) contractparametervalue(realValue, getmin_d(), getmax_d(), curve, curvespec);
+}
 
-	switch (curve)
+//-----------------------------------------------------------------------------
+// take a real parameter value and contract it to a generic 0.0 to 1.0 float value
+// this takes into account the parameter curve
+inline double contractparametervalue(double realValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
+{
+	double valueRange = maxValue - minValue;
+
+	switch (curveType)
 	{
 		case kDfxParamCurve_linear:
-			dvalue = (dvalue-dmin) / drange;
-			break;
+			return (realValue-minValue) / valueRange;
 		case kDfxParamCurve_stepped:
 			// XXX is this a good way to do this?
-			dvalue = (dvalue-dmin) / drange;
-			break;
+			return (realValue-minValue) / valueRange;
 		case kDfxParamCurve_sqrt:
-			dvalue = (sqrt(dvalue) * drange) + dmin;
-			break;
+			return (sqrt(realValue) * valueRange) + minValue;
 		case kDfxParamCurve_squared:
-			dvalue = sqrt((dvalue-dmin) / drange);
-			break;
+			return sqrt((realValue-minValue) / valueRange);
 		case kDfxParamCurve_cubed:
-			dvalue = pow( (dvalue-dmin) / drange, 1.0/3.0 );
-			break;
+			return pow( (realValue-minValue) / valueRange, 1.0/3.0 );
 		case kDfxParamCurve_pow:
-			dvalue = pow( (dvalue-dmin) / drange, 1.0/curvespec );
-			break;
+			return pow( (realValue-minValue) / valueRange, 1.0/curveSpec );
 		case kDfxParamCurve_exp:
-			dvalue = log(1.0-dmin+dvalue) / log(1.0-dmin+dmax);
-			break;
+			return log(1.0-minValue+realValue) / log(1.0-minValue+maxValue);
 		case kDfxParamCurve_log:
-			dvalue = (log(dvalue/dmin) / log(2.0)) / (log(dmax/dmin) / log(2.0));
-			break;
+			return (log(realValue/minValue) / log(2.0)) / (log(maxValue/minValue) / log(2.0));
 		case kDfxParamCurve_undefined:
 		default:
 			break;
 	}
 
-	return (float)dvalue;
+	return realValue;
 }
 
 //-----------------------------------------------------------------------------
 // get the parameter's current value scaled into a generic 0...1 float value
 float DfxParam::get_gen()
 {
-	return contract(get_d());
+	return (float) contractparametervalue(get_d(), getmin_d(), getmax_d(), curve, curvespec);
 }
 
 
@@ -826,43 +825,41 @@ bool DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
 // this takes into account the parameter curve
 double DfxParam::expand(float genValue)
 {
-	double dvalue = (double) genValue;
-	double dmin = getmin_d(), dmax = getmax_d();
-	double drange = dmax - dmin;
+	return expandparametervalue((double)genValue, getmin_d(), getmax_d(), curve, curvespec);
+}
 
-	switch (curve)
+//-----------------------------------------------------------------------------
+// take a generic 0.0 to 1.0 float value and expand it to a real parameter value
+// this takes into account the parameter curve
+inline double expandparametervalue(double genValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
+{
+	double valueRange = maxValue - minValue;
+
+	switch (curveType)
 	{
 		case kDfxParamCurve_linear:
-			dvalue = (dvalue * drange) + dmin;
-			break;
+			return (genValue * valueRange) + minValue;
 		case kDfxParamCurve_stepped:
 			// XXX is this a good way to do this?
-			dvalue = (double) ( (long) ((dvalue * drange) + dmin + twiddle_d) );
-			break;
+			return (double) ( (long) ((genValue * valueRange) + minValue + twiddle_d) );
 		case kDfxParamCurve_sqrt:
-			dvalue = (sqrt(dvalue) * drange) + dmin;
-			break;
+			return (sqrt(genValue) * valueRange) + minValue;
 		case kDfxParamCurve_squared:
-			dvalue = (dvalue*dvalue * drange) + dmin;
-			break;
+			return (genValue*genValue * valueRange) + minValue;
 		case kDfxParamCurve_cubed:
-			dvalue = (dvalue*dvalue*dvalue * drange) + dmin;
-			break;
+			return (genValue*genValue*genValue * valueRange) + minValue;
 		case kDfxParamCurve_pow:
-			dvalue = (pow(dvalue, curvespec) * drange) + dmin;
-			break;
+			return (pow(genValue, curveSpec) * valueRange) + minValue;
 		case kDfxParamCurve_exp:
-			dvalue = exp( log(drange+1.0) * dvalue ) + dmin - 1.0;
-			break;
+			return exp( log(valueRange+1.0) * genValue ) + minValue - 1.0;
 		case kDfxParamCurve_log:
-			dvalue = dmin * pow( 2.0, dvalue * log(dmax/dmin)/log(2.0) );
-			break;
+			return minValue * pow( 2.0, genValue * log(maxValue/minValue)/log(2.0) );
 		case kDfxParamCurve_undefined:
 		default:
 			break;
 	}
 
-	return dvalue;
+	return genValue;
 }
 
 //-----------------------------------------------------------------------------
@@ -918,7 +915,7 @@ void DfxParam::set_b(bool newValue)
 // set the parameter's current value with a generic 0...1 float value
 void DfxParam::set_gen(float genValue)
 {
-	set_d(expand(genValue));
+	set_d( expandparametervalue((double)genValue, getmin_d(), getmax_d(), curve, curvespec) );
 }
 
 

@@ -54,7 +54,7 @@ void Skidder::processPlateau()
 		rmscount = 0;	// reset the RMS counter
 		//
 		// set up the random floor values
-		randomFloor = (float) parameters[kFloor].expand(interpolateRandom(floorRandMin_gen, floor_gen));
+		randomFloor = (float) expandparametervalue_index(kFloor, interpolateRandom(floorRandMin_gen, floor_gen));
 		randomGainRange = 1.0f - randomFloor;	// the range of the skidding on/off gain
 		//
 		if (slopeDur > 0)
@@ -142,7 +142,7 @@ void Skidder::processValley()
 		else
 		{
 			if (useRandomRate)
-				cycleRate = (float) parameters[kRate_abs].expand(interpolateRandom(rateRandMinHz_gen, rateHz_gen));
+				cycleRate = (float) expandparametervalue_index(kRate_abs, interpolateRandom(rateRandMinHz_gen, rateHz_gen));
 			else
 				cycleRate = rateHz;
 		}
@@ -295,7 +295,7 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 			// adjust the floor according to note velocity if velocity mode is on
 			if (useVelocity)
 			{
-				floor = (float) parameters[kFloor].expand((float)(127-mostRecentVelocity)/127.0f);
+				floor = (float) expandparametervalue_index(kFloor, (float)(127-mostRecentVelocity)/127.0f);
 				gainRange = 1.0f - floor;	// the range of the skidding on/off gain
 				useRandomFloor = false;
 			}
@@ -386,7 +386,7 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 			// adjust the floor according to note velocity if velocity mode is on
 			if (useVelocity)
 			{
-				floor = (float) parameters[kFloor].expand((float)(127-mostRecentVelocity)/127.0f);
+				floor = (float) expandparametervalue_index(kFloor, (float)(127-mostRecentVelocity)/127.0f);
 				gainRange = 1.0f - floor;	// the range of the skidding on/off gain
 				useRandomFloor = false;
 			}
