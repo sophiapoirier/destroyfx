@@ -20,7 +20,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
   double bsize_float = (double)bsize;	// cut down on casting
   int filterMode1, filterMode2;	// the type of filtering to use in ultra hi-fi mode
   float mug1, mug2;	// make-up gain for lowpass filtering
-  float fsamplerate = (float)getsamplerate();
+  float fsamplerate = getsamplerate_f();
 
 
   // there must have not been available memory or something (like WaveLab goofing up), 

@@ -184,6 +184,9 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		case kDfxParamUnit_percent:
 			outParameterInfo.unit = kAudioUnitParameterUnit_Percent;
 			break;
+		case kDfxParamUnit_portion:
+			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+			break;
 		case kDfxParamUnit_lineargain:
 			outParameterInfo.unit = kAudioUnitParameterUnit_LinearGain;
 			break;
@@ -198,8 +201,10 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			outParameterInfo.unit = kAudioUnitParameterUnit_Hertz;
 			break;
 		case kDfxParamUnit_seconds:
-		case kDfxParamUnit_ms:	// eh, whatever...
 			outParameterInfo.unit = kAudioUnitParameterUnit_Seconds;
+			break;
+		case kDfxParamUnit_ms:
+			outParameterInfo.unit = kAudioUnitParameterUnit_Milliseconds;
 			break;
 		case kDfxParamUnit_samples:
 			outParameterInfo.unit = kAudioUnitParameterUnit_SampleFrames;
@@ -207,18 +212,29 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		case kDfxParamUnit_scalar:
 			outParameterInfo.unit = kAudioUnitParameterUnit_Rate;
 			break;
-		case kDfxParamUnit_notes:
-			outParameterInfo.unit = kAudioUnitParameterUnit_MIDINoteNumber;
+		case kDfxParamUnit_divisor:
+			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
 			break;
 		case kDfxParamUnit_semitones:
-		case kDfxParamUnit_octaves:	// whatever...
 			outParameterInfo.unit = kAudioUnitParameterUnit_RelativeSemiTones;
+			break;
+		case kDfxParamUnit_octaves:
+			outParameterInfo.unit = kAudioUnitParameterUnit_Octaves;
 			break;
 		case kDfxParamUnit_cents:
 			outParameterInfo.unit = kAudioUnitParameterUnit_Cents;
 			break;
+		case kDfxParamUnit_notes:
+			outParameterInfo.unit = kAudioUnitParameterUnit_MIDINoteNumber;
+			break;
 		case kDfxParamUnit_pan:
 			outParameterInfo.unit = kAudioUnitParameterUnit_Pan;
+			break;
+		case kDfxParamUnit_bpm:
+			outParameterInfo.unit = kAudioUnitParameterUnit_BPM;
+			break;
+		case kDfxParamUnit_beats:
+			outParameterInfo.unit = kAudioUnitParameterUnit_Beats;
 			break;
 		case kDfxParamUnit_index:
 		case kDfxParamUnit_strings:
@@ -588,17 +604,18 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
 				const CAStreamBasicDescription &inPrevFormat, const CAStreamBasicDescription &inNewFormat)
 {
-printf("\nDfxPlugin::ChangeStreamFormat,   newsr = %.3f,   oldsr = %.3f\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
+//printf("\nDfxPlugin::ChangeStreamFormat,   newsr = %.3f,   oldsr = %.3f\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
 	ComponentResult result = TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
 
 	if (result == noErr)
 	{
-//		if (inNewFormat.mSampleRate != inPrevFormat.mSampleRate)
-		if ( (inNewFormat.mSampleRate != getsamplerate()) || 
+		if ( (inNewFormat.mSampleRate != inPrevFormat.mSampleRate) || 
+//		if ( (inNewFormat.mSampleRate != getsamplerate()) || 
 				(inNewFormat.mChannelsPerFrame != inPrevFormat.mChannelsPerFrame) )
 		{
 //			do_initialize();
 			updatesamplerate();
+			updatenumchannels();
 			createbuffers();
 		}
 	}
@@ -633,7 +650,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags
 	}
 
 	// now do the processing
-	processaudio(inputsP, outputsP, inFramesToProcess);
+	processaudio((const float**)inputsP, outputsP, inFramesToProcess);
 
 	// I don't know what the hell this is for
 	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;

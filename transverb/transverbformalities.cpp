@@ -10,11 +10,6 @@
 #endif
 
 
-#ifndef powf
-#define powf (float)pow
-#endif
-
-
 
 // these are macros that do boring entry point stuff for us
 DFX_ENTRY(Transverb);
@@ -238,6 +233,7 @@ void Transverb::initPresets() {
 
 	int i = 1;
 
+	setpresetname(i, "phaser up");
 	setpresetparameter_f(i, kBsize, 48.687074827f);
 	setpresetparameter_f(i, kDrymix, 0.45f);
 	setpresetparameter_f(i, kMix1, 0.5f);
@@ -250,9 +246,9 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed2, 0.0f);
 	setpresetparameter_i(i, kQuality, ultrahifi);
 	setpresetparameter_b(i, kTomsound, false);
-	setpresetname(i, "phaser up");
 	i++;
 
+	setpresetname(i, "phaser down");
 	setpresetparameter_f(i, kBsize, 27.0f);
 	setpresetparameter_f(i, kDrymix, 0.45f);
 	setpresetparameter_f(i, kMix1, 0.5f);
@@ -265,9 +261,9 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed2, 0.0f);
 	setpresetparameter_i(i, kQuality, ultrahifi);
 	setpresetparameter_b(i, kTomsound, false);
-	setpresetname(i, "phaser down");
 	i++;
 
+	setpresetname(i, "aquinas");
 	setpresetparameter_f(i, kBsize, 2605.1f);
 	setpresetparameter_f(i, kDrymix, 0.6276f);
 	setpresetparameter_f(i, kMix1, 1.0f);
@@ -280,9 +276,9 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed2, 46.0f);
 	setpresetparameter_i(i, kQuality, ultrahifi);
 	setpresetparameter_b(i, kTomsound, false);
-	setpresetname(i, "aquinas");
 	i++;
 
+	setpresetname(i, "glup drums");
 	setpresetparameter_f(i, kBsize, 184.27356f);
 	setpresetparameter_f(i, kDrymix, 0.157f);
 	setpresetparameter_f(i, kMix1, 1.0f);
@@ -295,9 +291,9 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed2, 0.0f);
 	setpresetparameter_i(i, kQuality, ultrahifi);
 	setpresetparameter_b(i, kTomsound, false);
-	setpresetname(i, "glup drums");
 	i++;
 
+	setpresetname(i, "space invaders");
 	setpresetparameter_d(i, kSpeed1, -0.23/12.0);
 	setpresetparameter_f(i, kFeed1, 73.0f);
 	setpresetparameter_f(i, kDist1, 0.1857f);
@@ -310,7 +306,6 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kMix2, 0.1225f);
 	setpresetparameter_i(i, kQuality, ultrahifi);
 	setpresetparameter_b(i, kTomsound, false);
-	setpresetname(i, "space invaders");
 	i++;
 
 /*

@@ -199,20 +199,8 @@ DfxPlugin::~DfxPlugin()
 long DfxPlugin::do_initialize()
 {
 	updatesamplerate();
+	updatenumchannels();
 	createbuffers();	// XXX should this be called here or during do_reset?
-
-	#if TARGET_API_AUDIOUNIT
-		// the number of inputs or outputs may have changed
-		numInputs = getnuminputs();
-		if (inputsP)
-			free(inputsP);
-		inputsP = (float**) malloc(numInputs * sizeof(float*));
-
-		numOutputs = getnumoutputs();
-		if (outputsP)
-			free(outputsP);
-		outputsP = (float**) malloc(numOutputs * sizeof(float*));
-	#endif
 
 	long result = initialize();
 
@@ -323,7 +311,7 @@ void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName,
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, kDfxParamCurve_stepped, kDfxParamUnit_indexed);
+		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, kDfxParamCurve_stepped, kDfxParamUnit_strings);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -669,6 +657,23 @@ void DfxPlugin::updatesamplerate()
 #endif
 }
 
+//-----------------------------------------------------------------------------
+void DfxPlugin::updatenumchannels()
+{
+	#if TARGET_API_AUDIOUNIT
+		// the number of inputs or outputs may have changed
+		numInputs = getnuminputs();
+		if (inputsP)
+			free(inputsP);
+		inputsP = (float**) malloc(numInputs * sizeof(float*));
+
+		numOutputs = getnumoutputs();
+		if (outputsP)
+			free(outputsP);
+		outputsP = (float**) malloc(numOutputs * sizeof(float*));
+	#endif
+}
+
 
 
 #pragma mark _________properties_________
@@ -736,6 +741,7 @@ void DfxPlugin::processtimeinfo()
 	timeinfo.timeSigIsValid = false;
 	timeinfo.samplesToNextBar = 0;
 	timeinfo.samplesToNextBarIsValid = false;
+	timeinfo.playbackChanged = false;
 
 
 #if TARGET_API_AUDIOUNIT
@@ -817,6 +823,9 @@ void DfxPlugin::processtimeinfo()
 			timeinfo.numerator = (double) vstTimeInfo->timeSigNumerator;
 			timeinfo.denominator = (double) vstTimeInfo->timeSigDenominator;
 		}
+
+		if (kVstTransportChanged & vstTimeInfo->flags)
+			timeinfo.playbackChanged = true;
 	}
 #endif
 // TARGET_API_VST

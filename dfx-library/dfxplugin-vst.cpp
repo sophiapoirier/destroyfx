@@ -353,7 +353,7 @@ void DfxPlugin::getParameterLabel(long index, char *label)
 		case kDfxParamUnit_scalar:
 			strcpy(label, "");
 			break;
-		case kDfxParamUnit_notes:
+		case kDfxParamUnit_divisor:
 			strcpy(label, "");
 			break;
 		case kDfxParamUnit_semitones:
@@ -365,8 +365,17 @@ void DfxPlugin::getParameterLabel(long index, char *label)
 		case kDfxParamUnit_cents:
 			strcpy(label, "cents");
 			break;
+		case kDfxParamUnit_notes:
+			strcpy(label, "");
+			break;
 		case kDfxParamUnit_pan:
 			strcpy(label, "");
+			break;
+		case kDfxParamUnit_bpm:
+			strcpy(label, "bpm");
+			break;
+		case kDfxParamUnit_beats:
+			strcpy(label, "beats");
 			break;
 		case kDfxParamUnit_index:
 			strcpy(label, "");

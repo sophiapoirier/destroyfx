@@ -169,6 +169,8 @@ struct DfxTimeInfo {
 		bool timeSigIsValid;
 	long samplesToNextBar;
 		bool samplesToNextBarIsValid;
+	// XXX implement this for Audio Unit
+	bool playbackChanged;	// whether or not the playback state or position just changed
 };
 
 
@@ -222,8 +224,8 @@ public:
 	virtual void releasebuffers()
 		{ }
 
-	// ***
 	void do_processparameters();
+	// ***
 	virtual void processparameters()
 		{ }
 	void preprocessaudio();
@@ -353,10 +355,13 @@ public:
 
 	double getsamplerate()
 		{	return DfxPlugin::samplerate;	}
+	float getsamplerate_f()
+		{	return (float) (DfxPlugin::samplerate);	}
 	void setsamplerate(double newrate);
 	// force a refetching of the samplerate from the host
 	void updatesamplerate();
 
+	void updatenumchannels();
 	unsigned long getnuminputs();
 	unsigned long getnumoutputs();
 
@@ -507,7 +512,9 @@ public:
 	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags, 
 					const AudioBufferList &inBuffer, AudioBufferList &outBuffer, 
 					UInt32 inFramesToProcess);
-	virtual AUKernelBase * NewKernel();
+	#if TARGET_PLUGIN_USES_DSPCORE
+		virtual AUKernelBase * NewKernel();
+	#endif
 
 	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
@@ -634,7 +641,7 @@ public:
 #pragma mark _________DfxPluginCore_________
 
 //-----------------------------------------------------------------------------
-// Audio Unit must override NewKernel() to implmement this
+// Audio Unit must override NewKernel() to implement this
 class DfxPluginCore
 #ifdef TARGET_API_CORE_CLASS
 : public TARGET_API_CORE_CLASS
@@ -683,6 +690,8 @@ public:
 
 	double getsamplerate()
 		{	return dfxplugin->getsamplerate();	}
+	float getsamplerate_f()
+		{	return dfxplugin->getsamplerate_f();	}
 //	DfxParam getparameter(long index)
 //		{	return dfxplugin->getparameter(index);	}
 	float getparameter_f(long index)
@@ -728,9 +737,9 @@ public:
 		#define DFX_CORE_ENTRY(PluginCoreClass)	\
 			AUKernelBase * DfxPlugin::NewKernel()		\
 				{	return new PluginCoreClass(this);	}
-	#else
-		AUKernelBase * DfxPlugin::NewKernel()
-			{	return TARGET_API_BASE_CLASS::NewKernel();	}
+//	#else
+//		AUKernelBase * DfxPlugin::NewKernel()
+//			{	return TARGET_API_BASE_CLASS::NewKernel();	}
 	#endif
 
 #endif
