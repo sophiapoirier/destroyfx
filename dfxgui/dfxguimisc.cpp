@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 DGImage::DGImage(const char * inFileName, DfxGuiEditor * inEditor)
 {
+#if MAC
 	cgImage = NULL;
 
 	// no assumptions can be made about how long the reference is valid, 
@@ -50,6 +51,7 @@ DGImage::DGImage(const char * inFileName, DfxGuiEditor * inEditor)
 	}
 	if (fileCFName != NULL)
 		CFRelease(fileCFName);
+#endif
 
 	if (inEditor != NULL)
 		inEditor->addImage(this);
@@ -58,27 +60,33 @@ DGImage::DGImage(const char * inFileName, DfxGuiEditor * inEditor)
 //-----------------------------------------------------------------------------
 DGImage::~DGImage()
 {
+#if MAC
 	if (cgImage != NULL)
 		CGImageRelease(cgImage);
 	cgImage = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 long DGImage::getWidth()
 {
+#if MAC
 	if (cgImage != NULL)
 		return CGImageGetWidth(cgImage);
 	else
 		return 1;	// XXX sometimes safer than returning 0
+#endif
 }
 	
 //-----------------------------------------------------------------------------
 long DGImage::getHeight()
 {
+#if MAC
 	if (cgImage != NULL)
 		return CGImageGetHeight(cgImage);
 	else
 		return 1;	// XXX sometimes safer than returning 0
+#endif
 }
 
 //-----------------------------------------------------------------------------
