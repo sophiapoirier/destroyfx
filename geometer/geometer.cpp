@@ -172,7 +172,8 @@ void PLUGIN::resume() {
 
   changed = 0;
 
-  wantEvents(); // tells the host that we like to get MIDI
+  /* tell the host that we like to get MIDI */
+  wantEvents(); 
 }
 
 void PLUGIN::suspend () {
@@ -929,7 +930,6 @@ int PLUGIN::processw(float * in, float * out, long samples,
       }
     }
 
-#if 1
     /* generate output */
     int c = 0;
     for(int u = 0; u < intervals; u++) {
@@ -939,9 +939,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
 	     size * sizeof (float));
       c += size;
     }
-#else
-    memset(out, 0, samples * sizeof (float));
-#endif
+
     break;
   }
 
@@ -1245,17 +1243,6 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
           break;
-#if 0
-        case WINDOW_COS2:
-        default:
-          for(z = 0; z < third; z ++) {
-            float p = 0.5f * (-cos(float(pi * ((float)z * oneDivThird))) + 1.0f);
-            p = p * p;
-            out0[z+outstart+outsize] *= p;
-            out0[z+outstart+outsize+third] *= (1.0f - p);
-          }
-          break;
-#endif
       }
 
       /* mix in prevmix */
@@ -1314,7 +1301,7 @@ void PLUGIN::setProgram(long programNum) {
       for (int i=0; i < NUM_PARAMS; i++)
         setParameter(i, programs[programNum].param[i]);
     }
-  // tell the host to update the editor display with the new settings
+  /* tell the host to update the editor display with the new settings */
   AudioEffectX::updateDisplay();
 }
 
@@ -1361,7 +1348,8 @@ long PLUGIN::canDo(char* text) {
   if (strcmp(text, "1in1out") == 0)
     return 1;
 
-  return -1;	// explicitly can't do; 0 => don't know
+  /* explicitly can't do; 0 => don't know */
+  return -1;	
 }
 
 void PLUGIN::makepresets() {
@@ -1474,9 +1462,9 @@ AEffect *main (audioMasterCallback audioMaster);
 #endif
 
 AEffect *main (audioMasterCallback audioMaster) {
-  // get vst version
+  /* get vst version */
   if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
-    return 0;  // old version
+    return 0;  /* old version */
 
   AudioEffect* effect = new PLUGIN(audioMaster);
   if (!effect)
