@@ -452,13 +452,13 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 					break;
 			}
 	
-		#if TARGET_API_VST
+		#ifdef TARGET_API_VST
 			if (replacing)
 			{
 		#endif
 				*out1 = processOutput(*in1, *in2, panGainL);
 				*out2 = processOutput(*in2, *in1, panGainR);
-		#if TARGET_API_VST
+		#ifdef TARGET_API_VST
 			}
 			else
 			{
@@ -501,11 +501,11 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 					break;
 			}
 	
-		#if TARGET_API_VST
+		#ifdef TARGET_API_VST
 			if (replacing)
 		#endif
 				*out1 = processOutput(*in1, *in1, 1.0f);
-		#if TARGET_API_VST
+		#ifdef TARGET_API_VST
 			else
 				*out1 += processOutput(*in1, *in1, 1.0f);
 		#endif

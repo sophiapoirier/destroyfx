@@ -6,7 +6,7 @@
 #include "rezsynth.hpp"
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __REZSYNTHEDITOR_H
 	#include "rezsyntheditor.hpp"
 	#endif
@@ -69,7 +69,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setpresetname(0, "feminist synth");	// default preset name
 
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		canProcessReplacing(false);	// only support accumulating output
 		#if TARGET_PLUGIN_HAS_GUI
 			editor = new RezSynthEditor(this);
@@ -80,7 +80,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 RezSynth::~RezSynth()
 {
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
 	do_cleanup();

@@ -4,7 +4,7 @@
 #include "midigater.hpp"
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __MIDIGATEREDITOR_H
 	#include "midigatereditor.hpp"
 	#endif
@@ -28,7 +28,7 @@ MidiGater::MidiGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	midistuff->setLazyAttack();	// this enables the lazy note attack mode
 
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		canProcessReplacing(false);	// only support accumulating output
 		#if TARGET_PLUGIN_HAS_GUI
 			editor = new MidiGaterEditor(this);

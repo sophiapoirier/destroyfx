@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
   #ifndef __DFX_GEOMETEREDITOR_H
   #include "geometereditor.hpp"
   #endif
@@ -160,7 +160,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addchannelconfig(1, 1);	/* mono */
 #endif
 
-  #if TARGET_API_VST
+  #ifdef TARGET_API_VST
     #if TARGET_PLUGIN_USES_DSPCORE
       DFX_INIT_CORE(GeometerDSP);	/* we need to manage DSP cores manually in VST */
     #endif
@@ -175,7 +175,7 @@ PLUGIN::~PLUGIN() {
   delete cs;
 #endif
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
   /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
     so we need to call this manually here */
   do_cleanup();
@@ -280,7 +280,7 @@ void PLUGINCORE::processparameters() {
   pointop3 = getparameter_i(P_POINTOP3);
   oppar3 = getparameter_f(P_OPPAR3S + pointop3);
 
-  #if TARGET_API_VST
+  #ifdef TARGET_API_VST
   if (getparameterchanged(P_BUFSIZE))
     /* this tells the host to call a suspend()-resume() pair, 
       which updates initialDelay value */
@@ -1180,11 +1180,11 @@ void PLUGIN::processaudio(const float **trueinputs, float **trueoutputs, unsigne
     }
 
     /* send sample out */
-  #if TARGET_API_VST
+  #ifdef TARGET_API_VST
     if (replacing)
   #endif
       tout[ii] = out0[outstart];
-  #if TARGET_API_VST
+  #ifdef TARGET_API_VST
     else tout[ii] += out0[outstart];
   #endif
 

@@ -349,7 +349,7 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 		// in Audio Unit, this is handled already in AUBase::RestoreState, 
 		// and we are not really loading a "preset,"
 		// we are restoring the last user state
-		#if !TARGET_API_AUDIOUNIT
+		#ifndef TARGET_API_AUDIOUNIT
 		// copy the preset name from the chunk
 		plugin->setpresetname(plugin->getcurrentpresetnum(), newPreset->name);
 		#endif

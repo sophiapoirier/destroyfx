@@ -3,7 +3,7 @@
 
 #include "transverb.hpp"
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __TRANSVERBEDITOR_H
 	#include "transverbeditor.hpp"
 	#endif
@@ -67,7 +67,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   numtransverbcores = 0;	// none yet
 
 
-  #if TARGET_API_VST
+  #ifdef TARGET_API_VST
     #if TARGET_PLUGIN_HAS_GUI
       editor = new TransverbEditor(this);
     #endif
@@ -79,7 +79,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 Transverb::~Transverb() {
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
   // VST doesn't have initialize and cleanup methods like Audio Unit does, 
   // so we need to call this manually here
   do_cleanup();
@@ -441,7 +441,7 @@ void Transverb::randomizeParameters(bool writeAutomation)
 	for (long i=0; i < kSpeed1mode; i++)
 		postupdate_parameter(i);	// inform any parameter listeners of the changes
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		if (writeAutomation)
 		{
 			for (long i=0; i < kSpeed1mode; i++)

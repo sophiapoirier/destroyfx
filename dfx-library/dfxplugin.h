@@ -99,7 +99,11 @@ TARGET_PLUGIN_USES_MIDI
 TARGET_PLUGIN_IS_INSTRUMENT
 TARGET_PLUGIN_USES_DSPCORE
 TARGET_PLUGIN_HAS_GUI
-TARGET_API_AUDIOUNIT or TARGET_API_VST (to 1)
+	1 or 0
+
+ you must define one of these, and no more than one:
+TARGET_API_AUDIOUNIT
+TARGET_API_VST
 
  necessary for Audio Unit:
 PLUGIN_ENTRY_POINT
@@ -139,6 +143,10 @@ SUPPORT_AU_VERSION_1
 #define __DFXPLUGIN_H
 
 
+#ifndef __DFXDEFINES_H
+#include "dfxdefines.h"
+#endif
+
 
 // should be pretty much implied:  
 // if the plugin is an instrument, then it uses MIDI
@@ -151,7 +159,7 @@ SUPPORT_AU_VERSION_1
 // handle base header includes and class names for the target plugin API
 
 // using Apple's Audio Unit API
-#if TARGET_API_AUDIOUNIT
+#if defined(TARGET_API_AUDIOUNIT)
 	#define TARGET_API_CORE_CLASS AUKernelBase
 	#define TARGET_API_CORE_INSTANCE_TYPE AUEffectBase
 
@@ -173,7 +181,7 @@ SUPPORT_AU_VERSION_1
 	#endif
 
 // using Steinberg's VST API
-#elif TARGET_API_VST
+#elif defined(TARGET_API_VST)
 	#define BASE_API_HEADER "audioeffectx.h"
 	#define BASE_API_HEADER_DEFINITION __audioeffectx__
 	#define TARGET_API_BASE_CLASS AudioEffectX
@@ -191,7 +199,6 @@ SUPPORT_AU_VERSION_1
 	#endif
 
 #else
-
 	#error "You must define one of either TARGET_API_VST or TARGET_API_AUDIOUNIT"
 
 #endif
@@ -231,25 +238,9 @@ SUPPORT_AU_VERSION_1
 
 
 
-#if WIN32
-/* turn off warnings about default but no cases in switch, unknown pragma, etc. */
-   #pragma warning( disable : 4065 57 4200 4244 4068 )
-   #include <windows.h>
-#endif
-
-
 
 //-----------------------------------------------------------------------------
 // constants & macros
-
-#define DESTROY_FX_RULEZ
-
-#define DESTROYFX_NAME_STRING	"Destroy FX"
-#define DESTROYFX_COLLECTION_NAME	"Super Destroy FX bipolar plugin pack"
-#define DESTROYFX_URL "http://destroyfx.org/"
-#define SMARTELECTRONIX_URL "http://www.smartelectronix.com/"
-
-#define DESTROYFX_ID 'DFX!'
 
 #ifdef kAudioUnitErr_FailedInitialization
 #define kDfxErr_InitializationFailed	kAudioUnitErr_FailedInitialization
@@ -288,7 +279,7 @@ struct DfxTimeInfo {
 };
 
 
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	// the Audio Unit API already has an i/o configurations structure
 //	typedef struct DfxChannelConfig AUChannelInfo;
 	#define DfxChannelConfig AUChannelInfo
@@ -301,8 +292,6 @@ struct DfxTimeInfo {
 #endif
 
 
-
-class DfxPluginCore;
 
 #pragma mark _________DfxPlugin_________
 //-----------------------------------------------------------------------------
@@ -414,7 +403,7 @@ public:
 	void setparametercustomunitstring(long parameterIndex, const char *inText)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcustomunitstring(inText);	}
 	char * getparametervaluestring_ptr(long parameterIndex, long stringIndex);
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	CFStringRef * getparametervaluecfstrings(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getvaluecfstrings();   else return NULL;	}
 #endif
@@ -494,7 +483,7 @@ public:
 	void getpresetname(long presetIndex, char *outText);
 	// get a pointer to the text of a preset name
 	char * getpresetname_ptr(long presetIndex);
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getpresetcfname(long presetIndex);
 #endif
 	long getcurrentpresetnum()
@@ -642,7 +631,7 @@ protected:
 	unsigned long numInputs, numOutputs;
 	double samplerate;
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		// array of float pointers to input and output audio buffers, 
 		// just for the sake of making processaudio(float**, float**, etc.) possible
 		float **inputsP, **outputsP;
@@ -656,7 +645,7 @@ protected:
 		#endif
 	#endif
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		bool latencychanged;
 		bool isinitialized;
 		#if TARGET_PLUGIN_USES_DSPCORE
@@ -679,7 +668,7 @@ private:
 // overridden virtual methods from inherited API base classes
 public:
 
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	virtual void PostConstructor();
 	virtual ComponentResult Initialize();
 	virtual void Cleanup();
@@ -765,7 +754,7 @@ public:
 // end of Audio Unit API methods
 
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	virtual void process(float **inputs, float **outputs, long sampleFrames);
 	virtual void processReplacing(float **inputs, float **outputs, long sampleFrames);
 
@@ -907,7 +896,7 @@ protected:
 
 public:
 
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	void Process(const Float32 *in, Float32 *out, UInt32 inNumFrames, UInt32 inNumChannels, bool &ioSilence)
 	{
 		do_process(in, out, inNumFrames);
@@ -957,7 +946,7 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 //-----------------------------------------------------------------------------
 // plugin entry point macros and defines and stuff
 
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 
 	#define DFX_ENTRY(PluginClass)   COMPONENT_ENTRY(PluginClass)
 
@@ -979,7 +968,7 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 
 
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 
 	#if BEOS
 		#define main main_plugin
@@ -1023,3 +1012,4 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 
 
 #endif
+// __DFXPLUGIN_H

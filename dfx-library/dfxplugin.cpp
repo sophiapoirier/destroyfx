@@ -11,14 +11,16 @@ written by Marc Poirier, October 2002
 
 #include <time.h>	// for time(), which is used to feed srand()
 
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	#ifndef __AudioUnitUtilities_h__
 	#include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
 	#endif
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
-	#include "vstgui.h"
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
+	#ifndef __vstgui__
+	#include "vstgui.h"	// for AEffGUIEditor class definition
+	#endif
 #endif
 
 
@@ -35,7 +37,7 @@ DfxPlugin::DfxPlugin(
 					)
 
 // setup the constructors of the inherited base classes, for the appropriate API
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 		: TARGET_API_BASE_CLASS(inInstance, UInt32 numInputs, UInt32 numOutputs, UInt32 numGroups = 0), 
 	#else
@@ -43,7 +45,7 @@ DfxPlugin::DfxPlugin(
 	#endif
 #endif
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	: TARGET_API_BASE_CLASS(inInstance, numPresets, numParameters), 
 	numInputs(VST_NUM_INPUTS), numOutputs(VST_NUM_OUTPUTS), 
 #endif
@@ -96,7 +98,7 @@ DfxPlugin::DfxPlugin(
 	#endif
 
 
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	inputsP = outputsP = NULL;
 
 	aupresets = NULL;
@@ -119,7 +121,7 @@ DfxPlugin::DfxPlugin(
 // Audio Unit stuff
 
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	setUniqueID(PLUGIN_ID);	// identify
 	setNumInputs(VST_NUM_INPUTS);
 	setNumOutputs(VST_NUM_OUTPUTS);
@@ -195,7 +197,7 @@ DfxPlugin::~DfxPlugin()
 		dfxsettings = NULL;
 	#endif
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		if (aupresets != NULL)
 			free(aupresets);
 		aupresets = NULL;
@@ -207,7 +209,7 @@ DfxPlugin::~DfxPlugin()
 	#endif
 	// end AudioUnit-specific destructor stuff
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		// the child plugin class destructor should call do_cleanup for VST 
 		// because VST has no initialize/cleanup sort of methods, but if 
 		// the child class doesn't have its own cleanup method, then it's 
@@ -243,7 +245,7 @@ long DfxPlugin::do_initialize()
 	if (result != 0)
 		return result;
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		isinitialized = true;
 	#endif
 
@@ -262,7 +264,7 @@ void DfxPlugin::do_cleanup()
 {
 	releasebuffers();
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		if (inputsP != NULL)
 			free(inputsP);
 		inputsP = NULL;
@@ -273,7 +275,7 @@ void DfxPlugin::do_cleanup()
 
 	cleanup();
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		isinitialized = false;
 	#endif
 }
@@ -467,12 +469,12 @@ void DfxPlugin::randomizeparameter(long parameterIndex)
 // do stuff necessary to inform the host of changes, etc.
 void DfxPlugin::update_parameter(long parameterIndex)
 {
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		// make the global-scope element aware of the parameter's value
 		AUBase::SetParameter(parameterIndex, kAudioUnitScope_Global, (AudioUnitElement)0, getparameter_f(parameterIndex), 0);
 	#endif
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		long vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
 		if (presetisvalid(vstpresetnum))
 			setpresetparameter(vstpresetnum, parameterIndex, getparameter(parameterIndex));
@@ -492,7 +494,7 @@ void DfxPlugin::postupdate_parameter(long parameterIndex)
 	if ( !parameterisvalid(parameterIndex) )
 		return;
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		AudioUnitParameter dirtyparam;
 		dirtyparam.mAudioUnit = GetComponentInstance();
 		dirtyparam.mParameterID = parameterIndex;
@@ -653,7 +655,7 @@ void DfxPlugin::update_preset(long presetIndex)
 {
 	currentPresetNum = presetIndex;
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		AUPreset au_preset;
 		au_preset.presetNumber = presetIndex;
 		au_preset.presetName = getpresetcfname(presetIndex);
@@ -661,7 +663,7 @@ void DfxPlugin::update_preset(long presetIndex)
 		PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, (AudioUnitElement)0);
 	#endif
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		TARGET_API_BASE_CLASS::setProgram(presetIndex);
 		// tell the host to update the generic editor display with the new settings
 		AudioEffectX::updateDisplay();
@@ -772,7 +774,7 @@ char * DfxPlugin::getpresetname_ptr(long presetIndex)
 		return NULL;
 }
 
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 // get the CFString version of a preset name
 CFStringRef DfxPlugin::getpresetcfname(long presetIndex)
@@ -807,12 +809,13 @@ void DfxPlugin::setsamplerate(double newrate)
 // called when the sampling rate should be re-fetched from the host
 void DfxPlugin::updatesamplerate()
 {
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	if (IsInitialized())	// will crash if not initialized
 		setsamplerate(GetSampleRate());
 	else
 		setsamplerate(44100.0);
-#elif TARGET_API_VST
+#endif
+#ifdef TARGET_API_VST
 	setsamplerate((double)getSampleRate());
 #endif
 }
@@ -821,7 +824,7 @@ void DfxPlugin::updatesamplerate()
 // called when the number of audio channels has changed
 void DfxPlugin::updatenumchannels()
 {
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		// the number of inputs or outputs may have changed
 		numInputs = getnuminputs();
 		if (inputsP != NULL)
@@ -850,10 +853,10 @@ void DfxPlugin::getpluginname(char *outText)
 // return the number of audio inputs
 unsigned long DfxPlugin::getnuminputs()
 {
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	return GetInput(0)->GetStreamFormat().mChannelsPerFrame;
 #endif
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	return numInputs;
 #endif
 }
@@ -862,10 +865,10 @@ unsigned long DfxPlugin::getnuminputs()
 // return the number of audio outputs
 unsigned long DfxPlugin::getnumoutputs()
 {
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	return GetOutput(0)->GetStreamFormat().mChannelsPerFrame;
 #endif
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	return numOutputs;
 #endif
 }
@@ -948,7 +951,7 @@ double DfxPlugin::getlatency_seconds()
 //-----------------------------------------------------------------------------
 void DfxPlugin::update_latency()
 {
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		PropertyChanged(kAudioUnitProperty_Latency, kAudioUnitScope_Global, (AudioUnitElement)0);
 	#endif
 }
@@ -1006,7 +1009,7 @@ double DfxPlugin::gettailsize_seconds()
 //-----------------------------------------------------------------------------
 void DfxPlugin::update_tailsize()
 {
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		PropertyChanged(kAudioUnitProperty_TailTime, kAudioUnitScope_Global, (AudioUnitElement)0);
 	#endif
 }
@@ -1035,7 +1038,7 @@ void DfxPlugin::processtimeinfo()
 	timeinfo.playbackChanged = false;
 
 
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	if (mHostCallbackInfo.beatAndTempoProc != NULL)
 	{
 		Float64 tempo, beat;
@@ -1082,7 +1085,7 @@ void DfxPlugin::processtimeinfo()
 // TARGET_API_AUDIOUNIT
  
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	VstTimeInfo *vstTimeInfo = getTimeInfo(kVstTempoValid 
 										| kVstTransportChanged 
 										| kVstBarsValid 

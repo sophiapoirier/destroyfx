@@ -91,7 +91,7 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 // API-specific stuff below
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		#if TARGET_PLUGIN_HAS_GUI
 			editor = new DfxStubEditor(this);
 		#endif
@@ -108,7 +108,7 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 DfxStub::~DfxStub()
 {
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
 	// (only necessary if your plugin overrides cleanup and does its own stuff)
