@@ -113,12 +113,12 @@ long MidiGaterEditor::open()
 	//--initialize the displays---------------------------------------------
 	DGTextDisplay * display;
 	DGStaticTextDisplay * label;
-	AUVParameter auvp;
+	CAAUParameter auvp;
 
 	// slope
 	pos.set(kDisplayX, kSlopeDisplayY, kDisplayWidth/2, kDisplayHeight);
 	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize, kValueTextColor, kValueTextFont);
-	auvp = AUVParameter(GetEditAudioUnit(), kSlope, kAudioUnitScope_Global, (AudioUnitElement)0);
+	auvp = CAAUParameter(GetEditAudioUnit(), kSlope, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
 	//
 	pos.offset(kDisplayWidth/2, 0);
@@ -128,7 +128,7 @@ long MidiGaterEditor::open()
 	// velocity influence
 	pos.set(kDisplayX - 1, kVelInfluenceDisplayY, kVelInfluenceLabelWidth + 1, kDisplayHeight);
 	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize - 0.48f, kValueTextColor, kValueTextFont);
-	auvp = AUVParameter(GetEditAudioUnit(), kVelInfluence, kAudioUnitScope_Global, (AudioUnitElement)0);
+	auvp = CAAUParameter(GetEditAudioUnit(), kVelInfluence, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
 	//
 	pos.set(kDisplayX + kVelInfluenceLabelWidth, kVelInfluenceDisplayY, kDisplayWidth - kVelInfluenceLabelWidth, kDisplayHeight);
@@ -138,7 +138,7 @@ long MidiGaterEditor::open()
 	// floor
 	pos.set(kDisplayX, kFloorDisplayY, kDisplayWidth/2, kDisplayHeight);
 	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize, kValueTextColor, kValueTextFont);
-	auvp = AUVParameter(GetEditAudioUnit(), kFloor, kAudioUnitScope_Global, (AudioUnitElement)0);
+	auvp = CAAUParameter(GetEditAudioUnit(), kFloor, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
 	//
 	pos.offset(kDisplayWidth/2, 0);

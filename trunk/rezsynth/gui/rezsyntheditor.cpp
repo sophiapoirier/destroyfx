@@ -294,7 +294,7 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 
 		// parameter name label
 		DGStaticTextDisplay * label = new DGStaticTextDisplay(this, &pos2, NULL, kDGTextAlign_left, kValueTextFontSize, kMyVeryLightGreyColor, kValueTextFont);
-		AUVParameter auvp(GetEditAudioUnit(), paramID, kAudioUnitScope_Global, (AudioUnitElement)0);
+		CAAUParameter auvp(GetEditAudioUnit(), paramID, kAudioUnitScope_Global, (AudioUnitElement)0);
 		// get the name of this parameter
 		char paramName[DFX_PARAM_MAX_NAME_LENGTH];
 		strcpy(paramName, auvp.ParamInfo().name);
