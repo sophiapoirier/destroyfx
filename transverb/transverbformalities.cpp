@@ -129,7 +129,7 @@ TransverbDSP::~TransverbDSP() {
 
 void TransverbDSP::reset() {
 #if PRINT_FUNCTION_ALERTS
-printf("calling TransverbDSP::reset()\n");
+fprintf(stderr, "calling TransverbDSP::reset()\n");
 #endif
 
   writer = 0;
@@ -144,7 +144,7 @@ printf("calling TransverbDSP::reset()\n");
 
 bool TransverbDSP::createbuffers() {
 #if PRINT_FUNCTION_ALERTS
-printf("calling TransverbDSP::createbuffers()\n");
+fprintf(stderr, "calling TransverbDSP::createbuffers()\n");
 #endif
 
   long oldmax = MAXBUF;
@@ -161,7 +161,7 @@ printf("calling TransverbDSP::createbuffers()\n");
 
 void TransverbDSP::clearbuffers() {
 #if PRINT_FUNCTION_ALERTS
-printf("calling TransverbDSP::clearbuffers()\n");
+fprintf(stderr, "calling TransverbDSP::clearbuffers()\n");
 #endif
   clearbuffer_f(buf1, MAXBUF);
   clearbuffer_f(buf2, MAXBUF);
@@ -169,7 +169,7 @@ printf("calling TransverbDSP::clearbuffers()\n");
 
 void TransverbDSP::releasebuffers() {
 #if PRINT_FUNCTION_ALERTS
-printf("calling TransverbDSP::releasebuffers()\n");
+fprintf(stderr, "calling TransverbDSP::releasebuffers()\n");
 #endif
   releasebuffer_f(&buf1);
   releasebuffer_f(&buf2);
@@ -181,6 +181,7 @@ void TransverbDSP::processparameters() {
   drymix = getparameter_f(kDrymix);
   bsize = (int) (getparameter_f(kBsize) * getsamplerate() * 0.001f);
   if (bsize > MAXBUF)   bsize = MAXBUF;
+  if (bsize <= 0)   bsize = 1;
   mix1 = getparameter_f(kMix1);
   speed1 = pow(2.0, getparameter_f(kSpeed1));
   feed1 = getparameter_scalar(kFeed1);
@@ -439,5 +440,5 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	#endif
 
 	// display the mix parameter changes
-//	printf(mixData, "drymix = %.3f,   mix1 = %.3f,   mix2 = %.3f,   sum = %.6f\n", newDrymix, newMix1, newMix2, newDrymix+newMix1+newMix2);
+//	fprintf(stderr, mixData, "drymix = %.3f,   mix1 = %.3f,   mix2 = %.3f,   sum = %.6f\n", newDrymix, newMix1, newMix2, newDrymix+newMix1+newMix2);
 }
