@@ -126,23 +126,6 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 
 	switch (inID)
 	{
-	#if TARGET_PLUGIN_HAS_GUI
-		case kAudioUnitProperty_GetUIComponentList:
-			{
-				ComponentDescription *cd = static_cast<ComponentDescription *>(outData);
-				cd->componentType = kAudioUnitCarbonViewComponentType;
-				#ifdef PLUGIN_EDITOR_ID
-					cd->componentSubType = PLUGIN_EDITOR_ID;
-				#else
-					cd->componentSubType = PLUGIN_ID;
-				#endif
-				cd->componentManufacturer = DESTROYFX_ID;
-				cd->componentFlags = 0;
-				cd->componentFlagsMask = 0;
-			}
-			break;
-	#endif
-
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
 			{
@@ -205,6 +188,28 @@ Float64 DfxPlugin::GetTailTime()
 {
 	return gettailsize_seconds();
 }
+
+#if TARGET_PLUGIN_HAS_GUI
+//-----------------------------------------------------------------------------
+int DfxPlugin::GetNumCustomUIComponents()
+{
+	return 1;
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::GetUIComponentDescs(ComponentDescription *inDescArray)
+{
+	inDescArray->componentType = kAudioUnitCarbonViewComponentType;
+	#ifdef PLUGIN_EDITOR_ID
+		inDescArray->componentSubType = PLUGIN_EDITOR_ID;
+	#else
+		inDescArray->componentSubType = PLUGIN_ID;
+	#endif
+	inDescArray->componentManufacturer = DESTROYFX_ID;
+	inDescArray->componentFlags = 0;
+	inDescArray->componentFlagsMask = 0;
+}
+#endif
 
 
 

@@ -112,8 +112,10 @@ PLUGIN_EDITOR_ENTRY_POINT
 	a C string of the plugin editor class name with "Entry" appended
 
  necessary for VST:
-NUM_INPUTS
-NUM_OUTPUTS
+VST_NUM_INPUTS
+VST_NUM_OUTPUTS
+or if they match, simply define
+VST_NUM_CHANNELS
 	integers representing how many inputs and outputs your plugin has
 
  optional for Audio Unit:
@@ -180,10 +182,19 @@ SUPPORT_AU_VERSION_1
 	#define TARGET_API_BASE_INSTANCE_TYPE audioMasterCallback
 //	#define TARGET_API_CORE_CLASS 0	// none in VST
 	#define TARGET_API_CORE_INSTANCE_TYPE DfxPlugin
+	// set numinputs and numoutputs if numchannels is defined
+	#ifdef VST_NUM_CHANNELS
+		#ifndef VST_NUM_INPUTS
+		#define VST_NUM_INPUTS	VST_NUM_CHANNELS
+		#endif
+		#ifndef VST_NUM_OUTPUTS
+		#define VST_NUM_OUTPUTS	VST_NUM_CHANNELS
+		#endif
+	#endif
 
 #else
 
-	#error "You must define one of TARGET_API_VST or TARGET_API_AUDIOUNIT."
+	#error "You must define one of either TARGET_API_VST or TARGET_API_AUDIOUNIT"
 
 #endif
 // end of target API check
@@ -696,7 +707,7 @@ public:
 	virtual UInt32 SupportedNumChannels(const AUChannelInfo **outInfo);
 	virtual Float64 GetLatency();
 	virtual Float64 GetTailTime();
-	virtual bool SupportsRampAndTail()
+	virtual bool SupportsTail()
 		{	return true;	}
 
 	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
@@ -747,6 +758,10 @@ public:
 						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams *inParams) = 0;
 		virtual ComponentResult StopNote(MusicDeviceGroupID inGroupID, 
 						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) = 0;
+	#endif
+	#if TARGET_PLUGIN_HAS_GUI
+		virtual int GetNumCustomUIComponents();
+		virtual void GetUIComponentDescs(ComponentDescription *inDescArray);
 	#endif
 #endif
 // end of Audio Unit API methods
