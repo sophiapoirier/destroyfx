@@ -1,0 +1,126 @@
+<html>
+
+<head>
+<title>Destroy FX: Transverb</title>
+<link REL=STYLESHEET TYPE="text/css" HREF="dfx-docs.css">
+</head>
+
+<body topmargin=30 bgcolor=#171947>
+
+<center>
+<table width=600 bgcolor=#000000 cellpadding=4 cellspacing=0 border=0>
+<tr><td>
+<table width=100% bgcolor=#FFFFFF cellpadding=9 cellspacing=0 border=0>
+<tr><td>
+
+
+<h1 class=title>Transverb</h1>
+
+
+<p class=intro>
+Transverb is like a delay plugin, but it can play back the delay buffer at different speeds.  Think of it like a tape loop with two independently-moving read heads.  There are lots of parameters to control and a parameter randomizer for the impatient.  Tom's first released plugin.  Fun!
+</p>
+
+<br>
+
+
+<p class=desc>
+The controls are divided into sections.  <b>Head #1</b> is the section of controls for one of the delay playbacks.  <b>Head #2</b> is the section of controls for the other delay playback.  Each of these controls has a big slider and also little fine adjustment buttons to the right of the slider.
+</p>
+
+<p class=desc>
+The <b>buffer size</b> parameter controls the size of the buffer that both delays use.
+</p>
+
+<p class=desc>
+The <b>mix</b> section lets you control the volume levels of the input signal (your sound unaffected) and the 2 delays.
+</p>
+
+<p class=desc>
+The <b>quality</b> button enables higher quality playback of the delays' speed transposition.  Turning it on will result in better sound quality (hi-fi resampling vs. no interpolation), but it will use up more of your computer's processing power, so that's why you have the option of turning that off.  Also, you might sometimes maybe prefer the grainier dirt-fi sound.
+</p>
+
+<p class=desc>
+An X in the quality box indicates regular hi-fi mode and an ! indicates "ultra hi-fi" mode.  Ultra hi-fi mode reduces the aliasing noise that can occur when speeding up delay heads past 0.  This imposes an even bigger CPU load, though, and the load increases as you speed up a delay head, although the load stops increasing after +2.25 octaves.
+</p>
+
+<p class=desc>
+Speaking grainier, you can turn on <b>TOMSOUND</b> if you want megaharsh sound.
+</p>
+
+<br>
+
+
+<p class=desc>
+Each head section has 3 parameters:  <b>speed</b>, <b>feedback</b>, and <b>distance</b>.
+</p>
+
+<p class=desc>
+<b>Distance</b> only really makes a difference when the speed is at zero.  This is the how far behind the delay is with respect to the input signal.  If the speed is anything other than 0, then the distance quickly becomes irrelevant because the delay head is moving through the buffer at a different speed than the input is writing into the buffer.
+</p>
+
+<p class=desc>
+<b>Feedback</b> controls how much of the delay sound gets copied back into the delay buffer.
+</p>
+
+<p class=desc>
+<b>Speed</b> lets you control how quickly or slowly the delay moves through the delay buffer.
+</p>
+
+<p class=desc>
+<b>Speed</b> is also the fanciest parameter.  There are many ways to control it.  The units are in units of octaves and semitones so that you have musically useful control over the speed.  In addition to controlling the speed parameters with the big sliders and the fine tuner buttons, you can press the buttons above the fine adjustment buttons to change the way that the fine buttons function.  If you switch them to "semi" mode, then clicking on them will snap you to whole semitone values.  If you switch them to "8ve" mode, then clicking on them will snap you to whole octave values.
+</p>
+
+<p class=desc>
+On top of that fanciness, you can also click on the value field and manually type in your own values for total precision.  When you type in these boxes, Transverb looks for 2 numbers:  the octave followed by semitones.  So if you want + 1 octave and 3 semitones, you type in "1 3."  If you want to just enter that in terms of semitones, then type in "0 15."  If you do something kind of stupid like "1 -3," then it reinterprets the semitones as positive (since you're going in the positive direction with the octaves) and makes it +1 octave +3 semitones.  Similarly "-3 4" will get changed to -3 octaves -4 semitones."  If all you type is one number, then that gets interpreted as the octave.  You can even make that a fractional number and the fraction will get converted into semitones.  For example, if you type in "3.75," you'll get +3 octaves +9 semitones.  But if you type in an octave with a fractional value and a second number, the second number overrides the fractional part of the octave number, i.e. "3.3 8" will result in +3 octaves +8 semitones, not +3 octaves +3.6 semitones.
+</p>
+
+<br>
+
+
+<p class=desc>
+There are 2 ways to <b>randomize</b> Transverb's parameters.  You can press the "randomize all settings" button or you can choose the "random" preset.  These 2 approaches are different in certain ways.
+</p>
+
+<p class=desc>
+Pressing the button will tell the VST host to save automation data for each parameter change.  In hosts that support this (Logic, Cubase, and other multi-trackers), that means that these parameter changes can be saved in your song and then each randomized change will occur in exactly the same way every time you play back your song again later.
+</p>
+
+<p class=desc>
+</p>
+
+<p class=desc>
+Choosing the "random" preset will randomize Transverb's parameters without telling the host to save automation data.  And with hosts that support sending MIDI messages to effects plugins, you can automate the random preset by sending MIDI program change messages (send program 15).  This way, you can save parameter randomizations as a part of your song, but the outcome of each randomization will be different every time you play your song back.
+</p>
+
+<br>
+
+
+<br>
+<p class=desc>
+<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can make even finer adjustments with the little arrows nears the faders.  You can also reset a parameter to its default value by holding the command key when clicking on it.  And you can flip through the quality and semi/8ve/fine buttons in reverse order by right-clicking.
+</p>
+<br>
+
+
+<br>
+<p class=footer>
+by Tom Murphy 7 and Marc Poirier
+<br>
+September 2001
+<br><br>
+Destroy FX #22
+<br>
+<a href=http://destroyfx.org/>http://destroyfx.org/</a>
+<br><br>
+Transverb is Copyright &copy; 2001-2003 Tom Murphy 7 and Marc Poirier
+</p>
+
+
+</td></tr></table>
+</td></tr></table>
+</center>
+
+</body>
+
+</html>
