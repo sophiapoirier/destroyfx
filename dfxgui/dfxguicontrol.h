@@ -19,7 +19,7 @@ class DGControl
 {
 public:
 	// control for a parameter
-	DGControl(DfxGuiEditor * inOwnderEditor, long inParameterID, DGRect * inRegion);
+	DGControl(DfxGuiEditor * inOwnerEditor, long inParameterID, DGRect * inRegion);
 	// control with no actual parameter attached
 	DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange);
 	virtual ~DGControl();
