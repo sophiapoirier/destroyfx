@@ -13,7 +13,7 @@
 
 
 // XXX finish support for loading old pre-DfxPlugin settings
-#define DFX_SUPPORT_OLD_VST_SETTINGS 0
+#define DFX_SUPPORT_OLD_VST_SETTINGS 1
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark _________init/destroy_________
@@ -52,10 +52,8 @@ DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExte
 	sizeofParameterIDs = sizeof(long) * numParameters;
 	sizeofPresetChunk = sizeofPreset 			// 1 preset
 						+ sizeof(DfxSettingsInfo) 	// the special data header info
-#if !TARGET_API_VST
-						+ (sizeof(ParameterAssignment)*numParameters)	// the MIDI events assignment array
-#endif
-						+ sizeofParameterIDs;	// the table of parameter IDs
+						+ sizeofParameterIDs	// the table of parameter IDs
+						+ (sizeof(ParameterAssignment)*numParameters);	// the MIDI events assignment array
 	sizeofChunk = (sizeofPreset*numPresets)		// all of the presets
 					+ sizeof(DfxSettingsInfo)		// the special data header info
 					+ sizeofParameterIDs			// the table of parameter IDs
@@ -200,12 +198,10 @@ unsigned long DfxSettings::save(void **data, bool isPreset)
 		for (i=0; i < numParameters; i++)
 			firstSharedPreset->params[i] = plugin->getparameter_f(i);
 
-	#if !TARGET_API_VST
 		ParameterAssignment *tempSharedParamAssignment = (ParameterAssignment*) ((char*)firstSharedPreset + sizeofPreset);
 		// store the parameters' MIDI event assignments
 		for (i=0; i < numParameters; i++)
 			tempSharedParamAssignment[i] = paramAssignments[i];
-	#endif
 
 		// reverse the order of bytes in the data being sent to the host, if necessary
 		correctEndian(sharedChunk, false, isPreset);
@@ -253,7 +249,6 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
   DfxSettingsInfo *newSettingsInfo;
   GenPreset *newPreset;
   long *newParameterIDs;
-  ParameterAssignment *newParamAssignments;
   long i, j;
 
 
@@ -418,12 +413,16 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 		}
 	}
 
-#if !TARGET_API_VST
+#if DFX_SUPPORT_OLD_VST_SETTINGS
+if ( !(oldvst && isPreset) )
+{
+#endif
 	// completely clear our table of parameter assignments before loading the new 
 	// table since the new one might not have all of the data members
 	memset(paramAssignments, 0, sizeof(ParameterAssignment)*numParameters);
 	// then point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
+	ParameterAssignment *newParamAssignments;
 	if (isPreset)
 		newParamAssignments = (ParameterAssignment*) ((char*)newPreset + sizeofStoredPreset);
 	else
@@ -439,6 +438,8 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 					copyParameterAssignmentSize);
 //			paramAssignments[i] = newParamAssignments[mappedTag];
 	}
+#if DFX_SUPPORT_OLD_VST_SETTINGS
+}
 #endif
 
 	// allow for the retrieval of extra data
@@ -1022,29 +1023,30 @@ void DfxSettings::correctEndian(void *data, bool isReversed, bool isPreset)
 		dataPresets = (GenPreset*) ((char*)dataPresets - (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 #endif
 
-	// and reverse the byte order of each event assignment, if we're processing a bank
-#if TARGET_API_VST
-	if (!isPreset)
-#else
-	if (true)
+#if DFX_SUPPORT_OLD_VST_SETTINGS
+if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
+{
 #endif
+	// and reverse the byte order of each event assignment
+	ParameterAssignment *dataParameterAssignments = (ParameterAssignment*) dataPresets;
+	for (long i=0; i < numStoredParameters; i++)
 	{
-
-		ParameterAssignment *dataParameterAssignments = (ParameterAssignment*) dataPresets;
-		for (long i=0; i < numStoredParameters; i++)
-		{
-			reverseBytes( &(dataParameterAssignments->eventType), sizeof(long) );
-			reverseBytes( &(dataParameterAssignments->eventChannel), sizeof(long) );
-			reverseBytes( &(dataParameterAssignments->eventNum), sizeof(long) );
-			reverseBytes( &(dataParameterAssignments->eventNum2), sizeof(long) );
-			reverseBytes( &(dataParameterAssignments->eventBehaviourFlags), sizeof(long) );
-			reverseBytes( &(dataParameterAssignments->data1), sizeof(long) );
-			reverseBytes( &(dataParameterAssignments->data2), sizeof(long) );
-			reverseBytes( &(dataParameterAssignments->fdata1), sizeof(float) );
-			reverseBytes( &(dataParameterAssignments->fdata2), sizeof(float) );
-		}
+		reverseBytes( &(dataParameterAssignments->eventType), sizeof(long) );
+		reverseBytes( &(dataParameterAssignments->eventChannel), sizeof(long) );
+		reverseBytes( &(dataParameterAssignments->eventNum), sizeof(long) );
+		reverseBytes( &(dataParameterAssignments->eventNum2), sizeof(long) );
+		reverseBytes( &(dataParameterAssignments->eventBehaviourFlags), sizeof(long) );
+		reverseBytes( &(dataParameterAssignments->data1), sizeof(long) );
+		reverseBytes( &(dataParameterAssignments->data2), sizeof(long) );
+		reverseBytes( &(dataParameterAssignments->fdata1), sizeof(float) );
+		reverseBytes( &(dataParameterAssignments->fdata2), sizeof(float) );
 	}
+#if DFX_SUPPORT_OLD_VST_SETTINGS
+}
 #endif
+
+#endif
+// MAC (endian check)
 }
 
 //-----------------------------------------------------------------------------

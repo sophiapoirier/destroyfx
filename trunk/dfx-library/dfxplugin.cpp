@@ -597,6 +597,13 @@ void DfxPlugin::setpresetparameter_b(long presetIndex, long parameterIndex, bool
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::setpresetparameter_gen(long presetIndex, long parameterIndex, float genValue)
+{
+	if ( parameterisvalid(parameterIndex) && presetisvalid(presetIndex) )
+		parameters[parameterIndex].accept_d(parameters[parameterIndex].expand(genValue), presets[presetIndex].values[parameterIndex]);
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::setpresetname(long presetIndex, const char *inText)
 {
 	if (presetisvalid(presetIndex))
