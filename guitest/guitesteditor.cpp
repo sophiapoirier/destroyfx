@@ -10,7 +10,7 @@
 #define EDIT_WIDTH 500
 
 
-#define THINGS 1000
+#define THINGS 10
 
 extern HINSTANCE instance;
 int useCount = 0;
