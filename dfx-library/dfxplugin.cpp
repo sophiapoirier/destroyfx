@@ -1669,41 +1669,25 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 // otherwise an error code ranging from 0 to 32 is returned
 long launch_url(const char *urlstring)
 {
+	if (urlstring == NULL)
+		return 3;
+
 #if MAC
-	ICInstance ICconnection;
-	OSStatus error;
-	#if CALL_NOT_IN_CARBON
-	long gestaltResponse;
-	error = Gestalt('ICAp', &gestaltResponse);
-	if (error == noErr)
-	#endif
-	error = ICStart(&ICconnection, '????');
-	if ( (error == noErr) && (ICconnection == (void*)kUnresolvedCFragSymbolAddress) )
-		error = noErr + 3;
-	#if CALL_NOT_IN_CARBON
-	if (error == noErr)
-		error = ICFindConfigFile(ICconnection, 0, nil);
-	#endif
-	if (error == noErr)
+	OSStatus status = paramErr;	// unless proven otherwise, assume failure
+	CFStringRef urlcfstring = CFStringCreateWithCString(NULL, urlstring, kCFStringEncodingASCII);
+	if (urlcfstring != NULL)
 	{
-		// get this info for the ICLaunchURL function
-		long urlStart = 1, urlEnd, urlLength;
-		urlEnd = urlLength = (long)strlen(urlstring) + urlStart;
-		if (urlLength > 255)
-			urlEnd = urlLength = 255;
-		// convert the URL string into a Pascal string for the ICLaunchURL function
-		char *pascalURL = (char*) malloc(256);
-		for (int i=1; i < urlLength; i++)
-			pascalURL[i] = urlstring[i-1];	// move each char up one spot in the string array...
-		pascalURL[0] = (char) urlLength;	// ... & set the Pascal string length byte
-		// now launch the URL in a web browser
-		error = ICLaunchURL(ICconnection, "\phttp", pascalURL, urlLength, &urlStart, &urlEnd);
-		free(pascalURL);
+		CFURLRef urlcfurl = CFURLCreateWithString(NULL, urlcfstring, NULL);
+		if (urlcfurl != NULL)
+		{
+			status = LSOpenCFURLRef(urlcfurl, NULL);
+			CFRelease(urlcfurl);
+		}
+		CFRelease(urlcfstring);
 	}
-	if (error == noErr)
-		error = ICStop(ICconnection);
-	return error;
+	return status;
 #endif
+
 #if WIN32
 	return (long) ShellExecute(NULL, "open", urlstring, NULL, NULL, SW_SHOWNORMAL);
 #endif
