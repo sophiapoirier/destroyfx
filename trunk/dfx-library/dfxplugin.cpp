@@ -724,8 +724,10 @@ void DfxPlugin::update_preset(long presetIndex)
 
 	#ifdef TARGET_API_VST
 		TARGET_API_BASE_CLASS::setProgram(presetIndex);
-		// tell the host to update the generic editor display with the new settings
-		AudioEffectX::updateDisplay();
+		#if !TARGET_PLUGIN_HAS_GUI
+			// tell the host to update the generic editor display with the new settings
+			AudioEffectX::updateDisplay();
+		#endif
 
 	#endif
 }
