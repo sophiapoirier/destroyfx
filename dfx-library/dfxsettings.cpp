@@ -836,7 +836,7 @@ void DfxSettings::setLearner(long tag, long eventBehaviourFlags,
 // to turn MIDI learning on and off, VST parameter style
 void DfxSettings::setParameterMidiLearn(float value)
 {
-	setLearning(value > 0.5f);
+	setLearning(FBOOL(value));
 }
 
 //-----------------------------------------------------------------------------
@@ -844,7 +844,7 @@ void DfxSettings::setParameterMidiLearn(float value)
 // to clear MIDI event assignments, VST parameter style
 void DfxSettings::setParameterMidiReset(float value)
 {
-	if (value > 0.5f)
+	if (FBOOL(value))
 	{
 		// if we're in MIDI learn mode and a parameter has been selected, 
 		// then erase its MIDI event assigment (if it has one)

@@ -471,17 +471,9 @@ bool DfxParam::derive_b(DfxParamValue inValue)
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
-		#if TARGET_API_AUDIOUNIT
-			return (inValue.d != 0.0f);
-		#else
-			return (inValue.d > 0.5f);
-		#endif
+			return FBOOL(inValue.f);
 		case kDfxParamValueType_double:
-		#if TARGET_API_AUDIOUNIT
-			return (inValue.d != 0.0);
-		#else
-			return (inValue.d > 0.5);
-		#endif
+			return DBOOL(inValue.d);
 		case kDfxParamValueType_int:
 			return (inValue.i != 0);
 		case kDfxParamValueType_uint:
@@ -660,11 +652,7 @@ void DfxParam::accept_f(float inValue, DfxParamValue &outValue)
 				outValue.ui = (unsigned long) (inValue + twiddle_f);
 			break;
 		case kDfxParamValueType_boolean:
-		#if TARGET_API_AUDIOUNIT
-			outValue.b = (inValue != 0.0f) ? 1 : 0;
-		#else
-			outValue.b = (inValue > 0.5f) ? 1 : 0;
-		#endif
+			outValue.b = FBOOL(inValue) ? 1 : 0;
 			break;
 		case kDfxParamValueType_char:
 			if (inValue < 0.0f)
@@ -710,11 +698,7 @@ void DfxParam::accept_d(double inValue, DfxParamValue &outValue)
 				outValue.ui = (unsigned long) (inValue + twiddle_d);
 			break;
 		case kDfxParamValueType_boolean:
-		#if TARGET_API_AUDIOUNIT
-			outValue.b = (inValue != 0.0) ? 1 : 0;
-		#else
-			outValue.b = (inValue > 0.5) ? 1 : 0;
-		#endif
+			outValue.b = DBOOL(inValue) ? 1 : 0;
 			break;
 		case kDfxParamValueType_char:
 			if (inValue < 0.0)
