@@ -254,9 +254,15 @@ void PLUGINCORE::reset() {
   outstart = 0;
   outsize = framesize;
 
+#if TARGET_PLUGIN_USES_DSPCORE
   dfxplugin->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
   dfxplugin->settailsize_samples(framesize);
+#else
+  setlatency_samples(framesize);
+  /* tail is the same as delay, of course */
+  settailsize_samples(framesize);
+#endif
 }
 
 
