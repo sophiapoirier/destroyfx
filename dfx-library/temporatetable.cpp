@@ -6,28 +6,44 @@
 
 
 //-----------------------------------------------------------------------------
-TempoRateTable::TempoRateTable()
+TempoRateTable::TempoRateTable(long typeOfTable)
+:	typeOfTable(typeOfTable)
 {
   int i;
 
 
+	switch (typeOfTable)
+	{
+		case kSlowTempoRateTable:
+			numTempoRates = 25;
+			break;
+		case kNoExtremesTempoRateTable:
+			numTempoRates = 21;
+			break;
+		default:
+			numTempoRates = 24;
+			break;
+	}
+
 	scalars = 0;
-	scalars = new float[NUM_TEMPO_RATES];
+	scalars = (float*) malloc(sizeof(float) * numTempoRates);
 	displays = 0;
-	displays = new char*[NUM_TEMPO_RATES];
-	for (i = 0; i < NUM_TEMPO_RATES; i++)
-		displays[i] = new char[16];
+	displays = (char**) malloc(sizeof(char*) * numTempoRates);
+	for (i = 0; i < numTempoRates; i++)
+		displays[i] = (char*) malloc(sizeof(char) * 16);
 
 	i = 0;
-#ifdef USE_SLOW_TEMPO_RATES
-	scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/12");
-	scalars[i] = 1.f/6.f;	strcpy(displays[i++], "1/8");
-	scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/7");
-#endif
-#ifndef USE_BUFFER_OVERRIDE_TEMPO_RATES
-	scalars[i] = 1.f/6.f;	strcpy(displays[i++], "1/6");
-	scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/5");
-#endif
+	if (typeOfTable == kSlowTempoRates)
+	{
+		scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/12");
+		scalars[i] = 1.f/6.f;	strcpy(displays[i++], "1/8");
+		scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/7");
+	}
+	if (typeOfTable != kNoExtremesTempoRates)
+	{
+		scalars[i] = 1.f/6.f;	strcpy(displays[i++], "1/6");
+		scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/5");
+	}
 	scalars[i] = 1.f/4.f;	strcpy(displays[i++], "1/4");
 	scalars[i] = 1.f/3.f;	strcpy(displays[i++], "1/3");
 	scalars[i] = 1.f/2.f;	strcpy(displays[i++], "1/2");
@@ -48,25 +64,28 @@ TempoRateTable::TempoRateTable()
 	scalars[i] = 48.0f;		strcpy(displays[i++], "48");
 	scalars[i] = 64.0f;		strcpy(displays[i++], "64");
 	scalars[i] = 96.0f;		strcpy(displays[i++], "96");
-#ifndef USE_SLOW_TEMPO_RATES
-	scalars[i] = 333.0f;		strcpy(displays[i++], "333");
-#ifndef USE_BUFFER_OVERRIDE_TEMPO_RATES
-	scalars[i] = 3000.0f;	strcpy(displays[i++], "infinity");
-#endif
-#endif
+	if (typeOfTable != kUseSlowTempoRates)
+	{
+		scalars[i] = 333.0f;		strcpy(displays[i++], "333");
+	}
+	if ( (typeOfTable != kSlowTempoRates) && (typeOfTable != kNoExtremesTempoRates) )
+	{
+		scalars[i] = 3000.0f;	strcpy(displays[i++], "infinity");
+	}
 }
 
 //-----------------------------------------------------------------------------
 TempoRateTable::~TempoRateTable()
 {
 	if (scalars)
-		delete[] scalars;
-	for (int i=0; i < NUM_TEMPO_RATES; i++)
+		free(scalars);
+	scalars = 0;
+	for (int i=0; i < numTempoRates; i++)
 	{
 		if (displays[i])
-			delete[] displays[i];
+			free(displays[i]);
 	}
 	if (displays)
-		delete[] displays;
+		free(displays);
 	displays = 0;
 }
