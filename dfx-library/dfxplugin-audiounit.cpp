@@ -51,6 +51,13 @@ void DfxPlugin::PostConstructor()
 			// compare the output channel count
 			else if ( ((UInt32)(channelconfigs[i].outChannels) != curOutStreamFormat.mChannelsPerFrame) && (channelconfigs[i].outChannels >= 0) )
 				currentFormatIsNotSupported = true;
+
+			#if !TARGET_PLUGIN_IS_INSTRUMENT
+				// we can't do in-place audio rendering if there are different numbers of audio inputs and outputs
+				// XXX or is there a better selective way of handling this (depending on current stream format)?
+				if (channelconfigs[i].inChannels != channelconfigs[i].outChannels)
+					SetProcessesInPlace(false);
+			#endif
 		}
 		// if the current format is not supported, then set the format to the first supported i/o pair in our list
 		if (currentFormatIsNotSupported)
@@ -1006,10 +1013,6 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 // The CFArrayRef should be released by the caller.
 ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 {
-	// this is just to say that the property is supported (GetPropertyInfo needs this)
-	if (outData == NULL)
-		return noErr;
-
 	// figure out how many valid (loaded) presets we actually have...
 	long outNumPresets = 0;
 	for (long i=0; i < numPresets; i++)
@@ -1020,6 +1023,11 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 	}
 	if (outNumPresets <= 0)	// woops, looks like we don't actually have any presets
 		return kAudioUnitErr_InvalidProperty;
+
+	// this is just to say that the property is supported (GetPropertyInfo needs this)
+	if (outData == NULL)
+		return noErr;
+
 #if 0
 	// setup up the callbacks for the CFArray's value handling
 	CFArrayCallBacks arrayCallbacks;
