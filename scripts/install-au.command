@@ -98,7 +98,9 @@ then
 	echo "warning:  could not install documentation because install location \""$DOCS_INSTALL_DEST"\" does not exist"
 # but if it exists, try to move all documentation files into there
 else
-	$FILEINSTALLER -f -v *.rtf *.html "${DOCS_INSTALL_DEST}"
+#	fooey, -v does not work with the cp included in Mac OS X 10.2
+#	$FILEINSTALLER -f -v *.rtf *.html "${DOCS_INSTALL_DEST}"
+	$FILEINSTALLER -f *.rtf *.html "${DOCS_INSTALL_DEST}"
 	DOCS_CP_ERROR=$?
 fi
 
