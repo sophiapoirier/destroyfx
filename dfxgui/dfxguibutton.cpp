@@ -11,11 +11,10 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 					DfxGuiBottonMode	inMode, 
 					bool				inKick)
 :	DGControl(inOwnerEditor, inParamID, inWhere), 
-	numStates(inNumStates), kick(inKick)
+	numStates(inNumStates), mode(inMode), kick(inKick)
 {
 	ForeGround = inForeGround;
 	BackGround = inBackground;
-	mode = inMode;
 
 	userProcedure = NULL;
 	userProcData = NULL;
@@ -37,11 +36,10 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 					DfxGuiBottonMode	inMode, 
 					bool				inKick)
 :	DGControl(inOwnerEditor, inWhere, ((inNumStates < 1) ? 0.0f : (float)(inNumStates-1)) ), 
-	numStates(inNumStates), kick(inKick)
+	numStates(inNumStates), mode(inMode), kick(inKick)
 {
 	ForeGround = inForeGround;
 	BackGround = inBackground;
-	mode = inMode;
 
 	userProcedure = NULL;
 	userProcData = NULL;
@@ -136,7 +134,7 @@ void DGButton::mouseTrack(Point *P, bool with_option, bool with_shift)
 	if (mode == kPictureReel)
 		return;
 
-	if (mode = kRadioButton)
+	if (mode == kRadioButton)
 	{
 		SInt32 oldvalue = GetControl32BitValue(getCarbonControl());
 		SInt32 newvalue = P->h / (getBounds()->w / numStates);
@@ -176,10 +174,10 @@ void DGButton::mouseUp(Point *P, bool with_option, bool with_shift)
 			SetControl32BitValue(carbonControl, 0);
 			break;
 		case kIncButton:
-			Draw1Control(carbonControl);
+			redraw();
 			break;
 		case kDecButton:
-			Draw1Control(carbonControl);
+			redraw();
 			break;
 		default:
 			break;
