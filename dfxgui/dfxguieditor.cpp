@@ -20,6 +20,9 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 	idleTimer = NULL;
 	idleTimerUPP = NULL;
 
+	backgroundImage = NULL;
+	backgroundColor(rand() % 0xFF, rand() % 0xFF, rand() % 0xFF);
+
 	dgControlSpec.defType = kControlDefObjectClass;
 	dgControlSpec.u.classRef = NULL;
 	controlHandlerUPP = NULL;
@@ -164,6 +167,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 // register for HitTest events on the background embedding pane so that we now when the mouse hovers over it
 	EventTypeSpec paneEvents[] = {
+								{ kEventClassControl, kEventControlDraw }, 
 								{ kEventClassControl, kEventControlHitTest }
 								};
 	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
@@ -189,13 +193,53 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 {
-	// we just want to catch when the mouse hovers over onto the background area
-	if ( (GetEventClass(inEvent) == kEventClassControl) && (GetEventKind(inEvent) == kEventControlHitTest) )
+	if (GetEventClass(inEvent) == kEventClassControl)
 	{
-		ControlRef control;
-		GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &control);
-		if (control == mCarbonPane)
-			setCurrentControl_mouseover(NULL);	// we don't count the background
+		UInt32 inEventKind = GetEventKind(inEvent);
+		if (inEventKind == kEventControlDraw)
+		{
+			ControlRef carbonControl;
+			GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
+			if (carbonControl == mCarbonPane)
+			{
+				CGrafPtr oldPort = NULL;
+				CGrafPtr windowPort;
+				// if we received a graphics port parameter, use that...
+				if ( GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &windowPort) == noErr )
+				{
+					GetPort(&oldPort);	// remember original port
+					SetPort(windowPort);	// use new port
+				}
+				// ... otherwise use the current graphics port
+				else
+					GetPort(&windowPort);
+				Rect portBounds;
+				GetPortBounds(windowPort, &portBounds);
+
+				// drawing
+				CGContextRef context;
+				QDBeginCGContext(windowPort, &context);
+				SyncCGContextOriginWithPort(context, windowPort);
+				CGContextSaveGState(context);
+				DrawBackground(context, portBounds.bottom);
+				CGContextRestoreGState(context);
+				CGContextSynchronize(context);
+				QDEndCGContext(windowPort, &context);
+
+				// restore original port, if we set a different port
+				if (oldPort != NULL)
+					SetPort(oldPort);
+				return true;
+			}
+		}
+		// we want to catch when the mouse hovers over onto the background area
+		else if (inEventKind == kEventControlHitTest)
+		{
+			ControlRef control;
+			GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &control);
+			if (control == mCarbonPane)
+				setCurrentControl_mouseover(NULL);	// we don't count the background
+		}
 	}
 	
 	// let the parent implementation do its thing
@@ -253,59 +297,55 @@ void DfxGuiEditor::addControl(DGControl *inControl)
 		inControl->setOffset((long)GetXOffset(), (long)GetYOffset());
 	}
 
-	if (inControl->providesForeignControls())
-		inControl->initForeignControls(&dgControlSpec);
-	else
+	ControlRef newCarbonControl;
+	Rect r;
+	inControl->getBounds()->copyToRect(&r);
+	verify_noerr( CreateCustomControl(GetCarbonWindow(), &r, &dgControlSpec, NULL, &newCarbonControl) );
+	SetControl32BitMinimum(newCarbonControl, 0);
+	if (inControl->isContinuousControl())
 	{
-		ControlRef newCarbonControl;
-		Rect r;
-		inControl->getBounds()->copyToRect(&r);
-		verify_noerr( CreateCustomControl(GetCarbonWindow(), &r, &dgControlSpec, NULL, &newCarbonControl) );
-		SetControl32BitMinimum(newCarbonControl, 0);
-		if (inControl->isContinuousControl())
-		{
-			SInt32 controlrange = 0x7FFF;//1 << 14;
-			SetControl32BitMaximum(newCarbonControl, controlrange);
+		SInt32 controlrange = 0x7FFF;//1 << 14;
+		SetControl32BitMaximum(newCarbonControl, controlrange);
 /*
-			if (inControl->isAUVPattached())
-			{
-				float valnorm = 0.0f;
-				DfxParameterValueConversionRequest request;
-				UInt32 dataSize = sizeof(request);
-				request.parameterID = inControl->getAUVP().mParameterID;
-				request.conversionType = kDfxParameterValueConversion_contract;
-				request.inValue = inControl->getAUVP().GetValue();
-				if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
-										kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
-										== noErr)
-					valnorm = request.outValue;
-//				valnorm = (inControl->getAUVP().GetValue() - inControl->getAUVP().ParamInfo().minValue) / 
-//							(inControl->getAUVP().ParamInfo().maxValue - inControl->getAUVP().ParamInfo().minValue);
-				SetControl32BitValue( newCarbonControl, (SInt32) (valnorm * (float)controlrange) );
-			}
-*/
-		}
-		else
-		{
-			SetControl32BitMaximum(newCarbonControl, (SInt32) (inControl->getRange()+0.01f));
-/*
-			if (inControl->isAUVPattached())
-				SetControl32BitValue(newCarbonControl, (SInt32) (inControl->getAUVP().GetValue() - inControl->getAUVP().ParamInfo().minValue));
-*/
-		}
-
-		inControl->setCarbonControl(newCarbonControl);
 		if (inControl->isAUVPattached())
 		{
-//			AddCarbonControl(AUCarbonViewControl::kTypeContinuous, inControl->getAUVP(), newCarbonControl);
-			EmbedControl(newCarbonControl);
-			inControl->createAUVcontrol();
-//			AddControl(inControl->getAUVcontrol());
+			float valnorm = 0.0f;
+			DfxParameterValueConversionRequest request;
+			UInt32 dataSize = sizeof(request);
+			request.parameterID = inControl->getAUVP().mParameterID;
+			request.conversionType = kDfxParameterValueConversion_contract;
+			request.inValue = inControl->getAUVP().GetValue();
+			if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
+									kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+									== noErr)
+				valnorm = request.outValue;
+//			valnorm = (inControl->getAUVP().GetValue() - inControl->getAUVP().ParamInfo().minValue) / 
+//						(inControl->getAUVP().ParamInfo().maxValue - inControl->getAUVP().ParamInfo().minValue);
+			SetControl32BitValue( newCarbonControl, (SInt32) (valnorm * (float)controlrange) );
 		}
-		else
-		{
-			EmbedControl(newCarbonControl);
-			SetControl32BitValue(newCarbonControl, 0);
+*/
+	}
+	else
+	{
+		SetControl32BitMaximum(newCarbonControl, (SInt32) (inControl->getRange()+0.01f));
+/*
+		if (inControl->isAUVPattached())
+			SetControl32BitValue(newCarbonControl, (SInt32) (inControl->getAUVP().GetValue() - inControl->getAUVP().ParamInfo().minValue));
+*/
+	}
+
+	inControl->setCarbonControl(newCarbonControl);
+	if (inControl->isAUVPattached())
+	{
+//		AddCarbonControl(AUCarbonViewControl::kTypeContinuous, inControl->getAUVP(), newCarbonControl);
+		EmbedControl(newCarbonControl);
+		inControl->createAUVcontrol();
+//		AddControl(inControl->getAUVcontrol());
+	}
+	else
+	{
+		EmbedControl(newCarbonControl);
+		SetControl32BitValue(newCarbonControl, 0);
 /*
 UInt32 feat = 0;
 GetControlFeatures(newCarbonControl, &feat);
@@ -314,7 +354,6 @@ for (int i=0; i < 32; i++)
 if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
 }
 */
-		}
 	}
 }
 
@@ -349,6 +388,25 @@ UInt32 DfxGuiEditor::requestItemID()
 {
 	itemCount++;
 	return itemCount;
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::DrawBackground(CGContextRef inContext, UInt32 inPortHeight)
+{
+	CGImageRef backgroundCGImage = NULL;
+	if (backgroundImage != NULL)
+		backgroundCGImage = backgroundImage->getCGImage();
+	if (backgroundCGImage != NULL)
+	{
+		float backWidth = (float) CGImageGetWidth(backgroundCGImage);
+		float backHeight = (float) CGImageGetHeight(backgroundCGImage);
+		CGRect whole = CGRectMake(GetXOffset(), inPortHeight - (GetYOffset() + backHeight), backWidth, backHeight);
+		CGContextDrawImage(inContext, whole, backgroundCGImage);
+	}
+	else
+	{
+		// XXX draw a rectangle with the background color
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -549,11 +607,11 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 
 			if (hiCommand.commandID == kHICommandAppHelp)
 			{
-printf("command ID = kHICommandAppHelp\n");
+//printf("command ID = kHICommandAppHelp\n");
 				if (launch_documentation() == noErr)
 					return noErr;
 			}
-else printf("command ID = %.4s\n", (char*) &(hiCommand.commandID));
+//else printf("command ID = %.4s\n", (char*) &(hiCommand.commandID));
 
 			return eventNotHandledErr;
 		}
@@ -826,11 +884,17 @@ printf("kEventControlHit\n");
 //					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &buttons);
 
 					HIPoint mouseLocation_f;
+OSStatus fug = 
 					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation_f);
+printf("typeHIPoint result = %ld\n", fug);
+printf("mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation_f.x, mouseLocation_f.y);
 					Point mouseLocation;
 					mouseLocation.h = (short) mouseLocation_f.x;
 					mouseLocation.v = (short) mouseLocation_f.y;
-//GetGlobalMouse(&mouseLocation);	// Logic 5 workaround
+if (inEventKind == kEventControlContextualMenuClick)
+GetGlobalMouse(&mouseLocation);	// Logic 5 workaround
+printf("mouse.x = %d, mouse.y = %d\n", mouseLocation.h, mouseLocation.v);
+printf("\n");
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 					// the content area of the window (i.e. not the title bar or any borders)
