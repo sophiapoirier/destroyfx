@@ -327,6 +327,15 @@ void BufferOverride::initPresets()
 	i++;
 
 /*
+char *mook = (char*) malloc(DFX_PRESET_MAX_NAME_LENGTH);
+for (i=0; i < 396; i++)
+{
+	sprintf(mook, "%03d => %s", i, getpresetname_ptr(i));
+	setpresetname(i, mook);
+}
+free(mook);
+*/
+/*
 	setpresetname(i, "");
 	setpresetparameter_f(i, kDivisor, f);
 	setpresetparameter_f(i, kBufferSize_abs, f);
