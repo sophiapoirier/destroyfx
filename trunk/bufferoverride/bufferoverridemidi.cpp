@@ -2,8 +2,6 @@
 
 #include "bufferoverride.hpp"
 
-//#include <float.h>	// for isnan
-
 
 //-----------------------------------------------------------------------------
 float BufferOverride::getDivisorParameterFromNote(int currentNote)
@@ -15,23 +13,8 @@ float BufferOverride::getDivisorParameterFromNote(int currentNote)
 
 	// this step gets the literal value for the new divisor
 	float newDivisor = (float) ((double)bufferSizeMs*0.001 * midistuff->freqTable[currentNote] * pitchbend);
-/*
-	// this step scales that literal value into the appropriate value for fDivisor, 
-	// the value that will rescale correctly (back to newDivisor) in the bufferDivisorScaled() macro
-	newDivisor = (newDivisor-getparametermin_f(kDivisor)) / (getparametermax_f(kDivisor)-getparametermin_f(kDivisor));
-	// I don't know why, but even after checking if newDivisor>0.0 I still get not-a-numbers sometimes, so I prevent that
-	if (newDivisor > 0.0f)
-	#if MAC
-		return ( isnan(sqrtf(newDivisor)) ? 0.0f : sqrtf(newDivisor) );
-	#else
-		return ( _isnan(sqrtf(newDivisor)) ? 0.0f : sqrtf(newDivisor) );
-	#endif
-	// but skip the square-rooting if the value is negative (pitchbend went too low)
-	else
-		return 0.0f;
-*/
 //	return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
-	return (newDivisor < 0.001f) ? 0.001f : newDivisor;	// XXX is this much even necessary?
+	return (newDivisor < 0.0001f) ? 0.0001f : newDivisor;	// XXX is this much even necessary?
 }
 
 //-----------------------------------------------------------------------------
@@ -47,7 +30,6 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 		// then scale it according to tonal steps & the user defined range
 		pitchbend = pow(NOTE_UP_SCALAR, pitchbend*pitchbendRange);
 	}
-
 	// bend pitch down
 	else
 	{
@@ -65,26 +47,13 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 
 		// this step gets the literal value for the new divisor
 		// you need to take into account where pitchbend is coming from, hence the division by oldPitchbend
+		if (oldPitchbend == 0.0f)
+			oldPitchbend = 1.0f;	// avoid division by zero <-- XXX necessary?
 		float newDivisor = (float) ((double)divisor * pitchbend/oldPitchbend);
-/*
-		// these step scale that literal value into the appropriate value for fDivisor, 
-		// the value that will rescale correctly (back to newDivisor) in the bufferDivisorScaled() macro
-		newDivisor = (newDivisor-DIVISOR_MIN) / (DIVISOR_MAX-DIVISOR_MIN);
-		// I don't know why, but even after checking if newDivisor>0.0 I still get not-a-numbers sometimes, so I prevent that
-		if (newDivisor > 0.0f)
-		#if MAC
-			return ( isnan(sqrtf(newDivisor)) ? 0.0f : sqrtf(newDivisor) );
-		#else
-			return ( _isnan(sqrtf(newDivisor)) ? 0.0f : sqrtf(newDivisor) );
-		#endif
-		// but skip the squarerooting if the value is negative (pitchbend went too low)
-		else
-			return 0.0f;
-*/
 //		return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
-		return (newDivisor < 0.001f) ? 0.001f : newDivisor;	// XXX is this much even necessary?
+		return (newDivisor < 0.0001f) ? 0.0001f : newDivisor;	// XXX is this much even necessary?
 	}
-	// otherwise return -3, my code for "don't really update the fDivisor value"
+	// otherwise return -3 (my code for "don't actually update the fDivisor value")
 	else
 		return -3.0f;
 }
