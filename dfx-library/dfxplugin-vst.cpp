@@ -130,7 +130,14 @@ bool DfxPlugin::getEffectName(char * name)
 {
 	if (name == NULL)
 		return false;
-	getpluginname(name);	// name max 32 characters
+	// get the name into a temp string buffer that we know is large enough
+	char tempname[DFX_PARAM_MAX_NAME_LENGTH];
+	getpluginname(tempname);
+	// then make sure to only copy as much as the name C string can hold
+	strncpy(name, tempname, 32);	// name max 32 characters
+	// in case the parameter name was 32 or longer, 
+	// make sure that the name string is terminated
+	name[32-1] = 0;
 	return true;
 }
 
