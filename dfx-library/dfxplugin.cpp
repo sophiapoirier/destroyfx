@@ -1697,7 +1697,7 @@ long launch_url(const char *urlstring)
 		return 3;
 
 #if MAC && defined(__MACH__)
-	CFURLRef urlcfurl = CFURLCreateWithBytes(kCFAllocatorDefault, (const UInt8*)urlstring, strlen(urlstring), kCFStringEncodingASCII, NULL);
+	CFURLRef urlcfurl = CFURLCreateWithBytes(kCFAllocatorDefault, (const UInt8*)urlstring, (CFIndex)strlen(urlstring), kCFStringEncodingASCII, NULL);
 	if (urlcfurl != NULL)
 	{
 		OSStatus status = LSOpenCFURLRef(urlcfurl, NULL);	// try to launch the URL
