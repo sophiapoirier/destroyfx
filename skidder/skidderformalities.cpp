@@ -4,7 +4,7 @@
 #include "skidder.hpp"
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __SKIDDEREDITOR_H
 	#include "skiddereditor.hpp"
 	#endif
@@ -77,7 +77,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	rateDoubleAutomate = pulsewidthDoubleAutomate = floorDoubleAutomate = false;
 
 
-	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 		editor = new SkidderEditor(this);
 	#endif
 }

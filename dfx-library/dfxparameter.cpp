@@ -36,7 +36,7 @@ DfxParam::DfxParam()
 
 	// these are null until it's shown that we'll actually need them
 	valueStrings = NULL;
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		valueCFStrings = NULL;
 	#endif
 	numAllocatedValueStrings = 0;
@@ -258,7 +258,7 @@ void DfxParam::releaseValueStrings()
 	}
 	valueStrings = NULL;
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		// release the CFString versions of the parameter value strings, if any
 		if (valueCFStrings != NULL)
 		{
@@ -295,7 +295,7 @@ void DfxParam::setusevaluestrings(bool newMode)
 			valueStrings[i][0] = 0;	// default to empty strings
 		}
 
-		#if TARGET_API_AUDIOUNIT
+		#ifdef TARGET_API_AUDIOUNIT
 			valueCFStrings = (CFStringRef*) malloc(numAllocatedValueStrings * sizeof(CFStringRef));
 			for (long i=0; i < numAllocatedValueStrings; i++)
 				valueCFStrings[i] = NULL;
@@ -320,7 +320,7 @@ bool DfxParam::setvaluestring(long index, const char *inText)
 	long arrayIndex = index-getmin_i();
 	strcpy(valueStrings[arrayIndex], inText);
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		if (valueCFStrings[arrayIndex] != NULL)
 			CFRelease(valueCFStrings[arrayIndex]);	// XXX do this?
 		// convert the incoming text to a CFString
@@ -1182,7 +1182,7 @@ DfxPreset::DfxPreset()
 	name = (char*) malloc(DFX_PRESET_MAX_NAME_LENGTH * sizeof(char));
 	name[0] = 0;
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		cfname = NULL;
 	#endif
 }
@@ -1197,7 +1197,7 @@ DfxPreset::~DfxPreset()
 		free(name);
 	name = NULL;
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		if (cfname != NULL)
 			CFRelease(cfname);
 		cfname = NULL;
@@ -1244,7 +1244,7 @@ void DfxPreset::setname(const char *inText)
 
 	strcpy(name, inText);
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		if (strlen(inText) > 0)
 		{
 			if (cfname != NULL)

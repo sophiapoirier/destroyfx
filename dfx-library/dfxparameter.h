@@ -165,15 +165,13 @@ for the value strings.
 #define __DFXPARAMETER_H
 
 
-#if TARGET_API_AUDIOUNIT
-	#include <CoreFoundation/CFString.h>	// for CFString stuff
+#ifndef __DFXDEFINES_H
+#include "dfxdefines.h"
 #endif
 
-
-#define DFX_PARAM_MAX_NAME_LENGTH	64
-#define DFX_PRESET_MAX_NAME_LENGTH	64
-#define DFX_PARAM_MAX_VALUE_STRING_LENGTH	256
-#define DFX_PARAM_MAX_UNIT_STRING_LENGTH	256
+#ifdef TARGET_API_AUDIOUNIT
+	#include <CoreFoundation/CFString.h>	// for CFString stuff
+#endif
 
 
 
@@ -298,7 +296,7 @@ public:
 	bool getvaluestring(long index, char *outText);
 	// ...or get a copy of the pointer to the value string
 	char * getvaluestring_ptr(long index);
-#if TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the array of CFString value strings
 	CFStringRef * getvaluecfstrings()
 		{	return valueCFStrings;	}
@@ -451,18 +449,13 @@ protected:
 	bool changed;	// indicates if the value has changed
 	bool hidden;	// indicates if the parameter might be only for internal use
 
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		// array of CoreFoundation-style versions of the indexed value strings
 		CFStringRef *valueCFStrings;
 	#endif
 
 };
 // end of DfxParam class definition
-
-
-
-#define FBOOL(fvalue)	( (fvalue) != 0.0f )
-#define DBOOL(dvalue)	( (dvalue) != 0.0 )
 
 
 
@@ -485,7 +478,7 @@ public:
 	void setname(const char *inText);
 	void getname(char *outText);
 	char * getname_ptr();
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		CFStringRef getcfname()
 			{	return cfname;	}
 	#endif
@@ -495,7 +488,7 @@ public:
 protected:
 	char *name;
 	long numParameters;
-	#if TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 		CFStringRef cfname;
 	#endif
 };

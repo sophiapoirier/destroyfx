@@ -4,7 +4,7 @@
 #include "scrubby.hpp"
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __SCRUBBYEDITOR_H
 	#include "scrubbyeditor.hpp"
 	#endif
@@ -118,7 +118,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	currentTempoBPS = getparameter_f(kTempo) / 60.0f;
 
 
-	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 		editor = new ScrubbyEditor(this);
 	#endif
 }
@@ -126,7 +126,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-------------------------------------------------------------------------
 Scrubby::~Scrubby()
 {
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
 	do_cleanup();
@@ -464,7 +464,7 @@ void Scrubby::processparameters()
 	{
 		// tell the host what the length of delay compensation should be
 		setlatency_seconds(seekRangeSeconds * getparameter_scalar(kPredelay));
-		#if TARGET_API_VST
+		#ifdef TARGET_API_VST
 			// this tells the host to call a suspend()-resume() pair, 
 			// which updates initialDelay value
 			setlatencychanged(true);

@@ -4,7 +4,7 @@
 #include "polarizer.hpp"
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __POLARIZEREDITOR_H
 	#include "polarizereditor.hpp"
 	#endif
@@ -29,7 +29,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setpresetname(0, "twicky");	// default preset name
 
 
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		#if TARGET_PLUGIN_HAS_GUI
 			editor = new PolarizerEditor(this);
 		#endif
@@ -81,7 +81,7 @@ void PolarizerDSP::process(const float *in, float *out, unsigned long numSampleF
 			else	// invert the sample between -1 & 0
 				outval = -1.0f - outval;
 		}
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		if (!replacing)
 			outval += out[samplecount];
 	#endif

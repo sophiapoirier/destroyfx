@@ -4,7 +4,7 @@
 #include "eqsync.hpp"
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __EQSYNCEDITOR_H
 	#include "eqsynceditor.hpp"
 	#endif
@@ -47,7 +47,7 @@ EQsync::EQsync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	currentTempoBPS = getparameter_f(kTempo) / 60.0f;
 
 
-	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 		editor = new EQsyncEditor(this);
 	#endif
 }
@@ -55,7 +55,7 @@ EQsync::EQsync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 EQsync::~EQsync()
 {
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
 	do_cleanup();
@@ -213,7 +213,7 @@ void EQsync::processaudio(const float **inputs, float **outputs, unsigned long i
 							- (prevOut[ch]*b1) - (prevprevOut[ch]*b2) );
 			undenormalize(outval);
 
-			#if TARGET_API_VST
+			#ifdef TARGET_API_VST
 				if (!replacing)
 					outval += outputs[ch][samplecount];
 			#endif

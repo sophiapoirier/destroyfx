@@ -4,7 +4,7 @@
 #include "bufferoverride.hpp"
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __BUFFEROVERRIDEEDITOR_H
 	#include "bufferoverrideeditor.hpp"
 	#endif
@@ -85,7 +85,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initPresets();
 
 
-	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 		editor = new BufferOverrideEditor(this);
 	#endif
 }
@@ -98,7 +98,7 @@ BufferOverride::~BufferOverride()
 	if (bufferLFO)
 		delete bufferLFO;
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
 	do_cleanup();

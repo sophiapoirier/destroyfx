@@ -55,6 +55,11 @@
 #define __DFXSETTINGS_H
 
 
+#ifndef __DFXDEFINES_H
+#include "dfxdefines.h"
+#endif
+
+
 //------------------------------------------------------
 // some constants
 enum
@@ -220,8 +225,6 @@ void reverseBytes(void *data, unsigned long size, unsigned long count = 1);
 bool getenvBool(const char *var, bool def);
 
 
-//------------------------------------------------------
-class DfxPlugin;
 //------------------------------------------------------
 class DfxSettings
 {
@@ -419,7 +422,9 @@ protected:
 	long halfwayNoteNum;
 };
 
+
 #endif
+// __DFXSETTINGS_H
 
 
 

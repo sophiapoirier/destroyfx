@@ -394,13 +394,13 @@ void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFra
 		}
 
 		// write the output to the output streams, interpolated for smoothness
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		if (replacing)
 		{
 	#endif
 			for (ch=0; ch < numChannels; ch++)
 				out[ch][samplecount] = interpolateHermite(buffers[ch], readPos[ch], MAX_BUFFER);
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		}
 		else
 		{
