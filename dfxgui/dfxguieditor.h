@@ -90,9 +90,6 @@ public:
 	
 	void idle();
 
-	UInt32 X;	// X coordinate offset for view
-	UInt32 Y;	// Y coordinate offset for view
-
 private:
 	UInt32				itemCount;
 	DGGraphic *			Images;

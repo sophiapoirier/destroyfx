@@ -1,8 +1,7 @@
 #include <stdlib.h>
+#include<stdio.h>
 
-#ifndef __scrubbykeyboard
 #include "scrubbykeyboard.hpp"
-#endif
 
 
 //------------------------------------------------------------------------

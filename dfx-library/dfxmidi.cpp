@@ -7,11 +7,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-// XXX how to avoid this problem with gcc?
-#ifndef powf
-#define powf (float)pow
-#endif
-
 
 //------------------------------------------------------------------------
 DfxMidi::DfxMidi()
@@ -44,33 +39,33 @@ DfxMidi::~DfxMidi()
 {
 	for (int i=0; i < NUM_NOTES; i++)
 	{
-		if (noteTable[i].tail1)
+		if (noteTable[i].tail1 != NULL)
 			free(noteTable[i].tail1);
-		noteTable[i].tail1 = 0;
-		if (noteTable[i].tail2)
+		noteTable[i].tail1 = NULL;
+		if (noteTable[i].tail2 != NULL)
 			free(noteTable[i].tail2);
-		noteTable[i].tail2 = 0;
+		noteTable[i].tail2 = NULL;
 	}
 
 	// deallocate the memory from these arrays
-	if (noteTable)
+	if (noteTable != NULL)
 		free(noteTable);
-	noteTable = 0;
-	if (noteQueue)
+	noteTable = NULL;
+	if (noteQueue != NULL)
 		free(noteQueue);
-	noteQueue = 0;
-	if (sustainQueue)
+	noteQueue = NULL;
+	if (sustainQueue != NULL)
 		free(sustainQueue);
-	sustainQueue = 0;
-	if (freqTable)
+	sustainQueue = NULL;
+	if (freqTable != NULL)
 		free(freqTable);
-	freqTable = 0;
-	if (fadeTable)
+	freqTable = NULL;
+	if (fadeTable != NULL)
 		free(fadeTable);
-	fadeTable = 0;
-	if (blockEvents)
+	fadeTable = NULL;
+	if (blockEvents != NULL)
 		free(blockEvents);
-	blockEvents = 0;
+	blockEvents = NULL;
 }
 
 //------------------------------------------------------------------------
@@ -169,10 +164,14 @@ void DfxMidi::fillFrequencyTable()
 
 void DfxMidi::fillFadeTable()
 {
-  #define undenormalizeFloat(floatValue)   (fabs(floatValue) > 1e-15) ? floatValue : 0.0f
-
-	for (long i = 0; (i < NUM_FADE_POINTS); i++)
-		fadeTable[i] = undenormalizeFloat( powf( ((float)i / (float)(NUM_FADE_POINTS-1)), FADE_CURVE ) );
+	double fadeCurveStep = 1.0 / (double)(NUM_FADE_POINTS-1);
+	for (long i = 0; i < NUM_FADE_POINTS; i++)
+	{
+		fadeTable[i] = (float) pow( (double)i * fadeCurveStep, FADE_CURVE );
+		// zero any near-denormal values
+		if (fadeTable[i] < 1e-15)
+			fadeTable[i] = 0.0f;
+	}
 }
 
 
@@ -181,7 +180,7 @@ void DfxMidi::fillFadeTable()
 
 void DfxMidi::insertNote(int currentNote)
 {
-  int notecount;
+	int notecount;
 
 
 	// first check whether this note is already active (could happen in weird sequencers, like Max for example)
@@ -217,17 +216,11 @@ void DfxMidi::insertNote(int currentNote)
 
 void DfxMidi::removeNote(int currentNote)
 {
-  int notecount;
-  bool foundNote = false;
-
-
-	for (notecount = 0; notecount < (NUM_NOTES-1); notecount++)
+	for (int notecount = 0; notecount < (NUM_NOTES-1); notecount++)
 	{
 		// don't do anything until the note to delete is found
 		if (noteQueue[notecount] == currentNote)
-			foundNote = true;
-		// start shifting notes down past the point of the deleted note
-		if (foundNote)
+			// start shifting notes down past the point of the deleted note
 			noteQueue[notecount] = noteQueue[notecount+1];
 		// we've reached the last active note in the table, so there's no need to shift notes down anymore
 		if (noteQueue[notecount] < 0)
@@ -243,9 +236,7 @@ void DfxMidi::removeNote(int currentNote)
 
 void DfxMidi::removeAllNotes()
 {
-  int notecount;
-
-	for (notecount = 0; notecount < NUM_NOTES; notecount++)
+	for (int notecount = 0; notecount < NUM_NOTES; notecount++)
 		noteQueue[notecount] = kInvalidMidi;
 }
 
@@ -336,108 +327,105 @@ void DfxMidi::handleProgramChange(int channel, int programNum, long frameOffset)
 void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange, float attack, 
 							float release, bool legato, float velCurve, float velInfluence)
 {
-  int currentNote, notecount, currentVelocity, i;
-  long attackdur;
-  bool legatoNoteFound;	// a bool for the active note search cycle in legato mode
-
-
 	switch (blockEvents[eventNum].status)
 	{
 
 // --- NOTE-ON RECEIVED ---
-		case kMidiNoteOn :
-			currentNote = blockEvents[eventNum].byte1;
-			currentVelocity = blockEvents[eventNum].byte2;
-
-			noteTable[currentNote].velocity = currentVelocity;
-			noteTable[currentNote].noteAmp = (powf((MIDI_SCALAR*currentVelocity), velCurve) * velInfluence) + (1.0f-velInfluence);
-			//
-			if (legato)	// legato is on, fade out the last not & fade in the new one, supershort
+		case kMidiNoteOn:
 			{
-				// this is false until we find some already active note
-				legatoNoteFound = false;
-				// find the previous note & set it to fade out
-				for (notecount=0; (notecount < NUM_NOTES); notecount++)
+				int currentNote = blockEvents[eventNum].byte1;
+				noteTable[currentNote].velocity = blockEvents[eventNum].byte2;
+				noteTable[currentNote].noteAmp = ( (float)pow(MIDI_SCALAR * (float)(noteTable[currentNote].velocity), velCurve) * 
+												velInfluence ) + (1.0f - velInfluence);
+				//
+				if (legato)	// legato is on, fade out the last not & fade in the new one, supershort
 				{
-					// we want to find the active note, but not this new one
-					if ( (noteTable[notecount].velocity) && (notecount != currentNote) && (noteTable[notecount].releaseDur == 0) )
+					// this is false until we find some already active note
+					bool legatoNoteFound = false;
+					// find the previous note & set it to fade out
+					for (int notecount=0; notecount < NUM_NOTES; notecount++)
 					{
-						// if the note is currently fading in, pick up where it left off
-						if (noteTable[notecount].attackDur)
-							noteTable[notecount].releaseSamples = noteTable[notecount].attackSamples;
-						// otherwise do the full fade out duration, if the note is not already fading out
-						else if ( (noteTable[notecount].releaseSamples) <= 0 )
-							noteTable[notecount].releaseSamples = LEGATO_FADE_DUR;
-						noteTable[notecount].releaseDur = LEGATO_FADE_DUR;
-						noteTable[notecount].attackDur = 0;
-						noteTable[notecount].attackSamples = 0;
-						noteTable[notecount].fadeTableStep = (float)NUM_FADE_POINTS / (float)LEGATO_FADE_DUR;
-						noteTable[notecount].linearFadeStep = 1.0f / (float)LEGATO_FADE_DUR;
-						// we found an active note (that's the same as the new incoming note)
-						legatoNoteFound = true;
+						// we want to find the active note, but not this new one
+						if ( (noteTable[notecount].velocity) && (notecount != currentNote) && (noteTable[notecount].releaseDur == 0) )
+						{
+							// if the note is currently fading in, pick up where it left off
+							if (noteTable[notecount].attackDur)
+								noteTable[notecount].releaseSamples = noteTable[notecount].attackSamples;
+							// otherwise do the full fade out duration, if the note is not already fading out
+							else if ( (noteTable[notecount].releaseSamples) <= 0 )
+								noteTable[notecount].releaseSamples = LEGATO_FADE_DUR;
+							noteTable[notecount].releaseDur = LEGATO_FADE_DUR;
+							noteTable[notecount].attackDur = 0;
+							noteTable[notecount].attackSamples = 0;
+							noteTable[notecount].fadeTableStep = (float)NUM_FADE_POINTS / (float)LEGATO_FADE_DUR;
+							noteTable[notecount].linearFadeStep = LEGATO_FADE_STEP;
+							// we found an active note (that's the same as the new incoming note)
+							legatoNoteFound = true;
+						}
+					}
+					// don't start a new note fade-in if the currently active note is the same as this new note
+					if (! ((legatoNoteFound == false) && (noteTable[currentNote].velocity)) )
+					{
+						// legato mode always uses this short fade
+						noteTable[currentNote].attackDur = LEGATO_FADE_DUR;
+						// attackSamples starts counting from zero, so set it to zero
+						noteTable[currentNote].attackSamples = 0;
+						// calculate how far this fade must "step" through the fade table at each sample.
+						// Since legato mode overrides the fades parameter & only does cheap fades, this 
+						// isn't really necessary, but since I don't trust that everything will work right...
+						noteTable[currentNote].fadeTableStep = (float)NUM_FADE_POINTS / (float)LEGATO_FADE_DUR;
+						noteTable[currentNote].linearFadeStep = LEGATO_FADE_STEP;
 					}
 				}
-				// don't start a new note fade-in if the currently active note is the same as this new note
-				if (! ((legatoNoteFound == false) && (noteTable[currentNote].velocity)) )
+				//
+				else	//legato is off, so set up for the attack envelope
 				{
-					// legato mode always uses this short fade
-					noteTable[currentNote].attackDur = LEGATO_FADE_DUR;
-					// attackSamples starts counting from zero, so set it to zero
-					noteTable[currentNote].attackSamples = 0;
-					// calculate how far this fade must "step" through the fade table at each sample.
-					// Since legato mode overrides the fades parameter & only does cheap fades, this 
-					// isn't really necessary, but since I don't trust that everything will work right...
-					noteTable[currentNote].fadeTableStep = (float)NUM_FADE_POINTS / (float)LEGATO_FADE_DUR;
-					noteTable[currentNote].linearFadeStep = 1.0f / (float)LEGATO_FADE_DUR;
+					// calculate the duration, in samples, for the attack
+					long attackdur = (long) (attack * SAMPLERATE);
+					noteTable[currentNote].attackDur = attackdur;
+					if (attackdur)	// avoid potential division by zero
+					{
+						// calculate how far this fade must "step" through the fade table at each sample
+						noteTable[currentNote].fadeTableStep = (float)NUM_FADE_POINTS / (float)attackdur;
+						noteTable[currentNote].linearFadeStep = 1.0f / (float)attackdur;
+					}
+					// if using lazyAttackMode & this note is already sounding & in release, pick up from where it is
+					if ( lazyAttackMode && (noteTable[currentNote].releaseDur > 0) )
+						noteTable[currentNote].attackSamples = (long) ( (float)(noteTable[currentNote].releaseSamples) / 
+																(float)(noteTable[currentNote].releaseDur) * (float)attackdur );
+					else	// regular
+					{
+						// attackSamples starts counting from zero, so set it to zero
+						noteTable[currentNote].attackSamples = 0;
+						// if the note is still sounding & in release, then kick smooth the end of that last note
+						if (noteTable[currentNote].releaseDur > 0)
+							noteTable[currentNote].smoothSamples = STOLEN_NOTE_FADE_DUR;
+					}
 				}
+				// now we've checked the fade state, so we can zero these out to turn this note's release
+				noteTable[currentNote].releaseDur = 0;
+				noteTable[currentNote].releaseSamples = 0;
 			}
-			//
-			else	//legato is off, so set up for the attack envelope
-			{
-				// calculate the duration, in samples, for the attack
-				attackdur = (long)(attack * SAMPLERATE);
-				noteTable[currentNote].attackDur = attackdur;
-				if (attackdur)	// avoid potential division by zero
-				{
-					// calculate how far this fade must "step" through the fade table at each sample
-					noteTable[currentNote].fadeTableStep = (float)NUM_FADE_POINTS / (float)attackdur;
-					noteTable[currentNote].linearFadeStep = 1.0f / (float)attackdur;
-				}
-				// if using lazyAttackMode & this note is already sounding & in release, pick up from where it is
-				if ( lazyAttackMode && (noteTable[currentNote].releaseDur > 0) )
-					noteTable[currentNote].attackSamples = (long) 
-						( (float)(noteTable[currentNote].releaseSamples) / (float)(noteTable[currentNote].releaseDur) * (float)attackdur );
-				else	// regular
-				{
-					// attackSamples starts counting from zero, so set it to zero
-					noteTable[currentNote].attackSamples = 0;
-					// if the note is still sounding & in release, then kick smooth the end of that last note
-					if (noteTable[currentNote].releaseDur > 0)
-						noteTable[currentNote].smoothSamples = STOLEN_NOTE_FADE_DUR;
-				}
-			}
-			// now we've checked the fade state, so we can zero these out to turn this note's release
-			noteTable[currentNote].releaseDur = 0;
-			noteTable[currentNote].releaseSamples = 0;
 			break;
 
 
 
 // --- NOTE-OFF RECEIVED ---
-		case kMidiNoteOff :
-			currentNote = blockEvents[eventNum].byte1;
-
-			// don't process this note off, but do remember it, if the sustain pedal is on
-			if (sustain)
-				sustainQueue[currentNote] = true;
-			else
-				turnOffNote(currentNote, release, legato, SAMPLERATE);
+		case kMidiNoteOff:
+			{
+				int currentNote = blockEvents[eventNum].byte1;
+				// don't process this note off, but do remember it, if the sustain pedal is on
+				if (sustain)
+					sustainQueue[currentNote] = true;
+				else
+					turnOffNote(currentNote, release, legato, SAMPLERATE);
+			}
 			break;
 
 
 
 // --- PITCHBEND RECEIVED ---
-		case kMidiPitchbend :
+		case kMidiPitchbend:
 			// most MIDI controllers don't produce pitchben LSB, so only start using LSB if it's legit
 			if (blockEvents[eventNum].byte1 > 0)
 				usePitchbendLSB = true;
@@ -470,14 +458,16 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 
 
 // --- SUSTAIN PEDAL RECEIVED ---
-		case kMidiCC_SustainPedalOnOff :
+		case kMidiCC_SustainPedalOnOff:
 			if ( sustain && (blockEvents[eventNum].byte2 <= 63) )
-			for (i=0; i < NUM_NOTES; i++)
 			{
-				if (sustainQueue[i])
+				for (int i=0; i < NUM_NOTES; i++)
 				{
-					turnOffNote(i, release, legato, SAMPLERATE);
-					sustainQueue[i] = false;
+					if (sustainQueue[i])
+					{
+						turnOffNote(i, release, legato, SAMPLERATE);
+						sustainQueue[i] = false;
+					}
 				}
 			}
 			sustain = (blockEvents[eventNum].byte2 >= 64);
@@ -487,20 +477,22 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 
 // --- ALL-NOTES-OFF RECEIVED ---
 		// all sound off, so call suspend() to wipe out all of the notes & buffers
-		case kMidiCC_AllNotesOff :
-			// & zero out the note table, or what's important at least
-			for (i=0; (i < NUM_NOTES); i++)
+		case kMidiCC_AllNotesOff:
 			{
-				noteTable[i].velocity = 0;
-				noteTable[i].attackSamples = 0;
-				noteTable[i].attackDur = 0;
-				noteTable[i].releaseSamples = 0;
-				noteTable[i].releaseDur = 0;
+				// & zero out the note table, or what's important at least
+				for (int i=0; i < NUM_NOTES; i++)
+				{
+					noteTable[i].velocity = 0;
+					noteTable[i].attackSamples = 0;
+					noteTable[i].attackDur = 0;
+					noteTable[i].releaseSamples = 0;
+					noteTable[i].releaseDur = 0;
+				}
 			}
 			break;
 
 // --- nothingness ---
-		default :
+		default:
 			break;
 	}
 }
@@ -509,15 +501,12 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 //-----------------------------------------------------------------------------------------
 void DfxMidi::turnOffNote(int currentNote, float release, bool legato, float SAMPLERATE)
 {
-  long releasedur;
-
-
 	// legato is off (note-offs are ignored when it's on)
 	// go into the note release if legato is off & the note isn't already off
-	if ( !legato && (noteTable[currentNote].velocity > 0) )
+	if ( (legato == false) && (noteTable[currentNote].velocity > 0) )
 	{
 		// calculate the duration, in samples, for the release
-		releasedur = (long)(release * SAMPLERATE);
+		long releasedur = (long)(release * SAMPLERATE);
 		noteTable[currentNote].releaseDur = releasedur;
 		// this note is already sounding & in attack, so pick up from where it is
 		if (noteTable[currentNote].attackDur)
