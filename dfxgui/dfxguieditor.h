@@ -158,6 +158,8 @@ private:
 };
 
 
+long launch_documentation();
+
 
 #endif
 // __DFXGUI_H
