@@ -402,4 +402,6 @@ readlineloop:
 	fclose(sourcef);
 	if (destf != stdout)
 		fclose(destf);
+
+	return EXIT_SUCCESS;
 }
