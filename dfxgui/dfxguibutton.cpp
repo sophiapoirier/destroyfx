@@ -49,6 +49,13 @@ DGButton::~DGButton()
 }
 
 //-----------------------------------------------------------------------------
+void DGButton::post_embed()
+{
+	if ( isParameterAttached() && (carbonControl != NULL) )
+		SetControl32BitMaximum( carbonControl, (SInt32) (getAUVP().ParamInfo().minValue) + (numStates - 1) );
+}
+
+//-----------------------------------------------------------------------------
 void DGButton::draw(CGContextRef inContext, long inPortHeight)
 {
 	if (buttonImage != NULL)
@@ -192,6 +199,29 @@ void DGButton::setMouseIsDown(bool newMouseState)
 	mouseIsDown = newMouseState;
 	if ( (oldstate != newMouseState) && drawMomentaryState )
 		redraw();
+}
+
+//-----------------------------------------------------------------------------
+void DGButton::setValue(long inValue)
+{
+	if (getValue() != inValue)
+		SetControl32BitValue(carbonControl, inValue);
+}
+
+//-----------------------------------------------------------------------------
+long DGButton::getValue()
+{
+	return GetControl32BitValue(carbonControl);
+}
+
+//-----------------------------------------------------------------------------
+void DGButton::setButtonImage(DGImage * inImage)
+{
+	if (inImage != buttonImage)
+	{
+		buttonImage = inImage;
+		redraw();
+	}
 }
 
 //-----------------------------------------------------------------------------

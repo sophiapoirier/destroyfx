@@ -256,24 +256,30 @@ TransverbEditor::TransverbEditor(AudioUnitCarbonView inInstance)
 	speed2UpButton = NULL;
 	speed2DownButton = NULL;
 
-	AUListenerCreate(SpeedModeListenerProc, this,
+	parameterListener = NULL;
+	OSStatus status = AUListenerCreate(SpeedModeListenerProc, this,
 		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
 		&parameterListener);
+	if (status != noErr)
+		parameterListener = NULL;
 }
 
 //-----------------------------------------------------------------------------
 TransverbEditor::~TransverbEditor()
 {
-	if (speed1DownButton != NULL)
-		AUListenerRemoveParameter(parameterListener, speed1DownButton, &speed1modeAUP);
-	if (speed1UpButton != NULL)
-		AUListenerRemoveParameter(parameterListener, speed1UpButton, &speed1modeAUP);
-	if (speed2DownButton != NULL)
-		AUListenerRemoveParameter(parameterListener, speed2DownButton, &speed2modeAUP);
-	if (speed2UpButton != NULL)
-		AUListenerRemoveParameter(parameterListener, speed2UpButton, &speed2modeAUP);
+	if (parameterListener != NULL)
+	{
+		if (speed1DownButton != NULL)
+			AUListenerRemoveParameter(parameterListener, speed1DownButton, &speed1modeAUP);
+		if (speed1UpButton != NULL)
+			AUListenerRemoveParameter(parameterListener, speed1UpButton, &speed1modeAUP);
+		if (speed2DownButton != NULL)
+			AUListenerRemoveParameter(parameterListener, speed2DownButton, &speed2modeAUP);
+		if (speed2UpButton != NULL)
+			AUListenerRemoveParameter(parameterListener, speed2UpButton, &speed2modeAUP);
 
-	AUListenerDispose(parameterListener);
+		AUListenerDispose(parameterListener);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -427,16 +433,19 @@ long TransverbEditor::open()
 	button = new DGWebLink(this, &pos, gSmartElectronixLinkButton, SMARTELECTRONIX_URL);
 
 
-	speed1modeAUP.mAudioUnit = speed2modeAUP.mAudioUnit = GetEditAudioUnit();
-	speed1modeAUP.mScope = speed2modeAUP.mScope = kAudioUnitScope_Global;
-	speed1modeAUP.mElement = speed2modeAUP.mElement = (AudioUnitElement)0;
-	speed1modeAUP.mParameterID = kSpeed1mode;
-	speed2modeAUP.mParameterID = kSpeed2mode;
+	if (parameterListener != NULL)
+	{
+		speed1modeAUP.mAudioUnit = speed2modeAUP.mAudioUnit = GetEditAudioUnit();
+		speed1modeAUP.mScope = speed2modeAUP.mScope = kAudioUnitScope_Global;
+		speed1modeAUP.mElement = speed2modeAUP.mElement = (AudioUnitElement)0;
+		speed1modeAUP.mParameterID = kSpeed1mode;
+		speed2modeAUP.mParameterID = kSpeed2mode;
 
-	AUListenerAddParameter(parameterListener, speed1DownButton, &speed1modeAUP);
-	AUListenerAddParameter(parameterListener, speed1UpButton, &speed1modeAUP);
-	AUListenerAddParameter(parameterListener, speed2DownButton, &speed2modeAUP);
-	AUListenerAddParameter(parameterListener, speed2UpButton, &speed2modeAUP);
+		AUListenerAddParameter(parameterListener, speed1DownButton, &speed1modeAUP);
+		AUListenerAddParameter(parameterListener, speed1UpButton, &speed1modeAUP);
+		AUListenerAddParameter(parameterListener, speed2DownButton, &speed2modeAUP);
+		AUListenerAddParameter(parameterListener, speed2UpButton, &speed2modeAUP);
+	}
 
 
 	return noErr;
