@@ -119,8 +119,6 @@ public:
 private:
   /* set up the built-in presets */
   void makepresets();
-
-
 #if TARGET_PLUGIN_USES_DSPCORE
 };
 
@@ -132,12 +130,12 @@ public:
   virtual void reset();
   virtual void processparameters();
   virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);
+
+  long getwindowsize() { return third; }
 #endif
 
   /* several of these are needed by geometerview. Maybe should use accessors... */
 public:
-
-  long getwindowsize() { return third; }
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)

@@ -41,7 +41,11 @@ private:
 
   bool dirty;
 
+#if TARGET_PLUGIN_USES_DSPCORE
+  GeometerDSP * geom;
+#else
   Geometer * geom;
+#endif
 
   COffscreenContext * offc;
 
@@ -49,7 +53,11 @@ public:
 
   GeometerView(const CRect & size, Geometer * listener) : CView(size) {
     sz = size;
+  #if TARGET_PLUGIN_USES_DSPCORE
+    geom = (GeometerDSP*) (listener->getplugincore(0));
+  #else
     geom = listener;
+  #endif
     gwidth = size.right - size.left;
     gheight = size.bottom - size.top;
     gx = size.left;
