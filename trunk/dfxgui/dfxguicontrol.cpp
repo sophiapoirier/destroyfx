@@ -56,14 +56,17 @@ void DGControl::init(DGRect * inRegion)
 //-----------------------------------------------------------------------------
 DGControl::~DGControl()
 {
-	if (carbonControl != NULL)
-		DisposeControl(carbonControl);
-	if (auv_control != NULL)
-		delete auv_control;
 #if MAC
 	if (mouseTrackingRegion != NULL)
 		ReleaseMouseTrackingRegion(mouseTrackingRegion);
+	mouseTrackingRegion = NULL;
 #endif
+	if (auv_control != NULL)
+		delete auv_control;
+	auv_control = NULL;
+	if (carbonControl != NULL)
+		DisposeControl(carbonControl);
+	carbonControl = NULL;
 }
 
 
