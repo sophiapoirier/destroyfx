@@ -267,7 +267,7 @@ long EQSyncEditor::open()
 
 
 	// create the host sync button
-	if (gDestroyFXlinkTab != NULL)
+	if (gHostSyncButton != NULL)
 	{
 		pos.set(kHostSyncButtonX, kHostSyncButtonY, gHostSyncButton->getWidth()/2, gHostSyncButton->getHeight()/2);
 		DGButton * hostSyncButton = new DGButton(this, kTempoAuto, &pos, gHostSyncButton, 2, kDGButtonType_incbutton, true);
