@@ -66,11 +66,11 @@ void PLUGIN::resume() {
   /* set up buffers. Prevmix and first frame of output are always filled with zeros. */
 
   for (int i = 0; i < third; i ++) {
-    prevmix[i] = 0.0;
+    prevmix[i] = 0.0f;
   }
 
   for (int j = 0; j < framesize; j ++) {
-    out0[j] = 0.0;
+    out0[j] = 0.0f;
   }
   
   /* start input at beginning. Output has a frame of silence. */
@@ -107,6 +107,9 @@ void PLUGIN::setParameter(long index, float value) {
   /* copy the new value to the active program's corresponding parameter value */
   if ( (index >= 0) && (index < NUM_PARAMS) )
     programs[curProgram].param[index] = value;
+
+  if (editor)
+    ((AEffGUIEditor*)editor)->setParameter(index, value);
 }
 
 float PLUGIN::getParameter(long index) {
@@ -115,7 +118,7 @@ float PLUGIN::getParameter(long index) {
   default:
     /* otherwise pull it out of array. */
     if (index >= 0 && index < NUM_PARAMS) return *paramptrs[index].ptr;
-    else return 0.0; /* ? */
+    else return 0.0f; /* ? */
   }
 }
 
@@ -187,13 +190,13 @@ void PLUGIN::processw(float * in, float * out, long samples) {
   /* XXX memset */
   for(int u=0; u < samples; u ++) out[u] = 0.0f;
 
-  float bandsize = 1.0 / (usebands * .99f * BANDS);
+  float bandsize = 1.0f / (usebands * .99f * BANDS);
   for(int i=0; i < samples; i ++) {
     unsigned int which = fabs(in[i]) / bandsize;
     if (which >= (BANDS-1)) which = BANDS - 2;
 
     /* XXX when writing here, do anti-aliasing */
-    if (rigid > 0.5) {
+    if (rigid > 0.5f) {
       /* read band data, put sample */
       unsigned int dest = i + (band[which] * (samples / 4));
       /* only write it if it falls in this frame (otherwise
@@ -299,10 +302,10 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
 	/* 'second half */
 	int z;
 	for(z = 0; z < (third>>1); z++)
-	  out0[z+outstart+outsize] = 0.0;
+	  out0[z+outstart+outsize] = 0.0f;
 
 	for(; z < third; z ++)
-	  out0[z+outstart+outsize+third] = 0.0;
+	  out0[z+outstart+outsize+third] = 0.0f;
 
       }
 
@@ -403,13 +406,6 @@ bool PLUGIN::copyProgram(long destination) {
 /* ---------- boring stuff below this line ----------- */
 /* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
 
-static AudioEffect *effect = 0;
-bool oome = false;
-
-#if MAC
-   #pragma export on
-#endif
-
 // prototype of the export function main
 #if BEOS
    #define main main_plugin
@@ -425,19 +421,11 @@ AEffect *main (audioMasterCallback audioMaster) {
   if (!audioMaster (0, audioMasterVersion, 0, 0, 0, 0))
     return 0;  // old version
 
-  effect = new PLUGIN (audioMaster);
+  AudioEffect *effect = new PLUGIN (audioMaster);
   if (!effect)
     return 0;
-  if (oome) {
-    delete effect;
-    return 0;
-  }
-  return effect->getAeffect ();
+  return effect->getAeffect();
 }
-
-#if MAC
-  #pragma export off
-#endif
 
 #if WIN32
   void* hInstance;
