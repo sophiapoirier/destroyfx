@@ -528,9 +528,6 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 	return noErr;
 }
 
-#ifndef DFX_SUPPORT_OLD_VST_SETTINGS
-#define DFX_SUPPORT_OLD_VST_SETTINGS 0
-#endif
 //-----------------------------------------------------------------------------
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
@@ -616,23 +613,34 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 */
 
 	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
-printf("result from AUBase::RestoreState was %ld\n", result);
-	if (result != noErr)
-		return result;
 
 #if TARGET_PLUGIN_USES_MIDI
-	// look for a data section keyed with our custom data key
-	CFDataRef cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kDfxDataDictionaryKeyString));
-#if DFX_SUPPORT_OLD_VST_SETTINGS
-	// failing that, try to see if old VST chunk data is being fed to us
-	if (cfdata == NULL)
+printf("\nresult from AUBase::RestoreState was %ld\n", result);
+	CFDataRef cfdata = NULL;
+
+	if (result == noErr)
+	{
+		// look for a data section keyed with our custom data key
+		cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kDfxDataDictionaryKeyString));
+		// failing that, try to see if old VST chunk data is being fed to us
+		if (cfdata == NULL)
 {
+			cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
 printf("destroyfx-data was not there, trying vstdata...\n");
-		cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
 if (cfdata == NULL) printf("vstdata was not there\n");
 else printf("vstdata was there, loading...\n");
 }
-#endif
+	}
+	// there was an error in AUBas::RestoreState, but maybe some keys were missing and "vstdata" is there...
+	else
+{
+		cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
+printf("AUBase::RestoreState failed, trying vstdata...\n");
+if (cfdata == NULL) printf("vstdata was not there\n");
+else printf("vstdata was there, loading...\n");
+}
+
+	// if we couldn't get any data, abort with an error
 	if (cfdata == NULL)
 		return kAudioUnitErr_InvalidPropertyValue;
 
@@ -642,10 +650,15 @@ else printf("vstdata was there, loading...\n");
 	unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
 	// try to restore the saved settings data
 	bool success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
+if (success) printf("settings data was successfully loaded\n");
+else printf("settings data failed to load\n");
 	if (!success)
 		return kAudioUnitErr_InvalidPropertyValue;
 	
 #else
+	// abort if the base implementation of RestoreState failed
+	if (result != noErr)
+		return result;
 // XXX should we rethink this and load parameter settings if dfxsettings->restore() fails, or always before dfxsettings->restore()?
 	// load the parameter settings that were restored 
 	// by the inherited base class implementation of RestoreState

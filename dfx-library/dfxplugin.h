@@ -411,7 +411,7 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_gen();   else return 0.0f;	}
 	// return a (hopefully) 0 to 1 scalar version of the parameter's current value
 	float getparameter_scalar(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_f() / parameters[parameterIndex].getmax_f();	}
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_f() / parameters[parameterIndex].getmax_f();	else return 0.0f;	}
 
 	float getparametermin_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmin_f();   else return 0.0f;	}
