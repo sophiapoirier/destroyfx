@@ -137,7 +137,7 @@ DfxPlugin::DfxPlugin(
 	TARGET_API_BASE_CLASS::setProgram(0);	// set the current preset number to 0
 
 	isinitialized = false;
-	latencychanged = false;
+	setlatencychanged(false);
 
 	// check to see if the host supports sending tempo & time information to VST plugins
 	hostCanDoTempo = (canHostDo("sendVstTimeInfo") == 1);
@@ -159,7 +159,6 @@ DfxPlugin::DfxPlugin(
 
 }
 
-
 //-----------------------------------------------------------------------------
 // this is called immediately after all constructors (DfxPlugin and any derived classes) complete
 void DfxPlugin::dfxplugin_postconstructor()
@@ -168,6 +167,7 @@ void DfxPlugin::dfxplugin_postconstructor()
 	if ( !presetnameisvalid(0) )
 		setpresetname(0, PLUGIN_NAME_STRING);
 }
+
 
 //-----------------------------------------------------------------------------
 DfxPlugin::~DfxPlugin()
@@ -231,6 +231,17 @@ DfxPlugin::~DfxPlugin()
 		#endif
 	#endif
 	// end VST-specific destructor stuff
+}
+
+//-----------------------------------------------------------------------------
+// this is called immediately before all destructors (DfxPlugin and any derived classes) occur
+void DfxPlugin::dfxplugin_predestructor()
+{
+	#ifdef TARGET_API_VST
+		// VST doesn't have initialize and cleanup methods like Audio Unit does, 
+		// so we need to call this manually here
+		do_cleanup();	// XXX need to actually implement predestructor for VST!!!
+	#endif
 }
 
 

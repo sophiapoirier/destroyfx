@@ -49,7 +49,7 @@ void DfxPlugin::resume()
 	// do these after calling do_reset, 
 	// because the value for latency could change there
 	setInitialDelay(getlatency_samples());
-	setlatencychanged(false);
+	setlatencychanged(false);	// reset this state
 }
 
 //-------------------------------------------------------------------------
@@ -57,9 +57,9 @@ long DfxPlugin::fxIdle()
 {
 	// I'm moving calls to ioChanged into the idle thread 
 	// because it seems like it freaks out Fruity Loops
-	if (latencychanged)
+	if (getlatencychanged())
 		ioChanged();
-	latencychanged = false;
+	setlatencychanged(false);
 
 	return 1;
 }

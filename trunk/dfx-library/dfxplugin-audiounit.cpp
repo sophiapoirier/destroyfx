@@ -29,10 +29,8 @@ void DfxPlugin::PostConstructor()
 // this is where DSP-specific resources should be allocated
 ComponentResult DfxPlugin::Initialize()
 {
-	ComponentResult result = noErr;
-
 	// call the inherited class' Initialize routine
-	result = TARGET_API_BASE_CLASS::Initialize();
+	ComponentResult result = TARGET_API_BASE_CLASS::Initialize();
 
 	// call our initialize routine
 	if (result == noErr)
@@ -52,7 +50,7 @@ ComponentResult DfxPlugin::Initialize()
 // any DSP-specific resources should be released here
 void DfxPlugin::Cleanup()
 {
-	TARGET_API_BASE_CLASS::Cleanup();
+	TARGET_API_BASE_CLASS::Cleanup();	// XXX doesn't actually do anything now, but maybe at some point?
 
 	do_cleanup();
 }
@@ -495,27 +493,6 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inID,
 
 #pragma mark _________presets_________
 
-/*
-ComponentResult AUBase::DispatchSetProperty(AudioUnitPropertyID inID, const void *inData)
-{
-	case kAudioUnitProperty_CurrentPreset:
-	{
-		AUPreset &newPreset = *(AUPreset*)inData;
-		if (newPreset.presetName)
-		{
-			if (newPreset.presetNumber < 0 || NewFactoryPresetSet(newPreset) == noErr)
-			{
-				CFRelease(mCurrentPreset.presetName);
-				mCurrentPreset = newPreset;
-				CFRetain(mCurrentPreset.presetName);
-				return noErr;
-			}
-			else return kAudioUnitErr_InvalidPropertyValue;
-		}
-		else return kAudioUnitErr_InvalidPropertyValue;
-	}
-}
-*/
 //-----------------------------------------------------------------------------
 // Returns an array of AUPreset that contain a number and name for each of the presets.  
 // The number of each preset must be greater (or equal to) zero.  
@@ -577,22 +554,6 @@ OSStatus DfxPlugin::NewFactoryPresetSet(const AUPreset & inNewFactoryPreset)
 
 #pragma mark _________state_________
 
-/*
-//these are the current keys for the class info document
-static const CFStringRef kVersionString = CFSTR("version");
-static const CFStringRef kTypeString = CFSTR("type");
-static const CFStringRef kSubtypeString = CFSTR("subtype");
-static const CFStringRef kManufacturerString = CFSTR("manufacturer");
-static const CFStringRef kDataString = CFSTR("data");
-static const CFStringRef kNameString = CFSTR("name");
-static void AddNumToDictionary(CFMutableDictionaryRef dict, CFStringRef key, SInt32 value)
-{
-	CFNumberRef num = CFNumberCreate(NULL, kCFNumberSInt32Type, &value);
-	CFDictionarySetValue(dict, key, num);
-	CFRelease(num);
-}
-#define kCurrentSavedStateVersion 0
-*/
 static const CFStringRef kDfxDataDictionaryKeyString = CFSTR("destroyfx-data");
 //-----------------------------------------------------------------------------
 // stores the values of all parameters values, state info, etc. into a CFPropertyListRef
@@ -601,64 +562,6 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 	ComponentResult result = TARGET_API_BASE_CLASS::SaveState(outData);
 	if (result != noErr)
 		return result;
-
-/*
-	ComponentDescription desc;
-	OSStatus err = GetComponentInfo((Component)GetComponentInstance(), &desc, NULL, NULL, NULL);
-	if (err)
-		return err;
-
-	CFMutableDictionaryRef dict = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-
-// first step -> save the version to the data ref
-	SInt32 value = kCurrentSavedStateVersion;
-	AddNumToDictionary(dict, kVersionString, value);
-
-// second step -> save the component type, subtype, manu to the data ref
-	value = desc.componentType;
-	AddNumToDictionary(dict, kTypeString, value);
-
-	value = desc.componentSubType;
-	AddNumToDictionary(dict, kSubtypeString, value);
-	
-	value = desc.componentManufacturer;
-	AddNumToDictionary(dict, kManufacturerString, value);
-	
-// third step -> save the state of all parameters on all scopes and elements
-	CFMutableDataRef data = CFDataCreateMutable(NULL, NULL);
-	for (AudioUnitScope iscope=0; iscope < 4; ++iscope)
-	{
-		AUScope &scope = GetScope(iscope);
-		AudioUnitElement nElems = scope.GetNumberOfElements();
-		for (AudioUnitElement ielem=0; ielem < nElems; ++ielem)
-		{
-			AUElement *element = scope.GetElement(ielem);
-			UInt32 nparams = element->GetNumberOfParameters();
-			if (nparams > 0)
-			{
-				struct {
-					UInt32	scope;
-					UInt32	element;
-				} hdr;
-				
-				hdr.scope = CFSwapInt32HostToBig(iscope);
-				hdr.element = CFSwapInt32HostToBig(ielem);
-				CFDataAppendBytes(data, (UInt8 *)&hdr, sizeof(hdr));
-				
-				element->SaveState(data);
-			}
-		}
-	}
-
-	// save all this in the data section of the dictionary
-	CFDictionarySetValue(dict, kDataString, data);
-	CFRelease(data);
-
-// fourth step - save the name from the current preset
-	AUPreset au_preset;
-	if (DispatchGetProperty(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, 0, &au_preset) == noErr)
-		CFDictionarySetValue(dict, kNameString, au_preset.presetName);
-*/
 
 #if TARGET_PLUGIN_USES_MIDI
 	// create a CF data storage thingy for our special data
@@ -683,86 +586,6 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 {
-/*
-	if (CFGetTypeID(inData) != CFDictionaryGetTypeID())
-		return kAudioUnitErr_InvalidPropertyValue;
-
-	ComponentDescription desc;
-	OSStatus err = GetComponentInfo((Component)GetComponentInstance(), &desc, NULL, NULL, NULL);
-	if (err)
-		return err;
-
-// first step -> check the saved version in the data ref
-// at this point we're only dealing with version==0
-	CFNumberRef cfnum = reinterpret_cast<CFNumberRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kVersionString));
-	SInt32 value;
-	CFNumberGetValue(cfnum, kCFNumberSInt32Type, &value);
-	if (value != kCurrentSavedStateVersion)
-		return kAudioUnitErr_InvalidPropertyValue;
-
-// second step -> check that this data belongs to this kind of audio unit
-// by checking the component type, subtype and manuID
-// they MUST all match
-	cfnum = reinterpret_cast<CFNumberRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kTypeString));
-	CFNumberGetValue(cfnum, kCFNumberSInt32Type, &value);
-	if (UInt32(value) != desc.componentType)
-		return kAudioUnitErr_InvalidPropertyValue;
-
-	cfnum = reinterpret_cast<CFNumberRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kSubtypeString));
-	CFNumberGetValue(cfnum, kCFNumberSInt32Type, &value);
-	if (UInt32(value) != desc.componentSubType)
-		return kAudioUnitErr_InvalidPropertyValue;
-
-	cfnum = reinterpret_cast<CFNumberRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kManufacturerString));
-	CFNumberGetValue(cfnum, kCFNumberSInt32Type, &value);
-	if (UInt32(value) != desc.componentManufacturer)
-		return kAudioUnitErr_InvalidPropertyValue;
-
-// third step -> restore the state of all of the parameters for each scope and element	
-	CFDataRef data = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kDataString));
-	if (data == NULL)
-		return kAudioUnitErr_InvalidPropertyValue;
-
-	const UInt8 *p, *pend;
-	
-	p = CFDataGetBytePtr(data);
-	pend = p + CFDataGetLength(data);
-	
-	// we have a zero length data, which may just mean there were no parameters to save!
-	//	if (p >= pend) return noErr; 
-
-	while (p < pend)
-	{
-		struct {
-			UInt32	scope;
-			UInt32	element;
-		} hdr;
-		
-		hdr.scope = CFSwapInt32BigToHost(*(UInt32 *)p);		p += sizeof(UInt32);
-		hdr.element = CFSwapInt32BigToHost(*(UInt32 *)p);	p += sizeof(UInt32);
-		
-		AUScope &scope = GetScope(hdr.scope);
-		AUElement *element = scope.SafeGetElement(hdr.element);
-			// $$$ order of operations issue: what if the element does not yet exist?
-		p = element->RestoreState(p);
-	}
-	// XXX a cheap hack for now...
-	for (long i=0; i < numParameters; i++)
-		setparameter_f(i, TARGET_API_BASE_CLASS::GetParameter(i));
-
-// fourth step - restore the name from the document
-	CFStringRef name = reinterpret_cast<CFStringRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kNameString));
-	AUPreset au_preset;
-	au_preset.presetNumber = -1;
-	if (name)
-		au_preset.presetName = name;
-	else
-		// no name entry make the default one
-		au_preset.presetName = CFSTR("Untitled");
-	// set mCurrentPreset with this new preset data
-	DispatchSetProperty(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, 0, &au_preset, sizeof(AUPreset));
-*/
-
 	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -852,8 +675,6 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 //		if ( (inNewFormat.mSampleRate != getsamplerate()) || 
 				(inNewFormat.mChannelsPerFrame != inPrevFormat.mChannelsPerFrame) )
 		{
-//			do_cleanup();
-//			do_initialize();
 			updatesamplerate();
 			updatenumchannels();
 			createbuffers();
