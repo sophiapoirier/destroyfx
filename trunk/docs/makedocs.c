@@ -11,14 +11,18 @@
 #ifndef strcasestr
 char * strcasestr(const char *big, const char *little)
 {
-	if ( (big == NULL) || (little == NULL) )
-		return NULL;
-	for (int i=0; i < strlen(big) - strlen(little); i++)
-	{
-		if (strncasecmp(big + i, little, strlen(little)) == 0)
-			return (char*) (big + i);
-	}
-	return NULL;
+  if ( (big == NULL) || (little == NULL) )
+    return NULL;
+  {
+    int biglen = strlen(big);
+    int litlen = strlen(little);
+  for (int i=0; i < biglen - litlen; i++)
+    {
+      if (strncasecmp(big + i, little, litlen) == 0)
+	return (char*) (big + i);
+    }
+  }
+  return NULL;
 }
 #endif
 
