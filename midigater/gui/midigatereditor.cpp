@@ -82,18 +82,18 @@ OSStatus MidiGaterEditor::open(float inXOffset, float inYOffset)
 	// load some graphics
 
 	// background image
-	DGGraphic *gBackground = new DGGraphic("midi-gater-background.png");
+	DGImage *gBackground = new DGImage("midi-gater-background.png");
 	addImage(gBackground);
 	SetBackgroundImage(gBackground);
 	//
-	DGGraphic *gSlopeSliderHandle = new DGGraphic("slider-handle-slope.png");
+	DGImage *gSlopeSliderHandle = new DGImage("slider-handle-slope.png");
 	addImage(gSlopeSliderHandle);
-	DGGraphic *gVelInfluenceSliderHandle = new DGGraphic("slider-handle-velocity-influence.png");
+	DGImage *gVelInfluenceSliderHandle = new DGImage("slider-handle-velocity-influence.png");
 	addImage(gVelInfluenceSliderHandle);
-	DGGraphic *gFloorSliderHandle = new DGGraphic("slider-handle-floor.png");
+	DGImage *gFloorSliderHandle = new DGImage("slider-handle-floor.png");
 	addImage(gFloorSliderHandle);
 	//
-	DGGraphic *gDestroyFXlinkButton = new DGGraphic("destroy-fx-link-button.png");
+	DGImage *gDestroyFXlinkButton = new DGImage("destroy-fx-link-button.png");
 	addImage(gDestroyFXlinkButton);
 
 

@@ -30,16 +30,9 @@ void DGControl::init(DGRect *inRegion)
 	where.set(inRegion);
 	vizArea.set(inRegion);
 
-	Daddy = NULL;
-	children = NULL;
 	carbonControl = NULL;
 	auv_control = NULL;
 
-	id = 0;
-	lastUpdatedValue = 0;
-	redrawTolerance = 1;
-	opaque = true;
-	pleaseUpdate = false;
 	setContinuousControl(false);
 }
 
@@ -49,8 +42,6 @@ DGControl::~DGControl()
 //printf("DGControl::~DGControl()\n");
 	if (carbonControl != NULL)
 		DisposeControl(carbonControl);
-	if (children != NULL)
-		delete children;
 	if (auv_control != NULL)
 		delete auv_control;
 }
@@ -60,7 +51,6 @@ DGControl::~DGControl()
 // force a redraw
 void DGControl::redraw()
 {
-	pleaseUpdate = true;
 	if (getCarbonControl() != NULL)
 		Draw1Control( getCarbonControl() );
 }
@@ -112,13 +102,9 @@ void DGControl::clipRegion(bool drawing)
 //		printf("drawing 0x%08X type %ld\n", (unsigned long)this, getType());
 //	else
 //		printf("clipping 0x%08X type %ld\n", (unsigned long)this, getType());
-	if ( isOpaque() )
-	{
-		Rect r;
-		where.copyToRect(&r);
-		FrameRect(&r);
-//		printf("clipping opaque %d %d %d %d\n", r.left, r.top, r.right, r.bottom);
-	}
+	Rect r;
+	where.copyToRect(&r);
+	FrameRect(&r);
 }
 
 //-----------------------------------------------------------------------------
@@ -137,41 +123,11 @@ void DGControl::setVisible(bool inVisibility)
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::idle()
-{
-	if (children != NULL)
-		children->idle();
-}
-	
-//-----------------------------------------------------------------------------
 bool DGControl::isControlRef(ControlRef inControl)
 {
 	if (carbonControl == inControl)
 		return true;
 	return false;
-}
-
-//-----------------------------------------------------------------------------
-DGControl * DGControl::getChild(ControlRef inControl)
-{
-	if (carbonControl == inControl)
-		return this;
-
-// XXX we will not have this concept of control parents or children, right?
-#if 0
-	if (children != NULL)
-	{
-		DGControl* current = children;
-		while(current != NULL)
-		{
-			if ( current->isControlRef(inControl) )
-				return current->getChild(inControl);
-		
-			current = (DGControl*) current->getNext();
-		}
-	}
-#endif
-	return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -184,22 +140,6 @@ void DGControl::setForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h)
 void DGControl::shrinkForeBounds(SInt32 inXoffset, SInt32 inYoffset, SInt32 inWidthShrink, SInt32 inHeightShrink)
 {
 	vizArea.offset(inXoffset, inYoffset, -inWidthShrink, -inHeightShrink);
-}
-
-//-----------------------------------------------------------------------------
-bool DGControl::mustUpdate()
-{
-	long val = GetControl32BitValue(carbonControl);
-
-// XXX should we actually do anything to avoid needless redraws?
-//	if ( (abs(val-lastUpdatedValue) >= abs(redrawTolerance)) || pleaseUpdate )
-	{
-		lastUpdatedValue = val;
-		pleaseUpdate = false;
-		return true;
-	}
-
-	return false;
 }
 
 

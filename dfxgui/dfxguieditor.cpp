@@ -302,9 +302,7 @@ void DfxGuiEditor::addControl(DGControl *inControl)
 
 	controlsList = new DGControlsList(inControl, controlsList);
 
-	// XXX   ???
-	if (inControl->getDaddy() == NULL)
-		inControl->setOffset((long)GetXOffset(), (long)GetYOffset());
+	inControl->setOffset((long)GetXOffset(), (long)GetYOffset());
 
 	Rect r;
 	inControl->getBounds()->copyToRect(&r);
@@ -748,12 +746,6 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 		{
 			case kEventControlDraw:
 				{
-					if (ourDGControl->mustUpdate() == false)
-					{
-						result = noErr;
-						break;
-					}
-
 					CGrafPtr oldPort = NULL;
 					CGrafPtr windowPort;
 					// if we received a graphics port parameter, use that...
