@@ -156,6 +156,8 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     } else if (shape < 0.40f) {
       strcpy(text, "arrow");
     } else if (shape < 0.60f) {
+      //      float s = 1.0 / (shape - shape);
+      //      sprintf(text, "%f", s);
       strcpy(text, "wedge");
     } else if (shape < 0.80f) {
       strcpy(text, "best");
@@ -215,9 +217,9 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
   /* collect points. */
 
-  numpts = 1;
   pointx[0] = 0;
   pointy[0] = in[0];
+  numpts = 1;
 
   int maxpts = framesize * 2;
 
@@ -244,13 +246,15 @@ void PLUGIN::processw(float * in, float * out, long samples) {
     
     enum {SZ, SZC, SA, SB};
     int state;
+
+    state = SZ;
+
+    /*
     if (lasty <= zero_thresh && lasty >= -zero_thresh) state = SZ;
     else if (lasty > zero_thresh) state = SA;
     else state = SB;
-        
-    pointx[0] = lastx;
-    pointy[0] = lasty;
-
+    */
+  
     for(int i = 0 ; i < samples ; i ++) {
       switch(state) {
       case SZ: {
@@ -266,7 +270,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       
         /* push zero for last spot (we know it was a zero and not pushed). */
         if (numpts < (maxpts-1)) {
-          pointx[numpts] = i - 1;
+          pointx[numpts] = (i>0)?(i - 1):0;
           pointy[numpts] = 0.0;
           numpts++;
         } 
@@ -377,18 +381,22 @@ void PLUGIN::processw(float * in, float * out, long samples) {
   } else {
     /* x2 points */
     int i = 0, t;
-    for(t = 0; i < (numpts - 1) && t < (maxpts-2); t+=2) {
+    for(t = 0; i < (numpts - 1) && t < (maxpts-2); i++) {
       tempx[t] = pointx[i];
       tempy[t] = pointy[i];
+      t++;
+      /* now, only if there's room... */
+      if (pointx[i+1] - pointx[i] > 1) {
+	/* add an extra point. Pick it in some arbitrary weird way. 
+	   my idea is to double the frequency ...
+	*/
       
-      /* now an extra point. Pick it in some arbitrary weird way. 
-         my idea is to double the frequency ...
-      */
-      
-      tempy[t+1] = 0.75; //- pointy[i];
-      tempx[t+1] = (pointx[i] + pointx[i+1]) >> 1;
+	tempy[t] = 0.75; //- pointy[i];
+	tempx[t] = (pointx[i] + pointx[i+1]) >> 1;
 
-      i++;
+	t++;
+      }
+
     }
     /* always include last */
     tempx[t] = pointx[numpts-1];
@@ -410,7 +418,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
     for(int u=1; u < numpts; u ++) {
       float denom = (pointx[u] - pointx[u-1]);
-      for(int z=pointx[u-1]<0?0:pointx[u-1]; z < pointx[u]; z++) {
+      for(int z=pointx[u-1]; z < pointx[u]; z++) {
         float pct = (float)(z-pointx[u-1]) / denom;
         float s = pointy[u-1] * (1.0 - pct) +
           pointy[u]   * pct;
@@ -425,7 +433,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
     for(int u=1; u < numpts; u ++) {
       float denom = (pointx[u] - pointx[u-1]);
-      for(int z=pointx[u-1]<0?0:pointx[u-1]; z < pointx[u]; z++) {
+      for(int z=pointx[u-1]; z < pointx[u]; z++) {
         float pct = (float)(z-pointx[u-1]) / denom;
         float s = pointy[u-1] * pct +
           pointy[u]   * (1.0 - pct);
@@ -438,9 +446,11 @@ void PLUGIN::processw(float * in, float * out, long samples) {
   } else if (interpstyle < 0.30) {
     /* x-reverse input samples for each waveform - "reversi" */
     for(int u=1; u < numpts; u ++) {
-      for(int z = pointx[u-1]<0?0:pointx[u-1]; z < pointx[u]; z++) {
-        out[z] = in[(pointx[u] - z) + pointx[u - 1]];
-      }
+      if (pointx[u-1] < pointx[u])
+	for(int z = pointx[u-1]; z < pointx[u]; z++) {
+	  int s = (pointx[u] - (z + 1)) + pointx[u - 1];
+	  out[z] = in[(s>0)?s:0];
+	}
     }
 
   } else if (interpstyle < 0.40) {
@@ -448,7 +458,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
     for(int u=1; u < numpts; u ++) {
       float denom = (pointx[u] - pointx[u-1]);
-      for(int z=pointx[u-1]<0?0:pointx[u-1]; z < pointx[u]; z++) {
+      for(int z=pointx[u-1]; z < pointx[u]; z++) {
         float pct = (float)(z-pointx[u-1]) / denom;
         
         float p = 0.5f * (-cos(float(pi * pct)) + 1.0f);
@@ -475,10 +485,6 @@ void PLUGIN::processw(float * in, float * out, long samples) {
     /* unsupported ... ! */
     for(int i = 0; i < samples; i++) out[i] = 0.0;
   }
-
-  lastx = pointx[numpts-1] - samples;
-  lasty = pointy[numpts-1];
-
 
 }
 
