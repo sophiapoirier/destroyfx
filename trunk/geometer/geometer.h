@@ -39,7 +39,7 @@ enum { POINT_EXTNCROSS,
        POINT_SPAN, 
        POINT_DYDX, 
        NUM_POINTSTYLES,
-       MAX_POINTSTYLES=64
+       MAX_POINTSTYLES=48
 };
 
 /* the types of waveform regeneration operations */
@@ -51,7 +51,7 @@ enum { INTERP_POLYGON,
        INTERP_FRIENDS, 
        INTERP_SING,
        NUM_INTERPSTYLES,
-       MAX_INTERPSTYLES=64
+       MAX_INTERPSTYLES=48
 };
 
 /* the types of operations on points */
@@ -62,8 +62,9 @@ enum { OP_DOUBLE,
        OP_SHORTPASS, 
        OP_SLOW, 
        OP_FAST, 
-       OP_UNSUP3, 
-       NUM_OPS
+       OP_NONE, 
+       NUM_OPS,
+       MAX_OPS=48
 };
 
 /* the types of window shapes available for smoothity */
@@ -80,8 +81,8 @@ enum { WINDOW_TRIANGLE,
 #define UNMKPOINTSTYLE(i)    ( paramSteppedUnscaled((i), MAX_POINTSTYLES) )
 #define MKINTERPSTYLE(f)     ( paramSteppedScaled((f),   MAX_INTERPSTYLES) )
 #define UNMKINTERPSTYLE(i)   ( paramSteppedUnscaled((i), MAX_INTERPSTYLES) )
-#define MKPOINTOP(f)         ( paramSteppedScaled((f),   NUM_OPS) )
-#define UNMKPOINTOP(i)       ( paramSteppedUnscaled((i), NUM_OPS) )
+#define MKPOINTOP(f)         ( paramSteppedScaled((f),   MAX_OPS) )
+#define UNMKPOINTOP(i)       ( paramSteppedUnscaled((i), MAX_OPS) )
 #define MKWINDOWSHAPE(f)     ( paramSteppedScaled((f),   MAX_WINDOWSHAPES) )
 #define UNMKWINDOWSHAPE(i)   ( paramSteppedUnscaled((i), MAX_WINDOWSHAPES) )
 
@@ -89,37 +90,17 @@ enum { WINDOW_TRIANGLE,
 /* the names of the parameters */
 enum { P_BUFSIZE, P_SHAPE, 
        P_POINTSTYLE, 
-        P_POINTPARAMS,
+         P_POINTPARAMS,
        P_INTERPSTYLE = P_POINTPARAMS + MAX_POINTSTYLES,
-        P_INTERPARAMS,
+         P_INTERPARAMS,
        P_POINTOP1 = P_INTERPARAMS + MAX_INTERPSTYLES,
-        P_OPPAR1_0, 
-        P_OPPAR1_1, 
-        P_OPPAR1_2, 
-        P_OPPAR1_3, 
-        P_OPPAR1_4, 
-        P_OPPAR1_5, 
-        P_OPPAR1_6, 
-        P_OPPAR1_7, 
-       P_POINTOP2, 
-        P_OPPAR2_0, 
-        P_OPPAR2_1, 
-        P_OPPAR2_2, 
-        P_OPPAR2_3, 
-        P_OPPAR2_4, 
-        P_OPPAR2_5, 
-        P_OPPAR2_6, 
-        P_OPPAR2_7, 
-       P_POINTOP3,
-        P_OPPAR3_0,
-        P_OPPAR3_1,
-        P_OPPAR3_2,
-        P_OPPAR3_3,
-        P_OPPAR3_4,
-        P_OPPAR3_5,
-        P_OPPAR3_6,
-        P_OPPAR3_7,
-       NUM_PARAMS };
+         P_OPPAR1S,
+       P_POINTOP2 = P_OPPAR1S + MAX_OPS,
+         P_OPPAR2S,
+       P_POINTOP3 = P_OPPAR2S + MAX_OPS,
+         P_OPPAR3S,
+       NUM_PARAMS = P_OPPAR3S + MAX_OPS
+};
 
 
 struct param {
@@ -271,9 +252,9 @@ private:
   float pointop2;
   float pointop3;
 
-  float oppar1[NUM_OPS];
-  float oppar2[NUM_OPS];
-  float oppar3[NUM_OPS];
+  float oppar1[MAX_OPS];
+  float oppar2[MAX_OPS];
+  float oppar3[MAX_OPS];
 
   int lastx;
   float lasty;
