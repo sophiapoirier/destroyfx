@@ -28,9 +28,9 @@ is for our new DfxPlugin class.
 dfx-au-utilities has some stuff that's useful for pretty much any AU
 plugin or host, so it's in separate files because we possibly also use
 that stuff in non-DFX projects.  Also, for that same reason, these
-files are an exception in that they are offered under the terms of the
-GNU Lesser General Public License (LGPL) rather than the GNU General
-Public License (GPL).
+files are an exception in that they are offered under the terms of a
+modified BSD License (see bsd-license.txt) rather than the GNU 
+General Public License (GPL).
 
 *** EVERYTHING BELOW THIS LINE IS IN THE PROCESS OF BEING OBSOLETED ***
 ***                   DFXPLUGIN IS THE NEW WAY                      ***
