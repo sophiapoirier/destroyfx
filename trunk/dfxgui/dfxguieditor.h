@@ -72,6 +72,9 @@ public:
 	// *** override this if you want your GUI to react when the mouseovered control changes
 	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse) { }
 
+	DGControl * getCurrentControl_clicked()
+		{	return currentControl_clicked;	}
+
 	// the below methods all handle communication between the GUI component and the music component
 	DfxPlugin * getdfxplugin()
 		{	return dfxplugin;	}
