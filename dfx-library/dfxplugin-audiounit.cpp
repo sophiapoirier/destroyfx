@@ -41,6 +41,46 @@ ComponentResult DfxPlugin::Initialize()
 		result = TARGET_API_BASE_CLASS::Initialize();
 	#endif
 
+	const AUChannelInfo *auChannelConfigs = NULL;
+	UInt32 numIOconfigs = SupportedNumChannels(&auChannelConfigs);
+	// if this AU supports only specific i/o channel count configs, then check whether the current format is allowed
+	if ( (numIOconfigs > 0) && (auChannelConfigs != NULL) )
+	{
+		SInt16 auNumInputs = (SInt16) GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0).mChannelsPerFrame;
+		SInt16 auNumOutputs = (SInt16) GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0).mChannelsPerFrame;
+		bool foundMatch = false;
+		for (UInt32 i=0; (i < numIOconfigs) && !foundMatch; i++)
+		{
+			SInt16 configNumInputs = auChannelConfigs[i].inChannels;
+			SInt16 configNumOutputs = auChannelConfigs[i].outChannels;
+			// handle the special "wildcard" cases of negative AUChannelInfo values
+			if ( (configNumInputs < 0) && (configNumOutputs < 0) )
+			{
+				// a -1,-2 AUChannelInfo pair signifies that any number of inputs and outputs is allowed
+				if ( ((configNumInputs == -1) && (configNumOutputs == -2)) || ((configNumInputs == -2) && (configNumOutputs == -1)) )
+					foundMatch = true;
+				// failing that, a -1,-1 pair signifies that any number of ins and outs are allowed, as long as they are equal
+				else if ( ((configNumInputs == -1) && (configNumOutputs == -1)) && (auNumInputs == auNumOutputs) )
+					foundMatch = true;
+				// any other pair of negative values are illegal, so skip this AUChannelInfo pair
+				else
+					continue;
+			}
+			// handle literal AUChannelInfo values (and maybe a wildcard on one of the scopes)
+			else
+			{
+				bool inputMatch = (auNumInputs == configNumInputs) || (configNumInputs == -1);
+				bool outputMatch = (auNumOutputs == configNumOutputs) || (configNumOutputs == -1);
+				// if input and output are both allowed in this i/o pair description, then we found a match
+				if (inputMatch && outputMatch)
+					foundMatch = true;
+			}
+		}
+		// if the current i/o counts don't match any of the allowed configs, return an error
+		if ( !foundMatch )
+			return kAudioUnitErr_FormatNotSupported;
+	}
+
 	// call our initialize routine
 	if (result == noErr)
 		result = do_initialize();
@@ -972,29 +1012,33 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 //printf("\nDfxPlugin::ChangeStreamFormat,   new num channels = %lu,   old num channels = %lu\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
 	const AUChannelInfo *auChannelConfigs = NULL;
 	UInt32 numIOconfigs = SupportedNumChannels(&auChannelConfigs);
+	// if this AU supports only specific i/o channel count configs, 
+	// then try to check whether the incoming format is allowed
 	if ( (numIOconfigs > 0) && (auChannelConfigs != NULL) )
 	{
 		SInt16 newNumChannels = (SInt16) (inNewFormat.mChannelsPerFrame);
 		bool foundMatch = false;
-		for (UInt32 i=0; i < numIOconfigs; i++)
+		for (UInt32 i=0; (i < numIOconfigs) && !foundMatch; i++)
 		{
 			switch (inScope)
 			{
 				case kAudioUnitScope_Input:
-					if (newNumChannels == auChannelConfigs[i].inChannels)
+					if ( (newNumChannels == auChannelConfigs[i].inChannels) || (auChannelConfigs[i].inChannels < 0) )
 						foundMatch = true;
 					break;
 				case kAudioUnitScope_Output:
-				case kAudioUnitScope_Global:
-					if (newNumChannels == auChannelConfigs[i].outChannels)
+					if ( (newNumChannels == auChannelConfigs[i].outChannels) || (auChannelConfigs[i].outChannels < 0) )
 						foundMatch = true;
 					break;
 				default:
 					// just allow this pass through, since it's unknown what it's for
-					foundMatch = true;
-					break;
+//					foundMatch = true;
+//					break;
+					return kAudioUnitErr_InvalidScope;
 			}
 		}
+		// if the incoming channel count can't possibly work in 
+		// any of the allowed channel configs, return an error
 		if ( !foundMatch )
 			return kAudioUnitErr_FormatNotSupported;
 	}
