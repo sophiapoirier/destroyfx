@@ -43,6 +43,12 @@ void DGButton::init()
 
 	mouseIsDown = false;
 	setControlContinuous(false);
+
+	if (mode == kDGButtonType_picturereel)
+		setRespondToMouse(false);
+
+	if ( (mode == kDGButtonType_incbutton) || (mode == kDGButtonType_decbutton) )
+		setWraparoundValues(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -74,18 +80,11 @@ void DGButton::draw(CGContextRef inContext, long inPortHeight)
 //-----------------------------------------------------------------------------
 void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
-	if (mode == kDGButtonType_picturereel)
-		return;
-
 	entryValue = newValue = GetControl32BitValue(carbonControl);
 	SInt32 min = GetControl32BitMinimum(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
 
 	setMouseIsDown(true);
-	#if TARGET_PLUGIN_USES_MIDI
-		if (isParameterAttached())
-			getDfxGuiEditor()->setmidilearner(getParameterID());
-	#endif
 
 	switch (mode)
 	{
@@ -98,35 +97,37 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 				newValue = entryValue - 1;
 			else
 				newValue = entryValue + 1;
-			// wrap around
-			if (newValue > max)
-				newValue = min;
-			else if (newValue < min)
-				newValue = max;
 			break;
 		case kDGButtonType_decbutton:
 			if ( (inMouseButtons & (1<<1)) || (inKeyModifiers & kDGKeyModifier_alt) )
 				newValue = entryValue + 1;
 			else
 				newValue = entryValue - 1;
-			// wrap around
-			if (newValue < min)
-				newValue = max;
-			else if (newValue > max)
-				newValue = min;
 			break;
 		case kDGButtonType_radiobutton:
 			newValue = (long)inXpos / (getBounds()->w / numStates);
-			if (newValue >= numStates)
-				newValue = numStates - 1;
-			else if (newValue < 0)
-				newValue = 0;
 			newValue += min;	// offset
 			break;
 		default:
 			break;
 	}
 
+	// wrap around
+	if ( getWraparoundValues() )
+	{
+		if (newValue > max)
+			newValue = min;
+		else if (newValue < min)
+			newValue = max;
+	}
+	// limit
+	else
+	{
+		if (newValue > max)
+			newValue = max;
+		else if (newValue < min)
+			newValue = min;
+	}
 	if (newValue != entryValue)
 		SetControl32BitValue(carbonControl, newValue);
 
@@ -137,9 +138,6 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 //-----------------------------------------------------------------------------
 void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
-	if (mode == kDGButtonType_picturereel)
-		return;
-
 	SInt32 currentValue = GetControl32BitValue(carbonControl);
 
 	if ( getBounds()->isInside_zerobase((long)inXpos, (long)inYpos) )
@@ -186,9 +184,6 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 //-----------------------------------------------------------------------------
 void DGButton::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 {
-	if (mode == kDGButtonType_picturereel)
-		return;
-
 	setMouseIsDown(false);
 	
 	if (mode == kDGButtonType_pushbutton)
@@ -216,31 +211,23 @@ void DGButton::setMouseIsDown(bool newMouseState)
 //-----------------------------------------------------------------------------
 bool DGButton::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
 {
-	if (mode == kDGButtonType_picturereel)
-		return false;
-
-	float x = 0.0f, y = 0.0f;
-	DGKeyModifiers fakeModifiers = 0;
-	long direction = 1;
-	if (inDelta < 0)
+	switch (mode)
 	{
-		fakeModifiers = kDGKeyModifier_alt;
-		direction = -1;
-	}
-	if (mode == kDGButtonType_radiobutton)
-	{
-		SInt32 desiredValue = GetControl32BitValue(carbonControl) + direction;
-		x = (float) ((getBounds()->w / numStates) * desiredValue);
-		if (x < 0.0f)
-			x = 0.0f;
-		else if ( x > (float)(getBounds()->w) )
-			x = (float)(getBounds()->w);
-	}
+		case kDGButtonType_incbutton:
+		case kDGButtonType_decbutton:
+		case kDGButtonType_pushbutton:
+			{
+				DGKeyModifiers fakeModifiers = inKeyModifiers;
+				if (inDelta < 0)
+					fakeModifiers |= kDGKeyModifier_alt;
+				mouseDown(0.0f, 0.0f, 1, fakeModifiers);
+				mouseUp(0.0f, 0.0f, inKeyModifiers);
+			}
+			return true;
 
-	mouseDown(x, y, 1, fakeModifiers);
-	mouseUp(x, y, fakeModifiers);
-
-	return true;
+		default:
+			return DGControl::mouseWheel(inDelta, inAxis, inKeyModifiers);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -321,11 +308,6 @@ void DGFineTuneButton::draw(CGContextRef inContext, long inPortHeight)
 //-----------------------------------------------------------------------------
 void DGFineTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
-	#if TARGET_PLUGIN_USES_MIDI
-		if (isParameterAttached())
-			getDfxGuiEditor()->setmidilearner(getParameterID());
-	#endif
-
 	// figure out all of the values that we'll be using
 	entryValue = GetControl32BitValue(carbonControl);
 	SInt32 min = GetControl32BitMinimum(carbonControl);
@@ -402,6 +384,8 @@ DGWebLink::DGWebLink(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * 
 		urlString = (char*) malloc(strlen(inURL) + 4);
 		strcpy(urlString, inURL);
 	}
+
+	setRespondToMouseWheel(false);
 }
 
 //-----------------------------------------------------------------------------
