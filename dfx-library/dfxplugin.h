@@ -220,7 +220,7 @@ SUPPORT_AU_VERSION_1
 
 
 //-----------------------------------------------------------------------------
-// constants & types
+// constants and types
 
 #ifdef TARGET_API_AUDIOUNIT
 	enum {
@@ -660,8 +660,8 @@ public:
 	virtual void Cleanup();
 	virtual ComponentResult Reset(AudioUnitScope inScope, AudioUnitElement inElement);
 
-	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags, 
-					const AudioBufferList &inBuffer, AudioBufferList &outBuffer, 
+	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
+					const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
 					UInt32 inFramesToProcess);
 	#if TARGET_PLUGIN_USES_DSPCORE
 		virtual AUKernelBase * NewKernel();
@@ -669,7 +669,7 @@ public:
 
 	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
-					UInt32 &outDataSize, Boolean &outWritable);
+					UInt32 & outDataSize, Boolean & outWritable);
 	virtual ComponentResult GetProperty(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					void * outData);
@@ -686,7 +686,7 @@ public:
 
 	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
 					AudioUnitParameterID inParameterID, 
-					AudioUnitParameterInfo &outParameterInfo);
+					AudioUnitParameterInfo & outParameterInfo);
 	virtual ComponentResult GetParameterValueStrings(AudioUnitScope inScope, 
 					AudioUnitParameterID inParameterID, CFArrayRef * outStrings);
 	virtual ComponentResult SetParameter(AudioUnitParameterID inParameterID, 
@@ -695,8 +695,8 @@ public:
 
 	virtual	ComponentResult ChangeStreamFormat(AudioUnitScope inScope, 
 					AudioUnitElement inElement, 
-					const CAStreamBasicDescription &inPrevFormat, 
-					const CAStreamBasicDescription &inNewFormat);
+					const CAStreamBasicDescription & inPrevFormat, 
+					const CAStreamBasicDescription & inNewFormat);
 
 	virtual ComponentResult SaveState(CFPropertyListRef * outData);
 	virtual ComponentResult RestoreState(CFPropertyListRef inData);
@@ -887,7 +887,7 @@ protected:
 public:
 
 #ifdef TARGET_API_AUDIOUNIT
-	void Process(const Float32 * in, Float32 * out, UInt32 inNumFrames, UInt32 inNumChannels, bool &ioSilence)
+	void Process(const Float32 * in, Float32 * out, UInt32 inNumFrames, UInt32 inNumChannels, bool & ioSilence)
 	{
 		do_process(in, out, inNumFrames);
 		ioSilence = false;
