@@ -21,6 +21,7 @@
 	Please refer to the file lgpl.txt for the complete license terms.
 */
 
+
 #include "dfx-au-utilities.h"
 
 #include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
@@ -194,7 +195,7 @@ CFStringRef auPresetCFArrayCopyDescriptionCallback(const void * inPreset)
 
 //-----------------------------------------------------------------------------
 // this will initialize a CFArray callbacks structure to use the above callback functions
-void auPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks)
+void AUPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks)
 {
 	if (outArrayCallbacks == NULL)
 		return;
@@ -209,6 +210,7 @@ void auPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks)
 }
 
 //-----------------------------------------------------------------------------
+#ifdef __GNUC__
 #if 1
 const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 	version: 0, 
@@ -226,14 +228,15 @@ const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 	.equal = auPresetCFArrayEqualCallback
 };
 #else
-	#if defined(__GNUC__)
 		const CFArrayCallBacks kAUPresetCFArrayCallbacks;
 		static void kAUPresetCFArrayCallbacks_constructor() __attribute__((constructor));
 		static void kAUPresetCFArrayCallbacks_constructor()
 		{
-			auPresetCFArrayCallbacks_Init( (CFArrayCallBacks*) &kAUPresetCFArrayCallbacks );
+			AUPresetCFArrayCallbacks_Init( (CFArrayCallBacks*) &kAUPresetCFArrayCallbacks );
 		}
-	#endif
+#endif
+#else
+#warning "kAUPresetCFArrayCallbacks will not be initialized unless you use gcc to compile this source file, so don't rely on kAUPresetCFArrayCallbacks if you are not using gcc!"
 #endif
 
 
