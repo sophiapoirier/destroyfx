@@ -26,6 +26,12 @@ CFStringRef auPresetCFArrayCopyDescriptionCallback(const void * inPreset);
 // and this will init a CFArray callbacks struct to use the above callback functions
 void auPresetCFArrayCallbacks_Init(CFArrayCallBacks * inArrayCallbacks);
 
+// these are convenience functions for sending parameter change notifications to all parameter listeners
+void AUParameterChange_TellListeners_ScopeElement(AudioUnit inComponentInstance, AudioUnitParameterID inParameterID, 
+									AudioUnitScope inScope, AudioUnitElement inElement);
+// this one defaults to using global scope and element 0
+void AUParameterChange_TellListeners(AudioUnit inComponentInstance, AudioUnitParameterID inParameterID);
+
 
 
 #ifdef __cplusplus
