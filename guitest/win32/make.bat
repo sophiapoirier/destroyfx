@@ -15,4 +15,4 @@ cl  /FD  /MD /nologo /O2 /Ot /Og /Oi /Oy /Gs /GD /D "WIN32" /D "NDEBUG" /D "_WIN
 
 echo -------------- link.
 
-link kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"guitest.pdb" /machine:I386 /def:".\guitest.def" /out:"C:\Progra~1\Steinberg\VstPlugIns\dfx Guitest.dll" /implib:"guitest.lib" audioeffect.obj guitesteditor.obj audioeffectx.obj guitest.obj dfxplugin.obj dfxplugin-vst.obj dfxparameter.obj dfxsettings.obj dfxmidi.obj
+link /IGNORE:4089 kernel32.lib ddraw.lib user32.lib gdi32.lib shell32.lib winspool.lib comdlg32.lib advapi32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"guitest.pdb" /machine:I386 /def:".\guitest.def" /out:"C:\Progra~1\Steinberg\VstPlugIns\dfx Guitest.dll" /implib:"guitest.lib" audioeffect.obj guitesteditor.obj audioeffectx.obj guitest.obj dfxplugin.obj dfxplugin-vst.obj dfxparameter.obj dfxsettings.obj dfxmidi.obj
