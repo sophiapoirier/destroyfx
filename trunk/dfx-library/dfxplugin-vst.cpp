@@ -465,7 +465,8 @@ long DfxPlugin::processEvents(VstEvents* events)
 
 // boring Windows main stuff
 #if WIN32
-	HINSTANCE hInstance;
+/* vstgui needs void *, not HINSTANCE */
+	void * hInstance;
 	BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved)
 	{
 		hInstance = hInst;
