@@ -37,7 +37,7 @@
 //-----------------------------------------------------------------------------
 // this is the file name of the localizable strings file for the text for 
 // some of the alert messages and whatnot in this code
-#define kDfxLocalizableStringsTable	CFSTR("dfx-au-utilities-localizable")
+#define kDfxLocalizableStringsTable	CFSTR("dfx-au-utilities")
 // This global variable keeps track of the latest bundle that called SaveAUStateToPresetFile_Bundle.  
 // We need to reference that bundle in several other places in order to retrieve localizable strings, 
 // and it seems pretty safe to just assume that one global reference will work okay, and nicer than 
@@ -931,7 +931,7 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 		error = GetAUNameAndManufacturerCStrings(inAUComponent, auNameCString, NULL);
 		if (error == noErr)
 		{
-			CFStringRef dialogWindowTitle_firstPart = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save preset file for"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("window title of the regular (simple) save AU preset dialog.  (note:  the code will append the name of the AU after this string, so format the syntax accordingly)"));
+			CFStringRef dialogWindowTitle_firstPart = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save preset file for"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("window title of the regular (simple) save AU preset dialog.  (note:  the code will append the name of the AU after this string, so format the syntax accordingly)"));
 			CFStringRef dialogWindowTitle = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ %s"), dialogWindowTitle_firstPart, auNameCString);
 			CFRelease(dialogWindowTitle_firstPart);
 			if (dialogWindowTitle != NULL)
@@ -1247,7 +1247,7 @@ Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL)
 
 	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
 	alertParams.movable = true;
-	alertParams.defaultText = CFCopyLocalizedStringFromTableInBundle(CFSTR("Replace"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, 
+	alertParams.defaultText = CFCopyLocalizedStringFromTableInBundle(CFSTR("Replace"), CFSTR("dfx-au-utilities"), gCurrentBundle, 
 				CFSTR("text for the button that will over-write an existing file when a save file file-already-exists conflict arises"));
 	alertParams.cancelText = (CFStringRef) kAlertDefaultCancelText;
 	alertParams.defaultButton = kAlertStdAlertCancelButton;
@@ -1262,14 +1262,14 @@ Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL)
 		dirstring = CFURLCopyFileSystemPath(dirurl, kCFURLPOSIXPathStyle);
 		CFRelease(dirurl);
 	}
-	titleString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, 
+	titleString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save"), CFSTR("dfx-au-utilities"), gCurrentBundle, 
 								CFSTR("title of the alert window when a save file file-already-exists conflict arises"));
 	messageString = NULL;
 	// if we got strings for the file name and parent directory path, 
 	// then we can make a nice and specific dialog message
 	if ( (filenamestring != NULL) && (dirstring != NULL) )
 	{
-		CFStringRef messageOutlineString = CFCopyLocalizedStringFromTableInBundle(CFSTR("A file named \"%@\" already exists in \"%@\".  Do you want to replace it with the file that you are saving?"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, 
+		CFStringRef messageOutlineString = CFCopyLocalizedStringFromTableInBundle(CFSTR("A file named \"%@\" already exists in \"%@\".  Do you want to replace it with the file that you are saving?"), CFSTR("dfx-au-utilities"), gCurrentBundle, 
 				CFSTR("the message in the alert, specifying file name and location, for when file name and path are available as CFStrings"));
 		messageString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, messageOutlineString, filenamestring, dirstring);
 		CFRelease(messageOutlineString);
@@ -1277,7 +1277,7 @@ Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL)
 	// otherwise, we have to make it a general message
 	else
 	{
-		messageString = CFCopyLocalizedStringFromTableInBundle(CFSTR("A file with the same name already exists in this location.  Do you want to replace it with the file that you are saving?"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, 
+		messageString = CFCopyLocalizedStringFromTableInBundle(CFSTR("A file with the same name already exists in this location.  Do you want to replace it with the file that you are saving?"), CFSTR("dfx-au-utilities"), gCurrentBundle, 
 							CFSTR("the message in the alert, general, for when file name and path are not available"));
 	}
 	if (filenamestring != NULL)
@@ -1373,8 +1373,8 @@ OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 
 	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
 	alertParams.movable = true;
-	alertTitle = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save access error"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the alert window title for when an access privileges error occurs while trying to save a file"));
-	alertMessage = CFCopyLocalizedStringFromTableInBundle(CFSTR("You do not have sufficient privileges to save files in that location.  Try saving your file in the User domain."), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the content of the alert message text for an access privileges error"));
+	alertTitle = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save access error"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the alert window title for when an access privileges error occurs while trying to save a file"));
+	alertMessage = CFCopyLocalizedStringFromTableInBundle(CFSTR("You do not have sufficient privileges to save files in that location.  Try saving your file in the User domain."), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the content of the alert message text for an access privileges error"));
 	error = CreateStandardAlert(kAlertNoteAlert, alertTitle, alertMessage, &alertParams, &dialog);
 	CFRelease(alertTitle);
 	CFRelease(alertMessage);
@@ -1441,7 +1441,7 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 		if (inDefaultAUPresetName != NULL)
 			defaultFileBaseName = CFRetain(inDefaultAUPresetName);	// just retain it so we can release below without thinking about it
 		else
-			defaultFileBaseName = CFCopyLocalizedStringFromTableInBundle(CFSTR("untitled"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the default preset file name for the Nav Services save file dialog"));
+			defaultFileBaseName = CFCopyLocalizedStringFromTableInBundle(CFSTR("untitled"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the default preset file name for the Nav Services save file dialog"));
 		defaultFileName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@.%@"), 
 															defaultFileBaseName, kAUPresetFileNameExtension);
 		CFRelease(defaultFileBaseName);
