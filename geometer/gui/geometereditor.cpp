@@ -1,3 +1,5 @@
+
+
 #ifndef __GeometerEditor
 #include "GeometerEditor.hpp"
 #endif
@@ -955,7 +957,7 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
 
   switch (tag) {
   case id_midilearnbutton:
-    chunk->setParameter(control->getValue());
+    chunk->setParameterMidiLearn(control->getValue());
     control->update(context);
     break;
 
@@ -1234,8 +1236,10 @@ void GeometerEditor::idle() {
 
   // turn off any glowing controls that are no longer learning
   for (int i=0; i < NUM_SLIDERS; i++) {
-    if (sliders[i]->getTag() != chunk->learner)
-      glowingchanged = setGlowing(i, false);
+    if (sliders[i] != NULL) {
+      if (sliders[i]->getTag() != chunk->learner)
+        glowingchanged = setGlowing(i, false);
+    }
   }
   
 #if 1
