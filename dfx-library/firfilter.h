@@ -1,5 +1,5 @@
-#ifndef __FIRfilter
-#define __FIRfilter
+#ifndef __dfx_firfilter
+#define __dfx_firfilter
 
 #include <math.h>
 

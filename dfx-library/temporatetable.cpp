@@ -1,5 +1,5 @@
-#ifndef __TempoRateTable
-#include "TempoRateTable.h"
+#ifndef __dfx_temporatetable
+#include "temporatetable.h"
 #endif
 
 #include <string.h>
