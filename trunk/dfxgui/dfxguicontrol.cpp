@@ -56,12 +56,21 @@ DGControl::~DGControl()
 void DGControl::do_draw(CGContextRef inContext, long inPortHeight)
 {
 	// redraw the background behind the control in case the control background has any transparency
-	getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+	// this is handled automatically if the window is in compositing mode, though
+	if ( !(getDfxGuiEditor()->IsWindowCompositing()) )
+		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 
 	CGContextSetAlpha(inContext, drawAlpha);
 
+// XXX quicky hack to work around compositing problems...  can I think of a better solution?
+DGRect oldbounds(getBounds());
+DGRect oldfbounds(getForeBounds());
+FixControlCompositingOffset(getBounds(), carbonControl, getDfxGuiEditor());
+FixControlCompositingOffset(getForeBounds(), carbonControl, getDfxGuiEditor());
 	// then have the child control class do its drawing
 	draw(inContext, inPortHeight);
+getBounds()->set(&oldbounds);
+getForeBounds()->set(&oldfbounds);
 }
 
 //-----------------------------------------------------------------------------
@@ -69,7 +78,12 @@ void DGControl::do_draw(CGContextRef inContext, long inPortHeight)
 void DGControl::redraw()
 {
 	if (carbonControl != NULL)
-		Draw1Control(carbonControl);
+	{
+		if ( getDfxGuiEditor()->IsWindowCompositing() )
+			HIViewSetNeedsDisplay(carbonControl, true);
+		else
+			Draw1Control(carbonControl);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -298,3 +312,46 @@ void DGCarbonViewControl::ParameterToControl(Float32 paramValue)
 	else
 		AUCarbonViewControl::ParameterToControl(paramValue);
 }
+
+
+
+
+
+
+#if MAC
+//-----------------------------------------------------------------------------
+CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor)
+{
+	CGPoint offset;
+	offset.x = offset.y = 0.0f;
+	if ( (inControl == NULL) || (inEditor == NULL) )
+		return offset;
+	if ( !(inEditor->IsWindowCompositing()) )
+		return offset;
+
+	OSStatus error;
+	HIRect controlRect;
+	error = HIViewGetBounds(inControl, &controlRect);
+	if (error == noErr)
+	{
+		HIRect frameRect;
+		error = HIViewGetFrame(inControl, &frameRect);
+		if (error == noErr)
+		{
+			offset.x = controlRect.origin.x - frameRect.origin.x;
+			offset.y = controlRect.origin.y - frameRect.origin.y;
+		}
+	}
+	return offset;
+}
+
+//-----------------------------------------------------------------------------
+void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEditor * inEditor)
+{
+	if (inRect != NULL)
+	{
+		CGPoint offsetAmount = GetControlCompositingOffset(inControl, inEditor);
+		inRect->offset( (long)(offsetAmount.x), (long)(offsetAmount.y) );
+	}
+}
+#endif
