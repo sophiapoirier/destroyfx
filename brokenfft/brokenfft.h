@@ -44,6 +44,8 @@ enum { P_BUFSIZE, P_SHAPE,
        P_ECHOLOW,
        P_ECHOHI,
        P_POSTROT,
+       P_MOMENTS,
+       P_BRIDE,
        NUM_PARAMS};
 
 struct param {
@@ -218,6 +220,10 @@ protected:
 
 
   float postrot;
+
+  float bride;
+
+  float moments;
 
 };
 
