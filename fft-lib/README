@@ -1,0 +1,11 @@
+
+This directory contains a public domain FFT routine by Don Cross. I
+think I have modified it, but I don't remember how.
+
+FFTW is generally preferable to this library. If you're starting a new
+plugin, use that. However, some of my crazy effects in broken-fft
+probably rely on particular features of this FFT, so that's why it is
+here.
+
+
+Tom 7   15 Aug 2001
