@@ -26,7 +26,7 @@ class DGTextDisplay : public DGControl
 public:
 	DGTextDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
 					displayTextProcedure inTextProc, void * inUserData, DGImage * inBackground, 
-					float inFontSize = 12.0f, DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, 
+					DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
 					DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGTextDisplay();
 
@@ -54,10 +54,10 @@ protected:
 	DGImage *				backgroundImage;
 	displayTextProcedure	textProc;
 	void *					textProcUserData;
-	char *					fontName;
-	float					fontSize;
 	DfxGuiTextAlignment		alignment;
+	float					fontSize;
 	DGColor					fontColor;
+	char *					fontName;
 	DfxGuiTextDisplayMouseAxis	mouseAxis;	// flags indicating which directions you can mouse to adjust the control value
 	float					mouseDragRange;	// the range of pixels over which you can drag the mouse to adjust the control value
 	float					lastX, lastY;
@@ -69,7 +69,7 @@ class DGStaticTextDisplay : public DGTextDisplay
 {
 public:
 	DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
-						float inFontSize = 12.0f, DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, 
+						DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
 						DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 

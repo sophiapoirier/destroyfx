@@ -117,33 +117,33 @@ long MidiGaterEditor::open()
 
 	// slope
 	pos.set(kDisplayX, kSlopeDisplayY, kDisplayWidth/2, kDisplayHeight);
-	label = new DGStaticTextDisplay(this, &pos, NULL, kValueTextSize, kDGTextAlign_left, kValueTextColor, kValueTextFont);
+	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize, kValueTextColor, kValueTextFont);
 	auvp = AUVParameter(GetEditAudioUnit(), kSlope, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
 	//
 	pos.offset(kDisplayWidth/2, 0);
-	display = new DGTextDisplay(this, kSlope, &pos, slopeDisplayProc, NULL, NULL, kValueTextSize, 
-								kDGTextAlign_right, kValueTextColor, kValueTextFont);
+	display = new DGTextDisplay(this, kSlope, &pos, slopeDisplayProc, NULL, NULL, kDGTextAlign_right, 
+								kValueTextSize, kValueTextColor, kValueTextFont);
 
 	// velocity influence
 	pos.set(kDisplayX - 1, kVelInfluenceDisplayY, kVelInfluenceLabelWidth + 1, kDisplayHeight);
-	label = new DGStaticTextDisplay(this, &pos, NULL, kValueTextSize - 0.48f, kDGTextAlign_left, kValueTextColor, kValueTextFont);
+	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize - 0.48f, kValueTextColor, kValueTextFont);
 	auvp = AUVParameter(GetEditAudioUnit(), kVelInfluence, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
 	//
 	pos.set(kDisplayX + kVelInfluenceLabelWidth, kVelInfluenceDisplayY, kDisplayWidth - kVelInfluenceLabelWidth, kDisplayHeight);
 	display = new DGTextDisplay(this, kVelInfluence, &pos, velInfluenceDisplayProc, NULL, NULL, 
-								kValueTextSize, kDGTextAlign_right, kValueTextColor, kValueTextFont);
+								kDGTextAlign_right, kValueTextSize, kValueTextColor, kValueTextFont);
 
 	// floor
 	pos.set(kDisplayX, kFloorDisplayY, kDisplayWidth/2, kDisplayHeight);
-	label = new DGStaticTextDisplay(this, &pos, NULL, kValueTextSize, kDGTextAlign_left, kValueTextColor, kValueTextFont);
+	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_left, kValueTextSize, kValueTextColor, kValueTextFont);
 	auvp = AUVParameter(GetEditAudioUnit(), kFloor, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
 	//
 	pos.offset(kDisplayWidth/2, 0);
-	display = new DGTextDisplay(this, kFloor, &pos, floorDisplayProc, NULL, NULL, kValueTextSize, 
-								kDGTextAlign_right, kValueTextColor, kValueTextFont);
+	display = new DGTextDisplay(this, kFloor, &pos, floorDisplayProc, NULL, NULL, kDGTextAlign_right, 
+								kValueTextSize, kValueTextColor, kValueTextFont);
 
 
 	//--initialize the buttons----------------------------------------------
