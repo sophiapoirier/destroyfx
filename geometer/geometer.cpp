@@ -205,7 +205,7 @@ long PLUGIN::setChunk(void *data, long byteSize, bool isPreset) {
 /* process MIDI events */
 long PLUGIN::processEvents(VstEvents* events) {
   /* manage parameter automation via MIDI CCs */
-  chunk->processCCevents(events);
+  chunk->processParameterEvents(events);
   /* manage program changes via MIDI */
   processProgramChangeEvents(events, this);
   /* tells the host to keep sending events */
