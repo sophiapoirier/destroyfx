@@ -307,7 +307,7 @@ long GeometerEditor::open(void *ptr) {
   /* geometer view */
   size(pos_geometerviewx, pos_geometerviewy, 
        pos_geometerviewx + pos_geometervieww, pos_geometerviewy + pos_geometerviewh);
-  gview = new GeometerView(size, (Geometer*)effect);
+  gview = new GeometerView(size, (PLUGIN*)effect);
   gview->setTransparency(false);
   frame->addView(gview);
   gview->init();
@@ -1325,11 +1325,6 @@ void GeometerEditor::idle() {
   // some hosts need this call otherwise stuff doesn't redraw
   if (helpchanged || glowingchanged || gviewchanged)
     postUpdate();
-
-  /* use this idle routine to watch out for new frame size values, too */
-  if (((PLUGIN*)effect)->changed)
-    ((AudioEffectX*)effect)->ioChanged();
-  ((PLUGIN*)effect)->changed = 0;
 
   // this is called so that idle() actually happens
   AEffGUIEditor::idle();
