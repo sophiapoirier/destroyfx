@@ -17,7 +17,7 @@ typedef enum {
 } DfxGuiTextDisplayMouseAxis;
 
 
-typedef void (*displayTextProcedure) (float value, char * outText, void * userData);
+typedef void (*displayTextProcedure) (float inValue, char * outText, void * inUserData);
 
 
 //-----------------------------------------------------------------------------
@@ -32,6 +32,9 @@ public:
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
 	void drawText(DGRect * inRegion, const char * inText, CGContextRef inContext, long inPortHeight);
+#if MAC
+	OSStatus drawCFText(DGRect * inRegion, const CFStringRef inText, CGContextRef inContext, long inPortHeight);
+#endif
 
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
@@ -96,6 +99,9 @@ public:
 
 protected:
 	char * displayString;
+#if MAC
+	CFStringRef displayCFString;
+#endif
 };
 
 
@@ -123,6 +129,21 @@ public:
 protected:
 	long numStrings;
 	char ** displayStrings;
+};
+
+
+//-----------------------------------------------------------------------------
+class DGAnimation : public DGTextDisplay
+{
+public:
+	DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+				DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground = NULL);
+
+	virtual void draw(CGContextRef inContext, long inPortHeight);
+
+protected:
+	DGImage * animationImage;
+	long numAnimationFrames;
 };
 
 
