@@ -183,7 +183,7 @@ SUPPORT_AU_VERSION_1
 
 #else
 
-        #error "You must define one of TARGET_API_VST or TARGET_API_AUDIOUNIT."
+	#error "You must define one of TARGET_API_VST or TARGET_API_AUDIOUNIT."
 
 #endif
 // end of target API check
@@ -979,7 +979,7 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 		AEffect *main(audioMasterCallback audioMaster);
 	#endif
 
-#define DFX_ENTRYPRE(PluginClass)									\
+#define DFX_ENTRYPRE(PluginClass)								\
 	AEffect *main(audioMasterCallback audioMaster)				\
 	{															\
 		if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
@@ -1000,9 +1000,9 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 		}
 	#else
 
-        #define DFX_ENTRY(PC) DFX_ENTRYPRE(PC)
+		#define DFX_ENTRY(PC) DFX_ENTRYPRE(PC)
 
-        #endif
+	#endif
 
 	// we need to manage the DSP cores manually in VST
 	// call this in the plugin's constructor if it uses DSP cores for processing
