@@ -141,8 +141,8 @@ long Scrubby::initialize()
 		activeNotesTable = (long*) malloc(NUM_PITCH_STEPS * sizeof(long));
 
 	if ( (pitchSteps == NULL) || (activeNotesTable == NULL) )
-		return -10875;	// AUFailedInitialization error code
-	return 0;	// no error
+		return kDfxErr_InitializationFailed;
+	return kDfxErr_NoError;
 }
 
 //-------------------------------------------------------------------------

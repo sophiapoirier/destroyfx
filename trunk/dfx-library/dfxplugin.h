@@ -239,14 +239,24 @@ SUPPORT_AU_VERSION_1
 
 #define DESTROYFX_ID 'DFX!'
 
+#ifdef kAudioUnitErr_FailedInitialization
+#define kDfxErr_InitializationFailed	kAudioUnitErr_FailedInitialization
+#else
+#define kDfxErr_InitializationFailed	-10875
+#endif
+
+#ifdef noErr
+#define kDfxErr_NoError	noErr
+#else
+#define kDfxErr_NoError	0
+#endif
 
 
-//-----------------------------------------------------------------------------
-//enum DfxPluginCreationFlags {
-//	kDfxCreate_UseMidi = 1,
-//	kDfxCreate_Instrument = 1 << 1,
-//	kDfxCreate
-//};
+// property IDs for Audio Unit property stuff
+enum DfxPluginProperties {
+	kDfxPluginProperty_PluginPtr = 64000	// get a pointer to the DfxPlugin
+};
+
 
 
 struct DfxTimeInfo {
