@@ -1,0 +1,18 @@
+
+These files are not part of the repository, because they
+are not free software. You can get them for $0, though,
+from steinberg's website. This is what they look like.
+(You'll want the documentation and the rest of the SDK
+if you want to do plugin development, anyway!)
+
+07.12.1999  15:23                6,603 AEffect.h
+07.12.1999  15:23               19,692 aeffectx.h
+06.15.1999  11:33                  942 AEffEditor.hpp
+06.15.1999  11:33               10,640 AudioEffect.cpp
+06.15.1999  11:33                4,545 AudioEffect.hpp
+07.12.1999  15:23               18,680 audioeffectx.cpp
+07.12.1999  15:23               11,474 audioeffectx.h
+06.15.1999  11:33               18,617 vstcontrols.h
+07.02.1999  18:01               14,915 vstgui.h
+              10 File(s)        106,108 bytes
+
