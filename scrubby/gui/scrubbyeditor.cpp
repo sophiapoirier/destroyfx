@@ -380,6 +380,7 @@ ScrubbyHelpBox::ScrubbyHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, 
 					kDGTextAlign_left, kDisplayTextSize, kBlackDGColor, kDisplayFont), 
 	itemNum(kHelp_none)
 {
+	setRespondToMouseWheel(false);
 }
 
 //--------------------------------------------------------------------------
@@ -456,6 +457,7 @@ public:
 		buttonImage(inImage)
 	{
 		setControlContinuous(false);
+		setWraparoundValues(true);
 	}
 
 	virtual void draw(CGContextRef inContext, long inPortHeight)

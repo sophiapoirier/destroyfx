@@ -139,7 +139,9 @@ static void baseParamsListenerProc(void * inUserData, void * inObject, const Aud
 GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground)
  : DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
                  kDGTextAlign_left, fontsize_snoot, kBlackDGColor, fontface_snoot), 
-   helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY) {
+   helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
+{
+  setRespondToMouseWheel(false);
 }
 
 //--------------------------------------------------------------------------
