@@ -371,6 +371,7 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 				else
 			#endif
 				plugin->setparameter_f(i, newPreset->params[mappedTag]);
+				plugin->postupdate_parameter(i);	// notify listeners of internal parameter change
 				// allow for additional tweaking of the stored parameter setting
 				plugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->params[mappedTag], newSettingsInfo->version);
 			}
@@ -692,6 +693,7 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 
 		// automate the parameter with the value if we've reached this point
 		plugin->setparameter_gen(tag, fValue);
+		plugin->postupdate_parameter(tag);	// notify listeners of internal parameter change
 		// this is an invitation to do something more, if necessary
 		plugin->settings_doMidiAutomatedSetParameterStuff(tag, fValue, frameOffset);
 

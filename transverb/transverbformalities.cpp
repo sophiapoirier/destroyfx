@@ -388,6 +388,9 @@ void Transverb::randomizeParameters(bool writeAutomation)
 	setparameter_b( kTomsound, (bool) ((rand()%3)%2) );
 
 
+	for (long i=0; i < kSpeed1mode; i++)
+		postupdate_parameter(i);	// inform any parameter listeners of the changes
+
 	#if TARGET_API_VST
 		if (writeAutomation)
 		{

@@ -392,6 +392,7 @@ public:
 	void setparameter_gen(long parameterIndex, float newValue);
 	void randomizeparameter(long parameterIndex);
 	void update_parameter(long parameterIndex);
+	void postupdate_parameter(long parameterIndex);
 
 	DfxParamValue getparameter(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get();   else { DfxParamValue dummy; return dummy; }	}
@@ -502,58 +503,20 @@ public:
 	DfxTimeInfo gettimeinfo()
 		{	return timeinfo;	}
 
-	void setlatency_samples(long newlatency)
-	{
-		latency_samples = newlatency;
-		b_uselatency_seconds = false;
-	}
-	void setlatency_seconds(double newlatency)
-	{
-		latency_seconds = newlatency;
-		b_uselatency_seconds = true;
-	}
-	long getlatency_samples()
-	{
-		if (b_uselatency_seconds)
-			return (long) (latency_seconds * getsamplerate());
-		else
-			return latency_samples;
-	}
-	double getlatency_seconds()
-	{
-		if (b_uselatency_seconds)
-			return latency_seconds;
-		else
-			return (double)latency_samples / getsamplerate();
-	}
-
-	void settailsize_samples(long newsize)
-	{
-		tailsize_samples = newsize;
-		b_usetailsize_seconds = false;
-	}
-	void settailsize_seconds(double newsize)
-	{
-		tailsize_seconds = newsize;
-		b_usetailsize_seconds = true;
-	}
-	long gettailsize_samples()
-	{
-		if (b_usetailsize_seconds)
-			return (long) (tailsize_seconds * getsamplerate());
-		else
-			return tailsize_samples;
-	}
-	double gettailsize_seconds()
-	{
-		if (b_usetailsize_seconds)
-			return tailsize_seconds;
-		else
-			return (double)tailsize_samples / getsamplerate();
-	}
-
 	// add an audio input/output configuration to the array of i/o configurations
 	void addchannelconfig(short numin, short numout);
+
+	void setlatency_samples(long newlatency);
+	void setlatency_seconds(double newlatency);
+	long getlatency_samples();
+	double getlatency_seconds();
+	void update_latency();
+
+	void settailsize_samples(long newsize);
+	void settailsize_seconds(double newsize);
+	long gettailsize_samples();
+	double gettailsize_seconds();
+	void update_tailsize();
 
 //	virtual void SetUseTimeStampedParameters(bool newmode = true)
 //		{	b_usetimestampedparameters = newmode;	}
