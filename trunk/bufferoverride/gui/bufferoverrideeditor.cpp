@@ -297,9 +297,9 @@ BufferOverrideEditor::~BufferOverrideEditor()
 // ____________________________________________________________________________
 OSStatus BufferOverrideEditor::open(Float32 inXOffset, Float32 inYOffset)
 {
-printf("\n\n--------------------------------------------------\n");
-printf("       creating Buffer Override GUI\n");
-printf("--------------------------------------------------\n\n");
+//printf("\n\n--------------------------------------------------\n");
+//printf("       creating Buffer Override GUI\n");
+//printf("--------------------------------------------------\n\n");
 	bufferSizeTempoSyncAUP.mAudioUnit = divisorLFOtempoSyncAUP.mAudioUnit = bufferLFOtempoSyncAUP.mAudioUnit = GetEditAudioUnit();
 	bufferSizeTempoSyncAUP.mScope = divisorLFOtempoSyncAUP.mScope = bufferLFOtempoSyncAUP.mScope = kAudioUnitScope_Global;
 	bufferSizeTempoSyncAUP.mElement = divisorLFOtempoSyncAUP.mElement = bufferLFOtempoSyncAUP.mElement = (AudioUnitElement)0;
@@ -311,7 +311,7 @@ printf("--------------------------------------------------\n\n");
 	create graphics objects from PNG resource files
 ***************************************/
 
-	// Background image
+	// background image
 	DGGraphic *gBackground = new DGGraphic("buffer-override-background.png");
 	addImage(gBackground);
 	SetBackgroundImage(gBackground);
@@ -372,120 +372,118 @@ printf("--------------------------------------------------\n\n");
 ***************************************/
 	
 	DGRect pos;
-
-
 	DGSlider *slider;
 
 	long divisorLFOrateTag = getparameter_b(kDivisorLFOtempoSync) ? kDivisorLFOrate_sync : kDivisorLFOrate_abs;
 	pos.set (kDivisorLFOrateSliderX, kDivisorLFOrateSliderY, kSliderWidth, kLFOsliderHeight);
-	divisorLFOrateSlider = new DGSlider(this, divisorLFOrateTag, &pos, kDGSliderStyle_horizontal, gSliderHandle, gBackground);
+	divisorLFOrateSlider = new DGSlider(this, divisorLFOrateTag, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
 	addControl(divisorLFOrateSlider);
 
 	pos.set (kDivisorLFOdepthSliderX, kDivisorLFOdepthSliderY, kSliderWidth, kLFOsliderHeight);
-	slider = new DGSlider(this, kDivisorLFOdepth, &pos, kDGSliderStyle_horizontal, gSliderHandle, gBackground);
+	slider = new DGSlider(this, kDivisorLFOdepth, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
 	addControl(slider);
 
 	long bufferLFOrateTag = getparameter_b(kBufferLFOtempoSync) ? kBufferLFOrate_sync : kBufferLFOrate_abs;
 	pos.set (kBufferLFOrateSliderX, kBufferLFOrateSliderY, kSliderWidth, kLFOsliderHeight);
-	bufferLFOrateSlider = new DGSlider(this, bufferLFOrateTag, &pos, kDGSliderStyle_horizontal, gSliderHandle, gBackground);
+	bufferLFOrateSlider = new DGSlider(this, bufferLFOrateTag, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
 	addControl(bufferLFOrateSlider);
 
 	pos.set (kBufferLFOdepthSliderX, kBufferLFOdepthSliderY, kSliderWidth, kLFOsliderHeight);
-	slider = new DGSlider(this, kBufferLFOdepth, &pos, kDGSliderStyle_horizontal, gSliderHandle, gBackground);
+	slider = new DGSlider(this, kBufferLFOdepth, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
 	addControl(slider);
 
 	pos.set (kSmoothSliderX, kSmoothSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kSmooth, &pos, kDGSliderStyle_horizontal, gSliderHandle, gBackground);
+	slider = new DGSlider(this, kSmooth, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
 	addControl(slider);
 
 	pos.set (kDryWetMixSliderX, kDryWetMixSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kDryWetMix, &pos, kDGSliderStyle_horizontal, gSliderHandle, gBackground);
+	slider = new DGSlider(this, kDryWetMix, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
 	addControl(slider);
 
 	pos.set (kPitchbendSliderX, kPitchbendSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kPitchbend, &pos, kDGSliderStyle_horizontal, gSliderHandle, gBackground);
+	slider = new DGSlider(this, kPitchbend, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
 	addControl(slider);
 
 	pos.set (kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kTempo, &pos, kDGSliderStyle_horizontal, gSliderHandle, gBackground);
+	slider = new DGSlider(this, kTempo, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
 	addControl(slider);
 
 	pos.set (kDivisorBufferBoxX + 3, kDivisorBufferBoxY + 27, kDivisorBufferBoxWidth - 6, kSliderHeight);
-	slider = new DGSlider(this, kDivisor, &pos, kDGSliderStyle_horizontal, gXYboxHandle, gBackground);
+	slider = new DGSlider(this, kDivisor, &pos, kDGSliderStyle_horizontal, gXYboxHandle, NULL);
 	addControl(slider);
 
 	long bufferSizeTag = getparameter_b(kBufferTempoSync) ? kBufferSize_sync : kBufferSize_abs;
 	pos.offset(0, 57);
-	bufferSizeSlider = new DGSlider(this, bufferSizeTag, &pos, kDGSliderStyle_horizontal, gXYboxHandle, gBackground);
+	bufferSizeSlider = new DGSlider(this, bufferSizeTag, &pos, kDGSliderStyle_horizontal, gXYboxHandle, NULL);
 	addControl(bufferSizeSlider);
 
 
 
 	pos.set (kDivisorDisplayX, kDivisorDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *divisorDisplay = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
+	DGTextDisplay *divisorDisplay = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	divisorDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	divisorDisplay->setTextAlignmentStyle(kDGTextAlign_right);
 	divisorDisplay->setFontColor(kWhiteDGColor);
 	addControl(divisorDisplay);
 
 	pos.set (kBufferDisplayX, kBufferDisplayY, kDisplayWidth, kDisplayHeight);
-	bufferSizeDisplay = new DGTextDisplay(this, bufferSizeTag, &pos, bufferSizeDisplayProc, this, gBackground, VALUE_DISPLAY_FONT);
+	bufferSizeDisplay = new DGTextDisplay(this, bufferSizeTag, &pos, bufferSizeDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
 	bufferSizeDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	bufferSizeDisplay->setFontColor(kWhiteDGColor);
 	bufferSizeDisplay->setTextAlignmentStyle(kDGTextAlign_center);
 	addControl(bufferSizeDisplay);
 
 	pos.set (kDivisorLFOrateDisplayX, kDivisorLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
-	divisorLFOrateDisplay = new DGTextDisplay(this, divisorLFOrateTag, &pos, divisorLFOrateDisplayProc, this, gBackground, VALUE_DISPLAY_FONT);
+	divisorLFOrateDisplay = new DGTextDisplay(this, divisorLFOrateTag, &pos, divisorLFOrateDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
 	divisorLFOrateDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	divisorLFOrateDisplay->setTextAlignmentStyle(kDGTextAlign_right);
 	divisorLFOrateDisplay->setFontColor(kWhiteDGColor);
 	addControl(divisorLFOrateDisplay);
 
 	pos.set (kDivisorLFOdepthDisplayX, kDivisorLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *divisorLFOdepthDisplay = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
+	DGTextDisplay *divisorLFOdepthDisplay = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	divisorLFOdepthDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	divisorLFOdepthDisplay->setTextAlignmentStyle(kDGTextAlign_right);
 	divisorLFOdepthDisplay->setFontColor(kWhiteDGColor);
 	addControl(divisorLFOdepthDisplay);
 
 	pos.set (kBufferLFOrateDisplayX, kBufferLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
-	bufferLFOrateDisplay = new DGTextDisplay(this, bufferLFOrateTag, &pos, bufferLFOrateDisplayProc, this, gBackground, VALUE_DISPLAY_FONT);
+	bufferLFOrateDisplay = new DGTextDisplay(this, bufferLFOrateTag, &pos, bufferLFOrateDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
 	bufferLFOrateDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	bufferLFOrateDisplay->setTextAlignmentStyle(kDGTextAlign_right);
 	bufferLFOrateDisplay->setFontColor(kWhiteDGColor);
 	addControl(bufferLFOrateDisplay);
 
 	pos.set (kBufferLFOdepthDisplayX, kBufferLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *bufferLFOdepthDisplay = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
+	DGTextDisplay *bufferLFOdepthDisplay = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	bufferLFOdepthDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	bufferLFOdepthDisplay->setTextAlignmentStyle(kDGTextAlign_right);
 	bufferLFOdepthDisplay->setFontColor(kWhiteDGColor);
 	addControl(bufferLFOdepthDisplay);
 
 	pos.set (kSmoothDisplayX, kSmoothDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *smoothDisplay = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
+	DGTextDisplay *smoothDisplay = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	smoothDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	smoothDisplay->setTextAlignmentStyle(kDGTextAlign_right);
 	smoothDisplay->setFontColor(kWhiteDGColor);
 	addControl(smoothDisplay);
 
 	pos.set (kDryWetMixDisplayX, kDryWetMixDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *dryWetMixDisplay = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
+	DGTextDisplay *dryWetMixDisplay = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	dryWetMixDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	dryWetMixDisplay->setTextAlignmentStyle(kDGTextAlign_right);
 	dryWetMixDisplay->setFontColor(kWhiteDGColor);
 	addControl(dryWetMixDisplay);
 
 	pos.set (kPitchbendDisplayX, kPitchbendDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *pitchbendDisplay = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
+	DGTextDisplay *pitchbendDisplay = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	pitchbendDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	pitchbendDisplay->setTextAlignmentStyle(kDGTextAlign_right);
 	pitchbendDisplay->setFontColor(kWhiteDGColor);
 	addControl(pitchbendDisplay);
 
 	pos.set (kTempoDisplayX, kTempoDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *tempoDisplay = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
+	DGTextDisplay *tempoDisplay = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	tempoDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	tempoDisplay->setTextAlignmentStyle(kDGTextAlign_left);
 	tempoDisplay->setFontColor(kWhiteDGColor);
@@ -596,7 +594,7 @@ HMSetHelpTagsDisplayed(true);
 
 	// the help mouseover hint thingy
 	pos.set (kHelpDisplayX, kHelpDisplayY, gBackground->getWidth(), kDisplayHeight);
-	helpDisplay = new DGStaticTextDisplay(this, &pos, gBackground, HELP_DISPLAY_FONT);
+	helpDisplay = new DGStaticTextDisplay(this, &pos, NULL, HELP_DISPLAY_FONT);
 	helpDisplay->setFontSize(HELP_DISPLAY_FONT_SIZE);
 	helpDisplay->setTextAlignmentStyle(kDGTextAlign_center);
 	helpDisplay->setFontColor(HELP_DISPLAY_TEXT_COLOR);
@@ -610,9 +608,6 @@ HMSetHelpTagsDisplayed(true);
 	AUListenerAddParameter(parameterListener, bufferLFOrateSlider, &bufferLFOtempoSyncAUP);
 	AUListenerAddParameter(parameterListener, bufferLFOrateDisplay, &bufferLFOtempoSyncAUP);
 
-
-	// set size of overall pane
-	SizeControl(mCarbonPane, (SInt16) gBackground->getWidth(), (SInt16) gBackground->getHeight());
 
 HMSetTagDelay(9);	// make the hints appear quickly <-- XXX this is sort of a hack
 

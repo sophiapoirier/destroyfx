@@ -53,7 +53,7 @@ protected:
 class DGStaticTextDisplay : public DGTextDisplay
 {
 public:
-	DGStaticTextDisplay(DfxGuiEditor*, DGRect*, DGGraphic*, char *inFontName = NULL);
+	DGStaticTextDisplay(DfxGuiEditor*, DGRect*, DGGraphic*, const char *inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);

@@ -29,8 +29,8 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 		}
 	}
 		
-	int handleWidth = CGImageGetWidth(ForeGround->getCGImage());
-	int handleHeight = CGImageGetHeight(ForeGround->getCGImage());
+	int handleWidth = (ForeGround == NULL) ? 0 : ForeGround->getWidth();
+	int handleHeight = (ForeGround == NULL) ? 0 : ForeGround->getHeight();
 	int widthDiff = inRegion->w - handleWidth;
 	if (widthDiff < 0)
 		widthDiff = 0;
@@ -48,7 +48,7 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 		mouseOffset = handleWidth / 2;
 	}
 
-	fineTuneFactor = 6.0f;
+	fineTuneFactor = 12.0f;
 	setContinuousControl(true);
 	setType(kDfxGuiType_slider);
 }
@@ -76,14 +76,16 @@ void DGSlider::draw(CGContextRef inContext, UInt32 inPortHeight)
 	{
 		getBounds()->copyToCGRect(&bounds, inPortHeight);
 // XXX this is a very poor hack, Marc
-#ifdef SLIDERS_USE_BACKGROUND
-		bounds.size.width = (float) CGImageGetWidth(theBack);
-		bounds.size.height = (float) CGImageGetHeight(theBack);
+#if 0
+		bounds.size.width = (float) BackGround->getWidth();
+		bounds.size.height = (float) BackGround->getHeight();
 		bounds.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
-		bounds.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
+		bounds.origin.y -= (float) (BackGround->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
 #endif
 		CGContextDrawImage(inContext, bounds, theBack);
 	}
+	else
+		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 
 	CGImageRef theFore = NULL;
 	if (ForeGround != NULL)
@@ -97,15 +99,15 @@ void DGSlider::draw(CGContextRef inContext, UInt32 inPortHeight)
 		if (orientation == kDGSliderStyle_vertical)
 		{
 			float slideRange = bounds.size.height;
-			bounds.size.height = (float) CGImageGetHeight(theFore);
-//			bounds.size.width = (float) CGImageGetWidth(theFore);
+			bounds.size.height = (float) ForeGround->getHeight();
+//			bounds.size.width = (float) ForeGround->getWidth();
 			bounds.origin.y += round(slideRange * valNorm);
 		}
 		else
 		{
 			float slideRange = bounds.size.width;
-			bounds.size.width = (float) CGImageGetWidth(theFore);
-//			bounds.size.height = (float) CGImageGetHeight(theFore);
+			bounds.size.width = (float) ForeGround->getWidth();
+//			bounds.size.height = (float) ForeGround->getHeight();
 			bounds.origin.x += round(slideRange * valNorm);
 		}
 		CGContextDrawImage(inContext, bounds, theFore);

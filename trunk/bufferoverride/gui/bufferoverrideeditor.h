@@ -1,5 +1,5 @@
-#ifndef __BUFFEROVERRIDEEDITOR_H
-#define __BUFFEROVERRIDEEDITOR_H
+#ifndef __BUFFEROVERRIDE_EDITOR_H
+#define __BUFFEROVERRIDE_EDITOR_H
 
 
 #include "dfxgui.h"
@@ -14,10 +14,11 @@ class BufferOverrideEditor : public DfxGuiEditor
 public:
 	BufferOverrideEditor(AudioUnitCarbonView inInstance);
 	virtual ~BufferOverrideEditor();
-	
+
 	virtual OSStatus open(Float32 inXOffset, Float32 inYOffset);
 	virtual void mouseovercontrolchanged();
 
+private:
 	AUParameterListenerRef parameterListener;
 	AudioUnitParameter bufferSizeTempoSyncAUP, divisorLFOtempoSyncAUP, bufferLFOtempoSyncAUP;
 
