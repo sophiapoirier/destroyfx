@@ -34,7 +34,6 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 		}
 	}
 
-	fineTuneFactor = 12.0f;
 	setControlContinuous(true);
 }
 
@@ -90,7 +89,6 @@ void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 //-----------------------------------------------------------------------------
 void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 {
-	ControlRef carbonControl = getCarbonControl();
 	SInt32 max = GetControl32BitMaximum(carbonControl);
 	SInt32 val = GetControl32BitValue(carbonControl);
 	SInt32 oldval = val;

@@ -34,6 +34,7 @@ void DGControl::init(DGRect * inRegion)
 	auv_control = NULL;
 
 	isContinuous = false;
+	fineTuneFactor = 12.0f;
 
 	// add this control to the owner editor's list of controls
 	getDfxGuiEditor()->addControl(this);

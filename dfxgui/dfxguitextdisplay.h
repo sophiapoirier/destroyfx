@@ -11,6 +11,11 @@ typedef enum {
 	kDGTextAlign_right
 } DfxGuiTextAlignment;
 
+typedef enum {
+	kDGTextDisplayMouseAxis_horizontal = 1,
+	kDGTextDisplayMouseAxis_vertical = 1 << 1,
+} DfxGuiTextDisplayMouseAxis;
+
 
 typedef void (*displayTextProcedure) (Float32 value, char * outText, void * userData);
 
@@ -28,6 +33,9 @@ public:
 	virtual void draw(CGContextRef context, long portHeight);
 	void drawText(DGRect * inRegion, const char * inText, CGContextRef inContext, long inPortHeight);
 
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
+
 	void setTextAlignment(DfxGuiTextAlignment newAlignment)
 		{	alignment = newAlignment;	}
 	DfxGuiTextAlignment getTextAlignment()
@@ -36,7 +44,12 @@ public:
 		{	fontSize = newSize;	}
 	void setFontColor(DGColor newColor)
 		{	fontColor = newColor;	}
-	
+	void setMouseDragRange(float inMouseDragRange)
+	{
+		if (inMouseDragRange != 0.0f)	// to prevent division by zero
+			mouseDragRange = inMouseDragRange;
+	}
+
 protected:
 	DGImage *				backgroundImage;
 	displayTextProcedure	textProc;
@@ -45,6 +58,9 @@ protected:
 	float					fontSize;
 	DfxGuiTextAlignment		alignment;
 	DGColor					fontColor;
+	DfxGuiTextDisplayMouseAxis	mouseAxis;	// flags indicating which directions you can mouse to adjust the control value
+	float					mouseDragRange;	// the range of pixels over which you can drag the mouse to adjust the control value
+	float					lastX, lastY;
 };
 
 
@@ -58,6 +74,13 @@ public:
 	virtual ~DGStaticTextDisplay();
 
 	virtual void draw(CGContextRef context, long portHeight);
+
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+		{ }
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+		{ }
+	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+		{ }
 
 	void setText(const char * inNewText);
 

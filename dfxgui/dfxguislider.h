@@ -27,20 +27,10 @@ public:
 	void setMouseOffset(long inOffset)
 		{	mouseOffset = inOffset;	}
 
-	/* XXX example - call this instead of new */
-	static DGSlider * create(DfxGuiEditor * dge, long param, DGRect * pos, DfxGuiSliderAxis axis, DGImage * grabby, DGImage * back)
-	{
-		DGSlider * s = new DGSlider(dge, param, pos, axis, grabby, back);
-		dge->addControl(s);
-		return s;
-	}
-
-
 protected:
 	DfxGuiSliderAxis	orientation;
 	DGImage *	handleImage;
 	DGImage *	backgroundImage;
-	float		fineTuneFactor;	// slow-down factor for shift control
 	long		mouseOffset;	// for mouse tracking with click in the middle of the slider handle
 	float		lastX;
 	float		lastY;

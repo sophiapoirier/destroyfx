@@ -61,6 +61,12 @@ public:
 		{	return isContinuous;	}
 	void setControlContinuous(bool inContinuity);
 
+	void setFineTuneFactor(float inFineTuneFactor)
+	{
+		if (inFineTuneFactor != 0.0f)	// to prevent division by zero
+			fineTuneFactor = inFineTuneFactor;
+	}
+
 	bool isParameterAttached()
 		{	return parameterAttached;	}
 	long getParameterID();
@@ -97,6 +103,7 @@ protected:
 	float				Range;
 	bool				parameterAttached;
 	bool				isContinuous;
+	float				fineTuneFactor;	// slow-down factor for fine-tune control (if the control supports that)
 
 	DGRect				where;		// the control's area
 	DGRect				vizArea; 	// where the foreground displays
