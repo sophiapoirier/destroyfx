@@ -142,7 +142,8 @@ void PLUGIN::resume() {
   third = framesize / 2;
   bufsize = third * 3;
 
-  /* set up buffers. Prevmix and first frame of output are always filled with zeros. */
+  /* set up buffers. Prevmix and first frame of output are always 
+     filled with zeros. */
 
   for (int i = 0; i < third; i ++) {
     prevmix[i] = 0.0f;
@@ -190,7 +191,8 @@ void PLUGIN::setParameter(long index, float value) {
     programs[curProgram].param[index] = value;
 }
 
-/* save & restore parameter data using chunks so that we can save MIDI CC assignments */
+/* save & restore parameter data using chunks so that we 
+   can save MIDI CC assignments */
 long PLUGIN::getChunk(void **data, bool isPreset) {
   return chunk->getChunk(data, isPreset);
 }
@@ -201,11 +203,11 @@ long PLUGIN::setChunk(void *data, long byteSize, bool isPreset) {
 
 /* process MIDI events */
 long PLUGIN::processEvents(VstEvents* events) {
-  // manage parameter automation via MIDI CCs
+  /* manage parameter automation via MIDI CCs */
   chunk->processCCevents(events);
-  // manage program changes via MIDI
+  /* manage program changes via MIDI */
   processProgramChangeEvents(events, this);
-  // tells the host to keep sending events
+  /* tells the host to keep sending events */
   return 1;
 }
 
@@ -245,8 +247,6 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
       strcpy(text, "arrow");
       break;
     case WINDOW_WEDGE:
-      //      float s = 1.0 / (shape - shape);
-      //      sprintf(text, "%f", s);
       strcpy(text, "wedge");
       break;
     case WINDOW_COS:
@@ -533,6 +533,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
   case POINT_EXTNCROSS:
     /* extremities and crossings 
        FIXME: this is broken. It generates points out of order!
+       XXX: really? Am I sure?
     */
 
     ext = 0.0;
@@ -767,10 +768,10 @@ int PLUGIN::processw(float * in, float * out, long samples,
   switch(MKINTERPSTYLE(interpstyle)) {
 
   case INTERP_FRIENDS: {
-    /* bleed each segment into next segment. interparam
-       controls the amount of bleeding, between 0 samples
-       and next-segment-size samples.
-       suggestion by jcreed.
+    /* bleed each segment into next segment (its "friend"). 
+       interparam controls the amount of bleeding, between 
+       0 samples and next-segment-size samples. 
+       suggestion by jcreed (sorta).
     */
 
     /* copy last block verbatim. */
@@ -792,26 +793,32 @@ int PLUGIN::processw(float * in, float * out, long samples,
       if (tgtlen > 0) {
 	/* to avoid using temporary storage, copy from end of target
 	   towards beginning, overwriting already used source parts on
-	   the way. */
+	   the way. 
+	   
+	   j is an offset from p[x-1], ranging from 0 to tgtlen-1.
+	   Once we reach p[x], we have to start mixing with the
+	   data that's already there.
+	*/
 	for (int j = tgtlen - 1;
 	     j >= 0;
 	     j--) {
 
-	  /* XXX. use interpolated sampling for these */
+	  /* XXX. use interpolated sampling for this */
+	  float wet = in[(int)(px[x-1] + sizeleft * 
+			       (j/(float)tgtlen))];
+
 	  if ((j + px[x-1]) > px[x]) {
-	    /* HERE */
-#if 0
-	    float wet = (j - sizeleft) / (float)(tgtlen - sizeleft);
-	    wet = 1.0;
-	      
-	    out[j + px[x-1]] = (in[(int)(px[x-1]] + sizeleft * 
-				   (j/(float)tgtlen))) * wet
-	      + out[j + px[x-1]] * (1.0f - wet);
-#endif      
+	    /* after p[x] -- mix */
+
+	    /* linear fade-out */
+	    float pct = (j - sizeleft) / (float)(tgtlen - sizeleft);
+
+	    out[j + px[x-1]] =
+	      wet * (1.0 - pct) +
+	      out[j + px[x-1]] * pct;
 	  } else {
-	    /* no mix */
-	    out[j + px[x-1]] = in[(int)(px[x-1] + sizeleft * 
-					(j/(float)tgtlen))];
+	    /* before p[x] -- no mix */
+	    out[j + px[x-1]] = wet;
 	  }
 
 	}
