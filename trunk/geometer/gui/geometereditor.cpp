@@ -1097,7 +1097,8 @@ void GeometerEditor::idle() {
         if (helpchanged)
           helpbox->setDirty();
       }
-      else if (control == landmarksmenu) {
+      else if ((control == landmarksmenu) || 
+               (control == landmarkscontrolslider)) {
         controlfound = true;
         if (helpbackground != g_landmarkshelp) {
           helpbox->setBackground(g_landmarkshelp);
@@ -1110,7 +1111,8 @@ void GeometerEditor::idle() {
         if (helpchanged)
           helpbox->setDirty();
       }
-      else if (control == recreatemenu) {
+      else if ((control == recreatemenu) || 
+                (control == recreatecontrolslider)) {
         controlfound = true;
         if (helpbackground != g_recreatehelp) {
           helpbox->setBackground(g_recreatehelp);
@@ -1123,7 +1125,8 @@ void GeometerEditor::idle() {
         if (helpchanged)
           helpbox->setDirty();
       }
-      else if (control == op1menu) {
+      else if ((control == op1menu) || 
+               (control == op1controlslider)) {
         controlfound = true;
         if (helpbackground != g_opshelp) {
           helpbox->setBackground(g_opshelp);
@@ -1136,7 +1139,8 @@ void GeometerEditor::idle() {
         if (helpchanged)
           helpbox->setDirty();
       }
-      else if (control == op2menu) {
+      else if ((control == op2menu) || 
+               (control == op2controlslider)) {
         controlfound = true;
         if (helpbackground != g_opshelp) {
           helpbox->setBackground(g_opshelp);
@@ -1149,7 +1153,8 @@ void GeometerEditor::idle() {
         if (helpchanged)
           helpbox->setDirty();
       }
-      else if (control == op3menu) {
+      else if ((control == op3menu) || 
+               (control == op3controlslider)) {
         controlfound = true;
         if (helpbackground != g_opshelp) {
           helpbox->setBackground(g_opshelp);
@@ -1309,7 +1314,7 @@ void GeometerEditor::idle() {
 #endif
 
   // some hosts need this call otherwise stuff doesn't redraw
-  if (helpchanged || glowingchanged || 1)
+  if (helpchanged || glowingchanged || 1) /* <-  XXX Tom, why the || 1?  */
     postUpdate();  
 
   // this is called so that idle() actually happens
