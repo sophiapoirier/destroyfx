@@ -808,7 +808,7 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 
 
 
-#ifdef WIN32
+#if WIN32
 /* turn off warnings about default but no cases in switch, unknown pragma, etc. */
    #pragma warning( disable : 4065 57 4200 4244 4068 )
    #include <windows.h>
