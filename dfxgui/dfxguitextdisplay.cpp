@@ -13,6 +13,9 @@ void genericDisplayTextProcedure(float inValue, char * outText, void * inUserDat
 
 
 
+#pragma mark -
+#pragma mark DGTextDisplay
+
 //-----------------------------------------------------------------------------
 // Text Display
 //-----------------------------------------------------------------------------
@@ -252,7 +255,7 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 #endif
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void DGTextDisplay::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	lastX = inXpos;
 	lastY = inYpos;
@@ -264,7 +267,7 @@ void DGTextDisplay::mouseDown(float inXpos, float inYpos, unsigned long inMouseB
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	SInt32 min = GetControl32BitMinimum(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -291,10 +294,27 @@ void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouse
 	lastY = inYpos;
 }
 
+//-----------------------------------------------------------------------------
+bool DGTextDisplay::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+{
+	mouseDown(0.0f, 0.0f, 1, inKeyModifiers);
+	float x = 0.0f, y = 0.0f;
+	if (mouseAxis & kDGTextDisplayMouseAxis_horizontal)
+		x = (float)inDelta;
+	else if (mouseAxis & kDGTextDisplayMouseAxis_vertical)
+		y = (float)(-inDelta);
+	mouseTrack(x, y, 1, inKeyModifiers);
+
+	return true;
+}
 
 
 
 
+
+
+#pragma mark -
+#pragma mark DGStaticTextDisplay
 
 //-----------------------------------------------------------------------------
 DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
@@ -388,6 +408,9 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 
 
 
+#pragma mark -
+#pragma mark DGTextArrayDisplay
+
 //-----------------------------------------------------------------------------
 // Static Text Display
 //-----------------------------------------------------------------------------
@@ -471,6 +494,9 @@ void DGTextArrayDisplay::draw(CGContextRef inContext, long inPortHeight)
 
 
 
+#pragma mark -
+#pragma mark DGAnimation
+
 // XXX Yeah, I know that it's weird to have this be sub-classed from DGTextDisplay since 
 // it involves no text, but the mouse handling in DGTextDisplay is exactly what I want here.  
 // I should think of a better abstraction scheme, though...
@@ -479,7 +505,7 @@ void DGTextArrayDisplay::draw(CGContextRef inContext, long inPortHeight)
 //-----------------------------------------------------------------------------
 DGAnimation::DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
 						DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground)
-:   DGTextDisplay(inOwnerEditor, inParamID, inRegion, NULL, NULL, inBackground), 
+:	DGTextDisplay(inOwnerEditor, inParamID, inRegion, NULL, NULL, inBackground), 
 	animationImage(inAnimationImage), numAnimationFrames(inNumAnimationFrames)
 {
 	if (numAnimationFrames < 1)
