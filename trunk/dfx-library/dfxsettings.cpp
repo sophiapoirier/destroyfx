@@ -1,12 +1,7 @@
 /*--------- by Marc Poirier  ][  April-July + October 2002 ---------*/
 
-#ifndef __DFXSETTINGS_H
 #include "dfxsettings.h"
-#endif
-
-#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
-#endif
 
 #include <stdio.h>	// for FILE stuff
 

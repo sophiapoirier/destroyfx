@@ -2,9 +2,7 @@
     Marc's Destroy FX MIDI stuff --- happened February 2001
 ---------------------------------------------------------------*/
 
-#ifndef __DFXMIDI_H
 #include "dfxmidi.h"
-#endif
 
 #include <stdlib.h>
 #include <math.h>
