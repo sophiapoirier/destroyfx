@@ -7,6 +7,8 @@ written by Marc Poirier, January 2003
 #ifndef __DFXPLUGIN_PROPERTIES_H
 #define __DFXPLUGIN_PROPERTIES_H
 
+#include "dfxparameter.h"
+
 
 // property IDs for Audio Unit property stuff
 enum DfxPluginProperties {
