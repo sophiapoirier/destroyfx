@@ -57,7 +57,7 @@ BufferOverride::BufferOverride(audioMasterCallback audioMaster)
 
 	// allocate memory for these structures
 	midistuff = new VstMidi;
-	tempoRateTable = new TempoRateTable;
+	tempoRateTable = new TempoRateTable(kNoExtremeTempoRates);
 	divisorLFO = new LFO;
 	bufferLFO = new LFO;
 
