@@ -274,7 +274,8 @@ long GeometerEditor::open() {
 
   /* ---load some images--- */
   // background image
-  DGImage * g_background = new DGImage("geometer-background.png", this);
+//  DGImage * g_background = new DGImage("geometer-background.png", this);
+  DGImage * g_background = new DGImage("geometer-background-short.png", this);
   SetBackgroundImage(g_background);
   // slider and fine tune controls
   DGImage * g_sliderbackground = new DGImage("slider-background.png", this);
@@ -479,6 +480,15 @@ long GeometerEditor::open() {
   helpbox = new GeometerHelpBox(this, &pos, g_helpbackground);
 
 HMSetTagDelay(9);	// make the help appear quickly <-- XXX this is sort of a hack
+
+
+
+// XXX hack for Geometer missing waveform display (shift all controls up 136 pixels)
+DGControlsList * tempcl = controlsList;
+while (tempcl != NULL) {
+  tempcl->control->setOffset(0, -136);
+  tempcl = tempcl->next;
+}
 
 
 
