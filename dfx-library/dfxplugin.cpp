@@ -61,6 +61,8 @@ DfxPlugin::DfxPlugin(
 		dfxsettings = NULL;
 	#endif
 
+	numchannelconfigs = 0;
+
 	updatesamplerate();	// XXX have it set to something here?
 	sampleratechanged = true;
 	hostCanDoTempo = false;	// until proven otherwise
@@ -73,18 +75,20 @@ DfxPlugin::DfxPlugin(
 	tailsize_seconds = 0.0;
 	b_usetailsize_seconds = false;
 
-	numchannelconfigs = 0;
-
 	// set a seed value for rand() from the system clock
 	srand((unsigned int)time(NULL));
 
 	currentPresetNum = 0;	// XXX eh?
 
 
-	parameters = new DfxParam[numParameters];
-	presets = new DfxPreset[numPresets];
-	for (int i=0; i < numPresets; i++)
-		presets[i].PostConstructor(numParameters);	// allocate for parameter values
+	if (numParameters > 0)
+		parameters = new DfxParam[numParameters];
+	if (numPresets > 0)
+	{
+		presets = new DfxPreset[numPresets];
+		for (int i=0; i < numPresets; i++)
+			presets[i].PostConstructor(numParameters);	// allocate for parameter values
+	}
 
 	#if TARGET_PLUGIN_USES_MIDI
 		midistuff = new DfxMidi;
@@ -96,15 +100,19 @@ DfxPlugin::DfxPlugin(
 	inputsP = outputsP = NULL;
 
 	aupresets = NULL;
-	aupresets = (AUPreset*) malloc(numPresets * sizeof(AUPreset));
-	for (long i=0; i < numPresets; i++)
+	if (numPresets > 0)
 	{
-		aupresets[i].presetNumber = i;
-		aupresets[i].presetName = NULL;	// XXX eh?
+		aupresets = (AUPreset*) malloc(numPresets * sizeof(AUPreset));
+		for (long i=0; i < numPresets; i++)
+		{
+			aupresets[i].presetNumber = i;
+			aupresets[i].presetName = NULL;	// XXX eh?
+		}
 	}
 	#if TARGET_PLUGIN_USES_MIDI
 		aumidicontrolmap = NULL;
-		aumidicontrolmap = (AudioUnitMIDIControlMapping*) malloc(numParameters * sizeof(AudioUnitMIDIControlMapping));
+		if (numParameters > 0)
+			aumidicontrolmap = (AudioUnitMIDIControlMapping*) malloc(numParameters * sizeof(AudioUnitMIDIControlMapping));
 	#endif
 
 #endif
