@@ -407,7 +407,7 @@ long DfxPlugin::processEvents(VstEvents* events)
 		int status = midiData[0] & 0xF0;
 		int byte1 = midiData[1] & 0x7F;
 		int byte2 = midiData[2] & 0x7F;
-		int frameOffset = midiEvent->deltaFrames;	// timing offset
+		long frameOffset = midiEvent->deltaFrames;	// timing offset
 
 		// looking at notes   (0x9* is Note On status ~ 0x8* is Note Off status)
 		if ( (status == kMidiNoteOn) || (status == kMidiNoteOff) )
