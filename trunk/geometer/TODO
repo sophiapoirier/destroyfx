@@ -6,3 +6,7 @@ jason's expand-intervals thing. (take the original waveform, and expand it, blee
 more with the original waveform within intervals.
 
 spline interpolation
+
+"beat detect" point generation.
+
+pointop: transpose points (switch x/y, resort?)

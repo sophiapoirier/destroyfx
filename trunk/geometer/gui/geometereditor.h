@@ -7,6 +7,7 @@
 #include "MultiKick.hpp"
 #include "VstChunk.h"
 #include "geometerview.hpp"
+#include "indexbitmap.hpp"
 
 
 #define NUM_SLIDERS   5
@@ -27,9 +28,8 @@ enum { HELP_MIDILEARN,
        HELP_LANDMARKS,
        HELP_OPS,
        HELP_RECREATE,
-       HELP_EMPTY1,
-       HELP_EMPTY2,
-       NUM_HELPFRAMES
+       HELP_BLANK,
+       HELP_EMPTY,
 };
 
 //--------------------------------------------------------------------------
@@ -39,6 +39,7 @@ public:
   virtual ~GeometerEditor();
 
 protected:
+
   virtual long getRect(ERect **rect);
   virtual long open(void *ptr);
   virtual void close();
@@ -93,7 +94,7 @@ private:
   CMovieBitmap *op2controllabel;
   CMovieBitmap *op3controllabel;
   // help display
-  CMovieBitmap *helpbox;
+  IndexBitmap *helpbox;
 
   /* ---graphics--- */
   CBitmap *g_background;

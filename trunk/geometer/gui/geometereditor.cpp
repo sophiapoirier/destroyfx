@@ -39,6 +39,10 @@ enum {
   id_destroyfxlink,
   id_smartelectronixlink,
 
+  // button sizes
+  stdsize = 32,
+  controllabels_height = 13,
+
   // positions
   pos_sliderX = 60,
   pos_sliderY = 255,
@@ -283,11 +287,12 @@ long GeometerEditor::open(void *ptr) {
 
 
   //--initialize the options menus----------------------------------------
-  CPoint point (0, 0);
+  CPoint zero (0, 0);
 
 
   /* geometer view */
-  size(pos_geometerviewx, pos_geometerviewy, pos_geometerviewx + pos_geometervieww, pos_geometerviewy + pos_geometerviewh);
+  size(pos_geometerviewx, pos_geometerviewy, 
+       pos_geometerviewx + pos_geometervieww, pos_geometerviewy + pos_geometerviewh);
   gview = new GeometerView(size, (Geometer*)effect);
   gview->setTransparency(false);
   frame->addView(gview);
@@ -295,44 +300,62 @@ long GeometerEditor::open(void *ptr) {
   
 
   // window shape menu
-  size (pos_windowshapemenuX, pos_windowshapemenuY, pos_windowshapemenuX + (g_windowshapemenu->getWidth()/2), pos_windowshapemenuY + (g_windowshapemenu->getHeight())/NUM_WINDOWSHAPES);
-  windowshapemenu = new MultiKick (size, this, P_SHAPE, NUM_WINDOWSHAPES, g_windowshapemenu->getHeight()/NUM_WINDOWSHAPES, g_windowshapemenu, point, kKickPairs);
+  size (pos_windowshapemenuX, pos_windowshapemenuY, 
+	pos_windowshapemenuX + stdsize, 
+	pos_windowshapemenuY + stdsize);
+  windowshapemenu = new MultiKick (size, this, P_SHAPE, NUM_WINDOWSHAPES, 
+				   stdsize, g_windowshapemenu, zero, 
+				   kKickPairs, MAX_WINDOWSHAPES);
   windowshapemenu->setValue(effect->getParameter(P_SHAPE));
   frame->addView(windowshapemenu);
 
   // window size menu
-  size (pos_windowsizemenuX, pos_windowsizemenuY, pos_windowsizemenuX + (g_windowsizemenu->getWidth()/2), pos_windowsizemenuY + (g_windowsizemenu->getHeight())/BUFFERSIZESSIZE);
-  windowsizemenu = new MultiKick (size, this, P_BUFSIZE, BUFFERSIZESSIZE, g_windowsizemenu->getHeight()/BUFFERSIZESSIZE, g_windowsizemenu, point, kKickPairs);
+  size (pos_windowsizemenuX, pos_windowsizemenuY, 
+	pos_windowsizemenuX + stdsize,
+	pos_windowsizemenuY + stdsize);
+  windowsizemenu = new MultiKick (size, this, P_BUFSIZE, BUFFERSIZESSIZE, 
+				  stdsize, g_windowsizemenu, zero, 
+				  kKickPairs, BUFFERSIZESSIZE);
   windowsizemenu->setValue(effect->getParameter(P_BUFSIZE));
   frame->addView(windowsizemenu);
 
   // how to generate landmarks menu
-  size (pos_landmarksmenuX, pos_landmarksmenuY, pos_landmarksmenuX + (g_landmarksmenu->getWidth()/2), pos_landmarksmenuY + (g_landmarksmenu->getHeight())/NUM_POINTSTYLES);
-  landmarksmenu = new MultiKick (size, this, P_POINTSTYLE, NUM_POINTSTYLES, g_landmarksmenu->getHeight()/NUM_POINTSTYLES, g_landmarksmenu, point, kKickPairs);
+  size (pos_landmarksmenuX, pos_landmarksmenuY, 
+	pos_landmarksmenuX + stdsize,
+	pos_landmarksmenuY + stdsize);
+  landmarksmenu = new MultiKick (size, this, P_POINTSTYLE, NUM_POINTSTYLES, 
+				 stdsize, g_landmarksmenu, zero, kKickPairs, MAX_POINTSTYLES);
   landmarksmenu->setValue(effect->getParameter(P_POINTSTYLE));
   frame->addView(landmarksmenu);
 
   // how to recreate them menu
-  size (pos_recreatemenuX, pos_recreatemenuY, pos_recreatemenuX + (g_recreatemenu->getWidth()/2), pos_recreatemenuY + (g_recreatemenu->getHeight())/NUM_INTERPSTYLES);
-  recreatemenu = new MultiKick (size, this, P_INTERPSTYLE, NUM_INTERPSTYLES, g_recreatemenu->getHeight()/NUM_INTERPSTYLES, g_recreatemenu, point, kKickPairs);
+  size (pos_recreatemenuX, pos_recreatemenuY, 
+	pos_recreatemenuX + stdsize,
+	pos_recreatemenuY + stdsize);
+  recreatemenu = new MultiKick (size, this, P_INTERPSTYLE, NUM_INTERPSTYLES, 
+				stdsize, g_recreatemenu, zero, kKickPairs, MAX_INTERPSTYLES);
   recreatemenu->setValue(effect->getParameter(P_INTERPSTYLE));
   frame->addView(recreatemenu);
 
   // op 1 menu
-  size (pos_op1menuX, pos_op1menuY, pos_op1menuX + (g_opsmenu->getWidth()/2), pos_op1menuY + (g_opsmenu->getHeight())/NUM_OPS);
-  op1menu = new MultiKick (size, this, P_POINTOP1, NUM_OPS, g_opsmenu->getHeight()/NUM_OPS, g_opsmenu, point, kKickPairs);
+  size (pos_op1menuX, pos_op1menuY, pos_op1menuX + (g_opsmenu->getWidth()/2), 
+	pos_op1menuY + (g_opsmenu->getHeight())/NUM_OPS);
+  op1menu = new MultiKick (size, this, P_POINTOP1, NUM_OPS, g_opsmenu->getHeight()/NUM_OPS, 
+			   g_opsmenu, zero, kKickPairs);
   op1menu->setValue(effect->getParameter(P_POINTOP1));
   frame->addView(op1menu);
 
   // op 2 menu
   size.offset (pos_opmenuinc, 0);
-  op2menu = new MultiKick (size, this, P_POINTOP2, NUM_OPS, g_opsmenu->getHeight()/NUM_OPS, g_opsmenu, point, kKickPairs);
+  op2menu = new MultiKick (size, this, P_POINTOP2, NUM_OPS, g_opsmenu->getHeight()/NUM_OPS, 
+			   g_opsmenu, zero, kKickPairs);
   op2menu->setValue(effect->getParameter(P_POINTOP2));
   frame->addView(op2menu);
 
   // op 3 menu
   size.offset (pos_opmenuinc, 0);
-  op3menu = new MultiKick (size, this, P_POINTOP3, NUM_OPS, g_opsmenu->getHeight()/NUM_OPS, g_opsmenu, point, kKickPairs);
+  op3menu = new MultiKick (size, this, P_POINTOP3, NUM_OPS, g_opsmenu->getHeight()/NUM_OPS, 
+			   g_opsmenu, zero, kKickPairs);
   op3menu->setValue(effect->getParameter(P_POINTOP3));
   frame->addView(op3menu);
 
@@ -346,7 +369,8 @@ long GeometerEditor::open(void *ptr) {
   tag = CHOOSE_LANDMARK_PARAM;
   size (pos_sliderX, pos_sliderY, pos_sliderX + pos_sliderwidth, pos_sliderY + pos_sliderheight);
   displayoffset (pos_sliderX, pos_sliderY);
-  landmarkscontrolslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, g_sliderhandle, g_background, displayoffset, kLeft);
+  landmarkscontrolslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, 
+						  g_sliderhandle, g_background, displayoffset, kLeft);
   landmarkscontrolslider->setValue(effect->getParameter(tag));
   //    landmarkscontrolslider->setDefaultValue(.f);
   frame->addView(landmarkscontrolslider);
@@ -355,7 +379,8 @@ long GeometerEditor::open(void *ptr) {
   tag = CHOOSE_RECREATE_PARAM;
   size.offset (0, pos_sliderincY);
   displayoffset.offset (0, pos_sliderincY);
-  recreatecontrolslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, g_sliderhandle, g_background, displayoffset, kLeft);
+  recreatecontrolslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, 
+						 g_sliderhandle, g_background, displayoffset, kLeft);
   recreatecontrolslider->setValue(effect->getParameter(tag));
   //    recreatecontrolslider->setDefaultValue(.f);
   frame->addView(recreatecontrolslider);
@@ -366,7 +391,8 @@ long GeometerEditor::open(void *ptr) {
   tag = CHOOSE_OP1_PARAM;
   size.offset (pos_sliderincX, -pos_sliderincY);
   displayoffset.offset (pos_sliderincX, -pos_sliderincY);
-  op1controlslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, g_sliderhandle, g_background, displayoffset, kLeft);
+  op1controlslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, 
+					    g_sliderhandle, g_background, displayoffset, kLeft);
   op1controlslider->setValue(effect->getParameter(tag));
   //    op1controlslider->setDefaultValue(.f);
   frame->addView(op1controlslider);
@@ -375,7 +401,8 @@ long GeometerEditor::open(void *ptr) {
   tag = CHOOSE_OP2_PARAM;
   size.offset (0, pos_sliderincY);
   displayoffset.offset (0, pos_sliderincY);
-  op2controlslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, g_sliderhandle, g_background, displayoffset, kLeft);
+  op2controlslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, 
+					    g_sliderhandle, g_background, displayoffset, kLeft);
   op2controlslider->setValue(effect->getParameter(tag));
   //    op2controlslider->setDefaultValue(.f);
   frame->addView(op2controlslider);
@@ -384,7 +411,8 @@ long GeometerEditor::open(void *ptr) {
   tag = CHOOSE_OP3_PARAM;
   size.offset (0, pos_sliderincY);
   displayoffset.offset (0, pos_sliderincY);
-  op3controlslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, g_sliderhandle, g_background, displayoffset, kLeft);
+  op3controlslider = new CHorizontalSlider (size, this, tag, minpos, maxpos, 
+					    g_sliderhandle, g_background, displayoffset, kLeft);
   op3controlslider->setValue(effect->getParameter(tag));
   //    op3controlslider->setDefaultValue(.f);
   frame->addView(op3controlslider);
@@ -394,81 +422,105 @@ long GeometerEditor::open(void *ptr) {
 
   // fine tune down buttons
   tag = CHOOSE_LANDMARK_PARAM;
-  size (pos_finedownX, pos_finedownY, pos_finedownX + g_finedownbutton->getWidth(), pos_finedownY + (g_finedownbutton->getHeight())/2);
-  landmarkscontrolfinedownbutton = new CFineTuneButton(size, this, tag, (g_finedownbutton->getHeight())/2, g_finedownbutton, point, kFineDown);
+  size (pos_finedownX, pos_finedownY, pos_finedownX + g_finedownbutton->getWidth(), 
+	pos_finedownY + (g_finedownbutton->getHeight())/2);
+  landmarkscontrolfinedownbutton = 
+    new CFineTuneButton(size, this, tag, 
+			(g_finedownbutton->getHeight())/2, g_finedownbutton, zero, kFineDown);
   landmarkscontrolfinedownbutton->setValue(effect->getParameter(tag));
   frame->addView(landmarkscontrolfinedownbutton);
   //
   tag = CHOOSE_RECREATE_PARAM;
   size.offset (0, pos_finebuttonincY);
-  recreatecontrolfinedownbutton = new CFineTuneButton(size, this, tag, (g_finedownbutton->getHeight())/2, g_finedownbutton, point, kFineDown);
+  recreatecontrolfinedownbutton = 
+    new CFineTuneButton(size, this, tag, 
+			(g_finedownbutton->getHeight())/2, g_finedownbutton, zero, kFineDown);
   recreatecontrolfinedownbutton->setValue(effect->getParameter(tag));
   frame->addView(recreatecontrolfinedownbutton);
   //
   tag = CHOOSE_OP1_PARAM;
   size.offset (pos_finebuttonincX, -pos_finebuttonincY);
-  op1controlfinedownbutton = new CFineTuneButton(size, this, tag, (g_finedownbutton->getHeight())/2, g_finedownbutton, point, kFineDown);
+  op1controlfinedownbutton = 
+    new CFineTuneButton(size, this, tag, 
+			(g_finedownbutton->getHeight())/2, g_finedownbutton, zero, kFineDown);
   op1controlfinedownbutton->setValue(effect->getParameter(tag));
   frame->addView(op1controlfinedownbutton);
   //
   tag = CHOOSE_OP2_PARAM;
   size.offset (0, pos_finebuttonincY);
-  op2controlfinedownbutton = new CFineTuneButton(size, this, tag, (g_finedownbutton->getHeight())/2, g_finedownbutton, point, kFineDown);
+  op2controlfinedownbutton = 
+    new CFineTuneButton(size, this, tag, 
+			(g_finedownbutton->getHeight())/2, g_finedownbutton, zero, kFineDown);
   op2controlfinedownbutton->setValue(effect->getParameter(tag));
   frame->addView(op2controlfinedownbutton);
   //
   tag = CHOOSE_OP3_PARAM;
   size.offset (0, pos_finebuttonincY);
-  op3controlfinedownbutton = new CFineTuneButton(size, this, tag, (g_finedownbutton->getHeight())/2, g_finedownbutton, point, kFineDown);
+  op3controlfinedownbutton = 
+    new CFineTuneButton(size, this, tag, 
+			(g_finedownbutton->getHeight())/2, g_finedownbutton, zero, kFineDown);
   op3controlfinedownbutton->setValue(effect->getParameter(tag));
   frame->addView(op3controlfinedownbutton);
 
   // fine tune up buttons
   tag = CHOOSE_LANDMARK_PARAM;
-  size (pos_fineupX, pos_fineupY, pos_fineupX + g_fineupbutton->getWidth(), pos_fineupY + (g_fineupbutton->getHeight())/2);
-  landmarkscontrolfineupbutton = new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, point, kFineUp);
+  size (pos_fineupX, pos_fineupY, pos_fineupX + g_fineupbutton->getWidth(), 
+	pos_fineupY + (g_fineupbutton->getHeight())/2);
+  landmarkscontrolfineupbutton = 
+    new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, zero, kFineUp);
   landmarkscontrolfineupbutton->setValue(effect->getParameter(tag));
   frame->addView(landmarkscontrolfineupbutton);
   //
   tag = CHOOSE_RECREATE_PARAM;
   size.offset (0, pos_finebuttonincY);
-  recreatecontrolfineupbutton = new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, point, kFineUp);
+  recreatecontrolfineupbutton = 
+    new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, zero, kFineUp);
   recreatecontrolfineupbutton->setValue(effect->getParameter(tag));
   frame->addView(recreatecontrolfineupbutton);
   //
   tag = CHOOSE_OP1_PARAM;
   size.offset (pos_finebuttonincX, -pos_finebuttonincY);
-  op1controlfineupbutton = new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, point, kFineUp);
+  op1controlfineupbutton = 
+    new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, zero, kFineUp);
   op1controlfineupbutton->setValue(effect->getParameter(tag));
   frame->addView(op1controlfineupbutton);
   //
   tag = CHOOSE_OP2_PARAM;
   size.offset (0, pos_finebuttonincY);
-  op2controlfineupbutton = new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, point, kFineUp);
+  op2controlfineupbutton = 
+    new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, zero, kFineUp);
   op2controlfineupbutton->setValue(effect->getParameter(tag));
   frame->addView(op2controlfineupbutton);
   //
   tag = CHOOSE_OP3_PARAM;
   size.offset (0, pos_finebuttonincY);
-  op3controlfineupbutton = new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, point, kFineUp);
+  op3controlfineupbutton = 
+    new CFineTuneButton(size, this, tag, (g_fineupbutton->getHeight())/2, g_fineupbutton, zero, kFineUp);
   op3controlfineupbutton->setValue(effect->getParameter(tag));
   frame->addView(op3controlfineupbutton);
 
 
   // MIDI learn button
-  size (pos_midilearnbuttonX, pos_midilearnbuttonY, pos_midilearnbuttonX + g_midilearnbutton->getWidth(), pos_midilearnbuttonY + (g_midilearnbutton->getHeight())/4);
-  midilearnbutton = new MultiKick (size, this, id_midilearnbutton, 2, (g_midilearnbutton->getHeight())/4, g_midilearnbutton, point);
+  size (pos_midilearnbuttonX, pos_midilearnbuttonY, 
+	pos_midilearnbuttonX + g_midilearnbutton->getWidth(), 
+	pos_midilearnbuttonY + (g_midilearnbutton->getHeight())/4);
+  midilearnbutton = new MultiKick (size, this, id_midilearnbutton, 2, 
+				   (g_midilearnbutton->getHeight())/4, g_midilearnbutton, zero);
   midilearnbutton->setValue(0.0f);
   frame->addView(midilearnbutton);
 
   // Destroy FX web page link
-  size (pos_destroyfxlinkX, pos_destroyfxlinkY, pos_destroyfxlinkX + g_destroyfxlink->getWidth(), pos_destroyfxlinkY + (g_destroyfxlink->getHeight())/2);
-  destroyfxlink = new CWebLink (size, this, id_destroyfxlink, "http://www.smartelectronix.com/~destroyfx/", g_destroyfxlink);
+  size (pos_destroyfxlinkX, pos_destroyfxlinkY, 
+	pos_destroyfxlinkX + g_destroyfxlink->getWidth(), 
+	pos_destroyfxlinkY + (g_destroyfxlink->getHeight())/2);
+  destroyfxlink = new CWebLink (size, this, id_destroyfxlink, DESTROYFXLINK, g_destroyfxlink);
   frame->addView(destroyfxlink);
 
   // Smart Electronix web page link
-  size (pos_smartelectronixlinkX, pos_smartelectronixlinkY, pos_smartelectronixlinkX + g_smartelectronixlink->getWidth(), pos_smartelectronixlinkY + (g_smartelectronixlink->getHeight())/2);
-  smartelectronixlink = new CWebLink (size, this, id_smartelectronixlink, "http://www.smartelectronix.com/", g_smartelectronixlink);
+  size (pos_smartelectronixlinkX, pos_smartelectronixlinkY, 
+	pos_smartelectronixlinkX + g_smartelectronixlink->getWidth(), 
+	pos_smartelectronixlinkY + (g_smartelectronixlink->getHeight())/2);
+  smartelectronixlink = new CWebLink (size, this, id_smartelectronixlink, SELINK, g_smartelectronixlink);
   frame->addView(smartelectronixlink);
 
 
@@ -548,45 +600,63 @@ long GeometerEditor::open(void *ptr) {
   //--initialize the slider labels-----------------------------------------
 
   // landmarkscontrol parameter label
-  size (pos_landmarkscontrollabelX, pos_landmarkscontrollabelY, pos_landmarkscontrollabelX + g_landmarkscontrollabels->getWidth(), pos_landmarkscontrollabelY + (g_landmarkscontrollabels->getHeight()/NUM_POINTSTYLES));
-  landmarkscontrollabels = new CMovieBitmap (size, this, P_POINTSTYLE, NUM_POINTSTYLES, g_landmarkscontrollabels->getHeight()/NUM_POINTSTYLES, g_landmarkscontrollabels, point);
+  size (pos_landmarkscontrollabelX, pos_landmarkscontrollabelY, 
+	pos_landmarkscontrollabelX + g_landmarkscontrollabels->getWidth(), 
+	pos_landmarkscontrollabelY + controllabels_height);
+
+  landmarkscontrollabels =
+    new CMovieBitmap (size, this, P_POINTSTYLE, MAX_POINTSTYLES, 
+		      controllabels_height,
+		      g_landmarkscontrollabels, zero);
   landmarkscontrollabels->setValue(effect->getParameter(P_POINTSTYLE));
   frame->addView(landmarkscontrollabels);
 
   // recreatecontrol parameter label
-  size (pos_recreatecontrollabelX, pos_recreatecontrollabelY, pos_recreatecontrollabelX + g_recreatecontrollabels->getWidth(), pos_recreatecontrollabelY + (g_recreatecontrollabels->getHeight()/NUM_INTERPSTYLES));
-  recreatecontrollabels = new CMovieBitmap (size, this, P_INTERPSTYLE, NUM_INTERPSTYLES, g_recreatecontrollabels->getHeight()/NUM_INTERPSTYLES, g_recreatecontrollabels, point);
+  size (pos_recreatecontrollabelX, pos_recreatecontrollabelY, 
+	pos_recreatecontrollabelX + g_recreatecontrollabels->getWidth(), 
+	pos_recreatecontrollabelY + controllabels_height);
+  recreatecontrollabels = 
+    new CMovieBitmap (size, this, P_INTERPSTYLE, MAX_INTERPSTYLES, 
+		      controllabels_height,
+		      g_recreatecontrollabels, zero);
   recreatecontrollabels->setValue(effect->getParameter(P_INTERPSTYLE));
   frame->addView(recreatecontrollabels);
 
   // op 1 parameter label
-  size (pos_op1controllabelX, pos_op1controllabelY, pos_op1controllabelX + g_op1controllabels->getWidth(), pos_op1controllabelY + (g_op1controllabels->getHeight()/NUM_OPS));
-  op1controllabel = new CMovieBitmap (size, this, P_POINTOP1, NUM_OPS, g_op1controllabels->getHeight()/NUM_OPS, g_op1controllabels, point);
+  size (pos_op1controllabelX, pos_op1controllabelY, 
+	pos_op1controllabelX + g_op1controllabels->getWidth(), 
+	pos_op1controllabelY + controllabels_height);
+  op1controllabel = 
+    new CMovieBitmap (size, this, P_POINTOP1, NUM_OPS, 
+		      controllabels_height,
+		      g_op1controllabels, zero);
   op1controllabel->setValue(effect->getParameter(P_POINTOP1));
   frame->addView(op1controllabel);
 
   // op 2 parameter label
   size.offset (0, pos_sliderincY);
-  op2controllabel = new CMovieBitmap (size, this, P_POINTOP2, NUM_OPS, g_op2controllabels->getHeight()/NUM_OPS, g_op2controllabels, point);
+  op2controllabel = new CMovieBitmap (size, this, P_POINTOP2, NUM_OPS, 
+				      controllabels_height,
+				      g_op2controllabels, zero);
   op2controllabel->setValue(effect->getParameter(P_POINTOP2));
   frame->addView(op2controllabel);
 
   // op 3 parameter label
   size.offset (0, pos_sliderincY);
-  op3controllabel = new CMovieBitmap (size, this, P_POINTOP3, NUM_OPS, g_op3controllabels->getHeight()/NUM_OPS, g_op3controllabels, point);
+  op3controllabel = new CMovieBitmap (size, this, P_POINTOP3, NUM_OPS, 
+				      controllabels_height,
+				      g_op3controllabels, zero);
   op3controllabel->setValue(effect->getParameter(P_POINTOP3));
   frame->addView(op3controllabel);
 
 
   //--initialize the help display-----------------------------------------
-  size (pos_helpboxX, pos_helpboxY, pos_helpboxX + pos_helpboxwidth, pos_helpboxY + pos_helpboxheight);
-  //    displayoffset (pos_helpboxX, pos_helpboxY);
-  //    helpbox = new CMovieBitmap (size, this, P_, NUM_HELPFRAMES, pos_helpboxheight, g_background, displayoffset);
-  helpbox = new CMovieBitmap (size, this, 0, NUM_HELPFRAMES, pos_helpboxheight, g_generalhelp, point);
-  helpbox->setValue(1.0f);
+  size (pos_helpboxX, pos_helpboxY, pos_helpboxX + pos_helpboxwidth, 
+	pos_helpboxY + pos_helpboxheight);
+
+  helpbox = new IndexBitmap (size, pos_helpboxheight, g_generalhelp, zero);
+  helpbox->setindex(HELP_EMPTY);
   frame->addView(helpbox);
-
-
 
   // make an array of pointers to all of the sliders, for glow management
   sliders = (CHorizontalSlider**)malloc(sizeof(CHorizontalSlider*)*NUM_SLIDERS);
@@ -692,7 +762,36 @@ void GeometerEditor::setParameter(long index, float value) {
     return;
 
   long paramtag;
-  switch (index) {
+
+  if (index >= P_POINTPARAMS &&
+      index < P_POINTPARAMS + MAX_POINTSTYLES) {
+
+    if (CHOOSE_LANDMARK_PARAM == index) {
+      if (landmarkscontrolslider)
+        landmarkscontrolslider->setValue(effect->getParameter(index));
+      if (landmarkscontroldisplay)
+        landmarkscontroldisplay->setValue(effect->getParameter(index));
+      if (landmarkscontrolfinedownbutton)
+        landmarkscontrolfinedownbutton->setValue(effect->getParameter(index));
+      if (landmarkscontrolfineupbutton)
+        landmarkscontrolfineupbutton->setValue(effect->getParameter(index));
+    }
+
+  } else if (index >= P_INTERPARAMS &&
+	     index < P_INTERPARAMS + MAX_INTERPSTYLES) {
+
+    if (CHOOSE_RECREATE_PARAM == index) {
+      if (recreatecontrolslider)
+        recreatecontrolslider->setValue(effect->getParameter(index));
+      if (recreatecontroldisplay)
+        recreatecontroldisplay->setValue(effect->getParameter(index));
+      if (recreatecontrolfinedownbutton)
+        recreatecontrolfinedownbutton->setValue(effect->getParameter(index));
+      if (recreatecontrolfineupbutton)
+        recreatecontrolfineupbutton->setValue(effect->getParameter(index));
+    }
+
+  } else switch (index) {
   case P_SHAPE:
     if (windowshapemenu)
       windowshapemenu->setValue(effect->getParameter(index));
@@ -708,7 +807,7 @@ void GeometerEditor::setParameter(long index, float value) {
     if (landmarksmenu)
       landmarksmenu->setValue(effect->getParameter(index));
     if (landmarkscontrollabels)
-      landmarkscontrollabels->setValue(effect->getParameter(index));
+      landmarkscontrollabels->setValue(effect->getParameter(P_POINTSTYLE));
     // & reassociate "linked" controls with a new parameter
     paramtag = CHOOSE_LANDMARK_PARAM;
     if (landmarkscontrolslider) {
@@ -843,46 +942,6 @@ void GeometerEditor::setParameter(long index, float value) {
     }
     break;
 
-  case P_POINTPARAM0:
-  case P_POINTPARAM1:
-  case P_POINTPARAM2:
-  case P_POINTPARAM3:
-  case P_POINTPARAM4:
-  case P_POINTPARAM5:
-  case P_POINTPARAM6:
-  case P_POINTPARAM7:
-    if (CHOOSE_LANDMARK_PARAM == index) {
-      if (landmarkscontrolslider)
-        landmarkscontrolslider->setValue(effect->getParameter(index));
-      if (landmarkscontroldisplay)
-        landmarkscontroldisplay->setValue(effect->getParameter(index));
-      if (landmarkscontrolfinedownbutton)
-        landmarkscontrolfinedownbutton->setValue(effect->getParameter(index));
-      if (landmarkscontrolfineupbutton)
-        landmarkscontrolfineupbutton->setValue(effect->getParameter(index));
-    }
-    break;
-
-  case P_INTERPARAM0:
-  case P_INTERPARAM1:
-  case P_INTERPARAM2:
-  case P_INTERPARAM3:
-  case P_INTERPARAM4:
-  case P_INTERPARAM5:
-  case P_INTERPARAM6:
-  case P_INTERPARAM7:
-    if (CHOOSE_RECREATE_PARAM == index) {
-      if (recreatecontrolslider)
-        recreatecontrolslider->setValue(effect->getParameter(index));
-      if (recreatecontroldisplay)
-        recreatecontroldisplay->setValue(effect->getParameter(index));
-      if (recreatecontrolfinedownbutton)
-        recreatecontrolfinedownbutton->setValue(effect->getParameter(index));
-      if (recreatecontrolfineupbutton)
-        recreatecontrolfineupbutton->setValue(effect->getParameter(index));
-    }
-    break;
-
   case P_OPPAR1_0:
   case P_OPPAR1_1:
   case P_OPPAR1_2:
@@ -955,59 +1014,13 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
   long tag = control->getTag();
 
 
-  switch (tag) {
-  case id_midilearnbutton:
+  if (tag == id_midilearnbutton) {
     chunk->setParameterMidiLearn(control->getValue());
     control->update(context);
-    break;
 
-  case P_BUFSIZE:
-  case P_SHAPE:
-  case P_POINTSTYLE:
-  case P_POINTPARAM0:
-  case P_POINTPARAM1:
-  case P_POINTPARAM2:
-  case P_POINTPARAM3:
-  case P_POINTPARAM4:
-  case P_POINTPARAM5:
-  case P_POINTPARAM6:
-  case P_POINTPARAM7:
-  case P_INTERPSTYLE:
-  case P_INTERPARAM0:
-  case P_INTERPARAM1:
-  case P_INTERPARAM2:
-  case P_INTERPARAM3:
-  case P_INTERPARAM4:
-  case P_INTERPARAM5:
-  case P_INTERPARAM6:
-  case P_INTERPARAM7:
-  case P_POINTOP1:
-  case P_OPPAR1_0:
-  case P_OPPAR1_1:
-  case P_OPPAR1_2:
-  case P_OPPAR1_3:
-  case P_OPPAR1_4:
-  case P_OPPAR1_5:
-  case P_OPPAR1_6:
-  case P_OPPAR1_7:
-  case P_POINTOP2:
-  case P_OPPAR2_0:
-  case P_OPPAR2_1:
-  case P_OPPAR2_2:
-  case P_OPPAR2_3:
-  case P_OPPAR2_4:
-  case P_OPPAR2_5:
-  case P_OPPAR2_6:
-  case P_OPPAR2_7:
-  case P_POINTOP3:
-  case P_OPPAR3_0:
-  case P_OPPAR3_1:
-  case P_OPPAR3_2:
-  case P_OPPAR3_3:
-  case P_OPPAR3_4:
-  case P_OPPAR3_5:
-  case P_OPPAR3_6:
-  case P_OPPAR3_7:
+  } else if (tag < NUM_PARAMS) {
+    /* XXX for anything? */
+
     effect->setParameterAutomated(tag, control->getValue());
 
     if (chunk->midiLearn) {
@@ -1019,24 +1032,21 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
     }
 
     control->update(context);
-    break;
 
-  default:
-    break;
-  }
+  } 
+
 }
 
 //-----------------------------------------------------------------------------
 void GeometerEditor::idle() {
   bool helpchanged = false, glowingchanged = false;
 
-
   if ( (helpbox != NULL) && (frame != NULL) ) {
     // first look to see if any of the main control menus are moused over
     CControl *control = (CControl*)(frame->getCurrentView());
     bool controlfound = false;
     CBitmap *helpbackground = helpbox->getBackground();
-    float helpvalue = helpbox->getValue();
+    int helpvalue = helpbox->getindex();
     if (control != NULL) {
       if (control == windowshapemenu) {
         controlfound = true;
@@ -1044,8 +1054,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_windowshapehelp);
           helpchanged = true;
         }
-        if (helpvalue != windowshapemenu->getValue()) {
-          helpbox->setValue(windowshapemenu->getValue());
+        if (helpvalue != windowshapemenu->getState()) {
+          helpbox->setindex(windowshapemenu->getState());
           helpchanged = true;
         }
         if (helpchanged)
@@ -1057,8 +1067,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_landmarkshelp);
           helpchanged = true;
         }
-        if (helpvalue != landmarksmenu->getValue()) {
-          helpbox->setValue(landmarksmenu->getValue());
+        if (helpvalue != landmarksmenu->getState()) {
+          helpbox->setindex(landmarksmenu->getState());
           helpchanged = true;
         }
         if (helpchanged)
@@ -1070,8 +1080,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_recreatehelp);
           helpchanged = true;
         }
-        if (helpvalue != recreatemenu->getValue()) {
-          helpbox->setValue(recreatemenu->getValue());
+        if (helpvalue != recreatemenu->getState()) {
+          helpbox->setindex(recreatemenu->getState());
           helpchanged = true;
         }
         if (helpchanged)
@@ -1083,8 +1093,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_opshelp);
           helpchanged = true;
         }
-        if (helpvalue != op1menu->getValue()) {
-          helpbox->setValue(op1menu->getValue());
+        if (helpvalue != op1menu->getState()) {
+          helpbox->setindex(op1menu->getState());
           helpchanged = true;
         }
         if (helpchanged)
@@ -1096,8 +1106,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_opshelp);
           helpchanged = true;
         }
-        if (helpvalue != op2menu->getValue()) {
-          helpbox->setValue(op2menu->getValue());
+        if (helpvalue != op2menu->getState()) {
+          helpbox->setindex(op2menu->getState());
           helpchanged = true;
         }
         if (helpchanged)
@@ -1109,8 +1119,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_opshelp);
           helpchanged = true;
         }
-        if (helpvalue != op3menu->getValue()) {
-          helpbox->setValue(op3menu->getValue());
+        if (helpvalue != op3menu->getState()) {
+          helpbox->setindex(op3menu->getState());
           helpchanged = true;
         }
         if (helpchanged)
@@ -1122,8 +1132,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_generalhelp);
           helpchanged = true;
         }
-        if (helpvalue != UNMKHELP(HELP_WINDOWSIZE)) {
-          helpbox->setValue(UNMKHELP(HELP_WINDOWSIZE));
+        if (helpvalue != HELP_WINDOWSIZE) {
+          helpbox->setindex(HELP_WINDOWSIZE);
           helpchanged = true;
         }
         if (helpchanged)
@@ -1135,8 +1145,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_generalhelp);
           helpchanged = true;
         }
-        if (helpvalue != UNMKHELP(HELP_MIDILEARN)) {
-          helpbox->setValue(UNMKHELP(HELP_MIDILEARN));
+        if (helpvalue != HELP_MIDILEARN) {
+          helpbox->setindex(HELP_MIDILEARN);
           helpchanged = true;
         }
         if (helpchanged)
@@ -1158,8 +1168,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_generalhelp);
           helpchanged = true;
         }
-        if (helpvalue != UNMKHELP(HELP_WINDOWSHAPE)) {
-          helpbox->setValue(UNMKHELP(HELP_WINDOWSHAPE));
+        if (helpvalue != HELP_WINDOWSHAPE) {
+          helpbox->setindex(HELP_WINDOWSHAPE);
           helpchanged = true;
         }
         if (helpchanged)
@@ -1171,8 +1181,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_generalhelp);
           helpchanged = true;
         }
-        if (helpvalue != UNMKHELP(HELP_WINDOWSIZE)) {
-          helpbox->setValue(UNMKHELP(HELP_WINDOWSIZE));
+        if (helpvalue != HELP_WINDOWSIZE) {
+          helpbox->setindex(HELP_WINDOWSIZE);
           helpchanged = true;
         }
         if (helpchanged)
@@ -1184,8 +1194,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_generalhelp);
           helpchanged = true;
         }
-        if (helpvalue != UNMKHELP(HELP_LANDMARKS)) {
-          helpbox->setValue(UNMKHELP(HELP_LANDMARKS));
+        if (helpvalue != HELP_LANDMARKS) {
+          helpbox->setindex(HELP_LANDMARKS);
           helpchanged = true;
         }
         if (helpchanged)
@@ -1197,8 +1207,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_generalhelp);
           helpchanged = true;
         }
-        if (helpvalue != UNMKHELP(HELP_OPS)) {
-          helpbox->setValue(UNMKHELP(HELP_OPS));
+        if (helpvalue != HELP_OPS) {
+          helpbox->setindex(HELP_OPS);
           helpchanged = true;
         }
         if (helpchanged)
@@ -1210,8 +1220,8 @@ void GeometerEditor::idle() {
           helpbox->setBackground(g_generalhelp);
           helpchanged = true;
         }
-        if (helpvalue != UNMKHELP(HELP_RECREATE)) {
-          helpbox->setValue(UNMKHELP(HELP_RECREATE));
+        if (helpvalue != HELP_RECREATE) {
+          helpbox->setindex(HELP_RECREATE);
           helpchanged = true;
         }
         if (helpchanged)
@@ -1225,8 +1235,8 @@ void GeometerEditor::idle() {
         helpbox->setDirty();
         helpchanged = true;
       }
-      if (helpvalue != 1.0f) {
-        helpbox->setValue(1.0f);          
+      if (helpvalue != HELP_EMPTY) {
+        helpbox->setindex(HELP_EMPTY);          
         helpbox->setDirty();
         helpchanged = true;
       }
@@ -1241,7 +1251,8 @@ void GeometerEditor::idle() {
         glowingchanged = setGlowing(i, false);
     }
   }
-  
+
+  /* XXX reevaluate when I should do this. */
 #if 1
   static int when = 0;
   /* maybe I don't need to do this every frame... */
