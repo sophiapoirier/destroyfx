@@ -1,7 +1,7 @@
 /*------------------- by Marc Poirier  ][  January 2002 ------------------*/
 
-#ifndef __lfo
-#define __lfo
+#ifndef __dfx_lfo
+#define __dfx_lfo
 
 #include <math.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-#ifndef __lfo
+#ifndef __dfx_lfo
 #include "lfo.h"
 #endif
 
