@@ -258,9 +258,8 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     case WINDOW_COS:
       strcpy(text, "best");
       break;
-    case WINDOW_COS2:
     default:
-      strcpy(text, "cos^2");
+      strcpy(text, "???");
       break;
     }
     break;
@@ -1230,6 +1229,7 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
           break;
+#if 0
         case WINDOW_COS2:
         default:
           for(z = 0; z < third; z ++) {
@@ -1239,7 +1239,7 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
           break;
-
+#endif
       }
 
       /* mix in prevmix */
