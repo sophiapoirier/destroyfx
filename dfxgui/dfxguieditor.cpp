@@ -15,6 +15,10 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
 // for now this is a good idea, until it's totally obsoleted
 #define AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES
 
+static EventHandlerUPP gControlHandlerUPP = NULL;
+static EventHandlerUPP gWindowEventHandlerUPP = NULL;
+static EventLoopTimerUPP gIdleTimerUPP = NULL;
+
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
@@ -44,15 +48,12 @@ CFRelease(mut);
 	imagesList = NULL;
   
 	idleTimer = NULL;
-	idleTimerUPP = NULL;
 
 	backgroundImage = NULL;
 	backgroundColor(randFloat(), randFloat(), randFloat());
 
 	dgControlSpec.defType = kControlDefObjectClass;
 	dgControlSpec.u.classRef = NULL;
-	controlHandlerUPP = NULL;
-	windowEventHandlerUPP = NULL;
 	windowEventHandlerRef = NULL;
 
 	fontsATSContainer = NULL;
@@ -60,6 +61,7 @@ CFRelease(mut);
 
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
+	mousedOverControlsList = NULL;
 
 	dfxplugin = NULL;
 }
@@ -75,9 +77,10 @@ DfxGuiEditor::~DfxGuiEditor()
 	if (idleTimer != NULL)
 		RemoveEventLoopTimer(idleTimer);
 	idleTimer = NULL;
-	if (idleTimerUPP != NULL)
-		DisposeEventLoopTimerUPP(idleTimerUPP);
-	idleTimerUPP = NULL;
+
+	if (windowEventHandlerRef != NULL)
+		RemoveEventHandler(windowEventHandlerRef);
+	windowEventHandlerRef = NULL;
 
 	// deleting a list link also deletes the list's item
 	while (controlsList != NULL)
@@ -88,17 +91,16 @@ DfxGuiEditor::~DfxGuiEditor()
 	}
 	while (imagesList != NULL)
 	{
-		DGImagesList * tempcl = imagesList->next;
+		DGImagesList * tempil = imagesList->next;
 		delete imagesList;
-		imagesList = tempcl;
+		imagesList = tempil;
 	}
-
-	if (windowEventHandlerRef != NULL)
-		RemoveEventHandler(windowEventHandlerRef);
-	windowEventHandlerRef = NULL;
-	if (windowEventHandlerUPP != NULL)
-		DisposeEventHandlerUPP(windowEventHandlerUPP);
-	windowEventHandlerUPP = NULL;
+	while (mousedOverControlsList != NULL)
+	{
+		DGMousedOverControlsList * tempmocl = mousedOverControlsList->next;
+		delete mousedOverControlsList;
+		mousedOverControlsList = tempmocl;
+	}
 
 	// only unregister in Mac OS X version 10.2.3 or higher, otherwise this will cause a crash
 	if ( GetMacOSVersion() >= 0x1023 )
@@ -110,9 +112,6 @@ DfxGuiEditor::~DfxGuiEditor()
 			if (unregResult == noErr)
 			{
 				dgControlSpec.u.classRef = NULL;
-				if (controlHandlerUPP != NULL)
-					DisposeEventHandlerUPP(controlHandlerUPP);
-				controlHandlerUPP = NULL;
 			}
 //else fprintf(stderr, "unregistering our control toolbox class FAILED, error %ld\n", unregResult);
 		}
@@ -151,7 +150,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		{ kEventClassMouse, kEventMouseExited }, 
 	};
 	ToolboxObjectClassRef newControlClass = NULL;
-	controlHandlerUPP = NewEventHandlerUPP(DGControlEventHandler);
+	if (gControlHandlerUPP == NULL)
+		gControlHandlerUPP = NewEventHandlerUPP(DGControlEventHandler);
 	unsigned long instanceAddress = (unsigned long) this;
 	bool noSuccessYet = true;
 	while (noSuccessYet)
@@ -161,7 +161,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		if (toolboxClassIDcfstring != NULL)
 		{
 			if ( RegisterToolboxObjectClass(toolboxClassIDcfstring, NULL, GetEventTypeCount(toolboxClassEvents), toolboxClassEvents, 
-											controlHandlerUPP, this, &newControlClass) == noErr )
+											gControlHandlerUPP, this, &newControlClass) == noErr )
 				noSuccessYet = false;
 			CFRelease(toolboxClassIDcfstring);
 		}
@@ -172,6 +172,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 // create the window event handler that supplements the control event handler by tracking mouse dragging, mouseover controls, etc.
 	currentControl_clicked = NULL;	// make sure that it ain't nuthin
+	mousedOverControlsList = NULL;
 	setCurrentControl_mouseover(NULL);
 	EventTypeSpec windowEvents[] = {
 									{ kEventClassMouse, kEventMouseDragged }, 
@@ -182,8 +183,9 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 									{ kEventClassKeyboard, kEventRawKeyRepeat }, 
 									{ kEventClassCommand, kEventCommandProcess }, 
 								};
-	windowEventHandlerUPP = NewEventHandlerUPP(DGWindowEventHandler);
-	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), windowEventHandlerUPP, 
+	if (gWindowEventHandlerUPP == NULL)
+		gWindowEventHandlerUPP = NewEventHandlerUPP(DGWindowEventHandler);
+	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), gWindowEventHandlerUPP, 
 						GetEventTypeCount(windowEvents), windowEvents, this, &windowEventHandlerRef);
 
 
@@ -236,8 +238,9 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		if (backgroundImage != NULL)
 			SizeControl(mCarbonPane, (SInt16) (backgroundImage->getWidth()), (SInt16) (backgroundImage->getHeight()));
 
-		idleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
-		InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, idleTimerUPP, this, &idleTimer);
+		if (gIdleTimerUPP == NULL)
+			gIdleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
+		InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, gIdleTimerUPP, this, &idleTimer);
 
 		// embed/activate every control
 		DGControlsList * tempcl = controlsList;
