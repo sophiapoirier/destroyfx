@@ -1,11 +1,11 @@
-#ifndef __ScrubbyEditor
-#define __ScrubbyEditor
+#ifndef __scrubbyeditor
+#define __scrubbyeditor
 
 #include "dfxgui.h"
-#include "dfxguiMultiControls.h"
+#include "dfxguimulticontrols.h"
 #include "multikick.hpp"
 #include "indexbitmap.hpp"
-#include "ScrubbyKeyboard.hpp"
+#include "scrubbykeyboard.hpp"
 
 #ifndef __scrubby
 #include "scrubby.hpp"

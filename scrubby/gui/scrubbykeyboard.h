@@ -3,8 +3,11 @@
 //                         by Marc Poirier, May 2002
 //=============================================================================
 
-#ifndef __dfxguiMultiControls
-#include "dfxguiMultiControls.h"
+#ifndef __scrubbykeyboard
+#define __scrubbykeyboard
+
+#ifndef __dfxguimulticontrols
+#include "dfxguimulticontrols.h"
 #endif
 
 
@@ -47,3 +50,6 @@ protected:
 
 	long *whiteTags, *blackTags;
 };
+
+
+#endif
