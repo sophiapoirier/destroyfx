@@ -17,8 +17,10 @@
 #endif
 
 // only necessary for VST
-#define NUM_INPUTS	
-#define NUM_OUTPUTS	
+#define VST_NUM_INPUTS	
+#define VST_NUM_OUTPUTS	
+// or you can just define this if numinputs and numoutputs match
+#define VST_NUM_CHANNELS
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	""
