@@ -31,8 +31,6 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
 
-	relaxed	= false;
-
 	dfxplugin = NULL;
 
 	// load any fonts from our bundle resources to be accessible locally within our component instance
@@ -192,8 +190,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	if (openErr == noErr)
 	{
 		// set the size of the embedding pane
-		if (GetBackgroundImage() != NULL)
-			SizeControl(mCarbonPane, (SInt16) (GetBackgroundImage()->getWidth()), (SInt16) (GetBackgroundImage()->getHeight()));
+		if (backgroundImage() != NULL)
+			SizeControl(mCarbonPane, (SInt16) (backgroundImage()->getWidth()), (SInt16) (backgroundImage()->getHeight()));
 	}
 
 	return openErr;
@@ -281,7 +279,10 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::addImage(DGGraphic *inImage)
 {
-	inImage->setID( requestItemID() );
+	if (inImage == NULL)
+		return;
+
+	itemCount++;
 
 	if (Images == NULL)
 		Images = inImage;
@@ -290,20 +291,12 @@ void DfxGuiEditor::addImage(DGGraphic *inImage)
 }
 
 //-----------------------------------------------------------------------------
-DGGraphic * DfxGuiEditor::getImageByID(UInt32 inID)
-{
-	if (Images == NULL)
-		return NULL;
-	return (DGGraphic*)Images->getByID(inID);
-}
-
-//-----------------------------------------------------------------------------
 void DfxGuiEditor::addControl(DGControl *inControl)
 {
 	if (inControl == NULL)
 		return;
 
-	inControl->setID( requestItemID() );
+	itemCount++;
 
 	if (inControl->getDaddy() == NULL)
 	{
@@ -351,15 +344,7 @@ if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
 }
 
 //-----------------------------------------------------------------------------
-DGControl * DfxGuiEditor::getControlByID(UInt32 inID)
-{
-	if (Controls == NULL)
-		return NULL;
-	return (DGControl*) Controls->getByID(inID);
-}
-
-//-----------------------------------------------------------------------------
-DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
+DGControl * DfxGuiEditor::getDGControlByPlatformControlRef(PlatformControlRef inControl)
 {
 	DGControl * current = Controls;
 
@@ -374,13 +359,6 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 	}
 	
 	return current;
-}
-
-//-----------------------------------------------------------------------------
-UInt32 DfxGuiEditor::requestItemID()
-{
-	itemCount++;
-	return itemCount;
 }
 
 //-----------------------------------------------------------------------------
@@ -674,7 +652,7 @@ return eventKindIncorrectErr;
 		ControlRef underCarbonControl = FindControlUnderMouse(mouseLocation, window, NULL);
 		DGControl * underDGControl = NULL;
 		if (underCarbonControl != NULL)
-			underDGControl = ourOwnerEditor->getDGControlByCarbonControlRef(underCarbonControl);
+			underDGControl = ourOwnerEditor->getDGControlByPlatformControlRef(underCarbonControl);
 		ourOwnerEditor->setCurrentControl_mouseover(underDGControl);
 
 		// restore the original port
@@ -727,7 +705,6 @@ return eventKindIncorrectErr;
 		ourControl->mouseUp(mouseLocation, with_option, with_shift);
 
 		ourOwnerEditor->setCurrentControl_clicked(NULL);
-		ourOwnerEditor->setRelaxed(false);
 
 		// XXX do this to make Logic's touch automation work
 		if ( ourControl->isAUVPattached() )//&& ourControl->isContinuousControl() )
@@ -758,7 +735,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 	DfxGuiEditor *ourOwnerEditor = (DfxGuiEditor*) inUserData;
 	DGControl *ourDGControl = NULL;
 	if (ourOwnerEditor != NULL)
-		ourDGControl = ourOwnerEditor->getDGControlByCarbonControlRef(ourCarbonControl);	
+		ourDGControl = ourOwnerEditor->getDGControlByPlatformControlRef(ourCarbonControl);
 
 /*
 	// the Carbon control reference has not been added yet, so our DGControl pointer is NULL, because we can't look it up by ControlRef yet
@@ -885,9 +862,6 @@ printf("kEventControlHit\n");
 			case kEventControlContextualMenuClick:
 //if (inEventKind == kEventControlContextualMenuClick) printf("kEventControlContextualMenuClick\n");
 				{
-					// prevent unnecessary draws
-					ourOwnerEditor->setRelaxed(true);
-
 					ourOwnerEditor->setCurrentControl_mouseover(ourDGControl);
 
 //					UInt32 buttons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
@@ -939,7 +913,7 @@ printf("kEventControlHit\n");
 	}
 
 //	if ( (result != noErr) && (ourDGControl != NULL) )
-//		printf("DGControl ID = %ld,   event type = %ld\n", ourDGControl->getID(), inEventKind);
+//		printf("DGControl = 0x%08X,   event type = %ld\n", (unsigned long)ourDGControl, inEventKind);
 
 	return result;
 }
