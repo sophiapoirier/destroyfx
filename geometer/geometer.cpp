@@ -1297,7 +1297,7 @@ void PLUGIN::makepresets() {
   setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 0.7303371f);
   i++;
 
-  setpresetname(i, "time shuffle echo");
+  setpresetname(i, "time shuffle echo (sux?)");
   setpresetparameter_i(i, P_BUFSIZE, 13);
   setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_DYDX);
