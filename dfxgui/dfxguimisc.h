@@ -6,18 +6,6 @@
 
 #include "dfxdefines.h"
 
-
-//-----------------------------------------------------------------------------
-typedef enum {
-	kDfxGuiType_none = 0,
-	kDfxGuiType_graphic,
-	kDfxGuiType_slider,
-	kDfxGuiType_button,
-	kDfxGuiType_display
-} DfxGuiType;
-
-
-
 /***********************************************************************
 	DGRect
 	a rectangular region class
@@ -133,6 +121,11 @@ class Destructible {
 	class for loading and containing images
 ***********************************************************************/
 
+/* XXX should be "stacked" or "indexed" so that one bitmap might hold
+   several clipped regions that can be drawn. (but we use overloading
+   or default params so that it behaves like a single image when not
+   using those features) */
+
 //-----------------------------------------------------------------------------
 class DGGraphic : public Destructible
 {
@@ -145,13 +138,25 @@ public:
 	// passive API (for controls that want to draw images by themselves)
 	CGImageRef getCGImage()
 		{	return cgImage;	}
+
+	/* XXX int? */
 	size_t getWidth();
 	size_t getHeight();
 
 	// active API (for more than images...)
+	/* XXX float is not even used */
+	/* probably a better type is
+	   void draw(int x, int y);
+
+	   .. and also something like
+	   void drawex(int x, int y, int xindex, int yindex) 
+	   .. for stacked images.
+	*/
 	virtual void draw(CGContextRef context, UInt32 portHeight, DGRect* rect, float value);
 
-private:
+ private:
+	
+	/* XXX move to constructor */
 	void loadImageFile(const char *inFileName);
 
 	CGImageRef cgImage;

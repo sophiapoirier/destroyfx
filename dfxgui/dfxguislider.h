@@ -28,6 +28,17 @@ public:
 		{	mouseOffset = inOffset;	}
 
 
+	/* XXX example */
+	/* call this instead of new */
+	static DGSlider * create(DfxGuiEditor * dge, AudioUnitParameterID a, DGRect * r, DfxGuiSliderStyme dgss,
+				 DGGraphic * dg, DGGraphic * dg2) {
+
+	  DGSlider * n = new DGSlider(dge, a, r, dgss, dg, dg2);
+	  dge->add(n);
+	  return n;
+	}
+
+
 protected:
 	UInt32			orientation;
 	DGGraphic *		ForeGround;
