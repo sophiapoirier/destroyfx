@@ -6,6 +6,8 @@ This is our mutex shit.
 #ifndef __DFXMUTEX_H
 #define __DFXMUTEX_H
 
+
+
 #if WIN32
 
 struct dfxmutex {
@@ -13,39 +15,77 @@ struct dfxmutex {
 	dfxmutex() { InitializeCriticalSection(&c); }
 	~dfxmutex() { DeleteCriticalSection(&c); }
 	void grab() { EnterCriticalSection(&c); }
+	// map the TryEnterCriticalSection to the sort of error that every other mutex API uses
+	int try_grab() { return (TryEnterCriticalSection(&cs) == 0) ? 3 : 0; }
 	void release() { LeaveCriticalSection(&c); }
 };
 
-/*
+
+
 #elif MAC
+
+#ifdef __MACH__
+
+// POSIX
+#include <pthread.h>
+struct dfxmutex {
+	int createErr, deleteErr;
+	pthread_mutex_t pmut;
+	dfxmutex() { createErr = pthread_mutex_init(&pmut, NULL); }
+	~dfxmutex() { deleteErr = pthread_mutex_destroy(&pmut); }
+	int grab () { return pthread_mutex_lock(&pmut); }
+	int try_grab () { return pthread_mutex_trylock(&pmut); }
+	int release () { return pthread_mutex_unlock(&pmut); }
+};
+
+#else
 
 // Multiprocessing Services
 #include <Multiprocessing.h>
+#include <MacErrors.h>
 struct dfxmutex {
-	OSStatus initErr, deleteErr, enterErr, exitErr;
-	MPCriticalRegionID c;
-	Duration timeout;	// in ms   (available constants:  kDurationImmediate, kDurationForever, kDurationMillisecond, kDurationMicrosecond)
-	dfxmutex() { initErr = MPCreateCriticalRegion(&c); }
-	~dfxmutex() { deleteErr = MPDeleteCriticalRegion(c); }
-	void grab () { enterErr = MPEnterCriticalRegion(c, kDurationForever); }
-	void release () { exitErr = MPExitCriticalRegion(c); }
-};
-
-// POSIX
-// can this even work for CFM?  perhaps only mach-o
-#include <pthread.h>
-//#include <Carbon/Carbon.h>
-struct dfxmutex {
-	int initErr, deleteErr, enterErr, exitErr;
-	pthread_mutex_t c;
-	dfxmutex() { initErr = pthread_mutex_init(&c, NULL); }
-	~dfxmutex() { deleteErr = pthread_mutex_destroy(&c); }
-	void grab () { enterErr = pthread_mutex_lock(&c); }
-	void release () { exitErr = pthread_mutex_unlock(&c);
-					//pthread_testcancel();
+	OSStatus createErr, deleteErr;
+	MPCriticalRegionID mpcr;
+	Duration timeout;	// in ms
+	dfxmutex()
+	{
+		if ( MPLibraryIsLoaded() )
+			createErr = MPCreateCriticalRegion(&mpcr);
+		else
+			createErr = kMPInsufficientResourcesErr;
+	}
+	~dfxmutex()
+	{
+		if (createErr == noErr)
+			deleteErr = MPDeleteCriticalRegion(mpcr);
+	}
+	OSStatus grab()
+	{
+		if (createErr == noErr) 
+			return MPEnterCriticalRegion(mpcr, kDurationForever);
+		else
+			return createErr;
+	}
+	OSStatus try_grab()
+	{
+		if (createErr == noErr) 
+			return MPEnterCriticalRegion(mpcr, kDurationImmediate);
+		else
+			return createErr;
+	}
+	OSStatus release()
+	{
+		if (createErr == noErr) 
+			return MPExitCriticalRegion(mpcr);
+		else
+			return createErr;
 	}
 };
-*/
+
+#endif
+// __MACH__
+
+
 
 #else
 
@@ -59,7 +99,10 @@ struct dfxmutex {
 	void release () {}
 };
 
+
+
 #endif
+// platforms
 
 
 
