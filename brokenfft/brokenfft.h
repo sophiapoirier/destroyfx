@@ -43,6 +43,7 @@ enum { P_BUFSIZE, P_SHAPE,
        P_ECHOFB,
        P_ECHOLOW,
        P_ECHOHI,
+       P_POSTROT,
        NUM_PARAMS};
 
 struct param {
@@ -214,6 +215,8 @@ protected:
   float echolow, echohi;
   int echoctr;
 
+
+  float postrot;
 
 };
 

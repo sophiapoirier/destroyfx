@@ -38,7 +38,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(echofb, P_ECHOFB, "eo fbx", 0.50, "?");
   FPARAM(echolow, P_ECHOLOW, "eo >", 0.0, "?");
   FPARAM(echohi, P_ECHOHI, "eo <", 1.0, "?");
-  
+  FPARAM(postrot, P_POSTROT, "postrot", 0.5, "?");
   
 
   long maxframe = 0;
@@ -187,6 +187,16 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     }
     break;
     /* special cases here */
+  case P_POSTROT:
+    if (postrot > 0.5) {
+      sprintf(text, "+%d", 
+	      (int)((postrot - 0.5f) * 2.0f * MKBUFSIZE(bufsizep)));
+    } else if (postrot == 0.5) {
+      sprintf(text, "*NO*");
+    } else {
+      sprintf(text, "-%d", 
+	      (int)((0.5f - postrot) * 2.0f * MKBUFSIZE(bufsizep)));
+    }
   default:
     float2string(getParameter(index), text);
     break;
@@ -346,6 +356,27 @@ void PLUGIN::fftops(long samples) {
 	fftr[i] = (1.0 - echomix) * fftr[i] + echomix * echor[xx];
 	
 	ffti[i] = (1.0 - echomix) * ffti[i] + echomix * echoc[xx];
+      }
+    }
+  }
+
+  /* post-processing rotate-up */
+  if (postrot > 0.5) {
+    int rotn = (postrot - 0.5) * 2.0 * samples;
+    for(int v = samples - 1; v >= 0; v --) {
+      if (v < rotn) fftr[v] = ffti[v] = 0.0;
+      else { 
+	fftr[v] = fftr[v - rotn];
+	ffti[v] = ffti[v - rotn];
+      }
+    }
+  } else if (postrot < 0.5) {
+    int rotn = (int)((0.5f - postrot) * 2.0f * MKBUFSIZE(bufsizep));
+    for(int v = 0; v < samples; v++) {
+      if (v > (samples - rotn)) fftr[v] = ffti[v] = 0.0;
+      else {
+	fftr[v] = fftr[(samples - rotn) - v];
+	ffti[v] = ffti[(samples - rotn) - v];
       }
     }
   }
