@@ -21,7 +21,7 @@ public:
 	// control for a parameter
 	DGControl(DfxGuiEditor *inOwnderEditor, AudioUnitParameterID inParameterID, DGRect *inRegion);
 	// control with no actual parameter attached
-	DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange = 0.0f);
+	DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange);
 	virtual ~DGControl();
 
 	// ControlRefs will be implemented by Manager Class
@@ -30,19 +30,17 @@ public:
 	ControlRef getCarbonControl()
 		{	return carbonControl;	}
 
-	// called by EventHandler callback; draws a clipping region
-	void clipRegion(bool drawing);	// XXX marc says it can go?
 	void setVisible(bool inVisibility);
 
 	// The methods you should implement in derived controls
 	virtual void draw(CGContextRef context, UInt32 portHeight)
 		{ }
 	// *** mouse position is relative to controlBounds for ultra convenience
-	virtual void mouseDown(Point inPos, bool, bool)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 		{ }
-	virtual void mouseTrack(Point inPos, bool, bool)
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 		{ }
-	virtual void mouseUp(Point inPos, bool, bool)
+	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 		{ }
 
 // XXX fix this up

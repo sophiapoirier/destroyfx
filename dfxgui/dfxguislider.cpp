@@ -112,22 +112,22 @@ void DGSlider::draw(CGContextRef inContext, UInt32 inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseDown(Point inPos, bool with_option, bool with_shift)
+void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 {
-	lastX = inPos.h;
-	lastY = inPos.v;
+	lastX = inXpos;
+	lastY = inYpos;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		if (isAUVPattached())
 			getDfxGuiEditor()->setmidilearner(getAUVP().mParameterID);
 	#endif
 
-	if (!with_shift)
-		mouseTrack(inPos, with_option, with_shift);
+	if ( !(inKeyModifiers & kDGKeyModifier_shift) )
+		mouseTrack(inXpos, inYpos, inMouseButtons, inKeyModifiers);
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseTrack(Point inPos, bool with_option, bool with_shift)
+void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 {
 	ControlRef carbonControl = getCarbonControl();
 	SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -141,17 +141,17 @@ void DGSlider::mouseTrack(Point inPos, bool with_option, bool with_shift)
 	SInt32 o_X = fore.x - back.x + mouseOffset;
 	SInt32 o_Y = fore.y - back.y - mouseOffset;
 
-	if (with_shift)	// slo-mo
+	if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
 	{
 		if (orientation == kDGSliderStyle_vertical)
 		{
-			float diff = (float) (lastY - inPos.v);
+			float diff = lastY - inYpos;
 			diff /= fineTuneFactor;
 			val += (SInt32) (diff * (float)max / (float)fore.h);
 		}
 		else	// horizontal mode
 		{
-			float diff = (float) (inPos.h - lastX);
+			float diff = inXpos - lastX;
 			diff /= fineTuneFactor;
 			val += (SInt32) (diff * (float)max / (float)fore.w);
 		}
@@ -160,12 +160,12 @@ void DGSlider::mouseTrack(Point inPos, bool with_option, bool with_shift)
 	{
 		if (orientation == kDGSliderStyle_vertical)
 		{
-			float valnorm = (float)(inPos.v - o_Y) / (float)fore.h;
+			float valnorm = (inYpos - (float)o_Y) / (float)fore.h;
 			val = (SInt32)((float)max * (1.0f - valnorm));
 		}
 		else	// horizontal mode
 		{
-			float valnorm = (float)(inPos.h - o_X) / (float)fore.w;
+			float valnorm = (inXpos - (float)o_X) / (float)fore.w;
 			val = (SInt32)((float)max * valnorm);
 		}
 	}
@@ -177,12 +177,12 @@ void DGSlider::mouseTrack(Point inPos, bool with_option, bool with_shift)
 	if (val != oldval)
 		SetControl32BitValue(carbonControl, val);
 
-	lastX = inPos.h;
-	lastY = inPos.v;
+	lastX = inXpos;
+	lastY = inYpos;
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseUp(Point inPos, bool with_option, bool with_shift)
+void DGSlider::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 {
-	mouseTrack(inPos, with_option, with_shift);
+	mouseTrack(inXpos, inYpos, 1, inKeyModifiers);
 }

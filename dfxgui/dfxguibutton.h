@@ -26,9 +26,9 @@ public:
 	virtual ~DGButton();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
-	virtual void mouseDown(Point inPos, bool, bool);
-	virtual void mouseTrack(Point inPos, bool, bool);
-	virtual void mouseUp(Point inPos, bool, bool);
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
+	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers);
 	void setMouseIsDown(bool newMouseState);
 	bool getMouseIsDown()
 		{	return mouseIsDown;	}
@@ -59,7 +59,7 @@ public:
 	DGWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inImage, const char *inURL);
 	virtual ~DGWebLink();
 
-	virtual void mouseUp(Point inPos, bool, bool);
+	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers);
 
 private:
 	char * urlString;
