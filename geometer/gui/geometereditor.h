@@ -24,104 +24,103 @@ enum { HELP_MIDILEARN,
        HELP_LANDMARKS,
        HELP_OPS,
        HELP_RECREATE,
-        HELP_EMPTY1,
-        HELP_EMPTY2,
+       HELP_EMPTY1,
+       HELP_EMPTY2,
        NUM_HELPFRAMES
 };
 
 
 //--------------------------------------------------------------------------
-class GeometerEditor : public AEffGUIEditor, public CControlListener
-{
+class GeometerEditor : public AEffGUIEditor, public CControlListener {
 public:
-	GeometerEditor(AudioEffect *effect);
-	virtual ~GeometerEditor();
+  GeometerEditor(AudioEffect *effect);
+  virtual ~GeometerEditor();
 
 protected:
-	virtual long getRect(ERect **rect);
-	virtual long open(void *ptr);
-	virtual void close();
+  virtual long getRect(ERect **rect);
+  virtual long open(void *ptr);
+  virtual void close();
 
-	virtual void setParameter(long index, float value);
-	virtual void valueChanged(CDrawContext* context, CControl* control);
+  virtual void setParameter(long index, float value);
+  virtual void valueChanged(CDrawContext* context, CControl* control);
 
-    virtual void idle();
+  virtual void idle();
 
 private:
-	/* ---controls--- */
-	// sliders
-	CHorizontalSlider *landmarkscontrolslider;
-	CHorizontalSlider *recreatecontrolslider;
-	CHorizontalSlider *op1controlslider;
-	CHorizontalSlider *op2controlslider;
-	CHorizontalSlider *op3controlslider;
-	// options menus
-	MultiKick *windowshapemenu;
-	MultiKick *windowsizemenu;
-	MultiKick *landmarksmenu;
-	MultiKick *op1menu;
-	MultiKick *op2menu;
-	MultiKick *op3menu;
-	MultiKick *recreatemenu;
-	// buttons
-	CFineTuneButton *landmarkscontrolfinedownbutton;
-	CFineTuneButton *landmarkscontrolfineupbutton;
-	CFineTuneButton *recreatecontrolfinedownbutton;
-	CFineTuneButton *recreatecontrolfineupbutton;
-	CFineTuneButton *op1controlfinedownbutton;
-	CFineTuneButton *op1controlfineupbutton;
-	CFineTuneButton *op2controlfinedownbutton;
-	CFineTuneButton *op2controlfineupbutton;
-	CFineTuneButton *op3controlfinedownbutton;
-	CFineTuneButton *op3controlfineupbutton;
-	MultiKick *midilearnbutton;
-	CWebLink *destroyfxlink;
-	CWebLink *smartelectronixlink;
+  /* ---controls--- */
+  // sliders
+  CHorizontalSlider *landmarkscontrolslider;
+  CHorizontalSlider *recreatecontrolslider;
+  CHorizontalSlider *op1controlslider;
+  CHorizontalSlider *op2controlslider;
+  CHorizontalSlider *op3controlslider;
+  // options menus
+  MultiKick *windowshapemenu;
+  MultiKick *windowsizemenu;
+  MultiKick *landmarksmenu;
+  MultiKick *op1menu;
+  MultiKick *op2menu;
+  MultiKick *op3menu;
+  MultiKick *recreatemenu;
+  // buttons
+  CFineTuneButton *landmarkscontrolfinedownbutton;
+  CFineTuneButton *landmarkscontrolfineupbutton;
+  CFineTuneButton *recreatecontrolfinedownbutton;
+  CFineTuneButton *recreatecontrolfineupbutton;
+  CFineTuneButton *op1controlfinedownbutton;
+  CFineTuneButton *op1controlfineupbutton;
+  CFineTuneButton *op2controlfinedownbutton;
+  CFineTuneButton *op2controlfineupbutton;
+  CFineTuneButton *op3controlfinedownbutton;
+  CFineTuneButton *op3controlfineupbutton;
+  MultiKick *midilearnbutton;
+  CWebLink *destroyfxlink;
+  CWebLink *smartelectronixlink;
 
-	/* ---information displays--- */
-	// parameter value display boxes
-	CParamDisplay *landmarkscontroldisplay;
-	CParamDisplay *recreatecontroldisplay;
-	CParamDisplay *op1controldisplay;
-	CParamDisplay *op2controldisplay;
-	CParamDisplay *op3controldisplay;
-	// slider labels
-	CMovieBitmap *landmarkscontrollabels;
-	CMovieBitmap *recreatecontrollabels;
-	CMovieBitmap *op1controllabel;
-	CMovieBitmap *op2controllabel;
-	CMovieBitmap *op3controllabel;
-	// help display
-	CMovieBitmap *helpbox;
+  /* ---information displays--- */
+  // parameter value display boxes
+  CParamDisplay *landmarkscontroldisplay;
+  CParamDisplay *recreatecontroldisplay;
+  CParamDisplay *op1controldisplay;
+  CParamDisplay *op2controldisplay;
+  CParamDisplay *op3controldisplay;
+  // slider labels
+  CMovieBitmap *landmarkscontrollabels;
+  CMovieBitmap *recreatecontrollabels;
+  CMovieBitmap *op1controllabel;
+  CMovieBitmap *op2controllabel;
+  CMovieBitmap *op3controllabel;
+  // help display
+  CMovieBitmap *helpbox;
 
-	/* ---graphics--- */
-	CBitmap *g_background;
-	CBitmap *g_sliderhandle;
-	CBitmap *g_glowingsliderhandle;
-	CBitmap *g_finedownbutton;
-	CBitmap *g_fineupbutton;
-	CBitmap *g_windowshapemenu;
-	CBitmap *g_windowsizemenu;
-	CBitmap *g_landmarksmenu;
-	CBitmap *g_opsmenu;
-	CBitmap *g_recreatemenu;
-	CBitmap *g_landmarkscontrollabels;
-	CBitmap *g_recreatecontrollabels;
-	CBitmap *g_op1controllabels;
-	CBitmap *g_op2controllabels;
-	CBitmap *g_op3controllabels;
-	CBitmap *g_generalhelp;
-	CBitmap *g_windowshapehelp;
-	CBitmap *g_landmarkshelp;
-	CBitmap *g_opshelp;
-	CBitmap *g_recreatehelp;
-	CBitmap *g_midilearnbutton;
-	CBitmap *g_destroyfxlink;
-	CBitmap *g_smartelectronixlink;
+  /* ---graphics--- */
+  CBitmap *g_background;
+  CBitmap *g_sliderhandle;
+  CBitmap *g_glowingsliderhandle;
+  CBitmap *g_finedownbutton;
+  CBitmap *g_fineupbutton;
+  CBitmap *g_windowshapemenu;
+  CBitmap *g_windowsizemenu;
+  CBitmap *g_landmarksmenu;
+  CBitmap *g_opsmenu;
+  CBitmap *g_recreatemenu;
+  CBitmap *g_landmarkscontrollabels;
+  CBitmap *g_recreatecontrollabels;
+  CBitmap *g_op1controllabels;
+  CBitmap *g_op2controllabels;
+  CBitmap *g_op3controllabels;
+  CBitmap *g_generalhelp;
+  CBitmap *g_windowshapehelp;
+  CBitmap *g_landmarkshelp;
+  CBitmap *g_opshelp;
+  CBitmap *g_recreatehelp;
+  CBitmap *g_midilearnbutton;
+  CBitmap *g_destroyfxlink;
+  CBitmap *g_smartelectronixlink;
 
-	VstChunk *chunk;
-	CHorizontalSlider **sliders;
-	bool setGlowing(long index, bool glow = true);
+  VstChunk *chunk;
+  CHorizontalSlider **sliders;
+  bool setGlowing(long index, bool glow = true);
 };
 
 #endif
