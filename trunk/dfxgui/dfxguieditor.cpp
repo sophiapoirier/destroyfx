@@ -559,15 +559,17 @@ return eventKindIncorrectErr;
 	bool with_option = ( (modifiers & optionKey) || (modifiers & rightOptionKey) ) ? true : false;
 //	bool with_control = ( (modifiers & controlKey) || (modifiers & rightControlKey) ) ? true : false;
 
-	// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
-	Rect controlBounds;
-	GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
-	Rect globalBounds;	// Window Content Region
+// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 	WindowRef window;
 	GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
-	GetWindowBounds(window, kWindowGlobalPortRgn, &globalBounds);
-	mouseLocation.h -= controlBounds.left + globalBounds.left;
-	mouseLocation.v -= controlBounds.top + globalBounds.top;
+	// the content area of the window (i.e. not the title bar or any borders)
+	Rect windowBounds;
+	GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
+	// the position of the control relative to the top left corner of the window content area
+	Rect controlBounds;
+	GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
+	mouseLocation.h -= windowBounds.left + controlBounds.left;
+	mouseLocation.v -= windowBounds.top + controlBounds.top;
 
 
 	if (inEventKind == kEventMouseDragged)
@@ -744,12 +746,14 @@ printf("kEventControlHit\n");
 //GetGlobalMouse(&mouseLocation);	// Logic 5 workaround
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
+					// the content area of the window (i.e. not the title bar or any borders)
+					Rect windowBounds;
+					GetWindowBounds(GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &windowBounds);
+					// the position of the control relative to the top left corner of the window content area
 					Rect controlBounds;
 					GetControlBounds(ourCarbonControl, &controlBounds);
-					Rect globalBounds;	// Window Content Region
-					GetWindowBounds(GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &globalBounds);
-					mouseLocation.h -= controlBounds.left + globalBounds.left;
-					mouseLocation.v -= controlBounds.top + globalBounds.top;
+					mouseLocation.h -= windowBounds.left + controlBounds.left;
+					mouseLocation.v -= windowBounds.top + controlBounds.top;
 
 					UInt32 modifiers;
 					GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
