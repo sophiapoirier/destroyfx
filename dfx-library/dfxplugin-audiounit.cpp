@@ -827,13 +827,13 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayLogarithmic;
 			break;
 		case kDfxParamCurve_sqrt:
-			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplaySquareRoot;
-			break;
-		case kDfxParamCurve_squared:
 			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplaySquared;
 			break;
+		case kDfxParamCurve_squared:
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplaySquareRoot;
+			break;
 		case kDfxParamCurve_cubed:
-			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayCubed;
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayCubeRoot;
 			break;
 		case kDfxParamCurve_exp:
 			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayExponential;
@@ -1022,6 +1022,7 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 			outNumPresets++;
 	}
 	if (outNumPresets <= 0)	// woops, looks like we don't actually have any presets
+//		return kAudioUnitErr_PropertyNotInUse;
 		return kAudioUnitErr_InvalidProperty;
 
 	// this is just to say that the property is supported (GetPropertyInfo needs this)
