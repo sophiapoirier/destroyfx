@@ -19,7 +19,7 @@ typedef void (*displayTextProcedure) (Float32 value, char *outText, void *userDa
 class DGTextDisplay : public DGControl
 {
 public:
-	DGTextDisplay(DfxGuiEditor*, AudioUnitParameterID, DGRect*, displayTextProcedure, void *inUserData, DGGraphic*, const char *inFontName = NULL);
+	DGTextDisplay(DfxGuiEditor*, AudioUnitParameterID, DGRect*, displayTextProcedure, void *inUserData, DGImage*, const char *inFontName = NULL);
 	virtual ~DGTextDisplay();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
@@ -38,7 +38,7 @@ public:
 		{	fontColor = newColor;	}
 	
 protected:
-	DGGraphic *				BackGround;
+	DGImage *				BackGround;
 	displayTextProcedure	textProc;
 	void *					textProcUserData;
 	char *					fontName;
@@ -53,7 +53,7 @@ protected:
 class DGStaticTextDisplay : public DGTextDisplay
 {
 public:
-	DGStaticTextDisplay(DfxGuiEditor*, DGRect*, DGGraphic*, const char *inFontName = NULL);
+	DGStaticTextDisplay(DfxGuiEditor*, DGRect*, DGImage*, const char *inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);

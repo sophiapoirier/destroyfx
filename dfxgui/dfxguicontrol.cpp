@@ -46,6 +46,7 @@ void DGControl::init(DGRect *inRegion)
 //-----------------------------------------------------------------------------
 DGControl::~DGControl()
 {
+//printf("DGControl::~DGControl()\n");
 	if (carbonControl != NULL)
 		DisposeControl(carbonControl);
 	if (children != NULL)
@@ -102,16 +103,6 @@ void DGControl::setOffset(SInt32 x, SInt32 y)
 {
 	where.offset(x, y);
 	vizArea.offset(x, y);
-
-	if (children != NULL)
-	{
-		DGControl *current = children;
-		while (current != NULL)
-		{
-			current->setOffset(x, y);
-			current = (DGControl*) (current->getNext());
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -128,16 +119,6 @@ void DGControl::clipRegion(bool drawing)
 		FrameRect(&r);
 //		printf("clipping opaque %d %d %d %d\n", r.left, r.top, r.right, r.bottom);
 	}
-	
-	if ( !isOpaque() || drawing )
-	{
-		DGControl *current = children;
-		while (current != NULL)
-		{
-			current->clipRegion(false);
-			current = (DGControl*) current->getNext();
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -153,16 +134,6 @@ void DGControl::setVisible(bool inVisibility)
 		else
 			HideControl(carbonControl);
 	}
-	
-	if (children != NULL)
-	{
-		DGControl* current = children;
-		while(current != NULL)
-		{
-			current->setVisible(inVisibility);
-			current = (DGControl*) current->getNext();
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -170,8 +141,6 @@ void DGControl::idle()
 {
 	if (children != NULL)
 		children->idle();
-	if (getNext() != NULL)
-		((DGControl*)getNext())->idle();
 }
 	
 //-----------------------------------------------------------------------------
@@ -179,16 +148,6 @@ bool DGControl::isControlRef(ControlRef inControl)
 {
 	if (carbonControl == inControl)
 		return true;
-	if (children != NULL)
-	{
-		DGControl* current = children;
-		while(current != NULL)
-		{
-			if ( current->isControlRef(inControl) )
-				return true;
-			current = (DGControl*) current->getNext();
-		}
-	}
 	return false;
 }
 
@@ -197,6 +156,9 @@ DGControl * DGControl::getChild(ControlRef inControl)
 {
 	if (carbonControl == inControl)
 		return this;
+
+// XXX we will not have this concept of control parents or children, right?
+#if 0
 	if (children != NULL)
 	{
 		DGControl* current = children;
@@ -208,6 +170,7 @@ DGControl * DGControl::getChild(ControlRef inControl)
 			current = (DGControl*) current->getNext();
 		}
 	}
+#endif
 	return NULL;
 }
 
@@ -226,11 +189,10 @@ void DGControl::shrinkForeBounds(SInt32 inXoffset, SInt32 inYoffset, SInt32 inWi
 //-----------------------------------------------------------------------------
 bool DGControl::mustUpdate()
 {
-	SInt32 val = GetControl32BitValue(carbonControl);
-	SInt32 diff = val - lastUpdatedValue;
+	long val = GetControl32BitValue(carbonControl);
 
 // XXX should we actually do anything to avoid needless redraws?
-//	if ( (abs(diff) >= abs(redrawTolerance)) || pleaseUpdate )
+//	if ( (abs(val-lastUpdatedValue) >= abs(redrawTolerance)) || pleaseUpdate )
 	{
 		lastUpdatedValue = val;
 		pleaseUpdate = false;
