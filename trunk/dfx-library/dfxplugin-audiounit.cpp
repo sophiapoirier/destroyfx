@@ -467,7 +467,7 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 		// in case the min is not 0, get the total count of items in the array
 		long numStrings = getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1;
 		// create a CFArray of the strings (the host will destroy the CFArray)
-		*outStrings = CFArrayCreate(NULL, (const void**)outArray, numStrings, NULL);
+		*outStrings = CFArrayCreate(kCFAllocatorDefault, (const void**)outArray, numStrings, NULL);
 		return noErr;
 	}
 
@@ -533,7 +533,7 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef *outData) const
 	if (outNumPresets <= 0)	// woops, looks like we don't actually have any presets
 		return kAudioUnitErr_InvalidProperty;
 	// ...and then allocate a mutable array large enough to hold them all
-	CFMutableArrayRef outArray = CFArrayCreateMutable(NULL, outNumPresets, NULL);
+	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, NULL);
 
 	// add the preset data (name and number) into the array
 	for (long i=0; i < numPresets; i++)
@@ -662,7 +662,7 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 
 #if TARGET_PLUGIN_USES_MIDI
 	// create a CF data storage thingy for our special data
-	CFMutableDataRef cfdata = CFDataCreateMutable(NULL, NULL);
+	CFMutableDataRef cfdata = CFDataCreateMutable(kCFAllocatorDefault, 0);
 	void * dfxdata;	// a pointer to our special data
 	unsigned long dfxdatasize;	// the number of bytes of our data
 	// fetch our special data
