@@ -211,7 +211,7 @@ TransverbEditor::~TransverbEditor()
 }
 
 // ____________________________________________________________________________
-OSStatus TransverbEditor::open(Float32 inXOffset, Float32 inYOffset)
+OSStatus TransverbEditor::open(float inXOffset, float inYOffset)
 {
 printf("\n\n--------------------------------------------------\n");
 printf("       creating Transverb GUI\n");

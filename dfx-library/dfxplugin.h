@@ -178,7 +178,6 @@ SUPPORT_AU_VERSION_1
 		typedef AudioUnit TARGET_API_BASE_INSTANCE_TYPE;
 	#endif
 	#define TARGET_API_CORE_CLASS	AUKernelBase
-	typedef AUEffectBase TARGET_API_CORE_INSTANCE_TYPE;
 
 // using Steinberg's VST API
 #elif defined(TARGET_API_VST)
@@ -186,7 +185,6 @@ SUPPORT_AU_VERSION_1
 	typedef AudioEffectX TARGET_API_BASE_CLASS;
 	typedef audioMasterCallback TARGET_API_BASE_INSTANCE_TYPE;
 //	#define TARGET_API_CORE_CLASS 0	// none in VST
-	typedef DfxPlugin TARGET_API_CORE_INSTANCE_TYPE;
 	// set numinputs and numoutputs if numchannels is defined
 	#ifdef VST_NUM_CHANNELS
 		#ifndef VST_NUM_INPUTS
@@ -814,11 +812,11 @@ class DfxPluginCore
 #endif
 {
 public:
-	DfxPluginCore(TARGET_API_CORE_INSTANCE_TYPE *inInstance) :
+	DfxPluginCore(DfxPlugin *inDfxPlugin) :
 		#ifdef TARGET_API_CORE_CLASS
-		TARGET_API_CORE_CLASS(inInstance), 
+		TARGET_API_CORE_CLASS(inDfxPlugin), 
 		#endif
-		dfxplugin((DfxPlugin*)inInstance)
+		dfxplugin(inDfxPlugin)
 		{ }
 
 	virtual ~DfxPluginCore()
@@ -836,8 +834,7 @@ public:
 		process(in, out, inNumFrames, replacing);
 	}
 	virtual void process(const float *in, float *out, unsigned long inNumFrames, 
-						bool replacing=true)
-		{ }
+						bool replacing=true) = 0;
 	void do_reset()
 	{
 		createbuffers();

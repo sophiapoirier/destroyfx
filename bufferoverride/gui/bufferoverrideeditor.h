@@ -15,7 +15,7 @@ public:
 	BufferOverrideEditor(AudioUnitCarbonView inInstance);
 	virtual ~BufferOverrideEditor();
 
-	virtual OSStatus open(Float32 inXOffset, Float32 inYOffset);
+	virtual OSStatus open(float inXOffset, float inYOffset);
 	virtual void mouseovercontrolchanged();
 
 private:

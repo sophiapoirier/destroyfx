@@ -1,13 +1,9 @@
 /*-------------- by Marc Poirier  ][  December 2000 -------------*/
 
-#ifndef __SKIDDER_H
 #include "skidder.hpp"
-#endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __SKIDDEREDITOR_H
 	#include "skiddereditor.hpp"
-	#endif
 #endif
 
 

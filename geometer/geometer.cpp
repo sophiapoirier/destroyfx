@@ -189,8 +189,8 @@ PLUGIN::~PLUGIN() {
 }
 
 #if TARGET_PLUGIN_USES_DSPCORE
-PLUGINCORE::PLUGINCORE(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
-  : DfxPluginCore(inInstance), cs(NULL)
+PLUGINCORE::PLUGINCORE(DfxPlugin *inDfxPlugin)
+  : DfxPluginCore(inDfxPlugin), cs(NULL)
 {
   cs = new dfxmutex();
 #else

@@ -2,14 +2,10 @@
    © 2001, Marcberg Soft und Hard GmbH, All Rights Perversed
 ---------------------------------------------------------------*/
 
-#ifndef __REZSYNTH_H
 #include "rezsynth.hpp"
-#endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __REZSYNTHEDITOR_H
 	#include "rezsyntheditor.hpp"
-	#endif
 #endif
 
 
