@@ -54,11 +54,11 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kSmooth, "smooth", 9.0f, 3.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);
 	initparameter_f(kDryWetMix, "dry/wet mix", 100.0f, 50.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_drywetmix);
 	initparameter_d(kPitchbend, "pitchbend range", 6.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamCurve_linear, kDfxParamUnit_semitones);
-	initparameter_indexed(kMidiMode, "MIDI mode", kMidiModeNudge, kMidiModeNudge, kNumMidiModes);
+	initparameter_indexed(kMidiMode, "MIDI mode", kMidiMode_nudge, kMidiMode_nudge, kNumMidiModes);
 	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 57.0f, 480.0f, kDfxParamCurve_linear, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 
-	// initial the value names for the LFO shape parameters
+	// set the value strings for the LFO shape parameters
 	char *shapename = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH);
 	for (int i=0; i < numLFOshapes; i++)
 	{
@@ -67,7 +67,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		setparametervaluestring(kBufferLFOshape, i, shapename);
 	}
 	free(shapename);
-	// initialize the value names for the sync rate parameters
+	// set the value strings for the sync rate parameters
 	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
 	{
 		char *tname = tempoRateTable->getDisplay(i);
@@ -75,9 +75,9 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		setparametervaluestring(kDivisorLFOrate_sync, i, tname);
 		setparametervaluestring(kBufferLFOrate_sync, i, tname);
 	}
-	// initialize the value names for the MIDI mode parameter
-	setparametervaluestring(kMidiMode, kMidiModeNudge, "nudge");
-	setparametervaluestring(kMidiMode, kMidiModeTrigger, "trigger");
+	// set the value strings for the MIDI mode parameter
+	setparametervaluestring(kMidiMode, kMidiMode_nudge, "nudge");
+	setparametervaluestring(kMidiMode, kMidiMode_trigger, "trigger");
 
 	settailsize_seconds(4.0 / MIN_ALLOWABLE_BPS);
 
@@ -102,7 +102,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	#endif
 
-for (long i=NUM_PARAMETERS; i < 34; i++)	AUBase::SetParameter(i, kAudioUnitScope_Global, 0, 0.0f, 0);
+//for (long i=NUM_PARAMETERS; i < 34; i++)	AUBase::SetParameter(i, kAudioUnitScope_Global, 0, 0.0f, 0);
 }
 
 //-------------------------------------------------------------------------
@@ -112,6 +112,7 @@ BufferOverride::~BufferOverride()
 		delete divisorLFO;
 	if (bufferLFO)
 		delete bufferLFO;
+
 #if TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
@@ -198,7 +199,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferTempoSync, true);
 	setpresetparameter_f(i, kSmooth, 9.0f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
 	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
 
@@ -217,7 +218,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferLFOtempoSync, false);
 	setpresetparameter_f(i, kSmooth, 4.2f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
 	i++;
 
 	setpresetname(i, "laser");
@@ -235,7 +236,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferLFOtempoSync, false);
 	setpresetparameter_f(i, kSmooth, 20.1f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
 	i++;
 
 	setpresetname(i, "sour melodies");
@@ -250,7 +251,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_f(i, kBufferLFOdepth, 0.0f);
 	setpresetparameter_f(i, kSmooth, 3.9f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
 	i++;
 
 	setpresetname(i, "rerun");
@@ -267,7 +268,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferLFOtempoSync, false);
 	setpresetparameter_f(i, kSmooth, 8.1f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
 	i++;
 
 	setpresetname(i, "jiggy");
@@ -282,7 +283,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_f(i, kBufferLFOdepth, 0.0f);
 	setpresetparameter_f(i, kSmooth, 9.0f);	// eh?
 	setpresetparameter_f(i, kDryWetMix, 100.0f);
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
 	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
 
@@ -294,7 +295,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_f(i, kBufferLFOdepth, 0.0f);
 	setpresetparameter_f(i, kSmooth, getparametermax_f(kSmooth));
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
 	i++;
 
 	setpresetname(i, "squeegee");
@@ -312,7 +313,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferLFOtempoSync, true);
 	setpresetparameter_f(i, kSmooth, 6.0f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
 	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
 
@@ -336,7 +337,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_f(i, kSmooth, f);
 	setpresetparameter_f(i, kDryWetMix, f);
 	setpresetparameter_d(i, kPitchbend, );
-	setpresetparameter_i(i, kMidiMode, kMidiMode__);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_);
 	setpresetparameter_f(i, kTempo, f);
 	setpresetparameter_b(i, kTempoAuto, );
 	i++;
@@ -375,29 +376,21 @@ void BufferOverride::processparameters()
 		// tell MIDI trigger mode to respect this change
 		divisorWasChangedByHand = true;
 	if (getparameterchanged(kBufferSize_sync))
-	{
 		// make sure the cycles match up if the tempo rate has changed
 		needResync = true;
-	}
-	if (getparameterchanged(kBufferTempoSync))
-	{
+	if ( getparameterchanged(kBufferTempoSync) && bufferTempoSync )
 		// set needResync true if tempo sync mode has just been switched on
-		if (bufferTempoSync)
-			needResync = true;
-	}
+		needResync = true;
 	if (getparameterchanged(kMidiMode))
 	{
 		// reset all notes to off if we're switching into MIDI trigger mode
-		if (midiMode == kMidiModeTrigger)
+		if (midiMode == kMidiMode_trigger)
 		{
 			midistuff->removeAllNotes();
 			divisorWasChangedByHand = false;
 		}
 	}
-	if (getparameterchanged(kTempoAuto))
-	{
+	if ( getparameterchanged(kTempoAuto) && useHostTempo)
 		// set needResync true if host sync has just been switched on
-		if (useHostTempo)
-			needResync = true;
-	}
+		needResync = true;
 }

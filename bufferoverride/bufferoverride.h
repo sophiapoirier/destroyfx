@@ -76,8 +76,8 @@ enum
 #define MIN_ALLOWABLE_BPS 0.7
 
 enum {
-	kMidiModeNudge,
-	kMidiModeTrigger,
+	kMidiMode_nudge,
+	kMidiMode_trigger,
 	kNumMidiModes
 };
 

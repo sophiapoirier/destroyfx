@@ -278,7 +278,7 @@ public:
 					DfxParamUnit initUnit = kDfxParamUnit_undefined);
 	void init_i(const char *initName, long initValue, long initDefaultValue, 
 					long initMin, long initMax, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear, 
+					DfxParamCurve initCurve = kDfxParamCurve_stepped, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined);
 	void init_ui(const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
 					unsigned long initMin, unsigned long initMax, 

@@ -4,6 +4,88 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
+/*------------------------------------------------------------------------
+the following is provisional documentation (basically snippets of emails 
+that I wrote to Tom):
+
+the dspcore stuff:
+This has to do with AU, basically.  In AU, the easiest way to make an 
+effect is to use what are called "kernels" in AU-world, which are
+classes that handle 1-in/1-out audio streams and have all of the state
+variables necessary for DSP within them.  They fetch the parameter values
+from the main plugin class, they get created and destroyed as needed, they
+get an audio stream to process, and they just do their thing.  The
+advantage is that you get a clear encapsulation of the DSP stuff and you
+can handle an arbitrary number of channels with no extra work (this is
+possible in AU, but not VST).  The only time when you wouldn't do this is
+if there are channel dependencies (the effect needs to see more than one
+channel at a time) or when you need (or just support) mismatched in/out
+configs.  So that's why I made the DfxPluginCore class, that's why that
+stuff is in there, because it's nice.  It's mostly handled for you in AU,
+but I kind of hacked it into our VST implementation, too, so it should
+work fine there.  Transverb now uses this stuff.
+
+Oh yeah, one more thing to add:  There are tons and tons of methods in the
+DfxPlugin and DfxParameter classes, but you actually don't have to ever
+touch hardly any of them.  They are mostly all used just within the class
+(you'll notice that there are barely any virtual methods, also).
+
+Regarding having a "whole lot of crap" when starting a new plugin, 
+my hopes with this DfxPlugin stuff is that that is not the case anymore.  
+For one thing, there are very few methods that you need to
+implement (I think only 9 at most, and, depending on what you're doing, it
+could be as few as 4), and within those methods, there's very little
+default stuff that you need (as much as possible is handled in the
+inherited classes).  If I had written a true stub, it probably would have
+been about 15 lines of code.  But if you think it's still too much and you
+can thin of any ways to make it even more compact, that's cool, do tell.
+I think it's pretty good in that respect now, though.  Especially I hope
+you'll like the DSPcore thing, it might look weird, but it can make
+writing an effect pretty easy, since arbitrary numbers of channels are
+handled for you.
+
+Let me give you a little summary of the Theory Of Operation(tm):
+
+In the constructor and destructor, you take care of whatever is needed for
+specifying any properties, anything that other stuff depends on, etc.  You
+can save creating/destroying stuff that is only needed for audio
+processing for the initialize and cleanup methods.  Although in many
+cases, you won't even need to implement those, it just depends on the
+plugin in question.  One exception is audio buffers.  There are
+additionaly handy functions called createbuffers, clearbuffers, and
+releasebuffers.  The base DfxPlugin class knows when to call these, so you
+don't need to (not from initialize or cleanup or anything).  Note that
+createbuffers is also recreate buffers.  In other words, it is called when
+the sampling rate changes or when the number of channels to process
+changes.  So your plugin's implementation of createbuffers should be aware
+of what you currently have allocated and then check for sr or numchannels
+changes, if the buffers have dependencies there, and then call
+releasebuffers and then reallocate if necessary.  dfxplugin-stub has an
+example of this.
+
+When using DSPcore approach, the constructor and destructor of you DSP
+class are essentially what initialize and cleanup are for a plugin that
+doesn't use DSPcores.  Because of this, you do need to explicitly call
+do_cleanup in the DSP class' destructor.
+
+Immediately before processaudio (or just process for DSPcore) is called,
+processparameters is called.  You should override it and, in there, fetch
+the current parameter values into more usable variables and react to any
+parameter changes that need special reacting to.  The reason for taking
+this approach is to kind of at least minimize thread safety issues, and
+also to avoid having to insert reaction code directly into the
+setparameter call, and therefore reduce inefficient redundant reactions
+(more than 1 per processing buffer).  And I had other reasons, too, that I
+can't remember...
+
+Also immediately before audio processing, MIDI events are collected and
+sorted for you and useful tempo/time/location info is stuffed into a
+DfxTimeInfo struct timeinfo.
+
+So the core routines are: constructor, destructor, processparameters, and
+processaudio (or process for DSP core).  You might need initialize and
+cleanup, and maybe the buffer routines if you use buffers, but that's it.
+------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
  when impelementing plugins derived from this stuff, you must define the following:
@@ -50,7 +132,7 @@ PLUGIN_EDITOR_ID
 PLUGIN_EDITOR_RES_ID
 	component resource ID of the base plugin
 SUPPORT_AU_VERSION_1
-	0 or 1 (
+	0 or 1 (this is used by the AUBase classes)
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_H
@@ -274,7 +356,7 @@ public:
 						DfxParamUnit initUnit = kDfxParamUnit_undefined);
 	void initparameter_i(long parameterIndex, const char *initName, long initValue, long initDefaultValue, 
 						long initMin, long initMax, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear, 
+						DfxParamCurve initCurve = kDfxParamCurve_stepped, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined);
 	void initparameter_ui(long parameterIndex, const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
 						unsigned long initMin, unsigned long initMax, 
