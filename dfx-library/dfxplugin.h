@@ -400,7 +400,7 @@ public:
 	bool getparametervaluestring(long parameterIndex, long stringIndex, char *outText);
 	void getparameterunitstring(long parameterIndex, char *outText)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].getunitstring(outText);	}
-	void setcustomunitstring(long parameterIndex, const char *inText)
+	void setparametercustomunitstring(long parameterIndex, const char *inText)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcustomunitstring(inText);	}
 	char * getparametervaluestring_ptr(long parameterIndex, long stringIndex);
 #if TARGET_API_AUDIOUNIT
