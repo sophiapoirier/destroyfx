@@ -3,4 +3,50 @@ This is the DFX library, a collection of useful routines for
 writing VST plugins. It also includes several new controls for
 VSTGUI.
 
-XXX Marc: add some documentation!
+dfxgui contains a lot of useful GUI controls that are derived from 
+the VSTGUI library of controls (a library supplied by Steinberg 
+with the VST SDK).
+There are descriptions of each control in the header.
+
+multikick is another custom GUI object derived from the VSTGUI.  
+It might as well be a part of dfxgui, but I think Tom was writing 
+this while I was writing stuff in dfxgui, or something like that.
+
+dfxmisc has number of handy stuff for making VST plugins.
+There are a few interpolation functions.
+There are a some useful constants & macros, including tons of macros 
+for mapping parameter values into & out of the VST standard 0-1 float 
+range.
+There is implementation for mutexes that we've used in Geometer.
+There are also a couple handy functions, one for calculating the 
+number of samples until the next measure in a song, & another for 
+executing program changes from MIDI program change messages.
+
+vstchunk is basically Marc's solution for implementing a MIDI CC 
+parameter control system in VST plugins.
+The system is a "MIDI learn" style thing where you activate a 
+MIDI learn mode, then you touch some control to make it the 
+"learner," & then the next MIDI CC message received is applied to 
+that learner parameter & all messages from that CC are from then 
+on applied to that parameter, unless that CC later gets assigned 
+to a different parameter or MIDI reset is happens (which erases all 
+CC assignments).
+This system is GUI-based in the assignments (you have to click on 
+a parameter control to make it the learner).
+VST "chunks" come into play so that the CC assignments can be stored 
+in presets & saved settings without having to make each CC assignment 
+"slot" a VST parameter.  This also removes the data type limit of 
+floats (ints make more sense with MIDI).  In VST, you can use 
+chunk format data storing & recalling, so that's the other function 
+that VstChunk serves.  There are implementations of setChunk & 
+getChunk that manage saving parameter, program, & CC assignment 
+data.  If you want to store additional info in your chunks, you 
+can still use VstChunk.  You will just need to intercept the 
+data pointer & return of getChunk, adding your own data & 
+increasing the return value (data size in bytes) accordingly.  
+There is also a function included in vstchunk.cpp for reversing 
+the Endian-reversing of your data (which you will need to manage for 
+any data that you add on).  Then for setChunk, you'll need to do 
+whatever you need to do with your added data section, decrease 
+the size value by the size of your stuff, & then pass that along to 
+the VstChunk's setChunk.
