@@ -335,7 +335,7 @@ void DfxMidi::handleProgramChange(int channel, int programNum, long frameOffset)
 //-----------------------------------------------------------------------------------------
 // this function is called during process() when MIDI events need to be attended to
  
-void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, float fPitchbendRange, float attack, 
+void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange, float attack, 
 							float release, bool legato, float velCurve, float velInfluence)
 {
   int currentNote, notecount, currentVelocity, i;
@@ -453,7 +453,7 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, float fPitchbendRange,
 				else
 					pitchbend = (double)(blockEvents[eventNum].byte2 - 64) / 63.0;
 				// then scale it according to tonal steps & the user defined range
-				pitchbend = pow(NOTE_UP_SCALAR, (pitchbend*(double)fPitchbendRange*PITCHBEND_MAX));
+				pitchbend = pow(NOTE_UP_SCALAR, pitchbend*pitchbendRange);
 			}
 
 			// bend pitch down
@@ -465,7 +465,7 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, float fPitchbendRange,
 				else
 					pitchbend = (double)(64 - blockEvents[eventNum].byte2) / 64.0;
 				// then scale it according to tonal steps & the user defined range
-				pitchbend = pow(NOTE_DOWN_SCALAR, (pitchbend*(double)fPitchbendRange*PITCHBEND_MAX));
+				pitchbend = pow(NOTE_DOWN_SCALAR, pitchbend*pitchbendRange);
 			}
 			break;
 

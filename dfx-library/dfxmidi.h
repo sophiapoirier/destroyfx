@@ -177,7 +177,7 @@ public:
 	void postprocessEvents();
 
 	// this is where new MIDI events are reckoned with during audio processing
-	void heedEvents(long eventNum, float SAMPLERATE, float fPitchbendRange, float attack, float release, 
+	void heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange, float attack, float release, 
 					bool legato, float velCurve, float velInfluence);
 
 	// these are for manage the ordered queue of active MIDI notes

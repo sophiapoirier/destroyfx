@@ -293,6 +293,8 @@ public:
 	// ***
 	~DfxPlugin();
 
+	void dfxplugin_postconstructor();
+
 	long do_initialize();
 	// ***
 	virtual long initialize()
@@ -828,6 +830,11 @@ public:
 	virtual ~DfxPluginCore()
 		{	releasebuffers();	}	// XXX this doesn't work from parent class
 
+	void dfxplugincore_postconstructor()
+	{
+		do_reset();
+	}
+
 	void do_process(const float *in, float *out, unsigned long inNumFrames, 
 						bool replacing=true)
 	{
@@ -933,13 +940,13 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 	#define DFX_ENTRY(PluginClass)   COMPONENT_ENTRY(PluginClass)
 
 	#if TARGET_PLUGIN_USES_DSPCORE
-		#define DFX_CORE_ENTRY(PluginCoreClass)					\
-			AUKernelBase * DfxPlugin::NewKernel()				\
-			{													\
-				AUKernelBase *core = new PluginCoreClass(this);	\
-				if (core != NULL)								\
-					core->Reset();								\
-				return core;									\
+		#define DFX_CORE_ENTRY(PluginCoreClass)						\
+			AUKernelBase * DfxPlugin::NewKernel()					\
+			{														\
+				DfxPluginCore *core = new PluginCoreClass(this);	\
+				if (core != NULL)									\
+					core->dfxplugincore_postconstructor();			\
+				return core;										\
 			}
 //	#else
 //		AUKernelBase * DfxPlugin::NewKernel()
@@ -967,9 +974,10 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 	{															\
 		if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
 			return 0;											\
-		AudioEffectX *effect = new PluginClass(audioMaster);	\
-		if (!effect)											\
+		DfxPlugin *effect = new PluginClass(audioMaster);		\
+		if (effect == NULL)										\
 			return 0;											\
+		effect->dfxplugin_postconstructor();					\
 		return effect->getAeffect();							\
 	}
 
@@ -992,7 +1000,7 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 			{																	\
 				dspcores[corecount] = new PluginCoreClass(this);				\
 				if (dspcores[corecount] != NULL)								\
-					dspcores[corecount]->do_reset();							\
+					dspcores[corecount]->dfxplugincore_postconstructor();		\
 			}
 	#endif
 

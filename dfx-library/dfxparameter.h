@@ -214,6 +214,8 @@ enum DfxParamValueType {
 // these are the different value unit types that a parameter can have
 enum DfxParamUnit {
 	kDfxParamUnit_undefined,
+	kDfxParamUnit_generic,
+	kDfxParamUnit_quantity,
 	kDfxParamUnit_percent,	// typically 0-100
 	kDfxParamUnit_portion,	// like percent, but typically 0-1
 	kDfxParamUnit_lineargain,
@@ -225,6 +227,7 @@ enum DfxParamUnit {
 	kDfxParamUnit_samples,
 	kDfxParamUnit_scalar,
 	kDfxParamUnit_divisor,
+	kDfxParamUnit_exponent,
 	kDfxParamUnit_semitones,
 	kDfxParamUnit_octaves,
 	kDfxParamUnit_cents,
