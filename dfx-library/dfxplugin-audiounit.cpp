@@ -767,6 +767,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 
 	// the complicated part:  getting the unit type 
 	// (but easy if we use value strings for value display)
+	outParameterInfo.unitName = NULL;	// default to nothing, will be set if it is needed
 	if (getparameterusevaluestrings(inParameterID))
 		outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
 	else
@@ -845,11 +846,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 					char customUnitString[DFX_PARAM_MAX_UNIT_STRING_LENGTH];
 					customUnitString[0] = 0;
 					getparameterunitstring(inParameterID, customUnitString);
-#ifdef __AUPropertiesPostPantherAdditions__H__
-					TEMP_SET_PARAMETER_UNIT_NAME(outParameterInfo, CFStringCreateWithCString(kCFAllocatorDefault, customUnitString, CFStringGetSystemEncoding()));
-#else
 					outParameterInfo.unitName = CFStringCreateWithCString(kCFAllocatorDefault, customUnitString, CFStringGetSystemEncoding());
-#endif
 				}
 				break;
 
