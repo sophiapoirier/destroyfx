@@ -67,14 +67,39 @@ public:
 	}
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
 	{
-		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+//		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 		DGSlider::draw(inContext, inPortHeight);
 	}
 	virtual void mouseDown(Point inPos, bool with_option, bool with_shift)
 	{
 		ForeGround = clickedHandle;	// switch to the click-styled handle
 		DGSlider::mouseDown(inPos, with_option, with_shift);
+		lastX = inPos.h;
+		lastY = inPos.v;
+		lastXchange = lastYchange = 0;
 	}
+#if 0
+	virtual void mouseTrack(Point inPos, bool a, bool b)
+	{
+		if (orientation == kDGSliderStyle_vertical)
+		{
+			long xchange = inPos.h - lastX + lastXchange;
+			long ychange = inPos.v - lastY + lastYchange;
+			Rect cbounds;
+			GetControlBounds(getCarbonControl(), &cbounds);
+			MoveControl(getCarbonControl(), cbounds.left + xchange, cbounds.top + ychange);
+			getBounds()->offset(xchange, ychange);
+			getForeBounds()->offset(xchange, ychange);
+			redraw();
+			lastX = inPos.h;
+			lastY = inPos.v;
+			lastXchange = xchange;
+			lastYchange = ychange;
+		}
+		else
+			DGSlider::mouseTrack(inPos, a, b);
+	}
+#endif
 	virtual void mouseUp(Point inPos, bool with_option, bool with_shift)
 	{
 		ForeGround = regularHandle;	// switch back to the non-click-styled handle
@@ -84,6 +109,8 @@ public:
 private:
 	DGGraphic * regularHandle;
 	DGGraphic * clickedHandle;
+	long lastX, lastY;
+	long lastXchange, lastYchange;
 };
 
 
@@ -187,9 +214,8 @@ OSStatus EQSyncEditor::open(float inXOffset, float inYOffset)
 
 
 	DGRect pos;
-	long i;
 
-	for (i=kRate_sync; i <= kTempo; i++)
+	for (long i=kRate_sync; i <= kTempo; i++)
 	{
 		// create the horizontal sliders
 		pos.set(kWideFaderX, kWideFaderY + (kWideFaderInc * i), gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
@@ -213,7 +239,7 @@ OSStatus EQSyncEditor::open(float inXOffset, float inYOffset)
 	}
 
 	// create the vertical sliders
-	for (i=ka0; i <= kb2; i++)
+	for (long i=ka0; i <= kb2; i++)
 	{
 		pos.set(kTallFaderX + (kTallFaderInc * (i-ka0)), kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
 		EQSyncSlider *slider = new EQSyncSlider(this, i, &pos, kDGSliderStyle_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);

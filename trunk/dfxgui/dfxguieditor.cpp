@@ -796,22 +796,39 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					Rect portBounds;
 					GetPortBounds(windowPort, &portBounds);
 
+//#define USE_QUICKDRAW_CLIPPING
 					// clipping
+#ifdef USE_QUICKDRAW_CLIPPING
 					RgnHandle clipRgn = NewRgn();
 					OpenRgn();
 					ourDGControl->clipRegion(true);
 					CloseRgn(clipRgn);
 					SetClip(clipRgn);
 					clipRgn = GetPortClipRegion(windowPort, clipRgn);
+#endif
 
-					// drawing
+					// set up the CG context
 					CGContextRef context;
 					QDBeginCGContext(windowPort, &context);
+#ifdef USE_QUICKDRAW_CLIPPING
 					ClipCGContextToRegion(context, &portBounds, clipRgn);
 					DisposeRgn(clipRgn);
+#endif
 					SyncCGContextOriginWithPort(context, windowPort);
 					CGContextSaveGState(context);
-					CGContextSetShouldAntialias(context, false);	// XXX disable anti-aliased drawing for image rendering
+#ifndef USE_QUICKDRAW_CLIPPING
+					// define the clipping region
+					CGRect clipRect;
+					ourDGControl->getBounds()->copyToCGRect(&clipRect, portBounds.bottom);
+if (ourDGControl->getType() == kDfxGuiType_slider)
+{
+clipRect.origin.x -= 13.0f;
+clipRect.size.width += 27.0f;
+}
+					CGContextClipToRect(context, clipRect);
+#endif
+					// XXX disable anti-aliased drawing for image rendering
+					CGContextSetShouldAntialias(context, false);
 					ourDGControl->draw(context, portBounds.bottom);
 					CGContextRestoreGState(context);
 					CGContextSynchronize(context);
