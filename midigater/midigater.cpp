@@ -7,15 +7,34 @@
 #endif
 
 
+//----------------------------------------------------------------------------- 
+// constants
+const long kUnaffectedFadeDur = 18;
+const float kUnaffectedFadeStep = 1.0f / (float)kUnaffectedFadeDur;
+
+const bool kUseNiceAudioFades = true;
+const bool kUseLegato = false;
+
+// these are the 3 states of the unaffected audio input between notes
+enum
+{
+	unFadeIn,
+	unFlat,
+	unFadeOut
+};
+
+
 // this macro does boring entry point stuff for us
 DFX_ENTRY(MidiGater);
+
 
 //-----------------------------------------------------------------------------------------
 // initializations
 MidiGater::MidiGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 3 parameters, 1 preset
+	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 4 parameters, 1 preset
 {
-	initparameter_f(kSlope, "slope", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
+	initparameter_f(kAttackSlope, "attack", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
+	initparameter_f(kReleaseSlope, "release", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_f(kVelInfluence, "velocity influence", 0.0, 1.0, 0.0, 1.0, kDfxParamUnit_scalar);
 	initparameter_f(kFloor, "floor", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 
@@ -33,15 +52,9 @@ MidiGater::MidiGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-----------------------------------------------------------------------------------------
-MidiGater::~MidiGater()
-{
-	// nud
-}
-
-//-----------------------------------------------------------------------------------------
 void MidiGater::reset()
 {
-	// reset the unaffected between audio stuff
+	// reset the unaffected between-audio stuff
 	unaffectedState = unFadeIn;
 	unaffectedFadeSamples = 0;
 }
@@ -49,14 +62,15 @@ void MidiGater::reset()
 //-----------------------------------------------------------------------------------------
 void MidiGater::processparameters()
 {
-	slope_seconds = getparameter_f(kSlope) * 0.001;
+	attackSlope_seconds = getparameter_f(kAttackSlope) * 0.001;
+	releaseSlope_seconds = getparameter_f(kReleaseSlope) * 0.001;
 	velInfluence = getparameter_f(kVelInfluence);
 	floor = getparameter_f(kFloor);
 }
 
 
 //-----------------------------------------------------------------------------------------
-void MidiGater::processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing)
+void MidiGater::processaudio(const float ** inAudio, float ** outAudio, unsigned long inNumFrames, bool inReplacing)
 {
 	unsigned long numChannels = getnumoutputs();
 	long numFramesToProcess = (signed)inNumFrames, totalSampleFrames = (signed)inNumFrames;	// for dividing up the block accoring to events
@@ -67,7 +81,7 @@ void MidiGater::processaudio(const float ** in, float ** out, unsigned long inNu
 	for (unsigned long cha=0; cha < numChannels; cha++)
 	{
 		for (unsigned long samp=0; samp < inNumFrames; samp++)
-			out[cha][samp] = 0.0f;
+			outAudio[cha][samp] = 0.0f;
 	}
 #endif
 
@@ -77,10 +91,10 @@ void MidiGater::processaudio(const float ** in, float ** out, unsigned long inNu
 	long eventcount = -1;
 	long currentBlockPosition = 0;	// we are at sample 0
 
-	// now we're ready to start looking at MIDI messages & processing sound & such
+	// now we're ready to start looking at MIDI messages and processing sound and such
 	do
 	{
-		// check for an upcoming event & decrease this block chunk size accordingly 
+		// check for an upcoming event and decrease this block chunk size accordingly 
 		// if there will be another event
 		if ( (eventcount+1) >= midistuff->numBlockEvents )
 			numFramesToProcess = totalSampleFrames - currentBlockPosition;
@@ -94,12 +108,12 @@ void MidiGater::processaudio(const float ** in, float ** out, unsigned long inNu
 		{
 			eventcount++;
 			// take in the effects of the next event
-			midistuff->heedEvents(eventcount, getsamplerate_f(), 0.0f, slope_seconds, 
-									slope_seconds, false, 1.0f, velInfluence);
+			midistuff->heedEvents(eventcount, getsamplerate_f(), 0.0f, attackSlope_seconds, 
+									releaseSlope_seconds, kUseLegato, 1.0f, velInfluence);
 			continue;
 		}
 
-		// test for whether or not all notes are off & unprocessed audio can be outputted
+		// test for whether or not all notes are off and unprocessed audio can be outputted
 		bool noNotes = true;	// none yet for this chunk
 
 		for (int notecount=0; notecount < NUM_NOTES; notecount++)
@@ -111,11 +125,11 @@ void MidiGater::processaudio(const float ** in, float ** out, unsigned long inNu
 				for (long samplecount = currentBlockPosition; 
 						samplecount < numFramesToProcess+currentBlockPosition; samplecount++)
 				{
-					// see whether attack or release are active & fetch the output scalar
-					float envAmp = midistuff->processEnvelope(false, notecount);	// the attack/release scalar
+					// see whether attack or release are active and fetch the output scalar
+					float envAmp = midistuff->processEnvelope(kUseNiceAudioFades, notecount);	// the attack/release scalar
 					envAmp *=  midistuff->noteTable[notecount].noteAmp;	// scale by key velocity
 					for (unsigned long ch=0; ch < numChannels; ch++)
-						out[ch][samplecount] += in[ch][samplecount] * envAmp;
+						outAudio[ch][samplecount] += inAudio[ch][samplecount] * envAmp;
 				}
 			}
 		}	// end of notes loop
@@ -128,7 +142,7 @@ void MidiGater::processaudio(const float ** in, float ** out, unsigned long inNu
 		// we can output unprocessed audio if no notes happened during this block chunk
 		// or if the unaffected fade-out still needs to be finished
 		if ( noNotes || (unaffectedState == unFadeOut) )
-			processUnaffected(in, out, numFramesToProcess, currentBlockPosition, numChannels);
+			processUnaffected(inAudio, outAudio, numFramesToProcess, currentBlockPosition, numChannels);
 
 		eventcount++;
 		// don't do the event processing below if there are no more events
@@ -139,29 +153,29 @@ void MidiGater::processaudio(const float ** in, float ** out, unsigned long inNu
 		currentBlockPosition = midistuff->blockEvents[eventcount].delta;
 
 		// take in the effects of the next event
-		midistuff->heedEvents(eventcount, getsamplerate_f(), 0.0f, slope_seconds, 
-								slope_seconds, false, 1.0f, velInfluence);
+		midistuff->heedEvents(eventcount, getsamplerate_f(), 0.0f, attackSlope_seconds, 
+								releaseSlope_seconds, kUseLegato, 1.0f, velInfluence);
 
 	} while (eventcount < midistuff->numBlockEvents);
 }
 
 //-----------------------------------------------------------------------------------------
 // this function outputs the unprocessed audio input between notes, if desired
-void MidiGater::processUnaffected(const float ** in, float ** out, long numFramesToProcess, long offset, unsigned long numChannels)
+void MidiGater::processUnaffected(const float ** inAudio, float ** outAudio, long inNumFramesToProcess, long inOffset, unsigned long numChannels)
 {
-	long endPos = numFramesToProcess + offset;
-	for (long samplecount=offset; samplecount < endPos; samplecount++)
+	long endPos = inNumFramesToProcess + inOffset;
+	for (long samplecount=inOffset; samplecount < endPos; samplecount++)
 	{
 		float sampleAmp = floor;
 
-		// this is the state when all notes just ended & the clean input first kicks in
+		// this is the state when all notes just ended and the clean input first kicks in
 		if (unaffectedState == unFadeIn)
 		{
 			// linear fade-in
-			sampleAmp = (float)unaffectedFadeSamples * UNAFFECTED_FADE_STEP * floor;
+			sampleAmp = (float)unaffectedFadeSamples * kUnaffectedFadeStep * floor;
 			unaffectedFadeSamples++;
 			// go to the no-gain state if the fade-in is done
-			if (unaffectedFadeSamples >= UNAFFECTED_FADE_DUR)
+			if (unaffectedFadeSamples >= kUnaffectedFadeDur)
 				unaffectedState = unFlat;
 		}
 		// a note has just begun, so we need to hasily fade out the clean input audio
@@ -169,8 +183,8 @@ void MidiGater::processUnaffected(const float ** in, float ** out, long numFrame
 		{
 			unaffectedFadeSamples--;
 			// linear fade-out
-			sampleAmp = (float)unaffectedFadeSamples * UNAFFECTED_FADE_STEP * floor;
-			// get ready for the next time & exit this function if the fade-out is done
+			sampleAmp = (float)unaffectedFadeSamples * kUnaffectedFadeStep * floor;
+			// get ready for the next time and exit this function if the fade-out is done
 			if (unaffectedFadeSamples <= 0)
 			{
 				// ready for the next time
@@ -180,6 +194,6 @@ void MidiGater::processUnaffected(const float ** in, float ** out, long numFrame
 		}
 
 		for (unsigned long ch=0; ch < numChannels; ch++)
-			out[ch][samplecount] += in[ch][samplecount] * sampleAmp;
+			outAudio[ch][samplecount] += inAudio[ch][samplecount] * sampleAmp;
 	}
 }
