@@ -4,6 +4,7 @@
                      From the Destroy FX Labs!
               http://www.smartelectronix.com/~destroyfx/
 
+
    -- Geometer: Introduction --
 
    Geometer is a visually-oriented waveform geometry plugin. It
@@ -47,6 +48,16 @@
    the output wave. This display uses the input sound as a source,
    but also operates when the plugin is stopped. 
 
+   Geometer comes with a load of presets meant to show you how
+   it can be used. Of course, some of these will sound bad if used
+   on the wrong kind of input wave, so if it's not interesting, try
+   it on a different sound. Also be wary that the presets change
+   the window size, and most hosts need you to restart the sound
+   in order for that to take effect.
+
+   Most of all, experiment!
+
+
    -- Geometer: Generating Landmarks --
 
    Here are the different ways to generate landmarks:
@@ -86,6 +97,7 @@
    level: Generates a point whenever the wave crosses a level
    (specified by the slider) both above and below the origin.
 
+
    -- Geometer: Point Operations --
 
    none: If the op shows as an empty green square, then the
@@ -120,6 +132,7 @@
    from the beginning when it runs out. The amount of compression
    and repetition is controlled by the slider. Like slow, this
    can either change the pitch of the sound or make it stutter.
+
 
    -- Geometer: Recreating the Wave --
 
@@ -171,6 +184,7 @@
    shuffle: This swaps around intervals randomly. The slider
    controls how far intervals can travel. Sounds best with
    large intervals and window sizes.
+
 
    -- Geometer : Info --
 
