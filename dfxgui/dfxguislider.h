@@ -30,11 +30,11 @@ public:
 
 	/* XXX example */
 	/* call this instead of new */
-	static DGSlider * create(DfxGuiEditor * dge, AudioUnitParameterID a, DGRect * r, DfxGuiSliderStyme dgss,
+	static DGSlider * create(DfxGuiEditor * dge, AudioUnitParameterID a, DGRect * r, DfxGuiSliderStyle dgss,
 				 DGGraphic * dg, DGGraphic * dg2) {
 
 	  DGSlider * n = new DGSlider(dge, a, r, dgss, dg, dg2);
-	  dge->add(n);
+	  dge->addControl(n);
 	  return n;
 	}
 

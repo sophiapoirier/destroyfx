@@ -190,8 +190,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	if (openErr == noErr)
 	{
 		// set the size of the embedding pane
-		if (backgroundImage() != NULL)
-			SizeControl(mCarbonPane, (SInt16) (backgroundImage()->getWidth()), (SInt16) (backgroundImage()->getHeight()));
+		if (backgroundImage != NULL)
+			SizeControl(mCarbonPane, (SInt16) (backgroundImage->getWidth()), (SInt16) (backgroundImage->getHeight()));
 	}
 
 	return openErr;
