@@ -1306,16 +1306,20 @@ void GeometerEditor::idle() {
   /* XXX reevaluate when I should do this. */
 #if 1
   static int when = 0;
+  bool gviewchanged = false;
   /* maybe I don't need to do this every frame... */
   if (1 || !when--) {
-    gview->reflect();
+    if (gview) {
+      gview->reflect();
+      gviewchanged = true;
+    }
     when = 100;
   }
 #endif
 
   // some hosts need this call otherwise stuff doesn't redraw
-  if (helpchanged || glowingchanged || 1) /* <-  XXX Tom, why the || 1?  */
-    postUpdate();  
+  if (helpchanged || glowingchanged || gviewchanged || 1) /* <-  XXX Tom, why the || 1?  */
+    postUpdate();
 
   // this is called so that idle() actually happens
   AEffGUIEditor::idle();
