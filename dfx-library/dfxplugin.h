@@ -636,6 +636,9 @@ protected:
 	#if TARGET_API_VST
 		bool latencychanged;
 		bool isinitialized;
+		#if TARGET_PLUGIN_USES_DSPCORE
+			DfxPluginCore **dspcores;	// we have to handle this ourselves because VST can't
+		#endif
 	#endif
 
 private:
@@ -777,8 +780,17 @@ public:
 		virtual long getChunk(void **data, bool isPreset);
 	#endif
 
+	void setlatencychanged(bool newstatus = true)
+		{	latencychanged = newstatus;	}
 	#if TARGET_PLUGIN_USES_DSPCORE
-		DfxPluginCore **dspcores;	// we have to handle this ourselves because VST can't
+		DfxPluginCore * getplugincore(long channel)
+		{
+			if ( (channel < 0) || (channel >= getnumoutputs()) )
+				return NULL;
+			if (dspcores == NULL)
+				return NULL;
+			return dspcores[channel];
+		}
 	#endif
 #endif
 // end of VST API methods
