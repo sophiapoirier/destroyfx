@@ -157,21 +157,21 @@ bool getenvBool(const char *var, bool def)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
-// This gets called when the host wants to save settings data, 
-// like when saving a song or preset files.
-unsigned long DfxSettings::save(void **data, bool isPreset)
+// this gets called when the host wants to save settings data, 
+// like when saving a song or preset files
+unsigned long DfxSettings::save(void **outData, bool isPreset)
 {
   long i, j;
 
 
 	if ( (sharedChunk == NULL) || (plugin == NULL) )
 	{
-		*data = 0;
+		*outData = 0;
 		return 1;
 	}
 
 	// share with the host
-	*data = sharedChunk;
+	*outData = sharedChunk;
 
 	// first store the special chunk infos
 	sharedChunk->magic = settingsInfo.magic;
@@ -244,7 +244,7 @@ unsigned long DfxSettings::save(void **data, bool isPreset)
 // this gets called when the host wants to load settings data, 
 // like when restoring settings while opening a song, 
 // or loading a preset file
-bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
+bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 {
   DfxSettingsInfo *newSettingsInfo;
   GenPreset *newPreset;
@@ -256,10 +256,10 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 		return false;
 
 	// un-reverse the order of bytes in the received data, if necessary
-	correctEndian(data, true, isPreset);
+	correctEndian(inData, true, isPreset);
 
 	// point to the start of the chunk data:  the settingsInfo header
-	newSettingsInfo = (DfxSettingsInfo*)data;
+	newSettingsInfo = (DfxSettingsInfo*)inData;
 
 	// The following situations are basically considered to be 
 	// irrecoverable "crisis" situations.  Regardless of what 
@@ -445,7 +445,7 @@ if ( !(oldvst && isPreset) )
 #endif
 
 	// allow for the retrieval of extra data
-	plugin->settings_restoreExtendedData((char*)data+sizeofChunk-newSettingsInfo->storedExtendedDataSize, 
+	plugin->settings_restoreExtendedData((char*)inData+sizeofChunk-newSettingsInfo->storedExtendedDataSize, 
 						newSettingsInfo->storedExtendedDataSize, newSettingsInfo->version, isPreset);
 
 	if (paramMap)

@@ -223,8 +223,8 @@ public:
 	/* - - - - - - - - - API-connect methods - - - - - - - - - */
 
 	// for adding to your base plugin class methods
-	unsigned long save(void **data, bool isPreset);
-	bool restore(void *data, unsigned long byteSize, bool isPreset);
+	unsigned long save(void **outData, bool isPreset);
+	bool restore(void *inData, unsigned long byteSize, bool isPreset);
 
 	// handlers for the types of MIDI events that we support
 	void handleNoteOn(int channel, int note, int velocity, long frameOffset);
