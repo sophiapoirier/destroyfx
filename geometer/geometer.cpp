@@ -40,7 +40,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
     initparameter_f(P_POINTPARAMS + pp, "pointparam:unused", 0.04f, 0.04f, 0.0f, 1.0f, kDfxParamUnit_generic);
-	setparameterhidden(P_POINTPARAMS + pp, true);	/* don't display as available parameter */
+    setparameterattributes(P_POINTPARAMS + pp, kDfxParamAttribute_unused);	/* don't display as an available parameter */
   }
 
   initparameter_indexed(P_INTERPSTYLE, "interpolate how", INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
@@ -57,7 +57,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
     initparameter_f(P_INTERPARAMS + ip, 
 	   "inter:unused", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);
-	setparameterhidden(P_INTERPARAMS + ip, true);	/* don't display as available parameter */
+    setparameterattributes(P_INTERPARAMS + ip, kDfxParamAttribute_unused);	/* don't display as an available parameter */
   }
 
   initparameter_indexed(P_POINTOP1, "pointop1", OP_NONE, OP_NONE, MAX_OPS);
@@ -82,9 +82,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
     ALLOP(op, "unused", 0.5f, kDfxParamUnit_generic, NULL);
-	setparameterhidden(P_OPPAR1S + op, true);
-	setparameterhidden(P_OPPAR2S + op, true);
-	setparameterhidden(P_OPPAR3S + op, true);
+    setparameterattributes(P_OPPAR1S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
+    setparameterattributes(P_OPPAR2S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
+    setparameterattributes(P_OPPAR3S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
   }
 #undef ALLOP
 

@@ -432,10 +432,15 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurvespec();   else return 0.0;	}
 	void setparametercurvespec(long parameterIndex, double newcurvespec)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcurvespec(newcurvespec);	}
-	bool getparameterhidden(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].gethidden();   else return false;	}
-	void setparameterhidden(long parameterIndex, bool newhide = true)
-		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].sethidden(newhide);	}
+	unsigned long getparameterattributes(long parameterIndex)
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getattributes();   else 0;	}
+	void setparameterattributes(long parameterIndex, unsigned long inFlags)
+		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setattributes(inFlags);	}
+	void addparameterattributes(long parameterIndex, unsigned long inFlags)
+	{
+		if (parameterisvalid(parameterIndex))
+			parameters[parameterIndex].setattributes( inFlags | parameters[parameterIndex].getattributes() );
+	}
 
 	// convenience methods for expanding and contracting parameter values 
 	// using the min/max/curvetype/curvespec/etc. settings of a given parameter

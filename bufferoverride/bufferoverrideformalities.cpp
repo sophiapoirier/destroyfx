@@ -32,6 +32,8 @@ extern "C" ComponentResult BufferOverrideEntry(ComponentParameters * params, Buf
 
 	if ( (params->what == kAudioUnitSetPropertySelect) && (sp->inID == kAudioUnitProperty_CurrentPreset) )
 		printf("<BufferOverrideEntry>SetCurrentPreset ( %ld )\n", ((AUPreset*)sp->inData)->presetNumber);
+	else if ( (params->what == kAudioUnitSetPropertySelect) && (sp->inID == kAudioUnitProperty_ClassInfo) )
+		printf("<BufferOverrideEntry>SetProperty(ClassInfo)\n");
 
 	return ComponentEntryPoint<BufferOverride>::Dispatch(params, obj);
 }

@@ -46,8 +46,8 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   }
 
   // these are only for the GUI, no need to reveal them to the user as parameters
-  setparameterhidden(kSpeed1mode, true);
-  setparameterhidden(kSpeed2mode, true);
+  addparameterattributes(kSpeed1mode, kDfxParamAttribute_hidden);
+  addparameterattributes(kSpeed2mode, kDfxParamAttribute_hidden);
 
 
   settailsize_seconds(BUFFER_MAX * 0.001);
