@@ -54,7 +54,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	}
 
 	fontSize = 14.0f;
-	fontColor(103, 161, 215);
+	fontColor(103.0f/255.0f, 161.0f/255.0f, 215.0f/255.0f);
 
 	setContinuousControl(true);
 	alignment = kDGTextAlign_right;
@@ -71,46 +71,6 @@ DGTextDisplay::~DGTextDisplay()
 	fontName = NULL;
 }
 
-
-//-----------------------------------------------------------------------------
-void DGTextDisplay::mouseDown(Point inPos, bool, bool)
-{
-	last_Y = inPos.v;
-}
-
-//-----------------------------------------------------------------------------
-void DGTextDisplay::mouseTrack(Point inPos, bool with_option, bool with_shift)
-{
-	ControlRef carbonControl = getCarbonControl();
-	SInt32 max = GetControl32BitMaximum(carbonControl);
-	SInt32 val = GetControl32BitValue(carbonControl);
-
-	SInt32 precision = 4;
-	if (with_shift)
-		precision = 10;
-//	SInt32 subtle = (SInt32) getResolution();
-	SInt32 subtle = 10;
-	if ( inPos.h > (getBounds()->w / 2) )
-		subtle = 1;
-
-	SInt32 dy = last_Y - inPos.v;
-	if (abs(dy) > precision)
-	{
-		dy /= precision;
-		val += dy * subtle;
-		if (val > max)
-			val = max;
-		if (val < 0)
-			val = 0;
-		SetControl32BitValue(carbonControl, val);
-		last_Y = inPos.v;
-	}
-}
-
-//-----------------------------------------------------------------------------
-void DGTextDisplay::mouseUp(Point inPos, bool, bool)
-{
-}
 
 //-----------------------------------------------------------------------------
 void DGTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
@@ -166,7 +126,7 @@ void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const cha
 	}
 	CGContextSetShouldSmoothFonts(inContext, drawSmoothText);
 	CGContextSetShouldAntialias(inContext, drawSmoothText);	// it appears that I gotta do this, too
-	CGContextSetRGBFillColor(inContext, (float)fontColor.r/255.0f, (float)fontColor.g/255.0f, (float)fontColor.b/255.0f, 1.0f);
+	CGContextSetRGBFillColor(inContext, fontColor.r, fontColor.g, fontColor.b, 1.0f);
 
 	if (alignment != kDGTextAlign_left)
 	{

@@ -9,10 +9,6 @@
 
 
 
-#if MAC
-	typedef ControlRef PlatformControlRef;
-#endif
-
 #ifdef TARGET_API_AUDIOUNIT
 	typedef AudioUnitCarbonView DGEditorListenerInstance;
 #endif
@@ -32,31 +28,33 @@ public:
 	DfxGuiEditor(DGEditorListenerInstance inInstance);
 	virtual ~DfxGuiEditor();
 
+	// *** this one is for the child class to override
+	virtual OSStatus open(float inXOffset, float inYOffset) = 0;
+
 #ifdef TARGET_API_AUDIOUNIT
 	// this gets called from AUCarbonViewBase
 	OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	bool HandleEvent(EventRef inEvent);
-#endif
-	// *** this one is for the child class to override
-	virtual OSStatus open(float inXOffset, float inYOffset) = 0;
-
-	// Images
-	void			addImage(DGImage *inImage);
-	// Controls
-	void			addControl(DGControl *inCtrl);
-	DGControl *		getDGControlByPlatformControlRef(PlatformControlRef inControl);
 
 	AUParameterListenerRef getParameterListener()
 		{	return mParameterListener;	}
-
-#if 1
-// XXX bye bye
-	// get/set the control that is currently being moused (actively tweaked), if any (returns NULL if none)
-	DGControl * getCurrentControl_clicked()
-		{	return currentControl_clicked;	}
-	void setCurrentControl_clicked(DGControl *inNewClickedControl)
-		{	currentControl_clicked = inNewClickedControl;	}
 #endif
+
+	void			addImage(DGImage *inImage);
+	void			addControl(DGControl *inCtrl);
+
+	void do_idle();
+	virtual void idle() { }
+
+	virtual void DrawBackground(CGContextRef inContext, UInt32 inPortHeight);
+
+#if MAC
+	virtual bool HandleMouseEvent(EventRef inEvent);
+	virtual bool HandleKeyboardEvent(EventRef inEvent);
+	virtual bool HandleCommandEvent(EventRef inEvent);
+	virtual bool HandleControlEvent(EventRef inEvent);
+#endif
+
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()
 		{	return currentControl_mouseover;	}
@@ -64,8 +62,7 @@ public:
 	// *** override this if you want your GUI to react when the mouseovered control changes
 	virtual void mouseovercontrolchanged() { }
 
-	virtual void DrawBackground(CGContextRef inContext, UInt32 inPortHeight);
-
+	// the below methods all handle communication between the GUI component and the music component
 	DfxPlugin * getdfxplugin()
 		{	return dfxplugin;	}
 	float getparameter_f(long parameterID);
@@ -82,8 +79,6 @@ public:
 		long getmidilearner();
 		bool ismidilearner(long parameterIndex);
 	#endif
-
-	void idle();
 
 protected:
 	void SetBackgroundImage(DGImage *inBackgroundImage)
@@ -131,6 +126,8 @@ private:
 	DGControl *	currentControl_mouseover;
 
 #if MAC
+	DGControl * getDGControlByCarbonControlRef(ControlRef inControl);
+
 	EventHandlerUPP		controlHandlerUPP;
 	ControlDefSpec 		dgControlSpec;
 	EventHandlerUPP		windowEventHandlerUPP;

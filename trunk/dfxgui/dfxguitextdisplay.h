@@ -24,9 +24,6 @@ public:
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
 	virtual void drawText(CGContextRef context, CGRect& inBounds, const char *inString);
-	virtual void mouseDown(Point inPos, bool, bool);
-	virtual void mouseTrack(Point inPos, bool, bool);
-	virtual void mouseUp(Point inPos, bool, bool);
 
 	void setTextAlignmentStyle(DfxGuiTextAlignmentStyle newStyle)
 		{	alignment = newStyle;	}
@@ -45,7 +42,6 @@ protected:
 	float					fontSize;
 	DGColor					fontColor;
 	DfxGuiTextAlignmentStyle	alignment;
-	SInt32					last_Y;
 };
 
 

@@ -39,7 +39,6 @@ void DGControl::init(DGRect *inRegion)
 //-----------------------------------------------------------------------------
 DGControl::~DGControl()
 {
-//printf("DGControl::~DGControl()\n");
 	if (carbonControl != NULL)
 		DisposeControl(carbonControl);
 	if (auv_control != NULL)
@@ -51,8 +50,8 @@ DGControl::~DGControl()
 // force a redraw
 void DGControl::redraw()
 {
-	if (getCarbonControl() != NULL)
-		Draw1Control( getCarbonControl() );
+	if (carbonControl != NULL)
+		Draw1Control(carbonControl);
 }
 
 //-----------------------------------------------------------------------------
@@ -62,7 +61,7 @@ void DGControl::createAUVcontrol()
 	ctype = isContinuousControl() ? AUCarbonViewControl::kTypeContinuous : AUCarbonViewControl::kTypeDiscrete;
 	if (auv_control != NULL)
 		delete auv_control;
-	auv_control = new DGCarbonViewControl(getDfxGuiEditor(), getDfxGuiEditor()->getParameterListener(), ctype, getAUVP(), getCarbonControl());
+	auv_control = new DGCarbonViewControl(getDfxGuiEditor(), getDfxGuiEditor()->getParameterListener(), ctype, getAUVP(), carbonControl);
 	auv_control->Bind();
 }
 
@@ -93,18 +92,6 @@ void DGControl::setOffset(SInt32 x, SInt32 y)
 {
 	where.offset(x, y);
 	vizArea.offset(x, y);
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::clipRegion(bool drawing)
-{
-//	if (drawing)
-//		printf("drawing 0x%08X type %ld\n", (unsigned long)this, getType());
-//	else
-//		printf("clipping 0x%08X type %ld\n", (unsigned long)this, getType());
-	Rect r;
-	where.copyToRect(&r);
-	FrameRect(&r);
 }
 
 //-----------------------------------------------------------------------------

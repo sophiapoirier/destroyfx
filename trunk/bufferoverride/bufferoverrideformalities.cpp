@@ -10,7 +10,7 @@
 #pragma mark _________init_________
 
 // this macro does boring entry point stuff for us
-#if 0
+#if 1
 DFX_ENTRY(BufferOverride);
 #else
 extern "C" ComponentResult BufferOverrideEntry(ComponentParameters *params, BufferOverride *obj);

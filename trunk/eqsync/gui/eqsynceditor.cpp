@@ -70,46 +70,46 @@ public:
 		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 		DGSlider::draw(inContext, inPortHeight);
 	}
-	virtual void mouseDown(Point inPos, bool with_option, bool with_shift)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 	{
 		ForeGround = clickedHandle;	// switch to the click-styled handle
-		DGSlider::mouseDown(inPos, with_option, with_shift);
-		lastX = inPos.h;
-		lastY = inPos.v;
+		DGSlider::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+		lastPX = inXpos;
+		lastPY = inYpos;
 		lastXchange = lastYchange = 0;
 	}
 #if 0
-	virtual void mouseTrack(Point inPos, bool a, bool b)
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 	{
 		if (orientation == kDGSliderStyle_vertical)
 		{
-			long xchange = inPos.h - lastX + lastXchange;
-			long ychange = inPos.v - lastY + lastYchange;
+			long xchange = (long)(inXpos - lastPX) + lastXchange;
+			long ychange = (long)(inYpos - lastPY) + lastYchange;
 			Rect cbounds;
 			GetControlBounds(getCarbonControl(), &cbounds);
 			MoveControl(getCarbonControl(), cbounds.left + xchange, cbounds.top + ychange);
 			getBounds()->offset(xchange, ychange);
 			getForeBounds()->offset(xchange, ychange);
 			redraw();
-			lastX = inPos.h;
-			lastY = inPos.v;
+			lastPX = inXpos;
+			lastPY = inYpos;
 			lastXchange = xchange;
 			lastYchange = ychange;
 		}
 		else
-			DGSlider::mouseTrack(inPos, a, b);
+			DGSlider::mouseTrack(inXpos, inYpos, inMouseButtons, inKeyModifiers);
 	}
 #endif
-	virtual void mouseUp(Point inPos, bool with_option, bool with_shift)
+	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 	{
 		ForeGround = regularHandle;	// switch back to the non-click-styled handle
-		DGSlider::mouseUp(inPos, with_option, with_shift);
+		DGSlider::mouseUp(inXpos, inYpos, inKeyModifiers);
 		redraw();	// make sure that the change in slider handle is reflected
 	}
 private:
 	DGImage * regularHandle;
 	DGImage * clickedHandle;
-	long lastX, lastY;
+	float lastPX, lastPY;
 	long lastXchange, lastYchange;
 };
 
@@ -137,31 +137,31 @@ public:
 			CGContextDrawImage(inContext, bounds, theButton);
 		}
 	}
-	virtual void mouseDown(Point inPos, bool, bool)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 	{
-		if ( inPos.h > ((getBounds()->w / 2) - 6) )
+		if ( (long)inXpos > ((getBounds()->w / 2) - 6) )
 			SetControl32BitValue(getCarbonControl(), 1);
-		lastX = inPos.h;
-		lastY = inPos.v;
+		lastX = inXpos;
+		lastY = inYpos;
 		lastXchange = lastYchange = 0;
 	}
 #if 0
-	virtual void mouseTrack(Point inPos, bool, bool)
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 	{
-		long xchange = inPos.h - lastX + lastXchange;
-		long ychange = inPos.v - lastY + lastYchange;
+		long xchange = (long)(inXpos - lastX) + lastXchange;
+		long ychange = (long)(inYpos - lastY) + lastYchange;
 		Rect cbounds;
 		GetControlBounds(getCarbonControl(), &cbounds);
 		MoveControl(getCarbonControl(), cbounds.left + xchange, cbounds.top + ychange);
 		getBounds()->offset(xchange, ychange);
 		redraw();
-		lastX = inPos.h;
-		lastY = inPos.v;
+		lastX = inXpos;
+		lastY = inYpos;
 		lastXchange = xchange;
 		lastYchange = ychange;
 	}
 #endif
-	virtual void mouseUp(Point inPos, bool, bool)
+	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 	{
 		if (GetControl32BitValue(getCarbonControl()) != 0)
 		{
@@ -172,7 +172,7 @@ public:
 
 private:
 	DGImage * buttonImage;
-	long lastX, lastY;
+	float lastX, lastY;
 	long lastXchange, lastYchange;
 };
 
@@ -190,7 +190,7 @@ EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
 //-----------------------------------------------------------------------------
 OSStatus EQSyncEditor::open(float inXOffset, float inYOffset)
 {
-	// load some graphics
+	// load some images
 
 	// background image
 	DGImage *gBackground = new DGImage("eq-sync-background.png");
