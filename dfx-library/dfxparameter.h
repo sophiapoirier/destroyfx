@@ -60,7 +60,7 @@ indicate how they operate.  You will see multiple variations of the
 same function with varying suffixes.  Most of the suffixes indicate 
 that the functions are handling a specific variable type.  Those are:  
 _f for float, _d for double, _i for long int, _ui for unsigned long int, 
-_b for boolean, _c for char (byte), and _uc for unsigned char (byte).  
+and _b for boolean.  
 The suffix _gen indicates that the function handles parameter values 
 in the generic 0 to 1 float fashion.
 
@@ -181,8 +181,6 @@ struct DfxParamValue {
 	long i;
 	unsigned long ui;
 	unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
-	char c;
-	unsigned char uc;
 	DfxParamValue() {}	// suppress compiler warnings
 };
 typedef struct DfxParamValue DfxParamValue;
@@ -197,8 +195,6 @@ typedef enum {
 	kDfxParamValueType_int,
 	kDfxParamValueType_uint,
 	kDfxParamValueType_boolean,
-	kDfxParamValueType_char,
-	kDfxParamValueType_uchar
 } DfxParamValueType;
 
 
@@ -323,10 +319,6 @@ public:
 		{	return derive_ui(value);	}
 	bool get_b()
 		{	return derive_b(value);	}
-	char get_c()
-		{	return derive_c(value);	}
-	unsigned char get_uc()
-		{	return derive_uc(value);	}
 	// get the current value scaled into a generic 0...1 float value
 	float get_gen();
 
@@ -371,8 +363,6 @@ public:
 	long derive_i(DfxParamValue inValue);
 	unsigned long derive_ui(DfxParamValue inValue);
 	bool derive_b(DfxParamValue inValue);
-	char derive_c(DfxParamValue inValue);
-	unsigned char derive_uc(DfxParamValue inValue);
 
 	// set a DfxParamValue with a value of a specific type
 	// perform type conversion if the incoming variable type is not "native"

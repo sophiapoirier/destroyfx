@@ -141,26 +141,6 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 			if ( (defaultValue.b > max.b)  || (defaultValue.b < min.b) )
 				defaultValue.b = false;
 			break;
-		case kDfxParamValueType_char:
-			if (min.c > max.c)
-			{
-				char swap = max.c;
-				max.c = min.c;
-				min.c = swap;
-			}
-			if ( (defaultValue.c > max.c)  || (defaultValue.c < min.c) )
-				defaultValue.c = ((max.c - min.c) / 2) + min.c;
-			break;
-		case kDfxParamValueType_uchar:
-			if (min.uc > max.uc)
-			{
-				unsigned char swap = max.uc;
-				max.uc = min.uc;
-				min.uc = swap;
-			}
-			if ( (defaultValue.uc > max.uc)  || (defaultValue.uc < min.uc) )
-				defaultValue.uc = ((max.uc - min.uc) / 2) + min.uc;
-			break;
 		default:
 			break;
 	}
@@ -383,10 +363,6 @@ float DfxParam::derive_f(DfxParamValue inValue)
 			return (float) inValue.ui;
 		case kDfxParamValueType_boolean:
 			return (inValue.b != 0) ? 1.0f : 0.0f;
-		case kDfxParamValueType_char:
-			return (float) inValue.c;
-		case kDfxParamValueType_uchar:
-			return (float) inValue.uc;
 		case kDfxParamValueType_undefined:
 		default:
 			return 0.0f;
@@ -410,10 +386,6 @@ double DfxParam::derive_d(DfxParamValue inValue)
 			return (double) inValue.ui;
 		case kDfxParamValueType_boolean:
 			return (inValue.b != 0) ? 1.0 : 0.0;
-		case kDfxParamValueType_char:
-			return (double) inValue.c;
-		case kDfxParamValueType_uchar:
-			return (double) inValue.uc;
 		case kDfxParamValueType_undefined:
 		default:
 			return 0.0;
@@ -443,10 +415,6 @@ long DfxParam::derive_i(DfxParamValue inValue)
 			return (signed) inValue.ui;
 		case kDfxParamValueType_boolean:
 			return (inValue.b != 0) ? 1 : 0;
-		case kDfxParamValueType_char:
-			return (long) inValue.c;
-		case kDfxParamValueType_uchar:
-			return (long) inValue.uc;
 		case kDfxParamValueType_undefined:
 		default:
 			return 0;
@@ -479,13 +447,6 @@ unsigned long DfxParam::derive_ui(DfxParamValue inValue)
 			return inValue.ui;
 		case kDfxParamValueType_boolean:
 			return (inValue.b != 0) ? 1 : 0;
-		case kDfxParamValueType_char:
-			if (inValue.c < 0)
-				return 0;
-			else
-				return (unsigned long) inValue.c;
-		case kDfxParamValueType_uchar:
-			return (unsigned long) inValue.uc;
 		case kDfxParamValueType_undefined:
 		default:
 			return 0;
@@ -509,85 +470,9 @@ bool DfxParam::derive_b(DfxParamValue inValue)
 			return (inValue.ui != 0);
 		case kDfxParamValueType_boolean:
 			return (inValue.b != 0);
-		case kDfxParamValueType_char:
-			return (inValue.c != 0);
-		case kDfxParamValueType_uchar:
-			return (inValue.uc != 0);
 		case kDfxParamValueType_undefined:
 		default:
 			return false;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// figure out the value of a DfxParamValue as char type value
-// perform type conversion if char is not the parameter's "native" type
-char DfxParam::derive_c(DfxParamValue inValue)
-{
-	switch (valueType)
-	{
-		case kDfxParamValueType_float:
-			if (inValue.d < 0.0f)
-				return (char) (inValue.f - twiddle_f);
-			else
-				return (char) (inValue.f + twiddle_f);
-		case kDfxParamValueType_double:
-			if (inValue.d < 0.0)
-				return (char) (inValue.d - twiddle_d);
-			else
-				return (char) (inValue.d + twiddle_d);
-		case kDfxParamValueType_int:
-			return (char) inValue.i;
-		case kDfxParamValueType_uint:
-			return (char) inValue.ui;
-		case kDfxParamValueType_boolean:
-			return (inValue.b != 0) ? 1 : 0;
-		case kDfxParamValueType_char:
-			return inValue.c;
-		case kDfxParamValueType_uchar:
-			return (signed char) inValue.uc;
-		case kDfxParamValueType_undefined:
-		default:
-			return 0;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// figure out the value of a DfxParamValue as unsigned char type value
-// perform type conversion if unsigned char is not the parameter's "native" type
-unsigned char DfxParam::derive_uc(DfxParamValue inValue)
-{
-	switch (valueType)
-	{
-		case kDfxParamValueType_float:
-			if (inValue.d < 0.0f)
-				return 0;
-			else
-				return (unsigned char) (inValue.f + twiddle_f);
-		case kDfxParamValueType_double:
-			if (inValue.d < 0.0)
-				return 0;
-			else
-				return (unsigned char) (inValue.d + twiddle_d);
-		case kDfxParamValueType_int:
-			if (inValue.i < 0)
-				return 0;
-			else
-				return (unsigned char) inValue.i;
-		case kDfxParamValueType_uint:
-			return (unsigned char) inValue.ui;
-		case kDfxParamValueType_boolean:
-			return (inValue.b != 0) ? 1 : 0;
-		case kDfxParamValueType_char:
-			if (inValue.c < 0)
-				return 0;
-			else
-				return (unsigned char) inValue.c;
-		case kDfxParamValueType_uchar:
-			return inValue.uc;
-		case kDfxParamValueType_undefined:
-		default:
-			return 0;
 	}
 }
 
@@ -673,18 +558,6 @@ bool DfxParam::accept_f(float inValue, DfxParamValue &outValue)
 		case kDfxParamValueType_boolean:
 			outValue.b = FBOOL(inValue) ? 1 : 0;
 			break;
-		case kDfxParamValueType_char:
-			if (inValue < 0.0f)
-				outValue.c = (char) (inValue - twiddle_f);
-			else
-				outValue.c = (char) (inValue + twiddle_f);
-			break;
-		case kDfxParamValueType_uchar:
-			if (inValue < 0.0f)
-				outValue.uc = 0;
-			else
-				outValue.uc = (unsigned char) (inValue + twiddle_f);
-			break;
 		case kDfxParamValueType_undefined:
 		default:
 			break;
@@ -721,18 +594,6 @@ bool DfxParam::accept_d(double inValue, DfxParamValue &outValue)
 		case kDfxParamValueType_boolean:
 			outValue.b = DBOOL(inValue) ? 1 : 0;
 			break;
-		case kDfxParamValueType_char:
-			if (inValue < 0.0)
-				outValue.c = (char) (inValue - twiddle_d);
-			else
-				outValue.c = (char) (inValue + twiddle_d);
-			break;
-		case kDfxParamValueType_uchar:
-			if (inValue < 0.0)
-				outValue.uc = 0;
-			else
-				outValue.uc = (unsigned char) (inValue + twiddle_d);
-			break;
 		case kDfxParamValueType_undefined:
 		default:
 			break;
@@ -763,12 +624,6 @@ bool DfxParam::accept_i(long inValue, DfxParamValue &outValue)
 		case kDfxParamValueType_boolean:
 			outValue.b = (inValue == 0) ? 0 : 1;
 			break;
-		case kDfxParamValueType_char:
-			outValue.c = (char)inValue;
-			break;
-		case kDfxParamValueType_uchar:
-			outValue.uc = (inValue < 0) ? 0 : (unsigned char)inValue;
-			break;
 		case kDfxParamValueType_undefined:
 		default:
 			break;
@@ -798,12 +653,6 @@ bool DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
 			break;
 		case kDfxParamValueType_boolean:
 			outValue.b = (inValue ? 1 : 0);
-			break;
-		case kDfxParamValueType_char:
-			outValue.c = (inValue ? 1 : 0);
-			break;
-		case kDfxParamValueType_uchar:
-			outValue.uc = (inValue ? 1 : 0);
 			break;
 		case kDfxParamValueType_undefined:
 		default:
@@ -930,11 +779,6 @@ DfxParamValue DfxParam::randomize()
 //			value.i = (rand() % (long)(max.i-min.i)) + min.i;
 		case kDfxParamValueType_uint:
 //			value.ui = (unsigned)(rand() % (max.ui-min.ui)) + min.ui;
-		case kDfxParamValueType_char:
-//			value.c = (char) ((rand() % (long)(max.c-min.c)) + (long)min.c);
-		case kDfxParamValueType_uchar:
-//			value.uc = (unsigned char) ((rand() % (long)(max.uc-min.uc)) + (long)min.uc);
-			// using set_gen accounts for value distribution curves
 			set_gen( (float)rand() / (float)RAND_MAX );
 			break;
 		case kDfxParamValueType_boolean:
@@ -993,20 +837,6 @@ bool DfxParam::limit()
 				value.b = max.b;
 			else if (value.b < min.b)
 				value.b = min.b;
-			else return false;
-			break;
-		case kDfxParamValueType_char:
-			if (value.c > max.c)
-				value.c = max.c;
-			else if (value.c < min.c)
-				value.c = min.c;
-			else return false;
-			break;
-		case kDfxParamValueType_uchar:
-			if (value.uc > max.uc)
-				value.uc = max.uc;
-			else if (value.uc < min.uc)
-				value.uc = min.uc;
 			else return false;
 			break;
 		case kDfxParamValueType_undefined:

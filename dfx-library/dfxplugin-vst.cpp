@@ -349,12 +349,6 @@ void DfxPlugin::getParameterDisplay(long index, char * text)
 			else
 				strcpy(text, "off");
 			break;
-		case kDfxParamValueType_char:
-			sprintf(text, "%d", getparameter_c(index));
-			break;
-		case kDfxParamValueType_uchar:
-			sprintf(text, "%d", getparameter_uc(index));
-			break;
 		case kDfxParamValueType_undefined:
 		default:
 			break;
