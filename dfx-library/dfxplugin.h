@@ -158,6 +158,12 @@ SUPPORT_AU_VERSION_1
 
 // handle base header includes and class names for the target plugin API
 
+#if (defined(TARGET_API_AUDIOUNIT) + defined(TARGET_API_VST)) != 1
+
+   #error "You must define exactly one of TARGET_API_AUDIOUNIT, TARGET_API_VST."
+
+#endif
+
 // using Apple's Audio Unit API
 #if defined(TARGET_API_AUDIOUNIT)
 	#define TARGET_API_CORE_CLASS AUKernelBase
@@ -197,9 +203,6 @@ SUPPORT_AU_VERSION_1
 		#define VST_NUM_OUTPUTS	VST_NUM_CHANNELS
 		#endif
 	#endif
-
-#else
-	#error "You must define one of either TARGET_API_VST or TARGET_API_AUDIOUNIT"
 
 #endif
 // end of target API check
