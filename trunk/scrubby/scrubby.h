@@ -1,14 +1,12 @@
 /*-------------- by Marc Poirier  ][  February 2002 -------------*/
 
-#ifndef __scrubby
-#define __scrubby
+#ifndef __SCRUBBY_H
+#define __SCRUBBY_H
 
-#include <stdio.h>
 
-#include "dfxmisc.h"
-#include "vstmidi.h"
-#include "vstchunk.h"
-#include "temporatetable.h"
+#ifndef __DFXPLUGIN_H
+#include "dfxplugin.h"
+#endif
 
 
 //----------------------------------------------------------------------------- 
@@ -18,13 +16,15 @@ enum
 	kSeekRange,
 	kFreeze,
 
-	kSeekRate,
-	kSeekRateRandMin,
+	kSeekRate_abs,
+	kSeekRate_sync,
+	kSeekRateRandMin_abs,
+	kSeekRateRandMin_sync,
 	kTempoSync,
 	kSeekDur,
 	kSeekDurRandMin,
 
-	kPortamento,
+	kSpeedMode,
 	kSplitStereo,
 
 	kPitchConstraint,
@@ -44,6 +44,7 @@ enum
 	kOctaveMax,
 
 	kTempo,
+	kTempoAuto,
 	kPredelay,
 
 	NUM_PARAMETERS
@@ -84,29 +85,21 @@ enum
 #define NUM_PITCH_STEPS 12
 
 // this is a necessary value for calculating the pitches related to the playback speeds
-const double LN2TO1_12TH = log(pow(2.0, 1.0/12.0));	// why doesn't this work?
+const double LN2TO1_12TH = log(pow(2.0, 1.0/12.0));
 //#define LN2TO1_12TH   0.05776226504666215
 
-//#define USE_LINEAR_ACCELERATION
+#define USE_LINEAR_ACCELERATION 0
 
-#define NUM_PROGRAMS 16
-#define PLUGIN_VERSION 1000
-#define PLUGIN_ID 'scub'
+#define NUM_PRESETS 16
 
-//----------------------------------------------------------------------------- 
-class ScrubbyProgram
-{
-friend class Scrubby;
-public:
-	ScrubbyProgram();
-	~ScrubbyProgram();
-private:
-	float *param;
-	char *name;
+enum {
+	kSpeedMode_robot,
+	kSpeedMode_dj,
+	kNumSpeedModes
 };
 
 
-//----------------------------------------------------------------------------- 
+/*
 class ScrubbyChunk : public VstChunk
 {
 public:
@@ -122,105 +115,66 @@ public:
 	// true for unified single-point automation of both parameter range values
 	bool seekRateDoubleAutomate, seekDurDoubleAutomate;
 };
+*/
 
 
 //----------------------------------------------------------------------------- 
-
-class Scrubby : public AudioEffectX
+class Scrubby : public DfxPlugin
 {
 friend class ScrubbyEditor;
 public:
-	Scrubby(audioMasterCallback audioMaster);
-	~Scrubby();
+	Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	virtual ~Scrubby();
 
-	virtual void process(float **inputs, float **outputs, long sampleFrames);
-	virtual void processReplacing(float **inputs, float **outputs, long sampleFrames);
+	virtual long initialize();
+	virtual void cleanup();
+	virtual void reset();
 
-	virtual void suspend();
-	virtual void resume();
-	virtual long fxIdle();
-	virtual long processEvents(VstEvents* events);
+	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processparameters();
 
-	virtual long getTailSize();
-	// there was a typo in the VST header files versions 2.0 through 2.2, 
-	// so some hosts will still call this incorrectly named version...
-	virtual long getGetTailSize() { return getTailSize(); }
-	virtual bool getInputProperties(long index, VstPinProperties* properties);
-	virtual bool getOutputProperties(long index, VstPinProperties* properties);
-
-	virtual void setProgram(long programNum);
-	virtual void setProgramName(char *name);
-	virtual void getProgramName(char *name);
-	virtual bool getProgramNameIndexed(long category, long index, char *text);
-	virtual bool copyProgram(long destination);
-
-	virtual long setChunk(void *data, long byteSize, bool isPreset);
-	virtual long getChunk(void **data, bool isPreset);
-
-	virtual void setParameter(long index, float value);
-	virtual float getParameter(long index);
-	virtual void getParameterName(long index, char *text);
-	virtual void getParameterDisplay(long index, char *text);
-	virtual void getParameterLabel(long index, char *label);
-
-	virtual bool getEffectName(char *name);
-	virtual long getVendorVersion();
-	virtual bool getErrorText(char *text);
-	virtual bool getVendorString(char *text);
-	virtual bool getProductString(char *text);
-
-	virtual long canDo(char* text);
+	virtual bool createbuffers();
+	virtual void releasebuffers();
+	virtual void clearbuffers();
 
 
-protected:
-	friend class ScrubbyEditor;
+private:
+	void initPresets();
 
-	void doTheProcess(float **inputs, float **outputs, long sampleFrames, bool replacing);
-	void generateNewTarget(int channel);
+	void generateNewTarget(unsigned long channel);
 	double processPitchConstraint(double readStep);
 	void checkTempoSyncStuff();
-	void getRealValues();
-	void initPresets();
-	void createAudioBuffers();
+	void processMidiNotes();
 
 	// the parameters
-	float fSeekRange, fFreeze, fSeekRate, fSeekRateRandMin, fTempoSync;
-	float fSeekDur, fSeekDurRandMin, fPortamento, fSplitStereo, fTempo, fPredelay;
-	float fPitchConstraint, *fPitchSteps, fOctaveMin, fOctaveMax;
-	// some useful converted parameter booleans
-	bool useSeekRateRandMin, useSeekDurRandMin, freeze;
-	bool portamento, splitStereo, tempoSync, pitchConstraint;
+	float seekRangeSeconds, seekDur, seekDurRandMin;
+	float seekRateHz, seekRateSync, seekRateRandMinHz, seekRateRandMinSync;
+	float userTempo;
+	long speedMode, octaveMin, octaveMax;
+	bool freeze, splitStereo, pitchConstraint, tempoSync, useHostTempo;
 	bool *pitchSteps;
 
-	ScrubbyProgram *programs;
-	ScrubbyChunk *chunk;
+	bool useSeekRateRandMin, useSeekDurRandMin;
 
 	// buffers & associated position values/counters/etc.
-	float *buffer1, *buffer2;
+	float **buffers;
 	long writePos;
-	double readPos1, readPos2, readStep1, readStep2, portamentoStep1, portamentoStep2;
-	long movecount1, movecount2, seekcount1, seekcount2;
+	double *readPos, *readStep, *portamentoStep;
+	long *movecount, *seekcount;
+	unsigned long numBuffers;	// how many buffers we have allocated at the moment
 
-	float SAMPLERATE;
 	long MAX_BUFFER;	// the maximum size (in samples) of the audio buffer
 	double MAX_BUFFER_FLOAT;	// for avoiding casting
 
 	// tempo sync stuff
-	TempoRateTable *tempoRateTable;	// a table of tempo rate values
-	VstTimeInfo *timeInfo;
 	float currentTempoBPS;	// tempo in beats per second
-	long hostCanDoTempo;	// my semi-booly dude who knows something about the host's VstTimeInfo implementation
-	bool needResync1, needResync2;	// true when playback has just started up again
+	bool *needResync;	// true when playback has just started up again
 
 	// MIDI note control stuff
-	VstMidi *midistuff;	// all of the MIDI everythings
 	long *activeNotesTable;	// how many voices of each note in the octave are being played
 	bool keyboardWasPlayedByMidi;	// tells the GUI to update the keyboard display
 	bool notesWereAlreadyActive;	// says whether any notes were active in the previous block
 
-	bool predelayChanged;	// signals the need for updated initialDelay via ioChanged() call
-
-FILE *f;
 long sinecount;
 float showme;
 };
