@@ -184,11 +184,11 @@ void TransverbDSP::processparameters() {
   if (bsize > MAXBUF)   bsize = MAXBUF;
   mix1 = getparameter_f(kMix1);
   speed1 = pow(2.0, getparameter_d(kSpeed1));
-  feed1 = getparameter_f(kFeed1) * 0.01f;
+  feed1 = getparameter_scalar(kFeed1);
   dist1 = getparameter_f(kDist1);
   mix2 = getparameter_f(kMix2);
   speed2 = pow(2.0, getparameter_d(kSpeed2));
-  feed2 = getparameter_f(kFeed2) * 0.01f;
+  feed2 = getparameter_scalar(kFeed2);
   dist2 = getparameter_f(kDist2);
   quality = getparameter_i(kQuality);
   tomsound = getparameter_b(kTomsound);
