@@ -39,7 +39,7 @@ enum { POINT_EXTNCROSS,
        POINT_SPAN, 
        POINT_DYDX, 
        NUM_POINTSTYLES,
-       MAX_POINTSTYLES=64,
+       MAX_POINTSTYLES=64
 };
 
 /* the types of waveform regeneration operations */
@@ -51,7 +51,7 @@ enum { INTERP_POLYGON,
        INTERP_FRIENDS, 
        INTERP_SING,
        NUM_INTERPSTYLES,
-       MAX_INTERPSTYLES=64,
+       MAX_INTERPSTYLES=64
 };
 
 /* the types of operations on points */
@@ -63,7 +63,7 @@ enum { OP_DOUBLE,
        OP_SLOW, 
        OP_FAST, 
        OP_UNSUP3, 
-       NUM_OPS,
+       NUM_OPS
 };
 
 /* the types of window shapes available for smoothity */
@@ -73,7 +73,7 @@ enum { WINDOW_TRIANGLE,
        WINDOW_COS, 
        WINDOW_COS2, 
        NUM_WINDOWSHAPES,
-       MAX_WINDOWSHAPES=16,
+       MAX_WINDOWSHAPES=16
 };
 
 #define MKPOINTSTYLE(f)      ( paramSteppedScaled((f),   MAX_POINTSTYLES) )
