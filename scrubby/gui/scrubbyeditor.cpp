@@ -283,8 +283,19 @@ ScrubbyEditor::ScrubbyEditor(AudioEffect *effect)
 	// init the size of the plugin
 	rect.left   = 0;
 	rect.top    = 0;
-	rect.right  = (short)gBackground->getWidth();
-	rect.bottom = (short)gBackground->getHeight();
+	rect.right  = 100; // (short)gBackground->getWidth();
+	rect.bottom = 100; // (short)gBackground->getHeight();
+
+#if 1
+
+	FILE * ff = fopen("c:\\temp\\scrubby_log.txt", "a");
+	fprintf(ff, "gbackground(%p): %d x %d\n", gBackground, 
+		gBackground?gBackground->getWidth():0,
+		gBackground?gBackground->getHeight():0);
+
+	fclose(ff);
+
+#endif
 
 	tempoString = new char[256];
 	tempoRateString = new char[16];
@@ -392,11 +403,26 @@ long ScrubbyEditor::open(void *ptr)
 		gSmartElectronixLink = new CBitmap (kSmartElectronixLinkID);
 
 
+#if 1
+
+	FILE * ff = fopen("c:\\temp\\scrubby_log.txt", "a");
+	fprintf(ff, "[2]gbackground(%p): %d x %d\n", gBackground, 
+		gBackground?gBackground->getWidth():0,
+		gBackground?gBackground->getHeight():0);
+	fprintf(ff, "[2]DestroyFXlink(%p): %d x %d\n", gDestroyFXlink, 
+		gDestroyFXlink?gDestroyFXlink->getWidth():0,
+		gDestroyFXlink?gDestroyFXlink->getHeight():0);
+
+	fclose(ff);
+
+#endif
+
+
 	chunk->resetLearning();
 
 
 	//--initialize the background frame--------------------------------------
-	CRect size = (0, 0, (short)gBackground->getWidth(), (short)gBackground->getHeight());
+	CRect size = (0, 0, 100, 100); // (short)gBackground->getWidth(), (short)gBackground->getHeight());
 	frame = new CFrame (size, ptr, this);
 	frame->setBackground(gBackground);
 
