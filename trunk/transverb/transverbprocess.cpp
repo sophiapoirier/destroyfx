@@ -3,7 +3,7 @@
 
 #include "transverb.hpp"
 
-#include "FIRfilter.h"
+#include "firfilter.h"
 
 #include <stdlib.h>
 #include <stdio.h>
