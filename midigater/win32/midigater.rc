@@ -1,0 +1,12 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+128                     BITMAP  DISCARDABLE     "background.bmp"
+129                     BITMAP  DISCARDABLE     "slope-fader-handle.bmp"
+130                     BITMAP  DISCARDABLE     "velocity-influence-fader-handle.bmp"
+131                     BITMAP  DISCARDABLE     "floor-fader-handle.bmp"
+132                     BITMAP  DISCARDABLE     "destroy-fx-link.bmp"
+
