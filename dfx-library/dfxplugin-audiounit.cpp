@@ -830,11 +830,11 @@ OSStatus DfxPlugin::NewFactoryPresetSet(const AUPreset & inNewFactoryPreset)
 	long newNumber = inNewFactoryPreset.presetNumber;
 
 	if ( !presetisvalid(newNumber) )
-		return paramErr;
+		return kAudioUnitErr_InvalidPropertyValue;
 	// for AU, we are using invalid preset names as a way of saying "not a real preset," 
 	// even though it might be a valid (allocated) preset number
 	if ( !presetnameisvalid(newNumber) )
-		return paramErr;
+		return kAudioUnitErr_InvalidPropertyValue;
 
 	// try to load the preset
 	if ( !loadpreset(newNumber) )
@@ -874,7 +874,7 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 	return noErr;
 }
 
-#define DEBUG_VST_SETTINGS_IMPORT	0
+#define DEBUG_VST_SETTINGS_IMPORT	1
 //-----------------------------------------------------------------------------
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
@@ -882,40 +882,53 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
 
 #if TARGET_PLUGIN_USES_MIDI
-#if DEBUG_VST_SETTINGS_IMPORT
-printf("\nresult from AUBase::RestoreState was %ld\n", result);
-#endif
+	#if DEBUG_VST_SETTINGS_IMPORT
+	printf("\nresult from AUBase::RestoreState was %ld\n", result);
+	#endif
+
 	CFDataRef cfdata = NULL;
+	Boolean dataFound = false;
 
 	if (result == noErr)
 	{
 		// look for a data section keyed with our custom data key
-		cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kDfxDataDictionaryKeyString));
-		// failing that, try to see if old VST chunk data is being fed to us
-		if (cfdata == NULL)
-{
-			cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
-#if DEBUG_VST_SETTINGS_IMPORT
-printf("destroyfx-data was not there, trying vstdata...\n");
-if (cfdata == NULL) printf("vstdata was not there\n");
-else printf("vstdata was there, loading...\n");
-#endif
-}
-	}
-	// there was an error in AUBas::RestoreState, but maybe some keys were missing and "vstdata" is there...
+		dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, kDfxDataDictionaryKeyString, (const void**)&cfdata);
+
+	#if DEBUG_VST_SETTINGS_IMPORT
+	printf("AUBase::RestoreState succeeded\n");
+	if ( !dataFound || (cfdata == NULL) )
+		printf("but destroyfx-data was not found\n");
 	else
-{
-		cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
-#if DEBUG_VST_SETTINGS_IMPORT
-printf("AUBase::RestoreState failed, trying vstdata...\n");
-if (cfdata == NULL) printf("vstdata was not there\n");
-else printf("vstdata was there, loading...\n");
-#endif
-}
+		printf("destroyfx-data successfully found\n");
+	#endif
+
+	}
+
+	#if DEBUG_VST_SETTINGS_IMPORT
+	else
+		printf("AUBase::RestoreState failed, not attempting destroyfx-data\n");
+	#endif
+
+	// there was an error in AUBas::RestoreState or trying to find "destroyfx-data", 
+	// but maybe some keys were missing and "vstdata" is there...
+	if ( !dataFound || (cfdata == NULL) )
+	{
+		// failing that, try to see if old VST chunk data is being fed to us
+		dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, CFSTR("vstdata"), (const void**)&cfdata);
+
+	#if DEBUG_VST_SETTINGS_IMPORT
+	printf("trying vstdata...\n");
+	if ( !dataFound || (cfdata == NULL) )
+		printf("vstdata was not found\n");
+	else
+		printf("vstdata was found, attempting to load...\n");
+	#endif
+
+	}
 
 	// if we couldn't get any data, abort with an error
-	if (cfdata == NULL)
-		return paramErr;
+	if ( !dataFound || (cfdata == NULL) )
+		return kAudioUnitErr_InvalidPropertyValue;
 
 	// a pointer to our special data
 	const UInt8 * dfxdata = CFDataGetBytePtr(cfdata);
@@ -923,12 +936,16 @@ else printf("vstdata was there, loading...\n");
 	unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
 	// try to restore the saved settings data
 	bool success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
-#if DEBUG_VST_SETTINGS_IMPORT
-if (success) printf("settings data was successfully loaded\n");
-else printf("settings data failed to load\n");
-#endif
+
+	#if DEBUG_VST_SETTINGS_IMPORT
+	if (success)
+		printf("settings data was successfully loaded\n");
+	else
+		printf("settings data failed to load\n");
+	#endif
+
 	if (!success)
-		return paramErr;
+		return kAudioUnitErr_InvalidPropertyValue;
 
 #else
 	// abort if the base implementation of RestoreState failed
@@ -957,7 +974,8 @@ else printf("settings data failed to load\n");
 ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
 				const CAStreamBasicDescription &inPrevFormat, const CAStreamBasicDescription &inNewFormat)
 {
-//printf("\nDfxPlugin::ChangeStreamFormat,   newsr = %.3f,   oldsr = %.3f\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
+//printf("\nDfxPlugin::ChangeStreamFormat,   new sr = %.3lf,   old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
+//printf("\nDfxPlugin::ChangeStreamFormat,   new num channels = %ld,   old num channels = %ld\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
 	// just use the inherited base class implementation
 	ComponentResult result = TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
 

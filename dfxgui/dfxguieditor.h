@@ -135,7 +135,7 @@ public:
 
 	// if you do not want parameter attached controls
 	virtual bool	providesForeignControls() { return false; }
-	virtual void	initForeignControls (ControlDefSpec &inControlSpec) {}
+	virtual void	initForeignControls(ControlDefSpec *inControlSpec) {}
 	virtual bool	isAUVPattached() { return AUVPattached; }
 
 	void redraw();	// force a redraw
