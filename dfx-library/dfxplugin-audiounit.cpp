@@ -107,6 +107,7 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 			outWritable = false;
 			break;
 
+	#if TARGET_PLUGIN_USES_MIDI
 		// get/set the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
 			outDataSize = sizeof(bool);
@@ -117,6 +118,7 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 			outDataSize = sizeof(long);
 			outWritable = true;
 			break;
+	#endif
 
 		default:
 			result = TARGET_API_BASE_CLASS::GetPropertyInfo(inID, inScope, inElement, outDataSize, outWritable);
@@ -164,6 +166,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 			*(DfxPlugin**)outData = this;
 			break;
 
+	#if TARGET_PLUGIN_USES_MIDI
 		// get the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
 			*(bool*)outData = dfxsettings->isLearning();
@@ -172,6 +175,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 		case kDfxPluginProperty_MidiLearner:
 			*(long*)outData = dfxsettings->getLearner();
 			break;
+	#endif
 
 		default:
 			result = TARGET_API_BASE_CLASS::GetProperty(inID, inScope, inElement, outData);
@@ -190,6 +194,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 
 	switch (inID)
 	{
+	#if TARGET_PLUGIN_USES_MIDI
 		// set the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
 			dfxsettings->setLearning( *(bool*)inData );
@@ -198,6 +203,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 		case kDfxPluginProperty_MidiLearner:
 			dfxsettings->setLearner( *(long*)inData );
 			break;
+	#endif
 
 		default:
 			result = TARGET_API_BASE_CLASS::SetProperty(inID, inScope, inElement, inData, inDataSize);
