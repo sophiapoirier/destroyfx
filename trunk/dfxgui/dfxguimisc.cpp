@@ -113,7 +113,7 @@ void DGGraphic::loadImageFile(const char *inFileName)
 }
 
 //-----------------------------------------------------------------------------
-SInt32 DGGraphic::getWidth()
+size_t DGGraphic::getWidth()
 {
 	if (cgImage != NULL)
 		return CGImageGetWidth(cgImage);
@@ -122,7 +122,7 @@ SInt32 DGGraphic::getWidth()
 }
 	
 //-----------------------------------------------------------------------------
-SInt32 DGGraphic::getHeight()
+size_t DGGraphic::getHeight()
 {
 	if (cgImage != NULL)
 		return CGImageGetHeight(cgImage);
