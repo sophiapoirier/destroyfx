@@ -14,9 +14,9 @@
 enum
 {
 	kRate_sync,
-	kSmooth,
 	kTempo,
 	kTempoAuto,
+	kSmooth,
 	ka0,
 	ka1,
 	ka2,
@@ -39,12 +39,11 @@ const float TEMPO_MAX = 480.0f;
 
 //----------------------------------------------------------------------------- 
 
-class EQsync : public DfxPlugin
+class EQSync : public DfxPlugin
 {
-friend class EQsyncEditor;
 public:
-	EQsync(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual ~EQsync();
+	EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	virtual ~EQSync();
 
 	virtual void reset();
 	virtual void processparameters();

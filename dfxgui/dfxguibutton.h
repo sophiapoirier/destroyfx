@@ -44,7 +44,6 @@ protected:
 	void * userProcData;
 	void * userReleaseProcData;
 
-	float alpha;
 	long numStates;
 	DfxGuiBottonMode mode;
 	bool drawMomentaryState;
