@@ -68,11 +68,11 @@ const DGColor kBackgroundColor(43.0f/255.0f, 93.0f/255.0f, 63.0f/255.0f);
 const DGColor kMyGreyColor(111.0f/255.0f, 111.0f/255.0f, 111.0f/255.0f);
 const DGColor kMyLightGreyColor(230.0f/255.0f, 230.0f/255.0f, 228.0f/255.0f);
 const DGColor kMyVeryLightGreyColor(233.0f/255.0f, 242.0f/255.0f, 237.0f/255.0f);
-const DGColor kMyDarkColor(54.0f/255.0f, 51.0f/255.0f, 39.0f/255.0f);
 
 
 
 //-----------------------------------------------------------------------------
+// callbacks for button-triggered action
 
 void midilearnRezSynth(SInt32 value, void * editor)
 {
@@ -183,20 +183,26 @@ RezSynthEditor::RezSynthEditor(AudioUnitCarbonView inInstance)
 	sepAmountSlider = NULL;
 	sepAmountDisplay = NULL;
 
-	AUListenerCreate(SepModeListenerProc, this,
+	parameterListener = NULL;
+	OSStatus status = AUListenerCreate(SepModeListenerProc, this,
 		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
 		&parameterListener);
+	if (status != noErr)
+		parameterListener = NULL;
 }
 
 //-----------------------------------------------------------------------------
 RezSynthEditor::~RezSynthEditor()
 {
-	if (sepAmountSlider != NULL)
-		AUListenerRemoveParameter(parameterListener, sepAmountSlider, &sepModeAUP);
-	if (sepAmountDisplay != NULL)
-		AUListenerRemoveParameter(parameterListener, sepAmountDisplay, &sepModeAUP);
+	if (parameterListener != NULL)
+	{
+		if (sepAmountSlider != NULL)
+			AUListenerRemoveParameter(parameterListener, sepAmountSlider, &sepModeAUP);
+		if (sepAmountDisplay != NULL)
+			AUListenerRemoveParameter(parameterListener, sepAmountDisplay, &sepModeAUP);
 
-	AUListenerDispose(parameterListener);
+		AUListenerDispose(parameterListener);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -410,14 +416,17 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 
 
 
-	// set up the parameter listeners
-	sepModeAUP.mAudioUnit = GetEditAudioUnit();
-	sepModeAUP.mScope = kAudioUnitScope_Global;
-	sepModeAUP.mElement = (AudioUnitElement)0;
-	sepModeAUP.mParameterID = kSepMode;
+	if (parameterListener != NULL)
+	{
+		// set up the parameter listeners
+		sepModeAUP.mAudioUnit = GetEditAudioUnit();
+		sepModeAUP.mScope = kAudioUnitScope_Global;
+		sepModeAUP.mElement = (AudioUnitElement)0;
+		sepModeAUP.mParameterID = kSepMode;
 
-	AUListenerAddParameter(parameterListener, sepAmountSlider, &sepModeAUP);
-	AUListenerAddParameter(parameterListener, sepAmountDisplay, &sepModeAUP);
+		AUListenerAddParameter(parameterListener, sepAmountSlider, &sepModeAUP);
+		AUListenerAddParameter(parameterListener, sepAmountDisplay, &sepModeAUP);
+	}
 
 
 
