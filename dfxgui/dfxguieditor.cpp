@@ -12,6 +12,9 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef, EventRef, void 
 static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData);
 #endif
 
+// for now this is a good idea, until it's totally obsoleted
+#define AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES
+
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
@@ -474,8 +477,21 @@ long launch_documentation()
 		CFURLRef fileURL = CFBundleCopyResourceURL(pluginBundleRef, fileCFName, NULL, NULL);
 		if (fileURL != NULL)
 		{
+// open the manual with the default application for the file type
+#if 0
 			OSStatus status = LSOpenCFURLRef(fileURL, NULL);
 			CFRelease(fileURL);
+// open the manual with Apple's system Help Viewer
+#else
+			OSStatus status = coreFoundationUnknownErr;
+			CFStringRef fileUrlString = CFURLGetString(fileURL);
+			if (fileUrlString != NULL)
+			{
+				status = AHGotoPage(NULL, fileUrlString, NULL);
+				CFRelease(fileUrlString);
+			}
+			CFRelease(fileURL);
+#endif
 			return status;
 		}
 	}
@@ -509,12 +525,14 @@ OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, 
 		result = AUEventListenerNotify(NULL, NULL, &paramEvent);
 	}
 
+#ifdef AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES
 	// as a back-up, also still do the old way, until it's enough obsolete
-	AUVParameter auvp(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
+	CAAUParameter auvp(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
 	if (inEventType == kAudioUnitEvent_BeginParameterChangeGesture)
 		TellListener(auvp, kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
 	else if (inEventType == kAudioUnitEvent_EndParameterChangeGesture)
 		TellListener(auvp, kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+#endif
 
 	return result;
 }
