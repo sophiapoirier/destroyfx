@@ -1,0 +1,65 @@
+
+These are some of the plugins that are part of the DestroyFX plugin
+pack (DFX). All of them use the VST plugin standard, and should be
+(nearly) source-portable to any platform which supports that. Some
+advanced features may not work on all platforms or in all hosts.
+
+These plugins are Copyright (c) Tom Murphy 7 and Marc Poirier. You can
+use them in your music however you like, without royalties. You can
+also modify them to your liking. However, if you distribute them (or
+derivative/modifed versions of them) then you must also distribute the
+source package in order to be in compliance with the license (see the
+file COPYING). 
+
+This software comes with no warranty (see the file COPYING). In fact,
+it is likely that some of these crazy effects could crash hosts (by
+sending out-of-range samples or taking too much time to process), so
+you should be careful to save your work when using them in important
+songs. Tom uses Wavelab on the PC, and Marc uses Logic on the Mac, so
+the plugins should work properly in those programs, at least.
+
+Here's a description of each of the plugins included:
+
+brokenfft/
+        My favorite plugin; this converts to the frequency domain
+        using the FFT, and then does a number of crazy effects.
+
+trans/
+        Converts to and from other domains (sin, tan, derivative,
+        e^x, fft); the idea is that you run this and its inverse
+        with some other plugins in-between.
+
+decimate/
+
+        Reduces bit depth and sample rate in order to produce
+        artifacting. Also includes a bonus "DESTROY" effect.
+
+intercom/
+
+        Adds noise to your sound based on its RMS volume; can
+        also swap samples around.
+
+
+In the source package, each plugin has a corresponding directory,
+as well as a corresponding plugin_win32 directory containing
+MS VC++ project files.
+
+Here is a description of each of the directories in the source
+distribution:
+
+fftw/
+        "Fastest Fourier Transform in the West", which actually
+        comes from the East at MIT. A very fast FFT routine
+        (GPL).
+
+fft-lib/
+        FFT Library from Don Cross. Public Domain.
+
+vstsdk/
+        SDK from Steinberg for creating VST plugins. There is
+        no code in this directory; you should get the headers
+        and class stubs from Steinberg's site.
+
+stub-plugin/
+
+        Sources for starting a new plugin.
