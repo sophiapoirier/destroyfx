@@ -3,14 +3,14 @@
 
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
-					AudioUnitParameterID paramID, 
+					AudioUnitParameterID inParamID, 
 					DGRect *			inWhere,
 					DGGraphic *			inForeGround, 
 					DGGraphic *			inBackground, 
 					long				inNumStates, 
 					DfxGuiBottonMode	inMode, 
 					bool				inKick)
-:	DGControl(inOwnerEditor, paramID, inWhere), 
+:	DGControl(inOwnerEditor, inParamID, inWhere), 
 	numStates(inNumStates), kick(inKick)
 {
 	ForeGround = inForeGround;
@@ -24,6 +24,8 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 
 	alpha = 1.0f;
 	mouseIsDown = false;
+	setType(kDfxGuiType_Button);
+	setContinuousControl(false);
 }
 
 //-----------------------------------------------------------------------------
@@ -48,6 +50,8 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 
 	alpha = 1.0f;
 	mouseIsDown = false;
+	setType(kDfxGuiType_Button);
+	setContinuousControl(false);
 }
 
 //-----------------------------------------------------------------------------
@@ -188,9 +192,10 @@ void DGButton::mouseUp(Point *P, bool with_option, bool with_shift)
 //-----------------------------------------------------------------------------
 void DGButton::setMouseIsDown(bool newMouseState)
 {
-	if (mouseIsDown != newMouseState)
-		pleaseUpdate = true;
+	bool oldstate = mouseIsDown;
 	mouseIsDown = newMouseState;
+	if (oldstate != newMouseState)
+		redraw();
 }
 
 //-----------------------------------------------------------------------------

@@ -987,9 +987,8 @@ long launch_url(const char *urlstring);
 	// we need to manage the DSP cores manually in VST
 	// call this in the plugin's constructor if it uses DSP cores for processing
 	#if TARGET_PLUGIN_USES_DSPCORE
-		// XXX is there a better way to make an empty declaration?
-                // tom replaced with just a single semicolon; should be better.
-		#define DFX_CORE_ENTRY(PluginCoreClass) ;
+		// DFX_CORE_ENTRY is not useful for VST, so it is defined as nothing
+		#define DFX_CORE_ENTRY(PluginCoreClass)
 		#define DFX_INIT_CORE(PluginCoreClass)   										\
 			for (unsigned long corecount=0; corecount < getnumoutputs(); corecount++)	\
 			{																			\

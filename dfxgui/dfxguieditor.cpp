@@ -98,8 +98,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		{ kEventClassControl, kEventControlDraw },
 		{ kEventClassControl, kEventControlHitTest },
 		{ kEventClassControl, kEventControlHit }, 
-		{kEventClassControl, kEventControlClick}, 
-		{kEventClassControl, kEventControlContextualMenuClick} 
+		{ kEventClassControl, kEventControlClick }, 
+		{ kEventClassControl, kEventControlContextualMenuClick } 
 	};
 
 //	EventTypeSpec toolboxClassEvents[] = { {kEventClassMouse, kEventMouseDragged} };
@@ -176,75 +176,75 @@ DGGraphic * DfxGuiEditor::getImageByID(UInt32 inID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::addControl(DGControl *inCtrl)
+void DfxGuiEditor::addControl(DGControl *inControl)
 {
-	inCtrl->setID( requestItemID() );
+	inControl->setID( requestItemID() );
 
-	if (inCtrl->getDaddy() == NULL)
+	if (inControl->getDaddy() == NULL)
 	{
 		if (Controls == NULL)
-			Controls = inCtrl;
+			Controls = inControl;
 		else
-			Controls->append(inCtrl);
-		inCtrl->setOffset(X, Y);
+			Controls->append(inControl);
+		inControl->setOffset(X, Y);
 	}
 
-	if (inCtrl->providesForeignControls())
-		inCtrl->initForeignControls(&dgControlSpec);
+	if (inControl->providesForeignControls())
+		inControl->initForeignControls(&dgControlSpec);
 	else
 	{
-		ControlRef newControl;
+		ControlRef newCarbonControl;
 		Rect r;
-		inCtrl->getBounds()->copyToRect(&r);
-		verify_noerr( CreateCustomControl(GetCarbonWindow(), &r, &dgControlSpec, NULL, &newControl) );
-		SetControl32BitMinimum(newControl, 0);
-		if (inCtrl->isContinuousControl())
+		inControl->getBounds()->copyToRect(&r);
+		verify_noerr( CreateCustomControl(GetCarbonWindow(), &r, &dgControlSpec, NULL, &newCarbonControl) );
+		SetControl32BitMinimum(newCarbonControl, 0);
+		if (inControl->isContinuousControl())
 		{
 			SInt32 controlrange = 0x7FFF;//1 << 14;
-			SetControl32BitMaximum(newControl, controlrange);
+			SetControl32BitMaximum(newCarbonControl, controlrange);
 /*
-			if (inCtrl->isAUVPattached())
+			if (inControl->isAUVPattached())
 			{
 				float valnorm = 0.0f;
 				DfxParameterValueConversionRequest request;
 				UInt32 dataSize = sizeof(request);
-				request.parameterID = inCtrl->getAUVP().mParameterID;
+				request.parameterID = inControl->getAUVP().mParameterID;
 				request.conversionType = kDfxParameterValueConversion_contract;
-				request.inValue = inCtrl->getAUVP().GetValue();
+				request.inValue = inControl->getAUVP().GetValue();
 				if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
 										kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
 										== noErr)
 					valnorm = request.outValue;
-//				valnorm = (inCtrl->getAUVP().GetValue() - inCtrl->getAUVP().ParamInfo().minValue) / 
-//							(inCtrl->getAUVP().ParamInfo().maxValue - inCtrl->getAUVP().ParamInfo().minValue);
-				SetControl32BitValue( newControl, (SInt32) (valnorm * (float)controlrange) );
+//				valnorm = (inControl->getAUVP().GetValue() - inControl->getAUVP().ParamInfo().minValue) / 
+//							(inControl->getAUVP().ParamInfo().maxValue - inControl->getAUVP().ParamInfo().minValue);
+				SetControl32BitValue( newCarbonControl, (SInt32) (valnorm * (float)controlrange) );
 			}
 */
 		}
 		else
 		{
-			SetControl32BitMaximum(newControl, (SInt32) inCtrl->getRange());
+			SetControl32BitMaximum(newCarbonControl, (SInt32) (inControl->getRange()+0.01f));
 /*
-			if (inCtrl->isAUVPattached())
-				SetControl32BitValue(newControl, (SInt32) (inCtrl->getAUVP().GetValue() - inCtrl->getAUVP().ParamInfo().minValue));
+			if (inControl->isAUVPattached())
+				SetControl32BitValue(newCarbonControl, (SInt32) (inControl->getAUVP().GetValue() - inControl->getAUVP().ParamInfo().minValue));
 */
 		}
 
-		inCtrl->setCarbonControl(newControl);
-		if (inCtrl->isAUVPattached())
+		inControl->setCarbonControl(newCarbonControl);
+		if (inControl->isAUVPattached())
 		{
-//			AddCarbonControl(AUCarbonViewControl::kTypeContinuous, inCtrl->getAUVP(), newControl);
-			EmbedControl(newControl);
-			inCtrl->createAUVcontrol();
-//			AddControl(inCtrl->getAUVcontrol());
+//			AddCarbonControl(AUCarbonViewControl::kTypeContinuous, inControl->getAUVP(), newCarbonControl);
+			EmbedControl(newCarbonControl);
+			inControl->createAUVcontrol();
+//			AddControl(inControl->getAUVcontrol());
 		}
 		else
 		{
-			SetControl32BitValue(newControl, 0);
-			EmbedControl(newControl);
+			EmbedControl(newCarbonControl);
+			SetControl32BitValue(newCarbonControl, 0);
 /*
 UInt32 feat = 0;
-GetControlFeatures(newControl, &feat);
+GetControlFeatures(newCarbonControl, &feat);
 for (int i=0; i < 32; i++)
 {
 if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
@@ -582,14 +582,14 @@ if (inEventKind == kEventControlContextualMenuClick) printf("kEventControlContex
 					ourOwnerEditor->setRelaxed(false);
 
 					// XXX do this to make Logic's touch automation work
-					if ( ourDGControl->isAUVPattached() && ourDGControl->isContinuousControl() )
+					if ( ourDGControl->isAUVPattached() )//&& ourDGControl->isContinuousControl() )
 					{
 //printf("DGControlHandler -> TellListener(%ld, kMouseUpInControl)\n", ourDGControl->getAUVP().mParameterID);
-						ourOwnerEditor->TellListener(ourDGControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+//						ourOwnerEditor->TellListener(ourDGControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
 					}
 
-//					result = noErr;
 					result = eventNotHandledErr;	// cuz otherwise we don't get HitTest, Hit, or Track events (???)
+//					result = noErr;
 				}
 				break;
 

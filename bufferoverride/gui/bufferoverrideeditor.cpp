@@ -148,7 +148,7 @@ void linkKickButtonsDownProc(UInt32, void *otherbutton)
 	if (otherbutton != NULL)
 	{
 		((DGButton*)otherbutton)->setMouseIsDown(true);
-		Draw1Control( ((DGButton*)otherbutton)->getCarbonControl() );
+		((DGButton*)otherbutton)->redraw();
 	}
 }
 
@@ -158,7 +158,7 @@ void linkKickButtonsUpProc(UInt32, void *otherbutton)
 	if (otherbutton != NULL)
 	{
 		((DGButton*)otherbutton)->setMouseIsDown(false);
-		Draw1Control( ((DGButton*)otherbutton)->getCarbonControl() );
+		((DGButton*)otherbutton)->redraw();
 	}
 }
 
@@ -535,7 +535,7 @@ OSStatus BufferOverrideEditor::open(Float32 inXOffset, Float32 inYOffset)
 
 	// MIDI mode button
 	pos.set (kMidiModeButtonX, kMidiModeButtonY, gMidiModeButton->getWidth()/2, gMidiModeButton->getHeight()/kNumMidiModes);
-	DGButton *midiModeButton = new DGButton(this, &pos, gMidiModeButton, NULL, kNumMidiModes, kIncButton, true);
+	DGButton *midiModeButton = new DGButton(this, kMidiMode, &pos, gMidiModeButton, NULL, kNumMidiModes, kIncButton, true);
 	mainPane->addControl(midiModeButton);
 
 	// MIDI learn button
@@ -559,12 +559,12 @@ OSStatus BufferOverrideEditor::open(Float32 inXOffset, Float32 inYOffset)
 
 	// forced buffer size LFO shape switch
 	pos.set (kBufferLFOshapeSwitchX, kBufferLFOshapeSwitchY, gBufferLFOshapeSwitch->getWidth(), gBufferLFOshapeSwitch->getHeight()/numLFOshapes);
-	DGButton *bufferLFOshapeSwitch = new DGButton(this, &pos, gBufferLFOshapeSwitch, NULL, numLFOshapes, kRadioButton);
+	DGButton *bufferLFOshapeSwitch = new DGButton(this, kBufferLFOshape, &pos, gBufferLFOshapeSwitch, NULL, numLFOshapes, kRadioButton);
 	mainPane->addControl(bufferLFOshapeSwitch);
 
 	// divisor LFO shape switch
 	pos.set (kDivisorLFOshapeSwitchX, kDivisorLFOshapeSwitchY, gDivisorLFOshapeSwitch->getWidth(), gDivisorLFOshapeSwitch->getHeight()/numLFOshapes);
-	DGButton *divisorLFOshapeSwitch = new DGButton(this, &pos, gDivisorLFOshapeSwitch, NULL, numLFOshapes, kRadioButton);
+	DGButton *divisorLFOshapeSwitch = new DGButton(this, kDivisorLFOshape, &pos, gDivisorLFOshapeSwitch, NULL, numLFOshapes, kRadioButton);
 	mainPane->addControl(divisorLFOshapeSwitch);
 
 
