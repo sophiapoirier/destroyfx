@@ -171,6 +171,7 @@ DfxStubDSP::~DfxStubDSP()
 //-------------------------------------------------------------------------
 // this is where you can reset state variables and in general 
 // set things up as though audio processing is just starting up
+// (e.g. reset position trackers, clear IIR filter histories, etc.)
 // you can assume that this will be called before any 
 // audio processing ever happens and that things like 
 // the current sampling rate and number of channels will be valid here
