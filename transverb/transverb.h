@@ -53,10 +53,10 @@ enum { useNothing, useHighpass, useLowpassIIR, useLowpassFIR, numFilterModes };
 class TransverbDSP : public DfxPluginCore {
 
 public:
-  TransverbDSP(DfxPlugin *inDfxPlugin);
+  TransverbDSP(DfxPlugin * inDfxPlugin);
   virtual ~TransverbDSP();
 
-  virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);
+  virtual void process(const float * in, float * out, unsigned long inNumFrames, bool replacing=true);
   virtual void reset();
   virtual void processparameters();
   virtual bool createbuffers();
@@ -80,7 +80,7 @@ private:
   float * buf2;
   int MAXBUF;	// the size of the audio buffer (dependant on sampling rate)
 
-  IIRfilter *filter1, *filter2;
+  IIRfilter * filter1, * filter2;
   bool speed1hasChanged, speed2hasChanged;
 
   int smoothcount1, smoothcount2;
@@ -88,7 +88,7 @@ private:
   float smoothstep1, smoothstep2;
   float lastr1val, lastr2val;
 
-  float *firCoefficients1, *firCoefficients2;
+  float * firCoefficients1, * firCoefficients2;
 
   long tomsound_sampoffset;	// essentially the core instance number
 };
@@ -115,7 +115,7 @@ private:
 };
 
 
-inline float interpolateHermite (float *data, double address, 
+inline float interpolateHermite (float * data, double address, 
 				 int arraysize, int danger) {
   int pos, posMinus1, posPlus1, posPlus2;
   float posFract, a, b, c;
@@ -156,7 +156,7 @@ inline float interpolateHermite (float *data, double address,
   return ( ((a*posFract)+b) * posFract + c ) * posFract + data[pos];
 }
 /*
-inline float interpolateHermitePostLowpass (float *data, float address) {
+inline float interpolateHermitePostLowpass (float * data, float address) {
   long pos;
   float posFract, a, b, c;
 
@@ -173,7 +173,7 @@ inline float interpolateHermitePostLowpass (float *data, float address) {
 }
 */
 
-inline float interpolateLinear(float *data, double address, 
+inline float interpolateLinear(float * data, double address, 
 				int arraysize, int danger) {
 	int posPlus1, pos = (long)address;
 	float posFract = (float) (address - (double)pos);
