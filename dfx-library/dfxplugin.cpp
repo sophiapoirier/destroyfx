@@ -21,12 +21,6 @@ written by Marc Poirier, October 2002
 //     I don't see any aeffguieditor.h file.
 #endif
 
-#if WIN32
-	// for ShellExecute
-	#include <shlobj.h>
-	#include <shellapi.h>
-#endif
-
 
 
 #pragma mark _________---DfxPlugin---_________
@@ -1660,8 +1654,19 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 }
 
 
+#if WIN32
+	// for ShellExecute
+	#include <shellapi.h>
+	#include <shlobj.h>
+#endif
+
 //-----------------------------------------------------------------------------
 // handy function to open up an URL in the user's default web browser
+//  * Mac OS
+// returns noErr (0) if successful, otherwise a non-zero error code is returned
+//  * Windows
+// returns a meaningless value greater than 32 if successful, 
+// otherwise an error code ranging from 0 to 32 is returned
 long launch_url(const char *urlstring)
 {
 #if MAC
@@ -1700,6 +1705,6 @@ long launch_url(const char *urlstring)
 	return error;
 #endif
 #if WIN32
-	return ShellExecute(NULL, "open", urlstring, NULL, NULL, SW_SHOWNORMAL);
+	return (long) ShellExecute(NULL, "open", urlstring, NULL, NULL, SW_SHOWNORMAL);
 #endif
 }
