@@ -135,7 +135,7 @@ DfxPlugin::DfxPlugin(
 	#if TARGET_PLUGIN_USES_DSPCORE
 		dspcores = (DfxPluginCore**) malloc(getnumoutputs() * sizeof(DfxPluginCore*));
 		// need to save instantiating the cores for the inheriting plugin class constructor
-		for (long ii=0; i < getnumoutputs(); ii++)
+		for (long ii=0; ii < getnumoutputs(); ii++)
 			dspcores[ii] = NULL;
 	#endif
 
