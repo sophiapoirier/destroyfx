@@ -36,7 +36,7 @@ public:
 #endif
 
 	// The methods you should implement in derived controls
-	virtual void draw(CGContextRef context, UInt32 portHeight)
+	virtual void draw(CGContextRef context, long portHeight)
 		{ }
 	// *** mouse position is relative to controlBounds for ultra convenience
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)

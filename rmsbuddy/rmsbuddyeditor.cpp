@@ -125,7 +125,7 @@ RMSTextDisplay::~RMSTextDisplay()
 }
 
 //-----------------------------------------------------------------------------
-void RMSTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
+void RMSTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 {
 	CGContextSetShouldAntialias(inContext, false);	// XXX maybe this is more efficient for the box drawing?
 
@@ -246,7 +246,7 @@ RMSButton::~RMSButton()
 }
 
 //-----------------------------------------------------------------------------
-void RMSButton::draw(CGContextRef inContext, UInt32 inPortHeight)
+void RMSButton::draw(CGContextRef inContext, long inPortHeight)
 {
 	CGContextSetShouldAntialias(inContext, false);	// we more or less just want straight blitting of the image
 	CGRect bounds = CGRectMake(getBoundsRect()->left, inPortHeight - getBoundsRect()->bottom, width, height);
@@ -311,7 +311,7 @@ RMSSlider::~RMSSlider()
 }
 
 //-----------------------------------------------------------------------------
-void RMSSlider::draw(CGContextRef inContext, UInt32 inPortHeight)
+void RMSSlider::draw(CGContextRef inContext, long inPortHeight)
 {
 	CGContextSetShouldAntialias(inContext, false);	// XXX maybe this is more efficient for the box drawing?
 

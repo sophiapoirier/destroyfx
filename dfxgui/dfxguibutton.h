@@ -27,7 +27,7 @@ public:
 				long inNumStates, DfxGuiBottonMode inMode, bool inDrawMomentaryState = false);
 	virtual ~DGButton();
 
-	virtual void draw(CGContextRef context, UInt32 portHeight);
+	virtual void draw(CGContextRef context, long portHeight);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
 	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers);

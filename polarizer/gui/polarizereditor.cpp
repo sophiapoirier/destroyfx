@@ -64,41 +64,33 @@ public:
 		setForeBounds(fb->x, fb->y + kSliderFrameThickness, fb->w, fb->h - (kSliderFrameThickness*2));
 		setMouseOffset(0);
 	}
-	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
+	virtual void draw(CGContextRef inContext, long inPortHeight)
 	{
+		if (backgroundImage != NULL)
+			backgroundImage->draw(getBounds(), inContext, inPortHeight);
+		else
+			getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+
 		ControlRef carbonControl = getCarbonControl();
 		SInt32 max = GetControl32BitMaximum(carbonControl);
 		SInt32 min = GetControl32BitMinimum(carbonControl);
 		SInt32 val = GetControl32BitValue(carbonControl);
-
-		CGRect bounds;
-		getBounds()->copyToCGRect(&bounds, inPortHeight);
-		CGImageRef backgroundCGImage = NULL;
-		if (backgroundImage != NULL)
-			backgroundCGImage = backgroundImage->getCGImage();
-		if (backgroundCGImage != NULL)
-			CGContextDrawImage(inContext, bounds, backgroundCGImage);
-		else
-			getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+		float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
 
 		CGImageRef handleCGImage = NULL;
 		if (handleImage != NULL)
 			handleCGImage = handleImage->getCGImage();
 		if (handleCGImage != NULL)
 		{
-			float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
-			bounds.size.height = (float) handleImage->getHeight();
-			bounds.size.width = (float) handleImage->getWidth();
-			bounds.origin.y += round(bounds.size.height * valNorm) - bounds.size.height + (float)kSliderFrameThickness;
-			bounds.origin.x += (float)kSliderFrameThickness;
-			CGContextDrawImage(inContext, bounds, handleCGImage);
+			long yoff = (long)round( (float)(handleImage->getHeight()) * (1.0f-valNorm) ) + kSliderFrameThickness;
+			handleImage->draw(getBounds(), inContext, inPortHeight, -kSliderFrameThickness, -yoff);
 
-			getBounds()->copyToCGRect(&bounds, inPortHeight);
-			bounds.size.height = (float)kSliderFrameThickness;
-			bounds.size.width = (float) handleImage->getWidth();
-			bounds.origin.x += (float)kSliderFrameThickness;
+			CGRect bottomBorderRect = getBounds()->convertToCGRect(inPortHeight);
+			bottomBorderRect.size.height = (float)kSliderFrameThickness;
+			bottomBorderRect.size.width = (float) handleImage->getWidth();
+			bottomBorderRect.origin.x += (float)kSliderFrameThickness;
 			CGContextSetRGBFillColor(inContext, 0.0f, 0.0f, 0.0f, 1.0f);
-			CGContextFillRect(inContext, bounds);
+			CGContextFillRect(inContext, bottomBorderRect);
 		}
 	}
 };

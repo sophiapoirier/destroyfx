@@ -11,41 +11,27 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
 	orientation(inOrientation), handleImage(inHandleImage), backgroundImage(inBackgroundImage)
 {
-	if (inRegion->w == 0)
+	if (handleImage != NULL)
 	{
-		if (backgroundImage != NULL)
+		int handleWidth = handleImage->getWidth();
+		int handleHeight = handleImage->getHeight();
+		int widthDiff = inRegion->w - handleWidth;
+		if (widthDiff < 0)
+			widthDiff = 0;
+		int heightDiff = inRegion->h - handleHeight;
+		if (heightDiff < 0)
+			heightDiff = 0;
+
+		if (orientation == kDGSliderAxis_vertical)
 		{
-			inRegion->w = backgroundImage->getWidth();
-			setBounds(inRegion); 
+			shrinkForeBounds((widthDiff/2)+(widthDiff%2), handleHeight, widthDiff, handleHeight);
+			mouseOffset = handleHeight / 2;
 		}
-	}
-	
-	if (inRegion->h == 0)
-	{
-		if (backgroundImage != NULL)
+		else
 		{
-			inRegion->h = backgroundImage->getHeight();
-			setBounds(inRegion);
+			shrinkForeBounds(0, (heightDiff/2)+(heightDiff%2), handleWidth, heightDiff);
+			mouseOffset = handleWidth / 2;
 		}
-	}
-		
-	int handleWidth = (handleImage == NULL) ? 0 : handleImage->getWidth();
-	int handleHeight = (handleImage == NULL) ? 0 : handleImage->getHeight();
-	int widthDiff = inRegion->w - handleWidth;
-	if (widthDiff < 0)
-		widthDiff = 0;
-	int heightDiff = inRegion->h - handleHeight;
-	if (heightDiff < 0)
-		heightDiff = 0;
-	if (orientation == kDGSliderAxis_vertical)
-	{
-		shrinkForeBounds((widthDiff/2)+(widthDiff%2), handleHeight, widthDiff, handleHeight);
-		mouseOffset = handleHeight / 2;
-	}
-	else
-	{
-		shrinkForeBounds(0, (heightDiff/2)+(heightDiff%2), handleWidth, heightDiff);
-		mouseOffset = handleWidth / 2;
 	}
 
 	fineTuneFactor = 12.0f;
@@ -58,49 +44,31 @@ DGSlider::~DGSlider()
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::draw(CGContextRef inContext, UInt32 inPortHeight)
+void DGSlider::draw(CGContextRef inContext, long inPortHeight)
 {
+	if (backgroundImage != NULL)
+		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+	else
+		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+
 	ControlRef carbonControl = getCarbonControl();
 	SInt32 max = GetControl32BitMaximum(carbonControl);
 	SInt32 min = GetControl32BitMinimum(carbonControl);
 	SInt32 val = GetControl32BitValue(carbonControl);
+	float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
 
-	CGRect bounds;
-	CGImageRef backgroundCGImage = NULL;
-	if (backgroundImage != NULL)
-		backgroundCGImage = backgroundImage->getCGImage();
-	if (backgroundCGImage != NULL)
-	{
-		getBounds()->copyToCGRect(&bounds, inPortHeight);
-		CGContextDrawImage(inContext, bounds, backgroundCGImage);
-	}
-	else
-		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
-
-	CGImageRef handleCGImage = NULL;
 	if (handleImage != NULL)
-		handleCGImage = handleImage->getCGImage();
-	if (handleCGImage != NULL)
 	{
-//		float valNorm = (max == 0) ? 0.0f : (float)val / (float)max;
-		float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
-//printf("ControlMax = %ld,  ControlMin = %ld,  ControlValue = %ld,  valueF = %.3f\n", max, min, val, valNorm);
-		getForeBounds()->copyToCGRect(&bounds, inPortHeight);
+		DGRect drawRect(getForeBounds());
+		long xoff = 0, yoff = 0;
 		if (orientation == kDGSliderAxis_vertical)
 		{
-			float slideRange = bounds.size.height;
-			bounds.size.height = (float) handleImage->getHeight();
-//			bounds.size.width = (float) handleImage->getWidth();
-			bounds.origin.y += round(slideRange * valNorm);
+			yoff = (long) round( (float)(getForeBounds()->h) * (1.0f - valNorm) );
+			drawRect.y -= handleImage->getHeight();	// XXX this is because this whole forebounds thing is goofy
 		}
 		else
-		{
-			float slideRange = bounds.size.width;
-			bounds.size.width = (float) handleImage->getWidth();
-//			bounds.size.height = (float) handleImage->getHeight();
-			bounds.origin.x += round(slideRange * valNorm);
-		}
-		CGContextDrawImage(inContext, bounds, handleCGImage);
+			xoff = (long) round( (float)(getForeBounds()->w) * valNorm );
+		handleImage->draw(&drawRect, inContext, inPortHeight, -xoff, -yoff);
 	}
 }
 
@@ -129,10 +97,8 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 
 	DGRect fore;
 	fore.set(getForeBounds());
-	DGRect back;
-	back.set(getBounds());
-	SInt32 o_X = fore.x - back.x + mouseOffset;
-	SInt32 o_Y = fore.y - back.y - mouseOffset;
+	SInt32 o_X = fore.x - getBounds()->x + mouseOffset;
+	SInt32 o_Y = fore.y - getBounds()->y - mouseOffset;
 
 	if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
 	{

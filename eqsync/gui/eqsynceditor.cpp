@@ -65,7 +65,7 @@ public:
 		regularHandle(inHandle), clickedHandle(inHandleClicked)
 	{
 	}
-	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
+	virtual void draw(CGContextRef inContext, long inPortHeight)
 	{
 		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 		DGSlider::draw(inContext, inPortHeight);
@@ -125,16 +125,12 @@ public:
 		setControlContinuous(false);
 	}
 
-	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
+	virtual void draw(CGContextRef inContext, long inPortHeight)
 	{
-		CGImageRef theButton = (buttonImage == NULL) ? NULL : buttonImage->getCGImage();
-		if (theButton != NULL)
+		if (buttonImage != NULL)
 		{
-			CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
-			bounds.size.height = buttonImage->getHeight();
-			if (GetControl32BitValue(getCarbonControl()) == 0)
-				bounds.origin.y -= (float) (buttonImage->getHeight() / 2);
-			CGContextDrawImage(inContext, bounds, theButton);
+			long yoff = (GetControl32BitValue(getCarbonControl()) == 0) ? 0 : (buttonImage->getHeight() / 2);
+			buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
 		}
 	}
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
