@@ -1,9 +1,32 @@
-/* This source code is by Marc Poirier, 2003.  It is offered as public domain. */
+/*
+	DFX AU Utilities is a collection of helpful utility functions for 
+	creating and hosting Audio Unit plugins.
+	Copyright (C) 2003  Marc Genung Poirier
+
+	This library is free software; you can redistribute it and/or 
+	modify it under the terms of the GNU Lesser General Public 
+	License as published by the Free Software Foundation; either 
+	version 2.1 of the License, or (at your option) any later version.
+
+	This library is distributed in the hope that it will be useful, 
+	but WITHOUT ANY WARRANTY; without even the implied warranty of 
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+	Lesser General Public License for more details.
+
+	You should have received a copy of the GNU Lesser General Public 
+	License along with this library; if not, write to the Free Software 
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+	To contact the author, visit http://destroyfx.org/ and use the contact form.
+	Please refer to the file lgpl.txt for the complete license terms.
+*/
 
 #include "dfx-au-utilities.h"
 
 #include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
 
+
+#pragma mark _________Component_Version_________
 
 //-----------------------------------------------------------------------------
 // This function will get the version of a Component from its 'thng' resource 
@@ -30,21 +53,27 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 	short componentResFileID = kResFileNotOpened;
 	error = OpenAComponentResFile(inComponent, &componentResFileID);
 	// error or invalid resource ID, abort
-	if ( (error != noErr) || (componentResFileID <= 0) )
+	if (error != noErr)
 		return error;
+	// this shouldn't happen without an error, but...
+	if (componentResFileID <= 0)
+		return resFNotFound;
 	UseResFile(componentResFileID);
 
 	short thngResourceCount = Count1Resources(kComponentResourceType);
 	error = ResError();	// catch any error from Count1Resources
 	// only go on if we successfully found at least 1 thng resource
-	if ( (thngResourceCount <= 0) || (error != noErr) )
+	// (again, this shouldn't happen without an error, but just in case...)
+	if ( (thngResourceCount <= 0) && (error == noErr) )
+		error = resNotFound;
+	if (error != noErr)
 	{
 		UseResFile(curRes);	// revert
 		CloseComponentResFile(componentResFileID);
 		return error;
 	}
 
-	int versionFound = 0;
+	Boolean versionFound = false;
 	// loop through all of the Component thng resources trying to 
 	// find one that matches this Component description
 	short i;
@@ -54,6 +83,7 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 		Handle thngResourceHandle = Get1IndResource(kComponentResourceType, i+1);
 		if (thngResourceHandle == NULL)
 			continue;
+		HLock(thngResourceHandle);
 		ExtComponentResource * componentThng = (ExtComponentResource*) (*thngResourceHandle);
 		if (componentThng == NULL)
 			goto cleanupRes;
@@ -63,14 +93,14 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 
 		// check to see if this is the thng resource for the particular Component that we are looking at
 		// (there often is more than one Component described in the resource)
-		if ( (componentThng->cd.componentType != desc.componentType) 
-				|| (componentThng->cd.componentSubType != desc.componentSubType) 
-				|| (componentThng->cd.componentManufacturer != desc.componentManufacturer) )
-			goto cleanupRes;
-
-		// the version was successfully retrieved; output it and break out of this loop
-		*outVersion = componentThng->componentVersion;
-		versionFound = 1;
+		if ( (componentThng->cd.componentType == desc.componentType) 
+				&& (componentThng->cd.componentSubType == desc.componentSubType) 
+				&& (componentThng->cd.componentManufacturer == desc.componentManufacturer) )
+		{
+			// the version was successfully retrieved; output it and break out of this loop
+			*outVersion = componentThng->componentVersion;
+			versionFound = true;
+		}
 	cleanupRes:
 		ReleaseResource(thngResourceHandle);
 		if (versionFound)
@@ -81,11 +111,16 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 	CloseComponentResFile(componentResFileID);
 
 	if (!versionFound)
-		return resFNotFound;
+		return resNotFound;
 	return noErr;
 }
 
 
+
+
+
+
+#pragma mark _________Factory_Presets_CFArray_________
 
 //-----------------------------------------------------------------------------
 // The following 4 functions are CFArray callbacks for use when creating 
@@ -120,7 +155,8 @@ void auPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inP
 {
 	AUPreset * preset = (AUPreset*) inPreset;
 	// first release the name string, CF-style, since it's a CFString
-	CFRelease(preset->presetName);
+	if (preset->presetName != NULL)
+		CFRelease(preset->presetName);
 	// wipe out the data so that, if anyone tries to access stale memory later, it will be invalid
 	preset->presetName = NULL;
 	preset->presetNumber = 0;
@@ -140,7 +176,6 @@ Boolean auPresetCFArrayEqualCallback(const void * inPreset1, const void * inPres
 	// if the two name strings are the same (which we rely on the CF function to compare)
 	return (preset1->presetNumber == preset2->presetNumber) && 
 			(CFStringCompare(preset1->presetName, preset2->presetName, 0) == kCFCompareEqualTo);
-
 }
 
 //-----------------------------------------------------------------------------
@@ -158,35 +193,67 @@ CFStringRef auPresetCFArrayCopyDescriptionCallback(const void * inPreset)
 }
 
 //-----------------------------------------------------------------------------
-// this will init a CFArray callbacks struct to use the above callback functions
-void auPresetCFArrayCallbacks_Init(CFArrayCallBacks * inArrayCallbacks)
+// this will initialize a CFArray callbacks structure to use the above callback functions
+void auPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks)
 {
-	if (inArrayCallbacks == NULL)
+	if (outArrayCallbacks == NULL)
 		return;
 	// wipe the struct clean
-	memset(inArrayCallbacks, 0, sizeof(*inArrayCallbacks));
+	memset(outArrayCallbacks, 0, sizeof(*outArrayCallbacks));
 	// set all of the values and function pointers in the callbacks struct
-	inArrayCallbacks->version = 0;	// currently, 0 is the only valid version value for this
-	inArrayCallbacks->retain = auPresetCFArrayRetainCallback;
-	inArrayCallbacks->release = auPresetCFArrayReleaseCallback;
-	inArrayCallbacks->copyDescription = auPresetCFArrayCopyDescriptionCallback;
-	inArrayCallbacks->equal = auPresetCFArrayEqualCallback;
+	outArrayCallbacks->version = 0;	// currently, 0 is the only valid version value for this
+	outArrayCallbacks->retain = auPresetCFArrayRetainCallback;
+	outArrayCallbacks->release = auPresetCFArrayReleaseCallback;
+	outArrayCallbacks->copyDescription = auPresetCFArrayCopyDescriptionCallback;
+	outArrayCallbacks->equal = auPresetCFArrayEqualCallback;
 }
 
+//-----------------------------------------------------------------------------
+#if 1
+const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
+	version: 0, 
+	retain: auPresetCFArrayRetainCallback, 
+	release: auPresetCFArrayReleaseCallback, 
+	copyDescription: auPresetCFArrayCopyDescriptionCallback, 
+	equal: auPresetCFArrayEqualCallback
+};
+#elif 0
+const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
+	.version = 0, 
+	.retain = auPresetCFArrayRetainCallback, 
+	.release = auPresetCFArrayReleaseCallback, 
+	.copyDescription = auPresetCFArrayCopyDescriptionCallback, 
+	.equal = auPresetCFArrayEqualCallback
+};
+#else
+	#if defined(__GNUC__)
+		const CFArrayCallBacks kAUPresetCFArrayCallbacks;
+		static void kAUPresetCFArrayCallbacks_constructor() __attribute__((constructor));
+		static void kAUPresetCFArrayCallbacks_constructor()
+		{
+			auPresetCFArrayCallbacks_Init( (CFArrayCallBacks*) &kAUPresetCFArrayCallbacks );
+		}
+	#endif
+#endif
 
+
+
+
+
+#pragma mark _________Parameter_Change_Notifications_________
 
 //--------------------------------------------------------------------------
 // These are convenience functions for sending parameter change notifications 
 // to all parameter listeners.  
 // Use this when a parameter value in an AU changes and you need to make 
 // other entities (like the host, a GUI, etc.) aware of the change.
-void AUParameterChange_TellListeners_ScopeElement(AudioUnit inComponentInstance, AudioUnitParameterID inParameterID, 
+void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
 									AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	// set up an AudioUnitParameter struct with all of the necessary values
 	AudioUnitParameter dirtyparam;
 	memset(&dirtyparam, 0, sizeof(dirtyparam));	// zero out the struct
-	dirtyparam.mAudioUnit = inComponentInstance;
+	dirtyparam.mAudioUnit = inAUComponentInstance;
 	dirtyparam.mParameterID = inParameterID;
 	dirtyparam.mScope = inScope;
 	dirtyparam.mElement = inElement;
@@ -197,7 +264,7 @@ void AUParameterChange_TellListeners_ScopeElement(AudioUnit inComponentInstance,
 //--------------------------------------------------------------------------
 // this one defaults to using global scope and element 0 
 // (which are what most effects use for all of their parameters)
-void AUParameterChange_TellListeners(AudioUnit inComponentInstance, AudioUnitParameterID inParameterID)
+void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID)
 {
-	AUParameterChange_TellListeners_ScopeElement(inComponentInstance, inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
+	AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
 }
