@@ -4,8 +4,6 @@
 #ifndef __DFX_GEOMETER_H
 #define __DFX_GEOMETER_H
 
-#include "geometerdef.h"
-
 #include "dfxplugin.h"
 
 #ifndef __DFXMUTEX_H
