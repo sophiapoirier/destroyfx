@@ -406,10 +406,6 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_ui();   else return 0;	}
 	bool getparameter_b(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_b();   else return false;	}
-	char getparameter_c(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_c();   else return 0;	}
-	unsigned char getparameter_uc(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_uc();   else return 0;	}
 	float getparameter_gen(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_gen();   else return 0.0f;	}
 	// return a (hopefully) 0 to 1 scalar version of the parameter's current value
