@@ -243,6 +243,7 @@ const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 
 
 
+
 #pragma mark _________Parameter_Change_Notifications_________
 
 //--------------------------------------------------------------------------
@@ -270,4 +271,113 @@ void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstanc
 void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID)
 {
 	AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
+}
+
+
+
+
+
+
+#pragma mark _________AU_Plugin_Name_And_Manufacturer_Name_________
+
+//-----------------------------------------------------------------------------
+//Tthis is a wrapper function for GetAUNameAndManufacturerCStrings, 
+// since often it's handier to have CFStrings than C strings.
+// One of the string arguments can be NULL, if you are not interested in that string.
+OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef * outNameString, CFStringRef * outManufacturerString)
+{
+	// one input string or the other can be null, but not both
+	if ( (inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)) )
+		return paramErr;
+
+	// initialize some C string buffers for storing the C string versions of the AU name strings
+	char pluginNameCString[256], manufacturerNameCString[256];
+	memset(pluginNameCString, 0, sizeof(pluginNameCString));
+	memset(manufacturerNameCString, 0, sizeof(manufacturerNameCString));
+	// this will get us C string versions of the AU name strings
+	OSStatus error = GetAUNameAndManufacturerCStrings(inAUComponent, pluginNameCString, manufacturerNameCString);
+	if (error != noErr)
+		return error;
+
+	// for each input CFString that is not null, we want to provide a CFString representation of the C string
+	if (outNameString != NULL)
+		*outNameString = CFStringCreateWithCString(kCFAllocatorDefault, pluginNameCString, CFStringGetSystemEncoding());
+	if (outManufacturerString != NULL)
+		*outManufacturerString = CFStringCreateWithCString(kCFAllocatorDefault, manufacturerNameCString, CFStringGetSystemEncoding());
+	// if there was any problem creating any of the requested CFStrings, return an error
+	// XXX but what if one was created and not the other?  we will be giving a misleading error code, and potentially leaking memory...
+	if (outNameString != NULL)
+	{
+		if (*outNameString == NULL)
+			return coreFoundationUnknownErr;
+	}
+	if (outManufacturerString != NULL)
+	{
+		if (*outManufacturerString == NULL)
+			return coreFoundationUnknownErr;
+	}
+
+	return noErr;
+}
+
+//-----------------------------------------------------------------------------
+// This function will get an AU's plugin name and manufacturer name strings for you 
+// as separate strings.  In an AU's Component resource, these are stored as one Pascal string, 
+// delimited by a colon, so this function just does the work of fetching the Pascal string, 
+// parsing the plugin name and manufacturer name, and translating those to individual C strings.
+// One of the string arguments can be NULL, if you are not interested in that string.
+OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNameString, char * outManufacturerString)
+{
+	// one input string or the other can be null, but not both
+	if ( (inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)) )
+		return paramErr;
+
+	OSStatus error = noErr;
+
+	// first we need to create a handle and then try to fetch the Component name string resource into that handle
+	Handle componentNameHandle = NewHandle(sizeof(void*));
+	if (componentNameHandle == NULL)
+		return nilHandleErr;
+	ComponentDescription dummycd;
+	error = GetComponentInfo(inAUComponent, &dummycd, componentNameHandle, NULL, NULL);
+	if (error != noErr)
+		return error;
+	// dereferencing the name resource handle gives us a Pascal string pointer
+	HLock(componentNameHandle);
+	ConstStr255Param componentFullNamePString = (ConstStr255Param) (*componentNameHandle);
+	if (componentFullNamePString == NULL)
+		error = nilHandleErr;
+	else
+	{
+		// convert the Component name Pascal string to a C string
+		char componentFullNameCString[256];
+		memset(componentFullNameCString, 0, sizeof(componentFullNameCString));
+		memcpy(componentFullNameCString, componentFullNamePString+1, componentFullNamePString[0]);
+		// the manufacturer string is everything before the first : character, 
+		// and everything after that and any immediately following white space 
+		// is the plugin name string
+		char * separatorByte = strchr(componentFullNameCString, ':');
+		if (separatorByte == NULL)
+			error = internalComponentErr;
+		else
+		{
+			// this will terminate the manufacturer name string right before the : character
+			separatorByte[0] = 0;
+			char * manufacturerNameCString = componentFullNameCString;
+			// point to right after the : character for the plugin name string...
+			char * pluginNameCString = separatorByte + 1;
+			// ...and then also skip over any white space immediately following the : delimiter
+			while ( isspace(*pluginNameCString) )
+				pluginNameCString++;
+
+			// copy any of the requested strings for output
+			if (outNameString != NULL)
+				strcpy(outNameString, pluginNameCString);
+			if (outManufacturerString != NULL)
+				strcpy(outManufacturerString, manufacturerNameCString);
+		}
+	}
+	DisposeHandle(componentNameHandle);
+
+	return error;
 }
