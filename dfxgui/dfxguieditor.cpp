@@ -304,35 +304,11 @@ void DfxGuiEditor::addControl(DGControl *inControl)
 	SetControl32BitMinimum(newCarbonControl, 0);
 	if (inControl->isContinuousControl())
 	{
-		SInt32 controlrange = 0x7FFF;//1 << 14;
+		SInt32 controlrange = 0x7FFFFFFF;
 		SetControl32BitMaximum(newCarbonControl, controlrange);
-/*
-		if (inControl->isAUVPattached())
-		{
-			float valnorm = 0.0f;
-			DfxParameterValueConversionRequest request;
-			UInt32 dataSize = sizeof(request);
-			request.parameterID = inControl->getAUVP().mParameterID;
-			request.conversionType = kDfxParameterValueConversion_contract;
-			request.inValue = inControl->getAUVP().GetValue();
-			if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
-									kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
-									== noErr)
-				valnorm = request.outValue;
-//			valnorm = (inControl->getAUVP().GetValue() - inControl->getAUVP().ParamInfo().minValue) / 
-//						(inControl->getAUVP().ParamInfo().maxValue - inControl->getAUVP().ParamInfo().minValue);
-			SetControl32BitValue( newCarbonControl, (SInt32) (valnorm * (float)controlrange) );
-		}
-*/
 	}
 	else
-	{
 		SetControl32BitMaximum(newCarbonControl, (SInt32) (inControl->getRange()+0.01f));
-/*
-		if (inControl->isAUVPattached())
-			SetControl32BitValue(newCarbonControl, (SInt32) (inControl->getAUVP().GetValue() - inControl->getAUVP().ParamInfo().minValue));
-*/
-	}
 
 	inControl->setCarbonControl(newCarbonControl);
 	if (inControl->isAUVPattached())

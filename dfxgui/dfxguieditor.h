@@ -266,5 +266,19 @@ protected:
 };
 
 
+
+//-----------------------------------------------------------------------------
+// this gives some slight tweaks to Apple's AUCarbonViewControl class
+class DGCarbonViewControl : public AUCarbonViewControl
+{
+public:
+	DGCarbonViewControl(AUCarbonViewBase *ownerView, AUParameterListenerRef listener, ControlType type, const AUVParameter &param, ControlRef control);
+
+	virtual void ControlToParameter();
+	virtual void ParameterToControl(Float32 newValue);
+};
+
+
+
 #endif
 // __DFXGUI_H

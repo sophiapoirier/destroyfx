@@ -701,6 +701,7 @@ bool DfxPlugin::loadpreset(long presetIndex)
 	}
 
 	// do stuff necessary to inform the host of changes, etc.
+	// XXX in AU, if this resulted from a call to NewFactoryPresetSet, then PropertyChanged will be called twice
 	update_preset(presetIndex);
 	return true;
 }
@@ -724,8 +725,8 @@ void DfxPlugin::update_preset(long presetIndex)
 		// XXX Cubase SX will crash if custom-GUI plugs call updateDisplay 
 		// while the editor is closed, so as a workaround, only do it 
 		// if the plugin has no custom GUI
-		// this may not be a nice idea in general, though, since a generic 
-		// UI might still be provided in some hosts
+		// calling updateDisplay may be a nice idea in general, though, 
+		// since a generic UI might still be provided in some hosts
 		#if !TARGET_PLUGIN_HAS_GUI
 			// tell the host to update the generic editor display with the new settings
 			AudioEffectX::updateDisplay();
