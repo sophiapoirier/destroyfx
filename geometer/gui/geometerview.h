@@ -27,6 +27,9 @@ private:
   int samples;
   int numpts;
 
+  /* active points */
+  int apts;
+
   float * inputs;
   int * pointsx;
   float * pointsy;

@@ -200,16 +200,25 @@ protected:
   /* stores programs */
   PLUGINPROGRAM *programs;
 
-  /* size of buffer (param) */
-  float bufsizep;
   /* shape of envelope */
   float shape;
 
+  /* size of buffer (param) */
+  float bufsizep;
+
 public:
+  /* several of these are needed by geometerview. Maybe should use accessors... */
+
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
   */
   float * in0, * out0;
+
+  /* buffersize is 3 * third, framesize is 2 * third 
+     buffersize is used for outbuf.
+  */
+  long bufsize, framesize, third;
+
 
   /* must grab this before calling processw */
   dfxmutex * cs;
@@ -230,11 +239,6 @@ private:
 
   #define BUFFERSIZESSIZE 14
   static const int buffersizes[BUFFERSIZESSIZE];
-
-  /* buffersize is 3 * third, framesize is 2 * third 
-     buffersize is used for outbuf.
-  */
-  long bufsize, framesize, third;
 
   /* 1 if need to do ioChanged since buffer settings are different now */
   int changed;
