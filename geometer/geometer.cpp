@@ -41,7 +41,6 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
     FPARAM(interparam[ip], P_INTERPARAM0 + ip, "interparam", 0.0, "???");
   }
 
-
   FPARAM(pointop1, P_POINTOP1, "pointop1", 1.0f, "choose");
   FPARAM(pointop2, P_POINTOP2, "pointop2", 1.0f, "choose");
   FPARAM(pointop3, P_POINTOP3, "pointop3", 1.0f, "choose");
@@ -327,7 +326,7 @@ int PLUGIN::pointops(float pop, int numpts, float * op_param, int samples) {
   switch(MKPOINTOP(pop)) {
     case OP_DOUBLE:
       /* x2 points */
-      for(t = 0; i < (numpts - 1) && t < (maxpts-2); i++) {
+      for(t = 0; i < (numpts - 1) && t < (maxpts-4); i++) {
         tempx[t] = pointx[i];
         tempy[t] = pointy[i];
         t++;
