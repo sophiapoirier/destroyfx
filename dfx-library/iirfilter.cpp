@@ -1,8 +1,15 @@
-#ifndef __dfx_iirfilter
+#ifndef __dfx_iirfilter_h
 #include "iirfilter.h"
 #endif
 
 #include <math.h>
+
+#ifndef sinf
+#define sinf(v) (float)sin((v))
+#endif
+#ifndef cosf
+#define cosf(v) (float)cos((v))
+#endif
 
 
 //------------------------------------------------------------------------
