@@ -32,7 +32,8 @@ float BufferOverride::getDivisorParameterFromNote(int currentNote)
 	else
 		return 0.0f;
 */
-	return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
+//	return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
+	return (newDivisor < 0.001f) ? 0.001f : newDivisor;	// XXX is this much even necessary?
 }
 
 //-----------------------------------------------------------------------------
@@ -82,7 +83,8 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 		else
 			return 0.0f;
 */
-		return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
+//		return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
+		return (newDivisor < 0.001f) ? 0.001f : newDivisor;	// XXX is this much even necessary?
 	}
 	// otherwise return -3, my code for "don't really update the fDivisor value"
 	else
