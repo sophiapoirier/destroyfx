@@ -221,7 +221,8 @@
 
 
    This software comes with absolutely no warranty, express
-   or implied. Use at your own risk.
+   or implied. Use at your own risk. See the file COPYING for
+   full license terms. 
 
 
    If you have comments or suggestions for additions to be made 
