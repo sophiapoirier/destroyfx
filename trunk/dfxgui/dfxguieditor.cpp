@@ -686,9 +686,20 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 			case kEventControlHitTest:
 				{
 //printf("kEventControlHitTest\n");
-					ourOwnerEditor->setCurrentControl_mouseover(ourDGControl);	// make sure that it ain't nuthin
-					ControlPartCode hitPart = kControlIndicatorPart;	// scroll handle
-					// also there is kControlButtonPart, kControlCheckBoxPart, kControlPicturePart
+					// get mouse location
+					Point mouseLocation;
+					GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(Point), NULL, &mouseLocation);
+					// get control bounds rect
+					Rect controlBounds;
+					GetControlBounds(ourCarbonControl, &controlBounds);
+					ControlPartCode hitPart = kControlNoPart;
+					// see if the mouse is inside the control bounds (it probably is, wouldn't you say?)
+//					if ( PtInRgn(mouseLocation, controlBounds) )
+					{
+						hitPart = kControlIndicatorPart;	// scroll handle
+						// also there is kControlButtonPart, kControlCheckBoxPart, kControlPicturePart
+						ourOwnerEditor->setCurrentControl_mouseover(ourDGControl);
+					}
 					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(ControlPartCode), &hitPart);
 					result = eventNotHandledErr;	// let other event listeners have this if they want it
 //					result = noErr;

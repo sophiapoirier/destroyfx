@@ -327,6 +327,8 @@ printf("--------------------------------------------------\n\n");
 	// these move across the drawing rectangle
 	DGGraphic *gSliderHandle = new DGGraphic("slider-handle.png");
 	addImage(gSliderHandle);
+	DGGraphic *gXYboxHandle = new DGGraphic("xy-box-handle.png");
+	addImage(gXYboxHandle);
 
 	// buttons
 	DGGraphic *gBufferTempoSyncButton = new DGGraphic("buffer-tempo-sync-button.png");
@@ -424,12 +426,12 @@ printf("--------------------------------------------------\n\n");
 	mainPane->addControl(slider);
 
 	pos.set (kDivisorBufferBoxX + 3, kDivisorBufferBoxY + 27, kDivisorBufferBoxWidth - 6, kSliderHeight);
-	slider = new DGSlider(this, kDivisor, &pos, kHorizontalSlider, gSliderHandle, gBackground);
+	slider = new DGSlider(this, kDivisor, &pos, kHorizontalSlider, gXYboxHandle, gBackground);
 	mainPane->addControl(slider);
 
 	long bufferSizeTag = getparameter_b(kBufferTempoSync) ? kBufferSize_sync : kBufferSize_abs;
 	pos.offset(0, 57);
-	bufferSizeSlider = new DGSlider(this, bufferSizeTag, &pos, kHorizontalSlider, gSliderHandle, gBackground);
+	bufferSizeSlider = new DGSlider(this, bufferSizeTag, &pos, kHorizontalSlider, gXYboxHandle, gBackground);
 	mainPane->addControl(bufferSizeSlider);
 
 

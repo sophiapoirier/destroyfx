@@ -102,16 +102,16 @@ long DGControl::getParameterID()
 //-----------------------------------------------------------------------------
 void DGControl::setOffset(SInt32 x, SInt32 y)
 {
-	this->where.offset (x, y);
-	this->vizArea.offset (x, y);
+	where.offset(x, y);
+	vizArea.offset(x, y);
 
-	if (this->children != NULL)
+	if (children != NULL)
 	{
-		DGControl* current = children;
+		DGControl *current = children;
 		while (current != NULL)
 		{
-			current->setOffset (x, y);
-			current = (DGControl*)(current->getNext());
+			current->setOffset(x, y);
+			current = (DGControl*) (current->getNext());
 		}
 	}
 }
