@@ -14,12 +14,12 @@ class RMSbuddyEditor;
 class RMSControl
 {
 public:
-	RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+	RMSControl(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 				long inControlRange, long inParamID = -1);
 	virtual ~RMSControl();
 
 	// draw the control
-	virtual void draw(CGContextRef inContext, long inPortHeight)
+	virtual void draw(CGContextRef inContext, float inPortHeight)
 		{ }
 	// handle a mouse click in the control
 	virtual void mouseDown(long inXpos, long inYpos)
@@ -37,12 +37,9 @@ public:
 	ControlRef getCarbonControl()
 		{	return carbonControl;	}
 
-	// get the rectangular position of the control (relative to the view's owner window)
-	Rect * getBoundsRect()
-		{	return &boundsRect;	}
+	// get the rectangular position of the control
+	CGRect getBoundsRect();
 	// says whether or not this control needs to be clipped to its bounds when drawn
-	bool needsClipping()
-		{	return needsToBeClipped;	}
 	// says whether or not this control is connected to an AU parameter
 	bool isParameterAttached()
 		{	return hasParameter;	}
@@ -50,11 +47,9 @@ public:
 		{	return &auvParam;	}
 
 protected:
-	RMSbuddyEditor *ownerEditor;
-	long xpos, ypos, width, height;
+	RMSbuddyEditor * ownerEditor;
+	long width, height;
 	ControlRef carbonControl;
-	Rect boundsRect;
-	bool needsToBeClipped;
 	AUVParameter auvParam;
 	bool hasParameter;
 };
@@ -80,14 +75,14 @@ enum {
 class RMSTextDisplay : public RMSControl
 {
 public:
-	RMSTextDisplay(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+	RMSTextDisplay(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
-					const char *inFontName, float inFontSize, long inTextAlignment, long inParamID = -1);
+					const char * inFontName, float inFontSize, long inTextAlignment, long inParamID = -1);
 	virtual ~RMSTextDisplay();
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(CGContextRef inContext, float inPortHeight);
 	// set the display text directly with a string
-	void setText(const char *inText);
+	void setText(const char * inText);
 	// given a linear amplitude value, set the display text with the dB-converted value
 	void setText_dB(float inLinearValue);
 	// set the display text with an integer value
@@ -97,8 +92,8 @@ private:
 	RMSColor textColor, backColor, frameColor;
 	float fontSize;
 	long textAlignment;
-	char *fontName;
-	char *text;
+	char * fontName;
+	char * text;
 };
 
 
@@ -107,10 +102,9 @@ private:
 class RMSButton : public RMSControl
 {
 public:
-	RMSButton(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage);
-	virtual ~RMSButton();
+	RMSButton(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage);
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(CGContextRef inContext, float inPortHeight);
 	virtual void mouseDown(long inXpos, long inYpos);
 	virtual void mouseTrack(long inXpos, long inYpos);
 	virtual void mouseUp(long inXpos, long inYpos);
@@ -125,11 +119,11 @@ private:
 class RMSSlider : public RMSControl
 {
 public:
-	RMSSlider(RMSbuddyEditor *inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
+	RMSSlider(RMSbuddyEditor * inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
 				RMSColor inBackColor, RMSColor inFillColor);
 	virtual ~RMSSlider();
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(CGContextRef inContext, float inPortHeight);
 	virtual void mouseDown(long inXpos, long inYpos);
 	virtual void mouseTrack(long inXpos, long inYpos);
 	virtual void mouseUp(long inXpos, long inYpos);
@@ -154,7 +148,7 @@ public:
 	virtual bool HandleEvent(EventRef inEvent);
 
 	void updateDisplays();	// refresh the value displays
-	void updateWindowSize(Float32 inParamValue, RMSControl *inRMSControl);	// update analysis window size parameter controls
+	void updateWindowSize(Float32 inParamValue, RMSControl * inRMSControl);	// update analysis window size parameter controls
 	void resetRMS();	// send a message to the DSP component to reset average RMS
 	void resetPeak();	// send a message to the DSP component to reset absolute peak
 
@@ -166,39 +160,40 @@ public:
 	AUParameterListenerRef GetParameterListener()
 //		{	return mParameterListener;	}
 		{	return parameterListener;	}
-	void AddAUCVControl(AUCarbonViewControl *inControl)
+	void AddAUCVControl(AUCarbonViewControl * inControl)
 		{	AddControl(inControl);	}
+	bool IsWindowCompositing();
 
 	// get/set the control that is currently being moused (actively tweaked), if any (returns NULL if none)
 	RMSControl * getCurrentControl()
 		{	return currentControl;	}
-	void setCurrentControl(RMSControl *inNewClickedControl)
+	void setCurrentControl(RMSControl * inNewClickedControl)
 		{	currentControl = inNewClickedControl;	}
 
-	void handleControlValueChange(RMSControl *inControl, SInt32 inControlValue);
+	void handleControlValueChange(RMSControl * inControl, SInt32 inControlValue);
 
 private:
 	unsigned long numChannels;	// the number of channels being analyzed
 
 	// buttons
-	RMSButton *resetRMSbutton;
-	RMSButton *resetPeakButton;
+	RMSButton * resetRMSbutton;
+	RMSButton * resetPeakButton;
 
 	// text display boxes
-	RMSTextDisplay **averageRMSDisplays;
-	RMSTextDisplay **continualRMSDisplays;
-	RMSTextDisplay **absolutePeakDisplays;
-	RMSTextDisplay **continualPeakDisplays;
-	RMSTextDisplay *averageRMSLabel;
-	RMSTextDisplay *continualRMSLabel;
-	RMSTextDisplay *absolutePeakLabel;
-	RMSTextDisplay *continualPeakLabel;
-	RMSTextDisplay **channelLabels;
+	RMSTextDisplay ** averageRMSDisplays;
+	RMSTextDisplay ** continualRMSDisplays;
+	RMSTextDisplay ** absolutePeakDisplays;
+	RMSTextDisplay ** continualPeakDisplays;
+	RMSTextDisplay * averageRMSLabel;
+	RMSTextDisplay * continualRMSLabel;
+	RMSTextDisplay * absolutePeakLabel;
+	RMSTextDisplay * continualPeakLabel;
+	RMSTextDisplay ** channelLabels;
 
 	// slider
-	RMSSlider *windowSizeSlider;
-	RMSTextDisplay *windowSizeLabel;
-	RMSTextDisplay *windowSizeDisplay;
+	RMSSlider * windowSizeSlider;
+	RMSTextDisplay * windowSizeLabel;
+	RMSTextDisplay * windowSizeDisplay;
 
 	// bitmap graphics resource
 	CGImageRef gResetButton;
@@ -208,7 +203,7 @@ private:
 	ControlDefSpec controlClassSpec;
 	EventHandlerUPP windowEventHandlerUPP;
 	EventHandlerRef windowEventEventHandlerRef;
-	RMSControl *currentControl;
+	RMSControl * currentControl;
 
 
 	// parameter listener related stuff
