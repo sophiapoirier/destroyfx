@@ -131,7 +131,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	else
 	{
 		if (useSeekRateRandMin)
-			currentSeekRate = parameters[kSeekRate_abs].expand(interpolateRandom(seekRateRandMinHz_gen, seekRateHz_gen));
+			currentSeekRate = expandparametervalue_index(kSeekRate_abs, interpolateRandom(seekRateRandMinHz_gen, seekRateHz_gen));
 		else
 			currentSeekRate = seekRateHz;
 	}
