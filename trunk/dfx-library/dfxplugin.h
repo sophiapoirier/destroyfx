@@ -164,6 +164,8 @@ SUPPORT_AU_VERSION_1
 
 #endif
 
+/* XXX: use typedef here instead of #define where possible */
+
 // using Apple's Audio Unit API
 #if defined(TARGET_API_AUDIOUNIT)
 	#define TARGET_API_CORE_CLASS AUKernelBase
