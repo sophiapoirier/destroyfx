@@ -117,9 +117,9 @@ enum {
 
 
 //-----------------------------------------------------------------------------
+// callbacks for button-triggered action
 
-void midilearnBufferOverride(SInt32 value, void * editor);
-void midilearnBufferOverride(SInt32 value, void * editor)
+void midilearnBufferOverride(long value, void * editor)
 {
 	if (editor != NULL)
 	{
@@ -130,15 +130,13 @@ void midilearnBufferOverride(SInt32 value, void * editor)
 	}
 }
 
-void midiresetBufferOverride(SInt32 value, void * editor);
-void midiresetBufferOverride(SInt32 value, void * editor)
+void midiresetBufferOverride(long value, void * editor)
 {
 	if ( (editor != NULL) && (value != 0) )
 		((DfxGuiEditor*)editor)->resetmidilearn();
 }
 
-void linkKickButtonsDownProc(SInt32, void * otherbutton);
-void linkKickButtonsDownProc(SInt32, void * otherbutton)
+void linkKickButtonsDownProc(long, void * otherbutton)
 {
 	if (otherbutton != NULL)
 	{
@@ -147,8 +145,7 @@ void linkKickButtonsDownProc(SInt32, void * otherbutton)
 	}
 }
 
-void linkKickButtonsUpProc(SInt32, void * otherbutton);
-void linkKickButtonsUpProc(SInt32, void * otherbutton)
+void linkKickButtonsUpProc(long, void * otherbutton)
 {
 	if (otherbutton != NULL)
 	{
@@ -158,7 +155,8 @@ void linkKickButtonsUpProc(SInt32, void * otherbutton)
 }
 
 
-static void TempoSyncListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue);
+//-----------------------------------------------------------------------------
+// parameter listener procedure
 static void TempoSyncListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
 	if ( (inObject == NULL) || (inParameter == NULL) )
@@ -185,8 +183,10 @@ static void TempoSyncListenerProc(void * inRefCon, void * inObject, const AudioU
 }
 
 
-void divisorDisplayProc(Float32 value, char * outText, void *);
-void divisorDisplayProc(Float32 value, char * outText, void *)
+//-----------------------------------------------------------------------------
+// value text display procedures
+
+void divisorDisplayProc(float value, char * outText, void *)
 {
 	if (value < 2.0f)
 		sprintf(outText, "%.2f", 1.0f);
@@ -194,8 +194,7 @@ void divisorDisplayProc(Float32 value, char * outText, void *)
 		sprintf(outText, "%.2f", value);
 }
 
-void bufferSizeDisplayProc(Float32 value, char * outText, void * editor);
-void bufferSizeDisplayProc(Float32 value, char * outText, void * editor)
+void bufferSizeDisplayProc(float value, char * outText, void * editor)
 {
 	if ( ((DfxGuiEditor*)editor)->getparameter_b(kBufferTempoSync) )
 		((DfxGuiEditor*)editor)->getparametervaluestring(kBufferSize_sync, outText);
@@ -203,8 +202,7 @@ void bufferSizeDisplayProc(Float32 value, char * outText, void * editor)
 		sprintf(outText, "%.1f", value);
 }
 
-void divisorLFOrateDisplayProc(Float32 value, char * outText, void * editor);
-void divisorLFOrateDisplayProc(Float32 value, char * outText, void * editor)
+void divisorLFOrateDisplayProc(float value, char * outText, void * editor)
 {
 	if ( ((DfxGuiEditor*)editor)->getparameter_b(kDivisorLFOtempoSync) )
 		((DfxGuiEditor*)editor)->getparametervaluestring(kDivisorLFOrate_sync, outText);
@@ -217,8 +215,7 @@ void divisorLFOrateDisplayProc(Float32 value, char * outText, void * editor)
 	}
 }
 
-void bufferLFOrateDisplayProc(Float32 value, char * outText, void * editor);
-void bufferLFOrateDisplayProc(Float32 value, char * outText, void * editor)
+void bufferLFOrateDisplayProc(float value, char * outText, void * editor)
 {
 	if ( ((DfxGuiEditor*)editor)->getparameter_b(kBufferLFOtempoSync) )
 		((DfxGuiEditor*)editor)->getparametervaluestring(kBufferLFOrate_sync, outText);
@@ -231,32 +228,27 @@ void bufferLFOrateDisplayProc(Float32 value, char * outText, void * editor)
 	}
 }
 
-void LFOdepthDisplayProc(Float32 value, char * outText, void *);
-void LFOdepthDisplayProc(Float32 value, char * outText, void *)
+void LFOdepthDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%ld%%", (long)value);
 }
 
-void smoothDisplayProc(Float32 value, char * outText, void *);
-void smoothDisplayProc(Float32 value, char * outText, void *)
+void smoothDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%.1f%%", value);
 }
 
-void dryWetMixDisplayProc(Float32 value, char * outText, void *);
-void dryWetMixDisplayProc(Float32 value, char * outText, void *)
+void dryWetMixDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%ld%%", (long)value);
 }
 
-void pitchbendDisplayProc(Float32 value, char * outText, void *);
-void pitchbendDisplayProc(Float32 value, char * outText, void *)
+void pitchbendDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "\xB1 %.2f", value);
 }
 
-void tempoDisplayProc(Float32 value, char * outText, void *);
-void tempoDisplayProc(Float32 value, char * outText, void *)
+void tempoDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%.2f", value);
 }
@@ -306,23 +298,15 @@ BufferOverrideEditor::~BufferOverrideEditor()
 }
 
 //-----------------------------------------------------------------------------
-long BufferOverrideEditor::open(float inXOffset, float inYOffset)
+long BufferOverrideEditor::open()
 {
-	bufferSizeTempoSyncAUP.mAudioUnit = divisorLFOtempoSyncAUP.mAudioUnit = bufferLFOtempoSyncAUP.mAudioUnit = GetEditAudioUnit();
-	bufferSizeTempoSyncAUP.mScope = divisorLFOtempoSyncAUP.mScope = bufferLFOtempoSyncAUP.mScope = kAudioUnitScope_Global;
-	bufferSizeTempoSyncAUP.mElement = divisorLFOtempoSyncAUP.mElement = bufferLFOtempoSyncAUP.mElement = (AudioUnitElement)0;
-	bufferSizeTempoSyncAUP.mParameterID = kBufferTempoSync;
-	divisorLFOtempoSyncAUP.mParameterID = kDivisorLFOtempoSync;
-	bufferLFOtempoSyncAUP.mParameterID = kBufferLFOtempoSync;
-
-
 	// create images
 
 	// background image
 	DGImage * gBackground = new DGImage("buffer-override-background.png", this);
 	SetBackgroundImage(gBackground);
 
-	// these move across the drawing rectangle
+	// slider handles
 	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
 	DGImage * gXYboxHandle = new DGImage("xy-box-handle.png", this);
 
@@ -351,9 +335,7 @@ long BufferOverrideEditor::open(float inXOffset, float inYOffset)
 	DGImage * gGoButton = new DGImage("go-button.png", this);
 
 
-/***************************************
-	create controls
-***************************************/
+	// create controls
 	
 	DGRect pos;
 	DGSlider * slider;
@@ -519,6 +501,13 @@ HMSetHelpTagsDisplayed(true);
 	pos.set (kHelpDisplayX, kHelpDisplayY, gBackground->getWidth(), kDisplayHeight);
 	helpDisplay = new DGStaticTextDisplay(this, &pos, NULL, HELP_DISPLAY_FONT_SIZE, kDGTextAlign_center, HELP_DISPLAY_TEXT_COLOR, HELP_DISPLAY_FONT);
 
+
+	bufferSizeTempoSyncAUP.mAudioUnit = divisorLFOtempoSyncAUP.mAudioUnit = bufferLFOtempoSyncAUP.mAudioUnit = GetEditAudioUnit();
+	bufferSizeTempoSyncAUP.mScope = divisorLFOtempoSyncAUP.mScope = bufferLFOtempoSyncAUP.mScope = kAudioUnitScope_Global;
+	bufferSizeTempoSyncAUP.mElement = divisorLFOtempoSyncAUP.mElement = bufferLFOtempoSyncAUP.mElement = (AudioUnitElement)0;
+	bufferSizeTempoSyncAUP.mParameterID = kBufferTempoSync;
+	divisorLFOtempoSyncAUP.mParameterID = kDivisorLFOtempoSync;
+	bufferLFOtempoSyncAUP.mParameterID = kBufferLFOtempoSync;
 
 	AUListenerAddParameter(parameterListener, bufferSizeSlider, &bufferSizeTempoSyncAUP);
 	AUListenerAddParameter(parameterListener, bufferSizeDisplay, &bufferSizeTempoSyncAUP);

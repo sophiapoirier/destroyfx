@@ -77,7 +77,7 @@ MidiGaterEditor::MidiGaterEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long MidiGaterEditor::open(float inXOffset, float inYOffset)
+long MidiGaterEditor::open()
 {
 	// load some graphics
 

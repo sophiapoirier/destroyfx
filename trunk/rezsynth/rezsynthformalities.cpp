@@ -5,7 +5,7 @@
 #include "rezsynth.hpp"
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "rezsyntheditor.hpp"
+	#include "rezsyntheditor.h"
 #endif
 
 

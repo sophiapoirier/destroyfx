@@ -187,7 +187,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 
 	// let the child class do its thing
-	OSStatus openErr = open(inXOffset, inYOffset);
+	OSStatus openErr = open();
 	if (openErr == noErr)
 	{
 		// set the size of the embedding pane

@@ -9,7 +9,7 @@ class PolarizerEditor : public DfxGuiEditor
 {
 public:
 	PolarizerEditor(AudioUnitCarbonView inInstance);
-	virtual long open(float inXOffset, float inYOffset);
+	virtual long open();
 };
 
 #endif

@@ -15,7 +15,7 @@ public:
 	BufferOverrideEditor(AudioUnitCarbonView inInstance);
 	virtual ~BufferOverrideEditor();
 
-	virtual long open(float inXOffset, float inYOffset);
+	virtual long open();
 	virtual void mouseovercontrolchanged();
 
 private:

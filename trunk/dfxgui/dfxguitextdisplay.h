@@ -17,7 +17,7 @@ typedef enum {
 } DfxGuiTextDisplayMouseAxis;
 
 
-typedef void (*displayTextProcedure) (Float32 value, char * outText, void * userData);
+typedef void (*displayTextProcedure) (float value, char * outText, void * userData);
 
 
 //-----------------------------------------------------------------------------

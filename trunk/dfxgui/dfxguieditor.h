@@ -29,7 +29,7 @@ public:
 	virtual ~DfxGuiEditor();
 
 	// *** this one is for the child class of DfxGuiEditor to override
-	virtual long open(float inXOffset, float inYOffset) = 0;
+	virtual long open() = 0;
 
 #ifdef TARGET_API_AUDIOUNIT
 	// these are part of the AUCarbonViewBase interface
