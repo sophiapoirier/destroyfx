@@ -3,6 +3,8 @@
 
 #include "transverb.hpp"
 
+#include "transverbeditor.hpp"
+
 #include <string.h>
 #include <time.h>
 
@@ -53,6 +55,8 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   setProgram(0);
 
   srand((unsigned int)time(NULL));	// sets a seed value for rand() from the system clock
+
+  editor = new TransverbEditor(this);
 }
 
 PLUGIN::~PLUGIN() {
@@ -397,6 +401,9 @@ void PLUGIN::setParameter(long index, float value) {
 
   if ( (index >= 0) && (index < NUM_PARAMS) )
     programs[curProgram].parameter[index] = value;
+
+  if (editor)
+    ((AEffGUIEditor*)editor)->setParameter(index, value);
 }
 
 float PLUGIN::getParameter(long index) {
@@ -636,3 +643,36 @@ void PLUGIN::processReplacing(float **inputs, float **outputs, long samples) {
 void PLUGIN::process(float **inputs, float **outputs, long samples) {
   processX(inputs,outputs,samples, 0);
 }
+
+
+
+/* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
+/* ---------- boring stuff below this line ----------- */
+/* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
+
+#if BEOS
+#define main main_plugin
+extern "C" __declspec(dllexport) AEffect *main_plugin (audioMasterCallback audioMaster);
+
+#else
+AEffect *main (audioMasterCallback audioMaster);
+#endif
+
+AEffect *main (audioMasterCallback audioMaster) {
+  // get vst version
+  if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
+    return 0;  // old version
+
+  AudioEffect* effect = new PLUGIN(audioMaster);
+  if (!effect)
+    return 0;
+  return effect->getAeffect();
+}
+
+#if WIN32
+void* hInstance;
+BOOL WINAPI DllMain (HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
+  hInstance = hInst;
+  return 1;
+}
+#endif

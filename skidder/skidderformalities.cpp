@@ -4,6 +4,10 @@
 #include "skidder.hpp"
 #endif
 
+#ifndef __skiddereditor
+#include "skiddereditor.hpp"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -62,6 +66,8 @@ Skidder::Skidder(audioMasterCallback audioMaster)
 	}
 
 	srand((unsigned int)time(NULL));	// sets a seed value for rand() from the system clock
+
+	editor = new SkidderEditor(this);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -334,6 +340,9 @@ void Skidder::setParameter(long index, float value)
 
 	if ( (index >= 0) && (index < NUM_PARAMETERS) )
 		programs[curProgram].param[index] = value;
+
+	if (editor)
+		((AEffGUIEditor*)editor)->setParameter(index, value);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -575,3 +584,39 @@ long Skidder::canDo(char* text)
 
 	return -1;	// explicitly can't do; 0 => don't know
 }
+
+
+
+//-----------------------------------------------------------------------------
+//                                   main()                                   |
+//-----------------------------------------------------------------------------
+
+// prototype of the export function main
+#if BEOS
+#define main main_plugin
+extern "C" __declspec(dllexport) AEffect *main_plugin(audioMasterCallback audioMaster);
+
+#else
+AEffect *main(audioMasterCallback audioMaster);
+#endif
+
+AEffect *main(audioMasterCallback audioMaster)
+{
+	// get vst version
+	if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
+		return 0;  // old version
+
+	AudioEffect* effect = new Skidder(audioMaster);
+	if (!effect)
+		return 0;
+	return effect->getAeffect();
+}
+
+#if WIN32
+void* hInstance;
+BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved)
+{
+	hInstance = hInst;
+	return 1;
+}
+#endif
