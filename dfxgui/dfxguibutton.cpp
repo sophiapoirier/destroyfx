@@ -92,16 +92,26 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 			entryValue = 0;	// just to make sure it's like that
 			break;
 		case kDGButtonType_incbutton:
-			newValue = entryValue + 1;
+			if ( (inMouseButtons & (1<<1)) || (inKeyModifiers & kDGKeyModifier_extra) )
+				newValue = entryValue - 1;
+			else
+				newValue = entryValue + 1;
 			// wrap around
 			if (newValue > max)
 				newValue = min;
+			else if (newValue < min)
+				newValue = max;
 			break;
 		case kDGButtonType_decbutton:
-			newValue = entryValue - 1;
+			if ( (inMouseButtons & (1<<1)) || (inKeyModifiers & kDGKeyModifier_extra) )
+				newValue = entryValue + 1;
+			else
+				newValue = entryValue - 1;
 			// wrap around
 			if (newValue < min)
 				newValue = max;
+			else if (newValue > max)
+				newValue = min;
 			break;
 		case kDGButtonType_radiobutton:
 			newValue = (long)inXpos / (getBounds()->w / numStates);
