@@ -2,6 +2,7 @@
 #include "temporatetable.h"
 #endif
 
+#include <stdlib.h>
 #include <string.h>
 
 
@@ -14,10 +15,10 @@ TempoRateTable::TempoRateTable(long typeOfTable)
 
 	switch (typeOfTable)
 	{
-		case kSlowTempoRateTable:
+		case kSlowTempoRates:
 			numTempoRates = 25;
 			break;
-		case kNoExtremesTempoRateTable:
+		case kNoExtremeTempoRates:
 			numTempoRates = 21;
 			break;
 		default:
@@ -39,7 +40,7 @@ TempoRateTable::TempoRateTable(long typeOfTable)
 		scalars[i] = 1.f/6.f;	strcpy(displays[i++], "1/8");
 		scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/7");
 	}
-	if (typeOfTable != kNoExtremesTempoRates)
+	if (typeOfTable != kNoExtremeTempoRates)
 	{
 		scalars[i] = 1.f/6.f;	strcpy(displays[i++], "1/6");
 		scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/5");
@@ -64,11 +65,11 @@ TempoRateTable::TempoRateTable(long typeOfTable)
 	scalars[i] = 48.0f;		strcpy(displays[i++], "48");
 	scalars[i] = 64.0f;		strcpy(displays[i++], "64");
 	scalars[i] = 96.0f;		strcpy(displays[i++], "96");
-	if (typeOfTable != kUseSlowTempoRates)
+	if (typeOfTable != kSlowTempoRates)
 	{
 		scalars[i] = 333.0f;		strcpy(displays[i++], "333");
 	}
-	if ( (typeOfTable != kSlowTempoRates) && (typeOfTable != kNoExtremesTempoRates) )
+	if ( (typeOfTable != kSlowTempoRates) && (typeOfTable != kNoExtremeTempoRates) )
 	{
 		scalars[i] = 3000.0f;	strcpy(displays[i++], "infinity");
 	}

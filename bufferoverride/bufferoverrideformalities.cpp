@@ -343,7 +343,7 @@ void BufferOverride::initPresets()
   int i = 1;
 
 	programs[i].param[kDivisor] = bufferDivisorUnscaled(4.0f);
-	programs[i].param[kBuffer] = paramSteppedUnscaled(8.7f, NUM_TEMPO_RATES);
+	programs[i].param[kBuffer] = paramSteppedUnscaled(8.7f, tempoRateTable->getNumTempoRates());
 	programs[i].param[kBufferTempoSync] = 1.0f;
 	programs[i].param[kSmooth] = 0.09f;
 	programs[i].param[kDryWetMix] = 1.0f;
@@ -434,7 +434,7 @@ void BufferOverride::initPresets()
 	programs[i].param[kBuffer] = forcedBufferSizeUnscaled(81.0f);
 	programs[i].param[kBufferTempoSync] = 0.0f;
 	programs[i].param[kBufferInterrupt] = 1.0f;
-	programs[i].param[kDivisorLFOrate] = paramSteppedUnscaled(6.6f, NUM_TEMPO_RATES);
+	programs[i].param[kDivisorLFOrate] = paramSteppedUnscaled(6.6f, tempoRateTable->getNumTempoRates());
 	programs[i].param[kDivisorLFOdepth] = 0.333f;
 	programs[i].param[kDivisorLFOshape] = LFOshapeUnscaled(kSineLFO);
 	programs[i].param[kDivisorLFOtempoSync] = 1.0f;
