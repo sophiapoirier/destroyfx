@@ -1053,7 +1053,7 @@ void DfxSettings::correctEndian(void *data, bool isReversed, bool isPreset)
 		sizeofStoredPreset += OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH;
 	}
 #endif
-	for (long i=0; i < numStoredPresets; i++)
+	for (long iij=0; iij < numStoredPresets; iij++)
 	{
 		reverseBytes(dataPresets->params, sizeof(float), (unsigned)numStoredParameters);
 		// point to the next preset in the data array
