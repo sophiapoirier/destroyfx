@@ -55,24 +55,24 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   settailsize_seconds(BUFFER_MAX * 0.001);
 
   #if TARGET_PLUGIN_USES_MIDI
-    /* since we don't use notes for any specialized control of Geometer, 
-       allow them to be assigned to control parameters via MIDI learn */
+    // since we don't use notes for any specialized control of Geometer, 
+    // allow them to be assigned to control parameters via MIDI learn
     dfxsettings->setAllowPitchbendEvents(true);
     dfxsettings->setAllowNoteEvents(true);
   #endif
 
-  setpresetname(0, PLUGIN_NAME_STRING);	// default program name
+  setpresetname(0, PLUGIN_NAME_STRING);	// default preset name
   initPresets();
 
 
   #if TARGET_API_AUDIOUNIT
     // XXX is there a better way to do this?
-	update_preset(0);	// make host see that current preset is 0
+    update_preset(0);	// make host see that current preset is 0
 
   #elif TARGET_API_VST
     #if TARGET_PLUGIN_HAS_GUI
       editor = new TransverbEditor(this);
-	#endif
+    #endif
     #if TARGET_PLUGIN_USES_DSPCORE
       DFX_INIT_CORE(TransverbDSP);	// we need to manage DSP cores manually in VST
     #endif
