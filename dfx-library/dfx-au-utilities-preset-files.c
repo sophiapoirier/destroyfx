@@ -537,6 +537,9 @@ CFPropertyListRef CreatePropertyListFromXMLFile(const CFURLRef inXMLFileURL, SIn
 // XXX should I put these in the private header?
 // unique identifier of our AU preset file open dialogs for Navigation Services
 const UInt32 kAUPresetOpenNavDialogKey = 'AUpo';
+// global error code holder for the Navigation Services GetFile dialog
+// we can check errors from its event handler with this, if the dialog ran modally
+OSStatus gCustomRestoreAUPresetFileResult;
 //-----------------------------------------------------------------------------
 // This function is what you use when you want to allow the user to find an AU preset file 
 // anywhere on their system and try to open it and restore its data as the current state 
@@ -573,7 +576,15 @@ ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 		// XXX do we really want to do this?
 		SetNavDialogAUPresetStartLocation(dialog, (Component)inAUComponentInstance, kDontCreateFolder);
 
+		gCustomRestoreAUPresetFileResult = noErr;	// initialize it clean to start with
 		error = NavDialogRun(dialog);
+		// if the dialog ran modally, then we should see any error caught during its run now, 
+		// and can use that as the result of this function
+		if (error == noErr)
+		{
+			if (gCustomRestoreAUPresetFileResult != noErr)
+				error = gCustomRestoreAUPresetFileResult;
+		}
 	}
 	if (eventProc != NULL)
 		DisposeRoutineDescriptor(eventProc);
@@ -587,7 +598,6 @@ ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 // This is the event handler callback for the custom open AU preset file Nav Services dialog.  
 // It handles open and reading the selected file and then applying the file's state data as 
 // the new state for the AU instance.
-// XXX is there some way to get errors from this as a return from the main calling function?
 pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData)
 {
 	AudioUnit auComponentInstance = (AudioUnit) inUserData;
@@ -596,6 +606,7 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 	switch (inCallbackSelector)
 	{
 		case kNavCBStart:
+			gCustomRestoreAUPresetFileResult = noErr;
 			break;
 
 		case kNavCBTerminate:
@@ -611,8 +622,12 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 
 			// we're only interested in file open actions
 			NavUserAction userAction = NavDialogGetUserAction(dialog);
-			// XXX return userCanceled error for Cancel?
-//			if (userAction == kNavUserActionCancel)
+			// and I guess cancel, too
+			if (userAction == kNavUserActionCancel)
+			{
+				gCustomRestoreAUPresetFileResult = userCanceledErr;
+				break;
+			}
 			if (userAction != kNavUserActionOpen)
 				break;
 
@@ -645,6 +660,8 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 				}
 				NavDisposeReply(&reply);
 			}
+			// store the final result of these operations into the global restore-AU-preset-file result variable
+			gCustomRestoreAUPresetFileResult = error;
 			break;
 		}
 
@@ -1428,6 +1445,9 @@ OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 // XXX should I put these in the private header?
 // unique identifier of our AU preset file save dialogs for Navigation Services
 const UInt32 kAUPresetSaveNavDialogKey = 'AUps';
+// global error code holder for the Navigation Services PuttFile dialog
+// we can check errors from its event handler with this, if the dialog ran modally
+OSStatus gCustomSaveAUPresetFileResult;
 //-----------------------------------------------------------------------------
 // This is the function that you call if the user pushes the Choose Custom Location 
 // in the regular (simple) Save AU preset dialog.  Then this function will create and 
@@ -1477,8 +1497,16 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 		if (inAUComponent != NULL)
 			SetNavDialogAUPresetStartLocation(dialog, inAUComponent, kCreateFolder);
 
+		gCustomSaveAUPresetFileResult = noErr;	// initialize it clean to start with
 		// now show the dialog to the user
 		error = NavDialogRun(dialog);
+		// if the dialog ran modally, then we should see any error caught during its run now, 
+		// and can use that as the result of this function
+		if (error == noErr)
+		{
+			if (gCustomSaveAUPresetFileResult != noErr)
+				error = gCustomSaveAUPresetFileResult;
+		}
 	}
 	if (eventProc != NULL)
 		DisposeRoutineDescriptor(eventProc);
@@ -1487,7 +1515,6 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 }
 
 //-----------------------------------------------------------------------------
-// XXX is there some way to get errors from this as a return from the main calling function?
 // This is the event handler for the Navigation Services Save AU preset file dialog.
 // It does the regular required stuff and will handle writing the file out to disk 
 // when the user requests that.
@@ -1501,6 +1528,7 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 		// in case the dialog is non-modal and returns after the calling function returns, 
 		// we need to own our own reference to the AU state data PropertyList
 		case kNavCBStart:
+			gCustomSaveAUPresetFileResult = noErr;
 			if (auStateData != NULL)
 				CFRetain(auStateData);
 			break;
@@ -1521,8 +1549,12 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 
 			// anything other than Save, we are not interested in
 			NavUserAction userAction = NavDialogGetUserAction(dialog);
-			// XXX return userCanceled error for Cancel?
-//			if (userAction == kNavUserActionCancel)
+			// but I guess cancel we want, too
+			if (userAction == kNavUserActionCancel)
+			{
+				gCustomSaveAUPresetFileResult = userCanceledErr;
+				break;
+			}
 			if (userAction != kNavUserActionSaveAs)
 				break;
 
@@ -1536,7 +1568,6 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 					DescType actualType = 0;
 					Size actualSize;
 					FSRef parentDirFSRef;
-// XXX should I be catching these errors in the dialogInfo->dialogResult ?
 					error = AEGetNthPtr(&(reply.selection), 1, typeFSRef, &theKeyword, &actualType, 
 										&parentDirFSRef, sizeof(parentDirFSRef), &actualSize);
 //fprintf(stderr, "actual type = %.4s\n", (char*)&actualType);
@@ -1572,6 +1603,8 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 				}
 				NavDisposeReply(&reply);
 			}
+			// store the final result of these operations into the global save-AU-preset-file result variable
+			gCustomSaveAUPresetFileResult = error;
 			break;
 		}
 
