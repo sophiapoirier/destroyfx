@@ -3,7 +3,11 @@
 #include "vstcontrols.h"
 #include "geometer.hpp"
 
-/* this class is for the display of the wave at the top of the plugin. */
+/* this class is for the display of the wave at the top of the plugin.
+   It reads the current 'in' buffer for the plugin, runs it through
+   geometer with its current settings, and then draws it up there
+   whenever the plugin is idle.
+*/
 
 #ifdef WIN32
 /* turn off warnings about default but no cases in switch, etc. */
