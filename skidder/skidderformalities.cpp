@@ -148,7 +148,7 @@ void Skidder::processparameters()
 //		if ( (oldMidiMode == kMidiMode_none) && 
 //				(midiMode != kMidiMode_none) )
 		{
-			for (int i=0; (i < NUM_NOTES); i++)
+			for (int i=0; i < NUM_NOTES; i++)
 				noteTable[i] = 0;
 			noteOff();
 		}

@@ -188,19 +188,14 @@ void RezSynth::checkForNewNote(long currentEvent, unsigned long numChannels)
 	if ( (midistuff->blockEvents[currentEvent].status == kMidiNoteOn) && 	// it's a note-on
 	 		(midistuff->noteTable[currentNote].velocity == 0) )				// the note is currently off
 	{
-		int bandcount;
-		// wipe out the left channel feedback buffers
-		for (bandcount = 0; bandcount < MAX_BANDS; bandcount++)
-			prevOutValue[currentNote][bandcount] = 0.0;
-		for (bandcount = 0; bandcount < MAX_BANDS; bandcount++)
-			prevprevOutValue[currentNote][bandcount] = 0.0;
-		// & wipe out the right channel feedback buffers if we're processing in stereo
-		if (numChannels == 2)
+		// wipe out the feedback buffers
+		for (unsigned ch=0; ch < numChannels; ch++)
 		{
-			for (bandcount = 0; bandcount < MAX_BANDS; bandcount++)
-				prevOut2Value[currentNote][bandcount] = 0.0;
-			for (bandcount = 0; bandcount < MAX_BANDS; bandcount++)
-				prevprevOut2Value[currentNote][bandcount] = 0.0;
+			int bandcount;
+			for (bandcount=0; bandcount < MAX_BANDS; bandcount++)
+				prevOutValue[ch][currentNote][bandcount] = 0.0;
+			for (bandcount=0; bandcount < MAX_BANDS; bandcount++)
+				prevprevOutValue[ch][currentNote][bandcount] = 0.0;
 		}
 	}
 }

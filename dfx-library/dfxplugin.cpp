@@ -227,19 +227,22 @@ long DfxPlugin::do_initialize()
 {
 	updatesamplerate();
 	updatenumchannels();
-	createbuffers();
 
 	long result = initialize();
+	if (result != 0)
+		return result;
 
 	#if TARGET_API_VST
-		if (result == 0)
-			isinitialized = true;
+		isinitialized = true;
 	#endif
 
-	if (result == 0)
-		do_reset();
+	bool buffersCreated = createbuffers();
+	if (buffersCreated == false)
+		return -10875;	// AUFailedInitialization error code
 
-	return result;
+	do_reset();
+
+	return 0;	// no error
 }
 
 //-----------------------------------------------------------------------------
@@ -1181,7 +1184,7 @@ bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long
 		releasebufferarray_f(buffers, currentNumBuffers);
 
 	if (desiredNumBuffers <= 0)
-		return false;	// XXX false?
+		return true;	// XXX true?
 
 	if (*buffers == NULL)
 	{
@@ -1196,11 +1199,7 @@ bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long
 	{
 		if ((*buffers)[i] == NULL)
 			(*buffers)[i] = (float*) malloc(desiredBufferSize * sizeof(float));
-	}
-
-	// check if allocations were successful
-	for (unsigned long i=0; i < desiredNumBuffers; i++)
-	{
+		// check if the allocation was successful
 		if ((*buffers)[i] == NULL)
 			return false;
 	}
@@ -1208,6 +1207,60 @@ bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long
 	// we were successful if we reached this point
 	return true;
 }
+
+//-----------------------------------------------------------------------------
+// handy helper function for creating an array of arrays of double float values
+// returns true if allocation was successful, false if allocation failed
+bool createbufferarrayarray_d(double ****buffers, unsigned long currentNumBufferArrays, unsigned long currentNumBuffers, 
+							long currentBufferSize, unsigned long desiredNumBufferArrays, 
+							unsigned long desiredNumBuffers, long desiredBufferSize)
+{
+	// if the size of each buffer or the number of buffers have changed, 
+	// then delete & reallocate the buffers according to the new sizes
+	if ( (desiredBufferSize != currentBufferSize) 
+			|| (desiredNumBuffers != currentNumBuffers) 
+			|| (desiredNumBufferArrays != currentNumBufferArrays) )
+		releasebufferarrayarray_d(buffers, currentNumBufferArrays, currentNumBuffers);
+
+	if (desiredNumBufferArrays <= 0)
+		return true;	// XXX true?
+
+	unsigned long i, j;
+	if (*buffers == NULL)
+	{
+		*buffers = (double***) malloc(desiredNumBufferArrays * sizeof(double**));
+		// out of memory or something
+		if (*buffers == NULL)
+			return false;
+		for (i=0; i < desiredNumBufferArrays; i++)
+			(*buffers)[i] = NULL;
+	}
+	for (i=0; i < desiredNumBufferArrays; i++)
+	{
+		if ((*buffers)[i] == NULL)
+			(*buffers)[i] = (double**) malloc(desiredNumBuffers * sizeof(double*));
+		// check if the allocation was successful
+		if ((*buffers)[i] == NULL)
+			return false;
+		for (j=0; j < desiredNumBuffers; j++)
+			(*buffers)[i][j] = NULL;
+	}
+	for (i=0; i < desiredNumBufferArrays; i++)
+	{
+		for (j=0; j < desiredNumBuffers; j++)
+		{
+			if ((*buffers)[i][j] == NULL)
+				(*buffers)[i][j] = (double*) malloc(desiredBufferSize * sizeof(double));
+			// check if the allocation was successful
+			if ((*buffers)[i][j] == NULL)
+				return false;
+		}
+	}
+
+	// we were successful if we reached this point
+	return true;
+}
+
 
 //-------------------------------------------------------------------------
 // handy helper function for safely deallocating an array of float values
@@ -1270,6 +1323,32 @@ void releasebufferarray_f(float ***buffers, unsigned long numbuffers)
 	*buffers = NULL;
 }
 
+//-------------------------------------------------------------------------
+// handy helper function for safely deallocating an array of arrays of double float values
+void releasebufferarrayarray_d(double ****buffers, unsigned long numbufferarrays, unsigned long numbuffers)
+{
+	if (*buffers != NULL)
+	{
+		for (unsigned long i=0; i < numbufferarrays; i++)
+		{
+			if ((*buffers)[i] != NULL)
+			{
+				for (unsigned long j=0; j < numbuffers; j++)
+				{
+					if ((*buffers)[i][j] != NULL)
+						free((*buffers)[i][j]);
+					(*buffers)[i][j] = NULL;
+				}
+				free((*buffers)[i]);
+			}
+			(*buffers)[i] = NULL;
+		}
+		free(*buffers);
+	}
+	*buffers = NULL;
+}
+
+
 //-----------------------------------------------------------------------------
 // handy helper function for safely zeroing the contents of an array of float values
 void clearbuffer_f(float *buffer, long buffersize, float value)
@@ -1326,6 +1405,30 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 			{
 				for (long j=0; j < buffersize; j++)
 					buffers[i][j] = value;
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// handy helper function for safely zeroing the contents of an array of arrays of float values
+void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
+							long buffersize, double value)
+{
+	if (buffers != NULL)
+	{
+		for (unsigned long i=0; i < numbufferarrays; i++)
+		{
+			if (buffers[i] != NULL)
+			{
+				for (unsigned long j=0; j < numbuffers; j++)
+				{
+					if (buffers[i][j] != NULL)
+					{
+						for (long k=0; k < buffersize; k++)
+							buffers[i][j][k] = value;
+					}
+				}
 			}
 		}
 	}

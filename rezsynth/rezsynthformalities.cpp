@@ -21,6 +21,14 @@ DFX_ENTRY(RezSynth);
 RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 19 parameters, 16 presets
 {
+	inputAmp = NULL;
+	delay1amp = NULL;
+	delay2amp = NULL;
+	prevOutValue = NULL;
+	prevprevOutValue = NULL;
+	numBuffers = 0;
+
+
 	initparameter_d(kBandwidth, "bandwidth", 3.0, 3.0, 0.1, 300.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
 	initparameter_i(kNumBands, "# of bands", 1, 1, 1, 30, kDfxParamUnit_quantity, kDfxParamCurve_stepped);
 	initparameter_d(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
@@ -55,24 +63,6 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //	setparametervaluestring(kFoldover, 1, "allow");
 
 
-	// allocate memory for these arrays
-	delay1amp = (double*) malloc(MAX_BANDS * sizeof(double));
-	delay2amp = (double*) malloc(MAX_BANDS * sizeof(double));
-	inputAmp = (double*) malloc(MAX_BANDS * sizeof(double));
-	//
-	// some 2-dimensional arrays
-	prevOutValue = (double**) malloc(NUM_NOTES * sizeof(double*));
-	prevprevOutValue = (double**) malloc(NUM_NOTES * sizeof(double*));
-	prevOut2Value = (double**) malloc(NUM_NOTES * sizeof(double*));
-	prevprevOut2Value = (double**) malloc(NUM_NOTES * sizeof(double*));
-	for (int i = 0; i < NUM_NOTES; i++)
-	{
-		prevOutValue[i] = (double*) malloc(MAX_BANDS * sizeof(double));
-		prevprevOutValue[i] = (double*) malloc(MAX_BANDS * sizeof(double));
-		prevOut2Value[i] = (double*) malloc(MAX_BANDS * sizeof(double));
-		prevprevOut2Value[i] = (double*) malloc(MAX_BANDS * sizeof(double));
-	}
-
 	settailsize_seconds(RELEASE_MAX);
 	midistuff->setLazyAttack();	// this enables the lazy note attack mode
 
@@ -90,46 +80,31 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 RezSynth::~RezSynth()
 {
-	// deallocate the memory from these arrays
-	if (delay1amp)
-		free(delay1amp);
-	if (delay2amp)
-		free(delay2amp);
-	if (inputAmp)
-		free(inputAmp);
-	//
-	// some 2-dimensional arrays
-	if (prevOutValue)
-	{
-		for (int i=0; i < NUM_NOTES; i++)
-			free(prevOutValue[i]);
-		free(prevOutValue);
-	}
-	if (prevprevOutValue)
-	{
-		for (int i=0; i < NUM_NOTES; i++)
-			free(prevprevOutValue[i]);
-		free(prevprevOutValue);
-	}
-	if (prevOut2Value)
-	{
-		for (int i=0; i < NUM_NOTES; i++)
-			free(prevOut2Value[i]);
-		free(prevOut2Value);
-	}
-	if (prevprevOut2Value)
-	{
-		for (int i=0; i < NUM_NOTES; i++)
-			free(prevprevOut2Value[i]);
-		free(prevprevOut2Value);
-	}
-
-
 #if TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
 	do_cleanup();
 #endif
+}
+
+//-----------------------------------------------------------------------------------------
+long RezSynth::initialize()
+{
+	bool result1 = createbuffer_d(&inputAmp, MAX_BANDS, MAX_BANDS);
+	bool result2 = createbuffer_d(&delay1amp, MAX_BANDS, MAX_BANDS);
+	bool result3 = createbuffer_d(&delay2amp, MAX_BANDS, MAX_BANDS);
+
+	if ( result1 && result2 && result3 )
+		return 0;	// no error
+	return -10875;	// AUFailedInitialization error code
+}
+
+//-----------------------------------------------------------------------------------------
+void RezSynth::cleanup()
+{
+	releasebuffer_d(&inputAmp);
+	releasebuffer_d(&delay1amp);
+	releasebuffer_d(&delay2amp);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -143,28 +118,29 @@ void RezSynth::reset()
 //-----------------------------------------------------------------------------------------
 bool RezSynth::createbuffers()
 {
-	return true;
+	unsigned long oldNumBuffers = numBuffers;
+	numBuffers = getnumoutputs();
+
+	bool result1 = createbufferarrayarray_d(&prevOutValue, oldNumBuffers, NUM_NOTES, MAX_BANDS, numBuffers, NUM_NOTES, MAX_BANDS);
+	bool result2 = createbufferarrayarray_d(&prevprevOutValue, oldNumBuffers, NUM_NOTES, MAX_BANDS, numBuffers, NUM_NOTES, MAX_BANDS);
+
+	if (result1 && result2)
+		return true;
+	return false;
 }
 
 //-----------------------------------------------------------------------------------------
 void RezSynth::releasebuffers()
 {
+	releasebufferarrayarray_d(&prevOutValue, numBuffers, NUM_NOTES);
+	releasebufferarrayarray_d(&prevprevOutValue, numBuffers, NUM_NOTES);
 }
 
 //-----------------------------------------------------------------------------------------
 void RezSynth::clearbuffers()
 {
-	// zero out all of these feedback buffers
-	for (int i = 0; i < NUM_NOTES; i++)
-	{
-		for (int j = 0; j < MAX_BANDS; j++)
-		{
-			prevOutValue[i][j] = 0.0;
-			prevprevOutValue[i][j] = 0.0;
-			prevOut2Value[i][j] = 0.0;
-			prevprevOut2Value[i][j] = 0.0;
-		}
-	}
+	clearbufferarrayarray_d(prevOutValue, numBuffers, NUM_NOTES, MAX_BANDS);
+	clearbufferarrayarray_d(prevprevOutValue, numBuffers, NUM_NOTES, MAX_BANDS);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -199,14 +175,15 @@ int oldNumBands = numBands;
 		// clear the output buffers of abandoned bands when the number decreases
 		if (numBands < oldNumBands)
 		{
-			for (int notecount=0; notecount < NUM_NOTES; notecount++)
+			for (unsigned long ch=0; ch < numBuffers; ch++)
 			{
-				for (int bandcount = numBands; bandcount < oldNumBands; bandcount++)
+				for (int notecount=0; notecount < NUM_NOTES; notecount++)
 				{
-					prevOutValue[notecount][bandcount] = 0.0;
-					prevprevOutValue[notecount][bandcount] = 0.0;
-					prevOut2Value[notecount][bandcount] = 0.0;
-					prevprevOut2Value[notecount][bandcount] = 0.0;
+					for (int bandcount = numBands; bandcount < oldNumBands; bandcount++)
+					{
+						prevOutValue[ch][notecount][bandcount] = 0.0;
+						prevprevOutValue[ch][notecount][bandcount] = 0.0;
+					}
 				}
 			}
 		}
@@ -215,14 +192,15 @@ int oldNumBands = numBands;
 	// feedback buffers need to be cleared
 	if (getparameterchanged(kScaleMode))
 	{
-		for (int notecount=0; notecount < NUM_NOTES; notecount++)
+		for (unsigned long ch=0; ch < numBuffers; ch++)
 		{
-			for (int bandcount=0; bandcount < MAX_BANDS; bandcount++)
+			for (int notecount=0; notecount < NUM_NOTES; notecount++)
 			{
-				prevOutValue[notecount][bandcount] = 0.0;
-				prevprevOutValue[notecount][bandcount] = 0.0;
-				prevOut2Value[notecount][bandcount] = 0.0;
-				prevprevOut2Value[notecount][bandcount] = 0.0;
+				for (int bandcount=0; bandcount < MAX_BANDS; bandcount++)
+				{
+					prevOutValue[ch][notecount][bandcount] = 0.0;
+					prevprevOutValue[ch][notecount][bandcount] = 0.0;
+				}
 			}
 		}
 	}
