@@ -156,7 +156,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 	currentControl_clicked = NULL;	// make sure that it ain't nuthin
 	setCurrentControl_mouseover(NULL);
-	EventTypeSpec controlMouseEvents[] = {
+	EventTypeSpec windowEvents[] = {
 									{ kEventClassMouse, kEventMouseDragged }, 
 									{ kEventClassMouse, kEventMouseUp }, 
 //									{ kEventClassMouse, kEventMouseMoved }, 
@@ -166,7 +166,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 								};
 	windowEventHandlerUPP = NewEventHandlerUPP(DGWindowEventHandler);
 	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), windowEventHandlerUPP, 
-						GetEventTypeCount(controlMouseEvents), controlMouseEvents, this, &windowEventEventHandlerRef);
+						GetEventTypeCount(windowEvents), windowEvents, this, &windowEventEventHandlerRef);
 
 
 // register for HitTest events on the background embedding pane so that we now when the mouse hovers over it
