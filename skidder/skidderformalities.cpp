@@ -4,7 +4,9 @@
 #include "skidder.hpp"
 #endif
 
-#include "vstgui.h"		// for AEffGuiEditor::setParameter()
+#ifndef __skiddereditor
+#include "skiddereditor.hpp"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
