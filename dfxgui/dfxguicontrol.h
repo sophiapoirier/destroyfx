@@ -30,8 +30,7 @@ public:
 	ControlRef getCarbonControl()
 		{	return carbonControl;	}
 
-	// called by EventHandler callback; draws a clipping region if opaque == true, 
-	// otherwise asks embedded DfxGuiControls for their clipping regions
+	// called by EventHandler callback; draws a clipping region
 	void clipRegion(bool drawing);	// XXX marc says it can go?
 	void setVisible(bool inVisibility);
 
@@ -49,15 +48,11 @@ public:
 // XXX fix this up
 //	virtual void do_idle();
 	// *** idle timer function
-	virtual void idle();
-//		{ }
+	virtual void idle()
+		{ }
 
 	// checks if this or an embedded control is inside
 	virtual bool isControlRef(ControlRef inControl);
-
-	// if you do not want parameter attached controls
-	bool isAUVPattached()
-		{	return AUVPattached;	}
 
 	void redraw();	// force a redraw
 
@@ -70,14 +65,8 @@ public:
 	void setContinuousControl(bool inContinuity)
 		{	isContinuous = inContinuity;	}
 
-	/* XXX? mac? used? */
-	// for the clipping region
-	bool isOpaque()
-		{	return opaque;	}
-	void setOpaque(bool inNewOpaque)
-		{	opaque = inNewOpaque;	}
-
-	// accessor functions to be called by derived controls
+	bool isAUVPattached()
+		{	return AUVPattached;	}
 	AUVParameter & getAUVP()
 		{	return auvp;	}
 	void createAUVcontrol();
@@ -93,22 +82,13 @@ public:
 		{	return &vizArea;	}
 	DfxGuiEditor * getDfxGuiEditor()
 		{	return ownerEditor;	}
-	DGControl * getDaddy()
-		{	return Daddy;	}
-	virtual DGControl * getChild(ControlRef inControl);
 
-	void setDaddy(DGControl *inDaddy)
-		{	Daddy = inDaddy;	}
 	void setOffset(SInt32 x, SInt32 y);
 
 	void setBounds(DGRect *r)
 		{	where.set(r);	}
 	void setForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
 	void shrinkForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
-
-	void setRedrawTolerance(SInt32 inNewTolerance)
-		{	redrawTolerance = inNewTolerance;	}
-	bool mustUpdate(void);
 
  private:
 	// common constructor stuff
@@ -117,21 +97,14 @@ public:
 protected:
 	DfxGuiEditor *		ownerEditor;
 	AUVParameter 		auvp;
-	DGControl *			Daddy;
-	DGControl *			children;
-	UInt32				id;
 	float				Range;
 	bool				AUVPattached;
 	bool				isContinuous;
 	AUCarbonViewControl * auv_control;
 
-	bool				opaque;			// is it a drawing control or just a virtual region?
 	ControlRef			carbonControl;	// the physical control, if any
 	DGRect				where; 			// the bounds...
 	DGRect				vizArea; 		// where the foreground displays
-	SInt32				lastUpdatedValue;
-	SInt32				redrawTolerance;
-	bool				pleaseUpdate;
 };
 
 
