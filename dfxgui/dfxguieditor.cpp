@@ -117,7 +117,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		{ kEventClassControl, kEventControlTrack },
 //		{ kEventClassControl, kEventControlHit }, 
 //		{ kEventClassControl, kEventControlClick }, 
-		{ kEventClassControl, kEventControlContextualMenuClick } 
+		{ kEventClassControl, kEventControlContextualMenuClick }, 
+		{ kEventClassControl, kEventControlValueFieldChanged }
 	};
 	ToolboxObjectClassRef newControlClass = NULL;
 	controlHandlerUPP = NewEventHandlerUPP(DGControlEventHandler);
@@ -218,58 +219,124 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 #endif
 // TARGET_API_AUDIOUNIT
 
+#if MAC
+//-----------------------------------------------------------------------------
+// inEvent is expected to be an event of the class kEventClassControl.  
+// The return value is true if a CGContextRef was available from the event parameters 
+// (which happens with compositing windows) or false if the CGContext had to be created 
+// for the control's window port QuickDraw-style.  
+bool InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGrafPtr & outPort, long & outPortHeight)
+{
+	outContext = NULL;
+	outPort = NULL;
+	if (inEvent == NULL)
+		return false;
+
+	bool gotAutoContext = false;
+	OSStatus error;
+
+	// if we received a graphics port parameter, use that...
+	error = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &outPort);
+	// ... otherwise use the current graphics port
+	if ( (error != noErr) || (outPort == NULL) )
+		GetPort(&outPort);
+	if (outPort == NULL)
+		return false;
+	Rect portBounds;
+	GetPortBounds(outPort, &portBounds);
+	outPortHeight = portBounds.bottom - portBounds.top;
+
+	// set up the CG context
+	// if we are in compositing mode, then we can get a CG context already set up and clipped and whatnot
+	error = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &outContext);
+	if ( (error == noErr) && (outContext != NULL) )
+		gotAutoContext = true;
+	else
+	{
+		error = QDBeginCGContext(outPort, &outContext);
+		if ( (error != noErr) || (outContext == NULL) )
+		{
+			outContext = NULL;	// probably crazy, but in case there's an error, and yet a non-null result for the context
+			return false;
+		}
+	}
+	CGContextSaveGState(outContext);
+	SyncCGContextOriginWithPort(outContext, outPort);
+#ifdef FLIP_CG_COORDINATES
+	// this lets me position things with non-upside-down coordinates, 
+	// but unfortunately draws all images and text upside down...
+	CGContextTranslateCTM(outContext, 0.0f, (float)outPortHeight);
+	CGContextScaleCTM(outContext, 1.0f, -1.0f);
+#endif
+
+	// define the clipping region if we are not compositing and had to create our own context
+	if (!gotAutoContext)
+	{
+		ControlRef carbonControl = NULL;
+		error = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
+		if ( (error == noErr) && (carbonControl != NULL) )
+		{
+			CGRect clipRect;
+			error = HIViewGetBounds(carbonControl, &clipRect);
+			if (error == noErr)
+			{
+#ifndef FLIP_CG_COORDINATES
+				clipRect.origin.y = (float)outPortHeight - (clipRect.origin.y + clipRect.size.height);
+#endif
+				CGContextClipToRect(outContext, clipRect);
+			}
+		}
+	}
+
+	return gotAutoContext;
+}
+
+//-----------------------------------------------------------------------------
+// inGotAutoContext should be the return value that you got from InitControlDrawingContext().  
+// It is true if inContext came with the control event (compositing window behavior) or 
+// false if inContext was created via QDBeginCGContext(), and hence needs to be disposed.  
+void CleanupControlDrawingContext(CGContextRef & inContext, bool inGotAutoContext, CGrafPtr inPort)
+{
+	if (inContext == NULL)
+		return;
+
+	CGContextRestoreGState(inContext);
+	CGContextSynchronize(inContext);
+
+	if ( !inGotAutoContext && (inPort != NULL) )
+		QDEndCGContext(inPort, &inContext);
+}
+#endif
+// MAC
+
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 {
 	if (GetEventClass(inEvent) == kEventClassControl)
 	{
+		ControlRef carbonControl = NULL;
+		OSStatus error = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
+		if (error != noErr)
+			carbonControl = NULL;
+
 		UInt32 inEventKind = GetEventKind(inEvent);
+
 		if (inEventKind == kEventControlDraw)
 		{
-			ControlRef carbonControl;
-			GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
 			if (carbonControl == mCarbonPane)
 			{
-				CGrafPtr windowPort = NULL;
-				// if we received a graphics port parameter, use that...
-				OSStatus error = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &windowPort);
-				// ... otherwise use the current graphics port
-				if ( (error != noErr) || (windowPort == NULL) )
-					GetPort(&windowPort);
-				if (windowPort == NULL)
-					return false;
-				Rect portBounds;
-				GetPortBounds(windowPort, &portBounds);
-
-				// drawing
 				CGContextRef context = NULL;
-				error = QDBeginCGContext(windowPort, &context);
-				if ( (error != noErr) || (windowPort == NULL) )
+				CGrafPtr windowPort = NULL;
+				long portHeight;
+				bool gotAutoContext = InitControlDrawingContext(inEvent, context, windowPort, portHeight);
+				if ( (context == NULL) || (windowPort == NULL) )
 					return false;
-				SyncCGContextOriginWithPort(context, windowPort);
-				CGContextSaveGState(context);
-#ifdef FLIP_CG_COORDINATES
-				// this lets me position things with non-upside-down coordinates, 
-				// but unfortunately draws all images and text upside down...
-				CGContextTranslateCTM(context, 0.0f, (float)(portBounds.bottom - portBounds.top));
-				CGContextScaleCTM(context, 1.0f, -1.0f);
-#endif
-				// XXX need a better way of determining the background size
-				// XXX moreover, what's the point of clipping to the image size?  it's not like that image will draw outside its own bounds
-				if (backgroundImage != NULL)
-				{
-					// define the clipping region
-					CGRect clipRect = CGRectMake( GetXOffset(), GetYOffset(), 
-											(float)(backgroundImage->getWidth()), (float)(backgroundImage->getHeight()) );
-					CGContextClipToRect(context, clipRect);
-				}
-				CGContextSetShouldAntialias(context, false);	// XXX disable anti-aliased drawing for image rendering
-				DrawBackground(context, portBounds.bottom);
-				CGContextRestoreGState(context);
-				CGContextSynchronize(context);
-				QDEndCGContext(windowPort, &context);
 
+				CGContextSetShouldAntialias(context, false);	// XXX disable anti-aliased drawing for image rendering
+				DrawBackground(context, portHeight);
+
+				CleanupControlDrawingContext(context, gotAutoContext, windowPort);
 				return true;
 			}
 		}
@@ -277,15 +344,13 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 		// we want to catch when the mouse hovers over onto the background area
 		else if ( (inEventKind == kEventControlHitTest) || (inEventKind == kEventControlClick) )
 		{
-			ControlRef control;
-			GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &control);
-			if (control == mCarbonPane)
+			if (carbonControl == mCarbonPane)
 				setCurrentControl_mouseover(NULL);	// we don't count the background
 		}
 
 		else if (inEventKind == kEventControlApplyBackground)
 		{
-//			fprintf(stderr, "mCarbonPane HandleEvent(kEventControlApplyBackground)\n");
+//fprintf(stderr, "mCarbonPane HandleEvent(kEventControlApplyBackground)\n");
 			return false;
 		}
 	}
@@ -357,12 +422,14 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::IsWindowCompositing()
 {
-	WindowAttributes attributes = 0;
-	OSStatus error = GetWindowAttributes(GetCarbonWindow(), &attributes);
-	if (error == noErr)
-		return (attributes & kWindowCompositingAttribute) ? true : false;
-	else
-		return false;
+	if (GetCarbonWindow() != NULL)
+	{
+		WindowAttributes attributes = 0;
+		OSStatus error = GetWindowAttributes(GetCarbonWindow(), &attributes);
+		if (error == noErr)
+			return (attributes & kWindowCompositingAttribute) ? true : false;
+	}
+	return false;
 }
 #endif
 
@@ -713,6 +780,12 @@ return false;
 	// the content area of the window (i.e. not the title bar or any borders)
 	Rect windowBounds;
 	GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
+	if ( IsWindowCompositing() )
+	{
+		Rect paneBounds;
+		GetControlBounds(mCarbonPane, &paneBounds);
+		OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
+	}
 	// the position of the control relative to the top left corner of the window content area
 	Rect controlBounds;
 	GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
@@ -861,42 +934,18 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 			case kEventControlDraw:
 //fprintf(stderr, "kEventControlDraw\n");
 				{
-//CGContextRef econtext = NULL;
-//OSStatus cgstat = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &econtext);
-//fprintf(stderr, "GetEventParameter(kEventParamCGContextRef) = %ld\n", cgstat);
-					CGrafPtr windowPort = NULL;
-					// if we received a graphics port parameter, use that...
-					OSStatus error = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &windowPort);
-					// ... otherwise use the current graphics port
-					if ( (error != noErr) || (windowPort == NULL) )
-						GetPort(&windowPort);
-					if (windowPort == NULL)
-						return false;
-					Rect portBounds;
-					GetPortBounds(windowPort, &portBounds);
-
-					// set up the CG context
 					CGContextRef context = NULL;
-					error = QDBeginCGContext(windowPort, &context);
-					if ( (error != noErr) || (context == NULL) )
+					CGrafPtr windowPort = NULL;
+					long portHeight;
+					bool gotAutoContext = InitControlDrawingContext(inEvent, context, windowPort, portHeight);
+					if ( (context == NULL) || (windowPort == NULL) )
 						return false;
-					SyncCGContextOriginWithPort(context, windowPort);
-					CGContextSaveGState(context);
-#ifdef FLIP_CG_COORDINATES
-					// this lets me position things with non-upside-down coordinates, 
-					// but unfortunately draws all images and text upside down...
-					CGContextTranslateCTM(context, 0.0f, (float)(portBounds.bottom - portBounds.top));
-					CGContextScaleCTM(context, 1.0f, -1.0f);
-#endif
-					// define the clipping region
-					CGRect clipRect = ourDGControl->getBounds()->convertToCGRect(portBounds.bottom);
-					CGContextClipToRect(context, clipRect);
+
 					// XXX disable anti-aliased drawing for image rendering
 					CGContextSetShouldAntialias(context, false);
-					ourDGControl->do_draw(context, portBounds.bottom);
-					CGContextRestoreGState(context);
-					CGContextSynchronize(context);
-					QDEndCGContext(windowPort, &context);
+					ourDGControl->do_draw(context, portHeight);
+
+					CleanupControlDrawingContext(context, gotAutoContext, windowPort);
 				}
 				return true;
 
@@ -953,22 +1002,26 @@ fprintf(stderr, "kEventControlHit\n");
 					HIPoint mouseLocation;
 					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
 //fprintf(stderr, "mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation.x, mouseLocation.y);
-					Point mouseLocation_i;
-					mouseLocation_i.h = (short) mouseLocation.x;
-					mouseLocation_i.v = (short) mouseLocation.y;
 					// XXX only kEventControlClick gives global mouse coordinates for kEventParamMouseLocation?
 					if ( (inEventKind == kEventControlContextualMenuClick) || (inEventKind == kEventControlTrack) )
 					{
+						Point mouseLocation_i;
 						GetGlobalMouse(&mouseLocation_i);
 						mouseLocation.x = (float) mouseLocation_i.h;
 						mouseLocation.y = (float) mouseLocation_i.v;
-					}
 //fprintf(stderr, "mouse.x = %d, mouse.y = %d\n\n", mouseLocation_i.h, mouseLocation_i.v);
+					}
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 					// the content area of the window (i.e. not the title bar or any borders)
 					Rect windowBounds;
 					GetWindowBounds(GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &windowBounds);
+					if ( IsWindowCompositing() )
+					{
+						Rect paneBounds;
+						GetControlBounds(mCarbonPane, &paneBounds);
+						OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
+					}
 					// the position of the control relative to the top left corner of the window content area
 					Rect controlBounds;
 					GetControlBounds(ourCarbonControl, &controlBounds);
@@ -999,6 +1052,13 @@ fprintf(stderr, "kEventControlHit\n");
 					currentControl_clicked = ourDGControl;
 				}
 				return true;
+
+			case kEventControlValueFieldChanged:
+				// XXX it seems that I need to manually invalidate the control to get it to 
+				// redraw in response to a value change in compositing mode ?
+				if ( IsWindowCompositing() )
+					ourDGControl->redraw();
+				return false;
 
 			default:
 				return false;

@@ -126,6 +126,13 @@ protected:
 };
 
 
+#if MAC
+//-----------------------------------------------------------------------------
+CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor);
+void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEditor * inEditor);
+#endif
+
+
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 // this gives some slight tweaks to Apple's AUCarbonViewControl class
@@ -137,7 +144,6 @@ public:
 	virtual void ControlToParameter();
 	virtual void ParameterToControl(Float32 newValue);
 };
-
 #endif
 
 
