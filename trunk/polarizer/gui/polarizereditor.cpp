@@ -87,6 +87,9 @@ public:
 
 			CGRect bottomBorderRect = getBounds()->convertToCGRect(inPortHeight);
 			bottomBorderRect.size.height = (float)kSliderFrameThickness;
+#ifdef FLIP_CG_COORDINATES
+			bottomBorderRect.origin.y += (float) (getBounds()->h - kSliderFrameThickness);
+#endif
 			bottomBorderRect.size.width = (float) handleImage->getWidth();
 			bottomBorderRect.origin.x += (float)kSliderFrameThickness;
 			CGContextSetRGBFillColor(inContext, 0.0f, 0.0f, 0.0f, 1.0f);

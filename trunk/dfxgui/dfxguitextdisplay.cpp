@@ -74,14 +74,13 @@ DGTextDisplay::~DGTextDisplay()
 //-----------------------------------------------------------------------------
 void DGTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 {
-	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
-
 	if (backgroundImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
+		CGRect fillRect = getBounds()->convertToCGRect(inPortHeight);
 		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
-		CGContextFillRect(inContext, bounds);
+		CGContextFillRect(inContext, fillRect);
 #else
 		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 #endif
@@ -95,15 +94,22 @@ void DGTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 		char text[256];
 		text[0] = 0;
 		textProc(auvp.GetValue(), text, textProcUserData);
-		drawText(inContext, bounds, text);
+		drawText(getBounds(), text, inContext, inPortHeight);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const char * inString)
+void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRef inContext, long inPortHeight)
 {
-	if (inString == NULL)
+	if ( (inText == NULL) || (inRegion == NULL) )
 		return;
+
+	CGRect bounds = inRegion->convertToCGRect(inPortHeight);
+#ifdef FLIP_CG_COORDINATES
+	bounds.origin.y *= -1.0f;
+	CGContextScaleCTM(inContext, 1.0f, -1.0f);
+	CGContextTranslateCTM(inContext, 0.0f, -bounds.size.height);
+#endif
 
 	bool drawSmoothText = true;
 	if (fontName != NULL)
@@ -119,15 +125,20 @@ void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const cha
 	if (alignment != kDGTextAlign_left)
 	{
 		CGContextSetTextDrawingMode(inContext, kCGTextInvisible);
-		CGContextShowTextAtPoint(inContext, 0.0f, 0.0f, inString, strlen(inString));
+		CGContextShowTextAtPoint(inContext, 0.0f, 0.0f, inText, strlen(inText));
 		CGPoint pt = CGContextGetTextPosition(inContext);
 		if (alignment == kDGTextAlign_center)
-			inBounds.origin.x += (inBounds.size.width - pt.x) / 2.0f;
+			bounds.origin.x += (bounds.size.width - pt.x) / 2.0f;
 		else if (alignment == kDGTextAlign_right)
-			inBounds.origin.x += inBounds.size.width - pt.x;
+			bounds.origin.x += bounds.size.width - pt.x;
 	}
 	CGContextSetTextDrawingMode(inContext, kCGTextFill);
-	CGContextShowTextAtPoint(inContext, inBounds.origin.x, inBounds.origin.y+2.0f, inString, strlen(inString));
+	CGContextShowTextAtPoint(inContext, bounds.origin.x, bounds.origin.y+2.0f, inText, strlen(inText));
+
+#ifdef FLIP_CG_COORDINATES
+	CGContextTranslateCTM(inContext, 0.0f, bounds.size.height);
+	CGContextScaleCTM(inContext, 1.0f, -1.0f);
+#endif
 }
 
 
@@ -167,14 +178,13 @@ void DGStaticTextDisplay::setText(const char * inNewText)
 //-----------------------------------------------------------------------------
 void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 {
-	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
-
 	if (backgroundImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
+		CGRect fillRect = getBounds()->convertToCGRect(inPortHeight);
 		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
-		CGContextFillRect(inContext, bounds);
+		CGContextFillRect(inContext, fillRect);
 #else
 		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 #endif
@@ -183,5 +193,5 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 //		backgroundImage->draw(getBounds(), inContext, inPortHeight, getBounds()->x - (long)(getDfxGuiEditor()->GetXOffset()), getBounds()->y - (long)(getDfxGuiEditor()->GetYOffset()));	// draw underneath-style
 		backgroundImage->draw(getBounds(), inContext, inPortHeight);
 
-	drawText(inContext, bounds, displayString);
+	drawText(getBounds(), displayString, inContext, inPortHeight);
 }
