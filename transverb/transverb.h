@@ -117,9 +117,6 @@ public:
   Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance);
   virtual ~Transverb();
 
-  virtual long initialize();
-  virtual void cleanup();
-
   virtual bool loadpreset(long index);	// overriden to support the random preset
 // the GUI needs to be able to look at these, so they are public
   void randomizeParameters(bool writeAutomation = false);

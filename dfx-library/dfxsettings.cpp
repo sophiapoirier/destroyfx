@@ -8,6 +8,8 @@
 #include "dfxplugin.h"
 #endif
 
+#include <stdio.h>	// for FILE stuff
+
 
 #ifndef DFX_SUPPORT_OLD_VST_SETTINGS
 #define DFX_SUPPORT_OLD_VST_SETTINGS 0
@@ -373,6 +375,8 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 				doChunkRestoreSetParameterStuff(i, newPreset->params[mappedTag], newSettingsInfo->version);
 			}
 		}
+		// point to the next preset in the received data array
+		newPreset = (GenPreset*) ((char*)newPreset + sizeofStoredPreset);
 	}
 
 	// the chunk being received has all of the presets plus the MIDI event assignments
@@ -421,9 +425,9 @@ if ( !(oldvst && isPreset) )
 	// then point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
 	ParameterAssignment *newParamAssignments;
-	if (isPreset)
-		newParamAssignments = (ParameterAssignment*) ((char*)newPreset + sizeofStoredPreset);
-	else
+//	if (isPreset)
+//		newParamAssignments = (ParameterAssignment*) ((char*)newPreset + sizeofStoredPreset);
+//	else
 		newParamAssignments = (ParameterAssignment*) ((char*)newPreset + 
 								((numStoredPresets-copyPresets) * sizeofStoredPreset));
 	// and load up as many of them as we can

@@ -4,10 +4,6 @@
 #include "scrubby.hpp"
 #endif
 
-//#include <stdlib.h>
-//#include <math.h>
-//#include <float.h>
-
 
 //-----------------------------------------------------------------------------------------
 inline double calculateTargetSpeed(double a, double n, double k)
@@ -120,7 +116,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 		// randomize the tempo rate if the random min scalar is lower than the upper bound
 		if (useSeekRateRandMin)
 		{
-			currentSeekRate = tempoRateTable->getScalar((long)interpolateRandom(getparameter_f(kSeekRateRandMin_sync),getparameter_f(kSeekRate_sync)));
+			currentSeekRate = tempoRateTable->getScalar((long)interpolateRandom((float)seekRateRandMinIndex,(float)seekRateIndex+0.99f));
 			// don't do musical bar sync if we're using randomized tempo rate
 //			for (unsigned long ch=0; ch < numChannels; ch++)
 			needResync[channel] = false;
@@ -135,7 +131,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	else
 	{
 		if (useSeekRateRandMin)
-			currentSeekRate = interpolateRandom(seekRateRandMinHz, seekRateHz);
+			currentSeekRate = parameters[kSeekRate_abs].expand(interpolateRandom(seekRateRandMinHz_gen, seekRateHz_gen));
 		else
 			currentSeekRate = seekRateHz;
 	}
