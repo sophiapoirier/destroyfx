@@ -248,7 +248,7 @@ SUPPORT_AU_VERSION_1
 
 #define DESTROYFX_NAME_STRING	"Destroy FX"
 #define DESTROYFX_COLLECTION_NAME	"Super Destroy FX bipolar plugin pack"
-#define DESTROYFX_URL "http://www.smartelectronix.com/~destroyfx/"
+#define DESTROYFX_URL "http://destroyfx.org/"
 #define SMARTELECTRONIX_URL "http://www.smartelectronix.com/"
 
 #define DESTROYFX_ID 'DFX!'
