@@ -123,6 +123,7 @@ private:
   CBitmap *g_smartelectronixlink;
 
   GeometerView * gview;
+  unsigned long prevms;
 
   VstChunk *chunk;
   CHorizontalSlider **sliders;

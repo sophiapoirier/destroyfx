@@ -291,6 +291,7 @@ long GeometerEditor::open(void *ptr) {
 
 
   chunk->resetLearning();       // resets the state of MIDI learning & the learner
+  prevms = 0;
 
   //--initialize the background frame--------------------------------------
   CRect size (0, 0, g_background->getWidth(), g_background->getHeight());
@@ -1305,20 +1306,24 @@ void GeometerEditor::idle() {
 
   /* XXX reevaluate when I should do this. */
 #if 1
-  static int when = 0;
   bool gviewchanged = false;
   /* maybe I don't need to do this every frame... */
-  if (1 || !when--) {
+  unsigned long currentms = getTicks();
+  unsigned long windowsizems = (unsigned long) 
+                               ( (float)((PLUGIN*)effect)->getwindowsize() * 
+                                 1000.0f / effect->getSampleRate() );
+  unsigned long elapsedms = currentms - prevms;
+  if ( (elapsedms > windowsizems) || (currentms < prevms) || chunk->isLearning()) {
     if (gview) {
       gview->reflect();
       gviewchanged = true;
     }
-    when = 100;
+    prevms = currentms;
   }
 #endif
 
   // some hosts need this call otherwise stuff doesn't redraw
-  if (helpchanged || glowingchanged || gviewchanged || 1) /* <-  XXX Tom, why the || 1?  */
+  if (helpchanged || glowingchanged || gviewchanged) /* <-  XXX Tom, why the || 1?  */
     postUpdate();
 
   // this is called so that idle() actually happens
