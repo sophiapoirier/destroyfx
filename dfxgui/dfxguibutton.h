@@ -37,7 +37,6 @@ public:
 private:
 	DGGraphic *		ForeGround;
 	DGGraphic *		BackGround;
-	DfxGuiBottonMode	mode;
 
 	buttonUserProcedure	userProcedure;
 	buttonUserProcedure	userReleaseProcedure;
@@ -46,6 +45,7 @@ private:
 
 	float			alpha;
 	long			numStates;
+	DfxGuiBottonMode	mode;
 	bool			drawMomentaryState;
 	bool			mouseIsDown;
 	SInt32			entryValue, newValue;
