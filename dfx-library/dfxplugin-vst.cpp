@@ -38,8 +38,10 @@ void DfxPlugin::resume()
 
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this here
-	do_initialize();
-//	do_reset();	// do_initialize() calls do_reset()
+	if (!isinitialized)
+		do_initialize();
+	else
+		do_reset();	// else because do_initialize calls do_reset
 
 	#if TARGET_PLUGIN_USES_DSPCORE
 		for (int i=0; i < getnumoutputs(); i++)

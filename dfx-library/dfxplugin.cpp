@@ -123,6 +123,7 @@ DfxPlugin::DfxPlugin(
 	canProcessReplacing();	// supports both accumulating and replacing output
 	TARGET_API_BASE_CLASS::setProgram(0);	// set the current preset number to 0
 
+	isinitialized = false;
 	latencychanged = false;
 
 	// check to see if the host supports sending tempo & time information to VST plugins
@@ -188,6 +189,12 @@ DfxPlugin::~DfxPlugin()
 	// end AudioUnit-specific destructor stuff
 
 	#if TARGET_API_VST
+		// the child plugin class destructor should call do_cleanup for VST 
+		// because VST has no initialize/cleanup sort of methods, but if 
+		// the child class doesn't have its own cleanup method, then it's 
+		// not necessary, and so we can do it now if it wasn't done
+		if (isinitialized)
+			do_cleanup();
 		#if TARGET_PLUGIN_USES_DSPCORE
 			if (dspcores != NULL)
 			{
@@ -212,9 +219,14 @@ long DfxPlugin::do_initialize()
 {
 	updatesamplerate();
 	updatenumchannels();
-	createbuffers();	// XXX should this be called here or during do_reset?
+	createbuffers();
 
 	long result = initialize();
+
+	#if TARGET_API_VST
+		if (result == 0)
+			isinitialized = true;
+	#endif
 
 	if (result == 0)
 		do_reset();
@@ -238,6 +250,10 @@ void DfxPlugin::do_cleanup()
 	#endif
 
 	cleanup();
+
+	#if TARGET_API_VST
+		isinitialized = false;
+	#endif
 }
 
 //-----------------------------------------------------------------------------

@@ -11,19 +11,12 @@
 #endif
 
 // only necessary if using a custom GUI
-#if TARGET_PLUGIN_HAS_GUI
-	#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Buffer Override editor"
-	#define PLUGIN_EDITOR_ENTRY_POINT	"BufferOverrideEditorEntry"
-#endif
+#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Buffer Override editor"
+#define PLUGIN_EDITOR_ENTRY_POINT	"BufferOverrideEditorEntry"
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"overcome your audio processing buffer size and then (unsuccessfully) override that new buffer size to be a smaller buffer size"
-#define PLUGIN_RES_ID	3000
-#if TARGET_PLUGIN_HAS_GUI
-	#define PLUGIN_EDITOR_ID	'bufV'
-	#define PLUGIN_EDITOR_DESCRIPTION_STRING	"pretty pink interface for DFX Buffer Override"
-	#define PLUGIN_EDITOR_RES_ID	9000
-#endif
+#define PLUGIN_EDITOR_DESCRIPTION_STRING	"pretty pink interface for DFX Buffer Override"
 
 
 #define DFX_SUPPORT_OLD_VST_SETTINGS 0
