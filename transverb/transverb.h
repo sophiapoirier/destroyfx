@@ -107,6 +107,8 @@ private:
   float lastr1val, lastr2val;
 
   float *firCoefficients1, *firCoefficients2;
+
+  long tomsound_sampoffset;	// essentially the core instance number
 };
 
 
@@ -121,10 +123,14 @@ public:
 // the GUI needs to be able to look at these, so they are public
   void randomizeParameters(bool writeAutomation = false);
 
+  long addcore();	// add a DSP core instance to the counter
+  void subtractcore();	// subtract one
+
 private:
   void initPresets();
 
   long speed1mode, speed2mode;	// these are just for the GUI
+  long numtransverbcores;	// counter for the number of DSP core instances
 };
 
 

@@ -83,42 +83,6 @@ enum {
 	kNoGoDisplay = 33333
 };
 
-#if MOTIF
-// resource for MOTIF (format XPM)
-#include "bmp00128.xpm"
-#include "bmp00129.xpm"
-#include "bmp00130.xpm"
-#include "bmp00131.xpm"
-#include "bmp00132.xpm"
-#include "bmp00133.xpm"
-#include "bmp00134.xpm"
-#include "bmp00135.xpm"
-#include "bmp00136.xpm"
-#include "bmp00137.xpm"
-#include "bmp00138.xpm"
-#include "bmp00139.xpm"
-#include "bmp00140.xpm"
-#include "bmp00141.xpm"
-
-CResTable xpmResources = {
-	{kBackgroundID, bmp00128},
-	{kFaderSlideID, bmp00129},
-	{kFaderHandleID, bmp00130},
-	{kTallFaderSlideID, bmp00131},
-	{kTallFaderHandleID, bmp00132},
-	{kSepModeButtonID, bmp00133},
-	{kScaleButtonID, bmp00134},
-	{kLegatoButtonID, bmp00135},
-	{kFadesButtonID, bmp00136},
-	{kFoldoverButtonID, bmp00137},
-	{kWiseAmpButtonID, bmp00138},
-	{kGoButtonID, bmp00139},
-	{kDestroyFXlinkID, bmp00140},
-	{kSmartElectronixLinkID, bmp00141},
-	{0, 0}
-};
-#endif
-
 
 
 //-----------------------------------------------------------------------------
@@ -148,10 +112,10 @@ void numBandsParamDisplayConvert(float value, char *string)
 	strcpy(string, "bands  per  note");
 }
 
-void sepAmountDisplayConvert(float value, char *string, void *sepmode);
-void sepAmountDisplayConvert(float value, char *string, void *sepmode)
+void sepAmountDisplayConvert(float value, char *string, void *septag);
+void sepAmountDisplayConvert(float value, char *string, void *septag)
 {
-	if ( sepModeBool(*(float*)sepmode) )	// octaval values
+	if ( *(long*)septag == kSepAmount_octaval )
 		sprintf(string, "%.3f  semitones", value*(float)MAX_SEP_AMOUNT*12.0f);
 	else	// linear values
 		sprintf(string, "%.3f  x", value*(float)MAX_SEP_AMOUNT);
@@ -474,6 +438,8 @@ long RezSynthEditor::open(void *ptr)
 
 	chunk->resetLearning();
 	goError = kNoGoDisplay;
+	long sepTag = (((DfxPlugin*)effect)->getparameter_i(kSepMode) == kSepMode_octaval) ? kSepAmount_octaval : kSepAmount_linear;
+
 
 	//--initialize the background frame--------------------------------------
 	CRect size (0, 0, gBackground->getWidth(), gBackground->getHeight());
@@ -504,8 +470,8 @@ long RezSynthEditor::open(void *ptr)
 
 	// separation amount between bands
 	size.offset (0, kFaderInc);
-	sepAmountFader = new CHorizontalSlider (size, this, kSepAmount, minPos, maxPos, gFaderHandle, gFaderSlide, point, kLeft);
-	sepAmountFader->setValue(effect->getParameter(kSepAmount));
+	sepAmountFader = new CHorizontalSlider (size, this, sepTag, minPos, maxPos, gFaderHandle, gFaderSlide, point, kLeft);
+	sepAmountFader->setValue(effect->getParameter(sepTag));
 	sepAmountFader->setDefaultValue(1.0f/3.0f);
 	frame->addView(sepAmountFader);
 
@@ -706,9 +672,9 @@ long RezSynthEditor::open(void *ptr)
 	sepAmountTextEdit->setFont(kNormalFontVerySmall);
 	sepAmountTextEdit->setFontColor(kMyVeryLightGreyCColor);
 	sepAmountTextEdit->setHoriAlign(kRightText);
-	frame->addView (sepAmountTextEdit);
+	frame->addView(sepAmountTextEdit);
 	// this makes it display the current value
-	setParameter(kSepAmount, effect->getParameter(kSepAmount));
+	setParameter(sepTag, effect->getParameter(sepTag));
 
 	// note attack parameter label
 	size.offset (-kDisplayWidth, kFaderInc);
@@ -883,7 +849,6 @@ long RezSynthEditor::open(void *ptr)
 		faders[i] = NULL;
 	faders[kBandwidth] = bandwidthFader;
 	faders[kNumBands] = numBandsFader;
-	faders[kSepAmount] = sepAmountFader;
 	faders[kAttack] = attackFader;
 	faders[kRelease] = releaseFader;
 	faders[kVelCurve] = velCurveFader;
@@ -988,119 +953,137 @@ void RezSynthEditor::setParameter(long index, float value)
 	if (!frame)
 		return;
 
+	long sepTag = (((DfxPlugin*)effect)->getparameter_i(kSepMode) == kSepMode_octaval) ? kSepAmount_octaval : kSepAmount_linear;
+
 	// called from RezSynth
 	switch (index)
 	{
 		case kBandwidth:
 			if (bandwidthFader)
-				bandwidthFader->setValue(effect->getParameter(index));
+				bandwidthFader->setValue(value);
 			if (bandwidthDisplay)
-				bandwidthDisplay->setValue(effect->getParameter(index));
+				bandwidthDisplay->setValue(value);
 			break;
 
 		case kNumBands:
 			if (numBandsFader)
-				numBandsFader->setValue(effect->getParameter(index));
+				numBandsFader->setValue(value);
 			if (numBandsDisplay)
-				numBandsDisplay->setValue(effect->getParameter(index));
+				numBandsDisplay->setValue(value);
 			break;
 
-		case kSepAmount:
-			if (sepAmountFader)
-				sepAmountFader->setValue(effect->getParameter(index));
-			if (sepAmountTextEdit)
+		case kSepAmount_octaval:
+		case kSepAmount_linear:
+			if (sepTag == index)
 			{
-				sepAmountDisplayConvert(effect->getParameter(index), sepAmountString, &(((RezSynth*)effect)->fSepMode));
-				sepAmountTextEdit->setText(sepAmountString);
+				if (sepAmountFader)
+					sepAmountFader->setValue(value);
+				if (sepAmountTextEdit)
+				{
+					sepAmountDisplayConvert(value, sepAmountString, &sepTag);
+					sepAmountTextEdit->setText(sepAmountString);
+				}
 			}
 			break;
 
 		case kSepMode:
 			if (sepModeButton)
-				sepModeButton->setValue(effect->getParameter(index));
-			// the separation amount display changes according to the separation mode
-			setParameter(kSepAmount, effect->getParameter(kSepAmount));
+				sepModeButton->setValue(value);
+			// see if we need to swap the parameter assignment for the sep amount controls
+			if (sepAmountFader)
+			{
+				if (sepTag != sepAmountFader->getTag())
+				{
+					sepAmountFader->setTag(sepTag);
+					sepAmountFader->setValue(effect->getParameter(sepTag));
+				}
+			}
+			if (sepAmountTextEdit)
+			{
+				sepAmountDisplayConvert(effect->getParameter(sepTag), sepAmountString, &sepTag);
+				sepAmountTextEdit->setText(sepAmountString);
+			}
 			break;
 
 		case kAttack:
 			if (attackFader)
-				attackFader->setValue(effect->getParameter(index));
+				attackFader->setValue(value);
 			if (attackDisplay)
-				attackDisplay->setValue(effect->getParameter(index));
+				attackDisplay->setValue(value);
 			break;
 
 		case kRelease:
 			if (releaseFader)
-				releaseFader->setValue(effect->getParameter(index));
+				releaseFader->setValue(value);
 			if (releaseDisplay)
-				releaseDisplay->setValue(effect->getParameter(index));
+				releaseDisplay->setValue(value);
 			break;
 
 		case kVelCurve:
 			if (velCurveFader)
-				velCurveFader->setValue(effect->getParameter(index));
+				velCurveFader->setValue(value);
 			if (velCurveDisplay)
-				velCurveDisplay->setValue(effect->getParameter(index));
+				velCurveDisplay->setValue(value);
 			break;
 
 		case kVelInfluence:
 			if (velInfluenceFader)
-				velInfluenceFader->setValue(effect->getParameter(index));
+				velInfluenceFader->setValue(value);
 			if (velInfluenceDisplay)
-				velInfluenceDisplay->setValue(effect->getParameter(index));
+				velInfluenceDisplay->setValue(value);
 			break;
 
 		case kPitchbendRange:
 			if (pitchbendFader)
-				pitchbendFader->setValue(effect->getParameter(index));
+				pitchbendFader->setValue(value);
 			if (pitchbendDisplay)
-				pitchbendDisplay->setValue(effect->getParameter(index));
+				pitchbendDisplay->setValue(value);
 			break;
 
 		case kScaleMode:
 			if (scaleButton)
-				scaleButton->setValue(effect->getParameter(index));
+				scaleButton->setValue(value);
 			break;
 
 		case kGain:
 			if (gainFader)
-				gainFader->setValue(effect->getParameter(index));
+				gainFader->setValue(value);
 			if (gainDisplay)
-				gainDisplay->setValue(effect->getParameter(index));
+				gainDisplay->setValue(value);
 			break;
 
 		case kBetweenGain:
 			if (betweenGainFader)
-				betweenGainFader->setValue(effect->getParameter(index));
+				betweenGainFader->setValue(value);
 			if (betweenGainDisplay)
-				betweenGainDisplay->setValue(effect->getParameter(index));
+				betweenGainDisplay->setValue(value);
 			break;
 
 		case kDryWetMix:
 			if (dryWetMixFader)
-				dryWetMixFader->setValue(effect->getParameter(index));
+				dryWetMixFader->setValue(value);
 			if (dryWetMixDisplay)
-				dryWetMixDisplay->setValue(effect->getParameter(index));
+				dryWetMixDisplay->setValue(value);
 			break;
 
 		case kLegato:
 			if (legatoButton)
-				legatoButton->setValue(effect->getParameter(index));
+				legatoButton->setValue(value);
 			break;
 
 		case kFades:
 			if (fadesButton)
-				fadesButton->setValue(effect->getParameter(index));
+				fadesButton->setValue(value);
 			break;
 
 		case kFoldover:
 			if (foldoverButton)
-				foldoverButton->setValue(effect->getParameter(index));
+				foldoverButton->setValue(value);
 			break;
 
 		case kWiseAmp:
 			if (wiseAmpButton)
-				wiseAmpButton->setValue(effect->getParameter(index));
+				wiseAmpButton->setValue(value);
 			break;
 
 		default:
@@ -1113,10 +1096,7 @@ void RezSynthEditor::setParameter(long index, float value)
 //-----------------------------------------------------------------------------
 void RezSynthEditor::valueChanged(CDrawContext* context, CControl* control)
 {
-  long tag = control->getTag();
-  float tempSepAmount;
-  long sscanfReturn;
-
+	long tag = control->getTag();
 
 	switch (tag)
 	{
@@ -1125,18 +1105,19 @@ void RezSynthEditor::valueChanged(CDrawContext* context, CControl* control)
 			if (sepAmountTextEdit)
 			{
 				sepAmountTextEdit->getText(sepAmountString);
-				sscanfReturn = sscanf(sepAmountString, "%f", &tempSepAmount);
+				float tempSepAmount;
+				long sscanfReturn = sscanf(sepAmountString, "%f", &tempSepAmount);
 				if ( (sscanfReturn != EOF) && (sscanfReturn > 0) )
 				{
 					// no negative values
-					if (tempSepAmount < 0.0f)
-						tempSepAmount = -tempSepAmount;
+					tempSepAmount = fabsf(tempSepAmount);
+					long sepTag = (((DfxPlugin*)effect)->getparameter_i(kSepMode) == kSepMode_octaval) ? kSepAmount_octaval : kSepAmount_linear;
 					// scale the value to a 0.0 to 1.0 parameter value
-					if ( sepModeBool(((RezSynth*)effect)->fSepMode) )
+					if (sepTag == kSepAmount_octaval)
 						tempSepAmount = tempSepAmount / ((float)MAX_SEP_AMOUNT*12.0f);
 					else
 						tempSepAmount = tempSepAmount / (float)MAX_SEP_AMOUNT;
-					effect->setParameterAutomated(kSepAmount, tempSepAmount);
+					effect->setParameterAutomated(sepTag, tempSepAmount);
 				}
 				// there was a sscanf() error
 				else
@@ -1183,9 +1164,26 @@ void RezSynthEditor::valueChanged(CDrawContext* context, CControl* control)
 			chunk->setLearner(tag, kEventBehaviourToggle);
 			break;
 
+		case kSepAmount_octaval:
+		case kSepAmount_linear:
+			effect->setParameterAutomated(tag, control->getValue());
+			chunk->setLearner(tag);
+			if (chunk->isLearning())
+			{
+				if (sepAmountFader != NULL)
+				{
+					if ( (sepAmountFader->getTag() == tag) && 
+							(sepAmountFader->getHandle() == gFaderHandle) )
+					{
+						sepAmountFader->setHandle(gGlowingFaderHandle);
+						sepAmountFader->setDirty();
+					}
+				}
+			}
+			break;
+
 		case kBandwidth:
 		case kNumBands:
-		case kSepAmount:
 		case kAttack:
 		case kRelease:
 		case kVelCurve:
@@ -1255,6 +1253,24 @@ void RezSynthEditor::idle()
 					somethingChanged = true;
 				}
 			}
+		}
+	}
+	//
+	if (sepAmountFader != NULL)
+	{
+		if ( !chunk->isLearner(sepAmountFader->getTag()) && 
+				(sepAmountFader->getHandle() == gGlowingFaderHandle) )
+		{
+			sepAmountFader->setHandle(gFaderHandle);
+			sepAmountFader->setDirty();
+			somethingChanged = true;
+		}
+		else if ( chunk->isLearner(sepAmountFader->getTag()) && 
+				(sepAmountFader->getHandle() == gFaderHandle) )
+		{
+			sepAmountFader->setHandle(gGlowingFaderHandle);
+			sepAmountFader->setDirty();
+			somethingChanged = true;
 		}
 	}
 
