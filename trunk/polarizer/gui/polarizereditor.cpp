@@ -57,7 +57,7 @@ class PolarizerSlider : public DGSlider
 {
 public:
 	PolarizerSlider(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inRegion, 
-					DfxGuiSliderStyle inOrientation, DGGraphic *inForeGround, DGGraphic *inBackground)
+					DfxGuiSliderStyle inOrientation, DGImage *inForeGround, DGImage *inBackground)
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inForeGround, inBackground)
 	{
 		DGRect *fb = getBounds();
@@ -119,18 +119,18 @@ OSStatus PolarizerEditor::open(float inXOffset, float inYOffset)
 	// load some graphics
 
 	// background image
-	DGGraphic *gBackground = new DGGraphic("polarizer-background.png");
+	DGImage *gBackground = new DGImage("polarizer-background.png");
 	addImage(gBackground);
 	SetBackgroundImage(gBackground);
 	//
-	DGGraphic *gSliderHandle = new DGGraphic("slider-handle.png");
+	DGImage *gSliderHandle = new DGImage("slider-handle.png");
 	addImage(gSliderHandle);
-	DGGraphic *gSliderBackground = new DGGraphic("slider-background.png");
+	DGImage *gSliderBackground = new DGImage("slider-background.png");
 	addImage(gSliderBackground);
 	//
-	DGGraphic *gImplodeButton = new DGGraphic("implode-button.png");
+	DGImage *gImplodeButton = new DGImage("implode-button.png");
 	addImage(gImplodeButton);
-	DGGraphic *gDestroyFXlinkButton = new DGGraphic("destroy-fx-link.png");
+	DGImage *gDestroyFXlinkButton = new DGImage("destroy-fx-link.png");
 	addImage(gDestroyFXlinkButton);
 
 
