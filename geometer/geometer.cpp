@@ -25,14 +25,19 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
   FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5, "samples");
-  FPARAM(shape, P_SHAPE, "shape", 0.0, "");
+  FPARAM(shape, P_SHAPE, "wshape", 0.0, "");
 
   FPARAM(pointstyle, P_POINTSTYLE, "points where", 0.0, "choose");
-  FPARAM(pointfreq, P_POINTFREQ, "freq", 0.1f, "percent");
+  FPARAM(pointparam, P_POINTPARAM, "freq", 0.1f, "percent");
   FPARAM(interpstyle, P_INTERPSTYLE, "interp how", 0.0, "choose");
-  FPARAM(pointop, P_POINTOP, "pointop", 0.5f, "choose");
 
-  FPARAM(zero_thresh, P_ZEROTHRESH, "zero thresh", 0.0000001, "");
+  FPARAM(pointop1, P_POINTOP1, "pointop1", 0.5f, "choose");
+  FPARAM(pointop2, P_POINTOP2, "pointop2", 0.5f, "choose");
+  FPARAM(pointop3, P_POINTOP3, "pointop3", 0.5f, "choose");
+
+  FPARAM(oppar1, P_OPPAR1, "opparm1", 0.5f, "???");
+  FPARAM(oppar2, P_OPPAR2, "opparm1", 0.5f, "???");
+  FPARAM(oppar3, P_OPPAR3, "opparm1", 0.5f, "???");
 
   long maxframe = 0;
   for (long i=0; i<BUFFERSIZESSIZE; i++)
@@ -171,10 +176,10 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     break;
     /* geometer */
   case P_POINTSTYLE:
-    if (pointstyle < 0.33) strcpy(text, "ext 'n cross");
-    else if (pointstyle < 0.66) strcpy(text, "at freq");
-    else strcpy(text, "randomly");
-    
+    if (pointstyle < 0.25) strcpy(text, "ext 'n cross");
+    else if (pointstyle < 0.50) strcpy(text, "at freq");
+    else if (pointstyle < 0.75) strcpy(text, "randomly");
+    else strcpy(text, "dy/dx zero-cross");
     break;
   case P_INTERPSTYLE:
     if (interpstyle < 0.10) strcpy(text, "polygon");
@@ -184,10 +189,12 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     else if (interpstyle < 0.90) strcpy(text, "pulse-debug");
     else strcpy(text, "unsup");
     break;
-  case P_POINTOP:
-    if (pointop < 0.10) strcpy(text, "1/4");
-    else if (pointop < 0.20) strcpy(text, "1/2");
-    else if (pointop < 0.60) strcpy(text, "no");
+  case P_POINTOP1:
+  case P_POINTOP2:
+  case P_POINTOP3:
+    if (*paramptrs[index].ptr < 0.10) strcpy(text, "1/4");
+    else if (*paramptrs[index].ptr < 0.20) strcpy(text, "1/2");
+    else if (*paramptrs[index].ptr < 0.60) strcpy(text, "no");
     else strcpy(text, "x 2");
     break;
   default:
@@ -207,17 +214,72 @@ void PLUGIN::getParameterLabel(long index, char *label) {
   }
 }
 
-/* this is where you should write your real processing
-   function. It will be called on overlapping input frames,
-   but it doesn't need to know about that.
+/* operations on points. this is a separate function
+   because it is called once for each operation slot.
+*/
+int PLUGIN::pointops(float pop, int numpts, float op_param) {
+  /* pointops. */
 
-   Keep in mind that, for instance, a delay-like plug
-   that keeps a history of samples it's seen will not work
-   right here, since processw does not receive adjacent
-   frames. It might be possible to use two delay buffers,
-   toggling between them with each call, but it's probably
-   best to just use the windowing setup for functions that
-   operate entirely within one buffer.
+  int maxpts = framesize * 2;
+
+  if (pop < 0.20) {
+    int times = 1;
+    if (pop < 0.10) times = 2;
+
+    for(int t = 0; t < times; t++) {
+      /* cut points in half. never touch first or last. */
+      int q = 1, i = 1;
+      for(i=1; q < (numpts - 1); i++) {
+        pointx[i] = pointx[q];
+        pointy[i] = pointy[q];
+        q += 2;
+      }
+      pointx[i] = pointx[numpts - 1];
+      pointy[i] = pointy[numpts - 1];
+      numpts = i+1;
+    }
+  } else if (pop < 0.60) { 
+    /* nothing */ 
+  } else {
+    /* x2 points */
+    int i = 0, t;
+    for(t = 0; i < (numpts - 1) && t < (maxpts-2); i++) {
+      tempx[t] = pointx[i];
+      tempy[t] = pointy[i];
+      t++;
+      /* now, only if there's room... */
+      if (pointx[i+1] - pointx[i] > 1) {
+	/* add an extra point. Pick it in some arbitrary weird way. 
+	   my idea is to double the frequency ...
+	*/
+      
+	tempy[t] = (op_param * 2.0 - 1.0) * pointy[i];
+	tempx[t] = (pointx[i] + pointx[i+1]) >> 1;
+
+	t++;
+      }
+
+    }
+    /* always include last */
+    tempx[t] = pointx[numpts-1];
+    tempy[t] = pointy[numpts-1];
+    t++;
+
+    for(int c = 0; c < t; c++) {
+      pointx[c] = tempx[c];
+      pointy[c] = tempy[c];
+    }
+    numpts = t + 1;
+  }
+
+
+  return numpts;
+}
+
+/* this processes an individual window.
+   1. generate points
+   2. do operations on points (in slots op1, op2, op3)
+   3. generate waveform
 */
 void PLUGIN::processw(float * in, float * out, long samples) {
 
@@ -225,13 +287,12 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
   pointx[0] = 0;
   pointy[0] = in[0];
-  numpts = 1;
+  int numpts = 1;
 
   int maxpts = framesize * 2;
 
-  if (pointstyle < 0.33) {
+  if (pointstyle < 0.25) {
     /* extremities and crossings */
-
 
     float ext = 0.0;
     int extx = 0;
@@ -245,14 +306,14 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       switch(state) {
       case SZ: {
         /* just output a zero. */
-        if (in[i] <= zero_thresh && in[i] >= -zero_thresh) state = SZC;
-        else if (in[i] < -zero_thresh) { state = SB; ext = in[i]; extx = i; }
+        if (in[i] <= pointparam && in[i] >= -pointparam) state = SZC;
+        else if (in[i] < -pointparam) { state = SB; ext = in[i]; extx = i; }
         else { state = SA; ext = in[i]; extx = i; }
         break;
       }
       case SZC: {
         /* continuing zeros */
-        if (in[i] <= zero_thresh && in[i] >= -zero_thresh) break;
+        if (in[i] <= pointparam && in[i] >= -pointparam) break;
       
         /* push zero for last spot (we know it was a zero and not pushed). */
         if (numpts < (maxpts-1)) {
@@ -274,7 +335,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       case SA: {
         /* above zero */
 
-        if (in[i] <= zero_thresh) {
+        if (in[i] <= pointparam) {
           /* no longer above 0. push the highest point I reached. */
           if (numpts < (maxpts-1)) {
             pointx[numpts] = extx;
@@ -282,7 +343,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
             numpts++;
           } 
           /* and decide state */
-          if (in[i] >= -zero_thresh) {
+          if (in[i] >= -pointparam) {
             if (numpts < (maxpts-1)) {
               pointx[numpts] = i;
               pointy[numpts] = 0.0;
@@ -305,7 +366,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       case SB: {
         /* below zero */
 
-        if (in[i] >= -zero_thresh) {
+        if (in[i] >= -pointparam) {
           /* no longer below 0. push the lowest point I reached. */
           if (numpts < (maxpts-1)) {
             pointx[numpts] = extx;
@@ -313,7 +374,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
             numpts++;
           } 
           /* and decide state */
-          if (in[i] <= zero_thresh) {
+          if (in[i] <= pointparam) {
             if (numpts < (maxpts-1)) {
               pointx[numpts] = i;
               pointy[numpts] = 0.0;
@@ -337,10 +398,11 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
       }
     }
-  } else if (pointstyle < 0.66) {
+  } else if (pointstyle < 0.50) {
     /* at frequency */
     
-    int nth = (pointfreq * pointfreq) * samples;
+    /* XXX let the user choose hz, do conversion */
+    int nth = (pointparam * pointparam) * samples;
     int ctr = nth;
   
     for(int i = 0; i < samples; i ++) {
@@ -355,10 +417,10 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       }
     }
 
-  } else {
+  } else if (pointstyle < 0.75) {
     /* randomly */
 
-    int n = (1.0 - pointfreq) * samples;
+    int n = (1.0 - pointparam) * samples;
 
     for(;n --;) {
       if (numpts < (maxpts-1)) {
@@ -375,67 +437,48 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       pointy[sd] = in[pointx[sd]];
     }
 
+  } else {
+    int lastsign = 0;
+    float lasts = in[0];
+    int sign;
+
+    pointx[0] = 0;
+    pointy[0] = in[0];
+    numpts = 1;
+    
+    for(int i = 1; i < samples; i++) {
+      
+      if (pointparam > 0.5) {
+	float pp = pointparam - 0.5;
+	sign = (in[i] - lasts) > (pp * pp);
+      } else {
+	float pp = 0.5 - pointparam;
+	sign = (in[i] - lasts) < (pp * pp);
+      }
+
+      lasts = in[i];
+
+      if (sign != lastsign) {
+	pointx[numpts] = i;
+	pointy[numpts] = in[i];
+	numpts++;
+	if (numpts > (maxpts-1)) break;
+      }
+
+      lastsign = sign;
+    }
+    
+
   }
+
   /* always push final point for continuity (we saved room) */
   pointx[numpts] = samples-1;
   pointy[numpts] = in[samples-1];
   numpts++;
 
-#if 1
-  /* pointops. */
-
-  if (pointop < 0.20) {
-    int times = 1;
-    if (pointop < 0.10) times = 2;
-
-    for(int t = 0; t < times; t++) {
-      /* cut points in half. never touch first or last. */
-      int q = 1, i = 1;
-      for(i=1; q < (numpts - 1); i++) {
-        pointx[i] = pointx[q];
-        pointy[i] = pointy[q];
-        q += 2;
-      }
-      pointx[i] = pointx[numpts - 1];
-      pointy[i] = pointy[numpts - 1];
-      numpts = i+1;
-    }
-  } else if (pointop < 0.60) { 
-    /* nothing */ 
-  } else {
-    /* x2 points */
-    int i = 0, t;
-    for(t = 0; i < (numpts - 1) && t < (maxpts-2); i++) {
-      tempx[t] = pointx[i];
-      tempy[t] = pointy[i];
-      t++;
-      /* now, only if there's room... */
-      if (pointx[i+1] - pointx[i] > 1) {
-	/* add an extra point. Pick it in some arbitrary weird way. 
-	   my idea is to double the frequency ...
-	*/
-      
-	tempy[t] = 0.75; //- pointy[i];
-	tempx[t] = (pointx[i] + pointx[i+1]) >> 1;
-
-	t++;
-      }
-
-    }
-    /* always include last */
-    tempx[t] = pointx[numpts-1];
-    tempy[t] = pointy[numpts-1];
-    t++;
-
-    for(int c = 0; c < t; c++) {
-      pointx[c] = tempx[c];
-      pointy[c] = tempy[c];
-    }
-    numpts = t + 1;
-  }
-
-#endif
-
+  numpts = pointops(pointop1, numpts, oppar1);
+  numpts = pointops(pointop2, numpts, oppar2);
+  numpts = pointops(pointop3, numpts, oppar3);
 
   if (interpstyle < 0.10) {
     /* linear interpolation - "polygon" */
