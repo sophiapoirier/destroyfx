@@ -59,7 +59,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 	}
 
 	// only update the fDivisor value if we're in MIDI nudge mode or trigger mode with a note currently active
-	if ( (midiMode == kMidiModeNudge) || ((midiMode == kMidiModeTrigger) && (midistuff->noteQueue[0] >= 0)) )
+	if ( (midiMode == kMidiMode_nudge) || ((midiMode == kMidiMode_trigger) && (midistuff->noteQueue[0] >= 0)) )
 	{
 		// tell the GUI to update the divisor parameter's slider & value display
 		divisorWasChangedByMIDI = true;
@@ -149,7 +149,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 				lastNoteOn = kInvalidMidi;
 			}
 			// if we're in MIDI nudge mode, allow the last note-on to update fDivisor even if the note is not still active
-			else if ( (midiMode == kMidiModeNudge) && (foundNoteOn >= 0) )
+			else if ( (midiMode == kMidiMode_nudge) && (foundNoteOn >= 0) )
 			{
 				divisor = getDivisorParameterFromNote(foundNoteOn);
 				// false oldNote so it will be ignored until a new valid value is put into it
@@ -195,7 +195,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 		if (midistuff->noteQueue[0] >= 0)
 			divisor = getDivisorParameterFromNote(midistuff->noteQueue[0]);
 		// but we are more permissive if we're in MIDI nudge mode
-		else if ( (midiMode == kMidiModeNudge) && (lastNoteOn >= 0) )
+		else if ( (midiMode == kMidiMode_nudge) && (lastNoteOn >= 0) )
 			divisor = getDivisorParameterFromNote(lastNoteOn);
 	}
 	// negate the old note stuff so it will be ignored until a new valid value is put into it
@@ -217,7 +217,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 
 	// if we're in MIDI trigger mode & no notes are active & the divisor hasn't been updated 
 	// via normal parameter changes, then set divisor to its min so that we get that effect punch-out
-	if ( ((midiMode == kMidiModeTrigger) && (midistuff->noteQueue[0] < 0)) && (!divisorWasChangedByHand) )
+	if ( ((midiMode == kMidiMode_trigger) && (midistuff->noteQueue[0] < 0)) && (!divisorWasChangedByHand) )
 	{
 		divisor = getparametermin_f(kDivisor);
 		divisorWasChangedByMIDI = true;

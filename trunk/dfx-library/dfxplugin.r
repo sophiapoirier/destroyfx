@@ -1,6 +1,8 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
-This is our Audio Unit resource shit.
+This is our Audio Unit resource stuff that, so far, serves no purpose.
+(Can you help me make Rez (the Mac OS X resource compiler) see header defines?)
+written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #include "AudioUnit.r"

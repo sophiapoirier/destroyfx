@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
-This is our Audio Unit shit.
+This is our class for E-Z plugin-making and E-Z multiple-API support.
+This is the Audio Unit stuff.
 written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
@@ -675,7 +676,6 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags
 				const AudioBufferList &inBuffer, AudioBufferList &outBuffer, 
 				UInt32 inFramesToProcess)
 {
-printf("\tcalling DfxPlugin::ProcessBufferLists()\n");
 	OSStatus result = noErr;
 
 	// do any pre-DSP prep
