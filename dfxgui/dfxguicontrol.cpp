@@ -6,7 +6,7 @@
 DGControl::DGControl(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion)
 :	ownerEditor(inOwnerEditor)
 {
-	auvp = AUVParameter(ownerEditor->GetEditAudioUnit(), (AudioUnitParameterID)inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
+	auvp = CAAUParameter(ownerEditor->GetEditAudioUnit(), (AudioUnitParameterID)inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
 	parameterAttached = true;
 	Range = auvp.ParamInfo().maxValue - auvp.ParamInfo().minValue;
 	
@@ -17,7 +17,7 @@ DGControl::DGControl(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRe
 DGControl::DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange)
 :	ownerEditor(inOwnerEditor), Range(inRange)
 {
-	auvp = AUVParameter();	// an empty AUVParameter
+	auvp = CAAUParameter();	// an empty CAAUParameter
 	parameterAttached = false;
 
 	init(inRegion);
@@ -187,7 +187,7 @@ void DGControl::setParameterID(long inParameterID)
 	else if ( !parameterAttached || (inParameterID != getParameterID()) )	// only do this if it's a change
 	{
 		parameterAttached = true;
-		auvp = AUVParameter(getDfxGuiEditor()->GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, 
+		auvp = CAAUParameter(getDfxGuiEditor()->GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, 
 							kAudioUnitScope_Global, (AudioUnitElement)0);
 		createAUVcontrol();
 		redraw();	// it might not happen if the new parameter value is the same as the old value, so make sure it happens
@@ -263,7 +263,7 @@ void DGControl::shrinkForeBounds(long inXoffset, long inYoffset, long inWidthShr
 
 //-----------------------------------------------------------------------------
 DGCarbonViewControl::DGCarbonViewControl(AUCarbonViewBase * inOwnerView, AUParameterListenerRef inListener, 
-										ControlType inType, const AUVParameter &inAUVParam, ControlRef inControl)
+										ControlType inType, const CAAUParameter &inAUVParam, ControlRef inControl)
 :	AUCarbonViewControl(inOwnerView, inListener, inType, inAUVParam, inControl)
 {
 }
