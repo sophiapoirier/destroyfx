@@ -207,7 +207,7 @@ double nearestIntegerAbove(double number)
 }
 
 //-----------------------------------------------------------------------------
-void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	if (tuneMode == kFineMode)
 	{
@@ -217,7 +217,7 @@ void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned lo
 
 	entryValue = GetControl32BitValue(carbonControl);
 
-	double oldSpeedValue = getDfxGuiEditor()->getparameter_d( getParameterID() );
+	double oldSpeedValue = getDfxGuiEditor()->getparameter_f( getParameterID() );
 	double newSpeedValue;
 	bool isInc = (valueChangeAmount >= 0.0f);
 	double snapAmount = (isInc) ? 1.001 : -1.001;
