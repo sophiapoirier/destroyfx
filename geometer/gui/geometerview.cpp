@@ -15,32 +15,32 @@ void GeometerView::draw(CDrawContext * ctx) {
   offc->setFrameColor(coldwave);
 
   offc->setFillColor(cbackground);
-  offc->fillRect(CRect(0,0,gwidth,gheight));
+  offc->fillRect(CRect(-1,-1,gwidth,gheight));
 
-  offc->moveTo (CPoint(0, gheight >> 1));
+  offc->moveTo (CPoint(0, gheight * ((- inputs[0])+1.0f) * 0.5f));
 
   for(int u = 0; u < samples; u ++) {
-    offc->lineTo (CPoint(u, gheight * ((inputs[u]+1.0) * 0.5)));
+    offc->lineTo (CPoint(u, gheight * (((-inputs[u])+1.0f) * 0.5f)));
   }
 
   offc->setFrameColor(cnewwave);
-  offc->moveTo (CPoint(0, gheight >> 1));
+  offc->moveTo (CPoint(0, gheight * ((- outputs[0])+1.0f) * 0.5f));
 
   for(int v = 0; v < samples; v ++) {
-    offc->lineTo (CPoint(v, gheight * ((outputs[v]+1.0) * 0.5)));
+    offc->lineTo (CPoint(v, gheight * (((-outputs[v])+1.0f) * 0.5f)));
   }
 
 #if 1
   offc->setFillColor(cpointoutside);
   for(int w = 0; w < numpts; w ++) {
-    int yy = (int)(gheight * ((pointsy[w]+1.0)*0.5));
+    int yy = (int)(gheight * (((-pointsy[w])+1.0f)*0.5f));
     offc->fillRect(CRect(pointsx[w]-2, yy - 2,
 			 pointsx[w]+2, yy + 2));
   }
 
   offc->setFrameColor(cpointinside);
   for(int t = 0; t < numpts; t ++) {
-    offc->drawPoint(CPoint(pointsx[t], (gheight * ((pointsy[t]+1.0)*0.5))), cpointinside);
+    offc->drawPoint(CPoint(pointsx[t], (gheight * (((-pointsy[t])+1.0f)*0.5f))), cpointinside);
   }
 #endif
 
