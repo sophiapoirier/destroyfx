@@ -116,11 +116,6 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	currentTempoBPS = getparameter_f(kTempo) / 60.0f;
 
 
-	#if TARGET_API_AUDIOUNIT
-		// XXX is there a better way to do this?
-		update_preset(0);	// make host see that current preset is 0
-	#endif
-
 	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
 		editor = new ScrubbyEditor(this);
 	#endif

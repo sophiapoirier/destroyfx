@@ -637,6 +637,7 @@ private:
 public:
 
 #if TARGET_API_AUDIOUNIT
+	virtual void PostConstructor();
 	virtual ComponentResult Initialize();
 	virtual void Cleanup();
 	virtual void Reset();
