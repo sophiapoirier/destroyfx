@@ -5,6 +5,7 @@
 
 	P { text-indent: 0em }
 	p.intro { font: 13px Geneva,Arial,Verdana ; text-indent: 0em ; text-align: justify ; color: #000000 }
+	p.declaration { font: 13px Geneva,Arial,Verdana ; text-indent: 0em ; text-align: center }
 	p.label { font: 13px Geneva,Arial,Verdana ; font-weight: bold }
 	p.desc { font: 13px Geneva,Arial,Verdana ;  text-indent: 0em ; text-align: justify }
 	p.footer { font: 12px Geneva,Arial,Verdana ; text-align: center }
