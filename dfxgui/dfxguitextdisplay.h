@@ -39,7 +39,6 @@ public:
 
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
-	virtual bool mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers);
 
 	void setTextAlignment(DfxGuiTextAlignment newAlignment)
 		{	alignment = newAlignment;	}
@@ -49,11 +48,6 @@ public:
 		{	fontSize = newSize;	}
 	void setFontColor(DGColor newColor)
 		{	fontColor = newColor;	}
-	void setMouseDragRange(float inMouseDragRange)
-	{
-		if (inMouseDragRange != 0.0f)	// to prevent division by zero
-			mouseDragRange = inMouseDragRange;
-	}
 	void setAntiAliasing(bool inAntiAlias)
 		{	shouldAntiAlias = inAntiAlias;	}
 
@@ -71,7 +65,6 @@ protected:
 	float					fontAscent, fontDescent;
 
 	DfxGuiTextDisplayMouseAxis	mouseAxis;	// flags indicating which directions you can mouse to adjust the control value
-	float					mouseDragRange;	// the range of pixels over which you can drag the mouse to adjust the control value
 	float					lastX, lastY;
 };
 
@@ -88,13 +81,6 @@ public:
 	virtual ~DGStaticTextDisplay();
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
-
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
-		{ }
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
-		{ }
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
-		{ }
 
 	void setText(const char * inNewText);
 #if MAC
@@ -122,13 +108,6 @@ public:
 	virtual void post_embed();
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
-
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
-		{ }
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
-		{ }
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
-		{ }
 
 	void setText(long inStringNum, const char * inNewText);
 
