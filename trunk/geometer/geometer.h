@@ -153,6 +153,8 @@ public:
      so some hosts will still call this incorrectly named version... */
   virtual long getGetTailSize() { return getTailSize(); }
 
+  virtual long canDo(char* text);
+
   virtual void suspend();
   virtual void resume();
 
