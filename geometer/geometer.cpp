@@ -191,7 +191,7 @@ PLUGIN::~PLUGIN() {
 PLUGINCORE::PLUGINCORE(DfxPlugin * inDfxPlugin)
   : DfxPluginCore(inDfxPlugin), cs(NULL)
 {
-  cs = new dfxmutex();
+  cs = new DfxMutex();
 #else
 long PLUGIN::initialize()
 {
