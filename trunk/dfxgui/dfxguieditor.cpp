@@ -67,6 +67,11 @@ CFRelease(mut);
 //-----------------------------------------------------------------------------
 DfxGuiEditor::~DfxGuiEditor()
 {
+	#if TARGET_PLUGIN_USES_MIDI
+		if (GetEditAudioUnit() != NULL)
+			setmidilearning(false);
+	#endif
+
 	if (idleTimer != NULL)
 		RemoveEventLoopTimer(idleTimer);
 	idleTimer = NULL;
