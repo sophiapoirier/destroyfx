@@ -9,10 +9,9 @@
 #  au.sh bufferoverride Buffer\ Override buffer-override.html 1
 #  au.sh monomaker Monomaker monomaker.html 0
 
-# the COPY_PHASE_STRIP option in Project Builder runs strip -x on bundles, 
-# which doesn't seem to get all of the debugging symbols out
-# running strip -S reduces the executable file size a bit more
-strip -S ~/Library/Audio/Plug-Ins/Components/"$2.component"/Contents/MacOS/*
+# running strip -x reduces the executable file size 
+# by removing all local symbols and debugging symbols
+strip -x ~/Library/Audio/Plug-Ins/Components/"$2.component"/Contents/MacOS/*
 
 # run the input through makedist.sh
 #  * assumes that makedist.sh is in the same directory as this script
