@@ -1,3 +1,21 @@
 
-This is a stub plugin, for easy construction of new plugins.
-It does nothing (actually, it outputs silence.)
+
+
+DFX Geometer redraws your waveforms in a variety of ways.
+
+The basic idea is to generate landmarks on top of your sound wave,
+either at extremities and zero-crossings, or at a specific frequency,
+do some operations on those landmarks, and then to do processing based
+on those landmarks.
+
+Landmark operations include dithering (remove 1/2 or 1/4 of landmarks),
+or artificial doubling (double the amount of points in an arbitrary
+way).
+
+One kind of processing is to redraw the wave using straight lines
+("polygon"). This induces a strange kind of lowpass and plenty of
+aliasing. We can also use straight lines in the wrong direction
+("wrongygon") for a harsh sound.
+
+
+(More coming soon.)
