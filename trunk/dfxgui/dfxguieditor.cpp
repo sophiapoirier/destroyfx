@@ -17,26 +17,6 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 :	AUCarbonViewBase(inInstance, 0.015f)	// 15 ms parameter notification update interval
 {
-/*
-CFStringRef text = CFSTR("yo dude let's go");
-CFRange foundRange = CFStringFind(text, CFSTR(" "), 0);
-if (foundRange.length != 0)
-{
-CFMutableStringRef mut = CFStringCreateMutableCopy(kCFAllocatorDefault, 0, text);
-if (mut != NULL)
-{
-fprintf(stderr, "\n\tbefore:\n");
-CFShow(mut);
-CFStringFindAndReplace(mut, CFSTR(" "), CFSTR(""), CFRangeMake(0, CFStringGetLength(mut)), 0);
-fprintf(stderr, "\treplaced:\n");
-CFShow(mut);
-CFRelease(mut);
-}
-}
-*/
-
-
-
 	controlsList = NULL;
 	imagesList = NULL;
   
@@ -517,9 +497,10 @@ OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, 
 	OSStatus result = noErr;
 
 	// do the new-fangled way, if it's available on the user's system
-	if ( IsAvailable_AU2rev1() )
+	if (AUEventListenerNotify != NULL)
 	{
 		AudioUnitEvent paramEvent;
+		memset(&paramEvent, 0, sizeof(paramEvent));
 		paramEvent.mEventType = inEventType;
 		paramEvent.mArgument.mParameter.mParameterID = inParameterID;
 		paramEvent.mArgument.mParameter.mAudioUnit = GetEditAudioUnit();
