@@ -345,6 +345,7 @@ public:
 	void setpresetparameter_d(long presetIndex, long parameterIndex, double newValue);
 	void setpresetparameter_i(long presetIndex, long parameterIndex, long newValue);
 	void setpresetparameter_b(long presetIndex, long parameterIndex, bool newValue);
+	void setpresetparameter_gen(long presetIndex, long parameterIndex, float genValue);
 	void update_preset(long presetIndex);
 	DfxParamValue getpresetparameter(long presetIndex, long parameterIndex);
 	float getpresetparameter_f(long presetIndex, long parameterIndex);
