@@ -37,12 +37,12 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_indexed(kBufferSize_sync, "forced buffer size (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kBufferTempoSync, "forced buffer tempo sync", false, false);
 	initparameter_b(kBufferInterrupt, "buffer interrupt", true, true);
-	initparameter_f(kDivisorLFOrate_abs, "divisor LFO rate (free)", 0.3f, 3.0f, 0.03f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
+	initparameter_f(kDivisorLFOrate_abs, "divisor LFO rate (free)", 0.3f, 3.0f, 0.03f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_squared);
 	initparameter_indexed(kDivisorLFOrate_sync, "divisor LFO rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kDivisorLFOdepth, "divisor LFO depth", 0.0f, 0.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
 	initparameter_indexed(kDivisorLFOshape, "divisor LFO shape", 0, 0, numLFOshapes);
 	initparameter_b(kDivisorLFOtempoSync, "divisor LFO tempo sync", false, false);
-	initparameter_f(kBufferLFOrate_abs, "buffer LFO rate (free)", 3.0f, 3.0f, 0.03f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
+	initparameter_f(kBufferLFOrate_abs, "buffer LFO rate (free)", 3.0f, 3.0f, 0.03f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_exp);//kDfxParamCurve_squared);
 	initparameter_indexed(kBufferLFOrate_sync, "buffer LFO rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kBufferLFOdepth, "buffer LFO depth", 0.0f, 0.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
 	initparameter_indexed(kBufferLFOshape, "buffer LFO shape", 0, 0, numLFOshapes);

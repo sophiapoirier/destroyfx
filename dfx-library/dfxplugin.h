@@ -214,11 +214,15 @@ SUPPORT_AU_VERSION_1
 	#include "dfxsettings.h"
 #endif
 
+#ifdef TARGET_API_AUDIOUNIT
+	#include "dfxpluginproperties.h"
+#endif
+
 
 
 
 //-----------------------------------------------------------------------------
-// constants & macros
+// constants & types
 
 #ifdef kAudioUnitErr_FailedInitialization
 #define kDfxErr_InitializationFailed	kAudioUnitErr_FailedInitialization
@@ -231,17 +235,6 @@ SUPPORT_AU_VERSION_1
 #else
 #define kDfxErr_NoError	0
 #endif
-
-
-// property IDs for Audio Unit property stuff
-enum DfxPluginProperties {
-	kDfxPluginProperty_PluginPtr = 64000,	// get a pointer to the DfxPlugin
-	kDfxPluginProperty_RandomizeParameters,	// randomize the parameters
-	kDfxPluginProperty_MidiLearn,			// get/set the MIDI learn state
-	kDfxPluginProperty_ResetMidiLearn,		// clear MIDI parameter assignments
-	kDfxPluginProperty_MidiLearner			// get/set the current MIDI learner parameter
-};
-
 
 
 struct DfxTimeInfo {
