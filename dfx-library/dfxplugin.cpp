@@ -612,7 +612,10 @@ bool DfxPlugin::loadpreset(long presetIndex)
 		return false;
 
 	for (long i=0; i < numParameters; i++)
+	{
 		setparameter(i, getpresetparameter(presetIndex, i));
+		postupdate_parameter(i);	// inform any parameter listeners of the changes
+	}
 
 	// do stuff necessary to inform the host of changes, etc.
 	update_preset(presetIndex);
