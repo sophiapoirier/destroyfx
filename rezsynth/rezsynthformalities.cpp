@@ -1,6 +1,4 @@
-/*---------------------------------------------------------------
-   © 2001, Marcberg Soft und Hard GmbH, All Rights Perversed
----------------------------------------------------------------*/
+/*-------------- by Marc Poirier  ][  January - March 2001 -------------*/
 
 #include "rezsynth.hpp"
 
@@ -26,7 +24,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 	initparameter_d(kBandwidth, "bandwidth", 3.0, 3.0, 0.1, 300.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
-	initparameter_i(kNumBands, "# of bands", 1, 1, 1, 30, kDfxParamUnit_quantity, kDfxParamCurve_stepped);
+	initparameter_i(kNumBands, "bands per note", 1, 1, 1, 30, kDfxParamUnit_quantity, kDfxParamCurve_stepped);
 	initparameter_d(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
 	initparameter_d(kSepAmount_linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, kDfxParamUnit_scalar);	// % of center frequency
 	initparameter_indexed(kSepMode, "separation mode", kSepMode_octaval, kSepMode_octaval, kNumSepModes);
@@ -39,7 +37,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kVelInfluence, "velocity influence", 60.0f, 100.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
 	initparameter_f(kVelCurve, "velocity curve", 2.0f, 1.0f, 0.3f, 3.0f, kDfxParamUnit_exponent);
 	initparameter_d(kPitchbendRange, "pitchbend range", 3.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamUnit_semitones);
-	initparameter_indexed(kScaleMode, "input gain mode", kScaleMode_rms, kScaleMode_none, kNumScaleModes);
+	initparameter_indexed(kScaleMode, "input gain scaling mode", kScaleMode_rms, kScaleMode_none, kNumScaleModes);
 	initparameter_f(kGain, "output gain", 1.0f, 1.0f, 0.0f, 3.981f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kBetweenGain, "between gain", 0.0f, 1.0f, 0.0f, 3.981f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kDryWetMix, "dry/wet mix", 100.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_drywetmix);
