@@ -4,6 +4,7 @@
 
 #include "dfxgui.h"
 #include "dfxguislider.h"
+#include "dfxguibutton.h"
 #include "dfxguidisplay.h"
 
 
@@ -15,6 +16,7 @@ public:
 	virtual ~BufferOverrideEditor();
 	
 	virtual OSStatus open(Float32 inXOffset, Float32 inYOffset);
+	virtual void mouseovercontrolchanged();
 
 	AUParameterListenerRef parameterListener;
 	AudioUnitParameter bufferSizeTempoSyncAUP, divisorLFOtempoSyncAUP, bufferLFOtempoSyncAUP;
@@ -25,6 +27,10 @@ public:
 	DGTextDisplay *bufferSizeDisplay;
 	DGTextDisplay *divisorLFOrateDisplay;
 	DGTextDisplay *bufferLFOrateDisplay;
+
+	DGButton *midilearnButton;
+	DGButton *midiresetButton;
+	DGStaticTextDisplay *helpDisplay;
 };
 
 

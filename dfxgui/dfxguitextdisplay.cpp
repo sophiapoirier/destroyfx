@@ -141,34 +141,101 @@ whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEdito
 
 	if (textProc != NULL)
 	{
-		char *text = (char*) malloc(256);
+		char text[256];
 		text[0] = 0;
 		textProc(auvp.GetValue(), text, textProcUserData);
-
-		if (fontName != NULL)
-		{
-			CGContextSelectFont(context, fontName, fontSize, kCGEncodingMacRoman);
-			if (strcmp(fontName, "snoot.org pixel10") == 0)
-			{
-				CGContextSetShouldSmoothFonts(context, false);
-				CGContextSetShouldAntialias(context, false);	// it appears that I gotta do this, too
-			}
-		}
-		CGContextSetRGBFillColor(context, (float)fontColor.r/255.0f, (float)fontColor.g/255.0f, (float)fontColor.b/255.0f, 1.0f);
-
-		if (alignment != kTextAlign_left)
-		{
-			CGContextSetTextDrawingMode(context, kCGTextInvisible);
-			CGContextShowTextAtPoint(context, 0, 0, text, strlen(text));
-			CGPoint pt = CGContextGetTextPosition(context);
-			if (alignment == kTextAlign_center)
-				bounds.origin.x += (bounds.size.width - pt.x) / 2.0f;
-			else if (alignment == kTextAlign_right)
-				bounds.origin.x += bounds.size.width - pt.x;
-		}
-		CGContextSetTextDrawingMode(context, kCGTextFill);
-		CGContextShowTextAtPoint(context, bounds.origin.x, bounds.origin.y+2.0f, text, strlen(text));
-
-		free(text);
+		drawText(context, bounds, text);
 	}
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::drawText(CGContextRef context, CGRect& inBounds, const char *inString)
+{
+	if (inString == NULL)
+		return;
+
+	if (fontName != NULL)
+	{
+		CGContextSelectFont(context, fontName, fontSize, kCGEncodingMacRoman);
+		if (strcmp(fontName, "snoot.org pixel10") == 0)
+		{
+			CGContextSetShouldSmoothFonts(context, false);
+			CGContextSetShouldAntialias(context, false);	// it appears that I gotta do this, too
+		}
+	}
+	CGContextSetRGBFillColor(context, (float)fontColor.r/255.0f, (float)fontColor.g/255.0f, (float)fontColor.b/255.0f, 1.0f);
+
+	if (alignment != kTextAlign_left)
+	{
+		CGContextSetTextDrawingMode(context, kCGTextInvisible);
+		CGContextShowTextAtPoint(context, 0, 0, inString, strlen(inString));
+		CGPoint pt = CGContextGetTextPosition(context);
+		if (alignment == kTextAlign_center)
+			inBounds.origin.x += (inBounds.size.width - pt.x) / 2.0f;
+		else if (alignment == kTextAlign_right)
+			inBounds.origin.x += inBounds.size.width - pt.x;
+	}
+	CGContextSetTextDrawingMode(context, kCGTextFill);
+	CGContextShowTextAtPoint(context, inBounds.origin.x, inBounds.origin.y+2.0f, inString, strlen(inString));
+}
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor *inOwnerEditor, DGRect *inWhere, DGGraphic *inBackground, char *inFontName)
+:	DGTextDisplay(inOwnerEditor, 0xFFFFFFFF, inWhere, NULL, NULL, inBackground, inFontName), 
+	displayString(NULL)
+{
+	displayString = (char*) malloc(256);
+	displayString[0] = 0;
+	AUVPattached = false;	// XXX good enough?
+}
+
+//-----------------------------------------------------------------------------
+DGStaticTextDisplay::~DGStaticTextDisplay()
+{
+	if (displayString != NULL)
+		free(displayString);
+	displayString = NULL;
+}
+
+//-----------------------------------------------------------------------------
+void DGStaticTextDisplay::setText(const char *inNewText)
+{
+	if (inNewText == NULL)
+		return;
+	strcpy(displayString, inNewText);
+	redraw();
+}
+
+//-----------------------------------------------------------------------------
+void DGStaticTextDisplay::draw(CGContextRef context, UInt32 portHeight)
+{
+	CGRect bounds;
+	getBounds()->copyToCGRect(&bounds, portHeight);
+
+	CGImageRef theBack = NULL;
+	if (BackGround != NULL)
+		theBack = BackGround->getImage();
+	if (theBack == NULL)
+	{
+		CGContextSetRGBFillColor(context, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
+		CGContextFillRect(context, bounds);
+	}
+	else
+	{
+CGRect whole;
+whole = bounds;
+whole.size.width = (float) CGImageGetWidth(theBack);
+whole.size.height = (float) CGImageGetHeight(theBack);
+whole.origin.x -= (float) (where.x - getDfxGuiEditor()->X);
+whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->Y) - where.h);
+//		CGContextDrawImage(context, bounds, theBack);
+		CGContextDrawImage(context, whole, theBack);
+	}
+
+	drawText(context, bounds, displayString);
 }

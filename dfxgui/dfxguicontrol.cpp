@@ -91,6 +91,15 @@ void DGControl::setParameterID(AudioUnitParameterID inParameterID)
 }
 
 //-----------------------------------------------------------------------------
+long DGControl::getParameterID()
+{
+	if (isAUVPattached())
+		return getAUVP().mParameterID;
+	else
+		return DFX_PARAM_INVALID_ID;
+}
+
+//-----------------------------------------------------------------------------
 void DGControl::setOffset(SInt32 x, SInt32 y)
 {
 	this->where.offset (x, y);
