@@ -20,13 +20,22 @@
 
 #define NUM_PARAMS 12
 
-#define MAXBUF 16384
+#define MINBUF 27
+#define MAXBUF 132300
+#define bufferScaled(A)   ( (int) (((A)*(A)*(A)*(float)(MAXBUF-MINBUF)) + \
+                            (float)MINBUF) )
+
+#define gainScaled(A)   ((A)*(A)*(A))
+
+#define SPEED_MIN 0.03f
+#define SPEED_MAX 10.0f
+#define speedScaled(A)   ( ((A)*(A)*(SPEED_MAX-SPEED_MIN)) + SPEED_MIN )
+
+#define qualityScaled(A)   ( (long)((A)*2.7f) )
 
 #define SMOOTH_DUR 42
 
 enum { dirtfi, lofi, hifi } fidelity;
-
-#define qualityScaled(A) ( (long)((A)*2.7f) )
 
 
 struct param {
@@ -91,9 +100,11 @@ protected:
 
   param paramptrs[NUM_PARAMS];
 
-  float bsize, drymix;
+  float fBsize, drymix;
+  int bsize;
   float mix1, dist1, speed1, feed1;
   float mix2, dist2, speed2, feed2;
+  float drymixParam, mix1param, mix2param, speed1param, speed2param;
   float fQuality, fTomsound;
   long quality;
   bool tomsound;
@@ -107,7 +118,10 @@ protected:
   float smoothstep1[2], smoothstep2[2], lastr1val[2], lastr2val[2];
 };
 
-#define FPARAM(pname, idx, nm, init, un) do { pname = (init); paramptrs[idx].ptr = &pname; paramptrs[idx].name = (nm); paramptrs[idx].units = (un); } while (0)
+#define FPARAM(pname, idx, nm, init, un) \
+      do { pname = (init); paramptrs[idx].ptr = &pname; \
+           paramptrs[idx].name = (nm); paramptrs[idx].units = (un); } \
+      while (0)
 
 
 inline float interpolateHermite (float *data, float address, 
@@ -122,30 +136,30 @@ inline float interpolateHermite (float *data, float address,
   // upcoming or previous samples could be discontiguous, in which case 
   // just "interpolate" with repeated samples
   switch (danger) {
-    case 0:		// the previous sample is bogus
-      posMinus1 = pos;
-      posPlus1 = (pos+1) % arraysize;
-      posPlus2 = (pos+2) % arraysize;
-      break;
-    case 1:		// the next 2 samples are bogus
-      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
-      posPlus1 = posPlus2 = pos;
-      break;
-    case 2:		// the sample 2 steps ahead is bogus
-      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
-      posPlus1 = posPlus2 = (pos+1) % arraysize;
-      break;
-    default:	// everything's cool
-      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
-      posPlus1 = (pos+1) % arraysize;
-      posPlus2 = (pos+2) % arraysize;
-      break;
-    }
+  case 0:		// the previous sample is bogus
+    posMinus1 = pos;
+    posPlus1 = (pos+1) % arraysize;
+    posPlus2 = (pos+2) % arraysize;
+    break;
+  case 1:		// the next 2 samples are bogus
+    posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
+    posPlus1 = posPlus2 = pos;
+    break;
+  case 2:		// the sample 2 steps ahead is bogus
+    posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
+    posPlus1 = posPlus2 = (pos+1) % arraysize;
+    break;
+  default:	// everything's cool
+    posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
+    posPlus1 = (pos+1) % arraysize;
+    posPlus2 = (pos+2) % arraysize;
+    break;
+  }
 
   a = ( (3.0f*(data[pos]-data[posPlus1])) - 
-	 data[posMinus1] + data[posPlus2] ) * 0.5f;
+	data[posMinus1] + data[posPlus2] ) * 0.5f;
   b = (2.0f*data[posPlus1]) + data[posMinus1] - 
-         (2.5f*data[pos]) - (data[posPlus2]*0.5f);
+    (2.5f*data[pos]) - (data[posPlus2]*0.5f);
   c = (data[posPlus1] - data[posMinus1]) * 0.5f;
 
   return ( ((a*posFract)+b) * posFract + c ) * posFract+data[pos];
@@ -153,19 +167,19 @@ inline float interpolateHermite (float *data, float address,
 
 inline float interpolateLinear (float *data, float address, 
 				int arraysize, int danger) {
-	int posPlus1, pos = (long)address;
-	float posFract = address - (float)pos;
+  int posPlus1, pos = (long)address;
+  float posFract = address - (float)pos;
 
-	if (danger == 1) {
-	  /* the upcoming sample is not contiguous because 
-	     the write head is about to write to it */
-	  posPlus1 = pos;
-	} else {
-	  // it's all right
-	  posPlus1 = pos + 1;
-	}
-	return (data[pos] * (1.0f-posFract)) + 
-	       (data[(posPlus1)%arraysize] * posFract);
+  if (danger == 1) {
+    /* the upcoming sample is not contiguous because 
+       the write head is about to write to it */
+    posPlus1 = pos;
+  } else {
+    // it's all right
+    posPlus1 = pos + 1;
+  }
+  return (data[pos] * (1.0f-posFract)) + 
+    (data[(posPlus1)%arraysize] * posFract);
 }
 
 
