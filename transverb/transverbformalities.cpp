@@ -79,13 +79,6 @@ Transverb::~Transverb() {
 #endif
 }
 
-long Transverb::initialize() {
-  return 0;
-}
-
-void Transverb::cleanup() {
-}
-
 
 
 TransverbDSP::TransverbDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)

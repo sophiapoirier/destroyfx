@@ -84,8 +84,6 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setpresetname(0, "self-determined");	// default preset name
 	initPresets();
 
-	dfxsettings->setLowestLoadableVersion(0x00010000);	// can't load old VST-style settings
-
 
 	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
 		editor = new BufferOverrideEditor(this);

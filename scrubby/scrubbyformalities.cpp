@@ -121,7 +121,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	#endif
 }
 
-//-----------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 Scrubby::~Scrubby()
 {
 #if TARGET_API_VST
@@ -158,7 +158,7 @@ void Scrubby::cleanup()
 	activeNotesTable = NULL;
 }
 
-//-----------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 void Scrubby::reset()
 {
 	// reset these position trackers thingies & whatnot
@@ -421,15 +421,17 @@ void Scrubby::initPresets()
 
 #pragma mark _________parameters_________
 
-//-----------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 void Scrubby::processparameters()
 {
 	seekRangeSeconds = getparameter_f(kSeekRange) * 0.001f;
 	freeze = getparameter_b(kFreeze);
 	seekRateHz = getparameter_f(kSeekRate_abs);
-	seekRateSync = tempoRateTable->getScalar(getparameter_i(kSeekRate_sync));
+	seekRateIndex = getparameter_i(kSeekRate_sync);
+	seekRateSync = tempoRateTable->getScalar(seekRateIndex);
 	seekRateRandMinHz = getparameter_f(kSeekRateRandMin_abs);
-	seekRateRandMinSync = tempoRateTable->getScalar(getparameter_i(kSeekRateRandMin_sync));
+	seekRateRandMinIndex = getparameter_i(kSeekRateRandMin_sync);
+	seekRateRandMinSync = tempoRateTable->getScalar(seekRateRandMinIndex);
 	tempoSync = getparameter_b(kTempoSync);
 	seekDur = getparameter_scalar(kSeekDur);
 	seekDurRandMin = getparameter_scalar(kSeekDurRandMin);
@@ -445,6 +447,10 @@ void Scrubby::processparameters()
 		for (int i=0; i < NUM_PITCH_STEPS; i++)
 			pitchSteps[i] = getparameter_b(i+kPitchStep0);
 	}
+
+	// get the "generic" values of these parameters for randomization
+	seekRateHz_gen = getparameter_gen(kSeekRate_abs);
+	seekRateRandMinHz_gen = getparameter_gen(kSeekRateRandMin_abs);
 
 	bool tempNeedResync = false;
 	if (getparameterchanged(kSeekRate_sync))

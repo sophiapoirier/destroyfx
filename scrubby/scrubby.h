@@ -149,7 +149,12 @@ private:
 	// the parameters
 	float seekRangeSeconds, seekDur, seekDurRandMin;
 	float seekRateHz, seekRateSync, seekRateRandMinHz, seekRateRandMinSync;
+	long seekRateIndex, seekRateRandMinIndex;
 	float userTempo;
+
+	// generic versions of these parameters for curved randomization
+	float seekRateHz_gen, seekRateRandMinHz_gen;
+
 	long speedMode, octaveMin, octaveMax;
 	bool freeze, splitStereo, pitchConstraint, tempoSync, useHostTempo;
 	bool *pitchSteps;

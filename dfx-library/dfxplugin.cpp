@@ -435,6 +435,28 @@ void DfxPlugin::update_parameter(long parameterIndex)
 }
 
 //-----------------------------------------------------------------------------
+// return a (hopefully) 0 to 1 scalar version of the parameter's current value
+float DfxPlugin::getparameter_scalar(long parameterIndex)
+{
+	if (parameterisvalid(parameterIndex))
+	{
+		switch (getparameterunit(parameterIndex))
+		{
+			case kDfxParamUnit_percent:
+			case kDfxParamUnit_drywetmix:
+				return parameters[parameterIndex].get_f() / 100.0f;
+			case kDfxParamUnit_portion:
+			case kDfxParamUnit_scalar:
+				return parameters[parameterIndex].get_f();
+			default:
+				return parameters[parameterIndex].get_f() / parameters[parameterIndex].getmax_f();
+		}
+	}
+	else
+		return 0.0f;
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::getparametername(long parameterIndex, char *text)
 {
 	if (text != NULL)
