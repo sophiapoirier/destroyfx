@@ -396,7 +396,7 @@ long ScrubbyEditor::open(void *ptr)
 
 
 	//--initialize the background frame--------------------------------------
-	CRect size = (rect.left, rect.top, rect.right, rect.bottom);
+	CRect size = (0, 0, (short)gBackground->getWidth(), (short)gBackground->getHeight());
 	frame = new CFrame (size, ptr, this);
 	frame->setBackground(gBackground);
 
