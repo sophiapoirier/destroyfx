@@ -22,6 +22,10 @@
  *  attribute value that is in quotes) > character after the 
  *  href value inside of a link tag, the HTML parser will be 
  *  fooled into thinking that that is the end of the link tag.
+ *
+ *  If the href attribute does not appear on the same line 
+ *  on which the <link> tag begins, then the href attribute 
+ *  will not be found and the <link> will not be followed.
  */
 
 
