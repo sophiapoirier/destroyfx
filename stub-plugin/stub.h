@@ -29,6 +29,8 @@ struct PLUGIN : public AudioEffectX {
   PLUGIN(audioMasterCallback audioMaster);
   ~PLUGIN();
 
+  virtual void processX(float **inputs, float **outputs, long sampleFrames,
+		       int replacing);
   virtual void process(float **inputs, float **outputs, long sampleFrames);
   virtual void processReplacing(float **inputs, float **outputs, 
 				long sampleFrames);
@@ -40,17 +42,17 @@ struct PLUGIN : public AudioEffectX {
 
   virtual void suspend();
 
-  bool Intercom::getVendorString(char *text) {
+  bool PLUGIN::getVendorString(char *text) {
     strcpy (text, "Destroy FX");
     return true; 
   }
 
-  bool Intercom::getProductString(char *text) {
+  bool PLUGIN::getProductString(char *text) {
     strcpy (text, "Super Destroy FX bipolar VST plugin pack");
     return true; 
   }
 
-  bool Intercom::getEffectName(char *name) {
+  bool PLUGIN::getEffectName(char *name) {
     strcpy (name, PLUGINNAME);
     return true; 
   }
