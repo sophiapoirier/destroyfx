@@ -140,10 +140,12 @@ public:
 	*/
 	virtual void draw(CGContextRef context, UInt32 portHeight, DGRect* rect, float value);
 
- private:
-	
+private:
 	CGImageRef cgImage;
 };
+
+
+CGImageRef PreRenderCGImageBuffer(CGImageRef inCompressedImage);
 
 
 #endif
