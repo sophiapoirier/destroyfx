@@ -347,10 +347,7 @@ void DfxPlugin::getParameterDisplay(long index, char * text)
 	switch (getparametervaluetype(index))
 	{
 		case kDfxParamValueType_float:
-			sprintf(text, "%.3f", getparameter_f(index));
-			break;
-		case kDfxParamValueType_double:
-			sprintf(text, "%.3lf", getparameter_d(index));
+			sprintf(text, "%.3lf", getparameter_f(index));
 			break;
 		case kDfxParamValueType_int:
 			sprintf(text, "%ld", getparameter_i(index));
