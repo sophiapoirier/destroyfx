@@ -4,9 +4,7 @@
 #include "transverb.hpp"
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __TRANSVERBEDITOR_H
-	#include "transverbeditor.hpp"
-	#endif
+	#include "transverbeditor.h"
 #endif
 
 
