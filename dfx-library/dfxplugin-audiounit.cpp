@@ -644,6 +644,14 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 }
 
 //-----------------------------------------------------------------------------
+// should be a version 32-bit number hex-encoded like so:  
+// 0xMMMMmmbb (M = major version, m = minor version, and b = bugfix)
+ComponentResult	DfxPlugin::Version()
+{
+	return PLUGIN_VERSION;
+}
+
+//-----------------------------------------------------------------------------
 // give the host an array of the audio input/output channel configurations 
 // that the plugin supports
 // if the pointer passed in is NULL, then simply return the number of supported configurations
