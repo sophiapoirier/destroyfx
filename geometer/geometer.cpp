@@ -27,36 +27,36 @@ int intcompare(const void * a, const void * b) {
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.7, "samples");
-  FPARAM(shape, P_SHAPE, "wshape", 0.0, "");
+  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.7f, "samples");
+  FPARAM(shape, P_SHAPE, "wshape", 0.0f, "");
 
-  FPARAM(pointstyle, P_POINTSTYLE, "points where", 0.0, "choose");
+  FPARAM(pointstyle, P_POINTSTYLE, "points where", 0.0f, "choose");
 
-  FPARAM(pointparam[0], P_POINTPARAMS + 0, "point:ext'n'cross", 0.0, "magn");
-  FPARAM(pointparam[1], P_POINTPARAMS + 1, "point:freq", 0.08, "%");
-  FPARAM(pointparam[2], P_POINTPARAMS + 2, "point:rand", 0.20, "%");
-  FPARAM(pointparam[3], P_POINTPARAMS + 3, "point:span", 0.20, "width");
-  FPARAM(pointparam[4], P_POINTPARAMS + 4, "point:dydx", 0.50, "gap");
+  FPARAM(pointparam[0], P_POINTPARAMS + 0, "point:ext'n'cross", 0.0f, "magn");
+  FPARAM(pointparam[1], P_POINTPARAMS + 1, "point:freq", 0.08f, "%");
+  FPARAM(pointparam[2], P_POINTPARAMS + 2, "point:rand", 0.20f, "%");
+  FPARAM(pointparam[3], P_POINTPARAMS + 3, "point:span", 0.20f, "width");
+  FPARAM(pointparam[4], P_POINTPARAMS + 4, "point:dydx", 0.50f, "gap");
 
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
     FPARAM(pointparam[pp], P_POINTPARAMS + pp, 
 	   "pointparam:unused", 0.04f, "??");
   }
 
-  FPARAM(interpstyle, P_INTERPSTYLE, "interpolate how", 0.0, "choose");
+  FPARAM(interpstyle, P_INTERPSTYLE, "interpolate how", 0.0f, "choose");
 
-  FPARAM(interparam[0], P_INTERPARAMS + 0, "interp:polygon", 0.0, "angle");
-  FPARAM(interparam[1], P_INTERPARAMS + 1, "interp:wrongy", 0.0, "angle");
-  FPARAM(interparam[2], P_INTERPARAMS + 2, "interp:smoothie", 0.5, "exp");
-  FPARAM(interparam[3], P_INTERPARAMS + 3, "interp:reversie", 0.0, "nothing");
-  FPARAM(interparam[4], P_INTERPARAMS + 4, "interp:pulse", 0.05, "pulse");
-  FPARAM(interparam[5], P_INTERPARAMS + 5, "interp:friends", 1.0, "width");
-  FPARAM(interparam[6], P_INTERPARAMS + 6, "interp:sing", 0.8, "mod");
-  FPARAM(interparam[7], P_INTERPARAMS + 7, "interp:shuffle", 0.3, "amount");
+  FPARAM(interparam[0], P_INTERPARAMS + 0, "interp:polygon", 0.0f, "angle");
+  FPARAM(interparam[1], P_INTERPARAMS + 1, "interp:wrongy", 0.0f, "angle");
+  FPARAM(interparam[2], P_INTERPARAMS + 2, "interp:smoothie", 0.5f, "exp");
+  FPARAM(interparam[3], P_INTERPARAMS + 3, "interp:reversie", 0.0f, "nothing");
+  FPARAM(interparam[4], P_INTERPARAMS + 4, "interp:pulse", 0.05f, "pulse");
+  FPARAM(interparam[5], P_INTERPARAMS + 5, "interp:friends", 1.0f, "width");
+  FPARAM(interparam[6], P_INTERPARAMS + 6, "interp:sing", 0.8f, "mod");
+  FPARAM(interparam[7], P_INTERPARAMS + 7, "interp:shuffle", 0.3f, "amount");
 
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
     FPARAM(interparam[ip], P_INTERPARAMS + ip, 
-	   "inter:unused", 0.0, "???");
+	   "inter:unused", 0.0f, "???");
   }
 
   FPARAM(pointop1, P_POINTOP1, "pointop1", UNMKPOINTOP(OP_NONE), "choose");
@@ -70,14 +70,14 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
     FPARAM(oppar3[n], P_OPPAR3S + n, "op3:" str, def, unit); \
   } while (0)
 
-  ALLOP(0, "double", 0.5, "amp");
-  ALLOP(1, "half", 0.0, "nothing");
-  ALLOP(2, "quarter", 0.0, "nothing");
-  ALLOP(3, "longpass", 0.15, "length");
-  ALLOP(4, "shortpass", 0.5, "length");
-  ALLOP(5, "slow", 0.25, "factor");
-  ALLOP(6, "fast", 0.5, "factor");
-  ALLOP(7, "none", 0.0, "nothing");
+  ALLOP(0, "double", 0.5f, "amp");
+  ALLOP(1, "half", 0.0f, "nothing");
+  ALLOP(2, "quarter", 0.0f, "nothing");
+  ALLOP(3, "longpass", 0.15f, "length");
+  ALLOP(4, "shortpass", 0.5f, "length");
+  ALLOP(5, "slow", 0.25f, "factor");
+  ALLOP(6, "fast", 0.5f, "factor");
+  ALLOP(7, "none", 0.0f, "nothing");
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
     ALLOP(op, "unused", 0.5f, "???");
@@ -222,7 +222,7 @@ float PLUGIN::getParameter(long index) {
   default:
     /* otherwise pull it out of array. */
     if (index >= 0 && index < NUM_PARAMS) return *paramptrs[index].ptr;
-    else return 0.0; /* ? */
+    else return 0.0f; /* ? */
   }
 }
 
@@ -482,7 +482,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
     /* slow points down. stretches the points out so that
        the tail is lost, but preserves their y values. */
     
-    float factor = 1.0 + op_param[OP_SLOW];
+    float factor = 1.0f + op_param[OP_SLOW];
 
     int i;
     for(i = 0; i < (npts-1); i ++) {
@@ -545,7 +545,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
        XXX: really? Am I sure?
     */
 
-    ext = 0.0;
+    ext = 0.0f;
     extx = 0;
 
     enum {SZ, SZC, SA, SB};
@@ -881,7 +881,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
 	    float pct = (j - sizeleft) / (float)(tgtlen - sizeleft);
 
 	    out[j + px[x-1]] =
-	      wet * (1.0 - pct) +
+	      wet * (1.0f - pct) +
 	      out[j + px[x-1]] * pct;
 	  } else {
 	    /* before p[x] -- no mix */
@@ -1018,7 +1018,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
   case INTERP_SING:
 
     for(u=1; u < numpts; u ++) {
-      float oodenom = 1.0 / (px[u] - px[u-1]);
+      float oodenom = 1.0f / (px[u] - px[u-1]);
 
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) * oodenom;
@@ -1234,6 +1234,25 @@ bool PLUGIN::copyProgram(long destination) {
     return true;
   }
   return false;
+}
+
+long PLUGIN::canDo(char* text) {
+  if (strcmp(text, "receiveVstEvents") == 0)
+    return 1;
+  if (strcmp(text, "receiveVstMidiEvent") == 0)
+    return 1;
+  if (strcmp(text, "geometry") == 0)
+    return 1;
+  if (strcmp(text, "plugAsChannelInsert") == 0)
+    return 1;
+  if (strcmp(text, "plugAsSend") == 0)
+    return 1;
+  if (strcmp(text, "mixDryWet") == 0)
+    return 1;
+  if (strcmp(text, "1in1out") == 0)
+    return 1;
+
+  return -1;	// explicitly can't do; 0 => don't know
 }
 
 
