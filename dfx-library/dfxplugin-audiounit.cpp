@@ -29,6 +29,15 @@ void DfxPlugin::PostConstructor()
 }
 
 //-----------------------------------------------------------------------------
+// this is called immediately before an instance of the plugin class is deleted
+void DfxPlugin::PreDestructor()
+{
+	dfxplugin_predestructor();
+
+	TARGET_API_BASE_CLASS::PreDestructor();
+}
+
+//-----------------------------------------------------------------------------
 // this is like a second constructor, kind of
 // it is called when the Audio Unit is expected to be ready to process audio
 // this is where DSP-specific resources should be allocated

@@ -94,7 +94,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   long i;
   /* windowing */
-  char *bufstr = (char*) malloc(256);
+  char * bufstr = (char*) malloc(256);
   for (i=0; i < BUFFERSIZESSIZE; i++)
   {
     if (buffersizes[i] > 1000)
@@ -180,16 +180,10 @@ PLUGIN::~PLUGIN() {
     delete cs;
   cs = NULL;
 #endif
-
-#ifdef TARGET_API_VST
-  /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
-    so we need to call this manually here */
-  do_cleanup();
-#endif
 }
 
 #if TARGET_PLUGIN_USES_DSPCORE
-PLUGINCORE::PLUGINCORE(DfxPlugin *inDfxPlugin)
+PLUGINCORE::PLUGINCORE(DfxPlugin * inDfxPlugin)
   : DfxPluginCore(inDfxPlugin), cs(NULL)
 {
   cs = new dfxmutex();
@@ -1115,9 +1109,9 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
 */
 
 #if TARGET_PLUGIN_USES_DSPCORE
-void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, bool replacing) {
+void PLUGINCORE::process(const float * tin, float * tout, unsigned long samples, bool replacing) {
 #else
-void PLUGIN::processaudio(const float **trueinputs, float **trueoutputs, unsigned long samples, 
+void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsigned long samples, 
                       bool replacing) {
   const float * tin  = *trueinputs;
   float * tout = *trueoutputs;

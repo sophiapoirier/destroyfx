@@ -76,11 +76,6 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 RezSynth::~RezSynth()
 {
-#ifdef TARGET_API_VST
-	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
-	// so we need to call this manually here
-	do_cleanup();
-#endif
 }
 
 //-----------------------------------------------------------------------------------------

@@ -72,7 +72,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < numTempoRates; i++)
 	{
-		const char *tname = tempoRateTable->getDisplay(i);
+		const char * tname = tempoRateTable->getDisplay(i);
 		setparametervaluestring(kSeekRate_sync, i, tname);
 		setparametervaluestring(kSeekRateRandMin_sync, i, tname);
 	}
@@ -80,7 +80,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kSpeedMode, kSpeedMode_robot, "robot");
 	setparametervaluestring(kSpeedMode, kSpeedMode_dj, "DJ");
 	// set the value strings for the octave range parameters
-	char *octavename = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH);
+	char * octavename = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH);
 	for (int i=getparametermin_i(kOctaveMin)+1; i <= getparametermax_i(kOctaveMin); i++)
 	{
 		sprintf(octavename, "%d", i);
@@ -122,11 +122,6 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-------------------------------------------------------------------------
 Scrubby::~Scrubby()
 {
-#ifdef TARGET_API_VST
-	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
-	// so we need to call this manually here
-	do_cleanup();
-#endif
 }
 
 //-------------------------------------------------------------------------
@@ -234,7 +229,7 @@ void Scrubby::clearbuffers()
 
 /*
 //----------------------------------------------------------------------------- 
-ScrubbyChunk::ScrubbyChunk(long numParameters, long numPrograms, long magic, AudioEffectX *effect)
+ScrubbyChunk::ScrubbyChunk(long numParameters, long numPrograms, long magic, AudioEffectX * effect)
 	: VstChunk (numParameters, numPrograms, magic, effect)
 {
 	// start off with split CC automation of both range slider points
