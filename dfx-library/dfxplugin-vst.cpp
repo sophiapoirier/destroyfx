@@ -25,10 +25,7 @@ void DfxPlugin::suspend()
 void DfxPlugin::resume()
 {
 	needIdle();
-	setInitialDelay(getlatency_samples());
 	updatesamplerate();
-
-	latencychanged = false;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		wantEvents();
@@ -48,6 +45,11 @@ void DfxPlugin::resume()
 				dspcores[i]->do_reset();
 		}
 	#endif
+
+	// do these after calling do_reset, 
+	// because the value for latency could change there
+	setInitialDelay(getlatency_samples());
+	setlatencychanged(false);
 }
 
 //-------------------------------------------------------------------------
