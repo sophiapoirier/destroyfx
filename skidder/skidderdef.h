@@ -15,8 +15,3 @@
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"Skidder turns your sound on and off"
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"bland blue interface for DFX Skidder"
-
-
-#define DFX_SUPPORT_OLD_VST_SETTINGS	0
-
-#define MSKIDDER	1

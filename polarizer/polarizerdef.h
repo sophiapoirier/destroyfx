@@ -15,6 +15,3 @@
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"takes every nth sample and polarizes it; you can also implode your sound"
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"official DFX interface for DFX Polarizer"
-
-
-#define DFX_SUPPORT_OLD_VST_SETTINGS 0
