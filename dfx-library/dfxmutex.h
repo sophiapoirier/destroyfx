@@ -3,11 +3,8 @@ Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.
 This is our mutex shit.
 ------------------------------------------------------------------------*/
 
-
 #ifndef __DFXMUTEX_H
 #define __DFXMUTEX_H
-
-
 
 #if WIN32
 
@@ -51,6 +48,9 @@ struct dfxmutex {
 */
 
 #else
+
+/* other platforms don't have mutexes implemented, will just have
+   to get "lucky"... */
 
 struct dfxmutex {
 	dfxmutex() {}

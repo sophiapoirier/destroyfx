@@ -180,13 +180,14 @@ for the value strings.
 // the DfxParamValue struct holds every type of supported value variable type
 // all values (current, min, max, default) are stored in these
 struct DfxParamValue {
-	float f;
-	double d;
-	long i;
-	unsigned long ui;
-	unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
-	char c;
-	unsigned char uc;
+  float f;
+  double d;
+  long i;
+  unsigned long ui;
+  unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
+  char c;
+  unsigned char uc;
+  DfxParamValue() {} /* suppress compiler warnings */
 };
 
 
