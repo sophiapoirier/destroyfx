@@ -106,6 +106,10 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   /* XXX doesn't take self pointer now? */
   /* Marc, is this right? */
   chunk = new VstChunk(NUM_PARAMS, NUM_PROGRAMS, PLUGINID, this);
+  /* since we don't use notes for any specialized control of Geometer, 
+     allow them to be assigned to control parameters via MIDI learn */
+  chunk->setAllowPitchbendEvents(true);
+  chunk->setAllowNoteEvents(true);
 
   /* resume sets up buffers and sizes */
   changed = 1;
