@@ -437,7 +437,7 @@ public:
 	void setparametercurvespec(long parameterIndex, double newcurvespec)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcurvespec(newcurvespec);	}
 	unsigned long getparameterattributes(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getattributes();   else 0;	}
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getattributes();   else return 0;	}
 	void setparameterattributes(long parameterIndex, unsigned long inFlags)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setattributes(inFlags);	}
 	void addparameterattributes(long parameterIndex, unsigned long inFlags)
