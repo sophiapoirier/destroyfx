@@ -200,7 +200,6 @@ OSStatus MakeFSRefInDir(const FSRef * inParentDirRef, CFStringRef inItemNameStri
 	// then we try to create an FSRef for the file
 	error = FSMakeFSRefUnicode(inParentDirRef, itemUniName.length, itemUniName.unicode, kTextEncodingUnknown, outItemRef);
 //kTextEncodingUnicodeDefault
-//kCFStringEncodingUnicode
 	// FSRefs can only be created for existing files or directories.  So making the FSRef failed 
 	// and if creating missing items is desired, then try to create the child item.
 	if ( (error != noErr) && inCreateItem )
@@ -219,14 +218,34 @@ void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * out
 {
 	if ( (inCFString != NULL) && (outUniName != NULL) )
 	{
-		CFIndex cfnamelength = CFStringGetLength(inCFString);
-		CFIndex maxlength = sizeof(outUniName->unicode) / sizeof(UniChar);
+		UniCharCount cfNameLength = CFStringGetLength(inCFString);
+		static const UniCharCount kMaxUnicodeFileNameLength = sizeof(outUniName->unicode) / sizeof(outUniName->unicode[0]);
 		// the length can't be more than 255 characters for an HFS file name
-		if (cfnamelength > maxlength)
-			cfnamelength = maxlength;
-		outUniName->length = cfnamelength;
+		if (cfNameLength > kMaxUnicodeFileNameLength)
+		{
+			outUniName->length = kMaxUnicodeFileNameLength;	// in case any of the below fails, at least truncate within the array bounds
+			const UCTextBreakType breakType = kUCTextBreakClusterMask;
+			TextBreakLocatorRef textBreakLocator = NULL;
+			OSStatus status = UCCreateTextBreakLocator(NULL, (LocaleOperationVariant)0, breakType, &textBreakLocator);
+			if (status == noErr)
+			{
+				UniChar * fullUniName = (UniChar*) malloc(cfNameLength * sizeof(UniChar));
+				if (fullUniName != NULL)
+				{
+					CFStringGetCharacters(inCFString, CFRangeMake(0, cfNameLength), fullUniName);
+					UniCharArrayOffset breakOffset;
+					status = UCFindTextBreak(textBreakLocator, breakType, kUCTextBreakGoBackwardsMask, fullUniName, cfNameLength, kMaxUnicodeFileNameLength, &breakOffset);
+					if (status == noErr)
+						outUniName->length = breakOffset;
+					free(fullUniName);
+				}
+				UCDisposeTextBreakLocator(&textBreakLocator);
+			}
+		}
+		else
+			outUniName->length = cfNameLength;
 		// translate the CFString to a unicode string representation in the HFS file name string
-		CFStringGetCharacters(inCFString, CFRangeMake(0, cfnamelength), outUniName->unicode);
+		CFStringGetCharacters(inCFString, CFRangeMake(0, outUniName->length), outUniName->unicode);
 	}
 }
 
@@ -255,7 +274,7 @@ CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short i
 	{
 		// this will recursively traverse the preset files directory and all subdirectories and 
 		// add tree nodes for all of those to the root tree
-		CollectAllAUPresetFilesInDir(&presetsDirRef, tree);
+		CollectAllAUPresetFilesInDir(&presetsDirRef, tree, inAUComponent);
 		// it's nice to alphabetize the tree nodes in each level of the tree, don't you think?
 //		CFTreeSortChildren(tree, FileURLsTreeComparatorFunction, NULL);
 		SortCFTreeRecursively(tree, FileURLsTreeComparatorFunction, NULL);
@@ -334,9 +353,12 @@ CFTreeRef AddFileItemToTree(const FSRef * inItemRef, CFTreeRef inParentTree)
 // This function will scan through a directory and examine every file that might be 
 // an AU preset file.  If a child directory is encountered, then this function is 
 // called recursively on that child directory so that we get everything.
-// If any chil sub-directories don't wind up having any AU preset files, then 
+// If any child sub-directories don't wind up having any AU preset files, then 
 // they get removed from the tree.
-void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree)
+// If the inAUComponent argument is not null, then AU preset files will be examined 
+// to see if their ComponentDescription data matches that of the AU Component, and 
+// if not, then those preset files will be excluded from the tree.
+void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree, Component inAUComponent)
 {
 	OSErr error;
 	FSIterator dirIterator;
@@ -372,15 +394,37 @@ void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree
 			if (itemCatalogInfo.nodeFlags & kFSNodeIsDirectoryMask)
 			{
 				CFTreeRef newSubTree = AddFileItemToTree(&itemFSRef, inParentTree);
-				CollectAllAUPresetFilesInDir(&itemFSRef, newSubTree);
+				CollectAllAUPresetFilesInDir(&itemFSRef, newSubTree, inAUComponent);
 			}
 			// otherwise it's a file, so we add it (if it is an AU preset file)
 			else
 			{
 				// only add this file if file name extension indicates that this is an AU preset file
-				// XXX should I also open each file and make sure that it's a valid dictionary for the particular AU?
 				if ( FSRefIsAUPreset(&itemFSRef) )
+				{
+					// XXX should I also open and examine each file and make sure that it's a valid dictionary for the particular AU?
+#if 1
+					// we only do this examination if an AU Component argument was given
+					if (inAUComponent != NULL)
+					{
+						CFURLRef itemUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &itemFSRef);
+						if (itemUrl != NULL)
+						{
+							// get the ComponentDescription from the AU preset file
+							ComponentDescription presetDesc;
+							OSStatus status = GetAUComponentDescriptionFromPresetFile(itemUrl, &presetDesc);
+							CFRelease(itemUrl);
+							if (status == noErr)
+							{
+								// if the preset's ComponentDescription doesn't match the AU's, then don't add this preset file
+								if (! ComponentAndDescriptionMatch(inAUComponent, &presetDesc) )
+									continue;
+							}
+						}
+					}
+#endif
 					AddFileItemToTree(&itemFSRef, inParentTree);
+				}
 			}
 		}
 	// the iteration loop keeps going until an error is returned (probably meaning "no more items")
@@ -508,10 +552,14 @@ ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, co
 	CFRelease(auStatePlist);
 
 	// in case the AU itself or you don't already do this upon restoring settings, 
-	// it is a good idea to send out notifications to any parameter listeners so that 
+	// it is necessary to send out notifications to any parameter listeners so that 
 	// all parameter controls and whatnot reflect the new state
 	if (componentError == noErr)
-		AUParameterChange_TellListeners(inAUComponentInstance, kAUParameterListener_AnyParameter);
+	{
+		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, kAUParameterListener_AnyParameter, kAudioUnitScope_Global, (AudioUnitElement)0);
+		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, kAUParameterListener_AnyParameter, kAudioUnitScope_Input, (AudioUnitElement)0);
+		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, kAUParameterListener_AnyParameter, kAudioUnitScope_Output, (AudioUnitElement)0);
+	}
 
 	return componentError;
 }
@@ -732,13 +780,25 @@ pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, v
 				error = AEGetDescData(&fsrefDesc, &fileFSRef, sizeof(fileFSRef));
 				if (error == noErr)
 				{
-					CFURLRef fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &fileFSRef);
-					if (fileUrl != NULL)
+					result = FSRefIsAUPreset(&fileFSRef);
+					// XXX should I go a step further and validate the Component type/subtype/manu values as matching the specific AU?
+#if 1
+					if (result)
 					{
-						result = CFURLIsAUPreset(fileUrl);
-						// XXX should I go a step further and validate the Component type/subtype/manu values as matching the specific AU?
-						CFRelease(fileUrl);
+						CFURLRef fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &fileFSRef);
+						if (fileUrl != NULL)
+						{
+							AudioUnit auInstance = (AudioUnit)inUserData;
+							// get the ComponentDescription from the AU preset file
+							ComponentDescription presetDesc;
+							OSStatus status = GetAUComponentDescriptionFromPresetFile(fileUrl, &presetDesc);
+							CFRelease(fileUrl);
+							if (status == noErr)
+								// if the preset's ComponentDescription matches the AU's, then alow this file
+								result = ComponentAndDescriptionMatch((Component)auInstance, &presetDesc);
+						}
 					}
+#endif
 				}
 			}
 			AEDisposeDesc(&fsrefDesc);
@@ -778,6 +838,87 @@ OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAU
 	}
 
 	return error;
+}
+
+//-----------------------------------------------------------------------------
+// this is just a little helper function used by GetAUComponentDescriptionFromPresetFile()
+OSType GetDictionarySInt32Value(CFDictionaryRef inAUStateDictionary, CFStringRef inDictionaryKey, Boolean * outSuccess)
+{
+	CFNumberRef cfNumber;
+	SInt32 numberValue = 0;
+	Boolean dummySuccess;
+
+	if (outSuccess == NULL)
+		outSuccess = &dummySuccess;
+	if ( (inAUStateDictionary == NULL) || (inDictionaryKey == NULL) )
+	{
+		*outSuccess = FALSE;
+		return 0;
+	}
+
+	cfNumber = (CFNumberRef) CFDictionaryGetValue(inAUStateDictionary, inDictionaryKey);
+	if (cfNumber == NULL)
+	{
+		*outSuccess = FALSE;
+		return 0;
+	}
+	*outSuccess = CFNumberGetValue(cfNumber, kCFNumberSInt32Type, &numberValue);
+	if (*outSuccess)
+		return numberValue;
+	else
+		return 0;
+}
+
+//-----------------------------------------------------------------------------
+// input:  CFURL of an AU preset file to restore
+// output:  Audio Unit ComponentDescription, OSStatus error code
+// Given an AU preset file, this function will try to copy the preset's 
+// creator AU's ComponentDescription info from the preset file.
+OSStatus GetAUComponentDescriptionFromPresetFile(const CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription)
+{
+	SInt32 plistError;
+	CFPropertyListRef auStatePlist;
+	CFDictionaryRef auStateDictionary;
+	ComponentDescription tempDesc;
+	SInt32 versionValue;
+	Boolean gotValue;
+
+	if ( (inAUPresetFileURL == NULL) || (outComponentDescription == NULL) )
+		return paramErr;
+
+	// the preset file's state data is stored as XML data, and so we first we need to convert it to a PropertyList
+	plistError = 0;
+	auStatePlist = CreatePropertyListFromXMLFile(inAUPresetFileURL, &plistError);
+	if (auStatePlist == NULL)
+		return (plistError != 0) ? plistError : coreFoundationUnknownErr;
+
+	// the property list for AU state data must be of the dictionary type
+	if ( CFGetTypeID(auStatePlist) != CFDictionaryGetTypeID() )
+		return kAudioUnitErr_InvalidFile;
+	auStateDictionary = (CFDictionaryRef)auStatePlist;
+
+	// first check to make sure that the version of the AU state data is one that we know understand
+	versionValue = GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetVersionKey), &gotValue);
+	if (!gotValue)
+		return kAudioUnitErr_InvalidFile;
+#define kCurrentSavedStateVersion 0
+	if (versionValue != kCurrentSavedStateVersion)
+		return kAudioUnitErr_UnknownFileType;
+
+	// grab the ComponentDescription values from the AU state data
+	memset(&tempDesc, 0, sizeof(tempDesc));
+	tempDesc.componentType = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetTypeKey), NULL);
+	tempDesc.componentSubType = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetSubtypeKey), NULL);
+	tempDesc.componentManufacturer = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetManufacturerKey), NULL);
+	// zero values are illegit for specific ComponentDescriptions, so zero for any value means that there was an error
+	if ( (tempDesc.componentType == 0) || (tempDesc.componentSubType == 0) || (tempDesc.componentManufacturer == 0) )
+		return kAudioUnitErr_InvalidFile;
+
+
+	CFRelease(auStatePlist);
+	*outComponentDescription = tempDesc;
+
+	return noErr;
 }
 
 
