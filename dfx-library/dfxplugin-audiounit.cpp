@@ -301,6 +301,9 @@ int DfxPlugin::GetNumCustomUIComponents()
 //-----------------------------------------------------------------------------
 void DfxPlugin::GetUIComponentDescs(ComponentDescription *inDescArray)
 {
+	if (inDescArray == NULL)
+		return;
+
 	inDescArray->componentType = kAudioUnitCarbonViewComponentType;
 	#ifdef PLUGIN_EDITOR_ID
 		inDescArray->componentSubType = PLUGIN_EDITOR_ID;
