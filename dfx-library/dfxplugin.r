@@ -7,6 +7,12 @@ written by Marc Poirier, October 2002
 
 #include "AudioUnit.r"
 
+#ifndef __DFXDEFINES_H
+#include "dfxdefines.h"
+#else
+#warning YO!
+#endif
+
 
 //----------------------------------------------------------------------------- 
 // resources for the base plugin component
@@ -39,13 +45,13 @@ written by Marc Poirier, October 2002
 #ifdef PLUGIN_DOUBLE_NAME_STRING
 	#define NAME	PLUGIN_DOUBLE_NAME_STRING
 #else
-	#define NAME	"Destroy FX: "PLUGIN_NAME_STRING
+	#define NAME	DESTROYFX_NAME_STRING": "PLUGIN_NAME_STRING
 #endif
 
 #ifdef PLUGIN_DESCRIPTION_STRING
 	#define DESCRIPTION	PLUGIN_DESCRIPTION_STRING
 #else
-	#define DESCRIPTION	"Destroy FX "PLUGIN_NAME_STRING" = super destroy noise machine"
+	#define DESCRIPTION	DESTROYFX_NAME_STRING" "PLUGIN_NAME_STRING" = super destroy noise machine"
 #endif
 
 #define ENTRY_POINT	PLUGIN_ENTRY_POINT
@@ -84,13 +90,13 @@ written by Marc Poirier, October 2002
 #ifdef PLUGIN_EDITOR_DOUBLE_NAME_STRING
 	#define NAME	PLUGIN_EDITOR_DOUBLE_NAME_STRING
 #else
-	#define NAME	"Destroy FX: "PLUGIN_NAME_STRING" editor"
+	#define NAME	DESTROYFX_NAME_STRING": "PLUGIN_NAME_STRING" editor"
 #endif
 
 #ifdef PLUGIN_EDITOR_DESCRIPTION_STRING
 	#define DESCRIPTION	PLUGIN_EDITOR_DESCRIPTION_STRING
 #else
-	#define DESCRIPTION	"Destroy FX "PLUGIN_NAME_STRING" picturesque yet functional interface"
+	#define DESCRIPTION	DESTROYFX_NAME_STRING" "PLUGIN_NAME_STRING" picturesque yet functional interface"
 #endif
 
 #define ENTRY_POINT	PLUGIN_EDITOR_ENTRY_POINT
