@@ -125,7 +125,7 @@ public:
 	// control for a parameter
 	DGControl(DfxGuiEditor *inOwnderEditor, AudioUnitParameterID inParameterID, DGRect *inRegion);
 	// control with no actual parameter attached
-	DGControl(DfxGuiEditor *inOwnderEditor, DGRect *inRegion, float Range = 0.0f);
+	DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange = 0.0f);
 	virtual ~DGControl();
 
 	// common constructor stuff

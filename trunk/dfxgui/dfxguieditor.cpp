@@ -14,7 +14,6 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData);
 DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 :	AUCarbonViewBase(inInstance)
 {
-//	X = Y = 0;
 	Images = NULL;
 	Controls = NULL;
 	itemCount = 0;
