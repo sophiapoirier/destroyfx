@@ -3,5 +3,7 @@
 This is a stub plugin that does windowing and buffering. It's meant
 for the easy development of new plugins.
 
+It's been souped-up to use the new 'dfxplugin' standard!
+
 WARNING: THIS PLUGIN IS ULTRA SMOOTH.
 
