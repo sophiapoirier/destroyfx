@@ -12,13 +12,6 @@
   #endif
 #endif
 
-#define MKBUFSIZE(c) (buffersizes[(int)((c)*(BUFFERSIZESSIZE-1))])
-
-const long PLUGIN::buffersizes[BUFFERSIZESSIZE] = { 
-  4, 8, 16, 32, 64, 128, 256, 512, 
-  1024, 2048, 4096, 8192, 16384, 32768, 
-};
-
 int intcompare(const void * a, const void * b);
 int intcompare(const void * a, const void * b) {
   return (*(int*)a - *(int*)b);
@@ -26,20 +19,12 @@ int intcompare(const void * a, const void * b) {
 
 /* this macro does boring entry point stuff for us */
 DFX_ENTRY(Geometer);
+#if TARGET_PLUGIN_USES_DSPCORE
+  DFX_CORE_ENTRY(GeometerDSP);
+#endif
 
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
-
-  /* windowing buffers */
-  in0 = NULL;
-  out0 = NULL;
-  prevmix = NULL;
-  /* geometer buffers */
-  pointx = NULL;
-  storex = NULL;
-  pointy = NULL;
-  storey = NULL;
-
 
   initparameter_indexed(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE);
   initparameter_indexed(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
@@ -108,7 +93,10 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   char *bufstr = (char*) malloc(256);
   for (i=0; i < BUFFERSIZESSIZE; i++)
   {
-    sprintf(bufstr, "%ld", buffersizes[i]);
+    if (buffersizes[i] > 1000)
+      sprintf(bufstr, "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
+    else
+      sprintf(bufstr, "%ld", buffersizes[i]);
     setparametervaluestring(P_BUFSIZE, i, bufstr);
   }
   free(bufstr);
@@ -155,9 +143,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
     ALLOPSTR(i, "unsup");
 
 
-  framesize = buffersizes[getparameter_i(P_BUFSIZE)];
-  setlatency_samples(framesize);
-  settailsize_samples(framesize);
+  long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
+  setlatency_samples(delay_samples);
+  settailsize_samples(delay_samples);
 
   setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();
@@ -167,15 +155,25 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   dfxsettings->setAllowPitchbendEvents(true);
   dfxsettings->setAllowNoteEvents(true);
 
+#if !TARGET_PLUGIN_USES_DSPCORE
   cs = new dfxmutex();
+  addchannelconfig(1, 1);	/* mono */
+#endif
 
-  #if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
-    editor = new GeometerEditor(this);
+  #if TARGET_API_VST
+    #if TARGET_PLUGIN_HAS_GUI
+      editor = new GeometerEditor(this);
+	#endif
+    #if TARGET_PLUGIN_USES_DSPCORE
+      DFX_INIT_CORE(GeometerDSP);	/* we need to manage DSP cores manually in VST */
+    #endif
   #endif
 }
 
 PLUGIN::~PLUGIN() {
+#if !TARGET_PLUGIN_USES_DSPCORE
   delete cs;
+#endif
 
 #if TARGET_API_VST
   /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
@@ -184,7 +182,13 @@ PLUGIN::~PLUGIN() {
 #endif
 }
 
-long PLUGIN::initialize() {
+#if TARGET_PLUGIN_USES_DSPCORE
+PLUGINCORE::PLUGINCORE(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
+  : DfxPluginCore(inInstance)
+#else
+long PLUGIN::initialize()
+#endif
+{
   /* determine the size of the largest window size */
   long maxframe = 0;
   for (int i=0; i< BUFFERSIZESSIZE; i++)
@@ -204,10 +208,17 @@ long PLUGIN::initialize() {
   pointy = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
   storey = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
 
+#if !TARGET_PLUGIN_USES_DSPCORE
   return kDfxErr_NoError;
+#endif
 }
 
-void PLUGIN::cleanup() {
+#if TARGET_PLUGIN_USES_DSPCORE
+PLUGINCORE::~PLUGINCORE()
+#else
+void PLUGIN::cleanup()
+#endif
+{
   /* windowing buffers */
   free (in0);
   free (out0);
@@ -221,7 +232,7 @@ void PLUGIN::cleanup() {
   free(storey);
 }
 
-void PLUGIN::reset() {
+void PLUGINCORE::reset() {
 
   framesize = buffersizes[getparameter_i(P_BUFSIZE)];
   third = framesize / 2;
@@ -243,13 +254,13 @@ void PLUGIN::reset() {
   outstart = 0;
   outsize = framesize;
 
-  setlatency_samples(framesize);
+  dfxplugin->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
-  settailsize_samples(framesize);
+  dfxplugin->settailsize_samples(framesize);
 }
 
 
-void PLUGIN::processparameters() {
+void PLUGINCORE::processparameters() {
 
   shape = getparameter_i(P_SHAPE);
   pointstyle = getparameter_i(P_POINTSTYLE);
@@ -276,7 +287,7 @@ void PLUGIN::processparameters() {
    because it is called once for each operation slot.
    It's static to enforce thread-safety.
 */
-int PLUGIN::pointops(long pop, int npts, float op_param, int samples,
+int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
                      int * px, float * py, int maxpts,
                      int * tempx, float * tempy) {
   /* pointops. */
@@ -473,7 +484,7 @@ int PLUGIN::pointops(long pop, int npts, float op_param, int samples,
    2. do operations on points (in slots op1, op2, op3)
    3. generate waveform
 */
-int PLUGIN::processw(float * in, float * out, long samples,
+int PLUGINCORE::processw(float * in, float * out, long samples,
                      int * px, float * py, int maxpts,
                      int * tempx, float * tempy) {
 
@@ -949,7 +960,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) / denom;
         
-        float p = 0.5f * (-cos(float(pi * pct)) + 1.0f);
+        float p = 0.5f * (-cosf(PI * pct) + 1.0f);
         
         if (interparam > 0.5f) {
           p = powf(p, (interparam - 0.16666667f) * 3.0f);
@@ -1022,7 +1033,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) * oodenom;
         
-	float wand = sin(float(2.0f * pi * pct));
+	float wand = sinf(2.0f * PI * pct);
 	out[z] = wand * 
 	  interparam + 
 	  ((1.0f-interparam) * 
@@ -1081,10 +1092,14 @@ int PLUGIN::processw(float * in, float * out, long samples,
      (probably not)
 */
 
+#if TARGET_PLUGIN_USES_DSPCORE
+void PLUGINCORE::process(const float *tin, float *tout, unsigned long samples, bool replacing) {
+#else
 void PLUGIN::processaudio(const float **trueinputs, float **trueoutputs, unsigned long samples, 
                       bool replacing) {
   const float * tin  = *trueinputs;
   float * tout = *trueoutputs;
+#endif
   int z = 0;
 
   for (unsigned long ii = 0; ii < samples; ii++) {
@@ -1131,7 +1146,7 @@ void PLUGIN::processaudio(const float **trueinputs, float **trueoutputs, unsigne
           break;
         case WINDOW_COS:
           for(z = 0; z < third; z ++) {
-            float p = 0.5f * (-cos(float(pi * ((float)z * oneDivThird))) + 1.0f);
+            float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }

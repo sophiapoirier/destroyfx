@@ -12,13 +12,21 @@
 #include "dfxmutex.h"
 #endif
 
-#define fsign(f) ((f<0.0)?-1.0:1.0)
-#define pi (3.1415926535)
-
 /* change these for your plugins */
 #define PLUGIN Geometer
-
 #define NUM_PRESETS 16
+
+#define BUFFERSIZESSIZE 14
+const long buffersizes[BUFFERSIZESSIZE] = { 
+  4, 8, 16, 32, 64, 128, 256, 512, 
+  1024, 2048, 4096, 8192, 16384, 32768, 
+};
+
+#if TARGET_PLUGIN_USES_DSPCORE
+  #define PLUGINCORE GeometerDSP
+#else
+  #define PLUGINCORE Geometer
+#endif
 
 
 /* MAX_THING gives the maximum number of things I
@@ -73,13 +81,9 @@ enum { WINDOW_TRIANGLE,
 };
 
 #define MKPOINTSTYLE(f)      ( paramSteppedScaled((f),   MAX_POINTSTYLES) )
-#define UNMKPOINTSTYLE(i)    ( paramSteppedUnscaled((i), MAX_POINTSTYLES) )
 #define MKINTERPSTYLE(f)     ( paramSteppedScaled((f),   MAX_INTERPSTYLES) )
-#define UNMKINTERPSTYLE(i)   ( paramSteppedUnscaled((i), MAX_INTERPSTYLES) )
 #define MKPOINTOP(f)         ( paramSteppedScaled((f),   MAX_OPS) )
-#define UNMKPOINTOP(i)       ( paramSteppedUnscaled((i), MAX_OPS) )
 #define MKWINDOWSHAPE(f)     ( paramSteppedScaled((f),   MAX_WINDOWSHAPES) )
-#define UNMKWINDOWSHAPE(i)   ( paramSteppedUnscaled((i), MAX_WINDOWSHAPES) )
 
 
 /* the names of the parameters */
@@ -99,19 +103,39 @@ enum { P_BUFSIZE, P_SHAPE,
 
 
 class PLUGIN : public DfxPlugin {
-  friend class GeometerEditor;
 public:
   PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
   virtual ~PLUGIN();
 
+#if !TARGET_PLUGIN_USES_DSPCORE
   virtual long initialize();
   virtual void cleanup();
   virtual void reset();
 
   virtual void processparameters();
   virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+#endif
 
-  /* several of the below are needed by geometerview. Maybe should use accessors... */
+private:
+  /* set up the built-in presets */
+  void makepresets();
+
+
+#if TARGET_PLUGIN_USES_DSPCORE
+};
+
+class PLUGINCORE : public DfxPluginCore {
+public:
+  PLUGINCORE(TARGET_API_CORE_INSTANCE_TYPE *inInstance);
+  virtual ~PLUGINCORE();
+
+  virtual void reset();
+  virtual void processparameters();
+  virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);
+#endif
+
+  /* several of these are needed by geometerview. Maybe should use accessors... */
+public:
 
   long getwindowsize() { return third; }
 
@@ -146,20 +170,11 @@ private:
   int outsize;
   int outstart;
 
-  #define BUFFERSIZESSIZE 14
-  static const long buffersizes[BUFFERSIZESSIZE];
-
-  /* 1 if need to do ioChanged since buffer settings are different now */
-  int changed;
-
   /* ---------- geometer stuff ----------- */
 
   static int pointops(long pop, int npts, float op_param, int samps,
 		      int * px, float * py, int maxpts,
 		      int * tempx, float * tempy);
-
-  /* set up the built-in presets */
-  void makepresets();
 
   /* shape of envelope */
   long shape;
