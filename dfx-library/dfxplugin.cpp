@@ -89,7 +89,6 @@ DfxPlugin::DfxPlugin(
 
 
 #if TARGET_API_AUDIOUNIT
-//	CreateElements();	// XXX do this?  I think not, it happens in AUBase::DoInitialize()
 	inputsP = outputsP = NULL;
 
 	aupresets = NULL;

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
-This is the Audio Unit stuff.
+This is where we connect the Audio Unit API to our DfxPlugin system.
 written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
@@ -12,6 +12,15 @@ written by Marc Poirier, October 2002
 
 
 #pragma mark _________init_________
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::PostConstructor()
+{
+	TARGET_API_BASE_CLASS::PostConstructor();
+
+	// make host see that current preset is 0
+	update_preset(0);
+}
 
 //-----------------------------------------------------------------------------
 // this is like a second constructor, kind of
@@ -519,9 +528,9 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 	return noErr;
 }
 
-//#ifndef DFX_SUPPORT_OLD_VST_SETTINGS
-//#define DFX_SUPPORT_OLD_VST_SETTINGS 0
-//#endif
+#ifndef DFX_SUPPORT_OLD_VST_SETTINGS
+#define DFX_SUPPORT_OLD_VST_SETTINGS 0
+#endif
 //-----------------------------------------------------------------------------
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
@@ -607,9 +616,9 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 */
 
 	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
+printf("result from AUBase::RestoreState was %ld\n", result);
 	if (result != noErr)
 		return result;
-printf("result from AUBase::RestoreState was %ld\n", result);
 
 #if TARGET_PLUGIN_USES_MIDI
 	// look for a data section keyed with our custom data key
@@ -619,11 +628,9 @@ printf("result from AUBase::RestoreState was %ld\n", result);
 	if (cfdata == NULL)
 {
 printf("destroyfx-data was not there, trying vstdata...\n");
-		CFDataRef cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
-if (cfdata == NULL)
-printf("vstdata was not there\n");
-else
-printf("vstdata was there, loading...\n");
+		cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
+if (cfdata == NULL) printf("vstdata was not there\n");
+else printf("vstdata was there, loading...\n");
 }
 #endif
 	if (cfdata == NULL)
@@ -673,6 +680,7 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 //		if ( (inNewFormat.mSampleRate != getsamplerate()) || 
 				(inNewFormat.mChannelsPerFrame != inPrevFormat.mChannelsPerFrame) )
 		{
+//			do_cleanup();
 //			do_initialize();
 			updatesamplerate();
 			updatenumchannels();
