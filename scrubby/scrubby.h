@@ -23,7 +23,7 @@ enum
 	kSeekDurRandMin,
 
 	kSpeedMode,
-	kSplitStereo,
+	kSplitChannels,
 
 	kPitchConstraint,
 	kPitchStep0,
@@ -122,7 +122,7 @@ private:
 	long seekRateIndex, seekRateRandMinIndex;
 	double userTempo;
 	long speedMode, octaveMin, octaveMax;
-	bool freeze, splitStereo, pitchConstraint, tempoSync, useHostTempo;
+	bool freeze, splitChannels, pitchConstraint, tempoSync, useHostTempo;
 	bool * pitchSteps;
 
 	// generic versions of these parameters for curved randomization

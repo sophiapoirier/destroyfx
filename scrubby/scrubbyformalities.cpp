@@ -47,7 +47,7 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 	initparameter_f(kSeekDur, "seek duration", 100.0, 100.0, 3.0, 100.0, kDfxParamUnit_percent);	// percent of range
 	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0, 100.0, 3.0, 100.0, kDfxParamUnit_percent);	// percent of range
 	initparameter_indexed(kSpeedMode, "speeds", kSpeedMode_robot, kSpeedMode_robot, kNumSpeedModes);
-	initparameter_b(kSplitStereo, "stereo split", false, false);
+	initparameter_b(kSplitChannels, "channels split", false, false);
 	initparameter_b(kPitchConstraint, "pitch constraint", false, false);
 	// default all notes to off (looks better on the GUI)
 	// no, I changed my mind, at least leave 1 note on so that the user isn't 
@@ -333,7 +333,7 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekDur, 40.8);
 	setpresetparameter_f(i, kSeekDurRandMin, 40.8);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_robot);
-	setpresetparameter_b(i, kSplitStereo, false);
+	setpresetparameter_b(i, kSplitChannels, false);
 	setpresetparameter_b(i, kPitchConstraint, true);
 	setpresetparameter_i(i, kOctaveMin, getparametermin_i(kOctaveMin));
 	setpresetparameter_i(i, kOctaveMax, 1);
@@ -360,7 +360,7 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekDur, 100.0);
 	setpresetparameter_f(i, kSeekDurRandMin, 100.0);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_robot);
-	setpresetparameter_b(i, kSplitStereo, true);
+	setpresetparameter_b(i, kSplitChannels, true);
 	setpresetparameter_b(i, kPitchConstraint, false);
 	i++;
 
@@ -373,7 +373,7 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekDur, 100.0);
 	setpresetparameter_f(i, kSeekDurRandMin, 100.0);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_dj);
-	setpresetparameter_b(i, kSplitStereo, false);
+	setpresetparameter_b(i, kSplitChannels, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
 	i++;
 
@@ -386,7 +386,7 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekDur, 57.0);//5700.0);
 	setpresetparameter_f(i, kSeekDurRandMin, 30.0);//3000.0);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_robot);
-	setpresetparameter_b(i, kSplitStereo, false);
+	setpresetparameter_b(i, kSplitChannels, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
 	i++;
 
@@ -399,7 +399,7 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekDur, 22.2);
 	setpresetparameter_f(i, kSeekDurRandMin, 22.2);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_dj);
-	setpresetparameter_b(i, kSplitStereo, false);
+	setpresetparameter_b(i, kSplitChannels, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
 	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
@@ -416,7 +416,7 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekDur, );
 	setpresetparameter_f(i, kSeekDurRandMin, );
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_);
-	setpresetparameter_b(i, kSplitStereo, );
+	setpresetparameter_b(i, kSplitChannels, );
 	setpresetparameter_b(i, kPitchConstraint, );
 	setpresetparameter_i(i, kOctaveMin, );
 	setpresetparameter_i(i, kOctaveMax, );
@@ -457,7 +457,7 @@ void Scrubby::processparameters()
 	seekDur = getparameter_scalar(kSeekDur);
 	seekDurRandMin = getparameter_scalar(kSeekDurRandMin);
 	speedMode = getparameter_i(kSpeedMode);
-	splitStereo = getparameter_b(kSplitStereo);
+	splitChannels = getparameter_b(kSplitChannels);
 	pitchConstraint = getparameter_b(kPitchConstraint);
 	octaveMin = getparameter_i(kOctaveMin);
 	octaveMax = getparameter_i(kOctaveMax);
