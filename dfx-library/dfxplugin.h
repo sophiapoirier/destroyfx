@@ -354,11 +354,6 @@ public:
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_stepped, 
 						const char * initCustomUnitString = NULL);
-	void initparameter_ui(long parameterIndex, const char * initName, unsigned long initValue, unsigned long initDefaultValue, 
-						unsigned long initMin, unsigned long initMax, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear, 
-						const char * initCustomUnitString = NULL);
 	void initparameter_b(long parameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined);
 	void initparameter_indexed(long parameterIndex, const char * initName, long initValue, long initDefaultValue, 
@@ -402,8 +397,6 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_d();   else return 0.0;	}
 	long getparameter_i(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_i();   else return 0;	}
-	unsigned long getparameter_ui(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_ui();   else return 0;	}
 	bool getparameter_b(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_b();   else return false;	}
 	float getparameter_gen(long parameterIndex)

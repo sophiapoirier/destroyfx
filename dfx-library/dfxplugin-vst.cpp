@@ -348,9 +348,6 @@ void DfxPlugin::getParameterDisplay(long index, char * text)
 		case kDfxParamValueType_int:
 			sprintf(text, "%ld", getparameter_i(index));
 			break;
-		case kDfxParamValueType_uint:
-			sprintf(text, "%ld", getparameter_ui(index));
-			break;
 		case kDfxParamValueType_boolean:
 			if (getparameter_b(index))
 				strcpy(text, "on");
