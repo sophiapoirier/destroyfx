@@ -109,7 +109,7 @@ PolarizerEditor::PolarizerEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long PolarizerEditor::open(float inXOffset, float inYOffset)
+long PolarizerEditor::open()
 {
 	// load some graphics
 

@@ -184,7 +184,7 @@ EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long EQSyncEditor::open(float inXOffset, float inYOffset)
+long EQSyncEditor::open()
 {
 	// load some images
 

@@ -2,8 +2,8 @@
 
 
 //-----------------------------------------------------------------------------
-void genericDisplayTextProcedure(Float32 value, char * outText, void * userData);
-void genericDisplayTextProcedure(Float32 value, char * outText, void * userData)
+void genericDisplayTextProcedure(float value, char * outText, void * userData);
+void genericDisplayTextProcedure(float value, char * outText, void * userData)
 {
 	if (outText != NULL)
 		sprintf(outText, "%.1f", value);

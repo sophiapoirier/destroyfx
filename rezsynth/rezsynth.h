@@ -1,9 +1,7 @@
-/*---------------------------------------------------------------
-   © 2001, Marc Soft und Hardware GmbH, All Rights Reserved
----------------------------------------------------------------*/
+/*-------------- by Marc Poirier  ][  January - March 2001 -------------*/
 
-#ifndef __REZSYNTH_H
-#define __REZSYNTH_H
+#ifndef __REZ_SYNTH_H
+#define __REZ_SYNTH_H
 
 
 #include "dfxplugin.h"
@@ -78,8 +76,8 @@ enum
 // constants & macros
 
 
-#define BANDWIDTH_MIN 0.1
-#define BANDWIDTH_MAX 300.0
+const double BANDWIDTH_MIN = 0.1;
+const double BANDWIDTH_MAX = 300.0;
 #define bandwidthScaled(A)   ( paramRangeSquaredScaled(((double)(A)), BANDWIDTH_MIN, BANDWIDTH_MAX) )
 #define bandwidthUnscaled(A)   ( paramRangeSquaredUnscaled((A), BANDWIDTH_MIN, BANDWIDTH_MAX) )
 
@@ -87,32 +85,31 @@ const int MAX_BANDS = 30;	// the maximum number of resonant bands
 #define numBandsScaled(A)   ( paramRangeIntScaled((A), 1, MAX_BANDS) )
 #define numBandsUnscaled(A)   ( paramRangeIntUnscaled((A), 1, MAX_BANDS) )
 
-#define MAX_SEP_AMOUNT 3.0
+const double MAX_SEP_AMOUNT = 3.0;
 #define sepModeBool(A) ((A) < 0.12f)
 
-#define ATTACK_MAX 3.0f
-#define RELEASE_MAX 3.0f
+const float ATTACK_MAX = 3.0f;
+const float RELEASE_MAX = 3.0f;
 #define attackScaled(A)   ((A)*(A)*ATTACK_MAX)
 #define releaseScaled(A) ((A)*(A)*RELEASE_MAX)
 
-#define VELCURVE_MIN 0.3f
-#define VELCURVE_MAX 3.0f
+const float VELCURVE_MIN = 0.3f;
+const float VELCURVE_MAX = 3.0f;
 #define velCurveScaled(A)   ( paramRangeScaled((A), VELCURVE_MIN, VELCURVE_MAX) )
 #define velCurveUnscaled(A)   ( paramRangeUnscaled((A), VELCURVE_MIN, VELCURVE_MAX) )
 
 #define gainScaled(A)        ((A)*(A)*(A)*3.981f)
 #define betweenGainScaled(A) ((A)*(A)*(A)*3.981f)
 
-#define UNAFFECTED_FADE_DUR 18
+const long UNAFFECTED_FADE_DUR = 18;
 const float UNAFFECTED_FADE_STEP = 1.0f / (float)UNAFFECTED_FADE_DUR;
 
-#define NUM_PRESETS 16
+const long NUM_PRESETS = 16;
 
 
 //----------------------------------------------------------------------------- 
 class RezSynth : public DfxPlugin
 {
-friend class RezSynthEditor;
 public:
 	RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 	virtual ~RezSynth();
@@ -129,7 +126,7 @@ public:
 	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
 
 
-protected:
+private:
 	double processAmpEvener(int numBands, int currentNote);
 	void processCoefficients(int *numbands, int currentNote);
 	void processFilterOuts(const float *in, float *out, long sampleFrames, double ampEvener, 

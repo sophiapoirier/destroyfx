@@ -57,13 +57,13 @@ const float kFineTuneInc = 0.0001f;
 //-----------------------------------------------------------------------------
 // callbacks for button-triggered action
 
-void randomizeTransverb(SInt32 value, void * editor)
+void randomizeTransverb(long value, void * editor)
 {
 	if (editor != NULL)
 		((DfxGuiEditor*)editor)->randomizeparameters(true);
 }
 
-void midilearnTransverb(SInt32 value, void * editor)
+void midilearnTransverb(long value, void * editor)
 {
 	if (editor != NULL)
 	{
@@ -74,7 +74,7 @@ void midilearnTransverb(SInt32 value, void * editor)
 	}
 }
 
-void midiresetTransverb(SInt32 value, void * editor)
+void midiresetTransverb(long value, void * editor)
 {
 	if ( (editor != NULL) && (value != 0) )
 		((DfxGuiEditor*)editor)->resetmidilearn();
@@ -85,7 +85,7 @@ void midiresetTransverb(SInt32 value, void * editor)
 //-----------------------------------------------------------------------------
 // value text display procedures
 
-void bsizeDisplayProcedure(Float32 value, char * outText, void *)
+void bsizeDisplayProcedure(float value, char * outText, void *)
 {
 	float buffersize = value;
 	long thousands = (long)buffersize / 1000;
@@ -104,7 +104,7 @@ void bsizeDisplayProcedure(Float32 value, char * outText, void *)
 		sprintf(outText, "%.1f ms", buffersize);
 }
 
-void speedDisplayProcedure(Float32 value, char * outText, void *)
+void speedDisplayProcedure(float value, char * outText, void *)
 {
 	char * semitonesString = (char*) malloc(16);
 	float speed = value;
@@ -146,12 +146,12 @@ void speedDisplayProcedure(Float32 value, char * outText, void *)
 		free(semitonesString);
 }
 
-void feedbackDisplayProcedure(Float32 value, char * outText, void *)
+void feedbackDisplayProcedure(float value, char * outText, void *)
 {
 	sprintf(outText, "%ld%%", (long)value);
 }
 
-void distDisplayProcedure(Float32 value, char * outText, void * editor)
+void distDisplayProcedure(float value, char * outText, void * editor)
 {
 	float distance = value;
 	if (editor != NULL)
@@ -172,7 +172,7 @@ void distDisplayProcedure(Float32 value, char * outText, void * editor)
 		sprintf(outText, "%.2f ms", distance);
 }
 
-void valueDisplayProcedure(Float32 value, char * outText, void * userData)
+void valueDisplayProcedure(float value, char * outText, void * userData)
 {
 	if (outText != NULL)
 		sprintf(outText, "%.2f", value);
@@ -290,7 +290,7 @@ TransverbEditor::~TransverbEditor()
 }
 
 //-----------------------------------------------------------------------------
-long TransverbEditor::open(float inXOffset, float inYOffset)
+long TransverbEditor::open()
 {
 	// Background image
 	DGImage * gBackground = new DGImage("transverb-background.png", this);

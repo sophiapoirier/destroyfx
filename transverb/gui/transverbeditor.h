@@ -33,8 +33,8 @@ class TransverbEditor : public DfxGuiEditor
 public:
 	TransverbEditor(AudioUnitCarbonView inInstance);
 	virtual ~TransverbEditor();
-	
-	virtual long open(float inXOffset, float inYOffset);
+
+	virtual long open();
 
 private:
 	AUParameterListenerRef parameterListener;
