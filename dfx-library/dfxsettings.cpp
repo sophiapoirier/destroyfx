@@ -809,6 +809,13 @@ void DfxSettings::setLearning(bool newLearn)
 }
 
 //-----------------------------------------------------------------------------
+// just an easy way to check if a particular parameter is currently a learner
+bool DfxSettings::isLearner(long tag)
+{
+	return (tag == getLearner());
+}
+
+//-----------------------------------------------------------------------------
 // define the actively learning parameter during MIDI learn mode
 void DfxSettings::setLearner(long tag, long eventBehaviourFlags, 
 							long data1, long data2, float fdata1, float fdata2)

@@ -227,52 +227,53 @@ class DfxSettings
 {
 public:
 	DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExtendedData = 0);
-	virtual ~DfxSettings();
+	~DfxSettings();
 
 
 	/* - - - - - - - - - API-connect methods - - - - - - - - - */
 
 	// for adding to your base plugin class methods
-	virtual unsigned long save(void **data, bool isPreset);
-	virtual bool restore(void *data, unsigned long byteSize, bool isPreset);
+	unsigned long save(void **data, bool isPreset);
+	bool restore(void *data, unsigned long byteSize, bool isPreset);
 
 	// handlers for the types of MIDI events that we support
-	virtual void handleNoteOn(int channel, int note, int velocity, long frameOffset);
-	virtual void handleNoteOff(int channel, int note, int velocity, long frameOffset);
-	virtual void handlePitchBend(int channel, int valueLSB, int valueMSB, long frameOffset);
-	virtual void handleCC(int channel, int controllerNum, int value, long frameOffset);
+	void handleNoteOn(int channel, int note, int velocity, long frameOffset);
+	void handleNoteOff(int channel, int note, int velocity, long frameOffset);
+	void handlePitchBend(int channel, int valueLSB, int valueMSB, long frameOffset);
+	void handleCC(int channel, int controllerNum, int value, long frameOffset);
 
 
 	/* - - - - - - - - - MIDI learn - - - - - - - - - */
 
 	// deactivate MIDI learn mode
 	// call this when your editor window opens and when it closes
-	virtual void resetLearning() { setLearning(false); }
+	void resetLearning() { setLearning(false); }
 	// remove MIDI event assignments from all parameters
-	virtual void clearAssignments();
+	void clearAssignments();
 	// assign a MIDI event to a parameter
-	virtual void assignParam(long tag, long eventType, long eventChannel, 
+	void assignParam(long tag, long eventType, long eventChannel, 
 								long eventNum, long eventNum2 = 0, 
 								long eventBehaviourFlags = 0, 
 								long data1 = 0, long data2 = 0, 
 								float fdata1 = 0.0f, float fdata2 = 0.0f);
 	// remove a parameter's MIDI event assignment
-	virtual void unassignParam(long tag);
+	void unassignParam(long tag);
 
 	// define or report the actively learning parameter during MIDI learn mode
-	virtual void setLearner(long tag, long eventBehaviourFlags = 0, 
+	void setLearner(long tag, long eventBehaviourFlags = 0, 
 							long data1 = 0, long data2 = 0, 
 							float fdata1 = 0.0f, float fdata2 = 0.0f);
-	virtual long getLearner() { return learner; }
+	long getLearner() { return learner; }
+	bool isLearner(long tag);
 
 	// turn MIDI learning on or off
-	virtual void setLearning(bool newLearn);
+	void setLearning(bool newLearn);
 	// report whether or not MIDI learn mode is active
-	virtual bool isLearning() { return midiLearn; }
+	bool isLearning() { return midiLearn; }
 
 	// call these from valueChanged in the plugin editor
-	virtual void setParameterMidiLearn(float value);
-	virtual void setParameterMidiReset(float value);
+	void setParameterMidiLearn(float value);
+	void setParameterMidiReset(float value);
 
 	// potentially useful accessors
 	long getParameterAssignmentType(long paramTag);
@@ -284,9 +285,9 @@ public:
 	// if you set this to something and data is received during restore()
 	// which has a version number in its header that's lower than this, 
 	// then loading will abort
-	virtual void setLowestLoadableVersion(long version)
+	void setLowestLoadableVersion(long version)
 		{ settingsInfo.lowestLoadableVersion = version; }
-	virtual long getLowestLoadableVersion()
+	long getLowestLoadableVersion()
 		{ return settingsInfo.lowestLoadableVersion; }
 
 	// This stuff manages the parameter IDs.  Each parameter has an ID number 
@@ -303,39 +304,39 @@ public:
 	// creating the DfxSettings object, or at least before your plugin's 
 	// constructor returns, because you don't want any set or save calls 
 	// made before you have your parameter ID map finalized.
-	virtual void setParameterID(long tag, long newID)
+	void setParameterID(long tag, long newID)
 		{ if (paramTagIsValid(tag)) parameterIDs[tag] = newID; }
-	virtual long getParameterID(long tag)
+	long getParameterID(long tag)
 		{ if (paramTagIsValid(tag)) return parameterIDs[tag]; else return 0; }
-	virtual long getParameterTagFromID(long paramID, long numSearchIDs=0, long *searchIDs=0);
+	long getParameterTagFromID(long paramID, long numSearchIDs=0, long *searchIDs=0);
 
 
 	/* - - - - - - - - - optional settings - - - - - - - - - */
 
 	// true means allowing a given MIDI event to be assigned to only one parameter; 
 	// false means that a single event can be assigned to more than one parameter
-	virtual void setSteal(bool newSteal) { stealAssignments = newSteal; }
-	virtual bool getSteal() { return stealAssignments; }
+	void setSteal(bool newSteal) { stealAssignments = newSteal; }
+	bool getSteal() { return stealAssignments; }
 
 	// true means that pitchbend events can be assigned to parameters and 
 	// used to control those parameters; false means don't use pitchbend like that
-	virtual void setAllowPitchbendEvents(bool newMode=true) { allowPitchbendEvents = newMode; }
-	virtual bool getAllowPitchbendEvents() { return allowPitchbendEvents; }
+	void setAllowPitchbendEvents(bool newMode=true) { allowPitchbendEvents = newMode; }
+	bool getAllowPitchbendEvents() { return allowPitchbendEvents; }
 
 	// true means that MIDI note events can be assigned to parameters and 
 	// used to control those parameters; false means don't use notes like that
-	virtual void setAllowNoteEvents(bool newMode=true) { allowNoteEvents = newMode; }
-	virtual bool getAllowNoteEvents() { return allowNoteEvents; }
+	void setAllowNoteEvents(bool newMode=true) { allowNoteEvents = newMode; }
+	bool getAllowNoteEvents() { return allowNoteEvents; }
 
 	// true means that MIDI channel in events and assignments matters; 
 	// false means operate in MIDI omni mode
-	virtual void setUseChannel(bool newMode=true) { useChannel = newMode; }
-	virtual bool getUseChannel() { return useChannel; }
+	void setUseChannel(bool newMode=true) { useChannel = newMode; }
+	bool getUseChannel() { return useChannel; }
 
 	// this tells DfxSettings what you want it to do if a non-matching 
 	// settings data is received in restore()   (see the enum options above)
-	virtual void setCrisisBehaviour(bool newCB) { crisisBehaviour = newCB; }
-	virtual long getCrisisBehaviour() { return crisisBehaviour; }
+	void setCrisisBehaviour(bool newCB) { crisisBehaviour = newCB; }
+	long getCrisisBehaviour() { return crisisBehaviour; }
 
 
 protected:

@@ -328,6 +328,12 @@ void DfxPlugin::getParameterLabel(long index, char *label)
 {
 	switch (getparameterunit(index))
 	{
+		case kDfxParamUnit_generic:
+			strcpy(label, "");
+			break;
+		case kDfxParamUnit_quantity:
+			strcpy(label, "");
+			break;
 		case kDfxParamUnit_percent:
 			strcpy(label, "%%");
 			break;
@@ -360,6 +366,9 @@ void DfxPlugin::getParameterLabel(long index, char *label)
 			break;
 		case kDfxParamUnit_divisor:
 			strcpy(label, "");
+			break;
+		case kDfxParamUnit_exponent:
+			strcpy(label, "exponent");
 			break;
 		case kDfxParamUnit_semitones:
 			strcpy(label, "semitones");
