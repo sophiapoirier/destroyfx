@@ -4,6 +4,10 @@
 #include "transverbeditor.hpp"
 #endif
 
+#include <stdio.h>
+#include <string.h>
+
+
 
 //-----------------------------------------------------------------------------
 enum {
@@ -282,15 +286,15 @@ TransverbEditor::TransverbEditor(AudioEffect *effect)
 
 	speedString = new char[256];
 
-	chunk = ((PLUGIN*)effect)->chunk;	// this just simplifies pointing
+	chunk = ((DfxPlugin*)effect)->getsettings_ptr();	// this just simplifies pointing
 
 	faders = 0;
 	tallFaders = 0;
-	faders = (CHorizontalSlider**)malloc(sizeof(CHorizontalSlider*)*NUM_PARAMS);
-	tallFaders = (CVerticalSlider**)malloc(sizeof(CVerticalSlider*)*NUM_PARAMS);
-	for (long i=0; i < NUM_PARAMS; i++)
+	faders = (CHorizontalSlider**)malloc(sizeof(CHorizontalSlider*)*NUM_PARAMETERS);
+	tallFaders = (CVerticalSlider**)malloc(sizeof(CVerticalSlider*)*NUM_PARAMETERS);
+	for (long i=0; i < NUM_PARAMETERS; i++)
 		faders[i] = NULL;
-	for (long j=0; j < NUM_PARAMS; j++)
+	for (long j=0; j < NUM_PARAMETERS; j++)
 		tallFaders[j] = NULL;
 }
 
@@ -377,6 +381,7 @@ long TransverbEditor::open(void *ptr)
 
 
 	chunk->resetLearning();
+	fBsize = ((DfxPlugin*)effect)->getparameter_gen(kBsize);
 
 	//--initialize the background frame--------------------------------------
 	CRect size (0, 0, gBackground->getWidth(), gBackground->getHeight());
@@ -684,7 +689,7 @@ long TransverbEditor::open(void *ptr)
 	dist1Display->setFont(kNormalFontSmall);
 	dist1Display->setFontColor(kBlueTextCColor);
 	dist1Display->setValue(effect->getParameter(kDist1));
-	dist1Display->setStringConvert( distDisplayConvert, &(((PLUGIN*)effect)->fBsize) );
+	dist1Display->setStringConvert(distDisplayConvert, &fBsize);
 	dist1Display->setTag(kDist1);
 	frame->addView(dist1Display);
 
@@ -721,7 +726,7 @@ long TransverbEditor::open(void *ptr)
 	dist2Display->setFont(kNormalFontSmall);
 	dist2Display->setFontColor(kBlueTextCColor);
 	dist2Display->setValue(effect->getParameter(kDist2));
-	dist2Display->setStringConvert( distDisplayConvert, &(((PLUGIN*)effect)->fBsize) );
+	dist2Display->setStringConvert(distDisplayConvert, &fBsize);
 	dist2Display->setTag(kDist2);
 	frame->addView(dist2Display);
 
@@ -738,7 +743,7 @@ long TransverbEditor::open(void *ptr)
 	frame->addView(bsizeDisplay);
 
 
-	for (long i=0; i < NUM_PARAMS; i++)
+	for (long i=0; i < NUM_PARAMETERS; i++)
 		faders[i] = NULL;
 	faders[kSpeed1] = speed1Fader;
 	faders[kFeed1] = feed1Fader;
@@ -748,7 +753,7 @@ long TransverbEditor::open(void *ptr)
 	faders[kDist2] = dist2Fader;
 	faders[kBsize] = bsizeFader;
 
-	for (long j=0; j < NUM_PARAMS; j++)
+	for (long j=0; j < NUM_PARAMETERS; j++)
 		tallFaders[j] = NULL;
 	tallFaders[kDrymix] = drymixFader;
 	tallFaders[kMix1] = mix1Fader;
@@ -765,9 +770,9 @@ void TransverbEditor::close()
 		delete frame;
 	frame = 0;
 
-	for (long i=0; i < NUM_PARAMS; i++)
+	for (long i=0; i < NUM_PARAMETERS; i++)
 		faders[i] = NULL;
-	for (long j=0; j < NUM_PARAMS; j++)
+	for (long j=0; j < NUM_PARAMETERS; j++)
 		tallFaders[j] = NULL;
 
 	chunk->resetLearning();
@@ -860,6 +865,7 @@ void TransverbEditor::setParameter(long index, float value)
 			if (bsizeFineUpButton)
 				bsizeFineUpButton->setValue(value);
 			// update the distance displays if the buffer size is changed
+			fBsize = ((DfxPlugin*)effect)->getparameter_gen(kBsize);
 			if (dist1Display)
 				dist1Display->setDirty();
 			if (dist2Display)
@@ -888,6 +894,7 @@ void TransverbEditor::setParameter(long index, float value)
 			break;
 
 		case kDist1:
+			fBsize = ((DfxPlugin*)effect)->getparameter_gen(kBsize);
 			if (dist1Fader)
 				dist1Fader->setValue(value);
 			if (dist1Display)
@@ -920,6 +927,7 @@ void TransverbEditor::setParameter(long index, float value)
 			break;
 
 		case kDist2:
+			fBsize = ((DfxPlugin*)effect)->getparameter_gen(kBsize);
 			if (dist2Fader)
 				dist2Fader->setValue(value);
 			if (dist2Display)
@@ -1023,7 +1031,7 @@ void TransverbEditor::valueChanged(CDrawContext* context, CControl* control)
 		case kRandomButton:
 			// only if the button has just been pressed down, not released
 			if (control->getValue() >= 0.5f)
-				((PLUGIN*)effect)->randomizeParameters(true);
+				((Transverb*)effect)->randomizeParameters(true);
 			break;
 
 		// clicking on these parts of the GUI takes you to Destroy FX or SE web pages
@@ -1271,7 +1279,7 @@ void TransverbEditor::idle()
   bool somethingChanged = false;
 
 
-	for (long i=0; i < NUM_PARAMS; i++)
+	for (long i=0; i < NUM_PARAMETERS; i++)
 	{
 		if (i != chunk->getLearner())
 		{
