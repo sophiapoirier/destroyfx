@@ -414,7 +414,7 @@ long BufferOverrideEditor::open()
 	display = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, kDGTextAlign_left, kValueDisplayTinyFontSize, kWhiteDGColor, kValueDisplayFont);
 
 
-	DGButton *button;
+	DGButton * button;
 
 	// forced buffer size tempo sync button
 	pos.set(kBufferTempoSyncButtonX, kBufferTempoSyncButtonY, gBufferTempoSyncButton->getWidth()/2, gBufferTempoSyncButton->getHeight()/2);
@@ -489,20 +489,6 @@ long BufferOverrideEditor::open()
 	button = new DGButton(this, kDivisorLFOtempoSync, &pos, gDivisorLFOrateLabel, 2, kDGButtonType_picturereel);
 
 
-/*
-HMHelpContentRec helptag;
-helptag.version = kMacHelpVersion;
-SetRect(&(helptag.absHotRect), 0, 0, 0, 0);
-helptag.tagSide = kHMInsideTopCenterAligned;
-helptag.content[0].contentType = kHMCFStringContent;
-helptag.content[0].u.tagCFString = CFSTR("ooo yeah, MIDI mode shitz");
-helptag.content[1].contentType = kHMCFStringContent;
-helptag.content[1].u.tagCFString = CFSTR("who deh fuck yoo lookin' at?");
-HMSetControlHelpContent(midiModeButton->getCarbonControl(), &helptag);
-HMSetHelpTagsDisplayed(true);
-*/
-
-
 	// the help mouseover hint thingy
 	pos.set(kHelpDisplayX, kHelpDisplayY, gBackground->getWidth(), kDisplayHeight);
 	helpDisplay = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
@@ -525,8 +511,6 @@ HMSetHelpTagsDisplayed(true);
 		AUListenerAddParameter(parameterListener, bufferLFOrateDisplay, &bufferLFOtempoSyncAUP);
 	}
 
-
-HMSetTagDelay(9);	// make the hints appear quickly <-- XXX this is sort of a hack
 
 	return noErr;
 }
