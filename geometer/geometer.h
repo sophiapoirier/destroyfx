@@ -180,6 +180,9 @@ public:
   virtual bool copyProgram(long destination);
 
   virtual long getTailSize();
+  /* there was a typo in the VST header files versions 2.0 through 2.2, 
+     so some hosts will still call this incorrectly named version... */
+  virtual long getGetTailSize() { return getTailSize(); }
 
   virtual void suspend();
   virtual void resume();
