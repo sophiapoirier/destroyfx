@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #include "dfxmisc.h"
-#include "TempoRateTable.h"
+#include "temporatetable.h"
 
 
 //-------------------------------------------------------------------------------------
