@@ -78,8 +78,6 @@ void DGGraphic::loadImagePNG(char *fileName)
 	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 	if (pluginBundleRef != NULL)
 	{
-		short tempres = CurResFile();
-
 		CFStringRef fileCFName = CFStringCreateWithCString(kCFAllocatorDefault, fileName, CFStringGetSystemEncoding());
 		if (fileCFName != NULL)
 		{
@@ -89,15 +87,13 @@ void DGGraphic::loadImagePNG(char *fileName)
 				CGDataProviderRef provider = CGDataProviderCreateWithURL(resourceURL);
 				if (provider != NULL)
 				{
-					cgImage = CGImageCreateWithPNGDataProvider(provider, NULL, false,  kCGRenderingIntentDefault);
+					cgImage = CGImageCreateWithPNGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
 					CGDataProviderRelease(provider);
 				}
 				CFRelease(resourceURL);
 			}
 			CFRelease(fileCFName);
 		}
-
-		 UseResFile(tempres);
 	}
 }
 

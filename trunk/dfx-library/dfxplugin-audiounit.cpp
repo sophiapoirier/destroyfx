@@ -36,12 +36,6 @@ ComponentResult DfxPlugin::Initialize()
 	if (result == noErr)
 		result = do_initialize();
 
-	// AU hosts aren't required to call Reset between Initialize and 
-	// beginning audio processing, so this makes sure that Reset happens, 
-	// in case the plugin depends on that
-	if (result == noErr)
-		Reset();
-
 	return result;
 }
 
@@ -60,9 +54,10 @@ void DfxPlugin::Cleanup()
 // (playback stop/restart, change of playback position, etc.)
 // any DSP state variables should be reset here 
 // (contents of buffers, position trackers, IIR filter histories, etc.)
-void DfxPlugin::Reset()
+ComponentResult DfxPlugin::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	do_reset();
+	return noErr;
 }
 
 
@@ -81,13 +76,6 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 
 	switch (inID)
 	{
-	#if TARGET_PLUGIN_HAS_GUI
-		case kAudioUnitProperty_GetUIComponentList:
-			outDataSize = sizeof(ComponentDescription);
-			outWritable = false;
-			break;
-	#endif
-
 	#if TARGET_PLUGIN_USES_MIDI
 //		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
 //		MIDI controls and/or NRPN's to AudioUnit scopes/elements/parameters.
@@ -560,11 +548,11 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 // if any n-to-n configuration (i.e. same number of ins and outs) is supported, return 0
 UInt32 DfxPlugin::SupportedNumChannels(const AUChannelInfo **outInfo)
 {
-	if (channelconfigs)
+	if (channelconfigs != NULL)
 	{
 		if (outInfo != NULL)
 			*outInfo = channelconfigs;
-		return (unsigned)numchannelconfigs;
+		return (UInt32)numchannelconfigs;
 	}
 	return 0;
 }
@@ -766,7 +754,7 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inID, 
+ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inParameterID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					Float32 inValue, UInt32 inBufferOffsetInFrames)
 {
@@ -774,10 +762,10 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inID,
 		return kAudioUnitErr_InvalidScope;
 	if (inElement != 0)
 		return kAudioUnitErr_InvalidElement;
-	if ( !parameterisvalid(inID) )
+	if ( !parameterisvalid(inParameterID) )
 		return kAudioUnitErr_InvalidParameter;
 
-	setparameter_f(inID, inValue);
+	setparameter_f(inParameterID, inValue);
 	return noErr;
 //	return AUBase::SetParameter(inID, inScope, inElement, inValue, inBufferOffsetInFrames);
 }

@@ -660,7 +660,7 @@ public:
 	virtual void PostConstructor();
 	virtual ComponentResult Initialize();
 	virtual void Cleanup();
-	virtual void Reset();
+	virtual ComponentResult Reset(AudioUnitScope inScope, AudioUnitElement inElement);
 
 	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags, 
 					const AudioBufferList &inBuffer, AudioBufferList &outBuffer, 
@@ -690,7 +690,7 @@ public:
 					AudioUnitParameterInfo &outParameterInfo);
 	virtual ComponentResult GetParameterValueStrings(AudioUnitScope inScope, 
 					AudioUnitParameterID inParameterID, CFArrayRef *outStrings);
-	virtual ComponentResult SetParameter(AudioUnitParameterID inID, 
+	virtual ComponentResult SetParameter(AudioUnitParameterID inParameterID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					Float32 inValue, UInt32 inBufferOffsetInFrames);
 

@@ -19,14 +19,14 @@ typedef void (*displayTextProcedure) (Float32 value, char *outText, void *userDa
 class DGTextDisplay : public DGControl
 {
 public:
-	DGTextDisplay(DfxGuiEditor*, AudioUnitParameterID, DGRect*, displayTextProcedure, void *userData, DGGraphic*, char *inFontName = NULL);
+	DGTextDisplay(DfxGuiEditor*, AudioUnitParameterID, DGRect*, displayTextProcedure, void *userData, DGGraphic*, const char *inFontName = NULL);
 	virtual ~DGTextDisplay();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
 	virtual void drawText(CGContextRef context, CGRect& inBounds, const char *inString);
-	virtual void mouseDown(Point *P, bool, bool);
-	virtual void mouseTrack(Point *P, bool, bool);
-	virtual void mouseUp(Point *P, bool, bool);
+	virtual void mouseDown(Point inPos, bool, bool);
+	virtual void mouseTrack(Point inPos, bool, bool);
+	virtual void mouseUp(Point inPos, bool, bool);
 
 	void setTextAlignmentStyle(TextAlignmentStyle newStyle)
 		{	alignment = newStyle;	}

@@ -9,9 +9,9 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 					DGGraphic *			inBackground, 
 					long				inNumStates, 
 					DfxGuiBottonMode	inMode, 
-					bool				inKick)
+					bool				inDrawMomentaryState)
 :	DGControl(inOwnerEditor, inParamID, inWhere), 
-	numStates(inNumStates), mode(inMode), kick(inKick)
+	numStates(inNumStates), mode(inMode), drawMomentaryState(inDrawMomentaryState)
 {
 	ForeGround = inForeGround;
 	BackGround = inBackground;
@@ -34,9 +34,9 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 					DGGraphic *			inBackground,
 					long				inNumStates, 
 					DfxGuiBottonMode	inMode, 
-					bool				inKick)
-:	DGControl(inOwnerEditor, inWhere, ((inNumStates < 1) ? 0.0f : (float)(inNumStates-1)) ), 
-	numStates(inNumStates), mode(inMode), kick(inKick)
+					bool				inDrawMomentaryState)
+:	DGControl(inOwnerEditor, inWhere, ((inNumStates <= 0) ? 0.0f : (float)(inNumStates-1)) ), 
+	numStates(inNumStates), mode(inMode), drawMomentaryState(inDrawMomentaryState)
 {
 	ForeGround = inForeGround;
 	BackGround = inBackground;
@@ -76,7 +76,7 @@ void DGButton::draw(CGContextRef context, UInt32 portHeight)
 	{
 bounds.size.width = CGImageGetWidth(theButton);
 bounds.size.height = CGImageGetHeight(theButton);
-if (kick && mouseIsDown)
+if (drawMomentaryState && mouseIsDown)
 	bounds.origin.x -= (float) (CGImageGetWidth(theButton) / 2);
 bounds.origin.y -= (float) ((max - value) * (CGImageGetHeight(theButton) / numStates));
 //		CGContextSetAlpha(context, alpha);
@@ -85,14 +85,13 @@ bounds.origin.y -= (float) ((max - value) * (CGImageGetHeight(theButton) / numSt
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseDown(Point *P, bool with_option, bool with_shift)
+void DGButton::mouseDown(Point inPos, bool with_option, bool with_shift)
 {
 	if (mode == kPictureReel)
 		return;
 
 	ControlRef carbonControl = getCarbonControl();
-
-	SInt32 value = GetControl32BitValue(carbonControl);
+	entryValue = newValue = GetControl32BitValue(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
 	
 	setMouseIsDown(true);
@@ -104,62 +103,84 @@ void DGButton::mouseDown(Point *P, bool with_option, bool with_shift)
 	switch (mode)
 	{
 		case kPushButton:
-			value = max;
+			newValue = max;
+			entryValue = 0;	// just to make sure it's like that
 			break;
 		case kIncButton:
-			value = (value + 1) % (max + 1);
+			newValue = (newValue + 1) % (max + 1);
 			break;
 		case kDecButton:
-			value = (value - 1 + max) % (max + 1);
+			newValue = (newValue - 1 + max) % (max + 1);
 			break;
 		case kRadioButton:
-			value = P->h / (getBounds()->w / numStates);
-			if (value >= numStates)
-				value = numStates - 1;
-			else if (value < 0)
-				value = 0;
+			newValue = inPos.h / (getBounds()->w / numStates);
+			if (newValue >= numStates)
+				newValue = numStates - 1;
+			else if (newValue < 0)
+				newValue = 0;
 			break;
 		default:
-			return;
+			break;
 	}
-	SetControl32BitValue(carbonControl, value);
+
+	if (newValue != entryValue)
+		SetControl32BitValue(carbonControl, newValue);
 
 	if (userProcedure != NULL)
-		userProcedure(value, userProcData);
+		userProcedure(newValue, userProcData);
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseTrack(Point *P, bool with_option, bool with_shift)
+void DGButton::mouseTrack(Point inPos, bool with_option, bool with_shift)
 {
 	if (mode == kPictureReel)
 		return;
 
-	if (mode == kRadioButton)
+	ControlRef carbonControl = getCarbonControl();
+	SInt32 currentValue = GetControl32BitValue(carbonControl);
+
+	if ( (inPos.h >= 0) && (inPos.h <= getBounds()->w) && (inPos.v >= 0) && (inPos.v <= getBounds()->h) )
 	{
-		SInt32 oldvalue = GetControl32BitValue(getCarbonControl());
-		SInt32 newvalue = P->h / (getBounds()->w / numStates);
-		if (newvalue >= numStates)
-			newvalue = numStates - 1;
-		else if (newvalue < 0)
-			newvalue = 0;
-		if (newvalue != oldvalue)
-			SetControl32BitValue(getCarbonControl(), newvalue);
+		setMouseIsDown(true);
+
+		if (mode == kRadioButton)
+		{
+			newValue = inPos.h / (getBounds()->w / numStates);
+			if (newValue >= numStates)
+				newValue = numStates - 1;
+			else if (newValue < 0)
+				newValue = 0;
+		}
+		else
+		{
+			if ( (userProcedure != NULL) && (newValue != currentValue) )
+				userProcedure(newValue, userProcData);
+		}
+		if (newValue != currentValue)
+			SetControl32BitValue(getCarbonControl(), newValue);
 	}
 
-	if ( (P->h >= 0) && (P->h <= getBounds()->w) && (P->v >= 0) && (P->v <= getBounds()->h) )
-	{
-//printf("mouse is down and in the zone\n");
-		setMouseIsDown(true);
-	}
 	else
 	{
-//printf("mouse is down and out of it\n");
 		setMouseIsDown(false);
+		if (mode == kRadioButton)
+		{
+		}
+		else
+		{
+			if (entryValue != currentValue)
+			{
+				SetControl32BitValue(getCarbonControl(), entryValue);
+				if (userReleaseProcedure != NULL)
+					userReleaseProcedure(GetControl32BitValue(carbonControl), userReleaseProcData);
+			}
+		}
 	}
+
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseUp(Point *P, bool with_option, bool with_shift)
+void DGButton::mouseUp(Point inPos, bool with_option, bool with_shift)
 {
 	if (mode == kPictureReel)
 		return;
@@ -168,23 +189,17 @@ void DGButton::mouseUp(Point *P, bool with_option, bool with_shift)
 	
 	setMouseIsDown(false);
 	
-	switch (mode)
+	if (mode == kPushButton)
 	{
-		case kPushButton:
+		if (GetControl32BitValue(carbonControl) != 0)
 			SetControl32BitValue(carbonControl, 0);
-			break;
-		case kIncButton:
-			redraw();
-			break;
-		case kDecButton:
-			redraw();
-			break;
-		default:
-			break;
 	}
 
-	if (userReleaseProcedure != NULL)
-		userReleaseProcedure(GetControl32BitValue(carbonControl), userReleaseProcData);
+	if ( (inPos.h >= 0) && (inPos.h <= getBounds()->w) && (inPos.v >= 0) && (inPos.v <= getBounds()->h) )
+	{
+		if (userReleaseProcedure != NULL)
+			userReleaseProcedure(GetControl32BitValue(carbonControl), userReleaseProcData);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -192,7 +207,7 @@ void DGButton::setMouseIsDown(bool newMouseState)
 {
 	bool oldstate = mouseIsDown;
 	mouseIsDown = newMouseState;
-	if (oldstate != newMouseState)
+	if ( (oldstate != newMouseState) && drawMomentaryState )
 		redraw();
 }
 

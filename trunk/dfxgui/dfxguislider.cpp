@@ -116,10 +116,10 @@ void DGSlider::draw(CGContextRef context, UInt32 portHeight)
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseDown(Point *P, bool with_option, bool with_shift)
+void DGSlider::mouseDown(Point inPos, bool with_option, bool with_shift)
 {
-	sldr_X = P->h;
-	sldr_Y = P->v;
+	sldr_X = inPos.h;
+	sldr_Y = inPos.v;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		if (isAUVPattached())
@@ -127,11 +127,11 @@ void DGSlider::mouseDown(Point *P, bool with_option, bool with_shift)
 	#endif
 
 	if (!with_shift)
-		mouseTrack(P, with_option, with_shift);
+		mouseTrack(inPos, with_option, with_shift);
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseTrack(Point *P, bool with_option, bool with_shift)
+void DGSlider::mouseTrack(Point inPos, bool with_option, bool with_shift)
 {
 	ControlRef carbonControl = getCarbonControl();
 	SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -149,13 +149,13 @@ void DGSlider::mouseTrack(Point *P, bool with_option, bool with_shift)
 	{
 		if (orientation == kVerticalSlider)
 		{
-			float diff = (float) (sldr_Y - P->v);
+			float diff = (float) (sldr_Y - inPos.v);
 			diff /= fineTuneFactor;
 			val += (SInt32) (diff * (float)max / (float)fore.h);
 		}
 		else	// horizontal mode
 		{
-			float diff = (float) (P->h - sldr_X);
+			float diff = (float) (inPos.h - sldr_X);
 			diff /= fineTuneFactor;
 			val += (SInt32) (diff * (float)max / (float)fore.w);
 		}
@@ -164,12 +164,12 @@ void DGSlider::mouseTrack(Point *P, bool with_option, bool with_shift)
 	{
 		if (orientation == kVerticalSlider)
 		{
-			float valnorm = (float)(P->v - o_Y) / (float)fore.h;
+			float valnorm = (float)(inPos.v - o_Y) / (float)fore.h;
 			val = (SInt32)((float)max * (1.0f - valnorm));
 		}
 		else	// horizontal mode
 		{
-			float valnorm = (float)(P->h - o_X) / (float)fore.w;
+			float valnorm = (float)(inPos.h - o_X) / (float)fore.w;
 			val = (SInt32)((float)max * valnorm);
 		}
 	}
@@ -181,12 +181,12 @@ void DGSlider::mouseTrack(Point *P, bool with_option, bool with_shift)
 	if (val != oldval)
 		SetControl32BitValue(carbonControl, val);
 
-	sldr_X = P->h;
-	sldr_Y = P->v;
+	sldr_X = inPos.h;
+	sldr_Y = inPos.v;
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseUp(Point *P, bool with_option, bool with_shift)
+void DGSlider::mouseUp(Point inPos, bool with_option, bool with_shift)
 {
-	mouseTrack(P, with_option, with_shift);
+	mouseTrack(inPos, with_option, with_shift);
 }

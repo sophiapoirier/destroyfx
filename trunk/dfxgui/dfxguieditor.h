@@ -33,7 +33,7 @@ public:
 	virtual ~DfxGuiEditor();
 
 	// this gets called from AUCarbonViewBase
-	OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
+	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventRef inEvent);
 	// *** this one is for the child class to override
 	virtual OSStatus open(Float32 inXOffset, Float32 inYOffset) = 0;
@@ -149,11 +149,11 @@ public:
 	virtual void draw(CGContextRef context, UInt32 portHeight)
 		{ }
 	// *** mouse position is relative to controlBounds for ultra convenience
-	virtual void mouseDown(Point *P, bool, bool)
+	virtual void mouseDown(Point inPos, bool, bool)
 		{ }
-	virtual void mouseTrack(Point *P, bool, bool)
+	virtual void mouseTrack(Point inPos, bool, bool)
 		{ }
-	virtual void mouseUp(Point *P, bool, bool)
+	virtual void mouseUp(Point inPos, bool, bool)
 		{ }
 
 // XXX fix this up
