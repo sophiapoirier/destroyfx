@@ -1,77 +1,117 @@
 
-These are some of the plugins that are part of the DestroyFX plugin
+            Super Destroy FX Plugin Sources
+
+These are some of the plugins that are part of the Destroy FX plugin
 pack (DFX). All of them use the VST plugin standard, and should be
 (nearly) source-portable to any platform which supports that. Some
 advanced features may not work on all platforms or in all hosts.
 
+Unfortunately, C++ is currently the only appropriate language for
+creating VST plugins. Thus, all of these are written in C++. You'll
+need a C++ compiler for your platform in order to compile them. You'll
+also need an appropriate version of the VST SDK. Right now, this means
+that you'll be able to easily compile with Visual C++ for Windows,
+and somewhat easily with CodeWarrior for the Macintosh, and that it
+will be pretty difficult for any other platform.
+
 These plugins are Copyright (c) Tom Murphy 7 and Marc Poirier. You can
 use them in your music however you like, without royalties. You can
 also modify them to your liking. However, if you distribute them (or
-derivative/modifed versions of them) then you must also distribute the
-source package in order to be in compliance with the license (see the
-file COPYING). 
+derivative/modified versions of them) then you must also distribute
+the source package in order to be in compliance with the license (see
+the file COPYING).
 
 This software comes with no warranty (see the file COPYING). In fact,
 it is likely that some of these crazy effects could crash hosts (by
 sending out-of-range samples or taking too much time to process), so
 you should be careful to save your work when using them in important
 songs. Tom uses Wavelab on the PC, and Marc uses Logic on the Mac, so
-the plugins should work properly in those programs, at least.
+the plugins are likely work properly in those programs, at least.
+
+Pre-packaged versions of (some of) these with fancy GUIs are available
+at the Super Destroy FX web page:
+
+http://www.smartelectronix.com/~destroyfx/
+
+If you are simply interested in making music, you should check there
+first. If you want to get your feet wet making your own VST effects,
+this might be a good place to start. (You can also see and play with
+our effects before they're finished!)
 
 Here's a description of each of the plugins included:
 
 brokenfft/
 
         My favorite plugin; this converts to the frequency domain
-        using the FFT, and then does a number of crazy effects.
-        This one has an almost limitless variety of sounds that
-        will come out of it...
+        using the FFT, and then does a number of crazy effects. This
+        one has an almost limitless variety of sounds that will come
+        out of it...
 
 transverb/
 
         Fun simple plugin; sort of like a tape-loop with
-        independently-moving read/write heads. Lots of great
-        effects in this one.
+        independently-moving read/write heads. Lots of great effects
+        in this one.
 
 trans/
 
-        Converts to and from other domains (sin, tan, derivative,
-        e^x, fft); the idea is that you run this and its inverse
-        with some other plugins in-between.
+        Converts to and from other domains (sin, tan, derivative, e^x,
+        fft); the idea is that you run this and its inverse with some
+        other plugins in-between.
 
 decimate/
 
         Reduces bit depth and sample rate in order to produce
-        artifacting. Extreme settings. Also includes a bonus 
-        "DESTROY" effect.
+        artifacting. Extreme settings. Also includes a bonus "DESTROY"
+        effect.
 
 intercom/
 
-        Adds noise to your sound based on its RMS volume; can
-        also swap samples around.
+        Adds noise to your sound based on its RMS volume; can also
+        swap samples around.
+
+geometer/
+
+        Re-shapes waveforms using new curves and lines.
 
 
-In the source package, each plugin has a corresponding directory,
-as well as a corresponding plugin_win32 directory containing
-MS VC++ project files. Some day we will probably have Codewarrior
-build files for the Mac, too.
+In the source package, each plugin has a corresponding directory, as
+well as a corresponding plugin_win32 directory containing MS VC++
+project files. Some day we will probably have Codewarrior build files
+for the Mac, too. Some day after that we may have all of the media for
+building the plugins with GUIs.
 
 Here is a description of each of the directories in the source
 distribution:
 
+windowingstub/
+
+        Sources for starting a new plugin with buffering and
+        windowing. This is important when discontinuities at the
+        beginning and end of processing buffers translate into audible
+        artifacts in the output. (For example, when doing FFT.) This
+        adds certain overhead and extra complexity, and requires
+        running twice as much effect processing. In addition, some
+        effects do not fit the model well (a memory-driven delay
+        plugin, for instance). If your plugin does not need this, use
+        stub-plugin below instead.
+
 fftw/
-        "Fastest Fourier Transform in the West", which actually
-        comes from the East at MIT. A very fast FFT routine
-        (GPL).
+
+        "Fastest Fourier Transform in the West", which actually comes
+        from the East at MIT. A very fast FFT routine (GPL).
 
 fft-lib/
+
         FFT Library from Don Cross. Public Domain.
 
 vstsdk/
-        SDK from Steinberg for creating VST plugins. There is
-        no code in this directory; you should get the headers
-        and class stubs from Steinberg's site.
+
+        SDK from Steinberg for creating VST plugins. There is no code
+        in this directory; you should get the headers and class stubs
+        from Steinberg's site.
 
 stub-plugin/
 
-        Sources for starting a new plugin.
+        Sources for starting a new plugin. Much nicer than the
+        Steinberg examples (in my opinion).

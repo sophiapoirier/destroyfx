@@ -1,4 +1,6 @@
 
+/* Super Destroy FX Windowing System! */
+
 #include "windowingstub.hpp"
 
 #include <stdlib.h>
@@ -197,6 +199,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 /* to improve: 
    - use memcpy and arithmetic instead of
      sample-by-sample copy 
+   - new, smoother interpolation shapes.
    - can we use tail of out0 as prevmix, instead of copying?
    - can we use circular buffers instead of memmoving a lot
      (probably not)
