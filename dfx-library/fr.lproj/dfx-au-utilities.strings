@@ -1,0 +1,26 @@
+/* localized strings for DFX Audio Unit utilities */
+/* French version, translated by Airy André */
+
+/* window title of the regular (simple) save AU preset dialog */
+/* (note:  the code will append the name of the AU after this string) */
+"Save preset file for" = "Enregistrer le preset de";
+
+/* title of the alert window when a save file file-already-exists conflict arises */
+"Save" = "Enregistrer";
+/* text for the button that will over-write an existing file when a */
+/* save file file-already-exists conflict arises */
+"Replace" = "Remplacer";
+/* the message in the alert, specifying file name and location, */
+/* for when file name and path are available as CFStrings */
+"A file named \"%@\" already exists in \"%@\".  Do you want to replace it with the file that you are saving?" = "Un fichier \"%@\" existe déjà dans \"%@\".  Voulez-vous le remplacer par le fichier que vous enregistrez ?";
+/* the message in the alert, general, for when file name and path are not available */
+"A file with the same name already exists in this location.  Do you want to replace it with the file that you are saving?" = "Un fichier de même nom existe déjà à cet emplacement.  Voulez-vous le remplacer par le fichier que vous enregistrez ?";
+
+/* the alert window title for when an access privileges error occurs */
+/* while trying to save a file */
+"Save access error" = "Erreur d'accès lors de l'enregistrement";
+/* the content of the alert message text for an access privileges error */
+"You do not have sufficient privileges to save files in that location.  Try saving your file in the User domain." = "Vous n'avez pas de privilège suffisant pour enregistrer des fichiers à cet emplacement.  Essayer d'enregistrer votre fichier dans le domaine Utilisateur.";
+
+/* the default preset file name for the Nav Services save file dialog */
+"untitled" = "Sans titre";
