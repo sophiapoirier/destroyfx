@@ -385,6 +385,7 @@ ScrubbyHelpBox::ScrubbyHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, 
 //--------------------------------------------------------------------------
 void ScrubbyHelpBox::draw(CGContextRef inContext, long inPortHeight)
 {
+/*
 Rect cbounds;
 GetControlBounds(carbonControl, &cbounds);
 //SInt32 focusMetric = 0;
@@ -393,9 +394,10 @@ GetControlBounds(carbonControl, &cbounds);
 //else printf("GetThemeMetric(kThemeMetricFocusRectOutset) error = %ld\n", status);
 //InsetRect(&cbounds, focusMetric, focusMetric);
 InsetRect(&cbounds, 4, 4);
+*/
 	if (itemNum == kHelp_none)
 {
-DrawThemeFocusRect(&cbounds, false);
+//DrawThemeFocusRect(&cbounds, false);
 		return;
 }
 
@@ -419,7 +421,7 @@ DrawThemeFocusRect(&cbounds, false);
 		drawText(&textpos, helpstrings[itemNum][i], inContext, inPortHeight);
 		textpos.offset(0, 12);
 	}
-DrawThemeFocusRect(&cbounds, true);
+//DrawThemeFocusRect(&cbounds, true);
 }
 
 //--------------------------------------------------------------------------
