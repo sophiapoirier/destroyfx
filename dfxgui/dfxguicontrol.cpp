@@ -37,9 +37,8 @@ void DGControl::init(DGRect *inRegion)
 
 	id = 0;
 	lastUpdatedValue = 0;
-	tolerance = 1;
+	redrawTolerance = 1;
 	opaque = true;
-	becameVisible = false;
 	pleaseUpdate = false;
 	setContinuousControl(false);
 }
@@ -142,19 +141,17 @@ void DGControl::clipRegion(bool drawing)
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::setVisible(bool viz)
+void DGControl::setVisible(bool inVisibility)
 {
 	if (carbonControl != NULL)
 	{
-		if (viz)
+		if (inVisibility)
 		{
-			ShowControl (carbonControl);
-			becameVisible = true;
-			Draw1Control (carbonControl);
-			
+			ShowControl(carbonControl);
+			redraw();
 		}
 		else
-			HideControl (carbonControl);
+			HideControl(carbonControl);
 	}
 	
 	if (children != NULL)
@@ -162,8 +159,8 @@ void DGControl::setVisible(bool viz)
 		DGControl* current = children;
 		while(current != NULL)
 		{
-			current->setVisible (viz);
-			current = (DGControl*)current->getNext();
+			current->setVisible(inVisibility);
+			current = (DGControl*) current->getNext();
 		}
 	}
 }
@@ -229,28 +226,16 @@ void DGControl::shrinkForeBounds(SInt32 inXoffset, SInt32 inYoffset, SInt32 inWi
 //-----------------------------------------------------------------------------
 bool DGControl::mustUpdate()
 {
-	if (carbonControl == NULL)
-		return true; // probably no user interaction
-
 	SInt32 val = GetControl32BitValue(carbonControl);
 	SInt32 diff = val - lastUpdatedValue;
 
-	if ( !(ownerEditor->isRelaxed()) || becameVisible )
+	if ( (abs(diff) >= abs(redrawTolerance)) || pleaseUpdate || !(ownerEditor->isRelaxed()) )
 	{
-		becameVisible = false;
 		lastUpdatedValue = val;
+		pleaseUpdate = false;
 		return true;
 	}
 
-	// XXX ummm...  if ownerEditor is not relaxed, it will be caught by the previous if statement ???
-	if ( (abs(diff) >= abs(tolerance)) || !(ownerEditor->isRelaxed()) || pleaseUpdate )
-	{
-		lastUpdatedValue = val;
-		return true;
-	}
-
-	pleaseUpdate = false;
-//	printf("DGControl::mustUpdate() draw prevented!\n");
 	return false;
 }
 
