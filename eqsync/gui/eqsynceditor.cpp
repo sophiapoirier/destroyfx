@@ -65,11 +65,6 @@ public:
 		regularHandle(inHandle), clickedHandle(inHandleClicked)
 	{
 	}
-	virtual void draw(CGContextRef inContext, long inPortHeight)
-	{
-		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
-		DGSlider::draw(inContext, inPortHeight);
-	}
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 	{
 		handleImage = clickedHandle;	// switch to the click-styled handle

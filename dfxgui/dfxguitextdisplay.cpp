@@ -84,8 +84,6 @@ void DGTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 		CGRect fillRect = getBounds()->convertToCGRect(inPortHeight);
 		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
 		CGContextFillRect(inContext, fillRect);
-#else
-		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 #endif
 	}
 	else
@@ -224,8 +222,6 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 		CGRect fillRect = getBounds()->convertToCGRect(inPortHeight);
 		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
 		CGContextFillRect(inContext, fillRect);
-#else
-		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 #endif
 	}
 	else

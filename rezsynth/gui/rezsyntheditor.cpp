@@ -282,7 +282,7 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 		}
 
 		// slider control
-		RezSynthSlider * slider = new RezSynthSlider(this, paramID, &pos, kDGSliderAxis_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
+		DGSlider * slider = new DGSlider(this, paramID, &pos, kDGSliderAxis_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
 		if ( (paramID == kSepAmount_octaval) || (paramID == kSepAmount_linear) )
 			sepAmountSlider = slider;
 
