@@ -17,10 +17,10 @@
 const CColor kGreenTextCColor = {75, 151, 71, 0};
 
 #define CHOOSE_LANDMARK_PARAM   ( MKPOINTSTYLE(effect->getParameter(P_POINTSTYLE)) + P_POINTSTYLE + 1 )
-#define CHOOSE_RECREATE_PARAM   ( MKPOINTSTYLE(effect->getParameter(P_INTERPSTYLE)) + P_INTERPSTYLE + 1 )
-#define CHOOSE_OP1_PARAM   ( MKPOINTSTYLE(effect->getParameter(P_POINTOP1)) + P_POINTOP1 + 1 )
-#define CHOOSE_OP2_PARAM   ( MKPOINTSTYLE(effect->getParameter(P_POINTOP2)) + P_POINTOP2 + 1 )
-#define CHOOSE_OP3_PARAM   ( MKPOINTSTYLE(effect->getParameter(P_POINTOP3)) + P_POINTOP3 + 1 )
+#define CHOOSE_RECREATE_PARAM   ( MKINTERPSTYLE(effect->getParameter(P_INTERPSTYLE)) + P_INTERPSTYLE + 1 )
+#define CHOOSE_OP1_PARAM   ( MKPOINTOP(effect->getParameter(P_POINTOP1)) + P_POINTOP1 + 1 )
+#define CHOOSE_OP2_PARAM   ( MKPOINTOP(effect->getParameter(P_POINTOP2)) + P_POINTOP2 + 1 )
+#define CHOOSE_OP3_PARAM   ( MKPOINTOP(effect->getParameter(P_POINTOP3)) + P_POINTOP3 + 1 )
 
 enum { HELP_MIDILEARN,
        HELP_WINDOWSHAPE,
