@@ -31,33 +31,13 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 	windowEventHandlerUPP = NULL;
 	windowEventEventHandlerRef = NULL;
 
+	fontsATSContainer = NULL;
+	fontsWereActivated = false;	// guilty until proven innocent
+
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
 
 	dfxplugin = NULL;
-
-	// load any fonts from our bundle resources to be accessible locally within our component instance
-	fontsATSContainer = NULL;
-	fontsWereActivated = false;	// guilty until proven innocent
-	CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-	if (pluginBundle != NULL)
-	{
-		CFURLRef bundleResourcesDirCFURL = CFBundleCopyResourcesDirectoryURL(pluginBundle);
-		if (bundleResourcesDirCFURL != NULL)
-		{
-			FSRef bundleResourcesDirFSRef;
-			if ( CFURLGetFSRef(bundleResourcesDirCFURL, &bundleResourcesDirFSRef) )
-			{
-				FSSpec bundleResourcesDirFSSpec;
-				OSStatus status = FSGetCatalogInfo(&bundleResourcesDirFSRef, kFSCatInfoNone, NULL, NULL, &bundleResourcesDirFSSpec, NULL);
-				if (status == noErr)
-					status = ATSFontActivateFromFileSpecification(&bundleResourcesDirFSSpec, kATSFontContextLocal, kATSFontFormatUnspecified, 
-																	NULL, kATSOptionFlagsProcessSubdirectories, &fontsATSContainer);
-				if (status == noErr)
-					fontsWereActivated = true;
-			}
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -111,7 +91,7 @@ DfxGuiEditor::~DfxGuiEditor()
 	}
 //else printf("using a version of Mac OS X lower than 10.2.3, so our control toolbox class will NOT be unregistered\n");
 
-//	if (fontsWereActivated)
+//	if ( fontsWereActivated && (fontsATSContainer != NULL) )
 //		ATSFontDeactivate(fontsATSContainer, NULL, kATSOptionFlagsDefault);
 }
 
@@ -126,7 +106,6 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 
 // create our HIToolbox object class for common event handling amongst our custom Carbon Controls
-
 	EventTypeSpec toolboxClassEvents[] = {
 		{ kEventClassControl, kEventControlDraw },
 //		{ kEventClassControl, kEventControlInitialize },
@@ -136,7 +115,6 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 //		{ kEventClassControl, kEventControlClick }, 
 		{ kEventClassControl, kEventControlContextualMenuClick } 
 	};
-
 	ToolboxObjectClassRef newControlClass = NULL;
 	controlHandlerUPP = NewEventHandlerUPP(DGControlEventHandler);
 	unsigned long instanceAddress = (unsigned long) this;
@@ -151,12 +129,10 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		CFRelease(toolboxClassIDcfstring);
 		instanceAddress++;
 	}
-
 	dgControlSpec.u.classRef = newControlClass;
 
 
 // create the window event handler that supplements the control event handler by tracking mouse dragging, mouseover controls, etc.
-
 	currentControl_clicked = NULL;	// make sure that it ain't nuthin
 	setCurrentControl_mouseover(NULL);
 	EventTypeSpec windowEvents[] = {
@@ -181,6 +157,28 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
 
 
+// load any fonts from our bundle resources to be accessible locally within our component instance
+	CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	if (pluginBundle != NULL)
+	{
+		CFURLRef bundleResourcesDirCFURL = CFBundleCopyResourcesDirectoryURL(pluginBundle);
+		if (bundleResourcesDirCFURL != NULL)
+		{
+			FSRef bundleResourcesDirFSRef;
+			if ( CFURLGetFSRef(bundleResourcesDirCFURL, &bundleResourcesDirFSRef) )
+			{
+				FSSpec bundleResourcesDirFSSpec;
+				OSStatus status = FSGetCatalogInfo(&bundleResourcesDirFSRef, kFSCatInfoNone, NULL, NULL, &bundleResourcesDirFSSpec, NULL);
+				if (status == noErr)
+					status = ATSFontActivateFromFileSpecification(&bundleResourcesDirFSSpec, kATSFontContextLocal, kATSFontFormatUnspecified, 
+																	NULL, kATSOptionFlagsProcessSubdirectories, &fontsATSContainer);
+				if (status == noErr)
+					fontsWereActivated = true;
+			}
+		}
+	}
+
+
 	// XXX this is not a good thing to do, hmmm, maybe I should not do it...
 	UInt32 dataSize = sizeof(dfxplugin);
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_PluginPtr, 
@@ -190,12 +188,15 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 
 	// let the child class do its thing
-	OSStatus openErr = open();
+	long openErr = open();
 	if (openErr == noErr)
 	{
 		// set the size of the embedding pane
 		if (backgroundImage != NULL)
 			SizeControl(mCarbonPane, (SInt16) (backgroundImage->getWidth()), (SInt16) (backgroundImage->getHeight()));
+
+		idleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
+		InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, idleTimerUPP, this, &idleTimer);
 
 		// embed/activate every control
 		DGControlsList * tempcl = controlsList;
@@ -204,9 +205,6 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 			tempcl->control->embed();
 			tempcl = tempcl->next;
 		}
-
-		idleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
-		InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, idleTimerUPP, this, &idleTimer);
 	}
 
 	return openErr;
