@@ -17,6 +17,9 @@
  *  (i.e. the file that has <link> tags) and the second 
  *  argument is the consolidated output file name.  
  *  The second argument is optional (stdout is used by default).
+ *
+ *  BUGS:  If the <link> tag spans more than one line, 
+ *  evenything past the first line will be dumped to output.
  */
 
 #include <stdio.h>
@@ -87,6 +90,130 @@ int main(int argc, char **argv)
 		}
 	}
 
+	char *sourcedir = dirname(argv[kArg_InputFile]);
+	// get full path and filename for the CVS Entries file
+#define CVS_ENTRIES_FILE	"CVS/Entries"
+	char cvsentriesfilefullpath[strlen(sourcedir) + strlen(CVS_ENTRIES_FILE) + 4];
+	sprintf(cvsentriesfilefullpath, "%s/%s", sourcedir, CVS_ENTRIES_FILE);
+#undef CVS_ENTRIES_FILE
+	// open the linked file
+	FILE *cvsentriesf = fopen(cvsentriesfilefullpath, "r");
+	if (cvsentriesf != NULL)
+	{
+		char *sourcefilebase = basename(argv[kArg_InputFile]);
+		size_t sourcefilebaselen = strlen(sourcefilebase);
+
+		while ( !feof(cvsentriesf) )
+		{
+			// read the input file one line at a time
+			size_t linesize;
+			char *linestr = fgetln(cvsentriesf, &linesize);
+			// try the next line if this one failed
+			if ( (linestr == NULL) || (linesize <= (sourcefilebaselen+1)) )
+				continue;
+			long linepos = 0;
+			while (linepos < (linesize-1))
+			{
+				if (linestr[linepos] == '/')
+					break;
+				linepos++;
+			}
+			linepos++;	// move past the / delimiting character
+
+			if (strncmp(linestr+1, sourcefilebase, sourcefilebaselen) != 0)
+				continue;
+			linepos = sourcefilebaselen + 1;
+			while ( (linepos < (linesize-1)) && (linestr[linepos] != '/') )
+				linepos++;
+
+			linepos++;	// move past the / delimiting character
+			char versionstr[linesize-linepos];
+			long versionstrpos = 0;
+			while ( (linepos < (linesize-1)) && (linestr[linepos] != '/') )
+			{
+				versionstr[versionstrpos] = linestr[linepos];
+				linepos++;
+				versionstrpos++;
+			}
+			versionstr[versionstrpos] = 0;	// terminate the string
+
+			linepos++;	// move past the / delimiting character
+			char datestr[linesize-linepos];
+			long datestrpos = 0;
+			while ( (linepos < (linesize-1)) && (linestr[linepos] != '/') )
+			{
+				datestr[datestrpos] = linestr[linepos];
+				linepos++;
+				datestrpos++;
+			}
+			datestr[datestrpos] = 0;	// terminate the string
+
+		#define CVS_ROOT_FILE	"CVS/Root"
+			char cvsrootfilefullpath[strlen(sourcedir) + strlen(CVS_ROOT_FILE) + 4];
+			sprintf(cvsrootfilefullpath, "%s/%s", sourcedir, CVS_ROOT_FILE);
+		#undef CVS_ROOT_FILE
+			char cvsrootpathstr[1024];
+			cvsrootpathstr[0] = 0;
+			FILE *cvsrootf = fopen(cvsrootfilefullpath, "r");
+			if (cvsrootf != NULL)
+			{
+				size_t linesize2;
+				char *linestr2 = fgetln(cvsrootf, &linesize2);
+				if ( (linestr2 != NULL) || (linesize2 > 0) )
+				{
+					long linepos2 = 0;
+					while ( (linepos2 < (linesize2-1)) && (linestr2[linepos2] != '@') )
+						linepos2++;
+					linepos2++;	// move past the @ character
+
+					long rootstrpos = 0;
+					while ( (linepos2 < (linesize2-1)) && (linestr2[linepos2] != ':') )
+					{
+						cvsrootpathstr[rootstrpos] = linestr2[linepos2];
+						linepos2++;
+						rootstrpos++;
+					}
+					cvsrootpathstr[rootstrpos] = 0;	// terminate the string
+				}
+				fclose(cvsrootf);
+			}
+
+		#define CVS_REPOSITORY_FILE	"CVS/Repository"
+			char cvsrepositoryfilefullpath[strlen(sourcedir) + strlen(CVS_REPOSITORY_FILE) + 4];
+			sprintf(cvsrepositoryfilefullpath, "%s/%s", sourcedir, CVS_REPOSITORY_FILE);
+		#undef CVS_REPOSITORY_FILE
+			char cvsrepositorypathstr[1024];
+			cvsrepositorypathstr[0] = 0;
+			FILE *cvsrepositoryf = fopen(cvsrepositoryfilefullpath, "r");
+			if (cvsrepositoryf != NULL)
+			{
+				size_t linesize2;
+				char *linestr2 = fgetln(cvsrepositoryf, &linesize2);
+				if ( (linestr2 != NULL) || (linesize2 > 0) )
+				{
+					long linepos2;
+					for (linepos2=0; linepos2 < (linesize2-1); linepos2++)
+						cvsrepositorypathstr[linepos2] = linestr2[linepos2];
+					cvsrepositorypathstr[linepos2] = 0;	// terminate the string
+				}
+				fclose(cvsrepositoryf);
+			}
+
+			fprintf(destf, "<!--\n");
+			fprintf(destf, "\tthis file built from:  ");
+			if ( (strlen(cvsrootpathstr) > 0) && (strlen(cvsrepositorypathstr) > 0) )
+				fprintf(destf, "%s:%s/", cvsrootpathstr, cvsrepositorypathstr);
+			fprintf(destf, "%s\n", sourcefilebase);
+			if (strlen(versionstr) > 0)
+				fprintf(destf, "\tfile version:  %s\n", versionstr);
+			if (strlen(datestr) > 0)
+				fprintf(destf, "\tlast modified:  %s\n", datestr);
+			fprintf(destf, "-->\n\n");
+		}
+
+		fclose(cvsentriesf);
+	}
+
 	// this is the main input file reading loop
 	while ( !feof(sourcef) )
 	{
@@ -155,10 +282,10 @@ int main(int argc, char **argv)
 							}
 							// assume that the path of the linked file is relative to the source file 
 							// XXX I don't think that we need to deal with basehrefs or anything like that
-							char *sourcedir = dirname(argv[kArg_InputFile]);
+							char *basedir = dirname(argv[kArg_InputFile]);
 							// get full path and filename for linked file
-							char linkfilefullpath[strlen(sourcedir) + strlen(linkfilename) + 4];
-							sprintf(linkfilefullpath, "%s/%s", sourcedir, linkfilename);
+							char linkfilefullpath[strlen(basedir) + strlen(linkfilename) + 4];
+							sprintf(linkfilefullpath, "%s/%s", basedir, linkfilename);
 							// open the linked file
 							FILE *linkf = fopen(linkfilefullpath, "r");
 							if (linkf != NULL)
