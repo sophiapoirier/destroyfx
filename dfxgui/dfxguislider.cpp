@@ -69,7 +69,7 @@ void DGSlider::draw(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	lastX = inXpos;
 	lastY = inYpos;
@@ -84,7 +84,7 @@ void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	SInt32 min = GetControl32BitMinimum(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -124,7 +124,7 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 			val = (SInt32)(valnorm * (float)(max-min)) + min;
 		}
 	}
-	
+
 	if (val > max)
 		val = max;
 	if (val < min)
@@ -137,7 +137,27 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+void DGSlider::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 {
 	mouseTrack(inXpos, inYpos, 1, inKeyModifiers);
+}
+
+//-----------------------------------------------------------------------------
+bool DGSlider::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+{
+	lastX = 0.0f;
+	lastY = 0.0f;
+	float x = 0.0f, y = 0.0f;
+	if (orientation == kDGSliderAxis_vertical)
+		y = (float)(-inDelta);
+	else
+		x = (float)inDelta;
+	if ( !(inKeyModifiers & kDGKeyModifier_shift) )
+	{
+		x *= fineTuneFactor;
+		y *= fineTuneFactor;
+	}
+	mouseTrack(x, y, 1, inKeyModifiers | kDGKeyModifier_shift);
+
+	return true;
 }
