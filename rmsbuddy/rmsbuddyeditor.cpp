@@ -1019,7 +1019,20 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 
 		// do this to make Logic's touch automation work
 		if ( ourRMSControl->isParameterAttached() )
-			ourOwnerEditor->TellListener( *(ourRMSControl->getAUVP()), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL );
+		{
+			AUVParameter * ourAUVP = ourRMSControl->getAUVP();
+			// do the new-fangled way, if it's available on the user's system
+			if (AUEventListenerNotify != NULL)
+			{
+				AudioUnitEvent paramEvent;
+				memset(&paramEvent, 0, sizeof(paramEvent));
+				paramEvent.mEventType = kAudioUnitEvent_EndParameterChangeGesture;
+				paramEvent.mArgument.mParameter = *ourAUVP;
+				AUEventListenerNotify(NULL, NULL, &paramEvent);
+			}
+			// as a back-up, also still do the old way, until it's enough obsolete
+			ourOwnerEditor->TellListener(*ourAUVP, kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+		}
 
 		return noErr;
 	}
@@ -1091,7 +1104,20 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 #if !USE_AUCVCONTROL
 				// do this to make Logic's touch automation work
 				if ( ourRMSControl->isParameterAttached() )
-					ourOwnerEditor->TellListener( *(ourRMSControl->getAUVP()), kAudioUnitCarbonViewEvent_MouseDownInControl, NULL );
+				{
+					AUVParameter * ourAUVP = ourRMSControl->getAUVP();
+					// do the new-fangled way, if it's available on the user's system
+					if (AUEventListenerNotify != NULL)
+					{
+						AudioUnitEvent paramEvent;
+						memset(&paramEvent, 0, sizeof(paramEvent));
+						paramEvent.mEventType = kAudioUnitEvent_BeginParameterChangeGesture;
+						paramEvent.mArgument.mParameter = *ourAUVP;
+						AUEventListenerNotify(NULL, NULL, &paramEvent);
+					}
+					// as a back-up, also still do the old way, until it's enough obsolete
+					ourOwnerEditor->TellListener(*ourAUVP, kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
+				}
 #endif
 
 				// indicate that this control is being moused (for our mouse tracking handler)
