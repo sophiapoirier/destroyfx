@@ -435,6 +435,50 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 
 
 
+#pragma mark _________Comparing_Components_________
+
+//--------------------------------------------------------------------------
+// determine if 2 ComponentDescriptions are basically equal
+// (by that, I mean that the important identifying values are compared, 
+// but not the ComponentDescription flags)
+Boolean ComponentDescriptionsMatch(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2)
+{
+	if ( (inComponentDescription1 == NULL) || (inComponentDescription2 == NULL) )
+		return FALSE;
+
+	// type, sub-type, and manufacturer IDs all need to be equal in order to call this a match
+	if ( (inComponentDescription1->componentType == inComponentDescription2->componentType) 
+			&& (inComponentDescription1->componentSubType == inComponentDescription2->componentSubType) 
+			&& (inComponentDescription1->componentManufacturer == inComponentDescription2->componentManufacturer) )
+		return TRUE;
+	else
+		return FALSE;
+}
+
+//--------------------------------------------------------------------------
+// determine if a ComponentDescription basically matches that of a particular Component
+Boolean ComponentAndDescriptionMatch(Component inComponent, const ComponentDescription * inComponentDescription)
+{
+	OSErr status;
+	ComponentDescription desc;
+
+	if ( (inComponent == NULL) || (inComponentDescription == NULL) )
+		return FALSE;
+
+	// get the ComponentDescription of teh input Component
+	status = GetComponentInfo(inComponent, &desc, NULL, NULL, NULL);
+	if (status != noErr)
+		return FALSE;
+
+	// check if the Component's ComponentDescription matches the input ComponentDescription
+	return ComponentDescriptionsMatch(&desc, inComponentDescription);
+}
+
+
+
+
+
+
 #pragma mark _________System_Services_Availability_________
 
 //--------------------------------------------------------------------------
@@ -500,4 +544,46 @@ Boolean IsAvailable_AU2rev1()
 	if ( (GetMacOSVersion() >= 0x1030) || (GetQuickTimeVersion() >= 0x06408000) )
 		return true;
 	return false;
+}
+
+//--------------------------------------------------------------------------
+Boolean IsTransportStateProcSafe()
+{
+	CFBundleRef applicationBundle = CFBundleGetMainBundle();
+	if (applicationBundle != NULL)
+	{
+		CFStringRef applicationBundleID = CFBundleGetIdentifier(applicationBundle);
+		UInt32 applicationVersion = CFBundleGetVersionNumber(applicationBundle);
+if (applicationBundleID != NULL) CFShow(applicationBundleID);
+fprintf(stderr, "application version = 0x%08lX\n\n", applicationVersion);
+//		if ( (applicationBundleID != NULL) && (applicationVersion != 0) )
+		if (applicationBundleID != NULL)
+		{
+			const CFOptionFlags compareOptions = kCFCompareCaseInsensitive;
+			if ( (CFStringCompare(applicationBundleID, CFSTR("info.emagic.Logic"), compareOptions) == kCFCompareEqualTo) 
+				|| (CFStringCompare(applicationBundleID, CFSTR("de.emagic.Logic"), compareOptions) == kCFCompareEqualTo) )
+			{
+				if ( (applicationVersion < 0x06428000) && (applicationVersion > 0) )
+					return false;
+			}
+			else if ( CFStringCompare(applicationBundleID, CFSTR("com.apple.garageband"), compareOptions) == kCFCompareEqualTo )
+			{
+				const CFStringRef garageBandBadMajorVersionString = CFSTR("1.0");
+				CFStringRef applicationVersionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(applicationBundle, kCFBundleVersionKey);
+				if ( (applicationVersion < 0x01100000) && (applicationVersion > 0) )
+					return false;
+				if (applicationVersionString != NULL)
+				{
+					if ( CFStringCompareWithOptions(applicationVersionString, garageBandBadMajorVersionString, 
+							CFRangeMake(0, CFStringGetLength(garageBandBadMajorVersionString)), 0) == kCFCompareEqualTo )
+{
+fprintf(stderr, "found \"1.0\" in the version string\n");
+						return false;
+}
+				}
+			}
+		}
+	}
+
+	return true;
 }
