@@ -25,10 +25,10 @@ stuff is in there, because it's nice.  It's mostly handled for you in AU,
 but I kind of hacked it into our VST implementation, too, so it should
 work fine there.  Transverb now uses this stuff.
 
-Oh yeah, one more thing to add:  There are tons and tons of methods in the
-DfxPlugin and DfxParameter classes, but you actually don't have to ever
-touch hardly any of them.  They are mostly all used just within the class
-(you'll notice that there are barely any virtual methods, also).
+There are tons and tons of methods in the DfxPlugin and DfxParameter 
+classes, but you actually don't have to ever touch hardly any of them.  
+They are mostly all used just within the class (you'll notice that there 
+are barely any virtual methods).
 
 Regarding having a "whole lot of crap" when starting a new plugin, 
 my hopes with this DfxPlugin stuff is that that is not the case anymore.  
