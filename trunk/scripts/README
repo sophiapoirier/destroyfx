@@ -1,0 +1,29 @@
+This directory has some scripts that we use and find useful in our
+plugin making activities.  Some of them are for automating the process
+of making distribution archives for our web page downloads and others
+do some other useful stuff.
+
+
+makedist.sh:
+
+This sh script packages up a plugin and related text files
+(documentation, license, etc.) into an archive for download at our web
+page.
+
+
+au.sh:
+
+This is an sh script that feeds the makedist.sh script specifically
+for the provisional AU builds that Marc makes.  It makes a lot of
+assumptions (file names, file locations, etc.) and uses the current
+date to generate the output file and in general does stuff that's very
+specific to the task, and therefore probably not too useful for anyone
+aside from Marc.
+
+
+fixpng:
+
+fixpng is a simple sh script that will remove gAMA, cHRM, iCCP, and
+sRGB chunks from PNG files and also maximize the compression of the
+files.  The script uses pngcrush which is available at:
+http://pmt.sourceforge.net/pngcrush/
