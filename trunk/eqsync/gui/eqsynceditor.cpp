@@ -105,7 +105,6 @@ public:
 		if (theButton != NULL)
 		{
 			CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
-			bounds.size.width = buttonImage->getWidth();
 			bounds.size.height = buttonImage->getHeight();
 			if (GetControl32BitValue(getCarbonControl()) == 0)
 				bounds.origin.y -= (float) (buttonImage->getHeight() / 2);
@@ -116,7 +115,26 @@ public:
 	{
 		if ( inPos.h > ((getBounds()->w / 2) - 6) )
 			SetControl32BitValue(getCarbonControl(), 1);
+		lastX = inPos.h;
+		lastY = inPos.v;
+		lastXchange = lastYchange = 0;
 	}
+#if 0
+	virtual void mouseTrack(Point inPos, bool, bool)
+	{
+		long xchange = inPos.h - lastX + lastXchange;
+		long ychange = inPos.v - lastY + lastYchange;
+		Rect cbounds;
+		GetControlBounds(getCarbonControl(), &cbounds);
+		MoveControl(getCarbonControl(), cbounds.left + xchange, cbounds.top + ychange);
+		getBounds()->offset(xchange, ychange);
+		redraw();
+		lastX = inPos.h;
+		lastY = inPos.v;
+		lastXchange = xchange;
+		lastYchange = ychange;
+	}
+#endif
 	virtual void mouseUp(Point inPos, bool, bool)
 	{
 		if (GetControl32BitValue(getCarbonControl()) != 0)
@@ -128,6 +146,8 @@ public:
 
 private:
 	DGGraphic * buttonImage;
+	long lastX, lastY;
+	long lastXchange, lastYchange;
 };
 
 

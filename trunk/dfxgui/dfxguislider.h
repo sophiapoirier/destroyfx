@@ -34,8 +34,8 @@ protected:
 	DGGraphic *		BackGround;
 	float			fineTuneFactor;	// slow-down factor for shift control
 	long			mouseOffset;	// for mouse tracking with click in the middle of the slider handle
-	SInt32			sldr_X;
-	SInt32			sldr_Y;
+	SInt32			lastX;
+	SInt32			lastY;
 };
 
 

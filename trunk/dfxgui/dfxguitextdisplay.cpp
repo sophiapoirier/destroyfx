@@ -158,15 +158,15 @@ void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const cha
 	if (inString == NULL)
 		return;
 
+	bool drawSmoothText = true;
 	if (fontName != NULL)
 	{
 		CGContextSelectFont(inContext, fontName, fontSize, kCGEncodingMacRoman);
 		if (strcmp(fontName, "snoot.org pixel10") == 0)
-		{
-			CGContextSetShouldSmoothFonts(inContext, false);
-			CGContextSetShouldAntialias(inContext, false);	// it appears that I gotta do this, too
-		}
+			drawSmoothText = false;
 	}
+	CGContextSetShouldSmoothFonts(inContext, drawSmoothText);
+	CGContextSetShouldAntialias(inContext, drawSmoothText);	// it appears that I gotta do this, too
 	CGContextSetRGBFillColor(inContext, (float)fontColor.r/255.0f, (float)fontColor.g/255.0f, (float)fontColor.b/255.0f, 1.0f);
 
 	if (alignment != kDGTextAlign_left)

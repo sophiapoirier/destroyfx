@@ -115,8 +115,8 @@ void DGSlider::draw(CGContextRef inContext, UInt32 inPortHeight)
 //-----------------------------------------------------------------------------
 void DGSlider::mouseDown(Point inPos, bool with_option, bool with_shift)
 {
-	sldr_X = inPos.h;
-	sldr_Y = inPos.v;
+	lastX = inPos.h;
+	lastY = inPos.v;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		if (isAUVPattached())
@@ -146,13 +146,13 @@ void DGSlider::mouseTrack(Point inPos, bool with_option, bool with_shift)
 	{
 		if (orientation == kDGSliderStyle_vertical)
 		{
-			float diff = (float) (sldr_Y - inPos.v);
+			float diff = (float) (lastY - inPos.v);
 			diff /= fineTuneFactor;
 			val += (SInt32) (diff * (float)max / (float)fore.h);
 		}
 		else	// horizontal mode
 		{
-			float diff = (float) (inPos.h - sldr_X);
+			float diff = (float) (inPos.h - lastX);
 			diff /= fineTuneFactor;
 			val += (SInt32) (diff * (float)max / (float)fore.w);
 		}
@@ -178,8 +178,8 @@ void DGSlider::mouseTrack(Point inPos, bool with_option, bool with_shift)
 	if (val != oldval)
 		SetControl32BitValue(carbonControl, val);
 
-	sldr_X = inPos.h;
-	sldr_Y = inPos.v;
+	lastX = inPos.h;
+	lastY = inPos.v;
 }
 
 //-----------------------------------------------------------------------------
