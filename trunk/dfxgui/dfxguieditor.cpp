@@ -122,7 +122,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		{ kEventClassControl, kEventControlDraw },
 //		{ kEventClassControl, kEventControlInitialize },
 		{ kEventClassControl, kEventControlHitTest },
-//		{ kEventClassControl, kEventControlTrack },
+		{ kEventClassControl, kEventControlTrack },
 //		{ kEventClassControl, kEventControlHit }, 
 		{ kEventClassControl, kEventControlClick }, 
 		{ kEventClassControl, kEventControlContextualMenuClick } 
@@ -625,7 +625,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 	if (inEventKind == kEventControlInitialize)
 	{
 		UInt32 dfxControlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
-		SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(UInt32), &dfxControlFeatures);
+		SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(dfxControlFeatures), &dfxControlFeatures);
 		return noErr;
 	}
 */
@@ -700,38 +700,37 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 						// also there is kControlButtonPart, kControlCheckBoxPart, kControlPicturePart
 						ourOwnerEditor->setCurrentControl_mouseover(ourDGControl);
 					}
-					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(ControlPartCode), &hitPart);
-					result = eventNotHandledErr;	// let other event listeners have this if they want it
-//					result = noErr;
+					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(hitPart), &hitPart);
+//					result = eventNotHandledErr;	// let other event listeners have this if they want it
+					result = noErr;
 				}
 				break;
 
 /*
 			case kEventControlHit:
 				{
-//printf("kEventControlHit\n");
+printf("kEventControlHit\n");
 					result = noErr;
-				}
-				break;
-
-			case kEventControlTrack:
-				{
-//printf("kEventControlTrack\n");
-					ControlPartCode whatPart = kControlIndicatorPart;
-					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(ControlPartCode), &whatPart);
-					result = eventNotHandledErr;	// cuz this makes us get a Hit event, which triggers AUCViewControl automation end
-//					result = noErr;
 				}
 				break;
 */
 
+			case kEventControlTrack:
+				{
+//printf("kEventControlTrack\n");
+//					ControlPartCode whatPart = kControlIndicatorPart;
+					ControlPartCode whatPart = kControlNoPart;	// cuz otherwise we get a Hit event which triggers AUCVControl automation end
+					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(whatPart), &whatPart);
+				}
 			case kEventControlClick:
-//printf("kEventControlClick\n");
+//if (inEventKind == kEventControlClick) printf("kEventControlClick\n");
 			case kEventControlContextualMenuClick:
 //if (inEventKind == kEventControlContextualMenuClick) printf("kEventControlContextualMenuClick\n");
 				{
 					// prevent unnecessary draws
 					ourOwnerEditor->setRelaxed(true);
+
+					ourOwnerEditor->setCurrentControl_mouseover(ourDGControl);
 
 //					UInt32 buttons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 //					UInt32 buttons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
@@ -740,15 +739,15 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					HIPoint mouseLocation_f;
 					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation_f);
 					Point mouseLocation;
-//					GetGlobalMouse(&mouseLocation);
 					mouseLocation.h = (short) mouseLocation_f.x;
 					mouseLocation.v = (short) mouseLocation_f.y;
+//GetGlobalMouse(&mouseLocation);	// Logic 5 workaround
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 					Rect controlBounds;
 					GetControlBounds(ourCarbonControl, &controlBounds);
 					Rect globalBounds;	// Window Content Region
-					GetWindowBounds( GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &globalBounds );
+					GetWindowBounds(GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &globalBounds);
 					mouseLocation.h -= controlBounds.left + globalBounds.left;
 					mouseLocation.v -= controlBounds.top + globalBounds.top;
 

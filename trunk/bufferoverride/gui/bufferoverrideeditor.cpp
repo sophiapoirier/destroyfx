@@ -616,6 +616,8 @@ printf("--------------------------------------------------\n\n");
 	// set size of overall pane
 //	SizeControl(mCarbonPane, width, height);	// not necessary because of EmbedControl done on pane, right?
 
+HMSetTagDelay(9);	// make the hints appear quickly <-- XXX this is sort of a hack
+
 	return noErr;
 }
 

@@ -1,13 +1,9 @@
 /*-------------- by Marc Poirier  ][  February 2002 -------------*/
 
-#ifndef __SCRUBBY_H
 #include "scrubby.hpp"
-#endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __SCRUBBYEDITOR_H
 	#include "scrubbyeditor.hpp"
-	#endif
 #endif
 
 
@@ -384,6 +380,20 @@ void Scrubby::initPresets()
 	setpresetparameter_b(i, kPitchConstraint, false);
 	i++;
 
+	setpresetname(i, "DJ staccato");
+	setpresetparameter_f(i, kSeekRange, 1800.0f);
+	setpresetparameter_b(i, kFreeze, false);
+	setpresetparameter_i(i, kSeekRate_sync, tempoRateTable->getNearestTempoRateIndex(2.0f));
+	setpresetparameter_i(i, kSeekRateRandMin_sync, tempoRateTable->getNearestTempoRateIndex(2.0f));
+	setpresetparameter_b(i, kTempoSync, true);
+	setpresetparameter_f(i, kSeekDur, 22.2f);
+	setpresetparameter_f(i, kSeekDurRandMin, 22.2f);
+	setpresetparameter_i(i, kSpeedMode, kSpeedMode_dj);
+	setpresetparameter_b(i, kSplitStereo, false);
+	setpresetparameter_b(i, kPitchConstraint, false);
+	setpresetparameter_b(i, kTempoAuto, true);
+	i++;
+
 /*
 	setpresetname(i, "");
 	setpresetparameter_f(i, kSeekRange, f);
@@ -396,7 +406,7 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekDur, f);
 	setpresetparameter_f(i, kSeekDurRandMin, f);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_);
-	setpresetparameter_b(i, kSlitStereo, );
+	setpresetparameter_b(i, kSplitStereo, );
 	setpresetparameter_b(i, kPitchConstraint, );
 	setpresetparameter_i(i, kOctaveMin, );
 	setpresetparameter_i(i, kOctaveMax, );
