@@ -1,9 +1,9 @@
-#ifndef __BufferOverrideEditor
-#include "BufferOverrideEditor.hpp"
+#ifndef __bufferoverrideeditor
+#include "bufferoverrideeditor.hpp"
 #endif
 
-#ifndef __BufferOverride
-#include "BufferOverride.hpp"
+#ifndef __bufferoverride
+#include "bufferoverride.hpp"
 #endif
 
 #include <stdio.h>
@@ -268,7 +268,7 @@ void helpDisplayConvert(float value, char *string, void *mouseoverparam)
 		case kBufferDivisorHelpTag:
 #ifdef WIN32
 		        /* shorten long text for win32 */
-		        sprintf(string, "left/right is buffer divisor (number of skips in a buffer, hold ctrl).  up/dn is forced buffer size (hold %s)", XLOCK_KEY);
+		        sprintf(string, "left/right is buffer divisor (number of skips in a buffer, hold ctrl).  up/down is forced buffer size (hold %s)", XLOCK_KEY);
 #else
 		        sprintf(string, "left/right is buffer divisor (the number of skips in a forced buffer, hold ctrl).   up/down is forced buffer size (hold %s)", XLOCK_KEY);
 #endif
