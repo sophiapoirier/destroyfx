@@ -465,7 +465,7 @@ void Scrubby::processparameters()
 		#if TARGET_API_VST
 			// this tells the host to call a suspend()-resume() pair, 
 			// which updates initialDelay value
-			latencychanged = true;
+			setlatencychanged(true);
 		#endif
 	}
 	for (int i=0; i < NUM_PITCH_STEPS; i++)
