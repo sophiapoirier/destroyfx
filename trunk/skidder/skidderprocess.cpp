@@ -226,13 +226,13 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processaudio(const float **inputs, float **outputs, unsigned long inNumFrames, bool replacing)
+void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned long inNumFrames, bool replacing)
 {
 	unsigned long numInputs = getnuminputs(), numOutputs = getnumoutputs();
-	const float *in1  = inputs[0];
-	const float *in2  = (numInputs < 2) ? inputs[0] : inputs[1];	// support 1 or 2 inputs
-	float *out1 = outputs[0];
-	float *out2 = (numOutputs < 2) ? outputs[0] : outputs[1];
+	const float * in1  = inputs[0];
+	const float * in2  = (numInputs < 2) ? inputs[0] : inputs[1];	// support 1 or 2 inputs
+	float * out1 = outputs[0];
+	float * out2 = (numOutputs < 2) ? outputs[0] : outputs[1];
 	unsigned long samplecount;
 
 
@@ -255,22 +255,25 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 			// check waitSamples also because, if it's zero, we can just move ahead normally
 			if ( noteIsOn && (waitSamples != 0) )
 			{
+				// need to make sure that the skipped part is silent if we're processing in-place
+				if (replacing)
+				{
+					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
+						out1[samplecount] = 0.0f;
+					if (numOutputs > 1)
+					{
+						for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
+							out2[samplecount] = 0.0f;
+					}
+				}
+
 				// cut back the number of samples outputted
 				inNumFrames -= (unsigned)waitSamples;
-				// & jump ahead accordingly in the i/o streams
+				// and jump ahead accordingly in the i/o streams
 				in1 += waitSamples;
 				in2 += waitSamples;
 				out1 += waitSamples;
 				out2 += waitSamples;
-
-				// need to make sure that the skipped part is silent if we're processReplacing
-				if (replacing)
-				{
-					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-						outputs[0][samplecount] = 0.0f;
-					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-						outputs[1][samplecount] = 0.0f;
-				}
 
 				// reset
 				waitSamples = 0;
@@ -286,9 +289,12 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 					if (replacing)
 					{
 						for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-							outputs[0][samplecount] = 0.0f;
-						for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-							outputs[1][samplecount] = 0.0f;
+							out1[samplecount] = 0.0f;
+						if (numOutputs > 1)
+						{
+							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
+								out2[samplecount] = 0.0f;
+						}
 					}
 					inNumFrames = (unsigned)waitSamples;
 					waitSamples = 0;
@@ -309,29 +315,31 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 			// check waitSamples also because, if it's zero, we can just move ahead normally
 			if ( noteIsOn && (waitSamples != 0) )
 			{
-				// cut back the number of samples outputted
-				inNumFrames -= (unsigned)waitSamples;
-				// & jump ahead accordingly in the i/o streams
-				in1 += waitSamples;
-				in2 += waitSamples;
-				out1 += waitSamples;
-				out2 += waitSamples;
-
 				// need to make sure that the skipped part is unprocessed audio
 				if (replacing)
 				{
-					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-						outputs[0][samplecount] = inputs[0][samplecount];
-					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-						outputs[1][samplecount] = inputs[1][samplecount];
+					memcpy(out1, in1, waitSamples * sizeof(float));
+					if (numOutputs > 1)
+						memcpy(out2, in2, waitSamples * sizeof(float));
 				}
 				else
 				{
 					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-						outputs[0][samplecount] += inputs[0][samplecount];
-					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-						outputs[1][samplecount] += inputs[1][samplecount];
+						out1[samplecount] += in1[samplecount];
+					if (numOutputs > 1)
+					{
+						for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
+							out2[samplecount] += in2[samplecount];
+					}
 				}
+
+				// cut back the number of samples outputted
+				inNumFrames -= (unsigned)waitSamples;
+				// and jump ahead accordingly in the i/o streams
+				in1 += waitSamples;
+				in2 += waitSamples;
+				out1 += waitSamples;
+				out2 += waitSamples;
 
 				// reset
 				waitSamples = 0;
@@ -348,17 +356,19 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 					{
 						if (replacing)
 						{
-							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-								outputs[0][samplecount] = inputs[0][samplecount];
-							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-								outputs[1][samplecount] = inputs[1][samplecount];
+							memcpy( &(out1[waitSamples]), &(in1[waitSamples]), (inNumFrames - (unsigned)waitSamples) * sizeof(float) );
+							if (numOutputs > 1)
+								memcpy( &(out2[waitSamples]), &(in2[waitSamples]), (inNumFrames - (unsigned)waitSamples) * sizeof(float) );
 						}
 						else
 						{
 							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-								outputs[0][samplecount] += inputs[0][samplecount];
-							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-								outputs[1][samplecount] += inputs[1][samplecount];
+								out1[samplecount] += in1[samplecount];
+							if (numOutputs > 1)
+							{
+								for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
+									out2[samplecount] += in2[samplecount];
+							}
 						}
 						inNumFrames = (unsigned)waitSamples;
 						waitSamples = 0;
@@ -368,17 +378,19 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 				{
 					if (replacing)
 					{
-						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
-							outputs[0][samplecount] = inputs[0][samplecount];
-						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
-							outputs[1][samplecount] = inputs[1][samplecount];
+						memcpy(out1, in1, inNumFrames * sizeof(float));
+						if (numOutputs > 1)
+							memcpy(out2, in2, inNumFrames * sizeof(float));
 					}
 					else
 					{
 						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
-							outputs[0][samplecount] += inputs[0][samplecount];
-						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
-							outputs[1][samplecount] += inputs[1][samplecount];
+							out1[samplecount] += in1[samplecount];
+						if (numOutputs > 1)
+						{
+							for (samplecount = 0; samplecount < inNumFrames; samplecount++)
+								out2[samplecount] += in2[samplecount];
+						}
 					}
 					// that's all we need to do if there are no notes, 
 					// just copy the input to the output
