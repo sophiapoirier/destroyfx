@@ -2,6 +2,8 @@
 
 #include "dfx-au-utilities.h"
 
+#include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
+
 
 //-----------------------------------------------------------------------------
 // This function will get the version of a Component from its 'thng' resource 
@@ -169,4 +171,33 @@ void auPresetCFArrayCallbacks_Init(CFArrayCallBacks * inArrayCallbacks)
 	inArrayCallbacks->release = auPresetCFArrayReleaseCallback;
 	inArrayCallbacks->copyDescription = auPresetCFArrayCopyDescriptionCallback;
 	inArrayCallbacks->equal = auPresetCFArrayEqualCallback;
+}
+
+
+
+//--------------------------------------------------------------------------
+// These are convenience functions for sending parameter change notifications 
+// to all parameter listeners.  
+// Use this when a parameter value in an AU changes and you need to make 
+// other entities (like the host, a GUI, etc.) aware of the change.
+void AUParameterChange_TellListeners_ScopeElement(AudioUnit inComponentInstance, AudioUnitParameterID inParameterID, 
+									AudioUnitScope inScope, AudioUnitElement inElement)
+{
+	// set up an AudioUnitParameter struct with all of the necessary values
+	AudioUnitParameter dirtyparam;
+	memset(&dirtyparam, 0, sizeof(dirtyparam));	// zero out the struct
+	dirtyparam.mAudioUnit = inComponentInstance;
+	dirtyparam.mParameterID = inParameterID;
+	dirtyparam.mScope = inScope;
+	dirtyparam.mElement = inElement;
+	// then send a parameter change notification to all parameter listeners
+	AUParameterListenerNotify(NULL, NULL, &dirtyparam);
+}
+
+//--------------------------------------------------------------------------
+// this one defaults to using global scope and element 0 
+// (which are what most effects use for all of their parameters)
+void AUParameterChange_TellListeners(AudioUnit inComponentInstance, AudioUnitParameterID inParameterID)
+{
+	AUParameterChange_TellListeners_ScopeElement(inComponentInstance, inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
 }

@@ -9,14 +9,13 @@ written by Marc Poirier, October 2002
 #include <time.h>	// for time(), which is used to feed srand()
 
 #ifdef TARGET_API_AUDIOUNIT
-	#include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
+	#include "dfx-au-utilities.h"
 #endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
 	// If using the VST GUI interface, we need the class definition
 	// for AEffGUIEditor so we can send it parameter changes.
 	#include "vstgui.h"
-
 #endif
 
 
@@ -502,12 +501,7 @@ void DfxPlugin::postupdate_parameter(long parameterIndex)
 		return;
 
 	#ifdef TARGET_API_AUDIOUNIT
-		AudioUnitParameter dirtyparam;
-		dirtyparam.mAudioUnit = GetComponentInstance();
-		dirtyparam.mParameterID = parameterIndex;
-		dirtyparam.mScope = kAudioUnitScope_Global;
-		dirtyparam.mElement = 0;
-		AUParameterListenerNotify(NULL, NULL, &dirtyparam);
+		AUParameterChange_TellListeners(GetComponentInstance(), parameterIndex);
 	#endif
 }
 
