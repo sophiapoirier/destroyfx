@@ -37,11 +37,6 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addchannelconfig(1, 2);	// 1-in/2-out
 
 
-	#if TARGET_API_AUDIOUNIT
-		// XXX is there a better way to do this?
-		update_preset(0);	// make host see that current preset is 0
-	#endif
-
 	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
 		editor = new MonomakerEditor(this);
 	#endif
