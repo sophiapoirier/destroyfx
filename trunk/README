@@ -162,7 +162,7 @@ modifications are things that have been discussed/proposed/etc. on
 the CoreAudio API listserv.
 
 for building VST Mac versions:
-Some plugins have plugin_mac directories with *def.h "prefix" files.  
+Some plugins have plugin_mac directories with *def-vst.h "prefix" files.  
 You can use these to set various #defines in your CodeWarrior projects 
 to build the plugins in different ways.  This is because CW does not 
 allow you to specify preprocessor #defines in the project target 
