@@ -1,13 +1,9 @@
 /*------------------ by Marc Poirier  ][  January 2001 -----------------*/
 
-#ifndef __POLARIZER_H
 #include "polarizer.hpp"
-#endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __POLARIZEREDITOR_H
 	#include "polarizereditor.hpp"
-	#endif
 #endif
 
 
@@ -15,9 +11,8 @@
 DFX_ENTRY(Polarizer);
 DFX_CORE_ENTRY(PolarizerDSP);
 
-
 //-----------------------------------------------------------------------------
-// initializations & such
+// initializations and such
 Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 3 parameters, 1 preset
 {
@@ -28,18 +23,17 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "twicky");	// default preset name
 
-
 	#ifdef TARGET_API_VST
+		DFX_INIT_CORE(PolarizerDSP);	// we need to manage DSP cores manually in VST
 		#if TARGET_PLUGIN_HAS_GUI
 			editor = new PolarizerEditor(this);
 		#endif
-		DFX_INIT_CORE(PolarizerDSP);	// we need to manage DSP cores manually in VST
 	#endif
 }
 
 //-------------------------------------------------------------------------
-PolarizerDSP::PolarizerDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
-	: DfxPluginCore(inInstance)
+PolarizerDSP::PolarizerDSP(DfxPlugin *inDfxPlugin)
+	: DfxPluginCore(inDfxPlugin)
 {
 }
 
@@ -50,37 +44,34 @@ void PolarizerDSP::reset()
 }
 
 //-----------------------------------------------------------------------------------------
-void PolarizerDSP::processparameters()
-{
-	leapSize = getparameter_i(kSkip);
-	polarizedAmp = (0.5f - getparameter_scalar(kAmount)) * 2.0f;
-	implode = getparameter_b(kImplode);
-}
-
-//-----------------------------------------------------------------------------------------
 void PolarizerDSP::process(const float *in, float *out, unsigned long numSampleFrames, bool replacing)
 {
+	// fetch the current parameter values
+	long leapSize = getparameter_i(kSkip);
+	float polarizedAmp = (0.5f - getparameter_scalar(kAmount)) * 2.0f;
+	bool implode = getparameter_b(kImplode);
+
 	for (unsigned long samplecount=0; samplecount < numSampleFrames; samplecount++)
 	{
-		float amp = 1.0f;
+		float outval = in[samplecount];
 		unaffectedSamples--;
 		if (unaffectedSamples < 0)	// go to polarized when the leap is done
 		{
 			// figure out how long the unaffected period will last this time
 			unaffectedSamples = leapSize;
 			// this is the polarization scalar
-			amp = polarizedAmp;
+			outval *= polarizedAmp;
 		}
 
-		// if implode is off, just do the regular polarizing thing
-		float outval = in[samplecount] * amp;
-		if (implode)	// if it's on, then implode the audio signal
+		// if it's on, then implode the audio signal
+		if (implode)
 		{
-			if (outval > 0.0f)	// invert the sample between 1 & 0
+			if (outval > 0.0f)	// invert the sample between 1 and 0
 				outval = 1.0f - outval;
-			else	// invert the sample between -1 & 0
+			else	// invert the sample between -1 and 0
 				outval = -1.0f - outval;
 		}
+
 	#ifdef TARGET_API_VST
 		if (!replacing)
 			outval += out[samplecount];

@@ -295,7 +295,7 @@ BufferOverrideEditor::~BufferOverrideEditor()
 }
 
 // ____________________________________________________________________________
-OSStatus BufferOverrideEditor::open(Float32 inXOffset, Float32 inYOffset)
+OSStatus BufferOverrideEditor::open(float inXOffset, float inYOffset)
 {
 //printf("\n\n--------------------------------------------------\n");
 //printf("       creating Buffer Override GUI\n");

@@ -77,7 +77,7 @@ MidiGaterEditor::MidiGaterEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-OSStatus MidiGaterEditor::open(Float32 inXOffset, Float32 inYOffset)
+OSStatus MidiGaterEditor::open(float inXOffset, float inYOffset)
 {
 	// load some graphics
 	//
@@ -92,6 +92,7 @@ OSStatus MidiGaterEditor::open(Float32 inXOffset, Float32 inYOffset)
 	addImage(gVelInfluenceSliderHandle);
 	DGGraphic *gFloorSliderHandle = new DGGraphic("slider-handle-floor.png");
 	addImage(gFloorSliderHandle);
+	//
 	DGGraphic *gDestroyFXlinkButton = new DGGraphic("destroy-fx-link-button.png");
 	addImage(gDestroyFXlinkButton);
 
