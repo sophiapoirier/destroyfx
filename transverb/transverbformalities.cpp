@@ -3,7 +3,9 @@
 
 #include "transverb.hpp"
 
-#include "vstgui.h"		// for AEffGuiEditor::setParameter()
+#ifndef __transverbeditor
+#include "transverbeditor.hpp"
+#endif
 
 #include <string.h>
 #include <time.h>
