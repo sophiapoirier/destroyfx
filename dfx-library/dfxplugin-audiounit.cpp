@@ -101,6 +101,12 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 			break;
 	#endif
 
+		// this allows a GUI component to get a pointer to our DfxPlugin class instance
+		case kDfxPluginProperty_PluginPtr:
+			outDataSize = sizeof(DfxPlugin*);
+			outWritable = false;
+			break;
+
 		default:
 			result = TARGET_API_BASE_CLASS::GetPropertyInfo(inID, inScope, inElement, outDataSize, outWritable);
 			break;
@@ -158,6 +164,11 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 			}
 			break;
 	#endif
+
+		// this allows a GUI component to get a pointer to our DfxPlugin class instance
+		case kDfxPluginProperty_PluginPtr:
+			*(DfxPlugin**)outData = this;
+			break;
 
 		default:
 			result = TARGET_API_BASE_CLASS::GetProperty(inID, inScope, inElement, outData);

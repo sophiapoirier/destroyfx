@@ -95,8 +95,8 @@ long RezSynth::initialize()
 	bool result3 = createbuffer_d(&delay2amp, MAX_BANDS, MAX_BANDS);
 
 	if ( result1 && result2 && result3 )
-		return 0;	// no error
-	return -10875;	// AUFailedInitialization error code
+		return kDfxErr_NoError;
+	return kDfxErr_InitializationFailed;
 }
 
 //-----------------------------------------------------------------------------------------
