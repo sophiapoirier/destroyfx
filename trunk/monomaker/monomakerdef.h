@@ -15,6 +15,3 @@
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"a simple mono-merging and stereo-recentering utility"
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"virtual reality interface for DFX Monomaker"
-
-
-#define DFX_SUPPORT_OLD_VST_SETTINGS 0

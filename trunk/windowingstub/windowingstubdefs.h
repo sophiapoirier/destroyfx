@@ -21,5 +21,3 @@
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"i forgot to change the description"
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"i forgot to change the gui description too"
-
-#define DFX_SUPPORT_OLD_VST_SETTINGS 1
