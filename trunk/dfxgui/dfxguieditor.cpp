@@ -816,7 +816,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 					CGContextClipToRect(context, clipRect);
 					// XXX disable anti-aliased drawing for image rendering
 					CGContextSetShouldAntialias(context, false);
-					ourDGControl->draw(context, portBounds.bottom);
+					ourDGControl->do_draw(context, portBounds.bottom);
 					CGContextRestoreGState(context);
 					CGContextSynchronize(context);
 					QDEndCGContext(windowPort, &context);

@@ -47,8 +47,6 @@ void DGSlider::draw(CGContextRef inContext, long inPortHeight)
 {
 	if (backgroundImage != NULL)
 		backgroundImage->draw(getBounds(), inContext, inPortHeight);
-	else
-		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 
 	SInt32 max = GetControl32BitMaximum(carbonControl);
 	SInt32 min = GetControl32BitMinimum(carbonControl);
