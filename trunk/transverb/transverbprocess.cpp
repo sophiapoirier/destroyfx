@@ -210,11 +210,11 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       undenormalize(buf2[writer]);
 
       /* make output */
-    #if TARGET_API_VST
+    #ifdef TARGET_API_VST
       if (replacing)
     #endif
         out[i] = (in[i]*drymix) + (r1val*mix1) + (r2val*mix2);
-    #if TARGET_API_VST
+    #ifdef TARGET_API_VST
       else
         out[i] += (in[i]*drymix) + (r1val*mix1) + (r2val*mix2);
     #endif
@@ -425,11 +425,11 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       read2 = fmod(fabs(read2), bsize_float);
 
     /* make output */
-  #if TARGET_API_VST
+  #ifdef TARGET_API_VST
     if (replacing)
   #endif
       out[j] = in[j] * drymix + r1val + r2val;
-  #if TARGET_API_VST
+  #ifdef TARGET_API_VST
     else
       out[j] += in[j] * drymix + r1val + r2val;
   #endif

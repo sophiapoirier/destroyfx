@@ -51,12 +51,12 @@
 #define DFX_SUPPORT_OLD_VST_SETTINGS 0
 
 
-// only define one of these with 1, the rest with 0
-#define TARGET_API_AUDIOUNIT	1
-#define TARGET_API_VST	0
+// only define one of these for a given build, not both
+#define TARGET_API_AUDIOUNIT
+#define TARGET_API_VST
 
 
-#if TARGET_API_VST
+#ifdef TARGET_API_VST
 	#include "vstplugscarbon.h"	// Carbon for classic Mac OS or Mac OS X
 //	#include "vstplugsmac.h"	// classic Mac OS
 	// the number of ins and outs in VST must be fixed

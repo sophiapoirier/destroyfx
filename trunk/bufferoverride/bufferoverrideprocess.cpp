@@ -278,13 +278,13 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 		}
 
 		// write the output samples into the output stream
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		if (replacing)
 		{
 	#endif
 			for (ch=0; ch < numChannels; ch++)
 				out[ch][samplecount] = (outval[ch] * outputGain) + (in[ch][samplecount] * inputGain);
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		}
 		else
 		{

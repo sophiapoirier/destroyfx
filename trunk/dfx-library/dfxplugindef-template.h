@@ -7,9 +7,9 @@
 #define TARGET_PLUGIN_IS_INSTRUMENT	
 #define TARGET_PLUGIN_USES_DSPCORE	
 #define TARGET_PLUGIN_HAS_GUI	
-#define TARGET_API_AUDIOUNIT	
-#define TARGET_API_VST	
-#define SUPPORT_AU_VERSION_1	0
+// only define one of the following 2
+#define TARGET_API_AUDIOUNIT
+#define TARGET_API_VST
 
 // only necessary if using a custom GUI
 #if TARGET_PLUGIN_HAS_GUI
@@ -34,3 +34,5 @@
 #endif
 // if relavant
 #define DFX_SUPPORT_OLD_VST_SETTINGS 
+// for Audio Unit
+#define SUPPORT_AU_VERSION_1	0

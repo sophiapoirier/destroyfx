@@ -4,7 +4,7 @@
 #include "monomaker.hpp"
 #endif
 
-#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#ifndef __MONOMAKEREDITOR_H
 	#include "monomakereditor.hpp"
 	#endif
@@ -37,7 +37,7 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addchannelconfig(1, 2);	// 1-in/2-out
 
 
-	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 		editor = new MonomakerEditor(this);
 	#endif
 }
@@ -104,13 +104,13 @@ void Monomaker::processaudio(const float **inputs, float **outputs, unsigned lon
 		out2 = (in2 * monomerge_main) + (in1 * monomerge_other);
 
 		// do panning into the output stream
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		if (replacing)
 		{
 	#endif
 			outputs[0][samplecount] = (out1 * pan_left1) + (out2 * pan_left2);
 			outputs[1][samplecount] = (out2 * pan_right2) + (out1 * pan_right1);
-	#if TARGET_API_VST
+	#ifdef TARGET_API_VST
 		}
 		else
 		{
