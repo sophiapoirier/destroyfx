@@ -94,7 +94,10 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kOctaveMin, getparametermin_i(kOctaveMin), "no min");
 	for (int i=getparametermin_i(kOctaveMax); i < getparametermax_i(kOctaveMax); i++)
 	{
-		sprintf(octavename, "%+d", i);
+		if (i > 0)
+			sprintf(octavename, "%+d", i);
+		else
+			sprintf(octavename, "%d", i);	// XXX is there a better way to do this?
 		setparametervaluestring(kOctaveMax, i, octavename);
 	}
 	setparametervaluestring(kOctaveMax, getparametermax_i(kOctaveMax), "no max");

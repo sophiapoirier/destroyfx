@@ -241,19 +241,32 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 	// here we begin the audio output loop, which has two checkpoints at the beginning
 	for (unsigned long samplecount=0; samplecount < inNumFrames; samplecount++)
 	{
+//printf("\t1\n");
+//printf("smoothcount = %ld\n", smoothcount);
 		// check if it's the end of this minibuffer
 		if (readPos >= minibufferSize)
 			updateBuffer(samplecount);
 
+//printf("\t2a\n");
+//float ouch;
+//printf("numChannels = %ld\n", numChannels);
+//for (ch=0; ch < numChannels; ch++) ouch = in[ch][samplecount];
+//printf("\t2b\n");
+//for (ch=0; ch < numChannels; ch++) buffers[ch][writePos] = randFloat();
+//printf("\t2c\n");
+//printf("writePos = %ld\n", writePos);
 		// store the latest input samples into the buffers
 		for (ch=0; ch < numChannels; ch++)
 			buffers[ch][writePos] = in[ch][samplecount];
 
+//printf("\t3\n");
 		// get the current output without any smoothing
 		for (ch=0; ch < numChannels; ch++)
 			outval[ch] = buffers[ch][readPos];
 
+//printf("\t4\n");
 		// and if smoothing is taking place, get the smoothed audio output
+//printf("smoothcount = %ld\n", smoothcount);
 		if (smoothcount > 0)
 		{
 			for (ch=0; ch < numChannels; ch++)
@@ -267,7 +280,9 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 //				outval[ch] = (outval[ch] * newgain) + (buffers[ch][readPos+prevMinibufferSize] * oldgain);
 //				outval[ch] = (outval[ch] * sqrtFadeIn) + (buffers[ch][readPos+prevMinibufferSize] * sqrtFadeOut);
 				outval[ch] = (outval[ch] * fadeInGain) + (buffers[ch][readPos+prevMinibufferSize] * fadeOutGain);
+//printf("\t5 %ld\n", ch);
 			}
+//printf("\t6\n");
 			smoothcount--;
 //			smoothFract += smoothStep;
 //			sqrtFadeIn = 0.5f * (sqrtFadeIn + (smoothFract / sqrtFadeIn));
@@ -275,6 +290,7 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 			fadeInGain = (fadeOutGain * imaginaryFadePart) + (fadeInGain * realFadePart);
 			fadeOutGain = (realFadePart * fadeOutGain) - (imaginaryFadePart * fadeInGain);
 		}
+//printf("\t7\n");
 
 		// write the output samples into the output stream
 	#if TARGET_API_VST
@@ -283,6 +299,14 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 	#endif
 			for (ch=0; ch < numChannels; ch++)
 				out[ch][samplecount] = (outval[ch] * outputGain) + (in[ch][samplecount] * inputGain);
+/*
+for (ch=0; ch < numChannels; ch++) out[ch][samplecount] = 0.0f;
+printf("\t8\n");
+for (ch=0; ch < numChannels; ch++) ouch = in[ch][samplecount] * inputGain;
+printf("\t9\n");
+for (ch=0; ch < numChannels; ch++) ouch = outval[ch] * outputGain;
+printf("\t10\n");
+*/
 	#if TARGET_API_VST
 		}
 		else
@@ -291,11 +315,13 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 				out[ch][samplecount] += (outval[ch] * outputGain) + (in[ch][samplecount] * inputGain);
 		}
 	#endif
+//printf("\t11\n");
 
 		// increment the position trackers
 		readPos++;
 		writePos++;
 	}
+//printf("\t12\n");
 
 
 //-----------------------MIDI STUFF---------------------------
@@ -337,12 +363,14 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 			}
 		}
 	}
+//printf("\t8\n");
 
 	// make the our parameters storers and the host aware that divisor changed because of MIDI
 	if (divisor != oldDivisor)
 {
 		setparameter_f(kDivisor, divisor);	// XXX eh?
-printf("\tchanging divisor parameter value to %.3f\n", divisor);
+//printf("\tchanging divisor parameter value to %.3f\n", divisor);
 }
-else printf("\tdivisor parameter value not changed\n");
+//else printf("\tdivisor parameter value not changed\n");
+//printf("\t9\n");
 }

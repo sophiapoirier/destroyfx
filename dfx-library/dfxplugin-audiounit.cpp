@@ -503,8 +503,6 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 */
 
 #if TARGET_PLUGIN_USES_MIDI
-	// we ought to be able to assume that the data is now a CF mutable dictionary
-	CFMutableDictionaryRef dict = (CFMutableDictionaryRef) *outData;
 	// create a CF data storage thingy for our special data
 	CFMutableDataRef cfdata = CFDataCreateMutable(NULL, NULL);
 	UInt8 * dfxdata;	// a pointer to our special data
@@ -514,15 +512,17 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 	// put our special data into the CF data storage thingy
 	CFDataAppendBytes(cfdata, dfxdata, (signed)dfxdatasize);
 	// put the CF data storage thingy into the dfx-data section of the CF dictionary
-	CFDictionarySetValue(dict, kDfxDataDictionaryKeyString, cfdata);
+	CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
 	// dfx-data belongs to us no more, bye bye...
 	CFRelease(cfdata);
-	*outData = dict;
 #endif
 
 	return noErr;
 }
 
+//#ifndef DFX_SUPPORT_OLD_VST_SETTINGS
+//#define DFX_SUPPORT_OLD_VST_SETTINGS 0
+//#endif
 //-----------------------------------------------------------------------------
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
@@ -612,7 +612,13 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 */
 
 #if TARGET_PLUGIN_USES_MIDI
+	// look for a data section keyed with our custom data key
 	CFDataRef cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kDfxDataDictionaryKeyString));
+#if DFX_SUPPORT_OLD_VST_SETTINGS
+	// failing that, try to see if old VST chunk data is being fed to us
+	if (cfdata == NULL)
+		CFDataRef cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
+#endif
 	if (cfdata == NULL)
 		return kAudioUnitErr_InvalidPropertyValue;
 
@@ -691,22 +697,25 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags
 	UInt32 outNumBuffers = outBuffer.mNumberBuffers;
 	// can't have less than 1 in or out stream
 	if ( (inNumBuffers < 1) || (outNumBuffers < 1) )
-		return kAudioUnitErr_FormatNotSupported;
+		result = kAudioUnitErr_FormatNotSupported;
 
-	// set up our more convenient audio stream pointers
-	for (UInt32 i=0; i < numInputs; i++)
-		inputsP[i] = (float*) (inBuffer.mBuffers[i].mData);
-	for (UInt32 i=0; i < numOutputs; i++)
+	if (result == noErr)
 	{
-		outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
-		outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
+		// set up our more convenient audio stream pointers
+		for (UInt32 i=0; i < numInputs; i++)
+			inputsP[i] = (float*) (inBuffer.mBuffers[i].mData);
+		for (UInt32 i=0; i < numOutputs; i++)
+		{
+			outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
+			outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
+		}
+	
+		// now do the processing
+		processaudio((const float**)inputsP, outputsP, inFramesToProcess);
+	
+		// I don't know what the hell this is for
+		ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
 	}
-
-	// now do the processing
-	processaudio((const float**)inputsP, outputsP, inFramesToProcess);
-
-	// I don't know what the hell this is for
-	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
 
 #endif
 // end of if/else TARGET_PLUGIN_USES_DSPCORE
