@@ -200,7 +200,7 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 			tempSharedParamAssignment[i] = paramAssignments[i];
 
 		// reverse the order of bytes in the data being sent to the host, if necessary
-		correctEndian(sharedChunk, false, isPreset);
+		correctEndian(*outData, false, isPreset);
 		// allow for the storage of extra data
 		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofPresetChunk-sizeofExtendedData, isPreset);
 
@@ -227,7 +227,7 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 			firstSharedParamAssignment[i] = paramAssignments[i];
 
 		// reverse the order of bytes in the data being sent to the host, if necessary
-		correctEndian(sharedChunk, false, isPreset);
+		correctEndian(*outData, false, isPreset);
 		// allow for the storage of extra data
 		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofChunk-sizeofExtendedData, isPreset);
 
@@ -1006,40 +1006,30 @@ void DfxSettings::correctEndian(void *data, bool isReversed, bool isPreset)
 #if MAC
 // Mac OS (big endian) is the reference platform, so no byte-swapping is necessary
 #else
-  unsigned long storedHeaderSize;
-  long numStoredParameters, numStoredPresets, storedVersion;
-
-
 	// start by looking at the header info
 	DfxSettingsInfo *dataHeader = (DfxSettingsInfo*)data;
 	// we need to know how big the header is before dealing with it
-	storedHeaderSize = dataHeader->storedHeaderSize;
-	// correct the value's endian byte order order if the chunk was received byte-swapped
+	unsigned long storedHeaderSize = dataHeader->storedHeaderSize;
+	long numStoredParameters = dataHeader->numStoredParameters;
+	long numStoredPresets = dataHeader->numStoredPresets;
+	long storedVersion = dataHeader->version;
+	// correct the values' endian byte order order if the data was received byte-swapped
 	if (isReversed)
-		reverseBytes(&storedHeaderSize, sizeof(unsigned long));
-
-	// since the data is not yet reversed, collect this info now before we reverse it
-	if (!isReversed)
 	{
-		numStoredParameters = dataHeader->numStoredParameters;
-		numStoredPresets = (isPreset ? 1 : dataHeader->numStoredPresets);
-		storedVersion = dataHeader->version;
+		reversebytes(&storedHeaderSize, sizeof(storedHeaderSize));
+		reversebytes(&numStoredParameters, sizeof(numStoredParameters));
+		reversebytes(&numStoredPresets, sizeof(numStoredPresets));
+		reversebytes(&storedVersion, sizeof(storedVersion));
 	}
+//	if (isPreset)
+//		numStoredPresets = 1;
 
 	// reverse the order of bytes of the header values
-	reverseBytes(dataHeader, sizeof(long), storedHeaderSize/sizeof(long));
-
-	// if the data started off reversed, collect this info now that we've un-reversed the data
-	if (isReversed)
-	{
-		numStoredParameters = dataHeader->numStoredParameters;
-		numStoredPresets = (isPreset ? 1 : dataHeader->numStoredPresets);
-		storedVersion = dataHeader->version;
-	}
+	reversebytes(dataHeader, sizeof(long), storedHeaderSize/sizeof(long));
 
 	// reverse the byte order for each of the parameter IDs
 	long *dataParameterIDs = (long*) ((char*)data + storedHeaderSize);
-	reverseBytes(dataParameterIDs, sizeof(long), numStoredParameters);
+	reversebytes(dataParameterIDs, sizeof(long), numStoredParameters);
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char strings
@@ -1056,7 +1046,7 @@ void DfxSettings::correctEndian(void *data, bool isReversed, bool isPreset)
 #endif
 	for (long iij=0; iij < numStoredPresets; iij++)
 	{
-		reverseBytes(dataPresets->params, sizeof(float), (unsigned)numStoredParameters);
+		reversebytes(dataPresets->params, sizeof(float), (unsigned)numStoredParameters);
 		// point to the next preset in the data array
 		dataPresets = (GenPreset*) ((char*)dataPresets + sizeofStoredPreset);
 	}
@@ -1074,15 +1064,15 @@ if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
 	ParameterAssignment *dataParameterAssignments = (ParameterAssignment*) dataPresets;
 	for (long i=0; i < numStoredParameters; i++)
 	{
-		reverseBytes( &(dataParameterAssignments->eventType), sizeof(long) );
-		reverseBytes( &(dataParameterAssignments->eventChannel), sizeof(long) );
-		reverseBytes( &(dataParameterAssignments->eventNum), sizeof(long) );
-		reverseBytes( &(dataParameterAssignments->eventNum2), sizeof(long) );
-		reverseBytes( &(dataParameterAssignments->eventBehaviourFlags), sizeof(long) );
-		reverseBytes( &(dataParameterAssignments->data1), sizeof(long) );
-		reverseBytes( &(dataParameterAssignments->data2), sizeof(long) );
-		reverseBytes( &(dataParameterAssignments->fdata1), sizeof(float) );
-		reverseBytes( &(dataParameterAssignments->fdata2), sizeof(float) );
+		reversebytes( &(dataParameterAssignments->eventType), sizeof(long) );
+		reversebytes( &(dataParameterAssignments->eventChannel), sizeof(long) );
+		reversebytes( &(dataParameterAssignments->eventNum), sizeof(long) );
+		reversebytes( &(dataParameterAssignments->eventNum2), sizeof(long) );
+		reversebytes( &(dataParameterAssignments->eventBehaviourFlags), sizeof(long) );
+		reversebytes( &(dataParameterAssignments->data1), sizeof(long) );
+		reversebytes( &(dataParameterAssignments->data2), sizeof(long) );
+		reversebytes( &(dataParameterAssignments->fdata1), sizeof(float) );
+		reversebytes( &(dataParameterAssignments->fdata2), sizeof(float) );
 	}
 #if DFX_SUPPORT_OLD_VST_SETTINGS
 }
@@ -1090,24 +1080,4 @@ if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
 
 #endif
 // MAC (endian check)
-}
-
-//-----------------------------------------------------------------------------
-// this reverses the bytes in a stream of data, for correcting endian differences
-void reverseBytes(void *data, unsigned long size, unsigned long count)
-{
-	int half = (int) ((size / 2) + (size % 2));
-	char temp;
-	char *dataBytes = (char*)data;
-
-	for (unsigned long c=0; c < count; c++)
-	{
-		for (int i=0; i < half; i++)
-		{
-			temp = dataBytes[i];
-			dataBytes[i] = dataBytes[(size-1)-i];
-			dataBytes[(size-1)-i] = temp;
-		}
-		dataBytes += size;
-	}
 }
