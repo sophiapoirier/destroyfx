@@ -31,12 +31,12 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   initparameter_indexed(P_POINTSTYLE, "points where", POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
 
-  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "magn" XXX
+  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "magn");
   initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08f, 0.08f, 0.0f, 1.0f, kDfxParamUnit_portion);
   initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20f, 0.20f, 0.0f, 1.0f, kDfxParamUnit_portion);
-  initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20f, 0.20f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "width" XXX
-  initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50f, 0.50f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "gap" XXX
-  initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50f, 0.50f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "level" XXX
+  initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20f, 0.20f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
+  initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50f, 0.50f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "gap");
+  initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50f, 0.50f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "level");
 
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
     initparameter_f(P_POINTPARAMS + pp, "pointparam:unused", 0.04f, 0.04f, 0.0f, 1.0f, kDfxParamUnit_generic);
@@ -45,13 +45,13 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   initparameter_indexed(P_INTERPSTYLE, "interpolate how", INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
 
-  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "angle" XXX
-  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "angle" XXX
+  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
+  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
   initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, "interp:smoothie", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_exponent);
   initparameter_f(P_INTERPARAMS + INTERP_REVERSI, "interp:reversie", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);
-  initparameter_f(P_INTERPARAMS + INTERP_PULSE, "interp:pulse", 0.05f, 0.05f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "pulse" XXX
-  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, "interp:friends", 1.0f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "width" XXX
-  initparameter_f(P_INTERPARAMS + INTERP_SING, "interp:sing", 0.8f, 0.8f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "mod" XXX
+  initparameter_f(P_INTERPARAMS + INTERP_PULSE, "interp:pulse", 0.05f, 0.05f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "pulse");
+  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, "interp:friends", 1.0f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
+  initparameter_f(P_INTERPARAMS + INTERP_SING, "interp:sing", 0.8f, 0.8f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "mod");
   initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, "interp:shuffle", 0.3f, 0.3f, 0.0f, 1.0f, kDfxParamUnit_generic);
 
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
@@ -64,24 +64,24 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_indexed(P_POINTOP2, "pointop2", OP_NONE, OP_NONE, MAX_OPS);
   initparameter_indexed(P_POINTOP3, "pointop3", OP_NONE, OP_NONE, MAX_OPS);
 
-#define ALLOP(n, str, def, unit) \
+#define ALLOP(n, str, def, unit, unitstr) \
   do { \
-    initparameter_f(P_OPPAR1S + n, "op1:" str, def, def, 0.0f, 1.0f, unit); \
-    initparameter_f(P_OPPAR2S + n, "op2:" str, def, def, 0.0f, 1.0f, unit); \
-    initparameter_f(P_OPPAR3S + n, "op3:" str, def, def, 0.0f, 1.0f, unit); \
+    initparameter_f(P_OPPAR1S + n, "op1:" str, def, def, 0.0f, 1.0f, unit, kDfxParamCurve_linear, unitstr); \
+    initparameter_f(P_OPPAR2S + n, "op2:" str, def, def, 0.0f, 1.0f, unit, kDfxParamCurve_linear, unitstr); \
+    initparameter_f(P_OPPAR3S + n, "op3:" str, def, def, 0.0f, 1.0f, unit, kDfxParamCurve_linear, unitstr); \
   } while (0)
 
-  ALLOP(OP_DOUBLE, "double", 0.5f, kDfxParamUnit_lineargain);
-  ALLOP(OP_HALF, "half", 0.0f, kDfxParamUnit_generic);
-  ALLOP(OP_QUARTER, "quarter", 0.0f, kDfxParamUnit_generic);
-  ALLOP(OP_LONGPASS, "longpass", 0.15f, kDfxParamUnit_portion);	// "length" XXX
-  ALLOP(OP_SHORTPASS, "shortpass", 0.5f, kDfxParamUnit_portion);	// "length" XXX
-  ALLOP(OP_SLOW, "slow", 0.25f, kDfxParamUnit_scalar);	// "factor"
-  ALLOP(OP_FAST, "fast", 0.5f, kDfxParamUnit_scalar);	// "factor"
-  ALLOP(OP_NONE, "none", 0.0f, kDfxParamUnit_generic);
+  ALLOP(OP_DOUBLE, "double", 0.5f, kDfxParamUnit_lineargain, NULL);
+  ALLOP(OP_HALF, "half", 0.0f, kDfxParamUnit_generic, NULL);
+  ALLOP(OP_QUARTER, "quarter", 0.0f, kDfxParamUnit_generic, NULL);
+  ALLOP(OP_LONGPASS, "longpass", 0.15f, kDfxParamUnit_custom, "length");
+  ALLOP(OP_SHORTPASS, "shortpass", 0.5f, kDfxParamUnit_custom, "length");
+  ALLOP(OP_SLOW, "slow", 0.25f, kDfxParamUnit_scalar, NULL);	// "factor"
+  ALLOP(OP_FAST, "fast", 0.5f, kDfxParamUnit_scalar, NULL);	// "factor"
+  ALLOP(OP_NONE, "none", 0.0f, kDfxParamUnit_generic, NULL);
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
-    ALLOP(op, "unused", 0.5f, kDfxParamUnit_generic);
+    ALLOP(op, "unused", 0.5f, kDfxParamUnit_generic, NULL);
 	setparameterhidden(P_OPPAR1S + op, true);
 	setparameterhidden(P_OPPAR2S + op, true);
 	setparameterhidden(P_OPPAR3S + op, true);

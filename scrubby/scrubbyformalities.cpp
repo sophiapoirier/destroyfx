@@ -65,8 +65,10 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kPitchStep9, "semi9 (major 6th)", false, false);
 	initparameter_b(kPitchStep10, "semi10 (minor 7th)", false, false);
 	initparameter_b(kPitchStep11, "semi11 (major 7th)", false, false);
-	initparameter_i(kOctaveMin, "octave minimum", -5, -5, -5, 0, kDfxParamUnit_strings, kDfxParamCurve_stepped);
-	initparameter_i(kOctaveMax, "octave maximum", 7, 7, 0, 7, kDfxParamUnit_strings, kDfxParamCurve_stepped);
+	initparameter_i(kOctaveMin, "octave minimum", -5, -5, -5, 0, kDfxParamUnit_octaves, kDfxParamCurve_stepped);
+	setparameterusevaluestrings(kOctaveMin, true);
+	initparameter_i(kOctaveMax, "octave maximum", 7, 7, 0, 7, kDfxParamUnit_octaves, kDfxParamCurve_stepped);
+	setparameterusevaluestrings(kOctaveMax, true);
 	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 	initparameter_f(kPredelay, "predelay", 0.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
