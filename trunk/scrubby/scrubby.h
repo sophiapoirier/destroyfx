@@ -52,12 +52,6 @@ enum
 //----------------------------------------------------------------------------- 
 // constants
 
-const float SEEK_RANGE_MIN = 0.3f;
-const float SEEK_RANGE_MAX = 6000.0f;
-
-const float SEEK_RATE_MIN = 0.3f;
-const float SEEK_RATE_MAX = 810.0f;
-
 const long OCTAVE_MIN = -5;
 const long OCTAVE_MAX = 7;
 
@@ -83,7 +77,7 @@ enum {
 class ScrubbyChunk : public VstChunk
 {
 public:
-	ScrubbyChunk(long numParameters, long numPrograms, long magic, AudioEffectX *effect);
+	ScrubbyChunk(long numParameters, long numPrograms, long magic, AudioEffectX * effect);
 	virtual void doLearningAssignStuff(long tag, long eventType, long eventChannel, 
 										long eventNum, long delta, 
 										long eventNum2 = 0, 
@@ -111,7 +105,7 @@ public:
 	virtual void reset();
 
 	virtual void processparameters();
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
 
 	virtual bool createbuffers();
 	virtual void releasebuffers();
@@ -130,32 +124,32 @@ private:
 	float seekRangeSeconds, seekDur, seekDurRandMin;
 	float seekRateHz, seekRateSync, seekRateRandMinHz, seekRateRandMinSync;
 	long seekRateIndex, seekRateRandMinIndex;
-	float userTempo;
+	double userTempo;
 	long speedMode, octaveMin, octaveMax;
 	bool freeze, splitStereo, pitchConstraint, tempoSync, useHostTempo;
-	bool *pitchSteps;
+	bool * pitchSteps;
 
 	// generic versions of these parameters for curved randomization
 	float seekRateHz_gen, seekRateRandMinHz_gen;
 
 	bool useSeekRateRandMin, useSeekDurRandMin;
 
-	// buffers & associated position values/counters/etc.
-	float **buffers;
+	// buffers and associated position values/counters/etc.
+	float ** buffers;
 	long writePos;
-	double *readPos, *readStep, *portamentoStep;
-	long *movecount, *seekcount;
+	double * readPos, * readStep, * portamentoStep;
+	long * movecount, * seekcount;
 	unsigned long numBuffers;	// how many buffers we have allocated at the moment
 
 	long MAX_BUFFER;	// the maximum size (in samples) of the audio buffer
 	double MAX_BUFFER_FLOAT;	// for avoiding casting
 
 	// tempo sync stuff
-	float currentTempoBPS;	// tempo in beats per second
-	bool *needResync;	// true when playback has just started up again
+	double currentTempoBPS;	// tempo in beats per second
+	bool * needResync;	// true when playback has just started up again
 
 	// MIDI note control stuff
-	long *activeNotesTable;	// how many voices of each note in the octave are being played
+	long * activeNotesTable;	// how many voices of each note in the octave are being played
 	bool notesWereAlreadyActive;	// says whether any notes were active in the previous block
 
 long sinecount;

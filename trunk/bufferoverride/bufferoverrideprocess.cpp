@@ -5,6 +5,12 @@
 
 
 //-----------------------------------------------------------------------------
+inline long bufferSize_ms2samples(double inSizeMS, double inSampleRate)
+{
+	return (long) (inSizeMS * inSampleRate * 0.001);
+}
+
+//-----------------------------------------------------------------------------
 void BufferOverride::updateBuffer(unsigned long samplePos)
 {
 	bool doSmoothing = true;	// but in some situations, we shouldn't
@@ -26,7 +32,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	// Scale the 0.0 - 1.0 LFO output values to 0.0 - 2.0 (oscillating around 1.0).
 	float divisorLFOvalue = processLFOzero2two(divisorLFO);
 	float bufferLFOvalue = 2.0f - processLFOzero2two(bufferLFO);	// inverting it makes more pitch sense
-	// & then update the stepSize for each LFO, in case the LFO parameters have changed
+	// and then update the stepSize for each LFO, in case the LFO parameters have changed
 	if (divisorLFO->bTempoSync)
 		divisorLFO->stepSize = currentTempoBPS * divisorLFO->fTempoRate * numLFOpointsDivSR;
 	else
@@ -42,7 +48,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	{
 		writePos = 0;	// start up a new forced buffer
 
-		// check on the previous forced & minibuffers; don't smooth if the last forced buffer wasn't divided
+		// check on the previous forced and minibuffers; don't smooth if the last forced buffer wasn't divided
 		if (prevMinibufferSize >= currentForcedBufferSize)
 			doSmoothing = false;
 		else
@@ -50,18 +56,18 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 
 		// now update the the size of the current force buffer
 		if ( bufferTempoSync &&	// the user wants to do tempo sync / beat division rate
-			 (currentTempoBPS > 0.0f) ) // avoid division by zero
+			 (currentTempoBPS > 0.0) ) // avoid division by zero
 		{
-			currentForcedBufferSize = (long) ( getsamplerate_f() / (currentTempoBPS * bufferSizeSync) );
+			currentForcedBufferSize = (long) ( getsamplerate() / (currentTempoBPS * bufferSizeSync) );
 			// set this true so that we make sure to do the measure syncronisation later on
 			if (needResync)
 				barSync = true;
 		}
 		else
-			currentForcedBufferSize = bufferSize_ms2samples(bufferSizeMs);
+			currentForcedBufferSize = bufferSize_ms2samples(bufferSizeMs, getsamplerate());
 		// apply the buffer LFO to the forced buffer size
 		currentForcedBufferSize = (long) ((float)currentForcedBufferSize * bufferLFOvalue);
-		// really low tempos & tempo rate values can cause huge forced buffer sizes,
+		// really low tempos and tempo rate values can cause huge forced buffer sizes,
 		// so prevent going outside of the allocated buffer space
 		if (currentForcedBufferSize > SUPER_MAX_BUFFER)
 			currentForcedBufferSize = SUPER_MAX_BUFFER;
@@ -124,7 +130,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 			{
 				// calculate how long this forced buffer needs to be
 				long countdown = samplesToBar % currentForcedBufferSize;
-				// update the forced buffer size & number of minibuffers so that 
+				// update the forced buffer size and number of minibuffers so that 
 				// the forced buffers sync up with the musical measures of the song
 				if ( countdown < (minibufferSize*2) )	// extend the buffer if it would be too short...
 					currentForcedBufferSize += countdown;
@@ -172,7 +178,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
-void BufferOverride::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
+void BufferOverride::processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing)
 {
 	unsigned long numChannels = getnumoutputs();
 	unsigned long ch;
@@ -197,7 +203,7 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 
 
 //-------------------------INITIALIZATIONS----------------------
-	// this is a handy value to have during LFO calculations & wasteful to recalculate at every sample
+	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
 	numLFOpointsDivSR = NUM_LFO_POINTS_FLOAT / getsamplerate_f();
 	divisorLFO->pickTheLFOwaveform();
 	bufferLFO->pickTheLFOwaveform();
@@ -217,7 +223,7 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 		if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
 		{
 			currentTempoBPS = timeinfo.tempo_bps;
-			// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
+			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (timeinfo.playbackChanged)
 			{
 				needResync = true;
@@ -230,7 +236,7 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 		}
 		else	// get the tempo from the user parameter
 		{
-			currentTempoBPS = userTempo / 60.0f;
+			currentTempoBPS = userTempo / 60.0;
 			needResync = false;	// we don't want it true if we're not syncing to host tempo
 		}
 	}
@@ -257,7 +263,7 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 		{
 			for (ch=0; ch < numChannels; ch++)
 			{
-			// crossfade between the current input & its corresponding overlap sample
+			// crossfade between the current input and its corresponding overlap sample
 //				outval[ch] *= 1.0f - (smoothStep * (float)smoothcount);	// current
 //				outval[ch] += buffers[ch][readPos+prevMinibufferSize] * smoothStep*(float)smoothcount;	// + previous
 //				float smoothfract = smoothStep * (float)smoothcount;
@@ -308,12 +314,12 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 			{
 				// regardless of whether it's a note-on or note-off, we've found some note message
 				oldNote = true;
-				// store the note & update the notes table if it's a note-on message
+				// store the note and update the notes table if it's a note-on message
 				if (midistuff->blockEvents[eventcount].status == kMidiNoteOn)
 				{
 					midistuff->insertNote(midistuff->blockEvents[eventcount].byte1);
 					lastNoteOn = midistuff->blockEvents[eventcount].byte1;
-					// since we're not doing the fDivisor updating yet, this needs to be falsed
+					// since we're not doing the divisor updating yet, this needs to be falsed
 					divisorWasChangedByHand = false;
 				}
 				// otherwise remove the note from the notes table
@@ -326,7 +332,7 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 				midistuff->removeAllNotes();
 			}
 		}
-		for (eventcount = (midistuff->numBlockEvents-1); (eventcount >= 0); eventcount--)
+		for (eventcount = midistuff->numBlockEvents - 1; eventcount >= 0; eventcount--)
 		{
 			if (midistuff->blockEvents[eventcount].status == kMidiPitchbend)
 			{
@@ -337,7 +343,7 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 		}
 	}
 
-	// make the our parameters storers and the host aware that divisor changed because of MIDI
+	// make our parameters storers and the host aware that divisor changed because of MIDI
 	if (divisor != oldDivisor)
 	{
 		setparameter_f(kDivisor, divisor);	// XXX eh?

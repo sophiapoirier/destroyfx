@@ -13,7 +13,7 @@
 DFX_ENTRY(Scrubby);
 
 //-----------------------------------------------------------------------------
-// initializations & such
+// initializations and such
 Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 29 parameters, 16 presets
 {
@@ -28,30 +28,30 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	pitchSteps = NULL;
 	activeNotesTable = NULL;
 
-	tempoRateTable = new TempoRateTable;
+	tempoRateTable = new TempoRateTable();
 
 
 	// initialize the parameters
 	long numTempoRates = tempoRateTable->getNumTempoRates();
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
-	initparameter_f(kSeekRange, "seek range", 333.0f, 333.0f, 0.3f, 6000.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
+	initparameter_f(kSeekRange, "seek range", 333.0, 333.0, 0.3, 6000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_b(kFreeze, "freeze", false, false);
-	initparameter_f(kSeekRate_abs, "seek rate (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
+	initparameter_f(kSeekRate_abs, "seek rate (free)", 9.0, 3.0, 0.3, 810.0, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
 	initparameter_indexed(kSeekRate_sync, "seek rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
-//	initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
+//	initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 9.0, 3.0, 0.3, 810.0, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
 //	initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 // XXX temporary while implementing range sliders in DFX GUI
-initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 810.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
+initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 810.0, 3.0, 0.3, 810.0, kDfxParamUnit_hz, kDfxParamCurve_log);
 initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTempoRates-1, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kTempoSync, "tempo sync", false, false);
-	initparameter_f(kSeekDur, "seek duration", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
-	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
+	initparameter_f(kSeekDur, "seek duration", 100.0, 100.0, 3.0, 100.0, kDfxParamUnit_percent);	// percent of range
+	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0, 100.0, 3.0, 100.0, kDfxParamUnit_percent);	// percent of range
 	initparameter_indexed(kSpeedMode, "speeds", kSpeedMode_robot, kSpeedMode_robot, kNumSpeedModes);
 	initparameter_b(kSplitStereo, "stereo split", false, false);
 	initparameter_b(kPitchConstraint, "pitch constraint", false, false);
 	// default all notes to off (looks better on the GUI)
 	// no, I changed my mind, at least leave 1 note on so that the user isn't 
-	// confused the first time turning on pitch constraint & getting silence
+	// confused the first time turning on pitch constraint and getting silence
 	initparameter_b(kPitchStep0, "semi0 (unity/octave)", true, false);
 	initparameter_b(kPitchStep1, "semi1 (minor 2nd)", false, false);
 	initparameter_b(kPitchStep2, "semi2 (major 2nd)", false, false);
@@ -68,9 +68,9 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 	setparameterusevaluestrings(kOctaveMin, true);
 	initparameter_i(kOctaveMax, "octave maximum", 7, 7, 0, 7, kDfxParamUnit_octaves, kDfxParamCurve_stepped);
 	setparameterusevaluestrings(kOctaveMax, true);
-	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
+	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
-	initparameter_f(kPredelay, "predelay", 0.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
+	initparameter_f(kPredelay, "predelay", 0.0, 50.0, 0.0, 100.0, kDfxParamUnit_percent);	// percent of range
 
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < numTempoRates; i++)
@@ -101,7 +101,7 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 	setparametervaluestring(kOctaveMax, getparametermax_i(kOctaveMax), "no max");
 
 
-	settailsize_seconds(SEEK_RANGE_MAX * 0.001f / SEEK_RATE_MIN);
+	settailsize_seconds(getparametermax_f(kSeekRange) * 0.001 / getparametermin_f(kSeekRate_abs));
 
 	setpresetname(0, "scub");	// default preset name
 	initPresets();
@@ -113,7 +113,7 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 	dfxsettings->setLowestLoadableVersion(0x00010000);
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
-	currentTempoBPS = getparameter_f(kTempo) / 60.0f;
+	currentTempoBPS = getparameter_f(kTempo) / 60.0;
 
 
 	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
@@ -162,7 +162,7 @@ void Scrubby::cleanup()
 //-------------------------------------------------------------------------
 void Scrubby::reset()
 {
-	// reset these position trackers thingies & whatnot
+	// reset these position trackers thingies and whatnot
 	writePos = 0;
 
 	// delete any stored active notes
@@ -186,7 +186,7 @@ bool Scrubby::createbuffers()
 	long oldmax = MAX_BUFFER;
 	// the number of samples in the maximum seek range, 
 	// dividing by the minimum seek rate for extra leeway while moving
-	MAX_BUFFER = (long) (SEEK_RANGE_MAX * 0.001f * getsamplerate_f() / SEEK_RATE_MIN);
+	MAX_BUFFER = (long) (getparametermax_f(kSeekRange) * 0.001 * getsamplerate_f() / getparametermin_f(kSeekRate_abs));
 	MAX_BUFFER_FLOAT = (double)MAX_BUFFER;
 	unsigned long oldnum = numBuffers;
 	numBuffers = getnumoutputs();
@@ -322,13 +322,13 @@ void Scrubby::initPresets()
 	int i = 1;
 
 	setpresetname(i, "happy machine");
-	setpresetparameter_f(i, kSeekRange, 603.0f);
+	setpresetparameter_f(i, kSeekRange, 603.0);
 	setpresetparameter_b(i, kFreeze, false);
-	setpresetparameter_f(i, kSeekRate_abs, 11.547f);
-	setpresetparameter_f(i, kSeekRateRandMin_abs, 11.547f);
+	setpresetparameter_f(i, kSeekRate_abs, 11.547);
+	setpresetparameter_f(i, kSeekRateRandMin_abs, 11.547);
 	setpresetparameter_b(i, kTempoSync, false);
-	setpresetparameter_f(i, kSeekDur, 40.8f);
-	setpresetparameter_f(i, kSeekDurRandMin, 40.8f);
+	setpresetparameter_f(i, kSeekDur, 40.8);
+	setpresetparameter_f(i, kSeekDurRandMin, 40.8);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_robot);
 	setpresetparameter_b(i, kSplitStereo, false);
 	setpresetparameter_b(i, kPitchConstraint, true);
@@ -349,52 +349,52 @@ void Scrubby::initPresets()
 	i++;
 
 	setpresetname(i, "fake chorus");
-	setpresetparameter_f(i, kSeekRange, 3.0f);
+	setpresetparameter_f(i, kSeekRange, 3.0);
 	setpresetparameter_b(i, kFreeze, false);
-	setpresetparameter_f(i, kSeekRate_abs, 18.0f);
-	setpresetparameter_f(i, kSeekRateRandMin_abs, 18.0f);
+	setpresetparameter_f(i, kSeekRate_abs, 18.0);
+	setpresetparameter_f(i, kSeekRateRandMin_abs, 18.0);
 	setpresetparameter_b(i, kTempoSync, false);
-	setpresetparameter_f(i, kSeekDur, 100.0f);
-	setpresetparameter_f(i, kSeekDurRandMin, 100.0f);
+	setpresetparameter_f(i, kSeekDur, 100.0);
+	setpresetparameter_f(i, kSeekDurRandMin, 100.0);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_robot);
 	setpresetparameter_b(i, kSplitStereo, true);
 	setpresetparameter_b(i, kPitchConstraint, false);
 	i++;
 
 	setpresetname(i, "broken turntable");
-	setpresetparameter_f(i, kSeekRange, 3000.0f);
+	setpresetparameter_f(i, kSeekRange, 3000.0);
 	setpresetparameter_b(i, kFreeze, false);
-	setpresetparameter_f(i, kSeekRate_abs, 6.0f);
-	setpresetparameter_f(i, kSeekRateRandMin_abs, 6.0f);
+	setpresetparameter_f(i, kSeekRate_abs, 6.0);
+	setpresetparameter_f(i, kSeekRateRandMin_abs, 6.0);
 	setpresetparameter_b(i, kTempoSync, false);
-	setpresetparameter_f(i, kSeekDur, 100.0f);
-	setpresetparameter_f(i, kSeekDurRandMin, 100.0f);
+	setpresetparameter_f(i, kSeekDur, 100.0);
+	setpresetparameter_f(i, kSeekDurRandMin, 100.0);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_dj);
 	setpresetparameter_b(i, kSplitStereo, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
 	i++;
 
 	setpresetname(i, "blib");
-	setpresetparameter_f(i, kSeekRange, 270.0f);
+	setpresetparameter_f(i, kSeekRange, 270.0);
 	setpresetparameter_b(i, kFreeze, false);
-	setpresetparameter_f(i, kSeekRate_abs, 420.0f);
-	setpresetparameter_f(i, kSeekRateRandMin_abs, 7.2f);
+	setpresetparameter_f(i, kSeekRate_abs, 420.0);
+	setpresetparameter_f(i, kSeekRateRandMin_abs, 7.2);
 	setpresetparameter_b(i, kTempoSync, false);
-	setpresetparameter_f(i, kSeekDur, 57.0f);//5700.0f);
-	setpresetparameter_f(i, kSeekDurRandMin, 30.0f);//3000.0f);
+	setpresetparameter_f(i, kSeekDur, 57.0);//5700.0);
+	setpresetparameter_f(i, kSeekDurRandMin, 30.0);//3000.0);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_robot);
 	setpresetparameter_b(i, kSplitStereo, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
 	i++;
 
 	setpresetname(i, "DJ staccato");
-	setpresetparameter_f(i, kSeekRange, 1800.0f);
+	setpresetparameter_f(i, kSeekRange, 1800.0);
 	setpresetparameter_b(i, kFreeze, false);
 	setpresetparameter_i(i, kSeekRate_sync, tempoRateTable->getNearestTempoRateIndex(2.0f));
 	setpresetparameter_i(i, kSeekRateRandMin_sync, tempoRateTable->getNearestTempoRateIndex(2.0f));
 	setpresetparameter_b(i, kTempoSync, true);
-	setpresetparameter_f(i, kSeekDur, 22.2f);
-	setpresetparameter_f(i, kSeekDurRandMin, 22.2f);
+	setpresetparameter_f(i, kSeekDur, 22.2);
+	setpresetparameter_f(i, kSeekDurRandMin, 22.2);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_dj);
 	setpresetparameter_b(i, kSplitStereo, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
@@ -403,23 +403,23 @@ void Scrubby::initPresets()
 
 /*
 	setpresetname(i, "");
-	setpresetparameter_f(i, kSeekRange, f);
+	setpresetparameter_f(i, kSeekRange, );
 	setpresetparameter_b(i, kFreeze, );
-	setpresetparameter_f(i, kSeekRate_abs, f);
+	setpresetparameter_f(i, kSeekRate_abs, );
 	setpresetparameter_i(i, kSeekRate_sync, tempoRateTable->getNearestTempoRateIndex(f));
-	setpresetparameter_f(i, kSeekRateRandMin_abs, f);
+	setpresetparameter_f(i, kSeekRateRandMin_abs, );
 	setpresetparameter_i(i, kSeekRateRandMin_sync, tempoRateTable->getNearestTempoRateIndex(f));
 	setpresetparameter_b(i, kTempoSync, );
-	setpresetparameter_f(i, kSeekDur, f);
-	setpresetparameter_f(i, kSeekDurRandMin, f);
+	setpresetparameter_f(i, kSeekDur, );
+	setpresetparameter_f(i, kSeekDurRandMin, );
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_);
 	setpresetparameter_b(i, kSplitStereo, );
 	setpresetparameter_b(i, kPitchConstraint, );
 	setpresetparameter_i(i, kOctaveMin, );
 	setpresetparameter_i(i, kOctaveMax, );
-	setpresetparameter_f(i, kTempo, f);
+	setpresetparameter_f(i, kTempo, );
 	setpresetparameter_b(i, kTempoAuto, );
-	setpresetparameter_f(i, kPredelay, f);
+	setpresetparameter_f(i, kPredelay, );
 	setpresetparameter_b(i, kPitchStep0, );
 	setpresetparameter_b(i, kPitchStep1, );
 	setpresetparameter_b(i, kPitchStep2, );
@@ -442,7 +442,7 @@ void Scrubby::initPresets()
 //-------------------------------------------------------------------------
 void Scrubby::processparameters()
 {
-	seekRangeSeconds = getparameter_f(kSeekRange) * 0.001f;
+	seekRangeSeconds = getparameter_f(kSeekRange) * 0.001;
 	freeze = getparameter_b(kFreeze);
 	seekRateHz = getparameter_f(kSeekRate_abs);
 	seekRateIndex = getparameter_i(kSeekRate_sync);

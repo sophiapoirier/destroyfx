@@ -5,9 +5,7 @@
 #define __BUFFEROVERRIDE_H
 
 
-#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
-#endif
 
 #include "lfo.h"
 
@@ -46,34 +44,13 @@ enum
 };
 
 //----------------------------------------------------------------------------- 
-// constants & macros
+// constants
 
-#define NUM_PRESETS 16
+const long NUM_PRESETS = 16;
 
-#define DIVISOR_MIN 1.92f
-#define DIVISOR_MAX 222.0f
-#define bufferDivisorScaled(A) ( paramRangeSquaredScaled((A), DIVISOR_MIN, DIVISOR_MAX) )
-#define bufferDivisorUnscaled(A) ( paramRangeSquaredUnscaled((A), DIVISOR_MIN, DIVISOR_MAX) )
-
-#define BUFFER_MIN 1.0f
-#define BUFFER_MAX 999.0f
-#define forcedBufferSizeScaled(A) ( paramRangeSquaredScaled((1.0f-(A)), BUFFER_MIN, BUFFER_MAX) )
-#define forcedBufferSizeUnscaled(A) ( 1.0f - paramRangeSquaredUnscaled((A), BUFFER_MIN, BUFFER_MAX) )
-#define bufferSize_ms2samples(fMS) ( (long) ((fMS) * getsamplerate_f() * 0.001f) )
-
-#define TEMPO_MIN 57.0f
-#define TEMPO_MAX 480.0f
-#define tempoScaled(A)   ( paramRangeScaled((A), TEMPO_MIN, TEMPO_MAX) )
-#define tempoUnscaled(A)   ( paramRangeUnscaled((A), TEMPO_MIN, TEMPO_MAX) )
-
-#define LFO_RATE_MIN 0.03f
-#define LFO_RATE_MAX 21.0f
-#define LFOrateScaled(A)   ( paramRangeSquaredScaled((A), LFO_RATE_MIN, LFO_RATE_MAX) )
-#define LFOrateUnscaled(A)   ( paramRangeSquaredUnscaled((A), LFO_RATE_MIN, LFO_RATE_MAX) )
-
-// you need this stuff to get some maximum buffer size & allocate for that
+// you need this stuff to get some maximum buffer size and allocate for that
 // this is 42 bpm - should be sufficient
-#define MIN_ALLOWABLE_BPS 0.7
+const double MIN_ALLOWABLE_BPS = 0.7;
 
 enum {
 	kMidiMode_nudge,
@@ -94,7 +71,7 @@ public:
 	virtual void cleanup();
 	virtual void reset();
 
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
 	virtual void processparameters();
 
 	virtual bool createbuffers();
@@ -113,13 +90,13 @@ private:
 	// the parameters
 	float divisor, bufferSizeMs, bufferSizeSync;
 	bool bufferTempoSync, bufferInterrupt, useHostTempo;
-	float smooth, dryWetMix, userTempo;
-	double pitchbendRange;
+	float smooth, dryWetMix;
+	double pitchbendRange, userTempo;
 	long midiMode;
 
 	long currentForcedBufferSize;	// the size of the larger, imposed buffer
-	float **buffers;	// this stores the forced buffer
-	float *outval;	// array of current audio output values (1 for each channel)
+	float ** buffers;	// this stores the forced buffer
+	float * outval;	// array of current audio output values (1 for each channel)
 	unsigned long numBuffers;	// how many buffers we have allocated at the moment
 	long writePos;	// the current sample position within the forced buffer
 
@@ -130,12 +107,12 @@ private:
 
 	float numLFOpointsDivSR;	// the number of LFO table points divided by the sampling rate
 
-	float currentTempoBPS;	// tempo in beats per second
+	double currentTempoBPS;	// tempo in beats per second
 	bool needResync;
 
 	long SUPER_MAX_BUFFER;
 
-	long smoothDur, smoothcount;	// total duration & sample counter for the minibuffer transition smoothing period
+	long smoothDur, smoothcount;	// total duration and sample counter for the minibuffer transition smoothing period
 	float smoothStep;	// the gain increment for each sample "step" during the smoothing period
 	float sqrtFadeIn, sqrtFadeOut;	// square root of the smoothing gains, for equal power crossfading
 	float smoothFract;
@@ -146,7 +123,7 @@ private:
 	bool divisorWasChangedByHand;	// for MIDI trigger mode - tells us to respect the fDivisor value
 	bool divisorWasChangedByMIDI;	// tells the GUI that the divisor displays need updating
 
-	LFO *divisorLFO, *bufferLFO;
+	LFO * divisorLFO, * bufferLFO;
 
 	float fadeOutGain, fadeInGain, realFadePart, imaginaryFadePart;	// for trig crossfading
 };

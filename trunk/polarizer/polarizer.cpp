@@ -17,7 +17,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 3 parameters, 1 preset
 {
 	initparameter_i(kSkip, "leap", 1, 3, 1, 81, kDfxParamUnit_samples, kDfxParamCurve_pow);
-	initparameter_f(kAmount, "polarize", 50.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
+	initparameter_f(kAmount, "polarize", 50.0, 50.0, 0.0, 100.0, kDfxParamUnit_percent);
 	initparameter_b(kImplode, "implode", false, false);
 	setparametercurvespec(kSkip, 1.5);
 
@@ -32,7 +32,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-------------------------------------------------------------------------
-PolarizerDSP::PolarizerDSP(DfxPlugin *inDfxPlugin)
+PolarizerDSP::PolarizerDSP(DfxPlugin * inDfxPlugin)
 	: DfxPluginCore(inDfxPlugin)
 {
 }
@@ -44,11 +44,11 @@ void PolarizerDSP::reset()
 }
 
 //-----------------------------------------------------------------------------------------
-void PolarizerDSP::process(const float *in, float *out, unsigned long numSampleFrames, bool replacing)
+void PolarizerDSP::process(const float * in, float * out, unsigned long numSampleFrames, bool replacing)
 {
 	// fetch the current parameter values
 	long leapSize = getparameter_i(kSkip);
-	float polarizedAmp = (0.5f - getparameter_scalar(kAmount)) * 2.0f;
+	float polarizedAmp = (0.5 - getparameter_scalar(kAmount)) * 2.0;
 	bool implode = getparameter_b(kImplode);
 
 	for (unsigned long samplecount=0; samplecount < numSampleFrames; samplecount++)
