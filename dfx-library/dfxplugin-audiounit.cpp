@@ -115,19 +115,6 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 				cd->componentFlagsMask = 0;
 			}
 			break;
-/*
-	#else
-		case kAudioUnitProperty_GetUIComponentList:
-			{
-				ComponentDescription *cd = static_cast<ComponentDescription *>(outData);
-				cd->componentType = kAudioUnitCarbonViewComponentType;
-				cd->componentSubType = 'gnrc';	// Apple generic Audio Unit view
-				cd->componentManufacturer = kAudioUnitManufacturer_Apple;
-				cd->componentFlags = 0;
-				cd->componentFlagsMask = 0;
-			}
-			break;
-*/
 	#endif
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -189,7 +176,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	outParameterInfo.maxValue = getparametermax_f(inParameterID);
 	outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
 	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
-							& kAudioUnitParameterFlag_IsWritable;
+							| kAudioUnitParameterFlag_IsWritable;
 
 	// the complicated part:  getting the unit type
 	switch (getparameterunit(inParameterID))

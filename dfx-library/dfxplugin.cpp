@@ -57,6 +57,7 @@ DfxPlugin::DfxPlugin(
 	audioBuffersAllocated = false;
 	updatesamplerate();	// XXX have it set to something here?
 	sampleratechanged = true;
+	hostCanDoTempo = false;	// until proven otherwise
 
 	latency_samples = 0;
 	latency_seconds = 0.0;
@@ -97,9 +98,11 @@ DfxPlugin::DfxPlugin(
 		aupresets[i].presetNumber = i;
 		aupresets[i].presetName = 0;	// XXX eh?
 	}
+#endif
+// Audio Unit stuff
 
 
-#elif TARGET_API_VST
+#if TARGET_API_VST
 	setUniqueID(PLUGIN_ID);	// identify
 	setNumInputs(NUM_INPUTS);
 	setNumOutputs(NUM_OUTPUTS);
@@ -116,6 +119,9 @@ DfxPlugin::DfxPlugin(
 
 	latencychanged = false;
 
+	// check to see if the host supports sending tempo & time information to VST plugins
+	hostCanDoTempo = (canHostDo("sendVstTimeInfo") == 1);
+
 	#if TARGET_PLUGIN_USES_DSPCORE
 		dspcores = 0;
 		dspcores = (DfxPluginCore**) malloc(getnumoutputs() * sizeof(DfxPluginCore*));
@@ -128,11 +134,9 @@ DfxPlugin::DfxPlugin(
 		// tell host that we want to use special data chunks for settings storage
 		programsAreChunks();
 	#endif
-	
-
 
 #endif
-// end API-specific init stuff
+// VST stuff
 
 }
 
@@ -319,7 +323,7 @@ void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName,
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, kDfxParamCurve_stepped, kDfxParamUnit_strings);
+		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, kDfxParamCurve_stepped, kDfxParamUnit_indexed);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -744,6 +748,8 @@ void DfxPlugin::processtimeinfo()
 			timeinfo.tempo = tempo;
 			timeinfo.beatPosIsValid = true;
 			timeinfo.beatPos = beat;
+
+			hostCanDoTempo = true;
 		}
 	}
 

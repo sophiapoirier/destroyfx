@@ -457,6 +457,7 @@ protected:
 
 	DfxTimeInfo timeinfo;
 	bool b_usemusicaltimeinfo;	// XXX use this?
+	bool hostCanDoTempo;
 	TempoRateTable *tempoRateTable;	// a table of tempo rate values
 
 	bool b_usetimestampedparameters;	// XXX use this?
