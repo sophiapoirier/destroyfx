@@ -10,7 +10,32 @@
 #pragma mark _________init_________
 
 // this macro does boring entry point stuff for us
+#if 0
 DFX_ENTRY(BufferOverride);
+#else
+extern "C" ComponentResult BufferOverrideEntry(ComponentParameters *params, BufferOverride *obj);
+extern "C" ComponentResult BufferOverrideEntry(ComponentParameters *params, BufferOverride *obj)
+{
+	struct AudioUnitSetPropertyGluePB {
+		unsigned char                  componentFlags;
+		unsigned char                  componentParamSize;
+		short                          componentWhat;
+		UInt32                         inDataSize;
+		void*                          inData;
+		AudioUnitElement               inElement;
+		AudioUnitScope                 inScope;
+		AudioUnitPropertyID            inID;
+		AudioUnit                      ci;
+	};
+
+	AudioUnitSetPropertyGluePB *sp = (AudioUnitSetPropertyGluePB *) params;
+
+	if ( (params->what == kAudioUnitSetPropertySelect) && (sp->inID == kAudioUnitProperty_CurrentPreset) )
+		printf("<BufferOverrideEntry>SetCurrentPreset ( %ld )\n", ((AUPreset*)sp->inData)->presetNumber);
+
+	return ComponentEntryPoint<BufferOverride>::Dispatch(params, obj);
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // initializations & such
