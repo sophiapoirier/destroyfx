@@ -167,6 +167,16 @@ bool BufferOverride::createbuffers()
 
 	bool result1 = createbufferarray_f(&buffers, oldnum, oldmax, numBuffers, SUPER_MAX_BUFFER);
 	bool result2 = createbuffer_f(&outval, oldnum, numBuffers);
+/*
+bool result1 = true;
+if (buffers == NULL)
+{
+buffers = (float**) malloc(sizeof(float*) * 16);
+for (unsigned long i=0; i < 4; i++) buffers[i] = (float*) malloc(sizeof(float) * SUPER_MAX_BUFFER);
+}
+bool result2 = true;
+//if (outval == NULL) outval = (float*) malloc(sizeof(float) * 16);
+*/
 
 	if (!result1 || !result2)
 		return false;
