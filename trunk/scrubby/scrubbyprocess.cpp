@@ -269,6 +269,10 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	needResync[channel] = false;	// untrue this so that we don't do the measure sync calculations again unnecessarily
 }
 
+// this is a necessary value for calculating the pitches related to the playback speeds
+static const double LN2TO1_12TH = log( pow(2.0, 1.0/12.0) );
+//const double LN2TO1_12TH = 0.05776226504666215;
+
 //-----------------------------------------------------------------------------------------
 double Scrubby::processPitchConstraint(double readStep)
 {
