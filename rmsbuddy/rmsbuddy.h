@@ -57,6 +57,8 @@ public:
 						AudioUnitElement inElement, const void *inData, UInt32 inDataSize);
 	virtual int GetNumCustomUIComponents();
 	virtual void GetUIComponentDescs(ComponentDescription *inDescArray);
+	virtual ComponentResult	Version()
+		{	return RMS_BUDDY_VERSION;	}
 
 private:
 	unsigned long numChannels;	// remember the current number of channels being analyzed
