@@ -1,10 +1,10 @@
-#ifndef __skiddereditor
-#define __skiddereditor
+#ifndef __SKIDDEREDITOR_H
+#define __SKIDDEREDITOR_H
 
 #include "dfxgui.h"
 #include "dfxguimulticontrols.h"
 
-#ifndef __skidder
+#ifndef __SKIDDER_H
 #include "skidder.hpp"
 #endif
 
@@ -90,11 +90,6 @@ private:
 	COnOffButton *velocityButton;
 	CBitmap *gMidiModeButton;
 	CBitmap *gVelocityButton;
-#ifdef HUNGRY
-	COnOffButton *connectButton;
-	CParamDisplay *connectDisplay;
-	CBitmap *gConnectButton;
-#endif
 #endif
 
 	bool isOpen;
@@ -103,7 +98,8 @@ private:
 	static float theTempoSync;
 	char *tempoRateString;
 	float theCycleRate;	// the rate in Hz of the skidding cycles
-	SkidderChunk *chunk;
+//	SkidderChunk *chunk;
+	DfxSettings *chunk;
 	long goError;
 	CHorizontalSlider **faders;
 };

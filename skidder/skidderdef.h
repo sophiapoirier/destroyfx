@@ -19,6 +19,6 @@
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"bland blue interface for DFX Skidder"
 
 
-#define DFX_SUPPORT_OLD_VST_SETTINGS	1
+#define DFX_SUPPORT_OLD_VST_SETTINGS	0
 
 #define MSKIDDER	1
