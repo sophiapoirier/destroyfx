@@ -33,8 +33,14 @@ EQsync::EQsync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kSmooth, "smooth", 3.0f, 33.333f, 0.0f, 100.0f, kDfxParamUnit_percent);	// % of cycle
 	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
-	for (long i=ka0; i <= kb2; i++)
-		initparameter_f(i, " ", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
+//	for (long i=ka0; i <= kb2; i++)
+//		initparameter_f(i, " ", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
+	// okay, giving in and providing actual parameter names because Final Cut Pro folks say that it was causing problems...
+	initparameter_f(ka0, "a0", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
+	initparameter_f(ka1, "a1", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
+	initparameter_f(ka2, "a2", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
+	initparameter_f(kb1, "b1", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
+	initparameter_f(kb2, "b2", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_generic);
 
 	// set the value strings for the sync rate parameters
 	for (long i=0; i < numTempoRates; i++)
