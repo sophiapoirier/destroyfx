@@ -36,7 +36,7 @@ public:
 	// called by EventHandler callback; draws a clipping region if opaque == true, 
 	// otherwise asks embedded DfxGuiControls for their clipping regions
 	void clipRegion(bool drawing);
-	void setVisible(bool viz);
+	void setVisible(bool inVisibility);
 
 	// The methods you should implement in derived controls
 	virtual void draw(CGContextRef context, UInt32 portHeight)
@@ -104,8 +104,8 @@ public:
 	void setForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
 	void shrinkForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
 
-	void setTolerance(SInt32 inNewTolerance)
-		{	tolerance = inNewTolerance;	}
+	void setRedrawTolerance(SInt32 inNewTolerance)
+		{	redrawTolerance = inNewTolerance;	}
 	bool mustUpdate(void);
 
 protected:
@@ -124,8 +124,7 @@ protected:
 	DGRect				where; 			// the bounds...
 	DGRect				vizArea; 		// where the foreground displays
 	SInt32				lastUpdatedValue;
-	SInt32				tolerance;
-	bool				becameVisible;	// mustUpdate after setVisible(true)
+	SInt32				redrawTolerance;
 	bool				pleaseUpdate;
 };
 
