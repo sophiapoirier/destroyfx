@@ -80,7 +80,7 @@ MidiGaterEditor::MidiGaterEditor(AudioUnitCarbonView inInstance)
 OSStatus MidiGaterEditor::open(float inXOffset, float inYOffset)
 {
 	// load some graphics
-	//
+
 	// background image
 	DGGraphic *gBackground = new DGGraphic("midi-gater-background.png");
 	addImage(gBackground);

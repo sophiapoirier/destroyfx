@@ -95,7 +95,7 @@ RMSControl::~RMSControl()
 RMSTextDisplay::RMSTextDisplay(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
 					const char *inFontName, float inFontSize, long inTextAlignment, long inParamID)
-:	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x7FFF, inParamID), 
+:	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x3FFF, inParamID), 
 	textColor(inTextColor), backColor(inBackColor), frameColor(inFrameColor), 
 	fontSize(inFontSize), textAlignment(inTextAlignment), 
 	fontName(NULL), text(NULL)
@@ -299,7 +299,7 @@ void RMSButton::mouseUp(long inXpos, long inYpos)
 //-----------------------------------------------------------------------------
 RMSSlider::RMSSlider(RMSbuddyEditor *inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inBackColor, RMSColor inFillColor)
-:	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x7FFF, inParamID), 
+:	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x3FFF, inParamID), 
 	backColor(inBackColor), fillColor(inFillColor)
 {
 	borderWidth = 1;

@@ -615,9 +615,9 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 			GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
 			UInt32 modifiers;
 			GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-printf("keyCode = %lu,  charCode = ", keyCode);
-if ( (charCode > 0x7F) || iscntrl(charCode) ) printf("0x%.2X\n", charCode);
-else printf("%c\n", charCode);
+//printf("keyCode = %lu,  charCode = ", keyCode);
+//if ( (charCode > 0x7F) || iscntrl(charCode) ) printf("0x%.2X\n", charCode);
+//else printf("%c\n", charCode);
 
 			if ( ((keyCode == 44) && (modifiers & cmdKey)) || 
 					(charCode == kHelpCharCode) )
@@ -724,7 +724,7 @@ return eventKindIncorrectErr;
 		if ( ourControl->isAUVPattached() )//&& ourControl->isContinuousControl() )
 		{
 			ourOwnerEditor->TellListener(ourControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
-			printf("DGControlMouseHandler -> TellListener(MouseUp, %lu)\n", ourControl->getAUVP().mParameterID);
+//			printf("DGControlMouseHandler -> TellListener(MouseUp, %lu)\n", ourControl->getAUVP().mParameterID);
 		}
 
 		return noErr;
