@@ -184,10 +184,6 @@ public:
 	DGImage(const char * inFileName, DfxGuiEditor * inEditor = NULL);
 	virtual ~DGImage();
 
-	// XXX should eliminate this once I implement a proper draw method for this class
-	CGImageRef getCGImage()
-		{	return cgImage;	}
-
 	long getWidth();
 	long getHeight();
 
@@ -199,6 +195,11 @@ public:
 	   .. for stacked images.
 	*/
 	virtual void draw(DGRect * inRect, CGContextRef inContext, long inPortHeight, long inXoffset = 0, long inYoffset = 0);
+
+#if MAC
+	CGImageRef getCGImage()
+		{	return cgImage;	}
+#endif
 
 private:
 #if MAC
