@@ -20,9 +20,9 @@ public:
 	virtual ~DGSlider();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
-	virtual void mouseDown(Point *P, bool, bool);
-	virtual void mouseTrack(Point *P, bool, bool);
-	virtual void mouseUp(Point *P, bool, bool);
+	virtual void mouseDown(Point inPos, bool, bool);
+	virtual void mouseTrack(Point inPos, bool, bool);
+	virtual void mouseUp(Point inPos, bool, bool);
 
 private:
 	UInt32			orientation;

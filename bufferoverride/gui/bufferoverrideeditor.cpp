@@ -170,7 +170,7 @@ void linkKickButtonsUpProc(UInt32, void *otherbutton)
 static void TempoSyncListenerProc(void *inRefCon, void *inObject, const AudioUnitParameter *inParameter, Float32 inValue);
 static void TempoSyncListenerProc(void *inRefCon, void *inObject, const AudioUnitParameter *inParameter, Float32 inValue)
 {
-	if (inObject == NULL)
+	if ( (inObject == NULL) || (inParameter == NULL) )
 		return;
 
 	DGControl *control = (DGControl*) inObject;

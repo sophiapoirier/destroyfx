@@ -21,14 +21,14 @@ typedef void (*buttonUserProcedure) (UInt32 value, void *userData);
 class DGButton : public DGControl
 {
 public:
-	DGButton(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DGGraphic*, DGGraphic*, long inNumStates, DfxGuiBottonMode, bool inKick = false);
-	DGButton(DfxGuiEditor*, DGRect*, DGGraphic*, DGGraphic*, long inNumStates, DfxGuiBottonMode, bool inKick = false);
+	DGButton(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DGGraphic*, DGGraphic*, long inNumStates, DfxGuiBottonMode, bool inDrawMomentaryState = false);
+	DGButton(DfxGuiEditor*, DGRect*, DGGraphic*, DGGraphic*, long inNumStates, DfxGuiBottonMode, bool inDrawMomentaryState = false);
 	virtual ~DGButton();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
-	virtual void mouseDown(Point *P, bool, bool);
-	virtual void mouseTrack(Point *P, bool, bool);
-	virtual void mouseUp(Point *P, bool, bool);
+	virtual void mouseDown(Point inPos, bool, bool);
+	virtual void mouseTrack(Point inPos, bool, bool);
+	virtual void mouseUp(Point inPos, bool, bool);
 	void setMouseIsDown(bool newMouseState);
 
 	virtual void setUserProcedure(buttonUserProcedure inProc, void *inUserData);
@@ -41,13 +41,14 @@ private:
 
 	buttonUserProcedure	userProcedure;
 	buttonUserProcedure	userReleaseProcedure;
-	void *				userProcData;
-	void *				userReleaseProcData;
+	void *			userProcData;
+	void *			userReleaseProcData;
 
-	float				alpha;
-	long				numStates;
-	bool				kick;
-	bool				mouseIsDown;
+	float			alpha;
+	long			numStates;
+	bool			drawMomentaryState;
+	bool			mouseIsDown;
+	SInt32			entryValue, newValue;
 };
 
 
