@@ -25,6 +25,12 @@ for fully MIDI control of all plugin parameters.  dfxsettings is
 what vstchunk has now become.  vstchunk was just for VST, dfxsettings 
 is for our new DfxPlugin class.
 
+dfx-au-utilities has some stuff that's useful for pretty much any AU
+plugin or host, so it's in separate files because we possibly also use
+that stuff in non-DFX projects.  Also, for that same reason, these
+files are an exception in that they are offered as public domain
+rather than under the GPL.oooo
+
 *** EVERYTHING BELOW THIS LINE IS IN THE PROCESS OF BEING OBSOLETED ***
 ***                   DFXPLUGIN IS THE NEW WAY                      ***
 
