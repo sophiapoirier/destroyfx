@@ -18,9 +18,12 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							displayTextProcedure	inTextProc, 
 							void *					inUserData,
 							DGImage *				inBackgroundImage, 
+							float					inFontSize, 
+							DfxGuiTextAlignment		inTextAlignment, 
+							DGColor					inFontColor, 
 							const char *			inFontName)
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
-	backgroundImage(inBackgroundImage)
+	backgroundImage(inBackgroundImage), fontSize(inFontSize), alignment(inTextAlignment), fontColor(inFontColor)
 {
 	if (inTextProc == NULL)
 		textProc = genericDisplayTextProcedure;
@@ -53,11 +56,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 		}
 	}
 
-	fontSize = 14.0f;
-	fontColor(103.0f/255.0f, 161.0f/255.0f, 215.0f/255.0f);
-
 	setControlContinuous(true);
-	alignment = kDGTextAlign_right;
 }
 
 //-----------------------------------------------------------------------------
@@ -148,8 +147,10 @@ void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const cha
 
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, const char * inFontName)
-:	DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, inFontName), 
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, float inFontSize, 
+										DfxGuiTextAlignment inTextAlignment, DGColor inFontColor, const char * inFontName)
+:	DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
+					inFontSize, inTextAlignment, inFontColor, inFontName), 
 	displayString(NULL)
 {
 	displayString = (char*) malloc(256);

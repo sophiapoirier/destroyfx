@@ -245,10 +245,8 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 		DGSlider * slider = new DGSlider(this, tag, &pos, kDGSliderAxis_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
 		slider->shrinkForeBounds(1, 0, 2, 0);
 
-		DGTextDisplay * display = new DGTextDisplay(this, tag, &pos2, displayProc, userData, NULL, SNOOT_FONT);
-		display->setTextAlignment(kDGTextAlign_right);
-		display->setFontSize(kDisplayTextSize);
-		display->setFontColor(kDisplayTextColor);
+		DGTextDisplay * display = new DGTextDisplay(this, tag, &pos2, displayProc, userData, NULL, 
+										kDisplayTextSize, kDGTextAlign_right, kDisplayTextColor, SNOOT_FONT);
 
 		long yoff =  kWideFaderInc;
 		if (tag == kDist1)
@@ -262,10 +260,8 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 	DGSlider * bsizeSlider = new DGSlider(this, kBsize, &pos, kDGSliderAxis_horizontal, gGreyHorizontalSliderHandle, gGreyHorizontalSliderBackground);
 	bsizeSlider->shrinkForeBounds(1, 0, 2, 0);
 
-	DGTextDisplay * display = new DGTextDisplay(this, kBsize, &pos2, bsizeDisplayProcedure, NULL, NULL, SNOOT_FONT);
-	display->setTextAlignment(kDGTextAlign_right);
-	display->setFontSize(kDisplayTextSize);
-	display->setFontColor(kDisplayTextColor);
+	DGTextDisplay * display = new DGTextDisplay(this, kBsize, &pos2, bsizeDisplayProcedure, NULL, NULL, 
+										kDisplayTextSize, kDGTextAlign_right, kDisplayTextColor, SNOOT_FONT);
 
 	// Make horizontal sliders and add them to the pane
 	pos.set(kTallFaderX, kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
