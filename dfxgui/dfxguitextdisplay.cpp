@@ -19,9 +19,9 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							void *					inUserData,
 							DGGraphic *				inBackground, 
 							const char *			inFontName)
-:	DGControl(inOwnerEditor, inParamID, inRegion)
+:	DGControl(inOwnerEditor, inParamID, inRegion), 
+	BackGround(inBackground)
 {
-	BackGround = inBackground;
 	if (inTextProc == NULL)
 		textProc = genericDisplayTextProcedure;
 	else

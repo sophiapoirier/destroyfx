@@ -3,17 +3,14 @@
 
 //-----------------------------------------------------------------------------
 DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
-					AudioUnitParameterID paramID, 
+					AudioUnitParameterID inParamID, 
 					DGRect *			inRegion,
 					DfxGuiSliderStyle	inOrientation,
 					DGGraphic *			inForeGround, 
 					DGGraphic *			inBackground)
-:	DGControl(inOwnerEditor, paramID, inRegion)
+:	DGControl(inOwnerEditor, inParamID, inRegion), 
+	orientation(inOrientation), ForeGround(inForeGround), BackGround(inBackground)
 {
-	ForeGround = inForeGround;
-	BackGround = inBackground;
-	orientation = inOrientation;
-
 	if (inRegion->w == 0)
 	{
 		if (BackGround != NULL)

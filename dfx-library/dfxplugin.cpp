@@ -17,9 +17,6 @@ written by Marc Poirier, October 2002
    for AEffGUIEditor so we can send it parameter changes.
  */
 	#include "vstgui.h"
-// XXX Tom, shouldn't that be "vstgui.h" like it was before?
-//     I don't see any aeffguieditor.h file.
-//  Yeah. AEffGUIEditor is defined in that file.
 
 #endif
 
@@ -32,26 +29,26 @@ written by Marc Poirier, October 2002
 //-----------------------------------------------------------------------------
 DfxPlugin::DfxPlugin(
 					TARGET_API_BASE_INSTANCE_TYPE inInstance
-					, long numParameters
-					, long numPresets
+					, long inNumParameters
+					, long inNumPresets
 					)
 
 // setup the constructors of the inherited base classes, for the appropriate API
 #ifdef TARGET_API_AUDIOUNIT
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		: TARGET_API_BASE_CLASS(inInstance, UInt32 numInputs, UInt32 numOutputs, UInt32 numGroups = 0), 
+		: TARGET_API_BASE_CLASS(inInstance, UInt32 inNumInputs, UInt32 inNumOutputs, UInt32 inNumGroups = 0), 
 	#else
 		: TARGET_API_BASE_CLASS(inInstance), 
 	#endif
 #endif
 
 #ifdef TARGET_API_VST
-	: TARGET_API_BASE_CLASS(inInstance, numPresets, numParameters), 
+	: TARGET_API_BASE_CLASS(inInstance, inNumPresets, inNumParameters), 
 	numInputs(VST_NUM_INPUTS), numOutputs(VST_NUM_OUTPUTS), 
 #endif
 // end API-specific base constructors
 
-	numParameters(numParameters), numPresets(numPresets)
+	numParameters(inNumParameters), numPresets(inNumPresets)
 {
 	parameters = NULL;
 	presets = NULL;

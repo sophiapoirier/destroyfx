@@ -274,7 +274,7 @@ class DfxPlugin : public TARGET_API_BASE_CLASS
 friend class DfxPluginCore;
 public:
 	// ***
-	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long numParameters, long numPresets = 1);
+	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long inNumParameters, long inNumPresets = 1);
 	// ***
 	virtual ~DfxPlugin();
 

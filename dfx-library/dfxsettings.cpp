@@ -16,8 +16,8 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
-DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExtendedData)
-:	plugin(plugin), sizeofExtendedData(sizeofExtendedData)
+DfxSettings::DfxSettings(long inMagic, DfxPlugin *inPlugin, unsigned long inSizeofExtendedData)
+:	plugin(inPlugin), sizeofExtendedData(inSizeofExtendedData)
 {
 	sharedChunk = NULL;
 	paramAssignments = NULL;
@@ -68,7 +68,7 @@ DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExte
 									((char*)firstSharedPreset + (sizeofPreset*numPresets));
 
 	// set all of the header infos
-	settingsInfo.magic = magic;
+	settingsInfo.magic = inMagic;
 	settingsInfo.version = plugin->getpluginversion();
 	settingsInfo.lowestLoadableVersion = 0;
 	settingsInfo.storedHeaderSize = sizeof(DfxSettingsInfo);

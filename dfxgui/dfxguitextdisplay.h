@@ -19,7 +19,7 @@ typedef void (*displayTextProcedure) (Float32 value, char *outText, void *userDa
 class DGTextDisplay : public DGControl
 {
 public:
-	DGTextDisplay(DfxGuiEditor*, AudioUnitParameterID, DGRect*, displayTextProcedure, void *userData, DGGraphic*, const char *inFontName = NULL);
+	DGTextDisplay(DfxGuiEditor*, AudioUnitParameterID, DGRect*, displayTextProcedure, void *inUserData, DGGraphic*, const char *inFontName = NULL);
 	virtual ~DGTextDisplay();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
