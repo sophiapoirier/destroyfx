@@ -40,6 +40,21 @@ struct PLUGIN : public AudioEffectX {
 
   virtual void suspend();
 
+  bool Intercom::getVendorString(char *text) {
+    strcpy (text, "Destroy FX");
+    return true; 
+  }
+
+  bool Intercom::getProductString(char *text) {
+    strcpy (text, "Super Destroy FX bipolar VST plugin pack");
+    return true; 
+  }
+
+  bool Intercom::getEffectName(char *name) {
+    strcpy (name, PLUGINNAME);
+    return true; 
+  }
+
   void setup() {
     setNumInputs(1);		/* mono in/out */
     setNumOutputs(1);
