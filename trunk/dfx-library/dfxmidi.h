@@ -150,8 +150,8 @@ typedef struct {
 	float linearFadeStep;	// the step increment for each linear envelope step
 	float lastOutValue;	// capture the most recent output value for smoothing, if necessary
 	long smoothSamples;	// counter for quickly fading cut-off notes, for smoothity
-	float *tail1;	// a little buffer of output samples for smoothing a cut-off note (left channel)
-	float *tail2;	// (right channel)
+	float * tail1;	// a little buffer of output samples for smoothing a cut-off note (left channel)
+	float * tail2;	// (right channel)
 } NoteTable;
 
 
@@ -190,11 +190,11 @@ public:
 	void removeAllNotes();
 
 	// public variables
-	NoteTable *noteTable;	// a table with important data about each note
-	DfxMidiEvent *blockEvents;	// the new MIDI events for a given processing block
+	NoteTable * noteTable;	// a table with important data about each note
+	DfxMidiEvent * blockEvents;	// the new MIDI events for a given processing block
 	long numBlockEvents;	// the number of new MIDI events in a given processing block
-	int *noteQueue;		// a chronologically ordered queue of all active notes
-	double *freqTable;	// a table of the frequency corresponding to each MIDI note
+	int * noteQueue;		// a chronologically ordered queue of all active notes
+	double * freqTable;	// a table of the frequency corresponding to each MIDI note
 	double pitchbend;		// a frequency scalar value for the current pitchbend setting
 
 
@@ -202,7 +202,7 @@ public:
 	// this function calculates fade scalars if attack or release are happening
 	float processEnvelope(bool fades, int currentNote)
 	{
-		NoteTable *note = &noteTable[currentNote];
+		NoteTable * note = &noteTable[currentNote];
 
 		// if attack is in progress
 		if (note->attackDur > 0)
@@ -259,7 +259,7 @@ public:
 	//-------------------------------------------------------------------------
 	// this function writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note
-	void processSmoothingOutputSample(float *out, long sampleFrames, int currentNote)
+	void processSmoothingOutputSample(float * out, long sampleFrames, int currentNote)
 	{
 		for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
 		{
@@ -278,10 +278,10 @@ public:
 	//-------------------------------------------------------------------------
 	// this function writes the audio output for smoothing the tips of cut-off notes
 	// by fading out the samples stored in the tail buffers
-	void processSmoothingOutputBuffer(float *out, long sampleFrames, int currentNote, int channel)
+	void processSmoothingOutputBuffer(float * out, long sampleFrames, int currentNote, int channel)
 	{
-		long *smoothsamples = &(noteTable[currentNote].smoothSamples);
-		float *tail = (channel == 1) ? noteTable[currentNote].tail1 : noteTable[currentNote].tail2;
+		long * smoothsamples = &(noteTable[currentNote].smoothSamples);
+		float * tail = (channel == 1) ? noteTable[currentNote].tail1 : noteTable[currentNote].tail2;
 
 		for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
 		{
@@ -303,9 +303,9 @@ private:
 	void turnOffNote(int currentNote, float release, bool legato, float SAMPLERATE);
 
 	// a queue of note-offs for when the sustain pedal is active
-	bool *sustainQueue;
+	bool * sustainQueue;
 	// an exponentially curved gain envelope
-	float *fadeTable;
+	float * fadeTable;
 
 	// if the MIDI hardware uses it
 	bool usePitchbendLSB;

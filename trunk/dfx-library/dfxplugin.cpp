@@ -13,9 +13,8 @@ written by Marc Poirier, October 2002
 #endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
-/* If using the VST GUI interface, we need the class definition
-   for AEffGUIEditor so we can send it parameter changes.
- */
+	// If using the VST GUI interface, we need the class definition
+	// for AEffGUIEditor so we can send it parameter changes.
 	#include "vstgui.h"
 
 #endif
@@ -313,10 +312,10 @@ void DfxPlugin::do_reset()
 #pragma mark _________parameters_________
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_f(long parameterIndex, const char *initName, float initValue, 
+void DfxPlugin::initparameter_f(long parameterIndex, const char * initName, float initValue, 
 						float initDefaultValue, float initMin, float initMax, 
 						DfxParamUnit initUnit, DfxParamCurve initCurve, 
-						const char *initCustomUnitString)
+						const char * initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -330,10 +329,10 @@ void DfxPlugin::initparameter_f(long parameterIndex, const char *initName, float
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_d(long parameterIndex, const char *initName, double initValue, 
+void DfxPlugin::initparameter_d(long parameterIndex, const char * initName, double initValue, 
 						double initDefaultValue, double initMin, double initMax, 
 						DfxParamUnit initUnit, DfxParamCurve initCurve, 
-						const char *initCustomUnitString)
+						const char * initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -347,10 +346,10 @@ void DfxPlugin::initparameter_d(long parameterIndex, const char *initName, doubl
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_i(long parameterIndex, const char *initName, long initValue, 
+void DfxPlugin::initparameter_i(long parameterIndex, const char * initName, long initValue, 
 						long initDefaultValue, long initMin, long initMax, 
 						DfxParamUnit initUnit, DfxParamCurve initCurve, 
-						const char *initCustomUnitString)
+						const char * initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -364,10 +363,10 @@ void DfxPlugin::initparameter_i(long parameterIndex, const char *initName, long 
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_ui(long parameterIndex, const char *initName, unsigned long initValue, 
+void DfxPlugin::initparameter_ui(long parameterIndex, const char * initName, unsigned long initValue, 
 						unsigned long initDefaultValue, unsigned long initMin, unsigned long initMax, 
 						DfxParamUnit initUnit, DfxParamCurve initCurve, 
-						const char *initCustomUnitString)
+						const char * initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -381,7 +380,7 @@ void DfxPlugin::initparameter_ui(long parameterIndex, const char *initName, unsi
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_b(long parameterIndex, const char *initName, bool initValue, bool initDefaultValue, 
+void DfxPlugin::initparameter_b(long parameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
 						DfxParamUnit initUnit)
 {
 	if (parameterisvalid(parameterIndex))
@@ -395,8 +394,8 @@ void DfxPlugin::initparameter_b(long parameterIndex, const char *initName, bool 
 //-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
-void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, long initNumItems, 
-						DfxParamUnit initUnit, const char *initCustomUnitString)
+void DfxPlugin::initparameter_indexed(long parameterIndex, const char * initName, long initValue, long initDefaultValue, long initNumItems, 
+						DfxParamUnit initUnit, const char * initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -511,7 +510,7 @@ void DfxPlugin::update_parameter(long parameterIndex)
 			setpresetparameter(vstpresetnum, parameterIndex, getparameter(parameterIndex));
 		#if TARGET_PLUGIN_HAS_GUI
 			#ifdef TARGET_PLUGIN_USES_VSTGUI
-			if (editor != NULL)	/* XXX can't assume it's a GUI (ie, vstgui) editor! */
+			if (editor != NULL)	// XXX can't assume it's a VSTGUI editor!
 				((AEffGUIEditor*)editor)->setParameter(parameterIndex, getparameter_gen(parameterIndex));
 			#else
 			// XXX we will need something for our GUI class here
@@ -562,7 +561,7 @@ float DfxPlugin::getparameter_scalar(long parameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::getparametername(long parameterIndex, char *text)
+void DfxPlugin::getparametername(long parameterIndex, char * text)
 {
 	if (text != NULL)
 	{
@@ -592,7 +591,7 @@ DfxParamUnit DfxPlugin::getparameterunit(long parameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::setparametervaluestring(long parameterIndex, long stringIndex, const char *inText)
+bool DfxPlugin::setparametervaluestring(long parameterIndex, long stringIndex, const char * inText)
 {
 	if (parameterisvalid(parameterIndex))
 		return parameters[parameterIndex].setvaluestring(stringIndex, inText);
@@ -601,7 +600,7 @@ bool DfxPlugin::setparametervaluestring(long parameterIndex, long stringIndex, c
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getparametervaluestring(long parameterIndex, long stringIndex, char *outText)
+bool DfxPlugin::getparametervaluestring(long parameterIndex, long stringIndex, char * outText)
 {
 	if (parameterisvalid(parameterIndex))
 		return parameters[parameterIndex].getvaluestring(stringIndex, outText);
@@ -814,7 +813,7 @@ void DfxPlugin::setpresetparameter_gen(long presetIndex, long parameterIndex, fl
 
 //-----------------------------------------------------------------------------
 // set the text of a preset name
-void DfxPlugin::setpresetname(long presetIndex, const char *inText)
+void DfxPlugin::setpresetname(long presetIndex, const char * inText)
 {
 	if (presetisvalid(presetIndex))
 		presets[presetIndex].setname(inText);
@@ -822,7 +821,7 @@ void DfxPlugin::setpresetname(long presetIndex, const char *inText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the text of a preset name
-void DfxPlugin::getpresetname(long presetIndex, char *outText)
+void DfxPlugin::getpresetname(long presetIndex, char * outText)
 {
 	if (presetisvalid(presetIndex))
 		presets[presetIndex].getname(outText);
@@ -907,7 +906,7 @@ void DfxPlugin::updatenumchannels()
 #pragma mark _________properties_________
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::getpluginname(char *outText)
+void DfxPlugin::getpluginname(char * outText)
 {
 	if (outText != NULL)
 		strcpy(outText, PLUGIN_NAME_STRING);
@@ -943,7 +942,7 @@ void DfxPlugin::addchannelconfig(short numin, short numout)
 {
 	if (channelconfigs != NULL)
 	{
-		DfxChannelConfig *swapconfigs = (DfxChannelConfig*) malloc(sizeof(DfxChannelConfig) * numchannelconfigs);
+		DfxChannelConfig * swapconfigs = (DfxChannelConfig*) malloc(sizeof(DfxChannelConfig) * numchannelconfigs);
 		memcpy(swapconfigs, channelconfigs, sizeof(DfxChannelConfig) * numchannelconfigs);
 		free(channelconfigs);
 		channelconfigs = (DfxChannelConfig*) malloc(sizeof(DfxChannelConfig) * (numchannelconfigs+1));
@@ -1150,7 +1149,7 @@ void DfxPlugin::processtimeinfo()
  
 
 #ifdef TARGET_API_VST
-	VstTimeInfo *vstTimeInfo = getTimeInfo(kVstTempoValid 
+	VstTimeInfo * vstTimeInfo = getTimeInfo(kVstTempoValid 
 										| kVstTransportChanged 
 										| kVstBarsValid 
 										| kVstPpqPosValid 
@@ -1339,7 +1338,7 @@ void DfxPlugin::handlemidi_programchange(int channel, int programNum, long frame
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array of float values
 // returns true if allocation was successful, false if allocation failed
-bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSize)
+bool createbuffer_f(float ** buffer, long currentBufferSize, long desiredBufferSize)
 {
 	// if the size of the buffer has changed, 
 	// then delete & reallocate the buffes according to the new size
@@ -1359,7 +1358,7 @@ bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSi
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array of double float values
 // returns true if allocation was successful, false if allocation failed
-bool createbuffer_d(double **buffer, long currentBufferSize, long desiredBufferSize)
+bool createbuffer_d(double ** buffer, long currentBufferSize, long desiredBufferSize)
 {
 	// if the size of the buffer has changed, 
 	// then delete & reallocate the buffes according to the new size
@@ -1379,7 +1378,7 @@ bool createbuffer_d(double **buffer, long currentBufferSize, long desiredBufferS
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array of long int values
 // returns true if allocation was successful, false if allocation failed
-bool createbuffer_i(long **buffer, long currentBufferSize, long desiredBufferSize)
+bool createbuffer_i(long ** buffer, long currentBufferSize, long desiredBufferSize)
 {
 	// if the size of the buffer has changed, 
 	// then delete & reallocate the buffes according to the new size
@@ -1399,7 +1398,7 @@ bool createbuffer_i(long **buffer, long currentBufferSize, long desiredBufferSiz
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array of boolean values
 // returns true if allocation was successful, false if allocation failed
-bool createbuffer_b(bool **buffer, long currentBufferSize, long desiredBufferSize)
+bool createbuffer_b(bool ** buffer, long currentBufferSize, long desiredBufferSize)
 {
 	// if the size of the buffer has changed, 
 	// then delete & reallocate the buffes according to the new size
@@ -1419,7 +1418,7 @@ bool createbuffer_b(bool **buffer, long currentBufferSize, long desiredBufferSiz
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array of arrays of float values
 // returns true if allocation was successful, false if allocation failed
-bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long currentBufferSize, 
+bool createbufferarray_f(float *** buffers, unsigned long currentNumBuffers, long currentBufferSize, 
 						unsigned long desiredNumBuffers, long desiredBufferSize)
 {
 	// if the size of each buffer or the number of buffers have changed, 
@@ -1455,7 +1454,7 @@ bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array of arrays of double float values
 // returns true if allocation was successful, false if allocation failed
-bool createbufferarrayarray_d(double ****buffers, unsigned long currentNumBufferArrays, unsigned long currentNumBuffers, 
+bool createbufferarrayarray_d(double **** buffers, unsigned long currentNumBufferArrays, unsigned long currentNumBuffers, 
 							long currentBufferSize, unsigned long desiredNumBufferArrays, 
 							unsigned long desiredNumBuffers, long desiredBufferSize)
 {
@@ -1508,7 +1507,7 @@ bool createbufferarrayarray_d(double ****buffers, unsigned long currentNumBuffer
 
 //-------------------------------------------------------------------------
 // handy helper function for safely deallocating an array of float values
-void releasebuffer_f(float **buffer)
+void releasebuffer_f(float ** buffer)
 {
 	if (*buffer != NULL)
 	{
@@ -1519,7 +1518,7 @@ void releasebuffer_f(float **buffer)
 
 //-------------------------------------------------------------------------
 // handy helper function for safely deallocating an array of double float values
-void releasebuffer_d(double **buffer)
+void releasebuffer_d(double ** buffer)
 {
 	if (*buffer != NULL)
 	{
@@ -1530,7 +1529,7 @@ void releasebuffer_d(double **buffer)
 
 //-------------------------------------------------------------------------
 // handy helper function for safely deallocating an array of long int values
-void releasebuffer_i(long **buffer)
+void releasebuffer_i(long ** buffer)
 {
 	if (*buffer != NULL)
 	{
@@ -1541,7 +1540,7 @@ void releasebuffer_i(long **buffer)
 
 //-------------------------------------------------------------------------
 // handy helper function for safely deallocating an array of boolean values
-void releasebuffer_b(bool **buffer)
+void releasebuffer_b(bool ** buffer)
 {
 	if (*buffer != NULL)
 	{
@@ -1552,7 +1551,7 @@ void releasebuffer_b(bool **buffer)
 
 //-------------------------------------------------------------------------
 // handy helper function for safely deallocating an array of arrays of float values
-void releasebufferarray_f(float ***buffers, unsigned long numbuffers)
+void releasebufferarray_f(float *** buffers, unsigned long numbuffers)
 {
 	if (*buffers != NULL)
 	{
@@ -1569,7 +1568,7 @@ void releasebufferarray_f(float ***buffers, unsigned long numbuffers)
 
 //-------------------------------------------------------------------------
 // handy helper function for safely deallocating an array of arrays of double float values
-void releasebufferarrayarray_d(double ****buffers, unsigned long numbufferarrays, unsigned long numbuffers)
+void releasebufferarrayarray_d(double **** buffers, unsigned long numbufferarrays, unsigned long numbuffers)
 {
 	if (*buffers != NULL)
 	{
@@ -1595,7 +1594,7 @@ void releasebufferarrayarray_d(double ****buffers, unsigned long numbufferarrays
 
 //-----------------------------------------------------------------------------
 // handy helper function for safely zeroing the contents of an array of float values
-void clearbuffer_f(float *buffer, long buffersize, float value)
+void clearbuffer_f(float * buffer, long buffersize, float value)
 {
 	if (buffer != NULL)
 	{
@@ -1606,7 +1605,7 @@ void clearbuffer_f(float *buffer, long buffersize, float value)
 
 //-----------------------------------------------------------------------------
 // handy helper function for safely zeroing the contents of an array of double float values
-void clearbuffer_d(double *buffer, long buffersize, double value)
+void clearbuffer_d(double * buffer, long buffersize, double value)
 {
 	if (buffer != NULL)
 	{
@@ -1617,7 +1616,7 @@ void clearbuffer_d(double *buffer, long buffersize, double value)
 
 //-----------------------------------------------------------------------------
 // handy helper function for safely zeroing the contents of an array of long int values
-void clearbuffer_i(long *buffer, long buffersize, long value)
+void clearbuffer_i(long * buffer, long buffersize, long value)
 {
 	if (buffer != NULL)
 	{
@@ -1628,7 +1627,7 @@ void clearbuffer_i(long *buffer, long buffersize, long value)
 
 //-----------------------------------------------------------------------------
 // handy helper function for safely zeroing the contents of an array of boolean values
-void clearbuffer_b(bool *buffer, long buffersize, bool value)
+void clearbuffer_b(bool * buffer, long buffersize, bool value)
 {
 	if (buffer != NULL)
 	{
@@ -1639,7 +1638,7 @@ void clearbuffer_b(bool *buffer, long buffersize, bool value)
 
 //-----------------------------------------------------------------------------
 // handy helper function for safely zeroing the contents of an array of arrays of float values
-void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize, float value)
+void clearbufferarray_f(float ** buffers, unsigned long numbuffers, long buffersize, float value)
 {
 	if (buffers != NULL)
 	{
@@ -1656,7 +1655,7 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 
 //-----------------------------------------------------------------------------
 // handy helper function for safely zeroing the contents of an array of arrays of float values
-void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
+void clearbufferarrayarray_d(double *** buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
 							long buffersize, double value)
 {
 	if (buffers != NULL)
@@ -1692,7 +1691,7 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 //  * Windows
 // returns a meaningless value greater than 32 if successful, 
 // otherwise an error code ranging from 0 to 32 is returned
-long launch_url(const char *urlstring)
+long launch_url(const char * urlstring)
 {
 	if (urlstring == NULL)
 		return 3;

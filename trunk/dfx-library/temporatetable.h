@@ -67,8 +67,8 @@ private:
 		return index;
 	}
 
-	float *scalars;
-	char **displays;
+	float * scalars;
+	char ** displays;
 
 	long numTempoRates;
 	long typeOfTable;

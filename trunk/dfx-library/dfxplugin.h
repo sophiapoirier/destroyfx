@@ -332,48 +332,48 @@ public:
 	// do the audio processing (override with real stuff)
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
 	// 
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, 
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, 
 						bool replacing=true)
 		{ }
 
 	bool parameterisvalid(long parameterIndex)
 		{	return ( (parameterIndex >= 0) && (parameterIndex < numParameters) && (parameters != NULL) );	}
 
-	void initparameter_f(long parameterIndex, const char *initName, float initValue, float initDefaultValue, 
+	void initparameter_f(long parameterIndex, const char * initName, float initValue, float initDefaultValue, 
 						float initMin, float initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_linear, 
-						const char *initCustomUnitString = NULL);
-	void initparameter_d(long parameterIndex, const char *initName, double initValue, double initDefaultValue, 
+						const char * initCustomUnitString = NULL);
+	void initparameter_d(long parameterIndex, const char * initName, double initValue, double initDefaultValue, 
 						double initMin, double initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_linear, 
-						const char *initCustomUnitString = NULL);
-	void initparameter_i(long parameterIndex, const char *initName, long initValue, long initDefaultValue, 
+						const char * initCustomUnitString = NULL);
+	void initparameter_i(long parameterIndex, const char * initName, long initValue, long initDefaultValue, 
 						long initMin, long initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_stepped, 
-						const char *initCustomUnitString = NULL);
-	void initparameter_ui(long parameterIndex, const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
+						const char * initCustomUnitString = NULL);
+	void initparameter_ui(long parameterIndex, const char * initName, unsigned long initValue, unsigned long initDefaultValue, 
 						unsigned long initMin, unsigned long initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_linear, 
-						const char *initCustomUnitString = NULL);
-	void initparameter_b(long parameterIndex, const char *initName, bool initValue, bool initDefaultValue, 
+						const char * initCustomUnitString = NULL);
+	void initparameter_b(long parameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined);
-	void initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, 
+	void initparameter_indexed(long parameterIndex, const char * initName, long initValue, long initDefaultValue, 
 						long initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index, 
-						const char *initCustomUnitString = NULL);
+						const char * initCustomUnitString = NULL);
 
 	void setparameterusevaluestrings(long parameterIndex, bool newMode=true)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setusevaluestrings(newMode);	}
 	bool getparameterusevaluestrings(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getusevaluestrings();	else return false;	}
-	bool setparametervaluestring(long parameterIndex, long stringIndex, const char *inText);
-	bool getparametervaluestring(long parameterIndex, long stringIndex, char *outText);
-	void getparameterunitstring(long parameterIndex, char *outText)
+	bool setparametervaluestring(long parameterIndex, long stringIndex, const char * inText);
+	bool getparametervaluestring(long parameterIndex, long stringIndex, char * outText);
+	void getparameterunitstring(long parameterIndex, char * outText)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].getunitstring(outText);	}
-	void setparametercustomunitstring(long parameterIndex, const char *inText)
+	void setparametercustomunitstring(long parameterIndex, const char * inText)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcustomunitstring(inText);	}
 	char * getparametervaluestring_ptr(long parameterIndex, long stringIndex);
 #ifdef TARGET_API_AUDIOUNIT
@@ -430,7 +430,7 @@ public:
 	float getparameterdefault_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getdefault_f();   else return 0.0f;	}
 
-	void getparametername(long parameterIndex, char *text);
+	void getparametername(long parameterIndex, char * text);
 	DfxParamValueType getparametervaluetype(long parameterIndex);
 	DfxParamUnit getparameterunit(long parameterIndex);
 	bool getparameterchanged(long parameterIndex);
@@ -463,9 +463,9 @@ public:
 	// to the current value of that parameter
 	void initpresetsparameter(long parameterIndex);
 	// set the text of a preset name
-	void setpresetname(long presetIndex, const char *inText);
+	void setpresetname(long presetIndex, const char * inText);
 	// get a copy of the text of a preset name
-	void getpresetname(long presetIndex, char *outText);
+	void getpresetname(long presetIndex, char * outText);
 	// get a pointer to the text of a preset name
 	char * getpresetname_ptr(long presetIndex);
 #ifdef TARGET_API_AUDIOUNIT
@@ -536,7 +536,7 @@ public:
 //	bool GetUseTimeStampedParameters()
 //		{	return b_usetimestampedparameters;	}
 
-	void getpluginname(char *outText);
+	void getpluginname(char * outText);
 	long getpluginversion()
 		{	return PLUGIN_VERSION;	}
 
@@ -564,8 +564,8 @@ public:
 		// save() and restore() respectively
 		// the data pointers point to the start of the extended data 
 		// sections of the settings data
-		virtual void settings_saveExtendedData(void *outData, bool isPreset) {}
-		virtual void settings_restoreExtendedData(void *inData, unsigned long storedExtendedDataSize, 
+		virtual void settings_saveExtendedData(void * outData, bool isPreset) {}
+		virtual void settings_restoreExtendedData(void * inData, unsigned long storedExtendedDataSize, 
 											long dataVersion, bool isPreset) {}
 		//
 		// this can be overridden to react when parameter values are 
@@ -589,24 +589,24 @@ public:
 
 
 protected:
-	DfxParam *parameters;
-	DfxPreset *presets;
+	DfxParam * parameters;
+	DfxPreset * presets;
 
-	DfxChannelConfig *channelconfigs;
+	DfxChannelConfig * channelconfigs;
 	long numchannelconfigs;
 
 	DfxTimeInfo timeinfo;
 	bool b_usemusicaltimeinfo;	// XXX use this?
 	bool hostCanDoTempo;
-	TempoRateTable *tempoRateTable;	// a table of tempo rate values
+	TempoRateTable * tempoRateTable;	// a table of tempo rate values
 
 	bool b_usetimestampedparameters;	// XXX use this?
 
 	bool sampleratechanged;
 
 	#if TARGET_PLUGIN_USES_MIDI
-		DfxMidi *midistuff;
-		DfxSettings *dfxsettings;
+		DfxMidi * midistuff;
+		DfxSettings * dfxsettings;
 	#endif
 
 	long numParameters;
@@ -619,14 +619,15 @@ protected:
 	#ifdef TARGET_API_AUDIOUNIT
 		// array of float pointers to input and output audio buffers, 
 		// just for the sake of making processaudio(float**, float**, etc.) possible
-		float **inputsP, **outputsP;
+		float ** inputsP;
+		float ** outputsP;
 		// an array of the plugin's presets in AUPreset form (number and CFString name)
 		// the preset array needs to survive throughout the Audio Unit's life
-		AUPreset *aupresets;
+		AUPreset * aupresets;
 		#if TARGET_PLUGIN_USES_MIDI
 			// an array of how MIDI CCs and NRPNs map to parameters (if at all)
 			// the map needs to survive throughout the Audio Unit's life
-			AudioUnitMIDIControlMapping *aumidicontrolmap;
+			AudioUnitMIDIControlMapping * aumidicontrolmap;
 		#endif
 	#endif
 
@@ -634,7 +635,7 @@ protected:
 		bool latencychanged;
 		bool isinitialized;
 		#if TARGET_PLUGIN_USES_DSPCORE
-			DfxPluginCore **dspcores;	// we have to handle this ourselves because VST can't
+			DfxPluginCore ** dspcores;	// we have to handle this ourselves because VST can't
 		#endif
 	#endif
 
@@ -671,12 +672,12 @@ public:
 					UInt32 &outDataSize, Boolean &outWritable);
 	virtual ComponentResult GetProperty(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
-					void *outData);
+					void * outData);
 	virtual ComponentResult SetProperty(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
-					const void *inData, UInt32 inDataSize);
+					const void * inData, UInt32 inDataSize);
 
-	virtual UInt32 SupportedNumChannels(const AUChannelInfo **outInfo);
+	virtual UInt32 SupportedNumChannels(const AUChannelInfo ** outInfo);
 	virtual Float64 GetLatency();
 	virtual Float64 GetTailTime();
 	virtual bool SupportsTail()
@@ -686,7 +687,7 @@ public:
 					AudioUnitParameterID inParameterID, 
 					AudioUnitParameterInfo &outParameterInfo);
 	virtual ComponentResult GetParameterValueStrings(AudioUnitScope inScope, 
-					AudioUnitParameterID inParameterID, CFArrayRef *outStrings);
+					AudioUnitParameterID inParameterID, CFArrayRef * outStrings);
 	virtual ComponentResult SetParameter(AudioUnitParameterID inParameterID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					Float32 inValue, UInt32 inBufferOffsetInFrames);
@@ -696,9 +697,9 @@ public:
 					const CAStreamBasicDescription &inPrevFormat, 
 					const CAStreamBasicDescription &inNewFormat);
 
-	virtual ComponentResult SaveState(CFPropertyListRef *outData);
+	virtual ComponentResult SaveState(CFPropertyListRef * outData);
 	virtual ComponentResult RestoreState(CFPropertyListRef inData);
-	virtual ComponentResult GetPresets(CFArrayRef *outData) const;
+	virtual ComponentResult GetPresets(CFArrayRef * outData) const;
 	virtual OSStatus NewFactoryPresetSet(const AUPreset & inNewFactoryPreset);
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -726,22 +727,22 @@ public:
 		virtual ComponentResult PrepareInstrument(MusicDeviceInstrumentID inInstrument) = 0;
 		virtual ComponentResult ReleaseInstrument(MusicDeviceInstrumentID inInstrument) = 0;
 		virtual ComponentResult StartNote(MusicDeviceInstrumentID inInstrument, 
-						MusicDeviceGroupID inGroupID, NoteInstanceID *outNoteInstanceID, 
-						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams *inParams) = 0;
+						MusicDeviceGroupID inGroupID, NoteInstanceID * outNoteInstanceID, 
+						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams * inParams) = 0;
 		virtual ComponentResult StopNote(MusicDeviceGroupID inGroupID, 
 						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) = 0;
 	#endif
 	#if TARGET_PLUGIN_HAS_GUI
 		virtual int GetNumCustomUIComponents();
-		virtual void GetUIComponentDescs(ComponentDescription *inDescArray);
+		virtual void GetUIComponentDescs(ComponentDescription * inDescArray);
 	#endif
 #endif
 // end of Audio Unit API methods
 
 
 #ifdef TARGET_API_VST
-	virtual void process(float **inputs, float **outputs, long sampleFrames);
-	virtual void processReplacing(float **inputs, float **outputs, long sampleFrames);
+	virtual void process(float ** inputs, float ** outputs, long sampleFrames);
+	virtual void processReplacing(float ** inputs, float ** outputs, long sampleFrames);
 
 	virtual void suspend();
 	virtual void resume();
@@ -752,33 +753,33 @@ public:
 	// there was a typo in the VST header files versions 2.0 through 2.2, 
 	// so some hosts will still call this incorrectly named version...
 	virtual long getGetTailSize() { return getTailSize(); }
-	virtual bool getInputProperties(long index, VstPinProperties *properties);
-	virtual bool getOutputProperties(long index, VstPinProperties *properties);
+	virtual bool getInputProperties(long index, VstPinProperties * properties);
+	virtual bool getOutputProperties(long index, VstPinProperties * properties);
 
 	virtual void setProgram(long programNum);
-	virtual void setProgramName(char *name);
-	virtual void getProgramName(char *name);
-	virtual bool getProgramNameIndexed(long category, long index, char *name);
+	virtual void setProgramName(char * name);
+	virtual void getProgramName(char * name);
+	virtual bool getProgramNameIndexed(long category, long index, char * name);
 	virtual bool copyProgram(long destination);
 
 	virtual void setParameter(long index, float value);
 	virtual float getParameter(long index);
-	virtual void getParameterName(long index, char *name);
-	virtual void getParameterDisplay(long index, char *text);
-	virtual void getParameterLabel(long index, char *label);
+	virtual void getParameterName(long index, char * name);
+	virtual void getParameterDisplay(long index, char * text);
+	virtual void getParameterLabel(long index, char * label);
 
-	virtual bool getEffectName(char *name);
+	virtual bool getEffectName(char * name);
 	virtual long getVendorVersion();
-	virtual bool getErrorText(char *text);
-	virtual bool getVendorString(char *text);
-	virtual bool getProductString(char *text);
+	virtual bool getErrorText(char * text);
+	virtual bool getVendorString(char * text);
+	virtual bool getProductString(char * text);
 
-	virtual long canDo(char *text);
+	virtual long canDo(char * text);
 
 	#if TARGET_PLUGIN_USES_MIDI
-		virtual long processEvents(VstEvents *events);
-		virtual long setChunk(void *data, long byteSize, bool isPreset);
-		virtual long getChunk(void **data, bool isPreset);
+		virtual long processEvents(VstEvents * events);
+		virtual long setChunk(void * data, long byteSize, bool isPreset);
+		virtual long getChunk(void ** data, bool isPreset);
 	#endif
 
 	void setlatencychanged(bool newstatus = true)
@@ -812,7 +813,7 @@ class DfxPluginCore
 #endif
 {
 public:
-	DfxPluginCore(DfxPlugin *inDfxPlugin) :
+	DfxPluginCore(DfxPlugin * inDfxPlugin) :
 		#ifdef TARGET_API_CORE_CLASS
 		TARGET_API_CORE_CLASS(inDfxPlugin), 
 		#endif
@@ -827,13 +828,13 @@ public:
 		do_reset();
 	}
 
-	void do_process(const float *in, float *out, unsigned long inNumFrames, 
+	void do_process(const float * in, float * out, unsigned long inNumFrames, 
 						bool replacing=true)
 	{
 		processparameters();
 		process(in, out, inNumFrames, replacing);
 	}
-	virtual void process(const float *in, float *out, unsigned long inNumFrames, 
+	virtual void process(const float * in, float * out, unsigned long inNumFrames, 
 						bool replacing=true) = 0;
 	void do_reset()
 	{
@@ -877,13 +878,13 @@ public:
 
 
 protected:
-	DfxPlugin *dfxplugin;
+	DfxPlugin * dfxplugin;
 
 
 public:
 
 #ifdef TARGET_API_AUDIOUNIT
-	void Process(const Float32 *in, Float32 *out, UInt32 inNumFrames, UInt32 inNumChannels, bool &ioSilence)
+	void Process(const Float32 * in, Float32 * out, UInt32 inNumFrames, UInt32 inNumChannels, bool &ioSilence)
 	{
 		do_process(in, out, inNumFrames);
 		ioSilence = false;
@@ -899,32 +900,32 @@ public:
 //-----------------------------------------------------------------------------
 // prototypes for a few handy buffer helper functions
 
-bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSize);
-bool createbuffer_d(double **buffer, long currentBufferSize, long desiredBufferSize);
-bool createbuffer_i(long **buffer, long currentBufferSize, long desiredBufferSize);
-bool createbuffer_b(bool **buffer, long currentBufferSize, long desiredBufferSize);
-bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long currentBufferSize, 
+bool createbuffer_f(float ** buffer, long currentBufferSize, long desiredBufferSize);
+bool createbuffer_d(double ** buffer, long currentBufferSize, long desiredBufferSize);
+bool createbuffer_i(long ** buffer, long currentBufferSize, long desiredBufferSize);
+bool createbuffer_b(bool ** buffer, long currentBufferSize, long desiredBufferSize);
+bool createbufferarray_f(float *** buffers, unsigned long currentNumBuffers, long currentBufferSize, 
 						unsigned long desiredNumBuffers, long desiredBufferSize);
-bool createbufferarrayarray_d(double ****buffers, unsigned long currentNumBufferArrays, unsigned long currentNumBuffers, 
+bool createbufferarrayarray_d(double **** buffers, unsigned long currentNumBufferArrays, unsigned long currentNumBuffers, 
 							long currentBufferSize, unsigned long desiredNumBufferArrays, 
 							unsigned long desiredNumBuffers, long desiredBufferSize);
 
-void releasebuffer_f(float **buffer);
-void releasebuffer_d(double **buffer);
-void releasebuffer_i(long **buffer);
-void releasebuffer_b(bool **buffer);
-void releasebufferarray_f(float ***buffers, unsigned long numbuffers);
-void releasebufferarrayarray_d(double ****buffers, unsigned long numbufferarrays, unsigned long numbuffers);
+void releasebuffer_f(float ** buffer);
+void releasebuffer_d(double ** buffer);
+void releasebuffer_i(long ** buffer);
+void releasebuffer_b(bool ** buffer);
+void releasebufferarray_f(float *** buffers, unsigned long numbuffers);
+void releasebufferarrayarray_d(double **** buffers, unsigned long numbufferarrays, unsigned long numbuffers);
 
-void clearbuffer_f(float *buffer, long buffersize, float value = 0.0f);
-void clearbuffer_d(double *buffer, long buffersize, double value = 0.0);
-void clearbuffer_i(long *buffer, long buffersize, long value = 0);
-void clearbuffer_b(bool *buffer, long buffersize, bool value = false);
-void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize, float value = 0.0f);
-void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
+void clearbuffer_f(float * buffer, long buffersize, float value = 0.0f);
+void clearbuffer_d(double * buffer, long buffersize, double value = 0.0);
+void clearbuffer_i(long * buffer, long buffersize, long value = 0);
+void clearbuffer_b(bool * buffer, long buffersize, bool value = false);
+void clearbufferarray_f(float ** buffers, unsigned long numbuffers, long buffersize, float value = 0.0f);
+void clearbufferarrayarray_d(double *** buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
 							long buffersize, double value = 0.0);
 
-long launch_url(const char *urlstring);
+long launch_url(const char * urlstring);
 
 
 
@@ -942,7 +943,7 @@ long launch_url(const char *urlstring);
 		#define DFX_CORE_ENTRY(PluginCoreClass)						\
 			AUKernelBase * DfxPlugin::NewKernel()					\
 			{														\
-				DfxPluginCore *core = new PluginCoreClass(this);	\
+				DfxPluginCore * core = new PluginCoreClass(this);	\
 				if (core != NULL)									\
 					core->dfxplugincore_postconstructor();			\
 				return core;										\
@@ -960,20 +961,20 @@ long launch_url(const char *urlstring);
 
 	#if BEOS
 		#define main main_plugin
-		extern "C" __declspec(dllexport) AEffect *main_plugin(audioMasterCallback audioMaster);
+		extern "C" __declspec(dllexport) AEffect * main_plugin(audioMasterCallback audioMaster);
 	#elif MACX
 		#define main main_macho
-		extern "C" AEffect *main_macho(audioMasterCallback audioMaster);
+		extern "C" AEffect * main_macho(audioMasterCallback audioMaster);
 	#else
-		AEffect *main(audioMasterCallback audioMaster);
+		AEffect * main(audioMasterCallback audioMaster);
 	#endif
 
 #define DFX_ENTRY(PluginClass)									\
-	AEffect *main(audioMasterCallback audioMaster)				\
+	AEffect * main(audioMasterCallback audioMaster)				\
 	{															\
 		if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
 			return NULL;										\
-		DfxPlugin *effect = new PluginClass(audioMaster);		\
+		DfxPlugin * effect = new PluginClass(audioMaster);		\
 		if (effect == NULL)										\
 			return NULL;										\
 		effect->dfxplugin_postconstructor();					\

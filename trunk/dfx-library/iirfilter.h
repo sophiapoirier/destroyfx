@@ -19,7 +19,7 @@ public:
 
 	void calculateLowpassCoefficients(float cutoff, float samplerate);
 	void calculateHighpassCoefficients(float cutoff, float samplerate);
-	void copyCoefficients(IIRfilter *source);
+	void copyCoefficients(IIRfilter * source);
 
 	void reset()
 	{
@@ -73,7 +73,7 @@ public:
 		prevIn = currentIn;
 	}
 
-	void processH2(float *in, long inPos, long arraySize)
+	void processH2(float * in, long inPos, long arraySize)
 	{
 	  float in0 = in[inPos];
 	  float in1 = in[(inPos+1) % arraySize];
@@ -94,7 +94,7 @@ public:
 		prevIn = in1;
 	}
 
-	void processH3(float *in, long inPos, long arraySize)
+	void processH3(float * in, long inPos, long arraySize)
 	{
 	  float in0 = in[inPos];
 	  float in1 = in[(inPos+1) % arraySize];
@@ -116,7 +116,7 @@ public:
 		prevIn = in2;
 	}
 
-	void processH4(float *in, long inPos, long arraySize)
+	void processH4(float * in, long inPos, long arraySize)
 	{
 	  float in0 = in[inPos];
 	  float in1 = in[(inPos+1) % arraySize];
@@ -144,7 +144,7 @@ public:
 
 
 // 4-point Hermite spline interpolation for use with IIR filter output histories
-inline float interpolateHermitePostFilter(IIRfilter *filter, double address)
+inline float interpolateHermitePostFilter(IIRfilter * filter, double address)
 {
 	long pos = (long)address;
 	float posFract = (float) (address - (double)pos);

@@ -9,21 +9,21 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 
 
-//-----------------------------------------------------------------------------
+/*-----------------------------------------------------------------------------*/
 #define DESTROY_FX_RULEZ
 
 #define DESTROYFX_NAME_STRING	"Destroy FX"
 #define DESTROYFX_COLLECTION_NAME	"Super Destroy FX bipolar plugin pack"
 #define DESTROYFX_URL "http://destroyfx.org/"
 #define SMARTELECTRONIX_URL "http://www.smartelectronix.com/"
-// XXX needs workaround for plugin names with white spaces
+/* XXX needs workaround for plugin names with white spaces */
 #ifndef PLUGIN_BUNDLE_IDENTIFIER
 #define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx."PLUGIN_NAME_STRING
 #endif
 
 #define DESTROYFX_ID 'DFX!'
 
-// to indicate "not a real parameter" or something like that
+/* to indicate "not a real parameter" or something like that */
 #define DFX_PARAM_INVALID_ID	(-1)
 
 #define DFX_PARAM_MAX_NAME_LENGTH	64
@@ -31,14 +31,14 @@ somewhere in the include tree for every file for a DfxPlugin.
 #define DFX_PARAM_MAX_VALUE_STRING_LENGTH	256
 #define DFX_PARAM_MAX_UNIT_STRING_LENGTH	256
 
-// interpret fractional numbers as booleans (for plugin parameters)
+/* interpret fractional numbers as booleans (for plugin parameters) */
 #define FBOOL(fvalue)	( (fvalue) != 0.0f )
 #define DBOOL(dvalue)	( (dvalue) != 0.0 )
 
 
 
-//-----------------------------------------------------------------------------
-// class declarations
+/*-----------------------------------------------------------------------------*/
+/* class declarations */
 #ifdef __cplusplus
 class DfxPlugin;
 class DfxPluginCore;
@@ -56,4 +56,4 @@ class DfxPluginCore;
 
 
 #endif
-// __DFXDEFINES_H
+/* __DFXDEFINES_H */
