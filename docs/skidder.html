@@ -22,7 +22,7 @@ Skidder turns the sound on and off.  You could also call it an auto-muter.  Exce
 </p>
 
 <p class=intro>
-There is also a MIDI trigger mode for Skidder.  When this is on, the effect is triggered by MIDI notes.  This mode will only work in VST hosts that support sending MIDI notes to plugins.
+There is also a MIDI trigger mode for Skidder.  When this is on, the effect is triggered by MIDI notes.  This mode will only work in host applications that support sending MIDI notes to plugins.
 </p>
 
 <br>
@@ -58,11 +58,11 @@ This parameter lets you randomize the rate.  The random factor is a divisor and 
 <p class=label>tempo:</p>
 
 <p class=desc>
-The tempo parameter is used to tell Skidder what the tempo of your song is.  This parameter defaults to "auto" which means that Skidder tries to get the tempo from the VST host application.  If you move the tempo slider to the right, you exit "auto" mode and can set the tempo manually.  You can also click on the numerical value display and type your tempo in manually.
+The tempo parameter is used to tell Skidder what the tempo of your song is.  This parameter defaults to "auto" which means that Skidder tries to get the tempo from the host application.  If you move the tempo slider to the right, you exit "auto" mode and can set the tempo manually.  You can also click on the numerical value display and type your tempo in manually.
 </p>
 
 <p class=desc>
-"Auto" tempo only works if the VST host application supports sending tempo information to VST plugins.  If the application can't do this, then the "auto" option will not appear in Skidder.
+"Auto" tempo only works if the host application supports sending tempo information to plugins.  If the application can't do this, then the "auto" option will not appear in Skidder.
 </p>
 
 <br>
@@ -114,7 +114,7 @@ The stereo spread parameter controls the amount of random panning that your outp
 </p>
 
 <p class=desc>
-While panning, Skidder preserves the original audio signal's total amplitude, which means that it is possible to clip when the sound is panned off-center.  If you have an input signal that never peaks above half amplitude (-6 dB), then there's no risk, but otherwise, adjust the gain in your VST host application to accomodate for however much panning you are going to allow.
+While panning, Skidder preserves the original audio signal's total amplitude, which means that it is possible to clip when the sound is panned off-center.  If you have an input signal that never peaks above half amplitude (-6 dB), then there's no risk, but otherwise, adjust the gain in your host application to accomodate for however much panning you are going to allow.
 </p>
 
 <p class=desc>
