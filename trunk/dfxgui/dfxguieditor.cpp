@@ -22,8 +22,6 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 	idleTimer = NULL;
 	idleTimerUPP = NULL;
 
-	relaxed	= false;
-
 	dgControlSpec.defType = kControlDefObjectClass;
 	dgControlSpec.u.classRef = NULL;
 	controlHandlerUPP = NULL;
@@ -31,6 +29,8 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 	windowEventEventHandlerRef = NULL;
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
+
+	relaxed	= false;
 
 	dfxplugin = NULL;
 
@@ -43,12 +43,14 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 		if (myResourcesURL != NULL)
 		{
 			FSRef myResourceDirRef;
-			CFURLGetFSRef(myResourcesURL, &myResourceDirRef);
-			OSStatus status = FSGetCatalogInfo(&myResourceDirRef, kFSCatInfoNone, NULL, NULL, &bundleResourceDirFSSpec, NULL);
-			if (status == noErr)
-				status = FMActivateFonts(&bundleResourceDirFSSpec, NULL, NULL, kFMLocalActivationContext);
-			if (status == noErr)
-				fontsWereActivated = true;
+			if ( CFURLGetFSRef(myResourcesURL, &myResourceDirRef) )
+			{
+				OSStatus status = FSGetCatalogInfo(&myResourceDirRef, kFSCatInfoNone, NULL, NULL, &bundleResourceDirFSSpec, NULL);
+				if (status == noErr)
+					status = FMActivateFonts(&bundleResourceDirFSSpec, NULL, NULL, kFMLocalActivationContext);
+				if (status == noErr)
+					fontsWereActivated = true;
+			}
 		}
 	}
 }
@@ -554,7 +556,6 @@ return eventNotHandledErr;
 
 	UInt32 modifiers;
 	GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-//	UInt32 modifiers = GetCurrentEventKeyModifiers();
 //	bool with_command = (modifiers & cmdKey) ? true : false;
 	bool with_shift = ( (modifiers & shiftKey) || (modifiers & rightShiftKey) ) ? true : false;
 	bool with_option = ( (modifiers & optionKey) || (modifiers & rightOptionKey) ) ? true : false;
@@ -574,9 +575,8 @@ return eventNotHandledErr;
 
 	if (inEventKind == kEventMouseDragged)
 	{
-//		UInt32 buttons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-//		buttons = GetCurrentEventButtonState();
-//		GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &buttons);
+		UInt32 buttons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
+		GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &buttons);
 //		EventMouseButton button;	// kEventMouseButtonPrimary, kEventMouseButtonSecondary, or kEventMouseButtonTertiary
 //		GetEventParameter(inEvent, kEventParamMouseButton, typeMouseButton, NULL, sizeof(EventMouseButton), NULL, &button);
 
@@ -638,23 +638,28 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 		{
 			case kEventControlDraw:
 				{
-//printf("DGControlEventHandler -> draw() --- mustUpdate = %s\n", ourDGControl->mustUpdate() ? "true" : "false");
 					if (ourDGControl->mustUpdate() == false)
 					{
 						result = noErr;
 						break;
 					}
-		
-					GrafPtr oldPort;
-					GetPort(&oldPort);
-					CGrafPtr windowPort = GetWindowPort( GetControlOwner(ourCarbonControl) );
-					SetPort(windowPort);
+
+					CGrafPtr oldPort = NULL;
+					CGrafPtr windowPort;
+					// if we received a graphics port parameter, use that...
+					if ( GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &windowPort) == noErr )
+					{
+						GetPort(&oldPort);	// remember original port
+						SetPort(windowPort);	// use new port
+					}
+					// ... otherwise use the current graphics port
+					else
+						GetPort(&windowPort);
 					Rect portBounds;
 					GetPortBounds(windowPort, &portBounds);
 
 					// clipping
-					RgnHandle clipRgn;
-					clipRgn = NewRgn();
+					RgnHandle clipRgn = NewRgn();
 					OpenRgn();
 					ourDGControl->clipRegion(true);
 					CloseRgn(clipRgn);
@@ -665,15 +670,17 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					CGContextRef context;
 					QDBeginCGContext(windowPort, &context);            
 					ClipCGContextToRegion(context, &portBounds, clipRgn);
+					DisposeRgn(clipRgn);
 					SyncCGContextOriginWithPort(context, windowPort);
 					CGContextSaveGState(context);
 					ourDGControl->draw(context, portBounds.bottom);
 					CGContextRestoreGState(context);
 					CGContextSynchronize(context);
 					QDEndCGContext(windowPort, &context);
-					DisposeRgn(clipRgn);
 
-					SetPort(oldPort);
+					// restore original port, if we set a different port
+					if (oldPort != NULL)
+						SetPort(oldPort);
 					result = noErr;
 				}
 				break;
@@ -722,8 +729,8 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					ourOwnerEditor->setRelaxed(true);
 
 //					UInt32 buttons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-//					EventMouseButton buttons;
-//					GetEventParameter(inEvent, kEventParamMouseButton, typeMouseButton, NULL, sizeof(EventMouseButton), NULL, &buttons);
+//					UInt32 buttons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
+//					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &buttons);
 
 					Rect controlBounds;
 					GetControlBounds(ourCarbonControl, &controlBounds);

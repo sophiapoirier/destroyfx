@@ -279,10 +279,9 @@ TransverbEditor::~TransverbEditor()
 // ____________________________________________________________________________
 OSStatus TransverbEditor::open(Float32 inXOffset, Float32 inYOffset)
 {
-
-/***************************************
-	create graphics objects from PNG resource files
-***************************************/
+printf("\n\n--------------------------------------------------\n");
+printf("       creating Transverb GUI\n");
+printf("--------------------------------------------------\n\n");
 
 	// Background image
 	DGGraphic *backG = new DGGraphic("transverb-background.png");

@@ -140,9 +140,9 @@ public:
 	ControlRef getCarbonControl()
 		{	return carbonControl;	}
 
-	// Called by EventHandler Callback, draws a clipping region if opaque == true
+	// called by EventHandler callback; draws a clipping region if opaque == true, 
 	// otherwise asks embedded DfxGuiControls for their clipping regions
-	virtual void clipRegion(bool drawing);
+	void clipRegion(bool drawing);
 	virtual void setVisible(bool viz);
 
 	// The methods you should implement in derived controls
@@ -181,7 +181,7 @@ public:
 		{	isContinuous = inContinuity;	}
 
 	// for the clipping region
-	bool getOpaque()
+	bool isOpaque()
 		{	return opaque;	}
 	void setOpaque(bool inNewOpaque)
 		{	opaque = inNewOpaque;	}

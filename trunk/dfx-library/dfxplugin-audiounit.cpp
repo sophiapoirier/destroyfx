@@ -874,7 +874,7 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 	return noErr;
 }
 
-#define DEBUG_VST_SETTINGS_IMPORT	1
+#define DEBUG_VST_SETTINGS_IMPORT	0
 //-----------------------------------------------------------------------------
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
