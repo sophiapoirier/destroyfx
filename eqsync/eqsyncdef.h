@@ -1,7 +1,7 @@
 #define PLUGIN_NAME_STRING	"EQ Sync"
 #define PLUGIN_ID	'EQsy'
 #define PLUGIN_VERSION	0x00010100
-#define PLUGIN_ENTRY_POINT	"EQsyncEntry"
+#define PLUGIN_ENTRY_POINT	"EQSyncEntry"
 #define TARGET_PLUGIN_USES_MIDI	0
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
 #define TARGET_PLUGIN_USES_DSPCORE	0
@@ -10,7 +10,7 @@
 #endif
 
 // only necessary if using a custom GUI
-#define PLUGIN_EDITOR_ENTRY_POINT	"EQsyncEditorEntry"
+#define PLUGIN_EDITOR_ENTRY_POINT	"EQSyncEditorEntry"
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"EQ Sync is a ridiculous equalizer.  You have no control over the EQ curve, if you try to adjust the faders they will escape, and the EQ parameters don't make any sense anyway.  The EQ setting changes on its own according to your song's tempo."
@@ -18,3 +18,5 @@
 
 
 #define DFX_SUPPORT_OLD_VST_SETTINGS 0
+
+#define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx.EQSync"

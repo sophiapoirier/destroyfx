@@ -59,7 +59,11 @@ public:
 	PolarizerSlider(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inRegion, 
 					DfxGuiSliderStyle inOrientation, DGGraphic *inForeGround, DGGraphic *inBackground)
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inForeGround, inBackground)
-	{}
+	{
+		DGRect *fb = getBounds();
+		setForeBounds(fb->x, fb->y + kSliderFrameThickness, fb->w, fb->h - (kSliderFrameThickness*2));
+		setMouseOffset(0);
+	}
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
 	{
 		ControlRef carbonControl = getCarbonControl();
@@ -132,27 +136,21 @@ OSStatus PolarizerEditor::open(float inXOffset, float inYOffset)
 
 	DGRect pos;
 
-	//--initialize the sliders---------------------------------
+	//--create the sliders---------------------------------
 	PolarizerSlider *slider;
 
 	// leap size
 	pos.set(kSliderX, kSliderY, gSliderBackground->getWidth(), gSliderBackground->getHeight());
 	slider = new PolarizerSlider(this, kSkip, &pos, kDGSliderStyle_vertical, gSliderHandle, gSliderBackground);
-	DGRect *fb = slider->getBounds();
-	slider->setForeBounds(fb->x, fb->y + kSliderFrameThickness, fb->w, fb->h - (kSliderFrameThickness*2));
-	slider->setMouseOffset(0);
 	addControl(slider);
 
 	// polarization amount
 	pos.offset(kSliderInc, 0);
 	slider = new PolarizerSlider(this, kAmount, &pos, kDGSliderStyle_vertical, gSliderHandle, gSliderBackground);
-	fb = slider->getBounds();
-	slider->setForeBounds(fb->x, fb->y + kSliderFrameThickness, fb->w, fb->h - (kSliderFrameThickness*2));
-	slider->setMouseOffset(0);
 	addControl(slider);
 
 
-	//--initialize the displays---------------------------------------------
+	//--create the displays---------------------------------------------
 	DGTextDisplay *display;
 
 	// leap size read-out
@@ -172,7 +170,7 @@ OSStatus PolarizerEditor::open(float inXOffset, float inYOffset)
 	addControl(display);
 
 
-	//--initialize the buttons----------------------------------------------
+	//--create the buttons----------------------------------------------
 
 	// IMPLODE
 	pos.set(kImplodeButtonX, kImplodeButtonY, gImplodeButton->getWidth() / 2, gImplodeButton->getHeight() / 2);

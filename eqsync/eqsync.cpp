@@ -8,10 +8,10 @@
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(EQsync);
+DFX_ENTRY(EQSync);
 
 //-----------------------------------------------------------------------------
-EQsync::EQsync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
+EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 9 parameters, 1 preset
 {
 	prevIn = NULL;
@@ -50,12 +50,12 @@ EQsync::EQsync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-		editor = new EQsyncEditor(this);
+		editor = new EQSyncEditor(this);
 	#endif
 }
 
 //-----------------------------------------------------------------------------------------
-EQsync::~EQsync()
+EQSync::~EQSync()
 {
 #ifdef TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
@@ -65,7 +65,7 @@ EQsync::~EQsync()
 }
 
 //-----------------------------------------------------------------------------------------
-void EQsync::reset()
+void EQSync::reset()
 {
 	cycleSamples = 1;
 	smoothSamples = 1;
@@ -78,7 +78,7 @@ void EQsync::reset()
 }
 
 //-----------------------------------------------------------------------------
-bool EQsync::createbuffers()
+bool EQSync::createbuffers()
 {
 	unsigned long oldnum = numBuffers;
 	numBuffers = getnumoutputs();
@@ -94,7 +94,7 @@ bool EQsync::createbuffers()
 }
 
 //-----------------------------------------------------------------------------
-void EQsync::releasebuffers()
+void EQSync::releasebuffers()
 {
 	releasebuffer_f(&prevIn);
 	releasebuffer_f(&prevprevIn);
@@ -103,7 +103,7 @@ void EQsync::releasebuffers()
 }
 
 //-----------------------------------------------------------------------------
-void EQsync::clearbuffers()
+void EQSync::clearbuffers()
 {
 	clearbuffer_f(prevIn, numBuffers);
 	clearbuffer_f(prevprevIn, numBuffers);
@@ -112,7 +112,7 @@ void EQsync::clearbuffers()
 }
 
 //-----------------------------------------------------------------------------
-void EQsync::processparameters()
+void EQSync::processparameters()
 {
 	rate = tempoRateTable->getScalar(getparameter_i(kRate_sync));
 	smooth = getparameter_scalar(kSmooth);
@@ -130,7 +130,7 @@ void EQsync::processparameters()
 
 
 //-----------------------------------------------------------------------------
-void EQsync::processaudio(const float **inputs, float **outputs, unsigned long inNumFrames, bool replacing)
+void EQSync::processaudio(const float **inputs, float **outputs, unsigned long inNumFrames, bool replacing)
 {
 	unsigned long numChannels = getnumoutputs();
 	bool eqchanged = false;
