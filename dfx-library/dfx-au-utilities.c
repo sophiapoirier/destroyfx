@@ -39,19 +39,24 @@
 // Component for this function, if you want to do that for any reason.
 OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 {
+	OSErr error;
+	ComponentDescription desc;
+	short curRes, componentResFileID;
+	short thngResourceCount, i;
+	Boolean versionFound = false;
+
 	if ( (inComponent == NULL) || (outVersion == NULL) )
 		return paramErr;
 
 	// first we need to get the ComponentDescription so that we know 
 	// what the Component's type, sub-type, and manufacturer codes are
-	ComponentDescription desc;
-	OSErr error = GetComponentInfo(inComponent, &desc, NULL, NULL, NULL);
+	error = GetComponentInfo(inComponent, &desc, NULL, NULL, NULL);
 	if (error != noErr)
 		return error;
 
 	// remember the current resource file (because we will change it)
-	short curRes = CurResFile();
-	short componentResFileID = kResFileNotOpened;
+	curRes = CurResFile();
+	componentResFileID = kResFileNotOpened;
 	error = OpenAComponentResFile(inComponent, &componentResFileID);
 	// error or invalid resource ID, abort
 	if (error != noErr)
@@ -61,7 +66,7 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 		return resFNotFound;
 	UseResFile(componentResFileID);
 
-	short thngResourceCount = Count1Resources(kComponentResourceType);
+	thngResourceCount = Count1Resources(kComponentResourceType);
 	error = ResError();	// catch any error from Count1Resources
 	// only go on if we successfully found at least 1 thng resource
 	// (again, this shouldn't happen without an error, but just in case...)
@@ -74,18 +79,18 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 		return error;
 	}
 
-	Boolean versionFound = false;
 	// loop through all of the Component thng resources trying to 
 	// find one that matches this Component description
-	short i;
 	for (i=0; i < thngResourceCount; i++)
 	{
+		ExtComponentResource * componentThng;
+
 		// try to get a handle to this code resource
 		Handle thngResourceHandle = Get1IndResource(kComponentResourceType, i+1);
 		if (thngResourceHandle == NULL)
 			continue;
 		HLock(thngResourceHandle);
-		ExtComponentResource * componentThng = (ExtComponentResource*) (*thngResourceHandle);
+		componentThng = (ExtComponentResource*) (*thngResourceHandle);
 		if (componentThng == NULL)
 			goto cleanupRes;
 		// it's not a v2 extended resource, probably just v1, so it won't have the version value
@@ -211,6 +216,7 @@ void AUPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks)
 
 //-----------------------------------------------------------------------------
 #ifdef __GNUC__
+// XXX what is the best way to do this?
 #if 1
 const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 	version: 0, 
@@ -236,7 +242,13 @@ const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 		}
 #endif
 #else
-#warning "kAUPresetCFArrayCallbacks will not be initialized unless you use gcc to compile this source file, so don't rely on kAUPresetCFArrayCallbacks if you are not using gcc!"
+const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
+	0, 
+	auPresetCFArrayRetainCallback, 
+	auPresetCFArrayReleaseCallback, 
+	auPresetCFArrayCopyDescriptionCallback, 
+	auPresetCFArrayEqualCallback
+};
 #endif
 
 
@@ -286,16 +298,18 @@ void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitP
 // One of the string arguments can be NULL, if you are not interested in that string.
 OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef * outNameString, CFStringRef * outManufacturerString)
 {
+	OSStatus error;
+	char pluginNameCString[256], manufacturerNameCString[256];
+
 	// one input string or the other can be null, but not both
 	if ( (inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)) )
 		return paramErr;
 
 	// initialize some C string buffers for storing the C string versions of the AU name strings
-	char pluginNameCString[256], manufacturerNameCString[256];
 	memset(pluginNameCString, 0, sizeof(pluginNameCString));
 	memset(manufacturerNameCString, 0, sizeof(manufacturerNameCString));
 	// this will get us C string versions of the AU name strings
-	OSStatus error = GetAUNameAndManufacturerCStrings(inAUComponent, pluginNameCString, manufacturerNameCString);
+	error = GetAUNameAndManufacturerCStrings(inAUComponent, pluginNameCString, manufacturerNameCString);
 	if (error != noErr)
 		return error;
 
@@ -328,27 +342,30 @@ OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef *
 // One of the string arguments can be NULL, if you are not interested in that string.
 OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNameString, char * outManufacturerString)
 {
+	OSStatus error = noErr;
+	Handle componentNameHandle;
+	ConstStr255Param componentFullNamePString;
+	ComponentDescription dummydesc;
+
 	// one input string or the other can be null, but not both
 	if ( (inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)) )
 		return paramErr;
 
-	OSStatus error = noErr;
-
 	// first we need to create a handle and then try to fetch the Component name string resource into that handle
-	Handle componentNameHandle = NewHandle(sizeof(void*));
+	componentNameHandle = NewHandle(sizeof(void*));
 	if (componentNameHandle == NULL)
 		return nilHandleErr;
-	ComponentDescription dummycd;
-	error = GetComponentInfo(inAUComponent, &dummycd, componentNameHandle, NULL, NULL);
+	error = GetComponentInfo(inAUComponent, &dummydesc, componentNameHandle, NULL, NULL);
 	if (error != noErr)
 		return error;
 	// dereferencing the name resource handle gives us a Pascal string pointer
 	HLock(componentNameHandle);
-	ConstStr255Param componentFullNamePString = (ConstStr255Param) (*componentNameHandle);
+	componentFullNamePString = (ConstStr255Param) (*componentNameHandle);
 	if (componentFullNamePString == NULL)
 		error = nilHandleErr;
 	else
 	{
+		char * separatorByte;
 		// convert the Component name Pascal string to a C string
 		char componentFullNameCString[256];
 		memset(componentFullNameCString, 0, sizeof(componentFullNameCString));
@@ -356,16 +373,16 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 		// the manufacturer string is everything before the first : character, 
 		// and everything after that and any immediately following white space 
 		// is the plugin name string
-		char * separatorByte = strchr(componentFullNameCString, ':');
+		separatorByte = strchr(componentFullNameCString, ':');
 		if (separatorByte == NULL)
 			error = internalComponentErr;
 		else
 		{
-			// this will terminate the manufacturer name string right before the : character
-			separatorByte[0] = 0;
-			char * manufacturerNameCString = componentFullNameCString;
 			// point to right after the : character for the plugin name string...
 			char * pluginNameCString = separatorByte + 1;
+			// this will terminate the manufacturer name string right before the : character
+			char * manufacturerNameCString = componentFullNameCString;
+			separatorByte[0] = 0;
 			// ...and then also skip over any white space immediately following the : delimiter
 			while ( isspace(*pluginNameCString) )
 				pluginNameCString++;
