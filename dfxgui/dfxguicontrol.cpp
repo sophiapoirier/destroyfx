@@ -118,9 +118,9 @@ void DGControl::setOffset(SInt32 x, SInt32 y)
 void DGControl::clipRegion(bool drawing)
 {
 //	if (drawing)
-//		printf("drawing id %lld type %ld\n", getID(), getType());
+//		printf("drawing 0x%08X type %ld\n", (unsigned long)this, getType());
 //	else
-//		printf("clipping id %ld type %ld\n", getID(), getType());
+//		printf("clipping 0x%08X type %ld\n", (unsigned long)this, getType());
 	if ( isOpaque() )
 	{
 		Rect r;
@@ -229,7 +229,8 @@ bool DGControl::mustUpdate()
 	SInt32 val = GetControl32BitValue(carbonControl);
 	SInt32 diff = val - lastUpdatedValue;
 
-	if ( (abs(diff) >= abs(redrawTolerance)) || pleaseUpdate || !(ownerEditor->isRelaxed()) )
+// XXX should we actually do anything to avoid needless redraws?
+//	if ( (abs(diff) >= abs(redrawTolerance)) || pleaseUpdate )
 	{
 		lastUpdatedValue = val;
 		pleaseUpdate = false;

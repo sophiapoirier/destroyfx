@@ -9,6 +9,15 @@
 
 
 
+#if MAC
+typedef CarbonControl PlatformControlRef;
+#endif
+
+#ifdef TARGET_API_AUDIOUNIT
+titedef AudioUnitCarbonView EDIT0RR;
+#endif
+
+
 /***********************************************************************
 	DfxGuiEditor
 ***********************************************************************/
@@ -20,31 +29,31 @@ public:
 	DfxGuiEditor(AudioUnitCarbonView inInstance);
 	virtual ~DfxGuiEditor();
 
+#ifdef TARGET_API_AUDIOUNIT
 	// this gets called from AUCarbonViewBase
-	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
-	virtual bool HandleEvent(EventRef inEvent);
+	OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
+	bool HandleEvent(EventRef inEvent);
+#endif
 	// *** this one is for the child class to override
 	virtual OSStatus open(float inXOffset, float inYOffset) = 0;
 
-	UInt32			requestItemID();
 	// Images
 	void			addImage(DGGraphic *inImage);
-	DGGraphic *		getImageByID(UInt32 inID);
 	// Controls
 	void			addControl(DGControl *inCtrl);
-	DGControl *		getControlByID(UInt32 inID);
-	DGControl *		getDGControlByCarbonControlRef(ControlRef inControl);
-	DGControl *		getControls()
-		{	return Controls;	}
+	DGControl *		getDGControlByPlatformControlRef(PlatformControlRef inControl);
 
 	AUParameterListenerRef getParameterListener()
 		{	return mParameterListener;	}
 
+#if 0
+// XXX bye bye
 	// get/set the control that is currently being moused (actively tweaked), if any (returns NULL if none)
 	DGControl * getCurrentControl_clicked()
 		{	return currentControl_clicked;	}
 	void setCurrentControl_clicked(DGControl *inNewClickedControl)
 		{	currentControl_clicked = inNewClickedControl;	}
+#endif
 	// get/set the control that is currently idly under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()
 		{	return currentControl_mouseover;	}
@@ -53,12 +62,6 @@ public:
 	virtual void mouseovercontrolchanged()
 		{ }
 
-	void SetBackgroundImage(DGGraphic *inBackgroundImage)
-		{	backgroundImage = inBackgroundImage;	}
-	DGGraphic * GetBackgroundImage()
-		{	return backgroundImage;	}
-	void SetBackgroundColor(DGColor inBackgroundColor)
-		{	backgroundColor = inBackgroundColor;	}
 	virtual void DrawBackground(CGContextRef inContext, UInt32 inPortHeight);
 
 	DfxPlugin * getdfxplugin()
@@ -78,36 +81,41 @@ public:
 		bool ismidilearner(long parameterIndex);
 	#endif
 
-	// Relaxed drawing occurs when User adjusts parameters.
-	void setRelaxed(bool inRelaxation)
-		{	relaxed = inRelaxation;	}
-	bool isRelaxed(void)
-		{	return relaxed;	}
-	
 	void idle();
+
+protected:
+	void SetBackgroundImage(DGGraphic *inBackgroundImage)
+		{	backgroundImage = inBackgroundImage;	}
+	void SetBackgroundColor(DGColor inBackgroundColor)
+		{	backgroundColor = inBackgroundColor;	}
 
 private:
 	UInt32				itemCount;
 	DGGraphic *			Images;
 	DGControl *			Controls;
-	bool				relaxed;
-	EventLoopTimerUPP	idleTimerUPP;
-	EventLoopTimerRef	idleTimer;
 
 	DGGraphic *			backgroundImage;
 	DGColor				backgroundColor;
 
+	DGControl *			currentControl_clicked;
+	DGControl *			currentControl_mouseover;
+
+#if MAC
 	EventHandlerUPP		controlHandlerUPP;
 	ControlDefSpec 		dgControlSpec;
 	EventHandlerUPP		windowEventHandlerUPP;
 	EventHandlerRef		windowEventEventHandlerRef;
-	DGControl *			currentControl_clicked;
-	DGControl *			currentControl_mouseover;
+
+	EventLoopTimerUPP	idleTimerUPP;
+	EventLoopTimerRef	idleTimer;
 
 	FSSpec		bundleResourceDirFSSpec;	// the FSSpec for the Resources directory in the plugin bundle
 	bool		fontsWereActivated;	// memory of whether or not bundled fonts were loaded successfully
+#endif
 
+#ifdef TARGET_API_VST
 	DfxPlugin *dfxplugin;	// XXX bad thing
+#endif
 };
 
 
