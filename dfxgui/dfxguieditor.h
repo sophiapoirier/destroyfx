@@ -55,6 +55,8 @@ public:
 
 	void SetBackgroundImage(DGGraphic *inBackgroundImage)
 		{	backgroundImage = inBackgroundImage;	}
+	DGGraphic * GetBackgroundImage()
+		{	return backgroundImage;	}
 	void SetBackgroundColor(DGColor inBackgroundColor)
 		{	backgroundColor = inBackgroundColor;	}
 	virtual void DrawBackground(CGContextRef inContext, UInt32 inPortHeight);

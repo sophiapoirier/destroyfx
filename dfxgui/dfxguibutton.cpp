@@ -61,11 +61,11 @@ void DGButton::draw(CGContextRef inContext, UInt32 inPortHeight)
 	CGImageRef theButton = (buttonImage == NULL) ? NULL : buttonImage->getCGImage();
 	if (theButton != NULL)
 	{
-bounds.size.width = CGImageGetWidth(theButton);
-bounds.size.height = CGImageGetHeight(theButton);
+bounds.size.width = buttonImage->getWidth();
+bounds.size.height = buttonImage->getHeight();
 if (drawMomentaryState && mouseIsDown)
-	bounds.origin.x -= (float) (CGImageGetWidth(theButton) / 2);
-bounds.origin.y -= (float) ((max - value) * (CGImageGetHeight(theButton) / numStates));
+	bounds.origin.x -= (float) (buttonImage->getWidth() / 2);
+bounds.origin.y -= (float) ((max - value) * (buttonImage->getHeight() / numStates));
 //		CGContextSetAlpha(inContext, alpha);
 		CGContextDrawImage(inContext, bounds, theButton);
 	}

@@ -1,13 +1,9 @@
 /*-------------- by Marc Poirier  ][  November 2001 -------------*/
 
-#ifndef __MIDIGATER_H
 #include "midigater.hpp"
-#endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __MIDIGATEREDITOR_H
 	#include "midigatereditor.hpp"
-	#endif
 #endif
 
 
@@ -67,15 +63,14 @@ void MidiGater::processaudio(const float **in, float **out, unsigned long inNumF
 	float SAMPLERATE = getsamplerate_f();
 
 
+#ifndef TARGET_API_VST
 	// clear the output buffer because we accumulate output into it
-	if (replacing)
+	for (unsigned long cha=0; cha < numChannels; cha++)
 	{
-		for (unsigned long cha=0; cha < numChannels; cha++)
-		{
-			for (unsigned long samp=0; samp < inNumFrames; samp++)
-				out[cha][samp] = 0.0f;
-		}
+		for (unsigned long samp=0; samp < inNumFrames; samp++)
+			out[cha][samp] = 0.0f;
 	}
+#endif
 
 
 	// counter for the number of MIDI events this block
