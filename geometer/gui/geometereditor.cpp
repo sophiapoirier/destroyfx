@@ -36,6 +36,7 @@ enum {
   id_opshelp,
   id_recreatehelp,
   id_midilearnbutton,
+  id_midiresetbutton,
   id_destroyfxlink,
   id_smartelectronixlink,
 
@@ -90,6 +91,9 @@ enum {
   pos_midilearnbuttonX = 228,
   pos_midilearnbuttonY = 324,
 
+  pos_midiresetbuttonX = 228,
+  pos_midiresetbuttonY = 343,
+
   pos_destroyfxlinkX = 269,
   pos_destroyfxlinkY = 500,
   pos_smartelectronixlinkX = 407,
@@ -138,6 +142,7 @@ GeometerEditor::GeometerEditor(AudioEffect *effect)
   g_opshelp = 0;
   g_recreatehelp = 0;
   g_midilearnbutton = 0;
+  g_midiresetbutton = 0;
   g_destroyfxlink = 0;
   g_smartelectronixlink = 0;
 
@@ -267,9 +272,12 @@ long GeometerEditor::open(void *ptr) {
     g_opshelp = new CBitmap (id_opshelp);
   if (!g_recreatehelp)
     g_recreatehelp = new CBitmap (id_recreatehelp);
-  // MIDI learn button
+  // MIDI learn/reset buttons
   if (!g_midilearnbutton)
     g_midilearnbutton = new CBitmap (id_midilearnbutton);
+  if (!g_midiresetbutton)
+    g_midiresetbutton = new CBitmap (id_midiresetbutton);
+
   // web links
   if (!g_destroyfxlink)
     g_destroyfxlink = new CBitmap (id_destroyfxlink);
@@ -509,6 +517,15 @@ long GeometerEditor::open(void *ptr) {
   midilearnbutton->setValue(0.0f);
   frame->addView(midilearnbutton);
 
+  // MIDI reset button
+  size (pos_midiresetbuttonX, pos_midiresetbuttonY, 
+	pos_midiresetbuttonX + g_midiresetbutton->getWidth(), 
+	pos_midiresetbuttonY + (g_midiresetbutton->getHeight())/4);
+  midiresetbutton = new MultiKick (size, this, id_midiresetbutton, 2, 
+				   (g_midiresetbutton->getHeight())/4, g_midiresetbutton, zero);
+  midiresetbutton->setValue(0.0f);
+  frame->addView(midiresetbutton);
+
   // Destroy FX web page link
   size (pos_destroyfxlinkX, pos_destroyfxlinkY, 
 	pos_destroyfxlinkX + g_destroyfxlink->getWidth(), 
@@ -742,10 +759,15 @@ void GeometerEditor::close() {
   if (g_recreatehelp)
     g_recreatehelp->forget();
   g_recreatehelp = 0;
-  // MIDI learn button
+
+  // MIDI learn/reset buttons
   if (g_midilearnbutton)
     g_midilearnbutton->forget();
   g_midilearnbutton = 0;
+  if (g_midiresetbutton)
+    g_midiresetbutton->forget();
+  g_midiresetbutton = 0;
+
   // web links
   if (g_destroyfxlink)
     g_destroyfxlink->forget();
@@ -1017,6 +1039,11 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
   if (tag == id_midilearnbutton) {
     chunk->setParameterMidiLearn(control->getValue());
     control->update(context);
+  } else if (tag == id_midiresetbutton) {
+
+    /* XXX MARC !!! how do I midi reset?? */
+
+    
 
   } else if (tag < NUM_PARAMS) {
     /* XXX for anything? */
@@ -1152,6 +1179,16 @@ void GeometerEditor::idle() {
         if (helpchanged)
           helpbox->setDirty();
       }
+#if 0
+      else if (control == midiresetbutton) {
+        controlfound = true;
+	
+	/* XXX need help for midiresetbutton */
+
+	helpbox->setDirty();
+      }
+#endif
+
     }
     // look to see if we're over text labels, for general help
     if (!controlfound) {
