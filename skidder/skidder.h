@@ -19,6 +19,7 @@ enum
 	kRate_sync,
 	kRateRandMin_abs,
 	kRateRandMin_sync,
+	kTempoSync,
 	kPulsewidth,
 	kPulsewidthRandMin,
 	kSlope,
@@ -28,7 +29,6 @@ enum
 	kVelocity,
 	kFloor,
 	kFloorRandMin,
-	kTempoSync,
 	kTempo,
 	kTempoAuto,
 
@@ -87,26 +87,6 @@ enum
 #define NUM_PRESETS 16
 
 
-/*
-//----------------------------------------------------------------------------- 
-class SkidderChunk : public VstChunk
-{
-public:
-	SkidderChunk(long numParameters, long numPrograms, long magic, AudioEffectX *effect);
-	virtual void doLearningAssignStuff(long tag, long eventType, long eventChannel, 
-										long eventNum, long delta, 
-										long eventNum2 = 0, 
-										long eventBehaviourFlags = 0, 
-										long data1 = 0, long data2 = 0, 
-										float fdata1 = 0.0f, float fdata2 = 0.0f);
-	virtual void unassignParam(long tag);
-
-	// true for unified single-point automation of both parameter range values
-	bool pulsewidthDoubleAutomate, floorDoubleAutomate;
-};
-*/
-
-
 //----------------------------------------------------------------------------- 
 class Skidder : public DfxPlugin
 {
@@ -118,6 +98,15 @@ public:
 	virtual void reset();
 	virtual void processparameters();
 	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+
+	// stuff for extending DfxSettings
+	virtual void settings_doLearningAssignStuff(long tag, long eventType, long eventChannel, 
+										long eventNum, long delta, long eventNum2 = 0, 
+										long eventBehaviourFlags = 0, long data1 = 0, 
+										long data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f);
+//	virtual void settings_unassignParam(long tag);
+	// true for unified single-point automation of both parameter range values
+	bool rateDoubleAutomate, pulsewidthDoubleAutomate, floorDoubleAutomate;
 
 
 private:
@@ -151,10 +140,6 @@ private:
 
 	float currentTempoBPS;	// tempo in beats per second
 	float oldTempoBPS;	// holds the previous value of currentTempoBPS for comparison
-	bool tempoHasChanged;	// tells the GUI that the rate random range display needs updating
-	// this allows tempoHasChanged to be updated after the tempo gets recalulated 
-	// after switching to auto tempo, all of which is for the sake of the GUI
-	bool mustUpdateTempoHasChanged;
 	bool needResync;	// true when playback has just started up again
 
 	float fMidiMode;	// the MIDI note control mode parameter

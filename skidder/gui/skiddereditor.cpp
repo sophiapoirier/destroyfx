@@ -40,39 +40,28 @@ enum {
 	kTempoSyncButtonY = 79,
 
 	kGoButtonX = 18,
-	kGoButtonY = 378,
+	kGoButtonY = 338,
 
-	kDestroyFXlinkX = 286,
-	kDestroyFXlinkY = 413 - 19,
-	kSmartElectronixLinkX = 191,
-	kSmartElectronixLinkY = 430 - 19,
-
-#ifdef MSKIDDER
 	kMidiModeButtonX = 198,
-	kMidiModeButtonY = 378,
+	kMidiModeButtonY = 338,
 
 	kVelocityButtonX = kMidiModeButtonX + 11,
 	kVelocityButtonY = kMidiModeButtonY + 19,
 
 	kMidiLearnButtonX = 120,
-	kMidiLearnButtonY = 378,
+	kMidiLearnButtonY = 338,
 	kMidiResetButtonX = kMidiLearnButtonX,
 	kMidiResetButtonY = kMidiLearnButtonY + 18,
-#endif
 
-	kRangeDisplayX = 120,
-	kRangeDisplayY = 126,
-	kRangeDisplayWidth = 29,
-	kRangeDisplayHeight = 11,
 	kRandomMinimumWidth = 87,
 	kRandomMinimumX = kDisplayX - kRandomMinimumWidth - 9,
 	kRandomMinimumIncY = 19,
 
-	kRateRandRangeDisplayX = kRangeDisplayX + kRangeDisplayWidth,
-	kRateRandRangeDisplayY = kRangeDisplayY,
-	kRateRandRangeDisplayWidth = 126,
-	kRateRandRangeDisplayHeight = kRangeDisplayHeight,
-	
+	kDestroyFXlinkX = 286,
+	kDestroyFXlinkY = 373 - 19,
+	kSmartElectronixLinkX = 191,
+	kSmartElectronixLinkY = 390 - 19,
+
 	kTempoTextEdit = 333,
 	kNoGoDisplay = 33333
 };
@@ -98,32 +87,6 @@ void SkidderEditor::rateDisplayConvert(float value, char *string, void *temporat
 	}
 	else
 		sprintf(string, "%.3f  Hz", rateScaled(value));
-}
-
-void rateRandFactorDisplayConvert(float value, char *string);
-void rateRandFactorDisplayConvert(float value, char *string)
-{
-	sprintf(string, "%.3f", rateRandFactorScaled(value));
-}
-
-void rangeDisplayConvert(float value, char *string);
-void rangeDisplayConvert(float value, char *string)
-{
-	if (value > 0.0f)
-		strcpy(string, "range:");
-	else
-		strcpy(string, " ");
-}
-
-void rateRandRangeDisplayConvert(float value, char *string, void *cyclerate);
-void rateRandRangeDisplayConvert(float value, char *string, void *cyclerate)
-{
-	if (value > 0.0f)
-		sprintf(string, "%.2f  Hz    to   %.2f  Hz", 
-				*(float*)cyclerate / rateRandFactorScaled(value), 
-				*(float*)cyclerate * rateRandFactorScaled(value));
-	else
-		strcpy(string, " ");
 }
 
 void pulsewidthDisplayConvert(float value, char *string);
@@ -229,7 +192,6 @@ SkidderEditor::SkidderEditor(AudioEffect *effect)
 	// initialize the controls pointers
 	rateFader = 0;
 	tempoSyncButton = 0;
-	rateRandFactorFader = 0;
 	tempoFader = 0;
 	pulsewidthFader = 0;
 	slopeFader = 0;
@@ -244,9 +206,6 @@ SkidderEditor::SkidderEditor(AudioEffect *effect)
 
 	// initialize the value display box pointers
 	rateDisplay = 0;
-	rateRandFactorDisplay = 0;
-	rangeDisplay = 0;
-	rateRandRangeDisplay = 0;
 	tempoTextEdit = 0;
 	pulsewidthDisplay = 0;
 	pulsewidthRandMinDisplay = 0;
@@ -385,14 +344,6 @@ long SkidderEditor::open(void *ptr)
 	rateFader->setDefaultValue(rateUnscaled(3.0f));
 	frame->addView(rateFader);
 
-	// rate random factor
-	size.offset (0, kFaderInc);
-	rateRandFactorFader = new CHorizontalSlider (size, this, kRateRandFactor, minPos, maxPos, gFaderHandle, gFaderSlide, point, kLeft);
-	rateRandFactorFader->setOffsetHandle(offset);
-	rateRandFactorFader->setValue(effect->getParameter(kRateRandFactor));
-	rateRandFactorFader->setDefaultValue(0.0f);
-	frame->addView(rateRandFactorFader);
-
 	// tempo (in bpm)
 	size.offset (0, kFaderInc);
 	tempoFader = new CHorizontalSlider (size, this, kTempo, minPos, maxPos, gFaderHandle, gFaderSlide, point, kLeft);
@@ -472,7 +423,6 @@ long SkidderEditor::open(void *ptr)
 	SmartElectronixLink = new CWebLink (size, this, kSmartElectronixLinkID, SMARTELECTRONIX_URL, gSmartElectronixLink);
 	frame->addView(SmartElectronixLink);
 
-#ifdef MSKIDDER
 	// MIDI note control mode button
 	size (kMidiModeButtonX, kMidiModeButtonY, kMidiModeButtonX + gMidiModeButton->getWidth(), kMidiModeButtonY + (gMidiModeButton->getHeight())/kNumMidiModes);
 	midiModeButton = new CMultiToggle (size, this, kMidiMode, kNumMidiModes, gMidiModeButton->getHeight()/kNumMidiModes, gMidiModeButton, point);
@@ -496,20 +446,18 @@ long SkidderEditor::open(void *ptr)
 	midiResetButton = new CKickButton (size, this, kMidiResetButtonID, (gMidiResetButton->getHeight())/2, gMidiResetButton, point);
 	midiResetButton->setValue(0.0f);
 	frame->addView(midiResetButton);
-#endif
 
 
 	//--initialize the displays---------------------------------------------
 
 	// first store the proper values for all of the globals so that displays are correct
 	strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay_gen(effect->getParameter(kRate_sync)) );
-	theTempoSync = ((Skidder*)effect)->fTempoSync;
-	theCycleRate = calculateTheCycleRate();
+	theTempoSync = effect->getParameter(kTempoSync);
 
 	// rate   (unified display for "free" Hz rate & tempo synced rate)
 	size (kDisplayX, kDisplayY, kDisplayX + kDisplayWidth, kDisplayY + kDisplayHeight);
 	rateDisplay = new CParamDisplay (size, gBackground);
-	displayOffset (kDisplayX, kDisplayY);
+	displayOffset (size.left, size.top);
 	rateDisplay->setBackOffset(displayOffset);
 	rateDisplay->setHoriAlign(kLeftText);
 	rateDisplay->setFont(kNormalFontSmall);
@@ -519,23 +467,10 @@ long SkidderEditor::open(void *ptr)
 	rateDisplay->setTag(rateTag);
 	frame->addView(rateDisplay);
 
-	// rate random factor
-	size.offset (0, kFaderInc);
-	rateRandFactorDisplay = new CParamDisplay (size, gBackground);
-	displayOffset (kDisplayX, kDisplayY);
-	rateRandFactorDisplay->setBackOffset(displayOffset);
-	rateRandFactorDisplay->setHoriAlign(kLeftText);
-	rateRandFactorDisplay->setFont(kNormalFontSmall);
-	rateRandFactorDisplay->setFontColor(kWhiteCColor);
-	rateRandFactorDisplay->setValue(effect->getParameter(kRateRandFactor));
-	rateRandFactorDisplay->setStringConvert(rateRandFactorDisplayConvert);
-	rateRandFactorDisplay->setTag(kRateRandFactor);
-	frame->addView(rateRandFactorDisplay);
-
 	// tempo (in bpm)   (editable)
 	size.offset (0, kFaderInc);
 	tempoTextEdit = new CTextEdit (size, this, kTempoTextEdit, 0, gBackground);
-	displayOffset.offset (0, kFaderInc);
+	displayOffset (size.left, size.top);
 	tempoTextEdit->setBackOffset(displayOffset);
 	tempoTextEdit->setFont (kNormalFontSmall);
 	tempoTextEdit->setFontColor (kWhiteCColor);
@@ -547,7 +482,7 @@ long SkidderEditor::open(void *ptr)
 	// pulsewidth
 	size.offset (0, kFaderInc - 1);
 	pulsewidthDisplay = new CNumberBox (size, this, kPulsewidth, gBackground, 0, kVertical);
-	displayOffset.offset (0, kFaderInc - 1);
+	displayOffset (size.left, size.top);
 	pulsewidthDisplay->setBackOffset(displayOffset);
 	pulsewidthDisplay->setHoriAlign(kLeftText);
 	pulsewidthDisplay->setFont(kNormalFontSmall);
@@ -560,7 +495,7 @@ long SkidderEditor::open(void *ptr)
 	// pulsewidth random minimum
 	size.offset (1, kRandomMinimumIncY + 1);
 	pulsewidthRandMinDisplay = new CParamDisplay (size, gBackground);
-	displayOffset.offset (1, kRandomMinimumIncY + 1);
+	displayOffset (size.left, size.top);
 	pulsewidthRandMinDisplay->setBackOffset(displayOffset);
 	pulsewidthRandMinDisplay->setHoriAlign(kLeftText);
 	pulsewidthRandMinDisplay->setFont(kNormalFontVerySmall);
@@ -571,9 +506,9 @@ long SkidderEditor::open(void *ptr)
 	frame->addView(pulsewidthRandMinDisplay);
 
 	// the words "random minimum"
-	size (kRandomMinimumX, kDisplayY + (kFaderInc*3) + kRandomMinimumIncY, kRandomMinimumX + kRandomMinimumWidth, kDisplayY + (kFaderInc*3) + kRandomMinimumIncY + kDisplayHeight);
+	size (kRandomMinimumX, kDisplayY + (kFaderInc*2) + kRandomMinimumIncY, kRandomMinimumX + kRandomMinimumWidth, kDisplayY + (kFaderInc*2) + kRandomMinimumIncY + kDisplayHeight);
 	randomMinimumDisplay = new CParamDisplay (size, gBackground);
-	displayOffset (kRandomMinimumX, kDisplayY + (kFaderInc*4) + kRandomMinimumIncY + 1);
+	displayOffset (size.left, size.top);
 	randomMinimumDisplay->setBackOffset(displayOffset);
 	randomMinimumDisplay->setHoriAlign(kRightText);
 	randomMinimumDisplay->setFont(kNormalFontVerySmall);
@@ -584,9 +519,9 @@ long SkidderEditor::open(void *ptr)
 	frame->addView(randomMinimumDisplay);
 
 	// slope
-	size (kDisplayX, kDisplayY + (kFaderInc*4), kDisplayX + kDisplayWidth, kDisplayY + (kFaderInc*4) + kDisplayHeight);
+	size (kDisplayX, kDisplayY + (kFaderInc*3), kDisplayX + kDisplayWidth, kDisplayY + (kFaderInc*3) + kDisplayHeight);
 	slopeDisplay = new CParamDisplay (size, gBackground);
-	displayOffset (kDisplayX, kDisplayY + (kFaderInc*5));
+	displayOffset (size.left, size.top);
 	slopeDisplay->setBackOffset(displayOffset);
 	slopeDisplay->setHoriAlign(kLeftText);
 	slopeDisplay->setFont(kNormalFontSmall);
@@ -598,7 +533,7 @@ long SkidderEditor::open(void *ptr)
 	// floor
 	size.offset (0, kFaderInc - 1);
 	floorDisplay = new CParamDisplay (size, gBackground);
-	displayOffset.offset (0, kFaderInc - 1);
+	displayOffset (size.left, size.top);
 	floorDisplay->setBackOffset(displayOffset);
 	floorDisplay->setHoriAlign(kLeftText);
 	floorDisplay->setFont(kNormalFontSmall);
@@ -610,7 +545,7 @@ long SkidderEditor::open(void *ptr)
 	// floor random minimum
 	size.offset (1, kRandomMinimumIncY + 1);
 	floorRandMinDisplay = new CParamDisplay (size, gBackground);
-	displayOffset.offset (1, kRandomMinimumIncY + 1);
+	displayOffset (size.left, size.top);
 	floorRandMinDisplay->setBackOffset(displayOffset);
 	floorRandMinDisplay->setHoriAlign(kLeftText);
 	floorRandMinDisplay->setFont(kNormalFontVerySmall);
@@ -621,9 +556,9 @@ long SkidderEditor::open(void *ptr)
 	frame->addView(floorRandMinDisplay);
 
 	// the words "random minimum" again
-	size (kRandomMinimumX, kDisplayY + (kFaderInc*5) + kRandomMinimumIncY, kRandomMinimumX + kRandomMinimumWidth, kDisplayY + (kFaderInc*5) + kRandomMinimumIncY + kDisplayHeight);
+	size (kRandomMinimumX, kDisplayY + (kFaderInc*4) + kRandomMinimumIncY, kRandomMinimumX + kRandomMinimumWidth, kDisplayY + (kFaderInc*4) + kRandomMinimumIncY + kDisplayHeight);
 	randomMinimum2Display = new CParamDisplay (size, gBackground);
-	displayOffset (kRandomMinimumX, kDisplayY + (kFaderInc*6) + kRandomMinimumIncY + 1);
+	displayOffset (size.left, size.top);
 	randomMinimum2Display->setBackOffset(displayOffset);
 	randomMinimum2Display->setHoriAlign(kRightText);
 	randomMinimum2Display->setFont(kNormalFontVerySmall);
@@ -634,9 +569,9 @@ long SkidderEditor::open(void *ptr)
 	frame->addView(randomMinimum2Display);
 
 	// pan
-	size (kDisplayX, kDisplayY + (kFaderInc*6), kDisplayX + kDisplayWidth, kDisplayY + (kFaderInc*6) + kDisplayHeight);
+	size (kDisplayX, kDisplayY + (kFaderInc*5), kDisplayX + kDisplayWidth, kDisplayY + (kFaderInc*5) + kDisplayHeight);
 	panDisplay = new CParamDisplay (size, gBackground);
-	displayOffset.offset (0, kFaderInc);
+	displayOffset (size.left, size.top);
 	panDisplay->setBackOffset(displayOffset);
 	panDisplay->setHoriAlign(kLeftText);
 	panDisplay->setFont(kNormalFontSmall);
@@ -648,7 +583,7 @@ long SkidderEditor::open(void *ptr)
 	// noise
 	size.offset (0, kFaderInc);
 	noiseDisplay = new CParamDisplay (size, gBackground);
-	displayOffset.offset (0, kFaderInc);
+	displayOffset (size.left, size.top);
 	noiseDisplay->setBackOffset(displayOffset);
 	noiseDisplay->setHoriAlign(kLeftText);
 	noiseDisplay->setFont(kNormalFontSmall);
@@ -657,43 +592,10 @@ long SkidderEditor::open(void *ptr)
 	noiseDisplay->setStringConvert(noiseDisplayConvert);
 	frame->addView(noiseDisplay);
 
-	// the word "range"
-	size (kRangeDisplayX, kRangeDisplayY, kRangeDisplayX + kRangeDisplayWidth, kRangeDisplayY + kRangeDisplayHeight);
-	rangeDisplay = new CParamDisplay (size, gBackground);
-	displayOffset (kRangeDisplayX, kRangeDisplayY);
-	rangeDisplay->setBackOffset(displayOffset);
-	rangeDisplay->setHoriAlign(kLeftText);
-	rangeDisplay->setFont(kNormalFontVerySmall);
-	rangeDisplay->setFontColor(kBlackCColor);
-	rangeDisplay->setValue(effect->getParameter(kRateRandFactor));
-	rangeDisplay->setStringConvert(rangeDisplayConvert);
-	frame->addView(rangeDisplay);
-
-	// the rate random factor range read-out
-	size (kRateRandRangeDisplayX, kRateRandRangeDisplayY, kRateRandRangeDisplayX + kRateRandRangeDisplayWidth, kRateRandRangeDisplayY + kRateRandRangeDisplayHeight);
-	rateRandRangeDisplay = new CParamDisplay (size);
-	// if/else stuff to make this display disappear when there's no rate randomness
-	if ( effect->getParameter(kRateRandFactor) <= 0.0f )
-	{
-		rateRandRangeDisplay->setBackColor(kBackgroundCColor);
-		rateRandRangeDisplay->setFrameColor(kBackgroundCColor);
-	}
-	else
-	{
-		rateRandRangeDisplay->setBackColor(kMyPaleGreenCColor);
-		rateRandRangeDisplay->setFrameColor(kBlackCColor);
-	}
-	rateRandRangeDisplay->setHoriAlign(kCenterText);
-	rateRandRangeDisplay->setFont(kNormalFontVerySmall);
-	rateRandRangeDisplay->setFontColor(kMyDarkBlueCColor);
-	rateRandRangeDisplay->setValue(effect->getParameter(kRateRandFactor));
-	rateRandRangeDisplay->setStringConvert(rateRandRangeDisplayConvert, &theCycleRate);
-	frame->addView(rateRandRangeDisplay);
-
 	// go! error/success display
 	size (kGoButtonX, kGoButtonY + 17, kGoButtonX + gGoButton->getWidth(), kGoButtonY + kDisplayHeight + 17);
 	goDisplay = new CParamDisplay (size, gBackground);
-	displayOffset (kGoButtonX, kGoButtonY + 17);
+	displayOffset (size.left, size.top);
 	goDisplay->setBackOffset(displayOffset);
 	goDisplay->setHoriAlign(kCenterText);
 	goDisplay->setFont(kNormalFontSmall);
@@ -705,7 +607,6 @@ long SkidderEditor::open(void *ptr)
 
 	for (long i=0; i < NUM_PARAMETERS; i++)
 		faders[i] = NULL;
-	faders[kRateRandFactor] = rateRandFactorFader;
 	faders[kTempo] = tempoFader;
 	faders[kSlope] = slopeFader;
 	faders[kPan] = panFader;
@@ -802,30 +703,22 @@ void SkidderEditor::setParameter(long index, float value)
 		case kRate_abs:
 		case kRate_sync:
 			// store these into the static global variables so that the string convert function can see them
-			theCycleRate = calculateTheCycleRate();
 			strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay_gen(effect->getParameter(kRate_sync)) );
-			theTempoSync = ((Skidder*)effect)->fTempoSync;
+			theTempoSync = effect->getParameter(kTempoSync);
 			if (rateTag == index)
 			{
 				if (rateFader)
 					rateFader->setValue(value);
 				if (rateDisplay)
 					rateDisplay->setValue(value);
-				// update the rate random range display
-				if (rateRandRangeDisplay)
-					rateRandRangeDisplay->setDirty();
 			}
 			break;
 
 		case kTempoSync:
 			strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay_gen(effect->getParameter(kRate_sync)) );
-			theTempoSync = ((Skidder*)effect)->fTempoSync;
-			theCycleRate = calculateTheCycleRate();
+			theTempoSync = effect->getParameter(kTempoSync);
 			if (tempoSyncButton)
 				tempoSyncButton->setValue(value);
-			// update the rate displays if the sync mode is changed
-			if (rateRandRangeDisplay)
-				rateRandRangeDisplay->setDirty();
 			// see if we need to swap the parameter assignment for the rate controls
 			if (rateFader)
 			{
@@ -846,34 +739,7 @@ void SkidderEditor::setParameter(long index, float value)
 			}
 			break;
 
-		case kRateRandFactor:
-			theCycleRate = calculateTheCycleRate();
-			if (rateRandFactorFader)
-				rateRandFactorFader->setValue(value);
-			if (rateRandFactorDisplay)
-				rateRandFactorDisplay->setValue(value);
-			if (rangeDisplay)
-				rangeDisplay->setValue(value);
-			if (rateRandRangeDisplay)
-			{
-				rateRandRangeDisplay->setValue(value);
-				// makes the rate random range display disappear when there's no rate randomness
-				if ( effect->getParameter(kRateRandFactor) <= 0.0003f )
-				{
-					rateRandRangeDisplay->setBackColor(kBackgroundCColor);
-					rateRandRangeDisplay->setFrameColor(kBackgroundCColor);
-				}
-				else
-				{
-					rateRandRangeDisplay->setBackColor(kMyPaleGreenCColor);
-					rateRandRangeDisplay->setFrameColor(kBlackCColor);
-				}
-				rateRandRangeDisplay->setDirty();
-			}
-			break;
-
 		case kTempo:
-			theCycleRate = calculateTheCycleRate();
 			if (tempoFader)
 				tempoFader->setValue(value);
 			if (tempoTextEdit)
@@ -884,10 +750,6 @@ void SkidderEditor::setParameter(long index, float value)
 					strcpy(tempoString, "auto");
 				tempoTextEdit->setText(tempoString);
 			}
-			// update the rate random range display
-			// (this crashes for some reason?)
-//			if (rateRandRangeDisplay)
-//				rateRandRangeDisplay->setDirty();
 			break;
 
 		case kPulsewidth:
@@ -1052,20 +914,20 @@ void SkidderEditor::valueChanged(CDrawContext* context, CControl* control)
 				chunk->setLearner(pulsewidthFader->getTag());
 				// set the automation link mode for the pulsewidth range slider
 				if (pulsewidthFader->getClickBetween())
-					chunk->pulsewidthDoubleAutomate = 1;
+					((Skidder*)effect)->pulsewidthDoubleAutomate = true;
 				else
-					chunk->pulsewidthDoubleAutomate = 0;
+					((Skidder*)effect)->pulsewidthDoubleAutomate = false;
 				if (chunk->isLearning())
 				{
 					if ( ((pulsewidthFader->getTag() == kPulsewidthRandMin) || 
-								(chunk->pulsewidthDoubleAutomate != 0)) && 
+								((Skidder*)effect)->pulsewidthDoubleAutomate) && 
 							(pulsewidthFader->getHandle() == gFaderHandleLeft) )
 					{
 						pulsewidthFader->setHandle(gGlowingFaderHandleLeft);
 						pulsewidthFader->setDirty();
 					}
 					if ( ((pulsewidthFader->getTag() == kPulsewidth) || 
-								(chunk->pulsewidthDoubleAutomate != 0)) && 
+								((Skidder*)effect)->pulsewidthDoubleAutomate) && 
 							(pulsewidthFader->getHandle2() == gFaderHandleRight) )
 					{
 						pulsewidthFader->setHandle2(gGlowingFaderHandleRight);
@@ -1084,20 +946,20 @@ void SkidderEditor::valueChanged(CDrawContext* context, CControl* control)
 				chunk->setLearner(floorFader->getTag());
 				// set the automation link mode for the floor range slider
 				if (floorFader->getClickBetween())
-					chunk->floorDoubleAutomate = 1;
+					((Skidder*)effect)->floorDoubleAutomate = true;
 				else
-					chunk->floorDoubleAutomate = 0;
+					((Skidder*)effect)->floorDoubleAutomate = false;
 				if (chunk->isLearning())
 				{
 					if ( ((floorFader->getTag() == kFloorRandMin) || 
-								(chunk->floorDoubleAutomate != 0)) && 
+								((Skidder*)effect)->floorDoubleAutomate) && 
 							(floorFader->getHandle() == gFaderHandleLeft) )
 					{
 						floorFader->setHandle(gGlowingFaderHandleLeft);
 						floorFader->setDirty();
 					}
 					if ( ((floorFader->getTag() == kFloor) || 
-								(chunk->floorDoubleAutomate != 0)) && 
+								((Skidder*)effect)->floorDoubleAutomate) && 
 							(floorFader->getHandle2() == gFaderHandleRight) )
 					{
 						floorFader->setHandle2(gGlowingFaderHandleRight);
@@ -1142,7 +1004,6 @@ void SkidderEditor::valueChanged(CDrawContext* context, CControl* control)
 			break;
 	#endif
 
-		case kRateRandFactor:
 		case kTempo:
 		case kSlope:
 		case kPan:
@@ -1172,9 +1033,6 @@ void SkidderEditor::valueChanged(CDrawContext* context, CControl* control)
 }
 
 //-----------------------------------------------------------------------------
-// the idle routine in Skidder is for updating the 
-// rate random factor range display whenever the tempo changes
-
 void SkidderEditor::idle()
 {
 	bool somethingChanged = false;
@@ -1182,18 +1040,6 @@ void SkidderEditor::idle()
 
 	if (isOpen)
 	{
-		if ( ((Skidder*)effect)->tempoHasChanged )
-		{
-			if (rateRandFactorDisplay)
-			{
-				theCycleRate = calculateTheCycleRate();
-				if (rateRandRangeDisplay)
-					rateRandRangeDisplay->setDirty();
-				somethingChanged = true;
-			}
-			((Skidder*)effect)->tempoHasChanged = false;	// reset it
-		}
-
 		// turn off any glowing controls that are no longer learning
 		for (long i=0; i < NUM_PARAMETERS; i++)
 		{
@@ -1230,7 +1076,7 @@ void SkidderEditor::idle()
 		{
 			if ( ((chunk->getLearner() != kPulsewidthRandMin) && 
 					(pulsewidthFader->getHandle() == gGlowingFaderHandleLeft)) && 
-					!((chunk->getLearner() == kPulsewidth) && (chunk->pulsewidthDoubleAutomate != 0)) )
+					!((chunk->getLearner() == kPulsewidth) && ((Skidder*)effect)->pulsewidthDoubleAutomate) )
 			{
 				pulsewidthFader->setHandle(gFaderHandleLeft);
 				pulsewidthFader->setDirty();
@@ -1238,7 +1084,7 @@ void SkidderEditor::idle()
 			}
 			if ( ((chunk->getLearner() != kPulsewidth) && 
 					(pulsewidthFader->getHandle2() == gGlowingFaderHandleRight)) && 
-					!((chunk->getLearner() == kPulsewidthRandMin) && (chunk->pulsewidthDoubleAutomate != 0)) )
+					!((chunk->getLearner() == kPulsewidthRandMin) && ((Skidder*)effect)->pulsewidthDoubleAutomate) )
 			{
 				pulsewidthFader->setHandle2(gFaderHandleRight);
 				pulsewidthFader->setDirty();
@@ -1250,7 +1096,7 @@ void SkidderEditor::idle()
 		{
 			if ( ((chunk->getLearner() != kFloorRandMin) && 
 					(floorFader->getHandle() == gGlowingFaderHandleLeft)) && 
-					!((chunk->getLearner() == kFloor) && (chunk->floorDoubleAutomate != 0)) )
+					!((chunk->getLearner() == kFloor) && ((Skidder*)effect)->floorDoubleAutomate) )
 			{
 				floorFader->setHandle(gFaderHandleLeft);
 				floorFader->setDirty();
@@ -1258,7 +1104,7 @@ void SkidderEditor::idle()
 			}
 			if ( ((chunk->getLearner() != kFloor) && 
 					(floorFader->getHandle2() == gGlowingFaderHandleRight)) && 
-					!((chunk->getLearner() == kFloorRandMin) && (chunk->floorDoubleAutomate != 0)) )
+					!((chunk->getLearner() == kFloorRandMin) && ((Skidder*)effect)->floorDoubleAutomate) )
 			{
 				floorFader->setHandle2(gFaderHandleRight);
 				floorFader->setDirty();
@@ -1273,30 +1119,4 @@ void SkidderEditor::idle()
 
 	// this is called so that idle() actually happens
 	AEffGUIEditor::idle();
-}
-
-
-//-----------------------------------------------------------------------------
-// this little function just calculates the current user defined skid rate
-// useful information for some of the display boxes
-
-float SkidderEditor::calculateTheCycleRate()
-{
-  float tempoBPS;
-
-	// tempo sync is being used
-	if ( onOffTest(effect->getParameter(kTempoSync)) )
-	{
-		// "auto" mode; get the current tempo from the effect
-		if ( effect->getParameter(kTempo) <= 0.0f )
-			tempoBPS = ((Skidder*)effect)->currentTempoBPS;
-		// otherwise use the user-inputted tempo
-		else
-			tempoBPS = tempoScaled(effect->getParameter(kTempo)) / 60.0f;
-		return ( tempoBPS * (((Skidder*)effect)->tempoRateTable->getScalar(effect->getParameter(kRate_sync))) );
-	}
-
-	// tempo sync is not being used so just return the simple "free" rate value
-	else
-		return rateScaled(effect->getParameter(kRate_abs));
 }

@@ -18,6 +18,9 @@ void DfxPlugin::PostConstructor()
 {
 	TARGET_API_BASE_CLASS::PostConstructor();
 
+	// set up a name for the default preset if none was set
+	if ( !presetnameisvalid(0) )
+		setpresetname(0, PLUGIN_NAME_STRING);
 	// make host see that current preset is 0
 	update_preset(0);
 }

@@ -31,6 +31,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_indexed(kRate_sync, "rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
 	initparameter_f(kRateRandMin_abs, "rate random min (free)", 3.0f, 3.0f, 0.3f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
 	initparameter_indexed(kRateRandMin_sync, "rate random min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
+	initparameter_b(kTempoSync, "tempo sync", false, false);
 	initparameter_f(kPulsewidth, "pulsewidth", 0.5f, 0.5f, 0.001f, 0.999f, kDfxParamUnit_portion);
 	initparameter_f(kPulsewidthRandMin, "pulsewidth random min", 0.5f, 0.5f, 0.001f, 0.999f, kDfxParamUnit_portion);
 	initparameter_f(kSlope, "slope", 3.0f, 3.0f, 0.0f, 15.0f, kDfxParamUnit_ms);
@@ -40,13 +41,16 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kNoise, "rupture", 0.0f, 18732.0f, 0.0f, 18732.0f, kDfxParamUnit_lineargain, kDfxParamCurve_squared);
 	initparameter_indexed(kMidiMode, "MIDI mode", kMidiMode_none, kMidiMode_none, kNumMidiModes);
 	initparameter_b(kVelocity, "velocity", false, false);
-	initparameter_b(kTempoSync, "tempo sync", false, false);
 	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 
-	// set the value strings for the sync rate parameter
+	// set the value strings for the sync rate parameters
 	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
-		setparametervaluestring(kRate_sync, i, tempoRateTable->getDisplay(i));
+	{
+		char *tname = tempoRateTable->getDisplay(i);
+		setparametervaluestring(kRate_sync, i, tname);
+		setparametervaluestring(kRateRandMin_sync, i, tname);
+	}
 	// set the value strings for the MIDI modes
 	setparametervaluestring(kMidiMode, kMidiMode_none, "none");
 	setparametervaluestring(kMidiMode, kMidiMode_trigger, "trigger");
@@ -67,6 +71,9 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
 	currentTempoBPS = getparameter_f(kTempo) / 60.0f;
+
+	// start off with split CC automation of both range slider points
+	rateDoubleAutomate = pulsewidthDoubleAutomate = floorDoubleAutomate = false;
 
 
 	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
@@ -109,6 +116,7 @@ void Skidder::processparameters()
 	rateRandMinHz = getparameter_f(kRateRandMin_abs);
 	rateRandMinIndex = getparameter_i(kRateRandMin_sync);
 	rateRandMinSync = tempoRateTable->getScalar(rateRandMinIndex);
+	tempoSync = getparameter_b(kTempoSync);
 	pulsewidth = getparameter_f(kPulsewidth);
 	pulsewidthRandMin = getparameter_f(kPulsewidthRandMin);
 	slopeSeconds = getparameter_d(kSlope) * 0.001;
@@ -118,7 +126,6 @@ void Skidder::processparameters()
 	useVelocity = getparameter_b(kVelocity);
 	floor = getparameter_f(kFloor);
 	floorRandMin = getparameter_f(kFloorRandMin);
-	tempoSync = getparameter_b(kTempoSync);
 	userTempo = getparameter_f(kTempo);
 	useHostTempo = getparameter_b(kTempoAuto);
 
@@ -130,19 +137,9 @@ void Skidder::processparameters()
 
 	// set needResync true if tempo sync mode has just been switched on
 	if ( getparameterchanged(kTempoSync) && tempoSync )
-	{
 		needResync = true;
-		// the GUI may not correctly update the rate rand range display unless 
-		// we tell it to because it may update before the tempo has been calculated
-		mustUpdateTempoHasChanged = true;
-	}
 	if (getparameterchanged(kRate_sync))
 		needResync = true;
-	if (getparameterchanged(kTempo))
-		// XXX only do this if not in host tempo mode?
-		tempoHasChanged = true;
-	if (getparameterchanged(kTempoAuto))
-		tempoHasChanged = true;
 	if (getparameterchanged(kMidiMode))
 	{
 		// if we've just entered a MIDI mode, zero out all notes & reset waitSamples
