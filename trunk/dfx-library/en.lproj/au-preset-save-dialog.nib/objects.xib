@@ -6,51 +6,44 @@
   </object>
   <array count="9" name="allObjects">
     <object class="IBCarbonWindow" id="166">
-      <string name="windowRect">307 325 433 855 </string>
+      <string name="windowRect">306 322 456 818 </string>
       <string name="title">Save Audio Unit preset file</string>
       <object name="rootControl" class="IBCarbonRootControl" id="167">
-        <string name="bounds">0 0 126 530 </string>
-        <string name="viewFrame">0 0 530 126 </string>
+        <string name="bounds">0 0 150 496 </string>
+        <string name="viewFrame">0 0 496 150 </string>
         <array count="7" name="subviews">
-          <object class="IBCarbonStaticText" id="181">
-            <string name="bounds">20 436 36 510 </string>
-            <string name="viewFrame">436 20 74 16 </string>
-            <string name="title">location:</string>
-          </object>
           <object class="IBCarbonEditText" id="182">
-            <string name="bounds">47 23 63 409 </string>
-            <string name="viewFrame">23 47 386 16 </string>
+            <string name="bounds">23 114 39 432 </string>
+            <string name="viewFrame">114 23 318 16 </string>
             <ostype name="controlSignature">name</ostype>
             <int name="controlID">128</int>
             <boolean name="isUnicode">TRUE</boolean>
           </object>
           <object class="IBCarbonStaticText" id="183">
-            <string name="bounds">20 20 36 173 </string>
-            <string name="viewFrame">20 20 153 16 </string>
-            <string name="title">new preset name:</string>
+            <string name="bounds">22 51 38 105 </string>
+            <string name="viewFrame">51 22 54 16 </string>
+            <string name="title">Save as:</string>
+            <int name="justification">-1</int>
           </object>
           <object class="IBCarbonRadioGroup" id="196">
-            <string name="bounds">44 436 104 510 </string>
-            <string name="viewFrame">436 44 74 60 </string>
+            <string name="bounds">58 111 78 340 </string>
+            <string name="viewFrame">111 58 229 20 </string>
             <ostype name="controlSignature">doma</ostype>
             <int name="controlID">129</int>
             <string name="helpTagText">&quot;User&quot; is just for you, &quot;Local&quot; is for all users of your computer, and &quot;Network&quot; is for all computers on your network</string>
-            <int name="numRows">3</int>
-            <array count="3" name="radioTitles">
-              <array count="1">
+            <int name="numRows">1</int>
+            <int name="numCols">3</int>
+            <array count="1" name="radioTitles">
+              <array count="3">
                 <string>User</string>
-              </array>
-              <array count="1">
                 <string>Local</string>
-              </array>
-              <array count="1">
                 <string>Network</string>
               </array>
             </array>
           </object>
           <object class="IBCarbonButton" id="202">
-            <string name="bounds">86 20 106 225 </string>
-            <string name="viewFrame">20 86 205 20 </string>
+            <string name="bounds">110 64 130 269 </string>
+            <string name="viewFrame">64 110 205 20 </string>
             <ostype name="controlSignature">cust</ostype>
             <int name="controlID">132</int>
             <string name="title">Choose custom location...</string>
@@ -58,8 +51,8 @@
             <string name="helpTagText">choose a specific location to save in rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)</string>
           </object>
           <object class="IBCarbonButton" id="203">
-            <string name="bounds">86 249 106 331 </string>
-            <string name="viewFrame">249 86 82 20 </string>
+            <string name="bounds">110 293 130 375 </string>
+            <string name="viewFrame">293 110 82 20 </string>
             <ostype name="controlSignature">canc</ostype>
             <int name="controlID">131</int>
             <string name="title">Cancel</string>
@@ -67,13 +60,19 @@
             <int name="buttonType">2</int>
           </object>
           <object class="IBCarbonButton" id="204">
-            <string name="bounds">86 343 106 412 </string>
-            <string name="viewFrame">343 86 69 20 </string>
+            <string name="bounds">110 387 130 456 </string>
+            <string name="viewFrame">387 110 69 20 </string>
             <ostype name="controlSignature">save</ostype>
             <int name="controlID">130</int>
             <string name="title">Save</string>
             <ostype name="command">save</ostype>
             <int name="buttonType">1</int>
+          </object>
+          <object class="IBCarbonStaticText" id="181">
+            <string name="bounds">59 45 75 105 </string>
+            <string name="viewFrame">45 59 60 16 </string>
+            <string name="title">Location:</string>
+            <int name="justification">-1</int>
           </object>
         </array>
       </object>
