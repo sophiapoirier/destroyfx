@@ -1,0 +1,11 @@
+
+These are sources from FFTW, trimmed to reduce the size of my plugins
+distribution.
+
+They're released under the GPL (see COPYING); you can get the whole
+package from.
+
+http://fftw.org/
+
+
+They use Caml, so I like 'em. Rock on!
