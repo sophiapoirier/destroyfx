@@ -371,7 +371,6 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 				else
 			#endif
 				plugin->setparameter_f(i, newPreset->params[mappedTag]);
-				plugin->postupdate_parameter(i);	// notify listeners of internal parameter change
 				// allow for additional tweaking of the stored parameter setting
 				plugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->params[mappedTag], newSettingsInfo->version);
 			}
