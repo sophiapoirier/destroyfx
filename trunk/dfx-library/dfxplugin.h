@@ -164,38 +164,31 @@ SUPPORT_AU_VERSION_1
 
 #endif
 
-/* XXX: use typedef here instead of #define where possible */
-
 // using Apple's Audio Unit API
 #if defined(TARGET_API_AUDIOUNIT)
-	#define TARGET_API_CORE_CLASS AUKernelBase
-	#define TARGET_API_CORE_INSTANCE_TYPE AUEffectBase
-
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		#define BASE_API_HEADER "MusicDeviceBase.h"
-		#define BASE_API_HEADER_DEFINITION __MusicDeviceBase_h__
-		#define TARGET_API_BASE_CLASS MusicDeviceBase
-		#define TARGET_API_BASE_INSTANCE_TYPE ComponentInstance
+		#include "MusicDeviceBase.h"
+		typedef MusicDeviceBase TARGET_API_BASE_CLASS;
+		typedef ComponentInstance TARGET_API_BASE_INSTANCE_TYPE;
 	#elif TARGET_PLUGIN_USES_MIDI
-		#define BASE_API_HEADER "AUMIDIEffectBase.h"
-		#define BASE_API_HEADER_DEFINITION __AUMIDIEffectBase_h__
-		#define TARGET_API_BASE_CLASS AUMIDIEffectBase
-		#define TARGET_API_BASE_INSTANCE_TYPE ComponentInstance
+		#include "AUMIDIEffectBase.h"
+		typedef AUMIDIEffectBase TARGET_API_BASE_CLASS;
+		typedef ComponentInstance TARGET_API_BASE_INSTANCE_TYPE;
 	#else
-		#define BASE_API_HEADER "AUEffectBase.h"
-		#define BASE_API_HEADER_DEFINITION __AUEffectBase_h__
-		#define TARGET_API_BASE_CLASS AUEffectBase
-		#define TARGET_API_BASE_INSTANCE_TYPE AudioUnit
+		#include "AUEffectBase.h"
+		typedef AUEffectBase TARGET_API_BASE_CLASS;
+		typedef AudioUnit TARGET_API_BASE_INSTANCE_TYPE;
 	#endif
+	#define TARGET_API_CORE_CLASS	AUKernelBase
+	typedef AUEffectBase TARGET_API_CORE_INSTANCE_TYPE;
 
 // using Steinberg's VST API
 #elif defined(TARGET_API_VST)
-	#define BASE_API_HEADER "audioeffectx.h"
-	#define BASE_API_HEADER_DEFINITION __audioeffectx__
-	#define TARGET_API_BASE_CLASS AudioEffectX
-	#define TARGET_API_BASE_INSTANCE_TYPE audioMasterCallback
+	#include "audioeffectx.h"
+	typedef AudioEffectX TARGET_API_BASE_CLASS;
+	typedef audioMasterCallback TARGET_API_BASE_INSTANCE_TYPE;
 //	#define TARGET_API_CORE_CLASS 0	// none in VST
-	#define TARGET_API_CORE_INSTANCE_TYPE DfxPlugin
+	typedef DfxPlugin TARGET_API_CORE_INSTANCE_TYPE;
 	// set numinputs and numoutputs if numchannels is defined
 	#ifdef VST_NUM_CHANNELS
 		#ifndef VST_NUM_INPUTS
@@ -208,9 +201,6 @@ SUPPORT_AU_VERSION_1
 
 #endif
 // end of target API check
-
-
-#include BASE_API_HEADER
 
 
 
@@ -263,7 +253,9 @@ SUPPORT_AU_VERSION_1
 // property IDs for Audio Unit property stuff
 enum DfxPluginProperties {
 	kDfxPluginProperty_PluginPtr = 64000,	// get a pointer to the DfxPlugin
+	kDfxPluginProperty_RandomizeParameters,	// randomize the parameters
 	kDfxPluginProperty_MidiLearn,			// get/set the MIDI learn state
+	kDfxPluginProperty_ResetMidiLearn,		// clear MIDI parameter assignments
 	kDfxPluginProperty_MidiLearner			// get/set the current MIDI learner parameter
 };
 
@@ -422,6 +414,8 @@ public:
 	void setparameter_b(long parameterIndex, bool newValue);
 	void setparameter_gen(long parameterIndex, float newValue);
 	void randomizeparameter(long parameterIndex);
+	// ***
+	virtual void randomizeparameters(bool writeAutomation = false);	// randomize all parameters at once
 	void update_parameter(long parameterIndex);
 	void postupdate_parameter(long parameterIndex);
 
@@ -944,6 +938,8 @@ void clearbuffer_b(bool *buffer, long buffersize, bool value = false);
 void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize, float value = 0.0f);
 void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
 							long buffersize, double value = 0.0);
+
+long launch_url(const char *urlstring);
 
 
 

@@ -107,10 +107,22 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 			outWritable = false;
 			break;
 
+		// randomize the parameters
+		case kDfxPluginProperty_RandomizeParameters:
+			// when you "set" this "property", you send a bool to say whether or not to write automation data
+			outDataSize = sizeof(bool);
+			outWritable = true;
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		// get/set the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
 			outDataSize = sizeof(bool);
+			outWritable = true;
+			break;
+		// clear MIDI parameter assignments
+		case kDfxPluginProperty_ResetMidiLearn:
+			outDataSize = sizeof(bool);	// whatever, you don't need an input value for this property
 			outWritable = true;
 			break;
 		// get/set the current MIDI learner parameter
@@ -141,6 +153,9 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 	{
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
+			if (outData == NULL)
+				result = kAudioUnitErr_InvalidPropertyValue;
+			else
 			{
 				for (long i=0; i < numParameters; i++)
 				{
@@ -163,17 +178,26 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 
 		// this allows a GUI component to get a pointer to our DfxPlugin class instance
 		case kDfxPluginProperty_PluginPtr:
-			*(DfxPlugin**)outData = this;
+			if (outData == NULL)
+				result = kAudioUnitErr_InvalidPropertyValue;
+			else
+				*(DfxPlugin**)outData = this;
 			break;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		// get the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
-			*(bool*)outData = dfxsettings->isLearning();
+			if (outData == NULL)
+				result = kAudioUnitErr_InvalidPropertyValue;
+			else
+				*(bool*)outData = dfxsettings->isLearning();
 			break;
 		// get the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
-			*(long*)outData = dfxsettings->getLearner();
+			if (outData == NULL)
+				result = kAudioUnitErr_InvalidPropertyValue;
+			else
+				*(long*)outData = dfxsettings->getLearner();
 			break;
 	#endif
 
@@ -195,13 +219,43 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 	switch (inID)
 	{
 	#if TARGET_PLUGIN_USES_MIDI
+		case kAudioUnitProperty_MIDIControlMapping:
+			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+	#endif
+
+		case kDfxPluginProperty_PluginPtr:
+			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
+		// randomize the parameters
+		case kDfxPluginProperty_RandomizeParameters:
+			if (inData == NULL)
+				result = kAudioUnitErr_InvalidPropertyValue;
+			else
+				// when you "set" this "property", you send a bool to say whether or not to write automation data
+				randomizeparameters( *(bool*)inData );
+			break;
+
+	#if TARGET_PLUGIN_USES_MIDI
 		// set the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
-			dfxsettings->setLearning( *(bool*)inData );
+			if (inData == NULL)
+				result = kAudioUnitErr_InvalidPropertyValue;
+			else
+				dfxsettings->setParameterMidiLearn( *(bool*)inData );
+			break;
+		// clear MIDI parameter assignments
+		case kDfxPluginProperty_ResetMidiLearn:
+			// you don't need an input value for this property
+			dfxsettings->setParameterMidiReset();
 			break;
 		// set the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
-			dfxsettings->setLearner( *(long*)inData );
+			if (inData == NULL)
+				result = kAudioUnitErr_InvalidPropertyValue;
+			else
+				dfxsettings->setLearner( *(long*)inData );
 			break;
 	#endif
 

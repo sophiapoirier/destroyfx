@@ -269,8 +269,8 @@ public:
 	bool isLearning() { return midiLearn; }
 
 	// call these from valueChanged in the plugin editor
-	void setParameterMidiLearn(float value);
-	void setParameterMidiReset(float value);
+	void setParameterMidiLearn(bool value);
+	void setParameterMidiReset(bool value = true);
 
 	// potentially useful accessors
 	long getParameterAssignmentType(long paramTag);
