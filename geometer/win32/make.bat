@@ -10,7 +10,7 @@ rc geometer.rc
 echo -------------- compile.
 
 rem   XXX remove TARGET_PLUGIN_USES_VSTGUI define once we have our GUI lib
-cl  /FD  /MD /nologo /O2 /Ot /Og /Oi /Oy /Gs /GD /D "TARGET_PLUGIN_USES_VSTGUI" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I..\geometer\gui\ /I..\geometer\ /I..\vstsdk\ /I..\dfx-library\ /LD /D "GEOMETER_EXPORTS" /D "TARGET_API_VST" /FI "..\geometer\geometerdef.h" /D "VST_NUM_CHANNELS=2" ..\geometer\geometer.cpp ..\dfx-library\dfxgui.cpp ..\dfx-library\multikick.cpp ..\dfx-library\indexbitmap.cpp ..\geometer\gui\geometereditor.cpp ..\geometer\gui\geometerview.cpp ..\vstsdk\AudioEffect.cpp ..\vstsdk\audioeffectx.cpp ..\dfx-library\dfxplugin.cpp ..\dfx-library\dfxparameter.cpp ..\dfx-library\dfxsettings.cpp ..\dfx-library\dfxmidi.cpp ..\dfx-library\dfxplugin-vst.cpp /c
+cl  /FD  /MD /nologo /O2 /Ot /Og /Oi /Oy /Gs /GD /D "TARGET_PLUGIN_USES_VSTGUI" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I..\geometer\gui\ /I..\geometer\ /I..\vstsdk\ /I..\dfx-library\ /I..\dfx-library\obsolete /LD /D "GEOMETER_EXPORTS" /D "TARGET_API_VST" /FI "..\geometer\geometerdef.h" /D "VST_NUM_CHANNELS=2" ..\geometer\geometer.cpp ..\dfx-library\obsolete\dfxgui.cpp ..\dfx-library\obsolete\multikick.cpp ..\dfx-library\obsolete\indexbitmap.cpp ..\geometer\gui\geometereditor.cpp ..\geometer\gui\geometerview.cpp ..\vstsdk\AudioEffect.cpp ..\vstsdk\audioeffectx.cpp ..\dfx-library\dfxplugin.cpp ..\dfx-library\dfxparameter.cpp ..\dfx-library\dfxsettings.cpp ..\dfx-library\dfxmidi.cpp ..\dfx-library\dfxplugin-vst.cpp /c
 
 echo -------------- link.
 
