@@ -4,9 +4,9 @@
 #ifndef __DFX_GEOMETER_H
 #define __DFX_GEOMETER_H
 
-#ifndef __DFXPLUGIN_H
+#include "geometerdef.h"
+
 #include "dfxplugin.h"
-#endif
 
 #ifndef __DFXMUTEX_H
 #include "dfxmutex.h"
