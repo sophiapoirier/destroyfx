@@ -237,6 +237,9 @@ public:
   */
   float * in0, * out0;
 
+  /* must grab this before calling processw */
+  dfxmutex * cs;
+
 private:
 
   /* third-sized tail of previous processed frame. already has mixing envelope
