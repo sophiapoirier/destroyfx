@@ -148,6 +148,15 @@ DfxPlugin::DfxPlugin(
 
 
 //-----------------------------------------------------------------------------
+// this is called immediately after all constructors (DfxPlugin and any derived classes) complete
+void DfxPlugin::dfxplugin_postconstructor()
+{
+	// set up a name for the default preset if none was set
+	if ( !presetnameisvalid(0) )
+		setpresetname(0, PLUGIN_NAME_STRING);
+}
+
+//-----------------------------------------------------------------------------
 DfxPlugin::~DfxPlugin()
 {
 	if (parameters != NULL)

@@ -68,10 +68,13 @@ void MidiGater::processaudio(const float **in, float **out, unsigned long inNumF
 
 
 	// clear the output buffer because we accumulate output into it
-	for (unsigned long cha=0; cha < numChannels; cha++)
+	if (replacing)
 	{
-		for (unsigned long samp=0; samp < inNumFrames; samp++)
-			out[cha][samp] = 0.0f;
+		for (unsigned long cha=0; cha < numChannels; cha++)
+		{
+			for (unsigned long samp=0; samp < inNumFrames; samp++)
+				out[cha][samp] = 0.0f;
+		}
 	}
 
 

@@ -88,8 +88,6 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
 		editor = new BufferOverrideEditor(this);
 	#endif
-
-//for (long i=NUM_PARAMETERS; i < 34; i++)	AUBase::SetParameter(i, kAudioUnitScope_Global, 0, 0.0f, 0);
 }
 
 //-------------------------------------------------------------------------

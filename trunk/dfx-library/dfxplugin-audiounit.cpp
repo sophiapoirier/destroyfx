@@ -14,13 +14,13 @@ written by Marc Poirier, October 2002
 #pragma mark _________init_________
 
 //-----------------------------------------------------------------------------
+// this is called immediately after an instance of the plugin class is created
 void DfxPlugin::PostConstructor()
 {
 	TARGET_API_BASE_CLASS::PostConstructor();
 
-	// set up a name for the default preset if none was set
-	if ( !presetnameisvalid(0) )
-		setpresetname(0, PLUGIN_NAME_STRING);
+	dfxplugin_postconstructor();
+
 	// make host see that current preset is 0
 	update_preset(0);
 }
@@ -223,6 +223,12 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	// the complicated part:  getting the unit type
 	switch (getparameterunit(inParameterID))
 	{
+		case kDfxParamUnit_generic:
+			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+			break;
+		case kDfxParamUnit_quantity:
+			outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;	// XXX assume it's an integer?
+			break;
 		case kDfxParamUnit_percent:
 			outParameterInfo.unit = kAudioUnitParameterUnit_Percent;
 			break;
@@ -254,6 +260,9 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			outParameterInfo.unit = kAudioUnitParameterUnit_Rate;
 			break;
 		case kDfxParamUnit_divisor:
+			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+			break;
+		case kDfxParamUnit_exponent:
 			outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
 			break;
 		case kDfxParamUnit_semitones:
@@ -338,10 +347,16 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inID,
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					Float32 inValue, UInt32 inBufferOffsetInFrames)
 {
-	if ( (inScope == kAudioUnitScope_Global) && (inElement == 0) )
-		setparameter_f(inID, inValue);
+	if (inScope != kAudioUnitScope_Global)
+		return kAudioUnitErr_InvalidScope;
+	if (inElement != 0)
+		return kAudioUnitErr_InvalidElement;
+	if ( !parameterisvalid(inID) )
+		return kAudioUnitErr_InvalidParameter;
 
-	return AUBase::SetParameter(inID, inScope, inElement, inValue, inBufferOffsetInFrames);
+	setparameter_f(inID, inValue);
+	return noErr;
+//	return AUBase::SetParameter(inID, inScope, inElement, inValue, inBufferOffsetInFrames);
 }
 
 

@@ -1043,7 +1043,7 @@ void SkidderEditor::idle()
 		// turn off any glowing controls that are no longer learning
 		for (long i=0; i < NUM_PARAMETERS; i++)
 		{
-			if ( (faders[i] != NULL) && (i != chunk->getLearner()) )
+			if ( (faders[i] != NULL) && chunk->isLearner(i) )
 			{
 				if (faders[i]->getHandle() == gGlowingFaderHandle)
 				{
@@ -1056,14 +1056,14 @@ void SkidderEditor::idle()
 		//
 		if (rateFader)
 		{
-			if ( (chunk->getLearner() != rateFader->getTag()) && 
+			if ( !chunk->isLearner(rateFader->getTag()) && 
 					(rateFader->getHandle() == gGlowingFaderHandle) )
 			{
 				rateFader->setHandle(gFaderHandle);
 				rateFader->setDirty();
 				somethingChanged = true;
 			}
-			else if ( (chunk->getLearner() == rateFader->getTag()) && 
+			else if ( chunk->isLearner(rateFader->getTag()) && 
 					(rateFader->getHandle() == gFaderHandle) )
 			{
 				rateFader->setHandle(gGlowingFaderHandle);
@@ -1074,17 +1074,17 @@ void SkidderEditor::idle()
 		//
 		if (pulsewidthFader)
 		{
-			if ( ((chunk->getLearner() != kPulsewidthRandMin) && 
-					(pulsewidthFader->getHandle() == gGlowingFaderHandleLeft)) && 
-					!((chunk->getLearner() == kPulsewidth) && ((Skidder*)effect)->pulsewidthDoubleAutomate) )
+			if ( ( !chunk->isLearner(kPulsewidthRandMin) && 
+					(pulsewidthFader->getHandle() == gGlowingFaderHandleLeft) ) && 
+					!(chunk->isLearner(kPulsewidth) && ((Skidder*)effect)->pulsewidthDoubleAutomate) )
 			{
 				pulsewidthFader->setHandle(gFaderHandleLeft);
 				pulsewidthFader->setDirty();
 				somethingChanged = true;
 			}
-			if ( ((chunk->getLearner() != kPulsewidth) && 
+			if ( (!chunk->isLearner(kPulsewidth) && 
 					(pulsewidthFader->getHandle2() == gGlowingFaderHandleRight)) && 
-					!((chunk->getLearner() == kPulsewidthRandMin) && ((Skidder*)effect)->pulsewidthDoubleAutomate) )
+					!(chunk->isLearner(kPulsewidthRandMin) && ((Skidder*)effect)->pulsewidthDoubleAutomate) )
 			{
 				pulsewidthFader->setHandle2(gFaderHandleRight);
 				pulsewidthFader->setDirty();
@@ -1094,17 +1094,17 @@ void SkidderEditor::idle()
 		//
 		if (floorFader)
 		{
-			if ( ((chunk->getLearner() != kFloorRandMin) && 
+			if ( (!chunk->isLearner(kFloorRandMin) && 
 					(floorFader->getHandle() == gGlowingFaderHandleLeft)) && 
-					!((chunk->getLearner() == kFloor) && ((Skidder*)effect)->floorDoubleAutomate) )
+					!(chunk->isLearner(kFloor) && ((Skidder*)effect)->floorDoubleAutomate) )
 			{
 				floorFader->setHandle(gFaderHandleLeft);
 				floorFader->setDirty();
 				somethingChanged = true;
 			}
-			if ( ((chunk->getLearner() != kFloor) && 
+			if ( (!chunk->isLearner(kFloor) && 
 					(floorFader->getHandle2() == gGlowingFaderHandleRight)) && 
-					!((chunk->getLearner() == kFloorRandMin) && ((Skidder*)effect)->floorDoubleAutomate) )
+					!(chunk->isLearner(kFloorRandMin) && ((Skidder*)effect)->floorDoubleAutomate) )
 			{
 				floorFader->setHandle2(gFaderHandleRight);
 				floorFader->setDirty();
