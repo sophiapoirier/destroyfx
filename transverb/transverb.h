@@ -7,7 +7,9 @@
 #include "dfxplugin.h"
 #endif
 
+#ifndef __dfx_iirfilter_h
 #include "iirfilter.h"
+#endif
 
 
 //-----------------------------------------------------------------------------

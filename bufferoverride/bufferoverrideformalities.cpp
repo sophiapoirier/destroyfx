@@ -266,6 +266,22 @@ void BufferOverride::initPresets()
 	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
 	i++;
 
+	setpresetname(i, "jiggy");
+	setpresetparameter_f(i, kDivisor, 4.0f);
+	setpresetparameter_i(i, kBufferSize_sync, tempoRateTable->getNearestTempoRateIndex(4.0f));
+	setpresetparameter_b(i, kBufferTempoSync, true);
+	setpresetparameter_b(i, kBufferInterrupt, true);
+	setpresetparameter_i(i, kDivisorLFOrate_sync, tempoRateTable->getNearestTempoRateIndex(0.5f));
+	setpresetparameter_f(i, kDivisorLFOdepth, 84.0f);
+	setpresetparameter_i(i, kDivisorLFOshape, kSquareLFO);
+	setpresetparameter_b(i, kDivisorLFOtempoSync, true);
+	setpresetparameter_f(i, kBufferLFOdepth, 0.0f);
+	setpresetparameter_f(i, kSmooth, 9.0f);	// eh?
+	setpresetparameter_f(i, kDryWetMix, 100.0f);
+	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_b(i, kTempoAuto, true);
+	i++;
+
 	setpresetname(i, "\"echo\"");
 	setpresetparameter_f(i, kDivisor, 2.001f);
 	setpresetparameter_f(i, kBufferSize_abs, 603.0f);
@@ -292,22 +308,6 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferLFOtempoSync, true);
 	setpresetparameter_f(i, kSmooth, 6.0f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
-	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
-	setpresetparameter_b(i, kTempoAuto, true);
-	i++;
-
-	setpresetname(i, "jiggy");
-	setpresetparameter_f(i, kDivisor, 4.0f);
-	setpresetparameter_i(i, kBufferSize_sync, tempoRateTable->getNearestTempoRateIndex(4.0f));
-	setpresetparameter_b(i, kBufferTempoSync, true);
-	setpresetparameter_b(i, kBufferInterrupt, true);
-	setpresetparameter_i(i, kDivisorLFOrate_sync, tempoRateTable->getNearestTempoRateIndex(0.5f));
-	setpresetparameter_f(i, kDivisorLFOdepth, 84.0f);
-	setpresetparameter_i(i, kDivisorLFOshape, kSquareLFO);
-	setpresetparameter_b(i, kDivisorLFOtempoSync, true);
-	setpresetparameter_f(i, kBufferLFOdepth, 0.0f);
-	setpresetparameter_f(i, kSmooth, 9.0f);	// eh?
-	setpresetparameter_f(i, kDryWetMix, 100.0f);
 	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
 	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
