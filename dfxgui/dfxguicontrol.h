@@ -15,7 +15,7 @@ class DfxGuiEditor;
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-class DGControl : public DGItem
+class DGControl : public Destructible
 {
 public:
 
@@ -25,7 +25,7 @@ public:
 	DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange = 0.0f);
 	virtual ~DGControl();
 
-	virtual destroy() { delete this; }
+	virtual void destroy() { delete this; }
 
 	/* XXX add "settype", "gettype" (used to be in dgitem) */
 
