@@ -6,11 +6,10 @@
 
 
 // macro for boring Component entry point stuff
-COMPONENT_ENTRY(RMSbuddy);
+COMPONENT_ENTRY(RMSBuddy);
 
-unsigned long _numChannels = 1;
 //-----------------------------------------------------------------------------
-RMSbuddy::RMSbuddy(AudioUnit component)
+RMSBuddy::RMSBuddy(AudioUnit component)
 	: AUEffectBase(component, true)	// "true" to say that we can process audio in-place
 {
 	// initialize the arrays and array quantity counter
@@ -33,7 +32,7 @@ RMSbuddy::RMSbuddy(AudioUnit component)
 
 //-----------------------------------------------------------------------------------------
 // this is called when we need to prepare for audio processing (allocate DSP resources, etc.)
-ComponentResult RMSbuddy::Initialize()
+ComponentResult RMSBuddy::Initialize()
 {
 	// call parent implementation first
 	ComponentResult result = AUEffectBase::Initialize();
@@ -61,7 +60,7 @@ ComponentResult RMSbuddy::Initialize()
 
 //-----------------------------------------------------------------------------------------
 // this is the sort of mini-destructor partner to Initialize, where we clean up DSP resources
-void RMSbuddy::Cleanup()
+void RMSBuddy::Cleanup()
 {
 	// release all of our dynamics data value arrays
 
@@ -92,7 +91,7 @@ void RMSbuddy::Cleanup()
 
 //-----------------------------------------------------------------------------------------
 // this is called the reset the DSP state (clear buffers, reset counters, etc.)
-ComponentResult RMSbuddy::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
+ComponentResult RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	// reset all of these things
 	resetRMS();
@@ -110,14 +109,12 @@ ComponentResult RMSbuddy::Reset(AudioUnitScope inScope, AudioUnitElement inEleme
 	resetGUIcounters();
 	notifyGUI();	// make sure that the GUI catches these changes
 
-_numChannels++;
-PropertyChanged(kNumChannelsProperty, kAudioUnitScope_Global, (AudioUnitElement)0);
 	return noErr;
 }
 
 //-----------------------------------------------------------------------------------------
 // reset the average RMS-related values and restart calculation of average RMS
-void RMSbuddy::resetRMS()
+void RMSBuddy::resetRMS()
 {
 	totalSamples = 0;
 	for (unsigned long ch=0; ch < numChannels; ch++)
@@ -134,7 +131,7 @@ void RMSbuddy::resetRMS()
 
 //-----------------------------------------------------------------------------------------
 // reset the absolute peak-related values and restart calculation of absolute peak
-void RMSbuddy::resetPeak()
+void RMSBuddy::resetPeak()
 {
 	for (unsigned long ch=0; ch < numChannels; ch++)
 	{
@@ -148,7 +145,7 @@ void RMSbuddy::resetPeak()
 
 //-----------------------------------------------------------------------------------------
 // reset the GUI-related continual values
-void RMSbuddy::resetGUIcounters()
+void RMSBuddy::resetGUIcounters()
 {
 	guiSamplesCounter = 0;
 	for (unsigned long ch=0; ch < numChannels; ch++)
@@ -162,7 +159,7 @@ void RMSbuddy::resetGUIcounters()
 
 //-----------------------------------------------------------------------------------------
 // post notification to the GUI that it's time to re-fetch data and refresh its display
-void RMSbuddy::notifyGUI()
+void RMSBuddy::notifyGUI()
 {
 	// we use a parameter chane notification (using the fake parameter) rather than a property change notification 
 	// because property change notifications cause immediate callbacks which should not be done from audio threads, 
@@ -177,7 +174,7 @@ void RMSbuddy::notifyGUI()
 }
 
 //-----------------------------------------------------------------------------------------
-ComponentResult RMSbuddy::GetParameterInfo(AudioUnitScope inScope, 
+ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope, 
 						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo)
 {
 	// the size, in ms, of the RMS and peak analysis frame / refresh rate
@@ -207,7 +204,7 @@ ComponentResult RMSbuddy::GetParameterInfo(AudioUnitScope inScope,
 
 //-----------------------------------------------------------------------------------------
 // get the current value of a parameter
-ComponentResult RMSbuddy::GetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
+ComponentResult RMSBuddy::GetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
 										AudioUnitElement inElement, Float32 & outValue)
 {
 	// it's a fake parameter, but if we don't at least say noErr for this one, the parameter listener system won't work
@@ -224,7 +221,7 @@ ComponentResult RMSbuddy::GetParameter(AudioUnitParameterID inParameterID, Audio
 
 //-----------------------------------------------------------------------------------------
 // get the details about a property
-ComponentResult RMSbuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+ComponentResult RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, UInt32 & outDataSize, Boolean & outWritable)
 {
 	switch (inPropertyID)
@@ -253,7 +250,7 @@ ComponentResult RMSbuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, Audi
 
 //-----------------------------------------------------------------------------------------
 // get the value/data of a property
-ComponentResult RMSbuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+ComponentResult RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, void * outData)
 {
 	switch (inPropertyID)
@@ -283,7 +280,7 @@ ComponentResult RMSbuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 
 		// get the number of audio channels being analyzed
 		case kNumChannelsProperty:
-			*((unsigned long*)outData) = _numChannels;
+			*((unsigned long*)outData) = numChannels;
 			return noErr;
 
 		// let non-custom properties fall through to the parent class' handler
@@ -294,7 +291,7 @@ ComponentResult RMSbuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 
 //-----------------------------------------------------------------------------------------
 // set the value/data of a property
-ComponentResult RMSbuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+ComponentResult RMSBuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, const void * inData, UInt32 inDataSize)
 {
 	switch (inPropertyID)
@@ -323,14 +320,14 @@ ComponentResult RMSbuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 
 //-----------------------------------------------------------------------------------------
 // indicate how many custom GUI components are recommended for this AU
-int RMSbuddy::GetNumCustomUIComponents()
+int RMSBuddy::GetNumCustomUIComponents()
 {
 	return 1;
 }
 
 //-----------------------------------------------------------------------------------------
 // give a Component description of the GUI component(s) that we recommend for this AU
-void RMSbuddy::GetUIComponentDescs(ComponentDescription * inDescArray)
+void RMSBuddy::GetUIComponentDescs(ComponentDescription * inDescArray)
 {
 	if (inDescArray == NULL)
 		return;
@@ -349,7 +346,7 @@ void RMSbuddy::GetUIComponentDescs(ComponentDescription * inDescArray)
 // the nice thing is about this being an "inline effect" is that it means that 
 // the input and output buffers are the same, so we don't need to copy the 
 // audio input stream to output or anything pointless like that
-OSStatus RMSbuddy::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
+OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
 						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
 						UInt32 inFramesToProcess)
 {

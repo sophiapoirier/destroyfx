@@ -30,10 +30,10 @@ typedef struct {
 
 
 //----------------------------------------------------------------------------- 
-class RMSbuddy : public AUEffectBase
+class RMSBuddy : public AUEffectBase
 {
 public:
-	RMSbuddy(AudioUnit component);
+	RMSBuddy(AudioUnit component);
 
 	virtual ComponentResult Initialize();
 	virtual void Cleanup();

@@ -7,14 +7,14 @@
 #include "AUCarbonViewBase.h"
 
 
-class RMSbuddyEditor;
+class RMSBuddyEditor;
 
 //-----------------------------------------------------------------------------
 // a generic custom control class, which our useful controls are derived from
 class RMSControl
 {
 public:
-	RMSControl(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+	RMSControl(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 				long inControlRange, long inParamID = -1);
 	virtual ~RMSControl();
 
@@ -50,7 +50,7 @@ public:
 		{	return &auvParam;	}
 
 protected:
-	RMSbuddyEditor * ownerEditor;
+	RMSBuddyEditor * ownerEditor;
 	long width, height;
 	ControlRef carbonControl;
 	AUVParameter auvParam;
@@ -78,7 +78,7 @@ enum {
 class RMSTextDisplay : public RMSControl
 {
 public:
-	RMSTextDisplay(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+	RMSTextDisplay(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
 					const char * inFontName, float inFontSize, long inTextAlignment, long inParamID = -1);
 	virtual ~RMSTextDisplay();
@@ -105,7 +105,7 @@ private:
 class RMSButton : public RMSControl
 {
 public:
-	RMSButton(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage);
+	RMSButton(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage);
 
 	virtual void draw(CGContextRef inContext, float inPortHeight);
 	virtual void mouseDown(long inXpos, long inYpos);
@@ -122,7 +122,7 @@ private:
 class RMSSlider : public RMSControl
 {
 public:
-	RMSSlider(RMSbuddyEditor * inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
+	RMSSlider(RMSBuddyEditor * inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
 				RMSColor inBackColor, RMSColor inFillColor);
 	virtual ~RMSSlider();
 
@@ -141,11 +141,11 @@ private:
 
 //-----------------------------------------------------------------------------
 // our GUI
-class RMSbuddyEditor : public AUCarbonViewBase
+class RMSBuddyEditor : public AUCarbonViewBase
 {
 public:
-	RMSbuddyEditor(AudioUnitCarbonView inInstance);
-	virtual ~RMSbuddyEditor();
+	RMSBuddyEditor(AudioUnitCarbonView inInstance);
+	virtual ~RMSBuddyEditor();
 
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventRef inEvent);
