@@ -99,6 +99,7 @@ public:
 
   virtual void suspend();
   virtual void resume();
+  virtual long fxIdle();
 
   virtual void processw(float * in, float * out, long samples);
 

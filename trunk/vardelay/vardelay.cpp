@@ -19,14 +19,14 @@ const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = {
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5, "samples");
-  FPARAM(shape, P_SHAPE, "shape", 0.0, "");
+  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5f, "samples");
+  FPARAM(shape, P_SHAPE, "shape", 0.0f, "");
   
-  FPARAM(rigid, P_RIGID, "rigid", 0.0, "?");
+  FPARAM(rigid, P_RIGID, "rigid", 0.0f, "?");
 
-  FPARAM(usebands, P_USEBANDS, "usebands", 0.4, "number");
+  FPARAM(usebands, P_USEBANDS, "usebands", 0.4f, "number");
   for(int zz=0; zz < BANDS; zz++) {
-    FPARAM(band[zz], P_DELAYS + zz, "band", 0.0, "dist");
+    FPARAM(band[zz], P_DELAYS + zz, "band", 0.0f, "dist");
   }
 
   long maxframe = 0;
@@ -41,9 +41,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   /* prevmix is only a single third long */
   prevmix = (float*)malloc((maxframe / 2) * sizeof (float));
 
-  /* resume sets up buffers and sizes */
-  changed = 1;
-  resume ();
+  changed = 0;
 }
 
 PLUGIN::~PLUGIN() {
@@ -56,8 +54,6 @@ PLUGIN::~PLUGIN() {
 }
 
 void PLUGIN::resume() {
-
-  if (changed) ioChanged();
 
   framesize = MKBUFSIZE(bufsizep);
   third = framesize / 2;
@@ -78,15 +74,25 @@ void PLUGIN::resume() {
   outstart = 0;
   outsize = framesize;
 
-  if (changed) setInitialDelay(framesize);
-
+  setInitialDelay(framesize);
   changed = 0;
+  needIdle();
 
 }
 
 void PLUGIN::suspend () {
   /* nothing to do here. */
 
+}
+
+long PLUGIN::fxIdle() {
+  /* ioChanged() causes resume() to be called and 
+     changed to initialDelay are updated for the host */
+  if (changed)
+    ioChanged();
+  changed = 0;
+
+  return 1;
 }
 
 /* tail is the same as delay, of course */
@@ -192,7 +198,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
   float bandsize = 1.0f / (usebands * .99f * BANDS);
   for(int i=0; i < samples; i ++) {
-    unsigned int which = fabs(in[i]) / bandsize;
+    unsigned int which = fabsf(in[i]) / bandsize;
     if (which >= (BANDS-1)) which = BANDS - 2;
 
     /* XXX when writing here, do anti-aliasing */

@@ -1326,6 +1326,11 @@ void GeometerEditor::idle() {
   if (helpchanged || glowingchanged || gviewchanged)
     postUpdate();
 
+  /* use this idle routine to watch out for new frame size values, too */
+  if (((PLUGIN*)effect)->changed)
+    ((AudioEffectX*)effect)->ioChanged();
+  ((PLUGIN*)effect)->changed = 0;
+
   // this is called so that idle() actually happens
   AEffGUIEditor::idle();
 }

@@ -64,6 +64,8 @@ Scrubby::Scrubby(audioMasterCallback audioMaster)
 
 	srand((unsigned int)time(NULL));	// sets a seed value for rand() from the system clock
 
+	predelayChanged = false;
+
 	suspend();
 
 	editor = new ScrubbyEditor(this);
@@ -133,6 +135,8 @@ void Scrubby::resume()
 
 	// tell the host what the length of delay compensation should be, in samples
 	setInitialDelay((long) (seekRangeScaled(fSeekRange) * fPredelay * SAMPLERATE * 0.001f));
+	needIdle();
+	predelayChanged = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -172,6 +176,16 @@ void Scrubby::createAudioBuffers()
 		buffer2[j] = 0.0f;
 }
 
+//-------------------------------------------------------------------------
+long Scrubby::fxIdle()
+{
+	if (predelayChanged)
+		ioChanged();
+	predelayChanged = false;
+
+	return 1;
+}
+
 
 #pragma mark _________info_________
 
@@ -197,7 +211,7 @@ bool Scrubby::getInputProperties(long index, VstPinProperties* properties)
 }
 
 //------------------------------------------------------------------------
-bool Scrubby::getOutputProperties(long index, VstPinProperties* properties)
+bool Scrubby::getOutputProperties(long index, VstPinProperties *properties)
 {
 	if ( (index >= 0) && (index < 2) )
 	{
@@ -574,7 +588,7 @@ void Scrubby::setParameter(long index, float value)
 		case kPredelay:
 			fPredelay = value;
 			// this tells the host to call a suspend()-resume() pair, which updates initialDelay
-			ioChanged();
+			predelayChanged = true;
 			break;
 		default:	break;
 	}
