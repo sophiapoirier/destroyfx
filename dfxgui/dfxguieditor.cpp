@@ -29,7 +29,7 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 	dgControlSpec.u.classRef = NULL;
 	controlHandlerUPP = NULL;
 	windowEventHandlerUPP = NULL;
-	windowEventEventHandlerRef = NULL;
+	windowEventHandlerRef = NULL;
 
 	fontsATSContainer = NULL;
 	fontsWereActivated = false;	// guilty until proven innocent
@@ -64,9 +64,9 @@ DfxGuiEditor::~DfxGuiEditor()
 		imagesList = tempcl;
 	}
 
-	if (windowEventEventHandlerRef != NULL)
-		RemoveEventHandler(windowEventEventHandlerRef);
-	windowEventEventHandlerRef = NULL;
+	if (windowEventHandlerRef != NULL)
+		RemoveEventHandler(windowEventHandlerRef);
+	windowEventHandlerRef = NULL;
 	if (windowEventHandlerUPP != NULL)
 		DisposeEventHandlerUPP(windowEventHandlerUPP);
 	windowEventHandlerUPP = NULL;
@@ -75,7 +75,7 @@ DfxGuiEditor::~DfxGuiEditor()
 	long systemVersion = 0;
 	if ( (Gestalt(gestaltSystemVersion, &systemVersion) == noErr) && ((systemVersion & 0xFFFF) >= 0x1023) )
 	{
-//printf("using Mac OS X version 10.2.3 or higher, so our control toolbox class will be unregistered\n");
+//fprintf(stderr, "using Mac OS X version 10.2.3 or higher, so our control toolbox class will be unregistered\n");
 		if (dgControlSpec.u.classRef != NULL)
 		{
 			OSStatus unregResult = UnregisterToolboxObjectClass( (ToolboxObjectClassRef)(dgControlSpec.u.classRef) );
@@ -86,10 +86,10 @@ DfxGuiEditor::~DfxGuiEditor()
 					DisposeEventHandlerUPP(controlHandlerUPP);
 				controlHandlerUPP = NULL;
 			}
-//else printf("unregistering our control toolbox class FAILED, error %ld\n", unregResult);
+//else fprintf(stderr, "unregistering our control toolbox class FAILED, error %ld\n", unregResult);
 		}
 	}
-//else printf("using a version of Mac OS X lower than 10.2.3, so our control toolbox class will NOT be unregistered\n");
+//else fprintf(stderr, "using a version of Mac OS X lower than 10.2.3, so our control toolbox class will NOT be unregistered\n");
 
 	// This will actually automatically be deactivated when the host app is quit, 
 	// so there's no need to deactivate fonts ourselves.  
@@ -149,7 +149,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 								};
 	windowEventHandlerUPP = NewEventHandlerUPP(DGWindowEventHandler);
 	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), windowEventHandlerUPP, 
-						GetEventTypeCount(windowEvents), windowEvents, this, &windowEventEventHandlerRef);
+						GetEventTypeCount(windowEvents), windowEvents, this, &windowEventHandlerRef);
 
 
 // register for HitTest events on the background embedding pane so that we now when the mouse hovers over it
@@ -231,31 +231,32 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 			GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
 			if (carbonControl == mCarbonPane)
 			{
-				CGrafPtr oldPort = NULL;
-				CGrafPtr windowPort;
+				CGrafPtr windowPort = NULL;
 				// if we received a graphics port parameter, use that...
-				if ( GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &windowPort) == noErr )
-				{
-					GetPort(&oldPort);	// remember original port
-					SetPort(windowPort);	// use new port
-				}
+				OSStatus error = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &windowPort);
 				// ... otherwise use the current graphics port
-				else
+				if ( (error != noErr) || (windowPort == NULL) )
 					GetPort(&windowPort);
+				if (windowPort == NULL)
+					return false;
 				Rect portBounds;
 				GetPortBounds(windowPort, &portBounds);
 
 				// drawing
-				CGContextRef context;
-				QDBeginCGContext(windowPort, &context);
+				CGContextRef context = NULL;
+				error = QDBeginCGContext(windowPort, &context);
+				if ( (error != noErr) || (windowPort == NULL) )
+					return false;
 				SyncCGContextOriginWithPort(context, windowPort);
 				CGContextSaveGState(context);
 #ifdef FLIP_CG_COORDINATES
 				// this lets me position things with non-upside-down coordinates, 
 				// but unfortunately draws all images and text upside down...
-				CGContextTranslateCTM(context, 0.0f, (float)(portBounds.bottom));
+				CGContextTranslateCTM(context, 0.0f, (float)(portBounds.bottom - portBounds.top));
 				CGContextScaleCTM(context, 1.0f, -1.0f);
+#endif
 				// XXX need a better way of determining the background size
+				// XXX moreover, what's the point of clipping to the image size?  it's not like that image will draw outside its own bounds
 				if (backgroundImage != NULL)
 				{
 					// define the clipping region
@@ -263,16 +264,12 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 											(float)(backgroundImage->getWidth()), (float)(backgroundImage->getHeight()) );
 					CGContextClipToRect(context, clipRect);
 				}
-#endif
 				CGContextSetShouldAntialias(context, false);	// XXX disable anti-aliased drawing for image rendering
 				DrawBackground(context, portBounds.bottom);
 				CGContextRestoreGState(context);
 				CGContextSynchronize(context);
 				QDEndCGContext(windowPort, &context);
 
-				// restore original port, if we set a different port
-				if (oldPort != NULL)
-					SetPort(oldPort);
 				return true;
 			}
 		}
@@ -288,7 +285,7 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 
 		else if (inEventKind == kEventControlApplyBackground)
 		{
-//			printf("mCarbonPane HandleEvent(kEventControlApplyBackground)\n");
+//			fprintf(stderr, "mCarbonPane HandleEvent(kEventControlApplyBackground)\n");
 			return false;
 		}
 	}
@@ -355,6 +352,17 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 	}
 
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::IsWindowCompositing()
+{
+	WindowAttributes attributes = 0;
+	OSStatus error = GetWindowAttributes(GetCarbonWindow(), &attributes);
+	if (error == noErr)
+		return (attributes & kWindowCompositingAttribute) ? true : false;
+	else
+		return false;
 }
 #endif
 
@@ -436,29 +444,18 @@ void DfxGuiEditor::setCurrentControl_mouseover(DGControl * inNewMousedOverContro
 }
 
 //-----------------------------------------------------------------------------
-float DfxGuiEditor::getparameter_f(long inParameterID)
-{
-	Float32 value;
-	if (AudioUnitGetParameter(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, 
-					kAudioUnitScope_Global, (AudioUnitElement)0, &value) == noErr)
-		return value;
-	else
-		return 0.0f;
-}
-
-//-----------------------------------------------------------------------------
-double DfxGuiEditor::getparameter_d(long inParameterID)
+double DfxGuiEditor::getparameter_f(long inParameterID)
 {
 	DfxParameterValueRequest request;
 	UInt32 dataSize = sizeof(request);
 	request.parameterID = inParameterID;
 	request.valueItem = kDfxParameterValueItem_current;
-	request.valueType = kDfxParamValueType_double;
+	request.valueType = kDfxParamValueType_float;
 
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 							kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
 							== noErr)
-		return request.value.d;
+		return request.value.f;
 	else
 		return 0.0;
 }
@@ -498,7 +495,7 @@ bool DfxGuiEditor::getparameter_b(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_f(long inParameterID, float inValue)
+void DfxGuiEditor::setparameter_f(long inParameterID, double inValue)
 {
 	automationgesture_begin(inParameterID);
 
@@ -507,23 +504,6 @@ void DfxGuiEditor::setparameter_f(long inParameterID, float inValue)
 	request.valueItem = kDfxParameterValueItem_current;
 	request.valueType = kDfxParamValueType_float;
 	request.value.f = inValue;
-
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
-
-	automationgesture_end(inParameterID);
-}
-
-//-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_d(long inParameterID, double inValue)
-{
-	automationgesture_begin(inParameterID);
-
-	DfxParameterValueRequest request;
-	request.parameterID = inParameterID;
-	request.valueItem = kDfxParameterValueItem_current;
-	request.valueType = kDfxParamValueType_double;
-	request.value.d = inValue;
 
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
@@ -746,8 +726,6 @@ return false;
 		OSStatus paramstatus = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
 		if (paramstatus != noErr)
 			mouseButtons = GetCurrentEventButtonState();
-//		EventMouseButton button;	// kEventMouseButtonPrimary, kEventMouseButtonSecondary, or kEventMouseButtonTertiary
-//		GetEventParameter(inEvent, kEventParamMouseButton, typeMouseButton, NULL, sizeof(EventMouseButton), NULL, &button);
 
 		ourControl->mouseTrack(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
 
@@ -764,7 +742,7 @@ return false;
 		if ( ourControl->isParameterAttached() )
 		{
 			TellListener(ourControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
-//			printf("DGControlMouseHandler -> TellListener(MouseUp, %ld)\n", ourControl->getParameterID());
+//			fprintf(stderr, "DGControlMouseHandler -> TellListener(MouseUp, %ld)\n", ourControl->getParameterID());
 		}
 
 		return false;	// let it fall through in case the host needs the event
@@ -789,9 +767,9 @@ bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 		GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
 		UInt32 modifiers;
 		GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-//printf("keyCode = %lu,  charCode = ", keyCode);
-//if ( (charCode > 0x7F) || iscntrl(charCode) ) printf("0x%.2X\n", charCode);
-//else printf("%c\n", charCode);
+//fprintf(stderr, "keyCode = %lu,  charCode = ", keyCode);
+//if ( (charCode > 0x7F) || iscntrl(charCode) ) fprintf(stderr, "0x%.2X\n", charCode);
+//else fprintf(stderr, "%c\n", charCode);
 
 		if ( ((keyCode == 44) && (modifiers & cmdKey)) || 
 				(charCode == kHelpCharCode) )
@@ -825,11 +803,11 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 
 		if (hiCommand.commandID == kHICommandAppHelp)
 		{
-//printf("command ID = kHICommandAppHelp\n");
+//fprintf(stderr, "command ID = kHICommandAppHelp\n");
 			if (launch_documentation() == noErr)
 				return true;
 		}
-//else printf("command ID = %.4s\n", (char*) &(hiCommand.commandID));
+//else fprintf(stderr, "command ID = %.4s\n", (char*) &(hiCommand.commandID));
 
 		return false;
 	}
@@ -881,33 +859,33 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 		switch (inEventKind)
 		{
 			case kEventControlDraw:
+//fprintf(stderr, "kEventControlDraw\n");
 				{
 //CGContextRef econtext = NULL;
 //OSStatus cgstat = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &econtext);
-//printf("GetEventParameter(kEventParamCGContextRef) = %ld\n", cgstat);
-					CGrafPtr oldPort = NULL;
-					CGrafPtr windowPort;
+//fprintf(stderr, "GetEventParameter(kEventParamCGContextRef) = %ld\n", cgstat);
+					CGrafPtr windowPort = NULL;
 					// if we received a graphics port parameter, use that...
-					if ( GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &windowPort) == noErr )
-					{
-						GetPort(&oldPort);	// remember original port
-						SetPort(windowPort);	// use new port
-					}
+					OSStatus error = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &windowPort);
 					// ... otherwise use the current graphics port
-					else
+					if ( (error != noErr) || (windowPort == NULL) )
 						GetPort(&windowPort);
+					if (windowPort == NULL)
+						return false;
 					Rect portBounds;
 					GetPortBounds(windowPort, &portBounds);
 
 					// set up the CG context
-					CGContextRef context;
-					QDBeginCGContext(windowPort, &context);
+					CGContextRef context = NULL;
+					error = QDBeginCGContext(windowPort, &context);
+					if ( (error != noErr) || (context == NULL) )
+						return false;
 					SyncCGContextOriginWithPort(context, windowPort);
 					CGContextSaveGState(context);
 #ifdef FLIP_CG_COORDINATES
 					// this lets me position things with non-upside-down coordinates, 
 					// but unfortunately draws all images and text upside down...
-					CGContextTranslateCTM(context, 0.0f, (float)(portBounds.bottom));
+					CGContextTranslateCTM(context, 0.0f, (float)(portBounds.bottom - portBounds.top));
 					CGContextScaleCTM(context, 1.0f, -1.0f);
 #endif
 					// define the clipping region
@@ -919,16 +897,12 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 					CGContextRestoreGState(context);
 					CGContextSynchronize(context);
 					QDEndCGContext(windowPort, &context);
-
-					// restore original port, if we set a different port
-					if (oldPort != NULL)
-						SetPort(oldPort);
 				}
 				return true;
 
 			case kEventControlHitTest:
 				{
-//printf("kEventControlHitTest\n");
+//fprintf(stderr, "kEventControlHitTest\n");
 					// get mouse location
 					Point mouseLocation;
 					GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(Point), NULL, &mouseLocation);
@@ -951,33 +925,34 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 /*
 			case kEventControlHit:
 				{
-printf("kEventControlHit\n");
+fprintf(stderr, "kEventControlHit\n");
 				}
 				return true;
 */
 
 			case kEventControlTrack:
 				{
-//printf("kEventControlTrack\n");
+//fprintf(stderr, "kEventControlTrack\n");
 //					ControlPartCode whatPart = kControlIndicatorPart;
 					ControlPartCode whatPart = kControlNoPart;	// cuz otherwise we get a Hit event which triggers AUCVControl automation end
 					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(whatPart), &whatPart);
 				}
 //			case kEventControlClick:
-//if (inEventKind == kEventControlClick) printf("kEventControlClick\n");
+//if (inEventKind == kEventControlClick) fprintf(stderr, "kEventControlClick\n");
 			case kEventControlContextualMenuClick:
-//if (inEventKind == kEventControlContextualMenuClick) printf("kEventControlContextualMenuClick\n");
+//if (inEventKind == kEventControlContextualMenuClick) fprintf(stderr, "kEventControlContextualMenuClick\n");
 				{
 					setCurrentControl_mouseover(ourDGControl);
 
 					UInt32 mouseButtons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 //					UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 					// XXX kEventParamMouseChord does not exist for control class events, only mouse class
+					// XXX hey, that's not what the headers say, they say that kEventControlClick should have that parameter
 //					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
 
 					HIPoint mouseLocation;
 					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
-//printf("mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation.x, mouseLocation.y);
+//fprintf(stderr, "mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation.x, mouseLocation.y);
 					Point mouseLocation_i;
 					mouseLocation_i.h = (short) mouseLocation.x;
 					mouseLocation_i.v = (short) mouseLocation.y;
@@ -988,7 +963,7 @@ printf("kEventControlHit\n");
 						mouseLocation.x = (float) mouseLocation_i.h;
 						mouseLocation.y = (float) mouseLocation_i.v;
 					}
-//printf("mouse.x = %d, mouse.y = %d\n\n", mouseLocation_i.h, mouseLocation_i.v);
+//fprintf(stderr, "mouse.x = %d, mouse.y = %d\n\n", mouseLocation_i.h, mouseLocation_i.v);
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 					// the content area of the window (i.e. not the title bar or any borders)
@@ -1017,7 +992,7 @@ printf("kEventControlHit\n");
 					if ( ourDGControl->isParameterAttached() && (inEventKind == kEventControlContextualMenuClick) )
 					{
 						TellListener(ourDGControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
-//						printf("DGControlEventHandler -> TellListener(MouseDown, %ld)\n", ourDGControl->getParameterID());
+//						fprintf(stderr, "DGControlEventHandler -> TellListener(MouseDown, %ld)\n", ourDGControl->getParameterID());
 					}
 
 					ourDGControl->mouseDown(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
