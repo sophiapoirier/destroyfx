@@ -14,7 +14,7 @@
 
 // XXX finish support for loading old pre-DfxPlugin settings
 #ifndef DFX_SUPPORT_OLD_VST_SETTINGS
-#define DFX_SUPPORT_OLD_VST_SETTINGS 1
+#define DFX_SUPPORT_OLD_VST_SETTINGS 0
 #endif
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

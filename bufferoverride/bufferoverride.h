@@ -40,6 +40,7 @@ enum
 	kMidiMode,
 
 	kTempo,
+	kTempoAuto,
 
 	NUM_PARAMETERS
 };
@@ -111,7 +112,7 @@ private:
 
 	// the parameters
 	float divisor, bufferSizeMs, bufferSizeSync;
-	bool bufferTempoSync, bufferInterrupt;
+	bool bufferTempoSync, bufferInterrupt, useHostTempo;
 	float smooth, dryWetMix, userTempo;
 	double pitchbendRange;
 	long midiMode;
