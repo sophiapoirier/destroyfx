@@ -484,6 +484,9 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
     
     float factor = 1.0f + op_param[OP_SLOW];
 
+    /* We don't need to worry about maxpoints, since
+       we will just be moving existing samples (and
+       truncating)... */
     int i;
     for(i = 0; i < (npts-1); i ++) {
       px[i] *= factor;
@@ -502,8 +505,51 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
     break;
   }
   case OP_FAST: {
-    /* FIXME: write it! ;) */
 
+    float factor = 1.0f + (op_param[OP_FAST] * 3.0f);
+    float onedivfactor = 1.0f / factor;
+
+    /* number of times we need to loop through samples */
+    int times = (int)(factor + 1.0);
+
+    int outi = 0;
+    for(int rep = 0; rep < times; rep ++) {
+      /* where this copy of the points begins */
+      int offset = rep * (onedivfactor * samples);
+      for (int s = 0; s < npts; s ++) {
+	/* XXX is destx in range? */
+	int destx = offset + (px[s] * onedivfactor);
+
+	if (destx >= samples) goto op_fast_out_of_points;
+
+	/* check if we already have one here.
+	   if not, add it and advance, otherwise ignore. 
+	   XXX: one possibility would be to mix...
+	*/
+	if (!(outi > 0 && tempx[outi-1] == destx)) {
+	  tempx[outi] = destx;
+	  tempy[outi] = py[s];
+	  outi ++;
+	} 
+
+	if (outi > (maxpts - 2)) goto op_fast_out_of_points;
+      }
+    }
+
+  op_fast_out_of_points:
+    
+    /* always save last sample, as usual */
+    tempx[outi] = px[npts - 1];
+    tempy[outi] = py[npts - 1];
+
+    /* copy.. */
+
+    for(int c = 1; c < outi; c++) {
+      px[c] = tempx[c];
+      py[c] = tempy[c];
+    }
+
+    npts = outi;
 
     break;
   }
@@ -981,9 +1027,6 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
 
   case INTERP_PULSE: {
-
-    /* FIXME - generalize this to a shaped pulse of 
-       constant width */
 
     int wid = (int)(100.0 * interparam[INTERP_PULSE]);
     
