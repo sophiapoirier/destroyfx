@@ -166,7 +166,9 @@
    reversi: Reverses the contents (from the original wave) of each
    interval. This can create bizarre phasing artifacts with some
    window sizes. Try it with a low frequency of points on a large
-   window with singing for input, for instance. 
+   window with singing for input, for instance. (The preset
+   'atonal singing' is a good example of this. Run it on some
+   vocals and play with the frequency parameter...)
 
    pulse: Each point gets a little pulse, and the rest of the wave
    is empty. The slider controls the width of the pulses, and
