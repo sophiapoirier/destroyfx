@@ -89,7 +89,9 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	#endif
 
 	EventTypeSpec toolboxClassEventList[] = { {kEventClassControl, kEventControlDraw}, 
-//											  {kEventClassControl, kEventControlHit}, 
+											  {kEventClassControl, kEventControlHit}, 
+											  {kEventClassControl, kEventControlHitTest}, 
+											  {kEventClassControl, kEventControlInitialize}, 
 											  {kEventClassControl, kEventControlTrack}, 
 											  {kEventClassControl, kEventControlClick}, 
 											  {kEventClassControl, kEventControlContextualMenuClick} };
@@ -240,6 +242,14 @@ void DfxGuiEditor::addControl(DGControl *inCtrl)
 		{
 			SetControl32BitValue(newControl, 0);
 			EmbedControl(newControl);
+/*
+UInt32 feat = 0;
+GetControlFeatures(newControl, &feat);
+for (int i=0; i < 32; i++)
+{
+if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
+}
+*/
 		}
 	}
 }
@@ -435,6 +445,7 @@ static pascal OSStatus DGControlHandler(EventHandlerCallRef myHandler, EventRef 
 	CGContextRef context;
 
 	UInt32 inEventKind = GetEventKind(inEvent);
+	UInt32 inEventClass = GetEventClass(inEvent);
 
 	GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &theControl);
 
@@ -446,6 +457,15 @@ static pascal OSStatus DGControlHandler(EventHandlerCallRef myHandler, EventRef 
 	DGControl *theCtrl = NULL;
 	if (theOwnerEditor != NULL)
 		theCtrl = theOwnerEditor->getControlByControlRef(theControl);	
+
+	// the control is not created yet so the control pointer is NULL
+	if ( (inEventClass == kEventClassControl) && (inEventKind == kEventControlInitialize) )
+	{
+printf("\tinitialize control!\n");
+		UInt32 dfxControlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
+		SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(UInt32), &dfxControlFeatures);
+		return noErr;
+	}
 
 	if (theCtrl != NULL)
 	{
@@ -495,6 +515,17 @@ static pascal OSStatus DGControlHandler(EventHandlerCallRef myHandler, EventRef 
 				break;
 
 			case kEventControlHit:
+printf("kEventControlHit\n");
+				break;
+
+			case kEventControlHitTest:
+				{
+printf("\thit (test) control!\n");
+					ControlPartCode hitPart = kControlIndicatorPart;	// scroll handle
+					// also there is kControlButtonPart, kControlCheckBoxPart, kControlPicturePart
+					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(ControlPartCode), &hitPart);
+					result = noErr;
+				}
 				break;
 
 case kEventMouseDragged:
@@ -502,7 +533,7 @@ printf("draggin' da mouse...\n");
 			case kEventControlTrack:
 printf("trackin'\n");
 			case kEventControlClick:
-if (inEventKind == kEventControlClick) printf("kEventControlClick in DfxGui\n");
+//printf("kEventControlClick in DfxGui\n");
 			case kEventControlContextualMenuClick:
 				// prevent unnecessary draws
 				theOwnerEditor->setRelaxed(true);
@@ -522,7 +553,7 @@ if (inEventKind == kEventControlClick) printf("kEventControlClick in DfxGui\n");
 				theCtrl->mouseDown(&P, with_option, with_shift);
 				MouseTrackingResult outResult;
             			
-				while (true)
+//				while (true)
 				{
 					TrackMouseLocation(NULL, &P, &outResult);
 					GetGlobalMouse(&P);
@@ -538,7 +569,7 @@ if (inEventKind == kEventControlClick) printf("kEventControlClick in DfxGui\n");
 					if (outResult == kMouseTrackingMouseUp)
 					{
 						theCtrl->mouseUp(&P, with_option, with_shift);
-						break;
+//						break;
 					}
 					else
 						theCtrl->mouseTrack(&P, with_option, with_shift);
@@ -548,7 +579,7 @@ if (inEventKind == kEventControlClick) printf("kEventControlClick in DfxGui\n");
 // XXX do this to make Logic's touch automation work
 if ( theCtrl->isAUVPattached() && theCtrl->isContinuousControl() )
 {
-printf("DGControlHandler -> TellListener(%ld, kMouseUpInControl)\n", theCtrl->getAUVP().mParameterID);
+//printf("DGControlHandler -> TellListener(%ld, kMouseUpInControl)\n", theCtrl->getAUVP().mParameterID);
 	theOwnerEditor->TellListener(theCtrl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
 }
 				result = noErr;
