@@ -441,8 +441,8 @@ void Scrubby::processaudio(const float ** in, float ** out, unsigned long inNumF
 		{
 			generateNewTarget(0);
 
-			// copy the left channel's new values if we're in unified stereo mode
-			if (!splitStereo)
+			// copy the left channel's new values if we're in unified channels mode
+			if (!splitChannels)
 			{
 				for (ch=1; ch < numChannels; ch++)
 				{
@@ -455,8 +455,8 @@ void Scrubby::processaudio(const float ** in, float ** out, unsigned long inNumF
 				}
 			}
 		}
-		// find a new target to seek for the right channel if we're in split stereo mode
-		if (splitStereo)
+		// find a new target to seek for the right channel if we're in split channels mode
+		if (splitChannels)
 		{
 			for (ch=1; ch < numChannels; ch++)
 			{
