@@ -494,17 +494,27 @@ bool DfxParam::accept_f(float inValue, DfxParamValue &outValue)
 			outValue.d = (double) inValue;
 			break;
 		case kDfxParamValueType_int:
-			if (inValue < 0.0f)
-				outValue.i = (long) (inValue - twiddle_f);
-			else
-				outValue.i = (long) (inValue + twiddle_f);
+			{
+				long oldvalue = outValue.i;
+				if (inValue < 0.0f)
+					outValue.i = (long) (inValue - twiddle_f);
+				else
+					outValue.i = (long) (inValue + twiddle_f);
+				if (outValue.i == oldvalue)
+					return false;
+			}
 			break;
 		case kDfxParamValueType_boolean:
-			outValue.b = FBOOL(inValue) ? 1 : 0;
+			{
+				unsigned char oldvalue = outValue.b;
+				outValue.b = FBOOL(inValue) ? 1 : 0;
+				if (outValue.b == oldvalue)
+					return false;
+			}
 			break;
 		case kDfxParamValueType_undefined:
 		default:
-			break;
+			return false;
 	}
 
 	return true;	// XXX do this smarter?
@@ -524,17 +534,27 @@ bool DfxParam::accept_d(double inValue, DfxParamValue &outValue)
 			outValue.d = inValue;
 			break;
 		case kDfxParamValueType_int:
-			if (inValue < 0.0)
-				outValue.i = (long) (inValue - twiddle_d);
-			else
-				outValue.i = (long) (inValue + twiddle_d);
+			{
+				long oldvalue = outValue.i;
+				if (inValue < 0.0)
+					outValue.i = (long) (inValue - twiddle_d);
+				else
+					outValue.i = (long) (inValue + twiddle_d);
+				if (outValue.i == oldvalue)
+					return false;
+			}
 			break;
 		case kDfxParamValueType_boolean:
-			outValue.b = DBOOL(inValue) ? 1 : 0;
+			{
+				unsigned char oldvalue = outValue.b;
+				outValue.b = DBOOL(inValue) ? 1 : 0;
+				if (outValue.b == oldvalue)
+					return false;
+			}
 			break;
 		case kDfxParamValueType_undefined:
 		default:
-			break;
+			return false;
 	}
 
 	return true;	// XXX do this smarter?
@@ -554,14 +574,24 @@ bool DfxParam::accept_i(long inValue, DfxParamValue &outValue)
 			outValue.d = (double)inValue;
 			break;
 		case kDfxParamValueType_int:
-			outValue.i = inValue;
+			{
+				long oldvalue = outValue.i;
+				outValue.i = inValue;
+				if (outValue.i == oldvalue)
+					return false;
+			}
 			break;
 		case kDfxParamValueType_boolean:
-			outValue.b = (inValue == 0) ? 0 : 1;
+			{
+				unsigned char oldvalue = outValue.b;
+				outValue.b = (inValue == 0) ? 0 : 1;
+				if (outValue.b == oldvalue)
+					return false;
+			}
 			break;
 		case kDfxParamValueType_undefined:
 		default:
-			break;
+			return false;
 	}
 
 	return true;	// XXX do this smarter?
@@ -581,14 +611,24 @@ bool DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
 			outValue.d = (inValue ? 1.0 : 0.0);
 			break;
 		case kDfxParamValueType_int:
-			outValue.i = (inValue ? 1 : 0);
+			{
+				long oldvalue = outValue.i;
+				outValue.i = (inValue ? 1 : 0);
+				if (outValue.i == oldvalue)
+					return false;
+			}
 			break;
 		case kDfxParamValueType_boolean:
-			outValue.b = (inValue ? 1 : 0);
+			{
+				unsigned char oldvalue = outValue.b;
+				outValue.b = (inValue ? 1 : 0);
+				if (outValue.b == oldvalue)
+					return false;
+			}
 			break;
 		case kDfxParamValueType_undefined:
 		default:
-			break;
+			return false;
 	}
 
 	return true;	// XXX do this smarter?
