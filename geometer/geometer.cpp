@@ -1359,6 +1359,19 @@ void PLUGIN::makepresets() {
 
   i++;
 
+  strcpy(programs[i].name, "robo sing");
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);	// 2^11
+  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
+  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
+  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.234f;
+  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
+  programs[i].param[P_INTERPARAMS + INTERP_SING] = 1.0f;
+  programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_FAST);
+  programs[i].param[P_OPPAR1S + OP_FAST] = 0.9157304f;
+  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_SHORTPASS);
+  programs[i].param[P_OPPAR2S + OP_SHORTPASS] = 0.8595505f;
+  i++;
+
 }
 
 /* this is only compiled if not building the GUI version */
