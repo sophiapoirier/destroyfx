@@ -1,15 +1,87 @@
 
-/* This is the interface you must implement in order to create an editor
-   for a DFXPlugin. A GUI for VST and for Audiounit will be created from
-   this. */
+/* given an implementation (subclass) of DfxEditor called
+   EDITOR, create an AEffEditor for VST. */
 
-#include <dfxplugin.h>
-#include "keys.h"
+/* in order to send mouse events, we need to create the
+   win32 event handler, etc. This isn't done yet! */
+
+#include "dfxeditor.h"
+#include "aeffeditor.h"
+
+class DfxAEffEditor : public AEffEditor {
+private:
+  EDITOR * ed;
+
+public:
+  DfxAEffEditor(AudioEffect * eff) {
+    effect = eff;
+    updateFlag = 0;
+    ed = new EDITOR((DfxPlugin*)eff);
+  }
+
+  ~DfxAEffEditor() {
+    delete ed;
+  }
+
+  /* XXX does this pointer come with
+     space allocated? */
+     
+  virtual long getRect(ERect **r) {
+    ERect * a = *r;
+    a->top = 0;
+    a->left = 0;
+    a->bottom = ed->getheight ();
+    a->right = ed->getwidth ();
+  }
+  
+  virtual long open (void * ptr) {
+    systemWindow = ptr; 
+    ed->open(ptr);
+    return 0;
+  }
+  
+  virtual void close () {
+    ed->close();
+  }
+
+  virtual void idle () {
+    if (updateFlag) {
+      updateFlag = 0;
+      update();
+    }
+    ed->idle();
+  }
+
+  virtual void update () {
+    ed->redraw();
+  }
+
+  virtual void postUpdate() {
+    updateFlag = 1;
+  }
+
+  virtual long onKeyDown (VstKeyCode & kc) {
+    ed->uponkeydown(translatekey(kc));
+  }
+
+  virtual long onKeyUp (VstKeyCode & kc) {
+    ed->uponkeyup(translatekey(kc));
+  }
+
+  /* we don't use knobs, ever!! */
+  virtual long setKnobMode(int) { return 0; }
+
+  /* we don't support mouse wheel yet. */
+  virtual long onWheel (float distance) {
+    return false;
+  }
+
+}
 
 class DfxEditor {
 public:
   DfxEditor (DfxPlugin *effect) = 0;
-  virtual ~DfxEditor() = 0;
+  virtual ~AEffEditor() = 0;
 
   /* This instructs the plugin to open its 
      window. It's given the parent window under
