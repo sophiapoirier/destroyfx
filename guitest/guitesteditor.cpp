@@ -5,11 +5,12 @@
 
 // #include <control.h>
 #include <commctrl.h>
+#include "alpha.h"
 
 #define EDIT_HEIGHT 500
 #define EDIT_WIDTH 500
 
-LPDIRECTDRAW dd;
+LPDIRECTDRAW7 dd = 0;
 
 
 extern HINSTANCE instance;
@@ -68,7 +69,7 @@ long GuitestEditor::open (void *ptr) {
 
   HRESULT ddrval;
                 
-  ddrval = DirectDrawCreate( NULL, &dd, NULL );
+  ddrval = DirectDrawCreateEx( NULL, (VOID**) &dd, IID_IDirectDraw7, NULL );
 
   if( ddrval != DD_OK ) return(false);
 
@@ -79,7 +80,7 @@ long GuitestEditor::open (void *ptr) {
     return(false);
   }
 
-  DDSURFACEDESC ddsd;
+  DDSURFACEDESC2 ddsd;
   LPDIRECTDRAWCLIPPER clipper;
 
   memset( &ddsd, 0, sizeof(ddsd) );
@@ -144,10 +145,10 @@ long GuitestEditor::open (void *ptr) {
   return true;
 }
 
-IDirectDrawSurface * GuitestEditor::DDLoadBitmap(IDirectDraw *pdd, LPCSTR file) {
+IDirectDrawSurface7 * GuitestEditor::DDLoadBitmap(IDirectDraw7 *pdd, LPCSTR file) {
   HBITMAP hbm;
   BITMAP bm;
-  IDirectDrawSurface *pdds;
+  IDirectDrawSurface7 *pdds;
                 
   // LoadImage has some added functionality in Windows 95 that allows
   // you to load a bitmap from a file on disk.
@@ -172,9 +173,9 @@ IDirectDrawSurface * GuitestEditor::DDLoadBitmap(IDirectDraw *pdd, LPCSTR file) 
   return pdds;
 }
 
-IDirectDrawSurface * GuitestEditor::CreateOffScreenSurface(IDirectDraw *pdd, int dx, int dy) {
-  DDSURFACEDESC ddsd;
-  IDirectDrawSurface *pdds;
+IDirectDrawSurface7 * GuitestEditor::CreateOffScreenSurface(IDirectDraw7 *pdd, int dx, int dy) {
+  DDSURFACEDESC2 ddsd;
+  IDirectDrawSurface7 *pdds;
                 
   // create a DirectDrawSurface for this bitmap
   ZeroMemory(&ddsd, sizeof(ddsd));
@@ -189,7 +190,7 @@ IDirectDrawSurface * GuitestEditor::CreateOffScreenSurface(IDirectDraw *pdd, int
 
 }
 
-HRESULT GuitestEditor::DDCopyBitmap(IDirectDrawSurface *pdds, HBITMAP hbm, int dx, int dy) {
+HRESULT GuitestEditor::DDCopyBitmap(IDirectDrawSurface7 *pdds, HBITMAP hbm, int dx, int dy) {
   HDC hdcImage;
   HDC hdc;
   HRESULT hr;
@@ -274,8 +275,13 @@ void GuitestEditor::redraw() {
 
   SetRect(&rect, 0, 0, 150, 150);
 
+#if 0
+  BltAlphaFastMMX( back, guit, guitx, guity, &rect, 
+		   GetRGBMode(guit));
+#else
   back->BltFast( guitx, guity, guit, &rect, 
-		 DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		 DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT );
+#endif
 
   guitx += guitdx; guity += guitdy;
 
