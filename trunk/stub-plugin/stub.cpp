@@ -25,9 +25,13 @@ void PLUGIN::setParameter(long index, float value) {
     /*
   case 1:
     samplehold = value;
+    // .. then special stuff? 
     break;
     */
   default:
+    if (index >= 0 && index < NUM_PARAMS)
+      *paramptrs[index].ptr = value;
+    /* otherwise, ??? */
     break;
   }
 }
