@@ -6,6 +6,7 @@
 const char * kDisplayFont = "snoot.org pixel10";
 const float kDisplayTextSize = 14.0f;
 const DGColor kBrownTextColor(187.0f/255.0f, 173.0f/255.0f, 131.0f/255.0f);
+const float kUnusedControlAlpha = 0.234f;
 
 const long kOctavesSliderWidth = 226 - 2;
 const long kOctaveMaxSliderWidth = (long) (((float)OCTAVE_MAX / (float)(abs(OCTAVE_MIN)+OCTAVE_MAX)) * (float)kOctavesSliderWidth);
@@ -16,26 +17,30 @@ const long kOctaveMaxSliderX = kOctaveMinSliderX + kOctaveMinSliderWidth;
 //-----------------------------------------------------------------------------
 enum {
 	// positions
-	kDisplayWidth = 114,
-	kDisplayHeight = 10,
-	kDisplayInset = 2,
-
 	kSliderHeight = 28,
 
-	kOctaveMinSliderY = 255,
-	kOctaveMaxSliderY = kOctaveMinSliderY,
+#if 0
+	kMainSlidersOffsetY = 0,
+	kNotesStuffOffsetY = 0,
+#else
+	kMainSlidersOffsetY = -133,
+	kNotesStuffOffsetY = 128,
+#endif
 
 	kSeekRateSliderX = 33 + 1,
-	kSeekRateSliderY = 298,
+	kSeekRateSliderY = 298 + kMainSlidersOffsetY,
 	kSeekRateSliderWidth = 290 - 2,
 
+	kSeekRangeSliderX = 33 + 1,
+	kSeekRangeSliderY = 341 + kMainSlidersOffsetY,
+	kSeekRangeSliderWidth = 336 - 2,
+
 	kSeekDurSliderX = 33 + 1,
-	kSeekDurSliderY = 341,
+	kSeekDurSliderY = 384 + kMainSlidersOffsetY,
 	kSeekDurSliderWidth = 336 - 2,
 
-	kSeekRangeSliderX = 33 + 1,
-	kSeekRangeSliderY = 384,
-	kSeekRangeSliderWidth = 336 - 2,
+	kOctaveMinSliderY = 255 + kNotesStuffOffsetY,
+	kOctaveMaxSliderY = kOctaveMinSliderY,
 
 	kTempoSliderX = 33 + 1,
 	kTempoSliderY = 427,
@@ -45,30 +50,35 @@ enum {
 	kPredelaySliderY = 427,
 	kPredelaySliderWidth = 119 - 2,
 
-	kSpeedModeButtonX = 32,
+	kDisplayWidth =90,
+	kDisplayWidth_big = 117,	// for seek rate
+	kDisplayHeight = 10,
+	kDisplayInset = 2,
+
+	kSpeedModeButtonX = 31,
 	kSpeedModeButtonY = 60,
 	kFreezeButtonX = 127,
 	kFreezeButtonY = 60,
-	kTempoSyncButtonX = 223,
-	kTempoSyncButtonY = 60,
-	kStereoButtonX = 319,
+	kStereoButtonX = 223,
 	kStereoButtonY = 60,
+	kTempoSyncButtonX = 319,
+	kTempoSyncButtonY = 60,
 	kPitchConstraintButtonX = 415,
 	kPitchConstraintButtonY = 60,
 
 	kLittleTempoSyncButtonX = 327,
-	kLittleTempoSyncButtonY = 303,
+	kLittleTempoSyncButtonY = 303 + kMainSlidersOffsetY,
+
+	kKeyboardX = 33,
+	kKeyboardY = 164 + kNotesStuffOffsetY,
 
 	kTransposeDownButtonX = 263,
-	kTransposeDownButtonY = 164,
+	kTransposeDownButtonY = 164 + kNotesStuffOffsetY,
 	kTransposeUpButtonX = kTransposeDownButtonX,
 	kTransposeUpButtonY = kTransposeDownButtonY + 46,
 
-	kKeyboardX = 33,
-	kKeyboardY = 164,
-
 	kMajorChordButtonX = 299,
-	kMajorChordButtonY = 164,
+	kMajorChordButtonY = 164 + kNotesStuffOffsetY,
 	kMinorChordButtonX = kMajorChordButtonX,
 	kMinorChordButtonY = kMajorChordButtonY + 19,
 	kAllNotesButtonX = kMajorChordButtonX,
@@ -77,7 +87,7 @@ enum {
 	kNoneNotesButtonY = kMajorChordButtonY + 61,
 
 	kMidiLearnButtonX = 433,
-	kMidiLearnButtonY = 248,
+	kMidiLearnButtonY = 248 + kNotesStuffOffsetY,
 	kMidiResetButtonX = kMidiLearnButtonX,
 	kMidiResetButtonY = kMidiLearnButtonY + 19,
 
@@ -88,6 +98,11 @@ enum {
 	kDestroyFXlinkY = 47,
 	kSmartElectronixLinkX = 260,
 	kSmartElectronixLinkY = 47,
+
+	kTitleAreaX = 125,
+	kTitleAreaY = 8,
+	kTitleAreaWidth = 260,
+	kTitleAreaHeight = 37,
 };
 
 enum {
@@ -103,16 +118,16 @@ enum {
 enum {
 	kHelp_none = 0,
 	kHelp_general,
+	kHelp_seekRate,
+	kHelp_seekRange,
+	kHelp_seekDur,
 	kHelp_speedMode,
 	kHelp_freeze,
-	kHelp_tempoSync,
 	kHelp_stereo,
+	kHelp_tempoSync,
 	kHelp_pitchConstraint,
 	kHelp_notes,
 	kHelp_octaves,
-	kHelp_seekRate,
-	kHelp_seekDur,
-	kHelp_seekRange,
 	kHelp_tempo,
 	kHelp_predelay,
 	kHelp_midiLearn,
@@ -135,6 +150,30 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 		{"Scrubby will, at a given seek rate, find random target destinations within a "}, 
 		{"certain time range and then travel to those destinations."}, 
 	}, 
+#if MAC
+#define SCRUBBY_ALT_KEY_NAME "option"
+#else
+#define SCRUBBY_ALT_KEY_NAME "alt"
+#endif
+	// seek rate
+	{
+		{"seek rate:  the rate at which Scrubby finds new target destinations"}, 
+		{"You can define a randomized range with min & max rate limits for each seek."}, 
+		{"(control+click to move both together, "SCRUBBY_ALT_KEY_NAME"+click to move both relative)"}, 
+	}, 
+#undef SCRUBBY_ALT_KEY_NAME
+	// seek range
+	{
+		{"seek range:  define the time range in which Scrubby can zip around"}, 
+		{"This specifies how far back in the delay buffer Scrubby can look for new "}, 
+		{"random target destinations.  This tends to affect playback speeds."}, 
+	}, 
+	// seek duration
+	{
+		{"seek duration:  amount of a seek cycle spent moving to the target"}, 
+		{"Scrubby finds a new target to move towards at each seek cycle.  You can "}, 
+		{"make it reach the target early by lowering this value.  This produces gaps."}, 
+	}, 
 	// speed mode
 	{
 		{"speed mode:  are you a robot or a DJ?"}, 
@@ -147,17 +186,17 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 		{"This causes Scrubby to stop reading from your incoming audio stream and "}, 
 		{"to stick with the current contents of the delay buffer."}, 
 	}, 
-	// tempo sync
-	{
-		{"tempo sync:  lock the seek rate to the tempo"}, 
-		{"Turning this on will let you define seek rates in terms of your tempo.  "}, 
-		{"If your host doesn't give tempo info to plugins, you'll need to define a tempo."}, 
-	}, 
 	// stereo mode
 	{
 		{"stereo mode:  toggle between linked or split seeks for each channel"}, 
 		{"When linked, both stereo channels will seek the same target destinations.  "}, 
 		{"When split, each stereo channel will find different destinations to seek."}, 
+	}, 
+	// tempo sync
+	{
+		{"tempo sync:  lock the seek rate to the tempo"}, 
+		{"Turning this on will let you define seek rates in terms of your tempo.  "}, 
+		{"If your host doesn't give tempo info to plugins, you'll need to define a tempo."}, 
 	}, 
 	// pitch constraint
 	{
@@ -176,30 +215,6 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 		{"octave limits:  limit Scrubby's speeds within a range of octaves"}, 
 		{"You can limit how low or how high Scrubby's playback speeds can go in terms "}, 
 		{"of octaves, or move these to their outer points if you want no limits."}, 
-	}, 
-#if MAC
-#define SCRUBBY_ALT_KEY_NAME "option"
-#else
-#define SCRUBBY_ALT_KEY_NAME "alt"
-#endif
-	// seek rate
-	{
-		{"seek rate:  the rate at which Scrubby finds new target destinations"}, 
-		{"You can define a randomized range with min & max rate limits for each seek."}, 
-		{"(control+click to move both together, "SCRUBBY_ALT_KEY_NAME"+click to move both relative)"}, 
-	}, 
-#undef SCRUBBY_ALT_KEY_NAME
-	// seek duration
-	{
-		{"seek duration:  amount of a seek cycle spent moving to the target"}, 
-		{"Scrubby finds a new target to move towards at each seek cycle.  You can "}, 
-		{"make it reach the target early by lowering this value.  This produces gaps."}, 
-	}, 
-	// seek range
-	{
-		{"seek range:  define the time range in which Scrubby can zip around"}, 
-		{"This specifies how far back in the delay buffer Scrubby can look for new "}, 
-		{"random target destinations.  This tends to affect playback speeds."}, 
 	}, 
 	// tempo
 	{
@@ -265,21 +280,29 @@ void midiresetScrubby(SInt32 value, void * editor)
 
 //-----------------------------------------------------------------------------
 // parameter listener procedure
-static void TempoSyncListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
+static void ScrubbyParameterListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
 	if ( (inObject == NULL) || (inParameter == NULL) )
 		return;
 
-	DGControl * control = (DGControl*) inObject;
-	long oldParamID = control->getParameterID();
-	long newParamID;
-	bool useSyncParam = FBOOL(inValue);
-	if ( (oldParamID == kSeekRateRandMin_abs) || (oldParamID == kSeekRateRandMin_sync) )
-		newParamID = useSyncParam ? kSeekRateRandMin_sync : kSeekRateRandMin_abs;
-	else
-		newParamID = useSyncParam ? kSeekRate_sync : kSeekRate_abs;
-	control->setParameterID(newParamID);
-//	control->setControlContinuous(!useSyncParam);
+	AudioUnitParameterID paramID = inParameter->mParameterID;
+
+	if (paramID == kTempoSync)
+	{
+		DGControl * control = (DGControl*) inObject;
+		long oldParamID = control->getParameterID();
+		long newParamID;
+		bool useSyncParam = FBOOL(inValue);
+		if ( (oldParamID == kSeekRateRandMin_abs) || (oldParamID == kSeekRateRandMin_sync) )
+			newParamID = useSyncParam ? kSeekRateRandMin_sync : kSeekRateRandMin_abs;
+		else
+			newParamID = useSyncParam ? kSeekRate_sync : kSeekRate_abs;
+		control->setParameterID(newParamID);
+//		control->setControlContinuous(!useSyncParam);
+	}
+
+	else if ( (paramID == kSpeedMode) || (paramID == kPitchConstraint) )
+		((ScrubbyEditor*)inObject)->HandlePitchConstraintChange();
 }
 
 
@@ -464,7 +487,7 @@ ScrubbyEditor::ScrubbyEditor(AudioUnitCarbonView inInstance)
 		notesButtons[i] = NULL;
 
 	parameterListener = NULL;
-	OSStatus status = AUListenerCreate(TempoSyncListenerProc, this,
+	OSStatus status = AUListenerCreate(ScrubbyParameterListenerProc, this,
 		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
 		&parameterListener);
 	if (status != noErr)
@@ -484,6 +507,9 @@ ScrubbyEditor::~ScrubbyEditor()
 			AUListenerRemoveParameter(parameterListener, seekRateRandMinSlider, &tempoSyncAUP);
 		if (seekRateRandMinDisplay != NULL)
 			AUListenerRemoveParameter(parameterListener, seekRateRandMinDisplay, &tempoSyncAUP);
+
+		AUListenerRemoveParameter(parameterListener, this, &speedModeAUP);
+		AUListenerRemoveParameter(parameterListener, this, &pitchConstraintAUP);
 
 		AUListenerDispose(parameterListener);
 	}
@@ -558,8 +584,22 @@ long ScrubbyEditor::open()
 	long seekRateParamID = getparameter_b(kTempoSync) ? kSeekRate_sync : kSeekRate_abs;
 	long seekRateRandMinParamID = getparameter_b(kTempoSync) ? kSeekRateRandMin_sync : kSeekRateRandMin_abs;
 
-	//--initialize the sliders-----------------------------------------------
+	//--create the sliders-----------------------------------------------
 	DGSlider * slider;
+
+	// seek rate
+	pos.set(kSeekRateSliderX, kSeekRateSliderY, kSeekRateSliderWidth, kSliderHeight);
+	seekRateSlider = new DGSlider(this, seekRateParamID, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+//	seekRateSlider->setOvershoot(3);
+
+	// seek range
+	pos.set(kSeekRangeSliderX, kSeekRangeSliderY, kSeekRangeSliderWidth, kSliderHeight);
+	slider = new DGSlider(this, kSeekRange, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+
+	// seek duration
+	pos.set(kSeekDurSliderX, kSeekDurSliderY, kSeekDurSliderWidth, kSliderHeight);
+	slider = new DGSlider(this, kSeekDur, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+//	slider->setOvershoot(3);
 
 	// octave minimum
 	pos.set(kOctaveMinSliderX, kOctaveMinSliderY, kOctaveMinSliderWidth, kSliderHeight);
@@ -571,20 +611,6 @@ long ScrubbyEditor::open()
 	slider = new DGSlider(this, kOctaveMax, &pos, kDGSliderAxis_horizontal, gRangeSliderHandleRight, NULL);
 	slider->setControlContinuous(false);
 
-	// seek rate
-	pos.set(kSeekRateSliderX, kSeekRateSliderY, kSeekRateSliderWidth, kSliderHeight);
-	seekRateSlider = new DGSlider(this, seekRateParamID, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
-//	seekRateSlider->setOvershoot(3);
-
-	// seek duration
-	pos.set(kSeekDurSliderX, kSeekDurSliderY, kSeekDurSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kSeekDur, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
-//	slider->setOvershoot(3);
-
-	// seek range
-	pos.set(kSeekRangeSliderX, kSeekRangeSliderY, kSeekRangeSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kSeekRange, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
-
 	// tempo
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
 	slider = new DGSlider(this, kTempo, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
@@ -595,7 +621,48 @@ long ScrubbyEditor::open()
 
 
 
-	//--initialize the keyboard---------------------------------------------
+	//--create the displays---------------------------------------------
+	DGTextDisplay * display;
+
+	// seek rate random minimum
+	pos.set(kSeekRateSliderX + kDisplayInset, kSeekRateSliderY - kDisplayHeight, kDisplayWidth_big, kDisplayHeight);
+	seekRateRandMinDisplay = new DGTextDisplay(this, seekRateRandMinParamID, &pos, seekRateRandMinDisplayProc, this, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// seek rate
+	pos.set(kSeekRateSliderX + kSeekRateSliderWidth - kDisplayWidth_big - kDisplayInset, kSeekRateSliderY - kDisplayHeight, kDisplayWidth_big, kDisplayHeight);
+	seekRateDisplay = new DGTextDisplay(this, seekRateParamID, &pos, seekRateDisplayProc, this, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// seek range
+	pos.set(kSeekRangeSliderX + kSeekRangeSliderWidth - kDisplayWidth - kDisplayInset, kSeekRangeSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
+	display = new DGTextDisplay(this, kSeekRange, &pos, seekRangeDisplayProc, NULL, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// seek duration random minimum
+	pos.set(kSeekDurSliderX + kDisplayInset, kSeekDurSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
+	display = new DGTextDisplay(this, kSeekDurRandMin, &pos, seekDurDisplayProc, NULL, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// seek duration
+	pos.set(kSeekDurSliderX + kSeekDurSliderWidth - kDisplayWidth - kDisplayInset, kSeekDurSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
+	display = new DGTextDisplay(this, kSeekDur, &pos, seekDurDisplayProc, NULL, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// octave mininum
+	pos.set(kOctaveMinSliderX + kDisplayInset, kOctaveMinSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
+	display = new DGTextDisplay(this, kOctaveMin, &pos, octaveMinDisplayProc, NULL, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// octave maximum
+	pos.set(kOctaveMaxSliderX + kOctaveMaxSliderWidth - kDisplayWidth - kDisplayInset, kOctaveMaxSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
+	display = new DGTextDisplay(this, kOctaveMax, &pos, octaveMaxDisplayProc, NULL, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// tempo
+	pos.set(kTempoSliderX + kDisplayInset, kTempoSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
+	display = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// predelay
+	pos.set(kPredelaySliderX + kPredelaySliderWidth - kDisplayWidth - kDisplayInset, kPredelaySliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
+	display = new DGTextDisplay(this, kPredelay, &pos, predelayDisplayProc, NULL, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+
+
+	//--create the keyboard---------------------------------------------
 //	pos.set(kKeyboardX, kKeyboardY, gKeyboardOff->getWidth(), gKeyboardOff->getHeight());
 //	keyboard = new ScrubbyKeyboard(this, kPitchStep0, &pos, gKeyboardOff, gKeyboardOn, 24, 48, 18, 56, 114, 149, 184);
 	pos.set(kKeyboardX, kKeyboardY, gKeyboardTopKeys[0]->getWidth(), gKeyboardTopKeys[0]->getHeight()/2);
@@ -616,7 +683,7 @@ long ScrubbyEditor::open()
 
 
 
-	//--initialize the buttons----------------------------------------------
+	//--create the buttons----------------------------------------------
 	DGButton * button;
 
 	// ...................MODES...........................
@@ -629,13 +696,13 @@ long ScrubbyEditor::open()
 	pos.set(kFreezeButtonX, kFreezeButtonY, gFreezeButton->getWidth()/2, gFreezeButton->getHeight()/2);
 	button = new DGButton(this, kFreeze, &pos, gFreezeButton, 2, kDGButtonType_incbutton, true);
 
-	// choose the seek rate type ("free" or synced)
-	pos.set(kTempoSyncButtonX, kTempoSyncButtonY, gTempoSyncButton->getWidth()/2, gTempoSyncButton->getHeight()/2);
-	button = new DGButton(this, kTempoSync, &pos, gTempoSyncButton, 2, kDGButtonType_incbutton, true);
-
 	// choose the stereo mode (linked or split)
 	pos.set(kStereoButtonX, kStereoButtonY, gStereoButton->getWidth()/2, gStereoButton->getHeight()/2);
 	button = new DGButton(this, kSplitStereo, &pos, gStereoButton, 2, kDGButtonType_incbutton, true);
+
+	// choose the seek rate type ("free" or synced)
+	pos.set(kTempoSyncButtonX, kTempoSyncButtonY, gTempoSyncButton->getWidth()/2, gTempoSyncButton->getHeight()/2);
+	button = new DGButton(this, kTempoSync, &pos, gTempoSyncButton, 2, kDGButtonType_incbutton, true);
 
 	// toggle pitch constraint
 	pos.set(kPitchConstraintButtonX, kPitchConstraintButtonY, gPitchConstraintButton->getWidth()/2, gPitchConstraintButton->getHeight()/2);
@@ -702,52 +769,12 @@ long ScrubbyEditor::open()
 	weblink = new DGWebLink(this, &pos, gSmartElectronixLink, SMARTELECTRONIX_URL);
 
 	pos.set(125, 8, 260, 37);
+	pos.set(kTitleAreaX, kTitleAreaY, kTitleAreaWidth, kTitleAreaHeight);
 	titleArea = new DGControl(this, &pos, 0.0f);
 
 
 
-	//--initialize the displays---------------------------------------------
-	DGTextDisplay * display;
-
-	// octave mininum (for pitch constraint)
-	pos.set(kOctaveMinSliderX + kDisplayInset, kOctaveMinSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kOctaveMin, &pos, octaveMinDisplayProc, NULL, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-	// octave maximum (for pitch constraint)
-	pos.set(kOctaveMaxSliderX + kOctaveMaxSliderWidth - kDisplayWidth - kDisplayInset, kOctaveMaxSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kOctaveMax, &pos, octaveMaxDisplayProc, NULL, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-	// seek rate random minimum
-	pos.set(kSeekRateSliderX + kDisplayInset, kSeekRateSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	seekRateRandMinDisplay = new DGTextDisplay(this, seekRateRandMinParamID, &pos, seekRateRandMinDisplayProc, this, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-	// seek rate
-	pos.set(kSeekRateSliderX + kSeekRateSliderWidth - kDisplayWidth - kDisplayInset, kSeekRateSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	seekRateDisplay = new DGTextDisplay(this, seekRateParamID, &pos, seekRateDisplayProc, this, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-	// seek duration random minimum
-	pos.set(kSeekDurSliderX + kDisplayInset, kSeekDurSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kSeekDurRandMin, &pos, seekDurDisplayProc, NULL, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-	// seek duration
-	pos.set(kSeekDurSliderX + kSeekDurSliderWidth - kDisplayWidth - kDisplayInset, kSeekDurSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kSeekDur, &pos, seekDurDisplayProc, NULL, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-	// seek range
-	pos.set(kSeekRangeSliderX + kDisplayInset, kSeekRangeSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kSeekRange, &pos, seekRangeDisplayProc, NULL, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-	// tempo
-	pos.set(kTempoSliderX + kDisplayInset, kTempoSliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, kDGTextAlign_left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-	// predelay
-	pos.set(kPredelaySliderX + kPredelaySliderWidth - kDisplayWidth - kDisplayInset, kPredelaySliderY - kDisplayHeight, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kPredelay, &pos, predelayDisplayProc, NULL, NULL, kDGTextAlign_right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
-
-
-
-	//--initialize the help display-----------------------------------------
+	//--create the help display-----------------------------------------
 	pos.set(kHelpX, kHelpY, gHelpBackground->getWidth(), gHelpBackground->getHeight());
 	helpbox = new ScrubbyHelpBox(this, &pos, gHelpBackground);
 
@@ -755,18 +782,28 @@ HMSetTagDelay(9);	// make the help appear quickly <-- XXX this is sort of a hack
 
 
 
+	// this will initialize the pitch constraint controls' translucency settings 
+	HandlePitchConstraintChange();
+
+
+
 	if (parameterListener != NULL)
 	{
 		// set up the parameter listeners
-		tempoSyncAUP.mAudioUnit = GetEditAudioUnit();
-		tempoSyncAUP.mScope = kAudioUnitScope_Global;
-		tempoSyncAUP.mElement = (AudioUnitElement)0;
+		tempoSyncAUP.mAudioUnit = speedModeAUP.mAudioUnit = pitchConstraintAUP.mAudioUnit = GetEditAudioUnit();
+		tempoSyncAUP.mScope = speedModeAUP.mScope = pitchConstraintAUP.mScope = kAudioUnitScope_Global;
+		tempoSyncAUP.mElement = speedModeAUP.mElement = pitchConstraintAUP.mElement = (AudioUnitElement)0;
 		tempoSyncAUP.mParameterID = kTempoSync;
 
 		AUListenerAddParameter(parameterListener, seekRateSlider, &tempoSyncAUP);
 		AUListenerAddParameter(parameterListener, seekRateDisplay, &tempoSyncAUP);
 //		AUListenerAddParameter(parameterListener, seekRateRandMinSlider, &tempoSyncAUP);
 		AUListenerAddParameter(parameterListener, seekRateRandMinDisplay, &tempoSyncAUP);
+
+		speedModeAUP.mParameterID = kSpeedMode;
+		pitchConstraintAUP.mParameterID = kPitchConstraint;
+		AUListenerAddParameter(parameterListener, this, &speedModeAUP);
+		AUListenerAddParameter(parameterListener, this, &pitchConstraintAUP);
 	}
 
 
@@ -833,6 +870,32 @@ void ScrubbyEditor::HandleNotesButton(long inNotesButtonType)
 			break;
 		default:
 			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+void ScrubbyEditor::HandlePitchConstraintChange()
+{
+	long speedMode = getparameter_i(kSpeedMode);
+	bool pitchConstraint = getparameter_b(kPitchConstraint);
+	float alpha = ( (speedMode == kSpeedMode_robot) && pitchConstraint ) ? 1.0f : kUnusedControlAlpha;
+	float pcalpha = (speedMode == kSpeedMode_robot) ? 1.0f : kUnusedControlAlpha;
+
+	DGControlsList * tempcl = controlsList;
+	while (tempcl != NULL)
+	{
+		long paramid = tempcl->control->getParameterID();
+		if ( (paramid >= kPitchStep0) && (paramid <= kPitchStep11) )
+			tempcl->control->setDrawAlpha(alpha);
+		else if (paramid == kPitchConstraint)
+			tempcl->control->setDrawAlpha(pcalpha);
+		tempcl = tempcl->next;
+	}
+
+	for (long i=0; i < kNumNotesButtons; i++)
+	{
+		if (notesButtons[i] != NULL)
+			notesButtons[i]->setDrawAlpha(alpha);
 	}
 }
 
