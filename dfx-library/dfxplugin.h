@@ -420,6 +420,10 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getdefault_f();   else return 0.0f;	}
 
 	void getparametername(long parameterIndex, char * text);
+#ifdef TARGET_API_AUDIOUNIT
+	CFStringRef getparametercfname(long parameterIndex)
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcfname();   else return NULL;	}
+#endif
 	DfxParamValueType getparametervaluetype(long parameterIndex);
 	DfxParamUnit getparameterunit(long parameterIndex);
 	bool getparameterchanged(long parameterIndex);

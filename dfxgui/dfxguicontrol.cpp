@@ -121,6 +121,10 @@ void DGControl::setControlContinuous(bool inContinuity)
 	isContinuous = inContinuity;
 	if (inContinuity != oldContinuity)
 	{
+		// do this before doing the value range thing to avoid spurious parameter value changing
+		// XXX causes crashes - fix
+//		if (auv_control != NULL)
+//			delete auv_control;
 		initCarbonControlValueRange();
 		createAUVcontrol();
 	}

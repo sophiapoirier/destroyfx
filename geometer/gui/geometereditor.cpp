@@ -142,9 +142,11 @@ GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY) {
 }
 
+//--------------------------------------------------------------------------
 GeometerHelpBox::~GeometerHelpBox() {
 }
 
+//--------------------------------------------------------------------------
 void GeometerHelpBox::draw(CGContextRef inContext, long inPortHeight) {
 
   if ( (helpCategory == HELP_CATEGORY_GENERAL) && (itemNum == HELP_EMPTY) )
@@ -199,6 +201,7 @@ void GeometerHelpBox::draw(CGContextRef inContext, long inPortHeight) {
 
 }
 
+//--------------------------------------------------------------------------
 void GeometerHelpBox::setDisplayItem(long inHelpCategory, long inItemNum) {
 
   bool changed = false;
@@ -211,6 +214,9 @@ void GeometerHelpBox::setDisplayItem(long inHelpCategory, long inItemNum) {
   if (changed)
     redraw();
 }
+
+
+
 
 
 

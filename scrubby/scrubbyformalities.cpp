@@ -68,6 +68,8 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 	initparameter_f(kPredelay, "predelay", 0.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
+setparameter_f(kSeekRateRandMin_abs, getparametermax_f(kSeekRateRandMin_abs));
+setparameter_i(kSeekRateRandMin_sync, getparametermax_i(kSeekRateRandMin_sync));
 
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < numTempoRates; i++)

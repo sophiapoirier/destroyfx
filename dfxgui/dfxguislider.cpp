@@ -48,8 +48,8 @@ void DGSlider::draw(CGContextRef inContext, long inPortHeight)
 	if (backgroundImage != NULL)
 		backgroundImage->draw(getBounds(), inContext, inPortHeight);
 
-	SInt32 max = GetControl32BitMaximum(carbonControl);
 	SInt32 min = GetControl32BitMinimum(carbonControl);
+	SInt32 max = GetControl32BitMaximum(carbonControl);
 	SInt32 val = GetControl32BitValue(carbonControl);
 	float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
 
@@ -86,14 +86,15 @@ void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 //-----------------------------------------------------------------------------
 void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 {
+	SInt32 min = GetControl32BitMinimum(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
 	SInt32 val = GetControl32BitValue(carbonControl);
 	SInt32 oldval = val;
 
 	DGRect fore;
 	fore.set(getForeBounds());
-	SInt32 o_X = fore.x - getBounds()->x + mouseOffset;
-	SInt32 o_Y = fore.y - getBounds()->y - mouseOffset;
+	float o_X = (float) (fore.x - getBounds()->x + mouseOffset);
+	float o_Y = (float) (fore.y - getBounds()->y - mouseOffset);
 
 	if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
 	{
@@ -101,33 +102,33 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 		{
 			float diff = lastY - inYpos;
 			diff /= fineTuneFactor;
-			val += (SInt32) (diff * (float)max / (float)fore.h);
+			val += (SInt32) (diff * (float)(max-min) / (float)fore.h);
 		}
 		else	// horizontal mode
 		{
 			float diff = inXpos - lastX;
 			diff /= fineTuneFactor;
-			val += (SInt32) (diff * (float)max / (float)fore.w);
+			val += (SInt32) (diff * (float)(max-min) / (float)fore.w);
 		}
 	}
 	else	// regular movement
 	{
 		if (orientation == kDGSliderAxis_vertical)
 		{
-			float valnorm = (inYpos - (float)o_Y) / (float)fore.h;
-			val = (SInt32)((float)max * (1.0f - valnorm));
+			float valnorm = (inYpos - o_Y) / (float)fore.h;
+			val = (SInt32)((1.0f - valnorm) * (float)(max-min)) + min;
 		}
 		else	// horizontal mode
 		{
-			float valnorm = (inXpos - (float)o_X) / (float)fore.w;
-			val = (SInt32)((float)max * valnorm);
+			float valnorm = (inXpos - o_X) / (float)fore.w;
+			val = (SInt32)(valnorm * (float)(max-min)) + min;
 		}
 	}
 	
 	if (val > max)
 		val = max;
-	if (val < 0)
-		val = 0;
+	if (val < min)
+		val = min;
 	if (val != oldval)
 		SetControl32BitValue(carbonControl, val);
 
