@@ -6,6 +6,16 @@
 
 #include "dfxdefines.h"
 
+
+//-----------------------------------------------------------------------------
+typedef enum {
+	kDGKeyModifier_accel = 1,	// command on Macs, control on PCs
+	kDGKeyModifier_alt = 1 << 1,	// option on Macs, alt on PCs
+	kDGKeyModifier_shift = 1 << 2,
+	kDGKeyModifier_extra = 1 << 3,	// control on Macs
+} DGKeyModifiers;
+
+
 /***********************************************************************
 	DGRect
 	a rectangular region class
@@ -71,17 +81,17 @@ public:
 // XXX use floats (0.0 to 1.0) instead of ints
 struct DGColor
 {
-	int r;
-	int g;
-	int b;
+	float r;
+	float g;
+	float b;
 
 	DGColor()
-	:	r(0), g(0), b(0) {}
-	DGColor(int inRed, int inGreen, int inBlue)
+	:	r(0.0f), g(0.0f), b(0.0f) {}
+	DGColor(float inRed, float inGreen, float inBlue)
 	:	r(inRed), g(inGreen), b(inBlue) {}
 	DGColor(const DGColor& inColor)
 	:	r(inColor.r), g(inColor.g), b(inColor.b) {}
-	DGColor& operator () (int inRed, int inGreen, int inBlue)
+	DGColor& operator () (float inRed, float inGreen, float inBlue)
 	{
 		r = inRed;
 		g = inGreen;
@@ -99,8 +109,8 @@ struct DGColor
 };
 typedef struct DGColor DGColor;
 
-const DGColor kBlackDGColor(0, 0, 0);
-const DGColor kWhiteDGColor(255, 255, 255);
+const DGColor kBlackDGColor(0.0f, 0.0f, 0.0f);
+const DGColor kWhiteDGColor(1.0f, 1.0f, 1.0f);
 
 
 

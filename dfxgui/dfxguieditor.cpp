@@ -21,7 +21,7 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 	idleTimerUPP = NULL;
 
 	backgroundImage = NULL;
-	backgroundColor(rand() % 0xFF, rand() % 0xFF, rand() % 0xFF);
+	backgroundColor(randFloat(), randFloat(), randFloat());
 
 	dgControlSpec.defType = kControlDefObjectClass;
 	dgControlSpec.u.classRef = NULL;
@@ -155,7 +155,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 // create the window event handler that supplements the control event handler by tracking mouse dragging, mouseover controls, etc.
 
-	setCurrentControl_clicked(NULL);	// make sure that it ain't nuthin
+	currentControl_clicked = NULL;	// make sure that it ain't nuthin
 	setCurrentControl_mouseover(NULL);
 	EventTypeSpec controlMouseEvents[] = {
 									{ kEventClassMouse, kEventMouseDragged }, 
@@ -268,8 +268,12 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::idle()
+void DfxGuiEditor::do_idle()
 {
+	// call any child class implementation of the virtual idle method
+	idle();
+
+	// call every controls' implementation of its idle method
 	DGControlsList * tempcl = controlsList;
 	while (tempcl != NULL)
 	{
@@ -282,7 +286,7 @@ void DfxGuiEditor::idle()
 static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData)
 {
 	if (inUserData != NULL)
-		((DfxGuiEditor*)inUserData)->idle();
+		((DfxGuiEditor*)inUserData)->do_idle();
 }
 
 //-----------------------------------------------------------------------------
@@ -341,7 +345,7 @@ if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
 }
 
 //-----------------------------------------------------------------------------
-DGControl * DfxGuiEditor::getDGControlByPlatformControlRef(PlatformControlRef inControl)
+DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 {
 	DGControlsList * tempcl = controlsList;
 	while (tempcl != NULL)
@@ -552,84 +556,45 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 //-----------------------------------------------------------------------------
 static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void *inUserData)
 {
-	UInt32 inEventClass = GetEventClass(inEvent);
-	UInt32 inEventKind = GetEventKind(inEvent);
+	bool eventWasHandled = false;
 	DfxGuiEditor *ourOwnerEditor = (DfxGuiEditor*) inUserData;
 
-
-
-	if (inEventClass == kEventClassCommand)
+	switch ( GetEventClass(inEvent) )
 	{
-		if (inEventKind == kEventCommandProcess)
-		{
-			HICommand hiCommand;
-			OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
-			if (status != noErr)
-				status = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
-			if (status != noErr)
-				return eventNotHandledErr;
-
-			if (hiCommand.commandID == kHICommandAppHelp)
-			{
-//printf("command ID = kHICommandAppHelp\n");
-				if (launch_documentation() == noErr)
-					return noErr;
-			}
-//else printf("command ID = %.4s\n", (char*) &(hiCommand.commandID));
-
-			return eventNotHandledErr;
-		}
-
-		return eventKindIncorrectErr;
+		case kEventClassMouse:
+			eventWasHandled = ourOwnerEditor->HandleMouseEvent(inEvent);
+			break;
+		case kEventClassKeyboard:
+			eventWasHandled = ourOwnerEditor->HandleKeyboardEvent(inEvent);
+			break;
+		case kEventClassCommand:
+			eventWasHandled = ourOwnerEditor->HandleCommandEvent(inEvent);
+			break;
+		default:
+			return eventClassIncorrectErr;
 	}
 
+	if (eventWasHandled)
+		return noErr;
+	else
+		return eventNotHandledErr;
+}
 
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
+{
+	UInt32 inEventKind = GetEventKind(inEvent);
 
-	if (inEventClass == kEventClassKeyboard)
-	{
-		if ( (inEventKind == kEventRawKeyDown) || (inEventKind == kEventRawKeyRepeat) )
-		{
-			UInt32 keyCode;
-			GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &keyCode);
-			unsigned char charCode;
-			GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
-			UInt32 modifiers;
-			GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-//printf("keyCode = %lu,  charCode = ", keyCode);
-//if ( (charCode > 0x7F) || iscntrl(charCode) ) printf("0x%.2X\n", charCode);
-//else printf("%c\n", charCode);
-
-			if ( ((keyCode == 44) && (modifiers & cmdKey)) || 
-					(charCode == kHelpCharCode) )
-			{
-				if (launch_documentation() == noErr)
-					return noErr;
-//return eventNotHandledErr;
-			}
-
-			return eventNotHandledErr;
-		}
-
-		return eventKindIncorrectErr;
-	}
-
-
-
-	if (inEventClass != kEventClassMouse)
-		return eventClassIncorrectErr;
-
-//	Point mouseLocation;
-//	GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(Point), NULL, &mouseLocation);	// XXX being obsoleted
-	HIPoint mouseLocation_f;
-	GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation_f);
-	Point mouseLocation;
-	mouseLocation.h = (short) mouseLocation_f.x;
-	mouseLocation.v = (short) mouseLocation_f.y;
+	HIPoint mouseLocation;
+	GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
+	Point mouseLocation_i;
+	mouseLocation_i.h = (short) mouseLocation.x;
+	mouseLocation_i.v = (short) mouseLocation.y;
 
 
 // follow the mouse around, see if it falls over any of our hot spots
 	if (inEventKind == kEventMouseMoved)
-return eventKindIncorrectErr;
+return false;
 /*
 	{
 		// remember current port
@@ -641,32 +606,37 @@ return eventKindIncorrectErr;
 		SetPort( GetWindowPort(window) );
 
 		// figure out which control is currently under the mouse, if any
-		GlobalToLocal(&mouseLocation);
-		ControlRef underCarbonControl = FindControlUnderMouse(mouseLocation, window, NULL);
+		GlobalToLocal(&mouseLocation_i);
+		ControlRef underCarbonControl = FindControlUnderMouse(mouseLocation_i, window, NULL);
 		DGControl * underDGControl = NULL;
 		if (underCarbonControl != NULL)
-			underDGControl = ourOwnerEditor->getDGControlByPlatformControlRef(underCarbonControl);
-		ourOwnerEditor->setCurrentControl_mouseover(underDGControl);
+			underDGControl = getDGControlByCarbonControlRef(underCarbonControl);
+		setCurrentControl_mouseover(underDGControl);
 
 		// restore the original port
 		SetPort(oldport);
 
-		return noErr;
+		return true;
 	}
 */
 
 
 // follow the mouse when dragging (adjusting) a GUI control
-	DGControl *ourControl = ourOwnerEditor->getCurrentControl_clicked();
+	DGControl *ourControl = currentControl_clicked;
 	if (ourControl == NULL)
-		return eventNotHandledErr;
+		return false;
 
 	UInt32 modifiers;
 	GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-//	bool with_command = (modifiers & cmdKey) ? true : false;
-	bool with_shift = ( (modifiers & shiftKey) || (modifiers & rightShiftKey) ) ? true : false;
-	bool with_option = ( (modifiers & optionKey) || (modifiers & rightOptionKey) ) ? true : false;
-//	bool with_control = ( (modifiers & controlKey) || (modifiers & rightControlKey) ) ? true : false;
+	unsigned long keyModifiers = 0;
+	if (modifiers & cmdKey)
+		keyModifiers |= kDGKeyModifier_accel;
+	if ( (modifiers & optionKey) || (modifiers & rightOptionKey) )
+		keyModifiers |= kDGKeyModifier_alt;
+	if ( (modifiers & shiftKey) || (modifiers & rightShiftKey) )
+		keyModifiers |= kDGKeyModifier_shift;
+	if ( (modifiers & controlKey) || (modifiers & rightControlKey) )
+		keyModifiers |= kDGKeyModifier_extra;
 
 // orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 	WindowRef window;
@@ -677,39 +647,97 @@ return eventKindIncorrectErr;
 	// the position of the control relative to the top left corner of the window content area
 	Rect controlBounds;
 	GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
-	mouseLocation.h -= windowBounds.left + controlBounds.left;
-	mouseLocation.v -= windowBounds.top + controlBounds.top;
+	mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
+	mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
 
 
 	if (inEventKind == kEventMouseDragged)
 	{
-		UInt32 buttons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-		GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &buttons);
+		UInt32 mouseButtons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
+		GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
 //		EventMouseButton button;	// kEventMouseButtonPrimary, kEventMouseButtonSecondary, or kEventMouseButtonTertiary
 //		GetEventParameter(inEvent, kEventParamMouseButton, typeMouseButton, NULL, sizeof(EventMouseButton), NULL, &button);
 
-		ourControl->mouseTrack(mouseLocation, with_option, with_shift);
+		ourControl->mouseTrack(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
 
-		return noErr;
+		return true;
 	}
 
 	if (inEventKind == kEventMouseUp)
 	{
-		ourControl->mouseUp(mouseLocation, with_option, with_shift);
+		ourControl->mouseUp(mouseLocation.x, mouseLocation.y, keyModifiers);
 
-		ourOwnerEditor->setCurrentControl_clicked(NULL);
+		currentControl_clicked = NULL;
 
-		// XXX do this to make Logic's touch automation work
-		if ( ourControl->isAUVPattached() )//&& ourControl->isContinuousControl() )
+		// do this to make Logic's touch automation work
+		if ( ourControl->isAUVPattached() )
 		{
-			ourOwnerEditor->TellListener(ourControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+			TellListener(ourControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
 //			printf("DGControlMouseHandler -> TellListener(MouseUp, %lu)\n", ourControl->getAUVP().mParameterID);
 		}
 
-		return noErr;
+		return true;
 	}
 
-	return eventKindIncorrectErr;
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
+{
+	UInt32 inEventKind = GetEventKind(inEvent);
+
+	if ( (inEventKind == kEventRawKeyDown) || (inEventKind == kEventRawKeyRepeat) )
+	{
+		UInt32 keyCode;
+		GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &keyCode);
+		unsigned char charCode;
+		GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
+		UInt32 modifiers;
+		GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+//printf("keyCode = %lu,  charCode = ", keyCode);
+//if ( (charCode > 0x7F) || iscntrl(charCode) ) printf("0x%.2X\n", charCode);
+//else printf("%c\n", charCode);
+
+		if ( ((keyCode == 44) && (modifiers & cmdKey)) || 
+				(charCode == kHelpCharCode) )
+		{
+			if (launch_documentation() == noErr)
+				return true;
+		}
+
+		return false;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
+{
+	UInt32 inEventKind = GetEventKind(inEvent);
+
+	if (inEventKind == kEventCommandProcess)
+	{
+		HICommand hiCommand;
+		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+		if (status != noErr)
+			status = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+		if (status != noErr)
+			return false;
+
+		if (hiCommand.commandID == kHICommandAppHelp)
+		{
+//printf("command ID = kHICommandAppHelp\n");
+			if (launch_documentation() == noErr)
+				return true;
+		}
+//else printf("command ID = %.4s\n", (char*) &(hiCommand.commandID));
+
+		return false;
+	}
+
+	return false;
 }
 
 
@@ -719,16 +747,22 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 	if (GetEventClass(inEvent) != kEventClassControl)
 		return eventClassIncorrectErr;
 
-	OSStatus result = eventNotHandledErr;
+	bool eventWasHandled = ((DfxGuiEditor*)inUserData)->HandleControlEvent(inEvent);
+	if (eventWasHandled)
+		return noErr;
+	else
+		return eventNotHandledErr;
+}
 
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
+{
 	UInt32 inEventKind = GetEventKind(inEvent);
 
 	ControlRef ourCarbonControl = NULL;
 	GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &ourCarbonControl);
-	DfxGuiEditor *ourOwnerEditor = (DfxGuiEditor*) inUserData;
 	DGControl *ourDGControl = NULL;
-	if (ourOwnerEditor != NULL)
-		ourDGControl = ourOwnerEditor->getDGControlByPlatformControlRef(ourCarbonControl);
+	ourDGControl = getDGControlByCarbonControlRef(ourCarbonControl);
 
 /*
 	// the Carbon control reference has not been added yet, so our DGControl pointer is NULL, because we can't look it up by ControlRef yet
@@ -765,7 +799,10 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 #ifdef USE_QUICKDRAW_CLIPPING
 					RgnHandle clipRgn = NewRgn();
 					OpenRgn();
-					ourDGControl->clipRegion(true);
+					ourDGControl->clipRegion();
+					Rect clipRect;
+					ourDGControl->getBounds()->copyToRect(&clipRect);
+					FrameRect(&clipRect);	// XXX  whuh?
 					CloseRgn(clipRgn);
 					SetClip(clipRgn);
 					clipRgn = GetPortClipRegion(windowPort, clipRgn);
@@ -797,9 +834,8 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					// restore original port, if we set a different port
 					if (oldPort != NULL)
 						SetPort(oldPort);
-					result = noErr;
 				}
-				break;
+				return true;
 
 			case kEventControlHitTest:
 				{
@@ -816,21 +852,19 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					{
 						hitPart = kControlIndicatorPart;	// scroll handle
 						// also there is kControlButtonPart, kControlCheckBoxPart, kControlPicturePart
-						ourOwnerEditor->setCurrentControl_mouseover(ourDGControl);
+						setCurrentControl_mouseover(ourDGControl);
 					}
 					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(hitPart), &hitPart);
-//					result = eventNotHandledErr;	// let other event listeners have this if they want it
-					result = noErr;
 				}
-				break;
+//				return false;	// let other event listeners have this if they want it
+				return true;
 
 /*
 			case kEventControlHit:
 				{
 printf("kEventControlHit\n");
-					result = noErr;
 				}
-				break;
+				return true;
 */
 
 			case kEventControlTrack:
@@ -845,25 +879,26 @@ printf("kEventControlHit\n");
 			case kEventControlContextualMenuClick:
 //if (inEventKind == kEventControlContextualMenuClick) printf("kEventControlContextualMenuClick\n");
 				{
-					ourOwnerEditor->setCurrentControl_mouseover(ourDGControl);
+					setCurrentControl_mouseover(ourDGControl);
 
 //					UInt32 buttons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-//					UInt32 buttons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-//					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &buttons);
+					UInt32 mouseButtons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
+					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
 
-					HIPoint mouseLocation_f;
-//OSStatus fug = 
-					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation_f);
-//printf("typeHIPoint result = %ld\n", fug);
-//printf("mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation_f.x, mouseLocation_f.y);
-					Point mouseLocation;
-					mouseLocation.h = (short) mouseLocation_f.x;
-					mouseLocation.v = (short) mouseLocation_f.y;
+					HIPoint mouseLocation;
+					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
+//printf("mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation.x, mouseLocation.y);
+					Point mouseLocation_i;
+					mouseLocation_i.h = (short) mouseLocation.x;
+					mouseLocation_i.v = (short) mouseLocation.y;
 					// XXX only kEventControlClick gives global mouse coordinates for kEventParamMouseLocation?
 					if ( (inEventKind == kEventControlContextualMenuClick) || (inEventKind == kEventControlTrack) )
-						GetGlobalMouse(&mouseLocation);
-//printf("mouse.x = %d, mouse.y = %d\n", mouseLocation.h, mouseLocation.v);
-//printf("\n");
+					{
+						GetGlobalMouse(&mouseLocation_i);
+						mouseLocation.x = (float) mouseLocation_i.h;
+						mouseLocation.y = (float) mouseLocation_i.v;
+					}
+//printf("mouse.x = %d, mouse.y = %d\n\n", mouseLocation_i.h, mouseLocation_i.v);
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 					// the content area of the window (i.e. not the title bar or any borders)
@@ -872,31 +907,30 @@ printf("kEventControlHit\n");
 					// the position of the control relative to the top left corner of the window content area
 					Rect controlBounds;
 					GetControlBounds(ourCarbonControl, &controlBounds);
-					mouseLocation.h -= windowBounds.left + controlBounds.left;
-					mouseLocation.v -= windowBounds.top + controlBounds.top;
+					mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
+					mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
 
 					UInt32 modifiers;
 					GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-//					bool with_command = (modifiers & cmdKey) ? true : false;
-					bool with_shift = ( (modifiers & shiftKey) || (modifiers & rightShiftKey) ) ? true : false;
-					bool with_option = ( (modifiers & optionKey) || (modifiers & rightOptionKey) ) ? true : false;
-//					bool with_control = ( (modifiers & controlKey) || (modifiers & rightControlKey) ) ? true : false;
+					unsigned long keyModifiers = 0;
+					if (modifiers & cmdKey)
+						keyModifiers |= kDGKeyModifier_accel;
+					if ( (modifiers & optionKey) || (modifiers & rightOptionKey) )
+						keyModifiers |= kDGKeyModifier_alt;
+					if ( (modifiers & shiftKey) || (modifiers & rightShiftKey) )
+						keyModifiers |= kDGKeyModifier_shift;
+					if ( (modifiers & controlKey) || (modifiers & rightControlKey) )
+						keyModifiers |= kDGKeyModifier_extra;
 
-					ourDGControl->mouseDown(mouseLocation, with_option, with_shift);
-					ourOwnerEditor->setCurrentControl_clicked(ourDGControl);
-
-					result = noErr;
+					ourDGControl->mouseDown(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
+					currentControl_clicked = ourDGControl;
 				}
-				break;
+				return true;
 
 			default:
-				result = eventNotHandledErr;
-				break;
+				return false;
 		}
 	}
 
-//	if ( (result != noErr) && (ourDGControl != NULL) )
-//		printf("DGControl = 0x%08X,   event type = %ld\n", (unsigned long)ourDGControl, inEventKind);
-
-	return result;
+	return false;
 }

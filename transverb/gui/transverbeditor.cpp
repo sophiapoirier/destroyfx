@@ -61,7 +61,9 @@ enum {
 };
 
 
-#define SNOOT_FONT	"snoot.org pixel10"
+const char * SNOOT_FONT = "snoot.org pixel10";
+const DGColor kDisplayTextColor(103.0f/255.0f, 161.0f/255.0f, 215.0f/255.0f);
+const float kDisplayTextSize = 14.0f;
 
 
 
@@ -213,10 +215,6 @@ TransverbEditor::~TransverbEditor()
 // ____________________________________________________________________________
 OSStatus TransverbEditor::open(float inXOffset, float inYOffset)
 {
-printf("\n\n--------------------------------------------------\n");
-printf("       creating Transverb GUI\n");
-printf("--------------------------------------------------\n\n");
-
 	// Background image
 	DGImage *gBackground = new DGImage("transverb-background.png");
 	addImage(gBackground);
@@ -268,9 +266,6 @@ printf("--------------------------------------------------\n\n");
 	addImage(gSmartElectronixLinkButton);
 
 
-/***************************************
-	create controls
-***************************************/
 
 	DGRect where, where2;
 
@@ -296,6 +291,8 @@ printf("--------------------------------------------------\n\n");
 
 		DGTextDisplay *display = new DGTextDisplay(this, tag, &where2, displayProc, userData, NULL, SNOOT_FONT);
 		display->setTextAlignmentStyle(kDGTextAlign_right);
+		display->setFontSize(kDisplayTextSize);
+		display->setFontColor(kDisplayTextColor);
 		addControl(display);
 
 		long yoff =  kWideFaderInc;
@@ -313,6 +310,8 @@ printf("--------------------------------------------------\n\n");
 
 	DGTextDisplay *display = new DGTextDisplay(this, kBsize, &where2, bsizeDisplayProcedure, NULL, NULL, SNOOT_FONT);
 	display->setTextAlignmentStyle(kDGTextAlign_right);
+	display->setFontSize(kDisplayTextSize);
+	display->setFontColor(kDisplayTextColor);
 	addControl(display);
 
 	// Make horizontal sliders and add them to the pane

@@ -67,7 +67,7 @@ bounds.origin.y -= (float) ( (max - value) * (buttonImage->getHeight() / numStat
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseDown(Point inPos, bool with_option, bool with_shift)
+void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 {
 	if (mode == kDGButtonType_picturereel)
 		return;
@@ -95,7 +95,7 @@ void DGButton::mouseDown(Point inPos, bool with_option, bool with_shift)
 			newValue = (newValue - 1 + max) % (max + 1);
 			break;
 		case kDGButtonType_radiobutton:
-			newValue = inPos.h / (getBounds()->w / numStates);
+			newValue = (long)inXpos / (getBounds()->w / numStates);
 			if (newValue >= numStates)
 				newValue = numStates - 1;
 			else if (newValue < 0)
@@ -113,7 +113,7 @@ void DGButton::mouseDown(Point inPos, bool with_option, bool with_shift)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseTrack(Point inPos, bool with_option, bool with_shift)
+void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 {
 	if (mode == kDGButtonType_picturereel)
 		return;
@@ -121,13 +121,13 @@ void DGButton::mouseTrack(Point inPos, bool with_option, bool with_shift)
 	ControlRef carbonControl = getCarbonControl();
 	SInt32 currentValue = GetControl32BitValue(carbonControl);
 
-	if ( (inPos.h >= 0) && (inPos.h <= getBounds()->w) && (inPos.v >= 0) && (inPos.v <= getBounds()->h) )
+	if ( ((long)inXpos >= 0) && ((long)inXpos <= getBounds()->w) && ((long)inYpos >= 0) && ((long)inYpos <= getBounds()->h) )
 	{
 		setMouseIsDown(true);
 
 		if (mode == kDGButtonType_radiobutton)
 		{
-			newValue = inPos.h / (getBounds()->w / numStates);
+			newValue = (long)inXpos / (getBounds()->w / numStates);
 			if (newValue >= numStates)
 				newValue = numStates - 1;
 			else if (newValue < 0)
@@ -162,7 +162,7 @@ void DGButton::mouseTrack(Point inPos, bool with_option, bool with_shift)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseUp(Point inPos, bool with_option, bool with_shift)
+void DGButton::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 {
 	if (mode == kDGButtonType_picturereel)
 		return;
@@ -177,7 +177,7 @@ void DGButton::mouseUp(Point inPos, bool with_option, bool with_shift)
 			SetControl32BitValue(carbonControl, 0);
 	}
 
-	if ( (inPos.h >= 0) && (inPos.h <= getBounds()->w) && (inPos.v >= 0) && (inPos.v <= getBounds()->h) )
+	if ( ((long)inXpos >= 0) && ((long)inXpos <= getBounds()->w) && ((long)inYpos >= 0) && ((long)inYpos <= getBounds()->h) )
 	{
 		if (userReleaseProcedure != NULL)
 			userReleaseProcedure(GetControl32BitValue(carbonControl), userReleaseProcData);
@@ -243,11 +243,11 @@ DGWebLink::~DGWebLink()
 // This allows the user to accidentally push the button, but avoid the 
 // associated action (launching an URL) by moving the mouse pointer away 
 // before releasing the mouse button.
-void DGWebLink::mouseUp(Point inPos, bool with_option, bool with_shift)
+void DGWebLink::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 {
 	// only launch the URL if the mouse pointer is still in the button's area
 	if ( getMouseIsDown() && (urlString != NULL) )
 		launch_url(urlString);
 
-	DGButton::mouseUp(inPos, with_option, with_shift);
+	DGButton::mouseUp(inXpos, inYpos, inKeyModifiers);
 }

@@ -28,7 +28,7 @@ enum {
 };
 
 
-const DGColor kValueTextColor(152, 221, 251);
+const DGColor kValueTextColor(152.0f/255.0f, 221.0f/255.0f, 251.0f/255.0f);
 //const char * kValueTextFont = "Arial";
 const char * kValueTextFont = "Trebuchet MS";
 const float kValueTextSize = 10.5f;

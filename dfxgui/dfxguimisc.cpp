@@ -57,7 +57,6 @@ DGImage::DGImage(const char *inFileName)
 //-----------------------------------------------------------------------------
 DGImage::~DGImage()
 {
-printf("DGImage::~DGImage()\n");
 	if (cgImage != NULL)
 		CGImageRelease(cgImage);
 	cgImage = NULL;
