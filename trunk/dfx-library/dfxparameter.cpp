@@ -295,6 +295,8 @@ void DfxParam::setusevaluestrings(bool newMode)
 			for (long i=0; i < numAllocatedValueStrings; i++)
 				valueCFStrings[i] = NULL;
 		#endif
+
+		SetEnforceValueLimits(true);	// make sure not to go out of any array bounds
 	}
 }
 
@@ -1117,7 +1119,7 @@ void DfxParam::getunitstring(char *outText)
 			strcpy(outText, "bpm");
 			break;
 		case kDfxParamUnit_beats:
-			strcpy(outText, "beats");
+			strcpy(outText, "per beat");
 			break;
 		case kDfxParamUnit_index:
 			strcpy(outText, "");

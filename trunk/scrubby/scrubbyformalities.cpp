@@ -41,9 +41,9 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kSeekRange, "seek range", 333.0f, 333.0f, 0.3f, 6000.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_b(kFreeze, "freeze", false, false);
 	initparameter_f(kSeekRate_abs, "seek rate (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
-	initparameter_indexed(kSeekRate_sync, "seek rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
+	initparameter_indexed(kSeekRate_sync, "seek rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
-	initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
+	initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kTempoSync, "tempo sync", false, false);
 	initparameter_f(kSeekDur, "seek duration", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
 	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamUnit_percent);	// percent of range

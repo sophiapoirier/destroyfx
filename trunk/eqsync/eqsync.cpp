@@ -29,7 +29,7 @@ EQsync::EQsync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	long numTempoRates = tempoRateTable->getNumTempoRates();
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
-	initparameter_indexed(kRate_sync, "rate", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
+	initparameter_indexed(kRate_sync, "rate", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kSmooth, "smooth", 3.0f, 33.333f, 0.0f, 100.0f, kDfxParamUnit_percent);	// % of cycle
 	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
