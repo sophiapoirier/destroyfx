@@ -1,8 +1,22 @@
-#ifndef __dfx_firfilter
+#ifndef __dfx_firfilter_h
 #include "firfilter.h"
 #endif
 
-//----------------------------------------------------------------------------- 
+#include <math.h>
+
+#ifndef sinf
+#define sinf(v) (float)sin((v))
+#endif
+#ifndef powf
+#define powf(b,e) (float)pow((b),(e))
+#endif
+#ifndef sqrtf
+#define sqrtf(v) (float)sqrt((v))
+#endif
+
+
+
+//-----------------------------------------------------------------------------
 // you're supposed to use use an odd number of taps
 void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate, 
 											int numTaps, float *coefficients)
@@ -29,7 +43,7 @@ void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate,
 	}
 }
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 void applyKaiserWindow(int numTaps, float *coefficients, float attenuation)
 {
   int halfLength;
@@ -59,7 +73,7 @@ void applyKaiserWindow(int numTaps, float *coefficients, float attenuation)
 	}
 } 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 float besselIzero(float in)
 {
   float sum, numerator, denominator, term, halfIn;
@@ -78,7 +92,7 @@ float besselIzero(float in)
 	return sum;
 }
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 float besselIzero2(float in)
 {
   float sum = 1.0f;
