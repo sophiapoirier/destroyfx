@@ -66,8 +66,6 @@ public:
 	{
 		if (backgroundImage != NULL)
 			backgroundImage->draw(getBounds(), inContext, inPortHeight);
-		else
-			getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 
 		ControlRef carbonControl = getCarbonControl();
 		SInt32 max = GetControl32BitMaximum(carbonControl);
