@@ -149,6 +149,8 @@ public:
 
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventRef inEvent);
+	virtual ComponentResult Version()
+		{	return RMS_BUDDY_VERSION;	}
 
 	OSStatus setup();
 	void cleanup();
