@@ -237,7 +237,7 @@ SUPPORT_AU_VERSION_1
 #endif
 
 
-struct DfxTimeInfo {
+typedef struct {
 	double tempo, tempo_bps;
 	long samplesPerBeat;
 		bool tempoIsValid;
@@ -251,7 +251,7 @@ struct DfxTimeInfo {
 		bool samplesToNextBarIsValid;
 	// XXX implement this for Audio Unit
 	bool playbackChanged;	// whether or not the playback state or position just changed
-};
+} DfxTimeInfo;
 
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -260,10 +260,10 @@ struct DfxTimeInfo {
 	#define DfxChannelConfig AUChannelInfo
 #else
 	// immitate AUChannelInfo from the Audio Unit API for other APIs
-	struct DfxChannelConfig {
+	typedef struct {
 		short inChannels;
 		short outChannels;
-	};
+	} DfxChannelConfig;
 #endif
 
 
@@ -285,7 +285,7 @@ public:
 	long do_initialize();
 	// ***
 	virtual long initialize()
-		{	return 0;	}
+		{	return kDfxErr_NoError;	}
 	void do_cleanup();
 	// ***
 	virtual void cleanup()
@@ -976,10 +976,10 @@ long launch_url(const char *urlstring);
 	AEffect *main(audioMasterCallback audioMaster)				\
 	{															\
 		if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
-			return 0;											\
+			return NULL;										\
 		DfxPlugin *effect = new PluginClass(audioMaster);		\
 		if (effect == NULL)										\
-			return 0;											\
+			return NULL;										\
 		effect->dfxplugin_postconstructor();					\
 		return effect->getAeffect();							\
 	}

@@ -7,15 +7,14 @@
 #include "dfxdefines.h"
 
 
-typedef enum DfxGuiType
-{
-	kDfxGuiType_None = 0,
-	kDfxGuiType_Graphic,
-	kDfxGuiType_Pane,
-	kDfxGuiType_Slider,
-	kDfxGuiType_Button,
-	kDfxGuiType_Display
-};
+typedef enum {
+	kDfxGuiType_none = 0,
+	kDfxGuiType_graphic,
+	kDfxGuiType_pane,
+	kDfxGuiType_slider,
+	kDfxGuiType_button,
+	kDfxGuiType_display
+} DfxGuiType;
 
 
 
@@ -126,11 +125,11 @@ private:
 class DGGraphic : public DGItem
 {
 public:
-	DGGraphic(char *pngFileName);
+	DGGraphic(const char *inFileName);
 	virtual ~DGGraphic();
 
 	// passive API (for controls that want to draw images by themselves)
-	virtual CGImageRef getImage()
+	virtual CGImageRef getCGImage()
 		{	return cgImage;	}
 	virtual SInt32 getWidth();
 	virtual SInt32 getHeight();
@@ -139,8 +138,9 @@ public:
 	virtual void draw(CGContextRef context, UInt32 portHeight, DGRect* rect, float value);
 
 private:
-	void		loadImagePNG(char *pngFileName);
-	CGImageRef	cgImage;
+	void loadImageFile(const char *inFileName);
+
+	CGImageRef cgImage;
 };
 
 

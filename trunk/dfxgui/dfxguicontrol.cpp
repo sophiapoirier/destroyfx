@@ -2,32 +2,32 @@
 
 
 //-----------------------------------------------------------------------------
-DGControl::DGControl(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inWhere)
+DGControl::DGControl(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inRegion)
 :	ownerEditor(inOwnerEditor)
 {
 	auvp = AUVParameter(ownerEditor->GetEditAudioUnit(), inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
 	AUVPattached = true;
 	Range = auvp.ParamInfo().maxValue - auvp.ParamInfo().minValue;
 	
-	init(inWhere);
+	init(inRegion);
 }
 
 //-----------------------------------------------------------------------------
-DGControl::DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inWhere, float inRange)
+DGControl::DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange)
 :	ownerEditor(inOwnerEditor), Range(inRange)
 {
 	auvp = AUVParameter();	// an empty AUVParameter
 	AUVPattached = false;
 
-	init(inWhere);
+	init(inRegion);
 }
 
 //-----------------------------------------------------------------------------
 // common constructor stuff
-void DGControl::init(DGRect *inWhere)
+void DGControl::init(DGRect *inRegion)
 {
-	where.set(inWhere);
-	vizArea.set(inWhere);
+	where.set(inRegion);
+	vizArea.set(inRegion);
 
 	Daddy = NULL;
 	children = NULL;

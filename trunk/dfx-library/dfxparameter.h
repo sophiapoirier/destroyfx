@@ -175,21 +175,21 @@ for the value strings.
 
 // the DfxParamValue struct holds every type of supported value variable type
 // all values (current, min, max, default) are stored in these
-struct DfxParamValue {
-  float f;
-  double d;
-  long i;
-  unsigned long ui;
-  unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
-  char c;
-  unsigned char uc;
-  DfxParamValue() {} /* suppress compiler warnings */
-};
+typedef struct DfxParamValue {
+	float f;
+	double d;
+	long i;
+	unsigned long ui;
+	unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
+	char c;
+	unsigned char uc;
+	DfxParamValue() {} /* suppress compiler warnings */
+} DfxParamValue;
 
 
 // these are the different variable types that a parameter can 
 // declare as its "native" type
-enum DfxParamValueType {
+typedef enum {
 	kDfxParamValueType_undefined,
 	kDfxParamValueType_float,
 	kDfxParamValueType_double,
@@ -198,11 +198,11 @@ enum DfxParamValueType {
 	kDfxParamValueType_boolean,
 	kDfxParamValueType_char,
 	kDfxParamValueType_uchar
-};
+} DfxParamValueType;
 
 
 // these are the different value unit types that a parameter can have
-enum DfxParamUnit {
+typedef enum {
 	kDfxParamUnit_undefined,
 	kDfxParamUnit_generic,
 	kDfxParamUnit_quantity,
@@ -228,12 +228,12 @@ enum DfxParamUnit {
 	kDfxParamUnit_index,	// this indicates that the parameter value is an index into some array
 //	kDfxParamUnit_strings,	// index, using array of custom text strings for modes/states/etc.
 	kDfxParamUnit_custom	// with a text string lable for custom display
-};
+} DfxParamUnit;
 
 
 // these are the different value distribution curves that a parameter can have
 // this is useful if you need to give greater emphasis to some parts of the value range
-enum DfxParamCurve {
+typedef enum {
 	kDfxParamCurve_undefined,
 	kDfxParamCurve_linear,
 	kDfxParamCurve_stepped,
@@ -243,7 +243,7 @@ enum DfxParamCurve {
 	kDfxParamCurve_pow,	// requires curvespec to be defined as the value of the exponent
 	kDfxParamCurve_exp,
 	kDfxParamCurve_log
-};
+} DfxParamCurve;
 
 
 

@@ -5,10 +5,10 @@
 #include "dfxgui.h"
 
 
-enum DfxGuiSliderStyle {
-	kVerticalSlider,
-	kHorizontalSlider
-};
+typedef enum {
+	kDGSliderStyle_vertical,
+	kDGSliderStyle_horizontal
+} DfxGuiSliderStyle;
 
 
 
