@@ -55,6 +55,8 @@ public:
 						AudioUnitElement inElement, void *outData);
 	virtual ComponentResult SetProperty(AudioUnitPropertyID inID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, const void *inData, UInt32 inDataSize);
+	virtual ComponentResult ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
+						const CAStreamBasicDescription &inPrevFormat, const CAStreamBasicDescription &inNewFormat);
 	virtual int GetNumCustomUIComponents();
 	virtual void GetUIComponentDescs(ComponentDescription *inDescArray);
 

@@ -43,7 +43,7 @@ ComponentResult RMSbuddy::Initialize()
 	if (result == noErr)
 	{
 		// allocate dynamics data value arrays according to the current number of channels
-		numChannels = GetNumberOfChannels();
+		numChannels = GetInput(0)->GetStreamFormat().mChannelsPerFrame; //GetNumberOfChannels();
 		averageRMS = (double*) malloc(numChannels * sizeof(double));
 		totalSquaredCollection = (double*) malloc(numChannels * sizeof(double));
 		absolutePeak = (float*) malloc(numChannels * sizeof(float));
@@ -167,6 +167,35 @@ void RMSbuddy::notifyGUI()
 	messangerParam.mScope = kAudioUnitScope_Global;
 	messangerParam.mElement = 0;
 	AUParameterListenerNotify(NULL, NULL, &messangerParam);
+}
+
+//-----------------------------------------------------------------------------------------
+// this is called when the stream format changes (number of channels, sample rate, sample format, etc.)
+ComponentResult RMSbuddy::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
+						const CAStreamBasicDescription &inPrevFormat, const CAStreamBasicDescription &inNewFormat)
+{
+	// first let the parent class implementation check it looks okay
+	ComponentResult result = AUInlineEffectBase::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
+	// bail out if it's not okay
+	if (result != noErr)
+		return result;
+
+	// hosts are not supposed to change the stream format on an AU that is initialized, but Spark does, 
+	// so this is all basically to make RMS Buddy work in Spark
+	// we need to catch changes made to the number input channels, if any, if we are currently initialized 
+	// so that we can free and reallocate our per-channel arrays
+	if ( IsInitialized() && (inPrevFormat.mChannelsPerFrame != inNewFormat.mChannelsPerFrame) && (inScope == kAudioUnitScope_Input) )
+	{
+		DoCleanup();
+		ComponentResult result = DoInitialize();
+		if (result != noErr)
+		{
+			AUBase::ChangeStreamFormat(inScope, inElement, inNewFormat, inPrevFormat);	// XXX change it back (?)
+			return result;
+		}
+	}
+
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------------------
