@@ -119,13 +119,11 @@ void DGControl::setOffset(SInt32 x, SInt32 y)
 //-----------------------------------------------------------------------------
 void DGControl::clipRegion(bool drawing)
 {
-/*	
-	if (drawing)
-		printf ("drawing id %lld type %ld\n", getID(), getType());
-	else
-		printf ("clipping id %ld type %ld\n", getID(), getType());
-*/
-	if (opaque)
+//	if (drawing)
+//		printf("drawing id %lld type %ld\n", getID(), getType());
+//	else
+//		printf("clipping id %ld type %ld\n", getID(), getType());
+	if ( isOpaque() )
 	{
 		Rect r;
 		where.copyToRect(&r);
@@ -133,13 +131,13 @@ void DGControl::clipRegion(bool drawing)
 //		printf("clipping opaque %d %d %d %d\n", r.left, r.top, r.right, r.bottom);
 	}
 	
-	if (!opaque || drawing)
-	{		
-		DGControl* current = children;
-		while(current != NULL)
+	if ( !isOpaque() || drawing )
+	{
+		DGControl *current = children;
+		while (current != NULL)
 		{
 			current->clipRegion(false);
-			current = (DGControl*)current->getNext();
+			current = (DGControl*) current->getNext();
 		}
 	}
 }
