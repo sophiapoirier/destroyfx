@@ -27,31 +27,59 @@ int intcompare(const void * a, const void * b) {
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  FPARAM(bufsizep, P_BUFSIZE, "wsize", 1.0, "samples");
+  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.7, "samples");
   FPARAM(shape, P_SHAPE, "wshape", 0.0, "");
 
   FPARAM(pointstyle, P_POINTSTYLE, "points where", 0.0, "choose");
 
-  for(int pp = 0; pp < MAX_POINTSTYLES; pp++) {
-    FPARAM(pointparam[pp], P_POINTPARAMS + pp, "pointparam", 0.04f, "??");
+  FPARAM(pointparam[0], P_POINTPARAMS + 0, "point:ext'n'cross", 0.0, "magn");
+  FPARAM(pointparam[1], P_POINTPARAMS + 1, "point:freq", 0.08, "%");
+  FPARAM(pointparam[2], P_POINTPARAMS + 2, "point:rand", 0.20, "%");
+  FPARAM(pointparam[3], P_POINTPARAMS + 3, "point:span", 0.20, "width");
+  FPARAM(pointparam[4], P_POINTPARAMS + 4, "point:dydx", 0.50, "gap");
+
+  for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
+    FPARAM(pointparam[pp], P_POINTPARAMS + pp, 
+	   "pointparam:unused", 0.04f, "??");
   }
 
   FPARAM(interpstyle, P_INTERPSTYLE, "interp how", 0.0, "choose");
 
-  for(int ip = 0; ip < MAX_INTERPSTYLES; ip++) {
-    FPARAM(interparam[ip], P_INTERPARAMS + ip, "interparam", 0.0, "???");
-  }
+  FPARAM(interparam[0], P_INTERPARAMS + 0, "inter:polygon", 0.0, "angle");
+  FPARAM(interparam[1], P_INTERPARAMS + 1, "inter:wrongy", 0.0, "angle");
+  FPARAM(interparam[2], P_INTERPARAMS + 2, "inter:smoothie", 0.5, "exp");
+  FPARAM(interparam[3], P_INTERPARAMS + 3, "inter:reversie", 0.0, "nothing");
+  FPARAM(interparam[4], P_INTERPARAMS + 4, "inter:pulse", 0.05, "pulse");
+  FPARAM(interparam[5], P_INTERPARAMS + 5, "inter:friends", 1.0, "width");
+  FPARAM(interparam[6], P_INTERPARAMS + 6, "inter:sing", 0.8, "mod");
 
-  interparam[INTERP_SMOOTHIE] = 0.5;
+  for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
+    FPARAM(interparam[ip], P_INTERPARAMS + ip, 
+	   "inter:unused", 0.0, "???");
+  }
 
   FPARAM(pointop1, P_POINTOP1, "pointop1", 1.0f, "choose");
   FPARAM(pointop2, P_POINTOP2, "pointop2", 1.0f, "choose");
   FPARAM(pointop3, P_POINTOP3, "pointop3", 1.0f, "choose");
 
-  for(int op = 0; op < NUM_OPS; op++) {
-    FPARAM(oppar1[op], P_OPPAR1_0 + op, "opparm1", 0.5f, "???");
-    FPARAM(oppar2[op], P_OPPAR2_0 + op, "opparm2", 0.5f, "???");
-    FPARAM(oppar3[op], P_OPPAR3_0 + op, "opparm3", 0.5f, "???");
+#define ALLOP(n, str, def, unit) \
+  do { \
+    FPARAM(oppar1[n], P_OPPAR1S + n, "op1:" str, def, unit); \
+    FPARAM(oppar2[n], P_OPPAR2S + n, "op2:" str, def, unit); \
+    FPARAM(oppar3[n], P_OPPAR3S + n, "op3:" str, def, unit); \
+  } while (0)
+
+  ALLOP(0, "double", 0.5, "amp");
+  ALLOP(1, "half", 0.0, "nothing");
+  ALLOP(2, "quarter", 0.0, "nothing");
+  ALLOP(3, "longpass", 0.15, "length");
+  ALLOP(4, "shortpass", 0.5, "length");
+  ALLOP(5, "slow", 0.25, "factor");
+  ALLOP(6, "fast", 0.5, "factor");
+  ALLOP(7, "none", 0.0, "nothing");
+  
+  for(int op = NUM_OPS; op < MAX_OPS; op++) {
+    ALLOP(op, "unused", 0.5f, "???");
   }
 
   long maxframe = 0;
@@ -75,6 +103,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   storey = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
 
   /* XXX doesn't take self pointer now? */
+  /* Marc, is this right? */
   chunk = new VstChunk(NUM_PARAMS, NUM_PROGRAMS, PLUGINID, this);
 
   /* resume sets up buffers and sizes */
@@ -209,106 +238,108 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     break;
   case P_SHAPE:
     switch(MKWINDOWSHAPE(shape)) {
-      case WINDOW_TRIANGLE:
-        strcpy(text, "linear");
-        break;
-      case WINDOW_ARROW:
-        strcpy(text, "arrow");
-        break;
-      case WINDOW_WEDGE:
-        //      float s = 1.0 / (shape - shape);
-        //      sprintf(text, "%f", s);
-        strcpy(text, "wedge");
-        break;
-      case WINDOW_COS:
-        strcpy(text, "best");
-        break;
-      case WINDOW_COS2:
-      default:
-        strcpy(text, "cos^2");
-        break;
+    case WINDOW_TRIANGLE:
+      strcpy(text, "linear");
+      break;
+    case WINDOW_ARROW:
+      strcpy(text, "arrow");
+      break;
+    case WINDOW_WEDGE:
+      //      float s = 1.0 / (shape - shape);
+      //      sprintf(text, "%f", s);
+      strcpy(text, "wedge");
+      break;
+    case WINDOW_COS:
+      strcpy(text, "best");
+      break;
+    case WINDOW_COS2:
+    default:
+      strcpy(text, "cos^2");
+      break;
     }
     break;
     /* geometer */
   case P_POINTSTYLE:
     switch(MKPOINTSTYLE(pointstyle)) {
-      case POINT_EXTNCROSS:
-        strcpy(text, "ext 'n cross");
-        break;
-      case POINT_FREQ:
-        strcpy(text, "at freq");
-        break;
-      case POINT_RANDOM:
-        strcpy(text, "randomly");
-        break;
-      case POINT_SPAN:
-        strcpy(text, "span");
-        break;
-      case POINT_DYDX:
-        strcpy(text, "dy/dx");
-        break;
-      default:
-        strcpy(text, "unsup");
-        break;
+    case POINT_EXTNCROSS:
+      strcpy(text, "ext 'n cross");
+      break;
+    case POINT_FREQ:
+      strcpy(text, "at freq");
+      break;
+    case POINT_RANDOM:
+      strcpy(text, "randomly");
+      break;
+    case POINT_SPAN:
+      strcpy(text, "span");
+      break;
+    case POINT_DYDX:
+      strcpy(text, "dy/dx");
+      break;
+    default:
+      strcpy(text, "unsup");
+      break;
     }
     break;
   case P_INTERPSTYLE:
     switch(MKINTERPSTYLE(interpstyle)) {
-      case INTERP_POLYGON:
-        strcpy(text, "polygon");
-        break;
-      case INTERP_WRONGYGON:
-        strcpy(text, "wrongygon");
-        break;
-      case INTERP_SMOOTHIE:
-        strcpy(text, "smoothie");
-        break;
-      case INTERP_REVERSI:
-        strcpy(text, "reversi");
-        break;
-      case INTERP_PULSE:
-        strcpy(text, "pulse-debug");
-        break;
-      case INTERP_FRIENDS:
-	strcpy(text, "friends");
-	break;
-      case INTERP_SING:
-	strcpy(text, "sing");
-	break;
-      default:
-        strcpy(text, "unsup");
-        break;
+    case INTERP_POLYGON:
+      strcpy(text, "polygon");
+      break;
+    case INTERP_WRONGYGON:
+      strcpy(text, "wrongygon");
+      break;
+    case INTERP_SMOOTHIE:
+      strcpy(text, "smoothie");
+      break;
+    case INTERP_REVERSI:
+      strcpy(text, "reversi");
+      break;
+    case INTERP_PULSE:
+      strcpy(text, "pulse-debug");
+      break;
+    case INTERP_FRIENDS:
+      strcpy(text, "friends");
+      break;
+    case INTERP_SING:
+      strcpy(text, "sing");
+      break;
+    default:
+      strcpy(text, "unsup");
+      break;
     }
     break;
   case P_POINTOP1:
   case P_POINTOP2:
   case P_POINTOP3:
     switch(MKPOINTOP(*paramptrs[index].ptr)) {
-      case OP_DOUBLE:
-        strcpy(text, "x2");
-        break;
-      case OP_HALF:
-        strcpy(text, "1/2");
-        break;
-      case OP_QUARTER:
-        strcpy(text, "1/4");
-        break;
-      case OP_LONGPASS:
-        strcpy(text, "longpass");
-        break;
-      case OP_SHORTPASS:
-        strcpy(text, "shortpass");
-        break;
-      case OP_SLOW:
-	strcpy(text, "slow");
-	break;
-      case OP_FAST:
-	strcpy(text, "fast");
-	break;
-      case OP_UNSUP3:
-      default:
-        strcpy(text, "unsup");
-        break;
+    case OP_DOUBLE:
+      strcpy(text, "x2");
+      break;
+    case OP_HALF:
+      strcpy(text, "1/2");
+      break;
+    case OP_QUARTER:
+      strcpy(text, "1/4");
+      break;
+    case OP_LONGPASS:
+      strcpy(text, "longpass");
+      break;
+    case OP_SHORTPASS:
+      strcpy(text, "shortpass");
+      break;
+    case OP_SLOW:
+      strcpy(text, "slow");
+      break;
+    case OP_FAST:
+      strcpy(text, "fast");
+      break;
+    case OP_NONE:
+      strcpy(text, "none");
+      break;
+    default:
+      strcpy(text, "unsup");
+      break;
     }
     break;
   default:
@@ -467,7 +498,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
 
     break;
   }
-  case OP_UNSUP3:
+  case OP_NONE:
   default:
     /* nothing ... */
     break;
