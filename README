@@ -77,6 +77,13 @@ geometer/
         visual display of what's happening to your sound.
 
 
+scrubby/
+
+        A nice plugin that zips around the audio buffer like a
+        DJ (or robot DJ) scratching a record. Has the ability
+        to control the scratch speeds using a MIDI keyboard,
+        among other advanced features.
+
 In the source package, each plugin has a corresponding directory, as
 well as a corresponding plugin_win32 directory containing MS VC++
 project files. Some day we will probably have Codewarrior build files
