@@ -120,15 +120,10 @@ void bsizeDisplayConvert(float value, char *string)
 void speedDisplayConvert(float value, char *string);
 void speedDisplayConvert(float value, char *string)
 {
-  float speed, remainder, semitones;
-  int octaves;
-  char *semitonesString;
-
-
-	semitonesString = new char[16];
-	speed = speedScaled(value);
-	remainder = fmodf(fabsf(speed), 1.0f);
-	semitones = remainder * 12.0f;
+	char *semitonesString = (char*) malloc(16);
+	float speed = speedScaled(value);
+	float remainder = fmodf(fabsf(speed), 1.0f);
+	float semitones = remainder * 12.0f;
 	// make sure that these float crap doesn't result in wacky stuff 
 	// like displays that say "-1 octave & 12.00 semitones"
 	sprintf(semitonesString, "%.3f", semitones);
@@ -136,11 +131,11 @@ void speedDisplayConvert(float value, char *string)
 	{
 		semitones = 0.0f;
 		if (speed < 0.0f)
-			speed -= 0.0003f;
+			speed -= 0.003f;
 		else
-			speed += 0.0003f;
+			speed += 0.003f;
 	}
-	octaves = (int) speed;
+	int octaves = (int) speed;
 
 	if ( speed > 0.0f )
 	{
@@ -161,8 +156,8 @@ void speedDisplayConvert(float value, char *string)
 			sprintf(string, "%d octaves &  %.2f  semitones", octaves, semitones);
 	}
 
-	if (semitonesString)
-		delete[] semitonesString;
+	if (semitonesString != NULL)
+		free(semitonesString);
 }
 
 void feedDisplayConvert(float value, char *string);
