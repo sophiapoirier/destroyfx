@@ -59,7 +59,7 @@ enum {
   pos_finebuttonincY = pos_sliderincY,
 
   pos_displayX = 180,
-  pos_displayY = pos_sliderY - 11,
+  pos_displayY = pos_sliderY - 13,
   pos_displaywidth = pos_sliderX + pos_sliderwidth + 1 - pos_displayX,
   pos_displayheight = 10,
 
