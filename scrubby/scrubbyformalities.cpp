@@ -29,6 +29,8 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	seekcount = NULL;
 	needResync = NULL;
 	numBuffers = 0;
+	pitchSteps = NULL;
+	activeNotesTable = NULL;
 
 	tempoRateTable = new TempoRateTable;
 
