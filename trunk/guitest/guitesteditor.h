@@ -22,15 +22,15 @@ struct GuitestEditor : public AEffEditor {
 
   private:
   
-  LPDIRECTDRAWSURFACE primary; // DirectDraw primary surface
+  LPDIRECTDRAWSURFACE7 primary; // DirectDraw primary surface
   
-  LPDIRECTDRAWSURFACE back; // DirectDraw back surface
+  LPDIRECTDRAWSURFACE7 back; // DirectDraw back surface
 
   bool CreatePrimarySurface();
 
-  static IDirectDrawSurface * DDLoadBitmap(IDirectDraw *pdd, LPCSTR szBitmap);
-  static IDirectDrawSurface * CreateOffScreenSurface(IDirectDraw *pdd, int dx, int dy);
-  static HRESULT DDCopyBitmap(IDirectDrawSurface *pdds, HBITMAP hbm, int dx, int dy);
+  static IDirectDrawSurface7 * DDLoadBitmap(IDirectDraw7 *pdd, LPCSTR szBitmap);
+  static IDirectDrawSurface7 * CreateOffScreenSurface(IDirectDraw7 *pdd, int dx, int dy);
+  static HRESULT DDCopyBitmap(IDirectDrawSurface7 *pdds, HBITMAP hbm, int dx, int dy);
 
   static LONG WINAPI WindowProc (HWND hwnd, UINT message, WPARAM wParam, 
 				 LPARAM lParam);
@@ -38,7 +38,7 @@ struct GuitestEditor : public AEffEditor {
   void redraw();
 
   HWND window;
-  IDirectDrawSurface * bg, * guit;
+  IDirectDrawSurface7 * bg, * guit;
 
   int guitx, guity, guitdy, guitdx;
 

@@ -463,14 +463,20 @@ long DfxPlugin::processEvents(VstEvents* events)
 
 
 
-// boring Windows main stuff
+/* entry point for windows. All we need to do is set the global
+   instance pointers. We save two copies because vstgui stupidly wants
+   it to be a "void *", where our own GUI stuff avoids downcasts by
+   using the right type, HINSTANCE. */
 #if WIN32
+
 /* vstgui needs void *, not HINSTANCE */
-	void * hInstance;
-	BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved)
-	{
-		hInstance = hInst;
-		return 1;
-	}
+void * hInstance;
+HINSTANCE instance;
+
+BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
+  hInstance = instance = hInst;
+  return 1;
+}
+
 #endif
 
