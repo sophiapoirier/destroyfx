@@ -615,6 +615,7 @@ protected:
 	double samplerate;
 
 	#ifdef TARGET_API_AUDIOUNIT
+		bool auElementsHaveBeenCreated;
 		// array of float pointers to input and output audio buffers, 
 		// just for the sake of making processaudio(float**, float**, etc.) possible
 		float ** inputsP;

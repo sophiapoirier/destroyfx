@@ -61,6 +61,30 @@ DfxPlugin::DfxPlugin(
 
 	numchannelconfigs = 0;
 
+#ifdef TARGET_API_AUDIOUNIT
+	auElementsHaveBeenCreated = false;
+
+	inputsP = outputsP = NULL;
+
+	aupresets = NULL;
+	if (numPresets > 0)
+	{
+		aupresets = (AUPreset*) malloc(numPresets * sizeof(AUPreset));
+		for (long i=0; i < numPresets; i++)
+		{
+			aupresets[i].presetNumber = i;
+			aupresets[i].presetName = NULL;
+		}
+	}
+	#if TARGET_PLUGIN_USES_MIDI
+		aumidicontrolmap = NULL;
+		if (numParameters > 0)
+			aumidicontrolmap = (AudioUnitMIDIControlMapping*) malloc(numParameters * sizeof(AudioUnitMIDIControlMapping));
+	#endif
+
+#endif
+// Audio Unit stuff
+
 	updatesamplerate();	// XXX have it set to something here?
 	sampleratechanged = true;
 	hostCanDoTempo = false;	// until proven otherwise
@@ -92,29 +116,6 @@ DfxPlugin::DfxPlugin(
 		midistuff = new DfxMidi;
 		dfxsettings = new DfxSettings(PLUGIN_ID, this);
 	#endif
-
-
-#ifdef TARGET_API_AUDIOUNIT
-	inputsP = outputsP = NULL;
-
-	aupresets = NULL;
-	if (numPresets > 0)
-	{
-		aupresets = (AUPreset*) malloc(numPresets * sizeof(AUPreset));
-		for (long i=0; i < numPresets; i++)
-		{
-			aupresets[i].presetNumber = i;
-			aupresets[i].presetName = NULL;	// XXX eh?
-		}
-	}
-	#if TARGET_PLUGIN_USES_MIDI
-		aumidicontrolmap = NULL;
-		if (numParameters > 0)
-			aumidicontrolmap = (AudioUnitMIDIControlMapping*) malloc(numParameters * sizeof(AudioUnitMIDIControlMapping));
-	#endif
-
-#endif
-// Audio Unit stuff
 
 
 #ifdef TARGET_API_VST
@@ -846,11 +847,11 @@ void DfxPlugin::setsamplerate(double newrate)
 	if (newrate <= 0.0)
 		newrate = 44100.0;
 
-	if (newrate != DfxPlugin::samplerate)
+	if (newrate != samplerate)
 		sampleratechanged = true;
 
 	// accept the new value into our sampling rate keeper
-	DfxPlugin::samplerate = newrate;
+	samplerate = newrate;
 }
 
 //-----------------------------------------------------------------------------
@@ -858,10 +859,10 @@ void DfxPlugin::setsamplerate(double newrate)
 void DfxPlugin::updatesamplerate()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	if (IsInitialized())	// will crash if not initialized
+	if (auElementsHaveBeenCreated)	// will crash otherwise
 		setsamplerate(GetSampleRate());
 	else
-		setsamplerate(44100.0);
+		setsamplerate(kAUDefaultSampleRate);
 #endif
 #ifdef TARGET_API_VST
 	setsamplerate((double)getSampleRate());
@@ -1114,7 +1115,7 @@ void DfxPlugin::processtimeinfo()
 		if ( mHostCallbackInfo.musicalTimeLocationProc(mHostCallbackInfo.hostUserData, 
 				&sampleOffsetToNextBeat, &timeSigNumerator, &timeSigDenominator, &currentMeasureDownBeat) == noErr )
 		{
-			// get the song beat position of the beginning of the previous measure
+			// get the song beat position of the beginning of the current measure
 			timeinfo.barPosIsValid = true;
 			timeinfo.barPos = currentMeasureDownBeat;
 
@@ -1156,7 +1157,7 @@ void DfxPlugin::processtimeinfo()
 			timeinfo.beatPos = vstTimeInfo->ppqPos;
 		}
 
-		// get the song beat position of the beginning of the previous measure
+		// get the song beat position of the beginning of the current measure
 		if (kVstBarsValid & vstTimeInfo->flags)
 		{
 			timeinfo.barPosIsValid = true;
