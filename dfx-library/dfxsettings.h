@@ -55,9 +55,7 @@
 #define __DFXSETTINGS_H
 
 
-#ifndef __DFXDEFINES_H
 #include "dfxdefines.h"
-#endif
 
 
 //------------------------------------------------------
@@ -421,9 +419,7 @@ protected:
 Here's what you add to a plugin to make it use DfxSettings and MIDI learn.  
 In the header, add these includes:
 
-#ifndef __DFXSETTINGS_H
 #include "dfxsettings.h"
-#endif
 
 
 Add declarations for these 3 virtual functions:

@@ -5,9 +5,7 @@ This is where we connect the VST API to our DfxPlugin system.
 written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
-#endif
 
 #include <stdio.h>
 
