@@ -105,7 +105,9 @@ enum {
 
   /* parameter tags for the buttons that are not real parameters */
   tag_midilearn = id_midilearnbutton + 30000,
-  tag_midireset = id_midiresetbutton + 30000
+  tag_midireset = id_midiresetbutton + 30000,
+  tag_destroyfxlink = id_destroyfxlink + 30000,
+  tag_smartelectronixlink = id_smartelectronixlink + 30000
 
 };
 
@@ -539,14 +541,14 @@ long GeometerEditor::open(void *ptr) {
   size (pos_destroyfxlinkX, pos_destroyfxlinkY, 
         pos_destroyfxlinkX + g_destroyfxlink->getWidth(), 
         pos_destroyfxlinkY + (g_destroyfxlink->getHeight())/2);
-  destroyfxlink = new CWebLink (size, this, id_destroyfxlink, DESTROYFX_URL, g_destroyfxlink);
+  destroyfxlink = new CWebLink (size, this, tag_destroyfxlink, DESTROYFX_URL, g_destroyfxlink);
   frame->addView(destroyfxlink);
 
   // Smart Electronix web page link
   size (pos_smartelectronixlinkX, pos_smartelectronixlinkY, 
         pos_smartelectronixlinkX + g_smartelectronixlink->getWidth(), 
         pos_smartelectronixlinkY + (g_smartelectronixlink->getHeight())/2);
-  smartelectronixlink = new CWebLink (size, this, id_smartelectronixlink, SMARTELECTRONIX_URL, g_smartelectronixlink);
+  smartelectronixlink = new CWebLink (size, this, tag_smartelectronixlink, SMARTELECTRONIX_URL, g_smartelectronixlink);
   frame->addView(smartelectronixlink);
 
 
