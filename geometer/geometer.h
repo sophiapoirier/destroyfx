@@ -142,7 +142,7 @@ public:
 	       int * tx, float * ty);
 
   /* must grab this before calling processw */
-  dfxmutex * cs;
+  DfxMutex * cs;
 
 private:
 
