@@ -1,6 +1,8 @@
 #include "dfxguidisplay.h"
 
 
+const size_t kDGTextDisplay_stringSize = 256;
+
 //-----------------------------------------------------------------------------
 void genericDisplayTextProcedure(float value, char * outText, void * userData);
 void genericDisplayTextProcedure(float value, char * outText, void * userData)
@@ -35,7 +37,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 		textProcUserData = inUserData;
 
 	isSnootPixel10 = false;
-	fontName = (char*) malloc(256);
+	fontName = (char*) malloc(kDGTextDisplay_stringSize);
 	if (inFontName != NULL)
 	{
 		strcpy(fontName, inFontName);
@@ -126,7 +128,7 @@ void DGTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 
 	if (textProc != NULL)
 	{
-		char text[256];
+		char text[kDGTextDisplay_stringSize];
 		text[0] = 0;
 		textProc(auvp.GetValue(), text, textProcUserData);
 		drawText(getBounds(), text, inContext, inPortHeight);
@@ -158,7 +160,12 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRe
 		CGContextShowTextAtPoint(inContext, 0.0f, 0.0f, inText, strlen(inText));
 		CGPoint pt = CGContextGetTextPosition(inContext);
 		if (alignment == kDGTextAlign_center)
-			bounds.origin.x += (bounds.size.width - pt.x) / 2.0f;
+		{
+			float xoffset = (bounds.size.width - pt.x) / 2.0f;
+			// don't make the left edge get cropped, just left-align if the text is too long
+			if (xoffset > 0.0f)
+				bounds.origin.x += xoffset;
+		}
 		else if (alignment == kDGTextAlign_right)
 			bounds.origin.x += bounds.size.width - pt.x;
 	}
@@ -229,7 +236,7 @@ DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * 
 					inTextAlignment, inFontSize, inFontColor, inFontName), 
 	displayString(NULL)
 {
-	displayString = (char*) malloc(256);
+	displayString = (char*) malloc(kDGTextDisplay_stringSize);
 	displayString[0] = 0;
 	parameterAttached = false;	// XXX good enough?
 }
@@ -250,6 +257,18 @@ void DGStaticTextDisplay::setText(const char * inNewText)
 	strcpy(displayString, inNewText);
 	redraw();
 }
+
+#if MAC
+//-----------------------------------------------------------------------------
+void DGStaticTextDisplay::setCFText(CFStringRef inNewText)
+{
+	if (inNewText == NULL)
+		return;
+	Boolean success = CFStringGetCString(inNewText, displayString, kDGTextDisplay_stringSize, kCFStringEncodingUTF8);
+	if (success)
+		redraw();
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
@@ -289,7 +308,7 @@ DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inPara
 	displayStrings = (char**) malloc(numStrings * sizeof(char*));
 	for (long i=0; i < numStrings; i++)
 	{
-		displayStrings[i] = (char*) malloc(256);
+		displayStrings[i] = (char*) malloc(kDGTextDisplay_stringSize);
 		displayStrings[i][0] = 0;
 	}
 
