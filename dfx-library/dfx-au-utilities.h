@@ -37,43 +37,43 @@ extern "C" {
 
 
 // this is for getting a Component's version from the Component's resource cache
-OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion);
+extern OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion);
 
 // these are CFArray callbacks for use when creating an AU's FactoryPresets array
-const void * auPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inPreset);
-void auPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inPreset);
-Boolean auPresetCFArrayEqualCallback(const void * inPreset1, const void * inPreset2);
-CFStringRef auPresetCFArrayCopyDescriptionCallback(const void * inPreset);
+extern const void * auPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inPreset);
+extern void auPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inPreset);
+extern Boolean auPresetCFArrayEqualCallback(const void * inPreset1, const void * inPreset2);
+extern CFStringRef auPresetCFArrayCopyDescriptionCallback(const void * inPreset);
 // and this will initialize a CFArray callbacks structure to use the above callback functions
-void AUPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks);
+extern void AUPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks);
 extern const CFArrayCallBacks kAUPresetCFArrayCallbacks;
 
 // these are convenience functions for sending parameter change notifications to all parameter listeners
-void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
+extern void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
 									AudioUnitScope inScope, AudioUnitElement inElement);
 // this one defaults to using global scope and element 0
-void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID);
+extern void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID);
 
 // these are for getting the individual AU plugin name and manufacturer name strings (so you don't have to fetch and parse yourself)
 // get yourself some CFStrings
-OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef * outNameString, CFStringRef * outManufacturerString);
+extern OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef * outNameString, CFStringRef * outManufacturerString);
 // get yourself some C strings
-OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNameString, char * outManufacturerString);
+extern OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNameString, char * outManufacturerString);
 
 // stuff for handling AU preset files...
 // main
-ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance);
-ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFBundleRef inBundle);
-CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain);
-ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, const CFURLRef inPresetFileURL);
-ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance);
+extern ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance);
+extern ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFBundleRef inBundle);
+extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain);
+extern ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, const CFURLRef inAUPresetFileURL);
+extern ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance);
 // access
-CFURLRef GetCFURLFromFileURLsTreeNode(const CFTreeRef inTree);
+extern CFURLRef GetCFURLFromFileURLsTreeNode(const CFTreeRef inTree);
 // handies
-CFStringRef CopyAUPresetNameFromCFURL(const CFURLRef inAUPresetUrl);
-Boolean CFURLIsAUPreset(const CFURLRef inUrl);
-Boolean FSRefIsAUPreset(const FSRef * inFileRef);
-OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef);
+extern CFStringRef CopyAUPresetNameFromCFURL(const CFURLRef inAUPresetFileURL);
+extern Boolean CFURLIsAUPreset(const CFURLRef inURL);
+extern Boolean FSRefIsAUPreset(const FSRef * inFileRef);
+extern OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef);
 
 
 
