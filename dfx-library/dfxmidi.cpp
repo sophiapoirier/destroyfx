@@ -144,7 +144,6 @@ void DfxMidi::clearTail(int currentNote)
 
 //-----------------------------------------------------------------------------------------
 // this function fills a table with the correct frequency for every MIDI note
-
 void DfxMidi::fillFrequencyTable()
 {
 	double A = 6.875;	// A
@@ -161,7 +160,6 @@ void DfxMidi::fillFrequencyTable()
 
 //-----------------------------------------------------------------------------------------
 // this function makes a fade curve table for using when scaling during attack & release
-
 void DfxMidi::fillFadeTable()
 {
 	double fadeCurveStep = 1.0 / (double)(NUM_FADE_POINTS-1);
@@ -177,14 +175,10 @@ void DfxMidi::fillFadeTable()
 
 //-----------------------------------------------------------------------------
 // this function inserts a new note into the beginning of the active notes queue
-
 void DfxMidi::insertNote(int currentNote)
 {
-	int notecount;
-
-
 	// first check whether this note is already active (could happen in weird sequencers, like Max for example)
-	for (notecount = 0; notecount < NUM_NOTES; notecount--)
+	for (int notecount = 0; notecount < NUM_NOTES; notecount++)
 	{
 		// we've looked at all active notes & didn't find the current one, so escape this for loop...
 		if (noteQueue[notecount] < 0)
@@ -205,7 +199,7 @@ void DfxMidi::insertNote(int currentNote)
 	}
 
 	// shift every note up a position   (normal scenario)
-	for (notecount = NUM_NOTES-1; notecount > 0; notecount--)
+	for (int notecount = NUM_NOTES-1; notecount > 0; notecount--)
 		noteQueue[notecount] = noteQueue[notecount-1];
 	// then place the new note into the first position
 	noteQueue[0] = currentNote;
@@ -213,14 +207,16 @@ void DfxMidi::insertNote(int currentNote)
 
 //-----------------------------------------------------------------------------
 // this function removes a note from the active notes queue
-
 void DfxMidi::removeNote(int currentNote)
 {
+	bool doShift = false;
 	for (int notecount = 0; notecount < (NUM_NOTES-1); notecount++)
 	{
 		// don't do anything until the note to delete is found
 		if (noteQueue[notecount] == currentNote)
-			// start shifting notes down past the point of the deleted note
+			doShift = true;
+		// start shifting notes down past the point of the deleted note
+		if (doShift)
 			noteQueue[notecount] = noteQueue[notecount+1];
 		// we've reached the last active note in the table, so there's no need to shift notes down anymore
 		if (noteQueue[notecount] < 0)
@@ -233,7 +229,6 @@ void DfxMidi::removeNote(int currentNote)
 
 //-----------------------------------------------------------------------------
 // this function cancels all of the notes in the active notes queue
-
 void DfxMidi::removeAllNotes()
 {
 	for (int notecount = 0; notecount < NUM_NOTES; notecount++)
@@ -323,7 +318,6 @@ void DfxMidi::handleProgramChange(int channel, int programNum, long frameOffset)
 
 //-----------------------------------------------------------------------------------------
 // this function is called during process() when MIDI events need to be attended to
- 
 void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange, float attack, 
 							float release, bool legato, float velCurve, float velInfluence)
 {
