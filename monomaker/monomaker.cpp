@@ -20,9 +20,9 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 2 parameters, 1 preset
 {
 	// initialize the parameters
-	initparameter_f(kMonomerge, "monomix", 0.0f, 100.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);
+	initparameter_f(kMonomerge, "monomix", 0.0f, 100.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
 	initparameter_indexed(kMonomergeMode, "monomix mode", kMonomergeMode_equalpower, kMonomergeMode_linear, kNumMonomergeModes);
-	initparameter_f(kPan, "pan", 0.0f, 0.0f, -1.0f, 1.0f, kDfxParamCurve_linear, kDfxParamUnit_pan);
+	initparameter_f(kPan, "pan", 0.0f, 0.0f, -1.0f, 1.0f, kDfxParamUnit_pan);
 	initparameter_indexed(kPanMode, "pan mode", kPanMode_recenter, kPanMode_recenter, kNumPanModes);
 
 	// set the parameter value display strings

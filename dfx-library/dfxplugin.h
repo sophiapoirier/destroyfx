@@ -355,23 +355,23 @@ public:
 
 	void initparameter_f(long parameterIndex, const char *initName, float initValue, float initDefaultValue, 
 						float initMin, float initMax, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined);
+						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+						DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void initparameter_d(long parameterIndex, const char *initName, double initValue, double initDefaultValue, 
 						double initMin, double initMax, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined);
+						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+						DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void initparameter_i(long parameterIndex, const char *initName, long initValue, long initDefaultValue, 
 						long initMin, long initMax, 
-						DfxParamCurve initCurve = kDfxParamCurve_stepped, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined);
+						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+						DfxParamCurve initCurve = kDfxParamCurve_stepped);
 	void initparameter_ui(long parameterIndex, const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
 						unsigned long initMin, unsigned long initMax, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined);
+						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+						DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void initparameter_b(long parameterIndex, const char *initName, bool initValue, bool initDefaultValue, 
-						DfxParamCurve initCurve = kDfxParamCurve_linear, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined);
+						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+						DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, long initNumItems);
 
 	bool setparametervaluestring(long parameterIndex, long stringIndex, const char *inText);

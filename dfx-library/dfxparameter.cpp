@@ -88,7 +88,7 @@ DfxParam::~DfxParam()
 void DfxParam::init(const char *initName, DfxParamValueType initType, 
 						DfxParamValue initValue, DfxParamValue initDefaultValue, 
 						DfxParamValue initMin, DfxParamValue initMax, 
-						DfxParamCurve initCurve, DfxParamUnit initUnit)
+						DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	// accept all of the incoming init values
 	valueType = initType;
@@ -211,65 +211,65 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 // convenience wrapper of init() for initializing with float variable type
 void DfxParam::init_f(const char *initName, float initValue, float initDefaultValue, 
 							float initMin, float initMax, 
-							DfxParamCurve initCurve, DfxParamUnit initUnit)
+							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	DfxParamValue val, def, mn, mx;
 	val.f = initValue;
 	def.f = initDefaultValue;
 	mn.f = initMin;
 	mx.f = initMax;
-	init(initName, kDfxParamValueType_float, val, def, mn, mx, initCurve, initUnit);
+	init(initName, kDfxParamValueType_float, val, def, mn, mx, initUnit, initCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with double variable type
 void DfxParam::init_d(const char *initName, double initValue, double initDefaultValue, 
 							double initMin, double initMax, 
-							DfxParamCurve initCurve, DfxParamUnit initUnit)
+							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	DfxParamValue val, def, mn, mx;
 	val.d = initValue;
 	def.d = initDefaultValue;
 	mn.d = initMin;
 	mx.d = initMax;
-	init(initName, kDfxParamValueType_double, val, def, mn, mx, initCurve, initUnit);
+	init(initName, kDfxParamValueType_double, val, def, mn, mx, initUnit, initCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
 void DfxParam::init_i(const char *initName, long initValue, long initDefaultValue, 
 							long initMin, long initMax, 
-							DfxParamCurve initCurve, DfxParamUnit initUnit)
+							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	DfxParamValue val, def, mn, mx;
 	val.i = initValue;
 	def.i = initDefaultValue;
 	mn.i = initMin;
 	mx.i = initMax;
-	init(initName, kDfxParamValueType_int, val, def, mn, mx, initCurve, initUnit);
+	init(initName, kDfxParamValueType_int, val, def, mn, mx, initUnit, initCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with unsigned int variable type
 void DfxParam::init_ui(const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
 									unsigned long initMin, unsigned long initMax, 
-									DfxParamCurve initCurve, DfxParamUnit initUnit)
+									DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	DfxParamValue val, def, mn, mx;
 	val.ui = initValue;
 	def.ui = initDefaultValue;
 	mn.ui = initMin;
 	mx.ui = initMax;
-	init(initName, kDfxParamValueType_uint, val, def, mn, mx, initCurve, initUnit);
+	init(initName, kDfxParamValueType_uint, val, def, mn, mx, initUnit, initCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with boolean variable type
 void DfxParam::init_b(const char *initName, bool initValue, bool initDefaultValue, 
-							DfxParamCurve initCurve, DfxParamUnit initUnit)
+							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	DfxParamValue val, def, mn, mx;
 	val.b = initValue;
 	def.b = initDefaultValue;
 	mn.b = false;
 	mx.b = true;
-	init(initName, kDfxParamValueType_boolean, val, def, mn, mx, initCurve, initUnit);
+	init(initName, kDfxParamValueType_boolean, val, def, mn, mx, initUnit, initCurve);
 }
 
 //-----------------------------------------------------------------------------

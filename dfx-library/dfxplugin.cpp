@@ -271,11 +271,11 @@ void DfxPlugin::do_reset()
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_f(long parameterIndex, const char *initName, float initValue, 
 						float initDefaultValue, float initMin, float initMax, 
-						DfxParamCurve initCurve, DfxParamUnit initUnit)
+						DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_f(initName, initValue, initDefaultValue, initMin, initMax, initCurve, initUnit);
+		parameters[parameterIndex].init_f(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -284,11 +284,11 @@ void DfxPlugin::initparameter_f(long parameterIndex, const char *initName, float
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_d(long parameterIndex, const char *initName, double initValue, 
 						double initDefaultValue, double initMin, double initMax, 
-						DfxParamCurve initCurve, DfxParamUnit initUnit)
+						DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_d(initName, initValue, initDefaultValue, initMin, initMax, initCurve, initUnit);
+		parameters[parameterIndex].init_d(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -297,11 +297,11 @@ void DfxPlugin::initparameter_d(long parameterIndex, const char *initName, doubl
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_i(long parameterIndex, const char *initName, long initValue, 
 						long initDefaultValue, long initMin, long initMax, 
-						DfxParamCurve initCurve, DfxParamUnit initUnit)
+						DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, initMin, initMax, initCurve, initUnit);
+		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -310,11 +310,11 @@ void DfxPlugin::initparameter_i(long parameterIndex, const char *initName, long 
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_ui(long parameterIndex, const char *initName, unsigned long initValue, 
 						unsigned long initDefaultValue, unsigned long initMin, unsigned long initMax, 
-						DfxParamCurve initCurve, DfxParamUnit initUnit)
+						DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_ui(initName, initValue, initDefaultValue, initMin, initMax, initCurve, initUnit);
+		parameters[parameterIndex].init_ui(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -322,11 +322,11 @@ void DfxPlugin::initparameter_ui(long parameterIndex, const char *initName, unsi
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_b(long parameterIndex, const char *initName, bool initValue, bool initDefaultValue, 
-						DfxParamCurve initCurve, DfxParamUnit initUnit)
+						DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_b(initName, initValue, initDefaultValue, initCurve, initUnit);
+		parameters[parameterIndex].init_b(initName, initValue, initDefaultValue, initUnit, initCurve);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -339,7 +339,7 @@ void DfxPlugin::initparameter_indexed(long parameterIndex, const char *initName,
 {
 	if (parameterisvalid(parameterIndex))
 	{
-		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, kDfxParamCurve_stepped, kDfxParamUnit_strings);
+		parameters[parameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, kDfxParamUnit_strings, kDfxParamCurve_stepped);
 		update_parameter(parameterIndex);	// make the host aware of the parameter change
 		initpresetsparameter(parameterIndex);	// default empty presets with this value
 	}
@@ -730,12 +730,12 @@ void DfxPlugin::updatenumchannels()
 	#if TARGET_API_AUDIOUNIT
 		// the number of inputs or outputs may have changed
 		numInputs = getnuminputs();
-		if (inputsP)
+		if (inputsP != NULL)
 			free(inputsP);
 		inputsP = (float**) malloc(numInputs * sizeof(float*));
 
 		numOutputs = getnumoutputs();
-		if (outputsP)
+		if (outputsP != NULL)
 			free(outputsP);
 		outputsP = (float**) malloc(numOutputs * sizeof(float*));
 	#endif
@@ -1069,7 +1069,6 @@ bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSi
 	// check if allocation was successful
 	if (*buffer == NULL)
 		return false;
-
 	// we were successful if we reached this point
 	return true;
 }
@@ -1090,7 +1089,6 @@ bool createbuffer_d(double **buffer, long currentBufferSize, long desiredBufferS
 	// check if allocation was successful
 	if (*buffer == NULL)
 		return false;
-
 	// we were successful if we reached this point
 	return true;
 }
@@ -1111,7 +1109,6 @@ bool createbuffer_i(long **buffer, long currentBufferSize, long desiredBufferSiz
 	// check if allocation was successful
 	if (*buffer == NULL)
 		return false;
-
 	// we were successful if we reached this point
 	return true;
 }
@@ -1132,7 +1129,6 @@ bool createbuffer_b(bool **buffer, long currentBufferSize, long desiredBufferSiz
 	// check if allocation was successful
 	if (*buffer == NULL)
 		return false;
-
 	// we were successful if we reached this point
 	return true;
 }
