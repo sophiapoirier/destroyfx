@@ -28,8 +28,10 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(shape, P_SHAPE, "wshape", 0.0, "");
 
   FPARAM(pointstyle, P_POINTSTYLE, "points where", 0.0, "choose");
-  FPARAM(pointparam, P_POINTPARAM, "freq", 0.1f, "percent");
+  FPARAM(pointparam, P_POINTPARAM, "pointparam", 0.04f, "??");
+
   FPARAM(interpstyle, P_INTERPSTYLE, "interp how", 0.0, "choose");
+  FPARAM(interparam, P_INTERPARAM, "interparam", 0.0, "???");
 
   FPARAM(pointop1, P_POINTOP1, "pointop1", 0.5f, "choose");
   FPARAM(pointop2, P_POINTOP2, "pointop2", 0.5f, "choose");
@@ -176,10 +178,12 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     break;
     /* geometer */
   case P_POINTSTYLE:
-    if (pointstyle < 0.25) strcpy(text, "ext 'n cross");
-    else if (pointstyle < 0.50) strcpy(text, "at freq");
-    else if (pointstyle < 0.75) strcpy(text, "randomly");
-    else strcpy(text, "dy/dx zero-cross");
+    if (pointstyle < 0.10) strcpy(text, "ext 'n cross");
+    else if (pointstyle < 0.20) strcpy(text, "at freq");
+    else if (pointstyle < 0.30) strcpy(text, "randomly");
+    else if (pointstyle < 0.40) strcpy(text, "dy/dx zero-cross");
+    else if (pointstyle < 0.50) strcpy(text, "bram");
+    else strcpy(text, "unsup");
     break;
   case P_INTERPSTYLE:
     if (interpstyle < 0.10) strcpy(text, "polygon");
@@ -194,6 +198,8 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
   case P_POINTOP3:
     if (*paramptrs[index].ptr < 0.10) strcpy(text, "1/4");
     else if (*paramptrs[index].ptr < 0.20) strcpy(text, "1/2");
+    else if (*paramptrs[index].ptr < 0.30) strcpy(text, "longpass");
+    else if (*paramptrs[index].ptr < 0.40) strcpy(text, "shortpass");
     else if (*paramptrs[index].ptr < 0.60) strcpy(text, "no");
     else strcpy(text, "x 2");
     break;
@@ -217,7 +223,7 @@ void PLUGIN::getParameterLabel(long index, char *label) {
 /* operations on points. this is a separate function
    because it is called once for each operation slot.
 */
-int PLUGIN::pointops(float pop, int numpts, float op_param) {
+int PLUGIN::pointops(float pop, int numpts, float op_param, int samples) {
   /* pointops. */
 
   int maxpts = framesize * 2;
@@ -238,8 +244,43 @@ int PLUGIN::pointops(float pop, int numpts, float op_param) {
       pointy[i] = pointy[numpts - 1];
       numpts = i+1;
     }
-  } else if (pop < 0.60) { 
-    /* nothing */ 
+  } else if (pop < 0.30) { 
+    /* longpass. drop any point that's not at least param*samples
+       past the previous. */ 
+    tempx[0] = pointx[0];
+    tempy[0] = pointy[0];
+
+    int stretch = (op_param * op_param) * samples;
+    int np = 1;
+
+    for(int i=1; i < (numpts-1); i ++) {
+      if (pointx[i] - tempx[np-1] > stretch) {
+	tempx[np] = pointx[i];
+	tempy[np] = pointy[i];
+	np++;
+	if (np == maxpts) break;
+      }
+    }
+
+    for(int c = 1; c < np; c++) {
+      pointx[c] = tempx[c];
+      pointy[c] = tempy[c];
+    }
+    numpts = np + 1;
+
+  } else if (pop < 0.40) { 
+    /* shortpass. If an interval is longer than the
+       specified amount, zero the 2nd endpoint.
+     */
+
+    int stretch = (op_param * op_param) * samples;
+
+    for (int i=1; i < samples; i ++) {
+      if (pointx[i] - pointx[i-1] > stretch) pointy[i] = 0.0f;
+    }
+
+  } else if (pop < 0.60) {
+    /* nothing ... */
   } else {
     /* x2 points */
     int i = 0, t;
@@ -291,7 +332,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
   int maxpts = framesize * 2;
 
-  if (pointstyle < 0.25) {
+  if (pointstyle < 0.10) {
     /* extremities and crossings */
 
     float ext = 0.0;
@@ -398,7 +439,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
       }
     }
-  } else if (pointstyle < 0.50) {
+  } else if (pointstyle < 0.20) {
     /* at frequency */
     
     /* XXX let the user choose hz, do conversion */
@@ -417,7 +458,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       }
     }
 
-  } else if (pointstyle < 0.75) {
+  } else if (pointstyle < 0.30) {
     /* randomly */
 
     int n = (1.0 - pointparam) * samples;
@@ -437,7 +478,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       pointy[sd] = in[pointx[sd]];
     }
 
-  } else {
+  } else if (pointstyle < 0.40) {
     int lastsign = 0;
     float lasts = in[0];
     int sign;
@@ -469,6 +510,23 @@ void PLUGIN::processw(float * in, float * out, long samples) {
     }
     
 
+  } else if (pointstyle < 0.50) {
+    /* bram. next x determined by sample magnitude */
+
+    int span = (pointparam * pointparam) * samples;
+
+    int i = abs(pointy[0] * span) + 1;
+
+    while (i < samples) {
+      pointx[numpts] = i;
+      pointy[numpts] = in[i];
+      numpts++;
+      i = i + abs(in[i] * span) + 1;
+    }
+
+  } else /* pointstyle */ {
+    /* nothing, unsupported... */
+    numpts = 1;
   }
 
   /* always push final point for continuity (we saved room) */
@@ -476,35 +534,42 @@ void PLUGIN::processw(float * in, float * out, long samples) {
   pointy[numpts] = in[samples-1];
   numpts++;
 
-  numpts = pointops(pointop1, numpts, oppar1);
-  numpts = pointops(pointop2, numpts, oppar2);
-  numpts = pointops(pointop3, numpts, oppar3);
+  numpts = pointops(pointop1, numpts, oppar1, samples);
+  numpts = pointops(pointop2, numpts, oppar2, samples);
+  numpts = pointops(pointop3, numpts, oppar3, samples);
 
   if (interpstyle < 0.10) {
-    /* linear interpolation - "polygon" */
+    /* linear interpolation - "polygon" 
+       interparam causes dimming effect -- at 1.0 it just does
+       straight lines at the median.
+    */
 
     for(int u=1; u < numpts; u ++) {
       float denom = (pointx[u] - pointx[u-1]);
+      float minterparam = interparam * (pointy[u-1] + pointy[u]) * 0.5;
       for(int z=pointx[u-1]; z < pointx[u]; z++) {
         float pct = (float)(z-pointx[u-1]) / denom;
         float s = pointy[u-1] * (1.0 - pct) +
           pointy[u]   * pct;
-        out[z] = s;
+        out[z] = minterparam + (1.0 - interparam) * s;
       }
     }
 
     out[samples-1] = in[samples-1];
 
   } else if (interpstyle < 0.20) {
-    /* linear interpolation, wrong direction - "wrongygon" */
+    /* linear interpolation, wrong direction - "wrongygon" 
+       same dimming effect from polygon.
+    */
 
     for(int u=1; u < numpts; u ++) {
       float denom = (pointx[u] - pointx[u-1]);
+      float minterparam = interparam * (pointy[u-1] + pointy[u]) * 0.5;
       for(int z=pointx[u-1]; z < pointx[u]; z++) {
         float pct = (float)(z-pointx[u-1]) / denom;
         float s = pointy[u-1] * pct +
           pointy[u]   * (1.0 - pct);
-        out[z] = s;
+        out[z] = minterparam + (1.0 - interparam) * s;
       }
     }
 
@@ -530,6 +595,8 @@ void PLUGIN::processw(float * in, float * out, long samples) {
         float pct = (float)(z-pointx[u-1]) / denom;
         
         float p = 0.5f * (-cos(float(pi * pct)) + 1.0f);
+	
+	/* XXX param should control exponent */
 
         float s = pointy[u-1] * (1.0 - p) + pointy[u]   * p;
 
@@ -541,7 +608,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
   } else if (interpstyle < 0.90) {
 
-    /* XXX - how about generalizing this to a shaped pulse of 
+    /* FIXME - generalize this to a shaped pulse of 
        constant width */
 
     for(int i = 0; i < samples; i++) out[i] = 0.0;
