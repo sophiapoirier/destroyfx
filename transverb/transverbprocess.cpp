@@ -15,7 +15,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
   float r1val, r2val;	// delay buffer output values
   double bsize_float = (double)bsize;	// cut down on casting
   int filterMode1, filterMode2;	// the type of filtering to use in ultra hi-fi mode
-  float mug1, mug2;	// make-up gain for lowpass filtering
+  float mug1 = 1.0f, mug2 = 1.0f;	// make-up gain for lowpass filtering
   float fsamplerate = getsamplerate_f();
 
 
