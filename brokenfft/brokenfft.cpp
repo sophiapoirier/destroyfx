@@ -21,6 +21,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
 
   FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5f, "samples");
   FPARAM(shape, P_SHAPE, "shape", 0.0f, "");
+  FPARAM(method, P_METHOD, "how", 0.0f, "which");
 
   FPARAM(destruct, P_DESTRUCT, "very special", 1.0f, "?");
   FPARAM(perturb, P_PERTURB, "perturb", 0.0f, "?");
@@ -33,7 +34,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(spikehold, P_SPIKEHOLD, "spikehold", 0.0f, "?");
   FPARAM(echomix, P_ECHOMIX, "eo mix", 0.0f, "?");
   FPARAM(echotime, P_ECHOTIME, "eo time", 0.5f, "?");
-  FPARAM(echomodf, P_ECHOMODF, "eo mod f", 2.0f * pi, "?");
+  FPARAM(echomodf, P_ECHOMODF, "eo mod f", float(2.0 * pi), "?");
   FPARAM(echomodw, P_ECHOMODW, "eo mod w", 0.0f, "?");
   FPARAM(echofb, P_ECHOFB, "eo fbx", 0.50f, "?");
   FPARAM(echolow, P_ECHOLOW, "eo >", 0.0f, "?");
@@ -65,13 +66,15 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   echoc = (float*)malloc(MAXECHO * sizeof(float));
 
   ampl = (amplentry*)malloc(sizeof (amplentry) * maxframe);
-  amplsamples = maxframe;
 
   fftr = (float*)malloc(maxframe * sizeof(float));
   ffti = (float*)malloc(maxframe * sizeof(float));
   tmp = (float*)malloc(maxframe * sizeof(float));
   oot = (float*)malloc(maxframe * sizeof(float));
-  buffersamples = maxframe;
+
+  framesize = MKBUFSIZE(bufsizep);
+  plan = rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE);
+  rplan = rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE);
 
   changed = 0;
 }
@@ -103,6 +106,9 @@ void PLUGIN::resume() {
   framesize = MKBUFSIZE(bufsizep);
   third = framesize / 2;
   bufsize = third * 3;
+
+  plan = rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE);
+  rplan = rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE);
 
   /* set up buffers. Prevmix and first frame of output are always
      filled with zeros. */
@@ -200,6 +206,12 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
       strcpy(text, "cos^2");
     }
     break;
+
+  case P_METHOD:
+    if (method < 0.25) strcpy(text, "dc");
+    else if (method < 0.50) strcpy(text, "west");
+    else strcpy(text, "west-bug");
+    break;
     /* special cases here */
   case P_POSTROT:
     if (postrot > 0.5f) {
@@ -292,17 +304,19 @@ void PLUGIN::fftops(long samples) {
       samplesleft = 1 + (int)(binquant * binquant * binquant) * (samples >> 3);
     }
 
-    /* very special */
-    if ((rand ()/(float)RAND_MAX) > destruct) {
-      /* swap with random sample */
-      int j = (int)((rand()/(float)RAND_MAX) * (samples - 1));
-      float u = fftr[i];
-      fftr[i] = fftr[j];
-      fftr[j] = u;
+    if (destruct < 1.0) {
+      /* very special */
+      if ((rand ()/(float)RAND_MAX) > destruct) {
+	/* swap with random sample */
+	int j = (int)((rand()/(float)RAND_MAX) * (samples - 1));
+	float u = fftr[i];
+	fftr[i] = fftr[j];
+	fftr[j] = u;
 
-      u = ffti[i];
-      ffti[i] = ffti[j];
-      ffti[j] = u;
+	u = ffti[i];
+	ffti[i] = ffti[j];
+	ffti[j] = u;
+      }
     }
 
     /* operation Q */
@@ -312,15 +326,18 @@ void PLUGIN::fftops(long samples) {
     }
 
     /* perturb */
-    fftr[i] = (double)((rand()/(float)RAND_MAX) * perturb + 
-		       fftr[i]*(1.0f-perturb));
-    ffti[i] = (double)((rand()/(float)RAND_MAX) * perturb + 
-		       ffti[i]*(1.0f-perturb));
+    if (perturb > 0.000001) {
+      fftr[i] = (double)((rand()/(float)RAND_MAX) * perturb + 
+			 fftr[i]*(1.0f-perturb));
+      ffti[i] = (double)((rand()/(float)RAND_MAX) * perturb + 
+			 ffti[i]*(1.0f-perturb));
+    }
 
     /* rotate */
     int j = (i + (int)(rotate * samples)) % samples;
 
     fftr[i] = fftr[j];
+    /* XXX and ffti? */
 
     /* compress */
 
@@ -338,7 +355,7 @@ void PLUGIN::fftops(long samples) {
   }
 
   /* pretty expensive spike operation */
-  if (spike < 0.999999 ) {
+  if (spike < 0.999999) {
 
     double loudness = 0.0;
 
@@ -416,7 +433,7 @@ void PLUGIN::fftops(long samples) {
   }
 
   /* bufferride */
-  if (bride < 1.0f) {
+  if (bride < 0.999999f) {
     int smd = 0;
     int md = bride * samples;
     for(int ss = 0; ss < samples; ss ++) {
@@ -429,7 +446,7 @@ void PLUGIN::fftops(long samples) {
 
   /* first moment */
   /* XXX support later moments (and do what with them??) */
-  if (moments > 0.0f) {
+  if (moments > 0.00001f) {
     float mtr = 0.0f;
     float mti = 0.0f;
 
@@ -465,7 +482,7 @@ void PLUGIN::fftops(long samples) {
 
   /* XXX sounds crappy */
   /* freq(i) = 44100.0 * i / samples */
-  if (harm > 0.0001f) {
+  if (harm > 0.000001f) {
     for(int i = 0; i < samples; i ++) {
       /* j = bin(freq(i)/2) */
       int fi = 44100.0 * i /(float) samples;
@@ -483,22 +500,24 @@ void PLUGIN::fftops(long samples) {
   /* post-processing rotate-up */
   if (postrot > 0.5f) {
     int rotn = (postrot - 0.5f) * 1.0f * samples;
-    for(int v = samples - 1; v >= 0; v --) {
-      if (v < rotn) fftr[v] = ffti[v] = 0.0f;
-      else { 
-	fftr[v] = fftr[v - rotn];
-	ffti[v] = ffti[v - rotn];
+    if (rotn != 0) 
+      for(int v = samples - 1; v >= 0; v --) {
+	if (v < rotn) fftr[v] = ffti[v] = 0.0f;
+	else { 
+	  fftr[v] = fftr[v - rotn];
+	  ffti[v] = ffti[v - rotn];
+	}
       }
-    }
   } else if (postrot < 0.5f) {
     int rotn = (int)((0.5f - postrot) * 1.0f * MKBUFSIZE(bufsizep));
-    for(int v = 0; v < samples; v++) {
-      if (v > (samples - rotn)) fftr[v] = ffti[v] = 0.0f;
-      else {
-	fftr[v] = fftr[(samples - rotn) - v];
-	ffti[v] = ffti[(samples - rotn) - v];
+    if (rotn != 0)
+      for(int v = 0; v < samples; v++) {
+	if (v > (samples - rotn)) fftr[v] = ffti[v] = 0.0f;
+	else {
+	  fftr[v] = fftr[(samples - rotn) - v];
+	  ffti[v] = ffti[(samples - rotn) - v];
+	}
       }
-    }
   }
 
   
@@ -528,7 +547,9 @@ void PLUGIN::fftops(long samples) {
 /* XXX I'm probably copying more times than I need to!
    PS, use memmove!
 */
-void PLUGIN::processw(float * in, float * out, long samples) {
+void PLUGIN::processw(float * in, float * out) {
+
+  int samples = framesize;
 
   static int ss;
   ss = !ss;
@@ -537,12 +558,33 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
   for (int c = 0; c < samples; c++) tmp[c] = in[c];
 
-  fft_float(samples, 0, tmp, 0, fftr, ffti);
+  /* do the processing */
+  if (method < 0.25) { 
+    /* Don Cross style */
+    fft_float(samples, 0, tmp, 0, fftr, ffti);
+    fftops(samples);
+    fft_float(samples, 1, fftr, ffti, oot, tmp);
+  } else if (method < 0.50) {
+    /* FFTW .. this still doesn't work. How come? */
+    rfftw_one(plan, tmp, fftr);
+    memcpy(ffti, fftr, samples * sizeof(float)); /* dup? */
 
-  /* do actual processing */
-  fftops(samples);
+    fftops(samples);
 
-  fft_float(samples, 1, fftr, ffti, oot, tmp);
+    rfftw_one(rplan, fftr, oot);
+
+    float div = 1.0 / samples;
+    for(int xa = 0; xa < samples; xa++) {
+      oot[xa] = oot[xa] * div;
+    }
+
+  } else {
+    /* bug -- using forward plan both ways, not normalizing */
+    rfftw_one(plan, tmp, fftr);
+    memcpy(ffti, fftr, samples * sizeof(float)); /* dup? */
+    fftops(samples);
+    rfftw_one(plan, fftr, oot);
+  } 
 
   for (int cc = 0; cc < samples; cc++) out[cc] = oot[cc];
 
@@ -670,7 +712,7 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      processw(in0, out0+outstart+outsize, framesize);
+      processw(in0, out0+outstart+outsize);
 
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */

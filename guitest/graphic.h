@@ -20,6 +20,8 @@ struct PANELVERTEX
 #define DXTEST(c) do { int err; if ((err=(c)) != D3D_OK) \
                        MessageBox(0, #c, "ERROR", MB_OK); } while(0)
 
+extern HINSTANCE instance;
+
 struct Graphic {
 
   public:
@@ -52,13 +54,21 @@ LPDIRECT3DVERTEXBUFFER8 verts;
     // A quick hack to get the size of the image into srcInfo.
     DXTEST(device->CreateImageSurface(1, 1, 
 				      SURFACE_FORMAT, &pSurface));
+#if 0
     DXTEST(D3DXLoadSurfaceFromFile(pSurface, NULL, NULL, filename, 
 				   NULL, FILTER_HOW, 0, &srcInfo));
+#endif
+    DXTEST(D3DXLoadSurfaceFromResource(pSurface,
+				       NULL, NULL,
+				       instance,
+				       filename,
+				       NULL, FILTER_HOW, 0, &srcInfo));
+
     pSurface->Release();
-    
+
     height = srcInfo.Height;
     width = srcInfo.Width;
-    
+
     // Create a surface to hold the entire file
     DXTEST(device->CreateImageSurface(width, height, 
 				      SURFACE_FORMAT, ppSurface));
@@ -66,10 +76,17 @@ LPDIRECT3DVERTEXBUFFER8 verts;
     
     // The default colour key is 0xFF000000 (opaque black). Magenta 
     // (0xFFFF00FF) is another common colour used for transparency.
-    DXTEST(D3DXLoadSurfaceFromFile(pSurface, palette, NULL, filename, 
-				   NULL, FILTER_HOW,
-				   colourKey, &srcInfo));
+#if 1
+    DXTEST(D3DXLoadSurfaceFromResource(pSurface, 
+				       palette, 
+				       NULL, 
+				       instance,
+				       filename, 
+				       NULL, FILTER_HOW,
+				       colourKey, &srcInfo));
+#endif
   }
+
 
   /* height and width have to be set */
   void CreateTextureFromSurface(LPDIRECT3DSURFACE8 surf,

@@ -51,8 +51,8 @@ struct GuitestEditor : public AEffEditor {
  public:
   void setValue(void* fader, int value);
 
-  LPDIRECT3D8             g_pD3D;  //     = NULL; // Used to create the D3DDevice
-  LPDIRECT3DDEVICE8       g_pd3dDevice;// = NULL; // Our rendering device
+  LPDIRECT3D8             pD3D;  //     = NULL; // Used to create the D3DDevice
+  LPDIRECT3DDEVICE8       pd3dDevice;// = NULL; // Our rendering device
   
   /* XXX */
 
