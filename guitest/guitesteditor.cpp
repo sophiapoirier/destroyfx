@@ -5,26 +5,27 @@
 
 // #include <control.h>
 #include <commctrl.h>
+#include <ddraw.h>
 
 #define EDIT_HEIGHT 500
 #define EDIT_WIDTH 500
 
 
-
-extern HINSTANCE hInstance;
+extern HINSTANCE instance;
 int useCount = 0;
-HWND CreateFader (HWND parent, char* title, int x, int y, int w, int h, int min, int max);
-LONG WINAPI WindowProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+HWND CreateFader (HWND parent, char* title, 
+		  int x, int y, int w, int h, 
+		  int min, int max);
 
+LONG WINAPI WindowProc (HWND hwnd, UINT message, 
+			WPARAM wParam, LPARAM lParam);
 
 GuitestEditor::GuitestEditor (AudioEffect *effect) : AEffEditor (effect) {
   effect->setEditor (this);
 }
 
-
 GuitestEditor::~GuitestEditor () {
 }
-
 
 long GuitestEditor::getRect (ERect **erect) {
   static ERect r = {0, 0, EDIT_HEIGHT, EDIT_WIDTH};
@@ -34,7 +35,7 @@ long GuitestEditor::getRect (ERect **erect) {
 
 
 long GuitestEditor::open (void *ptr) {
-#if 0
+
   // Remember the parent window
   systemWindow = ptr;
   // Create window class, if we are called the first time
@@ -45,7 +46,7 @@ long GuitestEditor::open (void *ptr) {
       windowClass.lpfnWndProc = WindowProc;
       windowClass.cbClsExtra = 0;
       windowClass.cbWndExtra = 0;
-      windowClass.hInstance = hInstance;
+      windowClass.hInstance = instance;
       windowClass.hIcon = 0;
       windowClass.hCursor = 0;
       windowClass.hbrBackground = GetSysColorBrush (COLOR_BTNFACE);
@@ -57,8 +58,10 @@ long GuitestEditor::open (void *ptr) {
   HWND hwnd = CreateWindowEx (0, WINDOWCLASSNAME, "Window",
 			      WS_CHILD | WS_VISIBLE,
 			      0, 0, EDIT_HEIGHT, EDIT_WIDTH,
-			      (HWND)systemWindow, NULL, hInstance, NULL);
+			      (HWND)systemWindow, NULL, instance, NULL);
   SetWindowLong (hwnd, GWL_USERDATA, (long)this);
+
+#if 1
   // Create three fader controls
   delayFader = CreateFader (hwnd, "Delay", 10, 10, 35, 300, 0, 100);
   feedbackFader = CreateFader (hwnd, "Feedback", 50, 10, 64, 300, 0, 100);
@@ -70,12 +73,10 @@ long GuitestEditor::open (void *ptr) {
 
 
 void GuitestEditor::close () {
-#if 0
   useCount--;
   if (useCount == 0) {
-      UnregisterClass (WINDOWCLASSNAME, hInstance);
-    }
-#endif
+    UnregisterClass (WINDOWCLASSNAME, instance);
+  }
 }
 
 
@@ -91,6 +92,7 @@ void GuitestEditor::update() {
 	       (1));
   SendMessage (volumeFader, TBM_SETPOS, (WPARAM) TRUE, (LPARAM) effect->getParameter (1));
 #endif
+  AEffEditor::update ();
 }
 
 
@@ -106,7 +108,9 @@ void GuitestEditor::setValue(void* fader, int value) {
 }
 
 /* XXX ? */
-void GuitestEditor::postUpdate() {}
+void GuitestEditor::postUpdate() {
+  AEffEditor::postUpdate ();
+}
 
 
 HWND CreateFader (HWND parent, char* title, 
@@ -114,8 +118,9 @@ HWND CreateFader (HWND parent, char* title,
 		  int min, int max) {
   HWND hwndTrack = CreateWindowEx (0, TRACKBAR_CLASS, title,
 				   WS_CHILD | WS_VISIBLE |
-				   TBS_NOTICKS | TBS_ENABLESELRANGE | TBS_VERT,
-				   x, y, w, h, parent, NULL, hInstance, NULL);
+				   TBS_ENABLESELRANGE | 
+				   TBS_VERT, x, y, w, h, parent, 
+				   NULL, instance, NULL);
   SendMessage (hwndTrack, TBM_SETRANGE, (WPARAM ) TRUE,
 	       (LPARAM) MAKELONG (min, max));
   SendMessage (hwndTrack, TBM_SETPAGESIZE, 0, (LPARAM) 4);
@@ -124,19 +129,21 @@ HWND CreateFader (HWND parent, char* title,
 }
 
 
-LONG WINAPI WindowProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LONG WINAPI WindowProc (HWND hwnd, UINT message, WPARAM wParam, 
+			LPARAM lParam) {
+#if 0
   switch (message) {
     case WM_VSCROLL: {
-#if 0
+
 	int newValue = SendMessage ((HWND)lParam, TBM_GETPOS, 0, 0);
 	GuitestEditor* editor = 
 	  (GuitestEditor*)GetWindowLong (hwnd, GWL_USERDATA);
 	if (editor)
 	  editor->setValue ((void*)lParam, newValue);
-#endif
       }
       break;
     }
+#endif
   return DefWindowProc (hwnd, message, wParam, lParam);
 }
 
