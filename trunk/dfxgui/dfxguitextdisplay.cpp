@@ -331,6 +331,13 @@ void DGStaticTextDisplay::setText(const char * inNewText)
 {
 	if (inNewText == NULL)
 		return;
+
+#if MAC
+	if (displayCFString != NULL)
+		CFRelease(displayCFString);
+	displayCFString = NULL;
+#endif
+
 	strcpy(displayString, inNewText);
 	redraw();
 }
