@@ -177,7 +177,9 @@ SUPPORT_AU_VERSION_1
 		typedef AUEffectBase TARGET_API_BASE_CLASS;
 		typedef AudioUnit TARGET_API_BASE_INSTANCE_TYPE;
 	#endif
-	#define TARGET_API_CORE_CLASS	AUKernelBase
+	#if !TARGET_PLUGIN_IS_INSTRUMENT
+		#define TARGET_API_CORE_CLASS	AUKernelBase
+	#endif
 
 // using Steinberg's VST API
 #elif defined(TARGET_API_VST)
@@ -225,12 +227,12 @@ SUPPORT_AU_VERSION_1
 #ifdef TARGET_API_AUDIOUNIT
 	enum {
 		kDfxErr_NoError = noErr,
-		kDfxErr_InitializationFailed = kAudioUnitErr_FailedInitialization,
+		kDfxErr_InitializationFailed = kAudioUnitErr_FailedInitialization
 	};
 #else
 	enum {
 		kDfxErr_NoError = 0,
-		kDfxErr_InitializationFailed = -10875,
+		kDfxErr_InitializationFailed = -10875
 	};
 #endif
 
@@ -644,20 +646,25 @@ public:
 	virtual void Cleanup();
 	virtual ComponentResult Reset(AudioUnitScope inScope, AudioUnitElement inElement);
 
-	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
-					const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
-					UInt32 inFramesToProcess);
+	#if TARGET_PLUGIN_IS_INSTRUMENT
+		virtual ComponentResult Render(AudioUnitRenderActionFlags & ioActionFlags, 
+								const AudioTimeStamp & inTimeStamp, UInt32 inFramesToProcess);
+	#else
+		virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
+						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
+						UInt32 inFramesToProcess);
+	#endif
 	#if TARGET_PLUGIN_USES_DSPCORE
 		virtual AUKernelBase * NewKernel();
 	#endif
 
-	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inID, 
+	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					UInt32 & outDataSize, Boolean & outWritable);
-	virtual ComponentResult GetProperty(AudioUnitPropertyID inID, 
+	virtual ComponentResult GetProperty(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					void * outData);
-	virtual ComponentResult SetProperty(AudioUnitPropertyID inID, 
+	virtual ComponentResult SetProperty(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					const void * inData, UInt32 inDataSize);
 
@@ -709,13 +716,24 @@ public:
 			{ }
 	#endif
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		virtual ComponentResult PrepareInstrument(MusicDeviceInstrumentID inInstrument) = 0;
-		virtual ComponentResult ReleaseInstrument(MusicDeviceInstrumentID inInstrument) = 0;
+		virtual ComponentResult PrepareInstrument(MusicDeviceInstrumentID inInstrument);
+		virtual ComponentResult ReleaseInstrument(MusicDeviceInstrumentID inInstrument);
 		virtual ComponentResult StartNote(MusicDeviceInstrumentID inInstrument, 
-						MusicDeviceGroupID inGroupID, NoteInstanceID * outNoteInstanceID, 
-						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams * inParams) = 0;
+						MusicDeviceGroupID inGroupID, NoteInstanceID & outNoteInstanceID, 
+						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams & inParams);
 		virtual ComponentResult StopNote(MusicDeviceGroupID inGroupID, 
-						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame) = 0;
+						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame);
+
+		// this is a convenience function swiped from AUEffectBase, but not included in MusicDeviceBase
+		Float64 GetSampleRate()
+		{
+			return GetOutput(0)->GetStreamFormat().mSampleRate;
+		}
+		// this is handled by AUEffectBase, but not in MusicDeviceBase
+		virtual bool StreamFormatWritable(AudioUnitScope inScope, AudioUnitElement inElement)
+		{
+			return IsInitialized() ? false : true;
+		}
 	#endif
 	#if TARGET_PLUGIN_HAS_GUI
 		virtual int GetNumCustomUIComponents();

@@ -36,7 +36,9 @@ void DfxPlugin::PostConstructor()
 	// if this plugin specifies a list of supported i/o channel-count pairs
 	if (channelconfigs != NULL)
 	{
-		const CAStreamBasicDescription curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0);
+		CAStreamBasicDescription curInStreamFormat(0.0, 0, 0, 0, 0, 0, 0, 0);
+		if ( Inputs().GetNumberOfElements() > 0 )
+			curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0);
 		const CAStreamBasicDescription curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
 		bool currentFormatIsNotSupported = false;
 		for (long i=0; i < numchannelconfigs; i++)
@@ -54,7 +56,8 @@ void DfxPlugin::PostConstructor()
 			// change the input channel count to the first supported one listed
 			CAStreamBasicDescription newStreamFormat(curInStreamFormat);
 			newStreamFormat.mChannelsPerFrame = (UInt32) (channelconfigs[0].inChannels);
-			AUBase::ChangeStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0, curInStreamFormat, newStreamFormat);
+			if ( Inputs().GetNumberOfElements() > 0 )
+				AUBase::ChangeStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0, curInStreamFormat, newStreamFormat);
 			// change the output channel count to the first supported one listed
 			newStreamFormat = CAStreamBasicDescription(curOutStreamFormat);
 			newStreamFormat.mChannelsPerFrame = (UInt32) (channelconfigs[0].outChannels);
@@ -102,20 +105,25 @@ ComponentResult DfxPlugin::Initialize()
 {
 	ComponentResult result = noErr;
 
-// don't need to do this stuff any more with new forthcoming changes to AUEffectBase 
-// (which is basically a copy'n'paste of what I wrote below, which is why I still include it, for reference, for now)
-/*
-	#if TARGET_PLUGIN_USES_DSPCORE
-		// call the inherited class' Initialize routine
-		result = TARGET_API_BASE_CLASS::Initialize();
-	#endif
-
+#if TARGET_PLUGIN_IS_INSTRUMENT
 	const AUChannelInfo * auChannelConfigs = NULL;
 	UInt32 numIOconfigs = SupportedNumChannels(&auChannelConfigs);
+	AUChannelInfo auChannelConfigs_temp;
 	// if this AU supports only specific i/o channel count configs, then check whether the current format is allowed
-	if ( (numIOconfigs > 0) && (auChannelConfigs != NULL) )
+	if (auChannelConfigs == NULL)
+		numIOconfigs = 0;
+	if ( (numIOconfigs == 0) && (numchannelconfigs > 0) )
 	{
-		SInt16 auNumInputs = (SInt16) GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0).mChannelsPerFrame;
+		auChannelConfigs_temp.inChannels = channelconfigs[0].inChannels;
+		auChannelConfigs_temp.outChannels = channelconfigs[0].outChannels;
+		auChannelConfigs = &auChannelConfigs_temp;
+		numIOconfigs = 1;
+	}
+	if (numIOconfigs > 0)
+	{
+		SInt16 auNumInputs = 0;
+		if ( Inputs().GetNumberOfElements() > 0 )
+			auNumInputs = (SInt16) GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0).mChannelsPerFrame;
 		SInt16 auNumOutputs = (SInt16) GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0).mChannelsPerFrame;
 		bool foundMatch = false;
 		for (UInt32 i=0; (i < numIOconfigs) && !foundMatch; i++)
@@ -149,10 +157,11 @@ ComponentResult DfxPlugin::Initialize()
 		if ( !foundMatch )
 			return kAudioUnitErr_FormatNotSupported;
 	}
-*/
-
+#else
 	// call the inherited class' Initialize routine
 	result = TARGET_API_BASE_CLASS::Initialize();
+#endif
+// TARGET_PLUGIN_IS_INSTRUMENT
 
 	// call our initialize routine
 	if (result == noErr)
@@ -190,13 +199,13 @@ ComponentResult DfxPlugin::Reset(AudioUnitScope inScope, AudioUnitElement inElem
 // get basic information about Audio Unit Properties 
 // (whether they're supported, writability, and data size)
 // most properties are handled by inherited base class implementations
-ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID, 
+ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					UInt32 & outDataSize, Boolean & outWritable)
 {
 	ComponentResult result = noErr;
 
-	switch (inID)
+	switch (inPropertyID)
 	{
 	#if TARGET_PLUGIN_USES_MIDI
 //		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
@@ -262,7 +271,7 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 	#endif
 
 		default:
-			result = TARGET_API_BASE_CLASS::GetPropertyInfo(inID, inScope, inElement, outDataSize, outWritable);
+			result = TARGET_API_BASE_CLASS::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
 			break;
 	}
 
@@ -272,13 +281,13 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 //-----------------------------------------------------------------------------
 // get specific information about Audio Unit Properties
 // most properties are handled by inherited base class implementations
-ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID, 
+ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					void * outData)
 {
 	ComponentResult result = noErr;
 
-	switch (inID)
+	switch (inPropertyID)
 	{
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
@@ -447,7 +456,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 	#endif
 
 		default:
-			result = TARGET_API_BASE_CLASS::GetProperty(inID, inScope, inElement, outData);
+			result = TARGET_API_BASE_CLASS::GetProperty(inPropertyID, inScope, inElement, outData);
 			break;
 	}
 
@@ -455,13 +464,13 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID, 
+ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					const void * inData, UInt32 inDataSize)
 {
 	ComponentResult result = noErr;
 
-	switch (inID)
+	switch (inPropertyID)
 	{
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
@@ -607,7 +616,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 	#endif
 
 		default:
-			result = TARGET_API_BASE_CLASS::SetProperty(inID, inScope, inElement, inData, inDataSize);
+			result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
 			break;
 	}
 
@@ -1106,7 +1115,7 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 	// load the parameter settings that were restored 
 	// by the inherited base class implementation of RestoreState
 	for (long i=0; i < numParameters; i++)
-		setparameter_f(i, TARGET_API_BASE_CLASS::GetParameter(i));
+		setparameter_f(i, Globals()->GetParameter(i));
 
 #endif
 // TARGET_PLUGIN_USES_MIDI
@@ -1168,6 +1177,59 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 	return TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
 }
 
+#if TARGET_PLUGIN_IS_INSTRUMENT
+//-----------------------------------------------------------------------------
+ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags, 
+							const AudioTimeStamp & inTimeStamp, UInt32 inFramesToProcess)
+{
+	ComponentResult result = noErr;
+
+	// do any pre-DSP prep
+	preprocessaudio();
+
+	// get the output element
+	AUOutputElement * theOutput = GetOutput(0);	// throws if there's an error
+	AudioBufferList & outBuffers = theOutput->GetBufferList();
+	UInt32 outNumBuffers = outBuffers.mNumberBuffers;
+	// set up our more convenient audio stream pointers
+	for (UInt32 i=0; i < outNumBuffers; i++)
+	{
+		outputsP[i] = (float*) (outBuffers.mBuffers[i].mData);
+		outBuffers.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
+	}
+
+	// do stuff to prepare the audio inputs, if we use any
+	if (getnuminputs() > 0)
+	{
+		if ( !HasInput(0) )
+			return kAudioUnitErr_NoConnection;
+		AUInputElement * theInput = GetInput(0);
+		result = theInput->PullInput(ioActionFlags, inTimeStamp, (AudioUnitElement)0, inFramesToProcess);
+		if (result != noErr)
+			return result;
+
+		AudioBufferList & inBuffers = theInput->GetBufferList();
+		UInt32 inNumBuffers = inBuffers.mNumberBuffers;
+		// set up our more convenient audio stream pointers
+		for (UInt32 i=0; i < inNumBuffers; i++)
+			inputsP[i] = (float*) (inBuffers.mBuffers[i].mData);
+	}
+
+	// now do the processing
+	processaudio((const float**)inputsP, outputsP, inFramesToProcess);
+
+	// I don't know what the hell this is for
+	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
+
+	// do any post-DSP stuff
+	postprocessaudio();
+
+	return result;
+}
+
+#else
+// !TARGET_PLUGIN_IS_INSTRUMENT
+
 //-----------------------------------------------------------------------------
 // this is the audio processing routine
 OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
@@ -1187,27 +1249,21 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 #else
 	UInt32 inNumBuffers = inBuffer.mNumberBuffers;
 	UInt32 outNumBuffers = outBuffer.mNumberBuffers;
-	// can't have less than 1 in or out stream
-	if ( (inNumBuffers < 1) || (outNumBuffers < 1) )
-		result = kAudioUnitErr_FormatNotSupported;
 
-	if (result == noErr)
+	// set up our more convenient audio stream pointers
+	for (UInt32 i=0; i < inNumBuffers; i++)
+		inputsP[i] = (float*) (inBuffer.mBuffers[i].mData);
+	for (UInt32 i=0; i < outNumBuffers; i++)
 	{
-		// set up our more convenient audio stream pointers
-		for (UInt32 i=0; i < numInputs; i++)
-			inputsP[i] = (float*) (inBuffer.mBuffers[i].mData);
-		for (UInt32 i=0; i < numOutputs; i++)
-		{
-			outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
-			outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
-		}
-
-		// now do the processing
-		processaudio((const float**)inputsP, outputsP, inFramesToProcess);
-
-		// I don't know what the hell this is for
-		ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
+		outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
+		outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
 	}
+
+	// now do the processing
+	processaudio((const float**)inputsP, outputsP, inFramesToProcess);
+
+	// I don't know what the hell this is for
+	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
 
 #endif
 // end of if/else TARGET_PLUGIN_USES_DSPCORE
@@ -1217,6 +1273,8 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 
 	return result;
 }
+#endif
+// TARGET_PLUGIN_IS_INSTRUMENT
 
 
 
@@ -1265,6 +1323,39 @@ void DfxPlugin::HandleProgramChange(int inChannel, UInt8 inProgramNum)
 	// XXX maybe this is really all we want to do?
 	loadpreset(inProgramNum);
 }
+
+#if TARGET_PLUGIN_IS_INSTRUMENT
+//-----------------------------------------------------------------------------
+ComponentResult DfxPlugin::PrepareInstrument(MusicDeviceInstrumentID inInstrument)
+{
+	return kAudioUnitErr_PropertyNotInUse;
+}
+
+//-----------------------------------------------------------------------------
+ComponentResult DfxPlugin::ReleaseInstrument(MusicDeviceInstrumentID inInstrument)
+{
+	return kAudioUnitErr_PropertyNotInUse;
+}
+
+//-----------------------------------------------------------------------------
+ComponentResult DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument, 
+						MusicDeviceGroupID inGroupID, NoteInstanceID & outNoteInstanceID, 
+						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams & inParams)
+{
+	ComponentResult result = HandleMidiEvent(kMidiNoteOn, (UInt8)inGroupID, (UInt8)(inParams.mPitch), (UInt8)(inParams.mVelocity), inOffsetSampleFrame);
+	if (result == noErr)
+		outNoteInstanceID = (NoteInstanceID) (inParams.mPitch);
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+ComponentResult DfxPlugin::StopNote(MusicDeviceGroupID inGroupID, 
+						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame)
+{
+	return HandleMidiEvent(kMidiNoteOff, (UInt8)inGroupID, (UInt8)inNoteInstanceID, 0, inOffsetSampleFrame);
+}
+#endif
+// TARGET_PLUGIN_IS_INSTRUMENT
 
 #endif
 // TARGET_PLUGIN_USES_MIDI
