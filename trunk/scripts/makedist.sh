@@ -2,20 +2,22 @@
 
 if (( $# < 3 )); then
 	echo 
-	echo "   "`basename $0`" output suffix inmanual outmanual(.html) 0|1(uses MIDI) input1 [input2 [...]]"
+	echo "   "`basename $0`" output suffix inmanual pluginname 0|1(uses MIDI) input1 [input2 [...]]"
 	echo 
 	exit 1
 fi
 
 ENTRYDIR=`pwd`
-OUTPUTFILE="$1"-$2
+OUTPUTFILE="$1"-"$2"
 TEMPDIR=`dirname "$1"`/`basename "$1"`_temp_$$_`jot -r -n -p 20 1`
+PLUGINNAME="$4"
 
 echo
 echo "   creating temporary directory  "$TEMPDIR
 mkdir "${TEMPDIR}"
-echo "   creating  "$4" manual.html  in  "`basename "${TEMPDIR}"`
-makedocs "$3" "${TEMPDIR}"/"$4 manual.html"
+MANUALNAME="${PLUGINNAME} manual.html"
+echo "   creating  "$MANUALNAME"  in  "`basename "${TEMPDIR}"`
+makedocs "$3" "${TEMPDIR}"/"${MANUALNAME}"
 if (( $5 )); then
 	echo "   creating  Destroy FX MIDI.html  in  "`basename "${TEMPDIR}"`
 	makedocs ~/dfx/vstplugins/docs/destroy-fx-midi.html "${TEMPDIR}"/Destroy\ FX\ MIDI.html
@@ -27,6 +29,9 @@ while (( $# >= 1 )); do
 	shift
 done
 
+#cp -f ~/dfx/vstplugins/scripts/install-au.command "${TEMPDIR}"/"Install ${PLUGINNAME}.command"
+cp -f ~/dfx/scripts/install-au.command "${TEMPDIR}"/"Install ${PLUGINNAME}.command"
+
 cd "${TEMPDIR}"
 echo
 echo "   deleting the following files:"
@@ -35,10 +40,14 @@ find -f . \( -name "pbdevelopment.plist" \) -delete
 find -f . \( -name ".DS_Store" \) -print
 find -f . \( -name ".DS_Store" \) -delete
 
+#OUTPUTFILE_FULLNAME="${OUTPUTFILE}".tar.gz
+OUTPUTFILE_FULLNAME="${OUTPUTFILE}".dmg
 echo
-echo "   creating output file  "$OUTPUTFILE".tar.gz"
-gnutar -cv -f "$OUTPUTFILE".tar *
-gzip --best "$OUTPUTFILE".tar
+echo "   creating output file  "$OUTPUTFILE_FULLNAME
+#gnutar -cv -f "${OUTPUTFILE}".tar *
+#gzip --best "${OUTPUTFILE}".tar
+hdiutil create -ov -srcfolder "${TEMPDIR}" -volname "DFX ${PLUGINNAME}" -nouuid -gid 99 -format UDZO -imagekey zlib-level=9 "${OUTPUTFILE}"
+
 
 cd "${ENTRYDIR}"
 echo
@@ -46,7 +55,7 @@ echo "   removing temp directory  "$TEMPDIR
 rm -R "${TEMPDIR}"
 
 echo
-echo "   done with "`basename "${OUTPUTFILE}"`".tar.gz!"
+echo "   done with "`basename "${OUTPUTFILE_FULLNAME}"`"!"
 echo
 exit 0
 
