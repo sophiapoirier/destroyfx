@@ -741,6 +741,26 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue)
 }
 
 //-----------------------------------------------------------------------------
+void DfxGuiEditor::setparameter_default(long inParameterID)
+{
+	AudioUnitParameterInfo paramInfo;
+	memset(&paramInfo, 0, sizeof(paramInfo));
+	UInt32 dataSize = sizeof(paramInfo);
+
+	ComponentResult result = AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_ParameterInfo, 
+							kAudioUnitScope_Global, inParameterID, &paramInfo, &dataSize);
+	if (result == noErr)
+	{
+		AudioUnitParameter auParam;
+		auParam.mAudioUnit = GetEditAudioUnit();
+		auParam.mParameterID = inParameterID;
+		auParam.mScope = kAudioUnitScope_Global;
+		auParam.mElement = (AudioUnitElement)0;
+		result = AUParameterSet(NULL, NULL, &auParam, paramInfo.defaultValue, 0);
+	}
+}
+
+//-----------------------------------------------------------------------------
 void DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
 {
 	DfxParameterValueStringRequest request;
@@ -908,7 +928,7 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 		DGMousedOverControlsList * currentItem = mousedOverControlsList;
 		while (currentItem != NULL)
 		{
-			bool tempHandled = currentItem->control->mouseWheel(mouseWheelDelta, dgMouseWheelAxis, keyModifiers);
+			bool tempHandled = currentItem->control->do_mouseWheel(mouseWheelDelta, dgMouseWheelAxis, keyModifiers);
 			if (tempHandled)
 			{
 				mouseWheelWasHandled = true;
@@ -1022,14 +1042,14 @@ return false;
 		if (status != noErr)
 			mouseButtons = GetCurrentEventButtonState();
 
-		ourControl->mouseTrack(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
+		ourControl->do_mouseTrack(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
 
 		return false;	// let it fall through in case the host needs the event
 	}
 
 	if (inEventKind == kEventMouseUp)
 	{
-		ourControl->mouseUp(mouseLocation.x, mouseLocation.y, keyModifiers);
+		ourControl->do_mouseUp(mouseLocation.x, mouseLocation.y, keyModifiers);
 
 		currentControl_clicked = NULL;
 
@@ -1273,7 +1293,7 @@ fprintf(stderr, "kEventControlHit\n");
 //						fprintf(stderr, "DGControlEventHandler -> TellListener(MouseDown, %ld)\n", ourDGControl->getParameterID());
 					}
 
-					ourDGControl->mouseDown(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
+					ourDGControl->do_mouseDown(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
 					currentControl_clicked = ourDGControl;
 				}
 				return true;
