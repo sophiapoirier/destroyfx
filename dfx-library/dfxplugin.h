@@ -332,7 +332,7 @@ public:
 	// do the audio processing (override with real stuff)
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
 	// 
-	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, 
+	virtual void processaudio(const float ** inStreams, float ** outStreams, unsigned long inNumFrames, 
 						bool replacing=true)
 		{ }
 
@@ -502,7 +502,7 @@ public:
 		{	return timeinfo;	}
 
 	// add an audio input/output configuration to the array of i/o configurations
-	void addchannelconfig(short numin, short numout);
+	void addchannelconfig(short inNumInputChannels, short inNumOutputChannels);
 
 	void setlatency_samples(long newlatency);
 	void setlatency_seconds(double newlatency);
@@ -809,20 +809,20 @@ public:
 		{ }
 
 	virtual ~DfxPluginCore()
-		{	releasebuffers();	}	// XXX this doesn't work from parent class
+		{	releasebuffers();	}	// XXX this doesn't work for child class' releasebuffers() implementation
 
 	void dfxplugincore_postconstructor()
 	{
 		do_reset();
 	}
 
-	void do_process(const float * in, float * out, unsigned long inNumFrames, 
+	void do_process(const float * inStream, float * outStream, unsigned long inNumFrames, 
 						bool replacing=true)
 	{
 		processparameters();
-		process(in, out, inNumFrames, replacing);
+		process(inStream, outStream, inNumFrames, replacing);
 	}
-	virtual void process(const float * in, float * out, unsigned long inNumFrames, 
+	virtual void process(const float * inStream, float * outStream, unsigned long inNumFrames, 
 						bool replacing=true) = 0;
 	void do_reset()
 	{
@@ -849,18 +849,26 @@ public:
 		{	return dfxplugin->getsamplerate();	}
 	float getsamplerate_f()
 		{	return dfxplugin->getsamplerate_f();	}
-//	DfxParam getparameter(long index)
-//		{	return dfxplugin->getparameter(index);	}
-	double getparameter_f(long index)
-		{	return dfxplugin->getparameter_f(index);	}
-	sint64 getparameter_i(long index)
-		{	return dfxplugin->getparameter_i(index);	}
-	bool getparameter_b(long index)
-		{	return dfxplugin->getparameter_b(index);	}
-	double getparameter_scalar(long index)
-		{	return dfxplugin->getparameter_scalar(index);	}
-	bool getparameterchanged(long index)
-		{	if (dfxplugin->parameterisvalid(index)) return dfxplugin->getparameterchanged(index);   return false;	}
+//	DfxParamValue getparameter(long inParameterIndex)
+//		{	return dfxplugin->getparameter(inParameterIndex);	}
+	double getparameter_f(long inParameterIndex)
+		{	return dfxplugin->getparameter_f(inParameterIndex);	}
+	sint64 getparameter_i(long inParameterIndex)
+		{	return dfxplugin->getparameter_i(inParameterIndex);	}
+	bool getparameter_b(long inParameterIndex)
+		{	return dfxplugin->getparameter_b(inParameterIndex);	}
+	double getparameter_scalar(long inParameterIndex)
+		{	return dfxplugin->getparameter_scalar(inParameterIndex);	}
+	double getparametermin_f(long inParameterIndex)
+		{	return dfxplugin->getparametermin_f(inParameterIndex);	}
+	sint64 getparametermin_i(long inParameterIndex)
+		{	return dfxplugin->getparametermin_i(inParameterIndex);	}
+	double getparametermax_f(long inParameterIndex)
+		{	return dfxplugin->getparametermax_f(inParameterIndex);	}
+	sint64 getparametermax_i(long inParameterIndex)
+		{	return dfxplugin->getparametermax_i(inParameterIndex);	}
+	bool getparameterchanged(long inParameterIndex)
+		{	return dfxplugin->getparameterchanged(inParameterIndex);	}
 
 
 protected:
