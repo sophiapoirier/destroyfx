@@ -25,7 +25,7 @@ public:
 					DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGTextDisplay();
 
-	virtual void draw(CGContextRef context, UInt32 portHeight);
+	virtual void draw(CGContextRef context, long portHeight);
 	virtual void drawText(CGContextRef context, CGRect& inBounds, const char * inString);
 
 	void setTextAlignment(DfxGuiTextAlignment newAlignment)
@@ -57,7 +57,7 @@ public:
 						DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
-	virtual void draw(CGContextRef context, UInt32 portHeight);
+	virtual void draw(CGContextRef context, long portHeight);
 
 	void setText(const char * inNewText);
 

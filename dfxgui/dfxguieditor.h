@@ -46,7 +46,7 @@ public:
 	void do_idle();
 	virtual void idle() { }
 
-	virtual void DrawBackground(CGContextRef inContext, UInt32 inPortHeight);
+	virtual void DrawBackground(CGContextRef inContext, long inPortHeight);
 
 #if MAC
 	virtual bool HandleMouseEvent(EventRef inEvent);

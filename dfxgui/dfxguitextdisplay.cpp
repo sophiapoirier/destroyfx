@@ -72,14 +72,11 @@ DGTextDisplay::~DGTextDisplay()
 
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
+void DGTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 {
 	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
 
-	CGImageRef backgroundCGImage = NULL;
-	if (backgroundImage != NULL)
-		backgroundCGImage = backgroundImage->getCGImage();
-	if (backgroundCGImage == NULL)
+	if (backgroundImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
@@ -90,16 +87,8 @@ void DGTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 #endif
 	}
 	else
-	{
-CGRect whole;
-whole = bounds;
-whole.size.width = (float) backgroundImage->getWidth();
-whole.size.height = (float) backgroundImage->getHeight();
-whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
-whole.origin.y -= (float) (backgroundImage->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
-//		CGContextDrawImage(inContext, bounds, backgroundCGImage);
-		CGContextDrawImage(inContext, whole, backgroundCGImage);
-	}
+//		backgroundImage->draw(getBounds(), inContext, inPortHeight, getBounds()->x - (long)(getDfxGuiEditor()->GetXOffset()), getBounds()->y - (long)(getDfxGuiEditor()->GetYOffset()));	// draw underneath-style
+		backgroundImage->draw(getBounds(), inContext, inPortHeight);
 
 	if (textProc != NULL)
 	{
@@ -176,14 +165,11 @@ void DGStaticTextDisplay::setText(const char * inNewText)
 }
 
 //-----------------------------------------------------------------------------
-void DGStaticTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
+void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 {
 	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
 
-	CGImageRef backgroundCGImage = NULL;
-	if (backgroundImage != NULL)
-		backgroundCGImage = backgroundImage->getCGImage();
-	if (backgroundCGImage == NULL)
+	if (backgroundImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
@@ -194,16 +180,8 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 #endif
 	}
 	else
-	{
-CGRect whole;
-whole = bounds;
-whole.size.width = (float) backgroundImage->getWidth();
-whole.size.height = (float) backgroundImage->getHeight();
-whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
-whole.origin.y -= (float) (backgroundImage->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
-//		CGContextDrawImage(inContext, bounds, backgroundCGImage);
-		CGContextDrawImage(inContext, whole, backgroundCGImage);
-	}
+//		backgroundImage->draw(getBounds(), inContext, inPortHeight, getBounds()->x - (long)(getDfxGuiEditor()->GetXOffset()), getBounds()->y - (long)(getDfxGuiEditor()->GetYOffset()));	// draw underneath-style
+		backgroundImage->draw(getBounds(), inContext, inPortHeight);
 
 	drawText(inContext, bounds, displayString);
 }

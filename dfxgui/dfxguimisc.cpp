@@ -64,7 +64,7 @@ DGImage::~DGImage()
 }
 
 //-----------------------------------------------------------------------------
-unsigned long DGImage::getWidth()
+long DGImage::getWidth()
 {
 	if (cgImage != NULL)
 		return CGImageGetWidth(cgImage);
@@ -73,7 +73,7 @@ unsigned long DGImage::getWidth()
 }
 	
 //-----------------------------------------------------------------------------
-unsigned long DGImage::getHeight()
+long DGImage::getHeight()
 {
 	if (cgImage != NULL)
 		return CGImageGetHeight(cgImage);
@@ -82,14 +82,33 @@ unsigned long DGImage::getHeight()
 }
 
 //-----------------------------------------------------------------------------
-void DGImage::draw(CGContextRef inContext, UInt32 inPortHeight, DGRect * inRect)
+void DGImage::draw(DGRect * inRect, CGContextRef inContext, long inPortHeight, long inXoffset, long inYoffset)
 {
-	if ( (cgImage != NULL) && (inRect != NULL) && (inContext != NULL) )
-		CGContextDrawImage(inContext, inRect->convertToCGRect(inPortHeight), cgImage);
+	if ( (cgImage == NULL) && (inRect == NULL) && (inContext == NULL) )
+		return;
+
+	// convert the DGRect to a CGRect for the CG API stuffs
+	CGRect drawRect = inRect->convertToCGRect(inPortHeight);
+
+	// avoid CoreGraphics' automatic scaled-image-to-fit-drawing-rectangle feature 
+	// by specifying the drawing rect size as the size of the image, 
+	// regardless of the actual drawing area size
+	drawRect.size.width = (float) getWidth();
+	drawRect.size.height = (float) getHeight();
+
+	// this positions the image at the top of the region 
+	// rather than at the bottom (upside-down CG coordinates)
+	drawRect.origin.y -= (float) (getHeight() - inRect->h);
+	// take offsets into account
+	drawRect.origin.x -= (float) inXoffset;
+	drawRect.origin.y += (float) inYoffset;	// we have to add because the Y axis is upside-down in CG
+
+	// draw
+	CGContextDrawImage(inContext, drawRect, cgImage);
 }
 
 //-----------------------------------------------------------------------------
-void ReleasePreRenderedCGImageBuffer(void *info, const void *data, size_t size)
+void ReleasePreRenderedCGImageBuffer(void * info, const void * data, size_t size)
 {
 	free((void*)data);
 }
