@@ -4,12 +4,8 @@
 
 #include "geometer.hpp"
 
-#include <stdio.h>
-
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #ifndef __DFX_GEOMETEREDITOR_H
   #include "geometereditor.hpp"
-  #endif
 #endif
 
 int intcompare(const void * a, const void * b);
