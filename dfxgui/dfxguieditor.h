@@ -8,11 +8,11 @@
 
 
 
-typedef struct DGColor {
+typedef struct {
 	int r;
 	int g;
 	int b;
-};
+} DGColor;
 
 const DGColor kBlackDGColor = { 0, 0, 0 };
 const DGColor kWhiteDGColor = { 255, 255, 255 };
@@ -123,13 +123,13 @@ class DGControl : public DGItem
 {
 public:
 	// control for a parameter
-	DGControl(DfxGuiEditor *inOwnderEditor, AudioUnitParameterID inParameterID, DGRect *inPos);
+	DGControl(DfxGuiEditor *inOwnderEditor, AudioUnitParameterID inParameterID, DGRect *inRegion);
 	// control with no actual parameter attached
-	DGControl(DfxGuiEditor *inOwnderEditor, DGRect *inPos, float Range = 0.0f);
+	DGControl(DfxGuiEditor *inOwnderEditor, DGRect *inRegion, float Range = 0.0f);
 	virtual ~DGControl();
 
 	// common constructor stuff
-	void init(DGRect *inWhere);
+	void init(DGRect *inRegion);
 
 	// ControlRefs will be implemented by Manager Class
 	void setCarbonControl(ControlRef inCarbonControl)

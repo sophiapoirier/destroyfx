@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 DGItem::DGItem()
 {
-	type = kDfxGuiType_None;
+	type = kDfxGuiType_none;
 	itemID = 0;
 	prev = NULL;
 	next = NULL;
@@ -54,12 +54,12 @@ void DGItem::append(DGItem *nextItem)
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-DGGraphic::DGGraphic(char *fileName)
+DGGraphic::DGGraphic(const char *inFileName)
 {
 	cgImage = NULL;
-	loadImagePNG(fileName);
+	loadImageFile(inFileName);
 
-	setType(kDfxGuiType_Graphic);
+	setType(kDfxGuiType_graphic);
 }
 
 //-----------------------------------------------------------------------------
@@ -71,26 +71,41 @@ DGGraphic::~DGGraphic()
 }
 
 //-----------------------------------------------------------------------------
-void DGGraphic::loadImagePNG(char *fileName)
+void DGGraphic::loadImageFile(const char *inFileName)
 {
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
 	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 	if (pluginBundleRef != NULL)
 	{
-		CFStringRef fileCFName = CFStringCreateWithCString(kCFAllocatorDefault, fileName, CFStringGetSystemEncoding());
+		CFStringRef fileCFName = CFStringCreateWithCString(kCFAllocatorDefault, inFileName, CFStringGetSystemEncoding());
 		if (fileCFName != NULL)
 		{
-			CFURLRef resourceURL = CFBundleCopyResourceURL(pluginBundleRef, fileCFName, NULL, NULL);
-			if (resourceURL != NULL)
+			CFURLRef imageResourceURL = CFBundleCopyResourceURL(pluginBundleRef, fileCFName, NULL, NULL);
+			if (imageResourceURL != NULL)
 			{
-				CGDataProviderRef provider = CGDataProviderCreateWithURL(resourceURL);
+				CGDataProviderRef provider = CGDataProviderCreateWithURL(imageResourceURL);
 				if (provider != NULL)
 				{
-					cgImage = CGImageCreateWithPNGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
+//					char *fileExtension = strrchr(inFileName, '.');
+//					if (fileExtension != NULL)
+//						fileExtension += 1;	// advance past the .
+
+					CFStringRef fileCFExtension = CFURLCopyPathExtension(imageResourceURL);
+					if (fileCFExtension != NULL)
+					{
+						if (CFStringCompare(fileCFExtension, CFSTR("png"), kCFCompareCaseInsensitive) == kCFCompareEqualTo)
+							cgImage = CGImageCreateWithPNGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
+						else if ( (CFStringCompare(fileCFExtension, CFSTR("jpg"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) || 
+								(CFStringCompare(fileCFExtension, CFSTR("jpeg"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) || 
+								(CFStringCompare(fileCFExtension, CFSTR("jpe"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) )
+							cgImage = CGImageCreateWithJPEGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
+						CFRelease(fileCFExtension);
+					}
+
 					CGDataProviderRelease(provider);
 				}
-				CFRelease(resourceURL);
+				CFRelease(imageResourceURL);
 			}
 			CFRelease(fileCFName);
 		}
