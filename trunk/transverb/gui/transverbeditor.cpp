@@ -69,15 +69,15 @@ enum {
 //-----------------------------------------------------------------------------
 
 // callback for button-triggered action
-void randomizeTransverb(UInt32 value, void *editor);
-void randomizeTransverb(UInt32 value, void *editor)
+void randomizeTransverb(SInt32 value, void *editor);
+void randomizeTransverb(SInt32 value, void *editor)
 {
 	if (editor != NULL)
 		((DfxGuiEditor*)editor)->randomizeparameters(true);
 }
 
-void midilearnTransverb(UInt32 value, void *editor);
-void midilearnTransverb(UInt32 value, void *editor)
+void midilearnTransverb(SInt32 value, void *editor);
+void midilearnTransverb(SInt32 value, void *editor)
 {
 	if (editor != NULL)
 	{
@@ -88,8 +88,8 @@ void midilearnTransverb(UInt32 value, void *editor)
 	}
 }
 
-void midiresetTransverb(UInt32 value, void *editor);
-void midiresetTransverb(UInt32 value, void *editor)
+void midiresetTransverb(SInt32 value, void *editor);
+void midiresetTransverb(SInt32 value, void *editor)
 {
 	if ( (editor != NULL) && (value != 0) )
 		((DfxGuiEditor*)editor)->resetmidilearn();

@@ -14,7 +14,7 @@ typedef enum {
 } DfxGuiBottonMode;
 
 
-typedef void (*buttonUserProcedure) (UInt32 value, void *userData);
+typedef void (*buttonUserProcedure) (SInt32 value, void *userData);
 
 
 //-----------------------------------------------------------------------------
