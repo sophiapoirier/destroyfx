@@ -72,7 +72,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kPredelay, "predelay", 0.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
 
 	// set the value strings for the sync rate parameters
-	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
+	for (int i=0; i < numTempoRates; i++)
 	{
 		char *tname = tempoRateTable->getDisplay(i);
 		setparametervaluestring(kSeekRate_sync, i, tname);

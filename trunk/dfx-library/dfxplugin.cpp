@@ -11,6 +11,12 @@ written by Marc Poirier, October 2002
 
 #include <time.h>	// for time(), which is used to feed srand()
 
+#if TARGET_API_AUDIOUNIT
+	#ifndef __AudioUnitUtilities_h__
+	#include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
+	#endif
+#endif
+
 #if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
 	#include "vstgui.h"
 #endif
@@ -438,9 +444,10 @@ void DfxPlugin::update_parameter(long parameterIndex)
 {
 	#if TARGET_API_AUDIOUNIT
 		// make the global-scope element aware of the parameter's value
-		AUBase::SetParameter(parameterIndex, kAudioUnitScope_Global, 0, getparameter_f(parameterIndex), 0);
+		AUBase::SetParameter(parameterIndex, kAudioUnitScope_Global, (AudioUnitElement)0, getparameter_f(parameterIndex), 0);
+	#endif
 
-	#elif TARGET_API_VST
+	#if TARGET_API_VST
 		long vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
 		if (presetisvalid(vstpresetnum))
 			setpresetparameter(vstpresetnum, parameterIndex, getparameter(parameterIndex));
@@ -449,6 +456,24 @@ void DfxPlugin::update_parameter(long parameterIndex)
 			((AEffGUIEditor*)editor)->setParameter(parameterIndex, getparameter_gen(parameterIndex));
 		#endif
 
+	#endif
+}
+
+//-----------------------------------------------------------------------------
+// this will broadcast a notification to anyone interested (host, GUI, etc.) 
+// about a parameter change
+void DfxPlugin::postupdate_parameter(long parameterIndex)
+{
+	if ( !parameterisvalid(parameterIndex) )
+		return;
+
+	#if TARGET_API_AUDIOUNIT
+		AudioUnitParameter dirtyparam;
+		dirtyparam.mAudioUnit = GetComponentInstance();
+		dirtyparam.mParameterID = parameterIndex;
+		dirtyparam.mScope = kAudioUnitScope_Global;
+		dirtyparam.mElement = 0;
+		AUParameterListenerNotify(NULL, NULL, &dirtyparam);
 	#endif
 }
 
@@ -605,6 +630,7 @@ void DfxPlugin::update_preset(long presetIndex)
 		au_preset.presetNumber = presetIndex;
 		au_preset.presetName = getpresetcfname(presetIndex);
 		SetAFactoryPresetAsCurrent(au_preset);
+		PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, (AudioUnitElement)0);
 
 	#elif TARGET_API_VST
 		TARGET_API_BASE_CLASS::setProgram(presetIndex);
@@ -753,7 +779,7 @@ void DfxPlugin::setsamplerate(double newrate)
 void DfxPlugin::updatesamplerate()
 {
 #if TARGET_API_AUDIOUNIT
-	if (IsInitialized())	// will crash if not initialized (elements not created)
+	if (IsInitialized())	// will crash if not initialized
 		setsamplerate(GetSampleRate());
 	else
 		setsamplerate(44100.0);
@@ -831,6 +857,90 @@ void DfxPlugin::addchannelconfig(short numin, short numout)
 		channelconfigs[0].outChannels = numout;
 		numchannelconfigs = 1;
 	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::setlatency_samples(long newlatency)
+{
+	latency_samples = newlatency;
+	b_uselatency_seconds = false;
+	update_latency();
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::setlatency_seconds(double newlatency)
+{
+	latency_seconds = newlatency;
+	b_uselatency_seconds = true;
+	update_latency();
+}
+
+//-----------------------------------------------------------------------------
+long DfxPlugin::getlatency_samples()
+{
+	if (b_uselatency_seconds)
+		return (long) (latency_seconds * getsamplerate());
+	else
+		return latency_samples;
+}
+
+//-----------------------------------------------------------------------------
+double DfxPlugin::getlatency_seconds()
+{
+	if (b_uselatency_seconds)
+		return latency_seconds;
+	else
+		return (double)latency_samples / getsamplerate();
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::update_latency()
+{
+	#if TARGET_API_AUDIOUNIT
+		PropertyChanged(kAudioUnitProperty_Latency, kAudioUnitScope_Global, (AudioUnitElement)0);
+	#endif
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::settailsize_samples(long newsize)
+{
+	tailsize_samples = newsize;
+	b_usetailsize_seconds = false;
+	update_tailsize();
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::settailsize_seconds(double newsize)
+{
+	tailsize_seconds = newsize;
+	b_usetailsize_seconds = true;
+	update_tailsize();
+}
+
+//-----------------------------------------------------------------------------
+long DfxPlugin::gettailsize_samples()
+{
+	if (b_usetailsize_seconds)
+		return (long) (tailsize_seconds * getsamplerate());
+	else
+		return tailsize_samples;
+}
+
+//-----------------------------------------------------------------------------
+double DfxPlugin::gettailsize_seconds()
+{
+	if (b_usetailsize_seconds)
+		return tailsize_seconds;
+	else
+		return (double)tailsize_samples / getsamplerate();
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::update_tailsize()
+{
+	#if TARGET_API_AUDIOUNIT
+		PropertyChanged(kAudioUnitProperty_TailTime, kAudioUnitScope_Global, (AudioUnitElement)0);
+	#endif
 }
 
 
