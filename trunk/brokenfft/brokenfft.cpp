@@ -1,312 +1,207 @@
+/* Broken FFT 2.0: Featuring the Super Destroy FX Windowing System! */
 
-/* brokenfft: $Id: brokenfft.cpp,v 1.5 2002-02-06 04:34:39 tom7 Exp $ */
+#include "brokenfft.hpp"
+#include "fourier.h"
 
-#include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <math.h>
 
-#include "brokenfft.hpp"
-#include "fourier.h"
+#define MKBUFSIZE(c) (buffersizes[(int)((c)*(BUFFERSIZESSIZE-1))])
 
-#define fsign(f) ((f<0.0)?-1.0:1.0)
+const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = { 
+  2, 4, 8, 16, 32, 64, 128, 256, 512, 
+  1024, 2048, 4096, 8192, 16384, 32768, 
+};
 
-#define pi (3.1415926535)
+PLUGIN::PLUGIN(audioMasterCallback audioMaster)
+  : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-void tqsort(amplentry * low, int n, int stop);
+  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5, "samples");
+  FPARAM(shape, P_SHAPE, "shape", 0.0, "");
 
-int amplcomp(const void * l, const void * r);
-int amplcomp(const void * l, const void * r) {
-  amplentry * ll = (amplentry*) l;
-  amplentry * rr = (amplentry*) r;
- 
-  return (int) (rr->a - ll->a);
-}
+  FPARAM(destruct, P_DESTRUCT, "very special", 1.0, "?");
+  FPARAM(perturb, P_PERTURB, "perturb", 0.0, "?");
+  FPARAM(quant, P_QUANT, "operation q", 1.0, "?");
+  FPARAM(rotate, P_ROTATE, "rotate", 0.0, "?");
+  FPARAM(binquant, P_BINQUANT, "operation bq", 0.0, "?");
+  FPARAM(compress, P_COMPRESS, "comp???", 1.0, "?");
+  FPARAM(spike, P_SPIKE, "spike", 1.0, "?");
+  FPARAM(makeupgain, P_MUG, "M.U.G.", 0.0, "?");
+  FPARAM(spikehold, P_SPIKEHOLD, "spikehold", 0.0, "?");
+  FPARAM(echomix, P_ECHOMIX, "eo mix", 0.0, "?");
+  FPARAM(echotime, P_ECHOTIME, "eo time", 0.5, "?");
+  FPARAM(echomodf, P_ECHOMODF, "eo mod f", 2.0 * pi, "?");
+  FPARAM(echomodw, P_ECHOMODW, "eo mod w", 0.0, "?");
+  FPARAM(echofb, P_ECHOFB, "eo fbx", 0.50, "?");
+  FPARAM(echolow, P_ECHOLOW, "eo >", 0.0, "?");
+  FPARAM(echohi, P_ECHOHI, "eo <", 1.0, "?");
+  
+  
 
-/* samples */
+  long maxframe = 0;
+  for (long i=0; i<BUFFERSIZESSIZE; i++)
+    maxframe = ( buffersizes[i] > maxframe ? buffersizes[i] : maxframe );
 
-Fft::Fft(audioMasterCallback audioMaster)
-  : AudioEffectX(audioMaster, 1, 19) {
-  bitres = 1.;		
-  samplehold = 1.0;
-  samplesleft = 0;
-  destruct = 1.0;
-  perturb = 0.0;
-  quant = 1.0;
-  rotate = 0.0;
-  binquant = 0.0;
-  compress = 1.0;
-  sampler = 0.0;
-  samplei = 0.0;
-  spike = 1.0;
-  makeupgain = 0.0;
-  amplhold = 1;
-  stopat = 1;
-  ampl = 0;
-  spikehold = 0.0;
-  echomix = 0.0;
-  echotime = 0.5;
-  setNumInputs(1);		/* mono in/out */
-  setNumOutputs(1);
-  setUniqueID('T7BF');
+  setup();
 
-  echomodf = 2.0 * pi;
-  echomodw = 0.0;
+  in0 = (float*)malloc(maxframe * sizeof (float));
+  out0 = (float*)malloc(maxframe * 2 * sizeof (float));
 
-  echofb = 0.50;
-  echolow = 0.0;
-  echohi = 1.0;
+  /* prevmix is only a single third long */
+  prevmix = (float*)malloc((maxframe / 2) * sizeof (float));
 
-  OVERLAP = 5;
-
-  echoctr = 0;
   echor = (float*)malloc(MAXECHO * sizeof(float));
   echoc = (float*)malloc(MAXECHO * sizeof(float));
 
-  ampl = (amplentry*)malloc(sizeof (amplentry) * MAXSAMPLES);
-  amplsamples = MAXSAMPLES;
+  ampl = (amplentry*)malloc(sizeof (amplentry) * maxframe);
+  amplsamples = maxframe;
 
-  fftr = (float*)malloc(MAXSAMPLES * sizeof(float));
-  ffti = (float*)malloc(MAXSAMPLES * sizeof(float));
-  tmp = (float*)malloc(MAXSAMPLES * sizeof(float));
-  oot = (float*)malloc(MAXSAMPLES * sizeof(float));
-  buffersamples = MAXSAMPLES;
+  fftr = (float*)malloc(maxframe * sizeof(float));
+  ffti = (float*)malloc(maxframe * sizeof(float));
+  tmp = (float*)malloc(maxframe * sizeof(float));
+  oot = (float*)malloc(maxframe * sizeof(float));
+  buffersamples = maxframe;
+
+  /* resume sets up buffers and sizes */
+  changed = 1;
+  resume ();
+}
+
+PLUGIN::~PLUGIN() {
+  free (in0);
+  free (out0);
+
+  free (prevmix);
+
+  if (programs) delete[] programs;
+}
+
+void PLUGIN::resume() {
+
+  if (changed) ioChanged();
 
   for(int i = 0; i < MAXECHO; i++) {
     echor[i] = echoc[i] = 0.0;
   }
 
-  overbuff = (float*)malloc((MAXOVERLAP+4) * sizeof (float));
+  amplhold = 1;
+  stopat = 1;
 
-  for(int ii = 0; ii < (MAXOVERLAP+4); ii++) overbuff[ii] = 0.0;
+  echoctr = 0;
 
-  canProcessReplacing();
-  strcpy(programName, "Broken FFT");
+  sampler = samplei = 0.0f;
+
+  samplesleft = 0;
+
+  framesize = MKBUFSIZE(bufsizep);
+  third = framesize / 2;
+  bufsize = third * 3;
+
+  /* set up buffers. Prevmix and first frame of output are always
+     filled with zeros. */
+
+  for (int ii = 0; ii < third; ii ++) {
+    prevmix[ii] = 0.0;
+  }
+
+  for (int j = 0; j < framesize; j ++) {
+    out0[j] = 0.0;
+  }
+  
+  /* start input at beginning. Output has a frame of silence. */
+  insize = 0;
+  outstart = 0;
+  outsize = framesize;
+
+  if (changed) setInitialDelay(framesize);
+
+  changed = 0;
+
 }
 
-Fft::~Fft() {
-  free(overbuff);
-  free(ampl);
+void PLUGIN::suspend () {
+  /* nothing to do here. */
 
-  free(fftr);
-  free(ffti);
-  free(tmp);
-  free(oot);
-
-  free(echor);
-  free(echoc);
 }
 
-void Fft::setProgramName(char *name) {
-  strcpy(programName, name);
-}
+/* tail is the same as delay, of course */
+long PLUGIN::getTailSize() { return framesize; }
 
-void Fft::getProgramName(char *name) {
-  strcpy(name, programName);
-}
-
-void Fft::setParameter(long index, float value) {
+void PLUGIN::setParameter(long index, float value) {
   switch (index) {
-  case 0: {
-    bitres = value;
-    int nOVERLAP = (int)(MAXOVERLAP * (1.0 - value));
-
-    if (nOVERLAP > OVERLAP) {
-      for (int i=OVERLAP; i < nOVERLAP; i++) {
-	    overbuff[i] = samplehold * (rand()/(float)RAND_MAX);
-      }
-    }
-    OVERLAP = nOVERLAP;
-  }
-  break;
-  case 1:
-    samplehold = value;
-    break;
-  case 2: 
-    destruct = value;
-    break;
-  case 3:
-    perturb = value;
-    break;
-  case 4:
-    quant = value;
-    break;
-  case 5:
-    rotate = value;
-    break;
-  case 10:
-    binquant = value;
-    break;
-  case 7:
-    spike = value;
-    break;
-  case 8:
-    compress = value;
-    break;
-  case 9:
-    makeupgain = value;
-    break;
-  case 6:
-    spikehold = value;
-    break;
-  case 11:
-    break; /* unused */
-  case 12:
-    echomix = value;
-    break;
-  case 13:
-    echotime = value;
-    break;
-  case 14:
-    echomodw = value;
-    break;
-  case 15:
-    echomodf = value * 2.0 * pi;
-    break;
-  case 16:
-    echofb = value;
-    break;
-  case 17:
-    if (value < echohi) echolow = value;
-    break;
-  case 18:
-    if (value > echolow) echohi = value;
-    break;
+  case P_BUFSIZE:
+    changed = 1;
+    /* fallthrough */
   default:
+    if (index >= 0 && index < NUM_PARAMS)
+      *paramptrs[index].ptr = value;
+    /* otherwise, ??? */
     break;
   }
+
+  /* copy the new value to the active program's corresponding parameter value */
+  if ( (index >= 0) && (index < NUM_PARAMS) )
+    programs[curProgram].param[index] = value;
 }
 
-float Fft::getParameter(long index) {
+float PLUGIN::getParameter(long index) {
   switch (index) {
+    /* special cases here */
   default:
-  case 0: return bitres;
-  case 1: return samplehold;
-  case 2: return destruct;
-  case 3: return perturb;
-  case 4: return quant;
-  case 5: return rotate;
-  case 10: return binquant;
-  case 7: return spike;
-  case 8: return compress;
-  case 9: return makeupgain;
-  case 6: return spikehold;
-  case 12: return echomix;
-  case 13: return echotime;
-  case 14: return echomodw;
-  case 15: return (echomodf / (2.0 * pi));
-  case 16: return echofb;
-  case 17: return echolow;
-  case 18: return echohi;
+    /* otherwise pull it out of array. */
+    if (index >= 0 && index < NUM_PARAMS) return *paramptrs[index].ptr;
+    else return 0.0; /* ? */
   }
 }
 
-void Fft::getParameterName(long index, char *label) {
+void PLUGIN::getParameterName(long index, char *label) {
   switch(index) {
-  case 0:
-    strcpy(label, "OVERLAP");
-    break;
-  case 1:
-    strcpy(label, "inter-OVRLF");
-    break;
-  case 2:
-    strcpy(label, "very special");
-    break;
-  case 3:
-    strcpy(label, "soft noise");
-    break;
-  case 4:
-    strcpy(label, "operation q");
-    break;
-  case 5:
-    strcpy(label, "rotate");
-    break;
-  case 10:
-    strcpy(label, "BQ max");
-    break;
-  case 7:
-    strcpy(label, "spike");
-    break;
-  case 8:
-    strcpy(label, "compress");
-    break;
-  case 9:
-    strcpy(label, "M.U.G.");
-    break;
-  case 6:
-    strcpy(label, "spike-X");
-    break;
-  case 12:
-    strcpy(label, "EO mix");
-    break;
-  case 13:
-    strcpy(label, "EO space");
-    break;
-  case 14:
-    strcpy(label, "EO opn w");
-    break;
-  case 15:
-    strcpy(label, "EO opn f");
-    break;
-  case 16:
-    strcpy(label, "EO rept");
-    break;
-  case 17:
-    strcpy(label, "EO <<");
-    break;
-  case 18:
-    strcpy(label, "EO >>");
-    break;
+    /* special cases here */
   default:
-    strcpy(label, "?");
+    if (index >= 0 && index < NUM_PARAMS && paramptrs[index].name) 
+      strcpy(label, paramptrs[index].name);
+    else strcpy(label, "?");
     break;
   }
 }
 
-void Fft::getParameterDisplay(long index, char *text) {
+void PLUGIN::getParameterDisplay(long index, char *text) {
   switch(index) {
-  case 4:
-    float2string(sin(quant), text);
+  case P_BUFSIZE:
+    sprintf(text, "%d", MKBUFSIZE(bufsizep));
     break;
-  case 5:
-    { int uu = (int)(rotate * 0x7FFFFFFF);
-    for(int i = 0;
-	i < 6;
-	i ++) {
-      text[i] = "X1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM!@#$%^&*()"[uu&63];
-      uu ^= 0x23980123;
-      uu *= 0x3311;
-      uu >>= 4;
-      text[i+1] = 0;
+  case P_SHAPE:
+    if (shape < 0.20f) {
+      strcpy(text, "linear");
+    } else if (shape < 0.40f) {
+      strcpy(text, "arrow");
+    } else if (shape < 0.60f) {
+      strcpy(text, "wedge");
+    } else if (shape < 0.80f) {
+      strcpy(text, "best");
+    } else {
+      strcpy(text, "cos^2");
     }
-    }
     break;
-  case 10:
-    float2string(binquant * binquant * binquant, text);
-    break;
-  case 7:
-    if (spike >= 0.999999) strcpy(text, "...");
-    else float2string(spike, text);
-    break;
-  case 9:
-    float2string(makeupgain * makeupgain, text);
-    break;
-  case 6:
-    float2string(spikehold * 20.0, text);
-    break;
-  case 12:
-    float2string(echomix * sqrt(echotime), text);
-    break;
+    /* special cases here */
   default:
     float2string(getParameter(index), text);
     break;
   }
 }
 
-void Fft::getParameterLabel(long index, char *label) {
-  strcpy(label, "units");
+void PLUGIN::getParameterLabel(long index, char *label) {
+  switch(index) {
+    /* special cases here */
+  default:
+    if (index >= 0 && index < NUM_PARAMS && paramptrs[index].units) 
+      strcpy(label, paramptrs[index].units);
+    else strcpy(label, "?");
+    break;
+  }
 }
 
 inline float quantize(float q, float old) {
@@ -318,90 +213,9 @@ inline float quantize(float q, float old) {
   return (float)(X / (float)scale);
 }
 
-void Fft::suspend () {
-  memset (echoc, 0, MAXECHO * sizeof (float));
-  memset (echor, 0, MAXECHO * sizeof (float));
-  echoctr = 0;
-}
-
-
-/* tqsort partitions the array (of n elements) so that the first STOP
-   elements are each less than the remaining elements. */
-
-void tqsort(amplentry * low, int n, int stop) {
-
-  /* temporaries for swaps */
-  float t;
-  int i;
-  if (n <= 1) return;
-  if (stop <= 0) return;
-  if (stop >= n) return; 
-  
-  if (n == 2) {
-    if (low->a >= low[1].a) return;
-    t = low->a;
-    i = low->i;
-    low->a = low[1].a;
-    low->i = low[1].i;
-    low[1].a = t;
-    low[1].i = i;
-#if 0
-  } else if (n == 3) {
-    /* add this ... */
-#endif
-  } else {
-    int pivot = rand() % n;
-    t = low[pivot].a;
-    i = low[pivot].i;
-    low[pivot].a = low->a;
-    low[pivot].i = low->i;
-    low->a = t;
-    low->i = i;
-
-    int l = 1, r = n - 1;
-
-    while (l < r) {
-      /* move fingers. 
-	 it's possible to run off the array if
-	 the pivot is equal to one of the last
-	 or first elements (so check that). */
-
-      while ((l < n) && low[l].a >= low->a) l++;
-      while (r && low[r].a <= low->a) r--;
-      if (l >= r) break;
-      /* swap */
-      t = low[l].a;
-      i = low[l].i;
-      low[l].a = low[r].a;
-      low[l].i = low[r].i;
-      low[r].a = t;
-      low[r].i = i;
-    }
-
-    /* put the pivot back. */
-    
-    t = low[l-1].a;
-    i = low[l-1].i;
-    low[l-1].a = low->a;
-    low[l-1].i = low->i;
-    low->a = t;
-    low->i = i;
-    
-    /* recurse. */
-
-    if (stop <= l) {
-      tqsort(low, l - 1, stop);
-    } else {
-      tqsort(low+l, n-l, stop - l);
-    }
-    /* done. */
-  }
-
-}
-
 /* this function modifies 'samples' number of floats in
    fftr and ffti */
-void Fft::fftops(long samples) {
+void PLUGIN::fftops(long samples) {
   for(int i = 0; i < samples; i ++) {
 
     /* operation bq */
@@ -538,48 +352,15 @@ void Fft::fftops(long samples) {
       
 }
 
+/* XXX I'm probably copying more times than I need to!
+   PS, use memmove!
+*/
+void PLUGIN::processw(float * in, float * out, long samples) {
 
-/* wavelab: sampleframes = 2048 */
-
-void Fft::processX(float **inputs, float **outputs, long samples,
-		   int overwrite) {
-  float * in  = *inputs;
-  float * out = *outputs;
+  static int ss;
+  ss = !ss;
 
   int i = 0;
-  /* maybe here we can pad up to the next biggest power of two? */
-  if (samples & (samples-1)) {
-    /* not a power of two */
-    /*    MessageBox(0, "block size not a power of two", 
-	  "can't proceed", MB_OK);*/
-
-    /* FIXME!!!! do something...  */
-
-    return;
-  }
-
-  if (!ampl || samples > amplsamples) { 
-    amplhold = 1; /* recalc this time */
-    free(ampl);
-    ampl = (amplentry*)malloc(sizeof (amplentry) * samples);
-    amplsamples = samples;
-  }
-
-  if (samples > buffersamples) {
-
-    free(fftr);
-    free(ffti);
-    free(tmp);
-    free(oot);
-
-    buffersamples = samples;
-
-    fftr = (float*)malloc(buffersamples * sizeof(float));
-    ffti = (float*)malloc(buffersamples * sizeof(float));
-    tmp =  (float*)malloc(buffersamples * sizeof(float));
-    oot =  (float*)malloc(buffersamples * sizeof(float));
-
-  }
 
   for (int c = 0; c < samples; c++) tmp[c] = in[c];
 
@@ -590,66 +371,282 @@ void Fft::processX(float **inputs, float **outputs, long samples,
 
   fft_float(samples, 1, fftr, ffti, oot, tmp);
 
-  float overscale;
-  if (samples >= OVERLAP) overscale = 1.0;
-  else overscale =  (OVERLAP-samples) / (float)samples;
+  for (int cc = 0; cc < samples; cc++) out[cc] = oot[cc];
 
-  /* process samples, fading at the beginning and stretching
-     for an extra OVERLAP samples */
+}
+
+
+/* tqsort partitions the array (of n elements) so that the first STOP
+   elements are each less than the remaining elements. */
+
+void PLUGIN::tqsort(amplentry * low, int n, int stop) {
+
+  /* temporaries for swaps */
+  float t;
+  int i;
+  if (n <= 1) return;
+  if (stop <= 0) return;
+  if (stop >= n) return; 
   
-  if (overwrite) {
-    for(i = 0; i < samples; i++) {
-      if (i < OVERLAP) {
-	out[i] = oot[(int)(i * overscale)] * (i / (float)OVERLAP) +
-	  overbuff[i] * ((OVERLAP-i) / (float)OVERLAP);
-      } else { 
-	out[i] = oot[(int)(i * overscale)];
-      }
-    }
+  if (n == 2) {
+    if (low->a >= low[1].a) return;
+    t = low->a;
+    i = low->i;
+    low->a = low[1].a;
+    low->i = low[1].i;
+    low[1].a = t;
+    low[1].i = i;
+#if 0
+  } else if (n == 3) {
+    /* add this ... */
+#endif
   } else {
-    for(i = 0; i < samples; i++) {
-      if (i < OVERLAP) {
-	out[i] += oot[(int)(i * overscale)] * (i / (float)OVERLAP) +
-	  overbuff[i] * ((OVERLAP-i) / (float)OVERLAP);
-      } else { 
-	out[i] += oot[(int)(i * overscale)];
+    int pivot = rand() % n;
+    t = low[pivot].a;
+    i = low[pivot].i;
+    low[pivot].a = low->a;
+    low[pivot].i = low->i;
+    low->a = t;
+    low->i = i;
+
+    int l = 1, r = n - 1;
+
+    while (l < r) {
+      /* move fingers. 
+	 it's possible to run off the array if
+	 the pivot is equal to one of the last
+	 or first elements (so check that). */
+
+      while ((l < n) && low[l].a >= low->a) l++;
+      while (r && low[r].a <= low->a) r--;
+      if (l >= r) break;
+      /* swap */
+      t = low[l].a;
+      i = low[l].i;
+      low[l].a = low[r].a;
+      low[l].i = low[r].i;
+      low[r].a = t;
+      low[r].i = i;
+    }
+
+    /* put the pivot back. */
+    
+    t = low[l-1].a;
+    i = low[l-1].i;
+    low[l-1].a = low->a;
+    low[l-1].i = low->i;
+    low->a = t;
+    low->i = i;
+    
+    /* recurse. */
+
+    if (stop <= l) {
+      tqsort(low, l - 1, stop);
+    } else {
+      tqsort(low+l, n-l, stop - l);
+    }
+    /* done. */
+  }
+
+}
+
+/* this fake processX function reads samples one at a time
+   from the true input. It simultaneously copies samples from
+   the beginning of the output buffer to the true output.
+   We maintain that out0 always has at least 'third' samples
+   in it; this is enough to pick up for the delay of input
+   processing and to make sure we always have enough samples
+   to fill the true output buffer.
+
+   If the input frame is full:
+    - calls wprocess on this full input frame
+    - applies the windowing envelope to the tail of out0 (output frame)
+    - mixes in prevmix with the first half of the output frame
+    - increases outsize so that the first half of the output frame is
+      now available output
+    - copies the second half of the output to be prevmix for next frame.
+    - copies the second half of the input buffer to the first,
+      resets the size (thus we process each third-size chunk twice)
+
+  If we have read more than 'third' samples out of the out0 buffer:
+   - Slide contents to beginning of buffer
+   - Reset outstart
+
+*/
+
+/* to improve: 
+   - use memcpy and arithmetic instead of
+     sample-by-sample copy 
+   - can we use tail of out0 as prevmix, instead of copying?
+   - can we use circular buffers instead of memmoving a lot
+     (probably not)
+*/
+
+void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples, 
+		      int replacing) {
+  float * tin  = *trueinputs;
+  float * tout = *trueoutputs;
+
+  for (int ii = 0; ii < samples; ii++) {
+
+    /* copy sample in */
+    in0[insize] = tin[ii];
+    insize ++;
+ 
+    if (insize == framesize) {
+      /* frame is full! */
+
+      /* in0 -> process -> out0(first free space) */
+      processw(in0, out0+outstart+outsize, framesize);
+
+      float oneDivThird = 1.0f / (float)third;
+      /* apply envelope */
+
+      if (shape < 0.20f) {
+	for(int z = 0; z < third; z++) {
+	  float p = sqrtf((float)z * oneDivThird);
+	  out0[z+outstart+outsize] *= p;
+	  out0[z+outstart+outsize+third] *= (1.0f - p);
+	}
+      } else if (shape < 0.40f) {
+	for(int z = 0; z < third; z++) {
+	  float p = (float)z * oneDivThird;
+	  p *= p;
+	  out0[z+outstart+outsize] *= p;
+	  out0[z+outstart+outsize+third] *= (1.0f - p);
+	}
+      } else if (shape < 0.60f) {
+	for(int z = 0; z < third; z++) {
+	  out0[z+outstart+outsize] *= ((float)z * oneDivThird);
+	  out0[z+outstart+outsize+third] *= (1.0f - ((float)z * oneDivThird));
+	}
+      } else if (shape < 0.80f) {
+	for(int z = 0; z < third; z ++) {
+	  float p = 0.5f * (-cos(float(pi * ((float)z * oneDivThird))) + 1.0f);
+	  out0[z+outstart+outsize] *= p;
+	  out0[z+outstart+outsize+third] *= (1.0f - p);
+	}
+      } else {
+	for(int z = 0; z < third; z ++) {
+	  float p = 0.5f * (-cos(float(pi * ((float)z * oneDivThird))) + 1.0f);
+	  p = p * p;
+	  out0[z+outstart+outsize] *= p;
+	  out0[z+outstart+outsize+third] *= (1.0f - p);
+	}
       }
+
+      /* mix in prevmix */
+      for(int u = 0; u < third; u ++)
+	out0[u+outstart+outsize] += prevmix[u];
+
+      /* prevmix becomes out1 */
+      memcpy(prevmix, out0 + outstart + outsize + third, third * sizeof (float));
+
+      /* copy 2nd third of input over in0 (need to re-use it for next frame), 
+	 now insize = third */
+      memcpy(in0, in0 + third, third * sizeof (float));
+
+      insize = third;
+      
+      outsize += third;
+    }
+
+    /* send sample out */
+    if (replacing) tout[ii] = out0[outstart];
+    else tout[ii] += out0[outstart];
+
+    outstart ++;
+    outsize --;
+
+    /* make sure there is always enough room for a frame in out buffer */
+    if (outstart == third) {
+      memmove(out0, out0 + outstart, outsize * sizeof (float));
+      outstart = 0;
     }
   }
+}
 
-  int u = 0;
-  for(i = (i * overscale) + 1; i < samples; i ++) {
-    overbuff[u++] = oot[i];
+/* these should always call the common processX function */
+
+void PLUGIN::processReplacing(float **inputs, float **outputs, long samples) {
+  processX(inputs,outputs,samples, 1);
+}
+
+void PLUGIN::process(float **inputs, float **outputs, long samples) {
+  processX(inputs,outputs,samples, 0);
+}
+
+
+/* program stuff. Should never need to mess with this, hopefully.. */
+
+void PLUGINPROGRAM::init(PLUGIN * p) {
+  /* copy defaults from paramptrs */
+  for (int i=0; i < NUM_PARAMS; i++)
+    param[i] = p->paramptrs[i].def;
+}
+
+void PLUGIN::setProgram(long programNum) {
+  if ( (programNum < NUM_PROGRAMS) && (programNum >= 0) ) {
+      AudioEffectX::setProgram(programNum);
+
+      curProgram = programNum;
+      for (int i=0; i < NUM_PARAMS; i++)
+        setParameter(i, programs[programNum].param[i]);
+    }
+  // tell the host to update the editor display with the new settings
+  AudioEffectX::updateDisplay();
+}
+
+void PLUGIN::setProgramName(char *name) {
+  strcpy(programs[curProgram].name, name);
+}
+
+void PLUGIN::getProgramName(char *name) {
+  if ( !strcmp(programs[curProgram].name, "default") )
+    sprintf(name, "default %ld", curProgram+1);
+  else
+    strcpy(name, programs[curProgram].name);
+}
+
+bool PLUGIN::getProgramNameIndexed(long category, long index, char * text) {
+  if ( (index < NUM_PROGRAMS) && (index >= 0) ) {
+    strcpy(text, programs[index].name);
+    return true;
   }
-
+  return false;
 }
 
-void Fft::process(float **inputs, float **outputs, long samples) {
-  processX(inputs,outputs,samples,0);
+bool PLUGIN::copyProgram(long destination) {
+  if ( (destination < NUM_PROGRAMS) && (destination >= 0) ) {
+    programs[destination] = programs[curProgram];
+    return true;
+  }
+  return false;
 }
 
-void Fft::processReplacing(float **inputs, float **outputs, long samples) {
-  processX(inputs,outputs,samples,1);
-}
 
+/* this is only compiled if not building the GUI version */
+#ifndef GUI
 
-/* ------------------- boring! --------------------- */
+/* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
+/* ---------- boring stuff below this line ----------- */
+/* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
 
 static AudioEffect *effect = 0;
 bool oome = false;
 
 #if MAC
-  #pragma export on
+   #pragma export on
 #endif
 
 // prototype of the export function main
 #if BEOS
-#define main main_plugin
-extern "C" __declspec(dllexport) AEffect 
-    *main_plugin (audioMasterCallback audioMaster);
+   #define main main_plugin
+   extern "C" __declspec(dllexport) AEffect 
+      *main_plugin (audioMasterCallback audioMaster);
 
 #else
-AEffect *main (audioMasterCallback audioMaster);
+   AEffect *main (audioMasterCallback audioMaster);
 #endif
 
 AEffect *main (audioMasterCallback audioMaster) {
@@ -657,7 +654,7 @@ AEffect *main (audioMasterCallback audioMaster) {
   if (!audioMaster (0, audioMasterVersion, 0, 0, 0, 0))
     return 0;  // old version
 
-  effect = new Fft (audioMaster);
+  effect = new PLUGIN (audioMaster);
   if (!effect)
     return 0;
   if (oome) {
@@ -668,15 +665,14 @@ AEffect *main (audioMasterCallback audioMaster) {
 }
 
 #if MAC
-#pragma export off
+  #pragma export off
 #endif
 
-
 #if WIN32
-#include <windows.h>
-void* hInstance;
-BOOL WINAPI DllMain (HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
-  hInstance = hInst;
-  return 1;
-}
+  void* hInstance;
+  BOOL WINAPI DllMain (HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
+    hInstance = hInst;
+    return 1;
+  }
+#endif
 #endif
