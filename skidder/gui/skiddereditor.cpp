@@ -1,9 +1,8 @@
-#ifndef __skiddereditor
+#ifndef __SKIDDEREDITOR_H
 #include "skiddereditor.hpp"
 #endif
 
 #include <stdio.h>
-#include <math.h>
 
 
 //-----------------------------------------------------------------------------
@@ -59,12 +58,6 @@ enum {
 	kMidiLearnButtonY = 378,
 	kMidiResetButtonX = kMidiLearnButtonX,
 	kMidiResetButtonY = kMidiLearnButtonY + 18,
-
-#ifdef HUNGRY
-	kConnectButtonX = kGoButtonX + 63,
-	kConnectButtonY = kGoButtonY,
-#endif
-
 #endif
 
 	kRangeDisplayX = 120,
@@ -207,24 +200,6 @@ void goDisplayConvert(float value, char *string, void *goErr)
 	}
 }
 
-#ifdef MSKIDDER
-#ifdef HUNGRY
-void connectDisplayConvert(float value, char *string, void *foodErr);
-void connectDisplayConvert(float value, char *string, void *foodErr)
-{
-	if (value < 0.12f)
-		strcpy(string, " ");
-	else
-	{
-		if ( *(OSErr*)foodErr == noErr )
-			strcpy(string, " ");
-		else
-			strcpy(string, "!ERR0R!");
-	}
-}
-#endif
-#endif
-
 
 
 //-----------------------------------------------------------------------------
@@ -289,11 +264,6 @@ SkidderEditor::SkidderEditor(AudioEffect *effect)
 	gVelocityButton = 0;
 	midiModeButton = 0;
 	velocityButton = 0;
-#ifdef HUNGRY
-	gConnectButton = 0;
-	connectButton = 0;
-	connectDisplay = 0;
-#endif
 #endif
 
 	// load the background bitmap
@@ -308,7 +278,7 @@ SkidderEditor::SkidderEditor(AudioEffect *effect)
 
 	tempoString = new char[256];
 	tempoRateString = new char[16];
-	chunk = ((Skidder*)effect)->chunk;	// this just simplifies pointing
+	chunk = ((DfxPlugin*)effect)->getsettings_ptr();	// this just simplifies pointing
 
 	faders = 0;
 	faders = (CHorizontalSlider**)malloc(sizeof(CHorizontalSlider*)*NUM_PARAMETERS);
@@ -386,16 +356,12 @@ long SkidderEditor::open(void *ptr)
 		gMidiModeButton = new CBitmap (kMidiModeButtonID);
 	if (!gVelocityButton)
 		gVelocityButton = new CBitmap (kVelocityButtonID);
-#ifdef HUNGRY
-	if (!gConnectButton)
-		gConnectButton = new CBitmap (kConnectButtonID);
-#endif
 #endif
 
 
 	chunk->resetLearning();
 	goError = kNoGoDisplay;
-	long rateTag = onOffTest(effect->getParameter(kTempoSync)) ? kTempoRate : kRate;
+	long rateTag = onOffTest(effect->getParameter(kTempoSync)) ? kRate_sync : kRate_abs;
 
 
 	//--initialize the background frame--------------------------------------
@@ -508,8 +474,8 @@ long SkidderEditor::open(void *ptr)
 
 #ifdef MSKIDDER
 	// MIDI note control mode button
-	size (kMidiModeButtonX, kMidiModeButtonY, kMidiModeButtonX + gMidiModeButton->getWidth(), kMidiModeButtonY + (gMidiModeButton->getHeight())/NUM_MIDI_MODES);
-	midiModeButton = new CMultiToggle (size, this, kMidiMode, NUM_MIDI_MODES, gMidiModeButton->getHeight()/NUM_MIDI_MODES, gMidiModeButton, point);
+	size (kMidiModeButtonX, kMidiModeButtonY, kMidiModeButtonX + gMidiModeButton->getWidth(), kMidiModeButtonY + (gMidiModeButton->getHeight())/kNumMidiModes);
+	midiModeButton = new CMultiToggle (size, this, kMidiMode, kNumMidiModes, gMidiModeButton->getHeight()/kNumMidiModes, gMidiModeButton, point);
 	midiModeButton->setValue(effect->getParameter(kMidiMode));
 	frame->addView(midiModeButton);
 
@@ -530,25 +496,13 @@ long SkidderEditor::open(void *ptr)
 	midiResetButton = new CKickButton (size, this, kMidiResetButtonID, (gMidiResetButton->getHeight())/2, gMidiResetButton, point);
 	midiResetButton->setValue(0.0f);
 	frame->addView(midiResetButton);
-
-#ifdef HUNGRY
-	if ( ((Skidder*)effect)->foodEater->hostIsLogic )
-	{
-		// connect to food
-		size (kConnectButtonX, kConnectButtonY, kConnectButtonX + gConnectButton->getWidth(), kConnectButtonY + (gConnectButton->getHeight())/2);
-		connectButton = new COnOffButton (size, this, kConnect, gConnectButton);
-		connectButton->setValue(effect->getParameter(kConnect));
-		frame->addView(connectButton);
-	}
-#endif
-
 #endif
 
 
 	//--initialize the displays---------------------------------------------
 
 	// first store the proper values for all of the globals so that displays are correct
-	strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay(effect->getParameter(kTempoRate)) );
+	strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay_gen(effect->getParameter(kRate_sync)) );
 	theTempoSync = ((Skidder*)effect)->fTempoSync;
 	theCycleRate = calculateTheCycleRate();
 
@@ -748,25 +702,6 @@ long SkidderEditor::open(void *ptr)
 	goDisplay->setStringConvert(goDisplayConvert, &goError);
 	frame->addView(goDisplay);
 
-#ifdef MSKIDDER
-#ifdef HUNGRY
-	if ( ((Skidder*)effect)->foodEater->hostIsLogic )
-	{
-		// connect to food error display
-		size (kConnectButtonX, kConnectButtonY + 17, kConnectButtonX + gConnectButton->getWidth(), kConnectButtonY + kDisplayHeight + 17);
-		connectDisplay = new CParamDisplay (size, gBackground);
-		displayOffset (kConnectButtonX, kConnectButtonY + 17);
-		connectDisplay->setBackOffset(displayOffset);
-		connectDisplay->setHoriAlign(kCenterText);
-		connectDisplay->setFont(kNormalFontSmall);
-		connectDisplay->setFontColor(kWhiteCColor);
-		connectDisplay->setValue(effect->getParameter(kConnect));
-		connectDisplay->setStringConvert( connectDisplayConvert, &(((Skidder*)effect)->foodEater->foodError) );
-		frame->addView(connectDisplay);
-	}
-#endif
-#endif
-
 
 	for (long i=0; i < NUM_PARAMETERS; i++)
 		faders[i] = NULL;
@@ -850,11 +785,6 @@ void SkidderEditor::close()
 	if (gVelocityButton)
 		gVelocityButton->forget();
 	gVelocityButton = 0;
-#ifdef HUNGRY
-	if (gConnectButton)
-		gConnectButton->forget();
-	gConnectButton = 0;
-#endif
 #endif
 }
 
@@ -865,15 +795,15 @@ void SkidderEditor::setParameter(long index, float value)
 	if (!frame)
 		return;
 
-	long rateTag = onOffTest(effect->getParameter(kTempoSync)) ? kTempoRate : kRate;
+	long rateTag = onOffTest(effect->getParameter(kTempoSync)) ? kRate_sync : kRate_abs;
 
 	switch (index)
 	{
-		case kRate:
-		case kTempoRate:
+		case kRate_abs:
+		case kRate_sync:
 			// store these into the static global variables so that the string convert function can see them
 			theCycleRate = calculateTheCycleRate();
-			strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay(effect->getParameter(kTempoRate)) );
+			strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay_gen(effect->getParameter(kRate_sync)) );
 			theTempoSync = ((Skidder*)effect)->fTempoSync;
 			if (rateTag == index)
 			{
@@ -888,7 +818,7 @@ void SkidderEditor::setParameter(long index, float value)
 			break;
 
 		case kTempoSync:
-			strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay(effect->getParameter(kTempoRate)) );
+			strcpy( tempoRateString, ((Skidder*)effect)->tempoRateTable->getDisplay_gen(effect->getParameter(kRate_sync)) );
 			theTempoSync = ((Skidder*)effect)->fTempoSync;
 			theCycleRate = calculateTheCycleRate();
 			if (tempoSyncButton)
@@ -1038,14 +968,6 @@ void SkidderEditor::setParameter(long index, float value)
 			if (velocityButton)
 				velocityButton->setValue(value);
 			break;
-	#ifdef HUNGRY
-		case kConnect:
-			if (connectButton)
-				connectButton->setValue(value);
-			if (connectDisplay)
-				connectDisplay->setValue(value);
-			break;
-	#endif
 	#endif
 
 		default:
@@ -1185,8 +1107,8 @@ void SkidderEditor::valueChanged(CDrawContext* context, CControl* control)
 			}
 			break;
 
-		case kRate:
-		case kTempoRate:
+		case kRate_abs:
+		case kRate_sync:
 			effect->setParameterAutomated(tag, control->getValue());
 			chunk->setLearner(tag);
 			if (chunk->isLearning())
@@ -1206,9 +1128,6 @@ void SkidderEditor::valueChanged(CDrawContext* context, CControl* control)
 		case kTempoSync:
 	#ifdef MSKIDDER
 		case kVelocity:
-	#ifdef HUNGRY
-		case kConnect:
-	#endif
 	#endif
 			effect->setParameterAutomated(tag, control->getValue());
 			// these are on/off buttons, so use toggle MIDI control
@@ -1219,7 +1138,7 @@ void SkidderEditor::valueChanged(CDrawContext* context, CControl* control)
 		case kMidiMode:
 			effect->setParameterAutomated(tag, control->getValue());
 			// this is a multi-state switch, so use multi-state toggle MIDI control
-			chunk->setLearner(tag, kEventBehaviourToggle, NUM_MIDI_MODES);
+			chunk->setLearner(tag, kEventBehaviourToggle, kNumMidiModes);
 			break;
 	#endif
 
@@ -1374,10 +1293,10 @@ float SkidderEditor::calculateTheCycleRate()
 		// otherwise use the user-inputted tempo
 		else
 			tempoBPS = tempoScaled(effect->getParameter(kTempo)) / 60.0f;
-		return ( tempoBPS * (((Skidder*)effect)->tempoRateTable->getScalar(effect->getParameter(kTempoRate))) );
+		return ( tempoBPS * (((Skidder*)effect)->tempoRateTable->getScalar(effect->getParameter(kRate_sync))) );
 	}
 
 	// tempo sync is not being used so just return the simple "free" rate value
 	else
-		return rateScaled(effect->getParameter(kRate));
+		return rateScaled(effect->getParameter(kRate_abs));
 }
