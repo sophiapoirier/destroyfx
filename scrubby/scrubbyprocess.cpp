@@ -475,6 +475,10 @@ void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFra
 //-----------------------------------------------------------------------------------------
 void Scrubby::processMidiNotes()
 {
+	bool oldnotes[NUM_PITCH_STEPS];
+	for (int i=0; i < NUM_PITCH_STEPS; i++)
+		oldnotes[i] = getparameter_b(i+kPitchStep0);
+
 	for (long i=0; i < midistuff->numBlockEvents; i++)
 	{
 		// wrap the note value around to our 1-octave range
@@ -491,7 +495,6 @@ void Scrubby::processMidiNotes()
 				if (activeNotesTable[currentNote] == 0)
 				{
 					setparameter_b(currentNote+kPitchStep0, true);
-					keyboardWasPlayedByMidi = true;
 				}
 				// increment the active notes table for this note
 				activeNotesTable[currentNote] += 1;
@@ -503,7 +506,6 @@ void Scrubby::processMidiNotes()
 				if (activeNotesTable[currentNote] == 1)
 				{
 					setparameter_b(currentNote+kPitchStep0, false);
-					keyboardWasPlayedByMidi = true;
 				}
 				// decrement the active notes table for this note, but don't go below 0
 				if (activeNotesTable[currentNote] > 0)
@@ -520,7 +522,6 @@ void Scrubby::processMidiNotes()
 					if (activeNotesTable[notecount] > 0)
 					{
 						setparameter_b(notecount+kPitchStep0, false);
-						keyboardWasPlayedByMidi = true;
 					}
 					// reset this note in the table
 					activeNotesTable[notecount] = 0;
@@ -530,5 +531,12 @@ void Scrubby::processMidiNotes()
 			default:
 				break;
 		}
+	}
+
+	// go through and inform any listeners of any parameter changes that might have just happened
+	for (int i=0; i < NUM_PITCH_STEPS; i++)
+	{
+		if ( oldnotes[i] != getparameter_b(i+kPitchStep0) )
+			postupdate_parameter(i+kPitchStep0);
 	}
 }

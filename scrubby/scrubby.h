@@ -156,7 +156,6 @@ private:
 
 	// MIDI note control stuff
 	long *activeNotesTable;	// how many voices of each note in the octave are being played
-	bool keyboardWasPlayedByMidi;	// tells the GUI to update the keyboard display
 	bool notesWereAlreadyActive;	// says whether any notes were active in the previous block
 
 long sinecount;
