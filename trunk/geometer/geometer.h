@@ -25,8 +25,10 @@
 
 /* the names of the parameters */
 enum { P_BUFSIZE, P_SHAPE, 
-       P_POINTSTYLE, P_POINTFREQ, P_INTERPSTYLE,
-       P_POINTOP, P_ZEROTHRESH, 
+       P_POINTSTYLE, P_POINTPARAM, 
+       P_INTERPSTYLE,
+       P_POINTOP1, P_POINTOP2, P_POINTOP3,
+       P_OPPAR1, P_OPPAR2, P_OPPAR3,
        NUM_PARAMS };
 
 
@@ -151,22 +153,29 @@ protected:
 
   /* ---------- geometer stuff ----------- */
 
+  int pointops(float pop, int npts, float op_param);
+
   float pointstyle;
-  float pointfreq;
+  float pointparam;
+
   float interpstyle;
 
-  float pointop;
+  float pointop1;
+  float pointop2;
+  float pointop3;
+
+  float oppar1;
+  float oppar2;
+  float oppar3;
+
   int lastx;
   float lasty;
 
-  int numpts;
   int * pointx;
   float * pointy;
 
   int * tempx;
   float * tempy;
-
-  float zero_thresh;
 
 };
 
