@@ -648,8 +648,10 @@ return false;
 
 	if (inEventKind == kEventMouseDragged)
 	{
-		UInt32 mouseButtons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-		GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
+		UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
+		OSStatus paramstatus = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
+		if (paramstatus != noErr)
+			mouseButtons = GetCurrentEventButtonState();
 //		EventMouseButton button;	// kEventMouseButtonPrimary, kEventMouseButtonSecondary, or kEventMouseButtonTertiary
 //		GetEventParameter(inEvent, kEventParamMouseButton, typeMouseButton, NULL, sizeof(EventMouseButton), NULL, &button);
 
@@ -871,9 +873,10 @@ printf("kEventControlHit\n");
 				{
 					setCurrentControl_mouseover(ourDGControl);
 
-//					UInt32 buttons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-					UInt32 mouseButtons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
+					UInt32 mouseButtons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
+//					UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
+					// XXX kEventParamMouseChord does not exist for control class events, only mouse class
+//					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
 
 					HIPoint mouseLocation;
 					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);

@@ -88,7 +88,6 @@ protected:
 	void SetBackgroundColor(DGColor inBackgroundColor)
 		{	backgroundColor = inBackgroundColor;	}
 
-private:
 	class DGControlsList
 	{
 	public:
@@ -124,12 +123,17 @@ private:
 	DGImage *	backgroundImage;
 	DGColor		backgroundColor;
 
+#if MAC
+	DGControl * getDGControlByCarbonControlRef(ControlRef inControl);
+#endif
+
+	DfxPlugin * dfxplugin;	// XXX bad thing for AU, maybe just for easy debugging sometimes
+
+private:
 	DGControl *	currentControl_clicked;
 	DGControl *	currentControl_mouseover;
 
 #if MAC
-	DGControl * getDGControlByCarbonControlRef(ControlRef inControl);
-
 	EventHandlerUPP		controlHandlerUPP;
 	ControlDefSpec 		dgControlSpec;
 	EventHandlerUPP		windowEventHandlerUPP;
@@ -141,8 +145,6 @@ private:
 	FSSpec		bundleResourceDirFSSpec;	// the FSSpec for the Resources directory in the plugin bundle
 	bool		fontsWereActivated;	// memory of whether or not bundled fonts were loaded successfully
 #endif
-
-	DfxPlugin * dfxplugin;	// XXX bad thing for AU, maybe just for easy debugging sometimes
 };
 
 
