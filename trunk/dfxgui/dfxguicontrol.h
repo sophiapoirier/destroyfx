@@ -63,6 +63,8 @@ public:
 
 	bool isParameterAttached()
 		{	return parameterAttached;	}
+	long getParameterID();
+	void setParameterID(long inParameterID);
 #ifdef TARGET_API_AUDIOUNIT
 	AUVParameter & getAUVP()
 		{	return auvp;	}
@@ -70,8 +72,6 @@ public:
 	AUCarbonViewControl * getAUVcontrol()
 		{	return auv_control;	}
 #endif
-	long getParameterID();
-	void setParameterID(long inParameterID);
 	float getRange()
 		{	return Range;	}
 	DGRect * getBounds()
