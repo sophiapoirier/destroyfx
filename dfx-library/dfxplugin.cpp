@@ -1672,7 +1672,7 @@ long launch_url(const char *urlstring)
 	if (urlstring == NULL)
 		return 3;
 
-#if MAC
+#if MAC && defined(__MACH__)
 	CFURLRef urlcfurl = CFURLCreateWithBytes(kCFAllocatorDefault, (const UInt8*)urlstring, strlen(urlstring), kCFStringEncodingASCII, NULL);
 	if (urlcfurl != NULL)
 	{

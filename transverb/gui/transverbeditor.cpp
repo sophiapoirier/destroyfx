@@ -1039,10 +1039,10 @@ void TransverbEditor::valueChanged(CDrawContext* context, CControl* control)
 			break;
 
 		case kMidiLearnButtonID:
-			chunk->setParameterMidiLearn(control->getValue());
+			chunk->setParameterMidiLearn(control->getValue() > 0.5f);
 			break;
 		case kMidiResetButtonID:
-			chunk->setParameterMidiReset(control->getValue());
+			chunk->setParameterMidiReset(control->getValue() > 0.5f);
 			break;
 
 		case kSpeed1FineDown:
