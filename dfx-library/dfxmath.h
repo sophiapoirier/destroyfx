@@ -18,6 +18,7 @@ written by Tom Murphy 7 and Marc Poirier, 2001 - 2003
 	#define powf	(float)pow
 	#define sinf	(float)sin
 	#define cosf	(float)cos
+	#define log10f	(float)log10
 #endif
 
 
@@ -25,7 +26,7 @@ written by Tom Murphy 7 and Marc Poirier, 2001 - 2003
 //-----------------------------------------------------------------------------
 // constants & macros
 
-float linear2dB(float linearValue)
+inline float linear2dB(float linearValue)
 {
 	return 20.0f * log10f(linearValue);
 }
