@@ -198,27 +198,29 @@ long RMSbuddy::canDo(char* text)
 
 // prototype of the export function main
 #if BEOS
-#define main main_plugin
-extern "C" __declspec(dllexport) AEffect *main_plugin(audioMasterCallback audioMaster);
-
+	#define main main_plugin
+	extern "C" __declspec(dllexport) AEffect *main_plugin(audioMasterCallback audioMaster);
+#elif MACX
+	#define main main_macho
+	extern "C" AEffect *main_macho(audioMasterCallback audioMaster);
 #else
-AEffect *main(audioMasterCallback audioMaster);
+	AEffect *main(audioMasterCallback audioMaster);
 #endif
 
 AEffect *main(audioMasterCallback audioMaster)
 {
 	// get vst version
 	if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
-		return 0;  // old version
+		return NULL;  // old version
 
-	AudioEffect* effect = new RMSbuddy(audioMaster);
-	if (!effect)
-		return 0;
+	AudioEffect *effect = new RMSbuddy(audioMaster);
+	if (effect == NULL)
+		return NULL;
 	return effect->getAeffect();
 }
 
 #if WIN32
-void* hInstance;
+void *hInstance;
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved)
 {
 	hInstance = hInst;

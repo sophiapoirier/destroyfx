@@ -149,6 +149,7 @@ void RMSTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 
 	// draw the text
 	CGContextSetShouldAntialias(inContext, true);	// now we want anti-aliasing
+	CGContextSetShouldSmoothFonts(inContext, true);
 	CGContextSelectFont(inContext, fontName, fontSize, kCGEncodingMacRoman);
 	CGContextSetRGBFillColor(inContext, (float)textColor.r/255.0f, (float)textColor.g/255.0f, (float)textColor.b/255.0f, 1.0f);
 	// do tricks to align the text if it's not left-aligned
@@ -933,11 +934,10 @@ static pascal OSStatus ControlEventHandler(EventHandlerCallRef myHandler, EventR
 	if (ourCarbonControl == NULL)
 		return eventNotHandledErr;
 	// now try to get a pointer to one of our control objects from that ControlRef
-	RMSbuddyEditor *ourOwnerEditor = (RMSbuddyEditor*) inUserData;
-//	RMSControl *ourRMSControl = ourOwnerEditor->getRMSControl(ourCarbonControl);
 	RMSControl *ourRMSControl = (RMSControl*) GetControlReference(ourCarbonControl);
 	if (ourRMSControl == NULL)
 		return eventNotHandledErr;
+	RMSbuddyEditor *ourOwnerEditor = (RMSbuddyEditor*) inUserData;
 
 	switch (GetEventKind(inEvent))
 	{

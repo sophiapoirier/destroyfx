@@ -9,18 +9,18 @@
 //-----------------------------------------------------------------------------
 DGItem::DGItem()
 {
-	this->type = kDfxGuiType_None;
-	this->itemID = 0;
-	this->prev = NULL;
-	this->next = NULL;
+	type = kDfxGuiType_None;
+	itemID = 0;
+	prev = NULL;
+	next = NULL;
 }
 
 //-----------------------------------------------------------------------------
 DGItem::~DGItem()
 {
-	if (this->next != NULL)
-		delete this->next;
-	this->next = NULL;
+	if (next != NULL)
+		delete next;
+	next = NULL;
 }
 
 //-----------------------------------------------------------------------------
