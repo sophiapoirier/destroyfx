@@ -5,6 +5,7 @@
 #include <audioeffectx.h>
 #include <aeffeditor.hpp>
 #include <windows.h>
+#include <ddraw.h>
 
 struct GuitestEditor : public AEffEditor {
   friend class AudioEffect;
@@ -21,12 +22,16 @@ struct GuitestEditor : public AEffEditor {
 
   private:
   
-  HWND delayFader;
-  HWND feedbackFader;
-  HWND volumeFader;
+  LPDIRECTDRAWSURFACE primary; // DirectDraw primary surface
+  
+  LPDIRECTDRAWSURFACE back; // DirectDraw back surface
+
+  bool CreatePrimarySurface();
+
+  static IDirectDrawSurface * DDLoadBitmap(IDirectDraw *pdd, LPCSTR szBitmap);
 
   public:
-  void GuitestEditor::setValue(void* fader, int value);
+  void setValue(void* fader, int value);
 
 };
 
