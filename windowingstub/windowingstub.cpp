@@ -1,6 +1,3 @@
-
-
-
 /* Super Destroy FX Windowing System! */
 
 #include "windowingstub.hpp"
@@ -22,8 +19,8 @@ const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = {
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  FPARAM(bufsizep, 0, "wsize", 0.5, "samples");
-  FPARAM(shape, 1, "shape", 0.0, "");
+  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5, "samples");
+  FPARAM(shape, P_SHAPE, "shape", 0.0, "");
 
   long maxframe = 0;
   for (long i=0; i<BUFFERSIZESSIZE; i++)
@@ -35,7 +32,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   out0 = (float*)malloc(maxframe * 2 * sizeof (float));
 
   /* prevmix is only a single third long */
-  prevmix = (float*)malloc(maxframe / 2 * sizeof (float));
+  prevmix = (float*)malloc((maxframe / 2) * sizeof (float));
 
   /* resume sets up buffers and sizes */
   changed = 1;
@@ -90,7 +87,7 @@ long PLUGIN::getTailSize() { return framesize; }
 
 void PLUGIN::setParameter(long index, float value) {
   switch (index) {
-  case 0:
+  case P_BUFSIZE:
     changed = 1;
     /* fallthrough */
   default:
@@ -128,8 +125,21 @@ void PLUGIN::getParameterName(long index, char *label) {
 
 void PLUGIN::getParameterDisplay(long index, char *text) {
   switch(index) {
-  case 0:
+  case P_BUFSIZE:
     sprintf(text, "%d", MKBUFSIZE(bufsizep));
+    break;
+  case P_SHAPE:
+    if (shape < 0.20f) {
+      strcpy(text, "linear");
+    } else if (shape < 0.40f) {
+      strcpy(text, "arrow");
+    } else if (shape < 0.60f) {
+      strcpy(text, "wedge");
+    } else if (shape < 0.80f) {
+      strcpy(text, "best");
+    } else {
+      strcpy(text, "cos^2");
+    }
     break;
     /* special cases here */
   default:
@@ -223,7 +233,6 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 /* to improve: 
    - use memcpy and arithmetic instead of
      sample-by-sample copy 
-   - new, smoother interpolation shapes.
    - can we use tail of out0 as prevmix, instead of copying?
    - can we use circular buffers instead of memmoving a lot
      (probably not)
@@ -246,24 +255,39 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
       /* in0 -> process -> out0(first free space) */
       processw(in0, out0+outstart+outsize, framesize);
 
+      float oneDivThird = 1.0f / (float)third;
       /* apply envelope */
 
-      if (shape < 0.33) {
+      if (shape < 0.20f) {
 	for(int z = 0; z < third; z++) {
-	  float p = sqrt(z / (float)third);
+	  float p = sqrtf((float)z * oneDivThird);
 	  out0[z+outstart+outsize] *= p;
-	  out0[z+outstart+outsize+third] *= (1.0 - p);
+	  out0[z+outstart+outsize+third] *= (1.0f - p);
 	}
-      } else if (shape < 0.66) {
+      } else if (shape < 0.40f) {
 	for(int z = 0; z < third; z++) {
-	  float p = z / (float)third;
-	  out0[z+outstart+outsize] *= (p*p);
-	  out0[z+outstart+outsize+third] *= (1.0 - (p*p));
+	  float p = (float)z * oneDivThird;
+	  p *= p;
+	  out0[z+outstart+outsize] *= p;
+	  out0[z+outstart+outsize+third] *= (1.0f - p);
+	}
+      } else if (shape < 0.60f) {
+	for(int z = 0; z < third; z++) {
+	  out0[z+outstart+outsize] *= ((float)z * oneDivThird);
+	  out0[z+outstart+outsize+third] *= (1.0f - ((float)z * oneDivThird));
+	}
+      } else if (shape < 0.80f) {
+	for(int z = 0; z < third; z ++) {
+	  float p = 0.5f * (-cos(float(pi * ((float)z * oneDivThird))) + 1.0f);
+	  out0[z+outstart+outsize] *= p;
+	  out0[z+outstart+outsize+third] *= (1.0f - p);
 	}
       } else {
-	for(int z = 0; z < third; z++) {
-	  out0[z+outstart+outsize] *= (z / (float)third);
-	  out0[z+outstart+outsize+third] *= (1.0 - (z / (float)third));
+	for(int z = 0; z < third; z ++) {
+	  float p = 0.5f * (-cos(float(pi * ((float)z * oneDivThird))) + 1.0f);
+	  p = p * p;
+	  out0[z+outstart+outsize] *= p;
+	  out0[z+outstart+outsize+third] *= (1.0f - p);
 	}
       }
 
@@ -273,10 +297,6 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
 
       /* prevmix becomes out1 */
       memcpy(prevmix, out0 + outstart + outsize + third, third * sizeof (float));
-
-      /* XXX destroy old out1 - debug only. */
-      for(int q = 0; q < third; q ++)
-	out0[outstart+outsize+third+q] = rand();
 
       /* copy 2nd third of input over in0 (need to re-use it for next frame), 
 	 now insize = third */
@@ -302,6 +322,8 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
   }
 }
 
+/* these should always call the common processX function */
+
 void PLUGIN::processReplacing(float **inputs, float **outputs, long samples) {
   processX(inputs,outputs,samples, 1);
 }
@@ -325,7 +347,7 @@ void PLUGIN::setProgram(long programNum) {
 
       curProgram = programNum;
       for (int i=0; i < NUM_PARAMS; i++)
-	setParameter(i, programs[programNum].param[i]);
+        setParameter(i, programs[programNum].param[i]);
     }
   // tell the host to update the editor display with the new settings
   AudioEffectX::updateDisplay();
