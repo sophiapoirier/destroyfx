@@ -320,7 +320,7 @@ long SkidderEditor::open(void *ptr)
 
 	chunk->resetLearning();
 	goError = kNoGoDisplay;
-	long rateTag = onOffTest(effect->getParameter(kTempoSync)) ? kRate_sync : kRate_abs;
+	long rateTag = ((DfxPlugin*)effect)->getparameter_b(kTempoSync) ? kRate_sync : kRate_abs;
 
 
 	//--initialize the background frame--------------------------------------
@@ -696,7 +696,7 @@ void SkidderEditor::setParameter(long index, float value)
 	if (!frame)
 		return;
 
-	long rateTag = onOffTest(effect->getParameter(kTempoSync)) ? kRate_sync : kRate_abs;
+	long rateTag = ((DfxPlugin*)effect)->getparameter_b(kTempoSync) ? kRate_sync : kRate_abs;
 
 	switch (index)
 	{
