@@ -15,6 +15,7 @@
 #define DFX_SUPPORT_OLD_VST_SETTINGS 0
 #endif
 
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark _________init/destroy_________
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -239,6 +240,10 @@ unsigned long DfxSettings::save(void **data, bool isPreset)
 	}
 }
 
+
+// for backwerds compaxibilitee
+#define IS_OLD_VST_VERSION(version)	((version) < 0x00010000)
+#define OLD_PRESET_MAX_NAME_LENGTH 32
 
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to load settings data, 
