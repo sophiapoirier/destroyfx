@@ -16,9 +16,11 @@ written by Marc Poirier, October 2002
 /* If using the VST GUI interface, we need the class definition
    for AEffGUIEditor so we can send it parameter changes.
  */
-	#include "aeffguieditor.h"
+	#include "vstgui.h"
 // XXX Tom, shouldn't that be "vstgui.h" like it was before?
 //     I don't see any aeffguieditor.h file.
+//  Yeah. AEffGUIEditor is defined in that file.
+
 #endif
 
 
