@@ -277,14 +277,13 @@ void DfxPlugin::do_cleanup()
 // non-virtual function that calls reset() and insures that some stuff happens
 void DfxPlugin::do_reset()
 {
-	clearbuffers();
-
 	#if TARGET_PLUGIN_USES_MIDI
 		if (midistuff != NULL)
 			midistuff->reset();
 	#endif
 
 	reset();
+	clearbuffers();
 }
 
 
