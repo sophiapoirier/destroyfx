@@ -69,7 +69,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	}
 
 	mouseAxis = kDGTextDisplayMouseAxis_vertical;
-	mouseDragRange = 333.0f;	// pixels
+	setMouseDragRange(333.0f);	// pixels
 
 	if (fontName != NULL)
 	{
@@ -259,11 +259,6 @@ void DGTextDisplay::mouseDown(float inXpos, float inYpos, unsigned long inMouseB
 {
 	lastX = inXpos;
 	lastY = inYpos;
-
-	#if TARGET_PLUGIN_USES_MIDI
-		if (isParameterAttached())
-			getDfxGuiEditor()->setmidilearner(getParameterID());
-	#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -280,8 +275,8 @@ void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouse
 	if (mouseAxis & kDGTextDisplayMouseAxis_vertical)
 		diff += lastY - inYpos;
 	if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
-		diff /= fineTuneFactor;
-	val += (SInt32) (diff * (float)(max-min) / mouseDragRange);
+		diff /= getFineTuneFactor();
+	val += (SInt32) (diff * (float)(max-min) / getMouseDragRange());
 
 	if (val > max)
 		val = max;
@@ -292,20 +287,6 @@ void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouse
 
 	lastX = inXpos;
 	lastY = inYpos;
-}
-
-//-----------------------------------------------------------------------------
-bool DGTextDisplay::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
-{
-	mouseDown(0.0f, 0.0f, 1, inKeyModifiers);
-	float x = 0.0f, y = 0.0f;
-	if (mouseAxis & kDGTextDisplayMouseAxis_horizontal)
-		x = (float)inDelta;
-	else if (mouseAxis & kDGTextDisplayMouseAxis_vertical)
-		y = (float)(-inDelta);
-	mouseTrack(x, y, 1, inKeyModifiers);
-
-	return true;
 }
 
 
@@ -330,6 +311,7 @@ DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * 
 #if MAC
 	displayCFString = NULL;
 #endif
+	setRespondToMouse(false);
 }
 
 //-----------------------------------------------------------------------------
@@ -432,6 +414,7 @@ DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inPara
 	}
 
 	setControlContinuous(false);
+	setRespondToMouse(false);
 }
 
 //-----------------------------------------------------------------------------
