@@ -1,9 +1,9 @@
+/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+
 #ifndef __DFX_TEMPORATETABLE_H
 #define __DFX_TEMPORATETABLE_H
 
-#ifndef _STDLIB_H_
 #include <stdlib.h>	// for free()
-#endif
 
 
 //--------------------------------------------------------------------------

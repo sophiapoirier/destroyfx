@@ -1,8 +1,7 @@
-#ifndef __DFX_TEMPORATETABLE_H
-#include "temporatetable.h"
-#endif
+/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
 
-#include <stdlib.h>
+#include "temporatetable.h"
+
 #include <string.h>
 #include <math.h>	// for fabs
 

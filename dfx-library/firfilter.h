@@ -1,3 +1,5 @@
+/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+
 #ifndef __dfx_firfilter_h
 #define __dfx_firfilter_h
 
