@@ -63,6 +63,8 @@ public:
 	void automationgesture_end(long inParameterID);
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
+	ControlRef GetCarbonPane()
+		{	return mCarbonPane;	}
 #endif
 
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
@@ -145,6 +147,18 @@ protected:
 private:
 	DGControl *	currentControl_clicked;
 	DGControl *	currentControl_mouseover;
+
+	class DGMousedOverControlsList
+	{
+	public:
+		DGMousedOverControlsList(DGControl * inControl, DGMousedOverControlsList * inNextList)
+			: control(inControl), next(inNextList) {}
+		DGControl * control;
+		DGMousedOverControlsList * next;
+	};
+	DGMousedOverControlsList * mousedOverControlsList;
+	void addMousedOverControl(DGControl * inMousedOverControl);
+	void removeMousedOverControl(DGControl * inMousedOverControl);
 
 #if MAC
 	EventHandlerUPP		controlHandlerUPP;
