@@ -87,13 +87,19 @@ testing:
 brokenfft/
 
         One of my favorite plugins; this converts to the frequency
-        domain using the FFT, and then does a number of crazy effects. 
-	This one has an almost limitless variety of sounds that will come
-        out of it...
+        domain using the FFT, and then does a number of crazy effects.
+        This one has an almost limitless variety of sounds that will
+        come out of it...
 
 
 These plugins are in the beginning stages, may be buggy, but we plan
 on finishing them eventually:
+
+vardelay/
+
+        Allows for short delays of each sample, but the amount of
+        delay is dependent on the amplitude of the sample. (Several
+        bands are individually adjustable).
 
 trans/
 
