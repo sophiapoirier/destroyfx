@@ -56,20 +56,23 @@ OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAU
 
 // saving preset files
 OSStatus WritePropertyListToXMLFile(const CFPropertyListRef inPropertyList, const CFURLRef inXMLFileURL);
-OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist);
+OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist, 
+								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
 pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData);
 OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
-								CFStringRef inPresetNameString, short inFileSystemDomain);
+								CFStringRef inPresetNameString, short inFileSystemDomain, CFURLRef * outSavedAUPresetFileURL);
 Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL);
+pascal Boolean ShouldReplaceExistingAUPresetFileDialogFilterProc(DialogRef inDialog, EventRecord * inEvent, DialogItemIndex * outItemHit);
 Boolean IsFileAccessError(OSStatus inErrorCode);
 OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl);
-OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent);
+OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent, 
+								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
 pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
 
 
 
 #ifdef __cplusplus
-};
+}
 #endif
 // end of extern "C"
 

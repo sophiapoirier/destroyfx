@@ -62,8 +62,8 @@ extern OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char *
 
 // stuff for handling AU preset files...
 // main
-extern ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance);
-extern ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFBundleRef inBundle);
+extern ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
+extern ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL, CFBundleRef inBundle);
 extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain);
 extern ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, const CFURLRef inAUPresetFileURL);
 extern ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance);
@@ -78,7 +78,7 @@ extern OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemD
 
 
 #ifdef __cplusplus
-};
+}
 #endif
 // end of extern "C"
 
