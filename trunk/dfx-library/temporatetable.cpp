@@ -36,9 +36,9 @@ TempoRateTable::TempoRateTable(long typeOfTable)
 	i = 0;
 	if (typeOfTable == kSlowTempoRates)
 	{
-		scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/12");
-		scalars[i] = 1.f/6.f;	strcpy(displays[i++], "1/8");
-		scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/7");
+		scalars[i] = 1.f/12.f;	strcpy(displays[i++], "1/12");
+		scalars[i] = 1.f/8.f;	strcpy(displays[i++], "1/8");
+		scalars[i] = 1.f/7.f;	strcpy(displays[i++], "1/7");
 	}
 	if (typeOfTable != kNoExtremeTempoRates)
 	{
