@@ -15,15 +15,14 @@ work into this tempory sub-directory called dfxgui_mac.  Everything in
 here is just for AU graphics in Mac OS X.  This work is still very
 much under development.  Eventually we will better abstract our
 platform-specific work and coalesce this all into a unified code base
-for our graphics framework.
+for our graphics framework.  Update:  We are starting to work on that
+now.
 
 The work that I have done so far for AU graphics in Mac OS X owes a
 great deal to Urs Heckmann's wonderful CAUGui framework.  His code was
 the best example code that I could find demonstrating how to use the
 Quartz and Carbon Events APIs with AUCarbonViews, and his hard work on
 the project and generosity with sharing his code are very much
-appreciated.  A lot of the current form of the code in this directory
-is either borrowed from his framework or based on code from his
-framework.  Urs' excellent plugins are available at http://u-he.com/
+appreciated.  Urs' excellent plugins are available at http://u-he.com/
 and the latest version of his CAUGui framework can be found at
 http://u-he.com/audiounits/
