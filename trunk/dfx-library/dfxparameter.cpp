@@ -956,9 +956,6 @@ bool DfxParam::limit()
 	if (!enforceValueLimits)
 		return false;
 
-	// remember the old value in order to later see if it changed
-	DfxParamValue tempold = value;
-
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
