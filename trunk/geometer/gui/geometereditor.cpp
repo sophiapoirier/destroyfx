@@ -1031,10 +1031,34 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
   else if (tag < NUM_PARAMS) {
     /* XXX for anything? */
 
+  switch (tag) {
+    // for the switch parameters, set them up for toggle-style MIDI automation
+    case P_BUFSIZE:
+      chunk->setLearner(tag, kEventBehaviourToggle, BUFFERSIZESSIZE);
+      break;
+    case P_SHAPE:
+      chunk->setLearner(tag, kEventBehaviourToggle, MAX_WINDOWSHAPES);
+      break;
+    case P_POINTSTYLE:
+      chunk->setLearner(tag, kEventBehaviourToggle, MAX_POINTSTYLES);
+      break;
+    case P_INTERPSTYLE:
+      chunk->setLearner(tag, kEventBehaviourToggle, MAX_INTERPSTYLES);
+      break;
+    case P_POINTOP1:
+    case P_POINTOP2:
+    case P_POINTOP3:
+      chunk->setLearner(tag, kEventBehaviourToggle, MAX_OPS);
+      break;
+    // otherwise, set the learner regularly
+    default:
+      chunk->setLearner(tag);
+  }
+
     effect->setParameterAutomated(tag, control->getValue());
+    chunk->setLearner(tag);
 
     if (chunk->isLearning()) {
-      chunk->setLearner(tag);
       for (int i=0; i < NUM_SLIDERS; i++) {
         if (sliders[i]->getTag() == tag)
           setGlowing(i);
