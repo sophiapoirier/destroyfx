@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
-This is our shit.
+Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.
+This is our class for E-Z plugin-making and E-Z multiple-API support.
+written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 
@@ -48,6 +49,8 @@ PLUGIN_EDITOR_ID
 	4-byte ID for the plugin (will base it off PLUGIN_ID if not defined)
 PLUGIN_EDITOR_RES_ID
 	component resource ID of the base plugin
+SUPPORT_AU_VERSION_1
+	0 or 1 (
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_H
@@ -215,22 +218,45 @@ public:
 		{ }
 
 	// ***
+	// override this if the plugin uses audio buffers
+	// this will be called at the correct times
+	// it may be called repeatedly when the audio stream format changes 
+	// (sampling rate or number of channels), so it is expected that 
+	// the implementation will check to see whether or not the 
+	// buffers are already allocated and whether or not they need to 
+	// be destroyed and reallocated in a different size
 	virtual bool createbuffers()
 		{	return true;	}
 	// ***
+	// override this if the plugin uses audio buffers and 
+	// ever requires the buffer contents to be zeroed 
+	// (like when the DSP state is reset)
+	// this will be called at the correct times
 	virtual void clearbuffers()
 		{ }
 	// ***
+	// override this if the plugin uses audio buffers
+	// this will be called at the correct times
+	// release any allocated audio buffers
 	virtual void releasebuffers()
 		{ }
 
+	// insures that processparameters (and perhaps other related stuff) 
+	// is called at the correct moments
 	void do_processparameters();
 	// ***
+	// override this to handle/accept parameter values immediately before 
+	// processing audio and to react to parameter changes
 	virtual void processparameters()
 		{ }
+	// attend to things immediately before processing a block of audio
 	void preprocessaudio();
+	// attend to things immediately after processing a block of audio
 	void postprocessaudio();
 	// ***
+	// do the audio processing (override with real stuff)
+	// pass in arrays of float buffers for input and output ([channel][sample]), 
+	// 
 	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, 
 						bool replacing=true)
 		{ }
@@ -259,23 +285,9 @@ public:
 						DfxParamUnit initUnit = kDfxParamUnit_undefined);
 	void initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, long initNumItems);
 
-	bool setparametervaluestring(long parameterIndex, long stringIndex, const char *inText)
-	{
-		if (parameterisvalid(parameterIndex))
-			return parameters[parameterIndex].setvaluestring(stringIndex, inText);
-		else return false;
-	}
-	bool getparametervaluestring(long parameterIndex, long stringIndex, char *outText)
-	{
-		if (parameterisvalid(parameterIndex))
-			return parameters[parameterIndex].getvaluestring(stringIndex, outText);
-		else return false;
-	}
-	char * getparametervaluestring_ptr(long parameterIndex, long stringIndex)
-	{	if (parameterisvalid(parameterIndex))
-			return parameters[parameterIndex].getvaluestring_ptr(stringIndex);
-		else return 0;
-	}
+	bool setparametervaluestring(long parameterIndex, long stringIndex, const char *inText);
+	bool getparametervaluestring(long parameterIndex, long stringIndex, char *outText);
+	char * getparametervaluestring_ptr(long parameterIndex, long stringIndex);
 #if TARGET_API_AUDIOUNIT
 	CFStringRef * getparametervaluecfstrings(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getvaluecfstrings();   else return NULL;	}
@@ -333,12 +345,20 @@ public:
 	bool getparameterchanged(long parameterIndex);
 	void setparameterchanged(long parameterIndex, bool newChanged = true);
 
+	// whether or not the index is a valid preset
 	bool presetisvalid(long presetIndex);
+	// whether or not the index is a valid preset with a valid name
 	bool presetnameisvalid(long presetIndex);
+	// load the settings of a preset
 	virtual bool loadpreset(long presetIndex);
+	// set a parameter value in all of the empty (no name) presets 
+	// to the current value of that parameter
 	void initpresetsparameter(long parameterIndex);
+	// set the text of a preset name
 	void setpresetname(long presetIndex, const char *inText);
+	// get a copy of the text of a preset name
 	void getpresetname(long presetIndex, char *outText);
+	// get a pointer to the text of a preset name
 	char * getpresetname_ptr(long presetIndex);
 #if TARGET_API_AUDIOUNIT
 	CFStringRef getpresetcfname(long presetIndex);
@@ -356,16 +376,22 @@ public:
 	float getpresetparameter_f(long presetIndex, long parameterIndex);
 
 
+	// get the current audio sampling rate
 	double getsamplerate()
 		{	return DfxPlugin::samplerate;	}
+	// convenience wrapper of getsamplerate to get float type value
 	float getsamplerate_f()
 		{	return (float) (DfxPlugin::samplerate);	}
+	// change the current audio sampling rate
 	void setsamplerate(double newrate);
 	// force a refetching of the samplerate from the host
 	void updatesamplerate();
 
+	// react to a change in the number of audio channels
 	void updatenumchannels();
+	// return the number of audio inputs
 	unsigned long getnuminputs();
+	// return the number of audio outputs
 	unsigned long getnumoutputs();
 
 	long getnumparameters()
@@ -378,6 +404,7 @@ public:
 //	bool GetUseMusicalTimeInfo()
 //		{	return b_usemusicaltimeinfo;	}
 
+	// get the DfxTimeInfo struct with the latest timeinfo values
 	DfxTimeInfo gettimeinfo()
 		{	return timeinfo;	}
 
@@ -431,6 +458,7 @@ public:
 			return (double)tailsize_samples / getsamplerate();
 	}
 
+	// add an audio input/output configuration to the array of i/o configurations
 	void addchannelconfig(short numin, short numout);
 
 //	virtual void SetUseTimeStampedParameters(bool newmode = true)
@@ -486,7 +514,17 @@ protected:
 	double samplerate;
 
 	#if TARGET_API_AUDIOUNIT
+		// array of float pointers to input and output audio buffers, 
+		// just for the sake of making processaudio(float**, float**, etc.) possible
 		float **inputsP, **outputsP;
+		// an array of the plugin's presets in AUPreset form (number and CFString name)
+		// the preset array needs to survive throughout the Audio Unit's life
+		AUPreset *aupresets;
+		#if TARGET_PLUGIN_USES_MIDI
+			// an array of how MIDI CCs and NRPNs map to parameters (if at all)
+			// the map needs to survive throughout the Audio Unit's life
+			AudioUnitMIDIControlMapping *aumidicontrolmap;
+		#endif
 	#endif
 
 	#if TARGET_API_VST
@@ -494,6 +532,7 @@ protected:
 	#endif
 
 private:
+	// try to get musical tempo/time/location information from the host
 	void processtimeinfo();
 
 	long latency_samples;
@@ -553,7 +592,6 @@ public:
 	virtual ComponentResult RestoreState(CFPropertyListRef inData);
 	virtual ComponentResult GetPresets(CFArrayRef *outData) const;
 	virtual OSStatus NewFactoryPresetSet(const AUPreset & inNewFactoryPreset);
-	AUPreset *aupresets;	// preset data needs to survive throughout the Audio Unit's life
 
 	#if TARGET_PLUGIN_USES_MIDI
 		virtual void HandleNoteOn(int inChannel, UInt8 inNoteNumber, 
@@ -731,20 +769,34 @@ public:
 
 
 
+//-----------------------------------------------------------------------------
 // prototypes for a few handy buffer helper functions
+
 bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSize);
+bool createbuffer_d(double **buffer, long currentBufferSize, long desiredBufferSize);
+bool createbuffer_i(long **buffer, long currentBufferSize, long desiredBufferSize);
+bool createbuffer_b(bool **buffer, long currentBufferSize, long desiredBufferSize);
 bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long currentBufferSize, 
 						unsigned long desiredNumBuffers, long desiredBufferSize);
+
 void releasebuffer_f(float **buffer);
+void releasebuffer_d(double **buffer);
+void releasebuffer_i(long **buffer);
+void releasebuffer_b(bool **buffer);
 void releasebufferarray_f(float ***buffers, unsigned long numbuffers);
-void clearbuffer_f(float *buffer, long buffersize);
-void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize);
+
+void clearbuffer_f(float *buffer, long buffersize, float value = 0.0f);
+void clearbuffer_d(double *buffer, long buffersize, double value = 0.0);
+void clearbuffer_i(long *buffer, long buffersize, long value = 0);
+void clearbuffer_b(bool *buffer, long buffersize, bool value = false);
+void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize, float value = 0.0f);
 
 
 
 
 
 
+//-----------------------------------------------------------------------------
 // plugin entry point macros and defines and stuff
 
 #if TARGET_API_AUDIOUNIT

@@ -175,6 +175,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 //---------------------------------------------------------------------------------------------------
 void BufferOverride::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
 {
+printf("\tcalling BufferOverride::processaudio()\n");
 	unsigned long numChannels = getnumoutputs();
 	unsigned long ch;
 	float oldDivisor = divisor;
@@ -340,5 +341,9 @@ void BufferOverride::processaudio(const float **in, float **out, unsigned long i
 
 	// make the our parameters storers and the host aware that divisor changed because of MIDI
 	if (divisor != oldDivisor)
+	{
 		setparameter_f(kDivisor, divisor);	// XXX eh?
+printf("\tchanging divisor parameter value to %.3f\n", divisor);
+	}
+else printf("\tdivisor parameter value not changed\n");
 }

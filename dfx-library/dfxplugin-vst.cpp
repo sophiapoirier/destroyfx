@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our VST shit.
+written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_H
@@ -51,6 +52,8 @@ void DfxPlugin::resume()
 //-------------------------------------------------------------------------
 long DfxPlugin::fxIdle()
 {
+	// I'm moving calls to ioChanged into the idle thread 
+	// because it seems like it freaks out Fruity Loops
 	if (latencychanged)
 		ioChanged();
 	latencychanged = false;

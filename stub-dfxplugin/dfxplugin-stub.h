@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our unexciting, but informative, demonstration DfxPlugin.
+written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_STUB_H

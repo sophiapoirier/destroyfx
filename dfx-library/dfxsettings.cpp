@@ -1,4 +1,4 @@
-/*------------- by Marc Poirier  ][  April-June 2002 ------------*/
+/*--------- by Marc Poirier  ][  April-July + October 2002 ---------*/
 
 #ifndef __DFXSETTINGS_H
 #include "dfxsettings.h"
@@ -8,11 +8,7 @@
 #include "dfxplugin.h"
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
 
-
-// XXX finish support for loading old pre-DfxPlugin settings
 #ifndef DFX_SUPPORT_OLD_VST_SETTINGS
 #define DFX_SUPPORT_OLD_VST_SETTINGS 0
 #endif
@@ -25,9 +21,9 @@
 DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExtendedData)
 :	plugin(plugin), sizeofExtendedData(sizeofExtendedData)
 {
-	sharedChunk = 0;
-	paramAssignments = 0;
-	parameterIDs = 0;
+	sharedChunk = NULL;
+	paramAssignments = NULL;
+	parameterIDs = NULL;
 
 	// there's nothing we can do without a pointer back to the plugin
 	if (plugin == NULL)
@@ -114,17 +110,17 @@ DfxSettings::~DfxSettings()
 	settingsInfo.magic = 0;
 
 	// deallocate memories
-	if (paramAssignments)
+	if (paramAssignments != NULL)
 		free(paramAssignments);
-	paramAssignments = 0;
+	paramAssignments = NULL;
 
-	if (parameterIDs)
+	if (parameterIDs != NULL)
 		free(parameterIDs);
-	parameterIDs = 0;
+	parameterIDs = NULL;
 
-	if (sharedChunk)
+	if (sharedChunk != NULL)
 		free(sharedChunk);
-	sharedChunk = 0;
+	sharedChunk = NULL;
 
 	// allow for further destructor stuff, if necessary
 	uninit();
@@ -301,30 +297,30 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 	// check for conflicts and keep track of them
 	long crisisFlags = 0;
 	if (newSettingsInfo->version < settingsInfo.version)
-		crisisFlags = (crisisFlags | kCrisisLowerVersion);
+		crisisFlags = crisisFlags | kCrisisLowerVersion;
 	else if (newSettingsInfo->version > settingsInfo.version)
-		crisisFlags = (crisisFlags | kCrisisHigherVersion);
+		crisisFlags = crisisFlags | kCrisisHigherVersion;
 	if (numStoredParameters < numParameters)
-		crisisFlags = (crisisFlags | kCrisisFewerParameters);
+		crisisFlags = crisisFlags | kCrisisFewerParameters;
 	else if (numStoredParameters > numParameters)
-		crisisFlags = (crisisFlags | kCrisisMoreParameters);
+		crisisFlags = crisisFlags | kCrisisMoreParameters;
 	if (isPreset)
 	{
 		if (byteSize < sizeofPresetChunk)
-			crisisFlags = (crisisFlags | kCrisisSmallerByteSize);
+			crisisFlags = crisisFlags | kCrisisSmallerByteSize;
 		else if (byteSize > sizeofPresetChunk)
-			crisisFlags = (crisisFlags | kCrisisLargerByteSize);
+			crisisFlags = crisisFlags | kCrisisLargerByteSize;
 	}
 	else
 	{
 		if (byteSize < sizeofChunk)
-			crisisFlags = (crisisFlags | kCrisisSmallerByteSize);
+			crisisFlags = crisisFlags | kCrisisSmallerByteSize;
 		else if (byteSize > sizeofChunk)
-			crisisFlags = (crisisFlags | kCrisisLargerByteSize);
+			crisisFlags = crisisFlags | kCrisisLargerByteSize;
 		if (numStoredPresets < numPresets)
-			crisisFlags = (crisisFlags | kCrisisFewerPresets);
+			crisisFlags = crisisFlags | kCrisisFewerPresets;
 		else if (numStoredPresets > numPresets)
-			crisisFlags = (crisisFlags | kCrisisMorePresets);
+			crisisFlags = crisisFlags | kCrisisMorePresets;
 	}
 	// handle the crisis situations (if any) and abort loading if we're told to
 	if (handleCrisis(crisisFlags) == kCrisisAbortError)
@@ -867,6 +863,26 @@ void DfxSettings::setParameterMidiReset(float value)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark _________misc_________
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+//-----------------------------------------------------------------------------
+long DfxSettings::getParameterAssignmentType(long paramTag)
+{
+	// return no-assignment if what we got is not a valid parameter index
+	if (paramTagIsValid(paramTag) == false)
+		return kParamEventNone;
+
+	return paramAssignments[paramTag].eventType;
+}
+
+//-----------------------------------------------------------------------------
+long DfxSettings::getParameterAssignmentNum(long paramTag)
+{
+	// if what we got is not a valid parameter index
+	if (paramTagIsValid(paramTag) == false)
+		return 0;	// XXX is there a better value to return on error?
+
+	return paramAssignments[paramTag].eventNum;
+}
 
 //-----------------------------------------------------------------------------
 // given a parameter ID, find the tag (index) for that parameter in a table of 

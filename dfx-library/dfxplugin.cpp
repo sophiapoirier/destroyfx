@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our shit.
+written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_H
@@ -44,14 +45,14 @@ DfxPlugin::DfxPlugin(
 
 	numParameters(numParameters), numPresets(numPresets)
 {
-	parameters = 0;
-	presets = 0;
-	channelconfigs = 0;
-	tempoRateTable = 0;
+	parameters = NULL;
+	presets = NULL;
+	channelconfigs = NULL;
+	tempoRateTable = NULL;
 
 	#if TARGET_PLUGIN_USES_MIDI
-		midistuff = 0;
-		dfxsettings = 0;
+		midistuff = NULL;
+		dfxsettings = NULL;
 	#endif
 
 	audioBuffersAllocated = false;
@@ -89,15 +90,20 @@ DfxPlugin::DfxPlugin(
 
 #if TARGET_API_AUDIOUNIT
 //	CreateElements();	// XXX do this?  I think not, it happens in AUBase::DoInitialize()
-	inputsP = outputsP = 0;
+	inputsP = outputsP = NULL;
 
-	aupresets = 0;
+	aupresets = NULL;
 	aupresets = (AUPreset*) malloc(numPresets * sizeof(AUPreset));
 	for (long i=0; i < numPresets; i++)
 	{
 		aupresets[i].presetNumber = i;
-		aupresets[i].presetName = 0;	// XXX eh?
+		aupresets[i].presetName = NULL;	// XXX eh?
 	}
+	#if TARGET_PLUGIN_USES_MIDI
+		aumidicontrolmap = NULL;
+		aumidicontrolmap = (AudioUnitMIDIControlMapping*) malloc(numParameters * sizeof(AudioUnitMIDIControlMapping));
+	#endif
+
 #endif
 // Audio Unit stuff
 
@@ -123,11 +129,11 @@ DfxPlugin::DfxPlugin(
 	hostCanDoTempo = (canHostDo("sendVstTimeInfo") == 1);
 
 	#if TARGET_PLUGIN_USES_DSPCORE
-		dspcores = 0;
+		dspcores = NULL;
 		dspcores = (DfxPluginCore**) malloc(getnumoutputs() * sizeof(DfxPluginCore*));
 		// need to save instantiating the cores for the inheriting plugin class constructor
 		for (long i=0; i < getnumoutputs(); i++)
-			dspcores[i] = 0;
+			dspcores[i] = NULL;
 	#endif
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -144,58 +150,64 @@ DfxPlugin::DfxPlugin(
 //-----------------------------------------------------------------------------
 DfxPlugin::~DfxPlugin()
 {
-	if (parameters)
+	if (parameters != NULL)
 		delete[] parameters;
-	parameters = 0;
+	parameters = NULL;
 
-	if (presets)
+	if (presets != NULL)
 		delete[] presets;
-	presets = 0;
+	presets = NULL;
 
-	if (channelconfigs)
+	if (channelconfigs != NULL)
 		free(channelconfigs);
-	channelconfigs = 0;
+	channelconfigs = NULL;
 
-	if (tempoRateTable)
+	if (tempoRateTable != NULL)
 		delete tempoRateTable;
-	tempoRateTable = 0;
+	tempoRateTable = NULL;
 
 	#if TARGET_PLUGIN_USES_MIDI
-		if (midistuff)
+		if (midistuff != NULL)
 			delete midistuff;
-		midistuff = 0;
-		if (dfxsettings)
+		midistuff = NULL;
+		if (dfxsettings != NULL)
 			delete dfxsettings;
-		dfxsettings = 0;
+		dfxsettings = NULL;
 	#endif
 
 	#if TARGET_API_AUDIOUNIT
-		if (aupresets)
+		if (aupresets != NULL)
 			free(aupresets);
-		aupresets = 0;
+		aupresets = NULL;
+		#if TARGET_PLUGIN_USES_MIDI
+			if (aumidicontrolmap != NULL)
+				free(aumidicontrolmap);
+			aumidicontrolmap = NULL;
+		#endif
+	#endif
+	// end AudioUnit-specific destructor stuff
 
-	#elif TARGET_API_VST
+	#if TARGET_API_VST
 		#if TARGET_PLUGIN_USES_DSPCORE
-			if (dspcores)
+			if (dspcores != NULL)
 			{
 				for (long i=0; i < getnumoutputs(); i++)
 				{
-					if (dspcores[i])
+					if (dspcores[i] != NULL)
 						delete dspcores[i];
-					dspcores[i] = 0;
+					dspcores[i] = NULL;
 				}
 				free(dspcores);
 			}
-			dspcores = 0;
+			dspcores = NULL;
 		#endif
-
 	#endif
-	// end API-specific destructor stuff
+	// end VST-specific destructor stuff
 }
 
 
 //-----------------------------------------------------------------------------
-// calls initialize() and insures that some stuff happens
+// non-virtual function that calls initialize() and insures that some stuff happens
 long DfxPlugin::do_initialize()
 {
 	updatesamplerate();
@@ -211,25 +223,25 @@ long DfxPlugin::do_initialize()
 }
 
 //-----------------------------------------------------------------------------
-// calls cleanup() and insures that some stuff happens
+// non-virtual function that calls cleanup() and insures that some stuff happens
 void DfxPlugin::do_cleanup()
 {
 	releasebuffers();
 
 	#if TARGET_API_AUDIOUNIT
-		if (inputsP)
+		if (inputsP != NULL)
 			free(inputsP);
-		inputsP = 0;
-		if (outputsP)
+		inputsP = NULL;
+		if (outputsP != NULL)
 			free(outputsP);
-		outputsP = 0;
+		outputsP = NULL;
 	#endif
 
 	cleanup();
 }
 
 //-----------------------------------------------------------------------------
-// calls reset() and insures that some stuff happens
+// non-virtual function that calls reset() and insures that some stuff happens
 void DfxPlugin::do_reset()
 {
 	clearbuffers();
@@ -438,6 +450,32 @@ DfxParamUnit DfxPlugin::getparameterunit(long parameterIndex)
 }
 
 //-----------------------------------------------------------------------------
+bool DfxPlugin::setparametervaluestring(long parameterIndex, long stringIndex, const char *inText)
+{
+	if (parameterisvalid(parameterIndex))
+		return parameters[parameterIndex].setvaluestring(stringIndex, inText);
+	else
+		return false;
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::getparametervaluestring(long parameterIndex, long stringIndex, char *outText)
+{
+	if (parameterisvalid(parameterIndex))
+		return parameters[parameterIndex].getvaluestring(stringIndex, outText);
+	else
+		return false;
+}
+
+//-----------------------------------------------------------------------------
+char * DfxPlugin::getparametervaluestring_ptr(long parameterIndex, long stringIndex)
+{	if (parameterisvalid(parameterIndex))
+		return parameters[parameterIndex].getvaluestring_ptr(stringIndex);
+	else
+		return 0;
+}
+
+//-----------------------------------------------------------------------------
 bool DfxPlugin::getparameterchanged(long parameterIndex)
 {
 	if (parameterisvalid(parameterIndex))
@@ -458,6 +496,7 @@ void DfxPlugin::setparameterchanged(long parameterIndex, bool newChanged)
 #pragma mark _________presets_________
 
 //-----------------------------------------------------------------------------
+// whether or not the index is a valid preset
 bool DfxPlugin::presetisvalid(long presetIndex)
 {
 	if (presets == NULL)
@@ -469,6 +508,7 @@ bool DfxPlugin::presetisvalid(long presetIndex)
 }
 
 //-----------------------------------------------------------------------------
+// whether or not the index is a valid preset with a valid name
 // this is mostly just for Audio Unit
 bool DfxPlugin::presetnameisvalid(long presetIndex)
 {
@@ -485,6 +525,7 @@ bool DfxPlugin::presetnameisvalid(long presetIndex)
 }
 
 //-----------------------------------------------------------------------------
+// load the settings of a preset
 bool DfxPlugin::loadpreset(long presetIndex)
 {
 	if ( !presetisvalid(presetIndex) )
@@ -519,7 +560,7 @@ void DfxPlugin::update_preset(long presetIndex)
 }
 
 //-----------------------------------------------------------------------------
-// default all empty presets with the current value of a parameter
+// default all empty (no name) presets with the current value of a parameter
 void DfxPlugin::initpresetsparameter(long parameterIndex)
 {
 	// first fill in the presets with the init settings 
@@ -596,6 +637,7 @@ void DfxPlugin::setpresetparameter_gen(long presetIndex, long parameterIndex, fl
 }
 
 //-----------------------------------------------------------------------------
+// set the text of a preset name
 void DfxPlugin::setpresetname(long presetIndex, const char *inText)
 {
 	if (presetisvalid(presetIndex))
@@ -603,6 +645,7 @@ void DfxPlugin::setpresetname(long presetIndex, const char *inText)
 }
 
 //-----------------------------------------------------------------------------
+// get a copy of the text of a preset name
 void DfxPlugin::getpresetname(long presetIndex, char *outText)
 {
 	if (presetisvalid(presetIndex))
@@ -610,6 +653,7 @@ void DfxPlugin::getpresetname(long presetIndex, char *outText)
 }
 
 //-----------------------------------------------------------------------------
+// get a pointer to the text of a preset name
 char * DfxPlugin::getpresetname_ptr(long presetIndex)
 {
 	if (presetisvalid(presetIndex))
@@ -620,11 +664,13 @@ char * DfxPlugin::getpresetname_ptr(long presetIndex)
 
 #if TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
+// get the CFString version of a preset name
 CFStringRef DfxPlugin::getpresetcfname(long presetIndex)
 {
 	if (presetisvalid(presetIndex))
 		return presets[presetIndex].getcfname();
-	else return NULL;
+	else
+		return NULL;
 }
 #endif
 
@@ -633,18 +679,22 @@ CFStringRef DfxPlugin::getpresetcfname(long presetIndex)
 #pragma mark _________state_________
 
 //-----------------------------------------------------------------------------
+// change the current audio sampling rate
 void DfxPlugin::setsamplerate(double newrate)
 {
+	// avoid bogus values
 	if (newrate <= 0.0)
 		newrate = 44100.0;
 
 	if (newrate != DfxPlugin::samplerate)
 		sampleratechanged = true;
 
+	// accept the new value into our sampling rate keeper
 	DfxPlugin::samplerate = newrate;
 }
 
 //-----------------------------------------------------------------------------
+// called when the sampling rate should be re-fetched from the host
 void DfxPlugin::updatesamplerate()
 {
 #if TARGET_API_AUDIOUNIT
@@ -658,6 +708,7 @@ void DfxPlugin::updatesamplerate()
 }
 
 //-----------------------------------------------------------------------------
+// called when the number of audio channels has changed
 void DfxPlugin::updatenumchannels()
 {
 	#if TARGET_API_AUDIOUNIT
@@ -679,26 +730,31 @@ void DfxPlugin::updatenumchannels()
 #pragma mark _________properties_________
 
 //-----------------------------------------------------------------------------
+// return the number of audio inputs
 unsigned long DfxPlugin::getnuminputs()
 {
 #if TARGET_API_AUDIOUNIT
 	return GetInput(0)->GetStreamFormat().mChannelsPerFrame;
-#elif TARGET_API_VST
+#endif
+#if TARGET_API_VST
 	return numInputs;
 #endif
 }
 
 //-----------------------------------------------------------------------------
+// return the number of audio outputs
 unsigned long DfxPlugin::getnumoutputs()
 {
 #if TARGET_API_AUDIOUNIT
 	return GetOutput(0)->GetStreamFormat().mChannelsPerFrame;
-#elif TARGET_API_VST
+#endif
+#if TARGET_API_VST
 	return numOutputs;
 #endif
 }
 
 //-----------------------------------------------------------------------------
+// add an audio input/output configuration to the array of i/o configurations
 void DfxPlugin::addchannelconfig(short numin, short numout)
 {
 	if (channelconfigs != NULL)
@@ -727,9 +783,11 @@ void DfxPlugin::addchannelconfig(short numin, short numout)
 #pragma mark _________processing_________
 
 //-----------------------------------------------------------------------------
+// this is called once per audio processing block (before doing the processing) 
+// in order to try to get musical tempo/time/location information from the host
 void DfxPlugin::processtimeinfo()
 {
-  // default these values to something reasonable in case they are not available from the host
+	// default these values to something reasonable in case they are not available from the host
 	timeinfo.tempo = 120.0;
 	timeinfo.tempoIsValid = false;
 	timeinfo.beatPos = 0.0;
@@ -773,7 +831,6 @@ beat /= 192.0;	// XXX Logic workaround
 		if ( mHostCallbackInfo.musicalTimeLocationProc(mHostCallbackInfo.hostUserData, 
 				&sampleOffsetToNextBeat, &timeSigNumerator, &timeSigDenominator, &currentMeasureDownBeat) == noErr )
 		{
-currentMeasureDownBeat /= 192.0;	// XXX Logic workaround
 			// get the song beat position of the beginning of the previous measure
 			timeinfo.barPosIsValid = true;
 			timeinfo.barPos = currentMeasureDownBeat;
@@ -783,6 +840,11 @@ currentMeasureDownBeat /= 192.0;	// XXX Logic workaround
 			timeinfo.numerator = (double) timeSigNumerator;
 			timeinfo.denominator = (double) timeSigDenominator;
 		}
+
+		// determine whether the playback position or state has just changed
+// XXX implement this
+//		if ()
+//			timeinfo.playbackChanged = true;
 	}
 #endif
 // TARGET_API_AUDIOUNIT
@@ -826,6 +888,7 @@ currentMeasureDownBeat /= 192.0;	// XXX Logic workaround
 			timeinfo.denominator = (double) vstTimeInfo->timeSigDenominator;
 		}
 
+		// determine whether the playback position or state has just changed
 		if (kVstTransportChanged & vstTimeInfo->flags)
 			timeinfo.playbackChanged = true;
 	}
@@ -875,18 +938,21 @@ currentMeasureDownBeat /= 192.0;	// XXX Logic workaround
 
 
 //-----------------------------------------------------------------------------
+// this is called immediately before processing a block of audio
 void DfxPlugin::preprocessaudio()
 {
 	#if TARGET_PLUGIN_USES_MIDI
 		midistuff->preprocessEvents();
 	#endif
 
+	// fetch the latest musical tempo/time/location inforomation from the host
 	processtimeinfo();
-
+	// deal with current parameter values for usage during audio processing
 	do_processparameters();
 }
 
 //-----------------------------------------------------------------------------
+// this is called immediately after processing a block of audio
 void DfxPlugin::postprocessaudio()
 {
 	// XXX turn off all parameterchanged flags?
@@ -899,6 +965,7 @@ void DfxPlugin::postprocessaudio()
 }
 
 //-----------------------------------------------------------------------------
+// non-virtual function called to insure that processparameters happens
 void DfxPlugin::do_processparameters()
 {
 	processparameters();
@@ -971,6 +1038,8 @@ void DfxPlugin::handlemidi_programchange(int channel, int programNum, long frame
 #pragma mark _________---helper-functions---_________
 
 //-----------------------------------------------------------------------------
+// handy helper function for creating an array of float values
+// returns true if allocation was successful, false if allocation failed
 bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSize)
 {
 	// if the size of the buffer has changed, 
@@ -990,6 +1059,71 @@ bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSi
 }
 
 //-----------------------------------------------------------------------------
+// handy helper function for creating an array of double float values
+// returns true if allocation was successful, false if allocation failed
+bool createbuffer_d(double **buffer, long currentBufferSize, long desiredBufferSize)
+{
+	// if the size of the buffer has changed, 
+	// then delete & reallocate the buffes according to the new size
+	if (desiredBufferSize != currentBufferSize)
+		releasebuffer_d(buffer);
+
+	if (*buffer == NULL)
+		*buffer = (double*) malloc(desiredBufferSize * sizeof(double));
+
+	// check if allocation was successful
+	if (*buffer == NULL)
+		return false;
+
+	// we were successful if we reached this point
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// handy helper function for creating an array of long int values
+// returns true if allocation was successful, false if allocation failed
+bool createbuffer_i(long **buffer, long currentBufferSize, long desiredBufferSize)
+{
+	// if the size of the buffer has changed, 
+	// then delete & reallocate the buffes according to the new size
+	if (desiredBufferSize != currentBufferSize)
+		releasebuffer_i(buffer);
+
+	if (*buffer == NULL)
+		*buffer = (long*) malloc(desiredBufferSize * sizeof(long));
+
+	// check if allocation was successful
+	if (*buffer == NULL)
+		return false;
+
+	// we were successful if we reached this point
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// handy helper function for creating an array of boolean values
+// returns true if allocation was successful, false if allocation failed
+bool createbuffer_b(bool **buffer, long currentBufferSize, long desiredBufferSize)
+{
+	// if the size of the buffer has changed, 
+	// then delete & reallocate the buffes according to the new size
+	if (desiredBufferSize != currentBufferSize)
+		releasebuffer_b(buffer);
+
+	if (*buffer == NULL)
+		*buffer = (bool*) malloc(desiredBufferSize * sizeof(bool));
+
+	// check if allocation was successful
+	if (*buffer == NULL)
+		return false;
+
+	// we were successful if we reached this point
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// handy helper function for creating an array of arrays of float values
+// returns true if allocation was successful, false if allocation failed
 bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long currentBufferSize, 
 						unsigned long desiredNumBuffers, long desiredBufferSize)
 {
@@ -1028,6 +1162,7 @@ bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long
 }
 
 //-------------------------------------------------------------------------
+// handy helper function for safely deallocating an array of float values
 void releasebuffer_f(float **buffer)
 {
 	if (*buffer != NULL)
@@ -1038,6 +1173,40 @@ void releasebuffer_f(float **buffer)
 }
 
 //-------------------------------------------------------------------------
+// handy helper function for safely deallocating an array of double float values
+void releasebuffer_d(double **buffer)
+{
+	if (*buffer != NULL)
+	{
+		free(*buffer);
+	}
+	*buffer = NULL;
+}
+
+//-------------------------------------------------------------------------
+// handy helper function for safely deallocating an array of long int values
+void releasebuffer_i(long **buffer)
+{
+	if (*buffer != NULL)
+	{
+		free(*buffer);
+	}
+	*buffer = NULL;
+}
+
+//-------------------------------------------------------------------------
+// handy helper function for safely deallocating an array of boolean values
+void releasebuffer_b(bool **buffer)
+{
+	if (*buffer != NULL)
+	{
+		free(*buffer);
+	}
+	*buffer = NULL;
+}
+
+//-------------------------------------------------------------------------
+// handy helper function for safely deallocating an array of arrays of float values
 void releasebufferarray_f(float ***buffers, unsigned long numbuffers)
 {
 	if (*buffers != NULL)
@@ -1054,17 +1223,52 @@ void releasebufferarray_f(float ***buffers, unsigned long numbuffers)
 }
 
 //-----------------------------------------------------------------------------
-void clearbuffer_f(float *buffer, long buffersize)
+// handy helper function for safely zeroing the contents of an array of float values
+void clearbuffer_f(float *buffer, long buffersize, float value)
 {
 	if (buffer != NULL)
 	{
 		for (long i=0; i < buffersize; i++)
-			buffer[i] = 0.0f;
+			buffer[i] = value;
 	}
 }
 
 //-----------------------------------------------------------------------------
-void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize)
+// handy helper function for safely zeroing the contents of an array of double float values
+void clearbuffer_d(double *buffer, long buffersize, double value)
+{
+	if (buffer != NULL)
+	{
+		for (long i=0; i < buffersize; i++)
+			buffer[i] = value;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// handy helper function for safely zeroing the contents of an array of long int values
+void clearbuffer_i(long *buffer, long buffersize, long value)
+{
+	if (buffer != NULL)
+	{
+		for (long i=0; i < buffersize; i++)
+			buffer[i] = value;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// handy helper function for safely zeroing the contents of an array of boolean values
+void clearbuffer_b(bool *buffer, long buffersize, bool value)
+{
+	if (buffer != NULL)
+	{
+		for (long i=0; i < buffersize; i++)
+			buffer[i] = value;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// handy helper function for safely zeroing the contents of an array of arrays of float values
+void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize, float value)
 {
 	if (buffers != NULL)
 	{
@@ -1073,7 +1277,7 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 			if (buffers[i] != NULL)
 			{
 				for (long j=0; j < buffersize; j++)
-					buffers[i][j] = 0.0f;
+					buffers[i][j] = value;
 			}
 		}
 	}

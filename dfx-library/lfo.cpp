@@ -125,15 +125,15 @@ void LFO::getShapeNameIndexed(long index, char *nameString)
 {
 	switch (index)
 	{
-		case kSineLFO                : strcpy(nameString, "sine");					break;
-		case kTriangleLFO            : strcpy(nameString, "triangle");				break;
-		case kSquareLFO              : strcpy(nameString, "square");				break;
-		case kSawLFO                 : strcpy(nameString, "sawtooth");				break;
-		case kReverseSawLFO          : strcpy(nameString, "reverse sawtooth");		break;
-		case kThornLFO               : strcpy(nameString, "thorn");					break;
-		case kRandomLFO              : strcpy(nameString, "random");				break;
-		case kRandomInterpolatingLFO : strcpy(nameString, "random interpolating");	break;
-		default :																	break;
+		case kLFOshape_sine                : strcpy(nameString, "sine");					break;
+		case kLFOshape_triangle            : strcpy(nameString, "triangle");				break;
+		case kLFOshape_square              : strcpy(nameString, "square");					break;
+		case kLFOshape_saw                 : strcpy(nameString, "sawtooth");				break;
+		case kLFOshape_reversesaw          : strcpy(nameString, "reverse sawtooth");		break;
+		case kLFOshape_thorn               : strcpy(nameString, "thorn");					break;
+		case kLFOshape_random              : strcpy(nameString, "random");					break;
+		case kLFOshape_randominterpolating : strcpy(nameString, "random interpolating");	break;
+		default:																			break;
 	}
 }
 
@@ -145,25 +145,25 @@ void LFO::pickTheLFOwaveform()
 {
 	switch (iShape)
 	{
-		case kSineLFO :
+		case kLFOshape_sine:
 			table = sineTable;
 			break;
-		case kTriangleLFO :
+		case kLFOshape_triangle:
 			table = triangleTable;
 			break;
-		case kSquareLFO :
+		case kLFOshape_square:
 			table = squareTable;
 			break;
-		case kSawLFO :
+		case kLFOshape_saw:
 			table = sawTable;
 			break;
-		case kReverseSawLFO :
+		case kLFOshape_reversesaw:
 			table = reverseSawTable;
 			break;
-		case kThornLFO :
+		case kLFOshape_thorn:
 			table = thornTable;
 			break;
-		default :
+		default:
 			table = sineTable;
 			break;
 	}
