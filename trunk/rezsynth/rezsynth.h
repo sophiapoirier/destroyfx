@@ -119,7 +119,10 @@ public:
 	RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 	virtual ~RezSynth();
 
+	virtual long initialize();
+	virtual void cleanup();
 	virtual void reset();
+
 	virtual bool createbuffers();
 	virtual void releasebuffers();
 	virtual void clearbuffers();
@@ -142,11 +145,11 @@ protected:
 	int numBands, sepMode, scaleMode, dryWetMixMode;
 	bool legato, fades, foldover, wiseAmp;
 
+	double *inputAmp;	// gains for the current sample input, for each band
 	double *delay1amp;	// gains for the 1 sample delayed input, for each band
 	double *delay2amp;	// gains for the 2 second delayed input, for each band
-	double *inputAmp;	// gains for the current sample input, for each band
-	double **prevOutValue, **prevprevOutValue;	// arrays of previous resonator left outvalues
-	double **prevOut2Value, **prevprevOut2Value;	// arrays of previous resonator right outvalues
+	double ***prevOutValue, ***prevprevOutValue;	// arrays of previous resonator output values
+	unsigned long numBuffers;
 
 	double twoPiDivSR, nyquist;	// values that are needed when calculating coefficients
 
