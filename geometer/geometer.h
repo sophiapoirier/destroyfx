@@ -192,7 +192,6 @@ public:
   }
 
   /* this stuff is public so that the GUI can see it */
-  /* XXX Tom, does it make sense to update gview every framesize or third? */
   long getwindowsize() { return third; }
   VstChunk *chunk; /* chunky data full of parameter settings & stuff */
 
