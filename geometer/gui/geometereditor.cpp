@@ -1056,7 +1056,6 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
   }
 
     effect->setParameterAutomated(tag, control->getValue());
-    chunk->setLearner(tag);
 
     if (chunk->isLearning()) {
       for (int i=0; i < NUM_SLIDERS; i++) {
