@@ -1372,6 +1372,19 @@ void PLUGIN::makepresets() {
   programs[i].param[P_OPPAR2S + OP_SHORTPASS] = 0.8595505f;
   i++;
 
+  strcpy(programs[i].name, "sploop drums");
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);	// 2^11
+  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
+  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
+  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.528f;
+  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
+  programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.2921348f;
+  programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_QUARTER);
+  programs[i].param[P_OPPAR1S + OP_QUARTER] = 0.258427f;
+  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_DOUBLE);
+  programs[i].param[P_OPPAR2S + OP_DOUBLE] = 0.5f;
+  i++;
+
 }
 
 /* this is only compiled if not building the GUI version */
