@@ -24,7 +24,7 @@
 
 #include "dfx-au-utilities.h"
 
-#include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
+#include <AudioToolbox/AudioUnitUtilities.h>	// for AUEventListenerNotify and AUParameterListenerNotify
 
 
 #pragma mark _________Component_Version_________
@@ -266,15 +266,31 @@ const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
 									AudioUnitScope inScope, AudioUnitElement inElement)
 {
-	// set up an AudioUnitParameter struct with all of the necessary values
-	AudioUnitParameter dirtyparam;
-	memset(&dirtyparam, 0, sizeof(dirtyparam));	// zero out the struct
-	dirtyparam.mAudioUnit = inAUComponentInstance;
-	dirtyparam.mParameterID = inParameterID;
-	dirtyparam.mScope = inScope;
-	dirtyparam.mElement = inElement;
+	// set up an AudioUnitParameter structure with all of the necessary values
+	AudioUnitParameter dirtyParam;
+	memset(&dirtyParam, 0, sizeof(dirtyParam));	// zero out the struct
+	dirtyParam.mAudioUnit = inAUComponentInstance;
+	dirtyParam.mParameterID = inParameterID;
+	dirtyParam.mScope = inScope;
+	dirtyParam.mElement = inElement;
+
+/*
+// XXX actually, using AUEventListenerNotify is not necessary since it does the exact same thing as AUParameterListenerNotify in this case
 	// then send a parameter change notification to all parameter listeners
-	AUParameterListenerNotify(NULL, NULL, &dirtyparam);
+	// do the new-fangled way, if it's available on the user's system
+	if (AUEventListenerNotify != NULL)
+	{
+		// set up an AudioUnitEvent structure, which includes the AudioUnitParameter structure
+		AudioUnitEvent paramEvent;
+		memset(&paramEvent, 0, sizeof(paramEvent));	// zero out the struct
+		paramEvent.mEventType = kAudioUnitEvent_ParameterValueChange;
+		paramEvent.mArgument.mParameter = dirtyParam;
+		AUEventListenerNotify(NULL, NULL, &paramEvent);
+	}
+	// if that's unavailable, then send notification the old way
+	else
+*/
+		AUParameterListenerNotify(NULL, NULL, &dirtyParam);
 }
 
 //--------------------------------------------------------------------------
@@ -396,4 +412,76 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 	DisposeHandle(componentNameHandle);
 
 	return error;
+}
+
+
+
+
+
+
+#pragma mark _________System_Services_Availability_________
+
+//--------------------------------------------------------------------------
+// check the version of Mac OS installed
+// the version value of interest to us is 0x1030 for Panther
+long GetMacOSVersion()
+{
+	long systemVersion = 0;
+	OSErr error = Gestalt(gestaltSystemVersion, &systemVersion);
+	if (error == noErr)
+	{
+		systemVersion &= 0xFFFF;	// you are supposed to ignore the higher 16 bits for this Gestalt value
+//fprintf(stderr, "Mac OS version = 0x%04lX\n", systemVersion);
+		return systemVersion;
+	}
+	else
+		return 0;
+}
+
+//--------------------------------------------------------------------------
+// check the version of QuickTime installed
+// the version value of interest to us is 0x06408000 (6.4 release)
+long GetQuickTimeVersion()
+{
+    long qtVersion = 0;
+    OSErr error = Gestalt(gestaltQuickTime, &qtVersion);
+    if (error == noErr)
+	{
+//fprintf(stderr, "QuickTime version = 0x%08lX\n", qtVersion);
+		return qtVersion;
+	}
+	else
+		return 0;
+}
+
+//--------------------------------------------------------------------------
+// check the version of the AudioToolbox.framework installed
+// the version value of interest to us is 0x01300000 (1.3)
+UInt32 GetAudioToolboxFrameworkVersion()
+{
+	CFBundleRef audioToolboxBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.audio.toolbox.AudioToolbox"));
+	if (audioToolboxBundle != NULL)
+	{
+		UInt32 audioToolboxVersion = CFBundleGetVersionNumber(audioToolboxBundle);
+//fprintf(stderr, "AudioToolbox.framework version = 0x%08lX\n", audioToolboxVersion);
+//NumVersion * audioToolboxNumVersion = (NumVersion*)(&audioToolboxVersion);
+//fprintf(stderr, "AudioToolbox.framework major = %d, minor = %X\n", audioToolboxNumVersion->majorRev, audioToolboxNumVersion->minorAndBugRev);
+		return audioToolboxVersion;
+	}
+	else
+		return 0;
+}
+
+//--------------------------------------------------------------------------
+// check for the availability of AU 2.0 rev 1 system frameworks
+Boolean IsAvailable_AU2rev1()
+{
+	// the Audio Unit 2.0 rev 1 frameworks are available with Mac OS X 10.3 
+	// or QuickTime 6.4 for Mac OS X 10.2, or more specifically, AudioToolbox.framework 1.3
+	if (GetAudioToolboxFrameworkVersion() >= 0x01300000)
+		return true;
+	// in case that fails (possibly due to error, not wrong version value), try checking these
+	if ( (GetMacOSVersion() >= 0x1030) || (GetQuickTimeVersion() >= 0x06408000) )
+		return true;
+	return false;
 }
