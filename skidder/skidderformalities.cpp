@@ -28,9 +28,9 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
 	long numTempoRates = tempoRateTable->getNumTempoRates();
 	initparameter_f(kRate_abs, "rate (free)", 3.0f, 3.0f, 0.3f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
-	initparameter_indexed(kRate_sync, "rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
+	initparameter_indexed(kRate_sync, "rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kRateRandMin_abs, "rate random min (free)", 3.0f, 3.0f, 0.3f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
-	initparameter_indexed(kRateRandMin_sync, "rate random min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
+	initparameter_indexed(kRateRandMin_sync, "rate random min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kTempoSync, "tempo sync", false, false);
 	initparameter_f(kPulsewidth, "pulsewidth", 0.5f, 0.5f, 0.001f, 0.999f, kDfxParamUnit_portion);
 	initparameter_f(kPulsewidthRandMin, "pulsewidth random min", 0.5f, 0.5f, 0.001f, 0.999f, kDfxParamUnit_portion);
