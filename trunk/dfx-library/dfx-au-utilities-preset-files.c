@@ -1437,11 +1437,12 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 	{
 		// set the initial file name shown in the dialog's file name text edit field
 		CFStringRef defaultFileBaseName;
+		CFStringRef defaultFileName;
 		if (inDefaultAUPresetName != NULL)
 			defaultFileBaseName = CFRetain(inDefaultAUPresetName);	// just retain it so we can release below without thinking about it
 		else
 			defaultFileBaseName = CFCopyLocalizedStringFromTableInBundle(CFSTR("untitled"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the default preset file name for the Nav Services save file dialog"));
-		CFStringRef defaultFileName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@.%@"), 
+		defaultFileName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@.%@"), 
 															defaultFileBaseName, kAUPresetFileNameExtension);
 		CFRelease(defaultFileBaseName);
 		if (defaultFileName != NULL)
