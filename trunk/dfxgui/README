@@ -22,6 +22,8 @@ great deal to Urs Heckmann's wonderful CAUGui framework.  His code was
 the best example code that I could find demonstrating how to use the
 Quartz and Carbon Events APIs with AUCarbonViews, and his hard work on
 the project and generosity with sharing his code are very much
-appreciated.   His excellent plugins are available at http://u-he.com/
+appreciated.  A lot of the current form of the code in this directory
+is either borrowed from his framework or based on code from his
+framework.  Urs' excellent plugins are available at http://u-he.com/
 and the latest version of his CAUGui framework can be found at
 http://u-he.com/audiounits/
