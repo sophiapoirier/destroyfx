@@ -284,9 +284,10 @@ public:
 	// ***
 	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long numParameters, long numPresets = 1);
 	// ***
-	~DfxPlugin();
+	virtual ~DfxPlugin();
 
 	void dfxplugin_postconstructor();
+	void dfxplugin_predestructor();
 
 	long do_initialize();
 	// ***
@@ -791,6 +792,8 @@ public:
 
 	void setlatencychanged(bool newstatus = true)
 		{	latencychanged = newstatus;	}
+	bool getlatencychanged()
+		{	return latencychanged;	}
 	#if TARGET_PLUGIN_USES_DSPCORE
 		DfxPluginCore * getplugincore(unsigned long channel)
 		{
