@@ -14,9 +14,8 @@
 
 /* this macro does boring entry point stuff for us */
 DFX_ENTRY(Windowingstub);
-#if TARGET_PLUGIN_USES_DSPCORE
-  DFX_CORE_ENTRY(WindowingstubDSP);
-#endif
+DFX_CORE_ENTRY(WindowingstubDSP);
+
 
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
