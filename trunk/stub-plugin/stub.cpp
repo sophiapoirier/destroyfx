@@ -77,20 +77,22 @@ void PLUGIN::suspend () {
 
 }
 
-void PLUGIN::process(float **inputs, float **outputs, long samples) {
+void PLUGIN::processX(float **inputs, float **outputs, long samples, 
+		      int replacing) {
   float * in  = *inputs;
   float * out = *outputs;
 
   /* ... */
 }
 
-/* usually this will do */
 void PLUGIN::processReplacing(float **inputs, float **outputs, long samples) {
-  for (int i = 0; i < samples; i++) {
-    outputs[0][i] = 0.0;
-  }
-  process(inputs,outputs,samples);
+  processX(inputs,outputs,samples, 1);
 }
+
+void PLUGIN::process(float **inputs, float **outputs, long samples) {
+  processX(inputs,outputs,samples, 0);
+}
+
 
 
 
