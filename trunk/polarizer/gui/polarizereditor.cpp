@@ -36,7 +36,6 @@ const float kValueTextSize = 16.8f;
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-void leapDisplayProc(float value, char * outText, void *);
 void leapDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%ld sample", (long)value);
@@ -44,7 +43,6 @@ void leapDisplayProc(float value, char * outText, void *)
 		strcat(outText, "s");
 }
 
-void amountDisplayProc(float value, char * outText, void *);
 void amountDisplayProc(float value, char * outText, void *)
 {
 //	sprintf(outText, "%.3f", value);

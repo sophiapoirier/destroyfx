@@ -96,6 +96,9 @@ for (int i=0; i < 32; i++)
 if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
 }
 */
+
+	// call any child control class' extra init stuff
+	post_embed();
 }
 
 //-----------------------------------------------------------------------------

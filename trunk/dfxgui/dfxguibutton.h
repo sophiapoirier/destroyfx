@@ -26,14 +26,26 @@ public:
 	DGButton(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage, 
 				long inNumStates, DfxGuiBottonMode inMode, bool inDrawMomentaryState = false);
 	virtual ~DGButton();
+	virtual void post_embed();
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
 	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers);
+
 	void setMouseIsDown(bool newMouseState);
 	bool getMouseIsDown()
 		{	return mouseIsDown;	}
+
+	void setValue(long inValue);
+	long getValue();
+
+	void setNumStates(long inNumStates)
+		{	if (inNumStates > 0) numStates = inNumStates;	}
+	long getNumStates()
+		{	return numStates;	}
+
+	void setButtonImage(DGImage * inImage);
 
 	virtual void setUserProcedure(buttonUserProcedure inProc, void * inUserData);
 	virtual void setUserReleaseProcedure(buttonUserProcedure inProc, void * inUserData);
@@ -61,7 +73,8 @@ private:
 class DGFineTuneButton : public DGControl
 {
 public:
-	DGFineTuneButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, DGImage * inImage, float inValueChangeAmount);
+	DGFineTuneButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+						DGImage * inImage, float inValueChangeAmount = 0.0001f);
 	virtual ~DGFineTuneButton();
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);

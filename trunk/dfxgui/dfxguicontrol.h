@@ -52,6 +52,8 @@ public:
 		{ }
 
 	void embed();
+	virtual void post_embed()
+		{ }
 
 	void setVisible(bool inVisibility);
 

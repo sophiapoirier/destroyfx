@@ -271,7 +271,7 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 		}
 
 		// we want to catch when the mouse hovers over onto the background area
-		else if (inEventKind == kEventControlHitTest)
+		else if ( (inEventKind == kEventControlHitTest) || (inEventKind == kEventControlClick) )
 		{
 			ControlRef control;
 			GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &control);
@@ -406,7 +406,7 @@ void DfxGuiEditor::setCurrentControl_mouseover(DGControl * inNewMousedOverContro
 	currentControl_mouseover = inNewMousedOverControl;
 	// post notification if the mouseovered control has changed
 	if (oldcontrol != inNewMousedOverControl)
-		mouseovercontrolchanged();
+		mouseovercontrolchanged(inNewMousedOverControl);
 }
 
 //-----------------------------------------------------------------------------

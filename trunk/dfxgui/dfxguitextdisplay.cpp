@@ -230,3 +230,84 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 
 	drawText(getBounds(), displayString, inContext, inPortHeight);
 }
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
+DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+						long inNumStrings, DfxGuiTextAlignment inTextAlignment, DGImage * inBackground, 
+						float inFontSize, DGColor inFontColor, const char * inFontName)
+:	DGTextDisplay(inOwnerEditor, inParamID, inRegion, NULL, NULL, inBackground, 
+					inTextAlignment, inFontSize, inFontColor, inFontName), 
+	numStrings(inNumStrings), 
+	displayStrings(NULL)
+{
+	if (numStrings <= 0)
+		numStrings = 1;
+	displayStrings = (char**) malloc(numStrings * sizeof(char*));
+	for (long i=0; i < numStrings; i++)
+	{
+		displayStrings[i] = (char*) malloc(256);
+		displayStrings[i][0] = 0;
+	}
+
+	setControlContinuous(false);
+}
+
+//-----------------------------------------------------------------------------
+DGTextArrayDisplay::~DGTextArrayDisplay()
+{
+	if (displayStrings != NULL)
+	{
+		for (long i=0; i < numStrings; i++)
+		{
+			if (displayStrings[i] != NULL)
+				free(displayStrings[i]);
+			displayStrings[i] = NULL;
+		}
+		free(displayStrings);
+	}
+	displayStrings = NULL;
+}
+
+//-----------------------------------------------------------------------------
+void DGTextArrayDisplay::post_embed()
+{
+	if ( isParameterAttached() && (carbonControl != NULL) )
+		SetControl32BitMaximum( carbonControl, numStrings - 1 + GetControl32BitMinimum(carbonControl) );
+}
+
+//-----------------------------------------------------------------------------
+void DGTextArrayDisplay::setText(long inStringNum, const char * inNewText)
+{
+	if ( (inStringNum < 0) || (inStringNum >= numStrings) )
+		return;
+	if (inNewText == NULL)
+		return;
+
+	strcpy(displayStrings[inStringNum], inNewText);
+//	redraw();
+}
+
+//-----------------------------------------------------------------------------
+void DGTextArrayDisplay::draw(CGContextRef inContext, long inPortHeight)
+{
+	if (backgroundImage == NULL)
+	{
+// XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
+#if 0
+		CGRect fillRect = getBounds()->convertToCGRect(inPortHeight);
+		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
+		CGContextFillRect(inContext, fillRect);
+#endif
+	}
+	else
+		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+
+	long stringIndex = GetControl32BitValue(carbonControl) - GetControl32BitMinimum(carbonControl);
+	if ( (stringIndex >= 0) && (stringIndex < numStrings) )
+		drawText(getBounds(), displayStrings[stringIndex], inContext, inPortHeight);
+}

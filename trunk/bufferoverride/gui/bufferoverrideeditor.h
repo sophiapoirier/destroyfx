@@ -16,7 +16,7 @@ public:
 	virtual ~BufferOverrideEditor();
 
 	virtual long open();
-	virtual void mouseovercontrolchanged();
+	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse);
 
 private:
 	AUParameterListenerRef parameterListener;
