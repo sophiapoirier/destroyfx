@@ -1,0 +1,6 @@
+
+This is the DFX Transverb plugin.
+
+It is like a reverb/delay plugin, but it can play back the delay
+buffer at different speeds. Think of it like a tape loop with a number
+of independently-moving read heads.

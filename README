@@ -21,10 +21,12 @@ the plugins should work properly in those programs, at least.
 Here's a description of each of the plugins included:
 
 brokenfft/
+
         My favorite plugin; this converts to the frequency domain
         using the FFT, and then does a number of crazy effects.
 
 trans/
+
         Converts to and from other domains (sin, tan, derivative,
         e^x, fft); the idea is that you run this and its inverse
         with some other plugins in-between.
@@ -42,7 +44,8 @@ intercom/
 
 In the source package, each plugin has a corresponding directory,
 as well as a corresponding plugin_win32 directory containing
-MS VC++ project files.
+MS VC++ project files. Some day we will probably have Codewarrior
+build files for the Mac, too.
 
 Here is a description of each of the directories in the source
 distribution:
