@@ -1348,6 +1348,18 @@ long PLUGIN::canDo(char* text) {
   return -1;	// explicitly can't do; 0 => don't know
 }
 
+void PLUGIN::makepresets() {
+  int i = 1;
+
+  strcpy(programs[i].name, "atonal singing");
+  programs[i].param[P_BUFSIZE] = 0.7f;
+  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_FREQ);
+  programs[i].param[P_POINTPARAMS + POINT_FREQ] = 0.10112f;
+  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_REVERSI);
+
+  i++;
+
+}
 
 /* this is only compiled if not building the GUI version */
 #ifndef GUI
