@@ -18,6 +18,7 @@ class DfxGuiEditor;
 class DGControl : public DGItem
 {
 public:
+
 	// control for a parameter
 	DGControl(DfxGuiEditor *inOwnderEditor, AudioUnitParameterID inParameterID, DGRect *inRegion);
 	// control with no actual parameter attached
@@ -28,15 +29,13 @@ public:
 
 	/* XXX add "settype", "gettype" (used to be in dgitem) */
 
-	// common constructor stuff
-	void init(DGRect *inRegion);
-
 	// ControlRefs will be implemented by Manager Class
 	void setCarbonControl(ControlRef inCarbonControl)
 		{	carbonControl = inCarbonControl;	}
 	ControlRef getCarbonControl()
 		{	return carbonControl;	}
 
+	/* XXX marc says it can go? */
 	// called by EventHandler callback; draws a clipping region if opaque == true, 
 	// otherwise asks embedded DfxGuiControls for their clipping regions
 	void clipRegion(bool drawing);
@@ -68,11 +67,16 @@ public:
 
 	void redraw();	// force a redraw
 
+	/* XXX probably would go, since we will pass as argument to 
+	   dfxguieditor or else not use at all.
+	   in any case, set is kind of silly since only the child
+	   sets, and it has access to isContinuous */
 	bool isContinuousControl()
 		{	return isContinuous;	}
 	void setContinuousControl(bool inContinuity)
 		{	isContinuous = inContinuity;	}
 
+	/* XXX? mac? used? */
 	// for the clipping region
 	bool isOpaque()
 		{	return opaque;	}
@@ -112,6 +116,10 @@ public:
 		{	redrawTolerance = inNewTolerance;	}
 	bool mustUpdate(void);
 
+ private:
+	// common constructor stuff
+	void init(DGRect *inRegion);
+
 protected:
 	DfxGuiEditor *		ownerEditor;
 	AUVParameter 		auvp;
@@ -133,7 +141,7 @@ protected:
 };
 
 
-
+#ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 // this gives some slight tweaks to Apple's AUCarbonViewControl class
 class DGCarbonViewControl : public AUCarbonViewControl
@@ -145,6 +153,7 @@ public:
 	virtual void ParameterToControl(Float32 newValue);
 };
 
+#endif
 
 
 #endif

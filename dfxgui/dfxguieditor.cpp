@@ -783,11 +783,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					// define the clipping region
 					CGRect clipRect;
 					ourDGControl->getBounds()->copyToCGRect(&clipRect, portBounds.bottom);
-if (ourDGControl->getType() == kDfxGuiType_slider)
-{
-clipRect.origin.x -= 13.0f;
-clipRect.size.width += 27.0f;
-}
+
 					CGContextClipToRect(context, clipRect);
 #endif
 					// XXX disable anti-aliased drawing for image rendering
