@@ -44,7 +44,7 @@ void DfxPlugin::resume()
 		do_reset();	// else because do_initialize calls do_reset
 
 	#if TARGET_PLUGIN_USES_DSPCORE
-		for (int i=0; i < getnumoutputs(); i++)
+		for (unsigned long i=0; i < getnumoutputs(); i++)
 		{
 			if (dspcores[i] != NULL)
 				dspcores[i]->do_reset();
@@ -119,7 +119,7 @@ bool DfxPlugin::getOutputProperties(long index, VstPinProperties *properties)
 // Destroy FX infos
 
 bool DfxPlugin::getEffectName(char *name) {
-	strcpy (name, PLUGIN_NAME_STRING);	// name max 32 char
+	getpluginname(name);	// name max 32 char
 	return true; }
 
 long DfxPlugin::getVendorVersion() {
@@ -345,7 +345,7 @@ void DfxPlugin::process(float **inputs, float **outputs, long sampleFrames)
 	preprocessaudio();
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	for (int i=0; i < getnumoutputs(); i++)
+	for (unsigned long i=0; i < getnumoutputs(); i++)
 	{
 		if (dspcores[i] != NULL)
 			dspcores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, false);
@@ -363,7 +363,7 @@ void DfxPlugin::processReplacing(float **inputs, float **outputs, long sampleFra
 	preprocessaudio();
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	for (int i=0; i < getnumoutputs(); i++)
+	for (unsigned long i=0; i < getnumoutputs(); i++)
 	{
 		if (dspcores[i] != NULL)
 			dspcores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, true);
@@ -459,3 +459,17 @@ long DfxPlugin::processEvents(VstEvents* events)
 }
 #endif
 // TARGET_PLUGIN_USES_MIDI
+
+
+
+
+// boring Windows main stuff
+#if WIN32
+	void *hInstance;
+	BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved)
+	{
+		hInstance = hInst;
+		return 1;
+	}
+#endif
+
