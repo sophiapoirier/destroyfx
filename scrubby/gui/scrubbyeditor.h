@@ -13,7 +13,6 @@ class ScrubbyHelpBox : public DGTextDisplay
 {
 public:
 	ScrubbyHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground);
-	virtual ~ScrubbyHelpBox();
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
 
