@@ -91,6 +91,10 @@ DfxGuiEditor::~DfxGuiEditor()
 	}
 //else printf("using a version of Mac OS X lower than 10.2.3, so our control toolbox class will NOT be unregistered\n");
 
+	// This will actually automatically be deactivated when the host app is quit, 
+	// so there's no need to deactivate fonts ourselves.  
+	// In fact, since there may be multiple plugin GUI instances, it's safer 
+	// to just let the fonts stay activated.
 //	if ( fontsWereActivated && (fontsATSContainer != NULL) )
 //		ATSFontDeactivate(fontsATSContainer, NULL, kATSOptionFlagsDefault);
 }
@@ -169,6 +173,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 			{
 				FSSpec bundleResourcesDirFSSpec;
 				OSStatus status = FSGetCatalogInfo(&bundleResourcesDirFSRef, kFSCatInfoNone, NULL, NULL, &bundleResourcesDirFSSpec, NULL);
+				// activate all of our fonts in the local (host application) context only
+				// if the fonts already exist on the user's system, our versions will take precedence
 				if (status == noErr)
 					status = ATSFontActivateFromFileSpecification(&bundleResourcesDirFSSpec, kATSFontContextLocal, 
 									kATSFontFormatUnspecified, NULL, kATSOptionFlagsProcessSubdirectories, &fontsATSContainer);
