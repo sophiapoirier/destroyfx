@@ -50,7 +50,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addparameterattributes(kSpeed2mode, kDfxParamAttribute_hidden);
 
 
-  settailsize_seconds(BUFFER_MAX * 0.001);
+  settailsize_seconds(getparametermax_f(kBsize) * 0.001);
 
   #if TARGET_PLUGIN_USES_MIDI
     // since we don't use notes for any specialized control of Transverb, 
@@ -153,7 +153,7 @@ printf("calling TransverbDSP::createbuffers()\n");
 #endif
 
   long oldmax = MAXBUF;
-  MAXBUF = (int) (BUFFER_MAX * 0.001f * getsamplerate());
+  MAXBUF = (int) (getparametermax_f(kBsize) * 0.001 * getsamplerate());
 
   bool result1 = createbuffer_f(&buf1, oldmax, MAXBUF);
   bool result2 = createbuffer_f(&buf2, oldmax, MAXBUF);
