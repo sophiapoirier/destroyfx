@@ -1,21 +1,19 @@
-#ifndef __dfx_firfilter
-#define __dfx_firfilter
-
-#include <math.h>
+#ifndef __dfx_firfilter_h
+#define __dfx_firfilter_h
 
 
 #define PI   3.1415926535897932384626433832795f
 #define SHELF_START_FIR   0.333f
 
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate, 
 											int numTaps, float *coefficients);
 void applyKaiserWindow(int numTaps, float *coefficients, float attenuation);
 float besselIzero(float in);
 float besselIzero2(float in);
 
-//----------------------------------------------------------------------------- 
+//-----------------------------------------------------------------------------
 inline float processFIRfilter(float *in, int numTaps, float *coefficients, 
 								long inPos, long arraySize)
 {
