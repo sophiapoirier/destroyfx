@@ -305,6 +305,9 @@ BufferOverrideEditor::~BufferOverrideEditor()
 // ____________________________________________________________________________
 OSStatus BufferOverrideEditor::open(Float32 inXOffset, Float32 inYOffset)
 {
+printf("\n\n--------------------------------------------------\n");
+printf("       creating Buffer Override GUI\n");
+printf("--------------------------------------------------\n\n");
 	bufferSizeTempoSyncAUP.mAudioUnit = divisorLFOtempoSyncAUP.mAudioUnit = bufferLFOtempoSyncAUP.mAudioUnit = GetEditAudioUnit();
 	bufferSizeTempoSyncAUP.mScope = divisorLFOtempoSyncAUP.mScope = bufferLFOtempoSyncAUP.mScope = kAudioUnitScope_Global;
 	bufferSizeTempoSyncAUP.mElement = divisorLFOtempoSyncAUP.mElement = bufferLFOtempoSyncAUP.mElement = (AudioUnitElement)0;
