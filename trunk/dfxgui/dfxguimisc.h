@@ -69,7 +69,8 @@ public:
 
 //-----------------------------------------------------------------------------
 // XXX use floats (0.0 to 1.0) instead of ints
-struct DGColor {
+struct DGColor
+{
 	int r;
 	int g;
 	int b;
@@ -104,21 +105,7 @@ const DGColor kWhiteDGColor(255, 255, 255);
 
 
 /***********************************************************************
-	Destructible
-	.. has a destroy () method to free itself.
-***********************************************************************/
-
-//-----------------------------------------------------------------------------
-
-class Destructible {
- public:
-  virtual void destroy() {};
-};
-
-
-
-/***********************************************************************
-	DGGraphic
+	DGImage
 	class for loading and containing images
 ***********************************************************************/
 
@@ -128,13 +115,11 @@ class Destructible {
    using those features) */
 
 //-----------------------------------------------------------------------------
-class DGGraphic : public Destructible
+class DGImage
 {
 public:
-	DGGraphic(const char *inFileName);
-	virtual ~DGGraphic();
-	
-	virtual void destroy() { delete this; }
+	DGImage(const char *inFileName);
+	virtual ~DGImage();
 
 	// passive API (for controls that want to draw images by themselves)
 	CGImageRef getCGImage()

@@ -41,7 +41,7 @@ public:
 	virtual OSStatus open(float inXOffset, float inYOffset) = 0;
 
 	// Images
-	void			addImage(DGGraphic *inImage);
+	void			addImage(DGImage *inImage);
 	// Controls
 	void			addControl(DGControl *inCtrl);
 	DGControl *		getDGControlByPlatformControlRef(PlatformControlRef inControl);
@@ -86,32 +86,49 @@ public:
 	void idle();
 
 protected:
-	void SetBackgroundImage(DGGraphic *inBackgroundImage)
+	void SetBackgroundImage(DGImage *inBackgroundImage)
 		{	backgroundImage = inBackgroundImage;	}
 	void SetBackgroundColor(DGColor inBackgroundColor)
 		{	backgroundColor = inBackgroundColor;	}
 
 private:
+	class DGControlsList
+	{
+	public:
+		DGControl * control;
+		DGControlsList * next;
 
-	class CleanupList {
-	  public:
-	  Destructible * d;
-	  CleanupList * next;
-
-	  ~CleanupList() {
-	    d->destroy();
-	  }
-	  
-	  CleanupList(Destructible * dd, CleanupList * nn) : d(dd), next(nn) {}
+		DGControlsList(DGControl * inControl, DGControlsList * inNextList)
+			: control(inControl), next(inNextList) {}
+		~DGControlsList()
+		{
+			if (control != NULL)
+				delete control;
+		}
 	};
+	DGControlsList * controlsList;
 
-	CleanupList * cleanme;
+	class DGImagesList
+	{
+	public:
+		DGImage * image;
+		DGImagesList * next;
 
-	DGGraphic *			backgroundImage;
-	DGColor				backgroundColor;
+		DGImagesList(DGImage * inImage, DGImagesList * inNextList)
+			: image(inImage), next(inNextList) {}
+		~DGImagesList()
+		{
+			if (image != NULL)
+				delete image;
+		}
+	};
+	DGImagesList * imagesList;
 
-	DGControl *			currentControl_clicked;
-	DGControl *			currentControl_mouseover;
+	DGImage *	backgroundImage;
+	DGColor		backgroundColor;
+
+	DGControl *	currentControl_clicked;
+	DGControl *	currentControl_mouseover;
 
 #if MAC
 	EventHandlerUPP		controlHandlerUPP;
@@ -126,7 +143,7 @@ private:
 	bool		fontsWereActivated;	// memory of whether or not bundled fonts were loaded successfully
 #endif
 
-	DfxPlugin *dfxplugin;	// XXX bad thing for AU, maybe just for easy debugging sometimes
+	DfxPlugin * dfxplugin;	// XXX bad thing for AU, maybe just for easy debugging sometimes
 };
 
 

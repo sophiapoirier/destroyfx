@@ -15,19 +15,14 @@ class DfxGuiEditor;
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-class DGControl : public Destructible
+class DGControl
 {
 public:
-
 	// control for a parameter
 	DGControl(DfxGuiEditor *inOwnderEditor, AudioUnitParameterID inParameterID, DGRect *inRegion);
 	// control with no actual parameter attached
 	DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange = 0.0f);
 	virtual ~DGControl();
-
-	virtual void destroy() { delete this; }
-
-	/* XXX add "settype", "gettype" (used to be in dgitem) */
 
 	// ControlRefs will be implemented by Manager Class
 	void setCarbonControl(ControlRef inCarbonControl)
@@ -35,10 +30,9 @@ public:
 	ControlRef getCarbonControl()
 		{	return carbonControl;	}
 
-	/* XXX marc says it can go? */
 	// called by EventHandler callback; draws a clipping region if opaque == true, 
 	// otherwise asks embedded DfxGuiControls for their clipping regions
-	void clipRegion(bool drawing);
+	void clipRegion(bool drawing);	// XXX marc says it can go?
 	void setVisible(bool inVisibility);
 
 	// The methods you should implement in derived controls

@@ -16,7 +16,7 @@ typedef enum {
 class DGSlider : public DGControl
 {
 public:
-	DGSlider(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DfxGuiSliderStyle, DGGraphic*, DGGraphic*);
+	DGSlider(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DfxGuiSliderStyle, DGImage*, DGImage*);
 	virtual ~DGSlider();
 
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
@@ -31,7 +31,7 @@ public:
 	/* XXX example */
 	/* call this instead of new */
 	static DGSlider * create(DfxGuiEditor * dge, AudioUnitParameterID a, DGRect * r, DfxGuiSliderStyle dgss,
-				 DGGraphic * dg, DGGraphic * dg2) {
+				 DGImage * dg, DGImage * dg2) {
 
 	  DGSlider * n = new DGSlider(dge, a, r, dgss, dg, dg2);
 	  dge->addControl(n);
@@ -41,8 +41,8 @@ public:
 
 protected:
 	UInt32			orientation;
-	DGGraphic *		ForeGround;
-	DGGraphic *		BackGround;
+	DGImage *		ForeGround;
+	DGImage *		BackGround;
 	float			fineTuneFactor;	// slow-down factor for shift control
 	long			mouseOffset;	// for mouse tracking with click in the middle of the slider handle
 	SInt32			lastX;
