@@ -870,10 +870,6 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
 
 #if TARGET_PLUGIN_USES_MIDI
-	#if DEBUG_VST_SETTINGS_IMPORT
-	printf("\nresult from AUBase::RestoreState was %ld\n", result);
-	#endif
-
 	CFDataRef cfdata = NULL;
 	Boolean dataFound = false;
 
@@ -894,7 +890,7 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 
 	#if DEBUG_VST_SETTINGS_IMPORT
 	else
-		printf("AUBase::RestoreState failed, not attempting destroyfx-data\n");
+		printf("AUBase::RestoreState failed with error %ld, not attempting destroyfx-data\n", result);
 	#endif
 
 	// there was an error in AUBas::RestoreState or trying to find "destroyfx-data", 

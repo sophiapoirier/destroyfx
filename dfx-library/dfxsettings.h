@@ -203,8 +203,24 @@ struct ParameterAssignment
 
 
 //------------------------------------------------------
-// this swaps bytes for endian data correction
-void reverseBytes(void *data, unsigned long size, unsigned long count = 1);
+// this reverses the bytes in a stream of data, for correcting endian difference
+//void reverseBytes(void *data, unsigned long size, unsigned long count = 1);
+inline void reversebytes(void *data, unsigned long size, unsigned long count = 1)
+{
+	unsigned long half = (size / 2) + (size % 2);
+	char *dataBytes = (char*)data;
+
+	for (unsigned long c=0; c < count; c++)
+	{
+		for (unsigned long i=0; i < half; i++)
+		{
+			char temp = dataBytes[i];
+			dataBytes[i] = dataBytes[(size-1)-i];
+			dataBytes[(size-1)-i] = temp;
+		}
+		dataBytes += size;
+	}
+}
 
 
 //------------------------------------------------------
