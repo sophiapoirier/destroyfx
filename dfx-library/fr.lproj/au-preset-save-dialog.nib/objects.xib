@@ -1,0 +1,115 @@
+<?xml version="1.0" standalone="yes"?>
+<object class="NSIBObjectData">
+  <string name="targetFramework">IBCarbonFramework</string>
+  <object name="rootObject" class="NSCustomObject" id="1">
+    <string name="customClass">NSApplication</string>
+  </object>
+  <array count="9" name="allObjects">
+    <object class="IBCarbonWindow" id="166">
+      <string name="windowRect">417 247 567 743 </string>
+      <string name="title">Enregistrement d&apos;un preset Audio Unit</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="167">
+        <string name="bounds">0 0 150 496 </string>
+        <string name="viewFrame">0 0 496 150 </string>
+        <array count="7" name="subviews">
+          <object class="IBCarbonEditText" id="182">
+            <string name="bounds">23 142 39 473 </string>
+            <string name="viewFrame">142 23 331 16 </string>
+            <ostype name="controlSignature">name</ostype>
+            <int name="controlID">128</int>
+            <boolean name="isUnicode">TRUE</boolean>
+          </object>
+          <object class="IBCarbonStaticText" id="183">
+            <string name="bounds">22 20 38 131 </string>
+            <string name="viewFrame">20 22 111 16 </string>
+            <string name="title">Enregistrer sous : </string>
+            <int name="justification">-1</int>
+          </object>
+          <object class="IBCarbonRadioGroup" id="196">
+            <string name="bounds">58 139 78 476 </string>
+            <string name="viewFrame">139 58 337 20 </string>
+            <ostype name="controlSignature">doma</ostype>
+            <int name="controlID">129</int>
+            <string name="helpTagText">&quot;Utilisateur&quot; uniquement pour vous. &quot;Local&quot; pour tous les les utilisateurs de votre ordinateur, et &quot;Réseau&quot; pour tous les utilisateurs de votre réseau</string>
+            <int name="numRows">1</int>
+            <int name="numCols">3</int>
+            <array count="1" name="radioTitles">
+              <array count="3">
+                <string>Utilisateur</string>
+                <string>Local</string>
+                <string>Réseau</string>
+              </array>
+            </array>
+          </object>
+          <object class="IBCarbonButton" id="202">
+            <string name="bounds">110 48 130 241 </string>
+            <string name="viewFrame">48 110 193 20 </string>
+            <ostype name="controlSignature">cust</ostype>
+            <int name="controlID">132</int>
+            <string name="title">Choisir l&apos;emplacement...</string>
+            <ostype name="command">svas</ostype>
+            <string name="helpTagText">Choisissez un emplacement spécifique plutôt que l&apos;emplacement standard (note : cela veut dire que vos presets ne seront pas facilement accessibles depuis une autre application)</string>
+          </object>
+          <object class="IBCarbonButton" id="203">
+            <string name="bounds">110 265 130 355 </string>
+            <string name="viewFrame">265 110 90 20 </string>
+            <ostype name="controlSignature">canc</ostype>
+            <int name="controlID">131</int>
+            <string name="title">Annuler</string>
+            <ostype name="command">not!</ostype>
+            <int name="buttonType">2</int>
+          </object>
+          <object class="IBCarbonButton" id="204">
+            <string name="bounds">110 367 130 476 </string>
+            <string name="viewFrame">367 110 109 20 </string>
+            <ostype name="controlSignature">save</ostype>
+            <int name="controlID">130</int>
+            <string name="title">Enregistrer</string>
+            <ostype name="command">save</ostype>
+            <int name="buttonType">1</int>
+          </object>
+          <object class="IBCarbonStaticText" id="181">
+            <string name="bounds">56 38 77 131 </string>
+            <string name="viewFrame">38 56 93 21 </string>
+            <string name="title">Emplacement :</string>
+            <int name="justification">-1</int>
+          </object>
+        </array>
+      </object>
+      <boolean name="receiveUpdates">FALSE</boolean>
+      <boolean name="hasHorizontalZoom">FALSE</boolean>
+      <boolean name="isResizable">FALSE</boolean>
+      <boolean name="hasVerticalZoom">FALSE</boolean>
+      <boolean name="liveResize">TRUE</boolean>
+      <boolean name="compositing">TRUE</boolean>
+      <int name="carbonWindowClass">4</int>
+      <int name="windowPosition">1</int>
+    </object>
+    <reference idRef="167"/>
+    <reference idRef="181"/>
+    <reference idRef="182"/>
+    <reference idRef="183"/>
+    <reference idRef="196"/>
+    <reference idRef="202"/>
+    <reference idRef="203"/>
+    <reference idRef="204"/>
+  </array>
+  <array count="9" name="allParents">
+    <reference idRef="1"/>
+    <reference idRef="166"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+  </array>
+  <dictionary count="2" name="nameTable">
+    <string>File&apos;s Owner</string>
+    <reference idRef="1"/>
+    <string>Save dialog</string>
+    <reference idRef="166"/>
+  </dictionary>
+  <unsigned_int name="nextObjectID">205</unsigned_int>
+</object>
