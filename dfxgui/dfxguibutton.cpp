@@ -38,6 +38,7 @@ void DGButton::init()
 	userProcData = NULL;
 	userReleaseProcedure = NULL;
 	userReleaseProcData = NULL;
+	useReleaseProcedureOnlyAtEndWithNoCancel = false;
 
 	mouseIsDown = false;
 	setControlContinuous(false);
@@ -173,7 +174,7 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 			if (entryValue != currentValue)
 			{
 				SetControl32BitValue(carbonControl, entryValue);
-				if (userReleaseProcedure != NULL)
+				if ( (userReleaseProcedure != NULL) && !useReleaseProcedureOnlyAtEndWithNoCancel )
 					userReleaseProcedure(GetControl32BitValue(carbonControl), userReleaseProcData);
 			}
 		}
