@@ -1,0 +1,57 @@
+
+OK. I've included all of the geometer bitmaps and stuff for making the
+GUI.
+
+Each scrollbar corresponds to the button that it's near -- the top
+left one to "how to generate landmarks", the left bottom one to "how
+to recreate the wave" and the three on the right to the three
+operation slots, in order from top to bottom and left to right. When
+you select a different option for one of these, it should recall the
+previous setting for that option, or the default if it has never been
+selected before. This is pretty important, cos some settings have
+non-intuitive defaults (like 0.5) and sound crappy near the
+extremities, while others have their defaults at the extremities. 
+
+There's a PSD for the mockup, in case you need that as a reference or
+to re-create something.
+
+There's a background image.
+
+There are label images for each of the scrollbars (named with their
+positions). These should change with the selection of different
+options; they're in the order of the options for their corresponding
+buttons. They even say the coordinates that they should be placed at
+in the filename. 
+
+There are images for the regular and "midi learning" scroll handles.
+
+There are images for the buttons -- I arranged them and their click
+states side-by-side, since it's much easier to edit the graphics that
+way. I guess you'll need to modify multikick to read them that way,
+but from what I remember that should be really simple. Use multikick
+for these for now, but I plan on writing a GUI control that pops up a
+menu with all of the graphics right there, and lets you choose from
+them.
+
+help-*.bmp is a bunch of graphics for the various mouseover helps.
+These should go at (19,365). The "general" help should show up when
+the user puts his mouse over the text near a button (or midi-learn).
+The other help graphics are specific to a button, and appear in the
+same order that the button options appear.
+
+Don't worry about the size of the graphics (it looks like a few
+megabytes); I'll optimize that later.
+
+Also, don't worry about the display at top, unless you want to learn
+how to demonstrate for me how to draw lines in it whenever a parameter
+changes.
+
+I think I've done all the graphics so that it should be pretty easy to
+put together, but let me know if you have any problems or questions.
+Also, if you're messing with the code and see anything weird, or come
+up with some new effects, keep me informed... I think there are still
+plenty of ideas to be explored.
+
+Oh yeah, if you have a choice, avoid biCapitalized variable names.
+That really gets my goose for some reason, and I'll probably end up
+reflexively changing it anyway.
