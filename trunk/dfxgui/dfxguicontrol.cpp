@@ -72,6 +72,8 @@ void DGControl::createAUVcontrol()
 	if (auv_control != NULL)
 		delete auv_control;
 	auv_control = new AUCarbonViewControl(getDfxGuiEditor(), getDfxGuiEditor()->getParameterListener(), ctype, getAUVP(), getCarbonControl());
+	auv_control->Bind();
+	// set the Carbon control value according to the current parameter value
 	auv_control->Update(true);
 }
 
@@ -85,9 +87,6 @@ void DGControl::setParameterID(AudioUnitParameterID inParameterID)
 		AUVPattached = true;
 		auvp = AUVParameter(getDfxGuiEditor()->GetEditAudioUnit(), inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
 		createAUVcontrol();
-		auv_control->Bind();
-		// update the Carbon control value
-		auv_control->ParameterToControl(getDfxGuiEditor()->getparameter_f(inParameterID));
 	}
 }
 
