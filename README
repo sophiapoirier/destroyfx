@@ -70,15 +70,17 @@ skidder/
         Skidder also features the possibility for extreme settings
         and MIDI control.
 
-
-The following plugins aren't released yet, but have GUIs and are
-usable. You can think of these like Alpha or Beta tests:
-
 geometer/
 
         A laboratory for waveform geometry. All sorts of crazy
         effects are possible with this thing, and sports a neat
         visual display of what's happening to your sound.
+
+monomaker/
+
+        Monomaker is just a simple stereo utility.  It can do 
+        panning and stereo merging (i.e. merging a stereo signal 
+        to mono).  The panning is equal-power / -6 dB law (sort of).
 
 
 These plugins are somewhat mature, but are lacking GUIs and thorough
@@ -133,11 +135,28 @@ can be used from the command line to build the plugin, provided that
 the Visual Studio tools are in your path. Some directories have
 Visual Studio project files, but these are no longer supported.
 
-Some plugins have plugin_mac directories with .h "prefix" files.  You
-can use these to set various #defines in your CodeWarrior projects to
-build the plugins in different ways.  This is because CW does not 
+Some of these plugins have plugin_mac directories with stuff for 
+building Audio Unit versions of our plugins.  The plugin.pbproj 
+"files" (well, they are bundles, and might appear like directories, 
+which is what they really are) are Project Builder projects.  The 
+plugin.r files are resource files for Rez (although most of our 
+plugins actually rely on prefix headers and dfxplugin.r for resource 
+building).  The plugin.exp files are the entry point files.
+
+In order to build Audio Units, you need Mac OS X 10.2 or higher and 
+you need the Apple Developer Tools and CoreAudio SDK installed.  The 
+Developer Tools CD comes with the OS X 10.2 CDs and the CoreAudio SDK 
+is available at http://connect.apple.com/   Currently, you need to be 
+an Apple Developer Connection member to download it (I don't know 
+why), but the minimum membership is free.  Project Builder (if you 
+care to use that IDE) is included with the Developer Tools.
+
+for building VST Mac versions:
+Some plugins have plugin_mac directories with *def.h "prefix" files.  
+You can use these to set various #defines in your CodeWarrior projects 
+to build the plugins in different ways.  This is because CW does not 
 allow you to specify preprocessor #defines in the project target 
-settings (this is true as of v8.1, although Metroworks say they will 
+settings (this is true as of v8.2, although Metroworks say they will 
 eventually implement this long-missing feature).  In your CW project 
 target settings, you go to the C/C++ Language tab specify the 
 appropriate file in the "prefix file" field.  This means that CW will 
