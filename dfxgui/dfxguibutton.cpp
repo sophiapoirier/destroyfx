@@ -56,7 +56,7 @@ void DGButton::draw(CGContextRef inContext, long inPortHeight)
 		long xoff = 0;
 		if (drawMomentaryState && mouseIsDown)
 			xoff = buttonImage->getWidth() / 2;
-		long yoff = GetControl32BitValue(getCarbonControl()) * (buttonImage->getHeight() / numStates);
+		long yoff = (GetControl32BitValue(carbonControl) - GetControl32BitMinimum(carbonControl)) * (buttonImage->getHeight() / numStates);
 
 		buttonImage->draw(getBounds(), inContext, inPortHeight, xoff, yoff);
 	}
@@ -69,6 +69,7 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 		return;
 
 	entryValue = newValue = GetControl32BitValue(carbonControl);
+	SInt32 min = GetControl32BitMinimum(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
 
 	setMouseIsDown(true);
@@ -84,10 +85,16 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 			entryValue = 0;	// just to make sure it's like that
 			break;
 		case kDGButtonType_incbutton:
-			newValue = (newValue + 1) % (max + 1);
+			newValue = entryValue + 1;
+			// wrap around
+			if (newValue > max)
+				newValue = min;
 			break;
 		case kDGButtonType_decbutton:
-			newValue = (newValue - 1 + max) % (max + 1);
+			newValue = entryValue - 1;
+			// wrap around
+			if (newValue < min)
+				newValue = max;
 			break;
 		case kDGButtonType_radiobutton:
 			newValue = (long)inXpos / (getBounds()->w / numStates);
@@ -95,6 +102,7 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 				newValue = numStates - 1;
 			else if (newValue < 0)
 				newValue = 0;
+			newValue += min;	// offset
 			break;
 		default:
 			break;
@@ -126,6 +134,7 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 				newValue = numStates - 1;
 			else if (newValue < 0)
 				newValue = 0;
+			newValue += GetControl32BitMinimum(carbonControl);	// offset
 		}
 		else
 		{
@@ -133,7 +142,7 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 				userProcedure(newValue, userProcData);
 		}
 		if (newValue != currentValue)
-			SetControl32BitValue(getCarbonControl(), newValue);
+			SetControl32BitValue(carbonControl, newValue);
 	}
 
 	else
@@ -146,7 +155,7 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 		{
 			if (entryValue != currentValue)
 			{
-				SetControl32BitValue(getCarbonControl(), entryValue);
+				SetControl32BitValue(carbonControl, entryValue);
 				if (userReleaseProcedure != NULL)
 					userReleaseProcedure(GetControl32BitValue(carbonControl), userReleaseProcData);
 			}

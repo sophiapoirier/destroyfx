@@ -120,11 +120,24 @@ void DGControl::initCarbonControlValueRange()
 	if (carbonControl == NULL)
 		return;
 
-	SetControl32BitMinimum(carbonControl, 0);
 	if ( isContinuousControl() )
+	{
+		SetControl32BitMinimum(carbonControl, 0);
 		SetControl32BitMaximum(carbonControl, 0x3FFFFFFF);
+	}
 	else
-		SetControl32BitMaximum(carbonControl, (SInt32) (getRange()+0.01f));
+	{
+		if ( isParameterAttached() )
+		{
+			SetControl32BitMinimum( carbonControl, (SInt32) (getAUVP().ParamInfo().minValue) );
+			SetControl32BitMaximum( carbonControl, (SInt32) (getAUVP().ParamInfo().maxValue) );
+		}
+		else
+		{
+			SetControl32BitMinimum(carbonControl, 0);
+			SetControl32BitMaximum(carbonControl, (SInt32) (getRange() + 0.001f) );
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
