@@ -2,10 +2,10 @@
 
 
 //-----------------------------------------------------------------------------
-DGControl::DGControl(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID paramID, DGRect *inWhere)
+DGControl::DGControl(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inWhere)
 :	ownerEditor(inOwnerEditor)
 {
-	auvp = AUVParameter(ownerEditor->GetEditAudioUnit(), paramID, kAudioUnitScope_Global, (AudioUnitElement)0);
+	auvp = AUVParameter(ownerEditor->GetEditAudioUnit(), inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
 	AUVPattached = true;
 	Range = auvp.ParamInfo().maxValue - auvp.ParamInfo().minValue;
 	

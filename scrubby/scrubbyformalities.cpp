@@ -76,7 +76,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < numTempoRates; i++)
 	{
-		char *tname = tempoRateTable->getDisplay(i);
+		const char *tname = tempoRateTable->getDisplay(i);
 		setparametervaluestring(kSeekRate_sync, i, tname);
 		setparametervaluestring(kSeekRateRandMin_sync, i, tname);
 	}
