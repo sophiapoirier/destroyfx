@@ -113,9 +113,9 @@ void LFO::fillLFOtables()
 
 
 //--------------------------------------------------------------------------------------
-void LFO::getShapeName(char *nameString)
+void LFO::getShapeName(char * outNameString)
 {
-	getShapeNameIndexed(iShape, nameString);
+	getShapeNameIndexed(iShape, outNameString);
 }
 
 //--------------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ const char * LFO::getShapeNameIndexed_ptr(long index)
 }
 
 //--------------------------------------------------------------------------------------
-void LFO::getShapeNameIndexed(long index, char *outNameString)
+void LFO::getShapeNameIndexed(long index, char * outNameString)
 {
 	if (outNameString == NULL)
 		return;
