@@ -25,10 +25,49 @@
 
 /* the names of the parameters */
 enum { P_BUFSIZE, P_SHAPE, 
-       P_POINTSTYLE, P_POINTPARAM, 
-       P_INTERPSTYLE, P_INTERPARAM,
+       P_POINTSTYLE, 
+       P_POINTPARAM0,
+       P_POINTPARAM1,
+       P_POINTPARAM2,
+       P_POINTPARAM3,
+       P_POINTPARAM4,
+       P_POINTPARAM5,
+       P_POINTPARAM6,
+       P_POINTPARAM7,
+       P_INTERPSTYLE,
+       P_INTERPARAM0,
+       P_INTERPARAM1,
+       P_INTERPARAM2,
+       P_INTERPARAM3,
+       P_INTERPARAM4,
+       P_INTERPARAM5,
+       P_INTERPARAM6,
+       P_INTERPARAM7,
        P_POINTOP1, P_POINTOP2, P_POINTOP3,
-       P_OPPAR1, P_OPPAR2, P_OPPAR3,
+       P_OPPAR1_0, 
+       P_OPPAR1_1, 
+       P_OPPAR1_2, 
+       P_OPPAR1_3, 
+       P_OPPAR1_4, 
+       P_OPPAR1_5, 
+       P_OPPAR1_6, 
+       P_OPPAR1_7, 
+       P_OPPAR2_0, 
+       P_OPPAR2_1, 
+       P_OPPAR2_2, 
+       P_OPPAR2_3, 
+       P_OPPAR2_4, 
+       P_OPPAR2_5, 
+       P_OPPAR2_6, 
+       P_OPPAR2_7, 
+       P_OPPAR3_0,
+       P_OPPAR3_1,
+       P_OPPAR3_2,
+       P_OPPAR3_3,
+       P_OPPAR3_4,
+       P_OPPAR3_5,
+       P_OPPAR3_6,
+       P_OPPAR3_7,
        NUM_PARAMS };
 
 
@@ -153,21 +192,21 @@ protected:
 
   /* ---------- geometer stuff ----------- */
 
-  int pointops(float pop, int npts, float op_param, int samps);
+  int pointops(float pop, int npts, float * op_param, int samps);
 
   float pointstyle;
-  float pointparam;
+  float pointparam[8];
 
   float interpstyle;
-  float interparam;
+  float interparam[8];
 
   float pointop1;
   float pointop2;
   float pointop3;
 
-  float oppar1;
-  float oppar2;
-  float oppar3;
+  float oppar1[8];
+  float oppar2[8];
+  float oppar3[8];
 
   int lastx;
   float lasty;
