@@ -23,19 +23,21 @@ public:
 	virtual ~DGTextDisplay();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
+	virtual void drawText(CGContextRef context, CGRect& inBounds, const char *inString);
 	virtual void mouseDown(Point *P, bool, bool);
 	virtual void mouseTrack(Point *P, bool, bool);
 	virtual void mouseUp(Point *P, bool, bool);
-	virtual void setTextAlignmentStyle(TextAlignmentStyle newStyle)
+
+	void setTextAlignmentStyle(TextAlignmentStyle newStyle)
 		{	alignment = newStyle;	}
-	virtual TextAlignmentStyle getTextAlignmentStyle()
+	TextAlignmentStyle getTextAlignmentStyle()
 		{	return alignment;	}
 	void setFontSize(float newSize)
 		{	fontSize = newSize;	}
 	void setFontColor(DGColor newColor)
 		{	fontColor = newColor;	}
 	
-private:
+protected:
 	DGGraphic *				BackGround;
 	displayTextProcedure	textProc;
 	void *					textProcUserData;
@@ -44,6 +46,25 @@ private:
 	DGColor					fontColor;
 	TextAlignmentStyle		alignment;
 	SInt32					last_Y;
+};
+
+
+//-----------------------------------------------------------------------------
+class DGStaticTextDisplay : public DGTextDisplay
+{
+public:
+	DGStaticTextDisplay(DfxGuiEditor*, DGRect*, DGGraphic*, char *inFontName = NULL);
+	virtual ~DGStaticTextDisplay();
+
+	virtual void draw(CGContextRef context, UInt32 portHeight);
+	virtual void mouseDown(Point *P, bool, bool) {}
+	virtual void mouseTrack(Point *P, bool, bool) {}
+	virtual void mouseUp(Point *P, bool, bool) {}
+
+	virtual void setText(const char *inNewText);
+
+protected:
+	char *displayString;
 };
 
 

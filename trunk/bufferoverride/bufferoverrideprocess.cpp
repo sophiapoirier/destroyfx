@@ -1,8 +1,6 @@
 /*------------------- by Marc Poirier  ][  March 2001 -------------------*/
 
-#ifndef __BUFFEROVERRIDE_H
 #include "bufferoverride.hpp"
-#endif
 
 
 

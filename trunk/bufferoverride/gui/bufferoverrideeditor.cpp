@@ -2,11 +2,14 @@
 #include "bufferoverride.hpp"
 
 #include "dfxguipane.h"
-#include "dfxguibutton.h"
 
 
 #define VALUE_DISPLAY_FONT	"Helvetica"
 const float VALUE_DISPLAY_FONT_SIZE = 10.0f;
+#define HELP_DISPLAY_FONT	"Helvetica"
+const float HELP_DISPLAY_FONT_SIZE = 10.0f;
+const DGColor HELP_DISPLAY_TEXT_COLOR = {201, 201, 201};
+
 
 
 //-----------------------------------------------------------------------------
@@ -279,6 +282,9 @@ BufferOverrideEditor::BufferOverrideEditor(AudioUnitCarbonView inInstance)
 		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.010f, // 10 ms
 		&parameterListener);
 
+	midilearnButton = NULL;
+	midiresetButton = NULL;
+	helpDisplay = NULL;
 //printf("creating BufferOverrideEditor\n");
 }
 
@@ -540,13 +546,13 @@ OSStatus BufferOverrideEditor::open(Float32 inXOffset, Float32 inYOffset)
 
 	// MIDI learn button
 	pos.set (kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth(), gMidiLearnButton->getHeight()/2);
-	DGButton *midilearnButton = new DGButton(this, &pos, gMidiLearnButton, NULL, 2, kIncButton);
+	midilearnButton = new DGButton(this, &pos, gMidiLearnButton, NULL, 2, kIncButton);
 	midilearnButton->setUserProcedure(midilearnBufferOverride, this);
 	mainPane->addControl(midilearnButton);
 
 	// MIDI reset button
 	pos.set (kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton->getWidth(), gMidiResetButton->getHeight()/2);
-	DGButton *midiresetButton = new DGButton(this, &pos, gMidiResetButton, NULL, 2, kPushButton);
+	midiresetButton = new DGButton(this, &pos, gMidiResetButton, NULL, 2, kPushButton);
 	midiresetButton->setUserProcedure(midiresetBufferOverride, this);
 	mainPane->addControl(midiresetButton);
 
@@ -584,6 +590,15 @@ OSStatus BufferOverrideEditor::open(Float32 inXOffset, Float32 inYOffset)
 	mainPane->addControl(divisorLFOrateLabel);
 
 
+	// the help mouseover hint thingy
+	pos.set (kHelpDisplayX, kHelpDisplayY, gBackground->getWidth(), kDisplayHeight);
+	helpDisplay = new DGStaticTextDisplay(this, &pos, gBackground, HELP_DISPLAY_FONT);
+	helpDisplay->setFontSize(HELP_DISPLAY_FONT_SIZE);
+	helpDisplay->setTextAlignmentStyle(kTextAlign_center);
+	helpDisplay->setFontColor(HELP_DISPLAY_TEXT_COLOR);
+	mainPane->addControl(helpDisplay);
+
+
 	AUListenerAddParameter(parameterListener, bufferSizeSlider, &bufferSizeTempoSyncAUP);
 	AUListenerAddParameter(parameterListener, bufferSizeDisplay, &bufferSizeTempoSyncAUP);
 	AUListenerAddParameter(parameterListener, divisorLFOrateSlider, &divisorLFOtempoSyncAUP);
@@ -596,4 +611,104 @@ OSStatus BufferOverrideEditor::open(Float32 inXOffset, Float32 inYOffset)
 //	SizeControl(mCarbonPane, width, height);	// not necessary because of EmbedControl done on pane, right?
 
 	return noErr;
+}
+
+
+// ____________________________________________________________________________
+void BufferOverrideEditor::mouseovercontrolchanged()
+{
+	// there's no point in continuing
+	if (helpDisplay == NULL)
+		return;
+
+	DGControl * currentcontrol = getCurrentControl_mouseover();
+	long currentcontrolparam = DFX_PARAM_INVALID_ID;
+	if (currentcontrol != NULL)
+	{
+		if ( currentcontrol->isAUVPattached() )
+			currentcontrolparam = currentcontrol->getParameterID();
+	}
+
+	char helpstring[256];
+	switch (currentcontrolparam)
+	{
+		case kDivisor:
+			sprintf(helpstring, "buffer divisor is the number of times each forced buffer skips & starts over");
+			break;
+		case kBufferSize_abs:
+		case kBufferSize_sync:
+			sprintf(helpstring, "forced buffer size is the length of the sound chunks that Buffer Override works with");
+			break;
+//		case kBufferDivisorHelpTag:
+#if MAC
+//			sprintf(helpstring, "left/right is buffer divisor (the number of skips in a forced buffer, hold ctrl).   up/down is forced buffer size (hold option)");
+#else
+			// shorten display text for Windows (beware larger fonts)
+//			sprintf(helpstring, "left/right is buffer divisor (number of skips in a buffer, hold ctrl).  up/down is forced buffer size (hold alt)");
+#endif
+//			break;
+		case kBufferTempoSync:
+			strcpy(helpstring, "turn tempo sync on if you want the size of the forced buffers to sync to your tempo");
+			break;
+		case kBufferInterrupt:
+			strcpy(helpstring, "turn this off for the old version 1 style of stubborn \"stuck\" buffers (if you really want that)");
+			break;
+		case kDivisorLFOrate_abs:
+		case kDivisorLFOrate_sync:
+			strcpy(helpstring, "this is the speed of the LFO that modulates the buffer divisor");
+			break;
+		case kDivisorLFOdepth:
+			strcpy(helpstring, "the depth (or intensity) of the LFO that modulates the buffer divisor (0% does nothing)");
+			break;
+		case kDivisorLFOshape:
+			strcpy(helpstring, "choose the waveform shape of the LFO that modulates the buffer divisor");
+			break;
+		case kDivisorLFOtempoSync:
+			strcpy(helpstring, "turn tempo sync on if you want the rate of the buffer divisor LFO to sync to your tempo");
+			break;
+		case kBufferLFOrate_abs:
+		case kBufferLFOrate_sync:
+			strcpy(helpstring, "this is the speed of the LFO that modulates the forced buffer size");
+			break;
+		case kBufferLFOdepth:
+			strcpy(helpstring, "the depth (or intensity) of the LFO that modulates the forced buffer size (0% does nothing)");
+			break;
+		case kBufferLFOshape:
+			strcpy(helpstring, "choose the waveform shape of the LFO that modulates the forced buffer size");
+			break;
+		case kBufferLFOtempoSync:
+			strcpy(helpstring, "turn tempo sync on if you want the rate of the forced buffer size LFO to sync to your tempo");
+			break;
+		case kSmooth:
+			strcpy(helpstring, "the portion of each minibuffer spent smoothly crossfading the previous one into the new one (prevents glitches)");
+			break;
+		case kDryWetMix:
+			strcpy(helpstring, "the relative mix of the processed sound & the clean/original sound (100% is all processed)");
+			break;
+		case kPitchbend:
+			strcpy(helpstring, "the range, in semitones, of the MIDI pitchbend wheel's effect on the buffer divisor");
+			break;
+		case kMidiMode:
+			strcpy(helpstring, "nudge: MIDI notes adjust the buffer divisor.   trigger: notes also reset the divisor to 1 when they are released");
+			break;
+		case kTempo:
+			strcpy(helpstring, "you can adjust the tempo that Buffer Override uses, or set this to \"auto\" to get the tempo from your sequencer");
+			break;
+//		case kTempoTextEdit:
+//			strcpy(helpstring, "you can type in the tempo that Buffer Override uses, or set this to \"auto\" to get the tempo from your sequencer");
+//			break;
+
+		default:
+			if (currentcontrol == NULL)
+				strcpy(helpstring, " ");
+			else if (currentcontrol == midilearnButton)
+				strcpy(helpstring, "activate or deactivate learn mode for assigning MIDI CCs to control Buffer Override's parameters");
+			else if (currentcontrol == midiresetButton)
+				strcpy(helpstring, "press this button to erase all of your CC assignments");
+			else
+				strcpy(helpstring, " ");
+			break;
+	}
+
+	helpDisplay->setText(helpstring);
 }

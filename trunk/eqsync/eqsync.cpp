@@ -1,13 +1,9 @@
 /*------------------ by Marc Poirier  ][  January 2001 -----------------*/
 
-#ifndef __EQSYNC_H
 #include "eqsync.hpp"
-#endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __EQSYNCEDITOR_H
 	#include "eqsynceditor.hpp"
-	#endif
 #endif
 
 

@@ -1,8 +1,6 @@
 /*------------------- by Marc Poirier  ][  March 2001 -------------------*/
 
-#ifndef __BUFFEROVERRIDE_H
 #include "bufferoverride.hpp"
-#endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#include "bufferoverrideeditor.h"
