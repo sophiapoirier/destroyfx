@@ -162,6 +162,16 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRe
 		else if (alignment == kDGTextAlign_right)
 			bounds.origin.x += bounds.size.width - pt.x;
 	}
+
+	// a hack for this font and CGContextShowText
+	if (isSnootPixel10)
+	{
+		if (alignment == kDGTextAlign_left)
+			bounds.origin.x -= 1.0f;
+		else if (alignment == kDGTextAlign_right)
+			bounds.origin.x += 2.0f;
+	}
+
 	CGContextSetTextDrawingMode(inContext, kCGTextFill);
 	CGContextShowTextAtPoint(inContext, bounds.origin.x, bounds.origin.y+2.0f, inText, strlen(inText));
 

@@ -50,45 +50,27 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-// constants & macros
+// constants
 
-#define SEEK_RANGE_MIN 0.3f
-#define SEEK_RANGE_MAX 6000.0f
-#define seekRangeScaled(A)   (paramRangeSquaredScaled((A), SEEK_RANGE_MIN, SEEK_RANGE_MAX))
-#define seekRangeUnscaled(A)   (paramRangeSquaredUnscaled((A), SEEK_RANGE_MIN, SEEK_RANGE_MAX))
+const float SEEK_RANGE_MIN = 0.3f;
+const float SEEK_RANGE_MAX = 6000.0f;
 
-#define SEEK_RATE_MIN 0.3f
-#define SEEK_RATE_MAX 810.0f
-#define seekRateScaled(A)   (paramRangeCubedScaled((A), SEEK_RATE_MIN, SEEK_RATE_MAX))
-#define seekRateUnscaled(A)   (paramRangeCubedUnscaled((A), SEEK_RATE_MIN, SEEK_RATE_MAX))
+const float SEEK_RATE_MIN = 0.3f;
+const float SEEK_RATE_MAX = 810.0f;
 
-#define SEEK_DUR_MIN 0.03f
-#define SEEK_DUR_MAX 1.0f
-#define seekDurScaled(A)   (paramRangeScaled((A), SEEK_DUR_MIN, SEEK_DUR_MAX))
-#define seekDurUnscaled(A)   (paramRangeUnscaled((A), SEEK_DUR_MIN, SEEK_DUR_MAX))
-
-#define OCTAVE_MIN (-5)
-#define OCTAVE_MAX 7
-#define octaveMinScaled(f)   paramRangeIntScaled(f, OCTAVE_MIN, 0)
-#define octaveMaxScaled(f)   paramRangeIntScaled(f, 0, OCTAVE_MAX)
-#define octaveMinUnscaled(i)   paramRangeIntUnscaled(i, OCTAVE_MIN, 0)
-#define octaveMaxUnscaled(i)   paramRangeIntUnscaled(i, 0, OCTAVE_MAX)
-
-#define TEMPO_MIN 39.0f
-#define TEMPO_MAX 480.0f
-#define tempoScaled(A)   paramRangeScaled((A), TEMPO_MIN, TEMPO_MAX)
-#define tempoUnscaled(A)   paramRangeUnscaled((A), TEMPO_MIN, TEMPO_MAX)
+const long OCTAVE_MIN = -5;
+const long OCTAVE_MAX = 7;
 
 // the number of semitones in an octave
-#define NUM_PITCH_STEPS 12
+const long NUM_PITCH_STEPS = 12;
 
 // this is a necessary value for calculating the pitches related to the playback speeds
 const double LN2TO1_12TH = log(pow(2.0, 1.0/12.0));
-//#define LN2TO1_12TH   0.05776226504666215
+//const double LN2TO1_12TH = 0.05776226504666215;
 
 #define USE_LINEAR_ACCELERATION 0
 
-#define NUM_PRESETS 16
+const long NUM_PRESETS = 16;
 
 enum {
 	kSpeedMode_robot,

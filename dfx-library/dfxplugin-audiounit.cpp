@@ -171,8 +171,13 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 //		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
 //		MIDI controls and/or NRPN's to AudioUnit scopes/elements/parameters.
 		case kAudioUnitProperty_MIDIControlMapping:
-			outDataSize = sizeof(AudioUnitMIDIControlMapping*);
-			outWritable = false;
+			if (inScope == kAudioUnitScope_Global)
+			{
+				outDataSize = sizeof(AudioUnitMIDIControlMapping*);
+				outWritable = false;
+			}
+			else
+				result = kAudioUnitErr_InvalidScope;
 			break;
 	#endif
 
@@ -246,7 +251,9 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 	{
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
-			if (outData == NULL)
+			if (inScope != kAudioUnitScope_Global)
+				result = kAudioUnitErr_InvalidScope;
+			else if (outData == NULL)
 				result = paramErr;
 			else
 			{
@@ -278,7 +285,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 			break;
 
 		// get parameter values (current, min, max, etc.) using specific variable types
-		// XXX finish implementing all types and items
+		// XXX finish implementing all items
 		case kDfxPluginProperty_ParameterValue:
 			if (outData == NULL)
 				result = paramErr;
@@ -472,7 +479,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 			break;
 
 		// set parameter values (current, min, max, etc.) using specific variable types
-		// XXX finish implementing all types and items
+		// XXX finish implementing all items
 		case kDfxPluginProperty_ParameterValue:
 			if (inData == NULL)
 				result = paramErr;
@@ -703,19 +710,23 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		return kAudioUnitErr_InvalidParameter;
 
 	getparametername(inParameterID, outParameterInfo.name);
+	outParameterInfo.cfNameString = getparametercfname(inParameterID);
 	outParameterInfo.minValue = getparametermin_f(inParameterID);
 	outParameterInfo.maxValue = getparametermax_f(inParameterID);
 	outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
-	// if the parameter is hidden, then indicate that it's not readable or writable...
-	if (getparameterattributes(inParameterID) & kDfxParamAttribute_hidden)
+	// check if the parameter is used or not (stupid VST workaround)
+	if (getparameterattributes(inParameterID) & kDfxParamAttribute_unused)
 		outParameterInfo.flags = 0;
-	else if (getparameterattributes(inParameterID) & kDfxParamAttribute_unused)
 //		return kAudioUnitErr_InvalidParameter;	// XXX ey?
+	// if the parameter is hidden, then indicate that it's not readable or writable...
+	else if (getparameterattributes(inParameterID) & kDfxParamAttribute_hidden)
 		outParameterInfo.flags = 0;
 	// ...otherwise all parameters are readable and writable
 	else
 		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
 								| kAudioUnitParameterFlag_IsWritable;
+	if (outParameterInfo.cfNameString != NULL)
+		outParameterInfo.flags |= kAudioUnitParameterFlag_HasCFNameString;
 
 	// the complicated part:  getting the unit type, 
 	// but easy if we use value strings for value display

@@ -385,6 +385,11 @@ public:
 
 	// get a copy of the text of the parameter name
 	void getname(char * outText);
+#ifdef TARGET_API_AUDIOUNIT
+	// get a pointer to the CFString version of the parameter name
+	CFStringRef getcfname()
+		{	return cfname;	}
+#endif
 
 	// set/get the variable type of the parameter values
 	void setvaluetype(DfxParamValueType newType);
@@ -426,7 +431,7 @@ public:
 
 
 
-protected:
+private:
 
 	// when this is enabled, out of range values are "bounced" into range
 	bool enforceValueLimits;
@@ -444,6 +449,8 @@ protected:
 	unsigned long attributes;	// a bit-mask of various parameter attributes
 
 	#ifdef TARGET_API_AUDIOUNIT
+		// CoreFoundation string version of the parameter's name
+		CFStringRef cfname;
 		// array of CoreFoundation-style versions of the indexed value strings
 		CFStringRef * valueCFStrings;
 	#endif
