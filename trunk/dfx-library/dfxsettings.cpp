@@ -763,7 +763,7 @@ void DfxSettings::assignParam(long tag, long eventType, long eventChannel, long 
 					unassignParam(i);
 			}
 
-			// note a note, so it's simple:  
+			// not a note, so it's simple:  
 			// just delete the assignment if the event number matches
 			else if (pa->eventNum == eventNum)
 				unassignParam(i);
@@ -821,6 +821,10 @@ bool DfxSettings::isLearner(long tag)
 void DfxSettings::setLearner(long tag, long eventBehaviourFlags, 
 							long data1, long data2, float fdata1, float fdata2)
 {
+	// return if what we got is not a valid parameter index
+	if (paramTagIsValid(tag) == false)
+		return;
+
 	// cancel note range assignment if we're switching to a new learner
 	if (learner != tag)
 		noteRangeHalfwayDone = false;
