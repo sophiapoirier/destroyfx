@@ -34,7 +34,8 @@ DfxPlugin::DfxPlugin(
 // setup the constructors of the inherited base classes, for the appropriate API
 #ifdef TARGET_API_AUDIOUNIT
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		TARGET_API_BASE_CLASS(inInstance, UInt32 inNumInputs, UInt32 inNumOutputs, UInt32 inNumGroups = 0), 
+//		TARGET_API_BASE_CLASS(inInstance, UInt32 inNumInputs, UInt32 inNumOutputs, UInt32 inNumGroups = 0), 
+		TARGET_API_BASE_CLASS(inInstance, 0, 1), 
 	#else
 		TARGET_API_BASE_CLASS(inInstance), 
 	#endif
@@ -823,12 +824,16 @@ void DfxPlugin::updatenumchannels()
 		numInputs = getnuminputs();
 		if (inputsP != NULL)
 			free(inputsP);
-		inputsP = (float**) malloc(numInputs * sizeof(float*));
+		inputsP = NULL;
+		if (numInputs > 0)
+			inputsP = (float**) malloc(numInputs * sizeof(float*));
 
 		numOutputs = getnumoutputs();
 		if (outputsP != NULL)
 			free(outputsP);
-		outputsP = (float**) malloc(numOutputs * sizeof(float*));
+		outputsP = NULL;
+		if (numOutputs > 0)
+			outputsP = (float**) malloc(numOutputs * sizeof(float*));
 	#endif
 }
 
@@ -848,7 +853,10 @@ void DfxPlugin::getpluginname(char * outText)
 unsigned long DfxPlugin::getnuminputs()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	return GetInput(0)->GetStreamFormat().mChannelsPerFrame;
+	if ( Inputs().GetNumberOfElements() > 0 )
+		return GetInput(0)->GetStreamFormat().mChannelsPerFrame;
+	else
+		return 0;
 #endif
 #ifdef TARGET_API_VST
 	return numInputs;
@@ -860,7 +868,10 @@ unsigned long DfxPlugin::getnuminputs()
 unsigned long DfxPlugin::getnumoutputs()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	return GetOutput(0)->GetStreamFormat().mChannelsPerFrame;
+	if ( Outputs().GetNumberOfElements() > 0 )
+		return GetOutput(0)->GetStreamFormat().mChannelsPerFrame;
+	else
+		return 0;
 #endif
 #ifdef TARGET_API_VST
 	return numOutputs;
@@ -1040,6 +1051,7 @@ void DfxPlugin::processtimeinfo()
 	status = CallHostBeatAndTempo(&beat, &tempo);
 	if (status == noErr)
 	{
+//fprintf(stderr, "tempo = %.2f\n, beat = %.2f\n", tempo, beat);
 		timeinfo.tempoIsValid = true;
 		timeinfo.tempo = tempo;
 		timeinfo.beatPosIsValid = true;
@@ -1047,6 +1059,7 @@ void DfxPlugin::processtimeinfo()
 
 		hostCanDoTempo = true;
 	}
+//else fprintf("CallHostBeatAndTempo() error %ld\n", status);
 
 	// the number of samples until the next beat from the start sample of the current rendering buffer
 //	UInt32 sampleOffsetToNextBeat;	// XXX should I just send NULL since we don't use this?
@@ -1062,12 +1075,13 @@ void DfxPlugin::processtimeinfo()
 		// get the song beat position of the beginning of the current measure
 		timeinfo.barPosIsValid = true;
 		timeinfo.barPos = currentMeasureDownBeat;
-
+//fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.1f\n", timeSigNumerator, timeSigDenominator, currentMeasureDownBeat);
 		// get the numerator of the time signature - this is the number of beats per measure
 		timeinfo.timeSigIsValid = true;
 		timeinfo.numerator = (double) timeSigNumerator;
 		timeinfo.denominator = (double) timeSigDenominator;
 	}
+//else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 
 /*
 	Boolean isPlaying;
