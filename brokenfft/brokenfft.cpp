@@ -39,6 +39,8 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(echolow, P_ECHOLOW, "eo >", 0.0f, "?");
   FPARAM(echohi, P_ECHOHI, "eo <", 1.0f, "?");
   FPARAM(postrot, P_POSTROT, "postrot", 0.5f, "?");
+  FPARAM(moments, P_MOMENTS, "moments", 0.0f, "?");
+  FPARAM(bride, P_BRIDE, "bride", 1.0f, "?");
   
 
   long maxframe = 0;
@@ -196,13 +198,14 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
   case P_POSTROT:
     if (postrot > 0.5f) {
       sprintf(text, "+%d", 
-	      (int)((postrot - 0.5f) * 2.0f * MKBUFSIZE(bufsizep)));
+	      (int)((postrot - 0.5f) * 1.0f * MKBUFSIZE(bufsizep)));
     } else if (postrot == 0.5f) {
       sprintf(text, "*NO*");
     } else {
       sprintf(text, "-%d", 
-	      (int)((0.5f - postrot) * 2.0f * MKBUFSIZE(bufsizep)));
+	      (int)((0.5f - postrot) * 1.0f * MKBUFSIZE(bufsizep)));
     }
+    break;
   default:
     float2string(getParameter(index), text);
     break;
@@ -318,16 +321,16 @@ void PLUGIN::fftops(long samples) {
     }
 
     double newloudness = loudness;
-    for(long i = stopat - 1; i < samples; i++) {
-      newloudness -= ampl[i].a;
-      fftr[ampl[i].i] = 0.0f;
-      ffti[ampl[i].i] = 0.0f;
+    for(long iw = stopat - 1; iw < samples; iw++) {
+      newloudness -= ampl[iw].a;
+      fftr[ampl[iw].i] = 0.0f;
+      ffti[ampl[iw].i] = 0.0f;
     }
 
     /* boost what remains. */
     double boostby = loudness / newloudness;
-    for(long i = 0; i < samples; i ++) {
-      fftr[i] *= boostby;
+    for(long ie = 0; ie < samples; ie ++) {
+      fftr[ie] *= boostby;
       /* XXX ffti? */
     }
 
@@ -335,9 +338,10 @@ void PLUGIN::fftops(long samples) {
 
   /* EO FX */
 
-  for(long i = 0; i < samples; i ++) {
-    echor[echoctr] = fftr[i];
-    echoc[echoctr++] = ffti[i];
+
+  for(long iy = 0; iy < samples; iy ++) {
+    echor[echoctr] = fftr[iy];
+    echoc[echoctr++] = ffti[iy];
     echoctr %= MAXECHO;
 
     /* you want somma this magic?? */
@@ -357,18 +361,69 @@ void PLUGIN::fftops(long samples) {
 	echor[last] += echor[xx] * echofb;
       }
 
-      if (i >= (int)((echolow * echolow * echolow) * samples) && 
-	  i <= (int)((echohi * echohi * echohi) * samples)) {
-	fftr[i] = (1.0f - echomix) * fftr[i] + echomix * echor[xx];
+      if (iy >= (int)((echolow * echolow * echolow) * samples) && 
+	  iy <= (int)((echohi * echohi * echohi) * samples)) {
+	fftr[iy] = (1.0f - echomix) * fftr[iy] + echomix * echor[xx];
 	
-	ffti[i] = (1.0f - echomix) * ffti[i] + echomix * echoc[xx];
+	ffti[iy] = (1.0f - echomix) * ffti[iy] + echomix * echoc[xx];
       }
     }
   }
 
+  /* bufferride */
+  if (bride < 1.0f) {
+    int smd = 0;
+    int md = bride * samples;
+    for(int ss = 0; ss < samples; ss ++) {
+      fftr[ss] = fftr[smd];
+      ffti[ss] = ffti[smd];
+      smd++;
+      if (smd > md) smd = 0;
+    }
+  }
+
+  /* first moment */
+  /* XXX support later moments (and do what with them??) */
+  if (moments > 0.0f) {
+    float mtr = 0.0f;
+    float mti = 0.0f;
+
+    float magr = 0.0f;
+    float magi = 0.0f;
+
+    for(int ih=0; ih < samples; ih ++) {
+      float pwr = fftr[ih] * ih;
+      float pwi = ffti[ih] * ih;
+      
+      mtr += pwr;
+      mti += pwi;
+
+      magr += fftr[ih];
+      magi += ffti[ih];
+    }
+
+    mtr /= magr;
+    mti /= magi;
+
+    for(int zc = 0; zc < samples; zc++)
+      fftr[zc] = ffti[zc] = 0.0f;
+    
+    /* stick it all in one spot. */
+    
+    int mtrx = abs(mtr);
+    int mtix = abs(mti);
+
+    fftr[mtrx % samples] = magr;
+    ffti[mtix % samples] = magi;
+
+  }
+
+
+  /* XXX I changed 2.0f to 1.0f -- old range was boring... */
+
   /* post-processing rotate-up */
-  if (postrot > 0.5) {
-    int rotn = (postrot - 0.5f) * 2.0f * samples;
+  if (postrot > 0.5f) {
+    int rotn = (postrot - 0.5f) * 1.0f * samples;
     for(int v = samples - 1; v >= 0; v --) {
       if (v < rotn) fftr[v] = ffti[v] = 0.0f;
       else { 
@@ -376,8 +431,8 @@ void PLUGIN::fftops(long samples) {
 	ffti[v] = ffti[v - rotn];
       }
     }
-  } else if (postrot < 0.5) {
-    int rotn = (int)((0.5f - postrot) * 2.0f * MKBUFSIZE(bufsizep));
+  } else if (postrot < 0.5f) {
+    int rotn = (int)((0.5f - postrot) * 1.0f * MKBUFSIZE(bufsizep));
     for(int v = 0; v < samples; v++) {
       if (v > (samples - rotn)) fftr[v] = ffti[v] = 0.0f;
       else {
@@ -386,7 +441,7 @@ void PLUGIN::fftops(long samples) {
       }
     }
   }
-      
+
 }
 
 /* XXX I'm probably copying more times than I need to!
