@@ -63,15 +63,15 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   #if TARGET_API_AUDIOUNIT
     // XXX is there a better way to do this?
     update_preset(0);	// make host see that current preset is 0
+  #endif
 
-  #elif TARGET_API_VST
+  #if TARGET_API_VST
     #if TARGET_PLUGIN_HAS_GUI
       editor = new TransverbEditor(this);
     #endif
     #if TARGET_PLUGIN_USES_DSPCORE
       DFX_INIT_CORE(TransverbDSP);	// we need to manage DSP cores manually in VST
     #endif
-
   #endif
 
 }

@@ -178,6 +178,13 @@ SUPPORT_AU_VERSION_1
 #endif
 
 
+#if WIN32
+/* turn off warnings about default but no cases in switch, unknown pragma, etc. */
+   #pragma warning( disable : 4065 57 4200 4244 4068 )
+   #include <windows.h>
+#endif
+
+
 
 // handle base header includes and class names for the target plugin API
 
@@ -611,6 +618,7 @@ protected:
 
 	#if TARGET_API_VST
 		bool latencychanged;
+		bool isinitialized;
 	#endif
 
 private:
@@ -935,17 +943,9 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// XXX what else could be done aside from void?
 		#define DFX_CORE_ENTRY(PluginCoreClass)   void
-		#define DFX_INIT_CORE(TransverbDSP)   for (long i=0; i < getnumoutputs(); i++)   dspcores[i] = new TransverbDSP(this);
+		#define DFX_INIT_CORE(PluginCoreClass)   for (long i=0; i < getnumoutputs(); i++)   dspcores[i] = new PluginCoreClass(this);
 	#endif
 
-#endif
-
-
-
-#if WIN32
-/* turn off warnings about default but no cases in switch, unknown pragma, etc. */
-   #pragma warning( disable : 4065 57 4200 4244 4068 )
-   #include <windows.h>
 #endif
 
 

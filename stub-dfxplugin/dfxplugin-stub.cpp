@@ -116,6 +116,7 @@ DfxStub::~DfxStub()
 #if TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
+	// (only necessary if your plugin overrides cleanup and does its own stuff)
 	do_cleanup();
 #endif
 }
