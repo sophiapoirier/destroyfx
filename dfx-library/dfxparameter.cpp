@@ -1,22 +1,15 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
-This is our parameter shit.
+This is our our class for doing all kinds of fancy plugin parameter stuff.
 written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 
-#ifndef __DFXPARAMETER_H
 #include "dfxparameter.h"
-#endif
 
 #include <stdlib.h>	// for malloc and free and RAND_MAX
 #include <string.h>	// for strcpy
 #include <math.h>
-
-#if WIN32
-/* turn off warnings about default but no cases in switch, unknown pragma, etc. */
-   #pragma warning( disable : 4065 57 4200 4244 4068 )
-#endif
 
 
 // these are twiddly values for when casting with decimal types

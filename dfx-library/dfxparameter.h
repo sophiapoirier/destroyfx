@@ -165,9 +165,7 @@ for the value strings.
 #define __DFXPARAMETER_H
 
 
-#ifndef __DFXDEFINES_H
 #include "dfxdefines.h"
-#endif
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include <CoreFoundation/CFString.h>	// for CFString stuff

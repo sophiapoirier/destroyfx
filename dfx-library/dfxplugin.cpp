@@ -4,17 +4,12 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
-#endif
-
 
 #include <time.h>	// for time(), which is used to feed srand()
 
 #ifdef TARGET_API_AUDIOUNIT
-	#ifndef __AudioUnitUtilities_h__
 	#include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
-	#endif
 #endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
@@ -28,12 +23,8 @@ written by Marc Poirier, October 2002
 
 #if WIN32
 	// for ShellExecute
-	#ifndef __shlobj
 	#include <shlobj.h>
-	#endif
-	#ifndef __shellapi
 	#include <shellapi.h>
-	#endif
 #endif
 
 

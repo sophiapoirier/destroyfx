@@ -143,9 +143,7 @@ SUPPORT_AU_VERSION_1
 #define __DFXPLUGIN_H
 
 
-#ifndef __DFXDEFINES_H
 #include "dfxdefines.h"
-#endif
 
 
 // should be pretty much implied:  
@@ -206,29 +204,14 @@ SUPPORT_AU_VERSION_1
 
 // include our crucial shits
 
-#ifndef __DFXMATH_H
 #include "dfxmath.h"
-#endif
-
-#ifndef __DFXPARAMETER_H
 #include "dfxparameter.h"
-#endif
 
-#ifndef __DFX_TEMPORATETABLE_H
 #include "temporatetable.h"
-#endif
-
 
 #if TARGET_PLUGIN_USES_MIDI
-
-	#ifndef __DFXMIDI_H
 	#include "dfxmidi.h"
-	#endif
-
-	#ifndef __DFXSETTINGS_H
 	#include "dfxsettings.h"
-	#endif
-
 #endif
 
 
