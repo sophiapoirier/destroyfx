@@ -49,11 +49,12 @@ class DfxPluginCore;
 #ifdef WIN32
 #if WIN32
 /* turn off warnings about default but no cases in switch, unknown pragma, etc. */
-   #pragma warning( disable : 4065 57 4200 4244 4068 )
+   #pragma warning( disable : 4065 57 4200 4244 4068 4326 )
    #include <windows.h>
 #endif
 #endif
 
 
 #endif
+
 /* __DFXDEFINES_H */

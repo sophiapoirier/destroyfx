@@ -17,16 +17,16 @@ int useCount = 0;
 
 GuitestEditor::GuitestEditor (AudioEffect *effect) : AEffEditor (effect) {
   effect->setEditor (this);
-  g_pD3D = 0;
-  g_pd3dDevice = 0;
+  pD3D = 0;
+  pd3dDevice = 0;
 }
 
 GuitestEditor::~GuitestEditor () {
-  if( g_pd3dDevice != NULL) 
-    g_pd3dDevice->Release();
+  if( pd3dDevice != NULL) 
+    pd3dDevice->Release();
 
-  if( g_pD3D != NULL)
-    g_pD3D->Release();
+  if( pD3D != NULL)
+    pD3D->Release();
 }
 
 
@@ -94,23 +94,23 @@ long GuitestEditor::open (void *ptr) {
   D3DXMatrixOrthoLH(&Ortho2D, EDIT_WIDTH, EDIT_HEIGHT, 0.0f, 1.0f);
   D3DXMatrixIdentity(&Identity);
 
-  g_pd3dDevice->SetTransform(D3DTS_PROJECTION, &Ortho2D);
-  g_pd3dDevice->SetTransform(D3DTS_WORLD, &Identity);
-  g_pd3dDevice->SetTransform(D3DTS_VIEW, &Identity);
+  pd3dDevice->SetTransform(D3DTS_PROJECTION, &Ortho2D);
+  pd3dDevice->SetTransform(D3DTS_WORLD, &Identity);
+  pd3dDevice->SetTransform(D3DTS_VIEW, &Identity);
 
-  g_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+  pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-  ggg = new Graphic(g_pd3dDevice, "c:\\temp\\dfx.png");
+  ggg = new Graphic(pd3dDevice, "dfximage");
 
   /* turn on alpha blending */
   // Turn off culling, so we see the front and back of primitives
-  // DXTEST( g_lpD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
+  // DXTEST( lpD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
 
 
-  g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE,  TRUE);
-  g_pd3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-  g_pd3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-  g_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);  
+  pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE,  TRUE);
+  pd3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+  pd3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+  pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);  
 
   return true;
 }
@@ -154,25 +154,25 @@ void GuitestEditor::postUpdate() {
 
 void GuitestEditor::redraw() {
 
-    if( NULL == g_pd3dDevice )
+    if( NULL == pd3dDevice )
         return;
 
     // Clear the backbuffer to a green color
-    g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET, 
+    pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET, 
 			 D3DCOLOR_XRGB(0,50,0), 1.0f, 0 );
 
     // Begin the scene
-    g_pd3dDevice->BeginScene();
+    pd3dDevice->BeginScene();
 
     // Rendering of scene objects can happen here
 
     Render2D(); 
 
     // End the scene
-    g_pd3dDevice->EndScene();
+    pd3dDevice->EndScene();
 
     // Present the backbuffer contents to the display
-    g_pd3dDevice->Present( NULL, NULL, NULL, NULL );
+    pd3dDevice->Present( NULL, NULL, NULL, NULL );
 }
 
 void GuitestEditor::Render2D () {
@@ -220,13 +220,12 @@ LONG WINAPI GuitestEditor::WindowProc (HWND hwnd, UINT message, WPARAM wParam,
 HRESULT GuitestEditor:: InitD3D( HWND hWnd )
 {
     // Create the D3D object, which is needed to create the D3DDevice.
-    if( NULL == ( g_pD3D = Direct3DCreate8( D3D_SDK_VERSION ) ) )
+    if( NULL == ( pD3D = Direct3DCreate8( D3D_SDK_VERSION ) ) )
       return E_FAIL;
 
     // Get the current desktop display mode
     D3DDISPLAYMODE d3ddm;
-    if( FAILED( g_pD3D->GetAdapterDisplayMode( D3DADAPTER_DEFAULT, &d3ddm ) ) )
-        return E_FAIL;
+    DXTEST( pD3D->GetAdapterDisplayMode( D3DADAPTER_DEFAULT, &d3ddm ) );
 
     // Set up the structure used to create the D3DDevice. Most parameters are
     // zeroed out. We set Windowed to TRUE, since we want to do D3D in a
@@ -250,10 +249,9 @@ HRESULT GuitestEditor:: InitD3D( HWND hWnd )
     // specified since we know it will work on all cards. On cards that support 
     // hardware vertex processing, though, we would see a big performance gain 
     // by specifying hardware vertex processing.
-    if( FAILED( g_pD3D->CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
+    if( FAILED( pD3D->CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
                                       D3DCREATE_SOFTWARE_VERTEXPROCESSING,
-                                      &d3dpp, &g_pd3dDevice ) ) )
-    {
+                                      &d3dpp, &pd3dDevice ) ) ) {
         return E_FAIL;
     }
 

@@ -5,6 +5,7 @@
 #define __DFX_BROKENFFT_H
 
 #include <audioeffectx.h>
+#include "rfftw.h"
 
 #ifdef WIN32
 /* turn off warnings about default but no cases in switch, etc. */
@@ -26,7 +27,7 @@
 #define NUM_PROGRAMS 16
 
 /* the names of the parameters */
-enum { P_BUFSIZE, P_SHAPE, 
+enum { P_BUFSIZE, P_SHAPE, P_METHOD,
        P_DESTRUCT,
        P_PERTURB,
        P_QUANT,
@@ -109,7 +110,7 @@ public:
   virtual void resume();
   virtual long fxIdle();
 
-  virtual void processw(float * in, float * out, long samples);
+  virtual void processw(float * in, float * out);
 
   void normalize(long, float);
 
@@ -210,7 +211,7 @@ protected:
 
   float echomix, echotime;
 
-  int amplhold, amplsamples, stopat;
+  int amplhold, stopat;
   amplentry * ampl;
   float * echor;
   float * echoc;
@@ -219,8 +220,6 @@ protected:
 
   /* fft work area */
   float * tmp, * oot, * fftr, * ffti;
-  int buffersamples; /* size of work area */
-
 
   float echomodw, echomodf;
   float echolow, echohi;
@@ -240,6 +239,11 @@ protected:
   float norm;
 
   float harm;
+
+  float method;
+
+  rfftw_plan plan;
+  rfftw_plan rplan;
 
 };
 
