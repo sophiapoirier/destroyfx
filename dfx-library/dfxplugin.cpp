@@ -41,11 +41,11 @@ DfxPlugin::DfxPlugin(
 	#else
 		: TARGET_API_BASE_CLASS(inInstance), 
 	#endif
+#endif
 
-#elif TARGET_API_VST
+#if TARGET_API_VST
 	: TARGET_API_BASE_CLASS(inInstance, numPresets, numParameters), 
 	numInputs(NUM_INPUTS), numOutputs(NUM_OUTPUTS), 
-
 #endif
 // end API-specific base constructors
 
@@ -61,7 +61,6 @@ DfxPlugin::DfxPlugin(
 		dfxsettings = NULL;
 	#endif
 
-	audioBuffersAllocated = false;
 	updatesamplerate();	// XXX have it set to something here?
 	sampleratechanged = true;
 	hostCanDoTempo = false;	// until proven otherwise
@@ -86,7 +85,6 @@ DfxPlugin::DfxPlugin(
 	presets = new DfxPreset[numPresets];
 	for (int i=0; i < numPresets; i++)
 		presets[i].PostConstructor(numParameters);	// allocate for parameter values
-//	setpresetname(0, PLUGIN_NAME_STRING);	// default name for the default preset - XXX ?
 
 	#if TARGET_PLUGIN_USES_MIDI
 		midistuff = new DfxMidi;
@@ -1007,7 +1005,6 @@ void DfxPlugin::processtimeinfo()
 		Float64 tempo, beat;
 		if ( mHostCallbackInfo.beatAndTempoProc(mHostCallbackInfo.hostUserData, &beat, &tempo) == noErr )
 		{
-beat /= 192.0;	// XXX Logic workaround
 			timeinfo.tempoIsValid = true;
 			timeinfo.tempo = tempo;
 			timeinfo.beatPosIsValid = true;

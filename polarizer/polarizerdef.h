@@ -1,5 +1,4 @@
 #define PLUGIN_NAME_STRING	"Polarizer"
-#define PLUGIN_DOUBLE_NAME_STRING	"Destroy FX: Polarizer"
 #define PLUGIN_ID	'pola'
 #define PLUGIN_VERSION	0x00010100
 #define PLUGIN_ENTRY_POINT	"PolarizerEntry"
@@ -11,7 +10,6 @@
 #endif
 
 // only necessary if using a custom GUI
-#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Polarizer editor"
 #define PLUGIN_EDITOR_ENTRY_POINT	"PolarizerEditorEntry"
 
 // optional
