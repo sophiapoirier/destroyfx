@@ -17,9 +17,11 @@ public:
 
   virtual void draw(CGContextRef inContext, long inPortHeight);
 
-  virtual void mouseDown(float, float, unsigned long, unsigned long) { }
-  virtual void mouseTrack(float, float, unsigned long, unsigned long) { }
-  virtual void mouseUp(float, float, unsigned long) { }
+  virtual void mouseDown(float, float, unsigned long, DGKeyModifiers) { }
+  virtual void mouseTrack(float, float, unsigned long, DGKeyModifiers) { }
+  virtual void mouseUp(float, float, DGKeyModifiers) { }
+  virtual bool mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+    { return false; }
 
   void setDisplayItem(long inHelpCategory, long inItemNum);
 
