@@ -87,12 +87,12 @@ long DfxPlugin::getTailSize()
 //------------------------------------------------------------------------
 bool DfxPlugin::getInputProperties(long index, VstPinProperties* properties)
 {
-	if ( (index >= 0) && (index < numInputs) )
+	if ( (index >= 0) && ((unsigned long)index < getnuminputs()) )
 	{
 		sprintf(properties->label, "%s input %ld", PLUGIN_NAME_STRING, index+1);
 		sprintf(properties->shortLabel, "in %ld", index+1);
 		properties->flags = kVstPinIsActive;
-		if (numInputs == 2)
+		if (getnuminputs() == 2)
 			properties->flags |= kVstPinIsStereo;
 		return true;
 	}
@@ -102,12 +102,12 @@ bool DfxPlugin::getInputProperties(long index, VstPinProperties* properties)
 //------------------------------------------------------------------------
 bool DfxPlugin::getOutputProperties(long index, VstPinProperties *properties)
 {
-	if ( (index >= 0) && (index < numOutputs) )
+	if ( (index >= 0) && ((unsigned long)index < getnumoutputs()) )
 	{
 		sprintf (properties->label, "%s output %ld", PLUGIN_NAME_STRING, index+1);
 		sprintf (properties->shortLabel, "out %ld", index+1);
 		properties->flags = kVstPinIsActive;
-		if (numOutputs == 2)
+		if (getnumoutputs() == 2)
 			properties->flags |= kVstPinIsStereo;
 		return true;
 	}
