@@ -19,26 +19,26 @@ const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = {
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5, "samples");
-  FPARAM(shape, P_SHAPE, "shape", 0.0, "");
+  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5f, "samples");
+  FPARAM(shape, P_SHAPE, "shape", 0.0f, "");
 
-  FPARAM(destruct, P_DESTRUCT, "very special", 1.0, "?");
-  FPARAM(perturb, P_PERTURB, "perturb", 0.0, "?");
-  FPARAM(quant, P_QUANT, "operation q", 1.0, "?");
-  FPARAM(rotate, P_ROTATE, "rotate", 0.0, "?");
-  FPARAM(binquant, P_BINQUANT, "operation bq", 0.0, "?");
-  FPARAM(compress, P_COMPRESS, "comp???", 1.0, "?");
-  FPARAM(spike, P_SPIKE, "spike", 1.0, "?");
-  FPARAM(makeupgain, P_MUG, "M.U.G.", 0.0, "?");
-  FPARAM(spikehold, P_SPIKEHOLD, "spikehold", 0.0, "?");
-  FPARAM(echomix, P_ECHOMIX, "eo mix", 0.0, "?");
-  FPARAM(echotime, P_ECHOTIME, "eo time", 0.5, "?");
-  FPARAM(echomodf, P_ECHOMODF, "eo mod f", 2.0 * pi, "?");
-  FPARAM(echomodw, P_ECHOMODW, "eo mod w", 0.0, "?");
-  FPARAM(echofb, P_ECHOFB, "eo fbx", 0.50, "?");
-  FPARAM(echolow, P_ECHOLOW, "eo >", 0.0, "?");
-  FPARAM(echohi, P_ECHOHI, "eo <", 1.0, "?");
-  FPARAM(postrot, P_POSTROT, "postrot", 0.5, "?");
+  FPARAM(destruct, P_DESTRUCT, "very special", 1.0f, "?");
+  FPARAM(perturb, P_PERTURB, "perturb", 0.0f, "?");
+  FPARAM(quant, P_QUANT, "operation q", 1.0f, "?");
+  FPARAM(rotate, P_ROTATE, "rotate", 0.0f, "?");
+  FPARAM(binquant, P_BINQUANT, "operation bq", 0.0f, "?");
+  FPARAM(compress, P_COMPRESS, "comp???", 1.f, "?");
+  FPARAM(spike, P_SPIKE, "spike", 1.0f, "?");
+  FPARAM(makeupgain, P_MUG, "M.U.G.", 0.0f, "?");
+  FPARAM(spikehold, P_SPIKEHOLD, "spikehold", 0.0f, "?");
+  FPARAM(echomix, P_ECHOMIX, "eo mix", 0.0f, "?");
+  FPARAM(echotime, P_ECHOTIME, "eo time", 0.5f, "?");
+  FPARAM(echomodf, P_ECHOMODF, "eo mod f", 2.0f * pi, "?");
+  FPARAM(echomodw, P_ECHOMODW, "eo mod w", 0.0f, "?");
+  FPARAM(echofb, P_ECHOFB, "eo fbx", 0.50f, "?");
+  FPARAM(echolow, P_ECHOLOW, "eo >", 0.0f, "?");
+  FPARAM(echohi, P_ECHOHI, "eo <", 1.0f, "?");
+  FPARAM(postrot, P_POSTROT, "postrot", 0.5f, "?");
   
 
   long maxframe = 0;
@@ -65,9 +65,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   oot = (float*)malloc(maxframe * sizeof(float));
   buffersamples = maxframe;
 
-  /* resume sets up buffers and sizes */
-  changed = 1;
-  resume ();
+  changed = 0;
 }
 
 PLUGIN::~PLUGIN() {
@@ -81,10 +79,8 @@ PLUGIN::~PLUGIN() {
 
 void PLUGIN::resume() {
 
-  if (changed) ioChanged();
-
   for(int i = 0; i < MAXECHO; i++) {
-    echor[i] = echoc[i] = 0.0;
+    echor[i] = echoc[i] = 0.0f;
   }
 
   amplhold = 1;
@@ -104,11 +100,11 @@ void PLUGIN::resume() {
      filled with zeros. */
 
   for (int ii = 0; ii < third; ii ++) {
-    prevmix[ii] = 0.0;
+    prevmix[ii] = 0.0f;
   }
 
   for (int j = 0; j < framesize; j ++) {
-    out0[j] = 0.0;
+    out0[j] = 0.0f;
   }
   
   /* start input at beginning. Output has a frame of silence. */
@@ -116,15 +112,25 @@ void PLUGIN::resume() {
   outstart = 0;
   outsize = framesize;
 
-  if (changed) setInitialDelay(framesize);
-
+  setInitialDelay(framesize);
   changed = 0;
+  needIdle();
 
 }
 
 void PLUGIN::suspend () {
   /* nothing to do here. */
 
+}
+
+long PLUGIN::fxIdle() {
+  /* ioChanged() causes resume() to be called and 
+     changed to initialDelay are updated for the host */
+  if (changed)
+    ioChanged();
+  changed = 0;
+
+  return 1;
 }
 
 /* tail is the same as delay, of course */
@@ -153,7 +159,7 @@ float PLUGIN::getParameter(long index) {
   default:
     /* otherwise pull it out of array. */
     if (index >= 0 && index < NUM_PARAMS) return *paramptrs[index].ptr;
-    else return 0.0; /* ? */
+    else return 0.0f; /* ? */
   }
 }
 
@@ -188,10 +194,10 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     break;
     /* special cases here */
   case P_POSTROT:
-    if (postrot > 0.5) {
+    if (postrot > 0.5f) {
       sprintf(text, "+%d", 
 	      (int)((postrot - 0.5f) * 2.0f * MKBUFSIZE(bufsizep)));
-    } else if (postrot == 0.5) {
+    } else if (postrot == 0.5f) {
       sprintf(text, "*NO*");
     } else {
       sprintf(text, "-%d", 
@@ -259,9 +265,9 @@ void PLUGIN::fftops(long samples) {
 
     /* perturb */
     fftr[i] = (double)((rand()/(float)RAND_MAX) * perturb + 
-		       fftr[i]*(1.0-perturb));
+		       fftr[i]*(1.0f-perturb));
     ffti[i] = (double)((rand()/(float)RAND_MAX) * perturb + 
-		       ffti[i]*(1.0-perturb));
+		       ffti[i]*(1.0f-perturb));
 
     /* rotate */
     int j = (i + (int)(rotate * samples)) % samples;
@@ -271,8 +277,8 @@ void PLUGIN::fftops(long samples) {
     /* compress */
 
     if (compress < 0.9999999) {
-      fftr[i] = fsign(fftr[i]) * powf(fabs(fftr[i]), compress);
-      ffti[i] = fsign(ffti[i]) * powf(fabs(ffti[i]), compress);
+      fftr[i] = fsign(fftr[i]) * powf(fabsf(fftr[i]), compress);
+      ffti[i] = fsign(ffti[i]) * powf(fabsf(ffti[i]), compress);
     }
 
     /* M.U.G. */
@@ -288,12 +294,12 @@ void PLUGIN::fftops(long samples) {
 
     double loudness = 0.0;
 
-    for ( i=0; i<samples; i++ ) {
+    for ( long i=0; i<samples; i++ ) {
       loudness += fftr[i]*fftr[i] + ffti[i]*ffti[i];
     }
     
     if (! -- amplhold) {
-      for ( i=0; i<samples; i++ ) {
+      for ( long i=0; i<samples; i++ ) {
 	ampl[i].a = fftr[i]*fftr[i] + ffti[i]*ffti[i];
 	ampl[i].i = i;
       }
@@ -312,15 +318,15 @@ void PLUGIN::fftops(long samples) {
     }
 
     double newloudness = loudness;
-    for(i = stopat - 1; i < samples; i++) {
+    for(long i = stopat - 1; i < samples; i++) {
       newloudness -= ampl[i].a;
-      fftr[ampl[i].i] = 0.0;
-      ffti[ampl[i].i] = 0.0;
+      fftr[ampl[i].i] = 0.0f;
+      ffti[ampl[i].i] = 0.0f;
     }
 
     /* boost what remains. */
     double boostby = loudness / newloudness;
-    for(i = 0; i < samples; i ++) {
+    for(long i = 0; i < samples; i ++) {
       fftr[i] *= boostby;
       /* XXX ffti? */
     }
@@ -329,7 +335,7 @@ void PLUGIN::fftops(long samples) {
 
   /* EO FX */
 
-  for(i = 0; i < samples; i ++) {
+  for(long i = 0; i < samples; i ++) {
     echor[echoctr] = fftr[i];
     echoc[echoctr++] = ffti[i];
     echoctr %= MAXECHO;
@@ -353,18 +359,18 @@ void PLUGIN::fftops(long samples) {
 
       if (i >= (int)((echolow * echolow * echolow) * samples) && 
 	  i <= (int)((echohi * echohi * echohi) * samples)) {
-	fftr[i] = (1.0 - echomix) * fftr[i] + echomix * echor[xx];
+	fftr[i] = (1.0f - echomix) * fftr[i] + echomix * echor[xx];
 	
-	ffti[i] = (1.0 - echomix) * ffti[i] + echomix * echoc[xx];
+	ffti[i] = (1.0f - echomix) * ffti[i] + echomix * echoc[xx];
       }
     }
   }
 
   /* post-processing rotate-up */
   if (postrot > 0.5) {
-    int rotn = (postrot - 0.5) * 2.0 * samples;
+    int rotn = (postrot - 0.5f) * 2.0f * samples;
     for(int v = samples - 1; v >= 0; v --) {
-      if (v < rotn) fftr[v] = ffti[v] = 0.0;
+      if (v < rotn) fftr[v] = ffti[v] = 0.0f;
       else { 
 	fftr[v] = fftr[v - rotn];
 	ffti[v] = ffti[v - rotn];
@@ -373,7 +379,7 @@ void PLUGIN::fftops(long samples) {
   } else if (postrot < 0.5) {
     int rotn = (int)((0.5f - postrot) * 2.0f * MKBUFSIZE(bufsizep));
     for(int v = 0; v < samples; v++) {
-      if (v > (samples - rotn)) fftr[v] = ffti[v] = 0.0;
+      if (v > (samples - rotn)) fftr[v] = ffti[v] = 0.0f;
       else {
 	fftr[v] = fftr[(samples - rotn) - v];
 	ffti[v] = ffti[(samples - rotn) - v];

@@ -126,6 +126,7 @@ private:
 
 class PLUGIN : public AudioEffectX {
   friend class PLUGINPROGRAM;
+  friend class GeometerEditor;
 public:
   PLUGIN(audioMasterCallback audioMaster);
   ~PLUGIN();
@@ -157,6 +158,7 @@ public:
 
   virtual void suspend();
   virtual void resume();
+  virtual long fxIdle();
 
   virtual long processEvents(VstEvents* events);
   virtual long getChunk(void **data, bool isPreset);
@@ -245,14 +247,14 @@ private:
   /* 1 if need to do ioChanged since buffer settings are different now */
   int changed;
 
-  /* set up the built-in presets */
-  void makepresets();
-
   /* ---------- geometer stuff ----------- */
 
   static int pointops(float pop, int npts, float * op_param, int samps,
 		      int * px, float * py, int maxpts,
 		      int * tempx, float * tempy);
+
+  /* set up the built-in presets */
+  void makepresets();
 
   float pointstyle;
   float pointparam[MAX_POINTSTYLES];
