@@ -363,23 +363,6 @@ void DfxPlugin::initparameter_i(long parameterIndex, const char * initName, long
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_ui(long parameterIndex, const char * initName, unsigned long initValue, 
-						unsigned long initDefaultValue, unsigned long initMin, unsigned long initMax, 
-						DfxParamUnit initUnit, DfxParamCurve initCurve, 
-						const char * initCustomUnitString)
-{
-	if (parameterisvalid(parameterIndex))
-	{
-		parameters[parameterIndex].init_ui(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
-		update_parameter(parameterIndex);	// make the host aware of the parameter change
-		initpresetsparameter(parameterIndex);	// default empty presets with this value
-		// set the custom unit string, if there is one
-		if (initCustomUnitString != NULL)
-			setparametercustomunitstring(parameterIndex, initCustomUnitString);
-	}
-}
-
-//-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_b(long parameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
 						DfxParamUnit initUnit)
 {

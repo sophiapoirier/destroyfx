@@ -59,8 +59,7 @@ There are certain suffixes that are appended to function names to
 indicate how they operate.  You will see multiple variations of the 
 same function with varying suffixes.  Most of the suffixes indicate 
 that the functions are handling a specific variable type.  Those are:  
-_f for float, _d for double, _i for long int, _ui for unsigned long int, 
-and _b for boolean.  
+_f for float, _d for double, _i for long int, and _b for boolean.  
 The suffix _gen indicates that the function handles parameter values 
 in the generic 0 to 1 float fashion.
 
@@ -193,7 +192,6 @@ typedef enum {
 	kDfxParamValueType_float,
 	kDfxParamValueType_double,
 	kDfxParamValueType_int,
-	kDfxParamValueType_uint,
 	kDfxParamValueType_boolean,
 } DfxParamValueType;
 
@@ -270,10 +268,6 @@ public:
 					long initMin, long initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_stepped);
-	void init_ui(const char * initName, unsigned long initValue, unsigned long initDefaultValue, 
-					unsigned long initMin, unsigned long initMax, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void init_b(const char * initName, bool initValue, bool initDefaultValue, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined);
 
@@ -315,8 +309,6 @@ public:
 		{	return derive_d(value);	}
 	long get_i()
 		{	return derive_i(value);	}
-	unsigned long get_ui()
-		{	return derive_ui(value);	}
 	bool get_b()
 		{	return derive_b(value);	}
 	// get the current value scaled into a generic 0...1 float value
@@ -361,7 +353,6 @@ public:
 	float derive_f(DfxParamValue inValue);
 	double derive_d(DfxParamValue inValue);
 	long derive_i(DfxParamValue inValue);
-	unsigned long derive_ui(DfxParamValue inValue);
 	bool derive_b(DfxParamValue inValue);
 
 	// set a DfxParamValue with a value of a specific type
