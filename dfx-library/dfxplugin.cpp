@@ -1030,51 +1030,60 @@ void DfxPlugin::processtimeinfo()
 	timeinfo.samplesToNextBar = 0;
 	timeinfo.samplesToNextBarIsValid = false;
 	timeinfo.playbackChanged = false;
+	timeinfo.playbackIsOccurring = false;
 
 
 #ifdef TARGET_API_AUDIOUNIT
-	if (mHostCallbackInfo.beatAndTempoProc != NULL)
-	{
-		Float64 tempo, beat;
-		if ( mHostCallbackInfo.beatAndTempoProc(mHostCallbackInfo.hostUserData, &beat, &tempo) == noErr )
-		{
-			timeinfo.tempoIsValid = true;
-			timeinfo.tempo = tempo;
-			timeinfo.beatPosIsValid = true;
-			timeinfo.beatPos = beat;
+	OSStatus status;
 
-			hostCanDoTempo = true;
-		}
+	Float64 tempo, beat;
+	status = CallHostBeatAndTempo(&beat, &tempo);
+	if (status == noErr)
+	{
+		timeinfo.tempoIsValid = true;
+		timeinfo.tempo = tempo;
+		timeinfo.beatPosIsValid = true;
+		timeinfo.beatPos = beat;
+
+		hostCanDoTempo = true;
 	}
 
-	if (mHostCallbackInfo.musicalTimeLocationProc != NULL)
+	// the number of samples until the next beat from the start sample of the current rendering buffer
+//	UInt32 sampleOffsetToNextBeat;	// XXX should I just send NULL since we don't use this?
+	// the number of beats of the denominator value that contained in the current measure
+	Float32 timeSigNumerator;
+	// music notational conventions (4 is a quarter note, 8 an eigth note, etc)
+	UInt32 timeSigDenominator;
+	// the beat that corresponds to the downbeat (first beat) of the current measure
+	Float64 currentMeasureDownBeat;
+	status = CallHostMusicalTimeLocation(NULL, &timeSigNumerator, &timeSigDenominator, &currentMeasureDownBeat);
+	if (status == noErr)
 	{
-		// the number of samples until the next beat from the start sample of the current rendering buffer
-		UInt32 sampleOffsetToNextBeat;
-		// the number of beats of the denominator value that contained in the current measure
-		Float32 timeSigNumerator;
-		// music notational conventions (4 is a quarter note, 8 an eigth note, etc)
-		UInt32 timeSigDenominator;
-		// the beat that corresponds to the downbeat (first beat) of the current measure
-		Float64 currentMeasureDownBeat;
-		if ( mHostCallbackInfo.musicalTimeLocationProc(mHostCallbackInfo.hostUserData, 
-				&sampleOffsetToNextBeat, &timeSigNumerator, &timeSigDenominator, &currentMeasureDownBeat) == noErr )
-		{
-			// get the song beat position of the beginning of the current measure
-			timeinfo.barPosIsValid = true;
-			timeinfo.barPos = currentMeasureDownBeat;
+		// get the song beat position of the beginning of the current measure
+		timeinfo.barPosIsValid = true;
+		timeinfo.barPos = currentMeasureDownBeat;
 
-			// get the numerator of the time signature - this is the number of beats per measure
-			timeinfo.timeSigIsValid = true;
-			timeinfo.numerator = (double) timeSigNumerator;
-			timeinfo.denominator = (double) timeSigDenominator;
-		}
-
-		// determine whether the playback position or state has just changed
-// XXX implement this
-//		if ()
-//			timeinfo.playbackChanged = true;
+		// get the numerator of the time signature - this is the number of beats per measure
+		timeinfo.timeSigIsValid = true;
+		timeinfo.numerator = (double) timeSigNumerator;
+		timeinfo.denominator = (double) timeSigDenominator;
 	}
+
+/*
+	Boolean isPlaying;
+	Boolean transportStateChanged;
+//	Float64 currentSampleInTimeLine;
+//	Boolean isCycling;
+//	Float64 cycleStartBeat, cycleEndBeat;
+//	status = CallHostTransportState(&isPlaying, &transportStateChanged, &currentSampleInTimeLine, &isCycling, &cycleStartBeat, &cycleEndBeat);
+	status = CallHostTransportState(&isPlaying, &transportStateChanged, NULL, NULL, NULL, NULL);
+	// determine whether the playback position or state has just changed
+	if (status == noErr)
+	{
+		timeinfo.playbackChanged = transportStateChanged;
+		timeinfo.playbackIsOccurring = isPlaying;
+	}
+*/
 #endif
 // TARGET_API_AUDIOUNIT
  
@@ -1120,6 +1129,9 @@ void DfxPlugin::processtimeinfo()
 		// determine whether the playback position or state has just changed
 		if (kVstTransportChanged & vstTimeInfo->flags)
 			timeinfo.playbackChanged = true;
+
+		if (kVstTransportPlaying & vstTimeInfo->flags)
+			timeinfo.playbackIsOccurring = true;
 	}
 #endif
 // TARGET_API_VST
