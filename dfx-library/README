@@ -25,6 +25,9 @@ for fully MIDI control of all plugin parameters.  dfxsettings is
 what vstchunk has now become.  vstchunk was just for VST, dfxsettings 
 is for our new DfxPlugin class.
 
+*** EVERYTHING BELOW THIS LINE IS IN THE PROCESS OF BEING OBSOLETED ***
+***                   DFXPLUGIN IS THE NEW WAY                      ***
+
 dfxgui contains a lot of useful GUI controls that are derived from 
 the VSTGUI library of controls (a library supplied by Steinberg 
 with the VST SDK).
@@ -33,10 +36,6 @@ There are descriptions of each control in the header.
 multikick is another custom GUI object derived from the VSTGUI.  
 It might as well be a part of dfxgui, but I think Tom was writing 
 this while I was writing stuff in dfxgui, or something like that.
-
-
-*** EVERYTHING BELOW THIS LINE IS IN THE PROCESS OF BEING OBSOLETED ***
-***                   DFXPLUGIN IS THE NEW WAY                      ***
 
 dfxmisc has number of handy stuff for making VST plugins.
 There are a few interpolation functions.
