@@ -107,6 +107,10 @@ SOURCE=..\vstsdk\audioeffectx.cpp
 
 SOURCE="..\intercom\intercom.cpp"
 # End Source File
+# Begin Source File
+
+SOURCE=.\intercom.def
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -145,7 +149,7 @@ SOURCE=..\vstsdk\vstgui.h
 # End Group
 # Begin Source File
 
-SOURCE="..\intercom-plugin\intercom.hpp"
+SOURCE=..\intercom\intercom.hpp
 # End Source File
 # End Group
 # Begin Group "Resource Files"
