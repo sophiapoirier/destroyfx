@@ -80,7 +80,7 @@ void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 
 	#if TARGET_PLUGIN_USES_MIDI
 		if (isParameterAttached())
-			getDfxGuiEditor()->setmidilearner(getAUVP().mParameterID);
+			getDfxGuiEditor()->setmidilearner(getParameterID());
 	#endif
 
 	if ( !(inKeyModifiers & kDGKeyModifier_shift) )

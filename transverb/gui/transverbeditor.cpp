@@ -2,7 +2,6 @@
 #include "transverb.hpp"
 
 #include "dfxguislider.h"
-#include "dfxguibutton.h"
 #include "dfxguidisplay.h"
 
 
@@ -51,20 +50,19 @@ enum {
 const char * SNOOT_FONT = "snoot.org pixel10";
 const DGColor kDisplayTextColor(103.0f/255.0f, 161.0f/255.0f, 215.0f/255.0f);
 const float kDisplayTextSize = 14.0f;
+const float kFineTuneInc = 0.0001f;
 
 
 
 //-----------------------------------------------------------------------------
+// callbacks for button-triggered action
 
-// callback for button-triggered action
-void randomizeTransverb(SInt32 value, void * editor);
 void randomizeTransverb(SInt32 value, void * editor)
 {
 	if (editor != NULL)
 		((DfxGuiEditor*)editor)->randomizeparameters(true);
 }
 
-void midilearnTransverb(SInt32 value, void * editor);
 void midilearnTransverb(SInt32 value, void * editor)
 {
 	if (editor != NULL)
@@ -76,14 +74,17 @@ void midilearnTransverb(SInt32 value, void * editor)
 	}
 }
 
-void midiresetTransverb(SInt32 value, void * editor);
 void midiresetTransverb(SInt32 value, void * editor)
 {
 	if ( (editor != NULL) && (value != 0) )
 		((DfxGuiEditor*)editor)->resetmidilearn();
 }
 
-void bsizeDisplayProcedure(Float32 value, char * outText, void *);
+
+
+//-----------------------------------------------------------------------------
+// value text display procedures
+
 void bsizeDisplayProcedure(Float32 value, char * outText, void *)
 {
 	float buffersize = value;
@@ -103,7 +104,6 @@ void bsizeDisplayProcedure(Float32 value, char * outText, void *)
 		sprintf(outText, "%.1f ms", buffersize);
 }
 
-void speedDisplayProcedure(Float32 value, char * outText, void *);
 void speedDisplayProcedure(Float32 value, char * outText, void *)
 {
 	char * semitonesString = (char*) malloc(16);
@@ -146,13 +146,11 @@ void speedDisplayProcedure(Float32 value, char * outText, void *)
 		free(semitonesString);
 }
 
-void feedbackDisplayProcedure(Float32 value, char * outText, void *);
 void feedbackDisplayProcedure(Float32 value, char * outText, void *)
 {
 	sprintf(outText, "%ld%%", (long)value);
 }
 
-void distDisplayProcedure(Float32 value, char * outText, void * editor);
 void distDisplayProcedure(Float32 value, char * outText, void * editor)
 {
 	float distance = value;
@@ -174,7 +172,6 @@ void distDisplayProcedure(Float32 value, char * outText, void * editor)
 		sprintf(outText, "%.2f ms", distance);
 }
 
-void valueDisplayProcedure(Float32 value, char * outText, void * userData);
 void valueDisplayProcedure(Float32 value, char * outText, void * userData)
 {
 	if (outText != NULL)
@@ -183,21 +180,116 @@ void valueDisplayProcedure(Float32 value, char * outText, void * userData)
 
 
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
+
+static void SpeedModeListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
+{
+	if ( (inObject == NULL) || (inParameter == NULL) )
+		return;
+
+	TransverbSpeedTuneButton * button = (TransverbSpeedTuneButton*) inObject;
+	button->setTuneMode( button->getDfxGuiEditor()->getparameter_i(inParameter->mParameterID) );
+}
+
+double nearestIntegerBelow(double number)
+{
+	bool sign = (number >= 0.0);
+	double fraction = fmod(fabs(number), 1.0);
+
+	if (fraction <= 0.0001)
+		return number;
+
+	if (sign)
+		return (double) ((long)fabs(number));
+	else
+		return 0.0 - (double) ((long)fabs(number) + 1);
+}
+
+double nearestIntegerAbove(double number)
+{
+	bool sign = (number >= 0.0);
+	double fraction = fmod(fabs(number), 1.0);
+
+	if (fraction <= 0.0001)
+		return number;
+
+	if (sign)
+		return (double) ((long)fabs(number) + 1);
+	else
+		return 0.0 - (double) ((long)fabs(number));
+}
+
+//-----------------------------------------------------------------------------
+void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+{
+	if (tuneMode == kFineMode)
+	{
+		DGFineTuneButton::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+		return;
+	}
+
+	entryValue = GetControl32BitValue(carbonControl);
+
+	double oldSpeedValue = getDfxGuiEditor()->getparameter_d( getParameterID() );
+	double newSpeedValue;
+	bool isInc = (valueChangeAmount >= 0.0f);
+	double snapAmount = (isInc) ? 1.001 : -1.001;
+	double snapScalar = (tuneMode == kSemitoneMode) ? 12.0 : 1.0;
+
+	newSpeedValue = (oldSpeedValue * snapScalar) + snapAmount;
+	newSpeedValue = isInc ? nearestIntegerBelow(newSpeedValue) : nearestIntegerAbove(newSpeedValue);
+	newSpeedValue /= snapScalar;
+	getAUVP().SetValue(getDfxGuiEditor()->getParameterListener(), getAUVcontrol(), newSpeedValue);
+
+	SInt32 min = GetControl32BitMinimum(carbonControl);
+	SInt32 max = GetControl32BitMaximum(carbonControl);
+	getAUVcontrol()->ParameterToControl(newSpeedValue);
+	newValue = GetControl32BitValue(carbonControl);
+	if (newValue > max)
+		newValue = max;
+	if (newValue < min)
+		newValue = min;
+
+	mouseIsDown = true;
+	if (newValue != entryValue)
+		redraw();	// redraw with mouse down
+}
+
+
+
+//-----------------------------------------------------------------------------
 COMPONENT_ENTRY(TransverbEditor);
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
 TransverbEditor::TransverbEditor(AudioUnitCarbonView inInstance)
 :	DfxGuiEditor(inInstance)
 {
+	speed1UpButton = NULL;
+	speed1DownButton = NULL;
+	speed2UpButton = NULL;
+	speed2DownButton = NULL;
+
+	AUListenerCreate(SpeedModeListenerProc, this,
+		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
+		&parameterListener);
 }
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
 TransverbEditor::~TransverbEditor()
 {
+	if (speed1DownButton != NULL)
+		AUListenerRemoveParameter(parameterListener, speed1DownButton, &speed1modeAUP);
+	if (speed1UpButton != NULL)
+		AUListenerRemoveParameter(parameterListener, speed1UpButton, &speed1modeAUP);
+	if (speed2DownButton != NULL)
+		AUListenerRemoveParameter(parameterListener, speed2DownButton, &speed2modeAUP);
+	if (speed2UpButton != NULL)
+		AUListenerRemoveParameter(parameterListener, speed2UpButton, &speed2modeAUP);
+
+	AUListenerDispose(parameterListener);
 }
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
 long TransverbEditor::open(float inXOffset, float inYOffset)
 {
 	// Background image
@@ -216,6 +308,9 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 	DGImage * gQualityButton = new DGImage("quality-button.png", this);
 	DGImage * gTomsoundButton = new DGImage("tomsound-button.png", this);
 	DGImage * gRandomizeButton = new DGImage("randomize-button.png", this);
+	DGImage * gFineDownButton = new DGImage("fine-down-button.png", this);
+	DGImage * gFineUpButton = new DGImage("fine-up-button.png", this);
+	DGImage * gSpeedModeButton = new DGImage("speed-mode-button.png", this);
 	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", this);
 	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", this);
 	DGImage * gDfxLinkButton = new DGImage("dfx-link.png", this);
@@ -224,11 +319,13 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 
 
 
-	DGRect pos, pos2;
+	DGRect pos, pos2, pos3, pos4;
 
 	// Make horizontal sliders and add them to the pane
 	pos.set(kWideFaderX, kWideFaderY, gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
 	pos2.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
+	pos3.set(kFineDownButtonX, kFineButtonY, gFineDownButton->getWidth(), gFineDownButton->getHeight() / 2);
+	pos4.set(kFineUpButtonX, kFineButtonY, gFineUpButton->getWidth(), gFineUpButton->getHeight() / 2);
 	for (long tag=kSpeed1; tag <= kDist2; tag++)
 	{
 		displayTextProcedure displayProc;
@@ -248,6 +345,24 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 		DGTextDisplay * display = new DGTextDisplay(this, tag, &pos2, displayProc, userData, NULL, 
 										kDisplayTextSize, kDGTextAlign_right, kDisplayTextColor, SNOOT_FONT);
 
+		if (tag == kSpeed1)
+		{
+			long tuneMode = getparameter_i(kSpeed1mode);
+			speed1DownButton = new TransverbSpeedTuneButton(this, tag, &pos3, gFineDownButton, -kFineTuneInc, tuneMode);
+			speed1UpButton = new TransverbSpeedTuneButton(this, tag, &pos4, gFineUpButton, kFineTuneInc, tuneMode);
+		}
+		else if (tag == kSpeed2)
+		{
+			long tuneMode = getparameter_i(kSpeed2mode);
+			speed2DownButton = new TransverbSpeedTuneButton(this, tag, &pos3, gFineDownButton, -kFineTuneInc, tuneMode);
+			speed2UpButton = new TransverbSpeedTuneButton(this, tag, &pos4, gFineUpButton, kFineTuneInc, tuneMode);
+		}
+		else
+		{
+			DGFineTuneButton * button = new DGFineTuneButton(this, tag, &pos3, gFineDownButton, -kFineTuneInc);
+			button = new DGFineTuneButton(this, tag, &pos4, gFineUpButton, kFineTuneInc);
+		}
+
 		long yoff =  kWideFaderInc;
 		if (tag == kDist1)
 			yoff = kWideFaderMoreInc;
@@ -255,6 +370,8 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 			yoff =  kWideFaderEvenMoreInc;
 		pos.offset(0, yoff);
 		pos2.offset(0, yoff);
+		pos3.offset(0, yoff);
+		pos4.offset(0, yoff);
 	}
 
 	DGSlider * bsizeSlider = new DGSlider(this, kBsize, &pos, kDGSliderAxis_horizontal, gGreyHorizontalSliderHandle, gGreyHorizontalSliderBackground);
@@ -288,6 +405,14 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 	button = new DGButton(this, &pos, gRandomizeButton, 2, kDGButtonType_pushbutton);
 	button->setUserProcedure(randomizeTransverb, this);
 
+	// speed 1 mode button
+	pos.set(kSpeedModeButtonX, kSpeedModeButtonY, gSpeedModeButton->getWidth()/2, gSpeedModeButton->getHeight()/numSpeedModes);
+	button = new DGButton(this, kSpeed1mode, &pos, gSpeedModeButton, numSpeedModes, kDGButtonType_incbutton, true);
+	//
+	// speed 2 mode button
+	pos.offset(0, (kWideFaderInc * 2) + kWideFaderMoreInc);
+	button = new DGButton(this, kSpeed2mode, &pos, gSpeedModeButton, numSpeedModes, kDGButtonType_incbutton, true);
+
 	// MIDI learn button
 	pos.set(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth()/2, gMidiLearnButton->getHeight()/2);
 	button = new DGButton(this, &pos, gMidiLearnButton, 2, kDGButtonType_incbutton);
@@ -309,6 +434,18 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 	// Smart Electronix web link
 	pos.set(kSmartElectronixLinkX, kSmartElectronixLinkY, gSmartElectronixLinkButton->getWidth(), gSmartElectronixLinkButton->getHeight()/2);
 	button = new DGWebLink(this, &pos, gSmartElectronixLinkButton, SMARTELECTRONIX_URL);
+
+
+	speed1modeAUP.mAudioUnit = speed2modeAUP.mAudioUnit = GetEditAudioUnit();
+	speed1modeAUP.mScope = speed2modeAUP.mScope = kAudioUnitScope_Global;
+	speed1modeAUP.mElement = speed2modeAUP.mElement = (AudioUnitElement)0;
+	speed1modeAUP.mParameterID = kSpeed1mode;
+	speed2modeAUP.mParameterID = kSpeed2mode;
+
+	AUListenerAddParameter(parameterListener, speed1DownButton, &speed1modeAUP);
+	AUListenerAddParameter(parameterListener, speed1UpButton, &speed1modeAUP);
+	AUListenerAddParameter(parameterListener, speed2DownButton, &speed2modeAUP);
+	AUListenerAddParameter(parameterListener, speed2UpButton, &speed2modeAUP);
 
 
 	return noErr;
