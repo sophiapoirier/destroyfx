@@ -24,6 +24,14 @@ brokenfft/
 
         My favorite plugin; this converts to the frequency domain
         using the FFT, and then does a number of crazy effects.
+        This one has an almost limitless variety of sounds that
+        will come out of it...
+
+transverb/
+
+        Fun simple plugin; sort of like a tape-loop with
+        independently-moving read/write heads. Lots of great
+        effects in this one.
 
 trans/
 
@@ -34,7 +42,8 @@ trans/
 decimate/
 
         Reduces bit depth and sample rate in order to produce
-        artifacting. Also includes a bonus "DESTROY" effect.
+        artifacting. Extreme settings. Also includes a bonus 
+        "DESTROY" effect.
 
 intercom/
 
