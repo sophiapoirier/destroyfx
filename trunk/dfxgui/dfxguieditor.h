@@ -161,12 +161,9 @@ private:
 	void removeMousedOverControl(DGControl * inMousedOverControl);
 
 #if MAC
-	EventHandlerUPP		controlHandlerUPP;
 	ControlDefSpec 		dgControlSpec;
-	EventHandlerUPP		windowEventHandlerUPP;
 	EventHandlerRef		windowEventHandlerRef;
 
-	EventLoopTimerUPP	idleTimerUPP;
 	EventLoopTimerRef	idleTimer;
 
 	ATSFontContainerRef	fontsATSContainer;	// the ATS font container for the fonts in the bundle's Resources directory
