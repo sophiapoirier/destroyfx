@@ -93,9 +93,9 @@ void DGControl::embed()
 	Rect carbonControlRect;
 	getBounds()->copyToRect(&carbonControlRect);
 	ControlRef newCarbonControl = NULL;
-	verify_noerr( CreateCustomControl(getDfxGuiEditor()->GetCarbonWindow(), &carbonControlRect, 
-					getDfxGuiEditor()->getControlDefSpec(), NULL, &newCarbonControl) );
-	if (newCarbonControl == NULL)
+	OSStatus error = CreateCustomControl(getDfxGuiEditor()->GetCarbonWindow(), &carbonControlRect, 
+									getDfxGuiEditor()->getControlDefSpec(), NULL, &newCarbonControl);
+	if ( (error != noErr) || (newCarbonControl == NULL) )
 		return;	// XXX what else can we do?
 
 	setCarbonControl(newCarbonControl);
