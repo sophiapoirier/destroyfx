@@ -41,6 +41,12 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(postrot, P_POSTROT, "postrot", 0.5f, "?");
   FPARAM(moments, P_MOMENTS, "moments", 0.0f, "?");
   FPARAM(bride, P_BRIDE, "bride", 1.0f, "?");
+  FPARAM(blow, P_BLOW, "blow", 0.0f, "?");
+  FPARAM(lowpass, P_LOWP, "lowp", 1.0f, "?");
+  FPARAM(convolve, P_CONV, "convolve", 0.0f, "?");
+
+  FPARAM(afterlow, P_ALOW, "afterlow", 1.0f, "?");
+  FPARAM(norm, P_NORM, "anorm", 0.0f, "?");
   
 
   long maxframe = 0;
@@ -232,9 +238,48 @@ inline float quantize(float q, float old) {
   return (float)(X / (float)scale);
 }
 
+#define MAXVALUE 1000.0f
+
+void PLUGIN::normalize(long samples, float much) {
+  float mar = 0.0;
+  float mai = 0.0;
+  for(int i = 0; i < samples; i ++) {
+    if (mar < fabs(fftr[i])) mar = fabs(fftr[i]);
+    if (mai < fabs(ffti[i])) mai = fabs(ffti[i]);
+  }
+  
+  float facr = 1.0, faci = 1.0;
+
+  if (mar > 0.0001) facr = MAXVALUE / mar;
+
+  if (mai > 0.0001) faci = MAXVALUE / mai;
+
+  for(int i = 0; i < samples; i ++) {
+    fftr[i] = (much * facr * fftr[i]) + ((1.0 - much) * fftr[i]);
+    ffti[i] = (much * faci * ffti[i]) + ((1.0 - much) * ffti[i]);
+  }
+
+}
+
 /* this function modifies 'samples' number of floats in
    fftr and ffti */
 void PLUGIN::fftops(long samples) {
+
+  for(int i = lowpass * lowpass * samples; i < samples; i ++) {
+    fftr[i] = 0;
+    ffti[i] = 0;
+  }
+
+  /* convolve */
+
+  if (convolve > 0.0001f) {
+    for(int i = 0; i < samples; i ++) {
+      fftr[i] = convolve * tmp[i] + (1.0 - convolve) * fftr[i];
+      ffti[i] = convolve * tmp[i] * ffti[i] + (1.0 - convolve) * ffti[i];
+    }
+    normalize(samples, 1.0);
+  }
+
   for(int i = 0; i < samples; i ++) {
 
     /* operation bq */
@@ -440,6 +485,28 @@ void PLUGIN::fftops(long samples) {
 	ffti[v] = ffti[(samples - rotn) - v];
       }
     }
+  }
+
+  
+  if (bride < 0.9999f) {
+    int low = blow * blow * samples;
+
+    int modsize = 1 + (bride * bride) * samples;
+
+    for(int ii=0; ii < samples; ii++) {
+      fftr[ii] = fftr[((ii + low) % modsize) % samples];
+      ffti[ii] = ffti[((ii + low) % modsize) % samples];
+    }
+
+  }
+
+  for(int i = afterlow * afterlow * samples; i < samples; i ++) {
+    fftr[i] = 0;
+    ffti[i] = 0;
+  }
+
+  if (norm > 0.0001f) {
+    normalize(samples, norm);
   }
 
 }
