@@ -60,7 +60,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 				barSync = true;
 		}
 		else
-			currentForcedBufferSize = (long) bufferSize_ms2samples(bufferSizeMs);
+			currentForcedBufferSize = bufferSize_ms2samples(bufferSizeMs);
 		// apply the buffer LFO to the forced buffer size
 		currentForcedBufferSize = (long) ((float)currentForcedBufferSize * bufferLFOvalue);
 		// really low tempos & tempo rate values can cause huge forced buffer sizes,

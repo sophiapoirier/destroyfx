@@ -116,7 +116,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 				#ifdef PLUGIN_EDITOR_ID
 					cd->componentSubType = PLUGIN_EDITOR_ID;
 				#else
-					cd->componentSubType = (PLUGIN_ID & 0xFFFFFF00) + 'V';
+					cd->componentSubType = PLUGIN_ID;
 				#endif
 				cd->componentManufacturer = DESTROYFX_ID;
 				cd->componentFlags = 0;
@@ -505,12 +505,12 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 #if TARGET_PLUGIN_USES_MIDI
 	// create a CF data storage thingy for our special data
 	CFMutableDataRef cfdata = CFDataCreateMutable(NULL, NULL);
-	UInt8 * dfxdata;	// a pointer to our special data
+	void * dfxdata;	// a pointer to our special data
 	unsigned long dfxdatasize;	// the number of bytes of our data
 	// fetch our special data
-	dfxdatasize = dfxsettings->save( (void**)(&dfxdata), true );
+	dfxdatasize = dfxsettings->save( &dfxdata, true );
 	// put our special data into the CF data storage thingy
-	CFDataAppendBytes(cfdata, dfxdata, (signed)dfxdatasize);
+	CFDataAppendBytes(cfdata, (UInt8*)dfxdata, (signed)dfxdatasize);
 	// put the CF data storage thingy into the dfx-data section of the CF dictionary
 	CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
 	// dfx-data belongs to us no more, bye bye...

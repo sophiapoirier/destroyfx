@@ -291,6 +291,21 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
 
+	setpresetname(i, "aliens are coming");
+	setpresetparameter_f(i, kDivisor, 5.64f);
+	setpresetparameter_f(i, kBufferSize_abs, 31.25f);
+	setpresetparameter_b(i, kBufferTempoSync, false);
+	setpresetparameter_b(i, kBufferInterrupt, true);
+	setpresetparameter_f(i, kDivisorLFOdepth, 0.0f);
+	setpresetparameter_f(i, kBufferLFOrate_abs, 1.53f);
+	setpresetparameter_f(i, kBufferLFOdepth, 99.0f);
+	setpresetparameter_i(i, kBufferLFOshape, kLFOshape_sine);
+	setpresetparameter_b(i, kBufferLFOtempoSync, false);
+	setpresetparameter_f(i, kSmooth, 9.0f);
+	setpresetparameter_f(i, kDryWetMix, 100.0f);
+	setpresetparameter_i(i, kMidiMode, kMidiMode_nudge);
+	i++;
+
 	setpresetname(i, "\"echo\"");
 	setpresetparameter_f(i, kDivisor, 2.001f);
 	setpresetparameter_f(i, kBufferSize_abs, 603.0f);
@@ -333,7 +348,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_f(i, kDivisorLFOdepth, f);
 	setpresetparameter_i(i, kDivisorLFOshape, kLFOshape_);
 	setpresetparameter_b(i, kDivisorLFOtempoSync, );
-	setpresetparameter_f(i, kBufferLFOrate_abs, );
+	setpresetparameter_f(i, kBufferLFOrate_abs, f);
 	setpresetparameter_i(i, kBufferLFOrate_sync, tempoRateTable->getNearestTempoRateIndex(f));
 	setpresetparameter_f(i, kBufferLFOdepth, f);
 	setpresetparameter_i(i, kBufferLFOshape, kLFOshape_);

@@ -65,8 +65,8 @@ written by Marc Poirier, October 2002
 #ifdef PLUGIN_EDITOR_ID
 	#define COMP_SUBTYPE	PLUGIN_EDITOR_ID
 #else
-	// if not defined, use the base plugin ID with 'V' as the last byte
-	#define COMP_SUBTYPE	( (PLUGIN_ID & 0xFFFFFF00) + 'V' )
+	// if not defined, use the base plugin ID
+	#define COMP_SUBTYPE	PLUGIN_ID
 #endif
 
 #define COMP_MANUF	'DFX!'
