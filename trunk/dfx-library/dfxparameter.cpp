@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our parameter shit.
+written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 
@@ -24,16 +25,18 @@ const double twiddle_d = 0.001;
 //-----------------------------------------------------------------------------
 DfxParam::DfxParam()
 {
-	enforceValueLimits = false;
-
-	name = 0;
+	name = NULL;
 	name = (char*) malloc(sizeof(char) * DFX_PARAM_MAX_NAME_LENGTH);
-	name[0] = 0;
+	name[0] = 0;	// empty string
 
-	valueStrings = 0;
+	// these are null until it's shown that we'll actually need them
+	valueStrings = NULL;
 	#if TARGET_API_AUDIOUNIT
-		valueCFStrings = 0;
+		valueCFStrings = NULL;
 	#endif
+
+	// default to allowing values outside of the min/max range
+	enforceValueLimits = false;
 
 	// default this stuff empty-style
 	valueType = kDfxParamValueType_undefined;
@@ -46,34 +49,37 @@ DfxParam::DfxParam()
 //-----------------------------------------------------------------------------
 DfxParam::~DfxParam()
 {
-	if (name)
+	// release the parameter name
+	if (name != NULL)
 		free(name);
-	name = 0;
+	name = NULL;
 
-	if (valueStrings)
+	// release the parameter value strings, if any
+	if (valueStrings != NULL)
 	{
 		for (long i=0; i <= (max.i-min.i); i++)
 		{
-			if (valueStrings[i])
+			if (valueStrings[i] != NULL)
 				free(valueStrings[i]);
-			valueStrings[i] = 0;
+			valueStrings[i] = NULL;
 		}
 		free(valueStrings);
 	}
-	valueStrings = 0;
+	valueStrings = NULL;
 
 	#if TARGET_API_AUDIOUNIT
-		if (valueCFStrings)
+		// release the CFString versions of the parameter value strings, if any
+		if (valueCFStrings != NULL)
 		{
 			for (long i=0; i <= (max.i-min.i); i++)
 			{
-				if (valueCFStrings[i])
+				if (valueCFStrings[i] != NULL)
 					CFRelease(valueCFStrings[i]);
-				valueCFStrings[i] = 0;
+				valueCFStrings[i] = NULL;
 			}
 			free(valueCFStrings);
 		}
-		valueCFStrings = 0;
+		valueCFStrings = NULL;
 	#endif
 }
 
@@ -84,12 +90,13 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 						DfxParamValue initMin, DfxParamValue initMax, 
 						DfxParamCurve initCurve, DfxParamUnit initUnit)
 {
+	// accept all of the incoming init values
 	valueType = initType;
 	value = oldValue = initValue;
 	defaultValue = initDefaultValue;
 	min = initMin;
 	max = initMax;
-	if (initName)
+	if (initName != NULL)
 		strcpy(name, initName);
 	curve = initCurve;
 	unit = initUnit;
@@ -98,6 +105,8 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 	changed = true;
 
 
+	// do some checks to make sure that the min and max are not swapped 
+	// and that the default value is between the min and max
 	switch (initType)
 	{
 		case kDfxParamValueType_undefined:
@@ -172,6 +181,7 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 			break;
 	}
 
+	// now squeeze the current value within range, if necessary/desired
 	limit();
 
 	// if we're using value strings, initialize
@@ -185,12 +195,12 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(char));
 
 		#if TARGET_API_AUDIOUNIT
-			if (valueCFStrings)
+			if (valueCFStrings != NULL)
 				free(valueCFStrings);
 			// XXX release each CFString?
 			valueCFStrings = (CFStringRef*) malloc(numValueStrings * sizeof(CFStringRef));
 			for (long i=0; i < numValueStrings; i++)
-				valueCFStrings[i] = 0;
+				valueCFStrings[i] = NULL;
 		#endif
 
 	}
@@ -198,6 +208,7 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 
 
 //-----------------------------------------------------------------------------
+// convenience wrapper of init() for initializing with float variable type
 void DfxParam::init_f(const char *initName, float initValue, float initDefaultValue, 
 							float initMin, float initMax, 
 							DfxParamCurve initCurve, DfxParamUnit initUnit)
@@ -210,6 +221,7 @@ void DfxParam::init_f(const char *initName, float initValue, float initDefaultVa
 	init(initName, kDfxParamValueType_float, val, def, mn, mx, initCurve, initUnit);
 }
 //-----------------------------------------------------------------------------
+// convenience wrapper of init() for initializing with double variable type
 void DfxParam::init_d(const char *initName, double initValue, double initDefaultValue, 
 							double initMin, double initMax, 
 							DfxParamCurve initCurve, DfxParamUnit initUnit)
@@ -222,6 +234,7 @@ void DfxParam::init_d(const char *initName, double initValue, double initDefault
 	init(initName, kDfxParamValueType_double, val, def, mn, mx, initCurve, initUnit);
 }
 //-----------------------------------------------------------------------------
+// convenience wrapper of init() for initializing with int variable type
 void DfxParam::init_i(const char *initName, long initValue, long initDefaultValue, 
 							long initMin, long initMax, 
 							DfxParamCurve initCurve, DfxParamUnit initUnit)
@@ -234,6 +247,7 @@ void DfxParam::init_i(const char *initName, long initValue, long initDefaultValu
 	init(initName, kDfxParamValueType_int, val, def, mn, mx, initCurve, initUnit);
 }
 //-----------------------------------------------------------------------------
+// convenience wrapper of init() for initializing with unsigned int variable type
 void DfxParam::init_ui(const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
 									unsigned long initMin, unsigned long initMax, 
 									DfxParamCurve initCurve, DfxParamUnit initUnit)
@@ -246,6 +260,7 @@ void DfxParam::init_ui(const char *initName, unsigned long initValue, unsigned l
 	init(initName, kDfxParamValueType_uint, val, def, mn, mx, initCurve, initUnit);
 }
 //-----------------------------------------------------------------------------
+// convenience wrapper of init() for initializing with boolean variable type
 void DfxParam::init_b(const char *initName, bool initValue, bool initDefaultValue, 
 							DfxParamCurve initCurve, DfxParamUnit initUnit)
 {
@@ -258,6 +273,7 @@ void DfxParam::init_b(const char *initName, bool initValue, bool initDefaultValu
 }
 
 //-----------------------------------------------------------------------------
+// set a value string's text contents
 bool DfxParam::setvaluestring(long index, const char *inText)
 {
 	if (!ValueStringIndexIsValid(index))
@@ -266,12 +282,15 @@ bool DfxParam::setvaluestring(long index, const char *inText)
 	if (inText == NULL)
 		return false;
 
+	// the actual index of the array is the incoming index 
+	// minus the parameter's minimum value
 	long arrayIndex = index-getmin_i();
 	strcpy(valueStrings[arrayIndex], inText);
 
 	#if TARGET_API_AUDIOUNIT
-		if (valueCFStrings[arrayIndex])
+		if (valueCFStrings[arrayIndex] != NULL)
 			CFRelease(valueCFStrings[arrayIndex]);	// XXX do this?
+		// convert the incoming text to a CFString
 		valueCFStrings[arrayIndex] = CFStringCreateWithCString(NULL, inText, kCFStringEncodingMacRoman);//kCFStringEncodingASCII
 	#endif
 
@@ -279,6 +298,7 @@ bool DfxParam::setvaluestring(long index, const char *inText)
 }
 
 //-----------------------------------------------------------------------------
+// get a copy of the contents of a specific value string
 bool DfxParam::getvaluestring(long index, char *outText)
 {
 	char *text = getvaluestring_ptr(index);
@@ -291,6 +311,7 @@ bool DfxParam::getvaluestring(long index, char *outText)
 }
 
 //-----------------------------------------------------------------------------
+// get a copy of the pointer to a specific value string
 char * DfxParam::getvaluestring_ptr(long index)
 {
 	if (!ValueStringIndexIsValid(index))
@@ -300,6 +321,7 @@ char * DfxParam::getvaluestring_ptr(long index)
 }
 
 //-----------------------------------------------------------------------------
+// safety check for an index into the value strings array
 bool DfxParam::ValueStringIndexIsValid(long index)
 {
 	if (unit != kDfxParamUnit_strings)
@@ -316,6 +338,8 @@ bool DfxParam::ValueStringIndexIsValid(long index)
 #pragma mark _________getting_values_________
 
 //-----------------------------------------------------------------------------
+// figure out the value of a DfxParamValue as float type value
+// perform type conversion if float is not the parameter's "native" type
 float DfxParam::derive_f(DfxParamValue inValue)
 {
 	switch (valueType)
@@ -341,6 +365,8 @@ float DfxParam::derive_f(DfxParamValue inValue)
 }
 
 //-----------------------------------------------------------------------------
+// figure out the value of a DfxParamValue as double type value
+// perform type conversion if double is not the parameter's "native" type
 double DfxParam::derive_d(DfxParamValue inValue)
 {
 	switch (valueType)
@@ -366,6 +392,8 @@ double DfxParam::derive_d(DfxParamValue inValue)
 }
 
 //-----------------------------------------------------------------------------
+// figure out the value of a DfxParamValue as int type value
+// perform type conversion if int is not the parameter's "native" type
 long DfxParam::derive_i(DfxParamValue inValue)
 {
 	switch (valueType)
@@ -397,6 +425,8 @@ long DfxParam::derive_i(DfxParamValue inValue)
 }
 
 //-----------------------------------------------------------------------------
+// figure out the value of a DfxParamValue as unsigned int type value
+// perform type conversion if unsigned int is not the parameter's "native" type
 unsigned long DfxParam::derive_ui(DfxParamValue inValue)
 {
 	switch (valueType)
@@ -434,6 +464,8 @@ unsigned long DfxParam::derive_ui(DfxParamValue inValue)
 }
 
 //-----------------------------------------------------------------------------
+// figure out the value of a DfxParamValue as boolean type value
+// perform type conversion if boolean is not the parameter's "native" type
 bool DfxParam::derive_b(DfxParamValue inValue)
 {
 	switch (valueType)
@@ -467,6 +499,8 @@ bool DfxParam::derive_b(DfxParamValue inValue)
 }
 
 //-----------------------------------------------------------------------------
+// figure out the value of a DfxParamValue as char type value
+// perform type conversion if char is not the parameter's "native" type
 char DfxParam::derive_c(DfxParamValue inValue)
 {
 	switch (valueType)
@@ -498,6 +532,8 @@ char DfxParam::derive_c(DfxParamValue inValue)
 }
 
 //-----------------------------------------------------------------------------
+// figure out the value of a DfxParamValue as unsigned char type value
+// perform type conversion if unsigned char is not the parameter's "native" type
 unsigned char DfxParam::derive_uc(DfxParamValue inValue)
 {
 	switch (valueType)
@@ -536,6 +572,7 @@ unsigned char DfxParam::derive_uc(DfxParamValue inValue)
 
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
+// this takes into account the parameter curve
 float DfxParam::contract(double realValue)
 {
 	double dvalue = realValue;
@@ -578,6 +615,7 @@ float DfxParam::contract(double realValue)
 }
 
 //-----------------------------------------------------------------------------
+// get the parameter's current value scaled into a generic 0...1 float value
 float DfxParam::get_gen()
 {
 	return contract(get_d());
@@ -588,6 +626,7 @@ float DfxParam::get_gen()
 #pragma mark _________setting_values_________
 
 //-----------------------------------------------------------------------------
+// set the parameter's current value using a DfxParamValue
 void DfxParam::set(DfxParamValue newValue)
 {
 	value = newValue;
@@ -596,6 +635,8 @@ void DfxParam::set(DfxParamValue newValue)
 }
 
 //-----------------------------------------------------------------------------
+// set a DfxParamValue with a value of a float type
+// perform type conversion if float is not the parameter's "native" type
 void DfxParam::accept_f(float inValue, DfxParamValue &outValue)
 {
 	switch (valueType)
@@ -644,6 +685,8 @@ void DfxParam::accept_f(float inValue, DfxParamValue &outValue)
 }
 
 //-----------------------------------------------------------------------------
+// set a DfxParamValue with a value of a double type
+// perform type conversion if double is not the parameter's "native" type
 void DfxParam::accept_d(double inValue, DfxParamValue &outValue)
 {
 	switch (valueType)
@@ -692,6 +735,8 @@ void DfxParam::accept_d(double inValue, DfxParamValue &outValue)
 }
 
 //-----------------------------------------------------------------------------
+// set a DfxParamValue with a value of a int type
+// perform type conversion if int is not the parameter's "native" type
 void DfxParam::accept_i(long inValue, DfxParamValue &outValue)
 {
 	switch (valueType)
@@ -724,6 +769,8 @@ void DfxParam::accept_i(long inValue, DfxParamValue &outValue)
 }
 
 //-----------------------------------------------------------------------------
+// set a DfxParamValue with a value of a boolean type
+// perform type conversion if boolean is not the parameter's "native" type
 void DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
 {
 	switch (valueType)
@@ -757,6 +804,7 @@ void DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
 
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
+// this takes into account the parameter curve
 double DfxParam::expand(float genValue)
 {
 	double dvalue = (double) genValue;
@@ -799,6 +847,7 @@ double DfxParam::expand(float genValue)
 }
 
 //-----------------------------------------------------------------------------
+// set the current parameter value using a float type value
 void DfxParam::set_f(float newValue)
 {
 	accept_f(newValue, value);
@@ -807,6 +856,7 @@ void DfxParam::set_f(float newValue)
 }
 
 //-----------------------------------------------------------------------------
+// set the current parameter value using a double type value
 void DfxParam::set_d(double newValue)
 {
 	accept_d(newValue, value);
@@ -815,6 +865,7 @@ void DfxParam::set_d(double newValue)
 }
 
 //-----------------------------------------------------------------------------
+// set the current parameter value using an int type value
 void DfxParam::set_i(long newValue)
 {
 	accept_i(newValue, value);
@@ -823,6 +874,7 @@ void DfxParam::set_i(long newValue)
 }
 
 //-----------------------------------------------------------------------------
+// set the current parameter value using a boolean type value
 void DfxParam::set_b(bool newValue)
 {
 	accept_b(newValue, value);
@@ -831,6 +883,7 @@ void DfxParam::set_b(bool newValue)
 }
 
 //-----------------------------------------------------------------------------
+// set the parameter's current value with a generic 0...1 float value
 void DfxParam::set_gen(float genValue)
 {
 	set_d(expand(genValue));
@@ -841,6 +894,8 @@ void DfxParam::set_gen(float genValue)
 #pragma mark _________handling_values_________
 
 //-----------------------------------------------------------------------------
+// randomize the current parameter value
+// this takes into account the parameter curve
 DfxParamValue DfxParam::randomize()
 {
 	changed = true;	// do this smarter?
@@ -857,10 +912,11 @@ DfxParamValue DfxParam::randomize()
 //			value.c = (char) ((rand() % (long)(max.c-min.c)) + (long)min.c);
 		case kDfxParamValueType_uchar:
 //			value.uc = (unsigned char) ((rand() % (long)(max.uc-min.uc)) + (long)min.uc);
-			// using set_gen accounts for scaling curves
+			// using set_gen accounts for value distribution curves
 			set_gen( (float)rand() / (float)RAND_MAX );
 			break;
 		case kDfxParamValueType_boolean:
+			// but we don't really need to worry about the curve for boolean values
 			value.b = (rand() % 2) ? true : false;
 			break;
 		case kDfxParamValueType_undefined:
@@ -873,7 +929,7 @@ DfxParamValue DfxParam::randomize()
 }
 
 //-----------------------------------------------------------------------------
-// limits the value to be within the parameter's range
+// limits the current value to be within the parameter's min/max range
 // returns true if the value was altered, false if not
 bool DfxParam::limit()
 {
@@ -949,6 +1005,7 @@ bool DfxParam::limit()
 #pragma mark _________state_________
 
 //-----------------------------------------------------------------------------
+// set the property indicating whether the parameter value has changed
 void DfxParam::setchanged(bool newChanged)
 {
 	// XXX this is when we stuff the current value away as the old value (?)
@@ -963,6 +1020,7 @@ void DfxParam::setchanged(bool newChanged)
 #pragma mark _________info_________
 
 //-----------------------------------------------------------------------------
+// get a copy of the text of the parameter name
 void DfxParam::getname(char *text)
 {
 	if (name && text)
@@ -979,32 +1037,33 @@ void DfxParam::getname(char *text)
 //-----------------------------------------------------------------------------
 DfxPreset::DfxPreset()
 {
-	values = 0;
-	numParameters = 0;	// for now
+	// use PostConstructor to allocate parameters
+	values = NULL;
+	numParameters = 0;
 
-	name = 0;
+	name = NULL;
 	name = (char*) malloc(DFX_PRESET_MAX_NAME_LENGTH * sizeof(char));
 	name[0] = 0;
 
 	#if TARGET_API_AUDIOUNIT
-		cfname = 0;
+		cfname = NULL;
 	#endif
 }
 
 //-----------------------------------------------------------------------------
 DfxPreset::~DfxPreset()
 {
-	if (values)
+	if (values != NULL)
 		free(values);
-	values = 0;
-	if (name)
+	values = NULL;
+	if (name != NULL)
 		free(name);
-	name = 0;
+	name = NULL;
 
 	#if TARGET_API_AUDIOUNIT
-		if (cfname)
+		if (cfname != NULL)
 			CFRelease(cfname);
-		cfname = 0;
+		cfname = NULL;
 	#endif
 }
 
@@ -1013,6 +1072,8 @@ DfxPreset::~DfxPreset()
 void DfxPreset::PostConstructor(long inNumParameters)
 {
 	numParameters = inNumParameters;
+	if (values != NULL)
+		free(values);
 	values = (DfxParamValue*) malloc(numParameters * sizeof(DfxParamValue));
 }
 
@@ -1049,7 +1110,7 @@ void DfxPreset::setname(const char *inText)
 	#if TARGET_API_AUDIOUNIT
 		if (strlen(inText) > 0)
 		{
-			if (cfname)
+			if (cfname != NULL)
 				CFRelease(cfname);	// XXX do this?
 			cfname = CFStringCreateWithCString(NULL, inText, kCFStringEncodingMacRoman);//kCFStringEncodingASCII
 		}

@@ -9,6 +9,7 @@
 #define TARGET_PLUGIN_HAS_GUI	
 #define TARGET_API_AUDIOUNIT	
 #define TARGET_API_VST	
+#define SUPPORT_AU_VERSION_1	0
 
 // only define this if using a DSP core processing class
 #define PLUGINCORE	

@@ -88,6 +88,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setpresetname(0, "self-determined");	// default preset name
 	initPresets();
 
+	dfxsettings->setLowestLoadableVersion(0x00010000);	// can't load old VST-style settings
+
 
 	#if TARGET_API_AUDIOUNIT
 		// XXX is there a better way to do this?
@@ -99,6 +101,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		#endif
 
 	#endif
+
+for (long i=NUM_PARAMETERS; i < 34; i++)	AUBase::SetParameter(i, kAudioUnitScope_Global, 0, 0.0f, 0);
 }
 
 //-------------------------------------------------------------------------
@@ -205,11 +209,11 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferInterrupt, true);
 	setpresetparameter_f(i, kDivisorLFOrate_abs, 0.3f);
 	setpresetparameter_f(i, kDivisorLFOdepth, 72.0f);
-	setpresetparameter_i(i, kDivisorLFOshape, kSawLFO);
+	setpresetparameter_i(i, kDivisorLFOshape, kLFOshape_saw);
 	setpresetparameter_b(i, kDivisorLFOtempoSync, false);
 	setpresetparameter_f(i, kBufferLFOrate_abs, 0.27f);
 	setpresetparameter_f(i, kBufferLFOdepth, 63.0f);
-	setpresetparameter_i(i, kBufferLFOshape, kSawLFO);
+	setpresetparameter_i(i, kBufferLFOshape, kLFOshape_saw);
 	setpresetparameter_b(i, kBufferLFOtempoSync, false);
 	setpresetparameter_f(i, kSmooth, 4.2f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
@@ -223,11 +227,11 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferInterrupt, true);
 	setpresetparameter_f(i, kDivisorLFOrate_abs, 9.0f);
 	setpresetparameter_f(i, kDivisorLFOdepth, 87.0f);
-	setpresetparameter_i(i, kDivisorLFOshape, kThornLFO);
+	setpresetparameter_i(i, kDivisorLFOshape, kLFOshape_thorn);
 	setpresetparameter_b(i, kDivisorLFOtempoSync, false);
 	setpresetparameter_f(i, kBufferLFOrate_abs, 5.55f);
 	setpresetparameter_f(i, kBufferLFOdepth, 69.0f);
-	setpresetparameter_i(i, kBufferLFOshape, kReverseSawLFO);
+	setpresetparameter_i(i, kBufferLFOshape, kLFOshape_reversesaw);
 	setpresetparameter_b(i, kBufferLFOtempoSync, false);
 	setpresetparameter_f(i, kSmooth, 20.1f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
@@ -241,7 +245,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferInterrupt, true);
 	setpresetparameter_f(i, kDivisorLFOrate_abs, 3.78f);
 	setpresetparameter_f(i, kDivisorLFOdepth, 90.0f);
-	setpresetparameter_i(i, kDivisorLFOshape, kRandomLFO);
+	setpresetparameter_i(i, kDivisorLFOshape, kLFOshape_random);
 	setpresetparameter_b(i, kDivisorLFOtempoSync, false);
 	setpresetparameter_f(i, kBufferLFOdepth, 0.0f);
 	setpresetparameter_f(i, kSmooth, 3.9f);
@@ -255,11 +259,11 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferTempoSync, false);
 	setpresetparameter_f(i, kDivisorLFOrate_abs, getparametermin_f(kDivisorLFOrate_abs));
 	setpresetparameter_f(i, kDivisorLFOdepth, 0.0f);
-	setpresetparameter_i(i, kDivisorLFOshape, kTriangleLFO);
+	setpresetparameter_i(i, kDivisorLFOshape, kLFOshape_triangle);
 	setpresetparameter_b(i, kDivisorLFOtempoSync, false);
 	setpresetparameter_f(i, kBufferLFOrate_abs, 0.174f);
 	setpresetparameter_f(i, kBufferLFOdepth, 21.0f);
-	setpresetparameter_i(i, kBufferLFOshape, kTriangleLFO);
+	setpresetparameter_i(i, kBufferLFOshape, kLFOshape_triangle);
 	setpresetparameter_b(i, kBufferLFOtempoSync, false);
 	setpresetparameter_f(i, kSmooth, 8.1f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
@@ -273,7 +277,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferInterrupt, true);
 	setpresetparameter_i(i, kDivisorLFOrate_sync, tempoRateTable->getNearestTempoRateIndex(0.5f));
 	setpresetparameter_f(i, kDivisorLFOdepth, 84.0f);
-	setpresetparameter_i(i, kDivisorLFOshape, kSquareLFO);
+	setpresetparameter_i(i, kDivisorLFOshape, kLFOshape_square);
 	setpresetparameter_b(i, kDivisorLFOtempoSync, true);
 	setpresetparameter_f(i, kBufferLFOdepth, 0.0f);
 	setpresetparameter_f(i, kSmooth, 9.0f);	// eh?
@@ -300,11 +304,11 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferInterrupt, true);
 	setpresetparameter_i(i, kDivisorLFOrate_sync, tempoRateTable->getNearestTempoRateIndex(2.0f));
 	setpresetparameter_f(i, kDivisorLFOdepth, 33.3f);
-	setpresetparameter_i(i, kDivisorLFOshape, kSineLFO);
+	setpresetparameter_i(i, kDivisorLFOshape, kLFOshape_sine);
 	setpresetparameter_b(i, kDivisorLFOtempoSync, true);
 	setpresetparameter_i(i, kBufferLFOrate_sync, 0);
 	setpresetparameter_f(i, kBufferLFOdepth, 6.0f);
-	setpresetparameter_i(i, kBufferLFOshape, kSawLFO);
+	setpresetparameter_i(i, kBufferLFOshape, kLFOshape_saw);
 	setpresetparameter_b(i, kBufferLFOtempoSync, true);
 	setpresetparameter_f(i, kSmooth, 6.0f);
 	setpresetparameter_f(i, kDryWetMix, getparametermax_f(kDryWetMix));
@@ -322,12 +326,12 @@ void BufferOverride::initPresets()
 	setpresetparameter_f(i, kDivisorLFOrate_abs, f);
 	setpresetparameter_i(i, kDivisorLFOrate_sync, tempoRateTable->getNearestTempoRateIndex(f));
 	setpresetparameter_f(i, kDivisorLFOdepth, f);
-	setpresetparameter_i(i, kDivisorLFOshape, kLFO);
+	setpresetparameter_i(i, kDivisorLFOshape, kLFOshape_);
 	setpresetparameter_b(i, kDivisorLFOtempoSync, );
 	setpresetparameter_f(i, kBufferLFOrate_abs, );
 	setpresetparameter_i(i, kBufferLFOrate_sync, tempoRateTable->getNearestTempoRateIndex(f));
 	setpresetparameter_f(i, kBufferLFOdepth, f);
-	setpresetparameter_i(i, kBufferLFOshape, kLFO);
+	setpresetparameter_i(i, kBufferLFOshape, kLFOshape_);
 	setpresetparameter_b(i, kBufferLFOtempoSync, );
 	setpresetparameter_f(i, kSmooth, f);
 	setpresetparameter_f(i, kDryWetMix, f);
