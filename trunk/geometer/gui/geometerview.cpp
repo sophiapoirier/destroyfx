@@ -17,40 +17,37 @@ void GeometerView::draw(CDrawContext * ctx) {
   offc->setFillColor(cbackground);
   offc->fillRect(CRect(-1,-1,gwidth,gheight));
 
-  offc->moveTo (CPoint(0, gheight * ((- inputs[0])+1.0f) * 0.5f));
+  int start = apts<gwidth?(gwidth-apts)>>1:0;
 
-  for(int u = 0; u < samples; u ++) {
-    offc->lineTo (CPoint(u, gheight * (((-inputs[u])+1.0f) * 0.5f)));
+  offc->moveTo (CPoint(start, gheight * ((- inputs[0])+1.0f) * 0.5f));
+
+  for(int u = 0; u < apts; u ++) {
+    offc->lineTo (CPoint(start + u, gheight * (((-inputs[u])+1.0f) * 0.5f)));
   }
 
   offc->setFrameColor(cnewwave);
-  offc->moveTo (CPoint(0, gheight * ((- outputs[0])+1.0f) * 0.5f));
+  offc->moveTo (CPoint(start, gheight * ((- outputs[0])+1.0f) * 0.5f));
 
-  for(int v = 0; v < samples; v ++) {
-    offc->lineTo (CPoint(v, gheight * (((-outputs[v])+1.0f) * 0.5f)));
+  for(int v = 0; v < apts; v ++) {
+    offc->lineTo (CPoint(start + v, gheight * (((-outputs[v])+1.0f) * 0.5f)));
   }
 
 #if 1
   offc->setFillColor(cpointoutside);
   for(int w = 0; w < numpts; w ++) {
     int yy = (int)(gheight * (((-pointsy[w])+1.0f)*0.5f));
-    offc->fillRect(CRect(pointsx[w]-2, yy - 2,
-			 pointsx[w]+2, yy + 2));
+    offc->fillRect(CRect(start + pointsx[w]-2, yy - 2,
+			 start + pointsx[w]+2, yy + 2));
   }
 
   offc->setFrameColor(cpointinside);
-  /*  offc->moveTo (CPoint(pointsx[0], (gheight * (((-pointsy[0])+1.0f)*0.5f)))); */
   for(int t = 0; t < numpts; t ++) {
-    /*    offc->lineTo (CPoint(pointsx[t], (gheight * (((-pointsy[t])+1.0f)*0.5f)))); */
-
-    offc->drawPoint(CPoint(pointsx[t], (gheight * (((-pointsy[t])+1.0f)*0.5f))), cpointinside);
-
+    offc->drawPoint(CPoint(start + pointsx[t], 
+			   (gheight * (((-pointsy[t])+1.0f)*0.5f))), cpointinside);
   }
 #endif
 
   offc->copyFrom (ctx, sz, CPoint(0, 0));
-
-  //  CView::draw(ctx);
 
   setDirty(false);
 }
@@ -63,6 +60,8 @@ void GeometerView::update(CDrawContext * ctx) {
 }
 
 /* XXX use memcpy where applicable. */  
+/* XXX don't bother running processw unless 
+   the input data have changed. */
 void GeometerView::reflect() {
   /* when idle, copy points out of Geometer */
 
@@ -81,7 +80,10 @@ void GeometerView::reflect() {
 #endif
 
   geom->cs->grab();
-  int npts = geom->processw(inputs, outputs, samples,
+  apts = geom->framesize;
+  if (apts > samples) apts = samples;
+
+  int npts = geom->processw(inputs, outputs, apts,
 			    pointsx, pointsy, samples - 1,
 			    tmpx, tmpy);
   geom->cs->release();
