@@ -18,15 +18,16 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 		dryGain = sqrtf(dryGain);
 		wetGain = sqrtf(wetGain);
 	}
+	unsigned long ch;
 
 
 	// clear the output buffer because we accumulate output into it
 	if (replacing)
 	{
-		for (unsigned long cha=0; cha < numChannels; cha++)
+		for (ch=0; ch < numChannels; ch++)
 		{
 			for (unsigned long samp=0; samp < inNumFrames; samp++)
-				out[cha][samp] = 0.0f;
+				out[ch][samp] = 0.0f;
 		}
 	}
 
@@ -42,7 +43,7 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 
 	// mix very quiet noise (-300 dB) into the input singal to hopefully avoid any denormal values
 	float quietNoise = 1.0e-15f;
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (ch=0; ch < numChannels; ch++)
 	{
 		float *volatileIn = (float*) in[ch];
 		for (long samplecount = 0; samplecount < totalSampleFrames; samplecount++)
@@ -92,29 +93,26 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 				else
 					ampEvener = 1.0;
 
-				// most of the note values are liable to change during processFilterOuts,
-				// so we back them up to allow multi-band repetition
-				NoteTable noteTemp = midistuff->noteTable[notecount];
-
+				// store before processing the note's coefficients
+				int tempNumBands = numBands;
 				// this is the resonator stuff
 				processCoefficients(&numBands, notecount);
 
-				// restore the note values before doing processFilterOuts for the left channel
-				midistuff->noteTable[notecount] = noteTemp;
-				//
-				processFilterOuts(&(in[0][currentBlockPosition]), &(out[0][currentBlockPosition]), 
-								numFramesToProcess, ampEvener, notecount, numBands, 
-								prevOutValue[notecount], prevprevOutValue[notecount]);
-
-				if (numChannels == 2)
+				// most of the note values are liable to change during processFilterOuts,
+				// so we back them up to allow multi-band repetition
+				NoteTable noteTemp = midistuff->noteTable[notecount];
+				// render the filtered audio output for the note for each audio channel
+				for (ch=0; ch < numChannels; ch++)
 				{
-					// restore the note values before doing processFilterOuts for the right channel
+					// restore the note values before doing processFilterOuts for the next channel
 					midistuff->noteTable[notecount] = noteTemp;
-					//
-					processFilterOuts(&(in[1][currentBlockPosition]), &(out[1][currentBlockPosition]), 
-									numFramesToProcess, ampEvener, notecount, numBands, 
-									prevOut2Value[notecount], prevprevOut2Value[notecount]);
+					processFilterOuts(&(in[ch][currentBlockPosition]), &(out[ch][currentBlockPosition]), 
+								numFramesToProcess, ampEvener, notecount, numBands, 
+								prevOutValue[ch][notecount], prevprevOutValue[ch][notecount]);
 				}
+
+				// restore the number of bands before moving on to the next note
+				numBands = tempNumBands;
 			}
 		}	// end of notes loop
 
@@ -124,16 +122,15 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 
 		// we can output unprocessed audio if no notes happened during this block chunk
 		// or if the unaffected fade-out still needs to be finished
-		if ( (noNotes) || (unaffectedState == unFadeOut) )
+		if ( noNotes || (unaffectedState == unFadeOut) )
 		{
 			int tempUnState = unaffectedState;
 			int tempUnSamples = unaffectedFadeSamples;
-			processUnaffected(&(in[0][currentBlockPosition]), &(out[0][currentBlockPosition]), numFramesToProcess);
-			if (numChannels == 2)
+			for (ch=0; ch < numChannels; ch++)
 			{
 				unaffectedState = tempUnState;
 				unaffectedFadeSamples = tempUnSamples;
-				processUnaffected(&(in[1][currentBlockPosition]), &(out[1][currentBlockPosition]), numFramesToProcess);
+				processUnaffected(&(in[ch][currentBlockPosition]), &(out[ch][currentBlockPosition]), numFramesToProcess);
 			}
 		}
 
@@ -158,7 +155,7 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 	// mix in the dry input (only if there is supposed to be some dry; let's not waste calculations)
 	if (dryWetMix < 1.0f)
 	{
-		for (unsigned long ch=0; ch < numChannels; ch++)
+		for (ch=0; ch < numChannels; ch++)
 		{
 			for (long samplecount=0; samplecount < totalSampleFrames; samplecount++)
 				out[ch][samplecount] += in[ch][samplecount] * dryGain;

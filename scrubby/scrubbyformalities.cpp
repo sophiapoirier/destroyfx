@@ -142,8 +142,7 @@ long Scrubby::initialize()
 
 	if ( (pitchSteps == NULL) || (activeNotesTable == NULL) )
 		return -10875;	// AUFailedInitialization error code
-
-	return 0;
+	return 0;	// no error
 }
 
 //-------------------------------------------------------------------------
