@@ -1,5 +1,5 @@
 
-/* brokenfft: $Id: brokenfft.cpp,v 1.4 2001-09-02 05:05:51 tom7 Exp $ */
+/* brokenfft: $Id: brokenfft.cpp,v 1.5 2002-02-06 04:34:39 tom7 Exp $ */
 
 #include <windows.h>
 #include <stdlib.h>
@@ -572,7 +572,7 @@ void Fft::processX(float **inputs, float **outputs, long samples,
     free(tmp);
     free(oot);
 
-    samples = buffersamples;
+    buffersamples = samples;
 
     fftr = (float*)malloc(buffersamples * sizeof(float));
     ffti = (float*)malloc(buffersamples * sizeof(float));
@@ -592,7 +592,7 @@ void Fft::processX(float **inputs, float **outputs, long samples,
 
   float overscale;
   if (samples >= OVERLAP) overscale = 1.0;
-  else overscale =  (samples-OVERLAP) / (float)samples;
+  else overscale =  (OVERLAP-samples) / (float)samples;
 
   /* process samples, fading at the beginning and stretching
      for an extra OVERLAP samples */
