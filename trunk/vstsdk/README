@@ -5,14 +5,16 @@ from steinberg's website. This is what they look like.
 (You'll want the documentation and the rest of the SDK
 if you want to do plugin development, anyway!)
 
-07.12.1999  15:23                6,603 AEffect.h
-07.12.1999  15:23               19,692 aeffectx.h
-06.15.1999  11:33                  942 AEffEditor.hpp
-06.15.1999  11:33               10,640 AudioEffect.cpp
-06.15.1999  11:33                4,545 AudioEffect.hpp
-07.12.1999  15:23               18,680 audioeffectx.cpp
-07.12.1999  15:23               11,474 audioeffectx.h
-06.15.1999  11:33               18,617 vstcontrols.h
-07.02.1999  18:01               14,915 vstgui.h
-              10 File(s)        106,108 bytes
+For some plugins, you'll need the headers for VST GUI. You 
+can get these from Yvan Grabit's site.
 
+07.04.2000  17:32             6,841 AEffect.h
+06.08.2001  11:43            28,487 aeffectx.h
+03.20.2001  08:37             1,622 AEffEditor.hpp
+01.15.2001  09:10            10,683 AudioEffect.cpp
+01.22.1999  19:04             4,545 AudioEffect.hpp
+06.08.2001  19:37            21,716 audioeffectx.cpp
+03.27.2001  17:16            14,219 audioeffectx.h
+08.09.2001  19:44               811 README
+05.11.2001  13:15            23,420 vstcontrols.h
+05.23.2001  10:10            24,037 vstgui.h
