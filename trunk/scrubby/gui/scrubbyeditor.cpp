@@ -118,9 +118,9 @@ enum {
 	kHelp_midiLearn,
 	kHelp_midiReset,
 	kNumHelps,
-};
 
-const long kNumHelpTextLines = 3;
+	kNumHelpTextLines = 3,
+};
 
 const char * helpstrings[kNumHelps][kNumHelpTextLines] = 
 {
@@ -177,12 +177,18 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 		{"You can limit how low or how high Scrubby's playback speeds can go in terms "}, 
 		{"of octaves, or move these to their outer points if you want no limits."}, 
 	}, 
+#if MAC
+#define SCRUBBY_ALT_KEY_NAME "option"
+#else
+#define SCRUBBY_ALT_KEY_NAME "alt"
+#endif
 	// seek rate
 	{
 		{"seek rate:  the rate at which Scrubby finds new target destinations"}, 
 		{"You can define a randomized range with min & max rate limits for each seek."}, 
-		{"(control+click to move both together, option+click to move both relative)"}, 
+		{"(control+click to move both together, "SCRUBBY_ALT_KEY_NAME"+click to move both relative)"}, 
 	}, 
+#undef SCRUBBY_ALT_KEY_NAME
 	// seek duration
 	{
 		{"seek duration:  amount of a seek cycle spent moving to the target"}, 
@@ -345,15 +351,11 @@ void predelayDisplayProc(float value, char * outText, void *)
 
 
 //--------------------------------------------------------------------------
+// this is a display for Scrubby's built-in help
 ScrubbyHelpBox::ScrubbyHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground)
 :	DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
 					kDGTextAlign_left, kDisplayTextSize, kBlackDGColor, kDisplayFont), 
 	itemNum(kHelp_none)
-{
-}
-
-//--------------------------------------------------------------------------
-ScrubbyHelpBox::~ScrubbyHelpBox()
 {
 }
 
@@ -400,6 +402,41 @@ void ScrubbyHelpBox::setDisplayItem(long inItemNum)
 	if (changed)
 		redraw();
 }
+
+
+
+
+
+//-----------------------------------------------------------------------------
+// this is a very simple button class that has 2 states (on and off) and 
+// doesn't do any mouse tracking
+// this is for the keys on the keyboard control
+class ScrubbyKeyboardButton : public DGControl
+{
+public:
+	ScrubbyKeyboardButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, DGImage * inImage)
+	:	DGControl(inOwnerEditor, inParamID, inRegion), 
+		buttonImage(inImage)
+	{
+		setControlContinuous(false);
+	}
+
+	virtual void draw(CGContextRef inContext, long inPortHeight)
+	{
+		if (buttonImage != NULL)
+		{
+			long yoff = (GetControl32BitValue(carbonControl) == 0) ? 0 : (buttonImage->getHeight() / 2);
+			buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
+		}
+	}
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	{
+		SetControl32BitValue( carbonControl, (GetControl32BitValue(carbonControl) == 0) ? 1 : 0 );
+	}
+
+private:
+	DGImage * buttonImage;
+};
 
 
 
@@ -566,13 +603,13 @@ long ScrubbyEditor::open()
 	for (long i=0; i < NUM_PITCH_STEPS; i++)
 	{
 		pos.w = gKeyboardTopKeys[i]->getWidth();
-		DGButton * key = new DGButton(this, kPitchStep0 + i, &pos, gKeyboardTopKeys[i], 2, kDGButtonType_incbutton);
+		ScrubbyKeyboardButton * key = new ScrubbyKeyboardButton(this, kPitchStep0 + i, &pos, gKeyboardTopKeys[i]);
 		pos.offset(pos.w, 0);
 
 		if (gKeyboardBottomKeys[i] != NULL)
 		{
 			pos2.w = gKeyboardBottomKeys[i]->getWidth();
-			key = new DGButton(this, kPitchStep0 + i, &pos2, gKeyboardBottomKeys[i], 2, kDGButtonType_incbutton);
+			key = new ScrubbyKeyboardButton(this, kPitchStep0 + i, &pos2, gKeyboardBottomKeys[i]);
 			pos2.offset(pos2.w, 0);
 		}
 	}
