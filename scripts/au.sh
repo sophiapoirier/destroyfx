@@ -18,6 +18,6 @@ strip -x ~/Library/Audio/Plug-Ins/Components/"$2.component"/Contents/MacOS/*
 #  * uses the date to generate part of the output file name
 #  * ummm, also assumes some other stuff being where it happens 
 #    to be on Marc's hard disk, hmmm, maybe I should improve this...
-`dirname $0`/makedist.sh ~/dfx/_misc/distributions/first\ Audio\ Units/$1 au-`date \`\`+%m-%d-%Y''` ~/dfx/vstplugins/docs/$3 "$2" $4 ~/Library/Audio/Plug-Ins/Components/"$2.component" ~/dfx/docs/COPYING.rtf
+`dirname $0`/makedist.sh ~/dfx/_misc/distributions/first\ Audio\ Units/$1 au-`date \`\`+%Y-%m-%d''` ~/dfx/vstplugins/docs/$3 "$2" $4 ~/Library/Audio/Plug-Ins/Components/"$2.component" ~/dfx/docs/COPYING.rtf
 
 exit 0
