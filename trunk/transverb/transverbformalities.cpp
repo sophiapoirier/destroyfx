@@ -59,6 +59,8 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setpresetname(0, PLUGIN_NAME_STRING);	// default preset name
   initPresets();
 
+  numtransverbcores = 0;	// none yet
+
 
   #if TARGET_API_VST
     #if TARGET_PLUGIN_HAS_GUI
@@ -79,6 +81,19 @@ Transverb::~Transverb() {
 #endif
 }
 
+// add a DSP core instance to the counter
+long Transverb::addcore() {
+  numtransverbcores++;
+  return numtransverbcores;
+}
+
+// subtract a DSP core instance from the counter
+void Transverb::subtractcore() {
+  numtransverbcores--;
+  if (numtransverbcores < 0)
+    numtransverbcores = 0;
+}
+
 
 
 TransverbDSP::TransverbDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
@@ -86,13 +101,15 @@ TransverbDSP::TransverbDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
 
   buf1 = 0;
   buf2 = 0;
+  MAXBUF = 0;	// init to bogus value to "dirty" it
 
   filter1 = new IIRfilter();
   filter2 = new IIRfilter();
   firCoefficients1 = (float*) malloc(NUM_FIR_TAPS * sizeof(float));
   firCoefficients2 = (float*) malloc(NUM_FIR_TAPS * sizeof(float));
 
-  MAXBUF = 0;	// init to bogus value to "dirty" it
+  // increment the DSP core instance counter and fetch the current count
+  tomsound_sampoffset = ((Transverb*)inInstance)->addcore();
 }
 
 TransverbDSP::~TransverbDSP() {
@@ -110,6 +127,9 @@ TransverbDSP::~TransverbDSP() {
   if (firCoefficients2)
     free(firCoefficients2);
   firCoefficients2 = 0;
+
+  // decrement the DSP core instance counter
+  ((Transverb*)dfxplugin)->subtractcore();
 
   // must call here because ~DfxPluginCore can't do this for us
   releasebuffers();
@@ -198,6 +218,31 @@ void TransverbDSP::processparameters() {
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
     speed1hasChanged = speed2hasChanged = true;
+
+  // XXX is this necessary to get "true" TOMSOUND?
+  if (getparameterchanged(kTomsound))
+  {
+    // if TOMSOUND was just activated, set up the channel offset error
+    if (tomsound)
+    {
+      writer += tomsound_sampoffset;
+      writer %= bsize;
+      read1 += speed1 * (double)tomsound_sampoffset;
+      read2 += speed2 * (double)tomsound_sampoffset;
+      read1 = fmod(fabs(read1), (double)bsize);
+      read2 = fmod(fabs(read2), (double)bsize);
+    }
+    // otherwise remove the channel offset error (unless everything's initialized)
+	else if ( (writer != 0) || (read1 != 0.0) || (read2 != 0.0) )
+    {
+      writer -= tomsound_sampoffset;
+      writer = (writer+bsize) % bsize;
+      read1 -= speed1 * (double)tomsound_sampoffset;
+      read2 -= speed2 * (double)tomsound_sampoffset;
+      read1 = fmod(fabs(read1), (double)bsize);
+      read2 = fmod(fabs(read2), (double)bsize);
+    }
+  }
 }
 
 
