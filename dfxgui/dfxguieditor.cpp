@@ -791,35 +791,14 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 					Rect portBounds;
 					GetPortBounds(windowPort, &portBounds);
 
-//#define USE_QUICKDRAW_CLIPPING
-					// clipping
-#ifdef USE_QUICKDRAW_CLIPPING
-					RgnHandle clipRgn = NewRgn();
-					OpenRgn();
-					ourDGControl->clipRegion();
-					Rect clipRect;
-					ourDGControl->getBounds()->copyToRect(&clipRect);
-					FrameRect(&clipRect);	// XXX  whuh?
-					CloseRgn(clipRgn);
-					SetClip(clipRgn);
-					clipRgn = GetPortClipRegion(windowPort, clipRgn);
-#endif
-
 					// set up the CG context
 					CGContextRef context;
 					QDBeginCGContext(windowPort, &context);
-#ifdef USE_QUICKDRAW_CLIPPING
-					ClipCGContextToRegion(context, &portBounds, clipRgn);
-					DisposeRgn(clipRgn);
-#endif
 					SyncCGContextOriginWithPort(context, windowPort);
 					CGContextSaveGState(context);
-#ifndef USE_QUICKDRAW_CLIPPING
 					// define the clipping region
 					CGRect clipRect = ourDGControl->getBounds()->convertToCGRect(portBounds.bottom);
-
 					CGContextClipToRect(context, clipRect);
-#endif
 // this lets me position things with non-upside-down coordinates, but unfortunately draws all images and text upside down...
 //CGContextTranslateCTM(context, 0, portBounds.bottom);
 //CGContextScaleCTM(context, 1.0f, -1.0f);
