@@ -5,7 +5,7 @@
 // Button
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
-					AudioUnitParameterID inParamID, 
+					long				inParamID, 
 					DGRect *			inRegion,
 					DGImage *			inImage, 
 					long				inNumStates, 
@@ -14,13 +14,7 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
 	buttonImage(inImage), numStates(inNumStates), mode(inMode), drawMomentaryState(inDrawMomentaryState)
 {
-	userProcedure = NULL;
-	userProcData = NULL;
-	userReleaseProcedure = NULL;
-	userReleaseProcData = NULL;
-
-	mouseIsDown = false;
-	setContinuousControl(false);
+	init();
 }
 
 //-----------------------------------------------------------------------------
@@ -33,13 +27,20 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 :	DGControl(inOwnerEditor, inRegion, ((inNumStates <= 0) ? 0.0f : (float)(inNumStates-1)) ), 
 	buttonImage(inImage), numStates(inNumStates), mode(inMode), drawMomentaryState(inDrawMomentaryState)
 {
+	init();
+}
+
+//-----------------------------------------------------------------------------
+// common constructor stuff
+void DGButton::init()
+{
 	userProcedure = NULL;
 	userProcData = NULL;
 	userReleaseProcedure = NULL;
 	userReleaseProcData = NULL;
 
 	mouseIsDown = false;
-	setContinuousControl(false);
+	setControlContinuous(false);
 }
 
 //-----------------------------------------------------------------------------
@@ -50,8 +51,8 @@ DGButton::~DGButton()
 //-----------------------------------------------------------------------------
 void DGButton::draw(CGContextRef inContext, UInt32 inPortHeight)
 {
-	CGImageRef theButton = (buttonImage == NULL) ? NULL : buttonImage->getCGImage();
-	if (theButton != NULL)
+	CGImageRef buttonCGImage = (buttonImage == NULL) ? NULL : buttonImage->getCGImage();
+	if (buttonCGImage != NULL)
 	{
 		SInt32 value = GetControl32BitValue(getCarbonControl());
 		SInt32 max = GetControl32BitMaximum(getCarbonControl());
@@ -62,7 +63,7 @@ bounds.size.height = buttonImage->getHeight();
 if (drawMomentaryState && mouseIsDown)
 	bounds.origin.x -= (float) (buttonImage->getWidth() / 2);
 bounds.origin.y -= (float) ( (max - value) * (buttonImage->getHeight() / numStates) );
-		CGContextDrawImage(inContext, bounds, theButton);
+		CGContextDrawImage(inContext, bounds, buttonCGImage);
 	}
 }
 
@@ -78,7 +79,7 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 	
 	setMouseIsDown(true);
 	#if TARGET_PLUGIN_USES_MIDI
-		if (isAUVPattached())
+		if (isParameterAttached())
 			getDfxGuiEditor()->setmidilearner(getAUVP().mParameterID);
 	#endif
 
@@ -194,14 +195,14 @@ void DGButton::setMouseIsDown(bool newMouseState)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setUserProcedure(buttonUserProcedure inProc, void *inUserData)
+void DGButton::setUserProcedure(buttonUserProcedure inProc, void * inUserData)
 {
 	userProcedure = inProc;
 	userProcData = inUserData;
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setUserReleaseProcedure(buttonUserProcedure inProc, void *inUserData)
+void DGButton::setUserReleaseProcedure(buttonUserProcedure inProc, void * inUserData)
 {
 	userReleaseProcedure = inProc;
 	userReleaseProcData = inUserData;
@@ -215,7 +216,7 @@ void DGButton::setUserReleaseProcedure(buttonUserProcedure inProc, void *inUserD
 //-----------------------------------------------------------------------------
 // Web Link
 //-----------------------------------------------------------------------------
-DGWebLink::DGWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inImage, const char *inURL)
+DGWebLink::DGWebLink(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage, const char * inURL)
 :	DGButton(inOwnerEditor, inRegion, inImage, 2, kDGButtonType_pushbutton), 
 	urlString(NULL)
 {

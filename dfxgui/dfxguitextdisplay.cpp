@@ -2,8 +2,8 @@
 
 
 //-----------------------------------------------------------------------------
-void genericDisplayTextProcedure(Float32 value, char *outText, void *userData);
-void genericDisplayTextProcedure(Float32 value, char *outText, void *userData)
+void genericDisplayTextProcedure(Float32 value, char * outText, void * userData);
+void genericDisplayTextProcedure(Float32 value, char * outText, void * userData)
 {
 	if (outText != NULL)
 		sprintf(outText, "%.1f", value);
@@ -13,14 +13,14 @@ void genericDisplayTextProcedure(Float32 value, char *outText, void *userData)
 
 //-----------------------------------------------------------------------------
 DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
-							AudioUnitParameterID	inParamID, 
+							long					inParamID, 
 							DGRect *				inRegion,
 							displayTextProcedure	inTextProc, 
 							void *					inUserData,
-							DGImage *				inBackground, 
+							DGImage *				inBackgroundImage, 
 							const char *			inFontName)
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
-	BackGround(inBackground)
+	backgroundImage(inBackgroundImage)
 {
 	if (inTextProc == NULL)
 		textProc = genericDisplayTextProcedure;
@@ -56,14 +56,14 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	fontSize = 14.0f;
 	fontColor(103.0f/255.0f, 161.0f/255.0f, 215.0f/255.0f);
 
-	setContinuousControl(true);
+	setControlContinuous(true);
 	alignment = kDGTextAlign_right;
 }
 
 //-----------------------------------------------------------------------------
 DGTextDisplay::~DGTextDisplay()
 {
-	BackGround = NULL;
+	backgroundImage = NULL;
 	textProc = NULL;
 	textProcUserData = NULL;
 	if (fontName != NULL)
@@ -77,10 +77,10 @@ void DGTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 {
 	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
 
-	CGImageRef theBack = NULL;
-	if (BackGround != NULL)
-		theBack = BackGround->getCGImage();
-	if (theBack == NULL)
+	CGImageRef backgroundCGImage = NULL;
+	if (backgroundImage != NULL)
+		backgroundCGImage = backgroundImage->getCGImage();
+	if (backgroundCGImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
@@ -94,12 +94,12 @@ void DGTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 	{
 CGRect whole;
 whole = bounds;
-whole.size.width = (float) BackGround->getWidth();
-whole.size.height = (float) BackGround->getHeight();
+whole.size.width = (float) backgroundImage->getWidth();
+whole.size.height = (float) backgroundImage->getHeight();
 whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
-whole.origin.y -= (float) (BackGround->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
-//		CGContextDrawImage(inContext, bounds, theBack);
-		CGContextDrawImage(inContext, whole, theBack);
+whole.origin.y -= (float) (backgroundImage->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
+//		CGContextDrawImage(inContext, bounds, backgroundCGImage);
+		CGContextDrawImage(inContext, whole, backgroundCGImage);
 	}
 
 	if (textProc != NULL)
@@ -112,7 +112,7 @@ whole.origin.y -= (float) (BackGround->getHeight() - (where.y - getDfxGuiEditor(
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const char *inString)
+void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const char * inString)
 {
 	if (inString == NULL)
 		return;
@@ -148,13 +148,13 @@ void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const cha
 
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inBackground, const char *inFontName)
-:	DGTextDisplay(inOwnerEditor, 0xFFFFFFFF, inRegion, NULL, NULL, inBackground, inFontName), 
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, const char * inFontName)
+:	DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, inFontName), 
 	displayString(NULL)
 {
 	displayString = (char*) malloc(256);
 	displayString[0] = 0;
-	AUVPattached = false;	// XXX good enough?
+	parameterAttached = false;	// XXX good enough?
 }
 
 //-----------------------------------------------------------------------------
@@ -166,7 +166,7 @@ DGStaticTextDisplay::~DGStaticTextDisplay()
 }
 
 //-----------------------------------------------------------------------------
-void DGStaticTextDisplay::setText(const char *inNewText)
+void DGStaticTextDisplay::setText(const char * inNewText)
 {
 	if (inNewText == NULL)
 		return;
@@ -179,10 +179,10 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 {
 	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
 
-	CGImageRef theBack = NULL;
-	if (BackGround != NULL)
-		theBack = BackGround->getCGImage();
-	if (theBack == NULL)
+	CGImageRef backgroundCGImage = NULL;
+	if (backgroundImage != NULL)
+		backgroundCGImage = backgroundImage->getCGImage();
+	if (backgroundCGImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
@@ -196,12 +196,12 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 	{
 CGRect whole;
 whole = bounds;
-whole.size.width = (float) BackGround->getWidth();
-whole.size.height = (float) BackGround->getHeight();
+whole.size.width = (float) backgroundImage->getWidth();
+whole.size.height = (float) backgroundImage->getHeight();
 whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
-whole.origin.y -= (float) (BackGround->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
-//		CGContextDrawImage(inContext, bounds, theBack);
-		CGContextDrawImage(inContext, whole, theBack);
+whole.origin.y -= (float) (backgroundImage->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
+//		CGContextDrawImage(inContext, bounds, backgroundCGImage);
+		CGContextDrawImage(inContext, whole, backgroundCGImage);
 	}
 
 	drawText(inContext, bounds, displayString);

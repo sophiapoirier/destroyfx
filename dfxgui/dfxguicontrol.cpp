@@ -3,29 +3,29 @@
 
 
 //-----------------------------------------------------------------------------
-DGControl::DGControl(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inRegion)
+DGControl::DGControl(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion)
 :	ownerEditor(inOwnerEditor)
 {
-	auvp = AUVParameter(ownerEditor->GetEditAudioUnit(), inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
-	AUVPattached = true;
+	auvp = AUVParameter(ownerEditor->GetEditAudioUnit(), (AudioUnitParameterID)inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
+	parameterAttached = true;
 	Range = auvp.ParamInfo().maxValue - auvp.ParamInfo().minValue;
 	
 	init(inRegion);
 }
 
 //-----------------------------------------------------------------------------
-DGControl::DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange)
+DGControl::DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange)
 :	ownerEditor(inOwnerEditor), Range(inRange)
 {
 	auvp = AUVParameter();	// an empty AUVParameter
-	AUVPattached = false;
+	parameterAttached = false;
 
 	init(inRegion);
 }
 
 //-----------------------------------------------------------------------------
 // common constructor stuff
-void DGControl::init(DGRect *inRegion)
+void DGControl::init(DGRect * inRegion)
 {
 	where.set(inRegion);
 	vizArea.set(inRegion);
@@ -33,7 +33,10 @@ void DGControl::init(DGRect *inRegion)
 	carbonControl = NULL;
 	auv_control = NULL;
 
-	setContinuousControl(false);
+	isContinuous = false;
+
+	// add this control to the owner editor's list of controls
+	getDfxGuiEditor()->addControl(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -55,10 +58,42 @@ void DGControl::redraw()
 }
 
 //-----------------------------------------------------------------------------
+void DGControl::embed()
+{
+	setOffset( (long) (getDfxGuiEditor()->GetXOffset()), (long) (getDfxGuiEditor()->GetYOffset()) );
+	Rect carbonControlRect;
+	getBounds()->copyToRect(&carbonControlRect);
+	ControlRef newCarbonControl = NULL;
+	verify_noerr( CreateCustomControl(getDfxGuiEditor()->GetCarbonWindow(), &carbonControlRect, 
+					getDfxGuiEditor()->getControlDefSpec(), NULL, &newCarbonControl) );
+	if (newCarbonControl == NULL)
+		return;	// XXX what else can we do?
+
+	setCarbonControl(newCarbonControl);
+	initCarbonControlValueRange();
+
+	getDfxGuiEditor()->EmbedControl(newCarbonControl);
+	if ( isParameterAttached() )
+		createAUVcontrol();
+	else
+		SetControl32BitValue(newCarbonControl, GetControl32BitMinimum(newCarbonControl));
+/*
+UInt32 feat = 0;
+GetControlFeatures(newCarbonControl, &feat);
+for (int i=0; i < 32; i++)
+{
+if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
+}
+*/
+}
+
+//-----------------------------------------------------------------------------
 void DGControl::createAUVcontrol()
 {
-	AUCarbonViewControl::ControlType ctype;
-	ctype = isContinuousControl() ? AUCarbonViewControl::kTypeContinuous : AUCarbonViewControl::kTypeDiscrete;
+	if (carbonControl == NULL)
+		return;
+
+	AUCarbonViewControl::ControlType ctype = isContinuousControl() ? AUCarbonViewControl::kTypeContinuous : AUCarbonViewControl::kTypeDiscrete;
 	if (auv_control != NULL)
 		delete auv_control;
 	auv_control = new DGCarbonViewControl(getDfxGuiEditor(), getDfxGuiEditor()->getParameterListener(), ctype, getAUVP(), carbonControl);
@@ -66,14 +101,44 @@ void DGControl::createAUVcontrol()
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::setParameterID(AudioUnitParameterID inParameterID)
+void DGControl::setControlContinuous(bool inContinuity)
 {
-	if (inParameterID == 0xFFFFFFFF)	// XXX do something about this
-		AUVPattached = false;
-	else if (inParameterID != auvp.mParameterID)	// only do this if it's a change
+	bool oldContinuity = isContinuous;
+	isContinuous = inContinuity;
+	if (inContinuity != oldContinuity)
 	{
-		AUVPattached = true;
-		auvp = AUVParameter(getDfxGuiEditor()->GetEditAudioUnit(), inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
+		initCarbonControlValueRange();
+		createAUVcontrol();
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::initCarbonControlValueRange()
+{
+	if (carbonControl == NULL)
+		return;
+
+	SetControl32BitMinimum(carbonControl, 0);
+	if ( isContinuousControl() )
+		SetControl32BitMaximum(carbonControl, 0x3FFFFFFF);
+	else
+		SetControl32BitMaximum(carbonControl, (SInt32) (getRange()+0.01f));
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::setParameterID(long inParameterID)
+{
+	if (inParameterID == DFX_PARAM_INVALID_ID)
+	{
+		parameterAttached = false;
+		if (auv_control != NULL)
+			delete auv_control;
+	}
+	else if ( !parameterAttached || (inParameterID != (long)(auvp.mParameterID)) )	// only do this if it's a change
+	{
+		parameterAttached = true;
+		auvp = AUVParameter(getDfxGuiEditor()->GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, 
+							kAudioUnitScope_Global, (AudioUnitElement)0);
 		createAUVcontrol();
 	}
 }
@@ -81,14 +146,14 @@ void DGControl::setParameterID(AudioUnitParameterID inParameterID)
 //-----------------------------------------------------------------------------
 long DGControl::getParameterID()
 {
-	if (isAUVPattached())
+	if (isParameterAttached())
 		return getAUVP().mParameterID;
 	else
 		return DFX_PARAM_INVALID_ID;
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::setOffset(SInt32 x, SInt32 y)
+void DGControl::setOffset(long x, long y)
 {
 	where.offset(x, y);
 	vizArea.offset(x, y);
@@ -118,13 +183,13 @@ bool DGControl::isControlRef(ControlRef inControl)
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::setForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h)
+void DGControl::setForeBounds(long x, long y, long w, long h)
 {
 	vizArea.set(x, y, w, h);
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::shrinkForeBounds(SInt32 inXoffset, SInt32 inYoffset, SInt32 inWidthShrink, SInt32 inHeightShrink)
+void DGControl::shrinkForeBounds(long inXoffset, long inYoffset, long inWidthShrink, long inHeightShrink)
 {
 	vizArea.offset(inXoffset, inYoffset, -inWidthShrink, -inHeightShrink);
 }
@@ -137,7 +202,7 @@ void DGControl::shrinkForeBounds(SInt32 inXoffset, SInt32 inYoffset, SInt32 inWi
 #include "dfxpluginproperties.h"
 
 //-----------------------------------------------------------------------------
-DGCarbonViewControl::DGCarbonViewControl(AUCarbonViewBase *inOwnerView, AUParameterListenerRef inListener, 
+DGCarbonViewControl::DGCarbonViewControl(AUCarbonViewBase * inOwnerView, AUParameterListenerRef inListener, 
 										ControlType inType, const AUVParameter &inAUVParam, ControlRef inControl)
 :	AUCarbonViewControl(inOwnerView, inListener, inType, inAUVParam, inControl)
 {

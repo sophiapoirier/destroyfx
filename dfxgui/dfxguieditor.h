@@ -28,20 +28,20 @@ public:
 	DfxGuiEditor(DGEditorListenerInstance inInstance);
 	virtual ~DfxGuiEditor();
 
-	// *** this one is for the child class to override
-	virtual OSStatus open(float inXOffset, float inYOffset) = 0;
+	// *** this one is for the child class of DfxGuiEditor to override
+	virtual long open(float inXOffset, float inYOffset) = 0;
 
 #ifdef TARGET_API_AUDIOUNIT
-	// this gets called from AUCarbonViewBase
-	OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
-	bool HandleEvent(EventRef inEvent);
+	// these are part of the AUCarbonViewBase interface
+	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
+	virtual bool HandleEvent(EventRef inEvent);
 
 	AUParameterListenerRef getParameterListener()
 		{	return mParameterListener;	}
 #endif
 
-	void			addImage(DGImage *inImage);
-	void			addControl(DGControl *inCtrl);
+	void addImage(DGImage * inImage);
+	void addControl(DGControl * inCtrl);
 
 	void do_idle();
 	virtual void idle() { }
@@ -53,12 +53,14 @@ public:
 	virtual bool HandleKeyboardEvent(EventRef inEvent);
 	virtual bool HandleCommandEvent(EventRef inEvent);
 	virtual bool HandleControlEvent(EventRef inEvent);
+	ControlDefSpec * getControlDefSpec()
+		{	return &dgControlSpec;	}
 #endif
 
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()
 		{	return currentControl_mouseover;	}
-	void setCurrentControl_mouseover(DGControl *inNewMousedOverControl);
+	void setCurrentControl_mouseover(DGControl * inNewMousedOverControl);
 	// *** override this if you want your GUI to react when the mouseovered control changes
 	virtual void mouseovercontrolchanged() { }
 
@@ -69,7 +71,7 @@ public:
 	double getparameter_d(long parameterID);
 	long getparameter_i(long parameterID);
 	bool getparameter_b(long parameterID);
-	void getparametervaluestring(long parameterID, char *outText);
+	void getparametervaluestring(long parameterID, char * outText);
 	void randomizeparameters(bool writeAutomation = false);
 	#if TARGET_PLUGIN_USES_MIDI
 		void setmidilearning(bool newLearnMode);
@@ -81,7 +83,7 @@ public:
 	#endif
 
 protected:
-	void SetBackgroundImage(DGImage *inBackgroundImage)
+	void SetBackgroundImage(DGImage * inBackgroundImage)
 		{	backgroundImage = inBackgroundImage;	}
 	void SetBackgroundColor(DGColor inBackgroundColor)
 		{	backgroundColor = inBackgroundColor;	}

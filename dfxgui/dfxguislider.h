@@ -6,16 +6,17 @@
 
 
 typedef enum {
-	kDGSliderStyle_vertical,
-	kDGSliderStyle_horizontal
-} DfxGuiSliderStyle;
+	kDGSliderAxis_vertical,
+	kDGSliderAxis_horizontal
+} DfxGuiSliderAxis;
 
 
 //-----------------------------------------------------------------------------
 class DGSlider : public DGControl
 {
 public:
-	DGSlider(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DfxGuiSliderStyle, DGImage*, DGImage*);
+	DGSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+				DfxGuiSliderAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage);
 	virtual ~DGSlider();
 
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
@@ -27,18 +28,18 @@ public:
 		{	mouseOffset = inOffset;	}
 
 	/* XXX example - call this instead of new */
-	static DGSlider * create(DfxGuiEditor * dge, AudioUnitParameterID a, DGRect * r, DfxGuiSliderStyle dgss, DGImage * dg, DGImage * dg2)
+	static DGSlider * create(DfxGuiEditor * dge, long param, DGRect * pos, DfxGuiSliderAxis axis, DGImage * grabby, DGImage * back)
 	{
-		DGSlider * n = new DGSlider(dge, a, r, dgss, dg, dg2);
-		dge->addControl(n);
-		return n;
+		DGSlider * s = new DGSlider(dge, param, pos, axis, grabby, back);
+		dge->addControl(s);
+		return s;
 	}
 
 
 protected:
-	UInt32		orientation;
-	DGImage *	ForeGround;
-	DGImage *	BackGround;
+	DfxGuiSliderAxis	orientation;
+	DGImage *	handleImage;
+	DGImage *	backgroundImage;
 	float		fineTuneFactor;	// slow-down factor for shift control
 	long		mouseOffset;	// for mouse tracking with click in the middle of the slider handle
 	float		lastX;

@@ -4,10 +4,12 @@
 
 
 
-static pascal OSStatus DGControlEventHandler(EventHandlerCallRef, EventRef, void *inUserData);
-static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef, EventRef, void *inUserData);
+#if MAC
+static pascal OSStatus DGControlEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
+static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
 
-static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData);
+static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData);
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -64,8 +66,7 @@ DfxGuiEditor::~DfxGuiEditor()
 		DisposeEventLoopTimerUPP(idleTimerUPP);
 	idleTimerUPP = NULL;
 
-	/* deleting a list item also calls the destroy
-	   method for its Destructible data. */
+	// deleting a list link also deletes the list's item
 	while (controlsList != NULL)
 	{
 		DGControlsList * tempcl = controlsList->next;
@@ -112,6 +113,7 @@ DfxGuiEditor::~DfxGuiEditor()
 }
 
 
+#ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 {
@@ -195,13 +197,24 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		if (backgroundImage != NULL)
 			SizeControl(mCarbonPane, (SInt16) (backgroundImage->getWidth()), (SInt16) (backgroundImage->getHeight()));
 
+		// embed/activate every control
+		DGControlsList * tempcl = controlsList;
+		while (tempcl != NULL)
+		{
+			tempcl->control->embed();
+			tempcl = tempcl->next;
+		}
+
 		idleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
 		InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, idleTimerUPP, this, &idleTimer);
 	}
 
 	return openErr;
 }
+#endif
+// TARGET_API_AUDIOUNIT
 
+#ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 {
@@ -265,6 +278,8 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 	// let the parent implementation do its thing
 	return AUCarbonViewBase::HandleEvent(inEvent);
 }
+#endif
+// TARGET_API_AUDIOUNIT
 
 
 //-----------------------------------------------------------------------------
@@ -282,15 +297,17 @@ void DfxGuiEditor::do_idle()
 	}
 }
 
+#if MAC
 //-----------------------------------------------------------------------------
-static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData)
+static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
 {
 	if (inUserData != NULL)
 		((DfxGuiEditor*)inUserData)->do_idle();
 }
+#endif
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::addImage(DGImage *inImage)
+void DfxGuiEditor::addImage(DGImage * inImage)
 {
 	if (inImage == NULL)
 		return;
@@ -299,51 +316,15 @@ void DfxGuiEditor::addImage(DGImage *inImage)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::addControl(DGControl *inControl)
+void DfxGuiEditor::addControl(DGControl * inControl)
 {
 	if (inControl == NULL)
 		return;
 
 	controlsList = new DGControlsList(inControl, controlsList);
-
-	inControl->setOffset((long)GetXOffset(), (long)GetYOffset());
-
-	Rect r;
-	inControl->getBounds()->copyToRect(&r);
-	ControlRef newCarbonControl;
-	verify_noerr( CreateCustomControl(GetCarbonWindow(), &r, &dgControlSpec, NULL, &newCarbonControl) );
-	SetControl32BitMinimum(newCarbonControl, 0);
-	if (inControl->isContinuousControl())
-	{
-		SInt32 controlrange = 0x3FFFFFFF;
-		SetControl32BitMaximum(newCarbonControl, controlrange);
-	}
-	else
-		SetControl32BitMaximum(newCarbonControl, (SInt32) (inControl->getRange()+0.01f));
-
-	inControl->setCarbonControl(newCarbonControl);
-	if (inControl->isAUVPattached())
-	{
-//		AddCarbonControl(AUCarbonViewControl::kTypeContinuous, inControl->getAUVP(), newCarbonControl);
-		EmbedControl(newCarbonControl);
-		inControl->createAUVcontrol();
-//		AddControl(inControl->getAUVcontrol());
-	}
-	else
-	{
-		EmbedControl(newCarbonControl);
-		SetControl32BitValue(newCarbonControl, 0);
-/*
-UInt32 feat = 0;
-GetControlFeatures(newCarbonControl, &feat);
-for (int i=0; i < 32; i++)
-{
-if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
-}
-*/
-	}
 }
 
+#if MAC
 //-----------------------------------------------------------------------------
 DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 {
@@ -357,6 +338,7 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 
 	return NULL;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::DrawBackground(CGContextRef inContext, UInt32 inPortHeight)
@@ -379,8 +361,10 @@ void DfxGuiEditor::DrawBackground(CGContextRef inContext, UInt32 inPortHeight)
 
 //-----------------------------------------------------------------------------
 // XXX this function should really go somewhere else, like in that promised DFX utilities file or something like that
-OSStatus launch_documentation()
+long launch_documentation()
 {
+
+#if MAC
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
 	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
@@ -397,6 +381,8 @@ OSStatus launch_documentation()
 	}
 
 	return fnfErr;	// file not found error
+#endif
+
 }
 
 //-----------------------------------------------------------------------------
@@ -408,9 +394,9 @@ void DfxGuiEditor::randomizeparameters(bool writeAutomation)
 
 //-----------------------------------------------------------------------------
 // set the control that is currently idly under the mouse pointer, if any (NULL if none)
-void DfxGuiEditor::setCurrentControl_mouseover(DGControl *inNewMousedOverControl)
+void DfxGuiEditor::setCurrentControl_mouseover(DGControl * inNewMousedOverControl)
 {
-	DGControl *oldcontrol = currentControl_mouseover;
+	DGControl * oldcontrol = currentControl_mouseover;
 	currentControl_mouseover = inNewMousedOverControl;
 	// post notification if the mouseovered control has changed
 	if (oldcontrol != inNewMousedOverControl)
@@ -480,7 +466,7 @@ bool DfxGuiEditor::getparameter_b(long parameterID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::getparametervaluestring(long parameterID, char *outText)
+void DfxGuiEditor::getparametervaluestring(long parameterID, char * outText)
 {
 	DfxParameterValueStringRequest request;
 	UInt32 dataSize = sizeof(request);
@@ -553,11 +539,12 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 
 
 
+#if MAC
 //-----------------------------------------------------------------------------
-static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void *inUserData)
+static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
 	bool eventWasHandled = false;
-	DfxGuiEditor *ourOwnerEditor = (DfxGuiEditor*) inUserData;
+	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*) inUserData;
 
 	switch ( GetEventClass(inEvent) )
 	{
@@ -579,7 +566,9 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 	else
 		return eventNotHandledErr;
 }
+#endif
 
+#if MAC
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 {
@@ -622,7 +611,7 @@ return false;
 
 
 // follow the mouse when dragging (adjusting) a GUI control
-	DGControl *ourControl = currentControl_clicked;
+	DGControl * ourControl = currentControl_clicked;
 	if (ourControl == NULL)
 		return false;
 
@@ -670,7 +659,7 @@ return false;
 		currentControl_clicked = NULL;
 
 		// do this to make Logic's touch automation work
-		if ( ourControl->isAUVPattached() )
+		if ( ourControl->isParameterAttached() )
 		{
 			TellListener(ourControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
 //			printf("DGControlMouseHandler -> TellListener(MouseUp, %lu)\n", ourControl->getAUVP().mParameterID);
@@ -681,7 +670,10 @@ return false;
 
 	return false;
 }
+#endif
+// MAC
 
+#if MAC
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 {
@@ -711,7 +703,10 @@ bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 
 	return false;
 }
+#endif
+// MAC
 
+#if MAC
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 {
@@ -739,10 +734,13 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 
 	return false;
 }
+#endif
+// MAC
 
 
+#if MAC
 //-----------------------------------------------------------------------------
-static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void *inUserData)
+static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
 	if (GetEventClass(inEvent) != kEventClassControl)
 		return eventClassIncorrectErr;
@@ -753,7 +751,9 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 	else
 		return eventNotHandledErr;
 }
+#endif
 
+#if MAC
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 {
@@ -761,7 +761,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 
 	ControlRef ourCarbonControl = NULL;
 	GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &ourCarbonControl);
-	DGControl *ourDGControl = NULL;
+	DGControl * ourDGControl = NULL;
 	ourDGControl = getDGControlByCarbonControlRef(ourCarbonControl);
 
 /*
@@ -934,3 +934,5 @@ printf("kEventControlHit\n");
 
 	return false;
 }
+#endif
+// MAC

@@ -9,7 +9,7 @@ class EQSyncEditor : public DfxGuiEditor
 {
 public:
 	EQSyncEditor(AudioUnitCarbonView inInstance);
-	virtual OSStatus open(float inXOffset, float inYOffset);
+	virtual long open(float inXOffset, float inYOffset);
 };
 
 #endif
