@@ -133,8 +133,8 @@ CGRect whole;
 whole = bounds;
 whole.size.width = (float) CGImageGetWidth(theBack);
 whole.size.height = (float) CGImageGetHeight(theBack);
-whole.origin.x -= (float) (where.x - getDfxGuiEditor()->X);
-whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->Y) - where.h);
+whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
+whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
 //		CGContextDrawImage(context, bounds, theBack);
 		CGContextDrawImage(context, whole, theBack);
 	}
@@ -231,8 +231,8 @@ CGRect whole;
 whole = bounds;
 whole.size.width = (float) CGImageGetWidth(theBack);
 whole.size.height = (float) CGImageGetHeight(theBack);
-whole.origin.x -= (float) (where.x - getDfxGuiEditor()->X);
-whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->Y) - where.h);
+whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
+whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
 //		CGContextDrawImage(context, bounds, theBack);
 		CGContextDrawImage(context, whole, theBack);
 	}

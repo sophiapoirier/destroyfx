@@ -6,9 +6,7 @@
 #ifndef __scrubbykeyboard
 #define __scrubbykeyboard
 
-#ifndef __dfxguimulticontrols
 #include "dfxguimulticontrols.h"
-#endif
 
 
 

@@ -101,25 +101,26 @@ enum
 //----------------------------------------------------------------------------- 
 // constants & macros
 
-#define NUM_FADE_POINTS 30000
-#define FADE_CURVE 2.7f
+#define NUM_FADE_POINTS	30000
+#define FADE_CURVE	2.7
 
-#define PITCHBEND_MAX 36.0
+#define PITCHBEND_MAX	36.0
 
 // 128 midi notes
-#define NUM_NOTES 128
+#define NUM_NOTES	128
 // 12th root of 2
-#define NOTE_UP_SCALAR   1.059463094359295264561825294946
-#define NOTE_DOWN_SCALAR   0.94387431268169349664191315666792
+#define NOTE_UP_SCALAR	1.059463094359295264561825294946
+#define NOTE_DOWN_SCALAR	0.94387431268169349664191315666792
 const float MIDI_SCALAR = 1.0f / 127.0f;
 
-#define STOLEN_NOTE_FADE_DUR 48
+#define STOLEN_NOTE_FADE_DUR	48
 const float STOLEN_NOTE_FADE_STEP = 1.0f / (float)STOLEN_NOTE_FADE_DUR;
-#define LEGATO_FADE_DUR 39
+#define LEGATO_FADE_DUR	39
+const float LEGATO_FADE_STEP = 1.0f / LEGATO_FADE_DUR;
 
-#define EVENTS_QUEUE_SIZE 12000
+#define EVENTS_QUEUE_SIZE	12000
 
-#define isNote(A)   ( ((A) == kMidiNoteOn) || ((A) == kMidiNoteOff) )
+#define isNote(A)	( ((A) == kMidiNoteOn) || ((A) == kMidiNoteOff) )
 
 
 //----------------------------------------------------------------------------- 
@@ -142,7 +143,7 @@ struct NoteTable {
 	long attackSamples;	// current position in the attack phase
 	long releaseDur;	// duration, in samples, of the release phase
 	long releaseSamples;	// current position in the release phase
-	double fadeTableStep;	// the step increment for each envelope step using the fade table
+	float fadeTableStep;	// the step increment for each envelope step using the fade table
 	float linearFadeStep;	// the step increment for each linear envelope step
 	float lastOutValue;	// capture the most recent output value for smoothing, if necessary
 	long smoothSamples;	// counter for quickly fading cut-off notes, for smoothity
@@ -193,40 +194,40 @@ public:
 	double *freqTable;	// a table of the frequency corresponding to each MIDI note
 	double pitchbend;		// a frequency scalar value for the current pitchbend setting
 
+
 	//-------------------------------------------------------------------------
 	// this function calculates fade scalars if attack or release are happening
 	float processEnvelope(bool fades, int currentNote)
 	{
-	  long attackcount, releasecount;
-	  NoteTable *note = &noteTable[currentNote];
-
+		NoteTable *note = &noteTable[currentNote];
 
 		// if attack is in progress
-		if (note->attackDur)
+		if (note->attackDur > 0)
 		{
-			attackcount = (note->attackSamples)++;
+			(note->attackSamples)++;
 			// zero things out if the attack is over so we won't do this fade calculation next time
-			if ( attackcount >= (note->attackDur) )
+			if (note->attackSamples >= note->attackDur)
 			{
 				note->attackDur = 0;
 				return 1.0f;
 			}
 
 			if (fades)	// use nice, exponential fading
-				return (fadeTable[ (long) ((double)attackcount*(note->fadeTableStep)) ]);
+				return fadeTable[ (long) ((float)(note->attackSamples) * note->fadeTableStep) ];
 			else	// bad, linear fade
-				return ( (float)attackcount * note->linearFadeStep );
+				return (float)(note->attackSamples) * note->linearFadeStep;
 				// exponential sine fade (stupendously inefficient)
-//				envAmp = pow( (( sin((envAmp*PI)-(PI/2.0)) + 1.0 ) / 2.0), 2.0 );
+//				envAmp = ( sin((envAmp*PI)-(PI*0.5)) + 1.0 ) * 0.5;
+//				envAmp *= envAmp;	// squared
 		}
 
 		// if release is in progress
 		else if (note->releaseDur)
 		{
-			releasecount = --(note->releaseSamples);
+			(note->releaseSamples)--;
 			// zero things out if the release is over so we won't do this fade calculation next time
 			// & turn this note off
-			if (releasecount <= 0)
+			if (note->releaseSamples <= 0)
 			{
 				note->releaseDur = 0;
 				note->velocity = 0;
@@ -234,11 +235,12 @@ public:
 			}
 
 			if (fades)	// use nice, exponential fading
-				return (fadeTable[ (long) ((double)releasecount*(note->fadeTableStep)) ]);
+				return fadeTable[ (long) ((float)(note->releaseSamples) * note->fadeTableStep) ];
 			else	// use bad fade
-				return ( (float)releasecount * note->linearFadeStep );
+				return (float)(note->releaseSamples) * note->linearFadeStep;
 				// exponential sine fade
-//				envAmp = powf( (( sinf((envAmp*PI)-(PI/2.0f)) + 1.0f ) / 2.0f), 2.0f );
+//				envAmp = ( sinf((envAmp*PI)-(PI*0.5f)) + 1.0f ) * 0.5f;
+//				envAmp *= envAmp;	// squared
 		}
 
 		// since it's possible for the release to end & the note to turn off 
@@ -249,6 +251,7 @@ public:
 		// just send 1.0 no fades or note-offs are happening
 		return 1.0f;
 	}
+
 
 	//-------------------------------------------------------------------------
 	// this function writes the audio output for smoothing the tips of cut-off notes
@@ -268,21 +271,17 @@ public:
 		}
 	}
 
+
 	//-------------------------------------------------------------------------
 	// this function writes the audio output for smoothing the tips of cut-off notes
 	// by fading out the samples stored in the tail buffers
 	void processSmoothingOutputBuffer(float *out, long sampleFrames, int currentNote, int channel)
 	{
-	  float *tail;
-	  long *smoothsamples = &(noteTable[currentNote].smoothSamples);
-	  
-		if (channel == 1)
-			tail = (noteTable[currentNote].tail1);
-		else
-			tail = (noteTable[currentNote].tail2);
+		long *smoothsamples = &(noteTable[currentNote].smoothSamples);
+		float *tail = (channel == 1) ? noteTable[currentNote].tail1 : noteTable[currentNote].tail2;
+
 		for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
 		{
-//			out[samplecount] += tail[(*smoothsamples)-1] * 
 			out[samplecount] += tail[STOLEN_NOTE_FADE_DUR-(*smoothsamples)] * 
 								(float)(*smoothsamples) * STOLEN_NOTE_FADE_STEP;
 			(*smoothsamples)--;
@@ -292,7 +291,8 @@ public:
 	}
 
 
-protected:
+
+private:
 	// initializations
 	void fillFrequencyTable();
 	void fillFadeTable();
