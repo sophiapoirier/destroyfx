@@ -28,9 +28,9 @@ enum {
   stdsize = 32,
 
   // positions
-  pos_sliderX = 60,
+  pos_sliderX = 59,
   pos_sliderY = 255,
-  pos_sliderwidth = 194,
+  pos_sliderwidth = 196,
   pos_sliderheight = 16,
   pos_sliderincX = 245,
   pos_sliderincY = 35,
@@ -49,7 +49,7 @@ enum {
 
   pos_displayX = 180,
   pos_displayY = pos_sliderY - 10,
-  pos_displaywidth = pos_sliderX + pos_sliderwidth + 1 - pos_displayX + 2,
+  pos_displaywidth = pos_sliderX + pos_sliderwidth - pos_displayX - 2,
   pos_displayheight = 10,
 
   pos_windowshapemenuX = 19,
