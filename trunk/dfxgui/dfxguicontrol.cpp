@@ -71,10 +71,8 @@ void DGControl::createAUVcontrol()
 	ctype = isContinuousControl() ? AUCarbonViewControl::kTypeContinuous : AUCarbonViewControl::kTypeDiscrete;
 	if (auv_control != NULL)
 		delete auv_control;
-	auv_control = new AUCarbonViewControl(getDfxGuiEditor(), getDfxGuiEditor()->getParameterListener(), ctype, getAUVP(), getCarbonControl());
+	auv_control = new DGCarbonViewControl(getDfxGuiEditor(), getDfxGuiEditor()->getParameterListener(), ctype, getAUVP(), getCarbonControl());
 	auv_control->Bind();
-	// set the Carbon control value according to the current parameter value
-	auv_control->Update(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -253,4 +251,63 @@ bool DGControl::mustUpdate()
 	pleaseUpdate = false;
 //	printf("DGControl::mustUpdate() draw prevented!\n");
 	return false;
+}
+
+
+
+
+
+
+#include "dfxpluginproperties.h"
+
+//-----------------------------------------------------------------------------
+DGCarbonViewControl::DGCarbonViewControl(AUCarbonViewBase *inOwnerView, AUParameterListenerRef inListener, 
+										ControlType inType, const AUVParameter &inAUVParam, ControlRef inControl)
+:	AUCarbonViewControl(inOwnerView, inListener, inType, inAUVParam, inControl)
+{
+}
+
+//-----------------------------------------------------------------------------
+void DGCarbonViewControl::ControlToParameter()
+{
+	if (mType == kTypeContinuous)
+	{
+		double controlValue = GetValueFract();
+		Float32 paramValue;
+		DfxParameterValueConversionRequest request;
+		UInt32 dataSize = sizeof(request);
+		request.parameterID = mParam.mParameterID;
+		request.conversionType = kDfxParameterValueConversion_expand;
+		request.inValue = controlValue;
+		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
+								kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+								== noErr)
+			paramValue = request.outValue;
+		else
+			paramValue = AUParameterValueFromLinear(controlValue, &mParam);
+		mParam.SetValue(mListener, this, paramValue);
+	}
+	else
+		AUCarbonViewControl::ControlToParameter();
+}
+
+//-----------------------------------------------------------------------------
+void DGCarbonViewControl::ParameterToControl(Float32 paramValue)
+{
+	if (mType == kTypeContinuous)
+	{
+		DfxParameterValueConversionRequest request;
+		UInt32 dataSize = sizeof(request);
+		request.parameterID = mParam.mParameterID;
+		request.conversionType = kDfxParameterValueConversion_contract;
+		request.inValue = paramValue;
+		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
+								kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+								== noErr)
+			SetValueFract(request.outValue);
+		else
+			SetValueFract(AUParameterValueToLinear(paramValue, &mParam));
+	}
+	else
+		AUCarbonViewControl::ParameterToControl(paramValue);
 }
