@@ -447,6 +447,11 @@ protected:
 
 
 
+#define FBOOL(fvalue)	( (fvalue) != 0.0f )
+#define DBOOL(dvalue)	( (dvalue) != 0.0 )
+
+
+
 
 
 
