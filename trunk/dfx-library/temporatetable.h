@@ -18,13 +18,14 @@ enum TypesOfTempoRateTables
 class TempoRateTable
 {
 public:
-	TempoRateTable(long typeOfTable = kNormalTempoRateTable);
+	TempoRateTable(long typeOfTable = kNormalTempoRates);
 	~TempoRateTable();
 
 	float getScalar(float paramValue)
 		{	return scalars[float2index(paramValue)];	}
 	char * getDisplay(float paramValue)
 		{	return displays[float2index(paramValue)];	}
+	long getNumTempoRates() { return numTempoRates; }
 
 protected:
 	int float2index(float f)
