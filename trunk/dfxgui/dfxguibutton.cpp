@@ -52,12 +52,11 @@ DGButton::~DGButton()
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::draw(CGContextRef context, UInt32 portHeight)
+void DGButton::draw(CGContextRef inContext, UInt32 inPortHeight)
 {
 	SInt32 value = GetControl32BitValue(getCarbonControl());
 	SInt32 max = GetControl32BitMaximum(getCarbonControl());
-	CGRect bounds;
-	getBounds()->copyToCGRect(&bounds, portHeight);
+	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
 
 	CGImageRef theButton = (buttonImage == NULL) ? NULL : buttonImage->getCGImage();
 	if (theButton != NULL)
@@ -67,8 +66,8 @@ bounds.size.height = CGImageGetHeight(theButton);
 if (drawMomentaryState && mouseIsDown)
 	bounds.origin.x -= (float) (CGImageGetWidth(theButton) / 2);
 bounds.origin.y -= (float) ((max - value) * (CGImageGetHeight(theButton) / numStates));
-//		CGContextSetAlpha(context, alpha);
-		CGContextDrawImage(context, bounds, theButton);
+//		CGContextSetAlpha(inContext, alpha);
+		CGContextDrawImage(inContext, bounds, theButton);
 	}
 }
 

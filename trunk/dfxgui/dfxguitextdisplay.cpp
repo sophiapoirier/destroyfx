@@ -114,18 +114,17 @@ void DGTextDisplay::mouseUp(Point inPos, bool, bool)
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::draw(CGContextRef context, UInt32 portHeight)
+void DGTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 {
-	CGRect bounds;
-	getBounds()->copyToCGRect(&bounds, portHeight);
+	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
 
 	CGImageRef theBack = NULL;
 	if (BackGround != NULL)
 		theBack = BackGround->getCGImage();
 	if (theBack == NULL)
 	{
-		CGContextSetRGBFillColor(context, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
-		CGContextFillRect(context, bounds);
+		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
+		CGContextFillRect(inContext, bounds);
 	}
 	else
 	{
@@ -135,8 +134,8 @@ whole.size.width = (float) CGImageGetWidth(theBack);
 whole.size.height = (float) CGImageGetHeight(theBack);
 whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
 whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
-//		CGContextDrawImage(context, bounds, theBack);
-		CGContextDrawImage(context, whole, theBack);
+//		CGContextDrawImage(inContext, bounds, theBack);
+		CGContextDrawImage(inContext, whole, theBack);
 	}
 
 	if (textProc != NULL)
@@ -144,39 +143,39 @@ whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEdito
 		char text[256];
 		text[0] = 0;
 		textProc(auvp.GetValue(), text, textProcUserData);
-		drawText(context, bounds, text);
+		drawText(inContext, bounds, text);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::drawText(CGContextRef context, CGRect& inBounds, const char *inString)
+void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const char *inString)
 {
 	if (inString == NULL)
 		return;
 
 	if (fontName != NULL)
 	{
-		CGContextSelectFont(context, fontName, fontSize, kCGEncodingMacRoman);
+		CGContextSelectFont(inContext, fontName, fontSize, kCGEncodingMacRoman);
 		if (strcmp(fontName, "snoot.org pixel10") == 0)
 		{
-			CGContextSetShouldSmoothFonts(context, false);
-			CGContextSetShouldAntialias(context, false);	// it appears that I gotta do this, too
+			CGContextSetShouldSmoothFonts(inContext, false);
+			CGContextSetShouldAntialias(inContext, false);	// it appears that I gotta do this, too
 		}
 	}
-	CGContextSetRGBFillColor(context, (float)fontColor.r/255.0f, (float)fontColor.g/255.0f, (float)fontColor.b/255.0f, 1.0f);
+	CGContextSetRGBFillColor(inContext, (float)fontColor.r/255.0f, (float)fontColor.g/255.0f, (float)fontColor.b/255.0f, 1.0f);
 
 	if (alignment != kDGTextAlign_left)
 	{
-		CGContextSetTextDrawingMode(context, kCGTextInvisible);
-		CGContextShowTextAtPoint(context, 0.0f, 0.0f, inString, strlen(inString));
-		CGPoint pt = CGContextGetTextPosition(context);
+		CGContextSetTextDrawingMode(inContext, kCGTextInvisible);
+		CGContextShowTextAtPoint(inContext, 0.0f, 0.0f, inString, strlen(inString));
+		CGPoint pt = CGContextGetTextPosition(inContext);
 		if (alignment == kDGTextAlign_center)
 			inBounds.origin.x += (inBounds.size.width - pt.x) / 2.0f;
 		else if (alignment == kDGTextAlign_right)
 			inBounds.origin.x += inBounds.size.width - pt.x;
 	}
-	CGContextSetTextDrawingMode(context, kCGTextFill);
-	CGContextShowTextAtPoint(context, inBounds.origin.x, inBounds.origin.y+2.0f, inString, strlen(inString));
+	CGContextSetTextDrawingMode(inContext, kCGTextFill);
+	CGContextShowTextAtPoint(inContext, inBounds.origin.x, inBounds.origin.y+2.0f, inString, strlen(inString));
 }
 
 
@@ -212,18 +211,17 @@ void DGStaticTextDisplay::setText(const char *inNewText)
 }
 
 //-----------------------------------------------------------------------------
-void DGStaticTextDisplay::draw(CGContextRef context, UInt32 portHeight)
+void DGStaticTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 {
-	CGRect bounds;
-	getBounds()->copyToCGRect(&bounds, portHeight);
+	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
 
 	CGImageRef theBack = NULL;
 	if (BackGround != NULL)
 		theBack = BackGround->getCGImage();
 	if (theBack == NULL)
 	{
-		CGContextSetRGBFillColor(context, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
-		CGContextFillRect(context, bounds);
+		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
+		CGContextFillRect(inContext, bounds);
 	}
 	else
 	{
@@ -233,9 +231,9 @@ whole.size.width = (float) CGImageGetWidth(theBack);
 whole.size.height = (float) CGImageGetHeight(theBack);
 whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
 whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
-//		CGContextDrawImage(context, bounds, theBack);
-		CGContextDrawImage(context, whole, theBack);
+//		CGContextDrawImage(inContext, bounds, theBack);
+		CGContextDrawImage(inContext, whole, theBack);
 	}
 
-	drawText(context, bounds, displayString);
+	drawText(inContext, bounds, displayString);
 }

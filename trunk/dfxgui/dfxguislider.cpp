@@ -61,7 +61,7 @@ DGSlider::~DGSlider()
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::draw(CGContextRef context, UInt32 portHeight)
+void DGSlider::draw(CGContextRef inContext, UInt32 inPortHeight)
 {
 	ControlRef carbonControl = getCarbonControl();
 	SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -74,7 +74,7 @@ void DGSlider::draw(CGContextRef context, UInt32 portHeight)
 		theBack = BackGround->getCGImage();
 	if (theBack != NULL)
 	{
-		getBounds()->copyToCGRect(&bounds, portHeight);
+		getBounds()->copyToCGRect(&bounds, inPortHeight);
 // XXX this is a very poor hack, Marc
 #ifdef SLIDERS_USE_BACKGROUND
 		bounds.size.width = (float) CGImageGetWidth(theBack);
@@ -82,7 +82,7 @@ void DGSlider::draw(CGContextRef context, UInt32 portHeight)
 		bounds.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
 		bounds.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
 #endif
-		CGContextDrawImage(context, bounds, theBack);
+		CGContextDrawImage(inContext, bounds, theBack);
 	}
 
 	CGImageRef theFore = NULL;
@@ -93,7 +93,7 @@ void DGSlider::draw(CGContextRef context, UInt32 portHeight)
 //		float valNorm = (max == 0) ? 0.0f : (float)val / (float)max;
 		float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
 //printf("ControlMax = %ld,  ControlMin = %ld,  ControlValue = %ld,  valueF = %.3f\n", max, min, val, valNorm);
-		getForeBounds()->copyToCGRect(&bounds, portHeight);
+		getForeBounds()->copyToCGRect(&bounds, inPortHeight);
 		if (orientation == kDGSliderStyle_vertical)
 		{
 			float slideRange = bounds.size.height;
@@ -108,7 +108,7 @@ void DGSlider::draw(CGContextRef context, UInt32 portHeight)
 //			bounds.size.height = (float) CGImageGetHeight(theFore);
 			bounds.origin.x += round(slideRange * valNorm);
 		}
-		CGContextDrawImage(context, bounds, theFore);
+		CGContextDrawImage(inContext, bounds, theFore);
 	}
 }
 
