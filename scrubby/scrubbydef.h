@@ -15,6 +15,3 @@
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"Scrubby goes zipping around through time, doing whatever it takes to reach its destinations on time"
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"mud brown interface for DFX Scrubby"
-
-
-#define DFX_SUPPORT_OLD_VST_SETTINGS 0

@@ -6,11 +6,6 @@
 #include <stdio.h>	// for FILE stuff
 
 
-#ifndef DFX_SUPPORT_OLD_VST_SETTINGS
-#define DFX_SUPPORT_OLD_VST_SETTINGS 0
-#endif
-
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark _________init/destroy_________
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -274,7 +269,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 			 (settingsInfo.version < newSettingsInfo->lowestLoadableVersion) )
 		return false;
 
-#if DFX_SUPPORT_OLD_VST_SETTINGS
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	// we started using hex format versions (like below) with the advent 
 	// of the glorious DfxPlugin
 	// versions lower than 0x00010000 indicate inferior settings
@@ -353,7 +348,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 		// copy the preset name from the chunk
 		plugin->setpresetname(plugin->getcurrentpresetnum(), newPreset->name);
 		#endif
-	#if DFX_SUPPORT_OLD_VST_SETTINGS
+	#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 		// back up the pointer to account for shorter preset names
 		if (oldvst)
 			newPreset = (DfxGenPreset*) ((char*)newPreset + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
@@ -364,7 +359,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 			long mappedTag = paramMap[i];
 			if (mappedTag != DFX_PARAM_INVALID_ID)
 			{
-			#if DFX_SUPPORT_OLD_VST_SETTINGS
+			#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 				// handle old-style generic VST 0.0 to 1.0 parameter values
 				if (oldvst)
 					plugin->setparameter_gen(i, newPreset->params[mappedTag]);
@@ -388,7 +383,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 		{
 			// copy the preset name from the chunk
 			plugin->setpresetname(j, newPreset->name);
-		#if DFX_SUPPORT_OLD_VST_SETTINGS
+		#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 			// back up the pointer to account for shorter preset names
 			if (oldvst)
 				newPreset = (DfxGenPreset*) ((char*)newPreset + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
@@ -399,7 +394,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 				long mappedTag = paramMap[i];
 				if (mappedTag != DFX_PARAM_INVALID_ID)
 				{
-				#if DFX_SUPPORT_OLD_VST_SETTINGS
+				#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 					// handle old-style generic VST 0.0 to 1.0 parameter values
 					if (oldvst)
 						plugin->setpresetparameter_gen(j, i, newPreset->params[mappedTag]);
@@ -415,7 +410,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 		}
 	}
 
-#if DFX_SUPPORT_OLD_VST_SETTINGS
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 if ( !(oldvst && isPreset) )
 {
 #endif
@@ -440,7 +435,7 @@ if ( !(oldvst && isPreset) )
 					copyParameterAssignmentSize);
 //			paramAssignments[i] = newParamAssignments[mappedTag];
 	}
-#if DFX_SUPPORT_OLD_VST_SETTINGS
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 }
 #endif
 
@@ -1035,7 +1030,7 @@ void DfxSettings::correctEndian(void * data, bool isReversed, bool isPreset)
 	// but no need to mess with the preset names since they are char strings
 	DfxGenPreset * dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(long)*numStoredParameters));
 	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(float) * (numStoredParameters-2));
-#if DFX_SUPPORT_OLD_VST_SETTINGS
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (IS_OLD_VST_VERSION(storedVersion))
 	{
 		// back up the pointer to account for shorter preset names
@@ -1050,13 +1045,13 @@ void DfxSettings::correctEndian(void * data, bool isReversed, bool isPreset)
 		// point to the next preset in the data array
 		dataPresets = (DfxGenPreset*) ((char*)dataPresets + sizeofStoredPreset);
 	}
-#if DFX_SUPPORT_OLD_VST_SETTINGS
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (IS_OLD_VST_VERSION(storedVersion))
 		// advance the pointer to compensate for backing up earlier
 		dataPresets = (DfxGenPreset*) ((char*)dataPresets - (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 #endif
 
-#if DFX_SUPPORT_OLD_VST_SETTINGS
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
 {
 #endif
@@ -1074,7 +1069,7 @@ if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
 		reversebytes( &(dataParameterAssignments->fdata1), sizeof(float) );
 		reversebytes( &(dataParameterAssignments->fdata2), sizeof(float) );
 	}
-#if DFX_SUPPORT_OLD_VST_SETTINGS
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 }
 #endif
 
