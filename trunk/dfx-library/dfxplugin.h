@@ -410,8 +410,7 @@ public:
 	float getparameter_gen(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_gen();   else return 0.0f;	}
 	// return a (hopefully) 0 to 1 scalar version of the parameter's current value
-	float getparameter_scalar(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_f() / parameters[parameterIndex].getmax_f();	else return 0.0f;	}
+	float getparameter_scalar(long parameterIndex);
 
 	float getparametermin_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmin_f();   else return 0.0f;	}
@@ -567,13 +566,14 @@ public:
 	#if TARGET_PLUGIN_USES_MIDI
 		DfxSettings * getsettings_ptr()
 			{	return dfxsettings;	}
+		// ***
 		// handlers for the types of MIDI events that we support
-		void handlemidi_noteon(int channel, int note, int velocity, long frameOffset);
-		void handlemidi_noteoff(int channel, int note, int velocity, long frameOffset);
-		void handlemidi_allnotesoff(int channel, long frameOffset);
-		void handlemidi_pitchbend(int channel, int valueLSB, int valueMSB, long frameOffset);
-		void handlemidi_cc(int channel, int controllerNum, int value, long frameOffset);
-		void handlemidi_programchange(int channel, int programNum, long frameOffset);
+		virtual void handlemidi_noteon(int channel, int note, int velocity, long frameOffset);
+		virtual void handlemidi_noteoff(int channel, int note, int velocity, long frameOffset);
+		virtual void handlemidi_allnotesoff(int channel, long frameOffset);
+		virtual void handlemidi_pitchbend(int channel, int valueLSB, int valueMSB, long frameOffset);
+		virtual void handlemidi_cc(int channel, int controllerNum, int value, long frameOffset);
+		virtual void handlemidi_programchange(int channel, int programNum, long frameOffset);
 	#endif
 
 
@@ -951,9 +951,15 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 	// we need to manage the DSP cores manually in VST
 	// call this in the plugin's constructor if it uses DSP cores for processing
 	#if TARGET_PLUGIN_USES_DSPCORE
-		// XXX what else could be done aside from void?
-		#define DFX_CORE_ENTRY(PluginCoreClass)   void
-		#define DFX_INIT_CORE(PluginCoreClass)   for (long i=0; i < getnumoutputs(); i++)   dspcores[i] = new PluginCoreClass(this);
+		// XXX is there a better way to make an empty declaration?
+		#define DFX_CORE_ENTRY(PluginCoreClass)   const char acoivaXIjdASFfiXGjsASDldkfjXPVsd = 0
+		#define DFX_INIT_CORE(PluginCoreClass)   								\
+			for (long corecount=0; corecount < getnumoutputs(); corecount++)	\
+			{																	\
+				dspcores[corecount] = new PluginCoreClass(this);				\
+				if (dspcores[corecount] != NULL)								\
+					dspcores[corecount]->do_reset();							\
+			}
 	#endif
 
 #endif
