@@ -342,7 +342,6 @@ BufferOverrideEditor::BufferOverrideEditor(AudioEffect *effect)
  : AEffGUIEditor(effect) 
 {
 	frame = 0;
-	isOpen = false;
 
 	// initialize the graphics pointers
 	gBackground = 0;
@@ -904,15 +903,12 @@ long BufferOverrideEditor::open(void *ptr)
 	faders[kTempo] = tempoFader;
 
 
-	isOpen = true;
-
 	return true;
 }
 
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::close()
 {
-	isOpen = false;
 	if (frame)
 		delete frame;
 	frame = 0;
@@ -1320,7 +1316,7 @@ void BufferOverrideEditor::idle()
   bool somethingChanged = false;
 
 
-	if (isOpen)
+	if ( (frame != NULL) && frame->isOpen() )
 	{
 		// update the divisor control & display if it has changed via MIDI notes or pitchbend
 		if ( ((BufferOverride*)effect)->divisorWasChangedByMIDI )
