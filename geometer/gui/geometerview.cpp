@@ -2,9 +2,9 @@
 #include "geometerview.hpp"
 
 const CColor coldwave = {75, 151, 71, 0};
-const CColor cnewwave = {190, 255, 130, 0};
+const CColor cnewwave = {240, 255, 160, 0};
 const CColor cpointoutside = {0, 0, 0, 0};
-const CColor cpointinside = {220, 151, 200, 0};
+const CColor cpointinside = {220, 100, 200, 0};
 const CColor cbackground = {20, 50, 20, 0};
 
 void GeometerView::draw(CDrawContext * ctx) {
@@ -39,8 +39,12 @@ void GeometerView::draw(CDrawContext * ctx) {
   }
 
   offc->setFrameColor(cpointinside);
+  /*  offc->moveTo (CPoint(pointsx[0], (gheight * (((-pointsy[0])+1.0f)*0.5f)))); */
   for(int t = 0; t < numpts; t ++) {
+    /*    offc->lineTo (CPoint(pointsx[t], (gheight * (((-pointsy[t])+1.0f)*0.5f)))); */
+
     offc->drawPoint(CPoint(pointsx[t], (gheight * (((-pointsy[t])+1.0f)*0.5f))), cpointinside);
+
   }
 #endif
 
@@ -77,15 +81,10 @@ void GeometerView::reflect() {
 #endif
 
   geom->cs->grab();
-  int npts = geom->processw(inputs, outputs, samples);
+  int npts = geom->processw(inputs, outputs, samples,
+			    pointsx, pointsy, samples - 1,
+			    tmpx, tmpy);
   geom->cs->release();
-
-  if (npts >= samples) npts = samples - 1;
-
-  for(int k=0; k < npts; k++) {
-	pointsx[k] = geom->pointx[k];
-	pointsy[k] = geom->pointy[k];
-  }
 
   numpts = npts;
 
@@ -97,6 +96,8 @@ void GeometerView::init() {
   inputs = (float*)malloc(sizeof (float) * (samples + 3));
   pointsx = (int*)malloc(sizeof (int) * (samples + 3));
   pointsy = (float*)malloc(sizeof (float) * (samples + 3));
+  tmpx = (int*)malloc(sizeof (int) * (samples + 3));
+  tmpy = (float*)malloc(sizeof (float) * (samples + 3));
   outputs = (float*)malloc(sizeof (float) * (samples + 3));
   offc = new COffscreenContext (getParent (), gwidth, gheight, kBlackCColor);
   

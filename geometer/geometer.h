@@ -267,7 +267,9 @@ private:
 
   /* ---------- geometer stuff ----------- */
 
-  int pointops(float pop, int npts, float * op_param, int samps);
+  static int pointops(float pop, int npts, float * op_param, int samps,
+		      int * px, float * py, int maxpts,
+		      int * tempx, float * tempy);
 
   float pointstyle;
   float pointparam[NUM_POINTSTYLES];
@@ -286,15 +288,17 @@ private:
   int lastx;
   float lasty;
 
-  int * tempx;
-  float * tempy;
+  int * storex;
+  float * storey;
 
 
 public:
   int * pointx;
   float * pointy;
 
-  int processw(float * in, float * out, long samples);
+  int processw(float * in, float * out, long samples,
+	       int * px, float * py, int maxpts,
+	       int * tx, float * ty);
 };
 
 #define FPARAM(pname, idx, nm, init, un) do { paramptrs[idx].ptr = &pname; paramptrs[idx].name = (nm); paramptrs[idx].units = (un); paramptrs[idx].def = (init); pname = paramptrs[idx].def; } while (0)

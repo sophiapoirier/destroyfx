@@ -28,6 +28,10 @@ private:
   float * pointsy;
   float * outputs;
 
+  /* passed to processw */
+  int * tmpx;
+  float * tmpy;
+
   bool dirty;
 
   Geometer * geom;
@@ -56,6 +60,8 @@ public:
     free (inputs);
     free (pointsx);
     free (pointsy);
+    free (tmpx);
+    free (tmpy);
     free (outputs);
     delete offc;
   }
