@@ -31,16 +31,6 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 		}
 	}
 
-
-	// these are 2 values that are always needed during processCoefficients
-	twoPiDivSR = PId*2.0 / (double)SAMPLERATE;
-	nyquist = ((double)SAMPLERATE-bandwidth) / 2.0;	// adjusted for bandwidth to accomodate the filter's frequency range
-
-	// counter for the number of MIDI events this block
-	// start at -1 because the beginning stuff has to happen
-	long eventcount = -1;
-	long currentBlockPosition = 0;	// we are at sample 0
-
 	// mix very quiet noise (-300 dB) into the input singal to hopefully avoid any denormal values
 	float quietNoise = 1.0e-15f;
 	for (ch=0; ch < numChannels; ch++)
@@ -52,6 +42,16 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 			quietNoise = -quietNoise;
 		}
 	}
+
+
+	// these are 2 values that are always needed during processCoefficients
+	twoPiDivSR = PId*2.0 / (double)SAMPLERATE;
+	nyquist = ((double)SAMPLERATE-bandwidth) / 2.0;	// adjusted for bandwidth to accomodate the filter's frequency range
+
+	// counter for the number of MIDI events this block
+	// start at -1 because the beginning stuff has to happen
+	long eventcount = -1;
+	long currentBlockPosition = 0;	// we are at sample 0
 
 
 	// now we're ready to start looking at MIDI messages & processing sound & such
