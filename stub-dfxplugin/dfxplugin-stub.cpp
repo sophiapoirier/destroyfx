@@ -211,41 +211,10 @@ bool DfxStubDSP::createbuffers()
 	buffersize = (long) (getsamplerate() * BUFFER_SIZE_SECONDS);
 
 	// if the sampling rate (& therefore the buffer size) has changed, 
-	// or if the number of channels to process has changed, 
 	// then delete & reallocate the buffers according to the sampling rate
-	if (buffersize != oldsize)
-		releasebuffers();
-
-	numbuffers = getnumoutputs();
-	// return error if the channels count is bogus
-	if (numbuffers <= 0)
+	bool success = createbuffer_f(&buffer, oldsize, buffersize);
+	if (!success)
 		return false;
-
-	// now check if the array of buffers is null
-	if (buffers == NULL)
-	{
-		// (re)allocate
-		buffers = (float**) malloc(numbuffers * sizeof(float*));
-		// out of memory or something
-		if (buffers == NULL)
-			return false;
-		// initialize each pointer in the buffers array
-		for (long i=0; i < numbuffers; i++)
-			buffers[i] = NULL;
-	}
-	// (re)allocate each buffer, if necessary
-	for (long i=0; i < numbuffers; i++)
-	{
-		if (buffers[i] == NULL)
-			buffers[i] = (float*) malloc(SUPER_MAX_BUFFER * sizeof(float));
-	}
-
-	// check if allocations were successful
-	for (long i=0; i < numbuffers; i++)
-	{
-		if (buffers[i] == NULL)
-			return false;
-	}
 
 	// we were successful if we reached this point
 	return true;
@@ -256,43 +225,15 @@ bool DfxStub::createbuffers()
 {
 	long oldsize = buffersize;
 	buffersize = (long) (getsamplerate() * BUFFER_SIZE_SECONDS);
+	unsigned long oldnum = numbuffers;
+	numbuffers = getnumoutputs();
 
 	// if the sampling rate (& therefore the buffer size) has changed, 
 	// or if the number of channels to process has changed, 
 	// then delete & reallocate the buffers according to the sampling rate
-	if ( (buffersize != oldsize) || (numbuffers != getnumoutputs()) )
-		releasebuffers();
-
-	numbuffers = getnumoutputs();
-	// return error if the channels count is bogus
-	if (numbuffers <= 0)
+	bool success = createbufferarray_f(&buffers, oldnum, oldsize, numbuffers, buffersize);
+	if (!success)
 		return false;
-
-	// now check if the array of buffers is null
-	if (buffers == NULL)
-	{
-		// (re)allocate
-		buffers = (float**) malloc(numbuffers * sizeof(float*));
-		// out of memory or something
-		if (buffers == NULL)
-			return false;
-		// initialize each pointer in the buffers array
-		for (long i=0; i < numbuffers; i++)
-			buffers[i] = NULL;
-	}
-	// (re)allocate each buffer, if necessary
-	for (long i=0; i < numbuffers; i++)
-	{
-		if (buffers[i] == NULL)
-			buffers[i] = (float*) malloc(SUPER_MAX_BUFFER * sizeof(float));
-	}
-
-	// check if allocations were successful
-	for (long i=0; i < numbuffers; i++)
-	{
-		if (buffers[i] == NULL)
-			return false;
-	}
 
 	// we were successful if we reached this point
 	return true;
@@ -304,28 +245,13 @@ bool DfxStub::createbuffers()
 #if TARGET_PLUGIN_USES_DSPCORE
 void DfxStubDSP::releasebuffers()
 {
-	if (buffer != NULL)
-	{
-		free(buffer);
-	}
-	buffer = NULL;
+	releasebuffer_f(&buffer);
 }
 
 #else
 void DfxStub::releasebuffers()
 {
-	if (buffers != NULL)
-	{
-		for (long i=0; i < numbuffers; i++)
-		{
-			if (buffers[i] != NULL)
-				free(buffers[i]);
-			buffers[i] = NULL;
-		}
-		free(buffers);
-	}
-	buffers = NULL;
-
+	releasebufferarray_f(&buffers, numbuffers);
 	numbuffers = 0;
 }
 #endif
@@ -336,27 +262,13 @@ void DfxStub::releasebuffers()
 #if TARGET_PLUGIN_USES_DSPCORE
 void DfxStubDSP::clearbuffers()
 {
-	if (buffer != NULL)
-	{
-		for (long i=0; i < buffersize; i++)
-			buffer[i] = 0.0f;
-	}
+	clearbuffer_f(buffer, buffersize);
 }
 
 #else
 void DfxStub::clearbuffers()
 {
-	if (buffers != NULL)
-	{
-		for (long i=0; i < numbuffers; i++)
-		{
-			if (buffers[i] != NULL)
-			{
-				for (long j=0; j < buffersize; j++)
-					buffers[i][j] = 0.0f;
-			}
-		}
-	}
+	clearbufferarray_f(buffers, numbuffers, buffersize);
 }
 #endif
 

@@ -962,3 +962,119 @@ void DfxPlugin::handlemidi_programchange(int channel, int programNum, long frame
 
 #endif
 // TARGET_PLUGIN_USES_MIDI
+
+
+
+
+
+
+#pragma mark _________---helper-functions---_________
+
+//-----------------------------------------------------------------------------
+bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSize)
+{
+	// if the size of the buffer has changed, 
+	// then delete & reallocate the buffes according to the new size
+	if (desiredBufferSize != currentBufferSize)
+		releasebuffer_f(buffer);
+
+	if (*buffer == NULL)
+		*buffer = (float*) malloc(desiredBufferSize * sizeof(float));
+
+	// check if allocation was successful
+	if (*buffer == NULL)
+		return false;
+
+	// we were successful if we reached this point
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long currentBufferSize, 
+						unsigned long desiredNumBuffers, long desiredBufferSize)
+{
+	// if the size of each buffer or the number of buffers have changed, 
+	// then delete & reallocate the buffers according to the new sizes
+	if ( (desiredBufferSize != currentBufferSize) || (desiredNumBuffers != currentNumBuffers) )
+		releasebufferarray_f(buffers, currentNumBuffers);
+
+	if (desiredNumBuffers <= 0)
+		return false;	// XXX false?
+
+	if (*buffers == NULL)
+	{
+		*buffers = (float**) malloc(desiredNumBuffers * sizeof(float*));
+		// out of memory or something
+		if (*buffers == NULL)
+			return false;
+		for (unsigned long i=0; i < desiredNumBuffers; i++)
+			(*buffers)[i] = NULL;
+	}
+	for (unsigned long i=0; i < desiredNumBuffers; i++)
+	{
+		if ((*buffers)[i] == NULL)
+			(*buffers)[i] = (float*) malloc(desiredBufferSize * sizeof(float));
+	}
+
+	// check if allocations were successful
+	for (unsigned long i=0; i < desiredNumBuffers; i++)
+	{
+		if ((*buffers)[i] == NULL)
+			return false;
+	}
+
+	// we were successful if we reached this point
+	return true;
+}
+
+//-------------------------------------------------------------------------
+void releasebuffer_f(float **buffer)
+{
+	if (*buffer != NULL)
+	{
+		free(*buffer);
+	}
+	*buffer = NULL;
+}
+
+//-------------------------------------------------------------------------
+void releasebufferarray_f(float ***buffers, unsigned long numbuffers)
+{
+	if (*buffers != NULL)
+	{
+		for (unsigned long i=0; i < numbuffers; i++)
+		{
+			if ((*buffers)[i] != NULL)
+				free((*buffers)[i]);
+			(*buffers)[i] = NULL;
+		}
+		free(*buffers);
+	}
+	*buffers = NULL;
+}
+
+//-----------------------------------------------------------------------------
+void clearbuffer_f(float *buffer, long buffersize)
+{
+	if (buffer != NULL)
+	{
+		for (long i=0; i < buffersize; i++)
+			buffer[i] = 0.0f;
+	}
+}
+
+//-----------------------------------------------------------------------------
+void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize)
+{
+	if (buffers != NULL)
+	{
+		for (unsigned long i=0; i < numbuffers; i++)
+		{
+			if (buffers[i] != NULL)
+			{
+				for (long j=0; j < buffersize; j++)
+					buffers[i][j] = 0.0f;
+			}
+		}
+	}
+}
