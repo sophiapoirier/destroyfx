@@ -1,0 +1,6 @@
+
+This is the DFX library, a collection of useful routines for
+writing VST plugins. It also includes several new controls for
+VSTGUI.
+
+XXX Marc: add some documentation!
