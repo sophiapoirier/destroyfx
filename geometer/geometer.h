@@ -98,13 +98,6 @@ enum { P_BUFSIZE, P_SHAPE,
 };
 
 
-struct param {
-  float * ptr;
-  const char * name;
-  const char * units;
-  float def;
-};
-
 class PLUGIN : public DfxPlugin {
   friend class GeometerEditor;
 public:
@@ -118,15 +111,9 @@ public:
   virtual void processparameters();
   virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
 
-  /* this stuff is public so that the GUI can see it */
+  /* several of the below are needed by geometerview. Maybe should use accessors... */
+
   long getwindowsize() { return third; }
-
-protected:
-  /* shape of envelope */
-  long shape;
-
-public:
-  /* several of these are needed by geometerview. Maybe should use accessors... */
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
@@ -136,11 +123,14 @@ public:
   /* buffersize is 3 * third, framesize is 2 * third 
      buffersize is used for outbuf.
   */
-  long bufsize, framesize, third, maxframe;
-
+  long bufsize, framesize, third;
 
   /* must grab this before calling processw */
   dfxmutex * cs;
+
+  int processw(float * in, float * out, long samples,
+	       int * px, float * py, int maxpts,
+	       int * tx, float * ty);
 
 private:
 
@@ -171,6 +161,9 @@ private:
   /* set up the built-in presets */
   void makepresets();
 
+  /* shape of envelope */
+  long shape;
+
   long pointstyle;
   float pointparam;
 
@@ -188,17 +181,11 @@ private:
   int lastx;
   float lasty;
 
-  int * storex;
-  float * storey;
-
-
-public:
   int * pointx;
   float * pointy;
 
-  int processw(float * in, float * out, long samples,
-	       int * px, float * py, int maxpts,
-	       int * tx, float * ty);
+  int * storex;
+  float * storey;
 };
 
 #endif

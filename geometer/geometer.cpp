@@ -155,11 +155,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
     ALLOPSTR(i, "unsup");
 
 
-  /* determine the size of the largest window size */
-  maxframe = 0;
-  for (i=0; i< BUFFERSIZESSIZE; i++)
-    maxframe = ( buffersizes[i] > maxframe ? buffersizes[i] : maxframe );
-
   framesize = buffersizes[getparameter_i(P_BUFSIZE)];
   setlatency_samples(framesize);
   settailsize_samples(framesize);
@@ -190,6 +185,11 @@ PLUGIN::~PLUGIN() {
 }
 
 long PLUGIN::initialize() {
+  /* determine the size of the largest window size */
+  long maxframe = 0;
+  for (int i=0; i< BUFFERSIZESSIZE; i++)
+    maxframe = (buffersizes[i] > maxframe) ? buffersizes[i] : maxframe;
+
   /* add some leeway? */
   in0 = (float*)malloc(maxframe * sizeof (float));
   out0 = (float*)malloc(maxframe * 2 * sizeof (float));
