@@ -557,7 +557,7 @@ printf("--------------------------------------------------\n\n");
 
 	// go button
 	pos.set (kGoButtonX, kGoButtonY, gGoButton->getWidth(), gGoButton->getHeight()/2);
-	DGWebLink *goButton = new DGWebLink(this, &pos, gGoButton, "http://www.factoryfarming.org/");
+	DGWebLink *goButton = new DGWebLink(this, &pos, gGoButton, "http://www.factoryfarming.com/");
 	mainPane->addControl(goButton);
 
 
