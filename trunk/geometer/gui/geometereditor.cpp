@@ -834,13 +834,13 @@ void GeometerEditor::setParameter(long index, float value) {
   case P_POINTPARAM7:
     if (CHOOSE_LANDMARK_PARAM == index) {
       if (landmarkscontrolslider)
-	landmarkscontrolslider->setValue(effect->getParameter(index));
+        landmarkscontrolslider->setValue(effect->getParameter(index));
       if (landmarkscontroldisplay)
-	landmarkscontroldisplay->setValue(effect->getParameter(index));
+        landmarkscontroldisplay->setValue(effect->getParameter(index));
       if (landmarkscontrolfinedownbutton)
-	landmarkscontrolfinedownbutton->setValue(effect->getParameter(index));
+        landmarkscontrolfinedownbutton->setValue(effect->getParameter(index));
       if (landmarkscontrolfineupbutton)
-	landmarkscontrolfineupbutton->setValue(effect->getParameter(index));
+        landmarkscontrolfineupbutton->setValue(effect->getParameter(index));
     }
     break;
 
@@ -854,13 +854,13 @@ void GeometerEditor::setParameter(long index, float value) {
   case P_INTERPARAM7:
     if (CHOOSE_RECREATE_PARAM == index) {
       if (recreatecontrolslider)
-	recreatecontrolslider->setValue(effect->getParameter(index));
+        recreatecontrolslider->setValue(effect->getParameter(index));
       if (recreatecontroldisplay)
-	recreatecontroldisplay->setValue(effect->getParameter(index));
+        recreatecontroldisplay->setValue(effect->getParameter(index));
       if (recreatecontrolfinedownbutton)
-	recreatecontrolfinedownbutton->setValue(effect->getParameter(index));
+        recreatecontrolfinedownbutton->setValue(effect->getParameter(index));
       if (recreatecontrolfineupbutton)
-	recreatecontrolfineupbutton->setValue(effect->getParameter(index));
+        recreatecontrolfineupbutton->setValue(effect->getParameter(index));
     }
     break;
 
@@ -874,13 +874,13 @@ void GeometerEditor::setParameter(long index, float value) {
   case P_OPPAR1_7:
     if (CHOOSE_OP1_PARAM == index) {
       if (op1controlslider)
-	op1controlslider->setValue(effect->getParameter(index));
+        op1controlslider->setValue(effect->getParameter(index));
       if (op1controldisplay)
-	op1controldisplay->setValue(effect->getParameter(index));
+        op1controldisplay->setValue(effect->getParameter(index));
       if (op1controlfinedownbutton)
-	op1controlfinedownbutton->setValue(effect->getParameter(index));
+        op1controlfinedownbutton->setValue(effect->getParameter(index));
       if (op1controlfineupbutton)
-	op1controlfineupbutton->setValue(effect->getParameter(index));
+        op1controlfineupbutton->setValue(effect->getParameter(index));
     }
     break;
 
@@ -894,13 +894,13 @@ void GeometerEditor::setParameter(long index, float value) {
   case P_OPPAR2_7:
     if (CHOOSE_OP2_PARAM == index) {
       if (op2controlslider)
-	op2controlslider->setValue(effect->getParameter(index));
+        op2controlslider->setValue(effect->getParameter(index));
       if (op2controldisplay)
-	op2controldisplay->setValue(effect->getParameter(index));
+        op2controldisplay->setValue(effect->getParameter(index));
       if (op2controlfinedownbutton)
-	op2controlfinedownbutton->setValue(effect->getParameter(index));
+        op2controlfinedownbutton->setValue(effect->getParameter(index));
       if (op2controlfineupbutton)
-	op2controlfineupbutton->setValue(effect->getParameter(index));
+        op2controlfineupbutton->setValue(effect->getParameter(index));
     }
     break;
 
@@ -914,13 +914,13 @@ void GeometerEditor::setParameter(long index, float value) {
   case P_OPPAR3_7:
     if (CHOOSE_OP3_PARAM == index) {
       if (op3controlslider)
-	op3controlslider->setValue(effect->getParameter(index));
+        op3controlslider->setValue(effect->getParameter(index));
       if (op3controldisplay)
-	op3controldisplay->setValue(effect->getParameter(index));
+        op3controldisplay->setValue(effect->getParameter(index));
       if (op3controlfinedownbutton)
-	op3controlfinedownbutton->setValue(effect->getParameter(index));
+        op3controlfinedownbutton->setValue(effect->getParameter(index));
       if (op3controlfineupbutton)
-	op3controlfineupbutton->setValue(effect->getParameter(index));
+        op3controlfineupbutton->setValue(effect->getParameter(index));
     }
     break;
 
@@ -994,8 +994,8 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
     if (chunk->midiLearn) {
       chunk->learner = tag;
       for (int i=0; i < NUM_SLIDERS; i++) {
-	if (sliders[i]->getTag() == tag)
-	  setGlowing(i);
+        if (sliders[i]->getTag() == tag)
+          setGlowing(i);
       }
     }
 
@@ -1020,108 +1020,108 @@ void GeometerEditor::idle() {
     float helpvalue = helpbox->getValue();
     if (control != NULL) {
       if (control == windowshapemenu) {
-	controlfound = true;
-	if (helpbackground != g_windowshapehelp) {
-	  helpbox->setBackground(g_windowshapehelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != windowshapemenu->getValue()) {
-	  helpbox->setValue(windowshapemenu->getValue());
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_windowshapehelp) {
+          helpbox->setBackground(g_windowshapehelp);
+          helpchanged = true;
+        }
+        if (helpvalue != windowshapemenu->getValue()) {
+          helpbox->setValue(windowshapemenu->getValue());
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (control == landmarksmenu) {
-	controlfound = true;
-	if (helpbackground != g_landmarkshelp) {
-	  helpbox->setBackground(g_landmarkshelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != landmarksmenu->getValue()) {
-	  helpbox->setValue(landmarksmenu->getValue());
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_landmarkshelp) {
+          helpbox->setBackground(g_landmarkshelp);
+          helpchanged = true;
+        }
+        if (helpvalue != landmarksmenu->getValue()) {
+          helpbox->setValue(landmarksmenu->getValue());
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (control == recreatemenu) {
-	controlfound = true;
-	if (helpbackground != g_recreatehelp) {
-	  helpbox->setBackground(g_recreatehelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != recreatemenu->getValue()) {
-	  helpbox->setValue(recreatemenu->getValue());
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_recreatehelp) {
+          helpbox->setBackground(g_recreatehelp);
+          helpchanged = true;
+        }
+        if (helpvalue != recreatemenu->getValue()) {
+          helpbox->setValue(recreatemenu->getValue());
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (control == op1menu) {
-	controlfound = true;
-	if (helpbackground != g_opshelp) {
-	  helpbox->setBackground(g_opshelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != op1menu->getValue()) {
-	  helpbox->setValue(op1menu->getValue());
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_opshelp) {
+          helpbox->setBackground(g_opshelp);
+          helpchanged = true;
+        }
+        if (helpvalue != op1menu->getValue()) {
+          helpbox->setValue(op1menu->getValue());
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (control == op2menu) {
-	controlfound = true;
-	if (helpbackground != g_opshelp) {
-	  helpbox->setBackground(g_opshelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != op2menu->getValue()) {
-	  helpbox->setValue(op2menu->getValue());
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_opshelp) {
+          helpbox->setBackground(g_opshelp);
+          helpchanged = true;
+        }
+        if (helpvalue != op2menu->getValue()) {
+          helpbox->setValue(op2menu->getValue());
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (control == op3menu) {
-	controlfound = true;
-	if (helpbackground != g_opshelp) {
-	  helpbox->setBackground(g_opshelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != op3menu->getValue()) {
-	  helpbox->setValue(op3menu->getValue());
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_opshelp) {
+          helpbox->setBackground(g_opshelp);
+          helpchanged = true;
+        }
+        if (helpvalue != op3menu->getValue()) {
+          helpbox->setValue(op3menu->getValue());
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (control == windowsizemenu) {
-	controlfound = true;
-	if (helpbackground != g_generalhelp) {
-	  helpbox->setBackground(g_generalhelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != UNMKHELP(HELP_WINDOWSIZE)) {
-	  helpbox->setValue(UNMKHELP(HELP_WINDOWSIZE));
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_generalhelp) {
+          helpbox->setBackground(g_generalhelp);
+          helpchanged = true;
+        }
+        if (helpvalue != UNMKHELP(HELP_WINDOWSIZE)) {
+          helpbox->setValue(UNMKHELP(HELP_WINDOWSIZE));
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (control == midilearnbutton) {
-	controlfound = true;
-	if (helpbackground != g_generalhelp) {
-	  helpbox->setBackground(g_generalhelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != UNMKHELP(HELP_MIDILEARN)) {
-	  helpbox->setValue(UNMKHELP(HELP_MIDILEARN));
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_generalhelp) {
+          helpbox->setBackground(g_generalhelp);
+          helpchanged = true;
+        }
+        if (helpvalue != UNMKHELP(HELP_MIDILEARN)) {
+          helpbox->setValue(UNMKHELP(HELP_MIDILEARN));
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
     }
     // look to see if we're over text labels, for general help
@@ -1134,82 +1134,82 @@ void GeometerEditor::idle() {
       CPoint where;
       frame->getCurrentLocation(where);
       if (where.isInside(windowshapearea)) {
-	controlfound = true;
-	if (helpbackground != g_generalhelp) {
-	  helpbox->setBackground(g_generalhelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != UNMKHELP(HELP_WINDOWSHAPE)) {
-	  helpbox->setValue(UNMKHELP(HELP_WINDOWSHAPE));
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_generalhelp) {
+          helpbox->setBackground(g_generalhelp);
+          helpchanged = true;
+        }
+        if (helpvalue != UNMKHELP(HELP_WINDOWSHAPE)) {
+          helpbox->setValue(UNMKHELP(HELP_WINDOWSHAPE));
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (where.isInside(windowsizearea)) {
-	controlfound = true;
-	if (helpbackground != g_generalhelp) {
-	  helpbox->setBackground(g_generalhelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != UNMKHELP(HELP_WINDOWSIZE)) {
-	  helpbox->setValue(UNMKHELP(HELP_WINDOWSIZE));
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_generalhelp) {
+          helpbox->setBackground(g_generalhelp);
+          helpchanged = true;
+        }
+        if (helpvalue != UNMKHELP(HELP_WINDOWSIZE)) {
+          helpbox->setValue(UNMKHELP(HELP_WINDOWSIZE));
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (where.isInside(landmarksarea)) {
-	controlfound = true;
-	if (helpbackground != g_generalhelp) {
-	  helpbox->setBackground(g_generalhelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != UNMKHELP(HELP_LANDMARKS)) {
-	  helpbox->setValue(UNMKHELP(HELP_LANDMARKS));
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_generalhelp) {
+          helpbox->setBackground(g_generalhelp);
+          helpchanged = true;
+        }
+        if (helpvalue != UNMKHELP(HELP_LANDMARKS)) {
+          helpbox->setValue(UNMKHELP(HELP_LANDMARKS));
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (where.isInside(opsarea)) {
-	controlfound = true;
-	if (helpbackground != g_generalhelp) {
-	  helpbox->setBackground(g_generalhelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != UNMKHELP(HELP_OPS)) {
-	  helpbox->setValue(UNMKHELP(HELP_OPS));
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_generalhelp) {
+          helpbox->setBackground(g_generalhelp);
+          helpchanged = true;
+        }
+        if (helpvalue != UNMKHELP(HELP_OPS)) {
+          helpbox->setValue(UNMKHELP(HELP_OPS));
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
       else if (where.isInside(recreatearea)) {
-	controlfound = true;
-	if (helpbackground != g_generalhelp) {
-	  helpbox->setBackground(g_generalhelp);
-	  helpchanged = true;
-	}
-	if (helpvalue != UNMKHELP(HELP_RECREATE)) {
-	  helpbox->setValue(UNMKHELP(HELP_RECREATE));
-	  helpchanged = true;
-	}
-	if (helpchanged)
-	  helpbox->setDirty();
+        controlfound = true;
+        if (helpbackground != g_generalhelp) {
+          helpbox->setBackground(g_generalhelp);
+          helpchanged = true;
+        }
+        if (helpvalue != UNMKHELP(HELP_RECREATE)) {
+          helpbox->setValue(UNMKHELP(HELP_RECREATE));
+          helpchanged = true;
+        }
+        if (helpchanged)
+          helpbox->setDirty();
       }
     }
     // failing all of that, check to see if the empty help box should be loaded
     if (!controlfound) {
       if (helpbackground != g_generalhelp) {
-	helpbox->setBackground(g_generalhelp);
-	helpbox->setDirty();
-	helpchanged = true;
+        helpbox->setBackground(g_generalhelp);
+        helpbox->setDirty();
+        helpchanged = true;
       }
       if (helpvalue != 1.0f) {
-	helpbox->setValue(1.0f);          
-	helpbox->setDirty();
-	helpchanged = true;
+        helpbox->setValue(1.0f);          
+        helpbox->setDirty();
+        helpchanged = true;
       }
     }
   }
