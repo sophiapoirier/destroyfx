@@ -151,11 +151,12 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	setCurrentControl_clicked(NULL);	// make sure that it ain't nuthin
 	setCurrentControl_mouseover(NULL);
 	EventTypeSpec controlMouseEvents[] = {
-								  { kEventClassMouse, kEventMouseDragged }, 
-								  { kEventClassMouse, kEventMouseUp }, 
-//								  { kEventClassMouse, kEventMouseMoved }, 
-								  { kEventClassKeyboard, kEventRawKeyDown }, 
-								  { kEventClassKeyboard, kEventRawKeyRepeat }, 
+									{ kEventClassMouse, kEventMouseDragged }, 
+									{ kEventClassMouse, kEventMouseUp }, 
+//									{ kEventClassMouse, kEventMouseMoved }, 
+									{ kEventClassKeyboard, kEventRawKeyDown }, 
+									{ kEventClassKeyboard, kEventRawKeyRepeat }, 
+									{ kEventClassCommand, kEventCommandProcess }, 
 								};
 	windowEventHandlerUPP = NewEventHandlerUPP(DGWindowEventHandler);
 	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), windowEventHandlerUPP, 
@@ -349,7 +350,8 @@ UInt32 DfxGuiEditor::requestItemID()
 }
 
 //-----------------------------------------------------------------------------
-OSStatus loadManualFile()
+// XXX this function should really go somewhere else, like in that promised DFX utilities file or something like that
+OSStatus launch_documentation()
 {
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
@@ -526,9 +528,42 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 //-----------------------------------------------------------------------------
 static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void *inUserData)
 {
-	if (GetEventClass(inEvent) == kEventClassKeyboard)
+	UInt32 inEventClass = GetEventClass(inEvent);
+	UInt32 inEventKind = GetEventKind(inEvent);
+	DfxGuiEditor *ourOwnerEditor = (DfxGuiEditor*) inUserData;
+
+
+
+	if (inEventClass == kEventClassCommand)
 	{
-		if ( (GetEventKind(inEvent) == kEventRawKeyDown) || (GetEventKind(inEvent) == kEventRawKeyRepeat) )
+		if (inEventKind == kEventCommandProcess)
+		{
+			HICommand hiCommand;
+			OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+			if (status != noErr)
+				status = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+			if (status != noErr)
+				return eventNotHandledErr;
+
+			if (hiCommand.commandID == kHICommandAppHelp)
+			{
+printf("command ID = kHICommandAppHelp\n");
+				if (launch_documentation() == noErr)
+					return noErr;
+			}
+else printf("command ID = %.4s\n", (char*) &(hiCommand.commandID));
+
+			return eventNotHandledErr;
+		}
+
+		return eventKindIncorrectErr;
+	}
+
+
+
+	if (inEventClass == kEventClassKeyboard)
+	{
+		if ( (inEventKind == kEventRawKeyDown) || (inEventKind == kEventRawKeyRepeat) )
 		{
 			UInt32 keyCode;
 			GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &keyCode);
@@ -536,12 +571,16 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 			GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
 			UInt32 modifiers;
 			GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-//printf("keyCode = %lu,  charCode = %c\n", keyCode, charCode);
+printf("keyCode = %lu,  charCode = ", keyCode);
+if ( (charCode > 0x7F) || iscntrl(charCode) ) printf("0x%.2X\n", charCode);
+else printf("%c\n", charCode);
 
-			if ( (keyCode == 44) && (modifiers & cmdKey) )
+			if ( ((keyCode == 44) && (modifiers & cmdKey)) || 
+					(charCode == kHelpCharCode) )
 			{
-				if (loadManualFile() == noErr)
+				if (launch_documentation() == noErr)
 					return noErr;
+//return eventNotHandledErr;
 			}
 
 			return eventNotHandledErr;
@@ -552,11 +591,8 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 
 
 
-	if (GetEventClass(inEvent) != kEventClassMouse)
+	if (inEventClass != kEventClassMouse)
 		return eventClassIncorrectErr;
-
-	UInt32 inEventKind = GetEventKind(inEvent);
-	DfxGuiEditor *ourOwnerEditor = (DfxGuiEditor*) inUserData;
 
 //	Point mouseLocation;
 //	GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(Point), NULL, &mouseLocation);	// XXX being obsoleted
