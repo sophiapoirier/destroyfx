@@ -143,7 +143,7 @@ public:
 	// called by EventHandler callback; draws a clipping region if opaque == true, 
 	// otherwise asks embedded DfxGuiControls for their clipping regions
 	void clipRegion(bool drawing);
-	virtual void setVisible(bool viz);
+	void setVisible(bool viz);
 
 	// The methods you should implement in derived controls
 	virtual void draw(CGContextRef context, UInt32 portHeight)
@@ -194,29 +194,27 @@ public:
 		{	return auv_control;	}
 	long getParameterID();
 	void setParameterID(AudioUnitParameterID inParameterID);
-	virtual float getRange()
+	float getRange()
 		{	return Range;	}
 	DGRect * getBounds()
 		{	return &where;	}
-	virtual DGRect * getForeBounds()
+	DGRect * getForeBounds()
 		{	return &vizArea;	}
 	DfxGuiEditor * getDfxGuiEditor()
 		{	return ownerEditor;	}
-	virtual DGControl * getDaddy()
+	DGControl * getDaddy()
 		{	return Daddy;	}
 	virtual DGControl * getChild(ControlRef inControl);
 
-	virtual void setDaddy(DGControl *inDaddy)
-		{	this->Daddy = inDaddy;	}
-	virtual void setOffset(SInt32 x, SInt32 y);
-	
-	virtual void setBounds(DGRect *r)
+	void setDaddy(DGControl *inDaddy)
+		{	Daddy = inDaddy;	}
+	void setOffset(SInt32 x, SInt32 y);
+
+	void setBounds(DGRect *r)
 		{	where.set(r);	}
-	virtual void setForeBounds(DGRect *r)
-		{	vizArea.set (r);	}
-	virtual void setForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
-	virtual void shrinkForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
-	
+	void setForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
+	void shrinkForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
+
 	void setTolerance(SInt32 inNewTolerance)
 		{	tolerance = inNewTolerance;	}
 	bool mustUpdate(void);
