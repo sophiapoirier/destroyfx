@@ -553,33 +553,38 @@ Boolean IsTransportStateProcSafe()
 	if (applicationBundle != NULL)
 	{
 		CFStringRef applicationBundleID = CFBundleGetIdentifier(applicationBundle);
-		UInt32 applicationVersion = CFBundleGetVersionNumber(applicationBundle);
-if (applicationBundleID != NULL) CFShow(applicationBundleID);
-fprintf(stderr, "application version = 0x%08lX\n\n", applicationVersion);
-//		if ( (applicationBundleID != NULL) && (applicationVersion != 0) )
+		UInt32 applicationVersionNumber = CFBundleGetVersionNumber(applicationBundle);
+		CFStringRef applicationVersionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(applicationBundle, kCFBundleVersionKey);
+//if (applicationBundleID != NULL) CFShow(applicationBundleID);
+//fprintf(stderr, "application version number = 0x%08lX\n\n", applicationVersionNumber);
+//if (applicationVersionString != NULL) { fprintf(stderr, "application version string:  "); CFShow(applicationVersionString); }
 		if (applicationBundleID != NULL)
 		{
 			const CFOptionFlags compareOptions = kCFCompareCaseInsensitive;
 			if ( (CFStringCompare(applicationBundleID, CFSTR("info.emagic.Logic"), compareOptions) == kCFCompareEqualTo) 
 				|| (CFStringCompare(applicationBundleID, CFSTR("de.emagic.Logic"), compareOptions) == kCFCompareEqualTo) )
 			{
-				if ( (applicationVersion < 0x06428000) && (applicationVersion > 0) )
-					return false;
+				if (applicationVersionNumber > 0)
+				{
+					if (applicationVersionNumber < 0x06428000)
+						return false;
+				}
+				else if (applicationVersionString != NULL)
+				{
+					const CFStringRef logicFirstGoodVersionString = CFSTR("6.4.2");
+					if ( CFStringCompareWithOptions(applicationVersionString, logicFirstGoodVersionString, 
+							CFRangeMake(0, CFStringGetLength(logicFirstGoodVersionString)), 0) == kCFCompareLessThan )
+						return false;
+				}
 			}
 			else if ( CFStringCompare(applicationBundleID, CFSTR("com.apple.garageband"), compareOptions) == kCFCompareEqualTo )
 			{
 				const CFStringRef garageBandBadMajorVersionString = CFSTR("1.0");
-				CFStringRef applicationVersionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(applicationBundle, kCFBundleVersionKey);
-				if ( (applicationVersion < 0x01100000) && (applicationVersion > 0) )
-					return false;
 				if (applicationVersionString != NULL)
 				{
 					if ( CFStringCompareWithOptions(applicationVersionString, garageBandBadMajorVersionString, 
 							CFRangeMake(0, CFStringGetLength(garageBandBadMajorVersionString)), 0) == kCFCompareEqualTo )
-{
-fprintf(stderr, "found \"1.0\" in the version string\n");
 						return false;
-}
 				}
 			}
 		}
