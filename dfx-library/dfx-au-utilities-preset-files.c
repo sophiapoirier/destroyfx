@@ -59,25 +59,25 @@ CFBundleRef gCurrentBundle = NULL;
 // outDirRef - On successful return, this will point to a valid FSRef of the AU's presets directory.
 OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef)
 {
+	OSStatus error;
+	FSRef audioDirRef, presetsDirRef, manufacturerPresetsDirRef;
+	CFStringRef pluginNameCFString, manufacturerNameCFString;
+
 	if ( (inAUComponent == NULL) || (outDirRef == NULL) )
 		return paramErr;
 
-	OSStatus error;
-
 	// get an FSRef for the Audio support directory (in Library)
-	FSRef audioDirRef;
 	error = FSFindFolder(inFileSystemDomain, kAudioSupportFolderType, inCreateDir, &audioDirRef);
 	if (error != noErr)
 		return error;
 
 	// get an FSRef to the Presets directory in the Audio directory
-	FSRef presetsDirRef;
 	error = MakeFSRefInDir(&audioDirRef, kAUPresetsDirName, inCreateDir, &presetsDirRef);
 	if (error != noErr)
 		return error;
 
 	// determine the name of the AU and the AU manufacturer so that we know the names of the presets sub-directories
-	CFStringRef pluginNameCFString = NULL, manufacturerNameCFString = NULL;
+	pluginNameCFString = manufacturerNameCFString = NULL;
 	error = CopyAUNameAndManufacturerStrings(inAUComponent, &pluginNameCFString, &manufacturerNameCFString);
 	if (error != noErr)
 		return error;
@@ -85,7 +85,6 @@ OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, 
 		return coreFoundationUnknownErr;
 
 	// get an FSRef to the AU manufacturer directory in the Presets directory
-	FSRef manufacturerPresetsDirRef;
 	error = MakeFSRefInDir(&presetsDirRef, manufacturerNameCFString, inCreateDir, &manufacturerPresetsDirRef);
 	if (error == noErr)
 		// get an FSRef to the particular plugin's directory in the manufacturer directory
@@ -101,13 +100,13 @@ OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, 
 // parent directory path, making it nicer for displaying to a user.
 // The result is null if something went wrong, otherwise it's 
 // a CFString to which the caller owns a reference.
-CFStringRef CopyAUPresetNameFromCFURL(const CFURLRef inAUPresetUrl)
+CFStringRef CopyAUPresetNameFromCFURL(const CFURLRef inAUPresetFileURL)
 {
 	CFStringRef baseFileNameString = NULL;
-	if (inAUPresetUrl != NULL)
+	if (inAUPresetFileURL != NULL)
 	{
 		// first make a copy of the URL without the file name extension
-		CFURLRef baseNameUrl = CFURLCreateCopyDeletingPathExtension(kCFAllocatorDefault, inAUPresetUrl);
+		CFURLRef baseNameUrl = CFURLCreateCopyDeletingPathExtension(kCFAllocatorDefault, inAUPresetFileURL);
 		if (baseNameUrl != NULL)
 		{
 			// then chop off the parent directory path, keeping just the extensionless file name as a CFString
@@ -122,12 +121,12 @@ CFStringRef CopyAUPresetNameFromCFURL(const CFURLRef inAUPresetUrl)
 // This function tells you if a file represented by a CFURL is an AU preset file.  
 // This is determined by looking at the file name extension.
 // The result is true if the file is an AU preset, false otherwise.
-Boolean CFURLIsAUPreset(const CFURLRef inUrl)
+Boolean CFURLIsAUPreset(const CFURLRef inURL)
 {
 	Boolean result = false;
-	if (inUrl != NULL)
+	if (inURL != NULL)
 	{
-		CFStringRef fileNameExtension = CFURLCopyPathExtension(inUrl);
+		CFStringRef fileNameExtension = CFURLCopyPathExtension(inURL);
 		if (fileNameExtension != NULL)
 		{
 			result = (CFStringCompare(fileNameExtension, kAUPresetFileNameExtension, kCFCompareCaseInsensitive) == kCFCompareEqualTo);
@@ -171,12 +170,13 @@ Boolean FSRefIsAUPreset(const FSRef * inFileRef)
 // the FSRef pointed to by outItemRef is not altered.
 OSStatus MakeFSRefInDir(const FSRef * inParentDirRef, CFStringRef inItemNameString, Boolean inCreateItem, FSRef * outItemRef)
 {
+	OSStatus error = noErr;
+	HFSUniStr255 itemUniName;
+
 	if ( (inParentDirRef == NULL) || (inItemNameString == NULL) || (outItemRef == NULL) )
 		return paramErr;
 
-	OSStatus error = noErr;
 	// first we need to convert the CFString of the file name to a HFS-style unicode file name
-	HFSUniStr255 itemUniName;
 	memset(&itemUniName, 0, sizeof(itemUniName));
 	TranslateCFStringToUnicodeString(inItemNameString, &itemUniName);
 	// then we try to create an FSRef for the file
@@ -199,17 +199,17 @@ OSStatus MakeFSRefInDir(const FSRef * inParentDirRef, CFStringRef inItemNameStri
 // convert a CFString to a unicode HFS file name string
 void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * outUniName)
 {
-	if ( (inCFString == NULL) || (outUniName == NULL) )
-		return;
-
-	CFIndex cfnamelength = CFStringGetLength(inCFString);
-	CFIndex maxlength = sizeof(outUniName->unicode) / sizeof(UniChar);
-	// the length can't be more than 255 characters for an HFS file name
-	if (cfnamelength > maxlength)
-		cfnamelength = maxlength;
-	outUniName->length = cfnamelength;
-	// translate the CFString to a unicode string representation in the HFS file name string
-	CFStringGetCharacters(inCFString, CFRangeMake(0, cfnamelength), outUniName->unicode);
+	if ( (inCFString != NULL) && (outUniName != NULL) )
+	{
+		CFIndex cfnamelength = CFStringGetLength(inCFString);
+		CFIndex maxlength = sizeof(outUniName->unicode) / sizeof(UniChar);
+		// the length can't be more than 255 characters for an HFS file name
+		if (cfnamelength > maxlength)
+			cfnamelength = maxlength;
+		outUniName->length = cfnamelength;
+		// translate the CFString to a unicode string representation in the HFS file name string
+		CFStringGetCharacters(inCFString, CFRangeMake(0, cfnamelength), outUniName->unicode);
+	}
 }
 
 
@@ -219,18 +219,20 @@ void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * out
 //-----------------------------------------------------------------------------
 CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain)
 {
+	OSStatus error = noErr;
+	FSRef presetsDirRef;
+	CFTreeRef tree;
+
 	if (inAUComponent == NULL)
 		return NULL;
 
 	// first we need to find the directory for the AU's preset files in this domain
-	OSStatus error = noErr;
-	FSRef presetsDirRef;
 	error = FindPresetsDirForAU(inAUComponent, inFileSystemDomain, kDontCreateFolder, &presetsDirRef);
 	if (error != noErr)
 		return NULL;
 
 	// we start with a root tree that represents the parent directory of all AU preset files for this AU
-	CFTreeRef tree = CreateFileURLsTreeNode(&presetsDirRef, kCFAllocatorDefault);
+	tree = CreateFileURLsTreeNode(&presetsDirRef, kCFAllocatorDefault);
 	if (tree != NULL)
 	{
 		// this will recursively traverse the preset files directory and all subdirectories and 
@@ -257,10 +259,10 @@ CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short i
 // which in the case of our CFURLs trees, is a CFURLRef
 CFURLRef GetCFURLFromFileURLsTreeNode(const CFTreeRef inTree)
 {
+	CFTreeContext treeContext;
 	if (inTree == NULL)
 		return NULL;
 	// first get the context for this tree node
-	CFTreeContext treeContext;
 	treeContext.version = 0;	// supposedly you have to make sure that the version value is correct on input
 	CFTreeGetContext(inTree, &treeContext);
 	// the info pointer in the context is a CFURLRef
@@ -274,17 +276,20 @@ CFURLRef GetCFURLFromFileURLsTreeNode(const CFTreeRef inTree)
 // or null if anything went wrong.
 CFTreeRef CreateFileURLsTreeNode(const FSRef * inItemRef, CFAllocatorRef inAllocator)
 {
-	if (inItemRef == NULL)
-		return NULL;
-	// we'll need a CFURL representation of the file or directory for the tree
-	CFURLRef itemUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, inItemRef);
-	if (itemUrl == NULL)
-		return NULL;
-	CFTreeContext treeContext;
-	FileURLsCFTreeContext_Init(itemUrl, &treeContext);
-	CFTreeRef newNode = CFTreeCreate(inAllocator, &treeContext);
-	// the CFURL that we created got retained when the tree node was created, so we can release it now
-	CFRelease(itemUrl);
+	CFTreeRef newNode = NULL;
+	if (inItemRef != NULL)
+	{
+		// we'll need a CFURL representation of the file or directory for the tree
+		CFURLRef itemUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, inItemRef);
+		if (itemUrl != NULL)
+		{
+			CFTreeContext treeContext;
+			FileURLsCFTreeContext_Init(itemUrl, &treeContext);
+			newNode = CFTreeCreate(inAllocator, &treeContext);
+			// the CFURL that we created got retained when the tree node was created, so we can release it now
+			CFRelease(itemUrl);
+		}
+	}
 	return newNode;
 }
 
@@ -293,14 +298,16 @@ CFTreeRef CreateFileURLsTreeNode(const FSRef * inItemRef, CFAllocatorRef inAlloc
 // as a child to a parent tree, and if successful, returns a reference to the new tree node.
 CFTreeRef AddFileItemToTree(const FSRef * inItemRef, CFTreeRef inParentTree)
 {
-	if ( (inItemRef == NULL) || (inParentTree == NULL) )
-		return NULL;
-	CFTreeRef newNode = CreateFileURLsTreeNode(inItemRef, CFGetAllocator(inParentTree));
-	if (newNode != NULL)
+	CFTreeRef newNode = NULL;
+	if ( (inItemRef != NULL) && (inParentTree != NULL) )
 	{
-		CFTreeAppendChild(inParentTree, newNode);
-		// the new tree node was retained by the parent when it was added to the parent, so we can release it now
-		CFRelease(newNode);
+		newNode = CreateFileURLsTreeNode(inItemRef, CFGetAllocator(inParentTree));
+		if (newNode != NULL)
+		{
+			CFTreeAppendChild(inParentTree, newNode);
+			// the new tree node was retained by the parent when it was added to the parent, so we can release it now
+			CFRelease(newNode);
+		}
 	}
 	return newNode;
 }
@@ -313,6 +320,9 @@ CFTreeRef AddFileItemToTree(const FSRef * inItemRef, CFTreeRef inParentTree)
 // they get removed from the tree.
 void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree)
 {
+	OSErr error;
+	FSIterator dirIterator;
+
 	if ( (inDirRef == NULL) || (inParentTree == NULL) )
 		return;
 
@@ -321,8 +331,7 @@ void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree
 	// work with FSGetCatalogInfoBulk, we need to use the "flat" option, 
 	// which means that sub-directories will not automatically be recursed, 
 	// so we will need to do that ourselves
-	FSIterator dirIterator;
-	long error = FSOpenIterator(inDirRef, kFSIterateFlat, &dirIterator);
+	error = FSOpenIterator(inDirRef, kFSIterateFlat, &dirIterator);
 	// there's nothing for us to do if that failed
 	if (error != noErr)
 		goto checkEmptyTree;
@@ -379,14 +388,15 @@ void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparat
 {
 	if ( (inTreeRoot != NULL) && (inComparatorFunction != NULL) )
 	{
+		CFTreeRef child, next;
 		// first sort through our own tree level
 		CFTreeSortChildren(inTreeRoot, inComparatorFunction, inContext);
 		// then sort through any child levels recursively
-		CFTreeRef child = CFTreeGetFirstChild(inTreeRoot);
+		child = CFTreeGetFirstChild(inTreeRoot);
 		if (child != NULL)
 			SortCFTreeRecursively(child, inComparatorFunction, inContext);
 		// and sort the next node in our own level recursively, too
-		CFTreeRef next = CFTreeGetNextSibling(inTreeRoot);
+		next = CFTreeGetNextSibling(inTreeRoot);
 		if (next != NULL)
 			SortCFTreeRecursively(next, inComparatorFunction, inContext);
 	}
@@ -434,15 +444,15 @@ CFComparisonResult FileURLsTreeComparatorFunction(const void * inTree1, const vo
 
 //-----------------------------------------------------------------------------
 // this will initialize a CFTree context structure to use the above callback functions
-void FileURLsCFTreeContext_Init(const CFURLRef inUrl, CFTreeContext * outTreeContext)
+void FileURLsCFTreeContext_Init(const CFURLRef inURL, CFTreeContext * outTreeContext)
 {
-	if ( (outTreeContext == NULL) || (inUrl == NULL) )
+	if ( (outTreeContext == NULL) || (inURL == NULL) )
 		return;
 	// wipe the struct clean
 	memset(outTreeContext, 0, sizeof(*outTreeContext));
 	// set all of the values and function pointers in the callbacks struct
 	outTreeContext->version = 0;
-	outTreeContext->info = (void*) inUrl;
+	outTreeContext->info = (void*) inURL;
 	// the info is a CFType, so we can just use the regular CF functions for these
 	outTreeContext->retain = CFRetain;
 	outTreeContext->release = CFRelease;
@@ -458,44 +468,64 @@ void FileURLsCFTreeContext_Init(const CFURLRef inUrl, CFTreeContext * outTreeCon
 // output:  ComponentResult error code
 // Given an AU instance and an AU preset file, this function will try to restore the data 
 // from the preset file as the new state of the AU.
-ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, const CFURLRef inPresetFileURL)
+ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, const CFURLRef inAUPresetFileURL)
 {
-	if ( (inAUComponentInstance == NULL) || (inPresetFileURL == NULL) )
+	SInt32 plistError;
+	ComponentResult componentError;
+	CFPropertyListRef auStatePlist;
+
+	if ( (inAUComponentInstance == NULL) || (inAUPresetFileURL == NULL) )
 		return paramErr;
 
 	// the preset file's state data is stored as XML data, and so we first we need to convert it to a PropertyList
-	CFPropertyListRef auStatePlist = CreatePropertyListFromXMLFile(inPresetFileURL);
+	plistError = 0;
+	auStatePlist = CreatePropertyListFromXMLFile(inAUPresetFileURL, &plistError);
 	if (auStatePlist == NULL)
-		return coreFoundationUnknownErr;
+		return (plistError != 0) ? plistError : coreFoundationUnknownErr;
 
 	// attempt to apply the state data from the file to the AU
-	ComponentResult error = AudioUnitSetProperty(inAUComponentInstance, kAudioUnitProperty_ClassInfo, 
+	componentError = AudioUnitSetProperty(inAUComponentInstance, kAudioUnitProperty_ClassInfo, 
 						kAudioUnitScope_Global, (AudioUnitElement)0, &auStatePlist, sizeof(auStatePlist));
 
 	CFRelease(auStatePlist);
 
-	return error;
+	return componentError;
 }
 
 //-----------------------------------------------------------------------------
 // Given an URL to a file with XML data contents, this function will attempt to convert that file's data 
 // to a PropertyList.  If successful, a new PropertyList is returned, otherwise null is returned.  
 // The caller owns a reference to the returned PropertyList and is responsible for releasing it.
-CFPropertyListRef CreatePropertyListFromXMLFile(const CFURLRef inFileURL)
+// The outErrorCode argument can be null.  If it is not null, it *might* hold a non-zero error code 
+// upon failed return, but this is not guaranteed, so you should set the variable's value to 0 
+// before calling this, since the value reference by outErrorCode may not actually be altered..
+CFPropertyListRef CreatePropertyListFromXMLFile(const CFURLRef inXMLFileURL, SInt32 * outErrorCode)
 {
-	if (inFileURL == NULL)
-		return NULL;
+	CFDataRef fileData;
+	CFPropertyListRef propertyList;
+	Boolean success;
+	CFStringRef errorString;
 
+	// allow a null input for outErrorCode, and just point it to something, for safety
+	SInt32 dummyErrorCode = 0;
+	if (outErrorCode == NULL)
+		outErrorCode = &dummyErrorCode;
+
+	if (inXMLFileURL == NULL)
+	{
+		*outErrorCode = paramErr;
+		return NULL;
+	}
+	
 	// read the XML file
-	CFDataRef fileData = NULL;
-	SInt32 errorCode = 0;
-	Boolean success = CFURLCreateDataAndPropertiesFromResource(kCFAllocatorDefault, inFileURL, &fileData, NULL, NULL, &errorCode);
+	fileData = NULL;
+	success = CFURLCreateDataAndPropertiesFromResource(kCFAllocatorDefault, inXMLFileURL, &fileData, NULL, NULL, outErrorCode);
 	if ( !success || (fileData == NULL) )
 		return NULL;
 
 	// recreate the dictionary using the XML data
-	CFStringRef errorString = NULL;
-	CFPropertyListRef propertyList = CFPropertyListCreateFromXMLData(kCFAllocatorDefault, fileData, kCFPropertyListImmutable, &errorString);
+	errorString = NULL;
+	propertyList = CFPropertyListCreateFromXMLData(kCFAllocatorDefault, fileData, kCFPropertyListImmutable, &errorString);
 	if (errorString != NULL)
 		CFRelease(errorString);
 
@@ -513,12 +543,15 @@ const UInt32 kAUPresetOpenNavDialogKey = 'AUpo';
 // of the input AU instance.  It presents the user with a Navigation Services GetFile dialog.
 ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 {
+	ComponentResult error = noErr;
+	NavDialogCreationOptions dialogOptions;
+	NavEventUPP eventProc;
+	NavObjectFilterUPP filterProc;
+	NavDialogRef dialog;
+
 	if ( (inAUComponentInstance == NULL) )
 		return paramErr;
 
-	ComponentResult error = noErr;
-
-	NavDialogCreationOptions dialogOptions;
 	error = NavGetDefaultDialogCreationOptions(&dialogOptions);
 	if (error != noErr)
 		return error;
@@ -532,9 +565,8 @@ ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 
 	// create and run the standard Navigation Services GetFile dialog to allow the user to 
 	// /find and choose an AU preset file to load
-	NavEventUPP eventProc = NewNavEventUPP(CustomOpenAUPresetNavEventHandler);
-	NavObjectFilterUPP filterProc = NewNavObjectFilterUPP(CustomOpenAUPresetNavFilterProc);
-	NavDialogRef dialog;
+	eventProc = NewNavEventUPP(CustomOpenAUPresetNavEventHandler);
+	filterProc = NewNavObjectFilterUPP(CustomOpenAUPresetNavFilterProc);
 	error = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)inAUComponentInstance, &dialog);
 	if (error == noErr)
 	{
@@ -574,6 +606,9 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 		// the user did something action-packed
 		case kNavCBUserAction:
 		{
+			OSStatus error;
+			NavReplyRecord reply;
+
 			// we're only interested in file open actions
 			NavUserAction userAction = NavDialogGetUserAction(dialog);
 			// XXX return userCanceled error for Cancel?
@@ -582,8 +617,7 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 				break;
 
 			// get the file-choose response and check that it's valid (not a cancel or something like that)
-			NavReplyRecord reply;
-			OSStatus error = NavDialogGetReply(dialog, &reply);
+			error = NavDialogGetReply(dialog, &reply);
 			if (error == noErr)
 			{
 				if (reply.validRecord)
@@ -630,7 +664,7 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 // It handles filtering out non AU preset files from the file list display.  
 // They will still appear in the list, but can not be selected.
 // A response of true means "allow the file" and false means "disallow the file."
-Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode)
+pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode)
 {
 	// default to allowing the item
 	// only if we determine that a file, but not an AU preset file, do we want to reject it
@@ -678,12 +712,14 @@ Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * i
 // directory does not already exist, this function will fail.
 OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAUComponent, Boolean inShouldCreateFolder)
 {
+	OSStatus error;
+	FSRef presetFileDirRef;
+
 	if ( (inDialog == NULL) || (inAUComponent == NULL) )
 		return paramErr;
 
 	// get an FSRef to the standardized AU preset files location for this AU, in the user domain
-	FSRef presetFileDirRef;
-	OSStatus error = FindPresetsDirForAU(inAUComponent, kUserDomain, inShouldCreateFolder, &presetFileDirRef);
+	error = FindPresetsDirForAU(inAUComponent, kUserDomain, inShouldCreateFolder, &presetFileDirRef);
 	if (error == noErr)
 	{
 		// we have to create an AEDesc thingy in order to use NavCustomControl to set the dialog's start location
@@ -715,6 +751,10 @@ ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance)
 // output:  ComponentResult error code
 ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFBundleRef inBundle)
 {
+	ComponentResult error = noErr;
+	CFPropertyListRef auStatePlist;
+	UInt32 auStateDataSize = sizeof(auStatePlist);
+
 	if (inAUComponentInstance == NULL)
 		return paramErr;
 
@@ -723,8 +763,6 @@ ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, 
 	// so set our global bundle reference to the main application bundle
 	if (inBundle == NULL)
 		gCurrentBundle = CFBundleGetMainBundle();
-
-	ComponentResult error = noErr;
 
 /*
 1st
@@ -735,8 +773,7 @@ convert ClassInfo to XML/plist data
 */
 	// get the current state data for the AU
 	// if that fails, then there's no point in going any further since there is no data to save
-	CFPropertyListRef auStatePlist = NULL;
-	UInt32 auStateDataSize = sizeof(auStatePlist);
+	auStatePlist = NULL;
 	error = AudioUnitGetProperty(inAUComponentInstance, kAudioUnitProperty_ClassInfo, 
 						kAudioUnitScope_Global, (AudioUnitElement)0, &auStatePlist, &auStateDataSize);
 	if (error != noErr)
@@ -754,7 +791,7 @@ Open a dialog
 	open nib
 */
 	// this will show the dialog(s) to the user and do all the handling of saving the state data to a file, etc.
-	error = CreateSavePresetDialog((Component)inAUComponentInstance, auStatePlist, inBundle);
+	error = CreateSavePresetDialog((Component)inAUComponentInstance, auStatePlist);
 
 
 	CFRelease(auStatePlist);
@@ -766,19 +803,22 @@ Open a dialog
 // This function will take a PropertyList and CFURL referencing a file as input, 
 // try to convert the PropertyList to XML data, and then write a file of the XML data 
 // out to disk to the file referenced by the input CFURL.
-OSStatus WritePropertyListToXMLFile(const CFPropertyListRef inPropertyList, const CFURLRef inFileURL)
+OSStatus WritePropertyListToXMLFile(const CFPropertyListRef inPropertyList, const CFURLRef inXMLFileURL)
 {
-	if ( (inPropertyList == NULL) || (inFileURL == NULL) )
+	SInt32 error = noErr;
+	Boolean success;
+	CFDataRef xmlData;
+
+	if ( (inPropertyList == NULL) || (inXMLFileURL == NULL) )
 		return paramErr;
 
 	// convert the property list into XML data
-	CFDataRef xmlData = CFPropertyListCreateXMLData(kCFAllocatorDefault, inPropertyList);
+	xmlData = CFPropertyListCreateXMLData(kCFAllocatorDefault, inPropertyList);
 	if (xmlData == NULL)
 		return coreFoundationUnknownErr;
 
 	// write the XML data to the file
-	SInt32 error = noErr;
-	Boolean success = CFURLWriteDataAndPropertiesToResource(inFileURL, xmlData, NULL, &error);
+	success = CFURLWriteDataAndPropertiesToResource(inXMLFileURL, xmlData, NULL, &error);
 	if ( !success && (error == noErr) )	// whuh?
 		error = kCFURLUnknownError;
 
@@ -816,24 +856,25 @@ enum {
 
 //-----------------------------------------------------------------------------
 // create, show, and run modally our dialog window
-OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist, CFBundleRef inBundle)
+OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist)
 {
+	OSStatus error = noErr;
+	IBNibRef nibRef = NULL;
+	WindowRef dialogWindow = NULL;
+	SaveAUPresetFileDialogInfo dialogInfo;
+	EventHandlerUPP dialogEventHandlerUPP = NULL;
+	EventTypeSpec dialogEventsSpec[] = { { kEventClassCommand, kEventCommandProcess } };
+	EventHandlerRef dialogEventHandlerRef = NULL;
+
 	if ( (inAUComponent == NULL) || (inAUStatePlist == NULL) )
 		return paramErr;
 
-	OSStatus error = noErr;
-
 	// find the dialog nib
-	IBNibRef nibRef = NULL;
-	if (inBundle == NULL)
-		error = CreateNibReference(kAUPresetSaveDialogNibName, &nibRef);
-	else
-		error = CreateNibReferenceWithCFBundle(inBundle, kAUPresetSaveDialogNibName, &nibRef);
+	error = CreateNibReferenceWithCFBundle(gCurrentBundle, kAUPresetSaveDialogNibName, &nibRef);
 	if (error != noErr)
 		return error;
 
 	// load the window that is contained in the nib
-	WindowRef dialogWindow = NULL;
 	error = CreateWindowFromNib(nibRef, kAUPresetSaveDialogNibWindowName, &dialogWindow);
 	if (error != noErr)
 		return error;
@@ -842,7 +883,6 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	DisposeNibReference(nibRef);
 
 	// initialize the values in our dialog info struct
-	SaveAUPresetFileDialogInfo dialogInfo;
 	memset(&dialogInfo, 0, sizeof(dialogInfo));
 	dialogInfo.auStateData = inAUStatePlist;
 	dialogInfo.dialogWindow = dialogWindow;
@@ -850,9 +890,7 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	dialogInfo.dialogResult = noErr;
 
 	// install our dialog's event handler
-	EventHandlerUPP dialogEventHandlerUPP = NewEventHandlerUPP(SaveAUPresetFileDialogEventHandler);
-	EventTypeSpec dialogEventsSpec[] = { { kEventClassCommand, kEventCommandProcess } };
-	EventHandlerRef dialogEventHandlerRef = NULL;
+	dialogEventHandlerUPP = NewEventHandlerUPP(SaveAUPresetFileDialogEventHandler);
 	error = InstallWindowEventHandler(dialogWindow, dialogEventHandlerUPP, GetEventTypeCount(dialogEventsSpec), 
 										dialogEventsSpec, (void*)(&dialogInfo), &dialogEventHandlerRef);
 	if (error != noErr)
@@ -862,18 +900,20 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	}
 
 	// set the window title with the AU's name in there
-	char auNameCString[256];
-	memset(auNameCString, 0, sizeof(auNameCString));
-	error = GetAUNameAndManufacturerCStrings(inAUComponent, auNameCString, NULL);
-	if (error == noErr)
 	{
-		CFStringRef dialogWindowTitle_firstPart = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save preset file for"), CFSTR("dfx-au-utilities-localizable"), inBundle, CFSTR("window title of the regular (simple) save AU preset dialog.  (note:  the code will append the name of the AU after this string, so format the syntax accordingly)"));
-		CFStringRef dialogWindowTitle = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ %s"), dialogWindowTitle_firstPart, auNameCString);
-		CFRelease(dialogWindowTitle_firstPart);
-		if (dialogWindowTitle != NULL)
+		char auNameCString[256];
+		memset(auNameCString, 0, sizeof(auNameCString));
+		error = GetAUNameAndManufacturerCStrings(inAUComponent, auNameCString, NULL);
+		if (error == noErr)
 		{
-			SetWindowTitleWithCFString(dialogWindow, dialogWindowTitle);
-			CFRelease(dialogWindowTitle);
+			CFStringRef dialogWindowTitle_firstPart = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save preset file for"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("window title of the regular (simple) save AU preset dialog.  (note:  the code will append the name of the AU after this string, so format the syntax accordingly)"));
+			CFStringRef dialogWindowTitle = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ %s"), dialogWindowTitle_firstPart, auNameCString);
+			CFRelease(dialogWindowTitle_firstPart);
+			if (dialogWindowTitle != NULL)
+			{
+				SetWindowTitleWithCFString(dialogWindow, dialogWindowTitle);
+				CFRelease(dialogWindowTitle);
+			}
 		}
 	}
 
@@ -881,10 +921,12 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	ShowWindow(dialogWindow);
 
 	// set the file name text edit field as the initial focused control, for user convenience
-	ControlRef textFieldControl = NULL;
-	ControlID textFieldControlID =	{ kPresetNameTextControlSignature, kPresetNameTextControlID };
-	GetControlByID(dialogWindow, &textFieldControlID, &textFieldControl);
-	SetKeyboardFocus(dialogWindow, textFieldControl, kControlFocusNextPart);
+	{
+		ControlRef textFieldControl = NULL;
+		ControlID textFieldControlID =	{ kPresetNameTextControlSignature, kPresetNameTextControlID };
+		GetControlByID(dialogWindow, &textFieldControlID, &textFieldControl);
+		SetKeyboardFocus(dialogWindow, textFieldControl, kControlFocusNextPart);
+	}
 
 	// run the dialog window modally
 	// this will return when the dialog's event handler breaks the modal run loop
@@ -909,17 +951,18 @@ return error code
 // This is the event handler callback for the (simple) Save AU preset file dialog.
 pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
+	OSStatus error = eventNotHandledErr;
+	SaveAUPresetFileDialogInfo * dialogInfo = (SaveAUPresetFileDialogInfo*) inUserData;
+	// this will be set true when it's time to quit this dialog
+	Boolean exitModalLoop = false;
+	HICommand command;
+
 	if (GetEventClass(inEvent) != kEventClassCommand)
 		return eventNotHandledErr;
 	if (GetEventKind(inEvent) != kEventCommandProcess)
 		return eventNotHandledErr;
 	if (inUserData == NULL)
 		return eventNotHandledErr;
-
-	OSStatus error = eventNotHandledErr;
-	SaveAUPresetFileDialogInfo * dialogInfo = (SaveAUPresetFileDialogInfo*) inUserData;
-	// this will be set true when it's time to quit this dialog
-	Boolean exitModalLoop = false;
 
 /*
 3rd:
@@ -930,7 +973,6 @@ catch dialog response
 		if Custom location, open Nav Services save dialog and go to 4-ish
 */
 	// get the command's type info
-	HICommand command;
 	error = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &command);
 	if (error != noErr)
 		return error;
@@ -940,23 +982,27 @@ catch dialog response
 		// the Save button was pushed, so try to save the requested file in the requested domain
 		case kHICommandSave:
 			{
-				// get the file name text from the edit text field
 				ControlRef textFieldControl = NULL;
 				ControlID textFieldControlID =	{ kPresetNameTextControlSignature, kPresetNameTextControlID };
-				GetControlByID(dialogInfo->dialogWindow, &textFieldControlID, &textFieldControl);
 				CFStringRef presetNameString = NULL;
+
+				ControlRef domainChoiceControl = NULL;
+				ControlID domainChoiceControlID = { kDomainChoiceControlSignature, kDomainChoiceControlID };
+				SInt32 domainChoice;
+				short fsDomain;
+
+				// get the file name text from the edit text field
+				GetControlByID(dialogInfo->dialogWindow, &textFieldControlID, &textFieldControl);
 				if (textFieldControl != NULL)
 					GetControlData(textFieldControl, 0, kControlEditTextCFStringTag, sizeof(presetNameString), &presetNameString, NULL);
 
 				// get the user's choice of file system domain from the domain choice control
-				ControlRef domainChoiceControl = NULL;
-				ControlID domainChoiceControlID = { kDomainChoiceControlSignature, kDomainChoiceControlID };
 				GetControlByID(dialogInfo->dialogWindow, &domainChoiceControlID, &domainChoiceControl);
-				SInt32 domainChoice = kDomainChoiceValue_User;
+				domainChoice = kDomainChoiceValue_User;
 				if (domainChoiceControl != NULL)
 					domainChoice = GetControl32BitValue(domainChoiceControl);
 //fprintf(stderr, "domain choice = %ld\n", domainChoice);
-				short fsDomain = kUserDomain;
+				fsDomain = kUserDomain;
 				if (domainChoice == kDomainChoiceValue_Local)
 					fsDomain = kLocalDomain;
 				else if (domainChoice == kDomainChoiceValue_Network)
@@ -967,17 +1013,16 @@ catch dialog response
 				if (presetNameString != NULL)
 					CFRelease(presetNameString);
 
-				OSStatus dresult = dialogInfo->dialogResult;
 				// probably the file name was 0 characters long, so don't exit the dialog yet, 
 				// the user probably just accidentally hit return
-				if (dresult == errFSMissingName)
+				if (dialogInfo->dialogResult == errFSMissingName)
 					exitModalLoop = false;
 				// probably there was an existing file conflict and the user chose not to replace the existing file
-				else if (dresult == userCanceledErr)
+				else if (dialogInfo->dialogResult == userCanceledErr)
 					exitModalLoop = false;
 				// if there was a write access error and the domain choice was not User, 
 				// tell the user and give them a chance to choose a different domain in which to save
-				else if ( IsFileAccessError(dresult) )
+				else if ( IsFileAccessError(dialogInfo->dialogResult) )
 				{
 					// XXX hmmm, should we still put up an error?  would this actually ever happen anyway?
 					if (fsDomain == kUserDomain)
@@ -1025,6 +1070,24 @@ catch dialog response
 OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
 								CFStringRef inPresetNameString, short inFileSystemDomain)
 {
+	OSStatus error = noErr;
+
+	HFSUniStr255 dummyuniname;
+	// get the absolute maximum length that a file name can be
+	size_t maxUnicodeNameLength = sizeof(dummyuniname.unicode) / sizeof(UniChar);
+	// this is how much longer the file name will be after the AU preset file name extension is appended
+	CFIndex presetFileNameExtensionLength = CFStringGetLength(kAUPresetFileNameExtension) - 1;	// -1 for the . before the extension
+	// this is the maximum allowable length of the preset file's name without the extension
+	CFIndex maxNameLength = maxUnicodeNameLength - presetFileNameExtensionLength;
+
+	CFStringRef presetFileNameString;
+	FSRef presetFileDirRef;
+	CFURLRef presetFileDirUrl;
+	CFURLRef presetBaseFileUrl;
+	CFURLRef presetFullFileUrl;
+	FSRef dummyFSRef;
+	Boolean fileAlreadyExists;
+
 	if ( (inAUComponent == NULL) || (inAUStateData == NULL) || (inPresetNameString == NULL) )
 		return paramErr;
 
@@ -1042,17 +1105,7 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 	if (CFGetTypeID(inAUStateData) == CFDictionaryGetTypeID())
 		CFDictionarySetValue((CFMutableDictionaryRef)inAUStateData, CFSTR(kAUPresetNameKey), inPresetNameString);
 
-	OSStatus error = noErr;
-
 //fprintf(stderr, "\tuser chosen name:\n"); CFShow(inPresetNameString);
-	HFSUniStr255 dummyuniname;
-	// get the absolute maximum length that a file name can be
-	size_t maxUnicodeNameLength = sizeof(dummyuniname.unicode) / sizeof(UniChar);
-	// this is how much longer the file name will be after the AU preset file name extension is appended
-	CFIndex presetFileNameExtensionLength = CFStringGetLength(kAUPresetFileNameExtension) - 1;	// -1 for the . before the extension
-	// this is the maximum allowable length of the preset file's name without the extension
-	CFIndex maxNameLength = maxUnicodeNameLength - presetFileNameExtensionLength;
-	CFStringRef presetFileNameString = NULL;
 	// if the requested file name is too long, truncate it
 	if (CFStringGetLength(inPresetNameString) > maxNameLength)
 		presetFileNameString = CFStringCreateWithSubstring(kCFAllocatorDefault, inPresetNameString, CFRangeMake(0, maxNameLength));
@@ -1068,25 +1121,24 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 //fprintf(stderr, "\ttruncated name without extension:\n"); CFShow(presetFileNameString);
 
 	// now we need to get the parent directory of where we will save this file
-	FSRef presetFileDirRef;
 	error = FindPresetsDirForAU(inAUComponent, inFileSystemDomain, kCreateFolder, &presetFileDirRef);
 	if (error != noErr)
 		return error;
 	// and convert that into a CFURL so that we can use CoreFoundation's 
 	// PropertList and XML APIs for saving the data to a file
-	CFURLRef presetFileDirUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileDirRef);
+	presetFileDirUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileDirRef);
 	if (presetFileDirUrl == NULL)
 	{
 		CFRelease(presetFileNameString);
 		return coreFoundationUnknownErr;
 	}
 	// create a CFURL of the requested file name in the proper AU presets directory
-	CFURLRef presetBaseFileUrl = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, presetFileDirUrl, presetFileNameString, false);
+	presetBaseFileUrl = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, presetFileDirUrl, presetFileNameString, false);
 	CFRelease(presetFileDirUrl);
 	CFRelease(presetFileNameString);
 	if (presetBaseFileUrl == NULL)
 		return coreFoundationUnknownErr;
-	CFURLRef presetFullFileUrl = presetBaseFileUrl;
+	presetFullFileUrl = presetBaseFileUrl;
 	// the file name is already formed as a proper AU preset file name, so no need to append the extension
 	// maybe the user already added the .aupreset extension when entering in the name?
 	if ( CFURLIsAUPreset(presetFullFileUrl) )
@@ -1101,10 +1153,9 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 //fprintf(stderr, "\ttruncated name with extension:\n"); CFShow(presetFullFileUrl);
 
 	// check whether or not the file already exists
-	FSRef dummyFSRef;
 	// note that, since an FSRef cannot be created for a file that doesn't yet exist, 
 	// if this succeeds, then that means that a file with this path and name already exists
-	Boolean fileAlreadyExists = CFURLGetFSRef(presetFullFileUrl, &dummyFSRef);
+	fileAlreadyExists = CFURLGetFSRef(presetFullFileUrl, &dummyFSRef);
 	if (fileAlreadyExists)
 	{
 		// present the user with a dialog asking whether or not they want to replace an already existing file
@@ -1145,10 +1196,10 @@ XXX	if fails, tell user why
 // because button is also the default button, thus making things complicated.
 pascal OSStatus ShouldReplaceExistingAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
+	Boolean doCancel = false;
+
 	if (inUserData == NULL)
 		return eventNotHandledErr;
-
-	Boolean doCancel = false;
 
 	// check an HI command event to see if it's a cancel event
 	if (GetEventClass(inEvent) == kEventClassCommand)
@@ -1171,9 +1222,9 @@ pascal OSStatus ShouldReplaceExistingAUPresetFileDialogEventHandler(EventHandler
 	{
 		if (GetEventKind(inEvent) == kEventRawKeyDown)
 		{
-			unsigned char charCode;
+			unsigned char charCode = 0;
+			UInt32 modifiers = 0;
 			GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
-			UInt32 modifiers;
 			GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
 //fprintf(stderr, "charCode = %d, modifiers = %lu\n", charCode, modifiers);
 
@@ -1207,11 +1258,11 @@ if (error == noErr)
 			error = CreateEvent(NULL, kEventClassControl, kEventControlSimulateHit, GetCurrentEventTime(), kEventAttributeUserEvent, &cancelEvent);
 			if (error == noErr)
 			{
-				SetEventParameter(cancelEvent, kEventParamDirectObject, typeControlRef, sizeof(cancelControl), &cancelControl);
 				UInt32 modifiers = 0;
-				SetEventParameter(cancelEvent, kEventParamKeyModifiers, typeUInt32, sizeof(modifiers), &modifiers);
 				ControlPartCode hitPart = kControlIndicatorPart;
 //				ControlPartCode hitPart = kControlButtonPart;
+				SetEventParameter(cancelEvent, kEventParamDirectObject, typeControlRef, sizeof(cancelControl), &cancelControl);
+				SetEventParameter(cancelEvent, kEventParamKeyModifiers, typeUInt32, sizeof(modifiers), &modifiers);
 				SetEventParameter(cancelEvent, kEventParamControlPart, typeControlPartCode, sizeof(hitPart), &hitPart);
 
 				// XXX this is not working
@@ -1232,9 +1283,17 @@ if (error == noErr)
 // file already exists and asking the user if she really wants to replace that old file.
 // A return value of true means that the user wants to replace the file, and 
 // a return value of false means that the user does not want to replace the file.
-Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inFileUrl)
+Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL)
 {
 	AlertStdCFStringAlertParamRec alertParams;
+	CFStringRef filenamestring;
+	CFStringRef dirstring;
+	CFURLRef dirurl;
+	CFStringRef titleString;
+	CFStringRef messageString;
+	DialogRef dialog;
+	OSStatus alertErr;
+
 	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
 	alertParams.movable = true;
 	alertParams.defaultText = CFCopyLocalizedStringFromTableInBundle(CFSTR("Replace"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, 
@@ -1244,17 +1303,17 @@ Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inFileUrl)
 //	alertParams.cancelButton = kAlertStdAlertCancelButton;
 	alertParams.cancelButton = 0;
 	// do a bunch of wacky stuff to try to come up with a nice and informative message text for the dialog
-	CFStringRef filenamestring = CFURLCopyLastPathComponent(inFileUrl);
-	CFStringRef dirstring = NULL;
-	CFURLRef dirurl = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault, inFileUrl);
+	filenamestring = CFURLCopyLastPathComponent(inAUPresetFileURL);
+	dirstring = NULL;
+	dirurl = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault, inAUPresetFileURL);
 	if (dirurl != NULL)
 	{
 		dirstring = CFURLCopyFileSystemPath(dirurl, kCFURLPOSIXPathStyle);
 		CFRelease(dirurl);
 	}
-	CFStringRef titleString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, 
+	titleString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, 
 								CFSTR("title of the alert window when a save file file-already-exists conflict arises"));
-	CFStringRef messageString = NULL;
+	messageString = NULL;
 	// if we got strings for the file name and parent directory path, 
 	// then we can make a nice and specific dialog message
 	if ( (filenamestring != NULL) && (dirstring != NULL) )
@@ -1276,14 +1335,15 @@ Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inFileUrl)
 		CFRelease(dirstring);
 
 	// now that we have some message text for the user, we can create and show the dialog
-	DialogRef dialog;
-	OSStatus alertErr = CreateStandardAlert(kAlertCautionAlert, titleString, messageString, &alertParams, &dialog);
+	alertErr = CreateStandardAlert(kAlertCautionAlert, titleString, messageString, &alertParams, &dialog);
 	CFRelease(alertParams.defaultText);
 	CFRelease(titleString);
 	CFRelease(messageString);
 
 	if (alertErr == noErr)
 	{
+		DialogItemIndex itemHit;
+
 		// create and install custom event handler stuff
 		EventTypeSpec dialogEvents[] = { { kEventClassCommand, kEventCommandProcess }, {kEventClassKeyboard, kEventRawKeyDown} };
 		EventHandlerUPP dialogEventHandlerUPP = NewEventHandlerUPP(ShouldReplaceExistingAUPresetFileDialogEventHandler);
@@ -1292,7 +1352,6 @@ Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inFileUrl)
 							GetEventTypeCount(dialogEvents), dialogEvents, dialog, &dialogEventHandlerRef);
 
 		// show the alert dialog
-		DialogItemIndex itemHit;
 		alertErr = RunStandardAlert(dialog, NULL, &itemHit);
 
 		// clean up custom event handler stuff
@@ -1340,13 +1399,17 @@ Boolean IsFileAccessError(OSStatus inErrorCode)
 // the Save AU preset file dialog.
 OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 {
+	OSStatus error;
 	AlertStdCFStringAlertParamRec alertParams;
+	CFStringRef alertTitle;
+	CFStringRef alertMessage;
+	DialogRef dialog;
+
 	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
 	alertParams.movable = true;
-	DialogRef dialog;
-	CFStringRef alertTitle = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save access error"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the alert window title for when an access privileges error occurs while trying to save a file"));
-	CFStringRef alertMessage = CFCopyLocalizedStringFromTableInBundle(CFSTR("You do not have sufficient privileges to save files in that location.  Try saving your file in the User domain."), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the content of the alert message text for an access privileges error"));
-	OSStatus error = CreateStandardAlert(kAlertNoteAlert, alertTitle, alertMessage, &alertParams, &dialog);
+	alertTitle = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save access error"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the alert window title for when an access privileges error occurs while trying to save a file"));
+	alertMessage = CFCopyLocalizedStringFromTableInBundle(CFSTR("You do not have sufficient privileges to save files in that location.  Try saving your file in the User domain."), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the content of the alert message text for an access privileges error"));
+	error = CreateStandardAlert(kAlertNoteAlert, alertTitle, alertMessage, &alertParams, &dialog);
 	CFRelease(alertTitle);
 	CFRelease(alertMessage);
 	if (error == noErr)
@@ -1376,12 +1439,14 @@ const UInt32 kAUPresetSaveNavDialogKey = 'AUps';
 // in which case the default starting location will not be set.
 OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent)
 {
+	OSStatus error = noErr;
+	NavDialogCreationOptions dialogOptions;
+	NavEventUPP eventProc;
+	NavDialogRef dialog;
+
 	if (inAUStateData == NULL)
 		return paramErr;
 
-	OSStatus error = noErr;
-
-	NavDialogCreationOptions dialogOptions;
 	error = NavGetDefaultDialogCreationOptions(&dialogOptions);
 	if (error != noErr)
 		return error;
@@ -1391,17 +1456,10 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 	// this gives this dialog a unique identifier so that it has independent remembered settings for the calling app
 	dialogOptions.preferenceKey = kAUPresetSaveNavDialogKey;
 
-	NavEventUPP eventProc = NewNavEventUPP(CustomSaveAUPresetNavEventHandler);
-	NavDialogRef dialog;
+	eventProc = NewNavEventUPP(CustomSaveAUPresetNavEventHandler);
 	error = NavCreatePutFileDialog(&dialogOptions, (OSType)0, (OSType)0, eventProc, (void*)inAUStateData, &dialog);
 	if (error == noErr)
 	{
-		// if the input AU Component argument is valid, use it to find the 
-		// standard preset files location for the AU in the user domain, 
-		// and set the PutFile dialog to start off there
-		if (inAUComponent != NULL)
-			SetNavDialogAUPresetStartLocation(dialog, inAUComponent, kCreateFolder);
-
 		// set the initial file name shown in the dialog's file name text edit field
 		CFStringRef defaultFileBaseName = CFCopyLocalizedStringFromTableInBundle(CFSTR("untitled"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the default preset file name for the Nav Services save file dialog"));
 		CFStringRef defaultFileName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@.%@"), 
@@ -1412,6 +1470,12 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 			NavDialogSetSaveFileName(dialog, defaultFileName);
 			CFRelease(defaultFileName);
 		}
+
+		// if the input AU Component argument is valid, use it to find the 
+		// standard preset files location for the AU in the user domain, 
+		// and set the PutFile dialog to start off there
+		if (inAUComponent != NULL)
+			SetNavDialogAUPresetStartLocation(dialog, inAUComponent, kCreateFolder);
 
 		// now show the dialog to the user
 		error = NavDialogRun(dialog);
@@ -1452,6 +1516,9 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 		// "user actions" include the save request, which we need to respond to
 		case kNavCBUserAction:
 		{
+			OSStatus error;
+			NavReplyRecord reply;
+
 			// anything other than Save, we are not interested in
 			NavUserAction userAction = NavDialogGetUserAction(dialog);
 			// XXX return userCanceled error for Cancel?
@@ -1460,8 +1527,7 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 				break;
 
 			// find the parent dir and file name for the requested file to save to
-			NavReplyRecord reply;
-			OSStatus error = NavDialogGetReply(dialog, &reply);
+			error = NavDialogGetReply(dialog, &reply);
 			if (error == noErr)
 			{
 				if (reply.validRecord)
