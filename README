@@ -127,11 +127,27 @@ can be used from the command line to build the plugin, provided that
 the Visual Studio tools are in your path. Some directories have
 Visual Studio project files, but these are no longer supported.
 
-Some plugins have plugin_mac directories with .h "entry" files. You
-can use these to set various #defines in your Codewarrior projects to
-build the plugins in different ways. Maybe some day Marc will read
-this text and replace it with instructions on how to build with
-CodeWarrior -- otherwise, you're on your own!
+Some plugins have plugin_mac directories with .h "prefix" files.  You
+can use these to set various #defines in your CodeWarrior projects to
+build the plugins in different ways.  This is because CW does not 
+allow you to specify preprocessor #defines in the project target 
+settings (this is true as of v8.1, although Metroworks say they will 
+eventually implement this long-missing feature).  In your CW project 
+target settings, you go to the C/C++ Language tab specify the 
+appropriate file in the "prefix file" field.  This means that CW will 
+preprocess this file before everything else and use the preprocessor 
+stuff globally for the whole build process.  Usually you would use 
+vstplugsmac.h (for classic Mac OS builds) or vstplugscarbon.h (for 
+carbon builds) as the prefix file.  Those files come with Steinberg's 
+VST SDK distribution and include a few basic, necessary #defines.  
+Our prefix files #include those files so that you still get those 
+defines.  With our prefix files, those that end in def.h are for 
+classic builds, defcarbon.h are for carbon builds, eatdef.h are 
+for Marc's fancy "food" workaround for some plugs for Logic 4 Mac, 
+and some also have the word "stereo" to mean that they define 
+stereo processing for plugins that have both mono and stereo version 
+builds.
+
 
 Here is a description of each of the remaining directories in the
 source distribution:
