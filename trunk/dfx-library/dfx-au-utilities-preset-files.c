@@ -25,6 +25,8 @@
 #include "dfx-au-utilities.h"
 #include "dfx-au-utilities-private.h"
 
+#include <AudioToolbox/AudioUnitUtilities.h>	// for kAUParameterListener_AnyParameter
+
 
 //--------------------------------------------------------------------------
 // the file name extension that identifies a file as being an AU preset file
@@ -488,6 +490,12 @@ ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, co
 						kAudioUnitScope_Global, (AudioUnitElement)0, &auStatePlist, sizeof(auStatePlist));
 
 	CFRelease(auStatePlist);
+
+	// in case the AU itself or you don't already do this upon restoring settings, 
+	// it is a good idea to send out notifications to any parameter listeners so that 
+	// all parameter controls and whatnot reflect the new state
+	if (componentError == noErr)
+		AUParameterChange_TellListeners(inAUComponentInstance, kAUParameterListener_AnyParameter);
 
 	return componentError;
 }
