@@ -219,8 +219,7 @@ enum DfxParamUnit {
 	kDfxParamUnit_lineargain,
 	kDfxParamUnit_decibles,
 	kDfxParamUnit_drywetmix,	// typically 0-100
-	kDfxParamUnit_audiofreq,
-	kDfxParamUnit_lfofreq,
+	kDfxParamUnit_hz,
 	kDfxParamUnit_seconds,
 	kDfxParamUnit_ms,
 	kDfxParamUnit_samples,
@@ -265,28 +264,28 @@ public:
 	void init(const char *initName, DfxParamValueType initType, 
 					DfxParamValue initValue, DfxParamValue initDefaultValue, 
 					DfxParamValue initMin, DfxParamValue initMax, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined);
+					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve initCurve = kDfxParamCurve_linear);
 	// the rest of these are just convenience wrappers for initializing with a certain variable type
 	void init_f(const char *initName, float initValue, float initDefaultValue, 
 					float initMin, float initMax, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined);
+					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void init_d(const char *initName, double initValue, double initDefaultValue, 
 					double initMin, double initMax, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined);
+					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void init_i(const char *initName, long initValue, long initDefaultValue, 
 					long initMin, long initMax, 
-					DfxParamCurve initCurve = kDfxParamCurve_stepped, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined);
+					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve initCurve = kDfxParamCurve_stepped);
 	void init_ui(const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
 					unsigned long initMin, unsigned long initMax, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined);
+					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void init_b(const char *initName, bool initValue, bool initDefaultValue, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined);
+					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve initCurve = kDfxParamCurve_linear);
 
 	// safety check for an index into the value strings array
 	bool ValueStringIndexIsValid(long index);

@@ -226,8 +226,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		case kDfxParamUnit_drywetmix:
 			outParameterInfo.unit = kAudioUnitParameterUnit_EqualPowerCrossfade;
 			break;
-		case kDfxParamUnit_audiofreq:
-		case kDfxParamUnit_lfofreq:
+		case kDfxParamUnit_hz:
 			outParameterInfo.unit = kAudioUnitParameterUnit_Hertz;
 			break;
 		case kDfxParamUnit_seconds:
@@ -527,10 +526,6 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 // restores all parameter values, state info, etc. from the CFPropertyListRef
 ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 {
-	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
-	if (result != noErr)
-		return result;
-
 /*
 	if (CFGetTypeID(inData) != CFDictionaryGetTypeID())
 		return kAudioUnitErr_InvalidPropertyValue;
@@ -611,13 +606,25 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 	DispatchSetProperty(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, 0, &au_preset, sizeof(AUPreset));
 */
 
+	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
+	if (result != noErr)
+		return result;
+printf("result from AUBase::RestoreState was %ld\n", result);
+
 #if TARGET_PLUGIN_USES_MIDI
 	// look for a data section keyed with our custom data key
 	CFDataRef cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, kDfxDataDictionaryKeyString));
 #if DFX_SUPPORT_OLD_VST_SETTINGS
 	// failing that, try to see if old VST chunk data is being fed to us
 	if (cfdata == NULL)
+{
+printf("destroyfx-data was not there, trying vstdata...\n");
 		CFDataRef cfdata = reinterpret_cast<CFDataRef>(CFDictionaryGetValue((CFDictionaryRef)inData, CFSTR("vstdata")));
+if (cfdata == NULL)
+printf("vstdata was not there\n");
+else
+printf("vstdata was there, loading...\n");
+}
 #endif
 	if (cfdata == NULL)
 		return kAudioUnitErr_InvalidPropertyValue;

@@ -41,9 +41,9 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 // routines, every preset will automatically be set to those initial settings 
 // that way you know that they are all starting off from the default settings
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
-	initparameter_f(kFloatParam, "decimal parameter", 90.0f, 33.3f, 1.0f, 999.0f, kDfxParamCurve_linear, kDfxParamUnit_generic);
+	initparameter_f(kFloatParam, "decimal parameter", 90.0f, 33.3f, 1.0f, 999.0f, kDfxParamUnit_generic, kDfxParamCurve_linear);
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
-	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, kDfxParamCurve_stepped, kDfxParamUnit_index);
+	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, kDfxParamUnit_index, kDfxParamCurve_stepped);
 	// parameter ID, parameter name, init value, default value, number of values
 	initparameter_indexed(kIndexParam, "indexed parameter", kIndexParamState3, kIndexParamState1, kNumIndexParamStates);
 	// parameter ID, parameter name, init value, default value
