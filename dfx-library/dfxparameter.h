@@ -26,7 +26,7 @@ unit types
 multiple variable types:
 
 This parameter system allows a parameter to operate using whichever 
-variable type is most appropriate:  int, float, double, boolean, char, etc.  
+variable type is most appropriate:  integer, float, boolean, etc.  
 The variable type that the parameter uses "natively" is stored in a 
 DfxParamValueType type member called valueType.  
 The actual storage of parameter values is done in a struct (DfxParamValue) 
@@ -59,7 +59,7 @@ There are certain suffixes that are appended to function names to
 indicate how they operate.  You will see multiple variations of the 
 same function with varying suffixes.  Most of the suffixes indicate 
 that the functions are handling a specific variable type.  Those are:  
-_f for float, _d for double, _i for long int, and _b for boolean.  
+_f for 64-bit float, _i for 64-bit signed integer, and _b for boolean.  
 The suffix _gen indicates that the function handles parameter values 
 in the generic 0 to 1 float fashion.
 
@@ -172,24 +172,33 @@ for the value strings.
 
 
 
+#if TARGET_API_MAC_OSX
+typedef SInt64	sint64;
+#else
+typedef signed long long	sint64;
+#endif
+
 // the DfxParamValue struct holds every type of supported value variable type
 // all values (current, min, max, default) are stored in these
-struct DfxParamValue {
-	float f;
-	double d;
-	long i;
-	unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
-	DfxParamValue() {}	// suppress compiler warnings
-};
-typedef struct DfxParamValue DfxParamValue;
+typedef union {
+	double f;
+	sint64 i;
+	sint64 b;	// would be bool, but bool can vary in byte size depending on the compiler
+} DfxParamValue;
+
+// this is a structure for when a DfxParamValue needs to be archived for later use; 
+// it includes a tag specifying the value type that is valid in the DfxParamValue union
+typedef struct {
+	sint64 type;
+	DfxParamValue v;
+} DfxParamValueExt;
 
 
 // these are the different variable types that a parameter can 
 // declare as its "native" type
 typedef enum {
-	kDfxParamValueType_undefined,
+	kDfxParamValueType_undefined = 0,
 	kDfxParamValueType_float,
-	kDfxParamValueType_double,
 	kDfxParamValueType_int,
 	kDfxParamValueType_boolean,
 } DfxParamValueType;
@@ -263,16 +272,12 @@ public:
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_linear);
 	// the rest of these are just convenience wrappers for initializing with a certain variable type
-	void init_f(const char * initName, float initValue, float initDefaultValue, 
-					float initMin, float initMax, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear);
-	void init_d(const char * initName, double initValue, double initDefaultValue, 
+	void init_f(const char * initName, double initValue, double initDefaultValue, 
 					double initMin, double initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_linear);
-	void init_i(const char * initName, long initValue, long initDefaultValue, 
-					long initMin, long initMax, 
+	void init_i(const char * initName, sint64 initValue, sint64 initDefaultValue, 
+					sint64 initMin, sint64 initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_stepped);
 	void init_b(const char * initName, bool initValue, bool initDefaultValue, 
@@ -285,13 +290,13 @@ public:
 	bool getusevaluestrings()
 		{	return useValueStrings;	}
 	// safety check for an index into the value strings array
-	bool ValueStringIndexIsValid(long index);
+	bool ValueStringIndexIsValid(sint64 index);
 	// set a value string's text contents
-	bool setvaluestring(long index, const char * inText);
+	bool setvaluestring(sint64 index, const char * inText);
 	// get a copy of the contents of a specific value string...
-	bool getvaluestring(long index, char * outText);
+	bool getvaluestring(sint64 index, char * outText);
 	// ...or get a copy of the pointer to the value string
-	char * getvaluestring_ptr(long index);
+	char * getvaluestring_ptr(sint64 index);
 #ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the array of CFString value strings
 	CFStringRef * getvaluecfstrings()
@@ -300,35 +305,30 @@ public:
 
 	// set the parameter's current value
 	void set(DfxParamValue newValue);
-	void set_f(float newValue);
-	void set_d(double newValue);
-	void set_i(long newValue);
+	void set_f(double newValue);
+	void set_i(sint64 newValue);
 	void set_b(bool newValue);
 	// set the current value with a generic 0...1 float value
-	void set_gen(float genValue);
+	void set_gen(double genValue);
 
 	// get the parameter's current value
 	DfxParamValue get()
 		{	return value;	}
-	float get_f()
+	double get_f()
 		{	return derive_f(value);	}
-	double get_d()
-		{	return derive_d(value);	}
-	long get_i()
+	sint64 get_i()
 		{	return derive_i(value);	}
 	bool get_b()
 		{	return derive_b(value);	}
 	// get the current value scaled into a generic 0...1 float value
-	float get_gen();
+	double get_gen();
 
 	// get the parameter's minimum value
 	DfxParamValue getmin()
 		{	return min;	}
-	float getmin_f()
+	double getmin_f()
 		{	return derive_f(min);	}
-	double getmin_d()
-		{	return derive_d(min);	}
-	long getmin_i()
+	sint64 getmin_i()
 		{	return derive_i(min);	}
 	bool getmin_b()
 		{	return derive_b(min);	}
@@ -336,11 +336,9 @@ public:
 	// get the parameter's maximum value
 	DfxParamValue getmax()
 		{	return max;	}
-	float getmax_f()
+	double getmax_f()
 		{	return derive_f(max);	}
-	double getmax_d()
-		{	return derive_d(max);	}
-	long getmax_i()
+	sint64 getmax_i()
 		{	return derive_i(max);	}
 	bool getmax_b()
 		{	return derive_b(max);	}
@@ -348,31 +346,29 @@ public:
 	// get the parameter's default value
 	DfxParamValue getdefault()
 		{	return defaultValue;	}
-	float getdefault_f()
+	double getdefault_f()
 		{	return derive_f(defaultValue);	}
-	long getdefault_i()
+	sint64 getdefault_i()
 		{	return derive_i(defaultValue);	}
 	bool getdefault_b()
 		{	return derive_b(defaultValue);	}
 
 	// figure out the value of a DfxParamValue as a certain variable type
 	// perform type conversion if the desired variable type is not "native"
-	float derive_f(DfxParamValue inValue);
-	double derive_d(DfxParamValue inValue);
-	long derive_i(DfxParamValue inValue);
+	double derive_f(DfxParamValue inValue);
+	sint64 derive_i(DfxParamValue inValue);
 	bool derive_b(DfxParamValue inValue);
 
 	// set a DfxParamValue with a value of a specific type
 	// perform type conversion if the incoming variable type is not "native"
-	bool accept_f(float inValue, DfxParamValue & outValue);
-	bool accept_d(double inValue, DfxParamValue & outValue);
-	bool accept_i(long inValue, DfxParamValue & outValue);
+	bool accept_f(double inValue, DfxParamValue & outValue);
+	bool accept_i(sint64 inValue, DfxParamValue & outValue);
 	bool accept_b(bool inValue, DfxParamValue & outValue);
 
 	// expand and contract routines for setting and getting values generically
 	// these take into account the parameter curve
-	double expand(float genValue);
-	float contract(double realValue);
+	double expand(double genValue);
+	double contract(double realValue);
 
 	// clip the current parameter value to the min/max range
 	// returns true if the value was altered, false otherwise
@@ -443,7 +439,7 @@ private:
 	double curvespec;	// special specification, like the exponent in kDfxParamCurve_pow
 	bool useValueStrings;	// whether or not to use an array of custom strings to display the parameter's value
 	char ** valueStrings;	// an array of strings for when useValueStrings is true
-	long numAllocatedValueStrings;	// just to remember how many we allocated
+	sint64 numAllocatedValueStrings;	// just to remember how many we allocated
 	char * customUnitString;	// a text string display for parameters using custom unit types
 	bool changed;	// indicates if the value has changed
 	unsigned long attributes;	// a bit-mask of various parameter attributes
