@@ -122,12 +122,12 @@ void geometerDisplayProc(float value, char * outText, void *) {
 
 //-----------------------------------------------------------------------------
 // parameter listener procedure
-static void baseParamsListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue) {
+static void baseParamsListenerProc(void * inUserData, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue) {
   if ( (inObject == NULL) || (inParameter == NULL) )
     return;
 
   DGControl * control = (DGControl*) inObject;
-  GeometerEditor * geditor = (GeometerEditor*) (control->getDfxGuiEditor());
+  GeometerEditor * geditor = (GeometerEditor*) inUserData;
 
   long newParameterID = geditor->choose_multiparam(inParameter->mParameterID);
   control->setParameterID(newParameterID);
@@ -496,8 +496,6 @@ long GeometerEditor::open() {
 
   pos.set(pos_helpboxX, pos_helpboxY, g_helpbackground->getWidth(), g_helpbackground->getHeight());
   helpbox = new GeometerHelpBox(this, &pos, g_helpbackground);
-
-HMSetTagDelay(9);	// make the help appear quickly <-- XXX this is sort of a hack
 
 
 
