@@ -1,6 +1,6 @@
-#ifndef __dfx_lfo
+/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+
 #include "lfo.h"
-#endif
 
 #include <stdio.h>
 #include <math.h>
@@ -8,9 +8,7 @@
 #include <string.h>
 #include <time.h>
 
-#ifndef __DFXMATH_H
 #include "dfxmath.h"	// for PI
-#endif
 
 
 //------------------------------------------------------------------------

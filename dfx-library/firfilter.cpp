@@ -1,6 +1,6 @@
-#ifndef __dfx_firfilter_h
+/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+
 #include "firfilter.h"
-#endif
 
 #include <math.h>
 
