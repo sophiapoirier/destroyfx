@@ -5,8 +5,8 @@
 
 ---------------------------------------------------------------*/
 
-#ifndef __INTERCOM_H
-#define __INTERCOM_H
+#ifndef __intercom
+#define __intercom
 
 #include "audioeffectx.h"
 
@@ -55,6 +55,7 @@ protected:
   float lastRMS1, lastRMS2, noiseAmp1, noiseAmp2;
 
   float specialk, specialw, specialm;
+  float fUseWrongRMS, fRMSceiling;
 };
 
 #endif
