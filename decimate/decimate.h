@@ -28,6 +28,7 @@ protected:
   float bit1, bit2;
   int samplesleft;
   float samplehold;
+  float bigdivisor;
 };
 
 #endif

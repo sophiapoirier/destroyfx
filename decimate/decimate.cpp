@@ -10,11 +10,12 @@
 
 
 Decimate::Decimate(audioMasterCallback audioMaster)
-  : AudioEffectX(audioMaster, 1, 3) {
+  : AudioEffectX(audioMaster, 1, 4) {
   bitres = 1.;
   samplehold = 1.0;
   samplesleft = 0;
   destruct = 1.0;
+  bigdivisor = 0.5;
   setNumInputs(2);
   setNumOutputs(2);
   setUniqueID('T7dc');
@@ -42,7 +43,10 @@ void Decimate::setParameter(long index, float value) {
   case 1:
     samplehold = value;
     break;
-  case 2: 
+  case 2:
+    bigdivisor = value;
+    break;
+  case 3: 
     destruct = value;
     break;
   }
@@ -53,7 +57,8 @@ float Decimate::getParameter(long index) {
   default:
   case 0: return bitres;
   case 1: return samplehold;
-  case 2: return destruct;
+  case 3: return destruct;
+  case 2: return bigdivisor;
   }
 }
 
@@ -64,9 +69,12 @@ void Decimate::getParameterName(long index, char *label) {
     strcpy(label, "bits");
     break;
   case 1:
-    strcpy(label, "samples");
+    strcpy(label, "samplesfine");
     break;
   case 2:
+    strcpy(label, "samplescoarse");
+    break;
+  case 3:
     strcpy(label, "DESTROY");
   }
 }
@@ -80,6 +88,9 @@ void Decimate::getParameterDisplay(long index, char *text) {
     float2string(samplehold, text);
     break;
   case 2:
+    float2string(bigdivisor, text);
+    break;
+  case 3:
     float2string(destruct, text);
   }
 }
@@ -138,7 +149,7 @@ void Decimate::process(float **inputs, float **outputs, long sampleFrames) {
     } else {
       bit1 = *in1++;
       bit2 = *in2++;
-      samplesleft = (int)(512 * (1.0 - samplehold));
+      samplesleft = (int)((1 + (bigdivisor * 1024.)) * (1.0 - samplehold));
     }
     (*out1++) += destroy(quantize(bit1,bitres), destruct);    // accumulating
     (*out2++) += destroy(quantize(bit2,bitres), destruct);
@@ -161,7 +172,7 @@ void Decimate::processReplacing(float **inputs, float **outputs,
     } else {
       bit1 = *in1++;
       bit2 = *in2++;
-      samplesleft = (int)(256 * (1.0 - samplehold));
+      samplesleft = (int)((1 + (bigdivisor * 1024.)) * (1.0 - samplehold));
     }
     (*out1++) = destroy(quantize(bit1,bitres), destruct);    // overwrite
     (*out2++) = destroy(quantize(bit2,bitres), destruct);
