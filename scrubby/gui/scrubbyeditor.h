@@ -1,5 +1,5 @@
-#ifndef __scrubbyeditor
-#define __scrubbyeditor
+#ifndef __SCRUBBYEDITOR_H
+#define __SCRUBBYEDITOR_H
 
 #include "dfxgui.h"
 #include "dfxguimulticontrols.h"
@@ -7,9 +7,7 @@
 #include "indexbitmap.hpp"
 #include "scrubbykeyboard.hpp"
 
-#ifndef __scrubby
 #include "scrubby.hpp"
-#endif
 
 
 const CColor kBrownTextCColor = {187, 173, 131, 0};
@@ -22,7 +20,7 @@ public:
 	virtual ~ScrubbyEditor();
 
 protected:
-	virtual long getRect(ERect **rect);
+	virtual long getRect(ERect **erect);
 	virtual long open(void *ptr);
 	virtual void close();
 

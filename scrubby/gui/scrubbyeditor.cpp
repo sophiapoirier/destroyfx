@@ -1,9 +1,4 @@
-#ifndef __scrubbyeditor
 #include "scrubbyeditor.hpp"
-#endif
-
-#include <stdio.h>
-#include <math.h>
 
 
 //-----------------------------------------------------------------------------
@@ -422,7 +417,7 @@ long ScrubbyEditor::open(void *ptr)
 	displayOffset (size.left, size.top);
 	octaveMaxFader = new CHorizontalSliderChunky (size, this, kOctaveMax, minPos, maxPos, OCTAVE_MAX+1, gFaderHandleRight, gBackground, displayOffset, kLeft);
 	octaveMaxFader->setValue(effect->getParameter(kOctaveMax));
-	octaveMaxFader->setDefaultValue(0.0f);
+	octaveMaxFader->setDefaultValue(1.0f);
 	frame->addView(octaveMaxFader);
 
 	// seek rate
@@ -1027,10 +1022,10 @@ void ScrubbyEditor::valueChanged(CDrawContext* context, CControl* control)
 			break;
 
 		case kMidiLearnButtonID:
-			chunk->setParameterMidiLearn(control->getValue());
+			chunk->setParameterMidiLearn(control->getValue() > 0.5f);
 			break;
 		case kMidiResetButtonID:
-			chunk->setParameterMidiReset(control->getValue());
+			chunk->setParameterMidiReset(control->getValue() > 0.5f);
 			break;
 
 		case kTransposeDownButtonID:

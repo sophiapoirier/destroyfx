@@ -14,7 +14,7 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData);
 DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 :	AUCarbonViewBase(inInstance)
 {
-	X = Y = 0;
+//	X = Y = 0;
 	Images = NULL;
 	Controls = NULL;
 	itemCount = 0;
@@ -108,8 +108,8 @@ DfxGuiEditor::~DfxGuiEditor()
 //-----------------------------------------------------------------------------
 OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 {
-	X = (UInt32) inXOffset;
-	Y = (UInt32) inYOffset;
+//	X = (UInt32) inXOffset;
+//	Y = (UInt32) inYOffset;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		setmidilearning(false);
@@ -245,7 +245,7 @@ void DfxGuiEditor::addControl(DGControl *inControl)
 			Controls = inControl;
 		else
 			Controls->append(inControl);
-		inControl->setOffset(X, Y);
+		inControl->setOffset((long)GetXOffset(), (long)GetYOffset());
 	}
 
 	if (inControl->providesForeignControls())

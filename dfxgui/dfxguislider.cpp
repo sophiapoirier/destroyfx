@@ -82,8 +82,8 @@ void DGSlider::draw(CGContextRef context, UInt32 portHeight)
 #ifdef SLIDERS_USE_BACKGROUND
 		bounds.size.width = (float) CGImageGetWidth(theBack);
 		bounds.size.height = (float) CGImageGetHeight(theBack);
-		bounds.origin.x -= (float) (where.x - getDfxGuiEditor()->X);
-		bounds.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->Y) - where.h);
+		bounds.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
+		bounds.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
 #endif
 		CGContextDrawImage(context, bounds, theBack);
 	}
