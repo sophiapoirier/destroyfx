@@ -12,13 +12,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 //------------------------------------------------------------------
 // initializations & such
 
 Intercom::Intercom(audioMasterCallback audioMaster)
         : AudioEffectX(audioMaster, 1, 4) {
-  fNoiseGain = 0.5;
+  fNoiseGain = 0.5f;
 
   setNumInputs(2);      // stereo in
   setNumOutputs(2);     // stereo out
@@ -32,9 +33,11 @@ Intercom::Intercom(audioMasterCallback audioMaster)
   rms2 = 0.0;
   rmscount = 0;
 
-  specialk = 0.0;
-  specialw = 0.05;
-  specialm = 1.0;
+  specialk = 0.0f;
+  specialw = 0.05f;
+  specialm = 1.0f;
+
+  srand((unsigned int)time(NULL));	// sets a seed value for rand() from the system clock
 }
 
 
@@ -89,9 +92,12 @@ void Intercom::setParameter(long index, float value) {
   case 1:
     specialk = value;
     break;
-  default:
   case 2:
     specialw = value;
+    break;
+  case 3:
+  default:
+    specialm = value;
     break;
   }
 }
@@ -199,17 +205,27 @@ void Intercom::processX(float **inputs, float **outputs, long samples,
   float noise;
 
   // output a mix of (scaled) noise & the (unscaled) audio input
-  for (sampleCount=0; (sampleCount < samples); sampleCount++) {
+  for (sampleCount=0; sampleCount < samples; sampleCount++) {
       // collect the RMS datas
-      rms1 += sqrt( fabs((double)(*in1)) );
-      rms2 += sqrt( fabs((double)(*in2)) );
+#ifdef USE_BACKWARDS_RMS
+        rms1 += sqrt( fabs((double)(*in1)) );
+        rms2 += sqrt( fabs((double)(*in2)) );
+#else
+        rms1 += (double) ( (*in1) * (*in1) );
+        rms2 += (double) ( (*in2) * (*in2) );
+#endif
       rmscount++;
 
       // load up the latest RMS values if we're ready
       if (rmscount == RMS_WINDOW) {
           // calculate the RMS
-          lastRMS1 = (float) pow( (rms1/(double)RMS_WINDOW), 2.0f);
-          lastRMS2 = (float) pow( (rms2/(double)RMS_WINDOW), 2.0f);
+#ifdef USE_BACKWARDS_RMS
+            lastRMS1 = (float) pow( (rms1/(double)RMS_WINDOW), 2.0 );
+            lastRMS2 = (float) pow( (rms2/(double)RMS_WINDOW), 2.0 );
+#else
+            lastRMS1 = (float) sqrt( rms1 / (double)RMS_WINDOW );
+            lastRMS2 = (float) sqrt( rms2 / (double)RMS_WINDOW );
+#endif
 
           // re-initialize these holders
           rms1 = 0.0;
@@ -219,13 +235,18 @@ void Intercom::processX(float **inputs, float **outputs, long samples,
           // the RMS is subtracted to get the space left over for noise
           //                    noiseAmp1 = noiseGain - lastRMS1;
           //                    noiseAmp2 = noiseGain - lastRMS2;
+#ifdef USE_BACKWARDS_RMS
           noiseAmp1 = (0.288f - lastRMS1) * noiseGain;
           noiseAmp2 = (0.288f - lastRMS2) * noiseGain;
+#else
+          noiseAmp1 = (0.333f - lastRMS1) * noiseGain;
+          noiseAmp2 = (0.333f - lastRMS2) * noiseGain;
+#endif
           // safety to avoid negative amp scalars
           if (noiseAmp1 < 0.0)
-            noiseAmp1 = 0.0;
+            noiseAmp1 = 0.0f;
           if (noiseAmp2 < 0.0)
-            noiseAmp2 = 0.0;
+            noiseAmp2 = 0.0f;
         }
 
       noise = (float)rand() / (float)RAND_MAX;
@@ -270,52 +291,34 @@ void Intercom::processReplacing(float **inputs,
 }
 
 
+
 /* ------------------------------ boring -------------------- */
-
-#include "intercom.hpp"
-
-// static AudioEffect *effect = 0;
-bool oome = false;
-
-#if MAC
-#pragma export on
-#endif
 
 // prototype of the export function main
 #if BEOS
 #define main main_plugin
-extern "C" __declspec(dllexport) AEffect *main_plugin (audioMasterCallback audioMaster);
+extern "C" __declspec(dllexport) AEffect *main_plugin(audioMasterCallback audioMaster);
 
 #else
-AEffect *main (audioMasterCallback audioMaster);
+AEffect *main(audioMasterCallback audioMaster);
 #endif
 
-AEffect *main (audioMasterCallback audioMaster) {
-        // get vst version
-        if (!audioMaster (0, audioMasterVersion, 0, 0, 0, 0))
-                return 0;  // old version
+AEffect *main(audioMasterCallback audioMaster) {
+  // get vst version
+  if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
+    return 0;  // old version
 
-//      effect = new Intercom (audioMaster);
-        AudioEffect* effect = new Intercom (audioMaster);
-        if (!effect)
-                return 0;
-        if (oome) {
-                delete effect;
-                return 0;
-        }
-        return effect->getAeffect ();
+  AudioEffect* effect = new Intercom(audioMaster);
+  if (!effect)
+    return 0;
+  return effect->getAeffect();
 }
-
-#if MAC
-#pragma export off
-#endif
-
 
 #if WIN32
 #include <windows.h>
 void* hInstance;
 BOOL WINAPI DllMain (HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
-        hInstance = hInst;
-        return 1;
+  hInstance = hInst;
+  return 1;
 }
 #endif

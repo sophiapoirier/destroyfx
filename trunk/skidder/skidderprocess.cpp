@@ -44,11 +44,16 @@ void Skidder::processPlateau()
 
 	if (plateauSamples <= 0)
 	{
-		// average & then sqare the sample squareroots for the RMS value
+#ifdef USE_BACKWARDS_RMS
+		// average and then sqare the sample squareroots for the RMS value
 		rms = powf((rms/(float)rmscount), 2.0f);
+#else
+		// average and then get the sqare root of the squared samples for the RMS value
+		rms = sqrtf( rms / (float)(rmscount*2) );
+#endif
 		// because RMS tends to be < 0.5, thus unfairly limiting rupture's range
 		rms *= 2.0f;
-		// avoids clipping or unexpected values (like wraparound)
+		// avoids clipping or illegit values (like from wraparound)
 		if ( (rms > 1.0f) || (rms < 0.0f) )
 			rms = 1.0f;
 		rmscount = 0;	// reset the RMS counter
@@ -435,12 +440,20 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 			{
 				case slopeIn:
 					// get the average sqareroot of the current input samples
+#ifdef USE_BACKWARDS_RMS
 					rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
+#else
+					rms += ((*in1)*(*in1)) + ((*in2)*(*in2));
+#endif
 					rmscount++;	// this counter is later used for getting the mean
 					processSlopeIn();
 					break;
 				case plateau:
+#ifdef USE_BACKWARDS_RMS
 					rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
+#else
+					rms += ((*in1)*(*in1)) + ((*in2)*(*in2));
+#endif
 					rmscount++;
 					processPlateau();
 					break;
@@ -484,12 +497,20 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 			{
 				case slopeIn:
 					// get the average sqareroot of the current input samples
+#ifdef USE_BACKWARDS_RMS
 					rms += sqrtf( fabsf(*in1) );
+#else
+					rms += (*in1) * (*in1);
+#endif
 					rmscount++;	// this counter is later used for getting the mean
 					processSlopeIn();
 					break;
 				case plateau:
+#ifdef USE_BACKWARDS_RMS
 					rms += sqrtf( fabsf(*in1) );
+#else
+					rms += (*in1) * (*in1);
+#endif
 					rmscount++;
 					processPlateau();
 					break;
