@@ -750,6 +750,7 @@ void DfxPlugin::processtimeinfo()
 		Float64 tempo, beat;
 		if ( mHostCallbackInfo.beatAndTempoProc(mHostCallbackInfo.hostUserData, &beat, &tempo) == noErr )
 		{
+beat /= 192.0;	// XXX Logic workaround
 			timeinfo.tempoIsValid = true;
 			timeinfo.tempo = tempo;
 			timeinfo.beatPosIsValid = true;
@@ -772,6 +773,7 @@ void DfxPlugin::processtimeinfo()
 		if ( mHostCallbackInfo.musicalTimeLocationProc(mHostCallbackInfo.hostUserData, 
 				&sampleOffsetToNextBeat, &timeSigNumerator, &timeSigDenominator, &currentMeasureDownBeat) == noErr )
 		{
+currentMeasureDownBeat /= 192.0;	// XXX Logic workaround
 			// get the song beat position of the beginning of the previous measure
 			timeinfo.barPosIsValid = true;
 			timeinfo.barPos = currentMeasureDownBeat;
@@ -846,25 +848,29 @@ void DfxPlugin::processtimeinfo()
 	if (timeinfo.denominator <= 0.0)
 		timeinfo.denominator = 4.0;
 
-	double numBeatsToBar;
-	// calculate the distance in beats to the upcoming measure beginning point
-	if (timeinfo.barPos == timeinfo.beatPos)
-		numBeatsToBar = 0.0;
-	else
+	// calculate the number of samples frames from now until the next measure begins
+	if (timeinfo.samplesToNextBarIsValid)
 	{
-		numBeatsToBar = timeinfo.barPos + timeinfo.numerator - timeinfo.beatPos;
-		// do this stuff because some hosts (Cubase) give kind of wacky barStartPos sometimes
-		while (numBeatsToBar < 0.0)
-			numBeatsToBar += timeinfo.numerator;
-		while (numBeatsToBar > timeinfo.numerator)
-			numBeatsToBar -= timeinfo.numerator;
+		double numBeatsToBar;
+		// calculate the distance in beats to the upcoming measure beginning point
+		if (timeinfo.barPos == timeinfo.beatPos)
+			numBeatsToBar = 0.0;
+		else
+		{
+			numBeatsToBar = timeinfo.barPos + timeinfo.numerator - timeinfo.beatPos;
+			// do this stuff because some hosts (Cubase) give kind of wacky barStartPos sometimes
+			while (numBeatsToBar < 0.0)
+				numBeatsToBar += timeinfo.numerator;
+			while (numBeatsToBar > timeinfo.numerator)
+				numBeatsToBar -= timeinfo.numerator;
+		}
+	
+		// convert the value for the distance to the next measure from beats to samples
+		timeinfo.samplesToNextBar = (long) (numBeatsToBar * getsamplerate() / timeinfo.tempo_bps);
+		// protect against wacky values
+		if (timeinfo.samplesToNextBar < 0)
+			timeinfo.samplesToNextBar = 0;
 	}
-
-	// convert the value for the distance to the next measure from beats to samples
-	timeinfo.samplesToNextBar = (long) (numBeatsToBar * getsamplerate() / timeinfo.tempo_bps);
-	// protect against wacky values
-	if (timeinfo.samplesToNextBar < 0)
-		timeinfo.samplesToNextBar = 0;
 }
 
 

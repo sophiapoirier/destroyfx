@@ -1,13 +1,13 @@
 /*------------------- by Marc Poirier  ][  March 2001 -------------------*/
 
-#ifndef __bufferOverride
-#include "bufferOverride.hpp"
+#ifndef __BUFFEROVERRIDE_H
+#include "bufferoverride.hpp"
 #endif
 
 
 
 //-----------------------------------------------------------------------------
-void BufferOverride::updateBuffer(long samplePos)
+void BufferOverride::updateBuffer(unsigned long samplePos)
 {
   bool doSmoothing = true;	// but in some situations, we shouldn't
   bool barSync = false;	// true if we need to sync up with the next bar start
@@ -31,14 +31,14 @@ void BufferOverride::updateBuffer(long samplePos)
 	divisorLFOvalue = processLFOzero2two(divisorLFO);
 	bufferLFOvalue = 2.0f - processLFOzero2two(bufferLFO);	// inverting it makes more pitch sense
 	// & then update the stepSize for each LFO, in case the LFO parameters have changed
-	if (onOffTest(divisorLFO->fTempoSync))
-		divisorLFO->stepSize = currentTempoBPS * (tempoRateTable->getScalar(divisorLFO->fRate)) * numLFOpointsDivSR;
+	if (divisorLFO->bTempoSync)
+		divisorLFO->stepSize = currentTempoBPS * divisorLFO->fTempoRate * numLFOpointsDivSR;
 	else
-		divisorLFO->stepSize = LFOrateScaled(divisorLFO->fRate) * numLFOpointsDivSR;
-	if (onOffTest(bufferLFO->fTempoSync))
-		bufferLFO->stepSize = currentTempoBPS * (tempoRateTable->getScalar(bufferLFO->fRate)) * numLFOpointsDivSR;
+		divisorLFO->stepSize = divisorLFO->fRate * numLFOpointsDivSR;
+	if (bufferLFO->bTempoSync)
+		bufferLFO->stepSize = currentTempoBPS * bufferLFO->fTempoRate * numLFOpointsDivSR;
 	else
-		bufferLFO->stepSize = LFOrateScaled(bufferLFO->fRate) * numLFOpointsDivSR;
+		bufferLFO->stepSize = bufferLFO->fRate * numLFOpointsDivSR;
 
 	//---------------------------CALCULATE FORCED BUFFER SIZE----------------------------
 	// check if it's the end of this forced buffer
@@ -53,16 +53,16 @@ void BufferOverride::updateBuffer(long samplePos)
 			doSmoothing = true;
 
 		// now update the the size of the current force buffer
-		if ( onOffTest(fBufferTempoSync) &&	// the user wants to do tempo sync / beat division rate
+		if ( bufferTempoSync &&	// the user wants to do tempo sync / beat division rate
 			 (currentTempoBPS > 0.0f) ) // avoid division by zero
 		{
-			currentForcedBufferSize = (long) ( SAMPLERATE / (currentTempoBPS * tempoRateTable->getScalar(fBuffer)) );
+			currentForcedBufferSize = (long) ( getsamplerate_f() / (currentTempoBPS * bufferSizeSync) );
 			// set this true so that we make sure to do the measure syncronisation later on
 			if (needResync)
 				barSync = true;
 		}
 		else
-			currentForcedBufferSize = forcedBufferSizeSamples(fBuffer);
+			currentForcedBufferSize = (long) bufferSize_ms2samples(bufferSizeMs);
 		// apply the buffer LFO to the forced buffer size
 		currentForcedBufferSize = (long) ((float)currentForcedBufferSize * bufferLFOvalue);
 		// really low tempos & tempo rate values can cause huge forced buffer sizes,
@@ -77,7 +77,7 @@ void BufferOverride::updateBuffer(long samplePos)
 	}
 
 	//-----------------------CALCULATE THE DIVISOR-------------------------
-	currentBufferDivisor = bufferDivisorScaled(fDivisor);
+	currentBufferDivisor = divisor;
 	// apply the divisor LFO to the divisor value if there's an "active" divisor (i.e. 2 or greater)
 	if (currentBufferDivisor >= 2.0f)
 	{
@@ -93,7 +93,7 @@ void BufferOverride::updateBuffer(long samplePos)
 	if (writePos > 0)
 	{
 		// if it's allowed, update the minibuffer size midway through this forced buffer
-		if (onOffTest(fBufferInterrupt))
+		if (bufferInterrupt)
 			minibufferSize = (long) ( (float)currentForcedBufferSize / currentBufferDivisor );
 		// if it's the last minibuffer, then fill up the forced buffer to the end 
 		// by extending this last minibuffer to fill up the end of the forced buffer
@@ -104,14 +104,13 @@ void BufferOverride::updateBuffer(long samplePos)
 	// this is a new forced buffer just beginning, act accordingly, do bar sync if necessary
 	else
 	{
-		long samplesToBar;
+		long samplesToBar = timeinfo.samplesToNextBar;
 		if (barSync)
 		{
-			samplesToBar = samplesToNextBar(timeInfo);
 			// do beat sync for each LFO if it ought to be done
-			if (onOffTest(divisorLFO->fTempoSync))
+			if (divisorLFO->bTempoSync)
 				divisorLFO->syncToTheBeat(samplesToBar);
-			if (onOffTest(bufferLFO->fTempoSync))
+			if (bufferLFO->bTempoSync)
 				bufferLFO->syncToTheBeat(samplesToBar);
 		}
 		// because there isn't really any division (given my implementation) when the divisor is < 2
@@ -145,7 +144,7 @@ void BufferOverride::updateBuffer(long samplePos)
 		smoothcount = smoothDur = 0;
 	else
 	{
-		smoothDur = (long) (fSmooth * (float)minibufferSize);
+		smoothDur = (long) (smooth * (float)minibufferSize);
 		long maxSmoothDur;
 		// if we're just starting a new forced buffer, 
 		// then the samples beyond the end of the previous one are not valid
@@ -174,78 +173,61 @@ void BufferOverride::updateBuffer(long samplePos)
 
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
-void BufferOverride::doTheProcess(float **inputs, float **outputs, long sampleFrames, bool replacing)
+void BufferOverride::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
 {
-/* begin inter-plugin audio sharing stuff */
-#ifdef HUNGRY
-	if ( ! (foodEater->setupProcess(inputs, sampleFrames)) )
-		return;
-#endif
-/* end inter-plugin audio sharing stuff */
-
+	long numChannels = getnumoutputs();
+	long ch;
+	float oldDivisor = divisor;
 
 //-------------------------SAFETY CHECK----------------------
-#if MAC
-	// no memory allocations during interrupt
-#else
 	// there must have not been available memory or something (like WaveLab goofing up), 
 	// so try to allocate buffers now
-	if ( (buffer1 == NULL) 
-	#ifdef BUFFEROVERRIDE_STEREO
-		|| (buffer2 == NULL) 
-	#endif
-		)
-		createAudioBuffers();
-#endif
-	// if the creation failed, then abort audio processing
-	if (buffer1 == NULL)
-		return;
-#ifdef BUFFEROVERRIDE_STEREO
-	if (buffer2 == NULL)
-		return;
-#endif
+	if (numBuffers < numChannels)
+		createbuffers();
+	for (ch=0; ch < numChannels; ch++)
+	{
+		if (buffers[ch] == NULL)
+		{
+			// exit the loop if creation succeeded
+			if ( createbuffers() )
+				break;
+			// or abort audio processing if the creation failed
+			else return;
+		}
+	}
 
 
 //-------------------------INITIALIZATIONS----------------------
 	// this is a handy value to have during LFO calculations & wasteful to recalculate at every sample
-	numLFOpointsDivSR = NUM_LFO_POINTS_FLOAT / SAMPLERATE;
+	numLFOpointsDivSR = NUM_LFO_POINTS_FLOAT / getsamplerate_f();
 	divisorLFO->pickTheLFOwaveform();
 	bufferLFO->pickTheLFOwaveform();
 
 	// calculate this scaler value to minimize calculations later during processOutput()
-//	float inputGain = 1.0f - fDryWetMix;
-//	float outputGain = fDryWetMix;
-	float inputGain = sqrtf(1.0f - fDryWetMix);
-	float outputGain = sqrtf(fDryWetMix);
+	// (square root for equal power mix)
+	float inputGain = sqrtf(1.0f - dryWetMix);
+	float outputGain = sqrtf(dryWetMix);
 
 
 //-----------------------TEMPO STUFF---------------------------
 	// figure out the current tempo if we're doing tempo sync
-	if ( onOffTest(fBufferTempoSync) || 
-			(onOffTest(divisorLFO->fTempoSync) || onOffTest(bufferLFO->fTempoSync)) )
+	if ( bufferTempoSync || 
+			(divisorLFO->bTempoSync || bufferLFO->bTempoSync) )
 	{
 		// calculate the tempo at the current processing buffer
-		if ( (fTempo > 0.0f) || (hostCanDoTempo != 1) )	// get the tempo from the user parameter
+		if ( (userTempo > getparametermin_f(kTempo)) || !hostCanDoTempo )	// get the tempo from the user parameter
 		{
-			currentTempoBPS = tempoScaled(fTempo) / 60.0f;
+			currentTempoBPS = userTempo / 60.0f;
 			needResync = false;	// we don't want it true if we're not syncing to host tempo
 		}
 		else	// get the tempo from the host
 		{
-			timeInfo = getTimeInfo(kBeatSyncTimeInfoFlags);
-			if (timeInfo)
+			if (timeinfo.tempoIsValid)
 			{
-				if (kVstTempoValid & timeInfo->flags)
-					currentTempoBPS = (float)timeInfo->tempo / 60.0f;
-				else
-					currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-//				currentTempoBPS = ((float)tempoAt(reportCurrentPosition())) / 600000.0f;
-				// but zero & negative tempos are bad, so get the user tempo value instead if that happens
-				if (currentTempoBPS <= 0.0f)
-					currentTempoBPS = tempoScaled(fTempo) / 60.0f;
+				currentTempoBPS = timeinfo.tempo_bps;
 				//
 				// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
-				if (timeInfo->flags & kVstTransportChanged)
+				if (timeinfo.playbackChanged)
 				{
 					needResync = true;
 					currentForcedBufferSize = 1;
@@ -255,9 +237,9 @@ void BufferOverride::doTheProcess(float **inputs, float **outputs, long sampleFr
 					smoothcount = smoothDur = 0;
 				}
 			}
-			else	// do the same stuff as above if the timeInfo gets a null pointer
+			else	// do the same stuff as above if the host tempo is not valid
 			{
-				currentTempoBPS = tempoScaled(fTempo) / 60.0f;
+				currentTempoBPS = userTempo / 60.0f;
 				needResync = false;	// we don't want it true if we're not syncing to host tempo
 			}
 		}
@@ -266,43 +248,35 @@ void BufferOverride::doTheProcess(float **inputs, float **outputs, long sampleFr
 
 //-----------------------AUDIO STUFF---------------------------
 	// here we begin the audio output loop, which has two checkpoints at the beginning
-	for (long samplecount = 0; (samplecount < sampleFrames); samplecount++)
+	for (unsigned long samplecount=0; samplecount < inNumFrames; samplecount++)
 	{
 		// check if it's the end of this minibuffer
 		if (readPos >= minibufferSize)
 			updateBuffer(samplecount);
 
 		// store the latest input samples into the buffers
-		buffer1[writePos] = inputs[0][samplecount];
-	#ifdef BUFFEROVERRIDE_STEREO
-		buffer2[writePos] = inputs[1][samplecount];
-	#endif
+		for (ch=0; ch < numChannels; ch++)
+			buffers[ch][writePos] = in[ch][samplecount];
 
 		// get the current output without any smoothing
-		float out1 = buffer1[readPos];
-	#ifdef BUFFEROVERRIDE_STEREO
-		float out2 = buffer2[readPos];
-	#endif
+		for (ch=0; ch < numChannels; ch++)
+			outval[ch] = buffers[ch][readPos];
 
 		// and if smoothing is taking place, get the smoothed audio output
 		if (smoothcount > 0)
 		{
+			for (ch=0; ch < numChannels; ch++)
+			{
 			// crossfade between the current input & its corresponding overlap sample
-//			out1 *= 1.0f - (smoothStep * (float)smoothcount);	// current
-//			out1 += buffer1[readPos+prevMinibufferSize] * smoothStep*(float)smoothcount;	// + previous
-//			float smoothfract = smoothStep * (float)smoothcount;
-//			float newgain = sqrt(1.0f - smoothfract);
-//			float oldgain = sqrt(smoothfract);
-//			out1 = (out1 * newgain) + (buffer1[readPos+prevMinibufferSize] * oldgain);
-//			out1 = (out1 * sqrtFadeIn) + (buffer1[readPos+prevMinibufferSize] * sqrtFadeOut);
-			out1 = (out1 * fadeInGain) + (buffer1[readPos+prevMinibufferSize] * fadeOutGain);
-		#ifdef BUFFEROVERRIDE_STEREO
-//			out2 *= 1.0f - (smoothStep * (float)smoothcount);	// current
-//			out2 += buffer2[readPos+prevMinibufferSize] * smoothStep*(float)smoothcount;	// + previous
-//			out2 = (out2 * newgain) + (buffer2[readPos+prevMinibufferSize] * oldgain);
-//			out2 = (out2 * sqrtFadeIn) + (buffer2[readPos+prevMinibufferSize] * sqrtFadeOut);
-			out2 = (out2 * fadeInGain) + (buffer2[readPos+prevMinibufferSize] * fadeOutGain);
-		#endif
+//				outval[ch] *= 1.0f - (smoothStep * (float)smoothcount);	// current
+//				outval[ch] += buffers[ch][readPos+prevMinibufferSize] * smoothStep*(float)smoothcount;	// + previous
+//				float smoothfract = smoothStep * (float)smoothcount;
+//				float newgain = sqrt(1.0f - smoothfract);
+//				float oldgain = sqrt(smoothfract);
+//				outval[ch] = (outval[ch] * newgain) + (buffers[ch][readPos+prevMinibufferSize] * oldgain);
+//				outval[ch] = (outval[ch] * sqrtFadeIn) + (buffers[ch][readPos+prevMinibufferSize] * sqrtFadeOut);
+				outval[ch] = (outval[ch] * fadeInGain) + (buffers[ch][readPos+prevMinibufferSize] * fadeOutGain);
+			}
 			smoothcount--;
 //			smoothFract += smoothStep;
 //			sqrtFadeIn = 0.5f * (sqrtFadeIn + (smoothFract / sqrtFadeIn));
@@ -312,20 +286,20 @@ void BufferOverride::doTheProcess(float **inputs, float **outputs, long sampleFr
 		}
 
 		// write the output samples into the output stream
+	#if TARGET_API_VST
 		if (replacing)
 		{
-			outputs[0][samplecount] = (out1 * outputGain) + (inputs[0][samplecount] * inputGain);
-			#ifdef BUFFEROVERRIDE_STEREO
-			outputs[1][samplecount] = (out2 * outputGain) + (inputs[1][samplecount] * inputGain);
-			#endif
+	#endif
+			for (ch=0; ch < numChannels; ch++)
+				out[ch][samplecount] = (outval[ch] * outputGain) + (in[ch][samplecount] * inputGain);
+	#if TARGET_API_VST
 		}
 		else
 		{
-			outputs[0][samplecount] += (out1 * outputGain) + (inputs[0][samplecount] * inputGain);
-			#ifdef BUFFEROVERRIDE_STEREO
-			outputs[1][samplecount] += (out2 * outputGain) + (inputs[1][samplecount] * inputGain);
-			#endif
+			for (ch=0; ch < numChannels; ch++)
+				out[ch][samplecount] += (outval[ch] * outputGain) + (in[ch][samplecount] * inputGain);
 		}
+	#endif
 
 		// increment the position trackers
 		readPos++;
@@ -356,7 +330,7 @@ void BufferOverride::doTheProcess(float **inputs, float **outputs, long sampleFr
 				else
 					midistuff->removeNote(midistuff->blockEvents[eventcount].byte1);
 			}
-			else if (midistuff->blockEvents[eventcount].status == ccAllNotesOff)
+			else if (midistuff->blockEvents[eventcount].status == kMidiCC_AllNotesOff)
 			{
 				oldNote = true;
 				midistuff->removeAllNotes();
@@ -373,19 +347,7 @@ void BufferOverride::doTheProcess(float **inputs, float **outputs, long sampleFr
 		}
 	}
 
-	// always reset numBlockEvents because processEvents() may not get called before the next process()
-	midistuff->numBlockEvents = 0;
-}
-
-
-//-----------------------------------------------------------------------------------------
-void BufferOverride::process(float **inputs, float **outputs, long sampleFrames)
-{
-	doTheProcess(inputs, outputs, sampleFrames, false);
-}
-
-//-----------------------------------------------------------------------------------------
-void BufferOverride::processReplacing(float **inputs, float **outputs, long sampleFrames)
-{
-	doTheProcess(inputs, outputs, sampleFrames, true);
+	// make the our parameters storers and the host aware that divisor changed because of MIDI
+	if (divisor != oldDivisor)
+		setparameter_f(kDivisor, divisor);	// XXX eh?
 }
