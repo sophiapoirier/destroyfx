@@ -54,7 +54,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	}
 
 	fontSize = 14.0f;
-	fontColor.r = 103; fontColor.g = 161; fontColor.b = 215;
+	fontColor(103, 161, 215);
 
 	setType(kDfxGuiType_display);
 	setContinuousControl(true);

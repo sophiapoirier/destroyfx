@@ -8,14 +8,37 @@
 
 
 
-typedef struct {
+struct DGColor {
+	DGColor()
+	:	r(0), g(0), b(0) {}
+	DGColor(int inRed, int inGreen, int inBlue)
+	:	r(inRed), g(inGreen), b(inBlue) {}
+	DGColor(const DGColor& inColor)
+	:	r(inColor.r), g(inColor.g), b(inColor.b) {}
+	DGColor& operator () (int inRed, int inGreen, int inBlue)
+	{
+		r = inRed;
+		g = inGreen;
+		b = inBlue;
+		return *this;
+	}
+
+	DGColor& operator = (DGColor newColor)
+	{
+		r = newColor.r;
+		g = newColor.g;
+		b = newColor.b;
+		return *this;
+	}
+
 	int r;
 	int g;
 	int b;
-} DGColor;
+};
+typedef struct DGColor DGColor;
 
-const DGColor kBlackDGColor = { 0, 0, 0 };
-const DGColor kWhiteDGColor = { 255, 255, 255 };
+const DGColor kBlackDGColor(0, 0, 0);
+const DGColor kWhiteDGColor(255, 255, 255);
 
 
 class DGControl;
@@ -65,6 +88,12 @@ public:
 	virtual void mouseovercontrolchanged()
 		{ }
 
+	void SetBackgroundImage(DGGraphic *inBackgroundImage)
+		{	backgroundImage = inBackgroundImage;	}
+	void SetBackgroundColor(DGColor inBackgroundColor)
+		{	backgroundColor = inBackgroundColor;	}
+	virtual void DrawBackground(CGContextRef inContext, UInt32 inPortHeight);
+
 	DfxPlugin * getdfxplugin()
 		{	return dfxplugin;	}
 	float getparameter_f(long parameterID);
@@ -97,6 +126,9 @@ private:
 	bool				relaxed;
 	EventLoopTimerUPP	idleTimerUPP;
 	EventLoopTimerRef	idleTimer;
+
+	DGGraphic *			backgroundImage;
+	DGColor				backgroundColor;
 
 	EventHandlerUPP		controlHandlerUPP;
 	ControlDefSpec 		dgControlSpec;
@@ -163,10 +195,6 @@ public:
 	virtual bool isControlRef(ControlRef inControl);
 
 	// if you do not want parameter attached controls
-	virtual bool providesForeignControls()
-		{	return false;	}
-	virtual void initForeignControls(ControlDefSpec *inControlSpec)
-		{ }
 	bool isAUVPattached()
 		{	return AUVPattached;	}
 
