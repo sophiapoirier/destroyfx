@@ -392,6 +392,25 @@ long launch_documentation()
 
 }
 
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::automationgesture_begin(long inParameterID)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	AUVParameter auvp(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
+	TellListener(auvp, kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::automationgesture_end(long inParameterID)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	AUVParameter auvp(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
+	TellListener(auvp, kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+#endif
+}
+
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool writeAutomation)
 {
@@ -475,6 +494,8 @@ bool DfxGuiEditor::getparameter_b(long inParameterID)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparameter_f(long inParameterID, float inValue)
 {
+	automationgesture_begin(inParameterID);
+
 	DfxParameterValueRequest request;
 	request.parameterID = inParameterID;
 	request.valueItem = kDfxParameterValueItem_current;
@@ -483,11 +504,15 @@ void DfxGuiEditor::setparameter_f(long inParameterID, float inValue)
 
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+
+	automationgesture_end(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparameter_d(long inParameterID, double inValue)
 {
+	automationgesture_begin(inParameterID);
+
 	DfxParameterValueRequest request;
 	request.parameterID = inParameterID;
 	request.valueItem = kDfxParameterValueItem_current;
@@ -496,11 +521,15 @@ void DfxGuiEditor::setparameter_d(long inParameterID, double inValue)
 
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+
+	automationgesture_end(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparameter_i(long inParameterID, long inValue)
 {
+	automationgesture_begin(inParameterID);
+
 	DfxParameterValueRequest request;
 	request.parameterID = inParameterID;
 	request.valueItem = kDfxParameterValueItem_current;
@@ -509,11 +538,15 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue)
 
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+
+	automationgesture_end(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue)
 {
+	automationgesture_begin(inParameterID);
+
 	DfxParameterValueRequest request;
 	request.parameterID = inParameterID;
 	request.valueItem = kDfxParameterValueItem_current;
@@ -522,6 +555,8 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue)
 
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+
+	automationgesture_end(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
