@@ -324,7 +324,7 @@ bool DfxParam::setvaluestring(long index, const char *inText)
 		if (valueCFStrings[arrayIndex] != NULL)
 			CFRelease(valueCFStrings[arrayIndex]);	// XXX do this?
 		// convert the incoming text to a CFString
-		valueCFStrings[arrayIndex] = CFStringCreateWithCString(NULL, inText, kCFStringEncodingMacRoman);//kCFStringEncodingASCII
+		valueCFStrings[arrayIndex] = CFStringCreateWithCString(NULL, inText, kCFStringEncodingASCII);//kCFStringEncodingMacRoman
 	#endif
 
 	return true;
@@ -1246,7 +1246,7 @@ void DfxPreset::setname(const char *inText)
 		{
 			if (cfname != NULL)
 				CFRelease(cfname);	// XXX do this?
-			cfname = CFStringCreateWithCString(NULL, inText, kCFStringEncodingMacRoman);//kCFStringEncodingASCII
+			cfname = CFStringCreateWithCString(NULL, inText, kCFStringEncodingASCII);//kCFStringEncodingMacRoman
 		}
 	#endif
 }
