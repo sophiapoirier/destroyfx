@@ -1,5 +1,5 @@
-#ifndef __IIRfilter
-#include "IIRfilter.h"
+#ifndef __dfx_iirfilter
+#include "iirfilter.h"
 #endif
 
 #include <math.h>

@@ -1,5 +1,5 @@
-#ifndef __TempoRateTable
-#define __TempoRateTable
+#ifndef __dfx_temporatetable
+#define __dfx_temporatetable
 
 
 //--------------------------------------------------------------------------

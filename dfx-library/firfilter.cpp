@@ -1,5 +1,5 @@
-#ifndef __FIRfilter
-#include "FIRfilter.h"
+#ifndef __dfx_firfilter
+#include "firfilter.h"
 #endif
 
 //----------------------------------------------------------------------------- 
