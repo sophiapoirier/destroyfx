@@ -13,6 +13,11 @@ written by Marc Poirier, October 2002
 #include <string.h>	// for strcpy
 #include <math.h>
 
+#if WIN32
+/* turn off warnings about default but no cases in switch, unknown pragma, etc. */
+   #pragma warning( disable : 4065 57 4200 4244 4068 )
+#endif
+
 
 // these are twiddly values for when casting with decimal types
 const float twiddle_f = 0.001f;
