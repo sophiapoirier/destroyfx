@@ -18,7 +18,7 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
-:	AUCarbonViewBase(inInstance, 0.015f)	// 15 ms parameter notification update interval
+:	AUCarbonViewBase(inInstance, 0.030f)	// 30 ms parameter notification update interval
 {
 /*
 CFStringRef text = CFSTR("yo dude let's go");
@@ -146,7 +146,9 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 //		{ kEventClassControl, kEventControlHit }, 
 //		{ kEventClassControl, kEventControlClick }, 
 		{ kEventClassControl, kEventControlContextualMenuClick }, 
-		{ kEventClassControl, kEventControlValueFieldChanged }
+		{ kEventClassControl, kEventControlValueFieldChanged }, 
+		{ kEventClassMouse, kEventMouseEntered }, 
+		{ kEventClassMouse, kEventMouseExited }, 
 	};
 	ToolboxObjectClassRef newControlClass = NULL;
 	controlHandlerUPP = NewEventHandlerUPP(DGControlEventHandler);
@@ -175,6 +177,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 									{ kEventClassMouse, kEventMouseDragged }, 
 									{ kEventClassMouse, kEventMouseUp }, 
 //									{ kEventClassMouse, kEventMouseMoved }, 
+									{ kEventClassMouse, kEventMouseWheelMoved }, 
 									{ kEventClassKeyboard, kEventRawKeyDown }, 
 									{ kEventClassKeyboard, kEventRawKeyRepeat }, 
 									{ kEventClassCommand, kEventCommandProcess }, 
@@ -188,7 +191,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	EventTypeSpec paneEvents[] = {
 								{ kEventClassControl, kEventControlDraw }, 
 								{ kEventClassControl, kEventControlApplyBackground },
-								{ kEventClassControl, kEventControlHitTest }
+//								{ kEventClassControl, kEventControlHitTest }, 
 								};
 	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
 
@@ -273,12 +276,12 @@ bool InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGra
 		return false;
 
 	bool gotAutoContext = false;
-	OSStatus error;
+	OSStatus status;
 
 	// if we received a graphics port parameter, use that...
-	error = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &outPort);
+	status = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &outPort);
 	// ... otherwise use the current graphics port
-	if ( (error != noErr) || (outPort == NULL) )
+	if ( (status != noErr) || (outPort == NULL) )
 		GetPort(&outPort);
 	if (outPort == NULL)
 		return false;
@@ -288,13 +291,13 @@ bool InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGra
 
 	// set up the CG context
 	// if we are in compositing mode, then we can get a CG context already set up and clipped and whatnot
-	error = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &outContext);
-	if ( (error == noErr) && (outContext != NULL) )
+	status = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &outContext);
+	if ( (status == noErr) && (outContext != NULL) )
 		gotAutoContext = true;
 	else
 	{
-		error = QDBeginCGContext(outPort, &outContext);
-		if ( (error != noErr) || (outContext == NULL) )
+		status = QDBeginCGContext(outPort, &outContext);
+		if ( (status != noErr) || (outContext == NULL) )
 		{
 			outContext = NULL;	// probably crazy, but in case there's an error, and yet a non-null result for the context
 			return false;
@@ -313,12 +316,12 @@ bool InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGra
 	if (!gotAutoContext)
 	{
 		ControlRef carbonControl = NULL;
-		error = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
-		if ( (error == noErr) && (carbonControl != NULL) )
+		status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
+		if ( (status == noErr) && (carbonControl != NULL) )
 		{
 			CGRect clipRect;
-			error = HIViewGetBounds(carbonControl, &clipRect);
-			if (error == noErr)
+			status = HIViewGetBounds(carbonControl, &clipRect);
+			if (status == noErr)
 			{
 #ifndef FLIP_CG_COORDINATES
 				clipRect.origin.y = (float)outPortHeight - (clipRect.origin.y + clipRect.size.height);
@@ -356,8 +359,8 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 	if (GetEventClass(inEvent) == kEventClassControl)
 	{
 		ControlRef carbonControl = NULL;
-		OSStatus error = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
-		if (error != noErr)
+		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
+		if (status != noErr)
 			carbonControl = NULL;
 
 		UInt32 inEventKind = GetEventKind(inEvent);
@@ -381,12 +384,14 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 			}
 		}
 
+/*
 		// we want to catch when the mouse hovers over onto the background area
 		else if ( (inEventKind == kEventControlHitTest) || (inEventKind == kEventControlClick) )
 		{
 			if (carbonControl == mCarbonPane)
 				setCurrentControl_mouseover(NULL);	// we don't count the background
 		}
+*/
 
 		else if (inEventKind == kEventControlApplyBackground)
 		{
@@ -465,8 +470,8 @@ bool DfxGuiEditor::IsWindowCompositing()
 	if (GetCarbonWindow() != NULL)
 	{
 		WindowAttributes attributes = 0;
-		OSStatus error = GetWindowAttributes(GetCarbonWindow(), &attributes);
-		if (error == noErr)
+		OSStatus status = GetWindowAttributes(GetCarbonWindow(), &attributes);
+		if (status == noErr)
 			return (attributes & kWindowCompositingAttribute) ? true : false;
 	}
 	return false;
@@ -513,7 +518,6 @@ long launch_documentation()
 			if (fileUrlString != NULL)
 			{
 				status = AHGotoPage(NULL, fileUrlString, NULL);
-				CFRelease(fileUrlString);
 			}
 			CFRelease(fileURL);
 #endif
@@ -592,9 +596,43 @@ void DfxGuiEditor::setCurrentControl_mouseover(DGControl * inNewMousedOverContro
 {
 	DGControl * oldcontrol = currentControl_mouseover;
 	currentControl_mouseover = inNewMousedOverControl;
-	// post notification if the mouseovered control has changed
+	// post notification if the mouse-overed control has changed
 	if (oldcontrol != inNewMousedOverControl)
 		mouseovercontrolchanged(inNewMousedOverControl);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::addMousedOverControl(DGControl * inMousedOverControl)
+{
+	if (inMousedOverControl == NULL)
+		return;
+	mousedOverControlsList = new DGMousedOverControlsList(inMousedOverControl, mousedOverControlsList);
+	setCurrentControl_mouseover(inMousedOverControl);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::removeMousedOverControl(DGControl * inMousedOverControl)
+{
+	DGMousedOverControlsList * currentItem = mousedOverControlsList;
+	DGMousedOverControlsList * prevItem = NULL;
+	while (currentItem != NULL)
+	{
+		if (currentItem->control == inMousedOverControl)
+		{
+			if (prevItem != NULL)
+				prevItem->next = currentItem->next;
+			// this means that the item to delete is the first in the list, so move the list start to the next item
+			else
+				mousedOverControlsList = currentItem->next;
+			delete currentItem;
+			break;
+		}
+		prevItem = currentItem;
+		currentItem = currentItem->next;
+	}
+
+	if (mousedOverControlsList == NULL)
+		setCurrentControl_mouseover(NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -775,6 +813,32 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 
 #if MAC
 //-----------------------------------------------------------------------------
+DGKeyModifiers GetDGKeyModifiersForEvent(EventRef inEvent)
+{
+	if (inEvent == NULL)
+		return 0;
+
+	UInt32 macKeyModifiers = 0;
+	OSStatus status = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(macKeyModifiers), NULL, &macKeyModifiers);
+	if (status != noErr)
+		macKeyModifiers = GetCurrentEventKeyModifiers();
+
+	DGKeyModifiers dgKeyModifiers = 0;
+	if (macKeyModifiers & cmdKey)
+		dgKeyModifiers |= kDGKeyModifier_accel;
+	if ( (macKeyModifiers & optionKey) || (macKeyModifiers & rightOptionKey) )
+		dgKeyModifiers |= kDGKeyModifier_alt;
+	if ( (macKeyModifiers & shiftKey) || (macKeyModifiers & rightShiftKey) )
+		dgKeyModifiers |= kDGKeyModifier_shift;
+	if ( (macKeyModifiers & controlKey) || (macKeyModifiers & rightControlKey) )
+		dgKeyModifiers |= kDGKeyModifier_extra;
+
+	return dgKeyModifiers;
+}
+#endif
+
+#if MAC
+//-----------------------------------------------------------------------------
 static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
 	bool eventWasHandled = false;
@@ -807,11 +871,82 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 {
 	UInt32 inEventKind = GetEventKind(inEvent);
-	OSStatus error;
+	OSStatus status;
+
+	DGKeyModifiers keyModifiers = GetDGKeyModifiersForEvent(inEvent);
+
+
+
+	if (inEventKind == kEventMouseWheelMoved)
+	{
+		SInt32 mouseWheelDelta = 0;
+		status = GetEventParameter(inEvent, kEventParamMouseWheelDelta, typeSInt32, NULL, sizeof(mouseWheelDelta), NULL, &mouseWheelDelta);
+		if (status != noErr)
+			return false;
+
+		EventMouseWheelAxis macMouseWheelAxis = 0;
+		DGMouseWheelAxis dgMouseWheelAxis = kDGMouseWheelAxis_vertical;
+		status = GetEventParameter(inEvent, kEventParamMouseWheelAxis, typeMouseWheelAxis, NULL, sizeof(macMouseWheelAxis), NULL, &macMouseWheelAxis);
+		if (status == noErr)
+		{
+			switch (macMouseWheelAxis)
+			{
+				case kEventMouseWheelAxisX:
+					dgMouseWheelAxis = kDGMouseWheelAxis_horizontal;
+					break;
+				case kEventMouseWheelAxisY:
+				default:
+					dgMouseWheelAxis = kDGMouseWheelAxis_vertical;
+					break;
+			}
+		}
+
+		bool mouseWheelWasHandled = false;
+		DGMousedOverControlsList * currentItem = mousedOverControlsList;
+		while (currentItem != NULL)
+		{
+			bool tempHandled = currentItem->control->mouseWheel(mouseWheelDelta, dgMouseWheelAxis, keyModifiers);
+			if (tempHandled)
+			{
+				mouseWheelWasHandled = true;
+				break;	// XXX do I want to only allow the first control to use it, or should I keep iterating?
+			}
+			currentItem = currentItem->next;
+		}
+		return mouseWheelWasHandled;
+	}
+
+
+	if ( (inEventKind == kEventMouseEntered) || (inEventKind == kEventMouseExited) )
+	{
+		MouseTrackingRef mouseTrackingRegion = NULL;
+		status = GetEventParameter(inEvent, kEventParamMouseTrackingRef, typeMouseTrackingRef, NULL, sizeof(mouseTrackingRegion), NULL, &mouseTrackingRegion);
+		if (status == noErr)
+		{
+			MouseTrackingRegionID mouseTrackingRegionID;
+			status = GetMouseTrackingRegionID(mouseTrackingRegion, &mouseTrackingRegionID);
+			if ( (status == noErr) && (mouseTrackingRegionID.signature == DESTROYFX_ID) )
+			{
+				DGControl * ourMousedOverControl = NULL;
+				status = GetMouseTrackingRegionRefCon(mouseTrackingRegion, (void**)(&ourMousedOverControl));
+				if ( (status == noErr) && (ourMousedOverControl != NULL) )
+				{
+					if (inEventKind == kEventMouseEntered)
+						addMousedOverControl(ourMousedOverControl);
+					else if (inEventKind == kEventMouseExited)
+						removeMousedOverControl(ourMousedOverControl);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+
 
 	HIPoint mouseLocation;
-	error = GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
-	if (error != noErr)
+	status = GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
+	if (status != noErr)
 		return false;
 
 
@@ -825,8 +960,8 @@ return false;
 		GetPort(&oldport);
 		// switch to our window's port
 		WindowRef window = NULL;
-		error = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
-		if ( (error != noErr) || (window == NULL) )
+		status = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
+		if ( (status != noErr) || (window == NULL) )
 			return false;
 		SetPortWindowPort(window);
 
@@ -854,25 +989,11 @@ return false;
 	if (ourControl == NULL)
 		return false;
 
-	UInt32 modifiers = 0;
-	error = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-	if (error != noErr)
-		modifiers = GetCurrentEventKeyModifiers();
-	unsigned long keyModifiers = 0;
-	if (modifiers & cmdKey)
-		keyModifiers |= kDGKeyModifier_accel;
-	if ( (modifiers & optionKey) || (modifiers & rightOptionKey) )
-		keyModifiers |= kDGKeyModifier_alt;
-	if ( (modifiers & shiftKey) || (modifiers & rightShiftKey) )
-		keyModifiers |= kDGKeyModifier_shift;
-	if ( (modifiers & controlKey) || (modifiers & rightControlKey) )
-		keyModifiers |= kDGKeyModifier_extra;
-
 // orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 	WindowRef window = NULL;
-	error = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
+	status = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
 	// XXX should we bail if this fails?
-	if ( (error == noErr) && (window != NULL) )
+	if ( (status == noErr) && (window != NULL) )
 	{
 		// the content area of the window (i.e. not the title bar or any borders)
 		Rect windowBounds;
@@ -894,8 +1015,8 @@ return false;
 	if (inEventKind == kEventMouseDragged)
 	{
 		UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-		error = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
-		if (error != noErr)
+		status = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
+		if (status != noErr)
 			mouseButtons = GetCurrentEventButtonState();
 
 		ourControl->mouseTrack(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
@@ -937,8 +1058,8 @@ bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 		unsigned char charCode = 0;
 		GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
 		UInt32 modifiers = 0;
-		OSStatus error = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-		if (error != noErr)
+		OSStatus status = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+		if (status != noErr)
 			modifiers = GetCurrentEventKeyModifiers();
 //fprintf(stderr, "keyCode = %lu,  charCode = ", keyCode);
 //if ( (charCode > 0x7F) || iscntrl(charCode) ) fprintf(stderr, "0x%.2X\n", charCode);
@@ -968,10 +1089,10 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 	if (inEventKind == kEventCommandProcess)
 	{
 		HICommand hiCommand;
-		OSStatus error = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
-		if (error != noErr)
-			error = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
-		if (error != noErr)
+		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+		if (status != noErr)
+			status = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+		if (status != noErr)
 			return false;
 
 		if (hiCommand.commandID == kHICommandAppHelp)
@@ -995,10 +1116,21 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 //-----------------------------------------------------------------------------
 static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
-	if (GetEventClass(inEvent) != kEventClassControl)
-		return eventClassIncorrectErr;
+	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*)inUserData;
+	bool eventWasHandled = false;
 
-	bool eventWasHandled = ((DfxGuiEditor*)inUserData)->HandleControlEvent(inEvent);
+	switch ( GetEventClass(inEvent) )
+	{
+		case kEventClassControl:
+			eventWasHandled = ourOwnerEditor->HandleControlEvent(inEvent);
+			break;
+		case kEventClassMouse:
+			eventWasHandled = ourOwnerEditor->HandleMouseEvent(inEvent);
+			break;
+		default:
+			return eventClassIncorrectErr;
+	}
+
 	if (eventWasHandled)
 		return noErr;
 	else
@@ -1064,7 +1196,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 					{
 						hitPart = kControlIndicatorPart;	// scroll handle
 						// also there is kControlButtonPart, kControlCheckBoxPart, kControlPicturePart
-						setCurrentControl_mouseover(ourDGControl);
+//						setCurrentControl_mouseover(ourDGControl);
 					}
 					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(hitPart), &hitPart);
 				}
@@ -1091,7 +1223,7 @@ fprintf(stderr, "kEventControlHit\n");
 			case kEventControlContextualMenuClick:
 //if (inEventKind == kEventControlContextualMenuClick) fprintf(stderr, "kEventControlContextualMenuClick\n");
 				{
-					setCurrentControl_mouseover(ourDGControl);
+//					setCurrentControl_mouseover(ourDGControl);
 
 					UInt32 mouseButtons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 //					UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
@@ -1128,19 +1260,7 @@ fprintf(stderr, "kEventControlHit\n");
 					mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
 					mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
 
-					UInt32 modifiers = 0;
-					OSStatus error = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-					if (error != noErr)
-						modifiers = GetCurrentEventKeyModifiers();
-					unsigned long keyModifiers = 0;
-					if (modifiers & cmdKey)
-						keyModifiers |= kDGKeyModifier_accel;
-					if ( (modifiers & optionKey) || (modifiers & rightOptionKey) )
-						keyModifiers |= kDGKeyModifier_alt;
-					if ( (modifiers & shiftKey) || (modifiers & rightShiftKey) )
-						keyModifiers |= kDGKeyModifier_shift;
-					if ( (modifiers & controlKey) || (modifiers & rightControlKey) )
-						keyModifiers |= kDGKeyModifier_extra;
+					DGKeyModifiers keyModifiers = GetDGKeyModifiersForEvent(inEvent);
 
 					// do this to make Logic's touch automation work
 					// AUCarbonViewControl::HandleEvent will catch ControlClick but not ControlContextualMenuClick
