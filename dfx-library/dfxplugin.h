@@ -446,7 +446,7 @@ public:
 	DfxParamCurve getparametercurve(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurve();   else return kDfxParamCurve_undefined;	}
 	void setparametercurve(long parameterIndex, DfxParamCurve newcurve)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].setcurve(newcurve);	}
+		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcurve(newcurve);	}
 	double getparametercurvespec(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurvespec();   else return 0.0;	}
 	void setparametercurvespec(long parameterIndex, double newcurvespec)
