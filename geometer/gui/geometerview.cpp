@@ -79,14 +79,16 @@ void GeometerView::reflect() {
 
 #endif
 
-  geom->cs->grab();
+  if (geom->cs != NULL)
+    geom->cs->grab();
   apts = geom->framesize;
   if (apts > samples) apts = samples;
 
   int npts = geom->processw(inputs, outputs, apts,
 			    pointsx, pointsy, samples - 1,
 			    tmpx, tmpy);
-  geom->cs->release();
+  if (geom->cs != NULL)
+    geom->cs->release();
 
   numpts = npts;
 
