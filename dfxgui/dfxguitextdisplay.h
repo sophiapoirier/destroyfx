@@ -26,7 +26,7 @@ public:
 	virtual ~DGTextDisplay();
 
 	virtual void draw(CGContextRef context, long portHeight);
-	virtual void drawText(CGContextRef context, CGRect& inBounds, const char * inString);
+	void drawText(DGRect * inRegion, const char * inText, CGContextRef inContext, long inPortHeight);
 
 	void setTextAlignment(DfxGuiTextAlignment newAlignment)
 		{	alignment = newAlignment;	}

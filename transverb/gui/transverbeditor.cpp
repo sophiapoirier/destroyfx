@@ -42,7 +42,7 @@ enum {
 	kSmartElectronixLinkY = kSuperDFXlinkY,
 
 	kDisplayX = 318,
-	kDisplayY = 23,
+	kDisplayY = 24,
 	kDisplayWidth = 180,
 	kDisplayHeight = 10
 };

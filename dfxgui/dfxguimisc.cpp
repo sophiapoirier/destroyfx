@@ -96,12 +96,18 @@ void DGImage::draw(DGRect * inRect, CGContextRef inContext, long inPortHeight, l
 	drawRect.size.width = (float) getWidth();
 	drawRect.size.height = (float) getHeight();
 
+#ifndef FLIP_CG_COORDINATES
 	// this positions the image at the top of the region 
 	// rather than at the bottom (upside-down CG coordinates)
 	drawRect.origin.y -= (float) (getHeight() - inRect->h);
+#endif
 	// take offsets into account
 	drawRect.origin.x -= (float) inXoffset;
+#ifdef FLIP_CG_COORDINATES
+	drawRect.origin.y -= (float) inYoffset;
+#else
 	drawRect.origin.y += (float) inYoffset;	// we have to add because the Y axis is upside-down in CG
+#endif
 
 	// draw
 	CGContextDrawImage(inContext, drawRect, cgImage);
@@ -145,8 +151,12 @@ CGImageRef PreRenderCGImageBuffer(CGImageRef inImage)
 		CGContextRef context = CGBitmapContextCreate(buffer, width, height, bitsPerComponent, bytesPerRow, colorSpace, alphaInfo);
 		if (context != NULL)
 		{
+#ifdef FLIP_CG_COORDINATES
+			CGContextTranslateCTM(context, 0.0f, (float)height);
+			CGContextScaleCTM(context, 1.0f, -1.0f);
+#endif
 			// draw image into context
-			CGRect drawRect = CGRectMake(0, 0, width, height);
+			CGRect drawRect = CGRectMake(0.0f, 0.0f, (float)width, (float)height);
 			CGContextDrawImage(context, drawRect, inImage);
 			CGContextRelease(context);
 
