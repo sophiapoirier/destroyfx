@@ -4,24 +4,31 @@
 #define WINDOWCLASSNAME "GuiTestClass"
 
 // #include <control.h>
-#include <commctrl.h>
-#include "alpha.h"
+
 
 #define EDIT_HEIGHT 500
 #define EDIT_WIDTH 500
 
-LPDIRECTDRAW7 dd = 0;
 
+#define THINGS 1000
 
 extern HINSTANCE instance;
 int useCount = 0;
 
 GuitestEditor::GuitestEditor (AudioEffect *effect) : AEffEditor (effect) {
   effect->setEditor (this);
+  g_pD3D = 0;
+  g_pd3dDevice = 0;
 }
 
 GuitestEditor::~GuitestEditor () {
+  if( g_pd3dDevice != NULL) 
+    g_pd3dDevice->Release();
+
+  if( g_pD3D != NULL)
+    g_pD3D->Release();
 }
+
 
 long GuitestEditor::getRect (ERect **erect) {
   static ERect r = {0, 0, EDIT_HEIGHT, EDIT_WIDTH};
@@ -35,9 +42,17 @@ long GuitestEditor::open (void *ptr) {
   // Remember the parent window
   systemWindow = ptr;
 
-  guitx = guity = 5;
-  guitdy = 2;
-  guitdx = 3;
+  www = (Where *) malloc(THINGS * sizeof (Where));
+
+  for(int i = 0; i < THINGS; i ++) {
+
+    www[i].x = rand () % EDIT_WIDTH;
+    www[i].y = rand () % EDIT_HEIGHT;
+
+    www[i].dy = (rand () & 3) - 2;
+    www[i].dx = (rand () & 3) - 2;
+
+  }
 
   // Create window class, if we are called the first time
   useCount++;
@@ -67,151 +82,33 @@ long GuitestEditor::open (void *ptr) {
      dispatch to appropriate class instance. */
   SetWindowLong (hwnd, GWL_USERDATA, (long)this);
 
-  HRESULT ddrval;
-                
-  ddrval = DirectDrawCreateEx( NULL, (VOID**) &dd, IID_IDirectDraw7, NULL );
+  if (FAILED (InitD3D (hwnd))) return false;
+    
 
-  if( ddrval != DD_OK ) return(false);
+  /* set up orthographic projection and no wolrd/view transform.
+     This gives us a flat view of the coordinate space
+     from -EDIT_WIDTH/2 to EDIT_WIDTH/2, etc. */
+  D3DXMATRIX Ortho2D;	
+  D3DXMATRIX Identity;
+	
+  D3DXMatrixOrthoLH(&Ortho2D, EDIT_WIDTH, EDIT_HEIGHT, 0.0f, 1.0f);
+  D3DXMatrixIdentity(&Identity);
 
-  ddrval = dd->SetCooperativeLevel( hwnd, DDSCL_NORMAL );
+  g_pd3dDevice->SetTransform(D3DTS_PROJECTION, &Ortho2D);
+  g_pd3dDevice->SetTransform(D3DTS_WORLD, &Identity);
+  g_pd3dDevice->SetTransform(D3DTS_VIEW, &Identity);
 
-  if( ddrval != DD_OK ) {
-    dd->Release();
-    return(false);
-  }
+  g_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-  DDSURFACEDESC2 ddsd;
-  LPDIRECTDRAWCLIPPER clipper;
+  ggg = new Graphic(g_pd3dDevice, "c:\\temp\\dfx.jpg");
 
-  memset( &ddsd, 0, sizeof(ddsd) );
-  ddsd.dwSize = sizeof( ddsd );
-  ddsd.dwFlags = DDSD_CAPS;
-  ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-                
-  /* create primary surface */
-  ddrval = dd->CreateSurface( &ddsd, &primary, NULL );
-  if( ddrval != DD_OK ) {
-    dd->Release();
-    return(false);
-  }
-                
-  /* Create a clipper to ensure that our drawing stays inside our window */
-  ddrval = dd->CreateClipper( 0, &clipper, NULL );
-  if( ddrval != DD_OK ) {
-    primary->Release();
-    dd->Release();
-    return(false);
-  }
-                
-  /* setting it to our hwnd gives the clipper the coordinates from our window */
-  ddrval = clipper->SetHWnd( 0, hwnd );
-  if( ddrval != DD_OK ) {
-    clipper->Release();
-    primary->Release();
-    dd->Release();
-    return(false);
-  }
-
-  /* attach the clipper to the primary surface */
-  ddrval = primary->SetClipper( clipper );
-  if( ddrval != DD_OK ) {
-    clipper->Release();
-    primary->Release();
-    dd->Release();
-    return(false);
-  }
-
-  memset( &ddsd, 0, sizeof(ddsd) );
-  ddsd.dwSize = sizeof( ddsd );
-  ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
-  ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-  ddsd.dwWidth = EDIT_WIDTH;
-  ddsd.dwHeight = EDIT_HEIGHT;
-
-  // create the backbuffer separately
-  ddrval = dd->CreateSurface( &ddsd, &back, NULL );
-  if( ddrval != DD_OK ) {
-    clipper->Release();
-    primary->Release();
-    dd->Release();
-    return(false);
-  }
-
-  bg = DDLoadBitmap(dd, "c:\\temp\\poo.bmp");
-  guit = DDLoadBitmap(dd, "c:\\temp\\guit.bmp");
-
-  redraw();
+  /* turn on alpha blending */
+  g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE,  TRUE);
+  g_pd3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+  g_pd3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+  g_pd3dDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);  
 
   return true;
-}
-
-IDirectDrawSurface7 * GuitestEditor::DDLoadBitmap(IDirectDraw7 *pdd, LPCSTR file) {
-  HBITMAP hbm;
-  BITMAP bm;
-  IDirectDrawSurface7 *pdds;
-                
-  // LoadImage has some added functionality in Windows 95 that allows
-  // you to load a bitmap from a file on disk.
-  hbm = (HBITMAP)LoadImage(NULL, file, IMAGE_BITMAP, 0, 0,
-			   LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-                
-  if (hbm == NULL)
-    return NULL;
-                
-  GetObject(hbm, sizeof(bm), &bm); // get size of bitmap
-                
-  /*
-  * create a DirectDrawSurface for this bitmap
-  * source to function CreateOffScreenSurface() follows immediately
-  */
-                
-  pdds = CreateOffScreenSurface(pdd, bm.bmWidth, bm.bmHeight);
-  if (pdds) DDCopyBitmap(pdds, hbm, bm.bmWidth, bm.bmHeight);
-                
-  DeleteObject(hbm);
-                
-  return pdds;
-}
-
-IDirectDrawSurface7 * GuitestEditor::CreateOffScreenSurface(IDirectDraw7 *pdd, int dx, int dy) {
-  DDSURFACEDESC2 ddsd;
-  IDirectDrawSurface7 *pdds;
-                
-  // create a DirectDrawSurface for this bitmap
-  ZeroMemory(&ddsd, sizeof(ddsd));
-  ddsd.dwSize = sizeof(ddsd);
-  ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT |DDSD_WIDTH;
-  ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-  ddsd.dwWidth = dx;
-  ddsd.dwHeight = dy;
-                
-  if (pdd->CreateSurface(&ddsd, &pdds, NULL) != DD_OK) return 0;
-  else return pdds;
-
-}
-
-HRESULT GuitestEditor::DDCopyBitmap(IDirectDrawSurface7 *pdds, HBITMAP hbm, int dx, int dy) {
-  HDC hdcImage;
-  HDC hdc;
-  HRESULT hr;
-  HBITMAP hbmOld;
-                
-  //
-  // select bitmap into a memoryDC so we can use it.
-  //
-  hdcImage = CreateCompatibleDC(NULL);
-  hbmOld = (HBITMAP)SelectObject(hdcImage, hbm);
-                
-  if ((hr = pdds->GetDC(&hdc)) == DD_OK)
-    {
-      BitBlt(hdc, 0, 0, dx, dy, hdcImage, 0, 0, SRCCOPY);
-      pdds->ReleaseDC(hdc);
-    }
-                
-  SelectObject(hdcImage, hbmOld);
-  DeleteDC(hdcImage);
-                
-  return hr;
 }
 
 void GuitestEditor::close () {
@@ -233,9 +130,6 @@ void GuitestEditor::idle () {
 
 void GuitestEditor::update() {
 #if 0
-  SendMessage (delayFader, TBM_SETPOS, (WPARAM) TRUE, (LPARAM) effect->getParameter (0));
-  SendMessage (feedbackFader, TBM_SETPOS, (WPARAM) TRUE, (LPARAM) effect->getParameter
-	       (1));
   SendMessage (volumeFader, TBM_SETPOS, (WPARAM) TRUE, (LPARAM) effect->getParameter (1));
 #endif
   AEffEditor::update ();
@@ -246,10 +140,6 @@ void GuitestEditor::setValue(void* fader, int value) {
 #if 0
   if (fader == delayFader)
     effect->setParameterAutomated (0, (float)value / 100.f);
-  else if (fader == feedbackFader)
-    effect->setParameterAutomated (1, (float)value / 100.f);
-  else if (fader == volumeFader)
-    effect->setParameterAutomated (1, (float)value / 100.f);
 #endif
 }
 
@@ -259,45 +149,42 @@ void GuitestEditor::postUpdate() {
 }
 
 void GuitestEditor::redraw() {
-  RECT src;
-  RECT dest;
-  POINT p;
 
-  RECT rect;
+    if( NULL == g_pd3dDevice )
+        return;
 
-  // Blit the stuff for the next frame
-  SetRect(&rect, 0, 0, EDIT_HEIGHT, EDIT_WIDTH);
+    // Clear the backbuffer to a blue color
+    g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,50,0), 1.0f, 0 );
+    
+    // Begin the scene
+    g_pd3dDevice->BeginScene();
+    
+    // Rendering of scene objects can happen here
+    
+    Render2D(); 
 
-  // The parameter lpDDSOne is a hypothetical surface with this
-  // background bitmap loaded. LpDDSBack is our backbuffer.
-  back->BltFast( 0, 0, bg, &rect,
-		 DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+    // End the scene
+    g_pd3dDevice->EndScene();
+    
+    // Present the backbuffer contents to the display
+    g_pd3dDevice->Present( NULL, NULL, NULL, NULL );
 
-  SetRect(&rect, 0, 0, 150, 150);
+}
 
-#if 0
-  BltAlphaFastMMX( back, guit, guitx, guity, &rect, 
-		   GetRGBMode(guit));
-#else
-  back->BltFast( guitx, guity, guit, &rect, 
-		 DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT );
-#endif
+void GuitestEditor::Render2D () {
 
-  guitx += guitdx; guity += guitdy;
+  for(int i = 0; i < THINGS; i ++) {
+    ggg->drawat(www[i].x - EDIT_WIDTH / 2,
+		www[i].y - EDIT_HEIGHT / 2);
+    
+    www[i].x += www[i].dx; www[i].y += www[i].dy;
 
-  if (guitx > (EDIT_WIDTH - 160)) { guitx = (EDIT_WIDTH - 160); guitdx = -guitdx; }
-  if (guity > (EDIT_HEIGHT - 160)) { guity = (EDIT_WIDTH - 160); guitdy = -guitdy; }
-  if (guitx <= 0) { guitx = 0; guitdx = -guitdx; }
-  if (guity <= 0) { guity = 0; guitdy = -guitdy; }
+    if (www[i].x > (EDIT_WIDTH - 160)) { www[i].x = (EDIT_WIDTH - 160); www[i].dx = -www[i].dx; }
+    if (www[i].y > (EDIT_HEIGHT - 160)) { www[i].y = (EDIT_WIDTH - 160); www[i].dy = -www[i].dy; }
+    if (www[i].x <= 0) { www[i].x = 0; www[i].dx = -www[i].dx; }
+    if (www[i].y <= 0) { www[i].y = 0; www[i].dy = -www[i].dy; }
+  }
 
-
-  /* copy backbuffer to primary, all at once */
-  p.x = 0; p.y = 0;
-  ClientToScreen(window, &p);
-  GetClientRect(window, &dest);
-  OffsetRect(&dest, p.x, p.y);
-  SetRect(&src, 0, 0, EDIT_WIDTH, EDIT_HEIGHT);
-  primary->Blt( &dest, back, &src, DDBLT_WAIT, NULL);
 }
 
 LONG WINAPI GuitestEditor::WindowProc (HWND hwnd, UINT message, WPARAM wParam, 
@@ -308,21 +195,60 @@ LONG WINAPI GuitestEditor::WindowProc (HWND hwnd, UINT message, WPARAM wParam,
   switch (message) {
   case WM_PAINT: {
     editor->redraw();
+    ValidateRect( hwnd, NULL );
   }
-#if 0
-  case WM_VSCROLL: {
-
-    int newValue = SendMessage ((HWND)lParam, TBM_GETPOS, 0, 0);
-    GuitestEditor* editor = 
-      (GuitestEditor*)GetWindowLong (hwnd, GWL_USERDATA);
-    if (editor)
-      editor->setValue ((void*)lParam, newValue);
-  }
-    break;
-#endif
   default:
     return DefWindowProc (hwnd, message, wParam, lParam);
   }
   return true;
+}
+
+//-----------------------------------------------------------------------------
+// Name: InitD3D()
+// Desc: Initializes Direct3D
+//-----------------------------------------------------------------------------
+HRESULT GuitestEditor:: InitD3D( HWND hWnd )
+{
+    // Create the D3D object, which is needed to create the D3DDevice.
+    if( NULL == ( g_pD3D = Direct3DCreate8( D3D_SDK_VERSION ) ) )
+      return E_FAIL;
+
+    // Get the current desktop display mode
+    D3DDISPLAYMODE d3ddm;
+    if( FAILED( g_pD3D->GetAdapterDisplayMode( D3DADAPTER_DEFAULT, &d3ddm ) ) )
+        return E_FAIL;
+
+    // Set up the structure used to create the D3DDevice. Most parameters are
+    // zeroed out. We set Windowed to TRUE, since we want to do D3D in a
+    // window, and then set the SwapEffect to "discard", which is the most
+    // efficient method of presenting the back buffer to the display.  And 
+    // we request a back buffer format that matches the current desktop display 
+    // format.
+    D3DPRESENT_PARAMETERS d3dpp; 
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.BackBufferWidth = 0;
+    d3dpp.BackBufferHeight = 0;
+
+
+    // Create the Direct3D device. Here we are using the default adapter (most
+    // systems only have one, unless they have multiple graphics hardware cards
+    // installed) and requesting the HAL (which is saying we want the hardware
+    // device rather than a software one). Software vertex processing is 
+    // specified since we know it will work on all cards. On cards that support 
+    // hardware vertex processing, though, we would see a big performance gain 
+    // by specifying hardware vertex processing.
+    if( FAILED( g_pD3D->CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
+                                      D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+                                      &d3dpp, &g_pd3dDevice ) ) )
+    {
+        return E_FAIL;
+    }
+
+    // Device state would normally be set here
+
+    return S_OK;
 }
 

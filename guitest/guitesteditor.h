@@ -5,7 +5,20 @@
 #include <audioeffectx.h>
 #include <aeffeditor.hpp>
 #include <windows.h>
-#include <ddraw.h>
+// #include <ddraw.h>
+
+#include <commctrl.h>
+#include <d3d8.h>
+#include <d3dx8math.h>
+
+#include "graphic.h"
+
+struct Where {
+  int x;
+  int y;
+  int dx;
+  int dy; 
+};
 
 struct GuitestEditor : public AEffEditor {
   friend class AudioEffect;
@@ -20,30 +33,32 @@ struct GuitestEditor : public AEffEditor {
   virtual void close();
   virtual void idle();
 
-  private:
-  
-  LPDIRECTDRAWSURFACE7 primary; // DirectDraw primary surface
-  
-  LPDIRECTDRAWSURFACE7 back; // DirectDraw back surface
-
-  bool CreatePrimarySurface();
-
-  static IDirectDrawSurface7 * DDLoadBitmap(IDirectDraw7 *pdd, LPCSTR szBitmap);
-  static IDirectDrawSurface7 * CreateOffScreenSurface(IDirectDraw7 *pdd, int dx, int dy);
-  static HRESULT DDCopyBitmap(IDirectDrawSurface7 *pdds, HBITMAP hbm, int dx, int dy);
+ private:
 
   static LONG WINAPI WindowProc (HWND hwnd, UINT message, WPARAM wParam, 
 				 LPARAM lParam);
 
+  HRESULT InitD3D(HWND hWnd);
+
+  void Render2D ();
+
   void redraw();
 
   HWND window;
-  IDirectDrawSurface7 * bg, * guit;
 
-  int guitx, guity, guitdy, guitdx;
 
-  public:
+
+ public:
   void setValue(void* fader, int value);
+
+  LPDIRECT3D8             g_pD3D;  //     = NULL; // Used to create the D3DDevice
+  LPDIRECT3DDEVICE8       g_pd3dDevice;// = NULL; // Our rendering device
+  
+  /* XXX */
+
+  Graphic * ggg;
+
+  Where * www;
 
 };
 
