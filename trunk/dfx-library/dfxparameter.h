@@ -364,10 +364,10 @@ public:
 
 	// set a DfxParamValue with a value of a specific type
 	// perform type conversion if the incoming variable type is not "native"
-	bool accept_f(float inValue, DfxParamValue &outValue);
-	bool accept_d(double inValue, DfxParamValue &outValue);
-	bool accept_i(long inValue, DfxParamValue &outValue);
-	bool accept_b(bool inValue, DfxParamValue &outValue);
+	bool accept_f(float inValue, DfxParamValue & outValue);
+	bool accept_d(double inValue, DfxParamValue & outValue);
+	bool accept_i(long inValue, DfxParamValue & outValue);
+	bool accept_b(bool inValue, DfxParamValue & outValue);
 
 	// expand and contract routines for setting and getting values generically
 	// these take into account the parameter curve
