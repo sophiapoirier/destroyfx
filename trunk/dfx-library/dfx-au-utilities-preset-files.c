@@ -759,14 +759,17 @@ OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAU
 //-----------------------------------------------------------------------------
 // This is a convenience wrapper for SaveAUStateToPresetFile_Bundle for when 
 // the caller is the main application.
-ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance)
+ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL)
 {
-	return SaveAUStateToPresetFile_Bundle(inAUComponentInstance, NULL);
+	return SaveAUStateToPresetFile_Bundle(inAUComponentInstance, inDefaultAUPresetName, outSavedAUPresetFileURL, NULL);
 }
 //-----------------------------------------------------------------------------
 // input:  Audio Unit ComponentInstance
+// inDefaultAUPresetName is optional and can be NULL
+// outSavedAUPresetFileURL is optional and can be NULL
+// inBundle can be NULL, in which case the main application bundle is used
 // output:  ComponentResult error code
-ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFBundleRef inBundle)
+ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL, CFBundleRef inBundle)
 {
 	ComponentResult error = noErr;
 	CFPropertyListRef auStatePlist;
@@ -808,8 +811,7 @@ Open a dialog
 	open nib
 */
 	// this will show the dialog(s) to the user and do all the handling of saving the state data to a file, etc.
-	error = CreateSavePresetDialog((Component)inAUComponentInstance, auStatePlist);
-
+	error = CreateSavePresetDialog((Component)inAUComponentInstance, auStatePlist, inDefaultAUPresetName, outSavedAUPresetFileURL);
 
 	CFRelease(auStatePlist);
 
@@ -850,6 +852,8 @@ typedef struct {
 	WindowRef dialogWindow;
 	CFPropertyListRef auStateData;
 	Component auComponent;
+	CFStringRef defaultPresetName;
+	CFURLRef * savedFileUrl;
 	OSStatus dialogResult;
 } SaveAUPresetFileDialogInfo;
 
@@ -873,7 +877,9 @@ enum {
 
 //-----------------------------------------------------------------------------
 // create, show, and run modally our dialog window
-OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist)
+// inDefaultAUPresetName is optional and can be NULL
+// outSavedAUPresetFileURL is optional and can be NULL
+OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL)
 {
 	OSStatus error = noErr;
 	IBNibRef nibRef = NULL;
@@ -904,6 +910,8 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	dialogInfo.auStateData = inAUStatePlist;
 	dialogInfo.dialogWindow = dialogWindow;
 	dialogInfo.auComponent = inAUComponent;
+	dialogInfo.defaultPresetName = inDefaultAUPresetName;
+	dialogInfo.savedFileUrl = outSavedAUPresetFileURL;
 	dialogInfo.dialogResult = noErr;
 
 	// install our dialog's event handler
@@ -942,7 +950,15 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 		ControlRef textFieldControl = NULL;
 		ControlID textFieldControlID =	{ kPresetNameTextControlSignature, kPresetNameTextControlID };
 		GetControlByID(dialogWindow, &textFieldControlID, &textFieldControl);
-		SetKeyboardFocus(dialogWindow, textFieldControl, kControlFocusNextPart);
+		if (textFieldControl != NULL)
+		{
+			// and if the caller wants this, set the default file name text
+			if (inDefaultAUPresetName != NULL)
+				SetControlData(textFieldControl, kControlNoPart, kControlEditTextCFStringTag, 
+								sizeof(inDefaultAUPresetName), &inDefaultAUPresetName);
+
+			SetKeyboardFocus(dialogWindow, textFieldControl, kControlFocusNextPart);
+		}
 	}
 
 	// run the dialog window modally
@@ -1011,7 +1027,7 @@ catch dialog response
 				// get the file name text from the edit text field
 				GetControlByID(dialogInfo->dialogWindow, &textFieldControlID, &textFieldControl);
 				if (textFieldControl != NULL)
-					GetControlData(textFieldControl, 0, kControlEditTextCFStringTag, sizeof(presetNameString), &presetNameString, NULL);
+					GetControlData(textFieldControl, kControlNoPart, kControlEditTextCFStringTag, sizeof(presetNameString), &presetNameString, NULL);
 
 				// get the user's choice of file system domain from the domain choice control
 				GetControlByID(dialogInfo->dialogWindow, &domainChoiceControlID, &domainChoiceControl);
@@ -1026,7 +1042,8 @@ catch dialog response
 					fsDomain = kNetworkDomain;
 
 				// attempt to save out the AU state data to the requested file
-				dialogInfo->dialogResult = TryToSaveAUPresetFile(dialogInfo->auComponent, dialogInfo->auStateData, presetNameString, fsDomain);
+				dialogInfo->dialogResult = TryToSaveAUPresetFile(dialogInfo->auComponent, dialogInfo->auStateData, 
+																presetNameString, fsDomain, dialogInfo->savedFileUrl);
 				if (presetNameString != NULL)
 					CFRelease(presetNameString);
 
@@ -1069,7 +1086,8 @@ catch dialog response
 		// so exit this dialog and do the Nav Services PutFile dialog
 		case kHICommandSaveAs:
 			exitModalLoop = true;
-			dialogInfo->dialogResult = CustomSaveAUPresetFile(dialogInfo->auStateData, dialogInfo->auComponent);
+			dialogInfo->dialogResult = CustomSaveAUPresetFile(dialogInfo->auStateData, dialogInfo->auComponent, 
+													dialogInfo->defaultPresetName, dialogInfo->savedFileUrl);
 			break;
 	}
 
@@ -1085,7 +1103,7 @@ catch dialog response
 // and a file system domain and then tries to save the AU's state data in the requested domain 
 // with the requested file name (with the proper AU preset file name extension appended).
 OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
-								CFStringRef inPresetNameString, short inFileSystemDomain)
+					CFStringRef inPresetNameString, short inFileSystemDomain, CFURLRef * outSavedAUPresetFileURL)
 {
 	OSStatus error = noErr;
 
@@ -1187,6 +1205,9 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 	// if we've made it this far, then it's time to try to 
 	// write the AU state data out to the file as XML data
 	error = WritePropertyListToXMLFile(inAUStateData, presetFullFileUrl);
+	// if the caller wants it, give them a reference to the saved file's URL
+	if ( (error == noErr) && (outSavedAUPresetFileURL != NULL) )
+		*outSavedAUPresetFileURL = CFRetain(presetFullFileUrl);
 	CFRelease(presetFullFileUrl);
 
 
@@ -1205,93 +1226,6 @@ XXX	if fails, tell user why
 
 
 	return error;
-}
-
-//-----------------------------------------------------------------------------
-// This is the event handler for the "file already exists" alert/dialog.  
-// It's sole purpose is to map a Cancel command to the Cancel button, 
-// because button is also the default button, thus making things complicated.
-pascal OSStatus ShouldReplaceExistingAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
-{
-	Boolean doCancel = false;
-
-	if (inUserData == NULL)
-		return eventNotHandledErr;
-
-	// check an HI command event to see if it's a cancel event
-	if (GetEventClass(inEvent) == kEventClassCommand)
-	{
-		if (GetEventKind(inEvent) == kEventCommandProcess)
-		{
-			// get the HI command
-			HICommand command;
-			OSStatus error = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &command);
-			if (error == noErr)
-			{
-				if (command.commandID == kHICommandCancel)
-					doCancel = true;
-			}
-		}
-	}
-
-	// check a keyboard event to see if it's something equivalent to a typical cancel keyboard command
-	else if (GetEventClass(inEvent) == kEventClassKeyboard)
-	{
-		if (GetEventKind(inEvent) == kEventRawKeyDown)
-		{
-			unsigned char charCode = 0;
-			UInt32 modifiers = 0;
-			GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
-			GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-//fprintf(stderr, "charCode = %d, modifiers = %lu\n", charCode, modifiers);
-
-			// treat it as a cancel command if it is ESC or command-.
-			if ( (charCode == 27) || ((charCode == '.') && (modifiers == cmdKey)) )
-				doCancel = true;
-		}
-	}
-
-	// some sort of cancel event was received, so try to simulate a push of the Cancel button
-	if (doCancel)
-	{
-		DialogRef dialog = (DialogRef)inUserData;
-
-		// try to get a reference to the Cancel buton
-		ControlRef cancelControl = NULL;
-		OSStatus error = GetDialogItemAsControl(dialog, kAlertStdAlertCancelButton, &cancelControl);
-		if (error == noErr)
-		{
-/*
-CFStringRef ctitle = NULL;
-error = CopyControlTitleAsCFString(cancelControl, &ctitle);
-if (error == noErr)
-{
-	CFShow(ctitle);
-	CFRelease(ctitle);
-}
-*/
-			// then create a simulated "hit" event for the Cancel button
-			EventRef cancelEvent;
-			error = CreateEvent(NULL, kEventClassControl, kEventControlSimulateHit, GetCurrentEventTime(), kEventAttributeUserEvent, &cancelEvent);
-			if (error == noErr)
-			{
-				UInt32 modifiers = 0;
-				ControlPartCode hitPart = kControlIndicatorPart;
-//				ControlPartCode hitPart = kControlButtonPart;
-				SetEventParameter(cancelEvent, kEventParamDirectObject, typeControlRef, sizeof(cancelControl), &cancelControl);
-				SetEventParameter(cancelEvent, kEventParamKeyModifiers, typeUInt32, sizeof(modifiers), &modifiers);
-				SetEventParameter(cancelEvent, kEventParamControlPart, typeControlPartCode, sizeof(hitPart), &hitPart);
-
-				// XXX this is not working
-				SendEventToEventTarget(cancelEvent, GetControlEventTarget(cancelControl));
-				ReleaseEvent(cancelEvent);
-
-				return noErr;
-			}
-		}
-	}
-
-	return eventNotHandledErr;
 }
 
 //-----------------------------------------------------------------------------
@@ -1359,23 +1293,14 @@ Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL)
 
 	if (alertErr == noErr)
 	{
+		ModalFilterUPP dialogFilterUPP = NewModalFilterUPP(ShouldReplaceExistingAUPresetFileDialogFilterProc);
 		DialogItemIndex itemHit;
 
-		// create and install custom event handler stuff
-		EventTypeSpec dialogEvents[] = { { kEventClassCommand, kEventCommandProcess }, {kEventClassKeyboard, kEventRawKeyDown} };
-		EventHandlerUPP dialogEventHandlerUPP = NewEventHandlerUPP(ShouldReplaceExistingAUPresetFileDialogEventHandler);
-		EventHandlerRef dialogEventHandlerRef = NULL;
-		InstallEventHandler(GetWindowEventTarget(GetDialogWindow(dialog)), dialogEventHandlerUPP, 
-							GetEventTypeCount(dialogEvents), dialogEvents, dialog, &dialogEventHandlerRef);
-
 		// show the alert dialog
-		alertErr = RunStandardAlert(dialog, NULL, &itemHit);
+		alertErr = RunStandardAlert(dialog, dialogFilterUPP, &itemHit);
 
-		// clean up custom event handler stuff
-		if (dialogEventHandlerRef != NULL)
-			RemoveEventHandler(dialogEventHandlerRef);
-		if (dialogEventHandlerUPP != NULL)
-			DisposeEventHandlerUPP(dialogEventHandlerUPP);
+		if (dialogFilterUPP != NULL)
+			DisposeModalFilterUPP(dialogFilterUPP);
 
 		// If the dialog ran okay and the user said "cancel", 
 		// then say that the user wants to keep the file, 
@@ -1392,6 +1317,30 @@ Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL)
 	}
 
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// This is the event filter proc for the "file already exists" alert dialog.  
+// Its sole purpose is to map a "cancel" keyboard command to the Cancel button, 
+// because that button is also the default button, thus making things complicated.
+pascal Boolean ShouldReplaceExistingAUPresetFileDialogFilterProc(DialogRef inDialog, EventRecord * inEvent, DialogItemIndex * outItemHit)
+{
+	if ( (inEvent == NULL) || (outItemHit == NULL) )
+		return false;
+
+	// check a keyboard event to see if it's something equivalent to a typical cancel keyboard command
+	if (inEvent->what == keyDown)
+	{
+		UInt32 charCode = inEvent->message & charCodeMask;
+		// if the key event is ESC or command-. then treat it as a cancel command
+		if ( (charCode == 27) || ((charCode == '.') && (inEvent->modifiers == cmdKey)) )
+		{
+			*outItemHit = kAlertStdAlertCancelButton;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1448,6 +1397,8 @@ const UInt32 kAUPresetSaveNavDialogKey = 'AUps';
 // global error code holder for the Navigation Services PuttFile dialog
 // we can check errors from its event handler with this, if the dialog ran modally
 OSStatus gCustomSaveAUPresetFileResult;
+// the URL of the file where the AU state data eventually gets saved to
+CFURLRef gCustomSaveAUPresetFileSavedFileUrl;
 //-----------------------------------------------------------------------------
 // This is the function that you call if the user pushes the Choose Custom Location 
 // in the regular (simple) Save AU preset dialog.  Then this function will create and 
@@ -1457,7 +1408,11 @@ OSStatus gCustomSaveAUPresetFileResult;
 // to Component for this argument).  inAUComponent is only used to find the appropriate 
 // standard default location to start the Save file dialog off in, so it can be null, 
 // in which case the default starting location will not be set.
-OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent)
+// Also, you can provide text that appears as the default new file name as inDefaultAUPresetName.  
+// You only need to provide the base name without the file name extension (the extension will be appended).  
+// If you are not interested in doing that, use NULL for inDefaultAUPresetName.
+OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent, 
+								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL)
 {
 	OSStatus error = noErr;
 	NavDialogCreationOptions dialogOptions;
@@ -1481,7 +1436,11 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 	if (error == noErr)
 	{
 		// set the initial file name shown in the dialog's file name text edit field
-		CFStringRef defaultFileBaseName = CFCopyLocalizedStringFromTableInBundle(CFSTR("untitled"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the default preset file name for the Nav Services save file dialog"));
+		CFStringRef defaultFileBaseName;
+		if (inDefaultAUPresetName != NULL)
+			defaultFileBaseName = CFRetain(inDefaultAUPresetName);	// just retain it so we can release below without thinking about it
+		else
+			defaultFileBaseName = CFCopyLocalizedStringFromTableInBundle(CFSTR("untitled"), CFSTR("dfx-au-utilities-localizable"), gCurrentBundle, CFSTR("the default preset file name for the Nav Services save file dialog"));
 		CFStringRef defaultFileName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@.%@"), 
 															defaultFileBaseName, kAUPresetFileNameExtension);
 		CFRelease(defaultFileBaseName);
@@ -1497,7 +1456,9 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 		if (inAUComponent != NULL)
 			SetNavDialogAUPresetStartLocation(dialog, inAUComponent, kCreateFolder);
 
-		gCustomSaveAUPresetFileResult = noErr;	// initialize it clean to start with
+		// initialize these clean to start with
+		gCustomSaveAUPresetFileResult = noErr;
+		gCustomSaveAUPresetFileSavedFileUrl = NULL;
 		// now show the dialog to the user
 		error = NavDialogRun(dialog);
 		// if the dialog ran modally, then we should see any error caught during its run now, 
@@ -1506,6 +1467,17 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 		{
 			if (gCustomSaveAUPresetFileResult != noErr)
 				error = gCustomSaveAUPresetFileResult;
+			// we also can get the URL to the saved preset file, if available
+			if (gCustomSaveAUPresetFileSavedFileUrl != NULL)
+			{
+				// the caller owns the reference to the CFURL now, if the caller wanted it
+				if (outSavedAUPresetFileURL != NULL)
+					*outSavedAUPresetFileURL = gCustomSaveAUPresetFileSavedFileUrl;
+				// otherwise release the CFURL now since no one cares about it anymore
+				else
+					CFRelease(gCustomSaveAUPresetFileSavedFileUrl);
+				gCustomSaveAUPresetFileSavedFileUrl = NULL;
+			}
 		}
 	}
 	if (eventProc != NULL)
@@ -1587,7 +1559,14 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 								// with the full file URL, we can now try to translate the AU state data 
 								// to XML data, and write that XML data out to the file
 								error = WritePropertyListToXMLFile(auStateData, presetFileUrl);
-								CFRelease(presetFileUrl);
+								// if the final operation was successful, save the CFURL for the 
+								// saved file in case the caller is interested in it
+								// XXX note:  this will leak memory if the dialog was not run modally
+								if (error == noErr)
+									gCustomSaveAUPresetFileSavedFileUrl = presetFileUrl;
+								// otherwise, release the URL since nothing was written to it anyway
+								else
+									CFRelease(presetFileUrl);
 
 								reply.translationNeeded = false;
 								// always call NavCompleteSave() to complete
