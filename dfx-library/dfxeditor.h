@@ -18,7 +18,7 @@ public:
      close will never be called for AU, so don't
      do any special destruction here.
   */
-  virtual long open (TARGET_API_GUI_WINDOW ptr) = 0;
+  virtual long open (surface gui_window) = 0;
   virtual void close () = 0;
 
   /* idle is called periodically and can be used to
