@@ -194,7 +194,7 @@ typedef enum {
 	kDfxParamValueType_undefined = 0,
 	kDfxParamValueType_float,
 	kDfxParamValueType_int,
-	kDfxParamValueType_boolean,
+	kDfxParamValueType_boolean
 } DfxParamValueType;
 
 
@@ -247,7 +247,7 @@ typedef enum {
 // they are stored as flags in a bit-mask thingy
 typedef enum {
 	kDfxParamAttribute_hidden = 1,	// should not be revealed to the user
-	kDfxParamAttribute_unused = 1 << 1,	// isn't being used at all (a place-holder?); don't reveal to the host or anyone
+	kDfxParamAttribute_unused = 1 << 1	// isn't being used at all (a place-holder?); don't reveal to the host or anyone
 } DfxParamAttribute;
 
 
