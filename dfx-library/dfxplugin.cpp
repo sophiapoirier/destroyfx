@@ -18,9 +18,10 @@ written by Marc Poirier, October 2002
 #endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __vstgui__
-	#include "vstgui.h"	// for AEffGUIEditor class definition
-	#endif
+/* If using the VST GUI interface, we need the class definition
+   for AEffGUIEditor so we can send it parameter changes.
+ */
+	#include "aeffguieditor.h"
 #endif
 
 
@@ -479,7 +480,7 @@ void DfxPlugin::update_parameter(long parameterIndex)
 		if (presetisvalid(vstpresetnum))
 			setpresetparameter(vstpresetnum, parameterIndex, getparameter(parameterIndex));
 		#if TARGET_PLUGIN_HAS_GUI
-		if (editor)
+		if (editor && PLUGIN_USES_VSTGUI) /* XXX can't assume it's a GUI (ie, vstgui) editor! */
 			((AEffGUIEditor*)editor)->setParameter(parameterIndex, getparameter_gen(parameterIndex));
 		#endif
 
