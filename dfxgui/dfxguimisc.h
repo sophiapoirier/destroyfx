@@ -5,6 +5,7 @@
 #include <Carbon/Carbon.h>
 
 #include "dfxdefines.h"
+#define FLIP_CG_COORDINATES
 
 
 //-----------------------------------------------------------------------------
@@ -16,39 +17,81 @@ typedef enum {
 } DGKeyModifiers;
 
 
-/***********************************************************************
-	DGRect
-	a rectangular region class
-***********************************************************************/
-
 //-----------------------------------------------------------------------------
-class DGRect
+// a rectangular region defined with horizontal position (x), vertical position (y), width, and height
+struct DGRect
 {
-public:
+	long x;	// horizontal placement
+	long y;	// vertical placement
+	long w;	// width
+	long h;	// height
+
 	DGRect()
-		{	x = y = w = h = 0;	}
+	{
+		x = y = w = h = 0;
+	}
 	DGRect(long inX, long inY, long inWidth, long inHeight)
-		{	set(inX, inY, inWidth, inHeight);	}
+	{
+		set(inX, inY, inWidth, inHeight);
+	}
 	DGRect(DGRect * inSourceRect)
-		{	set(inSourceRect);	}
+	{
+		set(inSourceRect);
+	}
 
 	void set(DGRect * inSourceRect)
-		{	x = inSourceRect->x;	y = inSourceRect->y;	w = inSourceRect->w;	h = inSourceRect->h;	}
+	{
+		set(inSourceRect->x, inSourceRect->y, inSourceRect->w, inSourceRect->h);
+	}
 	void set(long inX, long inY, long inWidth, long inHeight)
-		{	x = inX;	y = inY;	w = inWidth;	h = inHeight;	}
+	{
+		x = inX;
+		y = inY;
+		w = inWidth;
+		h = inHeight;
+	}
 
 	void offset(long inOffsetX, long inOffsetY, long inWidthGrow = 0, long inHeightGrow = 0)
-		{	x += inOffsetX;	y += inOffsetY;	w += inWidthGrow;	h += inHeightGrow;	}
+	{
+		x += inOffsetX;
+		y += inOffsetY;
+		w += inWidthGrow;
+		h += inHeightGrow;
+	}
 	void moveTo(long inX, long inY)
-		{	x = inX;	y = inY;	}
+	{
+		x = inX;
+		y = inY;
+	}
 	void resize(long inWidth, long inHeight)
-		{	w = inWidth;	h = inHeight;	}
+	{
+		w = inWidth;
+		h = inHeight;
+	}
+
+	DGRect& operator = (const DGRect inRect)
+	{
+		set(inRect.x, inRect.y, inRect.w, inRect.h);
+		return *this;
+	}
+	bool operator != (const DGRect& otherRect) const
+	{
+		return ( (x != otherRect.x) || (y != otherRect.y) || (w != otherRect.w) || (h != otherRect.h) );
+	}
+	bool operator == (const DGRect& otherRect) const
+	{
+		return ( (x == otherRect.x) && (y == otherRect.y) && (w == otherRect.w) && (h == otherRect.h) );
+	}
 
 #if MAC
 	void copyToCGRect(CGRect * outDestRect, long inDestPortHeight)
 	{
 		outDestRect->origin.x = x;
+#ifdef FLIP_CG_COORDINATES
+		outDestRect->origin.y = y;
+#else
 		outDestRect->origin.y = inDestPortHeight - (h + y);
+#endif
 		outDestRect->size.width = w;
 		outDestRect->size.height = h;
 	}
@@ -72,11 +115,6 @@ public:
 		return outputRect;
 	}
 #endif
-
-	long x;
-	long y;
-	long w;
-	long h;
 };
 
 
@@ -104,11 +142,11 @@ struct DGColor
 		return *this;
 	}
 
-	DGColor& operator = (DGColor newColor)
+	DGColor& operator = (const DGColor inColor)
 	{
-		r = newColor.r;
-		g = newColor.g;
-		b = newColor.b;
+		r = inColor.r;
+		g = inColor.g;
+		b = inColor.b;
 		return *this;
 	}
 };

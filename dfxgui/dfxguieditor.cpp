@@ -243,6 +243,20 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 				QDBeginCGContext(windowPort, &context);
 				SyncCGContextOriginWithPort(context, windowPort);
 				CGContextSaveGState(context);
+#ifdef FLIP_CG_COORDINATES
+				// this lets me position things with non-upside-down coordinates, 
+				// but unfortunately draws all images and text upside down...
+				CGContextTranslateCTM(context, 0.0f, (float)(portBounds.bottom));
+				CGContextScaleCTM(context, 1.0f, -1.0f);
+				// XXX need a better way of determining the background size
+				if (backgroundImage != NULL)
+				{
+					// define the clipping region
+					CGRect clipRect = CGRectMake( GetXOffset(), GetYOffset(), 
+											(float)(backgroundImage->getWidth()), (float)(backgroundImage->getHeight()) );
+					CGContextClipToRect(context, clipRect);
+				}
+#endif
 				CGContextSetShouldAntialias(context, false);	// XXX disable anti-aliased drawing for image rendering
 				DrawBackground(context, portBounds.bottom);
 				CGContextRestoreGState(context);
@@ -340,15 +354,10 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::DrawBackground(CGContextRef inContext, long inPortHeight)
 {
-	CGImageRef backgroundCGImage = NULL;
 	if (backgroundImage != NULL)
-		backgroundCGImage = backgroundImage->getCGImage();
-	if (backgroundCGImage != NULL)
 	{
-		float backWidth = (float) CGImageGetWidth(backgroundCGImage);
-		float backHeight = (float) CGImageGetHeight(backgroundCGImage);
-		CGRect whole = CGRectMake(GetXOffset(), inPortHeight - (GetYOffset() + backHeight), backWidth, backHeight);
-		CGContextDrawImage(inContext, whole, backgroundCGImage);
+		DGRect drawRect( (long)GetXOffset(), (long)GetYOffset(), backgroundImage->getWidth(), backgroundImage->getHeight() );
+		backgroundImage->draw(&drawRect, inContext, inPortHeight);
 	}
 	else
 	{
@@ -796,12 +805,15 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 					QDBeginCGContext(windowPort, &context);
 					SyncCGContextOriginWithPort(context, windowPort);
 					CGContextSaveGState(context);
+#ifdef FLIP_CG_COORDINATES
+					// this lets me position things with non-upside-down coordinates, 
+					// but unfortunately draws all images and text upside down...
+					CGContextTranslateCTM(context, 0.0f, (float)(portBounds.bottom));
+					CGContextScaleCTM(context, 1.0f, -1.0f);
+#endif
 					// define the clipping region
 					CGRect clipRect = ourDGControl->getBounds()->convertToCGRect(portBounds.bottom);
 					CGContextClipToRect(context, clipRect);
-// this lets me position things with non-upside-down coordinates, but unfortunately draws all images and text upside down...
-//CGContextTranslateCTM(context, 0, portBounds.bottom);
-//CGContextScaleCTM(context, 1.0f, -1.0f);
 					// XXX disable anti-aliased drawing for image rendering
 					CGContextSetShouldAntialias(context, false);
 					ourDGControl->draw(context, portBounds.bottom);
