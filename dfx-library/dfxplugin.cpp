@@ -253,7 +253,7 @@ long DfxPlugin::do_initialize()
 	updatenumchannels();
 
 	long result = initialize();
-	if (result != 0)
+	if (result != kDfxErr_NoError)
 		return result;
 
 	#ifdef TARGET_API_VST
@@ -298,6 +298,13 @@ void DfxPlugin::do_reset()
 	#if TARGET_PLUGIN_USES_MIDI
 		if (midistuff != NULL)
 			midistuff->reset();
+	#endif
+
+	#ifdef TARGET_API_AUDIOUNIT
+		#if !TARGET_PLUGIN_IS_INSTRUMENT
+			// resets the kernels, if any
+			AUEffectBase::Reset(kAudioUnitScope_Global, (AudioUnitElement)0);
+		#endif
 	#endif
 
 	reset();

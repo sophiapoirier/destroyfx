@@ -18,7 +18,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							displayTextProcedure	inTextProc, 
 							void *					inUserData,
 							DGGraphic *				inBackground, 
-							char *					inFontName)
+							const char *			inFontName)
 :	DGControl(inOwnerEditor, inParamID, inWhere)
 {
 	BackGround = inBackground;
@@ -74,13 +74,13 @@ DGTextDisplay::~DGTextDisplay()
 
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::mouseDown(Point *P, bool, bool)
+void DGTextDisplay::mouseDown(Point inPos, bool, bool)
 {
-	last_Y = P->v;
+	last_Y = inPos.v;
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::mouseTrack(Point *P, bool with_option, bool with_shift)
+void DGTextDisplay::mouseTrack(Point inPos, bool with_option, bool with_shift)
 {
 	ControlRef carbonControl = getCarbonControl();
 	SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -91,10 +91,10 @@ void DGTextDisplay::mouseTrack(Point *P, bool with_option, bool with_shift)
 		precision = 10;
 //	SInt32 subtle = (SInt32) getResolution();
 	SInt32 subtle = 10;
-	if ( P->h > (getBounds()->w / 2) )
+	if ( inPos.h > (getBounds()->w / 2) )
 		subtle = 1;
 
-	SInt32 dy = last_Y - P->v;
+	SInt32 dy = last_Y - inPos.v;
 	if (abs(dy) > precision)
 	{
 		dy /= precision;
@@ -104,12 +104,12 @@ void DGTextDisplay::mouseTrack(Point *P, bool with_option, bool with_shift)
 		if (val < 0)
 			val = 0;
 		SetControl32BitValue(carbonControl, val);
-		last_Y = P->v;
+		last_Y = inPos.v;
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::mouseUp(Point *P, bool, bool)
+void DGTextDisplay::mouseUp(Point inPos, bool, bool)
 {
 }
 
@@ -168,7 +168,7 @@ void DGTextDisplay::drawText(CGContextRef context, CGRect& inBounds, const char 
 	if (alignment != kTextAlign_left)
 	{
 		CGContextSetTextDrawingMode(context, kCGTextInvisible);
-		CGContextShowTextAtPoint(context, 0, 0, inString, strlen(inString));
+		CGContextShowTextAtPoint(context, 0.0f, 0.0f, inString, strlen(inString));
 		CGPoint pt = CGContextGetTextPosition(context);
 		if (alignment == kTextAlign_center)
 			inBounds.origin.x += (inBounds.size.width - pt.x) / 2.0f;

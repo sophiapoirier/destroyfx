@@ -1,61 +1,3 @@
-/*
-
-CFBundleRef CFBundleGetBundleWithIdentifier(CFStringRef bundleID);
-CFURLRef CFBundleCopyResourceURL(CFBundleRef bundle, CFStringRef resourceName, CFStringRef resourceType, CFStringRef subDirName);
-
-
-// file:///coriander/Developer/Documentation/Carbon/text/ATSTypes/atstypes.html
-
-OSStatus 
-ATSFontActivateFromFileSpecification(
-const FSSpec *         iFile,
-ATSFontContext         iContext,	// kATSFontContextUnspecified, kATSFontContextGlobal, kATSFontContextLocal
-ATSFontFormat          iFormat,		// kATSFontFormatUnspecified
-void *                 iReserved,
-ATSOptionFlags         iOptions,	// undefined (?) UInt32
-ATSFontContainerRef *  oContainer)	// UInt32
-
-OSStatus 
-ATSFontActivateFromMemory(
-LogicalAddress         iData,
-ByteCount              iLength,
-ATSFontContext         iContext,
-ATSFontFormat          iFormat,
-void *                 iReserved,
-ATSOptionFlags         iOptions,
-ATSFontContainerRef *  oContainer)
-
-OSStatus 
-ATSFontDeactivate(
-ATSFontContainerRef   iContainer,
-void *                iRefCon,
-ATSOptionFlags        iOptions)
-
-
-
-// file:///coriander/Developer/Documentation/Carbon/text/FontManager/fontmanager.html
-
-// file:///coriander/Developer/Documentation/Carbon/text/FontManager/Managing_FontManager/fm_tasks/_Activating_ating_Fonts.html
-// file:///coriander/Developer/Documentation/Carbon/text/FontManager/Font_Manager/fmrefchapter/_Activating_ating_Fonts.html
-
-OSStatus FMActivateFonts (
-    const FSSpec *iFontContainer, 
-    const FMFilter *iFilter, 
-    void * iRefCon, 
-    OptionBits iOptions
-);
-
-OSStatus FMDeactivateFonts (
-    const FSSpec *iFontContainer, 
-    const FMFilter *iFilter, 
-    void * iRefCon, 
-    OptionBits iOptions
-);
-
-*/
-
-
-
 #include "transverbeditor.h"
 #include "transverb.hpp"
 
@@ -63,9 +5,6 @@ OSStatus FMDeactivateFonts (
 #include "dfxguislider.h"
 #include "dfxguibutton.h"
 #include "dfxguidisplay.h"
-
-
-#define SNOOT_FONT	"snoot.org pixel10"
 
 
 //-----------------------------------------------------------------------------
@@ -121,6 +60,9 @@ enum {
 	kSpeed1TextEdit = kSpeed1 + kSpeedTextEditOffset,
 	kSpeed2TextEdit = kSpeed2 + kSpeedTextEditOffset
 };
+
+
+#define SNOOT_FONT	"snoot.org pixel10"
 
 
 

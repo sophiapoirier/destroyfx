@@ -84,16 +84,21 @@ DfxGuiEditor::~DfxGuiEditor()
 	long systemVersion = 0;
 	if ( (Gestalt(gestaltSystemVersion, &systemVersion) == noErr) && ((systemVersion & 0xFFFF) >= 0x1023) )
 	{
-//printf("using Mac OS X version 10.2.3 or higher, so our control class will be unregistered\n");
+//printf("using Mac OS X version 10.2.3 or higher, so our control toolbox class will be unregistered\n");
 		if (dgControlSpec.u.classRef != NULL)
-			UnregisterToolboxObjectClass( (ToolboxObjectClassRef)(dgControlSpec.u.classRef) );
-		dgControlSpec.u.classRef = NULL;
-
-		if (controlHandlerUPP != NULL)
-			DisposeEventHandlerUPP(controlHandlerUPP);
-		controlHandlerUPP = NULL;
+		{
+			OSStatus unregResult = UnregisterToolboxObjectClass( (ToolboxObjectClassRef)(dgControlSpec.u.classRef) );
+			if (unregResult == noErr)
+			{
+				dgControlSpec.u.classRef = NULL;
+				if (controlHandlerUPP != NULL)
+					DisposeEventHandlerUPP(controlHandlerUPP);
+				controlHandlerUPP = NULL;
+			}
+//else printf("unregistering our control toolbox class FAILED, error %ld\n", unregResult);
+		}
 	}
-//else printf("using a version of Mac OS X lower than 10.2.3, so our control class will NOT be unregistered\n");
+//else printf("using a version of Mac OS X lower than 10.2.3, so our control toolbox class will NOT be unregistered\n");
 
 	// XXX should probably catch errors from activation and not attempt to deactivate if activation failed
 	if (fontsWereActivated)
@@ -126,23 +131,22 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		{ kEventClassControl, kEventControlContextualMenuClick } 
 	};
 
-	ToolboxObjectClassRef dgControlClass = NULL;
+	ToolboxObjectClassRef newControlClass = NULL;
 	controlHandlerUPP = NewEventHandlerUPP(DGControlEventHandler);
 	unsigned long instanceAddress = (unsigned long) this;
-	char toolboxClassIDstring[256];
 	bool noSuccessYet = true;
 	while (noSuccessYet)
 	{
-		sprintf(toolboxClassIDstring, "%s.DfxGuiControlClass%ld", PLUGIN_BUNDLE_IDENTIFIER, instanceAddress);
-		CFStringRef toolboxClassIDcfstring = CFStringCreateWithCString(kCFAllocatorDefault, toolboxClassIDstring, CFStringGetSystemEncoding());
+		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.DfxGuiControlClass%lu"), 
+																		PLUGIN_BUNDLE_IDENTIFIER, instanceAddress);
 		if ( RegisterToolboxObjectClass(toolboxClassIDcfstring, NULL, GetEventTypeCount(toolboxClassEvents), toolboxClassEvents, 
-										controlHandlerUPP, this, &dgControlClass) == noErr )
+										controlHandlerUPP, this, &newControlClass) == noErr )
 			noSuccessYet = false;
 		CFRelease(toolboxClassIDcfstring);
 		instanceAddress++;
 	}
 
-	dgControlSpec.u.classRef = dgControlClass;
+	dgControlSpec.u.classRef = newControlClass;
 
 
 // create the window event handler that supplements the control event handler by tracking mouse dragging, mouseover controls, etc.
@@ -463,8 +467,9 @@ bool DfxGuiEditor::getmidilearning()
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::resetmidilearn()
 {
+	bool nud;	// irrelavant
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ResetMidiLearn, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, NULL, sizeof(bool));
+				kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(bool));
 }
 
 //-----------------------------------------------------------------------------
@@ -506,7 +511,7 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 #endif
 
 	if (GetEventClass(inEvent) != kEventClassMouse)
-		return eventNotHandledErr;
+		return eventClassIncorrectErr;
 
 	UInt32 inEventKind = GetEventKind(inEvent);
 	DfxGuiEditor *ourOwnerEditor = (DfxGuiEditor*) inUserData;
@@ -522,7 +527,7 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 
 // follow the mouse around, see if it falls over any of our hot spots
 	if (inEventKind == kEventMouseMoved)
-return eventNotHandledErr;
+return eventKindIncorrectErr;
 /*
 	{
 		// remember current port
@@ -580,14 +585,14 @@ return eventNotHandledErr;
 //		EventMouseButton button;	// kEventMouseButtonPrimary, kEventMouseButtonSecondary, or kEventMouseButtonTertiary
 //		GetEventParameter(inEvent, kEventParamMouseButton, typeMouseButton, NULL, sizeof(EventMouseButton), NULL, &button);
 
-		ourControl->mouseTrack(&mouseLocation, with_option, with_shift);
+		ourControl->mouseTrack(mouseLocation, with_option, with_shift);
 
 		return noErr;
 	}
 
 	if (inEventKind == kEventMouseUp)
 	{
-		ourControl->mouseUp(&mouseLocation, with_option, with_shift);
+		ourControl->mouseUp(mouseLocation, with_option, with_shift);
 
 		ourOwnerEditor->setCurrentControl_clicked(NULL);
 		ourOwnerEditor->setRelaxed(false);
@@ -602,7 +607,7 @@ return eventNotHandledErr;
 		return noErr;
 	}
 
-	return eventNotHandledErr;
+	return eventKindIncorrectErr;
 }
 
 
@@ -610,7 +615,7 @@ return eventNotHandledErr;
 static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void *inUserData)
 {
 	if (GetEventClass(inEvent) != kEventClassControl)
-		return eventNotHandledErr;
+		return eventClassIncorrectErr;
 
 	OSStatus result = eventNotHandledErr;
 
@@ -668,7 +673,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 
 					// drawing
 					CGContextRef context;
-					QDBeginCGContext(windowPort, &context);            
+					QDBeginCGContext(windowPort, &context);
 					ClipCGContextToRegion(context, &portBounds, clipRgn);
 					DisposeRgn(clipRgn);
 					SyncCGContextOriginWithPort(context, windowPort);
@@ -756,7 +761,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					bool with_option = ( (modifiers & optionKey) || (modifiers & rightOptionKey) ) ? true : false;
 //					bool with_control = ( (modifiers & controlKey) || (modifiers & rightControlKey) ) ? true : false;
 
-					ourDGControl->mouseDown(&mouseLocation, with_option, with_shift);
+					ourDGControl->mouseDown(mouseLocation, with_option, with_shift);
 					ourOwnerEditor->setCurrentControl_clicked(ourDGControl);
 
 					result = noErr;
@@ -776,17 +781,17 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 
 						if (mouseResult == kMouseTrackingMouseDown)
 						{
-							ourDGControl->mouseDown(&mouseLocation, with_option, with_shift);
+							ourDGControl->mouseDown(mouseLocation, with_option, with_shift);
 //							printf("MouseDown\n");
 						}
 						else if (mouseResult == kMouseTrackingMouseDragged)
 						{
-							ourDGControl->mouseTrack(&mouseLocation, with_option, with_shift);
+							ourDGControl->mouseTrack(mouseLocation, with_option, with_shift);
 //							printf("MouseDragged\n");
 						}
 						else if (mouseResult == kMouseTrackingMouseUp)
 						{
-							ourDGControl->mouseUp(&mouseLocation, with_option, with_shift);
+							ourDGControl->mouseUp(mouseLocation, with_option, with_shift);
 //							printf("MouseUp\n");
 							break;
 						}

@@ -1,13 +1,9 @@
 /*--------------- by Marc Poirier  ][  March 2001 + October 2002 ---------------*/
 
-#ifndef __MONOMAKER_H
 #include "monomaker.hpp"
-#endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __MONOMAKEREDITOR_H
 	#include "monomakereditor.hpp"
-	#endif
 #endif
 
 
