@@ -10,9 +10,14 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 	unsigned long numChannels = getnumoutputs();
 	long numFramesToProcess = (signed)inNumFrames, totalSampleFrames = (signed)inNumFrames;	// for dividing up the block accoring to events
 	float SAMPLERATE = getsamplerate_f();
-	float dryGain = sqrtf(1.0f - dryWetMix);	// the gain of the input audio in the dry/wet mix
-	wetGain = sqrtf(dryWetMix);
-	bool mixDryAndWet = (dryWetMix < 1.0f);
+	float dryGain = 1.0f - dryWetMix;	// the gain of the input audio in the dry/wet mix
+	wetGain = dryWetMix;
+	if (dryWetMixMode == kDryWetMixMode_equalpower)
+	{
+		// sqare root for equal power blending of non-correlated signals
+		dryGain = sqrtf(dryGain);
+		wetGain = sqrtf(wetGain);
+	}
 
 
 	// clear the output buffer because we accumulate output into it
@@ -151,7 +156,7 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 	midistuff->numBlockEvents = 0;
 
 	// mix in the dry input (only if there is supposed to be some dry; let's not waste calculations)
-	if (mixDryAndWet)
+	if (dryWetMix < 1.0f)
 	{
 		for (unsigned long ch=0; ch < numChannels; ch++)
 		{

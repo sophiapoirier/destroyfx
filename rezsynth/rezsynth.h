@@ -34,6 +34,7 @@ enum
 	kGain,
 	kBetweenGain,
 	kDryWetMix,
+	kDryWetMixMode,
 	kWiseAmp,
 
 	NUM_PARAMETERS
@@ -56,6 +57,15 @@ enum
 	kSepMode_linear,
 
 	kNumSepModes
+};
+
+// these are the dry/wet mixing modes
+enum
+{
+	kDryWetMixMode_linear,
+	kDryWetMixMode_equalpower,
+
+	kNumDryWetMixModes
 };
 
 // these are the 3 states of the unaffected audio input between notes
@@ -110,6 +120,10 @@ public:
 	virtual ~RezSynth();
 
 	virtual void reset();
+	virtual bool createbuffers();
+	virtual void releasebuffers();
+	virtual void clearbuffers();
+
 	virtual void processparameters();
 	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
 
@@ -125,7 +139,7 @@ protected:
 	// parameters
 	double bandwidth, sepAmount_octaval, sepAmount_linear, pitchbendRange;
 	float attack, release, velCurve, velInfluence, gain, betweenGain, wetGain, dryWetMix;
-	int numBands, sepMode, scaleMode;
+	int numBands, sepMode, scaleMode, dryWetMixMode;
 	bool legato, fades, foldover, wiseAmp;
 
 	double *delay1amp;	// gains for the 1 sample delayed input, for each band

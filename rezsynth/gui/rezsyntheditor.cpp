@@ -6,6 +6,8 @@
 #include "rezsynth.hpp"
 #endif
 
+#include <stdio.h>
+
 
 //-----------------------------------------------------------------------------
 enum {
@@ -385,7 +387,7 @@ RezSynthEditor::RezSynthEditor(AudioEffect *effect)
 
 	sepAmountString = new char[256];
 
-	chunk = ((RezSynth*)effect)->chunk;	// this just simplifies pointing
+	chunk = ((DfxPlugin*)effect)->getsettings_ptr();	// this just simplifies pointing
 
 	faders = 0;
 	tallFaders = 0;
