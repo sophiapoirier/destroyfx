@@ -75,6 +75,12 @@ extern Boolean CFURLIsAUPreset(const CFURLRef inURL);
 extern Boolean FSRefIsAUPreset(const FSRef * inFileRef);
 extern OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef);
 
+// system services availability / version-checking stuff
+extern long GetMacOSVersion();
+extern long GetQuickTimeVersion();
+extern UInt32 GetAudioToolboxFrameworkVersion();
+extern Boolean IsAvailable_AU2rev1();
+
 
 
 #ifdef __cplusplus
