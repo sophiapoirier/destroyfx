@@ -1,0 +1,16 @@
+
+Intercom VST Plugin
+
+Part of the Super DestroyFX Plugin Pack
+By Marc 3 Poirier and Tom Murphy 7
+
+----------------------------------------------------------------------
+
+This plugin ruins your music by making it sound like it's being played
+through an intercom (in a way).
+
+This plugin works by filling soft parts in the input with noise, so
+that the entire clip has approximately the same RMS (volume). The
+"special" parameters control random movement of samples, for extra
+noise power.
+
