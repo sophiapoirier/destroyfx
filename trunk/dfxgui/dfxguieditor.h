@@ -55,6 +55,7 @@ public:
 	virtual bool HandleControlEvent(EventRef inEvent);
 	ControlDefSpec * getControlDefSpec()
 		{	return &dgControlSpec;	}
+	bool IsWindowCompositing();
 #endif
 
 	void automationgesture_begin(long inParameterID);
@@ -70,12 +71,10 @@ public:
 	// the below methods all handle communication between the GUI component and the music component
 	DfxPlugin * getdfxplugin()
 		{	return dfxplugin;	}
-	float getparameter_f(long inParameterID);
-	double getparameter_d(long inParameterID);
+	double getparameter_f(long inParameterID);
 	long getparameter_i(long inParameterID);
 	bool getparameter_b(long inParameterID);
-	void setparameter_f(long inParameterID, float inValue);
-	void setparameter_d(long inParameterID, double inValue);
+	void setparameter_f(long inParameterID, double inValue);
 	void setparameter_i(long inParameterID, long inValue);
 	void setparameter_b(long inParameterID, bool inValue);
 	void getparametervaluestring(long inParameterID, char * outText);
@@ -144,7 +143,7 @@ private:
 	EventHandlerUPP		controlHandlerUPP;
 	ControlDefSpec 		dgControlSpec;
 	EventHandlerUPP		windowEventHandlerUPP;
-	EventHandlerRef		windowEventEventHandlerRef;
+	EventHandlerRef		windowEventHandlerRef;
 
 	EventLoopTimerUPP	idleTimerUPP;
 	EventLoopTimerRef	idleTimer;
