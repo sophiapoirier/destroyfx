@@ -4,6 +4,8 @@
 
 #include "geometer.hpp"
 
+#include "dfxmisc.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
