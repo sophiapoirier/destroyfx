@@ -380,6 +380,10 @@ long TransverbEditor::open(float inXOffset, float inYOffset)
 	DGTextDisplay * display = new DGTextDisplay(this, kBsize, &pos2, bsizeDisplayProcedure, NULL, NULL, 
 										kDisplayTextSize, kDGTextAlign_right, kDisplayTextColor, SNOOT_FONT);
 
+	DGFineTuneButton * fineTuneButton = new DGFineTuneButton(this, kBsize, &pos3, gFineDownButton, -kFineTuneInc);
+	fineTuneButton = new DGFineTuneButton(this, kBsize, &pos4, gFineUpButton, kFineTuneInc);
+
+
 	// Make horizontal sliders and add them to the pane
 	pos.set(kTallFaderX, kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
 	for (long tag=kDrymix; tag <= kMix2; tag++)

@@ -38,12 +38,11 @@ const float BUFFER_MAX = 3000.0f;
 
 const long SMOOTH_DUR = 42;
 
+const long NUM_FIR_TAPS = 23;
+
 
 // this stuff is for the speed parameter adjustment mode switch on the GUI
 enum { kFineMode, kSemitoneMode, kOctaveMode, numSpeedModes };
-
-const long NUM_FIR_TAPS = 23;
-
 
 enum { dirtfi, hifi, ultrahifi, numQualities };
 
