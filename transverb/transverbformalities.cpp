@@ -105,9 +105,6 @@ TransverbDSP::TransverbDSP(DfxPlugin * inDfxPlugin)
   filter2 = new IIRfilter();
   firCoefficients1 = (float*) malloc(NUM_FIR_TAPS * sizeof(float));
   firCoefficients2 = (float*) malloc(NUM_FIR_TAPS * sizeof(float));
-
-  // increment the DSP core instance counter and fetch the current count
-  tomsound_sampoffset = ((Transverb*)inDfxPlugin)->addcore();
 }
 
 TransverbDSP::~TransverbDSP() {
@@ -126,9 +123,6 @@ TransverbDSP::~TransverbDSP() {
     free(firCoefficients2);
   firCoefficients2 = 0;
 
-  // decrement the DSP core instance counter
-  ((Transverb*)dfxplugin)->subtractcore();
-
   // must call here because ~DfxPluginCore can't do this for us
   releasebuffers();
 }
@@ -145,6 +139,7 @@ printf("calling TransverbDSP::reset()\n");
   filter1->reset();
   filter2->reset();
   speed1hasChanged = speed2hasChanged = true;
+  tomsound_sampoffset = GetChannelNum();
 }
 
 bool TransverbDSP::createbuffers() {
