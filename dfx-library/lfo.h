@@ -16,14 +16,14 @@
 // these are the 8 LFO waveforms:
 enum
 {
-	kSineLFO,
-	kTriangleLFO,
-	kSquareLFO,
-	kSawLFO,
-	kReverseSawLFO,
-	kThornLFO,
-	kRandomLFO,
-	kRandomInterpolatingLFO,
+	kLFOshape_sine,
+	kLFOshape_triangle,
+	kLFOshape_square,
+	kLFOshape_saw,
+	kLFOshape_reversesaw,
+	kLFOshape_thorn,
+	kLFOshape_random,
+	kLFOshape_randominterpolating,
 
 	numLFOshapes
 };
@@ -102,10 +102,10 @@ public:
 			// set up the sample smoothing if a discontiguous waveform's cycle just ended
 			switch (iShape)
 			{
-				case kSquareLFO     :
-				case kSawLFO        :
-				case kReverseSawLFO :
-				case kRandomLFO     :
+				case kLFOshape_square     :
+				case kLFOshape_saw        :
+				case kLFOshape_reversesaw :
+				case kLFOshape_random     :
 					smoothSamples = LFO_SMOOTH_DUR;
 				default:
 					break;
@@ -113,7 +113,7 @@ public:
 		}
 
 		// special check for the square waveform - it also needs smoothing at the half point
-		else if (iShape == kSquareLFO)
+		else if (iShape == kLFOshape_square)
 		{
 			// check to see if it has just passed the halfway point
 			if ( ((long)position >= SQUARE_HALF_POINT) && 
@@ -128,7 +128,7 @@ public:
 	{
 	  float randiScalar, outValue;
 
-		if (iShape == kRandomInterpolatingLFO)
+		if (iShape == kLFOshape_randominterpolating)
 		{
 			// calculate how far into this LFO cycle we are so far, scaled from 0.0 to 1.0
 			randiScalar = position * LFO_TABLE_STEP;
@@ -136,7 +136,7 @@ public:
 			outValue = (randomNumber * randiScalar) + (oldRandomNumber * (1.0f-randiScalar));
 		}
 		//
-		else if (iShape == kRandomLFO)
+		else if (iShape == kLFOshape_random)
 			outValue = randomNumber;
 		//
 		else

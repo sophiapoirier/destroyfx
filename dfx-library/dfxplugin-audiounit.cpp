@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our Audio Unit shit.
+written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_H
@@ -12,15 +13,23 @@ This is our Audio Unit shit.
 #pragma mark _________init_________
 
 //-----------------------------------------------------------------------------
+// this is like a second constructor, kind of
+// it is called when the Audio Unit is expected to be ready to process audio
+// this is where DSP-specific resources should be allocated
 ComponentResult DfxPlugin::Initialize()
 {
 	ComponentResult result = noErr;
 
+	// call the inherited class' Initialize routine
 	result = TARGET_API_BASE_CLASS::Initialize();	// XXX should I do this?
 
+	// call our initialize routine
 	if (result == noErr)
 		result = do_initialize();
 
+	// AU hosts aren't required to call Reset between Initialize and 
+	// beginning audio processing, so this makes sure that Reset happens, 
+	// in case the plugin depends on that
 	if (result == noErr)
 		Reset();
 
@@ -28,6 +37,8 @@ ComponentResult DfxPlugin::Initialize()
 }
 
 //-----------------------------------------------------------------------------
+// this is the "destructor" partner to Initialize
+// any DSP-specific resources should be released here
 void DfxPlugin::Cleanup()
 {
 	TARGET_API_BASE_CLASS::Cleanup();
@@ -36,6 +47,10 @@ void DfxPlugin::Cleanup()
 }
 
 //-----------------------------------------------------------------------------
+// this is called when an audio stream is broken somehow 
+// (playback stop/restart, change of playback position, etc.)
+// any DSP state variables should be reset here 
+// (contents of buffers, position trackers, IIR filter histories, etc.)
 void DfxPlugin::Reset()
 {
 	do_reset();
@@ -46,6 +61,9 @@ void DfxPlugin::Reset()
 #pragma mark _________info_________
 
 //-----------------------------------------------------------------------------
+// get basic information about Audio Unit Properties 
+// (whether they're supported, writability, and data size)
+// most properties are handled by inherited base class implementations
 ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					UInt32 &outDataSize, Boolean &outWritable)
@@ -64,19 +82,6 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 	#if TARGET_PLUGIN_USES_MIDI
 //		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
 //		MIDI controls and/or NRPN's to AudioUnit scopes/elements/parameters.
-//	typedef struct AudioUnitMIDIControlMapping {
-//		UInt16	midiNRPN;			// 0xFFFF if none
-								// MSB, LSB are in low 14 bits
-//		UInt8	midiControl;		// 0xFF if none
-								// must not use controls: 
-								//		0, 32 (bank select)
-								// 		6, 38 (data entry MSB/LSB), 
-								// 		96-101 (increment, decrement, RPN/NRPN select),
-								// 		120-127 (channel mode messages)
-//		UInt8					scope;
-//		AudioUnitElement		element;
-//		AudioUnitParameterID	parameter;
-//	};
 		case kAudioUnitProperty_MIDIControlMapping:
 			outDataSize = sizeof(AudioUnitMIDIControlMapping*);
 			outWritable = false;
@@ -92,6 +97,8 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 }
 
 //-----------------------------------------------------------------------------
+// get specific information about Audio Unit Properties
+// most properties are handled by inherited base class implementations
 ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					void *outData)
@@ -119,8 +126,23 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
-//			AudioUnitMIDIControlMapping *mcm = (AudioUnitMIDIControlMapping*)outData;
-			// XXX do something here
+			{
+				for (long i=0; i < numParameters; i++)
+				{
+					aumidicontrolmap[i].midiNRPN = 0xFFFF;	// this means "none"
+					aumidicontrolmap[i].midiControl = 0xFF;	// this means "none"
+					// but we might still have a CC assignment to share...
+					if (dfxsettings != NULL)
+					{
+						if (dfxsettings->getParameterAssignmentType(i) == kParamEventCC)
+							aumidicontrolmap[i].midiControl = dfxsettings->getParameterAssignmentNum(i);
+					}
+					aumidicontrolmap[i].scope = kAudioUnitScope_Global;
+					aumidicontrolmap[i].element = (AudioUnitElement) 0;
+					aumidicontrolmap[i].parameter = (AudioUnitParameterID) i;
+				}
+				*(AudioUnitMIDIControlMapping**)outData = aumidicontrolmap;
+			}
 			break;
 	#endif
 
@@ -133,6 +155,10 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 }
 
 //-----------------------------------------------------------------------------
+// give the host an array of the audio input/output channel configurations 
+// that the plugin supports
+// if the pointer passed in is NULL, then simply return the number of supported configurations
+// if any n-to-n configuration (i.e. same number of ins and outs) is supported, return 0
 UInt32 DfxPlugin::SupportedNumChannels(const AUChannelInfo **outInfo)
 {
 	if (channelconfigs)
@@ -161,10 +187,12 @@ Float64 DfxPlugin::GetTailTime()
 #pragma mark _________parameters_________
 
 //-----------------------------------------------------------------------------
+// get specific information about the properties of a parameter
 ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope, 
 					AudioUnitParameterID inParameterID, 
 					AudioUnitParameterInfo &outParameterInfo)
 {
+	// we're only handling the global scope
 	if (inScope != kAudioUnitScope_Global)
 		return kAudioUnitErr_InvalidScope;
 
@@ -175,6 +203,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	outParameterInfo.minValue = getparametermin_f(inParameterID);
 	outParameterInfo.maxValue = getparametermax_f(inParameterID);
 	outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
+	// all parameters are readable and writable
 	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
 							| kAudioUnitParameterFlag_IsWritable;
 
@@ -242,6 +271,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			break;
 
 		default:
+			// if we got to this point, try using the value type to determine the unit type
 			switch (getparametervaluetype(inParameterID))
 			{
 				case kDfxParamValueType_boolean:
@@ -260,14 +290,15 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	}
 
 
-
 	return noErr;
 }
 
 //-----------------------------------------------------------------------------
+// give the host an array of CFStrings with the display values for an indexed parameter
 ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, 
 					AudioUnitParameterID inParameterID, CFArrayRef *outStrings)
 {
+	// we're only handling the global scope
 	if (inScope != kAudioUnitScope_Global)
 		return kAudioUnitErr_InvalidScope;
 
@@ -277,9 +308,12 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 	if (getparameterunit(inParameterID) == kDfxParamUnit_strings)
 	{
 		CFStringRef * outArray = getparametervaluecfstrings(inParameterID);
+		// if we don't actually have strings set, exit with an error
 		if (outArray == NULL)
 			return kAudioUnitErr_InvalidProperty;
+		// in case the min is not 0, get the total count of items in the array
 		long numStrings = getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1;
+		// create a CFArray of the strings (the host will destroy the CFArray)
 		*outStrings = CFArrayCreate(NULL, (const void**)outArray, numStrings, NULL);
 		return noErr;
 	}
@@ -349,7 +383,7 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef *outData) const
 		if ( (presets[i].getname_ptr() != NULL) && (presets[i].getname_ptr()[0] != 0) )
 		{
 			aupresets[i].presetNumber = i;
-			//aupresets[i].presetName = getpresetcfname(i);
+//			aupresets[i].presetName = getpresetcfname(i);
 			aupresets[i].presetName = presets[i].getcfname();
 			CFArrayAppendValue(outArray, &(aupresets[i]));
 		}
@@ -361,15 +395,19 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef *outData) const
 }
 
 //-----------------------------------------------------------------------------
+// this is called as a request to load a preset
 OSStatus DfxPlugin::NewFactoryPresetSet(const AUPreset & inNewFactoryPreset)
 {
 	long newNumber = inNewFactoryPreset.presetNumber;
 
 	if ( !presetisvalid(newNumber) )
 		return kAudioUnitErr_InvalidPropertyValue;
+	// for AU, we are using invalid preset names as a way of saying "not a real preset," 
+	// even though it might be a valid (allocated) preset number
 	if ( !presetnameisvalid(newNumber) )
 		return kAudioUnitErr_InvalidPropertyValue;
 
+	// try to load the preset
 	if ( !loadpreset(newNumber) )
 		return kAudioUnitErr_InvalidPropertyValue;
 
@@ -581,11 +619,15 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 	const UInt8 * dfxdata = CFDataGetBytePtr(cfdata);
 	// the number of bytes of our data
 	unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
+	// try to restore the saved settings data
 	bool success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
 	if (!success)
 		return kAudioUnitErr_InvalidPropertyValue;
 	
 #else
+// XXX should we rethink this and load parameter settings if dfxsettings->restore() fails, or always before dfxsettings->restore()?
+	// load the parameter settings that were restored 
+	// by the inherited base class implementation of RestoreState
 	for (long i=0; i < numParameters; i++)
 		setparameter_f(i, TARGET_API_BASE_CLASS::GetParameter(i));
 
@@ -601,14 +643,18 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 #pragma mark _________dsp_________
 
 //-----------------------------------------------------------------------------
+// the host calls this to inform the plugin that it wants to start using 
+// a different audio stream format (sample rate, num channels, etc.)
 ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
 				const CAStreamBasicDescription &inPrevFormat, const CAStreamBasicDescription &inNewFormat)
 {
 //printf("\nDfxPlugin::ChangeStreamFormat,   newsr = %.3f,   oldsr = %.3f\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
+	// just use the inherited base class implementation
 	ComponentResult result = TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
 
 	if (result == noErr)
 	{
+		// react to changes in the number of channels or sampling rate
 		if ( (inNewFormat.mSampleRate != inPrevFormat.mSampleRate) || 
 //		if ( (inNewFormat.mSampleRate != getsamplerate()) || 
 				(inNewFormat.mChannelsPerFrame != inPrevFormat.mChannelsPerFrame) )
@@ -624,14 +670,20 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 }
 
 //-----------------------------------------------------------------------------
+// this is the audio processing routine
 OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags, 
 				const AudioBufferList &inBuffer, AudioBufferList &outBuffer, 
 				UInt32 inFramesToProcess)
 {
+printf("\tcalling DfxPlugin::ProcessBufferLists()\n");
 	OSStatus result = noErr;
+
+	// do any pre-DSP prep
 	preprocessaudio();
 
 #if TARGET_PLUGIN_USES_DSPCORE
+	// if the plugin uses DSP cores, then we just call the 
+	// inherited base class implementation, which handles "Kernels"
 	result = TARGET_API_BASE_CLASS::ProcessBufferLists(ioActionFlags, inBuffer, outBuffer, inFramesToProcess);
 
 #else
@@ -641,11 +693,12 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags
 	if ( (inNumBuffers < 1) || (outNumBuffers < 1) )
 		return kAudioUnitErr_FormatNotSupported;
 
+	// set up our more convenient audio stream pointers
 	for (UInt32 i=0; i < numInputs; i++)
-		inputsP[i] = (float*)inBuffer.mBuffers[i].mData;
+		inputsP[i] = (float*) (inBuffer.mBuffers[i].mData);
 	for (UInt32 i=0; i < numOutputs; i++)
 	{
-		outputsP[i] = (float*)outBuffer.mBuffers[i].mData;
+		outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
 		outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
 	}
 
@@ -656,7 +709,9 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags
 	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
 
 #endif
+// end of if/else TARGET_PLUGIN_USES_DSPCORE
 
+	// do any post-DSP stuff
 	postprocessaudio();
 
 	return result;

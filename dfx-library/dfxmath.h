@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our math shit.
+written by Tom Murphy 7 and Marc Poirier, 2001 - 2002
 ------------------------------------------------------------------------*/
 
 

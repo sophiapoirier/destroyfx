@@ -1,6 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
 This is our unexciting, but informative, demonstration DfxPlugin.
+written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 // This example uses preprocessor defines to designate code that you would 
@@ -204,6 +205,13 @@ void DfxStub::reset()
 // allocate your audio buffers here
 // this will be called when necessary, handled by DfxPlugin
 // return true on success, false on failure
+// note that createbuffers may be called repeatedly (with no 
+// releasebuffers called in between)
+// createbuffers is called whenever the audio stream format changes 
+// (sampling rate or number of channels), so it is expected that 
+// any implementation will check to see whether or not the 
+// buffers are already allocated and whether or not they need to 
+// be destroyed and reallocated in a different size
 #if TARGET_PLUGIN_USES_DSPCORE
 bool DfxStubDSP::createbuffers()
 {

@@ -1,7 +1,25 @@
 
 This is the DFX library, a collection of useful routines for
 writing VST plugins. It also includes several new controls for
-VSTGUI.
+VSTGUI.  Our base library code is comprised of the dfxplugin 
+and dfxparameter files, plus dfxmidi and dfxsettings for plugins 
+that use MIDI.
+
+dfxplugin has the base class that we derive from when making plugins.  
+The main functions that it serves are (1) making it really easy 
+to make a new plugin from scratch and (2) making it really easy 
+to support multiple plugin APIs (Audio Unit and VST at the moment).  
+
+dfxparameter has the parameter class with all kinds of fanciness 
+that we use in dfxplugins. 
+
+dfxmidi has MIDI handling and related routines.
+
+dfxsettings has routines for storing special plugin settings in 
+opaque data blocks and also for adding MIDI learn functionality 
+for fully MIDI control of all plugin parameters.  dfxsettings is 
+what vstchunk has now become.  vstchunk was just for VST, dfxsettings 
+is for our new DfxPlugin class.
 
 dfxgui contains a lot of useful GUI controls that are derived from 
 the VSTGUI library of controls (a library supplied by Steinberg 
@@ -11,6 +29,10 @@ There are descriptions of each control in the header.
 multikick is another custom GUI object derived from the VSTGUI.  
 It might as well be a part of dfxgui, but I think Tom was writing 
 this while I was writing stuff in dfxgui, or something like that.
+
+
+*** EVERYTHING BELOW THIS LINE IS IN THE PROCESS OF BEING OBSOLETED ***
+***                   DFXPLUGIN IS THE NEW WAY                      ***
 
 dfxmisc has number of handy stuff for making VST plugins.
 There are a few interpolation functions.

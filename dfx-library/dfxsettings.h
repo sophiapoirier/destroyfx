@@ -1,4 +1,4 @@
-// --- Destroy FX plugin data storage stuff by Marc Poirier  ][  April-July 2002 ---
+// Destroy FX plugin data storage stuff by Marc Poirier  ][  April-July + October 2002
 //
 // This is a class, some functions, and other relevant stuff for dealing 
 // with Destroy FX plugin settings data.
@@ -53,10 +53,6 @@
 
 #ifndef __DFXSETTINGS_H
 #define __DFXSETTINGS_H
-
-//#ifndef __DFXPLUGIN_H
-//#include "dfxplugin.h"
-//#endif
 
 
 //------------------------------------------------------
@@ -277,6 +273,10 @@ public:
 	// call these from valueChanged in the plugin editor
 	virtual void setParameterMidiLearn(float value);
 	virtual void setParameterMidiReset(float value);
+
+	// potentially useful accessors
+	long getParameterAssignmentType(long paramTag);
+	long getParameterAssignmentNum(long paramTag);
 
 
 	/* - - - - - - - - - version compatibility management - - - - - - - - - */
