@@ -159,6 +159,9 @@ property.  When setusevaluestrings(true) is called, memory is allocated
 for the value strings.
 ------------------------------------------------------------------------*/
 
+#ifdef WIN32
+  typedef __int64 int64_t;
+#endif
 
 #ifndef __DFXPARAMETER_H
 #define __DFXPARAMETER_H
