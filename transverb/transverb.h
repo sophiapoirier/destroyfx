@@ -1,6 +1,8 @@
 #ifndef __TOM7_TRANSVERB_H
 #define __TOM7_TRANSVERB_H
 
+/* DFX Transverb plugin by Tom 7 and Marc 3 */
+
 #include <audioeffectx.h>
 
 #ifdef WIN32
@@ -16,9 +18,16 @@
 #define PLUGINID 'DFtv'
 #define PLUGINNAME "DFX TRANSVERB"
 
-#define NUM_PARAMS 10
+#define NUM_PARAMS 12
 
 #define MAXBUF 16384
+
+#define SMOOTH_DUR 42
+
+enum { dirtfi, lofi, hifi } fidelity;
+
+#define qualityScaled(A) ( (long)((A)*2.7f) )
+
 
 struct param {
   float * ptr;
@@ -85,13 +94,79 @@ protected:
   float bsize, drymix;
   float mix1, dist1, speed1, feed1;
   float mix2, dist2, speed2, feed2;
+  float fQuality, fTomsound;
+  long quality;
+  bool tomsound;
 
   int writer;
   float read1, read2;
 
   float * buf[2];
+
+  int smoothcount1[2], smoothcount2[2], smoothdur1[2], smoothdur2[2];
+  float smoothstep1[2], smoothstep2[2], lastr1val[2], lastr2val[2];
 };
 
 #define FPARAM(pname, idx, nm, init, un) do { pname = (init); paramptrs[idx].ptr = &pname; paramptrs[idx].name = (nm); paramptrs[idx].units = (un); } while (0)
+
+
+inline float interpolateHermite (float *data, float address, 
+				 int arraysize, int danger) {
+  int pos, posMinus1, posPlus1, posPlus2;
+  float posFract, a, b, c;
+
+  pos = (long)address;
+  posFract = address - (float)pos;
+
+  // because the readers & writer are not necessarilly aligned, 
+  // upcoming or previous samples could be discontiguous, in which case 
+  // just "interpolate" with repeated samples
+  switch (danger) {
+    case 0:		// the previous sample is bogus
+      posMinus1 = pos;
+      posPlus1 = (pos+1) % arraysize;
+      posPlus2 = (pos+2) % arraysize;
+      break;
+    case 1:		// the next 2 samples are bogus
+      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
+      posPlus1 = posPlus2 = pos;
+      break;
+    case 2:		// the sample 2 steps ahead is bogus
+      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
+      posPlus1 = posPlus2 = (pos+1) % arraysize;
+      break;
+    default:	// everything's cool
+      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
+      posPlus1 = (pos+1) % arraysize;
+      posPlus2 = (pos+2) % arraysize;
+      break;
+    }
+
+  a = ( (3.0f*(data[pos]-data[posPlus1])) - 
+	 data[posMinus1] + data[posPlus2] ) * 0.5f;
+  b = (2.0f*data[posPlus1]) + data[posMinus1] - 
+         (2.5f*data[pos]) - (data[posPlus2]*0.5f);
+  c = (data[posPlus1] - data[posMinus1]) * 0.5f;
+
+  return ( ((a*posFract)+b) * posFract + c ) * posFract+data[pos];
+}
+
+inline float interpolateLinear (float *data, float address, 
+				int arraysize, int danger) {
+	int posPlus1, pos = (long)address;
+	float posFract = address - (float)pos;
+
+	if (danger == 1) {
+	  /* the upcoming sample is not contiguous because 
+	     the write head is about to write to it */
+	  posPlus1 = pos;
+	} else {
+	  // it's all right
+	  posPlus1 = pos + 1;
+	}
+	return (data[pos] * (1.0f-posFract)) + 
+	       (data[(posPlus1)%arraysize] * posFract);
+}
+
 
 #endif
