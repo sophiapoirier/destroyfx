@@ -148,8 +148,6 @@ SUPPORT_AU_VERSION_1
 	#endif
 #endif
 
-
-
 // handle base header includes and class names for the target plugin API
 
 // using Apple's Audio Unit API
@@ -182,6 +180,10 @@ SUPPORT_AU_VERSION_1
 	#define TARGET_API_BASE_INSTANCE_TYPE audioMasterCallback
 //	#define TARGET_API_CORE_CLASS 0	// none in VST
 	#define TARGET_API_CORE_INSTANCE_TYPE DfxPlugin
+
+#else
+
+        #error "You must define one of TARGET_API_VST or TARGET_API_AUDIOUNIT."
 
 #endif
 // end of target API check
@@ -419,7 +421,7 @@ public:
 	void postupdate_parameter(long parameterIndex);
 
 	DfxParamValue getparameter(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get();   else { DfxParamValue dummy; return dummy; }	}
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get();   else return DfxParamValue(); }
 	float getparameter_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_f();   else return 0.0f;	}
 	double getparameter_d(long parameterIndex)
@@ -977,7 +979,7 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 		AEffect *main(audioMasterCallback audioMaster);
 	#endif
 
-#define DFX_ENTRY(PluginClass)									\
+#define DFX_ENTRYPRE(PluginClass)									\
 	AEffect *main(audioMasterCallback audioMaster)				\
 	{															\
 		if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
@@ -990,19 +992,24 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 	}
 
 	#if WIN32
-		void *hInstance;
-		BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved)
-		{
-			hInstance = hInst;
-			return 1;
+        #define DFX_ENTRY(PC) DFX_ENTRYPRE(PC) \
+		void *hInstance; \
+		BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) { \
+		  hInstance = hInst; \
+		  return 1; \
 		}
-	#endif
+	#else
+
+        #define DFX_ENTRY(PC) DFX_ENTRYPRE(PC)
+
+        #endif
 
 	// we need to manage the DSP cores manually in VST
 	// call this in the plugin's constructor if it uses DSP cores for processing
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// XXX is there a better way to make an empty declaration?
-		#define DFX_CORE_ENTRY(PluginCoreClass)   const char acoivaXIjdASFfiXGjsASDldkfjXPVsd = 0
+                // tom replaced with just a single semicolon; should be better.
+		#define DFX_CORE_ENTRY(PluginCoreClass) ;
 		#define DFX_INIT_CORE(PluginCoreClass)   								\
 			for (long corecount=0; corecount < getnumoutputs(); corecount++)	\
 			{																	\
