@@ -16,6 +16,7 @@ written by Marc Poirier, October 2002
 void DfxPlugin::PostConstructor()
 {
 	TARGET_API_BASE_CLASS::PostConstructor();
+	auElementsHaveBeenCreated = true;
 
 	dfxplugin_postconstructor();
 
@@ -30,6 +31,35 @@ void DfxPlugin::PostConstructor()
 			AUBase::SetParameter(i, kAudioUnitScope_Global, (AudioUnitElement)0, getparameter_f(i), 0);
 	}
 
+	// make sure that the input and output elements are initially set to a supported number of channels, 
+	// if this plugin specifies a list of supported i/o channel-count pairs
+	if (channelconfigs != NULL)
+	{
+		const CAStreamBasicDescription curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0);
+		const CAStreamBasicDescription curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
+		bool currentFormatIsNotSupported = false;
+		for (long i=0; i < numchannelconfigs; i++)
+		{
+			// compare the input channel count
+			if ((UInt32)(channelconfigs[i].inChannels) != curInStreamFormat.mChannelsPerFrame)
+				currentFormatIsNotSupported = true;
+			// compare the output channel count
+			else if ((UInt32)(channelconfigs[i].outChannels) != curOutStreamFormat.mChannelsPerFrame)
+				currentFormatIsNotSupported = true;
+		}
+		// if the current format is not supported, then set the format to the first supported i/o pair in our list
+		if (currentFormatIsNotSupported)
+		{
+			// change the input channel count to the first supported one listed
+			CAStreamBasicDescription newStreamFormat(curInStreamFormat);
+			newStreamFormat.mChannelsPerFrame = (UInt32) (channelconfigs[0].inChannels);
+			AUBase::ChangeStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0, curInStreamFormat, newStreamFormat);
+			// change the output channel count to the first supported one listed
+			newStreamFormat = CAStreamBasicDescription(curOutStreamFormat);
+			newStreamFormat.mChannelsPerFrame = (UInt32) (channelconfigs[0].outChannels);
+			AUBase::ChangeStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0, curOutStreamFormat, newStreamFormat);
+		}
+	}
 
 // XXX some stuff that might worth adding an accessor for at some point or something...
 #if 0
@@ -725,11 +755,26 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	outParameterInfo.cfNameString = getparametercfname(inParameterID);
 	outParameterInfo.minValue = getparametermin_f(inParameterID);
 	outParameterInfo.maxValue = getparametermax_f(inParameterID);
-	outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
+	// XXX this might need a better solution (extend DfxParam to store initial value?)
+	// In AU, the "default value" means the value of the parameter when the plugin is first created.  
+	// This is not what I like to think of as the "default value" (I consider it to be a value that 
+	// is the closest thing to a "reset" or neutral or middle state that the parameter can have).  
+	// And hence, this is not what our getparameterdefault_x will return.  
+	// In most cases, our plugins store their initial state as the first built-in preset, 
+	// so here we are going to try to see if there is a first preset and, if so, rely on the 
+	// parameter value in there as the AU default value, but failing that, we'll use our DfxParam 
+	// default value.
+//	if ( presetisvalid(0) )
+//		outParameterInfo.defaultValue = getpresetparameter_f(0, inParameterID);
+//	else
+// XXX bzzzt!  no, now Bill Stewart says that our definition of default value is correct?
+		outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
 	// check if the parameter is used or not (stupid VST workaround)
 	if (getparameterattributes(inParameterID) & kDfxParamAttribute_unused)
+	{
 		outParameterInfo.flags = 0;
 //		return kAudioUnitErr_InvalidParameter;	// XXX ey?
+	}
 	// if the parameter is hidden, then indicate that it's not readable or writable...
 	else if (getparameterattributes(inParameterID) & kDfxParamAttribute_hidden)
 		outParameterInfo.flags = 0;
@@ -740,8 +785,8 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	if (outParameterInfo.cfNameString != NULL)
 		outParameterInfo.flags |= kAudioUnitParameterFlag_HasCFNameString;
 
-	// the complicated part:  getting the unit type, 
-	// but easy if we use value strings for value display
+	// the complicated part:  getting the unit type 
+	// (but easy if we use value strings for value display)
 	if (getparameterusevaluestrings(inParameterID))
 		outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
 	else
@@ -924,7 +969,7 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 			aupresets[i].presetNumber = i;
 //			aupresets[i].presetName = getpresetcfname(i);
 			aupresets[i].presetName = presets[i].getcfname();
-			CFArrayAppendValue(outArray, &(aupresets[i]));
+			CFArrayAppendValue( outArray, &(aupresets[i]) );
 		}
 	}
 
@@ -958,6 +1003,7 @@ OSStatus DfxPlugin::NewFactoryPresetSet(const AUPreset & inNewFactoryPreset)
 #pragma mark _________state_________
 
 static const CFStringRef kDfxDataDictionaryKeyString = CFSTR("destroyfx-data");
+
 //-----------------------------------------------------------------------------
 // stores the values of all parameters values, state info, etc. into a CFPropertyListRef
 ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
@@ -969,14 +1015,17 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
 #if TARGET_PLUGIN_USES_MIDI
 	// create a CF data storage thingy for our special data
 	CFMutableDataRef cfdata = CFDataCreateMutable(kCFAllocatorDefault, 0);
-	void * dfxdata;	// a pointer to our special data
+	void * dfxdata = NULL;	// a pointer to our special data
 	unsigned long dfxdatasize;	// the number of bytes of our data
 	// fetch our special data
-	dfxdatasize = dfxsettings->save( &dfxdata, true );
-	// put our special data into the CF data storage thingy
-	CFDataAppendBytes(cfdata, (UInt8*)dfxdata, (signed)dfxdatasize);
-	// put the CF data storage thingy into the dfx-data section of the CF dictionary
-	CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
+	dfxdatasize = dfxsettings->save(&dfxdata, true);
+	if ( (dfxdatasize > 0) && (dfxdata != NULL) )
+	{
+		// put our special data into the CF data storage thingy
+		CFDataAppendBytes(cfdata, (UInt8*)dfxdata, (signed)dfxdatasize);
+		// put the CF data storage thingy into the dfx-data section of the CF dictionary
+		CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
+	}
 	// cfdata belongs to us no more, bye bye...
 	CFRelease(cfdata);
 #endif
