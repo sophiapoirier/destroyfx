@@ -797,9 +797,9 @@ public:
 	void setlatencychanged(bool newstatus = true)
 		{	latencychanged = newstatus;	}
 	#if TARGET_PLUGIN_USES_DSPCORE
-		DfxPluginCore * getplugincore(long channel)
+		DfxPluginCore * getplugincore(unsigned long channel)
 		{
-			if ( (channel < 0) || (channel >= getnumoutputs()) )
+			if (channel >= getnumoutputs())
 				return NULL;
 			if (dspcores == NULL)
 				return NULL;
