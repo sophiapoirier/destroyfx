@@ -83,7 +83,7 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 	setparametervaluestring(kSpeedMode, kSpeedMode_robot, "robot");
 	setparametervaluestring(kSpeedMode, kSpeedMode_dj, "DJ");
 	// set the value strings for the octave range parameters
-	char * octavename = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH);
+	char octavename[DFX_PARAM_MAX_VALUE_STRING_LENGTH];
 	for (int i=getparametermin_i(kOctaveMin)+1; i <= getparametermax_i(kOctaveMin); i++)
 	{
 		sprintf(octavename, "%d", i);
@@ -99,7 +99,6 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 		setparametervaluestring(kOctaveMax, i, octavename);
 	}
 	setparametervaluestring(kOctaveMax, getparametermax_i(kOctaveMax), "no max");
-	free(octavename);
 
 
 	settailsize_seconds(SEEK_RANGE_MAX * 0.001f / SEEK_RATE_MIN);
