@@ -89,7 +89,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	#endif
 
 	EventTypeSpec toolboxClassEventList[] = { {kEventClassControl, kEventControlDraw}, 
-											  {kEventClassControl, kEventControlHit}, 
+//											  {kEventClassControl, kEventControlHit}, 
 											  {kEventClassControl, kEventControlTrack}, 
 											  {kEventClassControl, kEventControlClick}, 
 											  {kEventClassControl, kEventControlContextualMenuClick} };
@@ -187,7 +187,7 @@ void DfxGuiEditor::addControl(DGControl *inCtrl)
 	}
 
 	if (inCtrl->providesForeignControls())
-		inCtrl->initForeignControls(dgControlSpec);
+		inCtrl->initForeignControls(&dgControlSpec);
 	else
 	{
 		ControlRef newControl;
@@ -421,8 +421,6 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 
 static pascal OSStatus DGControlHandler(EventHandlerCallRef myHandler, EventRef inEvent, void *inUserData)
 {
-	#pragma unused (myHandler)
-
 	OSStatus result = eventNotHandledErr;
 
 	GrafPtr thePort;
@@ -436,7 +434,7 @@ static pascal OSStatus DGControlHandler(EventHandlerCallRef myHandler, EventRef 
 	
 	CGContextRef context;
 
-	UInt32 whatHappened = GetEventKind(inEvent);
+	UInt32 inEventKind = GetEventKind(inEvent);
 
 	GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &theControl);
 
@@ -451,12 +449,11 @@ static pascal OSStatus DGControlHandler(EventHandlerCallRef myHandler, EventRef 
 
 	if (theCtrl != NULL)
 	{
-//		printf ("Control exists!\n");
-		switch (whatHappened)
+		switch (inEventKind)
 		{
 			case kEventControlApplyBackground:
-				printf("Here is da background event\n");
 				break; 
+
 			case kEventControlDraw:
 //printf("DGControlHandler -> draw(%ld)   ---   mustUpdate = %s\n", (long)theCtrl, theCtrl->mustUpdate() ? "true" : "false");
 				if (theCtrl->mustUpdate() == false)
@@ -496,17 +493,16 @@ static pascal OSStatus DGControlHandler(EventHandlerCallRef myHandler, EventRef 
 
 				result = noErr;
 				break;
-            
-			case kEventControlHitTest:
-				result = noErr;
+
+			case kEventControlHit:
 				break;
-	
 
 case kEventMouseDragged:
 printf("draggin' da mouse...\n");
 			case kEventControlTrack:
 printf("trackin'\n");
 			case kEventControlClick:
+if (inEventKind == kEventControlClick) printf("kEventControlClick in DfxGui\n");
 			case kEventControlContextualMenuClick:
 				// prevent unnecessary draws
 				theOwnerEditor->setRelaxed(true);
@@ -561,7 +557,7 @@ printf("DGControlHandler -> TellListener(%ld, kMouseUpInControl)\n", theCtrl->ge
 	}
 
 	if ( (result != noErr) && (theCtrl != NULL) )
-		printf("DGControl ID = %ld,   event type = %ld\n", theCtrl->getID(), whatHappened);
+		printf("DGControl ID = %ld,   event type = %ld\n", theCtrl->getID(), inEventKind);
 
 	return result;
 }
