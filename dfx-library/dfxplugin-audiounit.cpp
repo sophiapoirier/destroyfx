@@ -739,9 +739,31 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		CFRetain(outParameterInfo.cfNameString);
 		outParameterInfo.flags |= kAudioUnitParameterFlag_CFNameRelease;
 	}
-	// so far, this is all that AU offers as far as parameter distribution curves go
-	if (getparametercurve(inParameterID) == kDfxParamCurve_log)
-		outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayLogarithmic;
+	switch (getparametercurve(inParameterID))
+	{
+		// so far, this is all that AU offers as far as parameter distribution curves go
+		case kDfxParamCurve_log:
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayLogarithmic;
+			break;
+		case kDfxParamCurve_sqrt:
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplaySquareRoot;
+			break;
+		case kDfxParamCurve_squared:
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplaySquared;
+			break;
+		case kDfxParamCurve_cubed:
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayCubed;
+			break;
+		case kDfxParamCurve_exp:
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayExponential;
+			break;
+// XXX currently no way to handle this with AU, except I guess by using HasName thingy, but I'd much rather not do that
+// XXX or maybe estimate?  like:  if (curveSpec < 1.0) DisplaySquareRoot; else if (curveSpec < 2.5) DisplaySquared; else DisplayCubed
+//		case kDfxParamCurve_pow:
+//			break;
+		default:
+			break;
+	}
 
 	// the complicated part:  getting the unit type 
 	// (but easy if we use value strings for value display)
@@ -818,7 +840,17 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 				outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
 				break;
 			case kDfxParamUnit_custom:
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+				{
+					outParameterInfo.unit = kAudioUnitParameterUnit_CustomUnit;
+					char customUnitString[DFX_PARAM_MAX_UNIT_STRING_LENGTH];
+					customUnitString[0] = 0;
+					getparameterunitstring(inParameterID, customUnitString);
+#ifdef __AUPropertiesPostPantherAdditions__H__
+					TEMP_SET_PARAMETER_UNIT_NAME(outParameterInfo, CFStringCreateWithCString(kCFAllocatorDefault, customUnitString, CFStringGetSystemEncoding()));
+#else
+					outParameterInfo.unitName = CFStringCreateWithCString(kCFAllocatorDefault, customUnitString, CFStringGetSystemEncoding());
+#endif
+				}
 				break;
 
 			default:
