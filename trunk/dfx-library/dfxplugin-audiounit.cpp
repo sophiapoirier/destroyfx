@@ -734,7 +734,11 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
 								| kAudioUnitParameterFlag_IsWritable;
 	if (outParameterInfo.cfNameString != NULL)
+	{
 		outParameterInfo.flags |= kAudioUnitParameterFlag_HasCFNameString;
+		CFRetain(outParameterInfo.cfNameString);
+		outParameterInfo.flags |= kAudioUnitParameterFlag_CFNameRelease;
+	}
 
 	// the complicated part:  getting the unit type 
 	// (but easy if we use value strings for value display)
