@@ -30,7 +30,7 @@
             <string name="viewFrame">111 58 272 20 </string>
             <ostype name="controlSignature">doma</ostype>
             <int name="controlID">129</int>
-            <string name="helpTagText">&quot;User&quot; is just for you, &quot;Local&quot; is for all users of your computer, and &quot;Network&quot; is for all computers on your network</string>
+            <string name="helpTagText">&quot;Gebruiker&quot; is voor u alleen, &quot;Lokaal&quot; is voor alle gebruikers van uw computer, en &quot;Netwerk&quot; is voor alle computers op uw netwerk</string>
             <int name="numRows">1</int>
             <int name="numCols">3</int>
             <array count="1" name="radioTitles">
@@ -48,7 +48,7 @@
             <int name="controlID">132</int>
             <string name="title">Kies andere locatie...</string>
             <ostype name="command">svas</ostype>
-            <string name="helpTagText">choose a specific location to save in rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)</string>
+            <string name="helpTagText">Kies een andere locatie dan de standaard locatie om in op te slaan (merk op: dit betekent dat uw presets niet gemakkelijk bereikbaar zullen zijn in andere host applicaties)</string>
           </object>
           <object class="IBCarbonButton" id="203">
             <string name="bounds">110 247 130 352 </string>
