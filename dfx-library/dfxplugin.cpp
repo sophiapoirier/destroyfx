@@ -318,8 +318,8 @@ void DfxPlugin::initparameter_f(long parameterIndex, const char * initName, doub
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_i(long parameterIndex, const char * initName, sint64 initValue, 
-						sint64 initDefaultValue, sint64 initMin, sint64 initMax, 
+void DfxPlugin::initparameter_i(long parameterIndex, const char * initName, int64_t initValue, 
+						int64_t initDefaultValue, int64_t initMin, int64_t initMax, 
 						DfxParamUnit initUnit, DfxParamCurve initCurve, 
 						const char * initCustomUnitString)
 {
@@ -349,8 +349,8 @@ void DfxPlugin::initparameter_b(long parameterIndex, const char * initName, bool
 //-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
-void DfxPlugin::initparameter_indexed(long parameterIndex, const char * initName, sint64 initValue, sint64 initDefaultValue, sint64 initNumItems, 
-						DfxParamUnit initUnit, const char * initCustomUnitString)
+void DfxPlugin::initparameter_indexed(long parameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
+						int64_t initNumItems, DfxParamUnit initUnit, const char * initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -385,7 +385,7 @@ void DfxPlugin::setparameter_f(long parameterIndex, double newValue)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_i(long parameterIndex, sint64 newValue)
+void DfxPlugin::setparameter_i(long parameterIndex, int64_t newValue)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -531,7 +531,7 @@ DfxParamUnit DfxPlugin::getparameterunit(long parameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::setparametervaluestring(long parameterIndex, sint64 stringIndex, const char * inText)
+bool DfxPlugin::setparametervaluestring(long parameterIndex, int64_t stringIndex, const char * inText)
 {
 	if (parameterisvalid(parameterIndex))
 		return parameters[parameterIndex].setvaluestring(stringIndex, inText);
@@ -540,7 +540,7 @@ bool DfxPlugin::setparametervaluestring(long parameterIndex, sint64 stringIndex,
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getparametervaluestring(long parameterIndex, sint64 stringIndex, char * outText)
+bool DfxPlugin::getparametervaluestring(long parameterIndex, int64_t stringIndex, char * outText)
 {
 	if (parameterisvalid(parameterIndex))
 		return parameters[parameterIndex].getvaluestring(stringIndex, outText);
@@ -549,7 +549,7 @@ bool DfxPlugin::getparametervaluestring(long parameterIndex, sint64 stringIndex,
 }
 
 //-----------------------------------------------------------------------------
-char * DfxPlugin::getparametervaluestring_ptr(long parameterIndex, sint64 stringIndex)
+char * DfxPlugin::getparametervaluestring_ptr(long parameterIndex, int64_t stringIndex)
 {	if (parameterisvalid(parameterIndex))
 		return parameters[parameterIndex].getvaluestring_ptr(stringIndex);
 	else
@@ -722,7 +722,7 @@ void DfxPlugin::setpresetparameter_f(long presetIndex, long parameterIndex, doub
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_i(long presetIndex, long parameterIndex, sint64 newValue)
+void DfxPlugin::setpresetparameter_i(long presetIndex, long parameterIndex, int64_t newValue)
 {
 	if ( parameterisvalid(parameterIndex) && presetisvalid(presetIndex) )
 		parameters[parameterIndex].accept_i(newValue, presets[presetIndex].values[parameterIndex]);
@@ -869,7 +869,7 @@ unsigned long DfxPlugin::getnumoutputs()
 
 //-----------------------------------------------------------------------------
 // add an audio input/output configuration to the array of i/o configurations
-void DfxPlugin::addchannelconfig(short numin, short numout)
+void DfxPlugin::addchannelconfig(short inNumInputChannels, short inNumOutputChannels)
 {
 	if (channelconfigs != NULL)
 	{
@@ -879,15 +879,15 @@ void DfxPlugin::addchannelconfig(short numin, short numout)
 		channelconfigs = (DfxChannelConfig*) malloc(sizeof(DfxChannelConfig) * (numchannelconfigs+1));
 		memcpy(channelconfigs, swapconfigs, sizeof(DfxChannelConfig) * numchannelconfigs);
 		free(swapconfigs);
-		channelconfigs[numchannelconfigs].inChannels = numin;
-		channelconfigs[numchannelconfigs].outChannels = numout;
+		channelconfigs[numchannelconfigs].inChannels = inNumInputChannels;
+		channelconfigs[numchannelconfigs].outChannels = inNumOutputChannels;
 		numchannelconfigs++;
 	}
 	else
 	{
 		channelconfigs = (DfxChannelConfig*) malloc(sizeof(DfxChannelConfig));
-		channelconfigs[0].inChannels = numin;
-		channelconfigs[0].outChannels = numout;
+		channelconfigs[0].inChannels = inNumInputChannels;
+		channelconfigs[0].outChannels = inNumOutputChannels;
 		numchannelconfigs = 1;
 	}
 }

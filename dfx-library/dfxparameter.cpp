@@ -121,7 +121,7 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 		case kDfxParamValueType_int:
 			if (min.i > max.i)
 			{
-				sint64 swap = max.i;
+				int64_t swap = max.i;
 				max.i = min.i;
 				min.i = swap;
 			}
@@ -158,8 +158,8 @@ void DfxParam::init_f(const char * initName, double initValue, double initDefaul
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
-void DfxParam::init_i(const char * initName, sint64 initValue, sint64 initDefaultValue, 
-							sint64 initMin, sint64 initMax, 
+void DfxParam::init_i(const char * initName, int64_t initValue, int64_t initDefaultValue, 
+							int64_t initMin, int64_t initMax, 
 							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	DfxParamValue val, def, mn, mx;
@@ -188,7 +188,7 @@ void DfxParam::releaseValueStrings()
 	// release the parameter value strings, if any
 	if (valueStrings != NULL)
 	{
-		for (sint64 i=0; i < numAllocatedValueStrings; i++)
+		for (int64_t i=0; i < numAllocatedValueStrings; i++)
 		{
 			if (valueStrings[i] != NULL)
 				free(valueStrings[i]);
@@ -202,7 +202,7 @@ void DfxParam::releaseValueStrings()
 		// release the CFString versions of the parameter value strings, if any
 		if (valueCFStrings != NULL)
 		{
-			for (sint64 i=0; i < numAllocatedValueStrings; i++)
+			for (int64_t i=0; i < numAllocatedValueStrings; i++)
 			{
 				if (valueCFStrings[i] != NULL)
 					CFRelease(valueCFStrings[i]);
@@ -229,7 +229,7 @@ void DfxParam::setusevaluestrings(bool newMode)
 		// determine how many items there are in the array from the parameter value range
 		numAllocatedValueStrings = getmax_i() - getmin_i() + 1;
 		valueStrings = (char**) malloc(numAllocatedValueStrings * sizeof(char*));
-		for (sint64 i=0; i < numAllocatedValueStrings; i++)
+		for (int64_t i=0; i < numAllocatedValueStrings; i++)
 		{
 			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(char));
 			valueStrings[i][0] = 0;	// default to empty strings
@@ -237,7 +237,7 @@ void DfxParam::setusevaluestrings(bool newMode)
 
 		#ifdef TARGET_API_AUDIOUNIT
 			valueCFStrings = (CFStringRef*) malloc(numAllocatedValueStrings * sizeof(CFStringRef));
-			for (sint64 i=0; i < numAllocatedValueStrings; i++)
+			for (int64_t i=0; i < numAllocatedValueStrings; i++)
 				valueCFStrings[i] = NULL;
 		#endif
 
@@ -247,7 +247,7 @@ void DfxParam::setusevaluestrings(bool newMode)
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-bool DfxParam::setvaluestring(sint64 index, const char * inText)
+bool DfxParam::setvaluestring(int64_t index, const char * inText)
 {
 	if (!ValueStringIndexIsValid(index))
 		return false;
@@ -257,7 +257,7 @@ bool DfxParam::setvaluestring(sint64 index, const char * inText)
 
 	// the actual index of the array is the incoming index 
 	// minus the parameter's minimum value
-	sint64 arrayIndex = index - getmin_i();
+	int64_t arrayIndex = index - getmin_i();
 	strncpy(valueStrings[arrayIndex], inText, DFX_PARAM_MAX_VALUE_STRING_LENGTH);
 	valueStrings[arrayIndex][DFX_PARAM_MAX_VALUE_STRING_LENGTH-1] = 0;
 
@@ -273,7 +273,7 @@ bool DfxParam::setvaluestring(sint64 index, const char * inText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the contents of a specific value string
-bool DfxParam::getvaluestring(sint64 index, char * outText)
+bool DfxParam::getvaluestring(int64_t index, char * outText)
 {
 	char * text = getvaluestring_ptr(index);
 
@@ -286,7 +286,7 @@ bool DfxParam::getvaluestring(sint64 index, char * outText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the pointer to a specific value string
-char * DfxParam::getvaluestring_ptr(sint64 index)
+char * DfxParam::getvaluestring_ptr(int64_t index)
 {
 	if (!ValueStringIndexIsValid(index))
 		return NULL;
@@ -296,7 +296,7 @@ char * DfxParam::getvaluestring_ptr(sint64 index)
 
 //-----------------------------------------------------------------------------
 // safety check for an index into the value strings array
-bool DfxParam::ValueStringIndexIsValid(sint64 index)
+bool DfxParam::ValueStringIndexIsValid(int64_t index)
 {
 	if ( !useValueStrings )
 		return false;
@@ -337,15 +337,15 @@ double DfxParam::derive_f(DfxParamValue inValue)
 //-----------------------------------------------------------------------------
 // figure out the value of a DfxParamValue as int type value
 // perform type conversion if int is not the parameter's "native" type
-sint64 DfxParam::derive_i(DfxParamValue inValue)
+int64_t DfxParam::derive_i(DfxParamValue inValue)
 {
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
 			if (inValue.f < 0.0)
-				return (sint64) (inValue.f - twiddle);
+				return (int64_t) (inValue.f - twiddle);
 			else
-				return (sint64) (inValue.f + twiddle);
+				return (int64_t) (inValue.f + twiddle);
 		case kDfxParamValueType_int:
 			return inValue.i;
 		case kDfxParamValueType_boolean:
@@ -441,11 +441,11 @@ bool DfxParam::accept_f(double inValue, DfxParamValue & outValue)
 			break;
 		case kDfxParamValueType_int:
 			{
-				sint64 oldvalue = outValue.i;
+				int64_t oldvalue = outValue.i;
 				if (inValue < 0.0)
-					outValue.i = (sint64) (inValue - twiddle);
+					outValue.i = (int64_t) (inValue - twiddle);
 				else
-					outValue.i = (sint64) (inValue + twiddle);
+					outValue.i = (int64_t) (inValue + twiddle);
 				if (outValue.i == oldvalue)
 					return false;
 			}
@@ -469,7 +469,7 @@ bool DfxParam::accept_f(double inValue, DfxParamValue & outValue)
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a int type
 // perform type conversion if int is not the parameter's "native" type
-bool DfxParam::accept_i(sint64 inValue, DfxParamValue & outValue)
+bool DfxParam::accept_i(int64_t inValue, DfxParamValue & outValue)
 {
 	switch (valueType)
 	{
@@ -478,7 +478,7 @@ bool DfxParam::accept_i(sint64 inValue, DfxParamValue & outValue)
 			break;
 		case kDfxParamValueType_int:
 			{
-				sint64 oldvalue = outValue.i;
+				int64_t oldvalue = outValue.i;
 				outValue.i = inValue;
 				if (outValue.i == oldvalue)
 					return false;
@@ -512,7 +512,7 @@ bool DfxParam::accept_b(bool inValue, DfxParamValue & outValue)
 			break;
 		case kDfxParamValueType_int:
 			{
-				sint64 oldvalue = outValue.i;
+				int64_t oldvalue = outValue.i;
 				outValue.i = (inValue ? 1 : 0);
 				if (outValue.i == oldvalue)
 					return false;
@@ -561,7 +561,7 @@ double expandparametervalue(double genValue, double minValue, double maxValue, D
 				else
 					tempval += twiddle;
 				// XXX is this a good way to do this?
-				return (double) ((sint64)tempval);
+				return (double) ((int64_t)tempval);
 			}
 		case kDfxParamCurve_sqrt:
 			return (sqrt(genValue) * valueRange) + minValue;
@@ -604,7 +604,7 @@ void DfxParam::set_f(double newValue)
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using an int type value
-void DfxParam::set_i(sint64 newValue)
+void DfxParam::set_i(int64_t newValue)
 {
 	bool changed_1 = accept_i(newValue, value);
 	bool changed_2 = limit();

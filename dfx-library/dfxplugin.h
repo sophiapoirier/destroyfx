@@ -344,28 +344,28 @@ public:
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_linear, 
 						const char * initCustomUnitString = NULL);
-	void initparameter_i(long parameterIndex, const char * initName, sint64 initValue, sint64 initDefaultValue, 
-						sint64 initMin, sint64 initMax, 
+	void initparameter_i(long parameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
+						int64_t initMin, int64_t initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_stepped, 
 						const char * initCustomUnitString = NULL);
 	void initparameter_b(long parameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined);
-	void initparameter_indexed(long parameterIndex, const char * initName, sint64 initValue, sint64 initDefaultValue, 
-						sint64 initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index, 
+	void initparameter_indexed(long parameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
+						int64_t initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index, 
 						const char * initCustomUnitString = NULL);
 
 	void setparameterusevaluestrings(long parameterIndex, bool newMode=true)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setusevaluestrings(newMode);	}
 	bool getparameterusevaluestrings(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getusevaluestrings();	else return false;	}
-	bool setparametervaluestring(long parameterIndex, sint64 stringIndex, const char * inText);
-	bool getparametervaluestring(long parameterIndex, sint64 stringIndex, char * outText);
+	bool setparametervaluestring(long parameterIndex, int64_t stringIndex, const char * inText);
+	bool getparametervaluestring(long parameterIndex, int64_t stringIndex, char * outText);
 	void getparameterunitstring(long parameterIndex, char * outText)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].getunitstring(outText);	}
 	void setparametercustomunitstring(long parameterIndex, const char * inText)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcustomunitstring(inText);	}
-	char * getparametervaluestring_ptr(long parameterIndex, sint64 stringIndex);
+	char * getparametervaluestring_ptr(long parameterIndex, int64_t stringIndex);
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef * getparametervaluecfstrings(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getvaluecfstrings();   else return NULL;	}
@@ -373,7 +373,7 @@ public:
 
 	void setparameter(long parameterIndex, DfxParamValue newValue);
 	void setparameter_f(long parameterIndex, double newValue);
-	void setparameter_i(long parameterIndex, sint64 newValue);
+	void setparameter_i(long parameterIndex, int64_t newValue);
 	void setparameter_b(long parameterIndex, bool newValue);
 	void setparameter_gen(long parameterIndex, double newValue);
 	// ***
@@ -387,7 +387,7 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get();   else return DfxParamValue(); }
 	double getparameter_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_f();   else return 0.0;	}
-	sint64 getparameter_i(long parameterIndex)
+	int64_t getparameter_i(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_i();   else return 0;	}
 	bool getparameter_b(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_b();   else return false;	}
@@ -398,11 +398,11 @@ public:
 
 	double getparametermin_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmin_f();   else return 0.0;	}
-	sint64 getparametermin_i(long parameterIndex)
+	int64_t getparametermin_i(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmin_i();   else return 0;	}
 	double getparametermax_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmax_f();   else return 0.0;	}
-	sint64 getparametermax_i(long parameterIndex)
+	int64_t getparametermax_i(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmax_i();   else return 0;	}
 	double getparameterdefault_f(long parameterIndex)
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getdefault_f();   else return 0.0;	}
@@ -461,7 +461,7 @@ public:
 		{	return currentPresetNum;	}
 	void setpresetparameter(long presetIndex, long parameterIndex, DfxParamValue newValue);
 	void setpresetparameter_f(long presetIndex, long parameterIndex, double newValue);
-	void setpresetparameter_i(long presetIndex, long parameterIndex, sint64 newValue);
+	void setpresetparameter_i(long presetIndex, long parameterIndex, int64_t newValue);
 	void setpresetparameter_b(long presetIndex, long parameterIndex, bool newValue);
 	void setpresetparameter_gen(long presetIndex, long parameterIndex, double genValue);
 	void update_preset(long presetIndex);
@@ -853,7 +853,7 @@ public:
 //		{	return dfxplugin->getparameter(inParameterIndex);	}
 	double getparameter_f(long inParameterIndex)
 		{	return dfxplugin->getparameter_f(inParameterIndex);	}
-	sint64 getparameter_i(long inParameterIndex)
+	int64_t getparameter_i(long inParameterIndex)
 		{	return dfxplugin->getparameter_i(inParameterIndex);	}
 	bool getparameter_b(long inParameterIndex)
 		{	return dfxplugin->getparameter_b(inParameterIndex);	}
@@ -861,11 +861,11 @@ public:
 		{	return dfxplugin->getparameter_scalar(inParameterIndex);	}
 	double getparametermin_f(long inParameterIndex)
 		{	return dfxplugin->getparametermin_f(inParameterIndex);	}
-	sint64 getparametermin_i(long inParameterIndex)
+	int64_t getparametermin_i(long inParameterIndex)
 		{	return dfxplugin->getparametermin_i(inParameterIndex);	}
 	double getparametermax_f(long inParameterIndex)
 		{	return dfxplugin->getparametermax_f(inParameterIndex);	}
-	sint64 getparametermax_i(long inParameterIndex)
+	int64_t getparametermax_i(long inParameterIndex)
 		{	return dfxplugin->getparametermax_i(inParameterIndex);	}
 	bool getparameterchanged(long inParameterIndex)
 		{	return dfxplugin->getparameterchanged(inParameterIndex);	}

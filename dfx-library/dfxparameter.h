@@ -172,24 +172,18 @@ for the value strings.
 
 
 
-#if TARGET_API_MAC_OSX
-typedef SInt64	sint64;
-#else
-typedef signed long long	sint64;
-#endif
-
 // the DfxParamValue struct holds every type of supported value variable type
 // all values (current, min, max, default) are stored in these
 typedef union {
 	double f;
-	sint64 i;
-	sint64 b;	// would be bool, but bool can vary in byte size depending on the compiler
+	int64_t i;
+	int64_t b;	// would be bool, but bool can vary in byte size depending on the compiler
 } DfxParamValue;
 
 // this is a structure for when a DfxParamValue needs to be archived for later use; 
 // it includes a tag specifying the value type that is valid in the DfxParamValue union
 typedef struct {
-	sint64 type;
+	int64_t type;
 	DfxParamValue v;
 } DfxParamValueExt;
 
@@ -276,8 +270,8 @@ public:
 					double initMin, double initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_linear);
-	void init_i(const char * initName, sint64 initValue, sint64 initDefaultValue, 
-					sint64 initMin, sint64 initMax, 
+	void init_i(const char * initName, int64_t initValue, int64_t initDefaultValue, 
+					int64_t initMin, int64_t initMax, 
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_stepped);
 	void init_b(const char * initName, bool initValue, bool initDefaultValue, 
@@ -290,13 +284,13 @@ public:
 	bool getusevaluestrings()
 		{	return useValueStrings;	}
 	// safety check for an index into the value strings array
-	bool ValueStringIndexIsValid(sint64 index);
+	bool ValueStringIndexIsValid(int64_t index);
 	// set a value string's text contents
-	bool setvaluestring(sint64 index, const char * inText);
+	bool setvaluestring(int64_t index, const char * inText);
 	// get a copy of the contents of a specific value string...
-	bool getvaluestring(sint64 index, char * outText);
+	bool getvaluestring(int64_t index, char * outText);
 	// ...or get a copy of the pointer to the value string
-	char * getvaluestring_ptr(sint64 index);
+	char * getvaluestring_ptr(int64_t index);
 #ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the array of CFString value strings
 	CFStringRef * getvaluecfstrings()
@@ -306,7 +300,7 @@ public:
 	// set the parameter's current value
 	void set(DfxParamValue newValue);
 	void set_f(double newValue);
-	void set_i(sint64 newValue);
+	void set_i(int64_t newValue);
 	void set_b(bool newValue);
 	// set the current value with a generic 0...1 float value
 	void set_gen(double genValue);
@@ -316,7 +310,7 @@ public:
 		{	return value;	}
 	double get_f()
 		{	return derive_f(value);	}
-	sint64 get_i()
+	int64_t get_i()
 		{	return derive_i(value);	}
 	bool get_b()
 		{	return derive_b(value);	}
@@ -328,7 +322,7 @@ public:
 		{	return min;	}
 	double getmin_f()
 		{	return derive_f(min);	}
-	sint64 getmin_i()
+	int64_t getmin_i()
 		{	return derive_i(min);	}
 	bool getmin_b()
 		{	return derive_b(min);	}
@@ -338,7 +332,7 @@ public:
 		{	return max;	}
 	double getmax_f()
 		{	return derive_f(max);	}
-	sint64 getmax_i()
+	int64_t getmax_i()
 		{	return derive_i(max);	}
 	bool getmax_b()
 		{	return derive_b(max);	}
@@ -348,7 +342,7 @@ public:
 		{	return defaultValue;	}
 	double getdefault_f()
 		{	return derive_f(defaultValue);	}
-	sint64 getdefault_i()
+	int64_t getdefault_i()
 		{	return derive_i(defaultValue);	}
 	bool getdefault_b()
 		{	return derive_b(defaultValue);	}
@@ -356,13 +350,13 @@ public:
 	// figure out the value of a DfxParamValue as a certain variable type
 	// perform type conversion if the desired variable type is not "native"
 	double derive_f(DfxParamValue inValue);
-	sint64 derive_i(DfxParamValue inValue);
+	int64_t derive_i(DfxParamValue inValue);
 	bool derive_b(DfxParamValue inValue);
 
 	// set a DfxParamValue with a value of a specific type
 	// perform type conversion if the incoming variable type is not "native"
 	bool accept_f(double inValue, DfxParamValue & outValue);
-	bool accept_i(sint64 inValue, DfxParamValue & outValue);
+	bool accept_i(int64_t inValue, DfxParamValue & outValue);
 	bool accept_b(bool inValue, DfxParamValue & outValue);
 
 	// expand and contract routines for setting and getting values generically
@@ -439,7 +433,7 @@ private:
 	double curvespec;	// special specification, like the exponent in kDfxParamCurve_pow
 	bool useValueStrings;	// whether or not to use an array of custom strings to display the parameter's value
 	char ** valueStrings;	// an array of strings for when useValueStrings is true
-	sint64 numAllocatedValueStrings;	// just to remember how many we allocated
+	int64_t numAllocatedValueStrings;	// just to remember how many we allocated
 	char * customUnitString;	// a text string display for parameters using custom unit types
 	bool changed;	// indicates if the value has changed
 	unsigned long attributes;	// a bit-mask of various parameter attributes
