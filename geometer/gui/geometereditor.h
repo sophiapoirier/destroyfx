@@ -77,6 +77,7 @@ private:
   CFineTuneButton *op3controlfinedownbutton;
   CFineTuneButton *op3controlfineupbutton;
   MultiKick *midilearnbutton;
+  MultiKick *midiresetbutton;
   CWebLink *destroyfxlink;
   CWebLink *smartelectronixlink;
 
@@ -118,6 +119,7 @@ private:
   CBitmap *g_opshelp;
   CBitmap *g_recreatehelp;
   CBitmap *g_midilearnbutton;
+  CBitmap *g_midiresetbutton;
   CBitmap *g_destroyfxlink;
   CBitmap *g_smartelectronixlink;
 

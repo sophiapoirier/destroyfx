@@ -102,8 +102,10 @@ PLUGIN::~PLUGIN() {
 }
 
 void PLUGIN::resume() {
-
-  if (changed) ioChanged();
+  /* XXX - I moved ioChanged to be called whenever the param is changed.
+     Do I still need it here?
+  */
+  //  if (changed) ioChanged();
 
   framesize = MKBUFSIZE(bufsizep);
   third = framesize / 2;
@@ -143,6 +145,7 @@ void PLUGIN::setParameter(long index, float value) {
   switch (index) {
   case P_BUFSIZE:
     changed = 1;
+    ioChanged();
     /* fallthrough */
   default:
     if (index >= 0 && index < NUM_PARAMS)
