@@ -142,7 +142,7 @@ void Skidder::processValley()
 		else
 		{
 			if (useRandomRate)
-				cycleRate = parameters[kRate_abs].expand(interpolateRandom(rateRandMinHz_gen, rateHz_gen));
+				cycleRate = (float) parameters[kRate_abs].expand(interpolateRandom(rateRandMinHz_gen, rateHz_gen));
 			else
 				cycleRate = rateHz;
 		}
@@ -404,7 +404,7 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 		// calculate the tempo at the current processing buffer
 		if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
 		{
-			currentTempoBPS = timeinfo.tempo_bps;
+			currentTempoBPS = (float) timeinfo.tempo_bps;
 			// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
 			if (timeinfo.playbackChanged)
 			{
@@ -417,13 +417,6 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 		{
 			currentTempoBPS = userTempo / 60.0f;
 			needResync = false;	// we don't want it true if we're not syncing to host tempo
-		}
-		//
-		// this is for notifying the GUI about updating the rate random range display
-		if ( (currentTempoBPS != oldTempoBPS) || mustUpdateTempoHasChanged )
-		{
-			tempoHasChanged = true;
-			mustUpdateTempoHasChanged = false;	// reset it now
 		}
 		oldTempoBPS = currentTempoBPS;
 	}

@@ -32,11 +32,8 @@ protected:
     virtual void idle();
 
 private:
-	float calculateTheCycleRate();
-
 	// controls
 	CHorizontalSlider *rateFader;
-	CHorizontalSlider *rateRandFactorFader;
 	CHorizontalSlider *tempoFader;
 	CHorizontalRangeSlider *pulsewidthFader;
 	CHorizontalSlider *slopeFader;
@@ -52,9 +49,6 @@ private:
 
 	// parameter value display boxes
 	CParamDisplay *rateDisplay;
-	CParamDisplay *rateRandFactorDisplay;
-	CParamDisplay *rangeDisplay;
-	CParamDisplay *rateRandRangeDisplay;
 	CTextEdit *tempoTextEdit;
 	CNumberBox *pulsewidthDisplay;
 	CParamDisplay *pulsewidthRandMinDisplay;
@@ -97,8 +91,6 @@ private:
 	static void rateDisplayConvert(float value, char *string, void *temporatestring);
 	static float theTempoSync;
 	char *tempoRateString;
-	float theCycleRate;	// the rate in Hz of the skidding cycles
-//	SkidderChunk *chunk;
 	DfxSettings *chunk;
 	long goError;
 	CHorizontalSlider **faders;

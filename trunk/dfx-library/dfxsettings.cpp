@@ -102,7 +102,7 @@ DfxSettings::DfxSettings(long magic, DfxPlugin *plugin, unsigned long sizeofExte
 	crisisBehaviour = kCrisisLoadWhatYouCan;
 
 	// allow for further constructor stuff, if necessary
-	init();
+	plugin->settings_init();
 }
 
 //-----------------------------------------------------------------------------
@@ -125,7 +125,7 @@ DfxSettings::~DfxSettings()
 	sharedChunk = NULL;
 
 	// allow for further destructor stuff, if necessary
-	uninit();
+	plugin->settings_cleanup();
 }
 
 //------------------------------------------------------
@@ -206,7 +206,7 @@ unsigned long DfxSettings::save(void **data, bool isPreset)
 		// reverse the order of bytes in the data being sent to the host, if necessary
 		correctEndian(sharedChunk, false, isPreset);
 		// allow for the storage of extra data
-		saveExtendedData((char*)sharedChunk+sizeofPresetChunk-sizeofExtendedData, isPreset);
+		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofPresetChunk-sizeofExtendedData, isPreset);
 
 		return sizeofPresetChunk;
 	}
@@ -233,7 +233,7 @@ unsigned long DfxSettings::save(void **data, bool isPreset)
 		// reverse the order of bytes in the data being sent to the host, if necessary
 		correctEndian(sharedChunk, false, isPreset);
 		// allow for the storage of extra data
-		saveExtendedData((char*)sharedChunk+sizeofChunk-sizeofExtendedData, isPreset);
+		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofChunk-sizeofExtendedData, isPreset);
 
 		return sizeofChunk;
 	}
@@ -372,7 +372,7 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 			#endif
 				plugin->setparameter_f(i, newPreset->params[mappedTag]);
 				// allow for additional tweaking of the stored parameter setting
-				doChunkRestoreSetParameterStuff(i, newPreset->params[mappedTag], newSettingsInfo->version);
+				plugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->params[mappedTag], newSettingsInfo->version);
 			}
 		}
 		// point to the next preset in the received data array
@@ -407,7 +407,7 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 				#endif
 					plugin->setpresetparameter_f(j, i, newPreset->params[mappedTag]);
 					// allow for additional tweaking of the stored parameter setting
-					doChunkRestoreSetParameterStuff(i, newPreset->params[mappedTag], newSettingsInfo->version, j);
+					plugin->settings_doChunkRestoreSetParameterStuff(i, newPreset->params[mappedTag], newSettingsInfo->version, j);
 				}
 			}
 			// point to the next preset in the received data array
@@ -445,7 +445,7 @@ if ( !(oldvst && isPreset) )
 #endif
 
 	// allow for the retrieval of extra data
-	restoreExtendedData((char*)data+sizeofChunk-newSettingsInfo->storedExtendedDataSize, 
+	plugin->settings_restoreExtendedData((char*)data+sizeofChunk-newSettingsInfo->storedExtendedDataSize, 
 						newSettingsInfo->storedExtendedDataSize, newSettingsInfo->version, isPreset);
 
 	if (paramMap)
@@ -553,7 +553,7 @@ void DfxSettings::handleMidi_assignParam(long eventType, long channel, long byte
 							learnerEventBehaviourFlags, learnerData1, learnerData2, 
 							learnerFData1, learnerFData2);
 				// this is an invitation to do something more, if necessary
-				doLearningAssignStuff(learner, eventType, channel, note1, 
+				plugin->settings_doLearningAssignStuff(learner, eventType, channel, note1, 
 										frameOffset, note2, 
 										learnerEventBehaviourFlags, learnerData1, 
 										learnerData2, learnerFData1, learnerFData2);
@@ -574,7 +574,7 @@ void DfxSettings::handleMidi_assignParam(long eventType, long channel, long byte
 					learnerEventBehaviourFlags, learnerData1, learnerData2, 
 					learnerFData1, learnerFData2);
 		// this is an invitation to do something more, if necessary
-		doLearningAssignStuff(learner, eventType, channel, byte1, 
+		plugin->settings_doLearningAssignStuff(learner, eventType, channel, byte1, 
 								frameOffset, 0, learnerEventBehaviourFlags, 
 								learnerData1, learnerData2, learnerFData1, learnerFData2);
 		// and then deactivate the current learner, the learning is complete
@@ -693,7 +693,7 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 		// automate the parameter with the value if we've reached this point
 		plugin->setparameter_gen(tag, fValue);
 		// this is an invitation to do something more, if necessary
-		doMidiAutomatedSetParameterStuff(tag, fValue, frameOffset);
+		plugin->settings_doMidiAutomatedSetParameterStuff(tag, fValue, frameOffset);
 
 	}	// end of parameters loop (for automation)
 }

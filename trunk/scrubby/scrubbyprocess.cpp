@@ -333,8 +333,7 @@ double Scrubby::processPitchConstraint(double readStep)
 //-----------------------------------------------------------------------------------------
 void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
 {
-	unsigned long numChannels = getnumoutputs();
-	unsigned long ch;
+	unsigned long ch, numChannels = getnumoutputs();
 
 //-------------------------SAFETY CHECK----------------------
 	// there must have not been available memory or something (like WaveLab goofing up), 

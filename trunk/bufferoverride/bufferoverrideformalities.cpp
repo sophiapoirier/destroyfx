@@ -138,7 +138,6 @@ void BufferOverride::reset()
 	pitchbend = 1.0;
 	oldPitchbend = 1.0;
 	divisorWasChangedByMIDI = divisorWasChangedByHand = false;
-	midistuff->reset();
 
 	needResync = true;	// some hosts may call resume when restarting playback
 }
