@@ -49,6 +49,7 @@ enum { P_BUFSIZE, P_SHAPE,
        P_BRIDE,
        P_BLOW,
        P_CONV,
+       P_HARM,
        P_ALOW,
        P_NORM,
        NUM_PARAMS};
@@ -237,6 +238,8 @@ protected:
   float convolve;
   float afterlow;
   float norm;
+
+  float harm;
 
 };
 
