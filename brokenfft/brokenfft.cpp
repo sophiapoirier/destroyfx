@@ -1,5 +1,5 @@
 
-/* brokenfft: $Id: brokenfft.cpp,v 1.3 2001-08-16 13:11:25 tom7 Exp $ */
+/* brokenfft: $Id: brokenfft.cpp,v 1.4 2001-09-02 05:05:51 tom7 Exp $ */
 
 #include <windows.h>
 #include <stdlib.h>
@@ -43,12 +43,11 @@ Fft::Fft(audioMasterCallback audioMaster)
   spike = 1.0;
   makeupgain = 0.0;
   amplhold = 1;
-  amplsamples = 0;
   stopat = 1;
   ampl = 0;
   spikehold = 0.0;
   echomix = 0.0;
-  echotime = 0.1;
+  echotime = 0.5;
   setNumInputs(1);		/* mono in/out */
   setNumOutputs(1);
   setUniqueID('T7BF');
@@ -60,11 +59,14 @@ Fft::Fft(audioMasterCallback audioMaster)
   echolow = 0.0;
   echohi = 1.0;
 
-  OVERLAP = 1;
+  OVERLAP = 5;
 
   echoctr = 0;
   echor = (float*)malloc(MAXECHO * sizeof(float));
   echoc = (float*)malloc(MAXECHO * sizeof(float));
+
+  ampl = (amplentry*)malloc(sizeof (amplentry) * MAXSAMPLES);
+  amplsamples = MAXSAMPLES;
 
   fftr = (float*)malloc(MAXSAMPLES * sizeof(float));
   ffti = (float*)malloc(MAXSAMPLES * sizeof(float));
@@ -574,8 +576,8 @@ void Fft::processX(float **inputs, float **outputs, long samples,
 
     fftr = (float*)malloc(buffersamples * sizeof(float));
     ffti = (float*)malloc(buffersamples * sizeof(float));
-    tmp = (float*)malloc(buffersamples * sizeof(float));
-    oot = (float*)malloc(buffersamples * sizeof(float));
+    tmp =  (float*)malloc(buffersamples * sizeof(float));
+    oot =  (float*)malloc(buffersamples * sizeof(float));
 
   }
 
@@ -588,7 +590,9 @@ void Fft::processX(float **inputs, float **outputs, long samples,
 
   fft_float(samples, 1, fftr, ffti, oot, tmp);
 
-  float overscale = (samples-OVERLAP) / (float)samples;
+  float overscale;
+  if (samples >= OVERLAP) overscale = 1.0;
+  else overscale =  (samples-OVERLAP) / (float)samples;
 
   /* process samples, fading at the beginning and stretching
      for an extra OVERLAP samples */
