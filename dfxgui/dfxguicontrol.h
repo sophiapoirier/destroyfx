@@ -97,6 +97,10 @@ public:
 	void setForeBounds(long x, long y, long w, long h);
 	void shrinkForeBounds(long x, long y, long w, long h);
 
+	void setDrawAlpha(float inAlpha);
+	float getDrawAlpha()
+		{	return drawAlpha;	}
+
  private:
 	// common constructor stuff
 	void init(DGRect * inRegion);
@@ -110,6 +114,7 @@ protected:
 
 	DGRect				where;		// the control's area
 	DGRect				vizArea; 	// where the foreground displays
+	float				drawAlpha;	// level of overall transparency to draw with (0.0 to 1.0)
 
 #ifdef TARGET_API_AUDIOUNIT
 	AUVParameter 		auvp;

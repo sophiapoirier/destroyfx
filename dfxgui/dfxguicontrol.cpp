@@ -36,6 +36,8 @@ void DGControl::init(DGRect * inRegion)
 	isContinuous = false;
 	fineTuneFactor = 12.0f;
 
+	drawAlpha = 1.0f;
+
 	// add this control to the owner editor's list of controls
 	getDfxGuiEditor()->addControl(this);
 }
@@ -55,6 +57,9 @@ void DGControl::do_draw(CGContextRef inContext, long inPortHeight)
 {
 	// redraw the background behind the control in case the control background has any transparency
 	getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+
+	CGContextSetAlpha(inContext, drawAlpha);
+
 	// then have the child control class do its drawing
 	draw(inContext, inPortHeight);
 }
@@ -204,6 +209,15 @@ void DGControl::setVisible(bool inVisibility)
 		else
 			HideControl(carbonControl);
 	}
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::setDrawAlpha(float inAlpha)
+{
+	float oldalpha = drawAlpha;
+	drawAlpha = inAlpha;
+	if (oldalpha != inAlpha)
+		redraw();
 }
 
 //-----------------------------------------------------------------------------
