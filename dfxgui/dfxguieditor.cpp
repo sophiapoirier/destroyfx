@@ -168,6 +168,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 // register for HitTest events on the background embedding pane so that we now when the mouse hovers over it
 	EventTypeSpec paneEvents[] = {
 								{ kEventClassControl, kEventControlDraw }, 
+								{ kEventClassControl, kEventControlApplyBackground },
 								{ kEventClassControl, kEventControlHitTest }
 								};
 	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
@@ -229,6 +230,7 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 				QDBeginCGContext(windowPort, &context);
 				SyncCGContextOriginWithPort(context, windowPort);
 				CGContextSaveGState(context);
+				CGContextSetShouldAntialias(context, false);	// XXX disable anti-aliased drawing for image rendering
 				DrawBackground(context, portBounds.bottom);
 				CGContextRestoreGState(context);
 				CGContextSynchronize(context);
@@ -240,6 +242,7 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 				return true;
 			}
 		}
+
 		// we want to catch when the mouse hovers over onto the background area
 		else if (inEventKind == kEventControlHitTest)
 		{
@@ -247,6 +250,12 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 			GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &control);
 			if (control == mCarbonPane)
 				setCurrentControl_mouseover(NULL);	// we don't count the background
+		}
+
+		else if (inEventKind == kEventControlApplyBackground)
+		{
+//			printf("mCarbonPane HandleEvent(kEventControlApplyBackground)\n");
+			return false;
 		}
 	}
 	
@@ -802,6 +811,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					DisposeRgn(clipRgn);
 					SyncCGContextOriginWithPort(context, windowPort);
 					CGContextSaveGState(context);
+					CGContextSetShouldAntialias(context, false);	// XXX disable anti-aliased drawing for image rendering
 					ourDGControl->draw(context, portBounds.bottom);
 					CGContextRestoreGState(context);
 					CGContextSynchronize(context);
