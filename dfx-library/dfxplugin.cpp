@@ -1673,19 +1673,14 @@ long launch_url(const char *urlstring)
 		return 3;
 
 #if MAC
-	OSStatus status = paramErr;	// unless proven otherwise, assume failure
-	CFStringRef urlcfstring = CFStringCreateWithCString(NULL, urlstring, kCFStringEncodingASCII);
-	if (urlcfstring != NULL)
+	CFURLRef urlcfurl = CFURLCreateWithBytes(kCFAllocatorDefault, (const UInt8*)urlstring, strlen(urlstring), kCFStringEncodingASCII, NULL);
+	if (urlcfurl != NULL)
 	{
-		CFURLRef urlcfurl = CFURLCreateWithString(NULL, urlcfstring, NULL);
-		if (urlcfurl != NULL)
-		{
-			status = LSOpenCFURLRef(urlcfurl, NULL);
-			CFRelease(urlcfurl);
-		}
-		CFRelease(urlcfstring);
+		OSStatus status = LSOpenCFURLRef(urlcfurl, NULL);	// try to launch the URL
+		CFRelease(urlcfurl);
+		return status;
 	}
-	return status;
+	return paramErr;	// couldn't create the CFURL, so return some error code
 #endif
 
 #if WIN32
