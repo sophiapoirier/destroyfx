@@ -128,7 +128,7 @@ PLUGIN_RES_ID
 PLUGIN_EDITOR_DESCRIPTION_STRING
 	a C string description of the plugin editor
 PLUGIN_EDITOR_ID
-	4-byte ID for the plugin (will base it off PLUGIN_ID if not defined)
+	4-byte ID for the plugin (will PLUGIN_ID if not defined)
 PLUGIN_EDITOR_RES_ID
 	component resource ID of the base plugin
 SUPPORT_AU_VERSION_1
