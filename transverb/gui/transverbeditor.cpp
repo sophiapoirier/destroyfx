@@ -4,8 +4,11 @@
 #include "transverbeditor.hpp"
 #endif
 
+#ifndef __TRANSVERB_H
+#include "transverb.hpp"
+#endif
+
 #include <stdio.h>
-#include <string.h>
 
 
 

@@ -19,38 +19,40 @@ DFX_ENTRY(RezSynth);
 //-----------------------------------------------------------------------------------------
 // initializations
 RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 18 parameters, 16 presets
+	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 19 parameters, 16 presets
 {
 	initparameter_d(kBandwidth, "bandwidth", 3.0, 3.0, 0.1, 300.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
 	initparameter_i(kNumBands, "# of bands", 1, 1, 1, 30, kDfxParamUnit_quantity, kDfxParamCurve_stepped);
 	initparameter_d(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
 	initparameter_d(kSepAmount_linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, kDfxParamUnit_scalar);	// % of center frequency
 	initparameter_indexed(kSepMode, "separation mode", kSepMode_octaval, kSepMode_octaval, kNumSepModes);
-	initparameter_b(kFoldover, "mistakes", false, false);
+	initparameter_b(kFoldover, "mistakes", true, false);
 	initparameter_f(kAttack, "attack", 3.0f, 3.0f, 0.0f, 3000.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_f(kRelease, "release", 300.0f, 300.0f, 0.0f, 3000.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_b(kFades, "nicer fades", false, false);
 	initparameter_b(kLegato, "legato", false, false);
-	initparameter_f(kVelInfluence, "velocity influence", 0.6f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_portion);
+//	initparameter_f(kVelInfluence, "velocity influence", 0.6f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_portion);
+	initparameter_f(kVelInfluence, "velocity influence", 60.0f, 100.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
 	initparameter_f(kVelCurve, "velocity curve", 2.0f, 1.0f, 0.3f, 3.0f, kDfxParamUnit_exponent);
 	initparameter_d(kPitchbendRange, "pitchbend range", 3.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamUnit_semitones);
 	initparameter_indexed(kScaleMode, "input gain mode", kScaleMode_rms, kScaleMode_none, kNumScaleModes);
 	initparameter_f(kGain, "output gain", 1.0f, 1.0f, 0.0f, 3.981f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kBetweenGain, "between gain", 0.0f, 1.0f, 0.0f, 3.981f, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kDryWetMix, "dry/wet mix", 100.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_drywetmix);
-	initparameter_b(kWiseAmp, "careful", false, false);
+	initparameter_indexed(kDryWetMixMode, "dry/wet mix mode", kDryWetMixMode_equalpower, kDryWetMixMode_linear, kNumDryWetMixModes);
+	initparameter_b(kWiseAmp, "careful", true, true);
 
 	setparametervaluestring(kSepMode, kSepMode_octaval, "octaval");
 	setparametervaluestring(kSepMode, kSepMode_linear, "linear");
 	setparametervaluestring(kScaleMode, kScaleMode_none, "no scaling");
 	setparametervaluestring(kScaleMode, kScaleMode_rms, "RMS normalize");
 	setparametervaluestring(kScaleMode, kScaleMode_peak, "peak normalize");
-//	case kFades :
-//		if (fades) strcpy(text, "nicer");
-//		else strcpy(text, "cheap");
-//	case kFoldover :
-//		if (foldover) strcpy(text, "allow");
-//		else strcpy(text, "resist");
+	setparametervaluestring(kDryWetMixMode, kDryWetMixMode_linear, "linear");
+	setparametervaluestring(kDryWetMixMode, kDryWetMixMode_equalpower, "equal power");
+//	setparametervaluestring(kFades, 0, "cheap");
+//	setparametervaluestring(kFades, 1, "nicer");
+//	setparametervaluestring(kFoldover, 0, "resist");
+//	setparametervaluestring(kFoldover, 1, "allow");
 
 
 	// allocate memory for these arrays
@@ -121,10 +123,36 @@ RezSynth::~RezSynth()
 			free(prevprevOut2Value[i]);
 		free(prevprevOut2Value);
 	}
+
+
+#if TARGET_API_VST
+	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
+	// so we need to call this manually here
+	do_cleanup();
+#endif
 }
 
 //-----------------------------------------------------------------------------------------
 void RezSynth::reset()
+{
+	// reset the unaffected between audio stuff
+	unaffectedState = unFadeIn;
+	unaffectedFadeSamples = 0;
+}
+
+//-----------------------------------------------------------------------------------------
+bool RezSynth::createbuffers()
+{
+	return true;
+}
+
+//-----------------------------------------------------------------------------------------
+void RezSynth::releasebuffers()
+{
+}
+
+//-----------------------------------------------------------------------------------------
+void RezSynth::clearbuffers()
 {
 	// zero out all of these feedback buffers
 	for (int i = 0; i < NUM_NOTES; i++)
@@ -137,10 +165,6 @@ void RezSynth::reset()
 			prevprevOut2Value[i][j] = 0.0;
 		}
 	}
-
-	// reset the unaffected between audio stuff
-	unaffectedState = unFadeIn;
-	unaffectedFadeSamples = 0;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -158,13 +182,14 @@ int oldNumBands = numBands;
 	release = getparameter_f(kRelease) * 0.001f;
 	fades = getparameter_b(kFades);	// true for nicer, false for cheap
 	legato = getparameter_b(kLegato);
-	velInfluence = getparameter_f(kVelInfluence);
+	velInfluence = getparameter_scalar(kVelInfluence);
 	velCurve = getparameter_f(kVelCurve);
 	pitchbendRange = getparameter_d(kPitchbendRange);
 	scaleMode = getparameter_i(kScaleMode);
 	gain = getparameter_f(kGain);	// max gain is +12 dB
 	betweenGain = getparameter_f(kBetweenGain);	// max betweenGain is +12 dB
 	dryWetMix = getparameter_scalar(kDryWetMix);
+	dryWetMixMode = getparameter_i(kDryWetMixMode);
 	wiseAmp = getparameter_b(kWiseAmp);
 
 	if (getparameterchanged(kNumBands))
