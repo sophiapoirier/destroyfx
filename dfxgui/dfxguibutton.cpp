@@ -240,6 +240,7 @@ DGWebLink::~DGWebLink()
 	urlString = NULL;
 }
 
+// XXX we should really move stuff like launch_url into a separate DFX utilities file or something like that
 #include "dfxplugin.h"	// for the launch_url function
 //-----------------------------------------------------------------------------
 // The mouse behaviour of our web link button is more like that of a standard 
