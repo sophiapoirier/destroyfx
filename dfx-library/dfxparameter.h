@@ -146,15 +146,18 @@ parameter unit types (Hz, ms, gain, percent, etc.).
 
 There are a couple of special unit types.  kDfxParamUnit_index indicates 
 that the parameter values represent integer index values for an array.  
-kDfxParamUnit_strings is a special variation of kDfxParamUnit_index.  
-It similarly indicates that the parameter values are indexes for an 
-array, but additionally it indicates that there is an array of text 
+kDfxParamUnit_custom indicates that there is a custom text string with 
+a name for the unit type.  setcustomunitstring is used to set the 
+text for the custom unit name, and getunitstring will get it (as well 
+as text names for any other non-custom unit types).
+
+Settings useValueStrings true indicates that there is an array of text 
 strings that should be used for displaying the parameter's value for a 
 given index value.  There are routines for getting and setting the text 
 for these value strings (setvaluestring, getvaluestring, 
-getvaluestring_ptr, etc.).  
-When a parameter with unit type kDfxParamUnit_strings is initialized, 
-memory is allocated for the value strings.
+getvaluestring_ptr, etc.), and setusevaluestrings is used to set this 
+property.  When setusevaluestrings(true) is called, memory is allocated 
+for the value strings.
 ------------------------------------------------------------------------*/
 
 
@@ -167,9 +170,10 @@ memory is allocated for the value strings.
 #endif
 
 
-#define DFX_PARAM_MAX_NAME_LENGTH 64
-#define DFX_PRESET_MAX_NAME_LENGTH 64
-#define DFX_PARAM_MAX_VALUE_STRING_LENGTH 256
+#define DFX_PARAM_MAX_NAME_LENGTH	64
+#define DFX_PRESET_MAX_NAME_LENGTH	64
+#define DFX_PARAM_MAX_VALUE_STRING_LENGTH	256
+#define DFX_PARAM_MAX_UNIT_STRING_LENGTH	256
 
 
 
@@ -183,17 +187,6 @@ struct DfxParamValue {
 	unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
 	char c;
 	unsigned char uc;
-};
-
-
-// this is something that we probably won't use
-// since it's easier to pass a value by reference than to specify a scope
-enum DfxParamElement {
-	kDfxParamElement_current,
-	kDfxParamElement_previous,
-	kDfxParamElement_min,
-	kDfxParamElement_max,
-	kDfxParamElement_default
 };
 
 
@@ -236,7 +229,8 @@ enum DfxParamUnit {
 	kDfxParamUnit_bpm,
 	kDfxParamUnit_beats,
 	kDfxParamUnit_index,	// this indicates that the parameter value is an index into some array
-	kDfxParamUnit_strings	// index, using array of custom text strings for modes/states/etc.
+//	kDfxParamUnit_strings,	// index, using array of custom text strings for modes/states/etc.
+	kDfxParamUnit_custom	// with a text string lable for custom display
 };
 
 
@@ -287,9 +281,14 @@ public:
 					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 					DfxParamCurve initCurve = kDfxParamCurve_linear);
 	void init_b(const char *initName, bool initValue, bool initDefaultValue, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear);
+					DfxParamUnit initUnit = kDfxParamUnit_undefined);
 
+	// release memory for the value strings arrays
+	void releaseValueStrings();
+	// set/get whether or not to use an array of strings for custom value display
+	void setusevaluestrings(bool newMode=true);
+	bool getusevaluestrings()
+		{	return useValueStrings;	}
 	// safety check for an index into the value strings array
 	bool ValueStringIndexIsValid(long index);
 	// set a value string's text contents
@@ -399,7 +398,7 @@ public:
 		{	return enforceValueLimits;	}
 
 	// get a copy of the text of the parameter name
-	void getname(char *text);
+	void getname(char *outText);
 
 	// set/get the variable type of the parameter values
 	void setvaluetype(DfxParamValueType newType);
@@ -410,6 +409,8 @@ public:
 	void setunit(DfxParamUnit newUnit);
 	DfxParamUnit getunit()
 		{	return unit;	}
+	void getunitstring(char *outText);
+	void setcustomunitstring(const char *inText);
 
 	// set/get possibly-necessary extra specification about the value distribution curve
 	void setcurvespec(double newcurvespec)
@@ -442,7 +443,10 @@ protected:
 	DfxParamUnit unit;	// the unit type of the parameter
 	DfxParamCurve curve;	// the shape of the distribution of parameter values
 	double curvespec;	// special specification, like the exponent in kDfxParamCurve_pow
-	char **valueStrings;	// an array of strings for kDfxParamUnit_strings
+	bool useValueStrings;	// whether or not to use an array of custom strings to display the parameter's value
+	char **valueStrings;	// an array of strings for when useValueStrings is true
+	long numAllocatedValueStrings;	// just to remember how many we allocated
+	char *customUnitString;	// a text string display for parameters using custom unit types
 	bool changed;	// indicates if the value has changed
 	bool hidden;	// indicates if the parameter might be only for internal use
 

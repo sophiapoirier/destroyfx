@@ -290,6 +290,12 @@ void DfxPlugin::getParameterName(long index, char *name)
 // numerical display of each parameter's gradiations
 void DfxPlugin::getParameterDisplay(long index, char *text)
 {
+	if (getparameterusevaluestrings(index))
+	{
+		getparametervaluestring(index, getparameter_i(index), text);
+		return;
+	}
+
 	switch (getparametervaluetype(index))
 	{
 		case kDfxParamValueType_float:
@@ -326,81 +332,7 @@ void DfxPlugin::getParameterDisplay(long index, char *text)
 // unit of measure for each parameter
 void DfxPlugin::getParameterLabel(long index, char *label)
 {
-	switch (getparameterunit(index))
-	{
-		case kDfxParamUnit_generic:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_quantity:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_percent:
-			strcpy(label, "%%");
-			break;
-		case kDfxParamUnit_portion:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_lineargain:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_decibles:
-			strcpy(label, "dB");
-			break;
-		case kDfxParamUnit_drywetmix:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_hz:
-			strcpy(label, "Hz");
-			break;
-		case kDfxParamUnit_seconds:
-			strcpy(label, "seconds");
-			break;
-		case kDfxParamUnit_ms:
-			strcpy(label, "ms");
-			break;
-		case kDfxParamUnit_samples:
-			strcpy(label, "samples");
-			break;
-		case kDfxParamUnit_scalar:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_divisor:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_exponent:
-			strcpy(label, "exponent");
-			break;
-		case kDfxParamUnit_semitones:
-			strcpy(label, "semitones");
-			break;
-		case kDfxParamUnit_octaves:
-			strcpy(label, "octaves");
-			break;
-		case kDfxParamUnit_cents:
-			strcpy(label, "cents");
-			break;
-		case kDfxParamUnit_notes:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_pan:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_bpm:
-			strcpy(label, "bpm");
-			break;
-		case kDfxParamUnit_beats:
-			strcpy(label, "beats");
-			break;
-		case kDfxParamUnit_index:
-			strcpy(label, "");
-			break;
-		case kDfxParamUnit_strings:
-			getparametervaluestring(index, getparameter_i(index), label);
-			break;
-		case kDfxParamUnit_undefined:
-		default:
-			break;
-	}
+	getparameterunitstring(index, label);
 }
 
 
