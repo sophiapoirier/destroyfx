@@ -120,8 +120,8 @@ enum {
 
 //-----------------------------------------------------------------------------
 
-void midilearnBufferOverride(UInt32 value, void *editor);
-void midilearnBufferOverride(UInt32 value, void *editor)
+void midilearnBufferOverride(SInt32 value, void *editor);
+void midilearnBufferOverride(SInt32 value, void *editor)
 {
 	if (editor != NULL)
 	{
@@ -132,15 +132,15 @@ void midilearnBufferOverride(UInt32 value, void *editor)
 	}
 }
 
-void midiresetBufferOverride(UInt32 value, void *editor);
-void midiresetBufferOverride(UInt32 value, void *editor)
+void midiresetBufferOverride(SInt32 value, void *editor);
+void midiresetBufferOverride(SInt32 value, void *editor)
 {
 	if ( (editor != NULL) && (value != 0) )
 		((DfxGuiEditor*)editor)->resetmidilearn();
 }
 
-void linkKickButtonsDownProc(UInt32, void *otherbutton);
-void linkKickButtonsDownProc(UInt32, void *otherbutton)
+void linkKickButtonsDownProc(SInt32, void *otherbutton);
+void linkKickButtonsDownProc(SInt32, void *otherbutton)
 {
 	if (otherbutton != NULL)
 	{
@@ -149,8 +149,8 @@ void linkKickButtonsDownProc(UInt32, void *otherbutton)
 	}
 }
 
-void linkKickButtonsUpProc(UInt32, void *otherbutton);
-void linkKickButtonsUpProc(UInt32, void *otherbutton)
+void linkKickButtonsUpProc(SInt32, void *otherbutton);
+void linkKickButtonsUpProc(SInt32, void *otherbutton)
 {
 	if (otherbutton != NULL)
 	{
