@@ -5,25 +5,36 @@
 #include "dfxguidisplay.h"
 #include "dfxguibutton.h"
 
+#include "dfx-au-utilities.h"
+
 
 //-----------------------------------------------------------------------------
 enum {
 	// positions
 	kWideFaderX = 138 - 2,
 	kWideFaderY = 68 - 7,
+	kWideFaderX_panther = 141 - 2,
+	kWideFaderY_panther = 64 - 7,
 	kWideFaderInc = 40,
 
 	kTallFaderX = 138 - 7,
 	kTallFaderY = 196 - 2,
+	kTallFaderX_panther = 141 - 7,
+	kTallFaderY_panther = 192 - 2,
 	kTallFaderInc = 48,
 
-	kDisplayX = 348,
-	kDisplayY = kWideFaderY + 2,
+	kDisplayOffsetX = 212,
+	kDisplayOffsetY = 2,
 	kDisplayWidth = 81,
 	kDisplayHeight = 12,
+
+	kHostSyncButtonX = 56,
+	kHostSyncButtonY = 160,
 	
 	kDestroyFXlinkX = 158,
-	kDestroyFXlinkY = 12
+	kDestroyFXlinkY = 12,
+	kDestroyFXlinkX_panther = 159,
+	kDestroyFXlinkY_panther = 11
 };
 
 
@@ -181,19 +192,50 @@ EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
 //-----------------------------------------------------------------------------
 long EQSyncEditor::open()
 {
-	// load some images
+	long wideFaderX = kWideFaderX;
+	long wideFaderY = kWideFaderY;
+	long tallFaderX = kTallFaderX;
+	long tallFaderY = kTallFaderY;
+	long destroyFXlinkX = kDestroyFXlinkX;
+	long destroyFXlinkY = kDestroyFXlinkY;
 
-	// background image
-	DGImage * gBackground = new DGImage("eq-sync-background.png", this);
+	DGImage * gBackground = NULL;
+	DGImage * gHorizontalSliderBackground = NULL;
+	DGImage * gVerticalSliderBackground = NULL;
+	DGImage * gSliderHandle = NULL;
+	DGImage * gSliderHandleClicked = NULL;
+	DGImage * gHostSyncButton = NULL;
+	DGImage * gDestroyFXlinkTab = NULL;
+
+	long macOS = GetMacOSVersion() & 0xFFF0;
+	switch (macOS)
+	{
+		case 0x1030:
+			wideFaderX = kWideFaderX_panther;
+			wideFaderY = kWideFaderY_panther;
+			tallFaderX = kTallFaderX_panther;
+			tallFaderY = kTallFaderY_panther;
+			destroyFXlinkX = kDestroyFXlinkX_panther;
+			destroyFXlinkY = kDestroyFXlinkY_panther;
+			gBackground = new DGImage("eq-sync-background-panther.png", this);
+			gHorizontalSliderBackground = new DGImage("horizontal-slider-background-panther.png", this);
+			gVerticalSliderBackground = new DGImage("vertical-slider-background-panther.png", this);
+			gSliderHandle = new DGImage("slider-handle-panther.png", this);
+			gSliderHandleClicked = new DGImage("slider-handle-clicked-panther.png", this);
+			gHostSyncButton = new DGImage("host-sync-button-panther.png", this);
+			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab-panther.png", this);
+			break;
+		default:
+			gBackground = new DGImage("eq-sync-background.png", this);
+			gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", this);
+			gVerticalSliderBackground = new DGImage("vertical-slider-background.png", this);
+			gSliderHandle = new DGImage("slider-handle.png", this);
+			gSliderHandleClicked = new DGImage("slider-handle-clicked.png", this);
+			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png", this);
+			break;
+	}
+
 	SetBackgroundImage(gBackground);
-
-	DGImage * gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", this);
-	DGImage * gVerticalSliderBackground = new DGImage("vertical-slider-background.png", this);
-	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
-	DGImage * gSliderHandleClicked = new DGImage("slider-handle-clicked.png", this);
-
-//	DGImage * gHostSyncButton = new DGImage("host-sync-button.png", this);
-	DGImage * gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png", this);
 
 
 	DGRect pos;
@@ -201,7 +243,7 @@ long EQSyncEditor::open()
 	for (long i=kRate_sync; i <= kTempo; i++)
 	{
 		// create the horizontal sliders
-		pos.set(kWideFaderX, kWideFaderY + (kWideFaderInc * i), gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
+		pos.set(wideFaderX, wideFaderY + (kWideFaderInc * i), gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
 		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGSliderAxis_horizontal, gSliderHandle, gSliderHandleClicked, gHorizontalSliderBackground);
 
 		// create the displays
@@ -212,20 +254,27 @@ long EQSyncEditor::open()
 			textproc = smoothDisplayProc;
 		else if (i == kTempo)
 			textproc = tempoDisplayProc;
-		pos.set(kDisplayX, kDisplayY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);
+		pos.set(wideFaderX + kDisplayOffsetX, wideFaderY + kDisplayOffsetY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);
 		DGTextDisplay * display = new DGTextDisplay(this, i, &pos, textproc, this, NULL, kDGTextAlign_left, kValueTextSize, kBlackDGColor, kValueTextFont);
 	}
 
 	// create the vertical sliders
 	for (long i=ka0; i <= kb2; i++)
 	{
-		pos.set(kTallFaderX + (kTallFaderInc * (i-ka0)), kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
+		pos.set(tallFaderX + (kTallFaderInc * (i-ka0)), tallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
 		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGSliderAxis_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);
 	}
 
 
+	// create the host sync button
+	if (gDestroyFXlinkTab != NULL)
+	{
+		pos.set(kHostSyncButtonX, kHostSyncButtonY, gHostSyncButton->getWidth()/2, gHostSyncButton->getHeight()/2);
+		DGButton * hostSyncButton = new DGButton(this, kTempoAuto, &pos, gHostSyncButton, 2, kDGButtonType_incbutton, true);
+	}
+
 	// create the Destroy FX web page link tab
-	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, gDestroyFXlinkTab->getWidth(), gDestroyFXlinkTab->getHeight()/2);
+	pos.set(destroyFXlinkX, destroyFXlinkY, gDestroyFXlinkTab->getWidth(), gDestroyFXlinkTab->getHeight()/2);
 	EQSyncWebLink * dfxLinkButton = new EQSyncWebLink(this, &pos, gDestroyFXlinkTab);
 
 
