@@ -1,17 +1,12 @@
 /*-------------- by Marc Poirier  ][  February 2002 -------------*/
 
-#ifndef __scrubby
+#ifndef __SCRUBBY_H
 #include "scrubby.hpp"
 #endif
 
-#include <stdlib.h>
-#include <math.h>
-#if MAC
-	#include <fp.h>
-#endif
-#if WIN32
-	#include <float.h>
-#endif
+//#include <stdlib.h>
+//#include <math.h>
+//#include <float.h>
 
 
 //-----------------------------------------------------------------------------------------
@@ -73,72 +68,65 @@ inline double calculateTargetSpeed(double a, double n, double k)
 //-----------------------------------------------------------------------------------------
 void Scrubby::checkTempoSyncStuff()
 {
+	unsigned long ch, numChannels = getnumoutputs();
+
 	// figure out the current tempo if we're doing tempo sync
 	if (tempoSync)
 	{
 		// calculate the tempo at the current processing buffer
-		if ( (fTempo > 0.0f) || (hostCanDoTempo != 1) )	// get the tempo from the user parameter
+		if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
 		{
-			currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-			needResync1 = needResync2 = false;	// we don't want it true if we're not syncing to host tempo
+			currentTempoBPS = timeinfo.tempo_bps;
+			// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
+			if (timeinfo.playbackChanged)
+			{
+				for (ch=0; ch < numChannels; ch++)
+					needResync[ch] = true;
+			}
 		}
-		else	// get the tempo from the host
+		else	// get the tempo from the user parameter
 		{
-			timeInfo = getTimeInfo(kBeatSyncTimeInfoFlags);
-			if (timeInfo)
-			{
-				if (kVstTempoValid & timeInfo->flags)
-					currentTempoBPS = (float)timeInfo->tempo / 60.0f;
-				else
-					currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-				// but zero & negative tempos are bad, so get the user tempo value instead if that happens
-				if (currentTempoBPS <= 0.0f)
-					currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-				//
-				// check if audio playback has just restarted or playback position has changed
-				if (timeInfo->flags & kVstTransportChanged)
-					needResync1 = needResync2 = true;
-			}
-			else	// do the same stuff as above if the timeInfo gets a null pointer
-			{
-				currentTempoBPS = tempoScaled(fTempo) / 60.0f;
-				needResync1 = needResync2 = false;	// we don't want it true if we're not syncing to host tempo
-			}
+			currentTempoBPS = userTempo / 60.0f;
+			for (ch=0; ch < numChannels; ch++)
+				needResync[ch] = false;	// we don't want it true if we're not syncing to host tempo
 		}
 	}
 	else
-		needResync1 = needResync2 = false;
+	{
+		for (ch=0; ch < numChannels; ch++)
+			needResync[ch] = false;	// we don't want it true if we're not syncing to host tempo
+	}
 
 	// reset cycle state stuff if playback has changed (for measure sync)
-	if (needResync1)
-		seekcount1 = 0;
-	if (needResync2)
-		seekcount2 = 0;
+	for (ch=0; ch < numChannels; ch++)
+	{
+		if (needResync[ch])
+			seekcount[ch] = 0;
+	}
 }
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::generateNewTarget(int channel)
+void Scrubby::generateNewTarget(unsigned long channel)
 {
   float currentSeekRate, currentSeekDur;
-  double readStep, portamentoStep;
-  long seekcount, movecount;
+//  double readStep, portamentoStep;
+//  long seekcount, movecount;
 
 
 // CALCULATE THE SEEK CYCLE LENGTH
 	// match the seek rate to tempo
 	if (tempoSync)
 	{
-		float tempoRateMin = tempoRateTable->getScalar(fSeekRateRandMin);
-		float tempoRateMax = tempoRateTable->getScalar(fSeekRate);
 		// randomize the tempo rate if the random min scalar is lower than the upper bound
-		if (tempoRateMin < tempoRateMax)
+		if (useSeekRateRandMin)
 		{
-			currentSeekRate = tempoRateTable->getScalar(interpolateRandom(fSeekRateRandMin,fSeekRate));
+			currentSeekRate = tempoRateTable->getScalar((long)interpolateRandom(getparameter_f(kSeekRateRandMin_sync),getparameter_f(kSeekRate_sync)));
 			// don't do musical bar sync if we're using randomized tempo rate
-			needResync1 = needResync2 = false;
+//			for (unsigned long ch=0; ch < numChannels; ch++)
+			needResync[channel] = false;
 		}
 		else
-			currentSeekRate = tempoRateMax;
+			currentSeekRate = seekRateSync;
 		// convert the tempo rate into rate in terms of Hz
 		currentSeekRate *= currentTempoBPS;
 	}
@@ -147,57 +135,54 @@ void Scrubby::generateNewTarget(int channel)
 	else
 	{
 		if (useSeekRateRandMin)
-			currentSeekRate = seekRateScaled(interpolateRandom(fSeekRateRandMin, fSeekRate));
+			currentSeekRate = interpolateRandom(seekRateRandMinHz, seekRateHz);
 		else
-			currentSeekRate = seekRateScaled(fSeekRate);
-		needResync1 = needResync2 = false;
+			currentSeekRate = seekRateHz;
 	}
 	// calculate the length of this seek cycle in seconds
 	float cycleDur = 1.0f / currentSeekRate;
 	// then calculate the length of this seek cycle in samples
-	seekcount = (long) (cycleDur * SAMPLERATE);
+	seekcount[channel] = (long) (cycleDur * getsamplerate_f());
 	//
-	bool needResync = (channel == 1) ? needResync1 : needResync2;
 	// do bar sync if we're in tempo sync & things resyncing is in order
-	if (needResync)
+	if (needResync[channel])
 	{
-		long samplesUntilBar = samplesToNextBar(timeInfo);
+		long samplesUntilBar = timeinfo.samplesToNextBar;
 		// because a 0 for seekcount will be soon turned into 1, which is not so good for DJ mode
 		if (samplesUntilBar > 0)
 		{
-			if (portamento)
+			if (speedMode == kSpeedMode_dj)
 				// doubling the length of the first seek after syncing to the measure 
 				// seems to prevent Cubase from freaking out in tempo sync'd DJ mode
-				seekcount = (samplesUntilBar+seekcount) % (seekcount*2);
+				seekcount[channel] = (samplesUntilBar+seekcount[channel]) % (seekcount[channel]*2);
 			else
-				seekcount = samplesUntilBar % seekcount;
-			cycleDur = (float)seekcount / SAMPLERATE;
+				seekcount[channel] = samplesUntilBar % seekcount[channel];
+			cycleDur = (float)(seekcount[channel]) / getsamplerate_f();
 		}
 	}
 	// avoid bad values
-	if (seekcount < 1)
-		seekcount = 1;
+	if (seekcount[channel] < 1)
+		seekcount[channel] = 1;
 
 // CALCULATE THE MOVEMENT CYCLE LENGTH
 	if (useSeekDurRandMin)
-		currentSeekDur = seekDurScaled(interpolateRandom(fSeekDurRandMin, fSeekDur));
+		currentSeekDur = interpolateRandom(seekDurRandMin, seekDur);
 	else
-		currentSeekDur = seekDurScaled(fSeekDur);
+		currentSeekDur = seekDur;
 	// calculate the length of the seeking movement in samples
-	movecount = (long) (cycleDur * currentSeekDur * SAMPLERATE);
+	movecount[channel] = (long) (cycleDur * currentSeekDur * getsamplerate_f());
 	// avoid bad values
-	if (movecount < 1)
-		movecount = 1;
+	if (movecount[channel] < 1)
+		movecount[channel] = 1;
 
 // FIND THE NEW TARGET POSITION IN THE BUFFER
 	// randomly locate a new target position within the buffer seek range
-	float randy = (float)rand() * ONE_DIV_RAND_MAX;
-	float bufferSizeFloat = seekRangeScaled(fSeekRange) * 0.001f * SAMPLERATE;
+	float bufferSizeFloat = seekRangeSeconds * getsamplerate_f();
 	// search back from the current writer input point
-	long newTargetPos = writePos - (long)(bufferSizeFloat * randy);
+	long newTargetPos = writePos - (long)(bufferSizeFloat * randFloat());
 	//
 	// calculate the distance between
-	long readPosInt = (channel == 1) ? (long)readPos1 : (long)readPos2;
+	long readPosInt = (long)(readPos[channel]);
 	if (readPosInt >= writePos)
 		readPosInt -= MAX_BUFFER;
 //	if ( abs(readPosInt-writePos) > (MAX_BUFFER/2) )
@@ -212,76 +197,62 @@ void Scrubby::generateNewTarget(int channel)
 		targetDistance = 1;	
 	//
 	// calculate the step size of playback movement through the buffer
-	readStep = (double)targetDistance / (double)movecount;
+	double newReadStep = (double)targetDistance / (double)movecount[channel];
 	// constrain the speed to a semitone step, if that's what we want to do
-	if (pitchConstraint && !portamento)
-		readStep = processPitchConstraint(readStep);
+	if ( pitchConstraint && (speedMode == kSpeedMode_robot) )
+		newReadStep = processPitchConstraint(newReadStep);
 	//
 	// calculate the step size of portamento playback incrementation
-//	if ( portamento && (!needResync) )
-	if (portamento)
+//	if ( (speedMode == kSpeedMode_dj) && !(needResync[channel]) )
+	if (speedMode == kSpeedMode_dj)
 	{
-		bool moveBackwards = (readStep < 0.0);	// will we move backwards in the delay buffer?
-		double oldReadStep = (channel == 1) ? readStep1 : readStep2;
+		bool moveBackwards = (newReadStep < 0.0);	// will we move backwards in the delay buffer?
+		double oldReadStep = readStep[channel];
 		oldReadStep = fabs(oldReadStep);
 		//
-#ifdef USE_LINEAR_ACCELERATION
-		double absReadStep = fabs(readStep);
+#if USE_LINEAR_ACCELERATION
+		double absReadStep = fabs(newReadStep);
 		bool slowdown = (absReadStep < oldReadStep);	// are we slowing down or speeding up?
 		double stepDifference = absReadStep - oldReadStep;
 		bool cross0 = ( slowdown && (stepDifference > absReadStep) );	// will we go down to 0 Hz & then back up again?
-		portamentoStep = (stepDifference * 2.0) / (double)movecount;
+		portamentoStep = (stepDifference * 2.0) / (double)(movecount[channel]);
 		if (moveBackwards)
-			portamentoStep = -portamentoStep;
-//		portamentoStep = fabs(portamentoStep);
+			portamentoStep[channel] *= -1.0;
+//		portamentoStep[channel] = fabs(portamentoStep[channel]);
 //		if (slowdown)
-//			portamentoStep = -portamentoStep;
+//			portamentoStep[channel] *= -1.0;
 #else
 		// exponential acceleration
 		if (oldReadStep < 0.001)	// protect against a situation impossible to deal with
 			oldReadStep = 0.001;
-		double targetReadStep = calculateTargetSpeed(oldReadStep, (double)movecount, (double)targetDistance);
-		portamentoStep = pow( fabs(targetReadStep)/oldReadStep, 1.0/(double)movecount );
-		portamentoStep = fabs(portamentoStep);
+		double targetReadStep = calculateTargetSpeed(oldReadStep, (double)(movecount[channel]), (double)targetDistance);
+		portamentoStep[channel] = pow( fabs(targetReadStep)/oldReadStep, 1.0/(double)(movecount[channel]) );
+		portamentoStep[channel] = fabs(portamentoStep[channel]);
 //showme = targetReadStep;
 //long ktest = (long) fabsf( (targetReadStep * (float)movecount) / logf(fabsf(targetReadStep/oldReadStep)) );
-//fprintf(f, "oldReadStep = %.6f\nreadStep = %.6f\ntargetReadStep = %.6f\nportamentoStep = %.6f\nmovecount = %ld\ntargetDistance = %ld\nktest = %ld\n\n", oldReadStep,readStep,targetReadStep,portamentoStep, movecount, targetDistance,ktest);
-//fprintf(f, "a = %.3f,\tb = %.3f,\tn = %ld,\tk = %ld\tportamentoStep = %.6f\n", oldReadStep, targetReadStep, movecount, targetDistance, portamentoStep);
-//fprintf(f, "\noldReadStep = %.6f\treadStep = %.6f\ttargetReadStep = %.6f\tportamentoStep = %.6f\n", oldReadStep,readStep,targetReadStep,portamentoStep);
+//printf("oldReadStep = %.6f\nreadStep = %.6f\ntargetReadStep = %.6f\nportamentoStep = %.6f\nmovecount = %ld\ntargetDistance = %ld\nktest = %ld\n\n", oldReadStep,newReadStep,targetReadStep,portamentoStep[channel], movecount[channel], targetDistance,ktest);
+//printf("a = %.3f,\tb = %.3f,\tn = %ld,\tk = %ld\tportamentoStep = %.6f\n", oldReadStep, targetReadStep, movecount[channel], targetDistance, portamentoStep[channel]);
+//printf("\noldReadStep = %.6f\treadStep = %.6f\ttargetReadStep = %.6f\tportamentoStep = %.6f\n", oldReadStep,newReadStep,targetReadStep,portamentoStep[channel]);
 
 #endif
-		readStep = oldReadStep;
+		newReadStep = oldReadStep;
 		if (moveBackwards)
-			readStep = -readStep;
-#ifdef USE_LINEAR_ACCELERATION
+			newReadStep = -newReadStep;
+#if USE_LINEAR_ACCELERATION
 		if (cross0)
-			readStep = -readStep;
+			newReadStep = -newReadStep;
 #endif
 	}
 	else
-#ifdef USE_LINEAR_ACCELERATION
-		portamentoStep = 0.0;	// for no linear acceleration
+#if USE_LINEAR_ACCELERATION
+		portamentoStep[channel] = 0.0;	// for no linear acceleration
 #else
-		portamentoStep = 1.0;	// for no exponential acceleration
+		portamentoStep[channel] = 1.0;	// for no exponential acceleration
 #endif
 
-// ASSIGN ALL OF THESE NEW VALUES INTO THE CORRECT CHANNEL'S VARIABLES
-	if (channel == 1)
-	{
-		seekcount1 = seekcount;
-		movecount1 = movecount;
-		readStep1 = readStep;
-		portamentoStep1 = portamentoStep;
-		needResync1 = false;	// untrue this so that we don't do the measure sync calculations again unnecessarily
-	}
-	else
-	{
-		seekcount2 = seekcount;
-		movecount2 = movecount;
-		readStep2 = readStep;
-		portamentoStep2 = portamentoStep;
-		needResync2 = false;	// untrue this so that we don't do the measure sync calculations again unnecessarily
-	}
+	// assign the new readStep value into the correct channel's variable
+	readStep[channel] = newReadStep;
+	needResync[channel] = false;	// untrue this so that we don't do the measure sync calculations again unnecessarily
 }
 
 //-----------------------------------------------------------------------------------------
@@ -351,12 +322,10 @@ double Scrubby::processPitchConstraint(double readStep)
 		} while (i != remainder);
 	}
 	// constrain to octaves range, if we're doing that
-	long octavemin = octaveMinScaled(fOctaveMin);
-	long octavemax = octaveMaxScaled(fOctaveMax);
-	if ( (octavemin > OCTAVE_MIN) && (octave < octavemin) )
-		octave = octavemin;
-	else if ( (octavemax < OCTAVE_MAX) && (octave > octavemax) )
-		octave = octavemax;
+	if ( (octaveMin > OCTAVE_MIN) && (octave < octaveMin) )
+		octave = octaveMin;
+	else if ( (octaveMax < OCTAVE_MAX) && (octave > octaveMax) )
+		octave = octaveMax;
 	// add the octave transposition back in to get the correct semitone transposition
 	semitone += (octave * 12);
 
@@ -366,36 +335,43 @@ double Scrubby::processPitchConstraint(double readStep)
 
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::doTheProcess(float **inputs, float **outputs, long sampleFrames, bool replacing)
+void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
 {
-#if MAC
-	// no memory allocations at during interrupt
-#else
+	unsigned long numChannels = getnumoutputs();
+	unsigned long ch;
+
+//-------------------------SAFETY CHECK----------------------
 	// there must have not been available memory or something (like WaveLab goofing up), 
 	// so try to allocate buffers now
-	if ( (buffer1 == NULL) || (buffer2 == NULL) )
-		createAudioBuffers();
-#endif
-	// if the creation failed, then abort audio processing
-	if ( (buffer1 == NULL) || (buffer2 == NULL) )
-		return;
+	if (numBuffers < numChannels)
+		createbuffers();
+	for (ch=0; ch < numChannels; ch++)
+	{
+		if (buffers[ch] == NULL)
+		{
+			// exit the loop if creation succeeded
+			if ( createbuffers() )
+				break;
+			// or abort audio processing if the creation failed
+			else return;
+		}
+	}
 
-	getRealValues();
-
+	processMidiNotes();
 	checkTempoSyncStuff();
 
 	// if we're using pitch constraint & the previous block had no notes active, 
-	// then check to see if new notes have begun &, if so, begin new seeks 
+	// then check to see if new notes have begun and, if so, begin new seeks 
 	// so that we start producing sound again immediately
 	int i;
-	if ( (pitchConstraint && !portamento) && !notesWereAlreadyActive )
+	if ( (pitchConstraint && (speedMode == kSpeedMode_robot)) && !notesWereAlreadyActive )
 	{
 		for (i=0; i < NUM_PITCH_STEPS; i++)
 		{
 			if (pitchSteps[i])
 			{
-				seekcount1 = 0;
-				seekcount2 = 0;
+				for (ch=0; ch < numChannels; ch++)
+					seekcount[ch] = 0;
 				break;
 			}
 		}
@@ -408,133 +384,108 @@ void Scrubby::doTheProcess(float **inputs, float **outputs, long sampleFrames, b
 			notesWereAlreadyActive = true;
 	}
 
-	for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
+	for (unsigned long samplecount=0; samplecount < inNumFrames; samplecount++)
 	{
 		// update the buffers with the latest samples
 		if (!freeze)
 		{
-			buffer1[writePos] = inputs[0][samplecount];
-			buffer2[writePos] = inputs[1][samplecount];
+			for (ch=0; ch < numChannels; ch++)
+				buffers[ch][writePos] = in[ch][samplecount];
 // melody test
-//			buffer1[writePos] = buffer2[writePos] = 0.69f*sinf(24.0f*PI*((float)samplecount/(float)sampleFrames));
-//			buffer1[writePos] = buffer2[writePos] = 0.69f*sinf(2.0f*PI*((float)sinecount/169.0f));
+//			for (ch=0; ch < numChannels; ch++)
+//				buffers[ch][writePos] = 0.69f*sinf(24.0f*PI*((float)samplecount/(float)inNumFrames));
+//				buffers[ch][writePos] = 0.69f*sinf(2.0f*PI*((float)sinecount/169.0f));
 //			if (++sinecount > 168)   sinecount = 0;	// produce a sine wave of C4 when using 44.1 kHz
 		}
 
-		// get the current output values, interpolated for smoothness
-		float out1 = interpolateHermite(buffer1, readPos1, MAX_BUFFER);
-		float out2 = interpolateHermite(buffer2, readPos2, MAX_BUFFER);
-
-		// write the output to the output streams
+		// write the output to the output streams, interpolated for smoothness
+	#if TARGET_API_VST
 		if (replacing)
 		{
-			outputs[0][samplecount] = out1;
-			outputs[1][samplecount] = out2;
+	#endif
+			for (ch=0; ch < numChannels; ch++)
+				out[ch][samplecount] = interpolateHermite(buffers[ch], readPos[ch], MAX_BUFFER);
+	#if TARGET_API_VST
 		}
 		else
 		{
-			outputs[0][samplecount] += out1;
-			outputs[1][samplecount] += out2;
+			for (ch=0; ch < numChannels; ch++)
+				out[ch][samplecount] += interpolateHermite(buffers[ch], readPos[ch], MAX_BUFFER);
 		}
+	#endif
 
 		// increment/decrement the position trackers & counters
 		if (!freeze)
 			writePos = (writePos+1) % MAX_BUFFER;
-		seekcount1--;
-		seekcount2--;
-		movecount1--;
-		movecount2--;
+		for (ch=0; ch < numChannels; ch++)
+		{
+			(seekcount[ch])--;
+			(movecount[ch])--;
+		}
 		//
 		// it's time to find a new target to seek
-		if (seekcount1 < 0)
+		if (seekcount[0] < 0)
 		{
-			generateNewTarget(1);
+			generateNewTarget(0);
 
 			// copy the left channel's new values if we're in unified stereo mode
 			if (!splitStereo)
 			{
-				readPos2 = readPos1;
-				readStep2 = readStep1;
-				portamentoStep2 = portamentoStep1;
-				seekcount2 = seekcount1;
-				movecount2 = movecount1;
-				needResync2 = needResync1;
+				for (ch=1; ch < numChannels; ch++)
+				{
+					readPos[ch] = readPos[0];
+					readStep[ch] = readStep[0];
+					portamentoStep[ch] = portamentoStep[0];
+					seekcount[ch] = seekcount[0];
+					movecount[ch] = movecount[0];
+					needResync[ch] = needResync[0];
+				}
 			}
 		}
 		// find a new target to seek for the right channel if we're in split stereo mode
-		if ( splitStereo && (seekcount2 < 0) )
-			generateNewTarget(2);
+		if (splitStereo)
+		{
+			for (ch=1; ch < numChannels; ch++)
+			{
+				if (seekcount[ch] < 0)
+					generateNewTarget(ch);
+			}
+		}
 		//
 		// only increment the read position trackers if we're still moving towards the target
-		if (movecount1 >= 0)
+		for (ch=0; ch < numChannels; ch++)
 		{
-			if (portamento)
-#ifdef USE_LINEAR_ACCELERATION
-				readStep1 += portamentoStep1;
-#else
-				readStep1 *= portamentoStep1;
-#endif
-			readPos1 += readStep1;
-			long readPosInt = (long)readPos1;
-			// wraparound the read position tracker if necessary
-			if (readPosInt >= MAX_BUFFER)
-				readPos1 = fmod(readPos1, MAX_BUFFER_FLOAT);
-			else if (readPosInt < 0)
+			if (movecount[ch] >= 0)
 			{
-				while (readPos1 < 0.0)
-					readPos1 += MAX_BUFFER_FLOAT;
-			}
-//fprintf(f, "readStep1 = %.6f\treadPos1 = %.9f\tmovecount1 = %ld\n", readStep1, readPos1, movecount1);
-		}
-		if (movecount2 >= 0)
-		{
-			if (portamento)
-#ifdef USE_LINEAR_ACCELERATION
-				readStep2 += portamentoStep2;
+				if (speedMode == kSpeedMode_dj)
+#if USE_LINEAR_ACCELERATION
+					readStep[ch] += portamentoStep[ch];
 #else
-				readStep2 *= portamentoStep2;
+					readStep[ch] *= portamentoStep[ch];
 #endif
-			readPos2 += readStep2;
-			long readPosInt = (long)readPos2;
-			// wraparound the read position tracker if necessary
-			if (readPosInt >= MAX_BUFFER)
-				readPos2 = fmod(readPos2, MAX_BUFFER_FLOAT);
-			else if (readPosInt < 0)
-			{
-				while (readPos2 < 0.0)
-					readPos2 += MAX_BUFFER_FLOAT;
+				readPos[ch] += readStep[ch];
+				long readPosInt = (long)readPos[ch];
+				// wraparound the read position tracker if necessary
+				if (readPosInt >= MAX_BUFFER)
+					readPos[ch] = fmod(readPos[ch], MAX_BUFFER_FLOAT);
+				else if (readPosInt < 0)
+				{
+					while (readPos[ch] < 0.0)
+						readPos[ch] += MAX_BUFFER_FLOAT;
+				}
+	//printf("readStep[ch] = %.6f\treadPos[ch] = %.9f\tmovecount[ch] = %ld\n", readStep[ch], readPos[ch], movecount[ch]);
 			}
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::process(float **inputs, float **outputs, long sampleFrames)
+void Scrubby::processMidiNotes()
 {
-	doTheProcess(inputs, outputs, sampleFrames, false);
-}
-
-//-----------------------------------------------------------------------------------------
-void Scrubby::processReplacing(float **inputs, float **outputs, long sampleFrames)
-{
-	doTheProcess(inputs, outputs, sampleFrames, true);
-}
-
-
-//-----------------------------------------------------------------------------------------
-long Scrubby::processEvents(VstEvents* events)
-{
-  int currentNote, notecount;
-  long i;
-
-
-	midistuff->processEvents(events, this);	// make sense of the current block's MIDI data
-	chunk->processParameterEvents(events);
-
-	for (i=0; i < midistuff->numBlockEvents; i++)
+	for (long i=0; i < midistuff->numBlockEvents; i++)
 	{
 		// wrap the note value around to our 1-octave range
-		currentNote = (midistuff->blockEvents[i].byte1) % NUM_PITCH_STEPS;
+		int currentNote = (midistuff->blockEvents[i].byte1) % NUM_PITCH_STEPS;
 
 		switch (midistuff->blockEvents[i].status)
 		{
@@ -546,7 +497,7 @@ long Scrubby::processEvents(VstEvents* events)
 				// then turn its associated pitch constraint parameter on
 				if (activeNotesTable[currentNote] == 0)
 				{
-					fPitchSteps[currentNote] = 1.0f;
+					setparameter_b(currentNote+kPitchStep0, true);
 					keyboardWasPlayedByMidi = true;
 				}
 				// increment the active notes table for this note
@@ -558,7 +509,7 @@ long Scrubby::processEvents(VstEvents* events)
 				// then turn its associated pitch constraint parameter off
 				if (activeNotesTable[currentNote] == 1)
 				{
-					fPitchSteps[currentNote] = 0.0f;
+					setparameter_b(currentNote+kPitchStep0, false);
 					keyboardWasPlayedByMidi = true;
 				}
 				// decrement the active notes table for this note, but don't go below 0
@@ -568,14 +519,14 @@ long Scrubby::processEvents(VstEvents* events)
 					activeNotesTable[currentNote] = 0;
 				break;
 
-			case ccAllNotesOff:
-				for (notecount=0; notecount < NUM_PITCH_STEPS; notecount++)
+			case kMidiCC_AllNotesOff:
+				for (int notecount=0; notecount < NUM_PITCH_STEPS; notecount++)
 				{
 					// if this note is currently active, then turn its 
 					// associated pitch constraint parameter off
 					if (activeNotesTable[notecount] > 0)
 					{
-						fPitchSteps[notecount] = 0.0f;
+						setparameter_b(notecount+kPitchStep0, false);
 						keyboardWasPlayedByMidi = true;
 					}
 					// reset this note in the table
@@ -587,7 +538,4 @@ long Scrubby::processEvents(VstEvents* events)
 				break;
 		}
 	}
-
-	// tells the host to keep calling this function in the future; 0 means stop
-	return 1;
 }
