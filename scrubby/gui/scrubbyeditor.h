@@ -38,6 +38,7 @@ public:
 	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse);
 
 	void HandleNotesButton(long inNotesButtonType);
+	void HandlePitchConstraintChange();
 
 private:
 	AUParameterListenerRef parameterListener;
@@ -46,6 +47,8 @@ private:
 	DGSlider * seekRateRandMinSlider;
 	DGTextDisplay * seekRateDisplay;
 	DGTextDisplay * seekRateRandMinDisplay;
+
+	AudioUnitParameter speedModeAUP, pitchConstraintAUP;
 
 	ScrubbyHelpBox * helpbox;
 	DGButton ** notesButtons;
