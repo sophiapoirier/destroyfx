@@ -199,8 +199,8 @@
 
    -- Geometer : Trouble --
 
-   Due to a bug in Wavelab, if you add Geometer to a track while it is
-   playing, you won't hear any output until you stop and restart
+   Due to a bug in Wavelab 3, if you add Geometer to a track while it
+   is playing, you won't hear any output until you stop and restart
    playing. It will work fine from then on. Other hosts may have this
    problem too, so try the same solution.
 
