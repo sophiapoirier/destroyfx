@@ -5,10 +5,12 @@
 
 // #include <control.h>
 #include <commctrl.h>
-#include <ddraw.h>
 
 #define EDIT_HEIGHT 500
 #define EDIT_WIDTH 500
+
+LPDIRECTDRAW dd;
+
 
 
 extern HINSTANCE instance;
@@ -41,36 +43,151 @@ long GuitestEditor::open (void *ptr) {
   // Create window class, if we are called the first time
   useCount++;
   if (useCount == 1) {
-      WNDCLASS windowClass;
-      windowClass.style = 0;
-      windowClass.lpfnWndProc = WindowProc;
-      windowClass.cbClsExtra = 0;
-      windowClass.cbWndExtra = 0;
-      windowClass.hInstance = instance;
-      windowClass.hIcon = 0;
-      windowClass.hCursor = 0;
-      windowClass.hbrBackground = GetSysColorBrush (COLOR_BTNFACE);
-      windowClass.lpszMenuName = 0;
-      windowClass.lpszClassName = WINDOWCLASSNAME;
-      RegisterClass (&windowClass);
-    }
+    WNDCLASS windowClass;
+    windowClass.style = 0;
+    windowClass.lpfnWndProc = WindowProc;
+    windowClass.cbClsExtra = 0;
+    windowClass.cbWndExtra = 0;
+    windowClass.hInstance = instance;
+    windowClass.hIcon = 0;
+    windowClass.hCursor = 0;
+    windowClass.hbrBackground = GetSysColorBrush (COLOR_BTNFACE);
+    windowClass.lpszMenuName = 0;
+    windowClass.lpszClassName = WINDOWCLASSNAME;
+    RegisterClass (&windowClass);
+  }
   // Create our base window
   HWND hwnd = CreateWindowEx (0, WINDOWCLASSNAME, "Window",
 			      WS_CHILD | WS_VISIBLE,
 			      0, 0, EDIT_HEIGHT, EDIT_WIDTH,
 			      (HWND)systemWindow, NULL, instance, NULL);
+
+  /* store this pointer with window so that callback can
+     dispatch to appropriate class instance. */
   SetWindowLong (hwnd, GWL_USERDATA, (long)this);
 
-#if 1
-  // Create three fader controls
-  delayFader = CreateFader (hwnd, "Delay", 10, 10, 35, 300, 0, 100);
-  feedbackFader = CreateFader (hwnd, "Feedback", 50, 10, 64, 300, 0, 100);
+  HRESULT ddrval;
+                
+  ddrval = DirectDrawCreate( NULL, &dd, NULL );
 
-  volumeFader = CreateFader (hwnd, "Volume", 300, 12, 32, 350, 0, 100);
-#endif
+  if( ddrval != DD_OK ) return(false);
+
+  ddrval = dd->SetCooperativeLevel( hwnd, DDSCL_NORMAL );
+
+  if( ddrval != DD_OK ) {
+
+    dd->Release();
+
+    return(false);
+
+  }
+
+  if (!CreatePrimarySurface()) return false;
+
   return true;
 }
 
+bool GuitestEditor::CreatePrimarySurface() {
+  DDSURFACEDESC ddsd;
+  DDSCAPS ddscaps;
+  HRESULT ddrval;
+
+  // Create the primary surface with 1 back buffer
+  memset( &ddsd, 0, sizeof(ddsd) );
+  ddsd.dwSize = sizeof( ddsd );
+
+  ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+  ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
+  ddsd.dwBackBufferCount = 1;
+
+  ddrval = dd->CreateSurface( &ddsd, &primary, NULL );
+  if( ddrval != DD_OK ) {
+    dd->Release();
+    return(false);
+  }
+
+  // Get the pointer to the back buffer
+  ddscaps.dwCaps = DDSCAPS_BACKBUFFER;
+  ddrval = primary->GetAttachedSurface(&ddscaps, &back);
+  if( ddrval != DD_OK ) {
+    primary->Release();
+    dd->Release();
+    return(false);
+  }
+
+  return true;
+}
+
+IDirectDrawSurface * GuitestEditor::DDLoadBitmap(IDirectDraw *pdd, LPCSTR file) {
+  HBITMAP hbm;
+  BITMAP bm;
+  IDirectDrawSurface *pdds;
+                
+  // LoadImage has some added functionality in Windows 95 that allows
+  // you to load a bitmap from a file on disk.
+  hbm = (HBITMAP)LoadImage(NULL, file, IMAGE_BITMAP, 0, 0,
+			   LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+                
+  if (hbm == NULL)
+    return NULL;
+                
+  GetObject(hbm, sizeof(bm), &bm); // get size of bitmap
+                
+  /*
+  * create a DirectDrawSurface for this bitmap
+  * source to function CreateOffScreenSurface() follows immediately
+  */
+                
+  pdds = CreateOffScreenSurface(pdd, bm.bmWidth, bm.bmHeight);
+  if (pdds) {
+    DDCopyBitmap(pdds, hbm, bm.bmWidth, bm.bmHeight);
+  }
+                
+  DeleteObject(hbm);
+                
+  return pdds;
+}
+
+IDirectDrawSurface * CreateOffScreenSurface(IDirectDraw *pdd, int dx, int dy) {
+  DDSURFACEDESC ddsd;
+  IDirectDrawSurface *pdds;
+                
+  // create a DirectDrawSurface for this bitmap
+  ZeroMemory(&ddsd, sizeof(ddsd));
+  ddsd.dwSize = sizeof(ddsd);
+  ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT |DDSD_WIDTH;
+  ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+  ddsd.dwWidth = dx;
+  ddsd.dwHeight = dy;
+                
+  if (pdd->CreateSurface(&ddsd, &pdds, NULL) != DD_OK) return 0;
+  else return pdds;
+
+}
+
+HRESULT DDCopyBitmap(IDirectDrawSurface *pdds, HBITMAP hbm, int dx, int dy) {
+  HDC hdcImage;
+  HDC hdc;
+  HRESULT hr;
+  HBITMAP hbmOld;
+                
+  //
+  // select bitmap into a memoryDC so we can use it.
+  //
+  hdcImage = CreateCompatibleDC(NULL);
+  hbmOld = (HBITMAP)SelectObject(hdcImage, hbm);
+                
+  if ((hr = pdds->GetDC(&hdc)) == DD_OK)
+    {
+      BitBlt(hdc, 0, 0, dx, dy, hdcImage, 0, 0, SRCCOPY);
+      pdds->ReleaseDC(hdc);
+    }
+                
+  SelectObject(hdcImage, hbmOld);
+  DeleteDC(hdcImage);
+                
+  return hr;
+}
 
 void GuitestEditor::close () {
   useCount--;
@@ -110,22 +227,6 @@ void GuitestEditor::setValue(void* fader, int value) {
 /* XXX ? */
 void GuitestEditor::postUpdate() {
   AEffEditor::postUpdate ();
-}
-
-
-HWND CreateFader (HWND parent, char* title, 
-		  int x, int y, int w, int h, 
-		  int min, int max) {
-  HWND hwndTrack = CreateWindowEx (0, TRACKBAR_CLASS, title,
-				   WS_CHILD | WS_VISIBLE |
-				   TBS_ENABLESELRANGE | 
-				   TBS_VERT, x, y, w, h, parent, 
-				   NULL, instance, NULL);
-  SendMessage (hwndTrack, TBM_SETRANGE, (WPARAM ) TRUE,
-	       (LPARAM) MAKELONG (min, max));
-  SendMessage (hwndTrack, TBM_SETPAGESIZE, 0, (LPARAM) 4);
-  SendMessage (hwndTrack, TBM_SETPOS, (WPARAM) TRUE, (LPARAM) min);
-  return hwndTrack;
 }
 
 
