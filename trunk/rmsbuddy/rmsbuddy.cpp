@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  June 2001 + February 2003 --------------*/
+/*--------------- by Marc Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
 
 #include "rmsbuddy.h"
 
@@ -8,12 +8,15 @@
 // macro for boring Component entry point stuff
 COMPONENT_ENTRY(RMSbuddy);
 
+unsigned long _numChannels = 1;
 //-----------------------------------------------------------------------------
 RMSbuddy::RMSbuddy(AudioUnit component)
 	: AUEffectBase(component, true)	// "true" to say that we can process audio in-place
 {
 	// initialize the arrays and array quantity counter
-	numChannels = 0;
+	// (choosing 2 since that's the default stream format and that at least sets it 
+	// to something in case the UI gets created before we get Initialized)
+	numChannels = 2;
 
 	averageRMS = NULL;
 	totalSquaredCollection = NULL;
@@ -36,8 +39,12 @@ ComponentResult RMSbuddy::Initialize()
 	ComponentResult result = AUEffectBase::Initialize();
 	if (result == noErr)
 	{
+		unsigned long oldNumChannels = numChannels;
+		numChannels = GetNumberOfChannels();
+		if (numChannels != oldNumChannels)
+			PropertyChanged(kNumChannelsProperty, kAudioUnitScope_Global, (AudioUnitElement)0);
+
 		// allocate dynamics data value arrays according to the current number of channels
-		numChannels = GetInput(0)->GetStreamFormat().mChannelsPerFrame; //GetNumberOfChannels();
 		averageRMS = (double*) malloc(numChannels * sizeof(double));
 		totalSquaredCollection = (double*) malloc(numChannels * sizeof(double));
 		absolutePeak = (float*) malloc(numChannels * sizeof(float));
@@ -56,7 +63,7 @@ ComponentResult RMSbuddy::Initialize()
 // this is the sort of mini-destructor partner to Initialize, where we clean up DSP resources
 void RMSbuddy::Cleanup()
 {
-	// release all of our dynamics data value arrays and reset the array counter (numChannels)
+	// release all of our dynamics data value arrays
 
 	if (averageRMS != NULL)
 		free(averageRMS);
@@ -81,8 +88,6 @@ void RMSbuddy::Cleanup()
 	if (guiShareDataCache != NULL)
 		free(guiShareDataCache);
 	guiShareDataCache = NULL;
-
-	numChannels = 0;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -105,6 +110,8 @@ ComponentResult RMSbuddy::Reset(AudioUnitScope inScope, AudioUnitElement inEleme
 	resetGUIcounters();
 	notifyGUI();	// make sure that the GUI catches these changes
 
+_numChannels++;
+PropertyChanged(kNumChannelsProperty, kAudioUnitScope_Global, (AudioUnitElement)0);
 	return noErr;
 }
 
@@ -276,7 +283,7 @@ ComponentResult RMSbuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 
 		// get the number of audio channels being analyzed
 		case kNumChannelsProperty:
-			*((unsigned long*)outData) = numChannels;
+			*((unsigned long*)outData) = _numChannels;
 			return noErr;
 
 		// let non-custom properties fall through to the parent class' handler

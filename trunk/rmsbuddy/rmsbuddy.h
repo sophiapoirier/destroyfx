@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  June 2001 + February 2003 --------------*/
+/*--------------- by Marc Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
 
 #ifndef __RMSBUDDY_H
 #define __RMSBUDDY_H

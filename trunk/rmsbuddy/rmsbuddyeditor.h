@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  June 2001 + February 2003 --------------*/
+/*--------------- by Marc Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
 
 #ifndef __RMSBUDDYEDITOR_H
 #define __RMSBUDDYEDITOR_H
@@ -30,6 +30,9 @@ public:
 	// handle a mouse button release on the control
 	virtual void mouseUp(long inXpos, long inYpos)
 		{ }
+
+	// force a redraw of the control to occur
+	void redraw();
 
 	// set/get the Carbon Control Manager control reference
 	void setCarbonControl(ControlRef inCarbonControl)
@@ -146,6 +149,9 @@ public:
 
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventRef inEvent);
+
+	OSStatus setup();
+	void cleanup();
 
 	void updateDisplays();	// refresh the value displays
 	void updateWindowSize(Float32 inParamValue, RMSControl * inRMSControl);	// update analysis window size parameter controls
