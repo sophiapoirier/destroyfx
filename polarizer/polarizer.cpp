@@ -11,13 +11,13 @@
 DFX_ENTRY(Polarizer);
 DFX_CORE_ENTRY(PolarizerDSP);
 
-//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
 // initializations and such
 Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 3 parameters, 1 preset
 {
 	initparameter_i(kSkip, "leap", 1, 3, 1, 81, kDfxParamUnit_samples, kDfxParamCurve_pow);
-	initparameter_f(kAmount, "polarize", 50.0, 50.0, 0.0, 100.0, kDfxParamUnit_percent);
+	initparameter_f(kAmount, "polarization strength", 50.0, 50.0, 0.0, 100.0, kDfxParamUnit_percent);
 	initparameter_b(kImplode, "implode", false, false);
 	setparametercurvespec(kSkip, 1.5);
 
@@ -31,7 +31,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	#endif
 }
 
-//-------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
 PolarizerDSP::PolarizerDSP(DfxPlugin * inDfxPlugin)
 	: DfxPluginCore(inDfxPlugin)
 {
