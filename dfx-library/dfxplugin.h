@@ -433,6 +433,10 @@ public:
 	DfxParamUnit getparameterunit(long parameterIndex);
 	bool getparameterchanged(long parameterIndex);
 	void setparameterchanged(long parameterIndex, bool newChanged = true);
+	double getparametercurvespec(long parameterIndex)
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurvespec();   else return 0.0;	}
+	void setparametercurvespec(long parameterIndex, double newcurvespec)
+		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcurvespec(newcurvespec);	}
 
 	// whether or not the index is a valid preset
 	bool presetisvalid(long presetIndex);
@@ -895,9 +899,14 @@ void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersi
 	#define DFX_ENTRY(PluginClass)   COMPONENT_ENTRY(PluginClass)
 
 	#if TARGET_PLUGIN_USES_DSPCORE
-		#define DFX_CORE_ENTRY(PluginCoreClass)	\
-			AUKernelBase * DfxPlugin::NewKernel()		\
-				{	return new PluginCoreClass(this);	}
+		#define DFX_CORE_ENTRY(PluginCoreClass)					\
+			AUKernelBase * DfxPlugin::NewKernel()				\
+			{													\
+				AUKernelBase *core = new PluginCoreClass(this);	\
+				if (core != NULL)								\
+					core->Reset();								\
+				return core;									\
+			}
 //	#else
 //		AUKernelBase * DfxPlugin::NewKernel()
 //			{	return TARGET_API_BASE_CLASS::NewKernel();	}

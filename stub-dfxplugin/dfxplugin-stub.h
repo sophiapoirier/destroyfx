@@ -91,7 +91,7 @@ class DfxStubDSP : public DfxPluginCore
 {
 public:
 	DfxStubDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance);
-	virtual ~TransverbDSP();
+	virtual ~DfxStubDSP();
 
 	virtual void reset();
 	virtual bool createbuffers();
