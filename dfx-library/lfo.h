@@ -52,14 +52,14 @@ public:
 	void fillLFOtables();
 
 	void pickTheLFOwaveform();
-	void getShapeName(char *nameString);
-	void getShapeNameIndexed(long index, char *outNameString);
+	void getShapeName(char * outNameString);
+	void getShapeNameIndexed(long index, char * outNameString);
 	const char * getShapeNameIndexed_ptr(long index);
 
 	void syncToTheBeat(long samplesToBar);
 
 	// the LFO waveform tables
-	float *sineTable, *triangleTable, *squareTable, *sawTable, *reverseSawTable, *thornTable;
+	float * sineTable, * triangleTable, * squareTable, * sawTable, * reverseSawTable, * thornTable;
 
 	// the following are intended to be used as 0.0 - 1.0 VST parameter values:
 	bool bOnOff;	// parameter value for turning the LFO on or off
@@ -71,7 +71,7 @@ public:
 
 	float position;	// this tracks the position in the LFO table
 	float stepSize;	// size of the steps through the LFO table
-	float *table;	// pointer to the LFO table
+	float * table;	// pointer to the LFO table
 	float randomNumber;	// this stores random values for the random LFO waveforms
 	float oldRandomNumber;	// this stores previous random values for the random interpolating LFO waveform
 	float cycleRate;	// the rate in Hz of the LFO (only used for first layer LFOs)
