@@ -155,7 +155,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   dfxsettings->setAllowPitchbendEvents(true);
   dfxsettings->setAllowNoteEvents(true);
 
-  cs = new dfxmutex();
+  //  cs = new dfxmutex();
 
 #if !TARGET_PLUGIN_USES_DSPCORE
   addchannelconfig(1, 1);	/* mono */
@@ -172,7 +172,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 PLUGIN::~PLUGIN() {
-  delete cs;
+  //  delete cs;
 
 #ifdef TARGET_API_VST
   /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
@@ -1121,11 +1121,11 @@ void PLUGIN::processaudio(const float **trueinputs, float **trueoutputs, unsigne
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      cs->grab();
+      //      cs->grab();
       processw(in0, out0+outstart+outsize, framesize,
 	       pointx, pointy, framesize * 2,
 	       storex, storey);
-      cs->release();
+      //      cs->release();
 
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */
