@@ -390,7 +390,8 @@ public:
 	void setparameter_i(long parameterIndex, long newValue);
 	void setparameter_b(long parameterIndex, bool newValue);
 	void setparameter_gen(long parameterIndex, float newValue);
-	void randomizeparameter(long parameterIndex);
+	// ***
+	virtual void randomizeparameter(long parameterIndex);
 	// ***
 	virtual void randomizeparameters(bool writeAutomation = false);	// randomize all parameters at once
 	void update_parameter(long parameterIndex);
