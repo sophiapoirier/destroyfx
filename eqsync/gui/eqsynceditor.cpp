@@ -36,7 +36,12 @@ enum {
 	kDestroyFXlinkX = 158,
 	kDestroyFXlinkY = 12,
 	kDestroyFXlinkX_panther = 159,
-	kDestroyFXlinkY_panther = 11
+	kDestroyFXlinkY_panther = 11,
+
+	kHelpButtonX = 419,
+	kHelpButtonY = 293,
+	kHelpButtonX_panther = 422,
+	kHelpButtonY_panther = 289,
 };
 
 
@@ -48,22 +53,28 @@ const float kValueTextSize = 13.0f;
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-void tempoRateDisplayProc(float value, char * outText, void * editor);
-void tempoRateDisplayProc(float value, char * outText, void * editor)
+void tempoRateDisplayProc(float inValue, char * outText, void * inEditor);
+void tempoRateDisplayProc(float inValue, char * outText, void * inEditor)
 {
-	((DfxGuiEditor*)editor)->getparametervaluestring(kRate_sync, outText);
+	((DfxGuiEditor*)inEditor)->getparametervaluestring(kRate_sync, outText);
 }
 
-void smoothDisplayProc(float value, char * outText, void *);
-void smoothDisplayProc(float value, char * outText, void *)
+void smoothDisplayProc(float inValue, char * outText, void *);
+void smoothDisplayProc(float inValue, char * outText, void *)
 {
-	sprintf(outText, "%.1f%%", value);
+	sprintf(outText, "%.1f%%", inValue);
 }
 
-void tempoDisplayProc(float value, char * outText, void *);
-void tempoDisplayProc(float value, char * outText, void *)
+void tempoDisplayProc(float inValue, char * outText, void *);
+void tempoDisplayProc(float inValue, char * outText, void *)
 {
-	sprintf(outText, "%.3f", value);
+	sprintf(outText, "%.3f", inValue);
+}
+
+//-----------------------------------------------------------------------------
+void helpButtonProc(long, void *)
+{
+	launch_documentation();
 }
 
 
@@ -78,7 +89,7 @@ public:
 		regularHandle(inHandle), clickedHandle(inHandleClicked)
 	{
 	}
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 	{
 		handleImage = clickedHandle;	// switch to the click-styled handle
 		DGSlider::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers);
@@ -87,7 +98,7 @@ public:
 		lastXchange = lastYchange = 0;
 	}
 #if 0
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 	{
 		if (orientation == kDGSliderAxis_vertical)
 		{
@@ -108,7 +119,7 @@ public:
 			DGSlider::mouseTrack(inXpos, inYpos, inMouseButtons, inKeyModifiers);
 	}
 #endif
-	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 	{
 		handleImage = regularHandle;	// switch back to the non-click-styled handle
 		DGSlider::mouseUp(inXpos, inYpos, inKeyModifiers);
@@ -141,7 +152,7 @@ public:
 			buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
 		}
 	}
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 	{
 		if ( (long)inXpos > ((getBounds()->w / 2) - 6) )
 			SetControl32BitValue(getCarbonControl(), 1);
@@ -150,7 +161,7 @@ public:
 		lastXchange = lastYchange = 0;
 	}
 #if 0
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 	{
 		long xchange = (long)(inXpos - lastX) + lastXchange;
 		long ychange = (long)(inYpos - lastY) + lastYchange;
@@ -165,7 +176,7 @@ public:
 		lastYchange = ychange;
 	}
 #endif
-	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 	{
 		if (GetControl32BitValue(getCarbonControl()) != 0)
 		{
@@ -194,14 +205,16 @@ EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
 //-----------------------------------------------------------------------------
 long EQSyncEditor::open()
 {
-	long wideFaderX = kWideFaderX;
-	long wideFaderY = kWideFaderY;
-	long tallFaderX = kTallFaderX;
-	long tallFaderY = kTallFaderY;
-	long hostSyncButtonX = kHostSyncButtonX;
-	long hostSyncButtonY = kHostSyncButtonY;
-	long destroyFXlinkX = kDestroyFXlinkX;
-	long destroyFXlinkY = kDestroyFXlinkY;
+	long wideFaderX = kWideFaderX_panther;
+	long wideFaderY = kWideFaderY_panther;
+	long tallFaderX = kTallFaderX_panther;
+	long tallFaderY = kTallFaderY_panther;
+	long hostSyncButtonX = kHostSyncButtonX_panther;
+	long hostSyncButtonY = kHostSyncButtonY_panther;
+	long destroyFXlinkX = kDestroyFXlinkX_panther;
+	long destroyFXlinkY = kDestroyFXlinkY_panther;
+	long helpButtonX = kHelpButtonX_panther;
+	long helpButtonY = kHelpButtonY_panther;
 
 	DGImage * gBackground = NULL;
 	DGImage * gHorizontalSliderBackground = NULL;
@@ -214,26 +227,18 @@ long EQSyncEditor::open()
 	long macOS = GetMacOSVersion() & 0xFFF0;
 	switch (macOS)
 	{
-		// Panther (Mac OS X 10.3)
-		case 0x1030:
-			wideFaderX = kWideFaderX_panther;
-			wideFaderY = kWideFaderY_panther;
-			tallFaderX = kTallFaderX_panther;
-			tallFaderY = kTallFaderY_panther;
-			hostSyncButtonX = kHostSyncButtonX_panther;
-			hostSyncButtonY = kHostSyncButtonY_panther;
-			destroyFXlinkX = kDestroyFXlinkX_panther;
-			destroyFXlinkY = kDestroyFXlinkY_panther;
-			gBackground = new DGImage("eq-sync-background-panther.png", this);
-			gHorizontalSliderBackground = new DGImage("horizontal-slider-background-panther.png", this);
-			gVerticalSliderBackground = new DGImage("vertical-slider-background-panther.png", this);
-			gSliderHandle = new DGImage("slider-handle-panther.png", this);
-			gSliderHandleClicked = new DGImage("slider-handle-clicked-panther.png", this);
-			gHostSyncButton = new DGImage("host-sync-button-panther.png", this);
-			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab-panther.png", this);
-			break;
 		// Jaguar (Mac OS X 10.2)
-		default:
+		case 0x1020:
+			wideFaderX = kWideFaderX;
+			wideFaderY = kWideFaderY;
+			tallFaderX = kTallFaderX;
+			tallFaderY = kTallFaderY;
+			hostSyncButtonX = kHostSyncButtonX;
+			hostSyncButtonY = kHostSyncButtonY;
+			destroyFXlinkX = kDestroyFXlinkX;
+			destroyFXlinkY = kDestroyFXlinkY;
+			helpButtonX = kHelpButtonX;
+			helpButtonY = kHelpButtonY;
 			gBackground = new DGImage("eq-sync-background.png", this);
 			gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", this);
 			gVerticalSliderBackground = new DGImage("vertical-slider-background.png", this);
@@ -242,7 +247,20 @@ long EQSyncEditor::open()
 			gHostSyncButton = new DGImage("host-sync-button-panther.png", this);	// it's the same widget image in Panther and Jaguar
 			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png", this);
 			break;
+		// Panther (Mac OS X 10.3)
+		case 0x1030:
+		default:
+			gBackground = new DGImage("eq-sync-background-panther.png", this);
+			gHorizontalSliderBackground = new DGImage("horizontal-slider-background-panther.png", this);
+			gVerticalSliderBackground = new DGImage("vertical-slider-background-panther.png", this);
+			gSliderHandle = new DGImage("slider-handle-panther.png", this);
+			gSliderHandleClicked = new DGImage("slider-handle-clicked-panther.png", this);
+			gHostSyncButton = new DGImage("host-sync-button-panther.png", this);
+			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab-panther.png", this);
+			break;
 	}
+
+	DGImage * gHelpButton = new DGImage("help-button.png", this);
 
 	SetBackgroundImage(gBackground);
 
@@ -282,6 +300,12 @@ long EQSyncEditor::open()
 	// create the Destroy FX web page link tab
 	pos.set(destroyFXlinkX, destroyFXlinkY, gDestroyFXlinkTab->getWidth(), gDestroyFXlinkTab->getHeight()/2);
 	EQSyncWebLink * dfxLinkButton = new EQSyncWebLink(this, &pos, gDestroyFXlinkTab);
+
+	// create the help button
+	pos.set(helpButtonX, helpButtonY, gHelpButton->getWidth(), gHelpButton->getHeight()/2);
+	DGButton * helpButton = new DGButton(this, &pos, gHelpButton, 2, kDGButtonType_pushbutton);
+	helpButton->setUserReleaseProcedure(helpButtonProc, this);
+	helpButton->setUseReleaseProcedureOnlyAtEndWithNoCancel(true);
 
 
 	return noErr;
