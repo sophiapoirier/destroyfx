@@ -30,8 +30,8 @@ enum
 
 //----------------------------------------------------------------------------- 
 // constants
-#define SLOPE_MAX 3000.0f
-#define UNAFFECTED_FADE_DUR 18
+const float SLOPE_MAX = 3000.0f;
+const long UNAFFECTED_FADE_DUR = 18;
 const float UNAFFECTED_FADE_STEP = 1.0f / (float)UNAFFECTED_FADE_DUR;
 
 
@@ -45,10 +45,10 @@ public:
 
 	virtual void reset();
 	virtual void processparameters();
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
 
 private:
-	void processUnaffected(const float **in, float **out, long numFramesToProcess, long offset, unsigned long numChannels);
+	void processUnaffected(const float ** in, float ** out, long numFramesToProcess, long offset, unsigned long numChannels);
 
 	float slope_seconds, velInfluence, floor;	// parameters
 	int unaffectedState, unaffectedFadeSamples;

@@ -71,7 +71,7 @@ void Scrubby::checkTempoSyncStuff()
 		if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
 		{
 			currentTempoBPS = timeinfo.tempo_bps;
-			// check if audio playback has just restarted & reset buffer stuff if it has (for measure sync)
+			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (timeinfo.playbackChanged)
 			{
 				for (ch=0; ch < numChannels; ch++)
@@ -80,7 +80,7 @@ void Scrubby::checkTempoSyncStuff()
 		}
 		else	// get the tempo from the user parameter
 		{
-			currentTempoBPS = userTempo / 60.0f;
+			currentTempoBPS = userTempo / 60.0;
 			for (ch=0; ch < numChannels; ch++)
 				needResync[ch] = false;	// we don't want it true if we're not syncing to host tempo
 		}
@@ -114,7 +114,8 @@ void Scrubby::generateNewTarget(unsigned long channel)
 		// randomize the tempo rate if the random min scalar is lower than the upper bound
 		if (useSeekRateRandMin)
 		{
-			currentSeekRate = tempoRateTable->getScalar((long)interpolateRandom((float)seekRateRandMinIndex,(float)seekRateIndex+0.99f));
+			long randomizedSeekRateIndex = (long) interpolateRandom((float)seekRateRandMinIndex, (float)seekRateIndex+0.99f);
+			currentSeekRate = tempoRateTable->getScalar(randomizedSeekRateIndex);
 			// don't do musical bar sync if we're using randomized tempo rate
 //			for (unsigned long ch=0; ch < numChannels; ch++)
 			needResync[channel] = false;
@@ -138,7 +139,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	// then calculate the length of this seek cycle in samples
 	seekcount[channel] = (long) (cycleDur * getsamplerate_f());
 	//
-	// do bar sync if we're in tempo sync & things resyncing is in order
+	// do bar sync if we're in tempo sync and things resyncing is in order
 	if (needResync[channel])
 	{
 		long samplesUntilBar = timeinfo.samplesToNextBar;
@@ -227,7 +228,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 		double absReadStep = fabs(newReadStep);
 		bool slowdown = (absReadStep < oldReadStep);	// are we slowing down or speeding up?
 		double stepDifference = absReadStep - oldReadStep;
-		bool cross0 = ( slowdown && (stepDifference > absReadStep) );	// will we go down to 0 Hz & then back up again?
+		bool cross0 = ( slowdown && (stepDifference > absReadStep) );	// will we go down to 0 Hz and then back up again?
 		portamentoStep = (stepDifference * 2.0) / (double)(movecount[channel]);
 		if (moveBackwards)
 			portamentoStep[channel] *= -1.0;
@@ -294,7 +295,7 @@ double Scrubby::processPitchConstraint(double readStep)
 	long octave = semitone / 12;	// the octave transposition
 	long remainder = semitone % 12;	// the semitone transposition
 	// remainder will be used as the index to the pitchSteps array, 
-	// so it must be positive, & we compensate for adding 12 to it 
+	// so it must be positive, and we compensate for adding 12 to it 
 	// by subtracting 1 octave, so it all evens out
 	if (remainder < 0)
 	{
@@ -304,7 +305,7 @@ double Scrubby::processPitchConstraint(double readStep)
 	// just in case it fails both searches, which shouldn't happen
 	semitone = remainder;
 	// start searching for an active pitchStep with the current pitchStep (remainder) 
-	// & then all those below it
+	// and then all those below it
 	long i = remainder;
 	// if no notes are active, then don't play back anything (this basically means silence)
 	if (noNotesActive)
@@ -314,7 +315,7 @@ double Scrubby::processPitchConstraint(double readStep)
 	{
 		do
 		{
-			// we found the pitchstep that we will use, store it & exit this loop
+			// we found the pitchstep that we will use, store it and exit this loop
 			if (pitchSteps[i])
 			{
 				semitone = i;
@@ -326,7 +327,7 @@ double Scrubby::processPitchConstraint(double readStep)
 			{
 				// didn't find an active one yet, so wrap around to the top of the pitchStep array
 				i = NUM_PITCH_STEPS - 1;
-				// & compensate for that by subtracting an octave
+				// and compensate for that by subtracting an octave
 				octave--;
 			}
 		} while (i != remainder);
@@ -345,7 +346,7 @@ double Scrubby::processPitchConstraint(double readStep)
 
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
+void Scrubby::processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing)
 {
 	unsigned long ch, numChannels = getnumoutputs();
 
@@ -369,7 +370,7 @@ void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFra
 	processMidiNotes();
 	checkTempoSyncStuff();
 
-	// if we're using pitch constraint & the previous block had no notes active, 
+	// if we're using pitch constraint and the previous block had no notes active, 
 	// then check to see if new notes have begun and, if so, begin new seeks 
 	// so that we start producing sound again immediately
 	if ( (pitchConstraint && (speedMode == kSpeedMode_robot)) && !notesWereAlreadyActive )
@@ -422,7 +423,7 @@ void Scrubby::processaudio(const float **in, float **out, unsigned long inNumFra
 		}
 	#endif
 
-		// increment/decrement the position trackers & counters
+		// increment/decrement the position trackers and counters
 		if (!freeze)
 			writePos = (writePos+1) % MAX_BUFFER;
 		for (ch=0; ch < numChannels; ch++)

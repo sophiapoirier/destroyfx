@@ -11,15 +11,15 @@
 DFX_ENTRY(Monomaker);
 
 //-----------------------------------------------------------------------------
-// initializations & such
+// initializations and such
 Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 2 parameters, 1 preset
 {
 	// initialize the parameters
 	initparameter_indexed(kInputSelection, "input selection", kInputSelection_stereo, kInputSelection_stereo, kNumInputSelections);
-	initparameter_f(kMonomerge, "monomix", 0.0f, 100.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
+	initparameter_f(kMonomerge, "monomix", 0.0, 100.0, 0.0, 100.0, kDfxParamUnit_percent);
 	initparameter_indexed(kMonomergeMode, "monomix mode", kMonomergeMode_equalpower, kMonomergeMode_linear, kNumMonomergeModes);
-	initparameter_f(kPan, "pan", 0.0f, 0.0f, -1.0f, 1.0f, kDfxParamUnit_pan);
+	initparameter_f(kPan, "pan", 0.0, 0.0, -1.0, 1.0, kDfxParamUnit_pan);
 	initparameter_indexed(kPanMode, "pan mode", kPanMode_recenter, kPanMode_recenter, kNumPanModes);
 
 	// set the parameter value display strings
@@ -46,7 +46,7 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::processaudio(const float **inputs, float **outputs, unsigned long inNumFrames, bool replacing)
+void Monomaker::processaudio(const float ** inputs, float ** outputs, unsigned long inNumFrames, bool replacing)
 {
 	// fetch the current parameter values
 	long inputselection = getparameter_i(kInputSelection);
@@ -57,7 +57,7 @@ void Monomaker::processaudio(const float **inputs, float **outputs, unsigned lon
 
 	// point the input signal pointers to the correct input streams, 
 	// according to the input selection (or dual-left if we only have 1 input)
-	const float *input1, *input2;
+	const float * input1, * input2;
 	if ( (inputselection == kInputSelection_left) || (getnuminputs() == 1) )
 	{
 		input1 = input2 = inputs[0];

@@ -73,33 +73,9 @@ enum
 };
 
 //----------------------------------------------------------------------------- 
-// constants & macros
-
-
-const double BANDWIDTH_MIN = 0.1;
-const double BANDWIDTH_MAX = 300.0;
-#define bandwidthScaled(A)   ( paramRangeSquaredScaled(((double)(A)), BANDWIDTH_MIN, BANDWIDTH_MAX) )
-#define bandwidthUnscaled(A)   ( paramRangeSquaredUnscaled((A), BANDWIDTH_MIN, BANDWIDTH_MAX) )
+// constants and macros
 
 const int MAX_BANDS = 30;	// the maximum number of resonant bands
-#define numBandsScaled(A)   ( paramRangeIntScaled((A), 1, MAX_BANDS) )
-#define numBandsUnscaled(A)   ( paramRangeIntUnscaled((A), 1, MAX_BANDS) )
-
-const double MAX_SEP_AMOUNT = 3.0;
-#define sepModeBool(A) ((A) < 0.12f)
-
-const float ATTACK_MAX = 3.0f;
-const float RELEASE_MAX = 3.0f;
-#define attackScaled(A)   ((A)*(A)*ATTACK_MAX)
-#define releaseScaled(A) ((A)*(A)*RELEASE_MAX)
-
-const float VELCURVE_MIN = 0.3f;
-const float VELCURVE_MAX = 3.0f;
-#define velCurveScaled(A)   ( paramRangeScaled((A), VELCURVE_MIN, VELCURVE_MAX) )
-#define velCurveUnscaled(A)   ( paramRangeUnscaled((A), VELCURVE_MIN, VELCURVE_MAX) )
-
-#define gainScaled(A)        ((A)*(A)*(A)*3.981f)
-#define betweenGainScaled(A) ((A)*(A)*(A)*3.981f)
 
 const long UNAFFECTED_FADE_DUR = 18;
 const float UNAFFECTED_FADE_STEP = 1.0f / (float)UNAFFECTED_FADE_DUR;
