@@ -611,6 +611,8 @@ protected:
 		// just for the sake of making processaudio(float**, float**, etc.) possible
 		float ** inputsP;
 		float ** outputsP;
+		// the value for the ContextName AU property
+		CFStringRef auContextName;
 		#if TARGET_PLUGIN_USES_MIDI
 			// an array of how MIDI CCs and NRPNs map to parameters (if at all)
 			// the map needs to survive throughout the Audio Unit's life
