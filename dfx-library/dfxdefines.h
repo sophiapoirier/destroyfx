@@ -21,6 +21,9 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 #define DESTROYFX_ID 'DFX!'
 
+// to indicate "not a real parameter" or something like that
+#define DFX_PARAM_INVALID_ID	(-1)
+
 #define DFX_PARAM_MAX_NAME_LENGTH	64
 #define DFX_PRESET_MAX_NAME_LENGTH	64
 #define DFX_PARAM_MAX_VALUE_STRING_LENGTH	256
