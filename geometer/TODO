@@ -3,6 +3,10 @@ point echo (needs two param sliders?)
 
 spline interpolation
 
+point negate
+
+snap x/y == quantize
+
 "beat detect" point generation.
 
 pointop: transpose points (switch x/y, resort?)

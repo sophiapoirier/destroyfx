@@ -182,6 +182,7 @@ public:
     for(int i = 0; i < NUM_PROGRAMS; i++) programs[i].init(this);
     setProgram(0);
     strcpy(programs[0].name, "Geometer LoFi");
+    makepresets();
 
     setNumInputs(1);            /* mono in/out */
     setNumOutputs(1);
@@ -242,6 +243,9 @@ private:
 
   /* 1 if need to do ioChanged since buffer settings are different now */
   int changed;
+
+  /* set up the built-in presets */
+  void makepresets();
 
   /* ---------- geometer stuff ----------- */
 
