@@ -154,7 +154,7 @@ public:
 	virtual bool HandleEvent(EventRef inEvent);
 
 	void updateDisplays();	// refresh the value displays
-	void updateWindowSize(Float32 inParamValue);	// update analysis window size parameter controls
+	void updateWindowSize(Float32 inParamValue, RMSControl *inRMSControl);	// update analysis window size parameter controls
 	void resetRMS();	// send a message to the DSP component to reset average RMS
 	void resetPeak();	// send a message to the DSP component to reset absolute peak
 
@@ -168,9 +168,6 @@ public:
 		{	return parameterListener;	}
 	void AddAUCVControl(AUCarbonViewControl *inControl)
 		{	AddControl(inControl);	}
-
-	// get the RMSControl object for a given CarbonControl reference
-	RMSControl * getRMSControl(ControlRef inCarbonControl);
 
 	// get/set the control that is currently being moused (actively tweaked), if any (returns NULL if none)
 	RMSControl * getCurrentControl()
