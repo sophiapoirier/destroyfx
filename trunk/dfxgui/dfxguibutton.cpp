@@ -1,6 +1,7 @@
 #include "dfxguibutton.h"
 
 
+#pragma mark DGButton
 //-----------------------------------------------------------------------------
 // Button
 //-----------------------------------------------------------------------------
@@ -71,7 +72,7 @@ void DGButton::draw(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	if (mode == kDGButtonType_picturereel)
 		return;
@@ -93,7 +94,7 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 			entryValue = 0;	// just to make sure it's like that
 			break;
 		case kDGButtonType_incbutton:
-			if ( (inMouseButtons & (1<<1)) || (inKeyModifiers & kDGKeyModifier_extra) )
+			if ( (inMouseButtons & (1<<1)) || (inKeyModifiers & kDGKeyModifier_alt) )
 				newValue = entryValue - 1;
 			else
 				newValue = entryValue + 1;
@@ -104,7 +105,7 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 				newValue = max;
 			break;
 		case kDGButtonType_decbutton:
-			if ( (inMouseButtons & (1<<1)) || (inKeyModifiers & kDGKeyModifier_extra) )
+			if ( (inMouseButtons & (1<<1)) || (inKeyModifiers & kDGKeyModifier_alt) )
 				newValue = entryValue + 1;
 			else
 				newValue = entryValue - 1;
@@ -134,7 +135,7 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	if (mode == kDGButtonType_picturereel)
 		return;
@@ -183,7 +184,7 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+void DGButton::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 {
 	if (mode == kDGButtonType_picturereel)
 		return;
@@ -210,6 +211,36 @@ void DGButton::setMouseIsDown(bool newMouseState)
 	mouseIsDown = newMouseState;
 	if ( (oldstate != newMouseState) && drawMomentaryState )
 		redraw();
+}
+
+//-----------------------------------------------------------------------------
+bool DGButton::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+{
+	if (mode == kDGButtonType_picturereel)
+		return false;
+
+	float x = 0.0f, y = 0.0f;
+	DGKeyModifiers fakeModifiers = 0;
+	long direction = 1;
+	if (inDelta < 0)
+	{
+		fakeModifiers = kDGKeyModifier_alt;
+		direction = -1;
+	}
+	if (mode == kDGButtonType_radiobutton)
+	{
+		SInt32 desiredValue = GetControl32BitValue(carbonControl) + direction;
+		x = (float) ((getBounds()->w / numStates) * desiredValue);
+		if (x < 0.0f)
+			x = 0.0f;
+		else if ( x > (float)(getBounds()->w) )
+			x = (float)(getBounds()->w);
+	}
+
+	mouseDown(x, y, 1, fakeModifiers);
+	mouseUp(x, y, fakeModifiers);
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -254,6 +285,9 @@ void DGButton::setUserReleaseProcedure(buttonUserProcedure inProc, void * inUser
 
 
 
+#pragma mark -
+#pragma mark DGFineTuneButton
+
 //-----------------------------------------------------------------------------
 // Fine-tune Button
 //-----------------------------------------------------------------------------
@@ -285,7 +319,7 @@ void DGFineTuneButton::draw(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void DGFineTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void DGFineTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	#if TARGET_PLUGIN_USES_MIDI
 		if (isParameterAttached())
@@ -307,7 +341,7 @@ void DGFineTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMou
 }
 
 //-----------------------------------------------------------------------------
-void DGFineTuneButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+void DGFineTuneButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 {
 	bool oldMouseDown = mouseIsDown;
 
@@ -339,7 +373,7 @@ void DGFineTuneButton::mouseTrack(float inXpos, float inYpos, unsigned long inMo
 }
 
 //-----------------------------------------------------------------------------
-void DGFineTuneButton::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+void DGFineTuneButton::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 {
 	if (mouseIsDown)
 	{
@@ -352,6 +386,9 @@ void DGFineTuneButton::mouseUp(float inXpos, float inYpos, unsigned long inKeyMo
 
 
 
+
+#pragma mark -
+#pragma mark DGWebLink
 
 //-----------------------------------------------------------------------------
 // Web Link
@@ -384,7 +421,7 @@ DGWebLink::~DGWebLink()
 // This allows the user to accidentally push the button, but avoid the 
 // associated action (launching an URL) by moving the mouse pointer away 
 // before releasing the mouse button.
-void DGWebLink::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+void DGWebLink::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 {
 	// only launch the URL if the mouse pointer is still in the button's area
 	if ( getMouseIsDown() && (urlString != NULL) )

@@ -20,6 +20,7 @@ typedef enum {
 typedef void (*displayTextProcedure) (float inValue, char * outText, void * inUserData);
 
 
+#pragma mark -
 //-----------------------------------------------------------------------------
 class DGTextDisplay : public DGControl
 {
@@ -36,8 +37,9 @@ public:
 	OSStatus drawCFText(DGRect * inRegion, const CFStringRef inText, CGContextRef inContext, long inPortHeight);
 #endif
 
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
+	virtual bool mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers);
 
 	void setTextAlignment(DfxGuiTextAlignment newAlignment)
 		{	alignment = newAlignment;	}
@@ -74,6 +76,8 @@ protected:
 };
 
 
+
+#pragma mark -
 //-----------------------------------------------------------------------------
 class DGStaticTextDisplay : public DGTextDisplay
 {
@@ -85,11 +89,11 @@ public:
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
 
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 		{ }
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 		{ }
-	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 		{ }
 
 	void setText(const char * inNewText);
@@ -105,6 +109,8 @@ protected:
 };
 
 
+
+#pragma mark -
 //-----------------------------------------------------------------------------
 class DGTextArrayDisplay : public DGTextDisplay
 {
@@ -117,11 +123,11 @@ public:
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
 
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 		{ }
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 		{ }
-	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 		{ }
 
 	void setText(long inStringNum, const char * inNewText);
@@ -132,6 +138,8 @@ protected:
 };
 
 
+
+#pragma mark -
 //-----------------------------------------------------------------------------
 class DGAnimation : public DGTextDisplay
 {
@@ -145,6 +153,7 @@ protected:
 	DGImage * animationImage;
 	long numAnimationFrames;
 };
+
 
 
 #endif
