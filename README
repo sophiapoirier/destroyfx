@@ -72,7 +72,9 @@ intercom/
 
 geometer/
 
-        Re-shapes waveforms using new curves and lines.
+        A laboratory for waveform geometry. All sorts of crazy
+        effects are possible with this thing, and sports a neat
+        visual display of what's happening to your sound.
 
 
 In the source package, each plugin has a corresponding directory, as
