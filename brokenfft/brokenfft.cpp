@@ -1,5 +1,5 @@
 
-/* brokenfft: $Id: brokenfft.cpp,v 1.2 2001-08-16 13:02:50 tom7 Exp $ */
+/* brokenfft: $Id: brokenfft.cpp,v 1.3 2001-08-16 13:11:25 tom7 Exp $ */
 
 #include <windows.h>
 #include <stdlib.h>
@@ -592,29 +592,32 @@ void Fft::processX(float **inputs, float **outputs, long samples,
 
   /* process samples, fading at the beginning and stretching
      for an extra OVERLAP samples */
-
-  for(i = 0; i < samples; i++) {
-    if (i < OVERLAP) {
-      out[i] += oot[(int)(i * overscale)] * (i / (float)OVERLAP) +
-	overbuff[i] * ((OVERLAP-i) / (float)OVERLAP);
-    } else { 
-      out[i] += oot[(int)(i * overscale)];
-    }
-  }
-
-  /* mix in the 'oot' buffer, based on whether we are in
-     process or processReplacing */
+  
   if (overwrite) {
-    int u = 0;
-    for(i = (i * overscale) + 1; i < samples; i ++) {
-      overbuff[u++] = oot[i];
+    for(i = 0; i < samples; i++) {
+      if (i < OVERLAP) {
+	out[i] = oot[(int)(i * overscale)] * (i / (float)OVERLAP) +
+	  overbuff[i] * ((OVERLAP-i) / (float)OVERLAP);
+      } else { 
+	out[i] = oot[(int)(i * overscale)];
+      }
     }
   } else {
-    int u = 0;
-    for(i = (i * overscale) + 1; i < samples; i ++) {
-      overbuff[u++] += oot[i];
+    for(i = 0; i < samples; i++) {
+      if (i < OVERLAP) {
+	out[i] += oot[(int)(i * overscale)] * (i / (float)OVERLAP) +
+	  overbuff[i] * ((OVERLAP-i) / (float)OVERLAP);
+      } else { 
+	out[i] += oot[(int)(i * overscale)];
+      }
     }
   }
+
+  int u = 0;
+  for(i = (i * overscale) + 1; i < samples; i ++) {
+    overbuff[u++] = oot[i];
+  }
+
 }
 
 void Fft::process(float **inputs, float **outputs, long samples) {
