@@ -1,0 +1,7 @@
+
+Wavelab (reasonably) has trouble starting up a plugin with latency
+while the song is playing -- the output will have clicks. Simply
+restart playing in order to fix this, or add Geometer when the song is
+not playing.
+
+
