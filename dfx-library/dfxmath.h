@@ -11,6 +11,25 @@ This is our math shit.
 #include <stdlib.h>	// for RAND_MAX
 
 
+// XXX figure out another way
+#ifndef sqrtf
+#define sqrtf (float)sqrt
+#endif
+#ifndef powf
+#define powf (float)pow
+#endif
+#ifndef sinf
+#define sinf (float)sin
+#endif
+#ifndef cosf
+#define cosf (float)cos
+#endif
+#ifndef fabsf
+#define fabsf (float)fabs
+#endif
+
+
+
 //-----------------------------------------------------------------------------
 // constants & macros
 

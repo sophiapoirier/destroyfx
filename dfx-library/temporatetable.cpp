@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>	// for fabs
 
 
 //-----------------------------------------------------------------------------
@@ -77,6 +78,7 @@ TempoRateTable::TempoRateTable(long typeOfTable)
 
 //-----------------------------------------------------------------------------
 /*
+// moved to header so that the implementation is seen by DfxPlugin::DfxPlugin
 TempoRateTable::~TempoRateTable()
 {
 	if (scalars)
@@ -92,3 +94,23 @@ TempoRateTable::~TempoRateTable()
 	displays = 0;
 }
 */
+
+
+//-----------------------------------------------------------------------------
+// given a tempo rate value, return the index of the tempo rate 
+// that is closest to that requested value
+long TempoRateTable::getNearestTempoRateIndex(float tempoRateValue)
+{
+	float bestdiff = tempoRateValue;
+	long bestindex = 0;
+	for (long i=0; i < numTempoRates; i++)
+	{
+		float diff = (float) fabs(tempoRateValue - scalars[i]);
+		if (diff < bestdiff)
+		{
+			bestdiff = diff;
+			bestindex = i;
+		}
+	}
+	return bestindex;
+}

@@ -8,6 +8,10 @@
 #include <string.h>
 #include <time.h>
 
+#ifndef __DFXMATH_H
+#include "dfxmath.h"	// for PI
+#endif
+
 
 //------------------------------------------------------------------------
 LFO::LFO()
@@ -113,7 +117,13 @@ void LFO::fillLFOtables()
 //--------------------------------------------------------------------------------------
 void LFO::getShapeName(char *nameString)
 {
-	switch (LFOshapeScaled(fShape))
+	getShapeNameIndexed(iShape, nameString);
+}
+
+//--------------------------------------------------------------------------------------
+void LFO::getShapeNameIndexed(long index, char *nameString)
+{
+	switch (index)
 	{
 		case kSineLFO                : strcpy(nameString, "sine");					break;
 		case kTriangleLFO            : strcpy(nameString, "triangle");				break;
@@ -133,7 +143,7 @@ void LFO::getShapeName(char *nameString)
 
 void LFO::pickTheLFOwaveform()
 {
-	switch (LFOshapeScaled(fShape))
+	switch (iShape)
 	{
 		case kSineLFO :
 			table = sineTable;

@@ -13,7 +13,9 @@
 
 
 // XXX finish support for loading old pre-DfxPlugin settings
+#ifndef DFX_SUPPORT_OLD_VST_SETTINGS
 #define DFX_SUPPORT_OLD_VST_SETTINGS 1
+#endif
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark _________init/destroy_________
