@@ -188,8 +188,6 @@ public:
   virtual long getChunk(void **data, bool isPreset);
   virtual long setChunk(void *data, long byteSize, bool isPreset);
 
-  virtual void processw(float * in, float * out, long samples);
-
   bool getVendorString(char *text) {
     strcpy (text, "Destroy FX");
     return true; 
@@ -233,10 +231,13 @@ protected:
   /* shape of envelope */
   float shape;
 
+public:
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
   */
   float * in0, * out0;
+
+private:
 
   /* third-sized tail of previous processed frame. already has mixing envelope
      applied.
@@ -282,12 +283,15 @@ protected:
   int lastx;
   float lasty;
 
-  int * pointx;
-  float * pointy;
-
   int * tempx;
   float * tempy;
 
+
+public:
+  int * pointx;
+  float * pointy;
+
+  int processw(float * in, float * out, long samples);
 };
 
 #define FPARAM(pname, idx, nm, init, un) do { paramptrs[idx].ptr = &pname; paramptrs[idx].name = (nm); paramptrs[idx].units = (un); paramptrs[idx].def = (init); pname = paramptrs[idx].def; } while (0)

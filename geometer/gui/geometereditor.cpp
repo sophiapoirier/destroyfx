@@ -87,7 +87,13 @@ enum {
   pos_destroyfxlinkX = 269,
   pos_destroyfxlinkY = 500,
   pos_smartelectronixlinkX = 407,
-  pos_smartelectronixlinkY = 500
+  pos_smartelectronixlinkY = 500,
+
+  pos_geometerviewx = 20,
+  pos_geometerviewy = 14,
+  pos_geometervieww = 476,
+  pos_geometerviewh = 133
+
 };
 
 //-----------------------------------------------------------------------------
@@ -128,6 +134,8 @@ GeometerEditor::GeometerEditor(AudioEffect *effect)
   g_midilearnbutton = 0;
   g_destroyfxlink = 0;
   g_smartelectronixlink = 0;
+
+  gview = 0;
 
   // initialize the controls pointers
   // sliders
@@ -190,16 +198,16 @@ GeometerEditor::GeometerEditor(AudioEffect *effect)
 
 //-----------------------------------------------------------------------------
 GeometerEditor::~GeometerEditor() {
-        // free background bitmap
-        if (g_background)
-                g_background->forget();
-        g_background = 0;
+  // free background bitmap
+  if (g_background)
+    g_background->forget();
+  g_background = 0;
 }
 
 //-----------------------------------------------------------------------------
 long GeometerEditor::getRect(ERect **erect) {
-        *erect = &rect;
-        return true;
+  *erect = &rect;
+  return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -274,6 +282,15 @@ long GeometerEditor::open(void *ptr) {
 
   //--initialize the options menus----------------------------------------
   CPoint point (0, 0);
+
+
+  /* geometer view */
+  size(pos_geometerviewx, pos_geometerviewy, pos_geometerviewx + pos_geometervieww, pos_geometerviewy + pos_geometerviewh);
+  gview = new GeometerView(size, (Geometer*)effect);
+  gview->setTransparency(false);
+  frame->addView(gview);
+  gview->init();
+  
 
   // window shape menu
   size (pos_windowshapemenuX, pos_windowshapemenuY, pos_windowshapemenuX + (g_windowshapemenu->getWidth()/2), pos_windowshapemenuY + (g_windowshapemenu->getHeight())/NUM_WINDOWSHAPES);
@@ -1220,11 +1237,19 @@ void GeometerEditor::idle() {
     if (sliders[i]->getTag() != chunk->learner)
       glowingchanged = setGlowing(i, false);
   }
-
+  
+#if 1
+  static int when = 0;
+  /* maybe I don't need to do this every frame... */
+  if (1 || !when--) {
+    gview->reflect();
+    when = 100;
+  }
+#endif
 
   // some hosts need this call otherwise stuff doesn't redraw
-  if (helpchanged || glowingchanged)
-    postUpdate();
+  if (helpchanged || glowingchanged || 1)
+    postUpdate();  
 
   // this is called so that idle() actually happens
   AEffGUIEditor::idle();
