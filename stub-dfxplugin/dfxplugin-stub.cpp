@@ -4,13 +4,12 @@ This is our unexciting, but informative, demonstration DfxPlugin.
 written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
-// This example uses preprocessor defines to designate code that you would 
-// use depending on which sorts of features or APIs you are supporting.  
-// You wouldn't necessarily use all of that stuff in a single plugin.
+// The gratiutous use of preprocessor defines is to designate code that 
+// you would use depending on which features or APIs you are supporting.  
+// You wouldn't use all of that stuff in a single plugin.  
+// In this example, it's just in order to show you all of the options.
 
-#ifndef __DFXPLUGIN_STUB_H
 #include "dfxplugin-stub.hpp"
-#endif
 
 
 #pragma mark _________base_initializations_________
@@ -107,13 +106,6 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 // do final cleanup here
 DfxStub::~DfxStub()
 {
-
-#ifdef TARGET_API_VST
-	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
-	// so we need to call this manually here
-	// (only necessary if your plugin overrides cleanup and does its own stuff)
-	do_cleanup();
-#endif
 }
 
 //-------------------------------------------------------------------------
@@ -150,7 +142,6 @@ DfxStubDSP::DfxStubDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
 //-------------------------------------------------------------------------
 DfxStubDSP::~DfxStubDSP()
 {
-
 	// you must call here because ~DfxPluginCore can't do this for us
 	releasebuffers();
 }

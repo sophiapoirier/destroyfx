@@ -29,26 +29,16 @@
 // optional
 // a description of the effect (for Audio Unit)
 #define PLUGIN_DESCRIPTION_STRING	"demonstration of how to use DfxPlugin"
-// the name of the plugin prepended with "Destroy FX: "   (for Audio Unit)
-#define PLUGIN_DOUBLE_NAME_STRING	"Destroy FX: DfxPlugin stub"
 // music plugin component resource ID (for Audio Unit)
 #define PLUGIN_RES_ID	3000
 #if TARGET_PLUGIN_HAS_GUI
 	// a four-byte ID for the GUI component of the plugin (for Audio Unit)
-	#define PLUGIN_EDITOR_ID	'stuV'
+	#define PLUGIN_EDITOR_ID	'stub'
 	// a description of the GUI component of the plugin (for Audio Unit, not important)
 	#define PLUGIN_EDITOR_DESCRIPTION_STRING	"graphics for DfxPlugin stub"
-	// the name of the plugin GUI prepended with "Destroy FX: "   (for Audio Unit, not important)
-	#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: DfxPlugin stub editor"
 	// GUI component resource ID (for Audio Unit)
 	#define PLUGIN_EDITOR_RES_ID	9000
 #endif
-
-
-// 0 or 1
-// whether or not we want to support loading old-style (pre-DfxPlugin) VST settings
-// definitely not necessary if you are writing a new plugin
-#define DFX_SUPPORT_OLD_VST_SETTINGS 0
 
 
 // only define one of these for a given build, not both
@@ -60,6 +50,8 @@
 	#include "vstplugscarbon.h"	// Carbon for classic Mac OS or Mac OS X
 //	#include "vstplugsmac.h"	// classic Mac OS
 	// the number of ins and outs in VST must be fixed
-	#define NUM_INPUTS 2	// change as needed
-	#define NUM_OUTPUTS 2	// change as needed
+	#define VST_NUM_INPUTS 2	// change as needed
+	#define VST_NUM_OUTPUTS 2	// change as needed
+	// or if they're both equal, simply this will do:
+//	#define VST_NUM_CHANNELS 2
 #endif
