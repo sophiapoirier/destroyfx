@@ -1,0 +1,14 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+128                     BITMAP  DISCARDABLE     "background.bmp"
+129                     BITMAP  DISCARDABLE     "fader-slide-monomerge.bmp"
+130                     BITMAP  DISCARDABLE     "fader-slide-pan.bmp"
+131                     BITMAP  DISCARDABLE     "fader-handle.bmp"
+132                     BITMAP  DISCARDABLE     "monomerge-animation.bmp"
+133                     BITMAP  DISCARDABLE     "pan-animation.bmp"
+134                     BITMAP  DISCARDABLE     "destroy-fx-link.bmp"
+
