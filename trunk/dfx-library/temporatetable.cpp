@@ -1,4 +1,4 @@
-#ifndef __dfx_temporatetable
+#ifndef __DFX_TEMPORATETABLE_H
 #include "temporatetable.h"
 #endif
 
@@ -76,6 +76,7 @@ TempoRateTable::TempoRateTable(long typeOfTable)
 }
 
 //-----------------------------------------------------------------------------
+/*
 TempoRateTable::~TempoRateTable()
 {
 	if (scalars)
@@ -90,3 +91,4 @@ TempoRateTable::~TempoRateTable()
 		free(displays);
 	displays = 0;
 }
+*/
