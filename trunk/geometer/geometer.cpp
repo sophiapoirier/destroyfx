@@ -155,8 +155,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   dfxsettings->setAllowPitchbendEvents(true);
   dfxsettings->setAllowNoteEvents(true);
 
-#if !TARGET_PLUGIN_USES_DSPCORE
   cs = new dfxmutex();
+
+#if !TARGET_PLUGIN_USES_DSPCORE
   addchannelconfig(1, 1);	/* mono */
 #endif
 
@@ -171,9 +172,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 PLUGIN::~PLUGIN() {
-#if !TARGET_PLUGIN_USES_DSPCORE
   delete cs;
-#endif
 
 #ifdef TARGET_API_VST
   /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
