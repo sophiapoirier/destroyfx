@@ -1,0 +1,30 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+128                     BITMAP  DISCARDABLE     "..\\bufferoverride\\GUI\\graphics\\background.bmp"
+129                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\xy-box-handle.bmp"
+130                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\xy-box-handle-divisor-glow.bmp"
+131                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\xy-box-handle-buffer-glow.bmp"
+132                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\fader-handle.bmp"
+133                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\glowing-fader-handle.bmp"
+134                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\fader-handle-pitchbend.bmp"
+135                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\glowing-fader-handle-pitchbend.bmp"
+136                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\buffer-interrupt-button.bmp"
+137                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\buffer-interrupt-button-corner.bmp"
+138                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\buffer-tempo-sync-button.bmp"
+139                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\buffer-tempo-sync-button-corner.bmp"
+140                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\buffer-size-label.bmp"
+141                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\midi-mode-button.bmp"
+142                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\divisor-lfo-shape-switch.bmp"
+143                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\divisor-lfo-tempo-sync-button.bmp"
+144                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\divisor-lfo-rate-label.bmp"
+145                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\buffer-lfo-shape-switch.bmp"
+146                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\buffer-lfo-tempo-sync-button.bmp"
+147                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\buffer-lfo-rate-label.bmp"
+148                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\midi-learn-button.bmp"
+149                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\midi-reset-button.bmp"
+150                     BITMAP  DISCARDABLE     "..\\bufferoverride\\gui\\graphics\\go-button.bmp"
+
