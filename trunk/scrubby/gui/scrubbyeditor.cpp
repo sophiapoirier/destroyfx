@@ -59,8 +59,8 @@ enum {
 	kSpeedModeButtonY = 60,
 	kFreezeButtonX = 127,
 	kFreezeButtonY = 60,
-	kStereoButtonX = 223,
-	kStereoButtonY = 60,
+	kSplitChannelsButtonX = 223,
+	kSplitChannelsButtonY = 60,
 	kTempoSyncButtonX = 319,
 	kTempoSyncButtonY = 60,
 	kPitchConstraintButtonX = 415,
@@ -123,7 +123,7 @@ enum {
 	kHelp_seekDur,
 	kHelp_speedMode,
 	kHelp_freeze,
-	kHelp_stereo,
+	kHelp_splitChannels,
 	kHelp_tempoSync,
 	kHelp_pitchConstraint,
 	kHelp_notes,
@@ -186,11 +186,11 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 		"This causes Scrubby to stop reading from your incoming audio stream and ", 
 		"to stick with the current contents of the delay buffer.", 
 	}, 
-	// stereo mode
+	// channels mode
 	{
-		"stereo mode:  toggle between linked or split seeks for each channel", 
-		"When linked, both stereo channels will seek the same target destinations.  ", 
-		"When split, each stereo channel will find different destinations to seek.", 
+		"channels mode:  toggle between linked or split seeks for each channel", 
+		"When linked, all audio channels will seek the same target destinations.  ", 
+		"When split, each audio channel will find different destinations to seek.", 
 	}, 
 	// tempo sync
 	{
@@ -466,7 +466,7 @@ public:
 			buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
 		}
 	}
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 	{
 		SetControl32BitValue( carbonControl, (GetControl32BitValue(carbonControl) == 0) ? 1 : 0 );
 	}
@@ -550,7 +550,7 @@ long ScrubbyEditor::open()
 	DGImage * gSpeedModeButton = new DGImage("speed-mode-button.png", this);
 	DGImage * gFreezeButton = new DGImage("freeze-button.png", this);
 	DGImage * gTempoSyncButton = new DGImage("tempo-sync-button.png", this);
-	DGImage * gStereoButton = new DGImage("stereo-button.png", this);
+	DGImage * gSplitChannelsButton = new DGImage("stereo-button.png", this);
 	DGImage * gPitchConstraintButton = new DGImage("pitch-constraint-button.png", this);
 	DGImage * gTempoSyncButton_little = new DGImage("tempo-sync-button-little.png", this);
 
@@ -710,9 +710,9 @@ long ScrubbyEditor::open()
 	pos.set(kFreezeButtonX, kFreezeButtonY, gFreezeButton->getWidth()/2, gFreezeButton->getHeight()/2);
 	button = new DGButton(this, kFreeze, &pos, gFreezeButton, 2, kDGButtonType_incbutton, true);
 
-	// choose the stereo mode (linked or split)
-	pos.set(kStereoButtonX, kStereoButtonY, gStereoButton->getWidth()/2, gStereoButton->getHeight()/2);
-	button = new DGButton(this, kSplitStereo, &pos, gStereoButton, 2, kDGButtonType_incbutton, true);
+	// choose the channels mode (linked or split)
+	pos.set(kSplitChannelsButtonX, kSplitChannelsButtonY, gSplitChannelsButton->getWidth()/2, gSplitChannelsButton->getHeight()/2);
+	button = new DGButton(this, kSplitChannels, &pos, gSplitChannelsButton, 2, kDGButtonType_incbutton, true);
 
 	// choose the seek rate type ("free" or synced)
 	pos.set(kTempoSyncButtonX, kTempoSyncButtonY, gTempoSyncButton->getWidth()/2, gTempoSyncButton->getHeight()/2);
@@ -791,8 +791,6 @@ long ScrubbyEditor::open()
 	//--create the help display-----------------------------------------
 	pos.set(kHelpX, kHelpY, gHelpBackground->getWidth(), gHelpBackground->getHeight());
 	helpbox = new ScrubbyHelpBox(this, &pos, gHelpBackground);
-
-HMSetTagDelay(9);	// make the help appear quickly <-- XXX this is sort of a hack
 
 
 
@@ -969,8 +967,8 @@ void ScrubbyEditor::mouseovercontrolchanged(DGControl * currentControlUnderMouse
 			case kSpeedMode:
 				newHelpItem = kHelp_speedMode;
 				break;
-			case kSplitStereo:
-				newHelpItem = kHelp_stereo;
+			case kSplitChannels:
+				newHelpItem = kHelp_splitChannels;
 				break;
 			case kPitchConstraint:
 				newHelpItem = kHelp_pitchConstraint;
