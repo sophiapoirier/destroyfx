@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------
 Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
-This is our shit.
+This is our class for E-Z plugin-making and E-Z multiple-API support.
 written by Marc Poirier, October 2002
 ------------------------------------------------------------------------*/
 
