@@ -90,7 +90,8 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 	max = initMax;
 	if (initName != NULL)
 	{
-		strcpy(name, initName);
+		strncpy(name, initName, DFX_PARAM_MAX_NAME_LENGTH);
+		name[DFX_PARAM_MAX_NAME_LENGTH-1] = 0;
 		#ifdef TARGET_API_AUDIOUNIT
 			cfname = CFStringCreateWithCString(kCFAllocatorDefault, initName, CFStringGetSystemEncoding());
 		#endif
@@ -280,12 +281,13 @@ bool DfxParam::setvaluestring(long index, const char * inText)
 
 	// the actual index of the array is the incoming index 
 	// minus the parameter's minimum value
-	long arrayIndex = index-getmin_i();
-	strcpy(valueStrings[arrayIndex], inText);
+	long arrayIndex = index - getmin_i();
+	strncpy(valueStrings[arrayIndex], inText, DFX_PARAM_MAX_VALUE_STRING_LENGTH);
+	valueStrings[arrayIndex][DFX_PARAM_MAX_VALUE_STRING_LENGTH-1] = 0;
 
 	#ifdef TARGET_API_AUDIOUNIT
 		if (valueCFStrings[arrayIndex] != NULL)
-			CFRelease(valueCFStrings[arrayIndex]);	// XXX do this?
+			CFRelease(valueCFStrings[arrayIndex]);
 		// convert the incoming text to a CFString
 		valueCFStrings[arrayIndex] = CFStringCreateWithCString(kCFAllocatorDefault, inText, CFStringGetSystemEncoding());
 	#endif
@@ -311,9 +313,9 @@ bool DfxParam::getvaluestring(long index, char * outText)
 char * DfxParam::getvaluestring_ptr(long index)
 {
 	if (!ValueStringIndexIsValid(index))
-		return 0;
+		return NULL;
 
-	return valueStrings[index-getmin_i()];
+	return valueStrings[index - getmin_i()];
 }
 
 //-----------------------------------------------------------------------------
@@ -326,7 +328,8 @@ bool DfxParam::ValueStringIndexIsValid(long index)
 		return false;
 	if ( (index < getmin_i()) || (index > getmax_i()) )
 		return false;
-	if (valueStrings[index] == NULL)
+	// XXX should I rethink this one?
+	if (valueStrings[index-getmin_i()] == NULL)
 		return false;
 
 	return true;
@@ -483,7 +486,7 @@ float DfxParam::get_gen()
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a float type
 // perform type conversion if float is not the parameter's "native" type
-bool DfxParam::accept_f(float inValue, DfxParamValue &outValue)
+bool DfxParam::accept_f(float inValue, DfxParamValue & outValue)
 {
 	switch (valueType)
 	{
@@ -523,7 +526,7 @@ bool DfxParam::accept_f(float inValue, DfxParamValue &outValue)
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a double type
 // perform type conversion if double is not the parameter's "native" type
-bool DfxParam::accept_d(double inValue, DfxParamValue &outValue)
+bool DfxParam::accept_d(double inValue, DfxParamValue & outValue)
 {
 	switch (valueType)
 	{
@@ -563,7 +566,7 @@ bool DfxParam::accept_d(double inValue, DfxParamValue &outValue)
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a int type
 // perform type conversion if int is not the parameter's "native" type
-bool DfxParam::accept_i(long inValue, DfxParamValue &outValue)
+bool DfxParam::accept_i(long inValue, DfxParamValue & outValue)
 {
 	switch (valueType)
 	{
@@ -600,7 +603,7 @@ bool DfxParam::accept_i(long inValue, DfxParamValue &outValue)
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a boolean type
 // perform type conversion if boolean is not the parameter's "native" type
-bool DfxParam::accept_b(bool inValue, DfxParamValue &outValue)
+bool DfxParam::accept_b(bool inValue, DfxParamValue & outValue)
 {
 	switch (valueType)
 	{
@@ -944,7 +947,8 @@ void DfxParam::setcustomunitstring(const char * inText)
 	if (customUnitString == NULL)
 		customUnitString = (char*) malloc(DFX_PARAM_MAX_UNIT_STRING_LENGTH * sizeof(char));
 
-	strcpy(customUnitString, inText);
+	strncpy(customUnitString, inText, DFX_PARAM_MAX_UNIT_STRING_LENGTH);
+	customUnitString[DFX_PARAM_MAX_UNIT_STRING_LENGTH-1] = 0;
 }
 
 
@@ -1025,13 +1029,14 @@ void DfxPreset::setname(const char * inText)
 	if (inText == NULL)
 		return;
 
-	strcpy(name, inText);
+	strncpy(name, inText, DFX_PRESET_MAX_NAME_LENGTH);
+	name[DFX_PRESET_MAX_NAME_LENGTH-1] = 0;
 
 	#ifdef TARGET_API_AUDIOUNIT
 		if (strlen(inText) > 0)
 		{
 			if (cfname != NULL)
-				CFRelease(cfname);	// XXX do this?
+				CFRelease(cfname);
 			cfname = CFStringCreateWithCString(kCFAllocatorDefault, inText, CFStringGetSystemEncoding());
 		}
 	#endif
