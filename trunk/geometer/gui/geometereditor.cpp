@@ -1071,23 +1071,6 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
   }
 
   control->update(context);
-
-	if (tag == tag_midilearn)
-	{
-		if (control->getValue() > 0.5f)
-		{
-//			rect.bottom = pos_helpboxY + rect.top;
-			frame->setSize(g_background->getHeight(), pos_helpboxY);
-		}
-		else
-		{
-//			rect.bottom = g_background->getHeight() + rect.top;
-			frame->setSize(g_background->getHeight(), g_background->getHeight());
-		}
-//		frame->setSize(rect.right-rect.left, rect.bottom-rect.top);
-		frame->redraw();
-	}
-
 }
 
 //-----------------------------------------------------------------------------
