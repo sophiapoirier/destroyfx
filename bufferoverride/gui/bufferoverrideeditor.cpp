@@ -5,10 +5,11 @@
 
 
 #define VALUE_DISPLAY_FONT	"Helvetica"
-const float VALUE_DISPLAY_FONT_SIZE = 10.0f;
+const float VALUE_DISPLAY_REGULAR_FONT_SIZE = 10.8f;
+const float VALUE_DISPLAY_TINY_FONT_SIZE = 10.2f;
 #define HELP_DISPLAY_FONT	"Helvetica"
-const float HELP_DISPLAY_FONT_SIZE = 10.0f;
-const DGColor HELP_DISPLAY_TEXT_COLOR = {201, 201, 201};
+const float HELP_DISPLAY_FONT_SIZE = 9.6f;
+const DGColor HELP_DISPLAY_TEXT_COLOR = { 201, 201, 201 };
 
 
 
@@ -53,12 +54,12 @@ enum {
 	kDivisorLFOrateDisplayY = 188,
 	kDivisorLFOdepthDisplayX = 171 - kDisplayWidth + 2,
 	kDivisorLFOdepthDisplayY = 212,
-	kBufferLFOrateDisplayX = 326 - kLFOrateDisplayWidth,
+	kBufferLFOrateDisplayX = 328 - kLFOrateDisplayWidth,
 	kBufferLFOrateDisplayY = 188,
 	kBufferLFOdepthDisplayX = 331 - kDisplayWidth,
 	kBufferLFOdepthDisplayY = 212,
 	//
-	kPitchbendDisplayX = 99 - kDisplayWidth,
+	kPitchbendDisplayX = 101 - kDisplayWidth,
 	kPitchbendDisplayY = 42,
 	kSmoothDisplayX = 413 - kDisplayWidth,
 	kSmoothDisplayY = 42,
@@ -68,7 +69,7 @@ enum {
 	kTempoDisplayY = 4,
 	//
 	kHelpDisplayX = 0,
-	kHelpDisplayY = 232,
+	kHelpDisplayY = 233,
 
 	// XY box
 	kDivisorBufferBoxX = 156,
@@ -435,70 +436,70 @@ printf("--------------------------------------------------\n\n");
 
 	pos.set (kDivisorDisplayX, kDivisorDisplayY, kDisplayWidth, kDisplayHeight);
 	DGTextDisplay *divisorDisplay = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
-	divisorDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	divisorDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	divisorDisplay->setTextAlignmentStyle(kTextAlign_right);
 	divisorDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(divisorDisplay);
 
 	pos.set (kBufferDisplayX, kBufferDisplayY, kDisplayWidth, kDisplayHeight);
 	bufferSizeDisplay = new DGTextDisplay(this, bufferSizeTag, &pos, bufferSizeDisplayProc, this, gBackground, VALUE_DISPLAY_FONT);
-	bufferSizeDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	bufferSizeDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	bufferSizeDisplay->setFontColor(kWhiteDGColor);
 	bufferSizeDisplay->setTextAlignmentStyle(kTextAlign_center);
 	mainPane->addControl(bufferSizeDisplay);
 
 	pos.set (kDivisorLFOrateDisplayX, kDivisorLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
 	divisorLFOrateDisplay = new DGTextDisplay(this, divisorLFOrateTag, &pos, divisorLFOrateDisplayProc, this, gBackground, VALUE_DISPLAY_FONT);
-	divisorLFOrateDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	divisorLFOrateDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	divisorLFOrateDisplay->setTextAlignmentStyle(kTextAlign_right);
 	divisorLFOrateDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(divisorLFOrateDisplay);
 
 	pos.set (kDivisorLFOdepthDisplayX, kDivisorLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
 	DGTextDisplay *divisorLFOdepthDisplay = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
-	divisorLFOdepthDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	divisorLFOdepthDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	divisorLFOdepthDisplay->setTextAlignmentStyle(kTextAlign_right);
 	divisorLFOdepthDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(divisorLFOdepthDisplay);
 
 	pos.set (kBufferLFOrateDisplayX, kBufferLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
 	bufferLFOrateDisplay = new DGTextDisplay(this, bufferLFOrateTag, &pos, bufferLFOrateDisplayProc, this, gBackground, VALUE_DISPLAY_FONT);
-	bufferLFOrateDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	bufferLFOrateDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	bufferLFOrateDisplay->setTextAlignmentStyle(kTextAlign_right);
 	bufferLFOrateDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(bufferLFOrateDisplay);
 
 	pos.set (kBufferLFOdepthDisplayX, kBufferLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
 	DGTextDisplay *bufferLFOdepthDisplay = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
-	bufferLFOdepthDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	bufferLFOdepthDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	bufferLFOdepthDisplay->setTextAlignmentStyle(kTextAlign_right);
 	bufferLFOdepthDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(bufferLFOdepthDisplay);
 
 	pos.set (kSmoothDisplayX, kSmoothDisplayY, kDisplayWidth, kDisplayHeight);
 	DGTextDisplay *smoothDisplay = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
-	smoothDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	smoothDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	smoothDisplay->setTextAlignmentStyle(kTextAlign_right);
 	smoothDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(smoothDisplay);
 
 	pos.set (kDryWetMixDisplayX, kDryWetMixDisplayY, kDisplayWidth, kDisplayHeight);
 	DGTextDisplay *dryWetMixDisplay = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
-	dryWetMixDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	dryWetMixDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	dryWetMixDisplay->setTextAlignmentStyle(kTextAlign_right);
 	dryWetMixDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(dryWetMixDisplay);
 
 	pos.set (kPitchbendDisplayX, kPitchbendDisplayY, kDisplayWidth, kDisplayHeight);
 	DGTextDisplay *pitchbendDisplay = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
-	pitchbendDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	pitchbendDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	pitchbendDisplay->setTextAlignmentStyle(kTextAlign_right);
 	pitchbendDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(pitchbendDisplay);
 
 	pos.set (kTempoDisplayX, kTempoDisplayY, kDisplayWidth, kDisplayHeight);
 	DGTextDisplay *tempoDisplay = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, gBackground, VALUE_DISPLAY_FONT);
-	tempoDisplay->setFontSize(VALUE_DISPLAY_FONT_SIZE);
+	tempoDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
 	tempoDisplay->setTextAlignmentStyle(kTextAlign_left);
 	tempoDisplay->setFontColor(kWhiteDGColor);
 	mainPane->addControl(tempoDisplay);
