@@ -553,8 +553,7 @@ public:
 //	bool GetUseTimeStampedParameters()
 //		{	return b_usetimestampedparameters;	}
 
-	void getpluginname(char *name)
-		{	if (name) strcpy(name, PLUGIN_NAME_STRING);	}
+	void getpluginname(char *outText);
 	long getpluginversion()
 		{	return PLUGIN_VERSION;	}
 
@@ -695,8 +694,8 @@ public:
 //					const void *inData, UInt32 inDataSize);
 
 	virtual UInt32 SupportedNumChannels(const AUChannelInfo **outInfo);
-    virtual Float64 GetLatency();
-    virtual Float64 GetTailTime();
+	virtual Float64 GetLatency();
+	virtual Float64 GetTailTime();
 	virtual bool SupportsRampAndTail()
 		{	return true;	}
 
@@ -979,7 +978,7 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 		AEffect *main(audioMasterCallback audioMaster);
 	#endif
 
-#define DFX_ENTRYPRE(PluginClass)								\
+#define DFX_ENTRY(PluginClass)									\
 	AEffect *main(audioMasterCallback audioMaster)				\
 	{															\
 		if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
@@ -991,31 +990,18 @@ void clearbufferarrayarray_d(double ***buffers, unsigned long numbufferarrays, u
 		return effect->getAeffect();							\
 	}
 
-	#if WIN32
-        #define DFX_ENTRY(PC) DFX_ENTRYPRE(PC) \
-		void *hInstance; \
-		BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) { \
-		  hInstance = hInst; \
-		  return 1; \
-		}
-	#else
-
-		#define DFX_ENTRY(PC) DFX_ENTRYPRE(PC)
-
-	#endif
-
 	// we need to manage the DSP cores manually in VST
 	// call this in the plugin's constructor if it uses DSP cores for processing
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// XXX is there a better way to make an empty declaration?
                 // tom replaced with just a single semicolon; should be better.
 		#define DFX_CORE_ENTRY(PluginCoreClass) ;
-		#define DFX_INIT_CORE(PluginCoreClass)   								\
-			for (long corecount=0; corecount < getnumoutputs(); corecount++)	\
-			{																	\
-				dspcores[corecount] = new PluginCoreClass(this);				\
-				if (dspcores[corecount] != NULL)								\
-					dspcores[corecount]->dfxplugincore_postconstructor();		\
+		#define DFX_INIT_CORE(PluginCoreClass)   										\
+			for (unsigned long corecount=0; corecount < getnumoutputs(); corecount++)	\
+			{																			\
+				dspcores[corecount] = new PluginCoreClass(this);						\
+				if (dspcores[corecount] != NULL)										\
+					dspcores[corecount]->dfxplugincore_postconstructor();				\
 			}
 	#endif
 

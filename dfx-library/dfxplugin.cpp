@@ -135,7 +135,7 @@ DfxPlugin::DfxPlugin(
 	#if TARGET_PLUGIN_USES_DSPCORE
 		dspcores = (DfxPluginCore**) malloc(getnumoutputs() * sizeof(DfxPluginCore*));
 		// need to save instantiating the cores for the inheriting plugin class constructor
-		for (long ii=0; ii < getnumoutputs(); ii++)
+		for (unsigned long ii=0; ii < getnumoutputs(); ii++)
 			dspcores[ii] = NULL;
 	#endif
 
@@ -209,7 +209,7 @@ DfxPlugin::~DfxPlugin()
 		#if TARGET_PLUGIN_USES_DSPCORE
 			if (dspcores != NULL)
 			{
-				for (long i=0; i < getnumoutputs(); i++)
+				for (unsigned long i=0; i < getnumoutputs(); i++)
 				{
 					if (dspcores[i] != NULL)
 						delete dspcores[i];
@@ -830,6 +830,13 @@ void DfxPlugin::updatenumchannels()
 
 
 #pragma mark _________properties_________
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::getpluginname(char *outText)
+{
+	if (outText != NULL)
+		strcpy(outText, PLUGIN_NAME_STRING);
+}
 
 //-----------------------------------------------------------------------------
 // return the number of audio inputs
