@@ -1371,7 +1371,7 @@ void PLUGIN::makepresets() {
   programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_REVERSI);
   i++;
 
-  strcpy(programs[i].name, "robo sing");
+  strcpy(programs[i].name, "robo sing (A)");
   programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
   programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
   programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
@@ -1405,6 +1405,55 @@ void PLUGIN::makepresets() {
   programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
   programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.8258427;
   i++;
+
+  strcpy(programs[i].name, "slower");
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((13), BUFFERSIZESSIZE);
+  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
+  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_FREQ);
+  programs[i].param[P_POINTPARAMS + POINT_FREQ] = 0.3089887f;
+  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_FRIENDS);
+  programs[i].param[P_INTERPARAMS + INTERP_FRIENDS] = 1.0f;
+  i++;
+
+  strcpy(programs[i].name, "space chamber");
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((13), BUFFERSIZESSIZE);
+  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
+  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_FREQ);
+  programs[i].param[P_POINTPARAMS + POINT_FREQ] = 0.0224719f;
+  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_FAST);
+  programs[i].param[P_OPPAR2S + OP_FAST] = 0.7247191f;
+  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SMOOTHIE);
+  programs[i].param[P_INTERPARAMS + INTERP_SMOOTHIE] = 0.5f;
+  i++;
+
+  strcpy(programs[i].name, "robo sing (B)");
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((10), BUFFERSIZESSIZE);
+  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
+  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_RANDOM);
+  programs[i].param[P_POINTPARAMS + POINT_RANDOM] = 0.0224719f;
+  programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_LONGPASS);
+  programs[i].param[P_OPPAR1S + OP_LONGPASS] = 0.1966292f;
+  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_FAST);
+  programs[i].param[P_OPPAR2S + OP_FAST] = 1.0f;
+  programs[i].param[P_POINTOP3] = UNMKPOINTOP(OP_FAST);
+  programs[i].param[P_OPPAR3S + OP_FAST] = 1.0f;
+  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_POLYGON);
+  programs[i].param[P_INTERPARAMS + INTERP_POLYGON] = 0.0f;
+  i++;
+  
+  strcpy(programs[i].name, "scrubby chorus");
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((13), BUFFERSIZESSIZE);
+  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_ARROW);
+  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_RANDOM);
+  programs[i].param[P_POINTPARAMS + POINT_RANDOM] = 0.9775281f;
+  programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_LONGPASS);
+  programs[i].param[P_OPPAR1S + OP_LONGPASS] = 0.5168539f;
+  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_FAST);
+  programs[i].param[P_OPPAR2S + OP_FAST] = 0.0617978f;
+  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_FRIENDS);
+  programs[i].param[P_INTERPARAMS + INTERP_FRIENDS] = 0.7303371f;
+  i++;
+
 
 }
 
