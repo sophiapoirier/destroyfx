@@ -299,8 +299,8 @@ void DfxPlugin::do_reset()
 #pragma mark _________parameters_________
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_f(long parameterIndex, const char * initName, float initValue, 
-						float initDefaultValue, float initMin, float initMax, 
+void DfxPlugin::initparameter_f(long parameterIndex, const char * initName, double initValue, 
+						double initDefaultValue, double initMin, double initMax, 
 						DfxParamUnit initUnit, DfxParamCurve initCurve, 
 						const char * initCustomUnitString)
 {
@@ -318,25 +318,8 @@ void DfxPlugin::initparameter_f(long parameterIndex, const char * initName, floa
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_d(long parameterIndex, const char * initName, double initValue, 
-						double initDefaultValue, double initMin, double initMax, 
-						DfxParamUnit initUnit, DfxParamCurve initCurve, 
-						const char * initCustomUnitString)
-{
-	if (parameterisvalid(parameterIndex))
-	{
-		parameters[parameterIndex].init_d(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
-		update_parameter(parameterIndex);	// make the host aware of the parameter change
-		initpresetsparameter(parameterIndex);	// default empty presets with this value
-		// set the custom unit string, if there is one
-		if (initCustomUnitString != NULL)
-			setparametercustomunitstring(parameterIndex, initCustomUnitString);
-	}
-}
-
-//-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_i(long parameterIndex, const char * initName, long initValue, 
-						long initDefaultValue, long initMin, long initMax, 
+void DfxPlugin::initparameter_i(long parameterIndex, const char * initName, sint64 initValue, 
+						sint64 initDefaultValue, sint64 initMin, sint64 initMax, 
 						DfxParamUnit initUnit, DfxParamCurve initCurve, 
 						const char * initCustomUnitString)
 {
@@ -366,7 +349,7 @@ void DfxPlugin::initparameter_b(long parameterIndex, const char * initName, bool
 //-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
-void DfxPlugin::initparameter_indexed(long parameterIndex, const char * initName, long initValue, long initDefaultValue, long initNumItems, 
+void DfxPlugin::initparameter_indexed(long parameterIndex, const char * initName, sint64 initValue, sint64 initDefaultValue, sint64 initNumItems, 
 						DfxParamUnit initUnit, const char * initCustomUnitString)
 {
 	if (parameterisvalid(parameterIndex))
@@ -392,7 +375,7 @@ void DfxPlugin::setparameter(long parameterIndex, DfxParamValue newValue)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_f(long parameterIndex, float newValue)
+void DfxPlugin::setparameter_f(long parameterIndex, double newValue)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -402,17 +385,7 @@ void DfxPlugin::setparameter_f(long parameterIndex, float newValue)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_d(long parameterIndex, double newValue)
-{
-	if (parameterisvalid(parameterIndex))
-	{
-		parameters[parameterIndex].set_d(newValue);
-		update_parameter(parameterIndex);	// make the host aware of the parameter change
-	}
-}
-
-//-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_i(long parameterIndex, long newValue)
+void DfxPlugin::setparameter_i(long parameterIndex, sint64 newValue)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -432,7 +405,7 @@ void DfxPlugin::setparameter_b(long parameterIndex, bool newValue)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameter_gen(long parameterIndex, float newValue)
+void DfxPlugin::setparameter_gen(long parameterIndex, double newValue)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -507,7 +480,7 @@ void DfxPlugin::postupdate_parameter(long parameterIndex)
 
 //-----------------------------------------------------------------------------
 // return a (hopefully) 0 to 1 scalar version of the parameter's current value
-float DfxPlugin::getparameter_scalar(long parameterIndex)
+double DfxPlugin::getparameter_scalar(long parameterIndex)
 {
 	if (parameterisvalid(parameterIndex))
 	{
@@ -515,7 +488,7 @@ float DfxPlugin::getparameter_scalar(long parameterIndex)
 		{
 			case kDfxParamUnit_percent:
 			case kDfxParamUnit_drywetmix:
-				return parameters[parameterIndex].get_f() / 100.0f;
+				return parameters[parameterIndex].get_f() / 100.0;
 			case kDfxParamUnit_portion:
 			case kDfxParamUnit_scalar:
 				return parameters[parameterIndex].get_f();
@@ -524,7 +497,7 @@ float DfxPlugin::getparameter_scalar(long parameterIndex)
 		}
 	}
 	else
-		return 0.0f;
+		return 0.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -558,7 +531,7 @@ DfxParamUnit DfxPlugin::getparameterunit(long parameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::setparametervaluestring(long parameterIndex, long stringIndex, const char * inText)
+bool DfxPlugin::setparametervaluestring(long parameterIndex, sint64 stringIndex, const char * inText)
 {
 	if (parameterisvalid(parameterIndex))
 		return parameters[parameterIndex].setvaluestring(stringIndex, inText);
@@ -567,7 +540,7 @@ bool DfxPlugin::setparametervaluestring(long parameterIndex, long stringIndex, c
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getparametervaluestring(long parameterIndex, long stringIndex, char * outText)
+bool DfxPlugin::getparametervaluestring(long parameterIndex, sint64 stringIndex, char * outText)
 {
 	if (parameterisvalid(parameterIndex))
 		return parameters[parameterIndex].getvaluestring(stringIndex, outText);
@@ -576,7 +549,7 @@ bool DfxPlugin::getparametervaluestring(long parameterIndex, long stringIndex, c
 }
 
 //-----------------------------------------------------------------------------
-char * DfxPlugin::getparametervaluestring_ptr(long parameterIndex, long stringIndex)
+char * DfxPlugin::getparametervaluestring_ptr(long parameterIndex, sint64 stringIndex)
 {	if (parameterisvalid(parameterIndex))
 		return parameters[parameterIndex].getvaluestring_ptr(stringIndex);
 	else
@@ -602,22 +575,20 @@ void DfxPlugin::setparameterchanged(long parameterIndex, bool newChanged)
 //-----------------------------------------------------------------------------
 // convenience methods for expanding and contracting parameter values 
 // using the min/max/curvetype/curvespec/etc. settings of a given parameter
-double DfxPlugin::expandparametervalue_index(long parameterIndex, float genValue)
+double DfxPlugin::expandparametervalue_index(long parameterIndex, double genValue)
 {
 	if (parameterisvalid(parameterIndex))
-		return expandparametervalue((double)genValue, getparametermin_d(parameterIndex), getparametermax_d(parameterIndex), 
-									getparametercurve(parameterIndex), getparametercurvespec(parameterIndex));
+		return parameters[parameterIndex].expand(genValue);
 	else
 		return 0.0;
 }
 //-----------------------------------------------------------------------------
-float DfxPlugin::contractparametervalue_index(long parameterIndex, double realValue)
+double DfxPlugin::contractparametervalue_index(long parameterIndex, double realValue)
 {
 	if (parameterisvalid(parameterIndex))
-		return (float) contractparametervalue(realValue, getparametermin_d(parameterIndex), getparametermax_d(parameterIndex), 
-									getparametercurve(parameterIndex), getparametercurvespec(parameterIndex));
+		return parameters[parameterIndex].contract(realValue);
 	else
-		return 0.0f;
+		return 0.0;
 }
 
 
@@ -728,12 +699,12 @@ DfxParamValue DfxPlugin::getpresetparameter(long presetIndex, long parameterInde
 }
 
 //-----------------------------------------------------------------------------
-float DfxPlugin::getpresetparameter_f(long presetIndex, long parameterIndex)
+double DfxPlugin::getpresetparameter_f(long presetIndex, long parameterIndex)
 {
 	if ( parameterisvalid(parameterIndex) && presetisvalid(presetIndex) )
 		return parameters[parameterIndex].derive_f(presets[presetIndex].values[parameterIndex]);
 	else
-		return 0.0f;
+		return 0.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -744,21 +715,14 @@ void DfxPlugin::setpresetparameter(long presetIndex, long parameterIndex, DfxPar
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_f(long presetIndex, long parameterIndex, float newValue)
+void DfxPlugin::setpresetparameter_f(long presetIndex, long parameterIndex, double newValue)
 {
 	if ( parameterisvalid(parameterIndex) && presetisvalid(presetIndex) )
 		parameters[parameterIndex].accept_f(newValue, presets[presetIndex].values[parameterIndex]);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_d(long presetIndex, long parameterIndex, double newValue)
-{
-	if ( parameterisvalid(parameterIndex) && presetisvalid(presetIndex) )
-		parameters[parameterIndex].accept_d(newValue, presets[presetIndex].values[parameterIndex]);
-}
-
-//-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_i(long presetIndex, long parameterIndex, long newValue)
+void DfxPlugin::setpresetparameter_i(long presetIndex, long parameterIndex, sint64 newValue)
 {
 	if ( parameterisvalid(parameterIndex) && presetisvalid(presetIndex) )
 		parameters[parameterIndex].accept_i(newValue, presets[presetIndex].values[parameterIndex]);
@@ -772,10 +736,10 @@ void DfxPlugin::setpresetparameter_b(long presetIndex, long parameterIndex, bool
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setpresetparameter_gen(long presetIndex, long parameterIndex, float genValue)
+void DfxPlugin::setpresetparameter_gen(long presetIndex, long parameterIndex, double genValue)
 {
 	if ( parameterisvalid(parameterIndex) && presetisvalid(presetIndex) )
-		parameters[parameterIndex].accept_d(expandparametervalue_index(parameterIndex, genValue), presets[presetIndex].values[parameterIndex]);
+		parameters[parameterIndex].accept_f(expandparametervalue_index(parameterIndex, genValue), presets[presetIndex].values[parameterIndex]);
 }
 
 //-----------------------------------------------------------------------------
