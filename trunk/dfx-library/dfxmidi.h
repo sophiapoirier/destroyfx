@@ -165,7 +165,8 @@ public:
 
 	void reset();	// resets the variables
 	void clearTail(int currentNote);	// zero out a note's tail buffers
-	void setLazyAttack(bool newMode=true) { lazyAttackMode = newMode; };
+	void setLazyAttack(bool newMode=true)
+		{	lazyAttackMode = newMode;	}
 
 	bool incNumEvents();	// increment the numBlockEvents counter, safely
 
@@ -197,102 +198,16 @@ public:
 	double * freqTable;	// a table of the frequency corresponding to each MIDI note
 	double pitchbend;		// a frequency scalar value for the current pitchbend setting
 
-
-	//-------------------------------------------------------------------------
 	// this function calculates fade scalars if attack or release are happening
-	float processEnvelope(bool fades, int currentNote)
-	{
-		NoteTable * note = &noteTable[currentNote];
+	float processEnvelope(bool fades, int currentNote);
 
-		// if attack is in progress
-		if (note->attackDur > 0)
-		{
-			(note->attackSamples)++;
-			// zero things out if the attack is over so we won't do this fade calculation next time
-			if (note->attackSamples >= note->attackDur)
-			{
-				note->attackDur = 0;
-				return 1.0f;
-			}
-
-			if (fades)	// use nice, exponential fading
-				return fadeTable[ (long) ((float)(note->attackSamples) * note->fadeTableStep) ];
-			else	// bad, linear fade
-				return (float)(note->attackSamples) * note->linearFadeStep;
-				// exponential sine fade (stupendously inefficient)
-//				envAmp = ( sin((envAmp*PI)-(PI*0.5)) + 1.0 ) * 0.5;
-//				envAmp *= envAmp;	// squared
-		}
-
-		// if release is in progress
-		else if (note->releaseDur)
-		{
-			(note->releaseSamples)--;
-			// zero things out if the release is over so we won't do this fade calculation next time
-			// & turn this note off
-			if (note->releaseSamples <= 0)
-			{
-				note->releaseDur = 0;
-				note->velocity = 0;
-				return 0.0f;
-			}
-
-			if (fades)	// use nice, exponential fading
-				return fadeTable[ (long) ((float)(note->releaseSamples) * note->fadeTableStep) ];
-			else	// use bad fade
-				return (float)(note->releaseSamples) * note->linearFadeStep;
-				// exponential sine fade
-//				envAmp = ( sinf((envAmp*PI)-(PI*0.5f)) + 1.0f ) * 0.5f;
-//				envAmp *= envAmp;	// squared
-		}
-
-		// since it's possible for the release to end & the note to turn off 
-		// during this processing buffer, we have to check for that & then return 0.0
-		else if ( (note->velocity) == 0 )
-			return 0.0f;
-
-		// just send 1.0 no fades or note-offs are happening
-		return 1.0f;
-	}
-
-
-	//-------------------------------------------------------------------------
 	// this function writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note
-	void processSmoothingOutputSample(float * out, long sampleFrames, int currentNote)
-	{
-		for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
-		{
-			// add the latest sample to the output collection, scaled by the note envelope & user gain
-			out[samplecount] += noteTable[currentNote].lastOutValue * 
-								(float)noteTable[currentNote].smoothSamples * STOLEN_NOTE_FADE_STEP;
-			// decrement the smoothing counter
-			(noteTable[currentNote].smoothSamples)--;
-			// exit this function if we've done all of the smoothing necessary
-			if (noteTable[currentNote].smoothSamples <= 0)
-				return;
-		}
-	}
+	void processSmoothingOutputSample(float * out, long sampleFrames, int currentNote);
 
-
-	//-------------------------------------------------------------------------
 	// this function writes the audio output for smoothing the tips of cut-off notes
 	// by fading out the samples stored in the tail buffers
-	void processSmoothingOutputBuffer(float * out, long sampleFrames, int currentNote, int channel)
-	{
-		long * smoothsamples = &(noteTable[currentNote].smoothSamples);
-		float * tail = (channel == 1) ? noteTable[currentNote].tail1 : noteTable[currentNote].tail2;
-
-		for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
-		{
-			out[samplecount] += tail[STOLEN_NOTE_FADE_DUR-(*smoothsamples)] * 
-								(float)(*smoothsamples) * STOLEN_NOTE_FADE_STEP;
-			(*smoothsamples)--;
-			if (*smoothsamples <= 0)
-				return;
-		}
-	}
-
+	void processSmoothingOutputBuffer(float * out, long sampleFrames, int currentNote, int channel);
 
 
 private:
@@ -318,5 +233,104 @@ private:
 	// the offset of the most recent MIDI program change message
 	long latestMidiProgramChange;
 };
+
+
+
+//-------------------------------------------------------------------------
+// this function calculates fade scalars if attack or release are happening
+inline float DfxMidi::processEnvelope(bool fades, int currentNote)
+{
+	NoteTable * note = &noteTable[currentNote];
+
+	// if attack is in progress
+	if (note->attackDur > 0)
+	{
+		(note->attackSamples)++;
+		// zero things out if the attack is over so we won't do this fade calculation next time
+		if (note->attackSamples >= note->attackDur)
+		{
+			note->attackDur = 0;
+			return 1.0f;
+		}
+
+		if (fades)	// use nice, exponential fading
+			return fadeTable[ (long) ((float)(note->attackSamples) * note->fadeTableStep) ];
+		else	// bad, linear fade
+			return (float)(note->attackSamples) * note->linearFadeStep;
+			// exponential sine fade (stupendously inefficient)
+//				envAmp = ( sin((envAmp*PI)-(PI*0.5)) + 1.0 ) * 0.5;
+//				envAmp *= envAmp;	// squared
+	}
+
+	// if release is in progress
+	else if (note->releaseDur)
+	{
+		(note->releaseSamples)--;
+		// zero things out if the release is over so we won't do this fade calculation next time
+		// & turn this note off
+		if (note->releaseSamples <= 0)
+		{
+			note->releaseDur = 0;
+			note->velocity = 0;
+			return 0.0f;
+		}
+
+		if (fades)	// use nice, exponential fading
+			return fadeTable[ (long) ((float)(note->releaseSamples) * note->fadeTableStep) ];
+		else	// use bad fade
+			return (float)(note->releaseSamples) * note->linearFadeStep;
+			// exponential sine fade
+//				envAmp = ( sinf((envAmp*PI)-(PI*0.5f)) + 1.0f ) * 0.5f;
+//				envAmp *= envAmp;	// squared
+	}
+
+	// since it's possible for the release to end & the note to turn off 
+	// during this processing buffer, we have to check for that & then return 0.0
+	else if ( (note->velocity) == 0 )
+		return 0.0f;
+
+	// just send 1.0 no fades or note-offs are happening
+	return 1.0f;
+}
+
+
+//-------------------------------------------------------------------------
+// this function writes the audio output for smoothing the tips of cut-off notes
+// by sloping down from the last sample outputted by the note
+inline void DfxMidi::processSmoothingOutputSample(float * out, long sampleFrames, int currentNote)
+{
+	for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
+	{
+		// add the latest sample to the output collection, scaled by the note envelope & user gain
+		out[samplecount] += noteTable[currentNote].lastOutValue * 
+							(float)noteTable[currentNote].smoothSamples * STOLEN_NOTE_FADE_STEP;
+		// decrement the smoothing counter
+		(noteTable[currentNote].smoothSamples)--;
+		// exit this function if we've done all of the smoothing necessary
+		if (noteTable[currentNote].smoothSamples <= 0)
+			return;
+	}
+}
+
+
+//-------------------------------------------------------------------------
+// this function writes the audio output for smoothing the tips of cut-off notes
+// by fading out the samples stored in the tail buffers
+inline void DfxMidi::processSmoothingOutputBuffer(float * out, long sampleFrames, int currentNote, int channel)
+{
+	long * smoothsamples = &(noteTable[currentNote].smoothSamples);
+	float * tail = (channel == 1) ? noteTable[currentNote].tail1 : noteTable[currentNote].tail2;
+
+	for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
+	{
+		out[samplecount] += tail[STOLEN_NOTE_FADE_DUR-(*smoothsamples)] * 
+							(float)(*smoothsamples) * STOLEN_NOTE_FADE_STEP;
+		(*smoothsamples)--;
+		if (*smoothsamples <= 0)
+			return;
+	}
+}
+
+
 
 #endif
