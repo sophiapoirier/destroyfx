@@ -4,7 +4,9 @@
 #include "scrubby.hpp"
 #endif
 
-#include "vstgui.h"		// for AEffGuiEditor::setParameter()
+#ifndef __scrubbyeditor
+#include "scrubbyeditor.hpp"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
