@@ -118,7 +118,7 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 			break;
 		// clear MIDI parameter assignments
 		case kDfxPluginProperty_ResetMidiLearn:
-			outDataSize = sizeof(bool);	// whatever, you don't need an input value for this property
+			outDataSize = 0;	// you don't need an input value for this property
 			outWritable = true;
 			break;
 		// get/set the current MIDI learner parameter
@@ -150,7 +150,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 	#if TARGET_PLUGIN_USES_MIDI
 		case kAudioUnitProperty_MIDIControlMapping:
 			if (outData == NULL)
-				result = kAudioUnitErr_InvalidPropertyValue;
+				result = paramErr;
 			else
 			{
 				for (long i=0; i < numParameters; i++)
@@ -175,7 +175,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 		// this allows a GUI component to get a pointer to our DfxPlugin class instance
 		case kDfxPluginProperty_PluginPtr:
 			if (outData == NULL)
-				result = kAudioUnitErr_InvalidPropertyValue;
+				result = paramErr;
 			else
 				*(DfxPlugin**)outData = this;
 			break;
@@ -184,14 +184,14 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 		// get the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
 			if (outData == NULL)
-				result = kAudioUnitErr_InvalidPropertyValue;
+				result = paramErr;
 			else
 				*(bool*)outData = dfxsettings->isLearning();
 			break;
 		// get the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
 			if (outData == NULL)
-				result = kAudioUnitErr_InvalidPropertyValue;
+				result = paramErr;
 			else
 				*(long*)outData = dfxsettings->getLearner();
 			break;
@@ -227,7 +227,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 		// randomize the parameters
 		case kDfxPluginProperty_RandomizeParameters:
 			if (inData == NULL)
-				result = kAudioUnitErr_InvalidPropertyValue;
+				result = paramErr;
 			else
 				// when you "set" this "property", you send a bool to say whether or not to write automation data
 				randomizeparameters( *(bool*)inData );
@@ -237,7 +237,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 		// set the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
 			if (inData == NULL)
-				result = kAudioUnitErr_InvalidPropertyValue;
+				result = paramErr;
 			else
 				dfxsettings->setParameterMidiLearn( *(bool*)inData );
 			break;
@@ -249,7 +249,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 		// set the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
 			if (inData == NULL)
-				result = kAudioUnitErr_InvalidPropertyValue;
+				result = paramErr;
 			else
 				dfxsettings->setLearner( *(long*)inData );
 			break;
@@ -540,15 +540,15 @@ OSStatus DfxPlugin::NewFactoryPresetSet(const AUPreset & inNewFactoryPreset)
 	long newNumber = inNewFactoryPreset.presetNumber;
 
 	if ( !presetisvalid(newNumber) )
-		return kAudioUnitErr_InvalidPropertyValue;
+		return paramErr;
 	// for AU, we are using invalid preset names as a way of saying "not a real preset," 
 	// even though it might be a valid (allocated) preset number
 	if ( !presetnameisvalid(newNumber) )
-		return kAudioUnitErr_InvalidPropertyValue;
+		return paramErr;
 
 	// try to load the preset
 	if ( !loadpreset(newNumber) )
-		return kAudioUnitErr_InvalidPropertyValue;
+		return kAudioUnitErr_InvalidPropertyValue;	// XXX is this a good error code to return?
 
 	return noErr;
 }
@@ -625,7 +625,7 @@ else printf("vstdata was there, loading...\n");
 
 	// if we couldn't get any data, abort with an error
 	if (cfdata == NULL)
-		return kAudioUnitErr_InvalidPropertyValue;
+		return paramErr;
 
 	// a pointer to our special data
 	const UInt8 * dfxdata = CFDataGetBytePtr(cfdata);
@@ -638,7 +638,7 @@ if (success) printf("settings data was successfully loaded\n");
 else printf("settings data failed to load\n");
 #endif
 	if (!success)
-		return kAudioUnitErr_InvalidPropertyValue;
+		return paramErr;
 
 #else
 	// abort if the base implementation of RestoreState failed
