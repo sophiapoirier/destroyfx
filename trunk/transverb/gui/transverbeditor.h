@@ -17,7 +17,7 @@ public:
 		tuneMode(inTuneMode)
 		{ }
 
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
 	void setTuneMode(long inTuneMode)
 		{	tuneMode = inTuneMode;	}
 
