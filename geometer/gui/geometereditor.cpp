@@ -520,9 +520,9 @@ long GeometerEditor::open(void *ptr) {
   // MIDI reset button
   size (pos_midiresetbuttonX, pos_midiresetbuttonY, 
 	pos_midiresetbuttonX + g_midiresetbutton->getWidth(), 
-	pos_midiresetbuttonY + (g_midiresetbutton->getHeight())/4);
-  midiresetbutton = new MultiKick (size, this, id_midiresetbutton, 2, 
-				   (g_midiresetbutton->getHeight())/4, g_midiresetbutton, zero);
+	pos_midiresetbuttonY + (g_midiresetbutton->getHeight())/2);
+  midiresetbutton = new CKickButton (size, this, id_midiresetbutton, 
+				   (g_midiresetbutton->getHeight())/2, g_midiresetbutton, zero);
   midiresetbutton->setValue(0.0f);
   frame->addView(midiresetbutton);
 
@@ -530,14 +530,14 @@ long GeometerEditor::open(void *ptr) {
   size (pos_destroyfxlinkX, pos_destroyfxlinkY, 
 	pos_destroyfxlinkX + g_destroyfxlink->getWidth(), 
 	pos_destroyfxlinkY + (g_destroyfxlink->getHeight())/2);
-  destroyfxlink = new CWebLink (size, this, id_destroyfxlink, DESTROYFXLINK, g_destroyfxlink);
+  destroyfxlink = new CWebLink (size, this, id_destroyfxlink, DESTROYFX_URL, g_destroyfxlink);
   frame->addView(destroyfxlink);
 
   // Smart Electronix web page link
   size (pos_smartelectronixlinkX, pos_smartelectronixlinkY, 
 	pos_smartelectronixlinkX + g_smartelectronixlink->getWidth(), 
 	pos_smartelectronixlinkY + (g_smartelectronixlink->getHeight())/2);
-  smartelectronixlink = new CWebLink (size, this, id_smartelectronixlink, SELINK, g_smartelectronixlink);
+  smartelectronixlink = new CWebLink (size, this, id_smartelectronixlink, SMARTELECTRONIX_URL, g_smartelectronixlink);
   frame->addView(smartelectronixlink);
 
 
@@ -1036,32 +1036,26 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
   long tag = control->getTag();
 
 
-  if (tag == id_midilearnbutton) {
+  if (tag == id_midilearnbutton)
     chunk->setParameterMidiLearn(control->getValue());
-    control->update(context);
-  } else if (tag == id_midiresetbutton) {
+  else if (tag == id_midiresetbutton)
+    chunk->setParameterCCreset(control->getValue());
 
-    /* XXX MARC !!! how do I midi reset?? */
-
-    
-
-  } else if (tag < NUM_PARAMS) {
+  else if (tag < NUM_PARAMS) {
     /* XXX for anything? */
 
     effect->setParameterAutomated(tag, control->getValue());
 
-    if (chunk->midiLearn) {
-      chunk->learner = tag;
+    if (chunk->isLearning()) {
+      chunk->setLearner(tag);
       for (int i=0; i < NUM_SLIDERS; i++) {
         if (sliders[i]->getTag() == tag)
           setGlowing(i);
       }
     }
+  }
 
-    control->update(context);
-
-  } 
-
+  control->update(context);
 }
 
 //-----------------------------------------------------------------------------
@@ -1284,7 +1278,7 @@ void GeometerEditor::idle() {
   // turn off any glowing controls that are no longer learning
   for (int i=0; i < NUM_SLIDERS; i++) {
     if (sliders[i] != NULL) {
-      if (sliders[i]->getTag() != chunk->learner)
+      if (sliders[i]->getTag() != chunk->getLearner())
         glowingchanged = setGlowing(i, false);
     }
   }

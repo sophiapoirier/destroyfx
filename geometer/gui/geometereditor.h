@@ -29,7 +29,7 @@ enum { HELP_MIDILEARN,
        HELP_OPS,
        HELP_RECREATE,
        HELP_BLANK,
-       HELP_EMPTY,
+       HELP_EMPTY
 };
 
 //--------------------------------------------------------------------------
@@ -77,7 +77,7 @@ private:
   CFineTuneButton *op3controlfinedownbutton;
   CFineTuneButton *op3controlfineupbutton;
   MultiKick *midilearnbutton;
-  MultiKick *midiresetbutton;
+  CKickButton *midiresetbutton;
   CWebLink *destroyfxlink;
   CWebLink *smartelectronixlink;
 
