@@ -85,9 +85,9 @@ long DfxPlugin::getTailSize()
 
 
 //------------------------------------------------------------------------
-bool DfxPlugin::getInputProperties(long index, VstPinProperties* properties)
+bool DfxPlugin::getInputProperties(long index, VstPinProperties *properties)
 {
-	if ( (index >= 0) && ((unsigned long)index < getnuminputs()) )
+	if ( (index >= 0) && ((unsigned long)index < getnuminputs()) && (properties != NULL) )
 	{
 		sprintf(properties->label, "%s input %ld", PLUGIN_NAME_STRING, index+1);
 		sprintf(properties->shortLabel, "in %ld", index+1);
@@ -102,7 +102,7 @@ bool DfxPlugin::getInputProperties(long index, VstPinProperties* properties)
 //------------------------------------------------------------------------
 bool DfxPlugin::getOutputProperties(long index, VstPinProperties *properties)
 {
-	if ( (index >= 0) && ((unsigned long)index < getnumoutputs()) )
+	if ( (index >= 0) && ((unsigned long)index < getnumoutputs()) && (properties != NULL) )
 	{
 		sprintf (properties->label, "%s output %ld", PLUGIN_NAME_STRING, index+1);
 		sprintf (properties->shortLabel, "out %ld", index+1);
@@ -118,30 +118,52 @@ bool DfxPlugin::getOutputProperties(long index, VstPinProperties *properties)
 //-----------------------------------------------------------------------------
 // Destroy FX infos
 
-bool DfxPlugin::getEffectName(char *name) {
-	getpluginname(name);	// name max 32 char
-	return true; }
+bool DfxPlugin::getEffectName(char *name)
+{
+	if (name == NULL)
+		return false;
+	getpluginname(name);	// name max 32 characters
+	return true;
+}
 
-long DfxPlugin::getVendorVersion() {
-	return PLUGIN_VERSION; }
+long DfxPlugin::getVendorVersion()
+{
+	return PLUGIN_VERSION;
+}
 
-bool DfxPlugin::getErrorText(char *text) {
-	strcpy (text, "U FUCT UP");	// max 256 char
-	return true; }
+bool DfxPlugin::getErrorText(char *text)
+{
+	if (text == NULL)
+		return false;
+	strcpy(text, "U FUCT UP");	// max 256 characters
+	return true;
+}
 
-bool DfxPlugin::getVendorString(char *text) {
-	strcpy (text, DESTROYFX_NAME_STRING);	// a string identifying the vendor (max 64 char)
-	return true; }
+bool DfxPlugin::getVendorString(char *text)
+{
+	if (text == NULL)
+		return false;
+	// a string identifying the vendor (max 64 characters)
+	strcpy(text, DESTROYFX_NAME_STRING);
+	return true;
+}
 
-bool DfxPlugin::getProductString(char *text) {
-	// a string identifying the product name (max 64 char)
-	strcpy (text, "Super Destroy FX bipolar VST plugin pack");
-	return true; }
+bool DfxPlugin::getProductString(char *text)
+{
+	if (text == NULL)
+		return false;
+	// a string identifying the product name (max 64 characters)
+	strcpy(text, "Super Destroy FX bipolar VST plugin pack");
+	return true;
+}
 
 //-----------------------------------------------------------------------------
 // this just tells the host what this plugin can do
-long DfxPlugin::canDo(char* text)
+long DfxPlugin::canDo(char *text)
 {
+	if (text == NULL)
+		return -1;
+
 	if (strcmp(text, "plugAsChannelInsert") == 0)
 		return 1;
 	if (strcmp(text, "plugAsSend") == 0)
@@ -190,12 +212,16 @@ void DfxPlugin::setProgram(long programNum)
 //-----------------------------------------------------------------------------
 void DfxPlugin::setProgramName(char *name)
 {
-	setpresetname(TARGET_API_BASE_CLASS::getProgram(), name);
+	if (name != NULL)
+		setpresetname(TARGET_API_BASE_CLASS::getProgram(), name);
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::getProgramName(char *name)
 {
+	if (name == NULL)
+		return;
+
 	long vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
 
 	if (presetisvalid(vstpresetnum))
@@ -210,6 +236,9 @@ void DfxPlugin::getProgramName(char *name)
 //-----------------------------------------------------------------------------
 bool DfxPlugin::getProgramNameIndexed(long category, long index, char *name)
 {
+	if (name == NULL)
+		return false;
+
 	if (presetisvalid(index))
 	{
 		if ( presetnameisvalid(index) )
@@ -283,13 +312,17 @@ float DfxPlugin::getParameter(long index)
 // titles of each parameter
 void DfxPlugin::getParameterName(long index, char *name)
 {
-	getparametername(index, name);
+	if (name != NULL)
+		getparametername(index, name);
 }
 
 //-----------------------------------------------------------------------------
 // numerical display of each parameter's gradiations
 void DfxPlugin::getParameterDisplay(long index, char *text)
 {
+	if (text == NULL)
+		return;
+
 	if (getparameterusevaluestrings(index))
 	{
 		getparametervaluestring(index, getparameter_i(index), text);
@@ -332,7 +365,8 @@ void DfxPlugin::getParameterDisplay(long index, char *text)
 // unit of measure for each parameter
 void DfxPlugin::getParameterLabel(long index, char *label)
 {
-	getparameterunitstring(index, label);
+	if (label != NULL)
+		getparameterunitstring(index, label);
 }
 
 
