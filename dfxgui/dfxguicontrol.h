@@ -19,18 +19,21 @@ class DGControl
 {
 public:
 	// control for a parameter
-	DGControl(DfxGuiEditor *inOwnderEditor, AudioUnitParameterID inParameterID, DGRect *inRegion);
+	DGControl(DfxGuiEditor * inOwnderEditor, long inParameterID, DGRect * inRegion);
 	// control with no actual parameter attached
-	DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange);
+	DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange);
 	virtual ~DGControl();
 
+#if MAC
 	// ControlRefs will be implemented by Manager Class
 	void setCarbonControl(ControlRef inCarbonControl)
 		{	carbonControl = inCarbonControl;	}
 	ControlRef getCarbonControl()
 		{	return carbonControl;	}
-
-	void setVisible(bool inVisibility);
+	void initCarbonControlValueRange();
+	// checks if this or an embedded control is inside
+	bool isControlRef(ControlRef inControl);
+#endif
 
 	// The methods you should implement in derived controls
 	virtual void draw(CGContextRef context, UInt32 portHeight)
@@ -43,35 +46,32 @@ public:
 	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 		{ }
 
-// XXX fix this up
-//	virtual void do_idle();
-	// *** idle timer function
+	// *** this will get called regularly by an idle timer
 	virtual void idle()
 		{ }
 
-	// checks if this or an embedded control is inside
-	virtual bool isControlRef(ControlRef inControl);
+	void embed();
 
-	void redraw();	// force a redraw
+	void setVisible(bool inVisibility);
 
-	/* XXX probably would go, since we will pass as argument to 
-	   dfxguieditor or else not use at all.
-	   in any case, set is kind of silly since only the child
-	   sets, and it has access to isContinuous */
+	// force a redraw of the control
+	void redraw();
+
 	bool isContinuousControl()
 		{	return isContinuous;	}
-	void setContinuousControl(bool inContinuity)
-		{	isContinuous = inContinuity;	}
+	void setControlContinuous(bool inContinuity);
 
-	bool isAUVPattached()
-		{	return AUVPattached;	}
+	bool isParameterAttached()
+		{	return parameterAttached;	}
+#ifdef TARGET_API_AUDIOUNIT
 	AUVParameter & getAUVP()
 		{	return auvp;	}
 	void createAUVcontrol();
 	AUCarbonViewControl * getAUVcontrol()
 		{	return auv_control;	}
+#endif
 	long getParameterID();
-	void setParameterID(AudioUnitParameterID inParameterID);
+	void setParameterID(long inParameterID);
 	float getRange()
 		{	return Range;	}
 	DGRect * getBounds()
@@ -81,28 +81,33 @@ public:
 	DfxGuiEditor * getDfxGuiEditor()
 		{	return ownerEditor;	}
 
-	void setOffset(SInt32 x, SInt32 y);
+	void setOffset(long x, long y);
 
-	void setBounds(DGRect *r)
+	void setBounds(DGRect * r)
 		{	where.set(r);	}
-	void setForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
-	void shrinkForeBounds(SInt32 x, SInt32 y, SInt32 w, SInt32 h);
+	void setForeBounds(long x, long y, long w, long h);
+	void shrinkForeBounds(long x, long y, long w, long h);
 
  private:
 	// common constructor stuff
-	void init(DGRect *inRegion);
+	void init(DGRect * inRegion);
 
 protected:
 	DfxGuiEditor *		ownerEditor;
-	AUVParameter 		auvp;
 	float				Range;
-	bool				AUVPattached;
+	bool				parameterAttached;
 	bool				isContinuous;
-	AUCarbonViewControl * auv_control;
 
-	ControlRef			carbonControl;	// the physical control, if any
-	DGRect				where; 			// the bounds...
-	DGRect				vizArea; 		// where the foreground displays
+	DGRect				where;		// the control's area
+	DGRect				vizArea; 	// where the foreground displays
+
+#ifdef TARGET_API_AUDIOUNIT
+	AUVParameter 		auvp;
+	AUCarbonViewControl * auv_control;
+#endif
+#if MAC
+	ControlRef			carbonControl;
+#endif
 };
 
 
@@ -112,7 +117,7 @@ protected:
 class DGCarbonViewControl : public AUCarbonViewControl
 {
 public:
-	DGCarbonViewControl(AUCarbonViewBase *ownerView, AUParameterListenerRef listener, ControlType type, const AUVParameter &param, ControlRef control);
+	DGCarbonViewControl(AUCarbonViewBase * ownerView, AUParameterListenerRef listener, ControlType type, const AUVParameter &param, ControlRef control);
 
 	virtual void ControlToParameter();
 	virtual void ParameterToControl(Float32 newValue);

@@ -14,15 +14,17 @@ typedef enum {
 } DfxGuiBottonMode;
 
 
-typedef void (*buttonUserProcedure) (SInt32 value, void *userData);
+typedef void (*buttonUserProcedure) (SInt32 value, void * userData);
 
 
 //-----------------------------------------------------------------------------
 class DGButton : public DGControl
 {
 public:
-	DGButton(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DGImage*, long inNumStates, DfxGuiBottonMode, bool inDrawMomentaryState = false);
-	DGButton(DfxGuiEditor*, DGRect*, DGImage*, long inNumStates, DfxGuiBottonMode, bool inDrawMomentaryState = false);
+	DGButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, DGImage * inImage, 
+				long inNumStates, DfxGuiBottonMode inMode, bool inDrawMomentaryState = false);
+	DGButton(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage, 
+				long inNumStates, DfxGuiBottonMode inMode, bool inDrawMomentaryState = false);
 	virtual ~DGButton();
 
 	virtual void draw(CGContextRef context, UInt32 portHeight);
@@ -33,8 +35,8 @@ public:
 	bool getMouseIsDown()
 		{	return mouseIsDown;	}
 
-	virtual void setUserProcedure(buttonUserProcedure inProc, void *inUserData);
-	virtual void setUserReleaseProcedure(buttonUserProcedure inProc, void *inUserData);
+	virtual void setUserProcedure(buttonUserProcedure inProc, void * inUserData);
+	virtual void setUserReleaseProcedure(buttonUserProcedure inProc, void * inUserData);
 
 protected:
 	DGImage * buttonImage;
@@ -48,7 +50,10 @@ protected:
 	DfxGuiBottonMode mode;
 	bool drawMomentaryState;
 	bool mouseIsDown;
-	SInt32 entryValue, newValue;
+	long entryValue, newValue;
+
+private:
+	void init();
 };
 
 
@@ -56,7 +61,7 @@ protected:
 class DGWebLink : public DGButton
 {
 public:
-	DGWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inImage, const char *inURL);
+	DGWebLink(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage, const char * inURL);
 	virtual ~DGWebLink();
 
 	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers);
