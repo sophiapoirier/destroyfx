@@ -830,15 +830,21 @@ int PLUGIN::processw(float * in, float * out, long samples,
     py[0] = in[0];
     numpts = 1;
 
+    float pp;
+    if (pointparam[POINT_DYDX] > 0.5f) 
+      pp = pointparam[POINT_DYDX] - 0.5f;
+    else
+      pp = 0.5f - pointparam[POINT_DYDX];
+
+    pp *= pp;
+    //    pp *= pp;
+
     for(i = 1; i < samples; i++) {
       
-      if (pointparam[4] > 0.5f) {
-        float pp = pointparam[4] - 0.5f;
-        sign = (in[i] - lasts) > (pp * pp);
-      } else {
-        float pp = 0.5f - pointparam[4];
-        sign = (in[i] - lasts) < (pp * pp);
-      }
+      if (pointparam[POINT_DYDX] > 0.5f)
+        sign = (in[i] - lasts) > pp;
+      else
+	sign = (in[i] - lasts) < pp;
 
       lasts = in[i];
 
@@ -1363,11 +1369,10 @@ void PLUGIN::makepresets() {
   programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_FREQ);
   programs[i].param[P_POINTPARAMS + POINT_FREQ] = 0.10112f;
   programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_REVERSI);
-
   i++;
 
   strcpy(programs[i].name, "robo sing");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);	// 2^11
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
   programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
   programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
   programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.234f;
@@ -1378,7 +1383,7 @@ void PLUGIN::makepresets() {
   i++;
 
   strcpy(programs[i].name, "sploop drums");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);	// 2^11
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
   programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
   programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
   programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.528f;
@@ -1388,6 +1393,17 @@ void PLUGIN::makepresets() {
   programs[i].param[P_OPPAR1S + OP_QUARTER] = 0.258427f;
   programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_DOUBLE);
   programs[i].param[P_OPPAR2S + OP_DOUBLE] = 0.5f;
+  i++;
+
+  strcpy(programs[i].name, "loudest sing");
+  programs[i].param[P_BUFSIZE] = paramStepUnscaled((9), BUFFERSIZESSIZE);
+  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
+  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_LEVEL);
+  programs[i].param[P_POINTPARAMS + POINT_LEVEL] = 0.280899f;
+  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_LONGPASS);
+  programs[i].param[P_OPPARS2 + OP_LONGPASS] = 0.1404494f;
+  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
+  programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.8258427;
   i++;
 
 }
