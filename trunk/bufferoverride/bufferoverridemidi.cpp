@@ -6,7 +6,7 @@
 //-----------------------------------------------------------------------------
 float BufferOverride::getDivisorParameterFromNote(int currentNote)
 {
-	// tell the GUI to update the divisor parameter's slider & value display
+	// tell the GUI to update the divisor parameter's slider and value display
 	divisorWasChangedByMIDI = true;
 	// this isn't true anymore - it's MIDI's turn
 	divisorWasChangedByHand = false;
@@ -27,7 +27,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 	{
 		// scale the MIDI value from 0.0 to 1.0
 		pitchbend = (double)(pitchbendByte - 64) / 63.0;
-		// then scale it according to tonal steps & the user defined range
+		// then scale it according to tonal steps and the user defined range
 		pitchbend = pow(NOTE_UP_SCALAR, pitchbend*pitchbendRange);
 	}
 	// bend pitch down
@@ -35,14 +35,14 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 	{
 		// scale the MIDI value from 0.0 to 1.0
 		pitchbend = (double)(64 - pitchbendByte) / 64.0;
-		// then scale it according to tonal steps & the user defined range
+		// then scale it according to tonal steps and the user defined range
 		pitchbend = pow(NOTE_DOWN_SCALAR, pitchbend*pitchbendRange);
 	}
 
-	// only update the fDivisor value if we're in MIDI nudge mode or trigger mode with a note currently active
+	// only update the divisor value if we're in MIDI nudge mode or trigger mode with a note currently active
 	if ( (midiMode == kMidiMode_nudge) || ((midiMode == kMidiMode_trigger) && (midistuff->noteQueue[0] >= 0)) )
 	{
-		// tell the GUI to update the divisor parameter's slider & value display
+		// tell the GUI to update the divisor parameter's slider and value display
 		divisorWasChangedByMIDI = true;
 
 		// this step gets the literal value for the new divisor
@@ -53,7 +53,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 //		return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
 		return (newDivisor < 0.0001f) ? 0.0001f : newDivisor;	// XXX is this much even necessary?
 	}
-	// otherwise return -3 (my code for "don't actually update the fDivisor value")
+	// otherwise return -3 (my code for "don't actually update the divisor value")
 	else
 		return -3.0f;
 }
@@ -63,21 +63,15 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 // this function implements the changes that new MIDI events demand
 void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 {
-  long eventcount;
-  bool foundNote;
-  float tempDivisor;
-  int foundNoteOn;
-
-
 	// look at the events if we have any
 	if (midistuff->numBlockEvents > 0)
 	{
 // SEARCH FOR NOTE
 		// initialize these to invalid values so that we can tell later what we really found
-		foundNote = false;
-		foundNoteOn = kInvalidMidi;
+		bool foundNote = false;
+		int foundNoteOn = kInvalidMidi;
 		// search events from the beginning up until the current processing block position
-		for (eventcount = 0; eventcount < midistuff->numBlockEvents; eventcount++)
+		for (long eventcount = 0; eventcount < midistuff->numBlockEvents; eventcount++)
 		{
 			// don't search past the current processing block position
 			if (midistuff->blockEvents[eventcount].delta > (signed)samplePos)
@@ -106,18 +100,22 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 			}
 		}
 
-		// we found a valid new note, so update the fDivisor value if that note is still active
+		// we found a valid new note, so update the divisor value if that note is still active
 		if (foundNote)
 		{
-			if ( (midistuff->noteQueue[0] >= 0) && ((foundNoteOn >= 0) || (!divisorWasChangedByHand)) )
+			if ( (midistuff->noteQueue[0] >= 0) && 
+// the || !divisorWasChangedByHand part has to do with the fact that the note event may have been a note off
+// which pushed an older still-playing note to be first in the queue, and so we want to use that older note
+// XXX however, it is possible that the removed note wasn't first, and so in that case maybe we shouldn't do this?
+					((foundNoteOn >= 0) || (!divisorWasChangedByHand)) )
 			{
-				// update the fDivisor parameter value
+				// update the divisor parameter value
 				divisor = getDivisorParameterFromNote(midistuff->noteQueue[0]);
 				// false oldNote so it will be ignored until a new valid value is put into it
 				oldNote = false;
 				lastNoteOn = kInvalidMidi;
 			}
-			// if we're in MIDI nudge mode, allow the last note-on to update fDivisor even if the note is not still active
+			// if we're in MIDI nudge mode, allow the last note-on to update divisor even if the note is not still active
 			else if ( (midiMode == kMidiMode_nudge) && (foundNoteOn >= 0) )
 			{
 				divisor = getDivisorParameterFromNote(foundNoteOn);
@@ -129,23 +127,23 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 
 // SEARCH FOR PITCHBEND
 		// search events backwards again looking for the most recent valid pitchbend
-		for (eventcount = (midistuff->numBlockEvents-1); (eventcount >= 0); eventcount--)
+		for (long eventcount = midistuff->numBlockEvents - 1; eventcount >= 0; eventcount--)
 		{
 			// once we're below the current block position, pitchbend messages can be considered
 			if ( (midistuff->blockEvents[eventcount].delta <= (signed)samplePos) && 
 					(midistuff->blockEvents[eventcount].status == kMidiPitchbend) )
 			{
-				// update the fDivisor parameter value
-				tempDivisor = getDivisorParameterFromPitchbend(midistuff->blockEvents[eventcount].byte2);
-				// make sure that we ought to be updating fDivisor
-				// the function will return -3 if we're in MIDI trigger mode & no notes are active
+				// update the divisor parameter value
+				float tempDivisor = getDivisorParameterFromPitchbend(midistuff->blockEvents[eventcount].byte2);
+				// make sure that we ought to be updating divisor
+				// the function will return -3 if we're in MIDI trigger mode and no notes are active
 				if (tempDivisor > 0.0f)
 					divisor = tempDivisor;
 
 				// negate lastPitchbend so it will be ignored until a new valid value is put into it
 				lastPitchbend = kInvalidMidi;
 
-				// invalidate this & all earlier pitchbend messages so that they are not found in a future search
+				// invalidate this and all earlier pitchbend messages so that they are not found in a future search
 				while (eventcount >= 0)
 				{
 					if (midistuff->blockEvents[eventcount].status == kMidiPitchbend)
@@ -157,10 +155,10 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 		}
 	}
 
-	// check for an unused note leftover from a previous block
-	if ( (oldNote) && (!divisorWasChangedByHand) )
+	// check for an unused note left over from a previous block
+	if ( oldNote && !divisorWasChangedByHand )
 	{
-		// only if a note is currently active
+		// only if a note is currently active for MIDI trigger mode
 		if (midistuff->noteQueue[0] >= 0)
 			divisor = getDivisorParameterFromNote(midistuff->noteQueue[0]);
 		// but we are more permissive if we're in MIDI nudge mode
@@ -174,17 +172,17 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 	// check for an unused pitchbend message leftover from a previous block
 	if (lastPitchbend >= 0)
 	{
-		// update the fDivisor parameter value
-		tempDivisor = getDivisorParameterFromPitchbend(lastPitchbend);
-		// make sure that we ought to be updating fDivisor
-		// the function will return -3 if we're in MIDI trigger mode & no notes are active
+		// update the divisor parameter value
+		float tempDivisor = getDivisorParameterFromPitchbend(lastPitchbend);
+		// make sure that we ought to be updating divisor
+		// the function will return -3 if we're in MIDI trigger mode and no notes are active
 		if (tempDivisor > 0.0f)
 			divisor = tempDivisor;
 		// negate lastPitchbend so it will be ignored until a new valid value is put into it
 		lastPitchbend = kInvalidMidi;
 	}
 
-	// if we're in MIDI trigger mode & no notes are active & the divisor hasn't been updated 
+	// if we're in MIDI trigger mode and no notes are active and the divisor hasn't been updated 
 	// via normal parameter changes, then set divisor to its min so that we get that effect punch-out
 	if ( ((midiMode == kMidiMode_trigger) && (midistuff->noteQueue[0] < 0)) && (!divisorWasChangedByHand) )
 	{
