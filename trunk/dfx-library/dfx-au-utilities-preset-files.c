@@ -1530,7 +1530,8 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 			error = NavDialogGetReply(dialog, &reply);
 			if (error == noErr)
 			{
-				if (reply.validRecord)
+				CFStringRef saveFileName = NavDialogGetSaveFileName(dialog);
+				if ( (reply.validRecord) && (saveFileName != NULL) )
 				{
 					AEKeyword theKeyword;
 					DescType actualType = 0;
@@ -1538,7 +1539,7 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 					FSRef parentDirFSRef;
 					error = AEGetNthPtr(&(reply.selection), 1, typeFSRef, &theKeyword, &actualType, 
 										&parentDirFSRef, sizeof(parentDirFSRef), &actualSize);
-//fprintf(stderr, "actual type = %.4s\n", (char*)&actualType);
+//fprintf(stderr, "actual AEDesc type = %.4s\n", (char*)&actualType);
 					if (error == noErr)
 					{
 						// now we need a CFURL version of the parent directory so that we can use the CF file APIs 
@@ -1548,7 +1549,7 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 						{
 							// use the file name response value to create the URL for the file to save
 							CFURLRef presetFileUrl = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, 
-																		parentDirUrl, reply.saveFileName, false);
+																		parentDirUrl, saveFileName, false);
 							CFRelease(parentDirUrl);
 							if (presetFileUrl != NULL)
 							{
@@ -1576,6 +1577,9 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 							error = coreFoundationUnknownErr;
 					}
 				}
+				// not a valid dialog reply record or saveFileName is null
+				else
+					error = userCanceledErr;	// XXX if it's not a valid reply (?)
 				NavDisposeReply(&reply);
 			}
 			// store the final result of these operations into the global save-AU-preset-file result variable
