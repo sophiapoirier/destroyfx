@@ -16,6 +16,10 @@ const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = {
   1024, 2048, 4096, 8192, 16384, 32768, 
 };
 
+int intcompare(const void * a, const void * b);
+int intcompare(const void * a, const void * b) {
+  return (*(int*)a - *(int*)b);
+}
 
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
@@ -167,8 +171,10 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     break;
     /* geometer */
   case P_POINTSTYLE:
-    if (pointstyle < 0.5) strcpy(text, "ext & cross");
-    else strcpy(text, "at freq");
+    if (pointstyle < 0.33) strcpy(text, "ext 'n cross");
+    else if (pointstyle < 0.66) strcpy(text, "at freq");
+    else strcpy(text, "randomly");
+    
     break;
   case P_INTERPSTYLE:
     if (interpstyle < 0.10) strcpy(text, "polygon");
@@ -223,23 +229,9 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
   int maxpts = framesize * 2;
 
-  if (pointstyle >= 0.5) {
-    int nth = (pointfreq * pointfreq * pointfreq) * samples;
-    int ctr = nth;
-  
-    for(int i = 0; i < samples; i ++) {
-      ctr--;
-      if (ctr <= 0) {
-        if (numpts < (maxpts-1)) {
-          pointx[numpts] = i;
-          pointy[numpts] = in[i];
-          numpts++;
-        } else break; /* no point in continuing... */
-        ctr = nth;
-      }
-    }
+  if (pointstyle < 0.33) {
+    /* extremities and crossings */
 
-  } else {
 
     float ext = 0.0;
     int extx = 0;
@@ -249,12 +241,6 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
     state = SZ;
 
-    /*
-    if (lasty <= zero_thresh && lasty >= -zero_thresh) state = SZ;
-    else if (lasty > zero_thresh) state = SA;
-    else state = SB;
-    */
-  
     for(int i = 0 ; i < samples ; i ++) {
       switch(state) {
       case SZ: {
@@ -351,6 +337,44 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
       }
     }
+  } else if (pointstyle < 0.66) {
+    /* at frequency */
+    
+    int nth = (pointfreq * pointfreq) * samples;
+    int ctr = nth;
+  
+    for(int i = 0; i < samples; i ++) {
+      ctr--;
+      if (ctr <= 0) {
+        if (numpts < (maxpts-1)) {
+          pointx[numpts] = i;
+          pointy[numpts] = in[i];
+          numpts++;
+        } else break; /* no point in continuing... */
+        ctr = nth;
+      }
+    }
+
+  } else {
+    /* randomly */
+
+    int n = (1.0 - pointfreq) * samples;
+
+    for(;n --;) {
+      if (numpts < (maxpts-1)) {
+	pointx[numpts++] = rand() % samples;
+      } else break;
+    }
+
+    /* sort them */
+
+    qsort(pointx, numpts, sizeof (int),
+	  intcompare);
+
+    for (int sd = 0; sd < numpts; sd++) {
+      pointy[sd] = in[pointx[sd]];
+    }
+
   }
   /* always push final point for continuity (we saved room) */
   pointx[numpts] = samples-1;
@@ -445,6 +469,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 
   } else if (interpstyle < 0.30) {
     /* x-reverse input samples for each waveform - "reversi" */
+
     for(int u=1; u < numpts; u ++) {
       if (pointx[u-1] < pointx[u])
 	for(int z = pointx[u-1]; z < pointx[u]; z++) {
@@ -454,7 +479,7 @@ void PLUGIN::processw(float * in, float * out, long samples) {
     }
 
   } else if (interpstyle < 0.40) {
-    /* cosine up or down - "curvy" */
+    /* cosine up or down - "smoothie" */
 
     for(int u=1; u < numpts; u ++) {
       float denom = (pointx[u] - pointx[u-1]);
@@ -516,9 +541,8 @@ void PLUGIN::processw(float * in, float * out, long samples) {
 /* to improve: 
    - use memcpy and arithmetic instead of
      sample-by-sample copy 
-   - new, smoother interpolation shapes.
    - can we use tail of out0 as prevmix, instead of copying?
-   - can we use circular buffers instead of memmoving a lot
+   - can we use circular buffers instead of memmoving a lot?
      (probably not)
 */
 
