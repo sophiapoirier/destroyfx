@@ -1,5 +1,4 @@
 
-
 /* Geometer,
    Featuring the Super Destroy FX Windowing System! */
 
@@ -57,6 +56,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
 
   setup();
 
+  /* add some leeway? */
   in0 = (float*)malloc(maxframe * sizeof (float));
   out0 = (float*)malloc(maxframe * 2 * sizeof (float));
 
@@ -245,6 +245,7 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
         strcpy(text, "unsup");
         break;
     }
+    break;
   case P_INTERPSTYLE:
     switch(MKINTERPSTYLE(interpstyle)) {
       case INTERP_POLYGON:
@@ -269,6 +270,7 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
         strcpy(text, "unsup");
         break;
     }
+    break;
   case P_POINTOP1:
   case P_POINTOP2:
   case P_POINTOP3:
@@ -295,6 +297,7 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
         strcpy(text, "unsup");
         break;
     }
+    break;
   default:
     float2string(getParameter(index), text);
     break;
@@ -325,7 +328,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples) {
     /* x2 points */
     int i = 0;
     int t;
-    for(t = 0; i < (npts - 2) && t < (maxpts-4); i++) {
+    for(t = 0; i < (npts - 4) && t < (maxpts-4); i++) {
       /* always include the actual point */
       tempx[t] = pointx[i];
       tempy[t] = pointy[i];
@@ -337,13 +340,13 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples) {
 	*/
 
 	tempy[t] = (op_param[0] * 2.0f - 1.0f) * pointy[i];
-	tempx[t] = (pointx[i] + pointx[i+1]) >> 1;
+	tempx[t] = pointx[i] + 1; //(pointx[i] + pointx[i+1]) >> 1;
 
 	t++;
       }
     }
     /* include last if not different from previous */
-    if (tempx[t-1] != pointx[npts-1]) {
+    if (t > 0 && npts > 0 && tempx[t-1] != pointx[npts-1]) {
       tempx[t] = pointx[npts-1];
       tempy[t] = pointy[npts-1];
       t++;
@@ -734,10 +737,10 @@ int PLUGIN::processw(float * in, float * out, long samples) {
         
         /* XXX param should control exponent */
 
-	if (interparam[2] > 0.5) {
-	  p = pow(p, (interparam[2] - 0.16666667) * 3.0);
+	if (interparam[2] > 0.5f) {
+	  p = powf(p, (interparam[2] - 0.16666667f) * 3.0f);
 	} else {
-	  p = pow(p, interparam[2] * 2.0);
+	  p = powf(p, interparam[2] * 2.0f);
 	}
 
         float s = pointy[u-1] * (1.0f - p) + pointy[u]   * p;
