@@ -411,6 +411,12 @@ public:
 	void getunitstring(char *outText);
 	void setcustomunitstring(const char *inText);
 
+	// set/get the value distribution curve
+	void setcurve(DfxParamCurve newcurve)
+		{	curve = newcurve;	}
+	DfxParamCurve getcurve()
+		{	return curve;	}
+
 	// set/get possibly-necessary extra specification about the value distribution curve
 	void setcurvespec(double newcurvespec)
 		{	curvespec = newcurvespec;	}
@@ -456,6 +462,15 @@ protected:
 
 };
 // end of DfxParam class definition
+
+
+
+
+
+
+// prototypes for parameter value mapping utility functions
+double expandparametervalue(double genValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec);
+double contractparametervalue(double realValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec);
 
 
 

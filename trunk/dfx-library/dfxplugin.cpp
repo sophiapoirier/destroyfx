@@ -631,6 +631,27 @@ void DfxPlugin::setparameterchanged(long parameterIndex, bool newChanged)
 		parameters[parameterIndex].setchanged(newChanged);
 }
 
+//-----------------------------------------------------------------------------
+// convenience methods for expanding and contracting parameter values 
+// using the min/max/curvetype/curvespec/etc. settings of a given parameter
+double DfxPlugin::expandparametervalue_index(long parameterIndex, float genValue)
+{
+	if (parameterisvalid(parameterIndex))
+		return expandparametervalue((double)genValue, getparametermin_d(parameterIndex), getparametermax_d(parameterIndex), 
+									getparametercurve(parameterIndex), getparametercurvespec(parameterIndex));
+	else
+		return 0.0;
+}
+//-----------------------------------------------------------------------------
+float DfxPlugin::contractparametervalue_index(long parameterIndex, double realValue)
+{
+	if (parameterisvalid(parameterIndex))
+		return (float) contractparametervalue(realValue, getparametermin_d(parameterIndex), getparametermax_d(parameterIndex), 
+									getparametercurve(parameterIndex), getparametercurvespec(parameterIndex));
+	else
+		return 0.0f;
+}
+
 
 
 #pragma mark _________presets_________
@@ -778,7 +799,7 @@ void DfxPlugin::setpresetparameter_b(long presetIndex, long parameterIndex, bool
 void DfxPlugin::setpresetparameter_gen(long presetIndex, long parameterIndex, float genValue)
 {
 	if ( parameterisvalid(parameterIndex) && presetisvalid(presetIndex) )
-		parameters[parameterIndex].accept_d(parameters[parameterIndex].expand(genValue), presets[presetIndex].values[parameterIndex]);
+		parameters[parameterIndex].accept_d(expandparametervalue_index(parameterIndex, genValue), presets[presetIndex].values[parameterIndex]);
 }
 
 //-----------------------------------------------------------------------------
