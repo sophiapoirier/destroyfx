@@ -405,7 +405,7 @@ void DfxPlugin::process(float **inputs, float **outputs, long sampleFrames)
 			dspcores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, false);
 	}
 #else
-	processaudio(inputs, outputs, sampleFrames, false);
+	processaudio((const float**)inputs, outputs, (unsigned)sampleFrames, false);
 #endif
 
 	postprocessaudio();
@@ -423,7 +423,7 @@ void DfxPlugin::processReplacing(float **inputs, float **outputs, long sampleFra
 			dspcores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, true);
 	}
 #else
-	processaudio(inputs, outputs, sampleFrames, true);
+	processaudio((const float**)inputs, outputs, (unsigned)sampleFrames, true);
 #endif
 
 	postprocessaudio();

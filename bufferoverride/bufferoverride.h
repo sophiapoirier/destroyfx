@@ -4,7 +4,11 @@
 #ifndef __BUFFEROVERRIDE_H
 #define __BUFFEROVERRIDE_H
 
+
+#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
+#endif
+
 #include "lfo.h"
 
 
@@ -115,7 +119,7 @@ private:
 	long currentForcedBufferSize;	// the size of the larger, imposed buffer
 	float **buffers;	// this stores the forced buffer
 	float *outval;	// array of current audio output values (1 for each channel)
-	long numBuffers;	// how many buffers we have allocated at the moment
+	unsigned long numBuffers;	// how many buffers we have allocated at the moment
 	long writePos;	// the current sample position within the forced buffer
 
 	long minibufferSize;	// the current size of the divided "mini" buffer
