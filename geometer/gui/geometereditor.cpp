@@ -1,5 +1,4 @@
 
-
 #ifndef __GeometerEditor
 #include "GeometerEditor.hpp"
 #endif
@@ -1037,18 +1036,18 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
       chunk->setLearner(tag, kEventBehaviourToggle, BUFFERSIZESSIZE);
       break;
     case P_SHAPE:
-      chunk->setLearner(tag, kEventBehaviourToggle, MAX_WINDOWSHAPES);
+      chunk->setLearner(tag, kEventBehaviourToggle, MAX_WINDOWSHAPES, NUM_WINDOWSHAPES);
       break;
     case P_POINTSTYLE:
-      chunk->setLearner(tag, kEventBehaviourToggle, MAX_POINTSTYLES);
+      chunk->setLearner(tag, kEventBehaviourToggle, MAX_POINTSTYLES, NUM_POINTSTYLES);
       break;
     case P_INTERPSTYLE:
-      chunk->setLearner(tag, kEventBehaviourToggle, MAX_INTERPSTYLES);
+      chunk->setLearner(tag, kEventBehaviourToggle, MAX_INTERPSTYLES, NUM_INTERPSTYLES);
       break;
     case P_POINTOP1:
     case P_POINTOP2:
     case P_POINTOP3:
-      chunk->setLearner(tag, kEventBehaviourToggle, MAX_OPS);
+      chunk->setLearner(tag, kEventBehaviourToggle, MAX_OPS, NUM_OPS);
       break;
     // otherwise, set the learner regularly
     default:
