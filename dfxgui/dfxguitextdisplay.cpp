@@ -49,9 +49,9 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 		OSStatus themeErr = GetThemeFont(kThemeApplicationFont, smSystemScript, appfontname, NULL, NULL);
 		if (themeErr == noErr)
 		{
-			// cheapo Pascal-string to C-string conversion
-			appfontname[appfontname[0]+1] = 0;
-			strcpy( fontName, (char*) &(appfontname[1]) );
+			// Pascal-string to C-string conversion
+			memcpy(fontName, &(appfontname[1]), appfontname[0]);
+			fontName[appfontname[0]] = 0;
 		}
 		else
 		{
