@@ -729,8 +729,21 @@ public:
 
 
 
+// prototypes for a few handy buffer helper functions
+bool createbuffer_f(float **buffer, long currentBufferSize, long desiredBufferSize);
+bool createbufferarray_f(float ***buffers, unsigned long currentNumBuffers, long currentBufferSize, 
+						unsigned long desiredNumBuffers, long desiredBufferSize);
+void releasebuffer_f(float **buffer);
+void releasebufferarray_f(float ***buffers, unsigned long numbuffers);
+void clearbuffer_f(float *buffer, long buffersize);
+void clearbufferarray_f(float **buffers, unsigned long numbuffers, long buffersize);
 
 
+
+
+
+
+// plugin entry point macros and defines and stuff
 
 #if TARGET_API_AUDIOUNIT
 
