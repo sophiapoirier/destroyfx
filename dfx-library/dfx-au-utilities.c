@@ -299,7 +299,7 @@ void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitP
 OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef * outNameString, CFStringRef * outManufacturerString)
 {
 	OSStatus error;
-	char pluginNameCString[256], manufacturerNameCString[256];
+	char pluginNameCString[sizeof(Str255)], manufacturerNameCString[sizeof(Str255)];
 
 	// one input string or the other can be null, but not both
 	if ( (inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)) )
@@ -367,9 +367,8 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 	{
 		char * separatorByte;
 		// convert the Component name Pascal string to a C string
-		char componentFullNameCString[256];
-		memset(componentFullNameCString, 0, sizeof(componentFullNameCString));
-		memcpy(componentFullNameCString, componentFullNamePString+1, componentFullNamePString[0]);
+		char componentFullNameCString[sizeof(Str255)];
+		CopyPascalStringToC(componentFullNamePString, componentFullNameCString);
 		// the manufacturer string is everything before the first : character, 
 		// and everything after that and any immediately following white space 
 		// is the plugin name string
