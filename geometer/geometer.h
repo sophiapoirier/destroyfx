@@ -192,7 +192,9 @@ public:
   }
 
   /* this stuff is public so that the GUI can see it */
-  VstChunk *chunk;      // chunky data full of parameter settings & stuff
+  /* XXX Tom, does it make sense to update gview every framesize or third? */
+  long getwindowsize() { return third; }
+  VstChunk *chunk; /* chunky data full of parameter settings & stuff */
 
 protected:
   /* stores info for each parameter */
