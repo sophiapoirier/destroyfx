@@ -44,7 +44,7 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   FPARAM(blow, P_BLOW, "blow", 0.0f, "?");
   FPARAM(lowpass, P_LOWP, "lowp", 1.0f, "?");
   FPARAM(convolve, P_CONV, "convolve", 0.0f, "?");
-
+  FPARAM(harm, P_HARM, "harm", 0.0f, "?");
   FPARAM(afterlow, P_ALOW, "afterlow", 1.0f, "?");
   FPARAM(norm, P_NORM, "anorm", 0.0f, "?");
   
@@ -254,9 +254,9 @@ void PLUGIN::normalize(long samples, float much) {
 
   if (mai > 0.0001) faci = MAXVALUE / mai;
 
-  for(int i = 0; i < samples; i ++) {
-    fftr[i] = (much * facr * fftr[i]) + ((1.0 - much) * fftr[i]);
-    ffti[i] = (much * faci * ffti[i]) + ((1.0 - much) * ffti[i]);
+  for(int ji = 0; ji < samples; ji ++) {
+    fftr[ji] = (much * facr * fftr[ji]) + ((1.0 - much) * fftr[ji]);
+    ffti[ji] = (much * faci * ffti[ji]) + ((1.0 - much) * ffti[ji]);
   }
 
 }
@@ -265,17 +265,17 @@ void PLUGIN::normalize(long samples, float much) {
    fftr and ffti */
 void PLUGIN::fftops(long samples) {
 
-  for(int i = lowpass * lowpass * samples; i < samples; i ++) {
-    fftr[i] = 0;
-    ffti[i] = 0;
+  for(int li = lowpass * lowpass * samples; li < samples; li ++) {
+    fftr[li] = 0;
+    ffti[li] = 0;
   }
 
   /* convolve */
 
   if (convolve > 0.0001f) {
-    for(int i = 0; i < samples; i ++) {
-      fftr[i] = convolve * tmp[i] + (1.0 - convolve) * fftr[i];
-      ffti[i] = convolve * tmp[i] * ffti[i] + (1.0 - convolve) * ffti[i];
+    for(int ci = 0; ci < samples; ci ++) {
+      fftr[ci] = convolve * tmp[ci] + (1.0 - convolve) * fftr[ci];
+      ffti[ci] = convolve * tmp[ci] * ffti[ci] + (1.0 - convolve) * ffti[ci];
     }
     normalize(samples, 1.0);
   }
@@ -463,6 +463,20 @@ void PLUGIN::fftops(long samples) {
 
   }
 
+  /* XXX sounds crappy */
+  /* freq(i) = 44100.0 * i / samples */
+  if (harm > 0.0001f) {
+    for(int i = 0; i < samples; i ++) {
+      /* j = bin(freq(i)/2) */
+      int fi = 44100.0 * i /(float) samples;
+      int fj = fi / 2.0;
+      int j = (int)((fi * (float)samples) / 44100.0);
+      if (j >= 0 && j < samples) {
+	fftr[i] += fftr[j] * harm;
+	ffti[i] += ffti[j] * harm;
+      }
+    }
+  }
 
   /* XXX I changed 2.0f to 1.0f -- old range was boring... */
 
@@ -500,9 +514,9 @@ void PLUGIN::fftops(long samples) {
 
   }
 
-  for(int i = afterlow * afterlow * samples; i < samples; i ++) {
-    fftr[i] = 0;
-    ffti[i] = 0;
+  for(int ali = afterlow * afterlow * samples; ali < samples; ali ++) {
+    fftr[ali] = 0;
+    ffti[ali] = 0;
   }
 
   if (norm > 0.0001f) {
