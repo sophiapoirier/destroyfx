@@ -86,6 +86,7 @@ public:
 	void setparameter_f(long inParameterID, double inValue);
 	void setparameter_i(long inParameterID, long inValue);
 	void setparameter_b(long inParameterID, bool inValue);
+	void setparameter_default(long inParameterID);
 	void getparametervaluestring(long inParameterID, char * outText);
 	void randomizeparameters(bool writeAutomation = false);
 	#if TARGET_PLUGIN_USES_MIDI
