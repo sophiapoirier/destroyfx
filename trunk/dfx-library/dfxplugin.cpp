@@ -864,17 +864,33 @@ void DfxPlugin::addchannelconfig(short numin, short numout)
 //-----------------------------------------------------------------------------
 void DfxPlugin::setlatency_samples(long newlatency)
 {
+	bool changed = false;
+	if (b_uselatency_seconds)
+		changed = true;
+	else if (latency_samples != newlatency)
+		changed = true;
+
 	latency_samples = newlatency;
 	b_uselatency_seconds = false;
-	update_latency();
+
+	if (changed)
+		update_latency();
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::setlatency_seconds(double newlatency)
 {
+	bool changed = false;
+	if (!b_uselatency_seconds)
+		changed = true;
+	else if (latency_seconds != newlatency)
+		changed = true;
+
 	latency_seconds = newlatency;
 	b_uselatency_seconds = true;
-	update_latency();
+
+	if (changed)
+		update_latency();
 }
 
 //-----------------------------------------------------------------------------
@@ -906,17 +922,33 @@ void DfxPlugin::update_latency()
 //-----------------------------------------------------------------------------
 void DfxPlugin::settailsize_samples(long newsize)
 {
+	bool changed = false;
+	if (b_usetailsize_seconds)
+		changed = true;
+	else if (tailsize_samples != newsize)
+		changed = true;
+
 	tailsize_samples = newsize;
 	b_usetailsize_seconds = false;
-	update_tailsize();
+
+	if (changed)
+		update_tailsize();
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::settailsize_seconds(double newsize)
 {
+	bool changed = false;
+	if (!b_usetailsize_seconds)
+		changed = true;
+	else if (tailsize_seconds != newsize)
+		changed = true;
+
 	tailsize_seconds = newsize;
 	b_usetailsize_seconds = true;
-	update_tailsize();
+
+	if (changed)
+		update_tailsize();
 }
 
 //-----------------------------------------------------------------------------

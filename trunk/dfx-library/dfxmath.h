@@ -53,6 +53,10 @@ const double ONE_DIV_RAND_MAX_D = 1.0 / (double)RAND_MAX;
 #define clip(fval)   (if (fval < -1.0f) fval = -1.0f; else if (fval > 1.0f) fval = 1.0f)
 #endif
 
+#ifndef fsign
+#define fsign(fval) (((fval)<0.0f)?-1.0f:1.0f)
+#endif
+
 #ifndef undenormalize
 #define undenormalize(dval)   if (fabs(dval) < 1.0e-15)   dval = 0.0
 //#define undenormalize(fval)  (((*(unsigned int*)&(fval))&0x7f800000)==0)?0.0f:(fval)
