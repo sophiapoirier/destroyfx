@@ -57,6 +57,9 @@ public:
 		{	return &dgControlSpec;	}
 #endif
 
+	void automationgesture_begin(long inParameterID);
+	void automationgesture_end(long inParameterID);
+
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()
 		{	return currentControl_mouseover;	}
