@@ -51,6 +51,15 @@ DGControl::~DGControl()
 
 
 //-----------------------------------------------------------------------------
+void DGControl::do_draw(CGContextRef inContext, long inPortHeight)
+{
+	// redraw the background behind the control in case the control background has any transparency
+	getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+	// then have the child control class do its drawing
+	draw(inContext, inPortHeight);
+}
+
+//-----------------------------------------------------------------------------
 // force a redraw
 void DGControl::redraw()
 {

@@ -35,8 +35,9 @@ public:
 	bool isControlRef(ControlRef inControl);
 #endif
 
+	void do_draw(CGContextRef inContext, long inPortHeight);
 	// The methods you should implement in derived controls
-	virtual void draw(CGContextRef context, long portHeight)
+	virtual void draw(CGContextRef inContext, long inPortHeight)
 		{ }
 	// *** mouse position is relative to controlBounds for ultra convenience
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
