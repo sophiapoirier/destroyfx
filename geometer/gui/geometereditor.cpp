@@ -106,6 +106,7 @@ void midiresetGeometer(long value, void * editor) {
 }
 
 void buttonswitched(long value, void * button) {
+  // XXX note that this still won't catch a change under your mouse caused by parameter automation
   DGButton * gbutton = (DGButton*) button;
   if (button != NULL)
     ((GeometerEditor*)(gbutton->getDfxGuiEditor()))->changehelp(gbutton);
@@ -225,10 +226,14 @@ GeometerEditor::GeometerEditor(AudioUnitCarbonView inInstance)
 
   sliders = (DGSlider**) malloc(NUM_SLIDERS * sizeof(DGSlider*));
   displays = (DGTextDisplay**) malloc(NUM_SLIDERS * sizeof(DGTextDisplay*));
+  finedownbuttons = (DGFineTuneButton**) malloc(NUM_SLIDERS * sizeof(DGFineTuneButton*));
+  fineupbuttons = (DGFineTuneButton**) malloc(NUM_SLIDERS * sizeof(DGFineTuneButton*));
   sliderAUPs = (AudioUnitParameter*) malloc(NUM_SLIDERS * sizeof(AudioUnitParameter));
   for (int i=0; i < NUM_SLIDERS; i++) {
     sliders[i] = NULL;
     displays[i] = NULL;
+    finedownbuttons[i] = NULL;
+    fineupbuttons[i] = NULL;
   }
 
   genhelpitemcontrols = (DGControl**) malloc(NUM_GEN_HELP_ITEMS * sizeof(DGControl*));
@@ -257,6 +262,10 @@ GeometerEditor::~GeometerEditor() {
         AUListenerRemoveParameter(parameterListener, sliders[i], &(sliderAUPs[i]));
       if (displays[i] != NULL)
         AUListenerRemoveParameter(parameterListener, displays[i], &(sliderAUPs[i]));
+      if (finedownbuttons[i] != NULL)
+        AUListenerRemoveParameter(parameterListener, finedownbuttons[i], &(sliderAUPs[i]));
+      if (fineupbuttons[i] != NULL)
+        AUListenerRemoveParameter(parameterListener, fineupbuttons[i], &(sliderAUPs[i]));
     }
 
     AUListenerDispose(parameterListener);
@@ -267,6 +276,8 @@ GeometerEditor::~GeometerEditor() {
   free(sliderAUPs);
   free(genhelpitemcontrols);
   free(g_helpicons);
+  free(finedownbuttons);
+  free(fineupbuttons);
 }
 
 //-----------------------------------------------------------------------------
@@ -409,11 +420,10 @@ long GeometerEditor::open() {
     sliders[i] = new DGSlider(this, param, &pos, kDGSliderAxis_horizontal, 
                                      g_sliderhandle, g_sliderbackground);
 
-    DGFineTuneButton * ftbutton;
     // fine tune down button
-    ftbutton = new DGFineTuneButton(this, param, &fdpos, g_finedownbutton, -finetuneinc);
+    finedownbuttons[i] = new DGFineTuneButton(this, param, &fdpos, g_finedownbutton, -finetuneinc);
     // fine tune up button
-    ftbutton = new DGFineTuneButton(this, param, &fupos, g_fineupbutton, finetuneinc);
+    fineupbuttons[i] = new DGFineTuneButton(this, param, &fupos, g_fineupbutton, finetuneinc);
 
     // value display
     displays[i] = new DGTextDisplay(this, param, &dpos, geometerDisplayProc, 
@@ -433,6 +443,8 @@ long GeometerEditor::open() {
 
       AUListenerAddParameter(parameterListener, sliders[i], &(sliderAUPs[i]));
       AUListenerAddParameter(parameterListener, displays[i], &(sliderAUPs[i]));
+      AUListenerAddParameter(parameterListener, finedownbuttons[i], &(sliderAUPs[i]));
+      AUListenerAddParameter(parameterListener, fineupbuttons[i], &(sliderAUPs[i]));
     }
 
     pos.offset(xoff, yoff);

@@ -48,6 +48,9 @@ private:
   AudioUnitParameter * sliderAUPs;
   DGSlider ** sliders;
   DGTextDisplay ** displays;
+  DGFineTuneButton ** finedownbuttons;
+  DGFineTuneButton ** fineupbuttons;
+
   DGControl ** genhelpitemcontrols;
   DGImage ** g_helpicons;
   DGButton * helpicon;
