@@ -6,11 +6,11 @@
 // #include <control.h>
 
 
-#define EDIT_HEIGHT 500
-#define EDIT_WIDTH 500
+#define EDIT_HEIGHT 900
+#define EDIT_WIDTH 900
 
 
-#define THINGS 10
+#define THINGS 100
 
 extern HINSTANCE instance;
 int useCount = 0;
@@ -100,9 +100,13 @@ long GuitestEditor::open (void *ptr) {
 
   g_pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-  ggg = new Graphic(g_pd3dDevice, "c:\\temp\\dfx.jpg");
+  ggg = new Graphic(g_pd3dDevice, "c:\\temp\\dfx.png");
 
   /* turn on alpha blending */
+  // Turn off culling, so we see the front and back of primitives
+  // DXTEST( g_lpD3DDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE) );
+
+
   g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE,  TRUE);
   g_pd3dDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
   g_pd3dDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
@@ -153,30 +157,35 @@ void GuitestEditor::redraw() {
     if( NULL == g_pd3dDevice )
         return;
 
-    // Clear the backbuffer to a blue color
-    g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0,50,0), 1.0f, 0 );
-    
+    // Clear the backbuffer to a green color
+    g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET, 
+			 D3DCOLOR_XRGB(0,50,0), 1.0f, 0 );
+
     // Begin the scene
     g_pd3dDevice->BeginScene();
-    
+
     // Rendering of scene objects can happen here
-    
+
     Render2D(); 
 
     // End the scene
     g_pd3dDevice->EndScene();
-    
+
     // Present the backbuffer contents to the display
     g_pd3dDevice->Present( NULL, NULL, NULL, NULL );
-
 }
 
 void GuitestEditor::Render2D () {
 
+#if 0
+  ggg->drawat(1, 1);
+  ggg->drawat(50, 50);
+
+#else
   for(int i = 0; i < THINGS; i ++) {
     ggg->drawat(www[i].x - EDIT_WIDTH / 2,
 		www[i].y - EDIT_HEIGHT / 2);
-    
+
     www[i].x += www[i].dx; www[i].y += www[i].dy;
 
     if (www[i].x > (EDIT_WIDTH - 160)) { www[i].x = (EDIT_WIDTH - 160); www[i].dx = -www[i].dx; }
@@ -184,6 +193,7 @@ void GuitestEditor::Render2D () {
     if (www[i].x <= 0) { www[i].x = 0; www[i].dx = -www[i].dx; }
     if (www[i].y <= 0) { www[i].y = 0; www[i].dy = -www[i].dy; }
   }
+#endif
 
 }
 
