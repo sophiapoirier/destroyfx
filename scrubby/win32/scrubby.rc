@@ -1,0 +1,33 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+128                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\scrubby-background.bmp"
+129                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\fader-handle.bmp"
+130                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\glowing-fader-handle.bmp"
+131                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\left-fader-handle.bmp"
+132                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\glowing-left-fader-handle.bmp"
+133                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\right-fader-handle.bmp"
+134                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\glowing-right-fader-handle.bmp"
+135                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\speed-mode-button.bmp"
+136                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\freeze-button.bmp"
+137                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\tempo-sync-button.bmp"
+138                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\stereo-button.bmp"
+139                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\pitch-constraint-button.bmp"
+140                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\little-tempo-sync-button.bmp"
+141                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\keyboard-off.bmp"
+142                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\keyboard-on.bmp"
+143                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\transpose-down-button.bmp"
+144                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\transpose-up-button.bmp"
+145                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\major-chord-button.bmp"
+146                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\minor-chord-button.bmp"
+147                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\all-notes-button.bmp"
+148                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\none-notes-button.bmp"
+149                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\midi-learn-button.bmp"
+150                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\midi-reset-button.bmp"
+151                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\help.bmp"
+152                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\destroy-fx-link.bmp"
+153                     BITMAP  DISCARDABLE     "..\\scrubby\\GUI\\graphics\\smart-electronix-link.bmp"
+
