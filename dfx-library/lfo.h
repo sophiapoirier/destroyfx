@@ -29,12 +29,12 @@ enum
 //#define LFOshapeScaled(A)   (paramSteppedScaled((A), numLFOshapes))
 //#define LFOshapeUnscaled(A)   (paramSteppedUnscaled((A), numLFOshapes))
 
-#define NUM_LFO_POINTS 512
+const long NUM_LFO_POINTS = 512;
 const float NUM_LFO_POINTS_FLOAT = (float)NUM_LFO_POINTS;	// to reduce casting later on
 const float LFO_TABLE_STEP = 1.0f / (float)NUM_LFO_POINTS;	// to reduce division & encourage multiplication
 const long SQUARE_HALF_POINT = NUM_LFO_POINTS / 2;	// the point in the table when the square waveform drops to zero
 
-#define LFO_SMOOTH_DUR 48
+const long LFO_SMOOTH_DUR = 48;
 const float LFO_SMOOTH_STEP = 1.0f / (float)LFO_SMOOTH_DUR;
 
 // this scales the return of processLFO() from 0.0 - 1.0 output to 0.0 - 2.0 (oscillating around 1.0)
@@ -53,7 +53,8 @@ public:
 
 	void pickTheLFOwaveform();
 	void getShapeName(char *nameString);
-	void getShapeNameIndexed(long index, char *nameString);
+	void getShapeNameIndexed(long index, char *outNameString);
+	const char * getShapeNameIndexed_ptr(long index);
 
 	void syncToTheBeat(long samplesToBar);
 

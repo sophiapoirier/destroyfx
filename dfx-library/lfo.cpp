@@ -119,20 +119,33 @@ void LFO::getShapeName(char *nameString)
 }
 
 //--------------------------------------------------------------------------------------
-void LFO::getShapeNameIndexed(long index, char *nameString)
+const char * LFO::getShapeNameIndexed_ptr(long index)
 {
 	switch (index)
 	{
-		case kLFOshape_sine                : strcpy(nameString, "sine");					break;
-		case kLFOshape_triangle            : strcpy(nameString, "triangle");				break;
-		case kLFOshape_square              : strcpy(nameString, "square");					break;
-		case kLFOshape_saw                 : strcpy(nameString, "sawtooth");				break;
-		case kLFOshape_reversesaw          : strcpy(nameString, "reverse sawtooth");		break;
-		case kLFOshape_thorn               : strcpy(nameString, "thorn");					break;
-		case kLFOshape_random              : strcpy(nameString, "random");					break;
-		case kLFOshape_randominterpolating : strcpy(nameString, "random interpolating");	break;
-		default:																			break;
+		case kLFOshape_sine                : return "sine";
+		case kLFOshape_triangle            : return "triangle";
+		case kLFOshape_square              : return "square";
+		case kLFOshape_saw                 : return "sawtooth";
+		case kLFOshape_reversesaw          : return "reverse sawtooth";
+		case kLFOshape_thorn               : return "thorn";
+		case kLFOshape_random              : return "random";
+		case kLFOshape_randominterpolating : return "random interpolating";
+		default:	return NULL;
 	}
+}
+
+//--------------------------------------------------------------------------------------
+void LFO::getShapeNameIndexed(long index, char *outNameString)
+{
+	if (outNameString == NULL)
+		return;
+
+	const char * shapename = getShapeNameIndexed_ptr(index);
+	if (shapename == NULL)
+		return;
+
+	strcpy(outNameString, shapename);
 }
 
 
