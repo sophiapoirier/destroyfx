@@ -1,4 +1,4 @@
-#define PLUGIN_NAME_STRING	"GEOMETER"
+#define PLUGIN_NAME_STRING	"Geometer"
 #define PLUGIN_ID	'DFgr'
 #define PLUGIN_VERSION	0x00010100
 #define PLUGIN_ENTRY_POINT	"GeometerEntry"

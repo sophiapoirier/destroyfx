@@ -6,9 +6,7 @@
 
 #include "dfxplugin.h"
 
-#ifndef __DFXMUTEX_H
 #include "dfxmutex.h"
-#endif
 
 /* change these for your plugins */
 #define PLUGIN Geometer
@@ -77,12 +75,6 @@ enum { WINDOW_TRIANGLE,
        NUM_WINDOWSHAPES,
        MAX_WINDOWSHAPES=16
 };
-
-#define MKPOINTSTYLE(f)      ( paramSteppedScaled((f),   MAX_POINTSTYLES) )
-#define MKINTERPSTYLE(f)     ( paramSteppedScaled((f),   MAX_INTERPSTYLES) )
-#define MKPOINTOP(f)         ( paramSteppedScaled((f),   MAX_OPS) )
-#define MKWINDOWSHAPE(f)     ( paramSteppedScaled((f),   MAX_WINDOWSHAPES) )
-
 
 /* the names of the parameters */
 enum { P_BUFSIZE, P_SHAPE, 
