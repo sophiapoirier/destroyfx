@@ -121,7 +121,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	EventTypeSpec toolboxClassEvents[] = {
 		{ kEventClassControl, kEventControlDraw },
 //		{ kEventClassControl, kEventControlInitialize },
-//		{ kEventClassControl, kEventControlHitTest },
+		{ kEventClassControl, kEventControlHitTest },
 //		{ kEventClassControl, kEventControlTrack },
 //		{ kEventClassControl, kEventControlHit }, 
 		{ kEventClassControl, kEventControlClick }, 
@@ -683,7 +683,6 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 				}
 				break;
 
-/*
 			case kEventControlHitTest:
 				{
 //printf("kEventControlHitTest\n");
@@ -696,6 +695,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 				}
 				break;
 
+/*
 			case kEventControlHit:
 				{
 //printf("kEventControlHit\n");
