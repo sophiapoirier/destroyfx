@@ -8,9 +8,7 @@ written by Marc Poirier, October 2002
 #define __DFXPLUGIN_STUB_H
 
 
-#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
-#endif
 
 
 //----------------------------------------------------------------------------- 
@@ -27,14 +25,17 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-// constants & macros & stuff
+// constants and helpfuls
 
-#define NUM_PRESETS 16
+const long NUM_PRESETS = 16;
 
 // audio buffer size in seconds
-#define BUFFER_SIZE_SECONDS	3.0
-// macro for getting samples from seconds
-#define buffersize_sec2samples(fSeconds) ( (long) ((fSeconds) * getsamplerate_f()) )
+const double BUFFER_SIZE_SECONDS = 3.0;
+// function for getting samples from seconds
+long buffersize_sec2samples(float inSeconds)
+{
+	return (long) (inSeconds * getsamplerate_f());
+}
 
 // the different states of the indexed parameter
 enum {
@@ -57,7 +58,7 @@ public:
 	virtual void reset();
 
 #if !TARGET_PLUGIN_USES_DSPCORE
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
 	virtual void processparameters();
 
 	virtual bool createbuffers();
@@ -75,7 +76,7 @@ private:
 	bool booleanParam;
 
 	// stuff needed for audio processing
-	float **buffers;	// a 2-dimensional array of audio buffers
+	float ** buffers;	// a 2-dimensional array of audio buffers
 	unsigned long numbuffers;	// number of buffers allocated in the 2D buffer array
 	long buffersize;	// size of each buffer in the audio buffers array
 	long bufferpos;	// position in the buffer
@@ -99,7 +100,7 @@ public:
 	virtual void clearbuffers();
 
 	virtual void processparameters();
-	virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);
+	virtual void process(const float * in, float * out, unsigned long inNumFrames, bool replacing=true);
 
 private:
 	// handy usable copies of the parameters
@@ -108,7 +109,7 @@ private:
 	bool booleanParam;
 
 	// stuff needed for audio processing
-	float *buffer;	// an audio buffer
+	float * buffer;	// an audio buffer
 	long buffersize;	// size of the audio buffer
 	long bufferpos;	// position in the buffer
 };
