@@ -10,12 +10,21 @@
 //----------------------------------------------------------------------------- 
 // these are the plugin parameters:
 enum {
+	kInputSelection,
 	kMonomerge,
 	kMonomergeMode,
 	kPan,
 	kPanMode,
 
 	NUM_PARAMETERS
+};
+
+enum {
+	kInputSelection_stereo,
+	kInputSelection_swap,
+	kInputSelection_left,
+	kInputSelection_right,
+	kNumInputSelections
 };
 
 enum {
