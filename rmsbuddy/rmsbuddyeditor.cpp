@@ -24,7 +24,7 @@ inline CGRect TransformControlBoundsToDrawingBounds(CGRect inRect, float inPortH
 //-----------------------------------------------------------------------------
 //                           RMSControl
 //-----------------------------------------------------------------------------
-RMSControl::RMSControl(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+RMSControl::RMSControl(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 						long inControlRange, long inParamID)
 :	ownerEditor(inOwnerEditor), width(inWidth), height(inHeight), 
 	carbonControl(NULL), hasParameter(false)
@@ -110,7 +110,7 @@ void RMSControl::redraw()
 //-----------------------------------------------------------------------------
 //                           RMSTextDisplay
 //-----------------------------------------------------------------------------
-RMSTextDisplay::RMSTextDisplay(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+RMSTextDisplay::RMSTextDisplay(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
 					const char * inFontName, float inFontSize, long inTextAlignment, long inParamID)
 :	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x3FFF, inParamID), 
@@ -251,7 +251,7 @@ void RMSTextDisplay::setText_int(long inValue)
 //-----------------------------------------------------------------------------
 //                           RMSButton
 //-----------------------------------------------------------------------------
-RMSButton::RMSButton(RMSbuddyEditor * inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage)
+RMSButton::RMSButton(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage)
 :	RMSControl(inOwnerEditor, inXpos, inYpos, CGImageGetWidth(inImage), CGImageGetHeight(inImage)/2, 1), 
 	buttonImage(inImage)
 {
@@ -310,7 +310,7 @@ void RMSButton::mouseUp(long inXpos, long inYpos)
 //-----------------------------------------------------------------------------
 //                           RMSSlider
 //-----------------------------------------------------------------------------
-RMSSlider::RMSSlider(RMSbuddyEditor * inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
+RMSSlider::RMSSlider(RMSBuddyEditor * inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inBackColor, RMSColor inFillColor)
 :	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x3FFF, inParamID), 
 	backColor(inBackColor), fillColor(inFillColor)
@@ -384,7 +384,7 @@ void RMSSlider::mouseUp(long inXpos, long inYpos)
 
 
 
-#pragma mark _________RMSbuddyEditor_________
+#pragma mark _________RMSBuddyEditor_________
 
 //-----------------------------------------------------------------------------
 // constants
@@ -462,13 +462,13 @@ static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInst
 
 //-----------------------------------------------------------------------------
 // macro for boring Component entry point stuff
-COMPONENT_ENTRY(RMSbuddyEditor);
+COMPONENT_ENTRY(RMSBuddyEditor);
 
 
 //-----------------------------------------------------------------------------
-//                           RMSbuddyEditor
+//                           RMSBuddyEditor
 //-----------------------------------------------------------------------------
-RMSbuddyEditor::RMSbuddyEditor(AudioUnitCarbonView inInstance)
+RMSBuddyEditor::RMSBuddyEditor(AudioUnitCarbonView inInstance)
 :	AUCarbonViewBase(inInstance), 
 	parameterListener(NULL)
 {
@@ -507,7 +507,7 @@ RMSbuddyEditor::RMSbuddyEditor(AudioUnitCarbonView inInstance)
 
 //-----------------------------------------------------------------------------
 // this is where we actually construct the GUI
-OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
+OSStatus RMSBuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 {
 	// register for draw events for our embedding pane so that we can draw the background
 	EventTypeSpec paneEvents[] = {
@@ -596,7 +596,7 @@ OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 }
 
 //-----------------------------------------------------------------------------
-RMSbuddyEditor::~RMSbuddyEditor()
+RMSBuddyEditor::~RMSBuddyEditor()
 {
 	// free the graphics resource
 	if (gResetButton != NULL)
@@ -643,7 +643,7 @@ RMSbuddyEditor::~RMSbuddyEditor()
 
 //-----------------------------------------------------------------------------
 // this function creates all of the controls for the UI and embeds them into the root pane control
-OSStatus RMSbuddyEditor::setup()
+OSStatus RMSBuddyEditor::setup()
 {
 	// first figure out how many channels of analysis data we will be displaying
 	UInt32 dataSize = sizeof(numChannels);
@@ -799,7 +799,7 @@ OSStatus RMSbuddyEditor::setup()
 
 //-----------------------------------------------------------------------------
 // this cleans up what setup() creates, which is basically just all of the UI controls
-void RMSbuddyEditor::cleanup()
+void RMSBuddyEditor::cleanup()
 {
 	// free the controls
 #define SAFE_DELETE_CONTROL(ctrl)	{ if (ctrl != NULL)   delete ctrl;   ctrl = NULL; }
@@ -915,7 +915,7 @@ void CleanupControlDrawingContext(CGContextRef & inContext, bool inGotAutoContex
 }
 
 //-----------------------------------------------------------------------------
-bool RMSbuddyEditor::HandleEvent(EventRef inEvent)
+bool RMSBuddyEditor::HandleEvent(EventRef inEvent)
 {
 	// we redraw the background when we catch a draw event for the root pane control
 	if ( (GetEventClass(inEvent) == kEventClassControl) && (GetEventKind(inEvent) == kEventControlDraw) )
@@ -973,7 +973,7 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 	if (GetEventClass(inEvent) != kEventClassMouse)
 		return eventClassIncorrectErr;
 
-	RMSbuddyEditor * ourOwnerEditor = (RMSbuddyEditor*) inUserData;
+	RMSBuddyEditor * ourOwnerEditor = (RMSBuddyEditor*) inUserData;
 
 	// get the mouse location event parameter
 	HIPoint mouseLocation_f;
@@ -1044,7 +1044,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 	RMSControl * ourRMSControl = (RMSControl*) GetControlReference(ourCarbonControl);
 	if (ourRMSControl == NULL)
 		return eventNotHandledErr;
-	RMSbuddyEditor * ourOwnerEditor = (RMSbuddyEditor*) inUserData;
+	RMSBuddyEditor * ourOwnerEditor = (RMSBuddyEditor*) inUserData;
 
 	switch (GetEventKind(inEvent))
 	{
@@ -1115,7 +1115,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 // this gets called when the DSP component sends notification via the kTimeToUpdate parameter
 static void RmsParameterListenerProc(void * inUserData, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
-	RMSbuddyEditor * bud = (RMSbuddyEditor*) inUserData;
+	RMSBuddyEditor * bud = (RMSBuddyEditor*) inUserData;
 	if ( (bud != NULL) && (inParameter != NULL) )
 	{
 		switch (inParameter->mParameterID)
@@ -1137,7 +1137,7 @@ static void RmsParameterListenerProc(void * inUserData, void * inObject, const A
 static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, 
 									AudioUnitScope inScope, AudioUnitElement inElement)
 {
-	RMSbuddyEditor * bud = (RMSbuddyEditor*) inUserData;
+	RMSBuddyEditor * bud = (RMSBuddyEditor*) inUserData;
 	// when the number of channels changes, we tear down the existing GUI layout and 
 	// then recreate it according to the new number of channels
 	if ( (bud != NULL) && (inPropertyID == kNumChannelsProperty) )
@@ -1149,7 +1149,7 @@ static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInst
 
 //-----------------------------------------------------------------------------
 // refresh the value displays
-void RMSbuddyEditor::updateDisplays()
+void RMSBuddyEditor::updateDisplays()
 {
 	RmsBuddyDynamicsData request;
 	UInt32 dataSize = sizeof(request);
@@ -1182,7 +1182,7 @@ void RMSbuddyEditor::updateDisplays()
 
 //-----------------------------------------------------------------------------
 // update analysis window size parameter controls
-void RMSbuddyEditor::updateWindowSize(Float32 inParamValue, RMSControl * inRMSControl)
+void RMSBuddyEditor::updateWindowSize(Float32 inParamValue, RMSControl * inRMSControl)
 {
 /*
 if (inRMSControl == windowSizeSlider) fprintf(stderr, "object = slider\n");
@@ -1211,7 +1211,7 @@ else fprintf(stderr, "object = %lu\n", (unsigned long)inRMSControl);
 }
 
 //-----------------------------------------------------------------------------
-void RMSbuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inControlValue)
+void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inControlValue)
 {
 	if (inControl == NULL)
 		return;
@@ -1251,7 +1251,7 @@ void RMSbuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 
 //-----------------------------------------------------------------------------
 // send a message to the DSP component to reset average RMS
-void RMSbuddyEditor::resetRMS()
+void RMSBuddyEditor::resetRMS()
 {
 	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
 	AudioUnitSetProperty(GetEditAudioUnit(), kResetRMSProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
@@ -1259,7 +1259,7 @@ void RMSbuddyEditor::resetRMS()
 
 //-----------------------------------------------------------------------------
 // send a message to the DSP component to reset absolute peak
-void RMSbuddyEditor::resetPeak()
+void RMSBuddyEditor::resetPeak()
 {
 	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
 	AudioUnitSetProperty(GetEditAudioUnit(), kResetPeakProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
@@ -1267,7 +1267,7 @@ void RMSbuddyEditor::resetPeak()
 
 //-----------------------------------------------------------------------------
 // this is a convenience function that tells us if the host-provided window has compositing enabled
-bool RMSbuddyEditor::IsWindowCompositing()
+bool RMSBuddyEditor::IsWindowCompositing()
 {
 	if (GetCarbonWindow() != NULL)
 	{
