@@ -270,13 +270,13 @@ COMPONENT_ENTRY(BufferOverrideEditor);
 BufferOverrideEditor::BufferOverrideEditor(AudioUnitCarbonView inInstance)
 :	DfxGuiEditor(inInstance)
 {
-	AUListenerCreate(TempoSyncListenerProc, this,
-		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.010f, // 10 ms
-		&parameterListener);
-
 	midilearnButton = NULL;
 	midiresetButton = NULL;
 	helpDisplay = NULL;
+
+	AUListenerCreate(TempoSyncListenerProc, this,
+		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
+		&parameterListener);
 }
 
 // ____________________________________________________________________________

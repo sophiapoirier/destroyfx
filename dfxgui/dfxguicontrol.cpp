@@ -72,6 +72,7 @@ void DGControl::embed()
 	setCarbonControl(newCarbonControl);
 	initCarbonControlValueRange();
 
+	// XXX do I maybe want to do this after creating the AUVControl (to make ControlInitialize happen better)?
 	getDfxGuiEditor()->EmbedControl(newCarbonControl);
 	if ( isParameterAttached() )
 		createAUVcontrol();
@@ -134,7 +135,7 @@ void DGControl::setParameterID(long inParameterID)
 		if (auv_control != NULL)
 			delete auv_control;
 	}
-	else if ( !parameterAttached || (inParameterID != (long)(auvp.mParameterID)) )	// only do this if it's a change
+	else if ( !parameterAttached || (inParameterID != getParameterID()) )	// only do this if it's a change
 	{
 		parameterAttached = true;
 		auvp = AUVParameter(getDfxGuiEditor()->GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, 

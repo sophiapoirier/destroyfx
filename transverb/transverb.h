@@ -31,31 +31,18 @@ enum
 };
 
 
-#define NUM_PRESETS 16
+const long NUM_PRESETS = 16;
 
-#define BUFFER_MIN 1.0f
-#define BUFFER_MAX 3000.0f
-#define bufferMsScaled(A)   ( paramRangeScaled((A), BUFFER_MIN, BUFFER_MAX) )
-#define bufferScaled(A)   ( ((int)(bufferMsScaled(A)*SAMPLERATE*0.001f) > MAXBUF) ? MAXBUF : (int)(bufferMsScaled(A)*SAMPLERATE*0.001f) )
+const float BUFFER_MIN = 1.0f;
+const float BUFFER_MAX = 3000.0f;
 
-#define gainScaled(A)   ((A)*(A))
-
-#define SPEED_MIN (-3.0f)
-#define SPEED_MAX 6.0f
-#define speedScaled(A)   ( paramRangeScaled((A), SPEED_MIN, SPEED_MAX) )
-#define speedUnscaled(A)   ( paramRangeUnscaled((A), SPEED_MIN, SPEED_MAX) )
-
-#define qualityScaled(A)   ( paramSteppedScaled((A), numQualities) )
-#define qualityUnscaled(A)   ( paramSteppedUnscaled((A), numQualities) )
-
-#define SMOOTH_DUR 42
+const long SMOOTH_DUR = 42;
 
 
 // this stuff is for the speed parameter adjustment mode switch on the GUI
 enum { kFineMode, kSemitoneMode, kOctaveMode, numSpeedModes };
-#define speedModeScaled(A)   ( paramSteppedScaled((A), numSpeedModes) )
 
-#define NUM_FIR_TAPS 23
+const long NUM_FIR_TAPS = 23;
 
 
 enum { dirtfi, hifi, ultrahifi, numQualities };

@@ -27,7 +27,7 @@ public:
 				long inNumStates, DfxGuiBottonMode inMode, bool inDrawMomentaryState = false);
 	virtual ~DGButton();
 
-	virtual void draw(CGContextRef context, long portHeight);
+	virtual void draw(CGContextRef inContext, long inPortHeight);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
 	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers);
@@ -54,6 +54,29 @@ protected:
 
 private:
 	void init();
+};
+
+
+//-----------------------------------------------------------------------------
+class DGFineTuneButton : public DGControl
+{
+public:
+	DGFineTuneButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, DGImage * inImage, float inValueChangeAmount);
+	virtual ~DGFineTuneButton();
+
+	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
+	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers);
+
+	void setValueChangeAmount(float inChangeAmount)
+		{	valueChangeAmount = inChangeAmount;	}
+
+protected:
+	DGImage * buttonImage;
+	float valueChangeAmount;
+	bool mouseIsDown;
+	long entryValue, newValue;
 };
 
 

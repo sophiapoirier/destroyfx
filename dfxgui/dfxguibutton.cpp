@@ -5,13 +5,13 @@
 // Button
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
-					long				inParamID, 
+					long				inParameterID, 
 					DGRect *			inRegion,
 					DGImage *			inImage, 
 					long				inNumStates, 
 					DfxGuiBottonMode	inMode, 
 					bool				inDrawMomentaryState)
-:	DGControl(inOwnerEditor, inParamID, inRegion), 
+:	DGControl(inOwnerEditor, inParameterID, inRegion), 
 	buttonImage(inImage), numStates(inNumStates), mode(inMode), drawMomentaryState(inDrawMomentaryState)
 {
 	init();
@@ -68,14 +68,13 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 	if (mode == kDGButtonType_picturereel)
 		return;
 
-	ControlRef carbonControl = getCarbonControl();
 	entryValue = newValue = GetControl32BitValue(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
-	
+
 	setMouseIsDown(true);
 	#if TARGET_PLUGIN_USES_MIDI
 		if (isParameterAttached())
-			getDfxGuiEditor()->setmidilearner(getAUVP().mParameterID);
+			getDfxGuiEditor()->setmidilearner(getParameterID());
 	#endif
 
 	switch (mode)
@@ -114,10 +113,9 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 	if (mode == kDGButtonType_picturereel)
 		return;
 
-	ControlRef carbonControl = getCarbonControl();
 	SInt32 currentValue = GetControl32BitValue(carbonControl);
 
-	if ( ((long)inXpos >= 0) && ((long)inXpos <= getBounds()->w) && ((long)inYpos >= 0) && ((long)inYpos <= getBounds()->h) )
+	if ( getBounds()->isInside_zerobase((long)inXpos, (long)inYpos) )
 	{
 		setMouseIsDown(true);
 
@@ -163,8 +161,6 @@ void DGButton::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 	if (mode == kDGButtonType_picturereel)
 		return;
 
-	ControlRef carbonControl = getCarbonControl();
-	
 	setMouseIsDown(false);
 	
 	if (mode == kDGButtonType_pushbutton)
@@ -173,7 +169,7 @@ void DGButton::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 			SetControl32BitValue(carbonControl, 0);
 	}
 
-	if ( ((long)inXpos >= 0) && ((long)inXpos <= getBounds()->w) && ((long)inYpos >= 0) && ((long)inYpos <= getBounds()->h) )
+	if ( getBounds()->isInside_zerobase((long)inXpos, (long)inYpos) )
 	{
 		if (userReleaseProcedure != NULL)
 			userReleaseProcedure(GetControl32BitValue(carbonControl), userReleaseProcData);
@@ -201,6 +197,105 @@ void DGButton::setUserReleaseProcedure(buttonUserProcedure inProc, void * inUser
 {
 	userReleaseProcedure = inProc;
 	userReleaseProcData = inUserData;
+}
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
+// Fine-tune Button
+//-----------------------------------------------------------------------------
+DGFineTuneButton::DGFineTuneButton(DfxGuiEditor *	inOwnerEditor,
+									long			inParameterID, 
+									DGRect *		inRegion,
+									DGImage *		inImage, 
+									float			inValueChangeAmount)
+:	DGControl(inOwnerEditor, inParameterID, inRegion), 
+	buttonImage(inImage), valueChangeAmount(inValueChangeAmount)
+{
+	mouseIsDown = false;
+	setControlContinuous(true);
+}
+
+//-----------------------------------------------------------------------------
+DGFineTuneButton::~DGFineTuneButton()
+{
+}
+
+//-----------------------------------------------------------------------------
+void DGFineTuneButton::draw(CGContextRef inContext, long inPortHeight)
+{
+	if (buttonImage != NULL)
+	{
+		long yoff = (mouseIsDown) ? (buttonImage->getHeight() / 2) : 0;
+		buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DGFineTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+{
+	#if TARGET_PLUGIN_USES_MIDI
+		if (isParameterAttached())
+			getDfxGuiEditor()->setmidilearner(getParameterID());
+	#endif
+
+	// figure out all of the values that we'll be using
+	entryValue = GetControl32BitValue(carbonControl);
+	SInt32 min = GetControl32BitMinimum(carbonControl);
+	SInt32 max = GetControl32BitMaximum(carbonControl);
+	newValue = entryValue + (long) (valueChangeAmount * (float)(max - min));
+	if (newValue > max)
+		newValue = max;
+	if (newValue < min)
+		newValue = min;
+
+	mouseIsDown = false;	// "dirty" it for mouseTrack
+	mouseTrack(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+}
+
+//-----------------------------------------------------------------------------
+void DGFineTuneButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+{
+	bool oldMouseDown = mouseIsDown;
+
+	if ( getBounds()->isInside_zerobase((long)inXpos, (long)inYpos) )
+	{
+		mouseIsDown = true;
+		if (!oldMouseDown)
+		{
+			if ( newValue != GetControl32BitValue(carbonControl) )
+				SetControl32BitValue(carbonControl, newValue);
+// XXX or do I prefer it not to do the mouse-down state when nothing is happening anyway?
+//			else
+//				redraw();	// at least make sure that redrawing occurs for mouseIsDown change
+		}
+	}
+
+	else
+	{
+		mouseIsDown = false;
+		if (oldMouseDown)
+		{
+			if ( entryValue != GetControl32BitValue(carbonControl) )
+				SetControl32BitValue(carbonControl, entryValue);
+			else
+				redraw();	// at least make sure that redrawing occurs for mouseIsDown change
+		}
+	}
+
+}
+
+//-----------------------------------------------------------------------------
+void DGFineTuneButton::mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+{
+	if (mouseIsDown)
+	{
+		mouseIsDown = false;
+		redraw();
+	}
 }
 
 

@@ -69,6 +69,15 @@ struct DGRect
 		h = inHeight;
 	}
 
+	bool isInside(long inX, long inY)
+	{
+		return ( ((inX >= x) && (inX < (x + w))) && ((inY >= y) && (inY < (y + h))) );
+	}
+	bool isInside_zerobase(long inX, long inY)
+	{
+		return ( ((inX >= 0) && (inX < w)) && ((inY >= 0) && (inY < h)) );
+	}
+
 	DGRect& operator = (const DGRect inRect)
 	{
 		set(inRect.x, inRect.y, inRect.w, inRect.h);

@@ -668,7 +668,7 @@ return false;
 		if ( ourControl->isParameterAttached() )
 		{
 			TellListener(ourControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
-//			printf("DGControlMouseHandler -> TellListener(MouseUp, %lu)\n", ourControl->getAUVP().mParameterID);
+//			printf("DGControlMouseHandler -> TellListener(MouseUp, %lu)\n", ourControl->getParameterID());
 		}
 
 		return false;	// let it fall through in case the host needs the event
