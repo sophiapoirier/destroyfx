@@ -227,9 +227,9 @@ void gainDisplayConvert(float value, char *string)
 	if (gainScaled(value) <= 0.0f)
 		strcpy(string, "-oo");
 	else if (gainScaled(value) > 1.0001f)
-		sprintf(string, "+%.1f", dBconvert(gainScaled(value)));
+		sprintf(string, "+%.1f", linear2dB(gainScaled(value)));
 	else
-		sprintf(string, "%.1f", dBconvert(gainScaled(value)));
+		sprintf(string, "%.1f", linear2dB(gainScaled(value)));
 }
 
 void betweenGainDisplayConvert(float value, char *string);
@@ -238,9 +238,9 @@ void betweenGainDisplayConvert(float value, char *string)
 	if (betweenGainScaled(value) <= 0.0f)
 			strcpy(string, "-oo");
 	else if (betweenGainScaled(value) > 1.0001)
-		sprintf(string, "+%.1f", dBconvert(betweenGainScaled(value)));
+		sprintf(string, "+%.1f", linear2dB(betweenGainScaled(value)));
 	else
-		sprintf(string, "%.1f", dBconvert(betweenGainScaled(value)));
+		sprintf(string, "%.1f", linear2dB(betweenGainScaled(value)));
 }
 
 void dryWetMixDisplayConvert(float value, char *string);
