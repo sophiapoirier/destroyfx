@@ -143,13 +143,13 @@ long PolarizerEditor::open()
 
 	// leap size read-out
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kSkip, &pos, leapDisplayProc, NULL, NULL, kValueTextSize, 
-								kDGTextAlign_center, kBlackDGColor, kValueTextFont);
+	display = new DGTextDisplay(this, kSkip, &pos, leapDisplayProc, NULL, NULL, kDGTextAlign_center, 
+								kValueTextSize, kBlackDGColor, kValueTextFont);
 
 	// polarization amount read-out
 	pos.offset(kSliderInc, 0);
-	display = new DGTextDisplay(this, kAmount, &pos, amountDisplayProc, NULL, NULL, kValueTextSize, 
-								kDGTextAlign_center, kBlackDGColor, kValueTextFont);
+	display = new DGTextDisplay(this, kAmount, &pos, amountDisplayProc, NULL, NULL, kDGTextAlign_center, 
+								kValueTextSize, kBlackDGColor, kValueTextFont);
 
 
 	//--create the buttons----------------------------------------------

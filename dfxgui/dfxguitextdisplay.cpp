@@ -18,12 +18,12 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							displayTextProcedure	inTextProc, 
 							void *					inUserData,
 							DGImage *				inBackgroundImage, 
-							float					inFontSize, 
 							DfxGuiTextAlignment		inTextAlignment, 
+							float					inFontSize, 
 							DGColor					inFontColor, 
 							const char *			inFontName)
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
-	backgroundImage(inBackgroundImage), fontSize(inFontSize), alignment(inTextAlignment), fontColor(inFontColor)
+	backgroundImage(inBackgroundImage), alignment(inTextAlignment), fontSize(inFontSize), fontColor(inFontColor)
 {
 	if (inTextProc == NULL)
 		textProc = genericDisplayTextProcedure;
@@ -185,10 +185,11 @@ void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouse
 
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, float inFontSize, 
-										DfxGuiTextAlignment inTextAlignment, DGColor inFontColor, const char * inFontName)
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
+										DfxGuiTextAlignment inTextAlignment, float inFontSize, 
+										DGColor inFontColor, const char * inFontName)
 :	DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
-					inFontSize, inTextAlignment, inFontColor, inFontName), 
+					inTextAlignment, inFontSize, inFontColor, inFontName), 
 	displayString(NULL)
 {
 	displayString = (char*) malloc(256);

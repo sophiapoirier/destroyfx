@@ -87,21 +87,14 @@ void midiresetTransverb(long value, void * editor)
 
 void bsizeDisplayProcedure(float value, char * outText, void *)
 {
-	float buffersize = value;
-	long thousands = (long)buffersize / 1000;
-	float remainder = fmodf(buffersize, 1000.0f);
+	long thousands = (long)value / 1000;
+	float remainder = fmodf(value, 1000.0f);
 
 	if (thousands > 0)
-	{
-		if (remainder < 10)
-			sprintf(outText, "%ld,00%.1f ms", thousands, remainder);
-		else if (remainder < 100)
-			sprintf(outText, "%ld,0%.1f ms", thousands, remainder);
-		else
-			sprintf(outText, "%ld,%.1f ms", thousands, remainder);
-	}
+		sprintf(outText, "%ld,%05.1f", thousands, remainder);
 	else
-		sprintf(outText, "%.1f ms", buffersize);
+		sprintf(outText, "%.1f", value);
+	strcat(outText, " ms");
 }
 
 void speedDisplayProcedure(float value, char * outText, void *)
@@ -160,16 +153,10 @@ void distDisplayProcedure(float value, char * outText, void * editor)
 	float remainder = fmodf(distance, 1000.0f);
 
 	if (thousands > 0)
-	{
-		if (remainder < 10.0f)
-			sprintf(outText, "%ld,00%.2f ms", thousands, remainder);
-		else if (remainder < 100.0f)
-			sprintf(outText, "%ld,0%.2f ms", thousands, remainder);
-		else
-			sprintf(outText, "%ld,%.2f ms", thousands, remainder);
-	}
+		sprintf(outText, "%ld,%06.2f", thousands, remainder);
 	else
-		sprintf(outText, "%.2f ms", distance);
+		sprintf(outText, "%.2f", distance);
+	strcat(outText, " ms");
 }
 
 void valueDisplayProcedure(float value, char * outText, void * userData)
@@ -343,7 +330,7 @@ long TransverbEditor::open()
 		slider->shrinkForeBounds(1, 0, 2, 0);
 
 		DGTextDisplay * display = new DGTextDisplay(this, tag, &pos2, displayProc, userData, NULL, 
-										kDisplayTextSize, kDGTextAlign_right, kDisplayTextColor, SNOOT_FONT);
+										kDGTextAlign_right, kDisplayTextSize, kDisplayTextColor, SNOOT_FONT);
 
 		if (tag == kSpeed1)
 		{
@@ -378,7 +365,7 @@ long TransverbEditor::open()
 	bsizeSlider->shrinkForeBounds(1, 0, 2, 0);
 
 	DGTextDisplay * display = new DGTextDisplay(this, kBsize, &pos2, bsizeDisplayProcedure, NULL, NULL, 
-										kDisplayTextSize, kDGTextAlign_right, kDisplayTextColor, SNOOT_FONT);
+										kDGTextAlign_right, kDisplayTextSize, kDisplayTextColor, SNOOT_FONT);
 
 	DGFineTuneButton * fineTuneButton = new DGFineTuneButton(this, kBsize, &pos3, gFineDownButton, -kFineTuneInc);
 	fineTuneButton = new DGFineTuneButton(this, kBsize, &pos4, gFineUpButton, kFineTuneInc);
