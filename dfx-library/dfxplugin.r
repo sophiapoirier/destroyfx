@@ -7,11 +7,7 @@ written by Marc Poirier, October 2002
 
 #include "AudioUnit.r"
 
-#ifndef __DFXDEFINES_H
 #include "dfxdefines.h"
-#else
-#warning YO!
-#endif
 
 
 //----------------------------------------------------------------------------- 
