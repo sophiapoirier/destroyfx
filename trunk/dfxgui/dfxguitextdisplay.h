@@ -49,15 +49,22 @@ public:
 		if (inMouseDragRange != 0.0f)	// to prevent division by zero
 			mouseDragRange = inMouseDragRange;
 	}
+	void setAntiAliasing(bool inAntiAlias)
+		{	shouldAntiAlias = inAntiAlias;	}
 
 protected:
 	DGImage *				backgroundImage;
 	displayTextProcedure	textProc;
 	void *					textProcUserData;
+
 	DfxGuiTextAlignment		alignment;
 	float					fontSize;
 	DGColor					fontColor;
 	char *					fontName;
+	bool					shouldAntiAlias;
+	bool					isSnootPixel10;	// special Tom font
+	float					fontAscent, fontDescent;
+
 	DfxGuiTextDisplayMouseAxis	mouseAxis;	// flags indicating which directions you can mouse to adjust the control value
 	float					mouseDragRange;	// the range of pixels over which you can drag the mouse to adjust the control value
 	float					lastX, lastY;

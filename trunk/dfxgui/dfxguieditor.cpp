@@ -30,25 +30,29 @@ DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 	controlHandlerUPP = NULL;
 	windowEventHandlerUPP = NULL;
 	windowEventEventHandlerRef = NULL;
+
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
 
 	dfxplugin = NULL;
 
 	// load any fonts from our bundle resources to be accessible locally within our component instance
+	fontsATSContainer = NULL;
 	fontsWereActivated = false;	// guilty until proven innocent
-	CFBundleRef myBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-	if (myBundle != NULL)
+	CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	if (pluginBundle != NULL)
 	{
-		CFURLRef myResourcesURL = CFBundleCopyResourcesDirectoryURL(myBundle);
-		if (myResourcesURL != NULL)
+		CFURLRef bundleResourcesDirCFURL = CFBundleCopyResourcesDirectoryURL(pluginBundle);
+		if (bundleResourcesDirCFURL != NULL)
 		{
-			FSRef myResourceDirRef;
-			if ( CFURLGetFSRef(myResourcesURL, &myResourceDirRef) )
+			FSRef bundleResourcesDirFSRef;
+			if ( CFURLGetFSRef(bundleResourcesDirCFURL, &bundleResourcesDirFSRef) )
 			{
-				OSStatus status = FSGetCatalogInfo(&myResourceDirRef, kFSCatInfoNone, NULL, NULL, &bundleResourceDirFSSpec, NULL);
+				FSSpec bundleResourcesDirFSSpec;
+				OSStatus status = FSGetCatalogInfo(&bundleResourcesDirFSRef, kFSCatInfoNone, NULL, NULL, &bundleResourcesDirFSSpec, NULL);
 				if (status == noErr)
-					status = FMActivateFonts(&bundleResourceDirFSSpec, NULL, NULL, kFMLocalActivationContext);
+					status = ATSFontActivateFromFileSpecification(&bundleResourcesDirFSSpec, kATSFontContextLocal, kATSFontFormatUnspecified, 
+																	NULL, kATSOptionFlagsProcessSubdirectories, &fontsATSContainer);
 				if (status == noErr)
 					fontsWereActivated = true;
 			}
@@ -107,9 +111,8 @@ DfxGuiEditor::~DfxGuiEditor()
 	}
 //else printf("using a version of Mac OS X lower than 10.2.3, so our control toolbox class will NOT be unregistered\n");
 
-	// XXX should probably catch errors from activation and not attempt to deactivate if activation failed
-	if (fontsWereActivated)
-		FMDeactivateFonts(&bundleResourceDirFSSpec, NULL, NULL, kFMDefaultOptions);
+//	if (fontsWereActivated)
+//		ATSFontDeactivate(fontsATSContainer, NULL, kATSOptionFlagsDefault);
 }
 
 

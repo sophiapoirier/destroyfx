@@ -142,7 +142,7 @@ private:
 	EventLoopTimerUPP	idleTimerUPP;
 	EventLoopTimerRef	idleTimer;
 
-	FSSpec		bundleResourceDirFSSpec;	// the FSSpec for the Resources directory in the plugin bundle
+	ATSFontContainerRef	fontsATSContainer;	// the ATS font container for the fonts in the bundle's Resources directory
 	bool		fontsWereActivated;	// memory of whether or not bundled fonts were loaded successfully
 #endif
 };
