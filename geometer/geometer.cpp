@@ -14,7 +14,17 @@ int intcompare(const void * a, const void * b) {
 }
 
 /* this macro does boring entry point stuff for us */
+#if 1
 DFX_ENTRY(Geometer);
+#else
+extern "C" ComponentResult GeometerEntry(ComponentParameters * params, Geometer * obj);
+extern "C" ComponentResult GeometerEntry(ComponentParameters * params, Geometer * obj)
+{
+	if (params->what == kAudioUnitResetSelect)
+		printf("Geometer kAudioUnitResetSelect\n");
+	return ComponentEntryPoint<Geometer>::Dispatch(params, obj);
+}
+#endif
 #if TARGET_PLUGIN_USES_DSPCORE
   DFX_CORE_ENTRY(GeometerDSP);
 #endif
@@ -31,32 +41,31 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   initparameter_indexed(P_POINTSTYLE, "points where", POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
 
-  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "magn");
-  initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08f, 0.08f, 0.0f, 1.0f, kDfxParamUnit_portion);
-  initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20f, 0.20f, 0.0f, 1.0f, kDfxParamUnit_portion);
-  initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20f, 0.20f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
-  initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50f, 0.50f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "gap");
-  initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50f, 0.50f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "level");
+  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "magn");
+  initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08, 0.08, 0.0, 1.0, kDfxParamUnit_portion);
+  initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20, 0.20, 0.0, 1.0, kDfxParamUnit_portion);
+  initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20, 0.20, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
+  initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50, 0.50, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "gap");
+  initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50, 0.50, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "level");
 
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
-    initparameter_f(P_POINTPARAMS + pp, "pointparam:unused", 0.04f, 0.04f, 0.0f, 1.0f, kDfxParamUnit_generic);
+    initparameter_f(P_POINTPARAMS + pp, "pointparam:unused", 0.04, 0.04, 0.0, 1.0, kDfxParamUnit_generic);
     setparameterattributes(P_POINTPARAMS + pp, kDfxParamAttribute_unused);	/* don't display as an available parameter */
   }
 
   initparameter_indexed(P_INTERPSTYLE, "interpolate how", INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
 
-  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
-  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
-  initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, "interp:smoothie", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_exponent);
-  initparameter_f(P_INTERPARAMS + INTERP_REVERSI, "interp:reversie", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);
-  initparameter_f(P_INTERPARAMS + INTERP_PULSE, "interp:pulse", 0.05f, 0.05f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "pulse");
-  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, "interp:friends", 1.0f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
-  initparameter_f(P_INTERPARAMS + INTERP_SING, "interp:sing", 0.8f, 0.8f, 0.0f, 1.0f, kDfxParamUnit_custom, kDfxParamCurve_linear, "mod");
-  initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, "interp:shuffle", 0.3f, 0.3f, 0.0f, 1.0f, kDfxParamUnit_generic);
+  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
+  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
+  initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, "interp:smoothie", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_exponent);
+  initparameter_f(P_INTERPARAMS + INTERP_REVERSI, "interp:reversie", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_generic);
+  initparameter_f(P_INTERPARAMS + INTERP_PULSE, "interp:pulse", 0.05, 0.05, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "pulse");
+  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, "interp:friends", 1.0, 1.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
+  initparameter_f(P_INTERPARAMS + INTERP_SING, "interp:sing", 0.8, 0.8, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "mod");
+  initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, "interp:shuffle", 0.3, 0.3, 0.0, 1.0, kDfxParamUnit_generic);
 
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
-    initparameter_f(P_INTERPARAMS + ip, 
-	   "inter:unused", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);
+    initparameter_f(P_INTERPARAMS + ip, "inter:unused", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_generic);
     setparameterattributes(P_INTERPARAMS + ip, kDfxParamAttribute_unused);	/* don't display as an available parameter */
   }
 
@@ -66,22 +75,22 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 #define ALLOP(n, str, def, unit, unitstr) \
   do { \
-    initparameter_f(P_OPPAR1S + n, "op1:" str, def, def, 0.0f, 1.0f, unit, kDfxParamCurve_linear, unitstr); \
-    initparameter_f(P_OPPAR2S + n, "op2:" str, def, def, 0.0f, 1.0f, unit, kDfxParamCurve_linear, unitstr); \
-    initparameter_f(P_OPPAR3S + n, "op3:" str, def, def, 0.0f, 1.0f, unit, kDfxParamCurve_linear, unitstr); \
+    initparameter_f(P_OPPAR1S + n, "op1:" str, def, def, 0.0, 1.0, unit, kDfxParamCurve_linear, unitstr); \
+    initparameter_f(P_OPPAR2S + n, "op2:" str, def, def, 0.0, 1.0, unit, kDfxParamCurve_linear, unitstr); \
+    initparameter_f(P_OPPAR3S + n, "op3:" str, def, def, 0.0, 1.0, unit, kDfxParamCurve_linear, unitstr); \
   } while (0)
 
-  ALLOP(OP_DOUBLE, "double", 0.5f, kDfxParamUnit_lineargain, NULL);
-  ALLOP(OP_HALF, "half", 0.0f, kDfxParamUnit_generic, NULL);
-  ALLOP(OP_QUARTER, "quarter", 0.0f, kDfxParamUnit_generic, NULL);
-  ALLOP(OP_LONGPASS, "longpass", 0.15f, kDfxParamUnit_custom, "length");
-  ALLOP(OP_SHORTPASS, "shortpass", 0.5f, kDfxParamUnit_custom, "length");
-  ALLOP(OP_SLOW, "slow", 0.25f, kDfxParamUnit_scalar, NULL);	// "factor"
-  ALLOP(OP_FAST, "fast", 0.5f, kDfxParamUnit_scalar, NULL);	// "factor"
-  ALLOP(OP_NONE, "none", 0.0f, kDfxParamUnit_generic, NULL);
+  ALLOP(OP_DOUBLE, "double", 0.5, kDfxParamUnit_lineargain, NULL);
+  ALLOP(OP_HALF, "half", 0.0, kDfxParamUnit_generic, NULL);
+  ALLOP(OP_QUARTER, "quarter", 0.0, kDfxParamUnit_generic, NULL);
+  ALLOP(OP_LONGPASS, "longpass", 0.15, kDfxParamUnit_custom, "length");
+  ALLOP(OP_SHORTPASS, "shortpass", 0.5, kDfxParamUnit_custom, "length");
+  ALLOP(OP_SLOW, "slow", 0.25, kDfxParamUnit_scalar, NULL);	// "factor"
+  ALLOP(OP_FAST, "fast", 0.5, kDfxParamUnit_scalar, NULL);	// "factor"
+  ALLOP(OP_NONE, "none", 0.0, kDfxParamUnit_generic, NULL);
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
-    ALLOP(op, "unused", 0.5f, kDfxParamUnit_generic, NULL);
+    ALLOP(op, "unused", 0.5, kDfxParamUnit_generic, NULL);
     setparameterattributes(P_OPPAR1S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
     setparameterattributes(P_OPPAR2S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
     setparameterattributes(P_OPPAR3S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
@@ -206,6 +215,7 @@ long PLUGIN::initialize()
   pointy = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
   storey = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
 
+windowbuf = (float*)malloc(maxframe * sizeof(float));
 #if !TARGET_PLUGIN_USES_DSPCORE
   return kDfxErr_NoError;
 #endif
@@ -221,6 +231,7 @@ PLUGINCORE::~PLUGINCORE()
 void PLUGIN::cleanup()
 {
 #endif
+free(windowbuf);
   /* windowing buffers */
   free (in0);
   free (out0);
@@ -265,6 +276,41 @@ void PLUGINCORE::reset() {
   /* tail is the same as delay, of course */
   settailsize_samples(framesize);
 #endif
+
+shape = getparameter_i(P_SHAPE);
+long z;
+const float oneDivThird = 1.0f / (float)third;
+switch(shape) {
+case WINDOW_TRIANGLE:
+	for(z = 0; z < third; z++) {
+		windowbuf[z] = ((float)z * oneDivThird);
+		windowbuf[z+third] = (1.0f - ((float)z * oneDivThird));
+	}
+	break;
+case WINDOW_ARROW:
+	for(z = 0; z < third; z++) {
+		float p = (float)z * oneDivThird;
+		p *= p;
+		windowbuf[z] = p;
+		windowbuf[z+third] = (1.0f - p);
+	}
+	break;
+case WINDOW_WEDGE:
+	for(z = 0; z < third; z++) {
+		float p = sqrtf((float)z * oneDivThird);
+		windowbuf[z] = p;
+		windowbuf[z+third] = (1.0f - p);
+	}
+	break;
+case WINDOW_COS:
+	for(z = 0; z < third; z ++) {
+		// XXX what about Eulor's law for cosine?
+		float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
+		windowbuf[z] = p;
+		windowbuf[z+third] = (1.0f - p);
+	}
+	break;
+}
 }
 
 
@@ -1081,7 +1127,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
    to fill the true output buffer.
 
    If the input frame is full:
-    - calls wprocess on this full input frame
+    - calls processw on this full input frame
     - applies the windowing envelope to the tail of out0 (output frame)
     - mixes in prevmix with the first half of the output frame
     - increases outsize so that the first half of the output frame is
@@ -1097,13 +1143,19 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
 */
 
 /* to improve: 
-   - use memcpy and arithmetic instead of
-     sample-by-sample copy 
    - can we use tail of out0 as prevmix, instead of copying?
    - can we use circular buffers instead of memmoving a lot?
      (probably not)
+XXX Marc's ideas:
+   - only calculate a given window the first time that it's needed (how often to we change them anyway?)
+   - cache it and use it next time
+   - moreover, we only need one cache for the plugin, although that might be tricky with the whole DSP cores abstraction thing
+   - possibly we only need to save half since the second half is always the first half reversed
+   - this can allow for an easy way to vector-optimize the windowing
+   - it would also be nice to make this windowing stuff into a reusable class so that we don't find ourselves maintaining the same code accross so many different plugins
 */
 
+#include <vecLib/vDSP.h>
 #if TARGET_PLUGIN_USES_DSPCORE
 void PLUGINCORE::process(const float * tin, float * tout, unsigned long samples, bool replacing) {
 #else
@@ -1112,7 +1164,6 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
   const float * tin  = *trueinputs;
   float * tout = *trueoutputs;
 #endif
-  int z = 0;
 
   for (unsigned long ii = 0; ii < samples; ii++) {
 
@@ -1132,11 +1183,14 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
       if (cs != NULL)
         cs->release();
 
-      float oneDivThird = 1.0f / (float)third;
+#if 0
+      const float oneDivThird = 1.0f / (float)third;
+      int z = 0;
       /* apply envelope */
 
       switch(shape) {
 
+	    // XXX it might be more efficient to do z+=oneDivThird each iteration (and then negativize oneDivThird for the second half)
         case WINDOW_TRIANGLE:
           for(z = 0; z < third; z++) {
             out0[z+outstart+outsize] *= ((float)z * oneDivThird);
@@ -1160,12 +1214,17 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
           break;
         case WINDOW_COS:
           for(z = 0; z < third; z ++) {
+		    // XXX what about Eulor's law for cosine?
             float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
           break;
       }
+#else
+      vmul(out0+outstart+outsize, 1, windowbuf, 1, out0+outstart+outsize, 1, (UInt32)framesize);
+//for (int z=0; z < framesize; z++) out0[z+outstart+outsize] *= windowbuf[z];
+#endif
 
       /* mix in prevmix */
       for(int u = 0; u < third; u ++)
@@ -1185,12 +1244,11 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
 
     /* send sample out */
   #ifdef TARGET_API_VST
-    if (replacing)
+    if (!replacing)
+      tout[ii] += out0[outstart];
+	else
   #endif
       tout[ii] = out0[outstart];
-  #ifdef TARGET_API_VST
-    else tout[ii] += out0[outstart];
-  #endif
 
     outstart ++;
     outsize --;
@@ -1210,7 +1268,7 @@ void PLUGIN::makepresets() {
   setpresetname(i, "atonal singing");
   setpresetparameter_i(i, P_BUFSIZE, 9);	// XXX is that 2^11 ?
   setpresetparameter_i(i, P_POINTSTYLE, POINT_FREQ);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.10112f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.10112);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_REVERSI);
   i++;
 
@@ -1218,96 +1276,96 @@ void PLUGIN::makepresets() {
   setpresetparameter_i(i, P_BUFSIZE, 9);
   setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_DYDX);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.1250387420637675f);//0.234f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.1250387420637675);//0.234);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SING);
-  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 1.0f);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 1.0);
   setpresetparameter_i(i, P_POINTOP1, OP_FAST);
-  setpresetparameter_f(i, P_OPPAR1S + OP_FAST, 0.9157304f);
+  setpresetparameter_f(i, P_OPPAR1S + OP_FAST, 0.9157304);
   i++;
 
   setpresetname(i, "sploop drums");
   setpresetparameter_i(i, P_BUFSIZE, 9);
   setpresetparameter_i(i, P_SHAPE, WINDOW_TRIANGLE);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_DYDX);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.5707532982591033f);//0.528f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.5707532982591033);//0.528);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SING);
-  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 0.2921348f);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 0.2921348);
   setpresetparameter_i(i, P_POINTOP1, OP_QUARTER);
-  setpresetparameter_f(i, P_OPPAR1S + OP_QUARTER, 0.258427f);
+  setpresetparameter_f(i, P_OPPAR1S + OP_QUARTER, 0.258427);
   setpresetparameter_i(i, P_POINTOP2, OP_DOUBLE);
-  setpresetparameter_f(i, P_OPPAR2S + OP_DOUBLE, 0.5f);
+  setpresetparameter_f(i, P_OPPAR2S + OP_DOUBLE, 0.5);
   i++;
 
   setpresetname(i, "loudest sing");
   setpresetparameter_i(i, P_BUFSIZE, 9);
   setpresetparameter_i(i, P_SHAPE, WINDOW_TRIANGLE);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_LEVEL);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_LEVEL, 0.280899f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_LEVEL, 0.280899);
   setpresetparameter_i(i, P_POINTOP2, OP_LONGPASS);
-  setpresetparameter_f(i, P_OPPAR2S + OP_LONGPASS, 0.1404494f);
+  setpresetparameter_f(i, P_OPPAR2S + OP_LONGPASS, 0.1404494);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SING);
-  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 0.8258427f);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 0.8258427);
   i++;
 
   setpresetname(i, "slower");
   setpresetparameter_i(i, P_BUFSIZE, 13);
   setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_FREQ);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.3089887f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.3089887);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_FRIENDS);
-  setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 1.0f);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 1.0);
   i++;
 
   setpresetname(i, "space chamber");
   setpresetparameter_i(i, P_BUFSIZE, 13);
   setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_FREQ);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.0224719f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.0224719);
   setpresetparameter_i(i, P_POINTOP2, OP_FAST);
-  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 0.7247191f);
+  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 0.7247191);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SMOOTHIE);
-  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SMOOTHIE, 0.5f);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SMOOTHIE, 0.5);
   i++;
 
   setpresetname(i, "robo sing (B)");
   setpresetparameter_i(i, P_BUFSIZE, 10);
   setpresetparameter_i(i, P_SHAPE, WINDOW_TRIANGLE);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_RANDOM);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_RANDOM, 0.0224719f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_RANDOM, 0.0224719);
   setpresetparameter_i(i, P_POINTOP1, OP_LONGPASS);
-  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.1966292f);
+  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.1966292);
   setpresetparameter_i(i, P_POINTOP2, OP_FAST);
-  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 1.0f);
+  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 1.0);
   setpresetparameter_i(i, P_POINTOP3, OP_FAST);
-  setpresetparameter_f(i, P_OPPAR3S + OP_FAST, 1.0f);
+  setpresetparameter_f(i, P_OPPAR3S + OP_FAST, 1.0);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_POLYGON);
-  setpresetparameter_f(i, P_INTERPARAMS + INTERP_POLYGON, 0.0f);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_POLYGON, 0.0);
   i++;
   
   setpresetname(i, "scrubby chorus");
   setpresetparameter_i(i, P_BUFSIZE, 13);
   setpresetparameter_i(i, P_SHAPE, WINDOW_ARROW);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_RANDOM);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_RANDOM, 0.9775281f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_RANDOM, 0.9775281);
   setpresetparameter_i(i, P_POINTOP1, OP_LONGPASS);
-  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.5168539f);
+  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.5168539);
   setpresetparameter_i(i, P_POINTOP2, OP_FAST);
-  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 0.0617978f);
+  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 0.0617978);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_FRIENDS);
-  setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 0.7303371f);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 0.7303371);
   i++;
 
   setpresetname(i, "time shuffle echo (sux?)");
   setpresetparameter_i(i, P_BUFSIZE, 13);
   setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
   setpresetparameter_i(i, P_POINTSTYLE, POINT_DYDX);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.81f);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.81);
   setpresetparameter_i(i, P_POINTOP1, OP_LONGPASS);
-  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.183f);
+  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.183);
   setpresetparameter_i(i, P_POINTOP2, OP_NONE);
   setpresetparameter_i(i, P_POINTOP3, OP_NONE);
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SHUFFLE);
-  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SHUFFLE, 0.84f);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SHUFFLE, 0.84);
   i++;
 
 }
