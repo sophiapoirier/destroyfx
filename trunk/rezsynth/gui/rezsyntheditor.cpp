@@ -184,11 +184,6 @@ RezSynthEditor::RezSynthEditor(AudioUnitCarbonView inInstance)
 	sepAmountDisplay = NULL;
 
 	parameterListener = NULL;
-	OSStatus status = AUListenerCreate(SepModeListenerProc, this,
-		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
-		&parameterListener);
-	if (status != noErr)
-		parameterListener = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -203,6 +198,7 @@ RezSynthEditor::~RezSynthEditor()
 
 		AUListenerDispose(parameterListener);
 	}
+	parameterListener = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -415,6 +411,12 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 	weblink = new DGWebLink(this, &pos, gSmartElectronixLink, SMARTELECTRONIX_URL);
 
 
+
+	OSStatus status = AUListenerCreate(SepModeListenerProc, this,
+						CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
+						&parameterListener);
+	if (status != noErr)
+		parameterListener = NULL;
 
 	if (parameterListener != NULL)
 	{
