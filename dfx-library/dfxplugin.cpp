@@ -80,7 +80,7 @@ DfxPlugin::DfxPlugin(
 	presets = new DfxPreset[numPresets];
 	for (int i=0; i < numPresets; i++)
 		presets[i].PostConstructor(numParameters);	// allocate for parameter values
-//	channelconfigs = ;
+//	setpresetname(0, PLUGIN_NAME_STRING);	// default name for the default preset - XXX ?
 
 	#if TARGET_PLUGIN_USES_MIDI
 		midistuff = new DfxMidi;
