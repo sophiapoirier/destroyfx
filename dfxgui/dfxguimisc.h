@@ -13,7 +13,7 @@ typedef enum {
 	kDGKeyModifier_accel = 1,	// command on Macs, control on PCs
 	kDGKeyModifier_alt = 1 << 1,	// option on Macs, alt on PCs
 	kDGKeyModifier_shift = 1 << 2,
-	kDGKeyModifier_extra = 1 << 3,	// control on Macs
+	kDGKeyModifier_extra = 1 << 3	// control on Macs
 } DGKeyModifiers;
 
 
