@@ -15,15 +15,11 @@ public:
 								float inValueChangeAmount, long inTuneMode)
 	:	DGFineTuneButton(inOwnerEditor, inParamID, inRegion, inImage, inValueChangeAmount), 
 		tuneMode(inTuneMode)
-	{
-	}
+		{ }
 
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
-
 	void setTuneMode(long inTuneMode)
-	{
-		tuneMode = inTuneMode;
-	}
+		{	tuneMode = inTuneMode;	}
 
 private:
 	long tuneMode;
