@@ -19,7 +19,6 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 	userReleaseProcedure = NULL;
 	userReleaseProcData = NULL;
 
-	alpha = 1.0f;
 	mouseIsDown = false;
 	setType(kDfxGuiType_button);
 	setContinuousControl(false);
@@ -40,7 +39,6 @@ DGButton::DGButton(DfxGuiEditor *		inOwnerEditor,
 	userReleaseProcedure = NULL;
 	userReleaseProcData = NULL;
 
-	alpha = 1.0f;
 	mouseIsDown = false;
 	setType(kDfxGuiType_button);
 	setContinuousControl(false);
@@ -54,19 +52,18 @@ DGButton::~DGButton()
 //-----------------------------------------------------------------------------
 void DGButton::draw(CGContextRef inContext, UInt32 inPortHeight)
 {
-	SInt32 value = GetControl32BitValue(getCarbonControl());
-	SInt32 max = GetControl32BitMaximum(getCarbonControl());
-	CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
-
 	CGImageRef theButton = (buttonImage == NULL) ? NULL : buttonImage->getCGImage();
 	if (theButton != NULL)
 	{
+		SInt32 value = GetControl32BitValue(getCarbonControl());
+		SInt32 max = GetControl32BitMaximum(getCarbonControl());
+		CGRect bounds = getBounds()->convertToCGRect(inPortHeight);
+
 bounds.size.width = buttonImage->getWidth();
 bounds.size.height = buttonImage->getHeight();
 if (drawMomentaryState && mouseIsDown)
 	bounds.origin.x -= (float) (buttonImage->getWidth() / 2);
-bounds.origin.y -= (float) ((max - value) * (buttonImage->getHeight() / numStates));
-//		CGContextSetAlpha(inContext, alpha);
+bounds.origin.y -= (float) ( (max - value) * (buttonImage->getHeight() / numStates) );
 		CGContextDrawImage(inContext, bounds, theButton);
 	}
 }
