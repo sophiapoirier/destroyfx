@@ -74,7 +74,6 @@ enum { WINDOW_TRIANGLE,
        WINDOW_ARROW, 
        WINDOW_WEDGE, 
        WINDOW_COS, 
-       WINDOW_COS2, 
        NUM_WINDOWSHAPES,
        MAX_WINDOWSHAPES=16
 };
