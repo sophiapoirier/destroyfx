@@ -9,12 +9,6 @@
 #include "iirfilter.h"
 #include "vstchunk.h"
 
-#ifdef WIN32
-/* turn off warnings about default but no cases in switch, etc. */
-   #pragma warning( disable : 4065 57 4200 4244 )
-   #include <windows.h>
-#endif
-
 
 //----------------------------------------------------------------------------- 
 // these are the plugin parameters:
