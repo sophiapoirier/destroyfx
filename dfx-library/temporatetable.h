@@ -22,7 +22,7 @@ enum TypesOfTempoRateTables
 class TempoRateTable
 {
 public:
-	TempoRateTable(long typeOfTable = kNormalTempoRates);
+	TempoRateTable(long inTypeOfTable = kNormalTempoRates);
 	~TempoRateTable()
 	{
 		if (scalars)
@@ -40,7 +40,7 @@ public:
 
 	float getScalar(long index)
 		{	return scalars[TempoRateTable::safeIndex(index)];	}
-	char * getDisplay(long index)
+	const char * getDisplay(long index)
 		{	return displays[TempoRateTable::safeIndex(index)];	}
 	float getScalar_gen(float genValue)
 		{	return scalars[TempoRateTable::float2index(genValue)];	}

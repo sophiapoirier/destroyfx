@@ -7,12 +7,9 @@
 
 
 //-----------------------------------------------------------------------------
-TempoRateTable::TempoRateTable(long typeOfTable)
-:	typeOfTable(typeOfTable)
+TempoRateTable::TempoRateTable(long inTypeOfTable)
+:	typeOfTable(inTypeOfTable)
 {
-  int i;
-
-
 	switch (typeOfTable)
 	{
 		case kSlowTempoRates:
@@ -30,6 +27,7 @@ TempoRateTable::TempoRateTable(long typeOfTable)
 	scalars = (float*) malloc(sizeof(float) * numTempoRates);
 	displays = 0;
 	displays = (char**) malloc(sizeof(char*) * numTempoRates);
+	long i;
 	for (i = 0; i < numTempoRates; i++)
 		displays[i] = (char*) malloc(sizeof(char) * 16);
 
