@@ -104,14 +104,10 @@ TARGET_API_VST
 	0 or 1
 
  necessary for Audio Unit:
-PLUGIN_DOUBLE_NAME_STRING
-	the plugin name prefixed with "Destroy FX: "
 PLUGIN_ENTRY_POINT
 	a C string of the base plugin class name with "Entry" appended
 
  necessary for Audio Units using a custom GUI (TARGET_PLUGIN_HAS_GUI = 1):
-PLUGIN_EDITOR_DOUBLE_NAME_STRING
-	a C string name for the editor, prefixed with "Destroy FX: "
 PLUGIN_EDITOR_ENTRY_POINT
 	a C string of the plugin editor class name with "Entry" appended
 
@@ -123,10 +119,14 @@ NUM_OUTPUTS
  optional for Audio Unit:
 PLUGIN_DESCRIPTION_STRING
 	a C string description of the plugin
+PLUGIN_DOUBLE_NAME_STRING
+	the plugin name prefixed with "Destroy FX: "
 PLUGIN_RES_ID
 	component resource ID of the base plugin
 PLUGIN_EDITOR_DESCRIPTION_STRING
 	a C string description of the plugin editor
+PLUGIN_EDITOR_DOUBLE_NAME_STRING
+	a C string name for the editor, prefixed with "Destroy FX: "
 PLUGIN_EDITOR_ID
 	4-byte ID for the plugin (will PLUGIN_ID if not defined)
 PLUGIN_EDITOR_RES_ID
@@ -604,7 +604,6 @@ protected:
 
 	bool b_usetimestampedparameters;	// XXX use this?
 
-	bool audioBuffersAllocated;
 	bool sampleratechanged;
 
 	#if TARGET_PLUGIN_USES_MIDI
