@@ -19,7 +19,7 @@ public:
 	virtual ~RMSControl();
 
 	// draw the control
-	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
+	virtual void draw(CGContextRef inContext, long inPortHeight)
 		{ }
 	// handle a mouse click in the control
 	virtual void mouseDown(long inXpos, long inYpos)
@@ -85,7 +85,7 @@ public:
 					const char *inFontName, float inFontSize, long inTextAlignment, long inParamID = -1);
 	virtual ~RMSTextDisplay();
 
-	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
+	virtual void draw(CGContextRef inContext, long inPortHeight);
 	// set the display text directly with a string
 	void setText(const char *inText);
 	// given a linear amplitude value, set the display text with the dB-converted value
@@ -110,7 +110,7 @@ public:
 	RMSButton(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage);
 	virtual ~RMSButton();
 
-	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
+	virtual void draw(CGContextRef inContext, long inPortHeight);
 	virtual void mouseDown(long inXpos, long inYpos);
 	virtual void mouseTrack(long inXpos, long inYpos);
 	virtual void mouseUp(long inXpos, long inYpos);
@@ -129,7 +129,7 @@ public:
 				RMSColor inBackColor, RMSColor inFillColor);
 	virtual ~RMSSlider();
 
-	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
+	virtual void draw(CGContextRef inContext, long inPortHeight);
 	virtual void mouseDown(long inXpos, long inYpos);
 	virtual void mouseTrack(long inXpos, long inYpos);
 	virtual void mouseUp(long inXpos, long inYpos);

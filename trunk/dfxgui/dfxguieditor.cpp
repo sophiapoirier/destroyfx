@@ -117,9 +117,6 @@ DfxGuiEditor::~DfxGuiEditor()
 //-----------------------------------------------------------------------------
 OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 {
-//	X = (UInt32) inXOffset;
-//	Y = (UInt32) inYOffset;
-
 	#if TARGET_PLUGIN_USES_MIDI
 		setmidilearning(false);
 	#endif
@@ -341,7 +338,7 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 #endif
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::DrawBackground(CGContextRef inContext, UInt32 inPortHeight)
+void DfxGuiEditor::DrawBackground(CGContextRef inContext, long inPortHeight)
 {
 	CGImageRef backgroundCGImage = NULL;
 	if (backgroundImage != NULL)
@@ -819,11 +816,13 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 					CGContextSaveGState(context);
 #ifndef USE_QUICKDRAW_CLIPPING
 					// define the clipping region
-					CGRect clipRect;
-					ourDGControl->getBounds()->copyToCGRect(&clipRect, portBounds.bottom);
+					CGRect clipRect = ourDGControl->getBounds()->convertToCGRect(portBounds.bottom);
 
 					CGContextClipToRect(context, clipRect);
 #endif
+// this lets me position things with non-upside-down coordinates, but unfortunately draws all images and text upside down...
+//CGContextTranslateCTM(context, 0, portBounds.bottom);
+//CGContextScaleCTM(context, 1.0f, -1.0f);
 					// XXX disable anti-aliased drawing for image rendering
 					CGContextSetShouldAntialias(context, false);
 					ourDGControl->draw(context, portBounds.bottom);

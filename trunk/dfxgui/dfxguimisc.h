@@ -28,6 +28,13 @@ public:
 	DGRect()
 		{	x = y = w = h = 0;	}
 	DGRect(long inX, long inY, long inWidth, long inHeight)
+		{	set(inX, inY, inWidth, inHeight);	}
+	DGRect(DGRect * inSourceRect)
+		{	set(inSourceRect);	}
+
+	void set(DGRect * inSourceRect)
+		{	x = inSourceRect->x;	y = inSourceRect->y;	w = inSourceRect->w;	h = inSourceRect->h;	}
+	void set(long inX, long inY, long inWidth, long inHeight)
 		{	x = inX;	y = inY;	w = inWidth;	h = inHeight;	}
 
 	void offset(long inOffsetX, long inOffsetY, long inWidthGrow = 0, long inHeightGrow = 0)
@@ -37,20 +44,15 @@ public:
 	void resize(long inWidth, long inHeight)
 		{	w = inWidth;	h = inHeight;	}
 
-	void set(DGRect * inSourceRect)
-		{	x = inSourceRect->x;	y = inSourceRect->y;	w = inSourceRect->w;	h = inSourceRect->h;	}
-	void set(long inX, long inY, long inWidth, long inHeight)
-		{	x = inX;	y = inY;	w = inWidth;	h = inHeight;	}
-
 #if MAC
-	void copyToCGRect(CGRect * outDestRect, UInt32 inDestPortHeight)
+	void copyToCGRect(CGRect * outDestRect, long inDestPortHeight)
 	{
 		outDestRect->origin.x = x;
-		outDestRect->origin.y = inDestPortHeight - y - h;
+		outDestRect->origin.y = inDestPortHeight - (h + y);
 		outDestRect->size.width = w;
 		outDestRect->size.height = h;
 	}
-	CGRect convertToCGRect(UInt32 inOutputPortHeight)
+	CGRect convertToCGRect(long inOutputPortHeight)
 	{
 		CGRect outputRect;
 		copyToCGRect(&outputRect, inOutputPortHeight);
@@ -139,8 +141,8 @@ public:
 	CGImageRef getCGImage()
 		{	return cgImage;	}
 
-	unsigned long getWidth();
-	unsigned long getHeight();
+	long getWidth();
+	long getHeight();
 
 	/* probably a better type is
 	   void draw(int x, int y);
@@ -149,7 +151,7 @@ public:
 	   void drawex(int x, int y, int xindex, int yindex) 
 	   .. for stacked images.
 	*/
-	virtual void draw(CGContextRef inContext, UInt32 inPortHeight, DGRect * inRect);
+	virtual void draw(DGRect * inRect, CGContextRef inContext, long inPortHeight, long inXoffset = 0, long inYoffset = 0);
 
 private:
 #if MAC
