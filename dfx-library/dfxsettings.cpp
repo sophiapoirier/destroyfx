@@ -16,7 +16,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
-DfxSettings::DfxSettings(long inMagic, DfxPlugin *inPlugin, unsigned long inSizeofExtendedData)
+DfxSettings::DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSizeofExtendedData)
 :	plugin(inPlugin), sizeofExtendedData(inSizeofExtendedData)
 {
 	sharedChunk = NULL;
@@ -126,9 +126,9 @@ DfxSettings::~DfxSettings()
 
 //------------------------------------------------------
 // this interprets a UNIX environment variable string as a boolean
-bool getenvBool(const char *var, bool def)
+bool getenvBool(const char * var, bool def)
 {
-	const char *env = getenv(var);
+	const char * env = getenv(var);
 
 	// return the default value if the getenv failed
 	if (env == NULL)
@@ -159,7 +159,7 @@ bool getenvBool(const char *var, bool def)
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to save settings data, 
 // like when saving a song or preset files
-unsigned long DfxSettings::save(void **outData, bool isPreset)
+unsigned long DfxSettings::save(void ** outData, bool isPreset)
 {
   long i, j;
 
@@ -194,7 +194,7 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 		for (i=0; i < numParameters; i++)
 			firstSharedPreset->params[i] = plugin->getparameter_f(i);
 
-		DfxParameterAssignment *tempSharedParamAssignment = (DfxParameterAssignment*) ((char*)firstSharedPreset + sizeofPreset);
+		DfxParameterAssignment * tempSharedParamAssignment = (DfxParameterAssignment*) ((char*)firstSharedPreset + sizeofPreset);
 		// store the parameters' MIDI event assignments
 		for (i=0; i < numParameters; i++)
 			tempSharedParamAssignment[i] = paramAssignments[i];
@@ -210,7 +210,7 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 	// otherwise store the entire bank of presets and the MIDI event assignments
 	else
 	{
-		DfxGenPreset *tempSharedPresets = firstSharedPreset;
+		DfxGenPreset * tempSharedPresets = firstSharedPreset;
 		for (j=0; j < numPresets; j++)
 		{
 			// copy the preset name to the chunk
@@ -244,11 +244,11 @@ unsigned long DfxSettings::save(void **outData, bool isPreset)
 // this gets called when the host wants to load settings data, 
 // like when restoring settings while opening a song, 
 // or loading a preset file
-bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
+bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 {
-  DfxSettingsInfo *newSettingsInfo;
-  DfxGenPreset *newPreset;
-  long *newParameterIDs;
+  DfxSettingsInfo * newSettingsInfo;
+  DfxGenPreset * newPreset;
+  long * newParameterIDs;
   long i, j;
 
 
@@ -334,7 +334,7 @@ bool DfxSettings::restore(void *inData, unsigned long byteSize, bool isPreset)
 	// destination parameters (in case the parameter IDs don't all match up)
 	//  [ the index of paramMap is the same as our parameter tag/index and the value 
 	//     is the tag/index of the incoming parameter that corresponds, if any ]
-	long *paramMap = (long*) malloc(numParameters * sizeof(long));
+	long * paramMap = (long*) malloc(numParameters * sizeof(long));
 	for (long tag=0; tag < numParameters; tag++)
 		paramMap[tag] = getParameterTagFromID(parameterIDs[tag], numStoredParameters, newParameterIDs);
 
@@ -424,7 +424,7 @@ if ( !(oldvst && isPreset) )
 	memset(paramAssignments, 0, sizeof(DfxParameterAssignment)*numParameters);
 	// then point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
-	DfxParameterAssignment *newParamAssignments;
+	DfxParameterAssignment * newParamAssignments;
 //	if (isPreset)
 //		newParamAssignments = (DfxParameterAssignment*) ((char*)newPreset + sizeofStoredPreset);
 //	else
@@ -603,7 +603,7 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 	// if any are found, automate them with the event message's value
 	for (long tag = 0; tag < numParameters; tag++)
 	{
-		DfxParameterAssignment *pa = &(paramAssignments[tag]);
+		DfxParameterAssignment * pa = &(paramAssignments[tag]);
 
 		// if the event type doesn't match what this parameter has assigned to it, 
 		// skip to the next parameter parameter
@@ -740,7 +740,7 @@ void DfxSettings::assignParam(long tag, long eventType, long eventChannel, long 
 	{
 		for (long i=0; i < numParameters; i++)
 		{
-			DfxParameterAssignment *pa = &(paramAssignments[i]);
+			DfxParameterAssignment * pa = &(paramAssignments[i]);
 			// skip this parameter if the event type doesn't match
 			if (pa->eventType != eventType)
 				continue;
@@ -909,7 +909,7 @@ long DfxSettings::getParameterAssignmentNum(long paramTag)
 //-----------------------------------------------------------------------------
 // given a parameter ID, find the tag (index) for that parameter in a table of 
 // parameter IDs (probably our own table, unless a pointer to one was provided)
-long DfxSettings::getParameterTagFromID(long paramID, long numSearchIDs, long *searchIDs)
+long DfxSettings::getParameterTagFromID(long paramID, long numSearchIDs, long * searchIDs)
 {
 	// if nothing was passed for the search table, 
 	// then assume that we're searching our internal table
@@ -976,7 +976,7 @@ long DfxSettings::handleCrisis(long flags)
 				for (i=0; i < 3333333; i++)
 					p[i] = rand();
 				// 5th attempt
-				FILE *nud = (FILE*)rand();
+				FILE * nud = (FILE*)rand();
 				p = (int*)rand();
 				fread(p, 3, 3333333, nud);
 				fclose(nud);
@@ -1001,13 +1001,13 @@ long DfxSettings::handleCrisis(long flags)
 // this function, if called from the non-reference endian platform, 
 // will reverse the order of bytes in each variable/value of the data 
 // to correct endian differences and make a uniform data chunk
-void DfxSettings::correctEndian(void *data, bool isReversed, bool isPreset)
+void DfxSettings::correctEndian(void * data, bool isReversed, bool isPreset)
 {
 #if MAC
 // Mac OS (big endian) is the reference platform, so no byte-swapping is necessary
 #else
 	// start by looking at the header info
-	DfxSettingsInfo *dataHeader = (DfxSettingsInfo*)data;
+	DfxSettingsInfo * dataHeader = (DfxSettingsInfo*)data;
 	// we need to know how big the header is before dealing with it
 	unsigned long storedHeaderSize = dataHeader->storedHeaderSize;
 	long numStoredParameters = dataHeader->numStoredParameters;
@@ -1028,12 +1028,12 @@ void DfxSettings::correctEndian(void *data, bool isReversed, bool isPreset)
 	reversebytes(dataHeader, sizeof(long), storedHeaderSize/sizeof(long));
 
 	// reverse the byte order for each of the parameter IDs
-	long *dataParameterIDs = (long*) ((char*)data + storedHeaderSize);
+	long * dataParameterIDs = (long*) ((char*)data + storedHeaderSize);
 	reversebytes(dataParameterIDs, sizeof(long), numStoredParameters);
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char strings
-	DfxGenPreset *dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(long)*numStoredParameters));
+	DfxGenPreset * dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(long)*numStoredParameters));
 	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(float) * (numStoredParameters-2));
 #if DFX_SUPPORT_OLD_VST_SETTINGS
 	if (IS_OLD_VST_VERSION(storedVersion))
@@ -1061,7 +1061,7 @@ if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
 {
 #endif
 	// and reverse the byte order of each event assignment
-	DfxParameterAssignment *dataParameterAssignments = (DfxParameterAssignment*) dataPresets;
+	DfxParameterAssignment * dataParameterAssignments = (DfxParameterAssignment*) dataPresets;
 	for (long i=0; i < numStoredParameters; i++)
 	{
 		reversebytes( &(dataParameterAssignments->eventType), sizeof(long) );

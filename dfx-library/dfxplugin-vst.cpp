@@ -85,7 +85,7 @@ long DfxPlugin::getTailSize()
 
 
 //------------------------------------------------------------------------
-bool DfxPlugin::getInputProperties(long index, VstPinProperties *properties)
+bool DfxPlugin::getInputProperties(long index, VstPinProperties * properties)
 {
 	if ( (index >= 0) && ((unsigned long)index < getnuminputs()) && (properties != NULL) )
 	{
@@ -100,7 +100,7 @@ bool DfxPlugin::getInputProperties(long index, VstPinProperties *properties)
 }
 
 //------------------------------------------------------------------------
-bool DfxPlugin::getOutputProperties(long index, VstPinProperties *properties)
+bool DfxPlugin::getOutputProperties(long index, VstPinProperties * properties)
 {
 	if ( (index >= 0) && ((unsigned long)index < getnumoutputs()) && (properties != NULL) )
 	{
@@ -118,7 +118,7 @@ bool DfxPlugin::getOutputProperties(long index, VstPinProperties *properties)
 //-----------------------------------------------------------------------------
 // Destroy FX infos
 
-bool DfxPlugin::getEffectName(char *name)
+bool DfxPlugin::getEffectName(char * name)
 {
 	if (name == NULL)
 		return false;
@@ -131,7 +131,7 @@ long DfxPlugin::getVendorVersion()
 	return PLUGIN_VERSION;
 }
 
-bool DfxPlugin::getErrorText(char *text)
+bool DfxPlugin::getErrorText(char * text)
 {
 	if (text == NULL)
 		return false;
@@ -139,7 +139,7 @@ bool DfxPlugin::getErrorText(char *text)
 	return true;
 }
 
-bool DfxPlugin::getVendorString(char *text)
+bool DfxPlugin::getVendorString(char * text)
 {
 	if (text == NULL)
 		return false;
@@ -148,7 +148,7 @@ bool DfxPlugin::getVendorString(char *text)
 	return true;
 }
 
-bool DfxPlugin::getProductString(char *text)
+bool DfxPlugin::getProductString(char * text)
 {
 	if (text == NULL)
 		return false;
@@ -159,7 +159,7 @@ bool DfxPlugin::getProductString(char *text)
 
 //-----------------------------------------------------------------------------
 // this just tells the host what this plugin can do
-long DfxPlugin::canDo(char *text)
+long DfxPlugin::canDo(char * text)
 {
 	if (text == NULL)
 		return -1;
@@ -210,14 +210,14 @@ void DfxPlugin::setProgram(long programNum)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setProgramName(char *name)
+void DfxPlugin::setProgramName(char * name)
 {
 	if (name != NULL)
 		setpresetname(TARGET_API_BASE_CLASS::getProgram(), name);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::getProgramName(char *name)
+void DfxPlugin::getProgramName(char * name)
 {
 	if (name == NULL)
 		return;
@@ -234,7 +234,7 @@ void DfxPlugin::getProgramName(char *name)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getProgramNameIndexed(long category, long index, char *name)
+bool DfxPlugin::getProgramNameIndexed(long category, long index, char * name)
 {
 	if (name == NULL)
 		return false;
@@ -272,7 +272,7 @@ bool DfxPlugin::copyProgram(long destination)
 
 //-----------------------------------------------------------------------------
 // note:  don't ever return 0 or Logic crashes
-long DfxPlugin::getChunk(void **data, bool isPreset)
+long DfxPlugin::getChunk(void ** data, bool isPreset)
 {
 	long outsize = (signed long) dfxsettings->save(data, isPreset);
 	return (outsize < 1) ? 1 : outsize;
@@ -284,7 +284,7 @@ long DfxPlugin::getChunk(void **data, bool isPreset)
 // back then, when it saved it).
 // <data> is only valid during this call.
 // you may want to check the bytesize, and certainly should maintain a version."
-long DfxPlugin::setChunk(void *data, long byteSize, bool isPreset)
+long DfxPlugin::setChunk(void * data, long byteSize, bool isPreset)
 {
 	return dfxsettings->restore(data, (unsigned)byteSize, isPreset);
 }
@@ -310,7 +310,7 @@ float DfxPlugin::getParameter(long index)
 
 //-----------------------------------------------------------------------------
 // titles of each parameter
-void DfxPlugin::getParameterName(long index, char *name)
+void DfxPlugin::getParameterName(long index, char * name)
 {
 	if (name != NULL)
 		getparametername(index, name);
@@ -318,7 +318,7 @@ void DfxPlugin::getParameterName(long index, char *name)
 
 //-----------------------------------------------------------------------------
 // numerical display of each parameter's gradiations
-void DfxPlugin::getParameterDisplay(long index, char *text)
+void DfxPlugin::getParameterDisplay(long index, char * text)
 {
 	if (text == NULL)
 		return;
@@ -363,7 +363,7 @@ void DfxPlugin::getParameterDisplay(long index, char *text)
 
 //-----------------------------------------------------------------------------
 // unit of measure for each parameter
-void DfxPlugin::getParameterLabel(long index, char *label)
+void DfxPlugin::getParameterLabel(long index, char * label)
 {
 	if (label != NULL)
 		getparameterunitstring(index, label);
@@ -374,7 +374,7 @@ void DfxPlugin::getParameterLabel(long index, char *label)
 #pragma mark _________dsp_________
 
 //-----------------------------------------------------------------------------------------
-void DfxPlugin::process(float **inputs, float **outputs, long sampleFrames)
+void DfxPlugin::process(float ** inputs, float ** outputs, long sampleFrames)
 {
 	preprocessaudio();
 
@@ -392,7 +392,7 @@ void DfxPlugin::process(float **inputs, float **outputs, long sampleFrames)
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxPlugin::processReplacing(float **inputs, float **outputs, long sampleFrames)
+void DfxPlugin::processReplacing(float ** inputs, float ** outputs, long sampleFrames)
 {
 	preprocessaudio();
 
@@ -431,9 +431,9 @@ long DfxPlugin::processEvents(VstEvents* events)
 			continue;
 
 		// cast the incoming event as a VstMidiEvent
-		VstMidiEvent *midiEvent = (VstMidiEvent*)events->events[i];
+		VstMidiEvent * midiEvent = (VstMidiEvent*)events->events[i];
 		// address the midiData[4] string from the event to this temp data pointer
-		char *midiData = midiEvent->midiData;
+		char * midiData = midiEvent->midiData;
 
 		// save the channel number ...
 		int channel = midiData[0] & 0x0F;

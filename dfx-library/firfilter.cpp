@@ -4,14 +4,11 @@
 
 #include <math.h>
 
-#ifndef sinf
-#define sinf(v) (float)sin((v))
-#endif
-#ifndef powf
-#define powf(b,e) (float)pow((b),(e))
-#endif
-#ifndef sqrtf
-#define sqrtf(v) (float)sqrt((v))
+// XXX figure out another way
+#ifdef __APPLE_CC__
+	#define sinf(v) (float)sin((v))
+	#define powf(b,e) (float)pow((b),(e))
+	#define sqrtf(v) (float)sqrt((v))
 #endif
 
 
@@ -19,7 +16,7 @@
 //-----------------------------------------------------------------------------
 // you're supposed to use use an odd number of taps
 void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate, 
-											int numTaps, float *coefficients)
+											int numTaps, float * coefficients)
 {
   int middleCoeff;
   float corner, value;
@@ -44,7 +41,7 @@ void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate,
 }
 
 //-----------------------------------------------------------------------------
-void applyKaiserWindow(int numTaps, float *coefficients, float attenuation)
+void applyKaiserWindow(int numTaps, float * coefficients, float attenuation)
 {
   int halfLength;
 

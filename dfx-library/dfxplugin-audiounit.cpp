@@ -36,12 +36,15 @@ ComponentResult DfxPlugin::Initialize()
 {
 	ComponentResult result = noErr;
 
+// don't need to do this stuff any more with new forthcoming changes to AUEffectBase 
+// (which is basically a copy'n'paste of what I wrote below, which is why I still include it, for reference, for now)
+/*
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// call the inherited class' Initialize routine
 		result = TARGET_API_BASE_CLASS::Initialize();
 	#endif
 
-	const AUChannelInfo *auChannelConfigs = NULL;
+	const AUChannelInfo * auChannelConfigs = NULL;
 	UInt32 numIOconfigs = SupportedNumChannels(&auChannelConfigs);
 	// if this AU supports only specific i/o channel count configs, then check whether the current format is allowed
 	if ( (numIOconfigs > 0) && (auChannelConfigs != NULL) )
@@ -80,6 +83,10 @@ ComponentResult DfxPlugin::Initialize()
 		if ( !foundMatch )
 			return kAudioUnitErr_FormatNotSupported;
 	}
+*/
+
+	// call the inherited class' Initialize routine
+	result = TARGET_API_BASE_CLASS::Initialize();
 
 	// call our initialize routine
 	if (result == noErr)
@@ -196,7 +203,7 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 // most properties are handled by inherited base class implementations
 ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
-					void *outData)
+					void * outData)
 {
 	ComponentResult result = noErr;
 
@@ -242,8 +249,8 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 				result = paramErr;
 			else
 			{
-				DfxParameterValueRequest *request = (DfxParameterValueRequest*) outData;
-				DfxParamValue *value = &(request->value);
+				DfxParameterValueRequest * request = (DfxParameterValueRequest*) outData;
+				DfxParamValue * value = &(request->value);
 				long paramID = request->parameterID;
 				switch (request->valueItem)
 				{
@@ -353,7 +360,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 				result = paramErr;
 			else
 			{
-				DfxParameterValueConversionRequest *request = (DfxParameterValueConversionRequest*) outData;
+				DfxParameterValueConversionRequest * request = (DfxParameterValueConversionRequest*) outData;
 				switch (request->conversionType)
 				{
 					case kDfxParameterValueConversion_expand:
@@ -375,7 +382,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 				result = paramErr;
 			else
 			{
-				DfxParameterValueStringRequest *request = (DfxParameterValueStringRequest*) outData;
+				DfxParameterValueStringRequest * request = (DfxParameterValueStringRequest*) outData;
 				if ( !getparametervaluestring(request->parameterID, request->stringIndex, request->valueString) )
 					result = paramErr;
 			}
@@ -409,7 +416,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 //-----------------------------------------------------------------------------
 ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
-					const void *inData, UInt32 inDataSize)
+					const void * inData, UInt32 inDataSize)
 {
 	ComponentResult result = noErr;
 
@@ -436,8 +443,8 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 				result = paramErr;
 			else
 			{
-				DfxParameterValueRequest *request = (DfxParameterValueRequest*) inData;
-				DfxParamValue *value = &(request->value);
+				DfxParameterValueRequest * request = (DfxParameterValueRequest*) inData;
+				DfxParamValue * value = &(request->value);
 				long paramID = request->parameterID;
 				switch (request->valueItem)
 				{
@@ -545,7 +552,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 				result = paramErr;
 			else
 			{
-				DfxParameterValueStringRequest *request = (DfxParameterValueStringRequest*) inData;
+				DfxParameterValueStringRequest * request = (DfxParameterValueStringRequest*) inData;
 				if ( !setparametervaluestring(request->parameterID, request->stringIndex, request->valueString) )
 					result = paramErr;
 			}
@@ -595,7 +602,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 // that the plugin supports
 // if the pointer passed in is NULL, then simply return the number of supported configurations
 // if any n-to-n configuration (i.e. same number of ins and outs) is supported, return 0
-UInt32 DfxPlugin::SupportedNumChannels(const AUChannelInfo **outInfo)
+UInt32 DfxPlugin::SupportedNumChannels(const AUChannelInfo ** outInfo)
 {
 	if (channelconfigs != NULL)
 	{
@@ -626,7 +633,7 @@ int DfxPlugin::GetNumCustomUIComponents()
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::GetUIComponentDescs(ComponentDescription *inDescArray)
+void DfxPlugin::GetUIComponentDescs(ComponentDescription * inDescArray)
 {
 	if (inDescArray == NULL)
 		return;
@@ -777,7 +784,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 //-----------------------------------------------------------------------------
 // give the host an array of CFStrings with the display values for an indexed parameter
 ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, 
-					AudioUnitParameterID inParameterID, CFArrayRef *outStrings)
+					AudioUnitParameterID inParameterID, CFArrayRef * outStrings)
 {
 	// we're only handling the global scope
 	if (inScope != kAudioUnitScope_Global)
@@ -831,7 +838,7 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 // Returns an array of AUPreset that contain a number and name for each of the presets.  
 // The number of each preset must be greater (or equal to) zero.  
 // The CFArrayRef should be released by the caller.
-ComponentResult DfxPlugin::GetPresets(CFArrayRef *outData) const
+ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 {
 	// this is just to say that the property is supported (GetPropertyInfo needs this)
 	if (outData == NULL)
@@ -895,7 +902,7 @@ OSStatus DfxPlugin::NewFactoryPresetSet(const AUPreset & inNewFactoryPreset)
 static const CFStringRef kDfxDataDictionaryKeyString = CFSTR("destroyfx-data");
 //-----------------------------------------------------------------------------
 // stores the values of all parameters values, state info, etc. into a CFPropertyListRef
-ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
+ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
 {
 	ComponentResult result = TARGET_API_BASE_CLASS::SaveState(outData);
 	if (result != noErr)
@@ -1010,7 +1017,7 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 {
 //printf("\nDfxPlugin::ChangeStreamFormat,   new sr = %.3lf,   old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
 //printf("\nDfxPlugin::ChangeStreamFormat,   new num channels = %lu,   old num channels = %lu\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
-	const AUChannelInfo *auChannelConfigs = NULL;
+	const AUChannelInfo * auChannelConfigs = NULL;
 	UInt32 numIOconfigs = SupportedNumChannels(&auChannelConfigs);
 	// if this AU supports only specific i/o channel count configs, 
 	// then try to check whether the incoming format is allowed

@@ -4,11 +4,10 @@
 
 #include <math.h>
 
-#ifndef sinf
-#define sinf(v) (float)sin((v))
-#endif
-#ifndef cosf
-#define cosf(v) (float)cos((v))
+// XXX figure out another way
+#ifdef __APPLE_CC__
+	#define sinf(v) (float)sin((v))
+	#define cosf(v) (float)cos((v))
 #endif
 
 
@@ -19,7 +18,9 @@ IIRfilter::IIRfilter()
 }
 
 //------------------------------------------------------------------------
-IIRfilter::~IIRfilter() { }
+IIRfilter::~IIRfilter()
+{
+}
 
 //------------------------------------------------------------------------
 void IIRfilter::calculateLowpassCoefficients(float cutoff, float samplerate)
@@ -58,7 +59,7 @@ void IIRfilter::calculateHighpassCoefficients(float cutoff, float samplerate)
 }
 
 //------------------------------------------------------------------------
-void IIRfilter::copyCoefficients(IIRfilter *source)
+void IIRfilter::copyCoefficients(IIRfilter * source)
 {
 	pOutCoeff = source->pOutCoeff;
 	ppOutCoeff = source->ppOutCoeff;

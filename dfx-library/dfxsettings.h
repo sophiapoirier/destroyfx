@@ -204,11 +204,11 @@ typedef struct
 
 //------------------------------------------------------
 // this reverses the bytes in a stream of data, for correcting endian difference
-//void reverseBytes(void *data, unsigned long size, unsigned long count = 1);
-inline void reversebytes(void *data, unsigned long size, unsigned long count = 1)
+//void reverseBytes(void * data, unsigned long size, unsigned long count = 1);
+inline void reversebytes(void * data, unsigned long size, unsigned long count = 1)
 {
 	unsigned long half = (size / 2) + (size % 2);
-	char *dataBytes = (char*)data;
+	char * dataBytes = (char*)data;
 
 	for (unsigned long c=0; c < count; c++)
 	{
@@ -225,22 +225,22 @@ inline void reversebytes(void *data, unsigned long size, unsigned long count = 1
 
 //------------------------------------------------------
 // this interprets a UNIX environment variable string as a boolean
-bool getenvBool(const char *var, bool def);
+bool getenvBool(const char * var, bool def);
 
 
 //------------------------------------------------------
 class DfxSettings
 {
 public:
-	DfxSettings(long inMagic, DfxPlugin *inPlugin, unsigned long inSizeofExtendedData = 0);
+	DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSizeofExtendedData = 0);
 	~DfxSettings();
 
 
-	/* - - - - - - - - - API-connect methods - - - - - - - - - */
+	// - - - - - - - - - API-connect methods - - - - - - - - -
 
 	// for adding to your base plugin class methods
-	unsigned long save(void **outData, bool isPreset);
-	bool restore(void *inData, unsigned long byteSize, bool isPreset);
+	unsigned long save(void ** outData, bool isPreset);
+	bool restore(void * inData, unsigned long byteSize, bool isPreset);
 
 	// handlers for the types of MIDI events that we support
 	void handleNoteOn(int channel, int note, int velocity, long frameOffset);
@@ -249,7 +249,7 @@ public:
 	void handleCC(int channel, int controllerNum, int value, long frameOffset);
 
 
-	/* - - - - - - - - - MIDI learn - - - - - - - - - */
+	// - - - - - - - - - MIDI learn - - - - - - - - -
 
 	// deactivate MIDI learn mode
 	// call this when your editor window opens and when it closes
@@ -286,7 +286,7 @@ public:
 	long getParameterAssignmentNum(long paramTag);
 
 
-	/* - - - - - - - - - version compatibility management - - - - - - - - - */
+	// - - - - - - - - - version compatibility management - - - - - - - - -
 
 	// if you set this to something and data is received during restore()
 	// which has a version number in its header that's lower than this, 
@@ -314,10 +314,10 @@ public:
 		{ if (paramTagIsValid(tag)) parameterIDs[tag] = newID; }
 	long getParameterID(long tag)
 		{ if (paramTagIsValid(tag)) return parameterIDs[tag]; else return 0; }
-	long getParameterTagFromID(long paramID, long numSearchIDs=0, long *searchIDs=0);
+	long getParameterTagFromID(long paramID, long numSearchIDs=0, long * searchIDs=0);
 
 
-	/* - - - - - - - - - optional settings - - - - - - - - - */
+	// - - - - - - - - - optional settings - - - - - - - - -
 
 	// true means allowing a given MIDI event to be assigned to only one parameter; 
 	// false means that a single event can be assigned to more than one parameter
@@ -347,7 +347,7 @@ public:
 
 protected:
 	// reverse the byte order of data
-	void correctEndian(void *data, bool isReversed, bool isPreset=false);
+	void correctEndian(void * data, bool isReversed, bool isPreset=false);
 
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
@@ -365,7 +365,7 @@ protected:
 
 
 	long numParameters, numPresets;
-	DfxPlugin *plugin;
+	DfxPlugin * plugin;
 
 	bool midiLearn;	// switch value for MIDI learn mode
 	long learner;	// the parameter currently selected for MIDI learning
@@ -389,16 +389,16 @@ protected:
 	// an ordered table of IDs for each parameter stored in each preset
 	// (this is so that non-parameter-compatible plugin versions can load 
 	// settings and know which stored parameters correspond to theirs)
-	long *parameterIDs;
+	long * parameterIDs;
 	// the array of which MIDI event, if any, is assigned to each parameter
-	DfxParameterAssignment *paramAssignments;
+	DfxParameterAssignment * paramAssignments;
 
 	// this what we point the host to during save()
-	DfxSettingsInfo *sharedChunk;
+	DfxSettingsInfo * sharedChunk;
 	// a few handy pointers into sections of our settings data
-	long *firstSharedParameterID;
-	DfxGenPreset *firstSharedPreset;
-	DfxParameterAssignment *firstSharedParamAssignment;
+	long * firstSharedParameterID;
+	DfxGenPreset * firstSharedPreset;
+	DfxParameterAssignment * firstSharedParamAssignment;
 
 	// whether to allow only one parameter assignment per MIDI event, or steal them
 	bool stealAssignments;
@@ -440,14 +440,14 @@ In the header, add these includes:
 
 Add declarations for these 3 virtual functions:
 
-	virtual long getChunk(void **data, bool isPreset);
-	virtual long setChunk(void *data, long byteSize, bool isPreset);
+	virtual long getChunk(void ** data, bool isPreset);
+	virtual long setChunk(void * data, long byteSize, bool isPreset);
 	virtual long processEvents(VstEvents* events);
 
 
 Add a DfxSettings pointer to your plugin class:
 
-	DfxSettings *dfxsettings;
+	DfxSettings * dfxsettings;
 
 
 
@@ -472,10 +472,10 @@ In canDo() add:
 Also add these functions somewhere, or if they're already implemented, 
 add the following stuff into them:
 
-long PLUGIN::getChunk(void **data, bool isPreset)
+long PLUGIN::getChunk(void ** data, bool isPreset)
 {	return dfxsettings->save(data, isPreset);	}
 
-long PLUGIN::setChunk(void *data, long byteSize, bool isPreset)
+long PLUGIN::setChunk(void * data, long byteSize, bool isPreset)
 {	return dfxsettings->restore(data, byteSize, isPreset);	}
 
 long PLUGIN::processEvents(VstEvents* events)

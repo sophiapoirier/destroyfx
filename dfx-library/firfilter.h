@@ -10,13 +10,13 @@
 
 //-----------------------------------------------------------------------------
 void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate, 
-											int numTaps, float *coefficients);
-void applyKaiserWindow(int numTaps, float *coefficients, float attenuation);
+											int numTaps, float * coefficients);
+void applyKaiserWindow(int numTaps, float * coefficients, float attenuation);
 float besselIzero(float in);
 float besselIzero2(float in);
 
 //-----------------------------------------------------------------------------
-inline float processFIRfilter(float *in, int numTaps, float *coefficients, 
+inline float processFIRfilter(float * in, int numTaps, float * coefficients, 
 								long inPos, long arraySize)
 {
 	float out = 0.0f;

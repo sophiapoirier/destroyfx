@@ -69,7 +69,7 @@ DfxParam::~DfxParam()
 
 
 //-----------------------------------------------------------------------------
-void DfxParam::init(const char *initName, DfxParamValueType initType, 
+void DfxParam::init(const char * initName, DfxParamValueType initType, 
                     DfxParamValue initValue, DfxParamValue initDefaultValue, 
                     DfxParamValue initMin, DfxParamValue initMax, 
                     DfxParamUnit initUnit, DfxParamCurve initCurve)
@@ -172,7 +172,7 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with float variable type
-void DfxParam::init_f(const char *initName, float initValue, float initDefaultValue, 
+void DfxParam::init_f(const char * initName, float initValue, float initDefaultValue, 
 							float initMin, float initMax, 
 							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
@@ -185,7 +185,7 @@ void DfxParam::init_f(const char *initName, float initValue, float initDefaultVa
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with double variable type
-void DfxParam::init_d(const char *initName, double initValue, double initDefaultValue, 
+void DfxParam::init_d(const char * initName, double initValue, double initDefaultValue, 
 							double initMin, double initMax, 
 							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
@@ -198,7 +198,7 @@ void DfxParam::init_d(const char *initName, double initValue, double initDefault
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
-void DfxParam::init_i(const char *initName, long initValue, long initDefaultValue, 
+void DfxParam::init_i(const char * initName, long initValue, long initDefaultValue, 
 							long initMin, long initMax, 
 							DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
@@ -211,7 +211,7 @@ void DfxParam::init_i(const char *initName, long initValue, long initDefaultValu
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with unsigned int variable type
-void DfxParam::init_ui(const char *initName, unsigned long initValue, unsigned long initDefaultValue, 
+void DfxParam::init_ui(const char * initName, unsigned long initValue, unsigned long initDefaultValue, 
 									unsigned long initMin, unsigned long initMax, 
 									DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
@@ -224,7 +224,7 @@ void DfxParam::init_ui(const char *initName, unsigned long initValue, unsigned l
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with boolean variable type
-void DfxParam::init_b(const char *initName, bool initValue, bool initDefaultValue, 
+void DfxParam::init_b(const char * initName, bool initValue, bool initDefaultValue, 
 							DfxParamUnit initUnit)
 {
 	DfxParamValue val, def, mn, mx;
@@ -300,7 +300,7 @@ void DfxParam::setusevaluestrings(bool newMode)
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-bool DfxParam::setvaluestring(long index, const char *inText)
+bool DfxParam::setvaluestring(long index, const char * inText)
 {
 	if (!ValueStringIndexIsValid(index))
 		return false;
@@ -325,9 +325,9 @@ bool DfxParam::setvaluestring(long index, const char *inText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the contents of a specific value string
-bool DfxParam::getvaluestring(long index, char *outText)
+bool DfxParam::getvaluestring(long index, char * outText)
 {
-	char *text = getvaluestring_ptr(index);
+	char * text = getvaluestring_ptr(index);
 
 	if (text == NULL)
 		return false;
@@ -1047,7 +1047,7 @@ void DfxParam::sethidden(bool newHide)
 
 //-----------------------------------------------------------------------------
 // get a copy of the text of the parameter name
-void DfxParam::getname(char *outText)
+void DfxParam::getname(char * outText)
 {
 	if (name && outText)
 		strcpy(outText, name);
@@ -1055,7 +1055,7 @@ void DfxParam::getname(char *outText)
 
 //-----------------------------------------------------------------------------
 // get a text string of the unit type
-void DfxParam::getunitstring(char *outText)
+void DfxParam::getunitstring(char * outText)
 {
 	if (outText == NULL)
 		return;
@@ -1142,7 +1142,7 @@ void DfxParam::getunitstring(char *outText)
 
 //-----------------------------------------------------------------------------
 // set the text for a custom unit type display
-void DfxParam::setcustomunitstring(const char *inText)
+void DfxParam::setcustomunitstring(const char * inText)
 {
 	if (inText == NULL)
 		return;
@@ -1227,7 +1227,7 @@ DfxParamValue getvalue(long parameterIndex)
 */
 
 //-----------------------------------------------------------------------------
-void DfxPreset::setname(const char *inText)
+void DfxPreset::setname(const char * inText)
 {
 	if (inText == NULL)
 		return;
@@ -1245,7 +1245,7 @@ void DfxPreset::setname(const char *inText)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPreset::getname(char *outText)
+void DfxPreset::getname(char * outText)
 {
 	if (outText != NULL)
 		strcpy(outText, name);
