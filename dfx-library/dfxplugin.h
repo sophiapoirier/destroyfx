@@ -150,42 +150,6 @@ SUPPORT_AU_VERSION_1
 
 
 
-// include our crucial shits
-
-#ifndef __DFXMATH_H
-#include "dfxmath.h"
-#endif
-
-#ifndef __DFXPARAMETER_H
-#include "dfxparameter.h"
-#endif
-
-#ifndef __DFX_TEMPORATETABLE_H
-#include "temporatetable.h"
-#endif
-
-
-#if TARGET_PLUGIN_USES_MIDI
-
-	#ifndef __DFXMIDI_H
-	#include "dfxmidi.h"
-	#endif
-
-	#ifndef __DFXSETTINGS_H
-	#include "dfxsettings.h"
-	#endif
-
-#endif
-
-
-#if WIN32
-/* turn off warnings about default but no cases in switch, unknown pragma, etc. */
-   #pragma warning( disable : 4065 57 4200 4244 4068 )
-   #include <windows.h>
-#endif
-
-
-
 // handle base header includes and class names for the target plugin API
 
 // using Apple's Audio Unit API
@@ -224,6 +188,43 @@ SUPPORT_AU_VERSION_1
 
 
 #include BASE_API_HEADER
+
+
+
+// include our crucial shits
+
+#ifndef __DFXMATH_H
+#include "dfxmath.h"
+#endif
+
+#ifndef __DFXPARAMETER_H
+#include "dfxparameter.h"
+#endif
+
+#ifndef __DFX_TEMPORATETABLE_H
+#include "temporatetable.h"
+#endif
+
+
+#if TARGET_PLUGIN_USES_MIDI
+
+	#ifndef __DFXMIDI_H
+	#include "dfxmidi.h"
+	#endif
+
+	#ifndef __DFXSETTINGS_H
+	#include "dfxsettings.h"
+	#endif
+
+#endif
+
+
+
+#if WIN32
+/* turn off warnings about default but no cases in switch, unknown pragma, etc. */
+   #pragma warning( disable : 4065 57 4200 4244 4068 )
+   #include <windows.h>
+#endif
 
 
 
@@ -388,7 +389,8 @@ public:
 	void initparameter_b(long parameterIndex, const char *initName, bool initValue, bool initDefaultValue, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined);
 	void initparameter_indexed(long parameterIndex, const char *initName, long initValue, long initDefaultValue, 
-						long initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index);
+						long initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index, 
+						const char *initCustomUnitString = NULL);
 
 	void setparameterusevaluestrings(long parameterIndex, bool newMode=true)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setusevaluestrings(newMode);	}
