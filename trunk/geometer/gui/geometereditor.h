@@ -3,8 +3,8 @@
 #define __DFX_GEOMETEREDITOR_H
 
 #include "dfxgui.h"
-#include "multikick.hpp"
-#include "indexbitmap.hpp"
+#include "multikick.h"
+#include "indexbitmap.h"
 #include "geometerview.hpp"
 
 
