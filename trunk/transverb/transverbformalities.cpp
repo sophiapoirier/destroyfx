@@ -100,8 +100,6 @@ TransverbDSP::TransverbDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
   firCoefficients2 = (float*) malloc(NUM_FIR_TAPS * sizeof(float));
 
   MAXBUF = 0;	// init to bogus value to "dirty" it
-
-  do_reset();
 }
 
 TransverbDSP::~TransverbDSP() {

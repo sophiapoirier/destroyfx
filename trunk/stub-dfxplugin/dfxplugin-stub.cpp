@@ -146,12 +146,6 @@ void DfxStub::cleanup()
 DfxStubDSP::DfxStubDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
 	: DfxPluginCore(inInstance)
 {
-
-	// unfortunately, it is not guaranteed that this 
-	// will be called before audio processing first begins, 
-	// so you should call it manually here at the end of 
-	// your DSP core constructor
-	do_reset();	// calls reset(), and other things
 }
 
 //-------------------------------------------------------------------------

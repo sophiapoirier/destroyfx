@@ -19,4 +19,4 @@
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"virtual reality interface for DFX Monomaker"
 
 
-#define DFX_SUPPORT_OLD_VST_SETTINGS 1
+#define DFX_SUPPORT_OLD_VST_SETTINGS 0
