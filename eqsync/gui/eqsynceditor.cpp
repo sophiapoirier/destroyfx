@@ -28,7 +28,7 @@ enum {
 
 
 const char * kValueTextFont = "Lucida Grande";
-const float kValueTextSize = 12.0f;
+const float kValueTextSize = 13.0f;
 
 
 
@@ -64,23 +64,19 @@ public:
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandle, inBackground), 
 		regularHandle(inHandle), clickedHandle(inHandleClicked)
 	{
-//printf("EQSyncSlider::EQSyncSlider\n");
 	}
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
 	{
-//printf("EQSyncSlider::draw\n");
 		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 		DGSlider::draw(inContext, inPortHeight);
 	}
 	virtual void mouseDown(Point inPos, bool with_option, bool with_shift)
 	{
-//printf("EQSyncSlider::mouseDown\n");
 		ForeGround = clickedHandle;	// switch to the click-styled handle
 		DGSlider::mouseDown(inPos, with_option, with_shift);
 	}
 	virtual void mouseUp(Point inPos, bool with_option, bool with_shift)
 	{
-//printf("EQSyncSlider::mouseUp\n");
 		ForeGround = regularHandle;	// switch back to the non-click-styled handle
 		DGSlider::mouseUp(inPos, with_option, with_shift);
 		redraw();	// make sure that the change in slider handle is reflected
@@ -99,14 +95,12 @@ public:
 	:	DGControl(inOwnerEditor, inRegion, 1.0f), 
 		buttonImage(inImage)
 	{
-//printf("EQSyncWebLink::EQSyncWebLink\n");
 		setType(kDfxGuiType_button);
 		setContinuousControl(false);
 	}
 
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
 	{
-//printf("EQSyncWebLink::draw\n");
 		CGImageRef theButton = (buttonImage == NULL) ? NULL : buttonImage->getCGImage();
 		if (theButton != NULL)
 		{
@@ -120,13 +114,11 @@ public:
 	}
 	virtual void mouseDown(Point inPos, bool, bool)
 	{
-//printf("EQSyncWebLink::mouseDown\n");
-		if ( inPos.h >= (getBounds()->w / 2) )
+		if ( inPos.h > ((getBounds()->w / 2) - 6) )
 			SetControl32BitValue(getCarbonControl(), 1);
 	}
 	virtual void mouseUp(Point inPos, bool, bool)
 	{
-//printf("EQSyncWebLink::mouseUp\n");
 		if (GetControl32BitValue(getCarbonControl()) != 0)
 		{
 			launch_url(DESTROYFX_URL);
@@ -175,56 +167,44 @@ OSStatus EQSyncEditor::open(float inXOffset, float inYOffset)
 
 
 	DGRect pos;
-	long i, paramID;
+	long i;
 
-	//--create the sliders------------------------------------------------
-
-	for (i = 0, paramID = kRate_sync; paramID < ka0; paramID++)
+	for (i=kRate_sync; i <= kTempo; i++)
 	{
-		if (paramID == kTempoAuto)
-			continue;
+		// create the horizontal sliders
 		pos.set(kWideFaderX, kWideFaderY + (kWideFaderInc * i), gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
-		EQSyncSlider *slider = new EQSyncSlider(this, paramID, &pos, kDGSliderStyle_horizontal, gSliderHandle, gSliderHandleClicked, gHorizontalSliderBackground);
+		EQSyncSlider *slider = new EQSyncSlider(this, i, &pos, kDGSliderStyle_horizontal, gSliderHandle, gSliderHandleClicked, gHorizontalSliderBackground);
 		addControl(slider);
-		i++;
-	}
 
-	for (paramID = ka0; paramID < NUM_PARAMETERS; paramID++)
-	{
-		pos.set(kTallFaderX + (kTallFaderInc * (paramID-ka0)), kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
-		EQSyncSlider *slider = new EQSyncSlider(this, paramID, &pos, kDGSliderStyle_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);
-		addControl(slider);
-	}
-
-
-	//--create the button----------------------------------------------
-
-	// Destroy FX web page link
-	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, gDestroyFXlinkTab->getWidth(), gDestroyFXlinkTab->getHeight()/2);
-	EQSyncWebLink *dfxLinkButton = new EQSyncWebLink(this, &pos, gDestroyFXlinkTab);
-	addControl(dfxLinkButton);
-
-
-	//--create the displays---------------------------------------------
-	for (i = 0, paramID = kRate_sync; paramID < ka0; paramID++)
-	{
-		if (paramID == kTempoAuto)
-			continue;
+		// create the displays
 		displayTextProcedure textproc = NULL;
-		if (paramID == kRate_sync)
+		if (i == kRate_sync)
 			textproc = tempoRateDisplayProc;
-		else if (paramID == kSmooth)
+		else if (i == kSmooth)
 			textproc = smoothDisplayProc;
-		else if (paramID == kTempo)
+		else if (i == kTempo)
 			textproc = tempoDisplayProc;
 		pos.set(kDisplayX, kDisplayY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);
-		DGTextDisplay *display = new DGTextDisplay(this, paramID, &pos, textproc, this, NULL, kValueTextFont);
+		DGTextDisplay *display = new DGTextDisplay(this, i, &pos, textproc, this, NULL, kValueTextFont);
 		display->setFontSize(kValueTextSize);
 		display->setTextAlignmentStyle(kDGTextAlign_left);
 		display->setFontColor(kBlackDGColor);
 		addControl(display);
-		i++;
 	}
+
+	// create the vertical sliders
+	for (i=ka0; i <= kb2; i++)
+	{
+		pos.set(kTallFaderX + (kTallFaderInc * (i-ka0)), kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
+		EQSyncSlider *slider = new EQSyncSlider(this, i, &pos, kDGSliderStyle_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);
+		addControl(slider);
+	}
+
+
+	// create the Destroy FX web page link tab
+	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, gDestroyFXlinkTab->getWidth(), gDestroyFXlinkTab->getHeight()/2);
+	EQSyncWebLink *dfxLinkButton = new EQSyncWebLink(this, &pos, gDestroyFXlinkTab);
+	addControl(dfxLinkButton);
 
 
 	return noErr;

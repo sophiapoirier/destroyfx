@@ -4,9 +4,7 @@
 #define __EQSYNC_H
 
 
-#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
-#endif
 
 
 //----------------------------------------------------------------------------- 
@@ -14,9 +12,9 @@
 enum
 {
 	kRate_sync,
+	kSmooth,
 	kTempo,
 	kTempoAuto,
-	kSmooth,
 	ka0,
 	ka1,
 	ka2,
