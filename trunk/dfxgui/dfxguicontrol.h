@@ -101,7 +101,11 @@ public:
 	float getDrawAlpha()
 		{	return drawAlpha;	}
 
- private:
+#if MAC
+	OSStatus setHelpText(CFStringRef inHelpText);
+#endif
+
+private:
 	// common constructor stuff
 	void init(DGRect * inRegion);
 
@@ -121,7 +125,8 @@ protected:
 	AUCarbonViewControl * auv_control;
 #endif
 #if MAC
-	ControlRef			carbonControl;
+	ControlRef		carbonControl;
+	CFStringRef		helpText;
 #endif
 };
 
