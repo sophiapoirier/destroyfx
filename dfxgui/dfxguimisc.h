@@ -129,10 +129,10 @@ public:
 	virtual ~DGGraphic();
 
 	// passive API (for controls that want to draw images by themselves)
-	virtual CGImageRef getCGImage()
+	CGImageRef getCGImage()
 		{	return cgImage;	}
-	virtual SInt32 getWidth();
-	virtual SInt32 getHeight();
+	size_t getWidth();
+	size_t getHeight();
 
 	// active API (for more than images...)
 	virtual void draw(CGContextRef context, UInt32 portHeight, DGRect* rect, float value);
