@@ -30,8 +30,13 @@ void DGControl::init(DGRect * inRegion)
 	where.set(inRegion);
 	vizArea.set(inRegion);
 
+#if MAC
 	carbonControl = NULL;
+	helpText = NULL;
+#endif
+#ifdef TARGET_API_AUDIOUNIT
 	auv_control = NULL;
+#endif
 
 	isContinuous = false;
 	fineTuneFactor = 12.0f;
@@ -115,6 +120,15 @@ for (int i=0; i < 32; i++)
 if (feat & (1 << i)) printf("control feature bit %d is active\n", i);
 }
 */
+
+	// if the help text was set before we created the Carbon control, 
+	// then we retained it so that we can set it now, having created the Carbon control
+	if (helpText != NULL)
+	{
+		setHelpText(helpText);
+		CFRelease(helpText);
+	}
+	helpText = NULL;
 
 	// call any child control class' extra init stuff
 	post_embed();
@@ -252,6 +266,42 @@ void DGControl::setForeBounds(long x, long y, long w, long h)
 void DGControl::shrinkForeBounds(long inXoffset, long inYoffset, long inWidthShrink, long inHeightShrink)
 {
 	vizArea.offset(inXoffset, inYoffset, -inWidthShrink, -inHeightShrink);
+}
+
+//-----------------------------------------------------------------------------
+OSStatus DGControl::setHelpText(CFStringRef inHelpText)
+{
+	if (inHelpText == NULL)
+		return paramErr;
+
+	// get rid of any previously retained help string
+	if ( (helpText != NULL) && (helpText != inHelpText) )
+	{
+		CFRelease(helpText);
+		helpText = NULL;
+	}
+
+	if (carbonControl == NULL)
+	{
+		// the Carbon control is probably null because it has not been created yet, 
+		// so we can retain the string and then try setting the help text after 
+		// we have created the Carbon control
+		// I actually create a copy rather than retain in case the CFString is a 
+		// CFSTR compile-time constant string, which you're apparently not supposed to CFRetain()
+		helpText = CFStringCreateCopy(kCFAllocatorDefault, inHelpText);
+		return errItemNotControl;
+	}
+
+	HMHelpContentRec helpContent;
+	memset(&helpContent, 0, sizeof(helpContent));
+	helpContent.version = kMacHelpVersion;
+	MacSetRect(&(helpContent.absHotRect), 0, 0, 0, 0);
+	helpContent.tagSide = kHMDefaultSide;
+	helpContent.content[kHMMinimumContentIndex].contentType = kHMCFStringContent;
+	helpContent.content[kHMMinimumContentIndex].u.tagCFString = inHelpText;
+	helpContent.content[kHMMaximumContentIndex].contentType = kHMNoContent;
+
+	return HMSetControlHelpContent(carbonControl, &helpContent);
 }
 
 
