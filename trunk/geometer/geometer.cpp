@@ -1396,12 +1396,12 @@ void PLUGIN::makepresets() {
   i++;
 
   strcpy(programs[i].name, "loudest sing");
-  programs[i].param[P_BUFSIZE] = paramStepUnscaled((9), BUFFERSIZESSIZE);
+  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
   programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
   programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_LEVEL);
   programs[i].param[P_POINTPARAMS + POINT_LEVEL] = 0.280899f;
   programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_LONGPASS);
-  programs[i].param[P_OPPARS2 + OP_LONGPASS] = 0.1404494f;
+  programs[i].param[P_OPPAR2S + OP_LONGPASS] = 0.1404494f;
   programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
   programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.8258427;
   i++;
