@@ -4,19 +4,17 @@
 
 #include "geometer.hpp"
 
-#ifndef __geometereditor
-#include "geometereditor.hpp"
-#endif
-
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
-#include <math.h>
+#if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+  #ifndef __DFX_GEOMETEREDITOR_H
+  #include "geometereditor.hpp"
+  #endif
+#endif
 
 #define MKBUFSIZE(c) (buffersizes[(int)((c)*(BUFFERSIZESSIZE-1))])
 
-const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = { 
+const long PLUGIN::buffersizes[BUFFERSIZESSIZE] = { 
   4, 8, 16, 32, 64, 128, 256, 512, 
   1024, 2048, 4096, 8192, 16384, 32768, 
 };
@@ -26,72 +24,172 @@ int intcompare(const void * a, const void * b) {
   return (*(int*)a - *(int*)b);
 }
 
-PLUGIN::PLUGIN(audioMasterCallback audioMaster)
-  : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
+/* this macro does boring entry point stuff for us */
+DFX_ENTRY(Geometer);
 
-  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.7f, "samples");
-  FPARAM(shape, P_SHAPE, "wshape", 0.0f, "");
+PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
+  : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
-  FPARAM(pointstyle, P_POINTSTYLE, "points where", 0.0f, "choose");
+  /* windowing buffers */
+  in0 = NULL;
+  out0 = NULL;
+  prevmix = NULL;
+  /* geometer buffers */
+  pointx = NULL;
+  storex = NULL;
+  pointy = NULL;
+  storey = NULL;
 
-  FPARAM(pointparam[0], P_POINTPARAMS + 0, "point:ext'n'cross", 0.0f, "magn");
-  FPARAM(pointparam[1], P_POINTPARAMS + 1, "point:freq", 0.08f, "%");
-  FPARAM(pointparam[2], P_POINTPARAMS + 2, "point:rand", 0.20f, "%");
-  FPARAM(pointparam[3], P_POINTPARAMS + 3, "point:span", 0.20f, "width");
-  FPARAM(pointparam[4], P_POINTPARAMS + 4, "point:dydx", 0.50f, "gap");
-  FPARAM(pointparam[5], P_POINTPARAMS + 5, "point:level", 0.50f, "level");
+
+  initparameter_indexed(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE);
+  initparameter_indexed(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
+
+  initparameter_indexed(P_POINTSTYLE, "points where", POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
+
+  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "magn" XXX
+  initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08f, 0.08f, 0.0f, 1.0f, kDfxParamUnit_portion);
+  initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20f, 0.20f, 0.0f, 1.0f, kDfxParamUnit_portion);
+  initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20f, 0.20f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "width" XXX
+  initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50f, 0.50f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "gap" XXX
+  initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50f, 0.50f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "level" XXX
 
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
-    FPARAM(pointparam[pp], P_POINTPARAMS + pp, 
-	   "pointparam:unused", 0.04f, "??");
+    initparameter_f(P_POINTPARAMS + pp, "pointparam:unused", 0.04f, 0.04f, 0.0f, 1.0f, kDfxParamUnit_generic);
+	setparameterhidden(P_POINTPARAMS + pp, true);	/* don't display as available parameter */
   }
 
-  FPARAM(interpstyle, P_INTERPSTYLE, "interpolate how", 0.0f, "choose");
+  initparameter_indexed(P_INTERPSTYLE, "interpolate how", INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
 
-  FPARAM(interparam[0], P_INTERPARAMS + 0, "interp:polygon", 0.0f, "angle");
-  FPARAM(interparam[1], P_INTERPARAMS + 1, "interp:wrongy", 0.0f, "angle");
-  FPARAM(interparam[2], P_INTERPARAMS + 2, "interp:smoothie", 0.5f, "exp");
-  FPARAM(interparam[3], P_INTERPARAMS + 3, "interp:reversie", 0.0f, "nothing");
-  FPARAM(interparam[4], P_INTERPARAMS + 4, "interp:pulse", 0.05f, "pulse");
-  FPARAM(interparam[5], P_INTERPARAMS + 5, "interp:friends", 1.0f, "width");
-  FPARAM(interparam[6], P_INTERPARAMS + 6, "interp:sing", 0.8f, "mod");
-  FPARAM(interparam[7], P_INTERPARAMS + 7, "interp:shuffle", 0.3f, "amount");
+  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "angle" XXX
+  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "angle" XXX
+  initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, "interp:smoothie", 0.5f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_exponent);
+  initparameter_f(P_INTERPARAMS + INTERP_REVERSI, "interp:reversie", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);
+  initparameter_f(P_INTERPARAMS + INTERP_PULSE, "interp:pulse", 0.05f, 0.05f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "pulse" XXX
+  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, "interp:friends", 1.0f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "width" XXX
+  initparameter_f(P_INTERPARAMS + INTERP_SING, "interp:sing", 0.8f, 0.8f, 0.0f, 1.0f, kDfxParamUnit_generic);	// "mod" XXX
+  initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, "interp:shuffle", 0.3f, 0.3f, 0.0f, 1.0f, kDfxParamUnit_generic);
 
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
-    FPARAM(interparam[ip], P_INTERPARAMS + ip, 
-	   "inter:unused", 0.0f, "???");
+    initparameter_f(P_INTERPARAMS + ip, 
+	   "inter:unused", 0.0f, 0.0f, 0.0f, 1.0f, kDfxParamUnit_generic);
+	setparameterhidden(P_INTERPARAMS + ip, true);	/* don't display as available parameter */
   }
 
-  FPARAM(pointop1, P_POINTOP1, "pointop1", UNMKPOINTOP(OP_NONE), "choose");
-  FPARAM(pointop2, P_POINTOP2, "pointop2", UNMKPOINTOP(OP_NONE), "choose");
-  FPARAM(pointop3, P_POINTOP3, "pointop3", UNMKPOINTOP(OP_NONE), "choose");
+  initparameter_indexed(P_POINTOP1, "pointop1", OP_NONE, OP_NONE, MAX_OPS);
+  initparameter_indexed(P_POINTOP2, "pointop2", OP_NONE, OP_NONE, MAX_OPS);
+  initparameter_indexed(P_POINTOP3, "pointop3", OP_NONE, OP_NONE, MAX_OPS);
 
 #define ALLOP(n, str, def, unit) \
   do { \
-    FPARAM(oppar1[n], P_OPPAR1S + n, "op1:" str, def, unit); \
-    FPARAM(oppar2[n], P_OPPAR2S + n, "op2:" str, def, unit); \
-    FPARAM(oppar3[n], P_OPPAR3S + n, "op3:" str, def, unit); \
+    initparameter_f(P_OPPAR1S + n, "op1:" str, def, def, 0.0f, 1.0f, unit); \
+    initparameter_f(P_OPPAR2S + n, "op2:" str, def, def, 0.0f, 1.0f, unit); \
+    initparameter_f(P_OPPAR3S + n, "op3:" str, def, def, 0.0f, 1.0f, unit); \
   } while (0)
 
-  ALLOP(0, "double", 0.5f, "amp");
-  ALLOP(1, "half", 0.0f, "nothing");
-  ALLOP(2, "quarter", 0.0f, "nothing");
-  ALLOP(3, "longpass", 0.15f, "length");
-  ALLOP(4, "shortpass", 0.5f, "length");
-  ALLOP(5, "slow", 0.25f, "factor");
-  ALLOP(6, "fast", 0.5f, "factor");
-  ALLOP(7, "none", 0.0f, "nothing");
+  ALLOP(OP_DOUBLE, "double", 0.5f, kDfxParamUnit_lineargain);
+  ALLOP(OP_HALF, "half", 0.0f, kDfxParamUnit_generic);
+  ALLOP(OP_QUARTER, "quarter", 0.0f, kDfxParamUnit_generic);
+  ALLOP(OP_LONGPASS, "longpass", 0.15f, kDfxParamUnit_portion);	// "length" XXX
+  ALLOP(OP_SHORTPASS, "shortpass", 0.5f, kDfxParamUnit_portion);	// "length" XXX
+  ALLOP(OP_SLOW, "slow", 0.25f, kDfxParamUnit_scalar);	// "factor"
+  ALLOP(OP_FAST, "fast", 0.5f, kDfxParamUnit_scalar);	// "factor"
+  ALLOP(OP_NONE, "none", 0.0f, kDfxParamUnit_generic);
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
-    ALLOP(op, "unused", 0.5f, "???");
+    ALLOP(op, "unused", 0.5f, kDfxParamUnit_generic);
+	setparameterhidden(P_OPPAR1S + op, true);
+	setparameterhidden(P_OPPAR2S + op, true);
+	setparameterhidden(P_OPPAR3S + op, true);
   }
 
-  long maxframe = 0;
-  for (long i=0; i<BUFFERSIZESSIZE; i++)
+
+  long i;
+  /* windowing */
+  char *bufstr = (char*) malloc(256);
+  for (i=0; i < BUFFERSIZESSIZE; i++)
+  {
+    sprintf(bufstr, "%ld", buffersizes[i]);
+    setparametervaluestring(P_BUFSIZE, i, bufstr);
+  }
+  free(bufstr);
+  setparametervaluestring(P_SHAPE, WINDOW_TRIANGLE, "linear");
+  setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
+  setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
+  setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
+  for (i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+    setparametervaluestring(P_SHAPE, i, "???");
+  /* geometer */
+  setparametervaluestring(P_POINTSTYLE, POINT_EXTNCROSS, "ext 'n cross");
+  setparametervaluestring(P_POINTSTYLE, POINT_LEVEL, "at level");
+  setparametervaluestring(P_POINTSTYLE, POINT_FREQ, "at freq");
+  setparametervaluestring(P_POINTSTYLE, POINT_RANDOM, "randomly");
+  setparametervaluestring(P_POINTSTYLE, POINT_SPAN, "span");
+  setparametervaluestring(P_POINTSTYLE, POINT_DYDX, "dy/dx");
+  for (i=NUM_POINTSTYLES; i < MAX_POINTSTYLES; i++)
+    setparametervaluestring(P_POINTSTYLE, i, "unsup");
+  setparametervaluestring(P_INTERPSTYLE, INTERP_POLYGON, "polygon");
+  setparametervaluestring(P_INTERPSTYLE, INTERP_WRONGYGON, "wrongygon");
+  setparametervaluestring(P_INTERPSTYLE, INTERP_SMOOTHIE, "smoothie");
+  setparametervaluestring(P_INTERPSTYLE, INTERP_REVERSI, "reversi");
+  setparametervaluestring(P_INTERPSTYLE, INTERP_PULSE, "pulse");
+  setparametervaluestring(P_INTERPSTYLE, INTERP_FRIENDS, "friends");
+  setparametervaluestring(P_INTERPSTYLE, INTERP_SING, "sing");
+  setparametervaluestring(P_INTERPSTYLE, INTERP_SHUFFLE, "shuffle");
+  for (i=NUM_INTERPSTYLES; i < MAX_INTERPSTYLES; i++)
+    setparametervaluestring(P_INTERPSTYLE, i, "unsup");
+#define ALLOPSTR(n, str) \
+  do { \
+    setparametervaluestring(P_POINTOP1, n, str); \
+    setparametervaluestring(P_POINTOP2, n, str); \
+    setparametervaluestring(P_POINTOP3, n, str); \
+  } while (0)
+  ALLOPSTR(OP_DOUBLE, "x2");
+  ALLOPSTR(OP_HALF, "1/2");
+  ALLOPSTR(OP_QUARTER, "1/4");
+  ALLOPSTR(OP_LONGPASS, "longpass");
+  ALLOPSTR(OP_SHORTPASS, "shortpass");
+  ALLOPSTR(OP_SLOW, "slow");
+  ALLOPSTR(OP_FAST, "fast");
+  ALLOPSTR(OP_NONE, "none");
+  for (i=NUM_OPS; i < MAX_OPS; i++)
+    ALLOPSTR(i, "unsup");
+
+
+  /* determine the size of the largest window size */
+  maxframe = 0;
+  for (i=0; i< BUFFERSIZESSIZE; i++)
     maxframe = ( buffersizes[i] > maxframe ? buffersizes[i] : maxframe );
 
-  setup();
+  framesize = buffersizes[getparameter_i(P_BUFSIZE)];
+  setlatency_samples(framesize);
+  settailsize_samples(framesize);
 
+  setpresetname(0, "Geometer LoFi");	/* default preset name */
+  makepresets();
+
+  /* since we don't use notes for any specialized control of Geometer, 
+     allow them to be assigned to control parameters via MIDI learn */
+  dfxsettings->setAllowPitchbendEvents(true);
+  dfxsettings->setAllowNoteEvents(true);
+
+  cs = new dfxmutex();
+
+  #if TARGET_API_VST && TARGET_PLUGIN_HAS_GUI
+    editor = new GeometerEditor(this);
+  #endif
+}
+
+PLUGIN::~PLUGIN() {
+  delete cs;
+
+#if TARGET_API_VST
+  /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
+    so we need to call this manually here */
+  do_cleanup();
+#endif
+}
+
+long PLUGIN::initialize() {
   /* add some leeway? */
   in0 = (float*)malloc(maxframe * sizeof (float));
   out0 = (float*)malloc(maxframe * 2 * sizeof (float));
@@ -106,42 +204,26 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   pointy = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
   storey = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
 
-  /* XXX doesn't take self pointer now? */
-  /* Marc, is this right? */
-  chunk = new VstChunk(NUM_PARAMS, NUM_PROGRAMS, PLUGINID, this);
-  /* since we don't use notes for any specialized control of Geometer, 
-     allow them to be assigned to control parameters via MIDI learn */
-  chunk->setAllowPitchbendEvents(true);
-  chunk->setAllowNoteEvents(true);
-
-  changed = 0;
-
-  cs = new dfxmutex();
-
-  editor = new GeometerEditor(this);
+  return kDfxErr_NoError;
 }
 
-PLUGIN::~PLUGIN() {
+void PLUGIN::cleanup() {
+  /* windowing buffers */
   free (in0);
   free (out0);
 
   free (prevmix);
 
+  /* geometer buffers */
   free(pointx);
   free(pointy);
   free(storex);
   free(storey);
-
-  delete cs;
-
-  if (chunk) delete chunk;
-
-  if (programs) delete[] programs;
 }
 
-void PLUGIN::resume() {
+void PLUGIN::reset() {
 
-  framesize = MKBUFSIZE(bufsizep);
+  framesize = buffersizes[getparameter_i(P_BUFSIZE)];
   third = framesize / 2;
   bufsize = third * 3;
 
@@ -161,236 +243,46 @@ void PLUGIN::resume() {
   outstart = 0;
   outsize = framesize;
 
-  setInitialDelay(framesize);
-  changed = 0;
-  needIdle();
-
-  /* tell the host that we like to get MIDI */
-  wantEvents(); 
+  setlatency_samples(framesize);
+  /* tail is the same as delay, of course */
+  settailsize_samples(framesize);
 }
 
-void PLUGIN::suspend () {
-  /* nothing to do here. */
 
+void PLUGIN::processparameters() {
+
+  shape = getparameter_i(P_SHAPE);
+  pointstyle = getparameter_i(P_POINTSTYLE);
+  pointparam = getparameter_f(P_POINTPARAMS + pointstyle);
+  interpstyle = getparameter_i(P_INTERPSTYLE);
+  interparam = getparameter_f(P_INTERPARAMS + interpstyle);
+  pointop1 = getparameter_i(P_POINTOP1);
+  oppar1 = getparameter_f(P_OPPAR1S + pointop1);
+  pointop2 = getparameter_i(P_POINTOP2);
+  oppar2 = getparameter_f(P_OPPAR2S + pointop2);
+  pointop3 = getparameter_i(P_POINTOP3);
+  oppar3 = getparameter_f(P_OPPAR3S + pointop3);
+
+  #if TARGET_API_VST
+  if (getparameterchanged(P_BUFSIZE))
+    /* this tells the host to call a suspend()-resume() pair, 
+      which updates initialDelay value */
+    latencychanged = true;
+  #endif
 }
 
-long PLUGIN::fxIdle() {
-  /* ioChanged() causes resume() to be called and 
-     changed to initialDelay are updated for the host */
-  if (changed)
-    ioChanged();
-  changed = 0;
-
-  return 1;
-}
-
-/* tail is the same as delay, of course */
-long PLUGIN::getTailSize() { return framesize; }
-
-void PLUGIN::setParameter(long index, float value) {
-  switch (index) {
-  case P_BUFSIZE:
-    changed = 1;
-    /* fallthrough */
-  default:
-    if (index >= 0 && index < NUM_PARAMS)
-      *paramptrs[index].ptr = value;
-    /* otherwise, ??? */
-    break;
-  }
-
-  /* copy the new value to the active program's corresponding parameter value */
-  if ( (index >= 0) && (index < NUM_PARAMS) )
-    programs[curProgram].param[index] = value;
-
-  if (editor)
-    ((AEffGUIEditor*)editor)->setParameter(index, value);
-}
-
-/* save & restore parameter data using chunks so that we 
-   can save MIDI CC assignments */
-long PLUGIN::getChunk(void **data, bool isPreset) {
-  return chunk->getChunk(data, isPreset);
-}
-
-long PLUGIN::setChunk(void *data, long byteSize, bool isPreset) {
-  return chunk->setChunk(data, byteSize, isPreset);
-}
-
-/* process MIDI events */
-long PLUGIN::processEvents(VstEvents* events) {
-  /* manage parameter automation via MIDI CCs */
-  chunk->processParameterEvents(events);
-  /* manage program changes via MIDI */
-  processProgramChangeEvents(events, this);
-  /* tells the host to keep sending events */
-  return 1;
-}
-
-float PLUGIN::getParameter(long index) {
-  switch (index) {
-    /* special cases here */
-  default:
-    /* otherwise pull it out of array. */
-    if (index >= 0 && index < NUM_PARAMS) return *paramptrs[index].ptr;
-    else return 0.0f; /* ? */
-  }
-}
-
-void PLUGIN::getParameterName(long index, char *label) {
-  switch(index) {
-    /* special cases here */
-  default:
-    if (index >= 0 && index < NUM_PARAMS && paramptrs[index].name) 
-      strcpy(label, paramptrs[index].name);
-    else strcpy(label, "?");
-    break;
-  }
-}
-
-void PLUGIN::getParameterDisplay(long index, char *text) {
-  switch(index) {
-    /* windowing */
-  case P_BUFSIZE:
-    sprintf(text, "%d", MKBUFSIZE(bufsizep));
-    break;
-  case P_SHAPE:
-    switch(MKWINDOWSHAPE(shape)) {
-    case WINDOW_TRIANGLE:
-      strcpy(text, "linear");
-      break;
-    case WINDOW_ARROW:
-      strcpy(text, "arrow");
-      break;
-    case WINDOW_WEDGE:
-      strcpy(text, "wedge");
-      break;
-    case WINDOW_COS:
-      strcpy(text, "best");
-      break;
-    default:
-      strcpy(text, "???");
-      break;
-    }
-    break;
-    /* geometer */
-  case P_POINTSTYLE:
-    switch(MKPOINTSTYLE(pointstyle)) {
-    case POINT_EXTNCROSS:
-      strcpy(text, "ext 'n cross");
-      break;
-    case POINT_LEVEL:
-      strcpy(text, "at level");
-      break;
-    case POINT_FREQ:
-      strcpy(text, "at freq");
-      break;
-    case POINT_RANDOM:
-      strcpy(text, "randomly");
-      break;
-    case POINT_SPAN:
-      strcpy(text, "span");
-      break;
-    case POINT_DYDX:
-      strcpy(text, "dy/dx");
-      break;
-    default:
-      strcpy(text, "unsup");
-      break;
-    }
-    break;
-  case P_INTERPSTYLE:
-    switch(MKINTERPSTYLE(interpstyle)) {
-    case INTERP_POLYGON:
-      strcpy(text, "polygon");
-      break;
-    case INTERP_WRONGYGON:
-      strcpy(text, "wrongygon");
-      break;
-    case INTERP_SMOOTHIE:
-      strcpy(text, "smoothie");
-      break;
-    case INTERP_REVERSI:
-      strcpy(text, "reversi");
-      break;
-    case INTERP_PULSE:
-      strcpy(text, "pulse");
-      break;
-    case INTERP_FRIENDS:
-      strcpy(text, "friends");
-      break;
-    case INTERP_SING:
-      strcpy(text, "sing");
-      break;
-    case INTERP_SHUFFLE:
-      strcpy(text, "shuffle");
-      break;
-    default:
-      strcpy(text, "unsup");
-      break;
-    }
-    break;
-  case P_POINTOP1:
-  case P_POINTOP2:
-  case P_POINTOP3:
-    switch(MKPOINTOP(*paramptrs[index].ptr)) {
-    case OP_DOUBLE:
-      strcpy(text, "x2");
-      break;
-    case OP_HALF:
-      strcpy(text, "1/2");
-      break;
-    case OP_QUARTER:
-      strcpy(text, "1/4");
-      break;
-    case OP_LONGPASS:
-      strcpy(text, "longpass");
-      break;
-    case OP_SHORTPASS:
-      strcpy(text, "shortpass");
-      break;
-    case OP_SLOW:
-      strcpy(text, "slow");
-      break;
-    case OP_FAST:
-      strcpy(text, "fast");
-      break;
-    case OP_NONE:
-      strcpy(text, "none");
-      break;
-    default:
-      strcpy(text, "unsup");
-      break;
-    }
-    break;
-  default:
-    float2string(getParameter(index), text);
-    break;
-  }
-}
-
-void PLUGIN::getParameterLabel(long index, char *label) {
-  switch(index) {
-    /* special cases here */
-  default:
-    if (index >= 0 && index < NUM_PARAMS && paramptrs[index].units) 
-      strcpy(label, paramptrs[index].units);
-    else strcpy(label, "?");
-    break;
-  }
-}
 
 /* operations on points. this is a separate function
    because it is called once for each operation slot.
    It's static to enforce thread-safety.
 */
-int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
+int PLUGIN::pointops(long pop, int npts, float op_param, int samples,
                      int * px, float * py, int maxpts,
                      int * tempx, float * tempy) {
   /* pointops. */
 
   int times = 2;
-  switch(MKPOINTOP(pop)) {
+  switch(pop) {
   case OP_DOUBLE: {
     /* x2 points */
     int i = 0;
@@ -407,7 +299,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
 	   Pick its y coordinate according to the parameter.
         */
 
-        tempy[t] = (op_param[OP_DOUBLE] * 2.0f - 1.0f) * py[i];
+        tempy[t] = (op_param * 2.0f - 1.0f) * py[i];
         tempx[t] = (px[i] + px[i+1]) >> 1;
 
         t++;
@@ -430,7 +322,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
   case OP_HALF:
   case OP_QUARTER: {
     times = 1;
-    if (MKPOINTOP(pop) == OP_QUARTER) times = 2;
+    if (pop == OP_QUARTER) times = 2;
     for(int t = 0; t < times; t++) {
       int i;
       /* cut points in half. never touch first or last. */
@@ -453,7 +345,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
     tempx[0] = px[0];
     tempy[0] = py[0];
 
-    int stretch = (op_param[OP_LONGPASS] * op_param[OP_LONGPASS]) * samples;
+    int stretch = (op_param * op_param) * samples;
     int np = 1;
 
     for(int i=1; i < (npts-1); i ++) {
@@ -483,7 +375,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
        specified amount, zero the 2nd endpoint.
     */
 
-    int stretch = (op_param[OP_SHORTPASS] * op_param[OP_SHORTPASS]) * samples;
+    int stretch = (op_param * op_param) * samples;
 
     for (int i=1; i < npts; i ++) {
       if (px[i] - px[i-1] > stretch) py[i] = 0.0f;
@@ -495,7 +387,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
     /* slow points down. stretches the points out so that
        the tail is lost, but preserves their y values. */
     
-    float factor = 1.0f + op_param[OP_SLOW];
+    float factor = 1.0f + op_param;
 
     /* We don't need to worry about maxpoints, since
        we will just be moving existing samples (and
@@ -519,7 +411,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
   }
   case OP_FAST: {
 
-    float factor = 1.0f + (op_param[OP_FAST] * 3.0f);
+    float factor = 1.0f + (op_param * 3.0f);
     float onedivfactor = 1.0f / factor;
 
     /* number of times we need to loop through samples */
@@ -596,7 +488,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
   int i = 0, extx = 0, nth = 0, ctr = 0, n = 0, sd = 0;
   float ext = 0.0f;
 
-  switch(MKPOINTSTYLE(pointstyle)) {
+  switch(pointstyle) {
 
   case POINT_EXTNCROSS:
     /* extremities and crossings 
@@ -615,14 +507,14 @@ int PLUGIN::processw(float * in, float * out, long samples,
       switch(state) {
       case SZ: {
         /* just output a zero. */
-        if (in[i] <= pointparam[0] && in[i] >= -pointparam[0]) state = SZC;
-        else if (in[i] < -pointparam[0]) { state = SB; ext = in[i]; extx = i; }
+        if (in[i] <= pointparam && in[i] >= -pointparam) state = SZC;
+        else if (in[i] < -pointparam) { state = SB; ext = in[i]; extx = i; }
         else { state = SA; ext = in[i]; extx = i; }
         break;
       }
       case SZC: {
         /* continuing zeros */
-        if (in[i] <= pointparam[0] && in[i] >= -pointparam[0]) break;
+        if (in[i] <= pointparam && in[i] >= -pointparam) break;
   
         /* push zero for last spot (we know it was a zero and not pushed). */
         if (numpts < (maxpts-1)) {
@@ -644,7 +536,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
       case SA: {
         /* above zero */
 
-        if (in[i] <= pointparam[0]) {
+        if (in[i] <= pointparam) {
           /* no longer above 0. push the highest point I reached. */
           if (numpts < (maxpts-1)) {
             px[numpts] = extx;
@@ -652,7 +544,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
             numpts++;
           } 
           /* and decide state */
-          if (in[i] >= -pointparam[0]) {
+          if (in[i] >= -pointparam) {
             if (numpts < (maxpts-1)) {
               px[numpts] = i;
               py[numpts] = 0.0f;
@@ -675,7 +567,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
       case SB: {
         /* below zero */
 
-        if (in[i] >= -pointparam[0]) {
+        if (in[i] >= -pointparam) {
           /* no longer below 0. push the lowest point I reached. */
           if (numpts < (maxpts-1)) {
             px[numpts] = extx;
@@ -683,7 +575,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
             numpts++;
           } 
           /* and decide state */
-          if (in[i] <= pointparam[0]) {
+          if (in[i] <= pointparam) {
             if (numpts < (maxpts-1)) {
               px[numpts] = i;
               py[numpts] = 0.0f;
@@ -715,7 +607,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
     enum { ABOVE, BETWEEN, BELOW };
 
     int state = BETWEEN;
-    float level = (pointparam[POINT_LEVEL] * .9999f) + .00005f;
+    float level = (pointparam * .9999f) + .00005f;
     numpts = 1;
 
     px[0] = 0;
@@ -723,14 +615,14 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     for(i = 0; i < samples; i ++) {
 
-      if (in[i] > pointparam[POINT_LEVEL]) {
+      if (in[i] > pointparam) {
 	if (state != ABOVE) {
 	  px[numpts] = i;
 	  py[numpts] = in[i];
 	  numpts ++;
 	  state = ABOVE;
 	}
-      } else if (in[i] < -pointparam[POINT_LEVEL]) {
+      } else if (in[i] < -pointparam) {
 	if (state != BELOW) {
 	  px[numpts] = i;
 	  py[numpts] = in[i];
@@ -761,7 +653,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
     /* at frequency */
 
     /* XXX let the user choose hz, do conversion */
-    nth = (pointparam[POINT_LEVEL] * pointparam[POINT_FREQ]) * samples;
+    nth = (pointparam * pointparam) * samples;
     ctr = nth;
   
     for(i = 0; i < samples; i ++) {
@@ -782,7 +674,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
   case POINT_RANDOM: {
     /* randomly */
 
-    n = (1.0f - pointparam[2]) * samples;
+    n = (1.0f - pointparam) * samples;
 
     for(;n --;) {
       if (numpts < (maxpts-1)) {
@@ -807,7 +699,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
     suggested by bram.
     */
 
-    int span = (pointparam[3] * pointparam[3]) * samples;
+    int span = (pointparam * pointparam) * samples;
 
     i = abs((int)(py[0] * span)) + 1;
 
@@ -834,11 +726,11 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     float pp;
     int above;
-    if (pointparam[POINT_DYDX] > 0.5f) {
-      pp = pointparam[POINT_DYDX] - 0.5f;
+    if (pointparam > 0.5f) {
+      pp = pointparam - 0.5f;
       above = 1;
     } else {
-      pp = 0.5f - pointparam[POINT_DYDX];
+      pp = 0.5f - pointparam;
       above = 0;
     }
 
@@ -890,7 +782,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
                     px, py, maxpts, tempx, tempy);
 
   int u=1, z=0;
-  switch(MKINTERPSTYLE(interpstyle)) {
+  switch(interpstyle) {
 
   case INTERP_SHUFFLE: {
     /* mix around the intervals. The parameter determines
@@ -915,12 +807,12 @@ int PLUGIN::processw(float * in, float * out, long samples,
     }
 
     for(int z = 0; z < intervals; z++) {
-      if (randFloat() < interparam[INTERP_SHUFFLE]) {
+      if (randFloat() < interparam) {
 	int t;
-	int dest = z + ((interparam[INTERP_SHUFFLE] * 
-			 interparam[INTERP_SHUFFLE] * (float)intervals)
-			* randFloat()) - (interparam[INTERP_SHUFFLE] *
-					  interparam[INTERP_SHUFFLE] *
+	int dest = z + ((interparam * 
+			 interparam * (float)intervals)
+			* randFloat()) - (interparam *
+					  interparam *
 					  0.5f * (float)intervals);
 	if (dest < 0) dest = 0;
 	if (dest >= intervals) dest = intervals - 1;
@@ -965,7 +857,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
       int sizeleft = px[x] - px[x-1];
       int sizetotal = sizeleft + sizeright;
 
-      int tgtlen = sizeleft + (sizeright * interparam[INTERP_FRIENDS]);
+      int tgtlen = sizeleft + (sizeright * interparam);
 
       if (tgtlen > 0) {
 	/* to avoid using temporary storage, copy from end of target
@@ -1012,13 +904,13 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     for(u=1; u < numpts; u ++) {
       float denom = (px[u] - px[u-1]);
-      float minterparam = interparam[INTERP_POLYGON] * (py[u-1] + py[u]) * 
+      float minterparam = interparam * (py[u-1] + py[u]) * 
 	0.5f;
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) / denom;
         float s = py[u-1] * (1.0f - pct) +
           py[u]   * pct;
-        out[z] = minterparam + (1.0f - interparam[INTERP_POLYGON]) * s;
+        out[z] = minterparam + (1.0f - interparam) * s;
       }
     }
 
@@ -1034,13 +926,13 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     for(u=1; u < numpts; u ++) {
       float denom = (px[u] - px[u-1]);
-      float minterparam = interparam[INTERP_WRONGYGON] * (py[u-1] + py[u]) 
+      float minterparam = interparam * (py[u-1] + py[u]) 
 	* 0.5f;
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) / denom;
         float s = py[u-1] * pct +
           py[u]   * (1.0f - pct);
-        out[z] = minterparam + (1.0f - interparam[INTERP_WRONGYGON]) * s;
+        out[z] = minterparam + (1.0f - interparam) * s;
       }
     }
 
@@ -1059,10 +951,10 @@ int PLUGIN::processw(float * in, float * out, long samples,
         
         float p = 0.5f * (-cos(float(pi * pct)) + 1.0f);
         
-        if (interparam[INTERP_SMOOTHIE] > 0.5f) {
-          p = powf(p, (interparam[INTERP_SMOOTHIE] - 0.16666667f) * 3.0f);
+        if (interparam > 0.5f) {
+          p = powf(p, (interparam - 0.16666667f) * 3.0f);
         } else {
-          p = powf(p, interparam[INTERP_SMOOTHIE] * 2.0f);
+          p = powf(p, interparam * 2.0f);
         }
 
         float s = py[u-1] * (1.0f - p) + py[u]   * p;
@@ -1092,7 +984,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
   case INTERP_PULSE: {
 
-    int wid = (int)(100.0 * interparam[INTERP_PULSE]);
+    int wid = (int)(100.0 * interparam);
     
     for(i = 0; i < samples; i++) out[i] = 0.0f;
 
@@ -1132,8 +1024,8 @@ int PLUGIN::processw(float * in, float * out, long samples,
         
 	float wand = sin(float(2.0f * pi * pct));
 	out[z] = wand * 
-	  interparam[INTERP_SING] + 
-	  ((1.0f-interparam[INTERP_SING]) * 
+	  interparam + 
+	  ((1.0f-interparam) * 
 	   in[z] *
 	   wand);
       }
@@ -1189,13 +1081,13 @@ int PLUGIN::processw(float * in, float * out, long samples,
      (probably not)
 */
 
-void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples, 
-                      int replacing) {
-  float * tin  = *trueinputs;
+void PLUGIN::processaudio(const float **trueinputs, float **trueoutputs, unsigned long samples, 
+                      bool replacing) {
+  const float * tin  = *trueinputs;
   float * tout = *trueoutputs;
   int z = 0;
 
-  for (int ii = 0; ii < samples; ii++) {
+  for (unsigned long ii = 0; ii < samples; ii++) {
 
     /* copy sample in */
     in0[insize] = tin[ii];
@@ -1214,7 +1106,7 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */
 
-      switch(MKWINDOWSHAPE(shape)) {
+      switch(shape) {
 
         case WINDOW_TRIANGLE:
           for(z = 0; z < third; z++) {
@@ -1263,8 +1155,13 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
     }
 
     /* send sample out */
-    if (replacing) tout[ii] = out0[outstart];
+  #if TARGET_API_VST
+    if (replacing)
+  #endif
+      tout[ii] = out0[outstart];
+  #if TARGET_API_VST
     else tout[ii] += out0[outstart];
+  #endif
 
     outstart ++;
     outsize --;
@@ -1277,206 +1174,98 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
   }
 }
 
-void PLUGIN::processReplacing(float **inputs, float **outputs, long samples) {
-  processX(inputs,outputs,samples, 1);
-}
-
-void PLUGIN::process(float **inputs, float **outputs, long samples) {
-  processX(inputs,outputs,samples, 0);
-}
-
-
-/* program stuff. Should never need to mess with this, hopefully.. */
-
-void PLUGINPROGRAM::init(PLUGIN * p) {
-  /* copy defaults from paramptrs */
-  for (int i=0; i < NUM_PARAMS; i++)
-    param[i] = p->paramptrs[i].def;
-}
-
-void PLUGIN::setProgram(long programNum) {
-  if ( (programNum < NUM_PROGRAMS) && (programNum >= 0) ) {
-      AudioEffectX::setProgram(programNum);
-
-      curProgram = programNum;
-      for (int i=0; i < NUM_PARAMS; i++)
-        setParameter(i, programs[programNum].param[i]);
-    }
-  /* tell the host to update the editor display with the new settings */
-  AudioEffectX::updateDisplay();
-}
-
-void PLUGIN::setProgramName(char *name) {
-  strcpy(programs[curProgram].name, name);
-}
-
-void PLUGIN::getProgramName(char *name) {
-  if ( !strcmp(programs[curProgram].name, "default") )
-    sprintf(name, "default %ld", curProgram+1);
-  else
-    strcpy(name, programs[curProgram].name);
-}
-
-bool PLUGIN::getProgramNameIndexed(long category, long index, char * text) {
-  if ( (index < NUM_PROGRAMS) && (index >= 0) ) {
-    strcpy(text, programs[index].name);
-    return true;
-  }
-  return false;
-}
-
-bool PLUGIN::copyProgram(long destination) {
-  if ( (destination < NUM_PROGRAMS) && (destination >= 0) ) {
-    programs[destination] = programs[curProgram];
-    return true;
-  }
-  return false;
-}
-
-long PLUGIN::canDo(char* text) {
-  if (strcmp(text, "receiveVstEvents") == 0)
-    return 1;
-  if (strcmp(text, "receiveVstMidiEvent") == 0)
-    return 1;
-  if (strcmp(text, "geometry") == 0)
-    return 1;
-  if (strcmp(text, "plugAsChannelInsert") == 0)
-    return 1;
-  if (strcmp(text, "plugAsSend") == 0)
-    return 1;
-  if (strcmp(text, "mixDryWet") == 0)
-    return 1;
-  if (strcmp(text, "1in1out") == 0)
-    return 1;
-
-  /* explicitly can't do; 0 => don't know */
-  return -1;	
-}
 
 void PLUGIN::makepresets() {
   int i = 1;
 
-  strcpy(programs[i].name, "atonal singing");
-  programs[i].param[P_BUFSIZE] = 0.7f;
-  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_FREQ);
-  programs[i].param[P_POINTPARAMS + POINT_FREQ] = 0.10112f;
-  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_REVERSI);
+  setpresetname(i, "atonal singing");
+  setpresetparameter_i(i, P_BUFSIZE, 9);	// XXX is that 2^11 ?
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_FREQ);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.10112f);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_REVERSI);
   i++;
 
-  strcpy(programs[i].name, "robo sing (A)");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
-  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
-  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
-  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.1250387420637675f;//0.234f;
-  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
-  programs[i].param[P_INTERPARAMS + INTERP_SING] = 1.0f;
-  programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_FAST);
-  programs[i].param[P_OPPAR1S + OP_FAST] = 0.9157304f;
+  setpresetname(i, "robo sing (A)");
+  setpresetparameter_i(i, P_BUFSIZE, 9);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_DYDX);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.1250387420637675f);//0.234f);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SING);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 1.0f);
+  setpresetparameter_i(i, P_POINTOP1, OP_FAST);
+  setpresetparameter_f(i, P_OPPAR1S + OP_FAST, 0.9157304f);
   i++;
 
-  strcpy(programs[i].name, "sploop drums");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
-  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
-  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
-  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.5707532982591033f;//0.528f;
-  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
-  programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.2921348f;
-  programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_QUARTER);
-  programs[i].param[P_OPPAR1S + OP_QUARTER] = 0.258427f;
-  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_DOUBLE);
-  programs[i].param[P_OPPAR2S + OP_DOUBLE] = 0.5f;
+  setpresetname(i, "sploop drums");
+  setpresetparameter_i(i, P_BUFSIZE, 9);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_TRIANGLE);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_DYDX);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_DYDX, 0.5707532982591033f);//0.528f);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SING);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 0.2921348f);
+  setpresetparameter_i(i, P_POINTOP1, OP_QUARTER);
+  setpresetparameter_f(i, P_OPPAR1S + OP_QUARTER, 0.258427f);
+  setpresetparameter_i(i, P_POINTOP2, OP_DOUBLE);
+  setpresetparameter_f(i, P_OPPAR2S + OP_DOUBLE, 0.5f);
   i++;
 
-  strcpy(programs[i].name, "loudest sing");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
-  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
-  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_LEVEL);
-  programs[i].param[P_POINTPARAMS + POINT_LEVEL] = 0.280899f;
-  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_LONGPASS);
-  programs[i].param[P_OPPAR2S + OP_LONGPASS] = 0.1404494f;
-  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
-  programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.8258427f;
+  setpresetname(i, "loudest sing");
+  setpresetparameter_i(i, P_BUFSIZE, 9);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_TRIANGLE);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_LEVEL);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_LEVEL, 0.280899f);
+  setpresetparameter_i(i, P_POINTOP2, OP_LONGPASS);
+  setpresetparameter_f(i, P_OPPAR2S + OP_LONGPASS, 0.1404494f);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SING);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SING, 0.8258427f);
   i++;
 
-  strcpy(programs[i].name, "slower");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((13), BUFFERSIZESSIZE);
-  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
-  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_FREQ);
-  programs[i].param[P_POINTPARAMS + POINT_FREQ] = 0.3089887f;
-  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_FRIENDS);
-  programs[i].param[P_INTERPARAMS + INTERP_FRIENDS] = 1.0f;
+  setpresetname(i, "slower");
+  setpresetparameter_i(i, P_BUFSIZE, 13);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_FREQ);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.3089887f);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_FRIENDS);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 1.0f);
   i++;
 
-  strcpy(programs[i].name, "space chamber");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((13), BUFFERSIZESSIZE);
-  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_COS);
-  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_FREQ);
-  programs[i].param[P_POINTPARAMS + POINT_FREQ] = 0.0224719f;
-  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_FAST);
-  programs[i].param[P_OPPAR2S + OP_FAST] = 0.7247191f;
-  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SMOOTHIE);
-  programs[i].param[P_INTERPARAMS + INTERP_SMOOTHIE] = 0.5f;
+  setpresetname(i, "space chamber");
+  setpresetparameter_i(i, P_BUFSIZE, 13);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_COS);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_FREQ);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.0224719f);
+  setpresetparameter_i(i, P_POINTOP2, OP_FAST);
+  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 0.7247191f);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SMOOTHIE);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_SMOOTHIE, 0.5f);
   i++;
 
-  strcpy(programs[i].name, "robo sing (B)");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((10), BUFFERSIZESSIZE);
-  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
-  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_RANDOM);
-  programs[i].param[P_POINTPARAMS + POINT_RANDOM] = 0.0224719f;
-  programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_LONGPASS);
-  programs[i].param[P_OPPAR1S + OP_LONGPASS] = 0.1966292f;
-  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_FAST);
-  programs[i].param[P_OPPAR2S + OP_FAST] = 1.0f;
-  programs[i].param[P_POINTOP3] = UNMKPOINTOP(OP_FAST);
-  programs[i].param[P_OPPAR3S + OP_FAST] = 1.0f;
-  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_POLYGON);
-  programs[i].param[P_INTERPARAMS + INTERP_POLYGON] = 0.0f;
+  setpresetname(i, "robo sing (B)");
+  setpresetparameter_i(i, P_BUFSIZE, 10);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_TRIANGLE);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_RANDOM);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_RANDOM, 0.0224719f);
+  setpresetparameter_i(i, P_POINTOP1, OP_LONGPASS);
+  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.1966292f);
+  setpresetparameter_i(i, P_POINTOP2, OP_FAST);
+  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 1.0f);
+  setpresetparameter_i(i, P_POINTOP3, OP_FAST);
+  setpresetparameter_f(i, P_OPPAR3S + OP_FAST, 1.0f);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_POLYGON);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_POLYGON, 0.0f);
   i++;
   
-  strcpy(programs[i].name, "scrubby chorus");
-  programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((13), BUFFERSIZESSIZE);
-  programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_ARROW);
-  programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_RANDOM);
-  programs[i].param[P_POINTPARAMS + POINT_RANDOM] = 0.9775281f;
-  programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_LONGPASS);
-  programs[i].param[P_OPPAR1S + OP_LONGPASS] = 0.5168539f;
-  programs[i].param[P_POINTOP2] = UNMKPOINTOP(OP_FAST);
-  programs[i].param[P_OPPAR2S + OP_FAST] = 0.0617978f;
-  programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_FRIENDS);
-  programs[i].param[P_INTERPARAMS + INTERP_FRIENDS] = 0.7303371f;
+  setpresetname(i, "scrubby chorus");
+  setpresetparameter_i(i, P_BUFSIZE, 13);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_ARROW);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_RANDOM);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_RANDOM, 0.9775281f);
+  setpresetparameter_i(i, P_POINTOP1, OP_LONGPASS);
+  setpresetparameter_f(i, P_OPPAR1S + OP_LONGPASS, 0.5168539f);
+  setpresetparameter_i(i, P_POINTOP2, OP_FAST);
+  setpresetparameter_f(i, P_OPPAR2S + OP_FAST, 0.0617978f);
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_FRIENDS);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 0.7303371f);
   i++;
 
-
 }
-
-
-/* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
-/* ---------- boring stuff below this line ----------- */
-/* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
-
-#if BEOS
-#define main main_plugin
-extern "C" __declspec(dllexport) AEffect *main_plugin (audioMasterCallback audioMaster);
-
-#else
-AEffect *main (audioMasterCallback audioMaster);
-#endif
-
-AEffect *main (audioMasterCallback audioMaster) {
-  /* get vst version */
-  if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
-    return 0;  /* old version */
-
-  AudioEffect* effect = new PLUGIN(audioMaster);
-  if (!effect)
-    return 0;
-  return effect->getAeffect();
-}
-
-#if WIN32
-void* hInstance;
-BOOL WINAPI DllMain (HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
-  hInstance = hInst;
-  return 1;
-}
-#endif

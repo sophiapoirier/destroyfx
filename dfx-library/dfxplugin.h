@@ -449,6 +449,10 @@ public:
 		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurvespec();   else return 0.0;	}
 	void setparametercurvespec(long parameterIndex, double newcurvespec)
 		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcurvespec(newcurvespec);	}
+	bool getparameterhidden(long parameterIndex)
+		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].gethidden();   else return false;	}
+	void setparameterhidden(long parameterIndex, bool newhide = true)
+		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].sethidden(newhide);	}
 
 	// whether or not the index is a valid preset
 	bool presetisvalid(long presetIndex);

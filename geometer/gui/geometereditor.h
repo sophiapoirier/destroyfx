@@ -1,12 +1,11 @@
 
-#ifndef __geometereditor
-#define __geometereditor
+#ifndef __DFX_GEOMETEREDITOR_H
+#define __DFX_GEOMETEREDITOR_H
 
 #include "dfxgui.h"
 #include "multikick.hpp"
-#include "vstchunk.h"
-#include "geometerview.hpp"
 #include "indexbitmap.hpp"
+#include "geometerview.hpp"
 
 
 #define NUM_SLIDERS   5
@@ -125,7 +124,7 @@ private:
   GeometerView * gview;
   unsigned long prevms;
 
-  VstChunk *chunk;
+  DfxSettings *chunk;
   CHorizontalSlider **sliders;
   bool setGlowing(long index, bool glow = true);
 };

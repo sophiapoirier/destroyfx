@@ -1,5 +1,5 @@
 
-#ifndef __geometereditor
+#ifndef __DFX_GEOMETEREDITOR_H
 #include "geometereditor.hpp"
 #endif
 
@@ -209,7 +209,7 @@ GeometerEditor::GeometerEditor(AudioEffect *effect)
   rect.right  = (short)g_background->getWidth();
   rect.bottom = (short)g_background->getHeight();
 
-  chunk = ((PLUGIN*)effect)->chunk;     // this just simplifies pointing
+  chunk = ((DfxPlugin*)effect)->getsettings_ptr();     // this just simplifies pointing
 }
 
 //-----------------------------------------------------------------------------

@@ -47,6 +47,11 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
     setparametervaluestring(i, kOctaveMode, "octave");
   }
 
+  // these are only for the GUI, no need to reveal them to the user as parameters
+  setparameterhidden(kSpeed1mode, true);
+  setparameterhidden(kSpeed2mode, true);
+
+
   settailsize_seconds(BUFFER_MAX * 0.001);
 
   #if TARGET_PLUGIN_USES_MIDI

@@ -417,6 +417,11 @@ public:
 	double getcurvespec()
 		{	return curvespec;	}
 
+	// set/get the property indicating whether the parameter is only for internal use
+	void sethidden(bool newHide = true);
+	bool gethidden()
+		{	return hidden;	}
+
 	// set/get the property indicating whether the parameter value has changed
 	void setchanged(bool newChanged = true);
 	bool getchanged()
@@ -439,6 +444,7 @@ protected:
 	double curvespec;	// special specification, like the exponent in kDfxParamCurve_pow
 	char **valueStrings;	// an array of strings for kDfxParamUnit_strings
 	bool changed;	// indicates if the value has changed
+	bool hidden;	// indicates if the parameter might be only for internal use
 
 	#if TARGET_API_AUDIOUNIT
 		// array of CoreFoundation-style versions of the indexed value strings

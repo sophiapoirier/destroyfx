@@ -44,6 +44,7 @@ DfxParam::DfxParam()
 	curve = kDfxParamCurve_undefined;
 	curvespec = 1.0;
 	changed = false;
+	hidden = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -997,6 +998,13 @@ void DfxParam::setchanged(bool newChanged)
 		oldValue = value;
 
 	changed = newChanged;
+}
+
+//-----------------------------------------------------------------------------
+// set/get the property indicating whether the parameter is only for internal use
+void DfxParam::sethidden(bool newHide)
+{
+	hidden = newHide;
 }
 
 
