@@ -4,7 +4,9 @@
 
 #include "geometer.hpp"
 
-#include "dfxmisc.h"
+#ifndef __geometereditor
+#include "geometereditor.hpp"
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -117,6 +119,8 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   
   cs = new dfxmutex();
 
+  editor = new GeometerEditor(this);
+
   resume ();
 }
 
@@ -195,6 +199,9 @@ void PLUGIN::setParameter(long index, float value) {
   /* copy the new value to the active program's corresponding parameter value */
   if ( (index >= 0) && (index < NUM_PARAMS) )
     programs[curProgram].param[index] = value;
+
+  if (editor)
+    ((AEffGUIEditor*)editor)->setParameter(index, value);
 }
 
 /* save & restore parameter data using chunks so that we 
@@ -1387,46 +1394,34 @@ void PLUGIN::makepresets() {
 
 }
 
-/* this is only compiled if not building the GUI version */
-#ifndef GUI
 
 /* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
 /* ---------- boring stuff below this line ----------- */
 /* XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX */ 
 
-static AudioEffect *effect = 0;
-bool oome = false;
-
-// prototype of the export function main
 #if BEOS
-   #define main main_plugin
-   extern "C" __declspec(dllexport) AEffect 
-      *main_plugin (audioMasterCallback audioMaster);
+#define main main_plugin
+extern "C" __declspec(dllexport) AEffect *main_plugin (audioMasterCallback audioMaster);
 
 #else
-   AEffect *main (audioMasterCallback audioMaster);
+AEffect *main (audioMasterCallback audioMaster);
 #endif
 
 AEffect *main (audioMasterCallback audioMaster) {
   // get vst version
-  if (!audioMaster (0, audioMasterVersion, 0, 0, 0, 0))
+  if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )
     return 0;  // old version
 
-  effect = new PLUGIN (audioMaster);
+  AudioEffect* effect = new PLUGIN(audioMaster);
   if (!effect)
     return 0;
-  if (oome) {
-    delete effect;
-    return 0;
-  }
-  return effect->getAeffect ();
+  return effect->getAeffect();
 }
 
 #if WIN32
-  void* hInstance;
-  BOOL WINAPI DllMain (HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
-    hInstance = hInst;
-    return 1;
-  }
-#endif
+void* hInstance;
+BOOL WINAPI DllMain (HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
+  hInstance = hInst;
+  return 1;
+}
 #endif

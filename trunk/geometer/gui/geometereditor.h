@@ -1,11 +1,10 @@
 
-
-#ifndef __GeometerEditor
-#define __GeometerEditor
+#ifndef __geometereditor
+#define __geometereditor
 
 #include "dfxgui.h"
-#include "MultiKick.hpp"
-#include "VstChunk.h"
+#include "multikick.hpp"
+#include "vstchunk.h"
 #include "geometerview.hpp"
 #include "indexbitmap.hpp"
 
