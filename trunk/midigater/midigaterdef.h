@@ -17,4 +17,4 @@
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"Nord Modular rip-off interface for DFX MIDI Gater"
 
 
-#define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx.MidiGater"
+#define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx.MIDIGater"
