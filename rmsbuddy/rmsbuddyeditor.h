@@ -10,27 +10,36 @@
 class RMSbuddyEditor;
 
 //-----------------------------------------------------------------------------
+// a generic custom control class, which our useful controls are derived from
 class RMSControl
 {
 public:
 	RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight);
 	virtual ~RMSControl();
 
+	// draw the control
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
 		{ }
+	// handle a mouse click in the control
 	virtual void mouseDown(long inXpos, long inYpos)
 		{ }
+	// handle a mouse drag on the control (mouse moved while clicked)
 	virtual void mouseTrack(long inXpos, long inYpos)
 		{ }
+	// handle a mouse button release on the control
 	virtual void mouseUp(long inXpos, long inYpos)
 		{ }
 
+	// set/get the Carbon Control Manager control reference
 	void setCarbonControl(ControlRef inCarbonControl)
 		{	carbonControl = inCarbonControl;	}
 	ControlRef getCarbonControl()
 		{	return carbonControl;	}
+
+	// get the rectangular position of the control (relative to the view's owner window)
 	Rect * getBoundsRect()
 		{	return &boundsRect;	}
+	// says whether or not this control needs to be clipped to its bounds when drawn
 	bool needsClipping()
 		{	return needsToBeClipped;	}
 
@@ -44,12 +53,14 @@ protected:
 
 
 
+// 24-bit RGB color description, 0 - 255 values for each field
 struct RMSColor {
 	int r;
 	int g;
 	int b;
 };
 
+// used for specifying text alignment in RMSTextDisplay objects
 enum {
 	kTextAlign_left = 0,
 	kTextAlign_center,
@@ -57,6 +68,7 @@ enum {
 };
 
 //-----------------------------------------------------------------------------
+// a text display control object
 class RMSTextDisplay : public RMSControl
 {
 public:
@@ -65,8 +77,12 @@ public:
 	virtual ~RMSTextDisplay();
 
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
+	// set the display text directly with a string
 	void setText(const char *inText);
+	// given a linear amplitude value, set the display text with the dB-converted value
 	void setText_dB(float inLinearValue);
+	// set the display text with an integer value
+	void setText_int(long inValue);
 
 private:
 	RMSColor textColor, backColor, frameColor;
@@ -78,6 +94,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
+// a push-button control object
 class RMSButton : public RMSControl
 {
 public:
@@ -95,6 +112,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
+// our GUI
 class RMSbuddyEditor : public AUCarbonViewBase
 {
 public:
@@ -104,47 +122,49 @@ public:
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventRef inEvent);
 
-	void updateDisplays();
-	void resetRMS();
-	void resetPeak();
+	void updateDisplays();	// refresh the value displays
+	void resetRMS();	// send a message to the DSP component to reset average RMS
+	void resetPeak();	// send a message to the DSP component to reset absolute peak
 
+	// these are accessors for data that the custom controls need in order to create themselves
 	ControlDefSpec * getControlClassSpec()
 		{	return &controlClassSpec;	}
+	ControlRef GetCarbonPane()
+		{	return mCarbonPane;	}
+
 	// get the RMSControl object for a given CarbonControl reference
 	RMSControl * getRMSControl(ControlRef inCarbonControl);
+
 	// get/set the control that is currently being moused (actively tweaked), if any (returns NULL if none)
 	RMSControl * getCurrentControl()
 		{	return currentControl;	}
 	void setCurrentControl(RMSControl *inNewClickedControl)
 		{	currentControl = inNewClickedControl;	}
-	ControlRef GetCarbonPane()
-		{	return mCarbonPane;	}
+
 	void handleControlValueChange(RMSControl *inControl, SInt32 inValue);
 
 private:
-	// controls
+	unsigned long numChannels;	// the number of channels being analyzed
+
+	// buttons
 	RMSButton *resetRMSbutton;
 	RMSButton *resetPeakButton;
 
-	// parameter value display boxes
-	RMSTextDisplay *leftAverageRMSDisplay;
-	RMSTextDisplay *rightAverageRMSDisplay;
-	RMSTextDisplay *leftContinualRMSDisplay;
-	RMSTextDisplay *rightContinualRMSDisplay;
-	RMSTextDisplay *leftAbsolutePeakDisplay;
-	RMSTextDisplay *rightAbsolutePeakDisplay;
-	RMSTextDisplay *leftContinualPeakDisplay;
-	RMSTextDisplay *rightContinualPeakDisplay;
-	RMSTextDisplay *averageRMSDisplay;
-	RMSTextDisplay *continualRMSDisplay;
-	RMSTextDisplay *absolutePeakDisplay;
-	RMSTextDisplay *continualPeakDisplay;
-	RMSTextDisplay *leftDisplay;
-	RMSTextDisplay *rightDisplay;
+	// text display boxes
+	RMSTextDisplay **averageRMSDisplays;
+	RMSTextDisplay **continualRMSDisplays;
+	RMSTextDisplay **absolutePeakDisplays;
+	RMSTextDisplay **continualPeakDisplays;
+	RMSTextDisplay *averageRMSLabel;
+	RMSTextDisplay *continualRMSLabel;
+	RMSTextDisplay *absolutePeakLabel;
+	RMSTextDisplay *continualPeakLabel;
+	RMSTextDisplay **channelLabels;
 
-	// graphics
+	// bitmap graphics resource
 	CGImageRef gResetButton;
 
+	// event handling related stuff
 	EventHandlerUPP controlHandlerUPP;
 	ControlDefSpec controlClassSpec;
 	EventHandlerUPP windowEventHandlerUPP;
@@ -152,6 +172,7 @@ private:
 	RMSControl *currentControl;
 
 
+	// parameter listener related stuff
 	AUParameterListenerRef parameterListener;
 	AudioUnitParameter timeToUpdateAUP;
 };

@@ -5,7 +5,6 @@
 
 
 static pascal OSStatus DGControlEventHandler(EventHandlerCallRef, EventRef, void *inUserData);
-#define USE_BETTER_MOUSE_TRACKING	1
 static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef, EventRef, void *inUserData);
 
 static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData);
@@ -121,12 +120,10 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 	EventTypeSpec toolboxClassEvents[] = {
 		{ kEventClassControl, kEventControlDraw },
-		{ kEventClassControl, kEventControlInitialize },
-		{ kEventClassControl, kEventControlHitTest },
-#if !USE_BETTER_MOUSE_TRACKING
-		{ kEventClassControl, kEventControlTrack },
-		{ kEventClassControl, kEventControlHit }, 
-#endif
+//		{ kEventClassControl, kEventControlInitialize },
+//		{ kEventClassControl, kEventControlHitTest },
+//		{ kEventClassControl, kEventControlTrack },
+//		{ kEventClassControl, kEventControlHit }, 
 		{ kEventClassControl, kEventControlClick }, 
 		{ kEventClassControl, kEventControlContextualMenuClick } 
 	};
@@ -506,10 +503,6 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 //-----------------------------------------------------------------------------
 static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void *inUserData)
 {
-#if !USE_BETTER_MOUSE_TRACKING
-	return eventNotHandledErr;
-#endif
-
 	if (GetEventClass(inEvent) != kEventClassMouse)
 		return eventClassIncorrectErr;
 
@@ -566,14 +559,13 @@ return eventKindIncorrectErr;
 	bool with_option = ( (modifiers & optionKey) || (modifiers & rightOptionKey) ) ? true : false;
 //	bool with_control = ( (modifiers & controlKey) || (modifiers & rightControlKey) ) ? true : false;
 
+	// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 	Rect controlBounds;
 	GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
 	Rect globalBounds;	// Window Content Region
 	WindowRef window;
 	GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
 	GetWindowBounds(window, kWindowGlobalPortRgn, &globalBounds);
-
-	// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 	mouseLocation.h -= controlBounds.left + globalBounds.left;
 	mouseLocation.v -= controlBounds.top + globalBounds.top;
 
@@ -628,14 +620,15 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 	if (ourOwnerEditor != NULL)
 		ourDGControl = ourOwnerEditor->getDGControlByCarbonControlRef(ourCarbonControl);	
 
+/*
 	// the Carbon control reference has not been added yet, so our DGControl pointer is NULL, because we can't look it up by ControlRef yet
-//	if ( (inEventClass == kEventClassControl) && (inEventKind == kEventControlInitialize) )
 	if (inEventKind == kEventControlInitialize)
 	{
 		UInt32 dfxControlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
 		SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(UInt32), &dfxControlFeatures);
 		return noErr;
 	}
+*/
 
 	if (ourDGControl != NULL)
 	{
@@ -690,6 +683,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 				}
 				break;
 
+/*
 			case kEventControlHitTest:
 				{
 //printf("kEventControlHitTest\n");
@@ -697,11 +691,8 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					ControlPartCode hitPart = kControlIndicatorPart;	// scroll handle
 					// also there is kControlButtonPart, kControlCheckBoxPart, kControlPicturePart
 					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(ControlPartCode), &hitPart);
-#if USE_BETTER_MOUSE_TRACKING
 					result = eventNotHandledErr;	// let other event listeners have this if they want it
-#else
-					result = noErr;
-#endif
+//					result = noErr;
 				}
 				break;
 
@@ -717,13 +708,11 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 //printf("kEventControlTrack\n");
 					ControlPartCode whatPart = kControlIndicatorPart;
 					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(ControlPartCode), &whatPart);
-#if USE_BETTER_MOUSE_TRACKING
 					result = eventNotHandledErr;	// cuz this makes us get a Hit event, which triggers AUCViewControl automation end
-#else
-					result = noErr;
-#endif
+//					result = noErr;
 				}
 				break;
+*/
 
 			case kEventControlClick:
 //printf("kEventControlClick\n");
@@ -737,11 +726,6 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 //					UInt32 buttons;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 //					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &buttons);
 
-					Rect controlBounds;
-					GetControlBounds(ourCarbonControl, &controlBounds);
-					Rect globalBounds;	// Window Content Region
-					GetWindowBounds( GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &globalBounds );
-
 					HIPoint mouseLocation_f;
 					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation_f);
 					Point mouseLocation;
@@ -749,8 +733,11 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					mouseLocation.h = (short) mouseLocation_f.x;
 					mouseLocation.v = (short) mouseLocation_f.y;
 
-#if USE_BETTER_MOUSE_TRACKING
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
+					Rect controlBounds;
+					GetControlBounds(ourCarbonControl, &controlBounds);
+					Rect globalBounds;	// Window Content Region
+					GetWindowBounds( GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &globalBounds );
 					mouseLocation.h -= controlBounds.left + globalBounds.left;
 					mouseLocation.v -= controlBounds.top + globalBounds.top;
 
@@ -765,54 +752,6 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 					ourOwnerEditor->setCurrentControl_clicked(ourDGControl);
 
 					result = noErr;
-#else
-					MouseTrackingResult mouseResult = kMouseTrackingMouseDown;
-					while (true)
-					{
-						// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
-						mouseLocation.h -= controlBounds.left + globalBounds.left;
-						mouseLocation.v -= controlBounds.top + globalBounds.top;
-
-						UInt32 modifiers = GetCurrentEventKeyModifiers();
-//						bool with_command = (modifiers & cmdKey) ? true : false;
-						bool with_shift = ( (modifiers & shiftKey) || (modifiers & rightShiftKey) ) ? true : false;
-						bool with_option = ( (modifiers & optionKey) || (modifiers & rightOptionKey) ) ? true : false;
-//						bool with_control = ( (modifiers & controlKey) || (modifiers & rightControlKey) ) ? true : false;
-
-						if (mouseResult == kMouseTrackingMouseDown)
-						{
-							ourDGControl->mouseDown(mouseLocation, with_option, with_shift);
-//							printf("MouseDown\n");
-						}
-						else if (mouseResult == kMouseTrackingMouseDragged)
-						{
-							ourDGControl->mouseTrack(mouseLocation, with_option, with_shift);
-//							printf("MouseDragged\n");
-						}
-						else if (mouseResult == kMouseTrackingMouseUp)
-						{
-							ourDGControl->mouseUp(mouseLocation, with_option, with_shift);
-//							printf("MouseUp\n");
-							break;
-						}
-						else printf("TrackMouseLocation = %d\n", mouseResult);
-
-						TrackMouseLocation( (GrafPtr)(-1), &mouseLocation, &mouseResult );
-						buttons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-					}
-
-					ourOwnerEditor->setRelaxed(false);
-
-					// XXX do this to make Logic's touch automation work
-					if ( ourDGControl->isAUVPattached() )//&& ourDGControl->isContinuousControl() )
-					{
-//printf("DGControlEventHandler -> TellListener(MouseUp, %lu)\n", ourDGControl->getAUVP().mParameterID);
-//						ourOwnerEditor->TellListener(ourDGControl->getAUVP(), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
-					}
-
-					result = eventNotHandledErr;	// cuz otherwise we don't get HitTest, Track, or Hit events (???)
-#endif
-// USE_BETTER_MOUSE_TRACKING
 				}
 				break;
 
