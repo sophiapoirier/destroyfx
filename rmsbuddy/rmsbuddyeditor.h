@@ -14,7 +14,8 @@ class RMSbuddyEditor;
 class RMSControl
 {
 public:
-	RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight);
+	RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+				long inControlRange, long inParamID = -1);
 	virtual ~RMSControl();
 
 	// draw the control
@@ -42,6 +43,11 @@ public:
 	// says whether or not this control needs to be clipped to its bounds when drawn
 	bool needsClipping()
 		{	return needsToBeClipped;	}
+	// says whether or not this control is connected to an AU parameter
+	bool isParameterAttached()
+		{	return hasParameter;	}
+	AUVParameter * getAUVP()
+		{	return &auvParam;	}
 
 protected:
 	RMSbuddyEditor *ownerEditor;
@@ -49,6 +55,8 @@ protected:
 	ControlRef carbonControl;
 	Rect boundsRect;
 	bool needsToBeClipped;
+	AUVParameter auvParam;
+	bool hasParameter;
 };
 
 
@@ -72,8 +80,9 @@ enum {
 class RMSTextDisplay : public RMSControl
 {
 public:
-	RMSTextDisplay(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, RMSColor inTextColor, 
-					RMSColor inBackColor, RMSColor inFrameColor, const char *inFontName, float inFontSize, long inTextAlignment);
+	RMSTextDisplay(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
+					const char *inFontName, float inFontSize, long inTextAlignment, long inParamID = -1);
 	virtual ~RMSTextDisplay();
 
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
@@ -112,6 +121,28 @@ private:
 
 
 //-----------------------------------------------------------------------------
+// a slider control object
+class RMSSlider : public RMSControl
+{
+public:
+	RMSSlider(RMSbuddyEditor *inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
+				RMSColor inBackColor, RMSColor inFillColor);
+	virtual ~RMSSlider();
+
+	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
+	virtual void mouseDown(long inXpos, long inYpos);
+	virtual void mouseTrack(long inXpos, long inYpos);
+	virtual void mouseUp(long inXpos, long inYpos);
+
+private:
+	RMSColor backColor;
+	RMSColor fillColor;
+	long borderWidth;
+};
+
+
+
+//-----------------------------------------------------------------------------
 // our GUI
 class RMSbuddyEditor : public AUCarbonViewBase
 {
@@ -123,6 +154,7 @@ public:
 	virtual bool HandleEvent(EventRef inEvent);
 
 	void updateDisplays();	// refresh the value displays
+	void updateWindowSize(Float32 inParamValue);	// update analysis window size parameter controls
 	void resetRMS();	// send a message to the DSP component to reset average RMS
 	void resetPeak();	// send a message to the DSP component to reset absolute peak
 
@@ -131,6 +163,11 @@ public:
 		{	return &controlClassSpec;	}
 	ControlRef GetCarbonPane()
 		{	return mCarbonPane;	}
+	AUParameterListenerRef GetParameterListener()
+//		{	return mParameterListener;	}
+		{	return parameterListener;	}
+	void AddAUCVControl(AUCarbonViewControl *inControl)
+		{	AddControl(inControl);	}
 
 	// get the RMSControl object for a given CarbonControl reference
 	RMSControl * getRMSControl(ControlRef inCarbonControl);
@@ -141,7 +178,7 @@ public:
 	void setCurrentControl(RMSControl *inNewClickedControl)
 		{	currentControl = inNewClickedControl;	}
 
-	void handleControlValueChange(RMSControl *inControl, SInt32 inValue);
+	void handleControlValueChange(RMSControl *inControl, SInt32 inControlValue);
 
 private:
 	unsigned long numChannels;	// the number of channels being analyzed
@@ -160,6 +197,11 @@ private:
 	RMSTextDisplay *absolutePeakLabel;
 	RMSTextDisplay *continualPeakLabel;
 	RMSTextDisplay **channelLabels;
+
+	// slider
+	RMSSlider *windowSizeSlider;
+	RMSTextDisplay *windowSizeLabel;
+	RMSTextDisplay *windowSizeDisplay;
 
 	// bitmap graphics resource
 	CGImageRef gResetButton;

@@ -4,13 +4,19 @@
 #include "rmsbuddy.h"
 
 
+// I want the analysis window size slider to have a squared-scaled value distribution curve, 
+// so it seems that AUCarbonViewControl won't be able to do what I want
+#define USE_AUCVCONTROL	0
+
+
 #pragma mark _________RMSControl_________
 //-----------------------------------------------------------------------------
 //                           RMSControl
 //-----------------------------------------------------------------------------
-RMSControl::RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight)
+RMSControl::RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
+						long inControlRange, long inParamID)
 :	ownerEditor(inOwnerEditor), xpos(inXpos), ypos(inYpos), width(inWidth), height(inHeight), 
-	carbonControl(NULL)
+	carbonControl(NULL), hasParameter(false)
 {
 	// create the position rectangle, taking into account the window offset of the AU view
 	boundsRect.left = xpos + (short)ownerEditor->GetXOffset();
@@ -22,11 +28,18 @@ RMSControl::RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, 
 	if (CreateCustomControl(ownerEditor->GetCarbonWindow(), &boundsRect, ownerEditor->getControlClassSpec(), NULL, &carbonControl) == noErr)
 	{
 		SetControl32BitMinimum(carbonControl, 0);
-		SetControl32BitMaximum(carbonControl, 1);
+		SetControl32BitMaximum(carbonControl, inControlRange);
 		SetControl32BitValue(carbonControl, 0);
 // hmmm, using EmbedControl causes AUCarbonViewBase to take over the sizing of the embedding pane...
 #if 0
-		ownerEditor->EmbedControl(carbonControl);
+		if (inParamID >= 0)
+		{
+			hasParameter = true;
+			auvParam = AUVParameter(ownerEditor->GetEditAudioUnit(), inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
+			ownerEditor->AddCarbonControl(AUCarbonViewControl::kTypeContinuous, auvParam, carbonControl);
+		}
+		else
+			ownerEditor->EmbedControl(carbonControl);
 // ... so I think we'll just handle the control embedding ourselves (this is most of what EmbedControl does)
 #else
 		WindowAttributes attributes;
@@ -35,9 +48,32 @@ RMSControl::RMSControl(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, 
 			::HIViewAddSubview(ownerEditor->GetCarbonPane(), carbonControl);
 		else
 			::EmbedControl(carbonControl, ownerEditor->GetCarbonPane());
+
+		// if a valid parameter ID was input, then we want to attach this control to a parameter
+		if (inParamID >= 0)
+		{
+			hasParameter = true;
+			// create AUVParameter andn AUCarbonViewControl convenience objects for this
+			auvParam = AUVParameter(ownerEditor->GetEditAudioUnit(), inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
+		#if USE_AUCVCONTROL
+			AUCarbonViewControl *auvc = new AUCarbonViewControl(ownerEditor, ownerEditor->GetParameterListener(), 
+															AUCarbonViewControl::kTypeContinuous, auvParam, carbonControl);
+		#else
+			SetControlReference(carbonControl, (SInt32)this);
+		#endif
+		#if USE_AUCVCONTROL
+			auvc->Bind();
+			ownerEditor->AddAUCVControl(auvc);
+			// make sure that the control reflects the current parameter value
+			auvc->Update(true);
+		#else
+			AUListenerAddParameter(ownerEditor->GetParameterListener(), ownerEditor, &auvParam);
+		#endif
+		}
 #endif
 	}
 
+	// the child control class can override this if it needs to be clipped
 	needsToBeClipped = false;
 }
 
@@ -59,8 +95,8 @@ RMSControl::~RMSControl()
 //-----------------------------------------------------------------------------
 RMSTextDisplay::RMSTextDisplay(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
-					const char *inFontName, float inFontSize, long inTextAlignment)
-:	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight), 
+					const char *inFontName, float inFontSize, long inTextAlignment, long inParamID)
+:	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x7FFF, inParamID), 
 	textColor(inTextColor), backColor(inBackColor), frameColor(inFrameColor), 
 	fontSize(inFontSize), textAlignment(inTextAlignment), 
 	fontName(NULL), text(NULL)
@@ -105,6 +141,12 @@ void RMSTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 	// and then also shrink the size accordingly
 	CGRect box = CGRectMake(bounds.origin.x + 0.5f, bounds.origin.y + 0.5f, bounds.size.width - 1.0f, bounds.size.height - 1.0f);
 	CGContextStrokeRectWithWidth(inContext, box, 1.0f);
+
+	if ( isParameterAttached() )
+	{
+		float value = getAUVP()->GetValue();
+		sprintf(text, "%.0f ms", value);
+	}
 
 	// draw the text
 	CGContextSetShouldAntialias(inContext, true);	// now we want anti-aliasing
@@ -191,7 +233,7 @@ void RMSTextDisplay::setText_int(long inValue)
 //                           RMSButton
 //-----------------------------------------------------------------------------
 RMSButton::RMSButton(RMSbuddyEditor *inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage)
-:	RMSControl(inOwnerEditor, inXpos, inYpos, CGImageGetWidth(inImage), CGImageGetHeight(inImage)/2), 
+:	RMSControl(inOwnerEditor, inXpos, inYpos, CGImageGetWidth(inImage), CGImageGetHeight(inImage)/2, 1), 
 	buttonImage(inImage)
 {
 	// because we only show half of the button image at a time, we need clipping
@@ -251,6 +293,80 @@ void RMSButton::mouseUp(long inXpos, long inYpos)
 
 
 
+#pragma mark _________RMSSlider_________
+//-----------------------------------------------------------------------------
+//                           RMSSlider
+//-----------------------------------------------------------------------------
+RMSSlider::RMSSlider(RMSbuddyEditor *inOwnerEditor, long inParamID, long inXpos, long inYpos, long inWidth, long inHeight, 
+					RMSColor inBackColor, RMSColor inFillColor)
+:	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x7FFF, inParamID), 
+	backColor(inBackColor), fillColor(inFillColor)
+{
+	borderWidth = 1;
+}
+
+//-----------------------------------------------------------------------------
+RMSSlider::~RMSSlider()
+{
+}
+
+//-----------------------------------------------------------------------------
+void RMSSlider::draw(CGContextRef inContext, UInt32 inPortHeight)
+{
+	CGContextSetShouldAntialias(inContext, false);	// XXX maybe this is more efficient for the box drawing?
+
+	// fill in the background color
+	CGRect bounds = CGRectMake(getBoundsRect()->left, inPortHeight - getBoundsRect()->bottom, width, height);
+	CGContextSetRGBFillColor(inContext, (float)backColor.r/255.0f, (float)backColor.g/255.0f, (float)backColor.b/255.0f, 1.0f);
+	CGContextFillRect(inContext, bounds);
+
+	// draw the frame around the box
+//	CGContextSetRGBStrokeColor(inContext, (float)frameColor.r/255.0f, (float)frameColor.g/255.0f, (float)frameColor.b/255.0f, 1.0f);
+	// Quartz draws lines on top of the pixel, so you need to move the coordinates to the middle of the pixel, 
+	// and then also shrink the size accordingly
+//	CGRect box = CGRectInset(bounds, 0.5f, 0.5f);
+//	CGContextStrokeRectWithWidth(inContext, box, 1.0f);
+
+	// fill in the active area
+	CGRect fillbox = CGRectInset(bounds, (float)borderWidth, (float)borderWidth);
+	fillbox.size.width *= (float)GetControl32BitValue(getCarbonControl()) / (float)GetControl32BitMaximum(getCarbonControl());
+	// naw, let's draw a faded frame on it first
+	CGRect fillframe = CGRectInset(fillbox, 0.5f, 0.5f);
+	CGContextSetRGBStrokeColor(inContext, (float)fillColor.r/255.0f, (float)fillColor.g/255.0f, (float)fillColor.b/255.0f, 1.0f);
+	CGContextSetAlpha(inContext, 0.45f);
+	CGContextStrokeRectWithWidth(inContext, fillframe, 1.0f);
+	CGContextSetAlpha(inContext, 1.0f);
+	fillbox = CGRectInset(fillbox, 1.0f, 1.0f);
+	// really fill it
+	CGContextSetRGBFillColor(inContext, (float)fillColor.r/255.0f, (float)fillColor.g/255.0f, (float)fillColor.b/255.0f, 1.0f);
+	CGContextFillRect(inContext, fillbox);
+}
+
+//-----------------------------------------------------------------------------
+void RMSSlider::mouseDown(long inXpos, long inYpos)
+{
+	mouseTrack(inXpos, inYpos);
+}
+
+//-----------------------------------------------------------------------------
+void RMSSlider::mouseTrack(long inXpos, long inYpos)
+{
+	if (inXpos < borderWidth)
+		inXpos = borderWidth;
+	if ( inXpos > (width-borderWidth) )
+		inXpos = width - borderWidth;
+	float valueNorm = (float)(inXpos-borderWidth) / (float)(width-(borderWidth*2));
+
+	SetControl32BitValue( getCarbonControl(), (SInt32)(valueNorm * (float)GetControl32BitMaximum(getCarbonControl())) );
+}
+
+//-----------------------------------------------------------------------------
+void RMSSlider::mouseUp(long inXpos, long inYpos)
+{
+}
+
+
+
 
 
 
@@ -264,18 +380,24 @@ const RMSColor kMyLightBrownColor = { 146, 116, 98 };
 const RMSColor kMyDarkBlueColor = { 54, 69, 115 };
 const RMSColor kMyLightOrangeColor = { 219, 145, 85 };
 const RMSColor kWhiteColor = { 255, 255, 255 };
+const RMSColor kMyYellowColor = { 249, 249, 120 };
 
 #define VALUE_DISPLAY_FONT	"Monaco"
 #define VALUE_DISPLAY_FONT_SIZE	12.0f
 #define LABEL_DISPLAY_FONT	"Lucida Grande"
 #define LABEL_DISPLAY_FONT_SIZE	12.0f
+#define SLIDER_LABEL_DISPLAY_FONT	"Lucida Grande"
+#define SLIDER_LABEL_DISPLAY_FONT_SIZE	11.0f
 
-#define kBackgroundColor	kMyLightBrownColor
+#define kBackgroundColor		kMyLightBrownColor
 #define kBackgroundFrameColor	kMyBrownColor
-#define kLabelTextColor		kWhiteColor
-#define kReadoutFrameColor	kMyBrownColor
-#define kReadoutBoxColor	kMyLightOrangeColor
-#define kReadoutTextColor	kMyDarkBlueColor
+#define kLabelTextColor			kWhiteColor
+#define kReadoutFrameColor		kMyBrownColor
+#define kReadoutBoxColor		kMyLightOrangeColor
+#define kReadoutTextColor		kMyDarkBlueColor
+#define kSliderBackgroundColor	kMyDarkBlueColor
+#define kSliderActiveColor		kMyYellowColor
+#define kSliderLabelTextColor	kMyDarkBlueColor
 
 
 //-----------------------------------------------------------------------------
@@ -299,11 +421,19 @@ enum {
 	kXinc = kChannelLabelWidth + 15,
 	kYinc = 33,
 
-	kBackgroundWidth = 151,
-	kBackgroundHeight = 156,
-
 	kButtonX = kValueDisplayX - 1,
 	kButtonY = kValueDisplayY + 1,
+
+	kSliderX = 15,
+	kSliderY = 159,
+	kSliderHeight = 11,
+	kSliderLabelOffsetX = 3,
+	kSliderLabelX = kSliderX + kSliderLabelOffsetX,
+	kSliderLabelY = kSliderY + kSliderHeight + 6,
+	kSliderLabelHeight = 13,
+
+	kBackgroundWidth = 151,
+	kBackgroundHeight = kSliderLabelY + 9 + kSliderLabelHeight,//156,
 };
 
 
@@ -311,7 +441,7 @@ enum {
 // static function prototypes
 static pascal OSStatus ControlEventHandler(EventHandlerCallRef, EventRef, void *inUserData);
 static pascal OSStatus WindowEventHandler(EventHandlerCallRef, EventRef, void *inUserData);
-static void TimeToUpdateListenerProc(void *inRefCon, void *inObject, const AudioUnitParameter*, Float32);
+static void ParameterListenerProc(void *inRefCon, void *inObject, const AudioUnitParameter*, Float32);
 
 
 //-----------------------------------------------------------------------------
@@ -336,7 +466,9 @@ RMSbuddyEditor::RMSbuddyEditor(AudioUnitCarbonView inInstance)
 	// initialize the controls pointers
 	resetRMSbutton = NULL;
 	resetPeakButton = NULL;
-
+	windowSizeSlider = NULL;
+	windowSizeLabel = NULL;
+	windowSizeDisplay = NULL;
 	// initialize the value display box pointers
 	averageRMSDisplays = NULL;
 	continualRMSDisplays = NULL;
@@ -392,6 +524,9 @@ RMSbuddyEditor::~RMSbuddyEditor()
 	SAFE_DELETE_CONTROL(continualRMSLabel)
 	SAFE_DELETE_CONTROL(absolutePeakLabel)
 	SAFE_DELETE_CONTROL(continualPeakLabel)
+	SAFE_DELETE_CONTROL(windowSizeSlider)
+	SAFE_DELETE_CONTROL(windowSizeLabel)
+	SAFE_DELETE_CONTROL(windowSizeDisplay)
 #undef SAFE_DELETE_CONTROL
 
 	// if we created and installe the parameter listener, remove and dispose it now
@@ -524,6 +659,19 @@ OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	}
 
 
+	// create the parameter listener
+	AUListenerCreate(ParameterListenerProc, this,
+		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.010f, // 10 ms
+		&parameterListener);
+
+	// install a parameter listener on the fake refresh-notification parameter
+	timeToUpdateAUP.mAudioUnit = GetEditAudioUnit();
+	timeToUpdateAUP.mScope = kAudioUnitScope_Global;
+	timeToUpdateAUP.mElement = 0;
+	timeToUpdateAUP.mParameterID = kTimeToUpdate;
+	AUListenerAddParameter(parameterListener, this, &timeToUpdateAUP);
+
+
 //--initialize the text displays---------------------------------------------
 
 	long xpos = kValueDisplayX;
@@ -621,17 +769,27 @@ OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	resetPeakButton = new RMSButton(this, kButtonX + (kXinc*numChannels), kButtonY + (kYinc*2), gResetButton);
 
 
-	// create the parameter listener
-	AUListenerCreate(TimeToUpdateListenerProc, this,
-		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.010f, // 10 ms
-		&parameterListener);
+//--initialize the slider-----------------------------------------------
 
-	// install a parameter listener on the fake refresh-notification parameter
-	timeToUpdateAUP.mAudioUnit = GetEditAudioUnit();
-	timeToUpdateAUP.mScope = kAudioUnitScope_Global;
-	timeToUpdateAUP.mElement = 0;
-	timeToUpdateAUP.mParameterID = kTimeToUpdate;
-	AUListenerAddParameter(parameterListener, this, &timeToUpdateAUP);
+	long sliderWidth = kBackgroundWidth + (kXinc*numChannels) - (kSliderX*2);
+	windowSizeSlider = new RMSSlider(this, kAnalysisFrameSize, kSliderX, kSliderY, sliderWidth, kSliderHeight, 
+										kSliderBackgroundColor, kSliderActiveColor);
+	updateWindowSize(windowSizeSlider->getAUVP()->GetValue());
+
+	sliderWidth -= kSliderLabelOffsetX * 2;
+	// the words "analysis window size"
+	long sliderLabelWidth = (2 * sliderWidth) / 3;
+	windowSizeLabel = new RMSTextDisplay(this, kSliderLabelX, kSliderLabelY, sliderLabelWidth, kSliderLabelHeight, 
+										kSliderLabelTextColor, kBackgroundColor, kBackgroundColor, 
+										SLIDER_LABEL_DISPLAY_FONT, SLIDER_LABEL_DISPLAY_FONT_SIZE, kTextAlign_left);
+	windowSizeLabel->setText("analysis window size");
+
+	// the analysis window size value read-out
+	long sliderDisplayWidth = sliderWidth - sliderLabelWidth;
+	windowSizeDisplay = new RMSTextDisplay(this, kSliderLabelX + sliderLabelWidth, kSliderLabelY, sliderDisplayWidth, kSliderLabelHeight, 
+										kSliderLabelTextColor, kBackgroundColor, kBackgroundColor, 
+										SLIDER_LABEL_DISPLAY_FONT, SLIDER_LABEL_DISPLAY_FONT_SIZE, kTextAlign_right, kAnalysisFrameSize);
+
 
 
 	// set size of the background embedding pane
@@ -681,14 +839,14 @@ bool RMSbuddyEditor::HandleEvent(EventRef inEvent)
 										(float)kBackgroundFrameColor.b/255.0f, 1.0f);
 			// Quartz draws lines on top of the pixel, so you need to move the coordinates to the middle of the pixel, 
 			// and then also shrink the size accordingly
-			CGRect box = CGRectMake(bounds.origin.x + 0.5f, bounds.origin.y + 0.5f, bounds.size.width - 1.0f, bounds.size.height - 1.0f);
+			CGRect box = CGRectInset(bounds, 0.5f,  0.5f);
 			CGContextSetLineWidth(context, 1.0f);
 			CGContextStrokeRect(context, box);
 			// draw a couple more lighter lines to fade the border
-			box = CGRectMake(box.origin.x + 1.0f, box.origin.y + 1.0f, box.size.width - 2.0f, box.size.height - 2.0f);
+			box = CGRectInset(box, 1.0f, 1.0f);
 			CGContextSetAlpha(context, 0.27f);
 			CGContextStrokeRect(context, box);
-			box = CGRectMake(box.origin.x + 1.0f, box.origin.y + 1.0f, box.size.width - 2.0f, box.size.height - 2.0f);
+			box = CGRectInset(box, 1.0f, 1.0f);
 			CGContextSetAlpha(context, 0.081f);
 			CGContextStrokeRect(context, box);
 
@@ -751,6 +909,11 @@ static pascal OSStatus WindowEventHandler(EventHandlerCallRef myHandler, EventRe
 	{
 		ourRMSControl->mouseUp(mouseX, mouseY);
 		ourOwnerEditor->setCurrentControl(NULL);
+
+		// do this to make Logic's touch automation work
+		if ( ourRMSControl->isParameterAttached() )
+			ourOwnerEditor->TellListener( *(ourRMSControl->getAUVP()), kAudioUnitCarbonViewEvent_MouseUpInControl, NULL );
+
 		return noErr;
 	}
 
@@ -841,6 +1004,13 @@ static pascal OSStatus ControlEventHandler(EventHandlerCallRef myHandler, EventR
 				mouseY -= controlBounds.top + globalBounds.top;
 
 				ourRMSControl->mouseDown(mouseX, mouseY);
+
+#if !USE_AUCVCONTROL
+				// do this to make Logic's touch automation work
+				if ( ourRMSControl->isParameterAttached() )
+					ourOwnerEditor->TellListener( *(ourRMSControl->getAUVP()), kAudioUnitCarbonViewEvent_MouseDownInControl, NULL );
+#endif
+
 				// indicate that this control is being moused (for our mouse tracking handler)
 				ourOwnerEditor->setCurrentControl(ourRMSControl);
 			}
@@ -858,10 +1028,23 @@ static pascal OSStatus ControlEventHandler(EventHandlerCallRef myHandler, EventR
 
 //-----------------------------------------------------------------------------
 // this gets called when the DSP component sends notification via the kTimeToUpdate parameter
-static void TimeToUpdateListenerProc(void *inRefCon, void *inObject, const AudioUnitParameter *inParameter, Float32 inValue)
+static void ParameterListenerProc(void *inRefCon, void *inObject, const AudioUnitParameter *inParameter, Float32 inValue)
 {
-	if (inObject != NULL)
-		((RMSbuddyEditor*)inObject)->updateDisplays();	// refresh the value displays
+	RMSbuddyEditor *bud = (RMSbuddyEditor*) inObject;
+	if ( (bud != NULL) && (inParameter != NULL) )
+	{
+		switch (inParameter->mParameterID)
+		{
+			case kAnalysisFrameSize:
+				bud->updateWindowSize(inValue);
+				break;
+			case kTimeToUpdate:
+				bud->updateDisplays();	// refresh the value displays
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -896,6 +1079,31 @@ void RMSbuddyEditor::updateDisplays()
 }
 
 //-----------------------------------------------------------------------------
+// update analysis window size parameter controls
+void RMSbuddyEditor::updateWindowSize(Float32 inParamValue)
+{
+	if (windowSizeSlider != NULL)
+	{
+		float fmin = windowSizeSlider->getAUVP()->ParamInfo().minValue;
+		float fmax = windowSizeSlider->getAUVP()->ParamInfo().maxValue;
+		float valueNorm = (inParamValue - fmin) / (fmax - fmin);
+		valueNorm = (float) sqrt(valueNorm);
+
+		ControlRef carbonControl = windowSizeSlider->getCarbonControl();
+		SInt32 cmin = GetControl32BitMinimum(carbonControl);
+		SInt32 cmax = GetControl32BitMaximum(carbonControl);
+		SInt32 cval = (SInt32) (valueNorm * (float)((cmax - cmin) + cmin) + 0.5f);
+		SetControl32BitValue(carbonControl, cval);
+
+//		if (windowSizeDisplay != NULL)
+//			SetControl32BitValue(windowSizeDisplay->getCarbonControl(), cval);
+	}
+
+	if (windowSizeDisplay != NULL)
+		Draw1Control(windowSizeDisplay->getCarbonControl());
+}
+
+//-----------------------------------------------------------------------------
 // send a message to the DSP component to reset average RMS
 void RMSbuddyEditor::resetRMS()
 {
@@ -912,25 +1120,41 @@ void RMSbuddyEditor::resetPeak()
 }
 
 //-----------------------------------------------------------------------------
-void RMSbuddyEditor::handleControlValueChange(RMSControl *inControl, SInt32 inValue)
+void RMSbuddyEditor::handleControlValueChange(RMSControl *inControl, SInt32 inControlValue)
 {
 	if (inControl == NULL)
 		return;
 
 	// if the button was pressed, the value will be 1 (it's 0 when the button is released)
-	if (inValue > 0)
+	if (inControl == resetRMSbutton)
 	{
-		if (inControl == resetRMSbutton)
+		if (inControlValue > 0)
 		{
 			resetRMS();
 			updateDisplays();
 		}
+	}
 
-		else if (inControl == resetPeakButton)
+	else if (inControl == resetPeakButton)
+	{
+		if (inControlValue > 0)
 		{
 			resetPeak();
 			updateDisplays();
 		}
+	}
+
+	else if (inControl == windowSizeSlider)
+	{
+		ControlRef carbonControl = windowSizeSlider->getCarbonControl();
+		SInt32 cmin = GetControl32BitMinimum(carbonControl);
+		SInt32 cmax = GetControl32BitMaximum(carbonControl);
+		Float32 controlValue = (Float32)(inControlValue - cmin) / (Float32)(cmax - cmin);
+
+		Float32 fmin = windowSizeSlider->getAUVP()->ParamInfo().minValue;
+		Float32 fmax = windowSizeSlider->getAUVP()->ParamInfo().maxValue;
+		Float32 paramValue = ( controlValue*controlValue * (fmax - fmin) ) + fmin;
+		windowSizeSlider->getAUVP()->SetValue(parameterListener, windowSizeSlider, paramValue);	// XXX what should the 2nd argument be?
 	}
 }
 
@@ -966,6 +1190,9 @@ RMSControl * RMSbuddyEditor::getRMSControl(ControlRef inCarbonControl)
 	CHECK_RMS_CONTROL(continualRMSLabel)
 	CHECK_RMS_CONTROL(absolutePeakLabel)
 	CHECK_RMS_CONTROL(continualPeakLabel)
+	CHECK_RMS_CONTROL(windowSizeSlider)
+	CHECK_RMS_CONTROL(windowSizeLabel)
+	CHECK_RMS_CONTROL(windowSizeDisplay)
 
 #undef CHECK_RMS_CONTROL
 
