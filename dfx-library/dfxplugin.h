@@ -567,8 +567,8 @@ public:
 		// save() and restore() respectively
 		// the data pointers point to the start of the extended data 
 		// sections of the settings data
-		virtual void settings_saveExtendedData(void *data, bool isPreset) {}
-		virtual void settings_restoreExtendedData(void *data, unsigned long storedExtendedDataSize, 
+		virtual void settings_saveExtendedData(void *outData, bool isPreset) {}
+		virtual void settings_restoreExtendedData(void *inData, unsigned long storedExtendedDataSize, 
 											long dataVersion, bool isPreset) {}
 		//
 		// this can be overridden to react when parameter values are 
