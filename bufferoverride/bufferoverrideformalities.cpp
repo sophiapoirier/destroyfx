@@ -157,40 +157,13 @@ bool BufferOverride::createbuffers()
 //printf("\n(pre) sr = %.0f, super_max_buffer = %ld, numBuffers = %ld\n", getsamplerate(), SUPER_MAX_BUFFER, numBuffers);
 	long oldmax = SUPER_MAX_BUFFER;
 	SUPER_MAX_BUFFER = (long) ((getsamplerate() / MIN_ALLOWABLE_BPS) * 4.0);
-
-	// if the sampling rate (& therefore the max buffer size) has changed, 
-	// then delete & reallocate the buffers according to the sampling rate
-	if ( (SUPER_MAX_BUFFER != oldmax) || (numBuffers != getnumoutputs()) )
-		releasebuffers();
-
+	unsigned long oldnum = numBuffers;
 	numBuffers = getnumoutputs();
-	if (numBuffers <= 0)
-		return false;	// XXX false?
 
-	if (buffers == NULL)
-	{
-		buffers = (float**) malloc(numBuffers * sizeof(float*));
-		// out of memory or something
-		if (buffers == NULL)
-			return false;
-		for (unsigned long i=0; i < numBuffers; i++)
-			buffers[i] = NULL;
-	}
-	for (unsigned long i=0; i < numBuffers; i++)
-	{
-		if (buffers[i] == NULL)
-			buffers[i] = (float*) malloc(SUPER_MAX_BUFFER * sizeof(float));
-	}
-	if (outval == NULL)
-		outval = (float*) malloc(numBuffers * sizeof(float));
+	bool result1 = createbufferarray_f(&buffers, oldnum, oldmax, numBuffers, SUPER_MAX_BUFFER);
+	bool result2 = createbuffer_f(&outval, oldnum, numBuffers);
 
-	// check if allocations were successful
-	for (unsigned long i=0; i < numBuffers; i++)
-	{
-		if (buffers[i] == NULL)
-			return false;
-	}
-	if (outval == NULL)
+	if (!result1 || !result2)
 		return false;
 
 //printf("(post) sr = %.0f, super_max_buffer = %ld, numBuffers = %ld\n\n", getsamplerate(), SUPER_MAX_BUFFER, numBuffers);
@@ -201,21 +174,8 @@ bool BufferOverride::createbuffers()
 //-------------------------------------------------------------------------
 void BufferOverride::releasebuffers()
 {
-	if (buffers != NULL)
-	{
-		for (unsigned long i=0; i < numBuffers; i++)
-		{
-			if (buffers[i] != NULL)
-				free(buffers[i]);
-			buffers[i] = NULL;
-		}
-		free(buffers);
-	}
-	buffers = NULL;
-
-	if (outval != NULL)
-		free(outval);
-	outval = NULL;
+	releasebufferarray_f(&buffers, numBuffers);
+	releasebuffer_f(&outval);
 
 	numBuffers = 0;
 }

@@ -151,40 +151,29 @@ printf("calling TransverbDSP::createbuffers()\n");
   long oldmax = MAXBUF;
   MAXBUF = (int) (BUFFER_MAX * 0.001f * getsamplerate());
 
-  // if the sampling rate (& therefore the max buffer size) has changed, 
-  // then delete & reallocate the buffers according to the sampling rate
-  if (MAXBUF != oldmax)
-    releasebuffers();
-  if (!buf1)
-    buf1 = (float*)malloc(MAXBUF * sizeof (float));
-  if (!buf2)
-    buf2 = (float*)malloc(MAXBUF * sizeof (float));
+  bool result1 = createbuffer_f(&buf1, oldmax, MAXBUF);
+  bool result2 = createbuffer_f(&buf2, oldmax, MAXBUF);
 
-  if (buf1 && buf2)
-    return true;
-  else
+  if (!result1 && !result2)
     return false;
+
+  return true;
 }
 
 void TransverbDSP::clearbuffers() {
 #if PRINT_FUNCTION_ALERTS
 printf("calling TransverbDSP::clearbuffers()\n");
 #endif
-  if ( (buf1 != NULL) && (buf2 != NULL) ) {
-    for (int i=0; i < MAXBUF; i++) buf1[i] = buf2[i] = 0.0f;
-  }
+  clearbuffer_f(buf1, MAXBUF);
+  clearbuffer_f(buf2, MAXBUF);
 }
 
 void TransverbDSP::releasebuffers() {
 #if PRINT_FUNCTION_ALERTS
 printf("calling TransverbDSP::releasebuffers()\n");
 #endif
-  if (buf1)
-    free(buf1);
-  buf1 = 0;
-  if (buf2)
-    free(buf2);
-  buf2 = 0;
+  releasebuffer_f(&buf1);
+  releasebuffer_f(&buf2);
 }
 
 
