@@ -29,7 +29,7 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 		}
 	}
 
-	// mix very quiet noise (-300 dB) into the input singal to hopefully avoid any denormal values
+	// mix very quiet noise (-300 dB) into the input signal to hopefully avoid any denormal values
 	float quietNoise = 1.0e-15f;
 	for (ch=0; ch < numChannels; ch++)
 	{
