@@ -15,11 +15,11 @@ const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = {
 };
 
 
-
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  FPARAM(bufsizep, 0, "", 0.5, "samples");
+  FPARAM(bufsizep, 0, "wsize", 0.5, "samples");
+  FPARAM(shape, 1, "shape", 0.0, "");
 
   long maxframe = 0;
   for (long i=0; i<BUFFERSIZESSIZE; i++)
@@ -27,14 +27,13 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   int maxbufsize = (maxframe / 2) * 3;
   setup();
 
-  /* XXX. I think in0 can be framesize. out0 needs to be bufsize though. */
-  in0 = (float*)malloc(maxbufsize * sizeof (float));
+  in0 = (float*)malloc(maxframe * sizeof (float));
   out0 = (float*)malloc(maxbufsize * sizeof (float));
 
   /* prevmix is only a single third long */
   prevmix = (float*)malloc(maxframe / 2 * sizeof (float));
 
-  /* resume sets up buffers */
+  /* resume sets up buffers and sizes */
   resume ();
 }
 
@@ -125,12 +124,31 @@ void PLUGIN::getParameterLabel(long index, char *label) {
   }
 }
 
+/* this is where you should write your real processing
+   function. It will be called on overlapping input frames,
+   but it doesn't need to know about that.
+
+   Keep in mind that, for instance, a delay-like plug
+   that keeps a history of samples it's seen will not work
+   right here, since processw does not receive adjacent
+   frames. It might be possible to use two delay buffers,
+   toggling between them with each call, but it's probably
+   best to just use the windowing setup for functions that
+   operate entirely within one buffer.
+*/
 void PLUGIN::processw(float * in, float * out, long samples) {
 
   static int ss;
   static int t;
   ss = !ss;
 
+#if 1
+  for (int i =0 ; i < samples; i++) out[i] = (float)ss;
+
+#else
+
+#if 1
+  /* test with sine tones */
   if (ss) {
     for(int i = 0; i < samples; i ++) {
       t++;
@@ -142,21 +160,48 @@ void PLUGIN::processw(float * in, float * out, long samples) {
       out[i] = sin(t/37.0);
     }
   }
+#else
 
+  /* reverse */
+
+  for(int i = 0; i < samples; i ++) out[i] = in[samples - (i + 1)];
+#endif
+#endif
 }
 
 
-/* this fake processX function reads samples (logically) one at a time
-   from the true input until the input buffer is full. Then it:
+/* this fake processX function reads samples one at a time
+   from the true input. It simultaneously copies samples from
+   the beginning of the output buffer to the true output.
+   We maintain that out0 always has at least 'third' samples
+   in it; this is enough to pick up for the delay of input
+   processing and to make sure we always have enough samples
+   to fill the true output buffer.
+
+   If the input frame is full:
     - calls wprocess on this full input frame
-    - applies the windowing envelope to the output frame
+    - applies the windowing envelope to the tail of out0 (output frame)
     - mixes in prevmix with the first half of the output frame
-    - copies this first half to the output buffer
-    - copies the second half to be prevmix
-    - copies from the outbuffer to the true output
+    - increases outsize so that the first half of the output frame is
+      now available output
+    - copies the second half of the output to be prevmix for next frame.
     - copies the second half of the input buffer to the first,
-    - continues until all input samples have been read.
+      resets the size (thus we process each third-size chunk twice)
+
+  If we have read more than 'third' samples out of the out0 buffer:
+   - Slide contents to beginning of buffer
+   - Reset outstart
+
 */
+
+/* to improve: 
+   - use memcpy and arithmetic instead of
+     sample-by-sample copy 
+   - can we use tail of out0 as prevmix, instead of copying?
+   - can we use circular buffers instead of memmoving a lot
+     (probably not)
+*/
+
 void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples, 
 		      int replacing) {
   float * tin  = *trueinputs;
@@ -175,9 +220,24 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
       processw(in0, out0+outstart+outsize, framesize);
 
       /* apply envelope */
-      for(int z = 0; z < third; z++) {
-	out0[z+outstart+outsize] *= (z / (float)third);
-	out0[z+outstart+outsize+third] *= (1.0 - (z / (float)third));
+
+      if (shape < 0.33) {
+	for(int z = 0; z < third; z++) {
+	  float p = sqrt(z / (float)third);
+	  out0[z+outstart+outsize] *= p;
+	  out0[z+outstart+outsize+third] *= (1.0 - p);
+	}
+      } else if (shape < 0.66) {
+	for(int z = 0; z < third; z++) {
+	  float p = z / (float)third;
+	  out0[z+outstart+outsize] *= (p*p);
+	  out0[z+outstart+outsize+third] *= (1.0 - (p*p));
+	}
+      } else {
+	for(int z = 0; z < third; z++) {
+	  out0[z+outstart+outsize] *= (z / (float)third);
+	  out0[z+outstart+outsize+third] *= (1.0 - (z / (float)third));
+	}
       }
 
       /* mix in prevmix */
@@ -187,7 +247,7 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
       /* prevmix becomes out1 */
       memcpy(prevmix, out0 + outstart + outsize + third, third * sizeof (float));
 
-      /* XXX destroy old out1 - debug. */
+      /* XXX destroy old out1 - debug only. */
       for(int q = 0; q < third; q ++)
 	out0[outstart+outsize+third+q] = rand();
 
@@ -212,11 +272,7 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
       memmove(out0, out0 + outstart, outsize * sizeof (float));
       outstart = 0;
     }
-
-
   }
-
-
 }
 
 void PLUGIN::processReplacing(float **inputs, float **outputs, long samples) {
