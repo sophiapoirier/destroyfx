@@ -239,6 +239,9 @@ DGGraphic * DfxGuiEditor::getImageByID(UInt32 inID)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::addControl(DGControl *inControl)
 {
+	if (inControl == NULL)
+		return;
+
 	inControl->setID( requestItemID() );
 
 	if (inControl->getDaddy() == NULL)

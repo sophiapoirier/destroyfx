@@ -802,7 +802,6 @@ OSStatus RMSbuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 //-----------------------------------------------------------------------------
 bool RMSbuddyEditor::HandleEvent(EventRef inEvent)
 {
-	// catch any clicks on the embedding pane in order to clear focus
 	if ( (GetEventClass(inEvent) == kEventClassControl) && (GetEventKind(inEvent) == kEventControlDraw) )
 	{
 		ControlRef carbonControl;
