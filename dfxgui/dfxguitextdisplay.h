@@ -30,7 +30,7 @@ public:
 					DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGTextDisplay();
 
-	virtual void draw(CGContextRef context, long portHeight);
+	virtual void draw(CGContextRef inContext, long inPortHeight);
 	void drawText(DGRect * inRegion, const char * inText, CGContextRef inContext, long inPortHeight);
 
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers);
@@ -73,7 +73,7 @@ public:
 						DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
-	virtual void draw(CGContextRef context, long portHeight);
+	virtual void draw(CGContextRef inContext, long inPortHeight);
 
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 		{ }
@@ -86,6 +86,33 @@ public:
 
 protected:
 	char * displayString;
+};
+
+
+//-----------------------------------------------------------------------------
+class DGTextArrayDisplay : public DGTextDisplay
+{
+public:
+	DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, long inNumStrings, 
+						DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, DGImage * inBackground = NULL, 
+						float inFontSize = 12.0f, DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
+	virtual ~DGTextArrayDisplay();
+	virtual void post_embed();
+
+	virtual void draw(CGContextRef inContext, long inPortHeight);
+
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+		{ }
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+		{ }
+	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+		{ }
+
+	void setText(long inStringNum, const char * inNewText);
+
+protected:
+	long numStrings;
+	char ** displayStrings;
 };
 
 
