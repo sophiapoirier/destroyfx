@@ -12,15 +12,8 @@
 LPDIRECTDRAW dd;
 
 
-
 extern HINSTANCE instance;
 int useCount = 0;
-HWND CreateFader (HWND parent, char* title, 
-		  int x, int y, int w, int h, 
-		  int min, int max);
-
-LONG WINAPI WindowProc (HWND hwnd, UINT message, 
-			WPARAM wParam, LPARAM lParam);
 
 GuitestEditor::GuitestEditor (AudioEffect *effect) : AEffEditor (effect) {
   effect->setEditor (this);
@@ -40,6 +33,11 @@ long GuitestEditor::open (void *ptr) {
 
   // Remember the parent window
   systemWindow = ptr;
+
+  guitx = guity = 5;
+  guitdy = 2;
+  guitdx = 3;
+
   // Create window class, if we are called the first time
   useCount++;
   if (useCount == 1) {
@@ -62,6 +60,8 @@ long GuitestEditor::open (void *ptr) {
 			      0, 0, EDIT_HEIGHT, EDIT_WIDTH,
 			      (HWND)systemWindow, NULL, instance, NULL);
 
+  window = hwnd;
+
   /* store this pointer with window so that callback can
      dispatch to appropriate class instance. */
   SetWindowLong (hwnd, GWL_USERDATA, (long)this);
@@ -75,45 +75,71 @@ long GuitestEditor::open (void *ptr) {
   ddrval = dd->SetCooperativeLevel( hwnd, DDSCL_NORMAL );
 
   if( ddrval != DD_OK ) {
-
     dd->Release();
-
     return(false);
-
   }
 
-  if (!CreatePrimarySurface()) return false;
-
-  return true;
-}
-
-bool GuitestEditor::CreatePrimarySurface() {
   DDSURFACEDESC ddsd;
-  DDSCAPS ddscaps;
-  HRESULT ddrval;
+  LPDIRECTDRAWCLIPPER clipper;
 
-  // Create the primary surface with 1 back buffer
   memset( &ddsd, 0, sizeof(ddsd) );
   ddsd.dwSize = sizeof( ddsd );
-
-  ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
-  ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
-  ddsd.dwBackBufferCount = 1;
-
+  ddsd.dwFlags = DDSD_CAPS;
+  ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+                
+  /* create primary surface */
   ddrval = dd->CreateSurface( &ddsd, &primary, NULL );
   if( ddrval != DD_OK ) {
     dd->Release();
     return(false);
   }
-
-  // Get the pointer to the back buffer
-  ddscaps.dwCaps = DDSCAPS_BACKBUFFER;
-  ddrval = primary->GetAttachedSurface(&ddscaps, &back);
+                
+  /* Create a clipper to ensure that our drawing stays inside our window */
+  ddrval = dd->CreateClipper( 0, &clipper, NULL );
   if( ddrval != DD_OK ) {
     primary->Release();
     dd->Release();
     return(false);
   }
+                
+  /* setting it to our hwnd gives the clipper the coordinates from our window */
+  ddrval = clipper->SetHWnd( 0, hwnd );
+  if( ddrval != DD_OK ) {
+    clipper->Release();
+    primary->Release();
+    dd->Release();
+    return(false);
+  }
+
+  /* attach the clipper to the primary surface */
+  ddrval = primary->SetClipper( clipper );
+  if( ddrval != DD_OK ) {
+    clipper->Release();
+    primary->Release();
+    dd->Release();
+    return(false);
+  }
+
+  memset( &ddsd, 0, sizeof(ddsd) );
+  ddsd.dwSize = sizeof( ddsd );
+  ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+  ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+  ddsd.dwWidth = EDIT_WIDTH;
+  ddsd.dwHeight = EDIT_HEIGHT;
+
+  // create the backbuffer separately
+  ddrval = dd->CreateSurface( &ddsd, &back, NULL );
+  if( ddrval != DD_OK ) {
+    clipper->Release();
+    primary->Release();
+    dd->Release();
+    return(false);
+  }
+
+  bg = DDLoadBitmap(dd, "c:\\temp\\poo.bmp");
+  guit = DDLoadBitmap(dd, "c:\\temp\\guit.bmp");
+
+  redraw();
 
   return true;
 }
@@ -139,16 +165,14 @@ IDirectDrawSurface * GuitestEditor::DDLoadBitmap(IDirectDraw *pdd, LPCSTR file) 
   */
                 
   pdds = CreateOffScreenSurface(pdd, bm.bmWidth, bm.bmHeight);
-  if (pdds) {
-    DDCopyBitmap(pdds, hbm, bm.bmWidth, bm.bmHeight);
-  }
+  if (pdds) DDCopyBitmap(pdds, hbm, bm.bmWidth, bm.bmHeight);
                 
   DeleteObject(hbm);
                 
   return pdds;
 }
 
-IDirectDrawSurface * CreateOffScreenSurface(IDirectDraw *pdd, int dx, int dy) {
+IDirectDrawSurface * GuitestEditor::CreateOffScreenSurface(IDirectDraw *pdd, int dx, int dy) {
   DDSURFACEDESC ddsd;
   IDirectDrawSurface *pdds;
                 
@@ -165,7 +189,7 @@ IDirectDrawSurface * CreateOffScreenSurface(IDirectDraw *pdd, int dx, int dy) {
 
 }
 
-HRESULT DDCopyBitmap(IDirectDrawSurface *pdds, HBITMAP hbm, int dx, int dy) {
+HRESULT GuitestEditor::DDCopyBitmap(IDirectDrawSurface *pdds, HBITMAP hbm, int dx, int dy) {
   HDC hdcImage;
   HDC hdc;
   HRESULT hr;
@@ -190,6 +214,8 @@ HRESULT DDCopyBitmap(IDirectDrawSurface *pdds, HBITMAP hbm, int dx, int dy) {
 }
 
 void GuitestEditor::close () {
+  /* FIXME destroy dd surfaces, etc. */
+
   useCount--;
   if (useCount == 0) {
     UnregisterClass (WINDOWCLASSNAME, instance);
@@ -198,6 +224,8 @@ void GuitestEditor::close () {
 
 
 void GuitestEditor::idle () {
+  redraw();
+
   AEffEditor::idle ();
 }
 
@@ -229,22 +257,66 @@ void GuitestEditor::postUpdate() {
   AEffEditor::postUpdate ();
 }
 
+void GuitestEditor::redraw() {
+  RECT src;
+  RECT dest;
+  POINT p;
 
-LONG WINAPI WindowProc (HWND hwnd, UINT message, WPARAM wParam, 
-			LPARAM lParam) {
-#if 0
+  RECT rect;
+
+  // Blit the stuff for the next frame
+  SetRect(&rect, 0, 0, EDIT_HEIGHT, EDIT_WIDTH);
+
+  // The parameter lpDDSOne is a hypothetical surface with this
+  // background bitmap loaded. LpDDSBack is our backbuffer.
+  back->BltFast( 0, 0, bg, &rect,
+		 DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+
+  SetRect(&rect, 0, 0, 150, 150);
+
+  back->BltFast( guitx, guity, guit, &rect, 
+		 DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+
+  guitx += guitdx; guity += guitdy;
+
+  if (guitx > (EDIT_WIDTH - 160)) { guitx = (EDIT_WIDTH - 160); guitdx = -guitdx; }
+  if (guity > (EDIT_HEIGHT - 160)) { guity = (EDIT_WIDTH - 160); guitdy = -guitdy; }
+  if (guitx <= 0) { guitx = 0; guitdx = -guitdx; }
+  if (guity <= 0) { guity = 0; guitdy = -guitdy; }
+
+
+  /* copy backbuffer to primary, all at once */
+  p.x = 0; p.y = 0;
+  ClientToScreen(window, &p);
+  GetClientRect(window, &dest);
+  OffsetRect(&dest, p.x, p.y);
+  SetRect(&src, 0, 0, EDIT_WIDTH, EDIT_HEIGHT);
+  primary->Blt( &dest, back, &src, DDBLT_WAIT, NULL);
+}
+
+LONG WINAPI GuitestEditor::WindowProc (HWND hwnd, UINT message, WPARAM wParam, 
+				       LPARAM lParam) {
+  GuitestEditor * editor = 
+    (GuitestEditor *)GetWindowLong (hwnd, GWL_USERDATA);
+
   switch (message) {
-    case WM_VSCROLL: {
+  case WM_PAINT: {
+    editor->redraw();
+  }
+#if 0
+  case WM_VSCROLL: {
 
-	int newValue = SendMessage ((HWND)lParam, TBM_GETPOS, 0, 0);
-	GuitestEditor* editor = 
-	  (GuitestEditor*)GetWindowLong (hwnd, GWL_USERDATA);
-	if (editor)
-	  editor->setValue ((void*)lParam, newValue);
-      }
-      break;
-    }
+    int newValue = SendMessage ((HWND)lParam, TBM_GETPOS, 0, 0);
+    GuitestEditor* editor = 
+      (GuitestEditor*)GetWindowLong (hwnd, GWL_USERDATA);
+    if (editor)
+      editor->setValue ((void*)lParam, newValue);
+  }
+    break;
 #endif
-  return DefWindowProc (hwnd, message, wParam, lParam);
+  default:
+    return DefWindowProc (hwnd, message, wParam, lParam);
+  }
+  return true;
 }
 

@@ -29,6 +29,18 @@ struct GuitestEditor : public AEffEditor {
   bool CreatePrimarySurface();
 
   static IDirectDrawSurface * DDLoadBitmap(IDirectDraw *pdd, LPCSTR szBitmap);
+  static IDirectDrawSurface * CreateOffScreenSurface(IDirectDraw *pdd, int dx, int dy);
+  static HRESULT DDCopyBitmap(IDirectDrawSurface *pdds, HBITMAP hbm, int dx, int dy);
+
+  static LONG WINAPI WindowProc (HWND hwnd, UINT message, WPARAM wParam, 
+				 LPARAM lParam);
+
+  void redraw();
+
+  HWND window;
+  IDirectDrawSurface * bg, * guit;
+
+  int guitx, guity, guitdy, guitdx;
 
   public:
   void setValue(void* fader, int value);
