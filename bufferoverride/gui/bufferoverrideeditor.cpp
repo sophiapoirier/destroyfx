@@ -1,8 +1,8 @@
-#ifndef __bufferoverrideeditor
+#ifndef __BUFFEROVERRIDEEDITOR_H
 #include "bufferoverrideeditor.hpp"
 #endif
 
-#ifndef __bufferoverride
+#ifndef __BUFFEROVERRIDE_H
 #include "bufferoverride.hpp"
 #endif
 
@@ -262,7 +262,7 @@ void helpDisplayConvert(float value, char *string, void *mouseoverparam)
 		case kDivisor:
 			sprintf(string, "buffer divisor is the number of times each forced buffer skips & starts over");
 			break;
-		case kBuffer:
+		case kBufferSize:
 			sprintf(string, "forced buffer size is the length of the sound chunks that Buffer Override works with");
 			break;
 		case kBufferDivisorHelpTag:
@@ -428,7 +428,7 @@ BufferOverrideEditor::BufferOverrideEditor(AudioEffect *effect)
 	for (long i=0; i < NUM_PARAMETERS; i++)
 		faders[i] = NULL;
 
-	chunk = ((BufferOverride*)effect)->chunk;	// this just simplifies pointing
+	chunk = ((DfxPlugin*)effect)->getsettings_ptr();	// this just simplifies pointing
 }
 
 //-----------------------------------------------------------------------------
@@ -549,14 +549,14 @@ long BufferOverrideEditor::open(void *ptr)
 	int maxYPos = kDivisorBufferBoxY + kDivisorBufferBoxHeight - gXYboxHandle->getHeight();
 	size (kDivisorBufferBoxX, kDivisorBufferBoxY, kDivisorBufferBoxX + kDivisorBufferBoxWidth, kDivisorBufferBoxY + kDivisorBufferBoxHeight);
 	offset (size.left, size.top);
-	divisorBufferBox = new XYbox (size, this, kDivisor, kBuffer, minXPos, maxXPos, 
+	divisorBufferBox = new XYbox (size, this, kDivisor, kBufferSize, minXPos, maxXPos, 
 						minYPos, maxYPos, gXYboxHandle, gBackground, offset, kLeft, kBottom);
-//	divisorBufferBox = new XYbox (size, this, kBuffer, kDivisor, minXPos, maxXPos, 
+//	divisorBufferBox = new XYbox (size, this, kBufferSize, kDivisor, minXPos, maxXPos, 
 //						minYPos, maxYPos, gXYboxHandle, gXYbox, offset, kRight, kBottom);
 	divisorBufferBox->setValueTagged(kDivisor, effect->getParameter(kDivisor));
-	divisorBufferBox->setValueTagged(kBuffer, effect->getParameter(kBuffer));
+	divisorBufferBox->setValueTagged(kBufferSize, effect->getParameter(kBufferSize));
 	divisorBufferBox->setDefaultValueTagged(kDivisor, 0.0f);
-	divisorBufferBox->setDefaultValueTagged(kBuffer, forcedBufferSizeUnscaled(33.3f));
+	divisorBufferBox->setDefaultValueTagged(kBufferSize, forcedBufferSizeUnscaled(33.3f));
 	frame->addView(divisorBufferBox);
 
 	// tempo (in bpm)
@@ -730,7 +730,7 @@ long BufferOverrideEditor::open(void *ptr)
 
 	//--initialize the displays---------------------------------------------
 
-	strcpy( bufferTempoRateString, ((BufferOverride*)effect)->tempoRateTable->getDisplay(effect->getParameter(kBuffer)) );
+	strcpy( bufferTempoRateString, ((BufferOverride*)effect)->tempoRateTable->getDisplay(effect->getParameter(kBufferSize)) );
 	strcpy( divisorLFOtempoRateString, ((BufferOverride*)effect)->tempoRateTable->getDisplay(effect->getParameter(kDivisorLFOrate)) );
 	strcpy( bufferLFOtempoRateString, ((BufferOverride*)effect)->tempoRateTable->getDisplay(effect->getParameter(kBufferLFOrate)) );
 
@@ -751,15 +751,15 @@ long BufferOverrideEditor::open(void *ptr)
 	// forced buffer size
 	size (kBufferDisplayX, kBufferDisplayY, kBufferDisplayX + kDisplayWidth, kBufferDisplayY + kDisplayHeight);
 //	bufferDisplay = new CParamDisplay (size, gBackground);
-	bufferDisplay = new CNumberBox(size, this, kBuffer, gBackground);
+	bufferDisplay = new CNumberBox(size, this, kBufferSize, gBackground);
 	offset (size.left, size.top);
 	bufferDisplay->setBackOffset(offset);
 	bufferDisplay->setHoriAlign(kCenterText);
 	bufferDisplay->setFont(kRegularTextSize);
 	bufferDisplay->setFontColor(kWhiteCColor);
-	bufferDisplay->setValue(effect->getParameter(kBuffer));
+	bufferDisplay->setValue(effect->getParameter(kBufferSize));
 	bufferDisplay->setStringConvert(bufferDisplayConvert, bufferTempoRateString);
-//	bufferDisplay->setTag(kBuffer);
+//	bufferDisplay->setTag(kBufferSize);
 	frame->addView(bufferDisplay);
 
 	// tempo (in bpm)   (editable)
@@ -1011,18 +1011,18 @@ void BufferOverrideEditor::setParameter(long index, float value)
 				divisorDisplay->setValue(effect->getParameter(kDivisor));
 			break;
 
-		case kBuffer:
+		case kBufferSize:
 			theBufferTempoSync = effect->getParameter(kBufferTempoSync);
-			strcpy( bufferTempoRateString, ((BufferOverride*)effect)->tempoRateTable->getDisplay(effect->getParameter(kBuffer)) );
+			strcpy( bufferTempoRateString, ((BufferOverride*)effect)->tempoRateTable->getDisplay(effect->getParameter(kBufferSize)) );
 			if (divisorBufferBox)
-				divisorBufferBox->setValueTagged(kBuffer, effect->getParameter(kBuffer));
+				divisorBufferBox->setValueTagged(kBufferSize, effect->getParameter(kBufferSize));
 			if (bufferDisplay)
-				bufferDisplay->setValue(effect->getParameter(kBuffer));
+				bufferDisplay->setValue(effect->getParameter(kBufferSize));
 			break;
 
 		case kBufferTempoSync:
 			theBufferTempoSync = effect->getParameter(kBufferTempoSync);
-			strcpy( bufferTempoRateString, ((BufferOverride*)effect)->tempoRateTable->getDisplay(effect->getParameter(kBuffer)) );
+			strcpy( bufferTempoRateString, ((BufferOverride*)effect)->tempoRateTable->getDisplay(effect->getParameter(kBufferSize)) );
 			if (bufferTempoSyncButton)
 				bufferTempoSyncButton->setValue(value);
 			if (bufferTempoSyncButtonCorner)
@@ -1221,11 +1221,11 @@ void BufferOverrideEditor::valueChanged(CDrawContext* context, CControl* control
 
 
 		case kDivisor:
-		case kBuffer:
+		case kBufferSize:
 			if (control == divisorBufferBox)
 			{
 				effect->setParameterAutomated(kDivisor, divisorBufferBox->getValueTagged(kDivisor));
-				effect->setParameterAutomated(kBuffer, divisorBufferBox->getValueTagged(kBuffer));
+				effect->setParameterAutomated(kBufferSize, divisorBufferBox->getValueTagged(kBufferSize));
 			}
 			else
 			{
@@ -1241,7 +1241,7 @@ void BufferOverrideEditor::valueChanged(CDrawContext* context, CControl* control
 							divisorBufferBox->setHandle(gGlowingDivisorHandle);
 							divisorBufferBox->setDirty();
 						}
-						else if ( (tag == kBuffer) && 
+						else if ( (tag == kBufferSize) && 
 							(divisorBufferBox->getHandle() != gGlowingBufferHandle) )
 						{
 							divisorBufferBox->setHandle(gGlowingBufferHandle);
@@ -1360,7 +1360,7 @@ void BufferOverrideEditor::idle()
 					{
 						if (chunk->getLearner() == kDivisor)
 						{
-							chunk->setLearner(kBuffer);
+							chunk->setLearner(kBufferSize);
 							if (divisorBufferBox->getHandle() != gGlowingBufferHandle)
 							{
 								divisorBufferBox->setHandle(gGlowingBufferHandle);
@@ -1405,7 +1405,7 @@ void BufferOverrideEditor::idle()
 				}
 			}			
 		}
-		if ( (chunk->getLearner() != kDivisor) && (chunk->getLearner() != kBuffer) )
+		if ( (chunk->getLearner() != kDivisor) && (chunk->getLearner() != kBufferSize) )
 		{
 			if (divisorBufferBox)
 			{
