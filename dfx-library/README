@@ -1,4 +1,8 @@
 
+   ** Wow! We need to make this file up-to-date because it
+      is so confusing to you, our poor reader! **
+
+
 This is the DFX library, a collection of useful routines for
 writing VST plugins. It also includes several new controls for
 VSTGUI.  Our base library code is comprised of the dfxplugin 
