@@ -114,14 +114,11 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   chunk->setAllowPitchbendEvents(true);
   chunk->setAllowNoteEvents(true);
 
-  /* resume sets up buffers and sizes */
-  changed = 1;
-  
+  changed = 0;
+
   cs = new dfxmutex();
 
   editor = new GeometerEditor(this);
-
-  resume ();
 }
 
 PLUGIN::~PLUGIN() {
@@ -143,10 +140,6 @@ PLUGIN::~PLUGIN() {
 }
 
 void PLUGIN::resume() {
-  /* XXX - I moved ioChanged to be called whenever the param is changed.
-     Do I still need it here?
-  */
-  //  if (changed) ioChanged();
 
   framesize = MKBUFSIZE(bufsizep);
   third = framesize / 2;
@@ -168,9 +161,9 @@ void PLUGIN::resume() {
   outstart = 0;
   outsize = framesize;
 
-  if (changed) setInitialDelay(framesize);
-
+  setInitialDelay(framesize);
   changed = 0;
+  needIdle();
 
   /* tell the host that we like to get MIDI */
   wantEvents(); 
@@ -181,6 +174,16 @@ void PLUGIN::suspend () {
 
 }
 
+long PLUGIN::fxIdle() {
+  /* ioChanged() causes resume() to be called and 
+     changed to initialDelay are updated for the host */
+  if (changed)
+    ioChanged();
+  changed = 0;
+
+  return 1;
+}
+
 /* tail is the same as delay, of course */
 long PLUGIN::getTailSize() { return framesize; }
 
@@ -188,7 +191,6 @@ void PLUGIN::setParameter(long index, float value) {
   switch (index) {
   case P_BUFSIZE:
     changed = 1;
-    ioChanged();
     /* fallthrough */
   default:
     if (index >= 0 && index < NUM_PARAMS)
@@ -710,7 +712,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
   case POINT_LEVEL: {
 
-    enum { ABOVE, BETWEEN, BELOW, };
+    enum { ABOVE, BETWEEN, BELOW };
 
     int state = BETWEEN;
     float level = (pointparam[POINT_LEVEL] * .9999f) + .00005f;
@@ -780,7 +782,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
   case POINT_RANDOM: {
     /* randomly */
 
-    n = (1.0 - pointparam[2]) * samples;
+    n = (1.0f - pointparam[2]) * samples;
 
     for(;n --;) {
       if (numpts < (maxpts-1)) {
@@ -1376,7 +1378,7 @@ void PLUGIN::makepresets() {
   programs[i].param[P_BUFSIZE] = paramSteppedUnscaled((9), BUFFERSIZESSIZE);
   programs[i].param[P_SHAPE] = UNMKWINDOWSHAPE(WINDOW_TRIANGLE);
   programs[i].param[P_POINTSTYLE] = UNMKPOINTSTYLE(POINT_DYDX);
-  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.5707532982591033;//0.528f;
+  programs[i].param[P_POINTPARAMS + POINT_DYDX] = 0.5707532982591033f;//0.528f;
   programs[i].param[P_INTERPSTYLE] = UNMKINTERPSTYLE(INTERP_SING);
   programs[i].param[P_INTERPARAMS + INTERP_SING] = 0.2921348f;
   programs[i].param[P_POINTOP1] = UNMKPOINTOP(OP_QUARTER);

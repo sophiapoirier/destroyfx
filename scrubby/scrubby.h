@@ -138,6 +138,7 @@ public:
 
 	virtual void suspend();
 	virtual void resume();
+	virtual long fxIdle();
 	virtual long processEvents(VstEvents* events);
 
 	virtual long getTailSize();
@@ -216,6 +217,8 @@ protected:
 	long *activeNotesTable;	// how many voices of each note in the octave are being played
 	bool keyboardWasPlayedByMidi;	// tells the GUI to update the keyboard display
 	bool notesWereAlreadyActive;	// says whether any notes were active in the previous block
+
+	bool predelayChanged;	// signals the need for updated initialDelay via ioChanged() call
 
 FILE *f;
 long sinecount;

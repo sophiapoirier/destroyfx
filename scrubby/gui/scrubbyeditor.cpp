@@ -205,7 +205,7 @@ void predelayDisplayConvert(float value, char *string)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 ScrubbyEditor::ScrubbyEditor(AudioEffect *effect)
- : AEffGUIEditor(effect) 
+ : AEffGUIEditor(effect)
 {
 	frame = 0;
 	isOpen = false;
@@ -320,7 +320,7 @@ ScrubbyEditor::~ScrubbyEditor()
 long ScrubbyEditor::getRect(ERect **erect)
 {
 	*erect = &rect;
-	return true;
+	return 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -743,7 +743,7 @@ long ScrubbyEditor::open(void *ptr)
 
 	isOpen = true;
 
-	return true;
+	return 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -847,7 +847,6 @@ void ScrubbyEditor::close()
 }
 
 //-----------------------------------------------------------------------------
-// called from ScrubbyEdit
 void ScrubbyEditor::setParameter(long index, float value)
 {
 	if (!frame)
@@ -1431,6 +1430,11 @@ void ScrubbyEditor::idle()
 		if (somethingChanged)
 			postUpdate();
 	}
+
+	// use this idle routine to watch out for new predelay values, too
+	if ( ((Scrubby*)effect)->predelayChanged )
+		((AudioEffectX*)effect)->ioChanged();
+	((Scrubby*)effect)->predelayChanged = false;
 
 	// this is called so that idle() actually happens
 	AEffGUIEditor::idle();
