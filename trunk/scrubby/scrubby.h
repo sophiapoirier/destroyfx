@@ -58,10 +58,6 @@ const long OCTAVE_MAX = 7;
 // the number of semitones in an octave
 const long NUM_PITCH_STEPS = 12;
 
-// this is a necessary value for calculating the pitches related to the playback speeds
-const double LN2TO1_12TH = log(pow(2.0, 1.0/12.0));
-//const double LN2TO1_12TH = 0.05776226504666215;
-
 #define USE_LINEAR_ACCELERATION 0
 
 const long NUM_PRESETS = 16;
