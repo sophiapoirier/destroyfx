@@ -26,6 +26,9 @@
  *  If the href attribute does not appear on the same line 
  *  on which the <link> tag begins, then the href attribute 
  *  will not be found and the <link> will not be followed.
+ *
+ * It is assumed that the linked file is a stylesheet 
+ * (the content is put between <style> tags).
  */
 
 
@@ -347,6 +350,7 @@ readlineloop:
 							FILE *linkf = fopen(linkfilefullpath, "r");
 							if (linkf != NULL)
 							{
+								fprintf(destf, "<style type=\"text/css\">\n\n");
 								// copy every byte of the linked file to the output stream
 								while (!feof(linkf))
 								{
@@ -355,6 +359,7 @@ readlineloop:
 										fputc(got, destf);
 								}
 								fclose(linkf);
+								fprintf(destf, "\n</style>\n");
 								// advance our line character reader position past the <link> tag 
 								// to continue copying anything else in this line to the output stream
 								i += linksource - linestr_copy + strlen(linkfilename);
