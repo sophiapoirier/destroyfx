@@ -47,8 +47,10 @@ public:
 
 	void setButtonImage(DGImage * inImage);
 
-	virtual void setUserProcedure(buttonUserProcedure inProc, void * inUserData);
-	virtual void setUserReleaseProcedure(buttonUserProcedure inProc, void * inUserData);
+	void setUserProcedure(buttonUserProcedure inProc, void * inUserData);
+	void setUserReleaseProcedure(buttonUserProcedure inProc, void * inUserData);
+	void setUseReleaseProcedureOnlyAtEndWithNoCancel(bool inNewPolicy)
+		{   useReleaseProcedureOnlyAtEndWithNoCancel = inNewPolicy; }
 
 protected:
 	DGImage * buttonImage;
@@ -57,6 +59,7 @@ protected:
 	buttonUserProcedure userReleaseProcedure;
 	void * userProcData;
 	void * userReleaseProcData;
+	bool useReleaseProcedureOnlyAtEndWithNoCancel;
 
 	long numStates;
 	DfxGuiBottonMode mode;
