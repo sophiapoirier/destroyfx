@@ -74,11 +74,6 @@ void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 	lastX = inXpos;
 	lastY = inYpos;
 
-	#if TARGET_PLUGIN_USES_MIDI
-		if (isParameterAttached())
-			getDfxGuiEditor()->setmidilearner(getParameterID());
-	#endif
-
 	if ( !(inKeyModifiers & kDGKeyModifier_shift) )
 		mouseTrack(inXpos, inYpos, inMouseButtons, inKeyModifiers);
 }
@@ -101,13 +96,13 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 		if (orientation == kDGSliderAxis_vertical)
 		{
 			float diff = lastY - inYpos;
-			diff /= fineTuneFactor;
+			diff /= getFineTuneFactor();
 			val += (SInt32) (diff * (float)(max-min) / (float)fore.h);
 		}
 		else	// horizontal mode
 		{
 			float diff = inXpos - lastX;
-			diff /= fineTuneFactor;
+			diff /= getFineTuneFactor();
 			val += (SInt32) (diff * (float)(max-min) / (float)fore.w);
 		}
 	}
@@ -140,24 +135,4 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 void DGSlider::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 {
 	mouseTrack(inXpos, inYpos, 1, inKeyModifiers);
-}
-
-//-----------------------------------------------------------------------------
-bool DGSlider::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
-{
-	lastX = 0.0f;
-	lastY = 0.0f;
-	float x = 0.0f, y = 0.0f;
-	if (orientation == kDGSliderAxis_vertical)
-		y = (float)(-inDelta);
-	else
-		x = (float)inDelta;
-	if ( !(inKeyModifiers & kDGKeyModifier_shift) )
-	{
-		x *= fineTuneFactor;
-		y *= fineTuneFactor;
-	}
-	mouseTrack(x, y, 1, inKeyModifiers | kDGKeyModifier_shift);
-
-	return true;
 }
