@@ -315,112 +315,115 @@ void PLUGIN::getParameterLabel(long index, char *label) {
 /* operations on points. this is a separate function
    because it is called once for each operation slot.
 */
-int PLUGIN::pointops(float pop, int numpts, float * op_param, int samples) {
+int PLUGIN::pointops(float pop, int npts, float * op_param, int samples) {
   /* pointops. */
 
-  int maxpts = framesize * 2;
-
-  /* MS Visual C++ is super retarded, so we have to define 
-     and initialize all of these before the switch statement */
-  int i = 0, t = 0, c = 0, stretch = 0, np = 1, times = 1;
+  int maxpts = samples;
+  int times = 2;
   switch(MKPOINTOP(pop)) {
-    case OP_DOUBLE:
-      /* x2 points */
-      for(t = 0; i < (numpts - 1) && t < (maxpts-4); i++) {
-        tempx[t] = pointx[i];
-        tempy[t] = pointy[i];
-        t++;
-        /* now, only if there's room... */
-        if (pointx[i+1] - pointx[i] > 1) {
-          /* add an extra point. Pick it in some arbitrary weird way. 
-          my idea is to double the frequency ...
-          */
-
-          tempy[t] = (op_param[0] * 2.0f - 1.0f) * pointy[i];
-          tempx[t] = (pointx[i] + pointx[i+1]) >> 1;
-
-          t++;
-        }
-      }
-      /* always include last */
-      tempx[t] = pointx[numpts-1];
-      tempy[t] = pointy[numpts-1];
+  case OP_DOUBLE: {
+    /* x2 points */
+    int i = 0;
+    int t;
+    for(t = 0; i < (npts - 2) && t < (maxpts-4); i++) {
+      /* always include the actual point */
+      tempx[t] = pointx[i];
+      tempy[t] = pointy[i];
       t++;
+      /* now, only if there's room... */
+      if (pointx[i+1] - pointx[i] > 1) {
+	/* add an extra point. Pick it in some arbitrary weird way. 
+	   my idea is to double the frequency ...
+	*/
 
-      for(c = 0; c < t; c++) {
-        pointx[c] = tempx[c];
-        pointy[c] = tempy[c];
+	tempy[t] = (op_param[0] * 2.0f - 1.0f) * pointy[i];
+	tempx[t] = (pointx[i] + pointx[i+1]) >> 1;
+
+	t++;
       }
-      numpts = t + 1;
-      break;
+    }
+    /* include last if not different from previous */
+    if (tempx[t-1] != pointx[npts-1]) {
+      tempx[t] = pointx[npts-1];
+      tempy[t] = pointy[npts-1];
+      t++;
+    }
 
-    case OP_HALF:
-    case OP_QUARTER:
-      times = 1;
-      if (MKPOINTOP(pop) == OP_QUARTER) times = 2;
-      for(t = 0; t < times; t++) {
-        /* cut points in half. never touch first or last. */
-        int q = 1;
-        for(i=1; q < (numpts - 1); i++) {
-          pointx[i] = pointx[q];
-          pointy[i] = pointy[q];
-          q += 2;
-        }
-        pointx[i] = pointx[numpts - 1];
-        pointy[i] = pointy[numpts - 1];
-        numpts = i+1;
+    for(int c = 0; c < t; c++) {
+      pointx[c] = tempx[c];
+      pointy[c] = tempy[c];
+    }
+    npts = t + 1;
+    break;
+  }
+  case OP_HALF:
+  case OP_QUARTER: {
+    times = 1;
+    if (MKPOINTOP(pop) == OP_QUARTER) times = 2;
+    for(int t = 0; t < times; t++) {
+      int i;
+      /* cut points in half. never touch first or last. */
+      int q = 1;
+      for(i=1; q < (npts - 1); i++) {
+	pointx[i] = pointx[q];
+	pointy[i] = pointy[q];
+	q += 2;
       }
-      break;
+      pointx[i] = pointx[npts - 1];
+      pointy[i] = pointy[npts - 1];
+      npts = i+1;
+    }
+    break;
+  }
+  case OP_LONGPASS: {
+    /* longpass. drop any point that's not at least param*samples
+       past the previous. */ 
+    tempx[0] = pointx[0];
+    tempy[0] = pointy[0];
 
-    case OP_LONGPASS:
-      /* longpass. drop any point that's not at least param*samples
-         past the previous. */ 
-      tempx[0] = pointx[0];
-      tempy[0] = pointy[0];
+    int stretch = (op_param[3] * op_param[3]) * samples;
+    int np = 1;
 
-      stretch = (op_param[3] * op_param[3]) * samples;
-      np = 1;
-
-      for(i=1; i < (numpts-1); i ++) {
-        if (pointx[i] - tempx[np-1] > stretch) {
-          tempx[np] = pointx[i];
-          tempy[np] = pointy[i];
-          np++;
-          if (np == maxpts) break;
-        }
+    for(int i=1; i < (npts-1); i ++) {
+      if (pointx[i] - tempx[np-1] > stretch) {
+	tempx[np] = pointx[i];
+	tempy[np] = pointy[i];
+	np++;
+	if (np == maxpts) break;
       }
+    }
 
-      for(c = 1; c < np; c++) {
-        pointx[c] = tempx[c];
-        pointy[c] = tempy[c];
-      }
-      numpts = np + 1;
+    for(int c = 1; c < np; c++) {
+      pointx[c] = tempx[c];
+      pointy[c] = tempy[c];
+    }
+    npts = np + 1;
 
-      break;
+    break;
+  }
+  case OP_SHORTPASS: {
+    /* shortpass. If an interval is longer than the
+       specified amount, zero the 2nd endpoint.
+    */
 
-    case OP_SHORTPASS:
-      /* shortpass. If an interval is longer than the
-         specified amount, zero the 2nd endpoint.
-       */
+    int stretch = (op_param[4] * op_param[4]) * samples;
 
-      stretch = (op_param[4] * op_param[4]) * samples;
+    for (int i=1; i < samples; i ++) {
+      if (pointx[i] - pointx[i-1] > stretch) pointy[i] = 0.0f;
+    }
 
-      for (i=1; i < samples; i ++) {
-        if (pointx[i] - pointx[i-1] > stretch) pointy[i] = 0.0f;
-      }
-
-      break;
-
-    case OP_UNSUP1:
-    case OP_UNSUP2:
-    case OP_UNSUP3:
-    default:
-      /* nothing ... */
-      break;
+    break;
+  }
+  case OP_UNSUP1:
+  case OP_UNSUP2:
+  case OP_UNSUP3:
+  default:
+    /* nothing ... */
+    break;
 
   } /* end of main switch statement */
 
-  return numpts;
+  return npts;
 }
 
 /* this processes an individual window.
@@ -428,7 +431,7 @@ int PLUGIN::pointops(float pop, int numpts, float * op_param, int samples) {
    2. do operations on points (in slots op1, op2, op3)
    3. generate waveform
 */
-void PLUGIN::processw(float * in, float * out, long samples) {
+int PLUGIN::processw(float * in, float * out, long samples) {
 
   /* collect points. */
 
@@ -731,6 +734,12 @@ void PLUGIN::processw(float * in, float * out, long samples) {
         
         /* XXX param should control exponent */
 
+	if (interparam[2] > 0.5) {
+	  p = pow(p, (interparam[2] - 0.16666667) * 3.0);
+	} else {
+	  p = pow(p, interparam[2] * 2.0);
+	}
+
         float s = pointy[u-1] * (1.0f - p) + pointy[u]   * p;
 
         out[z] = s;
@@ -779,6 +788,8 @@ void PLUGIN::processw(float * in, float * out, long samples) {
     break;
 
   } /* end of interpstyle cases */
+
+  return numpts;
 
 }
 

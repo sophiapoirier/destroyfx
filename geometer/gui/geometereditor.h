@@ -4,6 +4,7 @@
 #include "dfxgui.h"
 #include "MultiKick.hpp"
 #include "VstChunk.h"
+#include "geometerview.hpp"
 
 
 #define NUM_SLIDERS   5
@@ -28,7 +29,6 @@ enum { HELP_MIDILEARN,
        HELP_EMPTY2,
        NUM_HELPFRAMES
 };
-
 
 //--------------------------------------------------------------------------
 class GeometerEditor : public AEffGUIEditor, public CControlListener {
@@ -117,6 +117,8 @@ private:
   CBitmap *g_midilearnbutton;
   CBitmap *g_destroyfxlink;
   CBitmap *g_smartelectronixlink;
+
+  GeometerView * gview;
 
   VstChunk *chunk;
   CHorizontalSlider **sliders;
