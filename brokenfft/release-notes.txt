@@ -1,0 +1,3 @@
+
+
+spike will chew up mega CPU if it is processing a lot of equal samples.
