@@ -22,6 +22,7 @@ const CColor kMyLightOrangeCColor = {219, 145, 85, 0};
 #define kValueDisplayFont	kNormalFont
 #define kLabelDisplayFont	kNormalFontSmall
 #define kBackgroundColor	kMyLightBrownCColor
+#define kBackgroundFrameColor	kMyBrownCColor
 #define kLabelColor			kWhiteCColor
 #define kReadoutFrameColor	kMyBrownCColor
 #define kReadoutBoxColor	kMyLightOrangeCColor
@@ -180,7 +181,7 @@ long RMSbuddyEditor::open(void *ptr)
 	size (0, 0, kBackgroundWidth, kBackgroundHeight);
 	backgroundDisplay = new CParamDisplay (size);
 	backgroundDisplay->setBackColor(kBackgroundColor);
-	backgroundDisplay->setFrameColor(kBackgroundColor);
+	backgroundDisplay->setFrameColor(kBackgroundFrameColor);
 	backgroundDisplay->setValue(0.0f);
 	backgroundDisplay->setStringConvert(staticTextDisplayConvert, (void*)" ");
 	frame->addView(backgroundDisplay);

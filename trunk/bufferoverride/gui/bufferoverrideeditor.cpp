@@ -69,7 +69,7 @@ enum {
 	kTempoDisplayY = 4,
 	//
 	kHelpDisplayX = 0,
-	kHelpDisplayY = 233,
+	kHelpDisplayY = 231,
 
 	// XY box
 	kDivisorBufferBoxX = 156,
