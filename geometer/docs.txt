@@ -1,0 +1,34 @@
+Geometer is windowed. That's what the first two parameters do. You know
+about that.
+
+The first thing geometer does is to generate landmarks on the wave.
+The third parameter controls how it does this. There's "ext 'n cross",
+which puts landmarks at zero-crossings and extremities (the final
+parameter, zerothresh, controls what is considered "zero"). There's
+"at freq" which places landmarks at constant intervals. There's (in
+the new version) "randomly", which places them randomly throughout the
+wave. For the second two, the 4th parameter "freq" determines the
+frequency.
+
+In all of these modes, a landmark at sample x always has in[x] as its
+y value. (However, maybe there are landmark generating functions that
+don't choose the same y, I dunno.)
+
+The next thing geometer does is do an operation on those landmarks.
+The operations (under "pointops") are "no" which does nothing, "1/2",
+which deletes every other point, "1/4", which deletes 3/4 of the
+points, and "x 2", which arbitrarily inserts new points in between
+every pair of old points. I think most of my future innovations will
+be in "pointops", but who knows.
+
+Finally, geometer generates the output waveform according to the
+"interp how" parameter. With "polygon", it just interpolates linearly.
+With "wrongygon" it makes interpolation lines that go backwards, so
+that it looks like a sawtooth wave. "reversi" ignores the y values and
+just reverse the input buffer between each pair of landmarks.
+"smoothie" interpolates with a nice smooth cosine thingy.
+"pulse-debug" (which will go away) just sticks the raw landmarks in
+the output for debugging. "unsup" does nothing. I also need more
+waveform-reconstruction tricks.
+
+
