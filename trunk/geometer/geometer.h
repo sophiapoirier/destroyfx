@@ -45,8 +45,8 @@ enum { INTERP_POLYGON,
        INTERP_SMOOTHIE, 
        INTERP_REVERSI, 
        INTERP_PULSE, 
-       INTERP_UNSUP1, 
-       INTERP_UNSUP2, 
+       INTERP_FRIENDS, 
+       INTERP_SING,
        INTERP_UNSUP3, 
        NUM_INTERPSTYLES
 };
