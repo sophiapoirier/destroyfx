@@ -124,8 +124,7 @@ DfxStub::~DfxStub()
 // return 0 for success, otherwise return an error code
 long DfxStub::initialize()
 {
-
-	return 0;
+	return kDfxErr_NoError;
 }
 
 //-------------------------------------------------------------------------

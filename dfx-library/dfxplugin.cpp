@@ -244,11 +244,11 @@ long DfxPlugin::do_initialize()
 
 	bool buffersCreated = createbuffers();
 	if (buffersCreated == false)
-		return -10875;	// AUFailedInitialization error code
+		return kDfxErr_InitializationFailed;
 
 	do_reset();
 
-	return 0;	// no error
+	return kDfxErr_NoError;	// no error
 }
 
 //-----------------------------------------------------------------------------

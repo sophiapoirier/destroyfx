@@ -108,7 +108,7 @@ BufferOverride::~BufferOverride()
 //-------------------------------------------------------------------------
 long BufferOverride::initialize()
 {
-	return 0;
+	return kDfxErr_NoError;
 }
 
 //-------------------------------------------------------------------------
