@@ -1,0 +1,29 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+128                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\transverb-background.bmp"
+129                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\purple-wide-fader-slide.bmp"
+130                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\grey-wide-fader-slide.bmp"
+131                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\tall-fader-slide.bmp"
+132                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\purple-wide-fader-handle.bmp"
+133                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\wide-fader-handle-glowing.bmp"
+134                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\grey-wide-fader-handle.bmp"
+135                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\wide-fader-handle-glowing.bmp"
+136                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\tall-fader-handle.bmp"
+137                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\tall-fader-handle-glowing.bmp"
+138                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\fine-down-button.bmp"
+139                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\fine-up-button.bmp"
+140                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\speed-mode-button.bmp"
+141                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\quality-button.bmp"
+142                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\tomsound-button.bmp"
+143                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\random-button.bmp"
+144                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\midi-learn-button.bmp"
+145                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\midi-reset-button.bmp"
+146                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\dfx-link.bmp"
+147                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\super-destroy-fx-link.bmp"
+148                     BITMAP  DISCARDABLE     "..\\transverb\\GUI\\graphics\\smart-electronix-link.bmp"
+
+
