@@ -271,6 +271,7 @@ const RMSColor kWhiteColor = { 255, 255, 255 };
 #define LABEL_DISPLAY_FONT_SIZE	12.0f
 
 #define kBackgroundColor	kMyLightBrownColor
+#define kBackgroundFrameColor	kMyBrownColor
 #define kLabelTextColor		kWhiteColor
 #define kReadoutFrameColor	kMyBrownColor
 #define kReadoutBoxColor	kMyLightOrangeColor
@@ -298,10 +299,10 @@ enum {
 	kXinc = kChannelLabelWidth + 15,
 	kYinc = 33,
 
-	kBackgroundWidth = 150,
+	kBackgroundWidth = 151,
 	kBackgroundHeight = 156,
 
-	kButtonX = kValueDisplayX,
+	kButtonX = kValueDisplayX - 1,
 	kButtonY = kValueDisplayY + 1,
 };
 
@@ -674,6 +675,23 @@ bool RMSbuddyEditor::HandleEvent(EventRef inEvent)
 			CGContextSetRGBFillColor(context, (float)kBackgroundColor.r/255.0f, (float)kBackgroundColor.g/255.0f, 
 										(float)kBackgroundColor.b/255.0f, 1.0f);
 			CGContextFillRect(context, bounds);
+
+			// draw the frame around the box
+			CGContextSetRGBStrokeColor(context, (float)kBackgroundFrameColor.r/255.0f, (float)kBackgroundFrameColor.g/255.0f, 
+										(float)kBackgroundFrameColor.b/255.0f, 1.0f);
+			// Quartz draws lines on top of the pixel, so you need to move the coordinates to the middle of the pixel, 
+			// and then also shrink the size accordingly
+			CGRect box = CGRectMake(bounds.origin.x + 0.5f, bounds.origin.y + 0.5f, bounds.size.width - 1.0f, bounds.size.height - 1.0f);
+			CGContextSetLineWidth(context, 1.0f);
+			CGContextStrokeRect(context, box);
+			// draw a couple more lighter lines to fade the border
+			box = CGRectMake(box.origin.x + 1.0f, box.origin.y + 1.0f, box.size.width - 2.0f, box.size.height - 2.0f);
+			CGContextSetAlpha(context, 0.27f);
+			CGContextStrokeRect(context, box);
+			box = CGRectMake(box.origin.x + 1.0f, box.origin.y + 1.0f, box.size.width - 2.0f, box.size.height - 2.0f);
+			CGContextSetAlpha(context, 0.081f);
+			CGContextStrokeRect(context, box);
+
 			CGContextRestoreGState(context);
 			CGContextSynchronize(context);
 			QDEndCGContext(windowPort, &context);
