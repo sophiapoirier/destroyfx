@@ -10,11 +10,14 @@
 
 
 #if MAC
-typedef CarbonControl PlatformControlRef;
+	typedef ControlRef PlatformControlRef;
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-titedef AudioUnitCarbonView EDIT0RR;
+	typedef AudioUnitCarbonView DGEditorListenerInstance;
+#endif
+#ifdef TARGET_API_VST
+	typedef DfxPlugin * DGEditorListenerInstance;
 #endif
 
 
@@ -26,7 +29,7 @@ titedef AudioUnitCarbonView EDIT0RR;
 class DfxGuiEditor : public AUCarbonViewBase
 {
 public:
-	DfxGuiEditor(AudioUnitCarbonView inInstance);
+	DfxGuiEditor(DGEditorListenerInstance inInstance);
 	virtual ~DfxGuiEditor();
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -46,7 +49,7 @@ public:
 	AUParameterListenerRef getParameterListener()
 		{	return mParameterListener;	}
 
-#if 0
+#if 1
 // XXX bye bye
 	// get/set the control that is currently being moused (actively tweaked), if any (returns NULL if none)
 	DGControl * getCurrentControl_clicked()
@@ -91,6 +94,7 @@ protected:
 private:
 
 	class CleanupList {
+	  public:
 	  Destructible * d;
 	  CleanupList * next;
 
@@ -99,7 +103,7 @@ private:
 	  }
 	  
 	  CleanupList(Destructible * dd, CleanupList * nn) : d(dd), next(nn) {}
-	}
+	};
 
 	CleanupList * cleanme;
 
@@ -122,9 +126,7 @@ private:
 	bool		fontsWereActivated;	// memory of whether or not bundled fonts were loaded successfully
 #endif
 
-#ifdef TARGET_API_VST
-	DfxPlugin *dfxplugin;	// XXX bad thing
-#endif
+	DfxPlugin *dfxplugin;	// XXX bad thing for AU, maybe just for easy debugging sometimes
 };
 
 

@@ -68,6 +68,7 @@ public:
 
 
 //-----------------------------------------------------------------------------
+// XXX use floats (0.0 to 1.0) instead of ints
 struct DGColor {
 	int r;
 	int g;
@@ -111,8 +112,8 @@ const DGColor kWhiteDGColor(255, 255, 255);
 
 class Destructible {
  public:
-  virtual void destroy () {};
-}
+  virtual void destroy() {};
+};
 
 
 
@@ -133,7 +134,7 @@ public:
 	DGGraphic(const char *inFileName);
 	virtual ~DGGraphic();
 	
-	virtual destroy() { delete this; }
+	virtual void destroy() { delete this; }
 
 	// passive API (for controls that want to draw images by themselves)
 	CGImageRef getCGImage()
@@ -156,9 +157,6 @@ public:
 
  private:
 	
-	/* XXX move to constructor */
-	void loadImageFile(const char *inFileName);
-
 	CGImageRef cgImage;
 };
 
