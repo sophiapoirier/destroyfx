@@ -14,9 +14,9 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData);
 DfxGuiEditor::DfxGuiEditor(AudioUnitCarbonView inInstance)
 :	AUCarbonViewBase(inInstance)
 {
-	Images = NULL;
-	Controls = NULL;
-	itemCount = 0;
+  cleanme = 0;
+
+  
 	idleTimer = NULL;
 	idleTimerUPP = NULL;
 
@@ -63,14 +63,14 @@ DfxGuiEditor::~DfxGuiEditor()
 	if (idleTimerUPP != NULL)
 		DisposeEventLoopTimerUPP(idleTimerUPP);
 	idleTimerUPP = NULL;
-	
-	if (Controls != NULL)
-		delete Controls;
-	Controls = NULL;
 
-	if (Images != NULL)
-		delete Images;
-	Images = NULL;
+	/* deleting a list item also calls the destroy
+	   method for its Destructible data. */
+	while (cleanme) {
+	  CleanupList * tmp = cleanme->next;
+	  delete cleanme;
+	  cleanme = tmp;
+	}
 
 	if (windowEventEventHandlerRef != NULL)
 		RemoveEventHandler(windowEventEventHandlerRef);
@@ -277,17 +277,8 @@ static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void *inUserData)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::addImage(DGGraphic *inImage)
-{
-	if (inImage == NULL)
-		return;
-
-	itemCount++;
-
-	if (Images == NULL)
-		Images = inImage;
-	else
-		Images->append(inImage);
+void DfxGuiEditor::addImage(DGGraphic *inImage) {
+	cleanme = new CleanupList(inImage, cleanme);
 }
 
 //-----------------------------------------------------------------------------
@@ -296,14 +287,9 @@ void DfxGuiEditor::addControl(DGControl *inControl)
 	if (inControl == NULL)
 		return;
 
-	itemCount++;
-
 	if (inControl->getDaddy() == NULL)
 	{
-		if (Controls == NULL)
-			Controls = inControl;
-		else
-			Controls->append(inControl);
+	        cleanme = new CleanupList(inControl, cleanme);
 		inControl->setOffset((long)GetXOffset(), (long)GetYOffset());
 	}
 

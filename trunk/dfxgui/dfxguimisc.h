@@ -115,41 +115,17 @@ const DGColor kWhiteDGColor(255, 255, 255);
 
 
 /***********************************************************************
-	DGItem
-	base class for items contained in the editor's linked list of GUI objects
+	Destructible
+	.. has a destroy () method to free itself.
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-class DGItem
-{
-public:
-	DGItem();
-	virtual ~DGItem();
 
-	DGItem * getByID(UInt32 inID);
-	void append(DGItem *nextItem);
+class Destructible {
+ public:
+  virtual void destroy () {};
+}
 
-	DGItem * getNext()
-		{	return next;	}
-	DGItem * getPrev()
-		{	return prev;	}
-	void setPrev(DGItem *inPrev)
-		{	prev = inPrev;	}
-	UInt32 getID()
-		{	return itemID;	}
-	void setID(UInt32 inID)
-		{	itemID = inID;	}
-	DfxGuiType getType()
-		{	return type;	}
-	void setType(DfxGuiType inType)
-		{	type = inType;	}
-
-private:
-	DfxGuiType	type;
-	UInt32 		itemID;
-	DGItem *	prev;
-	DGItem *	next;
-};
 
 
 /***********************************************************************
@@ -158,11 +134,13 @@ private:
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-class DGGraphic : public DGItem
+class DGGraphic : public Destructible
 {
 public:
 	DGGraphic(const char *inFileName);
 	virtual ~DGGraphic();
+	
+	virtual destroy() { delete this; }
 
 	// passive API (for controls that want to draw images by themselves)
 	CGImageRef getCGImage()

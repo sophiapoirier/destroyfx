@@ -24,6 +24,10 @@ public:
 	DGControl(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, float inRange = 0.0f);
 	virtual ~DGControl();
 
+	virtual destroy() { delete this; }
+
+	/* XXX add "settype", "gettype" (used to be in dgitem) */
+
 	// common constructor stuff
 	void init(DGRect *inRegion);
 

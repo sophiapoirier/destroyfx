@@ -54,13 +54,12 @@ public:
 	void setCurrentControl_clicked(DGControl *inNewClickedControl)
 		{	currentControl_clicked = inNewClickedControl;	}
 #endif
-	// get/set the control that is currently idly under the mouse pointer, if any (returns NULL if none)
+	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()
 		{	return currentControl_mouseover;	}
 	void setCurrentControl_mouseover(DGControl *inNewMousedOverControl);
 	// *** override this if you want your GUI to react when the mouseovered control changes
-	virtual void mouseovercontrolchanged()
-		{ }
+	virtual void mouseovercontrolchanged() { }
 
 	virtual void DrawBackground(CGContextRef inContext, UInt32 inPortHeight);
 
@@ -90,9 +89,19 @@ protected:
 		{	backgroundColor = inBackgroundColor;	}
 
 private:
-	UInt32				itemCount;
-	DGGraphic *			Images;
-	DGControl *			Controls;
+
+	class CleanupList {
+	  Destructible * d;
+	  CleanupList * next;
+
+	  ~CleanupList() {
+	    d->destroy();
+	  }
+	  
+	  CleanupList(Destructible * dd, CleanupList * nn) : d(dd), next(nn) {}
+	}
+
+	CleanupList * cleanme;
 
 	DGGraphic *			backgroundImage;
 	DGColor				backgroundColor;
