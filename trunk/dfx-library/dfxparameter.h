@@ -178,7 +178,6 @@ struct DfxParamValue {
 	float f;
 	double d;
 	long i;
-	unsigned long ui;
 	unsigned char b;	// would be bool, but bool can vary in byte size depending on the compiler
 	DfxParamValue() {}	// suppress compiler warnings
 };
@@ -239,6 +238,14 @@ typedef enum {
 	kDfxParamCurve_exp,
 	kDfxParamCurve_log
 } DfxParamCurve;
+
+
+// some miscellaneous parameter attributes
+// they are stored as flags in a bit-mask thingy
+typedef enum {
+	kDfxParamAttribute_hidden = 1,	// should not be revealed to the user
+	kDfxParamAttribute_unused = 1 << 1,	// isn't being used at all (a place-holder?); don't reveal to the host or anyone
+} DfxParamAttribute;
 
 
 
@@ -403,10 +410,11 @@ public:
 	double getcurvespec()
 		{	return curvespec;	}
 
-	// set/get the property indicating whether the parameter is only for internal use
-	void sethidden(bool newHide = true);
-	bool gethidden()
-		{	return hidden;	}
+	// set/get various parameter attribute bits
+	void setattributes(unsigned long inFlags)
+		{	attributes = inFlags;	}
+	unsigned long getattributes()
+		{	return attributes;	}
 
 	// set/get the property indicating whether the parameter value has changed
 	void setchanged(bool newChanged = true);
@@ -433,7 +441,7 @@ protected:
 	long numAllocatedValueStrings;	// just to remember how many we allocated
 	char * customUnitString;	// a text string display for parameters using custom unit types
 	bool changed;	// indicates if the value has changed
-	bool hidden;	// indicates if the parameter might be only for internal use
+	unsigned long attributes;	// a bit-mask of various parameter attributes
 
 	#ifdef TARGET_API_AUDIOUNIT
 		// array of CoreFoundation-style versions of the indexed value strings
