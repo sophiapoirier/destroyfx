@@ -182,7 +182,7 @@ void DfxParam::init(const char *initName, DfxParamValueType initType,
 		long numValueStrings = getmax_i() - getmin_i() + 1;
 		valueStrings = (char**) malloc(numValueStrings * sizeof(char*));
 		for (long i=0; i < numValueStrings; i++)
-			valueStrings[i] = (char*) malloc(256 * sizeof(char));
+			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(char));
 
 		#if TARGET_API_AUDIOUNIT
 			if (valueCFStrings)
@@ -274,9 +274,6 @@ bool DfxParam::setvaluestring(long index, const char *inText)
 			CFRelease(valueCFStrings[arrayIndex]);	// XXX do this?
 		valueCFStrings[arrayIndex] = CFStringCreateWithCString(NULL, inText, kCFStringEncodingMacRoman);//kCFStringEncodingASCII
 	#endif
-
-	if (unit == kDfxParamUnit_index)
-		unit = kDfxParamUnit_strings;	// XXX should I do this?
 
 	return true;
 }
@@ -570,11 +567,7 @@ float DfxParam::contract(double realValue)
 			dvalue = log(1.0-dmin+dvalue) / log(1.0-dmin+dmax);
 			break;
 		case kDfxParamCurve_log:
-			// XXX implement this
-			break;
-		case kDfxParamCurve_freq:
-			// XXX implement this properly (for ranges other than 20 Hz to 20 kHz)
-			dvalue = ( log(dvalue/20.0) / log(2.0) ) / 9.965784284662088765571752446703612804412841796875;
+			dvalue = (log(dvalue/dmin) / log(2.0)) / (log(dmax/dmin) / log(2.0));
 			break;
 		case kDfxParamCurve_undefined:
 		default:
@@ -795,11 +788,7 @@ double DfxParam::expand(float genValue)
 			dvalue = exp( log(drange+1.0) * dvalue ) + dmin - 1.0;
 			break;
 		case kDfxParamCurve_log:
-			// XXX implement this
-			break;
-		case kDfxParamCurve_freq:
-			// XXX implement this properly (for ranges other than 20 Hz to 20 kHz)
-			dvalue = 20.0 * pow(2.0, dvalue * 9.965784284662088765571752446703612804412841796875);
+			dvalue = dmin * pow( 2.0, dvalue * log(dmax/dmin)/log(2.0) );
 			break;
 		case kDfxParamCurve_undefined:
 		default:

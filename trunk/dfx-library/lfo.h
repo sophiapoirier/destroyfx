@@ -6,8 +6,10 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "dfxmisc.h"
+
+#ifndef __DFX_TEMPORATETABLE_H
 #include "temporatetable.h"
+#endif
 
 
 //-------------------------------------------------------------------------------------
@@ -29,8 +31,8 @@ enum
 //-------------------------------------------------------------------------------------
 // constants & macros
 
-#define LFOshapeScaled(A)   (paramSteppedScaled((A), numLFOshapes))
-#define LFOshapeUnscaled(A)   (paramSteppedUnscaled((A), numLFOshapes))
+//#define LFOshapeScaled(A)   (paramSteppedScaled((A), numLFOshapes))
+//#define LFOshapeUnscaled(A)   (paramSteppedUnscaled((A), numLFOshapes))
 
 #define NUM_LFO_POINTS 512
 const float NUM_LFO_POINTS_FLOAT = (float)NUM_LFO_POINTS;	// to reduce casting later on
@@ -56,6 +58,7 @@ public:
 
 	void pickTheLFOwaveform();
 	void getShapeName(char *nameString);
+	void getShapeNameIndexed(long index, char *nameString);
 
 	void syncToTheBeat(long samplesToBar);
 
@@ -63,14 +66,13 @@ public:
 	float *sineTable, *triangleTable, *squareTable, *sawTable, *reverseSawTable, *thornTable;
 
 	// the following are intended to be used as 0.0 - 1.0 VST parameter values:
-	float fOnOff;	// parameter value for turning the LFO on or off
-	float fTempoSync;	// parameter value for toggling tempo sync
+	bool bOnOff;	// parameter value for turning the LFO on or off
+	bool bTempoSync;	// parameter value for toggling tempo sync
 	float fRate;	// parameter value for LFO rate (in Hz)
 	float fTempoRate;	// parameter value for LFO rate (in cycles per beat)
 	float fDepth;	// parameter value LFO depth
-	float fShape;	// parameter value for LFO shape
+	long iShape;	// parameter value for LFO shape
 
-	bool onOff;	// in case it's easier to have a bool version of fOnOff
 	float position;	// this tracks the position in the LFO table
 	float stepSize;	// size of the steps through the LFO table
 	float *table;	// pointer to the LFO table
@@ -98,7 +100,7 @@ public:
 			oldRandomNumber = randomNumber;
 			randomNumber = (float)rand() / (float)RAND_MAX;
 			// set up the sample smoothing if a discontiguous waveform's cycle just ended
-			switch (LFOshapeScaled(fShape))
+			switch (iShape)
 			{
 				case kSquareLFO     :
 				case kSawLFO        :
@@ -111,7 +113,7 @@ public:
 		}
 
 		// special check for the square waveform - it also needs smoothing at the half point
-		else if (LFOshapeScaled(fShape) == kSquareLFO)
+		else if (iShape == kSquareLFO)
 		{
 			// check to see if it has just passed the halfway point
 			if ( ((long)position >= SQUARE_HALF_POINT) && 
@@ -125,9 +127,8 @@ public:
 	float processLFO()
 	{
 	  float randiScalar, outValue;
-	  int shape = LFOshapeScaled(fShape);
 
-		if (shape == kRandomInterpolatingLFO)
+		if (iShape == kRandomInterpolatingLFO)
 		{
 			// calculate how far into this LFO cycle we are so far, scaled from 0.0 to 1.0
 			randiScalar = position * LFO_TABLE_STEP;
@@ -135,7 +136,7 @@ public:
 			outValue = (randomNumber * randiScalar) + (oldRandomNumber * (1.0f-randiScalar));
 		}
 		//
-		else if (shape == kRandomLFO)
+		else if (iShape == kRandomLFO)
 			outValue = randomNumber;
 		//
 		else

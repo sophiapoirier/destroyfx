@@ -1,6 +1,10 @@
 #ifndef __DFX_TEMPORATETABLE_H
 #define __DFX_TEMPORATETABLE_H
 
+#ifndef _STDLIB_H_
+#include <stdlib.h>	// for free()
+#endif
+
 
 //--------------------------------------------------------------------------
 // the number of tempo beat division options
@@ -43,6 +47,7 @@ public:
 	char * getDisplay_gen(float genValue)
 		{	return displays[TempoRateTable::float2index(genValue)];	}
 	long getNumTempoRates() { return numTempoRates; }
+	long getNearestTempoRateIndex(float tempoRateValue);
 
 private:
 	long float2index(float f)
