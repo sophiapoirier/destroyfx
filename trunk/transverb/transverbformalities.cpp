@@ -50,7 +50,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   settailsize_seconds(BUFFER_MAX * 0.001);
 
   #if TARGET_PLUGIN_USES_MIDI
-    // since we don't use notes for any specialized control of Geometer, 
+    // since we don't use notes for any specialized control of Transverb, 
     // allow them to be assigned to control parameters via MIDI learn
     dfxsettings->setAllowPitchbendEvents(true);
     dfxsettings->setAllowNoteEvents(true);
