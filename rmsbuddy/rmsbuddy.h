@@ -59,6 +59,8 @@ public:
 	virtual void GetUIComponentDescs(ComponentDescription *inDescArray);
 	virtual ComponentResult	Version()
 		{	return RMS_BUDDY_VERSION;	}
+	virtual bool SupportsTail()
+		{	return true;	}
 
 private:
 	unsigned long numChannels;	// remember the current number of channels being analyzed
