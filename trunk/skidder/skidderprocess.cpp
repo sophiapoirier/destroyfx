@@ -225,11 +225,12 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 //-----------------------------------------------------------------------------------------
 void Skidder::processaudio(const float **inputs, float **outputs, unsigned long inNumFrames, bool replacing)
 {
-  const float *in1  = inputs[0];
-  const float *in2  = (getnuminputs() < 2) ? inputs[0] : inputs[1];	// support 1 or 2 inputs
-  float *out1 = outputs[0];
-  float *out2 = outputs[1];
-  unsigned long samplecount;
+	unsigned long numInputs = getnuminputs(), numOutputs = getnumoutputs();
+	const float *in1  = inputs[0];
+	const float *in2  = (numInputs < 2) ? inputs[0] : inputs[1];	// support 1 or 2 inputs
+	float *out1 = outputs[0];
+	float *out2 = (numOutputs < 2) ? outputs[0] : outputs[1];
+	unsigned long samplecount;
 
 
 // ---------- begin MIDI stuff --------------
@@ -252,7 +253,7 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 			if ( noteIsOn && (waitSamples != 0) )
 			{
 				// cut back the number of samples outputted
-				inNumFrames -= waitSamples;
+				inNumFrames -= (unsigned)waitSamples;
 				// & jump ahead accordingly in the i/o streams
 				in1 += waitSamples;
 				in2 += waitSamples;
@@ -424,48 +425,93 @@ void Skidder::processaudio(const float **inputs, float **outputs, unsigned long 
 		needResync = false;	// we don't want it true if we're not syncing to host tempo
 
 
-	// this is the per-sample audio processing loop
-	for (samplecount=0; samplecount < inNumFrames; samplecount++)
+	// stereo processing
+	if (numOutputs >= 2)
 	{
-		switch (state)
+		// this is the per-sample audio processing loop
+		for (samplecount=0; samplecount < inNumFrames; samplecount++)
 		{
-			case slopeIn:
-				// get the average sqareroot of the current input samples
-				rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
-				rmscount++;	// this counter is later used for getting the mean
-				processSlopeIn();
-				break;
-			case plateau:
-				rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
-				rmscount++;
-				processPlateau();
-				break;
-			case slopeOut:
-				processSlopeOut();
-				break;
-			case valley:
-				processValley();
-				break;
+			switch (state)
+			{
+				case slopeIn:
+					// get the average sqareroot of the current input samples
+					rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
+					rmscount++;	// this counter is later used for getting the mean
+					processSlopeIn();
+					break;
+				case plateau:
+					rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
+					rmscount++;
+					processPlateau();
+					break;
+				case slopeOut:
+					processSlopeOut();
+					break;
+				case valley:
+					processValley();
+					break;
+			}
+	
+		#if TARGET_API_VST
+			if (replacing)
+			{
+		#endif
+				*out1 = processOutput(*in1, *in2, panGainL);
+				*out2 = processOutput(*in2, *in1, panGainR);
+		#if TARGET_API_VST
+			}
+			else
+			{
+				*out1 += processOutput(*in1, *in2, panGainL);
+				*out2 += processOutput(*in2, *in1, panGainR);
+			}
+		#endif
+			// move forward in the i/o sample streams
+			in1++;
+			in2++;
+			out1++;
+			out2++;
 		}
+	}
 
-	#if TARGET_API_VST
-		if (replacing)
+	// mono processing
+	else
+	{
+		// this is the per-sample audio processing loop
+		for (samplecount=0; samplecount < inNumFrames; samplecount++)
 		{
-	#endif
-			*out1 = processOutput(*in1, *in2, panGainL);
-			*out2 = processOutput(*in2, *in1, panGainR);
-	#if TARGET_API_VST
+			switch (state)
+			{
+				case slopeIn:
+					// get the average sqareroot of the current input samples
+					rms += sqrtf( fabsf(*in1) );
+					rmscount++;	// this counter is later used for getting the mean
+					processSlopeIn();
+					break;
+				case plateau:
+					rms += sqrtf( fabsf(*in1) );
+					rmscount++;
+					processPlateau();
+					break;
+				case slopeOut:
+					processSlopeOut();
+					break;
+				case valley:
+					processValley();
+					break;
+			}
+	
+		#if TARGET_API_VST
+			if (replacing)
+		#endif
+				*out1 = processOutput(*in1, *in1, 1.0f);
+		#if TARGET_API_VST
+			else
+				*out1 += processOutput(*in1, *in1, 1.0f);
+		#endif
+			// move forward in the i/o sample streams
+			in1++;
+			out1++;
 		}
-		else
-		{
-			*out1 += processOutput(*in1, *in2, panGainL);
-			*out2 += processOutput(*in2, *in1, panGainR);
-		}
-	#endif
-		// move forward in the i/o sample streams
-		in1++;
-		in2++;
-		out1++;
-		out2++;
 	}
 }

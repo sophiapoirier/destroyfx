@@ -67,7 +67,8 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	dfxsettings->setAllowPitchbendEvents(true);
 
 	addchannelconfig(2, 2);	// 2-in/2-out
-//	addchannelconfig(1, 2);	// 1-in/2-out
+	addchannelconfig(1, 2);	// 1-in/2-out
+	addchannelconfig(1, 1);	// 1-in/1-out
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
 	currentTempoBPS = getparameter_f(kTempo) / 60.0f;

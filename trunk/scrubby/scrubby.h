@@ -130,8 +130,8 @@ public:
 	virtual void cleanup();
 	virtual void reset();
 
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
 	virtual void processparameters();
+	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
 
 	virtual bool createbuffers();
 	virtual void releasebuffers();

@@ -14,8 +14,7 @@ double RezSynth::processAmpEvener(int numBands, int currentNote)
 
 	if (scaleMode <= kScaleMode_none)	// no scaling
 //		ampEvener = 0.0000000000009 * pow(((double)fBandwidth+0.72), 1.8) * baseFreq * baseFreq / sqrt((double)numBands*0.0000003);
-// XXX fix!
-		ampEvener = 0.0000000000009 * pow(((double)getparameter_gen(kBandwidth)+0.72), 1.8) * baseFreq * baseFreq / sqrt((double)numBands*0.0000003);
+		ampEvener = 0.0000000000009 * pow(parameters[kBandwidth].contract(bandwidth)+0.72, 1.8) * baseFreq * baseFreq / sqrt((double)numBands*0.0000003);
 	else if (scaleMode == kScaleMode_rms)	// RMS scaling
 		ampEvener = 0.0003 * baseFreq / sqrt((double)numBands*0.39);
 	else if (scaleMode >= kScaleMode_peak)	// peak scaling
