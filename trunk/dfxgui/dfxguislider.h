@@ -19,12 +19,16 @@ public:
 	DGSlider(DfxGuiEditor*, AudioUnitParameterID, DGRect*, DfxGuiSliderStyle, DGGraphic*, DGGraphic*);
 	virtual ~DGSlider();
 
-	virtual void draw(CGContextRef context, UInt32 portHeight);
+	virtual void draw(CGContextRef inContext, UInt32 inPortHeight);
 	virtual void mouseDown(Point inPos, bool, bool);
 	virtual void mouseTrack(Point inPos, bool, bool);
 	virtual void mouseUp(Point inPos, bool, bool);
 
-private:
+	void setMouseOffset(long inOffset)
+		{	mouseOffset = inOffset;	}
+
+
+protected:
 	UInt32			orientation;
 	DGGraphic *		ForeGround;
 	DGGraphic *		BackGround;

@@ -56,8 +56,6 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 //-----------------------------------------------------------------------------
 DGSlider::~DGSlider()
 {
-	ForeGround = NULL;
-	BackGround = NULL;
 }
 
 //-----------------------------------------------------------------------------
