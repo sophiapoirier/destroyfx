@@ -724,6 +724,11 @@ void DfxPlugin::update_preset(long presetIndex)
 
 	#ifdef TARGET_API_VST
 		TARGET_API_BASE_CLASS::setProgram(presetIndex);
+		// XXX Cubase SX will crash if custom-GUI plugs call updateDisplay 
+		// while the editor is closed, so as a workaround, only do it 
+		// if the plugin has no custom GUI
+		// this may not be a nice idea in general, though, since a generic 
+		// UI might still be provided in some hosts
 		#if !TARGET_PLUGIN_HAS_GUI
 			// tell the host to update the generic editor display with the new settings
 			AudioEffectX::updateDisplay();
