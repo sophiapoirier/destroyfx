@@ -125,12 +125,7 @@ enum
 	kCrisisVersionIsTooLow		= 1 << 9,	// the incoming data's version number is lower than our lowest loadable version number
 	kCrisisVersionIsTooHigh		= 1 << 10,	// our version number is lower than the incoming data's lowest loadable version number
 	kCrisisSmallerHeader		= 1 << 11,	// the incoming data's header size is smaller
-	kCrisisLargerHeader			= 1 << 12,	// the incoming data's header size is larger
-
-
-
-	// misc
-	kInvalidParamTag = -1	// for when there is no parameter with a matching ID
+	kCrisisLargerHeader			= 1 << 12	// the incoming data's header size is larger
 };
 
 
