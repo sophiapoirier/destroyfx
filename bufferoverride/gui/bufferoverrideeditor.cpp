@@ -263,13 +263,20 @@ void tempoDisplayProc(Float32 value, char * outText, void *)
 
 
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
 COMPONENT_ENTRY(BufferOverrideEditor);
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
 BufferOverrideEditor::BufferOverrideEditor(AudioUnitCarbonView inInstance)
 :	DfxGuiEditor(inInstance)
 {
+	bufferSizeSlider = NULL;
+	divisorLFOrateSlider = NULL;
+	bufferLFOrateSlider = NULL;
+	bufferSizeDisplay = NULL;
+	divisorLFOrateDisplay = NULL;
+	bufferLFOrateDisplay = NULL;
+
 	midilearnButton = NULL;
 	midiresetButton = NULL;
 	helpDisplay = NULL;
@@ -279,20 +286,26 @@ BufferOverrideEditor::BufferOverrideEditor(AudioUnitCarbonView inInstance)
 		&parameterListener);
 }
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
 BufferOverrideEditor::~BufferOverrideEditor()
 {
-	AUListenerRemoveParameter(parameterListener, bufferSizeSlider, &bufferSizeTempoSyncAUP);
-	AUListenerRemoveParameter(parameterListener, bufferSizeDisplay, &bufferSizeTempoSyncAUP);
-	AUListenerRemoveParameter(parameterListener, divisorLFOrateSlider, &divisorLFOtempoSyncAUP);
-	AUListenerRemoveParameter(parameterListener, divisorLFOrateDisplay, &divisorLFOtempoSyncAUP);
-	AUListenerRemoveParameter(parameterListener, bufferLFOrateSlider, &bufferLFOtempoSyncAUP);
-	AUListenerRemoveParameter(parameterListener, bufferLFOrateDisplay, &bufferLFOtempoSyncAUP);
+	if (bufferSizeSlider != NULL)
+		AUListenerRemoveParameter(parameterListener, bufferSizeSlider, &bufferSizeTempoSyncAUP);
+	if (bufferSizeDisplay != NULL)
+		AUListenerRemoveParameter(parameterListener, bufferSizeDisplay, &bufferSizeTempoSyncAUP);
+	if (divisorLFOrateSlider != NULL)
+		AUListenerRemoveParameter(parameterListener, divisorLFOrateSlider, &divisorLFOtempoSyncAUP);
+	if (divisorLFOrateDisplay != NULL)
+		AUListenerRemoveParameter(parameterListener, divisorLFOrateDisplay, &divisorLFOtempoSyncAUP);
+	if (bufferLFOrateSlider != NULL)
+		AUListenerRemoveParameter(parameterListener, bufferLFOrateSlider, &bufferLFOtempoSyncAUP);
+	if (bufferLFOrateDisplay != NULL)
+		AUListenerRemoveParameter(parameterListener, bufferLFOrateDisplay, &bufferLFOtempoSyncAUP);
 
 	AUListenerDispose(parameterListener);
 }
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
 long BufferOverrideEditor::open(float inXOffset, float inYOffset)
 {
 	bufferSizeTempoSyncAUP.mAudioUnit = divisorLFOtempoSyncAUP.mAudioUnit = bufferLFOtempoSyncAUP.mAudioUnit = GetEditAudioUnit();
@@ -521,7 +534,7 @@ HMSetTagDelay(9);	// make the hints appear quickly <-- XXX this is sort of a hac
 }
 
 
-// ____________________________________________________________________________
+//-----------------------------------------------------------------------------
 void BufferOverrideEditor::mouseovercontrolchanged()
 {
 	// there's no point in continuing
