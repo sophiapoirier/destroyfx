@@ -705,6 +705,8 @@ public:
 		{	return dfxplugin->getparameter_i(index);	}
 	bool getparameter_b(long index)
 		{	return dfxplugin->getparameter_b(index);	}
+	float getparameter_scalar(long index)
+		{	return dfxplugin->getparameter_scalar(index);	}
 	bool getparameterchanged(long index)
 		{	if (dfxplugin->parameterisvalid(index)) return dfxplugin->getparameterchanged(index);   return false;	}
 

@@ -296,6 +296,22 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kTempoAuto, true);
 	i++;
 
+	setpresetname(i, "jiggy");
+	setpresetparameter_f(i, kDivisor, 4.0f);
+	setpresetparameter_i(i, kBufferSize_sync, tempoRateTable->getNearestTempoRateIndex(4.0f));
+	setpresetparameter_b(i, kBufferTempoSync, true);
+	setpresetparameter_b(i, kBufferInterrupt, true);
+	setpresetparameter_i(i, kDivisorLFOrate_sync, tempoRateTable->getNearestTempoRateIndex(0.5f));
+	setpresetparameter_f(i, kDivisorLFOdepth, 84.0f);
+	setpresetparameter_i(i, kDivisorLFOshape, kSquareLFO);
+	setpresetparameter_b(i, kDivisorLFOtempoSync, true);
+	setpresetparameter_f(i, kBufferLFOdepth, 0.0f);
+	setpresetparameter_f(i, kSmooth, 9.0f);	// eh?
+	setpresetparameter_f(i, kDryWetMix, 100.0f);
+	setpresetparameter_i(i, kMidiMode, kMidiModeNudge);
+	setpresetparameter_b(i, kTempoAuto, true);
+	i++;
+
 /*
 	setpresetname(i, "");
 	setpresetparameter_f(i, kDivisor, f);
@@ -336,16 +352,16 @@ void BufferOverride::processparameters()
 	bufferInterrupt = getparameter_b(kBufferInterrupt);
 	divisorLFO->fRate = getparameter_f(kDivisorLFOrate_abs);
 	divisorLFO->fTempoRate = tempoRateTable->getScalar(getparameter_i(kDivisorLFOrate_sync));
-	divisorLFO->fDepth = getparameter_f(kDivisorLFOdepth) / getparametermax_f(kDivisorLFOdepth);
+	divisorLFO->fDepth = getparameter_scalar(kDivisorLFOdepth);
 	divisorLFO->iShape = getparameter_i(kDivisorLFOshape);
 	divisorLFO->bTempoSync = getparameter_b(kDivisorLFOtempoSync);
 	bufferLFO->fRate = getparameter_f(kBufferLFOrate_abs);
 	bufferLFO->fTempoRate = tempoRateTable->getScalar(getparameter_i(kBufferLFOrate_sync));
-	bufferLFO->fDepth = getparameter_f(kBufferLFOdepth) / getparametermax_f(kBufferLFOdepth);
+	bufferLFO->fDepth = getparameter_scalar(kBufferLFOdepth);
 	bufferLFO->iShape = getparameter_i(kBufferLFOshape);
 	bufferLFO->bTempoSync = getparameter_b(kBufferLFOtempoSync);
-	smooth = getparameter_f(kSmooth) / getparametermax_f(kSmooth);
-	dryWetMix = getparameter_f(kDryWetMix) / getparametermax_f(kDryWetMix);
+	smooth = getparameter_scalar(kSmooth);
+	dryWetMix = getparameter_scalar(kDryWetMix);
 	pitchbendRange = getparameter_d(kPitchbend);
 	midiMode = getparameter_i(kMidiMode);
 	userTempo = getparameter_f(kTempo);
