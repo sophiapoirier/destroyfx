@@ -1,3 +1,8 @@
+	BODY
+	{
+		margin-top: 8px ;
+	}
+
 	B { font-weight: bold }
 
 	H1 { text-indent: 0em }
@@ -21,3 +26,18 @@
 	A:hover { color: #b00939 ; font-weight: bold }
 	A:visited { color: #753027 ; font-weight: bold }
 	A:active { color: #DD4444 ; font-weight: bold }
+
+	TABLE.border
+	{
+		width: 600px ;
+		background-color: #000000 ;
+		border: 0px ;
+/*		padding: 4px ;	*/
+	}
+	TABLE.inside
+	{
+		width: 100% ;
+		background-color: #FFFFFF ;
+		border: 0px ;
+/*		padding: 9px ;	*/
+	}
