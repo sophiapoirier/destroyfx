@@ -3,9 +3,7 @@
 
 #include "transverb.hpp"
 
-#ifndef __dfx_firfilter_h
 #include "firfilter.h"
-#endif
 
 
 

@@ -5,9 +5,7 @@
 #endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#ifndef __BUFFEROVERRIDEEDITOR_H
-	#include "bufferoverrideeditor.hpp"
-	#endif
+	#include "bufferoverrideeditor.h"
 #endif
 
 

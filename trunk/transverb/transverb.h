@@ -3,13 +3,9 @@
 
 /* DFX Transverb plugin by Tom 7 and Marc 3 */
 
-#ifndef __DFXPLUGIN_H
 #include "dfxplugin.h"
-#endif
 
-#ifndef __dfx_iirfilter_h
 #include "iirfilter.h"
-#endif
 
 
 //-----------------------------------------------------------------------------
