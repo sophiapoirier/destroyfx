@@ -25,9 +25,6 @@ written by Tom Murphy 7 and Marc Poirier, 2001 - 2002
 #ifndef cosf
 #define cosf (float)cos
 #endif
-#ifndef fabsf
-#define fabsf (float)fabs
-#endif
 
 
 

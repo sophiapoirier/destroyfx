@@ -129,11 +129,11 @@ enum
 
 //------------------------------------------------------
 // structure of an API-generic preset
-struct GenPreset
+typedef struct
 {
 	char name[DFX_PRESET_MAX_NAME_LENGTH];
 	float params[2];	// can of course be more than 2...
-};
+} DfxGenPreset;
 
 
 //------------------------------------------------------
@@ -145,7 +145,7 @@ struct GenPreset
 // (everything up through numStoredPresets) will not change, 
 // so if you alter this header structure at all, keep the 
 // first six items in there and add anything else AFTER those.
-struct DfxSettingsInfo
+typedef struct
 {
 	// this is a value that you should look at to check for authenticity 
 	// of the data and as an identifier of the data's creator 
@@ -169,11 +169,11 @@ struct DfxSettingsInfo
 	unsigned long storedParameterAssignmentSize;
 	// the size (in bytes) of the extra settings data (if any)
 	unsigned long storedExtendedDataSize;
-};
+} DfxSettingsInfo;
 
 
 //------------------------------------------------------
-struct ParameterAssignment
+typedef struct
 {
 	// the MIDI event type 
 	//    (CC, note, pitchbend, etc.)
@@ -199,7 +199,7 @@ struct ParameterAssignment
 	float fdata1;
 	// (or the maximum point in a float range)
 	float fdata2;
-};
+} DfxParameterAssignment;
 
 
 //------------------------------------------------------
@@ -391,14 +391,14 @@ protected:
 	// settings and know which stored parameters correspond to theirs)
 	long *parameterIDs;
 	// the array of which MIDI event, if any, is assigned to each parameter
-	ParameterAssignment *paramAssignments;
+	DfxParameterAssignment *paramAssignments;
 
 	// this what we point the host to during save()
 	DfxSettingsInfo *sharedChunk;
 	// a few handy pointers into sections of our settings data
 	long *firstSharedParameterID;
-	GenPreset *firstSharedPreset;
-	ParameterAssignment *firstSharedParamAssignment;
+	DfxGenPreset *firstSharedPreset;
+	DfxParameterAssignment *firstSharedParamAssignment;
 
 	// whether to allow only one parameter assignment per MIDI event, or steal them
 	bool stealAssignments;
