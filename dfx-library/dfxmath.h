@@ -72,6 +72,27 @@ inline float interpolateHermite(float *data, double address, long arraysize)
 	long pos = (long)address;
 	float posFract = (float) (address - (double)pos);
 
+#if 0	// XXX test performance using fewer variables/registers
+	long posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
+	long posPlus1 = (pos+1) % arraysize;
+	long posPlus2 = (pos+2) % arraysize;
+
+	return (( (((((3.0f*(data[pos]-data[posPlus1])) - data[posMinus1] + data[posPlus2]) * 0.5f) * posFract)
+				+ ((2.0f*data[posPlus1]) + data[posMinus1] - (2.5f*data[pos]) - (data[posPlus2]*0.5f))) * 
+				posFract + ((data[posPlus1] - data[posMinus1]) * 0.5f) ) * posFract) + data[pos];
+
+#elif 1	// XXX also test using float variables of data[] rather than looking up with posMinus1, etc.
+	float dataPosMinus1 = data[ (pos == 0) ? arraysize-1 : pos-1 ];
+	float dataPosPlus1 = data[ (pos+1) % arraysize ];
+	float dataPosPlus2 = data[ (pos+2) % arraysize ];
+
+	float a = ( (3.0f*(data[pos]-dataPosPlus1)) - dataPosMinus1 + dataPosPlus2 ) * 0.5f;
+	float b = (2.0f*dataPosPlus1) + dataPosMinus1 - (2.5f*data[pos]) - (dataPosPlus2*0.5f);
+	float c = (dataPosPlus1 - dataPosMinus1) * 0.5f;
+
+	return (( ((a*posFract)+b) * posFract + c ) * posFract) + data[pos];
+
+#else
 	long posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
 	long posPlus1 = (pos+1) % arraysize;
 	long posPlus2 = (pos+2) % arraysize;
@@ -81,6 +102,7 @@ inline float interpolateHermite(float *data, double address, long arraysize)
 	float c = (data[posPlus1] - data[posMinus1]) * 0.5f;
 
 	return (( ((a*posFract)+b) * posFract + c ) * posFract) + data[pos];
+#endif
 }
 
 inline float interpolateLinear(float *data, double address, long arraysize)

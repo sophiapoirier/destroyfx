@@ -26,6 +26,10 @@ DFX_ENTRY(Geometer);
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
+#if !TARGET_PLUGIN_USES_DSPCORE
+  cs = NULL;
+#endif
+
   initparameter_indexed(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
   initparameter_indexed(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
@@ -155,10 +159,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   dfxsettings->setAllowPitchbendEvents(true);
   dfxsettings->setAllowNoteEvents(true);
 
-  //  cs = new dfxmutex();
-
 #if !TARGET_PLUGIN_USES_DSPCORE
   addchannelconfig(1, 1);	/* mono */
+  cs = new dfxmutex();
 #endif
 
   #ifdef TARGET_API_VST
@@ -172,7 +175,11 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 PLUGIN::~PLUGIN() {
-  //  delete cs;
+#if !TARGET_PLUGIN_USES_DSPCORE
+  if (cs != NULL)
+    delete cs;
+  cs = NULL;
+#endif
 
 #ifdef TARGET_API_VST
   /* VST doesn't have initialize and cleanup methods like Audio Unit does, 
@@ -183,11 +190,13 @@ PLUGIN::~PLUGIN() {
 
 #if TARGET_PLUGIN_USES_DSPCORE
 PLUGINCORE::PLUGINCORE(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
-  : DfxPluginCore(inInstance)
+  : DfxPluginCore(inInstance), cs(NULL)
+{
+  cs = new dfxmutex();
 #else
 long PLUGIN::initialize()
-#endif
 {
+#endif
   /* determine the size of the largest window size */
   long maxframe = 0;
   for (int i=0; i< BUFFERSIZESSIZE; i++)
@@ -214,10 +223,14 @@ long PLUGIN::initialize()
 
 #if TARGET_PLUGIN_USES_DSPCORE
 PLUGINCORE::~PLUGINCORE()
+{
+  if (cs != NULL)
+    delete cs;
+  cs = NULL;
 #else
 void PLUGIN::cleanup()
-#endif
 {
+#endif
   /* windowing buffers */
   free (in0);
   free (out0);
@@ -1121,11 +1134,13 @@ void PLUGIN::processaudio(const float **trueinputs, float **trueoutputs, unsigne
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      //      cs->grab();
+      if (cs != NULL)
+        cs->grab();
       processw(in0, out0+outstart+outsize, framesize,
 	       pointx, pointy, framesize * 2,
 	       storex, storey);
-      //      cs->release();
+      if (cs != NULL)
+        cs->release();
 
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */
