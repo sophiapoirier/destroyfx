@@ -22,16 +22,16 @@ DFX_ENTRY(Transverb);
 Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS) {
 
-  initparameter_f(kBsize, "buffer size", 2700.0f, 333.0f, 1.0f, 3000.0f, kDfxParamCurve_linear, kDfxParamUnit_ms);
-  initparameter_f(kDrymix, "dry mix", 1.0f, 1.0f, 0.0f, 1.0f, kDfxParamCurve_squared, kDfxParamUnit_lineargain);
-  initparameter_f(kMix1, "1:mix", 1.0f, 1.0f, 0.0f, 1.0f, kDfxParamCurve_squared, kDfxParamUnit_lineargain);
-  initparameter_f(kDist1, "1:dist", 0.90009f, 0.5f, 0.0f, 1.0f, kDfxParamCurve_linear, kDfxParamUnit_scalar);
-  initparameter_d(kSpeed1, "1:speed", 0.0, 0.0, -3.0, 6.0, kDfxParamCurve_linear, kDfxParamUnit_octaves);
-  initparameter_f(kFeed1, "1:feedback", 0.0f, 33.3f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);
-  initparameter_f(kMix2, "2:mix", 0.0f, 1.0f, 0.0f, 1.0f, kDfxParamCurve_squared, kDfxParamUnit_lineargain);
-  initparameter_f(kDist2, "2:dist", 0.1f, 0.5f, 0.0f, 1.0f, kDfxParamCurve_linear, kDfxParamUnit_scalar);
-  initparameter_d(kSpeed2, "2:speed", 1.0, 0.0, -3.0, 6.0, kDfxParamCurve_linear, kDfxParamUnit_octaves);
-  initparameter_f(kFeed2, "2:feedback", 0.0f, 33.3f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);
+  initparameter_f(kBsize, "buffer size", 2700.0f, 333.0f, 1.0f, 3000.0f, kDfxParamUnit_ms);
+  initparameter_f(kDrymix, "dry mix", 1.0f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_lineargain, kDfxParamCurve_squared);
+  initparameter_f(kMix1, "1:mix", 1.0f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_lineargain, kDfxParamCurve_squared);
+  initparameter_f(kDist1, "1:dist", 0.90009f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_scalar);
+  initparameter_d(kSpeed1, "1:speed", 0.0, 0.0, -3.0, 6.0, kDfxParamUnit_octaves);
+  initparameter_f(kFeed1, "1:feedback", 0.0f, 33.3f, 0.0f, 100.0f, kDfxParamUnit_percent);
+  initparameter_f(kMix2, "2:mix", 0.0f, 1.0f, 0.0f, 1.0f, kDfxParamUnit_lineargain, kDfxParamCurve_squared);
+  initparameter_f(kDist2, "2:dist", 0.1f, 0.5f, 0.0f, 1.0f, kDfxParamUnit_scalar);
+  initparameter_d(kSpeed2, "2:speed", 1.0, 0.0, -3.0, 6.0, kDfxParamUnit_octaves);
+  initparameter_f(kFeed2, "2:feedback", 0.0f, 33.3f, 0.0f, 100.0f, kDfxParamUnit_percent);
   initparameter_indexed(kQuality, "quality", ultrahifi, ultrahifi, numQualities);
   initparameter_b(kTomsound, "TOMSOUND", false, false);
   initparameter_indexed(kSpeed1mode, "1:speed mode", kFineMode, kFineMode, numSpeedModes);

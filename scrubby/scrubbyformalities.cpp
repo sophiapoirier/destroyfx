@@ -38,15 +38,15 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// initialize the parameters
 	long numTempoRates = tempoRateTable->getNumTempoRates();
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
-	initparameter_f(kSeekRange, "seek range", 333.0f, 333.0f, 0.3f, 6000.0f, kDfxParamCurve_squared, kDfxParamUnit_ms);
+	initparameter_f(kSeekRange, "seek range", 333.0f, 333.0f, 0.3f, 6000.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_b(kFreeze, "freeze", false, false);
-	initparameter_f(kSeekRate_abs, "seek rate (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamCurve_log, kDfxParamUnit_lfofreq);//kDfxParamCurve_cubed
+	initparameter_f(kSeekRate_abs, "seek rate (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
 	initparameter_indexed(kSeekRate_sync, "seek rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
-	initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamCurve_log, kDfxParamUnit_lfofreq);//kDfxParamCurve_cubed
+	initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 9.0f, 3.0f, 0.3f, 810.0f, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
 	initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
 	initparameter_b(kTempoSync, "tempo sync", false, false);
-	initparameter_f(kSeekDur, "seek duration", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);	// percent of range
-	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);	// percent of range
+	initparameter_f(kSeekDur, "seek duration", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
+	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0f, 100.0f, 3.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
 	initparameter_indexed(kSpeedMode, "speeds", kSpeedMode_robot, kSpeedMode_robot, kNumSpeedModes);
 	initparameter_b(kSplitStereo, "stereo split", false, false);
 	initparameter_b(kPitchConstraint, "pitch constraint", false, false);
@@ -65,11 +65,11 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kPitchStep9, "semi9 (major 6th)", false, false);
 	initparameter_b(kPitchStep10, "semi10 (minor 7th)", false, false);
 	initparameter_b(kPitchStep11, "semi11 (major 7th)", false, false);
-	initparameter_i(kOctaveMin, "octave minimum", -5, -5, -5, 0, kDfxParamCurve_stepped, kDfxParamUnit_strings);
-	initparameter_i(kOctaveMax, "octave maximum", 7, 7, 0, 7, kDfxParamCurve_stepped, kDfxParamUnit_strings);
-	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamCurve_linear, kDfxParamUnit_bpm);
+	initparameter_i(kOctaveMin, "octave minimum", -5, -5, -5, 0, kDfxParamUnit_strings, kDfxParamCurve_stepped);
+	initparameter_i(kOctaveMax, "octave maximum", 7, 7, 0, 7, kDfxParamUnit_strings, kDfxParamCurve_stepped);
+	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 39.0f, 480.0f, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
-	initparameter_f(kPredelay, "predelay", 0.0f, 50.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);	// percent of range
+	initparameter_f(kPredelay, "predelay", 0.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_percent);	// percent of range
 
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
@@ -231,8 +231,8 @@ void Scrubby::clearbuffers()
 #else
 	clearbuffer_d(portamentoStep, numBuffers, 1.0);
 #endif
-	clearbuffer_i(seekcount, numBuffers);
 	clearbuffer_i(movecount, numBuffers);
+	clearbuffer_i(seekcount, numBuffers);
 	// some hosts may call reset when restarting playback
 	clearbuffer_b(needResync, numBuffers, true);
 }

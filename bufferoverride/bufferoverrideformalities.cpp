@@ -32,26 +32,26 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	long numTempoRates = tempoRateTable->getNumTempoRates();
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
-	initparameter_f(kDivisor, "buffer divisor", 1.92f, 1.92f, 1.92f, 222.0f, kDfxParamCurve_squared, kDfxParamUnit_divisor);
-	initparameter_f(kBufferSize_abs, "forced buffer size (free)", 90.0f, 33.3f, 1.0f, 999.0f, kDfxParamCurve_squared, kDfxParamUnit_ms);
+	initparameter_f(kDivisor, "buffer divisor", 1.92f, 1.92f, 1.92f, 222.0f, kDfxParamUnit_divisor, kDfxParamCurve_squared);
+	initparameter_f(kBufferSize_abs, "forced buffer size (free)", 90.0f, 33.3f, 1.0f, 999.0f, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_indexed(kBufferSize_sync, "forced buffer size (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
 	initparameter_b(kBufferTempoSync, "forced buffer tempo sync", false, false);
 	initparameter_b(kBufferInterrupt, "buffer interrupt", true, true);
-	initparameter_f(kDivisorLFOrate_abs, "divisor LFO rate (free)", 0.3f, 3.0f, 0.03f, 21.0f, kDfxParamCurve_log, kDfxParamUnit_lfofreq);
+	initparameter_f(kDivisorLFOrate_abs, "divisor LFO rate (free)", 0.3f, 3.0f, 0.03f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
 	initparameter_indexed(kDivisorLFOrate_sync, "divisor LFO rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
-	initparameter_f(kDivisorLFOdepth, "divisor LFO depth", 0.0f, 0.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);
+	initparameter_f(kDivisorLFOdepth, "divisor LFO depth", 0.0f, 0.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
 	initparameter_indexed(kDivisorLFOshape, "divisor LFO shape", 0, 0, numLFOshapes);
 	initparameter_b(kDivisorLFOtempoSync, "divisor LFO tempo sync", false, false);
-	initparameter_f(kBufferLFOrate_abs, "buffer LFO rate (free)", 3.0f, 3.0f, 0.03f, 21.0f, kDfxParamCurve_log, kDfxParamUnit_lfofreq);
+	initparameter_f(kBufferLFOrate_abs, "buffer LFO rate (free)", 3.0f, 3.0f, 0.03f, 21.0f, kDfxParamUnit_hz, kDfxParamCurve_log);
 	initparameter_indexed(kBufferLFOrate_sync, "buffer LFO rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates);
-	initparameter_f(kBufferLFOdepth, "buffer LFO depth", 0.0f, 0.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);
+	initparameter_f(kBufferLFOdepth, "buffer LFO depth", 0.0f, 0.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
 	initparameter_indexed(kBufferLFOshape, "buffer LFO shape", 0, 0, numLFOshapes);
 	initparameter_b(kBufferLFOtempoSync, "buffer LFO tempo sync", false, false);
-	initparameter_f(kSmooth, "smooth", 9.0f, 3.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_percent);
-	initparameter_f(kDryWetMix, "dry/wet mix", 100.0f, 50.0f, 0.0f, 100.0f, kDfxParamCurve_linear, kDfxParamUnit_drywetmix);
-	initparameter_d(kPitchbend, "pitchbend range", 6.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamCurve_linear, kDfxParamUnit_semitones);
+	initparameter_f(kSmooth, "smooth", 9.0f, 3.0f, 0.0f, 100.0f, kDfxParamUnit_percent);
+	initparameter_f(kDryWetMix, "dry/wet mix", 100.0f, 50.0f, 0.0f, 100.0f, kDfxParamUnit_drywetmix);
+	initparameter_d(kPitchbend, "pitchbend range", 6.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamUnit_semitones);
 	initparameter_indexed(kMidiMode, "MIDI mode", kMidiMode_nudge, kMidiMode_nudge, kNumMidiModes);
-	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 57.0f, 480.0f, kDfxParamCurve_linear, kDfxParamUnit_bpm);
+	initparameter_f(kTempo, "tempo", 120.0f, 120.0f, 57.0f, 480.0f, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 
 	// set the value strings for the LFO shape parameters

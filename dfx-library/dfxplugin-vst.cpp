@@ -343,10 +343,7 @@ void DfxPlugin::getParameterLabel(long index, char *label)
 		case kDfxParamUnit_drywetmix:
 			strcpy(label, "");
 			break;
-		case kDfxParamUnit_audiofreq:
-			strcpy(label, "Hz");
-			break;
-		case kDfxParamUnit_lfofreq:
+		case kDfxParamUnit_hz:
 			strcpy(label, "Hz");
 			break;
 		case kDfxParamUnit_seconds:
