@@ -26,13 +26,13 @@
 #define __DFX_AU_UTILITIES_PRIVATE_H
 
 
+#include <Carbon/Carbon.h>
+#include <AudioUnit/AudioUnit.h>
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-#include <Carbon/Carbon.h>
-#include <AudioUnit/AudioUnit.h>
 
 
 
@@ -50,7 +50,6 @@ void FileURLsCFTreeContext_Init(const CFURLRef inUrl, CFTreeContext * outTreeCon
 
 // restoring preset files
 CFPropertyListRef CreatePropertyListFromXMLFile(const CFURLRef inFileURL);
-// XXX implement these
 pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
 Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode);
 OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAUComponent, Boolean inShouldCreateFolder);
@@ -64,7 +63,7 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inFileUrl);
 Boolean IsFileAccessError(OSStatus inErrorCode);
 OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl);
-OSStatus CustomSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData);
+OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent);
 pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
 
 
