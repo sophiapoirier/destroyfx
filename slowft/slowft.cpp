@@ -183,6 +183,17 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
 
   /* XXX do ops... */
 
+  int maxkey = 0;
+  {
+    float maxval = 0.0;
+    for(int k = 0; k < NUM_KEYS; k ++) {
+      float tval = abs(sines[k]) + abs(cosines[k]);
+      if (tval > maxval) {
+	maxkey = k;
+	maxval = tval;
+      }
+    }
+  }
   
   /* now generate output! */
 
@@ -199,6 +210,7 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
     /* now add back in sines and cosines */
     for(int key = 0; key < NUM_KEYS; key ++) {
       
+      if (key == maxkey)
       for(int s = 0; s < samples; s ++) {
 	
 	float seconds = ((float)s / (float)rate);
@@ -206,7 +218,7 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
 	/* argument to sin, cosine. */
 	float arg = freq * seconds * SLOWFT_2PI;
 
-	out[s] += sin(arg) + cos(arg);
+	out[s] += (sines[key] * sin(arg)) + (cosines[key] * cos(arg));
 
       }
 
