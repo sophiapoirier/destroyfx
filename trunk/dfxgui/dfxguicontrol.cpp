@@ -155,6 +155,7 @@ void DGControl::setParameterID(long inParameterID)
 		auvp = AUVParameter(getDfxGuiEditor()->GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, 
 							kAudioUnitScope_Global, (AudioUnitElement)0);
 		createAUVcontrol();
+		redraw();	// it might not happen if the new parameter value is the same as the old value, so make sure it happens
 	}
 }
 

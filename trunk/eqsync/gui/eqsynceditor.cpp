@@ -218,7 +218,7 @@ long EQSyncEditor::open()
 		else if (i == kTempo)
 			textproc = tempoDisplayProc;
 		pos.set(kDisplayX, kDisplayY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);
-		DGTextDisplay * display = new DGTextDisplay(this, i, &pos, textproc, this, NULL, kValueTextSize, kDGTextAlign_left, kBlackDGColor, kValueTextFont);
+		DGTextDisplay * display = new DGTextDisplay(this, i, &pos, textproc, this, NULL, kDGTextAlign_left, kValueTextSize, kBlackDGColor, kValueTextFont);
 	}
 
 	// create the vertical sliders
