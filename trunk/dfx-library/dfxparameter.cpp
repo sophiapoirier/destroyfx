@@ -72,9 +72,9 @@ DfxParam::~DfxParam()
 
 //-----------------------------------------------------------------------------
 void DfxParam::init(const char *initName, DfxParamValueType initType, 
-						DfxParamValue initValue, DfxParamValue initDefaultValue, 
-						DfxParamValue initMin, DfxParamValue initMax, 
-						DfxParamUnit initUnit, DfxParamCurve initCurve)
+                    DfxParamValue initValue, DfxParamValue initDefaultValue, 
+                    DfxParamValue initMin, DfxParamValue initMax, 
+                    DfxParamUnit initUnit, DfxParamCurve initCurve)
 {
 	// accept all of the incoming init values
 	valueType = initType;

@@ -133,11 +133,10 @@ DfxPlugin::DfxPlugin(
 	hostCanDoTempo = (canHostDo("sendVstTimeInfo") == 1);
 
 	#if TARGET_PLUGIN_USES_DSPCORE
-		dspcores = NULL;
 		dspcores = (DfxPluginCore**) malloc(getnumoutputs() * sizeof(DfxPluginCore*));
 		// need to save instantiating the cores for the inheriting plugin class constructor
-		for (long i=0; i < getnumoutputs(); i++)
-			dspcores[i] = NULL;
+		for (long ii=0; i < getnumoutputs(); ii++)
+			dspcores[ii] = NULL;
 	#endif
 
 	#if TARGET_PLUGIN_USES_MIDI
