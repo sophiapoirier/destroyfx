@@ -1,6 +1,6 @@
 
 
-/* broken fft: $Id: brokenfft.h,v 1.1 2001-08-16 02:23:31 tom7 Exp $ */
+/* broken fft: $Id: brokenfft.h,v 1.2 2001-08-16 13:02:50 tom7 Exp $ */
 
 #ifndef __AGAIN_H
 #define __AGAIN_H
@@ -8,6 +8,7 @@
 #include <audioeffectx.h>
 
 #define MAXOVERLAP 1024
+#define MAXSAMPLES 8192
 #define MAXECHO 8192
 
 struct amplentry {
@@ -21,8 +22,11 @@ public:
   Fft(audioMasterCallback audioMaster);
   ~Fft();
 
+  virtual void processX(float **inputs, float **outputs, 
+			long sampleFrames, int overwrite);
   virtual void process(float **inputs, float **outputs, long sampleFrames);
-  virtual void processReplacing(float **inputs, float **outputs, long sampleFrames);
+  virtual void processReplacing(float **inputs, float **outputs, 
+				long sampleFrames);
   virtual void setProgramName(char *name);
   virtual void getProgramName(char *name);
   virtual void setParameter(long index, float value);
@@ -32,6 +36,8 @@ public:
   virtual void getParameterName(long index, char *text);
 
   virtual void suspend();
+
+  void fftops(long samples);
 
 protected:
   float bitres;
@@ -44,11 +50,9 @@ protected:
   int lastblocksize;
 
   /* BAD FFT */
-#if 1
   int OVERLAP;
   float * overbuff;
 
-#endif
   float perturb, quant, rotate, spike;
 
   float binquant;
@@ -71,6 +75,11 @@ protected:
   float * echoc;
 
   float echofb;
+
+  /* fft work area */
+  float * tmp, * oot, * fftr, * ffti;
+  int buffersamples; /* size of work area */
+
 
   float echomodw, echomodf;
   float echolow, echohi;

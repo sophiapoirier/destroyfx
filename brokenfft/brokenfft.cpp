@@ -1,5 +1,5 @@
 
-/* brokenfft: $Id: brokenfft.cpp,v 1.1 2001-08-16 02:23:31 tom7 Exp $ */
+/* brokenfft: $Id: brokenfft.cpp,v 1.2 2001-08-16 13:02:50 tom7 Exp $ */
 
 #include <windows.h>
 #include <stdlib.h>
@@ -66,6 +66,12 @@ Fft::Fft(audioMasterCallback audioMaster)
   echor = (float*)malloc(MAXECHO * sizeof(float));
   echoc = (float*)malloc(MAXECHO * sizeof(float));
 
+  fftr = (float*)malloc(MAXSAMPLES * sizeof(float));
+  ffti = (float*)malloc(MAXSAMPLES * sizeof(float));
+  tmp = (float*)malloc(MAXSAMPLES * sizeof(float));
+  oot = (float*)malloc(MAXSAMPLES * sizeof(float));
+  buffersamples = MAXSAMPLES;
+
   for(int i = 0; i < MAXECHO; i++) {
     echor[i] = echoc[i] = 0.0;
   }
@@ -81,6 +87,11 @@ Fft::Fft(audioMasterCallback audioMaster)
 Fft::~Fft() {
   free(overbuff);
   free(ampl);
+
+  free(fftr);
+  free(ffti);
+  free(tmp);
+  free(oot);
 
   free(echor);
   free(echoc);
@@ -106,7 +117,6 @@ void Fft::setParameter(long index, float value) {
       }
     }
     OVERLAP = nOVERLAP;
-
   }
   break;
   case 1:
@@ -299,24 +309,11 @@ void Fft::getParameterLabel(long index, char *label) {
 
 inline float quantize(float q, float old) {
   /*	if (q >= 1.0) return old;*/
-#if 1
   long scale = ( long)(512 * q);
   if (scale == 0) scale = 2;
   long X = ( long)(scale * old);
 	
   return (float)(X / (float)scale);
-#else
-
-  float scale = ((float)512. * q);
-  if (scale == 0.0) scale = 1.1;
-  float X = (scale * old);
-	
-  return (float)(X / (float)scale);
-
-#if 0
-  return ( ((float)0xFFFFFFFF * q) * old) / ((float)0xFFFFFFFF * q);
-#endif
-#endif
 }
 
 void Fft::suspend () {
@@ -399,77 +396,11 @@ void tqsort(amplentry * low, int n, int stop) {
   }
 
 }
-/* wavelab: sampleframes = 2048 */
 
-void Fft::process(float **inputs, float **outputs, long samples) {
-  float * in  = *inputs;
-  float * out = *outputs;
-
-  int i = 0;
-  /* maybe here we can pad up to the next biggest power of two? */
-  if (samples & (samples-1)) {
-    /* not a power of two */
-    /*    MessageBox(0, "block size not a power of two", 
-	  "can't proceed", MB_OK);*/
-
-    /* FIXME!!!! do something...  */
-
-    return;
-  }
-
-  if (!ampl || samples > amplsamples) { 
-    amplhold = 1; /* recalc this time */
-    free(ampl);
-    ampl = (amplentry*)malloc(sizeof (amplentry) * samples);
-    amplsamples = samples;
-  }
-
-#if 0
-  if (samples > buffersamples) {
-
-    free(fftr);
-    free(ffti);
-    free(tmp);
-    free(oot);
-#endif
-    float * fftr = (float*)malloc(samples * sizeof(float));
-    float * ffti = (float*)malloc(samples * sizeof(float));
-    float * tmp = (float*)malloc(samples * sizeof(float));
-    float * oot = (float*)malloc(samples * sizeof(float));
-
-#if 0
-  }
-#endif
-
-#if 0
-  for(int c = 0; c < samples; c++) tmp[c] = (in[c] + 
-					     in[(c+1) & (samples-1)])/2.0;
-#else
-  for (int c = 0; c < samples; c++) tmp[c] = in[c];
-
-#endif
-  fft_float(samples, 0, tmp, 0, fftr, ffti);
-#if 0
-  for(int z = 6; z < (samples / 2); z++) {
-    int i = z - 5;
-
-    double magn = sqrt ( fftr[i]*fftr[i] + ffti[i]*ffti[i] );
-    double angle = atan2 ( ffti[i], fftr[i] );
-
-    fftr[z] = magn * cos(angle);
-    ffti[z] = magn * sin(angle);
-
-    i = (samples - (z - 5));
-
-    magn = sqrt ( fftr[i]*fftr[i] + ffti[i]*ffti[i] );
-    angle = atan2 ( ffti[i], fftr[i] );
-
-    fftr[samples - z] = magn * cos(angle);
-    ffti[samples - z] = magn * sin(angle);
-  }
-#endif
-
-  for(i = 0; i < samples; i ++) {
+/* this function modifies 'samples' number of floats in
+   fftr and ffti */
+void Fft::fftops(long samples) {
+  for(int i = 0; i < samples; i ++) {
 
     /* operation bq */
     if (binquant > 0.0 && (samplesleft -- > 0)) {
@@ -518,9 +449,10 @@ void Fft::process(float **inputs, float **outputs, long samples) {
       ffti[i] = fsign(ffti[i]) * powf(fabs(ffti[i]), compress);
     }
 
+    /* M.U.G. */
     if (makeupgain > 0.00001) {
-      fftr[i] *= 1.0 + makeupgain;
-      ffti[i] *= 1.0 + makeupgain;
+      fftr[i] *= 1.0 + (3.0*makeupgain);
+      ffti[i] *= 1.0 + (3.0*makeupgain);
     }
 
   }
@@ -545,16 +477,9 @@ void Fft::process(float **inputs, float **outputs, long samples) {
       stopat = 1+(int)((spike*spike*spike)*samples);
 
       /* consider a special case for when abs(stopat-samples) < lg samples? */ 
-
-#if 1
       tqsort(ampl, samples, stopat);
 
-#else
-      /* very slow (!) */
-      qsort(ampl, samples, sizeof(amplentry), amplcomp);
-#endif
       /* chop of everything after the first i */
-#if 1
 
       amplhold = 1 + (int)(spikehold * (20.0));
 
@@ -573,8 +498,6 @@ void Fft::process(float **inputs, float **outputs, long samples) {
       fftr[i] *= boostby;
       /* XXX ffti? */
     }
-
-#endif
 
   }
 
@@ -611,6 +534,58 @@ void Fft::process(float **inputs, float **outputs, long samples) {
     }
   }
       
+}
+
+
+/* wavelab: sampleframes = 2048 */
+
+void Fft::processX(float **inputs, float **outputs, long samples,
+		   int overwrite) {
+  float * in  = *inputs;
+  float * out = *outputs;
+
+  int i = 0;
+  /* maybe here we can pad up to the next biggest power of two? */
+  if (samples & (samples-1)) {
+    /* not a power of two */
+    /*    MessageBox(0, "block size not a power of two", 
+	  "can't proceed", MB_OK);*/
+
+    /* FIXME!!!! do something...  */
+
+    return;
+  }
+
+  if (!ampl || samples > amplsamples) { 
+    amplhold = 1; /* recalc this time */
+    free(ampl);
+    ampl = (amplentry*)malloc(sizeof (amplentry) * samples);
+    amplsamples = samples;
+  }
+
+  if (samples > buffersamples) {
+
+    free(fftr);
+    free(ffti);
+    free(tmp);
+    free(oot);
+
+    samples = buffersamples;
+
+    fftr = (float*)malloc(buffersamples * sizeof(float));
+    ffti = (float*)malloc(buffersamples * sizeof(float));
+    tmp = (float*)malloc(buffersamples * sizeof(float));
+    oot = (float*)malloc(buffersamples * sizeof(float));
+
+  }
+
+  for (int c = 0; c < samples; c++) tmp[c] = in[c];
+
+  fft_float(samples, 0, tmp, 0, fftr, ffti);
+
+  /* do actual processing */
+  fftops(samples);
+
   fft_float(samples, 1, fftr, ffti, oot, tmp);
 
   float overscale = (samples-OVERLAP) / (float)samples;
@@ -627,26 +602,28 @@ void Fft::process(float **inputs, float **outputs, long samples) {
     }
   }
 
-  int u = 0;
-  for(i = (i * overscale) + 1;i < samples; i ++) {
-    overbuff[u++] = oot[i];
+  /* mix in the 'oot' buffer, based on whether we are in
+     process or processReplacing */
+  if (overwrite) {
+    int u = 0;
+    for(i = (i * overscale) + 1; i < samples; i ++) {
+      overbuff[u++] = oot[i];
+    }
+  } else {
+    int u = 0;
+    for(i = (i * overscale) + 1; i < samples; i ++) {
+      overbuff[u++] += oot[i];
+    }
   }
-
-  free(tmp);
-  free(oot);
-  free (fftr);
-  free (ffti);
 }
 
+void Fft::process(float **inputs, float **outputs, long samples) {
+  processX(inputs,outputs,samples,0);
+}
 
 void Fft::processReplacing(float **inputs, float **outputs, long samples) {
-  for (int i = 0; i < samples; i++) {
-    outputs[0][i] =
-      outputs[1][i] = 0.0;
-  }
-  process(inputs,outputs,samples);
+  processX(inputs,outputs,samples,1);
 }
-
 
 
 /* ------------------- boring! --------------------- */
