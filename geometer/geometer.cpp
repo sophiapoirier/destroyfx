@@ -25,7 +25,7 @@ int intcompare(const void * a, const void * b) {
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5, "samples");
+  FPARAM(bufsizep, P_BUFSIZE, "wsize", 1.0, "samples");
   FPARAM(shape, P_SHAPE, "wshape", 0.0, "");
 
   FPARAM(pointstyle, P_POINTSTYLE, "points where", 0.0, "choose");
@@ -65,10 +65,10 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
 
   /* geometer buffers */
   pointx = (int*)malloc((maxframe * 2 + 3) * sizeof (int));
-  tempx = (int*)malloc((maxframe * 2 + 3) * sizeof (int));
+  storex = (int*)malloc((maxframe * 2 + 3) * sizeof (int));
 
   pointy = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
-  tempy = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
+  storey = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
 
   /* XXX doesn't take self pointer now? */
   chunk = new VstChunk(NUM_PARAMS, NUM_PROGRAMS, PLUGINID, this);
@@ -89,8 +89,8 @@ PLUGIN::~PLUGIN() {
 
   free(pointx);
   free(pointy);
-  free(tempx);
-  free(tempy);
+  free(storex);
+  free(storey);
 
   delete cs;
 
@@ -322,46 +322,48 @@ void PLUGIN::getParameterLabel(long index, char *label) {
 
 /* operations on points. this is a separate function
    because it is called once for each operation slot.
+   It's static to enforce thread-safety.
 */
-int PLUGIN::pointops(float pop, int npts, float * op_param, int samples) {
+int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
+                     int * px, float * py, int maxpts,
+                     int * tempx, float * tempy) {
   /* pointops. */
 
-  int maxpts = samples;
   int times = 2;
   switch(MKPOINTOP(pop)) {
   case OP_DOUBLE: {
     /* x2 points */
     int i = 0;
     int t;
-    for(t = 0; i < (npts - 4) && t < (maxpts-4); i++) {
+    for(t = 0; i < (npts - 1) && t < (maxpts-4); i++) {
       /* always include the actual point */
-      tempx[t] = pointx[i];
-      tempy[t] = pointy[i];
+      tempx[t] = px[i];
+      tempy[t] = py[i];
       t++;
       /* now, only if there's room... */
-      if (pointx[i+1] - pointx[i] > 1) {
-	/* add an extra point. Pick it in some arbitrary weird way. 
-	   my idea is to double the frequency ...
-	*/
+      if ((i < npts) && ((px[i+1] - px[i]) > 1)) {
+        /* add an extra point. Pick it in some arbitrary weird way. 
+           my idea is to double the frequency ...
+        */
 
-	tempy[t] = (op_param[0] * 2.0f - 1.0f) * pointy[i];
-	tempx[t] = pointx[i] + 1; //(pointx[i] + pointx[i+1]) >> 1;
+        tempy[t] = (op_param[0] * 2.0f - 1.0f) * py[i];
+        tempx[t] = (px[i] + px[i+1]) >> 1;
 
-	t++;
+        t++;
       }
     }
     /* include last if not different from previous */
-    if (t > 0 && npts > 0 && tempx[t-1] != pointx[npts-1]) {
-      tempx[t] = pointx[npts-1];
-      tempy[t] = pointy[npts-1];
+    if (t > 0 && npts > 0 && tempx[t-1] != px[npts-1]) {
+      tempx[t] = px[npts-1];
+      tempy[t] = py[npts-1];
       t++;
     }
 
     for(int c = 0; c < t; c++) {
-      pointx[c] = tempx[c];
-      pointy[c] = tempy[c];
+      px[c] = tempx[c];
+      py[c] = tempy[c];
     }
-    npts = t + 1;
+    npts = t;
     break;
   }
   case OP_HALF:
@@ -373,12 +375,12 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples) {
       /* cut points in half. never touch first or last. */
       int q = 1;
       for(i=1; q < (npts - 1); i++) {
-	pointx[i] = pointx[q];
-	pointy[i] = pointy[q];
-	q += 2;
+        px[i] = px[q];
+        py[i] = py[q];
+        q += 2;
       }
-      pointx[i] = pointx[npts - 1];
-      pointy[i] = pointy[npts - 1];
+      px[i] = px[npts - 1];
+      py[i] = py[npts - 1];
       npts = i+1;
     }
     break;
@@ -386,26 +388,32 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples) {
   case OP_LONGPASS: {
     /* longpass. drop any point that's not at least param*samples
        past the previous. */ 
-    tempx[0] = pointx[0];
-    tempy[0] = pointy[0];
+    /* XXX this can cut out the last point? */
+    tempx[0] = px[0];
+    tempy[0] = py[0];
 
     int stretch = (op_param[3] * op_param[3]) * samples;
     int np = 1;
 
     for(int i=1; i < (npts-1); i ++) {
-      if (pointx[i] - tempx[np-1] > stretch) {
-	tempx[np] = pointx[i];
-	tempy[np] = pointy[i];
-	np++;
-	if (np == maxpts) break;
+      if (px[i] - tempx[np-1] > stretch) {
+        tempx[np] = px[i];
+        tempy[np] = py[i];
+        np++;
+        if (np == maxpts) break;
       }
     }
 
     for(int c = 1; c < np; c++) {
-      pointx[c] = tempx[c];
-      pointy[c] = tempy[c];
+      px[c] = tempx[c];
+      py[c] = tempy[c];
     }
-    npts = np + 1;
+    
+    px[np] = px[npts-1];
+    py[np] = py[npts-1];
+    np++;
+
+    npts = np;
 
     break;
   }
@@ -417,7 +425,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples) {
     int stretch = (op_param[4] * op_param[4]) * samples;
 
     for (int i=1; i < samples; i ++) {
-      if (pointx[i] - pointx[i-1] > stretch) pointy[i] = 0.0f;
+      if (px[i] - px[i-1] > stretch) py[i] = 0.0f;
     }
 
     break;
@@ -439,15 +447,16 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples) {
    2. do operations on points (in slots op1, op2, op3)
    3. generate waveform
 */
-int PLUGIN::processw(float * in, float * out, long samples) {
+int PLUGIN::processw(float * in, float * out, long samples,
+                     int * px, float * py, int maxpts,
+                     int * tempx, float * tempy) {
 
   /* collect points. */
 
-  pointx[0] = 0;
-  pointy[0] = in[0];
+  px[0] = 0;
+  py[0] = in[0];
   int numpts = 1;
 
-  int maxpts = framesize * 2;
   /* MS Visual C++ is super retarded, so we have to define 
      and initialize all of these before the switch statement */
   int i = 0, extx = 0, nth = 0, ctr = 0, n = 0, sd = 0, span = 0, lastsign = 0;
@@ -481,8 +490,8 @@ int PLUGIN::processw(float * in, float * out, long samples) {
   
         /* push zero for last spot (we know it was a zero and not pushed). */
         if (numpts < (maxpts-1)) {
-          pointx[numpts] = (i>0)?(i - 1):0;
-          pointy[numpts] = 0.0f;
+          px[numpts] = (i>0)?(i - 1):0;
+          py[numpts] = 0.0f;
           numpts++;
         } 
 
@@ -502,15 +511,15 @@ int PLUGIN::processw(float * in, float * out, long samples) {
         if (in[i] <= pointparam[0]) {
           /* no longer above 0. push the highest point I reached. */
           if (numpts < (maxpts-1)) {
-            pointx[numpts] = extx;
-            pointy[numpts] = ext;
+            px[numpts] = extx;
+            py[numpts] = ext;
             numpts++;
           } 
           /* and decide state */
           if (in[i] >= -pointparam[0]) {
             if (numpts < (maxpts-1)) {
-              pointx[numpts] = i;
-              pointy[numpts] = 0.0f;
+              px[numpts] = i;
+              py[numpts] = 0.0f;
               numpts++;
             } 
             state = SZ;
@@ -533,15 +542,15 @@ int PLUGIN::processw(float * in, float * out, long samples) {
         if (in[i] >= -pointparam[0]) {
           /* no longer below 0. push the lowest point I reached. */
           if (numpts < (maxpts-1)) {
-            pointx[numpts] = extx;
-            pointy[numpts] = ext;
+            px[numpts] = extx;
+            py[numpts] = ext;
             numpts++;
           } 
           /* and decide state */
           if (in[i] <= pointparam[0]) {
             if (numpts < (maxpts-1)) {
-              pointx[numpts] = i;
-              pointy[numpts] = 0.0f;
+              px[numpts] = i;
+              py[numpts] = 0.0f;
               numpts++;
             } 
             state = SZ;
@@ -577,8 +586,8 @@ int PLUGIN::processw(float * in, float * out, long samples) {
       ctr--;
       if (ctr <= 0) {
         if (numpts < (maxpts-1)) {
-          pointx[numpts] = i;
-          pointy[numpts] = in[i];
+          px[numpts] = i;
+          py[numpts] = in[i];
           numpts++;
         } else break; /* no point in continuing... */
         ctr = nth;
@@ -588,39 +597,38 @@ int PLUGIN::processw(float * in, float * out, long samples) {
     break;
 
 
-  case POINT_RANDOM:
+  case POINT_RANDOM: {
     /* randomly */
 
     n = (1.0 - pointparam[2]) * samples;
 
     for(;n --;) {
       if (numpts < (maxpts-1)) {
-        pointx[numpts++] = rand() % samples;
+        px[numpts++] = rand() % samples;
       } else break;
     }
 
     /* sort them */
 
-    qsort(pointx, numpts, sizeof (int),
-          intcompare);
+    qsort(px, numpts, sizeof (int), intcompare);
 
     for (sd = 0; sd < numpts; sd++) {
-      pointy[sd] = in[pointx[sd]];
+      py[sd] = in[px[sd]];
     }
 
     break;
-
+  }
   
   case POINT_SPAN:
     /* bram. next x determined by sample magnitude */
 
     span = (pointparam[3] * pointparam[3]) * samples;
 
-    i = abs((int)(pointy[0] * span)) + 1;
+    i = abs((int)(py[0] * span)) + 1;
 
     while (i < samples) {
-      pointx[numpts] = i;
-      pointy[numpts] = in[i];
+      px[numpts] = i;
+      py[numpts] = in[i];
       numpts++;
       i = i + abs((int)(in[i] * span)) + 1;
     }
@@ -635,8 +643,8 @@ int PLUGIN::processw(float * in, float * out, long samples) {
     lasts = in[0];
     int sign;
 
-    pointx[0] = 0;
-    pointy[0] = in[0];
+    px[0] = 0;
+    py[0] = in[0];
     numpts = 1;
 
     for(i = 1; i < samples; i++) {
@@ -652,8 +660,8 @@ int PLUGIN::processw(float * in, float * out, long samples) {
       lasts = in[i];
 
       if (sign != lastsign) {
-        pointx[numpts] = i;
-        pointy[numpts] = in[i];
+        px[numpts] = i;
+        py[numpts] = in[i];
         numpts++;
         if (numpts > (maxpts-1)) break;
       }
@@ -676,13 +684,16 @@ int PLUGIN::processw(float * in, float * out, long samples) {
 
 
   /* always push final point for continuity (we saved room) */
-  pointx[numpts] = samples-1;
-  pointy[numpts] = in[samples-1];
+  px[numpts] = samples-1;
+  py[numpts] = in[samples-1];
   numpts++;
 
-  numpts = pointops(pointop1, numpts, oppar1, samples);
-  numpts = pointops(pointop2, numpts, oppar2, samples);
-  numpts = pointops(pointop3, numpts, oppar3, samples);
+  numpts = pointops(pointop1, numpts, oppar1, samples, 
+                    px, py, maxpts, tempx, tempy);
+  numpts = pointops(pointop2, numpts, oppar2, samples, 
+                    px, py, maxpts, tempx, tempy);
+  numpts = pointops(pointop3, numpts, oppar3, samples, 
+                    px, py, maxpts, tempx, tempy);
 
   int u=1, z=0;
   switch(MKINTERPSTYLE(interpstyle)) {
@@ -694,12 +705,12 @@ int PLUGIN::processw(float * in, float * out, long samples) {
     */
 
     for(u=1; u < numpts; u ++) {
-      float denom = (pointx[u] - pointx[u-1]);
-      float minterparam = interparam[0] * (pointy[u-1] + pointy[u]) * 0.5f;
-      for(z=pointx[u-1]; z < pointx[u]; z++) {
-        float pct = (float)(z-pointx[u-1]) / denom;
-        float s = pointy[u-1] * (1.0f - pct) +
-          pointy[u]   * pct;
+      float denom = (px[u] - px[u-1]);
+      float minterparam = interparam[0] * (py[u-1] + py[u]) * 0.5f;
+      for(z=px[u-1]; z < px[u]; z++) {
+        float pct = (float)(z-px[u-1]) / denom;
+        float s = py[u-1] * (1.0f - pct) +
+          py[u]   * pct;
         out[z] = minterparam + (1.0f - interparam[0]) * s;
       }
     }
@@ -715,12 +726,12 @@ int PLUGIN::processw(float * in, float * out, long samples) {
     */
 
     for(u=1; u < numpts; u ++) {
-      float denom = (pointx[u] - pointx[u-1]);
-      float minterparam = interparam[1] * (pointy[u-1] + pointy[u]) * 0.5f;
-      for(z=pointx[u-1]; z < pointx[u]; z++) {
-        float pct = (float)(z-pointx[u-1]) / denom;
-        float s = pointy[u-1] * pct +
-          pointy[u]   * (1.0f - pct);
+      float denom = (px[u] - px[u-1]);
+      float minterparam = interparam[1] * (py[u-1] + py[u]) * 0.5f;
+      for(z=px[u-1]; z < px[u]; z++) {
+        float pct = (float)(z-px[u-1]) / denom;
+        float s = py[u-1] * pct +
+          py[u]   * (1.0f - pct);
         out[z] = minterparam + (1.0f - interparam[1]) * s;
       }
     }
@@ -734,21 +745,21 @@ int PLUGIN::processw(float * in, float * out, long samples) {
     /* cosine up or down - "smoothie" */
 
     for(u=1; u < numpts; u ++) {
-      float denom = (pointx[u] - pointx[u-1]);
-      for(z=pointx[u-1]; z < pointx[u]; z++) {
-        float pct = (float)(z-pointx[u-1]) / denom;
+      float denom = (px[u] - px[u-1]);
+      for(z=px[u-1]; z < px[u]; z++) {
+        float pct = (float)(z-px[u-1]) / denom;
         
         float p = 0.5f * (-cos(float(pi * pct)) + 1.0f);
         
         /* XXX param should control exponent */
 
-	if (interparam[2] > 0.5f) {
-	  p = powf(p, (interparam[2] - 0.16666667f) * 3.0f);
-	} else {
-	  p = powf(p, interparam[2] * 2.0f);
-	}
+        if (interparam[2] > 0.5f) {
+          p = powf(p, (interparam[2] - 0.16666667f) * 3.0f);
+        } else {
+          p = powf(p, interparam[2] * 2.0f);
+        }
 
-        float s = pointy[u-1] * (1.0f - p) + pointy[u]   * p;
+        float s = py[u-1] * (1.0f - p) + py[u]   * p;
 
         out[z] = s;
       }
@@ -763,9 +774,9 @@ int PLUGIN::processw(float * in, float * out, long samples) {
     /* x-reverse input samples for each waveform - "reversi" */
 
     for(u=1; u < numpts; u ++) {
-      if (pointx[u-1] < pointx[u])
-        for(z = pointx[u-1]; z < pointx[u]; z++) {
-          int s = (pointx[u] - (z + 1)) + pointx[u - 1];
+      if (px[u-1] < px[u])
+        for(z = px[u-1]; z < px[u]; z++) {
+          int s = (px[u] - (z + 1)) + px[u - 1];
           out[z] = in[(s>0)?s:0];
         }
     }
@@ -780,7 +791,7 @@ int PLUGIN::processw(float * in, float * out, long samples) {
 
     for(i = 0; i < samples; i++) out[i] = 0.0f;
 
-    for(z = 0; z < numpts; z ++) { out[pointx[z]] += pointy[z]; }
+    for(z = 0; z < numpts; z ++) { out[px[z]] += py[z]; }
 
     break;
 
@@ -851,8 +862,10 @@ void PLUGIN::processX(float **trueinputs, float **trueoutputs, long samples,
 
       /* in0 -> process -> out0(first free space) */
       cs->grab();
-	  processw(in0, out0+outstart+outsize, framesize);
-	  cs->release();
+      processw(in0, out0+outstart+outsize, framesize,
+	       pointx, pointy, framesize * 2,
+	       storex, storey);
+      cs->release();
 
       float oneDivThird = 1.0f / (float)third;
       /* apply envelope */
