@@ -45,7 +45,7 @@ written by Marc Poirier, October 2002
 #ifdef PLUGIN_DESCRIPTION_STRING
 	#define DESCRIPTION	PLUGIN_DESCRIPTION_STRING
 #else
-	#define DESCRIPTION	"Destroy FX generic noise machine"
+	#define DESCRIPTION	"Destroy FX "PLUGIN_NAME_STRING" = super destroy noise machine"
 #endif
 
 #define ENTRY_POINT	PLUGIN_ENTRY_POINT
@@ -90,7 +90,7 @@ written by Marc Poirier, October 2002
 #ifdef PLUGIN_EDITOR_DESCRIPTION_STRING
 	#define DESCRIPTION	PLUGIN_EDITOR_DESCRIPTION_STRING
 #else
-	#define DESCRIPTION	"Destroy FX generic plugin GUI"
+	#define DESCRIPTION	"Destroy FX "PLUGIN_NAME_STRING" picturesque yet functional interface"
 #endif
 
 #define ENTRY_POINT	PLUGIN_EDITOR_ENTRY_POINT
