@@ -33,6 +33,7 @@ public:
 	void initCarbonControlValueRange();
 	// checks if this or an embedded control is inside
 	bool isControlRef(ControlRef inControl);
+	void initMouseTrackingRegion();
 #endif
 
 	void do_draw(CGContextRef inContext, long inPortHeight);
@@ -40,12 +41,14 @@ public:
 	virtual void draw(CGContextRef inContext, long inPortHeight)
 		{ }
 	// *** mouse position is relative to controlBounds for ultra convenience
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 		{ }
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 		{ }
-	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
+	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 		{ }
+	virtual bool mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+		{	return false;	}
 
 	// *** this will get called regularly by an idle timer
 	virtual void idle()
@@ -125,8 +128,10 @@ protected:
 	AUCarbonViewControl * auv_control;
 #endif
 #if MAC
-	ControlRef		carbonControl;
-	CFStringRef		helpText;
+	ControlRef			carbonControl;
+	CFStringRef			helpText;
+	MouseTrackingRef	mouseTrackingRegion;
+	bool				isFirstDraw;
 #endif
 };
 

@@ -1,6 +1,10 @@
 #include "dfxguicontrol.h"
 #include "dfxgui.h"
 
+#include "dfxpluginproperties.h"
+
+
+const SInt32 kContinuousControlMaxValue = 0x0FFFFFFF - 1;
 
 //-----------------------------------------------------------------------------
 DGControl::DGControl(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion)
@@ -33,6 +37,8 @@ void DGControl::init(DGRect * inRegion)
 #if MAC
 	carbonControl = NULL;
 	helpText = NULL;
+	mouseTrackingRegion = NULL;
+	isFirstDraw = true;
 #endif
 #ifdef TARGET_API_AUDIOUNIT
 	auv_control = NULL;
@@ -54,12 +60,24 @@ DGControl::~DGControl()
 		DisposeControl(carbonControl);
 	if (auv_control != NULL)
 		delete auv_control;
+#if MAC
+	if (mouseTrackingRegion != NULL)
+		ReleaseMouseTrackingRegion(mouseTrackingRegion);
+#endif
 }
 
 
 //-----------------------------------------------------------------------------
 void DGControl::do_draw(CGContextRef inContext, long inPortHeight)
 {
+#if MAC
+	// XXX a hack to workaround creating mouse tracking regions when 
+	// the portion of the window where the control is doesn't exist yet
+	if (isFirstDraw)
+		initMouseTrackingRegion();
+	isFirstDraw = false;
+#endif
+
 	// redraw the background behind the control in case the control background has any transparency
 	// this is handled automatically if the window is in compositing mode, though
 	if ( !(getDfxGuiEditor()->IsWindowCompositing()) )
@@ -172,7 +190,7 @@ void DGControl::initCarbonControlValueRange()
 	if ( isContinuousControl() )
 	{
 		SetControl32BitMinimum(carbonControl, 0);
-		SetControl32BitMaximum(carbonControl, 0x3FFFFFFF);
+		SetControl32BitMaximum(carbonControl, kContinuousControlMaxValue);
 	}
 	else
 	{
@@ -188,6 +206,40 @@ void DGControl::initCarbonControlValueRange()
 		}
 	}
 }
+
+#if MAC
+//-----------------------------------------------------------------------------
+void DGControl::initMouseTrackingRegion()
+{
+	if (getCarbonControl() == NULL)
+		return;
+
+	// handle control mouse-overs by creating mouse tracking region for the control
+	RgnHandle controlRegion = NewRgn();
+	if (controlRegion != NULL)
+	{
+		OSStatus status = GetControlRegion(getCarbonControl(), kControlEntireControl, controlRegion);
+		if (status != noErr)
+		{
+			Rect mouseRegionBounds;
+			GetControlBounds(getCarbonControl(), &mouseRegionBounds);
+			if ( getDfxGuiEditor()->IsWindowCompositing() )
+			{
+				Rect paneBounds;
+				GetControlBounds(getDfxGuiEditor()->GetCarbonPane(), &paneBounds);
+				OffsetRect(&mouseRegionBounds, paneBounds.left, paneBounds.top);
+			}
+			RectRgn(controlRegion, &mouseRegionBounds);
+		}
+		MouseTrackingRegionID mouseTrackingRegionID;
+		mouseTrackingRegionID.signature = DESTROYFX_ID;
+		mouseTrackingRegionID.id = (SInt32)this;
+		EventTargetRef targetToNotify = GetControlEventTarget(getCarbonControl());	// can be NULL (which means use the window's event target)
+		status = CreateMouseTrackingRegion(getDfxGuiEditor()->GetCarbonWindow(), controlRegion, NULL, kMouseTrackingOptionsLocalClip, mouseTrackingRegionID, this, targetToNotify, &mouseTrackingRegion);
+		DisposeRgn(controlRegion);
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void DGControl::setParameterID(long inParameterID)
@@ -308,8 +360,6 @@ OSStatus DGControl::setHelpText(CFStringRef inHelpText)
 
 
 
-
-#include "dfxpluginproperties.h"
 
 //-----------------------------------------------------------------------------
 DGCarbonViewControl::DGCarbonViewControl(AUCarbonViewBase * inOwnerView, AUParameterListenerRef inListener, 
