@@ -7,11 +7,6 @@
 #include <stdlib.h>
 
 
-#ifndef __DFX_TEMPORATETABLE_H
-#include "temporatetable.h"
-#endif
-
-
 //-------------------------------------------------------------------------------------
 // these are the 8 LFO waveforms:
 enum

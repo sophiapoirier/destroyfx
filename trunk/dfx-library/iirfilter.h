@@ -1,9 +1,15 @@
+/*------------------- by Marc Poirier  ][  December 2001 ------------------*/
+
 #ifndef __dfx_iirfilter_h
 #define __dfx_iirfilter_h
 
 
+#ifndef PI
 #define PI   3.1415926535897932384626433832795f
+#endif
+
 #define SHELF_START_IIR   0.333f
+
 
 class IIRfilter
 {

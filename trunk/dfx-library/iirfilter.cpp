@@ -1,6 +1,6 @@
-#ifndef __dfx_iirfilter_h
+/*------------------- by Marc Poirier  ][  December 2001 ------------------*/
+
 #include "iirfilter.h"
-#endif
 
 #include <math.h>
 
