@@ -140,15 +140,15 @@ enum {
 const char * helpstrings[kNumHelps][kNumHelpTextLines] = 
 {
 	{
-		{" "}, 
-		{" "}, 
-		{" "}, 
+		" ", 
+		" ", 
+		" ", 
 	}, 
 	// general
 	{
-		{"Scrubby randomly zips around through an audio delay buffer."}, 
-		{"Scrubby will, at a given seek rate, find random target destinations within a "}, 
-		{"certain time range and then travel to those destinations."}, 
+		"Scrubby randomly zips around through an audio delay buffer.", 
+		"Scrubby will, at a given seek rate, find random target destinations within a ", 
+		"certain time range and then travel to those destinations.", 
 	}, 
 #if MAC
 #define SCRUBBY_ALT_KEY_NAME "option"
@@ -157,88 +157,88 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 #endif
 	// seek rate
 	{
-		{"seek rate:  the rate at which Scrubby finds new target destinations"}, 
-		{"You can define a randomized range with min & max rate limits for each seek."}, 
-		{"(control+click to move both together, "SCRUBBY_ALT_KEY_NAME"+click to move both relative)"}, 
+		"seek rate:  the rate at which Scrubby finds new target destinations", 
+		"You can define a randomized range with min & max rate limits for each seek.", 
+		"(control+click to move both together, "SCRUBBY_ALT_KEY_NAME"+click to move both relative)", 
 	}, 
 #undef SCRUBBY_ALT_KEY_NAME
 	// seek range
 	{
-		{"seek range:  define the time range in which Scrubby can zip around"}, 
-		{"This specifies how far back in the delay buffer Scrubby can look for new "}, 
-		{"random target destinations.  This tends to affect playback speeds."}, 
+		"seek range:  define the time range in which Scrubby can zip around", 
+		"This specifies how far back in the delay buffer Scrubby can look for new ", 
+		"random target destinations.  This tends to affect playback speeds.", 
 	}, 
 	// seek duration
 	{
-		{"seek duration:  amount of a seek cycle spent moving to the target"}, 
-		{"Scrubby finds a new target to move towards at each seek cycle.  You can "}, 
-		{"make it reach the target early by lowering this value.  This produces gaps."}, 
+		"seek duration:  amount of a seek cycle spent moving to the target", 
+		"Scrubby finds a new target to move towards at each seek cycle.  You can ", 
+		"make it reach the target early by lowering this value.  This produces gaps.", 
 	}, 
 	// speed mode
 	{
-		{"speed mode:  are you a robot or a DJ?"}, 
-		{"Robot mode causes Scrubby to jump to the next speed after each target seek.  "}, 
-		{"In DJ mode, Scrubby gradually accelerates or decelerates to next speed."}, 
+		"speed mode:  are you a robot or a DJ?", 
+		"Robot mode causes Scrubby to jump to the next speed after each target seek.  ", 
+		"In DJ mode, Scrubby gradually accelerates or decelerates to next speed.", 
 	}, 
 	// freeze
 	{
-		{"freeze:  freeze the delay buffer"}, 
-		{"This causes Scrubby to stop reading from your incoming audio stream and "}, 
-		{"to stick with the current contents of the delay buffer."}, 
+		"freeze:  freeze the delay buffer", 
+		"This causes Scrubby to stop reading from your incoming audio stream and ", 
+		"to stick with the current contents of the delay buffer.", 
 	}, 
 	// stereo mode
 	{
-		{"stereo mode:  toggle between linked or split seeks for each channel"}, 
-		{"When linked, both stereo channels will seek the same target destinations.  "}, 
-		{"When split, each stereo channel will find different destinations to seek."}, 
+		"stereo mode:  toggle between linked or split seeks for each channel", 
+		"When linked, both stereo channels will seek the same target destinations.  ", 
+		"When split, each stereo channel will find different destinations to seek.", 
 	}, 
 	// tempo sync
 	{
-		{"tempo sync:  lock the seek rate to the tempo"}, 
-		{"Turning this on will let you define seek rates in terms of your tempo.  "}, 
-		{"If your host doesn't give tempo info to plugins, you'll need to define a tempo."}, 
+		"tempo sync:  lock the seek rate to the tempo", 
+		"Turning this on will let you define seek rates in terms of your tempo.  ", 
+		"If your host doesn't give tempo info to plugins, you'll need to define a tempo.", 
 	}, 
 	// pitch constraint
 	{
-		{"pitch constraint:  - only for robot mode -"}, 
-		{"With this set to \"notes,\" the playback speeds for each seek will always be "}, 
-		{"semitone increments from the original pitch.  (see also the keyboard help)"}, 
+		"pitch constraint:  - only for robot mode -", 
+		"With this set to \"notes,\" the playback speeds for each seek will always be ", 
+		"semitone increments from the original pitch.  (see also the keyboard help)", 
 	}, 
 	// notes
 	{
-		{"notes:  - only for robot mode with pitch constraint turned on -"}, 
-		{"You can choose which semitone steps within an octave are allowable when "}, 
-		{"pitch constraint mode is on.  There are preset and transposition buttons, too."}, 
+		"notes:  - only for robot mode with pitch constraint turned on -", 
+		"You can choose which semitone steps within an octave are allowable when ", 
+		"pitch constraint mode is on.  There are preset and transposition buttons, too.", 
 	}, 
 	// octaves
 	{
-		{"octave limits:  limit Scrubby's speeds within a range of octaves"}, 
-		{"You can limit how low or how high Scrubby's playback speeds can go in terms "}, 
-		{"of octaves, or move these to their outer points if you want no limits."}, 
+		"octave limits:  limit Scrubby's speeds within a range of octaves", 
+		"You can limit how low or how high Scrubby's playback speeds can go in terms ", 
+		"of octaves, or move these to their outer points if you want no limits.", 
 	}, 
 	// tempo
 	{
-		{"tempo:  sets the tempo that Scrubby uses when tempo sync is on"}, 
-		{"If your host app doesn't send tempo info to plugins, you'll need to adjust this "}, 
-		{"parameter in order to specify a tempo for Scrubby to use."}, 
+		"tempo:  sets the tempo that Scrubby uses when tempo sync is on", 
+		"If your host app doesn't send tempo info to plugins, you'll need to adjust this ", 
+		"parameter in order to specify a tempo for Scrubby to use.", 
 	}, 
 	// predelay
 	{
-		{"predelay:  compensate for Scrubby's (possible) output delay"}, 
-		{"Scrubby zips around in a delay buffer and therefore can create some latency.  "}, 
-		{"This tells your host to predelay by a % of the seek range.  (not in all hosts)"}, 
+		"predelay:  compensate for Scrubby's (possible) output delay", 
+		"Scrubby zips around in a delay buffer and therefore can create some latency.  ", 
+		"This tells your host to predelay by a % of the seek range.  (not in all hosts)", 
 	}, 
 	// MIDI learn
 	{
-		{"MIDI learn:  toggle \"MIDI learn\" mode for CC control of parameters"}, 
-		{"When this is turned on, you can click on a parameter control & then the next "}, 
-		{"MIDI CC received will be assigned to control that parameter.  (not in all hosts)"}, 
+		"MIDI learn:  toggle \"MIDI learn\" mode for CC control of parameters", 
+		"When this is turned on, you can click on a parameter control & then the next ", 
+		"MIDI CC received will be assigned to control that parameter.  (not in all hosts)", 
 	}, 
 	// MIDI reset
 	{
-		{"MIDI reset:  erase CC assignments"}, 
-		{"Click this button to erase all of your MIDI CC -> parameter assignments.  "}, 
-		{"Then CCs won't affect any parameters and you can start over if you want."}, 
+		"MIDI reset:  erase CC assignments", 
+		"Click this button to erase all of your MIDI CC -> parameter assignments.  ", 
+		"Then CCs won't affect any parameters and you can start over if you want.", 
 	}, 
 };
 
@@ -876,6 +876,7 @@ void ScrubbyEditor::HandleNotesButton(long inNotesButtonType)
 //-----------------------------------------------------------------------------
 void ScrubbyEditor::HandlePitchConstraintChange()
 {
+//SetWindowAlpha(GetCarbonWindow(), randFloat());	// heh heh heh...
 	long speedMode = getparameter_i(kSpeedMode);
 	bool pitchConstraint = getparameter_b(kPitchConstraint);
 	float alpha = ( (speedMode == kSpeedMode_robot) && pitchConstraint ) ? 1.0f : kUnusedControlAlpha;
