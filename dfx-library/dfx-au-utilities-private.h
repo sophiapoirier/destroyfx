@@ -59,7 +59,7 @@ void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * out
 // preset file trees
 CFTreeRef CreateFileURLsTreeNode(const FSRef * inItemRef, CFAllocatorRef inAllocator);
 CFTreeRef AddFileItemToTree(const FSRef * inItemRef, CFTreeRef inParentTree);
-void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree);
+void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree, Component inAUComponent);
 void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparatorFunction, void * inContext);
 CFComparisonResult FileURLsTreeComparatorFunction(const void * inTree1, const void * inTree2, void * inContext);
 void FileURLsCFTreeContext_Init(const CFURLRef inURL, CFTreeContext * outTreeContext);
