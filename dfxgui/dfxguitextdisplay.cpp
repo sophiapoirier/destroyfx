@@ -123,17 +123,22 @@ void DGTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 		theBack = BackGround->getCGImage();
 	if (theBack == NULL)
 	{
+// XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
+#if 0
 		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
 		CGContextFillRect(inContext, bounds);
+#else
+		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+#endif
 	}
 	else
 	{
 CGRect whole;
 whole = bounds;
-whole.size.width = (float) CGImageGetWidth(theBack);
-whole.size.height = (float) CGImageGetHeight(theBack);
+whole.size.width = (float) BackGround->getWidth();
+whole.size.height = (float) BackGround->getHeight();
 whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
-whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
+whole.origin.y -= (float) (BackGround->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
 //		CGContextDrawImage(inContext, bounds, theBack);
 		CGContextDrawImage(inContext, whole, theBack);
 	}
@@ -184,7 +189,7 @@ void DGTextDisplay::drawText(CGContextRef inContext, CGRect& inBounds, const cha
 
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGGraphic *inBackground, char *inFontName)
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGGraphic *inBackground, const char *inFontName)
 :	DGTextDisplay(inOwnerEditor, 0xFFFFFFFF, inRegion, NULL, NULL, inBackground, inFontName), 
 	displayString(NULL)
 {
@@ -220,17 +225,22 @@ void DGStaticTextDisplay::draw(CGContextRef inContext, UInt32 inPortHeight)
 		theBack = BackGround->getCGImage();
 	if (theBack == NULL)
 	{
+// XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
+#if 0
 		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
 		CGContextFillRect(inContext, bounds);
+#else
+		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+#endif
 	}
 	else
 	{
 CGRect whole;
 whole = bounds;
-whole.size.width = (float) CGImageGetWidth(theBack);
-whole.size.height = (float) CGImageGetHeight(theBack);
+whole.size.width = (float) BackGround->getWidth();
+whole.size.height = (float) BackGround->getHeight();
 whole.origin.x -= (float)where.x - getDfxGuiEditor()->GetXOffset();
-whole.origin.y -= (float) (CGImageGetHeight(theBack) - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
+whole.origin.y -= (float) (BackGround->getHeight() - (where.y - getDfxGuiEditor()->GetYOffset()) - where.h);
 //		CGContextDrawImage(inContext, bounds, theBack);
 		CGContextDrawImage(inContext, whole, theBack);
 	}

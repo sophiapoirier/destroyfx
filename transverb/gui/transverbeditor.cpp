@@ -294,7 +294,7 @@ printf("--------------------------------------------------\n\n");
 		slider->shrinkForeBounds(1, 0, 2, 0);
 		addControl(slider);
 
-		DGTextDisplay *display = new DGTextDisplay(this, tag, &where2, displayProc, userData, gBackground, SNOOT_FONT);
+		DGTextDisplay *display = new DGTextDisplay(this, tag, &where2, displayProc, userData, NULL, SNOOT_FONT);
 		display->setTextAlignmentStyle(kDGTextAlign_right);
 		addControl(display);
 
@@ -311,7 +311,7 @@ printf("--------------------------------------------------\n\n");
 	bsizeSlider->shrinkForeBounds(1, 0, 2, 0);
 	addControl(bsizeSlider);
 
-	DGTextDisplay *display = new DGTextDisplay(this, kBsize, &where2, bsizeDisplayProcedure, NULL, gBackground, SNOOT_FONT);
+	DGTextDisplay *display = new DGTextDisplay(this, kBsize, &where2, bsizeDisplayProcedure, NULL, NULL, SNOOT_FONT);
 	display->setTextAlignmentStyle(kDGTextAlign_right);
 	addControl(display);
 
@@ -368,9 +368,6 @@ printf("--------------------------------------------------\n\n");
 	DGWebLink *smartelectronixlinkButton = new DGWebLink(this, &where, gSmartElectronixLinkButton, SMARTELECTRONIX_URL);
 	addControl(smartelectronixlinkButton);
 
-
-	// set size of overall pane
-	SizeControl(mCarbonPane, (SInt16) gBackground->getWidth(), (SInt16) gBackground->getHeight());
 
 	return noErr;
 }

@@ -20,4 +20,3 @@
 #define DFX_SUPPORT_OLD_VST_SETTINGS 0
 
 #define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx.BufferOverride"
-#define SLIDERS_USE_BACKGROUND

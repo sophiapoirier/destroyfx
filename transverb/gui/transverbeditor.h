@@ -1,5 +1,5 @@
-#ifndef __TOM7_TRANSVERBEDITOR_H
-#define __TOM7_TRANSVERBEDITOR_H
+#ifndef __TOM7_TRANSVERB_EDITOR_H
+#define __TOM7_TRANSVERB_EDITOR_H
 
 
 #include "dfxgui.h"

@@ -187,7 +187,15 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 
 	// let the child class do its thing
-	return open(inXOffset, inYOffset);
+	OSStatus openErr = open(inXOffset, inYOffset);
+	if (openErr == noErr)
+	{
+		// set the size of the embedding pane
+		if (GetBackgroundImage() != NULL)
+			SizeControl(mCarbonPane, (SInt16) (GetBackgroundImage()->getWidth()), (SInt16) (GetBackgroundImage()->getHeight()));
+	}
+
+	return openErr;
 }
 
 //-----------------------------------------------------------------------------
@@ -304,7 +312,7 @@ void DfxGuiEditor::addControl(DGControl *inControl)
 	SetControl32BitMinimum(newCarbonControl, 0);
 	if (inControl->isContinuousControl())
 	{
-		SInt32 controlrange = 0x7FFFFFFF;
+		SInt32 controlrange = 0x3FFFFFFF;
 		SetControl32BitMaximum(newCarbonControl, controlrange);
 	}
 	else
