@@ -1,3 +1,4 @@
+#include "dfxguicontrol.h"
 #include "dfxgui.h"
 
 

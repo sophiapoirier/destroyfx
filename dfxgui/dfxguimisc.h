@@ -7,6 +7,7 @@
 #include "dfxdefines.h"
 
 
+//-----------------------------------------------------------------------------
 typedef enum {
 	kDfxGuiType_none = 0,
 	kDfxGuiType_graphic,
@@ -75,6 +76,42 @@ public:
 	SInt32	w;
 	SInt32	h;
 };
+
+
+
+//-----------------------------------------------------------------------------
+struct DGColor {
+	int r;
+	int g;
+	int b;
+
+	DGColor()
+	:	r(0), g(0), b(0) {}
+	DGColor(int inRed, int inGreen, int inBlue)
+	:	r(inRed), g(inGreen), b(inBlue) {}
+	DGColor(const DGColor& inColor)
+	:	r(inColor.r), g(inColor.g), b(inColor.b) {}
+	DGColor& operator () (int inRed, int inGreen, int inBlue)
+	{
+		r = inRed;
+		g = inGreen;
+		b = inBlue;
+		return *this;
+	}
+
+	DGColor& operator = (DGColor newColor)
+	{
+		r = newColor.r;
+		g = newColor.g;
+		b = newColor.b;
+		return *this;
+	}
+};
+typedef struct DGColor DGColor;
+
+const DGColor kBlackDGColor(0, 0, 0);
+const DGColor kWhiteDGColor(255, 255, 255);
+
 
 
 /***********************************************************************
