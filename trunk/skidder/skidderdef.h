@@ -1,5 +1,4 @@
 #define PLUGIN_NAME_STRING	"Skidder"
-#define PLUGIN_DOUBLE_NAME_STRING	"Destroy FX: Skidder"
 #define PLUGIN_ID	'skid'
 #define PLUGIN_VERSION	0x00010500
 #define PLUGIN_ENTRY_POINT	"SkidderEntry"
@@ -11,7 +10,6 @@
 #endif
 
 // only necessary if using a custom GUI
-#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Skidder editor"
 #define PLUGIN_EDITOR_ENTRY_POINT	"SkidderEditorEntry"
 
 // optional

@@ -1,5 +1,4 @@
-#define PLUGIN_NAME_STRING	"DFX GEOMETER"
-#define PLUGIN_DOUBLE_NAME_STRING	"Destroy FX: Geometer"
+#define PLUGIN_NAME_STRING	"GEOMETER"
 #define PLUGIN_ID	'DFgr'
 #define PLUGIN_VERSION	0x00010100
 #define PLUGIN_ENTRY_POINT	"GeometerEntry"
@@ -11,7 +10,6 @@
 #endif
 
 // only necessary if using a custom GUI
-#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Geometer editor"
 #define PLUGIN_EDITOR_ENTRY_POINT	"GeometerEditorEntry"
 
 // optional

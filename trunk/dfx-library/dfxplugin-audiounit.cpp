@@ -34,7 +34,7 @@ ComponentResult DfxPlugin::Initialize()
 	ComponentResult result = noErr;
 
 	// call the inherited class' Initialize routine
-	result = TARGET_API_BASE_CLASS::Initialize();	// XXX should I do this?
+	result = TARGET_API_BASE_CLASS::Initialize();
 
 	// call our initialize routine
 	if (result == noErr)
@@ -554,7 +554,7 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef *outData)
 	CFDataAppendBytes(cfdata, (UInt8*)dfxdata, (signed)dfxdatasize);
 	// put the CF data storage thingy into the dfx-data section of the CF dictionary
 	CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
-	// dfx-data belongs to us no more, bye bye...
+	// cfdata belongs to us no more, bye bye...
 	CFRelease(cfdata);
 #endif
 
@@ -687,7 +687,7 @@ if (success) printf("settings data was successfully loaded\n");
 else printf("settings data failed to load\n");
 	if (!success)
 		return kAudioUnitErr_InvalidPropertyValue;
-	
+
 #else
 	// abort if the base implementation of RestoreState failed
 	if (result != noErr)
@@ -770,10 +770,10 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags
 			outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
 			outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
 		}
-	
+
 		// now do the processing
 		processaudio((const float**)inputsP, outputsP, inFramesToProcess);
-	
+
 		// I don't know what the hell this is for
 		ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
 	}

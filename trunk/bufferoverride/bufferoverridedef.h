@@ -1,5 +1,4 @@
 #define PLUGIN_NAME_STRING	"Buffer Override"
-#define PLUGIN_DOUBLE_NAME_STRING	"Destroy FX: Buffer Override"
 #define PLUGIN_ID	'buff'
 #define PLUGIN_VERSION	0x00020100
 #define PLUGIN_ENTRY_POINT	"BufferOverrideEntry"
@@ -11,7 +10,6 @@
 #endif
 
 // only necessary if using a custom GUI
-#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: Buffer Override editor"
 #define PLUGIN_EDITOR_ENTRY_POINT	"BufferOverrideEditorEntry"
 
 // optional

@@ -1,5 +1,4 @@
 #define PLUGIN_NAME_STRING	"MIDI Gater"
-#define PLUGIN_DOUBLE_NAME_STRING	"Destroy FX: MIDI Gater"
 #define PLUGIN_ID	'Mgat'
 #define PLUGIN_VERSION	0x00010100
 #define PLUGIN_ENTRY_POINT	"MidiGaterEntry"
@@ -11,7 +10,6 @@
 #endif
 
 // only necessary if using a custom GUI
-#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: MIDI Gater editor"
 #define PLUGIN_EDITOR_ENTRY_POINT	"MidiGaterEditorEntry"
 
 // optional

@@ -5,8 +5,6 @@
 
 // the name of the plugin
 #define PLUGIN_NAME_STRING	"DfxPlugin stub"
-// the name of the plugin prepended with "Destroy FX: "   (for Audio Unit)
-#define PLUGIN_DOUBLE_NAME_STRING	"Destroy FX: DfxPlugin stub"
 // a four-byte ID for the plugin
 #define PLUGIN_ID	'stub'
 // the version expressed in hex with four bytes:  ?-major-minor-bugfix
@@ -24,8 +22,6 @@
 
 // only necessary if using a custom GUI
 #if TARGET_PLUGIN_HAS_GUI
-	// the name of the plugin GUI prepended with "Destroy FX: "   (for Audio Unit, not important)
-	#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: DfxPlugin stub editor"
 	// GUI component entry point (for Audio Unit)
 	#define PLUGIN_EDITOR_ENTRY_POINT	"DfxStubEditorEntry"
 #endif
@@ -33,6 +29,8 @@
 // optional
 // a description of the effect (for Audio Unit)
 #define PLUGIN_DESCRIPTION_STRING	"demonstration of how to use DfxPlugin"
+// the name of the plugin prepended with "Destroy FX: "   (for Audio Unit)
+#define PLUGIN_DOUBLE_NAME_STRING	"Destroy FX: DfxPlugin stub"
 // music plugin component resource ID (for Audio Unit)
 #define PLUGIN_RES_ID	3000
 #if TARGET_PLUGIN_HAS_GUI
@@ -40,6 +38,8 @@
 	#define PLUGIN_EDITOR_ID	'stuV'
 	// a description of the GUI component of the plugin (for Audio Unit, not important)
 	#define PLUGIN_EDITOR_DESCRIPTION_STRING	"graphics for DfxPlugin stub"
+	// the name of the plugin GUI prepended with "Destroy FX: "   (for Audio Unit, not important)
+	#define PLUGIN_EDITOR_DOUBLE_NAME_STRING	"Destroy FX: DfxPlugin stub editor"
 	// GUI component resource ID (for Audio Unit)
 	#define PLUGIN_EDITOR_RES_ID	9000
 #endif
