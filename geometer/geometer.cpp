@@ -58,9 +58,9 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
 	   "inter:unused", 0.0, "???");
   }
 
-  FPARAM(pointop1, P_POINTOP1, "pointop1", 1.0f, "choose");
-  FPARAM(pointop2, P_POINTOP2, "pointop2", 1.0f, "choose");
-  FPARAM(pointop3, P_POINTOP3, "pointop3", 1.0f, "choose");
+  FPARAM(pointop1, P_POINTOP1, "pointop1", UNMKPOINTOP(OP_NONE), "choose");
+  FPARAM(pointop2, P_POINTOP2, "pointop2", UNMKPOINTOP(OP_NONE), "choose");
+  FPARAM(pointop3, P_POINTOP3, "pointop3", UNMKPOINTOP(OP_NONE), "choose");
 
 #define ALLOP(n, str, def, unit) \
   do { \
