@@ -31,19 +31,19 @@ DfxPlugin::DfxPlugin(
 					TARGET_API_BASE_INSTANCE_TYPE inInstance
 					, long inNumParameters
 					, long inNumPresets
-					)
+					) :
 
 // setup the constructors of the inherited base classes, for the appropriate API
 #ifdef TARGET_API_AUDIOUNIT
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		: TARGET_API_BASE_CLASS(inInstance, UInt32 inNumInputs, UInt32 inNumOutputs, UInt32 inNumGroups = 0), 
+		TARGET_API_BASE_CLASS(inInstance, UInt32 inNumInputs, UInt32 inNumOutputs, UInt32 inNumGroups = 0), 
 	#else
-		: TARGET_API_BASE_CLASS(inInstance), 
+		TARGET_API_BASE_CLASS(inInstance), 
 	#endif
 #endif
 
 #ifdef TARGET_API_VST
-	: TARGET_API_BASE_CLASS(inInstance, inNumPresets, inNumParameters), 
+	TARGET_API_BASE_CLASS(inInstance, inNumPresets, inNumParameters), 
 	numInputs(VST_NUM_INPUTS), numOutputs(VST_NUM_OUTPUTS), 
 #endif
 // end API-specific base constructors
