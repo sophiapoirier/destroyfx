@@ -1,8 +1,8 @@
-#ifndef __SkidderEditor
-#define __SkidderEditor
+#ifndef __skiddereditor
+#define __skiddereditor
 
 #include "dfxgui.h"
-#include "dfxguiMultiControls.h"
+#include "dfxguimulticontrols.h"
 
 #ifndef __skidder
 #include "skidder.hpp"

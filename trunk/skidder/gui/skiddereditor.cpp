@@ -1,5 +1,5 @@
-#ifndef __SkidderEditor
-#include "SkidderEditor.hpp"
+#ifndef __skiddereditor
+#include "skiddereditor.hpp"
 #endif
 
 #include <stdio.h>

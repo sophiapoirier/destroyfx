@@ -12,7 +12,7 @@
 
 #include "dfxmisc.h"
 #include "vstchunk.h"
-#include "TempoRateTable.h"
+#include "temporatetable.h"
 
 #ifdef MSKIDDER
 /* begin inter-plugin audio sharing stuff */
