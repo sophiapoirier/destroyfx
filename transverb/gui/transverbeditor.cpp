@@ -95,13 +95,6 @@ void midiresetTransverb(UInt32 value, void *editor)
 		((DfxGuiEditor*)editor)->resetmidilearn();
 }
 
-void openTransverbURL(UInt32 value, void *urlstring);
-void openTransverbURL(UInt32 value, void *urlstring)
-{
-	if ( (value != 0) && (urlstring != NULL) )
-		launch_url((char*)urlstring);
-}
-
 void bsizeDisplayProcedure(Float32 value, char *outText, void*);
 void bsizeDisplayProcedure(Float32 value, char *outText, void*)
 {
@@ -226,53 +219,53 @@ printf("       creating Transverb GUI\n");
 printf("--------------------------------------------------\n\n");
 
 	// Background image
-	DGGraphic *backG = new DGGraphic("transverb-background.png");
-	addImage(backG);
+	DGGraphic *gBackground = new DGGraphic("transverb-background.png");
+	addImage(gBackground);
 
 	// these move across the drawing rectangle
-	DGGraphic *horizontal_handle = new DGGraphic("purple-wide-fader-handle.png");
-	addImage(horizontal_handle);
+	DGGraphic *gHorizontalSliderHandle = new DGGraphic("purple-wide-fader-handle.png");
+	addImage(gHorizontalSliderHandle);
 
-	DGGraphic *grey_horizontal_handle = new DGGraphic("grey-wide-fader-handle.png");
-	addImage(grey_horizontal_handle);
+	DGGraphic *gGreyHorizontalSliderHandle = new DGGraphic("grey-wide-fader-handle.png");
+	addImage(gGreyHorizontalSliderHandle);
 
-	DGGraphic *vertical_handle = new DGGraphic("tall-fader-handle.png");
-	addImage(vertical_handle);
+	DGGraphic *gVerticalSliderHandle = new DGGraphic("tall-fader-handle.png");
+	addImage(gVerticalSliderHandle);
 
 	// Backgrounds for Controls
-	DGGraphic *h_slider_back = new DGGraphic("purple-wide-fader-slide.png");
-	addImage(h_slider_back);
+	DGGraphic *gHorizontalSliderBackground = new DGGraphic("purple-wide-fader-slide.png");
+	addImage(gHorizontalSliderBackground);
 
-	DGGraphic *grey_h_slider_back = new DGGraphic("grey-wide-fader-slide.png");
-	addImage(grey_h_slider_back);
+	DGGraphic *gGreyHorizontalSliderBackground = new DGGraphic("grey-wide-fader-slide.png");
+	addImage(gGreyHorizontalSliderBackground);
 	
-	DGGraphic *v_slider_back = new DGGraphic("tall-fader-slide.png");
-	addImage(v_slider_back);
+	DGGraphic *gVerticalSliderBackground = new DGGraphic("tall-fader-slide.png");
+	addImage(gVerticalSliderBackground);
 	
 	// buttons
-	DGGraphic *quality_button = new DGGraphic("quality-button.png");
-	addImage(quality_button);
+	DGGraphic *gQualityButton = new DGGraphic("quality-button.png");
+	addImage(gQualityButton);
 
-	DGGraphic *tomsound_button = new DGGraphic("tomsound-button.png");
-	addImage(tomsound_button);
+	DGGraphic *gTomsoundButton = new DGGraphic("tomsound-button.png");
+	addImage(gTomsoundButton);
 
-	DGGraphic *randomize_button = new DGGraphic("randomize-button.png");
-	addImage(randomize_button);
+	DGGraphic *gRandomizeButton = new DGGraphic("randomize-button.png");
+	addImage(gRandomizeButton);
 
-	DGGraphic *midilearn_button = new DGGraphic("midi-learn-button.png");
-	addImage(midilearn_button);
+	DGGraphic *gMidiLearnButton = new DGGraphic("midi-learn-button.png");
+	addImage(gMidiLearnButton);
 
-	DGGraphic *midireset_button = new DGGraphic("midi-reset-button.png");
-	addImage(midireset_button);
+	DGGraphic *gMidiResetButton = new DGGraphic("midi-reset-button.png");
+	addImage(gMidiResetButton);
 
-	DGGraphic *dfxlink_button = new DGGraphic("dfx-link.png");
-	addImage(dfxlink_button);
+	DGGraphic *gDfxLinkButton = new DGGraphic("dfx-link.png");
+	addImage(gDfxLinkButton);
 
-	DGGraphic *superdestroyfxlink_button = new DGGraphic("super-destroy-fx-link.png");
-	addImage(superdestroyfxlink_button);
+	DGGraphic *gSuperDestroyFXlinkButton = new DGGraphic("super-destroy-fx-link.png");
+	addImage(gSuperDestroyFXlinkButton);
 
-	DGGraphic *smartelectronixlink_button = new DGGraphic("smart-electronix-link.png");
-	addImage(smartelectronixlink_button);
+	DGGraphic *gSmartElectronixLinkButton = new DGGraphic("smart-electronix-link.png");
+	addImage(gSmartElectronixLinkButton);
 
 
 /***************************************
@@ -280,11 +273,11 @@ printf("--------------------------------------------------\n\n");
 ***************************************/
 	
 	// Get size of GUI from Background Image and create background pane
-	SInt16 width = backG->getWidth();
-	SInt16 height = backG->getHeight();
+	SInt16 width = gBackground->getWidth();
+	SInt16 height = gBackground->getHeight();
 	DGRect where, where2;
 	where.set (0, 0, width, height);
-	DGPane *myPane = new DGPane(this, &where, backG);
+	DGPane *myPane = new DGPane(this, &where, gBackground);
 	addControl(myPane);
 
 /*
@@ -298,7 +291,7 @@ printf("--------------------------------------------------\n\n");
 */
 
 	// Make horizontal sliders and add them to the pane
-	where.set (kWideFaderX, kWideFaderY, h_slider_back->getWidth(), h_slider_back->getHeight());	// always relative to embedding pane
+	where.set (kWideFaderX, kWideFaderY, gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
 	where2.set (kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
 	for (AudioUnitParameterID tag=kSpeed1; tag <= kDist2; tag++)
 	{
@@ -313,85 +306,82 @@ printf("--------------------------------------------------\n\n");
 			displayProc = distDisplayProcedure;
 			userData = this;
 		}
-		DGSlider *slider = new DGSlider(this, tag, &where, kHorizontalSlider, horizontal_handle, h_slider_back);
+		DGSlider *slider = new DGSlider(this, tag, &where, kDGSliderStyle_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
 		slider->shrinkForeBounds(1, 0, 2, 0);
 		myPane->addControl(slider);
 
-		DGTextDisplay *display = new DGTextDisplay(this, tag, &where2, displayProc, userData, backG, SNOOT_FONT);
+		DGTextDisplay *display = new DGTextDisplay(this, tag, &where2, displayProc, userData, gBackground, SNOOT_FONT);
+		display->setTextAlignmentStyle(kDGTextAlign_right);
 		myPane->addControl(display);
 
-		long yoff;
+		long yoff =  kWideFaderInc;
 		if (tag == kDist1)
 			yoff = kWideFaderMoreInc;
 		else if (tag == kDist2)
 			yoff =  kWideFaderEvenMoreInc;
-		else
-			yoff =  kWideFaderInc;
 		where.offset (0, yoff);
 		where2.offset (0, yoff);
 	}
 
-	DGSlider *bsizeSlider = new DGSlider(this, kBsize, &where, kHorizontalSlider, grey_horizontal_handle, grey_h_slider_back);
+	DGSlider *bsizeSlider = new DGSlider(this, kBsize, &where, kDGSliderStyle_horizontal, gGreyHorizontalSliderHandle, gGreyHorizontalSliderBackground);
 	bsizeSlider->shrinkForeBounds(1, 0, 2, 0);
 	myPane->addControl(bsizeSlider);
 
-	DGTextDisplay *display = new DGTextDisplay(this, kBsize, &where2, bsizeDisplayProcedure, NULL, backG, SNOOT_FONT);
+	DGTextDisplay *display = new DGTextDisplay(this, kBsize, &where2, bsizeDisplayProcedure, NULL, gBackground, SNOOT_FONT);
+	display->setTextAlignmentStyle(kDGTextAlign_right);
 	myPane->addControl(display);
 
 	// Make horizontal sliders and add them to the pane
-	where.set (kTallFaderX, kTallFaderY, v_slider_back->getWidth(), v_slider_back->getHeight());	// always relative to embedding pane
+	where.set (kTallFaderX, kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
 	for (AudioUnitParameterID tag=kDrymix; tag <= kMix2; tag++)
 	{
-		DGSlider *slider = new DGSlider(this, tag, &where, kVerticalSlider, vertical_handle, v_slider_back);
+		DGSlider *slider = new DGSlider(this, tag, &where, kDGSliderStyle_vertical, gVerticalSliderHandle, gVerticalSliderBackground);
 		slider->shrinkForeBounds(0, 1, 0, 2);
 		myPane->addControl(slider);
 		where.offset (kTallFaderInc, 0);
 	}
 
 	// quality mode button
-	where.set (kQualityButtonX, kButtonY, quality_button->getWidth()/2, quality_button->getHeight()/numQualities);
-	DGButton *qualityButton = new DGButton(this, kQuality, &where, quality_button, NULL, numQualities, kIncButton, true);
+	where.set (kQualityButtonX, kButtonY, gQualityButton->getWidth()/2, gQualityButton->getHeight()/numQualities);
+	DGButton *qualityButton = new DGButton(this, kQuality, &where, gQualityButton, numQualities, kDGButtonType_incbutton, true);
 	myPane->addControl(qualityButton);
 
 	// TOMSOUND button
-	where.set (kTomsoundButtonX, kButtonY, tomsound_button->getWidth()/2, tomsound_button->getHeight()/2);
-	DGButton *tomsoundButton = new DGButton(this, kTomsound, &where, tomsound_button, NULL, 2, kIncButton, true);
+	where.set (kTomsoundButtonX, kButtonY, gTomsoundButton->getWidth()/2, gTomsoundButton->getHeight()/2);
+	DGButton *tomsoundButton = new DGButton(this, kTomsound, &where, gTomsoundButton, 2, kDGButtonType_incbutton, true);
 	myPane->addControl(tomsoundButton);
 
 	// randomize button
-	where.set (kRandomButtonX, kButtonY, randomize_button->getWidth(), randomize_button->getHeight()/2);
-	DGButton *randomizeButton = new DGButton(this, &where, randomize_button, NULL, 2, kPushButton);
+	where.set (kRandomButtonX, kButtonY, gRandomizeButton->getWidth(), gRandomizeButton->getHeight()/2);
+	DGButton *randomizeButton = new DGButton(this, &where, gRandomizeButton, 2, kDGButtonType_pushbutton);
 	randomizeButton->setUserProcedure(randomizeTransverb, this);
 	myPane->addControl(randomizeButton);
 
 	// MIDI learn button
-	where.set (kMidiLearnButtonX, kMidiLearnButtonY, midilearn_button->getWidth()/2, midilearn_button->getHeight()/2);
-	DGButton *midilearnButton = new DGButton(this, &where, midilearn_button, NULL, 2, kIncButton);
+	where.set (kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth()/2, gMidiLearnButton->getHeight()/2);
+	DGButton *midilearnButton = new DGButton(this, &where, gMidiLearnButton, 2, kDGButtonType_incbutton);
 	midilearnButton->setUserProcedure(midilearnTransverb, this);
 	myPane->addControl(midilearnButton);
 
 	// MIDI reset button
-	where.set (kMidiResetButtonX, kMidiResetButtonY, midireset_button->getWidth(), midireset_button->getHeight()/2);
-	DGButton *midiresetButton = new DGButton(this, &where, midireset_button, NULL, 2, kPushButton);
+	where.set (kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton->getWidth(), gMidiResetButton->getHeight()/2);
+	DGButton *midiresetButton = new DGButton(this, &where, gMidiResetButton, 2, kDGButtonType_pushbutton);
 	midiresetButton->setUserProcedure(midiresetTransverb, this);
 	myPane->addControl(midiresetButton);
 
 	// DFX web link
-	where.set (kDFXlinkX, kDFXlinkY, dfxlink_button->getWidth(), dfxlink_button->getHeight()/2);
-	DGButton *dfxlinkButton = new DGButton(this, &where, dfxlink_button, NULL, 2, kPushButton);
-	dfxlinkButton->setUserProcedure(openTransverbURL, (void*)DESTROYFX_URL);
+	where.set (kDFXlinkX, kDFXlinkY, gDfxLinkButton->getWidth(), gDfxLinkButton->getHeight()/2);
+	DGWebLink *dfxlinkButton = new DGWebLink(this, &where, gDfxLinkButton, DESTROYFX_URL);
 	myPane->addControl(dfxlinkButton);
 
 	// Super Destroy FX web link
-	where.set (kSuperDFXlinkX, kSuperDFXlinkY, superdestroyfxlink_button->getWidth(), superdestroyfxlink_button->getHeight()/2);
-	DGButton *superdestroyfxlinkButton = new DGButton(this, &where, superdestroyfxlink_button, NULL, 2, kPushButton);
-	superdestroyfxlinkButton->setUserProcedure(openTransverbURL, (void*)DESTROYFX_URL);
+	where.set (kSuperDFXlinkX, kSuperDFXlinkY, gSuperDestroyFXlinkButton->getWidth(), gSuperDestroyFXlinkButton->getHeight()/2);
+	DGWebLink *superdestroyfxlinkButton = new DGWebLink(this, &where, gSuperDestroyFXlinkButton, DESTROYFX_URL);
 	myPane->addControl(superdestroyfxlinkButton);
 
 	// Smart Electronix web link
-	where.set (kSmartElectronixLinkX, kSmartElectronixLinkY, smartelectronixlink_button->getWidth(), smartelectronixlink_button->getHeight()/2);
-	DGButton *smartelectronixlinkButton = new DGButton(this, &where, smartelectronixlink_button, NULL, 2, kPushButton);
-	smartelectronixlinkButton->setUserProcedure(openTransverbURL, (void*)SMARTELECTRONIX_URL);
+	where.set (kSmartElectronixLinkX, kSmartElectronixLinkY, gSmartElectronixLinkButton->getWidth(), gSmartElectronixLinkButton->getHeight()/2);
+	DGWebLink *smartelectronixlinkButton = new DGWebLink(this, &where, gSmartElectronixLinkButton, SMARTELECTRONIX_URL);
 	myPane->addControl(smartelectronixlinkButton);
 
 

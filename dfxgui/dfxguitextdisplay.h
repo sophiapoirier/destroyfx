@@ -5,11 +5,11 @@
 #include "dfxgui.h"
 
 
-enum TextAlignmentStyle {
-	kTextAlign_left = 0,
-	kTextAlign_center,
-	kTextAlign_right
-};
+typedef enum {
+	kDGTextAlign_left = 0,
+	kDGTextAlign_center,
+	kDGTextAlign_right
+} DfxGuiTextAlignmentStyle;
 
 
 typedef void (*displayTextProcedure) (Float32 value, char *outText, void *userData);
@@ -28,9 +28,9 @@ public:
 	virtual void mouseTrack(Point inPos, bool, bool);
 	virtual void mouseUp(Point inPos, bool, bool);
 
-	void setTextAlignmentStyle(TextAlignmentStyle newStyle)
+	void setTextAlignmentStyle(DfxGuiTextAlignmentStyle newStyle)
 		{	alignment = newStyle;	}
-	TextAlignmentStyle getTextAlignmentStyle()
+	DfxGuiTextAlignmentStyle getTextAlignmentStyle()
 		{	return alignment;	}
 	void setFontSize(float newSize)
 		{	fontSize = newSize;	}
@@ -44,7 +44,7 @@ protected:
 	char *					fontName;
 	float					fontSize;
 	DGColor					fontColor;
-	TextAlignmentStyle		alignment;
+	DfxGuiTextAlignmentStyle	alignment;
 	SInt32					last_Y;
 };
 

@@ -14,12 +14,12 @@ void genericDisplayTextProcedure(Float32 value, char *outText, void *userData)
 //-----------------------------------------------------------------------------
 DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							AudioUnitParameterID	inParamID, 
-							DGRect *				inWhere,
+							DGRect *				inRegion,
 							displayTextProcedure	inTextProc, 
 							void *					inUserData,
 							DGGraphic *				inBackground, 
 							const char *			inFontName)
-:	DGControl(inOwnerEditor, inParamID, inWhere)
+:	DGControl(inOwnerEditor, inParamID, inRegion)
 {
 	BackGround = inBackground;
 	if (inTextProc == NULL)
@@ -56,9 +56,9 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	fontSize = 14.0f;
 	fontColor.r = 103; fontColor.g = 161; fontColor.b = 215;
 
-	setType(kDfxGuiType_Display);
+	setType(kDfxGuiType_display);
 	setContinuousControl(true);
-	alignment = kTextAlign_right;
+	alignment = kDGTextAlign_right;
 }
 
 //-----------------------------------------------------------------------------
@@ -121,7 +121,7 @@ void DGTextDisplay::draw(CGContextRef context, UInt32 portHeight)
 
 	CGImageRef theBack = NULL;
 	if (BackGround != NULL)
-		theBack = BackGround->getImage();
+		theBack = BackGround->getCGImage();
 	if (theBack == NULL)
 	{
 		CGContextSetRGBFillColor(context, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
@@ -165,14 +165,14 @@ void DGTextDisplay::drawText(CGContextRef context, CGRect& inBounds, const char 
 	}
 	CGContextSetRGBFillColor(context, (float)fontColor.r/255.0f, (float)fontColor.g/255.0f, (float)fontColor.b/255.0f, 1.0f);
 
-	if (alignment != kTextAlign_left)
+	if (alignment != kDGTextAlign_left)
 	{
 		CGContextSetTextDrawingMode(context, kCGTextInvisible);
 		CGContextShowTextAtPoint(context, 0.0f, 0.0f, inString, strlen(inString));
 		CGPoint pt = CGContextGetTextPosition(context);
-		if (alignment == kTextAlign_center)
+		if (alignment == kDGTextAlign_center)
 			inBounds.origin.x += (inBounds.size.width - pt.x) / 2.0f;
-		else if (alignment == kTextAlign_right)
+		else if (alignment == kDGTextAlign_right)
 			inBounds.origin.x += inBounds.size.width - pt.x;
 	}
 	CGContextSetTextDrawingMode(context, kCGTextFill);
@@ -185,8 +185,8 @@ void DGTextDisplay::drawText(CGContextRef context, CGRect& inBounds, const char 
 
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor *inOwnerEditor, DGRect *inWhere, DGGraphic *inBackground, char *inFontName)
-:	DGTextDisplay(inOwnerEditor, 0xFFFFFFFF, inWhere, NULL, NULL, inBackground, inFontName), 
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGGraphic *inBackground, char *inFontName)
+:	DGTextDisplay(inOwnerEditor, 0xFFFFFFFF, inRegion, NULL, NULL, inBackground, inFontName), 
 	displayString(NULL)
 {
 	displayString = (char*) malloc(256);
@@ -219,7 +219,7 @@ void DGStaticTextDisplay::draw(CGContextRef context, UInt32 portHeight)
 
 	CGImageRef theBack = NULL;
 	if (BackGround != NULL)
-		theBack = BackGround->getImage();
+		theBack = BackGround->getCGImage();
 	if (theBack == NULL)
 	{
 		CGContextSetRGBFillColor(context, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);

@@ -11,7 +11,7 @@ written by Marc Poirier, January 2003
 
 
 // property IDs for Audio Unit property stuff
-enum DfxPluginProperties {
+typedef enum {
 	kDfxPluginProperty_PluginPtr = 64000,	// get a pointer to the DfxPlugin
 	kDfxPluginProperty_ParameterValue,		// get/set parameter values (current, min, max, etc.) using specific variable types
 	kDfxPluginProperty_ParameterValueConversion,	// expand or contract a parameter value
@@ -20,44 +20,46 @@ enum DfxPluginProperties {
 	kDfxPluginProperty_MidiLearn,			// get/set the MIDI learn state
 	kDfxPluginProperty_ResetMidiLearn,		// clear MIDI parameter assignments
 	kDfxPluginProperty_MidiLearner			// get/set the current MIDI learner parameter
-};
+} DfxPluginProperties;
 
 
 // for kDfxPluginProperty_ParameterValue
-enum DfxParameterValueItem {
+typedef enum {
 	kDfxParameterValueItem_current, 
 	kDfxParameterValueItem_previous, 
 	kDfxParameterValueItem_default, 
 	kDfxParameterValueItem_min, 
 	kDfxParameterValueItem_max
-};
-struct DfxParameterValueRequest {
+} DfxParameterValueItem;
+
+typedef struct {
 	long parameterID;
 	DfxParameterValueItem valueItem;
 	DfxParamValueType valueType;
 	DfxParamValue value;
-};
+} DfxParameterValueRequest;
 
 
 // for kDfxPluginProperty_ParameterValueConversion
-enum DfxParameterValueConversionType {
+typedef enum {
 	kDfxParameterValueConversion_expand, 
 	kDfxParameterValueConversion_contract
-};
-struct DfxParameterValueConversionRequest {
+} DfxParameterValueConversionType;
+
+typedef struct {
 	long parameterID;
 	DfxParameterValueConversionType conversionType;
 	double inValue;
 	double outValue;
-};
+} DfxParameterValueConversionRequest;
 
 
 // for kDfxPluginProperty_ParameterValueString
-struct DfxParameterValueStringRequest {
+typedef struct {
 	long parameterID;
 	long stringIndex;
 	char valueString[DFX_PARAM_MAX_VALUE_STRING_LENGTH];
-};
+} DfxParameterValueStringRequest;
 
 
 #endif
