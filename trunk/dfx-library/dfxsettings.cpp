@@ -367,7 +367,7 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 		for (i=0; i < numParameters; i++)
 		{
 			long mappedTag = paramMap[i];
-			if (mappedTag != kInvalidParamTag)
+			if (mappedTag != DFX_PARAM_INVALID_ID)
 			{
 			#if DFX_SUPPORT_OLD_VST_SETTINGS
 				// handle old-style generic VST 0.0 to 1.0 parameter values
@@ -402,7 +402,7 @@ bool DfxSettings::restore(void *data, unsigned long byteSize, bool isPreset)
 			for (i=0; i < numParameters; i++)
 			{
 				long mappedTag = paramMap[i];
-				if (mappedTag != kInvalidParamTag)
+				if (mappedTag != DFX_PARAM_INVALID_ID)
 				{
 				#if DFX_SUPPORT_OLD_VST_SETTINGS
 					// handle old-style generic VST 0.0 to 1.0 parameter values
@@ -439,7 +439,7 @@ if ( !(oldvst && isPreset) )
 	for (i=0; i < numParameters; i++)
 	{
 		long mappedTag = paramMap[i];
-		if (mappedTag != kInvalidParamTag)
+		if (mappedTag != DFX_PARAM_INVALID_ID)
 			memcpy( &(paramAssignments[i]), 
 					(char*)newParamAssignments+(mappedTag*(newSettingsInfo->storedParameterAssignmentSize)), 
 					copyParameterAssignmentSize);
@@ -932,8 +932,8 @@ long DfxSettings::getParameterTagFromID(long paramID, long numSearchIDs, long *s
 			return i;
 	}
 
-	// if nothing was found, then return the error tag
-	return kInvalidParamTag;
+	// if nothing was found, then return the error ID
+	return DFX_PARAM_INVALID_ID;
 }
 
 

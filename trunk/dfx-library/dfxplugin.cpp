@@ -507,9 +507,13 @@ void DfxPlugin::update_parameter(long parameterIndex)
 		long vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
 		if (presetisvalid(vstpresetnum))
 			setpresetparameter(vstpresetnum, parameterIndex, getparameter(parameterIndex));
-		#if TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
-		if (editor != NULL)	/* XXX can't assume it's a GUI (ie, vstgui) editor! */
-			((AEffGUIEditor*)editor)->setParameter(parameterIndex, getparameter_gen(parameterIndex));
+		#if TARGET_PLUGIN_HAS_GUI
+			#ifdef TARGET_PLUGIN_USES_VSTGUI
+			if (editor != NULL)	/* XXX can't assume it's a GUI (ie, vstgui) editor! */
+				((AEffGUIEditor*)editor)->setParameter(parameterIndex, getparameter_gen(parameterIndex));
+			#else
+			// XXX we will need something for our GUI class here
+			#endif
 		#endif
 
 	#endif
