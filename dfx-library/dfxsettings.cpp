@@ -827,7 +827,10 @@ void DfxSettings::setLearner(long tag, long eventBehaviourFlags,
 	}
 	// unless we're making it so that there's no learner, that's okay
 	else if (tag == kNoLearner)
+	{
 		learner = tag;
+		learnerEventBehaviourFlags = 0;
+	}
 }
 
 //-----------------------------------------------------------------------------

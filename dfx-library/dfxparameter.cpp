@@ -275,6 +275,9 @@ bool DfxParam::setvaluestring(long index, const char *inText)
 		valueCFStrings[arrayIndex] = CFStringCreateWithCString(NULL, inText, kCFStringEncodingMacRoman);//kCFStringEncodingASCII
 	#endif
 
+	if (unit == kDfxParamUnit_index)
+		unit = kDfxParamUnit_strings;	// XXX should I do this?
+
 	return true;
 }
 

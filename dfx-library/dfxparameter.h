@@ -51,6 +51,7 @@ enum DfxParamValueType {
 
 
 enum DfxParamUnit {
+#warning you have added new unit types; take care of them
 	kDfxParamUnit_undefined,
 	kDfxParamUnit_percent,	// typically 0-100
 	kDfxParamUnit_portion,	// like percent, but typically 0-1
@@ -63,11 +64,13 @@ enum DfxParamUnit {
 	kDfxParamUnit_ms,
 	kDfxParamUnit_samples,
 	kDfxParamUnit_scalar,
-	kDfxParamUnit_notes,
+	kDfxParamUnit_divisor,
 	kDfxParamUnit_semitones,
 	kDfxParamUnit_octaves,
 	kDfxParamUnit_cents,
+	kDfxParamUnit_notes,
 	kDfxParamUnit_pan,	// typically -1 - +1
+	kDfxParamUnit_bpm,
 	kDfxParamUnit_index,
 	kDfxParamUnit_strings	// index, using array of custom text strings for modes/states/etc.
 };
