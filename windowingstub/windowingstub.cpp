@@ -7,27 +7,50 @@
 
 #include <math.h>
 
+#define MKBUFSIZE(c) (buffersizes[(int)((c)*(BUFFERSIZESSIZE-1))])
+
+static const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = { 
+  2, 4, 8, 16, 32, 64, 128, 256, 512, 
+  1024, 2048, 4096, 8192, 16384, 32768, 
+};
+
+
+
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  /* FPARAM(samplehold, 0, "sample hold", 0.2, "msec"); */
+  FPARAM(bufsizep, 0, "", 0.5, "samples");
 
+  long i, maxframe = 0;
+  for (i=0; i<BUFFERSIZESIZE; i++)
+    maxframe = ( buffersizes[i] > maxframe ? buffersizes[i] : maxframe );
+  BUFFERSIZE = (maxframe / 2) * 3;
   setup();
+
+  inbuf = (float*)malloc(MAXBUFSIZE * sizeof(float));
+
+  resume ();
 }
 
 PLUGIN::~PLUGIN() {
 
 }
 
+void PLUGIN::resume() {
+
+  framesize = MKBUFSIZE(bufsizep);
+  third = curframesize / 2;
+  bufsize = curbufthird * 3;
+
+}
+
+void PLUGIN::suspend () {
+
+
+}
+
 void PLUGIN::setParameter(long index, float value) {
   switch (index) {
-
-    /*
-  case 1:
-    samplehold = value;
-    // .. then special stuff? 
-    break;
-    */
   default:
     if (index >= 0 && index < NUM_PARAMS)
       *paramptrs[index].ptr = value;
@@ -59,6 +82,9 @@ void PLUGIN::getParameterName(long index, char *label) {
 
 void PLUGIN::getParameterDisplay(long index, char *text) {
   switch(index) {
+  case 0:
+    sprintf(text, "%d", MKBUFSIZE(bufsizep));
+    break;
     /* special cases here */
   default:
     float2string(getParameter(index), text);
@@ -75,10 +101,6 @@ void PLUGIN::getParameterLabel(long index, char *label) {
     else strcpy(label, "?");
     break;
   }
-}
-
-void PLUGIN::suspend () {
-
 }
 
 void PLUGIN::processX(float **inputs, float **outputs, long samples, 
