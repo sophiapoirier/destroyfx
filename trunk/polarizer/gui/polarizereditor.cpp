@@ -36,16 +36,16 @@ const float kValueTextSize = 16.8f;
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-void leapDisplayProc(float value, char *outText, void*);
-void leapDisplayProc(float value, char *outText, void*)
+void leapDisplayProc(float value, char * outText, void *);
+void leapDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%ld sample", (long)value);
 	if (abs((long)value) > 1)
 		strcat(outText, "s");
 }
 
-void amountDisplayProc(float value, char *outText, void*);
-void amountDisplayProc(float value, char *outText, void*)
+void amountDisplayProc(float value, char * outText, void *);
+void amountDisplayProc(float value, char * outText, void *)
 {
 //	sprintf(outText, "%.3f", value);
 	sprintf(outText, "%ld%%", (long)(value*10.0f));
@@ -56,11 +56,11 @@ void amountDisplayProc(float value, char *outText, void*)
 class PolarizerSlider : public DGSlider
 {
 public:
-	PolarizerSlider(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inRegion, 
-					DfxGuiSliderStyle inOrientation, DGImage *inForeGround, DGImage *inBackground)
-	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inForeGround, inBackground)
+	PolarizerSlider(DfxGuiEditor * inOwnerEditor, AudioUnitParameterID inParamID, DGRect * inRegion, 
+					DfxGuiSliderAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage)
+	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandleImage, inBackgroundImage)
 	{
-		DGRect *fb = getBounds();
+		DGRect * fb = getBounds();
 		setForeBounds(fb->x, fb->y + kSliderFrameThickness, fb->w, fb->h - (kSliderFrameThickness*2));
 		setMouseOffset(0);
 	}
@@ -73,29 +73,29 @@ public:
 
 		CGRect bounds;
 		getBounds()->copyToCGRect(&bounds, inPortHeight);
-		CGImageRef theBack = NULL;
-		if (BackGround != NULL)
-			theBack = BackGround->getCGImage();
-		if (theBack != NULL)
-			CGContextDrawImage(inContext, bounds, theBack);
+		CGImageRef backgroundCGImage = NULL;
+		if (backgroundImage != NULL)
+			backgroundCGImage = backgroundImage->getCGImage();
+		if (backgroundCGImage != NULL)
+			CGContextDrawImage(inContext, bounds, backgroundCGImage);
 		else
 			getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 
-		CGImageRef theFore = NULL;
-		if (ForeGround != NULL)
-			theFore = ForeGround->getCGImage();
-		if (theFore != NULL)
+		CGImageRef handleCGImage = NULL;
+		if (handleImage != NULL)
+			handleCGImage = handleImage->getCGImage();
+		if (handleCGImage != NULL)
 		{
 			float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
-			bounds.size.height = (float) ForeGround->getHeight();
-			bounds.size.width = (float) ForeGround->getWidth();
+			bounds.size.height = (float) handleImage->getHeight();
+			bounds.size.width = (float) handleImage->getWidth();
 			bounds.origin.y += round(bounds.size.height * valNorm) - bounds.size.height + (float)kSliderFrameThickness;
 			bounds.origin.x += (float)kSliderFrameThickness;
-			CGContextDrawImage(inContext, bounds, theFore);
+			CGContextDrawImage(inContext, bounds, handleCGImage);
 
 			getBounds()->copyToCGRect(&bounds, inPortHeight);
 			bounds.size.height = (float)kSliderFrameThickness;
-			bounds.size.width = (float) ForeGround->getWidth();
+			bounds.size.width = (float) handleImage->getWidth();
 			bounds.origin.x += (float)kSliderFrameThickness;
 			CGContextSetRGBFillColor(inContext, 0.0f, 0.0f, 0.0f, 1.0f);
 			CGContextFillRect(inContext, bounds);
@@ -114,73 +114,62 @@ PolarizerEditor::PolarizerEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-OSStatus PolarizerEditor::open(float inXOffset, float inYOffset)
+long PolarizerEditor::open(float inXOffset, float inYOffset)
 {
 	// load some graphics
 
 	// background image
-	DGImage *gBackground = new DGImage("polarizer-background.png");
-	addImage(gBackground);
+	DGImage * gBackground = new DGImage("polarizer-background.png", this);
 	SetBackgroundImage(gBackground);
-	//
-	DGImage *gSliderHandle = new DGImage("slider-handle.png");
-	addImage(gSliderHandle);
-	DGImage *gSliderBackground = new DGImage("slider-background.png");
-	addImage(gSliderBackground);
-	//
-	DGImage *gImplodeButton = new DGImage("implode-button.png");
-	addImage(gImplodeButton);
-	DGImage *gDestroyFXlinkButton = new DGImage("destroy-fx-link.png");
-	addImage(gDestroyFXlinkButton);
+
+	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
+	DGImage * gSliderBackground = new DGImage("slider-background.png", this);
+
+	DGImage * gImplodeButton = new DGImage("implode-button.png", this);
+	DGImage * gDestroyFXlinkButton = new DGImage("destroy-fx-link.png", this);
 
 
 	DGRect pos;
 
 	//--create the sliders---------------------------------
-	PolarizerSlider *slider;
+	PolarizerSlider * slider;
 
 	// leap size
 	pos.set(kSliderX, kSliderY, gSliderBackground->getWidth(), gSliderBackground->getHeight());
-	slider = new PolarizerSlider(this, kSkip, &pos, kDGSliderStyle_vertical, gSliderHandle, gSliderBackground);
-	addControl(slider);
+	slider = new PolarizerSlider(this, kSkip, &pos, kDGSliderAxis_vertical, gSliderHandle, gSliderBackground);
 
 	// polarization amount
 	pos.offset(kSliderInc, 0);
-	slider = new PolarizerSlider(this, kAmount, &pos, kDGSliderStyle_vertical, gSliderHandle, gSliderBackground);
-	addControl(slider);
+	slider = new PolarizerSlider(this, kAmount, &pos, kDGSliderAxis_vertical, gSliderHandle, gSliderBackground);
 
 
 	//--create the displays---------------------------------------------
-	DGTextDisplay *display;
+	DGTextDisplay * display;
 
 	// leap size read-out
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
 	display = new DGTextDisplay(this, kSkip, &pos, leapDisplayProc, NULL, NULL, kValueTextFont);
 	display->setFontSize(kValueTextSize);
-	display->setTextAlignmentStyle(kDGTextAlign_center);
+	display->setTextAlignment(kDGTextAlign_center);
 	display->setFontColor(kBlackDGColor);
-	addControl(display);
 
 	// polarization amount read-out
 	pos.offset(kSliderInc, 0);
 	display = new DGTextDisplay(this, kAmount, &pos, amountDisplayProc, NULL, NULL, kValueTextFont);
 	display->setFontSize(kValueTextSize);
-	display->setTextAlignmentStyle(kDGTextAlign_center);
+	display->setTextAlignment(kDGTextAlign_center);
 	display->setFontColor(kBlackDGColor);
-	addControl(display);
 
 
 	//--create the buttons----------------------------------------------
 
 	// IMPLODE
 	pos.set(kImplodeButtonX, kImplodeButtonY, gImplodeButton->getWidth() / 2, gImplodeButton->getHeight() / 2);
-	DGButton *implodeButton = new DGButton(this, kImplode, &pos, gImplodeButton, 2, kDGButtonType_incbutton, true);
-	addControl(implodeButton);
+	DGButton * implodeButton = new DGButton(this, kImplode, &pos, gImplodeButton, 2, kDGButtonType_incbutton, true);
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, gDestroyFXlinkButton->getWidth(), gDestroyFXlinkButton->getHeight()/2);
-	DGWebLink *dfxLinkButton = new DGWebLink(this, &pos, gDestroyFXlinkButton, DESTROYFX_URL);
-	addControl(dfxLinkButton);
+	DGWebLink * dfxLinkButton = new DGWebLink(this, &pos, gDestroyFXlinkButton, DESTROYFX_URL);
 
 
 	return noErr;

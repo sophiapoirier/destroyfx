@@ -37,8 +37,8 @@ const float kValueTextSize = 10.5f;
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-void slopeDisplayProc(float value, char *outText, void*);
-void slopeDisplayProc(float value, char *outText, void*)
+void slopeDisplayProc(float value, char * outText, void *);
+void slopeDisplayProc(float value, char * outText, void *)
 {
 	long thousands = (long)value / 1000;
 	float remainder = fmodf(value, 1000.0f);
@@ -49,14 +49,14 @@ void slopeDisplayProc(float value, char *outText, void*)
 	strcat(outText, " ms");
 }
 
-void velInfluenceDisplayProc(float value, char *outText, void*);
-void velInfluenceDisplayProc(float value, char *outText, void*)
+void velInfluenceDisplayProc(float value, char * outText, void *);
+void velInfluenceDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%.1f%%", value * 100.0f);
 }
 
-void floorDisplayProc(float value, char *outText, void*);
-void floorDisplayProc(float value, char *outText, void*)
+void floorDisplayProc(float value, char * outText, void *);
+void floorDisplayProc(float value, char * outText, void *)
 {
 	if (value <= 0.0f)
 //		sprintf(outText, "-\xB0 dB");
@@ -77,110 +77,95 @@ MidiGaterEditor::MidiGaterEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-OSStatus MidiGaterEditor::open(float inXOffset, float inYOffset)
+long MidiGaterEditor::open(float inXOffset, float inYOffset)
 {
 	// load some graphics
 
 	// background image
-	DGImage *gBackground = new DGImage("midi-gater-background.png");
-	addImage(gBackground);
+	DGImage * gBackground = new DGImage("midi-gater-background.png", this);
 	SetBackgroundImage(gBackground);
-	//
-	DGImage *gSlopeSliderHandle = new DGImage("slider-handle-slope.png");
-	addImage(gSlopeSliderHandle);
-	DGImage *gVelInfluenceSliderHandle = new DGImage("slider-handle-velocity-influence.png");
-	addImage(gVelInfluenceSliderHandle);
-	DGImage *gFloorSliderHandle = new DGImage("slider-handle-floor.png");
-	addImage(gFloorSliderHandle);
-	//
-	DGImage *gDestroyFXlinkButton = new DGImage("destroy-fx-link-button.png");
-	addImage(gDestroyFXlinkButton);
+
+	DGImage * gSlopeSliderHandle = new DGImage("slider-handle-slope.png", this);
+	DGImage * gVelInfluenceSliderHandle = new DGImage("slider-handle-velocity-influence.png", this);
+	DGImage * gFloorSliderHandle = new DGImage("slider-handle-floor.png", this);
+
+	DGImage * gDestroyFXlinkButton = new DGImage("destroy-fx-link-button.png", this);
 
 
 	DGRect pos;
 
 	//--initialize the horizontal faders-------------------------------------
-	DGSlider *slider;
+	DGSlider * slider;
 
 	// slope
 	pos.set(kSliderX, kSlopeSliderY, kSliderWidth, gSlopeSliderHandle->getHeight());
-	slider = new DGSlider(this, kSlope, &pos, kDGSliderStyle_horizontal, gSlopeSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kSlope, &pos, kDGSliderAxis_horizontal, gSlopeSliderHandle, NULL);
 
 	// velocity influence
 	pos.set(kSliderX, kVelInfluenceSliderY, kSliderWidth, gVelInfluenceSliderHandle->getHeight());
-	slider = new DGSlider(this, kVelInfluence, &pos, kDGSliderStyle_horizontal, gVelInfluenceSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kVelInfluence, &pos, kDGSliderAxis_horizontal, gVelInfluenceSliderHandle, NULL);
 
 	// floor
 	pos.set(kSliderX, kFloorSliderY, kSliderWidth, gFloorSliderHandle->getHeight());
-	slider = new DGSlider(this, kFloor, &pos, kDGSliderStyle_horizontal, gFloorSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kFloor, &pos, kDGSliderAxis_horizontal, gFloorSliderHandle, NULL);
 
 
 	//--initialize the displays---------------------------------------------
-	DGTextDisplay *display;
-	DGStaticTextDisplay *label;
+	DGTextDisplay * display;
+	DGStaticTextDisplay * label;
 	AUVParameter auvp;
 
 	// slope
 	pos.set(kDisplayX, kSlopeDisplayY, kDisplayWidth/2, kDisplayHeight);
 	label = new DGStaticTextDisplay(this, &pos, NULL, kValueTextFont);
 	label->setFontSize(kValueTextSize);
-	label->setTextAlignmentStyle(kDGTextAlign_left);
+	label->setTextAlignment(kDGTextAlign_left);
 	label->setFontColor(kValueTextColor);
 	auvp = AUVParameter(GetEditAudioUnit(), kSlope, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
-	addControl(label);
 	//
 	pos.offset(kDisplayWidth/2, 0);
 	display = new DGTextDisplay(this, kSlope, &pos, slopeDisplayProc, NULL, NULL, kValueTextFont);
 	display->setFontSize(kValueTextSize);
-	display->setTextAlignmentStyle(kDGTextAlign_right);
+	display->setTextAlignment(kDGTextAlign_right);
 	display->setFontColor(kValueTextColor);
-	addControl(display);
 
 	// velocity influence
 	pos.set(kDisplayX - 1, kVelInfluenceDisplayY, kVelInfluenceLabelWidth + 1, kDisplayHeight);
 	label = new DGStaticTextDisplay(this, &pos, NULL, kValueTextFont);
 	label->setFontSize(kValueTextSize - 0.48f);
-	label->setTextAlignmentStyle(kDGTextAlign_left);
+	label->setTextAlignment(kDGTextAlign_left);
 	label->setFontColor(kValueTextColor);
 	auvp = AUVParameter(GetEditAudioUnit(), kVelInfluence, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
-	addControl(label);
 	//
 	pos.set(kDisplayX + kVelInfluenceLabelWidth, kVelInfluenceDisplayY, kDisplayWidth - kVelInfluenceLabelWidth, kDisplayHeight);
 	display = new DGTextDisplay(this, kVelInfluence, &pos, velInfluenceDisplayProc, NULL, NULL, kValueTextFont);
 	display->setFontSize(kValueTextSize);
-	display->setTextAlignmentStyle(kDGTextAlign_right);
+	display->setTextAlignment(kDGTextAlign_right);
 	display->setFontColor(kValueTextColor);
-	addControl(display);
 
 	// floor
 	pos.set(kDisplayX, kFloorDisplayY, kDisplayWidth/2, kDisplayHeight);
 	label = new DGStaticTextDisplay(this, &pos, NULL, kValueTextFont);
 	label->setFontSize(kValueTextSize);
-	label->setTextAlignmentStyle(kDGTextAlign_left);
+	label->setTextAlignment(kDGTextAlign_left);
 	label->setFontColor(kValueTextColor);
 	auvp = AUVParameter(GetEditAudioUnit(), kFloor, kAudioUnitScope_Global, (AudioUnitElement)0);
 	label->setText(auvp.ParamInfo().name);
-	addControl(label);
 	//
 	pos.offset(kDisplayWidth/2, 0);
 	display = new DGTextDisplay(this, kFloor, &pos, floorDisplayProc, NULL, NULL, kValueTextFont);
 	display->setFontSize(kValueTextSize);
-	display->setTextAlignmentStyle(kDGTextAlign_right);
+	display->setTextAlignment(kDGTextAlign_right);
 	display->setFontColor(kValueTextColor);
-	addControl(display);
 
 
 	//--initialize the buttons----------------------------------------------
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, gDestroyFXlinkButton->getWidth(), gDestroyFXlinkButton->getHeight()/2);
-	DGWebLink *dfxLinkButton = new DGWebLink(this, &pos, gDestroyFXlinkButton, DESTROYFX_URL);
-	addControl(dfxLinkButton);
+	DGWebLink * dfxLinkButton = new DGWebLink(this, &pos, gDestroyFXlinkButton, DESTROYFX_URL);
 
 
 

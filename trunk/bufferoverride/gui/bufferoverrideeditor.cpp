@@ -118,8 +118,8 @@ enum {
 
 //-----------------------------------------------------------------------------
 
-void midilearnBufferOverride(SInt32 value, void *editor);
-void midilearnBufferOverride(SInt32 value, void *editor)
+void midilearnBufferOverride(SInt32 value, void * editor);
+void midilearnBufferOverride(SInt32 value, void * editor)
 {
 	if (editor != NULL)
 	{
@@ -130,15 +130,15 @@ void midilearnBufferOverride(SInt32 value, void *editor)
 	}
 }
 
-void midiresetBufferOverride(SInt32 value, void *editor);
-void midiresetBufferOverride(SInt32 value, void *editor)
+void midiresetBufferOverride(SInt32 value, void * editor);
+void midiresetBufferOverride(SInt32 value, void * editor)
 {
 	if ( (editor != NULL) && (value != 0) )
 		((DfxGuiEditor*)editor)->resetmidilearn();
 }
 
-void linkKickButtonsDownProc(SInt32, void *otherbutton);
-void linkKickButtonsDownProc(SInt32, void *otherbutton)
+void linkKickButtonsDownProc(SInt32, void * otherbutton);
+void linkKickButtonsDownProc(SInt32, void * otherbutton)
 {
 	if (otherbutton != NULL)
 	{
@@ -147,8 +147,8 @@ void linkKickButtonsDownProc(SInt32, void *otherbutton)
 	}
 }
 
-void linkKickButtonsUpProc(SInt32, void *otherbutton);
-void linkKickButtonsUpProc(SInt32, void *otherbutton)
+void linkKickButtonsUpProc(SInt32, void * otherbutton);
+void linkKickButtonsUpProc(SInt32, void * otherbutton)
 {
 	if (otherbutton != NULL)
 	{
@@ -158,13 +158,13 @@ void linkKickButtonsUpProc(SInt32, void *otherbutton)
 }
 
 
-static void TempoSyncListenerProc(void *inRefCon, void *inObject, const AudioUnitParameter *inParameter, Float32 inValue);
-static void TempoSyncListenerProc(void *inRefCon, void *inObject, const AudioUnitParameter *inParameter, Float32 inValue)
+static void TempoSyncListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue);
+static void TempoSyncListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
 	if ( (inObject == NULL) || (inParameter == NULL) )
 		return;
 
-	DGControl *control = (DGControl*) inObject;
+	DGControl * control = (DGControl*) inObject;
 	bool useSyncParam = FBOOL(inValue);
 	AudioUnitParameterID newParameterID;
 	switch (inParameter->mParameterID)
@@ -185,8 +185,8 @@ static void TempoSyncListenerProc(void *inRefCon, void *inObject, const AudioUni
 }
 
 
-void divisorDisplayProc(Float32 value, char *outText, void*);
-void divisorDisplayProc(Float32 value, char *outText, void*)
+void divisorDisplayProc(Float32 value, char * outText, void *);
+void divisorDisplayProc(Float32 value, char * outText, void *)
 {
 	if (value < 2.0f)
 		sprintf(outText, "%.2f", 1.0f);
@@ -194,8 +194,8 @@ void divisorDisplayProc(Float32 value, char *outText, void*)
 		sprintf(outText, "%.2f", value);
 }
 
-void bufferSizeDisplayProc(Float32 value, char *outText, void *editor);
-void bufferSizeDisplayProc(Float32 value, char *outText, void *editor)
+void bufferSizeDisplayProc(Float32 value, char * outText, void * editor);
+void bufferSizeDisplayProc(Float32 value, char * outText, void * editor)
 {
 	if ( ((DfxGuiEditor*)editor)->getparameter_b(kBufferTempoSync) )
 		((DfxGuiEditor*)editor)->getparametervaluestring(kBufferSize_sync, outText);
@@ -203,8 +203,8 @@ void bufferSizeDisplayProc(Float32 value, char *outText, void *editor)
 		sprintf(outText, "%.1f", value);
 }
 
-void divisorLFOrateDisplayProc(Float32 value, char *outText, void *editor);
-void divisorLFOrateDisplayProc(Float32 value, char *outText, void *editor)
+void divisorLFOrateDisplayProc(Float32 value, char * outText, void * editor);
+void divisorLFOrateDisplayProc(Float32 value, char * outText, void * editor)
 {
 	if ( ((DfxGuiEditor*)editor)->getparameter_b(kDivisorLFOtempoSync) )
 		((DfxGuiEditor*)editor)->getparametervaluestring(kDivisorLFOrate_sync, outText);
@@ -217,8 +217,8 @@ void divisorLFOrateDisplayProc(Float32 value, char *outText, void *editor)
 	}
 }
 
-void bufferLFOrateDisplayProc(Float32 value, char *outText, void *editor);
-void bufferLFOrateDisplayProc(Float32 value, char *outText, void *editor)
+void bufferLFOrateDisplayProc(Float32 value, char * outText, void * editor);
+void bufferLFOrateDisplayProc(Float32 value, char * outText, void * editor)
 {
 	if ( ((DfxGuiEditor*)editor)->getparameter_b(kBufferLFOtempoSync) )
 		((DfxGuiEditor*)editor)->getparametervaluestring(kBufferLFOrate_sync, outText);
@@ -231,32 +231,32 @@ void bufferLFOrateDisplayProc(Float32 value, char *outText, void *editor)
 	}
 }
 
-void LFOdepthDisplayProc(Float32 value, char *outText, void*);
-void LFOdepthDisplayProc(Float32 value, char *outText, void*)
+void LFOdepthDisplayProc(Float32 value, char * outText, void *);
+void LFOdepthDisplayProc(Float32 value, char * outText, void *)
 {
 	sprintf(outText, "%ld%%", (long)value);
 }
 
-void smoothDisplayProc(Float32 value, char *outText, void*);
-void smoothDisplayProc(Float32 value, char *outText, void*)
+void smoothDisplayProc(Float32 value, char * outText, void *);
+void smoothDisplayProc(Float32 value, char * outText, void *)
 {
 	sprintf(outText, "%.1f%%", value);
 }
 
-void dryWetMixDisplayProc(Float32 value, char *outText, void*);
-void dryWetMixDisplayProc(Float32 value, char *outText, void*)
+void dryWetMixDisplayProc(Float32 value, char * outText, void *);
+void dryWetMixDisplayProc(Float32 value, char * outText, void *)
 {
 	sprintf(outText, "%ld%%", (long)value);
 }
 
-void pitchbendDisplayProc(Float32 value, char *outText, void*);
-void pitchbendDisplayProc(Float32 value, char *outText, void*)
+void pitchbendDisplayProc(Float32 value, char * outText, void *);
+void pitchbendDisplayProc(Float32 value, char * outText, void *)
 {
 	sprintf(outText, "\xB1 %.2f", value);
 }
 
-void tempoDisplayProc(Float32 value, char *outText, void*);
-void tempoDisplayProc(Float32 value, char *outText, void*)
+void tempoDisplayProc(Float32 value, char * outText, void *);
+void tempoDisplayProc(Float32 value, char * outText, void *)
 {
 	sprintf(outText, "%.2f", value);
 }
@@ -277,7 +277,6 @@ BufferOverrideEditor::BufferOverrideEditor(AudioUnitCarbonView inInstance)
 	midilearnButton = NULL;
 	midiresetButton = NULL;
 	helpDisplay = NULL;
-//printf("creating BufferOverrideEditor\n");
 }
 
 // ____________________________________________________________________________
@@ -291,15 +290,11 @@ BufferOverrideEditor::~BufferOverrideEditor()
 	AUListenerRemoveParameter(parameterListener, bufferLFOrateDisplay, &bufferLFOtempoSyncAUP);
 
 	AUListenerDispose(parameterListener);
-//printf("destroying BufferOverrideEditor\n");
 }
 
 // ____________________________________________________________________________
-OSStatus BufferOverrideEditor::open(float inXOffset, float inYOffset)
+long BufferOverrideEditor::open(float inXOffset, float inYOffset)
 {
-//printf("\n\n--------------------------------------------------\n");
-//printf("       creating Buffer Override GUI\n");
-//printf("--------------------------------------------------\n\n");
 	bufferSizeTempoSyncAUP.mAudioUnit = divisorLFOtempoSyncAUP.mAudioUnit = bufferLFOtempoSyncAUP.mAudioUnit = GetEditAudioUnit();
 	bufferSizeTempoSyncAUP.mScope = divisorLFOtempoSyncAUP.mScope = bufferLFOtempoSyncAUP.mScope = kAudioUnitScope_Global;
 	bufferSizeTempoSyncAUP.mElement = divisorLFOtempoSyncAUP.mElement = bufferLFOtempoSyncAUP.mElement = (AudioUnitElement)0;
@@ -307,64 +302,40 @@ OSStatus BufferOverrideEditor::open(float inXOffset, float inYOffset)
 	divisorLFOtempoSyncAUP.mParameterID = kDivisorLFOtempoSync;
 	bufferLFOtempoSyncAUP.mParameterID = kBufferLFOtempoSync;
 
-/***************************************
-	create graphics objects from PNG resource files
-***************************************/
+
+	// create images
 
 	// background image
-	DGImage *gBackground = new DGImage("buffer-override-background.png");
-	addImage(gBackground);
+	DGImage * gBackground = new DGImage("buffer-override-background.png", this);
 	SetBackgroundImage(gBackground);
 
 	// these move across the drawing rectangle
-	DGImage *gSliderHandle = new DGImage("slider-handle.png");
-	addImage(gSliderHandle);
-	DGImage *gXYboxHandle = new DGImage("xy-box-handle.png");
-	addImage(gXYboxHandle);
+	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
+	DGImage * gXYboxHandle = new DGImage("xy-box-handle.png", this);
 
 	// buttons
-	DGImage *gBufferTempoSyncButton = new DGImage("buffer-tempo-sync-button.png");
-	addImage(gBufferTempoSyncButton);
-	DGImage *gBufferTempoSyncButtonCorner = new DGImage("buffer-tempo-sync-button-corner.png");
-	addImage(gBufferTempoSyncButtonCorner);
-	//
-	DGImage *gBufferSizeLabel = new DGImage("buffer-size-label.png");
-	addImage(gBufferSizeLabel);
+	DGImage * gBufferTempoSyncButton = new DGImage("buffer-tempo-sync-button.png", this);
+	DGImage * gBufferTempoSyncButtonCorner = new DGImage("buffer-tempo-sync-button-corner.png", this);
+	DGImage * gBufferSizeLabel = new DGImage("buffer-size-label.png", this);
 
-	DGImage *gBufferInterruptButton = new DGImage("buffer-interrupt-button.png");
-	addImage(gBufferInterruptButton);
-	DGImage *gBufferInterruptButtonCorner = new DGImage("buffer-interrupt-button-corner.png");
-	addImage(gBufferInterruptButtonCorner);
+	DGImage * gBufferInterruptButton = new DGImage("buffer-interrupt-button.png", this);
+	DGImage * gBufferInterruptButtonCorner = new DGImage("buffer-interrupt-button-corner.png", this);
 
-	DGImage *gDivisorLFOtempoSyncButton = new DGImage("divisor-lfo-tempo-sync-button.png");
-	addImage(gDivisorLFOtempoSyncButton);
-	//
-	DGImage *gDivisorLFOrateLabel = new DGImage("divisor-lfo-rate-label.png");
-	addImage(gDivisorLFOrateLabel);
+	DGImage * gDivisorLFOtempoSyncButton = new DGImage("divisor-lfo-tempo-sync-button.png", this);
+	DGImage * gDivisorLFOrateLabel = new DGImage("divisor-lfo-rate-label.png", this);
 
-	DGImage *gBufferLFOtempoSyncButton = new DGImage("buffer-lfo-tempo-sync-button.png");
-	addImage(gBufferLFOtempoSyncButton);
-	//
-	DGImage *gBufferLFOrateLabel = new DGImage("buffer-lfo-rate-label.png");
-	addImage(gBufferLFOrateLabel);
+	DGImage * gBufferLFOtempoSyncButton = new DGImage("buffer-lfo-tempo-sync-button.png", this);
+	DGImage * gBufferLFOrateLabel = new DGImage("buffer-lfo-rate-label.png", this);
 
-	DGImage *gDivisorLFOshapeSwitch = new DGImage("divisor-lfo-shape-switch.png");
-	addImage(gDivisorLFOshapeSwitch);
+	DGImage * gDivisorLFOshapeSwitch = new DGImage("divisor-lfo-shape-switch.png", this);
 
-	DGImage *gBufferLFOshapeSwitch = new DGImage("buffer-lfo-shape-switch.png");
-	addImage(gBufferLFOshapeSwitch);
+	DGImage * gBufferLFOshapeSwitch = new DGImage("buffer-lfo-shape-switch.png", this);
 
-	DGImage *gMidiModeButton = new DGImage("midi-mode-button.png");
-	addImage(gMidiModeButton);
+	DGImage * gMidiModeButton = new DGImage("midi-mode-button.png", this);
+	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", this);
+	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", this);
 
-	DGImage *gMidiLearnButton = new DGImage("midi-learn-button.png");
-	addImage(gMidiLearnButton);
-
-	DGImage *gMidiResetButton = new DGImage("midi-reset-button.png");
-	addImage(gMidiResetButton);
-
-	DGImage *gGoButton = new DGImage("go-button.png");
-	addImage(gGoButton);
+	DGImage * gGoButton = new DGImage("go-button.png", this);
 
 
 /***************************************
@@ -372,132 +343,112 @@ OSStatus BufferOverrideEditor::open(float inXOffset, float inYOffset)
 ***************************************/
 	
 	DGRect pos;
-	DGSlider *slider;
+	DGSlider * slider;
 
 	long divisorLFOrateTag = getparameter_b(kDivisorLFOtempoSync) ? kDivisorLFOrate_sync : kDivisorLFOrate_abs;
 	pos.set (kDivisorLFOrateSliderX, kDivisorLFOrateSliderY, kSliderWidth, kLFOsliderHeight);
-	divisorLFOrateSlider = new DGSlider(this, divisorLFOrateTag, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
-	addControl(divisorLFOrateSlider);
+	divisorLFOrateSlider = new DGSlider(this, divisorLFOrateTag, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set (kDivisorLFOdepthSliderX, kDivisorLFOdepthSliderY, kSliderWidth, kLFOsliderHeight);
-	slider = new DGSlider(this, kDivisorLFOdepth, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kDivisorLFOdepth, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
 
 	long bufferLFOrateTag = getparameter_b(kBufferLFOtempoSync) ? kBufferLFOrate_sync : kBufferLFOrate_abs;
 	pos.set (kBufferLFOrateSliderX, kBufferLFOrateSliderY, kSliderWidth, kLFOsliderHeight);
-	bufferLFOrateSlider = new DGSlider(this, bufferLFOrateTag, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
-	addControl(bufferLFOrateSlider);
+	bufferLFOrateSlider = new DGSlider(this, bufferLFOrateTag, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set (kBufferLFOdepthSliderX, kBufferLFOdepthSliderY, kSliderWidth, kLFOsliderHeight);
-	slider = new DGSlider(this, kBufferLFOdepth, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kBufferLFOdepth, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set (kSmoothSliderX, kSmoothSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kSmooth, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kSmooth, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set (kDryWetMixSliderX, kDryWetMixSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kDryWetMix, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kDryWetMix, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set (kPitchbendSliderX, kPitchbendSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kPitchbend, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kPitchbend, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set (kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kTempo, &pos, kDGSliderStyle_horizontal, gSliderHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kTempo, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set (kDivisorBufferBoxX + 3, kDivisorBufferBoxY + 27, kDivisorBufferBoxWidth - 6, kSliderHeight);
-	slider = new DGSlider(this, kDivisor, &pos, kDGSliderStyle_horizontal, gXYboxHandle, NULL);
-	addControl(slider);
+	slider = new DGSlider(this, kDivisor, &pos, kDGSliderAxis_horizontal, gXYboxHandle, NULL);
 
 	long bufferSizeTag = getparameter_b(kBufferTempoSync) ? kBufferSize_sync : kBufferSize_abs;
 	pos.offset(0, 57);
-	bufferSizeSlider = new DGSlider(this, bufferSizeTag, &pos, kDGSliderStyle_horizontal, gXYboxHandle, NULL);
-	addControl(bufferSizeSlider);
+	bufferSizeSlider = new DGSlider(this, bufferSizeTag, &pos, kDGSliderAxis_horizontal, gXYboxHandle, NULL);
 
 
 
 	pos.set (kDivisorDisplayX, kDivisorDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *divisorDisplay = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
+	DGTextDisplay * divisorDisplay = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	divisorDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	divisorDisplay->setTextAlignmentStyle(kDGTextAlign_right);
+	divisorDisplay->setTextAlignment(kDGTextAlign_right);
 	divisorDisplay->setFontColor(kWhiteDGColor);
-	addControl(divisorDisplay);
 
 	pos.set (kBufferDisplayX, kBufferDisplayY, kDisplayWidth, kDisplayHeight);
 	bufferSizeDisplay = new DGTextDisplay(this, bufferSizeTag, &pos, bufferSizeDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
 	bufferSizeDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
 	bufferSizeDisplay->setFontColor(kWhiteDGColor);
-	bufferSizeDisplay->setTextAlignmentStyle(kDGTextAlign_center);
-	addControl(bufferSizeDisplay);
+	bufferSizeDisplay->setTextAlignment(kDGTextAlign_center);
 
 	pos.set (kDivisorLFOrateDisplayX, kDivisorLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
 	divisorLFOrateDisplay = new DGTextDisplay(this, divisorLFOrateTag, &pos, divisorLFOrateDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
 	divisorLFOrateDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	divisorLFOrateDisplay->setTextAlignmentStyle(kDGTextAlign_right);
+	divisorLFOrateDisplay->setTextAlignment(kDGTextAlign_right);
 	divisorLFOrateDisplay->setFontColor(kWhiteDGColor);
-	addControl(divisorLFOrateDisplay);
 
 	pos.set (kDivisorLFOdepthDisplayX, kDivisorLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *divisorLFOdepthDisplay = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
+	DGTextDisplay * divisorLFOdepthDisplay = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	divisorLFOdepthDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	divisorLFOdepthDisplay->setTextAlignmentStyle(kDGTextAlign_right);
+	divisorLFOdepthDisplay->setTextAlignment(kDGTextAlign_right);
 	divisorLFOdepthDisplay->setFontColor(kWhiteDGColor);
-	addControl(divisorLFOdepthDisplay);
 
 	pos.set (kBufferLFOrateDisplayX, kBufferLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
 	bufferLFOrateDisplay = new DGTextDisplay(this, bufferLFOrateTag, &pos, bufferLFOrateDisplayProc, this, NULL, VALUE_DISPLAY_FONT);
 	bufferLFOrateDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	bufferLFOrateDisplay->setTextAlignmentStyle(kDGTextAlign_right);
+	bufferLFOrateDisplay->setTextAlignment(kDGTextAlign_right);
 	bufferLFOrateDisplay->setFontColor(kWhiteDGColor);
-	addControl(bufferLFOrateDisplay);
 
 	pos.set (kBufferLFOdepthDisplayX, kBufferLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *bufferLFOdepthDisplay = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
+	DGTextDisplay * bufferLFOdepthDisplay = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	bufferLFOdepthDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	bufferLFOdepthDisplay->setTextAlignmentStyle(kDGTextAlign_right);
+	bufferLFOdepthDisplay->setTextAlignment(kDGTextAlign_right);
 	bufferLFOdepthDisplay->setFontColor(kWhiteDGColor);
-	addControl(bufferLFOdepthDisplay);
 
 	pos.set (kSmoothDisplayX, kSmoothDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *smoothDisplay = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
+	DGTextDisplay * smoothDisplay = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	smoothDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	smoothDisplay->setTextAlignmentStyle(kDGTextAlign_right);
+	smoothDisplay->setTextAlignment(kDGTextAlign_right);
 	smoothDisplay->setFontColor(kWhiteDGColor);
-	addControl(smoothDisplay);
 
 	pos.set (kDryWetMixDisplayX, kDryWetMixDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *dryWetMixDisplay = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
+	DGTextDisplay * dryWetMixDisplay = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	dryWetMixDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	dryWetMixDisplay->setTextAlignmentStyle(kDGTextAlign_right);
+	dryWetMixDisplay->setTextAlignment(kDGTextAlign_right);
 	dryWetMixDisplay->setFontColor(kWhiteDGColor);
-	addControl(dryWetMixDisplay);
 
 	pos.set (kPitchbendDisplayX, kPitchbendDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *pitchbendDisplay = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
+	DGTextDisplay * pitchbendDisplay = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	pitchbendDisplay->setFontSize(VALUE_DISPLAY_REGULAR_FONT_SIZE);
-	pitchbendDisplay->setTextAlignmentStyle(kDGTextAlign_right);
+	pitchbendDisplay->setTextAlignment(kDGTextAlign_right);
 	pitchbendDisplay->setFontColor(kWhiteDGColor);
-	addControl(pitchbendDisplay);
 
 	pos.set (kTempoDisplayX, kTempoDisplayY, kDisplayWidth, kDisplayHeight);
-	DGTextDisplay *tempoDisplay = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
+	DGTextDisplay * tempoDisplay = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, VALUE_DISPLAY_FONT);
 	tempoDisplay->setFontSize(VALUE_DISPLAY_TINY_FONT_SIZE);
-	tempoDisplay->setTextAlignmentStyle(kDGTextAlign_left);
+	tempoDisplay->setTextAlignment(kDGTextAlign_left);
 	tempoDisplay->setFontColor(kWhiteDGColor);
-	addControl(tempoDisplay);
 
+
+	DGButton *button;
 
 	// forced buffer size tempo sync button
 	pos.set (kBufferTempoSyncButtonX, kBufferTempoSyncButtonY, gBufferTempoSyncButton->getWidth()/2, gBufferTempoSyncButton->getHeight()/2);
-	DGButton *bufferTempoSyncButton = new DGButton(this, kBufferTempoSync, &pos, gBufferTempoSyncButton, 2, kDGButtonType_incbutton, true);
-	addControl(bufferTempoSyncButton);
+	DGButton * bufferTempoSyncButton = new DGButton(this, kBufferTempoSync, &pos, gBufferTempoSyncButton, 2, kDGButtonType_incbutton, true);
 	//
 	pos.set (kBufferTempoSyncButtonCornerX, kBufferTempoSyncButtonCornerY, gBufferTempoSyncButtonCorner->getWidth()/2, gBufferTempoSyncButtonCorner->getHeight()/2);
-	DGButton *bufferTempoSyncButtonCorner = new DGButton(this, kBufferTempoSync, &pos, gBufferTempoSyncButtonCorner, 2, kDGButtonType_incbutton, true);
-	addControl(bufferTempoSyncButtonCorner);
+	DGButton * bufferTempoSyncButtonCorner = new DGButton(this, kBufferTempoSync, &pos, gBufferTempoSyncButtonCorner, 2, kDGButtonType_incbutton, true);
 	//
 	bufferTempoSyncButton->setUserProcedure(linkKickButtonsDownProc, bufferTempoSyncButtonCorner);
 	bufferTempoSyncButtonCorner->setUserProcedure(linkKickButtonsDownProc, bufferTempoSyncButton);
@@ -506,12 +457,10 @@ OSStatus BufferOverrideEditor::open(float inXOffset, float inYOffset)
 
 	// buffer interrupt button
 	pos.set (kBufferInterruptButtonX, kBufferInterruptButtonY, gBufferInterruptButton->getWidth()/2, gBufferInterruptButton->getHeight()/2);
-	DGButton *bufferInterruptButton = new DGButton(this, kBufferInterrupt, &pos, gBufferInterruptButton, 2, kDGButtonType_incbutton, true);
-	addControl(bufferInterruptButton);
+	DGButton * bufferInterruptButton = new DGButton(this, kBufferInterrupt, &pos, gBufferInterruptButton, 2, kDGButtonType_incbutton, true);
 	//
 	pos.set (kBufferInterruptButtonCornerX, kBufferInterruptButtonCornerY, gBufferInterruptButtonCorner->getWidth()/2, gBufferInterruptButtonCorner->getHeight()/2);
-	DGButton *bufferInterruptButtonCorner = new DGButton(this, kBufferInterrupt, &pos, gBufferInterruptButtonCorner, 2, kDGButtonType_incbutton, true);
-	addControl(bufferInterruptButtonCorner);
+	DGButton * bufferInterruptButtonCorner = new DGButton(this, kBufferInterrupt, &pos, gBufferInterruptButtonCorner, 2, kDGButtonType_incbutton, true);
 	//
 	bufferInterruptButtonCorner->setUserProcedure(linkKickButtonsDownProc, bufferInterruptButton);
 	bufferInterruptButton->setUserProcedure(linkKickButtonsDownProc, bufferInterruptButtonCorner);
@@ -520,62 +469,51 @@ OSStatus BufferOverrideEditor::open(float inXOffset, float inYOffset)
 
 	// forced buffer size LFO tempo sync button
 	pos.set (kBufferLFOtempoSyncButtonX, kBufferLFOtempoSyncButtonY, gBufferLFOtempoSyncButton->getWidth()/2, gBufferLFOtempoSyncButton->getHeight()/2);
-	DGButton *bufferLFOtempoSyncButton = new DGButton(this, kBufferLFOtempoSync, &pos, gBufferLFOtempoSyncButton, 2, kDGButtonType_incbutton, true);
-	addControl(bufferLFOtempoSyncButton);
+	button = new DGButton(this, kBufferLFOtempoSync, &pos, gBufferLFOtempoSyncButton, 2, kDGButtonType_incbutton, true);
 
 	// divisor LFO tempo sync button
 	pos.set (kDivisorLFOtempoSyncButtonX, kDivisorLFOtempoSyncButtonY, gDivisorLFOtempoSyncButton->getWidth()/2, gDivisorLFOtempoSyncButton->getHeight()/2);
-	DGButton *divisorLFOtempoSyncButton = new DGButton(this, kDivisorLFOtempoSync, &pos, gDivisorLFOtempoSyncButton, 2, kDGButtonType_incbutton, true);
-	addControl(divisorLFOtempoSyncButton);
+	button = new DGButton(this, kDivisorLFOtempoSync, &pos, gDivisorLFOtempoSyncButton, 2, kDGButtonType_incbutton, true);
 
 	// MIDI mode button
 	pos.set (kMidiModeButtonX, kMidiModeButtonY, gMidiModeButton->getWidth()/2, gMidiModeButton->getHeight()/kNumMidiModes);
-	DGButton *midiModeButton = new DGButton(this, kMidiMode, &pos, gMidiModeButton, kNumMidiModes, kDGButtonType_incbutton, true);
-	addControl(midiModeButton);
+	button = new DGButton(this, kMidiMode, &pos, gMidiModeButton, kNumMidiModes, kDGButtonType_incbutton, true);
 
 	// MIDI learn button
 	pos.set (kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth(), gMidiLearnButton->getHeight()/2);
 	midilearnButton = new DGButton(this, &pos, gMidiLearnButton, 2, kDGButtonType_incbutton);
 	midilearnButton->setUserProcedure(midilearnBufferOverride, this);
-	addControl(midilearnButton);
 
 	// MIDI reset button
 	pos.set (kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton->getWidth(), gMidiResetButton->getHeight()/2);
 	midiresetButton = new DGButton(this, &pos, gMidiResetButton, 2, kDGButtonType_pushbutton);
 	midiresetButton->setUserProcedure(midiresetBufferOverride, this);
-	addControl(midiresetButton);
 
 	// go button
 	pos.set (kGoButtonX, kGoButtonY, gGoButton->getWidth(), gGoButton->getHeight()/2);
-	DGWebLink *goButton = new DGWebLink(this, &pos, gGoButton, "http://www.factoryfarming.com/");
-	addControl(goButton);
+	DGWebLink * goButton = new DGWebLink(this, &pos, gGoButton, "http://www.factoryfarming.com/");
 
 
 	// forced buffer size LFO shape switch
 	pos.set (kBufferLFOshapeSwitchX, kBufferLFOshapeSwitchY, gBufferLFOshapeSwitch->getWidth(), gBufferLFOshapeSwitch->getHeight()/numLFOshapes);
-	DGButton *bufferLFOshapeSwitch = new DGButton(this, kBufferLFOshape, &pos, gBufferLFOshapeSwitch, numLFOshapes, kDGButtonType_radiobutton);
-	addControl(bufferLFOshapeSwitch);
+	button = new DGButton(this, kBufferLFOshape, &pos, gBufferLFOshapeSwitch, numLFOshapes, kDGButtonType_radiobutton);
 
 	// divisor LFO shape switch
 	pos.set (kDivisorLFOshapeSwitchX, kDivisorLFOshapeSwitchY, gDivisorLFOshapeSwitch->getWidth(), gDivisorLFOshapeSwitch->getHeight()/numLFOshapes);
-	DGButton *divisorLFOshapeSwitch = new DGButton(this, kDivisorLFOshape, &pos, gDivisorLFOshapeSwitch, numLFOshapes, kDGButtonType_radiobutton);
-	addControl(divisorLFOshapeSwitch);
+	button = new DGButton(this, kDivisorLFOshape, &pos, gDivisorLFOshapeSwitch, numLFOshapes, kDGButtonType_radiobutton);
 
 
 	// forced buffer size label
 	pos.set (kBufferSizeLabelX, kBufferSizeLabelY, gBufferSizeLabel->getWidth(), gBufferSizeLabel->getHeight()/2);
-	DGButton *bufferSizeLabel = new DGButton(this, kBufferTempoSync, &pos, gBufferSizeLabel, 2, kDGButtonType_picturereel);
-	addControl(bufferSizeLabel);
+	button = new DGButton(this, kBufferTempoSync, &pos, gBufferSizeLabel, 2, kDGButtonType_picturereel);
 
 	// forced buffer size LFO rate label
 	pos.set (kBufferLFOrateLabelX, kBufferLFOrateLabelY, gBufferLFOrateLabel->getWidth(), gBufferLFOrateLabel->getHeight()/2);
-	DGButton *bufferLFOrateLabel = new DGButton(this, kBufferLFOtempoSync, &pos, gBufferLFOrateLabel, 2, kDGButtonType_picturereel);
-	addControl(bufferLFOrateLabel);
+	button = new DGButton(this, kBufferLFOtempoSync, &pos, gBufferLFOrateLabel, 2, kDGButtonType_picturereel);
 
 	// divisor LFO rate label
 	pos.set (kDivisorLFOrateLabelX, kDivisorLFOrateLabelY, gDivisorLFOrateLabel->getHeight(), gDivisorLFOrateLabel->getHeight()/2);
-	DGButton *divisorLFOrateLabel = new DGButton(this, kDivisorLFOtempoSync, &pos, gDivisorLFOrateLabel, 2, kDGButtonType_picturereel);
-	addControl(divisorLFOrateLabel);
+	button = new DGButton(this, kDivisorLFOtempoSync, &pos, gDivisorLFOrateLabel, 2, kDGButtonType_picturereel);
 
 
 /*
@@ -596,9 +534,8 @@ HMSetHelpTagsDisplayed(true);
 	pos.set (kHelpDisplayX, kHelpDisplayY, gBackground->getWidth(), kDisplayHeight);
 	helpDisplay = new DGStaticTextDisplay(this, &pos, NULL, HELP_DISPLAY_FONT);
 	helpDisplay->setFontSize(HELP_DISPLAY_FONT_SIZE);
-	helpDisplay->setTextAlignmentStyle(kDGTextAlign_center);
+	helpDisplay->setTextAlignment(kDGTextAlign_center);
 	helpDisplay->setFontColor(HELP_DISPLAY_TEXT_COLOR);
-	addControl(helpDisplay);
 
 
 	AUListenerAddParameter(parameterListener, bufferSizeSlider, &bufferSizeTempoSyncAUP);
@@ -626,7 +563,7 @@ void BufferOverrideEditor::mouseovercontrolchanged()
 	long currentcontrolparam = DFX_PARAM_INVALID_ID;
 	if (currentcontrol != NULL)
 	{
-		if ( currentcontrol->isAUVPattached() )
+		if ( currentcontrol->isParameterAttached() )
 			currentcontrolparam = currentcontrol->getParameterID();
 	}
 

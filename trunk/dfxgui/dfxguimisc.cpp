@@ -1,4 +1,5 @@
 #include "dfxguitools.h"
+#include "dfxgui.h"
 
 
 /***********************************************************************
@@ -7,19 +8,15 @@
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-DGImage::DGImage(const char *inFileName)
+DGImage::DGImage(const char * inFileName, DfxGuiEditor * inEditor)
 {
 	cgImage = NULL;
 
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
 	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-	// what can we do?
-	if (pluginBundleRef == NULL)
-		return;
-
 	CFStringRef fileCFName = CFStringCreateWithCString(kCFAllocatorDefault, inFileName, CFStringGetSystemEncoding());
-	if (fileCFName != NULL)
+	if ( (fileCFName != NULL) && (pluginBundleRef != NULL) )
 	{
 		CFURLRef imageResourceURL = CFBundleCopyResourceURL(pluginBundleRef, fileCFName, NULL, NULL);
 		if (imageResourceURL != NULL)
@@ -27,7 +24,7 @@ DGImage::DGImage(const char *inFileName)
 			CGDataProviderRef provider = CGDataProviderCreateWithURL(imageResourceURL);
 			if (provider != NULL)
 			{
-//				char *fileExtension = strrchr(inFileName, '.');
+//				char * fileExtension = strrchr(inFileName, '.');
 //				if (fileExtension != NULL)
 //					fileExtension += 1;	// advance past the .
 				const bool shouldInterpolate = true;
@@ -50,8 +47,12 @@ DGImage::DGImage(const char *inFileName)
 			}
 			CFRelease(imageResourceURL);
 		}
-		CFRelease(fileCFName);
 	}
+	if (fileCFName != NULL)
+		CFRelease(fileCFName);
+
+	if (inEditor != NULL)
+		inEditor->addImage(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -63,32 +64,33 @@ DGImage::~DGImage()
 }
 
 //-----------------------------------------------------------------------------
-size_t DGImage::getWidth()
+unsigned long DGImage::getWidth()
 {
 	if (cgImage != NULL)
 		return CGImageGetWidth(cgImage);
 	else
-		return 1;
+		return 1;	// XXX sometimes safer than returning 0
 }
 	
 //-----------------------------------------------------------------------------
-size_t DGImage::getHeight()
+unsigned long DGImage::getHeight()
 {
 	if (cgImage != NULL)
 		return CGImageGetHeight(cgImage);
 	else
-		return 1;
+		return 1;	// XXX sometimes safer than returning 0
 }
 
 //-----------------------------------------------------------------------------
-void DGImage::draw(CGContextRef context, UInt32 portHeight, DGRect *inRect, float value)
+void DGImage::draw(CGContextRef inContext, UInt32 inPortHeight, DGRect * inRect)
 {
-	if (cgImage != NULL)
-		CGContextDrawImage(context, inRect->convertToCGRect(portHeight), cgImage);
+	if ( (cgImage != NULL) && (inRect != NULL) && (inContext != NULL) )
+		CGContextDrawImage(inContext, inRect->convertToCGRect(inPortHeight), cgImage);
 }
 
 //-----------------------------------------------------------------------------
 // create an uncompressed, alpha-premultiplied bitmap image in memory
+// so far as I can tell, this makes drawing PNG files with CGContextDrawImage about 25 times faster
 CGImageRef PreRenderCGImageBuffer(CGImageRef inImage)
 {
 	if (inImage == NULL)
@@ -113,7 +115,7 @@ CGImageRef PreRenderCGImageBuffer(CGImageRef inImage)
 		// create a bitmap graphic context pointing at a data buffer that is 
 		// large enough to hold an uncompressed rendered version of the image
 		size_t dataSize = bytesPerRow * height;
-		void *buffer = malloc(dataSize);
+		void * buffer = malloc(dataSize);
 		memset(buffer, 0, dataSize);
 		CGContextRef context = CGBitmapContextCreate(buffer, width, height, bitsPerComponent, bytesPerRow, colorSpace, alphaInfo);
 		if (context != NULL)

@@ -27,22 +27,23 @@ class DGRect
 public:
 	DGRect()
 		{	x = y = w = h = 0;	}
-	DGRect(SInt32 inX, SInt32 inY, SInt32 inWidth, SInt32 inHeight)
+	DGRect(long inX, long inY, long inWidth, long inHeight)
 		{	x = inX;	y = inY;	w = inWidth;	h = inHeight;	}
 
-	void offset(SInt32 inOffsetX, SInt32 inOffsetY, SInt32 inWidthGrow = 0, SInt32 inHeightGrow = 0)
+	void offset(long inOffsetX, long inOffsetY, long inWidthGrow = 0, long inHeightGrow = 0)
 		{	x += inOffsetX;	y += inOffsetY;	w += inWidthGrow;	h += inHeightGrow;	}
-	void moveTo(SInt32 inX, SInt32 inY)
+	void moveTo(long inX, long inY)
 		{	x = inX;	y = inY;	}
-	void resize(SInt32 inWidth, SInt32 inHeight)
+	void resize(long inWidth, long inHeight)
 		{	w = inWidth;	h = inHeight;	}
 
-	void set(DGRect *inSourceRect)
+	void set(DGRect * inSourceRect)
 		{	x = inSourceRect->x;	y = inSourceRect->y;	w = inSourceRect->w;	h = inSourceRect->h;	}
-	void set(SInt32 inX, SInt32 inY, SInt32 inWidth, SInt32 inHeight)
+	void set(long inX, long inY, long inWidth, long inHeight)
 		{	x = inX;	y = inY;	w = inWidth;	h = inHeight;	}
 
-	void copyToCGRect(CGRect *outDestRect, UInt32 inDestPortHeight)
+#if MAC
+	void copyToCGRect(CGRect * outDestRect, UInt32 inDestPortHeight)
 	{
 		outDestRect->origin.x = x;
 		outDestRect->origin.y = inDestPortHeight - y - h;
@@ -55,7 +56,7 @@ public:
 		copyToCGRect(&outputRect, inOutputPortHeight);
 		return outputRect;
 	}
-	void copyToRect(Rect *outDestRect)
+	void copyToRect(Rect * outDestRect)
 	{
 		outDestRect->left = x;
 		outDestRect->top = y;
@@ -68,17 +69,19 @@ public:
 		copyToRect(&outputRect);
 		return outputRect;
 	}
+#endif
 
-	SInt32	x;
-	SInt32	y;
-	SInt32	w;
-	SInt32	h;
+	long x;
+	long y;
+	long w;
+	long h;
 };
 
 
 
 //-----------------------------------------------------------------------------
-// XXX use floats (0.0 to 1.0) instead of ints
+// 3-component RGB color represented with a float (range 0.0 to 1.0) 
+// for each color component
 struct DGColor
 {
 	float r;
@@ -119,28 +122,26 @@ const DGColor kWhiteDGColor(1.0f, 1.0f, 1.0f);
 	class for loading and containing images
 ***********************************************************************/
 
+class DfxGuiEditor;
+
 /* XXX should be "stacked" or "indexed" so that one bitmap might hold
    several clipped regions that can be drawn. (but we use overloading
    or default params so that it behaves like a single image when not
    using those features) */
-
 //-----------------------------------------------------------------------------
 class DGImage
 {
 public:
-	DGImage(const char *inFileName);
+	DGImage(const char * inFileName, DfxGuiEditor * inEditor = NULL);
 	virtual ~DGImage();
 
-	// passive API (for controls that want to draw images by themselves)
+	// XXX should eliminate this once I implement a proper draw method for this class
 	CGImageRef getCGImage()
 		{	return cgImage;	}
 
-	/* XXX int? */
-	size_t getWidth();
-	size_t getHeight();
+	unsigned long getWidth();
+	unsigned long getHeight();
 
-	// active API (for more than images...)
-	/* XXX float is not even used */
 	/* probably a better type is
 	   void draw(int x, int y);
 
@@ -148,12 +149,13 @@ public:
 	   void drawex(int x, int y, int xindex, int yindex) 
 	   .. for stacked images.
 	*/
-	virtual void draw(CGContextRef context, UInt32 portHeight, DGRect* rect, float value);
+	virtual void draw(CGContextRef inContext, UInt32 inPortHeight, DGRect * inRect);
 
 private:
+#if MAC
 	CGImageRef cgImage;
+#endif
 };
-
 
 CGImageRef PreRenderCGImageBuffer(CGImageRef inCompressedImage);
 

@@ -35,20 +35,20 @@ const float kValueTextSize = 13.0f;
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-void tempoRateDisplayProc(float value, char *outText, void *editor);
-void tempoRateDisplayProc(float value, char *outText, void *editor)
+void tempoRateDisplayProc(float value, char * outText, void * editor);
+void tempoRateDisplayProc(float value, char * outText, void * editor)
 {
 	((DfxGuiEditor*)editor)->getparametervaluestring(kRate_sync, outText);
 }
 
-void smoothDisplayProc(float value, char *outText, void*);
-void smoothDisplayProc(float value, char *outText, void*)
+void smoothDisplayProc(float value, char * outText, void *);
+void smoothDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%.1f%%", value);
 }
 
-void tempoDisplayProc(float value, char *outText, void*);
-void tempoDisplayProc(float value, char *outText, void*)
+void tempoDisplayProc(float value, char * outText, void *);
+void tempoDisplayProc(float value, char * outText, void *)
 {
 	sprintf(outText, "%.3f", value);
 }
@@ -59,8 +59,8 @@ void tempoDisplayProc(float value, char *outText, void*)
 class EQSyncSlider : public DGSlider
 {
 public:
-	EQSyncSlider(DfxGuiEditor *inOwnerEditor, AudioUnitParameterID inParamID, DGRect *inRegion, 
-					DfxGuiSliderStyle inOrientation, DGImage *inHandle, DGImage *inHandleClicked, DGImage *inBackground)
+	EQSyncSlider(DfxGuiEditor * inOwnerEditor, AudioUnitParameterID inParamID, DGRect * inRegion, 
+					DfxGuiSliderAxis inOrientation, DGImage * inHandle, DGImage * inHandleClicked, DGImage * inBackground)
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandle, inBackground), 
 		regularHandle(inHandle), clickedHandle(inHandleClicked)
 	{
@@ -72,7 +72,7 @@ public:
 	}
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 	{
-		ForeGround = clickedHandle;	// switch to the click-styled handle
+		handleImage = clickedHandle;	// switch to the click-styled handle
 		DGSlider::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers);
 		lastPX = inXpos;
 		lastPY = inYpos;
@@ -81,7 +81,7 @@ public:
 #if 0
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, unsigned long inKeyModifiers)
 	{
-		if (orientation == kDGSliderStyle_vertical)
+		if (orientation == kDGSliderAxis_vertical)
 		{
 			long xchange = (long)(inXpos - lastPX) + lastXchange;
 			long ychange = (long)(inYpos - lastPY) + lastYchange;
@@ -102,7 +102,7 @@ public:
 #endif
 	virtual void mouseUp(float inXpos, float inYpos, unsigned long inKeyModifiers)
 	{
-		ForeGround = regularHandle;	// switch back to the non-click-styled handle
+		handleImage = regularHandle;	// switch back to the non-click-styled handle
 		DGSlider::mouseUp(inXpos, inYpos, inKeyModifiers);
 		redraw();	// make sure that the change in slider handle is reflected
 	}
@@ -118,11 +118,11 @@ private:
 class EQSyncWebLink : public DGControl
 {
 public:
-	EQSyncWebLink(DfxGuiEditor *inOwnerEditor, DGRect *inRegion, DGImage *inImage)
+	EQSyncWebLink(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage)
 	:	DGControl(inOwnerEditor, inRegion, 1.0f), 
 		buttonImage(inImage)
 	{
-		setContinuousControl(false);
+		setControlContinuous(false);
 	}
 
 	virtual void draw(CGContextRef inContext, UInt32 inPortHeight)
@@ -188,28 +188,21 @@ EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-OSStatus EQSyncEditor::open(float inXOffset, float inYOffset)
+long EQSyncEditor::open(float inXOffset, float inYOffset)
 {
 	// load some images
 
 	// background image
-	DGImage *gBackground = new DGImage("eq-sync-background.png");
-	addImage(gBackground);
+	DGImage * gBackground = new DGImage("eq-sync-background.png", this);
 	SetBackgroundImage(gBackground);
-	//
-	DGImage *gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png");
-	addImage(gHorizontalSliderBackground);
-	DGImage *gVerticalSliderBackground = new DGImage("vertical-slider-background.png");
-	addImage(gVerticalSliderBackground);
-	DGImage *gSliderHandle = new DGImage("slider-handle.png");
-	addImage(gSliderHandle);
-	DGImage *gSliderHandleClicked = new DGImage("slider-handle-clicked.png");
-	addImage(gSliderHandleClicked);
-	//
-//	DGImage *gHostSyncButton = new DGImage("host-sync-button.png");
-//	addImage(gHostSyncButton);
-	DGImage *gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png");
-	addImage(gDestroyFXlinkTab);
+
+	DGImage * gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", this);
+	DGImage * gVerticalSliderBackground = new DGImage("vertical-slider-background.png", this);
+	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
+	DGImage * gSliderHandleClicked = new DGImage("slider-handle-clicked.png", this);
+
+//	DGImage * gHostSyncButton = new DGImage("host-sync-button.png", this);
+	DGImage * gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png", this);
 
 
 	DGRect pos;
@@ -218,8 +211,7 @@ OSStatus EQSyncEditor::open(float inXOffset, float inYOffset)
 	{
 		// create the horizontal sliders
 		pos.set(kWideFaderX, kWideFaderY + (kWideFaderInc * i), gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
-		EQSyncSlider *slider = new EQSyncSlider(this, i, &pos, kDGSliderStyle_horizontal, gSliderHandle, gSliderHandleClicked, gHorizontalSliderBackground);
-		addControl(slider);
+		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGSliderAxis_horizontal, gSliderHandle, gSliderHandleClicked, gHorizontalSliderBackground);
 
 		// create the displays
 		displayTextProcedure textproc = NULL;
@@ -230,26 +222,23 @@ OSStatus EQSyncEditor::open(float inXOffset, float inYOffset)
 		else if (i == kTempo)
 			textproc = tempoDisplayProc;
 		pos.set(kDisplayX, kDisplayY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);
-		DGTextDisplay *display = new DGTextDisplay(this, i, &pos, textproc, this, NULL, kValueTextFont);
+		DGTextDisplay * display = new DGTextDisplay(this, i, &pos, textproc, this, NULL, kValueTextFont);
 		display->setFontSize(kValueTextSize);
-		display->setTextAlignmentStyle(kDGTextAlign_left);
+		display->setTextAlignment(kDGTextAlign_left);
 		display->setFontColor(kBlackDGColor);
-		addControl(display);
 	}
 
 	// create the vertical sliders
 	for (long i=ka0; i <= kb2; i++)
 	{
 		pos.set(kTallFaderX + (kTallFaderInc * (i-ka0)), kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
-		EQSyncSlider *slider = new EQSyncSlider(this, i, &pos, kDGSliderStyle_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);
-		addControl(slider);
+		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGSliderAxis_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);
 	}
 
 
 	// create the Destroy FX web page link tab
 	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, gDestroyFXlinkTab->getWidth(), gDestroyFXlinkTab->getHeight()/2);
-	EQSyncWebLink *dfxLinkButton = new EQSyncWebLink(this, &pos, gDestroyFXlinkTab);
-	addControl(dfxLinkButton);
+	EQSyncWebLink * dfxLinkButton = new EQSyncWebLink(this, &pos, gDestroyFXlinkTab);
 
 
 	return noErr;

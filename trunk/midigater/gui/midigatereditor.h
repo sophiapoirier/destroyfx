@@ -8,7 +8,7 @@ class MidiGaterEditor : public DfxGuiEditor
 {
 public:
 	MidiGaterEditor(AudioUnitCarbonView inInstance);
-	virtual OSStatus open(float inXOffset, float inYOffset);
+	virtual long open(float inXOffset, float inYOffset);
 };
 
 #endif
