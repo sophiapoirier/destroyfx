@@ -1,8 +1,8 @@
 /*------------------- by Marc Poirier  ][  March 2001 -------------------*/
 
 
-#ifndef __bufferOverride
-#define __bufferOverride
+#ifndef __bufferoverride
+#define __bufferoverride
 
 #include "vstmidi.h"
 #include "dfxmisc.h"
