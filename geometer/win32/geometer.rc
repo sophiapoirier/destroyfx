@@ -25,6 +25,7 @@
 146                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/help-ops.bmp"
 147                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/help-recreate.bmp"
 148                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/midi-learn-at-228-324.bmp"
-149                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/destroy-fx-link149.bmp"
-150                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/smart-electronix-link150.bmp"
+149                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/midi-reset-at-228-343.bmp"
+150                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/destroy-fx-link149.bmp"
+151                     BITMAP  DISCARDABLE     "../geometer/gui/graphics/smart-electronix-link150.bmp"
 
