@@ -41,10 +41,10 @@ void DfxPlugin::PostConstructor()
 		for (long i=0; i < numchannelconfigs; i++)
 		{
 			// compare the input channel count
-			if ((UInt32)(channelconfigs[i].inChannels) != curInStreamFormat.mChannelsPerFrame)
+			if ( ((UInt32)(channelconfigs[i].inChannels) != curInStreamFormat.mChannelsPerFrame) && (channelconfigs[i].inChannels >= 0) )
 				currentFormatIsNotSupported = true;
 			// compare the output channel count
-			else if ((UInt32)(channelconfigs[i].outChannels) != curOutStreamFormat.mChannelsPerFrame)
+			else if ( ((UInt32)(channelconfigs[i].outChannels) != curOutStreamFormat.mChannelsPerFrame) && (channelconfigs[i].outChannels >= 0) )
 				currentFormatIsNotSupported = true;
 		}
 		// if the current format is not supported, then set the format to the first supported i/o pair in our list
@@ -191,7 +191,7 @@ ComponentResult DfxPlugin::Reset(AudioUnitScope inScope, AudioUnitElement inElem
 // most properties are handled by inherited base class implementations
 ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
-					UInt32 &outDataSize, Boolean &outWritable)
+					UInt32 & outDataSize, Boolean & outWritable)
 {
 	ComponentResult result = noErr;
 
@@ -742,7 +742,7 @@ void DfxPlugin::GetUIComponentDescs(ComponentDescription * inDescArray)
 // get specific information about the properties of a parameter
 ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope, 
 					AudioUnitParameterID inParameterID, 
-					AudioUnitParameterInfo &outParameterInfo)
+					AudioUnitParameterInfo & outParameterInfo)
 {
 	// we're only handling the global scope
 	if (inScope != kAudioUnitScope_Global)
@@ -751,7 +751,15 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	if ( !parameterisvalid(inParameterID) )
 		return kAudioUnitErr_InvalidParameter;
 
-	getparametername(inParameterID, outParameterInfo.name);
+	// get the name into a temp string buffer that we know is large enough
+	char tempname[DFX_PARAM_MAX_NAME_LENGTH];
+	getparametername(inParameterID, tempname);
+	// then make sure to only copy as much as the ParameterInfo name C string can hold
+	strncpy(outParameterInfo.name, tempname, sizeof(outParameterInfo.name));
+	// in case the parameter name was DFX_PARAM_MAX_NAME_LENGTH or longer, 
+	// make sure that the ParameterInfo name string is terminated
+	outParameterInfo.name[sizeof(outParameterInfo.name)-1] = 0;
+	//
 	outParameterInfo.cfNameString = getparametercfname(inParameterID);
 	outParameterInfo.minValue = getparametermin_f(inParameterID);
 	outParameterInfo.maxValue = getparametermax_f(inParameterID);
@@ -894,7 +902,7 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 		return kAudioUnitErr_InvalidScope;
 
 	if (!parameterisvalid(inParameterID))
-		return kAudioUnitErr_InvalidProperty;
+		return kAudioUnitErr_InvalidParameter;
 
 	if (getparameterusevaluestrings(inParameterID))
 	{
@@ -966,9 +974,11 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 //		if (presetnameisvalid(i))
 		if ( (presets[i].getname_ptr() != NULL) && (presets[i].getname_ptr()[0] != 0) )
 		{
+			// set the data as it should be
 			aupresets[i].presetNumber = i;
 //			aupresets[i].presetName = getpresetcfname(i);
 			aupresets[i].presetName = presets[i].getcfname();
+			// insert the AUPreset into the output array
 			CFArrayAppendValue( outArray, &(aupresets[i]) );
 		}
 	}
@@ -1120,7 +1130,7 @@ ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
 // the host calls this to inform the plugin that it wants to start using 
 // a different audio stream format (sample rate, num channels, etc.)
 ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
-				const CAStreamBasicDescription &inPrevFormat, const CAStreamBasicDescription &inNewFormat)
+				const CAStreamBasicDescription & inPrevFormat, const CAStreamBasicDescription & inNewFormat)
 {
 //printf("\nDfxPlugin::ChangeStreamFormat,   new sr = %.3lf,   old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
 //printf("\nDfxPlugin::ChangeStreamFormat,   new num channels = %lu,   old num channels = %lu\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
@@ -1163,8 +1173,8 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 
 //-----------------------------------------------------------------------------
 // this is the audio processing routine
-OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags, 
-				const AudioBufferList &inBuffer, AudioBufferList &outBuffer, 
+OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
+				const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
 				UInt32 inFramesToProcess)
 {
 	OSStatus result = noErr;
