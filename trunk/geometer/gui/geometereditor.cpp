@@ -1026,7 +1026,7 @@ void GeometerEditor::valueChanged(CDrawContext* context, CControl* control) {
   if (tag == id_midilearnbutton)
     chunk->setParameterMidiLearn(control->getValue());
   else if (tag == id_midiresetbutton)
-    chunk->setParameterCCreset(control->getValue());
+    chunk->setParameterMidiReset(control->getValue());
 
   else if (tag < NUM_PARAMS) {
     /* XXX for anything? */
