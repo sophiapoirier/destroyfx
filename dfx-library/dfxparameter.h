@@ -175,7 +175,7 @@ for the value strings.
 
 // the DfxParamValue struct holds every type of supported value variable type
 // all values (current, min, max, default) are stored in these
-typedef struct DfxParamValue {
+struct DfxParamValue {
 	float f;
 	double d;
 	long i;
@@ -184,7 +184,8 @@ typedef struct DfxParamValue {
 	char c;
 	unsigned char uc;
 	DfxParamValue() {} /* suppress compiler warnings */
-} DfxParamValue;
+};
+typedef struct DfxParamValue DfxParamValue;
 
 
 // these are the different variable types that a parameter can 
