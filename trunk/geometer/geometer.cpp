@@ -4,9 +4,7 @@
 
 #include "geometer.hpp"
 
-#ifndef __geometereditor
-#include "geometereditor.hpp"
-#endif
+#include "vstgui.h"		// for AEffGuiEditor::setParameter()
 
 #include <stdlib.h>
 #include <stdio.h>
