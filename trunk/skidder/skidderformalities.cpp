@@ -47,7 +47,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
 	{
-		char *tname = tempoRateTable->getDisplay(i);
+		const char *tname = tempoRateTable->getDisplay(i);
 		setparametervaluestring(kRate_sync, i, tname);
 		setparametervaluestring(kRateRandMin_sync, i, tname);
 	}

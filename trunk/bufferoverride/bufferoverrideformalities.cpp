@@ -53,18 +53,16 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 
 	// set the value strings for the LFO shape parameters
-	char *shapename = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH);
 	for (int i=0; i < numLFOshapes; i++)
 	{
-		divisorLFO->getShapeNameIndexed(i, shapename);
+		const char *shapename = divisorLFO->getShapeNameIndexed_ptr(i);
 		setparametervaluestring(kDivisorLFOshape, i, shapename);
 		setparametervaluestring(kBufferLFOshape, i, shapename);
 	}
-	free(shapename);
 	// set the value strings for the sync rate parameters
 	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
 	{
-		char *tname = tempoRateTable->getDisplay(i);
+		const char *tname = tempoRateTable->getDisplay(i);
 		setparametervaluestring(kBufferSize_sync, i, tname);
 		setparametervaluestring(kDivisorLFOrate_sync, i, tname);
 		setparametervaluestring(kBufferLFOrate_sync, i, tname);
@@ -73,7 +71,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kMidiMode, kMidiMode_nudge, "nudge");
 	setparametervaluestring(kMidiMode, kMidiMode_trigger, "trigger");
 
-	settailsize_seconds(4.0 / MIN_ALLOWABLE_BPS);
+	settailsize_seconds( 1.0 / (tempoRateTable->getScalar(0) * MIN_ALLOWABLE_BPS) );
 
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
@@ -143,7 +141,7 @@ bool BufferOverride::createbuffers()
 {
 //printf("\n(pre) sr = %.0f, super_max_buffer = %ld, numBuffers = %ld\n", getsamplerate(), SUPER_MAX_BUFFER, numBuffers);
 	long oldmax = SUPER_MAX_BUFFER;
-	SUPER_MAX_BUFFER = (long) ((getsamplerate() / MIN_ALLOWABLE_BPS) * 4.0);
+	SUPER_MAX_BUFFER = (long) ( getsamplerate() / (MIN_ALLOWABLE_BPS * tempoRateTable->getScalar(0)) );
 	unsigned long oldnum = numBuffers;
 	numBuffers = getnumoutputs();
 

@@ -13,6 +13,7 @@ typedef enum DfxGuiType
 	kDfxGuiType_Graphic,
 	kDfxGuiType_Pane,
 	kDfxGuiType_Slider,
+	kDfxGuiType_Button,
 	kDfxGuiType_Display
 };
 
