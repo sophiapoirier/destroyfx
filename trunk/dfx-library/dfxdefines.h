@@ -17,7 +17,9 @@ somewhere in the include tree for every file for a DfxPlugin.
 #define DESTROYFX_URL "http://destroyfx.org/"
 #define SMARTELECTRONIX_URL "http://www.smartelectronix.com/"
 // XXX needs workaround for plugin names with white spaces
+#ifndef PLUGIN_BUNDLE_IDENTIFIER
 #define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx."PLUGIN_NAME_STRING
+#endif
 
 #define DESTROYFX_ID 'DFX!'
 

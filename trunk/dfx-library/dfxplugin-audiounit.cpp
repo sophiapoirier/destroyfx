@@ -103,6 +103,24 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inID,
 			outWritable = false;
 			break;
 
+		// get/set parameter values (current, min, max, etc.) using specific variable types
+		case kDfxPluginProperty_ParameterValue:
+			outDataSize = sizeof(DfxParameterValueRequest);
+			outWritable = true;
+			break;
+
+		// expand or contract a parameter value
+		case kDfxPluginProperty_ParameterValueConversion:
+			outDataSize = sizeof(DfxParameterValueConversionRequest);
+			outWritable = false;
+			break;
+
+		// get/set parameter value strings
+		case kDfxPluginProperty_ParameterValueString:
+			outDataSize = sizeof(DfxParameterValueStringRequest);
+			outWritable = false;
+			break;
+
 		// randomize the parameters
 		case kDfxPluginProperty_RandomizeParameters:
 			// when you "set" this "property", you send a bool to say whether or not to write automation data
@@ -180,6 +198,152 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inID,
 				*(DfxPlugin**)outData = this;
 			break;
 
+		// get parameter values (current, min, max, etc.) using specific variable types
+		// XXX finish implementing all types and items
+		case kDfxPluginProperty_ParameterValue:
+			if (outData == NULL)
+				result = paramErr;
+			else
+			{
+				DfxParameterValueRequest *request = (DfxParameterValueRequest*) outData;
+				DfxParamValue *value = &(request->value);
+				long paramID = request->parameterID;
+				switch (request->valueItem)
+				{
+					case kDfxParameterValueItem_current:
+						{
+							switch (request->valueType)
+							{
+								case kDfxParamValueType_float:
+									value->f = getparameter_f(paramID);
+									break;
+								case kDfxParamValueType_double:
+									value->d = getparameter_d(paramID);
+									break;
+								case kDfxParamValueType_int:
+									value->i = getparameter_i(paramID);
+									break;
+								case kDfxParamValueType_boolean:
+									value->b = getparameter_b(paramID);
+									break;
+								default:
+									result = paramErr;
+									break;
+							}
+						}
+						break;
+					case kDfxParameterValueItem_previous:
+						// XXX implement this
+						break;
+					case kDfxParameterValueItem_default:
+						{
+							switch (request->valueType)
+							{
+								case kDfxParamValueType_float:
+									value->f = getparameterdefault_f(paramID);
+									break;
+								case kDfxParamValueType_double:
+//									value->d = getparameterdefault_d(paramID);
+									break;
+								case kDfxParamValueType_int:
+//									value->i = getparameterdefault_i(paramID);
+									break;
+								case kDfxParamValueType_boolean:
+//									value->b = getparameterdefault_b(paramID);
+									break;
+								default:
+									result = paramErr;
+									break;
+							}
+						}
+						break;
+					case kDfxParameterValueItem_min:
+						{
+							switch (request->valueType)
+							{
+								case kDfxParamValueType_float:
+									value->f = getparametermin_f(paramID);
+									break;
+								case kDfxParamValueType_double:
+									value->d = getparametermin_d(paramID);
+									break;
+								case kDfxParamValueType_int:
+									value->i = getparametermin_i(paramID);
+									break;
+								case kDfxParamValueType_boolean:
+//									value->b = getparametermin_b(paramID);
+									value->b = false;
+									break;
+								default:
+									result = paramErr;
+									break;
+							}
+						}
+						break;
+					case kDfxParameterValueItem_max:
+						{
+							switch (request->valueType)
+							{
+								case kDfxParamValueType_float:
+									value->f = getparametermax_f(paramID);
+									break;
+								case kDfxParamValueType_double:
+									value->d = getparametermax_d(paramID);
+									break;
+								case kDfxParamValueType_int:
+									value->i = getparametermax_i(paramID);
+									break;
+								case kDfxParamValueType_boolean:
+//									value->b = getparametermax_b(paramID);
+									value->b = true;
+									break;
+								default:
+									result = paramErr;
+									break;
+							}
+						}
+						break;
+					default:
+						result = paramErr;
+						break;
+				}
+			}
+			break;
+
+		// expand or contract a parameter value
+		case kDfxPluginProperty_ParameterValueConversion:
+			if (outData == NULL)
+				result = paramErr;
+			else
+			{
+				DfxParameterValueConversionRequest *request = (DfxParameterValueConversionRequest*) outData;
+				switch (request->conversionType)
+				{
+					case kDfxParameterValueConversion_expand:
+						request->outValue = expandparametervalue_index(request->parameterID, request->inValue);
+						break;
+					case kDfxParameterValueConversion_contract:
+						request->outValue = contractparametervalue_index(request->parameterID, request->inValue);
+						break;
+					default:
+						result = paramErr;
+						break;
+				}
+			}
+			break;
+
+		// get parameter value strings
+		case kDfxPluginProperty_ParameterValueString:
+			if (outData == NULL)
+				result = paramErr;
+			else
+			{
+				DfxParameterValueStringRequest *request = (DfxParameterValueStringRequest*) outData;
+				if ( !getparametervaluestring(request->parameterID, request->stringIndex, request->valueString) )
+					result = paramErr;
+			}
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		// get the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
@@ -222,6 +386,132 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inID,
 
 		case kDfxPluginProperty_PluginPtr:
 			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
+		case kDfxPluginProperty_ParameterValueConversion:
+			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
+		// set parameter values (current, min, max, etc.) using specific variable types
+		// XXX finish implementing all types and items
+		case kDfxPluginProperty_ParameterValue:
+			if (inData == NULL)
+				result = paramErr;
+			else
+			{
+				DfxParameterValueRequest *request = (DfxParameterValueRequest*) inData;
+				DfxParamValue *value = &(request->value);
+				long paramID = request->parameterID;
+				switch (request->valueItem)
+				{
+					case kDfxParameterValueItem_current:
+						{
+							switch (request->valueType)
+							{
+								case kDfxParamValueType_float:
+									setparameter_f(paramID, value->f);
+									break;
+								case kDfxParamValueType_double:
+									setparameter_d(paramID, value->d);
+									break;
+								case kDfxParamValueType_int:
+									setparameter_i(paramID, value->i);
+									break;
+								case kDfxParamValueType_boolean:
+									setparameter_b(paramID, value->b);
+									break;
+								default:
+									result = paramErr;
+									break;
+							}
+						}
+						break;
+					case kDfxParameterValueItem_previous:
+						// XXX implement this
+						break;
+					case kDfxParameterValueItem_default:
+						{
+							switch (request->valueType)
+							{
+								case kDfxParamValueType_float:
+//									setparameterdefault_f(paramID, value->f);
+									break;
+								case kDfxParamValueType_double:
+//									setparameterdefault_d(paramID, value->d);
+									break;
+								case kDfxParamValueType_int:
+//									setparameterdefault_i(paramID, value->i);
+									break;
+								case kDfxParamValueType_boolean:
+//									setparameterdefault_b(paramID, value->b);
+									break;
+								default:
+									result = paramErr;
+									break;
+							}
+						}
+						break;
+					case kDfxParameterValueItem_min:
+						{
+							switch (request->valueType)
+							{
+								case kDfxParamValueType_float:
+//									setparametermin_f(paramID, value->f);
+									break;
+								case kDfxParamValueType_double:
+//									setparametermin_d(paramID, value->d);
+									break;
+								case kDfxParamValueType_int:
+//									setparametermin_i(paramID, value->i);
+									break;
+								case kDfxParamValueType_boolean:
+//									setparametermin_b(paramID, value->b);
+									break;
+								default:
+									result = paramErr;
+									break;
+							}
+						}
+						break;
+					case kDfxParameterValueItem_max:
+						{
+							switch (request->valueType)
+							{
+								case kDfxParamValueType_float:
+//									setparametermax_f(paramID, value->f);
+									break;
+								case kDfxParamValueType_double:
+//									setparametermax_d(paramID, value->d);
+									break;
+								case kDfxParamValueType_int:
+//									setparametermax_i(paramID, value->i);
+									break;
+								case kDfxParamValueType_boolean:
+//									setparametermax_b(paramID, value->b);
+									break;
+								default:
+									result = paramErr;
+									break;
+							}
+						}
+						break;
+					default:
+						result = paramErr;
+						break;
+				}
+			}
+			break;
+
+		// set parameter value strings
+		case kDfxPluginProperty_ParameterValueString:
+			if (inData == NULL)
+				result = paramErr;
+			else
+			{
+				DfxParameterValueStringRequest *request = (DfxParameterValueStringRequest*) inData;
+				if ( !setparametervaluestring(request->parameterID, request->stringIndex, request->valueString) )
+					result = paramErr;
+			}
 			break;
 
 		// randomize the parameters
