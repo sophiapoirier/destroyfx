@@ -33,9 +33,6 @@ enum
 
 const long NUM_PRESETS = 16;
 
-const float BUFFER_MIN = 1.0f;
-const float BUFFER_MAX = 3000.0f;
-
 const long SMOOTH_DUR = 42;
 
 const long NUM_FIR_TAPS = 23;
