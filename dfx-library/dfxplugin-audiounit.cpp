@@ -975,27 +975,27 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 	if ( (numIOconfigs > 0) && (auChannelConfigs != NULL) )
 	{
 		SInt16 newNumChannels = (SInt16) (inNewFormat.mChannelsPerFrame);
-		bool knownScope = true;
+		bool foundMatch = false;
 		for (UInt32 i=0; i < numIOconfigs; i++)
 		{
 			switch (inScope)
 			{
 				case kAudioUnitScope_Input:
 					if (newNumChannels == auChannelConfigs[i].inChannels)
-						return noErr;
+						foundMatch = true;
 					break;
 				case kAudioUnitScope_Output:
 				case kAudioUnitScope_Global:
 					if (newNumChannels == auChannelConfigs[i].outChannels)
-						return noErr;
+						foundMatch = true;
 					break;
 				default:
-					knownScope = false;
+					// just allow this pass through, since it's unknown what it's for
+					foundMatch = true;
 					break;
 			}
 		}
-		// if we've reached this point, then we did not find this channel number in the list of supported i/o configs
-		if (knownScope)
+		if ( !foundMatch )
 			return kAudioUnitErr_FormatNotSupported;
 	}
 
