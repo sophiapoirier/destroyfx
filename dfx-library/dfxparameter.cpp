@@ -26,6 +26,9 @@ DfxParam::DfxParam()
 	name = NULL;
 	name = (char*) malloc(sizeof(char) * DFX_PARAM_MAX_NAME_LENGTH);
 	name[0] = 0;	// empty string
+	#ifdef TARGET_API_AUDIOUNIT
+		cfname = NULL;
+	#endif
 
 	// these are null until it's shown that we'll actually need them
 	valueStrings = NULL;
@@ -60,6 +63,11 @@ DfxParam::~DfxParam()
 	if (name != NULL)
 		free(name);
 	name = NULL;
+	#ifdef TARGET_API_AUDIOUNIT
+		if (cfname != NULL)
+			CFRelease(cfname);
+		cfname = NULL;
+	#endif
 
 	// release the custom unit name string, if there is one
 	if (customUnitString != NULL)
@@ -81,7 +89,12 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 	min = initMin;
 	max = initMax;
 	if (initName != NULL)
+	{
 		strcpy(name, initName);
+		#ifdef TARGET_API_AUDIOUNIT
+			cfname = CFStringCreateWithCString(kCFAllocatorDefault, initName, CFStringGetSystemEncoding());
+		#endif
+	}
 	curve = initCurve;
 	unit = initUnit;
 	if (unit == kDfxParamUnit_index)
@@ -601,8 +614,15 @@ double expandparametervalue(double genValue, double minValue, double maxValue, D
 		case kDfxParamCurve_linear:
 			return (genValue * valueRange) + minValue;
 		case kDfxParamCurve_stepped:
-			// XXX is this a good way to do this?
-			return (double) ( (long) ((genValue * valueRange) + minValue + twiddle_d) );
+			{
+				double tempval = (genValue * valueRange) + minValue;
+				if (tempval < 0.0)
+					tempval -= twiddle_d;
+				else
+					tempval += twiddle_d;
+				// XXX is this a good way to do this?
+				return (double) ((long)tempval);
+			}
 		case kDfxParamCurve_sqrt:
 			return (sqrt(genValue) * valueRange) + minValue;
 		case kDfxParamCurve_squared:
@@ -782,7 +802,7 @@ void DfxParam::setchanged(bool newChanged)
 // get a copy of the text of the parameter name
 void DfxParam::getname(char * outText)
 {
-	if (name && outText)
+	if ( (name != NULL) && (outText != NULL) )
 		strcpy(outText, name);
 }
 
