@@ -739,6 +739,9 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		CFRetain(outParameterInfo.cfNameString);
 		outParameterInfo.flags |= kAudioUnitParameterFlag_CFNameRelease;
 	}
+	// so far, this is all that AU offers as far as parameter distribution curves go
+	if (getparametercurve(inParameterID) == kDfxParamCurve_log)
+		outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayLogarithmic;
 
 	// the complicated part:  getting the unit type 
 	// (but easy if we use value strings for value display)
@@ -980,23 +983,21 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
 		return result;
 
 #if TARGET_PLUGIN_USES_MIDI
-	// create a CF data storage thingy for our special data
-	CFMutableDataRef cfdata = CFDataCreateMutable(kCFAllocatorDefault, 0);
-	if (cfdata != NULL)
+	void * dfxdata = NULL;	// a pointer to our special data
+	unsigned long dfxdatasize;	// the number of bytes of our data
+	// fetch our special data
+	dfxdatasize = dfxsettings->save(&dfxdata, true);
+	if ( (dfxdatasize > 0) && (dfxdata != NULL) )
 	{
-		void * dfxdata = NULL;	// a pointer to our special data
-		unsigned long dfxdatasize;	// the number of bytes of our data
-		// fetch our special data
-		dfxdatasize = dfxsettings->save(&dfxdata, true);
-		if ( (dfxdatasize > 0) && (dfxdata != NULL) )
+		// create a CF data storage thingy filled with our special data
+		CFDataRef cfdata = CFDataCreate(kCFAllocatorDefault, (const UInt8*)dfxdata, (CFIndex)dfxdatasize);
+		if (cfdata != NULL)
 		{
-			// put our special data into the CF data storage thingy
-			CFDataAppendBytes(cfdata, (UInt8*)dfxdata, (signed)dfxdatasize);
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary
 			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataDictionaryKeyString, cfdata);
+			// cfdata belongs to us no more, bye bye...
+			CFRelease(cfdata);
 		}
-		// cfdata belongs to us no more, bye bye...
-		CFRelease(cfdata);
 	}
 #endif
 
