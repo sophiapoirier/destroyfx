@@ -217,6 +217,12 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			result = noErr;
 			break;
 
+		case kAudioUnitProperty_ContextName:
+			outDataSize = sizeof(CFStringRef);
+			outWritable = true;
+			result = noErr;
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
 //		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
 //		MIDI controls and/or NRPN's to AudioUnit scopes/elements/parameters.
@@ -318,6 +324,17 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					}
 				}
 			}
+			break;
+
+		case kAudioUnitProperty_ContextName:
+			if (auContextName != NULL)
+			{
+				*((CFStringRef*)outData) = auContextName;
+				CFRetain(auContextName);
+				result = noErr;
+			}
+			else
+				result = kAudioUnitErr_CannotDoInCurrentContext;	// XXX right error code?  or is giving null valid?
 			break;
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -505,6 +522,17 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	{
 		case kAudioUnitProperty_ParameterClumpName:
 			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
+		case kAudioUnitProperty_ContextName:
+			// release the old one, if it was previously set
+			if (auContextName != NULL)
+				CFRelease(auContextName);
+			// use the new one
+			auContextName = *((CFStringRef*)inData);
+			if (auContextName != NULL)
+				CFRetain(auContextName);
+			result = noErr;
 			break;
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -938,7 +966,7 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 		CFStringRef * paramValueStrings = getparametervaluecfstrings(inParameterID);
 		// if we don't actually have strings set, exit with an error
 		if (paramValueStrings == NULL)
-			return kAudioUnitErr_InvalidProperty;
+			return kAudioUnitErr_InvalidPropertyValue;
 		// in case the min is not 0, get the total count of items in the array
 		long numStrings = getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1;
 		// create a CFArray of the strings (the host will destroy the CFArray)
@@ -946,7 +974,7 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 		return noErr;
 	}
 
-	return kAudioUnitErr_InvalidProperty;
+	return kAudioUnitErr_InvalidPropertyValue;
 }
 
 //-----------------------------------------------------------------------------
@@ -1239,7 +1267,7 @@ ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags,
 	for (UInt32 i=0; i < outNumBuffers; i++)
 	{
 		outputsP[i] = (float*) (outBuffers.mBuffers[i].mData);
-		outBuffers.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
+//		outBuffers.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
 	}
 
 	// do stuff to prepare the audio inputs, if we use any
@@ -1300,7 +1328,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 	for (UInt32 i=0; i < outNumBuffers; i++)
 	{
 		outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
-		outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
+//		outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
 	}
 
 	// now do the processing
