@@ -43,15 +43,16 @@ PLUGIN::PLUGIN(audioMasterCallback audioMaster)
 	   "pointparam:unused", 0.04f, "??");
   }
 
-  FPARAM(interpstyle, P_INTERPSTYLE, "interp how", 0.0, "choose");
+  FPARAM(interpstyle, P_INTERPSTYLE, "interpolate how", 0.0, "choose");
 
-  FPARAM(interparam[0], P_INTERPARAMS + 0, "inter:polygon", 0.0, "angle");
-  FPARAM(interparam[1], P_INTERPARAMS + 1, "inter:wrongy", 0.0, "angle");
-  FPARAM(interparam[2], P_INTERPARAMS + 2, "inter:smoothie", 0.5, "exp");
-  FPARAM(interparam[3], P_INTERPARAMS + 3, "inter:reversie", 0.0, "nothing");
-  FPARAM(interparam[4], P_INTERPARAMS + 4, "inter:pulse", 0.05, "pulse");
-  FPARAM(interparam[5], P_INTERPARAMS + 5, "inter:friends", 1.0, "width");
-  FPARAM(interparam[6], P_INTERPARAMS + 6, "inter:sing", 0.8, "mod");
+  FPARAM(interparam[0], P_INTERPARAMS + 0, "interp:polygon", 0.0, "angle");
+  FPARAM(interparam[1], P_INTERPARAMS + 1, "interp:wrongy", 0.0, "angle");
+  FPARAM(interparam[2], P_INTERPARAMS + 2, "interp:smoothie", 0.5, "exp");
+  FPARAM(interparam[3], P_INTERPARAMS + 3, "interp:reversie", 0.0, "nothing");
+  FPARAM(interparam[4], P_INTERPARAMS + 4, "interp:pulse", 0.05, "pulse");
+  FPARAM(interparam[5], P_INTERPARAMS + 5, "interp:friends", 1.0, "width");
+  FPARAM(interparam[6], P_INTERPARAMS + 6, "interp:sing", 0.8, "mod");
+  FPARAM(interparam[7], P_INTERPARAMS + 7, "interp:shuffle", 0.3, "amount");
 
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
     FPARAM(interparam[ip], P_INTERPARAMS + ip, 
@@ -304,6 +305,9 @@ void PLUGIN::getParameterDisplay(long index, char *text) {
     case INTERP_SING:
       strcpy(text, "sing");
       break;
+    case INTERP_SHUFFLE:
+      strcpy(text, "shuffle");
+      break;
     default:
       strcpy(text, "unsup");
       break;
@@ -381,8 +385,9 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
       t++;
       /* now, only if there's room... */
       if ((i < npts) && ((px[i+1] - px[i]) > 1)) {
-        /* add an extra point. Pick it in some arbitrary weird way. 
-           my idea is to double the frequency ...
+        /* add an extra point, right between the old points.
+           (the idea is to double the frequency).
+	   Pick its y coordinate according to the parameter.
         */
 
         tempy[t] = (op_param[OP_DOUBLE] * 2.0f - 1.0f) * py[i];
@@ -493,7 +498,7 @@ int PLUGIN::pointops(float pop, int npts, float * op_param, int samples,
     break;
   }
   case OP_FAST: {
-    
+    /* FIXME: write it! ;) */
 
 
     break;
@@ -525,8 +530,8 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
   /* MS Visual C++ is super retarded, so we have to define 
      and initialize all of these before the switch statement */
-  int i = 0, extx = 0, nth = 0, ctr = 0, n = 0, sd = 0, span = 0, lastsign = 0;
-  float ext = 0.0f, lasts = 0.0f;
+  int i = 0, extx = 0, nth = 0, ctr = 0, n = 0, sd = 0;
+  float ext = 0.0f;
 
   switch(MKPOINTSTYLE(pointstyle)) {
 
@@ -688,13 +693,13 @@ int PLUGIN::processw(float * in, float * out, long samples,
     break;
   }
   
-  case POINT_SPAN:
+  case POINT_SPAN: {
     /* next x determined by sample magnitude
        
     suggested by bram.
     */
 
-    span = (pointparam[3] * pointparam[3]) * samples;
+    int span = (pointparam[3] * pointparam[3]) * samples;
 
     i = abs((int)(py[0] * span)) + 1;
 
@@ -707,12 +712,12 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     break;
 
-
+  }
   
-  case POINT_DYDX:
+  case POINT_DYDX: {
     /* dy/dx */
-    lastsign = 0;
-    lasts = in[0];
+    int lastsign = 0;
+    float lasts = in[0];
     int sign;
 
     px[0] = 0;
@@ -743,7 +748,7 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
     break;
 
-
+  }
   default:
     /* nothing, unsupported... */
     numpts = 1;
@@ -757,6 +762,9 @@ int PLUGIN::processw(float * in, float * out, long samples,
   py[numpts] = in[samples-1];
   numpts++;
 
+  /* modify the points according to the three slots and
+     their parameters */
+
   numpts = pointops(pointop1, numpts, oppar1, samples, 
                     px, py, maxpts, tempx, tempy);
   numpts = pointops(pointop2, numpts, oppar2, samples, 
@@ -766,6 +774,61 @@ int PLUGIN::processw(float * in, float * out, long samples,
 
   int u=1, z=0;
   switch(MKINTERPSTYLE(interpstyle)) {
+
+  case INTERP_SHUFFLE: {
+    /* mix around the intervals. The parameter determines
+       how mobile an interval is. 
+
+       I build an array of interval indices (integers).
+       Then I swap elements with nearby elements (where
+       nearness is determined by the parameter). Then
+       I reconstruct the wave by reading the intervals
+       in their new order.
+    */
+    
+    /* fix last point at last sample -- necessary to
+       preserve invariants */
+    px[numpts-1] = samples - 1;
+
+    int intervals = numpts - 1;
+
+    /* generate table */
+    for(int a = 0; a < intervals; a++) {
+      tempx[a] = a;
+    }
+
+    for(int z = 0; z < intervals; z++) {
+      if (randFloat() < interparam[INTERP_SHUFFLE]) {
+	int t;
+	int dest = z + ((interparam[INTERP_SHUFFLE] * 
+			 interparam[INTERP_SHUFFLE] * (float)intervals)
+			* randFloat()) - (interparam[INTERP_SHUFFLE] *
+					  interparam[INTERP_SHUFFLE] *
+					  0.5f * (float)intervals);
+	if (dest < 0) dest = 0;
+	if (dest >= intervals) dest = intervals - 1;
+
+	t = tempx[z];
+	tempx[z] = tempx[dest];
+	tempx[dest] = t;
+      }
+    }
+
+#if 1
+    /* generate output */
+    int c = 0;
+    for(int u = 0; u < intervals; u++) {
+      int size = px[tempx[u]+1] - px[tempx[u]];
+      memcpy(out + c,
+	     in + px[tempx[u]],
+	     size * sizeof (float));
+      c += size;
+    }
+#else
+    memset(out, 0, samples * sizeof (float));
+#endif
+    break;
+  }
 
   case INTERP_FRIENDS: {
     /* bleed each segment into next segment (its "friend"). 
