@@ -376,7 +376,8 @@ void Transverb::randomizeparameters(bool writeAutomation)
 {
 // randomize the first 7 parameters
 
-	for (long i=0; (i < kDrymix); i++)
+	long i;
+	for (i=0; (i < kDrymix); i++)
 	{
 		// make slow speeds more probable (for fairer distribution)
 		if ( (i == kSpeed1) || (i == kSpeed1) )
@@ -436,13 +437,13 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	setparameter_b( kTomsound, (bool) ((rand()%3)%2) );
 
 
-	for (long i=0; i < kSpeed1mode; i++)
+	for (i=0; i < kSpeed1mode; i++)
 		postupdate_parameter(i);	// inform any parameter listeners of the changes
 
 	#ifdef TARGET_API_VST
 		if (writeAutomation)
 		{
-			for (long i=0; i < kSpeed1mode; i++)
+			for (i=0; i < kSpeed1mode; i++)
 				setParameterAutomated(i, getparameter_gen(i));
 		}
 	#endif
