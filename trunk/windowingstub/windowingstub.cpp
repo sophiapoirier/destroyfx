@@ -76,7 +76,7 @@ PLUGIN::~PLUGIN() {
 #endif
 }
 
-PLUGINCORE::PLUGINCORE(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
+PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
   : DfxPluginCore(inInstance) {
   /* determine the size of the largest window size */
   long maxframe = 0;
