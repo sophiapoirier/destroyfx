@@ -6,7 +6,7 @@
 //-----------------------------------------------------------------------------
 void Skidder::resetMidi()
 {
-	// & zero out the whole note table
+	// zero out the whole note table
 	for (int i=0; i < NUM_NOTES; i++)
 		noteTable[i] = 0;
 
@@ -120,7 +120,7 @@ void Skidder::noteOff()
 			// in case we're still in a MIDI-in phase; it won't get falsed otherwise
 			if (MIDIin)
 				MIDIin = false;
-			// if we're in a slope-out & there's a raised floor, the slope position needs to be rescaled
+			// if we're in a slope-out and there's a raised floor, the slope position needs to be rescaled
 			else if ( (state == slopeOut) && (floor > 0.0f) )
 			{
 				slopeSamples = (long) ( (((float)slopeSamples*slopeStep*gainRange)+floor) * (float)slopeDur );
