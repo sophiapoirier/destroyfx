@@ -67,11 +67,15 @@ public:
 	// the below methods all handle communication between the GUI component and the music component
 	DfxPlugin * getdfxplugin()
 		{	return dfxplugin;	}
-	float getparameter_f(long parameterID);
-	double getparameter_d(long parameterID);
-	long getparameter_i(long parameterID);
-	bool getparameter_b(long parameterID);
-	void getparametervaluestring(long parameterID, char * outText);
+	float getparameter_f(long inParameterID);
+	double getparameter_d(long inParameterID);
+	long getparameter_i(long inParameterID);
+	bool getparameter_b(long inParameterID);
+	void setparameter_f(long inParameterID, float inValue);
+	void setparameter_d(long inParameterID, double inValue);
+	void setparameter_i(long inParameterID, long inValue);
+	void setparameter_b(long inParameterID, bool inValue);
+	void getparametervaluestring(long inParameterID, char * outText);
 	void randomizeparameters(bool writeAutomation = false);
 	#if TARGET_PLUGIN_USES_MIDI
 		void setmidilearning(bool newLearnMode);

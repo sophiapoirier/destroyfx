@@ -177,12 +177,14 @@ ComponentResult RMSbuddy::GetParameterInfo(AudioUnitScope inScope,
 	if (inParameterID == kAnalysisFrameSize)
 	{
 		strcpy(outParameterInfo.name, "analysis window");
+		outParameterInfo.cfNameString = CFSTR("analysis window");
 		outParameterInfo.unit = kAudioUnitParameterUnit_Milliseconds;
 		outParameterInfo.minValue = 30.0f;
 		outParameterInfo.maxValue = 1000.0f;
 		outParameterInfo.defaultValue = 69.0f;
 		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
-								| kAudioUnitParameterFlag_IsWritable;
+								| kAudioUnitParameterFlag_IsWritable
+								| kAudioUnitParameterFlag_HasCFNameString;
 		return noErr;
 	}
 

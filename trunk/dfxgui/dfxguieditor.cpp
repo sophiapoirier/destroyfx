@@ -170,8 +170,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 				FSSpec bundleResourcesDirFSSpec;
 				OSStatus status = FSGetCatalogInfo(&bundleResourcesDirFSRef, kFSCatInfoNone, NULL, NULL, &bundleResourcesDirFSSpec, NULL);
 				if (status == noErr)
-					status = ATSFontActivateFromFileSpecification(&bundleResourcesDirFSSpec, kATSFontContextLocal, kATSFontFormatUnspecified, 
-																	NULL, kATSOptionFlagsProcessSubdirectories, &fontsATSContainer);
+					status = ATSFontActivateFromFileSpecification(&bundleResourcesDirFSSpec, kATSFontContextLocal, 
+									kATSFontFormatUnspecified, NULL, kATSOptionFlagsProcessSubdirectories, &fontsATSContainer);
 				if (status == noErr)
 					fontsWereActivated = true;
 			}
@@ -411,10 +411,10 @@ void DfxGuiEditor::setCurrentControl_mouseover(DGControl * inNewMousedOverContro
 }
 
 //-----------------------------------------------------------------------------
-float DfxGuiEditor::getparameter_f(long parameterID)
+float DfxGuiEditor::getparameter_f(long inParameterID)
 {
 	Float32 value;
-	if (AudioUnitGetParameter(GetEditAudioUnit(), (AudioUnitParameterID)parameterID, 
+	if (AudioUnitGetParameter(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, 
 					kAudioUnitScope_Global, (AudioUnitElement)0, &value) == noErr)
 		return value;
 	else
@@ -422,11 +422,11 @@ float DfxGuiEditor::getparameter_f(long parameterID)
 }
 
 //-----------------------------------------------------------------------------
-double DfxGuiEditor::getparameter_d(long parameterID)
+double DfxGuiEditor::getparameter_d(long inParameterID)
 {
 	DfxParameterValueRequest request;
 	UInt32 dataSize = sizeof(request);
-	request.parameterID = parameterID;
+	request.parameterID = inParameterID;
 	request.valueItem = kDfxParameterValueItem_current;
 	request.valueType = kDfxParamValueType_double;
 
@@ -439,11 +439,11 @@ double DfxGuiEditor::getparameter_d(long parameterID)
 }
 
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::getparameter_i(long parameterID)
+long DfxGuiEditor::getparameter_i(long inParameterID)
 {
 	DfxParameterValueRequest request;
 	UInt32 dataSize = sizeof(request);
-	request.parameterID = parameterID;
+	request.parameterID = inParameterID;
 	request.valueItem = kDfxParameterValueItem_current;
 	request.valueType = kDfxParamValueType_int;
 
@@ -456,11 +456,11 @@ long DfxGuiEditor::getparameter_i(long parameterID)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::getparameter_b(long parameterID)
+bool DfxGuiEditor::getparameter_b(long inParameterID)
 {
 	DfxParameterValueRequest request;
 	UInt32 dataSize = sizeof(request);
-	request.parameterID = parameterID;
+	request.parameterID = inParameterID;
 	request.valueItem = kDfxParameterValueItem_current;
 	request.valueType = kDfxParamValueType_boolean;
 
@@ -473,12 +473,64 @@ bool DfxGuiEditor::getparameter_b(long parameterID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::getparametervaluestring(long parameterID, char * outText)
+void DfxGuiEditor::setparameter_f(long inParameterID, float inValue)
+{
+	DfxParameterValueRequest request;
+	request.parameterID = inParameterID;
+	request.valueItem = kDfxParameterValueItem_current;
+	request.valueType = kDfxParamValueType_float;
+	request.value.f = inValue;
+
+	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
+				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setparameter_d(long inParameterID, double inValue)
+{
+	DfxParameterValueRequest request;
+	request.parameterID = inParameterID;
+	request.valueItem = kDfxParameterValueItem_current;
+	request.valueType = kDfxParamValueType_double;
+	request.value.d = inValue;
+
+	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
+				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setparameter_i(long inParameterID, long inValue)
+{
+	DfxParameterValueRequest request;
+	request.parameterID = inParameterID;
+	request.valueItem = kDfxParameterValueItem_current;
+	request.valueType = kDfxParamValueType_int;
+	request.value.i = inValue;
+
+	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
+				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue)
+{
+	DfxParameterValueRequest request;
+	request.parameterID = inParameterID;
+	request.valueItem = kDfxParameterValueItem_current;
+	request.valueType = kDfxParamValueType_boolean;
+	request.value.b = inValue;
+
+	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
+				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
 {
 	DfxParameterValueStringRequest request;
 	UInt32 dataSize = sizeof(request);
-	request.parameterID = parameterID;
-	request.stringIndex = getparameter_i(parameterID);
+	request.parameterID = inParameterID;
+	request.stringIndex = getparameter_i(inParameterID);
 
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValueString, 
 							kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
