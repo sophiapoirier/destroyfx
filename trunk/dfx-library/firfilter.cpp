@@ -16,9 +16,9 @@
 //-----------------------------------------------------------------------------
 // you're supposed to use use an odd number of taps
 void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate, 
-											int numTaps, float * coefficients)
+											long numTaps, float * coefficients)
 {
-  int middleCoeff;
+  long middleCoeff;
   float corner, value;
 
 	// get the cutoff as a ratio of cutoff to Nyquist, scaled from 0 to Pi
@@ -32,7 +32,7 @@ void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate,
 	else
 		middleCoeff = numTaps/2;
 
-	for (int n=0; n < middleCoeff; n++)
+	for (long n=0; n < middleCoeff; n++)
 	{
 		value = (float)n - ((float)(numTaps-1) * 0.5f);
 		coefficients[n] = sinf(value*corner) / (value*PI);
@@ -41,9 +41,9 @@ void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate,
 }
 
 //-----------------------------------------------------------------------------
-void applyKaiserWindow(int numTaps, float * coefficients, float attenuation)
+void applyKaiserWindow(long numTaps, float * coefficients, float attenuation)
 {
-  int halfLength;
+  long halfLength;
 
 
 	// beta is 0 if the attenuation is less than 21 dB
@@ -61,7 +61,7 @@ void applyKaiserWindow(int numTaps, float * coefficients, float attenuation)
 	else
 		halfLength = numTaps / 2;
 
-	for (int n=0; n < halfLength; n++)
+	for (long n=0; n < halfLength; n++)
 	{
 		coefficients[n] *= besselIzero(beta * 
 					sqrtf(1.0f - powf( (1.0f-((2.0f*n)/((float)(numTaps-1)))), 2.0f ))) 
@@ -71,12 +71,12 @@ void applyKaiserWindow(int numTaps, float * coefficients, float attenuation)
 } 
 
 //-----------------------------------------------------------------------------
-float besselIzero(float in)
+float besselIzero(float input)
 {
   float sum, numerator, denominator, term, halfIn;
 
 	sum = 1.0f;
-	halfIn = in * 0.5f;
+	halfIn = input * 0.5f;
 	denominator = 1.0f;
 	numerator = 1.0f;
 	for (int m=1; m <= 32; m++)
@@ -90,7 +90,7 @@ float besselIzero(float in)
 }
 
 //-----------------------------------------------------------------------------
-float besselIzero2(float in)
+float besselIzero2(float input)
 {
   float sum = 1.0f;
   float ds = 1.0f;
@@ -99,7 +99,7 @@ float besselIzero2(float in)
 	do
 	{
 		d += 2.0f;
-		ds *= ( in * in ) / ( d * d );
+		ds *= ( input * input ) / ( d * d );
 		sum += ds;
 	}
 	while ( ds > (1E-7f * sum) );
