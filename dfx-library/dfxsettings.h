@@ -338,39 +338,6 @@ public:
 	virtual long getCrisisBehaviour() { return crisisBehaviour; }
 
 
-	/* - - - - - - - - - hooks - - - - - - - - - */
-
-	// these allow for additional constructor or destructor stuff, if necessary
-	void init() {}
-	void uninit() {}
-
-	// these can be overridden to store and restore more data during 
-	// save() and restore() respectively
-	// the data pointers point to the start of the extended data 
-	// sections of the settings data
-	virtual void saveExtendedData(void *data, bool isPreset) {}
-	virtual void restoreExtendedData(void *data, unsigned long storedExtendedDataSize, 
-										long dataVersion, bool isPreset) {}
-
-	// this can be overridden to react when parameter values are 
-	// restored from settings that are loaded during restore()
-	// for example, you might need to remap certain parameter values 
-	// when loading settings stored by older versions of your plugin 
-	// (that's why settings data version is one of the function arguments; 
-	// it's the version number of the plugin that created the data)
-	// (presetNum of -1 indicates that we're just working with the current 
-	// state of the plugin)
-	virtual void doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum = -1) {}
-
-	// these can be overridden to do something and extend the MIDI event processing
-	virtual void doLearningAssignStuff(long tag, long eventType, long eventChannel, 
-										long eventNum, long delta, long eventNum2 = 0, 
-										long eventBehaviourFlags = 0, 
-										long data1 = 0, long data2 = 0, 
-										float fdata1 = 0.0f, float fdata2 = 0.0f) {}
-	virtual void doMidiAutomatedSetParameterStuff(long tag, float value, long delta) {}
-
-
 protected:
 	// reverse the byte order of data
 	void correctEndian(void *data, bool isReversed, bool isPreset=false);

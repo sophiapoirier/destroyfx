@@ -177,45 +177,36 @@ void Skidder::noteOff()
 }
 
 
-/*
-//----------------------------------------------------------------------------- 
-SkidderChunk::SkidderChunk(long numParameters, long numPrograms, long magic, AudioEffectX *effect)
-	: VstChunk (numParameters, numPrograms, magic, effect)
-{
-	// start off with split CC automation of both range slider points
-	pulsewidthDoubleAutomate = floorDoubleAutomate = false;
-}
-
 //----------------------------------------------------------------------------- 
 // this gets called when Skidder automates a parameter from CC messages.
 // this is where we can link parameter automation for rangeslider points.
-void SkidderChunk::doLearningAssignStuff(long tag, long eventType, long eventChannel, long eventNum, 
+void Skidder::settings_doLearningAssignStuff(long tag, long eventType, long eventChannel, long eventNum, 
 										long delta, long eventNum2, long eventBehaviourFlags, 
 										long data1, long data2, float fdata1, float fdata2)
 {
-	if ( getSteal() )
+	if ( dfxsettings->getSteal() )
 		return;
 
 	switch (tag)
 	{
 		case kPulsewidth:
 			if (pulsewidthDoubleAutomate)
-				assignParam(kPulsewidthRandMin, eventType, eventChannel, eventNum, eventNum2, 
+				dfxsettings->assignParam(kPulsewidthRandMin, eventType, eventChannel, eventNum, eventNum2, 
 							eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			break;
 		case kPulsewidthRandMin:
 			if (pulsewidthDoubleAutomate)
-				assignParam(kPulsewidth, eventType, eventChannel, eventNum, eventNum2, 
+				dfxsettings->assignParam(kPulsewidth, eventType, eventChannel, eventNum, eventNum2, 
 							eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			break;
 		case kFloor:
 			if (floorDoubleAutomate)
-				assignParam(kFloorRandMin, eventType, eventChannel, eventNum, eventNum2, 
+				dfxsettings->assignParam(kFloorRandMin, eventType, eventChannel, eventNum, eventNum2, 
 							eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			break;
 		case kFloorRandMin:
 			if (floorDoubleAutomate)
-				assignParam(kFloor, eventType, eventChannel, eventNum, eventNum2, 
+				dfxsettings->assignParam(kFloor, eventType, eventChannel, eventNum, eventNum2, 
 							eventBehaviourFlags, data1, data2, fdata1, fdata2);
 			break;
 		default:
@@ -223,8 +214,9 @@ void SkidderChunk::doLearningAssignStuff(long tag, long eventType, long eventCha
 	}
 }
 
+/*
 //----------------------------------------------------------------------------- 
-void SkidderChunk::unassignParam(long tag)
+void Skidder::settings_unassignParam(long tag)
 {
 	VstChunk::unassignParam(tag);
 
