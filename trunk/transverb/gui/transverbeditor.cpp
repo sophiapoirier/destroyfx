@@ -1,7 +1,6 @@
 #include "transverbeditor.h"
 #include "transverb.hpp"
 
-#include "dfxguipane.h"
 #include "dfxguislider.h"
 #include "dfxguibutton.h"
 #include "dfxguidisplay.h"
@@ -221,6 +220,7 @@ printf("--------------------------------------------------\n\n");
 	// Background image
 	DGGraphic *gBackground = new DGGraphic("transverb-background.png");
 	addImage(gBackground);
+	SetBackgroundImage(gBackground);
 
 	// these move across the drawing rectangle
 	DGGraphic *gHorizontalSliderHandle = new DGGraphic("purple-wide-fader-handle.png");
@@ -271,24 +271,8 @@ printf("--------------------------------------------------\n\n");
 /***************************************
 	create controls
 ***************************************/
-	
-	// Get size of GUI from Background Image and create background pane
-	SInt16 width = gBackground->getWidth();
-	SInt16 height = gBackground->getHeight();
-	DGRect where, where2;
-	where.set (0, 0, width, height);
-	DGPane *myPane = new DGPane(this, &where, gBackground);
-	addControl(myPane);
 
-/*
-	// Build layered Pane with 2 different Control sets
-	where.align (k_NEo);
-	where.offset (8, -12);
-	where.size (pane_back1->getWidth(), pane_back1->getHeight());
-	DGLayeredPane *myLayeredPane = new DGLayeredPane(this, &where, pane_back1);
-	myPane->addControl(myLayeredPane);
-	myLayeredPane->addBackground(pane_back2, 1);
-*/
+	DGRect where, where2;
 
 	// Make horizontal sliders and add them to the pane
 	where.set (kWideFaderX, kWideFaderY, gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
@@ -308,11 +292,11 @@ printf("--------------------------------------------------\n\n");
 		}
 		DGSlider *slider = new DGSlider(this, tag, &where, kDGSliderStyle_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
 		slider->shrinkForeBounds(1, 0, 2, 0);
-		myPane->addControl(slider);
+		addControl(slider);
 
 		DGTextDisplay *display = new DGTextDisplay(this, tag, &where2, displayProc, userData, gBackground, SNOOT_FONT);
 		display->setTextAlignmentStyle(kDGTextAlign_right);
-		myPane->addControl(display);
+		addControl(display);
 
 		long yoff =  kWideFaderInc;
 		if (tag == kDist1)
@@ -325,11 +309,11 @@ printf("--------------------------------------------------\n\n");
 
 	DGSlider *bsizeSlider = new DGSlider(this, kBsize, &where, kDGSliderStyle_horizontal, gGreyHorizontalSliderHandle, gGreyHorizontalSliderBackground);
 	bsizeSlider->shrinkForeBounds(1, 0, 2, 0);
-	myPane->addControl(bsizeSlider);
+	addControl(bsizeSlider);
 
 	DGTextDisplay *display = new DGTextDisplay(this, kBsize, &where2, bsizeDisplayProcedure, NULL, gBackground, SNOOT_FONT);
 	display->setTextAlignmentStyle(kDGTextAlign_right);
-	myPane->addControl(display);
+	addControl(display);
 
 	// Make horizontal sliders and add them to the pane
 	where.set (kTallFaderX, kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
@@ -337,56 +321,56 @@ printf("--------------------------------------------------\n\n");
 	{
 		DGSlider *slider = new DGSlider(this, tag, &where, kDGSliderStyle_vertical, gVerticalSliderHandle, gVerticalSliderBackground);
 		slider->shrinkForeBounds(0, 1, 0, 2);
-		myPane->addControl(slider);
+		addControl(slider);
 		where.offset (kTallFaderInc, 0);
 	}
 
 	// quality mode button
 	where.set (kQualityButtonX, kButtonY, gQualityButton->getWidth()/2, gQualityButton->getHeight()/numQualities);
 	DGButton *qualityButton = new DGButton(this, kQuality, &where, gQualityButton, numQualities, kDGButtonType_incbutton, true);
-	myPane->addControl(qualityButton);
+	addControl(qualityButton);
 
 	// TOMSOUND button
 	where.set (kTomsoundButtonX, kButtonY, gTomsoundButton->getWidth()/2, gTomsoundButton->getHeight()/2);
 	DGButton *tomsoundButton = new DGButton(this, kTomsound, &where, gTomsoundButton, 2, kDGButtonType_incbutton, true);
-	myPane->addControl(tomsoundButton);
+	addControl(tomsoundButton);
 
 	// randomize button
 	where.set (kRandomButtonX, kButtonY, gRandomizeButton->getWidth(), gRandomizeButton->getHeight()/2);
 	DGButton *randomizeButton = new DGButton(this, &where, gRandomizeButton, 2, kDGButtonType_pushbutton);
 	randomizeButton->setUserProcedure(randomizeTransverb, this);
-	myPane->addControl(randomizeButton);
+	addControl(randomizeButton);
 
 	// MIDI learn button
 	where.set (kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth()/2, gMidiLearnButton->getHeight()/2);
 	DGButton *midilearnButton = new DGButton(this, &where, gMidiLearnButton, 2, kDGButtonType_incbutton);
 	midilearnButton->setUserProcedure(midilearnTransverb, this);
-	myPane->addControl(midilearnButton);
+	addControl(midilearnButton);
 
 	// MIDI reset button
 	where.set (kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton->getWidth(), gMidiResetButton->getHeight()/2);
 	DGButton *midiresetButton = new DGButton(this, &where, gMidiResetButton, 2, kDGButtonType_pushbutton);
 	midiresetButton->setUserProcedure(midiresetTransverb, this);
-	myPane->addControl(midiresetButton);
+	addControl(midiresetButton);
 
 	// DFX web link
 	where.set (kDFXlinkX, kDFXlinkY, gDfxLinkButton->getWidth(), gDfxLinkButton->getHeight()/2);
 	DGWebLink *dfxlinkButton = new DGWebLink(this, &where, gDfxLinkButton, DESTROYFX_URL);
-	myPane->addControl(dfxlinkButton);
+	addControl(dfxlinkButton);
 
 	// Super Destroy FX web link
 	where.set (kSuperDFXlinkX, kSuperDFXlinkY, gSuperDestroyFXlinkButton->getWidth(), gSuperDestroyFXlinkButton->getHeight()/2);
 	DGWebLink *superdestroyfxlinkButton = new DGWebLink(this, &where, gSuperDestroyFXlinkButton, DESTROYFX_URL);
-	myPane->addControl(superdestroyfxlinkButton);
+	addControl(superdestroyfxlinkButton);
 
 	// Smart Electronix web link
 	where.set (kSmartElectronixLinkX, kSmartElectronixLinkY, gSmartElectronixLinkButton->getWidth(), gSmartElectronixLinkButton->getHeight()/2);
 	DGWebLink *smartelectronixlinkButton = new DGWebLink(this, &where, gSmartElectronixLinkButton, SMARTELECTRONIX_URL);
-	myPane->addControl(smartelectronixlinkButton);
+	addControl(smartelectronixlinkButton);
 
 
 	// set size of overall pane
-//	SizeControl(mCarbonPane, width, height);	// not necessary because of EmbedControl done on pane, right?
+	SizeControl(mCarbonPane, (SInt16) gBackground->getWidth(), (SInt16) gBackground->getHeight());
 
 	return noErr;
 }

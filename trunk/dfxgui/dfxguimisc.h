@@ -10,7 +10,6 @@
 typedef enum {
 	kDfxGuiType_none = 0,
 	kDfxGuiType_graphic,
-	kDfxGuiType_pane,
 	kDfxGuiType_slider,
 	kDfxGuiType_button,
 	kDfxGuiType_display
