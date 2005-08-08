@@ -224,12 +224,6 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			result = noErr;
 			break;
 
-		case kAudioUnitProperty_ContextName:
-			outDataSize = sizeof(CFStringRef);
-			outWritable = true;
-			result = noErr;
-			break;
-
 	#if TARGET_PLUGIN_USES_MIDI
 //		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
 //		MIDI controls and/or NRPN's to AudioUnit scopes/elements/parameters.
@@ -331,17 +325,6 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					}
 				}
 			}
-			break;
-
-		case kAudioUnitProperty_ContextName:
-			if (auContextName != NULL)
-			{
-				*((CFStringRef*)outData) = auContextName;
-				CFRetain(auContextName);
-				result = noErr;
-			}
-			else
-				result = kAudioUnitErr_CannotDoInCurrentContext;	// XXX right error code?  or is giving null valid?
 			break;
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -529,17 +512,6 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	{
 		case kAudioUnitProperty_ParameterClumpName:
 			result = kAudioUnitErr_PropertyNotWritable;
-			break;
-
-		case kAudioUnitProperty_ContextName:
-			// release the old one, if it was previously set
-			if (auContextName != NULL)
-				CFRelease(auContextName);
-			// use the new one
-			auContextName = *((CFStringRef*)inData);
-			if (auContextName != NULL)
-				CFRetain(auContextName);
-			result = noErr;
 			break;
 
 	#if TARGET_PLUGIN_USES_MIDI
