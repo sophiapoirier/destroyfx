@@ -64,7 +64,6 @@ DfxPlugin::DfxPlugin(
 #ifdef TARGET_API_AUDIOUNIT
 	auElementsHaveBeenCreated = false;
 	inputsP = outputsP = NULL;
-	auContextName = NULL;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		aumidicontrolmap = NULL;
@@ -185,10 +184,6 @@ DfxPlugin::~DfxPlugin()
 	#endif
 
 	#ifdef TARGET_API_AUDIOUNIT
-		if (auContextName != NULL)
-			CFRelease(auContextName);
-		auContextName = NULL;
-
 		#if TARGET_PLUGIN_USES_MIDI
 			if (aumidicontrolmap != NULL)
 				free(aumidicontrolmap);
@@ -640,6 +635,15 @@ bool DfxPlugin::loadpreset(long presetIndex)
 	if ( !presetisvalid(presetIndex) )
 		return false;
 
+	#ifdef TARGET_API_VST
+		// XXX this needs to be done before calls to setparameter(), cuz setparameter will 
+		// call update_parameter(), which will call setpresetparameter() using getProgram() 
+		// for the program index to set parameter values, which means that the currently 
+		// selected program will have its parameter values overwritten by those of the 
+		// program currently being loaded, unless we do this first
+		TARGET_API_BASE_CLASS::setProgram(presetIndex);
+	#endif
+
 	for (long i=0; i < numParameters; i++)
 	{
 		setparameter(i, getpresetparameter(presetIndex, i));
@@ -1079,7 +1083,7 @@ void DfxPlugin::processtimeinfo()
 //	UInt32 sampleOffsetToNextBeat = 0;	// XXX should I just send NULL since we don't use this?
 	// the number of beats of the denominator value that contained in the current measure
 	Float32 timeSigNumerator = 4.0f;
-	// music notational conventions (4 is a quarter note, 8 an eigth note, etc)
+	// music notational conventions (4 is a quarter note, 8 an eighth note, etc)
 	UInt32 timeSigDenominator = 4;
 	// the beat that corresponds to the downbeat (first beat) of the current measure
 	Float64 currentMeasureDownBeat = 0.0;
