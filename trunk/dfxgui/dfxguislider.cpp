@@ -69,7 +69,7 @@ void DGSlider::draw(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+void DGSlider::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
 	lastX = inXpos;
 	lastY = inYpos;

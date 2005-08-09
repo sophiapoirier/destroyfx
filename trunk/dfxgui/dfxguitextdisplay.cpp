@@ -184,7 +184,10 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRe
 			bounds.origin.x += 2.0f;
 	}
 
-	CGContextSetTextDrawingMode(inContext, kCGTextFill);
+//	if (bold)	// XXX implement this for real
+//		CGContextSetTextDrawingMode(inContext, kCGTextFillStroke);
+//	else
+		CGContextSetTextDrawingMode(inContext, kCGTextFill);
 	CGContextShowTextAtPoint(inContext, bounds.origin.x, bounds.origin.y+2.0f, inText, strlen(inText));
 
 #ifdef FLIP_CG_COORDINATES
@@ -255,7 +258,7 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 #endif
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+void DGTextDisplay::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
 	lastX = inXpos;
 	lastY = inYpos;
