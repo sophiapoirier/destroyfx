@@ -91,7 +91,7 @@ void DGControl::do_draw(CGContextRef inContext, long inPortHeight)
 
 	// redraw the background behind the control in case the control background has any transparency
 	// this is handled automatically if the window is in compositing mode, though
-	if ( !(getDfxGuiEditor()->IsWindowCompositing()) )
+	if ( !(getDfxGuiEditor()->IsCompositWindow()) )
 		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
 
 	CGContextSetAlpha(inContext, drawAlpha);
@@ -113,7 +113,7 @@ void DGControl::redraw()
 {
 	if (carbonControl != NULL)
 	{
-		if ( getDfxGuiEditor()->IsWindowCompositing() )
+		if ( getDfxGuiEditor()->IsCompositWindow() )
 			HIViewSetNeedsDisplay(carbonControl, true);
 		else
 			Draw1Control(carbonControl);
@@ -234,7 +234,7 @@ void DGControl::initMouseTrackingRegion()
 		{
 			Rect mouseRegionBounds;
 			GetControlBounds(getCarbonControl(), &mouseRegionBounds);
-			if ( getDfxGuiEditor()->IsWindowCompositing() )
+			if ( getDfxGuiEditor()->IsCompositWindow() )
 			{
 				Rect paneBounds;
 				GetControlBounds(getDfxGuiEditor()->GetCarbonPane(), &paneBounds);
@@ -253,7 +253,7 @@ void DGControl::initMouseTrackingRegion()
 #endif
 
 //-----------------------------------------------------------------------------
-void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
 	if (! getRespondToMouse() )
 		return;
@@ -273,7 +273,7 @@ void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseBu
 		return;
 	}
 
-	mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+	mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers, inIsDoubleClick);
 }
 
 //-----------------------------------------------------------------------------
@@ -537,7 +537,7 @@ CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEdito
 	offset.x = offset.y = 0.0f;
 	if ( (inControl == NULL) || (inEditor == NULL) )
 		return offset;
-	if ( !(inEditor->IsWindowCompositing()) )
+	if ( !(inEditor->IsCompositWindow()) )
 		return offset;
 
 	OSStatus error;
