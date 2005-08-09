@@ -78,7 +78,7 @@ void DGButton::draw(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
 	entryValue = newValue = GetControl32BitValue(carbonControl);
 	SInt32 min = GetControl32BitMinimum(carbonControl);
@@ -220,7 +220,7 @@ bool DGButton::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers 
 				DGKeyModifiers fakeModifiers = inKeyModifiers;
 				if (inDelta < 0)
 					fakeModifiers |= kDGKeyModifier_alt;
-				mouseDown(0.0f, 0.0f, 1, fakeModifiers);
+				mouseDown(0.0f, 0.0f, 1, fakeModifiers, false);
 				mouseUp(0.0f, 0.0f, inKeyModifiers);
 			}
 			return true;
@@ -306,7 +306,7 @@ void DGFineTuneButton::draw(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void DGFineTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+void DGFineTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
 	// figure out all of the values that we'll be using
 	entryValue = GetControl32BitValue(carbonControl);
