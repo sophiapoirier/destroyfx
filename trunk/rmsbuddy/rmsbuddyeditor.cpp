@@ -96,7 +96,7 @@ void RMSControl::redraw()
 {
 	if (carbonControl != NULL)
 	{
-		if ( ownerEditor->IsWindowCompositing() )
+		if ( ownerEditor->IsCompositWindow() )
 			HIViewSetNeedsDisplay(carbonControl, true);
 		else
 			Draw1Control(carbonControl);
@@ -513,7 +513,7 @@ OSStatus RMSBuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	EventTypeSpec paneEvents[] = {
 		{ kEventClassControl, kEventControlDraw }
 	};
-	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
+	WantEventTypes(GetControlEventTarget(GetCarbonPane()), GetEventTypeCount(paneEvents), paneEvents);
 
 
 // create our HIToolbox object class for common event handling amongst our custom Carbon Controls
@@ -791,7 +791,7 @@ OSStatus RMSBuddyEditor::setup()
 
 
 	// set size of the background embedding pane control to fit the entire UI display
-	SizeControl(mCarbonPane, kBackgroundWidth + (kXinc*numChannels), kBackgroundHeight);
+	SizeControl(GetCarbonPane(), kBackgroundWidth + (kXinc*numChannels), kBackgroundHeight);
 
 
 	return noErr;
@@ -922,7 +922,7 @@ bool RMSBuddyEditor::HandleEvent(EventRef inEvent)
 	{
 		ControlRef carbonControl = NULL;
 		OSStatus error = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
-		if ( (carbonControl == mCarbonPane) && (carbonControl != NULL) && (error == noErr) )
+		if ( (carbonControl == GetCarbonPane()) && (carbonControl != NULL) && (error == noErr) )
 		{
 			CGRect controlBounds;
 			error = HIViewGetBounds(carbonControl, &controlBounds);
@@ -994,7 +994,7 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 	WindowRef window;
 	GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
 	GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
-	if ( ourOwnerEditor->IsWindowCompositing() )
+	if ( ourOwnerEditor->IsCompositWindow() )
 	{
 		Rect paneBounds;
 		GetControlBounds(ourOwnerEditor->GetCarbonPane(), &paneBounds);
@@ -1090,7 +1090,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 				GetControlBounds(ourCarbonControl, &controlBounds);
 				Rect windowBounds;	// window content region
 				GetWindowBounds( GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &windowBounds );
-				if ( ourOwnerEditor->IsWindowCompositing() )
+				if ( ourOwnerEditor->IsCompositWindow() )
 				{
 					Rect paneBounds;
 					GetControlBounds(ourOwnerEditor->GetCarbonPane(), &paneBounds);
@@ -1128,7 +1128,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 		// the ControlValue, ControlMin, or ControlMax has changed
 		case kEventControlValueFieldChanged:
 			ourOwnerEditor->handleControlValueChange(ourRMSControl, GetControl32BitValue(ourCarbonControl));
-			if ( ourOwnerEditor->IsWindowCompositing() )
+			if ( ourOwnerEditor->IsCompositWindow() )
 				ourRMSControl->redraw();
 			return noErr;
 
@@ -1289,18 +1289,4 @@ void RMSBuddyEditor::resetPeak()
 {
 	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
 	AudioUnitSetProperty(GetEditAudioUnit(), kResetPeakProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
-}
-
-//-----------------------------------------------------------------------------
-// this is a convenience function that tells us if the host-provided window has compositing enabled
-bool RMSBuddyEditor::IsWindowCompositing()
-{
-	if (GetCarbonWindow() != NULL)
-	{
-		WindowAttributes attributes = 0;
-		OSStatus error = GetWindowAttributes(GetCarbonWindow(), &attributes);
-		if (error == noErr)
-			return (attributes & kWindowCompositingAttribute) ? true : false;
-	}
-	return false;
 }
