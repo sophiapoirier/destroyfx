@@ -7,7 +7,9 @@
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#pragma mark _________init/destroy_________
+#pragma mark -
+#pragma mark init / destroy
+#pragma mark -
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
@@ -90,7 +92,7 @@ DfxSettings::DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSiz
 	noteRangeHalfwayDone = false;
 
 	// default to trying to load un-matching chunks
-	crisisBehaviour = kCrisisLoadWhatYouCan;
+	crisisBehaviour = kDfxSettingsCrisis_LoadWhatYouCan;
 
 	// allow for further constructor stuff, if necessary
 	plugin->settings_init();
@@ -148,7 +150,9 @@ bool getenvBool(const char * var, bool def)
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#pragma mark _________settings_________
+#pragma mark -
+#pragma mark settings
+#pragma mark -
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
@@ -294,33 +298,33 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 	// check for conflicts and keep track of them
 	long crisisFlags = 0;
 	if (newSettingsInfo->version < settingsInfo.version)
-		crisisFlags = crisisFlags | kCrisisLowerVersion;
+		crisisFlags = crisisFlags | kDfxSettingsCrisis_LowerVersion;
 	else if (newSettingsInfo->version > settingsInfo.version)
-		crisisFlags = crisisFlags | kCrisisHigherVersion;
+		crisisFlags = crisisFlags | kDfxSettingsCrisis_HigherVersion;
 	if (numStoredParameters < numParameters)
-		crisisFlags = crisisFlags | kCrisisFewerParameters;
+		crisisFlags = crisisFlags | kDfxSettingsCrisis_FewerParameters;
 	else if (numStoredParameters > numParameters)
-		crisisFlags = crisisFlags | kCrisisMoreParameters;
+		crisisFlags = crisisFlags | kDfxSettingsCrisis_MoreParameters;
 	if (isPreset)
 	{
 		if (byteSize < sizeofPresetChunk)
-			crisisFlags = crisisFlags | kCrisisSmallerByteSize;
+			crisisFlags = crisisFlags | kDfxSettingsCrisis_SmallerByteSize;
 		else if (byteSize > sizeofPresetChunk)
-			crisisFlags = crisisFlags | kCrisisLargerByteSize;
+			crisisFlags = crisisFlags | kDfxSettingsCrisis_LargerByteSize;
 	}
 	else
 	{
 		if (byteSize < sizeofChunk)
-			crisisFlags = crisisFlags | kCrisisSmallerByteSize;
+			crisisFlags = crisisFlags | kDfxSettingsCrisis_SmallerByteSize;
 		else if (byteSize > sizeofChunk)
-			crisisFlags = crisisFlags | kCrisisLargerByteSize;
+			crisisFlags = crisisFlags | kDfxSettingsCrisis_LargerByteSize;
 		if (numStoredPresets < numPresets)
-			crisisFlags = crisisFlags | kCrisisFewerPresets;
+			crisisFlags = crisisFlags | kDfxSettingsCrisis_FewerPresets;
 		else if (numStoredPresets > numPresets)
-			crisisFlags = crisisFlags | kCrisisMorePresets;
+			crisisFlags = crisisFlags | kDfxSettingsCrisis_MorePresets;
 	}
 	// handle the crisis situations (if any) and abort loading if we're told to
-	if (handleCrisis(crisisFlags) == kCrisisAbortError)
+	if (handleCrisis(crisisFlags) == kDfxSettingsCrisis_AbortError)
 		return false;
 
 	// point to the next data element after the chunk header:  the first parameter ID
@@ -451,7 +455,9 @@ if ( !(oldvst && isPreset) )
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#pragma mark _________MIDI_learn_________
+#pragma mark -
+#pragma mark MIDI learn
+#pragma mark -
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------------------
@@ -878,7 +884,9 @@ void DfxSettings::setParameterMidiReset(bool value)
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#pragma mark _________misc_________
+#pragma mark -
+#pragma mark misc
+#pragma mark -
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
@@ -934,24 +942,24 @@ long DfxSettings::handleCrisis(long flags)
 {
 	// no need to continue on if there is no crisis situation
 	if (flags == 0)
-		return kCrisisNoError;
+		return kDfxSettingsCrisis_NoError;
 
 	switch (crisisBehaviour)
 	{
-		case kCrisisLoadWhatYouCan:
-			return kCrisisNoError;
+		case kDfxSettingsCrisis_LoadWhatYouCan:
+			return kDfxSettingsCrisis_NoError;
 			break;
 
-		case kCrisisDontLoad:
-			return kCrisisAbortError;
+		case kDfxSettingsCrisis_DontLoad:
+			return kDfxSettingsCrisis_AbortError;
 			break;
 
-		case kCrisisLoadButComplain:
+		case kDfxSettingsCrisis_LoadButComplain:
 			crisisAlert(flags);
-			return kCrisisComplainError;
+			return kDfxSettingsCrisis_ComplainError;
 			break;
 
-		case kCrisisCrashTheHostApplication:
+		case kDfxSettingsCrisis_CrashTheHostApplication:
 			do {
 				int i, j, k, *p;
 				// first attempt
@@ -981,25 +989,37 @@ long DfxSettings::handleCrisis(long flags)
 					p[i] = rand();
 			} while (0 == 3);
 			// if the host is still alive, then we have failed...
-			return kCrisisFailedCrashError;
+			return kDfxSettingsCrisis_FailedCrashError;
 			break;
 
 		default:
 			break;
 	}
 
-	return kCrisisNoError;
+	return kDfxSettingsCrisis_NoError;
 }
 
 
 //-----------------------------------------------------------------------------
-// this function, if called from the non-reference endian platform, 
+// this function, if called for the non-reference endian architecture, 
 // will reverse the order of bytes in each variable/value of the data 
 // to correct endian differences and make a uniform data chunk
 void DfxSettings::correctEndian(void * data, bool isReversed, bool isPreset)
 {
-#if MAC
-// Mac OS (big endian) is the reference platform, so no byte-swapping is necessary
+/*
+// XXX another idea...
+void blah(long long x)
+{
+	int n = sizeof(x);
+	while (n--)
+	{
+		write(f, x & 255, 1);
+		x >>= 8;
+	}
+}
+*/
+#if __BIG_ENDIAN__
+// big endian (like PowerPC) is the reference architecture, so no byte-swapping is necessary
 #else
 	// start by looking at the header info
 	DfxSettingsInfo * dataHeader = (DfxSettingsInfo*)data;
@@ -1074,5 +1094,5 @@ if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
 #endif
 
 #endif
-// MAC (endian check)
+// __BIG_ENDIAN__ (endian check)
 }
