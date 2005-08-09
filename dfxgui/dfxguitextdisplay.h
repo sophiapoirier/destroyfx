@@ -37,7 +37,7 @@ public:
 	OSStatus drawCFText(DGRect * inRegion, const CFStringRef inText, CGContextRef inContext, long inPortHeight);
 #endif
 
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
 
 	void setTextAlignment(DfxGuiTextAlignment newAlignment)
