@@ -233,7 +233,7 @@ void AUPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks)
 //-----------------------------------------------------------------------------
 #ifdef __GNUC__
 // XXX what is the best way to do this?
-#if 1
+#if 0
 const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 	version: 0, 
 	retain: auPresetCFArrayRetainCallback, 
@@ -250,14 +250,17 @@ const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 	.equal = auPresetCFArrayEqualCallback
 };
 #else
-		const CFArrayCallBacks kAUPresetCFArrayCallbacks;
-		static void kAUPresetCFArrayCallbacks_constructor() __attribute__((constructor));
-		static void kAUPresetCFArrayCallbacks_constructor()
-		{
-			AUPresetCFArrayCallbacks_Init( (CFArrayCallBacks*) &kAUPresetCFArrayCallbacks );
-		}
+// this seems to be the only way of the 3 that is fully valid C, but unfortunately only for GCC
+const CFArrayCallBacks kAUPresetCFArrayCallbacks;
+static void kAUPresetCFArrayCallbacks_constructor() __attribute__((constructor));
+static void kAUPresetCFArrayCallbacks_constructor()
+{
+	AUPresetCFArrayCallbacks_Init( (CFArrayCallBacks*) &kAUPresetCFArrayCallbacks );
+}
 #endif
 #else
+// XXX I'll use this for other compilers, even though I hate initializing structs with all arguments at once 
+// (cuz what if I ever decided to change the order of the struct members or something like that?)
 const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 	0, 
 	auPresetCFArrayRetainCallback, 
@@ -491,7 +494,6 @@ long GetMacOSVersion()
 	if (error == noErr)
 	{
 		systemVersion &= 0xFFFF;	// you are supposed to ignore the higher 16 bits for this Gestalt value
-//fprintf(stderr, "Mac OS version = 0x%04lX\n", systemVersion);
 		return systemVersion;
 	}
 	else
@@ -506,10 +508,7 @@ long GetQuickTimeVersion()
     long qtVersion = 0;
     OSErr error = Gestalt(gestaltQuickTime, &qtVersion);
     if (error == noErr)
-	{
-//fprintf(stderr, "QuickTime version = 0x%08lX\n", qtVersion);
 		return qtVersion;
-	}
 	else
 		return 0;
 }
@@ -523,9 +522,6 @@ UInt32 GetAudioToolboxFrameworkVersion()
 	if (audioToolboxBundle != NULL)
 	{
 		UInt32 audioToolboxVersion = CFBundleGetVersionNumber(audioToolboxBundle);
-//fprintf(stderr, "AudioToolbox.framework version = 0x%08lX\n", audioToolboxVersion);
-//NumVersion * audioToolboxNumVersion = (NumVersion*)(&audioToolboxVersion);
-//fprintf(stderr, "AudioToolbox.framework major = %d, minor = %X\n", audioToolboxNumVersion->majorRev, audioToolboxNumVersion->minorAndBugRev);
 		return audioToolboxVersion;
 	}
 	else
