@@ -781,8 +781,8 @@ pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, v
 				if (error == noErr)
 				{
 					result = FSRefIsAUPreset(&fileFSRef);
-					// XXX should I go a step further and validate the Component type/subtype/manu values as matching the specific AU?
 #if 1
+					// validate that the Component type/subtype/manu values match the specific AU
 					if (result)
 					{
 						CFURLRef fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &fileFSRef);
