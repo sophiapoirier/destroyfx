@@ -56,15 +56,12 @@ public:
 	virtual bool HandleControlEvent(EventRef inEvent);
 	ControlDefSpec * getControlDefSpec()
 		{	return &dgControlSpec;	}
-	bool IsWindowCompositing();
 #endif
 
 	void automationgesture_begin(long inParameterID);
 	void automationgesture_end(long inParameterID);
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
-	ControlRef GetCarbonPane()
-		{	return mCarbonPane;	}
 #endif
 
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
