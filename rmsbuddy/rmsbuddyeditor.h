@@ -163,14 +163,11 @@ public:
 	// these are accessors for data that the custom controls need in order to create themselves
 	ControlDefSpec * getControlClassSpec()
 		{	return &controlClassSpec;	}
-	ControlRef GetCarbonPane()
-		{	return mCarbonPane;	}
 	AUParameterListenerRef GetParameterListener()
 //		{	return mParameterListener;	}
 		{	return parameterListener;	}
 	void AddAUCVControl(AUCarbonViewControl * inControl)
 		{	AddControl(inControl);	}
-	bool IsWindowCompositing();
 
 	// get/set the control that is currently being moused (actively tweaked), if any (returns NULL if none)
 	RMSControl * getCurrentControl()
