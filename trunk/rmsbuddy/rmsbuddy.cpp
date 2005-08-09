@@ -355,6 +355,11 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags
 		return kAudioUnitErr_FormatNotSupported;
 
 
+	// the host might have changed the InPlaceProcessing property, 
+	// in which case we'll need to copy the audio input to output
+	if ( !ProcessesInPlace() )
+		GetInput(0)->CopyBufferContentsTo(outBuffer);
+
 	// increment the sample counter for the total number of samples since (re)starting average RMS analysis
 	totalSamples += inFramesToProcess;
 	double invTotalSamples = 1.0 / (double)totalSamples;	// it's slightly more efficient to only divide once
@@ -367,11 +372,6 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags
 	{
 		// manage the buffer list data, get pointer to the audio input stream
 		float * in = (float*) (inBuffer.mBuffers[ch].mData);
-		outBuffer.mBuffers[ch].mDataByteSize = inFramesToProcess * sizeof(Float32);
-		// the host might have changed the ProcessInPlace property, 
-		// in which case we'll need to copy the audio input to output
-		if ( !ProcessesInPlace() )
-			memcpy(outBuffer.mBuffers[ch].mData, inBuffer.mBuffers[ch].mData, outBuffer.mBuffers[ch].mDataByteSize);
 
 		// these will store the values for this processing buffer
 		double continualRMS = 0.0;
