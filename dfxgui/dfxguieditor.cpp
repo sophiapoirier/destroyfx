@@ -195,7 +195,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 								{ kEventClassControl, kEventControlApplyBackground },
 //								{ kEventClassControl, kEventControlHitTest }, 
 								};
-	WantEventTypes(GetControlEventTarget(mCarbonPane), GetEventTypeCount(paneEvents), paneEvents);
+	WantEventTypes(GetControlEventTarget(GetCarbonPane()), GetEventTypeCount(paneEvents), paneEvents);
 
 
 // load any fonts from our bundle resources to be accessible locally within our component instance
@@ -236,7 +236,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	{
 		// set the size of the embedding pane
 		if (backgroundImage != NULL)
-			SizeControl(mCarbonPane, (SInt16) (backgroundImage->getWidth()), (SInt16) (backgroundImage->getHeight()));
+			SizeControl(GetCarbonPane(), (SInt16) (backgroundImage->getWidth()), (SInt16) (backgroundImage->getHeight()));
 
 		if (gIdleTimerUPP == NULL)
 			gIdleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
@@ -370,7 +370,7 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 
 		if (inEventKind == kEventControlDraw)
 		{
-			if (carbonControl == mCarbonPane)
+			if ( (carbonControl != NULL) && (carbonControl == GetCarbonPane()) )
 			{
 				CGContextRef context = NULL;
 				CGrafPtr windowPort = NULL;
@@ -391,7 +391,7 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 		// we want to catch when the mouse hovers over onto the background area
 		else if ( (inEventKind == kEventControlHitTest) || (inEventKind == kEventControlClick) )
 		{
-			if (carbonControl == mCarbonPane)
+			if (carbonControl == GetCarbonPane())
 				setCurrentControl_mouseover(NULL);	// we don't count the background
 		}
 */
@@ -465,19 +465,6 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 	}
 
 	return NULL;
-}
-
-//-----------------------------------------------------------------------------
-bool DfxGuiEditor::IsWindowCompositing()
-{
-	if (GetCarbonWindow() != NULL)
-	{
-		WindowAttributes attributes = 0;
-		OSStatus status = GetWindowAttributes(GetCarbonWindow(), &attributes);
-		if (status == noErr)
-			return (attributes & kWindowCompositingAttribute) ? true : false;
-	}
-	return false;
 }
 #endif
 
@@ -1021,10 +1008,10 @@ return false;
 		// the content area of the window (i.e. not the title bar or any borders)
 		Rect windowBounds;
 		GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
-		if ( IsWindowCompositing() )
+		if ( IsCompositWindow() )
 		{
 			Rect paneBounds;
-			GetControlBounds(mCarbonPane, &paneBounds);
+			GetControlBounds(GetCarbonPane(), &paneBounds);
 			OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
 		}
 		// the position of the control relative to the top left corner of the window content area
@@ -1073,15 +1060,16 @@ return false;
 bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 {
 	UInt32 inEventKind = GetEventKind(inEvent);
+	OSStatus status;
 
 	if ( (inEventKind == kEventRawKeyDown) || (inEventKind == kEventRawKeyRepeat) )
 	{
 		UInt32 keyCode = 0;
-		GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &keyCode);
+		status = GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &keyCode);
 		unsigned char charCode = 0;
-		GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
+		status = GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
 		UInt32 modifiers = 0;
-		OSStatus status = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+		status = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
 		if (status != noErr)
 			modifiers = GetCurrentEventKeyModifiers();
 //fprintf(stderr, "keyCode = %lu,  charCode = ", keyCode);
@@ -1166,18 +1154,20 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 {
 	UInt32 inEventKind = GetEventKind(inEvent);
+	OSStatus status;
 
 	ControlRef ourCarbonControl = NULL;
-	GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &ourCarbonControl);
+	status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &ourCarbonControl);
 	DGControl * ourDGControl = NULL;
-	ourDGControl = getDGControlByCarbonControlRef(ourCarbonControl);
+	if ( (status == noErr) && (ourCarbonControl != NULL) )
+		ourDGControl = getDGControlByCarbonControlRef(ourCarbonControl);
 
 /*
 	// the Carbon control reference has not been added yet, so our DGControl pointer is NULL, because we can't look it up by ControlRef yet
 	if (inEventKind == kEventControlInitialize)
 	{
 		UInt32 dfxControlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
-		SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(dfxControlFeatures), &dfxControlFeatures);
+		status = SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(dfxControlFeatures), &dfxControlFeatures);
 		return noErr;
 	}
 */
@@ -1209,7 +1199,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 //fprintf(stderr, "kEventControlHitTest\n");
 					// get mouse location
 					Point mouseLocation;
-					GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(Point), NULL, &mouseLocation);
+					status = GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(Point), NULL, &mouseLocation);
 					// get control bounds rect
 					Rect controlBounds;
 					GetControlBounds(ourCarbonControl, &controlBounds);
@@ -1221,7 +1211,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 						// also there is kControlButtonPart, kControlCheckBoxPart, kControlPicturePart
 //						setCurrentControl_mouseover(ourDGControl);
 					}
-					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(hitPart), &hitPart);
+					status = SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(hitPart), &hitPart);
 				}
 //				return false;	// let other event listeners have this if they want it
 				return true;
@@ -1239,7 +1229,7 @@ fprintf(stderr, "kEventControlHit\n");
 //fprintf(stderr, "kEventControlTrack\n");
 //					ControlPartCode whatPart = kControlIndicatorPart;
 					ControlPartCode whatPart = kControlNoPart;	// cuz otherwise we get a Hit event which triggers AUCVControl automation end
-					SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(whatPart), &whatPart);
+					status = SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(whatPart), &whatPart);
 				}
 //			case kEventControlClick:
 //if (inEventKind == kEventControlClick) fprintf(stderr, "kEventControlClick\n");
@@ -1252,10 +1242,10 @@ fprintf(stderr, "kEventControlHit\n");
 //					UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 					// XXX kEventParamMouseChord does not exist for control class events, only mouse class
 					// XXX hey, that's not what the headers say, they say that kEventControlClick should have that parameter
-//					GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
+//					status = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
 
 					HIPoint mouseLocation;
-					GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
+					status = GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
 //fprintf(stderr, "mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation.x, mouseLocation.y);
 					// XXX only kEventControlClick gives global mouse coordinates for kEventParamMouseLocation?
 					if ( (inEventKind == kEventControlContextualMenuClick) || (inEventKind == kEventControlTrack) )
@@ -1271,10 +1261,10 @@ fprintf(stderr, "kEventControlHit\n");
 					// the content area of the window (i.e. not the title bar or any borders)
 					Rect windowBounds;
 					GetWindowBounds(GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &windowBounds);
-					if ( IsWindowCompositing() )
+					if ( IsCompositWindow() )
 					{
 						Rect paneBounds;
-						GetControlBounds(mCarbonPane, &paneBounds);
+						GetControlBounds(GetCarbonPane(), &paneBounds);
 						OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
 					}
 					// the position of the control relative to the top left corner of the window content area
@@ -1282,6 +1272,17 @@ fprintf(stderr, "kEventControlHit\n");
 					GetControlBounds(ourCarbonControl, &controlBounds);
 					mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
 					mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
+
+					// check if this is a double-click
+					bool isDoubleClick = false;
+					// only ControlClick gets the ClickCount event parameter
+					if (inEventKind == kEventControlClick)
+					{
+						UInt32 clickCount = 1;
+						status = GetEventParameter(inEvent, kEventParamClickCount, typeUInt32, NULL, sizeof(clickCount), NULL, &clickCount);
+						if ( (status == noErr) && (clickCount == 2) )
+							isDoubleClick = true;
+					}
 
 					DGKeyModifiers keyModifiers = GetDGKeyModifiersForEvent(inEvent);
 
@@ -1293,7 +1294,7 @@ fprintf(stderr, "kEventControlHit\n");
 //						fprintf(stderr, "DGControlEventHandler -> TellListener(MouseDown, %ld)\n", ourDGControl->getParameterID());
 					}
 
-					ourDGControl->do_mouseDown(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers);
+					ourDGControl->do_mouseDown(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers, isDoubleClick);
 					currentControl_clicked = ourDGControl;
 				}
 				return true;
@@ -1301,7 +1302,7 @@ fprintf(stderr, "kEventControlHit\n");
 			case kEventControlValueFieldChanged:
 				// XXX it seems that I need to manually invalidate the control to get it to 
 				// redraw in response to a value change in compositing mode ?
-				if ( IsWindowCompositing() )
+				if ( IsCompositWindow() )
 					ourDGControl->redraw();
 				return false;
 
