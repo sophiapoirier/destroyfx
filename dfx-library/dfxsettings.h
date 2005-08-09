@@ -99,31 +99,31 @@ enum
 	// . . . load crisis stuff . . .
 
 	// crisis behaviours (what to do when restore sends a foreign byteSize)
-	kCrisisLoadWhatYouCan = 0,
-	kCrisisDontLoad,
-	kCrisisLoadButComplain,
-	kCrisisCrashTheHostApplication,
+	kDfxSettingsCrisis_LoadWhatYouCan = 0,
+	kDfxSettingsCrisis_DontLoad,
+	kDfxSettingsCrisis_LoadButComplain,
+	kDfxSettingsCrisis_CrashTheHostApplication,
 
 	// crisis-handling errors
-	kCrisisNoError = 0,
-	kCrisisAbortError,
-	kCrisisComplainError,
-	kCrisisFailedCrashError,
+	kDfxSettingsCrisis_NoError = 0,
+	kDfxSettingsCrisis_AbortError,
+	kDfxSettingsCrisis_ComplainError,
+	kDfxSettingsCrisis_FailedCrashError,
 
 	// crisis situation flags
-	kCrisisMismatchedMagic		= 1,		// the magic signatures don't match
-	kCrisisSmallerByteSize		= 1 << 1,	// the incoming data size is smaller
-	kCrisisLargerByteSize		= 1 << 2,	// the incoming data size is larger
-	kCrisisFewerParameters		= 1 << 3,	// the incoming data has fewer parameters
-	kCrisisMoreParameters		= 1 << 4,	// the incoming data has more parameters
-	kCrisisFewerPresets			= 1 << 5,	// the incoming data has fewer presets
-	kCrisisMorePresets			= 1 << 6,	// the incoming data has more presets
-	kCrisisLowerVersion			= 1 << 7,	// the incoming data has a lower version number
-	kCrisisHigherVersion		= 1 << 8,	// the incoming data has a higher version number
-	kCrisisVersionIsTooLow		= 1 << 9,	// the incoming data's version number is lower than our lowest loadable version number
-	kCrisisVersionIsTooHigh		= 1 << 10,	// our version number is lower than the incoming data's lowest loadable version number
-	kCrisisSmallerHeader		= 1 << 11,	// the incoming data's header size is smaller
-	kCrisisLargerHeader			= 1 << 12	// the incoming data's header size is larger
+	kDfxSettingsCrisis_MismatchedMagic		= 1,		// the magic signatures don't match
+	kDfxSettingsCrisis_SmallerByteSize		= 1 << 1,	// the incoming data size is smaller
+	kDfxSettingsCrisis_LargerByteSize		= 1 << 2,	// the incoming data size is larger
+	kDfxSettingsCrisis_FewerParameters		= 1 << 3,	// the incoming data has fewer parameters
+	kDfxSettingsCrisis_MoreParameters		= 1 << 4,	// the incoming data has more parameters
+	kDfxSettingsCrisis_FewerPresets			= 1 << 5,	// the incoming data has fewer presets
+	kDfxSettingsCrisis_MorePresets			= 1 << 6,	// the incoming data has more presets
+	kDfxSettingsCrisis_LowerVersion			= 1 << 7,	// the incoming data has a lower version number
+	kDfxSettingsCrisis_HigherVersion		= 1 << 8,	// the incoming data has a higher version number
+	kDfxSettingsCrisis_VersionIsTooLow		= 1 << 9,	// the incoming data's version number is lower than our lowest loadable version number
+	kDfxSettingsCrisis_VersionIsTooHigh		= 1 << 10,	// our version number is lower than the incoming data's lowest loadable version number
+	kDfxSettingsCrisis_SmallerHeader		= 1 << 11,	// the incoming data's header size is smaller
+	kDfxSettingsCrisis_LargerHeader			= 1 << 12	// the incoming data's header size is larger
 };
 
 
@@ -353,7 +353,7 @@ protected:
 	// restore() that doesn't match what we are expecting
 	long handleCrisis(long flags);
 	// can be implemented to display an alert dialogue or something 
-	// if kCrisisLoadButComplain crisis behaviour is being used
+	// if kDfxSettingsCrisis_LoadButComplain crisis behaviour is being used
 	void crisisAlert(long flags) {}
 
 	// a simple but handy check to see if a parameter tag is valid
