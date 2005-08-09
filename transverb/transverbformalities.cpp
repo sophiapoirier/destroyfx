@@ -10,9 +10,9 @@
 
 
 // these are macros that do boring entry point stuff for us
-DFX_ENTRY(Transverb);
+DFX_ENTRY(Transverb)
 #if TARGET_PLUGIN_USES_DSPCORE
-  DFX_CORE_ENTRY(TransverbDSP);
+  DFX_CORE_ENTRY(TransverbDSP)
 #endif
 
 
@@ -341,7 +341,7 @@ void Transverb::initPresets() {
 
 	// special randomizing "preset"
 	setpresetname(numPresets-1, "random");
-};
+}
 
 //-----------------------------------------------------------------------------
 bool Transverb::loadpreset(long index)
