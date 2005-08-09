@@ -89,10 +89,10 @@ public:
 		regularHandle(inHandle), clickedHandle(inHandleClicked)
 	{
 	}
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 	{
 		handleImage = clickedHandle;	// switch to the click-styled handle
-		DGSlider::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+		DGSlider::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers, inIsDoubleClick);
 		lastPX = inXpos;
 		lastPY = inYpos;
 		lastXchange = lastYchange = 0;
@@ -152,7 +152,7 @@ public:
 			buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
 		}
 	}
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 	{
 		if ( (long)inXpos > ((getBounds()->w / 2) - 6) )
 			SetControl32BitValue(getCarbonControl(), 1);
