@@ -11,13 +11,13 @@
 
 # running strip -x reduces the executable file size 
 # by removing all local symbols and debugging symbols
-strip -x ~/Library/Audio/Plug-Ins/Components/"$2.component"/Contents/MacOS/*
+strip -x ~/Library/Audio/Plug-Ins/Components/"dfx ${2}.component"/Contents/MacOS/*
 
 # run the input through makedist.sh
 #  * assumes that makedist.sh is in the same directory as this script
 #  * uses the date to generate part of the output file name
 #  * ummm, also assumes some other stuff being where it happens 
 #    to be on Marc's hard disk, hmmm, maybe I should improve this...
-`dirname $0`/makedist.sh ~/dfx/_misc/distributions/first\ Audio\ Units/$1 au-`date \`\`+%Y-%m-%d''` ~/dfx/vstplugins/docs/$3 "$2" $4 ~/Library/Audio/Plug-Ins/Components/"$2.component" ~/dfx/docs/COPYING.rtf
+`dirname $0`/makedist.sh ~/dfx/_misc/distributions/first\ Audio\ Units/${1} au-`date \`\`+%Y-%m-%d''` ~/dfx/vstplugins/docs/${3} "${2}" ${4} ~/Library/Audio/Plug-Ins/Components/"dfx ${2}.component" ~/dfx/docs/COPYING.rtf
 
 exit 0
