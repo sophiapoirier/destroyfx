@@ -102,7 +102,7 @@ enum {
 	kTitleAreaX = 125,
 	kTitleAreaY = 8,
 	kTitleAreaWidth = 260,
-	kTitleAreaHeight = 37,
+	kTitleAreaHeight = 37
 };
 
 enum {
@@ -112,7 +112,7 @@ enum {
 	kNotes_minor,
 	kNotes_all,
 	kNotes_none,
-	kNumNotesButtons,
+	kNumNotesButtons
 };
 
 enum {
@@ -134,7 +134,7 @@ enum {
 	kHelp_midiReset,
 	kNumHelps,
 
-	kNumHelpTextLines = 3,
+	kNumHelpTextLines = 3
 };
 
 const char * helpstrings[kNumHelps][kNumHelpTextLines] = 
@@ -150,7 +150,7 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 		"Scrubby will, at a given seek rate, find random target destinations within a ", 
 		"certain time range and then travel to those destinations.", 
 	}, 
-#if MAC
+#if TARGET_OS_MAC
 #define SCRUBBY_ALT_KEY_NAME "option"
 #else
 #define SCRUBBY_ALT_KEY_NAME "alt"
@@ -373,6 +373,8 @@ void predelayDisplayProc(float value, char * outText, void *)
 
 
 
+#pragma mark -
+
 //--------------------------------------------------------------------------
 // this is a display for Scrubby's built-in help
 ScrubbyHelpBox::ScrubbyHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground)
@@ -380,11 +382,11 @@ ScrubbyHelpBox::ScrubbyHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, 
 					kDGTextAlign_left, kDisplayTextSize, kBlackDGColor, kDisplayFont), 
 	itemNum(kHelp_none)
 {
-	setRespondToMouseWheel(false);
+	setRespondToMouse(false);
 }
 
 //--------------------------------------------------------------------------
-void ScrubbyHelpBox::draw(CGContextRef inContext, long inPortHeight)
+void ScrubbyHelpBox::draw(DGGraphicsContext * inContext)
 {
 /*
 Rect cbounds;
@@ -403,7 +405,7 @@ InsetRect(&cbounds, 4, 4);
 }
 
 	if (backgroundImage != NULL)
-		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+		backgroundImage->draw(getBounds(), inContext);
 
 	DGRect textpos(getBounds());
 	textpos.h = 10;
@@ -411,15 +413,15 @@ InsetRect(&cbounds, 4, 4);
 	textpos.offset(12, 4);
 
 	fontColor = kBlackDGColor;
-	drawText(&textpos, helpstrings[itemNum][0], inContext, inPortHeight);
+	drawText(&textpos, helpstrings[itemNum][0], inContext);
 	textpos.offset(1, 0);
-	drawText(&textpos, helpstrings[itemNum][0], inContext, inPortHeight);
+	drawText(&textpos, helpstrings[itemNum][0], inContext);
 	textpos.offset(-1, 13);
 	fontColor = kWhiteDGColor;
 
 	for (int i=1; i < kNumHelpTextLines; i++)
 	{
-		drawText(&textpos, helpstrings[itemNum][i], inContext, inPortHeight);
+		drawText(&textpos, helpstrings[itemNum][i], inContext);
 		textpos.offset(0, 12);
 	}
 //DrawThemeFocusRect(&cbounds, true);
@@ -445,6 +447,8 @@ void ScrubbyHelpBox::setDisplayItem(long inItemNum)
 
 
 
+#pragma mark -
+
 //-----------------------------------------------------------------------------
 // this is a very simple button class that has 2 states (on and off) and 
 // doesn't do any mouse tracking
@@ -460,15 +464,15 @@ public:
 		setWraparoundValues(true);
 	}
 
-	virtual void draw(CGContextRef inContext, long inPortHeight)
+	virtual void draw(DGGraphicsContext * inContext)
 	{
 		if (buttonImage != NULL)
 		{
 			long yoff = (GetControl32BitValue(carbonControl) == 0) ? 0 : (buttonImage->getHeight() / 2);
-			buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
+			buttonImage->draw(getBounds(), inContext, 0, yoff);
 		}
 	}
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 	{
 		SetControl32BitValue( carbonControl, (GetControl32BitValue(carbonControl) == 0) ? 1 : 0 );
 	}
@@ -482,8 +486,10 @@ private:
 
 
 
+#pragma mark -
+
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(ScrubbyEditor);
+COMPONENT_ENTRY(ScrubbyEditor)
 
 //-----------------------------------------------------------------------------
 ScrubbyEditor::ScrubbyEditor(AudioUnitCarbonView inInstance)
