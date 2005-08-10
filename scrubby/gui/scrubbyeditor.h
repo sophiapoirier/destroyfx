@@ -14,11 +14,7 @@ class ScrubbyHelpBox : public DGTextDisplay
 public:
 	ScrubbyHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground);
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
-
-	virtual void mouseDown(float, float, unsigned long, DGKeyModifiers) { }
-	virtual void mouseTrack(float, float, unsigned long, DGKeyModifiers) { }
-	virtual void mouseUp(float, float, DGKeyModifiers) { }
+	virtual void draw(DGGraphicsContext * inContext);
 
 	void setDisplayItem(long inItemNum);
 
