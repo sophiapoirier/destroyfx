@@ -83,7 +83,7 @@ enum {
   pos_geometerviewx = 20,
   pos_geometerviewy = 14,
   pos_geometervieww = 476,
-  pos_geometerviewh = 133,
+  pos_geometerviewh = 133
 
 };
 
@@ -135,27 +135,25 @@ static void baseParamsListenerProc(void * inUserData, void * inObject, const Aud
 
 
 
+#pragma mark -
+
 //--------------------------------------------------------------------------
 GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground)
  : DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
                  kDGTextAlign_left, fontsize_snoot, kBlackDGColor, fontface_snoot), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
-  setRespondToMouseWheel(false);
+  setRespondToMouse(false);
 }
 
 //--------------------------------------------------------------------------
-GeometerHelpBox::~GeometerHelpBox() {
-}
-
-//--------------------------------------------------------------------------
-void GeometerHelpBox::draw(CGContextRef inContext, long inPortHeight) {
+void GeometerHelpBox::draw(DGGraphicsContext * inContext) {
 
   if ( (helpCategory == HELP_CATEGORY_GENERAL) && (itemNum == HELP_EMPTY) )
     return;
 
   if (backgroundImage != NULL)
-    backgroundImage->draw(getBounds(), inContext, inPortHeight);
+    backgroundImage->draw(getBounds(), inContext);
 
   DGRect textpos(getBounds());
   textpos.h = 10;
@@ -190,13 +188,13 @@ void GeometerHelpBox::draw(CGContextRef inContext, long inPortHeight) {
 
     if (i == 0) {
       fontColor = kBlackDGColor;
-      drawText(&textpos, helpstrings[0], inContext, inPortHeight);
+      drawText(&textpos, helpstrings[0], inContext);
       textpos.offset(-1, 0);
-      drawText(&textpos, helpstrings[0], inContext, inPortHeight);
+      drawText(&textpos, helpstrings[0], inContext);
       textpos.offset(1, 16);
       fontColor = kWhiteDGColor;
     } else {
-      drawText(&textpos, helpstrings[i], inContext, inPortHeight);
+      drawText(&textpos, helpstrings[i], inContext);
       textpos.offset(0, 12);
     }
   }
@@ -222,8 +220,10 @@ void GeometerHelpBox::setDisplayItem(long inHelpCategory, long inItemNum) {
 
 
 
+#pragma mark -
+
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(GeometerEditor);
+COMPONENT_ENTRY(GeometerEditor)
 
 //-----------------------------------------------------------------------------
 GeometerEditor::GeometerEditor(AudioUnitCarbonView inInstance)
