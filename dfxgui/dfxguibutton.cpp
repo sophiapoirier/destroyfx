@@ -64,7 +64,7 @@ void DGButton::post_embed()
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::draw(CGContextRef inContext, long inPortHeight)
+void DGButton::draw(DGGraphicsContext * inContext)
 {
 	if (buttonImage != NULL)
 	{
@@ -73,7 +73,7 @@ void DGButton::draw(CGContextRef inContext, long inPortHeight)
 			xoff = buttonImage->getWidth() / 2;
 		long yoff = (GetControl32BitValue(carbonControl) - GetControl32BitMinimum(carbonControl)) * (buttonImage->getHeight() / numStates);
 
-		buttonImage->draw(getBounds(), inContext, inPortHeight, xoff, yoff);
+		buttonImage->draw(getBounds(), inContext, xoff, yoff);
 	}
 }
 
@@ -296,12 +296,12 @@ DGFineTuneButton::~DGFineTuneButton()
 }
 
 //-----------------------------------------------------------------------------
-void DGFineTuneButton::draw(CGContextRef inContext, long inPortHeight)
+void DGFineTuneButton::draw(DGGraphicsContext * inContext)
 {
 	if (buttonImage != NULL)
 	{
 		long yoff = (mouseIsDown) ? (buttonImage->getHeight() / 2) : 0;
-		buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
+		buttonImage->draw(getBounds(), inContext, 0, yoff);
 	}
 }
 
