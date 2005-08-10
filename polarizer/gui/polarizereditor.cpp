@@ -62,10 +62,10 @@ public:
 		setForeBounds(fb->x, fb->y + kSliderFrameThickness, fb->w, fb->h - (kSliderFrameThickness*2));
 		setMouseOffset(0);
 	}
-	virtual void draw(CGContextRef inContext, long inPortHeight)
+	virtual void draw(DGGraphicsContext * inContext)
 	{
 		if (backgroundImage != NULL)
-			backgroundImage->draw(getBounds(), inContext, inPortHeight);
+			backgroundImage->draw(getBounds(), inContext);
 
 		ControlRef carbonControl = getCarbonControl();
 		SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -79,24 +79,22 @@ public:
 		if (handleCGImage != NULL)
 		{
 			long yoff = (long)round( (float)(handleImage->getHeight()) * (1.0f-valNorm) ) + kSliderFrameThickness;
-			handleImage->draw(getBounds(), inContext, inPortHeight, -kSliderFrameThickness, -yoff);
+			handleImage->draw(getBounds(), inContext, -kSliderFrameThickness, -yoff);
 
-			CGRect bottomBorderRect = getBounds()->convertToCGRect(inPortHeight);
-			bottomBorderRect.size.height = (float)kSliderFrameThickness;
-#ifdef FLIP_CG_COORDINATES
-			bottomBorderRect.origin.y += (float) (getBounds()->h - kSliderFrameThickness);
-#endif
-			bottomBorderRect.size.width = (float) handleImage->getWidth();
-			bottomBorderRect.origin.x += (float)kSliderFrameThickness;
-			CGContextSetRGBFillColor(inContext, 0.0f, 0.0f, 0.0f, 1.0f);
-			CGContextFillRect(inContext, bottomBorderRect);
+			DGRect bottomBorderRect( getBounds() );
+			bottomBorderRect.h = kSliderFrameThickness;
+			bottomBorderRect.y += getBounds()->h - kSliderFrameThickness;
+			bottomBorderRect.w = handleImage->getWidth();
+			bottomBorderRect.x += kSliderFrameThickness;
+			inContext->setFillColor(kBlackDGColor);
+			inContext->fillRect(&bottomBorderRect);
 		}
 	}
 };
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(PolarizerEditor);
+COMPONENT_ENTRY(PolarizerEditor)
 
 //-----------------------------------------------------------------------------
 PolarizerEditor::PolarizerEditor(AudioUnitCarbonView inInstance)
