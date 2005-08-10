@@ -98,22 +98,25 @@ struct DGRect
 		return ( (x == otherRect.x) && (y == otherRect.y) && (w == otherRect.w) && (h == otherRect.h) );
 	}
 
-#if MAC
+#if TARGET_OS_MAC
 	void copyToCGRect(CGRect * outDestRect, long inDestPortHeight)
 	{
 		outDestRect->origin.x = x;
 #ifdef FLIP_CG_COORDINATES
 		outDestRect->origin.y = y;
 #else
-		outDestRect->origin.y = inDestPortHeight - (h + y);
+		if (inDestPortHeight)
+			outDestRect->origin.y = inDestPortHeight - (h + y);
+		else
+			outDestRect->origin.y = y;
 #endif
 		outDestRect->size.width = w;
 		outDestRect->size.height = h;
 	}
-	CGRect convertToCGRect(long inOutputPortHeight)
+	CGRect convertToCGRect(long inDestPortHeight)
 	{
 		CGRect outputRect;
-		copyToCGRect(&outputRect, inOutputPortHeight);
+		copyToCGRect(&outputRect, inDestPortHeight);
 		return outputRect;
 	}
 	void copyToRect(Rect * outDestRect)
@@ -172,6 +175,52 @@ const DGColor kWhiteDGColor(1.0f, 1.0f, 1.0f);
 
 
 
+#if TARGET_OS_MAC
+	typedef CGContextRef TARGET_PLATFORM_GRAPHICS_CONTEXT;
+#endif
+
+//-----------------------------------------------------------------------------
+// 
+class DGGraphicsContext
+{
+public:
+	DGGraphicsContext(TARGET_PLATFORM_GRAPHICS_CONTEXT inContext);
+
+	TARGET_PLATFORM_GRAPHICS_CONTEXT getPlatformGraphicsContext()
+		{	return context;	}
+
+	void setAlpha(float inAlpha);
+	void setAntialias(bool inShouldAntialias);
+	void setFillColor(DGColor inColor, float inAlpha = 1.0f);
+	void setLineWidth(float inLineWidth);
+
+	void fillRect(DGRect * inRect);
+	void strokeRect(DGRect * inRect);
+	void strokeLine(float inStartX, float inStartY, float inEndX, float inEndY);
+
+#if TARGET_OS_MAC
+	long getPortHeight()
+		{	return portHeight;	}
+	void setPortHeight(long inPortHeight)
+		{	portHeight = inPortHeight;	}
+	bool isCompositWindow()
+		{	return (portHeight == 0) ? true : false;	}
+	void endQDContext(CGrafPtr inPort)
+	{
+		if ( (inPort != NULL) && (context != NULL) )
+			QDEndCGContext(inPort, &context);
+	}
+#endif
+
+	TARGET_PLATFORM_GRAPHICS_CONTEXT context;
+
+private:
+#if TARGET_OS_MAC
+	long portHeight;
+#endif
+};
+
+
 /***********************************************************************
 	DGImage
 	class for loading and containing images
@@ -200,20 +249,20 @@ public:
 	   void drawex(int x, int y, int xindex, int yindex) 
 	   .. for stacked images.
 	*/
-	virtual void draw(DGRect * inRect, CGContextRef inContext, long inPortHeight, long inXoffset = 0, long inYoffset = 0);
+	virtual void draw(DGRect * inRect, DGGraphicsContext * inContext, long inXoffset = 0, long inYoffset = 0);
 
-#if MAC
+#if TARGET_OS_MAC
 	CGImageRef getCGImage()
 		{	return cgImage;	}
 #endif
 
 private:
-#if MAC
+#if TARGET_OS_MAC
 	CGImageRef cgImage;
 #endif
 };
 
-CGImageRef PreRenderCGImageBuffer(CGImageRef inCompressedImage);
+CGImageRef PreRenderCGImageBuffer(CGImageRef inCompressedImage, bool inFlipImage);
 
 
 #endif
