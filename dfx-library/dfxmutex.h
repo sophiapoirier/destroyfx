@@ -10,7 +10,7 @@ This is our mutex shit.
 #if WIN32
 	// Win32 API
 	#include <Windows.h>
-#elif MAC && !defined(__MACH__)
+#elif TARGET_OS_MAC && !defined(__MACH__)
 	// Multiprocessing Services
 	#include <Multiprocessing.h>
 #else
