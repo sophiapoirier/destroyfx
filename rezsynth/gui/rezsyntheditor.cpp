@@ -58,7 +58,7 @@ kTallDisplayWidener = 8,
 	kDestroyFXlinkX = 453,
 	kDestroyFXlinkY = 327,
 	kSmartElectronixLinkX = 358,
-	kSmartElectronixLinkY = 345,
+	kSmartElectronixLinkY = 345
 };
 
 
@@ -174,7 +174,7 @@ void dryWetMixDisplayProc(float value, char *outText, void *)
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(RezSynthEditor);
+COMPONENT_ENTRY(RezSynthEditor)
 
 //-----------------------------------------------------------------------------
 RezSynthEditor::RezSynthEditor(AudioUnitCarbonView inInstance)
