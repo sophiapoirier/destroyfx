@@ -338,139 +338,139 @@ public:
 						bool replacing=true)
 		{ }
 
-	bool parameterisvalid(long parameterIndex)
-		{	return ( (parameterIndex >= 0) && (parameterIndex < numParameters) && (parameters != NULL) );	}
+	bool parameterisvalid(long inParameterIndex)
+		{	return ( (inParameterIndex >= 0) && (inParameterIndex < numParameters) && (parameters != NULL) );	}
 
-	void initparameter_f(long parameterIndex, const char * initName, double initValue, double initDefaultValue, 
+	void initparameter_f(long inParameterIndex, const char * initName, double initValue, double initDefaultValue, 
 						double initMin, double initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_linear, 
 						const char * initCustomUnitString = NULL);
-	void initparameter_i(long parameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
+	void initparameter_i(long inParameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
 						int64_t initMin, int64_t initMax, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
 						DfxParamCurve initCurve = kDfxParamCurve_stepped, 
 						const char * initCustomUnitString = NULL);
-	void initparameter_b(long parameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
+	void initparameter_b(long inParameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
 						DfxParamUnit initUnit = kDfxParamUnit_undefined);
-	void initparameter_indexed(long parameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
+	void initparameter_indexed(long inParameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
 						int64_t initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index, 
 						const char * initCustomUnitString = NULL);
 
-	void setparameterusevaluestrings(long parameterIndex, bool newMode=true)
-		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setusevaluestrings(newMode);	}
-	bool getparameterusevaluestrings(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getusevaluestrings();	else return false;	}
-	bool setparametervaluestring(long parameterIndex, int64_t stringIndex, const char * inText);
-	bool getparametervaluestring(long parameterIndex, int64_t stringIndex, char * outText);
-	void getparameterunitstring(long parameterIndex, char * outText)
-		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].getunitstring(outText);	}
-	void setparametercustomunitstring(long parameterIndex, const char * inText)
-		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcustomunitstring(inText);	}
-	char * getparametervaluestring_ptr(long parameterIndex, int64_t stringIndex);
+	void setparameterusevaluestrings(long inParameterIndex, bool newMode=true)
+		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].setusevaluestrings(newMode);	}
+	bool getparameterusevaluestrings(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getusevaluestrings();	else return false;	}
+	bool setparametervaluestring(long inParameterIndex, int64_t inStringIndex, const char * inText);
+	bool getparametervaluestring(long inParameterIndex, int64_t inStringIndex, char * outText);
+	void getparameterunitstring(long inParameterIndex, char * outText)
+		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].getunitstring(outText);	}
+	void setparametercustomunitstring(long inParameterIndex, const char * inText)
+		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].setcustomunitstring(inText);	}
+	char * getparametervaluestring_ptr(long inParameterIndex, int64_t inStringIndex);
 #ifdef TARGET_API_AUDIOUNIT
-	CFStringRef * getparametervaluecfstrings(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getvaluecfstrings();   else return NULL;	}
+	CFStringRef * getparametervaluecfstrings(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getvaluecfstrings();   else return NULL;	}
 	virtual CFStringRef CopyClumpName(UInt32 inClumpID)
 		{	return NULL;	}
 #endif
 
-	void setparameter(long parameterIndex, DfxParamValue newValue);
-	void setparameter_f(long parameterIndex, double newValue);
-	void setparameter_i(long parameterIndex, int64_t newValue);
-	void setparameter_b(long parameterIndex, bool newValue);
-	void setparameter_gen(long parameterIndex, double newValue);
+	void setparameter(long inParameterIndex, DfxParamValue newValue);
+	void setparameter_f(long inParameterIndex, double newValue);
+	void setparameter_i(long inParameterIndex, int64_t newValue);
+	void setparameter_b(long inParameterIndex, bool newValue);
+	void setparameter_gen(long inParameterIndex, double newValue);
 	// ***
-	virtual void randomizeparameter(long parameterIndex);
+	virtual void randomizeparameter(long inParameterIndex);
 	// ***
 	virtual void randomizeparameters(bool writeAutomation = false);	// randomize all parameters at once
-	void update_parameter(long parameterIndex);
-	void postupdate_parameter(long parameterIndex);
+	void update_parameter(long inParameterIndex);
+	void postupdate_parameter(long inParameterIndex);
 
-	DfxParamValue getparameter(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get();   else return DfxParamValue(); }
-	double getparameter_f(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_f();   else return 0.0;	}
-	int64_t getparameter_i(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_i();   else return 0;	}
-	bool getparameter_b(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_b();   else return false;	}
-	double getparameter_gen(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].get_gen();   else return 0.0;	}
+	DfxParamValue getparameter(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].get();   else return DfxParamValue(); }
+	double getparameter_f(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].get_f();   else return 0.0;	}
+	int64_t getparameter_i(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].get_i();   else return 0;	}
+	bool getparameter_b(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].get_b();   else return false;	}
+	double getparameter_gen(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].get_gen();   else return 0.0;	}
 	// return a (hopefully) 0 to 1 scalar version of the parameter's current value
-	double getparameter_scalar(long parameterIndex);
+	double getparameter_scalar(long inParameterIndex);
 
-	double getparametermin_f(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmin_f();   else return 0.0;	}
-	int64_t getparametermin_i(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmin_i();   else return 0;	}
-	double getparametermax_f(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmax_f();   else return 0.0;	}
-	int64_t getparametermax_i(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getmax_i();   else return 0;	}
-	double getparameterdefault_f(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getdefault_f();   else return 0.0;	}
+	double getparametermin_f(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getmin_f();   else return 0.0;	}
+	int64_t getparametermin_i(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getmin_i();   else return 0;	}
+	double getparametermax_f(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getmax_f();   else return 0.0;	}
+	int64_t getparametermax_i(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getmax_i();   else return 0;	}
+	double getparameterdefault_f(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getdefault_f();   else return 0.0;	}
 
-	void getparametername(long parameterIndex, char * text);
+	void getparametername(long inParameterIndex, char * text);
 #ifdef TARGET_API_AUDIOUNIT
-	CFStringRef getparametercfname(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcfname();   else return NULL;	}
+	CFStringRef getparametercfname(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getcfname();   else return NULL;	}
 #endif
-	DfxParamValueType getparametervaluetype(long parameterIndex);
-	DfxParamUnit getparameterunit(long parameterIndex);
-	bool getparameterchanged(long parameterIndex);
-	void setparameterchanged(long parameterIndex, bool newChanged = true);
-	DfxParamCurve getparametercurve(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurve();   else return kDfxParamCurve_undefined;	}
-	void setparametercurve(long parameterIndex, DfxParamCurve newcurve)
-		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcurve(newcurve);	}
-	double getparametercurvespec(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getcurvespec();   else return 0.0;	}
-	void setparametercurvespec(long parameterIndex, double newcurvespec)
-		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setcurvespec(newcurvespec);	}
-	unsigned long getparameterattributes(long parameterIndex)
-		{	if (parameterisvalid(parameterIndex)) return parameters[parameterIndex].getattributes();   else return 0;	}
-	void setparameterattributes(long parameterIndex, unsigned long inFlags)
-		{	if (parameterisvalid(parameterIndex)) parameters[parameterIndex].setattributes(inFlags);	}
-	void addparameterattributes(long parameterIndex, unsigned long inFlags)
+	DfxParamValueType getparametervaluetype(long inParameterIndex);
+	DfxParamUnit getparameterunit(long inParameterIndex);
+	bool getparameterchanged(long inParameterIndex);
+	void setparameterchanged(long inParameterIndex, bool newChanged = true);
+	DfxParamCurve getparametercurve(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getcurve();   else return kDfxParamCurve_undefined;	}
+	void setparametercurve(long inParameterIndex, DfxParamCurve newcurve)
+		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].setcurve(newcurve);	}
+	double getparametercurvespec(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getcurvespec();   else return 0.0;	}
+	void setparametercurvespec(long inParameterIndex, double newcurvespec)
+		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].setcurvespec(newcurvespec);	}
+	unsigned long getparameterattributes(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getattributes();   else return 0;	}
+	void setparameterattributes(long inParameterIndex, unsigned long inFlags)
+		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].setattributes(inFlags);	}
+	void addparameterattributes(long inParameterIndex, unsigned long inFlags)
 	{
-		if (parameterisvalid(parameterIndex))
-			parameters[parameterIndex].setattributes( inFlags | parameters[parameterIndex].getattributes() );
+		if (parameterisvalid(inParameterIndex))
+			parameters[inParameterIndex].setattributes( inFlags | parameters[inParameterIndex].getattributes() );
 	}
 
 	// convenience methods for expanding and contracting parameter values 
 	// using the min/max/curvetype/curvespec/etc. settings of a given parameter
-	double expandparametervalue_index(long parameterIndex, double genValue);
-	double contractparametervalue_index(long parameterIndex, double realValue);
+	double expandparametervalue_index(long inParameterIndex, double genValue);
+	double contractparametervalue_index(long inParameterIndex, double realValue);
 
 	// whether or not the index is a valid preset
-	bool presetisvalid(long presetIndex);
+	bool presetisvalid(long inPresetIndex);
 	// whether or not the index is a valid preset with a valid name
-	bool presetnameisvalid(long presetIndex);
+	bool presetnameisvalid(long inPresetIndex);
 	// load the settings of a preset
-	virtual bool loadpreset(long presetIndex);
+	virtual bool loadpreset(long inPresetIndex);
 	// set a parameter value in all of the empty (no name) presets 
 	// to the current value of that parameter
-	void initpresetsparameter(long parameterIndex);
+	void initpresetsparameter(long inParameterIndex);
 	// set the text of a preset name
-	void setpresetname(long presetIndex, const char * inText);
+	void setpresetname(long inPresetIndex, const char * inText);
 	// get a copy of the text of a preset name
-	void getpresetname(long presetIndex, char * outText);
+	void getpresetname(long inPresetIndex, char * outText);
 	// get a pointer to the text of a preset name
-	char * getpresetname_ptr(long presetIndex);
+	char * getpresetname_ptr(long inPresetIndex);
 #ifdef TARGET_API_AUDIOUNIT
-	CFStringRef getpresetcfname(long presetIndex);
+	CFStringRef getpresetcfname(long inPresetIndex);
 #endif
 	long getcurrentpresetnum()
 		{	return currentPresetNum;	}
-	void setpresetparameter(long presetIndex, long parameterIndex, DfxParamValue newValue);
-	void setpresetparameter_f(long presetIndex, long parameterIndex, double newValue);
-	void setpresetparameter_i(long presetIndex, long parameterIndex, int64_t newValue);
-	void setpresetparameter_b(long presetIndex, long parameterIndex, bool newValue);
-	void setpresetparameter_gen(long presetIndex, long parameterIndex, double genValue);
-	void update_preset(long presetIndex);
-	DfxParamValue getpresetparameter(long presetIndex, long parameterIndex);
-	double getpresetparameter_f(long presetIndex, long parameterIndex);
+	void setpresetparameter(long inPresetIndex, long inParameterIndex, DfxParamValue newValue);
+	void setpresetparameter_f(long inPresetIndex, long inParameterIndex, double newValue);
+	void setpresetparameter_i(long inPresetIndex, long inParameterIndex, int64_t newValue);
+	void setpresetparameter_b(long inPresetIndex, long inParameterIndex, bool newValue);
+	void setpresetparameter_gen(long inPresetIndex, long inParameterIndex, double genValue);
+	void update_preset(long inPresetIndex);
+	DfxParamValue getpresetparameter(long inPresetIndex, long inParameterIndex);
+	double getpresetparameter_f(long inPresetIndex, long inParameterIndex);
 
 
 	// get the current audio sampling rate
