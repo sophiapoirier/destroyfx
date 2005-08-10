@@ -71,7 +71,7 @@ void floorDisplayProc(float value, char * outText, void *)
 
 
 // ____________________________________________________________________________
-COMPONENT_ENTRY(MidiGaterEditor);
+COMPONENT_ENTRY(MidiGaterEditor)
 
 //-----------------------------------------------------------------------------
 MidiGaterEditor::MidiGaterEditor(AudioUnitCarbonView inInstance)
