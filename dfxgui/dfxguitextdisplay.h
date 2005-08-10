@@ -31,10 +31,10 @@ public:
 					DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGTextDisplay();
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
-	void drawText(DGRect * inRegion, const char * inText, CGContextRef inContext, long inPortHeight);
-#if MAC
-	OSStatus drawCFText(DGRect * inRegion, const CFStringRef inText, CGContextRef inContext, long inPortHeight);
+	virtual void draw(DGGraphicsContext * inContext);
+	void drawText(DGRect * inRegion, const char * inText, DGGraphicsContext * inContext);
+#if TARGET_OS_MAC
+	OSStatus drawCFText(DGRect * inRegion, const CFStringRef inText, DGGraphicsContext * inContext);
 #endif
 
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
@@ -80,16 +80,16 @@ public:
 						DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(DGGraphicsContext * inContext);
 
 	void setText(const char * inNewText);
-#if MAC
+#if TARGET_OS_MAC
 	void setCFText(CFStringRef inNewText);
 #endif
 
 protected:
 	char * displayString;
-#if MAC
+#if TARGET_OS_MAC
 	CFStringRef displayCFString;
 #endif
 };
@@ -107,7 +107,7 @@ public:
 	virtual ~DGTextArrayDisplay();
 	virtual void post_embed();
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(DGGraphicsContext * inContext);
 
 	void setText(long inStringNum, const char * inNewText);
 
@@ -126,7 +126,7 @@ public:
 	DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
 				DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground = NULL);
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(DGGraphicsContext * inContext);
 
 protected:
 	DGImage * animationImage;
