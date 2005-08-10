@@ -24,7 +24,7 @@ public:
 	DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange);
 	virtual ~DGControl();
 
-#if MAC
+#if TARGET_OS_MAC
 	// ControlRefs will be implemented by Manager Class
 	void setCarbonControl(ControlRef inCarbonControl)
 		{	carbonControl = inCarbonControl;	}
@@ -36,9 +36,9 @@ public:
 	void initMouseTrackingRegion();
 #endif
 
-	void do_draw(CGContextRef inContext, long inPortHeight);
+	void do_draw(DGGraphicsContext * inContext);
 	// The methods you should implement in derived controls
-	virtual void draw(CGContextRef inContext, long inPortHeight)
+	virtual void draw(DGGraphicsContext * inContext)
 		{ }
 	// *** mouse position is relative to controlBounds for ultra convenience
 	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
@@ -129,7 +129,7 @@ public:
 	float getDrawAlpha()
 		{	return drawAlpha;	}
 
-#if MAC
+#if TARGET_OS_MAC
 	OSStatus setHelpText(CFStringRef inHelpText);
 #endif
 
@@ -147,7 +147,7 @@ protected:
 	CAAUParameter 		auvp;
 	AUCarbonViewControl * auv_control;
 #endif
-#if MAC
+#if TARGET_OS_MAC
 	ControlRef			carbonControl;
 #endif
 
@@ -163,15 +163,16 @@ private:
 	bool				currentlyIgnoringMouseTracking;
 	bool				shouldWraparoundValues;
 
-#if MAC
+#if TARGET_OS_MAC
 	CFStringRef			helpText;
 	MouseTrackingRef	mouseTrackingRegion;
+	HIViewTrackingAreaRef	mouseTrackingArea;
 	bool				isFirstDraw;
 #endif
 };
 
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor);
 void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEditor * inEditor);
