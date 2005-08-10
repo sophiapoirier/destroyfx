@@ -207,11 +207,11 @@ double nearestIntegerAbove(double number)
 }
 
 //-----------------------------------------------------------------------------
-void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
 	if (tuneMode == kFineMode)
 	{
-		DGFineTuneButton::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+		DGFineTuneButton::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers, inIsDoubleClick);
 		return;
 	}
 
@@ -245,7 +245,7 @@ void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned lo
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(TransverbEditor);
+COMPONENT_ENTRY(TransverbEditor)
 
 //-----------------------------------------------------------------------------
 TransverbEditor::TransverbEditor(AudioUnitCarbonView inInstance)
