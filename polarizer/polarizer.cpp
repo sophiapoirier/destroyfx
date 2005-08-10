@@ -8,8 +8,8 @@
 
 
 // these are macros that do boring entry point stuff for us
-DFX_ENTRY(Polarizer);
-DFX_CORE_ENTRY(PolarizerDSP);
+DFX_ENTRY(Polarizer)
+DFX_CORE_ENTRY(PolarizerDSP)
 
 //-----------------------------------------------------------------------------------------
 // initializations and such
