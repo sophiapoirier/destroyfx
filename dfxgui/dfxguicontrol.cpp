@@ -36,10 +36,11 @@ void DGControl::init(DGRect * inRegion)
 	where.set(inRegion);
 	vizArea.set(inRegion);
 
-#if MAC
+#if TARGET_OS_MAC
 	carbonControl = NULL;
 	helpText = NULL;
 	mouseTrackingRegion = NULL;
+	mouseTrackingArea = NULL;
 	isFirstDraw = true;
 #endif
 #ifdef TARGET_API_AUDIOUNIT
@@ -64,9 +65,12 @@ void DGControl::init(DGRect * inRegion)
 //-----------------------------------------------------------------------------
 DGControl::~DGControl()
 {
-#if MAC
+#if TARGET_OS_MAC
+	if ( (mouseTrackingArea != NULL) && (HIViewDisposeTrackingArea != NULL) )
+		HIViewDisposeTrackingArea(mouseTrackingArea);
+	mouseTrackingArea = NULL;
 	if (mouseTrackingRegion != NULL)
-		ReleaseMouseTrackingRegion(mouseTrackingRegion);
+		ReleaseMouseTrackingRegion(mouseTrackingRegion);	// XXX deprecated in Mac OS X 10.4
 	mouseTrackingRegion = NULL;
 #endif
 	if (auv_control != NULL)
@@ -79,9 +83,9 @@ DGControl::~DGControl()
 
 
 //-----------------------------------------------------------------------------
-void DGControl::do_draw(CGContextRef inContext, long inPortHeight)
+void DGControl::do_draw(DGGraphicsContext * inContext)
 {
-#if MAC
+#if TARGET_OS_MAC
 	// XXX a hack to workaround creating mouse tracking regions when 
 	// the portion of the window where the control is doesn't exist yet
 	if (isFirstDraw)
@@ -92,9 +96,9 @@ void DGControl::do_draw(CGContextRef inContext, long inPortHeight)
 	// redraw the background behind the control in case the control background has any transparency
 	// this is handled automatically if the window is in compositing mode, though
 	if ( !(getDfxGuiEditor()->IsCompositWindow()) )
-		getDfxGuiEditor()->DrawBackground(inContext, inPortHeight);
+		getDfxGuiEditor()->DrawBackground(inContext);
 
-	CGContextSetAlpha(inContext, drawAlpha);
+	inContext->setAlpha(drawAlpha);
 
 // XXX quicky hack to work around compositing problems...  can I think of a better solution?
 DGRect oldbounds(getBounds());
@@ -102,7 +106,7 @@ DGRect oldfbounds(getForeBounds());
 FixControlCompositingOffset(getBounds(), carbonControl, getDfxGuiEditor());
 FixControlCompositingOffset(getForeBounds(), carbonControl, getDfxGuiEditor());
 	// then have the child control class do its drawing
-	draw(inContext, inPortHeight);
+	draw(inContext);
 getBounds()->set(&oldbounds);
 getForeBounds()->set(&oldfbounds);
 }
@@ -218,36 +222,53 @@ void DGControl::initCarbonControlValueRange()
 	}
 }
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 void DGControl::initMouseTrackingRegion()
 {
 	if (getCarbonControl() == NULL)
 		return;
 
-	// handle control mouse-overs by creating mouse tracking region for the control
-	RgnHandle controlRegion = NewRgn();
-	if (controlRegion != NULL)
+	OSStatus status;
+
+	// HIViewTrackingAreas are only available in Mac OS X 10.4 or higher
+	if ( (HIViewNewTrackingArea != NULL) && getDfxGuiEditor()->IsCompositWindow() )
 	{
-		OSStatus status = GetControlRegion(getCarbonControl(), kControlEntireControl, controlRegion);
-		if (status != noErr)
+		HIShapeRef trackingAreaShape = NULL;
+		HIRect trackingAreaBounds;
+		status = HIViewGetBounds(getCarbonControl(), &trackingAreaBounds);
+//		if (status == noErr)
+//			trackingAreaShape = HIShapeCreateWithRect(&trackingAreaBounds);
+		status = HIViewNewTrackingArea(getCarbonControl(), trackingAreaShape, (HIViewTrackingAreaID)this, &mouseTrackingArea);
+//		if (trackingAreaShape != NULL)
+//			CFRelease(trackingAreaShape);
+	}
+	else
+	{
+		// handle control mouse-overs by creating mouse tracking region for the control
+		RgnHandle controlRegion = NewRgn();	// XXX deprecated in Mac OS X 10.4
+		if (controlRegion != NULL)
 		{
-			Rect mouseRegionBounds;
-			GetControlBounds(getCarbonControl(), &mouseRegionBounds);
-			if ( getDfxGuiEditor()->IsCompositWindow() )
+			status = GetControlRegion(getCarbonControl(), kControlEntireControl, controlRegion);
+			if (status != noErr)
 			{
-				Rect paneBounds;
-				GetControlBounds(getDfxGuiEditor()->GetCarbonPane(), &paneBounds);
-				OffsetRect(&mouseRegionBounds, paneBounds.left, paneBounds.top);
+				Rect mouseRegionBounds;
+				GetControlBounds(getCarbonControl(), &mouseRegionBounds);
+				if ( getDfxGuiEditor()->IsCompositWindow() )
+				{
+					Rect paneBounds;
+					GetControlBounds(getDfxGuiEditor()->GetCarbonPane(), &paneBounds);
+					OffsetRect(&mouseRegionBounds, paneBounds.left, paneBounds.top);	// XXX deprecated in Mac OS X 10.4
+				}
+				RectRgn(controlRegion, &mouseRegionBounds);	// XXX deprecated in Mac OS X 10.4
 			}
-			RectRgn(controlRegion, &mouseRegionBounds);
+			MouseTrackingRegionID mouseTrackingRegionID;
+			mouseTrackingRegionID.signature = DESTROYFX_ID;
+			mouseTrackingRegionID.id = (SInt32)this;
+			EventTargetRef targetToNotify = GetControlEventTarget(getCarbonControl());	// can be NULL (which means use the window's event target)
+			status = CreateMouseTrackingRegion(getDfxGuiEditor()->GetCarbonWindow(), controlRegion, NULL, kMouseTrackingOptionsLocalClip, mouseTrackingRegionID, this, targetToNotify, &mouseTrackingRegion);	// XXX deprecated in Mac OS X 10.4
+			DisposeRgn(controlRegion);	// XXX deprecated in Mac OS X 10.4
 		}
-		MouseTrackingRegionID mouseTrackingRegionID;
-		mouseTrackingRegionID.signature = DESTROYFX_ID;
-		mouseTrackingRegionID.id = (SInt32)this;
-		EventTargetRef targetToNotify = GetControlEventTarget(getCarbonControl());	// can be NULL (which means use the window's event target)
-		status = CreateMouseTrackingRegion(getDfxGuiEditor()->GetCarbonWindow(), controlRegion, NULL, kMouseTrackingOptionsLocalClip, mouseTrackingRegionID, this, targetToNotify, &mouseTrackingRegion);
-		DisposeRgn(controlRegion);
 	}
 }
 #endif
@@ -458,7 +479,7 @@ OSStatus DGControl::setHelpText(CFStringRef inHelpText)
 	HMHelpContentRec helpContent;
 	memset(&helpContent, 0, sizeof(helpContent));
 	helpContent.version = kMacHelpVersion;
-	MacSetRect(&(helpContent.absHotRect), 0, 0, 0, 0);
+	SetRect(&(helpContent.absHotRect), 0, 0, 0, 0);	// XXX deprecated in Mac OS X 10.4
 	helpContent.tagSide = kHMDefaultSide;
 	helpContent.content[kHMMinimumContentIndex].contentType = kHMCFStringContent;
 	helpContent.content[kHMMinimumContentIndex].u.tagCFString = inHelpText;
@@ -529,7 +550,7 @@ void DGCarbonViewControl::ParameterToControl(Float32 paramValue)
 
 
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor)
 {
