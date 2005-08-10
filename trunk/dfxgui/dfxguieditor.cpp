@@ -5,7 +5,7 @@
 
 
 
-#if MAC
+#if TARGET_OS_MAC
 static pascal OSStatus DGControlEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
 static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
 
@@ -56,7 +56,7 @@ CFRelease(mut);
 	dgControlSpec.u.classRef = NULL;
 	windowEventHandlerRef = NULL;
 
-	fontsATSContainer = NULL;
+	fontsATSContainer = kATSFontContainerRefUnspecified;
 	fontsWereActivated = false;	// guilty until proven innocent
 
 	currentControl_clicked = NULL;
@@ -146,6 +146,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 //		{ kEventClassControl, kEventControlClick }, 
 		{ kEventClassControl, kEventControlContextualMenuClick }, 
 		{ kEventClassControl, kEventControlValueFieldChanged }, 
+		{ kEventClassControl, kEventControlTrackingAreaEntered }, 
+		{ kEventClassControl, kEventControlTrackingAreaExited }, 
 		{ kEventClassMouse, kEventMouseEntered }, 
 		{ kEventClassMouse, kEventMouseExited }, 
 	};
@@ -265,58 +267,78 @@ ComponentResult DfxGuiEditor::Version()
 #endif
 // TARGET_API_AUDIOUNIT
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 // inEvent is expected to be an event of the class kEventClassControl.  
-// The return value is true if a CGContextRef was available from the event parameters 
-// (which happens with compositing windows) or false if the CGContext had to be created 
+// The outPort will be null if a CGContextRef was available from the event parameters 
+// (which happens with compositing windows) or non-null if the CGContext had to be created 
 // for the control's window port QuickDraw-style.  
-bool InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGrafPtr & outPort, long & outPortHeight)
+DGGraphicsContext * InitControlDrawingContext(EventRef inEvent, CGrafPtr & outPort)
 {
-	outContext = NULL;
 	outPort = NULL;
 	if (inEvent == NULL)
-		return false;
+		return NULL;
 
-	bool gotAutoContext = false;
 	OSStatus status;
-
-	// if we received a graphics port parameter, use that...
-	status = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &outPort);
-	// ... otherwise use the current graphics port
-	if ( (status != noErr) || (outPort == NULL) )
-		GetPort(&outPort);
-	if (outPort == NULL)
-		return false;
-	Rect portBounds;
-	GetPortBounds(outPort, &portBounds);
-	outPortHeight = portBounds.bottom - portBounds.top;
+	CGContextRef cgContext = NULL;
+	long portHeight = 0;
 
 	// set up the CG context
 	// if we are in compositing mode, then we can get a CG context already set up and clipped and whatnot
-	status = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &outContext);
-	if ( (status == noErr) && (outContext != NULL) )
-		gotAutoContext = true;
+	status = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &cgContext);
+	if ( (status == noErr) && (cgContext != NULL) )
+	{
+//		CGRect contextBounds = CGContextGetClipBoundingBox(cgContext);
+//		portHeight = (long) (contextBounds.size.height);
+		portHeight = 0;
+	}
 	else
 	{
-		status = QDBeginCGContext(outPort, &outContext);
-		if ( (status != noErr) || (outContext == NULL) )
-		{
-			outContext = NULL;	// probably crazy, but in case there's an error, and yet a non-null result for the context
-			return false;
-		}
+		// if we received a graphics port parameter, use that...
+		status = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &outPort);
+		// ... otherwise use the current graphics port
+		if ( (status != noErr) || (outPort == NULL) )
+			GetPort(&outPort);	// XXX deprecated in Mac OS X 10.4
+		if (outPort == NULL)
+			return NULL;
+		Rect portBounds;
+		GetPortBounds(outPort, &portBounds);
+		portHeight = portBounds.bottom - portBounds.top;
+
+		status = QDBeginCGContext(outPort, &cgContext);
+		if ( (status != noErr) || (cgContext == NULL) )
+			return NULL;
 	}
-	CGContextSaveGState(outContext);
-	SyncCGContextOriginWithPort(outContext, outPort);
+
+	// create our result graphics context now with the platform-specific graphics context
+	DGGraphicsContext * outContext = new DGGraphicsContext(cgContext);
+	outContext->setPortHeight(portHeight);
+
+	CGContextSaveGState(cgContext);
+	if (outPort != NULL)
+		SyncCGContextOriginWithPort(cgContext, outPort);	// XXX deprecated in Mac OS X 10.4
 #ifdef FLIP_CG_COORDINATES
-	// this lets me position things with non-upside-down coordinates, 
-	// but unfortunately draws all images and text upside down...
-	CGContextTranslateCTM(outContext, 0.0f, (float)outPortHeight);
-	CGContextScaleCTM(outContext, 1.0f, -1.0f);
+	if (outPort != NULL)
+	{
+		// this lets me position things with non-upside-down coordinates, 
+		// but unfortunately draws all images and text upside down...
+		CGContextTranslateCTM(cgContext, 0.0f, (float)portHeight);
+		CGContextScaleCTM(cgContext, 1.0f, -1.0f);
+	}
+#endif
+#ifndef FLIP_CG_COORDINATES
+	if (outPort == NULL)
+	{
+#endif
+	// but this flips text drawing back right-side-up
+	CGAffineTransform textCTM = CGAffineTransformMake(1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+	CGContextSetTextMatrix(cgContext, textCTM);
+#ifndef FLIP_CG_COORDINATES
+	}
 #endif
 
 	// define the clipping region if we are not compositing and had to create our own context
-	if (!gotAutoContext)
+	if (outPort != NULL)
 	{
 		ControlRef carbonControl = NULL;
 		status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
@@ -327,33 +349,35 @@ bool InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGra
 			if (status == noErr)
 			{
 #ifndef FLIP_CG_COORDINATES
-				clipRect.origin.y = (float)outPortHeight - (clipRect.origin.y + clipRect.size.height);
+				clipRect.origin.y = (float)portHeight - (clipRect.origin.y + clipRect.size.height);
 #endif
-				CGContextClipToRect(outContext, clipRect);
+				CGContextClipToRect(cgContext, clipRect);
 			}
 		}
 	}
 
-	return gotAutoContext;
+	return outContext;
 }
 
 //-----------------------------------------------------------------------------
-// inGotAutoContext should be the return value that you got from InitControlDrawingContext().  
-// It is true if inContext came with the control event (compositing window behavior) or 
-// false if inContext was created via QDBeginCGContext(), and hence needs to be disposed.  
-void CleanupControlDrawingContext(CGContextRef & inContext, bool inGotAutoContext, CGrafPtr inPort)
+// inPort should be what you got from InitControlDrawingContext().  
+// It is null if inContext came with the control event (compositing window behavior) or 
+// non-null if inContext was created via QDBeginCGContext(), and hence needs to be terminated.
+void CleanupControlDrawingContext(DGGraphicsContext * inContext, CGrafPtr inPort)
 {
 	if (inContext == NULL)
 		return;
+	if (inContext->getPlatformGraphicsContext() == NULL)
+		return;
 
-	CGContextRestoreGState(inContext);
-	CGContextSynchronize(inContext);
+	CGContextRestoreGState( inContext->getPlatformGraphicsContext() );
+	CGContextSynchronize( inContext->getPlatformGraphicsContext() );
 
-	if ( !inGotAutoContext && (inPort != NULL) )
-		QDEndCGContext(inPort, &inContext);
+	if (inPort != NULL)
+		inContext->endQDContext(inPort);
 }
 #endif
-// MAC
+// TARGET_OS_MAC
 
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
@@ -372,17 +396,15 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 		{
 			if ( (carbonControl != NULL) && (carbonControl == GetCarbonPane()) )
 			{
-				CGContextRef context = NULL;
 				CGrafPtr windowPort = NULL;
-				long portHeight;
-				bool gotAutoContext = InitControlDrawingContext(inEvent, context, windowPort, portHeight);
-				if ( (context == NULL) || (windowPort == NULL) )
+				DGGraphicsContext * context = InitControlDrawingContext(inEvent, windowPort);
+				if (context == NULL)
 					return false;
 
-				CGContextSetShouldAntialias(context, false);	// XXX disable anti-aliased drawing for image rendering
-				DrawBackground(context, portHeight);
+				context->setAntialias(false);	// XXX disable anti-aliased drawing for image rendering
+				DrawBackground(context);
 
-				CleanupControlDrawingContext(context, gotAutoContext, windowPort);
+				CleanupControlDrawingContext(context, windowPort);
 				return true;
 			}
 		}
@@ -425,7 +447,7 @@ void DfxGuiEditor::do_idle()
 	}
 }
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
 {
@@ -452,7 +474,7 @@ void DfxGuiEditor::addControl(DGControl * inControl)
 	controlsList = new DGControlsList(inControl, controlsList);
 }
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 {
@@ -469,12 +491,12 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 #endif
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::DrawBackground(CGContextRef inContext, long inPortHeight)
+void DfxGuiEditor::DrawBackground(DGGraphicsContext * inContext)
 {
 	if (backgroundImage != NULL)
 	{
 		DGRect drawRect( (long)GetXOffset(), (long)GetYOffset(), backgroundImage->getWidth(), backgroundImage->getHeight() );
-		backgroundImage->draw(&drawRect, inContext, inPortHeight);
+		backgroundImage->draw(&drawRect, inContext);
 	}
 	else
 	{
@@ -483,33 +505,88 @@ void DfxGuiEditor::DrawBackground(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
+// this function looks for the plugin's documentation file in the appropriate system location, 
+// within a given file system domain, and returns a CFURLRef for the file if it is found, 
+// and NULL otherwise (or if some error is encountered along the way)
+CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, short inDomain)
+{
+	if (inDocsFileName == NULL)
+		return NULL;
+
+	// first find the base directory for the system documentation directory
+	FSRef docsDirRef;
+	OSErr error = FSFindFolder(inDomain, kDocumentationFolderType, kDontCreateFolder, &docsDirRef);
+	if (error == noErr)
+	{
+		// convert the FSRef of the documentation directory to a CFURLRef (for use in the next steps)
+		CFURLRef docsDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &docsDirRef);
+		if (docsDirURL != NULL)
+		{
+			// create a CFURL for the "manufacturer name" directory within the documentation directory
+			CFURLRef dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL, CFSTR(DESTROYFX_NAME_STRING), true);
+			CFRelease(docsDirURL);
+			if (dfxDocsDirURL != NULL)
+			{
+				// create a CFURL for the documentation file within the "manufacturer name" directory
+				CFURLRef docsFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL, inDocsFileName, false);
+				CFRelease(dfxDocsDirURL);
+				if (docsFileURL != NULL)
+				{
+					// check to see if the hypothetical documentation file actually exists 
+					// (CFURLs can reference files that don't exist)
+					SInt32 urlErrorCode = 0;
+					CFBooleanRef docsFileExists = (CFBooleanRef) CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL, kCFURLFileExists, &urlErrorCode);
+					if (docsFileExists != NULL)
+					{
+						// only return the file's CFURL if the file exists
+						if (docsFileExists == kCFBooleanTrue)
+							return docsFileURL;
+						CFRelease(docsFileExists);
+					}
+					CFRelease(docsFileURL);
+				}
+			}
+		}
+	}
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
 // XXX this function should really go somewhere else, like in that promised DFX utilities file or something like that
 long launch_documentation()
 {
 
-#if MAC
+#if TARGET_OS_MAC
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
 	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 	if (pluginBundleRef != NULL)
 	{
-		CFStringRef fileCFName = CFSTR( PLUGIN_NAME_STRING" manual.html" );
-		CFURLRef fileURL = CFBundleCopyResourceURL(pluginBundleRef, fileCFName, NULL, NULL);
-		if (fileURL != NULL)
+		CFStringRef docsFileName = CFSTR( PLUGIN_NAME_STRING" manual.html" );
+		CFURLRef docsFileURL = CFBundleCopyResourceURL(pluginBundleRef, docsFileName, NULL, NULL);
+		// if the documentation file is not found in the bundle, then search in appropriate system locations
+		if (docsFileURL ==  NULL)
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kUserDomain);
+		if (docsFileURL ==  NULL)
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kLocalDomain);
+		if (docsFileURL ==  NULL)
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kNetworkDomain);
+		if (docsFileURL != NULL)
 		{
 // open the manual with the default application for the file type
 #if 0
-			OSStatus status = LSOpenCFURLRef(fileURL, NULL);
-			CFRelease(fileURL);
+			OSStatus status = LSOpenCFURLRef(docsFileURL, NULL);
+			CFRelease(docsFileURL);
 // open the manual with Apple's system Help Viewer
 #else
 			OSStatus status = coreFoundationUnknownErr;
-			CFStringRef fileUrlString = CFURLGetString(fileURL);
-			if (fileUrlString != NULL)
+			CFStringRef docsFileUrlString = CFURLGetString(docsFileURL);
+			if (docsFileUrlString != NULL)
 			{
-				status = AHGotoPage(NULL, fileUrlString, NULL);
+				status = AHGotoPage(NULL, docsFileUrlString, NULL);
 			}
-			CFRelease(fileURL);
+			CFRelease(docsFileURL);
 #endif
 			return status;
 		}
@@ -821,7 +898,7 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 
 
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 DGKeyModifiers GetDGKeyModifiersForEvent(EventRef inEvent)
 {
@@ -847,7 +924,7 @@ DGKeyModifiers GetDGKeyModifiersForEvent(EventRef inEvent)
 }
 #endif
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
@@ -876,7 +953,7 @@ static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, Event
 }
 #endif
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 {
@@ -929,16 +1006,16 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 
 	if ( (inEventKind == kEventMouseEntered) || (inEventKind == kEventMouseExited) )
 	{
-		MouseTrackingRef mouseTrackingRegion = NULL;
-		status = GetEventParameter(inEvent, kEventParamMouseTrackingRef, typeMouseTrackingRef, NULL, sizeof(mouseTrackingRegion), NULL, &mouseTrackingRegion);
-		if (status == noErr)
+		MouseTrackingRef trackingRegion = NULL;
+		status = GetEventParameter(inEvent, kEventParamMouseTrackingRef, typeMouseTrackingRef, NULL, sizeof(trackingRegion), NULL, &trackingRegion);
+		if ( (status == noErr) && (trackingRegion != NULL) )
 		{
-			MouseTrackingRegionID mouseTrackingRegionID;
-			status = GetMouseTrackingRegionID(mouseTrackingRegion, &mouseTrackingRegionID);
-			if ( (status == noErr) && (mouseTrackingRegionID.signature == DESTROYFX_ID) )
+			MouseTrackingRegionID trackingRegionID;
+			status = GetMouseTrackingRegionID(trackingRegion, &trackingRegionID);	// XXX deprecated in Mac OS X 10.4
+			if ( (status == noErr) && (trackingRegionID.signature == DESTROYFX_ID) )
 			{
 				DGControl * ourMousedOverControl = NULL;
-				status = GetMouseTrackingRegionRefCon(mouseTrackingRegion, (void**)(&ourMousedOverControl));
+				status = GetMouseTrackingRegionRefCon(trackingRegion, (void**)(&ourMousedOverControl));	// XXX deprecated in Mac OS X 10.4
 				if ( (status == noErr) && (ourMousedOverControl != NULL) )
 				{
 					if (inEventKind == kEventMouseEntered)
@@ -1012,7 +1089,7 @@ return false;
 		{
 			Rect paneBounds;
 			GetControlBounds(GetCarbonPane(), &paneBounds);
-			OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
+			OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);	// XXX deprecated in Mac OS X 10.4
 		}
 		// the position of the control relative to the top left corner of the window content area
 		Rect controlBounds;
@@ -1053,9 +1130,9 @@ return false;
 	return false;
 }
 #endif
-// MAC
+// TARGET_OS_MAC
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 {
@@ -1089,9 +1166,9 @@ bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 	return false;
 }
 #endif
-// MAC
+// TARGET_OS_MAC
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 {
@@ -1120,10 +1197,10 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 	return false;
 }
 #endif
-// MAC
+// TARGET_OS_MAC
 
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
@@ -1149,7 +1226,7 @@ static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, Even
 }
 #endif
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 {
@@ -1168,9 +1245,31 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 	{
 		UInt32 dfxControlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
 		status = SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(dfxControlFeatures), &dfxControlFeatures);
-		return noErr;
+		return true;
 	}
 */
+
+	if ( (inEventKind == kEventControlTrackingAreaEntered) || (inEventKind == kEventControlTrackingAreaExited) )
+	{
+		HIViewTrackingAreaRef trackingArea = NULL;
+		status = GetEventParameter(inEvent, kEventParamHIViewTrackingArea, typeHIViewTrackingAreaRef, NULL, sizeof(trackingArea), NULL, &trackingArea);
+		if ( (status == noErr) && (trackingArea != NULL) && (HIViewGetTrackingAreaID != NULL) )
+		{
+			HIViewTrackingAreaID trackingAreaID = 0;
+			status = HIViewGetTrackingAreaID(trackingArea, &trackingAreaID);
+			if ( (status == noErr) && (trackingAreaID != 0) )
+			{
+				DGControl * ourMousedOverControl = (DGControl*)trackingAreaID;
+				if (inEventKind == kEventControlTrackingAreaEntered)
+					addMousedOverControl(ourMousedOverControl);
+				else if (inEventKind == kEventControlTrackingAreaExited)
+					removeMousedOverControl(ourMousedOverControl);
+				return true;
+			}
+		}
+		return false;
+	}
+
 
 	if (ourDGControl != NULL)
 	{
@@ -1179,18 +1278,15 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 			case kEventControlDraw:
 //fprintf(stderr, "kEventControlDraw\n");
 				{
-					CGContextRef context = NULL;
 					CGrafPtr windowPort = NULL;
-					long portHeight;
-					bool gotAutoContext = InitControlDrawingContext(inEvent, context, windowPort, portHeight);
-					if ( (context == NULL) || (windowPort == NULL) )
+					DGGraphicsContext * context = InitControlDrawingContext(inEvent, windowPort);
+					if (context == NULL)
 						return false;
 
-					// XXX disable anti-aliased drawing for image rendering
-					CGContextSetShouldAntialias(context, false);
-					ourDGControl->do_draw(context, portHeight);
+					context->setAntialias(false);	// XXX disable anti-aliased drawing for image rendering
+					ourDGControl->do_draw(context);
 
-					CleanupControlDrawingContext(context, gotAutoContext, windowPort);
+					CleanupControlDrawingContext(context, windowPort);
 				}
 				return true;
 
@@ -1265,7 +1361,7 @@ fprintf(stderr, "kEventControlHit\n");
 					{
 						Rect paneBounds;
 						GetControlBounds(GetCarbonPane(), &paneBounds);
-						OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
+						OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);	// XXX deprecated in Mac OS X 10.4
 					}
 					// the position of the control relative to the top left corner of the window content area
 					Rect controlBounds;
@@ -1314,4 +1410,4 @@ fprintf(stderr, "kEventControlHit\n");
 	return false;
 }
 #endif
-// MAC
+// TARGET_OS_MAC
