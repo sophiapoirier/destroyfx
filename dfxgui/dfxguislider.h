@@ -19,7 +19,7 @@ public:
 				DfxGuiSliderAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage);
 	virtual ~DGSlider();
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(DGGraphicsContext * inContext);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
 	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
