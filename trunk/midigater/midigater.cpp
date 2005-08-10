@@ -25,7 +25,7 @@ enum
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(MidiGater);
+DFX_ENTRY(MidiGater)
 
 
 //-----------------------------------------------------------------------------------------
