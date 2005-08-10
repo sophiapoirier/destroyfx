@@ -47,9 +47,9 @@ public:
 	void do_idle();
 	virtual void idle() { }
 
-	virtual void DrawBackground(CGContextRef inContext, long inPortHeight);
+	virtual void DrawBackground(DGGraphicsContext * inContext);
 
-#if MAC
+#if TARGET_OS_MAC
 	virtual bool HandleMouseEvent(EventRef inEvent);
 	virtual bool HandleKeyboardEvent(EventRef inEvent);
 	virtual bool HandleCommandEvent(EventRef inEvent);
@@ -136,7 +136,7 @@ protected:
 	DGImage *	backgroundImage;
 	DGColor		backgroundColor;
 
-#if MAC
+#if TARGET_OS_MAC
 	DGControl * getDGControlByCarbonControlRef(ControlRef inControl);
 #endif
 
@@ -158,7 +158,7 @@ private:
 	void addMousedOverControl(DGControl * inMousedOverControl);
 	void removeMousedOverControl(DGControl * inMousedOverControl);
 
-#if MAC
+#if TARGET_OS_MAC
 	ControlDefSpec 		dgControlSpec;
 	EventHandlerRef		windowEventHandlerRef;
 
