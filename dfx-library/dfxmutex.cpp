@@ -42,7 +42,7 @@ int DfxMutex::release()
 
 
 //------------------------------------------------------------------------
-#elif MAC && !defined(__MACH__)
+#elif TARGET_OS_MAC && !defined(__MACH__)
 
 #include <MacErrors.h>
 
