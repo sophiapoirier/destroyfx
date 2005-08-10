@@ -144,12 +144,12 @@ public:
 		setControlContinuous(false);
 	}
 
-	virtual void draw(CGContextRef inContext, long inPortHeight)
+	virtual void draw(DGGraphicsContext * inContext)
 	{
 		if (buttonImage != NULL)
 		{
 			long yoff = (GetControl32BitValue(getCarbonControl()) == 0) ? 0 : (buttonImage->getHeight() / 2);
-			buttonImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
+			buttonImage->draw(getBounds(), inContext, 0, yoff);
 		}
 	}
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
