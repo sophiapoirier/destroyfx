@@ -116,54 +116,52 @@ DGTextDisplay::~DGTextDisplay()
 
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::draw(CGContextRef inContext, long inPortHeight)
+void DGTextDisplay::draw(DGGraphicsContext * inContext)
 {
 	if (backgroundImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
-		CGRect fillRect = getBounds()->convertToCGRect(inPortHeight);
-		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
-		CGContextFillRect(inContext, fillRect);
+		inContext->setFillColor( DGColor(59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f) );
+		inContext->fillRect( getBounds() );
 #endif
 	}
 	else
-//		backgroundImage->draw(getBounds(), inContext, inPortHeight, getBounds()->x - (long)(getDfxGuiEditor()->GetXOffset()), getBounds()->y - (long)(getDfxGuiEditor()->GetYOffset()));	// draw underneath-style
-		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+//		backgroundImage->draw(getBounds(), inContext, getBounds()->x - (long)(getDfxGuiEditor()->GetXOffset()), getBounds()->y - (long)(getDfxGuiEditor()->GetYOffset()));	// draw underneath-style
+		backgroundImage->draw(getBounds(), inContext);
 
 	if (textProc != NULL)
 	{
 		char text[kDGTextDisplay_stringSize];
 		text[0] = 0;
 		textProc(auvp.GetValue(), text, textProcUserData);
-		drawText(getBounds(), text, inContext, inPortHeight);
+		drawText(getBounds(), text, inContext);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRef inContext, long inPortHeight)
+void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, DGGraphicsContext * inContext)
 {
 	if ( (inText == NULL) || (inRegion == NULL) )
 		return;
 
-	CGRect bounds = inRegion->convertToCGRect(inPortHeight);
-#ifdef FLIP_CG_COORDINATES
-	bounds.origin.y *= -1.0f;
-	CGContextScaleCTM(inContext, 1.0f, -1.0f);
-	CGContextTranslateCTM(inContext, 0.0f, -bounds.size.height);
+	CGRect bounds = inRegion->convertToCGRect( inContext->getPortHeight() );
+	float flippedBoundsOffset = bounds.size.height;
+#ifndef FLIP_CG_COORDINATES
+	if ( inContext->isCompositWindow() )
 #endif
+	CGContextTranslateCTM(inContext->getPlatformGraphicsContext(), 0.0f, flippedBoundsOffset);
 
 	if (fontName != NULL)
-		CGContextSelectFont(inContext, fontName, fontSize, kCGEncodingMacRoman);
-	CGContextSetShouldSmoothFonts(inContext, shouldAntiAlias);
-	CGContextSetShouldAntialias(inContext, shouldAntiAlias);	// it appears that I gotta do this, too
-	CGContextSetRGBFillColor(inContext, fontColor.r, fontColor.g, fontColor.b, 1.0f);
+		CGContextSelectFont(inContext->getPlatformGraphicsContext(), fontName, fontSize, kCGEncodingMacRoman);
+	inContext->setAntialias(shouldAntiAlias);
+	inContext->setFillColor(fontColor);
 
 	if (alignment != kDGTextAlign_left)
 	{
-		CGContextSetTextDrawingMode(inContext, kCGTextInvisible);
-		CGContextShowTextAtPoint(inContext, 0.0f, 0.0f, inText, strlen(inText));
-		CGPoint pt = CGContextGetTextPosition(inContext);
+		CGContextSetTextDrawingMode(inContext->getPlatformGraphicsContext(), kCGTextInvisible);
+		CGContextShowTextAtPoint(inContext->getPlatformGraphicsContext(), 0.0f, 0.0f, inText, strlen(inText));
+		CGPoint pt = CGContextGetTextPosition(inContext->getPlatformGraphicsContext());
 		if (alignment == kDGTextAlign_center)
 		{
 			float xoffset = (bounds.size.width - pt.x) / 2.0f;
@@ -185,27 +183,31 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, CGContextRe
 	}
 
 //	if (bold)	// XXX implement this for real
-//		CGContextSetTextDrawingMode(inContext, kCGTextFillStroke);
+//		CGContextSetTextDrawingMode(inContext->getPlatformGraphicsContext(), kCGTextFillStroke);
 //	else
-		CGContextSetTextDrawingMode(inContext, kCGTextFill);
-	CGContextShowTextAtPoint(inContext, bounds.origin.x, bounds.origin.y+2.0f, inText, strlen(inText));
-
-#ifdef FLIP_CG_COORDINATES
-	CGContextTranslateCTM(inContext, 0.0f, bounds.size.height);
-	CGContextScaleCTM(inContext, 1.0f, -1.0f);
+		CGContextSetTextDrawingMode(inContext->getPlatformGraphicsContext(), kCGTextFill);
+	float textYoffset = 2.0f;
+#ifndef FLIP_CG_COORDINATES
+	if ( inContext->isCompositWindow() )
 #endif
+	textYoffset *= -1.0f;
+	CGContextShowTextAtPoint(inContext->getPlatformGraphicsContext(), bounds.origin.x, bounds.origin.y+textYoffset, inText, strlen(inText));
+
+#ifndef FLIP_CG_COORDINATES
+	if ( inContext->isCompositWindow() )
+#endif
+	CGContextTranslateCTM(inContext->getPlatformGraphicsContext(), 0.0f, -flippedBoundsOffset);
 }
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, CGContextRef inContext, long inPortHeight)
+OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, DGGraphicsContext * inContext)
 {
 	if ( (inText == NULL) || (inRegion == NULL) )
 		return paramErr;
 
-	CGContextSetShouldSmoothFonts(inContext, shouldAntiAlias);
-	CGContextSetShouldAntialias(inContext, shouldAntiAlias);	// it appears that I gotta do this, too
-	CGContextSetRGBFillColor(inContext, fontColor.r, fontColor.g, fontColor.b, 1.0f);
+	inContext->setAntialias(shouldAntiAlias);
+	inContext->setFillColor(fontColor);
 
 // XXX do something to actually allow you to set the font ID and the font size and the font color
 	ThemeFontID themeFontID = kThemeLabelFont;
@@ -214,7 +216,7 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 	// this function is only available in Mac OS X 10.3 or higher
 	if (HIThemeDrawTextBox != NULL)
 	{
-		HIRect bounds = inRegion->convertToCGRect(inPortHeight);
+		HIRect bounds = inRegion->convertToCGRect( inContext->getPortHeight() );
 
 		HIThemeTextInfo textInfo;
 		memset(&textInfo, 0, sizeof(textInfo));
@@ -232,13 +234,13 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 		else if (alignment == kDGTextAlign_right)
 			textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushRight;
 
-	#ifdef FLIP_CG_COORDINATES
 		HIThemeOrientation contextOrientation = kHIThemeOrientationNormal;
-	#else
-		HIThemeOrientation contextOrientation = kHIThemeOrientationInverted;
+	#ifndef FLIP_CG_COORDINATES
+		if (! inContext->isCompositWindow() )
+			contextOrientation = kHIThemeOrientationInverted;
 	#endif
 
-		return HIThemeDrawTextBox(inText, &bounds, &textInfo, inContext, contextOrientation);
+		return HIThemeDrawTextBox(inText, &bounds, &textInfo, inContext->getPlatformGraphicsContext(), contextOrientation);
 	}
 	else
 	{
@@ -311,7 +313,7 @@ DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * 
 	displayString = (char*) malloc(kDGTextDisplay_stringSize);
 	displayString[0] = 0;
 	parameterAttached = false;	// XXX good enough?
-#if MAC
+#if TARGET_OS_MAC
 	displayCFString = NULL;
 #endif
 	setRespondToMouse(false);
@@ -324,7 +326,7 @@ DGStaticTextDisplay::~DGStaticTextDisplay()
 		free(displayString);
 	displayString = NULL;
 
-#if MAC
+#if TARGET_OS_MAC
 	if (displayCFString != NULL)
 		CFRelease(displayCFString);
 	displayCFString = NULL;
@@ -337,7 +339,7 @@ void DGStaticTextDisplay::setText(const char * inNewText)
 	if (inNewText == NULL)
 		return;
 
-#if MAC
+#if TARGET_OS_MAC
 	if (displayCFString != NULL)
 		CFRelease(displayCFString);
 	displayCFString = NULL;
@@ -347,7 +349,7 @@ void DGStaticTextDisplay::setText(const char * inNewText)
 	redraw();
 }
 
-#if MAC
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 void DGStaticTextDisplay::setCFText(CFStringRef inNewText)
 {
@@ -365,27 +367,26 @@ void DGStaticTextDisplay::setCFText(CFStringRef inNewText)
 #endif
 
 //-----------------------------------------------------------------------------
-void DGStaticTextDisplay::draw(CGContextRef inContext, long inPortHeight)
+void DGStaticTextDisplay::draw(DGGraphicsContext * inContext)
 {
 	if (backgroundImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
-		CGRect fillRect = getBounds()->convertToCGRect(inPortHeight);
-		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
-		CGContextFillRect(inContext, fillRect);
+		inContext->setFillColor( DGColor(59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f) );
+		inContext->fillRect( getBounds() );
 #endif
 	}
 	else
-//		backgroundImage->draw(getBounds(), inContext, inPortHeight, getBounds()->x - (long)(getDfxGuiEditor()->GetXOffset()), getBounds()->y - (long)(getDfxGuiEditor()->GetYOffset()));	// draw underneath-style
-		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+//		backgroundImage->draw(getBounds(), inContext, getBounds()->x - (long)(getDfxGuiEditor()->GetXOffset()), getBounds()->y - (long)(getDfxGuiEditor()->GetYOffset()));	// draw underneath-style
+		backgroundImage->draw(getBounds(), inContext);
 
-#if MAC
+#if TARGET_OS_MAC
 	if (displayCFString != NULL)
-		drawCFText(getBounds(), displayCFString, inContext, inPortHeight);
+		drawCFText(getBounds(), displayCFString, inContext);
 	else
 #endif
-	drawText(getBounds(), displayString, inContext, inPortHeight);
+	drawText(getBounds(), displayString, inContext);
 }
 
 
@@ -456,23 +457,22 @@ void DGTextArrayDisplay::setText(long inStringNum, const char * inNewText)
 }
 
 //-----------------------------------------------------------------------------
-void DGTextArrayDisplay::draw(CGContextRef inContext, long inPortHeight)
+void DGTextArrayDisplay::draw(DGGraphicsContext * inContext)
 {
 	if (backgroundImage == NULL)
 	{
 // XXX hmmm, I need to do something else to check on this; we may just want to draw on top of the background
 #if 0
-		CGRect fillRect = getBounds()->convertToCGRect(inPortHeight);
-		CGContextSetRGBFillColor(inContext, 59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f, 1.0f);
-		CGContextFillRect(inContext, fillRect);
+		inContext->setFillColor( DGColor(59.0f/255.0f, 83.0f/255.0f, 165.0f/255.0f) );
+		inContext->fillRect( getBounds() );
 #endif
 	}
 	else
-		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+		backgroundImage->draw(getBounds(), inContext);
 
 	long stringIndex = GetControl32BitValue(carbonControl) - GetControl32BitMinimum(carbonControl);
 	if ( (stringIndex >= 0) && (stringIndex < numStrings) )
-		drawText(getBounds(), displayStrings[stringIndex], inContext, inPortHeight);
+		drawText(getBounds(), displayStrings[stringIndex], inContext);
 }
 
 
@@ -501,10 +501,10 @@ DGAnimation::DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * 
 }
 
 //-----------------------------------------------------------------------------
-void DGAnimation::draw(CGContextRef inContext, long inPortHeight)
+void DGAnimation::draw(DGGraphicsContext * inContext)
 {
 	if (backgroundImage != NULL)
-		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+		backgroundImage->draw(getBounds(), inContext);
 
 	if (animationImage != NULL)
 	{
@@ -515,6 +515,6 @@ void DGAnimation::draw(CGContextRef inContext, long inPortHeight)
 		long frameIndex = (long) ( valNorm * (float)(numAnimationFrames-1) );
 
 		long yoff = frameIndex * (animationImage->getHeight() / numAnimationFrames);
-		animationImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
+		animationImage->draw(getBounds(), inContext, 0, yoff);
 	}
 }
