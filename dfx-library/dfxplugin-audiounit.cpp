@@ -224,10 +224,22 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			result = noErr;
 			break;
 
+		case kAudioUnitMigrateProperty_FromPlugin:
+			outDataSize = sizeof(CFArrayRef);
+			outWritable = false;
+			result = noErr;
+			break;
+
+		case kAudioUnitMigrateProperty_OldAutomation:
+			outDataSize = sizeof(AudioUnitParameterValueTranslation);
+			outWritable = false;
+			result = noErr;
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
 //		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
 //		MIDI controls and/or NRPN's to AudioUnit scopes/elements/parameters.
-		case kAudioUnitProperty_MIDIControlMapping:
+		case kAudioUnitProperty_MIDIControlMapping:	// XXX deprecated in QuickTime 7
 			if (inScope == kAudioUnitScope_Global)
 			{
 				outDataSize = sizeof(AudioUnitMIDIControlMapping*);
@@ -327,8 +339,40 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 
+		case kAudioUnitMigrateProperty_FromPlugin:
+			{
+				// VST counterpart description
+				static AudioUnitOtherPluginDesc vstPluginMigrationDesc;
+				memset(&vstPluginMigrationDesc, 0, sizeof(vstPluginMigrationDesc));
+				vstPluginMigrationDesc.format = kOtherPluginFormat_kVST;
+				vstPluginMigrationDesc.plugin.mSubType = PLUGIN_ID;
+				// create a CFArray of the VST counterpart description
+				CFMutableArrayRef descsArray = CFArrayCreateMutable(NULL, 1, NULL);
+				if (descsArray != NULL)
+				{
+					CFArrayAppendValue(descsArray, &vstPluginMigrationDesc);
+					*((CFArrayRef*)outData) = descsArray;
+				}
+				else
+					result = coreFoundationUnknownErr;
+			}
+			break;
+
+		case kAudioUnitMigrateProperty_OldAutomation:
+			{
+				AudioUnitParameterValueTranslation * pvt = (AudioUnitParameterValueTranslation*)outData;
+				if ( (pvt->otherDesc.format == kOtherPluginFormat_kVST) && (pvt->otherDesc.plugin.mSubType == PLUGIN_ID) )
+				{
+					pvt->auParamID = pvt->otherParamID;
+					pvt->auValue = expandparametervalue_index((long)(pvt->otherParamID), pvt->otherValue);
+				}
+				else
+					result = kAudioUnitErr_InvalidPropertyValue;
+			}
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
-		case kAudioUnitProperty_MIDIControlMapping:
+		case kAudioUnitProperty_MIDIControlMapping:	// XXX deprecated in QuickTime 7
 			if (inScope != kAudioUnitScope_Global)
 				result = kAudioUnitErr_InvalidScope;
 			else
@@ -514,8 +558,16 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			result = kAudioUnitErr_PropertyNotWritable;
 			break;
 
+		case kAudioUnitMigrateProperty_FromPlugin:
+			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
+		case kAudioUnitMigrateProperty_OldAutomation:
+			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
-		case kAudioUnitProperty_MIDIControlMapping:
+		case kAudioUnitProperty_MIDIControlMapping:	// XXX deprecated in QuickTime 7
 			result = kAudioUnitErr_PropertyNotWritable;
 			break;
 	#endif
@@ -1139,30 +1191,30 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 	#endif
 	}
 
-	// if we couldn't get any data, abort with an error
-	// XXX really?  couldn't we just restore the regular parameter values and that would be good enough?
-	if ( !dataFound || (cfdata == NULL) )
-		return kAudioUnitErr_InvalidPropertyValue;
+	if ( dataFound && (cfdata != NULL) )
+	{
+		// a pointer to our special data
+		const UInt8 * dfxdata = CFDataGetBytePtr(cfdata);
+		// the number of bytes of our data
+		unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
+		// try to restore the saved settings data
+		bool success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
 
-	// a pointer to our special data
-	const UInt8 * dfxdata = CFDataGetBytePtr(cfdata);
-	// the number of bytes of our data
-	unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
-	// try to restore the saved settings data
-	bool success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
+		#if DEBUG_VST_SETTINGS_IMPORT
+		if (success)
+			fprintf(stderr, "settings data was successfully loaded\n");
+		else
+			fprintf(stderr, "settings data failed to load\n");
+		#endif
 
-	#if DEBUG_VST_SETTINGS_IMPORT
-	if (success)
-		fprintf(stderr, "settings data was successfully loaded\n");
+//		if (!success)
+//			return kAudioUnitErr_InvalidPropertyValue;
+	}
 	else
-		fprintf(stderr, "settings data failed to load\n");
-	#endif
-
-	if (!success)
-		return kAudioUnitErr_InvalidPropertyValue;
+	{
 
 #else
-// XXX should we rethink this and load parameter settings if dfxsettings->restore() fails, or always before dfxsettings->restore()?
+// XXX should we rethink this and load parameter settings always before dfxsettings->restore()?
 	// load the parameter settings that were restored 
 	// by the inherited base class implementation of RestoreState
 	for (long i=0; i < numParameters; i++)
@@ -1170,6 +1222,10 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 
 #endif
 // TARGET_PLUGIN_USES_MIDI
+
+#if TARGET_PLUGIN_USES_MIDI
+	}
+#endif
 
 	// make any listeners aware of the changes in the parameter values
 	for (long i=0; i < numParameters; i++)
@@ -1213,10 +1269,13 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 					if ( (newNumChannels == auChannelConfigs[i].outChannels) || (auChannelConfigs[i].outChannels < 0) )
 						foundMatch = true;
 					break;
+				// XXX input and output scopes together at once?
+				case kAudioUnitScope_Global:
+					if ( ((newNumChannels == auChannelConfigs[i].inChannels) || (auChannelConfigs[i].inChannels < 0))
+							&& ((newNumChannels == auChannelConfigs[i].outChannels) || (auChannelConfigs[i].outChannels < 0)) )
+						foundMatch = true;
+					break;
 				default:
-					// just allow this pass through, since it's unknown what it's for
-//					foundMatch = true;
-//					break;
 					return kAudioUnitErr_InvalidScope;
 			}
 		}
