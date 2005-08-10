@@ -28,7 +28,7 @@ public:
 	virtual ~DGButton();
 	virtual void post_embed();
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(DGGraphicsContext * inContext);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
 	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
@@ -81,7 +81,7 @@ public:
 						DGImage * inImage, float inValueChangeAmount = 0.0001f);
 	virtual ~DGFineTuneButton();
 
-	virtual void draw(CGContextRef inContext, long inPortHeight);
+	virtual void draw(DGGraphicsContext * inContext);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
 	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);

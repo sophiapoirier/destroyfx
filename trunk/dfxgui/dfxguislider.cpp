@@ -43,10 +43,10 @@ DGSlider::~DGSlider()
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::draw(CGContextRef inContext, long inPortHeight)
+void DGSlider::draw(DGGraphicsContext * inContext)
 {
 	if (backgroundImage != NULL)
-		backgroundImage->draw(getBounds(), inContext, inPortHeight);
+		backgroundImage->draw(getBounds(), inContext);
 
 	SInt32 min = GetControl32BitMinimum(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -64,7 +64,7 @@ void DGSlider::draw(CGContextRef inContext, long inPortHeight)
 		}
 		else
 			xoff = (long) round( (float)(getForeBounds()->w) * valNorm );
-		handleImage->draw(&drawRect, inContext, inPortHeight, -xoff, -yoff);
+		handleImage->draw(&drawRect, inContext, -xoff, -yoff);
 	}
 }
 
