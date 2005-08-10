@@ -16,7 +16,7 @@ inline double calculateTargetSpeed(double a, double n, double k)
 	double lambertInput = (n * a) / k;
 	b = k * LambertW(lambertInput) / n;
 	// cuz I don't totally trust my LambertW function...
-#if MAC
+#if TARGET_OS_MAC
 	if ( isnan(b) || (! __isfinite(b)) )
 #else
 	if ( _isnan(b) || (! _finite(b)) )
