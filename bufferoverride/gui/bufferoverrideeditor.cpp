@@ -111,7 +111,7 @@ enum {
 	kMidiResetButtonY = 86,
 
 	kGoButtonX = 386,
-	kGoButtonY = 6,
+	kGoButtonY = 6
 };
 
 
@@ -256,7 +256,7 @@ void tempoDisplayProc(float value, char * outText, void *)
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(BufferOverrideEditor);
+COMPONENT_ENTRY(BufferOverrideEditor)
 
 //-----------------------------------------------------------------------------
 BufferOverrideEditor::BufferOverrideEditor(AudioUnitCarbonView inInstance)
@@ -541,7 +541,7 @@ void BufferOverrideEditor::mouseovercontrolchanged(DGControl * currentControlUnd
 			sprintf(helpstring, "forced buffer size is the length of the sound chunks that Buffer Override works with");
 			break;
 //		case kBufferDivisorHelpTag:
-#if MAC
+#if TARGET_OS_MAC
 //			sprintf(helpstring, "left/right is buffer divisor (the number of skips in a forced buffer, hold ctrl).   up/down is forced buffer size (hold option)");
 #else
 			// shorten display text for Windows (beware larger fonts)
