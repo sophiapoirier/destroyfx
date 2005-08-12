@@ -13,14 +13,16 @@
 // CoreGraphics is oriented bottom-left whereas HIToolbox and Control Manager 
 // are oriented top-left.  The function will translate a rectangle from 
 // control orientation to graphics orientation.
-inline CGRect TransformControlBoundsToDrawingBounds(CGRect inRect, float inPortHeight)
+inline CGRect TransformControlBoundsToDrawingBounds(CGRect inRect, long inPortHeight)
 {
-	inRect.origin.y = inPortHeight - (inRect.origin.y + inRect.size.height);
+	if (inPortHeight > 0)	// 0 signifies a compositing window, which is already top-left-oriented
+		inRect.origin.y = (float)inPortHeight - (inRect.origin.y + inRect.size.height);
 	return inRect;
 }
 
 
-#pragma mark _________RMSControl_________
+#pragma mark -
+#pragma mark RMSControl
 //-----------------------------------------------------------------------------
 //                           RMSControl
 //-----------------------------------------------------------------------------
@@ -83,8 +85,8 @@ CGRect RMSControl::getBoundsRect()
 	if (carbonControl != NULL)
 	{
 		CGRect controlRect;
-		OSStatus error = HIViewGetBounds(carbonControl, &controlRect);
-		if (error == noErr)
+		OSStatus status = HIViewGetBounds(carbonControl, &controlRect);
+		if (status == noErr)
 			return controlRect;
 	}
 	return CGRectMake(0.0f, 0.0f, 0.0f, 0.0f);
@@ -105,7 +107,8 @@ void RMSControl::redraw()
 
 
 
-#pragma mark _________RMSTextDisplay_________
+#pragma mark -
+#pragma mark RMSTextDisplay
 #define MINUS_INFINITY_STRING	"-oo"
 //-----------------------------------------------------------------------------
 //                           RMSTextDisplay
@@ -143,10 +146,8 @@ RMSTextDisplay::~RMSTextDisplay()
 }
 
 //-----------------------------------------------------------------------------
-void RMSTextDisplay::draw(CGContextRef inContext, float inPortHeight)
+void RMSTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 {
-	CGContextSetShouldAntialias(inContext, false);	// XXX maybe this is more efficient for the box drawing?
-
 	// fill in the background color
 	CGRect bounds = getBoundsRect();
 	bounds = TransformControlBoundsToDrawingBounds(bounds, inPortHeight);
@@ -167,10 +168,17 @@ void RMSTextDisplay::draw(CGContextRef inContext, float inPortHeight)
 	}
 
 	// draw the text
-	CGContextSetShouldAntialias(inContext, true);	// now we want anti-aliasing
 	CGContextSetShouldSmoothFonts(inContext, true);
 	CGContextSelectFont(inContext, fontName, fontSize, kCGEncodingMacRoman);
 	CGContextSetRGBFillColor(inContext, (float)textColor.r/255.0f, (float)textColor.g/255.0f, (float)textColor.b/255.0f, 1.0f);
+	// the text drawing is upside-down in compositing windows unless we do this transformation
+	if ( ownerEditor->IsCompositWindow() )
+	{
+//		CGAffineTransform textCTM = CGAffineTransformMake(1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+//		CGContextSetTextMatrix(inContext, textCTM);
+		CGContextTranslateCTM(inContext, 0.0f, bounds.size.height);
+		CGContextScaleCTM(inContext, 1.0f, -1.0f);
+	}
 	// do tricks to align the text if it's not left-aligned
 	if (textAlignment != kTextAlign_left)
 	{
@@ -247,7 +255,8 @@ void RMSTextDisplay::setText_int(long inValue)
 
 
 
-#pragma mark _________RMSButton_________
+#pragma mark -
+#pragma mark RMSButton
 //-----------------------------------------------------------------------------
 //                           RMSButton
 //-----------------------------------------------------------------------------
@@ -258,17 +267,25 @@ RMSButton::RMSButton(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, C
 }
 
 //-----------------------------------------------------------------------------
-void RMSButton::draw(CGContextRef inContext, float inPortHeight)
+void RMSButton::draw(CGContextRef inContext, long inPortHeight)
 {
-	CGContextSetShouldAntialias(inContext, false);	// we more or less just want straight blitting of the image
 	CGRect bounds = getBoundsRect();
 	bounds = TransformControlBoundsToDrawingBounds(bounds, inPortHeight);
 	// do this because the image is twice the size of the control, 
 	// and if we don't use the actual image size, Quartz will stretch the image
 	bounds.size.height *= 2;
+	// the indexing positioning is reversed in a composite window, so compensate here
+	if ( ownerEditor->IsCompositWindow() )
+		bounds.origin.y += (float)height;
 	// offset to the top image frame if the button is in its non-pressed state
 	if ( GetControl32BitValue(getCarbonControl()) == 0 )
 		bounds.origin.y -= (float)height;
+	// the image drawing is upside-down in compositing windows unless we do this transformation
+	if ( ownerEditor->IsCompositWindow() )
+	{
+		CGContextTranslateCTM(inContext, 0.0f, bounds.size.height);
+		CGContextScaleCTM(inContext, 1.0f, -1.0f);
+	}
 	CGContextDrawImage(inContext, bounds, buttonImage);
 }
 
@@ -306,7 +323,8 @@ void RMSButton::mouseUp(long inXpos, long inYpos)
 
 
 
-#pragma mark _________RMSSlider_________
+#pragma mark -
+#pragma mark RMSSlider
 //-----------------------------------------------------------------------------
 //                           RMSSlider
 //-----------------------------------------------------------------------------
@@ -324,10 +342,8 @@ RMSSlider::~RMSSlider()
 }
 
 //-----------------------------------------------------------------------------
-void RMSSlider::draw(CGContextRef inContext, float inPortHeight)
+void RMSSlider::draw(CGContextRef inContext, long inPortHeight)
 {
-	CGContextSetShouldAntialias(inContext, false);	// XXX maybe this is more efficient for the box drawing?
-
 	// fill in the background color
 	CGRect bounds = getBoundsRect();
 	bounds = TransformControlBoundsToDrawingBounds(bounds, inPortHeight);
@@ -374,17 +390,13 @@ void RMSSlider::mouseTrack(long inXpos, long inYpos)
 	SetControl32BitValue( getCarbonControl(), (SInt32)(valueNorm * (float)GetControl32BitMaximum(getCarbonControl())) );
 }
 
-//-----------------------------------------------------------------------------
-void RMSSlider::mouseUp(long inXpos, long inYpos)
-{
-}
 
 
 
 
 
-
-#pragma mark _________RMSBuddyEditor_________
+#pragma mark -
+#pragma mark RMSBuddyEditor
 
 //-----------------------------------------------------------------------------
 // constants
@@ -396,22 +408,22 @@ const RMSColor kMyLightOrangeColor = { 219, 145, 85 };
 const RMSColor kWhiteColor = { 255, 255, 255 };
 const RMSColor kMyYellowColor = { 249, 249, 120 };
 
-#define VALUE_DISPLAY_FONT	"Monaco"
-#define VALUE_DISPLAY_FONT_SIZE	12.0f
-#define LABEL_DISPLAY_FONT	"Lucida Grande"
-#define LABEL_DISPLAY_FONT_SIZE	12.0f
-#define SLIDER_LABEL_DISPLAY_FONT	"Lucida Grande"
-#define SLIDER_LABEL_DISPLAY_FONT_SIZE	11.0f
+const char * kValueDisplayFont = "Monaco";
+const float kValueDisplayFontSize = 12.0f;
+const char * kLabelDisplayFont = "Lucida Grande";
+const float kLabelDisplayFontSize = 12.0f;
+const char * kSliderLabelDisplayFont = "Lucida Grande";
+const float kSliderLabelDisplayFontSize = 11.0f;
 
-#define kBackgroundColor		kMyLightBrownColor
-#define kBackgroundFrameColor	kMyBrownColor
-#define kLabelTextColor			kWhiteColor
-#define kReadoutFrameColor		kMyBrownColor
-#define kReadoutBoxColor		kMyLightOrangeColor
-#define kReadoutTextColor		kMyDarkBlueColor
-#define kSliderBackgroundColor	kMyDarkBlueColor
-#define kSliderActiveColor		kMyYellowColor
-#define kSliderLabelTextColor	kMyDarkBlueColor
+const RMSColor kBackgroundColor = kMyLightBrownColor;
+const RMSColor kBackgroundFrameColor = kMyBrownColor;
+const RMSColor kLabelTextColor = kWhiteColor;
+const RMSColor kReadoutFrameColor = kMyBrownColor;
+const RMSColor kReadoutBoxColor = kMyLightOrangeColor;
+const RMSColor kReadoutTextColor = kMyDarkBlueColor;
+const RMSColor kSliderBackgroundColor = kMyDarkBlueColor;
+const RMSColor kSliderActiveColor = kMyYellowColor;
+const RMSColor kSliderLabelTextColor = kMyDarkBlueColor;
 
 
 //-----------------------------------------------------------------------------
@@ -447,7 +459,7 @@ enum {
 	kSliderLabelHeight = 13,
 
 	kBackgroundWidth = 151,
-	kBackgroundHeight = kSliderLabelY + 9 + kSliderLabelHeight,//156,
+	kBackgroundHeight = kSliderLabelY + 9 + kSliderLabelHeight//156
 };
 
 
@@ -462,7 +474,7 @@ static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInst
 
 //-----------------------------------------------------------------------------
 // macro for boring Component entry point stuff
-COMPONENT_ENTRY(RMSBuddyEditor);
+COMPONENT_ENTRY(RMSBuddyEditor)
 
 
 //-----------------------------------------------------------------------------
@@ -676,7 +688,7 @@ OSStatus RMSBuddyEditor::setup()
 	long xpos = kValueDisplayX;
 	long ypos = kValueDisplayY;
 
-#define VALUE_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueDisplayWidth, kValueDisplayHeight, kReadoutTextColor, kReadoutBoxColor, kReadoutFrameColor, VALUE_DISPLAY_FONT, VALUE_DISPLAY_FONT_SIZE, kTextAlign_center)
+#define VALUE_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueDisplayWidth, kValueDisplayHeight, kReadoutTextColor, kReadoutBoxColor, kReadoutFrameColor, kValueDisplayFont, kValueDisplayFontSize, kTextAlign_center)
 
 	for (unsigned long ch=0; ch < numChannels; ch++)
 	{
@@ -711,7 +723,7 @@ OSStatus RMSBuddyEditor::setup()
 	xpos = kValueLabelX;
 	ypos = kValueLabelY;
 
-#define LABEL_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueLabelWidth, kValueLabelHeight, kLabelTextColor, kBackgroundColor, kBackgroundColor, LABEL_DISPLAY_FONT, LABEL_DISPLAY_FONT_SIZE, kTextAlign_right)
+#define LABEL_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueLabelWidth, kValueLabelHeight, kLabelTextColor, kBackgroundColor, kBackgroundColor, kLabelDisplayFont, kLabelDisplayFontSize, kTextAlign_right)
 
 	// the words "average RMS"
 	averageRMSLabel = new LABEL_TEXT_DISPLAY;
@@ -741,7 +753,7 @@ OSStatus RMSBuddyEditor::setup()
 	for (unsigned long ch=0; ch < numChannels; ch++)
 	{
 		channelLabels[ch] = new RMSTextDisplay(this, xpos, ypos, kChannelLabelWidth, kChannelLabelHeight, kLabelTextColor, 
-							kBackgroundColor, kBackgroundColor, LABEL_DISPLAY_FONT, LABEL_DISPLAY_FONT_SIZE, kTextAlign_center);
+							kBackgroundColor, kBackgroundColor, kLabelDisplayFont, kLabelDisplayFontSize, kTextAlign_center);
 
 		if (numChannels <= 1)
 			channelLabels[ch]->setText(" ");
@@ -780,14 +792,14 @@ OSStatus RMSBuddyEditor::setup()
 	long sliderLabelWidth = (2 * sliderWidth) / 3;
 	windowSizeLabel = new RMSTextDisplay(this, kSliderLabelX, kSliderLabelY, sliderLabelWidth, kSliderLabelHeight, 
 										kSliderLabelTextColor, kBackgroundColor, kBackgroundColor, 
-										SLIDER_LABEL_DISPLAY_FONT, SLIDER_LABEL_DISPLAY_FONT_SIZE, kTextAlign_left);
+										kSliderLabelDisplayFont, kSliderLabelDisplayFontSize, kTextAlign_left);
 	windowSizeLabel->setText("analysis window size");
 
 	// the analysis window size value read-out
 	long sliderDisplayWidth = sliderWidth - sliderLabelWidth;
 	windowSizeDisplay = new RMSTextDisplay(this, kSliderLabelX + sliderLabelWidth, kSliderLabelY, sliderDisplayWidth, kSliderLabelHeight, 
 										kSliderLabelTextColor, kBackgroundColor, kBackgroundColor, 
-										SLIDER_LABEL_DISPLAY_FONT, SLIDER_LABEL_DISPLAY_FONT_SIZE, kTextAlign_right, kAnalysisFrameSize);
+										kSliderLabelDisplayFont, kSliderLabelDisplayFontSize, kTextAlign_right, kAnalysisFrameSize);
 
 
 	// set size of the background embedding pane control to fit the entire UI display
@@ -837,57 +849,62 @@ void RMSBuddyEditor::cleanup()
 
 //-----------------------------------------------------------------------------
 // inEvent is expected to be an event of the class kEventClassControl.  
-// The return value is true if a CGContextRef was available from the event parameters 
-// (which happens with compositing windows) or false if the CGContext had to be created 
+// outPort will be null if a CGContextRef was available from the event parameters 
+// (which happens with compositing windows) or non-null if the CGContext had to be created 
 // for the control's window port QuickDraw-style.  
-bool InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGrafPtr & outPort, float & outPortHeight)
+OSStatus InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGrafPtr & outPort, long & outPortHeight)
 {
 	outContext = NULL;
 	outPort = NULL;
 	if (inEvent == NULL)
-		return false;
+		return paramErr;
 
-	bool gotAutoContext = false;
-	OSStatus error;
+	OSStatus status;
 
-	// if we received a graphics port parameter, use that...
-	error = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &outPort);
-	// ... otherwise use the current graphics port
-	if ( (error != noErr) || (outPort == NULL) )
-		GetPort(&outPort);
-	if (outPort == NULL)
-		return false;
-	Rect portBounds;
-	GetPortBounds(outPort, &portBounds);
-	outPortHeight = (float) (portBounds.bottom - portBounds.top);
-
-	// set up the CG context
 	// if we are in compositing mode, then we can get a CG context already set up and clipped and whatnot
-	error = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &outContext);
-	if ( (error == noErr) && (outContext != NULL) )
-		gotAutoContext = true;
+	status = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(outContext), NULL, &outContext);
+	if ( (status == noErr) && (outContext != NULL) )
+	{
+		outPortHeight = 0;
+	}
+	// otherwise we need to get it from the QD port
 	else
 	{
-		error = QDBeginCGContext(outPort, &outContext);
-		if ( (error != noErr) || (outContext == NULL) )
+		// if we received a graphics port parameter, use that...
+		status = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(outPort), NULL, &outPort);
+		// ... otherwise use the current graphics port
+		if ( (status != noErr) || (outPort == NULL) )
+			GetPort(&outPort);
+		if (outPort == NULL)
+			return noPortErr;
+		Rect portBounds;
+		GetPortBounds(outPort, &portBounds);
+		outPortHeight = (long) (portBounds.bottom - portBounds.top);
+
+		status = QDBeginCGContext(outPort, &outContext);
+		if ( (status != noErr) || (outContext == NULL) )
 		{
-			outContext = NULL;	// probably crazy, but in case there's an error, and yet a non-null result for the context
-			return false;
+			if (status == noErr)
+				status = statusErr;
+			outContext = NULL;	// probably unlikely, but in case there's an error, and yet a non-null result for the context
+			return status;
 		}
 	}
+
 	CGContextSaveGState(outContext);
-	SyncCGContextOriginWithPort(outContext, outPort);
+	if (outPort != NULL)
+		SyncCGContextOriginWithPort(outContext, outPort);
 
 	// define the clipping region if we are not compositing and had to create our own context
-	if (!gotAutoContext)
+	if (outPort != NULL)
 	{
 		ControlRef carbonControl = NULL;
-		error = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
-		if ( (error == noErr) && (carbonControl != NULL) )
+		status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(carbonControl), NULL, &carbonControl);
+		if ( (status == noErr) && (carbonControl != NULL) )
 		{
 			CGRect clipRect;
-			error = HIViewGetBounds(carbonControl, &clipRect);
-			if (error == noErr)
+			status = HIViewGetBounds(carbonControl, &clipRect);
+			if (status == noErr)
 			{
 				clipRect = TransformControlBoundsToDrawingBounds(clipRect, outPortHeight);
 				CGContextClipToRect(outContext, clipRect);
@@ -895,14 +912,14 @@ bool InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, CGra
 		}
 	}
 
-	return gotAutoContext;
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-// inGotAutoContext should be the return value that you got from InitControlDrawingContext().  
-// It is true if inContext came with the control event (compositing window behavior) or 
-// false if inContext was created via QDBeginCGContext(), and hence needs to be disposed.  
-void CleanupControlDrawingContext(CGContextRef & inContext, bool inGotAutoContext, CGrafPtr inPort)
+// inPort should be what you got from InitControlDrawingContext().  
+// It is null if inContext came with the control event (compositing window behavior) or 
+// non-null if inContext was created via QDBeginCGContext(), and hence needs to be terminated.
+void CleanupControlDrawingContext(CGContextRef & inContext, CGrafPtr inPort)
 {
 	if (inContext == NULL)
 		return;
@@ -910,7 +927,7 @@ void CleanupControlDrawingContext(CGContextRef & inContext, bool inGotAutoContex
 	CGContextRestoreGState(inContext);
 	CGContextSynchronize(inContext);
 
-	if ( !inGotAutoContext && (inPort != NULL) )
+	if (inPort != NULL)
 		QDEndCGContext(inPort, &inContext);
 }
 
@@ -921,18 +938,18 @@ bool RMSBuddyEditor::HandleEvent(EventRef inEvent)
 	if ( (GetEventClass(inEvent) == kEventClassControl) && (GetEventKind(inEvent) == kEventControlDraw) )
 	{
 		ControlRef carbonControl = NULL;
-		OSStatus error = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
-		if ( (carbonControl == GetCarbonPane()) && (carbonControl != NULL) && (error == noErr) )
+		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(carbonControl), NULL, &carbonControl);
+		if ( (carbonControl == GetCarbonPane()) && (carbonControl != NULL) && (status == noErr) )
 		{
 			CGRect controlBounds;
-			error = HIViewGetBounds(carbonControl, &controlBounds);
-			if (error != noErr)
+			status = HIViewGetBounds(carbonControl, &controlBounds);
+			if (status != noErr)
 				return false;
 			CGContextRef context = NULL;
 			CGrafPtr windowPort = NULL;
-			float portHeight;
-			bool gotAutoContext = InitControlDrawingContext(inEvent, context, windowPort, portHeight);
-			if ( (context == NULL) || (windowPort == NULL) )
+			long portHeight;
+			status = InitControlDrawingContext(inEvent, context, windowPort, portHeight);
+			if ( (status != noErr) || (context == NULL) )
 				return false;
 
 			controlBounds = TransformControlBoundsToDrawingBounds(controlBounds, portHeight);
@@ -957,7 +974,7 @@ bool RMSBuddyEditor::HandleEvent(EventRef inEvent)
 			CGContextSetAlpha(context, 0.081f);
 			CGContextStrokeRect(context, box);
 
-			CleanupControlDrawingContext(context, gotAutoContext, windowPort);
+			CleanupControlDrawingContext(context, windowPort);
 			return true;
 		}
 	}
@@ -977,7 +994,7 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 
 	// get the mouse location event parameter
 	HIPoint mouseLocation_f;
-	GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation_f);
+	GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(mouseLocation_f), NULL, &mouseLocation_f);
 	long mouseX = (long) mouseLocation_f.x;
 	long mouseY = (long) mouseLocation_f.y;
 
@@ -992,7 +1009,7 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 	GetControlBounds(ourRMSControl->getCarbonControl(), &controlBounds);
 	Rect windowBounds;	// window content region
 	WindowRef window;
-	GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
+	GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(window), NULL, &window);
 	GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
 	if ( ourOwnerEditor->IsCompositWindow() )
 	{
@@ -1049,7 +1066,8 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 
 	// get the Carbon Control reference event parameter
 	ControlRef ourCarbonControl = NULL;
-	if (GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &ourCarbonControl) != noErr)
+	OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ourCarbonControl), NULL, &ourCarbonControl);
+	if (status != noErr)
 		return eventNotHandledErr;
 	if (ourCarbonControl == NULL)
 		return eventNotHandledErr;
@@ -1065,15 +1083,15 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 			{
 				CGContextRef context = NULL;
 				CGrafPtr windowPort = NULL;
-				float portHeight;
-				bool gotAutoContext = InitControlDrawingContext(inEvent, context, windowPort, portHeight);
-				if ( (context == NULL) || (windowPort == NULL) )
+				long portHeight;
+				status = InitControlDrawingContext(inEvent, context, windowPort, portHeight);
+				if ( (status != noErr) || (context == NULL) )
 					return eventNotHandledErr;
 
 				// draw
 				ourRMSControl->draw(context, portHeight);
 
-				CleanupControlDrawingContext(context, gotAutoContext, windowPort);
+				CleanupControlDrawingContext(context, windowPort);
 			}
 			return noErr;
 
@@ -1081,7 +1099,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 			{
 				// get the mouse location event parameter
 				HIPoint mouseLocation_f;
-				GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation_f);
+				GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(mouseLocation_f), NULL, &mouseLocation_f);
 				long mouseX = (long) mouseLocation_f.x;
 				long mouseY = (long) mouseLocation_f.y;
 
@@ -1219,10 +1237,7 @@ else fprintf(stderr, "object = %lu\n", (unsigned long)inRMSControl);
 //	if ( (windowSizeSlider != NULL) && (inRMSControl == windowSizeSlider) )
 	if (windowSizeSlider != NULL)
 	{
-		float fmin = windowSizeSlider->getAUVP()->ParamInfo().minValue;
-		float fmax = windowSizeSlider->getAUVP()->ParamInfo().maxValue;
-		float valueNorm = (inParamValue - fmin) / (fmax - fmin);
-		valueNorm = (float) sqrt(valueNorm);
+		float valueNorm = AUParameterValueToLinear(inParamValue, windowSizeSlider->getAUVP());
 
 		ControlRef carbonControl = windowSizeSlider->getCarbonControl();
 		SInt32 cmin = GetControl32BitMinimum(carbonControl);
@@ -1266,11 +1281,9 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 		ControlRef carbonControl = windowSizeSlider->getCarbonControl();
 		SInt32 cmin = GetControl32BitMinimum(carbonControl);
 		SInt32 cmax = GetControl32BitMaximum(carbonControl);
-		Float32 controlValue = (Float32)(inControlValue - cmin) / (Float32)(cmax - cmin);
+		Float32 controlValueNorm = (Float32)(inControlValue - cmin) / (Float32)(cmax - cmin);
 
-		Float32 fmin = windowSizeSlider->getAUVP()->ParamInfo().minValue;
-		Float32 fmax = windowSizeSlider->getAUVP()->ParamInfo().maxValue;
-		Float32 paramValue = ( controlValue*controlValue * (fmax - fmin) ) + fmin;
+		Float32 paramValue = AUParameterValueFromLinear(controlValueNorm, windowSizeSlider->getAUVP());
 		windowSizeSlider->getAUVP()->SetValue(parameterListener, windowSizeSlider, paramValue);
 	}
 }
