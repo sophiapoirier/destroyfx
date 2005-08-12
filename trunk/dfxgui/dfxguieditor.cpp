@@ -270,7 +270,7 @@ ComponentResult DfxGuiEditor::Version()
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 // inEvent is expected to be an event of the class kEventClassControl.  
-// The outPort will be null if a CGContextRef was available from the event parameters 
+// outPort will be null if a CGContextRef was available from the event parameters 
 // (which happens with compositing windows) or non-null if the CGContext had to be created 
 // for the control's window port QuickDraw-style.  
 DGGraphicsContext * InitControlDrawingContext(EventRef inEvent, CGrafPtr & outPort)
@@ -283,19 +283,19 @@ DGGraphicsContext * InitControlDrawingContext(EventRef inEvent, CGrafPtr & outPo
 	CGContextRef cgContext = NULL;
 	long portHeight = 0;
 
-	// set up the CG context
 	// if we are in compositing mode, then we can get a CG context already set up and clipped and whatnot
-	status = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(CGContextRef), NULL, &cgContext);
+	status = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(cgContext), NULL, &cgContext);
 	if ( (status == noErr) && (cgContext != NULL) )
 	{
 //		CGRect contextBounds = CGContextGetClipBoundingBox(cgContext);
 //		portHeight = (long) (contextBounds.size.height);
 		portHeight = 0;
 	}
+	// otherwise we need to get it from the QD port
 	else
 	{
 		// if we received a graphics port parameter, use that...
-		status = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(CGrafPtr), NULL, &outPort);
+		status = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(outPort), NULL, &outPort);
 		// ... otherwise use the current graphics port
 		if ( (status != noErr) || (outPort == NULL) )
 			GetPort(&outPort);	// XXX deprecated in Mac OS X 10.4
@@ -1047,7 +1047,7 @@ return false;
 		GetPort(&oldport);
 		// switch to our window's port
 		WindowRef window = NULL;
-		status = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
+		status = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(window), NULL, &window);
 		if ( (status != noErr) || (window == NULL) )
 			return false;
 		SetPortWindowPort(window);
@@ -1078,7 +1078,7 @@ return false;
 
 // orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 	WindowRef window = NULL;
-	status = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window);
+	status = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(window), NULL, &window);
 	// XXX should we bail if this fails?
 	if ( (status == noErr) && (window != NULL) )
 	{
@@ -1102,7 +1102,7 @@ return false;
 	if (inEventKind == kEventMouseDragged)
 	{
 		UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
-		status = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
+		status = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(mouseButtons), NULL, &mouseButtons);
 		if (status != noErr)
 			mouseButtons = GetCurrentEventButtonState();
 
@@ -1142,11 +1142,11 @@ bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 	if ( (inEventKind == kEventRawKeyDown) || (inEventKind == kEventRawKeyRepeat) )
 	{
 		UInt32 keyCode = 0;
-		status = GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &keyCode);
+		status = GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(keyCode), NULL, &keyCode);
 		unsigned char charCode = 0;
-		status = GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &charCode);
+		status = GetEventParameter(inEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(charCode), NULL, &charCode);
 		UInt32 modifiers = 0;
-		status = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
+		status = GetEventParameter(inEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(modifiers), NULL, &modifiers);
 		if (status != noErr)
 			modifiers = GetCurrentEventKeyModifiers();
 //fprintf(stderr, "keyCode = %lu,  charCode = ", keyCode);
@@ -1177,9 +1177,9 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 	if (inEventKind == kEventCommandProcess)
 	{
 		HICommand hiCommand;
-		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(hiCommand), NULL, &hiCommand);
 		if (status != noErr)
-			status = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(HICommand), NULL, &hiCommand);
+			status = GetEventParameter(inEvent, kEventParamHICommand, typeHICommand, NULL, sizeof(hiCommand), NULL, &hiCommand);
 		if (status != noErr)
 			return false;
 
@@ -1234,7 +1234,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 	OSStatus status;
 
 	ControlRef ourCarbonControl = NULL;
-	status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &ourCarbonControl);
+	status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ourCarbonControl), NULL, &ourCarbonControl);
 	DGControl * ourDGControl = NULL;
 	if ( (status == noErr) && (ourCarbonControl != NULL) )
 		ourDGControl = getDGControlByCarbonControlRef(ourCarbonControl);
@@ -1295,7 +1295,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 //fprintf(stderr, "kEventControlHitTest\n");
 					// get mouse location
 					Point mouseLocation;
-					status = GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(Point), NULL, &mouseLocation);
+					status = GetEventParameter(inEvent, kEventParamMouseLocation, typeQDPoint, NULL, sizeof(mouseLocation), NULL, &mouseLocation);
 					// get control bounds rect
 					Rect controlBounds;
 					GetControlBounds(ourCarbonControl, &controlBounds);
@@ -1338,10 +1338,10 @@ fprintf(stderr, "kEventControlHit\n");
 //					UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 					// XXX kEventParamMouseChord does not exist for control class events, only mouse class
 					// XXX hey, that's not what the headers say, they say that kEventControlClick should have that parameter
-//					status = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(UInt32), NULL, &mouseButtons);
+//					status = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(mouseButtons), NULL, &mouseButtons);
 
 					HIPoint mouseLocation;
-					status = GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
+					status = GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(mouseLocation), NULL, &mouseLocation);
 //fprintf(stderr, "mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation.x, mouseLocation.y);
 					// XXX only kEventControlClick gives global mouse coordinates for kEventParamMouseLocation?
 					if ( (inEventKind == kEventControlContextualMenuClick) || (inEventKind == kEventControlTrack) )
