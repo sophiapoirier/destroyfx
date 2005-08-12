@@ -14,8 +14,8 @@ written by Marc Poirier, October 2002
 
 // define both of these so that we produce the ComponentResources that indicate 
 // "universal binaries" (executables with code for PowerPC and x86)
-#define TARGET_REZ_MAC_PPC	1
-#define TARGET_REZ_MAC_X86	1
+#define ppc_YES		1
+#define i386_YES	1
 
 
 //----------------------------------------------------------------------------- 
