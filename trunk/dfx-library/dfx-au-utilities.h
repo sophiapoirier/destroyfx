@@ -79,8 +79,12 @@ extern OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char *
 /* comparing ComponentDescriptions */
 /* determine if 2 ComponentDescriptions are basically equal */
 extern Boolean ComponentDescriptionsMatch(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2);
+/* determine if 2 ComponentDescriptions have matching manufacturer and sub-type codes */
+extern Boolean ComponentDescriptionsMatch_Loosely(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2);
 /* determine if a ComponentDescription basically matches that of a particular Component */
 extern Boolean ComponentAndDescriptionMatch(Component inComponent, const ComponentDescription * inComponentDescription);
+/* determine if a ComponentDescription matches only the sub-type manufacturer codes of a particular Component */
+extern Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const ComponentDescription * inComponentDescription);
 
 /* stuff for handling AU preset files... */
 /* main */
