@@ -14,7 +14,7 @@ enum {
 	kDynamicsDataProperty = 64000,	// read-only *** get the current dynamics analysis data
 	kResetRMSProperty,	// event message *** reset the average RMS values
 	kResetPeakProperty,	// event message *** reset the absolute peak values
-	kNumChannelsProperty,	// read-only *** get the number of audio channels being analyzed
+	kNumChannelsProperty	// read-only *** get the number of audio channels being analyzed
 };
 
 // this is the data structure passed between GUI and DSP components for kDynamicsDataProperty
@@ -60,6 +60,7 @@ public:
 		{	return RMS_BUDDY_VERSION;	}
 	virtual bool SupportsTail()
 		{	return true;	}
+
 
 private:
 	unsigned long numChannels;	// remember the current number of channels being analyzed
