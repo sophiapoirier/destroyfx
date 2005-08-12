@@ -417,7 +417,7 @@ void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree
 							if (status == noErr)
 							{
 								// if the preset's ComponentDescription doesn't match the AU's, then don't add this preset file
-								if (! ComponentAndDescriptionMatch(inAUComponent, &presetDesc) )
+								if (! ComponentAndDescriptionMatch_Loosely(inAUComponent, &presetDesc) )
 									continue;
 							}
 						}
@@ -794,8 +794,8 @@ pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, v
 							OSStatus status = GetAUComponentDescriptionFromPresetFile(fileUrl, &presetDesc);
 							CFRelease(fileUrl);
 							if (status == noErr)
-								// if the preset's ComponentDescription matches the AU's, then alow this file
-								result = ComponentAndDescriptionMatch((Component)auInstance, &presetDesc);
+								// if the preset's ComponentDescription matches the AU's, then allow this file
+								result = ComponentAndDescriptionMatch_Loosely((Component)auInstance, &presetDesc);
 						}
 					}
 #endif
