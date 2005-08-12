@@ -441,26 +441,33 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 #pragma mark _________Comparing_Components_________
 
 //--------------------------------------------------------------------------
-// determine if 2 ComponentDescriptions are basically equal
-// (by that, I mean that the important identifying values are compared, 
-// but not the ComponentDescription flags)
-Boolean ComponentDescriptionsMatch(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2)
+// general implementation for ComponentDescriptionsMatch() and ComponentDescriptionsMatch_Loosely()
+// if inIgnoreType is true, then the type code is ignored in the ComponentDescriptions
+Boolean ComponentDescriptionsMatch_General(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2, Boolean inIgnoreType);
+Boolean ComponentDescriptionsMatch_General(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2, Boolean inIgnoreType)
 {
 	if ( (inComponentDescription1 == NULL) || (inComponentDescription2 == NULL) )
 		return FALSE;
 
-	// type, sub-type, and manufacturer IDs all need to be equal in order to call this a match
-	if ( (inComponentDescription1->componentType == inComponentDescription2->componentType) 
-			&& (inComponentDescription1->componentSubType == inComponentDescription2->componentSubType) 
+	if ( (inComponentDescription1->componentSubType == inComponentDescription2->componentSubType) 
 			&& (inComponentDescription1->componentManufacturer == inComponentDescription2->componentManufacturer) )
-		return TRUE;
-	else
-		return FALSE;
+	{
+		// only sub-type and manufacturer IDs need to be equal
+		if (inIgnoreType)
+			return TRUE;
+		// type, sub-type, and manufacturer IDs all need to be equal in order to call this a match
+		else if (inComponentDescription1->componentType == inComponentDescription2->componentType)
+			return TRUE;
+	}
+
+	return FALSE;
 }
 
 //--------------------------------------------------------------------------
-// determine if a ComponentDescription basically matches that of a particular Component
-Boolean ComponentAndDescriptionMatch(Component inComponent, const ComponentDescription * inComponentDescription)
+// general implementation for ComponentAndDescriptionMatch() and ComponentAndDescriptionMatch_Loosely()
+// if inIgnoreType is true, then the type code is ignored in the ComponentDescriptions
+Boolean ComponentAndDescriptionMatch_General(Component inComponent, const ComponentDescription * inComponentDescription, Boolean inIgnoreType);
+Boolean ComponentAndDescriptionMatch_General(Component inComponent, const ComponentDescription * inComponentDescription, Boolean inIgnoreType)
 {
 	OSErr status;
 	ComponentDescription desc;
@@ -468,13 +475,43 @@ Boolean ComponentAndDescriptionMatch(Component inComponent, const ComponentDescr
 	if ( (inComponent == NULL) || (inComponentDescription == NULL) )
 		return FALSE;
 
-	// get the ComponentDescription of teh input Component
+	// get the ComponentDescription of the input Component
 	status = GetComponentInfo(inComponent, &desc, NULL, NULL, NULL);
 	if (status != noErr)
 		return FALSE;
 
 	// check if the Component's ComponentDescription matches the input ComponentDescription
-	return ComponentDescriptionsMatch(&desc, inComponentDescription);
+	return ComponentDescriptionsMatch_General(&desc, inComponentDescription, inIgnoreType);
+}
+
+//--------------------------------------------------------------------------
+// determine if 2 ComponentDescriptions are basically equal
+// (by that, I mean that the important identifying values are compared, 
+// but not the ComponentDescription flags)
+Boolean ComponentDescriptionsMatch(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2)
+{
+	return ComponentDescriptionsMatch_General(inComponentDescription1, inComponentDescription2, FALSE);
+}
+
+//--------------------------------------------------------------------------
+// determine if 2 ComponentDescriptions have matching sub-type and manufacturer codes
+Boolean ComponentDescriptionsMatch_Loose(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2)
+{
+	return ComponentDescriptionsMatch_General(inComponentDescription1, inComponentDescription2, TRUE);
+}
+
+//--------------------------------------------------------------------------
+// determine if a ComponentDescription basically matches that of a particular Component
+Boolean ComponentAndDescriptionMatch(Component inComponent, const ComponentDescription * inComponentDescription)
+{
+	return ComponentAndDescriptionMatch_General(inComponent, inComponentDescription, FALSE);
+}
+
+//--------------------------------------------------------------------------
+// determine if a ComponentDescription matches only the sub-type and manufacturer codes of a particular Component
+Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const ComponentDescription * inComponentDescription)
+{
+	return ComponentAndDescriptionMatch_General(inComponent, inComponentDescription, TRUE);
 }
 
 
