@@ -6,7 +6,7 @@
 
 
 // macro for boring Component entry point stuff
-COMPONENT_ENTRY(RMSBuddy);
+COMPONENT_ENTRY(RMSBuddy)
 
 //-----------------------------------------------------------------------------
 RMSBuddy::RMSBuddy(AudioUnit component)
@@ -188,7 +188,8 @@ ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope,
 		outParameterInfo.defaultValue = 69.0f;
 		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
 								| kAudioUnitParameterFlag_IsWritable
-								| kAudioUnitParameterFlag_HasCFNameString;
+								| kAudioUnitParameterFlag_HasCFNameString
+								| kAudioUnitParameterFlag_DisplaySquareRoot;
 		return noErr;
 	}
 
