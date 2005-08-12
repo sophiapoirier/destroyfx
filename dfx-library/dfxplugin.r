@@ -10,15 +10,6 @@ written by Marc Poirier, October 2002
 
 
 //----------------------------------------------------------------------------- 
-// general
-
-// define both of these so that we produce the ComponentResources that indicate 
-// "universal binaries" (executables with code for PowerPC and x86)
-#define ppc_YES		1
-#define i386_YES	1
-
-
-//----------------------------------------------------------------------------- 
 // resources for the base plugin component
 
 // Note that resource IDs must be spaced 2 apart for the 'STR ' name and description
