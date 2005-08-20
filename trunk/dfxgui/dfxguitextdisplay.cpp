@@ -358,7 +358,8 @@ void DGStaticTextDisplay::setCFText(CFStringRef inNewText)
 
 	if (displayCFString != NULL)
 		CFRelease(displayCFString);
-	displayCFString = CFStringCreateCopy(kCFAllocatorDefault, inNewText);
+	displayCFString = inNewText;
+	CFRetain(displayCFString);
 
 	Boolean success = CFStringGetCString(inNewText, displayString, kDGTextDisplay_stringSize, kCFStringEncodingUTF8);
 //	if (success)
