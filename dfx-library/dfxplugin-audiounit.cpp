@@ -1191,6 +1191,7 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 	#endif
 	}
 
+	bool success = false;
 	if ( dataFound && (cfdata != NULL) )
 	{
 		// a pointer to our special data
@@ -1198,7 +1199,7 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 		// the number of bytes of our data
 		unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
 		// try to restore the saved settings data
-		bool success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
+		success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
 
 		#if DEBUG_VST_SETTINGS_IMPORT
 		if (success)
@@ -1210,18 +1211,16 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 //		if (!success)
 //			return kAudioUnitErr_InvalidPropertyValue;
 	}
-	else
+	if (!success)
 	{
+#endif
+// TARGET_PLUGIN_USES_MIDI
 
-#else
 // XXX should we rethink this and load parameter settings always before dfxsettings->restore()?
 	// load the parameter settings that were restored 
 	// by the inherited base class implementation of RestoreState
 	for (long i=0; i < numParameters; i++)
 		setparameter_f(i, Globals()->GetParameter(i));
-
-#endif
-// TARGET_PLUGIN_USES_MIDI
 
 #if TARGET_PLUGIN_USES_MIDI
 	}
