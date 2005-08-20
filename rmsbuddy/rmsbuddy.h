@@ -7,7 +7,7 @@
 
 
 enum {
-	kRMSBuddyParameter_AnalysisFrameSize = 0,	// the size, in ms, of the RMS and peak analysis frame / refresh rate
+	kRMSBuddyParameter_AnalysisWindowSize = 0,	// the size, in ms, of the RMS and peak analysis window / refresh rate
 	kRMSBuddyParameter_TimeToUpdate,	// a fake parameter (really an audio thread GUI notification mechanism)
 
 	// property IDs for allowing the GUI component get DSP information and trigger DSP-related events
