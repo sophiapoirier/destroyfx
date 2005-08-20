@@ -22,13 +22,13 @@ public:
 	virtual void draw(CGContextRef inContext, long inPortHeight)
 		{ }
 	// handle a mouse click in the control
-	virtual void mouseDown(long inXpos, long inYpos)
+	virtual void mouseDown(float inXpos, float inYpos)
 		{ }
 	// handle a mouse drag on the control (mouse moved while clicked)
-	virtual void mouseTrack(long inXpos, long inYpos)
+	virtual void mouseTrack(float inXpos, float inYpos)
 		{ }
 	// handle a mouse button release on the control
-	virtual void mouseUp(long inXpos, long inYpos)
+	virtual void mouseUp(float inXpos, float inYpos)
 		{ }
 
 	// force a redraw of the control to occur
@@ -66,13 +66,6 @@ struct RMSColor {
 	int b;
 };
 
-// used for specifying text alignment in RMSTextDisplay objects
-enum {
-	kTextAlign_left = 0,
-	kTextAlign_center,
-	kTextAlign_right
-};
-
 //-----------------------------------------------------------------------------
 // a text display control object
 class RMSTextDisplay : public RMSControl
@@ -80,12 +73,12 @@ class RMSTextDisplay : public RMSControl
 public:
 	RMSTextDisplay(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
-					const char * inFontName, float inFontSize, long inTextAlignment, long inParamID = -1);
+					ThemeFontID inFontID, HIThemeTextHorizontalFlush inTextAlignment, long inParamID = -1);
 	virtual ~RMSTextDisplay();
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
 	// set the display text directly with a string
-	void setText(const char * inText);
+	void setText(CFStringRef inText);
 	// given a linear amplitude value, set the display text with the dB-converted value
 	void setText_dB(float inLinearValue);
 	// set the display text with an integer value
@@ -93,10 +86,9 @@ public:
 
 private:
 	RMSColor textColor, backColor, frameColor;
-	float fontSize;
-	long textAlignment;
-	char * fontName;
-	char * text;
+	ThemeFontID fontID;
+	HIThemeTextHorizontalFlush textAlignment;
+	CFStringRef text;
 };
 
 
@@ -108,9 +100,9 @@ public:
 	RMSButton(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage);
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
-	virtual void mouseDown(long inXpos, long inYpos);
-	virtual void mouseTrack(long inXpos, long inYpos);
-	virtual void mouseUp(long inXpos, long inYpos);
+	virtual void mouseDown(float inXpos, float inYpos);
+	virtual void mouseTrack(float inXpos, float inYpos);
+	virtual void mouseUp(float inXpos, float inYpos);
 
 private:
 	CGImageRef buttonImage;
@@ -127,8 +119,8 @@ public:
 	virtual ~RMSSlider();
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
-	virtual void mouseDown(long inXpos, long inYpos);
-	virtual void mouseTrack(long inXpos, long inYpos);
+	virtual void mouseDown(float inXpos, float inYpos);
+	virtual void mouseTrack(float inXpos, float inYpos);
 
 private:
 	RMSColor backColor;
@@ -182,6 +174,7 @@ private:
 	// buttons
 	RMSButton * resetRMSbutton;
 	RMSButton * resetPeakButton;
+	RMSButton * helpButton;
 
 	// text display boxes
 	RMSTextDisplay ** averageRMSDisplays;
@@ -200,7 +193,8 @@ private:
 	RMSTextDisplay * windowSizeDisplay;
 
 	// bitmap graphics resource
-	CGImageRef gResetButton;
+	CGImageRef resetButtonImage;
+	CGImageRef helpButtonImage;
 
 	// event handling related stuff
 	EventHandlerUPP controlHandlerUPP;
