@@ -8,6 +8,9 @@
 // macro for boring Component entry point stuff
 COMPONENT_ENTRY(RMSBuddy)
 
+#ifdef RMSBUDDY_ENABLE_RESIZE_TEST
+unsigned long _numChannels = 1;
+#endif
 //-----------------------------------------------------------------------------
 RMSBuddy::RMSBuddy(AudioUnit component)
 	: AUEffectBase(component, true)	// "true" to say that we can process audio in-place
@@ -26,8 +29,8 @@ RMSBuddy::RMSBuddy(AudioUnit component)
 
 	// initialize our parameter
 	AudioUnitParameterInfo paramInfo;
-	if (GetParameterInfo(kAudioUnitScope_Global, kAnalysisFrameSize, paramInfo) == noErr)
-		AUBase::SetParameter(kAnalysisFrameSize, kAudioUnitScope_Global, (AudioUnitElement)0, paramInfo.defaultValue, 0);
+	if (GetParameterInfo(kAudioUnitScope_Global, kRMSBuddyParameter_AnalysisWindowSize, paramInfo) == noErr)
+		AUBase::SetParameter(kRMSBuddyParameter_AnalysisWindowSize, kAudioUnitScope_Global, (AudioUnitElement)0, paramInfo.defaultValue, 0);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -41,7 +44,7 @@ ComponentResult RMSBuddy::Initialize()
 		unsigned long oldNumChannels = numChannels;
 		numChannels = GetNumberOfChannels();
 		if (numChannels != oldNumChannels)
-			PropertyChanged(kNumChannelsProperty, kAudioUnitScope_Global, (AudioUnitElement)0);
+			PropertyChanged(kRMSBuddyProperty_NumChannels, kAudioUnitScope_Global, (AudioUnitElement)0);
 
 		// allocate dynamics data value arrays according to the current number of channels
 		averageRMS = (double*) malloc(numChannels * sizeof(double));
@@ -49,7 +52,7 @@ ComponentResult RMSBuddy::Initialize()
 		absolutePeak = (float*) malloc(numChannels * sizeof(float));
 		guiContinualRMS = (double*) malloc(numChannels * sizeof(double));
 		guiContinualPeak = (float*) malloc(numChannels * sizeof(float));
-		guiShareDataCache = (RmsBuddyDynamicsData*) malloc(numChannels * sizeof(RmsBuddyDynamicsData));
+		guiShareDataCache = (RMSBuddyDynamicsData*) malloc(numChannels * sizeof(RMSBuddyDynamicsData));
 
 		// since hosts aren't required to trigger Reset between Initializing and starting audio processing, 
 		// it's a good idea to do it ourselves here
@@ -101,8 +104,8 @@ ComponentResult RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inEleme
 	{
 		for (unsigned long ch=0; ch < numChannels; ch++)
 		{
-			guiShareDataCache[ch].continualRMS = 0.0;
-			guiShareDataCache[ch].continualPeak = 0.0f;
+			guiShareDataCache[ch].outContinualRMS = 0.0;
+			guiShareDataCache[ch].outContinualPeak = 0.0f;
 		}
 	}
 
@@ -111,6 +114,15 @@ ComponentResult RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inEleme
 
 	return noErr;
 }
+
+#ifdef RMSBUDDY_ENABLE_RESIZE_TEST
+ComponentResult RMSBuddy::RestoreState(CFPropertyListRef inData)
+{
+	_numChannels++;
+	PropertyChanged(kRMSBuddyProperty_NumChannels, kAudioUnitScope_Global, (AudioUnitElement)0);
+	return AUBase::RestoreState(inData);
+}
+#endif
 
 //-----------------------------------------------------------------------------------------
 // reset the average RMS-related values and restart calculation of average RMS
@@ -125,7 +137,7 @@ void RMSBuddy::resetRMS()
 			averageRMS[ch] = 0.0;
 
 		if (guiShareDataCache != NULL)
-			guiShareDataCache[ch].averageRMS = 0.0;
+			guiShareDataCache[ch].outAverageRMS = 0.0;
 	}
 }
 
@@ -139,7 +151,7 @@ void RMSBuddy::resetPeak()
 			absolutePeak[ch] = 0.0f;
 
 		if (guiShareDataCache != NULL)
-			guiShareDataCache[ch].absolutePeak = 0.0f;
+			guiShareDataCache[ch].outAbsolutePeak = 0.0f;
 	}
 }
 
@@ -167,7 +179,7 @@ void RMSBuddy::notifyGUI()
 	// and therefore return immediately and are fine for audio threads
 	AudioUnitParameter messengerParam;
 	messengerParam.mAudioUnit = GetComponentInstance();
-	messengerParam.mParameterID = kTimeToUpdate;
+	messengerParam.mParameterID = kRMSBuddyParameter_TimeToUpdate;
 	messengerParam.mScope = kAudioUnitScope_Global;
 	messengerParam.mElement = 0;
 	AUParameterListenerNotify(NULL, NULL, &messengerParam);
@@ -177,24 +189,28 @@ void RMSBuddy::notifyGUI()
 ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope, 
 						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo)
 {
-	// the size, in ms, of the RMS and peak analysis frame / refresh rate
-	if (inParameterID == kAnalysisFrameSize)
+	// the size, in ms, of the RMS and peak analysis window / refresh rate
+	if (inParameterID == kRMSBuddyParameter_AnalysisWindowSize)
 	{
-		strcpy(outParameterInfo.name, "analysis window");
-		outParameterInfo.cfNameString = CFSTR("analysis window");
+		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
+								| kAudioUnitParameterFlag_IsWritable
+								| kAudioUnitParameterFlag_DisplaySquareRoot;
+
+		CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(RMS_BUDDY_BUNDLE_ID) );
+		CFStringRef paramNameString = CFCopyLocalizedStringFromTableInBundle(CFSTR("analysis window"), 
+										CFSTR("Localizable"), pluginBundleRef, CFSTR("parameter name"));
+		FillInParameterName(outParameterInfo, paramNameString, true);
+
 		outParameterInfo.unit = kAudioUnitParameterUnit_Milliseconds;
 		outParameterInfo.minValue = 30.0f;
 		outParameterInfo.maxValue = 1000.0f;
 		outParameterInfo.defaultValue = 69.0f;
-		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
-								| kAudioUnitParameterFlag_IsWritable
-								| kAudioUnitParameterFlag_HasCFNameString
-								| kAudioUnitParameterFlag_DisplaySquareRoot;
+
 		return noErr;
 	}
 
 	// a fake parameter (really an audio thread GUI notification mechanism)
-	if (inParameterID == kTimeToUpdate)
+	if (inParameterID == kRMSBuddyParameter_TimeToUpdate)
 	{
 		memset(&outParameterInfo, 0, sizeof(outParameterInfo));
 		return noErr;
@@ -209,11 +225,11 @@ ComponentResult RMSBuddy::GetParameter(AudioUnitParameterID inParameterID, Audio
 										AudioUnitElement inElement, Float32 & outValue)
 {
 	// it's a fake parameter, but if we don't at least say noErr for this one, the parameter listener system won't work
-	if (inParameterID == kTimeToUpdate)
+	if (inParameterID == kRMSBuddyParameter_TimeToUpdate)
 		return noErr;
 
 	// let the AUBase systems handle our real parameter
-	else if (inParameterID == kAnalysisFrameSize)
+	else if (inParameterID == kRMSBuddyParameter_AnalysisWindowSize)
 		return AUBase::GetParameter(inParameterID, inScope, inElement, outValue);
 
 	else
@@ -227,18 +243,18 @@ ComponentResult RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, Audi
 {
 	switch (inPropertyID)
 	{
-		case kDynamicsDataProperty:
-			outDataSize = sizeof(RmsBuddyDynamicsData);
+		case kRMSBuddyProperty_DynamicsData:
+			outDataSize = sizeof(RMSBuddyDynamicsData);
 			outWritable = false;
 			return noErr;
 
-		case kResetRMSProperty:
-		case kResetPeakProperty:
+		case kRMSBuddyProperty_ResetRMS:
+		case kRMSBuddyProperty_ResetPeak:
 			outDataSize = sizeof(char);	// whatever, input data isn't actually needed to set these properties
 			outWritable = true;
 			return noErr;
 
-		case kNumChannelsProperty:
+		case kRMSBuddyProperty_NumChannels:
 			outDataSize = sizeof(unsigned long);
 			outWritable = false;
 			return noErr;
@@ -257,31 +273,34 @@ ComponentResult RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 	switch (inPropertyID)
 	{
 		// get the current dynamics analysis data for a specified audio channel
-		case kDynamicsDataProperty:
+		case kRMSBuddyProperty_DynamicsData:
 			{
 				if (guiShareDataCache == NULL)
 					return kAudioUnitErr_Uninitialized;
 
-				unsigned long requestedChannel = ((RmsBuddyDynamicsData*)outData)->channel;
+				unsigned long requestedChannel = ((RMSBuddyDynamicsData*)outData)->inChannel;
 				// invalid channel number requested
 				if (requestedChannel >= numChannels)
 					return kAudioUnitErr_InvalidPropertyValue;
 				// if we got this far, all is good, copy the data for the requester
-				memcpy(outData, &(guiShareDataCache[requestedChannel]), sizeof(RmsBuddyDynamicsData));
+				memcpy(outData, &(guiShareDataCache[requestedChannel]), sizeof(RMSBuddyDynamicsData));
 			}
 			return noErr;
 
 		// this has no actual data, it's used for event messages
-		case kResetRMSProperty:
+		case kRMSBuddyProperty_ResetRMS:
 			return noErr;
 
 		// this has no actual data, it's used for event messages
-		case kResetPeakProperty:
+		case kRMSBuddyProperty_ResetPeak:
 			return noErr;
 
 		// get the number of audio channels being analyzed
-		case kNumChannelsProperty:
+		case kRMSBuddyProperty_NumChannels:
 			*((unsigned long*)outData) = numChannels;
+#ifdef RMSBUDDY_ENABLE_RESIZE_TEST
+			*((unsigned long*)outData) = _numChannels;
+#endif
 			return noErr;
 
 		// let non-custom properties fall through to the parent class' handler
@@ -297,20 +316,20 @@ ComponentResult RMSBuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 {
 	switch (inPropertyID)
 	{
-		case kDynamicsDataProperty:
+		case kRMSBuddyProperty_DynamicsData:
 			return kAudioUnitErr_PropertyNotWritable;
 
 		// trigger the resetting of average RMS
-		case kResetRMSProperty:
+		case kRMSBuddyProperty_ResetRMS:
 			resetRMS();
 			return noErr;
 
 		// trigger the resetting of absolute peak
-		case kResetPeakProperty:
+		case kRMSBuddyProperty_ResetPeak:
 			resetPeak();
 			return noErr;
 
-		case kNumChannelsProperty:
+		case kRMSBuddyProperty_NumChannels:
 			return kAudioUnitErr_PropertyNotWritable;
 
 		// let non-custom properties fall through to the parent class' handler
@@ -409,19 +428,19 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags
 
 
 	// figure out if it's time to tell the GUI to refresh its display
-	unsigned long analysisFrame = (unsigned long) (AUEffectBase::GetParameter(kAnalysisFrameSize) * GetSampleRate() * 0.001);
-	unsigned long nextCount = guiSamplesCounter + inFramesToProcess;	// estimate the size after the next processing frame
-	if ( (guiSamplesCounter > analysisFrame) || 
-			(abs(guiSamplesCounter-analysisFrame) < abs(nextCount-analysisFrame)) )	// round
+	unsigned long analysisWindow = (unsigned long) (AUEffectBase::GetParameter(kRMSBuddyParameter_AnalysisWindowSize) * GetSampleRate() * 0.001);
+	unsigned long nextCount = guiSamplesCounter + inFramesToProcess;	// estimate the size after the next processing window
+	if ( (guiSamplesCounter > analysisWindow) || 
+			(abs(guiSamplesCounter-analysisWindow) < abs(nextCount-analysisWindow)) )	// round
 	{
 		double invGUItotal = 1.0 / (double)guiSamplesCounter;	// it's slightly more efficient to only divide once
 		// store the current dynamics data into the GUI data share caches for each channel...
 		for (unsigned long ch=0; ch < numChannels; ch++)
 		{
-			guiShareDataCache[ch].averageRMS = averageRMS[ch];
-			guiShareDataCache[ch].continualRMS = sqrt(guiContinualRMS[ch] * invGUItotal);
-			guiShareDataCache[ch].absolutePeak = absolutePeak[ch];
-			guiShareDataCache[ch].continualPeak = guiContinualPeak[ch];
+			guiShareDataCache[ch].outAverageRMS = averageRMS[ch];
+			guiShareDataCache[ch].outContinualRMS = sqrt(guiContinualRMS[ch] * invGUItotal);
+			guiShareDataCache[ch].outAbsolutePeak = absolutePeak[ch];
+			guiShareDataCache[ch].outContinualPeak = guiContinualPeak[ch];
 		}
 
 		// ... and then post notification to the GUI
