@@ -10,7 +10,7 @@
 #pragma mark _________init_________
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(Scrubby);
+DFX_ENTRY(Scrubby)
 
 //-----------------------------------------------------------------------------
 // initializations and such
