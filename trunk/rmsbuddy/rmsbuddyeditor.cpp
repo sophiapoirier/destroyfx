@@ -3,10 +3,13 @@
 #include "rmsbuddyeditor.h"
 #include "rmsbuddy.h"
 
+#include <c.h>  // for sizeofA
+
 
 // I want the analysis window size slider to have a squared-scaled value distribution curve, 
-// so it seems that AUCarbonViewControl won't be able to do what I want
-#define USE_AUCVCONTROL	0
+// so it seems that AUCarbonViewControl won't be able to do what I want.
+// XXX That's not true anymore, but AUCarbonViewControl still has problems worth avoiding, I think.
+//#define USE_AUCVCONTROL
 
 
 //-----------------------------------------------------------------------------
@@ -52,7 +55,7 @@ RMSControl::RMSControl(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos,
 			hasParameter = true;
 			// create an AUCarbonViewControl convenience object for this
 			auvParam = CAAUParameter(ownerEditor->GetEditAudioUnit(), inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
-		#if USE_AUCVCONTROL
+		#ifdef USE_AUCVCONTROL
 			AUCarbonViewControl * auvc = new AUCarbonViewControl(ownerEditor, ownerEditor->GetParameterListener(), 
 															AUCarbonViewControl::kTypeContinuous, auvParam, carbonControl);
 			auvc->Bind();
@@ -109,39 +112,25 @@ void RMSControl::redraw()
 
 #pragma mark -
 #pragma mark RMSTextDisplay
-#define MINUS_INFINITY_STRING	"-oo"
 //-----------------------------------------------------------------------------
 //                           RMSTextDisplay
 //-----------------------------------------------------------------------------
 RMSTextDisplay::RMSTextDisplay(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
-					const char * inFontName, float inFontSize, long inTextAlignment, long inParamID)
+					ThemeFontID inFontID, HIThemeTextHorizontalFlush inTextAlignment, long inParamID)
 :	RMSControl(inOwnerEditor, inXpos, inYpos, inWidth, inHeight, 0x3FFF, inParamID), 
 	textColor(inTextColor), backColor(inBackColor), frameColor(inFrameColor), 
-	fontSize(inFontSize), textAlignment(inTextAlignment), 
-	fontName(NULL), text(NULL)
+	fontID(inFontID), textAlignment(inTextAlignment), 
+	text(NULL)
 {
-	// allocate the font string and copy the input font name
-	fontName = (char*) malloc(256);
-	fontName[0] = 0;
-	if (inFontName != NULL)
-		strcpy(fontName, inFontName);
-
-	// allocate the text display string and initialize it to be an empty string
-	text = (char*) malloc(256);
-	text[0] = 0;
 }
 
 //-----------------------------------------------------------------------------
 RMSTextDisplay::~RMSTextDisplay()
 {
-	// release our strings
-	if (fontName != NULL)
-		free(fontName);
-	fontName = NULL;
-
+	// release our string
 	if (text != NULL)
-		free(text);
+		CFRelease(text);
 	text = NULL;
 }
 
@@ -164,83 +153,89 @@ void RMSTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 	if ( isParameterAttached() )
 	{
 		float value = getAUVP()->GetValue();
-		sprintf(text, "%.0f ms", value);
+		if (text != NULL)
+			CFRelease(text);
+		text = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%.0f ms"), value);
 	}
 
 	// draw the text
-	CGContextSetShouldSmoothFonts(inContext, true);
-	CGContextSelectFont(inContext, fontName, fontSize, kCGEncodingMacRoman);
 	CGContextSetRGBFillColor(inContext, (float)textColor.r/255.0f, (float)textColor.g/255.0f, (float)textColor.b/255.0f, 1.0f);
-	// the text drawing is upside-down in compositing windows unless we do this transformation
-	if ( ownerEditor->IsCompositWindow() )
+	if (text != NULL)
 	{
-//		CGAffineTransform textCTM = CGAffineTransformMake(1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
-//		CGContextSetTextMatrix(inContext, textCTM);
-		CGContextTranslateCTM(inContext, 0.0f, bounds.size.height);
-		CGContextScaleCTM(inContext, 1.0f, -1.0f);
+		// this function is only available in Mac OS X 10.3 or higher
+		if (HIThemeDrawTextBox != NULL)
+		{
+			HIThemeTextInfo textInfo;
+			memset(&textInfo, 0, sizeof(textInfo));
+			textInfo.version = 0;
+			textInfo.state = kThemeStateActive;
+			textInfo.fontID = fontID;
+			textInfo.horizontalFlushness = textAlignment;
+			textInfo.verticalFlushness = kHIThemeTextVerticalFlushCenter;
+			textInfo.truncationPosition = kHIThemeTextTruncationEnd;
+			textInfo.truncationMaxLines = 1;
+			textInfo.options = 0;
+			HIThemeOrientation contextOrientation = kHIThemeOrientationNormal;
+			if (! ownerEditor->IsCompositWindow() )
+				contextOrientation = kHIThemeOrientationInverted;
+
+			HIThemeDrawTextBox(text, &bounds, &textInfo, inContext, contextOrientation);
+		}
 	}
-	// do tricks to align the text if it's not left-aligned
-	if (textAlignment != kTextAlign_left)
-	{
-		// draw an invisible string and then see where the drawing ends to determine the rendered text width
-		CGContextSetTextDrawingMode(inContext, kCGTextInvisible);
-		CGContextShowTextAtPoint(inContext, 0.0f, 0.0f, text, strlen(text));
-		CGPoint pt = CGContextGetTextPosition(inContext);
-		if (textAlignment == kTextAlign_center)
-			bounds.origin.x += (bounds.size.width - pt.x) / 2.0f;
-		else if (textAlignment == kTextAlign_right)
-			bounds.origin.x += bounds.size.width - pt.x;
-	}
-	CGContextSetTextDrawingMode(inContext, kCGTextFill);
-	// try to simulate an infinity symbol by squashing two lowercase "o"s together
-	long minusInfLength = strlen(MINUS_INFINITY_STRING);
-	if (strncmp(text, MINUS_INFINITY_STRING, minusInfLength) == 0)
-	{
-		// first draw the "-o" part
-		CGContextShowTextAtPoint(inContext, bounds.origin.x, bounds.origin.y+4.0f, text, minusInfLength-1);
-		// then draw the next "o" and the rest of the string, pushed back a little bit
-		bounds.origin.x = CGContextGetTextPosition(inContext).x - 1.5f;
-		char * text2 = &(text[minusInfLength-1]);
-		CGContextShowTextAtPoint(inContext, bounds.origin.x, bounds.origin.y+4.0f, text2, strlen(text2));
-	}
-	else
-		// draw the text regular-style
-		CGContextShowTextAtPoint(inContext, bounds.origin.x, bounds.origin.y+4.0f, text, strlen(text));
 }
 
 //-----------------------------------------------------------------------------
 // set the display text directly with a string
-void RMSTextDisplay::setText(const char * inText)
+void RMSTextDisplay::setText(CFStringRef inText)
 {
-	if (inText != NULL)
-	{
-		strcpy(text, inText);
-		redraw();
-	}
+	if (text != NULL)
+		CFRelease(text);
+	text = inText;
+	if (text != NULL)
+		CFRetain(text);
+
+	redraw();
 }
 
 //-----------------------------------------------------------------------------
 // given a linear amplitude value, set the display text with the dB-converted value
 void RMSTextDisplay::setText_dB(float inLinearValue)
 {
+	if (text != NULL)
+		CFRelease(text);
+
 	// -infinity dB
 	if (inLinearValue <= 0.0f)
-		sprintf(text, MINUS_INFINITY_STRING);
+	{
+		const UniChar minusInfinity[] = { '-', 0x221E };
+		text = CFStringCreateWithCharacters(kCFAllocatorDefault, minusInfinity, sizeofA(minusInfinity));
+	}
 	else
 	{
 		float dBvalue = 20.0f * (float)log10(inLinearValue);	// convert linear value to dB
+		CFStringRef formatString;
 		// add a plus sign to positive values
 		if (dBvalue >= 0.01f)
-			sprintf(text, "+%.2f", dBvalue);
+			formatString = CFSTR("+%.2f");
 		// 1 decimal precision for -100 or lower
 		else if (fabsf(dBvalue) >= 100.0f)
-			sprintf(text, "%.1f", dBvalue);
+			formatString = CFSTR("%.1f");
 		// regular 2 decimal precision display
 		else
-			sprintf(text, "%.2f", dBvalue);
+			formatString = CFSTR("%.2f");
+		text = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, formatString, dBvalue);
 	}
-	// append the units to the string
-	strcat(text, " dB");
+
+	if (text != NULL)
+	{
+		CFMutableStringRef mutableText = CFStringCreateMutableCopy(kCFAllocatorDefault, 0, text);
+		if (mutableText != NULL)
+		{
+			CFStringAppend(mutableText, CFSTR(" dB"));
+			CFRelease(text);
+			text = mutableText;
+		}
+	}
 
 	redraw();
 }
@@ -249,7 +244,10 @@ void RMSTextDisplay::setText_dB(float inLinearValue)
 // set the display text with an integer value
 void RMSTextDisplay::setText_int(long inValue)
 {
-	sprintf(text, "%ld", inValue);
+	if (text != NULL)
+		CFRelease(text);
+	text = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%ld"), inValue);
+
 	redraw();
 }
 
@@ -290,18 +288,18 @@ void RMSButton::draw(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void RMSButton::mouseDown(long inXpos, long inYpos)
+void RMSButton::mouseDown(float inXpos, float inYpos)
 {
 	SetControl32BitValue(getCarbonControl(), 1);
 }
 
 //-----------------------------------------------------------------------------
-void RMSButton::mouseTrack(long inXpos, long inYpos)
+void RMSButton::mouseTrack(float inXpos, float inYpos)
 {
 	SInt32 currentValue = GetControl32BitValue(getCarbonControl());
 
 	// mouse is inside the button zone, so the value should be 1
-	if ( (inXpos >= 0) && (inXpos <= width) && (inYpos >= 0) && (inYpos <= height) )
+	if ( (inXpos >= 0.0f) && (inXpos < (float)width) && (inYpos >= 0.0f) && (inYpos < (float)height) )
 	{
 		if (currentValue == 0)
 			SetControl32BitValue(getCarbonControl(), 1);
@@ -316,7 +314,7 @@ void RMSButton::mouseTrack(long inXpos, long inYpos)
 }
 
 //-----------------------------------------------------------------------------
-void RMSButton::mouseUp(long inXpos, long inYpos)
+void RMSButton::mouseUp(float inXpos, float inYpos)
 {
 	SetControl32BitValue(getCarbonControl(), 0);
 }
@@ -373,19 +371,19 @@ void RMSSlider::draw(CGContextRef inContext, long inPortHeight)
 }
 
 //-----------------------------------------------------------------------------
-void RMSSlider::mouseDown(long inXpos, long inYpos)
+void RMSSlider::mouseDown(float inXpos, float inYpos)
 {
 	mouseTrack(inXpos, inYpos);
 }
 
 //-----------------------------------------------------------------------------
-void RMSSlider::mouseTrack(long inXpos, long inYpos)
+void RMSSlider::mouseTrack(float inXpos, float inYpos)
 {
-	if (inXpos < borderWidth)
-		inXpos = borderWidth;
-	if ( inXpos > (width-borderWidth) )
-		inXpos = width - borderWidth;
-	float valueNorm = (float)(inXpos-borderWidth) / (float)(width-(borderWidth*2));
+	if (inXpos < (float)borderWidth)
+		inXpos = (float)borderWidth;
+	if ( inXpos > (float)(width-borderWidth) )
+		inXpos = (float) (width - borderWidth);
+	float valueNorm = (inXpos - (float)borderWidth) / (float)(width - (borderWidth*2));
 
 	SetControl32BitValue( getCarbonControl(), (SInt32)(valueNorm * (float)GetControl32BitMaximum(getCarbonControl())) );
 }
@@ -397,6 +395,7 @@ void RMSSlider::mouseTrack(long inXpos, long inYpos)
 
 #pragma mark -
 #pragma mark RMSBuddyEditor
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // constants
@@ -408,12 +407,10 @@ const RMSColor kMyLightOrangeColor = { 219, 145, 85 };
 const RMSColor kWhiteColor = { 255, 255, 255 };
 const RMSColor kMyYellowColor = { 249, 249, 120 };
 
-const char * kValueDisplayFont = "Monaco";
-const float kValueDisplayFontSize = 12.0f;
-const char * kLabelDisplayFont = "Lucida Grande";
-const float kLabelDisplayFontSize = 12.0f;
-const char * kSliderLabelDisplayFont = "Lucida Grande";
-const float kSliderLabelDisplayFontSize = 11.0f;
+const ThemeFontID kValueDisplayFontID = kThemeSmallSystemFont;
+const ThemeFontID kLabelDisplayFontID = kThemeSmallSystemFont;
+const ThemeFontID kSliderLabelDisplayFontID = kThemeSmallSystemFont;
+//kThemeSystemFont kThemeSmallSystemFont kThemeMiniSystemFont kThemeLabelFont kThemeApplicationFont
 
 const RMSColor kBackgroundColor = kMyLightBrownColor;
 const RMSColor kBackgroundFrameColor = kMyBrownColor;
@@ -429,37 +426,40 @@ const RMSColor kSliderLabelTextColor = kMyDarkBlueColor;
 //-----------------------------------------------------------------------------
 // control positions and sizes
 enum {
-	kValueLabelX = 6,
-	kValueLabelY = 27,
-	kValueLabelWidth = 87,
-	kValueLabelHeight = 17,
+	kPadding_general = 20,
+	kPadding_between = 8,
+	kPadding_help = 12,
 
-	kChannelLabelX = kValueLabelX + kValueLabelWidth + 9,
-	kChannelLabelY = kValueLabelY - 22,
+	kValueLabelX = kPadding_general,
+	kValueLabelWidth = 84,
+	kValueLabelHeight = 13,
+
+	kChannelLabelX = kValueLabelX + kValueLabelWidth + kPadding_between,
+	kChannelLabelY = kPadding_general,
 	kChannelLabelWidth = 75,
-	kChannelLabelHeight = 17,
+	kChannelLabelHeight = 13,
 
 	kValueDisplayX = kChannelLabelX,
-	kValueDisplayY = kValueLabelY,
+	kValueDisplayY = kChannelLabelY + kChannelLabelHeight + kPadding_between,
 	kValueDisplayWidth = kChannelLabelWidth,
 	kValueDisplayHeight = 17,
 
-	kXinc = kChannelLabelWidth + 15,
-	kYinc = 33,
+	kValueLabelY = kValueDisplayY + ((kValueDisplayHeight - kValueLabelHeight) / 2),
 
-	kButtonX = kValueDisplayX - 1,
-	kButtonY = kValueDisplayY + 1,
+	kXinc = kValueDisplayWidth + kPadding_between,
+	kYinc = kValueDisplayHeight + kPadding_between,
 
-	kSliderX = 15,
-	kSliderY = 159,
+	kSliderX = kPadding_general,
+	kSliderY = kValueDisplayY + (kYinc * 4) - kPadding_between + kPadding_general,
 	kSliderHeight = 11,
 	kSliderLabelOffsetX = 3,
 	kSliderLabelX = kSliderX + kSliderLabelOffsetX,
-	kSliderLabelY = kSliderY + kSliderHeight + 6,
+	kSliderLabelY = kSliderY + kSliderHeight + kPadding_between,
 	kSliderLabelHeight = 13,
 
-	kBackgroundWidth = 151,
-	kBackgroundHeight = kSliderLabelY + 9 + kSliderLabelHeight//156
+	kHelpButtonY = kSliderLabelY + kSliderLabelHeight + kPadding_help,
+	kHelpButtonWidth = 25,
+	kHelpButtonHeight = 25
 };
 
 
@@ -489,11 +489,13 @@ RMSBuddyEditor::RMSBuddyEditor(AudioUnitCarbonView inInstance)
 	numChannels = 0;
 
 	// initialize the graphics pointers
-	gResetButton = NULL;
+	resetButtonImage = NULL;
+	helpButtonImage = NULL;
 
 	// initialize the controls pointers
 	resetRMSbutton = NULL;
 	resetPeakButton = NULL;
+	helpButton = NULL;
 	windowSizeSlider = NULL;
 	windowSizeLabel = NULL;
 	windowSizeDisplay = NULL;
@@ -569,20 +571,34 @@ OSStatus RMSBuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 
 	// load our graphics resource from a PNG file in our plugin bundle's Resources sub-directory
-	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(RMS_BUDDY_BUNDLE_ID));
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(RMS_BUDDY_BUNDLE_ID) );
 	if (pluginBundleRef != NULL)
 	{
-		CFURLRef resourceURL = CFBundleCopyResourceURL(pluginBundleRef, CFSTR("reset-button.png"), NULL, NULL);
-		if (resourceURL != NULL)
+		CFURLRef resetButtonImageURL = CFBundleCopyResourceURL(pluginBundleRef, CFSTR("reset-button.png"), NULL, NULL);
+		if (resetButtonImageURL != NULL)
 		{
-			CGDataProviderRef provider = CGDataProviderCreateWithURL(resourceURL);
+			CGDataProviderRef provider = CGDataProviderCreateWithURL(resetButtonImageURL);
 			if (provider != NULL)
 			{
-				gResetButton = CGImageCreateWithPNGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
+				resetButtonImage = CGImageCreateWithPNGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
 				CGDataProviderRelease(provider);
 			}
-			CFRelease(resourceURL);
+			CFRelease(resetButtonImageURL);
 		}
+
+#ifdef RMSBUDDY_SHOW_HELP_BUTTON
+		CFURLRef helpButtonImageURL = CFBundleCopyResourceURL(pluginBundleRef, CFSTR("help-button.png"), NULL, NULL);
+		if (helpButtonImageURL != NULL)
+		{
+			CGDataProviderRef provider = CGDataProviderCreateWithURL(helpButtonImageURL);
+			if (provider != NULL)
+			{
+				helpButtonImage = CGImageCreateWithPNGDataProvider(provider, NULL, false, kCGRenderingIntentDefault);
+				CGDataProviderRelease(provider);
+			}
+			CFRelease(helpButtonImageURL);
+		}
+#endif
 	}
 
 
@@ -595,12 +611,12 @@ OSStatus RMSBuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	timeToUpdateAUP.mAudioUnit = GetEditAudioUnit();
 	timeToUpdateAUP.mScope = kAudioUnitScope_Global;
 	timeToUpdateAUP.mElement = 0;
-	timeToUpdateAUP.mParameterID = kTimeToUpdate;
+	timeToUpdateAUP.mParameterID = kRMSBuddyParameter_TimeToUpdate;
 	AUListenerAddParameter(parameterListener, this, &timeToUpdateAUP);
 
 
 	// install AU property listeners for all of the special properties that we need to know about when they change
-	AudioUnitAddPropertyListener(GetEditAudioUnit(), kNumChannelsProperty, RmsPropertyListenerProc, this);
+	AudioUnitAddPropertyListener(GetEditAudioUnit(), kRMSBuddyProperty_NumChannels, RmsPropertyListenerProc, this);
 
 
 	// setup creates and adds all of the UI content
@@ -611,9 +627,12 @@ OSStatus RMSBuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 RMSBuddyEditor::~RMSBuddyEditor()
 {
 	// free the graphics resource
-	if (gResetButton != NULL)
-		CGImageRelease(gResetButton);
-	gResetButton = NULL;
+	if (resetButtonImage != NULL)
+		CGImageRelease(resetButtonImage);
+	resetButtonImage = NULL;
+	if (helpButtonImage != NULL)
+		CGImageRelease(helpButtonImage);
+	helpButtonImage = NULL;
 
 	// if we created and installed the parameter listener, remove and dispose it now
 	if (parameterListener != NULL)
@@ -625,7 +644,7 @@ RMSBuddyEditor::~RMSBuddyEditor()
 
 	// if we created and installed the property listener, remove and dispose it now
 	if (GetEditAudioUnit() != NULL)
-		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kNumChannelsProperty, RmsPropertyListenerProc);
+		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kRMSBuddyProperty_NumChannels, RmsPropertyListenerProc);
 
 	// remove our event handlers if we created them
 	if (windowEventEventHandlerRef != NULL)
@@ -659,7 +678,7 @@ OSStatus RMSBuddyEditor::setup()
 {
 	// first figure out how many channels of analysis data we will be displaying
 	UInt32 dataSize = sizeof(numChannels);
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kNumChannelsProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &numChannels, &dataSize) 
+	if (AudioUnitGetProperty(GetEditAudioUnit(), kRMSBuddyProperty_NumChannels, kAudioUnitScope_Global, (AudioUnitElement)0, &numChannels, &dataSize) 
 			!= noErr)
 		numChannels = 0;
 	// there's not really anything for us to do in this situation (which is crazy and shouldn't happen anyway)
@@ -688,7 +707,7 @@ OSStatus RMSBuddyEditor::setup()
 	long xpos = kValueDisplayX;
 	long ypos = kValueDisplayY;
 
-#define VALUE_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueDisplayWidth, kValueDisplayHeight, kReadoutTextColor, kReadoutBoxColor, kReadoutFrameColor, kValueDisplayFont, kValueDisplayFontSize, kTextAlign_center)
+#define VALUE_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueDisplayWidth, kValueDisplayHeight, kReadoutTextColor, kReadoutBoxColor, kReadoutFrameColor, kValueDisplayFontID, kHIThemeTextHorizontalFlushCenter)
 
 	for (unsigned long ch=0; ch < numChannels; ch++)
 	{
@@ -723,26 +742,37 @@ OSStatus RMSBuddyEditor::setup()
 	xpos = kValueLabelX;
 	ypos = kValueLabelY;
 
-#define LABEL_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueLabelWidth, kValueLabelHeight, kLabelTextColor, kBackgroundColor, kBackgroundColor, kLabelDisplayFont, kLabelDisplayFontSize, kTextAlign_right)
+#define LABEL_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueLabelWidth, kValueLabelHeight, kLabelTextColor, kBackgroundColor, kBackgroundColor, kLabelDisplayFontID, kHIThemeTextHorizontalFlushRight)
+
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(RMS_BUDDY_BUNDLE_ID) );
+	CFStringRef textLabelString = NULL;
 
 	// the words "average RMS"
 	averageRMSLabel = new LABEL_TEXT_DISPLAY;
-	averageRMSLabel->setText("average RMS");
+	textLabelString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Average RMS"), CFSTR("Localizable"), pluginBundleRef, CFSTR("average RMS label"));
+	averageRMSLabel->setText(textLabelString);
+	CFRelease(textLabelString);
 
 	// the words "continual RMS"
 	ypos += kYinc;
 	continualRMSLabel = new LABEL_TEXT_DISPLAY;
-	continualRMSLabel->setText("continual RMS");
+	textLabelString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Continual RMS"), CFSTR("Localizable"), pluginBundleRef, CFSTR("continual RMS label"));
+	continualRMSLabel->setText(textLabelString);
+	CFRelease(textLabelString);
 
 	// the words "absolute peak"
 	ypos += kYinc;
 	absolutePeakLabel = new LABEL_TEXT_DISPLAY;
-	absolutePeakLabel->setText("absolute peak");
+	textLabelString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Absolute Peak"), CFSTR("Localizable"), pluginBundleRef, CFSTR("absolute peak label"));
+	absolutePeakLabel->setText(textLabelString);
+	CFRelease(textLabelString);
 
 	// the words "continual peak"
 	ypos += kYinc;
 	continualPeakLabel = new LABEL_TEXT_DISPLAY;
-	continualPeakLabel->setText("continual peak");
+	textLabelString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Continual Peak"), CFSTR("Localizable"), pluginBundleRef, CFSTR("continual peak label"));
+	continualPeakLabel->setText(textLabelString);
+	CFRelease(textLabelString);
 
 #undef LABEL_TEXT_DISPLAY
 
@@ -753,16 +783,24 @@ OSStatus RMSBuddyEditor::setup()
 	for (unsigned long ch=0; ch < numChannels; ch++)
 	{
 		channelLabels[ch] = new RMSTextDisplay(this, xpos, ypos, kChannelLabelWidth, kChannelLabelHeight, kLabelTextColor, 
-							kBackgroundColor, kBackgroundColor, kLabelDisplayFont, kLabelDisplayFontSize, kTextAlign_center);
+							kBackgroundColor, kBackgroundColor, kLabelDisplayFontID, kHIThemeTextHorizontalFlushCenter);
 
 		if (numChannels <= 1)
-			channelLabels[ch]->setText(" ");
+			channelLabels[ch]->setText(NULL);
 		else if (numChannels == 2)
 		{
 			if (ch == 0)
-				channelLabels[ch]->setText("left");
+			{
+				textLabelString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Left"), CFSTR("Localizable"), pluginBundleRef, CFSTR("left channel label"));
+				channelLabels[ch]->setText(textLabelString);
+				CFRelease(textLabelString);
+			}
 			else
-				channelLabels[ch]->setText("right");
+			{
+				textLabelString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Right"), CFSTR("Localizable"), pluginBundleRef, CFSTR("right channel label"));
+				channelLabels[ch]->setText(textLabelString);
+				CFRelease(textLabelString);
+			}
 		}
 		else
 			channelLabels[ch]->setText_int(ch+1);
@@ -774,36 +812,81 @@ OSStatus RMSBuddyEditor::setup()
 //--initialize the buttons-----------------------------------------------
 
 	// reset continual RMS button
-	resetRMSbutton = new RMSButton(this, kButtonX + (kXinc*numChannels), kButtonY, gResetButton);
+	const long resetButtonWidth = CGImageGetWidth(resetButtonImage);
+	const long resetButtonHeight = CGImageGetHeight(resetButtonImage) / 2;
+	const long resetButtonX = kValueDisplayX + (kXinc * numChannels);
+	const long resetButtonY = kValueDisplayY + ((kValueDisplayHeight - resetButtonHeight) / 2);
+	resetRMSbutton = new RMSButton(this, resetButtonX, resetButtonY, resetButtonImage);
 
 	// reset peak button
-	resetPeakButton = new RMSButton(this, kButtonX + (kXinc*numChannels), kButtonY + (kYinc*2), gResetButton);
+	resetPeakButton = new RMSButton(this, resetButtonX, resetButtonY + (kYinc*2), resetButtonImage);
+
+	const long backgroundWidth = resetButtonX + resetButtonWidth + kPadding_general;
+
+#ifdef RMSBUDDY_SHOW_HELP_BUTTON
+	// help button
+#if 1
+	const long helpButtonWidth = CGImageGetWidth(helpButtonImage);
+	const long helpButtonHeight = CGImageGetHeight(helpButtonImage) / 2;
+	helpButton = new RMSButton(this, backgroundWidth - helpButtonWidth - 18, kHelpButtonY, helpButtonImage);
+#else
+// XXX using system icons and buttons doesn't embed in the right place in compositing windows (my own error) 
+// and doesn't draw pane background underneath in non-compositing windows
+	Rect helpButtonRect;
+	helpButtonRect.left = backgroundWidth - kHelpButtonWidth - kPadding_general;
+	helpButtonRect.top = kHelpButtonY;
+	helpButtonRect.right = kHelpButtonWidth + helpButtonRect.left;
+	helpButtonRect.bottom = kHelpButtonHeight + helpButtonRect.top;
+	ControlButtonContentInfo buttonContentInfo;
+	buttonContentInfo.contentType = kControlContentIconRef;
+	OSStatus buttonStatus = GetIconRef(kOnSystemDisk, kSystemIconsCreator, kHelpIcon, &(buttonContentInfo.u.iconRef));
+	if (buttonStatus == noErr)
+	{
+		ControlRef buttonControl = NULL;
+		buttonStatus = CreateRoundButtonControl(GetCarbonWindow(), &helpButtonRect, kControlSizeNormal, &buttonContentInfo, &buttonControl);
+		if ( (buttonStatus == noErr) && (buttonControl == NULL) )
+		{
+			if ( IsCompositWindow() )
+				buttonStatus = ::HIViewAddSubview(GetCarbonPane(), buttonControl);
+			else
+				buttonStatus = ::EmbedControl(buttonControl, GetCarbonPane());
+		}
+	}
+#endif
+#endif
 
 
 //--initialize the slider-----------------------------------------------
 
-	long sliderWidth = kBackgroundWidth + (kXinc*numChannels) - (kSliderX*2);
-	windowSizeSlider = new RMSSlider(this, kAnalysisFrameSize, kSliderX, kSliderY, sliderWidth, kSliderHeight, 
+	long sliderWidth = backgroundWidth - (kSliderX*2);
+	windowSizeSlider = new RMSSlider(this, kRMSBuddyParameter_AnalysisWindowSize, kSliderX, kSliderY, sliderWidth, kSliderHeight, 
 										kSliderBackgroundColor, kSliderActiveColor);
 	updateWindowSize(windowSizeSlider->getAUVP()->GetValue(), windowSizeSlider);
 
 	sliderWidth -= kSliderLabelOffsetX * 2;
 	// the words "analysis window size"
-	long sliderLabelWidth = (2 * sliderWidth) / 3;
+	const long sliderLabelWidth = (2 * sliderWidth) / 3;
 	windowSizeLabel = new RMSTextDisplay(this, kSliderLabelX, kSliderLabelY, sliderLabelWidth, kSliderLabelHeight, 
 										kSliderLabelTextColor, kBackgroundColor, kBackgroundColor, 
-										kSliderLabelDisplayFont, kSliderLabelDisplayFontSize, kTextAlign_left);
-	windowSizeLabel->setText("analysis window size");
+										kSliderLabelDisplayFontID, kHIThemeTextHorizontalFlushLeft);
+	textLabelString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Analysis Window Size"), CFSTR("Localizable"), pluginBundleRef, CFSTR("analysis window size slider label"));
+	windowSizeLabel->setText(textLabelString);
+	CFRelease(textLabelString);
 
 	// the analysis window size value read-out
-	long sliderDisplayWidth = sliderWidth - sliderLabelWidth;
+	const long sliderDisplayWidth = sliderWidth - sliderLabelWidth;
 	windowSizeDisplay = new RMSTextDisplay(this, kSliderLabelX + sliderLabelWidth, kSliderLabelY, sliderDisplayWidth, kSliderLabelHeight, 
 										kSliderLabelTextColor, kBackgroundColor, kBackgroundColor, 
-										kSliderLabelDisplayFont, kSliderLabelDisplayFontSize, kTextAlign_right, kAnalysisFrameSize);
+										kSliderLabelDisplayFontID, kHIThemeTextHorizontalFlushRight, kRMSBuddyParameter_AnalysisWindowSize);
 
 
 	// set size of the background embedding pane control to fit the entire UI display
-	SizeControl(GetCarbonPane(), kBackgroundWidth + (kXinc*numChannels), kBackgroundHeight);
+#ifdef RMSBUDDY_SHOW_HELP_BUTTON
+	const long backgroundHeight = kHelpButtonY + helpButtonHeight + kPadding_help;
+#else
+	const long backgroundHeight = kSliderLabelY + kSliderLabelHeight + kPadding_general;
+#endif
+	SizeControl(GetCarbonPane(), backgroundWidth, backgroundHeight);
 
 
 	return noErr;
@@ -818,6 +901,7 @@ void RMSBuddyEditor::cleanup()
 #define SAFE_FREE_ARRAY(array)	{ if (array != NULL)   free(array);   array = NULL; }
 	SAFE_DELETE_CONTROL(resetRMSbutton)
 	SAFE_DELETE_CONTROL(resetPeakButton)
+	SAFE_DELETE_CONTROL(helpButton)
 	for (unsigned long ch=0; ch < numChannels; ch++)
 	{
 		if (averageRMSDisplays != NULL)
@@ -993,11 +1077,8 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 	RMSBuddyEditor * ourOwnerEditor = (RMSBuddyEditor*) inUserData;
 
 	// get the mouse location event parameter
-	HIPoint mouseLocation_f;
-	GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(mouseLocation_f), NULL, &mouseLocation_f);
-	long mouseX = (long) mouseLocation_f.x;
-	long mouseY = (long) mouseLocation_f.y;
-
+	HIPoint mouseLocation;
+	GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(mouseLocation), NULL, &mouseLocation);
 
 	// see if a control was clicked on (we only use this event handling to track control mousing)
 	RMSControl * ourRMSControl = ourOwnerEditor->getCurrentControl();
@@ -1008,30 +1089,35 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 	Rect controlBounds;
 	GetControlBounds(ourRMSControl->getCarbonControl(), &controlBounds);
 	Rect windowBounds;	// window content region
-	WindowRef window;
+	memset(&windowBounds, 0, sizeof(windowBounds));
+	WindowRef window = NULL;
 	GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(window), NULL, &window);
-	GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
+	if (window == NULL)
+		GetControlOwner( ourRMSControl->getCarbonControl() );
+	if (window != NULL)
+		GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
 	if ( ourOwnerEditor->IsCompositWindow() )
 	{
 		Rect paneBounds;
 		GetControlBounds(ourOwnerEditor->GetCarbonPane(), &paneBounds);
-		OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
+		controlBounds.left += paneBounds.left;
+		controlBounds.top += paneBounds.top;
 	}
-	mouseX -= controlBounds.left + windowBounds.left;
-	mouseY -= controlBounds.top + windowBounds.top;
+	mouseLocation.x -= (float) (controlBounds.left + windowBounds.left);
+	mouseLocation.y -= (float) (controlBounds.top + windowBounds.top);
 
 
 	UInt32 inEventKind = GetEventKind(inEvent);
 
 	if (inEventKind == kEventMouseDragged)
 	{
-		ourRMSControl->mouseTrack(mouseX, mouseY);
+		ourRMSControl->mouseTrack(mouseLocation.x, mouseLocation.y);
 		return noErr;
 	}
 
 	if (inEventKind == kEventMouseUp)
 	{
-		ourRMSControl->mouseUp(mouseX, mouseY);
+		ourRMSControl->mouseUp(mouseLocation.x, mouseLocation.y);
 		ourOwnerEditor->setCurrentControl(NULL);
 
 		// do this to make Logic's touch automation work
@@ -1098,28 +1184,30 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 		case kEventControlClick:
 			{
 				// get the mouse location event parameter
-				HIPoint mouseLocation_f;
-				GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(mouseLocation_f), NULL, &mouseLocation_f);
-				long mouseX = (long) mouseLocation_f.x;
-				long mouseY = (long) mouseLocation_f.y;
+				HIPoint mouseLocation;
+				GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(mouseLocation), NULL, &mouseLocation);
 
 				// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 				Rect controlBounds;
 				GetControlBounds(ourCarbonControl, &controlBounds);
 				Rect windowBounds;	// window content region
-				GetWindowBounds( GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &windowBounds );
+				memset(&windowBounds, 0, sizeof(windowBounds));
+				WindowRef window = GetControlOwner(ourCarbonControl);
+				if (window != NULL)
+					GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds );
 				if ( ourOwnerEditor->IsCompositWindow() )
 				{
 					Rect paneBounds;
 					GetControlBounds(ourOwnerEditor->GetCarbonPane(), &paneBounds);
-					OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);
+					controlBounds.left += paneBounds.left;
+					controlBounds.top += paneBounds.top;
 				}
-				mouseX -= controlBounds.left + windowBounds.left;
-				mouseY -= controlBounds.top + windowBounds.top;
+				mouseLocation.x -= (float) (controlBounds.left + windowBounds.left);
+				mouseLocation.y -= (float) (controlBounds.top + windowBounds.top);
 
-				ourRMSControl->mouseDown(mouseX, mouseY);
+				ourRMSControl->mouseDown(mouseLocation.x, mouseLocation.y);
 
-#if !USE_AUCVCONTROL
+#ifndef USE_AUCVCONTROL
 				// do this to make Logic's touch automation work
 				if ( ourRMSControl->isParameterAttached() )
 				{
@@ -1156,7 +1244,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 }
 
 //-----------------------------------------------------------------------------
-// this gets called when the DSP component sends notification via the kTimeToUpdate parameter
+// this gets called when the DSP component sends notification via the TimeToUpdate parameter
 static void RmsParameterListenerProc(void * inUserData, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
 	RMSBuddyEditor * bud = (RMSBuddyEditor*) inUserData;
@@ -1164,10 +1252,10 @@ static void RmsParameterListenerProc(void * inUserData, void * inObject, const A
 	{
 		switch (inParameter->mParameterID)
 		{
-			case kAnalysisFrameSize:
+			case kRMSBuddyParameter_AnalysisWindowSize:
 				bud->updateWindowSize(inValue, (RMSControl*)inObject);
 				break;
-			case kTimeToUpdate:
+			case kRMSBuddyParameter_TimeToUpdate:
 				bud->updateDisplays();	// refresh the value displays
 				break;
 			default:
@@ -1177,14 +1265,14 @@ static void RmsParameterListenerProc(void * inUserData, void * inObject, const A
 }
 
 //-----------------------------------------------------------------------------
-// this gets called when the DSP component sends a property-changed notification of the kNumChannelsProperty property
+// this gets called when the DSP component sends a property-changed notification of the NumChannels property
 static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, 
 									AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	RMSBuddyEditor * bud = (RMSBuddyEditor*) inUserData;
 	// when the number of channels changes, we tear down the existing GUI layout and 
 	// then recreate it according to the new number of channels
-	if ( (bud != NULL) && (inPropertyID == kNumChannelsProperty) )
+	if ( (bud != NULL) && (inPropertyID == kRMSBuddyProperty_NumChannels) )
 	{
 		bud->cleanup();	// tear it down
 		bud->setup();	// rebuild
@@ -1195,18 +1283,18 @@ static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInst
 // refresh the value displays
 void RMSBuddyEditor::updateDisplays()
 {
-	RmsBuddyDynamicsData request;
+	RMSBuddyDynamicsData request;
 	UInt32 dataSize = sizeof(request);
 
 	// get the dynamics data values for each channel being analyzed
 	for (unsigned long ch=0; ch < numChannels; ch++)
 	{
-		request.channel = ch;
+		request.inChannel = ch;
 		// if getting the property fails, initialize to all zeroes so it's usable anyway
-		if (AudioUnitGetProperty(GetEditAudioUnit(), kDynamicsDataProperty, kAudioUnitScope_Global, 0, &request, &dataSize) != noErr)
+		if (AudioUnitGetProperty(GetEditAudioUnit(), kRMSBuddyProperty_DynamicsData, kAudioUnitScope_Global, 0, &request, &dataSize) != noErr)
 		{
-			request.averageRMS = request.continualRMS = 0.0;
-			request.absolutePeak = request.continualPeak = 0.0f;
+			request.outAverageRMS = request.outContinualRMS = 0.0;
+			request.outAbsolutePeak = request.outContinualPeak = 0.0f;
 		}
 #define SAFE_SET_TEXT(ctrl, val)	\
 	if (ctrl != NULL)	\
@@ -1215,10 +1303,10 @@ void RMSBuddyEditor::updateDisplays()
 			ctrl[ch]->setText_dB(val);	\
 	}
 		// update the values being displayed
-		SAFE_SET_TEXT(averageRMSDisplays, request.averageRMS)
-		SAFE_SET_TEXT(continualRMSDisplays, request.continualRMS)
-		SAFE_SET_TEXT(absolutePeakDisplays, request.absolutePeak)
-		SAFE_SET_TEXT(continualPeakDisplays, request.continualPeak)
+		SAFE_SET_TEXT(averageRMSDisplays, request.outAverageRMS)
+		SAFE_SET_TEXT(continualRMSDisplays, request.outContinualRMS)
+		SAFE_SET_TEXT(absolutePeakDisplays, request.outAbsolutePeak)
+		SAFE_SET_TEXT(continualPeakDisplays, request.outContinualPeak)
 #undef SAFE_SET_TEXT
 
 	}
@@ -1286,6 +1374,28 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 		Float32 paramValue = AUParameterValueFromLinear(controlValueNorm, windowSizeSlider->getAUVP());
 		windowSizeSlider->getAUVP()->SetValue(parameterListener, windowSizeSlider, paramValue);
 	}
+
+#ifdef RMSBUDDY_SHOW_HELP_BUTTON
+	else if (inControl == helpButton)
+	{
+		if (inControlValue == 0)
+		{
+			CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(RMS_BUDDY_BUNDLE_ID) );
+			if (pluginBundleRef != NULL)
+			{
+				CFStringRef docsFileName = CFSTR("RMS Buddy manual.html");
+				CFURLRef docsFileURL = CFBundleCopyResourceURL(pluginBundleRef, docsFileName, NULL, NULL);
+				if (docsFileURL != NULL)
+				{
+					CFStringRef docsFileUrlString = CFURLGetString(docsFileURL);
+					if (docsFileUrlString != NULL)
+						AHGotoPage(NULL, docsFileUrlString, NULL);
+					CFRelease(docsFileURL);
+				}
+			}
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1293,7 +1403,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 void RMSBuddyEditor::resetRMS()
 {
 	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
-	AudioUnitSetProperty(GetEditAudioUnit(), kResetRMSProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
+	AudioUnitSetProperty(GetEditAudioUnit(), kRMSBuddyProperty_ResetRMS, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
 }
 
 //-----------------------------------------------------------------------------
@@ -1301,5 +1411,5 @@ void RMSBuddyEditor::resetRMS()
 void RMSBuddyEditor::resetPeak()
 {
 	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
-	AudioUnitSetProperty(GetEditAudioUnit(), kResetPeakProperty, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
+	AudioUnitSetProperty(GetEditAudioUnit(), kRMSBuddyProperty_ResetPeak, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
 }
