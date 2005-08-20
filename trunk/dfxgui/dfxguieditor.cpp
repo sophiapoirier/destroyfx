@@ -1079,9 +1079,14 @@ return false;
 // orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 	WindowRef window = NULL;
 	status = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(window), NULL, &window);
+	if ( (status != noErr) || (window == NULL) )
+		window = GetControlOwner( ourControl->getCarbonControl() );
 	// XXX should we bail if this fails?
-	if ( (status == noErr) && (window != NULL) )
+	if (window != NULL)
 	{
+		// the position of the control relative to the top left corner of the window content area
+		Rect controlBounds;
+		GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
 		// the content area of the window (i.e. not the title bar or any borders)
 		Rect windowBounds;
 		GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
@@ -1089,13 +1094,11 @@ return false;
 		{
 			Rect paneBounds;
 			GetControlBounds(GetCarbonPane(), &paneBounds);
-			OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);	// XXX deprecated in Mac OS X 10.4
+			controlBounds.left += paneBounds.left;
+			controlBounds.top += paneBounds.top;
 		}
-		// the position of the control relative to the top left corner of the window content area
-		Rect controlBounds;
-		GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
-		mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
-		mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
+		mouseLocation.x -= (float) (controlBounds.left + windowBounds.left);
+		mouseLocation.y -= (float) (controlBounds.top + windowBounds.top);
 	}
 
 
@@ -1354,20 +1357,24 @@ fprintf(stderr, "kEventControlHit\n");
 					}
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
+					// the position of the control relative to the top left corner of the window content area
+					Rect controlBounds;
+					GetControlBounds(ourCarbonControl, &controlBounds);
 					// the content area of the window (i.e. not the title bar or any borders)
 					Rect windowBounds;
-					GetWindowBounds(GetControlOwner(ourCarbonControl), kWindowGlobalPortRgn, &windowBounds);
+					memset(&windowBounds, 0, sizeof(windowBounds));
+					WindowRef window = GetControlOwner(ourCarbonControl);
+					if (window != NULL)
+						GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
 					if ( IsCompositWindow() )
 					{
 						Rect paneBounds;
 						GetControlBounds(GetCarbonPane(), &paneBounds);
-						OffsetRect(&windowBounds, paneBounds.left, paneBounds.top);	// XXX deprecated in Mac OS X 10.4
+						controlBounds.left += paneBounds.left;
+						controlBounds.top += paneBounds.top;
 					}
-					// the position of the control relative to the top left corner of the window content area
-					Rect controlBounds;
-					GetControlBounds(ourCarbonControl, &controlBounds);
-					mouseLocation.x -= (float) (windowBounds.left + controlBounds.left);
-					mouseLocation.y -= (float) (windowBounds.top + controlBounds.top);
+					mouseLocation.x -= (float) (controlBounds.left + windowBounds.left);
+					mouseLocation.y -= (float) (controlBounds.top + windowBounds.top);
 
 					// check if this is a double-click
 					bool isDoubleClick = false;
