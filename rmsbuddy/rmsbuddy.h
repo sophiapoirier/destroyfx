@@ -7,26 +7,26 @@
 
 
 enum {
-	kAnalysisFrameSize = 0,	// the size, in ms, of the RMS and peak analysis frame / refresh rate
-	kTimeToUpdate,	// a fake parameter (really an audio thread GUI notification mechanism)
+	kRMSBuddyParameter_AnalysisFrameSize = 0,	// the size, in ms, of the RMS and peak analysis frame / refresh rate
+	kRMSBuddyParameter_TimeToUpdate,	// a fake parameter (really an audio thread GUI notification mechanism)
 
 	// property IDs for allowing the GUI component get DSP information and trigger DSP-related events
-	kDynamicsDataProperty = 64000,	// read-only *** get the current dynamics analysis data
-	kResetRMSProperty,	// event message *** reset the average RMS values
-	kResetPeakProperty,	// event message *** reset the absolute peak values
-	kNumChannelsProperty	// read-only *** get the number of audio channels being analyzed
+	kRMSBuddyProperty_DynamicsData = 64000,	// read-only *** get the current dynamics analysis data
+	kRMSBuddyProperty_ResetRMS,	// event message *** reset the average RMS values
+	kRMSBuddyProperty_ResetPeak,	// event message *** reset the absolute peak values
+	kRMSBuddyProperty_NumChannels	// read-only *** get the number of audio channels being analyzed
 };
 
-// this is the data structure passed between GUI and DSP components for kDynamicsDataProperty
+// this is the data structure passed between GUI and DSP components for kRMSBuddyProperty_DynamicsData
 typedef struct {
+	// value sent in upon input (specifies for which audio channel you want data)
+	unsigned long inChannel;
 	// values filled upon output
-	double averageRMS;
-	double continualRMS;
-	float absolutePeak;
-	float continualPeak;
-	// value sent in upon input (specifies which audio channel you want data for)
-	unsigned long channel;
-} RmsBuddyDynamicsData;
+	double outAverageRMS;
+	double outContinualRMS;
+	float outAbsolutePeak;
+	float outContinualPeak;
+} RMSBuddyDynamicsData;
 
 
 //----------------------------------------------------------------------------- 
@@ -60,6 +60,9 @@ public:
 		{	return RMS_BUDDY_VERSION;	}
 	virtual bool SupportsTail()
 		{	return true;	}
+#ifdef RMSBUDDY_ENABLE_RESIZE_TEST
+	virtual ComponentResult RestoreState(CFPropertyListRef inData);
+#endif
 
 
 private:
@@ -75,7 +78,7 @@ private:
 	unsigned long guiSamplesCounter;	// number of samples since the last GUI refresh
 	double * guiContinualRMS;	// the accumulation for continual RMS for GUI display
 	float * guiContinualPeak;	// the peak value since the last GUI refresh
-	RmsBuddyDynamicsData * guiShareDataCache;	// cache stores for the dynamics analysis data to be fetched by the GUI
+	RMSBuddyDynamicsData * guiShareDataCache;	// cache stores for the dynamics analysis data to be fetched by the GUI
 	void resetGUIcounters();	// reset the GUI-related continual values
 	void notifyGUI();	// post notification to the GUI that it's time to re-fetch data and refresh its display
 };
