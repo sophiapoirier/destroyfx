@@ -15,7 +15,7 @@ int intcompare(const void * a, const void * b) {
 
 /* this macro does boring entry point stuff for us */
 #if 1
-DFX_ENTRY(Geometer);
+DFX_ENTRY(Geometer)
 #else
 extern "C" ComponentResult GeometerEntry(ComponentParameters * params, Geometer * obj);
 extern "C" ComponentResult GeometerEntry(ComponentParameters * params, Geometer * obj)
@@ -26,7 +26,7 @@ extern "C" ComponentResult GeometerEntry(ComponentParameters * params, Geometer 
 }
 #endif
 #if TARGET_PLUGIN_USES_DSPCORE
-  DFX_CORE_ENTRY(GeometerDSP);
+  DFX_CORE_ENTRY(GeometerDSP)
 #endif
 
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
@@ -215,7 +215,7 @@ long PLUGIN::initialize()
   pointy = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
   storey = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
 
-windowbuf = (float*)malloc(maxframe * sizeof(float));
+  windowbuf = (float*)malloc(maxframe * sizeof(float));
 #if !TARGET_PLUGIN_USES_DSPCORE
   return kDfxErr_NoError;
 #endif
@@ -254,12 +254,18 @@ void PLUGINCORE::reset() {
   /* set up buffers. Prevmix and first frame of output are always 
      filled with zeros. */
 
-  for (int i = 0; i < third; i ++) {
-    prevmix[i] = 0.0f;
+  if (prevmix != NULL)
+  {
+    for (int i = 0; i < third; i ++) {
+      prevmix[i] = 0.0f;
+    }
   }
 
-  for (int j = 0; j < framesize; j ++) {
-    out0[j] = 0.0f;
+  if (out0 != NULL)
+  {
+    for (int j = 0; j < framesize; j ++) {
+      out0[j] = 0.0f;
+    }
   }
   
   /* start input at beginning. Output has a frame of silence. */
@@ -277,40 +283,43 @@ void PLUGINCORE::reset() {
   settailsize_samples(framesize);
 #endif
 
-shape = getparameter_i(P_SHAPE);
-long z;
-const float oneDivThird = 1.0f / (float)third;
-switch(shape) {
-case WINDOW_TRIANGLE:
-	for(z = 0; z < third; z++) {
-		windowbuf[z] = ((float)z * oneDivThird);
-		windowbuf[z+third] = (1.0f - ((float)z * oneDivThird));
-	}
-	break;
-case WINDOW_ARROW:
-	for(z = 0; z < third; z++) {
-		float p = (float)z * oneDivThird;
-		p *= p;
-		windowbuf[z] = p;
-		windowbuf[z+third] = (1.0f - p);
-	}
-	break;
-case WINDOW_WEDGE:
-	for(z = 0; z < third; z++) {
-		float p = sqrtf((float)z * oneDivThird);
-		windowbuf[z] = p;
-		windowbuf[z+third] = (1.0f - p);
-	}
-	break;
-case WINDOW_COS:
-	for(z = 0; z < third; z ++) {
-		// XXX what about Eulor's law for cosine?
-		float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
-		windowbuf[z] = p;
-		windowbuf[z+third] = (1.0f - p);
-	}
-	break;
-}
+  shape = getparameter_i(P_SHAPE);
+  long z;
+  const float oneDivThird = 1.0f / (float)third;
+  if (windowbuf != NULL)
+  {
+    switch(shape) {
+      case WINDOW_TRIANGLE:
+        for(z = 0; z < third; z++) {
+          windowbuf[z] = ((float)z * oneDivThird);
+          windowbuf[z+third] = (1.0f - ((float)z * oneDivThird));
+        }
+        break;
+      case WINDOW_ARROW:
+        for(z = 0; z < third; z++) {
+          float p = (float)z * oneDivThird;
+          p *= p;
+          windowbuf[z] = p;
+          windowbuf[z+third] = (1.0f - p);
+        }
+        break;
+      case WINDOW_WEDGE:
+        for(z = 0; z < third; z++) {
+          float p = sqrtf((float)z * oneDivThird);
+          windowbuf[z] = p;
+          windowbuf[z+third] = (1.0f - p);
+        }
+        break;
+      case WINDOW_COS:
+        for(z = 0; z < third; z ++) {
+          // XXX what about Eulor's law for cosine?
+          float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
+          windowbuf[z] = p;
+          windowbuf[z+third] = (1.0f - p);
+        }
+        break;
+    }
+  }
 }
 
 
@@ -365,7 +374,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
       if ((i < npts) && ((px[i+1] - px[i]) > 1)) {
         /* add an extra point, right between the old points.
            (the idea is to double the frequency).
-	   Pick its y coordinate according to the parameter.
+           Pick its y coordinate according to the parameter.
         */
 
         tempy[t] = (op_param * 2.0f - 1.0f) * py[i];
@@ -465,9 +474,9 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
     for(i = 0; i < (npts-1); i ++) {
       px[i] *= factor;
       if (px[i] > samples) {
-	/* this sample can't stay. */
-	i --;
-	break;
+        /* this sample can't stay. */
+        i --;
+        break;
       }
     }
     /* but save last point */
@@ -491,22 +500,22 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
       /* where this copy of the points begins */
       int offset = rep * (onedivfactor * samples);
       for (int s = 0; s < npts; s ++) {
-	/* XXX is destx in range? */
-	int destx = offset + (px[s] * onedivfactor);
+        /* XXX is destx in range? */
+        int destx = offset + (px[s] * onedivfactor);
 
-	if (destx >= samples) goto op_fast_out_of_points;
+        if (destx >= samples) goto op_fast_out_of_points;
 
-	/* check if we already have one here.
-	   if not, add it and advance, otherwise ignore. 
-	   XXX: one possibility would be to mix...
-	*/
-	if (!(outi > 0 && tempx[outi-1] == destx)) {
-	  tempx[outi] = destx;
-	  tempy[outi] = py[s];
-	  outi ++;
-	} 
+        /* check if we already have one here.
+           if not, add it and advance, otherwise ignore. 
+           XXX: one possibility would be to mix...
+        */
+        if (!(outi > 0 && tempx[outi-1] == destx)) {
+          tempx[outi] = destx;
+          tempy[outi] = py[s];
+          outi ++;
+        } 
 
-	if (outi > (maxpts - 2)) goto op_fast_out_of_points;
+        if (outi > (maxpts - 2)) goto op_fast_out_of_points;
       }
     }
 
@@ -685,26 +694,26 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     for(i = 0; i < samples; i ++) {
 
       if (in[i] > pointparam) {
-	if (state != ABOVE) {
-	  px[numpts] = i;
-	  py[numpts] = in[i];
-	  numpts ++;
-	  state = ABOVE;
-	}
+        if (state != ABOVE) {
+          px[numpts] = i;
+          py[numpts] = in[i];
+          numpts ++;
+          state = ABOVE;
+        }
       } else if (in[i] < -pointparam) {
-	if (state != BELOW) {
-	  px[numpts] = i;
-	  py[numpts] = in[i];
-	  numpts ++;
-	  state = BELOW;
-	}
+        if (state != BELOW) {
+          px[numpts] = i;
+          py[numpts] = in[i];
+          numpts ++;
+          state = BELOW;
+        }
       } else {
-	if (state != BETWEEN) {
-	  px[numpts] = i;
-	  py[numpts] = in[i];
-	  numpts++;
-	  state = BETWEEN;
-	}
+        if (state != BETWEEN) {
+          px[numpts] = i;
+          py[numpts] = in[i];
+          numpts++;
+          state = BETWEEN;
+        }
       }
 
       if (numpts > samples - 2) break;
@@ -877,18 +886,18 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
 
     for(int z = 0; z < intervals; z++) {
       if (randFloat() < interparam) {
-	int t;
-	int dest = z + ((interparam * 
-			 interparam * (float)intervals)
-			* randFloat()) - (interparam *
-					  interparam *
-					  0.5f * (float)intervals);
-	if (dest < 0) dest = 0;
-	if (dest >= intervals) dest = intervals - 1;
+        int t;
+        int dest = z + ((interparam * 
+                         interparam * (float)intervals)
+                        * randFloat()) - (interparam *
+                                          interparam *
+                                          0.5f * (float)intervals);
+        if (dest < 0) dest = 0;
+        if (dest >= intervals) dest = intervals - 1;
 
-	t = tempx[z];
-	tempx[z] = tempx[dest];
-	tempx[dest] = t;
+        t = tempx[z];
+        tempx[z] = tempx[dest];
+        tempx[dest] = t;
       }
     }
 
@@ -897,8 +906,8 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     for(int u = 0; u < intervals; u++) {
       int size = px[tempx[u]+1] - px[tempx[u]];
       memcpy(out + c,
-	     in + px[tempx[u]],
-	     size * sizeof (float));
+             in + px[tempx[u]],
+             size * sizeof (float));
       c += size;
     }
 
@@ -915,13 +924,13 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     /* copy last block verbatim. */
     if (numpts > 2)
       for(int s=px[numpts-2]; s < px[numpts-1]; s++)
-	out[s] = in[s];
+        out[s] = in[s];
 
     /* steady state */
     int x = numpts - 2;
     for(; x > 0; x--) {
       /* x points at the beginning of the segment we'll be bleeding
-	 into. */
+         into. */
       int sizeright = px[x+1] - px[x];
       int sizeleft = px[x] - px[x-1];
       int sizetotal = sizeleft + sizeright;
@@ -929,37 +938,37 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
       int tgtlen = sizeleft + (sizeright * interparam);
 
       if (tgtlen > 0) {
-	/* to avoid using temporary storage, copy from end of target
-	   towards beginning, overwriting already used source parts on
-	   the way. 
-	   
-	   j is an offset from p[x-1], ranging from 0 to tgtlen-1.
-	   Once we reach p[x], we have to start mixing with the
-	   data that's already there.
-	*/
-	for (int j = tgtlen - 1;
-	     j >= 0;
-	     j--) {
+        /* to avoid using temporary storage, copy from end of target
+           towards beginning, overwriting already used source parts on
+           the way. 
 
-	  /* XXX. use interpolated sampling for this */
-	  float wet = in[(int)(px[x-1] + sizeleft * 
-			       (j/(float)tgtlen))];
+           j is an offset from p[x-1], ranging from 0 to tgtlen-1.
+           Once we reach p[x], we have to start mixing with the
+           data that's already there.
+        */
+        for (int j = tgtlen - 1;
+             j >= 0;
+             j--) {
 
-	  if ((j + px[x-1]) > px[x]) {
-	    /* after p[x] -- mix */
+          /* XXX. use interpolated sampling for this */
+          float wet = in[(int)(px[x-1] + sizeleft * 
+                               (j/(float)tgtlen))];
 
-	    /* linear fade-out */
-	    float pct = (j - sizeleft) / (float)(tgtlen - sizeleft);
+          if ((j + px[x-1]) > px[x]) {
+            /* after p[x] -- mix */
 
-	    out[j + px[x-1]] =
-	      wet * (1.0f - pct) +
-	      out[j + px[x-1]] * pct;
-	  } else {
-	    /* before p[x] -- no mix */
-	    out[j + px[x-1]] = wet;
-	  }
+            /* linear fade-out */
+            float pct = (j - sizeleft) / (float)(tgtlen - sizeleft);
 
-	}
+            out[j + px[x-1]] =
+              wet * (1.0f - pct) +
+              out[j + px[x-1]] * pct;
+          } else {
+            /* before p[x] -- no mix */
+            out[j + px[x-1]] = wet;
+          }
+
+        }
       }
     }
 
@@ -974,7 +983,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     for(u=1; u < numpts; u ++) {
       float denom = (px[u] - px[u-1]);
       float minterparam = interparam * (py[u-1] + py[u]) * 
-	0.5f;
+        0.5f;
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) / denom;
         float s = py[u-1] * (1.0f - pct) +
@@ -996,7 +1005,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     for(u=1; u < numpts; u ++) {
       float denom = (px[u] - px[u-1]);
       float minterparam = interparam * (py[u-1] + py[u]) 
-	* 0.5f;
+        * 0.5f;
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) / denom;
         float s = py[u-1] * pct +
@@ -1061,21 +1070,21 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
       out[px[z]] = magmax(out[px[z]], py[z]);
 
       if (wid > 0) {
-	/* put w samples on the left, stopping if we hit a sample
-	   greater than what we're placing */
-	int w = wid;
-	float onedivwid = 1.0f / (float)(wid + 1);
-	for(int i=px[z]-1; i >= 0 && w > 0; i--, w--) {
-	  float sam = py[z] * (w * onedivwid);
-	  if ((out[i] + sam) * (out[i] + sam) > (sam * sam)) out[i] = sam;
-	  else out[i] += sam;
-	}
+        /* put w samples on the left, stopping if we hit a sample
+           greater than what we're placing */
+        int w = wid;
+        float onedivwid = 1.0f / (float)(wid + 1);
+        for(int i=px[z]-1; i >= 0 && w > 0; i--, w--) {
+          float sam = py[z] * (w * onedivwid);
+          if ((out[i] + sam) * (out[i] + sam) > (sam * sam)) out[i] = sam;
+          else out[i] += sam;
+        }
 
-	w = wid;
-	for(int ii=px[z]+1; ii < samples && w > 0; ii++, w--) {
-	  float sam = py[z] * (w * onedivwid);
-	  out[ii] = sam;
-	}
+        w = wid;
+        for(int ii=px[z]+1; ii < samples && w > 0; ii++, w--) {
+          float sam = py[z] * (w * onedivwid);
+          out[ii] = sam;
+        }
 
       }
     }
@@ -1091,12 +1100,12 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) * oodenom;
         
-	float wand = sinf(2.0f * PI * pct);
-	out[z] = wand * 
-	  interparam + 
-	  ((1.0f-interparam) * 
-	   in[z] *
-	   wand);
+        float wand = sinf(2.0f * PI * pct);
+        out[z] = wand * 
+          interparam + 
+          ((1.0f-interparam) * 
+           in[z] *
+           wand);
       }
     }
 
@@ -1178,8 +1187,8 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
       if (cs != NULL)
         cs->grab();
       processw(in0, out0+outstart+outsize, framesize,
-	       pointx, pointy, framesize * 2,
-	       storex, storey);
+               pointx, pointy, framesize * 2,
+               storex, storey);
       if (cs != NULL)
         cs->release();
 
@@ -1190,7 +1199,7 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
 
       switch(shape) {
 
-	    // XXX it might be more efficient to do z+=oneDivThird each iteration (and then negativize oneDivThird for the second half)
+        // XXX it might be more efficient to do z+=oneDivThird each iteration (and then negativize oneDivThird for the second half)
         case WINDOW_TRIANGLE:
           for(z = 0; z < third; z++) {
             out0[z+outstart+outsize] *= ((float)z * oneDivThird);
@@ -1214,7 +1223,7 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
           break;
         case WINDOW_COS:
           for(z = 0; z < third; z ++) {
-		    // XXX what about Eulor's law for cosine?
+            // XXX what about Eulor's law for cosine?
             float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
@@ -1246,7 +1255,7 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
   #ifdef TARGET_API_VST
     if (!replacing)
       tout[ii] += out0[outstart];
-	else
+    else
   #endif
       tout[ii] = out0[outstart];
 
