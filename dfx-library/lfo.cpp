@@ -58,14 +58,13 @@ void LFO::reset()
 }
 
 //-----------------------------------------------------------------------------------------
-// this function creates tables for mapping out the sine, triangle, & saw LFO shapes
-
+// this function creates tables for mapping out the sine, triangle, and saw LFO shapes
 void LFO::fillLFOtables()
 {
   long i, n;
 
 
-	// fill the sine waveform table (oscillates from 0 to 1 & back to 0)
+	// fill the sine waveform table (oscillates from 0 to 1 and back to 0)
 	for (i = 0; (i < NUM_LFO_POINTS); i++)
 		sineTable[i] = (sinf( ( ((float)i/(float)NUM_LFO_POINTS)-0.25f ) * 2.0f * PI ) + 1.0f) * 0.5f;
 
@@ -73,7 +72,7 @@ void LFO::fillLFOtables()
 	// ramp from 0 to 1 for the first half
 	for (i = 0; (i < NUM_LFO_POINTS/2); i++)
 		triangleTable[i] = (float)i / (float)(NUM_LFO_POINTS/2);
-	// & ramp from 1 to 0 for the second half
+	// and ramp from 1 to 0 for the second half
 	for (n = 0; (i < NUM_LFO_POINTS); n++)
 	{
 		triangleTable[i] = 1.0f - ((float)n / (float)(NUM_LFO_POINTS/2));
@@ -84,7 +83,7 @@ void LFO::fillLFOtables()
 	// stay at 1 for the first half
 	for (i = 0; (i < NUM_LFO_POINTS/2); i++)
 		squareTable[i] = 1.0f;
-	// & 0 for the second half
+	// and 0 for the second half
 	for (n = 0; (i < NUM_LFO_POINTS); n++)
 	{
 		squareTable[i] = 0.0f;
@@ -103,7 +102,7 @@ void LFO::fillLFOtables()
 	// exponentially slope up from 0 to 1 for the first half
 	for (i = 0; (i < NUM_LFO_POINTS/2); i++)
 		thornTable[i] = powf( ((float)i / (float)(NUM_LFO_POINTS/2)), 2.0f );
-	// & exponentially slope down from 1 to 0 for the second half
+	// and exponentially slope down from 1 to 0 for the second half
 	for (n = 0; (i < NUM_LFO_POINTS); n++)
 	{
 		thornTable[i] = powf( (1.0f - ((float)n / (float)(NUM_LFO_POINTS/2))), 2.0f );
@@ -151,7 +150,6 @@ void LFO::getShapeNameIndexed(long index, char * outNameString)
 
 //--------------------------------------------------------------------------------------
 // this function points the LFO table pointers to the correct waveform tables
-
 void LFO::pickTheLFOwaveform()
 {
 	switch (iShape)
@@ -182,18 +180,17 @@ void LFO::pickTheLFOwaveform()
 
 //--------------------------------------------------------------------------------------
 // calculates the position within an LFO's cycle needed to sync to the song's beat
-
 void LFO::syncToTheBeat(long samplesToBar)
 {
-  float countdown, cyclesize;
-
 	// calculate how many samples long the LFO cycle is
-	cyclesize = NUM_LFO_POINTS_FLOAT / stepSize;
+	float cyclesize = NUM_LFO_POINTS_FLOAT / stepSize;
 	// calculate many more samples it will take for this cycle to coincide with the beat
-	countdown = fmodf( (float)samplesToBar,  cyclesize);
-	// & convert that into the correct LFO position according to its table step size
+	float countdown = fmodf( (float)samplesToBar,  cyclesize);
+	// and convert that into the correct LFO position according to its table step size
 	position = (cyclesize - countdown) * stepSize;
 	// wrap around the new position if it is beyond the end of the LFO table
 	if (position >= NUM_LFO_POINTS_FLOAT)
 		position = fmodf(position, NUM_LFO_POINTS_FLOAT);
+	else if (position < 0.0f)
+		position = 0.0f;
 }
