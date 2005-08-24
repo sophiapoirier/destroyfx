@@ -7,8 +7,11 @@
 void Skidder::resetMidi()
 {
 	// zero out the whole note table
-	for (int i=0; i < NUM_NOTES; i++)
-		noteTable[i] = 0;
+	if (noteTable != NULL)
+	{
+		for (int i=0; i < NUM_NOTES; i++)
+			noteTable[i] = 0;
+	}
 
 	waitSamples = 0;
 	MIDIin = MIDIout = false;
