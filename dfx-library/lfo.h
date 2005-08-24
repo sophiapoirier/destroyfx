@@ -1,7 +1,7 @@
 /*------------------- by Marc Poirier  ][  January 2002 ------------------*/
 
-#ifndef __dfx_lfo
-#define __dfx_lfo
+#ifndef __DFX_LFO_H
+#define __DFX_LFO_H
 
 #include <math.h>
 #include <stdlib.h>
@@ -24,14 +24,14 @@ enum
 };
 
 //-------------------------------------------------------------------------------------
-// constants & macros
+// constants and macros
 
 //#define LFOshapeScaled(A)   (paramSteppedScaled((A), numLFOshapes))
 //#define LFOshapeUnscaled(A)   (paramSteppedUnscaled((A), numLFOshapes))
 
 const long NUM_LFO_POINTS = 512;
 const float NUM_LFO_POINTS_FLOAT = (float)NUM_LFO_POINTS;	// to reduce casting later on
-const float LFO_TABLE_STEP = 1.0f / (float)NUM_LFO_POINTS;	// to reduce division & encourage multiplication
+const float LFO_TABLE_STEP = 1.0f / (float)NUM_LFO_POINTS;	// to reduce division and encourage multiplication
 const long SQUARE_HALF_POINT = NUM_LFO_POINTS / 2;	// the point in the table when the square waveform drops to zero
 
 const long LFO_SMOOTH_DUR = 48;
@@ -107,6 +107,8 @@ public:
 					break;
 			}
 		}
+		else if (position < 0.0f)
+			position = 0.0f;
 
 		// special check for the square waveform - it also needs smoothing at the half point
 		else if (iShape == kLFOshape_square)
@@ -119,7 +121,7 @@ public:
 	}
 
 	//--------------------------------------------------------------------------------------
-	// this function gets the current 0.0 - 1.0 output value of the LFO & increments its position
+	// this function gets the current 0.0 - 1.0 output value of the LFO and increments its position
 	float processLFO()
 	{
 	  float randiScalar, outValue;
@@ -128,7 +130,7 @@ public:
 		{
 			// calculate how far into this LFO cycle we are so far, scaled from 0.0 to 1.0
 			randiScalar = position * LFO_TABLE_STEP;
-			// interpolate between the previous random number & the new one
+			// interpolate between the previous random number and the new one
 			outValue = (randomNumber * randiScalar) + (oldRandomNumber * (1.0f-randiScalar));
 		}
 		//
