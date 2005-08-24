@@ -244,7 +244,7 @@ long DfxPlugin::do_initialize()
 	#endif
 
 	bool buffersCreated = createbuffers();
-	if (buffersCreated == false)
+	if (!buffersCreated)
 		return kDfxErr_InitializationFailed;
 
 	do_reset();
@@ -281,8 +281,9 @@ void DfxPlugin::do_reset()
 	#ifdef TARGET_API_AUDIOUNIT
 		// no need to do this if we're not even in Initialized state 
 		// because this will basically happen when we become initialized
-		if (! IsInitialized() )
-			return;
+		// XXX not true!  because IsInitialized() will only return true *after* the Initialize() call returns
+//		if (! IsInitialized() )
+//			return;
 		#if !TARGET_PLUGIN_IS_INSTRUMENT
 			// resets the kernels, if any
 			AUEffectBase::Reset(kAudioUnitScope_Global, (AudioUnitElement)0);
