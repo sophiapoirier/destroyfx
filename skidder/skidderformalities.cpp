@@ -8,7 +8,7 @@
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(Skidder);
+DFX_ENTRY(Skidder)
 
 //-----------------------------------------------------------------------------
 // initializations and such
