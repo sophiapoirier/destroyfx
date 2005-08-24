@@ -136,8 +136,10 @@ fprintf(stderr, "calling TransverbDSP::reset()\n");
   read1 = read2 = 0.0;
   smoothcount1 = smoothcount2 = 0;
   lastr1val = lastr2val = 0.0f;
-  filter1->reset();
-  filter2->reset();
+  if (filter1 != NULL)
+    filter1->reset();
+  if (filter2 != NULL)
+    filter2->reset();
   speed1hasChanged = speed2hasChanged = true;
   tomsound_sampoffset = GetChannelNum();
 }
