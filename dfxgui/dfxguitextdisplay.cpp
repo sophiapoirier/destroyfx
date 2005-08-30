@@ -73,7 +73,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 
 	if (fontName != NULL)
 	{
-		CFStringRef fontCFName = CFStringCreateWithCString(kCFAllocatorDefault, fontName, CFStringGetSystemEncoding());
+		CFStringRef fontCFName = CFStringCreateWithCString(kCFAllocatorDefault, fontName, kCFStringEncodingUTF8);
 		if (fontCFName != NULL)
 		{
 			ATSFontRef atsfont = ATSFontFindFromName(fontCFName, kATSOptionFlagsDefault);
