@@ -171,6 +171,7 @@ for the value strings.
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include <CoreFoundation/CFString.h>	// for CFString stuff
+	const CFStringEncoding kDFX_DefaultCStringEncoding = kCFStringEncodingMacRoman;
 #endif
 
 

@@ -92,7 +92,7 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 		strncpy(name, initName, DFX_PARAM_MAX_NAME_LENGTH);
 		name[DFX_PARAM_MAX_NAME_LENGTH-1] = 0;
 		#ifdef TARGET_API_AUDIOUNIT
-			cfname = CFStringCreateWithCString(kCFAllocatorDefault, initName, CFStringGetSystemEncoding());
+			cfname = CFStringCreateWithCString(kCFAllocatorDefault, initName, kDFX_DefaultCStringEncoding);
 		#endif
 	}
 	curve = initCurve;
@@ -265,7 +265,7 @@ bool DfxParam::setvaluestring(int64_t index, const char * inText)
 		if (valueCFStrings[arrayIndex] != NULL)
 			CFRelease(valueCFStrings[arrayIndex]);
 		// convert the incoming text to a CFString
-		valueCFStrings[arrayIndex] = CFStringCreateWithCString(kCFAllocatorDefault, inText, CFStringGetSystemEncoding());
+		valueCFStrings[arrayIndex] = CFStringCreateWithCString(kCFAllocatorDefault, inText, kDFX_DefaultCStringEncoding);
 	#endif
 
 	return true;
@@ -917,7 +917,7 @@ void DfxPreset::setname(const char * inText)
 		{
 			if (cfname != NULL)
 				CFRelease(cfname);
-			cfname = CFStringCreateWithCString(kCFAllocatorDefault, inText, CFStringGetSystemEncoding());
+			cfname = CFStringCreateWithCString(kCFAllocatorDefault, inText, kDFX_DefaultCStringEncoding);
 		}
 	#endif
 }
