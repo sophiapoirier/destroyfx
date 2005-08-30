@@ -88,7 +88,7 @@ void DfxPlugin::PostConstructor()
 		CFIndex stringsize = (CFStringGetLength(processName) * sizeof(UniChar)) + 1;
 		char * cname = (char*) malloc(stringsize * sizeof(char));
 		cname[0] = 0;
-		Boolean success = CFStringGetCString(processName, cname, stringsize, CFStringGetSystemEncoding());
+		Boolean success = CFStringGetCString(processName, cname, stringsize, kCFStringEncodingUTF8);
 		if (success)
 			printf("process name = %s\n", cname);
 		free(cname);
@@ -951,7 +951,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 					char customUnitString[DFX_PARAM_MAX_UNIT_STRING_LENGTH];
 					customUnitString[0] = 0;
 					getparameterunitstring(inParameterID, customUnitString);
-					outParameterInfo.unitName = CFStringCreateWithCString(kCFAllocatorDefault, customUnitString, CFStringGetSystemEncoding());
+					outParameterInfo.unitName = CFStringCreateWithCString(kCFAllocatorDefault, customUnitString, kDFX_DefaultCStringEncoding);
 				}
 				break;
 
