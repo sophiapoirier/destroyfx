@@ -86,7 +86,7 @@ public:
 			bottomBorderRect.y += getBounds()->h - kSliderFrameThickness;
 			bottomBorderRect.w = handleImage->getWidth();
 			bottomBorderRect.x += kSliderFrameThickness;
-			inContext->setFillColor(kBlackDGColor);
+			inContext->setFillColor(kDGColor_black);
 			inContext->fillRect(&bottomBorderRect);
 		}
 	}
@@ -138,12 +138,12 @@ long PolarizerEditor::open()
 	// leap size read-out
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
 	display = new DGTextDisplay(this, kSkip, &pos, leapDisplayProc, NULL, NULL, kDGTextAlign_center, 
-								kValueTextSize, kBlackDGColor, kValueTextFont);
+								kValueTextSize, kDGColor_black, kValueTextFont);
 
 	// polarization amount read-out
 	pos.offset(kSliderInc, 0);
 	display = new DGTextDisplay(this, kAmount, &pos, amountDisplayProc, NULL, NULL, kDGTextAlign_center, 
-								kValueTextSize, kBlackDGColor, kValueTextFont);
+								kValueTextSize, kDGColor_black, kValueTextFont);
 
 
 	//--create the buttons----------------------------------------------
