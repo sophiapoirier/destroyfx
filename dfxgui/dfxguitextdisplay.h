@@ -13,7 +13,8 @@ typedef enum {
 
 typedef enum {
 	kDGTextDisplayMouseAxis_horizontal = 1,
-	kDGTextDisplayMouseAxis_vertical = 1 << 1
+	kDGTextDisplayMouseAxis_vertical = 1 << 1,
+	kDGTextDisplayMouseAxis_omni = (kDGTextDisplayMouseAxis_horizontal | kDGTextDisplayMouseAxis_vertical)
 } DfxGuiTextDisplayMouseAxis;
 
 
@@ -28,7 +29,7 @@ public:
 	DGTextDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
 					displayTextProcedure inTextProc, void * inUserData, DGImage * inBackground, 
 					DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
-					DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
+					DGColor inFontColor = kDGColor_black, const char * inFontName = NULL);
 	virtual ~DGTextDisplay();
 
 	virtual void draw(DGGraphicsContext * inContext);
@@ -50,6 +51,8 @@ public:
 		{	fontColor = newColor;	}
 	void setAntiAliasing(bool inAntiAlias)
 		{	shouldAntiAlias = inAntiAlias;	}
+	void setMouseAxis(DfxGuiTextDisplayMouseAxis inMouseAxis)
+		{	mouseAxis = inMouseAxis;	}
 
 protected:
 	DGImage *				backgroundImage;
@@ -77,7 +80,7 @@ class DGStaticTextDisplay : public DGTextDisplay
 public:
 	DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
 						DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
-						DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
+						DGColor inFontColor = kDGColor_black, const char * inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
 	virtual void draw(DGGraphicsContext * inContext);
@@ -103,7 +106,7 @@ class DGTextArrayDisplay : public DGTextDisplay
 public:
 	DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, long inNumStrings, 
 						DfxGuiTextAlignment inTextAlignment = kDGTextAlign_left, DGImage * inBackground = NULL, 
-						float inFontSize = 12.0f, DGColor inFontColor = kBlackDGColor, const char * inFontName = NULL);
+						float inFontSize = 12.0f, DGColor inFontColor = kDGColor_black, const char * inFontName = NULL);
 	virtual ~DGTextArrayDisplay();
 	virtual void post_embed();
 
