@@ -1,328 +1,154 @@
-#ifndef __MONOMAKEREDITOR_H
 #include "monomakereditor.hpp"
-#endif
-
-#ifndef __MONOMAKER_H
 #include "monomaker.hpp"
-#endif
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
+#include "dfxguislider.h"
+#include "dfxguidisplay.h"
+#include "dfxguibutton.h"
 
 
 //-----------------------------------------------------------------------------
 enum {
-	// resource IDs
-	kBackgroundID = 128,
-	kMonomergeFaderSlideID,
-	kPanFaderSlideID,
-	kFaderHandleID,
-	kMonomergeMovieID,
-	kPanMovieID,
-	kDestroyFXlinkID,
-
-	// positions
-	kFaderX = 15,
-	kFaderY = 81,
-	kFaderInc = 61,
+	kSliderX = 15,
+	kSliderY = 81,
+	kSliderInc = 61,
+	kSliderWidth = 227,
 
 	kDisplayX = 252,
 	kDisplayY = 77,
 	kDisplayWidth = 83,
 	kDisplayHeight = 12,
 
-	kMonomergeMovieX = 14,
-	kMonomergeMovieY = 28,
-	kPanMovieX = 15,
-	kPanMovieY = 116,
+	kMonomergeAnimationX = 14,
+	kMonomergeAnimationY = 28,
+	kPanAnimationX = 15,
+	kPanAnimationY = 116,
+
+	kButtonX = 21,
+	kButtonY = 184,
+	kButtonInc = 110,
 
 	kDestroyFXlinkX = 270,
 	kDestroyFXlinkY = 3
 };
 
-#if MOTIF
-// resource for MOTIF (format XPM)
-#include "bmp00128.xpm"
-#include "bmp00129.xpm"
-#include "bmp00130.xpm"
-#include "bmp00131.xpm"
-#include "bmp00132.xpm"
-#include "bmp00133.xpm"
-#include "bmp00134.xpm"
-
-CResTable xpmResources = {
-	{kBackgroundID, bmp00128},
-	{kMonomergeFaderSlideID, bmp00129},
-	{kPanFaderSlideID, bmp00130},
-	{kFaderHandleID, bmp00131},
-	{kMonomergeMovieID, bmp00132},
-	{kPanMovieID, bmp00133},
-	{kDestroyFXlinkID, bmp00134},
-	{0, 0}
-};
-#endif
+//const DGColor kBackgroundColor(64.0f/255.0f, 54.0f/255.0f, 40.0f/255.0f);
+const DGColor kBackgroundColor(42.0f/255.0f, 34.0f/255.0f, 22.0f/255.0f);
+const char * kValueTextFont = "Arial";
+const float kValueTextSize = 11.0f;
 
 
 
 //-----------------------------------------------------------------------------
-// parameter value string display conversion functions
+// parameter value display text conversion functions
 
-void monomergeDisplayConvert(float value, char *string);
-void monomergeDisplayConvert(float value, char *string)
+void monomergeDisplayProc(float inValue, char * outText, void *);
+void monomergeDisplayProc(float inValue, char * outText, void *)
 {
-	sprintf(string, " %.1f %%", value*100.0f);
+	sprintf(outText, " %.1f %%", inValue);
 }
 
-void panDisplayConvert(float value, char *string);
-void panDisplayConvert(float value, char *string)
+void panDisplayProc(float inValue, char * outText, void *);
+void panDisplayProc(float inValue, char * outText, void *)
 {
-	if (value >= 0.5004f)
-		sprintf(string, " +%.3f", (value*2.0f)-1.0f);
+	if (inValue >= 0.5004f)
+		sprintf(outText, " +%.3f", inValue);
 	else
-		sprintf(string, " %.3f", (value*2.0f)-1.0f);
+		sprintf(outText, " %.3f", inValue);
 }
 
 
 
+//____________________________________________________________________________
+COMPONENT_ENTRY(MonomakerEditor)
+
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-MonomakerEditor::MonomakerEditor(AudioEffect *effect)
- : AEffGUIEditor(effect) 
+MonomakerEditor::MonomakerEditor(DGEditorListenerInstance inInstance)
+:	DfxGuiEditor(inInstance)
 {
-	frame = 0;
-
-	// initialize the graphics pointers
-	gBackground = 0;
-	gMonomergeFaderSlide = 0;
-	gPanFaderSlide = 0;
-	gFaderHandle = 0;
-	gMonomergeMovie = 0;
-	gPanMovie = 0;
-	gDestroyFXlink = 0;
-
-	// initialize the controls pointers
-	monomergeFader = 0;
-	panFader = 0;
-	monomergeMovie = 0;
-	panMovie = 0;
-	DestroyFXlink = 0;
-
-	// initialize the value display box pointers
-	monomergeDisplay = 0;
-	panDisplay = 0;
-
-	// load the background bitmap
-	// we don't need to load all bitmaps, this could be done when open is called
-	gBackground = new CBitmap (kBackgroundID);
-
-	// init the size of the plugin
-	rect.left   = 0;
-	rect.top    = 0;
-	rect.right  = (short)gBackground->getWidth();
-	rect.bottom = (short)gBackground->getHeight();
 }
 
 //-----------------------------------------------------------------------------
-MonomakerEditor::~MonomakerEditor()
+long MonomakerEditor::open()
 {
-	// free background bitmap
-	if (gBackground)
-		gBackground->forget();
-	gBackground = 0;
-}
+	//--load the images-------------------------------------
 
-//-----------------------------------------------------------------------------
-long MonomakerEditor::getRect(ERect **erect)
-{
-	*erect = &rect;
-	return true;
-}
+	// background image
+	DGImage * backgroundImage = new DGImage("background.png", this);
+	SetBackgroundImage(backgroundImage);
 
-//-----------------------------------------------------------------------------
-long MonomakerEditor::open(void *ptr)
-{
-  CPoint displayOffset;	// for positioning the background graphic behind display boxes
+	DGImage * sliderHandleImage = new DGImage("slider-handle.png", this);
+	DGImage * monomergeAnimationImage = new DGImage("monomerge-blobs.png", this);
+	DGImage * panAnimationImage = new DGImage("pan-blobs.png", this);
+
+	DGImage * inputSelectionButtonImage = new DGImage("input-selection-button.png", this);
+	DGImage * monomergeModeButtonImage = new DGImage("monomerge-mode-button.png", this);
+	DGImage * panModeButtonImage = new DGImage("pan-mode-button.png", this);
+	DGImage * destroyFXLinkImage = new DGImage("destroy-fx-link.png", this);
 
 
-	// !!! always call this !!!
-	AEffGUIEditor::open(ptr);
 
-	// load some graphics
-	if (!gMonomergeFaderSlide)
-		gMonomergeFaderSlide = new CBitmap (kMonomergeFaderSlideID);
-	if (!gPanFaderSlide)
-		gPanFaderSlide = new CBitmap (kPanFaderSlideID);
-	if (!gFaderHandle)
-		gFaderHandle = new CBitmap (kFaderHandleID);
-	if (!gMonomergeMovie)
-		gMonomergeMovie = new CBitmap (kMonomergeMovieID);
-	if (!gPanMovie)
-		gPanMovie = new CBitmap (kPanMovieID);
-	if (!gDestroyFXlink)
-		gDestroyFXlink = new CBitmap (kDestroyFXlinkID);
+	//--create the controls-------------------------------------
+	DGRect pos;
 
 
-	//--initialize the background frame--------------------------------------
-	CRect size (0, 0, gBackground->getWidth(), gBackground->getHeight());
-	frame = new CFrame (size, ptr, this);
-	frame->setBackground(gBackground);
+	// --- sliders ---
+	DGSlider * slider;
+	DGAnimation * blobs;
+	const long numAnimationFrames = 19;
+
+	// monomerge slider
+	pos.set(kSliderX, kSliderY, kSliderWidth, sliderHandleImage->getHeight());
+	slider = new DGSlider(this, kMonomerge, &pos, kDGSliderAxis_horizontal, sliderHandleImage, NULL);
+
+	// pan slider
+	pos.offset(0, kSliderInc);
+	slider = new DGSlider(this, kPan, &pos, kDGSliderAxis_horizontal, sliderHandleImage, NULL);
+
+	// monomerge animation
+	pos.set(kMonomergeAnimationX, kMonomergeAnimationY, monomergeAnimationImage->getWidth(), (monomergeAnimationImage->getHeight())/numAnimationFrames);
+	blobs = new DGAnimation(this, kMonomerge, &pos, monomergeAnimationImage, numAnimationFrames);
+
+	// pan animation
+	pos.set(kPanAnimationX, kPanAnimationY, panAnimationImage->getWidth(), (panAnimationImage->getHeight())/numAnimationFrames);
+	blobs = new DGAnimation(this, kPan, &pos, panAnimationImage, numAnimationFrames);
 
 
-	//--initialize the horizontal faders-------------------------------------
-	int minPos = kFaderX;
-	int maxPos = kFaderX + gMonomergeFaderSlide->getWidth() - gFaderHandle->getWidth();
-	int numMovieFrames;
-	CPoint point (0, 0);
-
-	// monomerge
-	// size stores left, top, right, & bottom positions
-	size (kFaderX, kFaderY, kFaderX + gMonomergeFaderSlide->getWidth(), kFaderY + gMonomergeFaderSlide->getHeight());
-	monomergeFader = new CHorizontalSlider (size, this, kMonomerge, minPos, maxPos, gFaderHandle, gMonomergeFaderSlide, point, kLeft);
-	monomergeFader->setValue(effect->getParameter(kMonomerge));
-	monomergeFader->setDefaultValue(1.0f);
-	frame->addView(monomergeFader);
-
-	// pan
-	size.offset (0, kFaderInc);
-	panFader = new CHorizontalSlider (size, this, kPan, minPos, maxPos, gFaderHandle, gPanFaderSlide, point, kLeft);
-	panFader->setValue(effect->getParameter(kPan));
-	panFader->setDefaultValue(0.5f);
-	frame->addView(panFader);
-
-	// monomerge movie
-	numMovieFrames = 19;
-	size (kMonomergeMovieX, kMonomergeMovieY, kMonomergeMovieX + gMonomergeMovie->getWidth(), kMonomergeMovieY + (gMonomergeMovie->getHeight()/numMovieFrames));
-	monomergeMovie = new CMovieBitmap (size, this, kMonomerge, numMovieFrames, gMonomergeMovie->getHeight()/numMovieFrames, gMonomergeMovie, point);
-	monomergeMovie->setValue(effect->getParameter(kMonomerge));
-	frame->addView(monomergeMovie);
-
-	// pan movie
-	numMovieFrames = 19;
-	size (kPanMovieX, kPanMovieY, kPanMovieX + gPanMovie->getWidth(), kPanMovieY + (gPanMovie->getHeight()/numMovieFrames));
-	panMovie = new CMovieBitmap (size, this, kPan, numMovieFrames, gPanMovie->getHeight()/numMovieFrames, gPanMovie, point);
-	panMovie->setValue(effect->getParameter(kPan));
-	frame->addView(panMovie);
-
-
-	//--initialize the buttons----------------------------------------------
-
-	// Destroy FX web page link
-	size (kDestroyFXlinkX, kDestroyFXlinkY, kDestroyFXlinkX + gDestroyFXlink->getWidth(), kDestroyFXlinkY + (gDestroyFXlink->getHeight())/2);
-	DestroyFXlink = new CWebLink (size, this, kDestroyFXlinkID, "http://www.smartelectronix.com/~destroyfx/", gDestroyFXlink);
-	frame->addView(DestroyFXlink);
-
-
-	//--initialize the displays---------------------------------------------
+	// --- text displays ---
+	DGTextDisplay * display;
 
 	// mono merge
-	size (kDisplayX, kDisplayY, kDisplayX + kDisplayWidth, kDisplayY + kDisplayHeight);
-	monomergeDisplay = new CParamDisplay (size, gBackground);
-	displayOffset (kDisplayX, kDisplayY);
-	monomergeDisplay->setBackOffset(displayOffset);
-	monomergeDisplay->setHoriAlign(kCenterText);
-	monomergeDisplay->setFont(kNormalFontSmall);
-	monomergeDisplay->setFontColor(kBackgroundCColor);
-	monomergeDisplay->setValue(effect->getParameter(kMonomerge));
-	monomergeDisplay->setStringConvert(monomergeDisplayConvert);
-	frame->addView(monomergeDisplay);
+	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
+	display = new DGTextDisplay(this, kMonomerge, &pos, monomergeDisplayProc, NULL, NULL, kDGTextAlign_center, 
+								kValueTextSize, kBlackDGColor, kValueTextFont);
 
 	// pan
-	size.offset (0, kFaderInc-1);
-	panDisplay = new CParamDisplay (size, gBackground);
-	displayOffset.offset (0, kFaderInc);
-	panDisplay->setBackOffset(displayOffset);
-	panDisplay->setHoriAlign(kCenterText);
-	panDisplay->setFont(kNormalFontSmall);
-	panDisplay->setFontColor(kBackgroundCColor);
-	panDisplay->setValue(effect->getParameter(kPan));
-	panDisplay->setStringConvert(panDisplayConvert);
-	frame->addView(panDisplay);
+	pos.offset(0, kSliderInc - 1);
+	display = new DGTextDisplay(this, kPan, &pos, panDisplayProc, NULL, NULL, kDGTextAlign_center, 
+								kValueTextSize, kBlackDGColor, kValueTextFont);
 
 
-	return true;
-}
+	// --- buttons ---
+	DGButton * button;
 
-//-----------------------------------------------------------------------------
-void MonomakerEditor::close()
-{
-	if (frame)
-		delete frame;
-	frame = 0;
+	// input selection button
+	pos.set(kButtonX, kButtonY, inputSelectionButtonImage->getWidth(), (inputSelectionButtonImage->getHeight())/kNumInputSelections);
+	button = new DGButton(this, kInputSelection, &pos, inputSelectionButtonImage, kNumInputSelections, kDGButtonType_incbutton);
 
-	// free some bitmaps
-	if (gMonomergeFaderSlide)
-		gMonomergeFaderSlide->forget();
-	gMonomergeFaderSlide = 0;
-	if (gPanFaderSlide)
-		gPanFaderSlide->forget();
-	gPanFaderSlide = 0;
-	if (gFaderHandle)
-		gFaderHandle->forget();
-	gFaderHandle = 0;
+	// monomerge mode button
+	pos.offset(kButtonInc, 0);
+	pos.resize(monomergeModeButtonImage->getWidth(), (monomergeModeButtonImage->getHeight()) / kNumMonomergeModes);
+	button = new DGButton(this, kMonomergeMode, &pos, monomergeModeButtonImage, kNumMonomergeModes, kDGButtonType_incbutton);
 
-	if (gMonomergeMovie)
-		gMonomergeMovie->forget();
-	gMonomergeMovie = 0;
-	if (gPanMovie)
-		gPanMovie->forget();
-	gPanMovie = 0;
+	// pan mode button
+	pos.offset(kButtonInc, 0);
+	pos.resize(panModeButtonImage->getWidth(), (panModeButtonImage->getHeight()) / kNumPanModes);
+	button = new DGButton(this, kPanMode, &pos, panModeButtonImage, kNumPanModes, kDGButtonType_incbutton);
 
-	if (gDestroyFXlink)
-		gDestroyFXlink->forget();
-	gDestroyFXlink = 0;
-}
-
-//-----------------------------------------------------------------------------
-void MonomakerEditor::setParameter(long index, float value)
-{
-	if (!frame)
-		return;
-
-	// called from MonomakerEdit
-	switch (index)
-	{
-		case kMonomerge:
-			if (monomergeFader)
-				monomergeFader->setValue(effect->getParameter(index));
-			if (monomergeDisplay)
-				monomergeDisplay->setValue(effect->getParameter(index));
-			if (monomergeMovie)
-				monomergeMovie->setValue(effect->getParameter(index));
-			break;
-
-		case kPan:
-			if (panFader)
-				panFader->setValue(effect->getParameter(index));
-			if (panDisplay)
-				panDisplay->setValue(effect->getParameter(index));
-			if (panMovie)
-				panMovie->setValue(effect->getParameter(index));
-			break;
-
-		default:
-			return;
-	}	
-
-	postUpdate();
-}
-
-//-----------------------------------------------------------------------------
-void MonomakerEditor::valueChanged(CDrawContext* context, CControl* control)
-{
-  long tag = control->getTag();
+	// Destroy FX web page link
+	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight()/2);
+	DGWebLink * dfxLinkButton = new DGWebLink(this, &pos, destroyFXLinkImage, DESTROYFX_URL);
 
 
-	switch (tag)
-	{
-		case kMonomerge:
-		case kPan:
-			effect->setParameterAutomated(tag, control->getValue());
-		case kDestroyFXlinkID:
-			control->update(context);
-			break;
 
-		default:
-			break;
-	}
+	return noErr;
 }
