@@ -350,9 +350,9 @@ OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef *
 
 	// for each input CFString that is not null, we want to provide a CFString representation of the C string
 	if (outNameString != NULL)
-		*outNameString = CFStringCreateWithCString(kCFAllocatorDefault, pluginNameCString, CFStringGetSystemEncoding());
+		*outNameString = CFStringCreateWithCString(kCFAllocatorDefault, pluginNameCString, kCFStringEncodingMacRoman);
 	if (outManufacturerString != NULL)
-		*outManufacturerString = CFStringCreateWithCString(kCFAllocatorDefault, manufacturerNameCString, CFStringGetSystemEncoding());
+		*outManufacturerString = CFStringCreateWithCString(kCFAllocatorDefault, manufacturerNameCString, kCFStringEncodingMacRoman);
 	// if there was any problem creating any of the requested CFStrings, return an error
 	// XXX but what if one was created and not the other?  we will be giving a misleading error code, and potentially leaking memory...
 	if (outNameString != NULL)
