@@ -107,10 +107,12 @@ long MonomakerEditor::open()
 	// monomerge animation
 	pos.set(kMonomergeAnimationX, kMonomergeAnimationY, monomergeAnimationImage->getWidth(), (monomergeAnimationImage->getHeight())/numAnimationFrames);
 	blobs = new DGAnimation(this, kMonomerge, &pos, monomergeAnimationImage, numAnimationFrames);
+	blobs->setMouseAxis(kDGTextDisplayMouseAxis_horizontal);
 
 	// pan animation
 	pos.set(kPanAnimationX, kPanAnimationY, panAnimationImage->getWidth(), (panAnimationImage->getHeight())/numAnimationFrames);
 	blobs = new DGAnimation(this, kPan, &pos, panAnimationImage, numAnimationFrames);
+	blobs->setMouseAxis(kDGTextDisplayMouseAxis_horizontal);
 
 
 	// --- text displays ---
@@ -119,12 +121,12 @@ long MonomakerEditor::open()
 	// mono merge
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
 	display = new DGTextDisplay(this, kMonomerge, &pos, monomergeDisplayProc, NULL, NULL, kDGTextAlign_center, 
-								kValueTextSize, kBlackDGColor, kValueTextFont);
+								kValueTextSize, kDGColor_black, kValueTextFont);
 
 	// pan
 	pos.offset(0, kSliderInc - 1);
 	display = new DGTextDisplay(this, kPan, &pos, panDisplayProc, NULL, NULL, kDGTextAlign_center, 
-								kValueTextSize, kBlackDGColor, kValueTextFont);
+								kValueTextSize, kDGColor_black, kValueTextFont);
 
 
 	// --- buttons ---
