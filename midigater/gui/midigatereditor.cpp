@@ -38,43 +38,43 @@ const float kValueTextSize = 10.5f;
 
 
 //-----------------------------------------------------------------------------
-// parameter value string display conversion functions
+// parameter value display text conversion functions
 
-void slopeDisplayProc(float value, char * outText, void *);
-void slopeDisplayProc(float value, char * outText, void *)
+void slopeDisplayProc(float inValue, char * outText, void *);
+void slopeDisplayProc(float inValue, char * outText, void *)
 {
-	long thousands = (long)value / 1000;
-	float remainder = fmodf(value, 1000.0f);
+	long thousands = (long)inValue / 1000;
+	float remainder = fmodf(inValue, 1000.0f);
 	if (thousands > 0)
 		sprintf(outText, "%ld,%05.1f", thousands, remainder);
 	else
-		sprintf(outText, "%.1f", value);
+		sprintf(outText, "%.1f", inValue);
 	strcat(outText, " ms");
 }
 
-void velInfluenceDisplayProc(float value, char * outText, void *);
-void velInfluenceDisplayProc(float value, char * outText, void *)
+void velInfluenceDisplayProc(float inValue, char * outText, void *);
+void velInfluenceDisplayProc(float inValue, char * outText, void *)
 {
-	sprintf(outText, "%.1f%%", value * 100.0f);
+	sprintf(outText, "%.1f%%", inValue * 100.0f);
 }
 
-void floorDisplayProc(float value, char * outText, void *);
-void floorDisplayProc(float value, char * outText, void *)
+void floorDisplayProc(float inValue, char * outText, void *);
+void floorDisplayProc(float inValue, char * outText, void *)
 {
-	if (value <= 0.0f)
+	if (inValue <= 0.0f)
 //		sprintf(outText, "-\xB0 dB");
 		sprintf(outText, "-oo dB");
 	else
-		sprintf(outText, "%.1f dB", linear2dB(value));
+		sprintf(outText, "%.1f dB", linear2dB(inValue));
 }
 
 
 
-// ____________________________________________________________________________
+//____________________________________________________________________________
 COMPONENT_ENTRY(MidiGaterEditor)
 
 //-----------------------------------------------------------------------------
-MidiGaterEditor::MidiGaterEditor(AudioUnitCarbonView inInstance)
+MidiGaterEditor::MidiGaterEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
 }
@@ -82,42 +82,43 @@ MidiGaterEditor::MidiGaterEditor(AudioUnitCarbonView inInstance)
 //-----------------------------------------------------------------------------
 long MidiGaterEditor::open()
 {
-	// load some graphics
+	//--load the images-------------------------------------
 
 	// background image
-	DGImage * gBackground = new DGImage("midi-gater-background.png", this);
-	SetBackgroundImage(gBackground);
+	DGImage * backgroundImage = new DGImage("midi-gater-background.png", this);
+	SetBackgroundImage(backgroundImage);
 
-	DGImage * gSlopeSliderHandle = new DGImage("slider-handle-slope.png", this);
-	DGImage * gFloorSliderHandle = new DGImage("slider-handle-floor.png", this);
-	DGImage * gVelInfluenceSliderHandle = new DGImage("slider-handle-velocity-influence.png", this);
+	DGImage * slopeSliderHandleImage = new DGImage("slider-handle-slope.png", this);
+	DGImage * floorSliderHandleImage = new DGImage("slider-handle-floor.png", this);
+	DGImage * velInfluenceSliderHandleImage = new DGImage("slider-handle-velocity-influence.png", this);
 
-	DGImage * gDestroyFXlinkButton = new DGImage("destroy-fx-link-button.png", this);
+	DGImage * destroyFXLinkButtonImage = new DGImage("destroy-fx-link-button.png", this);
 
 
+	//--create the controls-------------------------------------
 	DGRect pos;
 
-	//--initialize the horizontal faders-------------------------------------
+	// --- sliders ---
 	DGSlider * slider;
 
 	// attack slope
-	pos.set(kSliderX, kAttackSlopeSliderY, kSliderWidth, gSlopeSliderHandle->getHeight());
-	slider = new DGSlider(this, kAttackSlope, &pos, kDGSliderAxis_horizontal, gSlopeSliderHandle, NULL);
+	pos.set(kSliderX, kAttackSlopeSliderY, kSliderWidth, slopeSliderHandleImage->getHeight());
+	slider = new DGSlider(this, kAttackSlope, &pos, kDGSliderAxis_horizontal, slopeSliderHandleImage, NULL);
 
 	// release slope
-	pos.set(kSliderX, kReleaseSlopeSliderY, kSliderWidth, gSlopeSliderHandle->getHeight());
-	slider = new DGSlider(this, kReleaseSlope, &pos, kDGSliderAxis_horizontal, gSlopeSliderHandle, NULL);
+	pos.set(kSliderX, kReleaseSlopeSliderY, kSliderWidth, slopeSliderHandleImage->getHeight());
+	slider = new DGSlider(this, kReleaseSlope, &pos, kDGSliderAxis_horizontal, slopeSliderHandleImage, NULL);
 
 	// velocity influence
-	pos.set(kSliderX, kVelInfluenceSliderY, kSliderWidth, gVelInfluenceSliderHandle->getHeight());
-	slider = new DGSlider(this, kVelInfluence, &pos, kDGSliderAxis_horizontal, gVelInfluenceSliderHandle, NULL);
+	pos.set(kSliderX, kVelInfluenceSliderY, kSliderWidth, velInfluenceSliderHandleImage->getHeight());
+	slider = new DGSlider(this, kVelInfluence, &pos, kDGSliderAxis_horizontal, velInfluenceSliderHandleImage, NULL);
 
 	// floor
-	pos.set(kSliderX, kFloorSliderY, kSliderWidth, gFloorSliderHandle->getHeight());
-	slider = new DGSlider(this, kFloor, &pos, kDGSliderAxis_horizontal, gFloorSliderHandle, NULL);
+	pos.set(kSliderX, kFloorSliderY, kSliderWidth, floorSliderHandleImage->getHeight());
+	slider = new DGSlider(this, kFloor, &pos, kDGSliderAxis_horizontal, floorSliderHandleImage, NULL);
 
 
-	//--initialize the displays---------------------------------------------
+	// --- text displays ---
 	DGTextDisplay * display;
 	DGStaticTextDisplay * label;
 	CAAUParameter auvp;
@@ -165,11 +166,11 @@ long MidiGaterEditor::open()
 								kValueTextSize, kValueTextColor, kValueTextFont);
 
 
-	//--initialize the buttons----------------------------------------------
+	// --- buttons ---
 
 	// Destroy FX web page link
-	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, gDestroyFXlinkButton->getWidth(), gDestroyFXlinkButton->getHeight()/2);
-	DGWebLink * dfxLinkButton = new DGWebLink(this, &pos, gDestroyFXlinkButton, DESTROYFX_URL);
+	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight()/2);
+	DGWebLink * dfxLinkButton = new DGWebLink(this, &pos, destroyFXLinkButtonImage, DESTROYFX_URL);
 
 
 
