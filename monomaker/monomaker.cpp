@@ -8,7 +8,7 @@
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(Monomaker);
+DFX_ENTRY(Monomaker)
 
 //-----------------------------------------------------------------------------
 // initializations and such
