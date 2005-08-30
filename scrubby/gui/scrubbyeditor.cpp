@@ -379,7 +379,7 @@ void predelayDisplayProc(float value, char * outText, void *)
 // this is a display for Scrubby's built-in help
 ScrubbyHelpBox::ScrubbyHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground)
 :	DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
-					kDGTextAlign_left, kDisplayTextSize, kBlackDGColor, kDisplayFont), 
+					kDGTextAlign_left, kDisplayTextSize, kDGColor_black, kDisplayFont), 
 	itemNum(kHelp_none)
 {
 	setRespondToMouse(false);
@@ -412,12 +412,12 @@ InsetRect(&cbounds, 4, 4);
 	textpos.w -= 13;
 	textpos.offset(12, 4);
 
-	fontColor = kBlackDGColor;
+	fontColor = kDGColor_black;
 	drawText(&textpos, helpstrings[itemNum][0], inContext);
 	textpos.offset(1, 0);
 	drawText(&textpos, helpstrings[itemNum][0], inContext);
 	textpos.offset(-1, 13);
-	fontColor = kWhiteDGColor;
+	fontColor = kDGColor_white;
 
 	for (int i=1; i < kNumHelpTextLines; i++)
 	{

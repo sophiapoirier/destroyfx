@@ -384,34 +384,34 @@ long BufferOverrideEditor::open()
 	DGTextDisplay * display;
 
 	pos.set(kDivisorDisplayX, kDivisorDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayRegularFontSize, kWhiteDGColor, kValueDisplayFont);
+	display = new DGTextDisplay(this, kDivisor, &pos, divisorDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayRegularFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kBufferDisplayX, kBufferDisplayY, kDisplayWidth, kDisplayHeight);
-	bufferSizeDisplay = new DGTextDisplay(this, bufferSizeTag, &pos, bufferSizeDisplayProc, this, NULL, kDGTextAlign_center, kValueDisplayRegularFontSize, kWhiteDGColor, kValueDisplayFont);
+	bufferSizeDisplay = new DGTextDisplay(this, bufferSizeTag, &pos, bufferSizeDisplayProc, this, NULL, kDGTextAlign_center, kValueDisplayRegularFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kDivisorLFOrateDisplayX, kDivisorLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
-	divisorLFOrateDisplay = new DGTextDisplay(this, divisorLFOrateTag, &pos, divisorLFOrateDisplayProc, this, NULL, kDGTextAlign_right, kValueDisplayTinyFontSize, kWhiteDGColor, kValueDisplayFont);
+	divisorLFOrateDisplay = new DGTextDisplay(this, divisorLFOrateTag, &pos, divisorLFOrateDisplayProc, this, NULL, kDGTextAlign_right, kValueDisplayTinyFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kDivisorLFOdepthDisplayX, kDivisorLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayTinyFontSize, kWhiteDGColor, kValueDisplayFont);
+	display = new DGTextDisplay(this, kDivisorLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayTinyFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kBufferLFOrateDisplayX, kBufferLFOrateDisplayY, kLFOrateDisplayWidth, kDisplayHeight);
-	bufferLFOrateDisplay = new DGTextDisplay(this, bufferLFOrateTag, &pos, bufferLFOrateDisplayProc, this, NULL, kDGTextAlign_right, kValueDisplayTinyFontSize, kWhiteDGColor, kValueDisplayFont);
+	bufferLFOrateDisplay = new DGTextDisplay(this, bufferLFOrateTag, &pos, bufferLFOrateDisplayProc, this, NULL, kDGTextAlign_right, kValueDisplayTinyFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kBufferLFOdepthDisplayX, kBufferLFOdepthDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayTinyFontSize, kWhiteDGColor, kValueDisplayFont);
+	display = new DGTextDisplay(this, kBufferLFOdepth, &pos, LFOdepthDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayTinyFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kSmoothDisplayX, kSmoothDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayRegularFontSize, kWhiteDGColor, kValueDisplayFont);
+	display = new DGTextDisplay(this, kSmooth, &pos, smoothDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayRegularFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kDryWetMixDisplayX, kDryWetMixDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayRegularFontSize, kWhiteDGColor, kValueDisplayFont);
+	display = new DGTextDisplay(this, kDryWetMix, &pos, dryWetMixDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayRegularFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kPitchbendDisplayX, kPitchbendDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayRegularFontSize, kWhiteDGColor, kValueDisplayFont);
+	display = new DGTextDisplay(this, kPitchbend, &pos, pitchbendDisplayProc, NULL, NULL, kDGTextAlign_right, kValueDisplayRegularFontSize, kDGColor_white, kValueDisplayFont);
 
 	pos.set(kTempoDisplayX, kTempoDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, kDGTextAlign_left, kValueDisplayTinyFontSize, kWhiteDGColor, kValueDisplayFont);
+	display = new DGTextDisplay(this, kTempo, &pos, tempoDisplayProc, NULL, NULL, kDGTextAlign_left, kValueDisplayTinyFontSize, kDGColor_white, kValueDisplayFont);
 
 
 	DGButton * button;
