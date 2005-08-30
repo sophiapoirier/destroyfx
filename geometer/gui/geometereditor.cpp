@@ -9,7 +9,7 @@ const long NUM_SLIDERS = 5;
 const char * fontface_snoot = "snoot.org pixel10";
 const float fontsize_snoot = 14.0f;
 const DGColor fontcolor_values(75.0f/255.0f, 151.0f/255.0f, 71.0f/255.0f);
-const DGColor fontcolor_labels = kWhiteDGColor;
+const DGColor fontcolor_labels = kDGColor_white;
 
 const float finetuneinc = 0.0001f;
 

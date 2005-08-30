@@ -170,8 +170,8 @@ struct DGColor
 };
 typedef struct DGColor DGColor;
 
-const DGColor kBlackDGColor(0.0f, 0.0f, 0.0f);
-const DGColor kWhiteDGColor(1.0f, 1.0f, 1.0f);
+const DGColor kDGColor_black(0.0f, 0.0f, 0.0f);
+const DGColor kDGColor_white(1.0f, 1.0f, 1.0f);
 
 
 
