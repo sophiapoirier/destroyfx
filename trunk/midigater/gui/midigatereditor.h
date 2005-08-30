@@ -7,7 +7,7 @@
 class MidiGaterEditor : public DfxGuiEditor
 {
 public:
-	MidiGaterEditor(AudioUnitCarbonView inInstance);
+	MidiGaterEditor(DGEditorListenerInstance inInstance);
 	virtual long open();
 };
 
