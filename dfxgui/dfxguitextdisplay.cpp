@@ -244,7 +244,7 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 	}
 	else
 	{
-		Rect bounds = inRegion->convertToRect();
+		Rect bounds = inRegion->convertToMacRect();
 
 		SetThemeTextColor(kThemeTextColorWhite, 32, true);	// XXX eh, is there a real way to get the graphics device bit-depth value?
 
