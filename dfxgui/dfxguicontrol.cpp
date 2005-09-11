@@ -89,7 +89,7 @@ void DGControl::do_draw(DGGraphicsContext * inContext)
 	// XXX a hack to workaround creating mouse tracking regions when 
 	// the portion of the window where the control is doesn't exist yet
 	if (isFirstDraw)
-		initMouseTrackingRegion();
+		initMouseTrackingArea();
 	isFirstDraw = false;
 #endif
 
@@ -129,7 +129,7 @@ void DGControl::embed()
 {
 	setOffset( (long) (getDfxGuiEditor()->GetXOffset()), (long) (getDfxGuiEditor()->GetYOffset()) );
 	Rect carbonControlRect;
-	getBounds()->copyToRect(&carbonControlRect);
+	getBounds()->copyToMacRect(&carbonControlRect);
 	ControlRef newCarbonControl = NULL;
 	OSStatus error = CreateCustomControl(getDfxGuiEditor()->GetCarbonWindow(), &carbonControlRect, 
 									getDfxGuiEditor()->getControlDefSpec(), NULL, &newCarbonControl);
@@ -196,6 +196,7 @@ void DGControl::setControlContinuous(bool inContinuity)
 	}
 }
 
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 void DGControl::initCarbonControlValueRange()
 {
@@ -221,27 +222,22 @@ void DGControl::initCarbonControlValueRange()
 		}
 	}
 }
+#endif
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-void DGControl::initMouseTrackingRegion()
+void DGControl::initMouseTrackingArea()
 {
 	if (getCarbonControl() == NULL)
 		return;
 
 	OSStatus status;
 
-	// HIViewTrackingAreas are only available in Mac OS X 10.4 or higher
+	// HIViewTrackingAreas are only available in Mac OS X 10.4 or higher 
+	// and only in compositing windows
 	if ( (HIViewNewTrackingArea != NULL) && getDfxGuiEditor()->IsCompositWindow() )
 	{
-		HIShapeRef trackingAreaShape = NULL;
-		HIRect trackingAreaBounds;
-		status = HIViewGetBounds(getCarbonControl(), &trackingAreaBounds);
-//		if (status == noErr)
-//			trackingAreaShape = HIShapeCreateWithRect(&trackingAreaBounds);
-		status = HIViewNewTrackingArea(getCarbonControl(), trackingAreaShape, (HIViewTrackingAreaID)this, &mouseTrackingArea);
-//		if (trackingAreaShape != NULL)
-//			CFRelease(trackingAreaShape);
+		status = HIViewNewTrackingArea(getCarbonControl(), NULL, (HIViewTrackingAreaID)this, &mouseTrackingArea);
 	}
 	else
 	{
@@ -249,17 +245,11 @@ void DGControl::initMouseTrackingRegion()
 		RgnHandle controlRegion = NewRgn();	// XXX deprecated in Mac OS X 10.4
 		if (controlRegion != NULL)
 		{
-			status = GetControlRegion(getCarbonControl(), kControlEntireControl, controlRegion);
-			if (status != noErr)
+// XXX doesn't get correct rect
+//			status = GetControlRegion(getCarbonControl(), kControlStructureMetaPart, controlRegion);
+//			if (status != noErr)
 			{
-				Rect mouseRegionBounds;
-				GetControlBounds(getCarbonControl(), &mouseRegionBounds);
-				if ( getDfxGuiEditor()->IsCompositWindow() )
-				{
-					Rect paneBounds;
-					GetControlBounds(getDfxGuiEditor()->GetCarbonPane(), &paneBounds);
-					OffsetRect(&mouseRegionBounds, paneBounds.left, paneBounds.top);	// XXX deprecated in Mac OS X 10.4
-				}
+				Rect mouseRegionBounds = getMacRect();
 				RectRgn(controlRegion, &mouseRegionBounds);	// XXX deprecated in Mac OS X 10.4
 			}
 			MouseTrackingRegionID mouseTrackingRegionID;
@@ -432,6 +422,7 @@ void DGControl::setDrawAlpha(float inAlpha)
 		redraw();
 }
 
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 bool DGControl::isControlRef(ControlRef inControl)
 {
@@ -439,6 +430,44 @@ bool DGControl::isControlRef(ControlRef inControl)
 		return true;
 	return false;
 }
+#endif
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+// this returns an old-style Mac Rect of the control's bounds in window-content-relative coordinates
+Rect DGControl::getMacRect()
+{
+	Rect controlRect;
+	memset(&controlRect, 0, sizeof(controlRect));
+
+	if ( getDfxGuiEditor()->IsCompositWindow() )
+	{
+//		Rect paneBounds;
+//		GetControlBounds(getDfxGuiEditor()->GetCarbonPane(), &paneBounds);
+//		OffsetRect(&controlRect, paneBounds.left, paneBounds.top);	// XXX deprecated in Mac OS X 10.4
+		HIRect frameRect;
+		OSStatus status = HIViewGetFrame(getCarbonControl(), &frameRect);
+		if (status == noErr)
+		{
+			HIRect paneFrameRect;
+			status = HIViewGetFrame(getDfxGuiEditor()->GetCarbonPane(), &paneFrameRect);
+			if (status == noErr)
+			{
+				frameRect = CGRectOffset(frameRect, paneFrameRect.origin.x, paneFrameRect.origin.y);
+				controlRect.left = (short) CGRectGetMinX(frameRect);
+				controlRect.top = (short) CGRectGetMinY(frameRect);
+				controlRect.right = (short) CGRectGetMaxX(frameRect);
+				controlRect.bottom = (short) CGRectGetMaxY(frameRect);
+//fprintf(stderr, "cb+ %d, %d, %d, %d\n", controlRect.left, controlRect.top, controlRect.right, controlRect.bottom);
+			}
+		}
+	}
+	else
+		GetControlBounds(getCarbonControl(), &controlRect);
+
+	return controlRect;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void DGControl::setForeBounds(long x, long y, long w, long h)
@@ -470,9 +499,8 @@ OSStatus DGControl::setHelpText(CFStringRef inHelpText)
 		// the Carbon control is probably null because it has not been created yet, 
 		// so we can retain the string and then try setting the help text after 
 		// we have created the Carbon control
-		// I actually create a copy rather than retain in case the CFString is a 
-		// CFSTR compile-time constant string, which you're apparently not supposed to CFRetain()
-		helpText = CFStringCreateCopy(kCFAllocatorDefault, inHelpText);
+		helpText = inHelpText;
+		CFRetain(helpText);
 		return errItemNotControl;
 	}
 
