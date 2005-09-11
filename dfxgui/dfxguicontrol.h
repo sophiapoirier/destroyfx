@@ -33,7 +33,8 @@ public:
 	void initCarbonControlValueRange();
 	// checks if this or an embedded control is inside
 	bool isControlRef(ControlRef inControl);
-	void initMouseTrackingRegion();
+	void initMouseTrackingArea();
+	Rect getMacRect();
 #endif
 
 	void do_draw(DGGraphicsContext * inContext);
