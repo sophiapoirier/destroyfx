@@ -119,17 +119,17 @@ struct DGRect
 		copyToCGRect(&outputRect, inDestPortHeight);
 		return outputRect;
 	}
-	void copyToRect(Rect * outDestRect)
+	void copyToMacRect(Rect * outDestRect)
 	{
 		outDestRect->left = x;
 		outDestRect->top = y;
 		outDestRect->right = x + w;
 		outDestRect->bottom = y + h;
 	}
-	Rect convertToRect()
+	Rect convertToMacRect()
 	{
 		Rect outputRect;
-		copyToRect(&outputRect);
+		copyToMacRect(&outputRect);
 		return outputRect;
 	}
 #endif
