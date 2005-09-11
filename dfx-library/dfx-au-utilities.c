@@ -1,7 +1,7 @@
 /*
 	DFX AU Utilities is a collection of helpful utility functions for 
 	creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2004  Marc Genung Poirier
+	Copyright (C) 2003-2005  Marc Genung Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -163,8 +163,10 @@ const void * auPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const voi
 	AUPreset * newPreset = (AUPreset*) CFAllocatorAllocate(inAllocator, sizeof(AUPreset), 0);
 	// set the number of the new copy to that of the input AUPreset
 	newPreset->presetNumber = preset->presetNumber;
-	// create a copy of the input AUPreset's name string for this new copy of the preset
-	newPreset->presetName = CFStringCreateCopy(kCFAllocatorDefault, preset->presetName);
+	// retain the input AUPreset's name string for this new copy of the preset
+	newPreset->presetName = preset->presetName;
+	if (newPreset->presetName != NULL)
+		CFRetain(newPreset->presetName);
 	// return the pointer to the new memory, which belongs to the array, rather than the input pointer
 	return newPreset;
 }
