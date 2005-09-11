@@ -1085,18 +1085,10 @@ return false;
 	if (window != NULL)
 	{
 		// the position of the control relative to the top left corner of the window content area
-		Rect controlBounds;
-		GetControlBounds(ourControl->getCarbonControl(), &controlBounds);
+		Rect controlBounds = ourControl->getMacRect();
 		// the content area of the window (i.e. not the title bar or any borders)
 		Rect windowBounds;
 		GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
-		if ( IsCompositWindow() )
-		{
-			Rect paneBounds;
-			GetControlBounds(GetCarbonPane(), &paneBounds);
-			controlBounds.left += paneBounds.left;
-			controlBounds.top += paneBounds.top;
-		}
 		mouseLocation.x -= (float) (controlBounds.left + windowBounds.left);
 		mouseLocation.y -= (float) (controlBounds.top + windowBounds.top);
 	}
@@ -1358,21 +1350,13 @@ fprintf(stderr, "kEventControlHit\n");
 
 					// orient the mouse coordinates as though the control were at 0, 0 (for convenience)
 					// the position of the control relative to the top left corner of the window content area
-					Rect controlBounds;
-					GetControlBounds(ourCarbonControl, &controlBounds);
+					Rect controlBounds = ourDGControl->getMacRect();
 					// the content area of the window (i.e. not the title bar or any borders)
 					Rect windowBounds;
 					memset(&windowBounds, 0, sizeof(windowBounds));
 					WindowRef window = GetControlOwner(ourCarbonControl);
 					if (window != NULL)
 						GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
-					if ( IsCompositWindow() )
-					{
-						Rect paneBounds;
-						GetControlBounds(GetCarbonPane(), &paneBounds);
-						controlBounds.left += paneBounds.left;
-						controlBounds.top += paneBounds.top;
-					}
 					mouseLocation.x -= (float) (controlBounds.left + windowBounds.left);
 					mouseLocation.y -= (float) (controlBounds.top + windowBounds.top);
 
