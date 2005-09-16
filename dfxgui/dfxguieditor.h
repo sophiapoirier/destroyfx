@@ -47,8 +47,6 @@ public:
 	void do_idle();
 	virtual void idle() { }
 
-	virtual void DrawBackground(DGGraphicsContext * inContext);
-
 #if TARGET_OS_MAC
 	virtual bool HandleMouseEvent(EventRef inEvent);
 	virtual bool HandleKeyboardEvent(EventRef inEvent);
@@ -63,6 +61,8 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
 #endif
+
+	void DrawBackground(DGGraphicsContext * inContext);
 
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()
@@ -96,10 +96,10 @@ public:
 	#endif
 
 protected:
-	void SetBackgroundImage(DGImage * inBackgroundImage)
-		{	backgroundImage = inBackgroundImage;	}
-	void SetBackgroundColor(DGColor inBackgroundColor)
-		{	backgroundColor = inBackgroundColor;	}
+	void SetBackgroundImage(DGImage * inBackgroundImage);
+	void SetBackgroundColor(DGColor inBackgroundColor);
+	DGBackgroundControl * getBackgroundControl()
+		{	return backgroundControl;	}
 
 	class DGControlsList
 	{
@@ -133,9 +133,6 @@ protected:
 	};
 	DGImagesList * imagesList;
 
-	DGImage *	backgroundImage;
-	DGColor		backgroundColor;
-
 #if TARGET_OS_MAC
 	DGControl * getDGControlByCarbonControlRef(ControlRef inControl);
 #endif
@@ -143,6 +140,8 @@ protected:
 	DfxPlugin * dfxplugin;	// XXX bad thing for AU, maybe just for easy debugging sometimes
 
 private:
+	DGBackgroundControl * backgroundControl;
+
 	DGControl *	currentControl_clicked;
 	DGControl *	currentControl_mouseover;
 
