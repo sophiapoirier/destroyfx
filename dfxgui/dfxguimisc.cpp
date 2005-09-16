@@ -44,6 +44,15 @@ void DGGraphicsContext::setFillColor(DGColor inColor, float inAlpha)
 }
 
 //-----------------------------------------------------------------------------
+void DGGraphicsContext::setStrokeColor(DGColor inColor, float inAlpha)
+{
+#if TARGET_OS_MAC
+	if (context != NULL)
+		CGContextSetRGBStrokeColor(context, inColor.r, inColor.g, inColor.b, inAlpha);
+#endif
+}
+
+//-----------------------------------------------------------------------------
 void DGGraphicsContext::setLineWidth(float inLineWidth)
 {
 #if TARGET_OS_MAC
@@ -68,15 +77,16 @@ void DGGraphicsContext::fillRect(DGRect * inRect)
 }
 
 //-----------------------------------------------------------------------------
-void DGGraphicsContext::strokeRect(DGRect * inRect)
+void DGGraphicsContext::strokeRect(DGRect * inRect, float inLineWidth)
 {
 #if TARGET_OS_MAC
 	if (context != NULL)
 	{
 		CGRect cgRect = inRect->convertToCGRect(portHeight);
-		cgRect = CGRectInset(cgRect, 0.5f, 0.5f);	// CoreGraphics lines are positioned between pixels rather than on them
-		CGContextStrokeRect(context, cgRect);
-//		CGContextStrokeRectWithWidth(inContext, cgRect, inLineWidth);
+		const float halfLineWidth = inLineWidth / 2.0f;
+		cgRect = CGRectInset(cgRect, halfLineWidth, halfLineWidth);	// CoreGraphics lines are positioned between pixels rather than on them
+//		CGContextStrokeRect(context, cgRect);
+		CGContextStrokeRectWithWidth(context, cgRect, inLineWidth);
 	}
 #endif
 }
