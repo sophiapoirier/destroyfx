@@ -140,7 +140,7 @@ static void baseParamsListenerProc(void * inUserData, void * inObject, const Aud
 //--------------------------------------------------------------------------
 GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground)
  : DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
-                 kDGTextAlign_left, fontsize_snoot, kBlackDGColor, fontface_snoot), 
+                 kDGTextAlign_left, fontsize_snoot, kDGColor_black, fontface_snoot), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
   setRespondToMouse(false);
@@ -187,12 +187,12 @@ void GeometerHelpBox::draw(DGGraphicsContext * inContext) {
       break;
 
     if (i == 0) {
-      fontColor = kBlackDGColor;
+      fontColor = kDGColor_black;
       drawText(&textpos, helpstrings[0], inContext);
       textpos.offset(-1, 0);
       drawText(&textpos, helpstrings[0], inContext);
       textpos.offset(1, 16);
-      fontColor = kWhiteDGColor;
+      fontColor = kDGColor_white;
     } else {
       drawText(&textpos, helpstrings[i], inContext);
       textpos.offset(0, 12);
