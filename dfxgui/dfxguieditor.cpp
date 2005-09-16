@@ -46,11 +46,10 @@ CFRelease(mut);
 
 	controlsList = NULL;
 	imagesList = NULL;
+
+	backgroundControl = NULL;
   
 	idleTimer = NULL;
-
-	backgroundImage = NULL;
-	backgroundColor(randFloat(), randFloat(), randFloat());
 
 	dgControlSpec.defType = kControlDefObjectClass;
 	dgControlSpec.u.classRef = NULL;
@@ -124,6 +123,10 @@ DfxGuiEditor::~DfxGuiEditor()
 	// to just let the fonts stay activated.
 //	if ( fontsWereActivated && (fontsATSContainer != NULL) )
 //		ATSFontDeactivate(fontsATSContainer, NULL, kATSOptionFlagsDefault);
+
+	if (backgroundControl != NULL)
+		delete backgroundControl;
+	backgroundControl = NULL;
 }
 
 
@@ -134,6 +137,10 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	#if TARGET_PLUGIN_USES_MIDI
 		setmidilearning(false);
 	#endif
+
+
+// create the background control object using the embedding pane control
+	backgroundControl = new DGBackgroundControl(this, GetCarbonPane());
 
 
 // create our HIToolbox object class for common event handling amongst our custom Carbon Controls
@@ -237,8 +244,8 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	if (openErr == noErr)
 	{
 		// set the size of the embedding pane
-		if (backgroundImage != NULL)
-			SizeControl(GetCarbonPane(), (SInt16) (backgroundImage->getWidth()), (SInt16) (backgroundImage->getHeight()));
+		if (backgroundControl != NULL)
+			SizeControl(GetCarbonPane(), (SInt16) (backgroundControl->getWidth()), (SInt16) (backgroundControl->getHeight()));
 
 		if (gIdleTimerUPP == NULL)
 			gIdleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
@@ -273,7 +280,7 @@ ComponentResult DfxGuiEditor::Version()
 // outPort will be null if a CGContextRef was available from the event parameters 
 // (which happens with compositing windows) or non-null if the CGContext had to be created 
 // for the control's window port QuickDraw-style.  
-DGGraphicsContext * InitControlDrawingContext(EventRef inEvent, CGrafPtr & outPort)
+DGGraphicsContext * DGInitControlDrawingContext(EventRef inEvent, CGrafPtr & outPort)
 {
 	outPort = NULL;
 	if (inEvent == NULL)
@@ -360,10 +367,10 @@ DGGraphicsContext * InitControlDrawingContext(EventRef inEvent, CGrafPtr & outPo
 }
 
 //-----------------------------------------------------------------------------
-// inPort should be what you got from InitControlDrawingContext().  
+// inPort should be what you got from DGInitControlDrawingContext().  
 // It is null if inContext came with the control event (compositing window behavior) or 
 // non-null if inContext was created via QDBeginCGContext(), and hence needs to be terminated.
-void CleanupControlDrawingContext(DGGraphicsContext * inContext, CGrafPtr inPort)
+void DGCleanupControlDrawingContext(DGGraphicsContext * inContext, CGrafPtr inPort)
 {
 	if (inContext == NULL)
 		return;
@@ -397,14 +404,14 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 			if ( (carbonControl != NULL) && (carbonControl == GetCarbonPane()) )
 			{
 				CGrafPtr windowPort = NULL;
-				DGGraphicsContext * context = InitControlDrawingContext(inEvent, windowPort);
+				DGGraphicsContext * context = DGInitControlDrawingContext(inEvent, windowPort);
 				if (context == NULL)
 					return false;
 
-				context->setAntialias(false);	// XXX disable anti-aliased drawing for image rendering
+//				context->setAntialias(false);	// XXX disable anti-aliased drawing for image rendering
 				DrawBackground(context);
 
-				CleanupControlDrawingContext(context, windowPort);
+				DGCleanupControlDrawingContext(context, windowPort);
 				return true;
 			}
 		}
@@ -424,7 +431,7 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 			return false;
 		}
 	}
-	
+
 	// let the parent implementation do its thing
 	return AUCarbonViewBase::HandleEvent(inEvent);
 }
@@ -493,15 +500,22 @@ DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::DrawBackground(DGGraphicsContext * inContext)
 {
-	if (backgroundImage != NULL)
-	{
-		DGRect drawRect( (long)GetXOffset(), (long)GetYOffset(), backgroundImage->getWidth(), backgroundImage->getHeight() );
-		backgroundImage->draw(&drawRect, inContext);
-	}
-	else
-	{
-		// XXX draw a rectangle with the background color
-	}
+	if (backgroundControl != NULL)
+		backgroundControl->draw(inContext);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::SetBackgroundImage(DGImage * inBackgroundImage)
+{
+	if (backgroundControl != NULL)
+		backgroundControl->setImage(inBackgroundImage);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::SetBackgroundColor(DGColor inBackgroundColor)
+{
+	if (backgroundControl != NULL)
+		backgroundControl->setColor(inBackgroundColor);
 }
 
 //-----------------------------------------------------------------------------
@@ -1043,7 +1057,7 @@ return false;
 /*
 	{
 		// remember current port
-		CGrafPtr oldport;
+		CGrafPtr oldport = NULL;
 		GetPort(&oldport);
 		// switch to our window's port
 		WindowRef window = NULL;
@@ -1064,7 +1078,8 @@ return false;
 		setCurrentControl_mouseover(underDGControl);
 
 		// restore the original port
-		SetPort(oldport);
+		if (oldport != NULL)
+			SetPort(oldport);
 
 		return false;
 	}
@@ -1238,8 +1253,10 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 	// the Carbon control reference has not been added yet, so our DGControl pointer is NULL, because we can't look it up by ControlRef yet
 	if (inEventKind == kEventControlInitialize)
 	{
-		UInt32 dfxControlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
-		status = SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(dfxControlFeatures), &dfxControlFeatures);
+		UInt32 controlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
+		if (ourCarbonControl != NULL)
+			status = GetControlFeatures(ourCarbonControl, &controlFeatures);
+		status = SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(controlFeatures), &controlFeatures);
 		return true;
 	}
 */
@@ -1274,14 +1291,14 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 //fprintf(stderr, "kEventControlDraw\n");
 				{
 					CGrafPtr windowPort = NULL;
-					DGGraphicsContext * context = InitControlDrawingContext(inEvent, windowPort);
+					DGGraphicsContext * context = DGInitControlDrawingContext(inEvent, windowPort);
 					if (context == NULL)
 						return false;
 
-					context->setAntialias(false);	// XXX disable anti-aliased drawing for image rendering
+//					context->setAntialias(false);	// XXX disable anti-aliased drawing for image rendering
 					ourDGControl->do_draw(context);
 
-					CleanupControlDrawingContext(context, windowPort);
+					DGCleanupControlDrawingContext(context, windowPort);
 				}
 				return true;
 
