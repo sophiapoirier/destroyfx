@@ -192,10 +192,11 @@ public:
 	void setAlpha(float inAlpha);
 	void setAntialias(bool inShouldAntialias);
 	void setFillColor(DGColor inColor, float inAlpha = 1.0f);
+	void setStrokeColor(DGColor inColor, float inAlpha = 1.0f);
 	void setLineWidth(float inLineWidth);
 
 	void fillRect(DGRect * inRect);
-	void strokeRect(DGRect * inRect);
+	void strokeRect(DGRect * inRect, float inLineWidth);
 	void strokeLine(float inStartX, float inStartY, float inEndX, float inEndY);
 
 #if TARGET_OS_MAC
