@@ -180,6 +180,48 @@ void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEd
 #endif
 
 
+//-----------------------------------------------------------------------------
+class DGBackgroundControl
+{
+public:
+	DGBackgroundControl(DfxGuiEditor * inOwnerEditor, ControlRef inControl);
+	virtual ~DGBackgroundControl()
+		{ }
+
+	virtual void draw(DGGraphicsContext * inContext);
+	void redraw();
+
+	void setImage(DGImage * inImage)
+		{	backgroundImage = inImage;	}
+	void setColor(DGColor inColor)
+		{	backgroundColor = inColor;	}
+
+	void setDragActive(bool inActiveStatus);
+
+	long getWidth();
+	long getHeight();
+
+	DfxGuiEditor * getDfxGuiEditor()
+		{	return ownerEditor;	}
+#if TARGET_OS_MAC
+	ControlRef getCarbonControl()
+		{	return carbonControl;	}
+#endif
+
+protected:
+	DfxGuiEditor *	ownerEditor;
+
+	DGImage *		backgroundImage;
+	DGColor			backgroundColor;
+
+	bool			dragIsActive;
+
+#if TARGET_OS_MAC
+	ControlRef		carbonControl;
+#endif
+};
+
+
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 // this gives some slight tweaks to Apple's AUCarbonViewControl class

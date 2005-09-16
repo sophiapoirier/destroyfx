@@ -2,6 +2,7 @@
 #include "dfxgui.h"
 
 #include "dfxpluginproperties.h"
+#include "dfxmath.h"
 
 
 const SInt32 kContinuousControlMaxValue = 0x0FFFFFFF - 1;
@@ -59,7 +60,8 @@ void DGControl::init(DGRect * inRegion)
 	drawAlpha = 1.0f;
 
 	// add this control to the owner editor's list of controls
-	getDfxGuiEditor()->addControl(this);
+	if (getDfxGuiEditor() != NULL)
+		getDfxGuiEditor()->addControl(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -615,3 +617,106 @@ void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEd
 	}
 }
 #endif
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
+DGBackgroundControl::DGBackgroundControl(DfxGuiEditor * inOwnerEditor, ControlRef inControl)
+:	ownerEditor(inOwnerEditor), carbonControl(inControl)
+{
+	backgroundImage = NULL;
+	backgroundColor(randFloat(), randFloat(), randFloat());
+	dragIsActive = false;
+}
+
+//-----------------------------------------------------------------------------
+void DGBackgroundControl::draw(DGGraphicsContext * inContext)
+{
+	DGRect drawRect( (long)(getDfxGuiEditor()->GetXOffset()), (long)(getDfxGuiEditor()->GetYOffset()), getWidth(), getHeight() );
+
+	// draw the background image, if there is one
+	if (backgroundImage != NULL)
+	{
+		backgroundImage->draw(&drawRect, inContext);
+	}
+	// fill in the background color
+	else
+	{
+		inContext->setFillColor(backgroundColor);
+		inContext->fillRect(&drawRect);
+	}
+
+	if (dragIsActive)
+	{
+		RGBColor dragHiliteColor;
+		OSErr error = GetDragHiliteColor(getDfxGuiEditor()->GetCarbonWindow(), &dragHiliteColor);
+		if (error == noErr)
+		{
+			const float rgbScalar = 1.0f / (float)0xFFFF;
+			DGColor strokeColor((float)(dragHiliteColor.red) * rgbScalar, (float)(dragHiliteColor.green) * rgbScalar, (float)(dragHiliteColor.blue) * rgbScalar);
+			inContext->setStrokeColor(strokeColor);
+			inContext->strokeRect(&drawRect, 2.0f);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// force a redraw
+void DGBackgroundControl::redraw()
+{
+	if (carbonControl != NULL)
+	{
+		if ( getDfxGuiEditor()->IsCompositWindow() )
+			HIViewSetNeedsDisplay(carbonControl, true);
+		else
+			Draw1Control(carbonControl);
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DGBackgroundControl::setDragActive(bool inActiveStatus)
+{
+	bool oldStatus = dragIsActive;
+	dragIsActive = inActiveStatus;
+	if (oldStatus != inActiveStatus)
+		redraw();
+}
+
+//-----------------------------------------------------------------------------
+long DGBackgroundControl::getWidth()
+{
+	if (backgroundImage != NULL)
+		return backgroundImage->getWidth();
+	else
+	{
+		if (carbonControl != NULL)
+		{
+			Rect controlBoundsRect;
+			GetControlBounds(carbonControl, &controlBoundsRect);
+			return (long)(controlBoundsRect.right - controlBoundsRect.left);
+		}
+	}
+
+	return 1;
+}
+
+//-----------------------------------------------------------------------------
+long DGBackgroundControl::getHeight()
+{
+	if (backgroundImage != NULL)
+		return backgroundImage->getHeight();
+	else
+	{
+		if (carbonControl != NULL)
+		{
+			Rect controlBoundsRect;
+			GetControlBounds(carbonControl, &controlBoundsRect);
+			return (long)(controlBoundsRect.bottom - controlBoundsRect.top);
+		}
+	}
+
+	return 1;
+}
