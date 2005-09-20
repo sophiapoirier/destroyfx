@@ -97,12 +97,12 @@ void GeometerView::reflect() {
 }
 
 void GeometerView::init() {
-  inputs = (float*)malloc(sizeof (float) * (samples + 3));
-  pointsx = (int*)malloc(sizeof (int) * (samples + 3));
-  pointsy = (float*)malloc(sizeof (float) * (samples + 3));
-  tmpx = (int*)malloc(sizeof (int) * (samples + 3));
-  tmpy = (float*)malloc(sizeof (float) * (samples + 3));
-  outputs = (float*)malloc(sizeof (float) * (samples + 3));
+  inputs = (float*)calloc((samples + 3), sizeof (float));
+  pointsx = (int*)calloc((samples + 3), sizeof (int));
+  pointsy = (float*)calloc((samples + 3), sizeof (float));
+  tmpx = (int*)calloc((samples + 3), sizeof (int));
+  tmpy = (float*)calloc((samples + 3), sizeof (float));
+  outputs = (float*)calloc((samples + 3), sizeof (float));
   offc = new COffscreenContext (getParent (), gwidth, gheight, kBlackCColor);
   
   reflect();
