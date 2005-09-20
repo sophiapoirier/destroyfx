@@ -1176,11 +1176,11 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 	#endif
 
 	// there was an error in AUBas::RestoreState or trying to find "destroyfx-data", 
-	// but maybe some keys were missing and "vstdata" is there...
+	// but maybe some keys were missing and kAUPresetVSTDataKey is there...
 	if ( !dataFound || (cfdata == NULL) )
 	{
 		// failing that, try to see if old VST chunk data is being fed to us
-		dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, CFSTR("vstdata"), (const void**)&cfdata);
+		dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, CFSTR(kAUPresetVSTDataKey), (const void**)&cfdata);
 
 	#if DEBUG_VST_SETTINGS_IMPORT
 	fprintf(stderr, "trying vstdata...\n");
@@ -1194,22 +1194,26 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 	bool success = false;
 	if ( dataFound && (cfdata != NULL) )
 	{
-		// a pointer to our special data
-		const UInt8 * dfxdata = CFDataGetBytePtr(cfdata);
-		// the number of bytes of our data
-		unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
-		// try to restore the saved settings data
-		success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
+		// make sure that the settings item is the CoreFoundation type that we are expecting it to be
+		if ( CFGetTypeID(cfdata) == CFDataGetTypeID() )
+		{
+			// a pointer to our special data
+			const UInt8 * dfxdata = CFDataGetBytePtr(cfdata);
+			// the number of bytes of our data
+			unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
+			// try to restore the saved settings data
+			success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
 
-		#if DEBUG_VST_SETTINGS_IMPORT
-		if (success)
-			fprintf(stderr, "settings data was successfully loaded\n");
-		else
-			fprintf(stderr, "settings data failed to load\n");
-		#endif
+			#if DEBUG_VST_SETTINGS_IMPORT
+			if (success)
+				fprintf(stderr, "settings data was successfully loaded\n");
+			else
+				fprintf(stderr, "settings data failed to load\n");
+			#endif
 
-//		if (!success)
-//			return kAudioUnitErr_InvalidPropertyValue;
+//			if (!success)
+//				return kAudioUnitErr_InvalidPropertyValue;
+		}
 	}
 	if (!success)
 	{
