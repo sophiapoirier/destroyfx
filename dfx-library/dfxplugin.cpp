@@ -493,10 +493,11 @@ double DfxPlugin::getparameter_scalar(long inParameterIndex)
 		{
 			case kDfxParamUnit_percent:
 			case kDfxParamUnit_drywetmix:
-				return parameters[inParameterIndex].get_f() / 100.0;
+				return parameters[inParameterIndex].get_f() * 0.01;
 			case kDfxParamUnit_portion:
 			case kDfxParamUnit_scalar:
 				return parameters[inParameterIndex].get_f();
+			// XXX should we not just use contractparametervalue() here?
 			default:
 				return parameters[inParameterIndex].get_f() / parameters[inParameterIndex].getmax_f();
 		}
