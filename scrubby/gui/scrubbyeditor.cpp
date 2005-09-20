@@ -237,7 +237,7 @@ const char * helpstrings[kNumHelps][kNumHelpTextLines] =
 	// MIDI reset
 	{
 		"MIDI reset:  erase CC assignments", 
-		"Click this button to erase all of your MIDI CC -> parameter assignments.  ", 
+		"Push this button to erase all of your MIDI CC -> parameter assignments.  ", 
 		"Then CCs won't affect any parameters and you can start over if you want.", 
 	}, 
 };
