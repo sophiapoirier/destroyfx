@@ -202,20 +202,20 @@ long PLUGIN::initialize()
     maxframe = (buffersizes[i] > maxframe) ? buffersizes[i] : maxframe;
 
   /* add some leeway? */
-  in0 = (float*)malloc(maxframe * sizeof (float));
-  out0 = (float*)malloc(maxframe * 2 * sizeof (float));
+  in0 = (float*)calloc(maxframe, sizeof (float));
+  out0 = (float*)calloc(maxframe * 2, sizeof (float));
 
   /* prevmix is only a single third long */
-  prevmix = (float*)malloc((maxframe / 2) * sizeof (float));
+  prevmix = (float*)calloc((maxframe / 2), sizeof (float));
 
   /* geometer buffers */
-  pointx = (int*)malloc((maxframe * 2 + 3) * sizeof (int));
-  storex = (int*)malloc((maxframe * 2 + 3) * sizeof (int));
+  pointx = (int*)calloc((maxframe * 2 + 3), sizeof (int));
+  storex = (int*)calloc((maxframe * 2 + 3), sizeof (int));
 
-  pointy = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
-  storey = (float*)malloc((maxframe * 2 + 3) * sizeof (float));
+  pointy = (float*)calloc((maxframe * 2 + 3), sizeof (float));
+  storey = (float*)calloc((maxframe * 2 + 3), sizeof (float));
 
-  windowbuf = (float*)malloc(maxframe * sizeof(float));
+  windowbuf = (float*)calloc(maxframe, sizeof(float));
 #if !TARGET_PLUGIN_USES_DSPCORE
   return kDfxErr_NoError;
 #endif
