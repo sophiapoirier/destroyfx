@@ -39,8 +39,6 @@ private:
   int * tmpx;
   float * tmpy;
 
-  bool dirty;
-
 #if TARGET_PLUGIN_USES_DSPCORE
   GeometerDSP * geom;
 #else
@@ -63,22 +61,30 @@ public:
     gx = size.left;
     gy = size.top;
     samples = gwidth;
-    inputs = outputs = pointsy = 0;
-    pointsx = 0;
+    inputs = outputs = pointsy = tmpy = NULL;
+	pointsx = tmpx = NULL;
     numpts = 0;
-    offc = 0;
+	apts = 0;
+    offc = NULL;
   }
 
   void init ();
 
   ~GeometerView() {
-    free (inputs);
-    free (pointsx);
-    free (pointsy);
-    free (tmpx);
-    free (tmpy);
-    free (outputs);
-    delete offc;
+    if (inputs != NULL)
+      free (inputs);
+    if (pointsx != NULL)
+      free (pointsx);
+    if (pointsy != NULL)
+      free (pointsy);
+    if (tmpx != NULL)
+      free (tmpx);
+    if (tmpy != NULL)
+      free (tmpy);
+    if (outputs != NULL)
+      free (outputs);
+    if (offc != NULL)
+      delete offc;
   }
 
   virtual void draw (CDrawContext *pContext);
