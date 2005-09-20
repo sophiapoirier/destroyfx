@@ -227,6 +227,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 				if (status == noErr)
 					fontsWereActivated = true;
 			}
+			CFRelease(bundleResourcesDirCFURL);
 		}
 	}
 
@@ -382,6 +383,8 @@ void DGCleanupControlDrawingContext(DGGraphicsContext * inContext, CGrafPtr inPo
 
 	if (inPort != NULL)
 		inContext->endQDContext(inPort);
+
+	delete inContext;
 }
 #endif
 // TARGET_OS_MAC
@@ -574,24 +577,23 @@ long launch_documentation()
 #if TARGET_OS_MAC
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
-	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
 	if (pluginBundleRef != NULL)
 	{
 		CFStringRef docsFileName = CFSTR( PLUGIN_NAME_STRING" manual.html" );
 		CFURLRef docsFileURL = CFBundleCopyResourceURL(pluginBundleRef, docsFileName, NULL, NULL);
 		// if the documentation file is not found in the bundle, then search in appropriate system locations
-		if (docsFileURL ==  NULL)
+		if (docsFileURL == NULL)
 			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kUserDomain);
-		if (docsFileURL ==  NULL)
+		if (docsFileURL == NULL)
 			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kLocalDomain);
-		if (docsFileURL ==  NULL)
+		if (docsFileURL == NULL)
 			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kNetworkDomain);
 		if (docsFileURL != NULL)
 		{
 // open the manual with the default application for the file type
 #if 0
 			OSStatus status = LSOpenCFURLRef(docsFileURL, NULL);
-			CFRelease(docsFileURL);
 // open the manual with Apple's system Help Viewer
 #else
 			OSStatus status = coreFoundationUnknownErr;
@@ -600,8 +602,8 @@ long launch_documentation()
 			{
 				status = AHGotoPage(NULL, docsFileUrlString, NULL);
 			}
-			CFRelease(docsFileURL);
 #endif
+			CFRelease(docsFileURL);
 			return status;
 		}
 	}
