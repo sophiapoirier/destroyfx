@@ -489,18 +489,11 @@ OSStatus DGControl::setHelpText(CFStringRef inHelpText)
 	if (inHelpText == NULL)
 		return paramErr;
 
-	// get rid of any previously retained help string
-	if ( (helpText != NULL) && (helpText != inHelpText) )
-	{
-		CFRelease(helpText);
-		helpText = NULL;
-	}
-
+	// the Carbon control is probably null because it has not been created yet, 
+	// so we can retain the string and then try setting the help text after 
+	// we have created the Carbon control
 	if (carbonControl == NULL)
 	{
-		// the Carbon control is probably null because it has not been created yet, 
-		// so we can retain the string and then try setting the help text after 
-		// we have created the Carbon control
 		helpText = inHelpText;
 		CFRetain(helpText);
 		return errItemNotControl;
