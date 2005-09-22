@@ -534,17 +534,20 @@ void Scrubby::processMidiNotes()
 					activeNotesTable[currentNote] = 0;
 				break;
 
-			case kMidiCC_AllNotesOff:
-				for (int notecount=0; notecount < NUM_PITCH_STEPS; notecount++)
+			case kMidiCC:
+				if (midistuff->blockEvents[i].byte1 == kMidiCC_AllNotesOff)
 				{
-					// if this note is currently active, then turn its 
-					// associated pitch constraint parameter off
-					if (activeNotesTable[notecount] > 0)
+					for (int notecount=0; notecount < NUM_PITCH_STEPS; notecount++)
 					{
-						setparameter_b(notecount+kPitchStep0, false);
+						// if this note is currently active, then turn its 
+						// associated pitch constraint parameter off
+						if (activeNotesTable[notecount] > 0)
+						{
+							setparameter_b(notecount+kPitchStep0, false);
+						}
+						// reset this note in the table
+						activeNotesTable[notecount] = 0;
 					}
-					// reset this note in the table
-					activeNotesTable[notecount] = 0;
 				}
 				break;
 

@@ -326,10 +326,13 @@ void BufferOverride::processaudio(const float ** in, float ** out, unsigned long
 				else
 					midistuff->removeNote(midistuff->blockEvents[eventcount].byte1);
 			}
-			else if (midistuff->blockEvents[eventcount].status == kMidiCC_AllNotesOff)
+			else if (midistuff->blockEvents[eventcount].status == kMidiCC)
 			{
-				oldNote = true;
-				midistuff->removeAllNotes();
+				if (midistuff->blockEvents[eventcount].byte1 == kMidiCC_AllNotesOff)
+				{
+					oldNote = true;
+					midistuff->removeAllNotes();
+				}
 			}
 		}
 		for (eventcount = midistuff->numBlockEvents - 1; eventcount >= 0; eventcount--)
