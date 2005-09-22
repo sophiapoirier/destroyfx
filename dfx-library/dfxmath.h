@@ -64,49 +64,65 @@ inline float fsign(float fval)
 //-----------------------------------------------------------------------------
 // inline functions
 
-inline float interpolateHermite(float * data, double address, long arraysize)
+inline float interpolateHermite(float * inData, double inAddress, long inArraySize)
 {
-	long pos = (long)address;
-	float posFract = (float) (address - (double)pos);
+	long pos = (long)inAddress;
+	float posFract = (float) (inAddress - (double)pos);
 
 #if 0	// XXX test performance using fewer variables/registers
-	long posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
-	long posPlus1 = (pos+1) % arraysize;
-	long posPlus2 = (pos+2) % arraysize;
+	long posMinus1 = (pos == 0) ? inArraySize-1 : pos-1;
+	long posPlus1 = (pos+1) % inArraySize;
+	long posPlus2 = (pos+2) % inArraySize;
 
-	return (( (((((3.0f*(data[pos]-data[posPlus1])) - data[posMinus1] + data[posPlus2]) * 0.5f) * posFract)
-				+ ((2.0f*data[posPlus1]) + data[posMinus1] - (2.5f*data[pos]) - (data[posPlus2]*0.5f))) * 
-				posFract + ((data[posPlus1] - data[posMinus1]) * 0.5f) ) * posFract) + data[pos];
+	return (( (((((3.0f*(inData[pos]-inData[posPlus1])) - inData[posMinus1] + inData[posPlus2]) * 0.5f) * posFract)
+				+ ((2.0f*inData[posPlus1]) + inData[posMinus1] - (2.5f*inData[pos]) - (inData[posPlus2]*0.5f))) * 
+				posFract + ((inData[posPlus1] - inData[posMinus1]) * 0.5f) ) * posFract) + inData[pos];
 
-#elif 1	// XXX also test using float variables of data[] rather than looking up with posMinus1, etc.
-	float dataPosMinus1 = data[ (pos == 0) ? arraysize-1 : pos-1 ];
-	float dataPosPlus1 = data[ (pos+1) % arraysize ];
-	float dataPosPlus2 = data[ (pos+2) % arraysize ];
+#elif 1	// XXX also test using float variables of inData[] rather than looking up with posMinus1, etc.
+	float dataPosMinus1 = inData[ (pos == 0) ? inArraySize-1 : pos-1 ];
+	float dataPosPlus1 = inData[ (pos+1) % inArraySize ];
+	float dataPosPlus2 = inData[ (pos+2) % inArraySize ];
 
-	float a = ( (3.0f*(data[pos]-dataPosPlus1)) - dataPosMinus1 + dataPosPlus2 ) * 0.5f;
-	float b = (2.0f*dataPosPlus1) + dataPosMinus1 - (2.5f*data[pos]) - (dataPosPlus2*0.5f);
+	float a = ( (3.0f*(inData[pos]-dataPosPlus1)) - dataPosMinus1 + dataPosPlus2 ) * 0.5f;
+	float b = (2.0f*dataPosPlus1) + dataPosMinus1 - (2.5f*inData[pos]) - (dataPosPlus2*0.5f);
 	float c = (dataPosPlus1 - dataPosMinus1) * 0.5f;
 
-	return (( ((a*posFract)+b) * posFract + c ) * posFract) + data[pos];
+	return (( ((a*posFract)+b) * posFract + c ) * posFract) + inData[pos];
 
 #else
-	long posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
-	long posPlus1 = (pos+1) % arraysize;
-	long posPlus2 = (pos+2) % arraysize;
+	long posMinus1 = (pos == 0) ? inArraySize-1 : pos-1;
+	long posPlus1 = (pos+1) % inArraySize;
+	long posPlus2 = (pos+2) % inArraySize;
 
-	float a = ( (3.0f*(data[pos]-data[posPlus1])) - data[posMinus1] + data[posPlus2] ) * 0.5f;
-	float b = (2.0f*data[posPlus1]) + data[posMinus1] - (2.5f*data[pos]) - (data[posPlus2]*0.5f);
-	float c = (data[posPlus1] - data[posMinus1]) * 0.5f;
+	float a = ( (3.0f*(inData[pos]-inData[posPlus1])) - inData[posMinus1] + inData[posPlus2] ) * 0.5f;
+	float b = (2.0f*inData[posPlus1]) + inData[posMinus1] - (2.5f*inData[pos]) - (inData[posPlus2]*0.5f);
+	float c = (inData[posPlus1] - inData[posMinus1]) * 0.5f;
 
-	return (( ((a*posFract)+b) * posFract + c ) * posFract) + data[pos];
+	return (( ((a*posFract)+b) * posFract + c ) * posFract) + inData[pos];
 #endif
 }
 
-inline float interpolateLinear(float * data, double address, long arraysize)
+inline float interpolateHermite_noWrap(float * inData, double inAddress, long inArraySize)
 {
-	long pos = (long)address;
-	float posFract = (float) (address - (double)pos);
-	return (data[pos] * (1.0f-posFract)) + (data[(pos+1)%arraysize] * posFract);
+	long pos = (long)inAddress;
+	float posFract = (float) (inAddress - (double)pos);
+
+	float dataPosMinus1 = (pos == 0) ? 0.0f : inData[pos-1];
+	float dataPosPlus1 = ((pos+1) == inArraySize) ? 0.0f : inData[pos+1];
+	float dataPosPlus2 = ((pos+2) >= inArraySize) ? 0.0f : inData[pos+2];
+
+	float a = ( (3.0f*(inData[pos]-dataPosPlus1)) - dataPosMinus1 + dataPosPlus2 ) * 0.5f;
+	float b = (2.0f*dataPosPlus1) + dataPosMinus1 - (2.5f*inData[pos]) - (dataPosPlus2*0.5f);
+	float c = (dataPosPlus1 - dataPosMinus1) * 0.5f;
+
+	return (( ((a*posFract)+b) * posFract + c ) * posFract) + inData[pos];
+}
+
+inline float interpolateLinear(float * inData, double inAddress, long inArraySize)
+{
+	long pos = (long)inAddress;
+	float posFract = (float) (inAddress - (double)pos);
+	return (inData[pos] * (1.0f-posFract)) + (inData[(pos+1)%inArraySize] * posFract);
 }
 
 inline float interpolateRandom(float randMin, float randMax)
@@ -115,9 +131,9 @@ inline float interpolateRandom(float randMin, float randMax)
 	return ((randMax-randMin) * randy) + randMin;
 }
 
-inline float interpolateLinear2values(float point1, float point2, double address)
+inline float interpolateLinear2values(float point1, float point2, double inAddress)
 {
-	float posFract = (float) (address - (double)((long)address));
+	float posFract = (float) (inAddress - (double)((long)inAddress));
 	return (point1 * (1.0f-posFract)) + (point2 * posFract);
 }
 
