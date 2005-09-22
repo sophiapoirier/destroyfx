@@ -99,11 +99,12 @@ enum
 };
 
 //----------------------------------------------------------------------------- 
-// constants & macros
+// constants and macros
 
 const long NUM_FADE_POINTS = 30000;
 const double FADE_CURVE = 2.7;
 
+const long kDfxMidi_PitchbendMiddleValue = 0x2000;
 const double PITCHBEND_MAX = 36.0;
 
 // 128 midi notes
@@ -141,7 +142,7 @@ typedef struct {
 // this holds information for each MIDI note
 typedef struct {
 	int velocity;	// note velocity - 7-bit MIDI value
-	float noteAmp;	// the gain for the note, scaled with velocity, curve, & influence
+	float noteAmp;	// the gain for the note, scaled with velocity, curve, and influence
 	long attackDur;	// duration, in samples, of the attack phase
 	long attackSamples;	// current position in the attack phase
 	long releaseDur;	// duration, in samples, of the release phase
@@ -222,9 +223,6 @@ private:
 	// an exponentially curved gain envelope
 	float * fadeTable;
 
-	// if the MIDI hardware uses it
-	bool usePitchbendLSB;
-
 	// pick up where the release left off, if it's still releasing
 	bool lazyAttackMode;
 	// sustain pedal is active
@@ -267,7 +265,7 @@ inline float DfxMidi::processEnvelope(bool fades, int currentNote)
 	{
 		(note->releaseSamples)--;
 		// zero things out if the release is over so we won't do this fade calculation next time
-		// & turn this note off
+		// and turn this note off
 		if (note->releaseSamples <= 0)
 		{
 			note->releaseDur = 0;
@@ -284,8 +282,8 @@ inline float DfxMidi::processEnvelope(bool fades, int currentNote)
 //				envAmp *= envAmp;	// squared
 	}
 
-	// since it's possible for the release to end & the note to turn off 
-	// during this processing buffer, we have to check for that & then return 0.0
+	// since it's possible for the release to end and the note to turn off 
+	// during this processing buffer, we have to check for that and then return 0.0
 	else if ( (note->velocity) == 0 )
 		return 0.0f;
 
@@ -301,7 +299,7 @@ inline void DfxMidi::processSmoothingOutputSample(float * out, long sampleFrames
 {
 	for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
 	{
-		// add the latest sample to the output collection, scaled by the note envelope & user gain
+		// add the latest sample to the output collection, scaled by the note envelope and user gain
 		out[samplecount] += noteTable[currentNote].lastOutValue * 
 							(float)noteTable[currentNote].smoothSamples * STOLEN_NOTE_FADE_STEP;
 		// decrement the smoothing counter
