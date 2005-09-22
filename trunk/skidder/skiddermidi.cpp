@@ -45,10 +45,13 @@ void Skidder::processMidiNotes()
 				break;
 
 			// all notes off
-			case kMidiCC_AllNotesOff:
-				for (currentNote = 0; currentNote < NUM_NOTES; currentNote++)
-					noteTable[currentNote] = 0;	// turn off all notes
-				noteOff();	// do the notes off Skidder stuff
+			case kMidiCC:
+				if (midistuff->blockEvents[i].byte1 == kMidiCC_AllNotesOff)
+				{
+					for (currentNote = 0; currentNote < NUM_NOTES; currentNote++)
+						noteTable[currentNote] = 0;	// turn off all notes
+					noteOff();	// do the notes off Skidder stuff
+				}
 				break;
 		}
 	}

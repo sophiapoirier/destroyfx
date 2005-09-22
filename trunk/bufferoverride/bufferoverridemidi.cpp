@@ -93,10 +93,13 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 				midistuff->blockEvents[eventcount].status = kInvalidMidi;
 			}
 
-			else if (midistuff->blockEvents[eventcount].status == kMidiCC_AllNotesOff)
+			else if (midistuff->blockEvents[eventcount].status == kMidiCC)
 			{
-				foundNote = true;
-				midistuff->removeAllNotes();
+				if (midistuff->blockEvents[eventcount].byte1 == kMidiCC_AllNotesOff)
+				{
+					foundNote = true;
+					midistuff->removeAllNotes();
+				}
 			}
 		}
 
