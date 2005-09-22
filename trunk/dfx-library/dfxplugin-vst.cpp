@@ -450,7 +450,7 @@ long DfxPlugin::processEvents(VstEvents* events)
 		if ( (status == kMidiNoteOn) || (status == kMidiNoteOff) )
 		{
 			// note-off received
-			if ( (status == kMidiNoteOff) || ((midiData[2] & 0x7F) == 0) )
+			if ( (status == kMidiNoteOff) || (byte2 == 0) )
 				handlemidi_noteoff(channel, byte1, byte2, frameOffset);
 			// note-on received
 			else
@@ -465,7 +465,7 @@ long DfxPlugin::processEvents(VstEvents* events)
 		else if (status == kMidiCC)
 		{
 			// all notes off
-			if (midiData[1] == kMidiCC_AllNotesOff)
+			if (byte1 == kMidiCC_AllNotesOff)
 				handlemidi_allnotesoff(channel, frameOffset);
 			else
 				handlemidi_cc(channel, byte1, byte2, frameOffset);
