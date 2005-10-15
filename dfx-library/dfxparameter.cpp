@@ -643,10 +643,10 @@ DfxParamValue DfxParam::randomize()
 	switch (valueType)
 	{
 		case kDfxParamValueType_float:
-		case kDfxParamValueType_int:
-// XXX is this better for int?
-//			value.i = (rand() % (max.i-min.i)) + min.i;
 			set_gen( (double)rand() / (double)RAND_MAX );
+			break;
+		case kDfxParamValueType_int:
+			value.i = (rand() % ((max.i-min.i)+1)) + min.i;
 			break;
 		case kDfxParamValueType_boolean:
 			// but we don't really need to worry about the curve for boolean values
@@ -711,7 +711,7 @@ bool DfxParam::limit()
 void DfxParam::setchanged(bool newChanged)
 {
 	// XXX this is when we stuff the current value away as the old value (?)
-	if (newChanged == false)
+	if (!newChanged)
 		oldValue = value;
 
 	changed = newChanged;
