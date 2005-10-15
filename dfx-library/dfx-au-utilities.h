@@ -55,6 +55,10 @@ extern "C" {
 /* this is for getting a Component's version from the Component's resource cache */
 extern OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion);
 
+/* these handle a CoreFoundation-like container object for AUPreset called CFAUPreset */
+typedef const struct CFAUPreset * CFAUPresetRef;
+extern CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName);
+extern void CFAUPresetRelease(CFAUPresetRef inPreset);
 /* these are CFArray callbacks for use when creating an AU's FactoryPresets array */
 extern const void * auPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inPreset);
 extern void auPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inPreset);
