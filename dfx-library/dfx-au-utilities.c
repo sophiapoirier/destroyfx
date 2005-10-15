@@ -145,47 +145,85 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 #pragma mark _________Factory_Presets_CFArray_________
 
 //-----------------------------------------------------------------------------
+// The following defines and implements CoreFoundation-like handling of 
+// an AUPreset container object:  CFAUPreset
+//-----------------------------------------------------------------------------
+
+typedef struct {
+	AUPreset auPreset;
+	CFAllocatorRef allocator;
+	CFIndex retainCount;
+} CFAUPreset;
+
+//-----------------------------------------------------------------------------
+// create an instance of a CFAUPreset object
+CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName)
+{
+	CFAUPreset * newPreset = (CFAUPreset*) CFAllocatorAllocate(inAllocator, sizeof(CFAUPreset), 0);
+	if (newPreset != NULL)
+	{
+		newPreset->auPreset.presetNumber = inPresetNumber;
+		newPreset->auPreset.presetName = NULL;
+		// create our own a copy rather than retain the string, in case the input string is mutable, 
+		// this will keep it from changing under our feet
+		if (inPresetName != NULL)
+			newPreset->auPreset.presetName = CFStringCreateCopy(inAllocator, inPresetName);
+		newPreset->allocator = inAllocator;
+		newPreset->retainCount = 1;
+	}
+	return (CFAUPresetRef)newPreset;
+}
+
+//-----------------------------------------------------------------------------
+// release a reference of a CFAUPreset object
+void CFAUPresetRelease(CFAUPresetRef inPreset)
+{
+	CFAUPreset * incomingPreset = (CFAUPreset*) inPreset;
+	// these situations shouldn't happen
+	if (inPreset == NULL)
+		return;
+	if (incomingPreset->retainCount <= 0)
+		return;
+	// first release the name string, CF-style, since it's a CFString
+	if (incomingPreset->auPreset.presetName != NULL)
+		CFRelease(incomingPreset->auPreset.presetName);
+	incomingPreset->retainCount -= 1;
+	// check if this is the end of this instance's life
+	if (incomingPreset->retainCount == 0)
+	{
+		// wipe out the data so that, if anyone tries to access stale memory later, it will be (semi)invalid
+		incomingPreset->auPreset.presetName = NULL;
+		incomingPreset->auPreset.presetNumber = 0;
+		// and finally, free the memory for the AUPreset struct
+		CFAllocatorDeallocate(incomingPreset->allocator, (void*)inPreset);
+	}
+}
+
+//-----------------------------------------------------------------------------
 // The following 4 functions are CFArray callbacks for use when creating 
 // an AU's factory presets array to support kAudioUnitProperty_FactoryPresets.
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-// This function is called when an item (an AUPreset) is added to the CFArray.  
-// At this time, we need to make a fully independent copy of the AUPreset so that 
-// the data will be guaranteed to be valid regardless of what the AU does, and 
-// regardless of whether the AU instance is still open or not.
-// This means that we need to allocate memory for an AUPreset struct just for the 
-// array and create a copy of the preset name string.
+// This function is called when an item (an AUPreset) is added to the CFArray, 
+// or when a CFArray containing an AUPreset is retained.  
 const void * auPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inPreset)
 {
-	AUPreset * preset = (AUPreset*) inPreset;
-	// first allocate new memory for the array's copy of this AUPreset
-	AUPreset * newPreset = (AUPreset*) CFAllocatorAllocate(inAllocator, sizeof(AUPreset), 0);
-	// set the number of the new copy to that of the input AUPreset
-	newPreset->presetNumber = preset->presetNumber;
-	// retain the input AUPreset's name string for this new copy of the preset
-	newPreset->presetName = preset->presetName;
-	if (newPreset->presetName != NULL)
-		CFRetain(newPreset->presetName);
-	// return the pointer to the new memory, which belongs to the array, rather than the input pointer
-	return newPreset;
+	CFAUPreset * incomingPreset = (CFAUPreset*) inPreset;
+	// retain the input AUPreset's name string for this reference to the preset
+	if (incomingPreset->auPreset.presetName != NULL)
+		CFRetain(incomingPreset->auPreset.presetName);
+	incomingPreset->retainCount += 1;
+	return inPreset;
 }
 
 //-----------------------------------------------------------------------------
 // This function is called when an item (an AUPreset) is removed from the CFArray 
 // or when the array is released.
-// Since the memory for the data belongs to the array, we need to release it all here.
+// Since a reference to the data belongs to the array, we need to release that here.
 void auPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inPreset)
 {
-	AUPreset * preset = (AUPreset*) inPreset;
-	// first release the name string, CF-style, since it's a CFString
-	if (preset->presetName != NULL)
-		CFRelease(preset->presetName);
-	// wipe out the data so that, if anyone tries to access stale memory later, it will be invalid
-	preset->presetName = NULL;
-	preset->presetNumber = 0;
-	// and finally, free the memory for the AUPreset struct
-	CFAllocatorDeallocate(inAllocator, (void*)inPreset);
+	CFAUPresetRelease(inPreset);
 }
 
 //-----------------------------------------------------------------------------
