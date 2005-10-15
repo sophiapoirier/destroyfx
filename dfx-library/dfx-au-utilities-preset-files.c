@@ -1055,7 +1055,7 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	WindowRef dialogWindow = NULL;
 	SaveAUPresetFileDialogInfo dialogInfo;
 	EventHandlerUPP dialogEventHandlerUPP = NULL;
-	EventTypeSpec dialogEventsSpec[] = { { kEventClassCommand, kEventCommandProcess } };
+	EventTypeSpec dialogEventTypes[] = { { kEventClassCommand, kEventCommandProcess } };
 	EventHandlerRef dialogEventHandlerRef = NULL;
 
 	if ( (inAUComponent == NULL) || (inAUStatePlist == NULL) )
@@ -1085,8 +1085,8 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 
 	// install our dialog's event handler
 	dialogEventHandlerUPP = NewEventHandlerUPP(SaveAUPresetFileDialogEventHandler);
-	error = InstallWindowEventHandler(dialogWindow, dialogEventHandlerUPP, GetEventTypeCount(dialogEventsSpec), 
-										dialogEventsSpec, (void*)(&dialogInfo), &dialogEventHandlerRef);
+	error = InstallWindowEventHandler(dialogWindow, dialogEventHandlerUPP, GetEventTypeCount(dialogEventTypes), 
+										dialogEventTypes, (void*)(&dialogInfo), &dialogEventHandlerRef);
 	if (error != noErr)
 	{
 		DisposeWindow(dialogWindow);
@@ -1196,7 +1196,7 @@ catch dialog response
 				// get the file name text from the edit text field
 				GetControlByID(dialogInfo->dialogWindow, &textFieldControlID, &textFieldControl);
 				if (textFieldControl != NULL)
-					GetControlData(textFieldControl, kControlNoPart, kControlEditTextCFStringTag, sizeof(presetNameString), &presetNameString, NULL);
+					error = GetControlData(textFieldControl, kControlNoPart, kControlEditTextCFStringTag, sizeof(presetNameString), &presetNameString, NULL);
 
 				// get the user's choice of file system domain from the domain choice control
 				GetControlByID(dialogInfo->dialogWindow, &domainChoiceControlID, &domainChoiceControl);
@@ -1371,7 +1371,10 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 	error = WritePropertyListToXMLFile(inAUStateData, presetFullFileUrl);
 	// if the caller wants it, give them a reference to the saved file's URL
 	if ( (error == noErr) && (outSavedAUPresetFileURL != NULL) )
-		*outSavedAUPresetFileURL = CFRetain(presetFullFileUrl);
+	{
+		*outSavedAUPresetFileURL = presetFullFileUrl;
+		CFRetain(*outSavedAUPresetFileURL);
+	}
 	CFRelease(presetFullFileUrl);
 
 
@@ -1603,7 +1606,10 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 		CFStringRef defaultFileBaseName;
 		CFStringRef defaultFileName;
 		if (inDefaultAUPresetName != NULL)
-			defaultFileBaseName = CFRetain(inDefaultAUPresetName);	// just retain it so we can release below without thinking about it
+		{
+			defaultFileBaseName = inDefaultAUPresetName;
+			CFRetain(defaultFileBaseName);	// just retain it so we can release below without thinking about it
+		}
 		else
 			defaultFileBaseName = CFCopyLocalizedStringFromTableInBundle(CFSTR("untitled"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the default preset file name for the Nav Services save file dialog"));
 		defaultFileName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@.%@"), 
