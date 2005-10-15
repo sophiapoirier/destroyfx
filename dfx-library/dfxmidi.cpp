@@ -358,7 +358,7 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 						}
 					}
 					// don't start a new note fade-in if the currently active note is the same as this new note
-					if (! ((legatoNoteFound == false) && (noteTable[currentNote].velocity)) )
+					if (! ((!legatoNoteFound) && (noteTable[currentNote].velocity)) )
 					{
 						// legato mode always uses this short fade
 						noteTable[currentNote].attackDur = LEGATO_FADE_DUR;
@@ -500,7 +500,7 @@ void DfxMidi::turnOffNote(int currentNote, float release, bool legato, float SAM
 {
 	// legato is off (note-offs are ignored when it's on)
 	// go into the note release if legato is off and the note isn't already off
-	if ( (legato == false) && (noteTable[currentNote].velocity > 0) )
+	if ( (!legato) && (noteTable[currentNote].velocity > 0) )
 	{
 		// calculate the duration, in samples, for the release
 		long releasedur = (long)(release * SAMPLERATE);
