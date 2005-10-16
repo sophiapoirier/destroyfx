@@ -6,23 +6,40 @@
 
 
 #if TARGET_OS_MAC
-static pascal OSStatus DGControlEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
-static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
-
-static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData);
+static pascal OSStatus DFXGUI_ControlEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
+static pascal OSStatus DFXGUI_WindowEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
+static pascal void DFXGUI_IdleTimerProc(EventLoopTimerRef inTimer, void * inUserData);
+static pascal OSStatus DFXGUI_TextEntryEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData);
+static pascal OSStatus DFXGUI_WindowTransparencyEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData);
 #endif
 
 // for now this is a good idea, until it's totally obsoleted
 #define AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES
 
+#if TARGET_OS_MAC
 static EventHandlerUPP gControlHandlerUPP = NULL;
 static EventHandlerUPP gWindowEventHandlerUPP = NULL;
 static EventLoopTimerUPP gIdleTimerUPP = NULL;
+static EventHandlerUPP gTextEntryEventHandlerUPP = NULL;
+static EventHandlerUPP gWindowTransparencyEventHandlerUPP = NULL;
+static ControlActionUPP gTransparencyControlActionUPP = NULL;
+
+static const CFStringRef kDfxGui_NibName = CFSTR("dfxgui");
+const OSType kDfxGui_ControlSignature = DESTROYFX_ID;
+const SInt32 kDfxGui_TextEntryControlID = 1;
+const SInt32 kDfxGui_TransparencySliderControlID = 0;
+#endif
+
+#ifdef TARGET_API_AUDIOUNIT
+	const float kDfxGui_ParameterNotificationInterval = 30.0 * kEventDurationMillisecond;	// 30 ms parameter notification update interval
+//	static const CFStringRef kDfxGui_AUPresetFileUTI = (kUTTypeXML != NULL) ? kUTTypeXML : CFSTR("public.xml");	// XXX only available in Mac OS X 10.4 or higher
+	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("org.destroyfx.aupreset");
+#endif
 
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
-:	AUCarbonViewBase(inInstance, 0.030f)	// 30 ms parameter notification update interval
+:	AUCarbonViewBase(inInstance, kDfxGui_ParameterNotificationInterval)
 {
 /*
 CFStringRef text = CFSTR("yo dude let's go");
@@ -41,14 +58,12 @@ CFRelease(mut);
 }
 }
 */
-
-
-
 	controlsList = NULL;
 	imagesList = NULL;
 
 	backgroundControl = NULL;
   
+#if TARGET_OS_MAC
 	idleTimer = NULL;
 
 	dgControlSpec.defType = kControlDefObjectClass;
@@ -57,6 +72,14 @@ CFRelease(mut);
 
 	fontsATSContainer = kATSFontContainerRefUnspecified;
 	fontsWereActivated = false;	// guilty until proven innocent
+
+	clipboardRef = NULL;
+
+	textEntryWindow = NULL;
+	textEntryControl = NULL;
+	textEntryResultString = NULL;
+	windowTransparencyWindow = NULL;
+#endif
 
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
@@ -69,10 +92,13 @@ CFRelease(mut);
 DfxGuiEditor::~DfxGuiEditor()
 {
 	#if TARGET_PLUGIN_USES_MIDI
-		if (GetEditAudioUnit() != NULL)
+		#ifdef TARGET_API_AUDIOUNIT
+			if (GetEditAudioUnit() != NULL)
+		#endif
 			setmidilearning(false);
 	#endif
 
+#if TARGET_OS_MAC
 	if (idleTimer != NULL)
 		RemoveEventLoopTimer(idleTimer);
 	idleTimer = NULL;
@@ -80,6 +106,7 @@ DfxGuiEditor::~DfxGuiEditor()
 	if (windowEventHandlerRef != NULL)
 		RemoveEventHandler(windowEventHandlerRef);
 	windowEventHandlerRef = NULL;
+#endif
 
 	// deleting a list link also deletes the list's item
 	while (controlsList != NULL)
@@ -101,6 +128,7 @@ DfxGuiEditor::~DfxGuiEditor()
 		mousedOverControlsList = tempmocl;
 	}
 
+#if TARGET_OS_MAC
 	// only unregister in Mac OS X version 10.2.3 or higher, otherwise this will cause a crash
 	if ( GetMacOSVersion() >= 0x1023 )
 	{
@@ -123,6 +151,18 @@ DfxGuiEditor::~DfxGuiEditor()
 	// to just let the fonts stay activated.
 //	if ( fontsWereActivated && (fontsATSContainer != NULL) )
 //		ATSFontDeactivate(fontsATSContainer, NULL, kATSOptionFlagsDefault);
+
+	if (windowTransparencyWindow != NULL)
+	{
+		HideWindow(windowTransparencyWindow);
+		DisposeWindow(windowTransparencyWindow);
+	}
+	windowTransparencyWindow = NULL;
+
+	if (clipboardRef != NULL)
+		CFRelease(clipboardRef);
+	clipboardRef = NULL;
+#endif
 
 	if (backgroundControl != NULL)
 		delete backgroundControl;
@@ -160,7 +200,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	};
 	ToolboxObjectClassRef newControlClass = NULL;
 	if (gControlHandlerUPP == NULL)
-		gControlHandlerUPP = NewEventHandlerUPP(DGControlEventHandler);
+		gControlHandlerUPP = NewEventHandlerUPP(DFXGUI_ControlEventHandler);
 	unsigned long instanceAddress = (unsigned long) this;
 	bool noSuccessYet = true;
 	while (noSuccessYet)
@@ -193,7 +233,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 									{ kEventClassCommand, kEventCommandProcess }, 
 								};
 	if (gWindowEventHandlerUPP == NULL)
-		gWindowEventHandlerUPP = NewEventHandlerUPP(DGWindowEventHandler);
+		gWindowEventHandlerUPP = NewEventHandlerUPP(DFXGUI_WindowEventHandler);
 	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), gWindowEventHandlerUPP, 
 						GetEventTypeCount(windowEvents), windowEvents, this, &windowEventHandlerRef);
 
@@ -201,8 +241,9 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 // register for HitTest events on the background embedding pane so that we know when the mouse hovers over it
 	EventTypeSpec paneEvents[] = {
 								{ kEventClassControl, kEventControlDraw }, 
-								{ kEventClassControl, kEventControlApplyBackground },
+								{ kEventClassControl, kEventControlApplyBackground }, 
 //								{ kEventClassControl, kEventControlHitTest }, 
+								{ kEventClassControl, kEventControlContextualMenuClick }, 
 								};
 	WantEventTypes(GetControlEventTarget(GetCarbonPane()), GetEventTypeCount(paneEvents), paneEvents);
 
@@ -249,7 +290,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 			SizeControl(GetCarbonPane(), (SInt16) (backgroundControl->getWidth()), (SInt16) (backgroundControl->getHeight()));
 
 		if (gIdleTimerUPP == NULL)
-			gIdleTimerUPP = NewEventLoopTimerUPP(DGIdleTimerProc);
+			gIdleTimerUPP = NewEventLoopTimerUPP(DFXGUI_IdleTimerProc);
 		InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, gIdleTimerUPP, this, &idleTimer);
 
 		// embed/activate every control
@@ -433,6 +474,16 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 //fprintf(stderr, "mCarbonPane HandleEvent(kEventControlApplyBackground)\n");
 			return false;
 		}
+
+		else if (inEventKind == kEventControlContextualMenuClick)
+		{
+			if ( (carbonControl != NULL) && (carbonControl == GetCarbonPane()) )
+			{
+				currentControl_clicked = NULL;
+				if (getBackgroundControl() != NULL)
+					return getBackgroundControl()->do_contextualMenuClick();
+			}
+		}
 	}
 
 	// let the parent implementation do its thing
@@ -459,7 +510,7 @@ void DfxGuiEditor::do_idle()
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-static pascal void DGIdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
+static pascal void DFXGUI_IdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
 {
 	if (inUserData != NULL)
 		((DfxGuiEditor*)inUserData)->do_idle();
@@ -519,6 +570,26 @@ void DfxGuiEditor::SetBackgroundColor(DGColor inBackgroundColor)
 {
 	if (backgroundControl != NULL)
 		backgroundControl->setColor(inBackgroundColor);
+}
+
+//-----------------------------------------------------------------------------
+float DfxGuiEditor::getWindowTransparency()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	float resultAlpha = 1.0f;
+	OSStatus status = GetWindowAlpha(GetCarbonWindow(), &resultAlpha);
+	if (status == noErr)
+		return resultAlpha;
+	else
+		return 1.0f;
+#endif
+}
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setWindowTransparency(float inTransparencyLevel)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	SetWindowAlpha(GetCarbonWindow(), inTransparencyLevel);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -667,10 +738,17 @@ void DfxGuiEditor::automationgesture_end(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::randomizeparameters(bool writeAutomation)
+void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation)
 {
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameters, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &writeAutomation, sizeof(bool));
+	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameter, 
+				kAudioUnitScope_Global, (AudioUnitElement)inParameterID, &inWriteAutomation, sizeof(inWriteAutomation));
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
+{
+	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameter, 
+				kAudioUnitScope_Global, kAUParameterListener_AnyParameter, &inWriteAutomation, sizeof(inWriteAutomation));
 }
 
 //-----------------------------------------------------------------------------
@@ -770,9 +848,10 @@ bool DfxGuiEditor::getparameter_b(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_f(long inParameterID, double inValue)
+void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWrapWithAutomationGesture)
 {
-	automationgesture_begin(inParameterID);
+	if (inWrapWithAutomationGesture)
+		automationgesture_begin(inParameterID);
 
 	DfxParameterValueRequest request;
 	request.parameterID = inParameterID;
@@ -783,13 +862,15 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue)
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
 
-	automationgesture_end(inParameterID);
+	if (inWrapWithAutomationGesture)
+		automationgesture_end(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_i(long inParameterID, long inValue)
+void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapWithAutomationGesture)
 {
-	automationgesture_begin(inParameterID);
+	if (inWrapWithAutomationGesture)
+		automationgesture_begin(inParameterID);
 
 	DfxParameterValueRequest request;
 	request.parameterID = inParameterID;
@@ -800,13 +881,15 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue)
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
 
-	automationgesture_end(inParameterID);
+	if (inWrapWithAutomationGesture)
+		automationgesture_end(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue)
+void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapWithAutomationGesture)
 {
-	automationgesture_begin(inParameterID);
+	if (inWrapWithAutomationGesture)
+		automationgesture_begin(inParameterID);
 
 	DfxParameterValueRequest request;
 	request.parameterID = inParameterID;
@@ -817,11 +900,12 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue)
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
 
-	automationgesture_end(inParameterID);
+	if (inWrapWithAutomationGesture)
+		automationgesture_end(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setparameter_default(long inParameterID)
+void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutomationGesture)
 {
 	AudioUnitParameterInfo paramInfo;
 	memset(&paramInfo, 0, sizeof(paramInfo));
@@ -831,12 +915,18 @@ void DfxGuiEditor::setparameter_default(long inParameterID)
 							kAudioUnitScope_Global, inParameterID, &paramInfo, &dataSize);
 	if (result == noErr)
 	{
+		if (inWrapWithAutomationGesture)
+			automationgesture_begin(inParameterID);
+
 		AudioUnitParameter auParam;
 		auParam.mAudioUnit = GetEditAudioUnit();
 		auParam.mParameterID = inParameterID;
 		auParam.mScope = kAudioUnitScope_Global;
 		auParam.mElement = (AudioUnitElement)0;
 		result = AUParameterSet(NULL, NULL, &auParam, paramInfo.defaultValue, 0);
+
+		if (inWrapWithAutomationGesture)
+			automationgesture_end(inParameterID);
 	}
 }
 
@@ -912,11 +1002,145 @@ bool DfxGuiEditor::ismidilearner(long parameterIndex)
 #endif
 // TARGET_PLUGIN_USES_MIDI
 
+//-----------------------------------------------------------------------------
+long DfxGuiEditor::initClipboard()
+{
+#if TARGET_OS_MAC
+	// already initialized (allow for lazy initialization)
+	if (clipboardRef != NULL)
+		return noErr;
+	// XXX only available in Mac OS X 10.3 or higher
+	if (PasteboardCreate == NULL)
+		return unsupportedOSErr;
+	OSStatus status = PasteboardCreate(kPasteboardClipboard, &clipboardRef);
+	if (status != noErr)
+		clipboardRef = NULL;
+	if ( (clipboardRef == NULL) && (status == noErr) )
+		status = coreFoundationUnknownErr;
+	return status;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+long DfxGuiEditor::copySettings()
+{
+	long status = initClipboard();
+	if (status != noErr)
+		return status;
+
+#if TARGET_OS_MAC
+	status = PasteboardClear(clipboardRef);
+	if (status != noErr)
+		return status;	// XXX or just keep going anyway?
+
+	PasteboardSyncFlags syncFlags = PasteboardSynchronize(clipboardRef);
+	if (syncFlags & kPasteboardModified)
+		return badPasteboardSyncErr;	// XXX this is a good idea?
+	if ( !(syncFlags & kPasteboardClientIsOwner) )
+		return notPasteboardOwnerErr;
+
+#ifdef TARGET_API_AUDIOUNIT
+	CFPropertyListRef auSettingsPropertyList = NULL;
+	UInt32 dataSize = sizeof(auSettingsPropertyList);
+	status = AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_ClassInfo, 
+						kAudioUnitScope_Global, (AudioUnitElement)0, &auSettingsPropertyList, &dataSize);
+	if (status != noErr)
+		return status;
+	if (auSettingsPropertyList == NULL)
+		return coreFoundationUnknownErr;
+
+	CFDataRef auSettingsCFData = CFPropertyListCreateXMLData(kCFAllocatorDefault, auSettingsPropertyList);
+	if (auSettingsCFData == NULL)
+		return coreFoundationUnknownErr;
+	status = PasteboardPutItemFlavor(clipboardRef, (PasteboardItemID)PLUGIN_ID, kDfxGui_AUPresetFileUTI, auSettingsCFData, kPasteboardFlavorNoFlags);
+	CFRelease(auSettingsCFData);
+#endif
+
+	return status;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+long DfxGuiEditor::pasteSettings(bool * inQueryPastabilityOnly)
+{
+	if (inQueryPastabilityOnly != NULL)
+		*inQueryPastabilityOnly = false;
+
+	long status = initClipboard();
+	if (status != noErr)
+		return status;
+
+#if TARGET_OS_MAC
+	PasteboardSynchronize(clipboardRef);
+
+	bool pastableItemFound = false;
+	ItemCount itemCount = 0;
+	status = PasteboardGetItemCount(clipboardRef, &itemCount);
+	if (status != noErr)
+		return status;
+	for (UInt32 itemIndex=1; itemIndex <= itemCount; itemIndex++)
+	{
+		PasteboardItemID itemID = NULL;
+		status = PasteboardGetItemIdentifier(clipboardRef, itemIndex, &itemID);
+		if (status != noErr)
+			continue;
+		if ((OSType)itemID != PLUGIN_ID)
+			continue;
+		CFArrayRef flavorTypesArray = NULL;
+		status = PasteboardCopyItemFlavors(clipboardRef, itemID, &flavorTypesArray);
+		if ( (status != noErr) || (flavorTypesArray == NULL) )
+			continue;
+		CFIndex flavorCount = CFArrayGetCount(flavorTypesArray);
+		for (CFIndex flavorIndex=0; flavorIndex < flavorCount; flavorIndex++)
+		{
+			CFStringRef flavorType = (CFStringRef) CFArrayGetValueAtIndex(flavorTypesArray, flavorIndex);
+			if (flavorType == NULL)
+				continue;
+			if ( UTTypeConformsTo(flavorType, kDfxGui_AUPresetFileUTI) )
+			{
+				if (inQueryPastabilityOnly != NULL)
+				{
+					*inQueryPastabilityOnly = pastableItemFound = true;
+				}
+				else
+				{
+					CFDataRef flavorData = NULL;
+					status = PasteboardCopyItemFlavorData(clipboardRef, itemID, flavorType, &flavorData);
+					if ( (status == noErr) && (flavorData != NULL) )
+					{
+						CFPropertyListRef auSettingsPropertyList = CFPropertyListCreateFromXMLData(kCFAllocatorDefault, flavorData, kCFPropertyListImmutable, NULL);
+						if (auSettingsPropertyList != NULL)
+						{
+							status = AudioUnitSetProperty(GetEditAudioUnit(), kAudioUnitProperty_ClassInfo, 
+										kAudioUnitScope_Global, (AudioUnitElement)0, &auSettingsPropertyList, sizeof(auSettingsPropertyList));
+							CFRelease(auSettingsPropertyList);
+							if (status == noErr)
+							{
+								pastableItemFound = true;
+								AUParameterChange_TellListeners(GetEditAudioUnit(), kAUParameterListener_AnyParameter);
+							}
+						}
+						CFRelease(flavorData);
+					}
+				}
+			}
+			if (pastableItemFound)
+				break;
+		}
+		CFRelease(flavorTypesArray);
+		if (pastableItemFound)
+			break;
+	}
+
+	return status;
+#endif
+}
+
 
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-DGKeyModifiers GetDGKeyModifiersForEvent(EventRef inEvent)
+DGKeyModifiers DFX_GetDGKeyModifiersForEvent(EventRef inEvent)
 {
 	if (inEvent == NULL)
 		return 0;
@@ -942,10 +1166,12 @@ DGKeyModifiers GetDGKeyModifiersForEvent(EventRef inEvent)
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-static pascal OSStatus DGWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
+static pascal OSStatus DFXGUI_WindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
 	bool eventWasHandled = false;
 	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*) inUserData;
+	if (ourOwnerEditor == NULL)
+		return eventNotHandledErr;
 
 	switch ( GetEventClass(inEvent) )
 	{
@@ -976,7 +1202,7 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 	UInt32 inEventKind = GetEventKind(inEvent);
 	OSStatus status;
 
-	DGKeyModifiers keyModifiers = GetDGKeyModifiersForEvent(inEvent);
+	DGKeyModifiers keyModifiers = DFX_GetDGKeyModifiersForEvent(inEvent);
 
 
 
@@ -1129,13 +1355,6 @@ return false;
 
 		currentControl_clicked = NULL;
 
-		// do this to make Logic's touch automation work
-		if ( ourControl->isParameterAttached() )
-		{
-			automationgesture_end( ourControl->getParameterID() );
-//			fprintf(stderr, "DGControlMouseHandler -> TellListener(MouseUp, %ld)\n", ourControl->getParameterID());
-		}
-
 		return false;	// let it fall through in case the host needs the event
 	}
 
@@ -1201,7 +1420,6 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 			if (launch_documentation() == noErr)
 				return true;
 		}
-//else fprintf(stderr, "command ID = %.4s\n", (char*) &(hiCommand.commandID));
 
 		return false;
 	}
@@ -1214,10 +1432,12 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-static pascal OSStatus DGControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
+static pascal OSStatus DFXGUI_ControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
 {
-	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*)inUserData;
 	bool eventWasHandled = false;
+	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*)inUserData;
+	if (ourOwnerEditor == NULL)
+		return eventNotHandledErr;
 
 	switch ( GetEventClass(inEvent) )
 	{
@@ -1343,8 +1563,6 @@ fprintf(stderr, "kEventControlHit\n");
 				}
 //			case kEventControlClick:
 //if (inEventKind == kEventControlClick) fprintf(stderr, "kEventControlClick\n");
-			case kEventControlContextualMenuClick:
-//if (inEventKind == kEventControlContextualMenuClick) fprintf(stderr, "kEventControlContextualMenuClick\n");
 				{
 //					setCurrentControl_mouseover(ourDGControl);
 
@@ -1352,6 +1570,7 @@ fprintf(stderr, "kEventControlHit\n");
 //					UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 					// XXX kEventParamMouseChord does not exist for control class events, only mouse class
 					// XXX hey, that's not what the headers say, they say that kEventControlClick should have that parameter
+					// XXX and so should ContextualMenuClick in Mac OS X 10.3 and above
 //					status = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(mouseButtons), NULL, &mouseButtons);
 
 					HIPoint mouseLocation;
@@ -1382,6 +1601,7 @@ fprintf(stderr, "kEventControlHit\n");
 					// check if this is a double-click
 					bool isDoubleClick = false;
 					// only ControlClick gets the ClickCount event parameter
+					// XXX no, ContextualMenuClick does, too, but only in Mac OS X 10.3 or higher
 					if (inEventKind == kEventControlClick)
 					{
 						UInt32 clickCount = 1;
@@ -1390,20 +1610,22 @@ fprintf(stderr, "kEventControlHit\n");
 							isDoubleClick = true;
 					}
 
-					DGKeyModifiers keyModifiers = GetDGKeyModifiersForEvent(inEvent);
-
-					// do this to make Logic's touch automation work
-					// AUCarbonViewControl::HandleEvent will catch ControlClick but not ControlContextualMenuClick
-					if ( ourDGControl->isParameterAttached() && (inEventKind == kEventControlContextualMenuClick) )
-					{
-						automationgesture_begin( ourDGControl->getParameterID() );
-//						fprintf(stderr, "DGControlEventHandler -> TellListener(MouseDown, %ld)\n", ourDGControl->getParameterID());
-					}
+					DGKeyModifiers keyModifiers = DFX_GetDGKeyModifiersForEvent(inEvent);
 
 					ourDGControl->do_mouseDown(mouseLocation.x, mouseLocation.y, mouseButtons, keyModifiers, isDoubleClick);
 					currentControl_clicked = ourDGControl;
 				}
 				return true;
+
+			case kEventControlContextualMenuClick:
+//fprintf(stderr, "kEventControlContextualMenuClick\n");
+				{
+					currentControl_clicked = ourDGControl;
+					bool contextualMenuResult = ourDGControl->do_contextualMenuClick();
+					// XXX now it's done (?)
+					currentControl_clicked = NULL;
+					return contextualMenuResult;
+				}
 
 			case kEventControlValueFieldChanged:
 				// XXX it seems that I need to manually invalidate the control to get it to 
@@ -1418,6 +1640,277 @@ fprintf(stderr, "kEventControlHit\n");
 	}
 
 	return false;
+}
+#endif
+// TARGET_OS_MAC
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+OSStatus DFX_OpenWindowFromNib(CFStringRef inWindowName, WindowRef * outWindow)
+{
+	if ( (inWindowName == NULL) || (outWindow == NULL) )
+		return paramErr;
+
+	// open the window from our nib
+	CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	if (pluginBundle == NULL)
+		return coreFoundationUnknownErr;
+
+	IBNibRef nibRef = NULL;
+	OSStatus status = CreateNibReferenceWithCFBundle(pluginBundle, kDfxGui_NibName, &nibRef);
+	if ( (nibRef == NULL) && (status == noErr) )	// unlikely, but just in case
+		status = kIBCarbonRuntimeCantFindNibFile;
+	if (status != noErr)
+		return status;
+
+	*outWindow = NULL;
+	status = CreateWindowFromNib(nibRef, inWindowName, outWindow);
+	DisposeNibReference(nibRef);
+	if ( (*outWindow == NULL) && (status == noErr) )	// unlikely, but just in case
+		status = kIBCarbonRuntimeCantFindObject;
+	if (status != noErr)
+		return status;
+
+	return noErr;
+}
+#endif
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+// this gets an embedded ControlRef from a window given a control's ID value
+ControlRef DFX_GetControlWithID(SInt32 inID, WindowRef inWindow)
+{
+	if (inWindow == NULL)
+		return NULL;
+
+	ControlID controlID;
+	memset(&controlID, 0, sizeof(controlID));
+	controlID.signature = kDfxGui_ControlSignature;
+	controlID.id = inID;
+	ControlRef resultControl = NULL;
+	GetControlByID(inWindow, &controlID, &resultControl);
+	return resultControl;
+}
+#endif
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+static pascal OSStatus DFXGUI_TextEntryEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData)
+{
+	bool eventWasHandled = false;
+	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*)inUserData;
+	if (ourOwnerEditor == NULL)
+		return eventNotHandledErr;
+
+	UInt32 eventClass = GetEventClass(inEvent);
+	UInt32 eventKind = GetEventKind(inEvent);
+
+	if ( (eventClass == kEventClassCommand) && (eventKind == kEventCommandProcess) )
+	{
+		HICommand command;
+		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(command), NULL, &command);
+		if (status == noErr)
+			eventWasHandled = ourOwnerEditor->handleTextEntryCommand(command.commandID);
+	}
+
+	if (eventWasHandled)
+		return noErr;
+	else
+		return eventNotHandledErr;
+}
+
+//-----------------------------------------------------------------------------
+CFStringRef DfxGuiEditor::openTextEntryWindow(CFStringRef inInitialText)
+{
+	textEntryWindow = NULL;
+	textEntryControl = NULL;
+	textEntryResultString = NULL;
+
+	OSStatus status = DFX_OpenWindowFromNib(CFSTR("text entry"), &textEntryWindow);
+	if (status != noErr)
+		return NULL;
+
+	// initialize the controls according to the current transparency value
+	textEntryControl = DFX_GetControlWithID(kDfxGui_TextEntryControlID, textEntryWindow);
+	if (textEntryControl != NULL)
+	{
+		if (inInitialText != NULL)
+			SetControlData(textEntryControl, kControlNoPart, kControlEditTextCFStringTag, sizeof(inInitialText), &inInitialText);
+		SetKeyboardFocus(textEntryWindow, textEntryControl, kControlFocusNextPart);
+	}
+
+	// set up the text entry window event handler
+	if (gTextEntryEventHandlerUPP == NULL)
+		gTextEntryEventHandlerUPP = NewEventHandlerUPP(DFXGUI_TextEntryEventHandler);
+	EventTypeSpec windowEvents[] = { { kEventClassCommand, kEventCommandProcess } };
+	EventHandlerRef windowEventHandler = NULL;
+	status = InstallWindowEventHandler(textEntryWindow, gTextEntryEventHandlerUPP, GetEventTypeCount(windowEvents), windowEvents, this, &windowEventHandler);
+	if (status != noErr)
+	{
+		DisposeWindow(textEntryWindow);
+		textEntryWindow = NULL;
+		return NULL;
+	}
+
+	SetWindowActivationScope(textEntryWindow, kWindowActivationScopeAll);	// this allows keyboard focus for floating windows
+	ShowWindow(textEntryWindow);
+
+	// run the dialog window modally
+	// this will return when the dialog's event handler breaks the modal run loop
+	RunAppModalLoopForWindow(textEntryWindow);
+
+	// clean up all of the dialog stuff now that's it's finished
+	RemoveEventHandler(windowEventHandler);
+	HideWindow(textEntryWindow);
+	DisposeWindow(textEntryWindow);
+	textEntryWindow = NULL;
+	textEntryControl = NULL;
+
+	return textEntryResultString;
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::handleTextEntryCommand(UInt32 inCommandID)
+{
+	bool eventWasHandled = false;
+
+	switch (inCommandID)
+	{
+		case kHICommandOK:
+			if (textEntryControl != NULL)
+			{
+				OSErr error = GetControlData(textEntryControl, kControlNoPart, kControlEditTextCFStringTag, sizeof(textEntryResultString), &textEntryResultString, NULL);
+				if (error != noErr)
+					textEntryResultString = NULL;
+			}
+		case kHICommandCancel:
+			QuitAppModalLoopForWindow(textEntryWindow);
+			eventWasHandled = true;
+			break;
+
+		default:
+			break;
+	}
+
+	return eventWasHandled;
+}
+#endif
+// TARGET_OS_MAC
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+static pascal OSStatus DFXGUI_WindowTransparencyEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData)
+{
+	bool eventWasHandled = false;
+	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*)inUserData;
+	if (ourOwnerEditor == NULL)
+		return eventNotHandledErr;
+
+	UInt32 eventClass = GetEventClass(inEvent);
+	UInt32 eventKind = GetEventKind(inEvent);
+
+	if ( (eventClass == kEventClassWindow) && (eventKind == kEventWindowClose) )
+	{
+		ourOwnerEditor->heedWindowTransparencyWindowClose();
+		eventWasHandled = false;	// let the standard window event handler dispose of the window and such
+	}
+
+	else if ( (eventClass == kEventClassControl) && (eventKind == kEventControlValueFieldChanged) )
+	{
+		ControlRef control = NULL;
+		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(control), NULL, &control);
+		if ( (status == noErr) && (control != NULL) )
+		{
+			ControlID controlID;
+			status = GetControlID(control, &controlID);
+			if (status == noErr)
+			{
+				if ( (controlID.signature == kDfxGui_ControlSignature) && (controlID.id == kDfxGui_TransparencySliderControlID) )
+				{
+					SInt32 min = GetControl32BitMinimum(control);
+					SInt32 max = GetControl32BitMaximum(control);
+					SInt32 controlValue = GetControl32BitValue(control);
+					float transparencyValue = (float)(controlValue - min) / (float)(max - min);
+					transparencyValue = 1.0f - transparencyValue;	// invert it to reflect transparency, not opacity
+					ourOwnerEditor->setWindowTransparency(transparencyValue);
+					eventWasHandled = true;
+				}
+			}
+		}
+	}
+
+	if (eventWasHandled)
+		return noErr;
+	else
+		return eventNotHandledErr;
+}
+
+//-----------------------------------------------------------------------------
+// this function doesn't actually have to do anything to get "live update" slider behavior, 
+// it just needs to exist
+static pascal void DFXGUI_TransparencyControlActionProc(ControlRef inControl, ControlPartCode inPartCode)
+{
+}
+
+//-----------------------------------------------------------------------------
+OSStatus DfxGuiEditor::openWindowTransparencyWindow()
+{
+	// if the window is already open, then don't open a new one, just bring the existing one to the front
+	if (windowTransparencyWindow != NULL)
+	{
+		SelectWindow(windowTransparencyWindow);
+		return noErr;
+	}
+
+	OSStatus status = DFX_OpenWindowFromNib(CFSTR("set transparency"), &windowTransparencyWindow);
+	if (status != noErr)
+		return status;
+
+	// initialize the controls according to the current transparency value
+	ControlRef transparencyControl = DFX_GetControlWithID(kDfxGui_TransparencySliderControlID, windowTransparencyWindow);
+	if (transparencyControl != NULL)
+	{
+		SInt32 min = GetControl32BitMinimum(transparencyControl);
+		SInt32 max = GetControl32BitMaximum(transparencyControl);
+		SInt32 initialValue = (SInt32)((1.0f - getWindowTransparency()) * (float)(max - min)) + min;
+		SetControl32BitValue(transparencyControl, initialValue);
+
+		// this is necessary for the slider to actually do the "live update" dragging behavior
+		if (gTransparencyControlActionUPP == NULL)
+			gTransparencyControlActionUPP = NewControlActionUPP(DFXGUI_TransparencyControlActionProc);
+		SetControlAction(transparencyControl, gTransparencyControlActionUPP);
+	}
+
+	// set up the window transparency window event handler
+	if (gWindowTransparencyEventHandlerUPP == NULL)
+		gWindowTransparencyEventHandlerUPP = NewEventHandlerUPP(DFXGUI_WindowTransparencyEventHandler);
+	EventTypeSpec windowEvents[] = { { kEventClassWindow, kEventWindowClose } };
+	EventHandlerRef windowEventHandler = NULL;
+	status = InstallWindowEventHandler(windowTransparencyWindow, gWindowTransparencyEventHandlerUPP, GetEventTypeCount(windowEvents), windowEvents, this, &windowEventHandler);
+	if (status != noErr)
+	{
+		DisposeWindow(windowTransparencyWindow);
+		windowTransparencyWindow = NULL;
+		return status;
+	}
+
+	// set up the window transparency control event handler
+	EventTypeSpec controlEvents[] = { { kEventClassControl, kEventControlValueFieldChanged } };
+	EventHandlerRef controlEventHandler = NULL;
+	if (transparencyControl != NULL)
+	{
+		status = InstallControlEventHandler(transparencyControl, gWindowTransparencyEventHandlerUPP, GetEventTypeCount(controlEvents), controlEvents, this, &controlEventHandler);
+	}
+
+	SetWindowActivationScope(windowTransparencyWindow, kWindowActivationScopeAll);	// this allows keyboard focus for floating windows
+	ShowWindow(windowTransparencyWindow);
+	return noErr;
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::heedWindowTransparencyWindowClose()
+{
+	windowTransparencyWindow = NULL;
 }
 #endif
 // TARGET_OS_MAC
