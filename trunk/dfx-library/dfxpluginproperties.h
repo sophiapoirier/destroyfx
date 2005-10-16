@@ -9,6 +9,8 @@ written by Marc Poirier, January 2003
 
 #include "dfxparameter.h"
 
+#include <AudioToolbox/AudioUnitUtilities.h>	// for kAUParameterListener_AnyParameter
+
 
 // property IDs for Audio Unit property stuff
 typedef enum {
@@ -16,7 +18,7 @@ typedef enum {
 	kDfxPluginProperty_ParameterValue,		// get/set parameter values (current, min, max, etc.) using specific variable types
 	kDfxPluginProperty_ParameterValueConversion,	// expand or contract a parameter value
 	kDfxPluginProperty_ParameterValueString,	// get/set parameter value strings
-	kDfxPluginProperty_RandomizeParameters,	// randomize the parameters
+	kDfxPluginProperty_RandomizeParameter,	// randomize a parameter
 	kDfxPluginProperty_MidiLearn,			// get/set the MIDI learn state
 	kDfxPluginProperty_ResetMidiLearn,		// clear MIDI parameter assignments
 	kDfxPluginProperty_MidiLearner			// get/set the current MIDI learner parameter
