@@ -275,7 +275,7 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			break;
 
 		// randomize the parameters
-		case kDfxPluginProperty_RandomizeParameters:
+		case kDfxPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a bool to say whether or not to write automation data
 			outDataSize = sizeof(bool);
 			outWritable = true;
@@ -688,9 +688,12 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 
 		// randomize the parameters
-		case kDfxPluginProperty_RandomizeParameters:
+		case kDfxPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a bool to say whether or not to write automation data
-			randomizeparameters( *(bool*)inData );
+			if (inElement == kAUParameterListener_AnyParameter)
+				randomizeparameters( *(bool*)inData );
+			else
+				randomizeparameter(inElement);
 			break;
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -1063,6 +1066,11 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 	// ...and then allocate a mutable array large enough to hold them all
 	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, &kAUPresetCFArrayCallbacks);
 #endif
+	if (outArray == NULL)
+	{
+		*outData = NULL;
+		return coreFoundationUnknownErr;
+	}
 
 	// add the preset data (name and number) into the array
 	for (long i=0; i < numPresets; i++)
@@ -1070,13 +1078,14 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 //		if (presetnameisvalid(i))
 		if ( (presets[i].getname_ptr() != NULL) && (presets[i].getname_ptr()[0] != 0) )
 		{
-			AUPreset aupreset;
 			// set the data as it should be
-			aupreset.presetNumber = i;
-//			aupreset.presetName = getpresetcfname(i);
-			aupreset.presetName = presets[i].getcfname();
-			// insert the AUPreset into the output array
-			CFArrayAppendValue(outArray, &aupreset);
+			CFAUPresetRef aupreset = CFAUPresetCreate(kCFAllocatorDefault, i, presets[i].getcfname());//getpresetcfname(i)
+			if (aupreset != NULL)
+			{
+				// insert the AUPreset into the output array
+				CFArrayAppendValue(outArray, aupreset);
+				CFAUPresetRelease(aupreset);
+			}
 		}
 	}
 
@@ -1459,17 +1468,17 @@ ComponentResult DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument,
 						MusicDeviceGroupID inGroupID, NoteInstanceID & outNoteInstanceID, 
 						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams & inParams)
 {
-	ComponentResult result = HandleMidiEvent(kMidiNoteOn, (UInt8)inGroupID, (UInt8)(inParams.mPitch), (UInt8)(inParams.mVelocity), inOffsetSampleFrame);
-	if (result == noErr)
-		outNoteInstanceID = (NoteInstanceID) (inParams.mPitch);
-	return result;
+	handlemidi_noteon(inGroupID, (int)(inParams.mPitch), (int)(inParams.mVelocity), inOffsetSampleFrame);
+	outNoteInstanceID = (NoteInstanceID) (inParams.mPitch);
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
 ComponentResult DfxPlugin::StopNote(MusicDeviceGroupID inGroupID, 
 						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame)
 {
-	return HandleMidiEvent(kMidiNoteOff, (UInt8)inGroupID, (UInt8)inNoteInstanceID, 0, inOffsetSampleFrame);
+	handlemidi_noteoff(inGroupID, inNoteInstanceID, 0, inOffsetSampleFrame);
+	return noErr;
 }
 #endif
 // TARGET_PLUGIN_IS_INSTRUMENT
