@@ -420,7 +420,7 @@ if ( !(oldvst && isPreset) )
 #endif
 	// completely clear our table of parameter assignments before loading the new 
 	// table since the new one might not have all of the data members
-	memset(paramAssignments, 0, sizeof(DfxParameterAssignment)*numParameters);
+	clearAssignments();
 	// then point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
 	DfxParameterAssignment * newParamAssignments;
@@ -452,6 +452,222 @@ if ( !(oldvst && isPreset) )
 
 	return true;
 }
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#pragma mark -
+#pragma mark AudioUnit-specific stuff
+#pragma mark -
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#ifdef TARGET_API_AUDIOUNIT
+	static const CFStringRef kDfxSettings_ParameterIDKey = CFSTR("parameter ID");
+static const CFStringRef kDfxSettings_MidiAssignmentsKey = CFSTR("DFX! MIDI assignments");
+	static const CFStringRef kDfxSettings_MidiAssignment_eventTypeKey = CFSTR("event type");
+	static const CFStringRef kDfxSettings_MidiAssignment_eventChannelKey = CFSTR("event channel");
+	static const CFStringRef kDfxSettings_MidiAssignment_eventNumKey = CFSTR("event number");
+	static const CFStringRef kDfxSettings_MidiAssignment_eventNum2Key = CFSTR("event number 2");
+	static const CFStringRef kDfxSettings_MidiAssignment_eventBehaviourFlagsKey = CFSTR("event behavior flags");
+	static const CFStringRef kDfxSettings_MidiAssignment_data1Key = CFSTR("integer data 1");
+	static const CFStringRef kDfxSettings_MidiAssignment_data2Key = CFSTR("integer data 2");
+	static const CFStringRef kDfxSettings_MidiAssignment_fdata1Key = CFSTR("float data 1");
+	static const CFStringRef kDfxSettings_MidiAssignment_fdata2Key = CFSTR("float data 2");
+
+//-----------------------------------------------------------------------------------------
+bool DFX_AddNumberToCFDictionary(const void * inNumber, CFNumberType inType, CFMutableDictionaryRef inDictionary, const void * inDictionaryKey)
+{
+	if ( (inNumber == NULL) || (inDictionary == NULL) || (inDictionaryKey == NULL) )
+		return false;
+
+	CFNumberRef cfNumber = CFNumberCreate(kCFAllocatorDefault, inType, inNumber);
+	if (cfNumber != NULL)
+	{
+		CFDictionarySetValue(inDictionary, inDictionaryKey, cfNumber);
+		CFRelease(cfNumber);
+		return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------------------
+bool DFX_AddNumberToCFDictionary_i(SInt64 inNumber, CFMutableDictionaryRef inDictionary, const void * inDictionaryKey)
+{
+	return DFX_AddNumberToCFDictionary(&inNumber, kCFNumberSInt64Type, inDictionary, inDictionaryKey);
+}
+
+//-----------------------------------------------------------------------------------------
+bool DFX_AddNumberToCFDictionary_f(Float64 inNumber, CFMutableDictionaryRef inDictionary, const void * inDictionaryKey)
+{
+	return DFX_AddNumberToCFDictionary(&inNumber, kCFNumberFloat64Type, inDictionary, inDictionaryKey);
+}
+
+//-----------------------------------------------------------------------------------------
+SInt64 DFX_GetNumberFromCFDictionary_i(CFDictionaryRef inDictionary, const void * inDictionaryKey, bool * outSuccess = NULL)
+{
+	SInt64 resultNumber = 0;
+	const CFNumberType numberType = kCFNumberSInt64Type;
+	if (outSuccess != NULL)
+		*outSuccess = false;
+
+	if ( (inDictionary == NULL) || (inDictionaryKey == NULL) )
+		return resultNumber;
+
+	CFNumberRef cfNumber = reinterpret_cast<CFNumberRef>( CFDictionaryGetValue(inDictionary, inDictionaryKey) );
+	if (cfNumber != NULL)
+	{
+		if ( CFGetTypeID(cfNumber) == CFNumberGetTypeID() )
+		{
+			if (CFNumberGetType(cfNumber) == numberType)
+			{
+				Boolean numberSuccess = CFNumberGetValue(cfNumber, numberType, &resultNumber);
+				if (outSuccess != NULL)
+					*outSuccess = numberSuccess;
+			}
+		}
+	}
+
+	return resultNumber;
+}
+
+//-----------------------------------------------------------------------------------------
+Float64 DFX_GetNumberFromCFDictionary_f(CFDictionaryRef inDictionary, const void * inDictionaryKey, bool * outSuccess = NULL)
+{
+	Float64 resultNumber = 0;
+	const CFNumberType numberType = kCFNumberFloat64Type;
+	if (outSuccess != NULL)
+		*outSuccess = false;
+
+	if ( (inDictionary == NULL) || (inDictionaryKey == NULL) )
+		return resultNumber;
+
+	CFNumberRef cfNumber = reinterpret_cast<CFNumberRef>( CFDictionaryGetValue(inDictionary, inDictionaryKey) );
+	if (cfNumber != NULL)
+	{
+		if ( CFGetTypeID(cfNumber) == CFNumberGetTypeID() )
+		{
+			if (CFNumberGetType(cfNumber) == numberType)
+			{
+				Boolean numberSuccess = CFNumberGetValue(cfNumber, numberType, &resultNumber);
+				if (outSuccess != NULL)
+					*outSuccess = numberSuccess;
+			}
+		}
+	}
+
+	return resultNumber;
+}
+
+//-----------------------------------------------------------------------------------------
+bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary)
+{
+	if (inDictionary == NULL)
+		return false;
+
+	bool assignmentsFound = false;
+	for (long i=0; i < numParameters; i++)
+	{
+		if (getParameterAssignmentType(i) != kParamEventNone)
+			assignmentsFound = true;
+	}
+
+	if (assignmentsFound)
+	{
+		CFMutableArrayRef assignmentsCFArray = CFArrayCreateMutable(kCFAllocatorDefault, numParameters, &kCFTypeArrayCallBacks);
+		if (assignmentsCFArray != NULL)
+		{
+			for (long i=0; i < numParameters; i++)
+			{
+				CFMutableDictionaryRef assignmentCFDictionary = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+				if (assignmentCFDictionary != NULL)
+				{
+					if (getParameterID(i) == DFX_PARAM_INVALID_ID)
+						continue;
+					DFX_AddNumberToCFDictionary_i(getParameterID(i), assignmentCFDictionary, kDfxSettings_ParameterIDKey);
+#define ADD_ASSIGNMENT_VALUE_TO_DICT(inMember, inTypeSuffix)	\
+					DFX_AddNumberToCFDictionary_##inTypeSuffix(paramAssignments[i].inMember, assignmentCFDictionary, kDfxSettings_MidiAssignment_##inMember##Key);
+					ADD_ASSIGNMENT_VALUE_TO_DICT(eventType, i)
+					ADD_ASSIGNMENT_VALUE_TO_DICT(eventChannel, i)
+printf("event num = %ld, event num 2 = %ld\n", paramAssignments[i].eventNum, paramAssignments[i].eventNum2);
+					ADD_ASSIGNMENT_VALUE_TO_DICT(eventNum, i)
+					ADD_ASSIGNMENT_VALUE_TO_DICT(eventNum2, i)
+					ADD_ASSIGNMENT_VALUE_TO_DICT(eventBehaviourFlags, i)
+					ADD_ASSIGNMENT_VALUE_TO_DICT(data1, i)
+					ADD_ASSIGNMENT_VALUE_TO_DICT(data2, i)
+					ADD_ASSIGNMENT_VALUE_TO_DICT(fdata1, f)
+					ADD_ASSIGNMENT_VALUE_TO_DICT(fdata2, f)
+#undef ADD_ASSIGNMENT_VALUE_TO_DICT
+					CFArraySetValueAtIndex(assignmentsCFArray, i, assignmentCFDictionary);
+					CFRelease(assignmentCFDictionary);
+				}
+			}
+			CFDictionarySetValue(inDictionary, kDfxSettings_MidiAssignmentsKey, assignmentsCFArray);
+			CFRelease(assignmentsCFArray);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------------------
+bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary)
+{
+	if (inDictionary == NULL)
+		return false;
+
+	CFArrayRef assignmentsCFArray = reinterpret_cast<CFArrayRef>( CFDictionaryGetValue(inDictionary, kDfxSettings_MidiAssignmentsKey) );
+	if (assignmentsCFArray != NULL)
+	{
+		if ( CFGetTypeID(assignmentsCFArray) == CFArrayGetTypeID() )
+		{
+			// completely clear our table of parameter assignments before loading the new 
+			// table since the new one might not have all of the data members
+			clearAssignments();
+
+			CFIndex arraySize = CFArrayGetCount(assignmentsCFArray);
+			for (CFIndex i=0; i < arraySize; i++)
+			{
+				CFDictionaryRef assignmentCFDictionary = reinterpret_cast<CFDictionaryRef>( CFArrayGetValueAtIndex(assignmentsCFArray, i) );
+				if (assignmentCFDictionary != NULL)
+				{
+					bool numberSuccess = false;
+					long paramID = DFX_GetNumberFromCFDictionary_i(assignmentCFDictionary, kDfxSettings_ParameterIDKey, &numberSuccess);
+					if (!numberSuccess)
+						continue;
+					paramID = getParameterTagFromID(paramID);
+					if (paramID == DFX_PARAM_INVALID_ID)
+						continue;
+#define GET_ASSIGNMENT_VALUE_FROM_DICT(inMember, inTypeSuffix)	\
+					paramAssignments[paramID].inMember = DFX_GetNumberFromCFDictionary_##inTypeSuffix(assignmentCFDictionary, kDfxSettings_MidiAssignment_##inMember##Key, &numberSuccess);
+					GET_ASSIGNMENT_VALUE_FROM_DICT(eventType, i)
+					if (!numberSuccess)
+					{
+						unassignParam(paramID);
+						continue;
+					}
+					GET_ASSIGNMENT_VALUE_FROM_DICT(eventChannel, i)
+					GET_ASSIGNMENT_VALUE_FROM_DICT(eventNum, i)
+					GET_ASSIGNMENT_VALUE_FROM_DICT(eventNum2, i)
+					GET_ASSIGNMENT_VALUE_FROM_DICT(eventBehaviourFlags, i)
+					GET_ASSIGNMENT_VALUE_FROM_DICT(data1, i)
+					GET_ASSIGNMENT_VALUE_FROM_DICT(data2, i)
+					GET_ASSIGNMENT_VALUE_FROM_DICT(fdata1, f)
+					GET_ASSIGNMENT_VALUE_FROM_DICT(fdata2, f)
+#undef GET_ASSIGNMENT_VALUE_FROM_DICT
+				}
+			}
+			// this seems like a good enough sign that we at least partially succeeded
+			if (arraySize > 0)
+				return true;
+		}
+	}
+
+	return false;
+}
+#endif
+
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -707,15 +923,7 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 void DfxSettings::clearAssignments()
 {
 	for (long i=0; i < numParameters; i++)
-	{
-		paramAssignments[i].eventType = kParamEventNone;
-		paramAssignments[i].eventChannel = 0;
-		paramAssignments[i].eventBehaviourFlags = 0;
-		paramAssignments[i].data1 = 0;
-		paramAssignments[i].data2 = 0;
-		paramAssignments[i].fdata1 = 0.0f;
-		paramAssignments[i].fdata2 = 0.0f;
-	}
+		unassignParam(i);
 }
 
 //-----------------------------------------------------------------------------
@@ -725,7 +933,7 @@ void DfxSettings::assignParam(long tag, long eventType, long eventChannel, long 
 							long data1, long data2, float fdata1, float fdata2)
 {
 	// abort if the parameter index is not valid
-	if (paramTagIsValid(tag) == false)
+	if (! paramTagIsValid(tag) )
 		return;
 	// abort if the eventNum is not a valid MIDI value
 	if ( (eventNum < 0) || (eventNum >= kNumMidiValues) )
@@ -788,12 +996,19 @@ void DfxSettings::assignParam(long tag, long eventType, long eventChannel, long 
 void DfxSettings::unassignParam(long tag)
 {
 	// return if what we got is not a valid parameter index
-	if (paramTagIsValid(tag) == false)
+	if (! paramTagIsValid(tag) )
 		return;
 
 	// clear the MIDI event assignment for this parameter
 	paramAssignments[tag].eventType = kParamEventNone;
+	paramAssignments[tag].eventChannel = 0;
+	paramAssignments[tag].eventNum = 0;
+	paramAssignments[tag].eventNum2 = 0;
 	paramAssignments[tag].eventBehaviourFlags = 0;
+	paramAssignments[tag].data1 = 0;
+	paramAssignments[tag].data2 = 0;
+	paramAssignments[tag].fdata1 = 0.0f;
+	paramAssignments[tag].fdata2 = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -804,7 +1019,7 @@ void DfxSettings::setLearning(bool newLearn)
 	if (newLearn != midiLearn)
 		setLearner(kNoLearner);
 	// or if it's being asked to be turned off, irregardless
-	else if (newLearn == false)
+	else if (!newLearn)
 		setLearner(kNoLearner);
 
 	midiLearn = newLearn;
@@ -829,7 +1044,7 @@ void DfxSettings::setLearner(long tag, long eventBehaviourFlags,
 		return;
 	}
 	// return if what we got is not a valid parameter index
-	if (paramTagIsValid(tag) == false)
+	if (! paramTagIsValid(tag)  )
 		return;
 
 	// cancel note range assignment if we're switching to a new learner
@@ -893,7 +1108,7 @@ void DfxSettings::setParameterMidiReset(bool value)
 long DfxSettings::getParameterAssignmentType(long paramTag)
 {
 	// return no-assignment if what we got is not a valid parameter index
-	if (paramTagIsValid(paramTag) == false)
+	if (! paramTagIsValid(paramTag) )
 		return kParamEventNone;
 
 	return paramAssignments[paramTag].eventType;
@@ -903,7 +1118,7 @@ long DfxSettings::getParameterAssignmentType(long paramTag)
 long DfxSettings::getParameterAssignmentNum(long paramTag)
 {
 	// if what we got is not a valid parameter index
-	if (paramTagIsValid(paramTag) == false)
+	if (! paramTagIsValid(paramTag) )
 		return 0;	// XXX is there a better value to return on error?
 
 	return paramAssignments[paramTag].eventNum;
