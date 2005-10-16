@@ -54,6 +54,11 @@ public:
 	virtual bool HandleControlEvent(EventRef inEvent);
 	ControlDefSpec * getControlDefSpec()
 		{	return &dgControlSpec;	}
+
+	CFStringRef openTextEntryWindow(CFStringRef inInitialText = NULL);
+	bool handleTextEntryCommand(UInt32 inCommandID);
+	OSStatus openWindowTransparencyWindow();
+	void heedWindowTransparencyWindowClose();
 #endif
 
 	void automationgesture_begin(long inParameterID);
@@ -63,6 +68,8 @@ public:
 #endif
 
 	void DrawBackground(DGGraphicsContext * inContext);
+	float getWindowTransparency();
+	void setWindowTransparency(float inTransparencyLevel);
 
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()
@@ -80,12 +87,13 @@ public:
 	double getparameter_f(long inParameterID);
 	long getparameter_i(long inParameterID);
 	bool getparameter_b(long inParameterID);
-	void setparameter_f(long inParameterID, double inValue);
-	void setparameter_i(long inParameterID, long inValue);
-	void setparameter_b(long inParameterID, bool inValue);
-	void setparameter_default(long inParameterID);
+	void setparameter_f(long inParameterID, double inValue, bool inWrapWithAutomationGesture = false);
+	void setparameter_i(long inParameterID, long inValue, bool inWrapWithAutomationGesture = false);
+	void setparameter_b(long inParameterID, bool inValue, bool inWrapWithAutomationGesture = false);
+	void setparameter_default(long inParameterID, bool inWrapWithAutomationGesture = false);
 	void getparametervaluestring(long inParameterID, char * outText);
-	void randomizeparameters(bool writeAutomation = false);
+	void randomizeparameter(long inParameterID, bool inWriteAutomation = false);
+	void randomizeparameters(bool inWriteAutomation = false);
 	#if TARGET_PLUGIN_USES_MIDI
 		void setmidilearning(bool newLearnMode);
 		bool getmidilearning();
@@ -94,6 +102,9 @@ public:
 		long getmidilearner();
 		bool ismidilearner(long parameterIndex);
 	#endif
+
+	long copySettings();
+	long pasteSettings(bool * inQueryPastabilityOnly = NULL);
 
 protected:
 	void SetBackgroundImage(DGImage * inBackgroundImage);
@@ -137,6 +148,8 @@ protected:
 	DGControl * getDGControlByCarbonControlRef(ControlRef inControl);
 #endif
 
+	long initClipboard();
+
 	DfxPlugin * dfxplugin;	// XXX bad thing for AU, maybe just for easy debugging sometimes
 
 private:
@@ -165,6 +178,13 @@ private:
 
 	ATSFontContainerRef	fontsATSContainer;	// the ATS font container for the fonts in the bundle's Resources directory
 	bool		fontsWereActivated;	// memory of whether or not bundled fonts were loaded successfully
+
+	PasteboardRef	clipboardRef;
+
+	WindowRef	textEntryWindow;
+	ControlRef	textEntryControl;
+	CFStringRef	textEntryResultString;
+	WindowRef	windowTransparencyWindow;
 #endif
 };
 
