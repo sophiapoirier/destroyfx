@@ -7,15 +7,57 @@
 
 
 
+typedef enum {
+	kDGControlType_BackgroundPane,
+	kDGControlType_SubControl
+} DGControlType;
+
+
+
 class DfxGuiEditor;
 
-/***********************************************************************
-	DGControl
-	base class for all control objects
-***********************************************************************/
+//-----------------------------------------------------------------------------
+class DGControlBase
+{
+public:
+	DGControlBase(DfxGuiEditor * inOwnerEditor);
+	virtual ~DGControlBase()
+		{ }
+
+	virtual DGControlType getType() = 0;
+
+	virtual void draw(DGGraphicsContext * inContext)
+		{ }
+	// force a redraw of the control
+	void redraw();
+
+	bool do_contextualMenuClick();
+	virtual bool contextualMenuClick();
+
+	DfxGuiEditor * getDfxGuiEditor()
+		{	return ownerEditor;	}
+
+#if TARGET_OS_MAC
+	ControlRef getCarbonControl()
+		{	return carbonControl;	}
+	// checks if a ControlRef is the one wrapped by this DGControl instance
+	bool isControlRef(ControlRef inControl);
+#endif
+
+protected:
+	DfxGuiEditor *	ownerEditor;
+
+#if TARGET_OS_MAC
+	void setCarbonControl(ControlRef inCarbonControl)
+		{	carbonControl = inCarbonControl;	}
+	ControlRef		carbonControl;
+#endif
+};
+
+
 
 //-----------------------------------------------------------------------------
-class DGControl
+class DGControl : public DGControlBase
 {
 public:
 	// control for a parameter
@@ -24,24 +66,17 @@ public:
 	DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange);
 	virtual ~DGControl();
 
+	virtual DGControlType getType()
+		{	return kDGControlType_SubControl;	}
+
 #if TARGET_OS_MAC
-	// ControlRefs will be implemented by Manager Class
-	void setCarbonControl(ControlRef inCarbonControl)
-		{	carbonControl = inCarbonControl;	}
-	ControlRef getCarbonControl()
-		{	return carbonControl;	}
 	void initCarbonControlValueRange();
-	// checks if this or an embedded control is inside
-	bool isControlRef(ControlRef inControl);
 	void initMouseTrackingArea();
 	Rect getMacRect();
 #endif
 
 	void do_draw(DGGraphicsContext * inContext);
-	// The methods you should implement in derived controls
-	virtual void draw(DGGraphicsContext * inContext)
-		{ }
-	// *** mouse position is relative to controlBounds for ultra convenience
+	// *** mouse position is relative to the control's bounds for ultra convenience
 	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 		{ }
@@ -77,9 +112,6 @@ public:
 
 	void setVisible(bool inVisibility);
 
-	// force a redraw of the control
-	void redraw();
-
 	bool isContinuousControl()
 		{	return isContinuous;	}
 	void setControlContinuous(bool inContinuity);
@@ -103,6 +135,8 @@ public:
 		{	return parameterAttached;	}
 	long getParameterID();
 	void setParameterID(long inParameterID);
+	virtual CFStringRef createStringFromValue();
+	virtual bool setValueWithString(CFStringRef inString);
 #ifdef TARGET_API_AUDIOUNIT
 	CAAUParameter & getAUVP()
 		{	return auvp;	}
@@ -111,13 +145,11 @@ public:
 		{	return auv_control;	}
 #endif
 	float getRange()
-		{	return Range;	}
+		{	return valueRange;	}
 	DGRect * getBounds()
 		{	return &where;	}
 	DGRect * getForeBounds()
 		{	return &vizArea;	}
-	DfxGuiEditor * getDfxGuiEditor()
-		{	return ownerEditor;	}
 
 	void setOffset(long x, long y);
 
@@ -135,8 +167,7 @@ public:
 #endif
 
 protected:
-	DfxGuiEditor *		ownerEditor;
-	float				Range;
+	float				valueRange;
 	bool				parameterAttached;
 	bool				isContinuous;
 
@@ -147,9 +178,6 @@ protected:
 #ifdef TARGET_API_AUDIOUNIT
 	CAAUParameter 		auvp;
 	AUCarbonViewControl * auv_control;
-#endif
-#if TARGET_OS_MAC
-	ControlRef			carbonControl;
 #endif
 
 private:
@@ -173,23 +201,16 @@ private:
 };
 
 
-#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor);
-void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEditor * inEditor);
-#endif
-
-
-//-----------------------------------------------------------------------------
-class DGBackgroundControl
+class DGBackgroundControl : public DGControlBase
 {
 public:
 	DGBackgroundControl(DfxGuiEditor * inOwnerEditor, ControlRef inControl);
-	virtual ~DGBackgroundControl()
-		{ }
+
+	virtual DGControlType getType()
+		{	return kDGControlType_BackgroundPane;	}
 
 	virtual void draw(DGGraphicsContext * inContext);
-	void redraw();
 
 	void setImage(DGImage * inImage)
 		{	backgroundImage = inImage;	}
@@ -201,24 +222,11 @@ public:
 	long getWidth();
 	long getHeight();
 
-	DfxGuiEditor * getDfxGuiEditor()
-		{	return ownerEditor;	}
-#if TARGET_OS_MAC
-	ControlRef getCarbonControl()
-		{	return carbonControl;	}
-#endif
-
 protected:
-	DfxGuiEditor *	ownerEditor;
-
 	DGImage *		backgroundImage;
 	DGColor			backgroundColor;
 
 	bool			dragIsActive;
-
-#if TARGET_OS_MAC
-	ControlRef		carbonControl;
-#endif
 };
 
 
@@ -231,8 +239,16 @@ public:
 	DGCarbonViewControl(AUCarbonViewBase * ownerView, AUParameterListenerRef listener, ControlType type, const CAAUParameter & param, ControlRef control);
 
 	virtual void ControlToParameter();
-	virtual void ParameterToControl(Float32 newValue);
+	virtual void ParameterToControl(Float32 inNewValue);
+	virtual bool HandleEvent(EventRef inEvent);
 };
+#endif
+
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor);
+void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEditor * inEditor);
 #endif
 
 
