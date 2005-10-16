@@ -426,6 +426,7 @@ void DfxPlugin::randomizeparameter(long inParameterIndex)
 	{
 		parameters[inParameterIndex].randomize();
 		update_parameter(inParameterIndex);	// make the host aware of the parameter change
+		postupdate_parameter(inParameterIndex);	// inform any parameter listeners of the changes
 	}
 }
 
@@ -436,7 +437,6 @@ void DfxPlugin::randomizeparameters(bool writeAutomation)
 	for (long i=0; i < numParameters; i++)
 	{
 		randomizeparameter(i);
-		postupdate_parameter(i);	// inform any parameter listeners of the changes
 
 	#ifdef TARGET_API_VST
 		if (writeAutomation)
