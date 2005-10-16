@@ -57,6 +57,10 @@
 
 #include "dfxdefines.h"
 
+#ifdef TARGET_API_AUDIOUNIT
+	#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 
 //------------------------------------------------------
 // some constants
@@ -241,6 +245,10 @@ public:
 	// for adding to your base plugin class methods
 	unsigned long save(void ** outData, bool isPreset);
 	bool restore(void * inData, unsigned long byteSize, bool isPreset);
+#ifdef TARGET_API_AUDIOUNIT
+	bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
+	bool restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary);
+#endif
 
 	// handlers for the types of MIDI events that we support
 	void handleNoteOn(int channel, int note, int velocity, long frameOffset);
