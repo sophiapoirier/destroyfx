@@ -3,26 +3,512 @@
 
 #include "dfxpluginproperties.h"
 #include "dfxmath.h"
+#include "dfx-au-utilities.h"
+#include "dfxplugin.h"	// XXX for launch_url(), but should move that elsewhere?
+
 
 
 const SInt32 kContinuousControlMaxValue = 0x0FFFFFFF - 1;
 const float kDefaultFineTuneFactor = 12.0f;
 const float kDefaultMouseDragRange = 333.0f;	// pixels
+#if TARGET_OS_MAC
+	const MenuID kDfxGui_ControlContextualMenuID = 3;	// XXX eh?  how am I supposed to come up with a meaningful 16-bit value for this?
+#endif
+
+
+
+#pragma mark -
+#pragma mark DGControlBase
+//-----------------------------------------------------------------------------
+DGControlBase::DGControlBase(DfxGuiEditor * inOwnerEditor)
+:	ownerEditor(inOwnerEditor)
+{
+}
 
 //-----------------------------------------------------------------------------
+// force a redraw
+void DGControlBase::redraw()
+{
+	if (carbonControl != NULL)
+	{
+		if ( getDfxGuiEditor()->IsCompositWindow() )
+			HIViewSetNeedsDisplay(carbonControl, true);
+		else
+			Draw1Control(carbonControl);
+	}
+}
+
+//-----------------------------------------------------------------------------
+enum {
+	kDfxContextualMenuItem_Global_Undo = 0,
+	kDfxContextualMenuItem_Global_RandomizeParameterValues,
+	kDfxContextualMenuItem_Global_GenerateAutomationSnapshot,
+	kDfxContextualMenuItem_Global_CopyState,
+	kDfxContextualMenuItem_Global_PasteState,
+	kDfxContextualMenuItem_Global_SavePresetFile,
+	kDfxContextualMenuItem_Global_LoadPresetFile,
+//	kDfxContextualMenuItem_Global_UserPresets,	// preset files sub-menu(s)?
+//	kDfxContextualMenuItem_Global_FactoryPresets,	// factory presets sub-menu?
+#if TARGET_PLUGIN_USES_MIDI
+	kDfxContextualMenuItem_Global_MidiLearn,
+	kDfxContextualMenuItem_Global_MidiReset,
+#endif
+//	kDfxContextualMenuItem_Global_ResizeGUI,
+	kDfxContextualMenuItem_Global_WindowTransparency,
+	kDfxContextualMenuItem_Global_OpenWebSite,
+	kDfxContextualMenuItem_Global_NumItems
+};
+enum {
+	kDfxContextualMenuItem_Parameter_SetDefaultValue = 0,
+	kDfxContextualMenuItem_Parameter_TextEntryForValue,	// type in value
+	kDfxContextualMenuItem_Parameter_Undo,
+	kDfxContextualMenuItem_Parameter_RandomizeParameterValue,
+//	kDfxContextualMenuItem_Parameter_SnapMode,	// toggle snap mode
+#if TARGET_PLUGIN_USES_MIDI
+	kDfxContextualMenuItem_Parameter_MidiLearner,
+	kDfxContextualMenuItem_Parameter_MidiUnassign,
+	kDfxContextualMenuItem_Parameter_TextEntryForMidiCC,	// assign MIDI CC by typing in directly
+#endif
+	kDfxContextualMenuItem_Parameter_NumItems
+};
+const UInt32 kDfxMenu_MenuItemIndentAmount = 1;
+
+//-----------------------------------------------------------------------------
+OSStatus DFX_AppendSeparatorToMenu(MenuRef inMenu)
+{
+	if (inMenu == NULL)
+		return paramErr;
+	return AppendMenuItemTextWithCFString(inMenu, NULL, kMenuItemAttrSeparator, 0, NULL);
+}
+
+//-----------------------------------------------------------------------------
+OSStatus DFX_AppendSectionTitleToMenu(MenuRef inMenu, CFStringRef inMenuItemText)
+{
+	if ( (inMenu == NULL) || (inMenuItemText == NULL) )
+		return paramErr;
+
+	MenuItemIndex menuItemIndex = 0;
+	OSStatus status = AppendMenuItemTextWithCFString(inMenu, inMenuItemText, kMenuItemAttrSectionHeader, 0, &menuItemIndex);
+	if (status == noErr)
+	{
+//		status = SetMenuItemIndent(inMenu, menuItemIndex, kDfxMenu_MenuItemIndentAmount);
+		SetItemStyle(inMenu, menuItemIndex, italic | bold);// | underline);
+	}
+	return status;
+}
+
+//-----------------------------------------------------------------------------
+int DFX_CFStringScanWithFormat(CFStringRef inString, const char * inFormat, ...)
+{
+	if ( (inString == NULL) || (inFormat == NULL) )
+		return 0;
+
+	int scanCount = 0;
+
+	CFIndex stringLength = CFStringGetLength(inString);
+	const CFStringEncoding cStringEncoding = kCFStringEncodingUTF8;
+	CFIndex cStringBufferSize = CFStringGetMaximumSizeForEncoding(stringLength, cStringEncoding);
+	if (cStringBufferSize > 0)
+	{
+		char * cString = (char*) malloc(cStringBufferSize);
+		if (cString != NULL)
+		{
+			Boolean cStringSuccess = CFStringGetCString(inString, cString, cStringBufferSize, cStringEncoding);
+			if (cStringSuccess)
+			{
+				va_list variableArgumentList;
+				va_start(variableArgumentList, inFormat);
+				scanCount = vsscanf(cString, inFormat, variableArgumentList);
+				va_end(variableArgumentList);
+			}
+			free(cString);
+		}
+	}
+
+	return scanCount;
+}
+
+//-----------------------------------------------------------------------------
+bool DGControlBase::do_contextualMenuClick()
+{
+	return contextualMenuClick();
+}
+
+//-----------------------------------------------------------------------------
+bool DGControlBase::contextualMenuClick()
+{
+#if TARGET_OS_MAC
+	MenuRef contextualMenu = NULL;
+	MenuID contextualMenuID = kDfxGui_ControlContextualMenuID;
+	MenuAttributes contextualMenuAttributes = kMenuAttrCondenseSeparators;
+	OSStatus status = CreateNewMenu(contextualMenuID, contextualMenuAttributes, &contextualMenu);
+	if ( (status != noErr) || (contextualMenu == NULL) )
+		return false;
+
+
+// --------- parameter menu creation ---------
+	bool parameterMenuItemsWereAdded = false;
+	DGControl * dgControl = NULL;
+	// populate the parameter-specific section of the menu
+	if (getType() == kDGControlType_SubControl)
+	{
+		dgControl = (DGControl*)this;
+		if ( dgControl->isParameterAttached() )
+		{
+			parameterMenuItemsWereAdded = true;
+			MenuItemIndex menuItemIndex = 0;
+
+			// preface the parameter-specific commands section with a header title
+			CFStringRef menuItemText = CFSTR("Parameter Options");
+			status = DFX_AppendSectionTitleToMenu(contextualMenu, menuItemText);
+			status = DFX_AppendSeparatorToMenu(contextualMenu);
+
+			for (UInt32 i=0; i < kDfxContextualMenuItem_Parameter_NumItems; i++)
+			{
+				bool showCheckmark = false;
+				bool disableItem = false;
+				bool isFirstItemOfSubgroup = false;
+				menuItemText = NULL;
+				switch (i)
+				{
+					case kDfxContextualMenuItem_Parameter_SetDefaultValue:
+						menuItemText = CFSTR("Set default value");
+						isFirstItemOfSubgroup = true;
+						break;
+					case kDfxContextualMenuItem_Parameter_TextEntryForValue:
+						menuItemText = CFSTR("Type in a value for this parameter...");
+						break;
+					case kDfxContextualMenuItem_Parameter_Undo:
+						if (true)	//XXX needs appropriate check for which text/function to use
+							menuItemText = CFSTR("Undo this parameter");
+						else
+							menuItemText = CFSTR("Redo this parameter");
+						break;
+					case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
+						menuItemText = CFSTR("Randomize value");
+						break;
+#if TARGET_PLUGIN_USES_MIDI
+					case kDfxContextualMenuItem_Parameter_MidiLearner:
+						menuItemText = CFSTR("MIDI learner");
+						if ( (getDfxGuiEditor()->getmidilearning()) )
+							showCheckmark = getDfxGuiEditor()->ismidilearner( dgControl->getParameterID() );
+						else
+							disableItem = true;
+						isFirstItemOfSubgroup = true;
+						break;
+					case kDfxContextualMenuItem_Parameter_MidiUnassign:
+						menuItemText = CFSTR("Unassign MIDI");
+						//XXX disable if not assigned
+						break;
+					case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
+						menuItemText = CFSTR("Type in a MIDI CC assignment...");
+						break;
+#endif
+					default:
+						break;
+				}
+				if (isFirstItemOfSubgroup)
+					status = DFX_AppendSeparatorToMenu(contextualMenu);
+				if (menuItemText != NULL)
+				{
+					MenuItemAttributes menuItemAttributes = 0;
+					if (disableItem)
+						menuItemAttributes |= kMenuItemAttrDisabled;
+					MenuCommand menuItemCommandID = i + kDfxContextualMenuItem_Global_NumItems;
+					status = AppendMenuItemTextWithCFString(contextualMenu, menuItemText, menuItemAttributes, menuItemCommandID, &menuItemIndex);
+					if (status == noErr)
+					{
+						if (showCheckmark)
+							CheckMenuItem(contextualMenu, menuItemIndex, true);
+						status = SetMenuItemIndent(contextualMenu, menuItemIndex, kDfxMenu_MenuItemIndentAmount);
+					}
+				}
+			}
+
+			// preface the global commands section with a divider...
+			status = DFX_AppendSeparatorToMenu(contextualMenu);
+			// ... and a header title
+			menuItemText = CFSTR("General Options");
+			status = DFX_AppendSectionTitleToMenu(contextualMenu, menuItemText);
+			status = DFX_AppendSeparatorToMenu(contextualMenu);
+		}
+	}
+
+// --------- global menu creation ---------
+	// populate the global section of the menu
+	for (UInt32 i=0; i < kDfxContextualMenuItem_Global_NumItems; i++)
+	{
+		MenuItemIndex menuItemIndex = 0;
+		bool showCheckmark = false;
+		bool disableItem = false;
+		bool isFirstItemOfSubgroup = false;
+		CFStringRef menuItemText = NULL;
+		switch (i)
+		{
+			case kDfxContextualMenuItem_Global_Undo:
+				if (true)	//XXX needs appropriate check for which text/function to use
+					menuItemText = CFSTR("Undo");
+				else
+					menuItemText = CFSTR("Redo");
+				isFirstItemOfSubgroup = true;
+				break;
+			case kDfxContextualMenuItem_Global_RandomizeParameterValues:
+				menuItemText = CFSTR("Randomize all parameter values");
+				break;
+			case kDfxContextualMenuItem_Global_GenerateAutomationSnapshot:
+				menuItemText = CFSTR("Generate parameter automation snapshot");
+				break;
+			case kDfxContextualMenuItem_Global_CopyState:
+				menuItemText = CFSTR("Copy settings");
+				isFirstItemOfSubgroup = true;
+				// the Pasteboard Manager API is only available in Mac OS X 10.3 or higher
+				if (PasteboardCreate == NULL)
+					disableItem = true;
+				break;
+			case kDfxContextualMenuItem_Global_PasteState:
+				menuItemText = CFSTR("Paste settings");
+				{
+					bool currentClipboardIsPastable = false;
+					getDfxGuiEditor()->pasteSettings(&currentClipboardIsPastable);
+					if (!currentClipboardIsPastable)
+						disableItem = true;
+				}
+				break;
+			case kDfxContextualMenuItem_Global_SavePresetFile:
+				menuItemText = CFSTR("Save preset file...");
+				break;
+			case kDfxContextualMenuItem_Global_LoadPresetFile:
+				menuItemText = CFSTR("Load preset file...");
+				break;
+#if TARGET_PLUGIN_USES_MIDI
+			case kDfxContextualMenuItem_Global_MidiLearn:
+				menuItemText = CFSTR("MIDI learn");
+				showCheckmark = getDfxGuiEditor()->getmidilearning();
+				isFirstItemOfSubgroup = true;
+				break;
+			case kDfxContextualMenuItem_Global_MidiReset:
+				menuItemText = CFSTR("MIDI assignments reset");
+				break;
+#endif
+			case kDfxContextualMenuItem_Global_WindowTransparency:
+				menuItemText = CFSTR("Set window transparency...");
+				isFirstItemOfSubgroup = true;
+				break;
+			case kDfxContextualMenuItem_Global_OpenWebSite:
+				menuItemText = CFSTR("Open "DESTROYFX_NAME_STRING" web site in browser");
+				break;
+			default:
+				break;
+		}
+		if (isFirstItemOfSubgroup)
+			status = DFX_AppendSeparatorToMenu(contextualMenu);
+		if (menuItemText != NULL)
+		{
+			MenuItemAttributes menuItemAttributes = 0;//kMenuItemAttrDisabled
+			if (disableItem)
+				menuItemAttributes |= kMenuItemAttrDisabled;
+			MenuCommand menuItemCommandID = i;
+			status = AppendMenuItemTextWithCFString(contextualMenu, menuItemText, menuItemAttributes, menuItemCommandID, &menuItemIndex);
+//			status = InsertMenuItemTextWithCFString(contextualMenu, menuItemText, MenuItemIndex inAfterItem, menuItemAttributes, menuItemCommandID);
+			if (status == noErr)
+			{
+				if (showCheckmark)
+					CheckMenuItem(contextualMenu, menuItemIndex, true);
+				if (parameterMenuItemsWereAdded)
+					status = SetMenuItemIndent(contextualMenu, menuItemIndex, kDfxMenu_MenuItemIndentAmount);
+			}
+		}
+	}
+
+
+// --------- show the contextual menu ---------
+	Point mouseLocation_global_i;
+	GetGlobalMouse(&mouseLocation_global_i);
+	UInt32 userSelectionType = kCMNothingSelected;
+	SInt16 menuID = 0;
+	MenuItemIndex menuItemIndex = 0;
+	status = ContextualMenuSelect(contextualMenu, mouseLocation_global_i, false, kCMHelpItemOtherHelp, "\p"PLUGIN_NAME_STRING" manual", NULL, &userSelectionType, &menuID, &menuItemIndex);
+
+	bool result = true;
+	// XXX this happens "if the user selects an item that requires no additional actions on your part", so report it as being handled?
+	if ( (status == userCanceledErr) && (userSelectionType == kCMNothingSelected) )
+	{
+		result = true;
+		goto cleanupMenu;
+	}
+	if (status != noErr)
+	{
+		result = false;
+		goto cleanupMenu;
+	}
+	result = true;
+
+// --------- handle the contextual menu command (global) ---------
+	if (userSelectionType == kCMShowHelpSelected)
+		launch_documentation();
+	else if (userSelectionType == kCMMenuItemSelected)
+	{
+//fprintf(stderr, "menuID = %d, menuItemIndex = %u\n", menuID, menuItemIndex);
+		MenuCommand menuCommandID = 0;
+		status = GetMenuItemCommandID(contextualMenu, menuItemIndex, &menuCommandID);
+		if (status == noErr)
+		{
+			bool tryHandlingParameterCommand = false;
+			switch (menuCommandID)
+			{
+				case kDfxContextualMenuItem_Global_Undo:
+					//XXX implement
+					break;
+				case kDfxContextualMenuItem_Global_RandomizeParameterValues:
+					getDfxGuiEditor()->randomizeparameters(true);	// XXX "yes" to writing automation data?
+					break;
+				case kDfxContextualMenuItem_Global_GenerateAutomationSnapshot:
+					//XXX implement
+					break;
+				case kDfxContextualMenuItem_Global_CopyState:
+					getDfxGuiEditor()->copySettings();
+					break;
+				case kDfxContextualMenuItem_Global_PasteState:
+					getDfxGuiEditor()->pasteSettings();
+					break;
+				case kDfxContextualMenuItem_Global_SavePresetFile:
+					{
+						CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
+						if (pluginBundle != NULL)
+						{
+							status = SaveAUStateToPresetFile_Bundle(getDfxGuiEditor()->GetEditAudioUnit(), NULL, NULL, pluginBundle);
+						}
+					}
+					break;
+				case kDfxContextualMenuItem_Global_LoadPresetFile:
+					status = CustomRestoreAUPresetFile( getDfxGuiEditor()->GetEditAudioUnit() );
+					break;
+#if TARGET_PLUGIN_USES_MIDI
+				case kDfxContextualMenuItem_Global_MidiLearn:
+					getDfxGuiEditor()->setmidilearning(! (getDfxGuiEditor()->getmidilearning()) );
+					break;
+				case kDfxContextualMenuItem_Global_MidiReset:
+					getDfxGuiEditor()->resetmidilearn();
+					break;
+#endif
+				case kDfxContextualMenuItem_Global_WindowTransparency:
+					status = getDfxGuiEditor()->openWindowTransparencyWindow();
+					break;
+				case kDfxContextualMenuItem_Global_OpenWebSite:
+					launch_url(DESTROYFX_URL);
+					break;
+				default:
+					tryHandlingParameterCommand = true;
+					break;
+			}
+
+// --------- handle the contextual menu command (parameter-specific) ---------
+			if (tryHandlingParameterCommand && parameterMenuItemsWereAdded)
+			{
+				long paramID = dgControl->getParameterID();
+				switch (menuCommandID - kDfxContextualMenuItem_Global_NumItems)
+				{
+					case kDfxContextualMenuItem_Parameter_SetDefaultValue:
+						getDfxGuiEditor()->setparameter_default(paramID, true);
+						break;
+					case kDfxContextualMenuItem_Parameter_TextEntryForValue:
+						{
+							// XXX initialize the text with the current parameter value
+							CFStringRef currentValueText = dgControl->createStringFromValue();
+							// XXX consider adding the min and max values to the window display for user's sake
+							CFStringRef text = getDfxGuiEditor()->openTextEntryWindow(currentValueText);
+							if (currentValueText != NULL)
+								CFRelease(currentValueText);
+							if (text != NULL)
+							{
+//CFShow(text);
+								dgControl->setValueWithString(text);
+								CFRelease(text);
+							}
+						}
+						break;
+					case kDfxContextualMenuItem_Parameter_Undo:
+						//XXX implement
+						break;
+					case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
+						// XXX "yes" to writing automation data?  (currently unimplemented, though)
+						getDfxGuiEditor()->randomizeparameter(paramID, true);
+						break;
+#if TARGET_PLUGIN_USES_MIDI
+					case kDfxContextualMenuItem_Parameter_MidiLearner:
+						if ( getDfxGuiEditor()->getmidilearner() == paramID )
+							getDfxGuiEditor()->setmidilearner(kNoLearner);
+						else
+							getDfxGuiEditor()->setmidilearner(paramID);
+						break;
+					case kDfxContextualMenuItem_Parameter_MidiUnassign:
+						//XXX implement
+//						getDfxGuiEditor()->midiunassign(paramID);
+						break;
+					case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
+						{
+							// XXX initialize the text with the current CC assignment, if there is one
+							CFStringRef text = getDfxGuiEditor()->openTextEntryWindow();
+							if (text != NULL)
+							{
+//CFShow(text);
+								long newValue = 0;
+								int scanResult = DFX_CFStringScanWithFormat(text, "%ld", &newValue);
+								if (scanResult > 0)
+								{
+									//XXX implement
+								}
+								CFRelease(text);
+							}
+						}
+						break;
+#endif
+					default:
+						break;
+				}
+			}
+		}
+	}
+
+cleanupMenu:
+	DisposeMenu(contextualMenu);
+
+	return result;
+#endif
+}
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+bool DGControlBase::isControlRef(ControlRef inControl)
+{
+	if (carbonControl == inControl)
+		return true;
+	return false;
+}
+#endif
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGControl
+//-----------------------------------------------------------------------------
 DGControl::DGControl(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion)
-:	ownerEditor(inOwnerEditor)
+:	DGControlBase(inOwnerEditor)
 {
 	auvp = CAAUParameter(ownerEditor->GetEditAudioUnit(), (AudioUnitParameterID)inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
 	parameterAttached = true;
-	Range = auvp.ParamInfo().maxValue - auvp.ParamInfo().minValue;
+	valueRange = auvp.ParamInfo().maxValue - auvp.ParamInfo().minValue;
 	
 	init(inRegion);
 }
 
 //-----------------------------------------------------------------------------
 DGControl::DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange)
-:	ownerEditor(inOwnerEditor), Range(inRange)
+:	DGControlBase(inOwnerEditor), 
+	valueRange(inRange)
 {
 	auvp = CAAUParameter();	// an empty CAAUParameter
 	parameterAttached = false;
@@ -114,19 +600,6 @@ getForeBounds()->set(&oldfbounds);
 }
 
 //-----------------------------------------------------------------------------
-// force a redraw
-void DGControl::redraw()
-{
-	if (carbonControl != NULL)
-	{
-		if ( getDfxGuiEditor()->IsCompositWindow() )
-			HIViewSetNeedsDisplay(carbonControl, true);
-		else
-			Draw1Control(carbonControl);
-	}
-}
-
-//-----------------------------------------------------------------------------
 void DGControl::embed()
 {
 	setOffset( (long) (getDfxGuiEditor()->GetXOffset()), (long) (getDfxGuiEditor()->GetYOffset()) );
@@ -175,9 +648,9 @@ void DGControl::createAUVcontrol()
 	if (carbonControl == NULL)
 		return;
 
-	AUCarbonViewControl::ControlType ctype = isContinuousControl() ? AUCarbonViewControl::kTypeContinuous : AUCarbonViewControl::kTypeDiscrete;
 	if (auv_control != NULL)
 		delete auv_control;
+	AUCarbonViewControl::ControlType ctype = isContinuousControl() ? AUCarbonViewControl::kTypeContinuous : AUCarbonViewControl::kTypeDiscrete;
 	auv_control = new DGCarbonViewControl(getDfxGuiEditor(), getDfxGuiEditor()->getParameterListener(), ctype, getAUVP(), carbonControl);
 	auv_control->Bind();
 }
@@ -190,9 +663,6 @@ void DGControl::setControlContinuous(bool inContinuity)
 	if (inContinuity != oldContinuity)
 	{
 		// do this before doing the value range thing to avoid spurious parameter value changing
-		// XXX causes crashes - fix
-//		if (auv_control != NULL)
-//			delete auv_control;
 		initCarbonControlValueRange();
 		createAUVcontrol();
 	}
@@ -273,12 +743,17 @@ void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseBu
 
 	currentlyIgnoringMouseTracking = false;
 
+	// do this to make touch automation work
+	// AUCarbonViewControl::HandleEvent will catch ControlClick but not ControlContextualMenuClick
+	if ( isParameterAttached() )//&& (inEventKind == kEventControlContextualMenuClick) )
+		getDfxGuiEditor()->automationgesture_begin( getParameterID() );
+
 	#if TARGET_PLUGIN_USES_MIDI
 		if ( isParameterAttached() )
 			getDfxGuiEditor()->setmidilearner( getParameterID() );
 	#endif
 
-	// set the defaul value of the parameter
+	// set the default value of the parameter
 	if ( (inKeyModifiers & kDGKeyModifier_accel) && isParameterAttached() )
 	{
 		getDfxGuiEditor()->setparameter_default( getParameterID() );
@@ -309,6 +784,10 @@ void DGControl::do_mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModif
 		mouseUp(inXpos, inYpos, inKeyModifiers);
 
 	currentlyIgnoringMouseTracking = false;
+
+	// do this to make touch automation work
+	if ( isParameterAttached() )
+		getDfxGuiEditor()->automationgesture_end( getParameterID() );
 }
 
 //-----------------------------------------------------------------------------
@@ -319,7 +798,15 @@ bool DGControl::do_mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifi
 	if (! getRespondToMouse() )
 		return false;
 
-	return mouseWheel(inDelta, inAxis, inKeyModifiers);
+	if ( isParameterAttached() )
+		getDfxGuiEditor()->automationgesture_begin( getParameterID() );
+
+	bool wheelResult = mouseWheel(inDelta, inAxis, inKeyModifiers);
+
+	if ( isParameterAttached() )
+		getDfxGuiEditor()->automationgesture_end( getParameterID() );
+
+	return wheelResult;
 }
 
 //-----------------------------------------------------------------------------
@@ -394,6 +881,62 @@ long DGControl::getParameterID()
 }
 
 //-----------------------------------------------------------------------------
+CFStringRef DGControl::createStringFromValue()
+{
+	if ( isContinuousControl() )	// XXX need a better check
+	{
+		double currentValue;
+		if ( isParameterAttached() )
+			currentValue = getDfxGuiEditor()->getparameter_f( getParameterID() );
+		else
+			currentValue = 0.0f;	// XXX implement
+		return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%.6f"), currentValue);
+	}
+	else
+	{
+		long currentValue;
+		if ( isParameterAttached() )
+			currentValue = getDfxGuiEditor()->getparameter_i( getParameterID() );
+		else
+			currentValue = GetControl32BitValue( getCarbonControl() );
+		return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%ld"), currentValue);
+	}
+}
+
+//-----------------------------------------------------------------------------
+bool DGControl::setValueWithString(CFStringRef inString)
+{
+	bool success = false;
+
+	if ( isParameterAttached() )
+	{
+		if ( isContinuousControl() )	// XXX need a better check
+		{
+//			double newValue = CFStringGetDoubleValue(inString);
+			double newValue = 0.0;
+			int scanResult = DFX_CFStringScanWithFormat(inString, "%lf", &newValue);
+			if (scanResult > 0)
+			{
+				getDfxGuiEditor()->setparameter_f(getParameterID(), newValue, true);
+				success = true;
+			}
+		}
+		else
+		{
+			long newValue = 0;
+			int scanResult = DFX_CFStringScanWithFormat(inString, "%ld", &newValue);
+			if (scanResult > 0)
+			{
+				getDfxGuiEditor()->setparameter_i(getParameterID(), newValue, true);
+				success = true;
+			}
+		}
+	}
+
+	return success;
+}
+
+//-----------------------------------------------------------------------------
 void DGControl::setOffset(long x, long y)
 {
 	where.offset(x, y);
@@ -423,16 +966,6 @@ void DGControl::setDrawAlpha(float inAlpha)
 	if (oldalpha != inAlpha)
 		redraw();
 }
-
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-bool DGControl::isControlRef(ControlRef inControl)
-{
-	if (carbonControl == inControl)
-		return true;
-	return false;
-}
-#endif
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
@@ -516,110 +1049,14 @@ OSStatus DGControl::setHelpText(CFStringRef inHelpText)
 
 
 
-//-----------------------------------------------------------------------------
-DGCarbonViewControl::DGCarbonViewControl(AUCarbonViewBase * inOwnerView, AUParameterListenerRef inListener, 
-										ControlType inType, const CAAUParameter &inAUVParam, ControlRef inControl)
-:	AUCarbonViewControl(inOwnerView, inListener, inType, inAUVParam, inControl)
-{
-}
-
-//-----------------------------------------------------------------------------
-void DGCarbonViewControl::ControlToParameter()
-{
-	if (mType == kTypeContinuous)
-	{
-		double controlValue = GetValueFract();
-		Float32 paramValue;
-		DfxParameterValueConversionRequest request;
-		UInt32 dataSize = sizeof(request);
-		request.parameterID = mParam.mParameterID;
-		request.conversionType = kDfxParameterValueConversion_expand;
-		request.inValue = controlValue;
-		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
-								kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
-								== noErr)
-			paramValue = request.outValue;
-		else
-			paramValue = AUParameterValueFromLinear(controlValue, &mParam);
-		mParam.SetValue(mListener, this, paramValue);
-	}
-	else
-		AUCarbonViewControl::ControlToParameter();
-}
-
-//-----------------------------------------------------------------------------
-void DGCarbonViewControl::ParameterToControl(Float32 paramValue)
-{
-	if (mType == kTypeContinuous)
-	{
-		DfxParameterValueConversionRequest request;
-		UInt32 dataSize = sizeof(request);
-		request.parameterID = mParam.mParameterID;
-		request.conversionType = kDfxParameterValueConversion_contract;
-		request.inValue = paramValue;
-		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
-								kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
-								== noErr)
-			SetValueFract(request.outValue);
-		else
-			SetValueFract(AUParameterValueToLinear(paramValue, &mParam));
-	}
-	else
-		AUCarbonViewControl::ParameterToControl(paramValue);
-}
-
-
-
-
-
-
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor)
-{
-	CGPoint offset;
-	offset.x = offset.y = 0.0f;
-	if ( (inControl == NULL) || (inEditor == NULL) )
-		return offset;
-	if ( !(inEditor->IsCompositWindow()) )
-		return offset;
-
-	OSStatus error;
-	HIRect controlRect;
-	error = HIViewGetBounds(inControl, &controlRect);
-	if (error == noErr)
-	{
-		HIRect frameRect;
-		error = HIViewGetFrame(inControl, &frameRect);
-		if (error == noErr)
-		{
-			offset.x = controlRect.origin.x - frameRect.origin.x;
-			offset.y = controlRect.origin.y - frameRect.origin.y;
-		}
-	}
-	return offset;
-}
-
-//-----------------------------------------------------------------------------
-void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEditor * inEditor)
-{
-	if (inRect != NULL)
-	{
-		CGPoint offsetAmount = GetControlCompositingOffset(inControl, inEditor);
-		inRect->offset( (long)(offsetAmount.x), (long)(offsetAmount.y) );
-	}
-}
-#endif
-
-
-
-
-
-
+#pragma mark -
+#pragma mark DGBackgroundControl
 //-----------------------------------------------------------------------------
 DGBackgroundControl::DGBackgroundControl(DfxGuiEditor * inOwnerEditor, ControlRef inControl)
-:	ownerEditor(inOwnerEditor), carbonControl(inControl)
+:	DGControlBase(inOwnerEditor)
 {
+	setCarbonControl(inControl);
+
 	backgroundImage = NULL;
 	backgroundColor(randFloat(), randFloat(), randFloat());
 	dragIsActive = false;
@@ -653,19 +1090,6 @@ void DGBackgroundControl::draw(DGGraphicsContext * inContext)
 			inContext->setStrokeColor(strokeColor);
 			inContext->strokeRect(&drawRect, 2.0f);
 		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// force a redraw
-void DGBackgroundControl::redraw()
-{
-	if (carbonControl != NULL)
-	{
-		if ( getDfxGuiEditor()->IsCompositWindow() )
-			HIViewSetNeedsDisplay(carbonControl, true);
-		else
-			Draw1Control(carbonControl);
 	}
 }
 
@@ -713,3 +1137,130 @@ long DGBackgroundControl::getHeight()
 
 	return 1;
 }
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGCarbonViewControl
+//-----------------------------------------------------------------------------
+DGCarbonViewControl::DGCarbonViewControl(AUCarbonViewBase * inOwnerView, AUParameterListenerRef inListener, 
+										ControlType inType, const CAAUParameter &inAUVParam, ControlRef inControl)
+:	AUCarbonViewControl(inOwnerView, inListener, inType, inAUVParam, inControl)
+{
+}
+
+//-----------------------------------------------------------------------------
+void DGCarbonViewControl::ControlToParameter()
+{
+	if (mType == kTypeContinuous)
+	{
+		double controlValue = GetValueFract();
+		Float32 paramValue;
+		DfxParameterValueConversionRequest request;
+		UInt32 dataSize = sizeof(request);
+		request.parameterID = mParam.mParameterID;
+		request.conversionType = kDfxParameterValueConversion_expand;
+		request.inValue = controlValue;
+		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
+								kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+								== noErr)
+			paramValue = request.outValue;
+		else
+			paramValue = AUParameterValueFromLinear(controlValue, &mParam);
+		mParam.SetValue(mListener, this, paramValue);
+	}
+	else
+		AUCarbonViewControl::ControlToParameter();
+}
+
+//-----------------------------------------------------------------------------
+void DGCarbonViewControl::ParameterToControl(Float32 inParamValue)
+{
+	if (mType == kTypeContinuous)
+	{
+		DfxParameterValueConversionRequest request;
+		UInt32 dataSize = sizeof(request);
+		request.parameterID = mParam.mParameterID;
+		request.conversionType = kDfxParameterValueConversion_contract;
+		request.inValue = inParamValue;
+		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
+								kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+								== noErr)
+			SetValueFract(request.outValue);
+		else
+			SetValueFract(AUParameterValueToLinear(inParamValue, &mParam));
+	}
+	else
+		AUCarbonViewControl::ParameterToControl(inParamValue);
+}
+
+//-----------------------------------------------------------------------------
+bool DGCarbonViewControl::HandleEvent(EventRef inEvent)
+{
+	UInt32 eventClass = GetEventClass(inEvent);
+	UInt32 eventKind = GetEventKind(inEvent);
+
+	// steal these events from being handled by AUCarbonViewControl 
+	// cuz it will do its own automation gesture stuff on top of ours
+	if (eventClass == kEventClassControl)
+	{
+		if ( (eventKind == kEventControlClick) || (eventKind == kEventControlHit) )
+		{
+			if ( (mLastControl != this) && (mLastControl != NULL) )
+				mLastControl->Update(false);
+			mLastControl = this;
+			return false;
+		}
+	}
+
+	return AUCarbonViewControl::HandleEvent(inEvent);
+}
+
+
+
+
+
+
+#pragma mark -
+#pragma mark Mac compositing window utility functions
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor)
+{
+	CGPoint offset;
+	offset.x = offset.y = 0.0f;
+	if ( (inControl == NULL) || (inEditor == NULL) )
+		return offset;
+	if ( !(inEditor->IsCompositWindow()) )
+		return offset;
+
+	OSStatus error;
+	HIRect controlRect;
+	error = HIViewGetBounds(inControl, &controlRect);
+	if (error == noErr)
+	{
+		HIRect frameRect;
+		error = HIViewGetFrame(inControl, &frameRect);
+		if (error == noErr)
+		{
+			offset.x = controlRect.origin.x - frameRect.origin.x;
+			offset.y = controlRect.origin.y - frameRect.origin.y;
+		}
+	}
+	return offset;
+}
+
+//-----------------------------------------------------------------------------
+void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEditor * inEditor)
+{
+	if (inRect != NULL)
+	{
+		CGPoint offsetAmount = GetControlCompositingOffset(inControl, inEditor);
+		inRect->offset( (long)(offsetAmount.x), (long)(offsetAmount.y) );
+	}
+}
+#endif
