@@ -58,15 +58,20 @@ extern OSErr GetComponentVersionFromResource(Component inComponent, long * outVe
 /* these handle a CoreFoundation-like container object for AUPreset called CFAUPreset */
 typedef const struct CFAUPreset * CFAUPresetRef;
 extern CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName);
+extern CFAUPresetRef CFAUPresetRetain(CFAUPresetRef inPreset);
 extern void CFAUPresetRelease(CFAUPresetRef inPreset);
-/* these are CFArray callbacks for use when creating an AU's FactoryPresets array */
-extern const void * auPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inPreset);
-extern void auPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inPreset);
-extern Boolean auPresetCFArrayEqualCallback(const void * inPreset1, const void * inPreset2);
-extern CFStringRef auPresetCFArrayCopyDescriptionCallback(const void * inPreset);
-/* and this will initialize a CFArray callbacks structure to use the above callback functions */
+/* this will initialize a CFArray callbacks structure to use the CFArray callback functions for AUPresets */
 extern void AUPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks);
 extern const CFArrayCallBacks kAUPresetCFArrayCallbacks;
+
+/* these handle a CoreFoundation-like container object for AudioUnitOtherPluginDesc called CFAUOtherPluginDesc */
+typedef const struct CFAUOtherPluginDesc * CFAUOtherPluginDescRef;
+extern CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID);
+extern CFAUOtherPluginDescRef CFAUOtherPluginDescCreateVST(CFAllocatorRef inAllocator, OSType inUniqueID);
+extern CFAUOtherPluginDescRef CFAUOtherPluginDescCreateMAS(CFAllocatorRef inAllocator, OSType inEffectID, OSType inVariantID, OSType inManufacturerID);
+extern CFAUOtherPluginDescRef CFAUOtherPluginDescRetain(CFAUOtherPluginDescRef inDesc);
+extern void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc);
+extern const CFArrayCallBacks kAUOtherPluginDescCFArrayCallbacks;
 
 /* these are convenience functions for sending parameter change notifications to all parameter listeners */
 extern void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
