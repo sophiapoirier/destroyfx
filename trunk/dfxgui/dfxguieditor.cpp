@@ -226,7 +226,6 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	EventTypeSpec windowEvents[] = {
 									{ kEventClassMouse, kEventMouseDragged }, 
 									{ kEventClassMouse, kEventMouseUp }, 
-//									{ kEventClassMouse, kEventMouseMoved }, 
 									{ kEventClassMouse, kEventMouseWheelMoved }, 
 									{ kEventClassKeyboard, kEventRawKeyDown }, 
 									{ kEventClassKeyboard, kEventRawKeyRepeat }, 
@@ -1277,41 +1276,6 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 	status = GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(HIPoint), NULL, &mouseLocation);
 	if (status != noErr)
 		return false;
-
-
-// follow the mouse around, see if it falls over any of our hot spots
-	if (inEventKind == kEventMouseMoved)
-return false;
-/*
-	{
-		// remember current port
-		CGrafPtr oldport = NULL;
-		GetPort(&oldport);
-		// switch to our window's port
-		WindowRef window = NULL;
-		status = GetEventParameter(inEvent, kEventParamWindowRef, typeWindowRef, NULL, sizeof(window), NULL, &window);
-		if ( (status != noErr) || (window == NULL) )
-			return false;
-		SetPortWindowPort(window);
-
-		Point mouseLocation_i;
-		mouseLocation_i.h = (short) mouseLocation.x;
-		mouseLocation_i.v = (short) mouseLocation.y;
-		// figure out which control is currently under the mouse, if any
-		GlobalToLocal(&mouseLocation_i);
-		ControlRef underCarbonControl = FindControlUnderMouse(mouseLocation_i, window, NULL);
-		DGControl * underDGControl = NULL;
-		if (underCarbonControl != NULL)
-			underDGControl = getDGControlByCarbonControlRef(underCarbonControl);
-		setCurrentControl_mouseover(underDGControl);
-
-		// restore the original port
-		if (oldport != NULL)
-			SetPort(oldport);
-
-		return false;
-	}
-*/
 
 
 // follow the mouse when dragging (adjusting) a GUI control
