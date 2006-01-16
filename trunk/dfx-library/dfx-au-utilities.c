@@ -344,6 +344,10 @@ typedef struct {
 	CFIndex retainCount;
 } CFAUOtherPluginDesc;
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_3
+	#define kOtherPluginFormat_AU	3
+#endif
+
 //-----------------------------------------------------------------------------
 // create an instance of a CFAUOtherPluginDesc object
 CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID)
@@ -477,6 +481,7 @@ CFStringRef AUOtherPluginDescCFArrayCopyDescriptionCallback(const void * inDesc)
 			break;
 	}
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_3
 	if (UTCreateStringForOSType != NULL)
 	{
 		CFStringRef typeString = UTCreateStringForOSType(desc->plugin.mType);
@@ -493,6 +498,7 @@ CFStringRef AUOtherPluginDescCFArrayCopyDescriptionCallback(const void * inDesc)
 			CFRelease(manufacturerString);
 	}
 	else
+#endif
 	{
 		descriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
 									CFSTR("AudioUnitOtherPluginDesc:\nplugin format = %@\ntype ID = %lu\nsub-type ID = %lu\nmanufacturer ID = %lu"), 
