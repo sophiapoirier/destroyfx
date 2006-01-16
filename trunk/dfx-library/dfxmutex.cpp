@@ -91,7 +91,17 @@ int DfxMutex::release()
 
 DfxMutex::DfxMutex()
 {
-	createErr = pthread_mutex_init(&pmut, NULL);
+	pthread_mutexattr_t pmutAttr, * pmutAttrPtr = NULL;
+	int attrInitErr = pthread_mutexattr_init(&pmutAttr);
+	if (attrInitErr == 0)
+	{
+		int attrSetTypeErr = pthread_mutexattr_settype(&pmutAttr, PTHREAD_MUTEX_RECURSIVE);
+		if (attrSetTypeErr == 0)
+			pmutAttrPtr = &pmutAttr;
+	}
+	createErr = pthread_mutex_init(&pmut, pmutAttrPtr);
+	if (attrInitErr == 0)
+		pthread_mutexattr_destroy(&pmutAttr);
 }
 
 DfxMutex::~DfxMutex()
