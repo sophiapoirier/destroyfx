@@ -8,7 +8,7 @@
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(RezSynth);
+DFX_ENTRY(RezSynth)
 
 //-----------------------------------------------------------------------------------------
 // initializations
@@ -135,7 +135,7 @@ void RezSynth::clearbuffers()
 //-----------------------------------------------------------------------------------------
 void RezSynth::processparameters()
 {
-int oldNumBands = numBands;
+	int oldNumBands = numBands;
 
 	bandwidth = getparameter_f(kBandwidth);
 	numBands = getparameter_i(kNumBands);

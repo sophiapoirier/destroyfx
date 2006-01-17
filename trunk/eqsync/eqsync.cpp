@@ -8,7 +8,7 @@
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(EQSync);
+DFX_ENTRY(EQSync)
 
 //-----------------------------------------------------------------------------
 EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
