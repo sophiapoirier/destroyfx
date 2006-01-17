@@ -669,6 +669,7 @@ void DfxPlugin::update_preset(long inPresetIndex)
 		au_preset.presetNumber = inPresetIndex;
 		au_preset.presetName = getpresetcfname(inPresetIndex);
 		SetAFactoryPresetAsCurrent(au_preset);
+		PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, (AudioUnitElement)0);
 		PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, (AudioUnitElement)0);
 	#endif
 
