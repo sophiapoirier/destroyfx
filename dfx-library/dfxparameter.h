@@ -489,7 +489,7 @@ public:
 
 	DfxParamValue * values;
 
-protected:
+private:
 	char * name;
 	long numParameters;
 	#ifdef TARGET_API_AUDIOUNIT
