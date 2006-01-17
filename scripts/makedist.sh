@@ -11,6 +11,7 @@ ENTRYDIR=`pwd`
 OUTPUTFILE="$1"-"$2"
 TEMPDIR=`dirname "$1"`/`basename "$1"`_temp_$$_`jot -r -n -p 20 1`
 PLUGINNAME="$4"
+PLUGINNAME_FILE=`basename "${6}"`
 
 echo
 echo "   creating temporary directory  "$TEMPDIR
@@ -34,11 +35,22 @@ cp -f ~/dfx/scripts/install-au.command "${TEMPDIR}"/"Install ${PLUGINNAME}.comma
 
 cd "${TEMPDIR}"
 echo
-echo "   deleting the following files:"
+echo "   deleting the following files (possibly none):"
 find -f . \( -name "pbdevelopment.plist" \) -print
 find -f . \( -name "pbdevelopment.plist" \) -delete
 find -f . \( -name ".DS_Store" \) -print
 find -f . \( -name ".DS_Store" \) -delete
+
+PLUGIN_BUNDLE_RESOURCES_DIR="${PLUGINNAME_FILE}/Contents/Resources/en.lproj"
+# if the English-localized sub-directory doesn't exist, then try the root resources directory
+if [ ! -d "${PLUGIN_BUNDLE_RESOURCES_DIR}" ]; then
+	PLUGIN_BUNDLE_RESOURCES_DIR=`basename "${PLUGIN_BUNDLE_RESOURCES_DIR}"`
+fi
+if [ -d "${PLUGIN_BUNDLE_RESOURCES_DIR}" ]; then
+	echo
+	echo "   copying  "$MANUALNAME"  into  "$PLUGINNAME_FILE
+	cp -f "${MANUALNAME}" "${PLUGIN_BUNDLE_RESOURCES_DIR}"/
+fi
 
 #OUTPUTFILE_FULLNAME="${OUTPUTFILE}".tar.gz
 OUTPUTFILE_FULLNAME="${OUTPUTFILE}".dmg
