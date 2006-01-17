@@ -612,7 +612,6 @@
 					/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers,
 					../rmsbuddy,
 				);
-				SEPARATE_STRIP = YES;
 				WARNING_CFLAGS = "-Wmost";
 				WRAPPER_EXTENSION = component;
 				ZERO_LINK = NO;
