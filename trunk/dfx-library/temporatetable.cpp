@@ -98,16 +98,16 @@ TempoRateTable::~TempoRateTable()
 // that is closest to that requested value
 long TempoRateTable::getNearestTempoRateIndex(float tempoRateValue)
 {
-	float bestdiff = tempoRateValue;
-	long bestindex = 0;
+	float bestDiff = scalars[numTempoRates-1];
+	long bestIndex = 0;
 	for (long i=0; i < numTempoRates; i++)
 	{
-		float diff = (float) fabs(tempoRateValue - scalars[i]);
-		if (diff < bestdiff)
+		float diff = fabsf(tempoRateValue - scalars[i]);
+		if (diff < bestDiff)
 		{
-			bestdiff = diff;
-			bestindex = i;
+			bestDiff = diff;
+			bestIndex = i;
 		}
 	}
-	return bestindex;
+	return bestIndex;
 }
