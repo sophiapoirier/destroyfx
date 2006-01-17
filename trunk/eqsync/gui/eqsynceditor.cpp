@@ -41,7 +41,7 @@ enum {
 	kHelpButtonX = 419,
 	kHelpButtonY = 293,
 	kHelpButtonX_panther = 422,
-	kHelpButtonY_panther = 289,
+	kHelpButtonY_panther = 289
 };
 
 
@@ -194,7 +194,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(EQSyncEditor);
+COMPONENT_ENTRY(EQSyncEditor)
 
 //-----------------------------------------------------------------------------
 EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
