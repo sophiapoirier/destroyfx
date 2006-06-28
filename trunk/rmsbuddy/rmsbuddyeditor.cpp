@@ -400,27 +400,27 @@ void RMSSlider::mouseTrack(float inXpos, float inYpos)
 //-----------------------------------------------------------------------------
 // constants
 
-const RMSColor kMyBrownColor = { 97, 73, 46 };
-const RMSColor kMyLightBrownColor = { 146, 116, 98 };
-const RMSColor kMyDarkBlueColor = { 54, 69, 115 };
-const RMSColor kMyLightOrangeColor = { 219, 145, 85 };
+const RMSColor kBrownColor = { 97, 73, 46 };
+const RMSColor kLightBrownColor = { 146, 116, 98 };
+const RMSColor kDarkBlueColor = { 54, 69, 115 };
+const RMSColor kLightOrangeColor = { 219, 145, 85 };
 const RMSColor kWhiteColor = { 255, 255, 255 };
-const RMSColor kMyYellowColor = { 249, 249, 120 };
+const RMSColor kYellowColor = { 249, 249, 120 };
 
 const ThemeFontID kValueDisplayFontID = kThemeSmallSystemFont;
 const ThemeFontID kLabelDisplayFontID = kThemeSmallSystemFont;
 const ThemeFontID kSliderLabelDisplayFontID = kThemeSmallSystemFont;
 //kThemeSystemFont kThemeSmallSystemFont kThemeMiniSystemFont kThemeLabelFont kThemeApplicationFont
 
-const RMSColor kBackgroundColor = kMyLightBrownColor;
-const RMSColor kBackgroundFrameColor = kMyBrownColor;
-const RMSColor kLabelTextColor = kWhiteColor;
-const RMSColor kReadoutFrameColor = kMyBrownColor;
-const RMSColor kReadoutBoxColor = kMyLightOrangeColor;
-const RMSColor kReadoutTextColor = kMyDarkBlueColor;
-const RMSColor kSliderBackgroundColor = kMyDarkBlueColor;
-const RMSColor kSliderActiveColor = kMyYellowColor;
-const RMSColor kSliderLabelTextColor = kMyDarkBlueColor;
+#define kBackgroundColor	kLightBrownColor
+#define kBackgroundFrameColor	kBrownColor
+#define kLabelTextColor	kWhiteColor
+#define kReadoutFrameColor	kBrownColor
+#define kReadoutBoxColor	kLightOrangeColor
+#define kReadoutTextColor	kDarkBlueColor
+#define kSliderBackgroundColor	kDarkBlueColor
+#define kSliderActiveColor	kYellowColor
+#define kSliderLabelTextColor	kDarkBlueColor
 
 
 //-----------------------------------------------------------------------------
@@ -1068,7 +1068,7 @@ bool RMSBuddyEditor::HandleEvent(EventRef inEvent)
 }
 
 //-----------------------------------------------------------------------------
-static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
+static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef inHandler, EventRef inEvent, void * inUserData)
 {
 	// make sure that it's the correct event class
 	if (GetEventClass(inEvent) != kEventClassMouse)
@@ -1122,20 +1122,7 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 
 		// do this to make Logic's touch automation work
 		if ( ourRMSControl->isParameterAttached() )
-		{
-			CAAUParameter * ourAUVP = ourRMSControl->getAUVP();
-			// do the new-fangled way, if it's available on the user's system
-			if (AUEventListenerNotify != NULL)
-			{
-				AudioUnitEvent paramEvent;
-				memset(&paramEvent, 0, sizeof(paramEvent));
-				paramEvent.mEventType = kAudioUnitEvent_EndParameterChangeGesture;
-				paramEvent.mArgument.mParameter = *ourAUVP;
-				AUEventListenerNotify(NULL, NULL, &paramEvent);
-			}
-			// as a back-up, also still do the old way, until it's enough obsolete
-			ourOwnerEditor->TellListener(*ourAUVP, kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
-		}
+			ourOwnerEditor->SendAUParameterEvent(ourRMSControl->getAUVP()->mParameterID, kAudioUnitEvent_EndParameterChangeGesture);
 
 		return noErr;
 	}
@@ -1144,7 +1131,7 @@ static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef myHandler, Even
 }
 
 //-----------------------------------------------------------------------------
-static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
+static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef inHandler, EventRef inEvent, void * inUserData)
 {
 	// make sure that it's the correct event class
 	if (GetEventClass(inEvent) != kEventClassControl)
@@ -1210,20 +1197,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef myHandler, Eve
 #ifndef USE_AUCVCONTROL
 				// do this to make Logic's touch automation work
 				if ( ourRMSControl->isParameterAttached() )
-				{
-					CAAUParameter * ourAUVP = ourRMSControl->getAUVP();
-					// do the new-fangled way, if it's available on the user's system
-					if (AUEventListenerNotify != NULL)
-					{
-						AudioUnitEvent paramEvent;
-						memset(&paramEvent, 0, sizeof(paramEvent));
-						paramEvent.mEventType = kAudioUnitEvent_BeginParameterChangeGesture;
-						paramEvent.mArgument.mParameter = *ourAUVP;
-						AUEventListenerNotify(NULL, NULL, &paramEvent);
-					}
-					// as a back-up, also still do the old way, until it's enough obsolete
-					ourOwnerEditor->TellListener(*ourAUVP, kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
-				}
+					ourOwnerEditor->SendAUParameterEvent(ourRMSControl->getAUVP()->mParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
 #endif
 
 				// indicate that this control is being moused (for our mouse tracking handler)
@@ -1277,6 +1251,39 @@ static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInst
 		bud->cleanup();	// tear it down
 		bud->setup();	// rebuild
 	}
+}
+
+//-----------------------------------------------------------------------------
+OSStatus RMSBuddyEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType)
+{
+	// we're not actually prepared to do anything at this point if we don't yet know which AU we are controlling
+	if (GetEditAudioUnit() == NULL)
+		return kAudioUnitErr_Uninitialized;
+
+	OSStatus result = noErr;
+
+	// do the new-fangled way, if it's available on the user's system
+	AudioUnitEvent paramEvent;
+	paramEvent.mEventType = inEventType;
+	paramEvent.mArgument.mParameter.mParameterID = inParameterID;
+	paramEvent.mArgument.mParameter.mAudioUnit = GetEditAudioUnit();
+	paramEvent.mArgument.mParameter.mScope = kAudioUnitScope_Global;
+	paramEvent.mArgument.mParameter.mElement = 0;
+	if (AUEventListenerNotify != NULL)
+		result = AUEventListenerNotify(NULL, NULL, &paramEvent);
+
+	// as a back-up, also still do the old way, until it's enough obsolete
+	if (mEventListener != NULL)
+	{
+		AudioUnitCarbonViewEventID carbonViewEventType = -1;
+		if (inEventType == kAudioUnitEvent_BeginParameterChangeGesture)
+			carbonViewEventType = kAudioUnitCarbonViewEvent_MouseDownInControl;
+		else if (inEventType == kAudioUnitEvent_EndParameterChangeGesture)
+			carbonViewEventType = kAudioUnitCarbonViewEvent_MouseUpInControl;
+		(*mEventListener)(mEventListenerUserData, GetComponentInstance(), &(paramEvent.mArgument.mParameter), carbonViewEventType, NULL);
+	}
+
+	return result;
 }
 
 //-----------------------------------------------------------------------------
