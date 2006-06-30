@@ -60,11 +60,11 @@ protected:
 
 
 // 24-bit RGB color description, 0 - 255 values for each field
-struct RMSColor {
+typedef struct {
 	int r;
 	int g;
 	int b;
-};
+} RMSColor;
 
 //-----------------------------------------------------------------------------
 // a text display control object
@@ -159,6 +159,7 @@ public:
 		{	return parameterListener;	}
 	void AddAUCVControl(AUCarbonViewControl * inControl)
 		{	AddControl(inControl);	}
+	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
 
 	// get/set the control that is currently being moused (actively tweaked), if any (returns NULL if none)
 	RMSControl * getCurrentControl()
@@ -203,10 +204,13 @@ private:
 	EventHandlerRef windowEventEventHandlerRef;
 	RMSControl * currentControl;
 
-
 	// parameter listener related stuff
 	AUParameterListenerRef parameterListener;
-	AudioUnitParameter timeToUpdateAUP;
+
+	// property listener related stuff
+	AUEventListenerRef propertyEventListener;
+	AudioUnitEvent dynamicsDataPropertyAUEvent;
+	AudioUnitEvent numChannelsPropertyAUEvent;
 };
 
 
