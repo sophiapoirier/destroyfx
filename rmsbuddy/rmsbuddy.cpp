@@ -2,7 +2,7 @@
 
 #include "rmsbuddy.h"
 
-#include <AudioToolbox/AudioUnitUtilities.h>	// for AUParameterListenerNotify
+#include <AudioToolbox/AudioUnitUtilities.h>	// for AUEventListenerNotify
 
 
 // macro for boring Component entry point stuff
@@ -173,16 +173,21 @@ void RMSBuddy::resetGUIcounters()
 // post notification to the GUI that it's time to re-fetch data and refresh its display
 void RMSBuddy::notifyGUI()
 {
-	// we use a parameter chane notification (using the fake parameter) rather than a property change notification 
-	// because property change notifications cause immediate callbacks which should not be done from audio threads, 
-	// whereas parameter change notifications enter a queue that is checked periodically by parameter listeners, 
+	// we use AUEventListenerNotify() notification rather than PropertyChanged() notification because 
+	// PropertyChanged() notifications cause immediate callbacks which should not be done from audio threads, 
+	// whereas AUEventListenerNotify() notifications enter a queue that is checked periodically by event listeners, 
 	// and therefore return immediately and are fine for audio threads
-	AudioUnitParameter messengerParam;
-	messengerParam.mAudioUnit = GetComponentInstance();
-	messengerParam.mParameterID = kRMSBuddyParameter_TimeToUpdate;
-	messengerParam.mScope = kAudioUnitScope_Global;
-	messengerParam.mElement = 0;
-	AUParameterListenerNotify(NULL, NULL, &messengerParam);
+	if (AUEventListenerNotify != NULL)
+	{
+		AudioUnitEvent auEvent;
+		memset(&auEvent, 0, sizeof(auEvent));
+		auEvent.mEventType = kAudioUnitEvent_PropertyChange;
+		auEvent.mArgument.mProperty.mAudioUnit = GetComponentInstance();
+		auEvent.mArgument.mProperty.mPropertyID = kRMSBuddyProperty_DynamicsData;
+		auEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
+		auEvent.mArgument.mProperty.mElement = 0;
+		AUEventListenerNotify(NULL, NULL, &auEvent);
+	}
 }
 
 //-----------------------------------------------------------------------------------------
@@ -209,31 +214,7 @@ ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope,
 		return noErr;
 	}
 
-	// a fake parameter (really an audio thread GUI notification mechanism)
-	if (inParameterID == kRMSBuddyParameter_TimeToUpdate)
-	{
-		memset(&outParameterInfo, 0, sizeof(outParameterInfo));
-		return noErr;
-	}
-
 	return kAudioUnitErr_InvalidParameter;
-}
-
-//-----------------------------------------------------------------------------------------
-// get the current value of a parameter
-ComponentResult RMSBuddy::GetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
-										AudioUnitElement inElement, Float32 & outValue)
-{
-	// it's a fake parameter, but if we don't at least say noErr for this one, the parameter listener system won't work
-	if (inParameterID == kRMSBuddyParameter_TimeToUpdate)
-		return noErr;
-
-	// let the AUBase systems handle our real parameter
-	else if (inParameterID == kRMSBuddyParameter_AnalysisWindowSize)
-		return AUBase::GetParameter(inParameterID, inScope, inElement, outValue);
-
-	else
-		return kAudioUnitErr_InvalidParameter;
 }
 
 //-----------------------------------------------------------------------------------------

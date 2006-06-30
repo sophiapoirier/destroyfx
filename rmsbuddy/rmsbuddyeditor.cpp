@@ -6,6 +6,9 @@
 #include <c.h>  // for sizeofA
 
 
+const Float32 kRMSEventNotificationInterval = 15.0 * kEventDurationMillisecond;	// 15 ms parameter and property event notification update interval
+
+
 // I want the analysis window size slider to have a squared-scaled value distribution curve, 
 // so it seems that AUCarbonViewControl won't be able to do what I want.
 // XXX That's not true anymore, but AUCarbonViewControl still has problems worth avoiding, I think.
@@ -468,8 +471,8 @@ enum {
 static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
 static pascal OSStatus RmsWindowEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
 static void RmsParameterListenerProc(void * inUserData, void * inObject, const AudioUnitParameter *, Float32);
-static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, 
-									AudioUnitScope inScope, AudioUnitElement inElement);
+static void RmsPropertyListenerProc(void * inCallbackRefCon, void * inObject, const AudioUnitEvent * inEvent, 
+									UInt64 inEventHostTime, Float32 inParameterValue);
 
 
 //-----------------------------------------------------------------------------
@@ -482,7 +485,7 @@ COMPONENT_ENTRY(RMSBuddyEditor)
 //-----------------------------------------------------------------------------
 RMSBuddyEditor::RMSBuddyEditor(AudioUnitCarbonView inInstance)
 :	AUCarbonViewBase(inInstance), 
-	parameterListener(NULL)
+	parameterListener(NULL), propertyEventListener(NULL)
 {
 	// we don't have a Component Instance of the DSP component until CreateUI, 
 	// so we can't get the number of channels being analyzed and allocate control arrays yet
@@ -604,19 +607,33 @@ OSStatus RMSBuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 	// create the parameter listener
 	AUListenerCreate(RmsParameterListenerProc, this,
-		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.010f, // 10 ms
+		CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, kRMSEventNotificationInterval, 
 		&parameterListener);
-
-	// install a parameter listener on the fake refresh-notification parameter
-	timeToUpdateAUP.mAudioUnit = GetEditAudioUnit();
-	timeToUpdateAUP.mScope = kAudioUnitScope_Global;
-	timeToUpdateAUP.mElement = 0;
-	timeToUpdateAUP.mParameterID = kRMSBuddyParameter_TimeToUpdate;
-	AUListenerAddParameter(parameterListener, this, &timeToUpdateAUP);
 
 
 	// install AU property listeners for all of the special properties that we need to know about when they change
-	AudioUnitAddPropertyListener(GetEditAudioUnit(), kRMSBuddyProperty_NumChannels, RmsPropertyListenerProc, this);
+	if ( (AUEventListenerCreate != NULL) && (AUEventListenerAddEventType != NULL) )
+	{
+		OSStatus status = AUEventListenerCreate(RmsPropertyListenerProc, this, 
+												CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 
+												kRMSEventNotificationInterval, kRMSEventNotificationInterval, 
+												&propertyEventListener);
+
+		if ( (status == noErr) && (propertyEventListener != NULL) )
+		{
+			memset(&dynamicsDataPropertyAUEvent, 0, sizeof(dynamicsDataPropertyAUEvent));
+			dynamicsDataPropertyAUEvent.mEventType = kAudioUnitEvent_PropertyChange;
+			dynamicsDataPropertyAUEvent.mArgument.mProperty.mAudioUnit = GetEditAudioUnit();
+			dynamicsDataPropertyAUEvent.mArgument.mProperty.mPropertyID = kRMSBuddyProperty_DynamicsData;
+			dynamicsDataPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
+			dynamicsDataPropertyAUEvent.mArgument.mProperty.mElement = 0;
+			status = AUEventListenerAddEventType(propertyEventListener, this, &dynamicsDataPropertyAUEvent);
+
+			numChannelsPropertyAUEvent = dynamicsDataPropertyAUEvent;
+			numChannelsPropertyAUEvent.mArgument.mProperty.mPropertyID = kRMSBuddyProperty_NumChannels;
+			status = AUEventListenerAddEventType(propertyEventListener, this, &numChannelsPropertyAUEvent);
+		}
+	}
 
 
 	// setup creates and adds all of the UI content
@@ -636,15 +653,20 @@ RMSBuddyEditor::~RMSBuddyEditor()
 
 	// if we created and installed the parameter listener, remove and dispose it now
 	if (parameterListener != NULL)
-	{
-		AUListenerRemoveParameter(parameterListener, this, &timeToUpdateAUP);
 		AUListenerDispose(parameterListener);
-	}
 	parameterListener = NULL;
 
 	// if we created and installed the property listener, remove and dispose it now
-	if (GetEditAudioUnit() != NULL)
-		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kRMSBuddyProperty_NumChannels, RmsPropertyListenerProc);
+	if (propertyEventListener != NULL)
+	{
+		if (AUEventListenerRemoveEventType != NULL)
+		{
+			AUEventListenerRemoveEventType(propertyEventListener, this, &dynamicsDataPropertyAUEvent);
+			AUEventListenerRemoveEventType(propertyEventListener, this, &numChannelsPropertyAUEvent);
+		}
+		AUListenerDispose(propertyEventListener);
+	}
+	propertyEventListener = NULL;
 
 	// remove our event handlers if we created them
 	if (windowEventEventHandlerRef != NULL)
@@ -1218,7 +1240,7 @@ static pascal OSStatus RmsControlEventHandler(EventHandlerCallRef inHandler, Eve
 }
 
 //-----------------------------------------------------------------------------
-// this gets called when the DSP component sends notification via the TimeToUpdate parameter
+// this gets called when a parameter value changes
 static void RmsParameterListenerProc(void * inUserData, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
 	RMSBuddyEditor * bud = (RMSBuddyEditor*) inUserData;
@@ -1229,9 +1251,6 @@ static void RmsParameterListenerProc(void * inUserData, void * inObject, const A
 			case kRMSBuddyParameter_AnalysisWindowSize:
 				bud->updateWindowSize(inValue, (RMSControl*)inObject);
 				break;
-			case kRMSBuddyParameter_TimeToUpdate:
-				bud->updateDisplays();	// refresh the value displays
-				break;
 			default:
 				break;
 		}
@@ -1239,17 +1258,30 @@ static void RmsParameterListenerProc(void * inUserData, void * inObject, const A
 }
 
 //-----------------------------------------------------------------------------
-// this gets called when the DSP component sends a property-changed notification of the NumChannels property
-static void RmsPropertyListenerProc(void * inUserData, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, 
-									AudioUnitScope inScope, AudioUnitElement inElement)
+// this gets called when the DSP component sends a property-change notification
+static void RmsPropertyListenerProc(void * inCallbackRefCon, void * inObject, const AudioUnitEvent * inEvent, 
+									UInt64 inEventHostTime, Float32 inParameterValue)
 {
-	RMSBuddyEditor * bud = (RMSBuddyEditor*) inUserData;
+	RMSBuddyEditor * bud = (RMSBuddyEditor*) inCallbackRefCon;
 	// when the number of channels changes, we tear down the existing GUI layout and 
 	// then recreate it according to the new number of channels
-	if ( (bud != NULL) && (inPropertyID == kRMSBuddyProperty_NumChannels) )
+	if ( (bud != NULL) && (inEvent != NULL) )
 	{
-		bud->cleanup();	// tear it down
-		bud->setup();	// rebuild
+		if (inEvent->mEventType == kAudioUnitEvent_PropertyChange)
+		{
+			switch (inEvent->mArgument.mProperty.mPropertyID)
+			{
+				case kRMSBuddyProperty_NumChannels:
+					bud->cleanup();	// tear it down
+					bud->setup();	// rebuild
+					break;
+				case kRMSBuddyProperty_DynamicsData:
+					bud->updateDisplays();	// refresh the value displays
+					break;
+				default:
+					break;
+			}
+		}
 	}
 }
 
@@ -1303,12 +1335,13 @@ void RMSBuddyEditor::updateDisplays()
 			request.outAverageRMS = request.outContinualRMS = 0.0;
 			request.outAbsolutePeak = request.outContinualPeak = 0.0f;
 		}
+
 #define SAFE_SET_TEXT(ctrl, val)	\
-	if (ctrl != NULL)	\
-	{	\
-		if (ctrl[ch] != NULL)	\
-			ctrl[ch]->setText_dB(val);	\
-	}
+		if (ctrl != NULL)	\
+		{	\
+			if (ctrl[ch] != NULL)	\
+				ctrl[ch]->setText_dB(val);	\
+		}
 		// update the values being displayed
 		SAFE_SET_TEXT(averageRMSDisplays, request.outAverageRMS)
 		SAFE_SET_TEXT(continualRMSDisplays, request.outContinualRMS)
