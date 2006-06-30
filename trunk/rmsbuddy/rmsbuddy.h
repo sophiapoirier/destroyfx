@@ -8,7 +8,6 @@
 
 enum {
 	kRMSBuddyParameter_AnalysisWindowSize = 0,	// the size, in ms, of the RMS and peak analysis window / refresh rate
-	kRMSBuddyParameter_TimeToUpdate,	// a fake parameter (really an audio thread GUI notification mechanism)
 
 	// property IDs for allowing the GUI component get DSP information and trigger DSP-related events
 	kRMSBuddyProperty_DynamicsData = 64000,	// read-only *** get the current dynamics analysis data
@@ -45,8 +44,6 @@ public:
 
 	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
 						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo);
-	virtual ComponentResult GetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, Float32 & outValue);
 
 	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, UInt32 & outDataSize, Boolean & outWritable);
