@@ -196,6 +196,11 @@ SUPPORT_AU_VERSION_1
 		#define VST_NUM_OUTPUTS	VST_NUM_CHANNELS
 		#endif
 	#endif
+	// XXX for when we may still need to build with pre-2.4 VST SDKs
+	#if !VST_2_4_EXTENSIONS
+		#define VstInt32	long
+		#define VstIntPtr	long
+	#endif
 
 #endif
 // end of target API check
@@ -748,45 +753,47 @@ public:
 #ifdef TARGET_API_VST
 	virtual void close();
 
-	virtual void process(float ** inputs, float ** outputs, long sampleFrames);
-	virtual void processReplacing(float ** inputs, float ** outputs, long sampleFrames);
+	virtual void processReplacing(float ** inputs, float ** outputs, VstInt32 sampleFrames);
+	#if !VST_FORCE_DEPRECATED
+	virtual void process(float ** inputs, float ** outputs, VstInt32 sampleFrames);
+	#endif
 
 	virtual void suspend();
 	virtual void resume();
-	virtual long fxIdle();
+	#if !VST_FORCE_DEPRECATED
+	virtual VstInt32 fxIdle();
+	#endif
 	virtual void setSampleRate(float newRate);
 
-	virtual long getTailSize();
-	// there was a typo in the VST header files versions 2.0 through 2.2, 
-	// so some hosts will still call this incorrectly named version...
-	virtual long getGetTailSize() { return getTailSize(); }
-	virtual bool getInputProperties(long index, VstPinProperties * properties);
-	virtual bool getOutputProperties(long index, VstPinProperties * properties);
+	virtual VstInt32 getTailSize();
+	// XXX there is a typo in the VST SDK header files, so in case it gets corrected, 
+	// make this call the properly-named version
+	virtual VstInt32 getGetTailSize() { return getTailSize(); }
+	virtual bool getInputProperties(VstInt32 index, VstPinProperties * properties);
+	virtual bool getOutputProperties(VstInt32 index, VstPinProperties * properties);
 
-	virtual void setProgram(long programNum);
+	virtual void setProgram(VstInt32 programNum);
 	virtual void setProgramName(char * name);
 	virtual void getProgramName(char * name);
-	virtual bool getProgramNameIndexed(long category, long index, char * name);
-	virtual bool copyProgram(long destination);
+	virtual bool getProgramNameIndexed(VstInt32 category, VstInt32 index, char * name);
 
-	virtual void setParameter(long index, float value);
-	virtual float getParameter(long index);
-	virtual void getParameterName(long index, char * name);
-	virtual void getParameterDisplay(long index, char * text);
-	virtual void getParameterLabel(long index, char * label);
+	virtual void setParameter(VstInt32 index, float value);
+	virtual float getParameter(VstInt32 index);
+	virtual void getParameterName(VstInt32 index, char * name);
+	virtual void getParameterDisplay(VstInt32 index, char * text);
+	virtual void getParameterLabel(VstInt32 index, char * label);
 
 	virtual bool getEffectName(char * name);
-	virtual long getVendorVersion();
-	virtual bool getErrorText(char * text);
+	virtual VstInt32 getVendorVersion();
 	virtual bool getVendorString(char * text);
 	virtual bool getProductString(char * text);
 
-	virtual long canDo(char * text);
+	virtual VstInt32 canDo(char * text);
 
 	#if TARGET_PLUGIN_USES_MIDI
-		virtual long processEvents(VstEvents * events);
-		virtual long setChunk(void * data, long byteSize, bool isPreset);
-		virtual long getChunk(void ** data, bool isPreset);
+		virtual VstInt32 processEvents(VstEvents * events);
+		virtual VstInt32 setChunk(void * data, VstInt32 byteSize, bool isPreset);
+		virtual VstInt32 getChunk(void ** data, bool isPreset);
 	#endif
 
 	// DFX supplementary VST methods
@@ -973,27 +980,44 @@ long launch_url(const char * urlstring);
 
 #ifdef TARGET_API_VST
 
-	#if BEOS
-		#define main main_plugin
-		extern "C" __declspec(dllexport) AEffect * main_plugin(audioMasterCallback audioMaster);
-	#elif MACX
-		#define main main_macho
-		extern "C" AEffect * main_macho(audioMasterCallback audioMaster);
-	#else
-		AEffect * main(audioMasterCallback audioMaster);
-	#endif
+	/// this is mostly handled in vstplugmain.cpp in the VST 2.4 SDK and higher
+	#if VST_2_4_EXTENSIONS
 
-#define DFX_ENTRY(PluginClass)									\
-	AEffect * main(audioMasterCallback audioMaster)				\
-	{															\
-		if ( !audioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
-			return NULL;										\
-		DfxPlugin * effect = new PluginClass(audioMaster);		\
-		if (effect == NULL)										\
-			return NULL;										\
-		effect->dfxplugin_postconstructor();					\
-		return effect->getAeffect();							\
-	}
+		#define DFX_ENTRY(PluginClass)														\
+			extern AudioEffect * createEffectInstance(audioMasterCallback inAudioMaster)	\
+			{																				\
+				DfxPlugin * effect = new PluginClass(inAudioMaster);						\
+				if (effect == NULL)															\
+					return NULL;															\
+				effect->dfxplugin_postconstructor();										\
+				return effect;																\
+			}
+
+	#else
+
+		#if BEOS
+			#define main main_plugin
+			extern "C" __declspec(dllexport) AEffect * main_plugin(audioMasterCallback audioMaster);
+		#elif MACX
+			#define main main_macho
+			extern "C" AEffect * main_macho(audioMasterCallback audioMaster);
+		#else
+			AEffect * main(audioMasterCallback audioMaster);
+		#endif
+
+		#define DFX_ENTRY(PluginClass)										\
+			AEffect * main(audioMasterCallback inAudioMaster)				\
+			{																\
+				if ( !inAudioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
+					return NULL;											\
+				DfxPlugin * effect = new PluginClass(inAudioMaster);		\
+				if (effect == NULL)											\
+					return NULL;											\
+				effect->dfxplugin_postconstructor();						\
+				return effect->getAeffect();								\
+			}
+
+	#endif
 
 	// we need to manage the DSP cores manually in VST
 	// call this in the plugin's constructor if it uses DSP cores for processing
