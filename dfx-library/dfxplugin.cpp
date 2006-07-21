@@ -111,15 +111,14 @@ DfxPlugin::DfxPlugin(
 	setUniqueID(PLUGIN_ID);	// identify
 	setNumInputs(VST_NUM_INPUTS);
 	setNumOutputs(VST_NUM_OUTPUTS);
-	#if VST_NUM_INPUTS == 2
-		canMono();	// it's okay to feed a double-mono (fake stereo) input
-	#endif
 
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 		isSynth();
 	#endif
 
+	#if !VST_FORCE_DEPRECATED
 	canProcessReplacing();	// supports both accumulating and replacing output
+	#endif
 	TARGET_API_BASE_CLASS::setProgram(0);	// set the current preset number to 0
 
 	isinitialized = false;

@@ -36,7 +36,9 @@ void DfxPlugin::resume()
 	updatesamplerate();
 
 	#if TARGET_PLUGIN_USES_MIDI
+		#if !VST_FORCE_DEPRECATED
 		wantEvents();
+		#endif
 	#endif
 
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
@@ -60,8 +62,9 @@ void DfxPlugin::resume()
 	setlatencychanged(false);	// reset this state
 }
 
+#if !VST_FORCE_DEPRECATED
 //-------------------------------------------------------------------------
-long DfxPlugin::fxIdle()
+VstInt32 DfxPlugin::fxIdle()
 {
 	// I'm moving calls to ioChanged into the idle thread 
 	// because it seems like it freaks out Fruity Loops
@@ -71,6 +74,7 @@ long DfxPlugin::fxIdle()
 
 	return 1;
 }
+#endif
 
 //-------------------------------------------------------------------------
 void DfxPlugin::setSampleRate(float newRate)
@@ -86,19 +90,19 @@ void DfxPlugin::setSampleRate(float newRate)
 //-----------------------------------------------------------------------------
 // this tells the host to keep calling process() for the duration of one buffer 
 // even if the audio input has ended
-long DfxPlugin::getTailSize()
+VstInt32 DfxPlugin::getTailSize()
 {
 	return gettailsize_samples();
 }
 
 
 //------------------------------------------------------------------------
-bool DfxPlugin::getInputProperties(long index, VstPinProperties * properties)
+bool DfxPlugin::getInputProperties(VstInt32 index, VstPinProperties * properties)
 {
 	if ( (index >= 0) && ((unsigned long)index < getnuminputs()) && (properties != NULL) )
 	{
-		sprintf(properties->label, "%s input %ld", PLUGIN_NAME_STRING, index+1);
-		sprintf(properties->shortLabel, "in %ld", index+1);
+		sprintf(properties->label, "%s input %d", PLUGIN_NAME_STRING, index+1);
+		sprintf(properties->shortLabel, "in %d", index+1);
 		properties->flags = kVstPinIsActive;
 		if (getnuminputs() == 2)
 			properties->flags |= kVstPinIsStereo;
@@ -108,12 +112,12 @@ bool DfxPlugin::getInputProperties(long index, VstPinProperties * properties)
 }
 
 //------------------------------------------------------------------------
-bool DfxPlugin::getOutputProperties(long index, VstPinProperties * properties)
+bool DfxPlugin::getOutputProperties(VstInt32 index, VstPinProperties * properties)
 {
 	if ( (index >= 0) && ((unsigned long)index < getnumoutputs()) && (properties != NULL) )
 	{
-		sprintf (properties->label, "%s output %ld", PLUGIN_NAME_STRING, index+1);
-		sprintf (properties->shortLabel, "out %ld", index+1);
+		sprintf (properties->label, "%s output %d", PLUGIN_NAME_STRING, index+1);
+		sprintf (properties->shortLabel, "out %d", index+1);
 		properties->flags = kVstPinIsActive;
 		if (getnumoutputs() == 2)
 			properties->flags |= kVstPinIsStereo;
@@ -134,24 +138,16 @@ bool DfxPlugin::getEffectName(char * name)
 	char tempname[DFX_PARAM_MAX_NAME_LENGTH];
 	getpluginname(tempname);
 	// then make sure to only copy as much as the name C string can hold
-	strncpy(name, tempname, 32);	// name max 32 characters
+	strncpy(name, tempname, 32);	// name max 32 characters XXX kVstMaxEffectNameLen
 	// in case the parameter name was 32 or longer, 
 	// make sure that the name string is terminated
 	name[32-1] = 0;
 	return true;
 }
 
-long DfxPlugin::getVendorVersion()
+VstInt32 DfxPlugin::getVendorVersion()
 {
 	return PLUGIN_VERSION;
-}
-
-bool DfxPlugin::getErrorText(char * text)
-{
-	if (text == NULL)
-		return false;
-	strcpy(text, "U FUCT UP");	// max 256 characters
-	return true;
 }
 
 bool DfxPlugin::getVendorString(char * text)
@@ -159,7 +155,7 @@ bool DfxPlugin::getVendorString(char * text)
 	if (text == NULL)
 		return false;
 	// a string identifying the vendor (max 64 characters)
-	strcpy(text, DESTROYFX_NAME_STRING);
+	strcpy(text, DESTROYFX_NAME_STRING);	// XXX kVstMaxVendorStrLen
 	return true;
 }
 
@@ -168,13 +164,13 @@ bool DfxPlugin::getProductString(char * text)
 	if (text == NULL)
 		return false;
 	// a string identifying the product name (max 64 characters)
-	strcpy(text, "Super Destroy FX bipolar VST plugin pack");
+	strcpy(text, "Super Destroy FX bipolar VST plugin pack");	// XXX kVstMaxProductStrLen
 	return true;
 }
 
 //-----------------------------------------------------------------------------
 // this just tells the host what this plugin can do
-long DfxPlugin::canDo(char * text)
+VstInt32 DfxPlugin::canDo(char * text)
 {
 	if (text == NULL)
 		return -1;
@@ -219,7 +215,7 @@ long DfxPlugin::canDo(char * text)
 #pragma mark _________programs_________
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setProgram(long programNum)
+void DfxPlugin::setProgram(VstInt32 programNum)
 {
 	loadpreset(programNum);
 }
@@ -242,14 +238,14 @@ void DfxPlugin::getProgramName(char * name)
 	if (presetisvalid(vstpresetnum))
 	{
 		if ( presetnameisvalid(vstpresetnum) )
-			getpresetname(vstpresetnum, name);
+			getpresetname(vstpresetnum, name);	// XXX kVstMaxProgNameLen
 		else
 			sprintf(name, "default %ld", vstpresetnum+1);
 	}
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getProgramNameIndexed(long category, long index, char * name)
+bool DfxPlugin::getProgramNameIndexed(VstInt32 category, VstInt32 index, char * name)
 {
 	if (name == NULL)
 		return false;
@@ -257,39 +253,21 @@ bool DfxPlugin::getProgramNameIndexed(long category, long index, char * name)
 	if (presetisvalid(index))
 	{
 		if ( presetnameisvalid(index) )
-			getpresetname(index, name);
+			getpresetname(index, name);	// XXX kVstMaxProgNameLen
 		else
-			sprintf(name, "default %ld", index+1);
+			sprintf(name, "default %d", index+1);
 		return true;
 	}
 	else return false;
-}
-
-//-----------------------------------------------------------------------------
-bool DfxPlugin::copyProgram(long destination)
-{
-	long vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
-
-	if ( presetisvalid(destination) && presetisvalid(vstpresetnum) )
-	{
-		if (destination != vstpresetnum)	// only copy it if it's a different program slot
-		{
-			for (long i=0; i < numParameters; i++)
-				setpresetparameter(destination, i, getpresetparameter(vstpresetnum, i));
-			setpresetname(destination, getpresetname_ptr(vstpresetnum));
-		}
-		return true;
-	}
-	return false;
 }
 
 #if TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
 // note:  don't ever return 0 or Logic crashes
-long DfxPlugin::getChunk(void ** data, bool isPreset)
+VstInt32 DfxPlugin::getChunk(void ** data, bool isPreset)
 {
-	long outsize = (signed long) dfxsettings->save(data, isPreset);
+	VstInt32 outsize = (VstInt32) dfxsettings->save(data, isPreset);
 	return (outsize < 1) ? 1 : outsize;
 }
 
@@ -299,7 +277,7 @@ long DfxPlugin::getChunk(void ** data, bool isPreset)
 // back then, when it saved it).
 // <data> is only valid during this call.
 // you may want to check the bytesize, and certainly should maintain a version."
-long DfxPlugin::setChunk(void * data, long byteSize, bool isPreset)
+VstInt32 DfxPlugin::setChunk(void * data, VstInt32 byteSize, bool isPreset)
 {
 	return dfxsettings->restore(data, (unsigned)byteSize, isPreset);
 }
@@ -312,35 +290,35 @@ long DfxPlugin::setChunk(void * data, long byteSize, bool isPreset)
 #pragma mark _________parameters_________
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setParameter(long index, float value)
+void DfxPlugin::setParameter(VstInt32 index, float value)
 {
 	setparameter_gen(index, value);
 }
 
 //-----------------------------------------------------------------------------
-float DfxPlugin::getParameter(long index)
+float DfxPlugin::getParameter(VstInt32 index)
 {
 	return getparameter_gen(index);
 }
 
 //-----------------------------------------------------------------------------
 // titles of each parameter
-void DfxPlugin::getParameterName(long index, char * name)
+void DfxPlugin::getParameterName(VstInt32 index, char * name)
 {
 	if (name != NULL)
-		getparametername(index, name);
+		getparametername(index, name);	// XXX kVstMaxParamStrLen
 }
 
 //-----------------------------------------------------------------------------
 // numerical display of each parameter's gradiations
-void DfxPlugin::getParameterDisplay(long index, char * text)
+void DfxPlugin::getParameterDisplay(VstInt32 index, char * text)
 {
 	if (text == NULL)
 		return;
 
 	if (getparameterusevaluestrings(index))
 	{
-		getparametervaluestring(index, getparameter_i(index), text);
+		getparametervaluestring(index, getparameter_i(index), text);	// XXX kVstMaxParamStrLen
 		return;
 	}
 
@@ -366,10 +344,10 @@ void DfxPlugin::getParameterDisplay(long index, char * text)
 
 //-----------------------------------------------------------------------------
 // unit of measure for each parameter
-void DfxPlugin::getParameterLabel(long index, char * label)
+void DfxPlugin::getParameterLabel(VstInt32 index, char * label)
 {
 	if (label != NULL)
-		getparameterunitstring(index, label);
+		getparameterunitstring(index, label);	// XXX kVstMaxParamStrLen
 }
 
 
@@ -377,25 +355,7 @@ void DfxPlugin::getParameterLabel(long index, char * label)
 #pragma mark _________dsp_________
 
 //-----------------------------------------------------------------------------------------
-void DfxPlugin::process(float ** inputs, float ** outputs, long sampleFrames)
-{
-	preprocessaudio();
-
-#if TARGET_PLUGIN_USES_DSPCORE
-	for (unsigned long i=0; i < getnumoutputs(); i++)
-	{
-		if (dspcores[i] != NULL)
-			dspcores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, false);
-	}
-#else
-	processaudio((const float**)inputs, outputs, (unsigned)sampleFrames, false);
-#endif
-
-	postprocessaudio();
-}
-
-//-----------------------------------------------------------------------------------------
-void DfxPlugin::processReplacing(float ** inputs, float ** outputs, long sampleFrames)
+void DfxPlugin::processReplacing(float ** inputs, float ** outputs, VstInt32 sampleFrames)
 {
 	preprocessaudio();
 
@@ -412,13 +372,33 @@ void DfxPlugin::processReplacing(float ** inputs, float ** outputs, long sampleF
 	postprocessaudio();
 }
 
+#if !VST_FORCE_DEPRECATED
+//-----------------------------------------------------------------------------------------
+void DfxPlugin::process(float ** inputs, float ** outputs, VstInt32 sampleFrames)
+{
+	preprocessaudio();
+
+#if TARGET_PLUGIN_USES_DSPCORE
+	for (unsigned long i=0; i < getnumoutputs(); i++)
+	{
+		if (dspcores[i] != NULL)
+			dspcores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, false);
+	}
+#else
+	processaudio((const float**)inputs, outputs, (unsigned)sampleFrames, false);
+#endif
+
+	postprocessaudio();
+}
+#endif
+
 
 
 #pragma mark _________MIDI_________
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------------------
-long DfxPlugin::processEvents(VstEvents* events)
+VstInt32 DfxPlugin::processEvents(VstEvents* events)
 {
 	long newProgramNum, newProgramOffset = -1;
 
@@ -500,7 +480,9 @@ long DfxPlugin::processEvents(VstEvents* events)
 
 
 
-/* entry point for windows. All we need to do is set the global
+/// this is handled in vstplugmain.cpp in the VST 2.4 SDK and higher
+#if !VST_2_4_EXTENSIONS
+/* entry point for Windows. All we need to do is set the global
    instance pointers. We save two copies because vstgui stupidly wants
    it to be a "void *", where our own GUI stuff avoids downcasts by
    using the right type, HINSTANCE. */
@@ -516,4 +498,4 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
 }
 
 #endif
-
+#endif
