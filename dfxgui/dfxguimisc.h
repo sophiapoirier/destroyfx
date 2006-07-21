@@ -211,6 +211,14 @@ public:
 		if ( (inPort != NULL) && (context != NULL) )
 			QDEndCGContext(inPort, &context);
 	}
+	HIThemeOrientation getHIThemeOrientation()
+	{
+	#ifndef FLIP_CG_COORDINATES
+		if (! isCompositWindow() )
+			return kHIThemeOrientationInverted;
+	#endif
+		return kHIThemeOrientationNormal;
+	}
 #endif
 
 	TARGET_PLATFORM_GRAPHICS_CONTEXT context;
