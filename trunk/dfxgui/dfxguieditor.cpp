@@ -31,7 +31,7 @@ const SInt32 kDfxGui_TransparencySliderControlID = 0;
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	const float kDfxGui_ParameterNotificationInterval = 30.0 * kEventDurationMillisecond;	// 30 ms parameter notification update interval
+	const Float32 kDfxGui_ParameterNotificationInterval = 30.0 * kEventDurationMillisecond;	// 30 ms parameter notification update interval
 //	static const CFStringRef kDfxGui_AUPresetFileUTI = (kUTTypeXML != NULL) ? kUTTypeXML : CFSTR("public.xml");	// XXX only available in Mac OS X 10.4 or higher
 	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("org.destroyfx.aupreset");
 #endif
@@ -350,6 +350,7 @@ DGGraphicsContext * DGInitControlDrawingContext(EventRef inEvent, CGrafPtr & out
 		if (outPort == NULL)
 			return NULL;
 		Rect portBounds;
+		memset(&portBounds, 0, sizeof(portBounds));
 		GetPortBounds(outPort, &portBounds);
 		portHeight = portBounds.bottom - portBounds.top;
 
@@ -695,25 +696,27 @@ OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, 
 	OSStatus result = noErr;
 
 	// do the new-fangled way, if it's available on the user's system
+	AudioUnitEvent paramEvent;
+	memset(&paramEvent, 0, sizeof(paramEvent));
+	paramEvent.mEventType = inEventType;
+	paramEvent.mArgument.mParameter.mParameterID = inParameterID;
+	paramEvent.mArgument.mParameter.mAudioUnit = GetEditAudioUnit();
+	paramEvent.mArgument.mParameter.mScope = kAudioUnitScope_Global;
+	paramEvent.mArgument.mParameter.mElement = 0;
 	if (AUEventListenerNotify != NULL)
-	{
-		AudioUnitEvent paramEvent;
-		memset(&paramEvent, 0, sizeof(paramEvent));
-		paramEvent.mEventType = inEventType;
-		paramEvent.mArgument.mParameter.mParameterID = inParameterID;
-		paramEvent.mArgument.mParameter.mAudioUnit = GetEditAudioUnit();
-		paramEvent.mArgument.mParameter.mScope = kAudioUnitScope_Global;
-		paramEvent.mArgument.mParameter.mElement = 0;
 		result = AUEventListenerNotify(NULL, NULL, &paramEvent);
-	}
 
 #ifdef AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES
 	// as a back-up, also still do the old way, until it's enough obsolete
-	CAAUParameter auvp(GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
-	if (inEventType == kAudioUnitEvent_BeginParameterChangeGesture)
-		TellListener(auvp, kAudioUnitCarbonViewEvent_MouseDownInControl, NULL);
-	else if (inEventType == kAudioUnitEvent_EndParameterChangeGesture)
-		TellListener(auvp, kAudioUnitCarbonViewEvent_MouseUpInControl, NULL);
+	if (mEventListener != NULL)
+	{
+		AudioUnitCarbonViewEventID carbonViewEventType = -1;
+		if (inEventType == kAudioUnitEvent_BeginParameterChangeGesture)
+			carbonViewEventType = kAudioUnitCarbonViewEvent_MouseDownInControl;
+		else if (inEventType == kAudioUnitEvent_EndParameterChangeGesture)
+			carbonViewEventType = kAudioUnitCarbonViewEvent_MouseUpInControl;
+		(*mEventListener)(mEventListenerUserData, GetComponentInstance(), &(paramEvent.mArgument.mParameter), carbonViewEventType, NULL);
+	}
 #endif
 
 	return result;
