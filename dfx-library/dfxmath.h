@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Marc Poirier and Tom Murphy 7.  
 This is our math shit.
 written by Tom Murphy 7 and Marc Poirier, 2001 - 2003
 ------------------------------------------------------------------------*/
@@ -12,8 +12,7 @@ written by Tom Murphy 7 and Marc Poirier, 2001 - 2003
 #include <stdlib.h>	// for RAND_MAX
 
 
-// XXX figure out another way
-#ifdef __APPLE_CC__
+#if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_2)
 	#define sqrtf	(float)sqrt
 	#define powf	(float)pow
 	#define sinf	(float)sin
@@ -24,7 +23,7 @@ written by Tom Murphy 7 and Marc Poirier, 2001 - 2003
 
 
 //-----------------------------------------------------------------------------
-// constants & macros
+// constants and macros
 
 inline float linear2dB(float linearValue)
 {
@@ -38,7 +37,7 @@ inline float linear2dB(float linearValue)
 #define PId 3.1415926535897932384626433832795
 #endif
 
-// reduces wasteful casting & division
+// reduces wasteful casting and division
 const float ONE_DIV_RAND_MAX = 1.0f / (float)RAND_MAX;
 #define randFloat()   ( (float)rand() * ONE_DIV_RAND_MAX )
 const double ONE_DIV_RAND_MAX_D = 1.0 / (double)RAND_MAX;
