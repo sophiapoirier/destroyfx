@@ -173,7 +173,7 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, DGGraphicsC
 			bounds.origin.x += bounds.size.width - pt.x;
 	}
 
-	// a hack for this font and CGContextShowText
+	// XXX a hack for this font and CGContextShowText
 	if (isSnootPixel10)
 	{
 		if (alignment == kDGTextAlign_left)
@@ -234,13 +234,7 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 		else if (alignment == kDGTextAlign_right)
 			textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushRight;
 
-		HIThemeOrientation contextOrientation = kHIThemeOrientationNormal;
-	#ifndef FLIP_CG_COORDINATES
-		if (! inContext->isCompositWindow() )
-			contextOrientation = kHIThemeOrientationInverted;
-	#endif
-
-		return HIThemeDrawTextBox(inText, &bounds, &textInfo, inContext->getPlatformGraphicsContext(), contextOrientation);
+		return HIThemeDrawTextBox(inText, &bounds, &textInfo, inContext->getPlatformGraphicsContext(), inContext->getHIThemeOrientation());
 	}
 	else
 	{
