@@ -20,9 +20,10 @@ written by Marc Poirier, October 2002 - 2004
 
 
 
-#pragma mark _________---DfxPlugin---_________
+#pragma mark --- DfxPlugin ---
 
-#pragma mark _________init_________
+#pragma mark -
+#pragma mark init
 
 //-----------------------------------------------------------------------------
 DfxPlugin::DfxPlugin(
@@ -64,13 +65,6 @@ DfxPlugin::DfxPlugin(
 #ifdef TARGET_API_AUDIOUNIT
 	auElementsHaveBeenCreated = false;
 	inputsP = outputsP = NULL;
-
-	#if TARGET_PLUGIN_USES_MIDI
-		aumidicontrolmap = NULL;
-		if (numParameters > 0)
-			aumidicontrolmap = (AudioUnitMIDIControlMapping*) malloc(numParameters * sizeof(AudioUnitMIDIControlMapping));
-	#endif
-
 #endif
 // Audio Unit stuff
 
@@ -86,8 +80,10 @@ DfxPlugin::DfxPlugin(
 	tailsize_seconds = 0.0;
 	b_usetailsize_seconds = false;
 
+	audioProcessingAccumulatingOnly = false;
+
 	// set a seed value for rand() from the system clock
-	srand((unsigned int)time(NULL));
+	srand( (unsigned int)time(NULL) );
 
 	currentPresetNum = 0;	// XXX eh?
 
@@ -181,15 +177,6 @@ DfxPlugin::~DfxPlugin()
 			delete dfxsettings;
 		dfxsettings = NULL;
 	#endif
-
-	#ifdef TARGET_API_AUDIOUNIT
-		#if TARGET_PLUGIN_USES_MIDI
-			if (aumidicontrolmap != NULL)
-				free(aumidicontrolmap);
-			aumidicontrolmap = NULL;
-		#endif
-	#endif
-	// end AudioUnit-specific destructor stuff
 
 	#ifdef TARGET_API_VST
 		// the child plugin class destructor should call do_cleanup for VST 
@@ -300,7 +287,8 @@ void DfxPlugin::do_reset()
 
 
 
-#pragma mark _________parameters_________
+#pragma mark -
+#pragma mark parameters
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::initparameter_f(long inParameterIndex, const char * initName, double initValue, 
@@ -598,7 +586,8 @@ double DfxPlugin::contractparametervalue_index(long inParameterIndex, double rea
 
 
 
-#pragma mark _________presets_________
+#pragma mark -
+#pragma mark presets
 
 //-----------------------------------------------------------------------------
 // whether or not the index is a valid preset
@@ -797,7 +786,8 @@ CFStringRef DfxPlugin::getpresetcfname(long inPresetIndex)
 
 
 
-#pragma mark _________state_________
+#pragma mark -
+#pragma mark state
 
 //-----------------------------------------------------------------------------
 // change the current audio sampling rate
@@ -853,7 +843,8 @@ void DfxPlugin::updatenumchannels()
 
 
 
-#pragma mark _________properties_________
+#pragma mark -
+#pragma mark properties
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::getpluginname(char * outText)
@@ -1033,9 +1024,25 @@ void DfxPlugin::update_tailsize()
 	#endif
 }
 
+//-----------------------------------------------------------------------------
+void DfxPlugin::setAudioProcessingMustAccumulate(bool inNewMode)
+{
+	audioProcessingAccumulatingOnly = inNewMode;
+	if (inNewMode)
+	{
+	#ifdef TARGET_API_AUDIOUNIT
+		SetProcessesInPlace(false);
+	#endif
+	#if defined(TARGET_API_VST) && !VST_FORCE_DEPRECATED
+		canProcessReplacing(false);
+	#endif
+	}
+}
 
 
-#pragma mark _________processing_________
+
+#pragma mark -
+#pragma mark processing
 
 #ifdef TARGET_API_AUDIOUNIT
 	// check if the host is a buggy one that will crash TransportStateProc
@@ -1249,7 +1256,8 @@ void DfxPlugin::do_processparameters()
 
 
 
-#pragma mark _________MIDI_________
+#pragma mark -
+#pragma mark MIDI
 
 #if TARGET_PLUGIN_USES_MIDI
 
@@ -1311,7 +1319,8 @@ void DfxPlugin::handlemidi_programchange(int channel, int programNum, long frame
 
 
 
-#pragma mark _________---helper-functions---_________
+#pragma mark -
+#pragma mark --- helper functions ---
 
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array of float values
