@@ -58,16 +58,14 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 	settailsize_seconds(getparametermax_f(kRelease) * 0.001);
+	setAudioProcessingMustAccumulate(true);	// only support accumulating output
 	midistuff->setLazyAttack();	// this enables the lazy note attack mode
 
 	setpresetname(0, "feminist synth");	// default preset name
 
 
-	#ifdef TARGET_API_VST
-		canProcessReplacing(false);	// only support accumulating output
-		#if TARGET_PLUGIN_HAS_GUI
-			editor = new RezSynthEditor(this);
-		#endif
+	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
+		editor = new RezSynthEditor(this);
 	#endif
 }
 

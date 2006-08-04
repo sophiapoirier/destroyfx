@@ -19,16 +19,6 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 	unsigned long ch;
 
 
-	// clear the output buffer because we accumulate output into it
-	if (replacing)
-	{
-		for (ch=0; ch < numChannels; ch++)
-		{
-			for (unsigned long samp=0; samp < inNumFrames; samp++)
-				out[ch][samp] = 0.0f;
-		}
-	}
-
 	// mix very quiet noise (-300 dB) into the input signal to hopefully avoid any denormal values
 	float quietNoise = 1.0e-15f;
 	for (ch=0; ch < numChannels; ch++)
