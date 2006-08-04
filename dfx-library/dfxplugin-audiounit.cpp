@@ -236,20 +236,6 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			result = noErr;
 			break;
 
-	#if TARGET_PLUGIN_USES_MIDI
-//		returns an array of AudioUnitMIDIControlMapping's, specifying a default mapping of
-//		MIDI controls and/or NRPN's to AudioUnit scopes/elements/parameters.
-		case kAudioUnitProperty_MIDIControlMapping:	// XXX deprecated in QuickTime 7
-			if (inScope == kAudioUnitScope_Global)
-			{
-				outDataSize = sizeof(AudioUnitMIDIControlMapping*);
-				outWritable = false;
-			}
-			else
-				result = kAudioUnitErr_InvalidScope;
-			break;
-	#endif
-
 		// this allows a GUI component to get a pointer to our DfxPlugin class instance
 		case kDfxPluginProperty_PluginPtr:
 			outDataSize = sizeof(DfxPlugin*);
@@ -370,31 +356,6 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					result = kAudioUnitErr_InvalidPropertyValue;
 			}
 			break;
-
-	#if TARGET_PLUGIN_USES_MIDI
-		case kAudioUnitProperty_MIDIControlMapping:	// XXX deprecated in QuickTime 7
-			if (inScope != kAudioUnitScope_Global)
-				result = kAudioUnitErr_InvalidScope;
-			else
-			{
-				for (long i=0; i < numParameters; i++)
-				{
-					aumidicontrolmap[i].midiNRPN = 0xFFFF;	// this means "none"
-					aumidicontrolmap[i].midiControl = 0xFF;	// this means "none"
-					// but we might still have a CC assignment to share...
-					if (dfxsettings != NULL)
-					{
-						if (dfxsettings->getParameterAssignmentType(i) == kParamEventCC)
-							aumidicontrolmap[i].midiControl = dfxsettings->getParameterAssignmentNum(i);
-					}
-					aumidicontrolmap[i].scope = kAudioUnitScope_Global;
-					aumidicontrolmap[i].element = (AudioUnitElement) 0;
-					aumidicontrolmap[i].parameter = (AudioUnitParameterID) i;
-				}
-				*(AudioUnitMIDIControlMapping**)outData = aumidicontrolmap;
-			}
-			break;
-	#endif
 
 		// this allows a GUI component to get a pointer to our DfxPlugin class instance
 		case kDfxPluginProperty_PluginPtr:
@@ -566,11 +527,12 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			result = kAudioUnitErr_PropertyNotWritable;
 			break;
 
-	#if TARGET_PLUGIN_USES_MIDI
-		case kAudioUnitProperty_MIDIControlMapping:	// XXX deprecated in QuickTime 7
-			result = kAudioUnitErr_PropertyNotWritable;
+		case kAudioUnitProperty_InPlaceProcessing:
+			if ( (audioProcessingAccumulatingOnly) && (*(UInt32*)inData != 0) )
+				result = kAudioUnitErr_InvalidPropertyValue;
+			else
+				result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
 			break;
-	#endif
 
 		case kDfxPluginProperty_PluginPtr:
 			result = kAudioUnitErr_PropertyNotWritable;
@@ -1063,7 +1025,7 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 	// ...and then allocate a mutable array large enough to hold them all
 	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, &arrayCallbacks);
 #else
-	// ...and then allocate a mutable array large enough to hold them all
+	// allocate a mutable array large enough to hold them all
 	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, &kAUPresetCFArrayCallbacks);
 #endif
 	if (outArray == NULL)
@@ -1314,13 +1276,10 @@ ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags,
 	// get the output element
 	AUOutputElement * theOutput = GetOutput(0);	// throws if there's an error
 	AudioBufferList & outBuffers = theOutput->GetBufferList();
-	UInt32 outNumBuffers = outBuffers.mNumberBuffers;
+	UInt32 numOutputBuffers = outBuffers.mNumberBuffers;
 	// set up our more convenient audio stream pointers
-	for (UInt32 i=0; i < outNumBuffers; i++)
-	{
+	for (UInt32 i=0; i < numOutputBuffers; i++)
 		outputsP[i] = (float*) (outBuffers.mBuffers[i].mData);
-//		outBuffers.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
-	}
 
 	// do stuff to prepare the audio inputs, if we use any
 	if (getnuminputs() > 0)
@@ -1333,9 +1292,9 @@ ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags,
 			return result;
 
 		AudioBufferList & inBuffers = theInput->GetBufferList();
-		UInt32 inNumBuffers = inBuffers.mNumberBuffers;
+		UInt32 numInputBuffers = inBuffers.mNumberBuffers;
 		// set up our more convenient audio stream pointers
-		for (UInt32 i=0; i < inNumBuffers; i++)
+		for (UInt32 i=0; i < numInputBuffers; i++)
 			inputsP[i] = (float*) (inBuffers.mBuffers[i].mData);
 	}
 
@@ -1365,23 +1324,24 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 	// do any pre-DSP prep
 	preprocessaudio();
 
+	// clear the output buffer because we will accumulate output into it
+	if (audioProcessingAccumulatingOnly)
+		AUBufferList::ZeroBuffer(outBuffer);
+
 #if TARGET_PLUGIN_USES_DSPCORE
 	// if the plugin uses DSP cores, then we just call the 
 	// inherited base class implementation, which handles "Kernels"
 	result = TARGET_API_BASE_CLASS::ProcessBufferLists(ioActionFlags, inBuffer, outBuffer, inFramesToProcess);
 
 #else
-	UInt32 inNumBuffers = inBuffer.mNumberBuffers;
-	UInt32 outNumBuffers = outBuffer.mNumberBuffers;
+	UInt32 numInputBuffers = inBuffer.mNumberBuffers;
+	UInt32 numOutputBuffers = outBuffer.mNumberBuffers;
 
 	// set up our more convenient audio stream pointers
-	for (UInt32 i=0; i < inNumBuffers; i++)
+	for (UInt32 i=0; i < numInputBuffers; i++)
 		inputsP[i] = (float*) (inBuffer.mBuffers[i].mData);
-	for (UInt32 i=0; i < outNumBuffers; i++)
-	{
+	for (UInt32 i=0; i < numOutputBuffers; i++)
 		outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
-//		outBuffer.mBuffers[i].mDataByteSize = inFramesToProcess * sizeof(Float32);
-	}
 
 	// now do the processing
 	processaudio((const float**)inputsP, outputsP, inFramesToProcess);
