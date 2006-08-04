@@ -525,6 +525,8 @@ public:
 	double gettailsize_seconds();
 	void update_tailsize();
 
+	void setAudioProcessingMustAccumulate(bool inNewMode);
+
 //	virtual void SetUseTimeStampedParameters(bool newmode = true)
 //		{	b_usetimestampedparameters = newmode;	}
 //	bool GetUseTimeStampedParameters()
@@ -616,11 +618,6 @@ protected:
 		// just for the sake of making processaudio(float**, float**, etc.) possible
 		float ** inputsP;
 		float ** outputsP;
-		#if TARGET_PLUGIN_USES_MIDI
-			// an array of how MIDI CCs and NRPNs map to parameters (if at all)
-			// the map needs to survive throughout the Audio Unit's life
-			AudioUnitMIDIControlMapping * aumidicontrolmap;
-		#endif
 	#endif
 
 	#ifdef TARGET_API_VST
@@ -641,6 +638,7 @@ private:
 	long tailsize_samples;
 	double tailsize_seconds;
 	bool b_usetailsize_seconds;
+	bool audioProcessingAccumulatingOnly;
 
 
 // overridden virtual methods from inherited API base classes
