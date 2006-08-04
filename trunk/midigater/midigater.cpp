@@ -40,14 +40,12 @@ MidiGater::MidiGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "push the button");	// default preset name
 
+	setAudioProcessingMustAccumulate(true);	// only support accumulating output
 	midistuff->setLazyAttack();	// this enables the lazy note attack mode
 
 
-	#ifdef TARGET_API_VST
-		canProcessReplacing(false);	// only support accumulating output
-		#if TARGET_PLUGIN_HAS_GUI
-			editor = new MidiGaterEditor(this);
-		#endif
+	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
+		editor = new MidiGaterEditor(this);
 	#endif
 }
 
@@ -74,16 +72,6 @@ void MidiGater::processaudio(const float ** inAudio, float ** outAudio, unsigned
 {
 	unsigned long numChannels = getnumoutputs();
 	long numFramesToProcess = (signed)inNumFrames, totalSampleFrames = (signed)inNumFrames;	// for dividing up the block accoring to events
-
-
-#ifndef TARGET_API_VST
-	// clear the output buffer because we accumulate output into it
-	for (unsigned long cha=0; cha < numChannels; cha++)
-	{
-		for (unsigned long samp=0; samp < inNumFrames; samp++)
-			outAudio[cha][samp] = 0.0f;
-	}
-#endif
 
 
 	// counter for the number of MIDI events this block
