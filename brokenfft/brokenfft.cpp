@@ -19,7 +19,7 @@ const int PLUGIN::buffersizes[BUFFERSIZESSIZE] = {
 PLUGIN::PLUGIN(audioMasterCallback audioMaster)
   : AudioEffectX(audioMaster, NUM_PROGRAMS, NUM_PARAMS) {
 
-  FPARAM(bufsizep, P_BUFSIZE, "wsize", 0.5f, "samples");
+  FPARAM(bufsizep, P_BUFSIZE, "wins", 0.5f, "samples");
   FPARAM(shape, P_SHAPE, "shape", 0.0f, "");
   FPARAM(method, P_METHOD, "how", 0.0f, "which");
 

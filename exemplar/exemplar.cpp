@@ -1,20 +1,21 @@
 
-/* Slowft,
-   Featuring the Super Destroy FX Windowing System! */
+/* DFX Exemplar! */
 
-#include "slowft.h"
+#include "exemplar.h"
 
 #include <stdio.h>
 
+#define DIMENSION 5
+
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #ifndef __DFX_SLOWFTEDITOR_H
-  #include "slowfteditor.hpp"
+  #ifndef __DFX_EXEMPLAREDITOR_H
+  #include "exemplareditor.hpp"
   #endif
 #endif
 
 /* this macro does boring entry point stuff for us */
-DFX_ENTRY(Slowft);
-DFX_CORE_ENTRY(SlowftDSP);
+DFX_ENTRY(Exemplar);
+DFX_CORE_ENTRY(ExemplarDSP);
 
 
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
@@ -22,6 +23,13 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   initparameter_indexed(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
   initparameter_indexed(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
+
+  initparameter_indexed(P_MODE, "mode", MODE_CAPTURE, MODE_CAPTURE, NUM_MODES);
+  capturemode = true;
+
+  /* modes */
+  setparametervaluestring(P_MODE, MODE_MATCH, "match");
+  setparametervaluestring(P_MODE, MODE_CAPTURE, "capture");
 
   long i;
   /* set up values for windowing */
@@ -38,14 +46,14 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
   setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
-  for (i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+  for (i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
 
   long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
   setlatency_samples(delay_samples);
   settailsize_samples(delay_samples);
 
-  setpresetname(0, "Slowft Default"); /* default preset name */
+  setpresetname(0, "Exemplar Default"); /* default preset name */
   makepresets();
 
   /* allow MIDI keys to be used to control parameters */
@@ -58,11 +66,11 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   #ifdef TARGET_API_VST
     #if TARGET_PLUGIN_USES_DSPCORE
-      DFX_INIT_CORE(SlowftDSP);	/* we need to manage DSP cores manually in VST */
+      DFX_INIT_CORE(ExemplarDSP);	/* we need to manage DSP cores manually in VST */
     #endif
     /* if you have a GUI, need an Editor class... */
     #if TARGET_PLUGIN_HAS_GUI
-      editor = new SlowftEditor(this);
+      editor = new ExemplarEditor(this);
     #endif
   #endif
 }
@@ -106,6 +114,17 @@ void PLUGINCORE::reset() {
   third = framesize / 2;
   bufsize = third * 3;
 
+
+  shape = getparameter_i(P_SHAPE);
+
+  bool newcapture = MODE_CAPTURE == getparameter_i(P_MODE);
+  if (newcapture != capturemode) {
+    /* switching modes. this can be expensive, since we have
+       to build the */
+    /* FIXME HERE */
+  }
+
+
   /* set up buffers. Prevmix and first frame of output are always 
      filled with zeros. XXX memset */
 
@@ -129,12 +148,11 @@ void PLUGINCORE::reset() {
 
 void PLUGINCORE::processparameters() {
 
-  shape = getparameter_i(P_SHAPE);
-
   #ifdef TARGET_API_VST
     /* this tells the host to call a suspend()-resume() pair, 
       which updates initialDelay value */
-  if (getparameterchanged(P_BUFSIZE))
+  if (getparameterchanged(P_BUFSIZE) ||
+      getparameterchanged(P_MODE))
     dfxplugin->setlatencychanged(true);
   #endif
 }
@@ -145,97 +163,79 @@ void PLUGINCORE::processparameters() {
    automatically overlapped. */
 void PLUGINCORE::processw(float * in, float * out, long samples) {
 
-  /* compute the 'slow fourier transform' */
-
-
-  /* XXX get sample rate from parameter somewhere. */
-  float rate = 44100.0f;
-
-  /* freq given in hz */
-  {
-    float freq = BASE_FREQ;
-    for(int key = 0; key < NUM_KEYS; key ++) {
-      
-      /* compute dot product */
-      sines[key] = 0.0f;
-      cosines[key] = 0.0f;
-      
-      /* PERF this is probably really inefficient. pre-computing
-	 tables of sines first, at least, would probably help. */
-      for(int s = 0; s < samples; s ++) {	
-
-	// float frac = ((float)s / (float)samples);
-	
-	/* PERF This could be strength-reduced */
-	float seconds = ((float)s / (float)rate);
-	
-	/* argument to sin, cosine. */
-	float arg = freq * seconds * SLOWFT_2PI;
-
-	sines[key] += sin(arg) * in[s];
-	cosines[key] += cos(arg) * in[s];
-      }
-
-      /* XXX this normalization is wrong: it should be the
-	 maximum possible score, which is the area under
-	 the curve of abs(sin(..)) within the region. */
-      sines[key] /= (float)samples;
-      cosines[key] /= (float)samples;
-      
-      /* go to next key */
-      freq *= HALFSTEP_RATIO;
-    }
+#if 0
+  /* this sounds pretty neat, actually. */
+  for(long i = 0; i < samples; i ++) {
+    out[i] = in[i] * in[(i + (samples >> 1)) % samples];
   }
+#endif
 
-  /* XXX do ops... */
+  /* memmove(out, in, samples * sizeof (float)); */
 
-  int maxkey = 0;
-  {
-    float maxval = 0.0;
-    for(int k = 12; k < NUM_KEYS; k ++) {
-      float tval = abs(sines[k]) + abs(cosines[k]);
-      if (tval > maxval) {
-	maxkey = k;
-	maxval = tval;
+}
+
+/* classify a series of samples according to the point.
+   
+   XXX--right now, it uses a stationary Haar wavelet.
+   So we take the dot product of 'in' with wavelets w0,...wd
+   of the following form:
+   
+           in/2
+      w0   ~~~~____
+               in/2
+
+          in/4
+      w1   ~~__~~__
+
+
+          in/8
+      w2   ~_~_~_~_
+
+
+    ... etc.
+ */
+
+/* assumes samples is a power of two. */
+void PLUGINCORE::classify(float * in, ANNpoint out, long samples) {
+  out = annAllocPt(DIMENSION);
+
+  /* dth wavelet switches from 1 to -1 each s samples. */
+  int freq = samples;
+
+  for(int d = 0; d < DIMENSION; d++) {
+    freq >>= 1;
+    if (freq) {
+      int i = 0;
+      float prod = 0.0;
+      while (i < samples) {
+	/* up */
+	{ 
+	  for(int j = 0; j < freq; j ++) {
+	    prod += in[i + j];
+	  }
+	}
+	i += freq;
+	/* down */
+	{
+	  for(int j = 0; j < freq; j ++) {
+	    prod -= in[i + j];
+	  }
+	}
+	i += freq;
       }
-    }
-  }
-  
-  /* now generate output! */
-
-  /* Start silent */
-  {
-    for(int s = 0; s < samples; s++) {
-      out[s] = 0.0f;
-    }
-  }
-
-  {
-    float freq = BASE_FREQ;
-
-    /* now add back in sines and cosines */
-    for(int key = 0; key < NUM_KEYS; key ++) {
-      
-      if (key == maxkey)
-      for(int s = 0; s < samples; s ++) {
-	
-	float seconds = ((float)s / (float)rate);
-	
-	/* argument to sin, cosine. */
-	float arg = freq * seconds * SLOWFT_2PI;
-
-	out[s] += (sines[key] * sin(arg)) + (cosines[key] * cos(arg));
-
-      }
-
-      freq *= HALFSTEP_RATIO;
+      out[d] = prod;
+    } else {
+      /* oops, we went to zero sample-length peaks... 
+	 our dimension is too high for this window size
+      */
+      out[d] = 0.0;
     }
   }
 
 }
 
 
-/* this fake process function reads samples one at a time
+/* this windowing process function reads samples one at a time
    from the true input. It simultaneously copies samples from
    the beginning of the output buffer to the true output.
    We maintain that out0 always has at least 'third' samples
@@ -259,7 +259,7 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
 
 */
 
-/* to improve: 
+/* PERF: 
    - use memcpy and arithmetic instead of
      sample-by-sample copy 
    - can we use tail of out0 as prevmix, instead of copying?
