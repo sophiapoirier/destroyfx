@@ -197,8 +197,8 @@ void DfxMidi::insertNote(int currentNote)
 	}
 
 	// shift every note up a position   (normal scenario)
-	for (int notecount = NUM_NOTES-1; notecount > 0; notecount--)
-		noteQueue[notecount] = noteQueue[notecount-1];
+	for (int nc = NUM_NOTES - 1; nc > 0; nc--)
+		noteQueue[nc] = noteQueue[nc - 1];
 	// then place the new note into the first position
 	noteQueue[0] = currentNote;
 }
