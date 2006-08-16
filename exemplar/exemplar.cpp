@@ -4,8 +4,10 @@
 #include "exemplar.h"
 
 #include <stdio.h>
+#include <fstream>
+// #include <fstream.h>
 
-#define DIMENSION 5
+#define DIMENSION 12
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
   #ifndef __DFX_EXEMPLAREDITOR_H
@@ -25,7 +27,10 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_indexed(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
   initparameter_indexed(P_MODE, "mode", MODE_CAPTURE, MODE_CAPTURE, NUM_MODES);
-  capturemode = true;
+
+  initparameter_f(P_ERRORAMOUNT, "erroramt", 0.10, 0.10, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "error");
+  // initparameter_f(P_ERRORAMOUNT, , 0.0, 0.0, -1.0, 1.0, kDfxParamUnit_pan);
+
 
   /* modes */
   setparametervaluestring(P_MODE, MODE_MATCH, "match");
@@ -97,6 +102,12 @@ PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
 
   /* prevmix is only a single third long */
   prevmix = (float*)malloc((maxframe / 2) * sizeof (float));
+
+  /* initialize nn stuff */
+  capturemode = true;
+  nntree = 0;
+  ncapsamples = 0;
+  npoints = 0;
 }
 
 
@@ -120,10 +131,41 @@ void PLUGINCORE::reset() {
   bool newcapture = MODE_CAPTURE == getparameter_i(P_MODE);
   if (newcapture != capturemode) {
     /* switching modes. this can be expensive, since we have
-       to build the */
-    /* FIXME HERE */
-  }
+       to build the nearest neighbor tree. */
+    capturemode = newcapture;
+    if (capturemode) {
+      /* entering capture mode. discard the existing tree */
+      nntree = 0; /* XXX do it... */
 
+      ncapsamples = 0;
+      npoints = 0;
+    } else {
+      /* entering match mode. build new tree. */
+
+      int wsize = getwindowsize();
+      /* make points */
+      for (npoints = 0; npoints < (ncapsamples - wsize); npoints ++) {
+	/* for now do every subwindow */
+	cap_index[npoints] = npoints;
+	classify(&(capsamples[npoints]), cap_point[npoints], wsize);
+      }
+
+      nntree = new ANNkd_tree(cap_point, npoints, DIMENSION);
+      char msg[512];
+      // sprintf(msg, "ok %p", this);
+      // MessageBoxA(0, "match mode", msg, MB_OK);
+      #if 0
+      std::ofstream f;
+      f.open("c:\\code\\vstplugins\\exemplar\\dump.ann");
+      if (f) {
+	nntree->Dump(ANNtrue, f);
+	f.close();
+      }
+      #endif
+
+      /* ok, ready! */
+    }
+  } /* mode changed */
 
   /* set up buffers. Prevmix and first frame of output are always 
      filled with zeros. XXX memset */
@@ -147,6 +189,9 @@ void PLUGINCORE::reset() {
 }
 
 void PLUGINCORE::processparameters() {
+  
+  /* can safely change this whenever... */
+  float erroramount = getparameter_f(P_ERRORAMOUNT);
 
   #ifdef TARGET_API_VST
     /* this tells the host to call a suspend()-resume() pair, 
@@ -172,6 +217,52 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
 
   /* memmove(out, in, samples * sizeof (float)); */
 
+  /* XXX since this capture is done in windowing mode,
+     our capture buffer would have overlapping regions
+     and also discontinuities, which is dumb. we should
+     only capture on even calls to processw.
+     (this should be a bit more principled...) */
+  static int parity = 0;
+  
+  parity = !parity;
+  if (capturemode) {
+    /* capture mode.. just record into capsamples */
+    if (parity == 0) {
+      for(int i = 0; i < samples && ncapsamples < CAPBUFFER; i ++) {
+	capsamples[ncapsamples++] = in[i];
+      }
+    }
+  } else {
+
+    ANNpoint p;
+    ANNidx res;
+    ANNdist dist;
+    classify(in, p, samples);
+
+    if (1 && nntree) {
+      /* match mode */
+      nntree->annkSearch(p, 1, &res, &dist /* distance array -- not needed */, erroramount);
+      
+      annDeallocPt(p);
+
+      /* XXX boost RMS? */
+      /* now res holds the closest point index */
+      if (res != ANN_NULL_IDX) {
+	/* so copy that captured window into output */
+	/* really should use the window size that this
+	   originally represented, perhaps stretching it... */
+	for(int i = 0; i < samples && (cap_index[res] + i < CAPBUFFER) ; i ++) {
+	  out[i] = capsamples[cap_index[res] + i];
+	}
+      } /* otherwise ??? */
+    } else {
+      /* error noise */
+      for(int i = 0; i < samples; i ++) {
+	out[i] = sin((float)i / 100.0);
+      }
+
+    }
+  }
 }
 
 /* classify a series of samples according to the point.
@@ -196,7 +287,7 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
  */
 
 /* assumes samples is a power of two. */
-void PLUGINCORE::classify(float * in, ANNpoint out, long samples) {
+void PLUGINCORE::classify(float * in, ANNpoint & out, long samples) {
   out = annAllocPt(DIMENSION);
 
   /* dth wavelet switches from 1 to -1 each s samples. */
