@@ -37,6 +37,7 @@ enum { MODE_CAPTURE,
 /* the names of the parameters */
 enum { P_BUFSIZE, P_SHAPE, 
        P_MODE,
+       P_ERRORAMOUNT,
        NUM_PARAMS,
 };
 
@@ -63,12 +64,7 @@ public:
   long getwindowsize() { return third; }
 
  private:
-
-  /* Exemplar stuff */
-  /* classifies a window */
-  void classify(float * in, ANNpoint out, long samples);
-
-  
+ 
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
@@ -96,7 +92,35 @@ public:
   int outsize;
   int outstart;
 
+
+
+  /* Exemplar stuff */
+  /* classifies a window */
+  void classify(float * in, ANNpoint & out, long samples);
+
   bool capturemode;
+  float erroramount;
+
+#define CAPBUFFER 500000 /* 1000000 */
+  float capsamples[CAPBUFFER];
+  int ncapsamples; /* < CAPBUFFER */
+  
+#if 0
+  /* an individual capture */
+  struct caplet {
+    /* its classification */
+    ANNpoint p;
+    /* its index in capsamples */
+    int i;
+    /* width? */
+  };
+#endif
+
+  ANNpoint cap_point[CAPBUFFER];
+  int cap_index[CAPBUFFER];
+  int npoints;
+
+  ANNkd_tree * nntree;
 
 };
 
