@@ -1,7 +1,7 @@
 /*
-	DFX AU Utilities is a collection of helpful utility functions for 
-	creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2005  Marc Genung Poirier
+	Destroy FX AU Utilities is a collection of helpful utility functions 
+	for creating and hosting Audio Unit plugins.
+	Copyright (C) 2003-2006  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -60,9 +60,7 @@ typedef const struct CFAUPreset * CFAUPresetRef;
 extern CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName);
 extern CFAUPresetRef CFAUPresetRetain(CFAUPresetRef inPreset);
 extern void CFAUPresetRelease(CFAUPresetRef inPreset);
-/* this will initialize a CFArray callbacks structure to use the CFArray callback functions for AUPresets */
-extern void AUPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks);
-extern const CFArrayCallBacks kAUPresetCFArrayCallbacks;
+extern const CFArrayCallBacks kCFAUPresetArrayCallBacks;
 
 /* these handle a CoreFoundation-like container object for AudioUnitOtherPluginDesc called CFAUOtherPluginDesc */
 typedef const struct CFAUOtherPluginDesc * CFAUOtherPluginDescRef;
@@ -71,7 +69,7 @@ extern CFAUOtherPluginDescRef CFAUOtherPluginDescCreateVST(CFAllocatorRef inAllo
 extern CFAUOtherPluginDescRef CFAUOtherPluginDescCreateMAS(CFAllocatorRef inAllocator, OSType inEffectID, OSType inVariantID, OSType inManufacturerID);
 extern CFAUOtherPluginDescRef CFAUOtherPluginDescRetain(CFAUOtherPluginDescRef inDesc);
 extern void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc);
-extern const CFArrayCallBacks kAUOtherPluginDescCFArrayCallbacks;
+extern const CFArrayCallBacks kCFAUOtherPluginDescArrayCallBacks;
 
 /* these are convenience functions for sending parameter change notifications to all parameter listeners */
 extern void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
