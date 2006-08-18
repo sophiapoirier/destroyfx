@@ -1,7 +1,7 @@
 /*
-	DFX AU Utilities is a collection of helpful utility functions for 
-	creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2005  Marc Genung Poirier
+	Destroy FX AU Utilities is a collection of helpful utility functions 
+	for creating and hosting Audio Unit plugins.
+	Copyright (C) 2003-2006  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -64,7 +64,8 @@ CFBundleRef gCurrentBundle = NULL;
 
 
 
-#pragma mark _________Handling_Files_And_Directories_________
+#pragma mark -
+#pragma mark Handling Files And Directories
 
 //-----------------------------------------------------------------------------
 // This function provides an FSRef for an AU Component's centralized preset files directory.
@@ -218,6 +219,14 @@ void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * out
 {
 	if ( (inCFString != NULL) && (outUniName != NULL) )
 	{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
+		if (FSGetHFSUniStrFromString != NULL)
+		{
+			OSStatus status = FSGetHFSUniStrFromString(inCFString, outUniName);
+			if (status == noErr)
+				return;
+		}
+#endif
 		UniCharCount cfNameLength = CFStringGetLength(inCFString);
 		static const UniCharCount kMaxUnicodeFileNameLength = sizeof(outUniName->unicode) / sizeof(outUniName->unicode[0]);
 		// the length can't be more than 255 characters for an HFS file name
@@ -251,7 +260,8 @@ void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * out
 
 
 
-#pragma mark _________Preset_Files_Tree_________
+#pragma mark -
+#pragma mark Preset Files Tree
 
 //-----------------------------------------------------------------------------
 CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain)
@@ -523,7 +533,8 @@ void FileURLsCFTreeContext_Init(const CFURLRef inURL, CFTreeContext * outTreeCon
 
 
 
-#pragma mark _________Restoring_Preset_Files_________
+#pragma mark -
+#pragma mark Restoring Preset Files
 
 //-----------------------------------------------------------------------------
 // input:  Audio Unit ComponentInstance, CFURL to AU preset file to restore
@@ -923,7 +934,8 @@ OSStatus GetAUComponentDescriptionFromPresetFile(const CFURLRef inAUPresetFileUR
 
 
 
-#pragma mark _________Saving_Preset_Files_________
+#pragma mark -
+#pragma mark Saving Preset Files
 
 //-----------------------------------------------------------------------------
 // This is a convenience wrapper for SaveAUStateToPresetFile_Bundle for when 
