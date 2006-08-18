@@ -1,7 +1,7 @@
 /*
-	DFX AU Utilities is a collection of helpful utility functions for 
-	creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2005  Marc Genung Poirier
+	Destroy FX AU Utilities is a collection of helpful utility functions 
+	for creating and hosting Audio Unit plugins.
+	Copyright (C) 2003-2006  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -43,7 +43,7 @@
 #include <AudioToolbox/AudioUnitUtilities.h>	// for AUEventListenerNotify and AUParameterListenerNotify
 
 
-#pragma mark _________Component_Version_________
+#pragma mark Component Version
 
 //-----------------------------------------------------------------------------
 // This function will get the version of a Component from its 'thng' resource 
@@ -105,7 +105,6 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 		Handle thngResourceHandle = Get1IndResource(kComponentResourceType, i+1);
 		if (thngResourceHandle == NULL)
 			continue;
-		HLock(thngResourceHandle);
 		componentThng = (ExtComponentResource*) (*thngResourceHandle);
 		if (componentThng == NULL)
 			goto cleanupRes;
@@ -142,15 +141,19 @@ OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
 
 
 
-#pragma mark _________Factory_Presets_CFArray_________
+#pragma mark -
+#pragma mark Factory Presets CFArray
 
 //-----------------------------------------------------------------------------
 // The following defines and implements CoreFoundation-like handling of 
 // an AUPreset container object:  CFAUPreset
 //-----------------------------------------------------------------------------
 
+const UInt32 kCFAUPreset_CurrentVersion = 0;
+
 typedef struct {
 	AUPreset auPreset;
+	UInt32 version;
 	CFAllocatorRef allocator;
 	CFIndex retainCount;
 } CFAUPreset;
@@ -168,6 +171,7 @@ CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber
 		// this will keep it from changing under our feet
 		if (inPresetName != NULL)
 			newPreset->auPreset.presetName = CFStringCreateCopy(inAllocator, inPresetName);
+		newPreset->version = kCFAUPreset_CurrentVersion;
 		newPreset->allocator = inAllocator;
 		newPreset->retainCount = 1;
 	}
@@ -220,15 +224,16 @@ void CFAUPresetRelease(CFAUPresetRef inPreset)
 // an AU's factory presets array to support kAudioUnitProperty_FactoryPresets.
 //-----------------------------------------------------------------------------
 
-const void * AUPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inPreset);
-void AUPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inPreset);
-Boolean AUPresetCFArrayEqualCallback(const void * inPreset1, const void * inPreset2);
-CFStringRef AUPresetCFArrayCopyDescriptionCallback(const void * inPreset);
+const void * CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, const void * inPreset);
+void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inPreset);
+Boolean CFAUPresetArrayEqualCallBack(const void * inPreset1, const void * inPreset2);
+CFStringRef CFAUPresetArrayCopyDescriptionCallBack(const void * inPreset);
+void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks);
 
 //-----------------------------------------------------------------------------
 // This function is called when an item (an AUPreset) is added to the CFArray, 
 // or when a CFArray containing an AUPreset is retained.  
-const void * AUPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inPreset)
+const void * CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, const void * inPreset)
 {
 	return CFAUPresetRetain(inPreset);
 }
@@ -237,7 +242,7 @@ const void * AUPresetCFArrayRetainCallback(CFAllocatorRef inAllocator, const voi
 // This function is called when an item (an AUPreset) is removed from the CFArray 
 // or when the array is released.
 // Since a reference to the data belongs to the array, we need to release that here.
-void AUPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inPreset)
+void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inPreset)
 {
 	CFAUPresetRelease(inPreset);
 }
@@ -246,7 +251,7 @@ void AUPresetCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inP
 // This function is called when someone wants to compare to items (AUPresets) 
 // in the CFArray to see if they are equal or not.
 // For our AUPresets, we will compare based on the preset number and the name string.
-Boolean AUPresetCFArrayEqualCallback(const void * inPreset1, const void * inPreset2)
+Boolean CFAUPresetArrayEqualCallBack(const void * inPreset1, const void * inPreset2)
 {
 	AUPreset * preset1 = (AUPreset*) inPreset1;
 	AUPreset * preset2 = (AUPreset*) inPreset2;
@@ -262,7 +267,7 @@ Boolean AUPresetCFArrayEqualCallback(const void * inPreset1, const void * inPres
 // That happens, for example, when using CFShow().  
 // This will create and return a CFString that indicates that 
 // the object is an AUPreset and tells the preset number and preset name.
-CFStringRef AUPresetCFArrayCopyDescriptionCallback(const void * inPreset)
+CFStringRef CFAUPresetArrayCopyDescriptionCallBack(const void * inPreset)
 {
 	AUPreset * preset = (AUPreset*) inPreset;
 	return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
@@ -272,57 +277,37 @@ CFStringRef AUPresetCFArrayCopyDescriptionCallback(const void * inPreset)
 
 //-----------------------------------------------------------------------------
 // this will initialize a CFArray callbacks structure to use the above callback functions
-void AUPresetCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks)
+void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks)
 {
-	if (outArrayCallbacks == NULL)
+	if (outArrayCallBacks == NULL)
 		return;
 	// wipe the struct clean
-	memset(outArrayCallbacks, 0, sizeof(*outArrayCallbacks));
+	memset(outArrayCallBacks, 0, sizeof(*outArrayCallBacks));
 	// set all of the values and function pointers in the callbacks struct
-	outArrayCallbacks->version = 0;	// currently, 0 is the only valid version value for this
-	outArrayCallbacks->retain = AUPresetCFArrayRetainCallback;
-	outArrayCallbacks->release = AUPresetCFArrayReleaseCallback;
-	outArrayCallbacks->copyDescription = AUPresetCFArrayCopyDescriptionCallback;
-	outArrayCallbacks->equal = AUPresetCFArrayEqualCallback;
+	outArrayCallBacks->version = 0;	// currently, 0 is the only valid version value for this
+	outArrayCallBacks->retain = CFAUPresetArrayRetainCallBack;
+	outArrayCallBacks->release = CFAUPresetArrayReleaseCallBack;
+	outArrayCallBacks->copyDescription = CFAUPresetArrayCopyDescriptionCallBack;
+	outArrayCallBacks->equal = CFAUPresetArrayEqualCallBack;
 }
 
 //-----------------------------------------------------------------------------
 #ifdef __GNUC__
-// XXX what is the best way to do this?
-#if 0
-const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
-	version: 0, 
-	retain: AUPresetCFArrayRetainCallback, 
-	release: AUPresetCFArrayReleaseCallback, 
-	copyDescription: AUPresetCFArrayCopyDescriptionCallback, 
-	equal: AUPresetCFArrayEqualCallback
-};
-#elif 0
-const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
-	.version = 0, 
-	.retain = AUPresetCFArrayRetainCallback, 
-	.release = AUPresetCFArrayReleaseCallback, 
-	.copyDescription = AUPresetCFArrayCopyDescriptionCallback, 
-	.equal = AUPresetCFArrayEqualCallback
-};
-#else
-// this seems to be the only way of the 3 that is fully valid C, but unfortunately only for GCC
-const CFArrayCallBacks kAUPresetCFArrayCallbacks;
-static void kAUPresetCFArrayCallbacks_constructor() __attribute__((constructor));
-static void kAUPresetCFArrayCallbacks_constructor()
+const CFArrayCallBacks kCFAUPresetArrayCallBacks;
+static void kCFAUPresetArrayCallBacks_constructor() __attribute__((constructor));
+static void kCFAUPresetArrayCallBacks_constructor()
 {
-	AUPresetCFArrayCallbacks_Init( (CFArrayCallBacks*) &kAUPresetCFArrayCallbacks );
+	CFAUPresetArrayCallBacks_Init( (CFArrayCallBacks*) &kCFAUPresetArrayCallBacks );
 }
-#endif
 #else
 // XXX I'll use this for other compilers, even though I hate initializing structs with all arguments at once 
-// (cuz what if I ever decided to change the order of the struct members or something like that?)
-const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
+// (cuz what if you ever decide to change the order of the struct members or something like that?)
+const CFArrayCallBacks kCFAUPresetArrayCallBacks = {
 	0, 
-	AUPresetCFArrayRetainCallback, 
-	AUPresetCFArrayReleaseCallback, 
-	AUPresetCFArrayCopyDescriptionCallback, 
-	AUPresetCFArrayEqualCallback
+	CFAUPresetArrayRetainCallBack, 
+	CFAUPresetArrayReleaseCallBack, 
+	CFAUPresetArrayCopyDescriptionCallBack, 
+	CFAUPresetArrayEqualCallBack
 };
 #endif
 
@@ -331,15 +316,19 @@ const CFArrayCallBacks kAUPresetCFArrayCallbacks = {
 
 
 
-#pragma mark _________AudioUnitOtherPluginDesc_CFArray_________
+#pragma mark -
+#pragma mark AudioUnitOtherPluginDesc CFArray
 
 //-----------------------------------------------------------------------------
 // The following defines and implements CoreFoundation-like handling of 
 // an AudioUnitOtherPluginDesc container object:  CFAUOtherPluginDesc
 //-----------------------------------------------------------------------------
 
+const UInt32 kCFAUOtherPluginDesc_CurrentVersion = 0;
+
 typedef struct {
 	AudioUnitOtherPluginDesc auOtherPluginDesc;
+	UInt32 version;
 	CFAllocatorRef allocator;
 	CFIndex retainCount;
 } CFAUOtherPluginDesc;
@@ -359,6 +348,7 @@ CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UIn
 		newDesc->auOtherPluginDesc.plugin.mType = inTypeID;
 		newDesc->auOtherPluginDesc.plugin.mSubType = inSubTypeID;
 		newDesc->auOtherPluginDesc.plugin.mManufacturer = inManufacturerID;
+		newDesc->version = kCFAUOtherPluginDesc_CurrentVersion;
 		newDesc->allocator = inAllocator;
 		newDesc->retainCount = 1;
 	}
@@ -416,16 +406,16 @@ void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc)
 // other plugin descriptions array to support kAudioUnitMigrateProperty_FromPlugin.
 //-----------------------------------------------------------------------------
 
-const void * AUOtherPluginDescCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inDesc);
-void AUOtherPluginDescCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inDesc);
-Boolean AUOtherPluginDescCFArrayEqualCallback(const void * inDesc1, const void * inDesc2);
-CFStringRef AUOtherPluginDescCFArrayCopyDescriptionCallback(const void * inDesc);
-void AUOtherPluginDescCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks);
+const void * CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, const void * inDesc);
+void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inDesc);
+Boolean CFAUOtherPluginDescArrayEqualCallBack(const void * inDesc1, const void * inDesc2);
+CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc);
+void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks);
 
 //-----------------------------------------------------------------------------
 // This function is called when an item (an AudioUnitOtherPluginDesc) is added to the CFArray, 
 // or when a CFArray containing an AudioUnitOtherPluginDesc is retained.  
-const void * AUOtherPluginDescCFArrayRetainCallback(CFAllocatorRef inAllocator, const void * inDesc)
+const void * CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, const void * inDesc)
 {
 	return CFAUOtherPluginDescRetain(inDesc);
 }
@@ -434,7 +424,7 @@ const void * AUOtherPluginDescCFArrayRetainCallback(CFAllocatorRef inAllocator, 
 // This function is called when an item (an AudioUnitOtherPluginDesc) is removed from 
 // the CFArray or when the array is released.
 // Since a reference to the data belongs to the array, we need to release that here.
-void AUOtherPluginDescCFArrayReleaseCallback(CFAllocatorRef inAllocator, const void * inDesc)
+void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inDesc)
 {
 	CFAUOtherPluginDescRelease(inDesc);
 }
@@ -442,7 +432,7 @@ void AUOtherPluginDescCFArrayReleaseCallback(CFAllocatorRef inAllocator, const v
 //-----------------------------------------------------------------------------
 // This function is called when someone wants to compare to items (AudioUnitOtherPluginDescs) 
 // in the CFArray to see if they are equal or not.
-Boolean AUOtherPluginDescCFArrayEqualCallback(const void * inDesc1, const void * inDesc2)
+Boolean CFAUOtherPluginDescArrayEqualCallBack(const void * inDesc1, const void * inDesc2)
 {
 	return (memcmp(inDesc1, inDesc2, sizeof(AudioUnitOtherPluginDesc)) == 0);
 }
@@ -453,7 +443,7 @@ Boolean AUOtherPluginDescCFArrayEqualCallback(const void * inDesc1, const void *
 // That happens, for example, when using CFShow().  
 // This will create and return a CFString that indicates that the object is 
 // an AudioUnitOtherPluginDesc and shows each piece of its data.
-CFStringRef AUOtherPluginDescCFArrayCopyDescriptionCallback(const void * inDesc)
+CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
 {
 	AudioUnitOtherPluginDesc * desc = (AudioUnitOtherPluginDesc*) inDesc;
 	CFStringRef descriptionString = NULL;
@@ -513,37 +503,37 @@ CFStringRef AUOtherPluginDescCFArrayCopyDescriptionCallback(const void * inDesc)
 
 //-----------------------------------------------------------------------------
 // this will initialize a CFArray callbacks structure to use the above callback functions
-void AUOtherPluginDescCFArrayCallbacks_Init(CFArrayCallBacks * outArrayCallbacks)
+void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks)
 {
-	if (outArrayCallbacks == NULL)
+	if (outArrayCallBacks == NULL)
 		return;
 	// wipe the struct clean
-	memset(outArrayCallbacks, 0, sizeof(*outArrayCallbacks));
+	memset(outArrayCallBacks, 0, sizeof(*outArrayCallBacks));
 	// set all of the values and function pointers in the callbacks struct
-	outArrayCallbacks->version = 0;	// currently, 0 is the only valid version value for this
-	outArrayCallbacks->retain = AUOtherPluginDescCFArrayRetainCallback;
-	outArrayCallbacks->release = AUOtherPluginDescCFArrayReleaseCallback;
-	outArrayCallbacks->copyDescription = AUOtherPluginDescCFArrayCopyDescriptionCallback;
-	outArrayCallbacks->equal = AUOtherPluginDescCFArrayEqualCallback;
+	outArrayCallBacks->version = 0;	// currently, 0 is the only valid version value for this
+	outArrayCallBacks->retain = CFAUOtherPluginDescArrayRetainCallBack;
+	outArrayCallBacks->release = CFAUOtherPluginDescArrayReleaseCallBack;
+	outArrayCallBacks->copyDescription = CFAUOtherPluginDescArrayCopyDescriptionCallBack;
+	outArrayCallBacks->equal = CFAUOtherPluginDescArrayEqualCallBack;
 }
 
 //-----------------------------------------------------------------------------
 #ifdef __GNUC__
-const CFArrayCallBacks kAUOtherPluginDescCFArrayCallbacks;
-static void kAUOtherPluginDescCFArrayCallbacks_constructor() __attribute__((constructor));
-static void kAUOtherPluginDescCFArrayCallbacks_constructor()
+const CFArrayCallBacks kCFAUOtherPluginDescArrayCallBacks;
+static void kCFAUOtherPluginDescArrayCallBacks_constructor() __attribute__((constructor));
+static void kCFAUOtherPluginDescArrayCallBacks_constructor()
 {
-	AUOtherPluginDescCFArrayCallbacks_Init( (CFArrayCallBacks*) &kAUOtherPluginDescCFArrayCallbacks );
+	CFAUOtherPluginDescArrayCallBacks_Init( (CFArrayCallBacks*) &kCFAUOtherPluginDescArrayCallBacks );
 }
 #else
 // XXX I'll use this for other compilers, even though I hate initializing structs with all arguments at once 
-// (cuz what if I ever decided to change the order of the struct members or something like that?)
-const CFArrayCallBacks kAUOtherPluginDescCFArrayCallbacks = {
+// (cuz what if you ever decide to change the order of the struct members or something like that?)
+const CFArrayCallBacks kCFAUOtherPluginDescArrayCallBacks = {
 	0, 
-	AUOtherPluginDescCFArrayRetainCallback, 
-	AUOtherPluginDescCFArrayReleaseCallback, 
-	AUOtherPluginDescCFArrayCopyDescriptionCallback, 
-	AUOtherPluginDescCFArrayEqualCallback
+	CFAUOtherPluginDescArrayRetainCallBack, 
+	CFAUOtherPluginDescArrayReleaseCallBack, 
+	CFAUOtherPluginDescArrayCopyDescriptionCallBack, 
+	CFAUOtherPluginDescArrayEqualCallBack
 };
 #endif
 
@@ -552,7 +542,8 @@ const CFArrayCallBacks kAUOtherPluginDescCFArrayCallbacks = {
 
 
 
-#pragma mark _________Parameter_Change_Notifications_________
+#pragma mark -
+#pragma mark Parameter Change Notifications
 
 //--------------------------------------------------------------------------
 // These are convenience functions for sending parameter change notifications 
@@ -602,7 +593,8 @@ void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitP
 
 
 
-#pragma mark _________AU_Plugin_Name_And_Manufacturer_Name_________
+#pragma mark -
+#pragma mark AU Plugin Name And Manufacturer Name
 
 //-----------------------------------------------------------------------------
 //Tthis is a wrapper function for GetAUNameAndManufacturerCStrings, 
@@ -671,7 +663,6 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 	if (error != noErr)
 		return error;
 	// dereferencing the name resource handle gives us a Pascal string pointer
-	HLock(componentNameHandle);
 	componentFullNamePString = (ConstStr255Param) (*componentNameHandle);
 	if (componentFullNamePString == NULL)
 		error = nilHandleErr;
@@ -715,7 +706,8 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 
 
 
-#pragma mark _________Comparing_Components_________
+#pragma mark -
+#pragma mark Comparing Components
 
 //--------------------------------------------------------------------------
 // general implementation for ComponentDescriptionsMatch() and ComponentDescriptionsMatch_Loosely()
@@ -796,7 +788,8 @@ Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const Compon
 
 
 
-#pragma mark _________System_Services_Availability_________
+#pragma mark -
+#pragma mark System Services Availability
 
 //--------------------------------------------------------------------------
 // check the version of Mac OS installed
