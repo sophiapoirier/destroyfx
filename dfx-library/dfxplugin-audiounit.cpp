@@ -1,8 +1,8 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
 This is where we connect the Audio Unit API to our DfxPlugin system.
-written by Marc Poirier, October 2002
+written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #include "dfxplugin.h"
@@ -308,8 +308,9 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			{
 				if (inScope != kAudioUnitScope_Global)
 					result = kAudioUnitErr_InvalidScope;
-				else if (inElement != 0)
-					result = kAudioUnitErr_InvalidElement;
+				// XXX the Cocoa Generic AUView sends bogus element values for this property, so ignore it
+//				else if (inElement != 0)
+//					result = kAudioUnitErr_InvalidElement;
 				else
 				{
 					AudioUnitParameterNameInfo * ioClumpInfo = (AudioUnitParameterNameInfo*) outData;
@@ -1018,16 +1019,8 @@ ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
 	if (outData == NULL)
 		return noErr;
 
-#if 0
-	// setup up the callbacks for the CFArray's value handling
-	CFArrayCallBacks arrayCallbacks;
-	AUPresetCFArrayCallbacks_Init(&arrayCallbacks);
-	// ...and then allocate a mutable array large enough to hold them all
-	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, &arrayCallbacks);
-#else
 	// allocate a mutable array large enough to hold them all
-	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, &kAUPresetCFArrayCallbacks);
-#endif
+	CFMutableArrayRef outArray = CFArrayCreateMutable(kCFAllocatorDefault, outNumPresets, &kCFAUPresetArrayCallBacks);
 	if (outArray == NULL)
 	{
 		*outData = NULL;
