@@ -1,4 +1,4 @@
-/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+/*------------------- by Sophia Poirier  ][  January 2002 ------------------*/
 
 #ifndef __DFX_LFO_H
 #define __DFX_LFO_H
@@ -37,9 +37,6 @@ const long SQUARE_HALF_POINT = NUM_LFO_POINTS / 2;	// the point in the table whe
 const long LFO_SMOOTH_DUR = 48;
 const float LFO_SMOOTH_STEP = 1.0f / (float)LFO_SMOOTH_DUR;
 
-// this scales the return of processLFO() from 0.0 - 1.0 output to 0.0 - 2.0 (oscillating around 1.0)
-#define processLFOzero2two(A)   ( ((A)->processLFO() * 2.0f) - (A)->fDepth + 1.0f );
-
 
 //----------------------------------------------------------------------------- 
 class LFO
@@ -53,10 +50,10 @@ public:
 
 	void pickTheLFOwaveform();
 	void getShapeName(char * outNameString);
-	void getShapeNameIndexed(long index, char * outNameString);
-	const char * getShapeNameIndexed_ptr(long index);
+	void getShapeNameIndexed(long inIndex, char * outNameString);
+	const char * getShapeNameIndexed_ptr(long inIndex);
 
-	void syncToTheBeat(long samplesToBar);
+	void syncToTheBeat(long inSamplesToBar);
 
 	// the LFO waveform tables
 	float * sineTable, * triangleTable, * squareTable, * sawTable, * reverseSawTable, * thornTable;
@@ -83,10 +80,10 @@ public:
 	//--------------------------------------------------------------------------------------
 	// This function wraps around the LFO table position when it passes the cycle end.
 	// It also sets up the smoothing counter if a discontiguous LFO waveform is being used.
-	void updatePosition(long numSteps = 1)
+	void updatePosition(long inNumSteps = 1)
 	{
 		// increment the LFO position tracker
-		position += (stepSize * (float)numSteps);
+		position += (stepSize * (float)inNumSteps);
 
 		if (position >= NUM_LFO_POINTS_FLOAT)
 		{
@@ -141,6 +138,13 @@ public:
 			outValue = table[(long)position];
 
 		return (outValue * fDepth);
+	}
+
+	//--------------------------------------------------------------------------------------
+	// this scales the return of processLFO() from 0.0 - 1.0 output to 0.0 - 2.0 (oscillating around 1.0)
+	float processLFOzero2two()
+	{
+		return ( (processLFO() * 2.0f) - fDepth + 1.0f );
 	}
 
 };
