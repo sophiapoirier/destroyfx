@@ -1,34 +1,33 @@
-/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+/*------------------- by Sophia Poirier  ][  January 2002 ------------------*/
 
-#ifndef __dfx_firfilter_h
-#define __dfx_firfilter_h
+#ifndef __DFX_FIR_FILTER_H
+#define __DFX_FIR_FILTER_H
 
 
-#define PI   3.1415926535897932384626433832795f
-#define SHELF_START_FIR   0.333f
+const float SHELF_START_FIR = 0.333f;
 
 
 //-----------------------------------------------------------------------------
-void calculateFIRidealLowpassCoefficients(float cutoff, float samplerate, 
-											long numTaps, float * coefficients);
-void applyKaiserWindow(long numTaps, float * coefficients, float attenuation);
+void calculateFIRidealLowpassCoefficients(float inCutoff, float inSampleRate, 
+											long inNumTaps, float * inCoefficients);
+void applyKaiserWindow(long inNumTaps, float * inCoefficients, float inAttenuation);
 float besselIzero(float input);
 float besselIzero2(float input);
 
 //-----------------------------------------------------------------------------
-inline float processFIRfilter(float * inStream, long numTaps, float * coefficients, 
-								long inPos, long arraySize)
+inline float processFIRfilter(float * inAudio, long inNumTaps, float * inCoefficients, 
+								long inPos, long inBufferSize)
 {
 	float outval = 0.0f;
-	if ( (inPos+numTaps) > arraySize )
+	if ( (inPos+inNumTaps) > inBufferSize )
 	{
-		for (long i=0; i < numTaps; i++)
-			outval += inStream[(inPos+i)%arraySize] * coefficients[i];
+		for (long i=0; i < inNumTaps; i++)
+			outval += inAudio[ (inPos + i) % arraySize] * inCoefficients[i];
 	}
 	else
 	{
-		for (long i=0; i < numTaps; i++)
-			outval += inStream[inPos+i] * coefficients[i];
+		for (long i=0; i < inNumTaps; i++)
+			outval += inAudio[inPos+i] * inCoefficients[i];
 	}
 	return outval;
 } 
