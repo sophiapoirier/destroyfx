@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our mutex shit.
 ------------------------------------------------------------------------*/
 
@@ -10,7 +10,7 @@ This is our mutex shit.
 #if WIN32
 	// Win32 API
 	#include <Windows.h>
-#elif MAC && !defined(__MACH__)
+#elif TARGET_OS_MAC && !defined(__MACH__)
 	// Multiprocessing Services
 	#include <Multiprocessing.h>
 #else
@@ -32,8 +32,8 @@ public:
 private:
 
 #if WIN32
-	CRITICAL_SECTION c;
-#elif MAC && !defined(__MACH__)
+	CRITICAL_SECTION cs;
+#elif TARGET_OS_MAC && !defined(__MACH__)
 	MPCriticalRegionID mpcr;
 #else
 	pthread_mutex_t pmut;

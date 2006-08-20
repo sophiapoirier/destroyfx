@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our mutex shit.
 ------------------------------------------------------------------------*/
 
@@ -12,17 +12,17 @@ This is our mutex shit.
 
 DfxMutex::DfxMutex()
 {
-	InitializeCriticalSection(&c);
+	InitializeCriticalSection(&cs);
 }
 
 DfxMutex::~DfxMutex()
 {
-	DeleteCriticalSection(&c);
+	DeleteCriticalSection(&cs);
 }
 
 int DfxMutex::grab()
 {
-	EnterCriticalSection(&c);
+	EnterCriticalSection(&cs);
 	return 0;
 }
 
@@ -35,7 +35,7 @@ int DfxMutex::try_grab()
 
 int DfxMutex::release()
 {
-	LeaveCriticalSection(&c);
+	LeaveCriticalSection(&cs);
 	return 0;
 }
 

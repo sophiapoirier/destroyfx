@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------
-    Marc's Destroy FX MIDI stuff --- happened February 2001
+    Sophia's Destroy FX MIDI stuff --- happened February 2001
 ---------------------------------------------------------------*/
 
 #include "dfxmidi.h"
@@ -132,26 +132,26 @@ void DfxMidi::postprocessEvents()
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::clearTail(int currentNote)
+void DfxMidi::clearTail(int inCurrentNote)
 {
 	for (int i=0; i < STOLEN_NOTE_FADE_DUR; i++)
-		noteTable[currentNote].tail1[i] = 0.0f;
+		noteTable[inCurrentNote].tail1[i] = 0.0f;
 	for (int j=0; j < STOLEN_NOTE_FADE_DUR; j++)
-		noteTable[currentNote].tail2[j] = 0.0f;
+		noteTable[inCurrentNote].tail2[j] = 0.0f;
 }
 
 //-----------------------------------------------------------------------------------------
 // this function fills a table with the correct frequency for every MIDI note
 void DfxMidi::fillFrequencyTable()
 {
-	double A = 6.875;	// A
-	A *= NOTE_UP_SCALAR;	// A#
-	A *= NOTE_UP_SCALAR;	// B
-	A *= NOTE_UP_SCALAR;	// C, frequency of midi note 0
-	for (int i = 0; (i < NUM_NOTES); i++)	// 128 midi notes
+	double baseNote = 6.875;	// A
+	baseNote *= NOTE_UP_SCALAR;	// A#
+	baseNote *= NOTE_UP_SCALAR;	// B
+	baseNote *= NOTE_UP_SCALAR;	// C, frequency of midi note 0
+	for (int i = 0; i < NUM_NOTES; i++)	// 128 midi notes
 	{
-		freqTable[i] = A;
-		A *= NOTE_UP_SCALAR;
+		freqTable[i] = baseNote;
+		baseNote *= NOTE_UP_SCALAR;
 	}
 }
 
@@ -173,7 +173,7 @@ void DfxMidi::fillFadeTable()
 
 //-----------------------------------------------------------------------------
 // this function inserts a new note into the beginning of the active notes queue
-void DfxMidi::insertNote(int currentNote)
+void DfxMidi::insertNote(int inCurrentNote)
 {
 	// first check whether this note is already active (could happen in weird sequencers, like Max for example)
 	for (int notecount = 0; notecount < NUM_NOTES; notecount++)
@@ -182,7 +182,7 @@ void DfxMidi::insertNote(int currentNote)
 		if (noteQueue[notecount] < 0)
 			break;
 		// the current note is already active ...
-		if (noteQueue[notecount] == currentNote)
+		if (noteQueue[notecount] == inCurrentNote)
 		{
 			// ... so shift all of the notes before it up one position ...
 			while (notecount > 0)
@@ -191,7 +191,7 @@ void DfxMidi::insertNote(int currentNote)
 				notecount--;
 			}
 			// ... and then re-insert the current note as the first note
-			noteQueue[0] = currentNote;
+			noteQueue[0] = inCurrentNote;
 			return;
 		}
 	}
@@ -200,18 +200,18 @@ void DfxMidi::insertNote(int currentNote)
 	for (int nc = NUM_NOTES - 1; nc > 0; nc--)
 		noteQueue[nc] = noteQueue[nc - 1];
 	// then place the new note into the first position
-	noteQueue[0] = currentNote;
+	noteQueue[0] = inCurrentNote;
 }
 
 //-----------------------------------------------------------------------------
 // this function removes a note from the active notes queue
-void DfxMidi::removeNote(int currentNote)
+void DfxMidi::removeNote(int inCurrentNote)
 {
 	bool doShift = false;
 	for (int notecount = 0; notecount < (NUM_NOTES-1); notecount++)
 	{
 		// don't do anything until the note to delete is found
-		if (noteQueue[notecount] == currentNote)
+		if (noteQueue[notecount] == inCurrentNote)
 			doShift = true;
 		// start shifting notes down past the point of the deleted note
 		if (doShift)
@@ -248,91 +248,91 @@ bool DfxMidi::incNumEvents()
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleNoteOn(int channel, int note, int velocity, long frameOffset)
+void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
 {
 	blockEvents[numBlockEvents].status = kMidiNoteOn;
-	blockEvents[numBlockEvents].channel = channel;
-	blockEvents[numBlockEvents].byte1 = note;
-	blockEvents[numBlockEvents].byte2 = velocity;
-	blockEvents[numBlockEvents].delta = frameOffset;
+	blockEvents[numBlockEvents].channel = inMidiChannel;
+	blockEvents[numBlockEvents].byte1 = inNoteNumber;
+	blockEvents[numBlockEvents].byte2 = inVelocity;
+	blockEvents[numBlockEvents].delta = inBufferOffset;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleNoteOff(int channel, int note, int velocity, long frameOffset)
+void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
 {
 	blockEvents[numBlockEvents].status = kMidiNoteOff;
-	blockEvents[numBlockEvents].channel = channel;
-	blockEvents[numBlockEvents].byte1 = note;
-	blockEvents[numBlockEvents].byte2 = velocity;
-	blockEvents[numBlockEvents].delta = frameOffset;
+	blockEvents[numBlockEvents].channel = inMidiChannel;
+	blockEvents[numBlockEvents].byte1 = inNoteNumber;
+	blockEvents[numBlockEvents].byte2 = inVelocity;
+	blockEvents[numBlockEvents].delta = inBufferOffset;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleAllNotesOff(int channel, long frameOffset)
+void DfxMidi::handleAllNotesOff(int inMidiChannel, long inBufferOffset)
 {
 	blockEvents[numBlockEvents].status = kMidiCC;
 	blockEvents[numBlockEvents].byte1 = kMidiCC_AllNotesOff;
-	blockEvents[numBlockEvents].channel = channel;
-	blockEvents[numBlockEvents].delta = frameOffset;
+	blockEvents[numBlockEvents].channel = inMidiChannel;
+	blockEvents[numBlockEvents].delta = inBufferOffset;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handlePitchBend(int channel, int valueLSB, int valueMSB, long frameOffset)
+void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset)
 {
 	blockEvents[numBlockEvents].status = kMidiPitchbend;
-	blockEvents[numBlockEvents].channel = channel;
-	blockEvents[numBlockEvents].byte1 = valueLSB;
-	blockEvents[numBlockEvents].byte2 = valueMSB;
-	blockEvents[numBlockEvents].delta = frameOffset;
+	blockEvents[numBlockEvents].channel = inMidiChannel;
+	blockEvents[numBlockEvents].byte1 = inValueLSB;
+	blockEvents[numBlockEvents].byte2 = inValueMSB;
+	blockEvents[numBlockEvents].delta = inBufferOffset;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleCC(int channel, int controllerNum, int value, long frameOffset)
+void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset)
 {
 	// only handling sustain pedal for now...
-	if (controllerNum == kMidiCC_SustainPedalOnOff)
+	if (inControllerNumber == kMidiCC_SustainPedalOnOff)
 	{
 		blockEvents[numBlockEvents].status = kMidiCC;
-		blockEvents[numBlockEvents].byte1 = controllerNum;
-		blockEvents[numBlockEvents].channel = channel;
-		blockEvents[numBlockEvents].byte2 = value;	// <= 63 is off, >= 64 is on
-		blockEvents[numBlockEvents].delta = frameOffset;
+		blockEvents[numBlockEvents].byte1 = inControllerNumber;
+		blockEvents[numBlockEvents].channel = inMidiChannel;
+		blockEvents[numBlockEvents].byte2 = inValue;	// <= 63 is off, >= 64 is on
+		blockEvents[numBlockEvents].delta = inBufferOffset;
 		incNumEvents();
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleProgramChange(int channel, int programNum, long frameOffset)
+void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, long inBufferOffset)
 {
 	blockEvents[numBlockEvents].status = kMidiProgramChange;
-	blockEvents[numBlockEvents].channel = channel;
-	blockEvents[numBlockEvents].byte1 = programNum;
-	blockEvents[numBlockEvents].delta = frameOffset;
+	blockEvents[numBlockEvents].channel = inMidiChannel;
+	blockEvents[numBlockEvents].byte1 = inProgramNumber;
+	blockEvents[numBlockEvents].delta = inBufferOffset;
 	incNumEvents();
 }
 
 
 //-----------------------------------------------------------------------------------------
 // this function is called during process() when MIDI events need to be attended to
-void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange, float attack, 
-							float release, bool legato, float velCurve, float velInfluence)
+void DfxMidi::heedEvents(long inEventNum, float inSampleRate, double inPitchbendRange, float inAttackDur, 
+							float inReleaseDur, bool inLegato, float inVelocityCurve, float inVelocityInfluence)
 {
-	switch (blockEvents[eventNum].status)
+	switch (blockEvents[inEventNum].status)
 	{
 
 // --- NOTE-ON RECEIVED ---
 		case kMidiNoteOn:
 			{
-				int currentNote = blockEvents[eventNum].byte1;
-				noteTable[currentNote].velocity = blockEvents[eventNum].byte2;
-				noteTable[currentNote].noteAmp = ( (float)pow(MIDI_SCALAR * (float)(noteTable[currentNote].velocity), velCurve) * 
-												velInfluence ) + (1.0f - velInfluence);
+				int currentNote = blockEvents[inEventNum].byte1;
+				noteTable[currentNote].velocity = blockEvents[inEventNum].byte2;
+				noteTable[currentNote].noteAmp = ( (float)pow(MIDI_SCALAR * (float)(noteTable[currentNote].velocity), inVelocityCurve) * 
+												inVelocityInfluence ) + (1.0f - inVelocityInfluence);
 				//
-				if (legato)	// legato is on, fade out the last not and fade in the new one, supershort
+				if (inLegato)	// legato is on, fade out the last not and fade in the new one, supershort
 				{
 					// this is false until we find some already active note
 					bool legatoNoteFound = false;
@@ -372,10 +372,10 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 					}
 				}
 				//
-				else	//legato is off, so set up for the attack envelope
+				else	// legato is off, so set up for the attack envelope
 				{
 					// calculate the duration, in samples, for the attack
-					long attackdur = (long) (attack * SAMPLERATE);
+					long attackdur = (long) (inAttackDur * inSampleRate);
 					noteTable[currentNote].attackDur = attackdur;
 					if (attackdur)	// avoid potential division by zero
 					{
@@ -407,12 +407,12 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 // --- NOTE-OFF RECEIVED ---
 		case kMidiNoteOff:
 			{
-				int currentNote = blockEvents[eventNum].byte1;
+				int currentNote = blockEvents[inEventNum].byte1;
 				// don't process this note off, but do remember it, if the sustain pedal is on
 				if (sustain)
 					sustainQueue[currentNote] = true;
 				else
-					turnOffNote(currentNote, release, legato, SAMPLERATE);
+					turnOffNote(currentNote, inReleaseDur, inLegato, inSampleRate);
 			}
 			break;
 
@@ -421,7 +421,7 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 // --- PITCHBEND RECEIVED ---
 		case kMidiPitchbend:
 			{
-				long pitchbend14bit = (blockEvents[eventNum].byte2 * 0x80) + blockEvents[eventNum].byte1;
+				long pitchbend14bit = (blockEvents[inEventNum].byte2 * 0x80) + blockEvents[inEventNum].byte1;
 				// no bend
 				if (pitchbend14bit == kDfxMidi_PitchbendMiddleValue)
 				{
@@ -433,7 +433,7 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 					// scale the MIDI value from 0.0 to 1.0
 					pitchbend = (double)(pitchbend14bit - kDfxMidi_PitchbendMiddleValue) / (double)(kDfxMidi_PitchbendMiddleValue - 1);
 					// then scale it according to tonal steps and the user defined range
-					pitchbend = pow(NOTE_UP_SCALAR, pitchbend*pitchbendRange);
+					pitchbend = pow(NOTE_UP_SCALAR, pitchbend*inPitchbendRange);
 				}
 				// bend pitch down
 				else
@@ -441,7 +441,7 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 					// scale the MIDI value from 1.0 to 0.0
 					pitchbend = (double)(-(pitchbend14bit - kDfxMidi_PitchbendMiddleValue)) / (double)kDfxMidi_PitchbendMiddleValue;
 					// then scale it according to tonal steps and the user defined range
-					pitchbend = pow(NOTE_DOWN_SCALAR, pitchbend*pitchbendRange);
+					pitchbend = pow(NOTE_DOWN_SCALAR, pitchbend*inPitchbendRange);
 				}
 			}
 			break;
@@ -451,22 +451,22 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 // --- CONTROLLER CHANGE RECEIVED ---
 		case kMidiCC:
 		{
-			switch (blockEvents[eventNum].byte1)
+			switch (blockEvents[inEventNum].byte1)
 			{
 	// --- SUSTAIN PEDAL RECEIVED ---
 				case kMidiCC_SustainPedalOnOff:
-					if ( sustain && (blockEvents[eventNum].byte2 <= 63) )
+					if ( sustain && (blockEvents[inEventNum].byte2 <= 63) )
 					{
 						for (int i=0; i < NUM_NOTES; i++)
 						{
 							if (sustainQueue[i])
 							{
-								turnOffNote(i, release, legato, SAMPLERATE);
+								turnOffNote(i, inReleaseDur, inLegato, inSampleRate);
 								sustainQueue[i] = false;
 							}
 						}
 					}
-					sustain = (blockEvents[eventNum].byte2 >= 64);
+					sustain = (blockEvents[inEventNum].byte2 >= 64);
 					break;
 
 	// --- ALL-NOTES-OFF RECEIVED ---
@@ -496,34 +496,34 @@ void DfxMidi::heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange,
 
 
 //-----------------------------------------------------------------------------------------
-void DfxMidi::turnOffNote(int currentNote, float release, bool legato, float SAMPLERATE)
+void DfxMidi::turnOffNote(int inCurrentNote, float inReleaseDur, bool inLegato, float inSampleRate)
 {
 	// legato is off (note-offs are ignored when it's on)
 	// go into the note release if legato is off and the note isn't already off
-	if ( (!legato) && (noteTable[currentNote].velocity > 0) )
+	if ( (!inLegato) && (noteTable[inCurrentNote].velocity > 0) )
 	{
 		// calculate the duration, in samples, for the release
-		long releasedur = (long)(release * SAMPLERATE);
-		noteTable[currentNote].releaseDur = releasedur;
+		long releasedur = (long)(inReleaseDur * inSampleRate);
+		noteTable[inCurrentNote].releaseDur = releasedur;
 		// this note is already sounding and in attack, so pick up from where it is
-		if (noteTable[currentNote].attackDur)
-			noteTable[currentNote].releaseSamples = (long) 
-				( (float)(noteTable[currentNote].attackSamples) / (float)(noteTable[currentNote].attackDur) * (float)releasedur );
+		if (noteTable[inCurrentNote].attackDur)
+			noteTable[inCurrentNote].releaseSamples = (long) 
+				( (float)(noteTable[inCurrentNote].attackSamples) / (float)(noteTable[inCurrentNote].attackDur) * (float)releasedur );
 		else	// regular
-			noteTable[currentNote].releaseSamples = releasedur;
+			noteTable[inCurrentNote].releaseSamples = releasedur;
 		if (releasedur)	// avoid potential division by zero
 		{
 			// calculate how far this fade must "step" through the fade table at each sample
-			noteTable[currentNote].fadeTableStep = (float)NUM_FADE_POINTS / (float)releasedur;
-			noteTable[currentNote].linearFadeStep = 1.0f / (float)releasedur;
+			noteTable[inCurrentNote].fadeTableStep = (float)NUM_FADE_POINTS / (float)releasedur;
+			noteTable[inCurrentNote].linearFadeStep = 1.0f / (float)releasedur;
 		}
 		// make sure to turn the note off NOW if there is no release
 		else
-			noteTable[currentNote].velocity = 0;
+			noteTable[inCurrentNote].velocity = 0;
 	}
 	// we're at note off, so wipe out the attack info
-	noteTable[currentNote].attackDur = 0;
-	noteTable[currentNote].attackSamples = 0;
+	noteTable[inCurrentNote].attackDur = 0;
+	noteTable[inCurrentNote].attackSamples = 0;
 }
 
 
