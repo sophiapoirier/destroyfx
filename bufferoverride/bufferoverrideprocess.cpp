@@ -1,4 +1,4 @@
-/*------------------- by Marc Poirier  ][  March 2001 -------------------*/
+/*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
 
 #include "bufferoverride.hpp"
 
@@ -30,8 +30,8 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	bufferLFO->updatePosition(prevMinibufferSize);
 	// Then get the current output values of the LFOs, which also updates their positions once more.  
 	// Scale the 0.0 - 1.0 LFO output values to 0.0 - 2.0 (oscillating around 1.0).
-	float divisorLFOvalue = processLFOzero2two(divisorLFO);
-	float bufferLFOvalue = 2.0f - processLFOzero2two(bufferLFO);	// inverting it makes more pitch sense
+	float divisorLFOvalue = divisorLFO->processLFOzero2two();
+	float bufferLFOvalue = 2.0f - bufferLFO->processLFOzero2two();	// inverting it makes more pitch sense
 	// and then update the stepSize for each LFO, in case the LFO parameters have changed
 	if (divisorLFO->bTempoSync)
 		divisorLFO->stepSize = currentTempoBPS * divisorLFO->fTempoRate * numLFOpointsDivSR;
