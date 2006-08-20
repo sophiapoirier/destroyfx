@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier and Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our math shit.
-written by Tom Murphy 7 and Marc Poirier, 2001 - 2003
+written by Tom Murphy 7 and Sophia Poirier, 2001 - 2003
 ------------------------------------------------------------------------*/
 
 
@@ -25,16 +25,16 @@ written by Tom Murphy 7 and Marc Poirier, 2001 - 2003
 //-----------------------------------------------------------------------------
 // constants and macros
 
-inline float linear2dB(float linearValue)
+inline float linear2dB(float inLinearValue)
 {
-	return 20.0f * log10f(linearValue);
+	return 20.0f * log10f(inLinearValue);
 }
 
 #ifndef PI
-#define PI 3.1415926535897932384626433832795f
+	#define PI	3.1415926535897932384626433832795f
 #endif
 #ifndef PId
-#define PId 3.1415926535897932384626433832795
+	#define PId	3.1415926535897932384626433832795
 #endif
 
 // reduces wasteful casting and division
@@ -44,18 +44,18 @@ const double ONE_DIV_RAND_MAX_D = 1.0 / (double)RAND_MAX;
 #define randDouble()   ( (double)rand() * ONE_DIV_RAND_MAX_D )
 
 #ifndef clip
-#define clip(fval)   (if (fval < -1.0f) fval = -1.0f; else if (fval > 1.0f) fval = 1.0f)
+	#define clip(fval)   (if (fval < -1.0f) fval = -1.0f; else if (fval > 1.0f) fval = 1.0f)
 #endif
 
-inline float fsign(float fval)
+inline float fsign(float inValue)
 {
-	return (fval < 0.0f) ? -1.0f : 1.0f;
+	return (inValue < 0.0f) ? -1.0f : 1.0f;
 }
 
 #ifndef undenormalize
-#define undenormalize(dval)   if (fabs(dval) < 1.0e-15)   dval = 0.0
-//#define undenormalize(fval)	if ( ((*((unsigned int*)&fval)) & 0x7f800000) == 0 )   fval = 0.0f
-//#define IS_DENORMAL(fval)   ( (*((unsigned int*)&fval)) & 0x7f800000) == 0 )
+	#define undenormalize(dval)   if (fabs(dval) < 1.0e-15)   dval = 0.0
+//	#define undenormalize(fval)	if ( ((*((unsigned int*)&fval)) & 0x7f800000) == 0 )   fval = 0.0f
+//	#define IS_DENORMAL(fval)   ( (*((unsigned int*)&fval)) & 0x7f800000) == 0 )
 #endif
 
 
@@ -63,24 +63,24 @@ inline float fsign(float fval)
 //-----------------------------------------------------------------------------
 // inline functions
 
-inline float interpolateHermite(float * inData, double inAddress, long inArraySize)
+inline float interpolateHermite(float * inData, double inAddress, long inBufferSize)
 {
 	long pos = (long)inAddress;
 	float posFract = (float) (inAddress - (double)pos);
 
 #if 0	// XXX test performance using fewer variables/registers
-	long posMinus1 = (pos == 0) ? inArraySize-1 : pos-1;
-	long posPlus1 = (pos+1) % inArraySize;
-	long posPlus2 = (pos+2) % inArraySize;
+	long posMinus1 = (pos == 0) ? inBufferSize-1 : pos-1;
+	long posPlus1 = (pos+1) % inBufferSize;
+	long posPlus2 = (pos+2) % inBufferSize;
 
 	return (( (((((3.0f*(inData[pos]-inData[posPlus1])) - inData[posMinus1] + inData[posPlus2]) * 0.5f) * posFract)
 				+ ((2.0f*inData[posPlus1]) + inData[posMinus1] - (2.5f*inData[pos]) - (inData[posPlus2]*0.5f))) * 
 				posFract + ((inData[posPlus1] - inData[posMinus1]) * 0.5f) ) * posFract) + inData[pos];
 
 #elif 1	// XXX also test using float variables of inData[] rather than looking up with posMinus1, etc.
-	float dataPosMinus1 = inData[ (pos == 0) ? inArraySize-1 : pos-1 ];
-	float dataPosPlus1 = inData[ (pos+1) % inArraySize ];
-	float dataPosPlus2 = inData[ (pos+2) % inArraySize ];
+	float dataPosMinus1 = inData[ (pos == 0) ? inBufferSize-1 : pos-1 ];
+	float dataPosPlus1 = inData[ (pos+1) % inBufferSize ];
+	float dataPosPlus2 = inData[ (pos+2) % inBufferSize ];
 
 	float a = ( (3.0f*(inData[pos]-dataPosPlus1)) - dataPosMinus1 + dataPosPlus2 ) * 0.5f;
 	float b = (2.0f*dataPosPlus1) + dataPosMinus1 - (2.5f*inData[pos]) - (dataPosPlus2*0.5f);
@@ -89,9 +89,9 @@ inline float interpolateHermite(float * inData, double inAddress, long inArraySi
 	return (( ((a*posFract)+b) * posFract + c ) * posFract) + inData[pos];
 
 #else
-	long posMinus1 = (pos == 0) ? inArraySize-1 : pos-1;
-	long posPlus1 = (pos+1) % inArraySize;
-	long posPlus2 = (pos+2) % inArraySize;
+	long posMinus1 = (pos == 0) ? inBufferSize-1 : pos-1;
+	long posPlus1 = (pos+1) % inBufferSize;
+	long posPlus2 = (pos+2) % inBufferSize;
 
 	float a = ( (3.0f*(inData[pos]-inData[posPlus1])) - inData[posMinus1] + inData[posPlus2] ) * 0.5f;
 	float b = (2.0f*inData[posPlus1]) + inData[posMinus1] - (2.5f*inData[pos]) - (inData[posPlus2]*0.5f);
@@ -101,14 +101,14 @@ inline float interpolateHermite(float * inData, double inAddress, long inArraySi
 #endif
 }
 
-inline float interpolateHermite_noWrap(float * inData, double inAddress, long inArraySize)
+inline float interpolateHermite_noWrap(float * inData, double inAddress, long inBufferSize)
 {
 	long pos = (long)inAddress;
 	float posFract = (float) (inAddress - (double)pos);
 
 	float dataPosMinus1 = (pos == 0) ? 0.0f : inData[pos-1];
-	float dataPosPlus1 = ((pos+1) == inArraySize) ? 0.0f : inData[pos+1];
-	float dataPosPlus2 = ((pos+2) >= inArraySize) ? 0.0f : inData[pos+2];
+	float dataPosPlus1 = ((pos+1) == inBufferSize) ? 0.0f : inData[pos+1];
+	float dataPosPlus2 = ((pos+2) >= inBufferSize) ? 0.0f : inData[pos+2];
 
 	float a = ( (3.0f*(inData[pos]-dataPosPlus1)) - dataPosMinus1 + dataPosPlus2 ) * 0.5f;
 	float b = (2.0f*dataPosPlus1) + dataPosMinus1 - (2.5f*inData[pos]) - (dataPosPlus2*0.5f);
@@ -117,23 +117,23 @@ inline float interpolateHermite_noWrap(float * inData, double inAddress, long in
 	return (( ((a*posFract)+b) * posFract + c ) * posFract) + inData[pos];
 }
 
-inline float interpolateLinear(float * inData, double inAddress, long inArraySize)
+inline float interpolateLinear(float * inData, double inAddress, long inBufferSize)
 {
 	long pos = (long)inAddress;
 	float posFract = (float) (inAddress - (double)pos);
 	return (inData[pos] * (1.0f-posFract)) + (inData[(pos+1)%inArraySize] * posFract);
 }
 
-inline float interpolateRandom(float randMin, float randMax)
+inline float interpolateRandom(float inMinValue, float inMaxValue)
 {
 	float randy = (float)rand() * ONE_DIV_RAND_MAX;
-	return ((randMax-randMin) * randy) + randMin;
+	return ((inMaxValue-inMinValue) * randy) + inMinValue;
 }
 
-inline float interpolateLinear2values(float point1, float point2, double inAddress)
+inline float interpolateLinear2values(float inValue1, float inValue2, double inAddress)
 {
 	float posFract = (float) (inAddress - (double)((long)inAddress));
-	return (point1 * (1.0f-posFract)) + (point2 * posFract);
+	return (inValue1 * (1.0f-posFract)) + (inValue2 * posFract);
 }
 
 // return the parameter with larger magnitude
@@ -144,27 +144,26 @@ inline float magmax(float a, float b) {
 
 // computes the principle branch of the Lambert W function
 //    { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
-inline double LambertW(double input)
+inline double LambertW(double inValue)
 {
-  double x = fabs(input);
-
+	double x = fabs(inValue);
 	if (x <= 500.0)
 		return 0.665 * ( 1.0 + (0.0195 * log(x+1.0)) ) * log(x+1.0) + 0.04;
 	else
 		return log(x-4.0) - ( (1.0 - 1.0/log(x)) * log(log(x)) );
 }
 
+/*
 //-----------------------------------------------------------------------------
 // I found this somewhere on the internet
-/*
-inline float anotherSqrt(float x)
+inline float anotherSqrt(float inValue)
 {
 	float result = 1.0f;
 	float store = 0.0f;
 	while (store != result)
 	{
 		store = result;
-		result = 0.5f * (result + (x / result));
+		result = 0.5f * (result + (inValue / result));
 	}
 }
 */
