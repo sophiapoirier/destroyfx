@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 These are our extended Audio Unit property IDs and types.  
-written by Marc Poirier, January 2003
+written by Sophia Poirier, January 2003
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_PROPERTIES_H

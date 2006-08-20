@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 This is our class for E-Z plugin-making and E-Z multiple-API support.
-written by Marc Poirier, October 2002
+written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
