@@ -1,4 +1,4 @@
-/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+/*------------------- by Sophia Poirier  ][  January 2002 ------------------*/
 
 #ifndef __DFX_TEMPORATETABLE_H
 #define __DFX_TEMPORATETABLE_H
@@ -25,46 +25,48 @@ public:
 	TempoRateTable(long inTypeOfTable = kNormalTempoRates);
 	~TempoRateTable()
 	{
-		if (scalars)
+		if (scalars != NULL)
 			free(scalars);
-		scalars = 0;
+		scalars = NULL;
 		for (int i=0; i < numTempoRates; i++)
 		{
-			if (displays[i])
+			if (displays[i] != NULL)
 				free(displays[i]);
+			displays[i] = NULL;
 		}
-		if (displays)
+		if (displays != NULL)
 			free(displays);
-		displays = 0;
+		displays = NULL;
 	}
 
-	float getScalar(long index)
-		{	return scalars[TempoRateTable::safeIndex(index)];	}
-	const char * getDisplay(long index)
-		{	return displays[TempoRateTable::safeIndex(index)];	}
-	float getScalar_gen(float genValue)
-		{	return scalars[TempoRateTable::float2index(genValue)];	}
-	char * getDisplay_gen(float genValue)
-		{	return displays[TempoRateTable::float2index(genValue)];	}
-	long getNumTempoRates() { return numTempoRates; }
-	long getNearestTempoRateIndex(float tempoRateValue);
+	float getScalar(long inIndex)
+		{	return scalars[TempoRateTable::safeIndex(inIndex)];	}
+	const char * getDisplay(long inIndex)
+		{	return displays[TempoRateTable::safeIndex(inIndex)];	}
+	float getScalar_gen(float inGenValue)
+		{	return scalars[TempoRateTable::float2index(inGenValue)];	}
+	char * getDisplay_gen(float inGenValue)
+		{	return displays[TempoRateTable::float2index(inGenValue)];	}
+	long getNumTempoRates()
+		{	return numTempoRates;	}
+	long getNearestTempoRateIndex(float inTempoRateValue);
 
 private:
-	long float2index(float f)
+	long float2index(float inValue)
 	{
-		if (f < 0.0f)
+		if (inValue < 0.0f)
 			return 0;
-		else if (f > 1.0f)
+		else if (inValue > 1.0f)
 			return numTempoRates-1;
-		return (long) (f * ((float)numTempoRates-0.9f));
+		return (long) (inValue * ((float)numTempoRates-0.9f));
 	}
-	long safeIndex(long index)
+	long safeIndex(long inIndex)
 	{
-		if (index < 0)
+		if (inIndex < 0)
 			return 0;
-		else if (index >= numTempoRates)
+		else if (inIndex >= numTempoRates)
 			return numTempoRates-1;
-		return index;
+		return inIndex;
 	}
 
 	float * scalars;

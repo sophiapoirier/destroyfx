@@ -1,4 +1,4 @@
-/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+/*------------------- by Sophia Poirier  ][  January 2002 ------------------*/
 
 #include "lfo.h"
 
@@ -24,7 +24,7 @@ LFO::LFO()
 	fillLFOtables();
 	table = sineTable;	// just to have it pointing to something at least
 
-	srand((unsigned int)time(NULL));	// sets a seed value for rand() from the system clock
+	srand( (unsigned int)time(NULL) );	// sets a seed value for rand() from the system clock
 
 	reset();
 }
@@ -118,9 +118,9 @@ void LFO::getShapeName(char * outNameString)
 }
 
 //--------------------------------------------------------------------------------------
-const char * LFO::getShapeNameIndexed_ptr(long index)
+const char * LFO::getShapeNameIndexed_ptr(long inIndex)
 {
-	switch (index)
+	switch (inIndex)
 	{
 		case kLFOshape_sine                : return "sine";
 		case kLFOshape_triangle            : return "triangle";
@@ -135,12 +135,12 @@ const char * LFO::getShapeNameIndexed_ptr(long index)
 }
 
 //--------------------------------------------------------------------------------------
-void LFO::getShapeNameIndexed(long index, char * outNameString)
+void LFO::getShapeNameIndexed(long inIndex, char * outNameString)
 {
 	if (outNameString == NULL)
 		return;
 
-	const char * shapename = getShapeNameIndexed_ptr(index);
+	const char * shapename = getShapeNameIndexed_ptr(inIndex);
 	if (shapename == NULL)
 		return;
 
@@ -180,12 +180,12 @@ void LFO::pickTheLFOwaveform()
 
 //--------------------------------------------------------------------------------------
 // calculates the position within an LFO's cycle needed to sync to the song's beat
-void LFO::syncToTheBeat(long samplesToBar)
+void LFO::syncToTheBeat(long inSamplesToBar)
 {
 	// calculate how many samples long the LFO cycle is
 	float cyclesize = NUM_LFO_POINTS_FLOAT / stepSize;
 	// calculate many more samples it will take for this cycle to coincide with the beat
-	float countdown = fmodf( (float)samplesToBar,  cyclesize);
+	float countdown = fmodf( (float)inSamplesToBar,  cyclesize);
 	// and convert that into the correct LFO position according to its table step size
 	position = (cyclesize - countdown) * stepSize;
 	// wrap around the new position if it is beyond the end of the LFO table
