@@ -1,8 +1,8 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
 This is where we connect the VST API to our DfxPlugin system.
-written by Marc Poirier, October 2002
+written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #include "dfxplugin.h"
@@ -11,7 +11,9 @@ written by Marc Poirier, October 2002
 
 
 
-#pragma mark _________init_________
+#pragma mark -
+#pragma mark init
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // this is called right before our plugin instance is destroyed
@@ -85,7 +87,9 @@ void DfxPlugin::setSampleRate(float newRate)
 
 
 
-#pragma mark _________info_________
+#pragma mark -
+#pragma mark info
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // this tells the host to keep calling process() for the duration of one buffer 
@@ -212,7 +216,9 @@ VstInt32 DfxPlugin::canDo(char * text)
 }
 
 
-#pragma mark _________programs_________
+#pragma mark -
+#pragma mark programs
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::setProgram(VstInt32 programNum)
@@ -287,7 +293,9 @@ VstInt32 DfxPlugin::setChunk(void * data, VstInt32 byteSize, bool isPreset)
 
 
 
-#pragma mark _________parameters_________
+#pragma mark -
+#pragma mark parameters
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::setParameter(VstInt32 index, float value)
@@ -352,7 +360,9 @@ void DfxPlugin::getParameterLabel(VstInt32 index, char * label)
 
 
 
-#pragma mark _________dsp_________
+#pragma mark -
+#pragma mark dsp
+#pragma mark -
 
 //-----------------------------------------------------------------------------------------
 void DfxPlugin::processReplacing(float ** inputs, float ** outputs, VstInt32 sampleFrames)
@@ -394,7 +404,9 @@ void DfxPlugin::process(float ** inputs, float ** outputs, VstInt32 sampleFrames
 
 
 
-#pragma mark _________MIDI_________
+#pragma mark -
+#pragma mark MIDI
+#pragma mark -
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------------------
