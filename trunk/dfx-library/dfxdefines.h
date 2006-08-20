@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 These are our general global defines and constants, to be included 
 somewhere in the include tree for every file for a DfxPlugin.
 ------------------------------------------------------------------------*/
@@ -28,7 +28,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 #define SMARTELECTRONIX_URL "http://smartelectronix.com/"
 /* XXX needs workaround for plugin names with white spaces */
 #ifndef PLUGIN_BUNDLE_IDENTIFIER
-#define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx."PLUGIN_NAME_STRING
+	#define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx."PLUGIN_NAME_STRING
 #endif
 
 #define DESTROYFX_ID 'DFX!'
@@ -69,7 +69,6 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 /*-----------------------------------------------------------------------------*/
 /* Windows stuff */
-#ifdef WIN32
 #if WIN32
 	#ifdef _MSC_VER
 		/* turn off warnings about default but no cases in switch, unknown pragma, etc. 
@@ -77,7 +76,6 @@ somewhere in the include tree for every file for a DfxPlugin.
 		#pragma warning( disable : 4065 57 4200 4244 4068 4326 )
 	#endif
 	#include <windows.h>
-#endif
 #endif
 
 
