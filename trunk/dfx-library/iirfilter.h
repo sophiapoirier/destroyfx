@@ -1,25 +1,20 @@
-/*------------------- by Marc Poirier  ][  December 2001 ------------------*/
+/*------------------- by Sophia Poirier  ][  December 2001 ------------------*/
 
-#ifndef __dfx_iirfilter_h
-#define __dfx_iirfilter_h
+#ifndef __DFX_IIR_FILTER_H
+#define __DFX_IIR_FILTER_H
 
 
-#ifndef PI
-#define PI   3.1415926535897932384626433832795f
-#endif
-
-#define SHELF_START_IIR   0.333f
+const float SHELF_START_IIR = 0.333f;
 
 
 class IIRfilter
 {
 public:
 	IIRfilter();
-	~IIRfilter();
 
-	void calculateLowpassCoefficients(float cutoff, float samplerate);
-	void calculateHighpassCoefficients(float cutoff, float samplerate);
-	void copyCoefficients(IIRfilter * source);
+	void calculateLowpassCoefficients(float inCutoff, float inSampleRate);
+	void calculateHighpassCoefficients(float inCutoff, float inSampleRate);
+	void copyCoefficients(IIRfilter * inSourceFilter);
 
 	void reset()
 	{
@@ -31,9 +26,9 @@ public:
 
 
 #ifdef USING_HERMITE
-	void process(float currentIn)
+	void process(float inSample)
 #else
-	float process(float currentIn)
+	float process(float inSample)
 #endif
 	{
 	#ifdef USING_HERMITE
@@ -43,13 +38,13 @@ public:
 		prevprevOut = prevOut;
 		prevOut = currentOut;
 
-//		currentOut = (currentIn*inCoeff) + (prevIn*pInCoeff) + (prevprevIn*ppInCoeff) 
+//		currentOut = (inSample*inCoeff) + (prevIn*pInCoeff) + (prevprevIn*ppInCoeff) 
 //					- (prevOut*pOutCoeff) - (prevprevOut*ppOutCoeff);
-		currentOut = ((currentIn+prevprevIn)*inCoeff) + (prevIn*pInCoeff) 
+		currentOut = ((inSample+prevprevIn)*inCoeff) + (prevIn*pInCoeff) 
 					- (prevOut*pOutCoeff) - (prevprevOut*ppOutCoeff);
 
 		prevprevIn = prevIn;
-		prevIn = currentIn;
+		prevIn = inSample;
 
 	#ifndef USING_HERMITE
 		return currentOut;
@@ -60,23 +55,23 @@ public:
 // start of pre-Hermite-specific functions
 // there are 4 versions, 3 of which unroll for loops of 2, 3, & 4 iterations
 
-	void processH1(float currentIn)
+	void processH1(float inSample)
 	{
 		prevprevprevOut = prevprevOut;
 		prevprevOut = prevOut;
 		prevOut = currentOut;
 		//
-		currentOut = ( (currentIn+prevprevIn) * inCoeff ) + (prevIn  * pInCoeff)
+		currentOut = ( (inSample+prevprevIn) * inCoeff ) + (prevIn  * pInCoeff)
 					- (prevOut * pOutCoeff) - (prevprevOut * ppOutCoeff);
 		//
 		prevprevIn = prevIn;
-		prevIn = currentIn;
+		prevIn = inSample;
 	}
 
-	void processH2(float * in, long inPos, long arraySize)
+	void processH2(float * inAudio, long inPos, long inBufferSize)
 	{
-	  float in0 = in[inPos];
-	  float in1 = in[(inPos+1) % arraySize];
+	  float in0 = inAudio[inPos];
+	  float in1 = inAudio[ (inPos + 1) % inBufferSize ];
 
 		prevprevprevOut = prevprevOut;
 		prevprevOut = prevOut;
@@ -94,11 +89,11 @@ public:
 		prevIn = in1;
 	}
 
-	void processH3(float * in, long inPos, long arraySize)
+	void processH3(float * inAudio, long inPos, long inBufferSize)
 	{
-	  float in0 = in[inPos];
-	  float in1 = in[(inPos+1) % arraySize];
-	  float in2 = in[(inPos+2) % arraySize];
+	  float in0 = inAudio[inPos];
+	  float in1 = inAudio[ (inPos + 1) % inBufferSize ];
+	  float in2 = inAudio[ (inPos + 2) % inBufferSize ];
 
 		prevprevprevOut = ( (in0+prevprevIn) * inCoeff ) + (prevIn * pInCoeff)
 						- (currentOut * pOutCoeff) - (prevOut * ppOutCoeff);
@@ -116,12 +111,12 @@ public:
 		prevIn = in2;
 	}
 
-	void processH4(float * in, long inPos, long arraySize)
+	void processH4(float * inAudio, long inPos, long inBufferSize)
 	{
-	  float in0 = in[inPos];
-	  float in1 = in[(inPos+1) % arraySize];
-	  float in2 = in[(inPos+2) % arraySize];
-	  float in3 = in[(inPos+3) % arraySize];
+	  float in0 = inAudio[inPos];
+	  float in1 = inAudio[ (inPos + 1) % inBufferSize ];
+	  float in2 = inAudio[ (inPos + 2) % inBufferSize ];
+	  float in3 = inAudio[ (inPos + 3) % inBufferSize ];
 
 		prevprevprevOut = ( (in0+prevprevIn) * inCoeff ) + (prevIn * pInCoeff)
 						- (currentOut * pOutCoeff) - (prevOut * ppOutCoeff);
@@ -144,18 +139,18 @@ public:
 
 
 // 4-point Hermite spline interpolation for use with IIR filter output histories
-inline float interpolateHermitePostFilter(IIRfilter * filter, double address)
+inline float interpolateHermitePostFilter(IIRfilter * inFilter, double inPos)
 {
-	long pos = (long)address;
-	float posFract = (float) (address - (double)pos);
+	long pos_i = (long)inPos;
+	float posFract = (float) (inPos - (double)pos_i);
 
-	float a = ( (3.0f*(filter->prevprevOut-filter->prevOut)) - 
-				filter->prevprevprevOut + filter->currentOut ) * 0.5f;
-	float b = (2.0f*filter->prevOut) + filter->prevprevprevOut - 
-				(2.5f*filter->prevprevOut) - (filter->currentOut*0.5f);
-	float c = (filter->prevOut - filter->prevprevprevOut) * 0.5f;
+	float a = ( (3.0f*(inFilter->prevprevOut-inFilter->prevOut)) - 
+				inFilter->prevprevprevOut + inFilter->currentOut ) * 0.5f;
+	float b = (2.0f*inFilter->prevOut) + inFilter->prevprevprevOut - 
+				(2.5f*inFilter->prevprevOut) - (inFilter->currentOut*0.5f);
+	float c = (inFilter->prevOut - inFilter->prevprevprevOut) * 0.5f;
 
-	return (( ((a*posFract)+b) * posFract + c ) * posFract) + filter->prevprevOut;
+	return (( ((a*posFract)+b) * posFract + c ) * posFract) + inFilter->prevprevOut;
 }
 
 
