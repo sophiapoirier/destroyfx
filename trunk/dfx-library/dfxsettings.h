@@ -1,4 +1,4 @@
-// Destroy FX plugin data storage stuff by Marc Poirier  ][  April-July + October 2002
+// Destroy FX plugin data storage stuff by Sophia Poirier  ][  April-July + October 2002
 //
 // This is a class, some functions, and other relevant stuff for dealing 
 // with Destroy FX plugin settings data.
@@ -102,7 +102,7 @@ enum
 
 	// . . . load crisis stuff . . .
 
-	// crisis behaviours (what to do when restore sends a foreign byteSize)
+	// crisis behaviours (what to do when restore sends an unexpected buffer size)
 	kDfxSettingsCrisis_LoadWhatYouCan = 0,
 	kDfxSettingsCrisis_DontLoad,
 	kDfxSettingsCrisis_LoadButComplain,
@@ -208,28 +208,27 @@ typedef struct
 
 //------------------------------------------------------
 // this reverses the bytes in a stream of data, for correcting endian difference
-//void reverseBytes(void * data, unsigned long size, unsigned long count = 1);
-inline void reversebytes(void * data, unsigned long size, unsigned long count = 1)
+inline void reversebytes(void * inData, unsigned long inItemSize, unsigned long inItemCount = 1)
 {
-	unsigned long half = (size / 2) + (size % 2);
-	char * dataBytes = (char*)data;
+	unsigned long half = (inItemSize / 2) + (inItemSize % 2);
 
-	for (unsigned long c=0; c < count; c++)
+	for (unsigned long c=0; c < inItemCount; c++)
 	{
 		for (unsigned long i=0; i < half; i++)
 		{
-			char temp = dataBytes[i];
-			dataBytes[i] = dataBytes[(size-1)-i];
-			dataBytes[(size-1)-i] = temp;
+			char temp = inData[i];
+			unsigned long complementIndex = (inItemSize - 1) - i;
+			inData[i] = inData[complementIndex];
+			inData[complementIndex] = temp;
 		}
-		dataBytes += size;
+		inData += inSize;
 	}
 }
 
 
 //------------------------------------------------------
 // this interprets a UNIX environment variable string as a boolean
-bool getenvBool(const char * var, bool def);
+bool getenvBool(const char * inVarName, bool inFallbackValue);
 
 
 //------------------------------------------------------
@@ -243,55 +242,58 @@ public:
 	// - - - - - - - - - API-connect methods - - - - - - - - -
 
 	// for adding to your base plugin class methods
-	unsigned long save(void ** outData, bool isPreset);
-	bool restore(void * inData, unsigned long byteSize, bool isPreset);
+	unsigned long save(void ** outData, bool inIsPreset);
+	bool restore(void * inData, unsigned long inBufferSize, bool inIsPreset);
 #ifdef TARGET_API_AUDIOUNIT
 	bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
 	bool restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary);
 #endif
 
 	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int channel, int note, int velocity, long frameOffset);
-	void handleNoteOff(int channel, int note, int velocity, long frameOffset);
-	void handlePitchBend(int channel, int valueLSB, int valueMSB, long frameOffset);
-	void handleCC(int channel, int controllerNum, int value, long frameOffset);
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset);
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset);
 
 
 	// - - - - - - - - - MIDI learn - - - - - - - - -
 
 	// deactivate MIDI learn mode
 	// call this when your editor window opens and when it closes
-	void resetLearning() { setLearning(false); }
+	void resetLearning()
+		{	setLearning(false);	}
 	// remove MIDI event assignments from all parameters
 	void clearAssignments();
 	// assign a MIDI event to a parameter
-	void assignParam(long tag, long eventType, long eventChannel, 
-								long eventNum, long eventNum2 = 0, 
-								long eventBehaviourFlags = 0, 
-								long data1 = 0, long data2 = 0, 
-								float fdata1 = 0.0f, float fdata2 = 0.0f);
+	void assignParam(long inTag, long inEventType, long inEventChannel, 
+								long inEventNum, long inEventNum2 = 0, 
+								long inEventBehaviourFlags = 0, 
+								long inData1 = 0, long inData2 = 0, 
+								float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
 	// remove a parameter's MIDI event assignment
-	void unassignParam(long tag);
+	void unassignParam(long inTag);
 
 	// define or report the actively learning parameter during MIDI learn mode
-	void setLearner(long tag, long eventBehaviourFlags = 0, 
-							long data1 = 0, long data2 = 0, 
-							float fdata1 = 0.0f, float fdata2 = 0.0f);
-	long getLearner() { return learner; }
-	bool isLearner(long tag);
+	void setLearner(long inTag, long inEventBehaviourFlags = 0, 
+							long inData1 = 0, long inData2 = 0, 
+							float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
+	long getLearner()
+		{	return learner;	}
+	bool isLearner(long inTag);
 
 	// turn MIDI learning on or off
-	void setLearning(bool newLearn);
+	void setLearning(bool inLearnMode);
 	// report whether or not MIDI learn mode is active
-	bool isLearning() { return midiLearn; }
+	bool isLearning()
+		{	return midiLearn;	}
 
 	// call these from valueChanged in the plugin editor
-	void setParameterMidiLearn(bool value);
-	void setParameterMidiReset(bool value = true);
+	void setParameterMidiLearn(bool inValue);
+	void setParameterMidiReset(bool inValue = true);
 
 	// potentially useful accessors
-	long getParameterAssignmentType(long paramTag);
-	long getParameterAssignmentNum(long paramTag);
+	long getParameterAssignmentType(long inParamTag);
+	long getParameterAssignmentNum(long inParamTag);
 
 
 	// - - - - - - - - - version compatibility management - - - - - - - - -
@@ -299,10 +301,10 @@ public:
 	// if you set this to something and data is received during restore()
 	// which has a version number in its header that's lower than this, 
 	// then loading will abort
-	void setLowestLoadableVersion(long version)
-		{ settingsInfo.lowestLoadableVersion = version; }
+	void setLowestLoadableVersion(long inVersion)
+		{	settingsInfo.lowestLoadableVersion = inVersion;	}
 	long getLowestLoadableVersion()
-		{ return settingsInfo.lowestLoadableVersion; }
+		{	return settingsInfo.lowestLoadableVersion;	}
 
 	// This stuff manages the parameter IDs.  Each parameter has an ID number 
 	// so that, if you later add parameters and their tags are inserted within 
@@ -318,58 +320,69 @@ public:
 	// creating the DfxSettings object, or at least before your plugin's 
 	// constructor returns, because you don't want any set or save calls 
 	// made before you have your parameter ID map finalized.
-	void setParameterID(long tag, long newID)
-		{ if (paramTagIsValid(tag)) parameterIDs[tag] = newID; }
-	long getParameterID(long tag)
-		{ if (paramTagIsValid(tag)) return parameterIDs[tag]; else return 0; }
-	long getParameterTagFromID(long paramID, long numSearchIDs=0, long * searchIDs=0);
+	void setParameterID(long inTag, long inNewID)
+		{	if (paramTagIsValid(inTag)) parameterIDs[inTag] = inNewID;	}
+	long getParameterID(long inTag)
+		{	if (paramTagIsValid(inTag)) return parameterIDs[inTag]; else return 0;	}
+	long getParameterTagFromID(long paramID, long inNumSearchIDs = 0, long * inSearchIDs = NULL);
 
 
 	// - - - - - - - - - optional settings - - - - - - - - -
 
 	// true means allowing a given MIDI event to be assigned to only one parameter; 
 	// false means that a single event can be assigned to more than one parameter
-	void setSteal(bool newSteal) { stealAssignments = newSteal; }
-	bool getSteal() { return stealAssignments; }
+	void setSteal(bool inStealMode)
+		{	stealAssignments = inStealMode;	}
+	bool getSteal()
+		{	return stealAssignments;	}
 
 	// true means that pitchbend events can be assigned to parameters and 
 	// used to control those parameters; false means don't use pitchbend like that
-	void setAllowPitchbendEvents(bool newMode=true) { allowPitchbendEvents = newMode; }
-	bool getAllowPitchbendEvents() { return allowPitchbendEvents; }
+	void setAllowPitchbendEvents(bool inNewMode = true)
+		{	allowPitchbendEvents = inNewMode;	}
+	bool getAllowPitchbendEvents()
+		{	return allowPitchbendEvents;	}
 
 	// true means that MIDI note events can be assigned to parameters and 
 	// used to control those parameters; false means don't use notes like that
-	void setAllowNoteEvents(bool newMode=true) { allowNoteEvents = newMode; }
-	bool getAllowNoteEvents() { return allowNoteEvents; }
+	void setAllowNoteEvents(bool inNewMode = true)
+		{	allowNoteEvents = inNewMode;	}
+	bool getAllowNoteEvents()
+		{	return allowNoteEvents;	}
 
 	// true means that MIDI channel in events and assignments matters; 
 	// false means operate in MIDI omni mode
-	void setUseChannel(bool newMode=true) { useChannel = newMode; }
-	bool getUseChannel() { return useChannel; }
+	void setUseChannel(bool inNewMode = true)
+		{	useChannel = inNewMode;	}
+	bool getUseChannel()
+		{	return useChannel;	}
 
 	// this tells DfxSettings what you want it to do if a non-matching 
 	// settings data is received in restore()   (see the enum options above)
-	void setCrisisBehaviour(bool newCB) { crisisBehaviour = newCB; }
-	long getCrisisBehaviour() { return crisisBehaviour; }
+	void setCrisisBehaviour(bool inNewMode)
+		{	crisisBehaviour = inNewMode;	}
+	long getCrisisBehaviour()
+		{	return crisisBehaviour;	}
 
 
 protected:
 	// reverse the byte order of data
-	void correctEndian(void * data, bool isReversed, bool isPreset=false);
+	void correctEndian(void * inData, bool isReversed, bool inIsPreset = false);
 
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
-	long handleCrisis(long flags);
+	long handleCrisis(long inFlags);
 	// can be implemented to display an alert dialogue or something 
 	// if kDfxSettingsCrisis_LoadButComplain crisis behaviour is being used
-	void crisisAlert(long flags) {}
+	void crisisAlert(long inFlags)
+		{ }
 
 	// a simple but handy check to see if a parameter tag is valid
-	bool paramTagIsValid(long tag)
-		{ return ( (tag >= 0) && (tag < numParameters) ); }
+	bool paramTagIsValid(long inTag)
+		{	return ( (inTag >= 0) && (inTag < numParameters) );	}
 
-	void handleMidi_assignParam(long eventType, long channel, long byte1, long frameOffset);
-	void handleMidi_automateParams(long eventType, long channel, long byte1, long byte2, long frameOffset, bool isNoteOff = false);
+	void handleMidi_assignParam(long inEventType, long inMidiChannel, long inByte1, long inBufferOffset);
+	void handleMidi_automateParams(long inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff = false);
 
 
 	long numParameters, numPresets;
