@@ -1,4 +1,4 @@
-/*------------------- by Marc Poirier  ][  January 2002 ------------------*/
+/*------------------- by Sophia Poirier  ][  January 2002 ------------------*/
 
 #include "temporatetable.h"
 
@@ -23,9 +23,7 @@ TempoRateTable::TempoRateTable(long inTypeOfTable)
 			break;
 	}
 
-	scalars = 0;
 	scalars = (float*) malloc(sizeof(float) * numTempoRates);
-	displays = 0;
 	displays = (char**) malloc(sizeof(char*) * numTempoRates);
 	long i;
 	for (i = 0; i < numTempoRates; i++)
@@ -78,17 +76,18 @@ TempoRateTable::TempoRateTable(long inTypeOfTable)
 // moved to header so that the implementation is seen by DfxPlugin::DfxPlugin
 TempoRateTable::~TempoRateTable()
 {
-	if (scalars)
+	if (scalars != NULL)
 		free(scalars);
-	scalars = 0;
+	scalars = NULL;
 	for (int i=0; i < numTempoRates; i++)
 	{
-		if (displays[i])
+		if (displays[i] != NULL)
 			free(displays[i]);
+		displays[i] = NULL;
 	}
-	if (displays)
+	if (displays != NULL)
 		free(displays);
-	displays = 0;
+	displays = NULL;
 }
 */
 
@@ -96,13 +95,13 @@ TempoRateTable::~TempoRateTable()
 //-----------------------------------------------------------------------------
 // given a tempo rate value, return the index of the tempo rate 
 // that is closest to that requested value
-long TempoRateTable::getNearestTempoRateIndex(float tempoRateValue)
+long TempoRateTable::getNearestTempoRateIndex(float inTempoRateValue)
 {
 	float bestDiff = scalars[numTempoRates-1];
 	long bestIndex = 0;
 	for (long i=0; i < numTempoRates; i++)
 	{
-		float diff = fabsf(tempoRateValue - scalars[i]);
+		float diff = fabsf(inTempoRateValue - scalars[i]);
 		if (diff < bestDiff)
 		{
 			bestDiff = diff;
