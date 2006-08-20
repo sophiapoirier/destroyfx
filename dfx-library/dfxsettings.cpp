@@ -1,4 +1,4 @@
-/*--------- by Marc Poirier  ][  April-July + October 2002 ---------*/
+/*--------- by Sophia Poirier  ][  April-July + October 2002 ---------*/
 
 #include "dfxsettings.h"
 #include "dfxplugin.h"
@@ -123,13 +123,13 @@ DfxSettings::~DfxSettings()
 
 //------------------------------------------------------
 // this interprets a UNIX environment variable string as a boolean
-bool getenvBool(const char * var, bool def)
+bool getenvBool(const char * inVarName, bool inFallbackValue)
 {
-	const char * env = getenv(var);
+	const char * env = getenv(inVarName);
 
 	// return the default value if the getenv failed
 	if (env == NULL)
-		return def;
+		return inFallbackValue;
 
 	switch (env[0])
 	{
@@ -144,7 +144,7 @@ bool getenvBool(const char * var, bool def)
 			return false;
 
 		default:
-			return def;
+			return inFallbackValue;
 	}
 }
 
@@ -158,7 +158,7 @@ bool getenvBool(const char * var, bool def)
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to save settings data, 
 // like when saving a song or preset files
-unsigned long DfxSettings::save(void ** outData, bool isPreset)
+unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
 {
   long i, j;
 
@@ -178,7 +178,7 @@ unsigned long DfxSettings::save(void ** outData, bool isPreset)
 	sharedChunk->lowestLoadableVersion = settingsInfo.lowestLoadableVersion;
 	sharedChunk->storedHeaderSize = settingsInfo.storedHeaderSize;
 	sharedChunk->numStoredParameters = settingsInfo.numStoredParameters;
-	sharedChunk->numStoredPresets = (isPreset) ? 1 : settingsInfo.numStoredPresets;
+	sharedChunk->numStoredPresets = (inIsPreset) ? 1 : settingsInfo.numStoredPresets;
 	sharedChunk->storedParameterAssignmentSize = settingsInfo.storedParameterAssignmentSize;
 	sharedChunk->storedExtendedDataSize = settingsInfo.storedExtendedDataSize;
 
@@ -186,8 +186,8 @@ unsigned long DfxSettings::save(void ** outData, bool isPreset)
 	for (i=0; i < numParameters; i++)
 		firstSharedParameterID[i] = parameterIDs[i];
 
-	// store only one preset setting if isPreset is true
-	if (isPreset)
+	// store only one preset setting if inIsPreset is true
+	if (inIsPreset)
 	{
 		plugin->getpresetname(plugin->getcurrentpresetnum(), firstSharedPreset->name);
 		for (i=0; i < numParameters; i++)
@@ -199,9 +199,9 @@ unsigned long DfxSettings::save(void ** outData, bool isPreset)
 			tempSharedParamAssignment[i] = paramAssignments[i];
 
 		// reverse the order of bytes in the data being sent to the host, if necessary
-		correctEndian(*outData, false, isPreset);
+		correctEndian(*outData, false, inIsPreset);
 		// allow for the storage of extra data
-		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofPresetChunk-sizeofExtendedData, isPreset);
+		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofPresetChunk-sizeofExtendedData, inIsPreset);
 
 		return sizeofPresetChunk;
 	}
@@ -226,9 +226,9 @@ unsigned long DfxSettings::save(void ** outData, bool isPreset)
 			firstSharedParamAssignment[i] = paramAssignments[i];
 
 		// reverse the order of bytes in the data being sent to the host, if necessary
-		correctEndian(*outData, false, isPreset);
+		correctEndian(*outData, false, inIsPreset);
 		// allow for the storage of extra data
-		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofChunk-sizeofExtendedData, isPreset);
+		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofChunk-sizeofExtendedData, inIsPreset);
 
 		return sizeofChunk;
 	}
@@ -243,7 +243,7 @@ unsigned long DfxSettings::save(void ** outData, bool isPreset)
 // this gets called when the host wants to load settings data, 
 // like when restoring settings while opening a song, 
 // or loading a preset file
-bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
+bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPreset)
 {
   DfxSettingsInfo * newSettingsInfo;
   DfxGenPreset * newPreset;
@@ -255,7 +255,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 		return false;
 
 	// un-reverse the order of bytes in the received data, if necessary
-	correctEndian(inData, true, isPreset);
+	correctEndian(inData, true, inIsPreset);
 
 	// point to the start of the chunk data:  the settingsInfo header
 	newSettingsInfo = (DfxSettingsInfo*)inData;
@@ -289,7 +289,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 	// if the incoming chunk doesn't match what we're expecting
 	long copyPresets = (numStoredPresets < numPresets) ? numStoredPresets : numPresets;
 	// irregardless, only restore one preset if we're loading a single preset
-	if (isPreset)
+	if (inIsPreset)
 		copyPresets = 1;
 	// figure out how much of the DfxParameterAssignment structure we can import
 	unsigned long copyParameterAssignmentSize = (newSettingsInfo->storedParameterAssignmentSize < settingsInfo.storedParameterAssignmentSize) ? 
@@ -305,18 +305,18 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 		crisisFlags = crisisFlags | kDfxSettingsCrisis_FewerParameters;
 	else if (numStoredParameters > numParameters)
 		crisisFlags = crisisFlags | kDfxSettingsCrisis_MoreParameters;
-	if (isPreset)
+	if (inIsPreset)
 	{
-		if (byteSize < sizeofPresetChunk)
+		if (inBufferSize < sizeofPresetChunk)
 			crisisFlags = crisisFlags | kDfxSettingsCrisis_SmallerByteSize;
-		else if (byteSize > sizeofPresetChunk)
+		else if (inBufferSize > sizeofPresetChunk)
 			crisisFlags = crisisFlags | kDfxSettingsCrisis_LargerByteSize;
 	}
 	else
 	{
-		if (byteSize < sizeofChunk)
+		if (inBufferSize < sizeofChunk)
 			crisisFlags = crisisFlags | kDfxSettingsCrisis_SmallerByteSize;
-		else if (byteSize > sizeofChunk)
+		else if (inBufferSize > sizeofChunk)
 			crisisFlags = crisisFlags | kDfxSettingsCrisis_LargerByteSize;
 		if (numStoredPresets < numPresets)
 			crisisFlags = crisisFlags | kDfxSettingsCrisis_FewerPresets;
@@ -343,7 +343,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(float)*(numStoredParameters-2));
 
 	// the chunk being received only contains one preset
-	if (isPreset)
+	if (inIsPreset)
 	{
 		// in Audio Unit, this is handled already in AUBase::RestoreState, 
 		// and we are not really loading a "preset,"
@@ -415,7 +415,7 @@ bool DfxSettings::restore(void * inData, unsigned long byteSize, bool isPreset)
 	}
 
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-if ( !(oldvst && isPreset) )
+if ( !(oldvst && inIsPreset) )
 {
 #endif
 	// completely clear our table of parameter assignments before loading the new 
@@ -424,7 +424,7 @@ if ( !(oldvst && isPreset) )
 	// then point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
 	DfxParameterAssignment * newParamAssignments;
-//	if (isPreset)
+//	if (inIsPreset)
 //		newParamAssignments = (DfxParameterAssignment*) ((char*)newPreset + sizeofStoredPreset);
 //	else
 		newParamAssignments = (DfxParameterAssignment*) ((char*)newPreset + 
@@ -445,7 +445,7 @@ if ( !(oldvst && isPreset) )
 
 	// allow for the retrieval of extra data
 	plugin->settings_restoreExtendedData((char*)inData+sizeofChunk-newSettingsInfo->storedExtendedDataSize, 
-						newSettingsInfo->storedExtendedDataSize, newSettingsInfo->version, isPreset);
+						newSettingsInfo->storedExtendedDataSize, newSettingsInfo->version, inIsPreset);
 
 	if (paramMap)
 		free(paramMap);
@@ -677,18 +677,18 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleCC(int channel, int controllerNum, int value, long frameOffset)
+void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset)
 {
 	// don't allow the "all notes off" CC because almost every sequencer uses that when playback stops
-	if (controllerNum == 0x7B)
+	if (inControllerNumber == 0x7B)
 		return;
 
-	handleMidi_assignParam(kParamEventCC, channel, controllerNum, frameOffset);
-	handleMidi_automateParams(kParamEventCC, channel, controllerNum, value, frameOffset);
+	handleMidi_assignParam(kParamEventCC, inMidiChannel, inControllerNumber, inBufferOffset);
+	handleMidi_automateParams(kParamEventCC, inMidiChannel, inControllerNumber, inValue, inBufferOffset);
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handlePitchBend(int channel, int valueLSB, int valueMSB, long frameOffset)
+void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset)
 {
 	if (!allowPitchbendEvents)
 		return;
@@ -697,27 +697,27 @@ void DfxSettings::handlePitchBend(int channel, int valueLSB, int valueMSB, long 
 	// event type for pitchbend as it does for other events, 
 	// and stuff below assumes that byte 2 means that, so this 
 	// keeps byte 2 consistent for pitchbend assignments
-	int realLSB = valueLSB;
-	valueLSB = 0;	// <- XXX this is stoopid
+	int realLSB = inValueLSB;
+	inValueLSB = 0;	// <- XXX this is stoopid
 
-	handleMidi_assignParam(kParamEventPitchbend, channel, valueLSB, frameOffset);
+	handleMidi_assignParam(kParamEventPitchbend, inMidiChannel, inValueLSB, inBufferOffset);
 
-	valueLSB = realLSB;	// restore it   <- XXX ugh stupid hackz...
-	handleMidi_automateParams(kParamEventPitchbend, channel, valueLSB, valueMSB, frameOffset);
+	inValueLSB = realLSB;	// restore it   <- XXX ugh stupid hackz...
+	handleMidi_automateParams(kParamEventPitchbend, inMidiChannel, inValueLSB, inValueMSB, inBufferOffset);
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleNoteOn(int channel, int note, int velocity, long frameOffset)
+void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
 {
 	if (!allowNoteEvents)
 		return;
 
-	handleMidi_assignParam(kParamEventNote, channel, note, frameOffset);
-	handleMidi_automateParams(kParamEventNote, channel, note, velocity, frameOffset, false);
+	handleMidi_assignParam(kParamEventNote, inMidiChannel, inNoteNumber, inBufferOffset);
+	handleMidi_automateParams(kParamEventNote, inMidiChannel, inNoteNumber, inVelocity, inBufferOffset, false);
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleNoteOff(int channel, int note, int velocity, long frameOffset)
+void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
 {
 	if (!allowNoteEvents)
 		return;
@@ -732,46 +732,46 @@ void DfxSettings::handleNoteOff(int channel, int note, int velocity, long frameO
 		allowAssignment = false;
 
 	if (allowAssignment)
-		handleMidi_assignParam(kParamEventNote, channel, note, frameOffset);
-	handleMidi_automateParams(kParamEventNote, channel, note, velocity, frameOffset, true);
+		handleMidi_assignParam(kParamEventNote, inMidiChannel, inNoteNumber, inBufferOffset);
+	handleMidi_automateParams(kParamEventNote, inMidiChannel, inNoteNumber, inVelocity, inBufferOffset, true);
 }
 
 //-----------------------------------------------------------------------------------------
 // assign an incoming MIDI event to the learner parameter
-void DfxSettings::handleMidi_assignParam(long eventType, long channel, long byte1, long frameOffset)
+void DfxSettings::handleMidi_assignParam(long inEventType, long inMidiChannel, long inByte1, long inBufferOffset)
 {
 	// we don't need to make an assignment to a parameter if MIDI learning is off
 	if ( !midiLearn || !paramTagIsValid(learner) )
 		return;
 
 	// see whether we are setting up a note range for parameter control 
-	if ( (eventType == kParamEventNote) && 
+	if ( (inEventType == kParamEventNote) && 
 		 !(learnerEventBehaviourFlags & kEventBehaviourToggle) )
 	{
 		if (noteRangeHalfwayDone)
 		{
 			// only use this note if it's different from the first note in the range
-			if (byte1 != halfwayNoteNum)
+			if (inByte1 != halfwayNoteNum)
 			{
 				noteRangeHalfwayDone = false;
 				long note1, note2;
-				if (byte1 > halfwayNoteNum)
+				if (inByte1 > halfwayNoteNum)
 				{
 					note1 = halfwayNoteNum;
-					note2 = byte1;
+					note2 = inByte1;
 				}
 				else
 				{
-					note1 = byte1;
+					note1 = inByte1;
 					note2 = halfwayNoteNum;
 				}
 				// assign the learner parameter to the event that sent the message
-				assignParam(learner, eventType, channel, note1, note2, 
+				assignParam(learner, inEventType, inMidiChannel, note1, note2, 
 							learnerEventBehaviourFlags, learnerData1, learnerData2, 
 							learnerFData1, learnerFData2);
 				// this is an invitation to do something more, if necessary
-				plugin->settings_doLearningAssignStuff(learner, eventType, channel, note1, 
-										frameOffset, note2, 
+				plugin->settings_doLearningAssignStuff(learner, inEventType, inMidiChannel, note1, 
+										inBufferOffset, note2, 
 										learnerEventBehaviourFlags, learnerData1, 
 										learnerData2, learnerFData1, learnerFData2);
 				// and then deactivate the current learner, the learning is complete
@@ -781,18 +781,18 @@ void DfxSettings::handleMidi_assignParam(long eventType, long channel, long byte
 		else
 		{
 			noteRangeHalfwayDone = true;
-			halfwayNoteNum = byte1;
+			halfwayNoteNum = inByte1;
 		}
 	}
 	else
 	{
 		// assign the learner parameter to the event that sent the message
-		assignParam(learner, eventType, channel, byte1, 0, 
+		assignParam(learner, inEventType, inMidiChannel, inByte1, 0, 
 					learnerEventBehaviourFlags, learnerData1, learnerData2, 
 					learnerFData1, learnerFData2);
 		// this is an invitation to do something more, if necessary
-		plugin->settings_doLearningAssignStuff(learner, eventType, channel, byte1, 
-								frameOffset, 0, learnerEventBehaviourFlags, 
+		plugin->settings_doLearningAssignStuff(learner, inEventType, inMidiChannel, inByte1, 
+								inBufferOffset, 0, learnerEventBehaviourFlags, 
 								learnerData1, learnerData2, learnerFData1, learnerFData2);
 		// and then deactivate the current learner, the learning is complete
 		setLearner(kNoLearner);
@@ -801,19 +801,19 @@ void DfxSettings::handleMidi_assignParam(long eventType, long channel, long byte
 
 //-----------------------------------------------------------------------------------------
 // automate assigned parameters in response to a MIDI event
-void DfxSettings::handleMidi_automateParams(long eventType, long channel, long byte1, long byte2, long frameOffset, bool isNoteOff)
+void DfxSettings::handleMidi_automateParams(long inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff)
 {
-	float fValue = (float)byte2 / 127.0f;
+	float fValue = (float)inByte2 / 127.0f;
 
-	if (eventType == kParamEventPitchbend)
+	if (inEventType == kParamEventPitchbend)
 	{
-		if (byte2 < 127)	// stay in the 0.0 to 1.0 range
-			fValue += (float)byte1 / 8192.0f;	// pitchbend LSB
+		if (inByte2 < 127)	// stay in the 0.0 to 1.0 range
+			fValue += (float)inByte1 / 8192.0f;	// pitchbend LSB
 		// do this because MIDI byte 2 is not used to indicate an 
 		// event type for pitchbend as it does for other events, 
 		// and stuff below assumes that byte 2 means that, so this 
 		// keeps byte 2 consistent for pitchbend assignments
-		byte1 = 0;
+		inByte1 = 0;
 	}
 
 	// search for parameters that have this MIDI event assigned to them and, 
@@ -824,23 +824,23 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 
 		// if the event type doesn't match what this parameter has assigned to it, 
 		// skip to the next parameter parameter
-		if (pa->eventType != eventType)
+		if (pa->eventType != inEventType)
 			continue;
 		// if the type matches but not the channel and we're using channels, 
 		// skip to the next parameter
-		if ( useChannel && (pa->eventChannel != channel) )
+		if ( useChannel && (pa->eventChannel != inMidiChannel) )
 			continue;
 
-		if (eventType == kParamEventNote)
+		if (inEventType == kParamEventNote)
 		{
 			// toggle the parameter on or off
 			// (when using notes, this flag overrides Toggle)
 			if (pa->eventBehaviourFlags & kEventBehaviourNoteHold)
 			{
 				// don't automate this parameter if the note does not match its assignment
-				if (pa->eventNum != byte1)
+				if (pa->eventNum != inByte1)
 					continue;
-				if (isNoteOff)
+				if (inIsNoteOff)
 					fValue = 0.0f;
 				else
 					fValue = 1.0f;
@@ -849,10 +849,10 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 			else if (pa->eventBehaviourFlags & kEventBehaviourToggle)
 			{
 				// don't automate this parameter if the note does not match its assignment
-				if (pa->eventNum != byte1)
+				if (pa->eventNum != inByte1)
 					continue;
 				// don't use note-offs in non-hold note toggle mode
-				if (isNoteOff)
+				if (inIsNoteOff)
 					continue;
 
 				long numSteps = pa->data1;
@@ -874,9 +874,9 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 			else
 			{
 				// don't automate this parameter if the note is not in its range
-				if ( (byte1 < pa->eventNum) || (byte1 > pa->eventNum2) )
+				if ( (inByte1 < pa->eventNum) || (inByte1 > pa->eventNum2) )
 					continue;
-				fValue = (float)(byte1 - pa->eventNum) / 
+				fValue = (float)(inByte1 - pa->eventNum) / 
 							(float)(pa->eventNum2 - pa->eventNum);
 			}
 		}
@@ -884,7 +884,7 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 		{
 			// since it's not a note, if the event number doesn't 
 			// match this parameter's assignment, don't use it
-			if (pa->eventNum != byte1)
+			if (pa->eventNum != inByte1)
 				continue;
 
 			// recalculate fValue to toggle the parameter's states
@@ -911,7 +911,7 @@ void DfxSettings::handleMidi_automateParams(long eventType, long channel, long b
 		plugin->setparameter_gen(tag, fValue);
 		plugin->postupdate_parameter(tag);	// notify listeners of internal parameter change
 		// this is an invitation to do something more, if necessary
-		plugin->settings_doMidiAutomatedSetParameterStuff(tag, fValue, frameOffset);
+		plugin->settings_doMidiAutomatedSetParameterStuff(tag, fValue, inBufferOffset);
 
 	}	// end of parameters loop (for automation)
 }
@@ -928,20 +928,20 @@ void DfxSettings::clearAssignments()
 
 //-----------------------------------------------------------------------------
 // assign a CC to a parameter
-void DfxSettings::assignParam(long tag, long eventType, long eventChannel, long eventNum, 
-							long eventNum2, long eventBehaviourFlags, 
-							long data1, long data2, float fdata1, float fdata2)
+void DfxSettings::assignParam(long inTag, long inEventType, long inEventChannel, long inEventNum, 
+							long inEventNum2, long inEventBehaviourFlags, 
+							long inData1, long inData2, float inFloatData1, float inFloatData2)
 {
 	// abort if the parameter index is not valid
-	if (! paramTagIsValid(tag) )
+	if (! paramTagIsValid(inTag) )
 		return;
-	// abort if the eventNum is not a valid MIDI value
-	if ( (eventNum < 0) || (eventNum >= kNumMidiValues) )
+	// abort if inEventNum is not a valid MIDI value
+	if ( (inEventNum < 0) || (inEventNum >= kNumMidiValues) )
 		return;
 
 	// if we're note-toggling, set up a bogus "range" for comparing with note range assignments
-	if ( (eventType == kParamEventNote) && (eventBehaviourFlags & kEventBehaviourToggle) )
-		eventNum2 = eventNum;
+	if ( (inEventType == kParamEventNote) && (inEventBehaviourFlags & kEventBehaviourToggle) )
+		inEventNum2 = inEventNum;
 
 	// first unassign the MIDI event from any other previous 
 	// parameter assignment(s) if using stealing
@@ -951,120 +951,120 @@ void DfxSettings::assignParam(long tag, long eventType, long eventChannel, long 
 		{
 			DfxParameterAssignment * pa = &(paramAssignments[i]);
 			// skip this parameter if the event type doesn't match
-			if (pa->eventType != eventType)
+			if (pa->eventType != inEventType)
 				continue;
 			// if the type matches but not the channel and we're using channels, 
 			// skip this parameter
-			if ( useChannel && (pa->eventChannel != eventChannel) )
+			if ( useChannel && (pa->eventChannel != inEventChannel) )
 				continue;
 
 			// it's a note, so we have to do complicated stuff
-			if (eventType == kParamEventNote)
+			if (inEventType == kParamEventNote)
 			{
 				// lower note overlaps with existing note assignment
-				if ( (pa->eventNum >= eventNum) && (pa->eventNum <= eventNum2) )
+				if ( (pa->eventNum >= inEventNum) && (pa->eventNum <= inEventNum2) )
 					unassignParam(i);
 				// upper note overlaps with existing note assignment
-				else if ( (pa->eventNum2 >= eventNum) && (pa->eventNum2 <= eventNum2) )
+				else if ( (pa->eventNum2 >= inEventNum) && (pa->eventNum2 <= inEventNum2) )
 					unassignParam(i);
 				// current note range consumes the entire existing assignment
-				else if ( (pa->eventNum <= eventNum) && (pa->eventNum2 >= eventNum2) )
+				else if ( (pa->eventNum <= inEventNum) && (pa->eventNum2 >= inEventNum2) )
 					unassignParam(i);
 			}
 
 			// not a note, so it's simple:  
 			// just delete the assignment if the event number matches
-			else if (pa->eventNum == eventNum)
+			else if (pa->eventNum == inEventNum)
 				unassignParam(i);
 		}
 	}
 
 	// then assign the event to the desired parameter
-	paramAssignments[tag].eventType = eventType;
-	paramAssignments[tag].eventChannel = eventChannel;
-	paramAssignments[tag].eventNum = eventNum;
-	paramAssignments[tag].eventNum2 = eventNum2;
-	paramAssignments[tag].eventBehaviourFlags = eventBehaviourFlags;
-	paramAssignments[tag].data1 = data1;
-	paramAssignments[tag].data2 = data2;
-	paramAssignments[tag].fdata1 = fdata1;
-	paramAssignments[tag].fdata2 = fdata2;
+	paramAssignments[inTag].eventType = inEventType;
+	paramAssignments[inTag].eventChannel = inEventChannel;
+	paramAssignments[inTag].eventNum = inEventNum;
+	paramAssignments[inTag].eventNum2 = inEventNum2;
+	paramAssignments[inTag].eventBehaviourFlags = inEventBehaviourFlags;
+	paramAssignments[inTag].data1 = inData1;
+	paramAssignments[inTag].data2 = inData2;
+	paramAssignments[inTag].fdata1 = inFloatData1;
+	paramAssignments[inTag].fdata2 = inFloatData2;
 }
 
 //-----------------------------------------------------------------------------
 // remove any MIDI event assignment that a parameter might have
-void DfxSettings::unassignParam(long tag)
+void DfxSettings::unassignParam(long inTag)
 {
 	// return if what we got is not a valid parameter index
-	if (! paramTagIsValid(tag) )
+	if (! paramTagIsValid(inTag) )
 		return;
 
 	// clear the MIDI event assignment for this parameter
-	paramAssignments[tag].eventType = kParamEventNone;
-	paramAssignments[tag].eventChannel = 0;
-	paramAssignments[tag].eventNum = 0;
-	paramAssignments[tag].eventNum2 = 0;
-	paramAssignments[tag].eventBehaviourFlags = 0;
-	paramAssignments[tag].data1 = 0;
-	paramAssignments[tag].data2 = 0;
-	paramAssignments[tag].fdata1 = 0.0f;
-	paramAssignments[tag].fdata2 = 0.0f;
+	paramAssignments[inTag].eventType = kParamEventNone;
+	paramAssignments[inTag].eventChannel = 0;
+	paramAssignments[inTag].eventNum = 0;
+	paramAssignments[inTag].eventNum2 = 0;
+	paramAssignments[inTag].eventBehaviourFlags = 0;
+	paramAssignments[inTag].data1 = 0;
+	paramAssignments[inTag].data2 = 0;
+	paramAssignments[inTag].fdata1 = 0.0f;
+	paramAssignments[inTag].fdata2 = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
 // turn MIDI learn mode on or off
-void DfxSettings::setLearning(bool newLearn)
+void DfxSettings::setLearning(bool inLearnMode)
 {
 	// erase the current learner if the state of MIDI learn is being toggled
-	if (newLearn != midiLearn)
+	if (inLearnMode != midiLearn)
 		setLearner(kNoLearner);
 	// or if it's being asked to be turned off, irregardless
-	else if (!newLearn)
+	else if (!inLearnMode)
 		setLearner(kNoLearner);
 
-	midiLearn = newLearn;
+	midiLearn = inLearnMode;
 }
 
 //-----------------------------------------------------------------------------
 // just an easy way to check if a particular parameter is currently a learner
-bool DfxSettings::isLearner(long tag)
+bool DfxSettings::isLearner(long inTag)
 {
-	return (tag == getLearner());
+	return (inTag == getLearner());
 }
 
 //-----------------------------------------------------------------------------
 // define the actively learning parameter during MIDI learn mode
-void DfxSettings::setLearner(long tag, long eventBehaviourFlags, 
-							long data1, long data2, float fdata1, float fdata2)
+void DfxSettings::setLearner(long inTag, long inEventBehaviourFlags, 
+							long inData1, long inData2, float inFloatData1, float inFloatData2)
 {
 	// allow this invalid parameter tag, and then exit
-	if (tag == kNoLearner)
+	if (inTag == kNoLearner)
 	{
 		learner = kNoLearner;
 		return;
 	}
 	// return if what we got is not a valid parameter index
-	if (! paramTagIsValid(tag)  )
+	if (! paramTagIsValid(inTag)  )
 		return;
 
 	// cancel note range assignment if we're switching to a new learner
-	if (learner != tag)
+	if (learner != inTag)
 		noteRangeHalfwayDone = false;
 
 	// only set the learner if MIDI learn is on
 	if (midiLearn)
 	{
-		learner = tag;
-		learnerEventBehaviourFlags = eventBehaviourFlags;
-		learnerData1 = data1;
-		learnerData2 = data2;
-		learnerFData1 = fdata1;
-		learnerFData2 = fdata2;
+		learner = inTag;
+		learnerEventBehaviourFlags = inEventBehaviourFlags;
+		learnerData1 = inData1;
+		learnerData2 = inData2;
+		learnerFData1 = inFloatData1;
+		learnerFData2 = inFloatData2;
 	}
 	// unless we're making it so that there's no learner, that's okay
-	else if (tag == kNoLearner)
+	else if (inTag == kNoLearner)
 	{
-		learner = tag;
+		learner = inTag;
 		learnerEventBehaviourFlags = 0;
 	}
 }
@@ -1072,17 +1072,17 @@ void DfxSettings::setLearner(long tag, long eventBehaviourFlags,
 //-----------------------------------------------------------------------------
 // a plugin editor should call this during valueChanged from a control 
 // to turn MIDI learning on and off, VST parameter style
-void DfxSettings::setParameterMidiLearn(bool value)
+void DfxSettings::setParameterMidiLearn(bool inValue)
 {
-	setLearning(value);
+	setLearning(inValue);
 }
 
 //-----------------------------------------------------------------------------
 // a plugin editor should call this during valueChanged from a control 
 // to clear MIDI event assignments, VST parameter style
-void DfxSettings::setParameterMidiReset(bool value)
+void DfxSettings::setParameterMidiReset(bool inValue)
 {
-	if (value)
+	if (inValue)
 	{
 		// if we're in MIDI learn mode and a parameter has been selected, 
 		// then erase its MIDI event assigment (if it has one)
@@ -1105,43 +1105,43 @@ void DfxSettings::setParameterMidiReset(bool value)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
-long DfxSettings::getParameterAssignmentType(long paramTag)
+long DfxSettings::getParameterAssignmentType(long inParamTag)
 {
 	// return no-assignment if what we got is not a valid parameter index
-	if (! paramTagIsValid(paramTag) )
+	if (! paramTagIsValid(inParamTag) )
 		return kParamEventNone;
 
-	return paramAssignments[paramTag].eventType;
+	return paramAssignments[inParamTag].eventType;
 }
 
 //-----------------------------------------------------------------------------
-long DfxSettings::getParameterAssignmentNum(long paramTag)
+long DfxSettings::getParameterAssignmentNum(long inParamTag)
 {
 	// if what we got is not a valid parameter index
-	if (! paramTagIsValid(paramTag) )
+	if (! paramTagIsValid(inParamTag) )
 		return 0;	// XXX is there a better value to return on error?
 
-	return paramAssignments[paramTag].eventNum;
+	return paramAssignments[inParamTag].eventNum;
 }
 
 //-----------------------------------------------------------------------------
 // given a parameter ID, find the tag (index) for that parameter in a table of 
 // parameter IDs (probably our own table, unless a pointer to one was provided)
-long DfxSettings::getParameterTagFromID(long paramID, long numSearchIDs, long * searchIDs)
+long DfxSettings::getParameterTagFromID(long paramID, long inNumSearchIDs, long * inSearchIDs)
 {
 	// if nothing was passed for the search table, 
 	// then assume that we're searching our internal table
-	if (searchIDs == NULL)
+	if (inSearchIDs == NULL)
 	{
-		searchIDs = parameterIDs;
-		numSearchIDs = numParameters;
+		inSearchIDs = parameterIDs;
+		inNumSearchIDs = numParameters;
 	}
 
 	// search for the ID in the table that matches the requested ID
-	for (long i=0; i < numSearchIDs; i++)
+	for (long i=0; i < inNumSearchIDs; i++)
 	{
 		// return the parameter tag if a match is found
-		if (searchIDs[i] == paramID)
+		if (inSearchIDs[i] == paramID)
 			return i;
 	}
 
@@ -1153,10 +1153,10 @@ long DfxSettings::getParameterTagFromID(long paramID, long numSearchIDs, long * 
 //-----------------------------------------------------------------------------
 // this is called to investigate what to do when a data chunk is received in 
 // restore() that doesn't match the characteristics of what we are expecting
-long DfxSettings::handleCrisis(long flags)
+long DfxSettings::handleCrisis(long inFlags)
 {
 	// no need to continue on if there is no crisis situation
-	if (flags == 0)
+	if (inFlags == 0)
 		return kDfxSettingsCrisis_NoError;
 
 	switch (crisisBehaviour)
@@ -1170,7 +1170,7 @@ long DfxSettings::handleCrisis(long flags)
 			break;
 
 		case kDfxSettingsCrisis_LoadButComplain:
-			crisisAlert(flags);
+			crisisAlert(inFlags);
 			return kDfxSettingsCrisis_ComplainError;
 			break;
 
@@ -1219,7 +1219,7 @@ long DfxSettings::handleCrisis(long flags)
 // this function, if called for the non-reference endian architecture, 
 // will reverse the order of bytes in each variable/value of the data 
 // to correct endian differences and make a uniform data chunk
-void DfxSettings::correctEndian(void * data, bool isReversed, bool isPreset)
+void DfxSettings::correctEndian(void * data, bool isReversed, bool inIsPreset)
 {
 /*
 // XXX another idea...
@@ -1251,7 +1251,7 @@ void blah(long long x)
 		reversebytes(&numStoredPresets, sizeof(numStoredPresets));
 		reversebytes(&storedVersion, sizeof(storedVersion));
 	}
-//	if (isPreset)
+//	if (inIsPreset)
 //		numStoredPresets = 1;
 
 	// reverse the order of bytes of the header values
@@ -1287,7 +1287,7 @@ void blah(long long x)
 #endif
 
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-if ( !(IS_OLD_VST_VERSION(storedVersion) && isPreset) )
+if ( !(IS_OLD_VST_VERSION(storedVersion) && inIsPreset) )
 {
 #endif
 	// and reverse the byte order of each event assignment
