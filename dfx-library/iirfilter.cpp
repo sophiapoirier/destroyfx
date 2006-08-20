@@ -1,14 +1,8 @@
-/*------------------- by Marc Poirier  ][  December 2001 ------------------*/
+/*------------------- by Sophia Poirier  ][  December 2001 ------------------*/
 
 #include "iirfilter.h"
 
-#include <math.h>
-
-// XXX figure out another way
-#ifdef __APPLE_CC__
-	#define sinf(v) (float)sin((v))
-	#define cosf(v) (float)cos((v))
-#endif
+#include "dfxmath.h"
 
 
 //------------------------------------------------------------------------
@@ -18,20 +12,13 @@ IIRfilter::IIRfilter()
 }
 
 //------------------------------------------------------------------------
-IIRfilter::~IIRfilter()
+void IIRfilter::calculateLowpassCoefficients(float inCutoff, float inSampleRate)
 {
-}
-
-//------------------------------------------------------------------------
-void IIRfilter::calculateLowpassCoefficients(float cutoff, float samplerate)
-{
-  float twoPiFreqDivSR, cosTwoPiFreqDivSR, Q, slopeFactor, coeffScalar;
-
-	Q = 0.5f;
-	twoPiFreqDivSR = 2.0f * PI * cutoff / samplerate;	// ¹ ... 0
-	cosTwoPiFreqDivSR = cosf(twoPiFreqDivSR);			// 1 ... -1
-	slopeFactor = sinf(twoPiFreqDivSR) / (Q * 2.0f);	// 0 ... 1 ... 0
-	coeffScalar = 1.0f / (1.0f + slopeFactor);			// 1 ... 0.5 ... 1
+	float Q = 0.5f;
+	float twoPiFreqDivSR = 2.0f * PI * inCutoff / inSampleRate;	// ¹ ... 0
+	float cosTwoPiFreqDivSR = cosf(twoPiFreqDivSR);				// 1 ... -1
+	float slopeFactor = sinf(twoPiFreqDivSR) / (Q * 2.0f);		// 0 ... 1 ... 0
+	float coeffScalar = 1.0f / (1.0f + slopeFactor);			// 1 ... 0.5 ... 1
 
 	// calculate filter coefficients
 	pInCoeff = (1.0f - cosTwoPiFreqDivSR) * coeffScalar;	// 0 ... 2
@@ -41,15 +28,13 @@ void IIRfilter::calculateLowpassCoefficients(float cutoff, float samplerate)
 }
 
 //------------------------------------------------------------------------
-void IIRfilter::calculateHighpassCoefficients(float cutoff, float samplerate)
+void IIRfilter::calculateHighpassCoefficients(float inCutoff, float inSampleRate)
 {
-  float twoPiFreqDivSR, cosTwoPiFreqDivSR, Q, slopeFactor, coeffScalar;
-
-	Q = 0.5f;
-	twoPiFreqDivSR = 2.0f * PI * cutoff / samplerate;	// ¹ ... 0
-	cosTwoPiFreqDivSR = cosf(twoPiFreqDivSR);			// 1 ... -1
-	slopeFactor = sinf(twoPiFreqDivSR) / (Q * 2.0f);	// 0 ... 1 ... 0
-	coeffScalar = 1.0f / (1.0f + slopeFactor);			// 1 ... 0.5 ... 1
+	float Q = 0.5f;
+	float twoPiFreqDivSR = 2.0f * PI * inCutoff / inSampleRate;	// ¹ ... 0
+	float cosTwoPiFreqDivSR = cosf(twoPiFreqDivSR);				// 1 ... -1
+	float slopeFactor = sinf(twoPiFreqDivSR) / (Q * 2.0f);		// 0 ... 1 ... 0
+	float coeffScalar = 1.0f / (1.0f + slopeFactor);			// 1 ... 0.5 ... 1
 
 	// calculate filter coefficients
 	pInCoeff = (-1.0f - cosTwoPiFreqDivSR) * coeffScalar;	// 2 ... 0
@@ -59,11 +44,11 @@ void IIRfilter::calculateHighpassCoefficients(float cutoff, float samplerate)
 }
 
 //------------------------------------------------------------------------
-void IIRfilter::copyCoefficients(IIRfilter * source)
+void IIRfilter::copyCoefficients(IIRfilter * inSourceFilter)
 {
-	pOutCoeff = source->pOutCoeff;
-	ppOutCoeff = source->ppOutCoeff;
-	pInCoeff = source->pInCoeff;
-	ppInCoeff = source->ppInCoeff;
-	inCoeff = source->inCoeff;
+	pOutCoeff = inSourceFilter->pOutCoeff;
+	ppOutCoeff = inSourceFilter->ppOutCoeff;
+	pInCoeff = inSourceFilter->pInCoeff;
+	ppInCoeff = inSourceFilter->ppInCoeff;
+	inCoeff = inSourceFilter->inCoeff;
 }
