@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our Audio Unit resource stuff.
-written by Marc Poirier, October 2002
+written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #include "AudioUnit.r"
