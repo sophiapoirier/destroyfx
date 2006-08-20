@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------
-    Marc's Destroy FX MIDI stuff --- happened February 2001
+    Sophia's Destroy FX MIDI stuff --- happened February 2001
 ---------------------------------------------------------------*/
 
 #ifndef __DFXMIDI_H
@@ -121,9 +121,9 @@ const float LEGATO_FADE_STEP = 1.0f / LEGATO_FADE_DUR;
 
 const long EVENTS_QUEUE_SIZE = 12000;
 
-inline bool isNote(int midiStatus)
+inline bool isNote(int inMidiStatus)
 {
-	return (midiStatus == kMidiNoteOn) || (midiStatus == kMidiNoteOff);
+	return (inMidiStatus == kMidiNoteOn) || (inMidiStatus == kMidiNoteOff);
 }
 
 
@@ -165,30 +165,31 @@ public:
 	~DfxMidi();
 
 	void reset();	// resets the variables
-	void clearTail(int currentNote);	// zero out a note's tail buffers
-	void setLazyAttack(bool newMode=true)
-		{	lazyAttackMode = newMode;	}
+	void clearTail(int inCurrentNote);	// zero out a note's tail buffers
+	void setLazyAttack(bool inNewMode=true)
+		{	lazyAttackMode = inNewMode;	}
 
 	bool incNumEvents();	// increment the numBlockEvents counter, safely
 
 	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int channel, int note, int velocity, long frameOffset);
-	void handleNoteOff(int channel, int note, int velocity, long frameOffset);
-	void handleAllNotesOff(int channel, long frameOffset);
-	void handlePitchBend(int channel, int valueLSB, int valueMSB, long frameOffset);
-	void handleCC(int channel, int controllerNum, int value, long frameOffset);
-	void handleProgramChange(int channel, int programNum, long frameOffset);
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
+	void handleAllNotesOff(int inMidiChannel, long inBufferOffset);
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset);
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset);
+	void handleProgramChange(int inMidiChannel, int inProgramNumber, long inBufferOffset);
 
 	void preprocessEvents();
 	void postprocessEvents();
 
 	// this is where new MIDI events are reckoned with during audio processing
-	void heedEvents(long eventNum, float SAMPLERATE, double pitchbendRange, float attack, float release, 
-					bool legato, float velCurve, float velInfluence);
+	void heedEvents(long inEventNum, float inSampleRate, double inPitchbendRange, 
+					float inAttackDur, float inReleaseDur, 
+					bool inLegato, float inVelocityCurve, float inVelocityInfluence);
 
 	// these are for manage the ordered queue of active MIDI notes
-	void insertNote(int currentNote);
-	void removeNote(int currentNote);
+	void insertNote(int inCurrentNote);
+	void removeNote(int inCurrentNote);
 	void removeAllNotes();
 
 	// public variables
@@ -200,15 +201,15 @@ public:
 	double pitchbend;		// a frequency scalar value for the current pitchbend setting
 
 	// this function calculates fade scalars if attack or release are happening
-	float processEnvelope(bool fades, int currentNote);
+	float processEnvelope(bool inUseFades, int inCurrentNote);
 
 	// this function writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note
-	void processSmoothingOutputSample(float * out, long sampleFrames, int currentNote);
+	void processSmoothingOutputSample(float * outAudio, long inNumSamples, int inCurrentNote);
 
 	// this function writes the audio output for smoothing the tips of cut-off notes
 	// by fading out the samples stored in the tail buffers
-	void processSmoothingOutputBuffer(float * out, long sampleFrames, int currentNote, int channel);
+	void processSmoothingOutputBuffer(float * outAudio, long inNumSamples, int inCurrentNote, int inMidiChannel);
 
 
 private:
@@ -216,7 +217,7 @@ private:
 	void fillFrequencyTable();
 	void fillFadeTable();
 
-	void turnOffNote(int currentNote, float release, bool legato, float SAMPLERATE);
+	void turnOffNote(int inCurrentNote, float inReleaseDur, bool inLegato, float inSampleRate);
 
 	// a queue of note-offs for when the sustain pedal is active
 	bool * sustainQueue;
@@ -236,9 +237,9 @@ private:
 
 //-------------------------------------------------------------------------
 // this function calculates fade scalars if attack or release are happening
-inline float DfxMidi::processEnvelope(bool fades, int currentNote)
+inline float DfxMidi::processEnvelope(bool inUseFades, int inCurrentNote)
 {
-	NoteTable * note = &noteTable[currentNote];
+	NoteTable * note = &noteTable[inCurrentNote];
 
 	// if attack is in progress
 	if (note->attackDur > 0)
@@ -251,7 +252,7 @@ inline float DfxMidi::processEnvelope(bool fades, int currentNote)
 			return 1.0f;
 		}
 
-		if (fades)	// use nice, exponential fading
+		if (inUseFades)	// use nice, exponential fading
 			return fadeTable[ (long) ((float)(note->attackSamples) * note->fadeTableStep) ];
 		else	// bad, linear fade
 			return (float)(note->attackSamples) * note->linearFadeStep;
@@ -273,7 +274,7 @@ inline float DfxMidi::processEnvelope(bool fades, int currentNote)
 			return 0.0f;
 		}
 
-		if (fades)	// use nice, exponential fading
+		if (inUseFades)	// use nice, exponential fading
 			return fadeTable[ (long) ((float)(note->releaseSamples) * note->fadeTableStep) ];
 		else	// use bad fade
 			return (float)(note->releaseSamples) * note->linearFadeStep;
@@ -295,17 +296,17 @@ inline float DfxMidi::processEnvelope(bool fades, int currentNote)
 //-------------------------------------------------------------------------
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by sloping down from the last sample outputted by the note
-inline void DfxMidi::processSmoothingOutputSample(float * out, long sampleFrames, int currentNote)
+inline void DfxMidi::processSmoothingOutputSample(float * outAudio, long inNumSamples, int inCurrentNote)
 {
-	for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
+	for (long samplecount=0; samplecount < inNumSamples; samplecount++)
 	{
 		// add the latest sample to the output collection, scaled by the note envelope and user gain
-		out[samplecount] += noteTable[currentNote].lastOutValue * 
-							(float)noteTable[currentNote].smoothSamples * STOLEN_NOTE_FADE_STEP;
+		outAudio[samplecount] += noteTable[inCurrentNote].lastOutValue * 
+							(float)noteTable[inCurrentNote].smoothSamples * STOLEN_NOTE_FADE_STEP;
 		// decrement the smoothing counter
-		(noteTable[currentNote].smoothSamples)--;
+		(noteTable[inCurrentNote].smoothSamples)--;
 		// exit this function if we've done all of the smoothing necessary
-		if (noteTable[currentNote].smoothSamples <= 0)
+		if (noteTable[inCurrentNote].smoothSamples <= 0)
 			return;
 	}
 }
@@ -314,14 +315,14 @@ inline void DfxMidi::processSmoothingOutputSample(float * out, long sampleFrames
 //-------------------------------------------------------------------------
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by fading out the samples stored in the tail buffers
-inline void DfxMidi::processSmoothingOutputBuffer(float * out, long sampleFrames, int currentNote, int channel)
+inline void DfxMidi::processSmoothingOutputBuffer(float * outAudio, long inNumSamples, int inCurrentNote, int inMidiChannel)
 {
-	long * smoothsamples = &(noteTable[currentNote].smoothSamples);
-	float * tail = (channel == 1) ? noteTable[currentNote].tail1 : noteTable[currentNote].tail2;
+	long * smoothsamples = &(noteTable[inCurrentNote].smoothSamples);
+	float * tail = (inMidiChannel == 1) ? noteTable[inCurrentNote].tail1 : noteTable[inCurrentNote].tail2;
 
-	for (long samplecount=0; (samplecount < sampleFrames); samplecount++)
+	for (long samplecount=0; samplecount < inNumSamples; samplecount++)
 	{
-		out[samplecount] += tail[STOLEN_NOTE_FADE_DUR-(*smoothsamples)] * 
+		outAudio[samplecount] += tail[STOLEN_NOTE_FADE_DUR-(*smoothsamples)] * 
 							(float)(*smoothsamples) * STOLEN_NOTE_FADE_STEP;
 		(*smoothsamples)--;
 		if (*smoothsamples <= 0)
