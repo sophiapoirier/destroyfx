@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for doing all kinds of fancy plugin parameter stuff.
-written by Marc Poirier, October 2002
+written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 
@@ -17,7 +17,9 @@ const double twiddle = 0.001;
 
 
 
-#pragma mark _________init_________
+#pragma mark -
+#pragma mark init
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 DfxParam::DfxParam()
@@ -76,27 +78,27 @@ DfxParam::~DfxParam()
 
 
 //-----------------------------------------------------------------------------
-void DfxParam::init(const char * initName, DfxParamValueType initType, 
-                    DfxParamValue initValue, DfxParamValue initDefaultValue, 
-                    DfxParamValue initMin, DfxParamValue initMax, 
-                    DfxParamUnit initUnit, DfxParamCurve initCurve)
+void DfxParam::init(const char * inName, DfxParamValueType inType, 
+                    DfxParamValue inInitialValue, DfxParamValue inDefaultValue, 
+                    DfxParamValue inMinValue, DfxParamValue inMaxValue, 
+                    DfxParamUnit inUnit, DfxParamCurve inCurve)
 {
 	// accept all of the incoming init values
-	valueType = initType;
-	value = oldValue = initValue;
-	defaultValue = initDefaultValue;
-	min = initMin;
-	max = initMax;
-	if (initName != NULL)
+	valueType = inType;
+	value = oldValue = inInitialValue;
+	defaultValue = inDefaultValue;
+	min = inMinValue;
+	max = inMaxValue;
+	if (inName != NULL)
 	{
-		strncpy(name, initName, DFX_PARAM_MAX_NAME_LENGTH);
+		strncpy(name, inName, DFX_PARAM_MAX_NAME_LENGTH);
 		name[DFX_PARAM_MAX_NAME_LENGTH-1] = 0;
 		#ifdef TARGET_API_AUDIOUNIT
-			cfname = CFStringCreateWithCString(kCFAllocatorDefault, initName, kDFX_DefaultCStringEncoding);
+			cfname = CFStringCreateWithCString(kCFAllocatorDefault, inName, kDFX_DefaultCStringEncoding);
 		#endif
 	}
-	curve = initCurve;
-	unit = initUnit;
+	curve = inCurve;
+	unit = inUnit;
 	if (unit == kDfxParamUnit_index)
 		SetEnforceValueLimits(true);	// make sure not to go out of any array bounds
 	changed = true;
@@ -104,7 +106,7 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 
 	// do some checks to make sure that the min and max are not swapped 
 	// and that the default value is between the min and max
-	switch (initType)
+	switch (inType)
 	{
 		case kDfxParamValueType_undefined:
 			break;
@@ -145,41 +147,41 @@ void DfxParam::init(const char * initName, DfxParamValueType initType,
 
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with float variable type
-void DfxParam::init_f(const char * initName, double initValue, double initDefaultValue, 
-							double initMin, double initMax, 
-							DfxParamUnit initUnit, DfxParamCurve initCurve)
+void DfxParam::init_f(const char * inName, double inInitialValue, double inDefaultValue, 
+							double inMinValue, double inMaxValue, 
+							DfxParamUnit inUnit, DfxParamCurve inCurve)
 {
 	DfxParamValue val, def, mn, mx;
-	val.f = initValue;
-	def.f = initDefaultValue;
-	mn.f = initMin;
-	mx.f = initMax;
-	init(initName, kDfxParamValueType_float, val, def, mn, mx, initUnit, initCurve);
+	val.f = inInitialValue;
+	def.f = inDefaultValue;
+	mn.f = inMinValue;
+	mx.f = inMaxValue;
+	init(inName, kDfxParamValueType_float, val, def, mn, mx, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
-void DfxParam::init_i(const char * initName, int64_t initValue, int64_t initDefaultValue, 
-							int64_t initMin, int64_t initMax, 
-							DfxParamUnit initUnit, DfxParamCurve initCurve)
+void DfxParam::init_i(const char * inName, int64_t inInitialValue, int64_t inDefaultValue, 
+							int64_t inMinValue, int64_t inMaxValue, 
+							DfxParamUnit inUnit, DfxParamCurve inCurve)
 {
 	DfxParamValue val, def, mn, mx;
-	val.i = initValue;
-	def.i = initDefaultValue;
-	mn.i = initMin;
-	mx.i = initMax;
-	init(initName, kDfxParamValueType_int, val, def, mn, mx, initUnit, initCurve);
+	val.i = inInitialValue;
+	def.i = inDefaultValue;
+	mn.i = inMinValue;
+	mx.i = inMaxValue;
+	init(inName, kDfxParamValueType_int, val, def, mn, mx, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with boolean variable type
-void DfxParam::init_b(const char * initName, bool initValue, bool initDefaultValue, 
-							DfxParamUnit initUnit)
+void DfxParam::init_b(const char * inName, bool inInitialValue, bool inDefaultValue, 
+							DfxParamUnit inUnit)
 {
 	DfxParamValue val, def, mn, mx;
-	val.b = initValue;
-	def.b = initDefaultValue;
+	val.b = inInitialValue;
+	def.b = inDefaultValue;
 	mn.b = false;
 	mx.b = true;
-	init(initName, kDfxParamValueType_boolean, val, def, mn, mx, initUnit, kDfxParamCurve_linear);
+	init(inName, kDfxParamValueType_boolean, val, def, mn, mx, inUnit, kDfxParamCurve_linear);
 }
 
 //-----------------------------------------------------------------------------
@@ -216,12 +218,12 @@ void DfxParam::releaseValueStrings()
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-void DfxParam::setusevaluestrings(bool newMode)
+void DfxParam::setusevaluestrings(bool inNewMode)
 {
-	useValueStrings = newMode;
+	useValueStrings = inNewMode;
 
 	// if we're using value strings, initialize
-	if (newMode)
+	if (inNewMode)
 	{
 		// release any value strings arrays that may have previously been allocated
 		releaseValueStrings();
@@ -247,9 +249,9 @@ void DfxParam::setusevaluestrings(bool newMode)
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-bool DfxParam::setvaluestring(int64_t index, const char * inText)
+bool DfxParam::setvaluestring(int64_t inIndex, const char * inText)
 {
-	if (!ValueStringIndexIsValid(index))
+	if ( !ValueStringIndexIsValid(inIndex) )
 		return false;
 
 	if (inText == NULL)
@@ -257,7 +259,7 @@ bool DfxParam::setvaluestring(int64_t index, const char * inText)
 
 	// the actual index of the array is the incoming index 
 	// minus the parameter's minimum value
-	int64_t arrayIndex = index - getmin_i();
+	int64_t arrayIndex = inIndex - getmin_i();
 	strncpy(valueStrings[arrayIndex], inText, DFX_PARAM_MAX_VALUE_STRING_LENGTH);
 	valueStrings[arrayIndex][DFX_PARAM_MAX_VALUE_STRING_LENGTH-1] = 0;
 
@@ -273,9 +275,9 @@ bool DfxParam::setvaluestring(int64_t index, const char * inText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the contents of a specific value string
-bool DfxParam::getvaluestring(int64_t index, char * outText)
+bool DfxParam::getvaluestring(int64_t inIndex, char * outText)
 {
-	char * text = getvaluestring_ptr(index);
+	char * text = getvaluestring_ptr(inIndex);
 
 	if (text == NULL)
 		return false;
@@ -286,26 +288,26 @@ bool DfxParam::getvaluestring(int64_t index, char * outText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the pointer to a specific value string
-char * DfxParam::getvaluestring_ptr(int64_t index)
+char * DfxParam::getvaluestring_ptr(int64_t inIndex)
 {
-	if (!ValueStringIndexIsValid(index))
+	if ( !ValueStringIndexIsValid(inIndex) )
 		return NULL;
 
-	return valueStrings[index - getmin_i()];
+	return valueStrings[inIndex - getmin_i()];
 }
 
 //-----------------------------------------------------------------------------
 // safety check for an index into the value strings array
-bool DfxParam::ValueStringIndexIsValid(int64_t index)
+bool DfxParam::ValueStringIndexIsValid(int64_t inIndex)
 {
 	if ( !useValueStrings )
 		return false;
 	if (valueStrings == NULL)
 		return false;
-	if ( (index < getmin_i()) || (index > getmax_i()) )
+	if ( (inIndex < getmin_i()) || (inIndex > getmax_i()) )
 		return false;
 	// XXX should I rethink this one?
-	if (valueStrings[index-getmin_i()] == NULL)
+	if (valueStrings[inIndex - getmin_i()] == NULL)
 		return false;
 
 	return true;
@@ -313,7 +315,9 @@ bool DfxParam::ValueStringIndexIsValid(int64_t index)
 
 
 
-#pragma mark _________getting_values_________
+#pragma mark -
+#pragma mark gettingvalues
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // figure out the value of a DfxParamValue as float type value
@@ -379,43 +383,43 @@ bool DfxParam::derive_b(DfxParamValue inValue)
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
 // XXX this is being obsoleted by the non-class contractparametervalue() function
-double DfxParam::contract(double realValue)
+double DfxParam::contract(double inLiteralValue)
 {
-	return contractparametervalue(realValue, getmin_f(), getmax_f(), curve, curvespec);
+	return contractparametervalue(inLiteralValue, getmin_f(), getmax_f(), curve, curvespec);
 }
 
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
-double contractparametervalue(double realValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
+double contractparametervalue(double inLiteralValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
 {
 	double valueRange = maxValue - minValue;
 
 	switch (curveType)
 	{
 		case kDfxParamCurve_linear:
-			return (realValue-minValue) / valueRange;
+			return (inLiteralValue-minValue) / valueRange;
 		case kDfxParamCurve_stepped:
 			// XXX is this a good way to do this?
-			return (realValue-minValue) / valueRange;
+			return (inLiteralValue-minValue) / valueRange;
 		case kDfxParamCurve_sqrt:
-			return (sqrt(realValue) * valueRange) + minValue;
+			return (sqrt(inLiteralValue) * valueRange) + minValue;
 		case kDfxParamCurve_squared:
-			return sqrt((realValue-minValue) / valueRange);
+			return sqrt((inLiteralValue-minValue) / valueRange);
 		case kDfxParamCurve_cubed:
-			return pow( (realValue-minValue) / valueRange, 1.0/3.0 );
+			return pow( (inLiteralValue-minValue) / valueRange, 1.0/3.0 );
 		case kDfxParamCurve_pow:
-			return pow( (realValue-minValue) / valueRange, 1.0/curveSpec );
+			return pow( (inLiteralValue-minValue) / valueRange, 1.0/curveSpec );
 		case kDfxParamCurve_exp:
-			return log(1.0-minValue+realValue) / log(1.0-minValue+maxValue);
+			return log(1.0-minValue+inLiteralValue) / log(1.0-minValue+maxValue);
 		case kDfxParamCurve_log:
-			return (log(realValue/minValue) / log(2.0)) / (log(maxValue/minValue) / log(2.0));
+			return (log(inLiteralValue/minValue) / log(2.0)) / (log(maxValue/minValue) / log(2.0));
 		case kDfxParamCurve_undefined:
 		default:
 			break;
 	}
 
-	return realValue;
+	return inLiteralValue;
 }
 
 //-----------------------------------------------------------------------------
@@ -427,7 +431,9 @@ double DfxParam::get_gen()
 
 
 
-#pragma mark _________setting_values_________
+#pragma mark -
+#pragma mark setting values
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // set a DfxParamValue with a value of a float type
@@ -537,25 +543,25 @@ bool DfxParam::accept_b(bool inValue, DfxParamValue & outValue)
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double DfxParam::expand(double genValue)
+double DfxParam::expand(double inGenValue)
 {
-	return expandparametervalue(genValue, getmin_f(), getmax_f(), curve, curvespec);
+	return expandparametervalue(inGenValue, getmin_f(), getmax_f(), curve, curvespec);
 }
 
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double expandparametervalue(double genValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
+double expandparametervalue(double inGenValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
 {
 	double valueRange = maxValue - minValue;
 
 	switch (curveType)
 	{
 		case kDfxParamCurve_linear:
-			return (genValue * valueRange) + minValue;
+			return (inGenValue * valueRange) + minValue;
 		case kDfxParamCurve_stepped:
 			{
-				double tempval = (genValue * valueRange) + minValue;
+				double tempval = (inGenValue * valueRange) + minValue;
 				if (tempval < 0.0)
 					tempval -= twiddle;
 				else
@@ -564,39 +570,39 @@ double expandparametervalue(double genValue, double minValue, double maxValue, D
 				return (double) ((int64_t)tempval);
 			}
 		case kDfxParamCurve_sqrt:
-			return (sqrt(genValue) * valueRange) + minValue;
+			return (sqrt(inGenValue) * valueRange) + minValue;
 		case kDfxParamCurve_squared:
-			return (genValue*genValue * valueRange) + minValue;
+			return (inGenValue*inGenValue * valueRange) + minValue;
 		case kDfxParamCurve_cubed:
-			return (genValue*genValue*genValue * valueRange) + minValue;
+			return (inGenValue*inGenValue*inGenValue * valueRange) + minValue;
 		case kDfxParamCurve_pow:
-			return (pow(genValue, curveSpec) * valueRange) + minValue;
+			return (pow(inGenValue, curveSpec) * valueRange) + minValue;
 		case kDfxParamCurve_exp:
-			return exp( log(valueRange+1.0) * genValue ) + minValue - 1.0;
+			return exp( log(valueRange+1.0) * inGenValue ) + minValue - 1.0;
 		case kDfxParamCurve_log:
-			return minValue * pow( 2.0, genValue * log(maxValue/minValue)/log(2.0) );
+			return minValue * pow( 2.0, inGenValue * log(maxValue/minValue)/log(2.0) );
 		case kDfxParamCurve_undefined:
 		default:
 			break;
 	}
 
-	return genValue;
+	return inGenValue;
 }
 
 //-----------------------------------------------------------------------------
 // set the parameter's current value using a DfxParamValue
-void DfxParam::set(DfxParamValue newValue)
+void DfxParam::set(DfxParamValue inNewValue)
 {
-	value = newValue;
+	value = inNewValue;
 	limit();
 	setchanged(true);	// XXX do this smarter?
 }
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using a float type value
-void DfxParam::set_f(double newValue)
+void DfxParam::set_f(double inNewValue)
 {
-	bool changed_1 = accept_f(newValue, value);
+	bool changed_1 = accept_f(inNewValue, value);
 	bool changed_2 = limit();
 	if (changed_1 || changed_2)
 		setchanged(true);
@@ -604,9 +610,9 @@ void DfxParam::set_f(double newValue)
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using an int type value
-void DfxParam::set_i(int64_t newValue)
+void DfxParam::set_i(int64_t inNewValue)
 {
-	bool changed_1 = accept_i(newValue, value);
+	bool changed_1 = accept_i(inNewValue, value);
 	bool changed_2 = limit();
 	if (changed_1 || changed_2)
 		setchanged(true);
@@ -614,9 +620,9 @@ void DfxParam::set_i(int64_t newValue)
 
 //-----------------------------------------------------------------------------
 // set the current parameter value using a boolean type value
-void DfxParam::set_b(bool newValue)
+void DfxParam::set_b(bool inNewValue)
 {
-	bool changed_1 = accept_b(newValue, value);
+	bool changed_1 = accept_b(inNewValue, value);
 	bool changed_2 = limit();
 	if (changed_1 || changed_2)
 		setchanged(true);
@@ -624,14 +630,16 @@ void DfxParam::set_b(bool newValue)
 
 //-----------------------------------------------------------------------------
 // set the parameter's current value with a generic 0...1 float value
-void DfxParam::set_gen(double genValue)
+void DfxParam::set_gen(double inGenValue)
 {
-	set_f( expandparametervalue(genValue, getmin_f(), getmax_f(), curve, curvespec) );
+	set_f( expandparametervalue(inGenValue, getmin_f(), getmax_f(), curve, curvespec) );
 }
 
 
 
-#pragma mark _________handling_values_________
+#pragma mark -
+#pragma mark handling values
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // randomize the current parameter value
@@ -704,22 +712,26 @@ bool DfxParam::limit()
 
 
 
-#pragma mark _________state_________
+#pragma mark -
+#pragma mark state
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // set the property indicating whether the parameter value has changed
-void DfxParam::setchanged(bool newChanged)
+void DfxParam::setchanged(bool inChanged)
 {
 	// XXX this is when we stuff the current value away as the old value (?)
-	if (!newChanged)
+	if (!inChanged)
 		oldValue = value;
 
-	changed = newChanged;
+	changed = inChanged;
 }
 
 
 
-#pragma mark _________info_________
+#pragma mark -
+#pragma mark info
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 // get a copy of the text of the parameter name
@@ -836,7 +848,9 @@ void DfxParam::setcustomunitstring(const char * inText)
 
 
 
-#pragma mark _________DfxPreset_________
+#pragma mark -
+#pragma mark DfxPreset
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 DfxPreset::DfxPreset()
@@ -883,17 +897,17 @@ void DfxPreset::PostConstructor(long inNumParameters)
 
 /*
 //-----------------------------------------------------------------------------
-void setvalue(long parameterIndex, DfxParamValue newValue)
+void setvalue(long inParameterIndex, DfxParamValue inNewValue)
 {
-	if ( (values != NULL) && ((parameterIndex >= 0) && (parameterIndex < numParameters)) )
-		values[parameterIndex] = newValue;
+	if ( (values != NULL) && ((inParameterIndex >= 0) && (inParameterIndex < numParameters)) )
+		values[inParameterIndex] = inNewValue;
 }
 
 //-----------------------------------------------------------------------------
-DfxParamValue getvalue(long parameterIndex)
+DfxParamValue getvalue(long inParameterIndex)
 {
-	if ( (values != NULL) && ((parameterIndex >= 0) && (parameterIndex < numParameters)) )
-		return values[parameterIndex];
+	if ( (values != NULL) && ((inParameterIndex >= 0) && (inParameterIndex < numParameters)) )
+		return values[inParameterIndex];
 	else
 	{
 		DfxParamValue dummy;
