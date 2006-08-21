@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for doing all kinds of fancy plugin parameter stuff.
-written by Marc Poirier, October 2002
+written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
@@ -159,15 +159,15 @@ property.  When setusevaluestrings(true) is called, memory is allocated
 for the value strings.
 ------------------------------------------------------------------------*/
 
-#if WIN32
-	typedef __int64	int64_t;
-#endif
-
 #ifndef __DFXPARAMETER_H
 #define __DFXPARAMETER_H
 
 
 #include "dfxdefines.h"
+
+#if WIN32
+	typedef __int64	int64_t;
+#endif
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include <CoreFoundation/CFString.h>	// for CFString stuff
@@ -264,37 +264,37 @@ public:
 	virtual ~DfxParam();
 	
 	// initialize a parameter with values, value types, curve types, etc.
-	void init(const char * initName, DfxParamValueType initType, 
-					DfxParamValue initValue, DfxParamValue initDefaultValue, 
-					DfxParamValue initMin, DfxParamValue initMax, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear);
+	void init(const char * inName, DfxParamValueType inType, 
+					DfxParamValue inInitialValue, DfxParamValue inDefaultValue, 
+					DfxParamValue inMinValue, DfxParamValue inMaxValue, 
+					DfxParamUnit inUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve inCurve = kDfxParamCurve_linear);
 	// the rest of these are just convenience wrappers for initializing with a certain variable type
-	void init_f(const char * initName, double initValue, double initDefaultValue, 
-					double initMin, double initMax, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-					DfxParamCurve initCurve = kDfxParamCurve_linear);
-	void init_i(const char * initName, int64_t initValue, int64_t initDefaultValue, 
-					int64_t initMin, int64_t initMax, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined, 
-					DfxParamCurve initCurve = kDfxParamCurve_stepped);
-	void init_b(const char * initName, bool initValue, bool initDefaultValue, 
-					DfxParamUnit initUnit = kDfxParamUnit_undefined);
+	void init_f(const char * inName, double inInitialValue, double inDefaultValue, 
+					double inMinValue, double inMaxValue, 
+					DfxParamUnit inUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve inCurve = kDfxParamCurve_linear);
+	void init_i(const char * inName, int64_t inInitialValue, int64_t inDefaultValue, 
+					int64_t inMinValue, int64_t inMaxValue, 
+					DfxParamUnit inUnit = kDfxParamUnit_undefined, 
+					DfxParamCurve inCurve = kDfxParamCurve_stepped);
+	void init_b(const char * inName, bool inInitialValue, bool inDefaultValue, 
+					DfxParamUnit inUnit = kDfxParamUnit_undefined);
 
 	// release memory for the value strings arrays
 	void releaseValueStrings();
 	// set/get whether or not to use an array of strings for custom value display
-	void setusevaluestrings(bool newMode=true);
+	void setusevaluestrings(bool inNewMode = true);
 	bool getusevaluestrings()
 		{	return useValueStrings;	}
 	// safety check for an index into the value strings array
-	bool ValueStringIndexIsValid(int64_t index);
+	bool ValueStringIndexIsValid(int64_t inIndex);
 	// set a value string's text contents
-	bool setvaluestring(int64_t index, const char * inText);
+	bool setvaluestring(int64_t inIndex, const char * inText);
 	// get a copy of the contents of a specific value string...
-	bool getvaluestring(int64_t index, char * outText);
+	bool getvaluestring(int64_t inIndex, char * outText);
 	// ...or get a copy of the pointer to the value string
-	char * getvaluestring_ptr(int64_t index);
+	char * getvaluestring_ptr(int64_t inIndex);
 #ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the array of CFString value strings
 	CFStringRef * getvaluecfstrings()
@@ -302,12 +302,12 @@ public:
 #endif
 
 	// set the parameter's current value
-	void set(DfxParamValue newValue);
-	void set_f(double newValue);
-	void set_i(int64_t newValue);
-	void set_b(bool newValue);
+	void set(DfxParamValue inNewValue);
+	void set_f(double inNewValue);
+	void set_i(int64_t inNewValue);
+	void set_b(bool inNewValue);
 	// set the current value with a generic 0...1 float value
-	void set_gen(double genValue);
+	void set_gen(double inGenValue);
 
 	// get the parameter's current value
 	DfxParamValue get()
@@ -365,15 +365,15 @@ public:
 
 	// expand and contract routines for setting and getting values generically
 	// these take into account the parameter curve
-	double expand(double genValue);
-	double contract(double realValue);
+	double expand(double inGenValue);
+	double contract(double inLiteralValue);
 
 	// clip the current parameter value to the min/max range
 	// returns true if the value was altered, false otherwise
 	bool limit();
 	// set/get the property stating whether or not to automatically clip values into range
-	void SetEnforceValueLimits(bool newRule)
-		{	enforceValueLimits = newRule;	limit();	}
+	void SetEnforceValueLimits(bool inNewMode)
+		{	enforceValueLimits = inNewMode;	limit();	}
 	bool GetEnforceValueLimits()
 		{	return enforceValueLimits;	}
 
@@ -386,26 +386,25 @@ public:
 #endif
 
 	// set/get the variable type of the parameter values
-	void setvaluetype(DfxParamValueType newType);
+	void setvaluetype(DfxParamValueType inNewType);
 	DfxParamValueType getvaluetype()
 		{	return valueType;	}
 
 	// set/get the unit type of the parameter
-	void setunit(DfxParamUnit newUnit);
+	void setunit(DfxParamUnit inNewUnit);
 	DfxParamUnit getunit()
 		{	return unit;	}
 	void getunitstring(char * outText);
 	void setcustomunitstring(const char * inText);
 
 	// set/get the value distribution curve
-	void setcurve(DfxParamCurve newcurve)
-		{	curve = newcurve;	}
+	void setcurve(DfxParamCurve inNewCurve)
+		{	curve = inNewCurve;	}
 	DfxParamCurve getcurve()
 		{	return curve;	}
-
 	// set/get possibly-necessary extra specification about the value distribution curve
-	void setcurvespec(double newcurvespec)
-		{	curvespec = newcurvespec;	}
+	void setcurvespec(double inNewCurveSpec)
+		{	curvespec = inNewCurveSpec;	}
 	double getcurvespec()
 		{	return curvespec;	}
 
@@ -414,9 +413,13 @@ public:
 		{	attributes = inFlags;	}
 	unsigned long getattributes()
 		{	return attributes;	}
+	void addattributes(unsigned long inFlags)
+		{	attributes |= inFlags;	}
+	void removeattributes(unsigned long inFlags)
+		{	attributes &= ~inFlags;	}
 
 	// set/get the property indicating whether the parameter value has changed
-	void setchanged(bool newChanged = true);
+	void setchanged(bool inChanged = true);
 	bool getchanged()
 		{	return changed;	}
 
@@ -458,8 +461,8 @@ private:
 
 
 // prototypes for parameter value mapping utility functions
-double expandparametervalue(double genValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec);
-double contractparametervalue(double realValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec);
+double expandparametervalue(double inGenValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec);
+double contractparametervalue(double inLiteralValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec);
 
 
 
@@ -477,8 +480,8 @@ public:
 	// call this immediately after the constructor (because new[] can't take arguments)
 	void PostConstructor(long inNumParameters);
 
-//	void setvalue(long parameterIndex, DfxParamValue newValue);
-//	DfxParamValue getvalue(long parameterIndex);
+//	void setvalue(long inParameterIndex, DfxParamValue inNewValue);
+//	DfxParamValue getvalue(long inParameterIndex);
 	void setname(const char * inText);
 	void getname(char * outText);
 	char * getname_ptr();
