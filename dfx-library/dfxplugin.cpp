@@ -1031,7 +1031,9 @@ void DfxPlugin::setAudioProcessingMustAccumulate(bool inNewMode)
 	if (inNewMode)
 	{
 	#ifdef TARGET_API_AUDIOUNIT
-		SetProcessesInPlace(false);
+		#if !TARGET_PLUGIN_IS_INSTRUMENT
+			SetProcessesInPlace(false);
+		#endif
 	#endif
 	#if defined(TARGET_API_VST) && !VST_FORCE_DEPRECATED
 		canProcessReplacing(false);
