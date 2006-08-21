@@ -69,6 +69,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 /*-----------------------------------------------------------------------------*/
 /* Windows stuff */
+#ifdef WIN32
 #if WIN32
 	#ifdef _MSC_VER
 		/* turn off warnings about default but no cases in switch, unknown pragma, etc. 
@@ -76,6 +77,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 		#pragma warning( disable : 4065 57 4200 4244 4068 4326 )
 	#endif
 	#include <windows.h>
+#endif
 #endif
 
 
