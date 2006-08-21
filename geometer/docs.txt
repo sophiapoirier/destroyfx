@@ -213,9 +213,9 @@
 
    -- Geometer : Info --
 
-   Geometer was mostly made by Tom 7, though Marc did most of the
-   painful GUI, MIDI learn, and chunk code. He also offered valuable
-   suggestions and debugging help. (Thanks Marc!)
+   Geometer was mostly made by Tom 7, though Sophia did most of the
+   painful GUI, MIDI learn, and chunk code. She also offered valuable
+   suggestions and debugging help. (Thanks Sophia!)
 
    'span' was suggested by Bram of Smartelectron:x.
    'friends' was invented when Jason Reed misunderstood what
@@ -248,5 +248,5 @@
    http://msg.spacebar.org/f/a/s/msg/disp/10
 
 
-   Geometer is Copyright (c) 2002 Tom Murphy 7 and Marc Poirier
+   Geometer is Copyright (c) 2002 Tom Murphy 7 and Sophia Poirier
    Super Destroy FX: http://destroyfx.org/
