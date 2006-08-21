@@ -1,7 +1,7 @@
 /*
  *  makedocs.c
  *
- *  Copyright (C) 2003 by Marc Poirier and Tom Murphy 7
+ *  Copyright (C) 2003 by Sophia Poirier
  *
  *  This software is released under the terms of the 
  *  GNU Public License (see COPYING for full license text)
@@ -287,7 +287,7 @@ readlineloop:
 		// this is the per-character line reading loop
 		for (size_t i=0; i < linesize; i++)
 		{
-		// begin Marc's sorry-ass HTML parsing...
+		// begin Sophia's sorry-ass HTML parsing...
 			// look for a tag
 			if (linestr[i] == '<')
 			{
