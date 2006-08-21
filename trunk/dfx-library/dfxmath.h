@@ -121,7 +121,7 @@ inline float interpolateLinear(float * inData, double inAddress, long inBufferSi
 {
 	long pos = (long)inAddress;
 	float posFract = (float) (inAddress - (double)pos);
-	return (inData[pos] * (1.0f-posFract)) + (inData[(pos+1)%inArraySize] * posFract);
+	return (inData[pos] * (1.0f-posFract)) + (inData[(pos+1)%inBufferSize] * posFract);
 }
 
 inline float interpolateRandom(float inMinValue, float inMaxValue)
