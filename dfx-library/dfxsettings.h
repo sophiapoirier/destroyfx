@@ -211,17 +211,18 @@ typedef struct
 inline void reversebytes(void * inData, unsigned long inItemSize, unsigned long inItemCount = 1)
 {
 	unsigned long half = (inItemSize / 2) + (inItemSize % 2);
+	char * dataBytes = (char*)inData;
 
 	for (unsigned long c=0; c < inItemCount; c++)
 	{
 		for (unsigned long i=0; i < half; i++)
 		{
-			char temp = inData[i];
+			char temp = dataBytes[i];
 			unsigned long complementIndex = (inItemSize - 1) - i;
-			inData[i] = inData[complementIndex];
-			inData[complementIndex] = temp;
+			dataBytes[i] = dataBytes[complementIndex];
+			dataBytes[complementIndex] = temp;
 		}
-		inData += inSize;
+		dataBytes += inItemSize;
 	}
 }
 
