@@ -1,17 +1,20 @@
             Super Destroy FX Plugin Sources
 
 These are some of the plugins that are part of the Destroy FX plugin
-pack (DFX). All of them use the VST plugin standard, and should be
-(nearly) source-portable to any platform which supports that. Some
-advanced features may not work on all platforms or in all hosts.
+pack. All of them use the VST plugin standard, and should be (nearly)
+source-portable to any platform which supports that. We also support
+Audio Units, the new plugin format for Mac OS X. Some advanced
+features may not work on all platforms or in all hosts.
 
 Unfortunately, C++ is currently the only appropriate language for
 creating VST plugins. Thus, all of these are written in C++. You'll
 need a C++ compiler for your platform in order to compile them. You'll
 also need an appropriate version of the VST SDK. Right now, this means
-that you'll be able to easily compile with Visual C++ for Windows,
-and somewhat easily with CodeWarrior for the Macintosh, and that it
-will be pretty difficult for any other platform.
+that you'll be able to easily compile with Visual C++ for Windows, and
+somewhat easily with CodeWarrior for the Macintosh, and that it will
+be pretty difficult for any other platform. Warning: The CVS
+repository often drifts out of date so that builds do not work; sorry
+about this.
 
 These plugins are Copyright (c) Tom Murphy 7 and Marc Poirier. You can
 use them in your music however you like, without royalties. You can
@@ -24,8 +27,9 @@ This software comes with no warranty (see the file COPYING). In fact,
 it is likely that some of these crazy effects could crash hosts (by
 sending out-of-range samples or taking too much time to process), so
 you should be careful to save your work when using them in important
-songs. Tom uses Wavelab on the PC, and Marc uses Logic on the Mac, so
-the plugins are likely work properly in those programs, at least.
+songs. Tom uses Wavelab and Cubase on the PC, and Marc uses Logic on
+the Mac, so the plugins are likely work properly in those programs, at
+least.
 
 Pre-packaged versions of (some of) these with fancy GUIs are available
 at the Super Destroy FX web page:
@@ -33,13 +37,13 @@ at the Super Destroy FX web page:
 http://destroyfx.org/
 
 If you are simply interested in making music, you should check there
-first. If you want to get your feet wet making your own VST effects,
-this might be a good place to start. (You can also see and play with
-our effects before they're finished!)
+first. If instead you want to get your feet wet making your own VST
+effects, this source code might be a good place to start. (You can
+also see and play with our effects before they're finished!)
 
 Here's a description of each of the plugins included. First, we have
-our "premiere" plugins; these have been released, have fancy GUIs,
-and are pretty thoroughly tested:
+our "finished" plugins; these have been released, have fancy GUIs, and
+are pretty thoroughly tested:
 
 transverb/
 
@@ -78,8 +82,8 @@ geometer/
 monomaker/
 
         Monomaker is just a simple stereo utility.  It can do 
-        panning and stereo merging (i.e. merging a stereo signal 
-        to mono).  The panning is equal-power / -6 dB law (sort of).
+        panning and merge a stereo signal to mono.
+        The panning is equal-power / -6 dB law (sort of).
 
 
 These plugins are somewhat mature, but are lacking GUIs and thorough
@@ -87,14 +91,18 @@ testing:
 
 brokenfft/
 
-        One of my favorite plugins; this converts to the frequency
+        One of Tom's favorite plugins; this converts to the frequency
         domain using the FFT, and then does a number of crazy effects.
-        This one has an almost limitless variety of sounds that will
+        It has an almost limitless variety of sounds that will
         come out of it...
 
 
-These plugins are in the beginning stages, may be buggy, but we plan
-on finishing them eventually:
+These plugins are experiments and may or may not work:
+
+exemplar/
+
+        Tries to recreate your sound from a training set using nearest-
+        neighbor techniques.
 
 vardelay/
 
@@ -111,6 +119,7 @@ trans/
 slowft/
 
         The "slow fourier transform." Not sure what this is about yet. ;)
+
 
 These plugins are not in development, perhaps because their functionality
 has been subsumed by another plugin:
@@ -209,6 +218,12 @@ fftw/
 fft-lib/
 
         FFT Library from Don Cross. Public Domain.
+
+ann/
+
+        The "Approximate Nearest Neighbors" library, which can be used
+        to do pretty efficient nearest neighbor calculations as long as
+        the set of points is preprocessed (GPL).
 
 vstsdk/
 
