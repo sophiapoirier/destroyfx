@@ -1,0 +1,4 @@
+good GPL library for nearest neighbors (approx):
+
+http://www.cs.umd.edu/~mount/ANN/
+
