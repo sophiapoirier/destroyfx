@@ -4,14 +4,16 @@
 #ifndef __DFX_EXEMPLAR_H
 #define __DFX_EXEMPLAR_H
 
-#include "dfxplugin.h"
+#include <dfxplugin.h>
 #include "ANN/ANN.h"
+#include "rfftw.h"
 
 /* change these for your plugins */
 #define PLUGIN Exemplar
 #define NUM_PRESETS 16
 
 #define BUFFERSIZESSIZE 14
+#define MAXBUFFERSIZE 32768
 const long buffersizes[BUFFERSIZESSIZE] = { 
   4, 8, 16, 32, 64, 128, 256, 512, 
   1024, 2048, 4096, 8192, 16384, 32768, 
@@ -34,9 +36,13 @@ enum { MODE_CAPTURE,
        MODE_MATCH,
        NUM_MODES, };
 
+enum { FFTR_AUDIBLE,
+       FFTR_ALL,
+       NUM_FFTRS, };
+
 /* the names of the parameters */
 enum { P_BUFSIZE, P_SHAPE, 
-       P_MODE,
+       P_MODE, P_FFTRANGE,
        P_ERRORAMOUNT,
        NUM_PARAMS,
 };
@@ -96,7 +102,12 @@ public:
 
   /* Exemplar stuff */
   /* classifies a window */
-  void classify(float * in, ANNpoint & out, long samples);
+  void classify(float * in, float & scale, ANNpoint & out, long samples);
+
+  /* specific classifiers */
+  void classify_haar(float * in, float & scale, ANNpoint & out, long samples);
+  void classify_fft (float * in, float & scale, ANNpoint & out, long samples);
+
 
   bool capturemode;
   float erroramount;
@@ -118,9 +129,17 @@ public:
 
   ANNpoint cap_point[CAPBUFFER];
   int cap_index[CAPBUFFER];
+  float cap_scale[CAPBUFFER];
   int npoints;
 
   ANNkd_tree * nntree;
+
+  /* for FFTW: current analysis plan */
+  rfftw_plan plan;
+  rfftw_plan rplan;
+
+  /* result of ffts ( */
+  float fftr[MAXBUFFERSIZE];
 
 };
 
