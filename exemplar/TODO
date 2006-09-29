@@ -1,0 +1,4 @@
+
+ * One classifier dimension could be the time since we
+   saw this sample (in self-similarity mode)
+
