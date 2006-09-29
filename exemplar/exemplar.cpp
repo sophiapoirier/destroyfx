@@ -5,9 +5,14 @@
 
 #include <stdio.h>
 #include <fstream>
+
+
 // #include <fstream.h>
 
-#define DIMENSION 12
+#define DIMENSION 10
+#define NORMALIZE 1
+// should be param */
+#define STRIDE 128
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
   #ifndef __DFX_EXEMPLAREDITOR_H
@@ -29,8 +34,13 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_indexed(P_MODE, "mode", MODE_CAPTURE, MODE_CAPTURE, NUM_MODES);
 
   initparameter_f(P_ERRORAMOUNT, "erroramt", 0.10, 0.10, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "error");
-  // initparameter_f(P_ERRORAMOUNT, , 0.0, 0.0, -1.0, 1.0, kDfxParamUnit_pan);
 
+  initparameter_indexed(P_FFTRANGE, "fft range", FFTR_AUDIBLE, FFTR_ALL, NUM_FFTRS);
+  
+
+  /* fft ranges */
+  setparametervaluestring(P_FFTRANGE, FFTR_AUDIBLE, "audible");
+  setparametervaluestring(P_FFTRANGE, FFTR_ALL, "all");
 
   /* modes */
   setparametervaluestring(P_MODE, MODE_MATCH, "match");
@@ -66,12 +76,12 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   dfxsettings->setAllowNoteEvents(true);
 
 #if !TARGET_PLUGIN_USES_DSPCORE
-  addchannelconfig(1, 1);	/* mono */
+  addchannelconfig(1, 1);       /* mono */
 #endif
 
   #ifdef TARGET_API_VST
     #if TARGET_PLUGIN_USES_DSPCORE
-      DFX_INIT_CORE(ExemplarDSP);	/* we need to manage DSP cores manually in VST */
+      DFX_INIT_CORE(ExemplarDSP);       /* we need to manage DSP cores manually in VST */
     #endif
     /* if you have a GUI, need an Editor class... */
     #if TARGET_PLUGIN_HAS_GUI
@@ -108,6 +118,11 @@ PLUGINCORE::PLUGINCORE(DfxPlugin * inInstance)
   nntree = 0;
   ncapsamples = 0;
   npoints = 0;
+
+  /* initialize FFT stuff */
+  plan = rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE);
+  // rplan = rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE);
+
 }
 
 
@@ -143,11 +158,15 @@ void PLUGINCORE::reset() {
       /* entering match mode. build new tree. */
 
       int wsize = getwindowsize();
+      int exstart = 0;
       /* make points */
-      for (npoints = 0; npoints < (ncapsamples - wsize); npoints ++) {
-	/* for now do every subwindow */
-	cap_index[npoints] = npoints;
-	classify(&(capsamples[npoints]), cap_point[npoints], wsize);
+      for (exstart = 0; exstart < (ncapsamples - wsize); exstart += STRIDE) {
+	/* save which start point this is */
+        cap_index[npoints] = exstart;
+        classify(&(capsamples[exstart]), 
+		 cap_scale[npoints],
+                 cap_point[npoints], wsize);
+	npoints++;
       }
 
       nntree = new ANNkd_tree(cap_point, npoints, DIMENSION);
@@ -158,8 +177,8 @@ void PLUGINCORE::reset() {
       std::ofstream f;
       f.open("c:\\code\\vstplugins\\exemplar\\dump.ann");
       if (f) {
-	nntree->Dump(ANNtrue, f);
-	f.close();
+        nntree->Dump(ANNtrue, f);
+        f.close();
       }
       #endif
 
@@ -182,6 +201,10 @@ void PLUGINCORE::reset() {
   insize = 0;
   outstart = 0;
   outsize = framesize;
+
+  /* restore FFT plans */
+  plan = rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE);
+  // rplan = rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE);
 
   dfxplugin->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
@@ -229,7 +252,7 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
     /* capture mode.. just record into capsamples */
     if (parity == 0) {
       for(int i = 0; i < samples && ncapsamples < CAPBUFFER; i ++) {
-	capsamples[ncapsamples++] = in[i];
+        capsamples[ncapsamples++] = in[i];
       }
     }
   } else {
@@ -237,7 +260,8 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
     ANNpoint p;
     ANNidx res;
     ANNdist dist;
-    classify(in, p, samples);
+    float scale;
+    classify(in, scale, p, samples);
 
     if (1 && nntree) {
       /* match mode */
@@ -245,20 +269,34 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
       
       annDeallocPt(p);
 
-      /* XXX boost RMS? */
       /* now res holds the closest point index */
       if (res != ANN_NULL_IDX) {
-	/* so copy that captured window into output */
-	/* really should use the window size that this
-	   originally represented, perhaps stretching it... */
-	for(int i = 0; i < samples && (cap_index[res] + i < CAPBUFFER) ; i ++) {
-	  out[i] = capsamples[cap_index[res] + i];
-	}
+        /* so copy that captured window into output */
+        /* really should use the window size that this
+           originally represented, perhaps stretching it... */
+
+        /* scale is the boost we would need to apply to
+           normalize the existing sample.
+
+           cap_scale[res] is the boost we would apply
+           to normalize the match sample.
+
+           so we boost the match sample
+           ( capsamples[i] * cap_scale[res] ) and then
+           dim the result to the volume of the existing
+           sample ( .. / scale ).
+        */
+
+        float matchvol = cap_scale[res] / scale;
+
+        for(int i = 0; i < samples && (cap_index[res] + i < CAPBUFFER) ; i ++) {
+          out[i] = capsamples[cap_index[res] + i] * matchvol;
+        }
       } /* otherwise ??? */
     } else {
       /* error noise */
       for(int i = 0; i < samples; i ++) {
-	out[i] = sin((float)i / 100.0);
+        out[i] = sin((float)i / 100.0);
       }
 
     }
@@ -287,42 +325,227 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
  */
 
 /* assumes samples is a power of two. */
-void PLUGINCORE::classify(float * in, ANNpoint & out, long samples) {
+void PLUGINCORE::classify_haar(float * in, float & scale, 
+                               ANNpoint & out, long samples) {
   out = annAllocPt(DIMENSION);
+
+  /* first we normalize, since we are not really trying to
+     match by scale but by the characteristic of the wave. */
+
+  /* XXX the scale we return should probably be based on
+     RMS, not the max sample seen. */
+  scale = 1.0;
+# if NORMALIZE
+  {
+    float max = 0.0;
+    /* PERF maybe a slicker way exists for this? */
+    for(int i = 0; i < samples; i ++) {
+      float s = in[i];
+      /* cheaper than fabs? */
+      s *= s;
+      if (s > max) max = s;
+    }
+    if (max > 0.0) {
+      scale = 1.0 / sqrt(max);
+    } else scale = 1.0;
+  }
+# endif
 
   /* dth wavelet switches from 1 to -1 each s samples. */
   int freq = samples;
 
+  /* often, the wave size is too low for the kinds of
+     dimensions we want to analyze. (a stationary haar
+     wavelet degenerates too quickly, because the peaks
+     shrink logarithmically). So, shrink at a smaller
+     factor. */
+#define shrink freq = freq * 4 / 5
+
   for(int d = 0; d < DIMENSION; d++) {
-    freq >>= 1;
+    shrink;
     if (freq) {
       int i = 0;
       float prod = 0.0;
+      /* XXX now that freq isn't a power of two,
+         we might drop the last peak or two
+         entirely... */
       while (i < samples) {
-	/* up */
-	{ 
-	  for(int j = 0; j < freq; j ++) {
-	    prod += in[i + j];
-	  }
-	}
-	i += freq;
-	/* down */
-	{
-	  for(int j = 0; j < freq; j ++) {
-	    prod -= in[i + j];
-	  }
-	}
-	i += freq;
+        /* up */
+        if (i + freq < samples) { 
+          for(int j = 0; j < freq; j ++) {
+            prod += in[i + j] * scale;
+          }
+        }
+        i += freq;
+        /* down */
+        if (i + freq < samples) {
+          for(int j = 0; j < freq; j ++) {
+            prod -= in[i + j] * scale;
+          }
+        }
+        i += freq;
       }
       out[d] = prod;
     } else {
       /* oops, we went to zero sample-length peaks... 
-	 our dimension is too high for this window size
+         our dimension is too high for this window size
       */
       out[d] = 0.0;
     }
   }
 
+}
+
+void PLUGINCORE::classify_fft(float * in, float & scale, 
+                              ANNpoint & out, long samples) {
+  out = annAllocPt(DIMENSION);
+
+  /* first we normalize, since we are not really trying to
+     match by scale but by the characteristic of the wave. */
+
+  /* XXX the scale we return should probably be based on
+     RMS, not the max sample seen. */
+  scale = 1.0;
+# if NORMALIZE
+  {
+    float max = 0.0;
+    /* PERF maybe a slicker way exists for this? */
+    for(int i = 0; i < samples; i ++) {
+      float s = in[i];
+      /* cheaper than fabs? */
+      s *= s;
+      if (s > max) max = s;
+    }
+    if (max > 0.0) {
+      scale = 1.0 / sqrt(max);
+    } else scale = 1.0;
+  }
+# endif
+
+  /* do the fft */
+  rfftw_one(plan, in, fftr);
+
+  /* what we've got now is frequency/amplitude pairs.
+     we want to represent the characteristics of this
+     sound so that we can later find sounds 'near' to it.
+
+     ** maybe should implement several of these, with
+        a parameter **
+
+     idea 1: count the n loudest frequencies by rank.
+
+     this is bad because something that matches closely
+     the last two faint frequencies might end up closer than
+     something that matches the very strong major frequency.
+     
+     idea 2: count the n loudest frequencies, but scale
+             them so that variations in the loudest frequency
+             count more than variations in the less loud freqs.
+
+     better, but arbitrary when the the n loudest frequencies
+     are close to one another in amplitude.
+
+     idea 3: count the n loudest frequencies, but scale
+             each one by the inverse of its amplitude.
+
+     bad, because we might confuse a 50hz peak at .5 amplitude
+     with a 25hz peak at 1.0 amplitude, which is wrong.
+
+     idea 4: classifier is n/2 pairs of (freq, amplitude)
+             sorted by amplitude.
+
+     bad because it has less frequency information, but it
+     is unlikely to cause false matches. Has the same drawback
+     as idea 1.
+
+     idea 5: classifier is n/2 pairs of (scaled freq, amplitude),
+             sorted by amplitude
+
+     seems to still have the same problem as #3, although it is
+     tempered by the fact that the amplitudes will not match. Maybe 
+     we can adjust the extent to which we care about exact matches 
+     by scaling the amplitude by a constant?
+
+     idea 6: classifier is n/2 pairs of (freq, amplitude), where
+             each pair is scaled by a constant determined by its
+	     index.
+
+     only bad when the n loudest frequencies are close to one
+     another in amplitude.
+
+     
+     Overall I think 6 is best, but 2 is easiest to implement
+     and might get best results anyway because it has twice as
+     many dimensions.
+  */
+  
+  /* METHOD 3.
+     collect the DIMENSION highest bins,
+     sorted in descending order. */
+
+  int best[DIMENSION];
+  { 
+    for(int j = 0; j < DIMENSION; j ++) best[j] = -1;
+  }
+
+  /* loop and insert */
+  {
+    int low = 0;
+    int hi = samples;
+
+    if (getparameter_i(P_FFTRANGE) == FFTR_AUDIBLE) {
+      /* XXX just a guess. Need to know the sample rate.
+	 But, whatever. */
+      low = .005 * samples;
+      hi = samples * 0.95;
+    }
+    
+    /* sanity check in case buffer is really small */
+    if (low < 0 || low >= samples) low = 0;
+    if (hi > samples) hi = samples;
+
+    for(int i = low; i < hi; i ++) {
+
+      int m = i;
+      /* m will be inserted if larger than fftr[best[j]]
+	 or best[j] == -1 */
+      for(int j = 0; j < DIMENSION; j ++) {
+	if (best[j] == -1) {
+	  best[j] = m; break;
+	} else {
+	  /* better than current best */
+	  if (fftr[m] > fftr[best[j]]) {
+	    int tmp = best[j];
+	    best[j] = m;
+	    m = tmp;
+	  } else break;
+	}
+      }
+
+    }
+  }
+
+  /* now we have the top DIMENSION frequencies */
+
+  {
+    /* nb. if we read fftr[best[i]] we had better
+       check that best[i] <> -1 */
+    for(int i = 0; i < DIMENSION; i ++) {
+      out[i] = (float)best[i];
+    }
+
+    /* then scale */
+    float sc = 0.25;
+    for(int j = DIMENSION - 1; j >= 0; j --) {
+      out[j] *= sc;
+      sc *= 2.0;
+    }
+  }
+}
+
+void PLUGINCORE::classify(float * in, float & scale, 
+                          ANNpoint & out, long samples) {
+  classify_fft(in, scale, out, samples);
 }
 
 
