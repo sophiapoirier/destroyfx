@@ -166,27 +166,23 @@ void GeometerHelpBox::draw(DGGraphicsContext * inContext) {
 
   for (int i=0; i < NUM_HELP_TEXT_LINES; i++) {
 
+#define SAFE_GET_HELPSTRING(string)	( (itemNum < sizeofA(string)) ? string[itemNum] : NULL )
     const char ** helpstrings = NULL;
     switch (helpCategory) {
       case HELP_CATEGORY_GENERAL:
-        if (itemNum < sizeofA(general_helpstrings))
-          helpstrings = general_helpstrings[itemNum];
+        helpstrings = SAFE_GET_HELPSTRING(general_helpstrings);
         break;
       case HELP_CATEGORY_WINDOWSHAPE:
-        if (itemNum < sizeofA(windowshape_helpstrings))
-          helpstrings = windowshape_helpstrings[itemNum];
+        helpstrings = SAFE_GET_HELPSTRING(windowshape_helpstrings);
         break;
       case HELP_CATEGORY_LANDMARKS:
-        if (itemNum < sizeofA(landmarks_helpstrings))
-          helpstrings = landmarks_helpstrings[itemNum];
+        helpstrings = SAFE_GET_HELPSTRING(landmarks_helpstrings);
         break;
       case HELP_CATEGORY_OPS:
-        if (itemNum < sizeofA(ops_helpstrings))
-          helpstrings = ops_helpstrings[itemNum];
+        helpstrings = SAFE_GET_HELPSTRING(ops_helpstrings);
         break;
       case HELP_CATEGORY_RECREATE:
-        if (itemNum < sizeofA(recreate_helpstrings))
-          helpstrings = recreate_helpstrings[itemNum];
+        helpstrings = SAFE_GET_HELPSTRING(recreate_helpstrings);
         break;
       default:
         helpstrings = NULL;
@@ -194,6 +190,7 @@ void GeometerHelpBox::draw(DGGraphicsContext * inContext) {
     }
     if (helpstrings == NULL)
       break;
+#undef SAFE_GET_HELPSTRING
 
     if (i == 0) {
       fontColor = kDGColor_black;
