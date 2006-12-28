@@ -3,6 +3,8 @@
 #include "geometer.hpp"
 #include "geometerhelp.h"
 
+#include <c.h>  // for sizeofA
+
 
 const long NUM_SLIDERS = 5;
 
@@ -151,6 +153,8 @@ void GeometerHelpBox::draw(DGGraphicsContext * inContext) {
 
   if ( (helpCategory == HELP_CATEGORY_GENERAL) && (itemNum == HELP_EMPTY) )
     return;
+  if (itemNum < 0)
+    return;
 
   if (backgroundImage != NULL)
     backgroundImage->draw(getBounds(), inContext);
@@ -162,22 +166,27 @@ void GeometerHelpBox::draw(DGGraphicsContext * inContext) {
 
   for (int i=0; i < NUM_HELP_TEXT_LINES; i++) {
 
-    const char ** helpstrings;
+    const char ** helpstrings = NULL;
     switch (helpCategory) {
       case HELP_CATEGORY_GENERAL:
-        helpstrings = general_helpstrings[itemNum];
+        if (itemNum < sizeofA(general_helpstrings))
+          helpstrings = general_helpstrings[itemNum];
         break;
       case HELP_CATEGORY_WINDOWSHAPE:
-        helpstrings = windowshape_helpstrings[itemNum];
+        if (itemNum < sizeofA(windowshape_helpstrings))
+          helpstrings = windowshape_helpstrings[itemNum];
         break;
       case HELP_CATEGORY_LANDMARKS:
-        helpstrings = landmarks_helpstrings[itemNum];
+        if (itemNum < sizeofA(landmarks_helpstrings))
+          helpstrings = landmarks_helpstrings[itemNum];
         break;
       case HELP_CATEGORY_OPS:
-        helpstrings = ops_helpstrings[itemNum];
+        if (itemNum < sizeofA(ops_helpstrings))
+          helpstrings = ops_helpstrings[itemNum];
         break;
       case HELP_CATEGORY_RECREATE:
-        helpstrings = recreate_helpstrings[itemNum];
+        if (itemNum < sizeofA(recreate_helpstrings))
+          helpstrings = recreate_helpstrings[itemNum];
         break;
       default:
         helpstrings = NULL;
