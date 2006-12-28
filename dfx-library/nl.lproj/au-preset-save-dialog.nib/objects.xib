@@ -4,17 +4,17 @@
   <object name="rootObject" class="NSCustomObject" id="1">
     <string name="customClass">NSApplication</string>
   </object>
-  <array count="9" name="allObjects">
+  <array count="7" name="allObjects">
     <object class="IBCarbonWindow" id="166">
-      <string name="windowRect">306 322 456 818 </string>
+      <string name="windowRect">306 322 408 779 </string>
       <string name="title">Audio Unit preset bestand opslaan</string>
       <object name="rootControl" class="IBCarbonRootControl" id="167">
-        <string name="bounds">0 0 150 496 </string>
-        <string name="viewFrame">0 0 496 150 </string>
-        <array count="7" name="subviews">
+        <string name="bounds">0 0 102 457 </string>
+        <string name="viewFrame">0 0 457 102 </string>
+        <array count="5" name="subviews">
           <object class="IBCarbonEditText" id="182">
-            <string name="bounds">23 114 39 432 </string>
-            <string name="viewFrame">114 23 318 16 </string>
+            <string name="bounds">23 116 39 434 </string>
+            <string name="viewFrame">116 23 318 16 </string>
             <ostype name="controlSignature">name</ostype>
             <int name="controlID">128</int>
             <boolean name="isUnicode">TRUE</boolean>
@@ -25,25 +25,9 @@
             <string name="title">Opslaan als:</string>
             <int name="justification">-1</int>
           </object>
-          <object class="IBCarbonRadioGroup" id="196">
-            <string name="bounds">58 111 78 383 </string>
-            <string name="viewFrame">111 58 272 20 </string>
-            <ostype name="controlSignature">doma</ostype>
-            <int name="controlID">129</int>
-            <string name="helpTagText">&quot;Gebruiker&quot; is voor u alleen, &quot;Lokaal&quot; is voor alle gebruikers van uw computer, en &quot;Netwerk&quot; is voor alle computers op uw netwerk</string>
-            <int name="numRows">1</int>
-            <int name="numCols">3</int>
-            <array count="1" name="radioTitles">
-              <array count="3">
-                <string>Gebruiker</string>
-                <string>Lokaal</string>
-                <string>Netwerk</string>
-              </array>
-            </array>
-          </object>
           <object class="IBCarbonButton" id="202">
-            <string name="bounds">110 51 130 223 </string>
-            <string name="viewFrame">51 110 172 20 </string>
+            <string name="bounds">62 32 82 204 </string>
+            <string name="viewFrame">32 62 172 20 </string>
             <ostype name="controlSignature">cust</ostype>
             <int name="controlID">132</int>
             <string name="title">Kies andere locatie...</string>
@@ -51,8 +35,8 @@
             <string name="helpTagText">Kies een andere locatie dan de standaard locatie om in op te slaan (merk op: dit betekent dat uw presets niet gemakkelijk bereikbaar zullen zijn in andere host applicaties)</string>
           </object>
           <object class="IBCarbonButton" id="203">
-            <string name="bounds">110 247 130 352 </string>
-            <string name="viewFrame">247 110 105 20 </string>
+            <string name="bounds">62 228 82 333 </string>
+            <string name="viewFrame">228 62 105 20 </string>
             <ostype name="controlSignature">canc</ostype>
             <int name="controlID">131</int>
             <string name="title">Annuleren</string>
@@ -60,22 +44,17 @@
             <int name="buttonType">2</int>
           </object>
           <object class="IBCarbonButton" id="204">
-            <string name="bounds">110 364 130 456 </string>
-            <string name="viewFrame">364 110 92 20 </string>
+            <string name="bounds">62 345 82 437 </string>
+            <string name="viewFrame">345 62 92 20 </string>
             <ostype name="controlSignature">save</ostype>
             <int name="controlID">130</int>
             <string name="title">Opslaan</string>
             <ostype name="command">save</ostype>
             <int name="buttonType">1</int>
           </object>
-          <object class="IBCarbonStaticText" id="181">
-            <string name="bounds">59 45 75 105 </string>
-            <string name="viewFrame">45 59 60 16 </string>
-            <string name="title">Locatie:</string>
-            <int name="justification">-1</int>
-          </object>
         </array>
       </object>
+      <boolean name="receiveUpdates">FALSE</boolean>
       <boolean name="hasHorizontalZoom">FALSE</boolean>
       <boolean name="isResizable">FALSE</boolean>
       <boolean name="hasVerticalZoom">FALSE</boolean>
@@ -85,19 +64,15 @@
       <int name="windowPosition">1</int>
     </object>
     <reference idRef="167"/>
-    <reference idRef="181"/>
     <reference idRef="182"/>
     <reference idRef="183"/>
-    <reference idRef="196"/>
     <reference idRef="202"/>
     <reference idRef="203"/>
     <reference idRef="204"/>
   </array>
-  <array count="9" name="allParents">
+  <array count="7" name="allParents">
     <reference idRef="1"/>
     <reference idRef="166"/>
-    <reference idRef="167"/>
-    <reference idRef="167"/>
     <reference idRef="167"/>
     <reference idRef="167"/>
     <reference idRef="167"/>
