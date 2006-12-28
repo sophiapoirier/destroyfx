@@ -10,24 +10,23 @@ Unfortunately, C++ is currently the only appropriate language for
 creating VST plugins. Thus, all of these are written in C++. You'll
 need a C++ compiler for your platform in order to compile them. You'll
 also need an appropriate version of the VST SDK. Right now, this means
-that you'll be able to easily compile with Visual C++ for Windows, and
-somewhat easily with CodeWarrior for the Macintosh, and that it will
-be pretty difficult for any other platform. Warning: The CVS
-repository often drifts out of date so that builds do not work; sorry
-about this.
+that you'll be able to easily compile with Visual C++ for Windows and
+with Xcode for the Macintosh, and that it will be pretty difficult for
+any other platform. Warning: The CVS repository often drifts out of
+date so that builds do not work; sorry about this.
 
-These plugins are Copyright (c) Tom Murphy 7 and Marc Poirier. You can
-use them in your music however you like, without royalties. You can
-also modify them to your liking. However, if you distribute them (or
-derivative/modified versions of them) then you must also distribute
-the source package in order to be in compliance with the license (see
-the file COPYING).
+These plugins are Copyright (c) Tom Murphy 7 and Sophia Poirier. You
+can use them in your music however you like, without royalties. You
+can also modify them to your liking. However, if you distribute them
+(or derivative/modified versions of them) then you must also
+distribute the source package in order to be in compliance with the
+license (see the file COPYING).
 
 This software comes with no warranty (see the file COPYING). In fact,
 it is likely that some of these crazy effects could crash hosts (by
 sending out-of-range samples or taking too much time to process), so
 you should be careful to save your work when using them in important
-songs. Tom uses Wavelab and Cubase on the PC, and Marc uses Logic on
+songs. Tom uses Wavelab and Cubase on the PC, and Sophia uses Logic on
 the Mac, so the plugins are likely work properly in those programs, at
 least.
 
@@ -37,8 +36,8 @@ at the Super Destroy FX web page:
 http://destroyfx.org/
 
 If you are simply interested in making music, you should check there
-first. If instead you want to get your feet wet making your own VST
-effects, this source code might be a good place to start. (You can
+first. If instead you want to get your feet wet making your own effect
+plugins, this source code might be a good place to start. (You can
 also see and play with our effects before they're finished!)
 
 Here's a description of each of the plugins included. First, we have
@@ -147,39 +146,39 @@ the Visual Studio tools are in your path. Some directories have
 Visual Studio project files, but these are no longer supported.
 
 Some of these plugins have plugin_mac directories with stuff for 
-building Audio Unit versions of our plugins.  The plugin.pbproj 
+building Audio Unit versions of our plugins.  The plugin.xcodeproj 
 "files" (well, they are bundles, and might appear like directories, 
-which is what they really are) are Project Builder projects.  The 
-plugin.r files are resource files for Rez (although most of our 
-plugins actually rely on prefix headers and dfxplugin.r for resource 
-building).  The plugin.exp files are the entry point files.
+which is what they really are) are Xcode projects.  The plugin.r
+files are resource files for Rez (although most of our plugins
+actually rely on prefix headers and dfxplugin.r for resource
+building).  The plugin.exp files are the entry point files.  The
+plugin-info.plist files are the Info.plist files for the built plugin
+bundles (used by the Mac OS X system for LaunchServices info mostly).
+The InfoPlist.strings file(s) are localized values for some Info.plist
+values and are located in <language-code>.lproj sub-directories
+accordingly.
 
 In order to build Audio Units, you need Mac OS X 10.2 or higher and 
-you need the Apple Developer Tools and CoreAudio SDK installed.  The 
-Developer Tools CD comes with the OS X 10.2 CDs and the CoreAudio SDK 
-is available at http://connect.apple.com/   Currently, you need to be 
-an Apple Developer Connection member to download it (I don't know 
-why), but the minimum membership is free.  Project Builder (if you 
-care to use that IDE) is included with the Developer Tools.  Note 
-that the Project Builder projects files here assume use absolute 
-paths for the Apple-provided base API files; they assume that the 
-files are located in the places where the CoreAudio SDK installer 
-places them.  If you've moved those files, you'll have to change the 
-paths in the project settings.  Also note that Marc works with a 
-rather modified set of the CoreAudio SDK files.  All of the changes 
-that Marc has made will make it into the next SDK revision, so 
-they're kind of legit, but just so that you know...  All of the 
-modifications are things that have been discussed/proposed/etc. on 
-the CoreAudio API listserv.
+you need the Apple Developer Tools installed.  The Developer Tools CD
+or DVD comes with the Mac OS X install CDs/DVDs.  Xcode (if you care
+to use that IDE) is included with the Developer Tools.  Note that the
+Xcode projects files here assume use absolute paths for the
+Apple-provided base CoreAudio SDK files; they assume that the files
+are located in the places where the Developer Tools installer places
+them.  If you've moved those files, you'll have to change the paths in
+the project settings.
 
-for building VST Mac versions:
-Some plugins have plugin_mac directories with *def-vst.h "prefix" files.  
-You can use these to set various #defines in your CodeWarrior projects 
-to build the plugins in different ways.  This is because CW does not 
-allow you to specify preprocessor #defines in the project target 
-settings (this is true as of v8.2, although Metroworks say they will 
-eventually implement this long-missing feature).  In your CW project 
-target settings, you go to the C/C++ Language tab specify the 
+for building VST Mac CFM versions:
+(note:  This section is deprecated cuz we don't use CodeWarrior or
+build CFM versions anymore and therefore don't maintain those
+associated files anymore.)
+Some plugins have plugin_mac directories with *def-vst.h "prefix"
+files.  You can use these to set various #defines in your CodeWarrior
+projects to build the plugins in different ways.  This is because CW
+does not allow you to specify preprocessor #defines in the project
+target settings (this is true as of v8.2, although Metroworks say they
+will eventually implement this long-missing feature).  In your CW
+project target settings, you go to the C/C++ Language tab specify the 
 appropriate file in the "prefix file" field.  This means that CW will 
 preprocess this file before everything else and use the preprocessor 
 stuff globally for the whole build process.  Usually you would use 
@@ -188,11 +187,9 @@ carbon builds) as the prefix file.  Those files come with Steinberg's
 VST SDK distribution and include a few basic, necessary #defines.  
 Our prefix files #include those files so that you still get those 
 defines.  With our prefix files, those that end in def.h are for 
-classic builds, defcarbon.h are for carbon builds, eatdef.h are 
-for Marc's fancy "food" workaround for some plugs for Logic 4 Mac, 
-and some also have the word "stereo" to mean that they define 
-stereo processing for plugins that have both mono and stereo version 
+"Classic" (InterfaceLib) builds and defcarbon.h are for Carbon CFM
 builds.
+
 
 
 Here is a description of each of the remaining directories in the
