@@ -49,6 +49,9 @@ enum {
 	kDfxContextualMenuItem_Global_LoadPresetFile,
 //	kDfxContextualMenuItem_Global_UserPresets,	// preset files sub-menu(s)?
 //	kDfxContextualMenuItem_Global_FactoryPresets,	// factory presets sub-menu?
+#if !TARGET_PLUGIN_IS_INSTRUMENT
+//	kDfxContextualMenuItem_Global_Bypass,	// effect bypass?
+#endif
 #if TARGET_PLUGIN_USES_MIDI
 	kDfxContextualMenuItem_Global_MidiLearn,
 	kDfxContextualMenuItem_Global_MidiReset,
@@ -295,7 +298,7 @@ bool DGControlBase::contextualMenuClick()
 				isFirstItemOfSubgroup = true;
 				break;
 			case kDfxContextualMenuItem_Global_OpenWebSite:
-				menuItemText = CFSTR("Open "DESTROYFX_NAME_STRING" web site in browser");
+				menuItemText = CFSTR("Open "DESTROYFX_NAME_STRING" web site");
 				break;
 			default:
 				break;
@@ -1081,14 +1084,30 @@ void DGBackgroundControl::draw(DGGraphicsContext * inContext)
 
 	if (dragIsActive)
 	{
-		RGBColor dragHiliteColor;
-		OSErr error = GetDragHiliteColor(getDfxGuiEditor()->GetCarbonWindow(), &dragHiliteColor);
-		if (error == noErr)
+		const float dragHiliteThickness = 2.0f;	// XXX is there a proper way to query this?
+		if (HIThemeSetStroke != NULL)
 		{
-			const float rgbScalar = 1.0f / (float)0xFFFF;
-			DGColor strokeColor((float)(dragHiliteColor.red) * rgbScalar, (float)(dragHiliteColor.green) * rgbScalar, (float)(dragHiliteColor.blue) * rgbScalar);
-			inContext->setStrokeColor(strokeColor);
-			inContext->strokeRect(&drawRect, 2.0f);
+//OSStatus status = HIThemeBrushCreateCGColor(kThemeBrushDragHilite, CGColorRef * outColor);
+			OSStatus status = HIThemeSetStroke(kThemeBrushDragHilite, NULL, inContext->getPlatformGraphicsContext(), inContext->getHIThemeOrientation());
+			if (status == noErr)
+			{
+				CGRect cgRect = drawRect.convertToCGRect( inContext->getPortHeight() );
+				const float halfLineWidth = dragHiliteThickness / 2.0f;
+				cgRect = CGRectInset(cgRect, halfLineWidth, halfLineWidth);	// CoreGraphics lines are positioned between pixels rather than on them
+				CGContextStrokeRect(inContext->getPlatformGraphicsContext(), cgRect);
+			}
+		}
+		else
+		{
+			RGBColor dragHiliteColor;
+			OSErr error = GetDragHiliteColor(getDfxGuiEditor()->GetCarbonWindow(), &dragHiliteColor);
+			if (error == noErr)
+			{
+				const float rgbScalar = 1.0f / (float)0xFFFF;
+				DGColor strokeColor((float)(dragHiliteColor.red) * rgbScalar, (float)(dragHiliteColor.green) * rgbScalar, (float)(dragHiliteColor.blue) * rgbScalar);
+				inContext->setStrokeColor(strokeColor);
+				inContext->strokeRect(&drawRect, dragHiliteThickness);
+			}
 		}
 	}
 }
