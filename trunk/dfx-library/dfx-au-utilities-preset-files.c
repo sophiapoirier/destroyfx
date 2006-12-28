@@ -1080,11 +1080,10 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 
 	// load the window that is contained in the nib
 	error = CreateWindowFromNib(nibRef, kAUPresetSaveDialogNibWindowName, &dialogWindow);
-	if (error != noErr)
-		return error;
-
 	// we don't need the nib reference anymore
 	DisposeNibReference(nibRef);
+	if (error != noErr)
+		return error;
 
 	// initialize the values in our dialog info struct
 	memset(&dialogInfo, 0, sizeof(dialogInfo));
@@ -1547,13 +1546,31 @@ OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 	OSStatus error;
 	AlertStdCFStringAlertParamRec alertParams;
 	CFStringRef alertTitle;
-	CFStringRef alertMessage;
+	CFStringRef alertMessageOutline, alertMessage;
+	CFStringRef alertMessageAppendage;
 	DialogRef dialog;
 
 	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
 	alertParams.movable = true;
 	alertTitle = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save access error"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the alert window title for when an access privileges error occurs while trying to save a file"));
-	alertMessage = CFCopyLocalizedStringFromTableInBundle(CFSTR("You do not have sufficient privileges to save files in that location.  Try saving your file in the User domain."), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the content of the alert message text for an access privileges error"));
+	// only if the domain choice control is present (I removed it from the dialog in the September 2006 release) 
+	// should the dialog include text about trying to save in the User domain
+	if (inDomainChoiceControl != NULL)
+		alertMessageAppendage = CFCopyLocalizedStringFromTableInBundle(CFSTR("Try saving your file in the User domain."), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the final part of the alert message text for an access privilege error in the case where the dialog allows you to choose a file system domain in which to save"));
+	else
+	{
+		alertMessageAppendage = CFSTR("");
+		CFRetain(alertMessageAppendage);
+	}
+	alertMessageOutline = CFCopyLocalizedStringFromTableInBundle(CFSTR("You do not have sufficient privileges to save files in that location.  %@"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the content of the alert message text for an access privileges error"));
+	alertMessage = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, alertMessageOutline, alertMessageAppendage);
+	CFRelease(alertMessageAppendage);
+	if (alertMessage == NULL)
+	{
+		alertMessage = alertMessageOutline;
+		CFRetain(alertMessage);
+	}
+	CFRelease(alertMessageOutline);
 	error = CreateStandardAlert(kAlertNoteAlert, alertTitle, alertMessage, &alertParams, &dialog);
 	CFRelease(alertTitle);
 	CFRelease(alertMessage);
