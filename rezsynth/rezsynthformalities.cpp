@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  January - March 2001 -------------*/
+/*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
 
 #include "rezsynth.hpp"
 
@@ -24,7 +24,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 	initparameter_f(kBandwidth, "bandwidth", 3.0, 3.0, 0.1, 300.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
-	initparameter_i(kNumBands, "bands per note", 1, 1, 1, MAX_BANDS, kDfxParamUnit_quantity, kDfxParamCurve_stepped);
+	initparameter_i(kNumBands, "bands per note", 1, 1, 1, MAX_BANDS, kDfxParamUnit_quantity);
 	initparameter_f(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
 	initparameter_f(kSepAmount_linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, kDfxParamUnit_scalar);	// % of center frequency
 	initparameter_indexed(kSepMode, "separation mode", kSepMode_octaval, kSepMode_octaval, kNumSepModes);

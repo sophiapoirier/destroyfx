@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  February 2002 -------------*/
+/*-------------- by Sophia Poirier  ][  February 2002 -------------*/
 
 #include "scrubby.hpp"
 
@@ -7,7 +7,7 @@
 #endif
 
 
-#pragma mark _________init_________
+#pragma mark init
 
 // this macro does boring entry point stuff for us
 DFX_ENTRY(Scrubby)
@@ -64,9 +64,9 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 	initparameter_b(kPitchStep9, "semi9 (major 6th)", false, false);
 	initparameter_b(kPitchStep10, "semi10 (minor 7th)", false, false);
 	initparameter_b(kPitchStep11, "semi11 (major 7th)", false, false);
-	initparameter_i(kOctaveMin, "octave minimum", -5, -5, -5, 0, kDfxParamUnit_octaves, kDfxParamCurve_stepped);
+	initparameter_i(kOctaveMin, "octave minimum", -5, -5, -5, 0, kDfxParamUnit_octaves);
 	setparameterusevaluestrings(kOctaveMin, true);
-	initparameter_i(kOctaveMax, "octave maximum", 7, 7, 0, 7, kDfxParamUnit_octaves, kDfxParamCurve_stepped);
+	initparameter_i(kOctaveMax, "octave maximum", 7, 7, 0, 7, kDfxParamUnit_octaves);
 	setparameterusevaluestrings(kOctaveMax, true);
 	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
@@ -240,7 +240,7 @@ void Scrubby::clearbuffers()
 }
 
 
-#pragma mark _________presets_________
+#pragma mark presets
 
 /*
 //----------------------------------------------------------------------------- 
@@ -440,7 +440,7 @@ void Scrubby::initPresets()
 }
 
 
-#pragma mark _________parameters_________
+#pragma mark parameters
 
 //-------------------------------------------------------------------------
 void Scrubby::processparameters()
