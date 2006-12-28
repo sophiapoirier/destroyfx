@@ -27,7 +27,7 @@ DFX_ENTRY(DfxStub);
 // this is not the place to create or initialize stuff that is only needed 
 // for audio processing (i.e. audio buffers, state variables)
 DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)
+	: DfxPlugin(inInstance, kNumParameters, kNumPresets)
 {
 // first, null any audio buffer pointers that you have
 	buffers = NULL;
@@ -196,7 +196,7 @@ void DfxStub::reset()
 bool DfxStubDSP::createbuffers()
 {
 	long oldsize = buffersize;
-	buffersize = (long) (getsamplerate() * BUFFER_SIZE_SECONDS);
+	buffersize = (long) (getsamplerate() * kBufferSize_seconds);
 
 	// if the sampling rate (& therefore the buffer size) has changed, 
 	// then delete & reallocate the buffers according to the sampling rate
@@ -212,7 +212,7 @@ bool DfxStubDSP::createbuffers()
 bool DfxStub::createbuffers()
 {
 	long oldsize = buffersize;
-	buffersize = (long) (getsamplerate() * BUFFER_SIZE_SECONDS);
+	buffersize = (long) (getsamplerate() * kBufferSize_seconds);
 	unsigned long oldnum = numbuffers;
 	numbuffers = getnumoutputs();
 

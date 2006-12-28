@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our unexciting, but informative, demonstration DfxPlugin.
-written by Marc Poirier, October 2002
+written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_STUB_H
@@ -20,17 +20,17 @@ enum
 	kIndexParam,
 	kBooleanParam,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 
 //----------------------------------------------------------------------------- 
 // constants and helpfuls
 
-const long NUM_PRESETS = 16;
+const long kNumPresets = 16;
 
 // audio buffer size in seconds
-const double BUFFER_SIZE_SECONDS = 3.0;
+const double kBufferSize_seconds = 3.0;
 // function for getting samples from seconds
 long buffersize_sec2samples(float inSeconds)
 {
