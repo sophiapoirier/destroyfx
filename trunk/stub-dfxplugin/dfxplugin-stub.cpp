@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Marc Poirier & Tom Murphy 7.  
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our unexciting, but informative, demonstration DfxPlugin.
-written by Marc Poirier, October 2002
+written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 // The gratiutous use of preprocessor defines is to designate code that 
@@ -42,7 +42,7 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
 	initparameter_f(kFloatParam, "decimal parameter", 90.0f, 33.3f, 1.0f, 999.0f, kDfxParamUnit_generic, kDfxParamCurve_linear);
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
-	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, kDfxParamUnit_index, kDfxParamCurve_stepped);
+	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, kDfxParamUnit_index);
 	// parameter ID, parameter name, init value, default value, number of values
 	initparameter_indexed(kIndexParam, "indexed parameter", kIndexParamState3, kIndexParamState1, kNumIndexParamStates);
 	// parameter ID, parameter name, init value, default value
