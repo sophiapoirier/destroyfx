@@ -1697,6 +1697,9 @@ CFStringRef DfxGuiEditor::openTextEntryWindow(CFStringRef inInitialText)
 	if (status != noErr)
 		return NULL;
 
+	// set the title of the window according to the particular plugin's name
+	status = SetWindowTitleWithCFString( textEntryWindow, CFSTR(PLUGIN_NAME_STRING" Text Entry") );
+
 	// initialize the controls according to the current transparency value
 	textEntryControl = DFX_GetControlWithID(kDfxGui_TextEntryControlID, textEntryWindow);
 	if (textEntryControl != NULL)
@@ -1799,6 +1802,7 @@ static pascal OSStatus DFXGUI_WindowTransparencyEventHandler(EventHandlerCallRef
 					SInt32 controlValue = GetControl32BitValue(control);
 					float transparencyValue = (float)(controlValue - min) / (float)(max - min);
 					transparencyValue = 1.0f - transparencyValue;	// invert it to reflect transparency, not opacity
+					transparencyValue = powf(transparencyValue, 0.69f);	// XXX root-scale the value distribution
 					ourOwnerEditor->setWindowTransparency(transparencyValue);
 					eventWasHandled = true;
 				}
@@ -1832,6 +1836,9 @@ OSStatus DfxGuiEditor::openWindowTransparencyWindow()
 	OSStatus status = DFX_OpenWindowFromNib(CFSTR("set transparency"), &windowTransparencyWindow);
 	if (status != noErr)
 		return status;
+
+	// set the title of the window according to the particular plugin's name
+	status = SetWindowTitleWithCFString( windowTransparencyWindow, CFSTR(PLUGIN_NAME_STRING" Window Transparency") );
 
 	// initialize the controls according to the current transparency value
 	ControlRef transparencyControl = DFX_GetControlWithID(kDfxGui_TransparencySliderControlID, windowTransparencyWindow);
