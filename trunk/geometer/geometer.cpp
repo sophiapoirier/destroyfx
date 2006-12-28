@@ -187,6 +187,38 @@ PLUGIN::~PLUGIN() {
 #endif
 }
 
+void PLUGIN::randomizeparameter(long inParameterIndex)
+{
+  // we need to constrain the range of values of the parameters that have extra (currently unused) room for future expansion
+  int64_t maxValue = 0;
+  switch (inParameterIndex)
+  {
+    case P_SHAPE:
+      maxValue = NUM_WINDOWSHAPES;
+	  break;
+    case P_POINTSTYLE:
+      maxValue = NUM_POINTSTYLES;
+	  break;
+    case P_INTERPSTYLE:
+      maxValue = NUM_INTERPSTYLES;
+	  break;
+    case P_POINTOP1:
+    case P_POINTOP2:
+    case P_POINTOP3:
+      maxValue = NUM_OPS;
+	  break;
+	default:
+	  DfxPlugin::randomizeparameter(inParameterIndex);
+	  return;
+  }
+
+  int64_t newValue = rand() % maxValue;
+  setparameter_i(inParameterIndex, newValue);
+
+  update_parameter(inParameterIndex);	// make the host aware of the parameter change
+  postupdate_parameter(inParameterIndex);	// inform any parameter listeners of the changes
+}
+
 #if TARGET_PLUGIN_USES_DSPCORE
 PLUGINCORE::PLUGINCORE(DfxPlugin * inDfxPlugin)
   : DfxPluginCore(inDfxPlugin), cs(NULL)
@@ -1155,7 +1187,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
    - can we use tail of out0 as prevmix, instead of copying?
    - can we use circular buffers instead of memmoving a lot?
      (probably not)
-XXX Marc's ideas:
+XXX Sophia's ideas:
    - only calculate a given window the first time that it's needed (how often to we change them anyway?)
    - cache it and use it next time
    - moreover, we only need one cache for the plugin, although that might be tricky with the whole DSP cores abstraction thing
