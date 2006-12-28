@@ -97,6 +97,8 @@ public:
   PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance);
   virtual ~PLUGIN();
 
+  virtual void randomizeparameter(long inParameterIndex);
+
 #if !TARGET_PLUGIN_USES_DSPCORE
   virtual long initialize();
   virtual void cleanup();
