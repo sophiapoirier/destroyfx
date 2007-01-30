@@ -356,7 +356,7 @@ void DGStaticTextDisplay::setCFText(CFStringRef inNewText)
 	CFRetain(displayCFString);
 
 	Boolean success = CFStringGetCString(inNewText, displayString, kDGTextDisplay_stringSize, kCFStringEncodingUTF8);
-//	if (success)
+	if (success)
 		redraw();
 }
 #endif
