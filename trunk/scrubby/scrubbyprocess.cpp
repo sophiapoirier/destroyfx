@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  February 2002 -------------*/
+/*-------------- by Sophia Poirier  ][  February 2002 -------------*/
 
 #include "scrubby.hpp"
 
@@ -17,7 +17,7 @@ inline double calculateTargetSpeed(double a, double n, double k)
 	b = k * LambertW(lambertInput) / n;
 	// cuz I don't totally trust my LambertW function...
 #if TARGET_OS_MAC
-	if ( isnan(b) || (! __isfinite(b)) )
+	if ( isnan(b) || (! isfinite(b)) )
 #else
 	if ( _isnan(b) || (! _finite(b)) )
 #endif
