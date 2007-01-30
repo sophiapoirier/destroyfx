@@ -394,6 +394,8 @@ double DfxParam::contract(double inLiteralValue)
 double contractparametervalue(double inLiteralValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
 {
 	double valueRange = maxValue - minValue;
+	static const double oneDivThree = 1.0 / 3.0;
+	static const double logTwo = log(2.0);
 
 	switch (curveType)
 	{
@@ -407,13 +409,13 @@ double contractparametervalue(double inLiteralValue, double minValue, double max
 		case kDfxParamCurve_squared:
 			return sqrt((inLiteralValue-minValue) / valueRange);
 		case kDfxParamCurve_cubed:
-			return pow( (inLiteralValue-minValue) / valueRange, 1.0/3.0 );
+			return pow( (inLiteralValue-minValue) / valueRange, oneDivThree );
 		case kDfxParamCurve_pow:
 			return pow( (inLiteralValue-minValue) / valueRange, 1.0/curveSpec );
 		case kDfxParamCurve_exp:
 			return log(1.0-minValue+inLiteralValue) / log(1.0-minValue+maxValue);
 		case kDfxParamCurve_log:
-			return (log(inLiteralValue/minValue) / log(2.0)) / (log(maxValue/minValue) / log(2.0));
+			return (log(inLiteralValue/minValue) / logTwo) / (log(maxValue/minValue) / logTwo);
 		case kDfxParamCurve_undefined:
 		default:
 			break;
@@ -554,6 +556,7 @@ double DfxParam::expand(double inGenValue)
 double expandparametervalue(double inGenValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec)
 {
 	double valueRange = maxValue - minValue;
+	static const double logTwoInv = 1.0 / log(2.0);
 
 	switch (curveType)
 	{
@@ -580,7 +583,7 @@ double expandparametervalue(double inGenValue, double minValue, double maxValue,
 		case kDfxParamCurve_exp:
 			return exp( log(valueRange+1.0) * inGenValue ) + minValue - 1.0;
 		case kDfxParamCurve_log:
-			return minValue * pow( 2.0, inGenValue * log(maxValue/minValue)/log(2.0) );
+			return minValue * pow( 2.0, inGenValue * log(maxValue/minValue)*logTwoInv );
 		case kDfxParamCurve_undefined:
 		default:
 			break;
