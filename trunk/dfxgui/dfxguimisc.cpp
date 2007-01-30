@@ -35,6 +35,34 @@ void DGGraphicsContext::setAntialias(bool inShouldAntialias)
 }
 
 //-----------------------------------------------------------------------------
+void DGGraphicsContext::setAntialiasQuality(DGAntialiasQuality inQualityLevel)
+{
+#if TARGET_OS_MAC
+	if (context != NULL)
+	{
+		CGInterpolationQuality cgQuality;
+		switch (inQualityLevel)
+		{
+			case kDGAntialiasQuality_none:
+				cgQuality = kCGInterpolationNone;
+				break;
+			case kDGAntialiasQuality_low:
+				cgQuality = kCGInterpolationLow;
+				break;
+			case kDGAntialiasQuality_high:
+				cgQuality = kCGInterpolationHigh;
+				break;
+			case kDGAntialiasQuality_default:
+			default:
+				cgQuality = kCGInterpolationDefault;
+				break;
+		}
+		CGContextSetInterpolationQuality(context, cgQuality);
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
 void DGGraphicsContext::setFillColor(DGColor inColor, float inAlpha)
 {
 #if TARGET_OS_MAC
@@ -212,6 +240,7 @@ void DGImage::draw(DGRect * inRect, DGGraphicsContext * inContext, long inXoffse
 	if ( (cgImage == NULL) && (inRect == NULL) && (inContext == NULL) )
 		return;
 
+//OSStatus status = HIViewDrawCGImage(inContext->getPlatformGraphicsContext(), HIRect * inBounds, cgImage);
 	// convert the DGRect to a CGRect for the CG API stuffs
 	CGRect drawRect = inRect->convertToCGRect( inContext->getPortHeight() );
 
@@ -323,3 +352,38 @@ CGImageRef PreRenderCGImageBuffer(CGImageRef inImage, bool inFlipImage)
 
 	return inImage;
 }
+
+/*
+#include <QuickTime/ImageCompression.h>
+//-----------------------------------------------------------------------------
+CGImageRef DFXGUI_LoadImageQT(CFStringRef inFileName)
+{
+	CGImageRef imageRef = NULL;
+
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
+	if (pluginBundleRef != NULL)
+	{
+		CFURLRef imageResourceURL = CFBundleCopyResourceURL(pluginBundleRef, inFileName, NULL, NULL);
+		if (imageResourceURL != NULL)
+		{
+			Handle dataRef = NULL;
+			OSType dataRefType = 0;
+			OSErr error = QTNewDataReferenceFromCFURL(imageResourceURL, 0, &dataRef, &dataRefType);
+			CFRelease(imageResourceURL);
+			if ( (error == noErr) && (dataRef != NULL) )
+			{
+				GraphicsImportComponent graphicsImporter = NULL;
+				error = GetGraphicsImporterForDataRef(dataRef, dataRefType, &graphicsImporter);
+				if ( (error == noErr) && (graphicsImporter != NULL) )
+				{
+					error = GraphicsImportCreateCGImage(graphicsImporter, &imageRef, 0);
+					CloseComponent(graphicsImporter);
+				}
+				DisposeHandle(dataRef);
+			}
+		}
+	}
+
+	return imageRef;
+}
+*/
