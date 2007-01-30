@@ -22,7 +22,7 @@ inline float processFIRfilter(float * inAudio, long inNumTaps, float * inCoeffic
 	if ( (inPos+inNumTaps) > inBufferSize )
 	{
 		for (long i=0; i < inNumTaps; i++)
-			outval += inAudio[ (inPos + i) % arraySize] * inCoefficients[i];
+			outval += inAudio[ (inPos + i) % inBufferSize] * inCoefficients[i];
 	}
 	else
 	{
