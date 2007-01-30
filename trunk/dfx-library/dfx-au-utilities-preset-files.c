@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2006  Sophia Poirier
+	Copyright (C) 2003-2007  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -119,7 +119,7 @@ OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, 
 // parent directory path, making it nicer for displaying to a user.
 // The result is null if something went wrong, otherwise it's 
 // a CFString to which the caller owns a reference.
-CFStringRef CopyAUPresetNameFromCFURL(const CFURLRef inAUPresetFileURL)
+CFStringRef CopyAUPresetNameFromCFURL(CFURLRef inAUPresetFileURL)
 {
 	CFStringRef baseFileNameString = NULL;
 	if (inAUPresetFileURL != NULL)
@@ -140,7 +140,7 @@ CFStringRef CopyAUPresetNameFromCFURL(const CFURLRef inAUPresetFileURL)
 // This function tells you if a file represented by a CFURL is an AU preset file.  
 // This is determined by looking at the file name extension.
 // The result is true if the file is an AU preset, false otherwise.
-Boolean CFURLIsAUPreset(const CFURLRef inURL)
+Boolean CFURLIsAUPreset(CFURLRef inURL)
 {
 	Boolean result = false;
 	if (inURL != NULL)
@@ -304,7 +304,7 @@ CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short i
 //-----------------------------------------------------------------------------
 // this is just a convenient way to get a reference a tree node's info pointer in its context, 
 // which in the case of our CFURLs trees, is a CFURLRef
-CFURLRef GetCFURLFromFileURLsTreeNode(const CFTreeRef inTree)
+CFURLRef GetCFURLFromFileURLsTreeNode(CFTreeRef inTree)
 {
 	CFTreeContext treeContext;
 	if (inTree == NULL)
@@ -516,7 +516,7 @@ CFComparisonResult FileURLsTreeComparatorFunction(const void * inTree1, const vo
 
 //-----------------------------------------------------------------------------
 // this will initialize a CFTree context structure to use the above callback functions
-void FileURLsCFTreeContext_Init(const CFURLRef inURL, CFTreeContext * outTreeContext)
+void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext * outTreeContext)
 {
 	if ( (outTreeContext == NULL) || (inURL == NULL) )
 		return;
@@ -541,7 +541,7 @@ void FileURLsCFTreeContext_Init(const CFURLRef inURL, CFTreeContext * outTreeCon
 // output:  ComponentResult error code
 // Given an AU instance and an AU preset file, this function will try to restore the data 
 // from the preset file as the new state of the AU.
-ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, const CFURLRef inAUPresetFileURL)
+ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL)
 {
 	SInt32 plistError;
 	ComponentResult componentError;
@@ -567,9 +567,9 @@ ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, co
 	// all parameter controls and whatnot reflect the new state
 	if (componentError == noErr)
 	{
-		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, kAUParameterListener_AnyParameter, kAudioUnitScope_Global, (AudioUnitElement)0);
-		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, kAUParameterListener_AnyParameter, kAudioUnitScope_Input, (AudioUnitElement)0);
-		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, kAUParameterListener_AnyParameter, kAudioUnitScope_Output, (AudioUnitElement)0);
+		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, (AudioUnitParameterID)kAUParameterListener_AnyParameter, kAudioUnitScope_Global, (AudioUnitElement)0);
+		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, (AudioUnitParameterID)kAUParameterListener_AnyParameter, kAudioUnitScope_Input, (AudioUnitElement)0);
+		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, (AudioUnitParameterID)kAUParameterListener_AnyParameter, kAudioUnitScope_Output, (AudioUnitElement)0);
 	}
 
 	return componentError;
@@ -582,7 +582,7 @@ ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, co
 // The outErrorCode argument can be null.  If it is not null, it *might* hold a non-zero error code 
 // upon failed return, but this is not guaranteed, so you should set the variable's value to 0 
 // before calling this, since the value reference by outErrorCode may not actually be altered..
-CFPropertyListRef CreatePropertyListFromXMLFile(const CFURLRef inXMLFileURL, SInt32 * outErrorCode)
+CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32 * outErrorCode)
 {
 	CFDataRef fileData;
 	CFPropertyListRef propertyList;
@@ -885,7 +885,7 @@ OSType GetDictionarySInt32Value(CFDictionaryRef inAUStateDictionary, CFStringRef
 // output:  Audio Unit ComponentDescription, OSStatus error code
 // Given an AU preset file, this function will try to copy the preset's 
 // creator AU's ComponentDescription info from the preset file.
-OSStatus GetAUComponentDescriptionFromPresetFile(const CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription)
+OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription)
 {
 	SInt32 plistError;
 	CFPropertyListRef auStatePlist;
@@ -1003,7 +1003,7 @@ Open a dialog
 // This function will take a PropertyList and CFURL referencing a file as input, 
 // try to convert the PropertyList to XML data, and then write a file of the XML data 
 // out to disk to the file referenced by the input CFURL.
-OSStatus WritePropertyListToXMLFile(const CFPropertyListRef inPropertyList, const CFURLRef inXMLFileURL)
+OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef inXMLFileURL)
 {
 	SInt32 error = noErr;
 	Boolean success;
@@ -1412,7 +1412,7 @@ XXX	if fails, tell user why
 // file already exists and asking the user if she really wants to replace that old file.
 // A return value of true means that the user wants to replace the file, and 
 // a return value of false means that the user does not want to replace the file.
-Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL)
+Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL)
 {
 	AlertStdCFStringAlertParamRec alertParams;
 	CFStringRef filenamestring;
