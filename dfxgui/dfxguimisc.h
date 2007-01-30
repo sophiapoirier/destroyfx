@@ -22,6 +22,13 @@ typedef enum {
 	kDGMouseWheelAxis_horizontal
 } DGMouseWheelAxis;
 
+typedef enum {
+	kDGAntialiasQuality_default,
+	kDGAntialiasQuality_none,
+	kDGAntialiasQuality_low,
+	kDGAntialiasQuality_high
+} DGAntialiasQuality;
+
 
 //-----------------------------------------------------------------------------
 // a rectangular region defined with horizontal position (x), vertical position (y), width, and height
@@ -191,6 +198,7 @@ public:
 
 	void setAlpha(float inAlpha);
 	void setAntialias(bool inShouldAntialias);
+	void setAntialiasQuality(DGAntialiasQuality inQualityLevel);
 	void setFillColor(DGColor inColor, float inAlpha = 1.0f);
 	void setStrokeColor(DGColor inColor, float inAlpha = 1.0f);
 	void setLineWidth(float inLineWidth);
