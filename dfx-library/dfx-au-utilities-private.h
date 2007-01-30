@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2006  Sophia Poirier
+	Copyright (C) 2003-2007  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -62,22 +62,22 @@ CFTreeRef AddFileItemToTree(const FSRef * inItemRef, CFTreeRef inParentTree);
 void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree, Component inAUComponent);
 void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparatorFunction, void * inContext);
 CFComparisonResult FileURLsTreeComparatorFunction(const void * inTree1, const void * inTree2, void * inContext);
-void FileURLsCFTreeContext_Init(const CFURLRef inURL, CFTreeContext * outTreeContext);
+void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext * outTreeContext);
 
 // restoring preset files
-CFPropertyListRef CreatePropertyListFromXMLFile(const CFURLRef inXMLFileURL, SInt32 * outErrorCode);
+CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32 * outErrorCode);
 pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
 pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode);
 OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAUComponent, Boolean inShouldCreateFolder);
 
 // saving preset files
-OSStatus WritePropertyListToXMLFile(const CFPropertyListRef inPropertyList, const CFURLRef inXMLFileURL);
+OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef inXMLFileURL);
 OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist, 
 								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
 pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData);
 OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
 								CFStringRef inPresetNameString, short inFileSystemDomain, CFURLRef * outSavedAUPresetFileURL);
-Boolean ShouldReplaceExistingAUPresetFile(const CFURLRef inAUPresetFileURL);
+Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL);
 pascal Boolean ShouldReplaceExistingAUPresetFileDialogFilterProc(DialogRef inDialog, EventRecord * inEvent, DialogItemIndex * outItemHit);
 Boolean IsFileAccessError(OSStatus inErrorCode);
 OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl);
