@@ -90,6 +90,25 @@ enum {
 };
 
 
+#include "dfx-au-utilities.h"
+void showtree(CFTreeRef inTree)
+{
+//	fprintf(stderr, "\n\ttree parent:\n");
+//	CFShow(inTree);
+
+	if (inTree == NULL)
+		fprintf(stderr, "tree is null\n");
+	else
+	{
+		CFShow(inTree);
+		CFTreeRef child = CFTreeGetFirstChild(inTree);
+		if (child != NULL)
+			showtree(child);
+		CFTreeRef next = CFTreeGetNextSibling(inTree);
+		if (next != NULL)
+			showtree(next);
+	}
+}
 //-----------------------------------------------------------------------------
 // callbacks for button-triggered action
 
@@ -105,6 +124,15 @@ void midilearnGeometer(long value, void * editor) {
 void midiresetGeometer(long value, void * editor) {
   if ( (editor != NULL) && (value != 0) )
     ((DfxGuiEditor*)editor)->resetmidilearn();
+
+/*
+CFTreeRef basetree = CFTreeCreateFromAUPresetFilesInDomain((Component) (((AUCarbonViewBase*)editor)->GetEditAudioUnit()), kUserDomain);
+if (basetree != NULL)
+{
+showtree(basetree);
+CFRelease(basetree);
+}
+*/
 }
 
 void buttonswitched(long value, void * button) {
@@ -166,7 +194,7 @@ void GeometerHelpBox::draw(DGGraphicsContext * inContext) {
 
   for (int i=0; i < NUM_HELP_TEXT_LINES; i++) {
 
-#define SAFE_GET_HELPSTRING(string)	( (itemNum < sizeofA(string)) ? string[itemNum] : NULL )
+#define SAFE_GET_HELPSTRING(string)	( (itemNum < (long)sizeofA(string)) ? string[itemNum] : NULL )
     const char ** helpstrings = NULL;
     switch (helpCategory) {
       case HELP_CATEGORY_GENERAL:
