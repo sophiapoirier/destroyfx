@@ -2,48 +2,47 @@
 
 	// check the size of the stored data
 	LONG error;
-	DWORD dataSize;
-	error = RegQueryValueEx(dataRef, AUTH_REGISTRY_VALUE_NAME, NULL, NULL, NULL, &dataSize);
-	if (error != ERROR_SUCCESS)
+	DWORD dataSize = 0;
+	error = RegQueryValueEx(valueKey, DFX_REGISTRY_VALUE_NAME, NULL, NULL, NULL, &dataSize);
+	if ( (error != ERROR_SUCCESS) || (dataSize != DFX_REGISTRY_VALUE_DATA_SIZE) )
 	{
-		RegCloseKey(dataRef);
-		return AUTH_CHECK_SIZE_CALC_ERR;
-	}
-	if (dataSize != AUTH_DATA_SIZE)
-	{
-		RegCloseKey(dataRef);
-		return AUTH_CHECK_DATA_SIZE_ERR;
+		RegCloseKey(valueKey);
+		if (error == ERROR_SUCCESS)
+			error = ERROR_INCORRECT_SIZE;
+		return ERROR_INCORRECT_SIZE;
 	}
 
 	// copy the data out of the file into a buffer in memory
-	error = RegQueryValueEx(dataRef, AUTH_REGISTRY_VALUE_NAME, NULL, NULL, buf, &dataSize);
+	error = RegQueryValueEx(valueKey, DFX_REGISTRY_VALUE_NAME, NULL, NULL, dataBuf, &dataSize);
 	// file read error
-	if ( (error != ERROR_SUCCESS) || (dataSize != CORRECT_DATA_SIZE) )
+	if ( (error != ERROR_SUCCESS) || (dataSize != DFX_REGISTRY_VALUE_DATA_SIZE) )
 	{
-		RegCloseKey(dataRef);
-		return AUTH_CHECK_DATA_GET_ERR;
+		RegCloseKey(valueKey);
+		if (error == ERROR_SUCCESS)
+			error = ERROR_INCORRECT_SIZE;
+		return error;
 	}
 
-	// all done reading, close the auth file
-	error = RegCloseKey(dataRef);
+	// all done reading, close the registry key
+	error = RegCloseKey(valueKey);
 
 
 
 // write the the data to registry
 
-	// now flush the authorization data out to disk to save it
+	// now flush the registry data out to disk to save it
 	LONG error;
-	DWORD numBytes = AUTH_DATA_SIZE;
-	error = RegSetValueEx(dataRef, AUTH_REGISTRY_VALUE_NAME, 0, REG_BINARY, buf, numBytes);
+	DWORD dataSize = DFX_REGISTRY_VALUE_DATA_SIZE;
+	error = RegSetValueEx(valueKey, DFX_REGISTRY_VALUE_NAME, 0, REG_BINARY, dataBuf, dataSize);
 	// if there was an error or the number of bytes written was not what we tried to write, exit with an error
 	if (error != ERROR_SUCCESS)
 	{
-		RegCloseKey(dataRef);
-		return AUTH_WRITEDATA_WRITE_FILE_ERR;
+		RegCloseKey(valueKey);
+		return error;
 	}
 
 	// close the file
-	error = RegCloseKey(dataRef);
+	error = RegCloseKey(valueKey);
 	// the file must close without error, otherwise our data probably was not saved
 	if (error != ERROR_SUCCESS)
-		return AUTH_WRITEDATA_CLOSE_FILE_ERR;
+		return error;
