@@ -257,7 +257,7 @@ inline float DfxMidi::processEnvelope(bool inUseFades, int inCurrentNote)
 		else	// bad, linear fade
 			return (float)(note->attackSamples) * note->linearFadeStep;
 			// exponential sine fade (stupendously inefficient)
-//				envAmp = ( sin((envAmp*PI)-(PI*0.5)) + 1.0 ) * 0.5;
+//				envAmp = ( sin((envAmp*kDFX_PI_d)-(kDFX_PI_d*0.5)) + 1.0 ) * 0.5;
 //				envAmp *= envAmp;	// squared
 	}
 
@@ -279,7 +279,7 @@ inline float DfxMidi::processEnvelope(bool inUseFades, int inCurrentNote)
 		else	// use bad fade
 			return (float)(note->releaseSamples) * note->linearFadeStep;
 			// exponential sine fade
-//				envAmp = ( sinf((envAmp*PI)-(PI*0.5f)) + 1.0f ) * 0.5f;
+//				envAmp = ( sinf((envAmp*kDFX_PI_f)-(kDFX_PI_f*0.5f)) + 1.0f ) * 0.5f;
 //				envAmp *= envAmp;	// squared
 	}
 

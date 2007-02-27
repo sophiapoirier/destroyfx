@@ -1,4 +1,4 @@
-/*------------------ by Marc Poirier  ][  January 2001 -----------------*/
+/*------------------ by Sophia Poirier  ][  January 2001 -----------------*/
 
 #include "eqsync.hpp"
 
@@ -174,11 +174,11 @@ void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long
 			prevb2 = b2;
 
 			// generate "current" filter parameter values
-			cura0 = randFloat();
-			cura1 = randFloat();
-			cura2 = randFloat();
-			curb1 = randFloat();
-			curb2 = randFloat();
+			cura0 = DFX_Rand_f();
+			cura1 = DFX_Rand_f();
+			cura2 = DFX_Rand_f();
+			curb1 = DFX_Rand_f();
+			curb2 = DFX_Rand_f();
 
 			eqchanged = true;
 		}
@@ -208,12 +208,14 @@ void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long
 			float inval = inputs[ch][samplecount];	// because Cubase inserts are goofy
 			float outval = ( (inval*a0) + (prevIn[ch]*a1) + (prevprevIn[ch]*a2) 
 							- (prevOut[ch]*b1) - (prevprevOut[ch]*b2) );
-			undenormalize(outval);
+		#ifndef TARGET_API_AUDIOUNIT
+			DFX_UNDENORMALIZE(outval);
+		#endif
 
-			#ifdef TARGET_API_VST
-				if (!replacing)
-					outval += outputs[ch][samplecount];
-			#endif
+		#ifdef TARGET_API_VST
+			if (!replacing)
+				outval += outputs[ch][samplecount];
+		#endif
 			// ...doing the complex filter thing here
 			outputs[ch][samplecount] = outval;
 

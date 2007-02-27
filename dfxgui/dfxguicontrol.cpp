@@ -1061,7 +1061,7 @@ DGBackgroundControl::DGBackgroundControl(DfxGuiEditor * inOwnerEditor, ControlRe
 	setCarbonControl(inControl);
 
 	backgroundImage = NULL;
-	backgroundColor(randFloat(), randFloat(), randFloat());
+	backgroundColor(DFX_Rand_f(), DFX_Rand_f(), DFX_Rand_f());
 	dragIsActive = false;
 }
 

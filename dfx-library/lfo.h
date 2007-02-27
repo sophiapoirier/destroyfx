@@ -26,8 +26,8 @@ enum
 //-------------------------------------------------------------------------------------
 // constants and macros
 
-//#define LFOshapeScaled(A)   (paramSteppedScaled((A), numLFOshapes))
-//#define LFOshapeUnscaled(A)   (paramSteppedUnscaled((A), numLFOshapes))
+//#define LFOshapeScaled(value)   ( (long)((value) * ((float)numLFOshapes-0.01f)) )
+//#define LFOshapeUnscaled(step)   ( (float)(step) / ((float)(numLFOshapes-1)) )
 
 const long NUM_LFO_POINTS = 512;
 const float NUM_LFO_POINTS_FLOAT = (float)NUM_LFO_POINTS;	// to reduce casting later on
