@@ -12,6 +12,7 @@ written by Tom Murphy 7 and Sophia Poirier, 2001 - 2003
 #include <stdlib.h>	// for RAND_MAX
 
 
+// the Mac OS X system math.h up through Mac OS X 10.2 was missing the float variations of these functions
 #if defined(MAC_OS_X_VERSION_MAX_ALLOWED) && (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_2)
 	#define sqrtf	(float)sqrt
 	#define powf	(float)pow
@@ -24,46 +25,55 @@ written by Tom Murphy 7 and Sophia Poirier, 2001 - 2003
 
 //-----------------------------------------------------------------------------
 // constants and macros
+//-----------------------------------------------------------------------------
 
-inline float linear2dB(float inLinearValue)
-{
-	return 20.0f * log10f(inLinearValue);
-}
-
-#ifndef PI
-	#define PI	3.1415926535897932384626433832795f
-#endif
-#ifndef PId
-	#define PId	3.1415926535897932384626433832795
-#endif
+const float kDFX_PI_f = 3.1415926535897932384626433832795f;
+const double kDFX_PI_d = 3.1415926535897932384626433832795;
 
 // reduces wasteful casting and division
-const float ONE_DIV_RAND_MAX = 1.0f / (float)RAND_MAX;
-#define randFloat()   ( (float)rand() * ONE_DIV_RAND_MAX )
-const double ONE_DIV_RAND_MAX_D = 1.0 / (double)RAND_MAX;
-#define randDouble()   ( (double)rand() * ONE_DIV_RAND_MAX_D )
+const float kDFX_OneDivRandMax = 1.0f / (float)RAND_MAX;
+const double kDFX_OneDivRandMax_d = 1.0 / (double)RAND_MAX;
 
-#ifndef clip
-	#define clip(fval)   (if (fval < -1.0f) fval = -1.0f; else if (fval > 1.0f) fval = 1.0f)
+#ifndef DFX_Clip
+	#define DFX_Clip(fval)   (if (fval < -1.0f) fval = -1.0f; else if (fval > 1.0f) fval = 1.0f)
 #endif
 
-inline float fsign(float inValue)
-{
-	return (inValue < 0.0f) ? -1.0f : 1.0f;
-}
-
-#ifndef undenormalize
-	#define undenormalize(dval)   if (fabs(dval) < 1.0e-15)   dval = 0.0
-//	#define undenormalize(fval)	if ( ((*((unsigned int*)&fval)) & 0x7f800000) == 0 )   fval = 0.0f
-//	#define IS_DENORMAL(fval)   ( (*((unsigned int*)&fval)) & 0x7f800000) == 0 )
+#ifndef DFX_UNDENORMALIZE
+	#define DFX_UNDENORMALIZE(fval)   do { if (fabsf(fval) < 1.0e-15f) fval = 0.0f; } while (0)
+//	#define DFX_UNDENORMALIZE(fval)	do { if ( ((*((unsigned int*)&fval)) & 0x7f800000) == 0 ) fval = 0.0f; } while (0)
+//	#define DFX_IS_DENORMAL(fval)   ( (*((unsigned int*)&fval)) & 0x7f800000) == 0 )
 #endif
 
 
 
 //-----------------------------------------------------------------------------
 // inline functions
+//-----------------------------------------------------------------------------
 
-inline float interpolateHermite(float * inData, double inAddress, long inBufferSize)
+//-----------------------------------------------------------------------------
+inline float DFX_Rand_f()
+{
+	return (float)rand() * kDFX_OneDivRandMax;
+}
+inline double DFX_Rand_d()
+{
+	return (double)rand() * kDFX_OneDivRandMax_d;
+}
+
+//-----------------------------------------------------------------------------
+inline float DFX_Sign_f(float inValue)
+{
+	return (inValue < 0.0f) ? -1.0f : 1.0f;
+}
+
+//-----------------------------------------------------------------------------
+inline float DFX_Linear2dB(float inLinearValue)
+{
+	return 20.0f * log10f(inLinearValue);
+}
+
+//-----------------------------------------------------------------------------
+inline float DFX_InterpolateHermite(float * inData, double inAddress, long inBufferSize)
 {
 	long pos = (long)inAddress;
 	float posFract = (float) (inAddress - (double)pos);
@@ -101,7 +111,8 @@ inline float interpolateHermite(float * inData, double inAddress, long inBufferS
 #endif
 }
 
-inline float interpolateHermite_noWrap(float * inData, double inAddress, long inBufferSize)
+//-----------------------------------------------------------------------------
+inline float DFX_InterpolateHermite_NoWrap(float * inData, double inAddress, long inBufferSize)
 {
 	long pos = (long)inAddress;
 	float posFract = (float) (inAddress - (double)pos);
@@ -117,34 +128,41 @@ inline float interpolateHermite_noWrap(float * inData, double inAddress, long in
 	return (( ((a*posFract)+b) * posFract + c ) * posFract) + inData[pos];
 }
 
-inline float interpolateLinear(float * inData, double inAddress, long inBufferSize)
+//-----------------------------------------------------------------------------
+inline float DFX_InterpolateLinear(float * inData, double inAddress, long inBufferSize)
 {
 	long pos = (long)inAddress;
 	float posFract = (float) (inAddress - (double)pos);
 	return (inData[pos] * (1.0f-posFract)) + (inData[(pos+1)%inBufferSize] * posFract);
 }
 
-inline float interpolateRandom(float inMinValue, float inMaxValue)
+//-----------------------------------------------------------------------------
+inline float DFX_InterpolateRandom(float inMinValue, float inMaxValue)
 {
-	float randy = (float)rand() * ONE_DIV_RAND_MAX;
-	return ((inMaxValue-inMinValue) * randy) + inMinValue;
+	return ((inMaxValue-inMinValue) * DFX_Rand_f()) + inMinValue;
 }
 
-inline float interpolateLinear2values(float inValue1, float inValue2, double inAddress)
+//-----------------------------------------------------------------------------
+inline float DFX_InterpolateLinear_Values(float inValue1, float inValue2, double inAddress)
 {
 	float posFract = (float) (inAddress - (double)((long)inAddress));
 	return (inValue1 * (1.0f-posFract)) + (inValue2 * posFract);
 }
 
+//-----------------------------------------------------------------------------
 // return the parameter with larger magnitude
-inline float magmax(float a, float b) {
-  if (fabsf(a) > fabsf(b)) return a;
-  else return b;
+inline float DFX_MagnitudeMax(float inValue1, float inValue2)
+{
+	if ( fabsf(inValue1) > fabsf(inValue2) )
+		return inValue1;
+	else
+		return inValue2;
 }
 
+//-----------------------------------------------------------------------------
 // computes the principle branch of the Lambert W function
 //    { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
-inline double LambertW(double inValue)
+inline double DFX_LambertW(double inValue)
 {
 	double x = fabs(inValue);
 	if (x <= 500.0)
@@ -156,7 +174,7 @@ inline double LambertW(double inValue)
 /*
 //-----------------------------------------------------------------------------
 // I found this somewhere on the internet
-inline float anotherSqrt(float inValue)
+inline float DFX_AnotherSqrt(float inValue)
 {
 	float result = 1.0f;
 	float store = 0.0f;
