@@ -64,6 +64,7 @@ enum {
 enum {
 	kDfxContextualMenuItem_Parameter_SetDefaultValue = 0,
 	kDfxContextualMenuItem_Parameter_TextEntryForValue,	// type in value
+//	kDfxContextualMenuItem_Parameter_ValueStrings,	// a sub-menu of value selections, for parameters that have them
 	kDfxContextualMenuItem_Parameter_Undo,
 	kDfxContextualMenuItem_Parameter_RandomizeParameterValue,
 //	kDfxContextualMenuItem_Parameter_SnapMode,	// toggle snap mode
@@ -863,6 +864,7 @@ void DGControl::setParameterID(long inParameterID)
 		parameterAttached = false;
 		if (auv_control != NULL)
 			delete auv_control;
+		auv_control = NULL;
 	}
 	else if ( !parameterAttached || (inParameterID != getParameterID()) )	// only do this if it's a change
 	{
@@ -975,8 +977,7 @@ void DGControl::setDrawAlpha(float inAlpha)
 // this returns an old-style Mac Rect of the control's bounds in window-content-relative coordinates
 Rect DGControl::getMacRect()
 {
-	Rect controlRect;
-	memset(&controlRect, 0, sizeof(controlRect));
+	Rect controlRect = {0};
 
 	if ( getDfxGuiEditor()->IsCompositWindow() )
 	{
@@ -1035,8 +1036,7 @@ OSStatus DGControl::setHelpText(CFStringRef inHelpText)
 		return errItemNotControl;
 	}
 
-	HMHelpContentRec helpContent;
-	memset(&helpContent, 0, sizeof(helpContent));
+	HMHelpContentRec helpContent = {0};
 	helpContent.version = kMacHelpVersion;
 	SetRect(&(helpContent.absHotRect), 0, 0, 0, 0);	// XXX deprecated in Mac OS X 10.4
 	helpContent.tagSide = kHMDefaultSide;
