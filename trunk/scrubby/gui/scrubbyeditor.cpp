@@ -391,16 +391,22 @@ void ScrubbyHelpBox::draw(DGGraphicsContext * inContext)
 /*
 Rect cbounds;
 GetControlBounds(carbonControl, &cbounds);
-//SInt32 focusMetric = 0;
-//OSStatus fmStatus = GetThemeMetric(kThemeMetricFocusRectOutset, &focusMetric);
-//if (fmStatus == noErr) printf("focus ring metric = %ld\n", focusMetric);
-//else printf("GetThemeMetric(kThemeMetricFocusRectOutset) error = %ld\n", status);
-//InsetRect(&cbounds, focusMetric, focusMetric);
-InsetRect(&cbounds, 4, 4);
+SInt32 focusMetric = 0;
+OSStatus focusStatus = GetThemeMetric(kThemeMetricFocusRectOutset, &focusMetric);
+if (focusStatus == noErr) printf("focus ring metric = %ld\n", focusMetric);
+else printf("GetThemeMetric(kThemeMetricFocusRectOutset) error = %ld\n", focusStatus);
+focusMetric = 4;	// XXX
+InsetRect(&cbounds, focusMetric, focusMetric);
 */
 	if (itemNum == kHelp_none)
 {
 //DrawThemeFocusRect(&cbounds, false);
+/*
+HIRect hiBounds;
+OSStatus hiStatus = HIViewGetBounds(carbonControl, &hiBounds);
+hiBounds = CGRectInset(hiBounds, focusMetric, focusMetric);
+hiStatus = HIThemeDrawFocusRect(&hiBounds, true, inContext->getPlatformGraphicsContext(), kHIThemeOrientationNormal);
+*/
 		return;
 }
 
@@ -896,7 +902,7 @@ void ScrubbyEditor::HandleNotesButton(long inNotesButtonType)
 //-----------------------------------------------------------------------------
 void ScrubbyEditor::HandlePitchConstraintChange()
 {
-//SetWindowAlpha(GetCarbonWindow(), randFloat());	// heh heh heh...
+//SetWindowAlpha(GetCarbonWindow(), DFX_Rand_f());	// heh heh heh...
 	long speedMode = getparameter_i(kSpeedMode);
 	bool pitchConstraint = getparameter_b(kPitchConstraint);
 	float alpha = ( (speedMode == kSpeedMode_robot) && pitchConstraint ) ? 1.0f : kUnusedControlAlpha;
