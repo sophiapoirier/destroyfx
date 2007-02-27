@@ -65,7 +65,7 @@ void floorDisplayProc(float inValue, char * outText, void *)
 //		sprintf(outText, "-\xB0 dB");
 		sprintf(outText, "-oo dB");
 	else
-		sprintf(outText, "%.1f dB", linear2dB(inValue));
+		sprintf(outText, "%.1f dB", DFX_Linear2dB(inValue));
 }
 
 
