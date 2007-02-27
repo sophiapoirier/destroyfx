@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2006  Sophia Poirier
+	Copyright (C) 2003-2007  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -554,8 +554,7 @@ void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstanc
 									AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	// set up an AudioUnitParameter structure with all of the necessary values
-	AudioUnitParameter dirtyParam;
-	memset(&dirtyParam, 0, sizeof(dirtyParam));	// zero out the struct
+	AudioUnitParameter dirtyParam = {0};
 	dirtyParam.mAudioUnit = inAUComponentInstance;
 	dirtyParam.mParameterID = inParameterID;
 	dirtyParam.mScope = inScope;
@@ -568,8 +567,7 @@ void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstanc
 	if (AUEventListenerNotify != NULL)
 	{
 		// set up an AudioUnitEvent structure, which includes the AudioUnitParameter structure
-		AudioUnitEvent paramEvent;
-		memset(&paramEvent, 0, sizeof(paramEvent));	// zero out the struct
+		AudioUnitEvent paramEvent = {0};
 		paramEvent.mEventType = kAudioUnitEvent_ParameterValueChange;
 		paramEvent.mArgument.mParameter = dirtyParam;
 		AUEventListenerNotify(NULL, NULL, &paramEvent);
