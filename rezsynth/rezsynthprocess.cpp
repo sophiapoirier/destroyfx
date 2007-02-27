@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  January - March 2001 -------------*/
+/*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
 
 #include "rezsynth.hpp"
 
@@ -33,7 +33,7 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 
 
 	// these are 2 values that are always needed during processCoefficients
-	twoPiDivSR = PId*2.0 / (double)SAMPLERATE;
+	twoPiDivSR = kDFX_PI_d*2.0 / (double)SAMPLERATE;
 	nyquist = ((double)SAMPLERATE-bandwidth) / 2.0;	// adjusted for bandwidth to accomodate the filter's frequency range
 
 	// counter for the number of MIDI events this block

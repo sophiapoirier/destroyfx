@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  December 2000 -------------*/
+/*-------------- by Sophia Poirier  ][  December 2000 -------------*/
 
 #include "skidder.hpp"
 
@@ -57,7 +57,7 @@ void Skidder::processPlateau()
 		rmscount = 0;	// reset the RMS counter
 		//
 		// set up the random floor values
-		randomFloor = (float) expandparametervalue_index(kFloor, interpolateRandom(floorRandMin_gen, floor_gen));
+		randomFloor = (float) expandparametervalue_index(kFloor, DFX_InterpolateRandom(floorRandMin_gen, floor_gen));
 		randomGainRange = 1.0f - randomFloor;	// the range of the skidding on/off gain
 		//
 		if (slopeDur > 0)
@@ -129,7 +129,7 @@ void Skidder::processValley()
 			// randomize the tempo rate if the random min scalar is lower than the upper bound
 			if (useRandomRate)
 			{
-				long randomizedTempoRateIndex = (long) interpolateRandom((float)rateRandMinIndex, (float)rateIndex+0.99f);
+				long randomizedTempoRateIndex = (long) DFX_InterpolateRandom((float)rateRandMinIndex, (float)rateIndex+0.99f);
 				cycleRate = tempoRateTable->getScalar(randomizedTempoRateIndex);
 				// we can't do the bar sync if the skids durations are random
 				needResync = false;
@@ -145,7 +145,7 @@ void Skidder::processValley()
 		else
 		{
 			if (useRandomRate)
-				cycleRate = (float) expandparametervalue_index(kRate_abs, interpolateRandom(rateRandMinHz_gen, rateHz_gen));
+				cycleRate = (float) expandparametervalue_index(kRate_abs, DFX_InterpolateRandom(rateRandMinHz_gen, rateHz_gen));
 			else
 				cycleRate = rateHz;
 		}
@@ -153,7 +153,7 @@ void Skidder::processValley()
 		cycleSamples = (long) (getsamplerate_f() / cycleRate);
 		//
 		if (useRandomPulsewidth)
-			pulseSamples = (long) ( (float)cycleSamples * interpolateRandom(pulsewidthRandMin, pulsewidth) );
+			pulseSamples = (long) ( (float)cycleSamples * DFX_InterpolateRandom(pulsewidthRandMin, pulsewidth) );
 		else
 			pulseSamples = (long) ( (float)cycleSamples * pulsewidth );
 		valleySamples = cycleSamples - pulseSamples;
@@ -196,7 +196,7 @@ void Skidder::processValley()
 		else
 		{
 			// this calculates a random float value from -1.0 to 1.0
-			float panRander = (randFloat() * 2.0f) - 1.0f;
+			float panRander = (DFX_Rand_f() * 2.0f) - 1.0f;
 			// ((panRander*panWidth)+1.0) ranges from 0.0 to 2.0
 			panGainL = (panRander*panWidth) + 1.0f;
 			panGainR = 2.0f - ((panRander*panWidth) + 1.0f);
@@ -210,9 +210,10 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 {
 	// output noise
 	if ( (state == valley) && (noise != 0.0f) )
+	{
 		// out gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
-		return ((randFloat()*2.0f)-1.0f) * panGain * noise * rms;
-
+		return ((DFX_Rand_f()*2.0f)-1.0f) * panGain * noise * rms;
+	}
 	// do regular skidding output
 	else
 	{

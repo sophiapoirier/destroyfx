@@ -1,5 +1,5 @@
 
-/* DFX Transverb plugin by Tom 7 and Marc 3 */
+/* DFX Transverb plugin by Tom 7 and Sophia */
 
 #include "transverb.hpp"
 
@@ -152,7 +152,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
               lp2 = processFIRfilter(buf1, NUM_FIR_TAPS, firCoefficients1, 
                                      (read1int-NUM_FIR_TAPS+1+bsize)%bsize, bsize);
               // interpolate output linearly (avoid shit sound) & compensate gain
-              r1val = interpolateLinear2values(lp1, lp2, read1) * mug1;
+              r1val = DFX_InterpolateLinear_Values(lp1, lp2, read1) * mug1;
               break;
             default:
               r1val = interpolateHermite(buf1, read1, bsize, writer-read1int);
@@ -172,7 +172,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
               lp2 = processFIRfilter(buf2, NUM_FIR_TAPS, firCoefficients2, 
                                      (read2int-NUM_FIR_TAPS+1+bsize)%bsize, bsize);
               // interpolate output linearly (avoid shit sound) & compensate gain
-              r2val = interpolateLinear2values(lp1, lp2, read2) * mug2;
+              r2val = DFX_InterpolateLinear_Values(lp1, lp2, read2) * mug2;
               break;
             default:
               r2val = interpolateHermite(buf2, read2, bsize, writer-read2int);
@@ -205,8 +205,10 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       // to hopefully avoid any denormal values from IIR filtering
       buf1[writer] = in[i] + (r1val * feed1 * mix1);
       buf2[writer] = in[i] + (r2val * feed2 * mix2);
-      undenormalize(buf1[writer]);
-      undenormalize(buf2[writer]);
+    #ifndef TARGET_API_AUDIOUNIT
+      DFX_UNDENORMALIZE(buf1[writer]);
+      DFX_UNDENORMALIZE(buf2[writer]);
+    #endif
 
       /* make output */
     #ifdef TARGET_API_VST

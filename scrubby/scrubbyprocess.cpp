@@ -14,8 +14,8 @@ inline double calculateTargetSpeed(double a, double n, double k)
 
 
 	double lambertInput = (n * a) / k;
-	b = k * LambertW(lambertInput) / n;
-	// cuz I don't totally trust my LambertW function...
+	b = k * DFX_LambertW(lambertInput) / n;
+	// cuz I don't totally trust my Lambert W function...
 #if TARGET_OS_MAC
 	if ( isnan(b) || (! isfinite(b)) )
 #else
@@ -114,7 +114,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 		// randomize the tempo rate if the random min scalar is lower than the upper bound
 		if (useSeekRateRandMin)
 		{
-			long randomizedSeekRateIndex = (long) interpolateRandom((float)seekRateRandMinIndex, (float)seekRateIndex+0.99f);
+			long randomizedSeekRateIndex = (long) DFX_InterpolateRandom((float)seekRateRandMinIndex, (float)seekRateIndex+0.99f);
 			currentSeekRate = tempoRateTable->getScalar(randomizedSeekRateIndex);
 			// don't do musical bar sync if we're using randomized tempo rate
 //			for (unsigned long ch=0; ch < numChannels; ch++)
@@ -130,7 +130,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	else
 	{
 		if (useSeekRateRandMin)
-			currentSeekRate = expandparametervalue_index(kSeekRate_abs, interpolateRandom(seekRateRandMinHz_gen, seekRateHz_gen));
+			currentSeekRate = expandparametervalue_index(kSeekRate_abs, DFX_InterpolateRandom(seekRateRandMinHz_gen, seekRateHz_gen));
 		else
 			currentSeekRate = seekRateHz;
 	}
@@ -161,7 +161,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 
 // CALCULATE THE MOVEMENT CYCLE LENGTH
 	if (useSeekDurRandMin)
-		currentSeekDur = interpolateRandom(seekDurRandMin, seekDur);
+		currentSeekDur = DFX_InterpolateRandom(seekDurRandMin, seekDur);
 	else
 		currentSeekDur = seekDur;
 	// calculate the length of the seeking movement in samples
@@ -174,7 +174,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	// randomly locate a new target position within the buffer seek range
 	float bufferSizeFloat = seekRangeSeconds * getsamplerate_f();
 	// search back from the current writer input point
-	long newTargetPos = writePos - (long)(bufferSizeFloat * randFloat());
+	long newTargetPos = writePos - (long)(bufferSizeFloat * DFX_Rand_f());
 	//
 	// calculate the distance between
 	long readPosInt = (long)(readPos[channel]);
@@ -406,8 +406,8 @@ void Scrubby::processaudio(const float ** in, float ** out, unsigned long inNumF
 				buffers[ch][writePos] = in[ch][samplecount];
 // melody test
 //			for (ch=0; ch < numChannels; ch++)
-//				buffers[ch][writePos] = 0.69f*sinf(24.0f*PI*((float)samplecount/(float)inNumFrames));
-//				buffers[ch][writePos] = 0.69f*sinf(2.0f*PI*((float)sinecount/169.0f));
+//				buffers[ch][writePos] = 0.69f*sinf(24.0f*kDFX_PI_f*((float)samplecount/(float)inNumFrames));
+//				buffers[ch][writePos] = 0.69f*sinf(2.0f*kDFX_PI_f*((float)sinecount/169.0f));
 //			if (++sinecount > 168)   sinecount = 0;	// produce a sine wave of C4 when using 44.1 kHz
 		}
 
@@ -417,13 +417,13 @@ void Scrubby::processaudio(const float ** in, float ** out, unsigned long inNumF
 		{
 	#endif
 			for (ch=0; ch < numChannels; ch++)
-				out[ch][samplecount] = interpolateHermite(buffers[ch], readPos[ch], MAX_BUFFER);
+				out[ch][samplecount] = DFX_InterpolateHermite(buffers[ch], readPos[ch], MAX_BUFFER);
 	#ifdef TARGET_API_VST
 		}
 		else
 		{
 			for (ch=0; ch < numChannels; ch++)
-				out[ch][samplecount] += interpolateHermite(buffers[ch], readPos[ch], MAX_BUFFER);
+				out[ch][samplecount] += DFX_InterpolateHermite(buffers[ch], readPos[ch], MAX_BUFFER);
 		}
 	#endif
 

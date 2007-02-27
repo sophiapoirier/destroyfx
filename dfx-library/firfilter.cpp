@@ -12,13 +12,13 @@ void calculateFIRidealLowpassCoefficients(float inCutoff, float inSampleRate,
 											long inNumTaps, float * inCoefficients)
 {
 	// get the cutoff as a ratio of cutoff to Nyquist, scaled from 0 to Pi
-	float corner = (inCutoff / (inSampleRate*0.5f)) * PI;
+	float corner = (inCutoff / (inSampleRate*0.5f)) * kDFX_PI_f;
 
 	long middleCoeff;
 	if (inNumTaps % 2)
 	{
 		middleCoeff = (inNumTaps-1) / 2;
-		inCoefficients[middleCoeff] = corner / PI;
+		inCoefficients[middleCoeff] = corner / kDFX_PI_f;
 	}
 	else
 		middleCoeff = inNumTaps / 2;
@@ -26,7 +26,7 @@ void calculateFIRidealLowpassCoefficients(float inCutoff, float inSampleRate,
 	for (long n=0; n < middleCoeff; n++)
 	{
 		float value = (float)n - ((float)(inNumTaps-1) * 0.5f);
-		inCoefficients[n] = sinf(value * corner) / (value * PI);
+		inCoefficients[n] = sinf(value * corner) / (value * kDFX_PI_f);
 		inCoefficients[inNumTaps - 1 - n] = inCoefficients[n];
 	}
 }

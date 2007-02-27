@@ -15,10 +15,10 @@ IIRfilter::IIRfilter()
 void IIRfilter::calculateLowpassCoefficients(float inCutoff, float inSampleRate)
 {
 	float Q = 0.5f;
-	float twoPiFreqDivSR = 2.0f * PI * inCutoff / inSampleRate;	// ¹ ... 0
-	float cosTwoPiFreqDivSR = cosf(twoPiFreqDivSR);				// 1 ... -1
-	float slopeFactor = sinf(twoPiFreqDivSR) / (Q * 2.0f);		// 0 ... 1 ... 0
-	float coeffScalar = 1.0f / (1.0f + slopeFactor);			// 1 ... 0.5 ... 1
+	float twoPiFreqDivSR = 2.0f * kDFX_PI_f * inCutoff / inSampleRate;	// ¹ ... 0
+	float cosTwoPiFreqDivSR = cosf(twoPiFreqDivSR);						// 1 ... -1
+	float slopeFactor = sinf(twoPiFreqDivSR) / (Q * 2.0f);				// 0 ... 1 ... 0
+	float coeffScalar = 1.0f / (1.0f + slopeFactor);					// 1 ... 0.5 ... 1
 
 	// calculate filter coefficients
 	pInCoeff = (1.0f - cosTwoPiFreqDivSR) * coeffScalar;	// 0 ... 2
@@ -31,10 +31,10 @@ void IIRfilter::calculateLowpassCoefficients(float inCutoff, float inSampleRate)
 void IIRfilter::calculateHighpassCoefficients(float inCutoff, float inSampleRate)
 {
 	float Q = 0.5f;
-	float twoPiFreqDivSR = 2.0f * PI * inCutoff / inSampleRate;	// ¹ ... 0
-	float cosTwoPiFreqDivSR = cosf(twoPiFreqDivSR);				// 1 ... -1
-	float slopeFactor = sinf(twoPiFreqDivSR) / (Q * 2.0f);		// 0 ... 1 ... 0
-	float coeffScalar = 1.0f / (1.0f + slopeFactor);			// 1 ... 0.5 ... 1
+	float twoPiFreqDivSR = 2.0f * kDFX_PI_f * inCutoff / inSampleRate;	// ¹ ... 0
+	float cosTwoPiFreqDivSR = cosf(twoPiFreqDivSR);						// 1 ... -1
+	float slopeFactor = sinf(twoPiFreqDivSR) / (Q * 2.0f);				// 0 ... 1 ... 0
+	float coeffScalar = 1.0f / (1.0f + slopeFactor);					// 1 ... 0.5 ... 1
 
 	// calculate filter coefficients
 	pInCoeff = (-1.0f - cosTwoPiFreqDivSR) * coeffScalar;	// 2 ... 0
