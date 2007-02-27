@@ -1,211 +1,213 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
-	"http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet href="#internalstyle" type="text/css"?>
+<!DOCTYPE html 
+	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
 <title>Destroy FX: Rez Synth</title>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<link REL=STYLESHEET TYPE="text/css" HREF="dfx-docs.css">
+<link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
 </head>
 
 <body style="background-color: #29603F">
 
-<table class=mainbox>
+<table class="mainbox">
 <tr><td>
 
 
-<h1 class=title>Rez Synth</h1>
+<h1 class="title">Rez Synth</h1>
 
 
-<p class=intro>
+<p class="intro">
 Rez Synth allows you to "play" bandpass resonant filter banks that are applied to the audio input signal.  The the center frequency of the base filter in any bank is controlled by MIDI notes.  The rest of the filters in each bank (if any) have center frequencies that ascend from the base frequency according to linear or octaval increments.  You can have up to 3,000,000 filter banks active.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>bandwidth:</p>
+<p class="label">bandwidth:</p>
 
-<p class=desc>
+<p class="desc">
 The bandwidth parameter controls the bandwidth of each resonant filter, in Hz.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>bands per note:</p>
+<p class="label">bands per note:</p>
 
-<p class=desc>
+<p class="desc">
 This is how many bands there will be in each filter bank.  Each MIDI note that you play creates a new filter bank on top of any other banks that are already playing.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>band separation:</p>
+<p class="label">band separation:</p>
 
-<p class=desc>
+<p class="desc">
 This controls the separation width between each band in a filter bank.  The way that it operates depends one which band separation mode you are working in.  If you are working in "octaval" separation mode, then band separation controls the separation width in semitones.  If you are in "linear" mode, then it controls the separation as a multiplier of the base frequency.
 </p>
 
-<p class=desc>
+<p class="desc">
 In addition to using the slider to adjust this parameter, you can also click on this parameter's value display and type a value in manually in case you need a precise value.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>separation mode:</p>
+<p class="label">separation mode:</p>
 
-<p class=desc>
+<p class="desc">
 The band separation mode defines how the band sep. parameter operates.  Separation mode can be set to "linear" or "octaval" (logarithmic separation).  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics for fractional values) and "octaval" makes the other bands spread like notes in a chord.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>attack & release:</p>
+<p class="label">attack &amp; release:</p>
 
-<p class=desc>
+<p class="desc">
 These adjust the attack and release durations for each note, in milliseconds.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>pitchbend range:</p>
+<p class="label">pitchbend range:</p>
 
-<p class=desc>
+<p class="desc">
 This lets you adjust your MIDI pitchbend wheel's range in semitones.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>velocity curve:</p>
+<p class="label">velocity curve:</p>
 
-<p class=desc>
+<p class="desc">
 This lets you adjust the key velocity response curve of your MIDI keyboard.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>velocity influence:</p>
+<p class="label">velocity influence:</p>
 
-<p class=desc>
+<p class="desc">
 This controls how much of an influence key velocity will have on the volume of each note.  A value of 0 means that key velocity is completely ignored and a value 1 means that key velocity is fully effective.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>input gain scaling:</p>
+<p class="label">input gain scaling:</p>
 
-<p class=desc>
+<p class="desc">
 This parameter allows you to scale the gain of the input signal in the resonant filter operations.  It can be scaled according to the RMS of the resonant feedback or the peak of the resonant feedback, or you can disable scaling.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>filtered output gain:</p>
+<p class="label">filtered output gain:</p>
 
-<p class=desc>
+<p class="desc">
 This allows you to control the level of the output signal after all other processing has taken place.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>between gain:</p>
+<p class="label">between gain:</p>
 
-<p class=desc>
+<p class="desc">
 This control the volume of the unprocessed audio input when no notes are sounding.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>dry/wet mix:</p>
+<p class="label">dry/wet mix:</p>
 
-<p class=desc>
+<p class="desc">
 This lets you adjust the balance of the input audio (unprocessed) and the output audio (processed).  100% is all processed.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>dry/wet mix mode:</p>
+<p class="label">dry/wet mix mode:</p>
 
-<p class=desc>
+<p class="desc">
 This allows you to adjust the way that the dry/wet mix combines the dry and wet signals.  You can choose linear mixing or equal power mixing.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>legato:</p>
+<p class="label">legato:</p>
 
-<p class=desc>
+<p class="desc">
 Turning this on puts Rez Synth into legato mode (i.e. no polyphony, no space between notes, and no note envelopes).
-<br>
+<br />
 Note that, while attack and release settings are inaffectual in legato mode, the fade mode is still relevant.  There are very short fades during each note transition in legato mode.  They are too short for the fade mode to make any audible difference, so you are best off setting the fade mode to the mode that is most efficient with your particular CPU.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>fades:</p>
+<p class="label">fades:</p>
 
-<p class=desc>
+<p class="desc">
 Calculating the fades for attack and release takes a little extra processing power.  With this parameter, you can choose between "nicer" and "cheap" fades.  On my G3, the difference between cheap fades and nicer fades is approximately 1% extra CPU vs. 2%, but for some reason on my Pentium II, cheap fades use about 2% extra CPU during attacks and releases and nicer fades use about 25% extra.  The nicer fades, of course, sound smoother, but if you have a PC and are only using really short attack and release times or you need to conserve processing power, you probably ought to use cheap fades.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>mistakes:</p>
+<p class="label">mistakes:</p>
 
-<p class=desc>
+<p class="desc">
 Because you are playing banks of resonant filters that ascend in center frequencies, it is possible to get filters in your bank that have center frequencies above what your digital sampling resolution can handle.  When this happens, frequencies "foldover" the maximum possible frequency and your filters start sounding rather odd.  I personally like that, so I have left the option up to the user whether or not to "allow" or "resist" these impossible bands.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>careful:</p>
+<p class="label">careful:</p>
 
-<p class=desc>
+<p class="desc">
 The volume of the output of these resonant bandpass filters is totally erratic.  With careful mode enabled, Rez Synth tries to keep a handle on this and keep your output within a narrow range.  Whether you use this mode or not, I still recommend following Rez Synth with a limiter, and perhaps a compressor before that, too.
 </p>
 
-<br>
+<br />
 
 
-<br>
-<p class=desc>
+<br />
+<p class="desc">
 <i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command key when clicking on it.
 </p>
-<br>
+<br />
 
 
-<br>
-<p class=footer>
+<br />
+<p class="footer">
 by Sophia Poirier
-<br>
+<br />
 January - February 2001
-<br><br>
+<br /><br />
 Destroy FX #8
-<br>
+<br />
 <a href="http://destroyfx.org/">http://destroyfx.org/</a>
-<br><br>
+<br /><br />
 Rez Synth is Copyright &copy; 2001-2007 Sophia Poirier
-<br>
-<br>
+<br />
+<br />
 This software comes with absolutely no warranty, express or implied.  
-<br>
+<br />
 Use at your own risk.  See the file COPYING for full license terms.
 </p>
 

@@ -1,170 +1,172 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
-	"http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet href="#internalstyle" type="text/css"?>
+<!DOCTYPE html 
+	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
 <title>Destroy FX: Skidder</title>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<link REL=STYLESHEET TYPE="text/css" HREF="dfx-docs.css">
+<link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
 </head>
 
 <body style="background-color: #3B4972">
 
-<table class=mainbox>
+<table class="mainbox">
 <tr><td>
 
 
-<h1 class=title>Skidder</h1>
+<h1 class="title">Skidder</h1>
 
 
-<p class=intro>
+<p class="intro">
 Skidder turns the sound on and off.  You could also call it an auto-muter.  Except that it also can randomly pan your choppy chunks of sound all about, which is why it's a skidder, like how a rock skids across a frozen lake when you throw it out there, bouncing here and there lopsided-style.
 </p>
 
-<p class=intro>
+<p class="intro">
 There is also a MIDI trigger mode for Skidder.  When this is on, the effect is triggered by MIDI notes.  This mode will only work in host applications that support sending MIDI notes to plugins.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>rate:</p>
+<p class="label">rate:</p>
 
-<p class=desc>
+<p class="desc">
 The rate parameter controls the speed at which the sound goes on and off.  The values are in cycles per second (Hertz).  When tempo sync is on, you can control Skidder's rate according to the tempo of your song instead of Hz.  The values are in cycles per beat (note:  I mean per single beat, not per measure, so this is independent of time signature).
 </p>
 
-<br>
+<br />
 
 
-<p class=label>tempo sync:</p>
+<p class="label">tempo sync:</p>
 
-<p class=desc>
+<p class="desc">
 This switches between the "free" rate control and the tempo-synced rate control.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>rate random factor:</p>
+<p class="label">rate random factor:</p>
 
-<p class=desc>
+<p class="desc">
 This parameter lets you randomize the rate.  The random factor is a divisor and multiplier to whatever rate you have already defined (tempo-synced or free).  The defined rate divided by the random factor is the lower limit for possible random rates.  The defined rate times the random factor is the upper limit.  Skidder's actual rate will randomly change between these limits at every cycle.  For example, if you have a defined rate of 12 cps and a random factor of 3, then each cycle will have a rate somewhere between 4 cps and 36 cps.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>tempo:</p>
+<p class="label">tempo:</p>
 
-<p class=desc>
+<p class="desc">
 The tempo parameter is used to tell Skidder what the tempo of your song is.  This parameter defaults to "auto" which means that Skidder tries to get the tempo from the host application.  If you move the tempo slider to the right, you exit "auto" mode and can set the tempo manually.  You can also click on the numerical value display and type your tempo in manually.
 </p>
 
-<p class=desc>
+<p class="desc">
 "Auto" tempo only works if the host application supports sending tempo information to plugins.  If the application can't do this, then the "auto" option will not appear in Skidder.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>pulsewidth:</p>
+<p class="label">pulsewidth:</p>
 
-<p class=desc>
+<p class="desc">
 The pulsewidth parameter controls how much of each cycle is "on."  If you set it to 0.9, then your source sound will be output during the first 90% of each cycle and the last 10% of each cycle will be silent.
 </p>
 
-<p class=desc>
+<p class="desc">
 This parameter can be set to use a randomized range.  If the 2 slider handles are not right next to each other, then Skidder will, for each cycle, randomly choose a value for the pulsewidth that is within the range of the minimum and maximum points.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>slope:</p>
+<p class="label">slope:</p>
 
-<p class=desc>
+<p class="desc">
 The slope parameter sets the length of the volume-smoothing slopes that are at the beginning and end of each pulse.  The values are in milliseconds and that's how long each volume fade will be.
 </p>
 
-<p class=desc>
+<p class="desc">
 Slope can be set to 0 ms if you want, but you are likely to get irritating popping sounds at the start and end of each pulse if you do that.  If you screw up and set the slopes to be longer than the pulse, then your slope setting gets overridden to be one 3rd of the pulse length.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>floor:</p>
+<p class="label">floor:</p>
 
-<p class=desc>
+<p class="desc">
 This controls how quiet the sound gets between skids, i.e. during the "off" periods of each cycle.  If you set this to -&infin; dB, then Skidder turns the sound completely on and off.  If you set it to 0.0 dB, then the volume never changes.  If you set this parameter somewhere in between, then Skidder will get quieter between skids, but not completely silent.
 </p>
 
-<p class=desc>
+<p class="desc">
 This parameter can be set to use a randomized range.  If the 2 slider handles are not right next to each other, then Skidder will, for each cycle, randomly choose a value for the floor that is within the range of the minimum and maximum points.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>stereo spread:</p>
+<p class="label">stereo spread:</p>
 
-<p class=desc>
+<p class="desc">
 The stereo spread parameter controls the amount of random panning that your outputted sound chunks will be subjected to.  When it's set to 0, all of your audio will come out centered.  When it's set to 1, each pulse will be randomly panned to a different place in the stereo field.  Lowering the stereo spread value will limit how far from center the random panning is allowed to stray.
 </p>
 
-<p class=desc>
+<p class="desc">
 While panning, Skidder preserves the original audio signal's total amplitude, which means that it is possible to clip when the sound is panned off-center.  If you have an input signal that never peaks above half amplitude (-6 dB), then there's no risk, but otherwise, adjust the gain in your host application to accomodate for however much panning you are going to allow.
 </p>
 
-<p class=desc>
+<p class="desc">
 Skidder pans to the left by moving some of the right signal into the left channel and pans to the right by moving some of the left signal into the right channel, so the overall volume of each channel is always preserved.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>MIDI mode:</p>
+<p class="label">MIDI mode:</p>
 
-<p class=desc>
+<p class="desc">
 This button lets you choose how Skidder responds to MIDI notes.  In MIDI trigger mode, Skidder gets triggered by MIDI notes.  The sound turns off when you're not playing any notes.  MIDI apply mode is similar except that the sound stays on, unprocessed, between notes.  "Nothing" mode means that notes are ignored.
 </p>
 
-<br>
+<br />
 
 
-<p class=label>velocity:</p>
+<p class="label">velocity:</p>
 
-<p class=desc>
+<p class="desc">
 If you switch this on and you are using a MIDI note control mode, then the floor value will be controlled by note velocity.
 </p>
 
-<br>
+<br />
 
 
-<br>
-<p class=desc>
+<br />
+<p class="desc">
 <i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command key when clicking on it.  You can move both points of a range slider together by holding the control key.  You can move both points of a range slider, preserving their relationship, by holding the option key.  You can make the two points of a range slider converge or diverge by holding the option and control keys while dragging up or down.
 </p>
-<br>
+<br />
 
 
-<br>
-<p class=footer>
+<br />
+<p class="footer">
 by Sophia Poirier
-<br>
+<br />
 December 2000
-<br><br>
+<br /><br />
 Destroy FX #2
-<br>
+<br />
 <a href="http://destroyfx.org/">http://destroyfx.org/</a>
-<br><br>
+<br /><br />
 Skidder is Copyright &copy; 2000-2007 Sophia Poirier
-<br>
-<br>
+<br />
+<br />
 This software comes with absolutely no warranty, express or implied.  
-<br>
+<br />
 Use at your own risk.  See the file COPYING for full license terms.
 </p>
 
