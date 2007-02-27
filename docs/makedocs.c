@@ -1,7 +1,7 @@
 /*
  *  makedocs.c
  *
- *  Copyright (C) 2003 by Sophia Poirier
+ *  Copyright (C) 2003-2007 by Sophia Poirier
  *
  *  This software is released under the terms of the 
  *  GNU Public License (see COPYING for full license text)
@@ -29,18 +29,26 @@
  *
  * It is assumed that the linked file is a stylesheet 
  * (the content is put between <style> tags).
+ *
+ * The inlined stylesheet element is given an id value of 
+ * "internalstyle" for making proper XHTML possible, but 
+ * therefore is assuming that you've declared that accordingly.
+ * e.g. <?xml-stylesheet href="#internalstyle" type="text/css"?>
  */
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>	/* for isspace */
 #include <libgen.h>	/* for basename and dirname */
+#include <sys/syslimits.h>	/* for PATH_MAX */
 #include <errno.h>	/* for error codes */
 
 
 #define LINK_TAG	"link"
 #define LINK_SOURCE	"href="
+#define STYLE_ID_VALUE	"internalstyle"
 #define CVS_ENTRIES_FILE	"CVS/Entries"
 #define CVS_ROOT_FILE	"CVS/Root"
 #define CVS_REPOSITORY_FILE	"CVS/Repository"
@@ -54,39 +62,24 @@ enum {
 };
 
 
-// hmmm, strcasestr doesn't appear to be included with BSD or Darwin...
-char * dfx_strcasestr(const char *big, const char *little)
-{
-	if ( (big == NULL) || (little == NULL) )
-		return NULL;
-	int biglen = strlen(big);
-	int litlen = strlen(little);
-	for (int i=0; i < biglen - litlen; i++)
-	{
-		if (strncasecmp(big + i, little, litlen) == 0)
-			return (char*) (big + i);
-	}
-	return NULL;
-}
-
-
 // try to use CVS logged data to construct an ultra-informative file header section
-void writeinfoheader(FILE *outputfile, const char *inputfilename)
+void writeinfoheader(FILE * outputfile, const char * inputfilename)
 {
 	// we're going to look for a CVS directory in the same 
 	// directory where the input file is located
-	char *sourcedir = dirname(inputfilename);
+	const char * sourcedir = dirname(inputfilename);
 
 	// get full path and filename for the CVS Entries file
-	char cvsentriesfilefullpath[strlen(sourcedir) + strlen(CVS_ENTRIES_FILE) + 4];
+	char * cvsentriesfilefullpath = (char*) malloc(strlen(sourcedir) + strlen(CVS_ENTRIES_FILE) + 4);
 	sprintf(cvsentriesfilefullpath, "%s/%s", sourcedir, CVS_ENTRIES_FILE);
 	// open the Entries file
-	FILE *cvsentriesf = fopen(cvsentriesfilefullpath, "r");
+	FILE * cvsentriesf = fopen(cvsentriesfilefullpath, "r");
+	free(cvsentriesfilefullpath);
 	if (cvsentriesf != NULL)
 	{
 		// get the filename of the input file so that we 
 		// can look for it in the CVS Entries log
-		char *sourcefilebase = basename(inputfilename);
+		const char * sourcefilebase = basename(inputfilename);
 		size_t sourcefilebaselen = strlen(sourcefilebase);
 
 		// loop through reading each line of the Entries file
@@ -94,7 +87,7 @@ void writeinfoheader(FILE *outputfile, const char *inputfilename)
 		{
 			// read the input file one line at a time
 			size_t linesize;
-			char *linestr = fgetln(cvsentriesf, &linesize);
+			const char * linestr = fgetln(cvsentriesf, &linesize);
 			// try the next line if this one failed
 			if ( (linestr == NULL) || (linesize <= (sourcefilebaselen+1)) )
 				continue;
@@ -121,7 +114,7 @@ void writeinfoheader(FILE *outputfile, const char *inputfilename)
 			linepos++;	// advance past the / delimiting character
 
 			// the next value is the latest version number of the file
-			char versionstr[linesize-linepos];
+			char * versionstr = (char*) malloc(linesize - linepos);
 			long versionstrpos = 0;
 			// copy the version value into our version string until a / is reached
 			while ( (linepos < (linesize-1)) && (linestr[linepos] != '/') )
@@ -148,12 +141,13 @@ void writeinfoheader(FILE *outputfile, const char *inputfilename)
 
 		// Root file
 			// next we will try to retrive the CVS Root from the Root file
-			char cvsrootfilefullpath[strlen(sourcedir) + strlen(CVS_ROOT_FILE) + 4];
+			char * cvsrootfilefullpath = (char*) malloc(strlen(sourcedir) + strlen(CVS_ROOT_FILE) + 4);
 			sprintf(cvsrootfilefullpath, "%s/%s", sourcedir, CVS_ROOT_FILE);
-			char cvsrootpathstr[1024];	// for storing the Root string
+			char cvsrootpathstr[PATH_MAX];	// for storing the Root string
 			cvsrootpathstr[0] = 0;
 			// see if we can find the CVS Root file
-			FILE *cvsrootf = fopen(cvsrootfilefullpath, "r");
+			FILE * cvsrootf = fopen(cvsrootfilefullpath, "r");
+			free(cvsrootfilefullpath);
 			if (cvsrootf != NULL)
 			{
 				// first find the @ character 
@@ -188,12 +182,13 @@ void writeinfoheader(FILE *outputfile, const char *inputfilename)
 
 		// Repository file
 			// then we will try to retrive the CVS Repository from the Repository file
-			char cvsrepositoryfilefullpath[strlen(sourcedir) + strlen(CVS_REPOSITORY_FILE) + 4];
+			char * cvsrepositoryfilefullpath = (char*) malloc(strlen(sourcedir) + strlen(CVS_REPOSITORY_FILE) + 4);
 			sprintf(cvsrepositoryfilefullpath, "%s/%s", sourcedir, CVS_REPOSITORY_FILE);
-			char cvsrepositorypathstr[1024];	// for storing the Repository string
+			char cvsrepositorypathstr[PATH_MAX];	// for storing the Repository string
 			cvsrepositorypathstr[0] = 0;
 			// see if we can find the CVS Repository file
-			FILE *cvsrepositoryf = fopen(cvsrepositoryfilefullpath, "r");
+			FILE * cvsrepositoryf = fopen(cvsrepositoryfilefullpath, "r");
+			free(cvsrepositoryfilefullpath);
 			if (cvsrepositoryf != NULL)
 			{
 				// copy the entire line from the Repository file
@@ -227,6 +222,8 @@ void writeinfoheader(FILE *outputfile, const char *inputfilename)
 				fprintf(outputfile, "\tlast modified:  %s\n", datestr);
 			fprintf(outputfile, "-->\n\n");
 
+			free(versionstr);
+
 			// if we made it this far, then we found our CVS entry info 
 			// and don't need to loop through the file any more
 			break;
@@ -240,32 +237,32 @@ void writeinfoheader(FILE *outputfile, const char *inputfilename)
 
 
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
 	// fail and print usage if there weren't enough arguments
 	// (only the last argument is optional)
 	if (argc < (kNumArgs-1))
 	{
-		printf("\t%s inputfile [outputfile]\n", basename(argv[kArg_Command]));
+		fprintf(stderr, "\t%s inputfile [outputfile]\n", basename(argv[kArg_Command]));
 		return EINVAL;
 	}
 
 	// try to open the input file
-	FILE *sourcef = fopen(argv[kArg_InputFile], "r");
+	FILE * sourcef = fopen(argv[kArg_InputFile], "r");
 	if (sourcef == NULL)
 	{
-		printf("could not open input file\n");
+		fprintf(stderr, "could not open input file\n");
 		return ENOENT;
 	}
 
 	// if an output file was specified, try to open it, otherwise use stdout
-	FILE *destf = stdout;
+	FILE * destf = stdout;
 	if (argc > kArg_OutputFile)
 	{
 		destf = fopen(argv[kArg_OutputFile], "w");
 		if (destf == NULL)
 		{
-			printf("could not create output file %s\n", argv[kArg_OutputFile]);
+			fprintf(stderr, "could not create output file %s\n", argv[kArg_OutputFile]);
 			return EIO;
 		}
 	}
@@ -278,8 +275,8 @@ readlineloop:
 	while ( !feof(sourcef) )
 	{
 		// read the input file one line at a time
-		size_t linesize;
-		char *linestr = fgetln(sourcef, &linesize);
+		size_t linesize = 0;
+		const char * linestr = fgetln(sourcef, &linesize);
 		// try the next line if this one failed
 		if (linestr == NULL)
 			continue;
@@ -292,11 +289,12 @@ readlineloop:
 			if (linestr[i] == '<')
 			{
 				// we need to make a copy the current line and null-terminate it 
-				// (most of those handy functions in string.h require null-terminated strings)
-				char linestr_copy[linesize];
+				char * linestr_copy = (char*) malloc(linesize + 1);
 				for (size_t j=0; j < linesize; j++)
 					linestr_copy[j] = linestr[j];
-				linestr_copy[linesize-1] = 0;	// terminate over newline character
+				linestr_copy[linesize] = 0;
+				if (linestr[linesize-1] == '\n')
+					linestr_copy[linesize-1] = 0;	// terminate over the newline character
 				// read the first word after the tag-begin bracket (should be the tag name)
 				char firstword[linesize];
 				firstword[0] = 0;
@@ -306,14 +304,14 @@ readlineloop:
 					if (strncasecmp(firstword, LINK_TAG, strlen(LINK_TAG)) == 0)
 					{
 						// find where the source filename tag attribute begins
-						char *linksource = dfx_strcasestr(linestr_copy + i, LINK_SOURCE);
+						char * linksource = strcasestr(linestr_copy + i, LINK_SOURCE);
 						// looks like we found a linked filename attribute
 						if (linksource != NULL)
 						{
 							// move string past the tag attribute label 
 							// so that it points to the attribute value
 							linksource += strlen(LINK_SOURCE);
-							char linkfilename[linesize];
+							char * linkfilename = (char*) malloc(linesize);
 							linkfilename[0] = 0;
 							// see if the value is wrapped in quotes (more sorry-ass HTML parsing)
 							if (linksource[0] == '"')
@@ -342,15 +340,16 @@ readlineloop:
 							}
 							// assume that the path of the linked file is relative to the source file 
 							// XXX I don't think that we need to deal with basehrefs or anything like that
-							char *basedir = dirname(argv[kArg_InputFile]);
+							const char * basedir = dirname(argv[kArg_InputFile]);
 							// get full path and filename for linked file
-							char linkfilefullpath[strlen(basedir) + strlen(linkfilename) + 4];
+							char * linkfilefullpath = (char*) malloc(strlen(basedir) + strlen(linkfilename) + 4);
 							sprintf(linkfilefullpath, "%s/%s", basedir, linkfilename);
 							// open the linked file
-							FILE *linkf = fopen(linkfilefullpath, "r");
+							FILE * linkf = fopen(linkfilefullpath, "r");
+							free(linkfilefullpath);
 							if (linkf != NULL)
 							{
-								fprintf(destf, "<style type=\"text/css\">\n\n");
+								fprintf(destf, "<style type=\"text/css\" id=\""STYLE_ID_VALUE"\">\n");
 								// copy every byte of the linked file to the output stream
 								while (!feof(linkf))
 								{
@@ -359,7 +358,7 @@ readlineloop:
 										fputc(got, destf);
 								}
 								fclose(linkf);
-								fprintf(destf, "\n</style>\n");
+								fprintf(destf, "</style>\n");
 								// advance our line character reader position past the <link> tag 
 								// to continue copying anything else in this line to the output stream
 								i += linksource - linestr_copy + strlen(linkfilename);
@@ -388,9 +387,11 @@ readlineloop:
 									i++;
 								}
 							}
+							free(linkfilename);
 						}	// end found linked filename attribute
 					}	// end tag is a <link> tag
 				}	// end scanning of tag name
+				free(linestr_copy);
 			}	// end tag-begin found
 			fprintf(destf, "%c", linestr[i]);
 		}
