@@ -218,8 +218,7 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 	{
 		HIRect bounds = inRegion->convertToCGRect( inContext->getPortHeight() );
 
-		HIThemeTextInfo textInfo;
-		memset(&textInfo, 0, sizeof(textInfo));
+		HIThemeTextInfo textInfo = {0};
 		textInfo.version = 0;
 		textInfo.state = kThemeStateActive;
 		textInfo.fontID = themeFontID;
