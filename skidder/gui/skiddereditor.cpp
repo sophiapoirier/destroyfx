@@ -79,6 +79,8 @@ float SkidderEditor::theTempoSync;
 
 void SkidderEditor::rateDisplayConvert(float value, char *string, void *temporatestring)
 {
+#define onOffTest(fvalue)   ((fvalue) > 0.5f)
+#warning stop using onOffTest and use DfxParam stuff properly
 	if ( onOffTest(theTempoSync) )
 	{
 		strcpy(string, (char*)temporatestring);
@@ -125,7 +127,7 @@ void floorDisplayConvert(float value, char *string)
 	if (value <= 0.0f)
 		strcpy(string, "-oo  dB");
 	else
-		sprintf(string, "%.2f  dB", linear2dB(gainScaled(value)));
+		sprintf(string, "%.2f  dB", DFX_Linear2dB(gainScaled(value)));
 }
 
 void floorRandMinDisplayConvert(float value, char *string, void *ffloor);
