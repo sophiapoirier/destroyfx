@@ -1,59 +1,61 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
-	"http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet href="#internalstyle" type="text/css"?>
+<!DOCTYPE html 
+	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 
 <head>
 	<title>Destroy FX: MIDI Gater</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-	<link REL=STYLESHEET TYPE="text/css" HREF="dfx-docs.css">
+	<link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
 </head>
 
 <body style="background-color: #A81B1C">
 
-<table class=mainbox>
+<table class="mainbox">
 <tr><td>
 
 
-<h1 class=title>MIDI Gater</h1>
+<h1 class="title">MIDI Gater</h1>
 
 
-<p class=intro>
+<p class="intro">
 MIDI Gater is a simple, handy, MIDI-controlled audio gate.  The idea is that, when you play a MIDI note, audio turns on.  When you release the note, audio turns off.
 </p>
 
-<p class=desc>
+<p class="desc">
 MIDI Gater is a little bit unusual as far as MIDI controlled gates go, though, because it is actually kind of "polyphonic."  What that means is that, the more notes you play, the louder your audio signal gets.  Basically each note turns on a copy of your audio signal.  The volume of each copy is determined by the key velocity of the MIDI note.  If you have the <b>velocity influence</b> parameter turned up to 1, then the volume of each copy directly corresponds to the MIDI note velocity.  If you turn velocity influence down to 0, then all notes result in copies of the audio playing back at full volume.  Values of velocity influence between 0 and 1 result in the key velocity having more or less effect on the audio volume.
 </p>
 
-<p class=desc>
+<p class="desc">
 If you don't want the sound to turn completely off no notes are playing, then you can adjust the <b>floor</b> parameter to control the audio volume level between notes.
 </p>
 
-<p class=desc>
+<p class="desc">
 If the audio simply turned on as soon as you played a MIDI note, you would hear clicky noises every time you played or released a note.  This is caused by glitchy digital waveform discontinuities.  In order to avoid this, MIDI Gater fades the volume in when notes start and fades it out when notes stop.  You can control the duration of these fades with the <b>attack</b> and <b>release</b> parameters.  Attack controls the duration of the fade-in slope when you begin playing a note, and release controls the duration of the fade-out slope when you stop playing a note.
 </p>
 
-<br>
+<br />
 
 
-<br>
-<p class=footer>
+<br />
+<p class="footer">
 by Sophia Poirier
-<br>
+<br />
 November 2001
-<br>
+<br />
 graphics by Brittnell Anderson ~ <a href="mailto:brittnell@brittnell.com">brittnell@brittnell.com</a>
-<br><br>
+<br /><br />
 Destroy FX #23
-<br>
+<br />
 <a href="http://destroyfx.org/">http://destroyfx.org/</a>
-<br><br>
+<br /><br />
 MIDI Gater is Copyright &copy; 2001-2007 Sophia Poirier
-<br>
-<br>
+<br />
+<br />
 This software comes with absolutely no warranty, express or implied.  
-<br>
+<br />
 Use at your own risk.  See the file COPYING for full license terms.
 </p>
 

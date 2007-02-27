@@ -1,13 +1,13 @@
-BODY
+body
 {
 	margin-top: 8px ;
 	margin-left: 15% ;
 	margin-right: 15% ;
 }
 
-B { font-weight: bold }
+b { font-weight: bold }
 
-H1.title
+h1.title
 {
 	font-family: Charcoal, Verdana, "Trebuchet MS", Helvetica, sans-serif ;
 	font-size: 300% ;
@@ -16,25 +16,25 @@ H1.title
 	color: black ;
 }
 
-P
+p
 {
 	font-family: Verdana, Geneva, Arial, sans-serif ;
 	text-indent: 0.0em ;
 	color: black ;
 }
-P.intro { text-align: justify }
-P.declaration { text-align: center }
-P.label { font-weight: bold }
-P.desc { text-align: justify }
-P.footer { font-size: smaller ; text-align: center }
+p.intro { text-align: justify }
+p.declaration { text-align: center }
+p.label { font-weight: bold }
+p.desc { text-align: justify }
+p.footer { font-size: smaller ; text-align: center }
 
-A { text-decoration: none ; font-weight: bold }
-A:link { color: #750927 }
-A:hover { color: #B00939 }
-A:visited { color: #753027 }
-A:active { color: #DD4444 }
+a { text-decoration: none ; font-weight: bold }
+a:link { color: #750927 }
+a:hover { color: #B00939 }
+a:visited { color: #753027 }
+a:active { color: #DD4444 }
 
-TABLE.mainbox
+table.mainbox
 {
 	width: 100% ;
 	background-color: white ;
