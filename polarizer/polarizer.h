@@ -1,4 +1,4 @@
-/*------------------ by Marc Poirier  ][  January 2001 -----------------*/
+/*------------------ by Sophia Poirier  ][  January 2001 -----------------*/
 
 #ifndef __POLARIZER_H
 #define __POLARIZER_H
@@ -13,7 +13,7 @@ enum
 	kAmount,
 	kImplode,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 
@@ -21,8 +21,8 @@ enum
 class PolarizerDSP : public DfxPluginCore
 {
 public:
-	PolarizerDSP(DfxPlugin *inDfxPlugin);
-	virtual void process(const float *in, float *out, unsigned long inNumFrames, bool replacing=true);
+	PolarizerDSP(DfxPlugin * inDfxPlugin);
+	virtual void process(const float * in, float * out, unsigned long inNumFrames, bool replacing=true);
 	virtual void reset();
 
 private:

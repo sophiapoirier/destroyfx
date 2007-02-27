@@ -209,7 +209,7 @@ double nearestIntegerAbove(double number)
 //-----------------------------------------------------------------------------
 void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
-	if (tuneMode == kFineMode)
+	if (tuneMode == kSpeedMode_Fine)
 	{
 		DGFineTuneButton::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers, inIsDoubleClick);
 		return;
@@ -221,7 +221,7 @@ void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned lo
 	double newSpeedValue;
 	bool isInc = (valueChangeAmount >= 0.0f);
 	double snapAmount = (isInc) ? 1.001 : -1.001;
-	double snapScalar = (tuneMode == kSemitoneMode) ? 12.0 : 1.0;
+	double snapScalar = (tuneMode == kSpeedMode_Semitone) ? 12.0 : 1.0;
 
 	newSpeedValue = (oldSpeedValue * snapScalar) + snapAmount;
 	newSpeedValue = isInc ? nearestIntegerBelow(newSpeedValue) : nearestIntegerAbove(newSpeedValue);
@@ -390,8 +390,8 @@ long TransverbEditor::open()
 	DGButton * button;
 
 	// quality mode button
-	pos.set(kQualityButtonX, kButtonY, gQualityButton->getWidth()/2, gQualityButton->getHeight()/numQualities);
-	button = new DGButton(this, kQuality, &pos, gQualityButton, numQualities, kDGButtonType_incbutton, true);
+	pos.set(kQualityButtonX, kButtonY, gQualityButton->getWidth()/2, gQualityButton->getHeight()/kQualityMode_NumModes);
+	button = new DGButton(this, kQuality, &pos, gQualityButton, kQualityMode_NumModes, kDGButtonType_incbutton, true);
 
 	// TOMSOUND button
 	pos.set(kTomsoundButtonX, kButtonY, gTomsoundButton->getWidth()/2, gTomsoundButton->getHeight()/2);
@@ -403,12 +403,12 @@ long TransverbEditor::open()
 	button->setUserProcedure(randomizeTransverb, this);
 
 	// speed 1 mode button
-	pos.set(kSpeedModeButtonX, kSpeedModeButtonY, gSpeedModeButton->getWidth()/2, gSpeedModeButton->getHeight()/numSpeedModes);
-	button = new DGButton(this, kSpeed1mode, &pos, gSpeedModeButton, numSpeedModes, kDGButtonType_incbutton, true);
+	pos.set(kSpeedModeButtonX, kSpeedModeButtonY, gSpeedModeButton->getWidth()/2, gSpeedModeButton->getHeight()/kSpeedMode_NumModes);
+	button = new DGButton(this, kSpeed1mode, &pos, gSpeedModeButton, kSpeedMode_NumModes, kDGButtonType_incbutton, true);
 	//
 	// speed 2 mode button
 	pos.offset(0, (kWideFaderInc * 2) + kWideFaderMoreInc);
-	button = new DGButton(this, kSpeed2mode, &pos, gSpeedModeButton, numSpeedModes, kDGButtonType_incbutton, true);
+	button = new DGButton(this, kSpeed2mode, &pos, gSpeedModeButton, kSpeedMode_NumModes, kDGButtonType_incbutton, true);
 
 	// MIDI learn button
 	pos.set(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth()/2, gMidiLearnButton->getHeight()/2);

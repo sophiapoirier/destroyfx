@@ -9,7 +9,7 @@ const DGColor kBrownTextColor(187.0f/255.0f, 173.0f/255.0f, 131.0f/255.0f);
 const float kUnusedControlAlpha = 0.234f;
 
 const long kOctavesSliderWidth = 226 - 2;
-const long kOctaveMaxSliderWidth = (long) (((float)OCTAVE_MAX / (float)(abs(OCTAVE_MIN)+OCTAVE_MAX)) * (float)kOctavesSliderWidth);
+const long kOctaveMaxSliderWidth = (long) (((float)kOctave_MaxValue / (float)(abs(kOctave_MinValue)+kOctave_MaxValue)) * (float)kOctavesSliderWidth);
 const long kOctaveMinSliderWidth = kOctavesSliderWidth - kOctaveMaxSliderWidth;
 const long kOctaveMinSliderX = 33 + 1;
 const long kOctaveMaxSliderX = kOctaveMinSliderX + kOctaveMinSliderWidth;
@@ -344,7 +344,7 @@ void seekDurDisplayProc(float value, char * outText, void *)
 void octaveMinDisplayProc(float value, char * outText, void *)
 {
 	long octaves = (long) value;
-	if (octaves <= OCTAVE_MIN)
+	if (octaves <= kOctave_MinValue)
 		strcpy(outText, "no min");
 	else
 		sprintf(outText, "%ld", octaves);
@@ -353,7 +353,7 @@ void octaveMinDisplayProc(float value, char * outText, void *)
 void octaveMaxDisplayProc(float value, char * outText, void *)
 {
 	long octaves = (long) value;
-	if (octaves >= OCTAVE_MAX)
+	if (octaves >= kOctave_MaxValue)
 		strcpy(outText, "no max");
 	else if (octaves == 0)
 		sprintf(outText, "0");
@@ -572,7 +572,7 @@ long ScrubbyEditor::open()
 //	DGImage * gKeyboardOff = new DGImage("keyboard-off.png", this);
 //	DGImage * gKeyboardOn = new DGImage("keyboard-on.png", this);
 	//
-	DGImage * gKeyboardTopKeys[NUM_PITCH_STEPS];
+	DGImage * gKeyboardTopKeys[kNumPitchSteps];
 	gKeyboardTopKeys[1] = gKeyboardTopKeys[3] = gKeyboardTopKeys[6] = gKeyboardTopKeys[8] = gKeyboardTopKeys[10] = 
 							new DGImage("keyboard-black-key.png", this);
 	gKeyboardTopKeys[0] = new DGImage("keyboard-white-key-top-1.png", this);
@@ -582,13 +582,13 @@ long ScrubbyEditor::open()
 	gKeyboardTopKeys[7] = gKeyboardTopKeys[9] = new DGImage("keyboard-white-key-top-5-6.png", this);
 	gKeyboardTopKeys[11] = new DGImage("keyboard-white-key-top-7.png", this);
 	//
-	DGImage * gKeyboardBottomKeys[NUM_PITCH_STEPS];
-	for (int i=0; i < NUM_PITCH_STEPS; i++)
+	DGImage * gKeyboardBottomKeys[kNumPitchSteps];
+	for (int i=0; i < kNumPitchSteps; i++)
 		gKeyboardBottomKeys[i] = NULL;
 	gKeyboardBottomKeys[0] = new DGImage("keyboard-white-key-bottom-left.png", this);
 	gKeyboardBottomKeys[2] = gKeyboardBottomKeys[4] = gKeyboardBottomKeys[5] = gKeyboardBottomKeys[7] = gKeyboardBottomKeys[9] = 
 							new DGImage("keyboard-white-key-bottom.png", this);
-	gKeyboardBottomKeys[NUM_PITCH_STEPS-1] = new DGImage("keyboard-white-key-bottom-right.png", this);
+	gKeyboardBottomKeys[kNumPitchSteps-1] = new DGImage("keyboard-white-key-bottom-right.png", this);
 	//
 	DGImage * gTransposeDownButton = new DGImage("transpose-down-button.png", this);
 	DGImage * gTransposeUpButton = new DGImage("transpose-up-button.png", this);
@@ -695,7 +695,7 @@ long ScrubbyEditor::open()
 //	keyboard = new ScrubbyKeyboard(this, kPitchStep0, &pos, gKeyboardOff, gKeyboardOn, 24, 48, 18, 56, 114, 149, 184);
 	pos.set(kKeyboardX, kKeyboardY, gKeyboardTopKeys[0]->getWidth(), gKeyboardTopKeys[0]->getHeight()/2);
 	DGRect pos2(kKeyboardX, kKeyboardY + pos.h, gKeyboardBottomKeys[0]->getWidth(), gKeyboardBottomKeys[0]->getHeight()/2);
-	for (long i=0; i < NUM_PITCH_STEPS; i++)
+	for (long i=0; i < kNumPitchSteps; i++)
 	{
 		pos.w = gKeyboardTopKeys[i]->getWidth();
 		ScrubbyKeyboardButton * key = new ScrubbyKeyboardButton(this, kPitchStep0 + i, &pos, gKeyboardTopKeys[i]);

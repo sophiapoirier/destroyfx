@@ -1,4 +1,4 @@
-/*------------------ by Marc Poirier  ][  January 2001 -----------------*/
+/*------------------ by Sophia Poirier  ][  January 2001 -----------------*/
 
 #include "polarizer.hpp"
 
@@ -14,7 +14,7 @@ DFX_CORE_ENTRY(PolarizerDSP)
 //-----------------------------------------------------------------------------------------
 // initializations and such
 Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 3 parameters, 1 preset
+	: DfxPlugin(inInstance, kNumParameters, 1)	// 3 parameters, 1 preset
 {
 	initparameter_i(kSkip, "leap", 1, 3, 1, 81, kDfxParamUnit_samples, kDfxParamCurve_pow);
 	initparameter_f(kAmount, "polarization strength", 50.0, 50.0, 0.0, 100.0, kDfxParamUnit_percent);

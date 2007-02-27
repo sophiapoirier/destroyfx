@@ -15,7 +15,7 @@ DFX_ENTRY(Scrubby)
 //-----------------------------------------------------------------------------
 // initializations and such
 Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 29 parameters, 16 presets
+	: DfxPlugin(inInstance, kNumParameters, kNumPresets)	// 29 parameters, 16 presets
 {
 	buffers = NULL;
 	readPos = NULL;
@@ -64,9 +64,9 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 	initparameter_b(kPitchStep9, "semi9 (major 6th)", false, false);
 	initparameter_b(kPitchStep10, "semi10 (minor 7th)", false, false);
 	initparameter_b(kPitchStep11, "semi11 (major 7th)", false, false);
-	initparameter_i(kOctaveMin, "octave minimum", -5, -5, -5, 0, kDfxParamUnit_octaves);
+	initparameter_i(kOctaveMin, "octave minimum", kOctave_MinValue, kOctave_MinValue, kOctave_MinValue, 0, kDfxParamUnit_octaves);
 	setparameterusevaluestrings(kOctaveMin, true);
-	initparameter_i(kOctaveMax, "octave maximum", 7, 7, 0, 7, kDfxParamUnit_octaves);
+	initparameter_i(kOctaveMax, "octave maximum", kOctave_MaxValue, kOctave_MaxValue, 0, kOctave_MaxValue, kDfxParamUnit_octaves);
 	setparameterusevaluestrings(kOctaveMax, true);
 	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
@@ -131,14 +131,14 @@ long Scrubby::initialize()
 {
 	// allocate memory for these arrays
 	if (pitchSteps == NULL)
-		pitchSteps = (bool*) malloc(NUM_PITCH_STEPS * sizeof(bool));
+		pitchSteps = (bool*) malloc(kNumPitchSteps * sizeof(bool));
 	if (activeNotesTable == NULL)
-		activeNotesTable = (long*) malloc(NUM_PITCH_STEPS * sizeof(long));
+		activeNotesTable = (long*) malloc(kNumPitchSteps * sizeof(long));
 
 	// initialize the active notes table
 	if (activeNotesTable != NULL)
 	{
-		for (int i=0; i < NUM_PITCH_STEPS; i++)
+		for (int i=0; i < kNumPitchSteps; i++)
 			activeNotesTable[i] = 0;
 	}
 
@@ -168,7 +168,7 @@ void Scrubby::reset()
 	// delete any stored active notes
 	if (activeNotesTable != NULL)
 	{
-		for (int i=0; i < NUM_PITCH_STEPS; i++)
+		for (int i=0; i < kNumPitchSteps; i++)
 		{
 			if (activeNotesTable[i] > 0)
 			{
@@ -465,7 +465,7 @@ void Scrubby::processparameters()
 	useHostTempo = getparameter_b(kTempoAuto);
 	if (pitchSteps != NULL)
 	{
-		for (int i=0; i < NUM_PITCH_STEPS; i++)
+		for (int i=0; i < kNumPitchSteps; i++)
 			pitchSteps[i] = getparameter_b(i+kPitchStep0);
 	}
 
@@ -490,7 +490,7 @@ void Scrubby::processparameters()
 			setlatencychanged(true);
 		#endif
 	}
-	for (int i=0; i < NUM_PITCH_STEPS; i++)
+	for (int i=0; i < kNumPitchSteps; i++)
 	{
 		if (getparameterchanged(i+kPitchStep0))
 			// reset the associated note in the notes table; manual changes override MIDI

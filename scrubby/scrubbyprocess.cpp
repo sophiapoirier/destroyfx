@@ -202,13 +202,13 @@ void Scrubby::generateNewTarget(unsigned long channel)
 		double fdirection = (newReadStep < 0.0) ? -1.0 : 1.0;	// direction scalar
 		double newReadStep_abs = fabs(newReadStep);
 		// constrain to octaves range, if we're doing that
-		if ( (octaveMin > OCTAVE_MIN) && (newReadStep_abs < 1.0) )
+		if ( (octaveMin > kOctave_MinValue) && (newReadStep_abs < 1.0) )
 		{
 			double minstep = pow(2.0, (double)octaveMin);
 			if (newReadStep_abs < minstep)
 				newReadStep = minstep * fdirection;
 		}
-		else if ( (octaveMax < OCTAVE_MAX) && (newReadStep_abs > 1.0) )
+		else if ( (octaveMax < kOctave_MaxValue) && (newReadStep_abs > 1.0) )
 		{
 			double maxstep = pow(2.0, (double)octaveMax);
 			if (newReadStep_abs > maxstep)
@@ -283,7 +283,7 @@ double Scrubby::processPitchConstraint(double readStep)
 	// in which case we act like they are all enabled.
 	// no we don't, we become silent, I changed my mind
 	bool noNotesActive = true;
-	for (long i=0; i < NUM_PITCH_STEPS; i++)
+	for (long i=0; i < kNumPitchSteps; i++)
 	{
 		if (pitchSteps[i])
 			noNotesActive = false;
@@ -330,16 +330,16 @@ double Scrubby::processPitchConstraint(double readStep)
 			if (i < 0)
 			{
 				// didn't find an active one yet, so wrap around to the top of the pitchStep array
-				i = NUM_PITCH_STEPS - 1;
+				i = kNumPitchSteps - 1;
 				// and compensate for that by subtracting an octave
 				octave--;
 			}
 		} while (i != remainder);
 	}
 	// constrain to octaves range, if we're doing that
-	if ( (octaveMin > OCTAVE_MIN) && (octave < octaveMin) )
+	if ( (octaveMin > kOctave_MinValue) && (octave < octaveMin) )
 		octave = octaveMin;
-	else if ( (octaveMax < OCTAVE_MAX) && (octave > octaveMax) )
+	else if ( (octaveMax < kOctave_MaxValue) && (octave > octaveMax) )
 		octave = octaveMax;
 	// add the octave transposition back in to get the correct semitone transposition
 	semitone += (octave * 12);
@@ -379,7 +379,7 @@ void Scrubby::processaudio(const float ** in, float ** out, unsigned long inNumF
 	// so that we start producing sound again immediately
 	if ( (pitchConstraint && (speedMode == kSpeedMode_robot)) && !notesWereAlreadyActive )
 	{
-		for (int i=0; i < NUM_PITCH_STEPS; i++)
+		for (int i=0; i < kNumPitchSteps; i++)
 		{
 			if (pitchSteps[i])
 			{
@@ -391,7 +391,7 @@ void Scrubby::processaudio(const float ** in, float ** out, unsigned long inNumF
 	}
 	// now remember the current situation for informing the next processing block
 	notesWereAlreadyActive = false;
-	for (int i=0; i < NUM_PITCH_STEPS; i++)
+	for (int i=0; i < kNumPitchSteps; i++)
 	{
 		if (pitchSteps[i])
 			notesWereAlreadyActive = true;
@@ -495,14 +495,14 @@ void Scrubby::processaudio(const float ** in, float ** out, unsigned long inNumF
 //-----------------------------------------------------------------------------------------
 void Scrubby::processMidiNotes()
 {
-	bool oldnotes[NUM_PITCH_STEPS];
-	for (int i=0; i < NUM_PITCH_STEPS; i++)
+	bool oldnotes[kNumPitchSteps];
+	for (int i=0; i < kNumPitchSteps; i++)
 		oldnotes[i] = getparameter_b(i+kPitchStep0);
 
 	for (long i=0; i < midistuff->numBlockEvents; i++)
 	{
 		// wrap the note value around to our 1-octave range
-		int currentNote = (midistuff->blockEvents[i].byte1) % NUM_PITCH_STEPS;
+		int currentNote = (midistuff->blockEvents[i].byte1) % kNumPitchSteps;
 
 		switch (midistuff->blockEvents[i].status)
 		{
@@ -537,7 +537,7 @@ void Scrubby::processMidiNotes()
 			case kMidiCC:
 				if (midistuff->blockEvents[i].byte1 == kMidiCC_AllNotesOff)
 				{
-					for (int notecount=0; notecount < NUM_PITCH_STEPS; notecount++)
+					for (int notecount=0; notecount < kNumPitchSteps; notecount++)
 					{
 						// if this note is currently active, then turn its 
 						// associated pitch constraint parameter off
@@ -557,7 +557,7 @@ void Scrubby::processMidiNotes()
 	}
 
 	// go through and inform any listeners of any parameter changes that might have just happened
-	for (int i=0; i < NUM_PITCH_STEPS; i++)
+	for (int i=0; i < kNumPitchSteps; i++)
 	{
 		if ( oldnotes[i] != getparameter_b(i+kPitchStep0) )
 			postupdate_parameter(i+kPitchStep0);

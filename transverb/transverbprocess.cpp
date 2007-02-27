@@ -29,31 +29,31 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
     return;
 
 
-  /////////////   M A R C S O U N D   //////////////
+  /////////////   S O P H I A S O U N D   //////////////
   // do it proper
   if (!tomsound) {
 
 	/// filter setup stuff ///
 
-    filterMode1 = filterMode2 = useNothing;	// reset these for now
-    if (quality == ultrahifi)
+    filterMode1 = filterMode2 = kFilterMode_Nothing;	// reset these for now
+    if (quality == kQualityMode_UltraHiFi)
     {
-      // check to see if we need to lowpass the first delay head & init coefficients if so
+      // check to see if we need to lowpass the first delay head and init coefficients if so
       if (speed1 > 1.0)
       {
-        filterMode1 = useLowpassIIR;
+        filterMode1 = kFilterMode_LowpassIIR;
         speed1int = (int)speed1;
         // it becomes too costly to try to IIR at > 5x speeds, so switch to FIR filtering
         if (speed1int >= 5)
         {
-          filterMode1 = useLowpassFIR;
+          filterMode1 = kFilterMode_LowpassFIR;
           mug1 = (float) pow( (speed1*0.2), 0.78 );	// compensate for gain lost from filtering
           // update the coefficients only if necessary
           if (speed1hasChanged)
           {
             calculateFIRidealLowpassCoefficients((fsamplerate/(float)speed1)*SHELF_START_IIR, 
-                  fsamplerate, NUM_FIR_TAPS, firCoefficients1);
-            applyKaiserWindow(NUM_FIR_TAPS, firCoefficients1, 60.0f);
+                  fsamplerate, kNumFIRTaps, firCoefficients1);
+            applyKaiserWindow(kNumFIRTaps, firCoefficients1, 60.0f);
             speed1hasChanged = false;
           }
         }
@@ -66,7 +66,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       // we need to highpass the delay head to remove mega sub bass
       else
       {
-        filterMode1 = useHighpass;
+        filterMode1 = kFilterMode_Highpass;
         if (speed1hasChanged)
         {
           filter1[0].calculateHighpassCoefficients(33.3f/(float)speed1, fsamplerate);
@@ -74,20 +74,20 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
         }
       }
 
-      // check to see if we need to lowpass the second delay head & init coefficients if so
+      // check to see if we need to lowpass the second delay head and init coefficients if so
       if (speed2 > 1.0)
       {
-        filterMode2 = useLowpassIIR;
+        filterMode2 = kFilterMode_LowpassIIR;
         speed2int = (int)speed2;
         if (speed2int >= 5)
         {
-          filterMode2 = useLowpassFIR;
+          filterMode2 = kFilterMode_LowpassFIR;
           mug2 = (float) pow( (speed2*0.2), 0.78 );	// compensate for gain lost from filtering
           if (speed2hasChanged)
           {
             calculateFIRidealLowpassCoefficients((fsamplerate/(float)speed2)*SHELF_START_IIR, 
-                  fsamplerate, NUM_FIR_TAPS, firCoefficients2);
-            applyKaiserWindow(NUM_FIR_TAPS, firCoefficients2, 60.0f);
+                  fsamplerate, kNumFIRTaps, firCoefficients2);
+            applyKaiserWindow(kNumFIRTaps, firCoefficients2, 60.0f);
             speed2hasChanged = false;
           }
         }
@@ -100,7 +100,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       // we need to highpass the delay head to remove mega sub bass
       else
       {
-        filterMode2 = useHighpass;
+        filterMode2 = kFilterMode_Highpass;
         if (speed2hasChanged)
         {
           filter2[0].calculateHighpassCoefficients(33.3f/(float)speed2, fsamplerate);
@@ -124,58 +124,58 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       switch(quality)
       {
         // no interpolation or filtering
-        case dirtfi:
+        case kQualityMode_DirtFi:
           r1val = buf1[read1int];
           r2val = buf2[read2int];
           break;
         // spline interpolation, but no filtering
-        case hifi:
-//          r1val = interpolateLinear(buf1, read1, bsize, writer-read1int);
-          r1val = interpolateHermite(buf1, read1, bsize, writer-read1int);
-          r2val = interpolateHermite(buf2, read2, bsize, writer-read2int);
+        case kQualityMode_HiFi:
+//          r1val = Transverb_InterpolateLinear(buf1, read1, bsize, writer-read1int);
+          r1val = Transverb_InterpolateHermite(buf1, read1, bsize, writer-read1int);
+          r2val = Transverb_InterpolateHermite(buf2, read2, bsize, writer-read2int);
           break;
         // spline interpolation plus anti-aliasing lowpass filtering for high speeds 
         // or sub-bass-removing highpass filtering for low speeds
-        case ultrahifi:
+        case kQualityMode_UltraHiFi:
           float lp1, lp2;
           switch (filterMode1)
           {
-            case useHighpass:
-            case useLowpassIIR:
+            case kFilterMode_Highpass:
+            case kFilterMode_LowpassIIR:
               // interpolate the values in the IIR output history
               r1val = interpolateHermitePostFilter(filter1, read1);
               break;
-            case useLowpassFIR:
+            case kFilterMode_LowpassFIR:
               // get 2 consecutive FIR output values for linear interpolation
-              lp1 = processFIRfilter(buf1, NUM_FIR_TAPS, firCoefficients1, 
-                                     (read1int-NUM_FIR_TAPS+bsize)%bsize, bsize);
-              lp2 = processFIRfilter(buf1, NUM_FIR_TAPS, firCoefficients1, 
-                                     (read1int-NUM_FIR_TAPS+1+bsize)%bsize, bsize);
-              // interpolate output linearly (avoid shit sound) & compensate gain
+              lp1 = processFIRfilter(buf1, kNumFIRTaps, firCoefficients1, 
+                                     (read1int-kNumFIRTaps+bsize)%bsize, bsize);
+              lp2 = processFIRfilter(buf1, kNumFIRTaps, firCoefficients1, 
+                                     (read1int-kNumFIRTaps+1+bsize)%bsize, bsize);
+              // interpolate output linearly (avoid shit sound) and compensate gain
               r1val = DFX_InterpolateLinear_Values(lp1, lp2, read1) * mug1;
               break;
             default:
-              r1val = interpolateHermite(buf1, read1, bsize, writer-read1int);
+              r1val = Transverb_InterpolateHermite(buf1, read1, bsize, writer-read1int);
               break;
           }
           switch (filterMode2)
           {
-            case useHighpass:
-            case useLowpassIIR:
+            case kFilterMode_Highpass:
+            case kFilterMode_LowpassIIR:
               // interpolate the values in the IIR output history
               r2val = interpolateHermitePostFilter(filter2, read2);
               break;
-            case useLowpassFIR:
+            case kFilterMode_LowpassFIR:
               // get 2 consecutive FIR output values for linear interpolation
-              lp1 = processFIRfilter(buf2, NUM_FIR_TAPS, firCoefficients2, 
-                                     (read2int-NUM_FIR_TAPS+bsize)%bsize, bsize);
-              lp2 = processFIRfilter(buf2, NUM_FIR_TAPS, firCoefficients2, 
-                                     (read2int-NUM_FIR_TAPS+1+bsize)%bsize, bsize);
-              // interpolate output linearly (avoid shit sound) & compensate gain
+              lp1 = processFIRfilter(buf2, kNumFIRTaps, firCoefficients2, 
+                                     (read2int-kNumFIRTaps+bsize)%bsize, bsize);
+              lp2 = processFIRfilter(buf2, kNumFIRTaps, firCoefficients2, 
+                                     (read2int-kNumFIRTaps+1+bsize)%bsize, bsize);
+              // interpolate output linearly (avoid shit sound) and compensate gain
               r2val = DFX_InterpolateLinear_Values(lp1, lp2, read2) * mug2;
               break;
             default:
-              r2val = interpolateHermite(buf2, read2, bsize, writer-read2int);
+              r2val = Transverb_InterpolateHermite(buf2, read2, bsize, writer-read2int);
               break;
           }
           break;
@@ -236,8 +236,8 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
           lastr1val = r1val;
           // truncate the smoothing duration if we're using too small of a buffer size
           smoothdur1 = 
-            (SMOOTH_DUR > (int)(bsize_float/speed1)) ? 
-            (int)(bsize_float/speed1) : SMOOTH_DUR;
+            (kAudioSmoothingDur_samples > (int)(bsize_float/speed1)) ? 
+            (int)(bsize_float/speed1) : kAudioSmoothingDur_samples;
           smoothstep1 = 1.0f / (float)smoothdur1;	// the scalar step value
           smoothcount1 = smoothdur1;	// set the counter to the total duration
         }
@@ -253,8 +253,8 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
           lastr2val = r2val;
           // truncate the smoothing duration if we're using too small of a buffer size
           smoothdur2 = 
-            (SMOOTH_DUR > (int)(bsize_float/speed2)) ? 
-            (int)(bsize_float/speed2) : SMOOTH_DUR;
+            (kAudioSmoothingDur_samples > (int)(bsize_float/speed2)) ? 
+            (int)(bsize_float/speed2) : kAudioSmoothingDur_samples;
           smoothstep2 = 1.0f / (float)smoothdur2;	// the scalar step value
           smoothcount2 = smoothdur2;	// set the counter to the total duration
         }
@@ -276,7 +276,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       // then we probably need to process a few consecutive samples in order 
       // to get the continuous impulse (or whatever you call that), 
       // probably whatever the speed multiplier is, that's how many samples
-      if (filterMode1 == useLowpassIIR)
+      if (filterMode1 == kFilterMode_LowpassIIR)
       {
         int lowpasscount = 0;
         while (lowpasscount < speed1int)
@@ -316,7 +316,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       }
       // it's simpler for highpassing; 
       // we may not even need to process anything for this sample
-      else if (filterMode1 == useHighpass)
+      else if (filterMode1 == kFilterMode_Highpass)
       {
         // only if we've traversed to a new integer sample position
         if ((int)read1 != read1int)
@@ -324,7 +324,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       }
 
       // head 2 filtering stuff
-      if (filterMode2 == useLowpassIIR)
+      if (filterMode2 == kFilterMode_LowpassIIR)
       {
         int lowpasscount = 0;
         while (lowpasscount < speed2int)
@@ -361,7 +361,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
           lowpass2pos = (lowpass2pos+1) % bsize;
         }
       }
-      else if (filterMode2 == useHighpass)
+      else if (filterMode2 == kFilterMode_Highpass)
       {
         if ((int)read2 != read2int)
           filter2->process(buf2[read2int]);
@@ -382,14 +382,14 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
     /* read from read heads */
 
     switch(quality) {
-      case dirtfi:
+      case kQualityMode_DirtFi:
         r1val = mix1 * buf1[(int)read1];
         r2val = mix2 * buf1[(int)read2];
         break;
-      case hifi:
-      case ultrahifi:
-        r1val = mix1 * interpolateHermite(buf1, read1, bsize, 333);
-        r2val = mix2 * interpolateHermite(buf1, read2, bsize, 333);
+      case kQualityMode_HiFi:
+      case kQualityMode_UltraHiFi:
+        r1val = mix1 * Transverb_InterpolateHermite(buf1, read1, bsize, 333);
+        r2val = mix2 * Transverb_InterpolateHermite(buf1, read2, bsize, 333);
         break;
       default:
         r1val = mix1 * buf1[(int)read1];

@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  January - March 2001 -------------*/
+/*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
 
 #include "rezsynth.hpp"
 
@@ -144,27 +144,27 @@ void RezSynth::processUnaffected(const float *in, float *out, long sampleFrames)
 		float unEnvAmp = 1.0f;
 
 		// this is the state when all notes just ended & the clean input first kicks in
-		if (unaffectedState == unFadeIn)
+		if (unaffectedState == kUnaffectedState_FadeIn)
 		{
 			// linear fade-in
-			unEnvAmp = (float)unaffectedFadeSamples * UNAFFECTED_FADE_STEP;
+			unEnvAmp = (float)unaffectedFadeSamples * kUnaffectedFadeStep;
 			unaffectedFadeSamples++;
 			// go to the no-gain state if the fade-in is done
-			if (unaffectedFadeSamples >= UNAFFECTED_FADE_DUR)
-				unaffectedState = unFlat;
+			if (unaffectedFadeSamples >= kUnaffectedFadeDur)
+				unaffectedState = kUnaffectedState_Flat;
 		}
 
 		// a note has just begun, so we need to hasily fade out the clean input audio
-		else if (unaffectedState == unFadeOut)
+		else if (unaffectedState == kUnaffectedState_FadeOut)
 		{
 			unaffectedFadeSamples--;
 			// linear fade-out
-			unEnvAmp = (float)unaffectedFadeSamples * UNAFFECTED_FADE_STEP;
+			unEnvAmp = (float)unaffectedFadeSamples * kUnaffectedFadeStep;
 			// get ready for the next time & exit this function if the fade-out is done
 			if (unaffectedFadeSamples <= 0)
 			{
 				// ready for the next time
-				unaffectedState = unFadeIn;
+				unaffectedState = kUnaffectedState_FadeIn;
 				return;	// important!  leave this function or a new fade-in will begin
 			}
 		}
@@ -190,9 +190,9 @@ void RezSynth::checkForNewNote(long currentEvent, unsigned long numChannels)
 		for (unsigned ch=0; ch < numChannels; ch++)
 		{
 			int bandcount;
-			for (bandcount=0; bandcount < MAX_BANDS; bandcount++)
+			for (bandcount=0; bandcount < kMaxBands; bandcount++)
 				prevOutValue[ch][currentNote][bandcount] = 0.0;
-			for (bandcount=0; bandcount < MAX_BANDS; bandcount++)
+			for (bandcount=0; bandcount < kMaxBands; bandcount++)
 				prevprevOutValue[ch][currentNote][bandcount] = 0.0;
 		}
 	}
