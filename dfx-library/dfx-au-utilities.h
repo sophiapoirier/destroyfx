@@ -101,6 +101,7 @@ extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, 
 extern ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL);
 extern ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance);
 extern OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription);
+extern OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription * outComponentDescription);
 /* access */
 extern CFURLRef GetCFURLFromFileURLsTreeNode(CFTreeRef inTree);
 /* handies */

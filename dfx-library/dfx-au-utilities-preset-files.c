@@ -190,13 +190,12 @@ Boolean FSRefIsAUPreset(const FSRef * inFileRef)
 OSStatus MakeFSRefInDir(const FSRef * inParentDirRef, CFStringRef inItemNameString, Boolean inCreateItem, FSRef * outItemRef)
 {
 	OSStatus error = noErr;
-	HFSUniStr255 itemUniName;
+	HFSUniStr255 itemUniName = {0};
 
 	if ( (inParentDirRef == NULL) || (inItemNameString == NULL) || (outItemRef == NULL) )
 		return paramErr;
 
 	// first we need to convert the CFString of the file name to a HFS-style unicode file name
-	memset(&itemUniName, 0, sizeof(itemUniName));
 	TranslateCFStringToUnicodeString(inItemNameString, &itemUniName);
 	// then we try to create an FSRef for the file
 	error = FSMakeFSRefUnicode(inParentDirRef, itemUniName.length, itemUniName.unicode, kTextEncodingUnknown, outItemRef);
@@ -881,6 +880,43 @@ OSType GetDictionarySInt32Value(CFDictionaryRef inAUStateDictionary, CFStringRef
 }
 
 //-----------------------------------------------------------------------------
+OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription * outComponentDescription)
+{
+	CFDictionaryRef auStateDictionary;
+	ComponentDescription tempDesc = {0};
+	SInt32 versionValue;
+	Boolean gotValue;
+
+	if ( (inAUStateData == NULL) || (outComponentDescription == NULL) )
+		return paramErr;
+
+	// the property list for AU state data must be of the dictionary type
+	if ( CFGetTypeID(inAUStateData) != CFDictionaryGetTypeID() )
+		return kAudioUnitErr_InvalidFile;
+	auStateDictionary = (CFDictionaryRef)inAUStateData;
+
+	// first check to make sure that the version of the AU state data is one that we know understand
+	// XXX should I really do this?  later versions would probably still hold these ID keys, right?
+	versionValue = GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetVersionKey), &gotValue);
+	if (!gotValue)
+		return kAudioUnitErr_InvalidFile;
+#define kCurrentSavedStateVersion 0
+	if (versionValue != kCurrentSavedStateVersion)
+		return kAudioUnitErr_UnknownFileType;
+
+	// grab the ComponentDescription values from the AU state data
+	tempDesc.componentType = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetTypeKey), NULL);
+	tempDesc.componentSubType = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetSubtypeKey), NULL);
+	tempDesc.componentManufacturer = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetManufacturerKey), NULL);
+	// zero values are illegit for specific ComponentDescriptions, so zero for any value means that there was an error
+	if ( (tempDesc.componentType == 0) || (tempDesc.componentSubType == 0) || (tempDesc.componentManufacturer == 0) )
+		return kAudioUnitErr_InvalidFile;
+
+	*outComponentDescription = tempDesc;
+	return noErr;
+}
+
+//-----------------------------------------------------------------------------
 // input:  CFURL of an AU preset file to restore
 // output:  Audio Unit ComponentDescription, OSStatus error code
 // Given an AU preset file, this function will try to copy the preset's 
@@ -888,11 +924,9 @@ OSType GetDictionarySInt32Value(CFDictionaryRef inAUStateDictionary, CFStringRef
 OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription)
 {
 	SInt32 plistError;
+	OSStatus status;
 	CFPropertyListRef auStatePlist;
-	CFDictionaryRef auStateDictionary;
-	ComponentDescription tempDesc;
-	SInt32 versionValue;
-	Boolean gotValue;
+	ComponentDescription tempDesc = {0};
 
 	if ( (inAUPresetFileURL == NULL) || (outComponentDescription == NULL) )
 		return paramErr;
@@ -903,33 +937,13 @@ OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, Com
 	if (auStatePlist == NULL)
 		return (plistError != 0) ? plistError : coreFoundationUnknownErr;
 
-	// the property list for AU state data must be of the dictionary type
-	if ( CFGetTypeID(auStatePlist) != CFDictionaryGetTypeID() )
-		return kAudioUnitErr_InvalidFile;
-	auStateDictionary = (CFDictionaryRef)auStatePlist;
-
-	// first check to make sure that the version of the AU state data is one that we know understand
-	versionValue = GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetVersionKey), &gotValue);
-	if (!gotValue)
-		return kAudioUnitErr_InvalidFile;
-#define kCurrentSavedStateVersion 0
-	if (versionValue != kCurrentSavedStateVersion)
-		return kAudioUnitErr_UnknownFileType;
-
-	// grab the ComponentDescription values from the AU state data
-	memset(&tempDesc, 0, sizeof(tempDesc));
-	tempDesc.componentType = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetTypeKey), NULL);
-	tempDesc.componentSubType = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetSubtypeKey), NULL);
-	tempDesc.componentManufacturer = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetManufacturerKey), NULL);
-	// zero values are illegit for specific ComponentDescriptions, so zero for any value means that there was an error
-	if ( (tempDesc.componentType == 0) || (tempDesc.componentSubType == 0) || (tempDesc.componentManufacturer == 0) )
-		return kAudioUnitErr_InvalidFile;
-
+	status = GetAUComponentDescriptionFromStateData(auStatePlist, &tempDesc);
 
 	CFRelease(auStatePlist);
-	*outComponentDescription = tempDesc;
+	if (status == noErr)
+		*outComponentDescription = tempDesc;
 
-	return noErr;
+	return status;
 }
 
 
@@ -1065,7 +1079,7 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	OSStatus error = noErr;
 	IBNibRef nibRef = NULL;
 	WindowRef dialogWindow = NULL;
-	SaveAUPresetFileDialogInfo dialogInfo;
+	SaveAUPresetFileDialogInfo dialogInfo = {0};
 	EventHandlerUPP dialogEventHandlerUPP = NULL;
 	EventTypeSpec dialogEventTypes[] = { { kEventClassCommand, kEventCommandProcess } };
 	EventHandlerRef dialogEventHandlerRef = NULL;
@@ -1086,7 +1100,6 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 		return error;
 
 	// initialize the values in our dialog info struct
-	memset(&dialogInfo, 0, sizeof(dialogInfo));
 	dialogInfo.auStateData = inAUStatePlist;
 	dialogInfo.dialogWindow = dialogWindow;
 	dialogInfo.auComponent = inAUComponent;
