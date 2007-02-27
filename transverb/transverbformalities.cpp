@@ -18,7 +18,7 @@ DFX_ENTRY(Transverb)
 
 
 Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-  : DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS) {
+  : DfxPlugin(inInstance, kNumParameters, kNumPresets) {
 
   initparameter_f(kBsize, "buffer size", 2700.0, 333.0, 1.0, 3000.0, kDfxParamUnit_ms);
   initparameter_f(kDrymix, "dry mix", 1.0, 1.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_squared);
@@ -30,19 +30,19 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(kDist2, "2:dist", 0.1, 0.5, 0.0, 1.0, kDfxParamUnit_scalar);
   initparameter_f(kSpeed2, "2:speed", 1.0, 0.0, -3.0, 6.0, kDfxParamUnit_octaves);
   initparameter_f(kFeed2, "2:feedback", 0.0, 33.3, 0.0, 100.0, kDfxParamUnit_percent);
-  initparameter_indexed(kQuality, "quality", ultrahifi, ultrahifi, numQualities);
+  initparameter_indexed(kQuality, "quality", kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
   initparameter_b(kTomsound, "TOMSOUND", false, false);
-  initparameter_indexed(kSpeed1mode, "1:speed mode", kFineMode, kFineMode, numSpeedModes);
-  initparameter_indexed(kSpeed2mode, "2:speed mode", kFineMode, kFineMode, numSpeedModes);
+  initparameter_indexed(kSpeed1mode, "1:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
+  initparameter_indexed(kSpeed2mode, "2:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
 
-  setparametervaluestring(kQuality, dirtfi, "dirt-fi");
-  setparametervaluestring(kQuality, hifi, "hi-fi");
-  setparametervaluestring(kQuality, ultrahifi, "ultra hi-fi");
+  setparametervaluestring(kQuality, kQualityMode_DirtFi, "dirt-fi");
+  setparametervaluestring(kQuality, kQualityMode_HiFi, "hi-fi");
+  setparametervaluestring(kQuality, kQualityMode_UltraHiFi, "ultra hi-fi");
   for (int i=kSpeed1mode; i <= kSpeed2mode; i += kSpeed2mode-kSpeed1mode)
   {
-    setparametervaluestring(i, kFineMode, "fine");
-    setparametervaluestring(i, kSemitoneMode, "semitone");
-    setparametervaluestring(i, kOctaveMode, "octave");
+    setparametervaluestring(i, kSpeedMode_Fine, "fine");
+    setparametervaluestring(i, kSpeedMode_Semitone, "semitone");
+    setparametervaluestring(i, kSpeedMode_Octave, "octave");
   }
 
   // these are only for the GUI, no need to reveal them to the user as parameters
@@ -103,8 +103,8 @@ TransverbDSP::TransverbDSP(DfxPlugin * inDfxPlugin)
 
   filter1 = new IIRfilter();
   filter2 = new IIRfilter();
-  firCoefficients1 = (float*) malloc(NUM_FIR_TAPS * sizeof(float));
-  firCoefficients2 = (float*) malloc(NUM_FIR_TAPS * sizeof(float));
+  firCoefficients1 = (float*) malloc(kNumFIRTaps * sizeof(float));
+  firCoefficients2 = (float*) malloc(kNumFIRTaps * sizeof(float));
 }
 
 TransverbDSP::~TransverbDSP() {
@@ -260,7 +260,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kDist2, 0.0);
 	setpresetparameter_f(i, kSpeed2, getparametermin_f(kSpeed2));
 	setpresetparameter_f(i, kFeed2, 0.0);
-	setpresetparameter_i(i, kQuality, ultrahifi);
+	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
 	i++;
 
@@ -275,7 +275,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kDist2, 0.0);
 	setpresetparameter_f(i, kSpeed2, getparametermin_f(kSpeed2));
 	setpresetparameter_f(i, kFeed2, 0.0);
-	setpresetparameter_i(i, kQuality, ultrahifi);
+	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
 	i++;
 
@@ -290,7 +290,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kDist2, 0.443);
 	setpresetparameter_f(i, kSpeed2, 2.444534569);
 	setpresetparameter_f(i, kFeed2, 46.0);
-	setpresetparameter_i(i, kQuality, ultrahifi);
+	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
 	i++;
 
@@ -305,7 +305,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kDist2, 0.197);
 	setpresetparameter_f(i, kSpeed2, 0.978195651);
 	setpresetparameter_f(i, kFeed2, 0.0);
-	setpresetparameter_i(i, kQuality, ultrahifi);
+	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
 	i++;
 
@@ -320,7 +320,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kDrymix, 0.000576);
 	setpresetparameter_f(i, kMix1, 1.0);
 	setpresetparameter_f(i, kMix2, 0.1225);
-	setpresetparameter_i(i, kQuality, ultrahifi);
+	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
 	i++;
 

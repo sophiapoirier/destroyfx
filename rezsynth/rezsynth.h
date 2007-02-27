@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  January - March 2001 -------------*/
+/*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
 
 #ifndef __REZ_SYNTH_H
 #define __REZ_SYNTH_H
@@ -33,7 +33,7 @@ enum
 	kDryWetMixMode,
 	kWiseAmp,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 // these are the input gain scaling modes
@@ -67,20 +67,20 @@ enum
 // these are the 3 states of the unaffected audio input between notes
 enum
 {
-	unFadeIn,
-	unFlat,
-	unFadeOut
+	kUnaffectedState_FadeIn,
+	kUnaffectedState_Flat,
+	kUnaffectedState_FadeOut
 };
 
 //----------------------------------------------------------------------------- 
 // constants and macros
 
-const int MAX_BANDS = 30;	// the maximum number of resonant bands
+const int kMaxBands = 30;	// the maximum number of resonant bands
 
-const long UNAFFECTED_FADE_DUR = 18;
-const float UNAFFECTED_FADE_STEP = 1.0f / (float)UNAFFECTED_FADE_DUR;
+const long kUnaffectedFadeDur = 18;
+const float kUnaffectedFadeStep = 1.0f / (float)kUnaffectedFadeDur;
 
-const long NUM_PRESETS = 16;
+const long kNumPresets = 16;
 
 
 //----------------------------------------------------------------------------- 

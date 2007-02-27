@@ -1,4 +1,4 @@
-/*------------------ by Marc Poirier  ][  January 2001 -----------------*/
+/*------------------ by Sophia Poirier  ][  January 2001 -----------------*/
 
 #ifndef __EQSYNC_H
 #define __EQSYNC_H
@@ -21,7 +21,7 @@ enum
 	kb1,
 	kb2,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 
@@ -42,7 +42,7 @@ public:
 	virtual void clearbuffers();
 
 
-protected:
+private:
 	// the parameters
 	double rate, smooth, userTempo;
 	bool useHostTempo;

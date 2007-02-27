@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  December 2000 -------------*/
+/*-------------- by Sophia Poirier  ][  December 2000 -------------*/
 
 #include "skidder.hpp"
 
@@ -74,14 +74,14 @@ void Skidder::noteOn(long delta)
 	{
 		case kMidiMode_trigger:
 			waitSamples = delta;
-			state = valley;
+			state = kSkidState_Valley;
 			valleySamples = 0;
 			MIDIin = true;
 			break;
 
 		case kMidiMode_apply:
 			waitSamples = delta;
-			state = valley;
+			state = kSkidState_Valley;
 			valleySamples = 0;
 			MIDIin = true;
 			break;
@@ -99,22 +99,22 @@ void Skidder::noteOff()
 		case kMidiMode_trigger:
 			switch (state)
 			{
-				case slopeIn:
-					state = slopeOut;
+				case kSkidState_SlopeIn:
+					state = kSkidState_SlopeOut;
 					slopeSamples = slopeDur - slopeSamples;
 					waitSamples = slopeSamples;
 					break;
 
-				case plateau:
+				case kSkidState_Plateau:
 					plateauSamples = 1;
 					waitSamples = slopeDur + 1;
 					break;
 
-				case slopeOut:
+				case kSkidState_SlopeOut:
 					waitSamples = slopeSamples;
 					break;
 
-				case valley:
+				case kSkidState_Valley:
 					waitSamples = 0;
 					break;
 
@@ -127,7 +127,7 @@ void Skidder::noteOff()
 			if (MIDIin)
 				MIDIin = false;
 			// if we're in a slope-out and there's a raised floor, the slope position needs to be rescaled
-			else if ( (state == slopeOut) && (floor > 0.0f) )
+			else if ( (state == kSkidState_SlopeOut) && (floor > 0.0f) )
 			{
 				slopeSamples = (long) ( (((float)slopeSamples*slopeStep*gainRange)+floor) * (float)slopeDur );
 				waitSamples = slopeSamples;
@@ -142,21 +142,21 @@ void Skidder::noteOff()
 		case kMidiMode_apply:
 			switch (state)
 			{
-				case slopeIn:
+				case kSkidState_SlopeIn:
 					waitSamples = slopeSamples;
 					break;
 
-				case plateau:
+				case kSkidState_Plateau:
 					waitSamples = 0;
 					break;
 
-				case slopeOut:
-					state = slopeIn;
+				case kSkidState_SlopeOut:
+					state = kSkidState_SlopeIn;
 					slopeSamples = slopeDur - slopeSamples;
 					waitSamples = slopeSamples;
 					break;
 
-				case valley:
+				case kSkidState_Valley:
 					valleySamples = 1;
 					waitSamples = slopeDur + 1;
 					break;

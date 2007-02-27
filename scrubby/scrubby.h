@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  February 2002 -------------*/
+/*-------------- by Sophia Poirier  ][  February 2002 -------------*/
 
 #ifndef __SCRUBBY_H
 #define __SCRUBBY_H
@@ -45,22 +45,22 @@ enum
 	kTempoAuto,
 	kPredelay,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 
 //----------------------------------------------------------------------------- 
 // constants
 
-const long OCTAVE_MIN = -5;
-const long OCTAVE_MAX = 7;
+const long kOctave_MinValue = -5;
+const long kOctave_MaxValue = 7;
 
 // the number of semitones in an octave
-const long NUM_PITCH_STEPS = 12;
+const long kNumPitchSteps = 12;
 
 #define USE_LINEAR_ACCELERATION 0
 
-const long NUM_PRESETS = 16;
+const long kNumPresets = 16;
 
 enum {
 	kSpeedMode_robot,
@@ -91,7 +91,6 @@ public:
 //----------------------------------------------------------------------------- 
 class Scrubby : public DfxPlugin
 {
-friend class ScrubbyEditor;
 public:
 	Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 	virtual ~Scrubby();

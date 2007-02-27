@@ -12,7 +12,7 @@ DFX_ENTRY(EQSync)
 
 //-----------------------------------------------------------------------------
 EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 9 parameters, 1 preset
+	: DfxPlugin(inInstance, kNumParameters, 1)	// 9 parameters, 1 preset
 {
 	prevIn = NULL;
 	prevprevIn = NULL;

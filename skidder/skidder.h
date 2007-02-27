@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  December 2000 -------------*/
+/*-------------- by Sophia Poirier  ][  December 2000 -------------*/
 
 #ifndef __SKIDDER_H
 #define __SKIDDER_H
@@ -28,7 +28,7 @@ enum
 	kTempo,
 	kTempoAuto,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 //----------------------------------------------------------------------------- 
@@ -45,22 +45,21 @@ enum
 // these are the 4 states of the process:
 enum
 {
-	slopeIn,
-	plateau,
-	slopeOut,
-	valley
+	kSkidState_SlopeIn,
+	kSkidState_Plateau,
+	kSkidState_SlopeOut,
+	kSkidState_Valley
 };
 
 //----------------------------------------------------------------------------- 
 // constants
 
-const long NUM_PRESETS = 16;
+const long kNumPresets = 16;
 
 
 //----------------------------------------------------------------------------- 
 class Skidder : public DfxPlugin
 {
-friend class SkidderEditor;
 public:
 	Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 	virtual ~Skidder();

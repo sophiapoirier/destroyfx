@@ -1,4 +1,4 @@
-/*------------------- by Marc Poirier  ][  March 2001 -------------------*/
+/*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
 
 #ifndef __MONOMAKER_H
 #define __MONOMAKER_H
@@ -15,8 +15,9 @@ enum {
 	kMonomergeMode,
 	kPan,
 	kPanMode,
+//	kPanLaw,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 enum {
@@ -45,7 +46,7 @@ class Monomaker : public DfxPlugin
 {
 public:
 	Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
 };
 
 #endif
