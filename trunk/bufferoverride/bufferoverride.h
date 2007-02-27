@@ -1,4 +1,4 @@
-/*------------------- by Marc Poirier  ][  March 2001 -------------------*/
+/*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
 
 
 #ifndef __BUFFEROVERRIDE_H
@@ -40,17 +40,17 @@ enum
 	kTempo,
 	kTempoAuto,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 //----------------------------------------------------------------------------- 
 // constants
 
-const long NUM_PRESETS = 16;
+const long kNumPresets = 16;
 
-// you need this stuff to get some maximum buffer size and allocate for that
-// this is 42 bpm - should be sufficient
-const double MIN_ALLOWABLE_BPS = 0.7;
+// We need this stuff to get some maximum buffer size and allocate for that.
+// This is 42 bpm, which should be sufficient.
+const double kMinAllowableBPS = 0.7;
 
 enum {
 	kMidiMode_nudge,
@@ -62,7 +62,6 @@ enum {
 //----------------------------------------------------------------------------- 
 class BufferOverride : public DfxPlugin
 {
-friend class BufferOverrideEditor;
 public:
 	BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 	virtual ~BufferOverride();

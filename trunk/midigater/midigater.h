@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  November 2001 -------------*/
+/*-------------- by Sophia Poirier  ][  November 2001 -------------*/
 
 #ifndef __MIDIGATER_H
 #define __MIDIGATER_H
@@ -15,7 +15,7 @@ enum
 	kVelInfluence,
 	kFloor,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
 

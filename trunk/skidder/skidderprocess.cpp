@@ -25,7 +25,7 @@ void Skidder::processSlopeIn()
 
 	if (slopeSamples <= 0)
 	{
-		state = plateau;
+		state = kSkidState_Plateau;
 		MIDIin = false;	// make sure it doesn't happen again
 	}
 }
@@ -62,12 +62,12 @@ void Skidder::processPlateau()
 		//
 		if (slopeDur > 0)
 		{
-			state = slopeOut;
+			state = kSkidState_SlopeOut;
 			slopeSamples = slopeDur; // refill slopeSamples
 			slopeStep = 1.0f / (float)slopeDur;	// calculate the fade increment scalar
 		}
 		else
-			state = valley;
+			state = kSkidState_Valley;
 	}
 }
 
@@ -88,7 +88,7 @@ void Skidder::processSlopeOut()
 
 	if (slopeSamples <= 0)
 	{
-		state = valley;
+		state = kSkidState_Valley;
 		MIDIout = false;	// make sure it doesn't happen again
 	}
 }
@@ -171,9 +171,9 @@ void Skidder::processValley()
 
 		// go to slopeIn next if slope is not 0.0, otherwise go to plateau
 		if (slopeDur > 0)
-			state = slopeIn;
+			state = kSkidState_SlopeIn;
 		else
-			state = plateau;
+			state = kSkidState_Plateau;
 
 		if (barSync)	// we need to adjust this cycle so that a skid syncs with the next bar
 		{
@@ -183,7 +183,7 @@ void Skidder::processValley()
 			if ( countdown <= (valleySamples+(slopeSamples*2)) )
 			{
 				valleySamples = countdown;
-				state = valley;
+				state = kSkidState_Valley;
 			}
 			// otherwise adjust the plateau if the shortened skid is still long enough for one
 			else
@@ -209,7 +209,7 @@ void Skidder::processValley()
 float Skidder::processOutput(float in1, float in2, float panGain)
 {
 	// output noise
-	if ( (state == valley) && (noise != 0.0f) )
+	if ( (state == kSkidState_Valley) && (noise != 0.0f) )
 	{
 		// out gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
 		return ((DFX_Rand_f()*2.0f)-1.0f) * panGain * noise * rms;
@@ -426,7 +426,7 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 			if (timeinfo.playbackChanged)
 			{
 				needResync = true;
-				state = valley;
+				state = kSkidState_Valley;
 				valleySamples = 0;
 			}
 		}
@@ -449,8 +449,8 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 		{
 			switch (state)
 			{
-				case slopeIn:
-					// get the average sqareroot of the current input samples
+				case kSkidState_SlopeIn:
+					// get the average sqare root of the current input samples
 #ifdef USE_BACKWARDS_RMS
 					rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
 #else
@@ -459,7 +459,7 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 					rmscount++;	// this counter is later used for getting the mean
 					processSlopeIn();
 					break;
-				case plateau:
+				case kSkidState_Plateau:
 #ifdef USE_BACKWARDS_RMS
 					rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
 #else
@@ -468,10 +468,10 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 					rmscount++;
 					processPlateau();
 					break;
-				case slopeOut:
+				case kSkidState_SlopeOut:
 					processSlopeOut();
 					break;
-				case valley:
+				case kSkidState_Valley:
 					processValley();
 					break;
 			}
@@ -506,8 +506,8 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 		{
 			switch (state)
 			{
-				case slopeIn:
-					// get the average sqareroot of the current input samples
+				case kSkidState_SlopeIn:
+					// get the average sqare root of the current input samples
 #ifdef USE_BACKWARDS_RMS
 					rms += sqrtf( fabsf(*in1) );
 #else
@@ -516,7 +516,7 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 					rmscount++;	// this counter is later used for getting the mean
 					processSlopeIn();
 					break;
-				case plateau:
+				case kSkidState_Plateau:
 #ifdef USE_BACKWARDS_RMS
 					rms += sqrtf( fabsf(*in1) );
 #else
@@ -525,10 +525,10 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 					rmscount++;
 					processPlateau();
 					break;
-				case slopeOut:
+				case kSkidState_SlopeOut:
 					processSlopeOut();
 					break;
-				case valley:
+				case kSkidState_Valley:
 					processValley();
 					break;
 			}

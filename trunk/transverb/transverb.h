@@ -1,7 +1,7 @@
 #ifndef __TOM7_TRANSVERB_H
 #define __TOM7_TRANSVERB_H
 
-/* DFX Transverb plugin by Tom 7 and Marc 3 */
+/* DFX Transverb plugin by Tom 7 and Sophia */
 
 #include "dfxplugin.h"
 
@@ -27,23 +27,21 @@ enum
 	kSpeed1mode,
 	kSpeed2mode,
 
-	NUM_PARAMETERS
+	kNumParameters
 };
 
+const long kNumPresets = 16;
 
-const long NUM_PRESETS = 16;
-
-const long SMOOTH_DUR = 42;
-
-const long NUM_FIR_TAPS = 23;
+const long kAudioSmoothingDur_samples = 42;
+const long kNumFIRTaps = 23;
 
 
 // this stuff is for the speed parameter adjustment mode switch on the GUI
-enum { kFineMode, kSemitoneMode, kOctaveMode, numSpeedModes };
+enum { kSpeedMode_Fine, kSpeedMode_Semitone, kSpeedMode_Octave, kSpeedMode_NumModes };
 
-enum { dirtfi, hifi, ultrahifi, numQualities };
+enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes };
 
-enum { useNothing, useHighpass, useLowpassIIR, useLowpassFIR, numFilterModes };
+enum { kFilterMode_Nothing, kFilterMode_Highpass, kFilterMode_LowpassIIR, kFilterMode_LowpassFIR };
 
 
 
@@ -112,7 +110,7 @@ private:
 };
 
 
-inline float interpolateHermite (float * data, double address, 
+inline float Transverb_InterpolateHermite (float * data, double address, 
 				 int arraysize, int danger) {
   int pos, posMinus1, posPlus1, posPlus2;
   float posFract, a, b, c;
@@ -153,7 +151,7 @@ inline float interpolateHermite (float * data, double address,
   return ( ((a*posFract)+b) * posFract + c ) * posFract + data[pos];
 }
 /*
-inline float interpolateHermitePostLowpass (float * data, float address) {
+inline float Transverb_InterpolateHermitePostLowpass (float * data, float address) {
   long pos;
   float posFract, a, b, c;
 
@@ -170,21 +168,21 @@ inline float interpolateHermitePostLowpass (float * data, float address) {
 }
 */
 
-inline float interpolateLinear(float * data, double address, 
+inline float Transverb_InterpolateLinear(float * data, double address, 
 				int arraysize, int danger) {
 	int posPlus1, pos = (long)address;
 	float posFract = (float) (address - (double)pos);
 
 	if (danger == 1) {
-	  /* the upcoming sample is not contiguous because 
-	     the write head is about to write to it */
-	  posPlus1 = pos;
+		// the upcoming sample is not contiguous because 
+		// the write head is about to write to it
+		posPlus1 = pos;
 	} else {
-	  // it's all right
-	  posPlus1 = (pos + 1) % arraysize;
+		// it's alright
+		posPlus1 = (pos + 1) % arraysize;
 	}
 	return (data[pos] * (1.0f-posFract)) + 
-	       (data[posPlus1] * posFract);
+			(data[posPlus1] * posFract);
 }
 
 #endif

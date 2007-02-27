@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  December 2000 -------------*/
+/*-------------- by Sophia Poirier  ][  December 2000 -------------*/
 
 #include "skidder.hpp"
 
@@ -13,7 +13,7 @@ DFX_ENTRY(Skidder)
 //-----------------------------------------------------------------------------
 // initializations and such
 Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 16 parameters, 16 presets
+	: DfxPlugin(inInstance, kNumParameters, kNumPresets)	// 16 parameters, 16 presets
 {
 	noteTable = NULL;
 
@@ -90,7 +90,7 @@ Skidder::~Skidder()
 //-----------------------------------------------------------------------------------------
 void Skidder::reset()
 {
-	state = valley;
+	state = kSkidState_Valley;
 	valleySamples = 0;
 	panGainL = panGainR = 1.0f;
 	rms = 0.0f;

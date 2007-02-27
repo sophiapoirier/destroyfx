@@ -105,12 +105,12 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 		}	// end of notes loop
 
 		// we had notes this chunk, but the unaffected processing hasn't faded out, so change its state to fade-out
-		if ( (!noNotes) && (unaffectedState == unFlat) )
-			unaffectedState = unFadeOut;
+		if ( (!noNotes) && (unaffectedState == kUnaffectedState_Flat) )
+			unaffectedState = kUnaffectedState_FadeOut;
 
 		// we can output unprocessed audio if no notes happened during this block chunk
 		// or if the unaffected fade-out still needs to be finished
-		if ( noNotes || (unaffectedState == unFadeOut) )
+		if ( noNotes || (unaffectedState == kUnaffectedState_FadeOut) )
 		{
 			int tempUnState = unaffectedState;
 			int tempUnSamples = unaffectedFadeSamples;

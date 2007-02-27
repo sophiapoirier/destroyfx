@@ -1,4 +1,4 @@
-/*-------------- by Marc Poirier  ][  November 2001 -------------*/
+/*-------------- by Sophia Poirier  ][  November 2001 -------------*/
 
 #include "midigater.hpp"
 
@@ -18,9 +18,9 @@ const bool kUseLegato = false;
 // these are the 3 states of the unaffected audio input between notes
 enum
 {
-	unFadeIn,
-	unFlat,
-	unFadeOut
+	kUnaffectedState_FadeIn,
+	kUnaffectedState_Flat,
+	kUnaffectedState_FadeOut
 };
 
 
@@ -31,7 +31,7 @@ DFX_ENTRY(MidiGater)
 //-----------------------------------------------------------------------------------------
 // initializations
 MidiGater::MidiGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 4 parameters, 1 preset
+	: DfxPlugin(inInstance, kNumParameters, 1)	// 4 parameters, 1 preset
 {
 	initparameter_f(kAttackSlope, "attack", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_f(kReleaseSlope, "release", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
@@ -53,7 +53,7 @@ MidiGater::MidiGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 void MidiGater::reset()
 {
 	// reset the unaffected between-audio stuff
-	unaffectedState = unFadeIn;
+	unaffectedState = kUnaffectedState_FadeIn;
 	unaffectedFadeSamples = 0;
 }
 
@@ -124,12 +124,12 @@ void MidiGater::processaudio(const float ** inAudio, float ** outAudio, unsigned
 
 
 		// we had notes this chunk, but the unaffected processing hasn't faded out, so change its state to fade-out
-		if ( !noNotes && (unaffectedState == unFlat) )
-			unaffectedState = unFadeOut;
+		if ( !noNotes && (unaffectedState == kUnaffectedState_Flat) )
+			unaffectedState = kUnaffectedState_FadeOut;
 
 		// we can output unprocessed audio if no notes happened during this block chunk
 		// or if the unaffected fade-out still needs to be finished
-		if ( noNotes || (unaffectedState == unFadeOut) )
+		if ( noNotes || (unaffectedState == kUnaffectedState_FadeOut) )
 			processUnaffected(inAudio, outAudio, numFramesToProcess, currentBlockPosition, numChannels);
 
 		eventcount++;
@@ -157,17 +157,17 @@ void MidiGater::processUnaffected(const float ** inAudio, float ** outAudio, lon
 		float sampleAmp = floor;
 
 		// this is the state when all notes just ended and the clean input first kicks in
-		if (unaffectedState == unFadeIn)
+		if (unaffectedState == kUnaffectedState_FadeIn)
 		{
 			// linear fade-in
 			sampleAmp = (float)unaffectedFadeSamples * kUnaffectedFadeStep * floor;
 			unaffectedFadeSamples++;
 			// go to the no-gain state if the fade-in is done
 			if (unaffectedFadeSamples >= kUnaffectedFadeDur)
-				unaffectedState = unFlat;
+				unaffectedState = kUnaffectedState_Flat;
 		}
 		// a note has just begun, so we need to hasily fade out the clean input audio
-		else if (unaffectedState == unFadeOut)
+		else if (unaffectedState == kUnaffectedState_FadeOut)
 		{
 			unaffectedFadeSamples--;
 			// linear fade-out
@@ -176,7 +176,7 @@ void MidiGater::processUnaffected(const float ** inAudio, float ** outAudio, lon
 			if (unaffectedFadeSamples <= 0)
 			{
 				// ready for the next time
-				unaffectedState = unFadeIn;
+				unaffectedState = kUnaffectedState_FadeIn;
 				return;	// important!  leave this function or a new fade-in will begin
 			}
 		}

@@ -13,7 +13,7 @@ DFX_ENTRY(RezSynth)
 //-----------------------------------------------------------------------------------------
 // initializations
 RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, NUM_PRESETS)	// 19 parameters, 16 presets
+	: DfxPlugin(inInstance,	kNumParameters, kNumPresets)	// 19 parameters, 16 presets
 {
 	inputAmp = NULL;
 	delay1amp = NULL;
@@ -24,7 +24,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 	initparameter_f(kBandwidth, "bandwidth", 3.0, 3.0, 0.1, 300.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
-	initparameter_i(kNumBands, "bands per note", 1, 1, 1, MAX_BANDS, kDfxParamUnit_quantity);
+	initparameter_i(kNumBands, "bands per note", 1, 1, 1, kMaxBands, kDfxParamUnit_quantity);
 	initparameter_f(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
 	initparameter_f(kSepAmount_linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, kDfxParamUnit_scalar);	// % of center frequency
 	initparameter_indexed(kSepMode, "separation mode", kSepMode_octaval, kSepMode_octaval, kNumSepModes);
@@ -77,9 +77,9 @@ RezSynth::~RezSynth()
 //-----------------------------------------------------------------------------------------
 long RezSynth::initialize()
 {
-	bool result1 = createbuffer_d(&inputAmp, MAX_BANDS, MAX_BANDS);
-	bool result2 = createbuffer_d(&delay1amp, MAX_BANDS, MAX_BANDS);
-	bool result3 = createbuffer_d(&delay2amp, MAX_BANDS, MAX_BANDS);
+	bool result1 = createbuffer_d(&inputAmp, kMaxBands, kMaxBands);
+	bool result2 = createbuffer_d(&delay1amp, kMaxBands, kMaxBands);
+	bool result3 = createbuffer_d(&delay2amp, kMaxBands, kMaxBands);
 
 	if ( result1 && result2 && result3 )
 		return kDfxErr_NoError;
@@ -98,7 +98,7 @@ void RezSynth::cleanup()
 void RezSynth::reset()
 {
 	// reset the unaffected between audio stuff
-	unaffectedState = unFadeIn;
+	unaffectedState = kUnaffectedState_FadeIn;
 	unaffectedFadeSamples = 0;
 }
 
@@ -108,8 +108,8 @@ bool RezSynth::createbuffers()
 	unsigned long oldNumBuffers = numBuffers;
 	numBuffers = getnumoutputs();
 
-	bool result1 = createbufferarrayarray_d(&prevOutValue, oldNumBuffers, NUM_NOTES, MAX_BANDS, numBuffers, NUM_NOTES, MAX_BANDS);
-	bool result2 = createbufferarrayarray_d(&prevprevOutValue, oldNumBuffers, NUM_NOTES, MAX_BANDS, numBuffers, NUM_NOTES, MAX_BANDS);
+	bool result1 = createbufferarrayarray_d(&prevOutValue, oldNumBuffers, NUM_NOTES, kMaxBands, numBuffers, NUM_NOTES, kMaxBands);
+	bool result2 = createbufferarrayarray_d(&prevprevOutValue, oldNumBuffers, NUM_NOTES, kMaxBands, numBuffers, NUM_NOTES, kMaxBands);
 
 	if (result1 && result2)
 		return true;
@@ -126,8 +126,8 @@ void RezSynth::releasebuffers()
 //-----------------------------------------------------------------------------------------
 void RezSynth::clearbuffers()
 {
-	clearbufferarrayarray_d(prevOutValue, numBuffers, NUM_NOTES, MAX_BANDS);
-	clearbufferarrayarray_d(prevprevOutValue, numBuffers, NUM_NOTES, MAX_BANDS);
+	clearbufferarrayarray_d(prevOutValue, numBuffers, NUM_NOTES, kMaxBands);
+	clearbufferarrayarray_d(prevprevOutValue, numBuffers, NUM_NOTES, kMaxBands);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ void RezSynth::processparameters()
 	if (getparameterchanged(kNumBands))
 	{
 		// protect against accessing out of the arrays' bounds
-		oldNumBands = (oldNumBands > MAX_BANDS) ? MAX_BANDS : oldNumBands;
+		oldNumBands = (oldNumBands > kMaxBands) ? kMaxBands : oldNumBands;
 		// clear the output buffers of abandoned bands when the number decreases
 		if (numBands < oldNumBands)
 		{
@@ -183,7 +183,7 @@ void RezSynth::processparameters()
 		{
 			for (int notecount=0; notecount < NUM_NOTES; notecount++)
 			{
-				for (int bandcount=0; bandcount < MAX_BANDS; bandcount++)
+				for (int bandcount=0; bandcount < kMaxBands; bandcount++)
 				{
 					prevOutValue[ch][notecount][bandcount] = 0.0;
 					prevprevOutValue[ch][notecount][bandcount] = 0.0;

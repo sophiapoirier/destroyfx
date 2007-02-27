@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  March 2001 + October 2002 ---------------*/
+/*--------------- by Sophia Poirier  ][  March 2001 + October 2002 ---------------*/
 
 #include "monomaker.hpp"
 
@@ -13,7 +13,7 @@ DFX_ENTRY(Monomaker)
 //-----------------------------------------------------------------------------
 // initializations and such
 Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, NUM_PARAMETERS, 1)	// 2 parameters, 1 preset
+	: DfxPlugin(inInstance, kNumParameters, 1)	// 2 parameters, 1 preset
 {
 	// initialize the parameters
 	initparameter_indexed(kInputSelection, "input selection", kInputSelection_stereo, kInputSelection_stereo, kNumInputSelections);
@@ -21,6 +21,7 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_indexed(kMonomergeMode, "monomix mode", kMonomergeMode_equalpower, kMonomergeMode_linear, kNumMonomergeModes);
 	initparameter_f(kPan, "pan", 0.0, 0.0, -1.0, 1.0, kDfxParamUnit_pan);
 	initparameter_indexed(kPanMode, "pan mode", kPanMode_recenter, kPanMode_recenter, kNumPanModes);
+//	initparameter_indexed(kPanLaw, "pan law", kPanLaw_, kPanLaw_, kNumPanLaws);
 
 	// set the parameter value display strings
 	setparametervaluestring(kInputSelection, kInputSelection_stereo, "left-right");
@@ -33,6 +34,24 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	//
 	setparametervaluestring(kPanMode, kPanMode_recenter, "recenter");
 	setparametervaluestring(kPanMode, kPanMode_balance, "balance");
+	//
+//	setparametervaluestring(kPanLaw, kPanLaw_, "-3 dB");
+//	setparametervaluestring(kPanLaw, kPanLaw_, "-6 dB");
+//	setparametervaluestring(kPanLaw, kPanLaw_, "sine-cosine");
+/*
+left_output = cos(p) * input
+right_output = sin(p) * input
+where p is 0¡ to 90¡ (or 0 to 1/2 ¹), with 45¡ center
+*/
+/*
+Stereo Pan supports three different kinds of pan law:  0 dB, -3 dB, and -6 dB.
+The 0dB setting essentially means that you have pan law turned off.
+The -3 dB setting means that sounds panned in the center are reduced by 3 dB.
+The -6 dB setting means that sounds panned in the center are reduced by 6 dB.
+The -3 dB setting uses a constant power curve based on sin/cos, while other two settings are linear.
+*/
+//	setparametervaluestring(kPanLaw, kPanLaw_, "square root");
+//	setparametervaluestring(kPanLaw, kPanLaw_, "0 dB");
 
 	setpresetname(0, "let's merge");	// default preset name
 
@@ -54,6 +73,7 @@ void Monomaker::processaudio(const float ** inputs, float ** outputs, unsigned l
 	long monomergemode = getparameter_i(kMonomergeMode);
 	float pan = getparameter_f(kPan);
 	long panmode = getparameter_i(kPanMode);
+//	long panlaw = getparameter_i(kPanLaw);
 
 	// point the input signal pointers to the correct input streams, 
 	// according to the input selection (or dual-left if we only have 1 input)
