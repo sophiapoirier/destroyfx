@@ -160,9 +160,9 @@ void gainDisplayProc(float value, char *outText, void *)
 //		strcpy(outText, "-\xB0");
 		strcpy(outText, "-oo");
 	else if (value > 1.0001f)
-		sprintf(outText, "+%.1f", linear2dB(value));
+		sprintf(outText, "+%.1f", DFX_Linear2dB(value));
 	else
-		sprintf(outText, "%.1f", linear2dB(value));
+		sprintf(outText, "%.1f", DFX_Linear2dB(value));
 	strcat(outText, " dB");
 }
 
