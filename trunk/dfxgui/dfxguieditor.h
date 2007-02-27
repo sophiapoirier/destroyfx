@@ -30,6 +30,7 @@ public:
 
 	// *** this one is for the child class of DfxGuiEditor to override
 	virtual long open() = 0;
+	virtual void post_open() { }
 
 #ifdef TARGET_API_AUDIOUNIT
 	// these are part of the AUCarbonViewBase interface

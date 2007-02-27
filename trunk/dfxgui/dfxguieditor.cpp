@@ -201,11 +201,11 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	ToolboxObjectClassRef newControlClass = NULL;
 	if (gControlHandlerUPP == NULL)
 		gControlHandlerUPP = NewEventHandlerUPP(DFXGUI_ControlEventHandler);
-	unsigned long instanceAddress = (unsigned long) this;
+	UInt64 instanceAddress = (UInt64) this;
 	bool noSuccessYet = true;
 	while (noSuccessYet)
 	{
-		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.DfxGuiControlClass%lu"), 
+		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.DfxGuiControlClass.%llu"), 
 																		PLUGIN_BUNDLE_IDENTIFIER, instanceAddress);
 		if (toolboxClassIDcfstring != NULL)
 		{
@@ -299,6 +299,9 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 			tempcl->control->embed();
 			tempcl = tempcl->next;
 		}
+
+		// allow for anything that might need to happen after the above post-opening stuff is finished
+		post_open();
 	}
 
 	return openErr;
@@ -349,8 +352,7 @@ DGGraphicsContext * DGInitControlDrawingContext(EventRef inEvent, CGrafPtr & out
 			GetPort(&outPort);	// XXX deprecated in Mac OS X 10.4
 		if (outPort == NULL)
 			return NULL;
-		Rect portBounds;
-		memset(&portBounds, 0, sizeof(portBounds));
+		Rect portBounds = {0};
 		GetPortBounds(outPort, &portBounds);
 		portHeight = portBounds.bottom - portBounds.top;
 
@@ -696,8 +698,7 @@ OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, 
 	OSStatus result = noErr;
 
 	// do the new-fangled way, if it's available on the user's system
-	AudioUnitEvent paramEvent;
-	memset(&paramEvent, 0, sizeof(paramEvent));
+	AudioUnitEvent paramEvent = {0};
 	paramEvent.mEventType = inEventType;
 	paramEvent.mArgument.mParameter.mParameterID = inParameterID;
 	paramEvent.mArgument.mParameter.mAudioUnit = GetEditAudioUnit();
@@ -909,8 +910,7 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutomationGesture)
 {
-	AudioUnitParameterInfo paramInfo;
-	memset(&paramInfo, 0, sizeof(paramInfo));
+	AudioUnitParameterInfo paramInfo = {0};
 	UInt32 dataSize = sizeof(paramInfo);
 
 	ComponentResult result = AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_ParameterInfo, 
@@ -1557,8 +1557,7 @@ fprintf(stderr, "kEventControlHit\n");
 					// the position of the control relative to the top left corner of the window content area
 					Rect controlBounds = ourDGControl->getMacRect();
 					// the content area of the window (i.e. not the title bar or any borders)
-					Rect windowBounds;
-					memset(&windowBounds, 0, sizeof(windowBounds));
+					Rect windowBounds = {0};
 					WindowRef window = GetControlOwner(ourCarbonControl);
 					if (window != NULL)
 						GetWindowBounds(window, kWindowGlobalPortRgn, &windowBounds);
@@ -1645,13 +1644,12 @@ OSStatus DFX_OpenWindowFromNib(CFStringRef inWindowName, WindowRef * outWindow)
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 // this gets an embedded ControlRef from a window given a control's ID value
-ControlRef DFX_GetControlWithID(SInt32 inID, WindowRef inWindow)
+ControlRef DFX_GetControlWithID(WindowRef inWindow, SInt32 inID)
 {
 	if (inWindow == NULL)
 		return NULL;
 
-	ControlID controlID;
-	memset(&controlID, 0, sizeof(controlID));
+	ControlID controlID = {0};
 	controlID.signature = kDfxGui_ControlSignature;
 	controlID.id = inID;
 	ControlRef resultControl = NULL;
@@ -1701,7 +1699,7 @@ CFStringRef DfxGuiEditor::openTextEntryWindow(CFStringRef inInitialText)
 	status = SetWindowTitleWithCFString( textEntryWindow, CFSTR(PLUGIN_NAME_STRING" Text Entry") );
 
 	// initialize the controls according to the current transparency value
-	textEntryControl = DFX_GetControlWithID(kDfxGui_TextEntryControlID, textEntryWindow);
+	textEntryControl = DFX_GetControlWithID(textEntryWindow, kDfxGui_TextEntryControlID);
 	if (textEntryControl != NULL)
 	{
 		if (inInitialText != NULL)
@@ -1841,7 +1839,7 @@ OSStatus DfxGuiEditor::openWindowTransparencyWindow()
 	status = SetWindowTitleWithCFString( windowTransparencyWindow, CFSTR(PLUGIN_NAME_STRING" Window Transparency") );
 
 	// initialize the controls according to the current transparency value
-	ControlRef transparencyControl = DFX_GetControlWithID(kDfxGui_TransparencySliderControlID, windowTransparencyWindow);
+	ControlRef transparencyControl = DFX_GetControlWithID(windowTransparencyWindow, kDfxGui_TransparencySliderControlID);
 	if (transparencyControl != NULL)
 	{
 		SInt32 min = GetControl32BitMinimum(transparencyControl);
