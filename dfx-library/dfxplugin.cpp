@@ -696,8 +696,7 @@ DfxParamValue DfxPlugin::getpresetparameter(long inPresetIndex, long inParameter
 		return presets[inPresetIndex].values[inParameterIndex];
 	else
 	{
-		DfxParamValue dummy;
-		memset(&dummy, 0, sizeof(DfxParamValue));
+		DfxParamValue dummy = {0};
 		return dummy;
 	}
 }
