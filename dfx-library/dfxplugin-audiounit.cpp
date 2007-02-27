@@ -329,8 +329,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kAudioUnitMigrateProperty_FromPlugin:
 			{
 				// VST counterpart description
-				static AudioUnitOtherPluginDesc vstPluginMigrationDesc;
-				memset(&vstPluginMigrationDesc, 0, sizeof(vstPluginMigrationDesc));
+				static AudioUnitOtherPluginDesc vstPluginMigrationDesc = {0};
 				vstPluginMigrationDesc.format = kOtherPluginFormat_kVST;
 				vstPluginMigrationDesc.plugin.mSubType = PLUGIN_ID;
 				// create a CFArray of the VST counterpart description

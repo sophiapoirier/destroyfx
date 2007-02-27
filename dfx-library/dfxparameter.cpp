@@ -913,8 +913,7 @@ DfxParamValue getvalue(long inParameterIndex)
 		return values[inParameterIndex];
 	else
 	{
-		DfxParamValue dummy;
-		memset(&dummy, 0, sizeof(DfxParamValue));
+		DfxParamValue dummy = {0};
 		return dummy;
 	}
 }
