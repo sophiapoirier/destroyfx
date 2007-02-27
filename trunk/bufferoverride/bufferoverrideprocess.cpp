@@ -167,8 +167,8 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 //		sqrtFadeOut = sqrtf(1.0f - smoothStep);
 //		smoothFract = smoothStep;
 
-		fadeOutGain = cosf(PI/(float)(4*smoothDur));
-		fadeInGain = sinf(PI/(float)(4*smoothDur));
+		fadeOutGain = cosf(kDFX_PI_f/(float)(4*smoothDur));
+		fadeInGain = sinf(kDFX_PI_f/(float)(4*smoothDur));
 		realFadePart = (fadeOutGain * fadeOutGain) - (fadeInGain * fadeInGain);	// cosf(3.141592/2/n)
 		imaginaryFadePart = 2.0f * fadeOutGain * fadeInGain;	// sinf(3.141592/2/n)
 	}

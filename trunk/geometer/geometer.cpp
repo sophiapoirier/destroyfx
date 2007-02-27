@@ -345,7 +345,7 @@ void PLUGINCORE::reset() {
       case WINDOW_COS:
         for(z = 0; z < third; z ++) {
           // XXX what about Eulor's law for cosine?
-          float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
+          float p = 0.5f * (-cosf(kDFX_PI_f * ((float)z * oneDivThird)) + 1.0f);
           windowbuf[z] = p;
           windowbuf[z+third] = (1.0f - p);
         }
@@ -917,11 +917,11 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     }
 
     for(int z = 0; z < intervals; z++) {
-      if (randFloat() < interparam) {
+      if (DFX_Rand_f() < interparam) {
         int t;
         int dest = z + ((interparam * 
                          interparam * (float)intervals)
-                        * randFloat()) - (interparam *
+                        * DFX_Rand_f()) - (interparam *
                                           interparam *
                                           0.5f * (float)intervals);
         if (dest < 0) dest = 0;
@@ -965,7 +965,6 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
          into. */
       int sizeright = px[x+1] - px[x];
       int sizeleft = px[x] - px[x-1];
-      int sizetotal = sizeleft + sizeright;
 
       int tgtlen = sizeleft + (sizeright * interparam);
 
@@ -1059,7 +1058,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) / denom;
         
-        float p = 0.5f * (-cosf(PI * pct) + 1.0f);
+        float p = 0.5f * (-cosf(kDFX_PI_f * pct) + 1.0f);
         
         if (interparam > 0.5f) {
           p = powf(p, (interparam - 0.16666667f) * 3.0f);
@@ -1099,7 +1098,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     for(i = 0; i < samples; i++) out[i] = 0.0f;
 
     for(z = 0; z < numpts; z ++) { 
-      out[px[z]] = magmax(out[px[z]], py[z]);
+      out[px[z]] = DFX_MagnitudeMax(out[px[z]], py[z]);
 
       if (wid > 0) {
         /* put w samples on the left, stopping if we hit a sample
@@ -1132,7 +1131,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
       for(z=px[u-1]; z < px[u]; z++) {
         float pct = (float)(z-px[u-1]) * oodenom;
         
-        float wand = sinf(2.0f * PI * pct);
+        float wand = sinf(2.0f * kDFX_PI_f * pct);
         out[z] = wand * 
           interparam + 
           ((1.0f-interparam) * 
@@ -1256,7 +1255,7 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
         case WINDOW_COS:
           for(z = 0; z < third; z ++) {
             // XXX what about Eulor's law for cosine?
-            float p = 0.5f * (-cosf(PI * ((float)z * oneDivThird)) + 1.0f);
+            float p = 0.5f * (-cosf(kDFX_PI_f * ((float)z * oneDivThird)) + 1.0f);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }

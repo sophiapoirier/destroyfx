@@ -8,7 +8,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "dfxmath.h"	// for PI
+#include "dfxmath.h"	// for kDFX_PI_f
 
 
 //------------------------------------------------------------------------
@@ -66,7 +66,7 @@ void LFO::fillLFOtables()
 
 	// fill the sine waveform table (oscillates from 0 to 1 and back to 0)
 	for (i = 0; (i < NUM_LFO_POINTS); i++)
-		sineTable[i] = (sinf( ( ((float)i/(float)NUM_LFO_POINTS)-0.25f ) * 2.0f * PI ) + 1.0f) * 0.5f;
+		sineTable[i] = (sinf( ( ((float)i/(float)NUM_LFO_POINTS)-0.25f ) * 2.0f * kDFX_PI_f ) + 1.0f) * 0.5f;
 
 	// fill the triangle waveform table
 	// ramp from 0 to 1 for the first half

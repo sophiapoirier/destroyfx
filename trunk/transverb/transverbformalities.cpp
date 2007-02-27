@@ -1,5 +1,5 @@
 
-/* DFX Transverb plugin by Tom 7 and Marc 3 */
+/* DFX Transverb plugin by Tom 7 and Sophia */
 
 #include "transverb.hpp"
 
@@ -375,7 +375,7 @@ void Transverb::randomizeparameters(bool writeAutomation)
 		// make slow speeds more probable (for fairer distribution)
 		if ( (i == kSpeed1) || (i == kSpeed1) )
 		{
-			double temprand = randDouble();
+			double temprand = DFX_Rand_d();
 			if (temprand < 0.5)
 				temprand = getparametermin_f(i) * temprand*2.0;
 			else
@@ -384,7 +384,7 @@ void Transverb::randomizeparameters(bool writeAutomation)
 		}
 		// make smaller buffer sizes more probable (because they sound better)
 		else if (i == kBsize)
-			setparameter_gen( kBsize, powf((randFloat()*0.93f)+0.07f, 1.38f) );
+			setparameter_gen( kBsize, powf((DFX_Rand_f()*0.93f)+0.07f, 1.38f) );
 		else
 			randomizeparameter(i);
 	}
@@ -396,9 +396,9 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	float mixSum = getparameter_f(kDrymix) + getparameter_f(kMix1) + getparameter_f(kMix2);
 
 	// randomize the mix parameters
-	float newDrymix = randFloat();
-	float newMix1 = randFloat();
-	float newMix2 = randFloat();
+	float newDrymix = DFX_Rand_f();
+	float newMix1 = DFX_Rand_f();
+	float newMix2 = DFX_Rand_f();
 	// square them all for squared gain scaling
 	newDrymix *= newDrymix;
 	newMix1 *= newMix1;
