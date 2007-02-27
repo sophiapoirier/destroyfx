@@ -62,6 +62,7 @@
       <boolean name="compositing">TRUE</boolean>
       <int name="carbonWindowClass">4</int>
       <int name="windowPosition">1</int>
+      <int name="scalingMode">1048576</int>
     </object>
     <reference idRef="167"/>
     <reference idRef="182"/>
