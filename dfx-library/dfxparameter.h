@@ -502,26 +502,4 @@ private:
 
 
 
-// XXX gotta obsolete this stuff...
-#define onOffTest(fvalue)   ((fvalue) > 0.5f)
-#define paramRangeScaled(value,min,max)   ( ((value) * ((max)-(min))) + (min) )
-#define paramRangeUnscaled(value,min,max)   ( ((value)-(min)) / ((max)-(min)) )
-#define paramRangeSquaredScaled(value,min,max)   ( ((value)*(value) * ((max)-(min))) + (min) )
-#define paramRangeSquaredUnscaled(value,min,max)   ( sqrtf(((value)-(min)) / ((max)-(min))) )
-#define paramRangeCubedScaled(value,min,max)   ( ((value)*(value)*(value) * ((max)-(min))) + (min) )
-#define paramRangeCubedUnscaled(value,min,max)   ( powf(((value)-(min)) / ((max)-(min)), 1.0f/3.0f) )
-#define paramRangePowScaled(value,min,max,power)   ( (powf((value),(power)) * ((max)-(min))) + (min) )
-#define paramRangePowUnscaled(value,min,max,power)   ( powf(((value)-(min)) / ((max)-(min)), 1.0f/(power)) )
-#define paramRangeExpScaled(value,min,max)   ( expf(logf((max)-(min)+1.0f)*(value)) + (min) - 1.0f )
-#define paramRangeExpUnscaled(value,min,max)   ( logf(1.0f-(min)+(value)) / logf(1.0f-(min)+(max)) )
-#define paramSteppedScaled(value,numSteps)   ( (long)((value) * ((float)(numSteps)-0.01f)) )
-#define paramSteppedUnscaled(step,numSteps)   ( (float)(step) / ((float)((numSteps)-1)) )
-#define paramRangeIntScaled(value,min,max)   ( (long)((value) * ((float)((max)-(min)+1)-0.01f)) + (min) )
-#define paramRangeIntUnscaled(step,min,max)   ( (float)((step)-(min)) / (float)((max)-(min)) )
-// scale logarithmicly from 20 Hz to 20 kHz
-#define paramFrequencyScaled(value)   (20.0f * powf(2.0f, (value) * 9.965784284662088765571752446703612804412841796875f))
-#define paramFrequencyUnscaled(value)   ( (logf((value)/20.0f)/logf(2.0f)) / 9.965784284662088765571752446703612804412841796875f )
-
-
-
 #endif
