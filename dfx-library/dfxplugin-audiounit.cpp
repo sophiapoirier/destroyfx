@@ -85,13 +85,17 @@ void DfxPlugin::PostConstructor()
 	OSStatus status = CopyProcessName(&currentProcess, &processName);
 	if ( (status == noErr) && (processName != NULL) )
 	{
-		CFIndex stringsize = (CFStringGetLength(processName) * sizeof(UniChar)) + 1;
-		char * cname = (char*) malloc(stringsize * sizeof(char));
-		cname[0] = 0;
-		Boolean success = CFStringGetCString(processName, cname, stringsize, kCFStringEncodingUTF8);
-		if (success)
-			printf("process name = %s\n", cname);
-		free(cname);
+		const CFStringEncoding encoding = kCFStringEncodingUTF8;
+		CFIndex stringsize = CFStringGetMaximumSizeForEncoding(CFStringGetLength(processName), encoding) + 1;
+		if (stringsize > 0)
+		{
+			char * cname = (char*) malloc(stringsize);
+			cname[0] = 0;
+			Boolean success = CFStringGetCString(processName, cname, stringsize, encoding);
+			if (success)
+				printf("process name = %s\n", cname);
+			free(cname);
+		}
 		CFRelease(processName);
 	}
 #endif
@@ -318,7 +322,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						result = kAudioUnitErr_InvalidPropertyValue;
 					else
 					{
-						ioClumpInfo->outName = CopyClumpName(ioClumpInfo->inID);
+						ioClumpInfo->outName = CopyParameterGroupName(ioClumpInfo->inID);
 						if (ioClumpInfo->outName == NULL)
 							result = kAudioUnitErr_InvalidPropertyValue;
 					}
@@ -1318,7 +1322,17 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 
 	// clear the output buffer because we will accumulate output into it
 	if (audioProcessingAccumulatingOnly)
-		AUBufferList::ZeroBuffer(outBuffer);
+	{
+		// XXX goes out of array bounds with AUEffectBase::ProcessScheduledSlice() implementation currently 
+		// cuz outBuffer.mNumberBuffers[].mDataByteSize isn't being updated to reflect the adjusted slice size
+//		AUBufferList::ZeroBuffer(outBuffer);
+		for (UInt32 ch=0; ch < outBuffer.mNumberBuffers; ch++)
+		{
+			float * outBuf = (float*) (outBuffer.mBuffers[ch].mData);
+			for (UInt32 samp=0; samp < inFramesToProcess; samp++)
+				outBuf[samp] = 0.0f;
+		}
+	}
 
 #if TARGET_PLUGIN_USES_DSPCORE
 	// if the plugin uses DSP cores, then we just call the 
