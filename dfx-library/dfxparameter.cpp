@@ -51,6 +51,7 @@ DfxParam::DfxParam()
 	curve = kDfxParamCurve_undefined;
 	curvespec = 1.0;
 	changed = false;
+	touched = false;
 	attributes = 0;
 }
 
@@ -599,6 +600,7 @@ void DfxParam::set(DfxParamValue inNewValue)
 	value = inNewValue;
 	limit();
 	setchanged(true);	// XXX do this smarter?
+	settouched(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -609,6 +611,7 @@ void DfxParam::set_f(double inNewValue)
 	bool changed_2 = limit();
 	if (changed_1 || changed_2)
 		setchanged(true);
+	settouched(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -619,6 +622,7 @@ void DfxParam::set_i(int64_t inNewValue)
 	bool changed_2 = limit();
 	if (changed_1 || changed_2)
 		setchanged(true);
+	settouched(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -629,6 +633,7 @@ void DfxParam::set_b(bool inNewValue)
 	bool changed_2 = limit();
 	if (changed_1 || changed_2)
 		setchanged(true);
+	settouched(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -649,7 +654,8 @@ void DfxParam::set_gen(double inGenValue)
 // this takes into account the parameter curve
 DfxParamValue DfxParam::randomize()
 {
-	changed = true;	// do this smarter?
+	changed = true;	// XXX do this smarter?
+	settouched(true);
 
 	switch (valueType)
 	{
@@ -710,6 +716,7 @@ bool DfxParam::limit()
 
 	// if we reach this point, then the value was changed, so return true
 	changed = true;
+	settouched(true);
 	return true;
 }
 
