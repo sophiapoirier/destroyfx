@@ -1437,7 +1437,6 @@ Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL)
 	OSStatus alertErr;
 
 	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
-	alertParams.movable = true;
 	alertParams.defaultText = CFCopyLocalizedStringFromTableInBundle(CFSTR("Replace"), CFSTR("dfx-au-utilities"), gCurrentBundle, 
 				CFSTR("text for the button that will over-write an existing file when a save file file-already-exists conflict arises"));
 	alertParams.cancelText = (CFStringRef) kAlertDefaultCancelText;
@@ -1557,14 +1556,11 @@ Boolean IsFileAccessError(OSStatus inErrorCode)
 OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 {
 	OSStatus error;
-	AlertStdCFStringAlertParamRec alertParams;
 	CFStringRef alertTitle;
 	CFStringRef alertMessageOutline, alertMessage;
 	CFStringRef alertMessageAppendage;
 	DialogRef dialog;
 
-	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
-	alertParams.movable = true;
 	alertTitle = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save access error"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the alert window title for when an access privileges error occurs while trying to save a file"));
 	// only if the domain choice control is present (I removed it from the dialog in the September 2006 release) 
 	// should the dialog include text about trying to save in the User domain
@@ -1584,7 +1580,7 @@ OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 		CFRetain(alertMessage);
 	}
 	CFRelease(alertMessageOutline);
-	error = CreateStandardAlert(kAlertNoteAlert, alertTitle, alertMessage, &alertParams, &dialog);
+	error = CreateStandardAlert(kAlertNoteAlert, alertTitle, alertMessage, NULL, &dialog);
 	CFRelease(alertTitle);
 	CFRelease(alertMessage);
 	if (error == noErr)
