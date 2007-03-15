@@ -920,11 +920,7 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 		if (inWrapWithAutomationGesture)
 			automationgesture_begin(inParameterID);
 
-		AudioUnitParameter auParam;
-		auParam.mAudioUnit = GetEditAudioUnit();
-		auParam.mParameterID = inParameterID;
-		auParam.mScope = kAudioUnitScope_Global;
-		auParam.mElement = (AudioUnitElement)0;
+		CAAUParameter auParam(GetEditAudioUnit(), inParameterID, kAudioUnitScope_Global, 0);
 		result = AUParameterSet(NULL, NULL, &auParam, paramInfo.defaultValue, 0);
 
 		if (inWrapWithAutomationGesture)
