@@ -111,7 +111,7 @@ int DFX_CFStringScanWithFormat(CFStringRef inString, const char * inFormat, ...)
 
 	CFIndex stringLength = CFStringGetLength(inString);
 	const CFStringEncoding cStringEncoding = kCFStringEncodingUTF8;
-	CFIndex cStringBufferSize = CFStringGetMaximumSizeForEncoding(stringLength, cStringEncoding);
+	CFIndex cStringBufferSize = CFStringGetMaximumSizeForEncoding(stringLength, cStringEncoding) + 1;
 	if (cStringBufferSize > 0)
 	{
 		char * cString = (char*) malloc(cStringBufferSize);
