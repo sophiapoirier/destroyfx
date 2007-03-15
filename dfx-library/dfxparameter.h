@@ -422,6 +422,11 @@ public:
 	void setchanged(bool inChanged = true);
 	bool getchanged()
 		{	return changed;	}
+	// set/get the property indicating whether the parameter value has been set for any reason (regardless of whether the new value differed)
+	void settouched(bool inTouched = true)
+		{	touched = inTouched;	}
+	bool gettouched()
+		{	return touched;	}
 
 	// randomize the current value of the parameter
 	virtual DfxParamValue randomize();
@@ -443,6 +448,7 @@ private:
 	int64_t numAllocatedValueStrings;	// just to remember how many we allocated
 	char * customUnitString;	// a text string display for parameters using custom unit types
 	bool changed;	// indicates if the value has changed
+	bool touched;	// indicates if the value has been newly set
 	unsigned long attributes;	// a bit-mask of various parameter attributes
 
 	#ifdef TARGET_API_AUDIOUNIT

@@ -559,10 +559,26 @@ bool DfxPlugin::getparameterchanged(long inParameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setparameterchanged(long inParameterIndex, bool newChanged)
+void DfxPlugin::setparameterchanged(long inParameterIndex, bool inChanged)
 {
 	if (parameterisvalid(inParameterIndex))
-		parameters[inParameterIndex].setchanged(newChanged);
+		parameters[inParameterIndex].setchanged(inChanged);
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::getparametertouched(long inParameterIndex)
+{
+	if (parameterisvalid(inParameterIndex))
+		return parameters[inParameterIndex].gettouched();
+	else
+		return false;
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::setparametertouched(long inParameterIndex, bool inTouched)
+{
+	if (parameterisvalid(inParameterIndex))
+		parameters[inParameterIndex].settouched(inTouched);
 }
 
 //-----------------------------------------------------------------------------
@@ -1239,9 +1255,12 @@ void DfxPlugin::preprocessaudio()
 // this is called immediately after processing a block of audio
 void DfxPlugin::postprocessaudio()
 {
-	// XXX turn off all parameterchanged flags?
+	// XXX turn off all parameterchanged and parametertouched flags?
 	for (long i=0; i < numParameters; i++)
+	{
 		setparameterchanged(i, false);
+		setparametertouched(i, false);
+	}
 
 	#if TARGET_PLUGIN_USES_MIDI
 		midistuff->postprocessEvents();
