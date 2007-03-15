@@ -376,7 +376,7 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef * getparametervaluecfstrings(long inParameterIndex)
 		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getvaluecfstrings();   else return NULL;	}
-	virtual CFStringRef CopyClumpName(UInt32 inClumpID)
+	virtual CFStringRef CopyParameterGroupName(UInt32 inParameterGroupID)
 		{	return NULL;	}
 #endif
 
@@ -424,7 +424,9 @@ public:
 	DfxParamValueType getparametervaluetype(long inParameterIndex);
 	DfxParamUnit getparameterunit(long inParameterIndex);
 	bool getparameterchanged(long inParameterIndex);
-	void setparameterchanged(long inParameterIndex, bool newChanged = true);
+	void setparameterchanged(long inParameterIndex, bool inChanged = true);
+	bool getparametertouched(long inParameterIndex);
+	void setparametertouched(long inParameterIndex, bool inTouched = true);
 	DfxParamCurve getparametercurve(long inParameterIndex)
 		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getcurve();   else return kDfxParamCurve_undefined;	}
 	void setparametercurve(long inParameterIndex, DfxParamCurve newcurve)
@@ -894,6 +896,8 @@ public:
 		{	return dfxplugin->getparametermax_i(inParameterIndex);	}
 	bool getparameterchanged(long inParameterIndex)
 		{	return dfxplugin->getparameterchanged(inParameterIndex);	}
+	bool getparametertouched(long inParameterIndex)
+		{	return dfxplugin->getparametertouched(inParameterIndex);	}
 
 
 protected:
