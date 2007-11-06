@@ -38,7 +38,7 @@ void DfxPlugin::PostConstructor()
 	// if this plugin specifies a list of supported i/o channel-count pairs
 	if (channelconfigs != NULL)
 	{
-		CAStreamBasicDescription curInStreamFormat(0.0, 0, 0, 0, 0, 0, 0, 0);
+		CAStreamBasicDescription curInStreamFormat;
 		if ( Inputs().GetNumberOfElements() > 0 )
 			curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0);
 		const CAStreamBasicDescription curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
@@ -46,10 +46,10 @@ void DfxPlugin::PostConstructor()
 		for (long i=0; i < numchannelconfigs; i++)
 		{
 			// compare the input channel count
-			if ( ((UInt32)(channelconfigs[i].inChannels) != curInStreamFormat.mChannelsPerFrame) && (channelconfigs[i].inChannels >= 0) )
+			if ( ((UInt32)(channelconfigs[i].inChannels) != curInStreamFormat.NumberChannels()) && (channelconfigs[i].inChannels >= 0) )
 				currentFormatIsNotSupported = true;
 			// compare the output channel count
-			else if ( ((UInt32)(channelconfigs[i].outChannels) != curOutStreamFormat.mChannelsPerFrame) && (channelconfigs[i].outChannels >= 0) )
+			else if ( ((UInt32)(channelconfigs[i].outChannels) != curOutStreamFormat.NumberChannels()) && (channelconfigs[i].outChannels >= 0) )
 				currentFormatIsNotSupported = true;
 
 			#if !TARGET_PLUGIN_IS_INSTRUMENT
@@ -64,12 +64,12 @@ void DfxPlugin::PostConstructor()
 		{
 			// change the input channel count to the first supported one listed
 			CAStreamBasicDescription newStreamFormat(curInStreamFormat);
-			newStreamFormat.mChannelsPerFrame = (UInt32) (channelconfigs[0].inChannels);
+			newStreamFormat.ChangeNumberChannels( (UInt32)(channelconfigs[0].inChannels), false );
 			if ( Inputs().GetNumberOfElements() > 0 )
 				AUBase::ChangeStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0, curInStreamFormat, newStreamFormat);
 			// change the output channel count to the first supported one listed
 			newStreamFormat = CAStreamBasicDescription(curOutStreamFormat);
-			newStreamFormat.mChannelsPerFrame = (UInt32) (channelconfigs[0].outChannels);
+			newStreamFormat.ChangeNumberChannels( (UInt32)(channelconfigs[0].outChannels), false );
 			AUBase::ChangeStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0, curOutStreamFormat, newStreamFormat);
 		}
 	}
@@ -136,8 +136,8 @@ ComponentResult DfxPlugin::Initialize()
 	{
 		SInt16 auNumInputs = 0;
 		if ( Inputs().GetNumberOfElements() > 0 )
-			auNumInputs = (SInt16) GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0).mChannelsPerFrame;
-		SInt16 auNumOutputs = (SInt16) GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0).mChannelsPerFrame;
+			auNumInputs = (SInt16) GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0).NumberChannels();
+		SInt16 auNumOutputs = (SInt16) GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0).NumberChannels();
 		bool foundMatch = false;
 		for (UInt32 i=0; (i < numIOconfigs) && !foundMatch; i++)
 		{
@@ -240,12 +240,6 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			result = noErr;
 			break;
 
-		// this allows a GUI component to get a pointer to our DfxPlugin class instance
-		case kDfxPluginProperty_PluginPtr:
-			outDataSize = sizeof(DfxPlugin*);
-			outWritable = false;
-			break;
-
 		// get/set parameter values (current, min, max, etc.) using specific variable types
 		case kDfxPluginProperty_ParameterValue:
 			outDataSize = sizeof(DfxParameterValueRequest);
@@ -266,28 +260,38 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 
 		// randomize the parameters
 		case kDfxPluginProperty_RandomizeParameter:
-			// when you "set" this "property", you send a bool to say whether or not to write automation data
-			outDataSize = sizeof(bool);
+			// when you "set" this "property", you send a boolean to say whether or not to write automation data
+			outDataSize = sizeof(Boolean);
 			outWritable = true;
 			break;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		// get/set the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
-			outDataSize = sizeof(bool);
+			outDataSize = sizeof(Boolean);
 			outWritable = true;
 			break;
 		// clear MIDI parameter assignments
 		case kDfxPluginProperty_ResetMidiLearn:
-			outDataSize = 0;	// you don't need an input value for this property
+			outDataSize = sizeof(Boolean);	// you don't need an input value for this property
 			outWritable = true;
 			break;
 		// get/set the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
-			outDataSize = sizeof(long);
+			outDataSize = sizeof(int32_t);
 			outWritable = true;
 			break;
 	#endif
+
+		case kLogicAUProperty_NodeOperationMode:
+			outDataSize = sizeof(UInt32);
+			outWritable = true;
+			break;
+
+		case kLogicAUProperty_NodePropertyDescriptions:
+			outDataSize = sizeof(LogicAUNodePropertyDescription) * getNumPluginProperties();
+			outWritable = false;
+			break;
 
 		default:
 			result = TARGET_API_BASE_CLASS::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
@@ -361,23 +365,23 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 
-		// this allows a GUI component to get a pointer to our DfxPlugin class instance
-		case kDfxPluginProperty_PluginPtr:
-			*(DfxPlugin**)outData = this;
-			break;
-
 		// get parameter values (current, min, max, etc.) using specific variable types
 		// XXX finish implementing all items
 		case kDfxPluginProperty_ParameterValue:
 			{
 				DfxParameterValueRequest * request = (DfxParameterValueRequest*) outData;
+				if ( isLogicNodeEndianReversed() )
+				{
+					request->inValueItem = CFSwapInt32(request->inValueItem);
+					request->inValueType = CFSwapInt32(request->inValueType);
+				}
 				DfxParamValue * value = &(request->value);
-				long paramID = request->parameterID;
-				switch (request->valueItem)
+				long paramID = inElement;
+				switch (request->inValueItem)
 				{
 					case kDfxParameterValueItem_current:
 						{
-							switch (request->valueType)
+							switch (request->inValueType)
 							{
 								case kDfxParamValueType_float:
 									value->f = getparameter_f(paramID);
@@ -399,7 +403,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						break;
 					case kDfxParameterValueItem_default:
 						{
-							switch (request->valueType)
+							switch (request->inValueType)
 							{
 								case kDfxParamValueType_float:
 									value->f = getparameterdefault_f(paramID);
@@ -418,7 +422,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						break;
 					case kDfxParameterValueItem_min:
 						{
-							switch (request->valueType)
+							switch (request->inValueType)
 							{
 								case kDfxParamValueType_float:
 									value->f = getparametermin_f(paramID);
@@ -438,7 +442,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						break;
 					case kDfxParameterValueItem_max:
 						{
-							switch (request->valueType)
+							switch (request->inValueType)
 							{
 								case kDfxParamValueType_float:
 									value->f = getparametermax_f(paramID);
@@ -460,6 +464,10 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						result = paramErr;
 						break;
 				}
+				if ( isLogicNodeEndianReversed() )
+				{
+					request->value.i = CFSwapInt64(request->value.i);
+				}
 			}
 			break;
 
@@ -467,17 +475,26 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kDfxPluginProperty_ParameterValueConversion:
 			{
 				DfxParameterValueConversionRequest * request = (DfxParameterValueConversionRequest*) outData;
-				switch (request->conversionType)
+				if ( isLogicNodeEndianReversed() )
+				{
+					request->inConversionType = CFSwapInt32(request->inConversionType);
+					reversebytes( &(request->inValue), sizeof(request->inValue) );
+				}
+				switch (request->inConversionType)
 				{
 					case kDfxParameterValueConversion_expand:
-						request->outValue = expandparametervalue_index(request->parameterID, request->inValue);
+						request->outValue = expandparametervalue_index(inElement, request->inValue);
 						break;
 					case kDfxParameterValueConversion_contract:
-						request->outValue = contractparametervalue_index(request->parameterID, request->inValue);
+						request->outValue = contractparametervalue_index(inElement, request->inValue);
 						break;
 					default:
 						result = paramErr;
 						break;
+				}
+				if ( isLogicNodeEndianReversed() )
+				{
+					reversebytes( &(request->outValue), sizeof(request->outValue) );
 				}
 			}
 			break;
@@ -486,7 +503,11 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kDfxPluginProperty_ParameterValueString:
 			{
 				DfxParameterValueStringRequest * request = (DfxParameterValueStringRequest*) outData;
-				if ( !getparametervaluestring(request->parameterID, request->stringIndex, request->valueString) )
+				if ( isLogicNodeEndianReversed() )
+				{
+					request->inStringIndex = CFSwapInt64(request->inStringIndex);
+				}
+				if ( !getparametervaluestring(inElement, request->inStringIndex, request->valueString) )
 					result = paramErr;
 			}
 			break;
@@ -494,13 +515,48 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 	#if TARGET_PLUGIN_USES_MIDI
 		// get the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
-			*(bool*)outData = dfxsettings->isLearning();
+			*(Boolean*)outData = dfxsettings->isLearning();
 			break;
 		// get the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
-			*(long*)outData = dfxsettings->getLearner();
+			*(int32_t*)outData = dfxsettings->getLearner();
 			break;
 	#endif
+
+		case kLogicAUProperty_NodeOperationMode:
+			*(UInt32*)outData = getSupportedLogicNodeOperationMode();
+			break;
+
+		case kLogicAUProperty_NodePropertyDescriptions:
+			{
+				LogicAUNodePropertyDescription * nodePropertyDescs = (LogicAUNodePropertyDescription*) outData;
+				for (long i=0; i < getNumPluginProperties(); i++)
+				{
+					nodePropertyDescs[i].mPropertyID = kDfxPluginProperty_startID + i;
+					nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_DontTouch;
+					nodePropertyDescs[i].mFlags = kLogicAUNodePropertyFlag_Synchronous;
+					switch ( nodePropertyDescs[i].mPropertyID )
+					{
+						case kDfxPluginProperty_ParameterValue:
+							nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+							break;
+						case kDfxPluginProperty_ParameterValueConversion:
+							nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+							break;
+						case kDfxPluginProperty_ParameterValueString:
+							nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+							break;
+						case kDfxPluginProperty_MidiLearner:
+							nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
+							break;
+						default:
+							getLogicNodePropertyDescription( nodePropertyDescs[i].mPropertyID, 
+										&(nodePropertyDescs[i].mEndianMode), &(nodePropertyDescs[i].mFlags) );
+							break;
+					}
+				}
+			}
+			break;
 
 		default:
 			result = TARGET_API_BASE_CLASS::GetProperty(inPropertyID, inScope, inElement, outData);
@@ -538,26 +594,24 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 				result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
 			break;
 
-		case kDfxPluginProperty_PluginPtr:
-			result = kAudioUnitErr_PropertyNotWritable;
-			break;
-
-		case kDfxPluginProperty_ParameterValueConversion:
-			result = kAudioUnitErr_PropertyNotWritable;
-			break;
-
 		// set parameter values (current, min, max, etc.) using specific variable types
 		// XXX finish implementing all items
 		case kDfxPluginProperty_ParameterValue:
 			{
 				DfxParameterValueRequest * request = (DfxParameterValueRequest*) inData;
+				if ( isLogicNodeEndianReversed() )
+				{
+					request->inValueItem = CFSwapInt32(request->inValueItem);
+					request->inValueType = CFSwapInt32(request->inValueType);
+					request->value.i = CFSwapInt64(request->value.i);
+				}
 				DfxParamValue * value = &(request->value);
-				long paramID = request->parameterID;
-				switch (request->valueItem)
+				long paramID = inElement;
+				switch (request->inValueItem)
 				{
 					case kDfxParameterValueItem_current:
 						{
-							switch (request->valueType)
+							switch (request->inValueType)
 							{
 								case kDfxParamValueType_float:
 									setparameter_f(paramID, value->f);
@@ -582,7 +636,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 						break;
 					case kDfxParameterValueItem_default:
 						{
-							switch (request->valueType)
+							switch (request->inValueType)
 							{
 								case kDfxParamValueType_float:
 //									setparameterdefault_f(paramID, value->f);
@@ -601,7 +655,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 						break;
 					case kDfxParameterValueItem_min:
 						{
-							switch (request->valueType)
+							switch (request->inValueType)
 							{
 								case kDfxParamValueType_float:
 //									setparametermin_f(paramID, value->f);
@@ -620,7 +674,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 						break;
 					case kDfxParameterValueItem_max:
 						{
-							switch (request->valueType)
+							switch (request->inValueType)
 							{
 								case kDfxParamValueType_float:
 //									setparametermax_f(paramID, value->f);
@@ -644,11 +698,19 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 
+		case kDfxPluginProperty_ParameterValueConversion:
+			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
 		// set parameter value strings
 		case kDfxPluginProperty_ParameterValueString:
 			{
 				DfxParameterValueStringRequest * request = (DfxParameterValueStringRequest*) inData;
-				if ( !setparametervaluestring(request->parameterID, request->stringIndex, request->valueString) )
+				if ( isLogicNodeEndianReversed() )
+				{
+					request->inStringIndex = CFSwapInt64(request->inStringIndex);
+				}
+				if ( !setparametervaluestring(inElement, request->inStringIndex, request->valueString) )
 					result = paramErr;
 			}
 			break;
@@ -657,7 +719,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 		case kDfxPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a bool to say whether or not to write automation data
 			if (inElement == kAUParameterListener_AnyParameter)
-				randomizeparameters( *(bool*)inData );
+				randomizeparameters( *(Boolean*)inData );
 			else
 				randomizeparameter(inElement);
 			break;
@@ -665,7 +727,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	#if TARGET_PLUGIN_USES_MIDI
 		// set the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
-			dfxsettings->setParameterMidiLearn( *(bool*)inData );
+			dfxsettings->setParameterMidiLearn( *(Boolean*)inData );
 			break;
 		// clear MIDI parameter assignments
 		case kDfxPluginProperty_ResetMidiLearn:
@@ -674,9 +736,17 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		// set the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
-			dfxsettings->setLearner( *(long*)inData );
+			dfxsettings->setLearner( *(int32_t*)inData );
 			break;
 	#endif
+
+		case kLogicAUProperty_NodeOperationMode:
+			setCurrentLogicNodeOperationMode( *(UInt32*)inData );
+			break;
+
+		case kLogicAUProperty_NodePropertyDescriptions:
+			result = kAudioUnitErr_PropertyNotWritable;
+			break;
 
 		default:
 			result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
@@ -795,13 +865,13 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 // XXX bzzzt!  no, now Bill Stewart says that our definition of default value is correct?
 		outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
 	// check if the parameter is used or not (stupid VST workaround)
-	if (getparameterattributes(inParameterID) & kDfxParamAttribute_unused)
+	if ( getparameterattributes(inParameterID) & kDfxParamAttribute_unused )
 	{
 		outParameterInfo.flags = 0;
 //		return kAudioUnitErr_InvalidParameter;	// XXX ey?
 	}
 	// if the parameter is hidden, then indicate that it's not readable or writable...
-	else if (getparameterattributes(inParameterID) & kDfxParamAttribute_hidden)
+	else if ( getparameterattributes(inParameterID) & kDfxParamAttribute_hidden )
 		outParameterInfo.flags = 0;
 	// ...otherwise all parameters are readable and writable
 	else
@@ -813,7 +883,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		CFRetain(outParameterInfo.cfNameString);
 		outParameterInfo.flags |= kAudioUnitParameterFlag_CFNameRelease;
 	}
-	switch (getparametercurve(inParameterID))
+	switch ( getparametercurve(inParameterID) )
 	{
 		// so far, this is all that AU offers as far as parameter distribution curves go
 		case kDfxParamCurve_log:
@@ -839,14 +909,17 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			break;
 	}
 
+	if ( getparametervaluetype(inParameterID) == kDfxParamValueType_float )
+		outParameterInfo.flags |= kAudioUnitParameterFlag_IsHighResolution;
+
 	// the complicated part:  getting the unit type 
 	// (but easy if we use value strings for value display)
 	outParameterInfo.unitName = NULL;	// default to nothing, will be set if it is needed
-	if (getparameterusevaluestrings(inParameterID))
+	if ( getparameterusevaluestrings(inParameterID) )
 		outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
 	else
 	{
-		switch (getparameterunit(inParameterID))
+		switch ( getparameterunit(inParameterID) )
 		{
 			case kDfxParamUnit_generic:
 				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
@@ -1218,14 +1291,14 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 				const CAStreamBasicDescription & inPrevFormat, const CAStreamBasicDescription & inNewFormat)
 {
 //fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat,   new sr = %.3lf,   old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
-//fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat,   new num channels = %lu,   old num channels = %lu\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
+//fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat,   new num channels = %lu,   old num channels = %lu\n\n", inNewFormat.NumberChannels(), inPrevFormat.NumberChannels());
 	const AUChannelInfo * auChannelConfigs = NULL;
 	UInt32 numIOconfigs = SupportedNumChannels(&auChannelConfigs);
 	// if this AU supports only specific i/o channel count configs, 
 	// then try to check whether the incoming format is allowed
 	if ( (numIOconfigs > 0) && (auChannelConfigs != NULL) )
 	{
-		SInt16 newNumChannels = (SInt16) (inNewFormat.mChannelsPerFrame);
+		SInt16 newNumChannels = (SInt16) (inNewFormat.NumberChannels());
 		bool foundMatch = false;
 		for (UInt32 i=0; (i < numIOconfigs) && !foundMatch; i++)
 		{
@@ -1322,17 +1395,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 
 	// clear the output buffer because we will accumulate output into it
 	if (audioProcessingAccumulatingOnly)
-	{
-		// XXX goes out of array bounds with AUEffectBase::ProcessScheduledSlice() implementation currently 
-		// cuz outBuffer.mNumberBuffers[].mDataByteSize isn't being updated to reflect the adjusted slice size
-//		AUBufferList::ZeroBuffer(outBuffer);
-		for (UInt32 ch=0; ch < outBuffer.mNumberBuffers; ch++)
-		{
-			float * outBuf = (float*) (outBuffer.mBuffers[ch].mData);
-			for (UInt32 samp=0; samp < inFramesToProcess; samp++)
-				outBuf[samp] = 0.0f;
-		}
-	}
+		AUBufferList::ZeroBuffer(outBuffer);
 
 #if TARGET_PLUGIN_USES_DSPCORE
 	// if the plugin uses DSP cores, then we just call the 
