@@ -1291,7 +1291,7 @@ OSStatus RMSBuddyEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID
 
 	OSStatus result = noErr;
 
-	// do the new-fangled way, if it's available on the user's system
+	// do the current way, if it's available on the user's system
 	AudioUnitEvent paramEvent;
 	paramEvent.mEventType = inEventType;
 	paramEvent.mArgument.mParameter.mParameterID = inParameterID;
@@ -1448,16 +1448,20 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 // send a message to the DSP component to reset average RMS
 void RMSBuddyEditor::resetRMS()
 {
-	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
-	AudioUnitSetProperty(GetEditAudioUnit(), kRMSBuddyProperty_ResetRMS, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(nud));
+	CAAUParameter auParam(GetEditAudioUnit(), kRMSBuddyParameter_ResetRMS, kAudioUnitScope_Global, (AudioUnitElement)0);
+	SendAUParameterEvent(auParam.mParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
+	AUParameterSet(NULL, this, &auParam, 1.0f, 0);
+	SendAUParameterEvent(auParam.mParameterID, kAudioUnitEvent_EndParameterChangeGesture);
 }
 
 //-----------------------------------------------------------------------------
 // send a message to the DSP component to reset absolute peak
 void RMSBuddyEditor::resetPeak()
 {
-	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
-	AudioUnitSetProperty(GetEditAudioUnit(), kRMSBuddyProperty_ResetPeak, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(nud));
+	CAAUParameter auParam(GetEditAudioUnit(), kRMSBuddyParameter_ResetPeak, kAudioUnitScope_Global, (AudioUnitElement)0);
+	SendAUParameterEvent(auParam.mParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
+	AUParameterSet(NULL, this, &auParam, 1.0f, 0);
+	SendAUParameterEvent(auParam.mParameterID, kAudioUnitEvent_EndParameterChangeGesture);
 }
 
 //-----------------------------------------------------------------------------

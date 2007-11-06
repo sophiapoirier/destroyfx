@@ -8,11 +8,12 @@
 
 enum {
 	kRMSBuddyParameter_AnalysisWindowSize = 0,	// the size, in ms, of the RMS and peak analysis window / refresh rate
+	kRMSBuddyParameter_ResetRMS,	// message *** reset the average RMS values
+	kRMSBuddyParameter_ResetPeak,	// message *** reset the absolute peak values
+	kRMSBuddyParameter_NumParameters,
 
 	// property IDs for allowing the GUI component get DSP information and trigger DSP-related events
-	kRMSBuddyProperty_DynamicsData = 64000,	// read-only *** get the current dynamics analysis data
-	kRMSBuddyProperty_ResetRMS,	// event message *** reset the average RMS values
-	kRMSBuddyProperty_ResetPeak	// event message *** reset the absolute peak values
+	kRMSBuddyProperty_DynamicsData = 64000	// read-only *** get the current dynamics analysis data
 };
 
 // this is the data structure passed between GUI and DSP components for kRMSBuddyProperty_DynamicsData
@@ -28,7 +29,7 @@ typedef struct {
 class RMSBuddy : public AUEffectBase
 {
 public:
-	RMSBuddy(AudioUnit component);
+	RMSBuddy(AudioUnit inComponentInstance);
 
 	virtual ComponentResult Initialize();
 	virtual void Cleanup();
@@ -40,6 +41,8 @@ public:
 
 	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
 						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo);
+	virtual ComponentResult SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
+						AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames);
 
 	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, UInt32 & outDataSize, Boolean & outWritable);
