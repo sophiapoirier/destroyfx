@@ -1180,11 +1180,10 @@ void DGCarbonViewControl::ControlToParameter()
 		Float32 paramValue;
 		DfxParameterValueConversionRequest request;
 		UInt32 dataSize = sizeof(request);
-		request.parameterID = mParam.mParameterID;
-		request.conversionType = kDfxParameterValueConversion_expand;
+		request.inConversionType = kDfxParameterValueConversion_expand;
 		request.inValue = controlValue;
 		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
-								kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+								kAudioUnitScope_Global, mParam.mParameterID, &request, &dataSize) 
 								== noErr)
 			paramValue = request.outValue;
 		else
@@ -1202,11 +1201,10 @@ void DGCarbonViewControl::ParameterToControl(Float32 inParamValue)
 	{
 		DfxParameterValueConversionRequest request;
 		UInt32 dataSize = sizeof(request);
-		request.parameterID = mParam.mParameterID;
-		request.conversionType = kDfxParameterValueConversion_contract;
+		request.inConversionType = kDfxParameterValueConversion_contract;
 		request.inValue = inParamValue;
 		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
-								kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+								kAudioUnitScope_Global, mParam.mParameterID, &request, &dataSize) 
 								== noErr)
 			SetValueFract(request.outValue);
 		else
