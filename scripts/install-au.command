@@ -63,7 +63,7 @@ then
 # to make sure that the new AUs become registered
 else
 	printf "\n\tplugin successfully installed!\n\n"
-	touch "${AU_INSTALL_DEST}"
+	touch -cf "${AU_INSTALL_DEST}"
 	if (( $CLEANUP ))
 	then
 		rm -R -f *.component
