@@ -176,6 +176,7 @@ void RMSBuddy::notifyGUI()
 }
 
 //-----------------------------------------------------------------------------------------
+// get the details about a parameter
 ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope, 
 						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo)
 {
@@ -202,7 +203,7 @@ ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope,
 
 		// reset the average RMS values
 		case kRMSBuddyParameter_ResetRMS:
-			outParameterInfo.flags = kAudioUnitParameterFlag_IsWritable;
+			outParameterInfo.flags = kAudioUnitParameterFlag_IsWritable;	// write-only means it's a "trigger"-type parameter
 			paramNameString = CFCopyLocalizedStringFromTableInBundle(CFSTR("reset average RMS"), 
 											CFSTR("Localizable"), pluginBundleRef, CFSTR("parameter name"));
 			FillInParameterName(outParameterInfo, paramNameString, true);
@@ -214,7 +215,7 @@ ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope,
 
 		// reset the absolute peak values
 		case kRMSBuddyParameter_ResetPeak:
-			outParameterInfo.flags = kAudioUnitParameterFlag_IsWritable;
+			outParameterInfo.flags = kAudioUnitParameterFlag_IsWritable;	// write-only means it's a "trigger"-type parameter
 			paramNameString = CFCopyLocalizedStringFromTableInBundle(CFSTR("reset absolute peak"), 
 											CFSTR("Localizable"), pluginBundleRef, CFSTR("parameter name"));
 			FillInParameterName(outParameterInfo, paramNameString, true);
@@ -230,7 +231,7 @@ ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope,
 }
 
 //-----------------------------------------------------------------------------------------
-// implement special handling of "trigger" parameters
+// only overridden to insert special handling of "trigger" parameters
 ComponentResult RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames)
 {
