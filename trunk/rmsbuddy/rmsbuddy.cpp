@@ -9,25 +9,25 @@
 COMPONENT_ENTRY(RMSBuddy)
 
 //-----------------------------------------------------------------------------
-RMSBuddy::RMSBuddy(AudioUnit component)
-	: AUEffectBase(component, true)	// "true" to say that we can process audio in-place
+RMSBuddy::RMSBuddy(AudioUnit inComponentInstance)
+	: AUEffectBase(inComponentInstance, true)	// "true" to say that we can process audio in-place
 {
 	// initialize the arrays and array quantity counter
-	// (choosing 2 since that's the default stream format and that at least sets it 
-	// to something in case the UI gets created before we get Initialized)
-	numChannels = 2;
-
 	averageRMS = NULL;
 	totalSquaredCollection = NULL;
 	absolutePeak = NULL;
 	guiContinualRMS = NULL;
 	guiContinualPeak = NULL;
 	guiShareDataCache = NULL;
+	numChannels = 0;
 
-	// initialize our parameter
-	AudioUnitParameterInfo paramInfo;
-	if (GetParameterInfo(kAudioUnitScope_Global, kRMSBuddyParameter_AnalysisWindowSize, paramInfo) == noErr)
-		AUBase::SetParameter(kRMSBuddyParameter_AnalysisWindowSize, kAudioUnitScope_Global, (AudioUnitElement)0, paramInfo.defaultValue, 0);
+	// initialize our parameters
+	for (AudioUnitParameterID i=0; i < kRMSBuddyParameter_NumParameters; i++)
+	{
+		AudioUnitParameterInfo paramInfo;
+		if (GetParameterInfo(kAudioUnitScope_Global, i, paramInfo) == noErr)
+			AUBase::SetParameter(i, kAudioUnitScope_Global, (AudioUnitElement)0, paramInfo.defaultValue, 0);
+	}
 }
 
 //-----------------------------------------------------------------------------------------
@@ -179,27 +179,76 @@ void RMSBuddy::notifyGUI()
 ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope, 
 						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo)
 {
-	// the size, in ms, of the RMS and peak analysis window / refresh rate
-	if (inParameterID == kRMSBuddyParameter_AnalysisWindowSize)
+	if (inScope != kAudioUnitScope_Global)
+		return kAudioUnitErr_InvalidScope;
+
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(RMS_BUDDY_BUNDLE_ID) );
+	CFStringRef paramNameString = NULL;
+	switch (inParameterID)
 	{
-		outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
-								| kAudioUnitParameterFlag_IsWritable
-								| kAudioUnitParameterFlag_DisplaySquareRoot;
+		// the size, in ms, of the RMS and peak analysis window / refresh rate
+		case kRMSBuddyParameter_AnalysisWindowSize:
+			outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
+									| kAudioUnitParameterFlag_IsWritable
+									| kAudioUnitParameterFlag_DisplaySquareRoot;
+			paramNameString = CFCopyLocalizedStringFromTableInBundle(CFSTR("analysis window"), 
+											CFSTR("Localizable"), pluginBundleRef, CFSTR("parameter name"));
+			FillInParameterName(outParameterInfo, paramNameString, true);
+			outParameterInfo.unit = kAudioUnitParameterUnit_Milliseconds;
+			outParameterInfo.minValue = 30.0f;
+			outParameterInfo.maxValue = 1000.0f;
+			outParameterInfo.defaultValue = 69.0f;
+			return noErr;
 
-		CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(RMS_BUDDY_BUNDLE_ID) );
-		CFStringRef paramNameString = CFCopyLocalizedStringFromTableInBundle(CFSTR("analysis window"), 
-										CFSTR("Localizable"), pluginBundleRef, CFSTR("parameter name"));
-		FillInParameterName(outParameterInfo, paramNameString, true);
+		// reset the average RMS values
+		case kRMSBuddyParameter_ResetRMS:
+			outParameterInfo.flags = kAudioUnitParameterFlag_IsWritable;
+			paramNameString = CFCopyLocalizedStringFromTableInBundle(CFSTR("reset average RMS"), 
+											CFSTR("Localizable"), pluginBundleRef, CFSTR("parameter name"));
+			FillInParameterName(outParameterInfo, paramNameString, true);
+			outParameterInfo.unit = kAudioUnitParameterUnit_Boolean;
+			outParameterInfo.minValue = 0.0f;
+			outParameterInfo.maxValue = 1.0f;
+			outParameterInfo.defaultValue = 0.0f;
+			return noErr;
 
-		outParameterInfo.unit = kAudioUnitParameterUnit_Milliseconds;
-		outParameterInfo.minValue = 30.0f;
-		outParameterInfo.maxValue = 1000.0f;
-		outParameterInfo.defaultValue = 69.0f;
+		// reset the absolute peak values
+		case kRMSBuddyParameter_ResetPeak:
+			outParameterInfo.flags = kAudioUnitParameterFlag_IsWritable;
+			paramNameString = CFCopyLocalizedStringFromTableInBundle(CFSTR("reset absolute peak"), 
+											CFSTR("Localizable"), pluginBundleRef, CFSTR("parameter name"));
+			FillInParameterName(outParameterInfo, paramNameString, true);
+			outParameterInfo.unit = kAudioUnitParameterUnit_Boolean;
+			outParameterInfo.minValue = 0.0f;
+			outParameterInfo.maxValue = 1.0f;
+			outParameterInfo.defaultValue = 0.0f;
+			return noErr;
 
-		return noErr;
+		default:
+			return kAudioUnitErr_InvalidParameter;
+	}
+}
+
+//-----------------------------------------------------------------------------------------
+// implement special handling of "trigger" parameters
+ComponentResult RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
+						AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames)
+{
+	switch (inParameterID)
+	{
+		// trigger the resetting of average RMS
+		case kRMSBuddyParameter_ResetRMS:
+			resetRMS();
+			break;
+		// trigger the resetting of absolute peak
+		case kRMSBuddyParameter_ResetPeak:
+			resetPeak();
+			break;
+		default:
+			break;
 	}
 
-	return kAudioUnitErr_InvalidParameter;
+	return AUBase::SetParameter(inParameterID, inScope, inElement, inValue, inBufferOffsetInFrames);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -212,12 +261,6 @@ ComponentResult RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, Audi
 		case kRMSBuddyProperty_DynamicsData:
 			outDataSize = sizeof(RMSBuddyDynamicsData);
 			outWritable = false;
-			return noErr;
-
-		case kRMSBuddyProperty_ResetRMS:
-		case kRMSBuddyProperty_ResetPeak:
-			outDataSize = sizeof(char);	// whatever, input data isn't actually needed to set these properties
-			outWritable = true;
 			return noErr;
 
 		// let non-custom properties fall through to the parent class' handler
@@ -248,14 +291,6 @@ ComponentResult RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 			}
 			return noErr;
 
-		// this has no actual data, it's used for event messages
-		case kRMSBuddyProperty_ResetRMS:
-			return noErr;
-
-		// this has no actual data, it's used for event messages
-		case kRMSBuddyProperty_ResetPeak:
-			return noErr;
-
 		// let non-custom properties fall through to the parent class' handler
 		default:
 			return AUEffectBase::GetProperty(inPropertyID, inScope, inElement, outData);
@@ -271,16 +306,6 @@ ComponentResult RMSBuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 	{
 		case kRMSBuddyProperty_DynamicsData:
 			return kAudioUnitErr_PropertyNotWritable;
-
-		// trigger the resetting of average RMS
-		case kRMSBuddyProperty_ResetRMS:
-			resetRMS();
-			return noErr;
-
-		// trigger the resetting of absolute peak
-		case kRMSBuddyProperty_ResetPeak:
-			resetPeak();
-			return noErr;
 
 		// let non-custom properties fall through to the parent class' handler
 		default:
