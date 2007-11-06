@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
+/*--------------- by Sophia Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
 
 #include "rmsbuddyeditor.h"
 #include "rmsbuddy.h"
@@ -150,7 +150,7 @@ void RMSTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 	CGContextSetRGBStrokeColor(inContext, (float)frameColor.r/255.0f, (float)frameColor.g/255.0f, (float)frameColor.b/255.0f, 1.0f);
 	// Quartz draws lines on top of the pixel, so you need to move the coordinates to the middle of the pixel, 
 	// and then also shrink the size accordingly
-	CGRect box = CGRectMake(bounds.origin.x + 0.5f, bounds.origin.y + 0.5f, bounds.size.width - 1.0f, bounds.size.height - 1.0f);
+	CGRect box = CGRectInset(bounds, 0.5f, 0.5f);
 	CGContextStrokeRectWithWidth(inContext, box, 1.0f);
 
 	if ( isParameterAttached() )
@@ -202,26 +202,26 @@ void RMSTextDisplay::setText(CFStringRef inText)
 
 //-----------------------------------------------------------------------------
 // given a linear amplitude value, set the display text with the dB-converted value
-void RMSTextDisplay::setText_dB(float inLinearValue)
+void RMSTextDisplay::setText_dB(double inLinearValue)
 {
 	if (text != NULL)
 		CFRelease(text);
 
 	// -infinity dB
-	if (inLinearValue <= 0.0f)
+	if (inLinearValue <= 0.0)
 	{
 		const UniChar minusInfinity[] = { '-', 0x221E };
 		text = CFStringCreateWithCharacters(kCFAllocatorDefault, minusInfinity, sizeofA(minusInfinity));
 	}
 	else
 	{
-		float dBvalue = 20.0f * (float)log10(inLinearValue);	// convert linear value to dB
+		double dBvalue = 20.0 * log10(inLinearValue);	// convert linear value to dB
 		CFStringRef formatString;
 		// add a plus sign to positive values
-		if (dBvalue >= 0.01f)
+		if (dBvalue >= 0.01)
 			formatString = CFSTR("+%.2f");
 		// 1 decimal precision for -100 or lower
-		else if (fabsf(dBvalue) >= 100.0f)
+		else if (fabs(dBvalue) >= 100.0)
 			formatString = CFSTR("%.1f");
 		// regular 2 decimal precision display
 		else
@@ -544,11 +544,11 @@ OSStatus RMSBuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 	ToolboxObjectClassRef newControlClass = NULL;
 	controlHandlerUPP = NewEventHandlerUPP(RmsControlEventHandler);
 	// this is sort of a hack to come up with a unique class ID name, so that we can instanciate multiple plugin instances
-	unsigned long instanceAddress = (unsigned long) this;
+	UInt64 instanceAddress = (UInt64) this;
 	bool noSuccessYet = true;
 	while (noSuccessYet)
 	{
-		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.ControlClass%lu"), 
+		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.ControlClass%llu"), 
 																		RMS_BUDDY_BUNDLE_ID, instanceAddress);
 		if ( RegisterToolboxObjectClass(toolboxClassIDcfstring, NULL, GetEventTypeCount(toolboxClassEvents), toolboxClassEvents, 
 										controlHandlerUPP, this, &newControlClass) == noErr )
@@ -630,7 +630,8 @@ OSStatus RMSBuddyEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 			status = AUEventListenerAddEventType(propertyEventListener, this, &dynamicsDataPropertyAUEvent);
 
 			numChannelsPropertyAUEvent = dynamicsDataPropertyAUEvent;
-			numChannelsPropertyAUEvent.mArgument.mProperty.mPropertyID = kRMSBuddyProperty_NumChannels;
+			numChannelsPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Output;
+			numChannelsPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_StreamFormat;
 			status = AUEventListenerAddEventType(propertyEventListener, this, &numChannelsPropertyAUEvent);
 		}
 	}
@@ -699,10 +700,7 @@ RMSBuddyEditor::~RMSBuddyEditor()
 OSStatus RMSBuddyEditor::setup()
 {
 	// first figure out how many channels of analysis data we will be displaying
-	UInt32 dataSize = sizeof(numChannels);
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kRMSBuddyProperty_NumChannels, kAudioUnitScope_Global, (AudioUnitElement)0, &numChannels, &dataSize) 
-			!= noErr)
-		numChannels = 0;
+	numChannels = getAUNumChannels();
 	// there's not really anything for us to do in this situation (which is crazy and shouldn't happen anyway)
 	if (numChannels == 0)
 		return kAudioUnitErr_FailedInitialization;
@@ -714,7 +712,7 @@ OSStatus RMSBuddyEditor::setup()
 	continualPeakDisplays = (RMSTextDisplay**) malloc(numChannels * sizeof(RMSTextDisplay*));
 	channelLabels = (RMSTextDisplay**) malloc(numChannels * sizeof(RMSTextDisplay*));
 	// and initialized the control object pointers in the arrays
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
 		averageRMSDisplays[ch] = NULL;
 		continualRMSDisplays[ch] = NULL;
@@ -731,7 +729,7 @@ OSStatus RMSBuddyEditor::setup()
 
 #define VALUE_TEXT_DISPLAY	RMSTextDisplay(this, xpos, ypos, kValueDisplayWidth, kValueDisplayHeight, kReadoutTextColor, kReadoutBoxColor, kReadoutFrameColor, kValueDisplayFontID, kHIThemeTextHorizontalFlushCenter)
 
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
 		// position back to the top of the channel column
 		ypos = kValueDisplayY;
@@ -802,7 +800,7 @@ OSStatus RMSBuddyEditor::setup()
 	ypos = kChannelLabelY;
 
 	// the label(s) for the the name(s) of the channel column(s)
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
 		channelLabels[ch] = new RMSTextDisplay(this, xpos, ypos, kChannelLabelWidth, kChannelLabelHeight, kLabelTextColor, 
 							kBackgroundColor, kBackgroundColor, kLabelDisplayFontID, kHIThemeTextHorizontalFlushCenter);
@@ -924,7 +922,7 @@ void RMSBuddyEditor::cleanup()
 	SAFE_DELETE_CONTROL(resetRMSbutton)
 	SAFE_DELETE_CONTROL(resetPeakButton)
 	SAFE_DELETE_CONTROL(helpButton)
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
 		if (averageRMSDisplays != NULL)
 			SAFE_DELETE_CONTROL(averageRMSDisplays[ch])
@@ -1271,9 +1269,8 @@ static void RmsPropertyListenerProc(void * inCallbackRefCon, void * inObject, co
 		{
 			switch (inEvent->mArgument.mProperty.mPropertyID)
 			{
-				case kRMSBuddyProperty_NumChannels:
-					bud->cleanup();	// tear it down
-					bud->setup();	// rebuild
+				case kAudioUnitProperty_StreamFormat:
+					bud->updateStreamFormatChange();
 					break;
 				case kRMSBuddyProperty_DynamicsData:
 					bud->updateDisplays();	// refresh the value displays
@@ -1326,14 +1323,13 @@ void RMSBuddyEditor::updateDisplays()
 	UInt32 dataSize = sizeof(request);
 
 	// get the dynamics data values for each channel being analyzed
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
-		request.inChannel = ch;
 		// if getting the property fails, initialize to all zeroes so it's usable anyway
-		if (AudioUnitGetProperty(GetEditAudioUnit(), kRMSBuddyProperty_DynamicsData, kAudioUnitScope_Global, 0, &request, &dataSize) != noErr)
+		if (AudioUnitGetProperty(GetEditAudioUnit(), kRMSBuddyProperty_DynamicsData, kAudioUnitScope_Global, ch, &request, &dataSize) != noErr)
 		{
-			request.outAverageRMS = request.outContinualRMS = 0.0;
-			request.outAbsolutePeak = request.outContinualPeak = 0.0f;
+			request.averageRMS = request.continualRMS = 0.0;
+			request.absolutePeak = request.continualPeak = 0.0;
 		}
 
 #define SAFE_SET_TEXT(ctrl, val)	\
@@ -1343,10 +1339,10 @@ void RMSBuddyEditor::updateDisplays()
 				ctrl[ch]->setText_dB(val);	\
 		}
 		// update the values being displayed
-		SAFE_SET_TEXT(averageRMSDisplays, request.outAverageRMS)
-		SAFE_SET_TEXT(continualRMSDisplays, request.outContinualRMS)
-		SAFE_SET_TEXT(absolutePeakDisplays, request.outAbsolutePeak)
-		SAFE_SET_TEXT(continualPeakDisplays, request.outContinualPeak)
+		SAFE_SET_TEXT(averageRMSDisplays, request.averageRMS)
+		SAFE_SET_TEXT(continualRMSDisplays, request.continualRMS)
+		SAFE_SET_TEXT(absolutePeakDisplays, request.absolutePeak)
+		SAFE_SET_TEXT(continualPeakDisplays, request.continualPeak)
 #undef SAFE_SET_TEXT
 
 	}
@@ -1360,7 +1356,7 @@ void RMSBuddyEditor::updateWindowSize(Float32 inParamValue, RMSControl * inRMSCo
 if (inRMSControl == windowSizeSlider) fprintf(stderr, "object = slider\n");
 else if (inRMSControl == windowSizeDisplay) fprintf(stderr, "object = display\n");
 else if (inRMSControl == NULL) fprintf(stderr, "object = NULL\n");
-else fprintf(stderr, "object = %lu\n", (unsigned long)inRMSControl);
+else fprintf(stderr, "object = %p\n", inRMSControl);
 */
 //	if ( (windowSizeSlider != NULL) && (inRMSControl == windowSizeSlider) )
 	if (windowSizeSlider != NULL)
@@ -1377,6 +1373,16 @@ else fprintf(stderr, "object = %lu\n", (unsigned long)inRMSControl);
 //	if ( (windowSizeDisplay != NULL) && (inRMSControl == windowSizeDisplay) )
 	if (windowSizeDisplay != NULL)
 		windowSizeDisplay->redraw();
+}
+
+//-----------------------------------------------------------------------------
+void RMSBuddyEditor::updateStreamFormatChange()
+{
+	if (getAUNumChannels() != numChannels)
+	{
+		cleanup();	// tear it down
+		setup();	// rebuild
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1443,7 +1449,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 void RMSBuddyEditor::resetRMS()
 {
 	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
-	AudioUnitSetProperty(GetEditAudioUnit(), kRMSBuddyProperty_ResetRMS, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
+	AudioUnitSetProperty(GetEditAudioUnit(), kRMSBuddyProperty_ResetRMS, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(nud));
 }
 
 //-----------------------------------------------------------------------------
@@ -1451,5 +1457,18 @@ void RMSBuddyEditor::resetRMS()
 void RMSBuddyEditor::resetPeak()
 {
 	char nud;	// irrelavant, no input data is actually needed, but SetProperty will fail without something
-	AudioUnitSetProperty(GetEditAudioUnit(), kRMSBuddyProperty_ResetPeak, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(char));
+	AudioUnitSetProperty(GetEditAudioUnit(), kRMSBuddyProperty_ResetPeak, kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(nud));
+}
+
+//-----------------------------------------------------------------------------
+// send a message to the DSP component to reset absolute peak
+UInt32 RMSBuddyEditor::getAUNumChannels()
+{
+	CAStreamBasicDescription streamDesc;
+	UInt32 dataSize = sizeof(streamDesc);
+	if (AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, (AudioUnitElement)0, &streamDesc, &dataSize) 
+			== noErr)
+		return streamDesc.NumberChannels();
+	else
+		return 0;
 }

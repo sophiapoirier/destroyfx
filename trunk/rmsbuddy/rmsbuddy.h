@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
+/*--------------- by Sophia Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
 
 #ifndef __RMSBUDDY_H
 #define __RMSBUDDY_H
@@ -12,19 +12,15 @@ enum {
 	// property IDs for allowing the GUI component get DSP information and trigger DSP-related events
 	kRMSBuddyProperty_DynamicsData = 64000,	// read-only *** get the current dynamics analysis data
 	kRMSBuddyProperty_ResetRMS,	// event message *** reset the average RMS values
-	kRMSBuddyProperty_ResetPeak,	// event message *** reset the absolute peak values
-	kRMSBuddyProperty_NumChannels	// read-only *** get the number of audio channels being analyzed
+	kRMSBuddyProperty_ResetPeak	// event message *** reset the absolute peak values
 };
 
 // this is the data structure passed between GUI and DSP components for kRMSBuddyProperty_DynamicsData
 typedef struct {
-	// value sent in upon input (specifies for which audio channel you want data)
-	unsigned long inChannel;
-	// values filled upon output
-	double outAverageRMS;
-	double outContinualRMS;
-	float outAbsolutePeak;
-	float outContinualPeak;
+	double averageRMS;
+	double continualRMS;
+	double absolutePeak;
+	double continualPeak;
 } RMSBuddyDynamicsData;
 
 
@@ -57,13 +53,10 @@ public:
 		{	return RMS_BUDDY_VERSION;	}
 	virtual bool SupportsTail()
 		{	return true;	}
-#ifdef RMSBUDDY_ENABLE_RESIZE_TEST
-	virtual ComponentResult RestoreState(CFPropertyListRef inData);
-#endif
 
 
 private:
-	unsigned long numChannels;	// remember the current number of channels being analyzed
+	UInt32 numChannels;	// remember the current number of channels being analyzed
 	unsigned long totalSamples;	// the total sample count since we last started analyzing average RMS and absolute peak
 	double * averageRMS;	// array of the current average RMS values for each channel
 	double * totalSquaredCollection;	// array of the current sums of squared input sample values for each channel (used for RMS calculation)
