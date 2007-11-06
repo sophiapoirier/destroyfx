@@ -46,9 +46,9 @@ DfxParam::DfxParam()
 	enforceValueLimits = false;
 
 	// default this stuff empty-style
-	valueType = kDfxParamValueType_undefined;
-	unit = kDfxParamUnit_undefined;
-	curve = kDfxParamCurve_undefined;
+	valueType = kDfxParamValueType_float;
+	unit = kDfxParamUnit_generic;
+	curve = kDfxParamCurve_linear;
 	curvespec = 1.0;
 	changed = false;
 	touched = false;
@@ -109,8 +109,6 @@ void DfxParam::init(const char * inName, DfxParamValueType inType,
 	// and that the default value is between the min and max
 	switch (inType)
 	{
-		case kDfxParamValueType_undefined:
-			break;
 		case kDfxParamValueType_float:
 			if (min.f > max.f)
 			{
@@ -333,7 +331,6 @@ double DfxParam::derive_f(DfxParamValue inValue)
 			return (double) inValue.i;
 		case kDfxParamValueType_boolean:
 			return (inValue.b != 0) ? 1.0 : 0.0;
-		case kDfxParamValueType_undefined:
 		default:
 			return 0.0;
 	}
@@ -355,7 +352,6 @@ int64_t DfxParam::derive_i(DfxParamValue inValue)
 			return inValue.i;
 		case kDfxParamValueType_boolean:
 			return (inValue.b != 0) ? 1 : 0;
-		case kDfxParamValueType_undefined:
 		default:
 			return 0;
 	}
@@ -374,7 +370,6 @@ bool DfxParam::derive_b(DfxParamValue inValue)
 			return (inValue.i != 0);
 		case kDfxParamValueType_boolean:
 			return (inValue.b != 0);
-		case kDfxParamValueType_undefined:
 		default:
 			return false;
 	}
@@ -417,7 +412,6 @@ double contractparametervalue(double inLiteralValue, double minValue, double max
 			return log(1.0-minValue+inLiteralValue) / log(1.0-minValue+maxValue);
 		case kDfxParamCurve_log:
 			return (log(inLiteralValue/minValue) / logTwo) / (log(maxValue/minValue) / logTwo);
-		case kDfxParamCurve_undefined:
 		default:
 			break;
 	}
@@ -467,7 +461,6 @@ bool DfxParam::accept_f(double inValue, DfxParamValue & outValue)
 					return false;
 			}
 			break;
-		case kDfxParamValueType_undefined:
 		default:
 			return false;
 	}
@@ -501,7 +494,6 @@ bool DfxParam::accept_i(int64_t inValue, DfxParamValue & outValue)
 					return false;
 			}
 			break;
-		case kDfxParamValueType_undefined:
 		default:
 			return false;
 	}
@@ -535,7 +527,6 @@ bool DfxParam::accept_b(bool inValue, DfxParamValue & outValue)
 					return false;
 			}
 			break;
-		case kDfxParamValueType_undefined:
 		default:
 			return false;
 	}
@@ -585,7 +576,6 @@ double expandparametervalue(double inGenValue, double minValue, double maxValue,
 			return exp( log(valueRange+1.0) * inGenValue ) + minValue - 1.0;
 		case kDfxParamCurve_log:
 			return minValue * pow( 2.0, inGenValue * log(maxValue/minValue)*logTwoInv );
-		case kDfxParamCurve_undefined:
 		default:
 			break;
 	}
@@ -669,7 +659,6 @@ DfxParamValue DfxParam::randomize()
 			// but we don't really need to worry about the curve for boolean values
 			value.b = (rand() % 2) ? true : false;
 			break;
-		case kDfxParamValueType_undefined:
 		default:
 			break;
 	}
@@ -709,7 +698,6 @@ bool DfxParam::limit()
 				value.b = min.b;
 			else return false;
 			break;
-		case kDfxParamValueType_undefined:
 		default:
 			return false;
 	}
@@ -832,7 +820,6 @@ void DfxParam::getunitstring(char * outText)
 			else
 				strcpy(outText, customUnitString);
 			break;
-		case kDfxParamUnit_undefined:
 		default:
 			break;
 	}

@@ -166,7 +166,7 @@ for the value strings.
 #include "dfxdefines.h"
 
 #if WIN32
-	typedef __int64	int64_t;
+	typedef INT64	int64_t;
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -189,23 +189,22 @@ typedef union {
 typedef struct {
 	int64_t type;
 	DfxParamValue v;
-} DfxParamValueExt;
+} DfxParamValueArchive;
 
 
 // these are the different variable types that a parameter can 
 // declare as its "native" type
-typedef enum {
-	kDfxParamValueType_undefined = 0,
-	kDfxParamValueType_float,
+enum {
+	kDfxParamValueType_float = 0,
 	kDfxParamValueType_int,
 	kDfxParamValueType_boolean
-} DfxParamValueType;
+};
+typedef uint32_t	DfxParamValueType;
 
 
 // these are the different value unit types that a parameter can have
-typedef enum {
-	kDfxParamUnit_undefined,
-	kDfxParamUnit_generic,
+enum {
+	kDfxParamUnit_generic = 0,
 	kDfxParamUnit_quantity,
 	kDfxParamUnit_percent,	// typically 0-100
 	kDfxParamUnit_portion,	// like percent, but typically 0-1
@@ -229,14 +228,14 @@ typedef enum {
 	kDfxParamUnit_index,	// this indicates that the parameter value is an index into some array
 //	kDfxParamUnit_strings,	// index, using array of custom text strings for modes/states/etc.
 	kDfxParamUnit_custom	// with a text string lable for custom display
-} DfxParamUnit;
+};
+typedef uint32_t	DfxParamUnit;
 
 
 // these are the different value distribution curves that a parameter can have
 // this is useful if you need to give greater emphasis to some parts of the value range
-typedef enum {
-	kDfxParamCurve_undefined,
-	kDfxParamCurve_linear,
+enum {
+	kDfxParamCurve_linear = 0,
 	kDfxParamCurve_stepped,
 	kDfxParamCurve_sqrt,
 	kDfxParamCurve_squared,
@@ -244,15 +243,17 @@ typedef enum {
 	kDfxParamCurve_pow,	// requires curvespec to be defined as the value of the exponent
 	kDfxParamCurve_exp,
 	kDfxParamCurve_log
-} DfxParamCurve;
+};
+typedef uint32_t	DfxParamCurve;
 
 
 // some miscellaneous parameter attributes
 // they are stored as flags in a bit-mask thingy
-typedef enum {
+enum {
 	kDfxParamAttribute_hidden = 1,	// should not be revealed to the user
 	kDfxParamAttribute_unused = 1 << 1	// isn't being used at all (a place-holder?); don't reveal to the host or anyone
-} DfxParamAttribute;
+};
+typedef uint32_t	DfxParamAttribute;
 
 
 
@@ -267,19 +268,19 @@ public:
 	void init(const char * inName, DfxParamValueType inType, 
 					DfxParamValue inInitialValue, DfxParamValue inDefaultValue, 
 					DfxParamValue inMinValue, DfxParamValue inMaxValue, 
-					DfxParamUnit inUnit = kDfxParamUnit_undefined, 
+					DfxParamUnit inUnit = kDfxParamUnit_generic, 
 					DfxParamCurve inCurve = kDfxParamCurve_linear);
 	// the rest of these are just convenience wrappers for initializing with a certain variable type
 	void init_f(const char * inName, double inInitialValue, double inDefaultValue, 
 					double inMinValue, double inMaxValue, 
-					DfxParamUnit inUnit = kDfxParamUnit_undefined, 
+					DfxParamUnit inUnit = kDfxParamUnit_generic, 
 					DfxParamCurve inCurve = kDfxParamCurve_linear);
 	void init_i(const char * inName, int64_t inInitialValue, int64_t inDefaultValue, 
 					int64_t inMinValue, int64_t inMaxValue, 
-					DfxParamUnit inUnit = kDfxParamUnit_undefined, 
+					DfxParamUnit inUnit = kDfxParamUnit_generic, 
 					DfxParamCurve inCurve = kDfxParamCurve_stepped);
 	void init_b(const char * inName, bool inInitialValue, bool inDefaultValue, 
-					DfxParamUnit inUnit = kDfxParamUnit_undefined);
+					DfxParamUnit inUnit = kDfxParamUnit_generic);
 
 	// release memory for the value strings arrays
 	void releaseValueStrings();
