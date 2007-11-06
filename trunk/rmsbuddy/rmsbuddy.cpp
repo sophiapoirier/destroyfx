@@ -3,6 +3,7 @@
 #include "rmsbuddy.h"
 
 #include <AudioToolbox/AudioUnitUtilities.h>	// for AUEventListenerNotify
+#include <AudioUnit/LogicAUProperties.h>
 
 
 // macro for boring Component entry point stuff
@@ -264,6 +265,16 @@ ComponentResult RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, Audi
 			outWritable = false;
 			return noErr;
 
+		case kLogicAUProperty_NodeOperationMode:
+			outDataSize = sizeof(UInt32);
+			outWritable = true;
+			return noErr;
+
+		case kLogicAUProperty_NodePropertyDescriptions:
+			outDataSize = sizeof(LogicAUNodePropertyDescription);
+			outWritable = false;
+			return noErr;
+
 		// let non-custom properties fall through to the parent class' handler
 		default:
 			return AUEffectBase::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
@@ -292,6 +303,19 @@ ComponentResult RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 			}
 			return noErr;
 
+		case kLogicAUProperty_NodeOperationMode:
+			*(UInt32*)outData = kLogicAUNodeOperationMode_FullSupport;
+			return noErr;
+
+		case kLogicAUProperty_NodePropertyDescriptions:
+			{
+				LogicAUNodePropertyDescription * nodePropertyDescs = (LogicAUNodePropertyDescription*) outData;
+				nodePropertyDescs->mPropertyID = kRMSBuddyProperty_DynamicsData;
+				nodePropertyDescs->mEndianMode = kLogicAUNodePropertyEndianMode_All64Bits;
+				nodePropertyDescs->mFlags = 0;
+			}
+			return noErr;
+
 		// let non-custom properties fall through to the parent class' handler
 		default:
 			return AUEffectBase::GetProperty(inPropertyID, inScope, inElement, outData);
@@ -306,6 +330,13 @@ ComponentResult RMSBuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 	switch (inPropertyID)
 	{
 		case kRMSBuddyProperty_DynamicsData:
+			return kAudioUnitErr_PropertyNotWritable;
+
+		case kLogicAUProperty_NodeOperationMode:
+			// in this plugin, we don't actually care about what mode we're running under
+			return noErr;
+
+		case kLogicAUProperty_NodePropertyDescriptions:
 			return kAudioUnitErr_PropertyNotWritable;
 
 		// let non-custom properties fall through to the parent class' handler
