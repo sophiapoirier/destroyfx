@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
+/*--------------- by Sophia Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
 
 #include "rmsbuddy.h"
 
@@ -8,9 +8,6 @@
 // macro for boring Component entry point stuff
 COMPONENT_ENTRY(RMSBuddy)
 
-#ifdef RMSBUDDY_ENABLE_RESIZE_TEST
-unsigned long _numChannels = 1;
-#endif
 //-----------------------------------------------------------------------------
 RMSBuddy::RMSBuddy(AudioUnit component)
 	: AUEffectBase(component, true)	// "true" to say that we can process audio in-place
@@ -41,10 +38,7 @@ ComponentResult RMSBuddy::Initialize()
 	ComponentResult result = AUEffectBase::Initialize();
 	if (result == noErr)
 	{
-		unsigned long oldNumChannels = numChannels;
 		numChannels = GetNumberOfChannels();
-		if (numChannels != oldNumChannels)
-			PropertyChanged(kRMSBuddyProperty_NumChannels, kAudioUnitScope_Global, (AudioUnitElement)0);
 
 		// allocate dynamics data value arrays according to the current number of channels
 		averageRMS = (double*) malloc(numChannels * sizeof(double));
@@ -102,10 +96,10 @@ ComponentResult RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inEleme
 	// reset continual values, too (the above functions only reset the average/absolute values)
 	if (guiShareDataCache != NULL)
 	{
-		for (unsigned long ch=0; ch < numChannels; ch++)
+		for (UInt32 ch=0; ch < numChannels; ch++)
 		{
-			guiShareDataCache[ch].outContinualRMS = 0.0;
-			guiShareDataCache[ch].outContinualPeak = 0.0f;
+			guiShareDataCache[ch].continualRMS = 0.0;
+			guiShareDataCache[ch].continualPeak = 0.0;
 		}
 	}
 
@@ -115,21 +109,12 @@ ComponentResult RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inEleme
 	return noErr;
 }
 
-#ifdef RMSBUDDY_ENABLE_RESIZE_TEST
-ComponentResult RMSBuddy::RestoreState(CFPropertyListRef inData)
-{
-	_numChannels++;
-	PropertyChanged(kRMSBuddyProperty_NumChannels, kAudioUnitScope_Global, (AudioUnitElement)0);
-	return AUBase::RestoreState(inData);
-}
-#endif
-
 //-----------------------------------------------------------------------------------------
 // reset the average RMS-related values and restart calculation of average RMS
 void RMSBuddy::resetRMS()
 {
 	totalSamples = 0;
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
 		if (totalSquaredCollection != NULL)
 			totalSquaredCollection[ch] = 0.0;
@@ -137,7 +122,7 @@ void RMSBuddy::resetRMS()
 			averageRMS[ch] = 0.0;
 
 		if (guiShareDataCache != NULL)
-			guiShareDataCache[ch].outAverageRMS = 0.0;
+			guiShareDataCache[ch].averageRMS = 0.0;
 	}
 }
 
@@ -145,13 +130,13 @@ void RMSBuddy::resetRMS()
 // reset the absolute peak-related values and restart calculation of absolute peak
 void RMSBuddy::resetPeak()
 {
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
 		if (absolutePeak != NULL)
 			absolutePeak[ch] = 0.0f;
 
 		if (guiShareDataCache != NULL)
-			guiShareDataCache[ch].outAbsolutePeak = 0.0f;
+			guiShareDataCache[ch].absolutePeak = 0.0;
 	}
 }
 
@@ -160,7 +145,7 @@ void RMSBuddy::resetPeak()
 void RMSBuddy::resetGUIcounters()
 {
 	guiSamplesCounter = 0;
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
 		if (guiContinualRMS != NULL)
 			guiContinualRMS[ch] = 0.0;
@@ -235,11 +220,6 @@ ComponentResult RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, Audi
 			outWritable = true;
 			return noErr;
 
-		case kRMSBuddyProperty_NumChannels:
-			outDataSize = sizeof(unsigned long);
-			outWritable = false;
-			return noErr;
-
 		// let non-custom properties fall through to the parent class' handler
 		default:
 			return AUEffectBase::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
@@ -259,7 +239,7 @@ ComponentResult RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 				if (guiShareDataCache == NULL)
 					return kAudioUnitErr_Uninitialized;
 
-				unsigned long requestedChannel = ((RMSBuddyDynamicsData*)outData)->inChannel;
+				UInt32 requestedChannel = inScope;
 				// invalid channel number requested
 				if (requestedChannel >= numChannels)
 					return kAudioUnitErr_InvalidPropertyValue;
@@ -274,14 +254,6 @@ ComponentResult RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 
 		// this has no actual data, it's used for event messages
 		case kRMSBuddyProperty_ResetPeak:
-			return noErr;
-
-		// get the number of audio channels being analyzed
-		case kRMSBuddyProperty_NumChannels:
-			*((unsigned long*)outData) = numChannels;
-#ifdef RMSBUDDY_ENABLE_RESIZE_TEST
-			*((unsigned long*)outData) = _numChannels;
-#endif
 			return noErr;
 
 		// let non-custom properties fall through to the parent class' handler
@@ -309,9 +281,6 @@ ComponentResult RMSBuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 		case kRMSBuddyProperty_ResetPeak:
 			resetPeak();
 			return noErr;
-
-		case kRMSBuddyProperty_NumChannels:
-			return kAudioUnitErr_PropertyNotWritable;
 
 		// let non-custom properties fall through to the parent class' handler
 		default:
@@ -369,7 +338,7 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags
 	guiSamplesCounter += inFramesToProcess;
 
 	// loop through each channel
-	for (unsigned long ch=0; ch < numChannels; ch++)
+	for (UInt32 ch=0; ch < numChannels; ch++)
 	{
 		// manage the buffer list data, get pointer to the audio input stream
 		float * in = (float*) (inBuffer.mBuffers[ch].mData);
@@ -416,12 +385,12 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags
 	{
 		double invGUItotal = 1.0 / (double)guiSamplesCounter;	// it's slightly more efficient to only divide once
 		// store the current dynamics data into the GUI data share caches for each channel...
-		for (unsigned long ch=0; ch < numChannels; ch++)
+		for (UInt32 ch=0; ch < numChannels; ch++)
 		{
-			guiShareDataCache[ch].outAverageRMS = averageRMS[ch];
-			guiShareDataCache[ch].outContinualRMS = sqrt(guiContinualRMS[ch] * invGUItotal);
-			guiShareDataCache[ch].outAbsolutePeak = absolutePeak[ch];
-			guiShareDataCache[ch].outContinualPeak = guiContinualPeak[ch];
+			guiShareDataCache[ch].averageRMS = averageRMS[ch];
+			guiShareDataCache[ch].continualRMS = sqrt(guiContinualRMS[ch] * invGUItotal);
+			guiShareDataCache[ch].absolutePeak = absolutePeak[ch];
+			guiShareDataCache[ch].continualPeak = guiContinualPeak[ch];
 		}
 
 		// ... and then post notification to the GUI

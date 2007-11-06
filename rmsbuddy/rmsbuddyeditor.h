@@ -1,4 +1,4 @@
-/*--------------- by Marc Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
+/*--------------- by Sophia Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
 
 #ifndef __RMSBUDDYEDITOR_H
 #define __RMSBUDDYEDITOR_H
@@ -80,7 +80,7 @@ public:
 	// set the display text directly with a string
 	void setText(CFStringRef inText);
 	// given a linear amplitude value, set the display text with the dB-converted value
-	void setText_dB(float inLinearValue);
+	void setText_dB(double inLinearValue);
 	// set the display text with an integer value
 	void setText_int(long inValue);
 
@@ -148,6 +148,7 @@ public:
 
 	void updateDisplays();	// refresh the value displays
 	void updateWindowSize(Float32 inParamValue, RMSControl * inRMSControl);	// update analysis window size parameter controls
+	void updateStreamFormatChange();
 	void resetRMS();	// send a message to the DSP component to reset average RMS
 	void resetPeak();	// send a message to the DSP component to reset absolute peak
 
@@ -170,7 +171,9 @@ public:
 	void handleControlValueChange(RMSControl * inControl, SInt32 inControlValue);
 
 private:
-	unsigned long numChannels;	// the number of channels being analyzed
+	UInt32 getAUNumChannels();
+
+	UInt32 numChannels;	// the number of channels being analyzed
 
 	// buttons
 	RMSButton * resetRMSbutton;
