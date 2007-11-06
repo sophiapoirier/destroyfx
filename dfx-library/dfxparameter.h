@@ -165,8 +165,11 @@ for the value strings.
 
 #include "dfxdefines.h"
 
-#if WIN32
+#ifdef _MSC_VER
+	typedef INT32	int32_t;
+	typedef UINT32	uint32_t;
 	typedef INT64	int64_t;
+	typedef UINT64	uint64_t;
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
