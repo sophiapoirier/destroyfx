@@ -84,8 +84,6 @@ CFRelease(mut);
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
 	mousedOverControlsList = NULL;
-
-	dfxplugin = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -270,14 +268,6 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 			CFRelease(bundleResourcesDirCFURL);
 		}
 	}
-
-
-	// XXX this is not a good thing to do, hmmm, maybe I should not do it...
-	UInt32 dataSize = sizeof(dfxplugin);
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_PluginPtr, 
-							kAudioUnitScope_Global, (AudioUnitElement)0, &dfxplugin, &dataSize) 
-							!= noErr)
-		dfxplugin = NULL;
 
 
 	// let the child class do its thing
@@ -743,15 +733,17 @@ void DfxGuiEditor::automationgesture_end(long inParameterID)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation)
 {
+	Boolean writeAutomation_fixedSize = inWriteAutomation;
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameter, 
-				kAudioUnitScope_Global, (AudioUnitElement)inParameterID, &inWriteAutomation, sizeof(inWriteAutomation));
+				kAudioUnitScope_Global, (AudioUnitElement)inParameterID, &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 {
+	Boolean writeAutomation_fixedSize = inWriteAutomation;
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameter, 
-				kAudioUnitScope_Global, kAUParameterListener_AnyParameter, &inWriteAutomation, sizeof(inWriteAutomation));
+				kAudioUnitScope_Global, kAUParameterListener_AnyParameter, &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
 }
 
 //-----------------------------------------------------------------------------
@@ -804,12 +796,11 @@ double DfxGuiEditor::getparameter_f(long inParameterID)
 {
 	DfxParameterValueRequest request;
 	UInt32 dataSize = sizeof(request);
-	request.parameterID = inParameterID;
-	request.valueItem = kDfxParameterValueItem_current;
-	request.valueType = kDfxParamValueType_float;
+	request.inValueItem = kDfxParameterValueItem_current;
+	request.inValueType = kDfxParamValueType_float;
 
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-							kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
 							== noErr)
 		return request.value.f;
 	else
@@ -821,12 +812,11 @@ long DfxGuiEditor::getparameter_i(long inParameterID)
 {
 	DfxParameterValueRequest request;
 	UInt32 dataSize = sizeof(request);
-	request.parameterID = inParameterID;
-	request.valueItem = kDfxParameterValueItem_current;
-	request.valueType = kDfxParamValueType_int;
+	request.inValueItem = kDfxParameterValueItem_current;
+	request.inValueType = kDfxParamValueType_int;
 
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-							kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
 							== noErr)
 		return request.value.i;
 	else
@@ -838,12 +828,11 @@ bool DfxGuiEditor::getparameter_b(long inParameterID)
 {
 	DfxParameterValueRequest request;
 	UInt32 dataSize = sizeof(request);
-	request.parameterID = inParameterID;
-	request.valueItem = kDfxParameterValueItem_current;
-	request.valueType = kDfxParamValueType_boolean;
+	request.inValueItem = kDfxParameterValueItem_current;
+	request.inValueType = kDfxParamValueType_boolean;
 
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-							kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
 							== noErr)
 		return request.value.b;
 	else
@@ -857,13 +846,12 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 		automationgesture_begin(inParameterID);
 
 	DfxParameterValueRequest request;
-	request.parameterID = inParameterID;
-	request.valueItem = kDfxParameterValueItem_current;
-	request.valueType = kDfxParamValueType_float;
+	request.inValueItem = kDfxParameterValueItem_current;
+	request.inValueType = kDfxParamValueType_float;
 	request.value.f = inValue;
 
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+				kAudioUnitScope_Global, inParameterID, &request, sizeof(request));
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -876,13 +864,12 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 		automationgesture_begin(inParameterID);
 
 	DfxParameterValueRequest request;
-	request.parameterID = inParameterID;
-	request.valueItem = kDfxParameterValueItem_current;
-	request.valueType = kDfxParamValueType_int;
+	request.inValueItem = kDfxParameterValueItem_current;
+	request.inValueType = kDfxParamValueType_int;
 	request.value.i = inValue;
 
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+				kAudioUnitScope_Global, inParameterID, &request, sizeof(request));
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -895,13 +882,12 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 		automationgesture_begin(inParameterID);
 
 	DfxParameterValueRequest request;
-	request.parameterID = inParameterID;
-	request.valueItem = kDfxParameterValueItem_current;
-	request.valueType = kDfxParamValueType_boolean;
+	request.inValueItem = kDfxParameterValueItem_current;
+	request.inValueType = kDfxParamValueType_boolean;
 	request.value.b = inValue;
 
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &request, sizeof(request));
+				kAudioUnitScope_Global, inParameterID, &request, sizeof(request));
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -931,29 +917,32 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
 {
+	if (outText == NULL)
+		return;
+
 	DfxParameterValueStringRequest request;
 	UInt32 dataSize = sizeof(request);
-	request.parameterID = inParameterID;
-	request.stringIndex = getparameter_i(inParameterID);
+	request.inStringIndex = getparameter_i(inParameterID);
 
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValueString, 
-							kAudioUnitScope_Global, (AudioUnitElement)0, &request, &dataSize) 
+							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
 							== noErr)
 		strcpy(outText, request.valueString);
 }
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setmidilearning(bool newLearnMode)
+void DfxGuiEditor::setmidilearning(bool inNewLearnMode)
 {
+	Boolean newLearnMode_fixedSize = inNewLearnMode;
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_MidiLearn, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &newLearnMode, sizeof(bool));
+				kAudioUnitScope_Global, (AudioUnitElement)0, &newLearnMode_fixedSize, sizeof(newLearnMode_fixedSize));
 }
 
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::getmidilearning()
 {
-	bool learnMode;
+	Boolean learnMode;
 	UInt32 dataSize = sizeof(learnMode);
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_MidiLearn, 
 							kAudioUnitScope_Global, (AudioUnitElement)0, &learnMode, &dataSize) 
@@ -966,22 +955,23 @@ bool DfxGuiEditor::getmidilearning()
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::resetmidilearn()
 {
-	bool nud;	// irrelavant
+	Boolean nud;	// irrelevant
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ResetMidiLearn, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(bool));
+				kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(nud));
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setmidilearner(long parameterIndex)
+void DfxGuiEditor::setmidilearner(long inParameterIndex)
 {
+	int32_t parameterIndex_fixedSize = inParameterIndex;
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_MidiLearner, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &parameterIndex, sizeof(long));
+				kAudioUnitScope_Global, (AudioUnitElement)0, &parameterIndex_fixedSize, sizeof(parameterIndex_fixedSize));
 }
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::getmidilearner()
 {
-	long learner;
+	int32_t learner;
 	UInt32 dataSize = sizeof(learner);
 	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_MidiLearner, 
 							kAudioUnitScope_Global, (AudioUnitElement)0, &learner, &dataSize) 
@@ -992,9 +982,9 @@ long DfxGuiEditor::getmidilearner()
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::ismidilearner(long parameterIndex)
+bool DfxGuiEditor::ismidilearner(long inParameterIndex)
 {
-	return (getmidilearner() == parameterIndex);
+	return (getmidilearner() == inParameterIndex);
 }
 
 #endif
@@ -1151,11 +1141,11 @@ DGKeyModifiers DFX_GetDGKeyModifiersForEvent(EventRef inEvent)
 	DGKeyModifiers dgKeyModifiers = 0;
 	if (macKeyModifiers & cmdKey)
 		dgKeyModifiers |= kDGKeyModifier_accel;
-	if ( (macKeyModifiers & optionKey) || (macKeyModifiers & rightOptionKey) )
+	if (macKeyModifiers & optionKey)
 		dgKeyModifiers |= kDGKeyModifier_alt;
-	if ( (macKeyModifiers & shiftKey) || (macKeyModifiers & rightShiftKey) )
+	if (macKeyModifiers & shiftKey)
 		dgKeyModifiers |= kDGKeyModifier_shift;
-	if ( (macKeyModifiers & controlKey) || (macKeyModifiers & rightControlKey) )
+	if (macKeyModifiers & controlKey)
 		dgKeyModifiers |= kDGKeyModifier_extra;
 
 	return dgKeyModifiers;
@@ -1540,6 +1530,10 @@ fprintf(stderr, "kEventControlHit\n");
 					status = GetEventParameter(inEvent, kEventParamMouseLocation, typeHIPoint, NULL, sizeof(mouseLocation), NULL, &mouseLocation);
 //fprintf(stderr, "mousef.x = %.0f, mousef.y = %.0f\n", mouseLocation.x, mouseLocation.y);
 					// XXX only kEventControlClick gives global mouse coordinates for kEventParamMouseLocation?
+					// XXX says Eric Schlegel, "You should probably always get the direct object from the event, 
+					// get the mouse location, and use HIPointConvert or HIViewConvertPoint to convert 
+					// the mouse location from the direct object view to your view (or to global coordinates)."
+					// e.g. HIPointConvert(&hiPt, kHICoordSpaceView, view, kHICoordSpace72DPIGlobal, NULL);
 					if ( (inEventKind == kEventControlContextualMenuClick) || (inEventKind == kEventControlTrack) )
 					{
 						Point mouseLocation_i;

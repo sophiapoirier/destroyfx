@@ -83,8 +83,6 @@ public:
 		{	return currentControl_clicked;	}
 
 	// the below methods all handle communication between the GUI component and the music component
-	DfxPlugin * getdfxplugin()
-		{	return dfxplugin;	}
 	double getparameter_f(long inParameterID);
 	long getparameter_i(long inParameterID);
 	bool getparameter_b(long inParameterID);
@@ -96,12 +94,12 @@ public:
 	void randomizeparameter(long inParameterID, bool inWriteAutomation = false);
 	void randomizeparameters(bool inWriteAutomation = false);
 	#if TARGET_PLUGIN_USES_MIDI
-		void setmidilearning(bool newLearnMode);
+		void setmidilearning(bool inNewLearnMode);
 		bool getmidilearning();
 		void resetmidilearn();
-		void setmidilearner(long parameterIndex);
+		void setmidilearner(long inParameterIndex);
 		long getmidilearner();
-		bool ismidilearner(long parameterIndex);
+		bool ismidilearner(long inParameterIndex);
 	#endif
 
 	long copySettings();
@@ -150,8 +148,6 @@ protected:
 #endif
 
 	long initClipboard();
-
-	DfxPlugin * dfxplugin;	// XXX bad thing for AU, maybe just for easy debugging sometimes
 
 private:
 	DGBackgroundControl * backgroundControl;
