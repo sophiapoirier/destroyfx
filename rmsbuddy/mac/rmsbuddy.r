@@ -8,7 +8,7 @@
 #define COMP_MANUF	RMS_BUDDY_MANUFACTURER_ID
 #define VERSION		RMS_BUDDY_VERSION
 #define NAME		"Destroy FX: RMS Buddy"
-#define DESCRIPTION	"modular multi-fx thingie"
+#define DESCRIPTION	"RMS and peak monitoring toy"
 #define ENTRY_POINT	"RMSBuddyEntry"
 
 #include "AUResources.r"
@@ -20,7 +20,7 @@
 #define COMP_MANUF	RMS_BUDDY_MANUFACTURER_ID
 #define VERSION		RMS_BUDDY_VERSION
 #define NAME		"Destroy FX: RMS Buddy editor"
-#define DESCRIPTION	"compact and informative interface for DFX RMS Buddy"
+#define DESCRIPTION	"compact and informative interface for dfx RMS Buddy"
 #define ENTRY_POINT	"RMSBuddyEditorEntry"
 
 #include "AUResources.r"
