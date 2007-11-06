@@ -65,8 +65,11 @@ DfxPlugin::DfxPlugin(
 #ifdef TARGET_API_AUDIOUNIT
 	auElementsHaveBeenCreated = false;
 	inputsP = outputsP = NULL;
+
+	supportedLogicNodeOperationMode = kLogicAUNodeOperationMode_FullSupport;
+	currentLogicNodeOperationMode = 0;
 #endif
-// Audio Unit stuff
+// end Audio Unit stuff
 
 	updatesamplerate();	// XXX have it set to something here?
 	sampleratechanged = true;
@@ -136,7 +139,7 @@ DfxPlugin::DfxPlugin(
 	#endif
 
 #endif
-// VST stuff
+// end VST stuff
 
 }
 
@@ -511,7 +514,7 @@ DfxParamValueType DfxPlugin::getparametervaluetype(long inParameterIndex)
 	if (parameterisvalid(inParameterIndex))
 		return parameters[inParameterIndex].getvaluetype();
 	else
-		return kDfxParamValueType_undefined;
+		return kDfxParamValueType_float;
 }
 
 //-----------------------------------------------------------------------------
@@ -520,7 +523,7 @@ DfxParamUnit DfxPlugin::getparameterunit(long inParameterIndex)
 	if (parameterisvalid(inParameterIndex))
 		return parameters[inParameterIndex].getunit();
 	else
-		return kDfxParamUnit_undefined;
+		return kDfxParamUnit_generic;
 }
 
 //-----------------------------------------------------------------------------
@@ -874,7 +877,7 @@ unsigned long DfxPlugin::getnuminputs()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	if ( Inputs().GetNumberOfElements() > 0 )
-		return GetInput(0)->GetStreamFormat().mChannelsPerFrame;
+		return GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0).NumberChannels();
 	else
 		return 0;
 #endif
@@ -889,7 +892,7 @@ unsigned long DfxPlugin::getnumoutputs()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	if ( Outputs().GetNumberOfElements() > 0 )
-		return GetOutput(0)->GetStreamFormat().mChannelsPerFrame;
+		return GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0).NumberChannels();
 	else
 		return 0;
 #endif

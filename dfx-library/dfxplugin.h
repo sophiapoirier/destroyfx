@@ -180,6 +180,7 @@ SUPPORT_AU_VERSION_1
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
 		#define TARGET_API_CORE_CLASS	AUKernelBase
 	#endif
+	#include <AudioUnit/LogicAUProperties.h>
 
 // using Steinberg's VST API
 #elif defined(TARGET_API_VST)
@@ -348,16 +349,16 @@ public:
 
 	void initparameter_f(long inParameterIndex, const char * initName, double initValue, double initDefaultValue, 
 						double initMin, double initMax, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+						DfxParamUnit initUnit = kDfxParamUnit_generic, 
 						DfxParamCurve initCurve = kDfxParamCurve_linear, 
 						const char * initCustomUnitString = NULL);
 	void initparameter_i(long inParameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
 						int64_t initMin, int64_t initMax, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined, 
+						DfxParamUnit initUnit = kDfxParamUnit_generic, 
 						DfxParamCurve initCurve = kDfxParamCurve_stepped, 
 						const char * initCustomUnitString = NULL);
 	void initparameter_b(long inParameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
-						DfxParamUnit initUnit = kDfxParamUnit_undefined);
+						DfxParamUnit initUnit = kDfxParamUnit_generic);
 	void initparameter_indexed(long inParameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
 						int64_t initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index, 
 						const char * initCustomUnitString = NULL);
@@ -428,7 +429,7 @@ public:
 	bool getparametertouched(long inParameterIndex);
 	void setparametertouched(long inParameterIndex, bool inTouched = true);
 	DfxParamCurve getparametercurve(long inParameterIndex)
-		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getcurve();   else return kDfxParamCurve_undefined;	}
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getcurve();   else return kDfxParamCurve_linear;	}
 	void setparametercurve(long inParameterIndex, DfxParamCurve newcurve)
 		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].setcurve(newcurve);	}
 	double getparametercurvespec(long inParameterIndex)
@@ -502,6 +503,8 @@ public:
 		{	return numParameters;	}
 	long getnumpresets()
 		{	return numPresets;	}
+	virtual long getNumPluginProperties()
+		{	return kDfxPluginProperty_NumProperties;	}
 
 //	virtual void SetUseMusicalTimeInfo(bool newmode = true)
 //		{	b_usemusicaltimeinfo = newmode;	}
@@ -585,6 +588,25 @@ public:
 		virtual void settings_doMidiAutomatedSetParameterStuff(long tag, float value, long delta) {}
 	#endif
 
+	// handling of AU properties specific to Logic
+	#ifdef TARGET_API_AUDIOUNIT
+		UInt32 getSupportedLogicNodeOperationMode()
+			{	return supportedLogicNodeOperationMode;	}
+		void setSupportedLogicNodeOperationMode(UInt32 inNewMode)
+			{	supportedLogicNodeOperationMode = inNewMode;	}
+		UInt32 getCurrentLogicNodeOperationMode()
+			{	return currentLogicNodeOperationMode;	}
+		virtual void setCurrentLogicNodeOperationMode(UInt32 inNewMode)
+			{	currentLogicNodeOperationMode = inNewMode;	}
+		bool isLogicNodeEndianReversed()
+		{
+			return ( (getCurrentLogicNodeOperationMode() & kLogicAUNodeOperationMode_NodeEnabled) 
+					&& (getCurrentLogicNodeOperationMode() & kLogicAUNodeOperationMode_EndianSwap) );
+		}
+		virtual void getLogicNodePropertyDescription(AudioUnitPropertyID inPropertyID, UInt32 * outEndianMode, UInt32 * outFlags)
+			{ }
+	#endif
+
 
 protected:
 	DfxParam * parameters;
@@ -641,6 +663,10 @@ private:
 	double tailsize_seconds;
 	bool b_usetailsize_seconds;
 	bool audioProcessingAccumulatingOnly;
+
+	#ifdef TARGET_API_AUDIOUNIT
+		UInt32 supportedLogicNodeOperationMode, currentLogicNodeOperationMode;
+	#endif
 
 
 // overridden virtual methods from inherited API base classes
