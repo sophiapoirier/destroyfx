@@ -9,13 +9,15 @@
 
 class RMSBuddyEditor;
 
+const long kRMSInvalidParameterID = -1;
+
 //-----------------------------------------------------------------------------
 // a generic custom control class, which our useful controls are derived from
 class RMSControl
 {
 public:
 	RMSControl(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
-				long inControlRange, long inParamID = -1);
+				long inControlRange, long inParamID = kRMSInvalidParameterID);
 	virtual ~RMSControl();
 
 	// draw the control
@@ -59,11 +61,12 @@ protected:
 
 
 
-// 24-bit RGB color description, 0 - 255 values for each field
+// 128-bit RGBa color description, 0.0 - 1.0 values for each field
 typedef struct {
-	int r;
-	int g;
-	int b;
+	float r;	// red
+	float g;	// green
+	float b;	// blue
+	float a;	// alpha
 } RMSColor;
 
 //-----------------------------------------------------------------------------
@@ -73,7 +76,8 @@ class RMSTextDisplay : public RMSControl
 public:
 	RMSTextDisplay(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, long inWidth, long inHeight, 
 					RMSColor inTextColor, RMSColor inBackColor, RMSColor inFrameColor, 
-					ThemeFontID inFontID, HIThemeTextHorizontalFlush inTextAlignment, long inParamID = -1);
+					ThemeFontID inFontID, HIThemeTextHorizontalFlush inTextAlignment, 
+					long inParamID = kRMSInvalidParameterID);
 	virtual ~RMSTextDisplay();
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
@@ -97,7 +101,7 @@ private:
 class RMSButton : public RMSControl
 {
 public:
-	RMSButton(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage);
+	RMSButton(RMSBuddyEditor * inOwnerEditor, long inParamID, long inXpos, long inYpos, CGImageRef inImage);
 
 	virtual void draw(CGContextRef inContext, long inPortHeight);
 	virtual void mouseDown(float inXpos, float inYpos);

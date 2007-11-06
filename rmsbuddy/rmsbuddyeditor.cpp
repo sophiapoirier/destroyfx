@@ -9,9 +9,7 @@
 const Float32 kRMSEventNotificationInterval = 15.0 * kEventDurationMillisecond;	// 15 ms parameter and property event notification update interval
 
 
-// I want the analysis window size slider to have a squared-scaled value distribution curve, 
-// so it seems that AUCarbonViewControl won't be able to do what I want.
-// XXX That's not true anymore, but AUCarbonViewControl still has problems worth avoiding, I think.
+// XXX AUCarbonViewControl still has problems worth avoiding, I think
 //#define USE_AUCVCONTROL
 
 
@@ -143,11 +141,11 @@ void RMSTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 	// fill in the background color
 	CGRect bounds = getBoundsRect();
 	bounds = TransformControlBoundsToDrawingBounds(bounds, inPortHeight);
-	CGContextSetRGBFillColor(inContext, (float)backColor.r/255.0f, (float)backColor.g/255.0f, (float)backColor.b/255.0f, 1.0f);
+	CGContextSetRGBFillColor(inContext, backColor.r, backColor.g, backColor.b, backColor.a);
 	CGContextFillRect(inContext, bounds);
 
 	// draw the frame around the box
-	CGContextSetRGBStrokeColor(inContext, (float)frameColor.r/255.0f, (float)frameColor.g/255.0f, (float)frameColor.b/255.0f, 1.0f);
+	CGContextSetRGBStrokeColor(inContext, frameColor.r, frameColor.g, frameColor.b, frameColor.a);
 	// Quartz draws lines on top of the pixel, so you need to move the coordinates to the middle of the pixel, 
 	// and then also shrink the size accordingly
 	CGRect box = CGRectInset(bounds, 0.5f, 0.5f);
@@ -162,7 +160,7 @@ void RMSTextDisplay::draw(CGContextRef inContext, long inPortHeight)
 	}
 
 	// draw the text
-	CGContextSetRGBFillColor(inContext, (float)textColor.r/255.0f, (float)textColor.g/255.0f, (float)textColor.b/255.0f, 1.0f);
+	CGContextSetRGBFillColor(inContext, textColor.r, textColor.g, textColor.b, textColor.a);
 	if (text != NULL)
 	{
 		// this function is only available in Mac OS X 10.3 or higher
@@ -261,8 +259,8 @@ void RMSTextDisplay::setText_int(long inValue)
 //-----------------------------------------------------------------------------
 //                           RMSButton
 //-----------------------------------------------------------------------------
-RMSButton::RMSButton(RMSBuddyEditor * inOwnerEditor, long inXpos, long inYpos, CGImageRef inImage)
-:	RMSControl(inOwnerEditor, inXpos, inYpos, CGImageGetWidth(inImage), CGImageGetHeight(inImage)/2, 1), 
+RMSButton::RMSButton(RMSBuddyEditor * inOwnerEditor, long inParamID, long inXpos, long inYpos, CGImageRef inImage)
+:	RMSControl(inOwnerEditor, inXpos, inYpos, CGImageGetWidth(inImage), CGImageGetHeight(inImage)/2, 1, inParamID), 
 	buttonImage(inImage)
 {
 }
@@ -348,11 +346,11 @@ void RMSSlider::draw(CGContextRef inContext, long inPortHeight)
 	// fill in the background color
 	CGRect bounds = getBoundsRect();
 	bounds = TransformControlBoundsToDrawingBounds(bounds, inPortHeight);
-	CGContextSetRGBFillColor(inContext, (float)backColor.r/255.0f, (float)backColor.g/255.0f, (float)backColor.b/255.0f, 1.0f);
+	CGContextSetRGBFillColor(inContext, backColor.r, backColor.g, backColor.b, backColor.a);
 	CGContextFillRect(inContext, bounds);
 
 	// draw the frame around the box
-//	CGContextSetRGBStrokeColor(inContext, (float)frameColor.r/255.0f, (float)frameColor.g/255.0f, (float)frameColor.b/255.0f, 1.0f);
+//	CGContextSetRGBStrokeColor(inContext, frameColor.r, frameColor.g, frameColor.b, frameColor.a);
 	// Quartz draws lines on top of the pixel, so you need to move the coordinates to the middle of the pixel, 
 	// and then also shrink the size accordingly
 //	CGRect box = CGRectInset(bounds, 0.5f, 0.5f);
@@ -363,13 +361,13 @@ void RMSSlider::draw(CGContextRef inContext, long inPortHeight)
 	fillbox.size.width *= (float)GetControl32BitValue(getCarbonControl()) / (float)GetControl32BitMaximum(getCarbonControl());
 	// naw, let's draw a faded frame on it first
 	CGRect fillframe = CGRectInset(fillbox, 0.5f, 0.5f);
-	CGContextSetRGBStrokeColor(inContext, (float)fillColor.r/255.0f, (float)fillColor.g/255.0f, (float)fillColor.b/255.0f, 1.0f);
+	CGContextSetRGBStrokeColor(inContext, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
 	CGContextSetAlpha(inContext, 0.45f);
 	CGContextStrokeRectWithWidth(inContext, fillframe, 1.0f);
 	CGContextSetAlpha(inContext, 1.0f);
 	fillbox = CGRectInset(fillbox, 1.0f, 1.0f);
 	// really fill it
-	CGContextSetRGBFillColor(inContext, (float)fillColor.r/255.0f, (float)fillColor.g/255.0f, (float)fillColor.b/255.0f, 1.0f);
+	CGContextSetRGBFillColor(inContext, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
 	CGContextFillRect(inContext, fillbox);
 }
 
@@ -403,12 +401,12 @@ void RMSSlider::mouseTrack(float inXpos, float inYpos)
 //-----------------------------------------------------------------------------
 // constants
 
-const RMSColor kBrownColor = { 97, 73, 46 };
-const RMSColor kLightBrownColor = { 146, 116, 98 };
-const RMSColor kDarkBlueColor = { 54, 69, 115 };
-const RMSColor kLightOrangeColor = { 219, 145, 85 };
-const RMSColor kWhiteColor = { 255, 255, 255 };
-const RMSColor kYellowColor = { 249, 249, 120 };
+const RMSColor kBrownColor = { 0.38f, 0.286f, 0.18f, 1.0f };
+const RMSColor kLightBrownColor = { 0.573f, 0.455f, 0.384f, 1.0f };
+const RMSColor kDarkBlueColor = { 0.212f, 0.27f, 0.45f, 1.0f };
+const RMSColor kLightOrangeColor = { 0.859f, 0.569f, 0.333333333f, 1.0f };
+const RMSColor kWhiteColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+const RMSColor kYellowColor = { 0.976f, 0.976f, 0.471f, 1.0f };
 
 const ThemeFontID kValueDisplayFontID = kThemeSmallSystemFont;
 const ThemeFontID kLabelDisplayFontID = kThemeSmallSystemFont;
@@ -836,10 +834,10 @@ OSStatus RMSBuddyEditor::setup()
 	const long resetButtonHeight = CGImageGetHeight(resetButtonImage) / 2;
 	const long resetButtonX = kValueDisplayX + (kXinc * numChannels);
 	const long resetButtonY = kValueDisplayY + ((kValueDisplayHeight - resetButtonHeight) / 2);
-	resetRMSbutton = new RMSButton(this, resetButtonX, resetButtonY, resetButtonImage);
+	resetRMSbutton = new RMSButton(this, kRMSBuddyParameter_ResetRMS, resetButtonX, resetButtonY, resetButtonImage);
 
 	// reset peak button
-	resetPeakButton = new RMSButton(this, resetButtonX, resetButtonY + (kYinc*2), resetButtonImage);
+	resetPeakButton = new RMSButton(this, kRMSBuddyParameter_ResetPeak, resetButtonX, resetButtonY + (kYinc*2), resetButtonImage);
 
 	const long backgroundWidth = resetButtonX + resetButtonWidth + kPadding_general;
 
@@ -848,7 +846,7 @@ OSStatus RMSBuddyEditor::setup()
 #if 1
 	const long helpButtonWidth = CGImageGetWidth(helpButtonImage);
 	const long helpButtonHeight = CGImageGetHeight(helpButtonImage) / 2;
-	helpButton = new RMSButton(this, backgroundWidth - helpButtonWidth - 18, kHelpButtonY, helpButtonImage);
+	helpButton = new RMSButton(this, kRMSInvalidParameterID, backgroundWidth - helpButtonWidth - 18, kHelpButtonY, helpButtonImage);
 #else
 // XXX using system icons and buttons doesn't embed in the right place in compositing windows (my own error) 
 // and doesn't draw pane background underneath in non-compositing windows
@@ -1058,13 +1056,11 @@ bool RMSBuddyEditor::HandleEvent(EventRef inEvent)
 
 			controlBounds = TransformControlBoundsToDrawingBounds(controlBounds, portHeight);
 			// fill in the background color
-			CGContextSetRGBFillColor(context, (float)kBackgroundColor.r/255.0f, (float)kBackgroundColor.g/255.0f, 
-										(float)kBackgroundColor.b/255.0f, 1.0f);
+			CGContextSetRGBFillColor(context, kBackgroundColor.r, kBackgroundColor.g, kBackgroundColor.b, kBackgroundColor.a);
 			CGContextFillRect(context, controlBounds);
 
 			// draw the frame around the box
-			CGContextSetRGBStrokeColor(context, (float)kBackgroundFrameColor.r/255.0f, (float)kBackgroundFrameColor.g/255.0f, 
-										(float)kBackgroundFrameColor.b/255.0f, 1.0f);
+			CGContextSetRGBStrokeColor(context, kBackgroundFrameColor.r, kBackgroundFrameColor.g, kBackgroundFrameColor.b, kBackgroundFrameColor.a);
 			// Quartz draws lines on top of the pixel, so you need to move the coordinates to the middle of the pixel, 
 			// and then also shrink the size accordingly
 			CGRect box = CGRectInset(controlBounds, 0.5f,  0.5f);
@@ -1449,9 +1445,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 void RMSBuddyEditor::resetRMS()
 {
 	CAAUParameter auParam(GetEditAudioUnit(), kRMSBuddyParameter_ResetRMS, kAudioUnitScope_Global, (AudioUnitElement)0);
-	SendAUParameterEvent(auParam.mParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
 	AUParameterSet(NULL, this, &auParam, 1.0f, 0);
-	SendAUParameterEvent(auParam.mParameterID, kAudioUnitEvent_EndParameterChangeGesture);
 }
 
 //-----------------------------------------------------------------------------
@@ -1459,9 +1453,7 @@ void RMSBuddyEditor::resetRMS()
 void RMSBuddyEditor::resetPeak()
 {
 	CAAUParameter auParam(GetEditAudioUnit(), kRMSBuddyParameter_ResetPeak, kAudioUnitScope_Global, (AudioUnitElement)0);
-	SendAUParameterEvent(auParam.mParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
 	AUParameterSet(NULL, this, &auParam, 1.0f, 0);
-	SendAUParameterEvent(auParam.mParameterID, kAudioUnitEvent_EndParameterChangeGesture);
 }
 
 //-----------------------------------------------------------------------------
