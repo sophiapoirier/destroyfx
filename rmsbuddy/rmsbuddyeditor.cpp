@@ -1392,7 +1392,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 	{
 		if (inControlValue > 0)
 		{
-			resetRMS();
+			inControl->getAUVP()->SetValue(parameterListener, inControl, 1.0f);
 			updateDisplays();
 		}
 	}
@@ -1401,7 +1401,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 	{
 		if (inControlValue > 0)
 		{
-			resetPeak();
+			inControl->getAUVP()->SetValue(parameterListener, inControl, 1.0f);
 			updateDisplays();
 		}
 	}
@@ -1414,7 +1414,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 		Float32 controlValueNorm = (Float32)(inControlValue - cmin) / (Float32)(cmax - cmin);
 
 		Float32 paramValue = AUParameterValueFromLinear(controlValueNorm, windowSizeSlider->getAUVP());
-		windowSizeSlider->getAUVP()->SetValue(parameterListener, windowSizeSlider, paramValue);
+		inControl->getAUVP()->SetValue(parameterListener, inControl, paramValue);
 	}
 
 #ifdef RMSBUDDY_SHOW_HELP_BUTTON
@@ -1438,22 +1438,6 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 		}
 	}
 #endif
-}
-
-//-----------------------------------------------------------------------------
-// send a message to the DSP component to reset average RMS
-void RMSBuddyEditor::resetRMS()
-{
-	CAAUParameter auParam(GetEditAudioUnit(), kRMSBuddyParameter_ResetRMS, kAudioUnitScope_Global, (AudioUnitElement)0);
-	AUParameterSet(NULL, this, &auParam, 1.0f, 0);
-}
-
-//-----------------------------------------------------------------------------
-// send a message to the DSP component to reset absolute peak
-void RMSBuddyEditor::resetPeak()
-{
-	CAAUParameter auParam(GetEditAudioUnit(), kRMSBuddyParameter_ResetPeak, kAudioUnitScope_Global, (AudioUnitElement)0);
-	AUParameterSet(NULL, this, &auParam, 1.0f, 0);
 }
 
 //-----------------------------------------------------------------------------

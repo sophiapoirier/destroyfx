@@ -61,7 +61,7 @@ protected:
 
 
 
-// 128-bit RGBa color description, 0.0 - 1.0 values for each field
+// 3-component RGB color description with alpha level, 0.0 - 1.0 values for each field
 typedef struct {
 	float r;	// red
 	float g;	// green
@@ -153,8 +153,6 @@ public:
 	void updateDisplays();	// refresh the value displays
 	void updateWindowSize(Float32 inParamValue, RMSControl * inRMSControl);	// update analysis window size parameter controls
 	void updateStreamFormatChange();
-	void resetRMS();	// send a message to the DSP component to reset average RMS
-	void resetPeak();	// send a message to the DSP component to reset absolute peak
 
 	// these are accessors for data that the custom controls need in order to create themselves
 	ControlDefSpec * getControlClassSpec()
