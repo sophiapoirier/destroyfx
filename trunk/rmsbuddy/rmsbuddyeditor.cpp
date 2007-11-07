@@ -109,6 +109,14 @@ void RMSControl::redraw()
 	}
 }
 
+//-----------------------------------------------------------------------------
+// set the value of a control's associated parameter
+void RMSControl::setParameterValue(float inValue)
+{
+	if ( isParameterAttached() )
+		getAUVP()->SetValue(ownerEditor->GetParameterListener(), this, inValue);
+}
+
 
 
 #pragma mark -
@@ -1392,7 +1400,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 	{
 		if (inControlValue > 0)
 		{
-			inControl->getAUVP()->SetValue(parameterListener, inControl, 1.0f);
+			inControl->setParameterValue(1.0f);
 			updateDisplays();
 		}
 	}
@@ -1401,7 +1409,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 	{
 		if (inControlValue > 0)
 		{
-			inControl->getAUVP()->SetValue(parameterListener, inControl, 1.0f);
+			inControl->setParameterValue(1.0f);
 			updateDisplays();
 		}
 	}
@@ -1414,7 +1422,7 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 		Float32 controlValueNorm = (Float32)(inControlValue - cmin) / (Float32)(cmax - cmin);
 
 		Float32 paramValue = AUParameterValueFromLinear(controlValueNorm, windowSizeSlider->getAUVP());
-		inControl->getAUVP()->SetValue(parameterListener, inControl, paramValue);
+		inControl->setParameterValue(paramValue);
 	}
 
 #ifdef RMSBUDDY_SHOW_HELP_BUTTON
