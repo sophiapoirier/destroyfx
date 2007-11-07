@@ -44,12 +44,12 @@ public:
 
 	// get the rectangular position of the control
 	CGRect getBoundsRect();
-	// says whether or not this control needs to be clipped to its bounds when drawn
 	// says whether or not this control is connected to an AU parameter
 	bool isParameterAttached()
 		{	return hasParameter;	}
 	CAAUParameter * getAUVP()
 		{	return &auvParam;	}
+	void setParameterValue(float inValue);
 
 protected:
 	RMSBuddyEditor * ownerEditor;
