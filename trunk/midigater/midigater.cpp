@@ -149,7 +149,7 @@ void MidiGater::processaudio(const float ** inAudio, float ** outAudio, unsigned
 
 //-----------------------------------------------------------------------------------------
 // this function outputs the unprocessed audio input between notes, if desired
-void MidiGater::processUnaffected(const float ** inAudio, float ** outAudio, long inNumFramesToProcess, long inOffset, unsigned long numChannels)
+void MidiGater::processUnaffected(const float ** inAudio, float ** outAudio, long inNumFramesToProcess, long inOffset, unsigned long inNumChannels)
 {
 	long endPos = inNumFramesToProcess + inOffset;
 	for (long samplecount=inOffset; samplecount < endPos; samplecount++)
@@ -181,7 +181,7 @@ void MidiGater::processUnaffected(const float ** inAudio, float ** outAudio, lon
 			}
 		}
 
-		for (unsigned long ch=0; ch < numChannels; ch++)
+		for (unsigned long ch=0; ch < inNumChannels; ch++)
 			outAudio[ch][samplecount] += inAudio[ch][samplecount] * sampleAmp;
 	}
 }
