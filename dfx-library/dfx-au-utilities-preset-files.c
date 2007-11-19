@@ -852,7 +852,7 @@ OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAU
 
 //-----------------------------------------------------------------------------
 // this is just a little helper function used by GetAUComponentDescriptionFromPresetFile()
-OSType GetDictionarySInt32Value(CFDictionaryRef inAUStateDictionary, CFStringRef inDictionaryKey, Boolean * outSuccess)
+SInt32 GetDictionarySInt32Value(CFDictionaryRef inAUStateDictionary, CFStringRef inDictionaryKey, Boolean * outSuccess)
 {
 	CFNumberRef cfNumber;
 	SInt32 numberValue = 0;
