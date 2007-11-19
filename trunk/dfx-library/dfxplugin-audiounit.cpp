@@ -921,9 +921,6 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	{
 		switch ( getparameterunit(inParameterID) )
 		{
-			case kDfxParamUnit_generic:
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
-				break;
 			case kDfxParamUnit_quantity:
 				outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;	// XXX assume it's an integer?
 				break;
@@ -997,6 +994,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 				}
 				break;
 
+			case kDfxParamUnit_generic:
 			default:
 				// if we got to this point, try using the value type to determine the unit type
 				switch (getparametervaluetype(inParameterID))
