@@ -444,7 +444,6 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 				if (context == NULL)
 					return false;
 
-//				context->setAntialias(false);	// XXX disable anti-aliased drawing for image rendering
 				DrawBackground(context);
 
 				DGCleanupControlDrawingContext(context, windowPort);
@@ -584,6 +583,7 @@ void DfxGuiEditor::setWindowTransparency(float inTransparencyLevel)
 #endif
 }
 
+#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 // this function looks for the plugin's documentation file in the appropriate system location, 
 // within a given file system domain, and returns a CFURLRef for the file if it is found, 
@@ -631,6 +631,7 @@ CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, short inD
 
 	return NULL;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // XXX this function should really go somewhere else, like in that promised DFX utilities file or something like that
@@ -687,7 +688,7 @@ OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, 
 
 	OSStatus result = noErr;
 
-	// do the new-fangled way, if it's available on the user's system
+	// do the current way, if it's available on the user's system
 	AudioUnitEvent paramEvent = {0};
 	paramEvent.mEventType = inEventType;
 	paramEvent.mArgument.mParameter.mParameterID = inParameterID;
@@ -1470,7 +1471,6 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 					if (context == NULL)
 						return false;
 
-//					context->setAntialias(false);	// XXX disable anti-aliased drawing for image rendering
 					ourDGControl->do_draw(context);
 
 					DGCleanupControlDrawingContext(context, windowPort);
