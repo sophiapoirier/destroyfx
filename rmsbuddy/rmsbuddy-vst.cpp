@@ -1,4 +1,4 @@
-/*---------------------- by Marc Poirier  ][  June 2001 ---------------------*/
+/*---------------------- by Sophia Poirier  ][  June 2001 ---------------------*/
 
 #include "rmsbuddy-vst.h"
 #include "rmsbuddyeditor-vst.h"
