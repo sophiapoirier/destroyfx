@@ -1,4 +1,4 @@
-/*----------------------- by Marc Poirier  ][  June 2001 ----------------------*/
+/*----------------------- by Sophia Poirier  ][  June 2001 ----------------------*/
 
 #ifndef __RMSBUDDYEDITOR_VST_H
 #define __RMSBUDDYEDITOR_VST_H
