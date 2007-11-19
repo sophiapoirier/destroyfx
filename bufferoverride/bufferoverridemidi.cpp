@@ -1,4 +1,4 @@
-/*------------------- by Marc Poirier  ][  March 2001 -------------------*/
+/*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
 
 #include "bufferoverride.hpp"
 
@@ -47,8 +47,8 @@ float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
 
 		// this step gets the literal value for the new divisor
 		// you need to take into account where pitchbend is coming from, hence the division by oldPitchbend
-		if (oldPitchbend == 0.0f)
-			oldPitchbend = 1.0f;	// avoid division by zero <-- XXX necessary?
+		if (oldPitchbend == 0.0)
+			oldPitchbend = 1.0;	// avoid division by zero <-- XXX necessary?
 		float newDivisor = (float) ((double)divisor * pitchbend/oldPitchbend);
 //		return (newDivisor < getparametermin_f(kDivisor)) ? getparametermin_f(kDivisor) : newDivisor;
 		return (newDivisor < 0.0001f) ? 0.0001f : newDivisor;	// XXX is this much even necessary?
