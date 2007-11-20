@@ -12,6 +12,7 @@ OUTPUTFILE="$1"-"$2"
 TEMPDIR=`dirname "$1"`/`basename "$1"`_temp_$$_`jot -r -n -p 20 1`
 PLUGINNAME="$4"
 PLUGINNAME_FILE=`basename "${6}"`
+LICENSENAME="COPYING.txt"
 
 echo
 echo "   creating temporary directory  "$TEMPDIR
@@ -50,6 +51,8 @@ if [ -d "${PLUGIN_BUNDLE_RESOURCES_DIR}" ]; then
 	echo
 	echo "   copying  "$MANUALNAME"  into  "$PLUGINNAME_FILE
 	cp -f "${MANUALNAME}" "${PLUGIN_BUNDLE_RESOURCES_DIR}"/
+	echo "   copying  "$LICENSENAME"  into  "$PLUGINNAME_FILE
+	cp -f ~/dfx/vstplugins/COPYING "${PLUGIN_BUNDLE_RESOURCES_DIR}"/"${LICENSENAME}"
 fi
 
 #OUTPUTFILE_FULLNAME="${OUTPUTFILE}".tar.gz
