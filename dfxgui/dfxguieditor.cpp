@@ -33,7 +33,8 @@ const SInt32 kDfxGui_TransparencySliderControlID = 0;
 #ifdef TARGET_API_AUDIOUNIT
 	const Float32 kDfxGui_ParameterNotificationInterval = 30.0 * kEventDurationMillisecond;	// 30 ms parameter notification update interval
 //	static const CFStringRef kDfxGui_AUPresetFileUTI = (kUTTypeXML != NULL) ? kUTTypeXML : CFSTR("public.xml");	// XXX only available in Mac OS X 10.4 or higher
-	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("org.destroyfx.aupreset");
+//	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("org.destroyfx.aupreset");
+	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("com.apple.audio-unit-preset");	// XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
 #endif
 
 
