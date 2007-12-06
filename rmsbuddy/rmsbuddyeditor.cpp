@@ -1449,7 +1449,6 @@ void RMSBuddyEditor::handleControlValueChange(RMSControl * inControl, SInt32 inC
 }
 
 //-----------------------------------------------------------------------------
-// send a message to the DSP component to reset absolute peak
 UInt32 RMSBuddyEditor::getAUNumChannels()
 {
 	CAStreamBasicDescription streamDesc;
