@@ -2,7 +2,6 @@
 
 #include "rmsbuddy.h"
 
-#include <AudioToolbox/AudioUnitUtilities.h>	// for AUEventListenerNotify
 #include <AudioUnit/LogicAUProperties.h>
 
 
@@ -159,21 +158,7 @@ void RMSBuddy::resetGUIcounters()
 // post notification to the GUI that it's time to re-fetch data and refresh its display
 void RMSBuddy::notifyGUI()
 {
-	// we use AUEventListenerNotify() notification rather than PropertyChanged() notification because 
-	// PropertyChanged() notifications cause immediate callbacks which should not be done from audio threads, 
-	// whereas AUEventListenerNotify() notifications enter a queue that is checked periodically by event listeners, 
-	// and therefore return immediately and are fine for audio threads
-	if (AUEventListenerNotify != NULL)
-	{
-		AudioUnitEvent auEvent;
-		memset(&auEvent, 0, sizeof(auEvent));
-		auEvent.mEventType = kAudioUnitEvent_PropertyChange;
-		auEvent.mArgument.mProperty.mAudioUnit = GetComponentInstance();
-		auEvent.mArgument.mProperty.mPropertyID = kRMSBuddyProperty_DynamicsData;
-		auEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
-		auEvent.mArgument.mProperty.mElement = 0;
-		AUEventListenerNotify(NULL, NULL, &auEvent);
-	}
+	PropertyChanged(kRMSBuddyProperty_DynamicsData, kAudioUnitScope_Global, (AudioUnitElement)0);
 }
 
 //-----------------------------------------------------------------------------------------
