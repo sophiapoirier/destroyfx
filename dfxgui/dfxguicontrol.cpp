@@ -1215,7 +1215,7 @@ void DGCarbonViewControl::ParameterToControl(Float32 inParamValue)
 }
 
 //-----------------------------------------------------------------------------
-bool DGCarbonViewControl::HandleEvent(EventRef inEvent)
+bool DGCarbonViewControl::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent)
 {
 	UInt32 eventClass = GetEventClass(inEvent);
 	UInt32 eventKind = GetEventKind(inEvent);
@@ -1233,7 +1233,7 @@ bool DGCarbonViewControl::HandleEvent(EventRef inEvent)
 		}
 	}
 
-	return AUCarbonViewControl::HandleEvent(inEvent);
+	return AUCarbonViewControl::HandleEvent(inHandlerRef, inEvent);
 }
 
 

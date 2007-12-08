@@ -240,7 +240,7 @@ public:
 
 	virtual void ControlToParameter();
 	virtual void ParameterToControl(Float32 inNewValue);
-	virtual bool HandleEvent(EventRef inEvent);
+	virtual bool HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent);
 };
 #endif
 
