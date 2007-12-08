@@ -12,7 +12,7 @@ enum {
 	kRMSBuddyParameter_ResetPeak,	// message *** reset the absolute peak values
 	kRMSBuddyParameter_NumParameters,
 
-	// property IDs for allowing the GUI component get DSP information and trigger DSP-related events
+	// custom property IDs for allowing the GUI component get DSP information
 	kRMSBuddyProperty_DynamicsData = 64000	// read-only *** get the current dynamics analysis data
 };
 
