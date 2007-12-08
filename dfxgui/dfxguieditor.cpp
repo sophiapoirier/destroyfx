@@ -219,7 +219,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 
 // create the window event handler that supplements the control event handler by tracking mouse dragging, mouseover controls, etc.
-	currentControl_clicked = NULL;	// make sure that it ain't nuthin
+	currentControl_clicked = NULL;	// make sure that it isn't set to anything
 	mousedOverControlsList = NULL;
 	setCurrentControl_mouseover(NULL);
 	EventTypeSpec windowEvents[] = {
@@ -425,7 +425,7 @@ void DGCleanupControlDrawingContext(DGGraphicsContext * inContext, CGrafPtr inPo
 
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::HandleEvent(EventRef inEvent)
+bool DfxGuiEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent)
 {
 	if (GetEventClass(inEvent) == kEventClassControl)
 	{
@@ -479,7 +479,7 @@ bool DfxGuiEditor::HandleEvent(EventRef inEvent)
 	}
 
 	// let the parent implementation do its thing
-	return AUCarbonViewBase::HandleEvent(inEvent);
+	return AUCarbonViewBase::HandleEvent(inHandlerRef, inEvent);
 }
 #endif
 // TARGET_API_AUDIOUNIT
