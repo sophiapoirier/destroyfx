@@ -143,7 +143,7 @@ public:
 	virtual ~RMSBuddyEditor();
 
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
-	virtual bool HandleEvent(EventRef inEvent);
+	virtual bool HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent);
 	virtual ComponentResult Version()
 		{	return RMS_BUDDY_VERSION;	}
 
@@ -198,7 +198,7 @@ private:
 	RMSTextDisplay * windowSizeLabel;
 	RMSTextDisplay * windowSizeDisplay;
 
-	// bitmap graphics resource
+	// images
 	CGImageRef resetButtonImage;
 	CGImageRef helpButtonImage;
 
