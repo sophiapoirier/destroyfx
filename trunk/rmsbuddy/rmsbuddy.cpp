@@ -22,6 +22,7 @@ RMSBuddy::RMSBuddy(AudioUnit inComponentInstance)
 	numChannels = 0;
 
 	// initialize our parameters
+	// (this also adds them to the parameter list that is shared when queried by a host)
 	for (AudioUnitParameterID i=0; i < kRMSBuddyParameter_NumParameters; i++)
 	{
 		AudioUnitParameterInfo paramInfo;
@@ -87,7 +88,7 @@ void RMSBuddy::Cleanup()
 }
 
 //-----------------------------------------------------------------------------------------
-// this is called the reset the DSP state (clear buffers, reset counters, etc.)
+// this is called to reset the DSP state (clear buffers, reset counters, etc.)
 ComponentResult RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	// reset all of these things
@@ -173,7 +174,7 @@ ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope,
 	CFStringRef paramNameString = NULL;
 	switch (inParameterID)
 	{
-		// the size, in ms, of the RMS and peak analysis window / refresh rate
+		// the size, in milliseconds, of the RMS and peak analysis window / refresh rate
 		case kRMSBuddyParameter_AnalysisWindowSize:
 			outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
 									| kAudioUnitParameterFlag_IsWritable
@@ -227,10 +228,12 @@ ComponentResult RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, Audio
 		case kRMSBuddyParameter_ResetRMS:
 			resetRMS();
 			break;
+
 		// trigger the resetting of absolute peak
 		case kRMSBuddyParameter_ResetPeak:
 			resetPeak();
 			break;
+
 		default:
 			break;
 	}
@@ -353,11 +356,11 @@ void RMSBuddy::GetUIComponentDescs(ComponentDescription * inDescArray)
 
 //-----------------------------------------------------------------------------------------
 // process audio
-// in this plugin, we don't actually alter the audio stream at all
-// we simply look at the input values
-// the nice thing is about this being an "inline effect" is that it means that 
+// In this plugin, we don't actually alter the audio stream at all.  
+// We simply look at the input values.  
+// The nice thing is about doing "in-place processing" is that it means that 
 // the input and output buffers are the same, so we don't need to copy the 
-// audio input stream to output or anything pointless like that
+// audio input stream to output or anything pointless like that.
 OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
 						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
 						UInt32 inFramesToProcess)
