@@ -41,7 +41,7 @@ void DfxPlugin::PostConstructor()
 		CAStreamBasicDescription curInStreamFormat;
 		if ( Inputs().GetNumberOfElements() > 0 )
 			curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0);
-		const CAStreamBasicDescription curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
+		CAStreamBasicDescription curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
 		bool currentFormatIsNotSupported = false;
 		for (long i=0; i < numchannelconfigs; i++)
 		{
@@ -51,27 +51,35 @@ void DfxPlugin::PostConstructor()
 			// compare the output channel count
 			else if ( ((UInt32)(channelconfigs[i].outChannels) != curOutStreamFormat.NumberChannels()) && (channelconfigs[i].outChannels >= 0) )
 				currentFormatIsNotSupported = true;
-
-			#if !TARGET_PLUGIN_IS_INSTRUMENT
-				// we can't do in-place audio rendering if there are different numbers of audio inputs and outputs
-				// XXX or is there a better selective way of handling this (depending on current stream format)?
-				if (channelconfigs[i].inChannels != channelconfigs[i].outChannels)
-					SetProcessesInPlace(false);
-			#endif
+			// if neither check failed, then we are matching this channel config and therefore are okay
+			else
+				break;
 		}
 		// if the current format is not supported, then set the format to the first supported i/o pair in our list
 		if (currentFormatIsNotSupported)
 		{
+			const UInt32 defaultNumChannels = 2;
 			// change the input channel count to the first supported one listed
+			UInt32 newNumInputs = (channelconfigs[0].inChannels < 0) ? defaultNumChannels : (UInt32)(channelconfigs[0].inChannels);
 			CAStreamBasicDescription newStreamFormat(curInStreamFormat);
-			newStreamFormat.ChangeNumberChannels( (UInt32)(channelconfigs[0].inChannels), false );
+			newStreamFormat.ChangeNumberChannels(newNumInputs, false);
 			if ( Inputs().GetNumberOfElements() > 0 )
 				AUBase::ChangeStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0, curInStreamFormat, newStreamFormat);
 			// change the output channel count to the first supported one listed
+			UInt32 newNumOutputs = (channelconfigs[0].outChannels < 0) ? defaultNumChannels : (UInt32)(channelconfigs[0].outChannels);
 			newStreamFormat = CAStreamBasicDescription(curOutStreamFormat);
-			newStreamFormat.ChangeNumberChannels( (UInt32)(channelconfigs[0].outChannels), false );
+			newStreamFormat.ChangeNumberChannels(newNumOutputs, false);
 			AUBase::ChangeStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0, curOutStreamFormat, newStreamFormat);
 		}
+	#if !TARGET_PLUGIN_IS_INSTRUMENT
+		// we can't do in-place audio rendering if there are different numbers of audio inputs and outputs
+		// XXX or is there a better selective way of handling this (depending on current stream format)?
+		if ( Inputs().GetNumberOfElements() > 0 )
+			curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0);
+		curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
+		if (curInStreamFormat.NumberChannels() != curOutStreamFormat.NumberChannels())
+			SetProcessesInPlace(false);
+	#endif
 	}
 
 // XXX some stuff that might worth adding an accessor for at some point or something...
@@ -316,7 +324,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			{
 				if (inScope != kAudioUnitScope_Global)
 					result = kAudioUnitErr_InvalidScope;
-				// XXX the Cocoa Generic AUView sends bogus element values for this property, so ignore it
+				// XXX the Cocoa Generic AUView (prior to Mac OS X 10.5) sends bogus element values for this property, so ignore it
 //				else if (inElement != 0)
 //					result = kAudioUnitErr_InvalidElement;
 				else
