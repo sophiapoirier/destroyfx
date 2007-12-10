@@ -6,20 +6,23 @@
 //-----------------------------------------------------------------------------------------
 void Skidder::processSlopeIn()
 {
+	float baseSlopeAmp = ((float)(slopeDur-slopeSamples)) * slopeStep;
+	baseSlopeAmp *= baseSlopeAmp;	// square-scale the gain scalar
+
 	// dividing the growing slopeDur-slopeSamples by slopeDur makes ascending values
 	if (MIDIin)
 	{
 		if (midiMode == kMidiMode_trigger)
 			// start from a 0.0 floor if we are coming in from silence
-			sampleAmp = ((float)(slopeDur-slopeSamples)) * slopeStep;
+			sampleAmp = baseSlopeAmp;
 		else if (midiMode == kMidiMode_apply)
 			// no fade-in for the first entry of MIDI apply
 			sampleAmp = 1.0f;
 	}
 	else if (useRandomFloor)
-		sampleAmp = ( ((float)(slopeDur-slopeSamples)) * slopeStep * randomGainRange ) + randomFloor;
+		sampleAmp = (baseSlopeAmp * randomGainRange) + randomFloor;
 	else
-		sampleAmp = ( ((float)(slopeDur-slopeSamples)) * slopeStep * gainRange ) + floor;
+		sampleAmp = (baseSlopeAmp * gainRange) + floor;
 
 	slopeSamples--;
 
@@ -44,16 +47,16 @@ void Skidder::processPlateau()
 	{
 #ifdef USE_BACKWARDS_RMS
 		// average and then sqare the sample squareroots for the RMS value
-		rms = powf((rms/(float)rmscount), 2.0f);
+		rms = pow( (rms/(double)rmscount), 2.0 );
 #else
 		// average and then get the sqare root of the squared samples for the RMS value
-		rms = sqrtf( rms / (float)(rmscount*2) );
+		rms = sqrt( rms / (double)rmscount );
 #endif
 		// because RMS tends to be < 0.5, thus unfairly limiting rupture's range
-		rms *= 2.0f;
+		rms *= 2.0;
 		// avoids clipping or illegit values (like from wraparound)
-		if ( (rms > 1.0f) || (rms < 0.0f) )
-			rms = 1.0f;
+		if ( (rms > 1.0) || (rms < 0.0) )
+			rms = 1.0;
 		rmscount = 0;	// reset the RMS counter
 		//
 		// set up the random floor values
@@ -63,7 +66,7 @@ void Skidder::processPlateau()
 		if (slopeDur > 0)
 		{
 			state = kSkidState_SlopeOut;
-			slopeSamples = slopeDur; // refill slopeSamples
+			slopeSamples = slopeDur;	// refill slopeSamples
 			slopeStep = 1.0f / (float)slopeDur;	// calculate the fade increment scalar
 		}
 		else
@@ -75,14 +78,17 @@ void Skidder::processPlateau()
 //-----------------------------------------------------------------------------------------
 void Skidder::processSlopeOut()
 {
+	float baseSlopeAmp = (float)slopeSamples * slopeStep;
+	baseSlopeAmp *= baseSlopeAmp;	// square-scale the gain scalar
+
 	// dividing the decrementing slopeSamples by slopeDur makes descending values
 	if ( MIDIout && (midiMode == kMidiMode_trigger) )
 		// start from a 0.0 floor if we are coming in from silence
-		sampleAmp = ((float)slopeSamples) * slopeStep;
+		sampleAmp = baseSlopeAmp;
 	else if (useRandomFloor)
-		sampleAmp = ( ((float)slopeSamples) * slopeStep * randomGainRange ) + randomFloor;
+		sampleAmp = (baseSlopeAmp * randomGainRange) + randomFloor;
 	else
-		sampleAmp = ( ((float)slopeSamples) * slopeStep * gainRange ) + floor;
+		sampleAmp = (baseSlopeAmp * gainRange) + floor;
 
 	slopeSamples--;
 
@@ -119,7 +125,7 @@ void Skidder::processValley()
 
 	if (valleySamples <= 0)
 	{
-		rms = 0.0f;	// reset rms now because valley is over
+		rms = 0.0;	// reset rms now because valley is over
 		//
 		// This is where we figure out how many samples long each 
 		// envelope section is for the next skid cycle.
@@ -202,7 +208,7 @@ void Skidder::processValley()
 			panGainR = 2.0f - ((panRander*panWidth) + 1.0f);
 		}
 
-	} //end of the "valley is over" if-statement
+	}	// end of the "valley is over" if-statement
 }
 
 //-----------------------------------------------------------------------------------------
@@ -212,7 +218,7 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 	if ( (state == kSkidState_Valley) && (noise != 0.0f) )
 	{
 		// out gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
-		return ((DFX_Rand_f()*2.0f)-1.0f) * panGain * noise * rms;
+		return ((DFX_Rand_f()*2.0f)-1.0f) * panGain * noise * (float)rms;
 	}
 	// do regular skidding output
 	else
@@ -227,14 +233,21 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned long inNumFrames, bool replacing)
+void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsigned long inNumFrames, bool replacing)
 {
 	unsigned long numInputs = getnuminputs(), numOutputs = getnumoutputs();
-	const float * in1  = inputs[0];
-	const float * in2  = (numInputs < 2) ? inputs[0] : inputs[1];	// support 1 or 2 inputs
-	float * out1 = outputs[0];
-	float * out2 = (numOutputs < 2) ? outputs[0] : outputs[1];
-	unsigned long samplecount;
+	unsigned long samplecount, ch;
+	const float channelScalar = 1.0f / (float)numOutputs;
+
+	// handle the special case of mismatched input/output channel counts that we allow 
+	// by repeating the mono-input to multiple (faked) input channels
+	const float * doubledInputStreams[2];
+	if ( (numInputs == 1) && (numOutputs == 2) )
+	{
+		for (ch=0; ch < numOutputs; ch++)
+			doubledInputStreams[ch] = inStreams[0];
+		inStreams = doubledInputStreams;
+	}
 
 
 // ---------- begin MIDI stuff --------------
@@ -259,22 +272,19 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 				// need to make sure that the skipped part is silent if we're processing in-place
 				if (replacing)
 				{
-					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-						out1[samplecount] = 0.0f;
-					if (numOutputs > 1)
+					for (ch=0; ch < numOutputs; ch++)
 					{
 						for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-							out2[samplecount] = 0.0f;
+							outStreams[ch][samplecount] = 0.0f;
+
+						// jump ahead accordingly in the i/o streams
+						outStreams[ch] += waitSamples;
+						inStreams[ch] += waitSamples;
 					}
 				}
 
 				// cut back the number of samples outputted
 				inNumFrames -= (unsigned)waitSamples;
-				// and jump ahead accordingly in the i/o streams
-				in1 += waitSamples;
-				in2 += waitSamples;
-				out1 += waitSamples;
-				out2 += waitSamples;
 
 				// reset
 				waitSamples = 0;
@@ -289,12 +299,10 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 				{
 					if (replacing)
 					{
-						for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-							out1[samplecount] = 0.0f;
-						if (numOutputs > 1)
+						for (ch=0; ch < numOutputs; ch++)
 						{
 							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-								out2[samplecount] = 0.0f;
+								outStreams[ch][samplecount] = 0.0f;
 						}
 					}
 					inNumFrames = (unsigned)waitSamples;
@@ -317,30 +325,23 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 			if ( noteIsOn && (waitSamples != 0) )
 			{
 				// need to make sure that the skipped part is unprocessed audio
-				if (replacing)
+				for (ch=0; ch < numOutputs; ch++)
 				{
-					memcpy(out1, in1, waitSamples * sizeof(float));
-					if (numOutputs > 1)
-						memcpy(out2, in2, waitSamples * sizeof(float));
-				}
-				else
-				{
-					for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-						out1[samplecount] += in1[samplecount];
-					if (numOutputs > 1)
+					if (replacing)
+						memcpy(outStreams[ch], inStreams[ch], waitSamples * sizeof(outStreams[0][0]));
+					else
 					{
 						for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-							out2[samplecount] += in2[samplecount];
+							outStreams[ch][samplecount] += inStreams[ch][samplecount];
 					}
+
+					// jump ahead accordingly in the i/o streams
+					inStreams[ch] += waitSamples;
+					outStreams[ch] += waitSamples;
 				}
 
 				// cut back the number of samples outputted
 				inNumFrames -= (unsigned)waitSamples;
-				// and jump ahead accordingly in the i/o streams
-				in1 += waitSamples;
-				in2 += waitSamples;
-				out1 += waitSamples;
-				out2 += waitSamples;
 
 				// reset
 				waitSamples = 0;
@@ -355,20 +356,14 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 						waitSamples -= (signed)inNumFrames;
 					else
 					{
-						if (replacing)
+						for (ch=0; ch < numOutputs; ch++)
 						{
-							memcpy( &(out1[waitSamples]), &(in1[waitSamples]), (inNumFrames - (unsigned)waitSamples) * sizeof(float) );
-							if (numOutputs > 1)
-								memcpy( &(out2[waitSamples]), &(in2[waitSamples]), (inNumFrames - (unsigned)waitSamples) * sizeof(float) );
-						}
-						else
-						{
-							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-								out1[samplecount] += in1[samplecount];
-							if (numOutputs > 1)
+							if (replacing)
+								memcpy( &(outStreams[ch][waitSamples]), &(inStreams[ch][waitSamples]), (inNumFrames - (unsigned)waitSamples) * sizeof(outStreams[0][0]) );
+							else
 							{
 								for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-									out2[samplecount] += in2[samplecount];
+									outStreams[ch][samplecount] += inStreams[ch][samplecount];
 							}
 						}
 						inNumFrames = (unsigned)waitSamples;
@@ -377,20 +372,14 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 				}
 				else
 				{
-					if (replacing)
+					for (ch=0; ch < numOutputs; ch++)
 					{
-						memcpy(out1, in1, inNumFrames * sizeof(float));
-						if (numOutputs > 1)
-							memcpy(out2, in2, inNumFrames * sizeof(float));
-					}
-					else
-					{
-						for (samplecount = 0; samplecount < inNumFrames; samplecount++)
-							out1[samplecount] += in1[samplecount];
-						if (numOutputs > 1)
+						if (replacing)
+							memcpy(outStreams[ch], inStreams[ch], inNumFrames * sizeof(outStreams[0][0]));
+						else
 						{
 							for (samplecount = 0; samplecount < inNumFrames; samplecount++)
-								out2[samplecount] += in2[samplecount];
+								outStreams[ch][samplecount] += inStreams[ch][samplecount];
 						}
 					}
 					// that's all we need to do if there are no notes, 
@@ -442,30 +431,30 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 
 
 	// stereo processing
-	if (numOutputs >= 2)
+	if (numOutputs == 2)
 	{
 		// this is the per-sample audio processing loop
 		for (samplecount=0; samplecount < inNumFrames; samplecount++)
 		{
+			const float inputValueL = inStreams[0][samplecount], inputValueR = inStreams[1][samplecount];
+
+			// get the average sqare root of the current input samples
+			if ( (state == kSkidState_SlopeIn) || (state == kSkidState_Plateau) )
+			{
+#ifdef USE_BACKWARDS_RMS
+				rms += sqrt( (fabsf(inputValueL)+fabsf(inputValueR)) * channelScalar );
+#else
+				rms += ((inputValueL*inputValueL) + (inputValueR*inputValueR)) * channelScalar;
+#endif
+				rmscount++;	// this counter is later used for getting the mean
+			}
+
 			switch (state)
 			{
 				case kSkidState_SlopeIn:
-					// get the average sqare root of the current input samples
-#ifdef USE_BACKWARDS_RMS
-					rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
-#else
-					rms += ((*in1)*(*in1)) + ((*in2)*(*in2));
-#endif
-					rmscount++;	// this counter is later used for getting the mean
 					processSlopeIn();
 					break;
 				case kSkidState_Plateau:
-#ifdef USE_BACKWARDS_RMS
-					rms += sqrtf( fabsf(((*in1)+(*in2))*0.5f) );
-#else
-					rms += ((*in1)*(*in1)) + ((*in2)*(*in2));
-#endif
-					rmscount++;
 					processPlateau();
 					break;
 				case kSkidState_SlopeOut:
@@ -474,55 +463,54 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 				case kSkidState_Valley:
 					processValley();
 					break;
+				default:
+					break;
 			}
 	
 		#ifdef TARGET_API_VST
 			if (replacing)
 			{
 		#endif
-				*out1 = processOutput(*in1, *in2, panGainL);
-				*out2 = processOutput(*in2, *in1, panGainR);
+				outStreams[0][samplecount] = processOutput(inputValueL, inputValueR, panGainL);
+				outStreams[1][samplecount] = processOutput(inputValueR, inputValueL, panGainR);
 		#ifdef TARGET_API_VST
 			}
 			else
 			{
-				*out1 += processOutput(*in1, *in2, panGainL);
-				*out2 += processOutput(*in2, *in1, panGainR);
+				outStreams[0][samplecount] += processOutput(inputValueL, inputValueR, panGainL);
+				outStreams[1][samplecount] += processOutput(inputValueR, inputValueL, panGainR);
 			}
 		#endif
-			// move forward in the i/o sample streams
-			in1++;
-			in2++;
-			out1++;
-			out2++;
 		}
 	}
 
-	// mono processing
+	// independent-channel processing
 	else
 	{
 		// this is the per-sample audio processing loop
 		for (samplecount=0; samplecount < inNumFrames; samplecount++)
 		{
+			// get the average sqare root of the current input samples
+			if ( (state == kSkidState_SlopeIn) || (state == kSkidState_Plateau) )
+			{
+#ifdef USE_BACKWARDS_RMS
+				float tempSum = 0.0f;
+				for (ch=0; ch < numOutputs; ch++)
+					tempSum += fabsf(inStreams[ch][samplecount]);
+				rms += sqrt(tempSum * channelScalar);
+#else
+				for (ch=0; ch < numOutputs; ch++)
+					rms += inStreams[ch][samplecount] * inStreams[ch][samplecount] * channelScalar;
+#endif
+				rmscount++;	// this counter is later used for getting the mean
+			}
+
 			switch (state)
 			{
 				case kSkidState_SlopeIn:
-					// get the average sqare root of the current input samples
-#ifdef USE_BACKWARDS_RMS
-					rms += sqrtf( fabsf(*in1) );
-#else
-					rms += (*in1) * (*in1);
-#endif
-					rmscount++;	// this counter is later used for getting the mean
 					processSlopeIn();
 					break;
 				case kSkidState_Plateau:
-#ifdef USE_BACKWARDS_RMS
-					rms += sqrtf( fabsf(*in1) );
-#else
-					rms += (*in1) * (*in1);
-#endif
-					rmscount++;
 					processPlateau();
 					break;
 				case kSkidState_SlopeOut:
@@ -531,19 +519,21 @@ void Skidder::processaudio(const float ** inputs, float ** outputs, unsigned lon
 				case kSkidState_Valley:
 					processValley();
 					break;
+				default:
+					break;
 			}
 	
+			for (ch=0; ch < numOutputs; ch++)
+			{
 		#ifdef TARGET_API_VST
-			if (replacing)
+				if (replacing)
 		#endif
-				*out1 = processOutput(*in1, *in1, 1.0f);
+					outStreams[ch][samplecount] = processOutput(inStreams[ch][samplecount], inStreams[ch][samplecount], 1.0f);
 		#ifdef TARGET_API_VST
-			else
-				*out1 += processOutput(*in1, *in1, 1.0f);
+				else
+					outStreams[ch][samplecount] += processOutput(inStreams[ch][samplecount], inStreams[ch][samplecount], 1.0f);
 		#endif
-			// move forward in the i/o sample streams
-			in1++;
-			out1++;
+			}
 		}
 	}
 }
