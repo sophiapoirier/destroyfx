@@ -212,12 +212,12 @@ SUPPORT_AU_VERSION_1
 
 #include "dfxmath.h"
 #include "dfxparameter.h"
+#include "dfxsettings.h"
 
 #include "temporatetable.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxmidi.h"
-	#include "dfxsettings.h"
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
