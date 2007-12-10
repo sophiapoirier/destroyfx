@@ -213,7 +213,7 @@ extern "C" ComponentResult BufferOverrideEntry(ComponentParameters * params, Buf
 	else if (params->what == kAudioUnitRemovePropertyListenerSelect)
 	{
 		AudioUnitRemovePropertyListenerGluePB * rpl = (AudioUnitRemovePropertyListenerGluePB*) params;
-		fprintf(stderr, "kAudioUnitRemovePropertyListenerSelect\n", GetAUPropertyName(rpl->inID));
+		fprintf(stderr, "kAudioUnitRemovePropertyListenerSelect(%s)\n", GetAUPropertyName(rpl->inID));
 	}
 	else if (params->what == kAudioUnitAddRenderNotifySelect)
 		fprintf(stderr, "kAudioUnitAddRenderNotifySelect\n");
