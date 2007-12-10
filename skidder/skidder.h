@@ -66,7 +66,7 @@ public:
 
 	virtual void reset();
 	virtual void processparameters();
-	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** inStreams, float ** outStreams, unsigned long inNumFrames, bool replacing=true);
 
 	// stuff for extending DfxSettings
 	virtual void settings_doLearningAssignStuff(long tag, long eventType, long eventChannel, 
@@ -104,7 +104,7 @@ private:
 	float slopeStep;	// the scalar for each step of the fade during a slope in or out
 	float panGainL, panGainR;	// the actual pan gain values for each stereo channel during each cycle
 	int state;	// the state of the process
-	float rms;
+	double rms;
 	long rmscount;
 
 	double currentTempoBPS;	// tempo in beats per second
