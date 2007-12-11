@@ -53,6 +53,9 @@ void Skidder::processMidiNotes()
 					noteOff();	// do the notes off Skidder stuff
 				}
 				break;
+
+			default:
+				break;
 		}
 	}
 
