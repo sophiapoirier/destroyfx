@@ -48,6 +48,12 @@ public:
 	void do_idle();
 	virtual void idle() { }
 
+#ifdef TARGET_API_AUDIOUNIT
+	void HandleStreamFormatChange();
+#endif
+	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels)
+		{ }
+
 #if TARGET_OS_MAC
 	virtual bool HandleMouseEvent(EventRef inEvent);
 	virtual bool HandleKeyboardEvent(EventRef inEvent);
@@ -101,6 +107,7 @@ public:
 		long getmidilearner();
 		bool ismidilearner(long inParameterIndex);
 	#endif
+	unsigned long getNumAudioChannels();
 
 	long copySettings();
 	long pasteSettings(bool * inQueryPastabilityOnly = NULL);
@@ -167,6 +174,8 @@ private:
 	void addMousedOverControl(DGControl * inMousedOverControl);
 	void removeMousedOverControl(DGControl * inMousedOverControl);
 
+	unsigned long numAudioChannels;
+
 #if TARGET_OS_MAC
 	ControlDefSpec 		dgControlSpec;
 	EventHandlerRef		windowEventHandlerRef;
@@ -182,6 +191,11 @@ private:
 	ControlRef	textEntryControl;
 	CFStringRef	textEntryResultString;
 	WindowRef	windowTransparencyWindow;
+#endif
+
+#ifdef TARGET_API_AUDIOUNIT
+	AUEventListenerRef auEventListener;
+	AudioUnitEvent streamFormatPropertyAUEvent;
 #endif
 };
 

@@ -13,7 +13,11 @@ static pascal OSStatus DFXGUI_TextEntryEventHandler(EventHandlerCallRef inHandle
 static pascal OSStatus DFXGUI_WindowTransparencyEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData);
 #endif
 
-// for now this is a good idea, until it's totally obsoleted
+#ifdef TARGET_API_AUDIOUNIT
+static void DFXGUI_AudioUnitEventListenerProc(void * inCallbackRefCon, void * inObject, const AudioUnitEvent * inEvent, UInt64 inEventHostTime, Float32 inParameterValue);
+#endif
+
+// XXX for now this is a good idea, until it's totally obsoleted
 #define AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES
 
 #if TARGET_OS_MAC
@@ -32,7 +36,7 @@ const SInt32 kDfxGui_TransparencySliderControlID = 0;
 
 #ifdef TARGET_API_AUDIOUNIT
 	const Float32 kDfxGui_ParameterNotificationInterval = 30.0 * kEventDurationMillisecond;	// 30 ms parameter notification update interval
-//	static const CFStringRef kDfxGui_AUPresetFileUTI = (kUTTypeXML != NULL) ? kUTTypeXML : CFSTR("public.xml");	// XXX only available in Mac OS X 10.4 or higher
+	const Float32 kDfxGui_PropertyNotificationInterval = kDfxGui_ParameterNotificationInterval;
 //	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("org.destroyfx.aupreset");
 	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("com.apple.audio-unit-preset");	// XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
 #endif
@@ -82,9 +86,15 @@ CFRelease(mut);
 	windowTransparencyWindow = NULL;
 #endif
 
+#ifdef TARGET_API_AUDIOUNIT
+	auEventListener = NULL;
+#endif
+
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
 	mousedOverControlsList = NULL;
+
+	numAudioChannels = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -96,6 +106,19 @@ DfxGuiEditor::~DfxGuiEditor()
 		#endif
 			setmidilearning(false);
 	#endif
+
+#ifdef TARGET_API_AUDIOUNIT
+	// remove and dispose the property listener, if we created it
+	if (auEventListener != NULL)
+	{
+		if (AUEventListenerRemoveEventType != NULL)
+		{
+			AUEventListenerRemoveEventType(auEventListener, this, &streamFormatPropertyAUEvent);
+		}
+		AUListenerDispose(auEventListener);
+	}
+	auEventListener = NULL;
+#endif
 
 #if TARGET_OS_MAC
 	if (idleTimer != NULL)
@@ -244,6 +267,30 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 								{ kEventClassControl, kEventControlContextualMenuClick }, 
 								};
 	WantEventTypes(GetControlEventTarget(GetCarbonPane()), GetEventTypeCount(paneEvents), paneEvents);
+
+
+// determine the number of audio channels currently configured for the AU
+	numAudioChannels = getNumAudioChannels();
+
+
+#ifdef TARGET_API_AUDIOUNIT
+// install a property listener for the necessary properties
+	if ( (AUEventListenerCreate != NULL) && (AUEventListenerAddEventType != NULL) )
+	{
+		OSStatus status = AUEventListenerCreate(DFXGUI_AudioUnitEventListenerProc, this, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 
+								kDfxGui_PropertyNotificationInterval, kDfxGui_PropertyNotificationInterval, &auEventListener);
+		if (status == noErr)
+		{
+			memset(&streamFormatPropertyAUEvent, 0, sizeof(streamFormatPropertyAUEvent));
+			streamFormatPropertyAUEvent.mEventType = kAudioUnitEvent_PropertyChange;
+			streamFormatPropertyAUEvent.mArgument.mProperty.mAudioUnit = GetEditAudioUnit();
+			streamFormatPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_StreamFormat;
+			streamFormatPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Output;
+			streamFormatPropertyAUEvent.mArgument.mProperty.mElement = 0;
+			AUEventListenerAddEventType(auEventListener, this, &streamFormatPropertyAUEvent);
+		}
+	}
+#endif
 
 
 // load any fonts from our bundle resources to be accessible locally within our component instance
@@ -993,6 +1040,24 @@ bool DfxGuiEditor::ismidilearner(long inParameterIndex)
 // TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
+unsigned long DfxGuiEditor::getNumAudioChannels()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	const AudioUnit effectAU = GetEditAudioUnit();
+	if (effectAU == NULL)
+		return 0;
+
+	CAStreamBasicDescription streamDesc;
+	UInt32 dataSize = sizeof(streamDesc);
+	ComponentResult result = AudioUnitGetProperty(effectAU, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, (AudioUnitElement)0, &streamDesc, &dataSize);
+	if (result == noErr)
+		return streamDesc.NumberChannels();
+	else
+		return 0;
+#endif
+}
+
+//-----------------------------------------------------------------------------
 long DfxGuiEditor::initClipboard()
 {
 #if TARGET_OS_MAC
@@ -1600,6 +1665,33 @@ fprintf(stderr, "kEventControlHit\n");
 }
 #endif
 // TARGET_OS_MAC
+
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+static void DFXGUI_AudioUnitEventListenerProc(void * inCallbackRefCon, void * inObject, const AudioUnitEvent * inEvent, UInt64 inEventHostTime, Float32 inParameterValue)
+{
+	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*) inCallbackRefCon;
+	if ( (ourOwnerEditor != NULL) && (inEvent != NULL) )
+	{
+		if (inEvent->mEventType == kAudioUnitEvent_PropertyChange)
+		{
+			if (inEvent->mArgument.mProperty.mPropertyID == kAudioUnitProperty_StreamFormat)
+				ourOwnerEditor->HandleStreamFormatChange();
+		}
+	}
+}
+#endif
+
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::HandleStreamFormatChange()
+{
+	unsigned long oldNumAudioChannels = numAudioChannels;
+	numAudioChannels = getNumAudioChannels();
+	if (numAudioChannels != oldNumAudioChannels)
+		numAudioChannelsChanged(numAudioChannels);
+}
+#endif
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
