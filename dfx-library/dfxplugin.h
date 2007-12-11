@@ -707,6 +707,7 @@ public:
 	virtual Float64 GetTailTime();
 	virtual bool SupportsTail()
 		{	return true;	}
+	virtual CFURLRef CopyIconLocation();
 
 	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
 					AudioUnitParameterID inParameterID, 
