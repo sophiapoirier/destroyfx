@@ -461,9 +461,8 @@ void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsign
 					processSlopeOut();
 					break;
 				case kSkidState_Valley:
-					processValley();
-					break;
 				default:
+					processValley();
 					break;
 			}
 	
@@ -517,9 +516,8 @@ void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsign
 					processSlopeOut();
 					break;
 				case kSkidState_Valley:
-					processValley();
-					break;
 				default:
+					processValley();
 					break;
 			}
 	
