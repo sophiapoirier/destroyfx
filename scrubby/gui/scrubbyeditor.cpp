@@ -808,8 +808,10 @@ long ScrubbyEditor::open()
 
 
 
-	// this will initialize the pitch constraint controls' translucency settings 
+	// this will initialize the pitch constraint controls' initial translucency settings 
 	HandlePitchConstraintChange();
+	// and this will do the same for the channels mode control
+	numAudioChannelsChanged( getNumAudioChannels() );
 
 
 
@@ -1020,4 +1022,18 @@ void ScrubbyEditor::mouseovercontrolchanged(DGControl * currentControlUnderMouse
 updateHelp:
 	if (helpbox != NULL)
 		helpbox->setDisplayItem(newHelpItem);
+}
+
+//-----------------------------------------------------------------------------
+void ScrubbyEditor::numAudioChannelsChanged(unsigned long inNewNumChannels)
+{
+	float alpha = (inNewNumChannels > 1) ? 1.0f : kUnusedControlAlpha;
+
+	DGControlsList * tempcl = controlsList;
+	while (tempcl != NULL)
+	{
+		if (tempcl->control->getParameterID() == kSplitChannels)
+			tempcl->control->setDrawAlpha(alpha);
+		tempcl = tempcl->next;
+	}
 }
