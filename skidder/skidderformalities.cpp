@@ -30,7 +30,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kTempoSync, "tempo sync", false, false);
 	initparameter_f(kPulsewidth, "pulsewidth", 0.5, 0.5, 0.001, 0.999, kDfxParamUnit_portion);
 	initparameter_f(kPulsewidthRandMin, "pulsewidth random min", 0.5, 0.5, 0.001, 0.999, kDfxParamUnit_portion);
-	initparameter_f(kSlope, "slope", 3.0, 3.0, 0.0, 333.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
+	initparameter_f(kSlope, "slope", 3.0, 3.0, 0.0, 300.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_f(kPan, "stereo spread", 0.0, 0.6, 0.0, 1.0, kDfxParamUnit_portion);
 	initparameter_f(kFloor, "floor", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kFloorRandMin, "floor random min", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
