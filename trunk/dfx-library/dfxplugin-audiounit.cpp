@@ -1350,11 +1350,10 @@ ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags,
 
 	// get the output element
 	AUOutputElement * theOutput = GetOutput(0);	// throws if there's an error
-	AudioBufferList & outBuffers = theOutput->GetBufferList();
-	UInt32 numOutputBuffers = outBuffers.mNumberBuffers;
+	UInt32 numOutputBuffers = theOutput->GetBufferList().mNumberBuffers;
 	// set up our more convenient audio stream pointers
 	for (UInt32 i=0; i < numOutputBuffers; i++)
-		outputsP[i] = (float*) (outBuffers.mBuffers[i].mData);
+		outputsP[i] = theOutput->GetChannelData(i);
 
 	// do stuff to prepare the audio inputs, if we use any
 	if (getnuminputs() > 0)
@@ -1366,11 +1365,10 @@ ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags,
 		if (result != noErr)
 			return result;
 
-		AudioBufferList & inBuffers = theInput->GetBufferList();
-		UInt32 numInputBuffers = inBuffers.mNumberBuffers;
+		UInt32 numInputBuffers = theInput->GetBufferList().mNumberBuffers;
 		// set up our more convenient audio stream pointers
 		for (UInt32 i=0; i < numInputBuffers; i++)
-			inputsP[i] = (float*) (inBuffers.mBuffers[i].mData);
+			inputsP[i] = theInput->GetChannelData(i);
 	}
 
 	// now do the processing
