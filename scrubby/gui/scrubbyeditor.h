@@ -32,6 +32,7 @@ public:
 
 	virtual long open();
 	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse);
+	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels);
 
 	void HandleNotesButton(long inNotesButtonType);
 	void HandlePitchConstraintChange();
