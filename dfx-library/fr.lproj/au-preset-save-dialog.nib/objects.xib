@@ -15,20 +15,21 @@
           <object class="IBCarbonEditText" id="182">
             <string name="bounds">23 142 39 473 </string>
             <string name="viewFrame">142 23 331 16 </string>
-            <ostype name="controlSignature">name</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">128</int>
             <boolean name="isUnicode">TRUE</boolean>
           </object>
           <object class="IBCarbonStaticText" id="183">
             <string name="bounds">22 20 38 131 </string>
             <string name="viewFrame">20 22 111 16 </string>
+            <ostype name="controlSignature">DFX!</ostype>
             <string name="title">Enregistrer sous : </string>
             <int name="justification">-1</int>
           </object>
           <object class="IBCarbonButton" id="202">
             <string name="bounds">62 48 82 241 </string>
             <string name="viewFrame">48 62 193 20 </string>
-            <ostype name="controlSignature">cust</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">132</int>
             <string name="title">Choisir l&apos;emplacement...</string>
             <ostype name="command">svas</ostype>
@@ -37,7 +38,7 @@
           <object class="IBCarbonButton" id="203">
             <string name="bounds">62 265 82 355 </string>
             <string name="viewFrame">265 62 90 20 </string>
-            <ostype name="controlSignature">canc</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">131</int>
             <string name="title">Annuler</string>
             <ostype name="command">not!</ostype>
@@ -46,7 +47,7 @@
           <object class="IBCarbonButton" id="204">
             <string name="bounds">62 367 82 476 </string>
             <string name="viewFrame">367 62 109 20 </string>
-            <ostype name="controlSignature">save</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">130</int>
             <string name="title">Enregistrer</string>
             <ostype name="command">save</ostype>

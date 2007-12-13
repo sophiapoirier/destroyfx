@@ -15,20 +15,21 @@
           <object class="IBCarbonEditText" id="182">
             <string name="bounds">23 83 39 422 </string>
             <string name="viewFrame">83 23 339 16 </string>
-            <ostype name="controlSignature">name</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">128</int>
             <boolean name="isUnicode">TRUE</boolean>
           </object>
           <object class="IBCarbonStaticText" id="183">
             <string name="bounds">22 20 38 74 </string>
             <string name="viewFrame">20 22 54 16 </string>
+            <ostype name="controlSignature">DFX!</ostype>
             <string name="title">Save as:</string>
             <int name="justification">-1</int>
           </object>
           <object class="IBCarbonButton" id="202">
             <string name="bounds">62 33 82 238 </string>
             <string name="viewFrame">33 62 205 20 </string>
-            <ostype name="controlSignature">cust</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">132</int>
             <string name="title">Choose custom location...</string>
             <ostype name="command">svas</ostype>
@@ -37,7 +38,7 @@
           <object class="IBCarbonButton" id="203">
             <string name="bounds">62 262 82 344 </string>
             <string name="viewFrame">262 62 82 20 </string>
-            <ostype name="controlSignature">canc</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">131</int>
             <string name="title">Cancel</string>
             <ostype name="command">not!</ostype>
@@ -46,7 +47,7 @@
           <object class="IBCarbonButton" id="204">
             <string name="bounds">62 356 82 425 </string>
             <string name="viewFrame">356 62 69 20 </string>
-            <ostype name="controlSignature">save</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">130</int>
             <string name="title">Save</string>
             <ostype name="command">save</ostype>

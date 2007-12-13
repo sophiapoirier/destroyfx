@@ -15,20 +15,21 @@
           <object class="IBCarbonEditText" id="182">
             <string name="bounds">23 116 39 434 </string>
             <string name="viewFrame">116 23 318 16 </string>
-            <ostype name="controlSignature">name</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">128</int>
             <boolean name="isUnicode">TRUE</boolean>
           </object>
           <object class="IBCarbonStaticText" id="183">
             <string name="bounds">22 20 38 105 </string>
             <string name="viewFrame">20 22 85 16 </string>
+            <ostype name="controlSignature">DFX!</ostype>
             <string name="title">Opslaan als:</string>
             <int name="justification">-1</int>
           </object>
           <object class="IBCarbonButton" id="202">
             <string name="bounds">62 32 82 204 </string>
             <string name="viewFrame">32 62 172 20 </string>
-            <ostype name="controlSignature">cust</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">132</int>
             <string name="title">Kies andere locatie...</string>
             <ostype name="command">svas</ostype>
@@ -37,7 +38,7 @@
           <object class="IBCarbonButton" id="203">
             <string name="bounds">62 228 82 333 </string>
             <string name="viewFrame">228 62 105 20 </string>
-            <ostype name="controlSignature">canc</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">131</int>
             <string name="title">Annuleren</string>
             <ostype name="command">not!</ostype>
@@ -46,7 +47,7 @@
           <object class="IBCarbonButton" id="204">
             <string name="bounds">62 345 82 437 </string>
             <string name="viewFrame">345 62 92 20 </string>
-            <ostype name="controlSignature">save</ostype>
+            <ostype name="controlSignature">DFX!</ostype>
             <int name="controlID">130</int>
             <string name="title">Opslaan</string>
             <ostype name="command">save</ostype>
