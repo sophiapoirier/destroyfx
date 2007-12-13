@@ -1055,11 +1055,10 @@ typedef struct {
 // some constant values for the Carbon controls in our Save AU preset dialog nib
 enum {
 	// the text field where the preset file name is entered
-	kPresetNameTextControlSignature = 'name',
-	kPresetNameTextControlID = 128,
+	kAUPresetSaveDialog_ControlSignature = 'DFX!',
+	kAUPresetSaveDialog_PresetNameTextControlID = 128,
 	// the radio button for choosing the file system domain
-	kDomainChoiceControlSignature = 'doma',
-	kDomainChoiceControlID = 129,
+	kAUPresetSaveDialog_DomainChoiceControlID = 129,
 
 	// the control values for each option in the file system domain radio button
 	kDomainChoiceValue_User = 1,
@@ -1067,8 +1066,8 @@ enum {
 	kDomainChoiceValue_Network
 };
 
-#define kAUPresetSaveDialogNibName	CFSTR("au-preset-save-dialog")
-#define kAUPresetSaveDialogNibWindowName	CFSTR("Save dialog")
+#define kAUPresetSaveDialog_NibName	CFSTR("au-preset-save-dialog")
+#define kAUPresetSaveDialog_NibWindowName	CFSTR("Save dialog")
 
 //-----------------------------------------------------------------------------
 // create, show, and run modally our dialog window
@@ -1088,12 +1087,12 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 		return paramErr;
 
 	// find the dialog nib
-	error = CreateNibReferenceWithCFBundle(gCurrentBundle, kAUPresetSaveDialogNibName, &nibRef);
+	error = CreateNibReferenceWithCFBundle(gCurrentBundle, kAUPresetSaveDialog_NibName, &nibRef);
 	if (error != noErr)
 		return error;
 
 	// load the window that is contained in the nib
-	error = CreateWindowFromNib(nibRef, kAUPresetSaveDialogNibWindowName, &dialogWindow);
+	error = CreateWindowFromNib(nibRef, kAUPresetSaveDialog_NibWindowName, &dialogWindow);
 	// we don't need the nib reference anymore
 	DisposeNibReference(nibRef);
 	if (error != noErr)
@@ -1141,7 +1140,7 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	// set the file name text edit field as the initial focused control, for user convenience
 	{
 		ControlRef textFieldControl = NULL;
-		ControlID textFieldControlID =	{ kPresetNameTextControlSignature, kPresetNameTextControlID };
+		ControlID textFieldControlID =	{ kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_PresetNameTextControlID };
 		GetControlByID(dialogWindow, &textFieldControlID, &textFieldControl);
 		if (textFieldControl != NULL)
 		{
@@ -1209,11 +1208,11 @@ catch dialog response
 		case kHICommandSave:
 			{
 				ControlRef textFieldControl = NULL;
-				ControlID textFieldControlID =	{ kPresetNameTextControlSignature, kPresetNameTextControlID };
+				ControlID textFieldControlID =	{ kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_PresetNameTextControlID };
 				CFStringRef presetNameString = NULL;
 
 				ControlRef domainChoiceControl = NULL;
-				ControlID domainChoiceControlID = { kDomainChoiceControlSignature, kDomainChoiceControlID };
+				ControlID domainChoiceControlID = { kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_DomainChoiceControlID };
 				SInt32 domainChoice;
 				short fsDomain;
 
