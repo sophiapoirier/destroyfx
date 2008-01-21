@@ -544,12 +544,12 @@ public:
 	#if TARGET_PLUGIN_USES_MIDI
 		// ***
 		// handlers for the types of MIDI events that we support
-		virtual void handlemidi_noteon(int channel, int note, int velocity, long frameOffset);
-		virtual void handlemidi_noteoff(int channel, int note, int velocity, long frameOffset);
-		virtual void handlemidi_allnotesoff(int channel, long frameOffset);
-		virtual void handlemidi_pitchbend(int channel, int valueLSB, int valueMSB, long frameOffset);
-		virtual void handlemidi_cc(int channel, int controllerNum, int value, long frameOffset);
-		virtual void handlemidi_programchange(int channel, int programNum, long frameOffset);
+		virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, long inFrameOffset);
+		virtual void handlemidi_noteoff(int inChannel, int inNote, int inVelocity, long inFrameOffset);
+		virtual void handlemidi_allnotesoff(int inChannel, long inFrameOffset);
+		virtual void handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, long inFrameOffset);
+		virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, long inFrameOffset);
+		virtual void handlemidi_programchange(int inChannel, int inProgramNum, long inFrameOffset);
 
 		DfxSettings * getsettings_ptr()
 			{	return dfxsettings;	}
