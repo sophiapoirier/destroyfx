@@ -18,6 +18,9 @@ written by Sophia Poirier, October 2002 - 2004
 	#include "vstgui.h"
 #endif
 
+//#define DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+//#define DFX_DEBUG_PRINT_MUSIC_EVENTS
+
 
 
 #pragma mark --- DfxPlugin ---
@@ -1098,7 +1101,9 @@ void DfxPlugin::processtimeinfo()
 	status = CallHostBeatAndTempo(&beat, &tempo);
 	if (status == noErr)
 	{
-//fprintf(stderr, "tempo = %.2f\n, beat = %.2f\n", tempo, beat);
+#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+fprintf(stderr, "\ntempo = %.2f\nbeat = %.2f\n", tempo, beat);
+#endif
 		timeinfo.tempoIsValid = true;
 		timeinfo.tempo = tempo;
 		timeinfo.beatPosIsValid = true;
@@ -1106,7 +1111,9 @@ void DfxPlugin::processtimeinfo()
 
 		hostCanDoTempo = true;
 	}
-//else fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
+#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+else fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
+#endif
 
 	// the number of samples until the next beat from the start sample of the current rendering buffer
 //	UInt32 sampleOffsetToNextBeat = 0;	// XXX should I just send NULL since we don't use this?
@@ -1122,13 +1129,17 @@ void DfxPlugin::processtimeinfo()
 		// get the song beat position of the beginning of the current measure
 		timeinfo.barPosIsValid = true;
 		timeinfo.barPos = currentMeasureDownBeat;
-//fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.1f\n", timeSigNumerator, timeSigDenominator, currentMeasureDownBeat);
+#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, timeSigDenominator, currentMeasureDownBeat);
+#endif
 		// get the numerator of the time signature - this is the number of beats per measure
 		timeinfo.timeSigIsValid = true;
 		timeinfo.numerator = (double) timeSigNumerator;
 		timeinfo.denominator = (double) timeSigDenominator;
 	}
-//else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
+#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
+#endif
 
 	if (gAUTransportStateIsSafe)
 	{
@@ -1142,9 +1153,15 @@ void DfxPlugin::processtimeinfo()
 		// determine whether the playback position or state has just changed
 		if (status == noErr)
 		{
+#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+fprintf(stderr, "is playing = %s\ntransport changed = %s\n", isPlaying ? "true" : "false", transportStateChanged ? "true" : "false");
+#endif
 			timeinfo.playbackChanged = transportStateChanged;
 			timeinfo.playbackIsOccurring = isPlaying;
 		}
+#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
+#endif
 	}
 #endif
 // TARGET_API_AUDIOUNIT
@@ -1285,53 +1302,71 @@ void DfxPlugin::do_processparameters()
 #if TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_noteon(int channel, int note, int velocity, long frameOffset)
+void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, long inFrameOffset)
 {
+#ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
+fprintf("note on:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n", inNote, inVelocity, inChannel, inFrameOffset);
+#endif
 	if (midistuff != NULL)
-		midistuff->handleNoteOn(channel, note, velocity, frameOffset);
+		midistuff->handleNoteOn(inChannel, inNote, inVelocity, inFrameOffset);
 	if (dfxsettings != NULL)
-		dfxsettings->handleNoteOn(channel, note, velocity, frameOffset);
+		dfxsettings->handleNoteOn(inChannel, inNote, inVelocity, inFrameOffset);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_noteoff(int channel, int note, int velocity, long frameOffset)
+void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, long inFrameOffset)
 {
+#ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
+fprintf("note off:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n", inNote, inVelocity, inChannel, inFrameOffset);
+#endif
 	if (midistuff != NULL)
-		midistuff->handleNoteOff(channel, note, velocity, frameOffset);
+		midistuff->handleNoteOff(inChannel, inNote, inVelocity, inFrameOffset);
 	if (dfxsettings != NULL)
-		dfxsettings->handleNoteOff(channel, note, velocity, frameOffset);
+		dfxsettings->handleNoteOff(inChannel, inNote, inVelocity, inFrameOffset);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_allnotesoff(int channel, long frameOffset)
+void DfxPlugin::handlemidi_allnotesoff(int inChannel, long inFrameOffset)
 {
+#ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
+fprintf("all notes off:  channel = %d, sample offset = %ld\n", inChannel, inFrameOffset);
+#endif
 	if (midistuff != NULL)
-		midistuff->handleAllNotesOff(channel, frameOffset);
+		midistuff->handleAllNotesOff(inChannel, inFrameOffset);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_pitchbend(int channel, int valueLSB, int valueMSB, long frameOffset)
+void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, long inFrameOffset)
 {
+#ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
+fprintf("pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %ld\n", inValueLSB, inValueMSB, inChannel, inFrameOffset);
+#endif
 	if (midistuff != NULL)
-		midistuff->handlePitchBend(channel, valueLSB, valueMSB, frameOffset);
+		midistuff->handlePitchBend(inChannel, inValueLSB, inValueMSB, inFrameOffset);
 	if (dfxsettings != NULL)
-		dfxsettings->handlePitchBend(channel, valueLSB, valueMSB, frameOffset);
+		dfxsettings->handlePitchBend(inChannel, inValueLSB, inValueMSB, inFrameOffset);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_cc(int channel, int controllerNum, int value, long frameOffset)
+void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, long inFrameOffset)
 {
+#ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
+fprintf("MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %ld\n", inControllerNum, inValue, inChannel, inFrameOffset);
+#endif
 	if (midistuff != NULL)
-		midistuff->handleCC(channel, controllerNum, value, frameOffset);
+		midistuff->handleCC(inChannel, inControllerNum, inValue, inFrameOffset);
 	if (dfxsettings != NULL)
-		dfxsettings->handleCC(channel, controllerNum, value, frameOffset);
+		dfxsettings->handleCC(inChannel, inControllerNum, inValue, inFrameOffset);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_programchange(int channel, int programNum, long frameOffset)
+void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, long inFrameOffset)
 {
+#ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
+fprintf("program change:  program num = %d, channel = %d, sample offset = %ld\n", inProgramNum, inChannel, inFrameOffset);
+#endif
 	if (midistuff != NULL)
-		midistuff->handleProgramChange(channel, programNum, frameOffset);
+		midistuff->handleProgramChange(inChannel, inProgramNum, inFrameOffset);
 }
 
 #endif
