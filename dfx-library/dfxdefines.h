@@ -22,17 +22,37 @@ somewhere in the include tree for every file for a DfxPlugin.
 /*-----------------------------------------------------------------------------*/
 #define DESTROY_FX_RULEZ
 
-#define DESTROYFX_NAME_STRING	"Destroy FX"
-#define DESTROYFX_COLLECTION_NAME	"Super Destroy FX bipolar plugin pack"
-#define DESTROYFX_URL "http://destroyfx.org/"
-#define SMARTELECTRONIX_URL "http://smartelectronix.com/"
+#ifndef PLUGIN_CREATOR_NAME_STRING
+	#define PLUGIN_CREATOR_NAME_STRING	"Destroy FX"
+#endif
+
+#ifndef PLUGIN_CREATOR_ID
+	#define PLUGIN_CREATOR_ID	'DFX!'
+#endif
+
+#ifndef PLUGIN_COLLECTION_NAME
+	#define PLUGIN_COLLECTION_NAME	"Super Destroy FX bipolar plugin pack"
+#endif
+
 /* XXX needs workaround for plugin names with white spaces */
 #ifndef PLUGIN_BUNDLE_IDENTIFIER
 	#define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx."PLUGIN_NAME_STRING
 #endif
 
-#define DESTROYFX_ID 'DFX!'
+#ifndef PLUGIN_ICON_FILE_NAME
+	#define PLUGIN_ICON_FILE_NAME	"destroyfx.icns"
+#endif
 
+#define DESTROYFX_URL	"http://destroyfx.org/"
+#define SMARTELECTRONIX_URL	"http://smartelectronix.com/"
+
+#ifndef PLUGIN_HOMEPAGE_URL
+	#define PLUGIN_HOMEPAGE_URL	DESTROYFX_URL
+#endif
+
+
+
+/*-----------------------------------------------------------------------------*/
 #ifdef __STDC__
 	/* to indicate "not a real parameter" or something like that */
 	const long DFX_PARAM_INVALID_ID = -1;
@@ -79,6 +99,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 	#include <windows.h>
 #endif
 #endif
+
 
 
 #endif

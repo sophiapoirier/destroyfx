@@ -132,20 +132,17 @@ bool DfxPlugin::getOutputProperties(VstInt32 index, VstPinProperties * propertie
 
 
 //-----------------------------------------------------------------------------
-// Destroy FX infos
+// plugin identifying infos
 
-bool DfxPlugin::getEffectName(char * name)
+bool DfxPlugin::getEffectName(char * outText)
 {
-	if (name == NULL)
+	if (outText == NULL)
 		return false;
 	// get the name into a temp string buffer that we know is large enough
 	char tempname[DFX_PARAM_MAX_NAME_LENGTH];
 	getpluginname(tempname);
 	// then make sure to only copy as much as the name C string can hold
-	strncpy(name, tempname, 32);	// name max 32 characters XXX kVstMaxEffectNameLen
-	// in case the parameter name was 32 or longer, 
-	// make sure that the name string is terminated
-	name[32-1] = 0;
+	vst_strncpy(outText, tempname, kVstMaxEffectNameLen)
 	return true;
 }
 
@@ -154,21 +151,19 @@ VstInt32 DfxPlugin::getVendorVersion()
 	return PLUGIN_VERSION;
 }
 
-bool DfxPlugin::getVendorString(char * text)
+bool DfxPlugin::getVendorString(char * outText)
 {
-	if (text == NULL)
+	if (outText == NULL)
 		return false;
-	// a string identifying the vendor (max 64 characters)
-	strcpy(text, DESTROYFX_NAME_STRING);	// XXX kVstMaxVendorStrLen
+	vst_strncpy(outText, PLUGIN_CREATOR_NAME_STRING, kVstMaxVendorStrLen);
 	return true;
 }
 
-bool DfxPlugin::getProductString(char * text)
+bool DfxPlugin::getProductString(char * outText)
 {
-	if (text == NULL)
+	if (outText == NULL)
 		return false;
-	// a string identifying the product name (max 64 characters)
-	strcpy(text, "Super Destroy FX bipolar VST plugin pack");	// XXX kVstMaxProductStrLen
+	vst_strncpy(outText, PLUGIN_COLLECTION_NAME, kVstMaxProductStrLen);
 	return true;
 }
 
@@ -221,47 +216,55 @@ VstInt32 DfxPlugin::canDo(char * text)
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setProgram(VstInt32 programNum)
+void DfxPlugin::setProgram(VstInt32 inProgramNum)
 {
-	loadpreset(programNum);
+	loadpreset(inProgramNum);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setProgramName(char * name)
+void DfxPlugin::setProgramName(char * inName)
 {
-	if (name != NULL)
-		setpresetname(TARGET_API_BASE_CLASS::getProgram(), name);
+	if (inName != NULL)
+		setpresetname(TARGET_API_BASE_CLASS::getProgram(), inName);
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::getProgramName(char * name)
+void DfxPlugin::getProgramName(char * outText)
 {
-	if (name == NULL)
+	if (outText == NULL)
 		return;
 
 	long vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
 
-	if (presetisvalid(vstpresetnum))
+	if ( presetisvalid(vstpresetnum) )
 	{
 		if ( presetnameisvalid(vstpresetnum) )
-			getpresetname(vstpresetnum, name);	// XXX kVstMaxProgNameLen
+		{
+			char tempname[DFX_PRESET_MAX_NAME_LENGTH];
+			getpresetname(vstpresetnum, tempname);
+			vst_strncpy(outText, tempname, kVstMaxProgNameLen)
+		}
 		else
-			sprintf(name, "default %ld", vstpresetnum+1);
+			sprintf(outText, "default %ld", vstpresetnum+1);
 	}
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getProgramNameIndexed(VstInt32 category, VstInt32 index, char * name)
+bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, char * outText)
 {
-	if (name == NULL)
+	if (outText == NULL)
 		return false;
 
-	if (presetisvalid(index))
+	if ( presetisvalid(inIndex) )
 	{
-		if ( presetnameisvalid(index) )
-			getpresetname(index, name);	// XXX kVstMaxProgNameLen
+		if ( presetnameisvalid(inIndex) )
+		{
+			char tempname[DFX_PRESET_MAX_NAME_LENGTH];
+			getpresetname(inIndex, tempname);
+			vst_strncpy(outText, tempname, kVstMaxProgNameLen)
+		}
 		else
-			sprintf(name, "default %d", index+1);
+			sprintf(outText, "default %d", inIndex+1);
 		return true;
 	}
 	else return false;
