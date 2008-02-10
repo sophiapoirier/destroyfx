@@ -883,8 +883,8 @@ void ScrubbyEditor::HandleNotesButton(long inNotesButtonType)
 			setparameter_b(kPitchStep5, true);
 			setparameter_b(kPitchStep6, false);
 			setparameter_b(kPitchStep7, true);
-			setparameter_b(kPitchStep8, false);
-			setparameter_b(kPitchStep9, true);
+			setparameter_b(kPitchStep8, true);
+			setparameter_b(kPitchStep9, false);
 			setparameter_b(kPitchStep10, true);
 			setparameter_b(kPitchStep11, false);
 			break;
