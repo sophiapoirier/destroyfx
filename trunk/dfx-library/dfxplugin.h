@@ -123,14 +123,10 @@ VST_NUM_CHANNELS
  optional for Audio Unit:
 PLUGIN_DESCRIPTION_STRING
 	a C string description of the plugin
-PLUGIN_DOUBLE_NAME_STRING
-	the plugin name prefixed with "Destroy FX: "
 PLUGIN_RES_ID
 	component resource ID of the base plugin
 PLUGIN_EDITOR_DESCRIPTION_STRING
 	a C string description of the plugin editor
-PLUGIN_EDITOR_DOUBLE_NAME_STRING
-	a C string name for the editor, prefixed with "Destroy FX: "
 PLUGIN_EDITOR_ID
 	4-byte ID for the plugin (will PLUGIN_ID if not defined)
 PLUGIN_EDITOR_RES_ID
@@ -799,10 +795,10 @@ public:
 	virtual bool getInputProperties(VstInt32 index, VstPinProperties * properties);
 	virtual bool getOutputProperties(VstInt32 index, VstPinProperties * properties);
 
-	virtual void setProgram(VstInt32 programNum);
-	virtual void setProgramName(char * name);
-	virtual void getProgramName(char * name);
-	virtual bool getProgramNameIndexed(VstInt32 category, VstInt32 index, char * name);
+	virtual void setProgram(VstInt32 inProgramNum);
+	virtual void setProgramName(char * inName);
+	virtual void getProgramName(char * outText);
+	virtual bool getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, char * outText);
 
 	virtual void setParameter(VstInt32 index, float value);
 	virtual float getParameter(VstInt32 index);
@@ -810,10 +806,10 @@ public:
 	virtual void getParameterDisplay(VstInt32 index, char * text);
 	virtual void getParameterLabel(VstInt32 index, char * label);
 
-	virtual bool getEffectName(char * name);
+	virtual bool getEffectName(char * outText);
 	virtual VstInt32 getVendorVersion();
-	virtual bool getVendorString(char * text);
-	virtual bool getProductString(char * text);
+	virtual bool getVendorString(char * outText);
+	virtual bool getProductString(char * outText);
 
 	virtual VstInt32 canDo(char * text);
 

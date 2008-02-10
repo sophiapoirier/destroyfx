@@ -29,7 +29,7 @@ static EventHandlerUPP gWindowTransparencyEventHandlerUPP = NULL;
 static ControlActionUPP gTransparencyControlActionUPP = NULL;
 
 static const CFStringRef kDfxGui_NibName = CFSTR("dfxgui");
-const OSType kDfxGui_ControlSignature = DESTROYFX_ID;
+const OSType kDfxGui_ControlSignature = PLUGIN_CREATOR_ID;
 const SInt32 kDfxGui_TextEntryControlID = 1;
 const SInt32 kDfxGui_TransparencySliderControlID = 0;
 #endif
@@ -651,7 +651,7 @@ CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, short inD
 		if (docsDirURL != NULL)
 		{
 			// create a CFURL for the "manufacturer name" directory within the documentation directory
-			CFURLRef dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL, CFSTR(DESTROYFX_NAME_STRING), true);
+			CFURLRef dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL, CFSTR(PLUGIN_CREATOR_NAME_STRING), true);
 			CFRelease(docsDirURL);
 			if (dfxDocsDirURL != NULL)
 			{
@@ -1309,7 +1309,7 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 		{
 			MouseTrackingRegionID trackingRegionID;
 			status = GetMouseTrackingRegionID(trackingRegion, &trackingRegionID);	// XXX deprecated in Mac OS X 10.4
-			if ( (status == noErr) && (trackingRegionID.signature == DESTROYFX_ID) )
+			if ( (status == noErr) && (trackingRegionID.signature == PLUGIN_CREATOR_ID) )
 			{
 				DGControl * ourMousedOverControl = NULL;
 				status = GetMouseTrackingRegionRefCon(trackingRegion, (void**)(&ourMousedOverControl));	// XXX deprecated in Mac OS X 10.4

@@ -805,11 +805,13 @@ Float64 DfxPlugin::GetTailTime()
 //-----------------------------------------------------------------------------
 CFURLRef DfxPlugin::CopyIconLocation()
 {
+#ifdef PLUGIN_ICON_FILE_NAME
 	CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
 	if (pluginBundle != NULL)
 	{
-		return CFBundleCopyResourceURL(pluginBundle, CFSTR("destroyfx.icns"), NULL, NULL);
+		return CFBundleCopyResourceURL(pluginBundle, CFSTR(PLUGIN_ICON_FILE_NAME), NULL, NULL);
 	}
+#endif
 
 	return NULL;
 }
@@ -833,7 +835,7 @@ void DfxPlugin::GetUIComponentDescs(ComponentDescription * inDescArray)
 	#else
 		inDescArray->componentSubType = PLUGIN_ID;
 	#endif
-	inDescArray->componentManufacturer = DESTROYFX_ID;
+	inDescArray->componentManufacturer = PLUGIN_CREATOR_ID;
 	inDescArray->componentFlags = 0;
 	inDescArray->componentFlagsMask = 0;
 }
