@@ -299,7 +299,7 @@ bool DGControlBase::contextualMenuClick()
 				isFirstItemOfSubgroup = true;
 				break;
 			case kDfxContextualMenuItem_Global_OpenWebSite:
-				menuItemText = CFSTR("Open "DESTROYFX_NAME_STRING" web site");
+				menuItemText = CFSTR("Open "PLUGIN_CREATOR_NAME_STRING" web site");
 				break;
 			default:
 				break;
@@ -399,7 +399,7 @@ bool DGControlBase::contextualMenuClick()
 					status = getDfxGuiEditor()->openWindowTransparencyWindow();
 					break;
 				case kDfxContextualMenuItem_Global_OpenWebSite:
-					launch_url(DESTROYFX_URL);
+					launch_url(PLUGIN_HOMEPAGE_URL);
 					break;
 				default:
 					tryHandlingParameterCommand = true;
@@ -729,7 +729,7 @@ void DGControl::initMouseTrackingArea()
 				RectRgn(controlRegion, &mouseRegionBounds);	// XXX deprecated in Mac OS X 10.4
 			}
 			MouseTrackingRegionID mouseTrackingRegionID;
-			mouseTrackingRegionID.signature = DESTROYFX_ID;
+			mouseTrackingRegionID.signature = PLUGIN_CREATOR_ID;
 			mouseTrackingRegionID.id = (SInt32)this;
 			EventTargetRef targetToNotify = GetControlEventTarget(getCarbonControl());	// can be NULL (which means use the window's event target)
 			status = CreateMouseTrackingRegion(getDfxGuiEditor()->GetCarbonWindow(), controlRegion, NULL, kMouseTrackingOptionsLocalClip, mouseTrackingRegionID, this, targetToNotify, &mouseTrackingRegion);	// XXX deprecated in Mac OS X 10.4
