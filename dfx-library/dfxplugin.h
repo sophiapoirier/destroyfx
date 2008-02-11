@@ -972,6 +972,7 @@ void clearbufferarrayarray_d(double *** buffers, unsigned long numbufferarrays, 
 							long buffersize, double value = 0.0);
 
 long launch_url(const char * urlstring);
+const char * DFX_GetNameForMIDINote(long inMidiNote);
 
 
 
