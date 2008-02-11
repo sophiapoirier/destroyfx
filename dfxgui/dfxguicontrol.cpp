@@ -161,6 +161,7 @@ bool DGControlBase::contextualMenuClick()
 		{
 			parameterMenuItemsWereAdded = true;
 			MenuItemIndex menuItemIndex = 0;
+			long paramID = dgControl->getParameterID();
 
 			// preface the parameter-specific commands section with a header title
 			CFStringRef menuItemText = CFSTR("Parameter Options");
@@ -173,6 +174,7 @@ bool DGControlBase::contextualMenuClick()
 				bool disableItem = false;
 				bool isFirstItemOfSubgroup = false;
 				menuItemText = NULL;
+				CFStringRef menuItemText_temp = NULL;
 				switch (i)
 				{
 					case kDfxContextualMenuItem_Parameter_SetDefaultValue:
@@ -195,14 +197,39 @@ bool DGControlBase::contextualMenuClick()
 					case kDfxContextualMenuItem_Parameter_MidiLearner:
 						menuItemText = CFSTR("MIDI learner");
 						if ( (getDfxGuiEditor()->getmidilearning()) )
-							showCheckmark = getDfxGuiEditor()->ismidilearner( dgControl->getParameterID() );
+							showCheckmark = getDfxGuiEditor()->ismidilearner(paramID);
 						else
 							disableItem = true;
 						isFirstItemOfSubgroup = true;
 						break;
 					case kDfxContextualMenuItem_Parameter_MidiUnassign:
-						menuItemText = CFSTR("Unassign MIDI");
-						//XXX disable if not assigned
+						{
+							menuItemText = CFSTR("Unassign MIDI");
+							DfxParameterAssignment currentParamAssignment = getDfxGuiEditor()->getparametermidiassignment(paramID);
+							// disable if not assigned
+							if (currentParamAssignment.eventType == kParamEventNone)
+								disableItem = true;
+							// append the current MIDI assignment, if there is one, to the menu item text
+							else
+							{
+								switch (currentParamAssignment.eventType)
+								{
+									case kParamEventCC:
+										menuItemText_temp = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ (CC %ld)"), menuItemText, currentParamAssignment.eventNum);
+										break;
+									case kParamEventPitchbend:
+										menuItemText_temp = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ (pitchbend)"), menuItemText);
+										break;
+									case kParamEventNote:
+										menuItemText_temp = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ (notes %s - %s)"), menuItemText, DFX_GetNameForMIDINote(currentParamAssignment.eventNum), DFX_GetNameForMIDINote(currentParamAssignment.eventNum2));
+										break;
+									default:
+										break;
+								}
+								if (menuItemText_temp != NULL)
+									menuItemText = menuItemText_temp;
+							}
+						}
 						break;
 					case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
 						menuItemText = CFSTR("Type in a MIDI CC assignment...");
@@ -227,6 +254,8 @@ bool DGControlBase::contextualMenuClick()
 						status = SetMenuItemIndent(contextualMenu, menuItemIndex, kDfxMenu_MenuItemIndentAmount);
 					}
 				}
+				if (menuItemText_temp != NULL)
+					CFRelease(menuItemText_temp);
 			}
 
 			// preface the global commands section with a divider...
@@ -417,7 +446,7 @@ bool DGControlBase::contextualMenuClick()
 						break;
 					case kDfxContextualMenuItem_Parameter_TextEntryForValue:
 						{
-							// XXX initialize the text with the current parameter value
+							// initialize the text with the current parameter value
 							CFStringRef currentValueText = dgControl->createStringFromValue();
 							// XXX consider adding the min and max values to the window display for user's sake
 							CFStringRef text = getDfxGuiEditor()->openTextEntryWindow(currentValueText);
@@ -446,21 +475,29 @@ bool DGControlBase::contextualMenuClick()
 							getDfxGuiEditor()->setmidilearner(paramID);
 						break;
 					case kDfxContextualMenuItem_Parameter_MidiUnassign:
-						//XXX implement
-//						getDfxGuiEditor()->midiunassign(paramID);
+						getDfxGuiEditor()->parametermidiunassign(paramID);
 						break;
 					case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
 						{
-							// XXX initialize the text with the current CC assignment, if there is one
-							CFStringRef text = getDfxGuiEditor()->openTextEntryWindow();
+							// initialize the text with the current CC assignment, if there is one
+							CFStringRef initialText = NULL;
+							DfxParameterAssignment currentParamAssignment = getDfxGuiEditor()->getparametermidiassignment(paramID);
+							if (currentParamAssignment.eventType == kParamEventCC)
+								initialText = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%ld"), currentParamAssignment.eventNum);
+							CFStringRef text = getDfxGuiEditor()->openTextEntryWindow(initialText);
+							if (initialText != NULL)
+								CFRelease(initialText);
 							if (text != NULL)
 							{
-//CFShow(text);
 								long newValue = 0;
 								int scanResult = DFX_CFStringScanWithFormat(text, "%ld", &newValue);
 								if (scanResult > 0)
 								{
-									//XXX implement
+									DfxParameterAssignment newParamAssignment = {0};
+									newParamAssignment.eventType = kParamEventCC;
+									newParamAssignment.eventChannel = 0;	// XXX not currently implemented
+									newParamAssignment.eventNum = newValue;
+									getDfxGuiEditor()->setparametermidiassignment(paramID, newParamAssignment);
 								}
 								CFRelease(text);
 							}
