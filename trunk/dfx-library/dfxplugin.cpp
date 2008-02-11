@@ -1756,3 +1756,15 @@ long launch_url(const char * urlstring)
 	return (long) ShellExecute(NULL, "open", urlstring, NULL, NULL, SW_SHOWNORMAL);
 #endif
 }
+
+//-----------------------------------------------------------------------------
+const char * DFX_GetNameForMIDINote(long inMidiNote)
+{
+	static char midiNoteName[8] = {0};
+	const long kNumNotesInOctave = 12;
+	const char * keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+	const long keyNameIndex = inMidiNote % kNumNotesInOctave;
+	const long octaveNumber = (inMidiNote / kNumNotesInOctave) - 2;
+	sprintf(midiNoteName, "%s %ld", keyNames[keyNameIndex], octaveNumber);
+	return midiNoteName;
+}
