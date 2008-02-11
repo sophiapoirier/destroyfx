@@ -1036,6 +1036,37 @@ bool DfxGuiEditor::ismidilearner(long inParameterIndex)
 	return (getmidilearner() == inParameterIndex);
 }
 
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setparametermidiassignment(long inParameterIndex, DfxParameterAssignment inAssignment)
+{
+	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterMidiAssignment, 
+				kAudioUnitScope_Global, (AudioUnitElement)inParameterIndex, &inAssignment, sizeof(inAssignment));
+}
+
+//-----------------------------------------------------------------------------
+DfxParameterAssignment DfxGuiEditor::getparametermidiassignment(long inParameterIndex)
+{
+	DfxParameterAssignment paramAssignment = {0};
+	UInt32 dataSize = sizeof(paramAssignment);
+	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterMidiAssignment, 
+							kAudioUnitScope_Global, (AudioUnitElement)inParameterIndex, &paramAssignment, &dataSize) 
+							== noErr)
+		return paramAssignment;
+	else
+	{
+		paramAssignment.eventType = kParamEventNone;
+		return paramAssignment;
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::parametermidiunassign(long inParameterIndex)
+{
+	DfxParameterAssignment paramAssignment = {0};
+	paramAssignment.eventType = kParamEventNone;
+	setparametermidiassignment(inParameterIndex, paramAssignment);
+}
+
 #endif
 // TARGET_PLUGIN_USES_MIDI
 
