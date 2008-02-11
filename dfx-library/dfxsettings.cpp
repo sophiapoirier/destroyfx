@@ -32,8 +32,8 @@ DfxSettings::DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSiz
 	if (numParameters < 1)
 		numParameters = 1;	// come on now, what are you trying to do?
 
-	paramAssignments = (DfxParameterAssignment*) malloc(numParameters * sizeof(DfxParameterAssignment));
-	parameterIDs = (long*) malloc(numParameters * sizeof(long));
+	paramAssignments = (DfxParameterAssignment*) malloc(numParameters * sizeof(*paramAssignments));
+	parameterIDs = (int32_t*) malloc(numParameters * sizeof(*parameterIDs));
 
 	// default to each parameter having its ID equal its index
 	// (I haven't implemented anything with parameter IDs yet)
@@ -41,8 +41,8 @@ DfxSettings::DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSiz
 		parameterIDs[i] = i;
 
 	// calculate some data sizes that are useful to know
-	sizeofPreset = sizeof(DfxGenPreset) + (sizeof(float) * (numParameters-2));
-	sizeofParameterIDs = sizeof(long) * numParameters;
+	sizeofPreset = sizeof(DfxGenPreset) + (sizeof(firstSharedPreset->params[0]) * (numParameters-2));
+	sizeofParameterIDs = sizeof(*parameterIDs) * numParameters;
 	sizeofPresetChunk = sizeofPreset 			// 1 preset
 						+ sizeof(DfxSettingsInfo) 	// the special data header info
 						+ sizeofParameterIDs	// the table of parameter IDs
@@ -59,7 +59,7 @@ DfxSettings::DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSiz
 	// this is the shared data that we point **data to in save()
 	sharedChunk = (DfxSettingsInfo*) malloc(sizeofChunk);
 	// and a few pointers to elements within that data, just for ease of use
-	firstSharedParameterID = (long*) ((char*)sharedChunk + sizeof(DfxSettingsInfo));
+	firstSharedParameterID = (int32_t*) ((char*)sharedChunk + sizeof(DfxSettingsInfo));
 	firstSharedPreset = (DfxGenPreset*) ((char*)firstSharedParameterID + sizeofParameterIDs);
 	firstSharedParamAssignment = (DfxParameterAssignment*) 
 									((char*)firstSharedPreset + (sizeofPreset*numPresets));
@@ -79,11 +79,11 @@ DfxSettings::DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSiz
 
 	// default to allowing MIDI event assignment sharing instead of stealing them, 
 	// unless the user has defined the environment variable DFX_PARAM_STEALMIDI
-	stealAssignments = getenvBool("DFX_PARAM_STEALMIDI", false);
+	stealAssignments = DFX_GetEnvBool("DFX_PARAM_STEALMIDI", false);
 
 	// default to ignoring MIDI channel in MIDI event assignments and automation, 
 	// unless the user has defined the environment variable DFX_PARAM_USECHANNEL
-	useChannel = getenvBool("DFX_PARAM_USECHANNEL", false);
+	useChannel = DFX_GetEnvBool("DFX_PARAM_USECHANNEL", false);
 
 	// default to not allowing MIDI note or pitchbend events to be assigned to parameters
 	allowNoteEvents = false;
@@ -123,7 +123,7 @@ DfxSettings::~DfxSettings()
 
 //------------------------------------------------------
 // this interprets a UNIX environment variable string as a boolean
-bool getenvBool(const char * inVarName, bool inFallbackValue)
+bool DFX_GetEnvBool(const char * inVarName, bool inFallbackValue)
 {
 	const char * env = getenv(inVarName);
 
@@ -160,7 +160,7 @@ bool getenvBool(const char * inVarName, bool inFallbackValue)
 // like when saving a song or preset files
 unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
 {
-  long i, j;
+	long i, j;
 
 
 	if ( (sharedChunk == NULL) || (plugin == NULL) )
@@ -235,9 +235,13 @@ unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
 }
 
 
+//-----------------------------------------------------------------------------
 // for backwerds compaxibilitee
-#define IS_OLD_VST_VERSION(version)	((version) < 0x00010000)
-#define OLD_PRESET_MAX_NAME_LENGTH 32
+inline bool DFX_IsOldVstVersionNumber(long inVersion)
+{
+	return (inVersion < 0x00010000);
+}
+const long OLD_PRESET_MAX_NAME_LENGTH = 32;
 
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to load settings data, 
@@ -245,10 +249,7 @@ unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
 // or loading a preset file
 bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPreset)
 {
-  DfxSettingsInfo * newSettingsInfo;
-  DfxGenPreset * newPreset;
-  long * newParameterIDs;
-  long i, j;
+	long i, j;
 
 
 	if (plugin == NULL)
@@ -258,7 +259,7 @@ bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPr
 	correctEndian(inData, true, inIsPreset);
 
 	// point to the start of the chunk data:  the settingsInfo header
-	newSettingsInfo = (DfxSettingsInfo*)inData;
+	DfxSettingsInfo * newSettingsInfo = (DfxSettingsInfo*)inData;
 
 	// The following situations are basically considered to be 
 	// irrecoverable "crisis" situations.  Regardless of what 
@@ -277,7 +278,7 @@ bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPr
 	// we started using hex format versions (like below) with the advent 
 	// of the glorious DfxPlugin
 	// versions lower than 0x00010000 indicate inferior settings
-	bool oldvst = IS_OLD_VST_VERSION(newSettingsInfo->version);
+	bool oldvst = DFX_IsOldVstVersionNumber(newSettingsInfo->version);
 #endif
 
 	// these just make the values easier to work with (no need for newSettingsInfo-> so often)
@@ -328,19 +329,19 @@ bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPr
 		return false;
 
 	// point to the next data element after the chunk header:  the first parameter ID
-	newParameterIDs = (long*) ((char*)newSettingsInfo + storedHeaderSize);
+	int32_t * newParameterIDs = (int32_t*) ((char*)newSettingsInfo + storedHeaderSize);
 	// create a mapping table for corresponding the incoming parameters to the 
 	// destination parameters (in case the parameter IDs don't all match up)
 	//  [ the index of paramMap is the same as our parameter tag/index and the value 
 	//     is the tag/index of the incoming parameter that corresponds, if any ]
-	long * paramMap = (long*) malloc(numParameters * sizeof(long));
+	long * paramMap = (long*) malloc(numParameters * sizeof(*paramMap));
 	for (long tag=0; tag < numParameters; tag++)
 		paramMap[tag] = getParameterTagFromID(parameterIDs[tag], numStoredParameters, newParameterIDs);
 
 	// point to the next data element after the parameter IDs:  the first preset name
-	newPreset = (DfxGenPreset*) ((char*)newParameterIDs + (sizeof(long)*numStoredParameters));
+	DfxGenPreset * newPreset = (DfxGenPreset*) ((char*)newParameterIDs + (sizeof(*parameterIDs)*numStoredParameters));
 	// handy for incrementing the data pointer
-	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(float)*(numStoredParameters-2));
+	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(firstSharedPreset->params[0])*(numStoredParameters-2));
 
 	// the chunk being received only contains one preset
 	if (inIsPreset)
@@ -457,7 +458,7 @@ if ( !(oldvst && inIsPreset) )
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark -
-#pragma mark AudioUnit-specific stuff
+#pragma mark Audio Unit -specific stuff
 #pragma mark -
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -589,7 +590,6 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 					DFX_AddNumberToCFDictionary_##inTypeSuffix(paramAssignments[i].inMember, assignmentCFDictionary, kDfxSettings_MidiAssignment_##inMember##Key);
 					ADD_ASSIGNMENT_VALUE_TO_DICT(eventType, i)
 					ADD_ASSIGNMENT_VALUE_TO_DICT(eventChannel, i)
-printf("event num = %ld, event num 2 = %ld\n", paramAssignments[i].eventNum, paramAssignments[i].eventNum2);
 					ADD_ASSIGNMENT_VALUE_TO_DICT(eventNum, i)
 					ADD_ASSIGNMENT_VALUE_TO_DICT(eventNum2, i)
 					ADD_ASSIGNMENT_VALUE_TO_DICT(eventBehaviourFlags, i)
@@ -928,12 +928,12 @@ void DfxSettings::clearAssignments()
 
 //-----------------------------------------------------------------------------
 // assign a CC to a parameter
-void DfxSettings::assignParam(long inTag, long inEventType, long inEventChannel, long inEventNum, 
+void DfxSettings::assignParam(long inParamTag, long inEventType, long inEventChannel, long inEventNum, 
 							long inEventNum2, long inEventBehaviourFlags, 
 							long inData1, long inData2, float inFloatData1, float inFloatData2)
 {
 	// abort if the parameter index is not valid
-	if (! paramTagIsValid(inTag) )
+	if (! paramTagIsValid(inParamTag) )
 		return;
 	// abort if inEventNum is not a valid MIDI value
 	if ( (inEventNum < 0) || (inEventNum >= kNumMidiValues) )
@@ -980,35 +980,35 @@ void DfxSettings::assignParam(long inTag, long inEventType, long inEventChannel,
 	}
 
 	// then assign the event to the desired parameter
-	paramAssignments[inTag].eventType = inEventType;
-	paramAssignments[inTag].eventChannel = inEventChannel;
-	paramAssignments[inTag].eventNum = inEventNum;
-	paramAssignments[inTag].eventNum2 = inEventNum2;
-	paramAssignments[inTag].eventBehaviourFlags = inEventBehaviourFlags;
-	paramAssignments[inTag].data1 = inData1;
-	paramAssignments[inTag].data2 = inData2;
-	paramAssignments[inTag].fdata1 = inFloatData1;
-	paramAssignments[inTag].fdata2 = inFloatData2;
+	paramAssignments[inParamTag].eventType = inEventType;
+	paramAssignments[inParamTag].eventChannel = inEventChannel;
+	paramAssignments[inParamTag].eventNum = inEventNum;
+	paramAssignments[inParamTag].eventNum2 = inEventNum2;
+	paramAssignments[inParamTag].eventBehaviourFlags = inEventBehaviourFlags;
+	paramAssignments[inParamTag].data1 = inData1;
+	paramAssignments[inParamTag].data2 = inData2;
+	paramAssignments[inParamTag].fdata1 = inFloatData1;
+	paramAssignments[inParamTag].fdata2 = inFloatData2;
 }
 
 //-----------------------------------------------------------------------------
 // remove any MIDI event assignment that a parameter might have
-void DfxSettings::unassignParam(long inTag)
+void DfxSettings::unassignParam(long inParamTag)
 {
 	// return if what we got is not a valid parameter index
-	if (! paramTagIsValid(inTag) )
+	if (! paramTagIsValid(inParamTag) )
 		return;
 
 	// clear the MIDI event assignment for this parameter
-	paramAssignments[inTag].eventType = kParamEventNone;
-	paramAssignments[inTag].eventChannel = 0;
-	paramAssignments[inTag].eventNum = 0;
-	paramAssignments[inTag].eventNum2 = 0;
-	paramAssignments[inTag].eventBehaviourFlags = 0;
-	paramAssignments[inTag].data1 = 0;
-	paramAssignments[inTag].data2 = 0;
-	paramAssignments[inTag].fdata1 = 0.0f;
-	paramAssignments[inTag].fdata2 = 0.0f;
+	paramAssignments[inParamTag].eventType = kParamEventNone;
+	paramAssignments[inParamTag].eventChannel = 0;
+	paramAssignments[inParamTag].eventNum = 0;
+	paramAssignments[inParamTag].eventNum2 = 0;
+	paramAssignments[inParamTag].eventBehaviourFlags = 0;
+	paramAssignments[inParamTag].data1 = 0;
+	paramAssignments[inParamTag].data2 = 0;
+	paramAssignments[inParamTag].fdata1 = 0.0f;
+	paramAssignments[inParamTag].fdata2 = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -1027,34 +1027,34 @@ void DfxSettings::setLearning(bool inLearnMode)
 
 //-----------------------------------------------------------------------------
 // just an easy way to check if a particular parameter is currently a learner
-bool DfxSettings::isLearner(long inTag)
+bool DfxSettings::isLearner(long inParamTag)
 {
-	return (inTag == getLearner());
+	return (inParamTag == getLearner());
 }
 
 //-----------------------------------------------------------------------------
 // define the actively learning parameter during MIDI learn mode
-void DfxSettings::setLearner(long inTag, long inEventBehaviourFlags, 
+void DfxSettings::setLearner(long inParamTag, long inEventBehaviourFlags, 
 							long inData1, long inData2, float inFloatData1, float inFloatData2)
 {
 	// allow this invalid parameter tag, and then exit
-	if (inTag == kNoLearner)
+	if (inParamTag == kNoLearner)
 	{
 		learner = kNoLearner;
 		return;
 	}
 	// return if what we got is not a valid parameter index
-	if (! paramTagIsValid(inTag)  )
+	if (! paramTagIsValid(inParamTag)  )
 		return;
 
 	// cancel note range assignment if we're switching to a new learner
-	if (learner != inTag)
+	if (learner != inParamTag)
 		noteRangeHalfwayDone = false;
 
 	// only set the learner if MIDI learn is on
 	if (midiLearn)
 	{
-		learner = inTag;
+		learner = inParamTag;
 		learnerEventBehaviourFlags = inEventBehaviourFlags;
 		learnerData1 = inData1;
 		learnerData2 = inData2;
@@ -1062,9 +1062,9 @@ void DfxSettings::setLearner(long inTag, long inEventBehaviourFlags,
 		learnerFData2 = inFloatData2;
 	}
 	// unless we're making it so that there's no learner, that's okay
-	else if (inTag == kNoLearner)
+	else if (inParamTag == kNoLearner)
 	{
-		learner = inTag;
+		learner = inParamTag;
 		learnerEventBehaviourFlags = 0;
 	}
 }
@@ -1105,6 +1105,20 @@ void DfxSettings::setParameterMidiReset(bool inValue)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
+DfxParameterAssignment DfxSettings::getParameterAssignment(long inParamTag)
+{
+	// return a no-assignment structure if what we got is not a valid parameter index
+	if (! paramTagIsValid(inParamTag) )
+	{
+		DfxParameterAssignment dummyAssignment = {0};
+		dummyAssignment.eventType = kParamEventNone;
+		return dummyAssignment;
+	}
+
+	return paramAssignments[inParamTag];
+}
+
+//-----------------------------------------------------------------------------
 long DfxSettings::getParameterAssignmentType(long inParamTag)
 {
 	// return no-assignment if what we got is not a valid parameter index
@@ -1127,7 +1141,7 @@ long DfxSettings::getParameterAssignmentNum(long inParamTag)
 //-----------------------------------------------------------------------------
 // given a parameter ID, find the tag (index) for that parameter in a table of 
 // parameter IDs (probably our own table, unless a pointer to one was provided)
-long DfxSettings::getParameterTagFromID(long paramID, long inNumSearchIDs, long * inSearchIDs)
+long DfxSettings::getParameterTagFromID(long inParamID, long inNumSearchIDs, int32_t * inSearchIDs)
 {
 	// if nothing was passed for the search table, 
 	// then assume that we're searching our internal table
@@ -1141,7 +1155,7 @@ long DfxSettings::getParameterTagFromID(long paramID, long inNumSearchIDs, long 
 	for (long i=0; i < inNumSearchIDs; i++)
 	{
 		// return the parameter tag if a match is found
-		if (inSearchIDs[i] == paramID)
+		if (inSearchIDs[i] == inParamID)
 			return i;
 	}
 
@@ -1219,7 +1233,7 @@ long DfxSettings::handleCrisis(long inFlags)
 // this function, if called for the non-reference endian architecture, 
 // will reverse the order of bytes in each variable/value of the data 
 // to correct endian differences and make a uniform data chunk
-void DfxSettings::correctEndian(void * data, bool isReversed, bool inIsPreset)
+void DfxSettings::correctEndian(void * ioData, bool inIsReversed, bool inIsPreset)
 {
 /*
 // XXX another idea...
@@ -1228,7 +1242,7 @@ void blah(long long x)
 	int n = sizeof(x);
 	while (n--)
 	{
-		write(f, x & 255, 1);
+		write(f, x & 0xFF, 1);
 		x >>= 8;
 	}
 }
@@ -1237,36 +1251,36 @@ void blah(long long x)
 // big endian (like PowerPC) is the reference architecture, so no byte-swapping is necessary
 #else
 	// start by looking at the header info
-	DfxSettingsInfo * dataHeader = (DfxSettingsInfo*)data;
+	DfxSettingsInfo * dataHeader = (DfxSettingsInfo*)ioData;
 	// we need to know how big the header is before dealing with it
-	unsigned long storedHeaderSize = dataHeader->storedHeaderSize;
-	long numStoredParameters = dataHeader->numStoredParameters;
-	long numStoredPresets = dataHeader->numStoredPresets;
-	long storedVersion = dataHeader->version;
+	uint32_t storedHeaderSize = dataHeader->storedHeaderSize;
+	int32_t numStoredParameters = dataHeader->numStoredParameters;
+	int32_t numStoredPresets = dataHeader->numStoredPresets;
+	int32_t storedVersion = dataHeader->version;
 	// correct the values' endian byte order order if the data was received byte-swapped
-	if (isReversed)
+	if (inIsReversed)
 	{
-		reversebytes(&storedHeaderSize, sizeof(storedHeaderSize));
-		reversebytes(&numStoredParameters, sizeof(numStoredParameters));
-		reversebytes(&numStoredPresets, sizeof(numStoredPresets));
-		reversebytes(&storedVersion, sizeof(storedVersion));
+		DFX_ReverseBytes(&storedHeaderSize, sizeof(storedHeaderSize));
+		DFX_ReverseBytes(&numStoredParameters, sizeof(numStoredParameters));
+		DFX_ReverseBytes(&numStoredPresets, sizeof(numStoredPresets));
+		DFX_ReverseBytes(&storedVersion, sizeof(storedVersion));
 	}
 //	if (inIsPreset)
 //		numStoredPresets = 1;
 
 	// reverse the order of bytes of the header values
-	reversebytes(dataHeader, sizeof(long), storedHeaderSize/sizeof(long));
+	DFX_ReverseBytes(dataHeader, sizeof(dataHeader->magic), storedHeaderSize/sizeof(dataHeader->magic));
 
 	// reverse the byte order for each of the parameter IDs
-	long * dataParameterIDs = (long*) ((char*)data + storedHeaderSize);
-	reversebytes(dataParameterIDs, sizeof(long), numStoredParameters);
+	int32_t * dataParameterIDs = (int32_t*) ((char*)ioData + storedHeaderSize);
+	DFX_ReverseBytes(dataParameterIDs, sizeof(*dataParameterIDs), numStoredParameters);
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char strings
-	DfxGenPreset * dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(long)*numStoredParameters));
-	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(float) * (numStoredParameters-2));
+	DfxGenPreset * dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(*dataParameterIDs)*numStoredParameters));
+	unsigned long sizeofStoredPreset = sizeof(*dataPresets) + (sizeof(dataPresets->params[0]) * (numStoredParameters-2));
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-	if (IS_OLD_VST_VERSION(storedVersion))
+	if (DFX_IsOldVstVersionNumber(storedVersion))
 	{
 		// back up the pointer to account for shorter preset names
 		dataPresets = (DfxGenPreset*) ((char*)dataPresets + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
@@ -1276,33 +1290,36 @@ void blah(long long x)
 #endif
 	for (long iij=0; iij < numStoredPresets; iij++)
 	{
-		reversebytes(dataPresets->params, sizeof(float), (unsigned)numStoredParameters);
+		DFX_ReverseBytes(dataPresets->params, sizeof(dataPresets->params[0]), (unsigned)numStoredParameters);
 		// point to the next preset in the data array
 		dataPresets = (DfxGenPreset*) ((char*)dataPresets + sizeofStoredPreset);
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-	if (IS_OLD_VST_VERSION(storedVersion))
+	if (DFX_IsOldVstVersionNumber(storedVersion))
 		// advance the pointer to compensate for backing up earlier
 		dataPresets = (DfxGenPreset*) ((char*)dataPresets - (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 #endif
 
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-if ( !(IS_OLD_VST_VERSION(storedVersion) && inIsPreset) )
+if ( !(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset) )
 {
 #endif
 	// and reverse the byte order of each event assignment
 	DfxParameterAssignment * dataParameterAssignments = (DfxParameterAssignment*) dataPresets;
 	for (long i=0; i < numStoredParameters; i++)
 	{
-		reversebytes( &(dataParameterAssignments->eventType), sizeof(long) );
-		reversebytes( &(dataParameterAssignments->eventChannel), sizeof(long) );
-		reversebytes( &(dataParameterAssignments->eventNum), sizeof(long) );
-		reversebytes( &(dataParameterAssignments->eventNum2), sizeof(long) );
-		reversebytes( &(dataParameterAssignments->eventBehaviourFlags), sizeof(long) );
-		reversebytes( &(dataParameterAssignments->data1), sizeof(long) );
-		reversebytes( &(dataParameterAssignments->data2), sizeof(long) );
-		reversebytes( &(dataParameterAssignments->fdata1), sizeof(float) );
-		reversebytes( &(dataParameterAssignments->fdata2), sizeof(float) );
+#define REVERSE_BYTES_ASSIGNMENT_ITEM(inMember)	\
+		DFX_ReverseBytes( &(dataParameterAssignments->inMember), sizeof(dataParameterAssignments->inMember) );
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventType)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventChannel)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventNum)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventNum2)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventBehaviourFlags)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(data1)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(data2)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata1)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata2)
+#undef REVERSE_BYTES_ASSIGNMENT_ITEM
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 }

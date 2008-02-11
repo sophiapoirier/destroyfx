@@ -142,7 +142,7 @@ typedef struct
 
 //------------------------------------------------------
 // header information for the storage data
-// note:  correctEndian() assumes that the data is all of type long, 
+// note:  correctEndian() assumes that the data is all of type 32-bit integer, 
 // so if you change this structure and add different types, 
 // then you will want to modify correctEndian() to handle that.
 // It is also assumed that the first 6 items in this struct 
@@ -153,26 +153,26 @@ typedef struct
 {
 	// this is a value that you should look at to check for authenticity 
 	// of the data and as an identifier of the data's creator 
-	// (the easiest thing is probably to use your plugin's "unique ID")
-	long magic;
+	// (the easiest thing is probably to use your plugin's ID code)
+	int32_t magic;
 	// the version number of the plugin that is creating the data
-	long version;
+	int32_t version;
 	// this defaults to 0, but you can set it to be the earliest version 
 	// number of your plugin that would be able to handle the storage data
 	// (then lower versions of the plugin will fail to load the data)
-	long lowestLoadableVersion;
+	int32_t lowestLoadableVersion;
 	// the size (in bytes) of the header data that the plugin 
 	// will store in the settings data
-	unsigned long storedHeaderSize;
+	uint32_t storedHeaderSize;
 	// the number of parameters that the plugin will store in the settings data
-	long numStoredParameters;
+	int32_t numStoredParameters;
 	// the number of presets that the plugin will store in the settings data
-	long numStoredPresets;
+	int32_t numStoredPresets;
 	// the size (in bytes) of each parameter assignment struct 
 	// that the plugin will store in the settings data
-	unsigned long storedParameterAssignmentSize;
+	uint32_t storedParameterAssignmentSize;
 	// the size (in bytes) of the extra settings data (if any)
-	unsigned long storedExtendedDataSize;
+	uint32_t storedExtendedDataSize;
 } DfxSettingsInfo;
 
 
@@ -181,24 +181,24 @@ typedef struct
 {
 	// the MIDI event type 
 	//    (CC, note, pitchbend, etc.)
-	long eventType;
+	int32_t eventType;
 	// the MIDI channel of the MIDI event assignment
 	//    (so far, I'm not using channel information for anything)
-	long eventChannel;
+	int32_t eventChannel;
 	// the number of the MIDI event assigned to the parameter 
 	//    (CC number, note number, etc.)
-	long eventNum;
+	int32_t eventNum;
 	// a second MIDI event number for double-value assignments 
 	//    (like 2 notes defining a note range)
-	long eventNum2;
+	int32_t eventNum2;
 	// indicating the behaviour of the event, i.e. toggle vs. hold for notes, etc.
-	long eventBehaviourFlags;
+	int32_t eventBehaviourFlags;
 	// bonus data slots
 	// (context-specific)
 	// (like for the number of steps in an indexed toggle assignment)
-	long data1;
+	int32_t data1;
 	// (or the maximum step, within that range, to cycle up to)
-	long data2;
+	int32_t data2;
 	// (or the minimum point in a float range)
 	float fdata1;
 	// (or the maximum point in a float range)
@@ -208,10 +208,10 @@ typedef struct
 
 //------------------------------------------------------
 // this reverses the bytes in a stream of data, for correcting endian difference
-inline void reversebytes(void * inData, unsigned long inItemSize, unsigned long inItemCount = 1)
+inline void DFX_ReverseBytes(void * ioData, unsigned long inItemSize, unsigned long inItemCount = 1)
 {
 	unsigned long half = (inItemSize / 2) + (inItemSize % 2);
-	char * dataBytes = (char*)inData;
+	char * dataBytes = (char*)ioData;
 
 	for (unsigned long c=0; c < inItemCount; c++)
 	{
@@ -229,7 +229,7 @@ inline void reversebytes(void * inData, unsigned long inItemSize, unsigned long 
 
 //------------------------------------------------------
 // this interprets a UNIX environment variable string as a boolean
-bool getenvBool(const char * inVarName, bool inFallbackValue);
+bool DFX_GetEnvBool(const char * inVarName, bool inFallbackValue);
 
 
 //------------------------------------------------------
@@ -237,7 +237,7 @@ class DfxSettings
 {
 public:
 	DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSizeofExtendedData = 0);
-	~DfxSettings();
+	virtual ~DfxSettings();
 
 
 	// - - - - - - - - - API-connect methods - - - - - - - - -
@@ -266,21 +266,21 @@ public:
 	// remove MIDI event assignments from all parameters
 	void clearAssignments();
 	// assign a MIDI event to a parameter
-	void assignParam(long inTag, long inEventType, long inEventChannel, 
-								long inEventNum, long inEventNum2 = 0, 
-								long inEventBehaviourFlags = 0, 
-								long inData1 = 0, long inData2 = 0, 
-								float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
+	void assignParam(long inParamTag, long inEventType, long inEventChannel, 
+						long inEventNum, long inEventNum2 = 0, 
+						long inEventBehaviourFlags = 0, 
+						long inData1 = 0, long inData2 = 0, 
+						float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
 	// remove a parameter's MIDI event assignment
-	void unassignParam(long inTag);
+	void unassignParam(long inParamTag);
 
 	// define or report the actively learning parameter during MIDI learn mode
-	void setLearner(long inTag, long inEventBehaviourFlags = 0, 
-							long inData1 = 0, long inData2 = 0, 
-							float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
+	void setLearner(long inParamTag, long inEventBehaviourFlags = 0, 
+					long inData1 = 0, long inData2 = 0, 
+					float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
 	long getLearner()
 		{	return learner;	}
-	bool isLearner(long inTag);
+	bool isLearner(long inParamTag);
 
 	// turn MIDI learning on or off
 	void setLearning(bool inLearnMode);
@@ -293,6 +293,7 @@ public:
 	void setParameterMidiReset(bool inValue = true);
 
 	// potentially useful accessors
+	DfxParameterAssignment getParameterAssignment(long inParamTag);
 	long getParameterAssignmentType(long inParamTag);
 	long getParameterAssignmentNum(long inParamTag);
 
@@ -321,11 +322,11 @@ public:
 	// creating the DfxSettings object, or at least before your plugin's 
 	// constructor returns, because you don't want any set or save calls 
 	// made before you have your parameter ID map finalized.
-	void setParameterID(long inTag, long inNewID)
-		{	if (paramTagIsValid(inTag)) parameterIDs[inTag] = inNewID;	}
-	long getParameterID(long inTag)
-		{	if (paramTagIsValid(inTag)) return parameterIDs[inTag]; else return 0;	}
-	long getParameterTagFromID(long paramID, long inNumSearchIDs = 0, long * inSearchIDs = NULL);
+	void setParameterID(long inParamTag, long inNewID)
+		{	if (paramTagIsValid(inParamTag)) parameterIDs[inParamTag] = inNewID;	}
+	long getParameterID(long inParamTag)
+		{	if (paramTagIsValid(inParamTag)) return parameterIDs[inParamTag]; else return 0;	}
+	long getParameterTagFromID(long inParamID, long inNumSearchIDs = 0, int32_t * inSearchIDs = NULL);
 
 
 	// - - - - - - - - - optional settings - - - - - - - - -
@@ -368,7 +369,7 @@ public:
 
 protected:
 	// reverse the byte order of data
-	void correctEndian(void * inData, bool isReversed, bool inIsPreset = false);
+	void correctEndian(void * ioData, bool inIsReversed, bool inIsPreset = false);
 
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
@@ -379,8 +380,8 @@ protected:
 		{ }
 
 	// a simple but handy check to see if a parameter tag is valid
-	bool paramTagIsValid(long inTag)
-		{	return ( (inTag >= 0) && (inTag < numParameters) );	}
+	bool paramTagIsValid(long inParamTag)
+		{	return ( (inParamTag >= 0) && (inParamTag < numParameters) );	}
 
 	void handleMidi_assignParam(long inEventType, long inMidiChannel, long inByte1, long inBufferOffset);
 	void handleMidi_automateParams(long inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff = false);
@@ -392,7 +393,7 @@ protected:
 	bool midiLearn;	// switch value for MIDI learn mode
 	long learner;	// the parameter currently selected for MIDI learning
 
-	// size of one preset (32-char preset name + all parameter values)
+	// size of one preset (preset name + all parameter values)
 	unsigned long sizeofPreset;
 	// size of the table of parameter IDs (one for each parameter)
 	unsigned long sizeofParameterIDs;
@@ -411,14 +412,14 @@ protected:
 	// an ordered table of IDs for each parameter stored in each preset
 	// (this is so that non-parameter-compatible plugin versions can load 
 	// settings and know which stored parameters correspond to theirs)
-	long * parameterIDs;
+	int32_t * parameterIDs;
 	// the array of which MIDI event, if any, is assigned to each parameter
 	DfxParameterAssignment * paramAssignments;
 
 	// this what we point the host to during save()
 	DfxSettingsInfo * sharedChunk;
 	// a few handy pointers into sections of our settings data
-	long * firstSharedParameterID;
+	int32_t * firstSharedParameterID;
 	DfxGenPreset * firstSharedPreset;
 	DfxParameterAssignment * firstSharedParamAssignment;
 
