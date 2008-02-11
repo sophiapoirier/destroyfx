@@ -24,6 +24,7 @@ kDfxPluginProperty_startID = 64000,
 	kDfxPluginProperty_MidiLearn,					// get/set the MIDI learn state
 	kDfxPluginProperty_ResetMidiLearn,				// clear MIDI parameter assignments
 	kDfxPluginProperty_MidiLearner,					// get/set the current MIDI learner parameter
+	kDfxPluginProperty_ParameterMidiAssignment,		// get/set the MIDI assignment for a parameter
 kDfxPluginProperty_endOfList,
 	kDfxPluginProperty_NumProperties = kDfxPluginProperty_endOfList - kDfxPluginProperty_startID
 };
