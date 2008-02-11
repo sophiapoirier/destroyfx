@@ -7,13 +7,19 @@
 #include "dfxguitools.h"
 #include "dfxguicontrol.h"
 
+#if TARGET_PLUGIN_USES_MIDI
+	#include "dfxsettings.h"	// for DfxParameterAssignment
+#endif
+
 
 
 #ifdef TARGET_API_AUDIOUNIT
-	typedef AudioUnitCarbonView DGEditorListenerInstance;
+	typedef AudioUnitCarbonView	DGEditorListenerInstance;
+	typedef AUCarbonViewBase	TARGET_API_EDITOR_BASE_CLASS;
 #endif
 #ifdef TARGET_API_VST
-	typedef DfxPlugin * DGEditorListenerInstance;
+	typedef DfxPlugin *	DGEditorListenerInstance;
+	typedef AEffGUIEditor	TARGET_API_EDITOR_BASE_CLASS;
 #endif
 
 
@@ -22,7 +28,7 @@
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-class DfxGuiEditor : public AUCarbonViewBase
+class DfxGuiEditor : public TARGET_API_EDITOR_BASE_CLASS
 {
 public:
 	DfxGuiEditor(DGEditorListenerInstance inInstance);
@@ -106,6 +112,9 @@ public:
 		void setmidilearner(long inParameterIndex);
 		long getmidilearner();
 		bool ismidilearner(long inParameterIndex);
+		void setparametermidiassignment(long inParameterIndex, DfxParameterAssignment inAssignment);
+		DfxParameterAssignment getparametermidiassignment(long inParameterIndex);
+		void parametermidiunassign(long inParameterIndex);
 	#endif
 	unsigned long getNumAudioChannels();
 
