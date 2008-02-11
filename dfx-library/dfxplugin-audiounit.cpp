@@ -289,6 +289,11 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outDataSize = sizeof(int32_t);
 			outWritable = true;
 			break;
+		// get/set the MIDI assignment for a parameter
+		case kDfxPluginProperty_ParameterMidiAssignment:
+			outDataSize = sizeof(DfxParameterAssignment);
+			outWritable = true;
+			break;
 	#endif
 
 		case kLogicAUProperty_NodeOperationMode:
@@ -486,7 +491,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				if ( isLogicNodeEndianReversed() )
 				{
 					request->inConversionType = CFSwapInt32(request->inConversionType);
-					reversebytes( &(request->inValue), sizeof(request->inValue) );
+					DFX_ReverseBytes( &(request->inValue), sizeof(request->inValue) );
 				}
 				switch (request->inConversionType)
 				{
@@ -502,7 +507,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				}
 				if ( isLogicNodeEndianReversed() )
 				{
-					reversebytes( &(request->outValue), sizeof(request->outValue) );
+					DFX_ReverseBytes( &(request->outValue), sizeof(request->outValue) );
 				}
 			}
 			break;
@@ -528,6 +533,10 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		// get the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
 			*(int32_t*)outData = dfxsettings->getLearner();
+			break;
+		// get the MIDI assignment for a parameter
+		case kDfxPluginProperty_ParameterMidiAssignment:
+			*(DfxParameterAssignment*)outData = dfxsettings->getParameterAssignment(inElement);
 			break;
 	#endif
 
@@ -555,6 +564,9 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 							nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
 							break;
 						case kDfxPluginProperty_MidiLearner:
+							nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
+							break;
+						case kDfxPluginProperty_ParameterMidiAssignment:
 							nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
 							break;
 						default:
@@ -745,6 +757,22 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 		// set the current MIDI learner parameter
 		case kDfxPluginProperty_MidiLearner:
 			dfxsettings->setLearner( *(int32_t*)inData );
+			break;
+		// set the MIDI assignment for a parameter
+		case kDfxPluginProperty_ParameterMidiAssignment:
+			{
+				DfxParameterAssignment * paramAssignment = (DfxParameterAssignment*)inData;
+				if (paramAssignment->eventType == kParamEventNone)
+					dfxsettings->unassignParam(inElement);
+				else
+				{
+					dfxsettings->assignParam(inElement, paramAssignment->eventType, paramAssignment->eventChannel, 
+											paramAssignment->eventNum, paramAssignment->eventNum2, 
+											paramAssignment->eventBehaviourFlags, 
+											paramAssignment->data1, paramAssignment->data2, 
+											paramAssignment->fdata1, paramAssignment->fdata2);
+				}
+			}
 			break;
 	#endif
 
