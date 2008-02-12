@@ -22,6 +22,8 @@
 	typedef AEffGUIEditor	TARGET_API_EDITOR_BASE_CLASS;
 #endif
 
+class DGButton;
+
 
 /***********************************************************************
 	DfxGuiEditor
@@ -56,6 +58,7 @@ public:
 
 #ifdef TARGET_API_AUDIOUNIT
 	void HandleStreamFormatChange();
+	void HandleMidiLearnChange();
 #endif
 	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels)
 		{ }
@@ -102,9 +105,11 @@ public:
 	void setparameter_i(long inParameterID, long inValue, bool inWrapWithAutomationGesture = false);
 	void setparameter_b(long inParameterID, bool inValue, bool inWrapWithAutomationGesture = false);
 	void setparameter_default(long inParameterID, bool inWrapWithAutomationGesture = false);
+	void setparameters_default(bool inWrapWithAutomationGesture = false);
 	void getparametervaluestring(long inParameterID, char * outText);
 	void randomizeparameter(long inParameterID, bool inWriteAutomation = false);
 	void randomizeparameters(bool inWriteAutomation = false);
+	AudioUnitParameterID * CreateParameterList(AudioUnitScope inScope, UInt32 * outNumParameters);
 	#if TARGET_PLUGIN_USES_MIDI
 		void setmidilearning(bool inNewLearnMode);
 		bool getmidilearning();
@@ -115,6 +120,8 @@ public:
 		void setparametermidiassignment(long inParameterIndex, DfxParameterAssignment inAssignment);
 		DfxParameterAssignment getparametermidiassignment(long inParameterIndex);
 		void parametermidiunassign(long inParameterIndex);
+		DGButton * CreateMidiLearnButton(long inXpos, long inYpos, DGImage * inImage, bool inDrawMomentaryState = false);
+		DGButton * CreateMidiResetButton(long inXpos, long inYpos, DGImage * inImage);
 	#endif
 	unsigned long getNumAudioChannels();
 
@@ -185,6 +192,11 @@ private:
 
 	unsigned long numAudioChannels;
 
+	#if TARGET_PLUGIN_USES_MIDI
+		DGButton * midiLearnButton;
+		DGButton * midiResetButton;
+	#endif
+
 #if TARGET_OS_MAC
 	ControlDefSpec 		dgControlSpec;
 	EventHandlerRef		windowEventHandlerRef;
@@ -205,6 +217,7 @@ private:
 #ifdef TARGET_API_AUDIOUNIT
 	AUEventListenerRef auEventListener;
 	AudioUnitEvent streamFormatPropertyAUEvent;
+	AudioUnitEvent midiLearnPropertyAUEvent;
 #endif
 };
 

@@ -1023,6 +1023,10 @@ void DfxSettings::setLearning(bool inLearnMode)
 		setLearner(kNoLearner);
 
 	midiLearn = inLearnMode;
+
+#ifdef TARGET_API_AUDIOUNIT
+	plugin->PropertyChanged(kDfxPluginProperty_MidiLearn, kAudioUnitScope_Global, (AudioUnitElement)0);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1070,16 +1074,16 @@ void DfxSettings::setLearner(long inParamTag, long inEventBehaviourFlags,
 }
 
 //-----------------------------------------------------------------------------
-// a plugin editor should call this during valueChanged from a control 
-// to turn MIDI learning on and off, VST parameter style
+// a plugin editor should call this upon a value change of a "MIDI learn" control 
+// to turn MIDI learning on and off
 void DfxSettings::setParameterMidiLearn(bool inValue)
 {
 	setLearning(inValue);
 }
 
 //-----------------------------------------------------------------------------
-// a plugin editor should call this during valueChanged from a control 
-// to clear MIDI event assignments, VST parameter style
+// a plugin editor should call this upon a value change of a "MIDI reset" control 
+// to clear MIDI event assignments
 void DfxSettings::setParameterMidiReset(bool inValue)
 {
 	if (inValue)
