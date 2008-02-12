@@ -63,23 +63,6 @@ void randomizeTransverb(long value, void * editor)
 		((DfxGuiEditor*)editor)->randomizeparameters(true);
 }
 
-void midilearnTransverb(long value, void * editor)
-{
-	if (editor != NULL)
-	{
-		if (value == 0)
-			((DfxGuiEditor*)editor)->setmidilearning(false);
-		else
-			((DfxGuiEditor*)editor)->setmidilearning(true);
-	}
-}
-
-void midiresetTransverb(long value, void * editor)
-{
-	if ( (editor != NULL) && (value != 0) )
-		((DfxGuiEditor*)editor)->resetmidilearn();
-}
-
 
 
 //-----------------------------------------------------------------------------
@@ -411,14 +394,10 @@ long TransverbEditor::open()
 	button = new DGButton(this, kSpeed2mode, &pos, gSpeedModeButton, kSpeedMode_NumModes, kDGButtonType_incbutton, true);
 
 	// MIDI learn button
-	pos.set(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth()/2, gMidiLearnButton->getHeight()/2);
-	button = new DGButton(this, &pos, gMidiLearnButton, 2, kDGButtonType_incbutton);
-	button->setUserProcedure(midilearnTransverb, this);
+	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton);
 
 	// MIDI reset button
-	pos.set(kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton->getWidth(), gMidiResetButton->getHeight()/2);
-	button = new DGButton(this, &pos, gMidiResetButton, 2, kDGButtonType_pushbutton);
-	button->setUserProcedure(midiresetTransverb, this);
+	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton);
 
 	// DFX web link
 	pos.set(kDFXlinkX, kDFXlinkY, gDfxLinkButton->getWidth(), gDfxLinkButton->getHeight()/2);

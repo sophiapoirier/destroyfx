@@ -119,23 +119,6 @@ enum {
 //-----------------------------------------------------------------------------
 // callbacks for button-triggered action
 
-void midilearnBufferOverride(long value, void * editor)
-{
-	if (editor != NULL)
-	{
-		if (value == 0)
-			((DfxGuiEditor*)editor)->setmidilearning(false);
-		else
-			((DfxGuiEditor*)editor)->setmidilearning(true);
-	}
-}
-
-void midiresetBufferOverride(long value, void * editor)
-{
-	if ( (editor != NULL) && (value != 0) )
-		((DfxGuiEditor*)editor)->resetmidilearn();
-}
-
 void linkKickButtonsDownProc(long, void * otherbutton)
 {
 	if (otherbutton != NULL)
@@ -453,14 +436,10 @@ long BufferOverrideEditor::open()
 	button = new DGButton(this, kMidiMode, &pos, gMidiModeButton, kNumMidiModes, kDGButtonType_incbutton, true);
 
 	// MIDI learn button
-	pos.set(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth(), gMidiLearnButton->getHeight()/2);
-	midilearnButton = new DGButton(this, &pos, gMidiLearnButton, 2, kDGButtonType_incbutton);
-	midilearnButton->setUserProcedure(midilearnBufferOverride, this);
+	midilearnButton = CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton);
 
 	// MIDI reset button
-	pos.set(kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton->getWidth(), gMidiResetButton->getHeight()/2);
-	midiresetButton = new DGButton(this, &pos, gMidiResetButton, 2, kDGButtonType_pushbutton);
-	midiresetButton->setUserProcedure(midiresetBufferOverride, this);
+	midiresetButton = CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton);
 
 	// go button
 	pos.set(kGoButtonX, kGoButtonY, gGoButton->getWidth(), gGoButton->getHeight()/2);

@@ -72,27 +72,6 @@ const DGColor kMyVeryLightGreyColor(233.0f/255.0f, 242.0f/255.0f, 237.0f/255.0f)
 
 
 //-----------------------------------------------------------------------------
-// callbacks for button-triggered action
-
-void midilearnRezSynth(SInt32 value, void * editor)
-{
-	if (editor != NULL)
-	{
-		if (value == 0)
-			((DfxGuiEditor*)editor)->setmidilearning(false);
-		else
-			((DfxGuiEditor*)editor)->setmidilearning(true);
-	}
-}
-
-void midiresetRezSynth(SInt32 value, void * editor)
-{
-	if ( (editor != NULL) && (value != 0) )
-		((DfxGuiEditor*)editor)->resetmidilearn();
-}
-
-
-//-----------------------------------------------------------------------------
 // parameter listener procedure
 static void SepModeListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
@@ -387,14 +366,10 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 	button = new DGButton(this, kDryWetMixMode, &pos, gDryWetMixModeButton, kNumDryWetMixModes, kDGButtonType_incbutton);
 
 	// turn on/off MIDI learn mode for CC parameter automation
-	pos.set(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth(), (gMidiLearnButton->getHeight())/2);
-	button = new DGButton(this, &pos, gMidiLearnButton, 2, kDGButtonType_incbutton);
-	button->setUserProcedure(midilearnRezSynth, this);
+	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton);
 
 	// clear all MIDI CC assignments
-	pos.set(kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton->getWidth(), (gMidiResetButton->getHeight())/2);
-	button = new DGButton(this, &pos, gMidiResetButton, 2, kDGButtonType_pushbutton);
-	button->setUserProcedure(midiresetRezSynth, this);
+	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton);
 
 	DGWebLink * weblink;
 
