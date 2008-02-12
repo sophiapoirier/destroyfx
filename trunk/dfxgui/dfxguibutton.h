@@ -14,7 +14,7 @@ typedef enum {
 } DfxGuiBottonMode;
 
 
-typedef void (*buttonUserProcedure) (long value, void * userData);
+typedef void (*DGButtonUserProcedure) (long inValue, void * inUserData);
 
 
 //-----------------------------------------------------------------------------
@@ -48,16 +48,16 @@ public:
 
 	void setButtonImage(DGImage * inImage);
 
-	void setUserProcedure(buttonUserProcedure inProc, void * inUserData);
-	void setUserReleaseProcedure(buttonUserProcedure inProc, void * inUserData);
+	void setUserProcedure(DGButtonUserProcedure inProc, void * inUserData);
+	void setUserReleaseProcedure(DGButtonUserProcedure inProc, void * inUserData);
 	void setUseReleaseProcedureOnlyAtEndWithNoCancel(bool inNewPolicy)
 		{   useReleaseProcedureOnlyAtEndWithNoCancel = inNewPolicy; }
 
 protected:
 	DGImage * buttonImage;
 
-	buttonUserProcedure userProcedure;
-	buttonUserProcedure userReleaseProcedure;
+	DGButtonUserProcedure userProcedure;
+	DGButtonUserProcedure userReleaseProcedure;
 	void * userProcData;
 	void * userReleaseProcData;
 	bool useReleaseProcedureOnlyAtEndWithNoCancel;
