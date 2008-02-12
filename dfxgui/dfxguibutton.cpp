@@ -254,14 +254,14 @@ void DGButton::setButtonImage(DGImage * inImage)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setUserProcedure(buttonUserProcedure inProc, void * inUserData)
+void DGButton::setUserProcedure(DGButtonUserProcedure inProc, void * inUserData)
 {
 	userProcedure = inProc;
 	userProcData = inUserData;
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setUserReleaseProcedure(buttonUserProcedure inProc, void * inUserData)
+void DGButton::setUserReleaseProcedure(DGButtonUserProcedure inProc, void * inUserData)
 {
 	userReleaseProcedure = inProc;
 	userReleaseProcData = inUserData;
