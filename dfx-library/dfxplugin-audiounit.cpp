@@ -7,6 +7,7 @@ written by Sophia Poirier, October 2002
 
 #include "dfxplugin.h"
 #include "dfx-au-utilities.h"
+#include <AudioUnit/AudioUnitCarbonView.h>
 
 
 
@@ -71,15 +72,7 @@ void DfxPlugin::PostConstructor()
 			newStreamFormat.ChangeNumberChannels(newNumOutputs, false);
 			AUBase::ChangeStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0, curOutStreamFormat, newStreamFormat);
 		}
-	#if !TARGET_PLUGIN_IS_INSTRUMENT
-		// we can't do in-place audio rendering if there are different numbers of audio inputs and outputs
-		// XXX or is there a better selective way of handling this (depending on current stream format)?
-		if ( Inputs().GetNumberOfElements() > 0 )
-			curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0);
-		curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
-		if (curInStreamFormat.NumberChannels() != curOutStreamFormat.NumberChannels())
-			SetProcessesInPlace(false);
-	#endif
+		UpdateInPlaceProcessingState();
 	}
 
 // XXX some stuff that might worth adding an accessor for at some point or something...
@@ -186,7 +179,10 @@ ComponentResult DfxPlugin::Initialize()
 
 	// call our initialize routine
 	if (result == noErr)
+	{
 		result = do_initialize();
+		UpdateInPlaceProcessingState();
+	}
 
 	return result;
 }
@@ -607,12 +603,15 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			result = kAudioUnitErr_PropertyNotWritable;
 			break;
 
+	#if !TARGET_PLUGIN_IS_INSTRUMENT
 		case kAudioUnitProperty_InPlaceProcessing:
-			if ( (audioProcessingAccumulatingOnly) && (*(UInt32*)inData != 0) )
+			if ( ((audioProcessingAccumulatingOnly) || (getnuminputs() != getnumoutputs())) 
+					&& (*(UInt32*)inData != 0) )
 				result = kAudioUnitErr_InvalidPropertyValue;
 			else
 				result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
 			break;
+	#endif
 
 		// set parameter values (current, min, max, etc.) using specific variable types
 		// XXX finish implementing all items
@@ -1378,6 +1377,19 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 
 	// use the inherited base class implementation
 	return TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::UpdateInPlaceProcessingState()
+{
+#if !TARGET_PLUGIN_IS_INSTRUMENT
+	// we can't do in-place audio rendering if there are different numbers of audio inputs and outputs
+	if ( getnuminputs() != getnumoutputs() )
+	{
+		SetProcessesInPlace(false);
+		PropertyChanged(kAudioUnitProperty_InPlaceProcessing, kAudioUnitScope_Global, (AudioUnitElement)0);
+	}
+#endif
 }
 
 #if TARGET_PLUGIN_IS_INSTRUMENT

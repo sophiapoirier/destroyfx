@@ -661,6 +661,7 @@ private:
 	bool audioProcessingAccumulatingOnly;
 
 	#ifdef TARGET_API_AUDIOUNIT
+		void UpdateInPlaceProcessingState();
 		UInt32 supportedLogicNodeOperationMode, currentLogicNodeOperationMode;
 	#endif
 
