@@ -801,17 +801,45 @@ void DfxGuiEditor::automationgesture_end(long inParameterID)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation)
 {
+	if (inWriteAutomation)
+		automationgesture_begin(inParameterID);
+
 	Boolean writeAutomation_fixedSize = inWriteAutomation;
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameter, 
 				kAudioUnitScope_Global, (AudioUnitElement)inParameterID, &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
+
+	if (inWriteAutomation)
+		automationgesture_end(inParameterID);
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 {
+	UInt32 parameterListSize = 0;
+	AudioUnitParameterID * parameterList = NULL;
+	if (inWriteAutomation)
+	{
+		parameterList = CreateParameterList(kAudioUnitScope_Global, &parameterListSize);
+		if (parameterList != NULL)
+		{
+			for (UInt32 i=0; i < parameterListSize; i++)
+				automationgesture_begin(parameterList[i]);
+		}
+	}
+
 	Boolean writeAutomation_fixedSize = inWriteAutomation;
 	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameter, 
 				kAudioUnitScope_Global, kAUParameterListener_AnyParameter, &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
+
+	if (inWriteAutomation)
+	{
+		if (parameterList != NULL)
+		{
+			for (UInt32 i=0; i < parameterListSize; i++)
+				automationgesture_end(parameterList[i]);
+			free(parameterList);
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -991,6 +1019,7 @@ void DfxGuiEditor::setparameters_default(bool inWrapWithAutomationGesture)
 	{
 		for (UInt32 i=0; i < parameterListSize; i++)
 			setparameter_default(parameterList[i], inWrapWithAutomationGesture);
+		free(parameterList);
 	}
 }
 
