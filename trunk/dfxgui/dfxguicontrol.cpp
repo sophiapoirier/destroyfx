@@ -41,6 +41,7 @@ void DGControlBase::redraw()
 //-----------------------------------------------------------------------------
 enum {
 	kDfxContextualMenuItem_Global_Undo = 0,
+	kDfxContextualMenuItem_Global_SetDefaultParameterValues,
 	kDfxContextualMenuItem_Global_RandomizeParameterValues,
 	kDfxContextualMenuItem_Global_GenerateAutomationSnapshot,
 	kDfxContextualMenuItem_Global_CopyState,
@@ -285,6 +286,9 @@ bool DGControlBase::contextualMenuClick()
 					menuItemText = CFSTR("Redo");
 				isFirstItemOfSubgroup = true;
 				break;
+			case kDfxContextualMenuItem_Global_SetDefaultParameterValues:
+				menuItemText = CFSTR("Reset all parameter values to default");
+				break;
 			case kDfxContextualMenuItem_Global_RandomizeParameterValues:
 				menuItemText = CFSTR("Randomize all parameter values");
 				break;
@@ -391,6 +395,9 @@ bool DGControlBase::contextualMenuClick()
 			{
 				case kDfxContextualMenuItem_Global_Undo:
 					//XXX implement
+					break;
+				case kDfxContextualMenuItem_Global_SetDefaultParameterValues:
+					getDfxGuiEditor()->setparameters_default(true);
 					break;
 				case kDfxContextualMenuItem_Global_RandomizeParameterValues:
 					getDfxGuiEditor()->randomizeparameters(true);	// XXX "yes" to writing automation data?
