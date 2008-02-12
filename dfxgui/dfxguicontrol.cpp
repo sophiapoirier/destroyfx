@@ -68,6 +68,7 @@ enum {
 //	kDfxContextualMenuItem_Parameter_ValueStrings,	// a sub-menu of value selections, for parameters that have them
 	kDfxContextualMenuItem_Parameter_Undo,
 	kDfxContextualMenuItem_Parameter_RandomizeParameterValue,
+	kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot,
 //	kDfxContextualMenuItem_Parameter_SnapMode,	// toggle snap mode
 #if TARGET_PLUGIN_USES_MIDI
 	kDfxContextualMenuItem_Parameter_MidiLearner,
@@ -193,6 +194,9 @@ bool DGControlBase::contextualMenuClick()
 						break;
 					case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
 						menuItemText = CFSTR("Randomize value");
+						break;
+					case kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot:
+						menuItemText = CFSTR("Generate parameter automation snapshot");
 						break;
 #if TARGET_PLUGIN_USES_MIDI
 					case kDfxContextualMenuItem_Parameter_MidiLearner:
@@ -403,7 +407,16 @@ bool DGControlBase::contextualMenuClick()
 					getDfxGuiEditor()->randomizeparameters(true);	// XXX "yes" to writing automation data?
 					break;
 				case kDfxContextualMenuItem_Global_GenerateAutomationSnapshot:
-					//XXX implement
+					{
+						UInt32 parameterListSize = 0;
+						AudioUnitParameterID * parameterList = getDfxGuiEditor()->CreateParameterList(kAudioUnitScope_Global, &parameterListSize);
+						if (parameterList != NULL)
+						{
+							for (UInt32 i=0; i < parameterListSize; i++)
+								getDfxGuiEditor()->setparameter_f(parameterList[i], getDfxGuiEditor()->getparameter_f(parameterList[i]), true);
+							free(parameterList);
+						}
+					}
 					break;
 				case kDfxContextualMenuItem_Global_CopyState:
 					getDfxGuiEditor()->copySettings();
@@ -471,8 +484,11 @@ bool DGControlBase::contextualMenuClick()
 						//XXX implement
 						break;
 					case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
-						// XXX "yes" to writing automation data?  (currently unimplemented, though)
+						// XXX "yes" to writing automation data?
 						getDfxGuiEditor()->randomizeparameter(paramID, true);
+						break;
+					case kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot:
+						getDfxGuiEditor()->setparameter_f(paramID, getDfxGuiEditor()->getparameter_f(paramID), true);
 						break;
 #if TARGET_PLUGIN_USES_MIDI
 					case kDfxContextualMenuItem_Parameter_MidiLearner:
