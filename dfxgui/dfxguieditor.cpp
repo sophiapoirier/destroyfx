@@ -2,6 +2,7 @@
 
 #include "dfxplugin.h"
 #include "dfx-au-utilities.h"
+#include "dfxguibutton.h"
 
 
 
@@ -67,6 +68,11 @@ CFRelease(mut);
 	imagesList = NULL;
 
 	backgroundControl = NULL;
+
+	#if TARGET_PLUGIN_USES_MIDI
+		midiLearnButton = NULL;
+		midiResetButton = NULL;
+	#endif
   
 #if TARGET_OS_MAC
 	idleTimer = NULL;
@@ -105,6 +111,9 @@ DfxGuiEditor::~DfxGuiEditor()
 			if (GetEditAudioUnit() != NULL)
 		#endif
 			setmidilearning(false);
+
+		midiLearnButton = NULL;
+		midiResetButton = NULL;
 	#endif
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -114,6 +123,9 @@ DfxGuiEditor::~DfxGuiEditor()
 		if (AUEventListenerRemoveEventType != NULL)
 		{
 			AUEventListenerRemoveEventType(auEventListener, this, &streamFormatPropertyAUEvent);
+			#if TARGET_PLUGIN_USES_MIDI
+				AUEventListenerRemoveEventType(auEventListener, this, &midiLearnPropertyAUEvent);
+			#endif
 		}
 		AUListenerDispose(auEventListener);
 	}
@@ -288,6 +300,13 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 			streamFormatPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Output;
 			streamFormatPropertyAUEvent.mArgument.mProperty.mElement = 0;
 			AUEventListenerAddEventType(auEventListener, this, &streamFormatPropertyAUEvent);
+
+			#if TARGET_PLUGIN_USES_MIDI
+				midiLearnPropertyAUEvent = streamFormatPropertyAUEvent;
+				midiLearnPropertyAUEvent.mArgument.mProperty.mPropertyID = kDfxPluginProperty_MidiLearn;
+				midiLearnPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
+				AUEventListenerAddEventType(auEventListener, this, &midiLearnPropertyAUEvent);
+			#endif
 		}
 	}
 #endif
@@ -964,6 +983,18 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 }
 
 //-----------------------------------------------------------------------------
+void DfxGuiEditor::setparameters_default(bool inWrapWithAutomationGesture)
+{
+	UInt32 parameterListSize = 0;
+	AudioUnitParameterID * parameterList = CreateParameterList(kAudioUnitScope_Global, &parameterListSize);
+	if (parameterList != NULL)
+	{
+		for (UInt32 i=0; i < parameterListSize; i++)
+			setparameter_default(parameterList[i], inWrapWithAutomationGesture);
+	}
+}
+
+//-----------------------------------------------------------------------------
 void DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
 {
 	if (outText == NULL)
@@ -977,6 +1008,37 @@ void DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
 							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
 							== noErr)
 		strcpy(outText, request.valueString);
+}
+
+//-----------------------------------------------------------------------------
+AudioUnitParameterID * DfxGuiEditor::CreateParameterList(AudioUnitScope inScope, UInt32 * outNumParameters)
+{
+	UInt32 numParameters = 0;
+	UInt32 dataSize = 0;
+	Boolean writable;
+	ComponentResult result = AudioUnitGetPropertyInfo(GetEditAudioUnit(), kAudioUnitProperty_ParameterList, inScope, (AudioUnitElement)0, &dataSize, &writable);
+	if (result == noErr)
+		numParameters = dataSize / sizeof(AudioUnitParameterID);
+
+	if (numParameters == 0)
+		return NULL;
+
+	AudioUnitParameterID * parameterList = (AudioUnitParameterID*) malloc(dataSize);
+	if (parameterList == NULL)
+		return NULL;
+
+	result = AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_ParameterList, inScope, (AudioUnitElement)0, parameterList, &dataSize);
+	if (result == noErr)
+	{
+		if (outNumParameters != NULL)
+			*outNumParameters = numParameters;
+		return parameterList;
+	}
+	else
+	{
+		free(parameterList);
+		return NULL;
+	}
 }
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -1706,8 +1768,19 @@ static void DFXGUI_AudioUnitEventListenerProc(void * inCallbackRefCon, void * in
 	{
 		if (inEvent->mEventType == kAudioUnitEvent_PropertyChange)
 		{
-			if (inEvent->mArgument.mProperty.mPropertyID == kAudioUnitProperty_StreamFormat)
-				ourOwnerEditor->HandleStreamFormatChange();
+			switch (inEvent->mArgument.mProperty.mPropertyID)
+			{
+				case kAudioUnitProperty_StreamFormat:
+					ourOwnerEditor->HandleStreamFormatChange();
+					break;
+			#if TARGET_PLUGIN_USES_MIDI
+				case kDfxPluginProperty_MidiLearn:
+					ourOwnerEditor->HandleMidiLearnChange();
+					break;
+			#endif
+				default:
+					break;
+			}
 		}
 	}
 }
@@ -1724,6 +1797,68 @@ void DfxGuiEditor::HandleStreamFormatChange()
 }
 #endif
 
+
+#if TARGET_PLUGIN_USES_MIDI
+
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::HandleMidiLearnChange()
+{
+	if (midiLearnButton != NULL)
+	{
+		long newControlValue = getmidilearning() ? 1 : 0;
+		SetControl32BitValue(midiLearnButton->getCarbonControl(), newControlValue);
+	}
+}
+#endif
+
+//-----------------------------------------------------------------------------
+static void DFXGUI_MidiLearnButtonUserProcedure(SInt32 inValue, void * inUserData)
+{
+	if (inUserData != NULL)
+	{
+		if (inValue == 0)
+			((DfxGuiEditor*)inUserData)->setmidilearning(false);
+		else
+			((DfxGuiEditor*)inUserData)->setmidilearning(true);
+	}
+}
+
+//-----------------------------------------------------------------------------
+static void DFXGUI_MidiResetButtonUserProcedure(SInt32 inValue, void * inUserData)
+{
+	if ( (inUserData != NULL) && (inValue != 0) )
+		((DfxGuiEditor*)inUserData)->resetmidilearn();
+}
+
+//-----------------------------------------------------------------------------
+DGButton * DfxGuiEditor::CreateMidiLearnButton(long inXpos, long inYpos, DGImage * inImage, bool inDrawMomentaryState)
+{
+	const long numButtonStates = 2;
+	long controlWidth = inImage->getWidth();
+	if (inDrawMomentaryState)
+		controlWidth /= 2;
+	const long controlHeight = inImage->getHeight() / numButtonStates;
+
+	DGRect pos(inXpos, inYpos, controlWidth, controlHeight);
+	midiLearnButton = new DGButton(this, &pos, inImage, numButtonStates, kDGButtonType_incbutton, inDrawMomentaryState);
+	midiLearnButton->setUserProcedure(DFXGUI_MidiLearnButtonUserProcedure, this);
+	return midiLearnButton;
+}
+
+//-----------------------------------------------------------------------------
+DGButton * DfxGuiEditor::CreateMidiResetButton(long inXpos, long inYpos, DGImage * inImage)
+{
+	DGRect pos(inXpos, inYpos, inImage->getWidth(), inImage->getHeight()/2);
+	midiResetButton = new DGButton(this, &pos, inImage, 2, kDGButtonType_pushbutton);
+	midiResetButton->setUserProcedure(DFXGUI_MidiResetButtonUserProcedure, this);
+	return midiResetButton;
+}
+
+#endif
+// TARGET_PLUGIN_USES_MIDI
+
+
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 OSStatus DFX_OpenWindowFromNib(CFStringRef inWindowName, WindowRef * outWindow)
@@ -1732,7 +1867,7 @@ OSStatus DFX_OpenWindowFromNib(CFStringRef inWindowName, WindowRef * outWindow)
 		return paramErr;
 
 	// open the window from our nib
-	CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
 	if (pluginBundle == NULL)
 		return coreFoundationUnknownErr;
 
