@@ -63,20 +63,20 @@ void DGGraphicsContext::setAntialiasQuality(DGAntialiasQuality inQualityLevel)
 }
 
 //-----------------------------------------------------------------------------
-void DGGraphicsContext::setFillColor(DGColor inColor, float inAlpha)
+void DGGraphicsContext::setFillColor(DGColor inColor)
 {
 #if TARGET_OS_MAC
 	if (context != NULL)
-		CGContextSetRGBFillColor(context, inColor.r, inColor.g, inColor.b, inAlpha);
+		CGContextSetRGBFillColor(context, inColor.r, inColor.g, inColor.b, inColor.a);
 #endif
 }
 
 //-----------------------------------------------------------------------------
-void DGGraphicsContext::setStrokeColor(DGColor inColor, float inAlpha)
+void DGGraphicsContext::setStrokeColor(DGColor inColor)
 {
 #if TARGET_OS_MAC
 	if (context != NULL)
-		CGContextSetRGBStrokeColor(context, inColor.r, inColor.g, inColor.b, inAlpha);
+		CGContextSetRGBStrokeColor(context, inColor.r, inColor.g, inColor.b, inColor.a);
 #endif
 }
 

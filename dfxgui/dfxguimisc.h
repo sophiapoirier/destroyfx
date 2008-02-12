@@ -145,25 +145,27 @@ struct DGRect
 
 
 //-----------------------------------------------------------------------------
-// 3-component RGB color represented with a float (range 0.0 to 1.0) 
+// 3-component RGB color + alpha represented with a float (range 0.0 to 1.0) 
 // for each color component
 struct DGColor
 {
 	float r;
 	float g;
 	float b;
+	float a;
 
 	DGColor()
-	:	r(0.0f), g(0.0f), b(0.0f) {}
-	DGColor(float inRed, float inGreen, float inBlue)
-	:	r(inRed), g(inGreen), b(inBlue) {}
+	:	r(0.0f), g(0.0f), b(0.0f), a(1.0f) {}
+	DGColor(float inRed, float inGreen, float inBlue, float inAlpha = 1.0f)
+	:	r(inRed), g(inGreen), b(inBlue), a(inAlpha) {}
 	DGColor(const DGColor& inColor)
-	:	r(inColor.r), g(inColor.g), b(inColor.b) {}
-	DGColor& operator () (float inRed, float inGreen, float inBlue)
+	:	r(inColor.r), g(inColor.g), b(inColor.b), a(inColor.a) {}
+	DGColor& operator () (float inRed, float inGreen, float inBlue, float inAlpha = 1.0f)
 	{
 		r = inRed;
 		g = inGreen;
 		b = inBlue;
+		a = inAlpha;
 		return *this;
 	}
 
@@ -172,13 +174,14 @@ struct DGColor
 		r = inColor.r;
 		g = inColor.g;
 		b = inColor.b;
+		a = inColor.a;
 		return *this;
 	}
 };
 typedef struct DGColor DGColor;
 
-const DGColor kDGColor_black(0.0f, 0.0f, 0.0f);
-const DGColor kDGColor_white(1.0f, 1.0f, 1.0f);
+const DGColor kDGColor_black(0.0f, 0.0f, 0.0f, 1.0f);
+const DGColor kDGColor_white(1.0f, 1.0f, 1.0f, 1.0f);
 
 
 
@@ -199,8 +202,8 @@ public:
 	void setAlpha(float inAlpha);
 	void setAntialias(bool inShouldAntialias);
 	void setAntialiasQuality(DGAntialiasQuality inQualityLevel);
-	void setFillColor(DGColor inColor, float inAlpha = 1.0f);
-	void setStrokeColor(DGColor inColor, float inAlpha = 1.0f);
+	void setFillColor(DGColor inColor);
+	void setStrokeColor(DGColor inColor);
 	void setLineWidth(float inLineWidth);
 
 	void fillRect(DGRect * inRect);
