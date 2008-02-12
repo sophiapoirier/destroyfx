@@ -112,18 +112,11 @@ void showtree(CFTreeRef inTree)
 //-----------------------------------------------------------------------------
 // callbacks for button-triggered action
 
-void midilearnGeometer(long value, void * editor) {
-  if (editor != NULL) {
-    if (value == 0)
-      ((DfxGuiEditor*)editor)->setmidilearning(false);
-    else
-      ((DfxGuiEditor*)editor)->setmidilearning(true);
-  }
-}
-
-void midiresetGeometer(long value, void * editor) {
-  if ( (editor != NULL) && (value != 0) )
-    ((DfxGuiEditor*)editor)->resetmidilearn();
+void buttonswitched(long value, void * button) {
+  // XXX note that this still won't catch a change under your mouse caused by parameter automation
+  DGButton * gbutton = (DGButton*) button;
+  if (button != NULL)
+    ((GeometerEditor*)(gbutton->getDfxGuiEditor()))->changehelp(gbutton);
 
 /*
 CFTreeRef basetree = CFTreeCreateFromAUPresetFilesInDomain((Component) (((AUCarbonViewBase*)editor)->GetEditAudioUnit()), kUserDomain);
@@ -133,13 +126,6 @@ showtree(basetree);
 CFRelease(basetree);
 }
 */
-}
-
-void buttonswitched(long value, void * button) {
-  // XXX note that this still won't catch a change under your mouse caused by parameter automation
-  DGButton * gbutton = (DGButton*) button;
-  if (button != NULL)
-    ((GeometerEditor*)(gbutton->getDfxGuiEditor()))->changehelp(gbutton);
 }
 
 //-----------------------------------------------------------------------------
@@ -500,16 +486,10 @@ long GeometerEditor::open() {
   //--initialize the buttons----------------------------------------------
 
   // MIDI learn button
-  pos.set(pos_midilearnbuttonX, pos_midilearnbuttonY, g_midilearnbutton->getWidth()/2, g_midilearnbutton->getHeight()/2);
-  DGButton * midilearnbutton = new DGButton(this, &pos, g_midilearnbutton, 2, kDGButtonType_incbutton, true);
-  midilearnbutton->setUserProcedure(midilearnGeometer, this);
-  genhelpitemcontrols[HELP_MIDILEARN] = midilearnbutton;
+  genhelpitemcontrols[HELP_MIDILEARN] = CreateMidiLearnButton(pos_midilearnbuttonX, pos_midilearnbuttonY, g_midilearnbutton, true);
 
   // MIDI reset button
-  pos.set(pos_midiresetbuttonX, pos_midiresetbuttonY, g_midiresetbutton->getWidth(), g_midiresetbutton->getHeight()/2);
-  DGButton * midiresetbutton = new DGButton(this, &pos, g_midiresetbutton, 2, kDGButtonType_pushbutton);
-  midiresetbutton->setUserProcedure(midiresetGeometer, this);
-  genhelpitemcontrols[HELP_MIDIRESET] = midiresetbutton;
+  genhelpitemcontrols[HELP_MIDIRESET] = CreateMidiResetButton(pos_midiresetbuttonX, pos_midiresetbuttonY, g_midiresetbutton);
 
   DGWebLink * weblink;
   // Destroy FX web page link

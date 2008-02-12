@@ -260,23 +260,6 @@ void allNotesButtonProc(SInt32 value, void * editor)
 void noneNotesButtonProc(SInt32 value, void * editor)
 {	if ( (editor != NULL) && (value != 0) ) ((ScrubbyEditor*)editor)->HandleNotesButton(kNotes_none);	}
 
-void midilearnScrubby(SInt32 value, void * editor)
-{
-	if (editor != NULL)
-	{
-		if (value == 0)
-			((DfxGuiEditor*)editor)->setmidilearning(false);
-		else
-			((DfxGuiEditor*)editor)->setmidilearning(true);
-	}
-}
-
-void midiresetScrubby(SInt32 value, void * editor)
-{
-	if ( (editor != NULL) && (value != 0) )
-		((DfxGuiEditor*)editor)->resetmidilearn();
-}
-
 
 //-----------------------------------------------------------------------------
 // parameter listener procedure
@@ -777,14 +760,10 @@ long ScrubbyEditor::open()
 	// .....................MISC..........................
 
 	// turn on/off MIDI learn mode for CC parameter automation
-	pos.set(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton->getWidth(), gMidiLearnButton->getHeight()/2);
-	midiLearnButton = new DGButton(this, &pos, gMidiLearnButton, 2, kDGButtonType_incbutton);
-	midiLearnButton->setUserProcedure(midilearnScrubby, this);
+	midiLearnButton = CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, gMidiLearnButton);
 
 	// clear all MIDI CC assignments
-	pos.set(kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton->getWidth(), gMidiResetButton->getHeight()/2);
-	midiResetButton = new DGButton(this, &pos, gMidiResetButton, 2, kDGButtonType_pushbutton);
-	midiResetButton->setUserProcedure(midiresetScrubby, this);
+	midiResetButton = CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, gMidiResetButton);
 
 	DGWebLink * weblink;
 
@@ -796,7 +775,6 @@ long ScrubbyEditor::open()
 	pos.set(kSmartElectronixLinkX, kSmartElectronixLinkY, gSmartElectronixLink->getWidth(), gSmartElectronixLink->getHeight()/2);
 	weblink = new DGWebLink(this, &pos, gSmartElectronixLink, SMARTELECTRONIX_URL);
 
-	pos.set(125, 8, 260, 37);
 	pos.set(kTitleAreaX, kTitleAreaY, kTitleAreaWidth, kTitleAreaHeight);
 	titleArea = new DGControl(this, &pos, 0.0f);
 
