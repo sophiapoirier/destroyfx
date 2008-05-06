@@ -1764,7 +1764,7 @@ const char * DFX_GetNameForMIDINote(long inMidiNote)
 	const long kNumNotesInOctave = 12;
 	const char * keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 	const long keyNameIndex = inMidiNote % kNumNotesInOctave;
-	const long octaveNumber = (inMidiNote / kNumNotesInOctave) - 2;
+	const long octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
 	sprintf(midiNoteName, "%s %ld", keyNames[keyNameIndex], octaveNumber);
 	return midiNoteName;
 }
