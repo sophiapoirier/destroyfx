@@ -26,8 +26,9 @@ somewhere in the include tree for every file for a DfxPlugin.
 	#define PLUGIN_CREATOR_NAME_STRING	"Destroy FX"
 #endif
 
+#define DESTROYFX_CREATOR_ID	'DFX!'
 #ifndef PLUGIN_CREATOR_ID
-	#define PLUGIN_CREATOR_ID	'DFX!'
+	#define PLUGIN_CREATOR_ID	DESTROYFX_CREATOR_ID
 #endif
 
 #ifndef PLUGIN_COLLECTION_NAME
