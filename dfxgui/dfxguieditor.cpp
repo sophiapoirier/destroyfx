@@ -30,7 +30,7 @@ static EventHandlerUPP gWindowTransparencyEventHandlerUPP = NULL;
 static ControlActionUPP gTransparencyControlActionUPP = NULL;
 
 static const CFStringRef kDfxGui_NibName = CFSTR("dfxgui");
-const OSType kDfxGui_ControlSignature = PLUGIN_CREATOR_ID;
+const OSType kDfxGui_ControlSignature = DESTROYFX_CREATOR_ID;
 const SInt32 kDfxGui_TextEntryControlID = 1;
 const SInt32 kDfxGui_TransparencySliderControlID = 0;
 #endif
@@ -69,6 +69,7 @@ CFRelease(mut);
 
 	backgroundControl = NULL;
 
+	splashScreenControl = NULL;
 	#if TARGET_PLUGIN_USES_MIDI
 		midiLearnButton = NULL;
 		midiResetButton = NULL;
@@ -500,9 +501,9 @@ bool DfxGuiEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEven
 		if (status != noErr)
 			carbonControl = NULL;
 
-		UInt32 inEventKind = GetEventKind(inEvent);
+		UInt32 eventKind = GetEventKind(inEvent);
 
-		if (inEventKind == kEventControlDraw)
+		if (eventKind == kEventControlDraw)
 		{
 			if ( (carbonControl != NULL) && (carbonControl == GetCarbonPane()) )
 			{
@@ -518,22 +519,22 @@ bool DfxGuiEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEven
 			}
 		}
 
-/*
 		// we want to catch when the mouse hovers over onto the background area
-		else if ( (inEventKind == kEventControlHitTest) || (inEventKind == kEventControlClick) )
+		else if ( (eventKind == kEventControlHitTest) || (eventKind == kEventControlClick) )
 		{
-			if (carbonControl == GetCarbonPane())
-				setCurrentControl_mouseover(NULL);	// we don't count the background
+//			if (carbonControl == GetCarbonPane())
+//				setCurrentControl_mouseover(NULL);	// we don't count the background
+			if (splashScreenControl != NULL)
+				removeSplashScreenControl();
 		}
-*/
 
-		else if (inEventKind == kEventControlApplyBackground)
+		else if (eventKind == kEventControlApplyBackground)
 		{
 //fprintf(stderr, "mCarbonPane HandleEvent(kEventControlApplyBackground)\n");
 			return false;
 		}
 
-		else if (inEventKind == kEventControlContextualMenuClick)
+		else if (eventKind == kEventControlContextualMenuClick)
 		{
 			if ( (carbonControl != NULL) && (carbonControl == GetCarbonPane()) )
 			{
@@ -591,6 +592,30 @@ void DfxGuiEditor::addControl(DGControl * inControl)
 		return;
 
 	controlsList = new DGControlsList(inControl, controlsList);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::removeControl(DGControl * inControl)
+{
+	if (inControl == NULL)
+		return;
+
+	DGControlsList * previousControl = NULL;
+	DGControlsList * tempcl = controlsList;
+	while (tempcl != NULL)
+	{
+		if (tempcl->control == inControl)
+		{
+			if (previousControl == NULL)
+				controlsList = tempcl->next;
+			else
+				previousControl->next = tempcl->next;
+			delete tempcl;
+			return;
+		}
+		previousControl = tempcl;
+		tempcl = tempcl->next;
+	}
 }
 
 #if TARGET_OS_MAC
@@ -1376,14 +1401,14 @@ static pascal OSStatus DFXGUI_WindowEventHandler(EventHandlerCallRef myHandler, 
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 {
-	UInt32 inEventKind = GetEventKind(inEvent);
+	UInt32 eventKind = GetEventKind(inEvent);
 	OSStatus status;
 
 	DGKeyModifiers keyModifiers = DFX_GetDGKeyModifiersForEvent(inEvent);
 
 
 
-	if (inEventKind == kEventMouseWheelMoved)
+	if (eventKind == kEventMouseWheelMoved)
 	{
 		SInt32 mouseWheelDelta = 0;
 		status = GetEventParameter(inEvent, kEventParamMouseWheelDelta, typeSInt32, NULL, sizeof(mouseWheelDelta), NULL, &mouseWheelDelta);
@@ -1423,7 +1448,7 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 	}
 
 
-	if ( (inEventKind == kEventMouseEntered) || (inEventKind == kEventMouseExited) )
+	if ( (eventKind == kEventMouseEntered) || (eventKind == kEventMouseExited) )
 	{
 		MouseTrackingRef trackingRegion = NULL;
 		status = GetEventParameter(inEvent, kEventParamMouseTrackingRef, typeMouseTrackingRef, NULL, sizeof(trackingRegion), NULL, &trackingRegion);
@@ -1437,9 +1462,9 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 				status = GetMouseTrackingRegionRefCon(trackingRegion, (void**)(&ourMousedOverControl));	// XXX deprecated in Mac OS X 10.4
 				if ( (status == noErr) && (ourMousedOverControl != NULL) )
 				{
-					if (inEventKind == kEventMouseEntered)
+					if (eventKind == kEventMouseEntered)
 						addMousedOverControl(ourMousedOverControl);
-					else if (inEventKind == kEventMouseExited)
+					else if (eventKind == kEventMouseExited)
 						removeMousedOverControl(ourMousedOverControl);
 					return true;
 				}
@@ -1479,7 +1504,7 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 	}
 
 
-	if (inEventKind == kEventMouseDragged)
+	if (eventKind == kEventMouseDragged)
 	{
 		UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 		status = GetEventParameter(inEvent, kEventParamMouseChord, typeUInt32, NULL, sizeof(mouseButtons), NULL, &mouseButtons);
@@ -1491,7 +1516,7 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 		return false;	// let it fall through in case the host needs the event
 	}
 
-	if (inEventKind == kEventMouseUp)
+	if (eventKind == kEventMouseUp)
 	{
 		ourControl->do_mouseUp(mouseLocation.x, mouseLocation.y, keyModifiers);
 
@@ -1509,10 +1534,10 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 {
-	UInt32 inEventKind = GetEventKind(inEvent);
+	UInt32 eventKind = GetEventKind(inEvent);
 	OSStatus status;
 
-	if ( (inEventKind == kEventRawKeyDown) || (inEventKind == kEventRawKeyRepeat) )
+	if ( (eventKind == kEventRawKeyDown) || (eventKind == kEventRawKeyRepeat) )
 	{
 		UInt32 keyCode = 0;
 		status = GetEventParameter(inEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(keyCode), NULL, &keyCode);
@@ -1545,9 +1570,9 @@ bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 {
-	UInt32 inEventKind = GetEventKind(inEvent);
+	UInt32 eventKind = GetEventKind(inEvent);
 
-	if (inEventKind == kEventCommandProcess)
+	if (eventKind == kEventCommandProcess)
 	{
 		HICommand hiCommand;
 		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeHICommand, NULL, sizeof(hiCommand), NULL, &hiCommand);
@@ -1604,7 +1629,7 @@ static pascal OSStatus DFXGUI_ControlEventHandler(EventHandlerCallRef myHandler,
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 {
-	UInt32 inEventKind = GetEventKind(inEvent);
+	UInt32 eventKind = GetEventKind(inEvent);
 	OSStatus status;
 
 	ControlRef ourCarbonControl = NULL;
@@ -1615,7 +1640,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 
 /*
 	// the Carbon control reference has not been added yet, so our DGControl pointer is NULL, because we can't look it up by ControlRef yet
-	if (inEventKind == kEventControlInitialize)
+	if (eventKind == kEventControlInitialize)
 	{
 		UInt32 controlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
 		if (ourCarbonControl != NULL)
@@ -1625,7 +1650,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 	}
 */
 
-	if ( (inEventKind == kEventControlTrackingAreaEntered) || (inEventKind == kEventControlTrackingAreaExited) )
+	if ( (eventKind == kEventControlTrackingAreaEntered) || (eventKind == kEventControlTrackingAreaExited) )
 	{
 		HIViewTrackingAreaRef trackingArea = NULL;
 		status = GetEventParameter(inEvent, kEventParamHIViewTrackingArea, typeHIViewTrackingAreaRef, NULL, sizeof(trackingArea), NULL, &trackingArea);
@@ -1636,9 +1661,9 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 			if ( (status == noErr) && (trackingAreaID != 0) )
 			{
 				DGControl * ourMousedOverControl = (DGControl*)trackingAreaID;
-				if (inEventKind == kEventControlTrackingAreaEntered)
+				if (eventKind == kEventControlTrackingAreaEntered)
 					addMousedOverControl(ourMousedOverControl);
-				else if (inEventKind == kEventControlTrackingAreaExited)
+				else if (eventKind == kEventControlTrackingAreaExited)
 					removeMousedOverControl(ourMousedOverControl);
 				return true;
 			}
@@ -1649,7 +1674,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 
 	if (ourDGControl != NULL)
 	{
-		switch (inEventKind)
+		switch (eventKind)
 		{
 			case kEventControlDraw:
 //fprintf(stderr, "kEventControlDraw\n");
@@ -1703,9 +1728,15 @@ fprintf(stderr, "kEventControlHit\n");
 					status = SetEventParameter(inEvent, kEventParamControlPart, typeControlPartCode, sizeof(whatPart), &whatPart);
 				}
 //			case kEventControlClick:
-//if (inEventKind == kEventControlClick) fprintf(stderr, "kEventControlClick\n");
+//if (eventKind == kEventControlClick) fprintf(stderr, "kEventControlClick\n");
 				{
 //					setCurrentControl_mouseover(ourDGControl);
+
+					if (splashScreenControl != NULL)
+					{
+						removeSplashScreenControl();
+						return true;
+					}
 
 					UInt32 mouseButtons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 //					UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
@@ -1722,7 +1753,7 @@ fprintf(stderr, "kEventControlHit\n");
 					// get the mouse location, and use HIPointConvert or HIViewConvertPoint to convert 
 					// the mouse location from the direct object view to your view (or to global coordinates)."
 					// e.g. HIPointConvert(&hiPt, kHICoordSpaceView, view, kHICoordSpace72DPIGlobal, NULL);
-					if ( (inEventKind == kEventControlContextualMenuClick) || (inEventKind == kEventControlTrack) )
+					if ( (eventKind == kEventControlContextualMenuClick) || (eventKind == kEventControlTrack) )
 					{
 						Point mouseLocation_i;
 						GetGlobalMouse(&mouseLocation_i);
@@ -1746,7 +1777,7 @@ fprintf(stderr, "kEventControlHit\n");
 					bool isDoubleClick = false;
 					// only ControlClick gets the ClickCount event parameter
 					// XXX no, ContextualMenuClick does, too, but only in Mac OS X 10.3 or higher
-					if (inEventKind == kEventControlClick)
+					if (eventKind == kEventControlClick)
 					{
 						UInt32 clickCount = 1;
 						status = GetEventParameter(inEvent, kEventParamClickCount, typeUInt32, NULL, sizeof(clickCount), NULL, &clickCount);
@@ -1887,6 +1918,20 @@ DGButton * DfxGuiEditor::CreateMidiResetButton(long inXpos, long inYpos, DGImage
 #endif
 // TARGET_PLUGIN_USES_MIDI
 
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::installSplashScreenControl(DGSplashScreen * inControl)
+{
+	splashScreenControl = inControl;
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::removeSplashScreenControl()
+{
+	if (splashScreenControl != NULL)
+		splashScreenControl->removeSplashDisplay();
+	splashScreenControl = NULL;
+}
+
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
@@ -1931,7 +1976,9 @@ ControlRef DFX_GetControlWithID(WindowRef inWindow, SInt32 inID)
 	controlID.signature = kDfxGui_ControlSignature;
 	controlID.id = inID;
 	ControlRef resultControl = NULL;
-	GetControlByID(inWindow, &controlID, &resultControl);
+	OSStatus status = GetControlByID(inWindow, &controlID, &resultControl);
+	if (status != noErr)
+		return NULL;
 	return resultControl;
 }
 #endif
@@ -2145,10 +2192,10 @@ OSStatus DfxGuiEditor::openWindowTransparencyWindow()
 	}
 
 	// set up the window transparency control event handler
-	EventTypeSpec controlEvents[] = { { kEventClassControl, kEventControlValueFieldChanged } };
-	EventHandlerRef controlEventHandler = NULL;
 	if (transparencyControl != NULL)
 	{
+		EventTypeSpec controlEvents[] = { { kEventClassControl, kEventControlValueFieldChanged } };
+		EventHandlerRef controlEventHandler = NULL;
 		status = InstallControlEventHandler(transparencyControl, gWindowTransparencyEventHandlerUPP, GetEventTypeCount(controlEvents), controlEvents, this, &controlEventHandler);
 	}
 
