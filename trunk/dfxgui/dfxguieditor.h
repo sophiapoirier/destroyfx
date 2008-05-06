@@ -23,6 +23,7 @@
 #endif
 
 class DGButton;
+class DGSplashScreen;
 
 
 /***********************************************************************
@@ -52,6 +53,7 @@ public:
 
 	void addImage(DGImage * inImage);
 	void addControl(DGControl * inCtrl);
+	void removeControl(DGControl * inControl);
 
 	void do_idle();
 	virtual void idle() { }
@@ -124,6 +126,8 @@ public:
 		DGButton * CreateMidiResetButton(long inXpos, long inYpos, DGImage * inImage);
 	#endif
 	unsigned long getNumAudioChannels();
+	void installSplashScreenControl(DGSplashScreen * inControl);
+	void removeSplashScreenControl();
 
 	long copySettings();
 	long pasteSettings(bool * inQueryPastabilityOnly = NULL);
@@ -192,6 +196,7 @@ private:
 
 	unsigned long numAudioChannels;
 
+	DGSplashScreen * splashScreenControl;
 	#if TARGET_PLUGIN_USES_MIDI
 		DGButton * midiLearnButton;
 		DGButton * midiResetButton;
