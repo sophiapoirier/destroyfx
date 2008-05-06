@@ -9,8 +9,6 @@
 
 
 const SInt32 kContinuousControlMaxValue = 0x0FFFFFFF - 1;
-const float kDefaultFineTuneFactor = 12.0f;
-const float kDefaultMouseDragRange = 333.0f;	// pixels
 #if TARGET_OS_MAC
 	const MenuID kDfxGui_ControlContextualMenuID = 3;	// XXX eh?  how am I supposed to come up with a meaningful 16-bit value for this?
 #endif
@@ -599,8 +597,8 @@ void DGControl::init(DGRect * inRegion)
 #endif
 
 	isContinuous = false;
-	fineTuneFactor = kDefaultFineTuneFactor;
-	mouseDragRange = kDefaultMouseDragRange;
+	fineTuneFactor = kDfxGui_DefaultFineTuneFactor;
+	mouseDragRange = kDfxGui_DefaultMouseDragRange;
 
 	shouldRespondToMouse = true;
 	shouldRespondToMouseWheel = true;
