@@ -8,8 +8,6 @@
 
 const long NUM_SLIDERS = 5;
 
-const char * fontface_snoot = "snoot.org pixel10";
-const float fontsize_snoot = 14.0f;
 const DGColor fontcolor_values(75.0f/255.0f, 151.0f/255.0f, 71.0f/255.0f);
 const DGColor fontcolor_labels = kDGColor_white;
 
@@ -156,7 +154,7 @@ static void baseParamsListenerProc(void * inUserData, void * inObject, const Aud
 //--------------------------------------------------------------------------
 GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground)
  : DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
-                 kDGTextAlign_left, fontsize_snoot, kDGColor_black, fontface_snoot), 
+                 kDGTextAlign_left, kDGFontSize_SnootPixel10, kDGColor_black, kDGFontName_SnootPixel10), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
   setRespondToMouse(false);
@@ -455,11 +453,11 @@ long GeometerEditor::open() {
 
     // value display
     displays[i] = new DGTextDisplay(this, param, &dpos, geometerDisplayProc, 
-                                    NULL, NULL, kDGTextAlign_right, fontsize_snoot, 
-                                    fontcolor_values, fontface_snoot);
+                                    NULL, NULL, kDGTextAlign_right, kDGFontSize_SnootPixel10, 
+                                    fontcolor_values, kDGFontName_SnootPixel10);
     // units label
     DGTextArrayDisplay * label = new DGTextArrayDisplay(this, baseparam, &lpos, numlabelstrings, 
-             kDGTextAlign_center, NULL, fontsize_snoot, fontcolor_labels, fontface_snoot);
+             kDGTextAlign_center, NULL, kDGFontSize_SnootPixel10, fontcolor_labels, kDGFontName_SnootPixel10);
     for (long j=0; j < numlabelstrings; j++)
       label->setText(j, labelstrings[j]);
 

@@ -35,6 +35,9 @@ typedef enum {
 	kDGTextAlign_right
 } DGTextAlignment;
 
+#define kDGFontName_SnootPixel10	"snoot.org pixel10"
+const float kDGFontSize_SnootPixel10 = 14.0f;
+
 
 //-----------------------------------------------------------------------------
 // a rectangular region defined with horizontal position (x), vertical position (y), width, and height
