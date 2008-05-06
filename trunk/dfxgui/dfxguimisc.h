@@ -228,9 +228,6 @@ public:
 
 	void setFont(const char * inFontName, float inFontSize);
 	void drawText(DGRect * inRegion, const char * inText, DGTextAlignment inAlignment = kDGTextAlign_left);
-#if TARGET_OS_MAC
-	OSStatus drawCFText(DGRect * inRegion, const CFStringRef inText, DGGraphicsContext * inContext);
-#endif
 
 #if TARGET_OS_MAC
 	long getPortHeight()
