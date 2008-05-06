@@ -227,7 +227,7 @@ void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
 		return;
 
 	fontSize = inFontSize;	// remember the value
-	if (strcmp(inFontName, "snoot.org pixel10") == 0)
+	if (strcmp(inFontName, kDGFontName_SnootPixel10) == 0)
 		isSnootPixel10 = true;
 
 #if TARGET_OS_MAC
