@@ -47,9 +47,9 @@ enum {
 };
 
 
-const char * SNOOT_FONT = "snoot.org pixel10";
+const char * kDisplayFont = kDGFontName_SnootPixel10;
 const DGColor kDisplayTextColor(103.0f/255.0f, 161.0f/255.0f, 215.0f/255.0f);
-const float kDisplayTextSize = 14.0f;
+const float kDisplayTextSize = kDGFontSize_SnootPixel10;
 const float kFineTuneInc = 0.0001f;
 
 
@@ -319,7 +319,7 @@ long TransverbEditor::open()
 		slider->shrinkForeBounds(1, 0, 2, 0);
 
 		DGTextDisplay * display = new DGTextDisplay(this, tag, &pos2, displayProc, userData, NULL, 
-										kDGTextAlign_right, kDisplayTextSize, kDisplayTextColor, SNOOT_FONT);
+										kDGTextAlign_right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
 		if (tag == kSpeed1)
 		{
@@ -354,7 +354,7 @@ long TransverbEditor::open()
 	bsizeSlider->shrinkForeBounds(1, 0, 2, 0);
 
 	DGTextDisplay * display = new DGTextDisplay(this, kBsize, &pos2, bsizeDisplayProcedure, NULL, NULL, 
-										kDGTextAlign_right, kDisplayTextSize, kDisplayTextColor, SNOOT_FONT);
+										kDGTextAlign_right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
 	DGFineTuneButton * fineTuneButton = new DGFineTuneButton(this, kBsize, &pos3, gFineDownButton, -kFineTuneInc);
 	fineTuneButton = new DGFineTuneButton(this, kBsize, &pos4, gFineUpButton, kFineTuneInc);

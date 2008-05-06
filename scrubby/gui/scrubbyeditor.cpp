@@ -3,8 +3,8 @@
 
 
 //-----------------------------------------------------------------------------
-const char * kDisplayFont = "snoot.org pixel10";
-const float kDisplayTextSize = 14.0f;
+const char * kDisplayFont = kDGFontName_SnootPixel10;
+const float kDisplayTextSize = kDGFontSize_SnootPixel10;
 const DGColor kBrownTextColor(187.0f/255.0f, 173.0f/255.0f, 131.0f/255.0f);
 const float kUnusedControlAlpha = 0.234f;
 
