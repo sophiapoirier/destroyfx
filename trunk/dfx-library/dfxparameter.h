@@ -377,7 +377,7 @@ public:
 	bool limit();
 	// set/get the property stating whether or not to automatically clip values into range
 	void SetEnforceValueLimits(bool inNewMode)
-		{	enforceValueLimits = inNewMode;	limit();	}
+		{	enforceValueLimits = inNewMode;	if (inNewMode) limit();	}
 	bool GetEnforceValueLimits()
 		{	return enforceValueLimits;	}
 
