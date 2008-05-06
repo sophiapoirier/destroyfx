@@ -29,6 +29,12 @@ typedef enum {
 	kDGAntialiasQuality_high
 } DGAntialiasQuality;
 
+typedef enum {
+	kDGTextAlign_left = 0,
+	kDGTextAlign_center,
+	kDGTextAlign_right
+} DGTextAlignment;
+
 
 //-----------------------------------------------------------------------------
 // a rectangular region defined with horizontal position (x), vertical position (y), width, and height
@@ -202,13 +208,29 @@ public:
 	void setAlpha(float inAlpha);
 	void setAntialias(bool inShouldAntialias);
 	void setAntialiasQuality(DGAntialiasQuality inQualityLevel);
+	void setColor(DGColor inColor);
 	void setFillColor(DGColor inColor);
 	void setStrokeColor(DGColor inColor);
 	void setLineWidth(float inLineWidth);
 
+	void beginPath();
+	void endPath();
+	void fillPath();
+	void strokePath();
+
 	void fillRect(DGRect * inRect);
-	void strokeRect(DGRect * inRect, float inLineWidth);
-	void strokeLine(float inStartX, float inStartY, float inEndX, float inEndY);
+	void strokeRect(DGRect * inRect, float inLineWidth = -1.0f);
+
+	void moveToPoint(float inX, float inY);
+	void addLineToPoint(float inX, float inY);
+	void strokeLine(float inLineWidth = -1.0f);
+	void drawLine(float inStartX, float inStartY, float inEndX, float inEndY, float inLineWidth = -1.0f);
+
+	void setFont(const char * inFontName, float inFontSize);
+	void drawText(DGRect * inRegion, const char * inText, DGTextAlignment inAlignment = kDGTextAlign_left);
+#if TARGET_OS_MAC
+	OSStatus drawCFText(DGRect * inRegion, const CFStringRef inText, DGGraphicsContext * inContext);
+#endif
 
 #if TARGET_OS_MAC
 	long getPortHeight()
@@ -235,6 +257,9 @@ public:
 	TARGET_PLATFORM_GRAPHICS_CONTEXT context;
 
 private:
+	float fontSize, fontAscent, fontDescent;
+	bool isSnootPixel10;	// special Tom font
+
 #if TARGET_OS_MAC
 	long portHeight;
 #endif
