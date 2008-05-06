@@ -1,8 +1,6 @@
 #include "dfxguidisplay.h"
 
 
-const size_t kDGTextDisplay_stringSize = 256;
-
 //-----------------------------------------------------------------------------
 void genericDisplayTextProcedure(float inValue, char * outText, void * inUserData);
 void genericDisplayTextProcedure(float inValue, char * outText, void * inUserData)
@@ -25,7 +23,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							displayTextProcedure	inTextProc, 
 							void *					inUserData,
 							DGImage *				inBackgroundImage, 
-							DfxGuiTextAlignment		inTextAlignment, 
+							DGTextAlignment			inTextAlignment, 
 							float					inFontSize, 
 							DGColor					inFontColor, 
 							const char *			inFontName)
@@ -41,13 +39,11 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	else
 		textProcUserData = inUserData;
 
-	isSnootPixel10 = false;
-	fontName = (char*) malloc(kDGTextDisplay_stringSize);
+	fontName = NULL;
 	if (inFontName != NULL)
 	{
+		fontName = (char*) malloc(strlen(inFontName) + 1);
 		strcpy(fontName, inFontName);
-		if (strcmp(fontName, "snoot.org pixel10") == 0)
-			isSnootPixel10 = true;
 	}
 	else
 	{
@@ -56,49 +52,15 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 		OSStatus themeErr = GetThemeFont(kThemeApplicationFont, smSystemScript, appfontname, NULL, NULL);
 		if (themeErr == noErr)
 		{
+			fontName = (char*) malloc(sizeof(appfontname));
 			// Pascal-string to C-string conversion
 			memcpy(fontName, &(appfontname[1]), appfontname[0]);
 			fontName[appfontname[0]] = 0;
 		}
-		else
-		{
-			// what else can we do?
-			free(fontName);
-			fontName = NULL;
-		}
 	}
 
 	mouseAxis = kDGTextDisplayMouseAxis_vertical;
-	setMouseDragRange(333.0f);	// pixels
-
-	if (fontName != NULL)
-	{
-		CFStringRef fontCFName = CFStringCreateWithCString(kCFAllocatorDefault, fontName, kCFStringEncodingUTF8);
-		if (fontCFName != NULL)
-		{
-			ATSFontRef atsfont = ATSFontFindFromName(fontCFName, kATSOptionFlagsDefault);
-			ATSFontMetrics horizontalMetrics;
-			OSStatus metstat = ATSFontGetHorizontalMetrics(atsfont, kATSOptionFlagsDefault, &horizontalMetrics);
-			if (metstat == noErr)
-			{
-				fontAscent = horizontalMetrics.ascent;
-				fontDescent = horizontalMetrics.descent;
-/*
-printf("ascent = %.3f\n", horizontalMetrics.ascent);
-printf("descent = %.3f\n", horizontalMetrics.descent);
-printf("caps height = %.3f\n", horizontalMetrics.capHeight);
-printf("littles height = %.3f\n", horizontalMetrics.xHeight);
-*/
-			}
-			ATSFontMetrics verticalMetrics;
-			metstat = ATSFontGetVerticalMetrics(atsfont, kATSOptionFlagsDefault, &verticalMetrics);
-			CFRelease(fontCFName);
-		}
-	}
-
 	shouldAntiAlias = true;
-	if (isSnootPixel10)
-		shouldAntiAlias = false;
 
 	setControlContinuous(true);
 }
@@ -134,7 +96,7 @@ void DGTextDisplay::draw(DGGraphicsContext * inContext)
 	{
 		char text[kDGTextDisplay_stringSize];
 		text[0] = 0;
-		textProc(auvp.GetValue(), text, textProcUserData);
+		textProc(getAUVP().GetValue(), text, textProcUserData);
 		drawText(getBounds(), text, inContext);
 	}
 }
@@ -145,58 +107,11 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, DGGraphicsC
 	if ( (inText == NULL) || (inRegion == NULL) )
 		return;
 
-	CGRect bounds = inRegion->convertToCGRect( inContext->getPortHeight() );
-	float flippedBoundsOffset = bounds.size.height;
-#ifndef FLIP_CG_COORDINATES
-	if ( inContext->isCompositWindow() )
-#endif
-	CGContextTranslateCTM(inContext->getPlatformGraphicsContext(), 0.0f, flippedBoundsOffset);
-
-	if (fontName != NULL)
-		CGContextSelectFont(inContext->getPlatformGraphicsContext(), fontName, fontSize, kCGEncodingMacRoman);
+	inContext->setFont(fontName, fontSize);
+	inContext->setColor(fontColor);
 	inContext->setAntialias(shouldAntiAlias);
-	inContext->setFillColor(fontColor);
 
-	if (alignment != kDGTextAlign_left)
-	{
-		CGContextSetTextDrawingMode(inContext->getPlatformGraphicsContext(), kCGTextInvisible);
-		CGContextShowTextAtPoint(inContext->getPlatformGraphicsContext(), 0.0f, 0.0f, inText, strlen(inText));
-		CGPoint pt = CGContextGetTextPosition(inContext->getPlatformGraphicsContext());
-		if (alignment == kDGTextAlign_center)
-		{
-			float xoffset = (bounds.size.width - pt.x) / 2.0f;
-			// don't make the left edge get cropped, just left-align if the text is too long
-			if (xoffset > 0.0f)
-				bounds.origin.x += xoffset;
-		}
-		else if (alignment == kDGTextAlign_right)
-			bounds.origin.x += bounds.size.width - pt.x;
-	}
-
-	// XXX a hack for this font and CGContextShowText
-	if (isSnootPixel10)
-	{
-		if (alignment == kDGTextAlign_left)
-			bounds.origin.x -= 1.0f;
-		else if (alignment == kDGTextAlign_right)
-			bounds.origin.x += 2.0f;
-	}
-
-//	if (bold)	// XXX implement this for real
-//		CGContextSetTextDrawingMode(inContext->getPlatformGraphicsContext(), kCGTextFillStroke);
-//	else
-		CGContextSetTextDrawingMode(inContext->getPlatformGraphicsContext(), kCGTextFill);
-	float textYoffset = 2.0f;
-#ifndef FLIP_CG_COORDINATES
-	if ( inContext->isCompositWindow() )
-#endif
-	textYoffset *= -1.0f;
-	CGContextShowTextAtPoint(inContext->getPlatformGraphicsContext(), bounds.origin.x, bounds.origin.y+textYoffset, inText, strlen(inText));
-
-#ifndef FLIP_CG_COORDINATES
-	if ( inContext->isCompositWindow() )
-#endif
-	CGContextTranslateCTM(inContext->getPlatformGraphicsContext(), 0.0f, -flippedBoundsOffset);
+	inContext->drawText(inRegion, inText, alignment);
 }
 
 #if TARGET_OS_MAC
@@ -207,10 +122,10 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 		return paramErr;
 
 	inContext->setAntialias(shouldAntiAlias);
-	inContext->setFillColor(fontColor);
+	inContext->setColor(fontColor);
 
 // XXX do something to actually allow you to set the font ID and the font size and the font color
-	ThemeFontID themeFontID = kThemeLabelFont;
+	const ThemeFontID themeFontID = kThemeLabelFont;
 //kThemeSystemFont kThemeSystemFontDetail kThemeMiniSystemFont kThemeLabelFont
 
 	// this function is only available in Mac OS X 10.3 or higher
@@ -241,13 +156,20 @@ OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, 
 
 		SetThemeTextColor(kThemeTextColorWhite, 32, true);	// XXX eh, is there a real way to get the graphics device bit-depth value?
 
+		const ThemeDrawState themDrawState = kThemeStateActive;
 		SInt16 justification = teFlushLeft;
 		if (alignment == kDGTextAlign_center)
 			justification = teCenter;
 		else if (alignment == kDGTextAlign_right)
 			justification = teFlushRight;
 
-		return DrawThemeTextBox(inText, themeFontID, kThemeStateActive, false, &bounds, justification, NULL);
+		// XXX center the text vertically (yah?)
+		Point heightPoint;
+		OSStatus status = GetThemeTextDimensions(inText, themeFontID, themDrawState, false, &heightPoint, NULL);
+		if (status == noErr)
+			InsetRect( &bounds, 0, ((bounds.bottom-bounds.top) - heightPoint.v) / 2 );
+
+		return DrawThemeTextBox(inText, themeFontID, themDrawState, false, &bounds, justification, NULL);
 	}
 }
 #endif
@@ -297,7 +219,7 @@ void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouse
 
 //-----------------------------------------------------------------------------
 DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
-										DfxGuiTextAlignment inTextAlignment, float inFontSize, 
+										DGTextAlignment inTextAlignment, float inFontSize, 
 										DGColor inFontColor, const char * inFontName)
 :	DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
 					inTextAlignment, inFontSize, inFontColor, inFontName), 
@@ -395,7 +317,7 @@ void DGStaticTextDisplay::draw(DGGraphicsContext * inContext)
 // Static Text Display
 //-----------------------------------------------------------------------------
 DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-						long inNumStrings, DfxGuiTextAlignment inTextAlignment, DGImage * inBackground, 
+						long inNumStrings, DGTextAlignment inTextAlignment, DGImage * inBackground, 
 						float inFontSize, DGColor inFontColor, const char * inFontName)
 :	DGTextDisplay(inOwnerEditor, inParamID, inRegion, NULL, NULL, inBackground, 
 					inTextAlignment, inFontSize, inFontColor, inFontName), 
@@ -490,8 +412,6 @@ DGAnimation::DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * 
 {
 	if (numAnimationFrames < 1)
 		numAnimationFrames = 1;
-
-	setMouseDragRange(120.0f);  // number of pixels
 }
 
 //-----------------------------------------------------------------------------
