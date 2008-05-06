@@ -11,6 +11,8 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
 	orientation(inOrientation), handleImage(inHandleImage), backgroundImage(inBackgroundImage)
 {
+	mouseOffset = 0;
+
 	if (handleImage != NULL)
 	{
 		int handleWidth = handleImage->getWidth();
@@ -86,10 +88,8 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 	SInt32 val = GetControl32BitValue(carbonControl);
 	SInt32 oldval = val;
 
-	DGRect fore;
-	fore.set(getForeBounds());
-	float o_X = (float) (fore.x - getBounds()->x + mouseOffset);
-	float o_Y = (float) (fore.y - getBounds()->y - mouseOffset);
+	float o_X = (float) (getForeBounds()->x - getBounds()->x + mouseOffset);
+	float o_Y = (float) (getForeBounds()->y - getBounds()->y - mouseOffset);
 
 	if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
 	{
@@ -97,25 +97,25 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 		{
 			float diff = lastY - inYpos;
 			diff /= getFineTuneFactor();
-			val += (SInt32) (diff * (float)(max-min) / (float)fore.h);
+			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->h));
 		}
 		else	// horizontal mode
 		{
 			float diff = inXpos - lastX;
 			diff /= getFineTuneFactor();
-			val += (SInt32) (diff * (float)(max-min) / (float)fore.w);
+			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->w));
 		}
 	}
 	else	// regular movement
 	{
 		if (orientation == kDGSliderAxis_vertical)
 		{
-			float valnorm = (inYpos - o_Y) / (float)fore.h;
+			float valnorm = (inYpos - o_Y) / (float)(getForeBounds()->h);
 			val = (SInt32)((1.0f - valnorm) * (float)(max-min)) + min;
 		}
 		else	// horizontal mode
 		{
-			float valnorm = (inXpos - o_X) / (float)fore.w;
+			float valnorm = (inXpos - o_X) / (float)(getForeBounds()->w);
 			val = (SInt32)(valnorm * (float)(max-min)) + min;
 		}
 	}
