@@ -7,10 +7,14 @@
 
 
 
+//-----------------------------------------------------------------------------
 typedef enum {
 	kDGControlType_BackgroundPane,
 	kDGControlType_SubControl
 } DGControlType;
+
+const float kDfxGui_DefaultFineTuneFactor = 10.0f;
+const float kDfxGui_DefaultMouseDragRange = 200.0f;	// pixels
 
 
 
