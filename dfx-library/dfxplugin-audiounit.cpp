@@ -1552,11 +1552,12 @@ ComponentResult DfxPlugin::ReleaseInstrument(MusicDeviceInstrumentID inInstrumen
 
 //-----------------------------------------------------------------------------
 ComponentResult DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument, 
-						MusicDeviceGroupID inGroupID, NoteInstanceID & outNoteInstanceID, 
+						MusicDeviceGroupID inGroupID, NoteInstanceID * outNoteInstanceID, 
 						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams & inParams)
 {
 	handlemidi_noteon(inGroupID, (int)(inParams.mPitch), (int)(inParams.mVelocity), inOffsetSampleFrame);
-	outNoteInstanceID = (NoteInstanceID) (inParams.mPitch);
+	if (outNoteInstanceID != NULL)
+		*outNoteInstanceID = (NoteInstanceID) (inParams.mPitch);
 	return noErr;
 }
 
