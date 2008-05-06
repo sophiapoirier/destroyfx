@@ -111,4 +111,28 @@ private:
 };
 
 
+//-----------------------------------------------------------------------------
+class DGSplashScreen : public DGControl
+{
+public:
+	DGSplashScreen(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inSplashImage);
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
+
+	void removeSplashDisplay();
+
+private:
+	DGImage * splashImage;
+	class DGSplashScreenDisplay : public DGControl
+	{
+		public:
+			DGSplashScreenDisplay(DGSplashScreen * inParentControl, DGRect * inRegion, DGImage * inSplashImage);
+			virtual void draw(DGGraphicsContext * inContext);
+		private:
+			DGSplashScreen * parentSplashControl;
+			DGImage * splashImage;
+	};
+	DGSplashScreenDisplay * splashDisplay;
+};
+
+
 #endif

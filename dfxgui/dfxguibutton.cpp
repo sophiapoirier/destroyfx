@@ -413,3 +413,79 @@ void DGWebLink::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifier
 
 	DGButton::mouseUp(inXpos, inYpos, inKeyModifiers);
 }
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGSplashScreen
+
+//-----------------------------------------------------------------------------
+// "about" splash screen
+//-----------------------------------------------------------------------------
+DGSplashScreen::DGSplashScreen(DfxGuiEditor *	inOwnerEditor,
+								DGRect *		inRegion, 
+								DGImage *		inSplashImage)
+:	DGControl(inOwnerEditor, inRegion, 1), 
+	splashImage(inSplashImage)
+{
+	splashDisplay = NULL;
+}
+
+//-----------------------------------------------------------------------------
+void DGSplashScreen::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
+{
+	if (splashDisplay == NULL)
+	{
+		CGRect editorRect = {0};
+		HIViewGetBounds(getDfxGuiEditor()->GetCarbonPane(), &editorRect);
+		if (splashImage != NULL)
+		{
+			long splashWidth = splashImage->getWidth();
+			long splashHeight = splashImage->getHeight();
+			long splashX = (editorRect.size.width - splashWidth) / 2;
+			long splashY = (editorRect.size.height - splashHeight) / 2;
+			DGRect splashRegion(splashX, splashY, splashWidth, splashHeight);
+			splashDisplay = new DGSplashScreenDisplay(this, &splashRegion, splashImage);
+			if (splashDisplay != NULL)
+				splashDisplay->embed();
+		}
+	}
+	else
+	{
+		if (splashDisplay->getCarbonControl() != NULL)
+			ShowControl( splashDisplay->getCarbonControl() );
+	}
+
+	getDfxGuiEditor()->installSplashScreenControl(this);
+}
+
+//-----------------------------------------------------------------------------
+void DGSplashScreen::removeSplashDisplay()
+{
+	if (splashDisplay != NULL)
+	{
+		if (splashDisplay->getCarbonControl() != NULL)
+			HideControl( splashDisplay->getCarbonControl() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// splash screen display
+//-----------------------------------------------------------------------------
+DGSplashScreen::DGSplashScreenDisplay::DGSplashScreenDisplay(DGSplashScreen *	inParentControl, 
+																DGRect *		inRegion, 
+																DGImage *		inSplashImage)
+:	DGControl(inParentControl->getDfxGuiEditor(), inRegion, 1), 
+	parentSplashControl(inParentControl), splashImage(inSplashImage)
+{
+}
+
+//-----------------------------------------------------------------------------
+void DGSplashScreen::DGSplashScreenDisplay::draw(DGGraphicsContext * inContext)
+{
+	if (splashImage != NULL)
+		splashImage->draw(getBounds(), inContext);
+}
