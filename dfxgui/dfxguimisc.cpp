@@ -2,10 +2,15 @@
 #include "dfxgui.h"
 
 
+#pragma mark DGGraphicsContext
+
 //-----------------------------------------------------------------------------
 DGGraphicsContext::DGGraphicsContext(TARGET_PLATFORM_GRAPHICS_CONTEXT inContext)
 :	context(inContext)
 {
+	fontSize = fontAscent = fontDescent = 0.0f;
+	isSnootPixel10 = false;
+
 #if TARGET_OS_MAC
 	portHeight = 0;
 #endif
@@ -63,6 +68,13 @@ void DGGraphicsContext::setAntialiasQuality(DGAntialiasQuality inQualityLevel)
 }
 
 //-----------------------------------------------------------------------------
+void DGGraphicsContext::setColor(DGColor inColor)
+{
+	setFillColor(inColor);
+	setStrokeColor(inColor);
+}
+
+//-----------------------------------------------------------------------------
 void DGGraphicsContext::setFillColor(DGColor inColor)
 {
 #if TARGET_OS_MAC
@@ -90,6 +102,43 @@ void DGGraphicsContext::setLineWidth(float inLineWidth)
 }
 
 //-----------------------------------------------------------------------------
+void DGGraphicsContext::beginPath()
+{
+#if TARGET_OS_MAC
+	if (context != NULL)
+		CGContextBeginPath(context);
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+void DGGraphicsContext::endPath()
+{
+#if TARGET_OS_MAC
+	if (context != NULL)
+		CGContextClosePath(context);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void DGGraphicsContext::fillPath()
+{
+#if TARGET_OS_MAC
+	if (context != NULL)
+		CGContextFillPath(context);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void DGGraphicsContext::strokePath()
+{
+#if TARGET_OS_MAC
+	if (context != NULL)
+		CGContextStrokePath(context);
+#endif
+}
+
+//-----------------------------------------------------------------------------
 void DGGraphicsContext::fillRect(DGRect * inRect)
 {
 	if (inRect == NULL)
@@ -107,34 +156,179 @@ void DGGraphicsContext::fillRect(DGRect * inRect)
 //-----------------------------------------------------------------------------
 void DGGraphicsContext::strokeRect(DGRect * inRect, float inLineWidth)
 {
+	if (inRect == NULL)
+		return;
+
 #if TARGET_OS_MAC
 	if (context != NULL)
 	{
 		CGRect cgRect = inRect->convertToCGRect(portHeight);
 		const float halfLineWidth = inLineWidth / 2.0f;
 		cgRect = CGRectInset(cgRect, halfLineWidth, halfLineWidth);	// CoreGraphics lines are positioned between pixels rather than on them
-//		CGContextStrokeRect(context, cgRect);
-		CGContextStrokeRectWithWidth(context, cgRect, inLineWidth);
+		// use the currently-set line width
+		if (inLineWidth < 0.0f)
+			CGContextStrokeRect(context, cgRect);
+		// specify the line width
+		else
+			CGContextStrokeRectWithWidth(context, cgRect, inLineWidth);
 	}
 #endif
 }
 
 //-----------------------------------------------------------------------------
-void DGGraphicsContext::strokeLine(float inStartX, float inStartY, float inEndX, float inEndY)
+void DGGraphicsContext::moveToPoint(float inX, float inY)
 {
 #if TARGET_OS_MAC
 	if (context != NULL)
 	{
-		CGContextBeginPath(context);
-		CGContextMoveToPoint(context, inStartX, inStartY);
-		CGContextAddLineToPoint(context, inEndX, inEndY);
-		CGContextClosePath(context);
-		CGContextStrokePath(context);
+		beginPath();
+		CGContextMoveToPoint(context, inX, inY);
 	}
 #endif
 }
 
+//-----------------------------------------------------------------------------
+void DGGraphicsContext::addLineToPoint(float inX, float inY)
+{
+#if TARGET_OS_MAC
+	if (context != NULL)
+		CGContextAddLineToPoint(context, inX, inY);
+#endif
+}
 
+//-----------------------------------------------------------------------------
+void DGGraphicsContext::strokeLine(float inLineWidth)
+{
+	// (re)set the line width
+	if (inLineWidth >= 0.0f)
+		setLineWidth(inLineWidth);
+	endPath();
+	strokePath();
+}
+
+//-----------------------------------------------------------------------------
+void DGGraphicsContext::drawLine(float inStartX, float inStartY, float inEndX, float inEndY, float inLineWidth)
+{
+	beginPath();
+	// (re)set the line width
+	if (inLineWidth >= 0.0f)
+		setLineWidth(inLineWidth);
+	moveToPoint(inStartX, inStartY);
+	addLineToPoint(inEndX, inEndY);
+	endPath();
+	strokePath();
+}
+
+
+//-----------------------------------------------------------------------------
+void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
+{
+	if (inFontName == NULL)
+		return;
+
+	fontSize = inFontSize;	// remember the value
+	if (strcmp(inFontName, "snoot.org pixel10") == 0)
+		isSnootPixel10 = true;
+
+#if TARGET_OS_MAC
+	if (context != NULL)
+	{
+		CGContextSelectFont(context, inFontName, inFontSize, kCGEncodingMacRoman);
+
+#if 0
+		CFStringRef fontCFName = CFStringCreateWithCString(kCFAllocatorDefault, inFontName, kCFStringEncodingUTF8);
+		if (fontCFName != NULL)
+		{
+			ATSFontRef atsFont = ATSFontFindFromName(fontCFName, kATSOptionFlagsDefault);
+			ATSFontMetrics verticalMetrics = {0};
+			status = ATSFontGetVerticalMetrics(atsFont, kATSOptionFlagsDefault, &verticalMetrics);
+			if (status == noErr)
+			{
+				fontAscent = verticalMetrics.ascent;
+				fontDescent = verticalMetrics.descent;
+/*
+printf("ascent = %.3f\n", verticalMetrics.ascent);
+printf("descent = %.3f\n", verticalMetrics.descent);
+printf("caps height = %.3f\n", verticalMetrics.capHeight);
+printf("littles height = %.3f\n", verticalMetrics.xHeight);
+*/
+			}
+			CFRelease(fontCFName);
+		}
+#endif
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, DGTextAlignment inAlignment)
+{
+	if ( (inText == NULL) || (inRegion == NULL) )
+		return;
+
+#if TARGET_OS_MAC
+	if (context == NULL)
+		return;
+
+	CGRect bounds = inRegion->convertToCGRect( getPortHeight() );
+	float flippedBoundsOffset = bounds.size.height;
+#ifndef FLIP_CG_COORDINATES
+	if ( isCompositWindow() )
+#endif
+	CGContextTranslateCTM(context, 0.0f, flippedBoundsOffset);
+
+	if (inAlignment != kDGTextAlign_left)
+	{
+		CGContextSetTextDrawingMode(context, kCGTextInvisible);
+		CGContextShowTextAtPoint(context, 0.0f, 0.0f, inText, strlen(inText));
+		CGPoint pt = CGContextGetTextPosition(context);
+		if (inAlignment == kDGTextAlign_center)
+		{
+			float xoffset = (bounds.size.width - pt.x) / 2.0f;
+			// don't make the left edge get cropped, just left-align if the text is too long
+			if (xoffset > 0.0f)
+				bounds.origin.x += xoffset;
+		}
+		else if (inAlignment == kDGTextAlign_right)
+			bounds.origin.x += bounds.size.width - pt.x;
+	}
+
+	if (isSnootPixel10)
+	{
+		// it is a bitmapped font that should not be anti-aliased
+		setAntialias(false);
+		// XXX a hack for this font and CGContextShowText
+		if (inAlignment == kDGTextAlign_left)
+			bounds.origin.x -= 1.0f;
+		else if (inAlignment == kDGTextAlign_right)
+			bounds.origin.x += 2.0f;
+	}
+
+	CGContextSetTextDrawingMode(context, kCGTextFill);
+	float textYoffset = 2.0f;
+	// XXX this is a presumptious hack for vertical centering (only works when 1 point = 1 pixel)
+	textYoffset += floorf( (bounds.size.height - fontSize) * 0.5f );
+#ifndef FLIP_CG_COORDINATES
+	if ( isCompositWindow() )
+#endif
+	textYoffset *= -1.0f;
+	CGContextShowTextAtPoint(context, bounds.origin.x, bounds.origin.y+textYoffset, inText, strlen(inText));
+
+#ifndef FLIP_CG_COORDINATES
+	if ( isCompositWindow() )
+#endif
+	CGContextTranslateCTM(context, 0.0f, -flippedBoundsOffset);
+#endif
+// TARGET_OS_MAC
+}
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGImage
 
 /***********************************************************************
 	DGImage
