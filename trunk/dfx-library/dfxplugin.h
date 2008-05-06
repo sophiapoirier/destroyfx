@@ -131,8 +131,6 @@ PLUGIN_EDITOR_ID
 	4-byte ID for the plugin (will PLUGIN_ID if not defined)
 PLUGIN_EDITOR_RES_ID
 	component resource ID of the base plugin
-SUPPORT_AU_VERSION_1
-	0 or 1 (this is used by the AUBase classes)
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_H
@@ -432,6 +430,10 @@ public:
 		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getcurvespec();   else return 0.0;	}
 	void setparametercurvespec(long inParameterIndex, double newcurvespec)
 		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].setcurvespec(newcurvespec);	}
+	bool getparameterenforcevaluelimits(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].GetEnforceValueLimits();   else return false;	}
+	void setparameterenforcevaluelimits(long inParameterIndex, bool inNewMode)
+		{	if (parameterisvalid(inParameterIndex)) parameters[inParameterIndex].SetEnforceValueLimits(inNewMode);	}
 	unsigned long getparameterattributes(long inParameterIndex)
 		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getattributes();   else return 0;	}
 	void setparameterattributes(long inParameterIndex, unsigned long inFlags)
@@ -547,6 +549,8 @@ public:
 		virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, long inFrameOffset);
 		virtual void handlemidi_programchange(int inChannel, int inProgramNum, long inFrameOffset);
 
+		DfxMidi * getmidistream()
+			{	return midistuff;	}
 		DfxSettings * getsettings_ptr()
 			{	return dfxsettings;	}
 
@@ -749,8 +753,8 @@ public:
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 		virtual ComponentResult PrepareInstrument(MusicDeviceInstrumentID inInstrument);
 		virtual ComponentResult ReleaseInstrument(MusicDeviceInstrumentID inInstrument);
-		virtual ComponentResult StartNote(MusicDeviceInstrumentID inInstrument, 
-						MusicDeviceGroupID inGroupID, NoteInstanceID & outNoteInstanceID, 
+		virtual ComponentResult StartNote(MusicDeviceInstrumentID inInstrument,
+						MusicDeviceGroupID inGroupID, NoteInstanceID * outNoteInstanceID, 
 						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams & inParams);
 		virtual ComponentResult StopNote(MusicDeviceGroupID inGroupID, 
 						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame);
@@ -910,6 +914,8 @@ public:
 		{	return dfxplugin->getparameter_b(inParameterIndex);	}
 	double getparameter_scalar(long inParameterIndex)
 		{	return dfxplugin->getparameter_scalar(inParameterIndex);	}
+	double getparameter_gen(long inParameterIndex)
+		{	return dfxplugin->getparameter_gen(inParameterIndex);	}
 	double getparametermin_f(long inParameterIndex)
 		{	return dfxplugin->getparametermin_f(inParameterIndex);	}
 	int64_t getparametermin_i(long inParameterIndex)
