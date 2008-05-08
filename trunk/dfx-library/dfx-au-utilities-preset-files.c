@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2007  Sophia Poirier
+	Copyright (C) 2003-2008  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -892,17 +892,17 @@ OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData,
 
 	// the property list for AU state data must be of the dictionary type
 	if ( CFGetTypeID(inAUStateData) != CFDictionaryGetTypeID() )
-		return kAudioUnitErr_InvalidFile;
+		return kAudioUnitErr_InvalidPropertyValue;
 	auStateDictionary = (CFDictionaryRef)inAUStateData;
 
 	// first check to make sure that the version of the AU state data is one that we know understand
 	// XXX should I really do this?  later versions would probably still hold these ID keys, right?
 	versionValue = GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetVersionKey), &gotValue);
 	if (!gotValue)
-		return kAudioUnitErr_InvalidFile;
+		return kAudioUnitErr_InvalidPropertyValue;
 #define kCurrentSavedStateVersion 0
 	if (versionValue != kCurrentSavedStateVersion)
-		return kAudioUnitErr_UnknownFileType;
+		return kAudioUnitErr_InvalidPropertyValue;
 
 	// grab the ComponentDescription values from the AU state data
 	tempDesc.componentType = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetTypeKey), NULL);
@@ -910,7 +910,7 @@ OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData,
 	tempDesc.componentManufacturer = (OSType) GetDictionarySInt32Value(auStateDictionary, CFSTR(kAUPresetManufacturerKey), NULL);
 	// zero values are illegit for specific ComponentDescriptions, so zero for any value means that there was an error
 	if ( (tempDesc.componentType == 0) || (tempDesc.componentSubType == 0) || (tempDesc.componentManufacturer == 0) )
-		return kAudioUnitErr_InvalidFile;
+		return kAudioUnitErr_InvalidPropertyValue;
 
 	*outComponentDescription = tempDesc;
 	return noErr;
@@ -1564,7 +1564,9 @@ OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 	// only if the domain choice control is present (I removed it from the dialog in the September 2006 release) 
 	// should the dialog include text about trying to save in the User domain
 	if (inDomainChoiceControl != NULL)
+	{
 		alertMessageAppendage = CFCopyLocalizedStringFromTableInBundle(CFSTR("Try saving your file in the User domain."), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("the final part of the alert message text for an access privilege error in the case where the dialog allows you to choose a file system domain in which to save"));
+	}
 	else
 	{
 		alertMessageAppendage = CFSTR("");
