@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2007  Sophia Poirier
+	Copyright (C) 2003-2008  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -100,8 +100,8 @@ extern ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentIns
 extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain);
 extern ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL);
 extern ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance);
-extern OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription);
 extern OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription * outComponentDescription);
+extern OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription);
 /* access */
 extern CFURLRef GetCFURLFromFileURLsTreeNode(CFTreeRef inTree);
 /* handies */
