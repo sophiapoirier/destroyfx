@@ -244,7 +244,7 @@ public:
 
 	// for adding to your base plugin class methods
 	unsigned long save(void ** outData, bool inIsPreset);
-	bool restore(void * inData, unsigned long inBufferSize, bool inIsPreset);
+	bool restore(const void * inData, unsigned long inBufferSize, bool inIsPreset);
 #ifdef TARGET_API_AUDIOUNIT
 	bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
 	bool restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary);
