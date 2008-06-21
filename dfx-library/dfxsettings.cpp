@@ -165,7 +165,7 @@ unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
 
 	if ( (sharedChunk == NULL) || (plugin == NULL) )
 	{
-		*outData = 0;
+		*outData = NULL;
 		return 1;
 	}
 
@@ -189,6 +189,7 @@ unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
 	// store only one preset setting if inIsPreset is true
 	if (inIsPreset)
 	{
+		memset(firstSharedPreset->name, 0, sizeof(firstSharedPreset->name));
 		plugin->getpresetname(plugin->getcurrentpresetnum(), firstSharedPreset->name);
 		for (i=0; i < numParameters; i++)
 			firstSharedPreset->params[i] = plugin->getparameter_f(i);
@@ -247,7 +248,7 @@ const long OLD_PRESET_MAX_NAME_LENGTH = 32;
 // this gets called when the host wants to load settings data, 
 // like when restoring settings while opening a song, 
 // or loading a preset file
-bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPreset)
+bool DfxSettings::restore(const void * inData, unsigned long inBufferSize, bool inIsPreset)
 {
 	long i, j;
 
@@ -255,11 +256,17 @@ bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPr
 	if (plugin == NULL)
 		return false;
 
+	// create our own copy of the data before we muck with it (e.g. reversing endianness, etc.)
+	void * incomingData_copy = malloc(inBufferSize);
+	if (incomingData_copy == NULL)
+		return false;
+	memcpy(incomingData_copy, inData, inBufferSize);
+
 	// un-reverse the order of bytes in the received data, if necessary
-	correctEndian(inData, true, inIsPreset);
+	correctEndian(incomingData_copy, true, inIsPreset);
 
 	// point to the start of the chunk data:  the settingsInfo header
-	DfxSettingsInfo * newSettingsInfo = (DfxSettingsInfo*)inData;
+	DfxSettingsInfo * newSettingsInfo = (DfxSettingsInfo*)incomingData_copy;
 
 	// The following situations are basically considered to be 
 	// irrecoverable "crisis" situations.  Regardless of what 
@@ -269,10 +276,16 @@ bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPr
 	// probably for some other plugin.  And the whole point of setting a 
 	// lowestLoadableVersion value is that it should be taken seriously.
 	if (newSettingsInfo->magic != settingsInfo.magic)
+	{
+		free(incomingData_copy);
 		return false;
+	}
 	if ( (newSettingsInfo->version < settingsInfo.lowestLoadableVersion) || 
-			 (settingsInfo.version < newSettingsInfo->lowestLoadableVersion) )
+			(settingsInfo.version < newSettingsInfo->lowestLoadableVersion) )
+	{
+		free(incomingData_copy);
 		return false;
+	}
 
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	// we started using hex format versions (like below) with the advent 
@@ -326,7 +339,10 @@ bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPr
 	}
 	// handle the crisis situations (if any) and abort loading if we're told to
 	if (handleCrisis(crisisFlags) == kDfxSettingsCrisis_AbortError)
+	{
+		free(incomingData_copy);
 		return false;
+	}
 
 	// point to the next data element after the chunk header:  the first parameter ID
 	int32_t * newParameterIDs = (int32_t*) ((char*)newSettingsInfo + storedHeaderSize);
@@ -335,6 +351,11 @@ bool DfxSettings::restore(void * inData, unsigned long inBufferSize, bool inIsPr
 	//  [ the index of paramMap is the same as our parameter tag/index and the value 
 	//     is the tag/index of the incoming parameter that corresponds, if any ]
 	long * paramMap = (long*) malloc(numParameters * sizeof(*paramMap));
+	if (paramMap == NULL)
+	{
+		free(incomingData_copy);
+		return false;
+	}
 	for (long tag=0; tag < numParameters; tag++)
 		paramMap[tag] = getParameterTagFromID(parameterIDs[tag], numStoredParameters, newParameterIDs);
 
@@ -445,13 +466,114 @@ if ( !(oldvst && inIsPreset) )
 #endif
 
 	// allow for the retrieval of extra data
-	plugin->settings_restoreExtendedData((char*)inData+sizeofChunk-newSettingsInfo->storedExtendedDataSize, 
+	plugin->settings_restoreExtendedData((char*)incomingData_copy+sizeofChunk-newSettingsInfo->storedExtendedDataSize, 
 						newSettingsInfo->storedExtendedDataSize, newSettingsInfo->version, inIsPreset);
 
-	if (paramMap)
-		free(paramMap);
+	free(paramMap);
+	free(incomingData_copy);
 
 	return true;
+}
+
+
+//-----------------------------------------------------------------------------
+// this function, if called for the non-reference endian architecture, 
+// will reverse the order of bytes in each variable/value of the data 
+// to correct endian differences and make a uniform data chunk
+void DfxSettings::correctEndian(void * ioData, bool inIsReversed, bool inIsPreset)
+{
+/*
+// XXX another idea...
+void blah(long long x)
+{
+	int n = sizeof(x);
+	while (n--)
+	{
+		write(f, x & 0xFF, 1);
+		x >>= 8;
+	}
+}
+*/
+#if __BIG_ENDIAN__
+// big endian (like PowerPC) is the reference architecture, so no byte-swapping is necessary
+#else
+	// start by looking at the header info
+	DfxSettingsInfo * dataHeader = (DfxSettingsInfo*)ioData;
+	// we need to know how big the header is before dealing with it
+	uint32_t storedHeaderSize = dataHeader->storedHeaderSize;
+	int32_t numStoredParameters = dataHeader->numStoredParameters;
+	int32_t numStoredPresets = dataHeader->numStoredPresets;
+	int32_t storedVersion = dataHeader->version;
+	// correct the values' endian byte order order if the data was received byte-swapped
+	if (inIsReversed)
+	{
+		DFX_ReverseBytes(&storedHeaderSize, sizeof(storedHeaderSize));
+		DFX_ReverseBytes(&numStoredParameters, sizeof(numStoredParameters));
+		DFX_ReverseBytes(&numStoredPresets, sizeof(numStoredPresets));
+		DFX_ReverseBytes(&storedVersion, sizeof(storedVersion));
+	}
+//	if (inIsPreset)
+//		numStoredPresets = 1;
+
+	// reverse the order of bytes of the header values
+	DFX_ReverseBytes(dataHeader, sizeof(dataHeader->magic), storedHeaderSize/sizeof(dataHeader->magic));
+
+	// reverse the byte order for each of the parameter IDs
+	int32_t * dataParameterIDs = (int32_t*) ((char*)ioData + storedHeaderSize);
+	DFX_ReverseBytes(dataParameterIDs, sizeof(*dataParameterIDs), numStoredParameters);
+
+	// reverse the order of bytes for each parameter value, 
+	// but no need to mess with the preset names since they are char strings
+	DfxGenPreset * dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(*dataParameterIDs)*numStoredParameters));
+	unsigned long sizeofStoredPreset = sizeof(*dataPresets) + (sizeof(dataPresets->params[0]) * (numStoredParameters-2));
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
+	if (DFX_IsOldVstVersionNumber(storedVersion))
+	{
+		// back up the pointer to account for shorter preset names
+		dataPresets = (DfxGenPreset*) ((char*)dataPresets + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+		// and shrink the size to account for shorter preset names
+		sizeofStoredPreset += OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH;
+	}
+#endif
+	for (long iij=0; iij < numStoredPresets; iij++)
+	{
+		DFX_ReverseBytes(dataPresets->params, sizeof(dataPresets->params[0]), (unsigned)numStoredParameters);	//XXX potential floating point machine error
+		// point to the next preset in the data array
+		dataPresets = (DfxGenPreset*) ((char*)dataPresets + sizeofStoredPreset);
+	}
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
+	if (DFX_IsOldVstVersionNumber(storedVersion))
+		// advance the pointer to compensate for backing up earlier
+		dataPresets = (DfxGenPreset*) ((char*)dataPresets - (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+#endif
+
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
+if ( !(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset) )
+{
+#endif
+	// and reverse the byte order of each event assignment
+	DfxParameterAssignment * dataParameterAssignments = (DfxParameterAssignment*) dataPresets;
+	for (long i=0; i < numStoredParameters; i++)
+	{
+#define REVERSE_BYTES_ASSIGNMENT_ITEM(inMember)	\
+		DFX_ReverseBytes( &(dataParameterAssignments->inMember), sizeof(dataParameterAssignments->inMember) );
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventType)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventChannel)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventNum)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventNum2)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(eventBehaviourFlags)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(data1)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(data2)
+		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata1)	//XXX potential floating point machine error
+		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata2)	//XXX potential floating point machine error
+#undef REVERSE_BYTES_ASSIGNMENT_ITEM
+	}
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
+}
+#endif
+
+#endif
+// __BIG_ENDIAN__ (endian check)
 }
 
 
@@ -535,7 +657,7 @@ SInt64 DFX_GetNumberFromCFDictionary_i(CFDictionaryRef inDictionary, const void 
 //-----------------------------------------------------------------------------------------
 Float64 DFX_GetNumberFromCFDictionary_f(CFDictionaryRef inDictionary, const void * inDictionaryKey, bool * outSuccess = NULL)
 {
-	Float64 resultNumber = 0;
+	Float64 resultNumber = 0.0;
 	const CFNumberType numberType = kCFNumberFloat64Type;
 	if (outSuccess != NULL)
 		*outSuccess = false;
@@ -1230,105 +1352,4 @@ long DfxSettings::handleCrisis(long inFlags)
 	}
 
 	return kDfxSettingsCrisis_NoError;
-}
-
-
-//-----------------------------------------------------------------------------
-// this function, if called for the non-reference endian architecture, 
-// will reverse the order of bytes in each variable/value of the data 
-// to correct endian differences and make a uniform data chunk
-void DfxSettings::correctEndian(void * ioData, bool inIsReversed, bool inIsPreset)
-{
-/*
-// XXX another idea...
-void blah(long long x)
-{
-	int n = sizeof(x);
-	while (n--)
-	{
-		write(f, x & 0xFF, 1);
-		x >>= 8;
-	}
-}
-*/
-#if __BIG_ENDIAN__
-// big endian (like PowerPC) is the reference architecture, so no byte-swapping is necessary
-#else
-	// start by looking at the header info
-	DfxSettingsInfo * dataHeader = (DfxSettingsInfo*)ioData;
-	// we need to know how big the header is before dealing with it
-	uint32_t storedHeaderSize = dataHeader->storedHeaderSize;
-	int32_t numStoredParameters = dataHeader->numStoredParameters;
-	int32_t numStoredPresets = dataHeader->numStoredPresets;
-	int32_t storedVersion = dataHeader->version;
-	// correct the values' endian byte order order if the data was received byte-swapped
-	if (inIsReversed)
-	{
-		DFX_ReverseBytes(&storedHeaderSize, sizeof(storedHeaderSize));
-		DFX_ReverseBytes(&numStoredParameters, sizeof(numStoredParameters));
-		DFX_ReverseBytes(&numStoredPresets, sizeof(numStoredPresets));
-		DFX_ReverseBytes(&storedVersion, sizeof(storedVersion));
-	}
-//	if (inIsPreset)
-//		numStoredPresets = 1;
-
-	// reverse the order of bytes of the header values
-	DFX_ReverseBytes(dataHeader, sizeof(dataHeader->magic), storedHeaderSize/sizeof(dataHeader->magic));
-
-	// reverse the byte order for each of the parameter IDs
-	int32_t * dataParameterIDs = (int32_t*) ((char*)ioData + storedHeaderSize);
-	DFX_ReverseBytes(dataParameterIDs, sizeof(*dataParameterIDs), numStoredParameters);
-
-	// reverse the order of bytes for each parameter value, 
-	// but no need to mess with the preset names since they are char strings
-	DfxGenPreset * dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(*dataParameterIDs)*numStoredParameters));
-	unsigned long sizeofStoredPreset = sizeof(*dataPresets) + (sizeof(dataPresets->params[0]) * (numStoredParameters-2));
-#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-	if (DFX_IsOldVstVersionNumber(storedVersion))
-	{
-		// back up the pointer to account for shorter preset names
-		dataPresets = (DfxGenPreset*) ((char*)dataPresets + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
-		// and shrink the size to account for shorter preset names
-		sizeofStoredPreset += OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH;
-	}
-#endif
-	for (long iij=0; iij < numStoredPresets; iij++)
-	{
-		DFX_ReverseBytes(dataPresets->params, sizeof(dataPresets->params[0]), (unsigned)numStoredParameters);
-		// point to the next preset in the data array
-		dataPresets = (DfxGenPreset*) ((char*)dataPresets + sizeofStoredPreset);
-	}
-#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-	if (DFX_IsOldVstVersionNumber(storedVersion))
-		// advance the pointer to compensate for backing up earlier
-		dataPresets = (DfxGenPreset*) ((char*)dataPresets - (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
-#endif
-
-#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-if ( !(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset) )
-{
-#endif
-	// and reverse the byte order of each event assignment
-	DfxParameterAssignment * dataParameterAssignments = (DfxParameterAssignment*) dataPresets;
-	for (long i=0; i < numStoredParameters; i++)
-	{
-#define REVERSE_BYTES_ASSIGNMENT_ITEM(inMember)	\
-		DFX_ReverseBytes( &(dataParameterAssignments->inMember), sizeof(dataParameterAssignments->inMember) );
-		REVERSE_BYTES_ASSIGNMENT_ITEM(eventType)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(eventChannel)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(eventNum)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(eventNum2)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(eventBehaviourFlags)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(data1)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(data2)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata1)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata2)
-#undef REVERSE_BYTES_ASSIGNMENT_ITEM
-	}
-#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-}
-#endif
-
-#endif
-// __BIG_ENDIAN__ (endian check)
 }
