@@ -1182,12 +1182,21 @@ pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler
 	Boolean exitModalLoop = false;
 	HICommand command;
 
+	ControlRef textFieldControl = NULL;
+	ControlID textFieldControlID =	{ kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_PresetNameTextControlID };
+	CFStringRef presetNameString = NULL;
+
 	if (GetEventClass(inEvent) != kEventClassCommand)
 		return eventNotHandledErr;
 	if (GetEventKind(inEvent) != kEventCommandProcess)
 		return eventNotHandledErr;
 	if (inUserData == NULL)
 		return eventNotHandledErr;
+
+	// get the file name text from the edit text field
+	GetControlByID(dialogInfo->dialogWindow, &textFieldControlID, &textFieldControl);
+	if (textFieldControl != NULL)
+		GetControlData(textFieldControl, kControlNoPart, kControlEditTextCFStringTag, sizeof(presetNameString), &presetNameString, NULL);
 
 /*
 3rd:
@@ -1207,19 +1216,10 @@ catch dialog response
 		// the Save button was pushed, so try to save the requested file in the requested domain
 		case kHICommandSave:
 			{
-				ControlRef textFieldControl = NULL;
-				ControlID textFieldControlID =	{ kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_PresetNameTextControlID };
-				CFStringRef presetNameString = NULL;
-
 				ControlRef domainChoiceControl = NULL;
 				ControlID domainChoiceControlID = { kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_DomainChoiceControlID };
 				SInt32 domainChoice;
 				short fsDomain;
-
-				// get the file name text from the edit text field
-				GetControlByID(dialogInfo->dialogWindow, &textFieldControlID, &textFieldControl);
-				if (textFieldControl != NULL)
-					error = GetControlData(textFieldControl, kControlNoPart, kControlEditTextCFStringTag, sizeof(presetNameString), &presetNameString, NULL);
 
 				// get the user's choice of file system domain from the domain choice control
 				GetControlByID(dialogInfo->dialogWindow, &domainChoiceControlID, &domainChoiceControl);
@@ -1236,8 +1236,6 @@ catch dialog response
 				// attempt to save out the AU state data to the requested file
 				dialogInfo->dialogResult = TryToSaveAUPresetFile(dialogInfo->auComponent, dialogInfo->auStateData, 
 																presetNameString, fsDomain, dialogInfo->savedFileUrl);
-				if (presetNameString != NULL)
-					CFRelease(presetNameString);
 
 				// probably the file name was 0 characters long, so don't exit the dialog yet, 
 				// the user probably just accidentally hit return
@@ -1277,11 +1275,23 @@ catch dialog response
 		// the Choose Custom Location button was pushed, 
 		// so exit this dialog and do the Nav Services PutFile dialog
 		case kHICommandSaveAs:
-			exitModalLoop = true;
-			dialogInfo->dialogResult = CustomSaveAUPresetFile(dialogInfo->auStateData, dialogInfo->auComponent, 
-													dialogInfo->defaultPresetName, dialogInfo->savedFileUrl);
+			{
+				exitModalLoop = true;
+				// if the user has already typed something in for a name in the simple dialog, 
+				// then use that to start with in the new dialog
+				CFStringRef presetNameForCustomDialog = presetNameString;
+				if (presetNameForCustomDialog == NULL)
+					presetNameForCustomDialog = dialogInfo->defaultPresetName;
+				else if (CFStringGetLength(presetNameForCustomDialog) <= 0)
+					presetNameForCustomDialog = dialogInfo->defaultPresetName;
+				dialogInfo->dialogResult = CustomSaveAUPresetFile(dialogInfo->auStateData, dialogInfo->auComponent, 
+														presetNameForCustomDialog, dialogInfo->savedFileUrl);
+			}
 			break;
 	}
+
+	if (presetNameString != NULL)
+		CFRelease(presetNameString);
 
 	// this will kill the event run loop for the dialog
 	if (exitModalLoop)
