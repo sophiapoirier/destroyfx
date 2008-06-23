@@ -253,6 +253,7 @@ public:
 	// handlers for the types of MIDI events that we support
 	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
 	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
+	void handleAllNotesOff(int inMidiChannel, long inBufferOffset);
 	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset);
 	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset);
 
