@@ -1305,7 +1305,7 @@ void DfxPlugin::do_processparameters()
 void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, long inFrameOffset)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf("note on:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n", inNote, inVelocity, inChannel, inFrameOffset);
+fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n", inNote, inVelocity, inChannel, inFrameOffset);
 #endif
 	if (midistuff != NULL)
 		midistuff->handleNoteOn(inChannel, inNote, inVelocity, inFrameOffset);
@@ -1317,7 +1317,7 @@ fprintf("note on:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n
 void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, long inFrameOffset)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf("note off:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n", inNote, inVelocity, inChannel, inFrameOffset);
+fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n", inNote, inVelocity, inChannel, inFrameOffset);
 #endif
 	if (midistuff != NULL)
 		midistuff->handleNoteOff(inChannel, inNote, inVelocity, inFrameOffset);
@@ -1329,17 +1329,19 @@ fprintf("note off:  note = %d, velocity = %d, channel = %d, sample offset = %ld\
 void DfxPlugin::handlemidi_allnotesoff(int inChannel, long inFrameOffset)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf("all notes off:  channel = %d, sample offset = %ld\n", inChannel, inFrameOffset);
+fprintf(stderr, "all notes off:  channel = %d, sample offset = %ld\n", inChannel, inFrameOffset);
 #endif
 	if (midistuff != NULL)
 		midistuff->handleAllNotesOff(inChannel, inFrameOffset);
+	if (dfxsettings != NULL)
+		dfxsettings->handleAllNotesOff(inChannel, inFrameOffset);
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, long inFrameOffset)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf("pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %ld\n", inValueLSB, inValueMSB, inChannel, inFrameOffset);
+fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %ld\n", inValueLSB, inValueMSB, inChannel, inFrameOffset);
 #endif
 	if (midistuff != NULL)
 		midistuff->handlePitchBend(inChannel, inValueLSB, inValueMSB, inFrameOffset);
@@ -1351,7 +1353,7 @@ fprintf("pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %ld\n", i
 void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, long inFrameOffset)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf("MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %ld\n", inControllerNum, inValue, inChannel, inFrameOffset);
+fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %ld\n", inControllerNum, inValue, inChannel, inFrameOffset);
 #endif
 	if (midistuff != NULL)
 		midistuff->handleCC(inChannel, inControllerNum, inValue, inFrameOffset);
@@ -1363,7 +1365,7 @@ fprintf("MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset 
 void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, long inFrameOffset)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf("program change:  program num = %d, channel = %d, sample offset = %ld\n", inProgramNum, inChannel, inFrameOffset);
+fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %ld\n", inProgramNum, inChannel, inFrameOffset);
 #endif
 	if (midistuff != NULL)
 		midistuff->handleProgramChange(inChannel, inProgramNum, inFrameOffset);
