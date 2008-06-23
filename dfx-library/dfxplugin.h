@@ -730,25 +730,25 @@ public:
 	virtual OSStatus NewFactoryPresetSet(const AUPreset & inNewFactoryPreset);
 
 	#if TARGET_PLUGIN_USES_MIDI
-		virtual void HandleNoteOn(int inChannel, UInt8 inNoteNumber, 
-						UInt8 inVelocity, long inFrameOffset);
-		virtual void HandleNoteOff(int inChannel, UInt8 inNoteNumber, 
-						UInt8 inVelocity, long inFrameOffset);
-		virtual void HandleAllNotesOff(int inChannel);
-		virtual void HandleControlChange(int inChannel, UInt8 inController, 
-						UInt8 inValue, long inFrameOffset);
-		virtual void HandlePitchWheel(int inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, 
-						long inFrameOffset);
-		virtual void HandleProgramChange(int inChannel, UInt8 inProgramNum);
-		virtual void HandleChannelPressure(int inChannel, UInt8 inValue, long inFrameOffset)
-			{ }
-		virtual void HandlePolyPressure(int inChannel, UInt8 inKey, 
-						UInt8 inValue, long inFrameOffset)
-			{ }
-		virtual void HandleResetAllControllers(int inChannel)
-			{ }
-		virtual void HandleAllSoundOff(int inChannel)
-			{ }
+		virtual OSStatus HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, 
+							UInt8 inVelocity, UInt32 inStartFrame);
+		virtual OSStatus HandleNoteOff(UInt8 inChannel, UInt8 inNoteNumber, 
+							UInt8 inVelocity, UInt32 inStartFrame);
+		virtual OSStatus HandleAllNotesOff(UInt8 inChannel);
+		virtual OSStatus HandleControlChange(UInt8 inChannel, UInt8 inController, 
+							UInt8 inValue, UInt32 inStartFrame);
+		virtual OSStatus HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, 
+							UInt32 inStartFrame);
+		virtual OSStatus HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum);
+		virtual OSStatus HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame)
+			{	return noErr;	}
+		virtual OSStatus HandlePolyPressure(UInt8 inChannel, UInt8 inKey, 
+							UInt8 inValue, UInt32 inStartFrame)
+			{	return noErr;	}
+		virtual OSStatus HandleResetAllControllers(UInt8 inChannel)
+			{	return noErr;	}
+		virtual OSStatus HandleAllSoundOff(UInt8 inChannel)
+			{	return noErr;	}
 	#endif
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 		virtual ComponentResult PrepareInstrument(MusicDeviceInstrumentID inInstrument);
