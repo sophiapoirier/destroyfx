@@ -1496,45 +1496,51 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 #if TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::HandleNoteOn(int inChannel, UInt8 inNoteNumber, 
-						UInt8 inVelocity, long inFrameOffset)
+OSStatus DfxPlugin::HandleNoteOn(UInt8 inChannel, UInt8 inNoteNumber, 
+						UInt8 inVelocity, UInt32 inStartFrame)
 {
-	handlemidi_noteon(inChannel, inNoteNumber, inVelocity, inFrameOffset);
+	handlemidi_noteon(inChannel, inNoteNumber, inVelocity, inStartFrame);
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::HandleNoteOff(int inChannel, UInt8 inNoteNumber, 
-						UInt8 inVelocity, long inFrameOffset)
+OSStatus DfxPlugin::HandleNoteOff(UInt8 inChannel, UInt8 inNoteNumber, 
+						UInt8 inVelocity, UInt32 inStartFrame)
 {
-	handlemidi_noteoff(inChannel, inNoteNumber, inVelocity, inFrameOffset);
+	handlemidi_noteoff(inChannel, inNoteNumber, inVelocity, inStartFrame);
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::HandleAllNotesOff(int inChannel)
+OSStatus DfxPlugin::HandleAllNotesOff(UInt8 inChannel)
 {
 	handlemidi_allnotesoff(inChannel, 0);
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::HandlePitchWheel(int inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, 
-						long inFrameOffset)
+OSStatus DfxPlugin::HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, 
+						UInt32 inStartFrame)
 {
-	handlemidi_pitchbend(inChannel, inPitchLSB, inPitchMSB, inFrameOffset);
+	handlemidi_pitchbend(inChannel, inPitchLSB, inPitchMSB, inStartFrame);
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::HandleControlChange(int inChannel, UInt8 inController, 
-						UInt8 inValue, long inFrameOffset)
+OSStatus DfxPlugin::HandleControlChange(UInt8 inChannel, UInt8 inController, 
+						UInt8 inValue, UInt32 inStartFrame)
 {
-	handlemidi_cc(inChannel, inController, inValue, inFrameOffset);
+	handlemidi_cc(inChannel, inController, inValue, inStartFrame);
+	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::HandleProgramChange(int inChannel, UInt8 inProgramNum)
+OSStatus DfxPlugin::HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum)
 {
 	handlemidi_programchange(inChannel, inProgramNum, 0);
 	// XXX maybe this is really all we want to do?
 	loadpreset(inProgramNum);
+	return noErr;
 }
 
 #if TARGET_PLUGIN_IS_INSTRUMENT
