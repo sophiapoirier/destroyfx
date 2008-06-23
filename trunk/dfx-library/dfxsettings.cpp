@@ -859,6 +859,16 @@ void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVeloc
 }
 
 //-----------------------------------------------------------------------------------------
+void DfxSettings::handleAllNotesOff(int inMidiChannel, long inBufferOffset)
+{
+	if (!allowNoteEvents)
+		return;
+
+	for (long i=0; i < NUM_NOTES; i++)
+		handleMidi_automateParams(kParamEventNote, inMidiChannel, i, 0, inBufferOffset, true);
+}
+
+//-----------------------------------------------------------------------------------------
 // assign an incoming MIDI event to the learner parameter
 void DfxSettings::handleMidi_assignParam(long inEventType, long inMidiChannel, long inByte1, long inBufferOffset)
 {
