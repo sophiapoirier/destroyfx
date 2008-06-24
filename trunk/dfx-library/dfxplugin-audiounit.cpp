@@ -1211,7 +1211,7 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
 
 #if TARGET_PLUGIN_USES_MIDI
 	void * dfxdata = NULL;	// a pointer to our special data
-	unsigned long dfxdatasize;	// the number of bytes of our data
+	size_t dfxdatasize;	// the number of bytes of our data
 	// fetch our special data
 	dfxdatasize = dfxsettings->save(&dfxdata, true);
 	if ( (dfxdatasize > 0) && (dfxdata != NULL) )
@@ -1287,7 +1287,7 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 			// a pointer to our special data
 			const UInt8 * dfxdata = CFDataGetBytePtr(cfdata);
 			// the number of bytes of our data
-			unsigned long dfxdatasize = (unsigned) CFDataGetLength(cfdata);
+			size_t dfxdatasize = (size_t) CFDataGetLength(cfdata);
 			// try to restore the saved settings data
 			success = dfxsettings->restore((void*)dfxdata, dfxdatasize, true);
 
