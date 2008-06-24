@@ -84,6 +84,7 @@ OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl);
 OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent, 
 								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
 pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
+void SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inPresetName);
 
 
 
