@@ -69,7 +69,7 @@ enum
 	// . . . MIDI learn stuff . . .
 
 	kNoLearner = -3,	// for when no parameter is activated for learning
-	kNumMidiValues = 128,	// the number of values for MIDI events
+	kNumMidiValues = 128,	// the number of values for MIDI events (XXX move this into DfxMidi yeah?)
 
 	// MIDI event types
 	kParamEventNone = 0,	// for when you haven't assigned an event to a parameter
@@ -208,17 +208,17 @@ typedef struct
 
 //------------------------------------------------------
 // this reverses the bytes in a stream of data, for correcting endian difference
-inline void DFX_ReverseBytes(void * ioData, unsigned long inItemSize, unsigned long inItemCount = 1)
+inline void DFX_ReverseBytes(void * ioData, size_t inItemSize, unsigned long inItemCount = 1)
 {
-	unsigned long half = (inItemSize / 2) + (inItemSize % 2);
+	size_t half = (inItemSize / 2) + (inItemSize % 2);
 	char * dataBytes = (char*)ioData;
 
 	for (unsigned long c=0; c < inItemCount; c++)
 	{
-		for (unsigned long i=0; i < half; i++)
+		for (size_t i=0; i < half; i++)
 		{
 			char temp = dataBytes[i];
-			unsigned long complementIndex = (inItemSize - 1) - i;
+			size_t complementIndex = (inItemSize - 1) - i;
 			dataBytes[i] = dataBytes[complementIndex];
 			dataBytes[complementIndex] = temp;
 		}
@@ -236,15 +236,15 @@ bool DFX_GetEnvBool(const char * inVarName, bool inFallbackValue);
 class DfxSettings
 {
 public:
-	DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSizeofExtendedData = 0);
+	DfxSettings(long inMagic, DfxPlugin * inPlugin, size_t inSizeofExtendedData = 0);
 	virtual ~DfxSettings();
 
 
 	// - - - - - - - - - API-connect methods - - - - - - - - -
 
 	// for adding to your base plugin class methods
-	unsigned long save(void ** outData, bool inIsPreset);
-	bool restore(const void * inData, unsigned long inBufferSize, bool inIsPreset);
+	size_t save(void ** outData, bool inIsPreset);
+	bool restore(const void * inData, size_t inBufferSize, bool inIsPreset);
 #ifdef TARGET_API_AUDIOUNIT
 	bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
 	bool restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDictionary);
@@ -370,7 +370,7 @@ public:
 
 protected:
 	// reverse the byte order of data
-	void correctEndian(void * ioData, bool inIsReversed, bool inIsPreset = false);
+	bool correctEndian(void * ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset = false);
 
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
@@ -395,18 +395,18 @@ protected:
 	long learner;	// the parameter currently selected for MIDI learning
 
 	// size of one preset (preset name + all parameter values)
-	unsigned long sizeofPreset;
+	size_t sizeofPreset;
 	// size of the table of parameter IDs (one for each parameter)
-	unsigned long sizeofParameterIDs;
+	size_t sizeofParameterIDs;
 	// size of the single-preset "preset" version of the settings data
-	unsigned long sizeofPresetChunk;
+	size_t sizeofPresetChunk;
 	// size of the entire settings data (entire bank, not preset)
-	unsigned long sizeofChunk;
+	size_t sizeofChunk;
 
 	// This is how much larger (beyond the regular stuff) the settings data 
 	// memory allocation should be (for extending the basic data stuff).
 	// It is set with an optional constructor argument (default it 0).
-	unsigned long sizeofExtendedData;
+	size_t sizeofExtendedData;
 
 	// the header info for the settings data
 	DfxSettingsInfo settingsInfo;
