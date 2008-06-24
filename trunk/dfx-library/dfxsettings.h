@@ -439,7 +439,7 @@ protected:
 	// this lets the plugin specify any MIDI control behaviour characterists 
 	// for the current MIDI-learning parameter
 	long learnerEventBehaviourFlags;
-	// let's the plugin pass along an extra context-specific data bytes
+	// lets the plugin pass along an extra context-specific data bytes
 	long learnerData1, learnerData2;
 	float learnerFData1, learnerFData2;
 
