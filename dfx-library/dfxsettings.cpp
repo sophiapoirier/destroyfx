@@ -13,7 +13,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
-DfxSettings::DfxSettings(long inMagic, DfxPlugin * inPlugin, unsigned long inSizeofExtendedData)
+DfxSettings::DfxSettings(long inMagic, DfxPlugin * inPlugin, size_t inSizeofExtendedData)
 :	plugin(inPlugin), sizeofExtendedData(inSizeofExtendedData)
 {
 	sharedChunk = NULL;
@@ -158,7 +158,7 @@ bool DFX_GetEnvBool(const char * inVarName, bool inFallbackValue)
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to save settings data, 
 // like when saving a song or preset files
-unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
+size_t DfxSettings::save(void ** outData, bool inIsPreset)
 {
 	long i, j;
 
@@ -200,7 +200,7 @@ unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
 			tempSharedParamAssignment[i] = paramAssignments[i];
 
 		// reverse the order of bytes in the data being sent to the host, if necessary
-		correctEndian(*outData, false, inIsPreset);
+		correctEndian(*outData, sizeofPresetChunk, false, inIsPreset);
 		// allow for the storage of extra data
 		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofPresetChunk-sizeofExtendedData, inIsPreset);
 
@@ -227,7 +227,7 @@ unsigned long DfxSettings::save(void ** outData, bool inIsPreset)
 			firstSharedParamAssignment[i] = paramAssignments[i];
 
 		// reverse the order of bytes in the data being sent to the host, if necessary
-		correctEndian(*outData, false, inIsPreset);
+		correctEndian(*outData, sizeofChunk, false, inIsPreset);
 		// allow for the storage of extra data
 		plugin->settings_saveExtendedData((char*)sharedChunk+sizeofChunk-sizeofExtendedData, inIsPreset);
 
@@ -242,13 +242,13 @@ inline bool DFX_IsOldVstVersionNumber(long inVersion)
 {
 	return (inVersion < 0x00010000);
 }
-const long OLD_PRESET_MAX_NAME_LENGTH = 32;
+const long DFX_OLD_PRESET_MAX_NAME_LENGTH = 32;
 
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to load settings data, 
 // like when restoring settings while opening a song, 
 // or loading a preset file
-bool DfxSettings::restore(const void * inData, unsigned long inBufferSize, bool inIsPreset)
+bool DfxSettings::restore(const void * inData, size_t inBufferSize, bool inIsPreset)
 {
 	long i, j;
 
@@ -263,7 +263,12 @@ bool DfxSettings::restore(const void * inData, unsigned long inBufferSize, bool 
 	memcpy(incomingData_copy, inData, inBufferSize);
 
 	// un-reverse the order of bytes in the received data, if necessary
-	correctEndian(incomingData_copy, true, inIsPreset);
+	bool endianSuccess = correctEndian(incomingData_copy, inBufferSize, true, inIsPreset);
+	if (!endianSuccess)
+	{
+		free(incomingData_copy);
+		return false;
+	}
 
 	// point to the start of the chunk data:  the settingsInfo header
 	DfxSettingsInfo * newSettingsInfo = (DfxSettingsInfo*)incomingData_copy;
@@ -362,7 +367,7 @@ bool DfxSettings::restore(const void * inData, unsigned long inBufferSize, bool 
 	// point to the next data element after the parameter IDs:  the first preset name
 	DfxGenPreset * newPreset = (DfxGenPreset*) ((char*)newParameterIDs + (sizeof(*parameterIDs)*numStoredParameters));
 	// handy for incrementing the data pointer
-	unsigned long sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(firstSharedPreset->params[0])*(numStoredParameters-2));
+	size_t sizeofStoredPreset = sizeof(DfxGenPreset) + (sizeof(firstSharedPreset->params[0])*(numStoredParameters-2));
 
 	// the chunk being received only contains one preset
 	if (inIsPreset)
@@ -377,7 +382,7 @@ bool DfxSettings::restore(const void * inData, unsigned long inBufferSize, bool 
 	#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 		// back up the pointer to account for shorter preset names
 		if (oldvst)
-			newPreset = (DfxGenPreset*) ((char*)newPreset + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+			newPreset = (DfxGenPreset*) ((char*)newPreset + (DFX_OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 	#endif
 		// copy all of the parameters that we can for this preset from the chunk
 		for (i=0; i < numParameters; i++)
@@ -412,7 +417,7 @@ bool DfxSettings::restore(const void * inData, unsigned long inBufferSize, bool 
 		#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 			// back up the pointer to account for shorter preset names
 			if (oldvst)
-				newPreset = (DfxGenPreset*) ((char*)newPreset + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+				newPreset = (DfxGenPreset*) ((char*)newPreset + (DFX_OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
 		#endif
 			// copy all of the parameters that we can for this preset from the chunk
 			for (i=0; i < numParameters; i++)
@@ -475,12 +480,28 @@ if ( !(oldvst && inIsPreset) )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// XXX temporary (for testing)
+void DFX_DEBUG_ALERT_CORRUPT_DATA(long inLineNumber)
+{
+#if 1
+#if TARGET_OS_MAC
+	CFStringRef title = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("settings data fuct at line %ld"), inLineNumber);
+	CFStringRef message = CFSTR("This \"shouldn't happen\".");
+	if (title != NULL)
+	{
+		CFUserNotificationDisplayNotice(0.0, kCFUserNotificationPlainAlertLevel, NULL, NULL, NULL, title, message, NULL);
+		CFRelease(title);
+	}
+#endif
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // this function, if called for the non-reference endian architecture, 
 // will reverse the order of bytes in each variable/value of the data 
 // to correct endian differences and make a uniform data chunk
-void DfxSettings::correctEndian(void * ioData, bool inIsReversed, bool inIsPreset)
+bool DfxSettings::correctEndian(void * ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset)
 {
 /*
 // XXX another idea...
@@ -515,36 +536,54 @@ void blah(long long x)
 //	if (inIsPreset)
 //		numStoredPresets = 1;
 
+	// use this to pre-test for out-of-bounds memory addressing, probably from corrupt data
+	void * dataEndAddress = (char*)ioData + inDataSize;
+
 	// reverse the order of bytes of the header values
+	if ( ((char*)dataHeader + storedHeaderSize) > dataEndAddress )	// the data is somehow corrupt
+	{
+		DFX_DEBUG_ALERT_CORRUPT_DATA(__LINE__);
+		return false;
+	}
 	DFX_ReverseBytes(dataHeader, sizeof(dataHeader->magic), storedHeaderSize/sizeof(dataHeader->magic));
 
 	// reverse the byte order for each of the parameter IDs
 	int32_t * dataParameterIDs = (int32_t*) ((char*)ioData + storedHeaderSize);
+	if ( ((char*)dataParameterIDs + (sizeof(*dataParameterIDs) * numStoredParameters)) > dataEndAddress )	// the data is somehow corrupt
+	{
+		DFX_DEBUG_ALERT_CORRUPT_DATA(__LINE__);
+		return false;
+	}
 	DFX_ReverseBytes(dataParameterIDs, sizeof(*dataParameterIDs), numStoredParameters);
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char strings
 	DfxGenPreset * dataPresets = (DfxGenPreset*) ((char*)dataParameterIDs + (sizeof(*dataParameterIDs)*numStoredParameters));
-	unsigned long sizeofStoredPreset = sizeof(*dataPresets) + (sizeof(dataPresets->params[0]) * (numStoredParameters-2));
+	size_t sizeofStoredPreset = sizeof(*dataPresets) + (sizeof(dataPresets->params[0]) * (numStoredParameters-2));
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-	if (DFX_IsOldVstVersionNumber(storedVersion))
+	if ( DFX_IsOldVstVersionNumber(storedVersion) )
 	{
 		// back up the pointer to account for shorter preset names
-		dataPresets = (DfxGenPreset*) ((char*)dataPresets + (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+		dataPresets = (DfxGenPreset*) ((char*)dataPresets - (DFX_PRESET_MAX_NAME_LENGTH - DFX_OLD_PRESET_MAX_NAME_LENGTH));
 		// and shrink the size to account for shorter preset names
-		sizeofStoredPreset += OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH;
+		sizeofStoredPreset -= DFX_PRESET_MAX_NAME_LENGTH - DFX_OLD_PRESET_MAX_NAME_LENGTH;
 	}
 #endif
-	for (long iij=0; iij < numStoredPresets; iij++)
+	if ( ((char*)dataPresets + (sizeofStoredPreset * numStoredPresets)) > dataEndAddress )	// the data is somehow corrupt
+	{
+		DFX_DEBUG_ALERT_CORRUPT_DATA(__LINE__);
+		return false;
+	}
+	for (long i=0; i < numStoredPresets; i++)
 	{
 		DFX_ReverseBytes(dataPresets->params, sizeof(dataPresets->params[0]), (unsigned)numStoredParameters);	//XXX potential floating point machine error
 		// point to the next preset in the data array
 		dataPresets = (DfxGenPreset*) ((char*)dataPresets + sizeofStoredPreset);
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
-	if (DFX_IsOldVstVersionNumber(storedVersion))
+	if ( DFX_IsOldVstVersionNumber(storedVersion) )
 		// advance the pointer to compensate for backing up earlier
-		dataPresets = (DfxGenPreset*) ((char*)dataPresets - (OLD_PRESET_MAX_NAME_LENGTH - DFX_PRESET_MAX_NAME_LENGTH));
+		dataPresets = (DfxGenPreset*) ((char*)dataPresets + (DFX_PRESET_MAX_NAME_LENGTH - DFX_OLD_PRESET_MAX_NAME_LENGTH));
 #endif
 
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
@@ -553,10 +592,15 @@ if ( !(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset) )
 #endif
 	// and reverse the byte order of each event assignment
 	DfxParameterAssignment * dataParameterAssignments = (DfxParameterAssignment*) dataPresets;
+	if ( ((char*)dataParameterAssignments + (sizeof(*dataParameterAssignments) * numStoredParameters)) > dataEndAddress )	// the data is somehow corrupt
+	{
+		DFX_DEBUG_ALERT_CORRUPT_DATA(__LINE__);
+		return false;
+	}
 	for (long i=0; i < numStoredParameters; i++)
 	{
 #define REVERSE_BYTES_ASSIGNMENT_ITEM(inMember)	\
-		DFX_ReverseBytes( &(dataParameterAssignments->inMember), sizeof(dataParameterAssignments->inMember) );
+		DFX_ReverseBytes( &(dataParameterAssignments[i].inMember), sizeof(dataParameterAssignments[i].inMember) );
 		REVERSE_BYTES_ASSIGNMENT_ITEM(eventType)
 		REVERSE_BYTES_ASSIGNMENT_ITEM(eventChannel)
 		REVERSE_BYTES_ASSIGNMENT_ITEM(eventNum)
@@ -574,6 +618,8 @@ if ( !(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset) )
 
 #endif
 // __BIG_ENDIAN__ (endian check)
+
+	return true;
 }
 
 
@@ -802,7 +848,7 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset)
 {
 	// don't allow the "all notes off" CC because almost every sequencer uses that when playback stops
-	if (inControllerNumber == 0x7B)
+	if (inControllerNumber == kMidiCC_AllNotesOff)
 		return;
 
 	handleMidi_assignParam(kParamEventCC, inMidiChannel, inControllerNumber, inBufferOffset);
