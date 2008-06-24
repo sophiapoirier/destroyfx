@@ -1334,8 +1334,7 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 
 	// set the state data's name value to the requested name
 	// do this before we mess around with the file name string (truncating, adding extension, etc.)
-	if (CFGetTypeID(inAUStateData) == CFDictionaryGetTypeID())
-		CFDictionarySetValue((CFMutableDictionaryRef)inAUStateData, CFSTR(kAUPresetNameKey), inPresetNameString);
+	SetAUPresetNameInStateData(inAUStateData, inPresetNameString);
 
 //fprintf(stderr, "\tuser chosen name:\n"); CFShow(inPresetNameString);
 	// if the requested file name is too long, truncate it
@@ -1777,6 +1776,17 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 							CFRelease(parentDirUrl);
 							if (presetFileUrl != NULL)
 							{
+								// set the state data's name value to the requested name
+								if (auStateData != NULL)
+								{
+									CFStringRef presetName = CopyAUPresetNameFromCFURL(presetFileUrl);
+									if (presetName != NULL)
+									{
+										SetAUPresetNameInStateData(auStateData, presetName);
+										CFRelease(presetName);
+									}
+								}
+
 								// with the full file URL, we can now try to translate the AU state data 
 								// to XML data, and write that XML data out to the file
 								error = WritePropertyListToXMLFile(auStateData, presetFileUrl);
@@ -1820,4 +1830,14 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 			}
 			break;
 	}
+}
+
+//-----------------------------------------------------------------------------
+void SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inPresetName)
+{
+	if ( (inAUStateData == NULL) || (inPresetName == NULL) )
+		return;
+
+	if ( CFGetTypeID(inAUStateData) == CFDictionaryGetTypeID() )
+		CFDictionarySetValue((CFMutableDictionaryRef)inAUStateData, CFSTR(kAUPresetNameKey), inPresetName);
 }
