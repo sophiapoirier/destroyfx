@@ -482,16 +482,18 @@ if ( !(oldvst && inIsPreset) )
 
 //-----------------------------------------------------------------------------
 // XXX temporary (for testing)
-void DFX_DEBUG_ALERT_CORRUPT_DATA(long inLineNumber)
+void DFX_DEBUG_ALERT_CORRUPT_DATA(const char * inDataItemName, size_t inDataItemSize, size_t inDataTotalSize)
 {
 #if 1
 #if TARGET_OS_MAC
-	CFStringRef title = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("settings data fuct at line %ld"), inLineNumber);
-	CFStringRef message = CFSTR("This \"shouldn't happen\".");
-	if (title != NULL)
+	CFStringRef title = CFSTR("settings data fuct");
+	CFStringRef message = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
+								CFSTR("This should never happen.  Please inform the developers at "DESTROYFX_URL" if you see this message.  Please tell them: \r\rdata item name = %s \rdata item size = %lu \rtotal data size = %lu"), 
+								inDataItemName, inDataItemSize, inDataTotalSize);
+	if (message != NULL)
 	{
 		CFUserNotificationDisplayNotice(0.0, kCFUserNotificationPlainAlertLevel, NULL, NULL, NULL, title, message, NULL);
-		CFRelease(title);
+		CFRelease(message);
 	}
 #endif
 #endif
@@ -542,7 +544,7 @@ void blah(long long x)
 	// reverse the order of bytes of the header values
 	if ( ((char*)dataHeader + storedHeaderSize) > dataEndAddress )	// the data is somehow corrupt
 	{
-		DFX_DEBUG_ALERT_CORRUPT_DATA(__LINE__);
+		DFX_DEBUG_ALERT_CORRUPT_DATA("header", storedHeaderSize, inDataSize);
 		return false;
 	}
 	DFX_ReverseBytes(dataHeader, sizeof(dataHeader->magic), storedHeaderSize/sizeof(dataHeader->magic));
@@ -551,7 +553,7 @@ void blah(long long x)
 	int32_t * dataParameterIDs = (int32_t*) ((char*)ioData + storedHeaderSize);
 	if ( ((char*)dataParameterIDs + (sizeof(*dataParameterIDs) * numStoredParameters)) > dataEndAddress )	// the data is somehow corrupt
 	{
-		DFX_DEBUG_ALERT_CORRUPT_DATA(__LINE__);
+		DFX_DEBUG_ALERT_CORRUPT_DATA("parameter IDs", sizeof(*dataParameterIDs) * numStoredParameters, inDataSize);
 		return false;
 	}
 	DFX_ReverseBytes(dataParameterIDs, sizeof(*dataParameterIDs), numStoredParameters);
@@ -571,12 +573,12 @@ void blah(long long x)
 #endif
 	if ( ((char*)dataPresets + (sizeofStoredPreset * numStoredPresets)) > dataEndAddress )	// the data is somehow corrupt
 	{
-		DFX_DEBUG_ALERT_CORRUPT_DATA(__LINE__);
+		DFX_DEBUG_ALERT_CORRUPT_DATA("presets", sizeofStoredPreset * numStoredPresets, inDataSize);
 		return false;
 	}
 	for (long i=0; i < numStoredPresets; i++)
 	{
-		DFX_ReverseBytes(dataPresets->params, sizeof(dataPresets->params[0]), (unsigned)numStoredParameters);	//XXX potential floating point machine error
+		DFX_ReverseBytes(dataPresets->params, sizeof(dataPresets->params[0]), (unsigned)numStoredParameters);	//XXX potential floating point machine error?
 		// point to the next preset in the data array
 		dataPresets = (DfxGenPreset*) ((char*)dataPresets + sizeofStoredPreset);
 	}
@@ -594,7 +596,7 @@ if ( !(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset) )
 	DfxParameterAssignment * dataParameterAssignments = (DfxParameterAssignment*) dataPresets;
 	if ( ((char*)dataParameterAssignments + (sizeof(*dataParameterAssignments) * numStoredParameters)) > dataEndAddress )	// the data is somehow corrupt
 	{
-		DFX_DEBUG_ALERT_CORRUPT_DATA(__LINE__);
+		DFX_DEBUG_ALERT_CORRUPT_DATA("parameter assignments", sizeof(*dataParameterAssignments) * numStoredParameters, inDataSize);
 		return false;
 	}
 	for (long i=0; i < numStoredParameters; i++)
@@ -608,8 +610,8 @@ if ( !(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset) )
 		REVERSE_BYTES_ASSIGNMENT_ITEM(eventBehaviourFlags)
 		REVERSE_BYTES_ASSIGNMENT_ITEM(data1)
 		REVERSE_BYTES_ASSIGNMENT_ITEM(data2)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata1)	//XXX potential floating point machine error
-		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata2)	//XXX potential floating point machine error
+		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata1)	//XXX potential floating point machine error?
+		REVERSE_BYTES_ASSIGNMENT_ITEM(fdata2)	//XXX potential floating point machine error?
 #undef REVERSE_BYTES_ASSIGNMENT_ITEM
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
