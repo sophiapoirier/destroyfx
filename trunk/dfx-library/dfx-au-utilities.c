@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2008  Sophia Poirier
+	Copyright (C) 2003-2009  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -53,7 +53,7 @@
 // CallComponentVersion, the first argument of this function is a Component, 
 // not a ComponentInstance.  You can, however, cast a ComponentInstance to 
 // Component for this function, if you want to do that for any reason.
-OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion)
+OSErr GetComponentVersionFromResource(Component inComponent, SInt32 * outVersion)
 {
 	OSErr error;
 	ComponentDescription desc;
