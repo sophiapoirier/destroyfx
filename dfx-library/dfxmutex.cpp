@@ -8,7 +8,7 @@ This is our mutex shit.
 
 
 //------------------------------------------------------------------------
-#if WIN32
+#if WIN32 && !defined(PLUGIN_SDK_BUILD)
 
 DfxMutex::DfxMutex()
 {
@@ -28,14 +28,46 @@ int DfxMutex::grab()
 
 int DfxMutex::try_grab()
 {
+#if defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0400)
 	BOOL success = TryEnterCriticalSection(&cs);
 	// map the TryEnterCriticalSection result to the sort of error that every other mutex API uses
 	return (success == 0) ? -1 : 0;
+#else
+	return 0;
+#endif
 }
 
 int DfxMutex::release()
 {
 	LeaveCriticalSection(&cs);
+	return 0;
+}
+
+
+
+//------------------------------------------------------------------------
+#elif WIN32 && defined(PLUGIN_SDK_BUILD)
+
+DfxMutex::DfxMutex()
+{
+}
+
+DfxMutex::~DfxMutex()
+{
+}
+
+int DfxMutex::grab()
+{
+	return 0;
+}
+
+int DfxMutex::try_grab()
+{
+	return 0;
+}
+
+int DfxMutex::release()
+{
 	return 0;
 }
 
