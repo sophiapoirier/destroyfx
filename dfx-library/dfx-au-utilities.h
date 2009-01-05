@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2008  Sophia Poirier
+	Copyright (C) 2003-2009  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -53,7 +53,7 @@ extern "C" {
 
 
 /* this is for getting a Component's version from the Component's resource cache */
-extern OSErr GetComponentVersionFromResource(Component inComponent, long * outVersion);
+extern OSErr GetComponentVersionFromResource(Component inComponent, SInt32 * outVersion);
 
 /* these handle a CoreFoundation-like container object for AUPreset called CFAUPreset */
 typedef const struct CFAUPreset * CFAUPresetRef;
