@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2008  Sophia Poirier
+	Copyright (C) 2003-2009  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -1275,8 +1275,8 @@ catch dialog response
 		// the Choose Custom Location button was pushed, 
 		// so exit this dialog and do the Nav Services PutFile dialog
 		case kHICommandSaveAs:
+			exitModalLoop = true;
 			{
-				exitModalLoop = true;
 				// if the user has already typed something in for a name in the simple dialog, 
 				// then use that to start with in the new dialog
 				CFStringRef presetNameForCustomDialog = presetNameString;
