@@ -7,9 +7,10 @@ This is our mutex shit.
 #define __DFX_MUTEX_H
 
 
-#if WIN32
+#if WIN32 && !defined(PLUGIN_SDK_BUILD)
 	// Win32 API
 	#include <Windows.h>
+#elif WIN32 && defined(PLUGIN_SDK_BUILD)
 #elif TARGET_OS_MAC && !defined(__MACH__)
 	// Multiprocessing Services
 	#include <Multiprocessing.h>
@@ -31,8 +32,9 @@ public:
 
 private:
 
-#if WIN32
+#if WIN32 && !defined(PLUGIN_SDK_BUILD)
 	CRITICAL_SECTION cs;
+#elif WIN32 && defined(PLUGIN_SDK_BUILD)
 #elif TARGET_OS_MAC && !defined(__MACH__)
 	MPCriticalRegionID mpcr;
 #else
