@@ -1,0 +1,71 @@
+
+Phase vocoder examples:
+http://www.bath.ac.uk/~masrwd/pvplugs.html
+(these give you pairs of frequency, volume)
+
+DFX SEAMLESS. Take sections of the wave (any way you choose) and
+double them, but the second copy is reversed. That way there won't be
+any 'seams'. This would be good for geometer, actually (except
+windowing shouldn't be necessary..)
+
+DFX EXEMPLAR. Keep a database of sounds with their fft characteristics
+(only low bands), perhaps by running it in "train" mode. Then replace
+new incoming sound with whatever sound from the database that they
+match best.
+
+DFX POSTLOOP. Be able to load up drum loops and lay them down over an
+existing track, but tweaking their lengths (and perhaps even the speed
+within them) so that they match up with the original. I should be able
+to play the loops by just pressing keys on my keyboard or midi device,
+then edit the loops after.
+
+DFX SOMETHING. grabs grains from the input (like snippet or stuck
+synth) then plays them back transverb style -- really slowwww, really
+fast, overlapping, etc. with various envelopes.
+
+DFX GRAVITY. a plugin that's just a giant surface with some points on
+it. each of those points controls some simple effect (eq, reverb, ...)
+(or read head like transverb) Then, we can place 'Planets' (or walls,
+or whatever) that attract the points with gravity.
+
+DFX FIREFLY. Draw a curve that's the impulse response to a sample. Can
+this be efficiently implemented? Then supply some nice presets... Also
+can have 'presponse' if we use windowing, but should have 0-latency
+mode for live play.
+
+Allow to vary based on the input sample's amplitude.
+(Can do a delay that differs based on amplitude: weird!)
+(also: could differ based on frequency? = spectral delay?)
+
+Brokenfft: allow turning on/off of bins by MIDI keys.
+
+
+DFX WORSTCASE - live performance thing to prevent drop-outs and
+freezes. what could it do?
+
+
+DFX SORRY - fix clipping, denormals, infinity, etc.
+
+
+Poor man's Fourier Transform.
+A few (4? 8?) frequency bins, calculate sin(f*t) for these bins, and see how well the signal correlates with the sine at a particular time. Add the difference to the bin. Use the bins to provide some sort of feedback (or maybe only output the bins). Modulate the frequency of the bins.
+
+Keep a rolling average of the frequency level (or RMS), and subtract this from (average it with) the signal sample-wise. Or just output the average.
+
+For the DFX gui superclass, also support a "blocksplit" which calls
+process on blocks smaller than the host size.
+
+
+general purpose feedback (a formula with adjustable coefficients)
+
+DES TRANSFORM!!
+
+PKZIP TRANSFORM!!
+
+Plugin reads its own dll file for noise data!!
+
+
+"contortion" (?) filter (the one where you fft and then multiply bins
+between two sources). With adjustable 2nd source (could use a delayed
+version of the first, could use two stereo channels, could use sin
+waves of various frequencies...)
