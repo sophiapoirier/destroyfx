@@ -1,0 +1,6 @@
+DirectX 7 here:
+
+http://www.microsoft.com/downloads/details.aspx?displaylang=en&FamilyID=4CD7BB2E-75B5-423C-853A-A632F9B9DE34
+
+http://download.microsoft.com/download/win98SE/DXSDK/7.0/W9X/EN-US/dx7docs.exe
+http://download.microsoft.com/download/win98SE/DXSDK/7.0/W9X/EN-US/dx7libhdr.exe
