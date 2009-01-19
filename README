@@ -101,7 +101,9 @@ These plugins are experiments and may or may not work:
 exemplar/
 
         Tries to recreate your sound from a training set using nearest-
-        neighbor techniques.
+        neighbor techniques. I thought this was going to be awesome but
+        initial experiments were disappointing. Should be revisited now
+        that I know more about machine learning.
 
 vardelay/
 
@@ -119,6 +121,11 @@ slowft/
 
         The "slow fourier transform." Not sure what this is about yet. ;)
 
+firefly/
+
+        The idea was to provide a general-purpose finite impluse response
+        filter with a drawable model. Didn't get very far, except drawing
+        a placeholder GUI.
 
 These plugins are not in development, perhaps because their functionality
 has been subsumed by another plugin:
