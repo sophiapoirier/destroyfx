@@ -1,3 +1,25 @@
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+------------------------------------------------------------------------*/
+
 #include "dfxguibutton.h"
 
 
@@ -40,6 +62,8 @@ void DGButton::init()
 	userReleaseProcedure = NULL;
 	userReleaseProcData = NULL;
 	useReleaseProcedureOnlyAtEndWithNoCancel = false;
+
+	orientation = kDGAxis_horizontal;
 
 	mouseIsDown = false;
 	setControlContinuous(false);
@@ -105,7 +129,10 @@ void DGButton::mouseDown(float inXpos, float inYpos, unsigned long inMouseButton
 				newValue = entryValue - 1;
 			break;
 		case kDGButtonType_radiobutton:
-			newValue = (long)inXpos / (getBounds()->w / numStates);
+			if (orientation & kDGAxis_horizontal)
+				newValue = (long)inXpos / (getBounds()->w / numStates);
+			else
+				newValue = (long)inYpos / (getBounds()->h / numStates);
 			newValue += min;	// offset
 			break;
 		default:
@@ -146,7 +173,10 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 
 		if (mode == kDGButtonType_radiobutton)
 		{
-			newValue = (long)inXpos / (getBounds()->w / numStates);
+			if (orientation & kDGAxis_horizontal)
+				newValue = (long)inXpos / (getBounds()->w / numStates);
+			else
+				newValue = (long)inYpos / (getBounds()->h / numStates);
 			if (newValue >= numStates)
 				newValue = numStates - 1;
 			else if (newValue < 0)
@@ -178,14 +208,13 @@ void DGButton::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 			}
 		}
 	}
-
 }
 
 //-----------------------------------------------------------------------------
 void DGButton::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 {
 	setMouseIsDown(false);
-	
+
 	if (mode == kDGButtonType_pushbutton)
 	{
 		if (GetControl32BitValue(carbonControl) != 0)
@@ -209,7 +238,7 @@ void DGButton::setMouseIsDown(bool newMouseState)
 }
 
 //-----------------------------------------------------------------------------
-bool DGButton::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+bool DGButton::mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers)
 {
 	switch (mode)
 	{
@@ -231,19 +260,6 @@ bool DGButton::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers 
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setValue(long inValue)
-{
-	if (getValue() != inValue)
-		SetControl32BitValue(carbonControl, inValue);
-}
-
-//-----------------------------------------------------------------------------
-long DGButton::getValue()
-{
-	return GetControl32BitValue(carbonControl);
-}
-
-//-----------------------------------------------------------------------------
 void DGButton::setButtonImage(DGImage * inImage)
 {
 	if (inImage != buttonImage)
@@ -261,10 +277,11 @@ void DGButton::setUserProcedure(DGButtonUserProcedure inProc, void * inUserData)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setUserReleaseProcedure(DGButtonUserProcedure inProc, void * inUserData)
+void DGButton::setUserReleaseProcedure(DGButtonUserProcedure inProc, void * inUserData, bool inOnlyAtEndWithNoCancel)
 {
 	userReleaseProcedure = inProc;
 	userReleaseProcData = inUserData;
+	useReleaseProcedureOnlyAtEndWithNoCancel = inOnlyAtEndWithNoCancel;
 }
 
 
@@ -361,6 +378,65 @@ void DGFineTuneButton::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyM
 	{
 		mouseIsDown = false;
 		redraw();
+	}
+}
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGValueSpot
+
+//-----------------------------------------------------------------------------
+// Value Hot-Spot
+//-----------------------------------------------------------------------------
+DGValueSpot::DGValueSpot(DfxGuiEditor *	inOwnerEditor, 
+						long			inParameterID, 
+						DGRect *		inRegion, 
+						DGImage *		inImage, 
+						double			inValue)
+:	DGControl(inOwnerEditor, inRegion, 1.0f), 
+	buttonImage(inImage), valueToSet(inValue), 
+	mParameterID_unattached(inParameterID)
+{
+}
+
+//-----------------------------------------------------------------------------
+void DGValueSpot::mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
+{
+	mouseTrack(inXpos, inYpos, inMouseButtons, inKeyModifiers);
+}
+
+//-----------------------------------------------------------------------------
+void DGValueSpot::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+{
+	if ( getBounds()->isInside_zerobase((long)inXpos, (long)inYpos) )
+	{
+		if (! GetControl32BitValue(carbonControl) )
+			getDfxGuiEditor()->setparameter_f(mParameterID_unattached, valueToSet, true);
+		SetControl32BitValue(carbonControl, 1);
+	}
+	else
+	{
+		SetControl32BitValue(carbonControl, 0);
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DGValueSpot::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
+{
+	SetControl32BitValue(carbonControl, 0);
+}
+
+//-----------------------------------------------------------------------------
+void DGValueSpot::draw(DGGraphicsContext * inContext)
+{
+	if (buttonImage != NULL)
+	{
+		long yoff = GetControl32BitValue(carbonControl) * (buttonImage->getHeight() / 2);
+		buttonImage->draw(getBounds(), inContext, 0, yoff);
 	}
 }
 
