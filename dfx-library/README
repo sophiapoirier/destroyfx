@@ -1,16 +1,11 @@
+This is the Destroy FX Library, a collection of useful source code
+material for writing audio processing plugins.  Our base library code
+is comprised of the dfxplugin and dfxparameter files, plus dfxmidi and
+dfxsettings for plugins that use MIDI.  And there is oodles of other
+stuff too.
 
-   ** Wow! We need to make this file up-to-date because it
-      is so confusing to you, our poor reader! **
-
-
-This is the DFX library, a collection of useful routines for
-writing VST plugins. It also includes several new controls for
-VSTGUI.  Our base library code is comprised of the dfxplugin 
-and dfxparameter files, plus dfxmidi and dfxsettings for plugins 
-that use MIDI.
-
-dfxplugin has the base class that we derive from when making plugins.  
-The main functions that it serves are (1) making it really easy 
+dfxplugin has the base class from which we derive when making
+plugins.  The main functions that it serves are (1) making it really easy 
 to make a new plugin from scratch and (2) making it really easy 
 to support multiple plugin APIs (Audio Unit and VST at the moment).  
 
@@ -20,10 +15,8 @@ that we use in dfxplugins.
 dfxmidi has MIDI handling and related routines.
 
 dfxsettings has routines for storing special plugin settings in 
-opaque data blocks and also for adding MIDI learn functionality 
-for fully MIDI control of all plugin parameters.  dfxsettings is 
-what vstchunk has now become.  vstchunk was just for VST, dfxsettings 
-is for our new DfxPlugin class.
+custom data blocks and also for adding MIDI learn functionality 
+for fully MIDI control of all plugin parameters.
 
 dfx-au-utilities has some stuff that's useful for pretty much any AU
 plugin or host, so it's in separate files because we possibly also use
@@ -32,53 +25,9 @@ files are an exception in that they are offered under the terms of a
 modified BSD License (see bsd-license.txt) rather than the GNU 
 General Public License (GPL).
 
-*** EVERYTHING BELOW THIS LINE IS IN THE PROCESS OF BEING OBSOLETED ***
-***                   DFXPLUGIN IS THE NEW WAY                      ***
+dfxdefines.h a bunch of basic definitions for Destroy FX plugins, and
+some base stuff that's just useful all our the source tree.
 
-dfxgui contains a lot of useful GUI controls that are derived from 
-the VSTGUI library of controls (a library supplied by Steinberg 
-with the VST SDK).
-There are descriptions of each control in the header.
+dfxmath.h has various handy math-related constants and functions.
 
-multikick is another custom GUI object derived from the VSTGUI.  
-It might as well be a part of dfxgui, but I think Tom was writing 
-this while I was writing stuff in dfxgui, or something like that.
-
-dfxmisc has number of handy stuff for making VST plugins.
-There are a few interpolation functions.
-There are a some useful constants & macros, including tons of macros 
-for mapping parameter values into & out of the VST standard 0-1 float 
-range.
-There is implementation for mutexes that we've used in Geometer.
-There are also a couple handy functions, one for calculating the 
-number of samples until the next measure in a song, & another for 
-executing program changes from MIDI program change messages.
-
-vstchunk is basically Marc's solution for implementing a MIDI CC 
-parameter control system in VST plugins.
-The system is a "MIDI learn" style thing where you activate a 
-MIDI learn mode, then you touch some control to make it the 
-"learner," & then the next MIDI CC message received is applied to 
-that learner parameter & all messages from that CC are from then 
-on applied to that parameter, unless that CC later gets assigned 
-to a different parameter or MIDI reset is happens (which erases all 
-CC assignments).
-This system is GUI-based in the assignments (you have to click on 
-a parameter control to make it the learner).
-VST "chunks" come into play so that the CC assignments can be stored 
-in presets & saved settings without having to make each CC assignment 
-"slot" a VST parameter.  This also removes the data type limit of 
-floats (ints make more sense with MIDI).  In VST, you can use 
-chunk format data storing & recalling, so that's the other function 
-that VstChunk serves.  There are implementations of setChunk & 
-getChunk that manage saving parameter, program, & CC assignment 
-data.  If you want to store additional info in your chunks, you 
-can still use VstChunk.  You will just need to intercept the 
-data pointer & return of getChunk, adding your own data & 
-increasing the return value (data size in bytes) accordingly.  
-There is also a function included in vstchunk.cpp for reversing 
-the Endian-reversing of your data (which you will need to manage for 
-any data that you add on).  Then for setChunk, you'll need to do 
-whatever you need to do with your added data section, decrease 
-the size value by the size of your stuff, & then pass that along to 
-the VstChunk's setChunk.
+dfxmutex has an implementation for mutexes that we've used in Geometer.
