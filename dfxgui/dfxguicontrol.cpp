@@ -1,5 +1,27 @@
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+------------------------------------------------------------------------*/
+
 #include "dfxguicontrol.h"
-#include "dfxgui.h"
+#include "dfxguieditor.h"
 
 #include "dfxpluginproperties.h"
 #include "dfxmath.h"
@@ -11,6 +33,11 @@
 const SInt32 kContinuousControlMaxValue = 0x0FFFFFFF - 1;
 #if TARGET_OS_MAC
 	const MenuID kDfxGui_ControlContextualMenuID = 3;	// XXX eh?  how am I supposed to come up with a meaningful 16-bit value for this?
+#endif
+
+
+#ifndef DFXGUI_USE_CONTEXTUAL_MENU
+	#define DFXGUI_USE_CONTEXTUAL_MENU	1
 #endif
 
 
@@ -135,7 +162,11 @@ int DFX_CFStringScanWithFormat(CFStringRef inString, const char * inFormat, ...)
 //-----------------------------------------------------------------------------
 bool DGControlBase::do_contextualMenuClick()
 {
+#if DFXGUI_USE_CONTEXTUAL_MENU
 	return contextualMenuClick();
+#else
+	return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -582,7 +613,7 @@ DGControl::DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRa
 // common constructor stuff
 void DGControl::init(DGRect * inRegion)
 {
-	where.set(inRegion);
+	controlPos.set(inRegion);
 	vizArea.set(inRegion);
 
 #if TARGET_OS_MAC
@@ -668,9 +699,9 @@ void DGControl::embed()
 	Rect carbonControlRect;
 	getBounds()->copyToMacRect(&carbonControlRect);
 	ControlRef newCarbonControl = NULL;
-	OSStatus error = CreateCustomControl(getDfxGuiEditor()->GetCarbonWindow(), &carbonControlRect, 
+	OSStatus status = CreateCustomControl(getDfxGuiEditor()->GetCarbonWindow(), &carbonControlRect, 
 									getDfxGuiEditor()->getControlDefSpec(), NULL, &newCarbonControl);
-	if ( (error != noErr) || (newCarbonControl == NULL) )
+	if ( (status != noErr) || (newCarbonControl == NULL) )
 		return;	// XXX what else can we do?
 
 	setCarbonControl(newCarbonControl);
@@ -853,7 +884,7 @@ void DGControl::do_mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModif
 }
 
 //-----------------------------------------------------------------------------
-bool DGControl::do_mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+bool DGControl::do_mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers)
 {
 	if (! getRespondToMouseWheel() )
 		return false;
@@ -873,7 +904,7 @@ bool DGControl::do_mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifi
 
 //-----------------------------------------------------------------------------
 // a default implementation of mouse wheel handling that should work for most controls
-bool DGControl::mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers)
+bool DGControl::mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers)
 {
 	SInt32 min = GetControl32BitMinimum(carbonControl);
 	SInt32 max = GetControl32BitMaximum(carbonControl);
@@ -944,6 +975,25 @@ long DGControl::getParameterID()
 }
 
 //-----------------------------------------------------------------------------
+void DGControl::setValue_i(long inValue)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	if (carbonControl != NULL)
+		SetControl32BitValue(carbonControl, inValue);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+long DGControl::getValue_i()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	if (carbonControl != NULL)
+		return GetControl32BitValue(carbonControl);
+#endif
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
 CFStringRef DGControl::createStringFromValue()
 {
 	if ( isContinuousControl() )	// XXX need a better check
@@ -1002,7 +1052,7 @@ bool DGControl::setValueWithString(CFStringRef inString)
 //-----------------------------------------------------------------------------
 void DGControl::setOffset(long x, long y)
 {
-	where.offset(x, y);
+	controlPos.offset(x, y);
 	vizArea.offset(x, y);
 }
 
@@ -1282,7 +1332,7 @@ bool DGCarbonViewControl::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef
 	// cuz it will do its own automation gesture stuff on top of ours
 	if (eventClass == kEventClassControl)
 	{
-		if ( (eventKind == kEventControlClick) || (eventKind == kEventControlHit) )
+		if ( (eventKind == kEventControlClick) || (eventKind == kEventControlHit) || (eventKind == kEventControlTrack) )
 		{
 			if ( (mLastControl != this) && (mLastControl != NULL) )
 				mLastControl->Update(false);
@@ -1313,14 +1363,14 @@ CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEdito
 	if ( !(inEditor->IsCompositWindow()) )
 		return offset;
 
-	OSStatus error;
+	OSStatus status;
 	HIRect controlRect;
-	error = HIViewGetBounds(inControl, &controlRect);
-	if (error == noErr)
+	status = HIViewGetBounds(inControl, &controlRect);
+	if (status == noErr)
 	{
 		HIRect frameRect;
-		error = HIViewGetFrame(inControl, &frameRect);
-		if (error == noErr)
+		status = HIViewGetFrame(inControl, &frameRect);
+		if (status == noErr)
 		{
 			offset.x = controlRect.origin.x - frameRect.origin.x;
 			offset.y = controlRect.origin.y - frameRect.origin.y;
