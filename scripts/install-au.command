@@ -29,7 +29,7 @@ then
 fi
 
 
-# everything being  installed goes into Library, so first make sure that exists
+# everything being installed goes into Library, so first make sure that exists
 LIBRARY="${INSTALL_DOMAIN_BASE}"/Library
 if [ ! -d "${LIBRARY}" ]
 then
@@ -99,8 +99,8 @@ then
 # but if it exists, try to move all documentation files into there
 else
 #	fooey, -v does not work with the cp included in Mac OS X 10.2
-#	$FILEINSTALLER -f -v *.rtf *.html "${DOCS_INSTALL_DEST}"
-	$FILEINSTALLER -f *.rtf *.html "${DOCS_INSTALL_DEST}"
+#	$FILEINSTALLER -f -v *.html "${DOCS_INSTALL_DEST}"
+	$FILEINSTALLER -f *.html "${DOCS_INSTALL_DEST}"
 	DOCS_CP_ERROR=$?
 fi
 
