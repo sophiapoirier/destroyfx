@@ -1,9 +1,31 @@
-#include "dfxguidisplay.h"
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+------------------------------------------------------------------------*/
+
+#include "dfxguitextdisplay.h"
 
 
 //-----------------------------------------------------------------------------
-void genericDisplayTextProcedure(float inValue, char * outText, void * inUserData);
-void genericDisplayTextProcedure(float inValue, char * outText, void * inUserData)
+static void DFXGUI_GenericValue2TextProc(float inValue, char * outText, void * inUserData);
+static void DFXGUI_GenericValue2TextProc(float inValue, char * outText, void * inUserData)
 {
 	if (outText != NULL)
 		sprintf(outText, "%.2f", inValue);
@@ -20,7 +42,7 @@ void genericDisplayTextProcedure(float inValue, char * outText, void * inUserDat
 DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 							long					inParamID, 
 							DGRect *				inRegion,
-							displayTextProcedure	inTextProc, 
+							DGValue2TextProcedure	inTextProc, 
 							void *					inUserData,
 							DGImage *				inBackgroundImage, 
 							DGTextAlignment			inTextAlignment, 
@@ -31,7 +53,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 	backgroundImage(inBackgroundImage), alignment(inTextAlignment), fontSize(inFontSize), fontColor(inFontColor)
 {
 	if (inTextProc == NULL)
-		textProc = genericDisplayTextProcedure;
+		textProc = DFXGUI_GenericValue2TextProc;
 	else
 		textProc = inTextProc;
 	if (inUserData == NULL)
@@ -59,7 +81,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor *			inOwnerEditor,
 		}
 	}
 
-	mouseAxis = kDGTextDisplayMouseAxis_vertical;
+	mouseAxis = kDGAxis_vertical;
 	shouldAntiAlias = true;
 
 	setControlContinuous(true);
@@ -116,61 +138,16 @@ void DGTextDisplay::drawText(DGRect * inRegion, const char * inText, DGGraphicsC
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, const CFStringRef inText, DGGraphicsContext * inContext)
+OSStatus DGTextDisplay::drawCFText(DGRect * inRegion, CFStringRef inText, DGGraphicsContext * inContext)
 {
 	if ( (inText == NULL) || (inRegion == NULL) )
 		return paramErr;
 
-	inContext->setAntialias(shouldAntiAlias);
+	inContext->setFont(fontName, fontSize);
 	inContext->setColor(fontColor);
+	inContext->setAntialias(shouldAntiAlias);
 
-// XXX do something to actually allow you to set the font ID and the font size and the font color
-	const ThemeFontID themeFontID = kThemeLabelFont;
-//kThemeSystemFont kThemeSystemFontDetail kThemeMiniSystemFont kThemeLabelFont
-
-	// this function is only available in Mac OS X 10.3 or higher
-	if (HIThemeDrawTextBox != NULL)
-	{
-		HIRect bounds = inRegion->convertToCGRect( inContext->getPortHeight() );
-
-		HIThemeTextInfo textInfo = {0};
-		textInfo.version = 0;
-		textInfo.state = kThemeStateActive;
-		textInfo.fontID = themeFontID;
-		textInfo.truncationPosition = kHIThemeTextTruncationEnd;
-		textInfo.truncationMaxLines = 1;
-		textInfo.verticalFlushness = kHIThemeTextVerticalFlushCenter;
-		textInfo.options = 0;
-
-		textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushLeft;
-		if (alignment == kDGTextAlign_center)
-			textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushCenter;
-		else if (alignment == kDGTextAlign_right)
-			textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushRight;
-
-		return HIThemeDrawTextBox(inText, &bounds, &textInfo, inContext->getPlatformGraphicsContext(), inContext->getHIThemeOrientation());
-	}
-	else
-	{
-		Rect bounds = inRegion->convertToMacRect();
-
-		SetThemeTextColor(kThemeTextColorWhite, 32, true);	// XXX eh, is there a real way to get the graphics device bit-depth value?
-
-		const ThemeDrawState themDrawState = kThemeStateActive;
-		SInt16 justification = teFlushLeft;
-		if (alignment == kDGTextAlign_center)
-			justification = teCenter;
-		else if (alignment == kDGTextAlign_right)
-			justification = teFlushRight;
-
-		// XXX center the text vertically (yah?)
-		Point heightPoint;
-		OSStatus status = GetThemeTextDimensions(inText, themeFontID, themDrawState, false, &heightPoint, NULL);
-		if (status == noErr)
-			InsetRect( &bounds, 0, ((bounds.bottom-bounds.top) - heightPoint.v) / 2 );
-
-		return DrawThemeTextBox(inText, themeFontID, themDrawState, false, &bounds, justification, NULL);
-	}
+	return inContext->drawCFText(inRegion, inText, alignment);
 }
 #endif
 
@@ -190,9 +167,9 @@ void DGTextDisplay::mouseTrack(float inXpos, float inYpos, unsigned long inMouse
 	SInt32 oldval = val;
 
 	float diff = 0.0f;
-	if (mouseAxis & kDGTextDisplayMouseAxis_horizontal)
+	if (mouseAxis & kDGAxis_horizontal)
 		diff += inXpos - lastX;
-	if (mouseAxis & kDGTextDisplayMouseAxis_vertical)
+	if (mouseAxis & kDGAxis_vertical)
 		diff += lastY - inYpos;
 	if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
 		diff /= getFineTuneFactor();
