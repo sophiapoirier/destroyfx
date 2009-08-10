@@ -1,4 +1,24 @@
 /*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for doing all kinds of fancy plugin parameter stuff.
 written by Sophia Poirier, October 2002
@@ -170,6 +190,8 @@ for the value strings.
 	typedef UINT32	uint32_t;
 	typedef INT64	int64_t;
 	typedef UINT64	uint64_t;
+#else
+	#include <stdint.h>
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -257,6 +279,10 @@ enum {
 	kDfxParamAttribute_unused = 1 << 1	// isn't being used at all (a place-holder?); don't reveal to the host or anyone
 };
 typedef uint32_t	DfxParamAttribute;
+
+
+// this is a twiddly value for when casting with decimal types
+const double kDfxParam_IntegerPadding = 0.001;
 
 
 
@@ -508,6 +534,35 @@ private:
 	#ifdef TARGET_API_AUDIOUNIT
 		CFStringRef cfname;
 	#endif
+};
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
+class DfxSmoothedValue
+{
+public:
+	DfxSmoothedValue(double inSmoothingTime = 0.100);
+	void setValue(double inTargetValue);
+	void setValueNow(double inValue);
+	double getValue()
+		{	return mCurrentValue;	}
+	float getValue_f()
+		{	return static_cast<float>(mCurrentValue);	}
+	void inc();
+	void setSmoothingTime(double inSmoothingTime);
+	void setSampleRate(double inSampleRate);
+
+private:
+	double mCurrentValue, mTargetValue;
+	double mValueStep;
+	double mSmoothDur_seconds;
+	long mSmoothDur_samples, mSmoothCount;
+	double mSampleRate;
+	bool mReinit;
 };
 
 
