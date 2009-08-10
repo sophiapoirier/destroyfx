@@ -1,3 +1,3 @@
 #include "midigaterdef.h"
 
-#include "dfxplugin.r"
+#include "dfxplugin-audiounit.r"
