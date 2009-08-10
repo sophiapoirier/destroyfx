@@ -1,4 +1,26 @@
-#include "dfxgui.h"
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+------------------------------------------------------------------------*/
+
+#include "dfxguieditor.h"
 
 #include "dfxplugin.h"
 #include "dfx-au-utilities.h"
@@ -45,7 +67,7 @@ const SInt32 kDfxGui_TransparencySliderControlID = 0;
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
-:	AUCarbonViewBase(inInstance, kDfxGui_ParameterNotificationInterval)
+:	TARGET_API_EDITOR_BASE_CLASS(inInstance, kDfxGui_ParameterNotificationInterval)
 {
 /*
 CFStringRef text = CFSTR("yo dude let's go");
@@ -102,11 +124,17 @@ CFRelease(mut);
 	mousedOverControlsList = NULL;
 
 	numAudioChannels = 0;
+	mIsOpen = false;
 }
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::~DfxGuiEditor()
 {
+	if ( IsOpen() )
+		CloseEditor();
+
+	mIsOpen = false;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		#ifdef TARGET_API_AUDIOUNIT
 			if (GetEditAudioUnit() != NULL)
@@ -339,7 +367,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 
 
 	// let the child class do its thing
-	long openErr = open();
+	long openErr = OpenEditor();
 	if (openErr == noErr)
 	{
 		// set the size of the embedding pane
@@ -362,16 +390,30 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 		post_open();
 	}
 
+	if (openErr == noErr)
+		mIsOpen = true;
+
 	return openErr;
 }
 #endif
 // TARGET_API_AUDIOUNIT
 
+//-----------------------------------------------------------------------------
+// recursively traverse the controls list so that embed is called on each control from last to first
+void DfxGuiEditor::embedAllControlsInReverseOrder(DGControlsList * inControlsList)
+{
+	if (inControlsList == NULL)
+		return;
+	if (inControlsList->next != NULL)
+		embedAllControlsInReverseOrder(inControlsList->next);
+	inControlsList->control->embed();
+}
+
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 ComponentResult DfxGuiEditor::Version()
 {
-	return PLUGIN_VERSION;
+	return DFX_CompositePluginVersionNumberValue();
 }
 #endif
 // TARGET_API_AUDIOUNIT
@@ -546,7 +588,7 @@ bool DfxGuiEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEven
 	}
 
 	// let the parent implementation do its thing
-	return AUCarbonViewBase::HandleEvent(inHandlerRef, inEvent);
+	return TARGET_API_EDITOR_BASE_CLASS::HandleEvent(inHandlerRef, inEvent);
 }
 #endif
 // TARGET_API_AUDIOUNIT
@@ -565,6 +607,7 @@ void DfxGuiEditor::do_idle()
 		tempcl->control->idle();
 		tempcl = tempcl->next;
 	}
+	// XXX call background control idle as well?
 }
 
 #if TARGET_OS_MAC
@@ -673,100 +716,6 @@ void DfxGuiEditor::setWindowTransparency(float inTransparencyLevel)
 #ifdef TARGET_API_AUDIOUNIT
 	SetWindowAlpha(GetCarbonWindow(), inTransparencyLevel);
 #endif
-}
-
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-// this function looks for the plugin's documentation file in the appropriate system location, 
-// within a given file system domain, and returns a CFURLRef for the file if it is found, 
-// and NULL otherwise (or if some error is encountered along the way)
-CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, short inDomain)
-{
-	if (inDocsFileName == NULL)
-		return NULL;
-
-	// first find the base directory for the system documentation directory
-	FSRef docsDirRef;
-	OSErr error = FSFindFolder(inDomain, kDocumentationFolderType, kDontCreateFolder, &docsDirRef);
-	if (error == noErr)
-	{
-		// convert the FSRef of the documentation directory to a CFURLRef (for use in the next steps)
-		CFURLRef docsDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &docsDirRef);
-		if (docsDirURL != NULL)
-		{
-			// create a CFURL for the "manufacturer name" directory within the documentation directory
-			CFURLRef dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL, CFSTR(PLUGIN_CREATOR_NAME_STRING), true);
-			CFRelease(docsDirURL);
-			if (dfxDocsDirURL != NULL)
-			{
-				// create a CFURL for the documentation file within the "manufacturer name" directory
-				CFURLRef docsFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL, inDocsFileName, false);
-				CFRelease(dfxDocsDirURL);
-				if (docsFileURL != NULL)
-				{
-					// check to see if the hypothetical documentation file actually exists 
-					// (CFURLs can reference files that don't exist)
-					SInt32 urlErrorCode = 0;
-					CFBooleanRef docsFileExists = (CFBooleanRef) CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL, kCFURLFileExists, &urlErrorCode);
-					if (docsFileExists != NULL)
-					{
-						// only return the file's CFURL if the file exists
-						if (docsFileExists == kCFBooleanTrue)
-							return docsFileURL;
-						CFRelease(docsFileExists);
-					}
-					CFRelease(docsFileURL);
-				}
-			}
-		}
-	}
-
-	return NULL;
-}
-#endif
-
-//-----------------------------------------------------------------------------
-// XXX this function should really go somewhere else, like in that promised DFX utilities file or something like that
-long launch_documentation()
-{
-
-#if TARGET_OS_MAC
-	// no assumptions can be made about how long the reference is valid, 
-	// and the caller should not attempt to release the CFBundleRef object
-	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
-	if (pluginBundleRef != NULL)
-	{
-		CFStringRef docsFileName = CFSTR( PLUGIN_NAME_STRING" manual.html" );
-		CFURLRef docsFileURL = CFBundleCopyResourceURL(pluginBundleRef, docsFileName, NULL, NULL);
-		// if the documentation file is not found in the bundle, then search in appropriate system locations
-		if (docsFileURL == NULL)
-			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kUserDomain);
-		if (docsFileURL == NULL)
-			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kLocalDomain);
-		if (docsFileURL == NULL)
-			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kNetworkDomain);
-		if (docsFileURL != NULL)
-		{
-// open the manual with the default application for the file type
-#if 0
-			OSStatus status = LSOpenCFURLRef(docsFileURL, NULL);
-// open the manual with Apple's system Help Viewer
-#else
-			OSStatus status = coreFoundationUnknownErr;
-			CFStringRef docsFileUrlString = CFURLGetString(docsFileURL);
-			if (docsFileUrlString != NULL)
-			{
-				status = AHGotoPage(NULL, docsFileUrlString, NULL);
-			}
-#endif
-			CFRelease(docsFileURL);
-			return status;
-		}
-	}
-
-	return fnfErr;	// file not found error
-#endif
-
 }
 
 
@@ -1416,18 +1365,18 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 			return false;
 
 		EventMouseWheelAxis macMouseWheelAxis = 0;
-		DGMouseWheelAxis dgMouseWheelAxis = kDGMouseWheelAxis_vertical;
+		DGAxis dgMouseWheelAxis = kDGAxis_vertical;
 		status = GetEventParameter(inEvent, kEventParamMouseWheelAxis, typeMouseWheelAxis, NULL, sizeof(macMouseWheelAxis), NULL, &macMouseWheelAxis);
 		if (status == noErr)
 		{
 			switch (macMouseWheelAxis)
 			{
 				case kEventMouseWheelAxisX:
-					dgMouseWheelAxis = kDGMouseWheelAxis_horizontal;
+					dgMouseWheelAxis = kDGAxis_horizontal;
 					break;
 				case kEventMouseWheelAxisY:
 				default:
-					dgMouseWheelAxis = kDGMouseWheelAxis_vertical;
+					dgMouseWheelAxis = kDGAxis_vertical;
 					break;
 			}
 		}
@@ -1839,6 +1788,7 @@ static void DFXGUI_AudioUnitEventListenerProc(void * inCallbackRefCon, void * in
 					break;
 			#endif
 				default:
+					ourOwnerEditor->HandleAUPropertyChange(inObject, inEvent->mArgument.mProperty, inEventHostTime);
 					break;
 			}
 		}
