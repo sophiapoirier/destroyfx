@@ -1,4 +1,24 @@
 /*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
 written by Sophia Poirier, October 2002 - 2004
@@ -6,6 +26,7 @@ written by Sophia Poirier, October 2002 - 2004
 
 #include "dfxplugin.h"
 
+#include <stdio.h>
 #include <time.h>	// for time(), which is used to feed srand()
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -14,8 +35,9 @@ written by Sophia Poirier, October 2002 - 2004
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
 	// If using the VST GUI interface, we need the class definition
-	// for AEffGUIEditor so we can send it parameter changes.
+	// for AEffGUIEditor so that we can send it parameter changes.
 	#include "vstgui.h"
+	extern AEffEditor * DFXGUI_NewEditorInstance(DfxPlugin * inEffectInstance);
 #endif
 
 //#define DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
@@ -132,8 +154,8 @@ DfxPlugin::DfxPlugin(
 	#if TARGET_PLUGIN_USES_DSPCORE
 		dspcores = (DfxPluginCore**) malloc(getnumoutputs() * sizeof(DfxPluginCore*));
 		// need to save instantiating the cores for the inheriting plugin class constructor
-		for (unsigned long ii=0; ii < getnumoutputs(); ii++)
-			dspcores[ii] = NULL;
+		for (unsigned long ch=0; ch < getnumoutputs(); ch++)
+			dspcores[ch] = NULL;
 	#endif
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -141,6 +163,9 @@ DfxPlugin::DfxPlugin(
 		programsAreChunks();
 	#endif
 
+	#if TARGET_PLUGIN_HAS_GUI
+		editor = DFXGUI_NewEditorInstance(this);
+	#endif
 #endif
 // end VST stuff
 
@@ -194,11 +219,11 @@ DfxPlugin::~DfxPlugin()
 		#if TARGET_PLUGIN_USES_DSPCORE
 			if (dspcores != NULL)
 			{
-				for (unsigned long i=0; i < getnumoutputs(); i++)
+				for (unsigned long ch=0; ch < getnumoutputs(); ch++)
 				{
-					if (dspcores[i] != NULL)
-						delete dspcores[i];
-					dspcores[i] = NULL;
+					if (dspcores[ch] != NULL)
+						delete dspcores[ch];
+					dspcores[ch] = NULL;
 				}
 				free(dspcores);
 			}
@@ -590,7 +615,7 @@ void DfxPlugin::setparametertouched(long inParameterIndex, bool inTouched)
 //-----------------------------------------------------------------------------
 // convenience methods for expanding and contracting parameter values 
 // using the min/max/curvetype/curvespec/etc. settings of a given parameter
-double DfxPlugin::expandparametervalue_index(long inParameterIndex, double genValue)
+double DfxPlugin::expandparametervalue(long inParameterIndex, double genValue)
 {
 	if (parameterisvalid(inParameterIndex))
 		return parameters[inParameterIndex].expand(genValue);
@@ -598,7 +623,7 @@ double DfxPlugin::expandparametervalue_index(long inParameterIndex, double genVa
 		return 0.0;
 }
 //-----------------------------------------------------------------------------
-double DfxPlugin::contractparametervalue_index(long inParameterIndex, double realValue)
+double DfxPlugin::contractparametervalue(long inParameterIndex, double realValue)
 {
 	if (parameterisvalid(inParameterIndex))
 		return parameters[inParameterIndex].contract(realValue);
@@ -764,7 +789,7 @@ void DfxPlugin::setpresetparameter_b(long inPresetIndex, long inParameterIndex, 
 void DfxPlugin::setpresetparameter_gen(long inPresetIndex, long inParameterIndex, double genValue)
 {
 	if ( parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex) )
-		parameters[inParameterIndex].accept_f(expandparametervalue_index(inParameterIndex, genValue), presets[inPresetIndex].values[inParameterIndex]);
+		parameters[inParameterIndex].accept_f(expandparametervalue(inParameterIndex, genValue), presets[inPresetIndex].values[inParameterIndex]);
 }
 
 //-----------------------------------------------------------------------------
@@ -872,6 +897,12 @@ void DfxPlugin::getpluginname(char * outText)
 {
 	if (outText != NULL)
 		strcpy(outText, PLUGIN_NAME_STRING);
+}
+
+//-----------------------------------------------------------------------------
+long DfxPlugin::getpluginversion()
+{
+	return DFX_CompositePluginVersionNumberValue();
 }
 
 //-----------------------------------------------------------------------------
@@ -1101,7 +1132,7 @@ void DfxPlugin::processtimeinfo()
 	status = CallHostBeatAndTempo(&beat, &tempo);
 	if (status == noErr)
 	{
-#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+#ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 fprintf(stderr, "\ntempo = %.2f\nbeat = %.2f\n", tempo, beat);
 #endif
 		timeinfo.tempoIsValid = true;
@@ -1111,7 +1142,7 @@ fprintf(stderr, "\ntempo = %.2f\nbeat = %.2f\n", tempo, beat);
 
 		hostCanDoTempo = true;
 	}
-#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+#ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 else fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
 #endif
 
@@ -1129,7 +1160,7 @@ else fprintf(stderr, "CallHostBeatAndTempo() error %ld\n", status);
 		// get the song beat position of the beginning of the current measure
 		timeinfo.barPosIsValid = true;
 		timeinfo.barPos = currentMeasureDownBeat;
-#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+#ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, timeSigDenominator, currentMeasureDownBeat);
 #endif
 		// get the numerator of the time signature - this is the number of beats per measure
@@ -1137,7 +1168,7 @@ fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, 
 		timeinfo.numerator = (double) timeSigNumerator;
 		timeinfo.denominator = (double) timeSigDenominator;
 	}
-#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+#ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 #endif
 
@@ -1153,13 +1184,13 @@ else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 		// determine whether the playback position or state has just changed
 		if (status == noErr)
 		{
-#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+#ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 fprintf(stderr, "is playing = %s\ntransport changed = %s\n", isPlaying ? "true" : "false", transportStateChanged ? "true" : "false");
 #endif
 			timeinfo.playbackChanged = transportStateChanged;
 			timeinfo.playbackIsOccurring = isPlaying;
 		}
-#if DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
+#ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 #endif
 	}
@@ -1381,6 +1412,12 @@ fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset 
 
 #pragma mark -
 #pragma mark --- helper functions ---
+
+//-----------------------------------------------------------------------------
+long DFX_CompositePluginVersionNumberValue()
+{
+	return (PLUGIN_VERSION_MAJOR << 16) | (PLUGIN_VERSION_MINOR << 8) | PLUGIN_VERSION_BUGFIX;
+}
 
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array of float values
@@ -1759,6 +1796,129 @@ long launch_url(const char * urlstring)
 #endif
 }
 
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+// this function looks for the plugin's documentation file in the appropriate system location, 
+// within a given file system domain, and returns a CFURLRef for the file if it is found, 
+// and NULL otherwise (or if some error is encountered along the way)
+CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, short inDomain)
+{
+	if (inDocsFileName == NULL)
+		return NULL;
+
+	// first find the base directory for the system documentation directory
+	FSRef docsDirRef;
+	OSErr error = FSFindFolder(inDomain, kDocumentationFolderType, kDontCreateFolder, &docsDirRef);
+	if (error == noErr)
+	{
+		// convert the FSRef of the documentation directory to a CFURLRef (for use in the next steps)
+		CFURLRef docsDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &docsDirRef);
+		if (docsDirURL != NULL)
+		{
+			// create a CFURL for the "manufacturer name" directory within the documentation directory
+			CFURLRef dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL, CFSTR(PLUGIN_CREATOR_NAME_STRING), true);
+			CFRelease(docsDirURL);
+			if (dfxDocsDirURL != NULL)
+			{
+				// create a CFURL for the documentation file within the "manufacturer name" directory
+				CFURLRef docsFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL, inDocsFileName, false);
+				CFRelease(dfxDocsDirURL);
+				if (docsFileURL != NULL)
+				{
+					// check to see if the hypothetical documentation file actually exists 
+					// (CFURLs can reference files that don't exist)
+					SInt32 urlErrorCode = 0;
+					CFBooleanRef docsFileExists = (CFBooleanRef) CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL, kCFURLFileExists, &urlErrorCode);
+					if (docsFileExists != NULL)
+					{
+						// only return the file's CFURL if the file exists
+						if (docsFileExists == kCFBooleanTrue)
+							return docsFileURL;
+						CFRelease(docsFileExists);
+					}
+					CFRelease(docsFileURL);
+				}
+			}
+		}
+	}
+
+	return NULL;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+// XXX this function should really go somewhere else, like in that promised DFX utilities file or something like that
+long launch_documentation()
+{
+
+#if TARGET_OS_MAC
+	// no assumptions can be made about how long the reference is valid, 
+	// and the caller should not attempt to release the CFBundleRef object
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
+	if (pluginBundleRef != NULL)
+	{
+		CFStringRef docsFileName = CFSTR( PLUGIN_NAME_STRING" manual.html" );
+	#ifdef PLUGIN_DOCUMENTATION_FILE_NAME
+		docsFileName = CFSTR(PLUGIN_DOCUMENTATION_FILE_NAME);
+	#endif
+		CFStringRef docsSubdirName = NULL;
+	#ifdef PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME
+		docsSubdirName = CFSTR(PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME);
+	#endif
+		CFURLRef docsFileURL = CFBundleCopyResourceURL(pluginBundleRef, docsFileName, NULL, docsSubdirName);
+		// if the documentation file is not found in the bundle, then search in appropriate system locations
+		if (docsFileURL == NULL)
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kUserDomain);
+		if (docsFileURL == NULL)
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kLocalDomain);
+		if (docsFileURL == NULL)
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kNetworkDomain);
+		if (docsFileURL != NULL)
+		{
+// open the manual with the default application for the file type
+#if 0
+			OSStatus status = LSOpenCFURLRef(docsFileURL, NULL);
+// open the manual with Apple's system Help Viewer
+#else
+		#if 1
+			// starting in Mac OS X 10.5.7, we get an error if the help book is not registered
+			// XXX please note that this also requires adding a CFBundleHelpBookFolder key/value to your Info.plist
+			static bool helpBookRegistered = false;
+			if (!helpBookRegistered)
+			{
+				CFURLRef bundleURL = CFBundleCopyBundleURL(pluginBundleRef);
+				if (bundleURL != NULL)
+				{
+					FSRef bundleRef = {0};
+					Boolean fsrefSuccess = CFURLGetFSRef(bundleURL, &bundleRef);
+					if (fsrefSuccess)
+					{
+						OSStatus registerStatus = AHRegisterHelpBook(&bundleRef);
+						if (registerStatus == noErr)
+							helpBookRegistered = true;
+					}
+					CFRelease(bundleURL);
+				}
+			}
+		#endif
+			OSStatus status = coreFoundationUnknownErr;
+			CFStringRef docsFileUrlString = CFURLGetString(docsFileURL);
+			if (docsFileUrlString != NULL)
+			{
+				status = AHGotoPage(NULL, docsFileUrlString, NULL);
+			}
+#endif
+			CFRelease(docsFileURL);
+			return status;
+		}
+	}
+
+	return fnfErr;	// file not found error
+#endif
+
+	return 0;
+}
+
 //-----------------------------------------------------------------------------
 const char * DFX_GetNameForMIDINote(long inMidiNote)
 {
@@ -1770,3 +1930,64 @@ const char * DFX_GetNameForMIDINote(long inMidiNote)
 	sprintf(midiNoteName, "%s %ld", keyNames[keyNameIndex], octaveNumber);
 	return midiNoteName;
 }
+
+//-----------------------------------------------------------------------------
+uint64_t DFX_GetMillisecondCount()
+{
+#if TARGET_OS_MAC
+	// convert from 1/60 second to millisecond values
+	return (uint64_t)TickCount() * 100 / 6;
+#endif
+
+#if WIN32
+	#if _WIN32_WINNT >= 0x0600
+		return GetTickCount64();
+	#else
+		return (UINT64) GetTickCount();
+	#endif
+#endif
+}
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding)
+{
+	CFIndex maxBytesPerCharacter;
+	switch (inCStringEncoding)
+	{
+		case kCFStringEncodingUTF8:
+			maxBytesPerCharacter = 4;
+			break;
+		case kCFStringEncodingUnicode:
+			maxBytesPerCharacter = 2;
+			break;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
+		case kCFStringEncodingUTF16BE:
+		case kCFStringEncodingUTF16LE:
+			maxBytesPerCharacter = 2;
+			break;
+		case kCFStringEncodingUTF32:
+		case kCFStringEncodingUTF32BE:
+		case kCFStringEncodingUTF32LE:
+			maxBytesPerCharacter = 4;
+			break;
+#endif
+		default:
+			maxBytesPerCharacter = 1;
+			break;
+	}
+
+	CFIndex stringBufferSize = (CFStringGetLength(inCFString) + 1) * maxBytesPerCharacter;
+	char * outputString = (char*) malloc(stringBufferSize);
+	if (outputString == NULL)
+		return NULL;
+	Boolean stringSuccess = CFStringGetCString(inCFString, outputString, stringBufferSize, inCStringEncoding);
+	if (!stringSuccess)
+	{
+		free(outputString);
+		outputString = NULL;
+	}
+
+	return outputString;
+}
+#endif
