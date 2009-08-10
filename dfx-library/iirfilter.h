@@ -1,28 +1,65 @@
-/*------------------- by Sophia Poirier  ][  December 2001 ------------------*/
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2001-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
+Welcome to our IIR filter.
+by Sophia Poirier  ][  December 2001
+------------------------------------------------------------------------*/
 
 #ifndef __DFX_IIR_FILTER_H
 #define __DFX_IIR_FILTER_H
 
 
-const float SHELF_START_IIR = 0.333f;
+#include "dfxmath.h"
 
 
-class IIRfilter
+const double SHELF_START_IIR_LOWPASS = 0.333;
+extern const double kDfxIIRFilter_DefaultQ_LP_HP;
+
+typedef enum {
+	kDfxIIRFilterType_Lowpass,
+	kDfxIIRFilterType_Highpass,
+	kDfxIIRFilterType_Bandpass,
+	kDfxIIRFilterType_Peak,
+	kDfxIIRFilterType_Notch,
+	kDfxIIRFilterType_LowShelf,
+	kDfxIIRFilterType_HighShelf,
+	kDfxIIRFilterType_NumTypes
+} DfxIIRFilterType;
+
+
+class DfxIIRfilter
 {
 public:
-	IIRfilter();
+	DfxIIRfilter();
 
-	void calculateLowpassCoefficients(float inCutoff, float inSampleRate);
-	void calculateHighpassCoefficients(float inCutoff, float inSampleRate);
-	void copyCoefficients(IIRfilter * inSourceFilter);
+	void calculateCoefficients(DfxIIRFilterType inFilterType, double inFreq, double inQ, double inGain);
+	void calculateLowpassCoefficients(double inCutoffFreq, double inQ = kDfxIIRFilter_DefaultQ_LP_HP);
+	void calculateHighpassCoefficients(double inCutoffFreq, double inQ = kDfxIIRFilter_DefaultQ_LP_HP);
+	void calculateBandpassCoefficients(double inCenterFreq, double inQ);
+	void setCoefficients(float inA0, float inA1, float inA2, float inB1, float inB2);
+	void copyCoefficients(DfxIIRfilter * inSourceFilter);
+	void setSampleRate(double inSampleRate);
 
-	void reset()
-	{
-		prevIn = prevprevIn = prevOut = prevprevOut = prevprevprevOut = currentOut = 0.0f;
-	}
-
-	float prevIn, prevprevIn, prevOut, prevprevOut, prevprevprevOut, currentOut;
-	float pOutCoeff, ppOutCoeff, pInCoeff, ppInCoeff, inCoeff;
+	void reset();
 
 
 #ifdef USING_HERMITE
@@ -33,21 +70,25 @@ public:
 	{
 	#ifdef USING_HERMITE
 		// store 4 samples of history if we're preprocessing for Hermite interpolation
-		prevprevprevOut = prevprevOut;
+		mPrevPrevPrevOut = mPrevPrevOut;
 	#endif
-		prevprevOut = prevOut;
-		prevOut = currentOut;
+		mPrevPrevOut = mPrevOut;
+		mPrevOut = mCurrentOut;
 
-//		currentOut = (inSample*inCoeff) + (prevIn*pInCoeff) + (prevprevIn*ppInCoeff) 
-//					- (prevOut*pOutCoeff) - (prevprevOut*ppOutCoeff);
-		currentOut = ((inSample+prevprevIn)*inCoeff) + (prevIn*pInCoeff) 
-					- (prevOut*pOutCoeff) - (prevprevOut*ppOutCoeff);
+#ifdef USE_OPTIMIZATION_THAT_ONLY_WORKS_FOR_LP_HP_NOTCH
+		mCurrentOut = ((inSample+mPrevPrevIn)*mInCoeff) + (mPrevIn*mPrevInCoeff) 
+						- (mPrevOut*mPrevOutCoeff) - (mPrevPrevOut*mPrevPrevOutCoeff);
+#else
+		mCurrentOut = (inSample*mInCoeff) + (mPrevIn*mPrevInCoeff) + (mPrevPrevIn*mPrevPrevInCoeff) 
+						- (mPrevOut*mPrevOutCoeff) - (mPrevPrevOut*mPrevPrevOutCoeff);
+#endif
+		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
 
-		prevprevIn = prevIn;
-		prevIn = inSample;
+		mPrevPrevIn = mPrevIn;
+		mPrevIn = inSample;
 
 	#ifndef USING_HERMITE
-		return currentOut;
+		return mCurrentOut;
 	#endif
 	}
 
@@ -57,15 +98,17 @@ public:
 
 	void processH1(float inSample)
 	{
-		prevprevprevOut = prevprevOut;
-		prevprevOut = prevOut;
-		prevOut = currentOut;
+		mPrevPrevPrevOut = mPrevPrevOut;
+		mPrevPrevOut = mPrevOut;
+		mPrevOut = mCurrentOut;
 		//
-		currentOut = ( (inSample+prevprevIn) * inCoeff ) + (prevIn  * pInCoeff)
-					- (prevOut * pOutCoeff) - (prevprevOut * ppOutCoeff);
+		// XXX this uses an optimization that only works for LP, HP, and notch filters
+		mCurrentOut = ( (inSample+mPrevPrevIn) * mInCoeff ) + (mPrevIn  * mPrevInCoeff)
+						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
+		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
 		//
-		prevprevIn = prevIn;
-		prevIn = inSample;
+		mPrevPrevIn = mPrevIn;
+		mPrevIn = inSample;
 	}
 
 	void processH2(float * inAudio, long inPos, long inBufferSize)
@@ -73,20 +116,22 @@ public:
 	  float in0 = inAudio[inPos];
 	  float in1 = inAudio[ (inPos + 1) % inBufferSize ];
 
-		prevprevprevOut = prevprevOut;
-		prevprevOut = prevOut;
-		prevOut = currentOut;
-		currentOut = ( (in0+prevprevIn) * inCoeff ) + (prevIn * pInCoeff)
-					- (prevOut * pOutCoeff) - (prevprevOut * ppOutCoeff);
+		mPrevPrevPrevOut = mPrevPrevOut;
+		mPrevPrevOut = mPrevOut;
+		mPrevOut = mCurrentOut;
+		// XXX this uses an optimization that only works for LP, HP, and notch filters
+		mCurrentOut = ( (in0+mPrevPrevIn) * mInCoeff ) + (mPrevIn * mPrevInCoeff)
+						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
 		//
-		prevprevprevOut = prevprevOut;
-		prevprevOut = prevOut;
-		prevOut = currentOut;
-		currentOut = ( (in1+prevIn) * inCoeff ) + (in0 * pInCoeff)
-					- (prevOut * pOutCoeff) - (prevprevOut * ppOutCoeff);
+		mPrevPrevPrevOut = mPrevPrevOut;
+		mPrevPrevOut = mPrevOut;
+		mPrevOut = mCurrentOut;
+		mCurrentOut = ( (in1+mPrevIn) * mInCoeff ) + (in0 * mPrevInCoeff)
+						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
 		//
-		prevprevIn = in0;
-		prevIn = in1;
+		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
+		mPrevPrevIn = in0;
+		mPrevIn = in1;
 	}
 
 	void processH3(float * inAudio, long inPos, long inBufferSize)
@@ -95,20 +140,22 @@ public:
 	  float in1 = inAudio[ (inPos + 1) % inBufferSize ];
 	  float in2 = inAudio[ (inPos + 2) % inBufferSize ];
 
-		prevprevprevOut = ( (in0+prevprevIn) * inCoeff ) + (prevIn * pInCoeff)
-						- (currentOut * pOutCoeff) - (prevOut * ppOutCoeff);
-		prevprevOut = ((in1+prevIn) * inCoeff) + (in0 * pInCoeff)
-						- (prevprevprevOut * pOutCoeff) - (currentOut * ppOutCoeff);
-		prevOut = ((in2+in0) * inCoeff) + (in1 * pInCoeff)
-						- (prevprevOut * pOutCoeff) - (prevprevprevOut * ppOutCoeff);
+		// XXX this uses an optimization that only works for LP, HP, and notch filters
+		mPrevPrevPrevOut = ( (in0+mPrevPrevIn) * mInCoeff ) + (mPrevIn * mPrevInCoeff)
+							- (mCurrentOut * mPrevOutCoeff) - (mPrevOut * mPrevPrevOutCoeff);
+		mPrevPrevOut = ((in1+mPrevIn) * mInCoeff) + (in0 * mPrevInCoeff)
+						- (mPrevPrevPrevOut * mPrevOutCoeff) - (mCurrentOut * mPrevPrevOutCoeff);
+		mPrevOut = ((in2+in0) * mInCoeff) + (in1 * mPrevInCoeff)
+					- (mPrevPrevOut * mPrevOutCoeff) - (mPrevPrevPrevOut * mPrevPrevOutCoeff);
 		//
-		currentOut = prevOut;
-		prevOut = prevprevOut;
-		prevprevOut = prevprevprevOut;
-		prevprevprevOut = currentOut;
+		mCurrentOut = mPrevOut;
+		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
+		mPrevOut = mPrevPrevOut;
+		mPrevPrevOut = mPrevPrevPrevOut;
+		mPrevPrevPrevOut = mCurrentOut;
 		//
-		prevprevIn = in1;
-		prevIn = in2;
+		mPrevPrevIn = in1;
+		mPrevIn = in2;
 	}
 
 	void processH4(float * inAudio, long inPos, long inBufferSize)
@@ -118,40 +165,47 @@ public:
 	  float in2 = inAudio[ (inPos + 2) % inBufferSize ];
 	  float in3 = inAudio[ (inPos + 3) % inBufferSize ];
 
-		prevprevprevOut = ( (in0+prevprevIn) * inCoeff ) + (prevIn * pInCoeff)
-						- (currentOut * pOutCoeff) - (prevOut * ppOutCoeff);
-		prevprevOut = ((in1+prevIn) * inCoeff) + (in0 * pInCoeff)
-						- (prevprevprevOut * pOutCoeff) - (currentOut * ppOutCoeff);
-		prevOut = ((in2+in0) * inCoeff) + (in1 * pInCoeff)
-						- (prevprevOut * pOutCoeff) - (prevprevprevOut * ppOutCoeff);
-		currentOut = ((in3+in1) * inCoeff) + (in2 * pInCoeff)
-						- (prevOut * pOutCoeff) - (prevprevOut * ppOutCoeff);
+		// XXX this uses an optimization that only works for LP, HP, and notch filters
+		mPrevPrevPrevOut = ( (in0+mPrevPrevIn) * mInCoeff ) + (mPrevIn * mPrevInCoeff)
+							- (mCurrentOut * mPrevOutCoeff) - (mPrevOut * mPrevPrevOutCoeff);
+		mPrevPrevOut = ((in1+mPrevIn) * mInCoeff) + (in0 * mPrevInCoeff)
+						- (mPrevPrevPrevOut * mPrevOutCoeff) - (mCurrentOut * mPrevPrevOutCoeff);
+		mPrevOut = ((in2+in0) * mInCoeff) + (in1 * mPrevInCoeff)
+					- (mPrevPrevOut * mPrevOutCoeff) - (mPrevPrevPrevOut * mPrevPrevOutCoeff);
+		mCurrentOut = ((in3+in1) * mInCoeff) + (in2 * mPrevInCoeff)
+						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
+		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
 		//
-		prevprevIn = in2;
-		prevIn = in3;
+		mPrevPrevIn = in2;
+		mPrevIn = in3;
+	}
+
+	// 4-point Hermite spline interpolation for use with IIR filter output histories
+	float interpolateHermitePostFilter(double inPos)
+	{
+		float posFract = (float) (inPos - floor(inPos));	// XXX or fmod(inPos, 1.0) ?
+
+		float a = ( (3.0f*(mPrevPrevOut-mPrevOut)) - 
+					mPrevPrevPrevOut + mCurrentOut ) * 0.5f;
+		float b = (2.0f*mPrevOut) + mPrevPrevPrevOut - 
+					(2.5f*mPrevPrevOut) - (mCurrentOut*0.5f);
+		float c = (mPrevOut - mPrevPrevPrevOut) * 0.5f;
+
+		return (( ((a*posFract)+b) * posFract + c ) * posFract) + mPrevPrevOut;
 	}
 
 #endif
 // end of USING_HERMITE batch of functions
 
-};	// end of IIRfilter class definition
 
+private:
+	DfxIIRFilterType mFilterType;
+	double mFilterFreq, mFilterQ, mFilterGain;
+	double mSampleRate;
 
-
-// 4-point Hermite spline interpolation for use with IIR filter output histories
-inline float interpolateHermitePostFilter(IIRfilter * inFilter, double inPos)
-{
-	long pos_i = (long)inPos;
-	float posFract = (float) (inPos - (double)pos_i);
-
-	float a = ( (3.0f*(inFilter->prevprevOut-inFilter->prevOut)) - 
-				inFilter->prevprevprevOut + inFilter->currentOut ) * 0.5f;
-	float b = (2.0f*inFilter->prevOut) + inFilter->prevprevprevOut - 
-				(2.5f*inFilter->prevprevOut) - (inFilter->currentOut*0.5f);
-	float c = (inFilter->prevOut - inFilter->prevprevprevOut) * 0.5f;
-
-	return (( ((a*posFract)+b) * posFract + c ) * posFract) + inFilter->prevprevOut;
-}
+	float mPrevIn, mPrevPrevIn, mPrevOut, mPrevPrevOut, mPrevPrevPrevOut, mCurrentOut;
+	float mPrevOutCoeff, mPrevPrevOutCoeff, mPrevInCoeff, mPrevPrevInCoeff, mInCoeff;
+};
 
 
 #endif
