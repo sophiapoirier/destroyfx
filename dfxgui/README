@@ -6,17 +6,14 @@ specifically and nicely with DfxPlugin and will work with all of the
 plugin formats that DfxPlugin supports (currently Audio Unit for Mac
 and VST for Windows).
 
-For right now, though, we are working on things in a kind of
-disconnected way.  Tom is focusing on the VST Windows side of things
-and I am focusing on the Audio Unit Mac side of things.  We are both
-still learning about some of the platform-specific technical stuff
-involved in making plugin graphics.  So for now, I am checking in my
-work into this tempory sub-directory called dfxgui_mac.  Everything in
-here is just for AU graphics in Mac OS X.  This work is still very
-much under development.  Eventually we will better abstract our
-platform-specific work and coalesce this all into a unified code base
-for our graphics framework.  Update:  We are starting to work on that
-now.
+Originally the plan was that I was going to make a Mac / Audio Unit
+specific implementation and Tom was going to make a Windows / VST
+specific implementation.  The former is quite far along now, but the
+latter never really happened, so I have begun work on a VST
+implementation that is VSTGUI-based.  We originally wanted to make our
+own from scratch because of the number of bugs and unpleasantries in
+VSTGUI, but since that doesn't look like it's going to happen any time
+soon/ever, the VSTGUI compromise is being made as a shortcut.
 
 The work that I have done so far for AU graphics in Mac OS X owes a
 great deal to Urs Heckmann's wonderful CAUGui framework.  His code was
