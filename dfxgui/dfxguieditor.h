@@ -1,26 +1,46 @@
-#ifndef __DFXGUI_H
-#define __DFXGUI_H
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+------------------------------------------------------------------------*/
+
+#ifndef __DFXGUI_EDITOR_H
+#define __DFXGUI_EDITOR_H
 
 
-#include "AUCarbonViewBase.h"
+#include "dfxgui-base.h"
 
-#include "dfxguitools.h"
+#include "dfxguimisc.h"
 #include "dfxguicontrol.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxsettings.h"	// for DfxParameterAssignment
 #endif
 
-
-
 #ifdef TARGET_API_AUDIOUNIT
+	#include "AUCarbonViewBase.h"
 	typedef AudioUnitCarbonView	DGEditorListenerInstance;
 	typedef AUCarbonViewBase	TARGET_API_EDITOR_BASE_CLASS;
+	#define DFX_EDITOR_ENTRY	COMPONENT_ENTRY
 #endif
-#ifdef TARGET_API_VST
-	typedef DfxPlugin *	DGEditorListenerInstance;
-	typedef AEffGUIEditor	TARGET_API_EDITOR_BASE_CLASS;
-#endif
+
+
 
 class DGButton;
 class DGSplashScreen;
@@ -38,7 +58,8 @@ public:
 	virtual ~DfxGuiEditor();
 
 	// *** this one is for the child class of DfxGuiEditor to override
-	virtual long open() = 0;
+	virtual long OpenEditor() = 0;
+	virtual void CloseEditor() { }
 	virtual void post_open() { }
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -49,6 +70,10 @@ public:
 
 	AUParameterListenerRef getParameterListener()
 		{	return mParameterListener;	}
+	AUEventListenerRef getAUEventListener()
+		{	return auEventListener;	}
+	virtual void HandleAUPropertyChange(void * inObject, AudioUnitProperty inAUProperty, UInt64 inEventHostTime)
+		{ }
 #endif
 
 	void addImage(DGImage * inImage);
@@ -84,6 +109,9 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
 #endif
+
+	bool IsOpen()
+		{	return mIsOpen;	}
 
 	void DrawBackground(DGGraphicsContext * inContext);
 	float getWindowTransparency();
@@ -177,6 +205,8 @@ protected:
 	long initClipboard();
 
 private:
+	void embedAllControlsInReverseOrder(DGControlsList * inControlsList);
+
 	DGBackgroundControl * backgroundControl;
 
 	DGControl *	currentControl_clicked;
@@ -194,6 +224,7 @@ private:
 	void addMousedOverControl(DGControl * inMousedOverControl);
 	void removeMousedOverControl(DGControl * inMousedOverControl);
 
+	bool mIsOpen;
 	unsigned long numAudioChannels;
 
 	DGSplashScreen * splashScreenControl;
@@ -227,8 +258,4 @@ private:
 };
 
 
-long launch_documentation();
-
-
 #endif
-// __DFXGUI_H
