@@ -1,4 +1,24 @@
 /*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for doing all kinds of fancy plugin parameter stuff.
 written by Sophia Poirier, October 2002
@@ -10,10 +30,6 @@ written by Sophia Poirier, October 2002
 #include <stdlib.h>	// for malloc and free and RAND_MAX
 #include <string.h>	// for strcpy
 #include <math.h>
-
-
-// this is a twiddly value for when casting with decimal types
-const double twiddle = 0.001;
 
 
 
@@ -50,7 +66,7 @@ DfxParam::DfxParam()
 	unit = kDfxParamUnit_generic;
 	curve = kDfxParamCurve_linear;
 	curvespec = 1.0;
-	changed = false;
+	changed = true;
 	touched = false;
 	attributes = 0;
 }
@@ -345,9 +361,9 @@ int64_t DfxParam::derive_i(DfxParamValue inValue)
 	{
 		case kDfxParamValueType_float:
 			if (inValue.f < 0.0)
-				return (int64_t) (inValue.f - twiddle);
+				return (int64_t) (inValue.f - kDfxParam_IntegerPadding);
 			else
-				return (int64_t) (inValue.f + twiddle);
+				return (int64_t) (inValue.f + kDfxParam_IntegerPadding);
 		case kDfxParamValueType_int:
 			return inValue.i;
 		case kDfxParamValueType_boolean:
@@ -446,9 +462,9 @@ bool DfxParam::accept_f(double inValue, DfxParamValue & outValue)
 			{
 				int64_t oldvalue = outValue.i;
 				if (inValue < 0.0)
-					outValue.i = (int64_t) (inValue - twiddle);
+					outValue.i = (int64_t) (inValue - kDfxParam_IntegerPadding);
 				else
-					outValue.i = (int64_t) (inValue + twiddle);
+					outValue.i = (int64_t) (inValue + kDfxParam_IntegerPadding);
 				if (outValue.i == oldvalue)
 					return false;
 			}
@@ -558,9 +574,9 @@ double expandparametervalue(double inGenValue, double minValue, double maxValue,
 			{
 				double tempval = (inGenValue * valueRange) + minValue;
 				if (tempval < 0.0)
-					tempval -= twiddle;
+					tempval -= kDfxParam_IntegerPadding;
 				else
-					tempval += twiddle;
+					tempval += kDfxParam_IntegerPadding;
 				// XXX is this a good way to do this?
 				return (double) ((int64_t)tempval);
 			}
@@ -943,4 +959,85 @@ void DfxPreset::getname(char * outText)
 char * DfxPreset::getname_ptr()
 {
 	return name;
+}
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DfxSmoothedValue
+#pragma mark -
+
+//-----------------------------------------------------------------------------
+DfxSmoothedValue::DfxSmoothedValue(double inSmoothingTime)
+{
+	mSmoothDur_seconds = inSmoothingTime;
+	mCurrentValue = mTargetValue = 0.0;
+	mValueStep = 0.0;
+	mSmoothDur_samples = 0;
+	mSmoothCount = 0;
+	mSampleRate = 1.0;
+	mReinit = false;
+}
+
+//-----------------------------------------------------------------------------
+void DfxSmoothedValue::setValue(double inTargetValue)
+{
+	if (mReinit)
+	{
+		setValueNow(inTargetValue);
+		mReinit = false;
+	}
+	else
+	{
+		if (inTargetValue == mTargetValue)
+			return;
+		mTargetValue = inTargetValue;
+		if (mSmoothDur_samples > 0)
+			mValueStep = (mTargetValue - mCurrentValue) / static_cast<double>(mSmoothDur_samples);
+		else
+			mValueStep = 0.0;
+		mSmoothCount = 0;
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxSmoothedValue::setValueNow(double inValue)
+{
+	mCurrentValue = mTargetValue = inValue;
+	mSmoothCount = mSmoothDur_samples;
+	mReinit = false;
+}
+
+//-----------------------------------------------------------------------------
+void DfxSmoothedValue::inc()
+{
+	if (mSmoothCount < mSmoothDur_samples)
+	{
+		mCurrentValue += mValueStep;
+		mSmoothCount++;
+	}
+	else
+	{
+		mCurrentValue = mTargetValue;
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxSmoothedValue::setSmoothingTime(double inSmoothingTime)
+{
+	mSmoothDur_seconds = inSmoothingTime;
+	mSmoothDur_samples = static_cast<long>(mSmoothDur_seconds * mSampleRate);
+}
+
+//-----------------------------------------------------------------------------
+void DfxSmoothedValue::setSampleRate(double inSampleRate)
+{
+	mSampleRate = inSampleRate;
+	setSmoothingTime(mSmoothDur_seconds);
+
+	setValueNow(mTargetValue);
+	mReinit = true;
 }
