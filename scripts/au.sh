@@ -42,7 +42,7 @@ strip -x ~/Library/Audio/Plug-Ins/Components/"${PLUGINNAME_FILE}"/Contents/MacOS
 #  * uses the current date to generate part of the output file name
 #  * ummm, also assumes some other stuff being where it happens 
 #    to be on my hard disk, hmmm, maybe I should improve this...
-`dirname $0`/makedist.sh ~/dfx/_misc/distributions/first\ Audio\ Units/$PLUGINNAME_STRIPPED au-`date \`\`+%Y-%m-%d''` ~/dfx/vstplugins/docs/${DOCSNAME}.html "${PLUGINNAME}" $MIDIPLUGIN ~/Library/Audio/Plug-Ins/Components/"${PLUGINNAME_FILE}" ~/dfx/docs/COPYING.rtf
+`dirname $0`/makedist.sh ~/dfx/_misc/distributions/first\ Audio\ Units/$PLUGINNAME_STRIPPED au-`date \`\`+%Y-%m-%d''` ~/dfx/repos/trunk/docs/${DOCSNAME}.html "${PLUGINNAME}" $MIDIPLUGIN ~/Library/Audio/Plug-Ins/Components/"${PLUGINNAME_FILE}" ~/dfx/docs/COPYING.html
 
 
 exit 0
