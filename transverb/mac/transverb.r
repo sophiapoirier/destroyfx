@@ -1,2 +1,2 @@
 #include "transverbdef.h"
-#include "dfxplugin.r"
+#include "dfxplugin-audiounit.r"
