@@ -1,0 +1,4 @@
+#include "dfxplugin-vst"
+#include "dfxplugin-release"
+
+GCC_PREPROCESSOR_DEFINITIONS = $(DFX_PLUGIN_FORMAT_MACROS) $(DFX_BUILD_CONFIGURATION_MACROS)
