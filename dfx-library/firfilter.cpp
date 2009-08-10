@@ -1,4 +1,28 @@
-/*------------------- by Sophia Poirier  ][  January 2002 ------------------*/
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
+Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
+Welcome to our FIR filter.
+by Sophia Poirier  ][  January 2002
+------------------------------------------------------------------------*/
 
 #include "firfilter.h"
 
@@ -8,25 +32,25 @@
 
 //-----------------------------------------------------------------------------
 // you're supposed to use use an odd number of taps
-void calculateFIRidealLowpassCoefficients(float inCutoff, float inSampleRate, 
+void calculateFIRidealLowpassCoefficients(double inCutoff, double inSampleRate, 
 											long inNumTaps, float * inCoefficients)
 {
 	// get the cutoff as a ratio of cutoff to Nyquist, scaled from 0 to Pi
-	float corner = (inCutoff / (inSampleRate*0.5f)) * kDFX_PI_f;
+	double corner = (inCutoff / (inSampleRate*0.5)) * kDFX_PI_d;
 
 	long middleCoeff;
 	if (inNumTaps % 2)
 	{
 		middleCoeff = (inNumTaps-1) / 2;
-		inCoefficients[middleCoeff] = corner / kDFX_PI_f;
+		inCoefficients[middleCoeff] = corner / kDFX_PI_d;
 	}
 	else
 		middleCoeff = inNumTaps / 2;
 
 	for (long n=0; n < middleCoeff; n++)
 	{
-		float value = (float)n - ((float)(inNumTaps-1) * 0.5f);
-		inCoefficients[n] = sinf(value * corner) / (value * kDFX_PI_f);
+		double value = (double)n - ((double)(inNumTaps-1) * 0.5);
+		inCoefficients[n] = sin(value * corner) / (value * kDFX_PI_d);
 		inCoefficients[inNumTaps - 1 - n] = inCoefficients[n];
 	}
 }
