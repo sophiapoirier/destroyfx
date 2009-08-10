@@ -1,7 +1,13 @@
+#ifndef __DFXPLUGIN_DEF_TEMPLATE_H
+#define __DFXPLUGIN_DEF_TEMPLATE_H
+
+
 // required
 #define PLUGIN_NAME_STRING	""
 #define PLUGIN_ID	''
-#define PLUGIN_VERSION	0x0001----
+#define PLUGIN_VERSION_MAJOR	
+#define PLUGIN_VERSION_MINOR	
+#define PLUGIN_VERSION_BUGFIX	
 #define PLUGIN_ENTRY_POINT	"Entry"
 #define TARGET_PLUGIN_USES_MIDI	
 #define TARGET_PLUGIN_IS_INSTRUMENT	
@@ -34,3 +40,6 @@
 #define DFX_SUPPORT_OLD_VST_SETTINGS 
 // for Audio Unit
 #define SUPPORT_AU_VERSION_1	0
+
+
+#endif
