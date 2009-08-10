@@ -1,7 +1,26 @@
 /*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2001-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our math shit.
-written by Tom Murphy 7 and Sophia Poirier, 2001 - 2003
 ------------------------------------------------------------------------*/
 
 
@@ -27,16 +46,14 @@ written by Tom Murphy 7 and Sophia Poirier, 2001 - 2003
 // constants and macros
 //-----------------------------------------------------------------------------
 
-const float kDFX_PI_f = 3.1415926535897932384626433832795f;
-const double kDFX_PI_d = 3.1415926535897932384626433832795;
+const float kDFX_PI_f = 3.1415926535897932384626433832795f;	// XXX 4.0f * atanf(1.0f);
+const double kDFX_PI_d = 3.1415926535897932384626433832795;	// XXX 4.0 * atan(1.0);
+const float kDFX_LN2_f = 0.69314718055994530942f;
+const double kDFX_LN2_d = 0.69314718055994530942;
 
 // reduces wasteful casting and division
 const float kDFX_OneDivRandMax = 1.0f / (float)RAND_MAX;
 const double kDFX_OneDivRandMax_d = 1.0 / (double)RAND_MAX;
-
-#ifndef DFX_Clip
-	#define DFX_Clip(fval)   (if (fval < -1.0f) fval = -1.0f; else if (fval > 1.0f) fval = 1.0f)
-#endif
 
 #ifndef DFX_UNDENORMALIZE
 	#define DFX_UNDENORMALIZE(fval)   do { if (fabsf(fval) < 1.0e-15f) fval = 0.0f; } while (0)
@@ -61,15 +78,43 @@ inline double DFX_Rand_d()
 }
 
 //-----------------------------------------------------------------------------
+inline float DFX_ClipAudio(float inValue)
+{
+	if (inValue < -1.0f)
+		return -1.0f;
+	else if (inValue > 1.0f)
+		return 1.0f;
+	return inValue;
+}
+
+//-----------------------------------------------------------------------------
 inline float DFX_Sign_f(float inValue)
 {
 	return (inValue < 0.0f) ? -1.0f : 1.0f;
 }
 
 //-----------------------------------------------------------------------------
-inline float DFX_Linear2dB(float inLinearValue)
+inline float DFX_ClampDenormalValue(float inValue)
 {
-	return 20.0f * log10f(inLinearValue);
+#ifndef TARGET_API_AUDIOUNIT	// the AU SDK handles denormals for us
+	// clamp down any very small values (below -300 dB) to zero to hopefully avoid any denormal values
+	static const float verySmallButNotDenormalValue = 1.0e-15f;
+	if (fabsf(inValue) < verySmallButNotDenormalValue)
+		return 0.0f;
+#endif
+	return inValue;
+}
+
+//-----------------------------------------------------------------------------
+inline double DFX_Linear2dB(double inLinearValue)
+{
+	return 20.0 * log10(inLinearValue);
+}
+
+//-----------------------------------------------------------------------------
+inline double DFX_dB2Linear(double inDecibalValue)
+{
+	return pow(10.0, inDecibalValue/20.0);
 }
 
 //-----------------------------------------------------------------------------
