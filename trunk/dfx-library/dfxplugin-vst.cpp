@@ -1,4 +1,24 @@
 /*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
 This is where we connect the VST API to our DfxPlugin system.
@@ -34,7 +54,10 @@ void DfxPlugin::suspend()
 // this gets called when the plugin is activated
 void DfxPlugin::resume()
 {
+	#if !VST_FORCE_DEPRECATED
 	needIdle();
+	#endif
+
 	updatesamplerate();
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -142,13 +165,13 @@ bool DfxPlugin::getEffectName(char * outText)
 	char tempname[DFX_PARAM_MAX_NAME_LENGTH];
 	getpluginname(tempname);
 	// then make sure to only copy as much as the name C string can hold
-	vst_strncpy(outText, tempname, kVstMaxEffectNameLen)
+	vst_strncpy(outText, tempname, kVstMaxEffectNameLen);
 	return true;
 }
 
 VstInt32 DfxPlugin::getVendorVersion()
 {
-	return PLUGIN_VERSION;
+	return getpluginversion();
 }
 
 bool DfxPlugin::getVendorString(char * outText)
@@ -242,7 +265,7 @@ void DfxPlugin::getProgramName(char * outText)
 		{
 			char tempname[DFX_PRESET_MAX_NAME_LENGTH];
 			getpresetname(vstpresetnum, tempname);
-			vst_strncpy(outText, tempname, kVstMaxProgNameLen)
+			vst_strncpy(outText, tempname, kVstMaxProgNameLen);
 		}
 		else
 			sprintf(outText, "default %ld", vstpresetnum+1);
@@ -261,7 +284,7 @@ bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, cha
 		{
 			char tempname[DFX_PRESET_MAX_NAME_LENGTH];
 			getpresetname(inIndex, tempname);
-			vst_strncpy(outText, tempname, kVstMaxProgNameLen)
+			vst_strncpy(outText, tempname, kVstMaxProgNameLen);
 		}
 		else
 			sprintf(outText, "default %d", inIndex+1);
@@ -336,7 +359,7 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char * text)
 	switch (getparametervaluetype(index))
 	{
 		case kDfxParamValueType_float:
-			sprintf(text, "%.3lf", getparameter_f(index));
+			sprintf(text, "%.3f", getparameter_f(index));
 			break;
 		case kDfxParamValueType_int:
 			sprintf(text, "%ld", getparameter_i(index));
@@ -347,7 +370,6 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char * text)
 			else
 				strcpy(text, "off");
 			break;
-		case kDfxParamValueType_undefined:
 		default:
 			break;
 	}
