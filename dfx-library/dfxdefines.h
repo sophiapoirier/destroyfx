@@ -1,11 +1,31 @@
 /*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 These are our general global defines and constants, to be included 
 somewhere in the include tree for every file for a DfxPlugin.
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXDEFINES_H
-#define __DFXDEFINES_H
+#ifndef __DFX_DEFINES_H
+#define __DFX_DEFINES_H
 
 
 
@@ -37,7 +57,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 /* XXX needs workaround for plugin names with white spaces */
 #ifndef PLUGIN_BUNDLE_IDENTIFIER
-	#define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx."PLUGIN_NAME_STRING
+	#define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX PLUGIN_NAME_STRING DFX_BUNDLE_ID_SUFFIX
 #endif
 
 #ifndef PLUGIN_ICON_FILE_NAME
@@ -93,15 +113,22 @@ somewhere in the include tree for every file for a DfxPlugin.
 #ifdef WIN32
 #if WIN32
 	#ifdef _MSC_VER
-		/* turn off warnings about default but no cases in switch, unknown pragma, etc. 
-		   if using Microsoft's C compiler */
-		#pragma warning( disable : 4065 57 4200 4244 4068 4326 )
+		#define isnan	_isnan
+		inline long lrint(double inValue)
+		{
+			if (inValue < 0.0)
+				return (long) (inValue - 0.5);
+			else
+				return (long) (inValue + 0.5);
+		}
 	#endif
-	#include <windows.h>
+
+	#ifdef __STDC__
+		#include <windows.h>
+	#endif
 #endif
 #endif
 
 
 
 #endif
-/* __DFXDEFINES_H */
