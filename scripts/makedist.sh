@@ -12,7 +12,7 @@ OUTPUTFILE="$1"-"$2"
 TEMPDIR=`dirname "$1"`/`basename "$1"`_temp_$$_`jot -r -n -p 20 1`
 PLUGINNAME="$4"
 PLUGINNAME_FILE=`basename "${6}"`
-LICENSENAME="COPYING.txt"
+LICENSENAME="COPYING.html"
 
 echo
 echo "   creating temporary directory  "$TEMPDIR
@@ -22,7 +22,7 @@ echo "   creating  "$MANUALNAME"  in  "`basename "${TEMPDIR}"`
 makedocs "$3" "${TEMPDIR}"/"${MANUALNAME}"
 if (( $5 )); then
 	echo "   creating  Destroy FX MIDI.html  in  "`basename "${TEMPDIR}"`
-	makedocs ~/dfx/vstplugins/docs/destroy-fx-midi.html "${TEMPDIR}"/Destroy\ FX\ MIDI.html
+	makedocs ~/dfx/repos/trunk/docs/destroy-fx-midi.html "${TEMPDIR}"/Destroy\ FX\ MIDI.html
 fi
 shift 5
 while (( $# >= 1 )); do
@@ -31,7 +31,7 @@ while (( $# >= 1 )); do
 	shift
 done
 
-#cp -f ~/dfx/vstplugins/scripts/install-au.command "${TEMPDIR}"/"Install ${PLUGINNAME}.command"
+#cp -f ~/dfx/repos/trunk/scripts/install-au.command "${TEMPDIR}"/"Install ${PLUGINNAME}.command"
 cp -f ~/dfx/scripts/install-au.command "${TEMPDIR}"/"Install ${PLUGINNAME}.command"
 
 cd "${TEMPDIR}"
@@ -52,7 +52,7 @@ if [ -d "${PLUGIN_BUNDLE_RESOURCES_DIR}" ]; then
 	echo "   copying  "$MANUALNAME"  into  "$PLUGINNAME_FILE
 	cp -f "${MANUALNAME}" "${PLUGIN_BUNDLE_RESOURCES_DIR}"/
 	echo "   copying  "$LICENSENAME"  into  "$PLUGINNAME_FILE
-	cp -f ~/dfx/vstplugins/COPYING "${PLUGIN_BUNDLE_RESOURCES_DIR}"/"${LICENSENAME}"
+	cp -f ~/dfx/repos/trunk/docs/"${LICENSENAME}" "${PLUGIN_BUNDLE_RESOURCES_DIR}"/"${LICENSENAME}"
 fi
 
 #OUTPUTFILE_FULLNAME="${OUTPUTFILE}".tar.gz
