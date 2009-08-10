@@ -1,4 +1,24 @@
 /*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 This is our class for E-Z plugin-making and E-Z multiple-API support.
 written by Sophia Poirier, October 2002
@@ -179,8 +199,8 @@ PLUGIN_EDITOR_RES_ID
 // using Steinberg's VST API
 #elif defined(TARGET_API_VST)
 	#include "audioeffectx.h"
-	typedef AudioEffectX TARGET_API_BASE_CLASS;
-	typedef audioMasterCallback TARGET_API_BASE_INSTANCE_TYPE;
+	typedef AudioEffectX	TARGET_API_BASE_CLASS;
+	typedef audioMasterCallback	TARGET_API_BASE_INSTANCE_TYPE;
 //	#define TARGET_API_CORE_CLASS 0	// none in VST
 	// set numinputs and numoutputs if numchannels is defined
 	#ifdef VST_NUM_CHANNELS
@@ -195,6 +215,9 @@ PLUGIN_EDITOR_RES_ID
 	#if !VST_2_4_EXTENSIONS
 		#define VstInt32	long
 		#define VstIntPtr	long
+	#endif
+	#ifdef __MACH__
+		#include <CoreFoundation/CoreFoundation.h>
 	#endif
 
 #endif
@@ -446,8 +469,8 @@ public:
 
 	// convenience methods for expanding and contracting parameter values 
 	// using the min/max/curvetype/curvespec/etc. settings of a given parameter
-	double expandparametervalue_index(long inParameterIndex, double genValue);
-	double contractparametervalue_index(long inParameterIndex, double realValue);
+	double expandparametervalue(long inParameterIndex, double genValue);
+	double contractparametervalue(long inParameterIndex, double realValue);
 
 	// whether or not the index is a valid preset
 	bool presetisvalid(long inPresetIndex);
@@ -501,8 +524,12 @@ public:
 		{	return numParameters;	}
 	long getnumpresets()
 		{	return numPresets;	}
-	virtual long getNumPluginProperties()
-		{	return kDfxPluginProperty_NumProperties;	}
+#ifdef TARGET_API_AUDIOUNIT
+	long getNumPluginProperties()
+		{	return kDfxPluginProperty_NumProperties + getNumAdditionalPluginProperties();	}
+	virtual long getNumAdditionalPluginProperties()
+		{	return 0;	}
+#endif
 
 //	virtual void SetUseMusicalTimeInfo(bool newmode = true)
 //		{	b_usemusicaltimeinfo = newmode;	}
@@ -536,8 +563,7 @@ public:
 //		{	return b_usetimestampedparameters;	}
 
 	void getpluginname(char * outText);
-	long getpluginversion()
-		{	return PLUGIN_VERSION;	}
+	long getpluginversion();
 
 	#if TARGET_PLUGIN_USES_MIDI
 		// ***
@@ -953,6 +979,8 @@ public:
 //-----------------------------------------------------------------------------
 // prototypes for a few handy buffer helper functions
 
+long DFX_CompositePluginVersionNumberValue();
+
 bool createbuffer_f(float ** buffer, long currentBufferSize, long desiredBufferSize);
 bool createbuffer_d(double ** buffer, long currentBufferSize, long desiredBufferSize);
 bool createbuffer_i(long ** buffer, long currentBufferSize, long desiredBufferSize);
@@ -979,7 +1007,14 @@ void clearbufferarrayarray_d(double *** buffers, unsigned long numbufferarrays, 
 							long buffersize, double value = 0.0);
 
 long launch_url(const char * urlstring);
+long launch_documentation();
 const char * DFX_GetNameForMIDINote(long inMidiNote);
+
+uint64_t DFX_GetMillisecondCount();
+
+#if TARGET_OS_MAC
+char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding = kCFStringEncodingUTF8);
+#endif
 
 
 
