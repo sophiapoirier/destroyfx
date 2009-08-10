@@ -1,13 +1,35 @@
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+------------------------------------------------------------------------*/
+
 #include "dfxguislider.h"
 
 
 //-----------------------------------------------------------------------------
-DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
-					long				inParamID, 
-					DGRect *			inRegion,
-					DfxGuiSliderAxis	inOrientation,
-					DGImage *			inHandleImage, 
-					DGImage *			inBackgroundImage)
+DGSlider::DGSlider(DfxGuiEditor *	inOwnerEditor,
+					long			inParamID, 
+					DGRect *		inRegion,
+					DGAxis			inOrientation,
+					DGImage *		inHandleImage, 
+					DGImage *		inBackgroundImage)
 :	DGControl(inOwnerEditor, inParamID, inRegion), 
 	orientation(inOrientation), handleImage(inHandleImage), backgroundImage(inBackgroundImage)
 {
@@ -24,24 +46,19 @@ DGSlider::DGSlider(DfxGuiEditor *		inOwnerEditor,
 		if (heightDiff < 0)
 			heightDiff = 0;
 
-		if (orientation == kDGSliderAxis_vertical)
-		{
-			shrinkForeBounds((widthDiff/2)+(widthDiff%2), handleHeight, widthDiff, handleHeight);
-			mouseOffset = handleHeight / 2;
-		}
-		else
+		if (orientation & kDGAxis_horizontal)
 		{
 			shrinkForeBounds(0, (heightDiff/2)+(heightDiff%2), handleWidth, heightDiff);
 			mouseOffset = handleWidth / 2;
 		}
+		else
+		{
+			shrinkForeBounds((widthDiff/2)+(widthDiff%2), handleHeight, widthDiff, handleHeight);
+			mouseOffset = handleHeight / 2;
+		}
 	}
 
 	setControlContinuous(true);
-}
-
-//-----------------------------------------------------------------------------
-DGSlider::~DGSlider()
-{
 }
 
 //-----------------------------------------------------------------------------
@@ -59,13 +76,15 @@ void DGSlider::draw(DGGraphicsContext * inContext)
 	{
 		DGRect drawRect(getForeBounds());
 		long xoff = 0, yoff = 0;
-		if (orientation == kDGSliderAxis_vertical)
+		if (orientation & kDGAxis_horizontal)
+		{
+			xoff = (long) round( (float)(getForeBounds()->w) * valNorm );
+		}
+		else
 		{
 			yoff = (long) round( (float)(getForeBounds()->h) * (1.0f - valNorm) );
 			drawRect.y -= handleImage->getHeight();	// XXX this is because this whole forebounds thing is goofy
 		}
-		else
-			xoff = (long) round( (float)(getForeBounds()->w) * valNorm );
 		handleImage->draw(&drawRect, inContext, -xoff, -yoff);
 	}
 }
@@ -93,30 +112,30 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 
 	if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
 	{
-		if (orientation == kDGSliderAxis_vertical)
-		{
-			float diff = lastY - inYpos;
-			diff /= getFineTuneFactor();
-			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->h));
-		}
-		else	// horizontal mode
+		if (orientation & kDGAxis_horizontal)
 		{
 			float diff = inXpos - lastX;
 			diff /= getFineTuneFactor();
 			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->w));
 		}
+		else	// vertical mode
+		{
+			float diff = lastY - inYpos;
+			diff /= getFineTuneFactor();
+			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->h));
+		}
 	}
 	else	// regular movement
 	{
-		if (orientation == kDGSliderAxis_vertical)
-		{
-			float valnorm = (inYpos - o_Y) / (float)(getForeBounds()->h);
-			val = (SInt32)((1.0f - valnorm) * (float)(max-min)) + min;
-		}
-		else	// horizontal mode
+		if (orientation & kDGAxis_horizontal)
 		{
 			float valnorm = (inXpos - o_X) / (float)(getForeBounds()->w);
 			val = (SInt32)(valnorm * (float)(max-min)) + min;
+		}
+		else	// vertical mode
+		{
+			float valnorm = (inYpos - o_Y) / (float)(getForeBounds()->h);
+			val = (SInt32)((1.0f - valnorm) * (float)(max-min)) + min;
 		}
 	}
 
