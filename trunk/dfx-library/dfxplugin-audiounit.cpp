@@ -1,4 +1,24 @@
 /*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2002-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
 This is where we connect the Audio Unit API to our DfxPlugin system.
@@ -367,7 +387,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				if ( (pvt->otherDesc.format == kOtherPluginFormat_kVST) && (pvt->otherDesc.plugin.mSubType == PLUGIN_ID) )
 				{
 					pvt->auParamID = pvt->otherParamID;
-					pvt->auValue = expandparametervalue_index((long)(pvt->otherParamID), pvt->otherValue);
+					pvt->auValue = expandparametervalue((long)(pvt->otherParamID), pvt->otherValue);
 				}
 				else
 					result = kAudioUnitErr_InvalidPropertyValue;
@@ -492,10 +512,10 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				switch (request->inConversionType)
 				{
 					case kDfxParameterValueConversion_expand:
-						request->outValue = expandparametervalue_index(inElement, request->inValue);
+						request->outValue = expandparametervalue(inElement, request->inValue);
 						break;
 					case kDfxParameterValueConversion_contract:
-						request->outValue = contractparametervalue_index(inElement, request->inValue);
+						request->outValue = contractparametervalue(inElement, request->inValue);
 						break;
 					default:
 						result = paramErr;
@@ -545,7 +565,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				LogicAUNodePropertyDescription * nodePropertyDescs = (LogicAUNodePropertyDescription*) outData;
 				for (long i=0; i < getNumPluginProperties(); i++)
 				{
-					nodePropertyDescs[i].mPropertyID = kDfxPluginProperty_startID + i;
+					nodePropertyDescs[i].mPropertyID = kDfxPluginProperty_StartID + i;
 					nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_DontTouch;
 					nodePropertyDescs[i].mFlags = kLogicAUNodePropertyFlag_Synchronous;
 					switch ( nodePropertyDescs[i].mPropertyID )
@@ -796,7 +816,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 // 0xMMMMmmbb (M = major version, m = minor version, and b = bugfix)
 ComponentResult	DfxPlugin::Version()
 {
-	return PLUGIN_VERSION;
+	return getpluginversion();
 }
 
 //-----------------------------------------------------------------------------
@@ -1376,7 +1396,14 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 	}
 
 	// use the inherited base class implementation
-	return TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
+	ComponentResult result = TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
+
+	if (result == noErr)
+	{
+		updatesamplerate();	// XXX do this here, or does it get caught elsewhere?
+	}
+
+	return result;
 }
 
 //-----------------------------------------------------------------------------
