@@ -1,8 +1,30 @@
+/*------------------------------------------------------------------------
+Destroy FX Library (version 1.0) is a collection of foundation code 
+for creating audio software plug-ins.  
+Copyright (C) 2003-2009  Sophia Poirier
+
+This program is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, please visit http://destroyfx.org/ 
+and use the contact form.
+------------------------------------------------------------------------*/
+
 #ifndef __DFXGUI_CONTROL_H
 #define __DFXGUI_CONTROL_H
 
 
-#include "dfxguitools.h"
+#include "dfxguimisc.h"
 #include "AUCarbonViewControl.h"
 
 
@@ -37,6 +59,10 @@ public:
 
 	bool do_contextualMenuClick();
 	virtual bool contextualMenuClick();
+
+	// this will get called regularly by an idle timer
+	virtual void idle()
+		{ }
 
 	DfxGuiEditor * getDfxGuiEditor()
 		{	return ownerEditor;	}
@@ -80,7 +106,7 @@ public:
 #endif
 
 	void do_draw(DGGraphicsContext * inContext);
-	// *** mouse position is relative to the control's bounds for ultra convenience
+	// mouse position is relative to the control's bounds for ultra convenience
 	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
 		{ }
@@ -90,8 +116,8 @@ public:
 	void do_mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
 	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
 		{ }
-	bool do_mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers);
-	virtual bool mouseWheel(long inDelta, DGMouseWheelAxis inAxis, DGKeyModifiers inKeyModifiers);
+	bool do_mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
+	virtual bool mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
 
 	void setRespondToMouse(bool inMousePolicy)
 		{	shouldRespondToMouse = inMousePolicy;	}
@@ -105,10 +131,6 @@ public:
 		{	shouldWraparoundValues = inWraparoundPolicy;	}
 	bool getWraparoundValues()
 		{	return shouldWraparoundValues;	}
-
-	// *** this will get called regularly by an idle timer
-	virtual void idle()
-		{ }
 
 	void embed();
 	virtual void post_embed()
@@ -139,6 +161,8 @@ public:
 		{	return parameterAttached;	}
 	long getParameterID();
 	void setParameterID(long inParameterID);
+	void setValue_i(long inValue);
+	long getValue_i();
 	virtual CFStringRef createStringFromValue();
 	virtual bool setValueWithString(CFStringRef inString);
 #ifdef TARGET_API_AUDIOUNIT
@@ -151,14 +175,14 @@ public:
 	float getRange()
 		{	return valueRange;	}
 	DGRect * getBounds()
-		{	return &where;	}
+		{	return &controlPos;	}
 	DGRect * getForeBounds()
 		{	return &vizArea;	}
 
 	void setOffset(long x, long y);
 
 	void setBounds(DGRect * r)
-		{	where.set(r);	}
+		{	controlPos.set(r);	}
 	void setForeBounds(long x, long y, long w, long h);
 	void shrinkForeBounds(long x, long y, long w, long h);
 
@@ -175,7 +199,7 @@ protected:
 	bool				parameterAttached;
 	bool				isContinuous;
 
-	DGRect				where;		// the control's area
+	DGRect				controlPos;	// the control's area
 	DGRect				vizArea; 	// where the foreground displays
 	float				drawAlpha;	// level of overall transparency to draw with (0.0 to 1.0)
 
