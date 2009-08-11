@@ -1,26 +1,27 @@
             Super Destroy FX Plugin Sources
 
 These are some of the plugins that are part of the Destroy FX plugin
-pack. All of them use the VST plugin standard, and should be (nearly)
+pack. All of them use the VST plugin format, and should be (nearly)
 source-portable to any platform which supports that. We also support
-Audio Units, the new plugin format for Mac OS X. Some advanced
+Audio Unit, the newer plugin format for Mac OS X. Some advanced
 features may not work on all platforms or in all hosts.
 
 Unfortunately, C++ is currently the only appropriate language for
-creating VST plugins. Thus, all of these are written in C++. You'll
+creating audio plugins. Thus, all of these are written in C++. You'll
 need a C++ compiler for your platform in order to compile them. You'll
-also need an appropriate version of the VST SDK. Right now, this means
-that you'll be able to easily compile with Visual C++ for Windows and
-with Xcode for the Macintosh, and that it will be pretty difficult for
-any other platform. Warning: The CVS repository often drifts out of
-date so that builds do not work; sorry about this.
+also need an appropriate version of the VST SDK (for VST) or CoreAudio 
+SDK (for Audio Unit). Right now, this means that you'll be able to 
+easily compile with Visual C++ for Windows and with Xcode for Mac, and 
+that it may be more difficult for any other platform. Warning: Our 
+source code repository often drifts out of date so that builds do not 
+work; sorry about this.
 
 These plugins are Copyright (c) Tom Murphy 7 and Sophia Poirier. You
 can use them in your music however you like, without royalties. You
 can also modify them to your liking. However, if you distribute them
 (or derivative/modified versions of them) then you must also
 distribute the source package in order to be in compliance with the
-license (see the file COPYING).
+license (see the file COPYING for full license terms).
 
 This software comes with no warranty (see the file COPYING). In fact,
 it is likely that some of these crazy effects could crash hosts (by
@@ -40,7 +41,7 @@ first. If instead you want to get your feet wet making your own effect
 plugins, this source code might be a good place to start. (You can
 also see and play with our effects before they're finished!)
 
-Here's a description of each of the plugins included. First, we have
+Here are descriptions of each of the plugins included. First, we have
 our "finished" plugins; these have been released, have fancy GUIs, and
 are pretty thoroughly tested:
 
@@ -54,7 +55,7 @@ scrubby/
 
         A nice plugin that zips around the audio buffer like a
         DJ (or robot DJ) scratching a record. Has the ability
-        to control the scratch speeds using a MIDI keyboard,
+        to constrain the scratch speeds using a MIDI keyboard,
         among other advanced features.
 
 bufferoverride/
@@ -78,11 +79,33 @@ geometer/
         effects are possible with this thing, and sports a neat
         visual display of what's happening to your sound.
 
+rezsynth/
+
+        Allows you to "play" resonant bandpass filters with MIDI notes.
+
+rmsbuddy/
+
+        RMS and peak audio monitoring utility.
+
 monomaker/
 
         Monomaker is just a simple stereo utility.  It can do 
         panning and merge a stereo signal to mono.
         The panning is equal-power / -6 dB law (sort of).
+
+midigater/
+
+        A MIDI note controlled audio gate.
+
+eqsync/
+
+        Total novelty effect that retunes biquad filter coefficents 
+        at regular intervals synchronized to tempo.
+
+polarizer/
+
+        Inverts the polarity of every Nth audio sample, resulting 
+        in a crispy digital noisy effect.
 
 
 These plugins are somewhat mature, but are lacking GUIs and thorough
@@ -146,46 +169,41 @@ intercom/
 
 
 In the source package, each plugin has a corresponding directory, as
-well as a corresponding plugin_win32 directory containing MS VC++
-project files. In these directories, a batch file called "make.bat"
-can be used from the command line to build the plugin, provided that
-the Visual Studio tools are in your path. Some directories have
-Visual Studio project files, but these are no longer supported.
+well as a win32 subdirectory containing MS VC++ project files. In 
+these directories, a batch file called "make.bat" can be used from 
+the command line to build the plugin, provided that the Visual Studio 
+tools are in your path. Some directories have Visual Studio project 
+files, but these are no longer supported.
 
-Some of these plugins have plugin_mac directories with stuff for 
+Most of these plugins have mac subdirectories with stuff for 
 building Audio Unit versions of our plugins.  The plugin.xcodeproj 
 "files" (well, they are bundles, and might appear like directories, 
-which is what they really are) are Xcode projects.  The plugin.r
-files are resource files for Rez (although most of our plugins
-actually rely on prefix headers and dfxplugin.r for resource
-building).  The plugin.exp files are the entry point files.  The
-plugin-info.plist files are the Info.plist files for the built plugin
-bundles (used by the Mac OS X system for LaunchServices info mostly).
-The InfoPlist.strings file(s) are localized values for some Info.plist
-values and are located in <language-code>.lproj sub-directories
-accordingly.
+which is what they really are) are Xcode projects.  The plugin.exp 
+files are the entry point symbol files.  The InfoPlist.strings files 
+are localized values for some Info.plist values and are located in 
+<language-code>.lproj subdirectories accordingly.
 
 In order to build Audio Units, you need Mac OS X 10.2 or higher and 
 you need the Apple Developer Tools installed.  The Developer Tools CD
 or DVD comes with the Mac OS X install CDs/DVDs.  Xcode (if you care
 to use that IDE) is included with the Developer Tools.  Note that the
-Xcode projects files here assume use absolute paths for the
-Apple-provided base CoreAudio SDK files; they assume that the files
-are located in the places where the Developer Tools installer places
-them.  If you've moved those files, you'll have to change the paths in
-the project settings.
+Xcode projects files here assume absolute paths for the Apple-provided 
+base CoreAudio SDK files; they assume that the files are located in 
+the places where the Developer Tools installer puts them.  If you've 
+moved those files, you'll need to change the paths in the project 
+settings.
 
 for building VST Mac CFM versions:
-(note:  This section is deprecated cuz we don't use CodeWarrior or
-build CFM versions anymore and therefore don't maintain those
-associated files anymore.)
-Some plugins have plugin_mac directories with *def-vst.h "prefix"
-files.  You can use these to set various #defines in your CodeWarrior
-projects to build the plugins in different ways.  This is because CW
-does not allow you to specify preprocessor #defines in the project
-target settings (this is true as of v8.2, although Metroworks say they
-will eventually implement this long-missing feature).  In your CW
-project target settings, you go to the C/C++ Language tab specify the 
+(note:  This section is legacy cuz we don't use CodeWarrior or build 
+CFM versions anymore and therefore don't maintain those associated 
+files anymore.)
+Some plugins have mac subdirectories with *def-vst.h "prefix" files.  
+You can use these to set various #defines in your CodeWarrior projects 
+to build the plugins in different ways.  This is because CW does not 
+allow you to specify preprocessor #defines in the project target 
+settings (this is true as of v8.2, although Metroworks say they will 
+eventually implement this long-missing feature).  In your CW project 
+target settings, you go to the C/C++ Language tab specify the 
 appropriate file in the "prefix file" field.  This means that CW will 
 preprocess this file before everything else and use the preprocessor 
 stuff globally for the whole build process.  Usually you would use 
@@ -234,12 +252,6 @@ vstsdk/
         SDK from Steinberg for creating VST plugins. There is no code
         in this directory; you should get the headers and class stubs
         from Steinberg's site.
-
-vstsdk_win32/
-
-        Binary libraries for the VST GUI. There's nothing in here
-        except for directions on where to get the library from Steinberg's
-        site.
 
 stub-plugin/
 
