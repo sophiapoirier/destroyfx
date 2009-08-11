@@ -1,7 +1,7 @@
 /*-------------- by Sophia Poirier  ][  November 2001 -------------*/
 
-#ifndef __MIDIGATER_H
-#define __MIDIGATER_H
+#ifndef __MIDI_GATER_H
+#define __MIDI_GATER_H
 
 #include "dfxplugin.h"
 

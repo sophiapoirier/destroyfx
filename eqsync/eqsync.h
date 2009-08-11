@@ -1,7 +1,7 @@
 /*------------------ by Sophia Poirier  ][  January 2001 -----------------*/
 
-#ifndef __EQSYNC_H
-#define __EQSYNC_H
+#ifndef __EQ_SYNC_H
+#define __EQ_SYNC_H
 
 
 #include "dfxplugin.h"

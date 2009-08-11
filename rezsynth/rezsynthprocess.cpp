@@ -1,6 +1,6 @@
 /*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
 
-#include "rezsynth.hpp"
+#include "rezsynth.h"
 
 
 void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
