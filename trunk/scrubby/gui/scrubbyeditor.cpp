@@ -1,5 +1,5 @@
-#include "scrubbyeditor.hpp"
-#include "scrubby.hpp"
+#include "scrubbyeditor.h"
+#include "scrubby.h"
 
 
 //-----------------------------------------------------------------------------
@@ -478,7 +478,7 @@ private:
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(ScrubbyEditor)
+DFX_EDITOR_ENTRY(ScrubbyEditor)
 
 //-----------------------------------------------------------------------------
 ScrubbyEditor::ScrubbyEditor(AudioUnitCarbonView inInstance)
@@ -530,64 +530,64 @@ ScrubbyEditor::~ScrubbyEditor()
 }
 
 //-----------------------------------------------------------------------------
-long ScrubbyEditor::open()
+long ScrubbyEditor::OpenEditor()
 {
 	// create images
 
 	// background image
-	DGImage * gBackground = new DGImage("scrubby-background.png", this);
+	DGImage * gBackground = new DGImage("scrubby-background.png", 0, this);
 	SetBackgroundImage(gBackground);
 
 	// sliders
-	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
-	DGImage * gRangeSliderHandleLeft = new DGImage("range-slider-handle-left.png", this);
-	DGImage * gRangeSliderHandleRight = new DGImage("range-slider-handle-right.png", this);
+	DGImage * gSliderHandle = new DGImage("slider-handle.png", 0, this);
+	DGImage * gRangeSliderHandleLeft = new DGImage("range-slider-handle-left.png", 0, this);
+	DGImage * gRangeSliderHandleRight = new DGImage("range-slider-handle-right.png", 0, this);
 
 	// mode buttons
-	DGImage * gSpeedModeButton = new DGImage("speed-mode-button.png", this);
-	DGImage * gFreezeButton = new DGImage("freeze-button.png", this);
-	DGImage * gTempoSyncButton = new DGImage("tempo-sync-button.png", this);
-	DGImage * gSplitChannelsButton = new DGImage("stereo-button.png", this);
-	DGImage * gPitchConstraintButton = new DGImage("pitch-constraint-button.png", this);
-	DGImage * gTempoSyncButton_little = new DGImage("tempo-sync-button-little.png", this);
+	DGImage * gSpeedModeButton = new DGImage("speed-mode-button.png", 0, this);
+	DGImage * gFreezeButton = new DGImage("freeze-button.png", 0, this);
+	DGImage * gTempoSyncButton = new DGImage("tempo-sync-button.png", 0, this);
+	DGImage * gSplitChannelsButton = new DGImage("stereo-button.png", 0, this);
+	DGImage * gPitchConstraintButton = new DGImage("pitch-constraint-button.png", 0, this);
+	DGImage * gTempoSyncButton_little = new DGImage("tempo-sync-button-little.png", 0, this);
 
 	// pitch constraint control buttons
-//	DGImage * gKeyboardOff = new DGImage("keyboard-off.png", this);
-//	DGImage * gKeyboardOn = new DGImage("keyboard-on.png", this);
+//	DGImage * gKeyboardOff = new DGImage("keyboard-off.png", 0, this);
+//	DGImage * gKeyboardOn = new DGImage("keyboard-on.png", 0, this);
 	//
 	DGImage * gKeyboardTopKeys[kNumPitchSteps];
 	gKeyboardTopKeys[1] = gKeyboardTopKeys[3] = gKeyboardTopKeys[6] = gKeyboardTopKeys[8] = gKeyboardTopKeys[10] = 
-							new DGImage("keyboard-black-key.png", this);
-	gKeyboardTopKeys[0] = new DGImage("keyboard-white-key-top-1.png", this);
-	gKeyboardTopKeys[2] = new DGImage("keyboard-white-key-top-2.png", this);
-	gKeyboardTopKeys[4] = new DGImage("keyboard-white-key-top-3.png", this);
-	gKeyboardTopKeys[5] = new DGImage("keyboard-white-key-top-4.png", this);
-	gKeyboardTopKeys[7] = gKeyboardTopKeys[9] = new DGImage("keyboard-white-key-top-5-6.png", this);
-	gKeyboardTopKeys[11] = new DGImage("keyboard-white-key-top-7.png", this);
+							new DGImage("keyboard-black-key.png", 0, this);
+	gKeyboardTopKeys[0] = new DGImage("keyboard-white-key-top-1.png", 0, this);
+	gKeyboardTopKeys[2] = new DGImage("keyboard-white-key-top-2.png", 0, this);
+	gKeyboardTopKeys[4] = new DGImage("keyboard-white-key-top-3.png", 0, this);
+	gKeyboardTopKeys[5] = new DGImage("keyboard-white-key-top-4.png", 0, this);
+	gKeyboardTopKeys[7] = gKeyboardTopKeys[9] = new DGImage("keyboard-white-key-top-5-6.png", 0, this);
+	gKeyboardTopKeys[11] = new DGImage("keyboard-white-key-top-7.png", 0, this);
 	//
 	DGImage * gKeyboardBottomKeys[kNumPitchSteps];
 	for (int i=0; i < kNumPitchSteps; i++)
 		gKeyboardBottomKeys[i] = NULL;
-	gKeyboardBottomKeys[0] = new DGImage("keyboard-white-key-bottom-left.png", this);
+	gKeyboardBottomKeys[0] = new DGImage("keyboard-white-key-bottom-left.png", 0, this);
 	gKeyboardBottomKeys[2] = gKeyboardBottomKeys[4] = gKeyboardBottomKeys[5] = gKeyboardBottomKeys[7] = gKeyboardBottomKeys[9] = 
-							new DGImage("keyboard-white-key-bottom.png", this);
-	gKeyboardBottomKeys[kNumPitchSteps-1] = new DGImage("keyboard-white-key-bottom-right.png", this);
+							new DGImage("keyboard-white-key-bottom.png", 0, this);
+	gKeyboardBottomKeys[kNumPitchSteps-1] = new DGImage("keyboard-white-key-bottom-right.png", 0, this);
 	//
-	DGImage * gTransposeDownButton = new DGImage("transpose-down-button.png", this);
-	DGImage * gTransposeUpButton = new DGImage("transpose-up-button.png", this);
-	DGImage * gMajorChordButton = new DGImage("major-chord-button.png", this);
-	DGImage * gMinorChordButton = new DGImage("minor-chord-button.png", this);
-	DGImage * gAllNotesButton = new DGImage("all-notes-button.png", this);
-	DGImage * gNoneNotesButton = new DGImage("none-notes-button.png", this);
+	DGImage * gTransposeDownButton = new DGImage("transpose-down-button.png", 0, this);
+	DGImage * gTransposeUpButton = new DGImage("transpose-up-button.png", 0, this);
+	DGImage * gMajorChordButton = new DGImage("major-chord-button.png", 0, this);
+	DGImage * gMinorChordButton = new DGImage("minor-chord-button.png", 0, this);
+	DGImage * gAllNotesButton = new DGImage("all-notes-button.png", 0, this);
+	DGImage * gNoneNotesButton = new DGImage("none-notes-button.png", 0, this);
 
 	// help box
-	DGImage * gHelpBackground = new DGImage("help-background.png", this);
+	DGImage * gHelpBackground = new DGImage("help-background.png", 0, this);
 
 	// other buttons
-	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", this);
-	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", this);
-	DGImage * gDestroyFXlink = new DGImage("destroy-fx-link.png", this);
-	DGImage * gSmartElectronixLink = new DGImage("smart-electronix-link.png", this);
+	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", 0, this);
+	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", 0, this);
+	DGImage * gDestroyFXlink = new DGImage("destroy-fx-link.png", 0, this);
+	DGImage * gSmartElectronixLink = new DGImage("smart-electronix-link.png", 0, this);
 
 
 
@@ -600,35 +600,35 @@ long ScrubbyEditor::open()
 
 	// seek rate
 	pos.set(kSeekRateSliderX, kSeekRateSliderY, kSeekRateSliderWidth, kSliderHeight);
-	seekRateSlider = new DGSlider(this, seekRateParamID, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	seekRateSlider = new DGSlider(this, seekRateParamID, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 //	seekRateSlider->setOvershoot(3);
 
 	// seek range
 	pos.set(kSeekRangeSliderX, kSeekRangeSliderY, kSeekRangeSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kSeekRange, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kSeekRange, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	// seek duration
 	pos.set(kSeekDurSliderX, kSeekDurSliderY, kSeekDurSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kSeekDur, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kSeekDur, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 //	slider->setOvershoot(3);
 
 	// octave minimum
 	pos.set(kOctaveMinSliderX, kOctaveMinSliderY, kOctaveMinSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kOctaveMin, &pos, kDGSliderAxis_horizontal, gRangeSliderHandleLeft, NULL);
+	slider = new DGSlider(this, kOctaveMin, &pos, kDGAxis_horizontal, gRangeSliderHandleLeft, NULL);
 	slider->setControlContinuous(false);
 
 	// octave maximum
 	pos.set(kOctaveMaxSliderX, kOctaveMaxSliderY, kOctaveMaxSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kOctaveMax, &pos, kDGSliderAxis_horizontal, gRangeSliderHandleRight, NULL);
+	slider = new DGSlider(this, kOctaveMax, &pos, kDGAxis_horizontal, gRangeSliderHandleRight, NULL);
 	slider->setControlContinuous(false);
 
 	// tempo
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kTempo, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kTempo, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	// predelay
 	pos.set(kPredelaySliderX, kPredelaySliderY, kPredelaySliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kPredelay, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kPredelay, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 
 

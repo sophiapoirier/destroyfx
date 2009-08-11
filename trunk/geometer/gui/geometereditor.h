@@ -1,12 +1,8 @@
 
-#ifndef __DFX_GEOMETEREDITOR_H
-#define __DFX_GEOMETEREDITOR_H
+#ifndef __DFX_GEOMETER_EDITOR_H
+#define __DFX_GEOMETER_EDITOR_H
 
 #include "dfxgui.h"
-
-#include "dfxguislider.h"
-#include "dfxguibutton.h"
-#include "dfxguidisplay.h"
 
 
 //--------------------------------------------------------------------------
@@ -30,7 +26,7 @@ public:
   GeometerEditor(AudioUnitCarbonView inInstance);
   virtual ~GeometerEditor();
 
-  virtual long open();
+  virtual long OpenEditor();
   virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse);
 
   long choose_multiparam(long baseParamID) {

@@ -1,10 +1,6 @@
 /*-------------- by Sophia Poirier  ][  February 2002 -------------*/
 
-#include "scrubby.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "scrubbyeditor.hpp"
-#endif
+#include "scrubby.h"
 
 
 #pragma mark init
@@ -110,15 +106,10 @@ initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTem
 	// allow it be assigned to control parameters
 	dfxsettings->setAllowPitchbendEvents(true);
 	// can't load old VST-style settings
-	dfxsettings->setLowestLoadableVersion(0x00010000);
+	dfxsettings->setLowestLoadableVersion(0x00010100);
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
 	currentTempoBPS = getparameter_f(kTempo) / 60.0;
-
-
-	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-		editor = new ScrubbyEditor(this);
-	#endif
 }
 
 //-------------------------------------------------------------------------

@@ -1,9 +1,5 @@
-#include "polarizereditor.hpp"
-#include "polarizer.hpp"
-
-#include "dfxguislider.h"
-#include "dfxguidisplay.h"
-#include "dfxguibutton.h"
+#include "polarizereditor.h"
+#include "polarizer.h"
 
 
 //-----------------------------------------------------------------------------
@@ -55,7 +51,7 @@ class PolarizerSlider : public DGSlider
 {
 public:
 	PolarizerSlider(DfxGuiEditor * inOwnerEditor, AudioUnitParameterID inParamID, DGRect * inRegion, 
-					DfxGuiSliderAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage)
+					DGAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage)
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandleImage, inBackgroundImage)
 	{
 		DGRect * fb = getBounds();
@@ -94,7 +90,7 @@ public:
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(PolarizerEditor)
+DFX_EDITOR_ENTRY(PolarizerEditor)
 
 //-----------------------------------------------------------------------------
 PolarizerEditor::PolarizerEditor(AudioUnitCarbonView inInstance)
@@ -103,19 +99,19 @@ PolarizerEditor::PolarizerEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long PolarizerEditor::open()
+long PolarizerEditor::OpenEditor()
 {
 	// load some graphics
 
 	// background image
-	DGImage * gBackground = new DGImage("polarizer-background.png", this);
+	DGImage * gBackground = new DGImage("polarizer-background.png", 0, this);
 	SetBackgroundImage(gBackground);
 
-	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
-	DGImage * gSliderBackground = new DGImage("slider-background.png", this);
+	DGImage * gSliderHandle = new DGImage("slider-handle.png", 0, this);
+	DGImage * gSliderBackground = new DGImage("slider-background.png", 0, this);
 
-	DGImage * gImplodeButton = new DGImage("implode-button.png", this);
-	DGImage * gDestroyFXlinkButton = new DGImage("destroy-fx-link.png", this);
+	DGImage * gImplodeButton = new DGImage("implode-button.png", 0, this);
+	DGImage * gDestroyFXlinkButton = new DGImage("destroy-fx-link.png", 0, this);
 
 
 	DGRect pos;
@@ -125,11 +121,11 @@ long PolarizerEditor::open()
 
 	// leap size
 	pos.set(kSliderX, kSliderY, gSliderBackground->getWidth(), gSliderBackground->getHeight());
-	slider = new PolarizerSlider(this, kSkip, &pos, kDGSliderAxis_vertical, gSliderHandle, gSliderBackground);
+	slider = new PolarizerSlider(this, kSkip, &pos, kDGAxis_vertical, gSliderHandle, gSliderBackground);
 
 	// polarization amount
 	pos.offset(kSliderInc, 0);
-	slider = new PolarizerSlider(this, kAmount, &pos, kDGSliderAxis_vertical, gSliderHandle, gSliderBackground);
+	slider = new PolarizerSlider(this, kAmount, &pos, kDGAxis_vertical, gSliderHandle, gSliderBackground);
 
 
 	//--create the displays---------------------------------------------

@@ -9,7 +9,7 @@ class MonomakerEditor : public DfxGuiEditor
 {
 public:
 	MonomakerEditor(DGEditorListenerInstance inInstance);
-	virtual long open();
+	virtual long OpenEditor();
 };
 
 #endif

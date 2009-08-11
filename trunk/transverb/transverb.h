@@ -75,7 +75,7 @@ private:
   float * buf2;
   int MAXBUF;	// the size of the audio buffer (dependant on sampling rate)
 
-  IIRfilter * filter1, * filter2;
+  DfxIIRfilter filter1, filter2;
   bool speed1hasChanged, speed2hasChanged;
 
   int smoothcount1, smoothcount2;

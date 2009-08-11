@@ -1,10 +1,6 @@
 /*-------------- by Sophia Poirier  ][  December 2000 -------------*/
 
-#include "skidder.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "skiddereditor.hpp"
-#endif
+#include "skidder.h"
 
 
 // this macro does boring entry point stuff for us
@@ -70,11 +66,6 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	// start off with split CC automation of both range slider points
 	rateDoubleAutomate = pulsewidthDoubleAutomate = floorDoubleAutomate = false;
-
-
-	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-		editor = new SkidderEditor(this);
-	#endif
 }
 
 //-----------------------------------------------------------------------------------------

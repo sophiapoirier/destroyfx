@@ -1,10 +1,6 @@
 /*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
 
-#include "rezsynth.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "rezsyntheditor.h"
-#endif
+#include "rezsynth.h"
 
 
 // this macro does boring entry point stuff for us
@@ -62,11 +58,6 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	midistuff->setLazyAttack();	// this enables the lazy note attack mode
 
 	setpresetname(0, "feminist synth");	// default preset name
-
-
-	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-		editor = new RezSynthEditor(this);
-	#endif
 }
 
 //-----------------------------------------------------------------------------------------

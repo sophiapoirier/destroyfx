@@ -1,10 +1,6 @@
 /*--------------- by Sophia Poirier  ][  March 2001 + October 2002 ---------------*/
 
-#include "monomaker.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "monomakereditor.hpp"
-#endif
+#include "monomaker.h"
 
 
 // this macro does boring entry point stuff for us
@@ -57,11 +53,6 @@ The -3 dB setting uses a constant power curve based on sin/cos, while other two 
 
 	addchannelconfig(2, 2);	// 2-in/2-out
 	addchannelconfig(1, 2);	// 1-in/2-out
-
-
-	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-		editor = new MonomakerEditor(this);
-	#endif
 }
 
 //-----------------------------------------------------------------------------------------

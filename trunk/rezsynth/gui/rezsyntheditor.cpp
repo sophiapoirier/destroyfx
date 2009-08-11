@@ -1,7 +1,5 @@
 #include "rezsyntheditor.h"
-#include "rezsynth.hpp"
-
-#include "dfxguibutton.h"
+#include "rezsynth.h"
 
 
 //-----------------------------------------------------------------------------
@@ -153,7 +151,7 @@ void dryWetMixDisplayProc(float value, char *outText, void *)
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(RezSynthEditor)
+DFX_EDITOR_ENTRY(RezSynthEditor)
 
 //-----------------------------------------------------------------------------
 RezSynthEditor::RezSynthEditor(AudioUnitCarbonView inInstance)
@@ -181,35 +179,35 @@ RezSynthEditor::~RezSynthEditor()
 }
 
 //-----------------------------------------------------------------------------
-long RezSynthEditor::open()
+long RezSynthEditor::OpenEditor()
 {
 	// create images
 
 	// background image
-	DGImage * gBackground = new DGImage("rez-synth-background.png", this);
+	DGImage * gBackground = new DGImage("rez-synth-background.png", 0, this);
 	SetBackgroundImage(gBackground);
 
 	// sliders
-	DGImage * gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", this);
-	DGImage * gHorizontalSliderHandle = new DGImage("horizontal-slider-handle.png", this);
-	DGImage * gVerticalSliderBackground = new DGImage("vertical-slider-background.png", this);
-	DGImage * gVerticalSliderHandle = new DGImage("vertical-slider-handle.png", this);
+	DGImage * gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", 0, this);
+	DGImage * gHorizontalSliderHandle = new DGImage("horizontal-slider-handle.png", 0, this);
+	DGImage * gVerticalSliderBackground = new DGImage("vertical-slider-background.png", 0, this);
+	DGImage * gVerticalSliderHandle = new DGImage("vertical-slider-handle.png", 0, this);
 
 	// buttons
-	DGImage * gSepModeButton = new DGImage("separation-mode-button.png", this);
-	DGImage * gScaleModeButton = new DGImage("scale-mode-button.png", this);
-	DGImage * gFadesButton = new DGImage("fades-button.png", this);
-	DGImage * gLegatoButton = new DGImage("legato-button.png", this);
-	DGImage * gFoldoverButton = new DGImage("foldover-button.png", this);
-	DGImage * gWiseAmpButton = new DGImage("wise-amp-button.png", this);
-	DGImage * gDryWetMixModeButton = new DGImage("dry-wet-mix-mode-button.png", this);
-	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", this);
-	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", this);
-	DGImage * gGoButton = new DGImage("go-button.png", this);
-	DGImage * gDestroyFXlink = new DGImage("destroy-fx-link.png", this);
-	DGImage * gSmartElectronixLink = new DGImage("smart-electronix-link.png", this);
+	DGImage * gSepModeButton = new DGImage("separation-mode-button.png", 0, this);
+	DGImage * gScaleModeButton = new DGImage("scale-mode-button.png", 0, this);
+	DGImage * gFadesButton = new DGImage("fades-button.png", 0, this);
+	DGImage * gLegatoButton = new DGImage("legato-button.png", 0, this);
+	DGImage * gFoldoverButton = new DGImage("foldover-button.png", 0, this);
+	DGImage * gWiseAmpButton = new DGImage("wise-amp-button.png", 0, this);
+	DGImage * gDryWetMixModeButton = new DGImage("dry-wet-mix-mode-button.png", 0, this);
+	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", 0, this);
+	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", 0, this);
+	DGImage * gGoButton = new DGImage("go-button.png", 0, this);
+	DGImage * gDestroyFXlink = new DGImage("destroy-fx-link.png", 0, this);
+	DGImage * gSmartElectronixLink = new DGImage("smart-electronix-link.png", 0, this);
 
-DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-background.png", this);
+DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-background.png", 0, this);
 
 
 
@@ -225,7 +223,7 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 	for (int i=0; i < 8; i++)
 	{
 		long paramID = kBandwidth;
-		displayTextProcedure displayProc = bandwidthDisplayProc;
+		DGValue2TextProcedure displayProc = bandwidthDisplayProc;
 		if (i == 1)
 		{
 			paramID = kNumBands;
@@ -263,7 +261,7 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 		}
 
 		// slider control
-		DGSlider * slider = new DGSlider(this, paramID, &pos, kDGSliderAxis_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
+		DGSlider * slider = new DGSlider(this, paramID, &pos, kDGAxis_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
 		if ( (paramID == kSepAmount_octaval) || (paramID == kSepAmount_linear) )
 			sepAmountSlider = slider;
 
@@ -295,7 +293,7 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 	pos3.set(kTallLabelX, kTallLabelY, kTallLabelWidth, kTallLabelHeight);
 	for (int paramID=kGain; paramID <= kDryWetMix; paramID++)
 	{
-		displayTextProcedure displayProc = gainDisplayProc;
+		DGValue2TextProcedure displayProc = gainDisplayProc;
 		char * label1 = "filtered";
 		char * label2 = "gain";
 		if (paramID == kBetweenGain)
@@ -307,7 +305,7 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 			displayProc = dryWetMixDisplayProc;
 		}
 		// slider control
-		DGSlider * slider = new DGSlider(this, paramID, &pos, kDGSliderAxis_vertical, gVerticalSliderHandle, gVerticalSliderBackground);
+		DGSlider * slider = new DGSlider(this, paramID, &pos, kDGAxis_vertical, gVerticalSliderHandle, gVerticalSliderBackground);
 
 		// value display
 		DGTextDisplay * display = new DGTextDisplay(this, paramID, &pos2, displayProc, NULL, gVerticalValueDisplayBackground, kDGTextAlign_center, kValueTextFontSize, kMyLightGreyColor, kValueTextFont);
