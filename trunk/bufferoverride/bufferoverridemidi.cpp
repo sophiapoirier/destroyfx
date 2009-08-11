@@ -1,6 +1,6 @@
 /*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
 
-#include "bufferoverride.hpp"
+#include "bufferoverride.h"
 
 
 //-----------------------------------------------------------------------------

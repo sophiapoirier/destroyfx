@@ -1,8 +1,8 @@
 /*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
 
 
-#ifndef __BUFFEROVERRIDE_H
-#define __BUFFEROVERRIDE_H
+#ifndef __BUFFER_OVERRIDE_H
+#define __BUFFER_OVERRIDE_H
 
 
 #include "dfxplugin.h"
