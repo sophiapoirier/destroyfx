@@ -1,11 +1,7 @@
 
 /* DFX Transverb plugin by Tom 7 and Sophia */
 
-#include "transverb.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "transverbeditor.h"
-#endif
+#include "transverb.h"
 
 
 
@@ -66,9 +62,6 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
   #ifdef TARGET_API_VST
-    #if TARGET_PLUGIN_HAS_GUI
-      editor = new TransverbEditor(this);
-    #endif
     #if TARGET_PLUGIN_USES_DSPCORE
       DFX_INIT_CORE(TransverbDSP);	// we need to manage DSP cores manually in VST
     #endif
@@ -101,20 +94,11 @@ TransverbDSP::TransverbDSP(DfxPlugin * inDfxPlugin)
   buf2 = 0;
   MAXBUF = 0;	// init to bogus value to "dirty" it
 
-  filter1 = new IIRfilter();
-  filter2 = new IIRfilter();
   firCoefficients1 = (float*) malloc(kNumFIRTaps * sizeof(float));
   firCoefficients2 = (float*) malloc(kNumFIRTaps * sizeof(float));
 }
 
 TransverbDSP::~TransverbDSP() {
-
-  if (filter1)
-    delete filter1;
-  filter1 = 0;
-  if (filter2)
-    delete filter2;
-  filter2 = 0;
 
   if (firCoefficients1)
     free(firCoefficients1);
@@ -136,12 +120,13 @@ fprintf(stderr, "calling TransverbDSP::reset()\n");
   read1 = read2 = 0.0;
   smoothcount1 = smoothcount2 = 0;
   lastr1val = lastr2val = 0.0f;
-  if (filter1 != NULL)
-    filter1->reset();
-  if (filter2 != NULL)
-    filter2->reset();
+  filter1.reset();
+  filter2.reset();
   speed1hasChanged = speed2hasChanged = true;
   tomsound_sampoffset = GetChannelNum();
+
+  filter1.setSampleRate( getsamplerate() );
+  filter2.setSampleRate( getsamplerate() );
 }
 
 bool TransverbDSP::createbuffers() {

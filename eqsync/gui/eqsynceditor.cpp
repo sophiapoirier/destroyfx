@@ -1,9 +1,5 @@
-#include "eqsynceditor.hpp"
-#include "eqsync.hpp"
-
-#include "dfxguislider.h"
-#include "dfxguidisplay.h"
-#include "dfxguibutton.h"
+#include "eqsynceditor.h"
+#include "eqsync.h"
 
 #include "dfx-au-utilities.h"
 
@@ -84,7 +80,7 @@ class EQSyncSlider : public DGSlider
 {
 public:
 	EQSyncSlider(DfxGuiEditor * inOwnerEditor, AudioUnitParameterID inParamID, DGRect * inRegion, 
-					DfxGuiSliderAxis inOrientation, DGImage * inHandle, DGImage * inHandleClicked, DGImage * inBackground)
+					DGAxis inOrientation, DGImage * inHandle, DGImage * inHandleClicked, DGImage * inBackground)
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandle, inBackground), 
 		regularHandle(inHandle), clickedHandle(inHandleClicked)
 	{
@@ -100,7 +96,7 @@ public:
 #if 0
 	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
 	{
-		if (orientation == kDGSliderAxis_vertical)
+		if (orientation & kDGAxis_vertical)
 		{
 			long xchange = (long)(inXpos - lastPX) + lastXchange;
 			long ychange = (long)(inYpos - lastPY) + lastYchange;
@@ -194,7 +190,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(EQSyncEditor)
+DFX_EDITOR_ENTRY(EQSyncEditor)
 
 //-----------------------------------------------------------------------------
 EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
@@ -203,7 +199,7 @@ EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long EQSyncEditor::open()
+long EQSyncEditor::OpenEditor()
 {
 	long wideFaderX = kWideFaderX_panther;
 	long wideFaderY = kWideFaderY_panther;
@@ -239,28 +235,28 @@ long EQSyncEditor::open()
 			destroyFXlinkY = kDestroyFXlinkY;
 			helpButtonX = kHelpButtonX;
 			helpButtonY = kHelpButtonY;
-			gBackground = new DGImage("eq-sync-background.png", this);
-			gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", this);
-			gVerticalSliderBackground = new DGImage("vertical-slider-background.png", this);
-			gSliderHandle = new DGImage("slider-handle.png", this);
-			gSliderHandleClicked = new DGImage("slider-handle-clicked.png", this);
-			gHostSyncButton = new DGImage("host-sync-button-panther.png", this);	// it's the same widget image in Panther and Jaguar
-			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png", this);
+			gBackground = new DGImage("eq-sync-background.png", 0, this);
+			gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", 0, this);
+			gVerticalSliderBackground = new DGImage("vertical-slider-background.png", 0, this);
+			gSliderHandle = new DGImage("slider-handle.png", 0, this);
+			gSliderHandleClicked = new DGImage("slider-handle-clicked.png", 0, this);
+			gHostSyncButton = new DGImage("host-sync-button-panther.png", 0, this);	// it's the same widget image in Panther and Jaguar
+			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png", 0, this);
 			break;
 		// Panther (Mac OS X 10.3)
 		case 0x1030:
 		default:
-			gBackground = new DGImage("eq-sync-background-panther.png", this);
-			gHorizontalSliderBackground = new DGImage("horizontal-slider-background-panther.png", this);
-			gVerticalSliderBackground = new DGImage("vertical-slider-background-panther.png", this);
-			gSliderHandle = new DGImage("slider-handle-panther.png", this);
-			gSliderHandleClicked = new DGImage("slider-handle-clicked-panther.png", this);
-			gHostSyncButton = new DGImage("host-sync-button-panther.png", this);
-			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab-panther.png", this);
+			gBackground = new DGImage("eq-sync-background-panther.png", 0, this);
+			gHorizontalSliderBackground = new DGImage("horizontal-slider-background-panther.png", 0, this);
+			gVerticalSliderBackground = new DGImage("vertical-slider-background-panther.png", 0, this);
+			gSliderHandle = new DGImage("slider-handle-panther.png", 0, this);
+			gSliderHandleClicked = new DGImage("slider-handle-clicked-panther.png", 0, this);
+			gHostSyncButton = new DGImage("host-sync-button-panther.png", 0, this);
+			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab-panther.png", 0, this);
 			break;
 	}
 
-	DGImage * gHelpButton = new DGImage("help-button.png", this);
+	DGImage * gHelpButton = new DGImage("help-button.png", 0, this);
 
 	SetBackgroundImage(gBackground);
 
@@ -271,10 +267,10 @@ long EQSyncEditor::open()
 	{
 		// create the horizontal sliders
 		pos.set(wideFaderX, wideFaderY + (kWideFaderInc * i), gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
-		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGSliderAxis_horizontal, gSliderHandle, gSliderHandleClicked, gHorizontalSliderBackground);
+		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGAxis_horizontal, gSliderHandle, gSliderHandleClicked, gHorizontalSliderBackground);
 
 		// create the displays
-		displayTextProcedure textproc = NULL;
+		DGValue2TextProcedure textproc = NULL;
 		if (i == kRate_sync)
 			textproc = tempoRateDisplayProc;
 		else if (i == kSmooth)
@@ -289,7 +285,7 @@ long EQSyncEditor::open()
 	for (long i=ka0; i <= kb2; i++)
 	{
 		pos.set(tallFaderX + (kTallFaderInc * (i-ka0)), tallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
-		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGSliderAxis_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);
+		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGAxis_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);
 	}
 
 
@@ -304,8 +300,7 @@ long EQSyncEditor::open()
 	// create the help button
 	pos.set(helpButtonX, helpButtonY, gHelpButton->getWidth(), gHelpButton->getHeight()/2);
 	DGButton * helpButton = new DGButton(this, &pos, gHelpButton, 2, kDGButtonType_pushbutton);
-	helpButton->setUserReleaseProcedure(helpButtonProc, this);
-	helpButton->setUseReleaseProcedureOnlyAtEndWithNoCancel(true);
+	helpButton->setUserReleaseProcedure(helpButtonProc, this, true);
 
 
 	return noErr;

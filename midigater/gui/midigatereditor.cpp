@@ -1,9 +1,5 @@
-#include "midigatereditor.hpp"
-#include "midigater.hpp"
-
-#include "dfxguislider.h"
-#include "dfxguidisplay.h"
-#include "dfxguibutton.h"
+#include "midigatereditor.h"
+#include "midigater.h"
 
 
 //-----------------------------------------------------------------------------
@@ -71,7 +67,7 @@ void floorDisplayProc(float inValue, char * outText, void *)
 
 
 //____________________________________________________________________________
-COMPONENT_ENTRY(MidiGaterEditor)
+DFX_EDITOR_ENTRY(MidiGaterEditor)
 
 //-----------------------------------------------------------------------------
 MidiGaterEditor::MidiGaterEditor(DGEditorListenerInstance inInstance)
@@ -80,19 +76,19 @@ MidiGaterEditor::MidiGaterEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long MidiGaterEditor::open()
+long MidiGaterEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
 	// background image
-	DGImage * backgroundImage = new DGImage("midi-gater-background.png", this);
+	DGImage * backgroundImage = new DGImage("midi-gater-background.png", 0, this);
 	SetBackgroundImage(backgroundImage);
 
-	DGImage * slopeSliderHandleImage = new DGImage("slider-handle-slope.png", this);
-	DGImage * floorSliderHandleImage = new DGImage("slider-handle-floor.png", this);
-	DGImage * velInfluenceSliderHandleImage = new DGImage("slider-handle-velocity-influence.png", this);
+	DGImage * slopeSliderHandleImage = new DGImage("slider-handle-slope.png", 0, this);
+	DGImage * floorSliderHandleImage = new DGImage("slider-handle-floor.png", 0, this);
+	DGImage * velInfluenceSliderHandleImage = new DGImage("slider-handle-velocity-influence.png", 0, this);
 
-	DGImage * destroyFXLinkButtonImage = new DGImage("destroy-fx-link-button.png", this);
+	DGImage * destroyFXLinkButtonImage = new DGImage("destroy-fx-link-button.png", 0, this);
 
 
 	//--create the controls-------------------------------------
@@ -103,19 +99,19 @@ long MidiGaterEditor::open()
 
 	// attack slope
 	pos.set(kSliderX, kAttackSlopeSliderY, kSliderWidth, slopeSliderHandleImage->getHeight());
-	slider = new DGSlider(this, kAttackSlope, &pos, kDGSliderAxis_horizontal, slopeSliderHandleImage, NULL);
+	slider = new DGSlider(this, kAttackSlope, &pos, kDGAxis_horizontal, slopeSliderHandleImage, NULL);
 
 	// release slope
 	pos.set(kSliderX, kReleaseSlopeSliderY, kSliderWidth, slopeSliderHandleImage->getHeight());
-	slider = new DGSlider(this, kReleaseSlope, &pos, kDGSliderAxis_horizontal, slopeSliderHandleImage, NULL);
+	slider = new DGSlider(this, kReleaseSlope, &pos, kDGAxis_horizontal, slopeSliderHandleImage, NULL);
 
 	// velocity influence
 	pos.set(kSliderX, kVelInfluenceSliderY, kSliderWidth, velInfluenceSliderHandleImage->getHeight());
-	slider = new DGSlider(this, kVelInfluence, &pos, kDGSliderAxis_horizontal, velInfluenceSliderHandleImage, NULL);
+	slider = new DGSlider(this, kVelInfluence, &pos, kDGAxis_horizontal, velInfluenceSliderHandleImage, NULL);
 
 	// floor
 	pos.set(kSliderX, kFloorSliderY, kSliderWidth, floorSliderHandleImage->getHeight());
-	slider = new DGSlider(this, kFloor, &pos, kDGSliderAxis_horizontal, floorSliderHandleImage, NULL);
+	slider = new DGSlider(this, kFloor, &pos, kDGAxis_horizontal, floorSliderHandleImage, NULL);
 
 
 	// --- text displays ---

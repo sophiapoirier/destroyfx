@@ -3,8 +3,6 @@
 
 
 #include "dfxgui.h"
-#include "dfxguislider.h"
-#include "dfxguidisplay.h"
 
 
 //-----------------------------------------------------------------------
@@ -14,7 +12,7 @@ public:
 	RezSynthEditor(AudioUnitCarbonView inInstance);
 	virtual ~RezSynthEditor();
 
-	virtual long open();
+	virtual long OpenEditor();
 
 private:
 	AUParameterListenerRef parameterListener;

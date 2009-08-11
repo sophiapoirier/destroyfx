@@ -2,11 +2,7 @@
 /* Geometer,
    Featuring the Super Destroy FX Windowing System! */
 
-#include "geometer.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #include "geometereditor.hpp"
-#endif
+#include "geometer.h"
 
 int intcompare(const void * a, const void * b);
 int intcompare(const void * a, const void * b) {
@@ -173,9 +169,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
     #if TARGET_PLUGIN_USES_DSPCORE
       DFX_INIT_CORE(GeometerDSP);	/* we need to manage DSP cores manually in VST */
     #endif
-    #if TARGET_PLUGIN_HAS_GUI
-      editor = new GeometerEditor(this);
-	#endif
   #endif
 }
 

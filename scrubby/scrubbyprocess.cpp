@@ -1,6 +1,6 @@
 /*-------------- by Sophia Poirier  ][  February 2002 -------------*/
 
-#include "scrubby.hpp"
+#include "scrubby.h"
 
 
 //-----------------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ void Scrubby::generateNewTarget(unsigned long channel)
 	else
 	{
 		if (useSeekRateRandMin)
-			currentSeekRate = expandparametervalue_index(kSeekRate_abs, DFX_InterpolateRandom(seekRateRandMinHz_gen, seekRateHz_gen));
+			currentSeekRate = expandparametervalue(kSeekRate_abs, DFX_InterpolateRandom(seekRateRandMinHz_gen, seekRateHz_gen));
 		else
 			currentSeekRate = seekRateHz;
 	}

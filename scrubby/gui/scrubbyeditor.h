@@ -3,9 +3,6 @@
 
 
 #include "dfxgui.h"
-#include "dfxguislider.h"
-#include "dfxguibutton.h"
-#include "dfxguidisplay.h"
 
 
 //--------------------------------------------------------------------------
@@ -30,7 +27,7 @@ public:
 	ScrubbyEditor(AudioUnitCarbonView inInstance);
 	virtual ~ScrubbyEditor();
 
-	virtual long open();
+	virtual long OpenEditor();
 	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse);
 	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels);
 

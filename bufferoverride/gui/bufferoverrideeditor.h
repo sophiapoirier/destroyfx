@@ -1,11 +1,8 @@
-#ifndef __BUFFEROVERRIDE_EDITOR_H
-#define __BUFFEROVERRIDE_EDITOR_H
+#ifndef __BUFFER_OVERRIDE_EDITOR_H
+#define __BUFFER_OVERRIDE_EDITOR_H
 
 
 #include "dfxgui.h"
-#include "dfxguislider.h"
-#include "dfxguibutton.h"
-#include "dfxguidisplay.h"
 
 
 //-----------------------------------------------------------------------------
@@ -15,7 +12,7 @@ public:
 	BufferOverrideEditor(AudioUnitCarbonView inInstance);
 	virtual ~BufferOverrideEditor();
 
-	virtual long open();
+	virtual long OpenEditor();
 	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse);
 
 private:

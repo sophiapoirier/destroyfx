@@ -3,7 +3,6 @@
 
 
 #include "dfxgui.h"
-#include "dfxguibutton.h"
 
 
 
@@ -34,7 +33,7 @@ public:
 	TransverbEditor(AudioUnitCarbonView inInstance);
 	virtual ~TransverbEditor();
 
-	virtual long open();
+	virtual long OpenEditor();
 
 private:
 	AUParameterListenerRef parameterListener;
