@@ -1,5 +1,5 @@
 #include "bufferoverrideeditor.h"
-#include "bufferoverride.hpp"
+#include "bufferoverride.h"
 
 
 
@@ -239,7 +239,7 @@ void tempoDisplayProc(float value, char * outText, void *)
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(BufferOverrideEditor)
+DFX_EDITOR_ENTRY(BufferOverrideEditor)
 
 //-----------------------------------------------------------------------------
 BufferOverrideEditor::BufferOverrideEditor(AudioUnitCarbonView inInstance)
@@ -287,41 +287,41 @@ BufferOverrideEditor::~BufferOverrideEditor()
 }
 
 //-----------------------------------------------------------------------------
-long BufferOverrideEditor::open()
+long BufferOverrideEditor::OpenEditor()
 {
 	// create images
 
 	// background image
-	DGImage * gBackground = new DGImage("buffer-override-background.png", this);
+	DGImage * gBackground = new DGImage("buffer-override-background.png", 0, this);
 	SetBackgroundImage(gBackground);
 
 	// slider handles
-	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
-	DGImage * gXYboxHandle = new DGImage("xy-box-handle.png", this);
+	DGImage * gSliderHandle = new DGImage("slider-handle.png", 0, this);
+	DGImage * gXYboxHandle = new DGImage("xy-box-handle.png", 0, this);
 
 	// buttons
-	DGImage * gBufferTempoSyncButton = new DGImage("buffer-tempo-sync-button.png", this);
-	DGImage * gBufferTempoSyncButtonCorner = new DGImage("buffer-tempo-sync-button-corner.png", this);
-	DGImage * gBufferSizeLabel = new DGImage("buffer-size-label.png", this);
+	DGImage * gBufferTempoSyncButton = new DGImage("buffer-tempo-sync-button.png", 0, this);
+	DGImage * gBufferTempoSyncButtonCorner = new DGImage("buffer-tempo-sync-button-corner.png", 0, this);
+	DGImage * gBufferSizeLabel = new DGImage("buffer-size-label.png", 0, this);
 
-	DGImage * gBufferInterruptButton = new DGImage("buffer-interrupt-button.png", this);
-	DGImage * gBufferInterruptButtonCorner = new DGImage("buffer-interrupt-button-corner.png", this);
+	DGImage * gBufferInterruptButton = new DGImage("buffer-interrupt-button.png", 0, this);
+	DGImage * gBufferInterruptButtonCorner = new DGImage("buffer-interrupt-button-corner.png", 0, this);
 
-	DGImage * gDivisorLFOtempoSyncButton = new DGImage("divisor-lfo-tempo-sync-button.png", this);
-	DGImage * gDivisorLFOrateLabel = new DGImage("divisor-lfo-rate-label.png", this);
+	DGImage * gDivisorLFOtempoSyncButton = new DGImage("divisor-lfo-tempo-sync-button.png", 0, this);
+	DGImage * gDivisorLFOrateLabel = new DGImage("divisor-lfo-rate-label.png", 0, this);
 
-	DGImage * gBufferLFOtempoSyncButton = new DGImage("buffer-lfo-tempo-sync-button.png", this);
-	DGImage * gBufferLFOrateLabel = new DGImage("buffer-lfo-rate-label.png", this);
+	DGImage * gBufferLFOtempoSyncButton = new DGImage("buffer-lfo-tempo-sync-button.png", 0, this);
+	DGImage * gBufferLFOrateLabel = new DGImage("buffer-lfo-rate-label.png", 0, this);
 
-	DGImage * gDivisorLFOshapeSwitch = new DGImage("divisor-lfo-shape-switch.png", this);
+	DGImage * gDivisorLFOshapeSwitch = new DGImage("divisor-lfo-shape-switch.png", 0, this);
 
-	DGImage * gBufferLFOshapeSwitch = new DGImage("buffer-lfo-shape-switch.png", this);
+	DGImage * gBufferLFOshapeSwitch = new DGImage("buffer-lfo-shape-switch.png", 0, this);
 
-	DGImage * gMidiModeButton = new DGImage("midi-mode-button.png", this);
-	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", this);
-	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", this);
+	DGImage * gMidiModeButton = new DGImage("midi-mode-button.png", 0, this);
+	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", 0, this);
+	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", 0, this);
 
-	DGImage * gGoButton = new DGImage("go-button.png", this);
+	DGImage * gGoButton = new DGImage("go-button.png", 0, this);
 
 
 	// create controls
@@ -331,36 +331,36 @@ long BufferOverrideEditor::open()
 
 	long divisorLFOrateTag = getparameter_b(kDivisorLFOtempoSync) ? kDivisorLFOrate_sync : kDivisorLFOrate_abs;
 	pos.set(kDivisorLFOrateSliderX, kDivisorLFOrateSliderY, kSliderWidth, kLFOsliderHeight);
-	divisorLFOrateSlider = new DGSlider(this, divisorLFOrateTag, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	divisorLFOrateSlider = new DGSlider(this, divisorLFOrateTag, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set(kDivisorLFOdepthSliderX, kDivisorLFOdepthSliderY, kSliderWidth, kLFOsliderHeight);
-	slider = new DGSlider(this, kDivisorLFOdepth, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kDivisorLFOdepth, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	long bufferLFOrateTag = getparameter_b(kBufferLFOtempoSync) ? kBufferLFOrate_sync : kBufferLFOrate_abs;
 	pos.set(kBufferLFOrateSliderX, kBufferLFOrateSliderY, kSliderWidth, kLFOsliderHeight);
-	bufferLFOrateSlider = new DGSlider(this, bufferLFOrateTag, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	bufferLFOrateSlider = new DGSlider(this, bufferLFOrateTag, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set(kBufferLFOdepthSliderX, kBufferLFOdepthSliderY, kSliderWidth, kLFOsliderHeight);
-	slider = new DGSlider(this, kBufferLFOdepth, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kBufferLFOdepth, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set(kSmoothSliderX, kSmoothSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kSmooth, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kSmooth, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set(kDryWetMixSliderX, kDryWetMixSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kDryWetMix, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kDryWetMix, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set(kPitchbendSliderX, kPitchbendSliderY, kSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kPitchbend, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kPitchbend, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
-	slider = new DGSlider(this, kTempo, &pos, kDGSliderAxis_horizontal, gSliderHandle, NULL);
+	slider = new DGSlider(this, kTempo, &pos, kDGAxis_horizontal, gSliderHandle, NULL);
 
 	pos.set(kDivisorBufferBoxX + 3, kDivisorBufferBoxY + 27, kDivisorBufferBoxWidth - 6, kSliderHeight);
-	slider = new DGSlider(this, kDivisor, &pos, kDGSliderAxis_horizontal, gXYboxHandle, NULL);
+	slider = new DGSlider(this, kDivisor, &pos, kDGAxis_horizontal, gXYboxHandle, NULL);
 
 	long bufferSizeTag = getparameter_b(kBufferTempoSync) ? kBufferSize_sync : kBufferSize_abs;
 	pos.offset(0, 57);
-	bufferSizeSlider = new DGSlider(this, bufferSizeTag, &pos, kDGSliderAxis_horizontal, gXYboxHandle, NULL);
+	bufferSizeSlider = new DGSlider(this, bufferSizeTag, &pos, kDGAxis_horizontal, gXYboxHandle, NULL);
 
 
 

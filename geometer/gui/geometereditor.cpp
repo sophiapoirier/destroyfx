@@ -1,6 +1,6 @@
 
-#include "geometereditor.hpp"
-#include "geometer.hpp"
+#include "geometereditor.h"
+#include "geometer.h"
 #include "geometerhelp.h"
 
 #include <c.h>  // for sizeofA
@@ -241,7 +241,7 @@ void GeometerHelpBox::setDisplayItem(long inHelpCategory, long inItemNum) {
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(GeometerEditor)
+DFX_EDITOR_ENTRY(GeometerEditor)
 
 //-----------------------------------------------------------------------------
 GeometerEditor::GeometerEditor(AudioUnitCarbonView inInstance)
@@ -307,39 +307,39 @@ GeometerEditor::~GeometerEditor() {
 }
 
 //-----------------------------------------------------------------------------
-long GeometerEditor::open() {
+long GeometerEditor::OpenEditor() {
 
   /* ---load some images--- */
   // background image
-//  DGImage * g_background = new DGImage("geometer-background.png", this);
-  DGImage * g_background = new DGImage("geometer-background-short.png", this);
+//  DGImage * g_background = new DGImage("geometer-background.png", 0, this);
+  DGImage * g_background = new DGImage("geometer-background-short.png", 0, this);
   SetBackgroundImage(g_background);
   // slider and fine tune controls
-  DGImage * g_sliderbackground = new DGImage("slider-background.png", this);
-  DGImage * g_sliderhandle = new DGImage("slider-handle.png", this);
-//  DGImage * g_sliderhandle_glowing = new DGImage("slider-handle-glowing.png", this);
-  DGImage * g_finedownbutton = new DGImage("fine-tune-down-button.png", this);
-  DGImage * g_fineupbutton = new DGImage("fine-tune-up-button.png", this);
+  DGImage * g_sliderbackground = new DGImage("slider-background.png", 0, this);
+  DGImage * g_sliderhandle = new DGImage("slider-handle.png", 0, this);
+//  DGImage * g_sliderhandle_glowing = new DGImage("slider-handle-glowing.png", 0, this);
+  DGImage * g_finedownbutton = new DGImage("fine-tune-down-button.png", 0, this);
+  DGImage * g_fineupbutton = new DGImage("fine-tune-up-button.png", 0, this);
   // option menus
-  DGImage * g_windowshapemenu = new DGImage("window-shape-button.png", this);
-  DGImage * g_windowsizemenu = new DGImage("window-size-button.png", this);
-  DGImage * g_landmarksmenu = new DGImage("landmarks-button.png", this);
-  DGImage * g_opsmenu = new DGImage("ops-button.png", this);
-  DGImage * g_recreatemenu = new DGImage("recreate-button.png", this);
+  DGImage * g_windowshapemenu = new DGImage("window-shape-button.png", 0, this);
+  DGImage * g_windowsizemenu = new DGImage("window-size-button.png", 0, this);
+  DGImage * g_landmarksmenu = new DGImage("landmarks-button.png", 0, this);
+  DGImage * g_opsmenu = new DGImage("ops-button.png", 0, this);
+  DGImage * g_recreatemenu = new DGImage("recreate-button.png", 0, this);
   // help displays
-  DGImage * g_helpbackground = new DGImage("help-background.png", this);
-  g_helpicons[HELP_CATEGORY_GENERAL] = new DGImage("help-general.png", this);
-  g_helpicons[HELP_CATEGORY_WINDOWSHAPE] = new DGImage("help-window-shape.png", this);
-  g_helpicons[HELP_CATEGORY_LANDMARKS] = new DGImage("help-landmarks.png", this);
-  g_helpicons[HELP_CATEGORY_OPS] = new DGImage("help-ops.png", this);
-  g_helpicons[HELP_CATEGORY_RECREATE] = new DGImage("help-recreate.png", this);
+  DGImage * g_helpbackground = new DGImage("help-background.png", 0, this);
+  g_helpicons[HELP_CATEGORY_GENERAL] = new DGImage("help-general.png", 0, this);
+  g_helpicons[HELP_CATEGORY_WINDOWSHAPE] = new DGImage("help-window-shape.png", 0, this);
+  g_helpicons[HELP_CATEGORY_LANDMARKS] = new DGImage("help-landmarks.png", 0, this);
+  g_helpicons[HELP_CATEGORY_OPS] = new DGImage("help-ops.png", 0, this);
+  g_helpicons[HELP_CATEGORY_RECREATE] = new DGImage("help-recreate.png", 0, this);
   // MIDI learn/reset buttons
-  DGImage * g_midilearnbutton = new DGImage("midi-learn-button.png", this);
-  DGImage * g_midiresetbutton = new DGImage("midi-reset-button.png", this);
+  DGImage * g_midilearnbutton = new DGImage("midi-learn-button.png", 0, this);
+  DGImage * g_midiresetbutton = new DGImage("midi-reset-button.png", 0, this);
 
   // web links
-  DGImage * g_destroyfxlink = new DGImage("destroy-fx-link.png", this);
-  DGImage * g_smartelectronixlink = new DGImage("smart-electronix-link.png", this);
+  DGImage * g_destroyfxlink = new DGImage("destroy-fx-link.png", 0, this);
+  DGImage * g_smartelectronixlink = new DGImage("smart-electronix-link.png", 0, this);
 
 
 
@@ -443,7 +443,7 @@ long GeometerEditor::open() {
     }
     long param = choose_multiparam(baseparam);
 
-    sliders[i] = new DGSlider(this, param, &pos, kDGSliderAxis_horizontal, 
+    sliders[i] = new DGSlider(this, param, &pos, kDGAxis_horizontal, 
                                      g_sliderhandle, g_sliderbackground);
 
     // fine tune down button
@@ -506,7 +506,7 @@ long GeometerEditor::open() {
   long initcat = HELP_CATEGORY_GENERAL;
   pos.set(pos_helpiconX, pos_helpiconY, g_helpicons[initcat]->getWidth(), g_helpicons[initcat]->getHeight()/NUM_GEN_HELP_ITEMS);
   helpicon = new DGButton(this, &pos, g_helpicons[initcat], NUM_GEN_HELP_ITEMS, kDGButtonType_picturereel);
-  helpicon->setValue(HELP_EMPTY);
+  helpicon->setValue_i(HELP_EMPTY);
 
   pos.set(pos_helpboxX, pos_helpboxY, g_helpbackground->getWidth(), g_helpbackground->getHeight());
   helpbox = new GeometerHelpBox(this, &pos, g_helpbackground);
@@ -596,7 +596,7 @@ updatehelp:
   if (helpicon != NULL) {
     helpicon->setNumStates(helpnumitems);
     helpicon->setButtonImage(g_helpicons[helpcategory]);
-    helpicon->setValue(helpitem);
+    helpicon->setValue_i(helpitem);
   }
   if (helpbox != NULL)
     helpbox->setDisplayItem(helpcategory, helpitem);

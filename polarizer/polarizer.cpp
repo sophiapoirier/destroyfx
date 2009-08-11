@@ -1,10 +1,6 @@
 /*------------------ by Sophia Poirier  ][  January 2001 -----------------*/
 
-#include "polarizer.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "polarizereditor.hpp"
-#endif
+#include "polarizer.h"
 
 
 // these are macros that do boring entry point stuff for us
@@ -25,9 +21,6 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	#ifdef TARGET_API_VST
 		DFX_INIT_CORE(PolarizerDSP);	// we need to manage DSP cores manually in VST
-		#if TARGET_PLUGIN_HAS_GUI
-			editor = new PolarizerEditor(this);
-		#endif
 	#endif
 }
 

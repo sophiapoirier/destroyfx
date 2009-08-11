@@ -1,8 +1,5 @@
 #include "transverbeditor.h"
-#include "transverb.hpp"
-
-#include "dfxguislider.h"
-#include "dfxguidisplay.h"
+#include "transverb.h"
 
 
 //-----------------------------------------------------------------------------
@@ -228,7 +225,7 @@ void TransverbSpeedTuneButton::mouseDown(float inXpos, float inYpos, unsigned lo
 
 
 //-----------------------------------------------------------------------------
-COMPONENT_ENTRY(TransverbEditor)
+DFX_EDITOR_ENTRY(TransverbEditor)
 
 //-----------------------------------------------------------------------------
 TransverbEditor::TransverbEditor(AudioUnitCarbonView inInstance)
@@ -266,32 +263,32 @@ TransverbEditor::~TransverbEditor()
 }
 
 //-----------------------------------------------------------------------------
-long TransverbEditor::open()
+long TransverbEditor::OpenEditor()
 {
 	// Background image
-	DGImage * gBackground = new DGImage("transverb-background.png", this);
+	DGImage * gBackground = new DGImage("transverb-background.png", 0, this);
 	SetBackgroundImage(gBackground);
 
 	// slider handles
-	DGImage * gHorizontalSliderHandle = new DGImage("purple-wide-fader-handle.png", this);
-	DGImage * gGreyHorizontalSliderHandle = new DGImage("grey-wide-fader-handle.png", this);
-	DGImage * gVerticalSliderHandle = new DGImage("tall-fader-handle.png", this);
+	DGImage * gHorizontalSliderHandle = new DGImage("purple-wide-fader-handle.png", 0, this);
+	DGImage * gGreyHorizontalSliderHandle = new DGImage("grey-wide-fader-handle.png", 0, this);
+	DGImage * gVerticalSliderHandle = new DGImage("tall-fader-handle.png", 0, this);
 	// slider backgrounds
-	DGImage * gHorizontalSliderBackground = new DGImage("purple-wide-fader-slide.png", this);
-	DGImage * gGreyHorizontalSliderBackground = new DGImage("grey-wide-fader-slide.png", this);
-	DGImage * gVerticalSliderBackground = new DGImage("tall-fader-slide.png", this);
+	DGImage * gHorizontalSliderBackground = new DGImage("purple-wide-fader-slide.png", 0, this);
+	DGImage * gGreyHorizontalSliderBackground = new DGImage("grey-wide-fader-slide.png", 0, this);
+	DGImage * gVerticalSliderBackground = new DGImage("tall-fader-slide.png", 0, this);
 	// buttons
-	DGImage * gQualityButton = new DGImage("quality-button.png", this);
-	DGImage * gTomsoundButton = new DGImage("tomsound-button.png", this);
-	DGImage * gRandomizeButton = new DGImage("randomize-button.png", this);
-	DGImage * gFineDownButton = new DGImage("fine-down-button.png", this);
-	DGImage * gFineUpButton = new DGImage("fine-up-button.png", this);
-	DGImage * gSpeedModeButton = new DGImage("speed-mode-button.png", this);
-	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", this);
-	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", this);
-	DGImage * gDfxLinkButton = new DGImage("dfx-link.png", this);
-	DGImage * gSuperDestroyFXlinkButton = new DGImage("super-destroy-fx-link.png", this);
-	DGImage * gSmartElectronixLinkButton = new DGImage("smart-electronix-link.png", this);
+	DGImage * gQualityButton = new DGImage("quality-button.png", 0, this);
+	DGImage * gTomsoundButton = new DGImage("tomsound-button.png", 0, this);
+	DGImage * gRandomizeButton = new DGImage("randomize-button.png", 0, this);
+	DGImage * gFineDownButton = new DGImage("fine-down-button.png", 0, this);
+	DGImage * gFineUpButton = new DGImage("fine-up-button.png", 0, this);
+	DGImage * gSpeedModeButton = new DGImage("speed-mode-button.png", 0, this);
+	DGImage * gMidiLearnButton = new DGImage("midi-learn-button.png", 0, this);
+	DGImage * gMidiResetButton = new DGImage("midi-reset-button.png", 0, this);
+	DGImage * gDfxLinkButton = new DGImage("dfx-link.png", 0, this);
+	DGImage * gSuperDestroyFXlinkButton = new DGImage("super-destroy-fx-link.png", 0, this);
+	DGImage * gSmartElectronixLinkButton = new DGImage("smart-electronix-link.png", 0, this);
 
 
 
@@ -304,7 +301,7 @@ long TransverbEditor::open()
 	pos4.set(kFineUpButtonX, kFineButtonY, gFineUpButton->getWidth(), gFineUpButton->getHeight() / 2);
 	for (long tag=kSpeed1; tag <= kDist2; tag++)
 	{
-		displayTextProcedure displayProc;
+		DGValue2TextProcedure displayProc;
 		void * userData = NULL;
 		if ( (tag == kSpeed1) || (tag == kSpeed2) )
 			displayProc = speedDisplayProcedure;
@@ -315,7 +312,7 @@ long TransverbEditor::open()
 			displayProc = distDisplayProcedure;
 			userData = this;
 		}
-		DGSlider * slider = new DGSlider(this, tag, &pos, kDGSliderAxis_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
+		DGSlider * slider = new DGSlider(this, tag, &pos, kDGAxis_horizontal, gHorizontalSliderHandle, gHorizontalSliderBackground);
 		slider->shrinkForeBounds(1, 0, 2, 0);
 
 		DGTextDisplay * display = new DGTextDisplay(this, tag, &pos2, displayProc, userData, NULL, 
@@ -350,7 +347,7 @@ long TransverbEditor::open()
 		pos4.offset(0, yoff);
 	}
 
-	DGSlider * bsizeSlider = new DGSlider(this, kBsize, &pos, kDGSliderAxis_horizontal, gGreyHorizontalSliderHandle, gGreyHorizontalSliderBackground);
+	DGSlider * bsizeSlider = new DGSlider(this, kBsize, &pos, kDGAxis_horizontal, gGreyHorizontalSliderHandle, gGreyHorizontalSliderBackground);
 	bsizeSlider->shrinkForeBounds(1, 0, 2, 0);
 
 	DGTextDisplay * display = new DGTextDisplay(this, kBsize, &pos2, bsizeDisplayProcedure, NULL, NULL, 
@@ -364,7 +361,7 @@ long TransverbEditor::open()
 	pos.set(kTallFaderX, kTallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
 	for (long tag=kDrymix; tag <= kMix2; tag++)
 	{
-		DGSlider * slider = new DGSlider(this, tag, &pos, kDGSliderAxis_vertical, gVerticalSliderHandle, gVerticalSliderBackground);
+		DGSlider * slider = new DGSlider(this, tag, &pos, kDGAxis_vertical, gVerticalSliderHandle, gVerticalSliderBackground);
 		slider->shrinkForeBounds(0, 1, 0, 2);
 		pos.offset(kTallFaderInc, 0);
 	}

@@ -1,13 +1,21 @@
+#ifndef __REZ_SYNTH_DEF_H
+#define __REZ_SYNTH_DEF_H
+
+
+#include "dfxplugin-prefix.h"
+
+
 #define PLUGIN_NAME_STRING	"Rez Synth"
 #define PLUGIN_ID	'RezS'
-#define PLUGIN_VERSION	0x00010300
+#define PLUGIN_VERSION_MAJOR	1
+#define PLUGIN_VERSION_MINOR	3
+#define PLUGIN_VERSION_BUGFIX	0
+#define PLUGIN_VERSION_STRING	"1.3.0"
 #define PLUGIN_ENTRY_POINT	"RezSynthEntry"
 #define TARGET_PLUGIN_USES_MIDI	1
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
 #define TARGET_PLUGIN_USES_DSPCORE	0
-#ifndef TARGET_PLUGIN_HAS_GUI
 #define TARGET_PLUGIN_HAS_GUI	1
-#endif
 
 // only necessary if using a custom GUI
 #define PLUGIN_EDITOR_ENTRY_POINT	"RezSynthEditorEntry"
@@ -17,4 +25,7 @@
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"tiled interface for DFX Rez Synth"
 
 
-#define PLUGIN_BUNDLE_IDENTIFIER	"org.destroyfx.RezSynth"
+#define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "RezSynth" DFX_BUNDLE_ID_SUFFIX
+
+
+#endif

@@ -1,9 +1,5 @@
-#include "monomakereditor.hpp"
-#include "monomaker.hpp"
-
-#include "dfxguislider.h"
-#include "dfxguidisplay.h"
-#include "dfxguibutton.h"
+#include "monomakereditor.h"
+#include "monomaker.h"
 
 
 //-----------------------------------------------------------------------------
@@ -59,7 +55,7 @@ void panDisplayProc(float inValue, char * outText, void *)
 
 
 //____________________________________________________________________________
-COMPONENT_ENTRY(MonomakerEditor)
+DFX_EDITOR_ENTRY(MonomakerEditor)
 
 //-----------------------------------------------------------------------------
 MonomakerEditor::MonomakerEditor(DGEditorListenerInstance inInstance)
@@ -68,22 +64,22 @@ MonomakerEditor::MonomakerEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long MonomakerEditor::open()
+long MonomakerEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
 	// background image
-	DGImage * backgroundImage = new DGImage("background.png", this);
+	DGImage * backgroundImage = new DGImage("background.png", 0, this);
 	SetBackgroundImage(backgroundImage);
 
-	DGImage * sliderHandleImage = new DGImage("slider-handle.png", this);
-	DGImage * monomergeAnimationImage = new DGImage("monomerge-blobs.png", this);
-	DGImage * panAnimationImage = new DGImage("pan-blobs.png", this);
+	DGImage * sliderHandleImage = new DGImage("slider-handle.png", 0, this);
+	DGImage * monomergeAnimationImage = new DGImage("monomerge-blobs.png", 0, this);
+	DGImage * panAnimationImage = new DGImage("pan-blobs.png", 0, this);
 
-	DGImage * inputSelectionButtonImage = new DGImage("input-selection-button.png", this);
-	DGImage * monomergeModeButtonImage = new DGImage("monomerge-mode-button.png", this);
-	DGImage * panModeButtonImage = new DGImage("pan-mode-button.png", this);
-	DGImage * destroyFXLinkImage = new DGImage("destroy-fx-link.png", this);
+	DGImage * inputSelectionButtonImage = new DGImage("input-selection-button.png", 0, this);
+	DGImage * monomergeModeButtonImage = new DGImage("monomerge-mode-button.png", 0, this);
+	DGImage * panModeButtonImage = new DGImage("pan-mode-button.png", 0, this);
+	DGImage * destroyFXLinkImage = new DGImage("destroy-fx-link.png", 0, this);
 
 
 
@@ -98,21 +94,21 @@ long MonomakerEditor::open()
 
 	// monomerge slider
 	pos.set(kSliderX, kSliderY, kSliderWidth, sliderHandleImage->getHeight());
-	slider = new DGSlider(this, kMonomerge, &pos, kDGSliderAxis_horizontal, sliderHandleImage, NULL);
+	slider = new DGSlider(this, kMonomerge, &pos, kDGAxis_horizontal, sliderHandleImage, NULL);
 
 	// pan slider
 	pos.offset(0, kSliderInc);
-	slider = new DGSlider(this, kPan, &pos, kDGSliderAxis_horizontal, sliderHandleImage, NULL);
+	slider = new DGSlider(this, kPan, &pos, kDGAxis_horizontal, sliderHandleImage, NULL);
 
 	// monomerge animation
 	pos.set(kMonomergeAnimationX, kMonomergeAnimationY, monomergeAnimationImage->getWidth(), (monomergeAnimationImage->getHeight())/numAnimationFrames);
 	blobs = new DGAnimation(this, kMonomerge, &pos, monomergeAnimationImage, numAnimationFrames);
-	blobs->setMouseAxis(kDGTextDisplayMouseAxis_horizontal);
+	blobs->setMouseAxis(kDGAxis_horizontal);
 
 	// pan animation
 	pos.set(kPanAnimationX, kPanAnimationY, panAnimationImage->getWidth(), (panAnimationImage->getHeight())/numAnimationFrames);
 	blobs = new DGAnimation(this, kPan, &pos, panAnimationImage, numAnimationFrames);
-	blobs->setMouseAxis(kDGTextDisplayMouseAxis_horizontal);
+	blobs->setMouseAxis(kDGAxis_horizontal);
 
 
 	// --- text displays ---

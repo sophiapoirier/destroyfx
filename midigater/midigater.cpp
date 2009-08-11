@@ -1,10 +1,6 @@
 /*-------------- by Sophia Poirier  ][  November 2001 -------------*/
 
-#include "midigater.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "midigatereditor.hpp"
-#endif
+#include "midigater.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -42,11 +38,6 @@ MidiGater::MidiGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setAudioProcessingMustAccumulate(true);	// only support accumulating output
 	midistuff->setLazyAttack();	// this enables the lazy note attack mode
-
-
-	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-		editor = new MidiGaterEditor(this);
-	#endif
 }
 
 //-----------------------------------------------------------------------------------------

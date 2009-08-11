@@ -1,10 +1,6 @@
 /*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
 
-#include "bufferoverride.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "bufferoverrideeditor.h"
-#endif
+#include "bufferoverride.h"
 
 
 #pragma mark _________init_________
@@ -352,11 +348,6 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "self-determined");	// default preset name
 	initPresets();
-
-
-	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-		editor = new BufferOverrideEditor(this);
-	#endif
 }
 
 //-------------------------------------------------------------------------

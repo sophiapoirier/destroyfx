@@ -1,7 +1,7 @@
 
 /* DFX Transverb plugin by Tom 7 and Sophia */
 
-#include "transverb.hpp"
+#include "transverb.h"
 
 #include "firfilter.h"
 
@@ -16,7 +16,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
   double bsize_float = (double)bsize;	// cut down on casting
   int filterMode1, filterMode2;	// the type of filtering to use in ultra hi-fi mode
   float mug1 = 1.0f, mug2 = 1.0f;	// make-up gain for lowpass filtering
-  float fsamplerate = getsamplerate_f();
+  double samplerate = getsamplerate();
   tomsound_sampoffset = GetChannelNum();
 
 
@@ -51,15 +51,15 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
           // update the coefficients only if necessary
           if (speed1hasChanged)
           {
-            calculateFIRidealLowpassCoefficients((fsamplerate/(float)speed1)*SHELF_START_IIR, 
-                  fsamplerate, kNumFIRTaps, firCoefficients1);
+            calculateFIRidealLowpassCoefficients((samplerate/(double)speed1)*SHELF_START_FIR_LOWPASS, 
+                  samplerate, kNumFIRTaps, firCoefficients1);
             applyKaiserWindow(kNumFIRTaps, firCoefficients1, 60.0f);
             speed1hasChanged = false;
           }
         }
         else if (speed1hasChanged)
         {
-          filter1[0].calculateLowpassCoefficients((fsamplerate/(float)speed1)*SHELF_START_IIR, fsamplerate);
+          filter1.calculateLowpassCoefficients((samplerate/(double)speed1)*SHELF_START_IIR_LOWPASS);
           speed1hasChanged = false;
         }
       }
@@ -69,7 +69,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
         filterMode1 = kFilterMode_Highpass;
         if (speed1hasChanged)
         {
-          filter1[0].calculateHighpassCoefficients(33.3f/(float)speed1, fsamplerate);
+          filter1.calculateHighpassCoefficients(33.3f/(float)speed1);
           speed1hasChanged = false;
         }
       }
@@ -85,15 +85,15 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
           mug2 = (float) pow( (speed2*0.2), 0.78 );	// compensate for gain lost from filtering
           if (speed2hasChanged)
           {
-            calculateFIRidealLowpassCoefficients((fsamplerate/(float)speed2)*SHELF_START_IIR, 
-                  fsamplerate, kNumFIRTaps, firCoefficients2);
+            calculateFIRidealLowpassCoefficients((samplerate/(double)speed2)*SHELF_START_FIR_LOWPASS, 
+                  samplerate, kNumFIRTaps, firCoefficients2);
             applyKaiserWindow(kNumFIRTaps, firCoefficients2, 60.0f);
             speed2hasChanged = false;
           }
         }
         else if (speed2hasChanged)
         {
-          filter2[0].calculateLowpassCoefficients((fsamplerate/(float)speed2)*SHELF_START_IIR, fsamplerate);
+          filter2.calculateLowpassCoefficients((samplerate/(double)speed2)*SHELF_START_IIR_LOWPASS);
           speed2hasChanged = false;
         }
       }
@@ -103,7 +103,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
         filterMode2 = kFilterMode_Highpass;
         if (speed2hasChanged)
         {
-          filter2[0].calculateHighpassCoefficients(33.3f/(float)speed2, fsamplerate);
+          filter2.calculateHighpassCoefficients(33.3f/(float)speed2);
           speed2hasChanged = false;
         }
       }
@@ -143,7 +143,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
             case kFilterMode_Highpass:
             case kFilterMode_LowpassIIR:
               // interpolate the values in the IIR output history
-              r1val = interpolateHermitePostFilter(filter1, read1);
+              r1val = filter1.interpolateHermitePostFilter(read1);
               break;
             case kFilterMode_LowpassFIR:
               // get 2 consecutive FIR output values for linear interpolation
@@ -163,7 +163,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
             case kFilterMode_Highpass:
             case kFilterMode_LowpassIIR:
               // interpolate the values in the IIR output history
-              r2val = interpolateHermitePostFilter(filter2, read2);
+              r2val = filter2.interpolateHermitePostFilter(read2);
               break;
             case kFilterMode_LowpassFIR:
               // get 2 consecutive FIR output values for linear interpolation
@@ -201,14 +201,8 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       
       /* then write into buffer (w/ feedback) */
 
-      // mix very quiet noise (-300 dB) into the input singal 
-      // to hopefully avoid any denormal values from IIR filtering
       buf1[writer] = in[i] + (r1val * feed1 * mix1);
       buf2[writer] = in[i] + (r2val * feed2 * mix2);
-    #ifndef TARGET_API_AUDIOUNIT
-      DFX_UNDENORMALIZE(buf1[writer]);
-      DFX_UNDENORMALIZE(buf2[writer]);
-    #endif
 
       /* make output */
     #ifdef TARGET_API_VST
@@ -284,22 +278,22 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
           switch (speed1int - lowpasscount)
           {
             case 1:
-              filter1->processH1(buf1[lowpass1pos]);
+              filter1.processH1(buf1[lowpass1pos]);
               lowpass1pos = (lowpass1pos + 1) % bsize;
               lowpasscount++;
               break;
             case 2:
-              filter1->processH2(buf1, lowpass1pos, bsize);
+              filter1.processH2(buf1, lowpass1pos, bsize);
               lowpass1pos = (lowpass1pos + 2) % bsize;
               lowpasscount += 2;
               break;
             case 3:
-              filter1->processH3(buf1, lowpass1pos, bsize);
+              filter1.processH3(buf1, lowpass1pos, bsize);
               lowpass1pos = (lowpass1pos + 3) % bsize;
               lowpasscount += 3;
               break;
             default:
-              filter1->processH4(buf1, lowpass1pos, bsize);
+              filter1.processH4(buf1, lowpass1pos, bsize);
               lowpass1pos = (lowpass1pos + 4) % bsize;
               lowpasscount += 4;
               break;
@@ -310,7 +304,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
         if ( ((lowpass1pos < read1int) && ((lowpass1pos+1) == read1int)) ||
              ((lowpass1pos == (bsize-1)) && (read1int == 0)) )
         {
-          filter1->processH1(buf1[lowpass1pos]);
+          filter1.processH1(buf1[lowpass1pos]);
           lowpass1pos = (lowpass1pos+1) % bsize;
         }
       }
@@ -320,7 +314,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
       {
         // only if we've traversed to a new integer sample position
         if ((int)read1 != read1int)
-          filter1->process(buf1[read1int]);
+          filter1.process(buf1[read1int]);
       }
 
       // head 2 filtering stuff
@@ -332,22 +326,22 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
           switch (speed2int - lowpasscount)
           {
             case 1:
-              filter2->processH1(buf2[lowpass2pos]);
+              filter2.processH1(buf2[lowpass2pos]);
               lowpass2pos = (lowpass2pos + 1) % bsize;
               lowpasscount++;
               break;
             case 2:
-              filter2->processH2(buf2, lowpass2pos, bsize);
+              filter2.processH2(buf2, lowpass2pos, bsize);
               lowpass2pos = (lowpass2pos + 2) % bsize;
               lowpasscount += 2;
               break;
             case 3:
-              filter2->processH3(buf2, lowpass2pos, bsize);
+              filter2.processH3(buf2, lowpass2pos, bsize);
               lowpass2pos = (lowpass2pos + 3) % bsize;
               lowpasscount += 3;
               break;
             default:
-              filter2->processH4(buf2, lowpass2pos, bsize);
+              filter2.processH4(buf2, lowpass2pos, bsize);
               lowpass2pos = (lowpass2pos + 4) % bsize;
               lowpasscount += 4;
               break;
@@ -357,14 +351,14 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
         if ( ((lowpass2pos < read2int) && ((lowpass2pos+1) == read2int)) ||
              ((lowpass2pos == (bsize-1)) && (read2int == 0)) )
         {
-          filter2->processH1(buf2[lowpass2pos]);
+          filter2.processH1(buf2[lowpass2pos]);
           lowpass2pos = (lowpass2pos+1) % bsize;
         }
       }
       else if (filterMode2 == kFilterMode_Highpass)
       {
         if ((int)read2 != read2int)
-          filter2->process(buf2[read2int]);
+          filter2.process(buf2[read2int]);
       }
     }	/* end of samples loop */
 

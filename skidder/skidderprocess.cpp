@@ -1,6 +1,6 @@
 /*-------------- by Sophia Poirier  ][  December 2000 -------------*/
 
-#include "skidder.hpp"
+#include "skidder.h"
 
 
 //-----------------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ void Skidder::processPlateau()
 		rmscount = 0;	// reset the RMS counter
 		//
 		// set up the random floor values
-		randomFloor = (float) expandparametervalue_index(kFloor, DFX_InterpolateRandom(floorRandMin_gen, floor_gen));
+		randomFloor = (float) expandparametervalue(kFloor, DFX_InterpolateRandom(floorRandMin_gen, floor_gen));
 		randomGainRange = 1.0f - randomFloor;	// the range of the skidding on/off gain
 		//
 		if (slopeDur > 0)
@@ -151,7 +151,7 @@ void Skidder::processValley()
 		else
 		{
 			if (useRandomRate)
-				cycleRate = (float) expandparametervalue_index(kRate_abs, DFX_InterpolateRandom(rateRandMinHz_gen, rateHz_gen));
+				cycleRate = (float) expandparametervalue(kRate_abs, DFX_InterpolateRandom(rateRandMinHz_gen, rateHz_gen));
 			else
 				cycleRate = rateHz;
 		}
@@ -313,7 +313,7 @@ void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsign
 			// adjust the floor according to note velocity if velocity mode is on
 			if (useVelocity)
 			{
-				floor = (float) expandparametervalue_index(kFloor, (float)(127-mostRecentVelocity)/127.0f);
+				floor = (float) expandparametervalue(kFloor, (float)(127-mostRecentVelocity)/127.0f);
 				gainRange = 1.0f - floor;	// the range of the skidding on/off gain
 				useRandomFloor = false;
 			}
@@ -391,7 +391,7 @@ void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsign
 			// adjust the floor according to note velocity if velocity mode is on
 			if (useVelocity)
 			{
-				floor = (float) expandparametervalue_index(kFloor, (float)(127-mostRecentVelocity)/127.0f);
+				floor = (float) expandparametervalue(kFloor, (float)(127-mostRecentVelocity)/127.0f);
 				gainRange = 1.0f - floor;	// the range of the skidding on/off gain
 				useRandomFloor = false;
 			}

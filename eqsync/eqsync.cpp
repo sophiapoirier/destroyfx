@@ -1,10 +1,6 @@
 /*------------------ by Sophia Poirier  ][  January 2001 -----------------*/
 
-#include "eqsync.hpp"
-
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	#include "eqsynceditor.hpp"
-#endif
+#include "eqsync.h"
 
 
 // this macro does boring entry point stuff for us
@@ -47,11 +43,6 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
 	currentTempoBPS = getparameter_f(kTempo) / 60.0;
-
-
-	#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-		editor = new EQSyncEditor(this);
-	#endif
 }
 
 //-----------------------------------------------------------------------------------------
@@ -208,9 +199,7 @@ void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long
 			float inval = inputs[ch][samplecount];	// because Cubase inserts are goofy
 			float outval = ( (inval*a0) + (prevIn[ch]*a1) + (prevprevIn[ch]*a2) 
 							- (prevOut[ch]*b1) - (prevprevOut[ch]*b2) );
-		#ifndef TARGET_API_AUDIOUNIT
-			DFX_UNDENORMALIZE(outval);
-		#endif
+			outval = DFX_ClampDenormalValue(outval);
 
 		#ifdef TARGET_API_VST
 			if (!replacing)
