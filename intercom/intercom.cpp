@@ -1,24 +1,31 @@
 /*---------------------------------------------------------------
 
-   (c) 2001, Marcberg Soft und Hard GmbH, All Rights Perversed
+   (c) 2001, Sophberg Soft und Hard GmbH, All Rights Perversed
    (c) 2001, TOMBORG!!!@!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ---------------------------------------------------------------*/
 
-#ifndef __intercom
-#include "intercom.hpp"
-#endif
+#include "intercom.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 
+
+//----------------------------------------------------------------------- 
+// constants & macros
+const long kRMSWindowSize = 630;
+
+// this is for shaping the parameter values into more dB-like values
+#define noiseGainScaled(val) (val*val*4.0f)
+
+
 //------------------------------------------------------------------
 // initializations & such
 
 Intercom::Intercom(audioMasterCallback audioMaster)
-        : AudioEffectX(audioMaster, 1, 4) {
+        : AudioEffectX(audioMaster, 1, kNumParameters) {
   fNoiseGain = 0.5f;
 
   setNumInputs(2);      // stereo in
@@ -29,15 +36,20 @@ Intercom::Intercom(audioMasterCallback audioMaster)
 
   strcpy(programName, "Smoking is not permitted.");
 
-  rms1 = 0.0;
-  rms2 = 0.0;
-  rmscount = 0;
-
   specialk = 0.0f;
   specialw = 0.05f;
   specialm = 1.0f;
 
   srand((unsigned int)time(NULL));	// sets a seed value for rand() from the system clock
+
+  suspend();
+}
+
+
+void Intercom::suspend() {
+  rms1 = 0.0;
+  rms2 = 0.0;
+  rmscount = 0;
 }
 
 
@@ -45,27 +57,27 @@ Intercom::Intercom(audioMasterCallback audioMaster)
 
 bool Intercom::getEffectName(char *name) {
   strcpy (name, "Intercom (stereo)");   // name max 32 char
-  return true; 
+  return true;
 }
 
 long Intercom::getVendorVersion() {
-  return 1; 
+  return 1;
 }
 
 bool Intercom::getErrorText(char *text) {
   strcpy (text, "I don't know what happened."); // max 256 char
-  return true; 
+  return true;
 }
 
 bool Intercom::getVendorString(char *text) {
   strcpy (text, "Destroy FX");
-  return true; 
+  return true;
 }
 
 bool Intercom::getProductString(char *text) {
   // a string identifying the product name (max 64 char)
   strcpy (text, "Super Destroy FX bipolar VST plugin pack");
-  return true; 
+  return true;
 }
 
 
@@ -86,16 +98,16 @@ void Intercom::getProgramName(char *name) {
 
 void Intercom::setParameter(long index, float value) {
   switch(index) {
-  case 0:
+  case kParam_NoiseGain:
     fNoiseGain = value;
     break;
-  case 1:
+  case kParam_SpecialK:
     specialk = value;
     break;
-  case 2:
+  case kParam_SpecialW:
     specialw = value;
     break;
-  case 3:
+  case kParam_SpecialM:
   default:
     specialm = value;
     break;
@@ -106,13 +118,13 @@ void Intercom::setParameter(long index, float value) {
 float Intercom::getParameter(long index) {
 
   switch(index) {
-  case 0:
+  case kParam_NoiseGain:
     return fNoiseGain;
-  case 1:
+  case kParam_SpecialK:
     return specialk;
-  case 2:
+  case kParam_SpecialW:
     return specialw;
-  case 3:
+  case kParam_SpecialM:
   default:
     return specialm;
   }
@@ -123,17 +135,17 @@ float Intercom::getParameter(long index) {
 
 void Intercom::getParameterName(long index, char *label) {
   switch(index) {
-  case 0:
+  case kParam_NoiseGain:
     strcpy(label, "Brand Loyalty");
     break;
-  case 1:
+  case kParam_SpecialK:
     strcpy(label, "special k");
     break;
-  case 2:
+  case kParam_SpecialW:
     strcpy(label, "special w");
     break;
   default:
-  case 3:
+  case kParam_SpecialM:
     strcpy(label, "special m");
     break;
   }
@@ -143,25 +155,31 @@ void Intercom::getParameterName(long index, char *label) {
 // numerical display of each parameter's gradiations
 
 void Intercom::getParameterDisplay(long index, char *text) {
+#if TARGET_OS_MAC
+  #define REGISTERED_SYMBOL_CHARACTER	"\xA8"
+#else
+  #define REGISTERED_SYMBOL_CHARACTER	"\xAE"
+#endif
+
   switch(index) {
-  case 0:
+  case kParam_NoiseGain:
         if (fNoiseGain <= 0.25f)
-                strcpy(text, "Sears\xAE");
+                strcpy(text, "Sears"REGISTERED_SYMBOL_CHARACTER);
         if ( (fNoiseGain > 0.25f) && (fNoiseGain <= 0.5f) )
-                strcpy(text, "Fisher Price\xAE");
+                strcpy(text, "Fisher Price"REGISTERED_SYMBOL_CHARACTER);
         if ( (fNoiseGain > 0.5f) && (fNoiseGain <= 0.75f) )
-                strcpy(text, "Tonka\xAE");
+                strcpy(text, "Tonka"REGISTERED_SYMBOL_CHARACTER);
         if (fNoiseGain > 0.75f)
-                strcpy(text, "Radio Shack\xAE");
+                strcpy(text, "Radio Shack"REGISTERED_SYMBOL_CHARACTER);
         break;
   default:
     {float val;
     switch(index) {
-    case 1:
+    case kParam_SpecialK:
       val = specialk; break;
-    case 2:
+    case kParam_SpecialW:
       val = specialw; break;
-    case 3:
+    case kParam_SpecialM:
     default:
       val = specialm;
     }
@@ -180,7 +198,7 @@ void Intercom::getParameterDisplay(long index, char *text) {
 // unit of measure for each parameter
 
 void Intercom::getParameterLabel(long index, char *label) {
-  if (index > 1)
+  if (index >= kParam_SpecialK)
     strcpy(label, "!!!!!");
   else strcpy(label, "");
 }
@@ -189,42 +207,42 @@ void Intercom::getParameterLabel(long index, char *label) {
 void Intercom::process(float **inputs, float **outputs, long sf) {
   processX(inputs, outputs, sf, 0);
 }
-                       
 
-void Intercom::processX(float **inputs, float **outputs, long samples,
-                        int replacing) {
-  float *in1  =  inputs[0];
-  float *in2  =  inputs[1];
-  float *out1 = outputs[0];
-  float *out2 = outputs[1];
-  float * out1b = out1;
-  float * out2b = out2;
+void Intercom::processReplacing(float **inputs, float **outputs, long samples) {
+  processX(inputs, outputs, samples, 1);
+}
 
 
-  long sampleCount;
-  float noise;
+void Intercom::processX(float **inputs, float **outputs, long samples, int replacing) {
+  const float * in1 = inputs[0];
+  const float * in2 = inputs[1];
+  float * out1 = outputs[0];
+  float * out2 = outputs[1];
+
+  const float noiseGain = noiseGainScaled(fNoiseGain);
+  const float randMaxInv = 1.0f / (float)RAND_MAX;
 
   // output a mix of (scaled) noise & the (unscaled) audio input
-  for (sampleCount=0; sampleCount < samples; sampleCount++) {
+  for (long i=0; i < samples; i++) {
       // collect the RMS datas
 #ifdef USE_BACKWARDS_RMS
-        rms1 += sqrt( fabs((double)(*in1)) );
-        rms2 += sqrt( fabs((double)(*in2)) );
+        rms1 += sqrt( fabs((double)in1[i]) );
+        rms2 += sqrt( fabs((double)in2[i]) );
 #else
-        rms1 += (double) ( (*in1) * (*in1) );
-        rms2 += (double) ( (*in2) * (*in2) );
+        rms1 += (double) (in1[i] * in1[i]);
+        rms2 += (double) (in2[i] * in2[i]);
 #endif
       rmscount++;
 
       // load up the latest RMS values if we're ready
-      if (rmscount == RMS_WINDOW) {
+      if (rmscount == kRMSWindowSize) {
           // calculate the RMS
 #ifdef USE_BACKWARDS_RMS
-            lastRMS1 = (float) pow( (rms1/(double)RMS_WINDOW), 2.0 );
-            lastRMS2 = (float) pow( (rms2/(double)RMS_WINDOW), 2.0 );
+            lastRMS1 = (float) pow( (rms1/(double)kRMSWindowSize), 2.0 );
+            lastRMS2 = (float) pow( (rms2/(double)kRMSWindowSize), 2.0 );
 #else
-            lastRMS1 = (float) sqrt( rms1 / (double)RMS_WINDOW );
-            lastRMS2 = (float) sqrt( rms2 / (double)RMS_WINDOW );
+            lastRMS1 = (float) sqrt( rms1 / (double)kRMSWindowSize );
+            lastRMS2 = (float) sqrt( rms2 / (double)kRMSWindowSize );
 #endif
 
           // re-initialize these holders
@@ -233,8 +251,8 @@ void Intercom::processX(float **inputs, float **outputs, long samples,
           rmscount = 0;
 
           // the RMS is subtracted to get the space left over for noise
-          //                    noiseAmp1 = noiseGain - lastRMS1;
-          //                    noiseAmp2 = noiseGain - lastRMS2;
+//        noiseAmp1 = noiseGain - lastRMS1;
+//        noiseAmp2 = noiseGain - lastRMS2;
 #ifdef USE_BACKWARDS_RMS
           noiseAmp1 = (0.288f - lastRMS1) * noiseGain;
           noiseAmp2 = (0.288f - lastRMS2) * noiseGain;
@@ -243,51 +261,44 @@ void Intercom::processX(float **inputs, float **outputs, long samples,
           noiseAmp2 = (0.333f - lastRMS2) * noiseGain;
 #endif
           // safety to avoid negative amp scalars
-          if (noiseAmp1 < 0.0)
+          if (noiseAmp1 < 0.0f)
             noiseAmp1 = 0.0f;
-          if (noiseAmp2 < 0.0)
+          if (noiseAmp2 < 0.0f)
             noiseAmp2 = 0.0f;
         }
 
-      noise = (float)rand() / (float)RAND_MAX;
+      float noise = (float)rand() * randMaxInv;
       if (replacing) {
-        (*out1++) = (*in1++) + (noise * noiseAmp1);
-        (*out2++) = (*in2++) + (noise * noiseAmp2);
+        out1[i] = in1[i] + (noise * noiseAmp1);
+        out2[i] = in2[i] + (noise * noiseAmp2);
       } else {
-        (*out1++) += (*in1++) + (noise * noiseAmp1);
-        (*out2++) += (*in2++) + (noise * noiseAmp2);
+        out1[i] += in1[i] + (noise * noiseAmp1);
+        out2[i] += in2[i] + (noise * noiseAmp2);
       }
     }
 
   /* SPECIAL ops 
      whether replacing or not, we move these around destructively.
    */
-  for(int i = 0; i < samples; i++) {
-    if (((float)rand() / (float)RAND_MAX) < specialk) {
+  for (long i = 0; i < samples; i++) {
+    if (((float)rand() * randMaxInv) < specialk) {
       /* mobile */
       
-      int j = (int) ((((float)rand() / (float)RAND_MAX) * samples) * specialw);
+      int j = (int) ((((float)rand() * randMaxInv) * samples) * specialw);
       j = (i + j) % samples;
 
-      float t = (float)((out1b[i] * specialm) + (out1b[j] * (1.0 - specialm)));
-      out1b[i] =(float)((out1b[j] * specialm) + 
-                        (out1b[i] * (1.0 - specialm)));
-      out1b[j] = t;
+      float t = (out1[i] * specialm) + (out1[j] * (1.0f - specialm));
+      out1[i] = (out1[j] * specialm) + (out1[i] * (1.0f - specialm));
+      out1[j] = t;
 
-      t = (float)((out2b[i] * specialm) + (out2b[j] * (1.0 - specialm)));
-      out2b[i] =(float)((out2b[j] * specialm) + (out2b[i] * (1.0 - specialm)));
-      out2b[j] = t;
+      t       = (out2[i] * specialm) + (out2[j] * (1.0f - specialm));
+      out2[i] = (out2[j] * specialm) + (out2[i] * (1.0f - specialm));
+      out2[j] = t;
 
     }
   }
 
 
-}
-
-
-void Intercom::processReplacing(float **inputs, 
-                                float **outputs, long samples) {
-  processX(inputs, outputs, samples, 1);
 }
 
 

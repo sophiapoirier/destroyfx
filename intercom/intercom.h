@@ -1,23 +1,27 @@
 /*---------------------------------------------------------------
 
-   (c) 2001, Marcberg Soft & Hard GmbH, All Rights Reserved
+   (c) 2001, Sophberg Soft & Hard GmbH, All Rights Reserved
    (c) 2001 TOMBORG!!!!!!!!!!!!!!!!!!!!
 
 ---------------------------------------------------------------*/
 
-#ifndef __intercom
-#define __intercom
+#ifndef __DFX_INTERCOM_H
+#define __DFX_INTERCOM_H
 
 #include "audioeffectx.h"
 
 
-//----------------------------------------------------------------------- 
-// constants & macros
+//----------------------------------------------------------------------------- 
+// plugin parameters
+enum
+{
+	kParam_NoiseGain,
+	kParam_SpecialK,
+	kParam_SpecialW,
+	kParam_SpecialM,
 
-const long RMS_WINDOW = 630;
-
-// this is for shaping the parameter entries into more dB-like values
-#define noiseGain (fNoiseGain*fNoiseGain*4.0f)
+	kNumParameters
+};
 
 
 //--------------------------------------------------------------------- 
@@ -25,13 +29,10 @@ const long RMS_WINDOW = 630;
 class Intercom : public AudioEffectX {
 public:
   Intercom(audioMasterCallback audioMaster);
-  ~Intercom();
 
   virtual void process(float **inputs, float **outputs, long samples);
   virtual void processReplacing(float **inputs, float **outputs, long samples);
-
-  virtual void processX(float **inputs, float **outputs, 
-			long samples, int replacing);
+  virtual void suspend();
 
   virtual void setProgramName(char *name);
   virtual void getProgramName(char *name);
@@ -48,6 +49,8 @@ public:
 
   // this is my stuff:
 protected:
+  void processX(float **inputs, float **outputs, long samples, int replacing);
+
   float fNoiseGain;	// the parameter
   char programName[32];
   double rms1, rms2;
