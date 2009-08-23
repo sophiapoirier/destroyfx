@@ -1,28 +1,28 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
 Copyright (C) 2002-2009  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for E-Z plugin-making and E-Z multiple-API support.
 This is where we connect the Audio Unit API to our DfxPlugin system.
-written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 #include "dfxplugin.h"
@@ -318,12 +318,26 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			break;
 
 		case kLogicAUProperty_NodePropertyDescriptions:
-			outDataSize = sizeof(LogicAUNodePropertyDescription) * getNumPluginProperties();
+			outDataSize = sizeof(LogicAUNodePropertyDescription) * dfx_GetNumPluginProperties();
 			outWritable = false;
 			break;
 
 		default:
-			result = TARGET_API_BASE_CLASS::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
+			if (inPropertyID >= kDfxPluginProperty_StartID)
+			{
+				size_t dfxDataSize = 0;
+				DfxPropertyFlags dfxFlags = 0;
+				result = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
+				if (result == noErr)
+				{
+					outDataSize = dfxDataSize;
+					outWritable = dfxFlags & kDfxPropertyFlag_Writable;
+				}
+			}
+			else
+			{
+				result = TARGET_API_BASE_CLASS::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
+			}
 			break;
 	}
 
@@ -563,11 +577,11 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kLogicAUProperty_NodePropertyDescriptions:
 			{
 				LogicAUNodePropertyDescription * nodePropertyDescs = (LogicAUNodePropertyDescription*) outData;
-				for (long i=0; i < getNumPluginProperties(); i++)
+				for (long i=0; i < dfx_GetNumPluginProperties(); i++)
 				{
 					nodePropertyDescs[i].mPropertyID = kDfxPluginProperty_StartID + i;
 					nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_DontTouch;
-					nodePropertyDescs[i].mFlags = kLogicAUNodePropertyFlag_Synchronous;
+					nodePropertyDescs[i].mFlags = kLogicAUNodePropertyFlag_Synchronous | kLogicAUNodePropertyFlag_NeedsInitialization;
 					switch ( nodePropertyDescs[i].mPropertyID )
 					{
 						case kDfxPluginProperty_ParameterValue:
@@ -586,8 +600,16 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 							nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
 							break;
 						default:
-							getLogicNodePropertyDescription( nodePropertyDescs[i].mPropertyID, 
-										&(nodePropertyDescs[i].mEndianMode), &(nodePropertyDescs[i].mFlags) );
+							{
+								size_t dfxDataSize = 0;
+								DfxPropertyFlags dfxFlags = 0;
+								long dfxResult = dfx_GetPropertyInfo(nodePropertyDescs[i].mPropertyID, kDfxScope_Global, 0, dfxDataSize, dfxFlags);
+								if (dfxResult == kDfxErr_NoError)
+								{
+									if (dfxFlags & kDfxPropertyFlag_BiDirectional)
+										nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+								}
+							}
 							break;
 					}
 				}
@@ -595,7 +617,18 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 
 		default:
-			result = TARGET_API_BASE_CLASS::GetProperty(inPropertyID, inScope, inElement, outData);
+			if (inPropertyID >= kDfxPluginProperty_StartID)
+			{
+				size_t dfxDataSize = 0;
+				DfxPropertyFlags dfxFlags = 0;
+				result = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
+				if ( (result == noErr) && !(dfxFlags & kDfxPropertyFlag_Readable) )
+					result = kAudioUnitErr_InvalidPropertyValue;
+				else
+					result = dfx_GetProperty(inPropertyID, inScope, inElement, outData);
+			}
+			else
+				result = TARGET_API_BASE_CLASS::GetProperty(inPropertyID, inScope, inElement, outData);
 			break;
 	}
 
@@ -804,7 +837,20 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 
 		default:
-			result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
+			if (inPropertyID >= kDfxPluginProperty_StartID)
+			{
+				size_t dfxDataSize = 0;
+				DfxPropertyFlags dfxFlags = 0;
+				result = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
+				if ( (result == noErr) && !(dfxFlags & kDfxPropertyFlag_Writable) )
+					result = kAudioUnitErr_PropertyNotWritable;
+				else
+					result = dfx_SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
+			}
+			else
+			{
+				result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
+			}
 			break;
 	}
 

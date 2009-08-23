@@ -1,27 +1,27 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
 Copyright (C) 2003-2009  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 These are our extended Audio Unit property IDs and types.  
-written by Sophia Poirier, January 2003
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXPLUGIN_PROPERTIES_H
@@ -29,7 +29,9 @@ written by Sophia Poirier, January 2003
 
 #include "dfxparameter.h"
 
-#include <AudioToolbox/AudioUnitUtilities.h>	// for kAUParameterListener_AnyParameter
+#ifdef TARGET_API_AUDIOUNIT
+	#include <AudioToolbox/AudioUnitUtilities.h>	// for kAUParameterListener_AnyParameter
+#endif
 
 
 
@@ -48,6 +50,32 @@ kDfxPluginProperty_StartID = 64000,
 kDfxPluginProperty_EndOfList,
 	kDfxPluginProperty_NumProperties = kDfxPluginProperty_EndOfList - kDfxPluginProperty_StartID
 };
+typedef uint32_t	DfxPropertyID;
+
+
+//-----------------------------------------------------------------------------
+enum {
+	kDfxPropertyFlag_Readable = 1,
+	kDfxPropertyFlag_Writable = 1 << 1,
+	kDfxPropertyFlag_BiDirectional = 1 << 2
+};
+typedef uint32_t	DfxPropertyFlags;
+
+#ifdef TARGET_API_AUDIOUNIT
+	enum {
+		kDfxScope_Global = kAudioUnitScope_Global,
+		kDfxScope_Input = kAudioUnitScope_Input,
+		kDfxScope_Output = kAudioUnitScope_Output
+	};
+	typedef AudioUnitScope	DfxScope;
+#else
+	enum {
+		kDfxScope_Global = 0,
+		kDfxScope_Input = 1,
+		kDfxScope_Output = 2
+	};
+typedef uint32_t	DfxScope;
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -93,4 +121,3 @@ typedef struct {
 
 
 #endif
-// __DFXPLUGIN_PROPERTIES_H

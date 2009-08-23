@@ -1,27 +1,27 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
 Copyright (C) 2002-2009  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 This is our class for E-Z plugin-making and E-Z multiple-API support.
-written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
@@ -230,15 +230,12 @@ PLUGIN_EDITOR_RES_ID
 #include "dfxmath.h"
 #include "dfxparameter.h"
 #include "dfxsettings.h"
+#include "dfxpluginproperties.h"
 
 #include "temporatetable.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxmidi.h"
-#endif
-
-#ifdef TARGET_API_AUDIOUNIT
-	#include "dfxpluginproperties.h"
 #endif
 
 
@@ -250,12 +247,20 @@ PLUGIN_EDITOR_RES_ID
 #ifdef TARGET_API_AUDIOUNIT
 	enum {
 		kDfxErr_NoError = noErr,
-		kDfxErr_InitializationFailed = kAudioUnitErr_FailedInitialization
+		kDfxErr_InitializationFailed = kAudioUnitErr_FailedInitialization,
+		kDfxErr_InvalidParameter = kAudioUnitErr_InvalidParameter,
+		kDfxErr_InvalidProperty = kAudioUnitErr_InvalidProperty,
+		kDfxErr_InvalidPropertyValue = kAudioUnitErr_InvalidPropertyValue,
+		kDfxErr_CannotDoInCurrentContext = kAudioUnitErr_CannotDoInCurrentContext
 	};
 #else
 	enum {
 		kDfxErr_NoError = 0,
-		kDfxErr_InitializationFailed = -10875
+		kDfxErr_InitializationFailed = -10875,
+		kDfxErr_InvalidParameter = -10878,
+		kDfxErr_InvalidProperty = -10879,
+		kDfxErr_InvalidPropertyValue = -10851,
+		kDfxErr_CannotDoInCurrentContext = -10863
 	};
 #endif
 
@@ -502,6 +507,21 @@ public:
 	double getpresetparameter_f(long inPresetIndex, long inParameterIndex);
 
 
+	virtual long dfx_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+										size_t & outDataSize, DfxPropertyFlags & outFlags)
+		{	return kDfxErr_InvalidProperty;	}
+	virtual long dfx_GetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+									void * outData)
+		{	return kDfxErr_InvalidProperty;	}
+	virtual long dfx_SetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+									const void * inData, size_t inDataSize)
+		{	return kDfxErr_InvalidProperty;	}
+	long dfx_GetNumPluginProperties()
+		{	return kDfxPluginProperty_NumProperties + dfx_GetNumAdditionalPluginProperties();	}
+	virtual long dfx_GetNumAdditionalPluginProperties()
+		{	return 0;	}
+
+
 	// get the current audio sampling rate
 	double getsamplerate()
 		{	return DfxPlugin::samplerate;	}
@@ -524,12 +544,6 @@ public:
 		{	return numParameters;	}
 	long getnumpresets()
 		{	return numPresets;	}
-#ifdef TARGET_API_AUDIOUNIT
-	long getNumPluginProperties()
-		{	return kDfxPluginProperty_NumProperties + getNumAdditionalPluginProperties();	}
-	virtual long getNumAdditionalPluginProperties()
-		{	return 0;	}
-#endif
 
 //	virtual void SetUseMusicalTimeInfo(bool newmode = true)
 //		{	b_usemusicaltimeinfo = newmode;	}
@@ -629,8 +643,6 @@ public:
 			return ( (getCurrentLogicNodeOperationMode() & kLogicAUNodeOperationMode_NodeEnabled) 
 					&& (getCurrentLogicNodeOperationMode() & kLogicAUNodeOperationMode_EndianSwap) );
 		}
-		virtual void getLogicNodePropertyDescription(AudioUnitPropertyID inPropertyID, UInt32 * outEndianMode, UInt32 * outFlags)
-			{ }
 	#endif
 
 
@@ -648,7 +660,10 @@ protected:
 
 	bool b_usetimestampedparameters;	// XXX use this?
 
+	double samplerate;
 	bool sampleratechanged;
+
+	unsigned long numInputs, numOutputs;
 
 	#if TARGET_PLUGIN_USES_MIDI
 		DfxMidi * midistuff;
@@ -658,9 +673,6 @@ protected:
 	long numParameters;
 	long numPresets;
 	long currentPresetNum;
-
-	unsigned long numInputs, numOutputs;
-	double samplerate;
 
 	#ifdef TARGET_API_AUDIOUNIT
 		bool auElementsHaveBeenCreated;
