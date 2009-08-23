@@ -793,8 +793,8 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 		automationgesture_begin(inParameterID);
 
 	Boolean writeAutomation_fixedSize = inWriteAutomation;
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameter, 
-				kAudioUnitScope_Global, (AudioUnitElement)inParameterID, &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
+	dfxgui_SetProperty(kDfxPluginProperty_RandomizeParameter, kDfxScope_Global, inParameterID, 
+						&writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
 
 	if (inWriteAutomation)
 		automationgesture_end(inParameterID);
@@ -816,8 +816,8 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 	}
 
 	Boolean writeAutomation_fixedSize = inWriteAutomation;
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_RandomizeParameter, 
-				kAudioUnitScope_Global, kAUParameterListener_AnyParameter, &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
+	dfxgui_SetProperty(kDfxPluginProperty_RandomizeParameter, kDfxScope_Global, kAUParameterListener_AnyParameter, 
+						&writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
 
 	if (inWriteAutomation)
 	{
@@ -879,12 +879,12 @@ void DfxGuiEditor::removeMousedOverControl(DGControl * inMousedOverControl)
 double DfxGuiEditor::getparameter_f(long inParameterID)
 {
 	DfxParameterValueRequest request;
-	UInt32 dataSize = sizeof(request);
+	size_t dataSize = sizeof(request);
 	request.inValueItem = kDfxParameterValueItem_current;
 	request.inValueType = kDfxParamValueType_float;
 
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
+	if (dfxgui_GetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, 
+							inParameterID, &request, dataSize) 
 							== noErr)
 		return request.value.f;
 	else
@@ -895,12 +895,12 @@ double DfxGuiEditor::getparameter_f(long inParameterID)
 long DfxGuiEditor::getparameter_i(long inParameterID)
 {
 	DfxParameterValueRequest request;
-	UInt32 dataSize = sizeof(request);
+	size_t dataSize = sizeof(request);
 	request.inValueItem = kDfxParameterValueItem_current;
 	request.inValueType = kDfxParamValueType_int;
 
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
+	if (dfxgui_GetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, 
+							inParameterID, &request, dataSize) 
 							== noErr)
 		return request.value.i;
 	else
@@ -911,12 +911,12 @@ long DfxGuiEditor::getparameter_i(long inParameterID)
 bool DfxGuiEditor::getparameter_b(long inParameterID)
 {
 	DfxParameterValueRequest request;
-	UInt32 dataSize = sizeof(request);
+	size_t dataSize = sizeof(request);
 	request.inValueItem = kDfxParameterValueItem_current;
 	request.inValueType = kDfxParamValueType_boolean;
 
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
+	if (dfxgui_GetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, 
+							inParameterID, &request, dataSize) 
 							== noErr)
 		return request.value.b;
 	else
@@ -934,8 +934,8 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 	request.inValueType = kDfxParamValueType_float;
 	request.value.f = inValue;
 
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-				kAudioUnitScope_Global, inParameterID, &request, sizeof(request));
+	dfxgui_SetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, inParameterID, 
+						&request, sizeof(request));
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -952,8 +952,8 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 	request.inValueType = kDfxParamValueType_int;
 	request.value.i = inValue;
 
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-				kAudioUnitScope_Global, inParameterID, &request, sizeof(request));
+	dfxgui_SetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, 
+						inParameterID, &request, sizeof(request));
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -970,8 +970,8 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 	request.inValueType = kDfxParamValueType_boolean;
 	request.value.b = inValue;
 
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValue, 
-				kAudioUnitScope_Global, inParameterID, &request, sizeof(request));
+	dfxgui_SetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, 
+						inParameterID, &request, sizeof(request));
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -981,10 +981,10 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutomationGesture)
 {
 	AudioUnitParameterInfo paramInfo = {0};
-	UInt32 dataSize = sizeof(paramInfo);
+	size_t dataSize = sizeof(paramInfo);
 
-	ComponentResult result = AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_ParameterInfo, 
-							kAudioUnitScope_Global, inParameterID, &paramInfo, &dataSize);
+	long result = dfxgui_GetProperty(kAudioUnitProperty_ParameterInfo, kAudioUnitScope_Global, 
+										inParameterID, &paramInfo, dataSize);
 	if (result == noErr)
 	{
 		if (inWrapWithAutomationGesture)
@@ -1018,11 +1018,11 @@ void DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
 		return;
 
 	DfxParameterValueStringRequest request;
-	UInt32 dataSize = sizeof(request);
+	size_t dataSize = sizeof(request);
 	request.inStringIndex = getparameter_i(inParameterID);
 
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterValueString, 
-							kAudioUnitScope_Global, inParameterID, &request, &dataSize) 
+	if (dfxgui_GetProperty(kDfxPluginProperty_ParameterValueString, kDfxScope_Global, 
+							inParameterID, &request, dataSize) 
 							== noErr)
 		strcpy(outText, request.valueString);
 }
@@ -1031,9 +1031,9 @@ void DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
 AudioUnitParameterID * DfxGuiEditor::CreateParameterList(AudioUnitScope inScope, UInt32 * outNumParameters)
 {
 	UInt32 numParameters = 0;
-	UInt32 dataSize = 0;
-	Boolean writable;
-	ComponentResult result = AudioUnitGetPropertyInfo(GetEditAudioUnit(), kAudioUnitProperty_ParameterList, inScope, (AudioUnitElement)0, &dataSize, &writable);
+	size_t dataSize = 0;
+	DfxPropertyFlags propFlags;
+	long result = dfxgui_GetPropertyInfo(kAudioUnitProperty_ParameterList, inScope, 0, dataSize, propFlags);
 	if (result == noErr)
 		numParameters = dataSize / sizeof(AudioUnitParameterID);
 
@@ -1044,7 +1044,7 @@ AudioUnitParameterID * DfxGuiEditor::CreateParameterList(AudioUnitScope inScope,
 	if (parameterList == NULL)
 		return NULL;
 
-	result = AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_ParameterList, inScope, (AudioUnitElement)0, parameterList, &dataSize);
+	result = dfxgui_GetProperty(kAudioUnitProperty_ParameterList, inScope, 0, parameterList, dataSize);
 	if (result == noErr)
 	{
 		if (outNumParameters != NULL)
@@ -1058,23 +1058,65 @@ AudioUnitParameterID * DfxGuiEditor::CreateParameterList(AudioUnitScope inScope,
 	}
 }
 
+//-----------------------------------------------------------------------------
+long DfxGuiEditor::dfxgui_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+											size_t & outDataSize, DfxPropertyFlags & outFlags)
+{
+	if (GetEditAudioUnit() == NULL)
+		return kAudioUnitErr_Uninitialized;
+
+	UInt32 auDataSize = 0;
+	Boolean writable = false;
+	ComponentResult result = AudioUnitGetPropertyInfo(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, &auDataSize, &writable);
+	if (result == noErr)
+	{
+		outDataSize = auDataSize;
+		outFlags = kDfxPropertyFlag_Readable;	// XXX okay to just assume here?
+		if (writable)
+			outFlags |= kDfxPropertyFlag_Writable;
+	}
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+long DfxGuiEditor::dfxgui_GetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+										void * outData, size_t & ioDataSize)
+{
+	if (GetEditAudioUnit() == NULL)
+		return kAudioUnitErr_Uninitialized;
+
+	UInt32 auDataSize = ioDataSize;
+	ComponentResult result = AudioUnitGetProperty(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, outData, &auDataSize);
+	if (result == noErr)
+		ioDataSize = auDataSize;
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+long DfxGuiEditor::dfxgui_SetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+										const void * inData, size_t inDataSize)
+{
+	if (GetEditAudioUnit() == NULL)
+		return kAudioUnitErr_Uninitialized;
+
+	return AudioUnitSetProperty(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, inData, inDataSize);
+}
+
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setmidilearning(bool inNewLearnMode)
 {
 	Boolean newLearnMode_fixedSize = inNewLearnMode;
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_MidiLearn, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &newLearnMode_fixedSize, sizeof(newLearnMode_fixedSize));
+	dfxgui_SetProperty(kDfxPluginProperty_MidiLearn, kDfxScope_Global, 0, 
+						&newLearnMode_fixedSize, sizeof(newLearnMode_fixedSize));
 }
 
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::getmidilearning()
 {
 	Boolean learnMode;
-	UInt32 dataSize = sizeof(learnMode);
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_MidiLearn, 
-							kAudioUnitScope_Global, (AudioUnitElement)0, &learnMode, &dataSize) 
-							== noErr)
+	size_t dataSize = sizeof(learnMode);
+	if (dfxgui_GetProperty(kDfxPluginProperty_MidiLearn, kDfxScope_Global, 0, &learnMode, dataSize) == noErr)
 		return learnMode;
 	else
 		return false;
@@ -1084,26 +1126,23 @@ bool DfxGuiEditor::getmidilearning()
 void DfxGuiEditor::resetmidilearn()
 {
 	Boolean nud;	// irrelevant
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ResetMidiLearn, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &nud, sizeof(nud));
+	dfxgui_SetProperty(kDfxPluginProperty_ResetMidiLearn, kDfxScope_Global, 0, &nud, sizeof(nud));
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setmidilearner(long inParameterIndex)
 {
 	int32_t parameterIndex_fixedSize = inParameterIndex;
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_MidiLearner, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &parameterIndex_fixedSize, sizeof(parameterIndex_fixedSize));
+	dfxgui_SetProperty(kDfxPluginProperty_MidiLearner, kDfxScope_Global, 0, 
+						&parameterIndex_fixedSize, sizeof(parameterIndex_fixedSize));
 }
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::getmidilearner()
 {
 	int32_t learner;
-	UInt32 dataSize = sizeof(learner);
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_MidiLearner, 
-							kAudioUnitScope_Global, (AudioUnitElement)0, &learner, &dataSize) 
-							== noErr)
+	size_t dataSize = sizeof(learner);
+	if (dfxgui_GetProperty(kDfxPluginProperty_MidiLearner, kDfxScope_Global, 0, &learner, dataSize) == noErr)
 		return learner;
 	else
 		return DFX_PARAM_INVALID_ID;
@@ -1118,17 +1157,17 @@ bool DfxGuiEditor::ismidilearner(long inParameterIndex)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparametermidiassignment(long inParameterIndex, DfxParameterAssignment inAssignment)
 {
-	AudioUnitSetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterMidiAssignment, 
-				kAudioUnitScope_Global, (AudioUnitElement)inParameterIndex, &inAssignment, sizeof(inAssignment));
+	dfxgui_SetProperty(kDfxPluginProperty_ParameterMidiAssignment, kDfxScope_Global, 
+						inParameterIndex, &inAssignment, sizeof(inAssignment));
 }
 
 //-----------------------------------------------------------------------------
 DfxParameterAssignment DfxGuiEditor::getparametermidiassignment(long inParameterIndex)
 {
 	DfxParameterAssignment paramAssignment = {0};
-	UInt32 dataSize = sizeof(paramAssignment);
-	if (AudioUnitGetProperty(GetEditAudioUnit(), kDfxPluginProperty_ParameterMidiAssignment, 
-							kAudioUnitScope_Global, (AudioUnitElement)inParameterIndex, &paramAssignment, &dataSize) 
+	size_t dataSize = sizeof(paramAssignment);
+	if (dfxgui_GetProperty(kDfxPluginProperty_ParameterMidiAssignment, kDfxScope_Global, 
+							inParameterIndex, &paramAssignment, dataSize) 
 							== noErr)
 		return paramAssignment;
 	else
@@ -1153,13 +1192,10 @@ void DfxGuiEditor::parametermidiunassign(long inParameterIndex)
 unsigned long DfxGuiEditor::getNumAudioChannels()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	const AudioUnit effectAU = GetEditAudioUnit();
-	if (effectAU == NULL)
-		return 0;
-
 	CAStreamBasicDescription streamDesc;
-	UInt32 dataSize = sizeof(streamDesc);
-	ComponentResult result = AudioUnitGetProperty(effectAU, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, (AudioUnitElement)0, &streamDesc, &dataSize);
+	size_t dataSize = sizeof(streamDesc);
+	long result = dfxgui_GetProperty(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, 
+										&streamDesc, dataSize);
 	if (result == noErr)
 		return streamDesc.NumberChannels();
 	else
@@ -1206,9 +1242,9 @@ long DfxGuiEditor::copySettings()
 
 #ifdef TARGET_API_AUDIOUNIT
 	CFPropertyListRef auSettingsPropertyList = NULL;
-	UInt32 dataSize = sizeof(auSettingsPropertyList);
-	status = AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_ClassInfo, 
-						kAudioUnitScope_Global, (AudioUnitElement)0, &auSettingsPropertyList, &dataSize);
+	size_t dataSize = sizeof(auSettingsPropertyList);
+	status = dfxgui_GetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
+								&auSettingsPropertyList, dataSize);
 	if (status != noErr)
 		return status;
 	if (auSettingsPropertyList == NULL)
@@ -1276,8 +1312,8 @@ long DfxGuiEditor::pasteSettings(bool * inQueryPastabilityOnly)
 						CFPropertyListRef auSettingsPropertyList = CFPropertyListCreateFromXMLData(kCFAllocatorDefault, flavorData, kCFPropertyListImmutable, NULL);
 						if (auSettingsPropertyList != NULL)
 						{
-							status = AudioUnitSetProperty(GetEditAudioUnit(), kAudioUnitProperty_ClassInfo, 
-										kAudioUnitScope_Global, (AudioUnitElement)0, &auSettingsPropertyList, sizeof(auSettingsPropertyList));
+							status = dfxgui_SetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
+														&auSettingsPropertyList, sizeof(auSettingsPropertyList));
 							CFRelease(auSettingsPropertyList);
 							if (status == noErr)
 							{

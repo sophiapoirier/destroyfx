@@ -30,6 +30,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguimisc.h"
 #include "dfxguicontrol.h"
 
+#include "dfxpluginproperties.h"
+
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxsettings.h"	// for DfxParameterAssignment
 #endif
@@ -142,6 +144,12 @@ public:
 	void randomizeparameter(long inParameterID, bool inWriteAutomation = false);
 	void randomizeparameters(bool inWriteAutomation = false);
 	AudioUnitParameterID * CreateParameterList(AudioUnitScope inScope, UInt32 * outNumParameters);
+	long dfxgui_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+								size_t & outDataSize, DfxPropertyFlags & outFlags);
+	long dfxgui_GetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+							void * outData, size_t & ioDataSize);
+	long dfxgui_SetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+							const void * inData, size_t inDataSize);
 	#if TARGET_PLUGIN_USES_MIDI
 		void setmidilearning(bool inNewLearnMode);
 		bool getmidilearning();
