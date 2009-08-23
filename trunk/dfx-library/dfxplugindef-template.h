@@ -2,6 +2,9 @@
 #define __DFXPLUGIN_DEF_TEMPLATE_H
 
 
+#include "dfxplugin-prefix.h"
+
+
 // required
 #define PLUGIN_NAME_STRING	""
 #define PLUGIN_ID	''
