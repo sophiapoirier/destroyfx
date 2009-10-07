@@ -1,27 +1,27 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
 Copyright (C) 2001-2009  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
-Welcome to our IIR filter.
-by Sophia Poirier  ][  December 2001
+Welcome to our Infinite Impulse Response filter.
 ------------------------------------------------------------------------*/
 
 #ifndef __DFX_IIR_FILTER_H
@@ -31,9 +31,7 @@ by Sophia Poirier  ][  December 2001
 #include "dfxmath.h"
 
 
-const double SHELF_START_IIR_LOWPASS = 0.333;
-extern const double kDfxIIRFilter_DefaultQ_LP_HP;
-
+//-----------------------------------------------------------------------------
 typedef enum {
 	kDfxIIRFilterType_Lowpass,
 	kDfxIIRFilterType_Highpass,
@@ -46,14 +44,18 @@ typedef enum {
 } DfxIIRFilterType;
 
 
+//-----------------------------------------------------------------------------
 class DfxIIRfilter
 {
 public:
 	DfxIIRfilter();
 
+	static const double kDefaultQ_LP_HP;
+	static const double kShelfStartLowpass;
+
 	void calculateCoefficients(DfxIIRFilterType inFilterType, double inFreq, double inQ, double inGain);
-	void calculateLowpassCoefficients(double inCutoffFreq, double inQ = kDfxIIRFilter_DefaultQ_LP_HP);
-	void calculateHighpassCoefficients(double inCutoffFreq, double inQ = kDfxIIRFilter_DefaultQ_LP_HP);
+	void calculateLowpassCoefficients(double inCutoffFreq, double inQ = kDefaultQ_LP_HP);
+	void calculateHighpassCoefficients(double inCutoffFreq, double inQ = kDefaultQ_LP_HP);
 	void calculateBandpassCoefficients(double inCenterFreq, double inQ);
 	void setCoefficients(float inA0, float inA1, float inA2, float inB1, float inB2);
 	void copyCoefficients(DfxIIRfilter * inSourceFilter);
