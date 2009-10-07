@@ -59,7 +59,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
         }
         else if (speed1hasChanged)
         {
-          filter1.calculateLowpassCoefficients((samplerate/(double)speed1)*SHELF_START_IIR_LOWPASS);
+          filter1.calculateLowpassCoefficients((samplerate/(double)speed1)*DfxIIRfilter::kShelfStartLowpass);
           speed1hasChanged = false;
         }
       }
@@ -93,7 +93,7 @@ void TransverbDSP::process(const float *in, float *out, unsigned long numSampleF
         }
         else if (speed2hasChanged)
         {
-          filter2.calculateLowpassCoefficients((samplerate/(double)speed2)*SHELF_START_IIR_LOWPASS);
+          filter2.calculateLowpassCoefficients((samplerate/(double)speed2)*DfxIIRfilter::kShelfStartLowpass);
           speed2hasChanged = false;
         }
       }
