@@ -42,7 +42,7 @@ void DfxPlugin::PostConstructor()
 	TARGET_API_BASE_CLASS::PostConstructor();
 	auElementsHaveBeenCreated = true;
 
-	dfxplugin_postconstructor();
+	dfx_PostConstructor();
 
 	// make host see that current preset is 0
 	update_preset(0);
@@ -97,7 +97,7 @@ void DfxPlugin::PostConstructor()
 
 // XXX some stuff that might worth adding an accessor for at some point or something...
 #if 0
-	unsigned char * appname = LMGetCurApName();
+	const unsigned char * appname = LMGetCurApName();
 	if (appname != NULL)
 		printf( "app name = %.*s\n", appname[0], (char*)&(appname[1]) );
 
@@ -106,15 +106,10 @@ void DfxPlugin::PostConstructor()
 	OSStatus status = CopyProcessName(&currentProcess, &processName);
 	if ( (status == noErr) && (processName != NULL) )
 	{
-		const CFStringEncoding encoding = kCFStringEncodingUTF8;
-		CFIndex stringsize = CFStringGetMaximumSizeForEncoding(CFStringGetLength(processName), encoding) + 1;
-		if (stringsize > 0)
+		char * cname = DFX_CreateCStringFromCFString(processName, kCFStringEncodingUTF8);
+		if (cname != NULL)
 		{
-			char * cname = (char*) malloc(stringsize);
-			cname[0] = 0;
-			Boolean success = CFStringGetCString(processName, cname, stringsize, encoding);
-			if (success)
-				printf("process name = %s\n", cname);
+			printf("process name = %s\n", cname);
 			free(cname);
 		}
 		CFRelease(processName);
@@ -126,7 +121,7 @@ void DfxPlugin::PostConstructor()
 // this is called immediately before an instance of the plugin class is deleted
 void DfxPlugin::PreDestructor()
 {
-	dfxplugin_predestructor();
+	dfx_PreDestructor();
 
 	TARGET_API_BASE_CLASS::PreDestructor();
 }
@@ -249,6 +244,12 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 		case kAudioUnitProperty_ParameterClumpName:
 			outDataSize = sizeof(AudioUnitParameterNameInfo);
 			outWritable = false;
+			result = noErr;
+			break;
+
+		case kAudioUnitProperty_AUHostIdentifier:
+			outDataSize = sizeof(AUHostIdentifier);	// XXX update to AUHostVersionIdentifier
+			outWritable = true;
 			result = noErr;
 			break;
 
@@ -646,6 +647,22 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	{
 		case kAudioUnitProperty_ParameterClumpName:
 			result = kAudioUnitErr_PropertyNotWritable;
+			break;
+
+		case kAudioUnitProperty_AUHostIdentifier:
+			{
+				const AUHostIdentifier * hostID = (AUHostIdentifier*) inData;	// XXX update to AUHostVersionIdentifier
+				if (hostID->hostName == NULL)
+					result = kAudioUnitErr_InvalidPropertyValue;
+				else
+				{
+#if 0
+					fprintf(stderr, "\tSetProperty(AUHostIdentifier)\n");
+					CFShow(hostID->hostName);
+					fprintf(stderr, "version: major = %u, minor&bug = 0x%02X, stage = 0x%02X, non-released = %u\n", hostID->hostVersion.majorRev, hostID->hostVersion.minorAndBugRev, hostID->hostVersion.stage, hostID->hostVersion.nonRelRev);
+#endif
+				}
+			}
 			break;
 
 		case kAudioUnitMigrateProperty_FromPlugin:
