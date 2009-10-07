@@ -227,7 +227,7 @@ void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * out
 		}
 #endif
 		UniCharCount cfNameLength = CFStringGetLength(inCFString);
-		static const UniCharCount kMaxUnicodeFileNameLength = sizeof(outUniName->unicode) / sizeof(outUniName->unicode[0]);
+		const UniCharCount kMaxUnicodeFileNameLength = sizeof(outUniName->unicode) / sizeof(outUniName->unicode[0]);
 		// the length can't be more than 255 characters for an HFS file name
 		if (cfNameLength > kMaxUnicodeFileNameLength)
 		{
