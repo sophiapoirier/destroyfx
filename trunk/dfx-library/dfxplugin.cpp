@@ -177,7 +177,7 @@ DfxPlugin::DfxPlugin(
 
 //-----------------------------------------------------------------------------
 // this is called immediately after all constructors (DfxPlugin and any derived classes) complete
-void DfxPlugin::dfxplugin_postconstructor()
+void DfxPlugin::dfx_PostConstructor()
 {
 	// set up a name for the default preset if none was set
 	if ( !presetnameisvalid(0) )
@@ -214,12 +214,6 @@ DfxPlugin::~DfxPlugin()
 	#endif
 
 	#ifdef TARGET_API_VST
-		// the child plugin class destructor should call do_cleanup for VST 
-		// because VST has no initialize/cleanup sort of methods, but if 
-		// the child class doesn't have its own cleanup method, then it's 
-		// not necessary, and so we can do it now if it wasn't done
-		if (isinitialized)
-			do_cleanup();
 		#if TARGET_PLUGIN_USES_DSPCORE
 			if (dspcores != NULL)
 			{
@@ -239,7 +233,7 @@ DfxPlugin::~DfxPlugin()
 
 //-----------------------------------------------------------------------------
 // this is called immediately before all destructors (DfxPlugin and any derived classes) occur
-void DfxPlugin::dfxplugin_predestructor()
+void DfxPlugin::dfx_PreDestructor()
 {
 	#ifdef TARGET_API_VST
 		// VST doesn't have initialize and cleanup methods like Audio Unit does, 
@@ -277,6 +271,11 @@ long DfxPlugin::do_initialize()
 // non-virtual function that calls cleanup() and insures that some stuff happens
 void DfxPlugin::do_cleanup()
 {
+	#ifdef TARGET_API_VST
+		if (!isinitialized)
+			return;
+	#endif
+
 	releasebuffers();
 
 	#ifdef TARGET_API_AUDIOUNIT
@@ -336,7 +335,7 @@ void DfxPlugin::initparameter_f(long inParameterIndex, const char * initName, do
 		parameters[inParameterIndex].init_f(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 // XXX hmmm... maybe not here?
 //		if (getparameterattributes(inParameterIndex) & kDfxParamAttribute_unused)	// XXX should we do it like this?
-//			update_parameter(inParameterIndex);	// make the host aware of the parameter change
+//			update_parameter(inParameterIndex);	// XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);	// default empty presets with this value
 		// set the custom unit string, if there is one
 		if (initCustomUnitString != NULL)
@@ -353,7 +352,7 @@ void DfxPlugin::initparameter_i(long inParameterIndex, const char * initName, in
 	if (parameterisvalid(inParameterIndex))
 	{
 		parameters[inParameterIndex].init_i(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
-		update_parameter(inParameterIndex);	// make the host aware of the parameter change
+//		update_parameter(inParameterIndex);	// XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);	// default empty presets with this value
 		// set the custom unit string, if there is one
 		if (initCustomUnitString != NULL)
@@ -368,7 +367,7 @@ void DfxPlugin::initparameter_b(long inParameterIndex, const char * initName, bo
 	if (parameterisvalid(inParameterIndex))
 	{
 		parameters[inParameterIndex].init_b(initName, initValue, initDefaultValue, initUnit);
-		update_parameter(inParameterIndex);	// make the host aware of the parameter change
+//		update_parameter(inParameterIndex);	// XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);	// default empty presets with this value
 	}
 }
@@ -383,7 +382,7 @@ void DfxPlugin::initparameter_indexed(long inParameterIndex, const char * initNa
 	{
 		parameters[inParameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems-1, initUnit, kDfxParamCurve_stepped);
 		setparameterusevaluestrings(inParameterIndex, true);	// indicate that we will use custom value display strings
-		update_parameter(inParameterIndex);	// make the host aware of the parameter change
+//		update_parameter(inParameterIndex);	// XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);	// default empty presets with this value
 		// set the custom unit string, if there is one
 		if (initCustomUnitString != NULL)
@@ -482,7 +481,7 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 			setpresetparameter(vstpresetnum, inParameterIndex, getparameter(inParameterIndex));
 		#if TARGET_PLUGIN_HAS_GUI
 			#ifdef TARGET_PLUGIN_USES_VSTGUI
-			if (editor != NULL)	// XXX can't assume it's a VSTGUI editor!
+			if (editor != NULL)
 				((AEffGUIEditor*)editor)->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
 			#else
 			// XXX we will need something for our GUI class here
@@ -814,7 +813,7 @@ void DfxPlugin::getpresetname(long inPresetIndex, char * outText)
 
 //-----------------------------------------------------------------------------
 // get a pointer to the text of a preset name
-char * DfxPlugin::getpresetname_ptr(long inPresetIndex)
+const char * DfxPlugin::getpresetname_ptr(long inPresetIndex)
 {
 	if (presetisvalid(inPresetIndex))
 		return presets[inPresetIndex].getname_ptr();
@@ -945,19 +944,17 @@ void DfxPlugin::addchannelconfig(short inNumInputChannels, short inNumOutputChan
 {
 	if (channelconfigs != NULL)
 	{
-		DfxChannelConfig * swapconfigs = (DfxChannelConfig*) malloc(sizeof(DfxChannelConfig) * numchannelconfigs);
-		memcpy(swapconfigs, channelconfigs, sizeof(DfxChannelConfig) * numchannelconfigs);
+		DfxChannelConfig * swapconfigs = (DfxChannelConfig*) malloc(sizeof(*channelconfigs) * (numchannelconfigs+1));
+		memcpy(swapconfigs, channelconfigs, sizeof(*channelconfigs) * numchannelconfigs);
 		free(channelconfigs);
-		channelconfigs = (DfxChannelConfig*) malloc(sizeof(DfxChannelConfig) * (numchannelconfigs+1));
-		memcpy(channelconfigs, swapconfigs, sizeof(DfxChannelConfig) * numchannelconfigs);
-		free(swapconfigs);
+		channelconfigs = swapconfigs;
 		channelconfigs[numchannelconfigs].inChannels = inNumInputChannels;
 		channelconfigs[numchannelconfigs].outChannels = inNumOutputChannels;
 		numchannelconfigs++;
 	}
 	else
 	{
-		channelconfigs = (DfxChannelConfig*) malloc(sizeof(DfxChannelConfig));
+		channelconfigs = (DfxChannelConfig*) malloc(sizeof(*channelconfigs));
 		channelconfigs[0].inChannels = inNumInputChannels;
 		channelconfigs[0].outChannels = inNumOutputChannels;
 		numchannelconfigs = 1;
@@ -1102,11 +1099,6 @@ void DfxPlugin::setAudioProcessingMustAccumulate(bool inNewMode)
 #pragma mark -
 #pragma mark processing
 
-#ifdef TARGET_API_AUDIOUNIT
-	// check if the host is a buggy one that will crash TransportStateProc
-	static const bool gAUTransportStateIsSafe = IsTransportStateProcSafe();
-#endif
-
 //-----------------------------------------------------------------------------
 // this is called once per audio processing block (before doing the processing) 
 // in order to try to get musical tempo/time/location information from the host
@@ -1176,7 +1168,9 @@ fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, 
 else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 #endif
 
-	if (gAUTransportStateIsSafe)
+	// check if the host is a buggy one that will crash TransportStateProc
+	static const bool auTransportStateIsSafe = IsTransportStateProcSafe();
+	if (auTransportStateIsSafe)
 	{
 		Boolean isPlaying = true;
 		Boolean transportStateChanged = false;
@@ -1779,13 +1773,13 @@ void clearbufferarrayarray_d(double *** buffers, unsigned long numbufferarrays, 
 //  * Windows
 // returns a meaningless value greater than 32 if successful, 
 // otherwise an error code ranging from 0 to 32 is returned
-long launch_url(const char * urlstring)
+long launch_url(const char * inUrlString)
 {
-	if (urlstring == NULL)
+	if (inUrlString == NULL)
 		return 3;
 
 #if TARGET_OS_MAC
-	CFURLRef urlcfurl = CFURLCreateWithBytes(kCFAllocatorDefault, (const UInt8*)urlstring, (CFIndex)strlen(urlstring), kCFStringEncodingASCII, NULL);
+	CFURLRef urlcfurl = CFURLCreateWithBytes(kCFAllocatorDefault, (const UInt8*)inUrlString, (CFIndex)strlen(inUrlString), kCFStringEncodingASCII, NULL);
 	if (urlcfurl != NULL)
 	{
 		OSStatus status = LSOpenCFURLRef(urlcfurl, NULL);	// try to launch the URL
@@ -1796,7 +1790,7 @@ long launch_url(const char * urlstring)
 #endif
 
 #if WIN32
-	return (long) ShellExecute(NULL, "open", urlstring, NULL, NULL, SW_SHOWNORMAL);
+	return (long) ShellExecute(NULL, "open", inUrlString, NULL, NULL, SW_SHOWNORMAL);
 #endif
 }
 
@@ -1926,7 +1920,7 @@ long launch_documentation()
 //-----------------------------------------------------------------------------
 const char * DFX_GetNameForMIDINote(long inMidiNote)
 {
-	static char midiNoteName[8] = {0};
+	static char midiNoteName[16] = {0};
 	const long kNumNotesInOctave = 12;
 	const char * keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 	const long keyNameIndex = inMidiNote % kNumNotesInOctave;
@@ -1956,35 +1950,13 @@ uint64_t DFX_GetMillisecondCount()
 //-----------------------------------------------------------------------------
 char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding)
 {
-	CFIndex maxBytesPerCharacter;
-	switch (inCStringEncoding)
-	{
-		case kCFStringEncodingUTF8:
-			maxBytesPerCharacter = 4;
-			break;
-		case kCFStringEncodingUnicode:
-			maxBytesPerCharacter = 2;
-			break;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-		case kCFStringEncodingUTF16BE:
-		case kCFStringEncodingUTF16LE:
-			maxBytesPerCharacter = 2;
-			break;
-		case kCFStringEncodingUTF32:
-		case kCFStringEncodingUTF32BE:
-		case kCFStringEncodingUTF32LE:
-			maxBytesPerCharacter = 4;
-			break;
-#endif
-		default:
-			maxBytesPerCharacter = 1;
-			break;
-	}
-
-	CFIndex stringBufferSize = (CFStringGetLength(inCFString) + 1) * maxBytesPerCharacter;
+	CFIndex stringBufferSize = CFStringGetMaximumSizeForEncoding(CFStringGetLength(inCFString) + 1, inCStringEncoding);
+	if (stringBufferSize <= 0)
+		return NULL;
 	char * outputString = (char*) malloc(stringBufferSize);
 	if (outputString == NULL)
 		return NULL;
+	memset(outputString, 0, stringBufferSize);
 	Boolean stringSuccess = CFStringGetCString(inCFString, outputString, stringBufferSize, inCStringEncoding);
 	if (!stringSuccess)
 	{

@@ -299,15 +299,14 @@ typedef struct {
 //-----------------------------------------------------------------------------
 class DfxPlugin : public TARGET_API_BASE_CLASS
 {
-friend class DfxPluginCore;
 public:
 	// ***
 	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long inNumParameters, long inNumPresets = 1);
 	// ***
 	virtual ~DfxPlugin();
 
-	void dfxplugin_postconstructor();
-	void dfxplugin_predestructor();
+	void dfx_PostConstructor();
+	void dfx_PreDestructor();
 
 	long do_initialize();
 	// ***
@@ -491,7 +490,7 @@ public:
 	// get a copy of the text of a preset name
 	void getpresetname(long inPresetIndex, char * outText);
 	// get a pointer to the text of a preset name
-	char * getpresetname_ptr(long inPresetIndex);
+	const char * getpresetname_ptr(long inPresetIndex);
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getpresetcfname(long inPresetIndex);
 #endif
@@ -1018,7 +1017,7 @@ void clearbufferarray_f(float ** buffers, unsigned long numbuffers, long buffers
 void clearbufferarrayarray_d(double *** buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
 							long buffersize, double value = 0.0);
 
-long launch_url(const char * urlstring);
+long launch_url(const char * inUrlString);
 long launch_documentation();
 const char * DFX_GetNameForMIDINote(long inMidiNote);
 
@@ -1063,14 +1062,14 @@ char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding in
 	/// this is mostly handled in vstplugmain.cpp in the VST 2.4 SDK and higher
 	#if VST_2_4_EXTENSIONS
 
-		#define DFX_ENTRY(PluginClass)														\
-			extern AudioEffect * createEffectInstance(audioMasterCallback inAudioMaster)	\
-			{																				\
-				DfxPlugin * effect = new PluginClass(inAudioMaster);						\
-				if (effect == NULL)															\
-					return NULL;															\
-				effect->dfxplugin_postconstructor();										\
-				return effect;																\
+		#define DFX_ENTRY(PluginClass)												\
+			AudioEffect * createEffectInstance(audioMasterCallback inAudioMaster)	\
+			{																		\
+				DfxPlugin * effect = new PluginClass(inAudioMaster);				\
+				if (effect == NULL)													\
+					return NULL;													\
+				effect->dfx_PostConstructor();										\
+				return effect;														\
 			}
 
 	#else
@@ -1078,7 +1077,7 @@ char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding in
 		#if BEOS
 			#define main main_plugin
 			extern "C" __declspec(dllexport) AEffect * main_plugin(audioMasterCallback audioMaster);
-		#elif MACX
+		#elif (MACX && __ppc__)
 			#define main main_macho
 			extern "C" AEffect * main_macho(audioMasterCallback audioMaster);
 		#else
@@ -1093,7 +1092,7 @@ char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding in
 				DfxPlugin * effect = new PluginClass(inAudioMaster);		\
 				if (effect == NULL)											\
 					return NULL;											\
-				effect->dfxplugin_postconstructor();						\
+				effect->dfx_PostConstructor();								\
 				return effect->getAeffect();								\
 			}
 
