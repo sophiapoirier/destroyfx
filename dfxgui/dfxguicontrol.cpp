@@ -1,23 +1,24 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
 Copyright (C) 2002-2009  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #include "dfxguicontrol.h"
@@ -136,24 +137,14 @@ int DFX_CFStringScanWithFormat(CFStringRef inString, const char * inFormat, ...)
 
 	int scanCount = 0;
 
-	CFIndex stringLength = CFStringGetLength(inString);
-	const CFStringEncoding cStringEncoding = kCFStringEncodingUTF8;
-	CFIndex cStringBufferSize = CFStringGetMaximumSizeForEncoding(stringLength, cStringEncoding) + 1;
-	if (cStringBufferSize > 0)
+	char * cString = DFX_CreateCStringFromCFString(inString, kCFStringEncodingUTF8);
+	if (cString != NULL)
 	{
-		char * cString = (char*) malloc(cStringBufferSize);
-		if (cString != NULL)
-		{
-			Boolean cStringSuccess = CFStringGetCString(inString, cString, cStringBufferSize, cStringEncoding);
-			if (cStringSuccess)
-			{
-				va_list variableArgumentList;
-				va_start(variableArgumentList, inFormat);
-				scanCount = vsscanf(cString, inFormat, variableArgumentList);
-				va_end(variableArgumentList);
-			}
-			free(cString);
-		}
+		va_list variableArgumentList;
+		va_start(variableArgumentList, inFormat);
+		scanCount = vsscanf(cString, inFormat, variableArgumentList);
+		va_end(variableArgumentList);
+		free(cString);
 	}
 
 	return scanCount;
@@ -1274,7 +1265,7 @@ long DGBackgroundControl::getHeight()
 #pragma mark DGCarbonViewControl
 //-----------------------------------------------------------------------------
 DGCarbonViewControl::DGCarbonViewControl(AUCarbonViewBase * inOwnerView, AUParameterListenerRef inListener, 
-										ControlType inType, const CAAUParameter &inAUVParam, ControlRef inControl)
+										ControlType inType, const CAAUParameter & inAUVParam, ControlRef inControl)
 :	AUCarbonViewControl(inOwnerView, inListener, inType, inAUVParam, inControl)
 {
 }
