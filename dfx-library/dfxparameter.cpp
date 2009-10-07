@@ -1,27 +1,27 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
 Copyright (C) 2002-2009  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
 This is our class for doing all kinds of fancy plugin parameter stuff.
-written by Sophia Poirier, October 2002
 ------------------------------------------------------------------------*/
 
 
@@ -41,8 +41,6 @@ written by Sophia Poirier, October 2002
 DfxParam::DfxParam()
 {
 	name = NULL;
-	name = (char*) malloc(sizeof(char) * DFX_PARAM_MAX_NAME_LENGTH);
-	name[0] = 0;	// empty string
 	#ifdef TARGET_API_AUDIOUNIT
 		cfname = NULL;
 	#endif
@@ -54,6 +52,9 @@ DfxParam::DfxParam()
 	#endif
 	numAllocatedValueStrings = 0;
 	customUnitString = NULL;
+
+	name = (char*) malloc(DFX_PARAM_MAX_NAME_LENGTH * sizeof(*name));
+	name[0] = 0;	// empty string
 
 	// default to not using any custom value display
 	useValueStrings = false;
@@ -146,10 +147,10 @@ void DfxParam::init(const char * inName, DfxParamValueType inType,
 				defaultValue.i = ((max.i - min.i) / 2) + min.i;
 			break;
 		case kDfxParamValueType_boolean:
-			min.f = false;
-			max.f = true;
+			min.b = false;
+			max.b = true;
 			if ( (defaultValue.b > max.b)  || (defaultValue.b < min.b) )
-				defaultValue.b = false;
+				defaultValue.b = true;
 			break;
 		default:
 			break;
@@ -245,15 +246,15 @@ void DfxParam::setusevaluestrings(bool inNewMode)
 
 		// determine how many items there are in the array from the parameter value range
 		numAllocatedValueStrings = getmax_i() - getmin_i() + 1;
-		valueStrings = (char**) malloc(numAllocatedValueStrings * sizeof(char*));
+		valueStrings = (char**) malloc(numAllocatedValueStrings * sizeof(*valueStrings));
 		for (int64_t i=0; i < numAllocatedValueStrings; i++)
 		{
-			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(char));
+			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(valueStrings[0][0]));
 			valueStrings[i][0] = 0;	// default to empty strings
 		}
 
 		#ifdef TARGET_API_AUDIOUNIT
-			valueCFStrings = (CFStringRef*) malloc(numAllocatedValueStrings * sizeof(CFStringRef));
+			valueCFStrings = (CFStringRef*) malloc(numAllocatedValueStrings * sizeof(*valueCFStrings));
 			for (int64_t i=0; i < numAllocatedValueStrings; i++)
 				valueCFStrings[i] = NULL;
 		#endif
@@ -315,7 +316,7 @@ char * DfxParam::getvaluestring_ptr(int64_t inIndex)
 // safety check for an index into the value strings array
 bool DfxParam::ValueStringIndexIsValid(int64_t inIndex)
 {
-	if ( !useValueStrings )
+	if (!useValueStrings)
 		return false;
 	if (valueStrings == NULL)
 		return false;
@@ -850,7 +851,7 @@ void DfxParam::setcustomunitstring(const char * inText)
 
 	// allocate for the custom unit type string if we haven't yet
 	if (customUnitString == NULL)
-		customUnitString = (char*) malloc(DFX_PARAM_MAX_UNIT_STRING_LENGTH * sizeof(char));
+		customUnitString = (char*) malloc(DFX_PARAM_MAX_UNIT_STRING_LENGTH * sizeof(*customUnitString));
 
 	strncpy(customUnitString, inText, DFX_PARAM_MAX_UNIT_STRING_LENGTH);
 	customUnitString[DFX_PARAM_MAX_UNIT_STRING_LENGTH-1] = 0;
@@ -869,11 +870,11 @@ void DfxParam::setcustomunitstring(const char * inText)
 DfxPreset::DfxPreset()
 {
 	// use PostConstructor to allocate parameters
+	name = NULL;
 	values = NULL;
 	numParameters = 0;
 
-	name = NULL;
-	name = (char*) malloc(DFX_PRESET_MAX_NAME_LENGTH * sizeof(char));
+	name = (char*) malloc(DFX_PRESET_MAX_NAME_LENGTH * sizeof(*name));
 	name[0] = 0;
 
 	#ifdef TARGET_API_AUDIOUNIT
@@ -905,7 +906,12 @@ void DfxPreset::PostConstructor(long inNumParameters)
 	numParameters = inNumParameters;
 	if (values != NULL)
 		free(values);
-	values = (DfxParamValue*) malloc(numParameters * sizeof(DfxParamValue));
+	values = (DfxParamValue*) malloc(numParameters * sizeof(*values));
+	if (values != NULL)
+	{
+		for (long i=0; i < numParameters; i++)
+			values[i].i = 0;
+	}
 }
 
 /*
@@ -956,7 +962,7 @@ void DfxPreset::getname(char * outText)
 }
 
 //-----------------------------------------------------------------------------
-char * DfxPreset::getname_ptr()
+const char * DfxPreset::getname_ptr()
 {
 	return name;
 }
