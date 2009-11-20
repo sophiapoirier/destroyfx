@@ -60,6 +60,7 @@ void DfxPlugin::PostConstructor()
 	if (channelconfigs != NULL)
 	{
 		CAStreamBasicDescription curInStreamFormat;
+		curInStreamFormat.mChannelsPerFrame = 0;
 		if ( Inputs().GetNumberOfElements() > 0 )
 			curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0);
 		CAStreamBasicDescription curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
@@ -74,22 +75,25 @@ void DfxPlugin::PostConstructor()
 				currentFormatIsNotSupported = true;
 			// if neither check failed, then we are matching this channel config and therefore are okay
 			else
+			{
+				currentFormatIsNotSupported = false;
 				break;
+			}
 		}
 		// if the current format is not supported, then set the format to the first supported i/o pair in our list
 		if (currentFormatIsNotSupported)
 		{
 			const UInt32 defaultNumChannels = 2;
 			// change the input channel count to the first supported one listed
-			UInt32 newNumInputs = (channelconfigs[0].inChannels < 0) ? defaultNumChannels : (UInt32)(channelconfigs[0].inChannels);
+			UInt32 newNumChannels = (channelconfigs[0].inChannels < 0) ? defaultNumChannels : (UInt32)(channelconfigs[0].inChannels);
 			CAStreamBasicDescription newStreamFormat(curInStreamFormat);
-			newStreamFormat.ChangeNumberChannels(newNumInputs, false);
+			newStreamFormat.ChangeNumberChannels(newNumChannels, newStreamFormat.IsInterleaved());
 			if ( Inputs().GetNumberOfElements() > 0 )
 				AUBase::ChangeStreamFormat(kAudioUnitScope_Input, (AudioUnitElement)0, curInStreamFormat, newStreamFormat);
 			// change the output channel count to the first supported one listed
-			UInt32 newNumOutputs = (channelconfigs[0].outChannels < 0) ? defaultNumChannels : (UInt32)(channelconfigs[0].outChannels);
+			newNumChannels = (channelconfigs[0].outChannels < 0) ? defaultNumChannels : (UInt32)(channelconfigs[0].outChannels);
 			newStreamFormat = CAStreamBasicDescription(curOutStreamFormat);
-			newStreamFormat.ChangeNumberChannels(newNumOutputs, false);
+			newStreamFormat.ChangeNumberChannels(newNumChannels, newStreamFormat.IsInterleaved());
 			AUBase::ChangeStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0, curOutStreamFormat, newStreamFormat);
 		}
 		UpdateInPlaceProcessingState();
