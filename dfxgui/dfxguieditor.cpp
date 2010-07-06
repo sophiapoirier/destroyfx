@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2010  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -416,7 +416,7 @@ void DfxGuiEditor::embedAllControlsInReverseOrder(DGControlsList * inControlsLis
 
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
-ComponentResult DfxGuiEditor::Version()
+OSStatus DfxGuiEditor::Version()
 {
 	return DFX_CompositePluginVersionNumberValue();
 }
@@ -1032,7 +1032,7 @@ AudioUnitParameterID * DfxGuiEditor::CreateParameterList(AudioUnitScope inScope,
 {
 	UInt32 numParameters = 0;
 	size_t dataSize = 0;
-	DfxPropertyFlags propFlags;
+	DfxPropertyFlags propFlags = 0;
 	long result = dfxgui_GetPropertyInfo(kAudioUnitProperty_ParameterList, inScope, 0, dataSize, propFlags);
 	if (result == noErr)
 		numParameters = dataSize / sizeof(AudioUnitParameterID);
@@ -1067,15 +1067,15 @@ long DfxGuiEditor::dfxgui_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope i
 
 	UInt32 auDataSize = 0;
 	Boolean writable = false;
-	ComponentResult result = AudioUnitGetPropertyInfo(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, &auDataSize, &writable);
-	if (result == noErr)
+	OSStatus status = AudioUnitGetPropertyInfo(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, &auDataSize, &writable);
+	if (status == noErr)
 	{
 		outDataSize = auDataSize;
 		outFlags = kDfxPropertyFlag_Readable;	// XXX okay to just assume here?
 		if (writable)
 			outFlags |= kDfxPropertyFlag_Writable;
 	}
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
@@ -1086,10 +1086,10 @@ long DfxGuiEditor::dfxgui_GetProperty(DfxPropertyID inPropertyID, DfxScope inSco
 		return kAudioUnitErr_Uninitialized;
 
 	UInt32 auDataSize = ioDataSize;
-	ComponentResult result = AudioUnitGetProperty(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, outData, &auDataSize);
-	if (result == noErr)
+	OSStatus status = AudioUnitGetProperty(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, outData, &auDataSize);
+	if (status == noErr)
 		ioDataSize = auDataSize;
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------

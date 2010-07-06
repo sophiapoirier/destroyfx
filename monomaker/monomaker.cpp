@@ -1,10 +1,29 @@
-/*--------------- by Sophia Poirier  ][  March 2001 + October 2002 ---------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2009  Sophia Poirier
+
+This file is part of Monomaker.
+
+Monomaker is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Monomaker is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Monomaker.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "monomaker.h"
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(Monomaker)
+DFX_EFFECT_ENTRY(Monomaker)
 
 //-----------------------------------------------------------------------------
 // initializations and such
@@ -12,12 +31,12 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, kNumParameters, 1)	// 2 parameters, 1 preset
 {
 	// initialize the parameters
-	initparameter_indexed(kInputSelection, "input selection", kInputSelection_stereo, kInputSelection_stereo, kNumInputSelections);
+	initparameter_list(kInputSelection, "input selection", kInputSelection_stereo, kInputSelection_stereo, kNumInputSelections);
 	initparameter_f(kMonomerge, "monomix", 0.0, 100.0, 0.0, 100.0, kDfxParamUnit_percent);
-	initparameter_indexed(kMonomergeMode, "monomix mode", kMonomergeMode_equalpower, kMonomergeMode_linear, kNumMonomergeModes);
+	initparameter_list(kMonomergeMode, "monomix mode", kMonomergeMode_equalpower, kMonomergeMode_linear, kNumMonomergeModes);
 	initparameter_f(kPan, "pan", 0.0, 0.0, -1.0, 1.0, kDfxParamUnit_pan);
-	initparameter_indexed(kPanMode, "pan mode", kPanMode_recenter, kPanMode_recenter, kNumPanModes);
-//	initparameter_indexed(kPanLaw, "pan law", kPanLaw_, kPanLaw_, kNumPanLaws);
+	initparameter_list(kPanMode, "pan mode", kPanMode_recenter, kPanMode_recenter, kNumPanModes);
+//	initparameter_list(kPanLaw, "pan law", kPanLaw_, kPanLaw_, kNumPanLaws);
 
 	// set the parameter value display strings
 	setparametervaluestring(kInputSelection, kInputSelection_stereo, "left-right");

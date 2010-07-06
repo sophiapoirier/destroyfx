@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2010  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -70,7 +70,7 @@ public:
 	// these are part of the AUCarbonViewBase interface
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent);
-	virtual ComponentResult Version();
+	virtual OSStatus Version();
 
 	AUParameterListenerRef getParameterListener()
 		{	return mParameterListener;	}

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2010  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -157,76 +157,33 @@ PLUGIN_EDITOR_RES_ID
 #define __DFXPLUGIN_H
 
 
-#include "dfxdefines.h"
-
-
-// should be pretty much implied:  
-// if the plugin is an instrument, then it uses MIDI
-#if TARGET_PLUGIN_IS_INSTRUMENT
-	#ifndef TARGET_PLUGIN_USES_MIDI
-	#define TARGET_PLUGIN_USES_MIDI 1
-	#endif
-#endif
-
-// handle base header includes and class names for the target plugin API
-
-#if (defined(TARGET_API_AUDIOUNIT) + defined(TARGET_API_VST)) != 1
-
-   #error "You must define exactly one of TARGET_API_AUDIOUNIT, TARGET_API_VST."
-
-#endif
-
-// using Apple's Audio Unit API
-#if defined(TARGET_API_AUDIOUNIT)
-	#if TARGET_PLUGIN_IS_INSTRUMENT
-		#include "MusicDeviceBase.h"
-		typedef MusicDeviceBase TARGET_API_BASE_CLASS;
-		typedef ComponentInstance TARGET_API_BASE_INSTANCE_TYPE;
-	#elif TARGET_PLUGIN_USES_MIDI
-		#include "AUMIDIEffectBase.h"
-		typedef AUMIDIEffectBase TARGET_API_BASE_CLASS;
-		typedef ComponentInstance TARGET_API_BASE_INSTANCE_TYPE;
+#ifdef TARGET_API_RTAS
+	#include "CEffectGroup.h"
+	#ifdef TARGET_API_AUDIOSUITE
+		#include "CEffectProcessAS.h"
+		typedef CEffectProcessAS	TARGET_API_BASE_CLASS;
 	#else
-		#include "AUEffectBase.h"
-		typedef AUEffectBase TARGET_API_BASE_CLASS;
-		typedef AudioUnit TARGET_API_BASE_INSTANCE_TYPE;
+		#include "CEffectProcessRTAS.h"
+		typedef CEffectProcessRTAS	TARGET_API_BASE_CLASS;
 	#endif
-	#if !TARGET_PLUGIN_IS_INSTRUMENT
-		#define TARGET_API_CORE_CLASS	AUKernelBase
+	typedef void *	TARGET_API_BASE_INSTANCE_TYPE;
+	#ifdef TARGET_PLUGIN_USES_VSTGUI
+		#include "CTemplateNoUIView.h"
+		#include "CProcessType.h"
 	#endif
-	#include <AudioUnit/LogicAUProperties.h>
-
-// using Steinberg's VST API
-#elif defined(TARGET_API_VST)
-	#include "audioeffectx.h"
-	typedef AudioEffectX	TARGET_API_BASE_CLASS;
-	typedef audioMasterCallback	TARGET_API_BASE_INSTANCE_TYPE;
-//	#define TARGET_API_CORE_CLASS 0	// none in VST
-	// set numinputs and numoutputs if numchannels is defined
-	#ifdef VST_NUM_CHANNELS
-		#ifndef VST_NUM_INPUTS
-		#define VST_NUM_INPUTS	VST_NUM_CHANNELS
-		#endif
-		#ifndef VST_NUM_OUTPUTS
-		#define VST_NUM_OUTPUTS	VST_NUM_CHANNELS
-		#endif
+	#if WINDOWS_VERSION
+		#include "Mac2Win.h"
 	#endif
-	// XXX for when we may still need to build with pre-2.4 VST SDKs
-	#if !VST_2_4_EXTENSIONS
-		#define VstInt32	long
-		#define VstIntPtr	long
-	#endif
-	#ifdef __MACH__
-		#include <CoreFoundation/CoreFoundation.h>
-	#endif
-
 #endif
-// end of target API check
 
 
 
 // include our crucial shits
 
+#include "dfxdefines.h"
+#include "dfxplugin-base.h"
+
+#include "dfxmisc.h"
 #include "dfxmath.h"
 #include "dfxparameter.h"
 #include "dfxsettings.h"
@@ -242,28 +199,7 @@ PLUGIN_EDITOR_RES_ID
 
 
 //-----------------------------------------------------------------------------
-// constants and types
-
-#ifdef TARGET_API_AUDIOUNIT
-	enum {
-		kDfxErr_NoError = noErr,
-		kDfxErr_InitializationFailed = kAudioUnitErr_FailedInitialization,
-		kDfxErr_InvalidParameter = kAudioUnitErr_InvalidParameter,
-		kDfxErr_InvalidProperty = kAudioUnitErr_InvalidProperty,
-		kDfxErr_InvalidPropertyValue = kAudioUnitErr_InvalidPropertyValue,
-		kDfxErr_CannotDoInCurrentContext = kAudioUnitErr_CannotDoInCurrentContext
-	};
-#else
-	enum {
-		kDfxErr_NoError = 0,
-		kDfxErr_InitializationFailed = -10875,
-		kDfxErr_InvalidParameter = -10878,
-		kDfxErr_InvalidProperty = -10879,
-		kDfxErr_InvalidPropertyValue = -10851,
-		kDfxErr_CannotDoInCurrentContext = -10863
-	};
-#endif
-
+// types
 
 typedef struct {
 	double tempo, tempo_bps;
@@ -298,6 +234,9 @@ typedef struct {
 #pragma mark _________DfxPlugin_________
 //-----------------------------------------------------------------------------
 class DfxPlugin : public TARGET_API_BASE_CLASS
+#if defined(TARGET_API_RTAS) && defined(TARGET_PLUGIN_USES_VSTGUI)
+, public ITemplateProcess
+#endif
 {
 public:
 	// ***
@@ -380,8 +319,8 @@ public:
 						const char * initCustomUnitString = NULL);
 	void initparameter_b(long inParameterIndex, const char * initName, bool initValue, bool initDefaultValue, 
 						DfxParamUnit initUnit = kDfxParamUnit_generic);
-	void initparameter_indexed(long inParameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
-						int64_t initNumItems, DfxParamUnit initUnit = kDfxParamUnit_index, 
+	void initparameter_list(long inParameterIndex, const char * initName, int64_t initValue, int64_t initDefaultValue, 
+						int64_t initNumItems, DfxParamUnit initUnit = kDfxParamUnit_list, 
 						const char * initCustomUnitString = NULL);
 
 	void setparameterusevaluestrings(long inParameterIndex, bool newMode=true)
@@ -437,6 +376,10 @@ public:
 		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getmax_i();   else return 0;	}
 	double getparameterdefault_f(long inParameterIndex)
 		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getdefault_f();   else return 0.0;	}
+	int64_t getparameterdefault_i(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getdefault_i();   else return 0;	}
+	bool getparameterdefault_b(long inParameterIndex)
+		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getdefault_b();   else return false;	}
 
 	void getparametername(long inParameterIndex, char * text);
 #ifdef TARGET_API_AUDIOUNIT
@@ -673,20 +616,21 @@ protected:
 	long numPresets;
 	long currentPresetNum;
 
+	#if TARGET_PLUGIN_USES_DSPCORE && !defined(TARGET_API_AUDIOUNIT)
+		DfxPluginCore ** dspcores;	// we have to handle this ourselves because VST can't
+	#endif
+
 	#ifdef TARGET_API_AUDIOUNIT
 		bool auElementsHaveBeenCreated;
 		// array of float pointers to input and output audio buffers, 
 		// just for the sake of making processaudio(float**, float**, etc.) possible
-		float ** inputsP;
-		float ** outputsP;
+		float ** inputAudioStreams_au;
+		float ** outputAudioStreams_au;
 	#endif
 
 	#ifdef TARGET_API_VST
 		bool latencychanged;
 		bool isinitialized;
-		#if TARGET_PLUGIN_USES_DSPCORE
-			DfxPluginCore ** dspcores;	// we have to handle this ourselves because VST can't
-		#endif
 	#endif
 
 private:
@@ -700,10 +644,27 @@ private:
 	double tailsize_seconds;
 	bool b_usetailsize_seconds;
 	bool audioProcessingAccumulatingOnly;
+	bool audioIsRendering;
 
 	#ifdef TARGET_API_AUDIOUNIT
 		void UpdateInPlaceProcessingState();
 		UInt32 supportedLogicNodeOperationMode, currentLogicNodeOperationMode;
+	#endif
+
+	#ifdef TARGET_API_RTAS
+		void AddParametersToList();
+		bool mMasterBypass_rtas;
+		float ** inputAudioStreams_as;
+		float ** outputAudioStreams_as;
+		float * zeroAudioBuffer;
+		long numZeroAudioBufferSamples;
+	#ifdef TARGET_PLUGIN_USES_VSTGUI
+		GrafPtr mMainPort;
+		ITemplateCustomUI * mCustomUI_p;
+		Rect mPIWinRect;
+		CTemplateNoUIView * mNoUIView_p;
+		void * mModuleHandle_p;
+	#endif
 	#endif
 
 
@@ -713,13 +674,13 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	virtual void PostConstructor();
 	virtual void PreDestructor();
-	virtual ComponentResult Initialize();
+	virtual OSStatus Initialize();
 	virtual void Cleanup();
-	virtual ComponentResult Reset(AudioUnitScope inScope, AudioUnitElement inElement);
+	virtual OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement);
 
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		virtual ComponentResult Render(AudioUnitRenderActionFlags & ioActionFlags, 
-								const AudioTimeStamp & inTimeStamp, UInt32 inFramesToProcess);
+		virtual OSStatus Render(AudioUnitRenderActionFlags & ioActionFlags, 
+						const AudioTimeStamp & inTimeStamp, UInt32 inFramesToProcess);
 	#else
 		virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
 						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
@@ -729,17 +690,17 @@ public:
 		virtual AUKernelBase * NewKernel();
 	#endif
 
-	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					UInt32 & outDataSize, Boolean & outWritable);
-	virtual ComponentResult GetProperty(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					void * outData);
-	virtual ComponentResult SetProperty(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					const void * inData, UInt32 inDataSize);
+	virtual OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
+				AudioUnitScope inScope, AudioUnitElement inElement, 
+				UInt32 & outDataSize, Boolean & outWritable);
+	virtual OSStatus GetProperty(AudioUnitPropertyID inPropertyID, 
+				AudioUnitScope inScope, AudioUnitElement inElement, 
+				void * outData);
+	virtual OSStatus SetProperty(AudioUnitPropertyID inPropertyID, 
+				AudioUnitScope inScope, AudioUnitElement inElement, 
+				const void * inData, UInt32 inDataSize);
 
-	virtual ComponentResult	Version();
+	virtual OSStatus Version();
 	virtual UInt32 SupportedNumChannels(const AUChannelInfo ** outInfo);
 	virtual Float64 GetLatency();
 	virtual Float64 GetTailTime();
@@ -747,23 +708,23 @@ public:
 		{	return true;	}
 	virtual CFURLRef CopyIconLocation();
 
-	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
-					AudioUnitParameterID inParameterID, 
-					AudioUnitParameterInfo & outParameterInfo);
-	virtual ComponentResult GetParameterValueStrings(AudioUnitScope inScope, 
-					AudioUnitParameterID inParameterID, CFArrayRef * outStrings);
-	virtual ComponentResult SetParameter(AudioUnitParameterID inParameterID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					Float32 inValue, UInt32 inBufferOffsetInFrames);
+	virtual OSStatus GetParameterInfo(AudioUnitScope inScope, 
+				AudioUnitParameterID inParameterID, 
+				AudioUnitParameterInfo & outParameterInfo);
+	virtual OSStatus GetParameterValueStrings(AudioUnitScope inScope, 
+				AudioUnitParameterID inParameterID, CFArrayRef * outStrings);
+	virtual OSStatus SetParameter(AudioUnitParameterID inParameterID, 
+				AudioUnitScope inScope, AudioUnitElement inElement, 
+				Float32 inValue, UInt32 inBufferOffsetInFrames);
 
-	virtual	ComponentResult ChangeStreamFormat(AudioUnitScope inScope, 
-					AudioUnitElement inElement, 
-					const CAStreamBasicDescription & inPrevFormat, 
-					const CAStreamBasicDescription & inNewFormat);
+	virtual	OSStatus ChangeStreamFormat(AudioUnitScope inScope, 
+				AudioUnitElement inElement, 
+				const CAStreamBasicDescription & inPrevFormat, 
+				const CAStreamBasicDescription & inNewFormat);
 
-	virtual ComponentResult SaveState(CFPropertyListRef * outData);
-	virtual ComponentResult RestoreState(CFPropertyListRef inData);
-	virtual ComponentResult GetPresets(CFArrayRef * outData) const;
+	virtual OSStatus SaveState(CFPropertyListRef * outData);
+	virtual OSStatus RestoreState(CFPropertyListRef inData);
+	virtual OSStatus GetPresets(CFArrayRef * outData) const;
 	virtual OSStatus NewFactoryPresetSet(const AUPreset & inNewFactoryPreset);
 
 	#if TARGET_PLUGIN_USES_MIDI
@@ -788,12 +749,12 @@ public:
 			{	return noErr;	}
 	#endif
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		virtual ComponentResult PrepareInstrument(MusicDeviceInstrumentID inInstrument);
-		virtual ComponentResult ReleaseInstrument(MusicDeviceInstrumentID inInstrument);
-		virtual ComponentResult StartNote(MusicDeviceInstrumentID inInstrument,
+		virtual OSStatus PrepareInstrument(MusicDeviceInstrumentID inInstrument);
+		virtual OSStatus ReleaseInstrument(MusicDeviceInstrumentID inInstrument);
+		virtual OSStatus StartNote(MusicDeviceInstrumentID inInstrument,
 						MusicDeviceGroupID inGroupID, NoteInstanceID * outNoteInstanceID, 
 						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams & inParams);
-		virtual ComponentResult StopNote(MusicDeviceGroupID inGroupID, 
+		virtual OSStatus StopNote(MusicDeviceGroupID inGroupID, 
 						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame);
 
 		// this is a convenience function swiped from AUEffectBase, but not included in MusicDeviceBase
@@ -869,7 +830,7 @@ public:
 	#if TARGET_PLUGIN_USES_DSPCORE
 		DfxPluginCore * getplugincore(unsigned long channel)
 		{
-			if (channel >= getnumoutputs())
+			if ( channel >= getnumoutputs() )
 				return NULL;
 			if (dspcores == NULL)
 				return NULL;
@@ -878,6 +839,63 @@ public:
 	#endif
 #endif
 // end of VST API methods
+
+
+#ifdef TARGET_API_RTAS
+	virtual void Free();
+	virtual ComponentResult ResetPlugInState();
+	virtual ComponentResult Prime(Boolean inPriming);
+	virtual void UpdateControlValueInAlgorithm(long inParameterIndex);
+	virtual ComponentResult IsControlAutomatable(long inControlIndex, short * outItIs);
+	virtual ComponentResult GetControlNameOfLength(long inParameterIndex, char * outName, long inNameLength, OSType inControllerType, FicBoolean * outReverseHighlight);
+	virtual ComponentResult GetValueString(long inParameterIndex, long inValue, StringPtr outValueString, long inMaxLength);
+	virtual ComponentResult SetChunk(OSType inChunkID, SFicPlugInChunk * chunk);
+	virtual void DoTokenIdle();
+	virtual CPlugInView * CreateCPlugInView();
+
+	// AU->RTAS glue convenience functions
+	double GetParameter_f_FromRTAS(long inParameterID);
+	int64_t GetParameter_i_FromRTAS(long inParameterID);
+	bool GetParameter_b_FromRTAS(long inParameterID);
+
+#ifdef TARGET_PLUGIN_USES_VSTGUI
+	virtual void SetViewPort(GrafPtr inPort);
+	virtual void GetViewRect(Rect * outViewRect);
+	virtual long SetControlValue(long inControlIndex, long inValue);
+	virtual long GetControlValue(long inControlIndex, long * aValue);
+	virtual long GetControlDefaultValue(long inControlIndex, long * outValue);
+	ComponentResult UpdateControlGraphic(long inControlIndex, long inValue);
+	ComponentResult SetControlHighliteInfo(long inControlIndex, short inIsHighlighted, short inColor);
+	ComponentResult ChooseControl(Point inLocalCoord, long * outControlIndex);
+
+	virtual void setEditor(void * inEditor)
+		{	mCustomUI_p = (ITemplateCustomUI*)inEditor;	}
+	virtual int ProcessTouchControl(long inControlIndex);
+	virtual int ProcessReleaseControl(long inControlIndex);
+	virtual void ProcessDoIdle();
+	virtual void * ProcessGetModuleHandle()
+		{	return mModuleHandle_p;	}
+	virtual short ProcessUseResourceFile()
+		{	return fProcessType->GetProcessGroup()->UseResourceFile();	}
+	virtual void ProcessRestoreResourceFile(short resFile)
+		{	fProcessType->GetProcessGroup()->RestoreResourceFile(resFile);	}
+
+	// silliness needing for RTAS<->VSTGUI connecting
+//	virtual float GetParameter_f(long inParameterID)
+//		{	return GetParameter(inParameterID);	}
+#endif
+#endif
+// end of RTAS/AudioSuite API methods
+
+
+protected:
+#ifdef TARGET_API_RTAS
+	virtual void EffectInit();
+#ifdef TARGET_API_AUDIOSUITE
+	virtual UInt32 ProcessAudio(bool inIsMasterBypassed);
+#endif
+	virtual void RenderAudio(float ** inAudioStreams, float ** outAudioStreams, long inNumFramesToProcess);
+#endif
 
 };
 
@@ -987,44 +1005,34 @@ public:
 
 
 
+#pragma mark _________DfxEffectGroup_________
+
+#ifdef TARGET_API_RTAS
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+class DfxEffectGroup : public CEffectGroup
+{
+public:
+	DfxEffectGroup();
+
+protected:
+	virtual void CreateEffectTypes();
+	virtual void Initialize();
+
+private:
+	void dfx_AddEffectType(CEffectType * inEffectType);
+};
+#endif
+
+
+
 //-----------------------------------------------------------------------------
 // prototypes for a few handy buffer helper functions
 
 long DFX_CompositePluginVersionNumberValue();
 
-bool createbuffer_f(float ** buffer, long currentBufferSize, long desiredBufferSize);
-bool createbuffer_d(double ** buffer, long currentBufferSize, long desiredBufferSize);
-bool createbuffer_i(long ** buffer, long currentBufferSize, long desiredBufferSize);
-bool createbuffer_b(bool ** buffer, long currentBufferSize, long desiredBufferSize);
-bool createbufferarray_f(float *** buffers, unsigned long currentNumBuffers, long currentBufferSize, 
-						unsigned long desiredNumBuffers, long desiredBufferSize);
-bool createbufferarrayarray_d(double **** buffers, unsigned long currentNumBufferArrays, unsigned long currentNumBuffers, 
-							long currentBufferSize, unsigned long desiredNumBufferArrays, 
-							unsigned long desiredNumBuffers, long desiredBufferSize);
-
-void releasebuffer_f(float ** buffer);
-void releasebuffer_d(double ** buffer);
-void releasebuffer_i(long ** buffer);
-void releasebuffer_b(bool ** buffer);
-void releasebufferarray_f(float *** buffers, unsigned long numbuffers);
-void releasebufferarrayarray_d(double **** buffers, unsigned long numbufferarrays, unsigned long numbuffers);
-
-void clearbuffer_f(float * buffer, long buffersize, float value = 0.0f);
-void clearbuffer_d(double * buffer, long buffersize, double value = 0.0);
-void clearbuffer_i(long * buffer, long buffersize, long value = 0);
-void clearbuffer_b(bool * buffer, long buffersize, bool value = false);
-void clearbufferarray_f(float ** buffers, unsigned long numbuffers, long buffersize, float value = 0.0f);
-void clearbufferarrayarray_d(double *** buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
-							long buffersize, double value = 0.0);
-
-long launch_url(const char * inUrlString);
-long launch_documentation();
-const char * DFX_GetNameForMIDINote(long inMidiNote);
-
-uint64_t DFX_GetMillisecondCount();
-
-#if TARGET_OS_MAC
-char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding = kCFStringEncodingUTF8);
+#ifdef TARGET_API_RTAS
+OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode);
 #endif
 
 
@@ -1037,7 +1045,7 @@ char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding in
 
 #ifdef TARGET_API_AUDIOUNIT
 
-	#define DFX_ENTRY(PluginClass)   COMPONENT_ENTRY(PluginClass)
+	#define DFX_EFFECT_ENTRY(PluginClass)   COMPONENT_ENTRY(PluginClass)
 
 	#if TARGET_PLUGIN_USES_DSPCORE
 		#define DFX_CORE_ENTRY(PluginCoreClass)						\
@@ -1051,6 +1059,23 @@ char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding in
 //	#else
 //		AUKernelBase * DfxPlugin::NewKernel()
 //			{	return TARGET_API_BASE_CLASS::NewKernel();	}
+		#define DFX_INIT_CORE(PluginCoreClass)
+	#endif
+
+#else
+
+	// we need to manage the DSP cores manually in APIs other than AU
+	// call this in the plugin's constructor if it uses DSP cores for processing
+	#if TARGET_PLUGIN_USES_DSPCORE
+		// DFX_CORE_ENTRY is not useful for APIs other than AU, so it is defined as nothing
+		#define DFX_CORE_ENTRY(PluginCoreClass)
+		#define DFX_INIT_CORE(PluginCoreClass)   										\
+			for (unsigned long corecount=0; corecount < getnumoutputs(); corecount++)	\
+			{																			\
+				dspcores[corecount] = new PluginCoreClass(this);						\
+				if (dspcores[corecount] != NULL)										\
+					dspcores[corecount]->dfxplugincore_postconstructor();				\
+			}
 	#endif
 
 #endif
@@ -1062,7 +1087,7 @@ char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding in
 	/// this is mostly handled in vstplugmain.cpp in the VST 2.4 SDK and higher
 	#if VST_2_4_EXTENSIONS
 
-		#define DFX_ENTRY(PluginClass)												\
+		#define DFX_EFFECT_ENTRY(PluginClass)										\
 			AudioEffect * createEffectInstance(audioMasterCallback inAudioMaster)	\
 			{																		\
 				DfxPlugin * effect = new PluginClass(inAudioMaster);				\
@@ -1084,7 +1109,7 @@ char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding in
 			AEffect * main(audioMasterCallback audioMaster);
 		#endif
 
-		#define DFX_ENTRY(PluginClass)										\
+		#define DFX_EFFECT_ENTRY(PluginClass)								\
 			AEffect * main(audioMasterCallback inAudioMaster)				\
 			{																\
 				if ( !inAudioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
@@ -1098,19 +1123,20 @@ char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding in
 
 	#endif
 
-	// we need to manage the DSP cores manually in VST
-	// call this in the plugin's constructor if it uses DSP cores for processing
-	#if TARGET_PLUGIN_USES_DSPCORE
-		// DFX_CORE_ENTRY is not useful for VST, so it is defined as nothing
-		#define DFX_CORE_ENTRY(PluginCoreClass)
-		#define DFX_INIT_CORE(PluginCoreClass)   										\
-			for (unsigned long corecount=0; corecount < getnumoutputs(); corecount++)	\
-			{																			\
-				dspcores[corecount] = new PluginCoreClass(this);						\
-				if (dspcores[corecount] != NULL)										\
-					dspcores[corecount]->dfxplugincore_postconstructor();				\
-			}
+#endif
+
+
+
+#ifdef TARGET_API_RTAS
+
+	#ifdef TARGET_API_AUDIOSUITE
+		#define DFX_NewEffectProcess	DFX_NewEffectProcessAS
 	#endif
+	#define DFX_EFFECT_ENTRY(PluginClass)		\
+		CEffectProcess * DFX_NewEffectProcess()	\
+		{										\
+			return new PluginClass(NULL);		\
+		}
 
 #endif
 

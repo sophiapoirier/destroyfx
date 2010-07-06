@@ -1,4 +1,23 @@
-/*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2010  Sophia Poirier
+
+This file is part of Buffer Override.
+
+Buffer Override is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Buffer Override is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "bufferoverride.h"
 
@@ -7,10 +26,10 @@
 
 // this macro does boring entry point stuff for us
 #if 1
-DFX_ENTRY(BufferOverride)
+DFX_EFFECT_ENTRY(BufferOverride)
 #elif 0
-extern "C" ComponentResult BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj);
-extern "C" ComponentResult BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj)
+extern "C" OSStatus BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj);
+extern "C" OSStatus BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj)
 {
 	struct AudioUnitSetPropertyGluePB {
 		unsigned char                  componentFlags;
@@ -106,8 +125,8 @@ const char * GetAUPropertyName(AudioUnitPropertyID inPropertyID)
 	return propNum;
 }
 
-extern "C" ComponentResult BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj);
-extern "C" ComponentResult BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj)
+extern "C" OSStatus BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj);
+extern "C" OSStatus BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj)
 {
 	struct AudioUnitGetPropertyInfoGluePB {
 		unsigned char			componentFlags;
@@ -301,23 +320,23 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
 	initparameter_f(kDivisor, "buffer divisor", 1.92, 1.92, 1.92, 222.0, kDfxParamUnit_divisor, kDfxParamCurve_squared);
 	initparameter_f(kBufferSize_abs, "forced buffer size (free)", 90.0, 33.3, 1.0, 999.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
-	initparameter_indexed(kBufferSize_sync, "forced buffer size (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+	initparameter_list(kBufferSize_sync, "forced buffer size (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kBufferTempoSync, "forced buffer tempo sync", false, false);
 	initparameter_b(kBufferInterrupt, "buffer interrupt", true, true);
 	initparameter_f(kDivisorLFOrate_abs, "divisor LFO rate (free)", 0.3, 3.0, 0.03, 21.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
-	initparameter_indexed(kDivisorLFOrate_sync, "divisor LFO rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+	initparameter_list(kDivisorLFOrate_sync, "divisor LFO rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kDivisorLFOdepth, "divisor LFO depth", 0.0, 0.0, 0.0, 100.0, kDfxParamUnit_percent);
-	initparameter_indexed(kDivisorLFOshape, "divisor LFO shape", 0, 0, numLFOshapes);
+	initparameter_list(kDivisorLFOshape, "divisor LFO shape", 0, 0, numLFOshapes);
 	initparameter_b(kDivisorLFOtempoSync, "divisor LFO tempo sync", false, false);
 	initparameter_f(kBufferLFOrate_abs, "buffer LFO rate (free)", 3.0, 3.0, 0.03, 21.0, kDfxParamUnit_hz, kDfxParamCurve_exp);//kDfxParamCurve_squared);
-	initparameter_indexed(kBufferLFOrate_sync, "buffer LFO rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+	initparameter_list(kBufferLFOrate_sync, "buffer LFO rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kBufferLFOdepth, "buffer LFO depth", 0.0, 0.0, 0.0, 100.0, kDfxParamUnit_percent);
-	initparameter_indexed(kBufferLFOshape, "buffer LFO shape", 0, 0, numLFOshapes);
+	initparameter_list(kBufferLFOshape, "buffer LFO shape", 0, 0, numLFOshapes);
 	initparameter_b(kBufferLFOtempoSync, "buffer LFO tempo sync", false, false);
 	initparameter_f(kSmooth, "smooth", 9.0, 3.0, 0.0, 100.0, kDfxParamUnit_percent);
 	initparameter_f(kDryWetMix, "dry/wet mix", 100.0, 50.0, 0.0, 100.0, kDfxParamUnit_drywetmix);
 	initparameter_f(kPitchbend, "pitchbend range", 6.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamUnit_semitones);
-	initparameter_indexed(kMidiMode, "MIDI mode", kMidiMode_nudge, kMidiMode_nudge, kNumMidiModes);
+	initparameter_list(kMidiMode, "MIDI mode", kMidiMode_nudge, kMidiMode_nudge, kNumMidiModes);
 	initparameter_f(kTempo, "tempo", 120.0, 120.0, 57.0, 480.0, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 
