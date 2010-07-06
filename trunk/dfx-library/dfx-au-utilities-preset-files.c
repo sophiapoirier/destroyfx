@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2009  Sophia Poirier
+	Copyright (C) 2003-2010  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -537,13 +537,13 @@ void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext * outTreeContext)
 
 //-----------------------------------------------------------------------------
 // input:  Audio Unit ComponentInstance, CFURL to AU preset file to restore
-// output:  ComponentResult error code
+// output:  OSStatus error code
 // Given an AU instance and an AU preset file, this function will try to restore the data 
 // from the preset file as the new state of the AU.
-ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL)
+OSStatus RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL)
 {
 	SInt32 plistError;
-	ComponentResult componentError;
+	OSStatus auError;
 	CFPropertyListRef auStatePlist;
 
 	if ( (inAUComponentInstance == NULL) || (inAUPresetFileURL == NULL) )
@@ -556,22 +556,22 @@ ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CF
 		return (plistError != 0) ? plistError : coreFoundationUnknownErr;
 
 	// attempt to apply the state data from the file to the AU
-	componentError = AudioUnitSetProperty(inAUComponentInstance, kAudioUnitProperty_ClassInfo, 
-						kAudioUnitScope_Global, (AudioUnitElement)0, &auStatePlist, sizeof(auStatePlist));
+	auError = AudioUnitSetProperty(inAUComponentInstance, kAudioUnitProperty_ClassInfo, 
+				kAudioUnitScope_Global, (AudioUnitElement)0, &auStatePlist, sizeof(auStatePlist));
 
 	CFRelease(auStatePlist);
 
 	// in case the AU itself or you don't already do this upon restoring settings, 
 	// it is necessary to send out notifications to any parameter listeners so that 
 	// all parameter controls and whatnot reflect the new state
-	if (componentError == noErr)
+	if (auError == noErr)
 	{
 		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, (AudioUnitParameterID)kAUParameterListener_AnyParameter, kAudioUnitScope_Global, (AudioUnitElement)0);
 		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, (AudioUnitParameterID)kAUParameterListener_AnyParameter, kAudioUnitScope_Input, (AudioUnitElement)0);
 		AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, (AudioUnitParameterID)kAUParameterListener_AnyParameter, kAudioUnitScope_Output, (AudioUnitElement)0);
 	}
 
-	return componentError;
+	return auError;
 }
 
 //-----------------------------------------------------------------------------
@@ -626,9 +626,9 @@ OSStatus gCustomRestoreAUPresetFileResult;
 // This function is what you use when you want to allow the user to find an AU preset file 
 // anywhere on their system and try to open it and restore its data as the current state 
 // of the input AU instance.  It presents the user with a Navigation Services GetFile dialog.
-ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
+OSStatus CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 {
-	ComponentResult error = noErr;
+	OSStatus status = noErr;
 	NavDialogCreationOptions dialogOptions;
 	NavEventUPP eventProc;
 	NavObjectFilterUPP filterProc;
@@ -637,9 +637,9 @@ ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 	if (inAUComponentInstance == NULL)
 		return paramErr;
 
-	error = NavGetDefaultDialogCreationOptions(&dialogOptions);
-	if (error != noErr)
-		return error;
+	status = NavGetDefaultDialogCreationOptions(&dialogOptions);
+	if (status != noErr)
+		return status;
 // XXX maybe consider allowing an All Documents option in the Type popup?
 //	dialogOptions.optionFlags |= kNavNoTypePopup;
 	// disallow multiple file selection (an AU only has one state at a given moment, so that wouldn't make sense)
@@ -652,20 +652,20 @@ ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 	// find and choose an AU preset file to load
 	eventProc = NewNavEventUPP(CustomOpenAUPresetNavEventHandler);
 	filterProc = NewNavObjectFilterUPP(CustomOpenAUPresetNavFilterProc);
-	error = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)inAUComponentInstance, &dialog);
-	if (error == noErr)
+	status = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)inAUComponentInstance, &dialog);
+	if (status == noErr)
 	{
 		// XXX do we really want to do this?
 		SetNavDialogAUPresetStartLocation(dialog, (Component)inAUComponentInstance, kDontCreateFolder);
 
 		gCustomRestoreAUPresetFileResult = noErr;	// initialize it clean to start with
-		error = NavDialogRun(dialog);
+		status = NavDialogRun(dialog);
 		// if the dialog ran modally, then we should see any error caught during its run now, 
 		// and can use that as the result of this function
-		if (error == noErr)
+		if (status == noErr)
 		{
 			if (gCustomRestoreAUPresetFileResult != noErr)
-				error = gCustomRestoreAUPresetFileResult;
+				status = gCustomRestoreAUPresetFileResult;
 		}
 	}
 	if (eventProc != NULL)
@@ -673,7 +673,7 @@ ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 	if (filterProc != NULL)
 		DisposeRoutineDescriptor(filterProc);
 
-	return error;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
@@ -954,7 +954,7 @@ OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, Com
 //-----------------------------------------------------------------------------
 // This is a convenience wrapper for SaveAUStateToPresetFile_Bundle for when 
 // the caller is the main application.
-ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL)
+OSStatus SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL)
 {
 	return SaveAUStateToPresetFile_Bundle(inAUComponentInstance, inDefaultAUPresetName, outSavedAUPresetFileURL, NULL);
 }
@@ -963,10 +963,10 @@ ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStrin
 // inDefaultAUPresetName is optional and can be NULL
 // outSavedAUPresetFileURL is optional and can be NULL
 // inBundle can be NULL, in which case the main application bundle is used
-// output:  ComponentResult error code
-ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL, CFBundleRef inBundle)
+// output:  OSStatus error code
+OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL, CFBundleRef inBundle)
 {
-	ComponentResult error = noErr;
+	OSStatus status = noErr;
 	CFPropertyListRef auStatePlist;
 	UInt32 auStateDataSize = sizeof(auStatePlist);
 
@@ -989,10 +989,10 @@ convert ClassInfo to XML/plist data
 	// get the current state data for the AU
 	// if that fails, then there's no point in going any further since there is no data to save
 	auStatePlist = NULL;
-	error = AudioUnitGetProperty(inAUComponentInstance, kAudioUnitProperty_ClassInfo, 
+	status = AudioUnitGetProperty(inAUComponentInstance, kAudioUnitProperty_ClassInfo, 
 						kAudioUnitScope_Global, (AudioUnitElement)0, &auStatePlist, &auStateDataSize);
-	if (error != noErr)
-		return error;
+	if (status != noErr)
+		return status;
 	// probably won't happen if noErr was returned, but just in case...
 	if (auStatePlist == NULL)
 		return coreFoundationUnknownErr;
@@ -1006,11 +1006,11 @@ Open a dialog
 	open nib
 */
 	// this will show the dialog(s) to the user and do all the handling of saving the state data to a file, etc.
-	error = CreateSavePresetDialog((Component)inAUComponentInstance, auStatePlist, inDefaultAUPresetName, outSavedAUPresetFileURL);
+	status = CreateSavePresetDialog((Component)inAUComponentInstance, auStatePlist, inDefaultAUPresetName, outSavedAUPresetFileURL);
 
 	CFRelease(auStatePlist);
 
-	return error;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
