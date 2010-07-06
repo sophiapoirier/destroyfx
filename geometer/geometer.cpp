@@ -11,10 +11,10 @@ int intcompare(const void * a, const void * b) {
 
 /* this macro does boring entry point stuff for us */
 #if 1
-DFX_ENTRY(Geometer)
+DFX_EFFECT_ENTRY(Geometer)
 #else
-extern "C" ComponentResult GeometerEntry(ComponentParameters * params, Geometer * obj);
-extern "C" ComponentResult GeometerEntry(ComponentParameters * params, Geometer * obj)
+extern "C" OSStatus GeometerEntry(ComponentParameters * params, Geometer * obj);
+extern "C" OSStatus GeometerEntry(ComponentParameters * params, Geometer * obj)
 {
 	if (params->what == kAudioUnitResetSelect)
 		printf("Geometer kAudioUnitResetSelect\n");
@@ -32,14 +32,14 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   cs = NULL;
 #endif
 
-  initparameter_indexed(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
-  initparameter_indexed(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
+  initparameter_list(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
+  initparameter_list(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
-  initparameter_indexed(P_POINTSTYLE, "points where", POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
+  initparameter_list(P_POINTSTYLE, "points where", POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
 
   initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "magn");
-  initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08, 0.08, 0.0, 1.0, kDfxParamUnit_portion);
-  initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20, 0.20, 0.0, 1.0, kDfxParamUnit_portion);
+  initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08, 0.08, 0.0, 1.0, kDfxParamUnit_scalar);
+  initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20, 0.20, 0.0, 1.0, kDfxParamUnit_scalar);
   initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20, 0.20, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
   initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50, 0.50, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "gap");
   initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50, 0.50, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "level");
@@ -49,7 +49,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
     setparameterattributes(P_POINTPARAMS + pp, kDfxParamAttribute_unused);	/* don't display as an available parameter */
   }
 
-  initparameter_indexed(P_INTERPSTYLE, "interpolate how", INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
+  initparameter_list(P_INTERPSTYLE, "interpolate how", INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
 
   initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
   initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
@@ -65,9 +65,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
     setparameterattributes(P_INTERPARAMS + ip, kDfxParamAttribute_unused);	/* don't display as an available parameter */
   }
 
-  initparameter_indexed(P_POINTOP1, "pointop1", OP_NONE, OP_NONE, MAX_OPS);
-  initparameter_indexed(P_POINTOP2, "pointop2", OP_NONE, OP_NONE, MAX_OPS);
-  initparameter_indexed(P_POINTOP3, "pointop3", OP_NONE, OP_NONE, MAX_OPS);
+  initparameter_list(P_POINTOP1, "pointop1", OP_NONE, OP_NONE, MAX_OPS);
+  initparameter_list(P_POINTOP2, "pointop2", OP_NONE, OP_NONE, MAX_OPS);
+  initparameter_list(P_POINTOP3, "pointop3", OP_NONE, OP_NONE, MAX_OPS);
 
 #define ALLOP(n, str, def, unit, unitstr) \
   do { \
@@ -165,11 +165,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   cs = new dfxmutex();
 #endif
 
-  #ifdef TARGET_API_VST
-    #if TARGET_PLUGIN_USES_DSPCORE
-      DFX_INIT_CORE(GeometerDSP);	/* we need to manage DSP cores manually in VST */
-    #endif
-  #endif
+##if TARGET_PLUGIN_USES_DSPCORE
+  DFX_INIT_CORE(GeometerDSP);
+#endif
 }
 
 PLUGIN::~PLUGIN() {

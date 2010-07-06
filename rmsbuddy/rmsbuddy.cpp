@@ -1,4 +1,23 @@
-/*--------------- by Sophia Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2010  Sophia Poirier
+
+This file is part of RMS Buddy.
+
+RMS Buddy is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+RMS Buddy is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with RMS Buddy.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "rmsbuddy.h"
 
@@ -9,7 +28,7 @@
 COMPONENT_ENTRY(RMSBuddy)
 
 //-----------------------------------------------------------------------------
-RMSBuddy::RMSBuddy(AudioUnit inComponentInstance)
+RMSBuddy::RMSBuddy(AudioComponentInstance inComponentInstance)
 	: AUEffectBase(inComponentInstance, true)	// "true" to say that we can process audio in-place
 {
 	// initialize the arrays and array quantity counter
@@ -33,11 +52,11 @@ RMSBuddy::RMSBuddy(AudioUnit inComponentInstance)
 
 //-----------------------------------------------------------------------------------------
 // this is called when we need to prepare for audio processing (allocate DSP resources, etc.)
-ComponentResult RMSBuddy::Initialize()
+OSStatus RMSBuddy::Initialize()
 {
 	// call parent implementation first
-	ComponentResult result = AUEffectBase::Initialize();
-	if (result == noErr)
+	OSStatus status = AUEffectBase::Initialize();
+	if (status == noErr)
 	{
 		numChannels = GetNumberOfChannels();
 
@@ -53,7 +72,7 @@ ComponentResult RMSBuddy::Initialize()
 		// it's a good idea to do it ourselves here
 		Reset(kAudioUnitScope_Global, (AudioUnitElement)0);
 	}
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -89,7 +108,7 @@ void RMSBuddy::Cleanup()
 
 //-----------------------------------------------------------------------------------------
 // this is called to reset the DSP state (clear buffers, reset counters, etc.)
-ComponentResult RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
+OSStatus RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	// reset all of these things
 	resetRMS();
@@ -164,8 +183,8 @@ void RMSBuddy::notifyGUI()
 
 //-----------------------------------------------------------------------------------------
 // get the details about a parameter
-ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope, 
-						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo)
+OSStatus RMSBuddy::GetParameterInfo(AudioUnitScope inScope, 
+				AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo)
 {
 	if (inScope != kAudioUnitScope_Global)
 		return kAudioUnitErr_InvalidScope;
@@ -219,8 +238,8 @@ ComponentResult RMSBuddy::GetParameterInfo(AudioUnitScope inScope,
 
 //-----------------------------------------------------------------------------------------
 // only overridden to insert special handling of "trigger" parameters
-ComponentResult RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames)
+OSStatus RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
+				AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames)
 {
 	switch (inParameterID)
 	{
@@ -243,8 +262,8 @@ ComponentResult RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, Audio
 
 //-----------------------------------------------------------------------------------------
 // get the details about a property
-ComponentResult RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, UInt32 & outDataSize, Boolean & outWritable)
+OSStatus RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+				AudioUnitElement inElement, UInt32 & outDataSize, Boolean & outWritable)
 {
 	switch (inPropertyID)
 	{
@@ -271,8 +290,8 @@ ComponentResult RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, Audi
 
 //-----------------------------------------------------------------------------------------
 // get the value/data of a property
-ComponentResult RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, void * outData)
+OSStatus RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+				AudioUnitElement inElement, void * outData)
 {
 	switch (inPropertyID)
 	{
@@ -312,8 +331,8 @@ ComponentResult RMSBuddy::GetProperty(AudioUnitPropertyID inPropertyID, AudioUni
 
 //-----------------------------------------------------------------------------------------
 // set the value/data of a property
-ComponentResult RMSBuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, const void * inData, UInt32 inDataSize)
+OSStatus RMSBuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+				AudioUnitElement inElement, const void * inData, UInt32 inDataSize)
 {
 	switch (inPropertyID)
 	{

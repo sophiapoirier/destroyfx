@@ -1,7 +1,26 @@
-/*--------------- by Sophia Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2010  Sophia Poirier
 
-#ifndef __RMSBUDDYEDITOR_H
-#define __RMSBUDDYEDITOR_H
+This file is part of RMS Buddy.
+
+RMS Buddy is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+RMS Buddy is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with RMS Buddy.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#ifndef __RMS_BUDDY_EDITOR_H
+#define __RMS_BUDDY_EDITOR_H
 
 
 #include "AUCarbonViewBase.h"
@@ -144,7 +163,7 @@ public:
 
 	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
 	virtual bool HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent);
-	virtual ComponentResult Version()
+	virtual OSStatus Version()
 		{	return RMS_BUDDY_VERSION;	}
 
 	OSStatus setup();

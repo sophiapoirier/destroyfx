@@ -1,4 +1,23 @@
-/*-------------- by Sophia Poirier  ][  February 2002 -------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2002-2009  Sophia Poirier
+
+This file is part of Scrubby.
+
+Scrubby is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Scrubby is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Scrubby.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "scrubby.h"
 
@@ -6,7 +25,7 @@
 #pragma mark init
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(Scrubby)
+DFX_EFFECT_ENTRY(Scrubby)
 
 //-----------------------------------------------------------------------------
 // initializations and such
@@ -33,16 +52,16 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kSeekRange, "seek range", 333.0, 333.0, 0.3, 6000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_b(kFreeze, "freeze", false, false);
 	initparameter_f(kSeekRate_abs, "seek rate (free)", 9.0, 3.0, 0.3, 810.0, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
-	initparameter_indexed(kSeekRate_sync, "seek rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+	initparameter_list(kSeekRate_sync, "seek rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 //	initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 9.0, 3.0, 0.3, 810.0, kDfxParamUnit_hz, kDfxParamCurve_log);//kDfxParamCurve_cubed
-//	initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+//	initparameter_list(kSeekRateRandMin_sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 // XXX temporary while implementing range sliders in DFX GUI
 initparameter_f(kSeekRateRandMin_abs, "seek rate rand min (free)", 810.0, 3.0, 0.3, 810.0, kDfxParamUnit_hz, kDfxParamCurve_log);
-initparameter_indexed(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTempoRates-1, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+initparameter_list(kSeekRateRandMin_sync, "seek rate rand min (sync)", numTempoRates-1, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kTempoSync, "tempo sync", false, false);
 	initparameter_f(kSeekDur, "seek duration", 100.0, 100.0, 3.0, 100.0, kDfxParamUnit_percent);	// percent of range
 	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0, 100.0, 3.0, 100.0, kDfxParamUnit_percent);	// percent of range
-	initparameter_indexed(kSpeedMode, "speeds", kSpeedMode_robot, kSpeedMode_robot, kNumSpeedModes);
+	initparameter_list(kSpeedMode, "speeds", kSpeedMode_robot, kSpeedMode_robot, kNumSpeedModes);
 	initparameter_b(kSplitChannels, "channels split", false, false);
 	initparameter_b(kPitchConstraint, "pitch constraint", false, false);
 	// default all notes to off (looks better on the GUI)

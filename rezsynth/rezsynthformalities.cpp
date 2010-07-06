@@ -1,10 +1,29 @@
-/*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2009  Sophia Poirier
+
+This file is part of Rez Synth.
+
+Rez Synth is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Rez Synth is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "rezsynth.h"
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(RezSynth)
+DFX_EFFECT_ENTRY(RezSynth)
 
 //-----------------------------------------------------------------------------------------
 // initializations
@@ -20,24 +39,24 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 	initparameter_f(kBandwidth, "bandwidth", 3.0, 3.0, 0.1, 300.0, kDfxParamUnit_hz, kDfxParamCurve_squared);
-	initparameter_i(kNumBands, "bands per note", 1, 1, 1, kMaxBands, kDfxParamUnit_quantity);
+	initparameter_i(kNumBands, "bands per note", 1, 1, 1, kMaxBands, kDfxParamUnit_generic);
 	initparameter_f(kSepAmount_octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
 	initparameter_f(kSepAmount_linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, kDfxParamUnit_scalar);	// % of center frequency
-	initparameter_indexed(kSepMode, "separation mode", kSepMode_octaval, kSepMode_octaval, kNumSepModes);
+	initparameter_list(kSepMode, "separation mode", kSepMode_octaval, kSepMode_octaval, kNumSepModes);
 	initparameter_b(kFoldover, "filter frequency aliasing", true, false);
 	initparameter_f(kAttack, "attack", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_f(kRelease, "release", 300.0, 300.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_b(kFades, "nicer fades", false, false);
 	initparameter_b(kLegato, "legato", false, false);
-//	initparameter_f(kVelInfluence, "velocity influence", 0.6, 1.0, 0.0, 1.0, kDfxParamUnit_portion);
+//	initparameter_f(kVelInfluence, "velocity influence", 0.6, 1.0, 0.0, 1.0, kDfxParamUnit_scalar);
 	initparameter_f(kVelInfluence, "velocity influence", 60.0, 100.0, 0.0, 100.0, kDfxParamUnit_percent);
 	initparameter_f(kVelCurve, "velocity curve", 2.0, 1.0, 0.3, 3.0, kDfxParamUnit_exponent);
 	initparameter_f(kPitchbendRange, "pitchbend range", 3.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamUnit_semitones);
-	initparameter_indexed(kScaleMode, "input gain scaling mode", kScaleMode_rms, kScaleMode_none, kNumScaleModes);
+	initparameter_list(kScaleMode, "input gain scaling mode", kScaleMode_rms, kScaleMode_none, kNumScaleModes);
 	initparameter_f(kGain, "output gain", 1.0, 1.0, 0.0, 3.981, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kBetweenGain, "between gain", 0.0, 1.0, 0.0, 3.981, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kDryWetMix, "dry/wet mix", 100.0, 50.0, 0.0, 100.0, kDfxParamUnit_drywetmix);
-	initparameter_indexed(kDryWetMixMode, "dry/wet mix mode", kDryWetMixMode_equalpower, kDryWetMixMode_linear, kNumDryWetMixModes);
+	initparameter_list(kDryWetMixMode, "dry/wet mix mode", kDryWetMixMode_equalpower, kDryWetMixMode_linear, kNumDryWetMixModes);
 	initparameter_b(kWiseAmp, "careful", true, true);
 
 	setparametervaluestring(kSepMode, kSepMode_octaval, "octaval");

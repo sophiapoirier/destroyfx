@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2010  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -163,7 +163,7 @@ A parameter has a unit type, specified by the member variable called
 unit which is of type DfxParamUnit.  DfxParamUnit is an enum of common 
 parameter unit types (Hz, ms, gain, percent, etc.).
 
-There are a couple of special unit types.  kDfxParamUnit_index indicates 
+There are a couple of special unit types.  kDfxParamUnit_list indicates 
 that the parameter values represent integer index values for an array.  
 kDfxParamUnit_custom indicates that there is a custom text string with 
 a name for the unit type.  setcustomunitstring is used to set the 
@@ -184,15 +184,6 @@ for the value strings.
 
 
 #include "dfxdefines.h"
-
-#ifdef _MSC_VER
-	typedef INT32	int32_t;
-	typedef UINT32	uint32_t;
-	typedef INT64	int64_t;
-	typedef UINT64	uint64_t;
-#else
-	#include <stdint.h>
-#endif
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include <CoreFoundation/CFString.h>	// for CFString stuff
@@ -230,9 +221,7 @@ typedef uint32_t	DfxParamValueType;
 // these are the different value unit types that a parameter can have
 enum {
 	kDfxParamUnit_generic = 0,
-	kDfxParamUnit_quantity,
 	kDfxParamUnit_percent,	// typically 0-100
-	kDfxParamUnit_portion,	// like percent, but typically 0-1
 	kDfxParamUnit_lineargain,
 	kDfxParamUnit_decibles,
 	kDfxParamUnit_drywetmix,	// typically 0-100
@@ -250,7 +239,7 @@ enum {
 	kDfxParamUnit_pan,	// typically -1 - +1
 	kDfxParamUnit_bpm,
 	kDfxParamUnit_beats,
-	kDfxParamUnit_index,	// this indicates that the parameter value is an index into some array
+	kDfxParamUnit_list,	// this indicates that the parameter value is an index into some array
 //	kDfxParamUnit_strings,	// index, using array of custom text strings for modes/states/etc.
 	kDfxParamUnit_custom	// with a text string lable for custom display
 };

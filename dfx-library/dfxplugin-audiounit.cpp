@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2010  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -134,9 +134,9 @@ void DfxPlugin::PreDestructor()
 // this is like a second constructor, kind of
 // it is called when the Audio Unit is expected to be ready to process audio
 // this is where DSP-specific resources should be allocated
-ComponentResult DfxPlugin::Initialize()
+OSStatus DfxPlugin::Initialize()
 {
-	ComponentResult result = noErr;
+	OSStatus status = noErr;
 
 #if TARGET_PLUGIN_IS_INSTRUMENT
 	const AUChannelInfo * auChannelConfigs = NULL;
@@ -192,18 +192,18 @@ ComponentResult DfxPlugin::Initialize()
 	}
 #else
 	// call the inherited class' Initialize routine
-	result = TARGET_API_BASE_CLASS::Initialize();
+	status = TARGET_API_BASE_CLASS::Initialize();
 #endif
 // TARGET_PLUGIN_IS_INSTRUMENT
 
 	// call our initialize routine
-	if (result == noErr)
+	if (status == noErr)
 	{
-		result = do_initialize();
+		status = do_initialize();
 		UpdateInPlaceProcessingState();
 	}
 
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
@@ -221,7 +221,7 @@ void DfxPlugin::Cleanup()
 // (playback stop/restart, change of playback position, etc.)
 // any DSP state variables should be reset here 
 // (contents of buffers, position trackers, IIR filter histories, etc.)
-ComponentResult DfxPlugin::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
+OSStatus DfxPlugin::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	do_reset();
 	return noErr;
@@ -237,36 +237,30 @@ ComponentResult DfxPlugin::Reset(AudioUnitScope inScope, AudioUnitElement inElem
 // get basic information about Audio Unit Properties 
 // (whether they're supported, writability, and data size)
 // most properties are handled by inherited base class implementations
-ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					UInt32 & outDataSize, Boolean & outWritable)
+OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
+			AudioUnitScope inScope, AudioUnitElement inElement, 
+			UInt32 & outDataSize, Boolean & outWritable)
 {
-	ComponentResult result = noErr;
+	OSStatus status = noErr;
 
 	switch (inPropertyID)
 	{
-		case kAudioUnitProperty_ParameterClumpName:
-			outDataSize = sizeof(AudioUnitParameterNameInfo);
-			outWritable = false;
-			result = noErr;
-			break;
-
 		case kAudioUnitProperty_AUHostIdentifier:
 			outDataSize = sizeof(AUHostIdentifier);	// XXX update to AUHostVersionIdentifier
 			outWritable = true;
-			result = noErr;
+			status = noErr;
 			break;
 
 		case kAudioUnitMigrateProperty_FromPlugin:
 			outDataSize = sizeof(CFArrayRef);
 			outWritable = false;
-			result = noErr;
+			status = noErr;
 			break;
 
 		case kAudioUnitMigrateProperty_OldAutomation:
 			outDataSize = sizeof(AudioUnitParameterValueTranslation);
 			outWritable = false;
-			result = noErr;
+			status = noErr;
 			break;
 
 		// get/set parameter values (current, min, max, etc.) using specific variable types
@@ -332,8 +326,8 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			{
 				size_t dfxDataSize = 0;
 				DfxPropertyFlags dfxFlags = 0;
-				result = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
-				if (result == noErr)
+				status = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
+				if (status == noErr)
 				{
 					outDataSize = dfxDataSize;
 					outWritable = dfxFlags & kDfxPropertyFlag_Writable;
@@ -341,47 +335,25 @@ ComponentResult DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			}
 			else
 			{
-				result = TARGET_API_BASE_CLASS::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
+				status = TARGET_API_BASE_CLASS::GetPropertyInfo(inPropertyID, inScope, inElement, outDataSize, outWritable);
 			}
 			break;
 	}
 
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
 // get specific information about Audio Unit Properties
 // most properties are handled by inherited base class implementations
-ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					void * outData)
+OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID, 
+			AudioUnitScope inScope, AudioUnitElement inElement, 
+			void * outData)
 {
-	ComponentResult result = noErr;
+	OSStatus status = noErr;
 
 	switch (inPropertyID)
 	{
-		case kAudioUnitProperty_ParameterClumpName:
-			{
-				if (inScope != kAudioUnitScope_Global)
-					result = kAudioUnitErr_InvalidScope;
-				// XXX the Cocoa Generic AUView (prior to Mac OS X 10.5) sends bogus element values for this property, so ignore it
-//				else if (inElement != 0)
-//					result = kAudioUnitErr_InvalidElement;
-				else
-				{
-					AudioUnitParameterNameInfo * ioClumpInfo = (AudioUnitParameterNameInfo*) outData;
-					if (ioClumpInfo->inID == kAudioUnitClumpID_System)	// this ID value is reserved
-						result = kAudioUnitErr_InvalidPropertyValue;
-					else
-					{
-						ioClumpInfo->outName = CopyParameterGroupName(ioClumpInfo->inID);
-						if (ioClumpInfo->outName == NULL)
-							result = kAudioUnitErr_InvalidPropertyValue;
-					}
-				}
-			}
-			break;
-
 		case kAudioUnitMigrateProperty_FromPlugin:
 			{
 				// VST counterpart description
@@ -396,7 +368,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					*((CFArrayRef*)outData) = descsArray;
 				}
 				else
-					result = coreFoundationUnknownErr;
+					status = coreFoundationUnknownErr;
 			}
 			break;
 
@@ -409,7 +381,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					pvt->auValue = expandparametervalue((long)(pvt->otherParamID), pvt->otherValue);
 				}
 				else
-					result = kAudioUnitErr_InvalidPropertyValue;
+					status = kAudioUnitErr_InvalidPropertyValue;
 			}
 			break;
 
@@ -441,7 +413,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 									value->b = getparameter_b(paramID);
 									break;
 								default:
-									result = paramErr;
+									status = paramErr;
 									break;
 							}
 						}
@@ -463,7 +435,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 //									value->b = getparameterdefault_b(paramID);
 									break;
 								default:
-									result = paramErr;
+									status = paramErr;
 									break;
 							}
 						}
@@ -483,7 +455,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 									value->b = false;
 									break;
 								default:
-									result = paramErr;
+									status = paramErr;
 									break;
 							}
 						}
@@ -503,13 +475,13 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 									value->b = true;
 									break;
 								default:
-									result = paramErr;
+									status = paramErr;
 									break;
 							}
 						}
 						break;
 					default:
-						result = paramErr;
+						status = paramErr;
 						break;
 				}
 				if ( isLogicNodeEndianReversed() )
@@ -537,7 +509,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						request->outValue = contractparametervalue(inElement, request->inValue);
 						break;
 					default:
-						result = paramErr;
+						status = paramErr;
 						break;
 				}
 				if ( isLogicNodeEndianReversed() )
@@ -556,7 +528,7 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					request->inStringIndex = CFSwapInt64(request->inStringIndex);
 				}
 				if ( !getparametervaluestring(inElement, request->inStringIndex, request->valueString) )
-					result = paramErr;
+					status = paramErr;
 			}
 			break;
 
@@ -608,8 +580,8 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 							{
 								size_t dfxDataSize = 0;
 								DfxPropertyFlags dfxFlags = 0;
-								long dfxResult = dfx_GetPropertyInfo(nodePropertyDescs[i].mPropertyID, kDfxScope_Global, 0, dfxDataSize, dfxFlags);
-								if (dfxResult == kDfxErr_NoError)
+								long dfxStatus = dfx_GetPropertyInfo(nodePropertyDescs[i].mPropertyID, kDfxScope_Global, 0, dfxDataSize, dfxFlags);
+								if (dfxStatus == kDfxErr_NoError)
 								{
 									if (dfxFlags & kDfxPropertyFlag_BiDirectional)
 										nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
@@ -626,38 +598,34 @@ ComponentResult DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			{
 				size_t dfxDataSize = 0;
 				DfxPropertyFlags dfxFlags = 0;
-				result = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
-				if ( (result == noErr) && !(dfxFlags & kDfxPropertyFlag_Readable) )
-					result = kAudioUnitErr_InvalidPropertyValue;
+				status = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
+				if ( (status == noErr) && !(dfxFlags & kDfxPropertyFlag_Readable) )
+					status = kAudioUnitErr_InvalidPropertyValue;
 				else
-					result = dfx_GetProperty(inPropertyID, inScope, inElement, outData);
+					status = dfx_GetProperty(inPropertyID, inScope, inElement, outData);
 			}
 			else
-				result = TARGET_API_BASE_CLASS::GetProperty(inPropertyID, inScope, inElement, outData);
+				status = TARGET_API_BASE_CLASS::GetProperty(inPropertyID, inScope, inElement, outData);
 			break;
 	}
 
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
+OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID, 
+			AudioUnitScope inScope, AudioUnitElement inElement, 
 					const void * inData, UInt32 inDataSize)
 {
-	ComponentResult result = noErr;
+	OSStatus status = noErr;
 
 	switch (inPropertyID)
 	{
-		case kAudioUnitProperty_ParameterClumpName:
-			result = kAudioUnitErr_PropertyNotWritable;
-			break;
-
 		case kAudioUnitProperty_AUHostIdentifier:
 			{
 				const AUHostIdentifier * hostID = (AUHostIdentifier*) inData;	// XXX update to AUHostVersionIdentifier
 				if (hostID->hostName == NULL)
-					result = kAudioUnitErr_InvalidPropertyValue;
+					status = kAudioUnitErr_InvalidPropertyValue;
 				else
 				{
 #if 0
@@ -670,20 +638,20 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 
 		case kAudioUnitMigrateProperty_FromPlugin:
-			result = kAudioUnitErr_PropertyNotWritable;
+			status = kAudioUnitErr_PropertyNotWritable;
 			break;
 
 		case kAudioUnitMigrateProperty_OldAutomation:
-			result = kAudioUnitErr_PropertyNotWritable;
+			status = kAudioUnitErr_PropertyNotWritable;
 			break;
 
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
 		case kAudioUnitProperty_InPlaceProcessing:
 			if ( ((audioProcessingAccumulatingOnly) || (getnuminputs() != getnumoutputs())) 
 					&& (*(UInt32*)inData != 0) )
-				result = kAudioUnitErr_InvalidPropertyValue;
+				status = kAudioUnitErr_InvalidPropertyValue;
 			else
-				result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
+				status = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
 			break;
 	#endif
 
@@ -719,7 +687,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 									postupdate_parameter(paramID);
 									break;
 								default:
-									result = paramErr;
+									status = paramErr;
 									break;
 							}
 						}
@@ -741,7 +709,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 //									setparameterdefault_b(paramID, value->b);
 									break;
 								default:
-									result = paramErr;
+									status = paramErr;
 									break;
 							}
 						}
@@ -760,7 +728,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 //									setparametermin_b(paramID, value->b);
 									break;
 								default:
-									result = paramErr;
+									status = paramErr;
 									break;
 							}
 						}
@@ -779,20 +747,20 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 //									setparametermax_b(paramID, value->b);
 									break;
 								default:
-									result = paramErr;
+									status = paramErr;
 									break;
 							}
 						}
 						break;
 					default:
-						result = paramErr;
+						status = paramErr;
 						break;
 				}
 			}
 			break;
 
 		case kDfxPluginProperty_ParameterValueConversion:
-			result = kAudioUnitErr_PropertyNotWritable;
+			status = kAudioUnitErr_PropertyNotWritable;
 			break;
 
 		// set parameter value strings
@@ -804,7 +772,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 					request->inStringIndex = CFSwapInt64(request->inStringIndex);
 				}
 				if ( !setparametervaluestring(inElement, request->inStringIndex, request->valueString) )
-					result = paramErr;
+					status = paramErr;
 			}
 			break;
 
@@ -854,7 +822,7 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 
 		case kLogicAUProperty_NodePropertyDescriptions:
-			result = kAudioUnitErr_PropertyNotWritable;
+			status = kAudioUnitErr_PropertyNotWritable;
 			break;
 
 		default:
@@ -862,26 +830,26 @@ ComponentResult DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			{
 				size_t dfxDataSize = 0;
 				DfxPropertyFlags dfxFlags = 0;
-				result = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
-				if ( (result == noErr) && !(dfxFlags & kDfxPropertyFlag_Writable) )
-					result = kAudioUnitErr_PropertyNotWritable;
+				status = dfx_GetPropertyInfo(inPropertyID, inScope, inElement, dfxDataSize, dfxFlags);
+				if ( (status == noErr) && !(dfxFlags & kDfxPropertyFlag_Writable) )
+					status = kAudioUnitErr_PropertyNotWritable;
 				else
-					result = dfx_SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
+					status = dfx_SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
 			}
 			else
 			{
-				result = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
+				status = TARGET_API_BASE_CLASS::SetProperty(inPropertyID, inScope, inElement, inData, inDataSize);
 			}
 			break;
 	}
 
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
 // should be a version 32-bit number hex-encoded like so:  
 // 0xMMMMmmbb (M = major version, m = minor version, and b = bugfix)
-ComponentResult	DfxPlugin::Version()
+OSStatus DfxPlugin::Version()
 {
 	return getpluginversion();
 }
@@ -963,9 +931,9 @@ void DfxPlugin::GetUIComponentDescs(ComponentDescription * inDescArray)
 
 //-----------------------------------------------------------------------------
 // get specific information about the properties of a parameter
-ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope, 
-					AudioUnitParameterID inParameterID, 
-					AudioUnitParameterInfo & outParameterInfo)
+OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope, 
+			AudioUnitParameterID inParameterID, 
+			AudioUnitParameterInfo & outParameterInfo)
 {
 	// we're only handling the global scope
 	if (inScope != kAudioUnitScope_Global)
@@ -1057,14 +1025,8 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	{
 		switch ( getparameterunit(inParameterID) )
 		{
-			case kDfxParamUnit_quantity:
-				outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;	// XXX assume it's an integer?
-				break;
 			case kDfxParamUnit_percent:
 				outParameterInfo.unit = kAudioUnitParameterUnit_Percent;
-				break;
-			case kDfxParamUnit_portion:
-				outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
 				break;
 			case kDfxParamUnit_lineargain:
 				outParameterInfo.unit = kAudioUnitParameterUnit_LinearGain;
@@ -1117,7 +1079,7 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			case kDfxParamUnit_beats:
 				outParameterInfo.unit = kAudioUnitParameterUnit_Beats;
 				break;
-			case kDfxParamUnit_index:
+			case kDfxParamUnit_list:
 				outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
 				break;
 			case kDfxParamUnit_custom:
@@ -1154,8 +1116,8 @@ ComponentResult DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 
 //-----------------------------------------------------------------------------
 // give the host an array of CFStrings with the display values for an indexed parameter
-ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, 
-					AudioUnitParameterID inParameterID, CFArrayRef * outStrings)
+OSStatus DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, 
+			AudioUnitParameterID inParameterID, CFArrayRef * outStrings)
 {
 	// we're only handling the global scope
 	if (inScope != kAudioUnitScope_Global)
@@ -1185,9 +1147,9 @@ ComponentResult DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope,
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inParameterID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					Float32 inValue, UInt32 inBufferOffsetInFrames)
+OSStatus DfxPlugin::SetParameter(AudioUnitParameterID inParameterID, 
+			AudioUnitScope inScope, AudioUnitElement inElement, 
+			Float32 inValue, UInt32 inBufferOffsetInFrames)
 {
 	if (inScope != kAudioUnitScope_Global)
 		return kAudioUnitErr_InvalidScope;
@@ -1211,7 +1173,7 @@ ComponentResult DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 // Returns an array of AUPreset that contain a number and name for each of the presets.  
 // The number of each preset must be greater (or equal to) zero.  
 // The CFArrayRef should be released by the caller.
-ComponentResult DfxPlugin::GetPresets(CFArrayRef * outData) const
+OSStatus DfxPlugin::GetPresets(CFArrayRef * outData) const
 {
 	// figure out how many valid (loaded) presets we actually have...
 	long outNumPresets = 0;
@@ -1290,11 +1252,11 @@ static const CFStringRef kDfxDataClassInfoKeyString = CFSTR("destroyfx-data");
 
 //-----------------------------------------------------------------------------
 // stores the values of all parameters values, state info, etc. into a CFPropertyListRef
-ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
+OSStatus DfxPlugin::SaveState(CFPropertyListRef * outData)
 {
-	ComponentResult result = TARGET_API_BASE_CLASS::SaveState(outData);
-	if (result != noErr)
-		return result;
+	OSStatus status = TARGET_API_BASE_CLASS::SaveState(outData);
+	if (status != noErr)
+		return status;
 
 #if TARGET_PLUGIN_USES_MIDI
 	void * dfxdata = NULL;	// a pointer to our special data
@@ -1321,19 +1283,19 @@ ComponentResult DfxPlugin::SaveState(CFPropertyListRef * outData)
 #define DEBUG_VST_SETTINGS_IMPORT	0
 //-----------------------------------------------------------------------------
 // restores all parameter values, state info, etc. from the CFPropertyListRef
-ComponentResult DfxPlugin::RestoreState(CFPropertyListRef inData)
+OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 {
 #if DEBUG_VST_SETTINGS_IMPORT
 fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 #endif
-	ComponentResult result = TARGET_API_BASE_CLASS::RestoreState(inData);
+	OSStatus status = TARGET_API_BASE_CLASS::RestoreState(inData);
 	// abort if the base implementation of RestoreState failed
-	if (result != noErr)
+	if (status != noErr)
 	{
 	#if DEBUG_VST_SETTINGS_IMPORT
 		fprintf(stderr, "AUBase::RestoreState failed with error %ld, not attempting destroyfx-data\n", result);
 	#endif
-		return result;
+		return status;
 	}
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -1421,8 +1383,8 @@ fprintf(stderr, "\tDfxPlugin::RestoreState()\n");
 //-----------------------------------------------------------------------------
 // the host calls this to inform the plugin that it wants to start using 
 // a different audio stream format (sample rate, num channels, etc.)
-ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
-				const CAStreamBasicDescription & inPrevFormat, const CAStreamBasicDescription & inNewFormat)
+OSStatus DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
+			const CAStreamBasicDescription & inPrevFormat, const CAStreamBasicDescription & inNewFormat)
 {
 //fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat,   new sr = %.3lf,   old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
 //fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat,   new num channels = %lu,   old num channels = %lu\n\n", inNewFormat.NumberChannels(), inPrevFormat.NumberChannels());
@@ -1463,14 +1425,14 @@ ComponentResult DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitE
 	}
 
 	// use the inherited base class implementation
-	ComponentResult result = TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
+	OSStatus status = TARGET_API_BASE_CLASS::ChangeStreamFormat(inScope, inElement, inPrevFormat, inNewFormat);
 
-	if (result == noErr)
+	if (status == noErr)
 	{
 		updatesamplerate();	// XXX do this here, or does it get caught elsewhere?
 	}
 
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
@@ -1488,10 +1450,10 @@ void DfxPlugin::UpdateInPlaceProcessingState()
 
 #if TARGET_PLUGIN_IS_INSTRUMENT
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags, 
-							const AudioTimeStamp & inTimeStamp, UInt32 inFramesToProcess)
+OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags, 
+						const AudioTimeStamp & inTimeStamp, UInt32 inFramesToProcess)
 {
-	ComponentResult result = noErr;
+	OSStatus status = noErr;
 
 	// do any pre-DSP prep
 	preprocessaudio();
@@ -1501,7 +1463,7 @@ ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags,
 	UInt32 numOutputBuffers = theOutput->GetBufferList().mNumberBuffers;
 	// set up our more convenient audio stream pointers
 	for (UInt32 i=0; i < numOutputBuffers; i++)
-		outputsP[i] = theOutput->GetChannelData(i);
+		outputAudioStreams_au[i] = theOutput->GetChannelData(i);
 
 	// do stuff to prepare the audio inputs, if we use any
 	if (getnuminputs() > 0)
@@ -1509,18 +1471,18 @@ ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags,
 		if ( !HasInput(0) )
 			return kAudioUnitErr_NoConnection;
 		AUInputElement * theInput = GetInput(0);
-		result = theInput->PullInput(ioActionFlags, inTimeStamp, (AudioUnitElement)0, inFramesToProcess);
-		if (result != noErr)
+		status = theInput->PullInput(ioActionFlags, inTimeStamp, (AudioUnitElement)0, inFramesToProcess);
+		if (status != noErr)
 			return result;
 
 		UInt32 numInputBuffers = theInput->GetBufferList().mNumberBuffers;
 		// set up our more convenient audio stream pointers
 		for (UInt32 i=0; i < numInputBuffers; i++)
-			inputsP[i] = theInput->GetChannelData(i);
+			inputAudioStreams_au[i] = theInput->GetChannelData(i);
 	}
 
 	// now do the processing
-	processaudio((const float**)inputsP, outputsP, inFramesToProcess);
+	processaudio((const float**)inputAudioStreams_au, outputAudioStreams_au, inFramesToProcess);
 
 	// I don't know what the hell this is for
 	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
@@ -1528,7 +1490,7 @@ ComponentResult DfxPlugin::Render(AudioUnitRenderActionFlags & ioActionFlags,
 	// do any post-DSP stuff
 	postprocessaudio();
 
-	return result;
+	return status;
 }
 
 #else
@@ -1560,12 +1522,12 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlag
 
 	// set up our more convenient audio stream pointers
 	for (UInt32 i=0; i < numInputBuffers; i++)
-		inputsP[i] = (float*) (inBuffer.mBuffers[i].mData);
+		inputAudioStreams_au[i] = (float*) (inBuffer.mBuffers[i].mData);
 	for (UInt32 i=0; i < numOutputBuffers; i++)
-		outputsP[i] = (float*) (outBuffer.mBuffers[i].mData);
+		outputAudioStreams_au[i] = (float*) (outBuffer.mBuffers[i].mData);
 
 	// now do the processing
-	processaudio((const float**)inputsP, outputsP, inFramesToProcess);
+	processaudio((const float**)inputAudioStreams_au, outputAudioStreams_au, inFramesToProcess);
 
 	// I don't know what the hell this is for
 	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
@@ -1639,21 +1601,21 @@ OSStatus DfxPlugin::HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum)
 
 #if TARGET_PLUGIN_IS_INSTRUMENT
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::PrepareInstrument(MusicDeviceInstrumentID inInstrument)
+OSStatus DfxPlugin::PrepareInstrument(MusicDeviceInstrumentID inInstrument)
 {
 	return kAudioUnitErr_PropertyNotInUse;
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::ReleaseInstrument(MusicDeviceInstrumentID inInstrument)
+OSStatus DfxPlugin::ReleaseInstrument(MusicDeviceInstrumentID inInstrument)
 {
 	return kAudioUnitErr_PropertyNotInUse;
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument, 
-						MusicDeviceGroupID inGroupID, NoteInstanceID * outNoteInstanceID, 
-						UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams & inParams)
+OSStatus DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument, 
+				MusicDeviceGroupID inGroupID, NoteInstanceID * outNoteInstanceID, 
+				UInt32 inOffsetSampleFrame, const MusicDeviceNoteParams & inParams)
 {
 	handlemidi_noteon(inGroupID, (int)(inParams.mPitch), (int)(inParams.mVelocity), inOffsetSampleFrame);
 	if (outNoteInstanceID != NULL)
@@ -1662,8 +1624,8 @@ ComponentResult DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument,
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult DfxPlugin::StopNote(MusicDeviceGroupID inGroupID, 
-						NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame)
+OSStatus DfxPlugin::StopNote(MusicDeviceGroupID inGroupID, 
+				NoteInstanceID inNoteInstanceID, UInt32 inOffsetSampleFrame)
 {
 	handlemidi_noteoff(inGroupID, inNoteInstanceID, 0, inOffsetSampleFrame);
 	return noErr;
