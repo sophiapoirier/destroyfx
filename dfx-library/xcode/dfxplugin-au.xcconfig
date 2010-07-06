@@ -5,6 +5,7 @@ INSTALL_PATH = $(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components
 REZ_SEARCH_PATHS = /Developer/Examples/CoreAudio/AudioUnits/AUPublic/AUBase /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers $(DFX_ROOT_SOURCE_PATH)/dfx-library $(DFX_PLUGIN_SOURCE_PATH)
 REZ_PREFIX_FILE = $(GCC_PREFIX_HEADER)
 OTHER_REZFLAGS = -d ppc_$ppc -d i386_$i386
+GCC_WARN_PEDANTIC = YES
 
 DFX_PLUGIN_FORMAT_MACROS = TARGET_API_AUDIOUNIT SUPPORT_AU_VERSION_1=0
 
