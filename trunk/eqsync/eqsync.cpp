@@ -1,10 +1,29 @@
-/*------------------ by Sophia Poirier  ][  January 2001 -----------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2009  Sophia Poirier
+
+This file is part of EQ Sync.
+
+EQ Sync is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+EQ Sync is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with EQ Sync.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "eqsync.h"
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(EQSync)
+DFX_EFFECT_ENTRY(EQSync)
 
 //-----------------------------------------------------------------------------
 EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
@@ -21,7 +40,7 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	long numTempoRates = tempoRateTable->getNumTempoRates();
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
-	initparameter_indexed(kRate_sync, "rate", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+	initparameter_list(kRate_sync, "rate", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kSmooth, "smooth", 3.0, 33.333, 0.0, 100.0, kDfxParamUnit_percent);	// % of cycle
 	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);

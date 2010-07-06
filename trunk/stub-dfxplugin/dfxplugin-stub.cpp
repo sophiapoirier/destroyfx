@@ -1,7 +1,26 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
-This is our unexciting, but informative, demonstration DfxPlugin.
-written by Sophia Poirier, October 2002
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2010  Sophia Poirier
+
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Destroy FX Library is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+
+This is a template for making a DfxPlugin.
 ------------------------------------------------------------------------*/
 
 // The gratiutous use of preprocessor defines is to designate code that 
@@ -15,7 +34,7 @@ written by Sophia Poirier, October 2002
 #pragma mark _________base_initializations_________
 
 // these macros do boring entry point stuff for us
-DFX_ENTRY(DfxStub);
+DFX_EFFECT_ENTRY(DfxStub);
 #if TARGET_PLUGIN_USES_DSPCORE
 	DFX_CORE_ENTRY(DxfStubDSP);
 #endif
@@ -42,9 +61,9 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
 	initparameter_f(kFloatParam, "decimal parameter", 90.0f, 33.3f, 1.0f, 999.0f, kDfxParamUnit_generic, kDfxParamCurve_linear);
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
-	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, kDfxParamUnit_index);
+	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, kDfxParamUnit_generic);
 	// parameter ID, parameter name, init value, default value, number of values
-	initparameter_indexed(kIndexParam, "indexed parameter", kIndexParamState3, kIndexParamState1, kNumIndexParamStates);
+	initparameter_list(kIndexParam, "list of items parameter", kIndexParamState3, kIndexParamState1, kNumIndexParamStates);
 	// parameter ID, parameter name, init value, default value
 	initparameter_b(kBooleanParam, "forced buffer tempo sync", false, false);
 
@@ -90,13 +109,12 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 // API-specific stuff below
+	##if TARGET_PLUGIN_USES_DSPCORE
+		DFX_INIT_CORE(DfxStubDSP);
+	#endif
 	#ifdef TARGET_API_VST
 		#if TARGET_PLUGIN_HAS_GUI
 			editor = new DfxStubEditor(this);
-		#endif
-		#if TARGET_PLUGIN_USES_DSPCORE
-			// we need to manage DSP cores manually in VST
-			DFX_INIT_CORE(DfxStubDSP);
 		#endif
 	#endif
 

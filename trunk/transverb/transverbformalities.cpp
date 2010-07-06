@@ -6,7 +6,7 @@
 
 
 // these are macros that do boring entry point stuff for us
-DFX_ENTRY(Transverb)
+DFX_EFFECT_ENTRY(Transverb)
 #if TARGET_PLUGIN_USES_DSPCORE
   DFX_CORE_ENTRY(TransverbDSP)
 #endif
@@ -26,10 +26,10 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(kDist2, "2:dist", 0.1, 0.5, 0.0, 1.0, kDfxParamUnit_scalar);
   initparameter_f(kSpeed2, "2:speed", 1.0, 0.0, -3.0, 6.0, kDfxParamUnit_octaves);
   initparameter_f(kFeed2, "2:feedback", 0.0, 33.3, 0.0, 100.0, kDfxParamUnit_percent);
-  initparameter_indexed(kQuality, "quality", kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
+  initparameter_list(kQuality, "quality", kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
   initparameter_b(kTomsound, "TOMSOUND", false, false);
-  initparameter_indexed(kSpeed1mode, "1:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
-  initparameter_indexed(kSpeed2mode, "2:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
+  initparameter_list(kSpeed1mode, "1:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
+  initparameter_list(kSpeed2mode, "2:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
 
   setparametervaluestring(kQuality, kQualityMode_DirtFi, "dirt-fi");
   setparametervaluestring(kQuality, kQualityMode_HiFi, "hi-fi");
@@ -61,10 +61,8 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   numtransverbcores = 0;	// none yet
 
 
-  #ifdef TARGET_API_VST
-    #if TARGET_PLUGIN_USES_DSPCORE
-      DFX_INIT_CORE(TransverbDSP);	// we need to manage DSP cores manually in VST
-    #endif
+  #if TARGET_PLUGIN_USES_DSPCORE
+    DFX_INIT_CORE(TransverbDSP);
   #endif
 
 }

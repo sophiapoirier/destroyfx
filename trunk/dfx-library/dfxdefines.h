@@ -1,23 +1,24 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2010  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 These are our general global defines and constants, to be included 
@@ -83,9 +84,41 @@ somewhere in the include tree for every file for a DfxPlugin.
 	const long DFX_PARAM_MAX_VALUE_STRING_LENGTH = 256;
 	const long DFX_PARAM_MAX_UNIT_STRING_LENGTH = 256;
 
+	#if WIN32 && !defined(TARGET_API_RTAS)
+		#include <windows.h>
+	#endif
+	#ifdef _MSC_VER
+		#ifdef TARGET_API_RTAS
+			typedef unsigned int	uint32_t;
+			typedef __int64	int64_t;
+			typedef unsigned __int64	uint64_t;
+		#else
+			typedef INT32	int32_t;
+			typedef UINT32	uint32_t;
+			typedef INT64	int64_t;
+			typedef UINT64	uint64_t;
+		#endif
+		#define isnan	_isnan
+		inline long lrint(double inValue)
+		{
+			if (inValue < 0.0)
+				return (long) (inValue - 0.5);
+			else
+				return (long) (inValue + 0.5);
+		}
+	#else
+		#include <stdint.h>
+	#endif
+
 	/* interpret fractional numbers as booleans (for plugin parameters) */
 	#ifndef __cplusplus
-		#include <stdbool.h>
+		#ifdef _MSC_VER
+			#ifndef bool
+				#define bool	int
+			#endif
+		#else
+			#include <stdbool.h>
+		#endif
 	#endif
 	inline bool FBOOL(float inValue)
 	{
@@ -104,29 +137,6 @@ somewhere in the include tree for every file for a DfxPlugin.
 #ifdef __cplusplus
 	class DfxPlugin;
 	class DfxPluginCore;
-#endif
-
-
-
-/*-----------------------------------------------------------------------------*/
-/* Windows stuff */
-#ifdef WIN32
-#if WIN32
-	#ifdef _MSC_VER
-		#define isnan	_isnan
-		inline long lrint(double inValue)
-		{
-			if (inValue < 0.0)
-				return (long) (inValue - 0.5);
-			else
-				return (long) (inValue + 0.5);
-		}
-	#endif
-
-	#ifdef __STDC__
-		#include <windows.h>
-	#endif
-#endif
 #endif
 
 

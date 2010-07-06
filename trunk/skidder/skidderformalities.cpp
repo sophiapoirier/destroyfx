@@ -1,10 +1,29 @@
-/*-------------- by Sophia Poirier  ][  December 2000 -------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2000-2009  Sophia Poirier
+
+This file is part of Skidder.
+
+Skidder is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Skidder is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "skidder.h"
 
 
 // this macro does boring entry point stuff for us
-DFX_ENTRY(Skidder)
+DFX_EFFECT_ENTRY(Skidder)
 
 //-----------------------------------------------------------------------------
 // initializations and such
@@ -20,18 +39,18 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
 	long numTempoRates = tempoRateTable->getNumTempoRates();
 	initparameter_f(kRate_abs, "rate (free)", 3.0, 3.0, 0.3, 21.0, kDfxParamUnit_hz, kDfxParamCurve_log);
-	initparameter_indexed(kRate_sync, "rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+	initparameter_list(kRate_sync, "rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_f(kRateRandMin_abs, "rate random min (free)", 3.0, 3.0, 0.3, 21.0, kDfxParamUnit_hz, kDfxParamCurve_log);
-	initparameter_indexed(kRateRandMin_sync, "rate random min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
+	initparameter_list(kRateRandMin_sync, "rate random min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
 	initparameter_b(kTempoSync, "tempo sync", false, false);
-	initparameter_f(kPulsewidth, "pulsewidth", 0.5, 0.5, 0.001, 0.999, kDfxParamUnit_portion);
-	initparameter_f(kPulsewidthRandMin, "pulsewidth random min", 0.5, 0.5, 0.001, 0.999, kDfxParamUnit_portion);
+	initparameter_f(kPulsewidth, "pulsewidth", 0.5, 0.5, 0.001, 0.999, kDfxParamUnit_scalar);
+	initparameter_f(kPulsewidthRandMin, "pulsewidth random min", 0.5, 0.5, 0.001, 0.999, kDfxParamUnit_scalar);
 	initparameter_f(kSlope, "slope", 3.0, 3.0, 0.0, 300.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
-	initparameter_f(kPan, "stereo spread", 0.0, 0.6, 0.0, 1.0, kDfxParamUnit_portion);
+	initparameter_f(kPan, "stereo spread", 0.0, 0.6, 0.0, 1.0, kDfxParamUnit_scalar);
 	initparameter_f(kFloor, "floor", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kFloorRandMin, "floor random min", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kNoise, "rupture", 0.0, 18732.0, 0.0, 18732.0, kDfxParamUnit_lineargain, kDfxParamCurve_squared);
-	initparameter_indexed(kMidiMode, "MIDI mode", kMidiMode_none, kMidiMode_none, kNumMidiModes);
+	initparameter_list(kMidiMode, "MIDI mode", kMidiMode_none, kMidiMode_none, kNumMidiModes);
 	initparameter_b(kVelocity, "velocity", false, false);
 	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, kDfxParamUnit_bpm);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);

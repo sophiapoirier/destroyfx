@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2010  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -73,14 +73,6 @@ void DfxPlugin::resume()
 	else
 		do_reset();	// else because do_initialize calls do_reset
 
-	#if TARGET_PLUGIN_USES_DSPCORE
-		for (unsigned long i=0; i < getnumoutputs(); i++)
-		{
-			if (dspcores[i] != NULL)
-				dspcores[i]->do_reset();
-		}
-	#endif
-
 	// do these after calling do_reset, 
 	// because the value for latency could change there
 	setInitialDelay(getlatency_samples());
@@ -93,7 +85,7 @@ VstInt32 DfxPlugin::fxIdle()
 {
 	// I'm moving calls to ioChanged into the idle thread 
 	// because it seems like it freaks out Fruity Loops
-	if (getlatencychanged())
+	if ( getlatencychanged() )
 		ioChanged();
 	setlatencychanged(false);
 

@@ -1,7 +1,26 @@
-/*--------------- by Sophia Poirier  ][  June 2001 + February 2003 + November 2003 --------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2010  Sophia Poirier
 
-#ifndef __RMSBUDDY_H
-#define __RMSBUDDY_H
+This file is part of RMS Buddy.
+
+RMS Buddy is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+RMS Buddy is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with RMS Buddy.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#ifndef __RMS_BUDDY_H
+#define __RMS_BUDDY_H
 
 #include "AUEffectBase.h"
 
@@ -29,30 +48,30 @@ typedef struct {
 class RMSBuddy : public AUEffectBase
 {
 public:
-	RMSBuddy(AudioUnit inComponentInstance);
+	RMSBuddy(AudioComponentInstance inComponentInstance);
 
-	virtual ComponentResult Initialize();
+	virtual OSStatus Initialize();
 	virtual void Cleanup();
-	virtual ComponentResult Reset(AudioUnitScope inScope, AudioUnitElement inElement);
+	virtual OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement);
 
 	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
 						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
 						UInt32 inFramesToProcess);
 
-	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
+	virtual OSStatus GetParameterInfo(AudioUnitScope inScope, 
 						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo);
-	virtual ComponentResult SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
+	virtual OSStatus SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames);
 
-	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+	virtual OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, UInt32 & outDataSize, Boolean & outWritable);
-	virtual ComponentResult GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+	virtual OSStatus GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, void * outData);
-	virtual ComponentResult SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
+	virtual OSStatus SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
 						AudioUnitElement inElement, const void * inData, UInt32 inDataSize);
 	virtual int GetNumCustomUIComponents();
 	virtual void GetUIComponentDescs(ComponentDescription * inDescArray);
-	virtual ComponentResult	Version()
+	virtual OSStatus Version()
 		{	return RMS_BUDDY_VERSION;	}
 	virtual bool SupportsTail()
 		{	return true;	}

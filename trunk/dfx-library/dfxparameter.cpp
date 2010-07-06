@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2010  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -117,7 +117,7 @@ void DfxParam::init(const char * inName, DfxParamValueType inType,
 	}
 	curve = inCurve;
 	unit = inUnit;
-	if (unit == kDfxParamUnit_index)
+	if (unit == kDfxParamUnit_list)
 		SetEnforceValueLimits(true);	// make sure not to go out of any array bounds
 	changed = true;
 
@@ -768,14 +768,8 @@ void DfxParam::getunitstring(char * outText)
 		case kDfxParamUnit_generic:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_quantity:
-			strcpy(outText, "");
-			break;
 		case kDfxParamUnit_percent:
 			strcpy(outText, "%%");
-			break;
-		case kDfxParamUnit_portion:
-			strcpy(outText, "");
 			break;
 		case kDfxParamUnit_lineargain:
 			strcpy(outText, "");
@@ -828,7 +822,7 @@ void DfxParam::getunitstring(char * outText)
 		case kDfxParamUnit_beats:
 			strcpy(outText, "per beat");
 			break;
-		case kDfxParamUnit_index:
+		case kDfxParamUnit_list:
 			strcpy(outText, "");
 			break;
 		case kDfxParamUnit_custom:
