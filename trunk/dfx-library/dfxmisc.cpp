@@ -417,7 +417,7 @@ long launch_url(const char * inUrlString)
 // this function looks for the plugin's documentation file in the appropriate system location, 
 // within a given file system domain, and returns a CFURLRef for the file if it is found, 
 // and NULL otherwise (or if some error is encountered along the way)
-CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, short inDomain)
+CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, FSVolumeRefNum inDomain)
 {
 	if (inDocsFileName == NULL)
 		return NULL;
