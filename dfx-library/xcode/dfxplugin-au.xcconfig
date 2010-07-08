@@ -2,12 +2,11 @@
 
 WRAPPER_EXTENSION = component
 INSTALL_PATH = $(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components
-REZ_SEARCH_PATHS = /Developer/Examples/CoreAudio/AudioUnits/AUPublic/AUBase /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers $(DFX_ROOT_SOURCE_PATH)/dfx-library $(DFX_PLUGIN_SOURCE_PATH)
+REZ_SEARCH_PATHS = /Developer/Extras/CoreAudio/AudioUnits/AUPublic/AUBase /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers $(DFX_ROOT_SOURCE_PATH)/dfx-library $(DFX_PLUGIN_SOURCE_PATH)
 REZ_PREFIX_FILE = $(GCC_PREFIX_HEADER)
-OTHER_REZFLAGS = -d ppc_$ppc -d i386_$i386
-GCC_WARN_PEDANTIC = YES
+OTHER_REZFLAGS = -d ppc_$ppc -d i386_$i386 -d x86_64_$x86_64 -d ppc64_$ppc64
 
-DFX_PLUGIN_FORMAT_MACROS = TARGET_API_AUDIOUNIT SUPPORT_AU_VERSION_1=0
+DFX_PLUGIN_FORMAT_MACROS = TARGET_API_AUDIOUNIT
 
 EXPORTED_SYMBOLS_FILE = $(DFX_PLUGIN_SHORT_NAME).exp
 DFX_PLUGIN_BUNDLE_IDENTIFIER = org.destroyfx.$(DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS).AU
