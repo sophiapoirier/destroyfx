@@ -628,6 +628,9 @@ OSStatus gCustomRestoreAUPresetFileResult;
 // of the input AU instance.  It presents the user with a Navigation Services GetFile dialog.
 OSStatus CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 {
+#if __LP64__
+	return unimpErr;	// XXX implement
+#else
 	OSStatus status = noErr;
 	NavDialogCreationOptions dialogOptions;
 	NavEventUPP eventProc;
@@ -674,8 +677,10 @@ OSStatus CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
 		DisposeRoutineDescriptor(filterProc);
 
 	return status;
+#endif	// __LP64__
 }
 
+#if !__LP64__
 //-----------------------------------------------------------------------------
 // This is the event handler callback for the custom open AU preset file Nav Services dialog.  
 // It handles open and reading the selected file and then applying the file's state data as 
@@ -817,7 +822,9 @@ pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, v
 
 	return result;
 }
+#endif	// !__LP64__
 
+#if !__LP64__
 //-----------------------------------------------------------------------------
 // This function takes a Navigation Services dialog and AU Component as input 
 // and will attempt to set the start-off location for the dialog to the 
@@ -849,6 +856,7 @@ OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAU
 
 	return error;
 }
+#endif	// !__LP64__
 
 //-----------------------------------------------------------------------------
 // this is just a little helper function used by GetAUComponentDescriptionFromPresetFile()
@@ -1075,6 +1083,9 @@ enum {
 // outSavedAUPresetFileURL is optional and can be NULL
 OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL)
 {
+#if __LP64__
+	return unimpErr;	// XXX implement
+#else
 	OSStatus error = noErr;
 	IBNibRef nibRef = NULL;
 	WindowRef dialogWindow = NULL;
@@ -1170,8 +1181,10 @@ return error code
 	DisposeWindow(dialogWindow);
 
 	return dialogInfo.dialogResult;
+#endif // __LP64__
 }
 
+#if !__LP64__
 //-----------------------------------------------------------------------------
 // This is the event handler callback for the (simple) Save AU preset file dialog.
 pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
@@ -1299,6 +1312,7 @@ catch dialog response
 
 	return error;
 }
+#endif	// !__LP64__
 
 //-----------------------------------------------------------------------------
 // This function takes an AU Component, its state data, a name for a preset file of the state data, 
@@ -1436,6 +1450,9 @@ XXX	if fails, tell user why
 // a return value of false means that the user does not want to replace the file.
 Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL)
 {
+#if __LP64__
+	return true;	// XXX implement
+#else
 	AlertStdCFStringAlertParamRec alertParams;
 	CFStringRef filenamestring;
 	CFStringRef dirstring;
@@ -1516,8 +1533,10 @@ Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL)
 	}
 
 	return true;
+#endif	// __LP64__
 }
 
+#if !__LP64__
 //-----------------------------------------------------------------------------
 // This is the event filter proc for the "file already exists" alert dialog.  
 // Its sole purpose is to map a "cancel" keyboard command to the Cancel button, 
@@ -1541,6 +1560,7 @@ pascal Boolean ShouldReplaceExistingAUPresetFileDialogFilterProc(DialogRef inDia
 
 	return false;
 }
+#endif	// !__LP64__
 
 //-----------------------------------------------------------------------------
 // A handy little function that, given an error code value, returns true 
@@ -1564,6 +1584,9 @@ Boolean IsFileAccessError(OSStatus inErrorCode)
 // the Save AU preset file dialog.
 OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 {
+#if __LP64__
+	return unimpErr;	// XXX implement
+#else
 	OSStatus error;
 	CFStringRef alertTitle;
 	CFStringRef alertMessageOutline, alertMessage;
@@ -1605,6 +1628,7 @@ OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 		SetControl32BitValue(inDomainChoiceControl, kDomainChoiceValue_User);
 
 	return error;
+#endif	// __LP64__
 }
 
 // XXX should I put these in the private header?
@@ -1630,6 +1654,9 @@ CFURLRef gCustomSaveAUPresetFileSavedFileUrl;
 OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent, 
 								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL)
 {
+#if __LP64__
+	return unimpErr;	// XXX implement
+#else
 	OSStatus error = noErr;
 	NavDialogCreationOptions dialogOptions;
 	NavEventUPP eventProc;
@@ -1704,8 +1731,10 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 		DisposeRoutineDescriptor(eventProc);
 
 	return error;
+#endif	// __LP64__
 }
 
+#if !__LP64__
 //-----------------------------------------------------------------------------
 // This is the event handler for the Navigation Services Save AU preset file dialog.
 // It does the regular required stuff and will handle writing the file out to disk 
@@ -1832,6 +1861,7 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 			break;
 	}
 }
+#endif	// !__LP64_
 
 //-----------------------------------------------------------------------------
 void SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inPresetName)
