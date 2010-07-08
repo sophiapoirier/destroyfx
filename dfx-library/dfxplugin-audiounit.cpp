@@ -902,7 +902,11 @@ CFURLRef DfxPlugin::CopyIconLocation()
 //-----------------------------------------------------------------------------
 int DfxPlugin::GetNumCustomUIComponents()
 {
+#if __LP64__
+	return 0;
+#else
 	return 1;
+#endif
 }
 
 //-----------------------------------------------------------------------------
