@@ -76,7 +76,7 @@ CFBundleRef gCurrentBundle = NULL;
 // inCreateDir - If true, then create directories in the path to the location if they do not already exist.  
 //		Otherwise, this function will fail if all of the directories in the complete path do not already exist.
 // outDirRef - On successful return, this will point to a valid FSRef of the AU's presets directory.
-OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef)
+OSStatus FindPresetsDirForAU(Component inAUComponent, FSVolumeRefNum inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef)
 {
 	OSStatus error;
 	FSRef audioDirRef, presetsDirRef, manufacturerPresetsDirRef;
@@ -263,7 +263,7 @@ void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * out
 #pragma mark Preset Files Tree
 
 //-----------------------------------------------------------------------------
-CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain)
+CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, FSVolumeRefNum inFileSystemDomain)
 {
 	OSStatus error = noErr;
 	FSRef presetsDirRef;
@@ -1219,7 +1219,7 @@ catch dialog response
 				ControlRef domainChoiceControl = NULL;
 				ControlID domainChoiceControlID = { kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_DomainChoiceControlID };
 				SInt32 domainChoice;
-				short fsDomain;
+				FSVolumeRefNum fsDomain;
 
 				// get the user's choice of file system domain from the domain choice control
 				GetControlByID(dialogInfo->dialogWindow, &domainChoiceControlID, &domainChoiceControl);
@@ -1305,7 +1305,8 @@ catch dialog response
 // and a file system domain and then tries to save the AU's state data in the requested domain 
 // with the requested file name (with the proper AU preset file name extension appended).
 OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
-					CFStringRef inPresetNameString, short inFileSystemDomain, CFURLRef * outSavedAUPresetFileURL)
+					CFStringRef inPresetNameString, FSVolumeRefNum inFileSystemDomain, 
+					CFURLRef * outSavedAUPresetFileURL)
 {
 	OSStatus error = noErr;
 

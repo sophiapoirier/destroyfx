@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2009  Sophia Poirier
+	Copyright (C) 2003-2010  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -57,8 +57,8 @@ OSErr GetComponentVersionFromResource(Component inComponent, SInt32 * outVersion
 {
 	OSErr error;
 	ComponentDescription desc;
-	short curRes, componentResFileID;
-	short thngResourceCount, i;
+	ResFileRefNum curRes, componentResFileID;
+	ResFileRefNum thngResourceCount, i;
 	Boolean versionFound = false;
 
 	if ( (inComponent == NULL) || (outVersion == NULL) )
@@ -669,7 +669,8 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 		char * separatorByte;
 		// convert the Component name Pascal string to a C string
 		char componentFullNameCString[sizeof(Str255)];
-		CopyPascalStringToC(componentFullNamePString, componentFullNameCString);
+		strncpy(componentFullNameCString, (const char*)(componentFullNamePString+1), componentFullNamePString[0]);
+		componentFullNameCString[componentFullNamePString[0]] = 0;
 		// the manufacturer string is everything before the first : character, 
 		// and everything after that and any immediately following white space 
 		// is the plugin name string
@@ -792,9 +793,9 @@ Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const Compon
 //--------------------------------------------------------------------------
 // check the version of Mac OS installed
 // the version value of interest to us is 0x1030 for Panther
-long GetMacOSVersion()
+SInt32 GetMacOSVersion()
 {
-	long systemVersion = 0;
+	SInt32 systemVersion = 0;
 	OSErr error = Gestalt(gestaltSystemVersion, &systemVersion);
 	if (error == noErr)
 	{
@@ -808,9 +809,9 @@ long GetMacOSVersion()
 //--------------------------------------------------------------------------
 // check the version of QuickTime installed
 // the version value of interest to us is 0x06408000 (6.4 release)
-long GetQuickTimeVersion()
+SInt32 GetQuickTimeVersion()
 {
-    long qtVersion = 0;
+    SInt32 qtVersion = 0;
     OSErr error = Gestalt(gestaltQuickTime, &qtVersion);
     if (error == noErr)
 		return qtVersion;

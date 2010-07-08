@@ -97,7 +97,7 @@ extern Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const
 /* main */
 extern OSStatus SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
 extern OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL, CFBundleRef inBundle);
-extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain);
+extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, FSVolumeRefNum inFileSystemDomain);
 extern OSStatus RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL);
 extern OSStatus CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance);
 extern OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription * outComponentDescription);
@@ -108,11 +108,11 @@ extern CFURLRef GetCFURLFromFileURLsTreeNode(CFTreeRef inTree);
 extern CFStringRef CopyAUPresetNameFromCFURL(CFURLRef inAUPresetFileURL);
 extern Boolean CFURLIsAUPreset(CFURLRef inURL);
 extern Boolean FSRefIsAUPreset(const FSRef * inFileRef);
-extern OSStatus FindPresetsDirForAU(Component inAUComponent, short inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef);
+extern OSStatus FindPresetsDirForAU(Component inAUComponent, FSVolumeRefNum inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef);
 
 /* system services availability / version-checking stuff */
-extern long GetMacOSVersion();
-extern long GetQuickTimeVersion();
+extern SInt32 GetMacOSVersion();
+extern SInt32 GetQuickTimeVersion();
 extern UInt32 GetAudioToolboxFrameworkVersion();
 extern Boolean IsAvailable_AU2rev1();
 extern Boolean IsTransportStateProcSafe();
