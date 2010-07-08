@@ -41,8 +41,6 @@
 #endif
 // if relavant
 #define DFX_SUPPORT_OLD_VST_SETTINGS 
-// for Audio Unit
-#define SUPPORT_AU_VERSION_1	0
 
 
 #endif
