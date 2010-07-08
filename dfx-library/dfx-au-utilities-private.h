@@ -66,25 +66,33 @@ void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext * outTreeContext);
 
 // restoring preset files
 CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32 * outErrorCode);
+#if !__LP64__
 pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
 pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode);
 OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAUComponent, Boolean inShouldCreateFolder);
+#endif
 
 // saving preset files
 OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef inXMLFileURL);
 OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist, 
 								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
+#if !__LP64__
 pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData);
+#endif
 OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
 								CFStringRef inPresetNameString, FSVolumeRefNum inFileSystemDomain, 
 								CFURLRef * outSavedAUPresetFileURL);
 Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL);
+#if !__LP64__
 pascal Boolean ShouldReplaceExistingAUPresetFileDialogFilterProc(DialogRef inDialog, EventRecord * inEvent, DialogItemIndex * outItemHit);
+#endif
 Boolean IsFileAccessError(OSStatus inErrorCode);
 OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl);
 OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent, 
 								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
+#if !__LP64__
 pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
+#endif
 void SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inPresetName);
 
 
