@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2009  Sophia Poirier
+	Copyright (C) 2003-2010  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -76,7 +76,8 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
 pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData);
 OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
-								CFStringRef inPresetNameString, short inFileSystemDomain, CFURLRef * outSavedAUPresetFileURL);
+								CFStringRef inPresetNameString, FSVolumeRefNum inFileSystemDomain, 
+								CFURLRef * outSavedAUPresetFileURL);
 Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL);
 pascal Boolean ShouldReplaceExistingAUPresetFileDialogFilterProc(DialogRef inDialog, EventRecord * inEvent, DialogItemIndex * outItemHit);
 Boolean IsFileAccessError(OSStatus inErrorCode);
