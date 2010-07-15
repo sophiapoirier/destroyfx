@@ -486,8 +486,8 @@ private:
 
 
 // prototypes for parameter value mapping utility functions
-double expandparametervalue(double inGenValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec);
-double contractparametervalue(double inLiteralValue, double minValue, double maxValue, DfxParamCurve curveType, double curveSpec);
+double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inMaxValue, DfxParamCurve inCurveType, double inCurveSpec = 1.0);
+double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, double inMaxValue, DfxParamCurve inCurveType, double inCurveSpec = 1.0);
 
 
 
