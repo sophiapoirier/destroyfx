@@ -21,6 +21,8 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
+#if !__LP64__
+
 #include "dfxguieditor.h"
 
 #include "dfxplugin.h"
@@ -2211,3 +2213,5 @@ void DfxGuiEditor::heedWindowTransparencyWindowClose()
 }
 #endif
 // TARGET_OS_MAC
+
+#endif // !__LP64__
