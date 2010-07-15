@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2010  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -20,6 +20,8 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
+
+#if !__LP64__
 
 #include "dfxguicontrol.h"
 #include "dfxguieditor.h"
@@ -1380,3 +1382,5 @@ void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEd
 	}
 }
 #endif
+
+#endif // !__LP64__
