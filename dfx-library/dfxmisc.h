@@ -42,6 +42,8 @@ bool createbuffer_i(long ** buffer, long currentBufferSize, long desiredBufferSi
 bool createbuffer_b(bool ** buffer, long currentBufferSize, long desiredBufferSize);
 bool createbufferarray_f(float *** buffers, unsigned long currentNumBuffers, long currentBufferSize, 
 						unsigned long desiredNumBuffers, long desiredBufferSize);
+bool createbufferarray_d(double *** buffers, unsigned long currentNumBuffers, long currentBufferSize, 
+						unsigned long desiredNumBuffers, long desiredBufferSize);
 bool createbufferarrayarray_d(double **** buffers, unsigned long currentNumBufferArrays, unsigned long currentNumBuffers, 
 							long currentBufferSize, unsigned long desiredNumBufferArrays, 
 							unsigned long desiredNumBuffers, long desiredBufferSize);
@@ -51,6 +53,7 @@ void releasebuffer_d(double ** buffer);
 void releasebuffer_i(long ** buffer);
 void releasebuffer_b(bool ** buffer);
 void releasebufferarray_f(float *** buffers, unsigned long numbuffers);
+void releasebufferarray_d(double *** buffers, unsigned long numbuffers);
 void releasebufferarrayarray_d(double **** buffers, unsigned long numbufferarrays, unsigned long numbuffers);
 
 void clearbuffer_f(float * buffer, long buffersize, float value = 0.0f);
@@ -58,6 +61,7 @@ void clearbuffer_d(double * buffer, long buffersize, double value = 0.0);
 void clearbuffer_i(long * buffer, long buffersize, long value = 0);
 void clearbuffer_b(bool * buffer, long buffersize, bool value = false);
 void clearbufferarray_f(float ** buffers, unsigned long numbuffers, long buffersize, float value = 0.0f);
+void clearbufferarray_d(double ** buffers, unsigned long numbuffers, long buffersize, double value = 0.0);
 void clearbufferarrayarray_d(double *** buffers, unsigned long numbufferarrays, unsigned long numbuffers, 
 							long buffersize, double value = 0.0);
 
