@@ -1,4 +1,23 @@
-/*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2010  Sophia Poirier
+
+This file is part of Rez Synth.
+
+Rez Synth is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Rez Synth is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "rezsynth.h"
 
@@ -32,9 +51,10 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 	}
 
 
-	// these are 2 values that are always needed during processCoefficients
-	twoPiDivSR = kDFX_PI_d*2.0 / (double)SAMPLERATE;
-	nyquist = ((double)SAMPLERATE-bandwidth) / 2.0;	// adjusted for bandwidth to accomodate the filter's frequency range
+	// these are values that are always needed during calculateCoefficients
+	piDivSR = kDFX_PI_d / getsamplerate();
+	twoPiDivSR = piDivSR * 2.0;
+	nyquist = (getsamplerate()-bandwidth) / 2.0;	// adjusted for bandwidth to accomodate the filter's frequency range
 
 	// counter for the number of MIDI events this block
 	// start at -1 because the beginning stuff has to happen
@@ -42,14 +62,14 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 	long currentBlockPosition = 0;	// we are at sample 0
 
 
-	// now we're ready to start looking at MIDI messages & processing sound & such
+	// now we're ready to start looking at MIDI messages and processing sound and such
 	do
 	{
-		// check for an upcoming event & decrease this block chunk size accordingly 
+		// check for an upcoming event and decrease this block chunk size accordingly 
 		// if there won't be another event, go all the way to the end of the block
 		if ( (eventcount+1) >= midistuff->numBlockEvents )
 			numFramesToProcess = totalSampleFrames - currentBlockPosition;
-		// else there will be & this chunk goes up to the next delta position
+		// else there will be and this chunk goes up to the next delta position
 		else
 			numFramesToProcess = midistuff->blockEvents[eventcount+1].delta - currentBlockPosition;
 
@@ -58,13 +78,13 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 		if (numFramesToProcess == 0)
 		{
 			eventcount++;
-			checkForNewNote(eventcount, numChannels);	// & attend to related issues if necessary
+			checkForNewNote(eventcount, numChannels);	// and attend to related issues if necessary
 			// take in the effects of the next event
 			midistuff->heedEvents(eventcount, SAMPLERATE, pitchbendRange, attack, release, legato, velCurve, velInfluence);
 			continue;
 		}
 
-		// test for whether or not all notes are off & unprocessed audio can be outputted
+		// test for whether or not all notes are off and unprocessed audio can be outputted
 		bool noNotes = true;	// none yet for this chunk
 
 		for (int notecount=0; notecount < NUM_NOTES; notecount++)
@@ -74,17 +94,15 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 			{
 				noNotes = false;	// we have a note
 
-				double ampEvener;	// a scalar for balancing outputs from the 3 normalizing modes
+				double ampEvener = 1.0;	// a scalar for balancing outputs from the 3 normalizing modes
 				// do the smart gain control thing if the user says so
 				if (wiseAmp)
-					ampEvener = processAmpEvener(numBands, notecount);
-				else
-					ampEvener = 1.0;
+					ampEvener = calculateAmpEvener(numBands, notecount);
 
 				// store before processing the note's coefficients
 				int tempNumBands = numBands;
 				// this is the resonator stuff
-				processCoefficients(&numBands, notecount);
+				calculateCoefficients(&numBands, notecount);
 
 				// most of the note values are liable to change during processFilterOuts,
 				// so we back them up to allow multi-band repetition
@@ -96,6 +114,7 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 					midistuff->noteTable[notecount] = noteTemp;
 					processFilterOuts(&(in[ch][currentBlockPosition]), &(out[ch][currentBlockPosition]), 
 								numFramesToProcess, ampEvener, notecount, numBands, 
+								prevInValue[ch][notecount], prevprevInValue[ch][notecount], 
 								prevOutValue[ch][notecount], prevprevOutValue[ch][notecount]);
 				}
 
@@ -130,7 +149,7 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 		// jump our position value forward
 		currentBlockPosition = midistuff->blockEvents[eventcount].delta;
 
-		checkForNewNote(eventcount, numChannels);	// & attend to related issues if necessary
+		checkForNewNote(eventcount, numChannels);	// and attend to related issues if necessary
 		// take in the effects of the next event
 		midistuff->heedEvents(eventcount, SAMPLERATE, pitchbendRange, attack, release, legato, velCurve, velInfluence);
 

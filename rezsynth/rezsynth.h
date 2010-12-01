@@ -1,4 +1,23 @@
-/*-------------- by Sophia Poirier  ][  January - March 2001 -------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2010  Sophia Poirier
+
+This file is part of Rez Synth.
+
+Rez Synth is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Rez Synth is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #ifndef __REZ_SYNTH_H
 #define __REZ_SYNTH_H
@@ -32,6 +51,7 @@ enum
 	kDryWetMix,
 	kDryWetMixMode,
 	kWiseAmp,
+	kResonAlgorithm,
 
 	kNumParameters
 };
@@ -44,6 +64,16 @@ enum
 	kScaleMode_peak,
 
 	kNumScaleModes
+};
+
+// algorithm options for the resonant filter
+enum
+{
+	kResonAlg_2poleNoZero,
+	kResonAlg_2pole2zeroR,
+	kResonAlg_2pole2zero1,
+
+	kNumResonAlgs
 };
 
 // these are the filter bank band separation modes
@@ -99,30 +129,33 @@ public:
 	virtual void clearbuffers();
 
 	virtual void processparameters();
-	virtual void processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
 
 
 private:
-	double processAmpEvener(int numBands, int currentNote);
-	void processCoefficients(int *numbands, int currentNote);
-	void processFilterOuts(const float *in, float *out, long sampleFrames, double ampEvener, 
-						int currentNote, int numBands, double *prevOut, double *prevprevOut);
-	void processUnaffected(const float *in, float *out, long sampleFrames);
+	double calculateAmpEvener(int numBands, int currentNote);
+	void calculateCoefficients(int * numbands, int currentNote);
+	void processFilterOuts(const float * in, float * out, long sampleFrames, double ampEvener, 
+						int currentNote, int numBands, double & prevIn, double & prevprevIn, 
+						double * prevOut, double * prevprevOut);
+	void processUnaffected(const float * in, float * out, long sampleFrames);
 	void checkForNewNote(long currentEvent, unsigned long numChannels);
 
 	// parameters
 	double bandwidth, sepAmount_octaval, sepAmount_linear, pitchbendRange;
 	float attack, release, velCurve, velInfluence, gain, betweenGain, wetGain, dryWetMix;
-	int numBands, sepMode, scaleMode, dryWetMixMode;
+	int numBands, sepMode, scaleMode, resonAlgorithm, dryWetMixMode;
 	bool legato, fades, foldover, wiseAmp;
 
-	double *inputAmp;	// gains for the current sample input, for each band
-	double *delay1amp;	// gains for the 1 sample delayed input, for each band
-	double *delay2amp;	// gains for the 2 second delayed input, for each band
-	double ***prevOutValue, ***prevprevOutValue;	// arrays of previous resonator output values
+	double * inputAmp;	// gains for the current sample input, for each band
+	double * prevOutCoeff;	// coefficients for the 1-sample delayed ouput, for each band
+	double * prevprevOutCoeff;	// coefficients for the 2-sample delayed ouput, for each band
+	double * prevprevInCoeff;	// coefficients for the 2-sample delayed input, for each band
+	double *** prevOutValue, *** prevprevOutValue;	// arrays of previous resonator output values
+	double ** prevInValue, ** prevprevInValue;	// arrays of previous audio input values
 	unsigned long numBuffers;
 
-	double twoPiDivSR, nyquist;	// values that are needed when calculating coefficients
+	double piDivSR, twoPiDivSR, nyquist;	// values that are needed when calculating coefficients
 
 	int unaffectedState, unaffectedFadeSamples;
 };
