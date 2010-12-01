@@ -104,6 +104,9 @@
 		B06E6101097ACA2F00AC582C /* dfx-au-utilities-preset-files.c in Sources */ = {isa = PBXBuildFile; fileRef = B06E60FF097ACA2F00AC582C /* dfx-au-utilities-preset-files.c */; };
 		B06E6102097ACA2F00AC582C /* dfx-au-utilities-private.h in Headers */ = {isa = PBXBuildFile; fileRef = B06E6100097ACA2F00AC582C /* dfx-au-utilities-private.h */; };
 		EC9840041030853200FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
+		ECC3B5D112A60A6300BA11D5 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC3B5CF12A60A6300BA11D5 /* dfxmisc.cpp */; };
+		ECC3B5D212A60A6300BA11D5 /* dfxmisc.h in Headers */ = {isa = PBXBuildFile; fileRef = ECC3B5D012A60A6300BA11D5 /* dfxmisc.h */; };
+		ECC3B61412A6D62B00BA11D5 /* reson-algorithm-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECC3B61312A6D62B00BA11D5 /* reson-algorithm-button.png */; };
 		ECC43127102F5208000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC43125102F5208000B05A1 /* dfx-au-utilities.strings */; };
 		ECC4312C102F521F000B05A1 /* au-preset-save-dialog.nib in Resources */ = {isa = PBXBuildFile; fileRef = ECC4312A102F521F000B05A1 /* au-preset-save-dialog.nib */; };
 		ECC43131102F5235000B05A1 /* dfxgui.nib in Resources */ = {isa = PBXBuildFile; fileRef = ECC4312F102F5235000B05A1 /* dfxgui.nib */; };
@@ -215,6 +218,9 @@
 		B06E6100097ACA2F00AC582C /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		EC9841871030C46000FA3B2B /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		EC9841881030C46000FA3B2B /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
+		ECC3B5CF12A60A6300BA11D5 /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
+		ECC3B5D012A60A6300BA11D5 /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
+		ECC3B61312A6D62B00BA11D5 /* reson-algorithm-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "reson-algorithm-button.png"; sourceTree = "<group>"; };
 		ECC43126102F5208000B05A1 /* en */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
 		ECC43128102F520F000B05A1 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
 		ECC43129102F5219000B05A1 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
@@ -310,6 +316,7 @@
 				49BB476807E53B4B00861708 /* vertical-slider-background.png */,
 				49BB476A07E53B4B00861708 /* vertical-slider-handle.png */,
 				49BB476907E53B4B00861708 /* vertical-slider-handle-glowing.png */,
+				ECC3B61312A6D62B00BA11D5 /* reson-algorithm-button.png */,
 				49BB476607E53B4B00861708 /* separation-mode-button.png */,
 				49BB476507E53B4B00861708 /* scale-mode-button.png */,
 				49BB475B07E53B4B00861708 /* fades-button.png */,
@@ -338,8 +345,8 @@
 				4932F46A06800FCD006A9591 /* AUCarbonViewBase */,
 			);
 			name = AUPublic;
-			path = /Developer/Examples/CoreAudio/AudioUnits/AUPublic;
-			sourceTree = "<absolute>";
+			path = Extras/CoreAudio/AudioUnits/AUPublic;
+			sourceTree = SYSTEM_DEVELOPER_DIR;
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
 			isa = PBXGroup;
@@ -421,8 +428,8 @@
 				B025B9EA08AD348400A9CCAE /* CAVectorUnit.cpp */,
 			);
 			name = PublicUtility;
-			path = /Developer/Examples/CoreAudio/PublicUtility;
-			sourceTree = "<absolute>";
+			path = Extras/CoreAudio/PublicUtility;
+			sourceTree = SYSTEM_DEVELOPER_DIR;
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
 			isa = PBXGroup;
@@ -434,6 +441,8 @@
 				4932F4D006801180006A9591 /* dfxplugin-audiounit.cpp */,
 				4932F4CF06801180006A9591 /* dfxparameter.h */,
 				4932F4CE06801180006A9591 /* dfxparameter.cpp */,
+				ECC3B5D012A60A6300BA11D5 /* dfxmisc.h */,
+				ECC3B5CF12A60A6300BA11D5 /* dfxmisc.cpp */,
 				4932F4CD06801180006A9591 /* dfxmath.h */,
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
@@ -516,6 +525,7 @@
 				B025B9EE08AD348400A9CCAE /* CAVectorUnit.h in Headers */,
 				B025B9EF08AD348400A9CCAE /* CAVectorUnitTypes.h in Headers */,
 				B06E6102097ACA2F00AC582C /* dfx-au-utilities-private.h in Headers */,
+				ECC3B5D212A60A6300BA11D5 /* dfxmisc.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -549,6 +559,7 @@
 			isa = PBXProject;
 			buildConfigurationList = B025B9F408AD348400A9CCAE /* Build configuration list for PBXProject "rezsynth" */;
 			compatibilityVersion = "Xcode 2.4";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -596,6 +607,7 @@
 				ECC43127102F5208000B05A1 /* dfx-au-utilities.strings in Resources */,
 				ECC4312C102F521F000B05A1 /* au-preset-save-dialog.nib in Resources */,
 				ECC43131102F5235000B05A1 /* dfxgui.nib in Resources */,
+				ECC3B61412A6D62B00BA11D5 /* reson-algorithm-button.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -652,6 +664,7 @@
 				49BB474E07E53B0200861708 /* rezsyntheditor.cpp in Sources */,
 				B025B9ED08AD348400A9CCAE /* CAVectorUnit.cpp in Sources */,
 				B06E6101097ACA2F00AC582C /* dfx-au-utilities-preset-files.c in Sources */,
+				ECC3B5D112A60A6300BA11D5 /* dfxmisc.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2009  Sophia Poirier
+Copyright (C) 2001-2010  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -31,10 +31,13 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance,	kNumParameters, kNumPresets)	// 19 parameters, 16 presets
 {
 	inputAmp = NULL;
-	delay1amp = NULL;
-	delay2amp = NULL;
+	prevOutCoeff = NULL;
+	prevprevOutCoeff = NULL;
+	prevprevInCoeff = NULL;
 	prevOutValue = NULL;
 	prevprevOutValue = NULL;
+	prevInValue = NULL;
+	prevprevInValue = NULL;
 	numBuffers = 0;
 
 
@@ -46,13 +49,14 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kFoldover, "filter frequency aliasing", true, false);
 	initparameter_f(kAttack, "attack", 3.0, 3.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_f(kRelease, "release", 300.0, 300.0, 0.0, 3000.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
-	initparameter_b(kFades, "nicer fades", false, false);
+	initparameter_b(kFades, "exponential fades", true, false);
 	initparameter_b(kLegato, "legato", false, false);
 //	initparameter_f(kVelInfluence, "velocity influence", 0.6, 1.0, 0.0, 1.0, kDfxParamUnit_scalar);
 	initparameter_f(kVelInfluence, "velocity influence", 60.0, 100.0, 0.0, 100.0, kDfxParamUnit_percent);
 	initparameter_f(kVelCurve, "velocity curve", 2.0, 1.0, 0.3, 3.0, kDfxParamUnit_exponent);
 	initparameter_f(kPitchbendRange, "pitchbend range", 3.0, 3.0, 0.0, PITCHBEND_MAX, kDfxParamUnit_semitones);
-	initparameter_list(kScaleMode, "input gain scaling mode", kScaleMode_rms, kScaleMode_none, kNumScaleModes);
+	initparameter_list(kScaleMode, "filter response scaling mode", kScaleMode_rms, kScaleMode_none, kNumScaleModes);
+	initparameter_list(kResonAlgorithm, "resonance algorithm", kResonAlg_2pole2zeroR, kResonAlg_2pole2zeroR, kNumResonAlgs);
 	initparameter_f(kGain, "output gain", 1.0, 1.0, 0.0, 3.981, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kBetweenGain, "between gain", 0.0, 1.0, 0.0, 3.981, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 	initparameter_f(kDryWetMix, "dry/wet mix", 100.0, 50.0, 0.0, 100.0, kDfxParamUnit_drywetmix);
@@ -64,6 +68,9 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kScaleMode, kScaleMode_none, "no scaling");
 	setparametervaluestring(kScaleMode, kScaleMode_rms, "RMS normalize");
 	setparametervaluestring(kScaleMode, kScaleMode_peak, "peak normalize");
+	setparametervaluestring(kResonAlgorithm, kResonAlg_2poleNoZero, "no zero");
+	setparametervaluestring(kResonAlgorithm, kResonAlg_2pole2zeroR, "2-zero (radius)");
+	setparametervaluestring(kResonAlgorithm, kResonAlg_2pole2zero1, "2-zero (1)");
 	setparametervaluestring(kDryWetMixMode, kDryWetMixMode_linear, "linear");
 	setparametervaluestring(kDryWetMixMode, kDryWetMixMode_equalpower, "equal power");
 //	setparametervaluestring(kFades, 0, "cheap");
@@ -88,10 +95,11 @@ RezSynth::~RezSynth()
 long RezSynth::initialize()
 {
 	bool result1 = createbuffer_d(&inputAmp, kMaxBands, kMaxBands);
-	bool result2 = createbuffer_d(&delay1amp, kMaxBands, kMaxBands);
-	bool result3 = createbuffer_d(&delay2amp, kMaxBands, kMaxBands);
+	bool result2 = createbuffer_d(&prevOutCoeff, kMaxBands, kMaxBands);
+	bool result3 = createbuffer_d(&prevprevOutCoeff, kMaxBands, kMaxBands);
+	bool result4 = createbuffer_d(&prevprevInCoeff, kMaxBands, kMaxBands);
 
-	if ( result1 && result2 && result3 )
+	if ( result1 && result2 && result3 && result4 )
 		return kDfxErr_NoError;
 	return kDfxErr_InitializationFailed;
 }
@@ -100,8 +108,9 @@ long RezSynth::initialize()
 void RezSynth::cleanup()
 {
 	releasebuffer_d(&inputAmp);
-	releasebuffer_d(&delay1amp);
-	releasebuffer_d(&delay2amp);
+	releasebuffer_d(&prevOutCoeff);
+	releasebuffer_d(&prevprevOutCoeff);
+	releasebuffer_d(&prevprevInCoeff);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -120,8 +129,10 @@ bool RezSynth::createbuffers()
 
 	bool result1 = createbufferarrayarray_d(&prevOutValue, oldNumBuffers, NUM_NOTES, kMaxBands, numBuffers, NUM_NOTES, kMaxBands);
 	bool result2 = createbufferarrayarray_d(&prevprevOutValue, oldNumBuffers, NUM_NOTES, kMaxBands, numBuffers, NUM_NOTES, kMaxBands);
+	bool result3 = createbufferarray_d(&prevInValue, oldNumBuffers, NUM_NOTES, numBuffers, NUM_NOTES);
+	bool result4 = createbufferarray_d(&prevprevInValue, oldNumBuffers, NUM_NOTES, numBuffers, NUM_NOTES);
 
-	if (result1 && result2)
+	if (result1 && result2 && result3 && result4)
 		return true;
 	return false;
 }
@@ -131,6 +142,8 @@ void RezSynth::releasebuffers()
 {
 	releasebufferarrayarray_d(&prevOutValue, numBuffers, NUM_NOTES);
 	releasebufferarrayarray_d(&prevprevOutValue, numBuffers, NUM_NOTES);
+	releasebufferarray_d(&prevInValue, numBuffers);
+	releasebufferarray_d(&prevprevInValue, numBuffers);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -138,6 +151,8 @@ void RezSynth::clearbuffers()
 {
 	clearbufferarrayarray_d(prevOutValue, numBuffers, NUM_NOTES, kMaxBands);
 	clearbufferarrayarray_d(prevprevOutValue, numBuffers, NUM_NOTES, kMaxBands);
+	clearbufferarray_d(prevInValue, numBuffers, NUM_NOTES);
+	clearbufferarray_d(prevprevInValue, numBuffers, NUM_NOTES);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -159,6 +174,7 @@ void RezSynth::processparameters()
 	velCurve = getparameter_f(kVelCurve);
 	pitchbendRange = getparameter_f(kPitchbendRange);
 	scaleMode = getparameter_i(kScaleMode);
+	resonAlgorithm = getparameter_i(kResonAlgorithm);
 	gain = getparameter_f(kGain);	// max gain is +12 dB
 	betweenGain = getparameter_f(kBetweenGain);	// max betweenGain is +12 dB
 	dryWetMix = getparameter_scalar(kDryWetMix);
@@ -187,7 +203,7 @@ void RezSynth::processparameters()
 	}
 
 	// feedback buffers need to be cleared
-	if (getparameterchanged(kScaleMode))
+	if ( getparameterchanged(kScaleMode) || getparameterchanged(kResonAlgorithm) )
 	{
 		for (unsigned long ch=0; ch < numBuffers; ch++)
 		{

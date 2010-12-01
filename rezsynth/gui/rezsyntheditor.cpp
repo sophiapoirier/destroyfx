@@ -1,3 +1,24 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2010  Sophia Poirier
+
+This file is part of Rez Synth.
+
+Rez Synth is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Rez Synth is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
 #include "rezsyntheditor.h"
 #include "rezsynth.h"
 
@@ -30,6 +51,8 @@ kTallDisplayWidener = 8,
 	kTallLabelY = kTallDisplayY + 17,
 	kTallLabelInc = 12,
 
+	kResonAlgButtonX = 275,
+	kResonAlgButtonY = 53,
 	kSepModeButtonX = 274,
 	kSepModeButtonY = 121,
 	kScaleButtonX = 400,
@@ -194,6 +217,7 @@ long RezSynthEditor::OpenEditor()
 	DGImage * gVerticalSliderHandle = new DGImage("vertical-slider-handle.png", 0, this);
 
 	// buttons
+	DGImage * gResonAlgButton = new DGImage("reson-algorithm-button.png", 0, this);
 	DGImage * gSepModeButton = new DGImage("separation-mode-button.png", 0, this);
 	DGImage * gScaleModeButton = new DGImage("scale-mode-button.png", 0, this);
 	DGImage * gFadesButton = new DGImage("fades-button.png", 0, this);
@@ -330,14 +354,15 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 
 	//--initialize the buttons----------------------------------------------
 	DGButton * button;
+	DGStaticTextDisplay * label;
 
-	// input gain scaling
+	// filter response scaling
 	pos.set(kScaleButtonX, kScaleButtonY, gScaleModeButton->getWidth(), (gScaleModeButton->getHeight())/kNumScaleModes);
 	button = new DGButton(this, kScaleMode, &pos, gScaleModeButton, kNumScaleModes, kDGButtonType_radiobutton);
 	// parameter name label
 	pos.set(kScaleButtonX, kScaleButtonY - kDisplayHeight - 6, gScaleModeButton->getWidth(), kDisplayHeight);
-	DGStaticTextDisplay * label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kValueTextFontSize, kMyVeryLightGreyColor, kValueTextFont);
-	label->setText("input gain scaling");
+	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kValueTextFontSize, kMyVeryLightGreyColor, kValueTextFont);
+	label->setText("filter scaling");
 
 	// separation mode (logarithmic or linear)
 	pos.set(kSepModeButtonX, kSepModeButtonY, gSepModeButton->getWidth(), (gSepModeButton->getHeight())/kNumSepModes);
@@ -350,6 +375,14 @@ DGImage * gVerticalValueDisplayBackground = new DGImage("vertical-value-display-
 	// attack & release fade mode
 	pos.set(kFadesButtonX, kFadesButtonY, gFadesButton->getWidth(), (gFadesButton->getHeight())/2);
 	button = new DGButton(this, kFades, &pos, gFadesButton, 2, kDGButtonType_incbutton);
+
+	// resonance algorithm
+	pos.set(kResonAlgButtonX, kResonAlgButtonY, gResonAlgButton->getWidth(), (gResonAlgButton->getHeight())/kNumResonAlgs);
+	button = new DGButton(this, kResonAlgorithm, &pos, gResonAlgButton, kNumResonAlgs, kDGButtonType_radiobutton);
+	// parameter name label
+	pos.set(kResonAlgButtonX, kResonAlgButtonY - kDisplayHeight - 6, gResonAlgButton->getWidth(), kDisplayHeight);
+	label = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kValueTextFontSize, kMyVeryLightGreyColor, kValueTextFont);
+	label->setText("resonance algorithm");
 
 	// allow Nyquist foldover or no
 	pos.set(kFoldoverButtonX, kFoldoverButtonY, gFoldoverButton->getWidth(), (gFoldoverButton->getHeight())/2);
