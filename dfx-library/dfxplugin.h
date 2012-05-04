@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2012  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -128,10 +128,6 @@ TARGET_API_VST
  necessary for Audio Unit:
 PLUGIN_ENTRY_POINT
 	a C string of the base plugin class name with "Entry" appended
-
- necessary for Audio Units using a custom GUI (TARGET_PLUGIN_HAS_GUI = 1):
-PLUGIN_EDITOR_ENTRY_POINT
-	a C string of the plugin editor class name with "Entry" appended
 
  necessary for VST:
 VST_NUM_INPUTS
@@ -381,7 +377,7 @@ public:
 	bool getparameterdefault_b(long inParameterIndex)
 		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getdefault_b();   else return false;	}
 
-	void getparametername(long inParameterIndex, char * text);
+	void getparametername(long inParameterIndex, char * outText);
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getparametercfname(long inParameterIndex)
 		{	if (parameterisvalid(inParameterIndex)) return parameters[inParameterIndex].getcfname();   else return NULL;	}
@@ -663,6 +659,7 @@ private:
 		ITemplateCustomUI * mCustomUI_p;
 		Rect mPIWinRect;
 		CTemplateNoUIView * mNoUIView_p;
+		short mLeftOffset, mTopOffset;
 		void * mModuleHandle_p;
 	#endif
 	#endif
@@ -852,6 +849,9 @@ public:
 	virtual ComponentResult SetChunk(OSType inChunkID, SFicPlugInChunk * chunk);
 	virtual void DoTokenIdle();
 	virtual CPlugInView * CreateCPlugInView();
+#ifdef TARGET_API_AUDIOSUITE
+	virtual void SetViewOrigin(Point anOrigin);
+#endif
 
 	// AU->RTAS glue convenience functions
 	double GetParameter_f_FromRTAS(long inParameterID);
@@ -1008,6 +1008,7 @@ public:
 #pragma mark _________DfxEffectGroup_________
 
 #ifdef TARGET_API_RTAS
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 class DfxEffectGroup : public CEffectGroup
@@ -1022,7 +1023,62 @@ protected:
 private:
 	void dfx_AddEffectType(CEffectType * inEffectType);
 };
+
+
+#include "CPluginControl_Continuous.h"
+#include "CPluginControl_Frequency.h"
+
+#if WINDOWS_VERSION
+	#pragma warning( disable : 4250 ) // function being inherited through dominance
 #endif
+
+
+//-----------------------------------------------------------------------------
+class CPluginControl_DfxCurved : virtual public CPluginControl_Continuous
+{
+public:
+	CPluginControl_DfxCurved(OSType id, const char * name, double min, double max, 
+		int numSteps, double defaultValue, bool isAutomatable, 
+		DfxParamCurve inCurve, double inCurveSpec = 1.0, 
+		const PrefixDictionaryEntry * begin = cStandardPrefixDictionary+ePrefixOffset_no_prefix, 
+		const PrefixDictionaryEntry * end = cStandardPrefixDictionary+ePrefixOffset_End);
+
+	// CPluginControl overrides
+	virtual long GetNumSteps() const;
+
+	// CPluginControl_Continuous overrides
+	virtual long ConvertContinuousToControl(double continuous) const;
+	virtual double ConvertControlToContinuous(long control) const;
+	
+private:
+	DfxParamCurve mCurve;
+	double mCurveSpec;
+	int mNumSteps;
+};
+
+
+//-----------------------------------------------------------------------------
+class CPluginControl_DfxCurvedFrequency : public CPluginControl_Frequency, public CPluginControl_DfxCurved
+{
+public:
+	CPluginControl_DfxCurvedFrequency(OSType id, const char * name, double min, double max, 
+		int numSteps, double defaultValue, bool isAutomatable, 
+		DfxParamCurve inCurve, double inCurveSpec = 1.0, 
+		const PrefixDictionaryEntry * begin = cStandardPrefixDictionary+ePrefixOffset_no_prefix, 
+		const PrefixDictionaryEntry * end = cStandardPrefixDictionary+ePrefixOffset_End)
+	:
+		CPluginControl_Continuous(id, name, min, max, defaultValue, isAutomatable, begin, end),
+		CPluginControl_Frequency(id, name, min, max, defaultValue, isAutomatable, begin, end),
+		CPluginControl_DfxCurved(id, name, min, max, numSteps, defaultValue, isAutomatable, 
+			inCurve, inCurveSpec, begin, end)
+	{}
+
+private:
+	CPluginControl_DfxCurvedFrequency(const CPluginControl_DfxCurvedFrequency&);
+	CPluginControl_DfxCurvedFrequency& operator=(const CPluginControl_DfxCurvedFrequency&);
+};
+
+#endif	// TARGET_API_RTAS
 
 
 
@@ -1102,7 +1158,7 @@ OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode);
 		#if BEOS
 			#define main main_plugin
 			extern "C" __declspec(dllexport) AEffect * main_plugin(audioMasterCallback audioMaster);
-		#elif (MACX && __ppc__)
+		#elif (MAC && __ppc__)
 			#define main main_macho
 			extern "C" AEffect * main_macho(audioMasterCallback audioMaster);
 		#else
