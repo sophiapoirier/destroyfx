@@ -1,0 +1,10 @@
+#include "dfxplugin"
+
+INSTALL_PATH = /Library/Application Support/Digidesign/Plug-Ins
+HEADER_SEARCH_PATHS = $(inherited) $(DFX_ROOT_SOURCE_PATH)/ProToolsSDK/AlturaPorts/TDMPlugIns/common/Mac/
+
+DFX_PLUGIN_FORMAT_MACROS = TARGET_API_RTAS
+
+DFX_PLUGIN_BUNDLE_IDENTIFIER = org.destroyfx.$(DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS).RTAS
+
+MacBag = $(DFX_ROOT_SOURCE_PATH)/ProToolsSDK/MacBag
