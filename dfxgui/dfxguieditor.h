@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2012  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -31,20 +31,85 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguicontrol.h"
 
 #include "dfxpluginproperties.h"
+#include "dfxmisc.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxsettings.h"	// for DfxParameterAssignment
 #endif
 
+#include "vstgui.h"
+#if (VSTGUI_VERSION_MAJOR < 4)
+	#include "ctooltipsupport.h"
+	#define CButtonState	long
+#endif
+
+#ifdef TARGET_API_VST
+	#include "dfxplugin.h"
+	typedef DfxPlugin *	DGEditorListenerInstance;
+#endif
+#ifdef TARGET_API_RTAS
+	#include "dfxplugin-base.h"
+	typedef ITemplateProcess * DGEditorListenerInstance;
+#endif
 #ifdef TARGET_API_AUDIOUNIT
 	#include "AUCarbonViewBase.h"
-	typedef AudioUnitCarbonView	DGEditorListenerInstance;
+	typedef AudioUnit	DGEditorListenerInstance;
 	typedef AUCarbonViewBase	TARGET_API_EDITOR_BASE_CLASS;
-	#define DFX_EDITOR_ENTRY	COMPONENT_ENTRY
+#endif
+
+#ifdef TARGET_API_VST
+	#include "aeffguieditor.h"
+	#define TARGET_API_EDITOR_BASE_CLASS	AEffGUIEditor
+	#define TARGET_API_EDITOR_INDEX_TYPE	VstInt32
+#else
+	#include "plugguieditor.h"
+	#define TARGET_API_EDITOR_BASE_CLASS	PluginGUIEditor
+	#define TARGET_API_EDITOR_INDEX_TYPE	long
 #endif
 
 
 
+//-----------------------------------------------------------------------------
+#if defined(TARGET_API_AUDIOUNIT) || defined(TARGET_API_RTAS)
+	#define DFX_EDITOR_ENTRY(PluginEditorClass)												\
+		DfxGuiEditor * DFXGUI_NewEditorInstance(DGEditorListenerInstance inProcessInstance)	\
+		{																					\
+			return new PluginEditorClass(inProcessInstance);								\
+		}
+#endif
+
+#ifdef TARGET_API_VST
+	#define DFX_EDITOR_ENTRY(PluginEditorClass)												\
+		AEffEditor * DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance)	\
+		{																					\
+			return new PluginEditorClass(inEffectInstance);									\
+		}
+#endif
+
+
+
+//-----------------------------------------------------------------------------
+#ifdef TARGET_API_AUDIOUNIT
+	const Float32 kDfxGui_NotificationInterval = 42.0 * kEventDurationMillisecond;	// 24 fps
+	const EventTimerInterval kDfxGui_IdleTimerInterval = kDfxGui_NotificationInterval;
+#endif
+
+enum {
+#ifdef TARGET_API_RTAS
+	kKeyModifier_DefaultValue = kAlt,
+	kKeyModifier_FineControl = kControl
+#else
+	kKeyModifier_DefaultValue = kControl,
+	kKeyModifier_FineControl = kShift
+#endif
+};
+
+
+
+
+
+
+//-----------------------------------------------------------------------------
 class DGButton;
 class DGSplashScreen;
 
@@ -54,11 +119,22 @@ class DGSplashScreen;
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-class DfxGuiEditor : public TARGET_API_EDITOR_BASE_CLASS
+class DfxGuiEditor : public TARGET_API_EDITOR_BASE_CLASS, public CControlListener
 {
 public:
 	DfxGuiEditor(DGEditorListenerInstance inInstance);
 	virtual ~DfxGuiEditor();
+
+	// VSTGUI overrides
+	virtual bool open(void * inWindow);
+	virtual void close();
+	virtual void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue);
+	virtual void valueChanged(CControl * inControl);
+#ifndef TARGET_API_VST
+	virtual void beginEdit(long inParameterIndex);
+	virtual void endEdit(long inParameterIndex);
+#endif
+	virtual void idle();
 
 	// *** this one is for the child class of DfxGuiEditor to override
 	virtual long OpenEditor() = 0;
@@ -67,45 +143,49 @@ public:
 	virtual void dfxgui_EditorShown() { }
 
 #ifdef TARGET_API_AUDIOUNIT
-	// these are part of the AUCarbonViewBase interface
-	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
-	virtual bool HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent);
-	virtual OSStatus Version();
-
-	AUParameterListenerRef getParameterListener()
-		{	return mParameterListener;	}
+	long dfxgui_GetParameterInfo(AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo);
 	AUEventListenerRef getAUEventListener()
 		{	return auEventListener;	}
 	virtual void HandleAUPropertyChange(void * inObject, AudioUnitProperty inAUProperty, UInt64 inEventHostTime)
 		{ }
+#if !__LP64__
+	void SetOwnerAUCarbonView(AUCarbonViewBase * inAUCarbonView)
+		{	mOwnerAUCarbonView = inAUCarbonView;	}
+	AUCarbonViewBase * GetOwnerAUCarbonView()
+		{	return mOwnerAUCarbonView;	}
+#endif
 #endif
 
 	void addImage(DGImage * inImage);
 	void addControl(DGControl * inCtrl);
 	void removeControl(DGControl * inControl);
+	DGControl * getNextControlFromParameterID(long inParameterID, DGControl * inPreviousControl = NULL);
+	DGImage * GetBackgroundImage()
+		{	return backgroundImage;	}
 
 	void do_idle();
 	virtual void dfxgui_Idle() { }
 
 #ifdef TARGET_API_AUDIOUNIT
 	void HandleStreamFormatChange();
+	void HandleParameterListChange();
+	#if TARGET_PLUGIN_USES_MIDI
 	void HandleMidiLearnChange();
+	#endif
 #endif
 	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels)
 		{ }
 
 #if TARGET_OS_MAC
+#if defined(TARGET_API_AUDIOUNIT) && 0
 	virtual bool HandleMouseEvent(EventRef inEvent);
 	virtual bool HandleKeyboardEvent(EventRef inEvent);
 	virtual bool HandleCommandEvent(EventRef inEvent);
 	virtual bool HandleControlEvent(EventRef inEvent);
-	ControlDefSpec * getControlDefSpec()
-		{	return &dgControlSpec;	}
+#endif
 
 	CFStringRef openTextEntryWindow(CFStringRef inInitialText = NULL);
 	bool handleTextEntryCommand(UInt32 inCommandID);
-	OSStatus openWindowTransparencyWindow();
-	void heedWindowTransparencyWindowClose();
 #endif
 
 	void automationgesture_begin(long inParameterID);
@@ -113,13 +193,13 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
 #endif
+	virtual void parameterChanged(long inParameterID, float inValue)
+		{ }
 
-	bool IsOpen()
-		{	return mIsOpen;	}
-
-	void DrawBackground(DGGraphicsContext * inContext);
-	float getWindowTransparency();
-	void setWindowTransparency(float inTransparencyLevel);
+	bool IsOpen();
+	DGEditorListenerInstance dfxgui_GetEffectInstance();
+	long dfxgui_GetEditorOpenErrorCode()
+		{	return mEditorOpenErr;	}
 
 	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
 	DGControl * getCurrentControl_mouseover()
@@ -131,19 +211,53 @@ public:
 	DGControl * getCurrentControl_clicked()
 		{	return currentControl_clicked;	}
 
-	// the below methods all handle communication between the GUI component and the music component
+#ifdef TARGET_API_RTAS
+	void GetBackgroundRect(sRect * outRect);
+	void SetBackgroundRect(sRect * inRect);
+	void GetControlIndexFromPoint(long inXpos, long inYpos, long * outControlIndex);	// Called by CProcess::ChooseControl
+	void SetControlHighlight(long inControlIndex, short inIsHighlighted, short inColor);
+	void drawControlHighlight(CDrawContext * inContext, CControl * inControl);
+
+	// VSTGUI: needed the following so that the algorithm is updated while the mouse is down
+	virtual void doIdleStuff();
+#endif
+
+#if PLUGGUI
+	bool isOpen()
+		{	return (systemWindow != NULL);	}
+#endif
+
+	// VST/RTAS abstraction methods
+	long GetNumParameters();
+	long GetNumAudioOutputs();
+	float dfxgui_ExpandParameterValue(long inParameterIndex, float inValue);
+	float dfxgui_ContractParameterValue(long inParameterIndex, float inValue);
+	float GetParameter_minValue(long inParameterIndex);
+	float GetParameter_maxValue(long inParameterIndex);
+	float GetParameter_defaultValue(long inParameterIndex);
+	DfxParamValueType GetParameterValueType(long inParameterIndex);
+	DfxParamUnit GetParameterUnit(long inParameterIndex);
+
+	// the below methods all handle communication between the GUI component and the audio component
 	double getparameter_f(long inParameterID);
 	long getparameter_i(long inParameterID);
 	bool getparameter_b(long inParameterID);
+	double getparameter_gen(long inParameterIndex);
 	void setparameter_f(long inParameterID, double inValue, bool inWrapWithAutomationGesture = false);
 	void setparameter_i(long inParameterID, long inValue, bool inWrapWithAutomationGesture = false);
 	void setparameter_b(long inParameterID, bool inValue, bool inWrapWithAutomationGesture = false);
 	void setparameter_default(long inParameterID, bool inWrapWithAutomationGesture = false);
 	void setparameters_default(bool inWrapWithAutomationGesture = false);
-	void getparametervaluestring(long inParameterID, char * outText);
+	bool getparametervaluestring(long inParameterID, char * outText);
+	char * getparameterunitstring(long inParameterIndex);
+	char * getparametername(long inParameterID);
 	void randomizeparameter(long inParameterID, bool inWriteAutomation = false);
 	void randomizeparameters(bool inWriteAutomation = false);
+	bool dfxgui_IsValidParamID(long inParameterID);
+#ifdef TARGET_API_AUDIOUNIT
+	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
 	AudioUnitParameterID * CreateParameterList(AudioUnitScope inScope, UInt32 * outNumParameters);
+#endif
 	long dfxgui_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
 								size_t & outDataSize, DfxPropertyFlags & outFlags);
 	long dfxgui_GetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
@@ -164,17 +278,12 @@ public:
 		DGButton * CreateMidiResetButton(long inXpos, long inYpos, DGImage * inImage);
 	#endif
 	unsigned long getNumAudioChannels();
-	void installSplashScreenControl(DGSplashScreen * inControl);
-	void removeSplashScreenControl();
 
 	long copySettings();
 	long pasteSettings(bool * inQueryPastabilityOnly = NULL);
 
 protected:
 	void SetBackgroundImage(DGImage * inBackgroundImage);
-	void SetBackgroundColor(DGColor inBackgroundColor);
-	DGBackgroundControl * getBackgroundControl()
-		{	return backgroundControl;	}
 
 	class DGControlsList
 	{
@@ -184,11 +293,6 @@ protected:
 
 		DGControlsList(DGControl * inControl, DGControlsList * inNextList)
 			: control(inControl), next(inNextList) {}
-		~DGControlsList()
-		{
-			if (control != NULL)
-				delete control;
-		}
 	};
 	DGControlsList * controlsList;
 
@@ -203,22 +307,14 @@ protected:
 		~DGImagesList()
 		{
 			if (image != NULL)
-				delete image;
+				image->forget();
 		}
 	};
 	DGImagesList * imagesList;
 
-#if TARGET_OS_MAC
-	DGControl * getDGControlByCarbonControlRef(ControlRef inControl);
-#endif
-
 	long initClipboard();
 
 private:
-	void embedAllControlsInReverseOrder(DGControlsList * inControlsList);
-
-	DGBackgroundControl * backgroundControl;
-
 	DGControl *	currentControl_clicked;
 	DGControl *	currentControl_mouseover;
 
@@ -234,39 +330,51 @@ private:
 	void addMousedOverControl(DGControl * inMousedOverControl);
 	void removeMousedOverControl(DGControl * inMousedOverControl);
 
-	bool mIsOpen;
+	DGImage * backgroundImage;
+
 	bool mJustOpened;
+	long mEditorOpenErr;
 	unsigned long numAudioChannels;
 
-	DGSplashScreen * splashScreenControl;
+	CTooltipSupport * mTooltipSupport;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		DGButton * midiLearnButton;
 		DGButton * midiResetButton;
 	#endif
 
 #if TARGET_OS_MAC
-	ControlDefSpec 		dgControlSpec;
-	EventHandlerRef		windowEventHandlerRef;
-
-	EventLoopTimerRef	idleTimer;
-
 	ATSFontContainerRef	fontsATSContainer;	// the ATS font container for the fonts in the bundle's Resources directory
 	bool		fontsWereActivated;	// memory of whether or not bundled fonts were loaded successfully
 
 	PasteboardRef	clipboardRef;
 
+#if !__LP64__
 	WindowRef	textEntryWindow;
 	ControlRef	textEntryControl;
 	CFStringRef	textEntryResultString;
-	WindowRef	windowTransparencyWindow;
+#endif
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
+#if !__LP64__
+	AUCarbonViewBase * mOwnerAUCarbonView;
+#endif
+	AudioUnitParameterID * auParameterList;
+	UInt32 auParameterListSize;
+	AudioUnitParameterID auMaxParameterID;
 	AUEventListenerRef auEventListener;
 	AudioUnitEvent streamFormatPropertyAUEvent;
+	AudioUnitEvent parameterListPropertyAUEvent;
 	AudioUnitEvent midiLearnPropertyAUEvent;
 #endif
+
+#ifdef TARGET_API_RTAS
+	ITemplateProcess * m_Process;
+	long * parameterHighlightColors;
+#endif
 };
+
 
 
 #endif
