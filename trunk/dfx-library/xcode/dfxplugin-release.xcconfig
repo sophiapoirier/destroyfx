@@ -1,5 +1,3 @@
-#include "dfxplugin"
-
 ARCHS = ppc i386
 ZERO_LINK = NO
 DEAD_CODE_STRIPPING = YES

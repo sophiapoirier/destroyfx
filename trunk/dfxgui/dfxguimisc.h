@@ -1,173 +1,107 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2012  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXGUI_MISC_H
 #define __DFXGUI_MISC_H
 
 
-#include <Carbon/Carbon.h>
-
 #include "dfxgui-base.h"
 
+#include "vstgui.h"
+
 #include "dfxdefines.h"
+
+#if TARGET_OS_MAC
+	#include <ApplicationServices/ApplicationServices.h>
+#endif
+
+
 #define FLIP_CG_COORDINATES
 
 
 //-----------------------------------------------------------------------------
-// a rectangular region defined with horizontal position (x), vertical position (y), width, and height
-struct DGRect
+// for some reason the = operator is not working with CColor or something, so these need to be macros
+#define kDGColor_White	kWhiteCColor
+#define kDGColor_Black	kBlackCColor
+
+
+//-----------------------------------------------------------------------------
+class DGRect : public CRect
 {
-	long x;	// horizontal placement
-	long y;	// vertical placement
-	long w;	// width
-	long h;	// height
-
+public:
 	DGRect()
+	:	CRect() {}
+	DGRect(CCoord inX, CCoord inY, CCoord inWidth, CCoord inHeight)
+	:	CRect(inX, inY, inX + inWidth, inY + inHeight)
 	{
-		x = y = w = h = 0;
 	}
-	DGRect(long inX, long inY, long inWidth, long inHeight)
+	void set(CCoord inX, CCoord inY, CCoord inWidth, CCoord inHeight)
 	{
-		set(inX, inY, inWidth, inHeight);
+		left = inX;
+		top = inY;
+		right = inX + inWidth;
+		bottom = inY + inHeight;
 	}
-	DGRect(DGRect * inSourceRect)
+	void setX(CCoord inX)
 	{
-		set(inSourceRect);
+		moveTo(inX, top);
 	}
-
-	long getX()
+	void setY(CCoord inY)
 	{
-		return x;
+		moveTo(left, inY);
 	}
-	long getY()
+	bool isInside(CCoord inX, CCoord inY)
 	{
-		return y;
+		return pointInside( CPoint(inX, inY) );
 	}
-	long getWidth()
+	bool isInside_zerobase(CCoord inX, CCoord inY)
 	{
-		return w;
-	}
-	long getHeight()
-	{
-		return h;
-	}
-
-	void setX(long inX)
-	{
-		x = inX;
-	}
-	void setY(long inY)
-	{
-		y = inY;
-	}
-	void setWidth(long inWidth)
-	{
-		w = inWidth;
-	}
-	void setHeight(long inHeight)
-	{
-		h = inHeight;
+		return pointInside( CPoint(inX + left, inY + top) );
 	}
 
-	void set(DGRect * inSourceRect)
+/* XXX necessary?
+	void offset(CCoord inOffsetX, CCoord inOffsetY, CCoord inWidthGrow, CCoord inHeightGrow)
 	{
-		set(inSourceRect->x, inSourceRect->y, inSourceRect->w, inSourceRect->h);
+		offset(inOffsetX, inOffsetY);
+		setWidth( getWidth() + inWidthGrow );
+		setHeight( getHeight() + inHeightGrow );
 	}
-	void set(long inX, long inY, long inWidth, long inHeight)
-	{
-		x = inX;
-		y = inY;
-		w = inWidth;
-		h = inHeight;
-	}
-
-	void offset(long inOffsetX, long inOffsetY, long inWidthGrow = 0, long inHeightGrow = 0)
-	{
-		x += inOffsetX;
-		y += inOffsetY;
-		w += inWidthGrow;
-		h += inHeightGrow;
-	}
-	void moveTo(long inX, long inY)
-	{
-		x = inX;
-		y = inY;
-	}
-	void resize(long inWidth, long inHeight)
-	{
-		w = inWidth;
-		h = inHeight;
-	}
-
-	bool isInside(long inX, long inY)
-	{
-		return ( ((inX >= x) && (inX < (x + w))) && ((inY >= y) && (inY < (y + h))) );
-	}
-	bool isInside_zerobase(long inX, long inY)
-	{
-		return ( ((inX >= 0) && (inX < w)) && ((inY >= 0) && (inY < h)) );
-	}
-
-	bool isOverlapping(const DGRect & inRect)
-	{
-		if ( (y+h) < inRect.y )
-			return false;
-		if ( y > (inRect.y + inRect.h) )
-			return false;
-		if ( (x+w) < inRect.x )
-			return false;
-		if ( x > (inRect.x + inRect.w) )
-			return false;
-		return true;
-	}
-
-	DGRect& operator = (const DGRect inRect)
-	{
-		set(inRect.x, inRect.y, inRect.w, inRect.h);
-		return *this;
-	}
-	bool operator != (const DGRect & otherRect) const
-	{
-		return ( (x != otherRect.x) || (y != otherRect.y) || (w != otherRect.w) || (h != otherRect.h) );
-	}
-	bool operator == (const DGRect& otherRect) const
-	{
-		return ( (x == otherRect.x) && (y == otherRect.y) && (w == otherRect.w) && (h == otherRect.h) );
-	}
+*/
 
 #if TARGET_OS_MAC
 	void copyToCGRect(CGRect * outDestRect, long inOutputPortHeight)
 	{
-		outDestRect->origin.x = x;
+		outDestRect->origin.x = left;
 #ifdef FLIP_CG_COORDINATES
-		outDestRect->origin.y = y;
+		outDestRect->origin.y = top;
 #else
 		if (inOutputPortHeight)
-			outDestRect->origin.y = inOutputPortHeight - (h + y);
+			outDestRect->origin.y = inOutputPortHeight - (getHeight() + top);
 		else
-			outDestRect->origin.y = y;
+			outDestRect->origin.y = top;
 #endif
-		outDestRect->size.width = w;
-		outDestRect->size.height = h;
+		outDestRect->size.width = getWidth();
+		outDestRect->size.height = getHeight();
 	}
 	CGRect convertToCGRect(long inOutputPortHeight)
 	{
@@ -177,10 +111,10 @@ struct DGRect
 	}
 	void copyToMacRect(Rect * outDestRect)
 	{
-		outDestRect->left = x;
-		outDestRect->top = y;
-		outDestRect->right = x + w;
-		outDestRect->bottom = y + h;
+		outDestRect->left = left;
+		outDestRect->top = top;
+		outDestRect->right = left + getWidth();
+		outDestRect->bottom = top + getHeight();
 	}
 	Rect convertToMacRect()
 	{
@@ -188,49 +122,62 @@ struct DGRect
 		copyToMacRect(&outputRect);
 		return outputRect;
 	}
-#endif
+#endif	// TARGET_OS_MAC
 };
 
 
+
+#ifdef TARGET_API_RTAS
+
+#if WINDOWS_VERSION
+	#define sRect RECT
+#elif MAC_VERSION
+	#define sRect Rect
+#endif
+
+USING_NAMESPACE_VSTGUI
 
 //-----------------------------------------------------------------------------
-// 3-component RGB color + alpha represented with a float (range 0.0 to 1.0) 
-// for each color component
-struct DGColor
-{
-	float r;
-	float g;
-	float b;
-	float a;
+enum {
+	eHighlight_None = -1,
+	eHighlight_Red,	// = 0, same as what Pro Tools passes in
+	eHighlight_Blue,
+	eHighlight_Green,
+	eHighlight_Yellow
+};
 
+#endif
+// TARGET_API_RTAS
+
+
+
+#if 0
+// XXX maybe this serves no useful purpose?
+//-----------------------------------------------------------------------------
+// 3-component RGB color + alpha
+class DGColor : public CColor
+{
+public:
 	DGColor()
-	:	r(0.0f), g(0.0f), b(0.0f), a(1.0f) {}
-	DGColor(float inRed, float inGreen, float inBlue, float inAlpha = 1.0f)
-	:	r(inRed), g(inGreen), b(inBlue), a(inAlpha) {}
-	DGColor(const DGColor& inColor)
-	:	r(inColor.r), g(inColor.g), b(inColor.b), a(inColor.a) {}
+	{
+		red = 0;
+		green = 0;
+		blue = 0;
+		alpha = 0xFF;
+	}
 	DGColor& operator () (float inRed, float inGreen, float inBlue, float inAlpha = 1.0f)
 	{
-		r = inRed;
-		g = inGreen;
-		b = inBlue;
-		a = inAlpha;
-		return *this;
-	}
-
-	DGColor& operator = (const DGColor inColor)
-	{
-		r = inColor.r;
-		g = inColor.g;
-		b = inColor.b;
-		a = inColor.a;
+		const float fixedScalar = (float) 0xFF;
+		red = lrintf(inRed * fixedScalar);
+		green = lrintf(inGreen * fixedScalar);
+		blue = lrintf(inBlue * fixedScalar);
+		alpha = lrintf(inAlpha * fixedScalar);
 		return *this;
 	}
 };
-typedef struct DGColor DGColor;
-
-const DGColor kDGColor_black(0.0f, 0.0f, 0.0f, 1.0f);
-const DGColor kDGColor_white(1.0f, 1.0f, 1.0f, 1.0f);
+#else
+typedef CColor	DGColor;
+#endif
 
 
 
@@ -238,8 +185,9 @@ const DGColor kDGColor_white(1.0f, 1.0f, 1.0f, 1.0f);
 	typedef CGContextRef TARGET_PLATFORM_GRAPHICS_CONTEXT;
 #endif
 
+#if 0
 //-----------------------------------------------------------------------------
-// 
+// XXX replace with CDrawContext
 class DGGraphicsContext
 {
 public:
@@ -307,6 +255,8 @@ private:
 	long portHeight;
 #endif
 };
+#endif
+
 
 
 /***********************************************************************
@@ -321,14 +271,10 @@ class DfxGuiEditor;
    or default params so that it behaves like a single image when not
    using those features) */
 //-----------------------------------------------------------------------------
-class DGImage
+class DGImage : public CBitmap
 {
 public:
-	DGImage(const char * inFileName, long inResourceID, DfxGuiEditor * inOwnerEditor = NULL);
-	virtual ~DGImage();
-
-	long getWidth();
-	long getHeight();
+	DGImage(const char * inFileName, long inResourceID, DfxGuiEditor * inEditor = NULL);
 
 	/* probably a better type is
 	   void draw(int x, int y);
@@ -337,22 +283,18 @@ public:
 	   void drawex(int x, int y, int xindex, int yindex) 
 	   .. for stacked images.
 	*/
-	virtual void draw(DGRect * inRect, DGGraphicsContext * inContext, 
+/*	virtual void draw(DGRect * inRect, DGGraphicsContext * inContext, 
 						long inXoffset = 0, long inYoffset = 0, 
 						float inXscalar = 1.0f, float inYscalar = 1.0f);
-
-#if TARGET_OS_MAC
-	CGImageRef getCGImage()
-		{	return cgImage;	}
-#endif
-
-private:
-#if TARGET_OS_MAC
-	CGImageRef cgImage;
-#endif
+*/
 };
 
-CGImageRef PreRenderCGImageBuffer(CGImageRef inCompressedImage, bool inFlipImage);
+
+
+//-----------------------------------------------------------------------------
+unsigned long DFXGUI_ConvertVstGuiMouseButtons(long inButtons);
+DGKeyModifiers DFXGUI_ConvertVstGuiKeyModifiers(long inButtons);
+
 
 
 #endif

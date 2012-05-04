@@ -1,23 +1,24 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2011  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXGUI_TEXT_DISPLAY_H
@@ -33,6 +34,24 @@ const size_t kDGTextDisplay_stringSize = 256;
 typedef void (*DGValue2TextProcedure) (float inValue, char * outText, void * inUserData);
 
 
+#ifdef TARGET_PLUGIN_USES_VSTGUI
+
+//-----------------------------------------------------------------------------
+class DGAnimation : public CAnimKnob
+{
+public:
+	DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+				DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground = NULL);
+
+#ifdef TARGET_API_RTAS
+	virtual void draw(CDrawContext * inContext);
+#endif
+};
+
+#else
+
+
+
 #pragma mark -
 //-----------------------------------------------------------------------------
 class DGTextDisplay : public DGControl
@@ -41,7 +60,7 @@ public:
 	DGTextDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
 					DGValue2TextProcedure inTextProc, void * inUserData, DGImage * inBackground, 
 					DGTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
-					DGColor inFontColor = kDGColor_black, const char * inFontName = NULL);
+					DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
 	virtual ~DGTextDisplay();
 
 	virtual void draw(DGGraphicsContext * inContext);
@@ -90,7 +109,7 @@ class DGStaticTextDisplay : public DGTextDisplay
 public:
 	DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
 						DGTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
-						DGColor inFontColor = kDGColor_black, const char * inFontName = NULL);
+						DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
 	virtual void draw(DGGraphicsContext * inContext);
@@ -116,7 +135,7 @@ class DGTextArrayDisplay : public DGTextDisplay
 public:
 	DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, long inNumStrings, 
 						DGTextAlignment inTextAlignment = kDGTextAlign_left, DGImage * inBackground = NULL, 
-						float inFontSize = 12.0f, DGColor inFontColor = kDGColor_black, const char * inFontName = NULL);
+						float inFontSize = 12.0f, DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
 	virtual ~DGTextArrayDisplay();
 	virtual void post_embed();
 
@@ -145,6 +164,9 @@ protected:
 	DGImage * animationImage;
 	long numAnimationFrames;
 };
+
+#endif	// !TARGET_PLUGIN_USES_VSTGUI
+
 
 
 

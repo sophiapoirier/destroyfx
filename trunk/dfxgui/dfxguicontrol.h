@@ -1,23 +1,24 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2003-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2003-2011  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #ifndef __DFXGUI_CONTROL_H
@@ -25,69 +26,27 @@ and use the contact form.
 
 
 #include "dfxguimisc.h"
-#include "AUCarbonViewControl.h"
 
 
 
 //-----------------------------------------------------------------------------
-typedef enum {
-	kDGControlType_BackgroundPane,
-	kDGControlType_SubControl
-} DGControlType;
-
 const float kDfxGui_DefaultFineTuneFactor = 10.0f;
 const float kDfxGui_DefaultMouseDragRange = 200.0f;	// pixels
+//const float kDfxGui_DefaultMouseDragValueIncrement = 0.1f;
+//const float kDfxGui_DefaultMouseDragValueIncrement_descrete = 15.0f;
+
+
+
+#ifdef TARGET_PLUGIN_USES_VSTGUI
+typedef CControl	DGControl;
+#else
 
 
 
 class DfxGuiEditor;
 
 //-----------------------------------------------------------------------------
-class DGControlBase
-{
-public:
-	DGControlBase(DfxGuiEditor * inOwnerEditor);
-	virtual ~DGControlBase()
-		{ }
-
-	virtual DGControlType getType() = 0;
-
-	virtual void draw(DGGraphicsContext * inContext)
-		{ }
-	// force a redraw of the control
-	void redraw();
-
-	bool do_contextualMenuClick();
-	virtual bool contextualMenuClick();
-
-	// this will get called regularly by an idle timer
-	virtual void idle()
-		{ }
-
-	DfxGuiEditor * getDfxGuiEditor()
-		{	return ownerEditor;	}
-
-#if TARGET_OS_MAC
-	ControlRef getCarbonControl()
-		{	return carbonControl;	}
-	// checks if a ControlRef is the one wrapped by this DGControl instance
-	bool isControlRef(ControlRef inControl);
-#endif
-
-protected:
-	DfxGuiEditor *	ownerEditor;
-
-#if TARGET_OS_MAC
-	void setCarbonControl(ControlRef inCarbonControl)
-		{	carbonControl = inCarbonControl;	}
-	ControlRef		carbonControl;
-#endif
-};
-
-
-
-//-----------------------------------------------------------------------------
-class DGControl : public DGControlBase
+class DGControl : public CControl
 {
 public:
 	// control for a parameter
@@ -96,16 +55,8 @@ public:
 	DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange);
 	virtual ~DGControl();
 
-	virtual DGControlType getType()
-		{	return kDGControlType_SubControl;	}
-
-#if TARGET_OS_MAC
-	void initCarbonControlValueRange();
-	void initMouseTrackingArea();
-	Rect getMacRect();
-#endif
-
-	void do_draw(DGGraphicsContext * inContext);
+	virtual void draw(CDrawContext * inContext)
+		{ }
 	// mouse position is relative to the control's bounds for ultra convenience
 	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
 	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
@@ -118,6 +69,15 @@ public:
 		{ }
 	bool do_mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
 	virtual bool mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
+	bool do_contextualMenuClick();
+	virtual bool contextualMenuClick();
+
+	// force a redraw of the control
+	void redraw();
+
+	// this will get called regularly by an idle timer
+	virtual void idle()
+		{ }
 
 	void setRespondToMouse(bool inMousePolicy)
 		{	shouldRespondToMouse = inMousePolicy;	}
@@ -132,11 +92,8 @@ public:
 	bool getWraparoundValues()
 		{	return shouldWraparoundValues;	}
 
-	void embed();
-	virtual void post_embed()
-		{ }
-
-	void setVisible(bool inVisibility);
+	DfxGuiEditor * getDfxGuiEditor()
+		{	return ownerEditor;	}
 
 	bool isContinuousControl()
 		{	return isContinuous;	}
@@ -182,7 +139,7 @@ public:
 	void setOffset(long x, long y);
 
 	void setBounds(DGRect * r)
-		{	controlPos.set(r);	}
+		{	controlPos = *r;	}
 	void setForeBounds(long x, long y, long w, long h);
 	void shrinkForeBounds(long x, long y, long w, long h);
 
@@ -191,10 +148,12 @@ public:
 		{	return drawAlpha;	}
 
 #if TARGET_OS_MAC
-	OSStatus setHelpText(CFStringRef inHelpText);
+	bool setHelpText(const char * inHelpText);
 #endif
 
 protected:
+	DfxGuiEditor *		ownerEditor;
+
 	float				valueRange;
 	bool				parameterAttached;
 	bool				isContinuous;
@@ -202,11 +161,6 @@ protected:
 	DGRect				controlPos;	// the control's area
 	DGRect				vizArea; 	// where the foreground displays
 	float				drawAlpha;	// level of overall transparency to draw with (0.0 to 1.0)
-
-#ifdef TARGET_API_AUDIOUNIT
-	CAAUParameter 		auvp;
-	AUCarbonViewControl * auv_control;
-#endif
 
 private:
 	// common constructor stuff
@@ -219,42 +173,6 @@ private:
 	bool				shouldRespondToMouseWheel;
 	bool				currentlyIgnoringMouseTracking;
 	bool				shouldWraparoundValues;
-
-#if TARGET_OS_MAC
-	CFStringRef			helpText;
-	MouseTrackingRef	mouseTrackingRegion;
-	HIViewTrackingAreaRef	mouseTrackingArea;
-	bool				isFirstDraw;
-#endif
-};
-
-
-//-----------------------------------------------------------------------------
-class DGBackgroundControl : public DGControlBase
-{
-public:
-	DGBackgroundControl(DfxGuiEditor * inOwnerEditor, ControlRef inControl);
-
-	virtual DGControlType getType()
-		{	return kDGControlType_BackgroundPane;	}
-
-	virtual void draw(DGGraphicsContext * inContext);
-
-	void setImage(DGImage * inImage)
-		{	backgroundImage = inImage;	}
-	void setColor(DGColor inColor)
-		{	backgroundColor = inColor;	}
-
-	void setDragActive(bool inActiveStatus);
-
-	long getWidth();
-	long getHeight();
-
-protected:
-	DGImage *		backgroundImage;
-	DGColor			backgroundColor;
-
-	bool			dragIsActive;
 };
 
 
@@ -268,16 +186,12 @@ public:
 
 	virtual void ControlToParameter();
 	virtual void ParameterToControl(Float32 inNewValue);
-	virtual bool HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent);
 };
 #endif
 
 
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-CGPoint GetControlCompositingOffset(ControlRef inControl, DfxGuiEditor * inEditor);
-void FixControlCompositingOffset(DGRect * inRect, ControlRef inControl, DfxGuiEditor * inEditor);
-#endif
+
+#endif	// !TARGET_PLUGIN_USES_VSTGUI
 
 
 #endif
