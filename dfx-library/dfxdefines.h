@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2011  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -84,7 +84,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 	const long DFX_PARAM_MAX_VALUE_STRING_LENGTH = 256;
 	const long DFX_PARAM_MAX_UNIT_STRING_LENGTH = 256;
 
-	#if WIN32 && !defined(TARGET_API_RTAS)
+	#if _WIN32 && !defined(TARGET_API_RTAS)
 		#include <windows.h>
 	#endif
 	#ifdef _MSC_VER

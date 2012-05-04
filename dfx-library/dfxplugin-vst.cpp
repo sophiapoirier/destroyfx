@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2011  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -515,7 +515,7 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
    instance pointers. We save two copies because vstgui stupidly wants
    it to be a "void *", where our own GUI stuff avoids downcasts by
    using the right type, HINSTANCE. */
-#if WIN32
+#if _WIN32
 
 /* vstgui needs void *, not HINSTANCE */
 void * hInstance;
