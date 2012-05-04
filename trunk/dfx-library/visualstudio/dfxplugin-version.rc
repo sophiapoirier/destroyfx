@@ -41,7 +41,7 @@ BEGIN
 			VALUE "FileDescription", PLUGIN_DISPLAY_NAME " " PLUGIN_API_NAME " audio plug-in\0"
 			VALUE "FileVersion", PLUGIN_VERSION_STRING "\0"
 			VALUE "InternalName", PLUGIN_DISPLAY_NAME "\0"
-			VALUE "LegalCopyright", "Copyright (C) 2009 " PLUGIN_CREATOR_NAME_STRING "\0"
+			VALUE "LegalCopyright", "Copyright (C) " PLUGIN_COPYRIGHT_YEAR_STRING " " PLUGIN_CREATOR_NAME_STRING "\0"
 			VALUE "OriginalFilename", PLUGIN_DISPLAY_NAME "." PLUGIN_FILENAME_EXTENSION
 			VALUE "ProductName", PLUGIN_DISPLAY_NAME "\0"
 			VALUE "ProductVersion", PLUGIN_VERSION_STRING "\0"

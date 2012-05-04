@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2011  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -32,7 +32,7 @@ These are some generally useful functions.
 	#include <Carbon/Carbon.h>
 #endif
 
-#if WIN32
+#if _WIN32
 	#include <windows.h>
 	// for ShellExecute
 	#include <shellapi.h>
@@ -477,7 +477,7 @@ long launch_url(const char * inUrlString)
 	return paramErr;	// couldn't create the CFURL, so return some error code
 #endif
 
-#if WIN32
+#if _WIN32
 	return (long) ShellExecute(NULL, "open", inUrlString, NULL, NULL, SW_SHOWNORMAL);
 #endif
 }
@@ -625,12 +625,15 @@ uint64_t DFX_GetMillisecondCount()
 	return (uint64_t)TickCount() * 100 / 6;
 #endif
 
-#if WIN32
-	#if _WIN32_WINNT >= 0x0600
+#if _WIN32
+	#if (_WIN32_WINNT >= 0x0600) && 0	// XXX how to runtime check without symbol error if unavailable?
+	OSVERSIONINFO versionInfo = {0};
+	versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
+	if ( GetVersionEx(&versionInfo) && (versionInfo.dwMajorVersion >= 6) )
 		return GetTickCount64();
-	#else
-		return (UINT64) GetTickCount();
+	else
 	#endif
+	return (UINT64) GetTickCount();
 #endif
 }
 
