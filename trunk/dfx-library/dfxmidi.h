@@ -1,29 +1,33 @@
 /*---------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2001-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2001-2010  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
-Sophia's Destroy FX MIDI stuff --- happened February 2001
+Sophia's Destroy FX MIDI stuff
 ---------------------------------------------------------------*/
 
-#ifndef __DFXMIDI_H
-#define __DFXMIDI_H
+#ifndef __DFX_MIDI_H
+#define __DFX_MIDI_H
+
+
+#include "dfxenvelope.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -121,17 +125,14 @@ enum
 //----------------------------------------------------------------------------- 
 // constants and macros
 
-const long NUM_FADE_POINTS = 30000;
-const double FADE_CURVE = 2.7;
-
 const long kDfxMidi_PitchbendMiddleValue = 0x2000;
 const double PITCHBEND_MAX = 36.0;
 
-// 128 midi notes
+// 128 MIDI notes
 const long NUM_NOTES = 128;
 // 12th root of 2
-const double NOTE_UP_SCALAR = 1.059463094359295264561825294946;
-const double NOTE_DOWN_SCALAR = 0.94387431268169349664191315666792;
+const double NOTE_UP_SCALAR = 1.059463094359295264561825294946;	// XXX use exact math?
+const double NOTE_DOWN_SCALAR = 0.94387431268169349664191315666792;	// XXX use exact math?
 const float MIDI_SCALAR = 1.0f / 127.0f;
 
 const long STOLEN_NOTE_FADE_DUR = 48;
@@ -159,25 +160,28 @@ typedef struct {
 	int channel;	// the MIDI channel
 } DfxMidiEvent;
 
+
+//-----------------------------------------------------------------------------
 // this holds information for each MIDI note
-typedef struct {
-	int velocity;	// note velocity - 7-bit MIDI value
-	float noteAmp;	// the gain for the note, scaled with velocity, curve, and influence
-	long attackDur;	// duration, in samples, of the attack phase
-	long attackSamples;	// current position in the attack phase
-	long releaseDur;	// duration, in samples, of the release phase
-	long releaseSamples;	// current position in the release phase
-	float fadeTableStep;	// the step increment for each envelope step using the fade table
-	float linearFadeStep;	// the step increment for each linear envelope step
-	float lastOutValue;	// capture the most recent output value for smoothing, if necessary
-	long smoothSamples;	// counter for quickly fading cut-off notes, for smoothity
-	float * tail1;	// a little buffer of output samples for smoothing a cut-off note (left channel)
-	float * tail2;	// (right channel)
-} NoteTable;
+class DfxMusicNote
+{
+public:
+	DfxMusicNote();
+	~DfxMusicNote();
+
+	void clearTail();	// zero out a note's tail buffers
+
+	int mVelocity;	// note velocity - 7-bit MIDI value
+	float mNoteAmp;	// the gain for the note, scaled with velocity, curve, and influence
+	DfxEnvelope mEnvelope;
+	float mLastOutValue;	// capture the most recent output value for smoothing, if necessary   XXX mono assumption
+	long mSmoothSamples;	// counter for quickly fading cut-off notes, for smoothity
+	float * mTail1;	// a little buffer of output samples for smoothing a cut-off note (left channel)
+	float * mTail2;	// (right channel)	XXX wow this stereo assumption is such a bad idea
+};
 
 
 //-----------------------------------------------------------------------------
-
 class DfxMidi
 {
 public:
@@ -185,9 +189,10 @@ public:
 	~DfxMidi();
 
 	void reset();	// resets the variables
-	void clearTail(int inCurrentNote);	// zero out a note's tail buffers
-	void setLazyAttack(bool inNewMode=true)
-		{	lazyAttackMode = inNewMode;	}
+	void setSampleRate(double inSampleRate);
+	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);
+	void setEnvCurveType(DfxEnvCurveType inCurveType);
+	void setResumedAttackMode(bool inNewMode);
 
 	bool incNumEvents();	// increment the numBlockEvents counter, safely
 
@@ -203,9 +208,8 @@ public:
 	void postprocessEvents();
 
 	// this is where new MIDI events are reckoned with during audio processing
-	void heedEvents(long inEventNum, float inSampleRate, double inPitchbendRange, 
-					float inAttackDur, float inReleaseDur, 
-					bool inLegato, float inVelocityCurve, float inVelocityInfluence);
+	void heedEvents(long inEventNum, double inPitchbendRange, bool inLegato, 
+					float inVelocityCurve, float inVelocityInfluence);
 
 	// these are for manage the ordered queue of active MIDI notes
 	void insertNote(int inCurrentNote);
@@ -213,15 +217,15 @@ public:
 	void removeAllNotes();
 
 	// public variables
-	NoteTable * noteTable;	// a table with important data about each note
+	DfxMusicNote * noteTable;	// a table with important data about each note
 	DfxMidiEvent * blockEvents;	// the new MIDI events for a given processing block
 	long numBlockEvents;	// the number of new MIDI events in a given processing block
 	int * noteQueue;		// a chronologically ordered queue of all active notes
 	double * freqTable;	// a table of the frequency corresponding to each MIDI note
 	double pitchbend;		// a frequency scalar value for the current pitchbend setting
 
-	// this function calculates fade scalars if attack or release are happening
-	float processEnvelope(bool inUseFades, int inCurrentNote);
+	// this function calculates fade scalars if attack, decay, or release are happening
+	float processEnvelope(int inCurrentNote);
 
 	// this function writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note
@@ -235,17 +239,14 @@ public:
 private:
 	// initializations
 	void fillFrequencyTable();
-	void fillFadeTable();
 
-	void turnOffNote(int inCurrentNote, float inReleaseDur, bool inLegato, float inSampleRate);
+	void turnOffNote(int inCurrentNote, bool inLegato);
 
 	// a queue of note-offs for when the sustain pedal is active
 	bool * sustainQueue;
-	// an exponentially curved gain envelope
-	float * fadeTable;
 
 	// pick up where the release left off, if it's still releasing
-	bool lazyAttackMode;
+//	bool lazyAttackMode;
 	// sustain pedal is active
 	bool sustain;
 
@@ -256,60 +257,14 @@ private:
 
 
 //-------------------------------------------------------------------------
-// this function calculates fade scalars if attack or release are happening
-inline float DfxMidi::processEnvelope(bool inUseFades, int inCurrentNote)
+// this function calculates fade scalars if attack, decay, or release are happening
+inline float DfxMidi::processEnvelope(int inCurrentNote)
 {
-	NoteTable * note = &noteTable[inCurrentNote];
+	const float outputAmp = noteTable[inCurrentNote].mEnvelope.process();
+	if (noteTable[inCurrentNote].mEnvelope.getState() == kDfxEnvState_Dormant)
+		noteTable[inCurrentNote].mVelocity = 0;
 
-	// if attack is in progress
-	if (note->attackDur > 0)
-	{
-		(note->attackSamples)++;
-		// zero things out if the attack is over so we won't do this fade calculation next time
-		if (note->attackSamples >= note->attackDur)
-		{
-			note->attackDur = 0;
-			return 1.0f;
-		}
-
-		if (inUseFades)	// use nice, exponential fading
-			return fadeTable[ (long) ((float)(note->attackSamples) * note->fadeTableStep) ];
-		else	// bad, linear fade
-			return (float)(note->attackSamples) * note->linearFadeStep;
-			// exponential sine fade (stupendously inefficient)
-//				envAmp = ( sin((envAmp*kDFX_PI_d)-(kDFX_PI_d*0.5)) + 1.0 ) * 0.5;
-//				envAmp *= envAmp;	// squared
-	}
-
-	// if release is in progress
-	else if (note->releaseDur)
-	{
-		(note->releaseSamples)--;
-		// zero things out if the release is over so we won't do this fade calculation next time
-		// and turn this note off
-		if (note->releaseSamples <= 0)
-		{
-			note->releaseDur = 0;
-			note->velocity = 0;
-			return 0.0f;
-		}
-
-		if (inUseFades)	// use nice, exponential fading
-			return fadeTable[ (long) ((float)(note->releaseSamples) * note->fadeTableStep) ];
-		else	// use bad fade
-			return (float)(note->releaseSamples) * note->linearFadeStep;
-			// exponential sine fade
-//				envAmp = ( sinf((envAmp*kDFX_PI_f)-(kDFX_PI_f*0.5f)) + 1.0f ) * 0.5f;
-//				envAmp *= envAmp;	// squared
-	}
-
-	// since it's possible for the release to end and the note to turn off 
-	// during this processing buffer, we have to check for that and then return 0.0
-	else if ( (note->velocity) == 0 )
-		return 0.0f;
-
-	// just send 1.0 no fades or note-offs are happening
-	return 1.0f;
+	return outputAmp;
 }
 
 
@@ -321,12 +276,13 @@ inline void DfxMidi::processSmoothingOutputSample(float * outAudio, long inNumSa
 	for (long samplecount=0; samplecount < inNumSamples; samplecount++)
 	{
 		// add the latest sample to the output collection, scaled by the note envelope and user gain
-		outAudio[samplecount] += noteTable[inCurrentNote].lastOutValue * 
-							(float)noteTable[inCurrentNote].smoothSamples * STOLEN_NOTE_FADE_STEP;
+		float outputFadeScalar = (float)noteTable[inCurrentNote].mSmoothSamples * STOLEN_NOTE_FADE_STEP;
+		outputFadeScalar = outputFadeScalar * outputFadeScalar * outputFadeScalar;
+		outAudio[samplecount] += noteTable[inCurrentNote].mLastOutValue * outputFadeScalar;
 		// decrement the smoothing counter
-		(noteTable[inCurrentNote].smoothSamples)--;
+		(noteTable[inCurrentNote].mSmoothSamples)--;
 		// exit this function if we've done all of the smoothing necessary
-		if (noteTable[inCurrentNote].smoothSamples <= 0)
+		if (noteTable[inCurrentNote].mSmoothSamples <= 0)
 			return;
 	}
 }
@@ -337,8 +293,8 @@ inline void DfxMidi::processSmoothingOutputSample(float * outAudio, long inNumSa
 // by fading out the samples stored in the tail buffers
 inline void DfxMidi::processSmoothingOutputBuffer(float * outAudio, long inNumSamples, int inCurrentNote, int inMidiChannel)
 {
-	long * smoothsamples = &(noteTable[inCurrentNote].smoothSamples);
-	float * tail = (inMidiChannel == 1) ? noteTable[inCurrentNote].tail1 : noteTable[inCurrentNote].tail2;
+	long * smoothsamples = &(noteTable[inCurrentNote].mSmoothSamples);
+	float * tail = (inMidiChannel == 1) ? noteTable[inCurrentNote].mTail1 : noteTable[inCurrentNote].mTail2;
 
 	for (long samplecount=0; samplecount < inNumSamples; samplecount++)
 	{
