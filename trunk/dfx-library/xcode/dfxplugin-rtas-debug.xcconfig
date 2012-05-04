@@ -1,0 +1,5 @@
+#include "dfxplugin-rtas"
+#include "../../ProToolsSDK/AlturaPorts/TDMPlugIns/common/Mac/CommonDebugSettings"
+#include "dfxplugin-debug"
+
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) $(DFX_PLUGIN_FORMAT_MACROS) $(DFX_BUILD_CONFIGURATION_MACROS)
