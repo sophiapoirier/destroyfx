@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2012  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,22 +21,23 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#if !__LP64__
-
 #include "dfxguieditor.h"
 
 #include "dfxplugin.h"
-#include "dfx-au-utilities.h"
 #include "dfxguibutton.h"
 
+#ifdef TARGET_API_AUDIOUNIT
+	#include "dfx-au-utilities.h"
+#endif
+
+#ifdef TARGET_API_RTAS
+	#include "ConvertUtils.h"
+#endif
 
 
-#if TARGET_OS_MAC
-static pascal OSStatus DFXGUI_ControlEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
-static pascal OSStatus DFXGUI_WindowEventHandler(EventHandlerCallRef, EventRef, void * inUserData);
-static pascal void DFXGUI_IdleTimerProc(EventLoopTimerRef inTimer, void * inUserData);
+
+#if TARGET_OS_MAC && !__LP64__
 static pascal OSStatus DFXGUI_TextEntryEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData);
-static pascal OSStatus DFXGUI_WindowTransparencyEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData);
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -44,36 +45,30 @@ static void DFXGUI_AudioUnitEventListenerProc(void * inCallbackRefCon, void * in
 #endif
 
 // XXX for now this is a good idea, until it's totally obsoleted
-#define AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES
+#define AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES	1
 
-#if TARGET_OS_MAC
-static EventHandlerUPP gControlHandlerUPP = NULL;
-static EventHandlerUPP gWindowEventHandlerUPP = NULL;
-static EventLoopTimerUPP gIdleTimerUPP = NULL;
+#if TARGET_OS_MAC && !__LP64__
 static EventHandlerUPP gTextEntryEventHandlerUPP = NULL;
-static EventHandlerUPP gWindowTransparencyEventHandlerUPP = NULL;
-static ControlActionUPP gTransparencyControlActionUPP = NULL;
 
 static const CFStringRef kDfxGui_NibName = CFSTR("dfxgui");
 const OSType kDfxGui_ControlSignature = DESTROYFX_CREATOR_ID;
 const SInt32 kDfxGui_TextEntryControlID = 1;
-const SInt32 kDfxGui_TransparencySliderControlID = 0;
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	const Float32 kDfxGui_ParameterNotificationInterval = 30.0 * kEventDurationMillisecond;	// 30 ms parameter notification update interval
-	const Float32 kDfxGui_PropertyNotificationInterval = kDfxGui_ParameterNotificationInterval;
 //	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("org.destroyfx.aupreset");
 	static const CFStringRef kDfxGui_AUPresetFileUTI = CFSTR("com.apple.audio-unit-preset");	// XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
 #endif
 
+const long kDfxGui_BackgroundImageResourceID = 128;
+
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
-:	TARGET_API_EDITOR_BASE_CLASS(inInstance, kDfxGui_ParameterNotificationInterval)
+:	TARGET_API_EDITOR_BASE_CLASS(inInstance)
 {
 /*
-CFStringRef text = CFSTR("yo dude let's go");
+CFStringRef text = CFSTR("oh hey wetty");
 CFRange foundRange = CFStringFind(text, CFSTR(" "), 0);
 if (foundRange.length != 0)
 {
@@ -92,43 +87,64 @@ CFRelease(mut);
 	controlsList = NULL;
 	imagesList = NULL;
 
-	backgroundControl = NULL;
-
-	splashScreenControl = NULL;
 	#if TARGET_PLUGIN_USES_MIDI
 		midiLearnButton = NULL;
 		midiResetButton = NULL;
 	#endif
   
 #if TARGET_OS_MAC
-	idleTimer = NULL;
-
-	dgControlSpec.defType = kControlDefObjectClass;
-	dgControlSpec.u.classRef = NULL;
-	windowEventHandlerRef = NULL;
-
 	fontsATSContainer = kATSFontContainerRefUnspecified;
 	fontsWereActivated = false;	// guilty until proven innocent
 
 	clipboardRef = NULL;
 
+#if !__LP64__
 	textEntryWindow = NULL;
 	textEntryControl = NULL;
 	textEntryResultString = NULL;
-	windowTransparencyWindow = NULL;
+#endif
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
+#if !__LP64__
+	mOwnerAUCarbonView = NULL;
+#endif
+	auParameterListSize = 0;
+	auParameterList = NULL;
+	auMaxParameterID = 0;
 	auEventListener = NULL;
+#endif
+
+#ifdef TARGET_API_RTAS
+	m_Process = inInstance;
+
+	parameterHighlightColors = (long*) malloc(GetNumParameters() * sizeof(*parameterHighlightColors));
+	for (long i=0; i < GetNumParameters(); i++)
+		parameterHighlightColors[i] = eHighlight_None;
 #endif
 
 	currentControl_clicked = NULL;
 	currentControl_mouseover = NULL;
 	mousedOverControlsList = NULL;
+	mTooltipSupport = NULL;
 
 	numAudioChannels = 0;
-	mIsOpen = false;
 	mJustOpened = false;
+	mEditorOpenErr = kDfxErr_NoError;
+
+	rect.top = rect.left = rect.bottom = rect.right = 0;
+	// load the background image
+	// we don't need to load all bitmaps, this could be done when open is called
+	// XXX hack
+	backgroundImage = new DGImage(PLUGIN_BACKGROUND_IMAGE_FILENAME, kDfxGui_BackgroundImageResourceID);
+	if (backgroundImage != NULL)
+	{
+		// init the size of the plugin
+		rect.right = rect.left + backgroundImage->getWidth();
+		rect.bottom = rect.top + backgroundImage->getHeight();
+	}
+
+	setKnobMode(kLinearMode);
 }
 
 //-----------------------------------------------------------------------------
@@ -137,25 +153,32 @@ DfxGuiEditor::~DfxGuiEditor()
 	if ( IsOpen() )
 		CloseEditor();
 
-	mIsOpen = false;
-
 	#if TARGET_PLUGIN_USES_MIDI
-		#ifdef TARGET_API_AUDIOUNIT
-			if (GetEditAudioUnit() != NULL)
-		#endif
-			setmidilearning(false);
-
+		setmidilearning(false);
 		midiLearnButton = NULL;
 		midiResetButton = NULL;
 	#endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	// remove and dispose the property listener, if we created it
+#if !__LP64__
+	mOwnerAUCarbonView = NULL;
+#endif
+
+	// remove and dispose the event listener, if we created it
 	if (auEventListener != NULL)
 	{
+		if (auParameterList != NULL)
+		{
+			for (UInt32 i=0; i < auParameterListSize; i++)
+			{
+				AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(auParameterList[i]);
+				AUListenerRemoveParameter(auEventListener, this, &auParam);
+			}
+		}
 		if (AUEventListenerRemoveEventType != NULL)
 		{
 			AUEventListenerRemoveEventType(auEventListener, this, &streamFormatPropertyAUEvent);
+			AUEventListenerRemoveEventType(auEventListener, this, &parameterListPropertyAUEvent);
 			#if TARGET_PLUGIN_USES_MIDI
 				AUEventListenerRemoveEventType(auEventListener, this, &midiLearnPropertyAUEvent);
 			#endif
@@ -163,16 +186,10 @@ DfxGuiEditor::~DfxGuiEditor()
 		AUListenerDispose(auEventListener);
 	}
 	auEventListener = NULL;
-#endif
 
-#if TARGET_OS_MAC
-	if (idleTimer != NULL)
-		RemoveEventLoopTimer(idleTimer);
-	idleTimer = NULL;
-
-	if (windowEventHandlerRef != NULL)
-		RemoveEventHandler(windowEventHandlerRef);
-	windowEventHandlerRef = NULL;
+	if (auParameterList != NULL)
+		free(auParameterList);
+	auParameterList = NULL;
 #endif
 
 	// deleting a list link also deletes the list's item
@@ -196,22 +213,6 @@ DfxGuiEditor::~DfxGuiEditor()
 	}
 
 #if TARGET_OS_MAC
-	// only unregister in Mac OS X version 10.2.3 or higher, otherwise this will cause a crash
-	if ( GetMacOSVersion() >= 0x1023 )
-	{
-//fprintf(stderr, "using Mac OS X version 10.2.3 or higher, so our control toolbox class will be unregistered\n");
-		if (dgControlSpec.u.classRef != NULL)
-		{
-			OSStatus unregResult = UnregisterToolboxObjectClass( (ToolboxObjectClassRef)(dgControlSpec.u.classRef) );
-			if (unregResult == noErr)
-			{
-				dgControlSpec.u.classRef = NULL;
-			}
-//else fprintf(stderr, "unregistering our control toolbox class FAILED, error %ld\n", unregResult);
-		}
-	}
-//else fprintf(stderr, "using a version of Mac OS X lower than 10.2.3, so our control toolbox class will NOT be unregistered\n");
-
 	// This will actually automatically be deactivated when the host app is quit, 
 	// so there's no need to deactivate fonts ourselves.  
 	// In fact, since there may be multiple plugin GUI instances, it's safer 
@@ -219,120 +220,97 @@ DfxGuiEditor::~DfxGuiEditor()
 //	if ( fontsWereActivated && (fontsATSContainer != NULL) )
 //		ATSFontDeactivate(fontsATSContainer, NULL, kATSOptionFlagsDefault);
 
-	if (windowTransparencyWindow != NULL)
-	{
-		HideWindow(windowTransparencyWindow);
-		DisposeWindow(windowTransparencyWindow);
-	}
-	windowTransparencyWindow = NULL;
-
 	if (clipboardRef != NULL)
 		CFRelease(clipboardRef);
 	clipboardRef = NULL;
 #endif
 
-	if (backgroundControl != NULL)
-		delete backgroundControl;
-	backgroundControl = NULL;
+	if (backgroundImage != NULL)
+		backgroundImage->forget();
+	backgroundImage = NULL;
+
+#ifdef TARGET_API_RTAS
+	m_Process = NULL;
+
+	if (parameterHighlightColors != NULL)
+		free(parameterHighlightColors);
+	parameterHighlightColors = NULL;
+#endif
 }
 
 
-#ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
-OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
+bool DfxGuiEditor::open(void * inWindow)
 {
+	// !!! always call this !!!
+	TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
+
+	controlsList = NULL;
+	imagesList = NULL;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		setmidilearning(false);
 	#endif
 
-
-// create the background control object using the embedding pane control
-	backgroundControl = new DGBackgroundControl(this, GetCarbonPane());
-
-
-// create our HIToolbox object class for common event handling amongst our custom Carbon Controls
-	EventTypeSpec toolboxClassEvents[] = {
-		{ kEventClassControl, kEventControlDraw },
-//		{ kEventClassControl, kEventControlInitialize },
-		{ kEventClassControl, kEventControlHitTest },
-		{ kEventClassControl, kEventControlTrack },
-//		{ kEventClassControl, kEventControlHit }, 
-//		{ kEventClassControl, kEventControlClick }, 
-		{ kEventClassControl, kEventControlContextualMenuClick }, 
-		{ kEventClassControl, kEventControlValueFieldChanged }, 
-		{ kEventClassControl, kEventControlTrackingAreaEntered }, 
-		{ kEventClassControl, kEventControlTrackingAreaExited }, 
-		{ kEventClassMouse, kEventMouseEntered }, 
-		{ kEventClassMouse, kEventMouseExited }, 
-	};
-	ToolboxObjectClassRef newControlClass = NULL;
-	if (gControlHandlerUPP == NULL)
-		gControlHandlerUPP = NewEventHandlerUPP(DFXGUI_ControlEventHandler);
-	UInt64 instanceAddress = (UInt64) this;
-	bool noSuccessYet = true;
-	while (noSuccessYet)
-	{
-		CFStringRef toolboxClassIDcfstring = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s.DfxGuiControlClass.%llu"), 
-																		PLUGIN_BUNDLE_IDENTIFIER, instanceAddress);
-		if (toolboxClassIDcfstring != NULL)
-		{
-			if ( RegisterToolboxObjectClass(toolboxClassIDcfstring, NULL, GetEventTypeCount(toolboxClassEvents), toolboxClassEvents, 
-											gControlHandlerUPP, this, &newControlClass) == noErr )
-				noSuccessYet = false;
-			CFRelease(toolboxClassIDcfstring);
-		}
-		instanceAddress++;
-	}
-	dgControlSpec.u.classRef = newControlClass;
+	CRect frameRect(rect.left, rect.top, rect.right, rect.bottom);
+	frame = new CFrame(frameRect, inWindow, this);
+	frame->setBackground( GetBackgroundImage() );
 
 
-// create the window event handler that supplements the control event handler by tracking mouse dragging, mouseover controls, etc.
 	currentControl_clicked = NULL;	// make sure that it isn't set to anything
 	mousedOverControlsList = NULL;
 	setCurrentControl_mouseover(NULL);
-	EventTypeSpec windowEvents[] = {
-									{ kEventClassMouse, kEventMouseDragged }, 
-									{ kEventClassMouse, kEventMouseUp }, 
-									{ kEventClassMouse, kEventMouseWheelMoved }, 
-									{ kEventClassKeyboard, kEventRawKeyDown }, 
-									{ kEventClassKeyboard, kEventRawKeyRepeat }, 
-									{ kEventClassCommand, kEventCommandProcess }, 
-								};
-	if (gWindowEventHandlerUPP == NULL)
-		gWindowEventHandlerUPP = NewEventHandlerUPP(DFXGUI_WindowEventHandler);
-	InstallEventHandler(GetWindowEventTarget(GetCarbonWindow()), gWindowEventHandlerUPP, 
-						GetEventTypeCount(windowEvents), windowEvents, this, &windowEventHandlerRef);
 
 
-// register for HitTest events on the background embedding pane so that we know when the mouse hovers over it
-	EventTypeSpec paneEvents[] = {
-								{ kEventClassControl, kEventControlDraw }, 
-								{ kEventClassControl, kEventControlApplyBackground }, 
-//								{ kEventClassControl, kEventControlHitTest }, 
-								{ kEventClassControl, kEventControlContextualMenuClick }, 
-								};
-	WantEventTypes(GetControlEventTarget(GetCarbonPane()), GetEventTypeCount(paneEvents), paneEvents);
+#if TARGET_OS_MAC && !__LP64__
+	Duration tooltipDelayDur = 0;
+	OSStatus hmStatus = HMGetTagDelay(&tooltipDelayDur);
+	if (hmStatus == noErr)
+	{
+		if (tooltipDelayDur < 0)	// this signifies microseconds rather than milliseconds
+			tooltipDelayDur = abs(tooltipDelayDur) / 1000;
+		mTooltipSupport = new CTooltipSupport(frame, tooltipDelayDur);
+	}
+	else
+#else
+		mTooltipSupport = new CTooltipSupport(frame);
+#endif
 
 
 // determine the number of audio channels currently configured for the AU
 	numAudioChannels = getNumAudioChannels();
 
-
 #ifdef TARGET_API_AUDIOUNIT
-// install a property listener for the necessary properties
+// install an event listener for the parameters and necessary properties
+	auParameterList = CreateParameterList(kAudioUnitScope_Global, &auParameterListSize);
 	if ( (AUEventListenerCreate != NULL) && (AUEventListenerAddEventType != NULL) )
 	{
+		// XXX should I use kCFRunLoopCommonModes instead, like AUCarbonViewBase does?
 		OSStatus status = AUEventListenerCreate(DFXGUI_AudioUnitEventListenerProc, this, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 
-								kDfxGui_PropertyNotificationInterval, kDfxGui_PropertyNotificationInterval, &auEventListener);
+								kDfxGui_NotificationInterval, kDfxGui_NotificationInterval, &auEventListener);
 		if (status == noErr)
 		{
+			if (auParameterList != NULL)
+			{
+				for (UInt32 i=0; i < auParameterListSize; i++)
+				{
+					AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(auParameterList[i]);
+					AUListenerAddParameter(auEventListener, this, &auParam);
+				}
+			}
+
 			memset(&streamFormatPropertyAUEvent, 0, sizeof(streamFormatPropertyAUEvent));
 			streamFormatPropertyAUEvent.mEventType = kAudioUnitEvent_PropertyChange;
-			streamFormatPropertyAUEvent.mArgument.mProperty.mAudioUnit = GetEditAudioUnit();
+			streamFormatPropertyAUEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
 			streamFormatPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_StreamFormat;
 			streamFormatPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Output;
 			streamFormatPropertyAUEvent.mArgument.mProperty.mElement = 0;
 			AUEventListenerAddEventType(auEventListener, this, &streamFormatPropertyAUEvent);
+
+			parameterListPropertyAUEvent = streamFormatPropertyAUEvent;
+			parameterListPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_ParameterList;
+			parameterListPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
+			AUEventListenerAddEventType(auEventListener, this, &parameterListPropertyAUEvent);
 
 			#if TARGET_PLUGIN_USES_MIDI
 				midiLearnPropertyAUEvent = streamFormatPropertyAUEvent;
@@ -345,6 +323,7 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 #endif
 
 
+#if TARGET_OS_MAC
 // load any fonts from our bundle resources to be accessible locally within our component instance
 	CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 	if (pluginBundle != NULL)
@@ -355,6 +334,10 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 			FSRef bundleResourcesDirFSRef;
 			if ( CFURLGetFSRef(bundleResourcesDirCFURL, &bundleResourcesDirFSRef) )
 			{
+#if __LP64__ || (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5)
+				OSStatus status = ATSFontActivateFromFileReference(&bundleResourcesDirFSRef, kATSFontContextLocal, 
+									kATSFontFormatUnspecified, NULL, kATSOptionFlagsProcessSubdirectories, &fontsATSContainer);
+#else
 				FSSpec bundleResourcesDirFSSpec;
 				OSStatus status = FSGetCatalogInfo(&bundleResourcesDirFSRef, kFSCatInfoNone, NULL, NULL, &bundleResourcesDirFSSpec, NULL);
 				// activate all of our fonts in the local (host application) context only
@@ -362,243 +345,173 @@ OSStatus DfxGuiEditor::CreateUI(Float32 inXOffset, Float32 inYOffset)
 				if (status == noErr)
 					status = ATSFontActivateFromFileSpecification(&bundleResourcesDirFSSpec, kATSFontContextLocal, 
 									kATSFontFormatUnspecified, NULL, kATSOptionFlagsProcessSubdirectories, &fontsATSContainer);
+#endif
 				if (status == noErr)
 					fontsWereActivated = true;
 			}
 			CFRelease(bundleResourcesDirCFURL);
 		}
 	}
+#endif
 
 
-	// let the child class do its thing
-	long openErr = OpenEditor();
-	if (openErr == noErr)
+	mEditorOpenErr = OpenEditor();
+	if (mEditorOpenErr == kDfxErr_NoError)
 	{
-		// set the size of the embedding pane
-		if (backgroundControl != NULL)
-			SizeControl(GetCarbonPane(), (SInt16) (backgroundControl->getWidth()), (SInt16) (backgroundControl->getHeight()));
-
-		if (gIdleTimerUPP == NULL)
-			gIdleTimerUPP = NewEventLoopTimerUPP(DFXGUI_IdleTimerProc);
-		InstallEventLoopTimer(GetCurrentEventLoop(), 0.0, kEventDurationMillisecond * 50.0, gIdleTimerUPP, this, &idleTimer);
+		mJustOpened = true;
 
 		// embed/activate every control
+		// XXX do this?
 		DGControlsList * tempcl = controlsList;
 		while (tempcl != NULL)
 		{
-			tempcl->control->embed();
+//			tempcl->control->embed();	// XXX I removed this method, so any need to do this iteration?
 			tempcl = tempcl->next;
 		}
 
 		// allow for anything that might need to happen after the above post-opening stuff is finished
 		post_open();
+
+		return true;
 	}
-
-	if (openErr == noErr)
-	{
-		mIsOpen = true;
-		mJustOpened = true;
-	}
-
-	return openErr;
-}
-#endif
-// TARGET_API_AUDIOUNIT
-
-//-----------------------------------------------------------------------------
-// recursively traverse the controls list so that embed is called on each control from last to first
-void DfxGuiEditor::embedAllControlsInReverseOrder(DGControlsList * inControlsList)
-{
-	if (inControlsList == NULL)
-		return;
-	if (inControlsList->next != NULL)
-		embedAllControlsInReverseOrder(inControlsList->next);
-	inControlsList->control->embed();
-}
-
-#ifdef TARGET_API_AUDIOUNIT
-//-----------------------------------------------------------------------------
-OSStatus DfxGuiEditor::Version()
-{
-	return DFX_CompositePluginVersionNumberValue();
-}
-#endif
-// TARGET_API_AUDIOUNIT
-
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-// inEvent is expected to be an event of the class kEventClassControl.  
-// outPort will be null if a CGContextRef was available from the event parameters 
-// (which happens with compositing windows) or non-null if the CGContext had to be created 
-// for the control's window port QuickDraw-style.  
-DGGraphicsContext * DGInitControlDrawingContext(EventRef inEvent, CGrafPtr & outPort)
-{
-	outPort = NULL;
-	if (inEvent == NULL)
-		return NULL;
-
-	OSStatus status;
-	CGContextRef cgContext = NULL;
-	long portHeight = 0;
-
-	// if we are in compositing mode, then we can get a CG context already set up and clipped and whatnot
-	status = GetEventParameter(inEvent, kEventParamCGContextRef, typeCGContextRef, NULL, sizeof(cgContext), NULL, &cgContext);
-	if ( (status == noErr) && (cgContext != NULL) )
-	{
-//		CGRect contextBounds = CGContextGetClipBoundingBox(cgContext);
-//		portHeight = (long) (contextBounds.size.height);
-		portHeight = 0;
-	}
-	// otherwise we need to get it from the QD port
 	else
 	{
-		// if we received a graphics port parameter, use that...
-		status = GetEventParameter(inEvent, kEventParamGrafPort, typeGrafPtr, NULL, sizeof(outPort), NULL, &outPort);
-		// ... otherwise use the current graphics port
-		if ( (status != noErr) || (outPort == NULL) )
-			GetPort(&outPort);	// XXX deprecated in Mac OS X 10.4
-		if (outPort == NULL)
-			return NULL;
-		Rect portBounds = {0};
-		GetPortBounds(outPort, &portBounds);
-		portHeight = portBounds.bottom - portBounds.top;
-
-		status = QDBeginCGContext(outPort, &cgContext);
-		if ( (status != noErr) || (cgContext == NULL) )
-			return NULL;
+		return false;
 	}
-
-	// create our result graphics context now with the platform-specific graphics context
-	DGGraphicsContext * outContext = new DGGraphicsContext(cgContext);
-	outContext->setPortHeight(portHeight);
-
-	CGContextSaveGState(cgContext);
-	if (outPort != NULL)
-		SyncCGContextOriginWithPort(cgContext, outPort);	// XXX deprecated in Mac OS X 10.4
-#ifdef FLIP_CG_COORDINATES
-	if (outPort != NULL)
-	{
-		// this lets me position things with non-upside-down coordinates, 
-		// but unfortunately draws all images and text upside down...
-		CGContextTranslateCTM(cgContext, 0.0f, (float)portHeight);
-		CGContextScaleCTM(cgContext, 1.0f, -1.0f);
-	}
-#endif
-#ifndef FLIP_CG_COORDINATES
-	if (outPort == NULL)
-	{
-#endif
-	// but this flips text drawing back right-side-up
-	CGAffineTransform textCTM = CGAffineTransformMake(1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
-	CGContextSetTextMatrix(cgContext, textCTM);
-#ifndef FLIP_CG_COORDINATES
-	}
-#endif
-
-	// define the clipping region if we are not compositing and had to create our own context
-	if (outPort != NULL)
-	{
-		ControlRef carbonControl = NULL;
-		status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
-		if ( (status == noErr) && (carbonControl != NULL) )
-		{
-			CGRect clipRect;
-			status = HIViewGetBounds(carbonControl, &clipRect);
-			if (status == noErr)
-			{
-#ifndef FLIP_CG_COORDINATES
-				clipRect.origin.y = (float)portHeight - (clipRect.origin.y + clipRect.size.height);
-#endif
-				CGContextClipToRect(cgContext, clipRect);
-			}
-		}
-	}
-
-	return outContext;
 }
 
 //-----------------------------------------------------------------------------
-// inPort should be what you got from DGInitControlDrawingContext().  
-// It is null if inContext came with the control event (compositing window behavior) or 
-// non-null if inContext was created via QDBeginCGContext(), and hence needs to be terminated.
-void DGCleanupControlDrawingContext(DGGraphicsContext * inContext, CGrafPtr inPort)
+void DfxGuiEditor::close()
 {
-	if (inContext == NULL)
-		return;
-	if (inContext->getPlatformGraphicsContext() == NULL)
-		return;
+	mJustOpened = false;
 
-	CGContextRestoreGState( inContext->getPlatformGraphicsContext() );
-	CGContextSynchronize( inContext->getPlatformGraphicsContext() );
+	CloseEditor();
 
-	if (inPort != NULL)
-		inContext->endQDContext(inPort);
+	// zero the member frame before we delete it so that other asynchronous calls don't crash
+	CFrame * frame_temp = frame;
+	frame = NULL;
 
-	delete inContext;
+	if (mTooltipSupport != NULL)
+		mTooltipSupport->forget();
+	mTooltipSupport = NULL;
+
+	while (controlsList != NULL)
+	{
+		DGControlsList * tempcl = controlsList->next;
+		delete controlsList;
+		controlsList = tempcl;
+	}
+
+	while (imagesList != NULL)
+	{
+		DGImagesList * tempil = imagesList->next;
+		delete imagesList;
+		imagesList = tempil;
+	}
+
+	if (frame_temp != NULL)
+		frame_temp->forget();
+	frame_temp = NULL;
+
+	TARGET_API_EDITOR_BASE_CLASS::close();
 }
-#endif
-// TARGET_OS_MAC
 
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::IsOpen()
+{
+	if (frame == NULL)
+		return false;
+	return ( isOpen() 
+#if (VSTGUI_VERSION_MAJOR < 4)
+			&& frame->isOpen() 
+#endif
+			);	// XXX both?
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue)
+{
+	if (! IsOpen() )
+		return;
+
+	DGControlsList * tempcl = controlsList;
+	while (tempcl != NULL)
+	{
+		if (tempcl->control->getTag() == inParameterIndex)
+		{
+			tempcl->control->setValue(inValue);
+			tempcl->control->invalid();	// XXX this seems to be necessary for 64-bit AU to update from outside parameter value changes?
+		}
+		tempcl = tempcl->next;
+	}
+
+	parameterChanged(inParameterIndex, inValue);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::valueChanged(CControl * inControl)
+{
+	long paramIndex = inControl->getTag();
+	float paramValue_norm = inControl->getValue();
+
+	if ( dfxgui_IsValidParamID(paramIndex) )
+	{
 #ifdef TARGET_API_AUDIOUNIT
+		AudioUnitParameterValue paramValue_literal = dfxgui_ExpandParameterValue(paramIndex, paramValue_norm);
+		// XXX or should I call setparameter_f()?
+		AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(paramIndex);
+		AUParameterSet(NULL, inControl, &auParam, paramValue_literal, 0);
+#endif
+#ifdef TARGET_API_VST
+		getEffect()->setParameterAutomated(paramIndex, paramValue_norm);
+#endif
+#ifdef TARGET_API_RTAS
+		if (m_Process != NULL)
+			m_Process->SetControlValue( DFX_ParameterID_ToRTAS(paramIndex), ConvertToDigiValue(paramValue_norm) );
+#endif
+	}
+}
+
+#ifndef TARGET_API_VST
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent)
+void DfxGuiEditor::beginEdit(long inParameterIndex)
 {
-	if (GetEventClass(inEvent) == kEventClassControl)
+	TARGET_API_EDITOR_BASE_CLASS::beginEdit(inParameterIndex);
+	if (inParameterIndex >= 0)
+		automationgesture_begin(inParameterIndex);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::endEdit(long inParameterIndex)
+{
+	TARGET_API_EDITOR_BASE_CLASS::endEdit(inParameterIndex);
+	if (inParameterIndex >= 0)
+		automationgesture_end(inParameterIndex);
+}
+#endif	// !TARGET_API_VST
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::idle()
+{
+	// call this so that idle() actually happens
+	TARGET_API_EDITOR_BASE_CLASS::idle();
+
+	if (! IsOpen() )
+		return;
+
+	if (mJustOpened)
 	{
-		ControlRef carbonControl = NULL;
-		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(ControlRef), NULL, &carbonControl);
-		if (status != noErr)
-			carbonControl = NULL;
-
-		UInt32 eventKind = GetEventKind(inEvent);
-
-		if (eventKind == kEventControlDraw)
-		{
-			if ( (carbonControl != NULL) && (carbonControl == GetCarbonPane()) )
-			{
-				CGrafPtr windowPort = NULL;
-				DGGraphicsContext * context = DGInitControlDrawingContext(inEvent, windowPort);
-				if (context == NULL)
-					return false;
-
-				DrawBackground(context);
-
-				DGCleanupControlDrawingContext(context, windowPort);
-				return true;
-			}
-		}
-
-		// we want to catch when the mouse hovers over onto the background area
-		else if ( (eventKind == kEventControlHitTest) || (eventKind == kEventControlClick) )
-		{
-//			if (carbonControl == GetCarbonPane())
-//				setCurrentControl_mouseover(NULL);	// we don't count the background
-			if (splashScreenControl != NULL)
-				removeSplashScreenControl();
-		}
-
-		else if (eventKind == kEventControlApplyBackground)
-		{
-//fprintf(stderr, "mCarbonPane HandleEvent(kEventControlApplyBackground)\n");
-			return false;
-		}
-
-		else if (eventKind == kEventControlContextualMenuClick)
-		{
-			if ( (carbonControl != NULL) && (carbonControl == GetCarbonPane()) )
-			{
-				currentControl_clicked = NULL;
-				if (getBackgroundControl() != NULL)
-					return getBackgroundControl()->do_contextualMenuClick();
-			}
-		}
+		mJustOpened = false;
+		dfxgui_EditorShown();
+#if WINDOWS_VERSION // && defined(TARGET_API_RTAS)
+		// XXX this seems to be necessary to correct background re-drawing failure 
+		// when switching between different plugins in an open plugin editor window
+		getFrame()->setDirty();	// XXX or should I call invalid() ?
+#endif
 	}
 
-	// let the parent implementation do its thing
-	return TARGET_API_EDITOR_BASE_CLASS::HandleEvent(inHandlerRef, inEvent);
+	do_idle();
 }
-#endif
-// TARGET_API_AUDIOUNIT
 
 
 //-----------------------------------------------------------------------------
@@ -607,12 +520,6 @@ void DfxGuiEditor::do_idle()
 	if (! IsOpen() )
 		return;
 
-	if (mJustOpened)
-	{
-		dfxgui_EditorShown();
-		mJustOpened = false;
-	}
-
 	// call any child class implementation of the virtual idle method
 	dfxgui_Idle();
 
@@ -620,20 +527,11 @@ void DfxGuiEditor::do_idle()
 	DGControlsList * tempcl = controlsList;
 	while (tempcl != NULL)
 	{
-		tempcl->control->idle();
+//		tempcl->control->idle();	// XXX missing from CControl, reimplement?
 		tempcl = tempcl->next;
 	}
 	// XXX call background control idle as well?
 }
-
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-static pascal void DFXGUI_IdleTimerProc(EventLoopTimerRef inTimer, void * inUserData)
-{
-	if (inUserData != NULL)
-		((DfxGuiEditor*)inUserData)->do_idle();
-}
-#endif
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::addImage(DGImage * inImage)
@@ -650,7 +548,36 @@ void DfxGuiEditor::addControl(DGControl * inControl)
 	if (inControl == NULL)
 		return;
 
-	controlsList = new DGControlsList(inControl, controlsList);
+	long parameterIndex = inControl->getTag();
+	// XXX only add it to our controls list if it is attached to a parameter (?)
+	if ( dfxgui_IsValidParamID(parameterIndex) )
+	{
+		controlsList = new DGControlsList(inControl, controlsList);
+
+#ifdef TARGET_API_RTAS
+		if (m_Process != NULL)
+		{
+			long parameterIndex_rtas = DFX_ParameterID_ToRTAS(parameterIndex);
+			long value_rtas = 0;
+			m_Process->GetControlValue(parameterIndex_rtas, &value_rtas);
+			inControl->setValue( ConvertToVSTValue(value_rtas) );
+			long defaultValue_rtas = 0;
+			m_Process->GetControlDefaultValue(parameterIndex_rtas, &defaultValue_rtas);	// VSTGUI: necessary for Alt+Click behavior
+			inControl->setDefaultValue( ConvertToVSTValue(defaultValue_rtas) );	// VSTGUI: necessary for Alt+Click behavior
+		}
+		else
+#endif
+		{
+		inControl->setValue( getparameter_gen(parameterIndex) );
+		float defaultValue = GetParameter_defaultValue(parameterIndex);
+		defaultValue = dfxgui_ContractParameterValue(parameterIndex, defaultValue);
+		inControl->setDefaultValue(defaultValue);
+		}
+	}
+	else
+		inControl->setValue(0.0f);
+
+	getFrame()->addView(inControl);
 }
 
 //-----------------------------------------------------------------------------
@@ -677,61 +604,48 @@ void DfxGuiEditor::removeControl(DGControl * inControl)
 	}
 }
 
-#if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-DGControl * DfxGuiEditor::getDGControlByCarbonControlRef(ControlRef inControl)
+DGControl * DfxGuiEditor::getNextControlFromParameterID(long inParameterID, DGControl * inPreviousControl)
 {
+	bool previousFound = (inPreviousControl == NULL) ? true : false;
 	DGControlsList * tempcl = controlsList;
 	while (tempcl != NULL)
 	{
-		if ( tempcl->control->isControlRef(inControl) )
-			return tempcl->control;
+		DGControl * foundControl = NULL;
+		if (tempcl->control->getTag() == inParameterID)
+			foundControl = tempcl->control;
+
+		if (previousFound)
+			return foundControl;
+		else if (foundControl == inPreviousControl)
+			previousFound = true;
+
 		tempcl = tempcl->next;
 	}
 
 	return NULL;
 }
-#endif
-
-//-----------------------------------------------------------------------------
-void DfxGuiEditor::DrawBackground(DGGraphicsContext * inContext)
-{
-	if (backgroundControl != NULL)
-		backgroundControl->draw(inContext);
-}
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::SetBackgroundImage(DGImage * inBackgroundImage)
 {
-	if (backgroundControl != NULL)
-		backgroundControl->setImage(inBackgroundImage);
-}
+// XXX implement for VST?
+/*
+	if (backgroundImage != NULL)
+		backgroundImage->forget();
 
-//-----------------------------------------------------------------------------
-void DfxGuiEditor::SetBackgroundColor(DGColor inBackgroundColor)
-{
-	if (backgroundControl != NULL)
-		backgroundControl->setColor(inBackgroundColor);
-}
+	backgroundImage = inBackgroundImage;
+	if (backgroundImage != NULL)
+	{
+		backgroundImage->remember();
+		// init the size of the plugin
+		rect.right = rect.left + (short)(backgroundImage->getWidth());
+		rect.bottom = rect.top + (short)(backgroundImage->getHeight());
+	}
 
-//-----------------------------------------------------------------------------
-float DfxGuiEditor::getWindowTransparency()
-{
-#ifdef TARGET_API_AUDIOUNIT
-	float resultAlpha = 1.0f;
-	OSStatus status = GetWindowAlpha(GetCarbonWindow(), &resultAlpha);
-	if (status == noErr)
-		return resultAlpha;
-	else
-		return 1.0f;
-#endif
-}
-//-----------------------------------------------------------------------------
-void DfxGuiEditor::setWindowTransparency(float inTransparencyLevel)
-{
-#ifdef TARGET_API_AUDIOUNIT
-	SetWindowAlpha(GetCarbonWindow(), inTransparencyLevel);
-#endif
+	if (frame != NULL)
+		frame->setBackground(backgroundImage);
+*/
 }
 
 
@@ -740,33 +654,36 @@ void DfxGuiEditor::setWindowTransparency(float inTransparencyLevel)
 OSStatus DfxGuiEditor::SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType)
 {
 	// we're not actually prepared to do anything at this point if we don't yet know which AU we are controlling
-	if (GetEditAudioUnit() == NULL)
+	if (dfxgui_GetEffectInstance() == NULL)
 		return kAudioUnitErr_Uninitialized;
 
 	OSStatus result = noErr;
+	AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(inParameterID);
 
-	// do the current way, if it's available on the user's system
-	AudioUnitEvent paramEvent = {0};
-	paramEvent.mEventType = inEventType;
-	paramEvent.mArgument.mParameter.mParameterID = inParameterID;
-	paramEvent.mArgument.mParameter.mAudioUnit = GetEditAudioUnit();
-	paramEvent.mArgument.mParameter.mScope = kAudioUnitScope_Global;
-	paramEvent.mArgument.mParameter.mElement = 0;
-	if (AUEventListenerNotify != NULL)
-		result = AUEventListenerNotify(NULL, NULL, &paramEvent);
-
-#ifdef AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES
-	// as a back-up, also still do the old way, until it's enough obsolete
-	if (mEventListener != NULL)
+#if defined(AU_DO_OLD_STYLE_PARAMETER_CHANGE_GESTURES) && !__LP64__
+	// still do the old way (which additionally calls the new way), until it's enough obsolete
+	if (GetOwnerAUCarbonView() != NULL)
 	{
 		AudioUnitCarbonViewEventID carbonViewEventType = -1;
 		if (inEventType == kAudioUnitEvent_BeginParameterChangeGesture)
 			carbonViewEventType = kAudioUnitCarbonViewEvent_MouseDownInControl;
 		else if (inEventType == kAudioUnitEvent_EndParameterChangeGesture)
 			carbonViewEventType = kAudioUnitCarbonViewEvent_MouseUpInControl;
-		(*mEventListener)(mEventListenerUserData, GetComponentInstance(), &(paramEvent.mArgument.mParameter), carbonViewEventType, NULL);
+		if (carbonViewEventType >= 0)
+		{
+			CAAUParameter caauParam(auParam);
+			GetOwnerAUCarbonView()->TellListener(caauParam, carbonViewEventType, NULL);
+			return noErr;
+		}
 	}
 #endif
+
+	// do the current way, if it's available on the user's system
+	AudioUnitEvent paramEvent = {0};
+	paramEvent.mEventType = inEventType;
+	paramEvent.mArgument.mParameter = auParam;
+	if (AUEventListenerNotify != NULL)
+		result = AUEventListenerNotify(getAUEventListener(), NULL, &paramEvent);
 
 	return result;
 }
@@ -778,6 +695,17 @@ void DfxGuiEditor::automationgesture_begin(long inParameterID)
 #ifdef TARGET_API_AUDIOUNIT
 	SendAUParameterEvent((AudioUnitParameterID)inParameterID, kAudioUnitEvent_BeginParameterChangeGesture);
 #endif
+
+#ifdef TARGET_API_VST
+	beginEdit(inParameterID);
+#endif
+
+#ifdef TARGET_API_RTAS
+	// called by GUI when mouse down event has occured; NO_UI: Call process' TouchControl()
+	// This and endEdit are necessary for Touch Automation to work properly
+	if (m_Process != NULL)
+		m_Process->ProcessTouchControl( DFX_ParameterID_ToRTAS(inParameterID) );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -786,11 +714,22 @@ void DfxGuiEditor::automationgesture_end(long inParameterID)
 #ifdef TARGET_API_AUDIOUNIT
 	SendAUParameterEvent((AudioUnitParameterID)inParameterID, kAudioUnitEvent_EndParameterChangeGesture);
 #endif
+
+#ifdef TARGET_API_VST
+	endEdit(inParameterID);
+#endif
+
+#ifdef TARGET_API_RTAS
+	// called by GUI when mouse up event has occured; NO_UI: Call process' ReleaseControl()
+	if (m_Process != NULL)
+		m_Process->ProcessReleaseControl( DFX_ParameterID_ToRTAS(inParameterID) );
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	if (inWriteAutomation)
 		automationgesture_begin(inParameterID);
 
@@ -800,20 +739,20 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 
 	if (inWriteAutomation)
 		automationgesture_end(inParameterID);
+#else
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 {
-	UInt32 parameterListSize = 0;
-	AudioUnitParameterID * parameterList = NULL;
+#ifdef TARGET_API_AUDIOUNIT
 	if (inWriteAutomation)
 	{
-		parameterList = CreateParameterList(kAudioUnitScope_Global, &parameterListSize);
-		if (parameterList != NULL)
+		if (auParameterList != NULL)
 		{
-			for (UInt32 i=0; i < parameterListSize; i++)
-				automationgesture_begin(parameterList[i]);
+			for (UInt32 i=0; i < auParameterListSize; i++)
+				automationgesture_begin(auParameterList[i]);
 		}
 	}
 
@@ -823,13 +762,30 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 
 	if (inWriteAutomation)
 	{
-		if (parameterList != NULL)
+		if (auParameterList != NULL)
 		{
-			for (UInt32 i=0; i < parameterListSize; i++)
-				automationgesture_end(parameterList[i]);
-			free(parameterList);
+			for (UInt32 i=0; i < auParameterListSize; i++)
+				automationgesture_end(auParameterList[i]);
 		}
 	}
+#else
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID)
+{
+	if ( (inParameterID == DFX_PARAM_INVALID_ID) || (inParameterID < 0) )
+		return false;
+#ifdef TARGET_API_AUDIOUNIT
+	if (inParameterID > auMaxParameterID)
+		return false;
+#else
+	if ( inParameterID >= GetNumParameters() )
+		return false;
+#endif
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -880,6 +836,7 @@ void DfxGuiEditor::removeMousedOverControl(DGControl * inMousedOverControl)
 //-----------------------------------------------------------------------------
 double DfxGuiEditor::getparameter_f(long inParameterID)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	DfxParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = kDfxParameterValueItem_current;
@@ -891,11 +848,15 @@ double DfxGuiEditor::getparameter_f(long inParameterID)
 		return request.value.f;
 	else
 		return 0.0;
+#else
+	return dfxgui_GetEffectInstance()->getparameter_f(inParameterID);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::getparameter_i(long inParameterID)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	DfxParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = kDfxParameterValueItem_current;
@@ -907,11 +868,15 @@ long DfxGuiEditor::getparameter_i(long inParameterID)
 		return request.value.i;
 	else
 		return 0;
+#else
+	return dfxgui_GetEffectInstance()->getparameter_i(inParameterID);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::getparameter_b(long inParameterID)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	DfxParameterValueRequest request;
 	size_t dataSize = sizeof(request);
 	request.inValueItem = kDfxParameterValueItem_current;
@@ -923,6 +888,20 @@ bool DfxGuiEditor::getparameter_b(long inParameterID)
 		return request.value.b;
 	else
 		return false;
+#else
+	return dfxgui_GetEffectInstance()->getparameter_b(inParameterID);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+double DfxGuiEditor::getparameter_gen(long inParameterIndex)
+{
+#ifdef TARGET_API_VST
+	return getEffect()->getParameter(inParameterIndex);
+#else
+	double currentValue = getparameter_f(inParameterIndex);
+	return dfxgui_ContractParameterValue(inParameterIndex, currentValue);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -931,6 +910,7 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 	if (inWrapWithAutomationGesture)
 		automationgesture_begin(inParameterID);
 
+#ifdef TARGET_API_AUDIOUNIT
 	DfxParameterValueRequest request;
 	request.inValueItem = kDfxParameterValueItem_current;
 	request.inValueType = kDfxParamValueType_float;
@@ -938,6 +918,8 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 
 	dfxgui_SetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, inParameterID, 
 						&request, sizeof(request));
+#else
+#endif
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -949,6 +931,7 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 	if (inWrapWithAutomationGesture)
 		automationgesture_begin(inParameterID);
 
+#ifdef TARGET_API_AUDIOUNIT
 	DfxParameterValueRequest request;
 	request.inValueItem = kDfxParameterValueItem_current;
 	request.inValueType = kDfxParamValueType_int;
@@ -956,6 +939,8 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 
 	dfxgui_SetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, 
 						inParameterID, &request, sizeof(request));
+#else
+#endif
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -967,6 +952,7 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 	if (inWrapWithAutomationGesture)
 		automationgesture_begin(inParameterID);
 
+#ifdef TARGET_API_AUDIOUNIT
 	DfxParameterValueRequest request;
 	request.inValueItem = kDfxParameterValueItem_current;
 	request.inValueType = kDfxParamValueType_boolean;
@@ -974,6 +960,8 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 
 	dfxgui_SetProperty(kDfxPluginProperty_ParameterValue, kDfxScope_Global, 
 						inParameterID, &request, sizeof(request));
+#else
+#endif
 
 	if (inWrapWithAutomationGesture)
 		automationgesture_end(inParameterID);
@@ -982,51 +970,288 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutomationGesture)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	AudioUnitParameterInfo paramInfo = {0};
-	size_t dataSize = sizeof(paramInfo);
-
-	long result = dfxgui_GetProperty(kAudioUnitProperty_ParameterInfo, kAudioUnitScope_Global, 
-										inParameterID, &paramInfo, dataSize);
+	long result = dfxgui_GetParameterInfo(inParameterID, paramInfo);
 	if (result == noErr)
 	{
 		if (inWrapWithAutomationGesture)
 			automationgesture_begin(inParameterID);
 
-		CAAUParameter auParam(GetEditAudioUnit(), inParameterID, kAudioUnitScope_Global, 0);
+		AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(inParameterID);
 		result = AUParameterSet(NULL, NULL, &auParam, paramInfo.defaultValue, 0);
 
 		if (inWrapWithAutomationGesture)
 			automationgesture_end(inParameterID);
 	}
+#else
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparameters_default(bool inWrapWithAutomationGesture)
 {
-	UInt32 parameterListSize = 0;
-	AudioUnitParameterID * parameterList = CreateParameterList(kAudioUnitScope_Global, &parameterListSize);
-	if (parameterList != NULL)
+#ifdef TARGET_API_AUDIOUNIT
+	if (auParameterList != NULL)
 	{
-		for (UInt32 i=0; i < parameterListSize; i++)
-			setparameter_default(parameterList[i], inWrapWithAutomationGesture);
-		free(parameterList);
+		for (UInt32 i=0; i < auParameterListSize; i++)
+			setparameter_default(auParameterList[i], inWrapWithAutomationGesture);
 	}
+#else
+#endif
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
+bool DfxGuiEditor::getparametervaluestring(long inParameterID, char * outText)
 {
 	if (outText == NULL)
-		return;
+		return false;
 
+	const int64_t stringIndex = getparameter_i(inParameterID);
+
+#ifdef TARGET_API_AUDIOUNIT
 	DfxParameterValueStringRequest request;
 	size_t dataSize = sizeof(request);
-	request.inStringIndex = getparameter_i(inParameterID);
-
+	request.inStringIndex = stringIndex;
 	if (dfxgui_GetProperty(kDfxPluginProperty_ParameterValueString, kDfxScope_Global, 
 							inParameterID, &request, dataSize) 
 							== noErr)
+	{
 		strcpy(outText, request.valueString);
+		return true;
+	}
+
+#else
+	return dfxgui_GetEffectInstance()->getparametervaluestring(inParameterID, stringIndex, outText);
+#endif
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+char * DfxGuiEditor::getparameterunitstring(long inParameterIndex)
+{
+	char * outputString = NULL;
+
+#ifdef TARGET_API_AUDIOUNIT
+	char unitLabel[DFX_PARAM_MAX_UNIT_STRING_LENGTH];
+	unitLabel[0] = 0;
+	size_t dataSize = sizeof(unitLabel);
+	long result = dfxgui_GetProperty(kDfxPluginProperty_ParameterUnitLabel, kDfxScope_Global, 
+										inParameterIndex, unitLabel, dataSize);
+	if ( (result == noErr) && (strlen(unitLabel) > 0) )
+	{
+		outputString = (char*) malloc(DFX_PARAM_MAX_UNIT_STRING_LENGTH);
+		strcpy(outputString, unitLabel);
+	}
+
+#else
+	outputString = (char*) calloc(DFX_PARAM_MAX_UNIT_STRING_LENGTH, 1);
+	if (outputString != NULL)
+		dfxgui_GetEffectInstance()->getparameterunitstring(inParameterIndex, outputString);
+#endif
+
+	return outputString;
+}
+
+//-----------------------------------------------------------------------------
+char * DfxGuiEditor::getparametername(long inParameterID)
+{
+	char * outputString = NULL;
+
+#ifdef TARGET_API_AUDIOUNIT
+	AudioUnitParameterInfo auParamInfo = {0};
+	long result = dfxgui_GetParameterInfo(inParameterID, auParamInfo);
+	if (result == noErr)
+	{
+		if ( (auParamInfo.flags & kAudioUnitParameterFlag_HasCFNameString) && 
+				(auParamInfo.cfNameString != NULL) )
+		{
+			outputString = DFX_CreateCStringFromCFString(auParamInfo.cfNameString);
+			if (auParamInfo.flags & kAudioUnitParameterFlag_CFNameRelease)
+				CFRelease(auParamInfo.cfNameString);
+		}
+		else
+		{
+			outputString = (char*) malloc(strlen(auParamInfo.name) + 1);
+			if (outputString != NULL)
+				strcpy(outputString, auParamInfo.name);
+		}
+	}
+
+#else
+	outputString = (char*) calloc(DFX_PARAM_MAX_NAME_LENGTH, 1);
+	if (outputString != NULL)
+		dfxgui_GetEffectInstance()->getparametername(inParameterID, outputString);
+#endif
+
+	return outputString;
+}
+
+//-----------------------------------------------------------------------------
+float DfxGuiEditor::dfxgui_ExpandParameterValue(long inParameterIndex, float inValue)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	DfxParameterValueConversionRequest request = {0};
+	request.inConversionType = kDfxParameterValueConversion_expand;
+	request.inValue = inValue;
+	size_t dataSize = sizeof(request);
+	if (dfxgui_GetProperty(kDfxPluginProperty_ParameterValueConversion, kDfxScope_Global, 
+							inParameterIndex, &request, dataSize) 
+							== noErr)
+	{
+		return request.outValue;
+	}
+	else
+	{
+		AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(inParameterIndex);
+		return AUParameterValueFromLinear(inValue, &auParam);
+	}
+#else
+	return dfxgui_GetEffectInstance()->expandparametervalue(inParameterIndex, inValue);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+float DfxGuiEditor::dfxgui_ContractParameterValue(long inParameterIndex, float inValue)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	DfxParameterValueConversionRequest request = {0};
+	request.inConversionType = kDfxParameterValueConversion_contract;
+	request.inValue = inValue;
+	size_t dataSize = sizeof(request);
+	if (dfxgui_GetProperty(kDfxPluginProperty_ParameterValueConversion, kDfxScope_Global, 
+							inParameterIndex, &request, dataSize) 
+							== noErr)
+	{
+		return request.outValue;
+	}
+	else
+	{
+		AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(inParameterIndex);
+		return AUParameterValueToLinear(inValue, &auParam);
+	}
+#else
+	return dfxgui_GetEffectInstance()->contractparametervalue(inParameterIndex, inValue);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+float DfxGuiEditor::GetParameter_minValue(long inParameterIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	AudioUnitParameterInfo paramInfo = {0};
+	long result = dfxgui_GetParameterInfo(inParameterIndex, paramInfo);
+	if (result == noErr)
+		return paramInfo.minValue;
+#else
+	return dfxgui_GetEffectInstance()->getparametermin_f(inParameterIndex);
+#endif
+	return 0.0f;
+}
+
+//-----------------------------------------------------------------------------
+float DfxGuiEditor::GetParameter_maxValue(long inParameterIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	AudioUnitParameterInfo paramInfo = {0};
+	long result = dfxgui_GetParameterInfo(inParameterIndex, paramInfo);
+	if (result == noErr)
+		return paramInfo.maxValue;
+#else
+	return dfxgui_GetEffectInstance()->getparametermax_f(inParameterIndex);
+#endif
+	return 0.0f;
+}
+
+//-----------------------------------------------------------------------------
+float DfxGuiEditor::GetParameter_defaultValue(long inParameterIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	AudioUnitParameterInfo paramInfo = {0};
+	long result = dfxgui_GetParameterInfo(inParameterIndex, paramInfo);
+	if (result == noErr)
+		return paramInfo.defaultValue;
+#else
+	return dfxgui_GetEffectInstance()->getparameterdefault_f(inParameterIndex);
+#endif
+	return 0.0f;
+}
+
+//-----------------------------------------------------------------------------
+DfxParamValueType DfxGuiEditor::GetParameterValueType(long inParameterIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	DfxParamValueType valueType = 0;
+	size_t dataSize = sizeof(valueType);
+	long result = dfxgui_GetProperty(kDfxPluginProperty_ParameterValueType, kDfxScope_Global, 
+										inParameterIndex, &valueType, dataSize);
+	if (result == noErr)
+		return valueType;
+#else
+	return dfxgui_GetEffectInstance()->getparametervaluetype(inParameterIndex);
+#endif
+	return kDfxParamValueType_float;
+}
+
+//-----------------------------------------------------------------------------
+DfxParamUnit DfxGuiEditor::GetParameterUnit(long inParameterIndex)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	DfxParamUnit unitType = 0;
+	size_t dataSize = sizeof(unitType);
+	long result = dfxgui_GetProperty(kDfxPluginProperty_ParameterUnit, kDfxScope_Global, 
+										inParameterIndex, &unitType, dataSize);
+	if (result == noErr)
+		return unitType;
+#else
+	return dfxgui_GetEffectInstance()->getparameterunit(inParameterIndex);
+#endif
+	return kDfxParamUnit_generic;
+}
+
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+long DfxGuiEditor::dfxgui_GetParameterInfo(AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo)
+{
+	size_t dataSize = sizeof(outParameterInfo);
+
+	long result = dfxgui_GetProperty(kAudioUnitProperty_ParameterInfo, kAudioUnitScope_Global, 
+										inParameterID, &outParameterInfo, dataSize);
+	return result;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+long DfxGuiEditor::GetNumParameters()
+{
+#ifdef TARGET_API_VST
+	return getEffect()->getAeffect()->numParams;
+#endif
+#ifdef TARGET_API_RTAS
+	return m_Process->getnumparameters();
+#endif
+#ifdef TARGET_API_AUDIOUNIT
+	// XXX questionable implementation; return max ID value +1 instead?
+	size_t dataSize = 0;
+	DfxPropertyFlags propFlags = 0;
+	long result = dfxgui_GetPropertyInfo(kAudioUnitProperty_ParameterList, kDfxScope_Global, 0, dataSize, propFlags);
+	if (result == noErr)
+		return (dataSize / sizeof(AudioUnitParameterID));
+#endif
+	return 0;
+}
+
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+AudioUnitParameter DfxGuiEditor::dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement)
+{
+	AudioUnitParameter outParam = {0};
+	outParam.mAudioUnit = dfxgui_GetEffectInstance();
+	outParam.mParameterID = inParameterID;
+	outParam.mScope = inScope;
+	outParam.mElement = inElement;
+	return outParam;
 }
 
 //-----------------------------------------------------------------------------
@@ -1051,6 +1276,12 @@ AudioUnitParameterID * DfxGuiEditor::CreateParameterList(AudioUnitScope inScope,
 	{
 		if (outNumParameters != NULL)
 			*outNumParameters = numParameters;
+		auMaxParameterID = 0;
+		for (UInt32 i=0; i < numParameters; i++)
+		{
+			if (parameterList[i] > auMaxParameterID)
+				auMaxParameterID = parameterList[i];
+		}
 		return parameterList;
 	}
 	else
@@ -1059,17 +1290,19 @@ AudioUnitParameterID * DfxGuiEditor::CreateParameterList(AudioUnitScope inScope,
 		return NULL;
 	}
 }
+#endif
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::dfxgui_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
 											size_t & outDataSize, DfxPropertyFlags & outFlags)
 {
-	if (GetEditAudioUnit() == NULL)
+#ifdef TARGET_API_AUDIOUNIT
+	if (dfxgui_GetEffectInstance() == NULL)
 		return kAudioUnitErr_Uninitialized;
 
 	UInt32 auDataSize = 0;
 	Boolean writable = false;
-	OSStatus status = AudioUnitGetPropertyInfo(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, &auDataSize, &writable);
+	OSStatus status = AudioUnitGetPropertyInfo(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, &auDataSize, &writable);
 	if (status == noErr)
 	{
 		outDataSize = auDataSize;
@@ -1078,30 +1311,55 @@ long DfxGuiEditor::dfxgui_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope i
 			outFlags |= kDfxPropertyFlag_Writable;
 	}
 	return status;
+#else
+	return dfxgui_GetEffectInstance()->dfx_GetPropertyInfo(inPropertyID, inScope, inItemIndex, outDataSize, outFlags);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::dfxgui_GetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
 										void * outData, size_t & ioDataSize)
 {
-	if (GetEditAudioUnit() == NULL)
+#ifdef TARGET_API_AUDIOUNIT
+	if (dfxgui_GetEffectInstance() == NULL)
 		return kAudioUnitErr_Uninitialized;
 
 	UInt32 auDataSize = ioDataSize;
-	OSStatus status = AudioUnitGetProperty(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, outData, &auDataSize);
+	OSStatus status = AudioUnitGetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, outData, &auDataSize);
 	if (status == noErr)
 		ioDataSize = auDataSize;
 	return status;
+#else
+	return dfxgui_GetEffectInstance()->dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::dfxgui_SetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
 										const void * inData, size_t inDataSize)
 {
-	if (GetEditAudioUnit() == NULL)
+#ifdef TARGET_API_AUDIOUNIT
+	if (dfxgui_GetEffectInstance() == NULL)
 		return kAudioUnitErr_Uninitialized;
 
-	return AudioUnitSetProperty(GetEditAudioUnit(), inPropertyID, inScope, inItemIndex, inData, inDataSize);
+	return AudioUnitSetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, inData, inDataSize);
+#else
+	return dfxgui_GetEffectInstance()->dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
+{
+#ifdef TARGET_API_VST
+	return static_cast<DfxPlugin*>( getEffect() );
+#endif
+#ifdef TARGET_API_RTAS
+	return m_Process;
+#endif
+#ifdef TARGET_API_AUDIOUNIT
+	return static_cast<AudioUnit>( getEffect() );
+#endif
 }
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -1203,6 +1461,12 @@ unsigned long DfxGuiEditor::getNumAudioChannels()
 	else
 		return 0;
 #endif
+#ifdef TARGET_API_VST
+	return (unsigned long) (getEffect()->getAeffect()->numOutputs);
+#endif
+#ifdef TARGET_API_RTAS
+	return (unsigned long) (m_Process->getnumoutputs());
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1222,13 +1486,15 @@ long DfxGuiEditor::initClipboard()
 		status = coreFoundationUnknownErr;
 	return status;
 #endif
+
+	return kDfxErr_NoError;	// XXX implement
 }
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::copySettings()
 {
 	long status = initClipboard();
-	if (status != noErr)
+	if (status != kDfxErr_NoError)
 		return status;
 
 #if TARGET_OS_MAC
@@ -1258,9 +1524,9 @@ long DfxGuiEditor::copySettings()
 	status = PasteboardPutItemFlavor(clipboardRef, (PasteboardItemID)PLUGIN_ID, kDfxGui_AUPresetFileUTI, auSettingsCFData, kPasteboardFlavorNoFlags);
 	CFRelease(auSettingsCFData);
 #endif
+#endif
 
 	return status;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1270,7 +1536,7 @@ long DfxGuiEditor::pasteSettings(bool * inQueryPastabilityOnly)
 		*inQueryPastabilityOnly = false;
 
 	long status = initClipboard();
-	if (status != noErr)
+	if (status != kDfxErr_NoError)
 		return status;
 
 #if TARGET_OS_MAC
@@ -1287,7 +1553,7 @@ long DfxGuiEditor::pasteSettings(bool * inQueryPastabilityOnly)
 		status = PasteboardGetItemIdentifier(clipboardRef, itemIndex, &itemID);
 		if (status != noErr)
 			continue;
-		if ((OSType)itemID != PLUGIN_ID)
+		if ((unsigned long)itemID != PLUGIN_ID)	// XXX hacky?
 			continue;
 		CFArrayRef flavorTypesArray = NULL;
 		status = PasteboardCopyItemFlavors(clipboardRef, itemID, &flavorTypesArray);
@@ -1299,6 +1565,7 @@ long DfxGuiEditor::pasteSettings(bool * inQueryPastabilityOnly)
 			CFStringRef flavorType = (CFStringRef) CFArrayGetValueAtIndex(flavorTypesArray, flavorIndex);
 			if (flavorType == NULL)
 				continue;
+#ifdef TARGET_API_AUDIOUNIT
 			if ( UTTypeConformsTo(flavorType, kDfxGui_AUPresetFileUTI) )
 			{
 				if (inQueryPastabilityOnly != NULL)
@@ -1320,13 +1587,14 @@ long DfxGuiEditor::pasteSettings(bool * inQueryPastabilityOnly)
 							if (status == noErr)
 							{
 								pastableItemFound = true;
-								AUParameterChange_TellListeners(GetEditAudioUnit(), kAUParameterListener_AnyParameter);
+								AUParameterChange_TellListeners(dfxgui_GetEffectInstance(), kAUParameterListener_AnyParameter);
 							}
 						}
 						CFRelease(flavorData);
 					}
 				}
 			}
+#endif	// TARGET_API_AUDIOUNIT
 			if (pastableItemFound)
 				break;
 		}
@@ -1334,14 +1602,14 @@ long DfxGuiEditor::pasteSettings(bool * inQueryPastabilityOnly)
 		if (pastableItemFound)
 			break;
 	}
+#endif
 
 	return status;
-#endif
 }
 
 
 
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && !__LP64__
 //-----------------------------------------------------------------------------
 DGKeyModifiers DFX_GetDGKeyModifiersForEvent(EventRef inEvent)
 {
@@ -1367,38 +1635,7 @@ DGKeyModifiers DFX_GetDGKeyModifiersForEvent(EventRef inEvent)
 }
 #endif
 
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-static pascal OSStatus DFXGUI_WindowEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
-{
-	bool eventWasHandled = false;
-	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*) inUserData;
-	if (ourOwnerEditor == NULL)
-		return eventNotHandledErr;
-
-	switch ( GetEventClass(inEvent) )
-	{
-		case kEventClassMouse:
-			eventWasHandled = ourOwnerEditor->HandleMouseEvent(inEvent);
-			break;
-		case kEventClassKeyboard:
-			eventWasHandled = ourOwnerEditor->HandleKeyboardEvent(inEvent);
-			break;
-		case kEventClassCommand:
-			eventWasHandled = ourOwnerEditor->HandleCommandEvent(inEvent);
-			break;
-		default:
-			return eventClassIncorrectErr;
-	}
-
-	if (eventWasHandled)
-		return noErr;
-	else
-		return eventNotHandledErr;
-}
-#endif
-
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && TARGET_API_AUDIOUNIT && 0
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 {
@@ -1531,7 +1768,7 @@ bool DfxGuiEditor::HandleMouseEvent(EventRef inEvent)
 #endif
 // TARGET_OS_MAC
 
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && TARGET_API_AUDIOUNIT && 0
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 {
@@ -1567,7 +1804,7 @@ bool DfxGuiEditor::HandleKeyboardEvent(EventRef inEvent)
 #endif
 // TARGET_OS_MAC
 
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && TARGET_API_AUDIOUNIT && 0
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 {
@@ -1598,35 +1835,7 @@ bool DfxGuiEditor::HandleCommandEvent(EventRef inEvent)
 // TARGET_OS_MAC
 
 
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-static pascal OSStatus DFXGUI_ControlEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData)
-{
-	bool eventWasHandled = false;
-	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*)inUserData;
-	if (ourOwnerEditor == NULL)
-		return eventNotHandledErr;
-
-	switch ( GetEventClass(inEvent) )
-	{
-		case kEventClassControl:
-			eventWasHandled = ourOwnerEditor->HandleControlEvent(inEvent);
-			break;
-		case kEventClassMouse:
-			eventWasHandled = ourOwnerEditor->HandleMouseEvent(inEvent);
-			break;
-		default:
-			return eventClassIncorrectErr;
-	}
-
-	if (eventWasHandled)
-		return noErr;
-	else
-		return eventNotHandledErr;
-}
-#endif
-
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && TARGET_API_AUDIOUNIT && 0
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 {
@@ -1685,7 +1894,7 @@ bool DfxGuiEditor::HandleControlEvent(EventRef inEvent)
 					if (context == NULL)
 						return false;
 
-					ourDGControl->do_draw(context);
+					ourDGControl->draw(context);
 
 					DGCleanupControlDrawingContext(context, windowPort);
 				}
@@ -1732,12 +1941,6 @@ fprintf(stderr, "kEventControlHit\n");
 //if (eventKind == kEventControlClick) fprintf(stderr, "kEventControlClick\n");
 				{
 //					setCurrentControl_mouseover(ourDGControl);
-
-					if (splashScreenControl != NULL)
-					{
-						removeSplashScreenControl();
-						return true;
-					}
 
 					UInt32 mouseButtons = GetCurrentEventButtonState();	// bit 0 is mouse button 1, bit 1 is button 2, etc.
 //					UInt32 mouseButtons = 1;	// bit 0 is mouse button 1, bit 1 is button 2, etc.
@@ -1827,12 +2030,22 @@ static void DFXGUI_AudioUnitEventListenerProc(void * inCallbackRefCon, void * in
 	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*) inCallbackRefCon;
 	if ( (ourOwnerEditor != NULL) && (inEvent != NULL) )
 	{
+		if (inEvent->mEventType == kAudioUnitEvent_ParameterValueChange)
+		{
+			AudioUnitParameterID paramID = inEvent->mArgument.mParameter.mParameterID;
+			float paramCurrentValue_norm = ourOwnerEditor->getparameter_gen(paramID);
+			ourOwnerEditor->setParameter(paramID, paramCurrentValue_norm);
+		}
+
 		if (inEvent->mEventType == kAudioUnitEvent_PropertyChange)
 		{
 			switch (inEvent->mArgument.mProperty.mPropertyID)
 			{
 				case kAudioUnitProperty_StreamFormat:
 					ourOwnerEditor->HandleStreamFormatChange();
+					break;
+				case kAudioUnitProperty_ParameterList:
+					ourOwnerEditor->HandleParameterListChange();
 					break;
 			#if TARGET_PLUGIN_USES_MIDI
 				case kDfxPluginProperty_MidiLearn:
@@ -1856,6 +2069,30 @@ void DfxGuiEditor::HandleStreamFormatChange()
 	numAudioChannels = getNumAudioChannels();
 	if (numAudioChannels != oldNumAudioChannels)
 		numAudioChannelsChanged(numAudioChannels);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::HandleParameterListChange()
+{
+	if (auParameterList != NULL)
+	{
+		for (UInt32 i=0; i < auParameterListSize; i++)
+		{
+			AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(auParameterList[i]);
+			AUListenerRemoveParameter(auEventListener, this, &auParam);
+		}
+		free(auParameterList);
+	}
+
+	auParameterList = CreateParameterList(kAudioUnitScope_Global, &auParameterListSize);
+	if ( (auParameterList != NULL) && (auEventListener != NULL) )
+	{
+		for (UInt32 i=0; i < auParameterListSize; i++)
+		{
+			AudioUnitParameter auParam = dfxgui_MakeAudioUnitParameter(auParameterList[i]);
+			AUListenerAddParameter(auEventListener, this, &auParam);
+		}
+	}
 }
 #endif
 
@@ -1920,22 +2157,8 @@ DGButton * DfxGuiEditor::CreateMidiResetButton(long inXpos, long inYpos, DGImage
 #endif
 // TARGET_PLUGIN_USES_MIDI
 
-//-----------------------------------------------------------------------------
-void DfxGuiEditor::installSplashScreenControl(DGSplashScreen * inControl)
-{
-	splashScreenControl = inControl;
-}
 
-//-----------------------------------------------------------------------------
-void DfxGuiEditor::removeSplashScreenControl()
-{
-	if (splashScreenControl != NULL)
-		splashScreenControl->removeSplashDisplay();
-	splashScreenControl = NULL;
-}
-
-
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && !__LP64__
 //-----------------------------------------------------------------------------
 OSStatus DFX_OpenWindowFromNib(CFStringRef inWindowName, WindowRef * outWindow)
 {
@@ -1966,7 +2189,7 @@ OSStatus DFX_OpenWindowFromNib(CFStringRef inWindowName, WindowRef * outWindow)
 }
 #endif
 
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && !__LP64__
 //-----------------------------------------------------------------------------
 // this gets an embedded ControlRef from a window given a control's ID value
 ControlRef DFX_GetControlWithID(WindowRef inWindow, SInt32 inID)
@@ -1985,7 +2208,7 @@ ControlRef DFX_GetControlWithID(WindowRef inWindow, SInt32 inID)
 }
 #endif
 
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && !__LP64__
 //-----------------------------------------------------------------------------
 static pascal OSStatus DFXGUI_TextEntryEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData)
 {
@@ -2025,7 +2248,7 @@ CFStringRef DfxGuiEditor::openTextEntryWindow(CFStringRef inInitialText)
 	// set the title of the window according to the particular plugin's name
 	status = SetWindowTitleWithCFString( textEntryWindow, CFSTR(PLUGIN_NAME_STRING" Text Entry") );
 
-	// initialize the controls according to the current transparency value
+	// initialize the control according to the current input string
 	textEntryControl = DFX_GetControlWithID(textEntryWindow, kDfxGui_TextEntryControlID);
 	if (textEntryControl != NULL)
 	{
@@ -2092,126 +2315,238 @@ bool DfxGuiEditor::handleTextEntryCommand(UInt32 inCommandID)
 #endif
 // TARGET_OS_MAC
 
-#if TARGET_OS_MAC
+
+
+
+
+
+#pragma mark -
+
+#ifdef TARGET_API_RTAS
+
 //-----------------------------------------------------------------------------
-static pascal OSStatus DFXGUI_WindowTransparencyEventHandler(EventHandlerCallRef inHandlerRef, EventRef inEvent, void * inUserData)
+// fills inRect with dimensions of background frame; NO_UI: called (indirectly) by Pro Tools
+void DfxGuiEditor::GetBackgroundRect(sRect * inRect)
 {
-	bool eventWasHandled = false;
-	DfxGuiEditor * ourOwnerEditor = (DfxGuiEditor*)inUserData;
-	if (ourOwnerEditor == NULL)
-		return eventNotHandledErr;
+	inRect->top = rect.top;
+	inRect->left = rect.left;
+	inRect->bottom = rect.bottom;
+	inRect->right = rect.right;
+}
 
-	UInt32 eventClass = GetEventClass(inEvent);
-	UInt32 eventKind = GetEventKind(inEvent);
+//-----------------------------------------------------------------------------
+// sets dimensions of background frame; NO_UI: called by the plug-in process class when resizing the window
+void DfxGuiEditor::SetBackgroundRect(sRect * inRect)
+{
+	rect.top = inRect->top;
+	rect.left = inRect->left;
+	rect.bottom = inRect->bottom;
+	rect.right = inRect->right;
+}
 
-	if ( (eventClass == kEventClassWindow) && (eventKind == kEventWindowClose) )
+//-----------------------------------------------------------------------------
+// Called by GUI when idle time available; NO_UI: Call process' DoIdle() method.  
+// Keeps other processes from starving during certain events (like mouse down).
+void DfxGuiEditor::doIdleStuff()
+{
+	TARGET_API_EDITOR_BASE_CLASS::doIdleStuff();	// XXX do this?
+
+	if (m_Process != NULL)
+		m_Process->ProcessDoIdle();
+}
+
+//-----------------------------------------------------------------------------
+// Called by process to get the index of the control that contains the point
+void DfxGuiEditor::GetControlIndexFromPoint(long inXpos, long inYpos, long * outControlIndex)
+{
+	if (outControlIndex == NULL)
+		return;
+
+	*outControlIndex = 0;
+	CPoint point(inXpos, inYpos);
+	DGControlsList * tempcl = controlsList;
+	while (tempcl != NULL)
 	{
-		ourOwnerEditor->heedWindowTransparencyWindowClose();
-		eventWasHandled = false;	// let the standard window event handler dispose of the window and such
-	}
-
-	else if ( (eventClass == kEventClassControl) && (eventKind == kEventControlValueFieldChanged) )
-	{
-		ControlRef control = NULL;
-		OSStatus status = GetEventParameter(inEvent, kEventParamDirectObject, typeControlRef, NULL, sizeof(control), NULL, &control);
-		if ( (status == noErr) && (control != NULL) )
+		CRect controlBounds;
+		tempcl->control->getViewSize(controlBounds);
+		if ( point.isInside(controlBounds) )
 		{
-			ControlID controlID;
-			status = GetControlID(control, &controlID);
-			if (status == noErr)
-			{
-				if ( (controlID.signature == kDfxGui_ControlSignature) && (controlID.id == kDfxGui_TransparencySliderControlID) )
-				{
-					SInt32 min = GetControl32BitMinimum(control);
-					SInt32 max = GetControl32BitMaximum(control);
-					SInt32 controlValue = GetControl32BitValue(control);
-					float transparencyValue = (float)(controlValue - min) / (float)(max - min);
-					transparencyValue = 1.0f - transparencyValue;	// invert it to reflect transparency, not opacity
-					transparencyValue = powf(transparencyValue, 0.69f);	// XXX root-scale the value distribution
-					ourOwnerEditor->setWindowTransparency(transparencyValue);
-					eventWasHandled = true;
-				}
-			}
+			*outControlIndex = DFX_ParameterID_ToRTAS( tempcl->control->getTag() );
+			break;
 		}
+		tempcl = tempcl->next;
 	}
-
-	if (eventWasHandled)
-		return noErr;
-	else
-		return eventNotHandledErr;
 }
 
 //-----------------------------------------------------------------------------
-// this function doesn't actually have to do anything to get "live update" slider behavior, 
-// it just needs to exist
-static pascal void DFXGUI_TransparencyControlActionProc(ControlRef inControl, ControlPartCode inPartCode)
+// Called by process when a control's highlight has changed
+void DfxGuiEditor::SetControlHighlight(long inControlIndex, short inIsHighlighted, short inColor)
 {
+	inControlIndex = DFX_ParameterID_FromRTAS(inControlIndex);
+	if (!inIsHighlighted)
+		inColor = eHighlight_None;
+
+	if ( dfxgui_IsValidParamID(inControlIndex) )
+	{
+		if (parameterHighlightColors != NULL)
+			parameterHighlightColors[inControlIndex] = inColor;
+	}
+
+	if ( IsOpen() )
+		getFrame()->setDirty(true);
 }
 
 //-----------------------------------------------------------------------------
-OSStatus DfxGuiEditor::openWindowTransparencyWindow()
+// Called by process when a control's highlight has changed
+void DfxGuiEditor::drawControlHighlight(CDrawContext * inContext, CControl * inControl)
 {
-	// if the window is already open, then don't open a new one, just bring the existing one to the front
-	if (windowTransparencyWindow != NULL)
+	if ( (inContext == NULL) || (inControl == NULL) )
+		return;
+	long parameterIndex = inControl->getTag();
+	if ( !dfxgui_IsValidParamID(parameterIndex) )
+		return;
+	if (parameterHighlightColors == NULL)
+		return;
+
+	CColor highlightColor;
+	switch (parameterHighlightColors[parameterIndex])
 	{
-		SelectWindow(windowTransparencyWindow);
-		return noErr;
+		case eHighlight_Red:
+			highlightColor = MakeCColor(255, 0, 0);
+			break;
+		case eHighlight_Blue:
+			highlightColor = MakeCColor(0, 0, 170);
+			break;
+		case eHighlight_Green:
+			highlightColor = MakeCColor(0, 221, 0);
+			break;
+		case eHighlight_Yellow:
+			highlightColor = MakeCColor(255, 204, 0);
+			break;
+		default:
+			return;
 	}
 
-	OSStatus status = DFX_OpenWindowFromNib(CFSTR("set transparency"), &windowTransparencyWindow);
-	if (status != noErr)
-		return status;
+	const CCoord highlightWidth = 1;
+	CRect highlightRect;
+	inControl->getViewSize(highlightRect);
+	inContext->setFillColor(highlightColor);
+	inContext->setFrameColor(highlightColor);
+	inContext->setLineWidth(highlightWidth);
+	inContext->drawRect(highlightRect);
 
-	// set the title of the window according to the particular plugin's name
-	status = SetWindowTitleWithCFString( windowTransparencyWindow, CFSTR(PLUGIN_NAME_STRING" Window Transparency") );
+	highlightColor.alpha = 90;
+	inContext->setFillColor(highlightColor);
+	inContext->setFrameColor(highlightColor);
+	highlightRect.inset(highlightWidth, highlightWidth);
+	inContext->drawRect(highlightRect);
+}
 
-	// initialize the controls according to the current transparency value
-	ControlRef transparencyControl = DFX_GetControlWithID(windowTransparencyWindow, kDfxGui_TransparencySliderControlID);
-	if (transparencyControl != NULL)
+#endif
+// TARGET_API_RTAS
+
+
+
+
+
+
+#ifdef TARGET_API_AUDIOUNIT
+
+#if __LP64__
+extern "C" void DGVstGuiAUViewEntry() {}	// XXX workaround to quiet missing exported symbal error
+#else
+
+#pragma mark -
+
+//-----------------------------------------------------------------------------
+class DGVstGuiAUView : public AUCarbonViewBase 
+{
+public:
+	DGVstGuiAUView(AudioUnitCarbonView inInstance);
+	virtual ~DGVstGuiAUView();
+	
+	virtual OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset);
+	virtual void RespondToEventTimer(EventLoopTimerRef inTimer);
+	virtual OSStatus Version();
+
+private:
+	DfxGuiEditor * mDfxGuiEditor;
+};
+
+COMPONENT_ENTRY(DGVstGuiAUView)
+
+//-----------------------------------------------------------------------------
+DGVstGuiAUView::DGVstGuiAUView(AudioUnitCarbonView inInstance)
+:	AUCarbonViewBase(inInstance, kDfxGui_NotificationInterval)
+{
+	mDfxGuiEditor = NULL;
+}
+
+//-----------------------------------------------------------------------------
+DGVstGuiAUView::~DGVstGuiAUView()
+{
+	if (mDfxGuiEditor != NULL)
 	{
-		SInt32 min = GetControl32BitMinimum(transparencyControl);
-		SInt32 max = GetControl32BitMaximum(transparencyControl);
-		SInt32 initialValue = (SInt32)((1.0f - getWindowTransparency()) * (float)(max - min)) + min;
-		SetControl32BitValue(transparencyControl, initialValue);
+		// the idle timer gets disposed in the parent class destructor, 
+		// so make sure that the mDfxGuiEditor pointer is zeroed so that it 
+		// can't be accessed asynchronously by the idle timer while being deleted
+		DfxGuiEditor * editor_temp = mDfxGuiEditor;
+		mDfxGuiEditor = NULL;
 
-		// this is necessary for the slider to actually do the "live update" dragging behavior
-		if (gTransparencyControlActionUPP == NULL)
-			gTransparencyControlActionUPP = NewControlActionUPP(DFXGUI_TransparencyControlActionProc);
-		SetControlAction(transparencyControl, gTransparencyControlActionUPP);
+		editor_temp->close();
+		delete editor_temp;
 	}
+}
 
-	// set up the window transparency window event handler
-	if (gWindowTransparencyEventHandlerUPP == NULL)
-		gWindowTransparencyEventHandlerUPP = NewEventHandlerUPP(DFXGUI_WindowTransparencyEventHandler);
-	EventTypeSpec windowEvents[] = { { kEventClassWindow, kEventWindowClose } };
-	EventHandlerRef windowEventHandler = NULL;
-	status = InstallWindowEventHandler(windowTransparencyWindow, gWindowTransparencyEventHandlerUPP, GetEventTypeCount(windowEvents), windowEvents, this, &windowEventHandler);
-	if (status != noErr)
-	{
-		DisposeWindow(windowTransparencyWindow);
-		windowTransparencyWindow = NULL;
-		return status;
-	}
+//-----------------------------------------------------------------------------
+void DGVstGuiAUView::RespondToEventTimer(EventLoopTimerRef inTimer)
+{
+	if (mDfxGuiEditor != NULL)
+		mDfxGuiEditor->idle();
+}
 
-	// set up the window transparency control event handler
-	if (transparencyControl != NULL)
-	{
-		EventTypeSpec controlEvents[] = { { kEventClassControl, kEventControlValueFieldChanged } };
-		EventHandlerRef controlEventHandler = NULL;
-		status = InstallControlEventHandler(transparencyControl, gWindowTransparencyEventHandlerUPP, GetEventTypeCount(controlEvents), controlEvents, this, &controlEventHandler);
-	}
+extern DfxGuiEditor * DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 
-	SetWindowActivationScope(windowTransparencyWindow, kWindowActivationScopeAll);	// this allows keyboard focus for floating windows
-	ShowWindow(windowTransparencyWindow);
+//-----------------------------------------------------------------------------
+OSStatus DGVstGuiAUView::CreateUI(Float32 inXOffset, Float32 inYOffset)
+{
+	if (GetEditAudioUnit() == NULL)
+		return kAudioUnitErr_Uninitialized;
+
+	mDfxGuiEditor = DFXGUI_NewEditorInstance( GetEditAudioUnit() );
+	if (mDfxGuiEditor == NULL)
+		return memFullErr;
+	mDfxGuiEditor->SetOwnerAUCarbonView(this);
+	bool success = mDfxGuiEditor->open( GetCarbonWindow() );
+	if (!success)
+		return mDfxGuiEditor->dfxgui_GetEditorOpenErrorCode();
+
+#if (VSTGUI_VERSION_MAJOR < 4)
+	HIViewRef editorHIView = (HIViewRef) (mDfxGuiEditor->getFrame()->getPlatformControl());
+#else
+	HIViewRef editorHIView = (HIViewRef) (mDfxGuiEditor->getFrame()->getPlatformFrame()->getPlatformRepresentation());
+#endif
+	HIViewMoveBy(editorHIView, inXOffset, inYOffset);
+	EmbedControl(editorHIView);
+
+	// set the size of the embedding pane
+	CRect frameSize = mDfxGuiEditor->getFrame()->getViewSize(frameSize);
+	SizeControl( GetCarbonPane(), frameSize.width(), frameSize.height() );
+
+	CreateEventLoopTimer(kEventDurationMillisecond * 5.0, kDfxGui_IdleTimerInterval);
+
+	HIViewSetVisible(editorHIView, true);
+	HIViewSetNeedsDisplay(editorHIView, true);
+
 	return noErr;
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::heedWindowTransparencyWindowClose()
+OSStatus DGVstGuiAUView::Version()
 {
-	windowTransparencyWindow = NULL;
+	return DFX_CompositePluginVersionNumberValue();
 }
-#endif
-// TARGET_OS_MAC
 
-#endif // !__LP64__
+#endif	// !__LP64__
+
+#endif	// TARGET_API_AUDIOUNIT

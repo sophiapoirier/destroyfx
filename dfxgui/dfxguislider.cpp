@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2011  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,9 +21,53 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#if !__LP64__
-
 #include "dfxguislider.h"
+
+
+#ifdef TARGET_PLUGIN_USES_VSTGUI
+
+//-----------------------------------------------------------------------------
+DGSlider::DGSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+					DGAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage)
+:	CSlider(*inRegion, inOwnerEditor, inParamID, CPoint(0, 0), 
+			(inOrientation & kDGAxis_horizontal) ? inRegion->width() : inRegion->height(), 
+			inHandleImage, inBackgroundImage, CPoint(0, 0), 
+			(inOrientation & kDGAxis_horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical))
+{
+	setTransparency(true);
+	if (inBackgroundImage == NULL)
+	{
+		CPoint backgroundOffset(inRegion->left, inRegion->top);
+		setBackOffset(backgroundOffset);
+	}
+
+	setZoomFactor(kDfxGui_DefaultFineTuneFactor);
+
+	if (inHandleImage != NULL)
+	{
+		CPoint centeredHandleOffset(0, 0);
+		if (getStyle() & kHorizontal)
+			centeredHandleOffset.v = (size.height() - inHandleImage->getHeight()) / 2;
+		else
+			centeredHandleOffset.h = (size.width() - inHandleImage->getWidth()) / 2;
+		setOffsetHandle(centeredHandleOffset);
+	}
+
+	inOwnerEditor->addControl(this);
+}
+
+#ifdef TARGET_API_RTAS
+//-----------------------------------------------------------------------------
+void DGSlider::draw(CDrawContext * inContext)
+{
+	CSlider::draw(inContext);
+
+	((DfxGuiEditor*)(getListener()))->drawControlHighlight(inContext, this);
+}
+#endif
+
+#else
+
 
 
 //-----------------------------------------------------------------------------
@@ -42,10 +86,10 @@ DGSlider::DGSlider(DfxGuiEditor *	inOwnerEditor,
 	{
 		int handleWidth = handleImage->getWidth();
 		int handleHeight = handleImage->getHeight();
-		int widthDiff = inRegion->w - handleWidth;
+		int widthDiff = inRegion->getWidth() - handleWidth;
 		if (widthDiff < 0)
 			widthDiff = 0;
-		int heightDiff = inRegion->h - handleHeight;
+		int heightDiff = inRegion->getHeight() - handleHeight;
 		if (heightDiff < 0)
 			heightDiff = 0;
 
@@ -81,11 +125,11 @@ void DGSlider::draw(DGGraphicsContext * inContext)
 		long xoff = 0, yoff = 0;
 		if (orientation & kDGAxis_horizontal)
 		{
-			xoff = (long) round( (float)(getForeBounds()->w) * valNorm );
+			xoff = (long) round( (float)(getForeBounds()->getWidth()) * valNorm );
 		}
 		else
 		{
-			yoff = (long) round( (float)(getForeBounds()->h) * (1.0f - valNorm) );
+			yoff = (long) round( (float)(getForeBounds()->getHeight()) * (1.0f - valNorm) );
 			drawRect.y -= handleImage->getHeight();	// XXX this is because this whole forebounds thing is goofy
 		}
 		handleImage->draw(&drawRect, inContext, -xoff, -yoff);
@@ -119,25 +163,25 @@ void DGSlider::mouseTrack(float inXpos, float inYpos, unsigned long inMouseButto
 		{
 			float diff = inXpos - lastX;
 			diff /= getFineTuneFactor();
-			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->w));
+			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->getWidth()));
 		}
 		else	// vertical mode
 		{
 			float diff = lastY - inYpos;
 			diff /= getFineTuneFactor();
-			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->h));
+			val += (SInt32) (diff * (float)(max-min) / (float)(getForeBounds()->getHeight()));
 		}
 	}
 	else	// regular movement
 	{
 		if (orientation & kDGAxis_horizontal)
 		{
-			float valnorm = (inXpos - o_X) / (float)(getForeBounds()->w);
+			float valnorm = (inXpos - o_X) / (float)(getForeBounds()->getWidth());
 			val = (SInt32)(valnorm * (float)(max-min)) + min;
 		}
 		else	// vertical mode
 		{
-			float valnorm = (inYpos - o_Y) / (float)(getForeBounds()->h);
+			float valnorm = (inYpos - o_Y) / (float)(getForeBounds()->getHeight());
 			val = (SInt32)((1.0f - valnorm) * (float)(max-min)) + min;
 		}
 	}
@@ -159,4 +203,4 @@ void DGSlider::mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers
 	mouseTrack(inXpos, inYpos, 1, inKeyModifiers);
 }
 
-#endif // !__LP64__
+#endif	// !TARGET_PLUGIN_USES_VSTGUI

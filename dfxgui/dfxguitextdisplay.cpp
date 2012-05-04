@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2011  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,9 +21,9 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#if !__LP64__
-
 #include "dfxguitextdisplay.h"
+
+#include <stdio.h>
 
 
 //-----------------------------------------------------------------------------
@@ -33,6 +33,45 @@ static void DFXGUI_GenericValue2TextProc(float inValue, char * outText, void * i
 	if (outText != NULL)
 		sprintf(outText, "%.2f", inValue);
 }
+
+
+
+#ifdef TARGET_PLUGIN_USES_VSTGUI
+
+//-----------------------------------------------------------------------------
+// DGAnimation
+//-----------------------------------------------------------------------------
+DGAnimation::DGAnimation(DfxGuiEditor *	inOwnerEditor, 
+							long		inParamID, 
+							DGRect *	inRegion, 
+							DGImage *	inAnimationImage, 
+							long		inNumAnimationFrames, 
+							DGImage *	inBackground)
+:	CAnimKnob(*inRegion, inOwnerEditor, inParamID, inNumAnimationFrames, inRegion->height(), inAnimationImage)
+{
+	inOwnerEditor->addControl(this);
+
+	setTransparency(true);
+	if (inBackground == NULL)
+	{
+		CPoint backgroundOffset(inRegion->left, inRegion->top);
+		setBackOffset(backgroundOffset);
+	}
+
+	setZoomFactor(kDfxGui_DefaultFineTuneFactor);
+}
+
+#ifdef TARGET_API_RTAS
+//------------------------------------------------------------------------
+void DGAnimation::draw(CDrawContext * inContext)
+{
+	CAnimKnob::draw(inContext);
+
+	((DfxGuiEditor*)(getListener()))->drawControlHighlight(inContext, this);
+}
+#endif
+
+#else
 
 
 
@@ -413,4 +452,4 @@ void DGAnimation::draw(DGGraphicsContext * inContext)
 	}
 }
 
-#endif // !__LP64__
+#endif	// !TARGET_PLUGIN_USES_VSTGUI
