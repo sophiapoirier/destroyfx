@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2011  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -191,6 +191,7 @@ DfxPlugin::DfxPlugin(
 	mCustomUI_p = NULL;
 	mNoUIView_p = NULL;
 	mModuleHandle_p = NULL;
+	mLeftOffset = mTopOffset = 0;
 	mPIWinRect.top = mPIWinRect.left = mPIWinRect.bottom = mPIWinRect.right = 0;
 	#if WINDOWS_VERSION
 		mModuleHandle_p = (void*)gThisModule;	// extern from DLLMain.cpp; HINSTANCE of the DLL
@@ -591,14 +592,14 @@ double DfxPlugin::getparameter_scalar(long inParameterIndex)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::getparametername(long inParameterIndex, char * text)
+void DfxPlugin::getparametername(long inParameterIndex, char * outText)
 {
-	if (text != NULL)
+	if (outText != NULL)
 	{
 		if (parameterisvalid(inParameterIndex))
-			parameters[inParameterIndex].getname(text);
+			parameters[inParameterIndex].getname(outText);
 		else
-			text[0] = 0;
+			outText[0] = 0;
 	}
 }
 
@@ -915,6 +916,11 @@ void DfxPlugin::setsamplerate(double newrate)
 
 	// accept the new value into our sampling rate keeper
 	samplerate = newrate;
+
+	#if TARGET_PLUGIN_USES_MIDI
+		if (midistuff != NULL)
+			midistuff->setSampleRate(newrate);
+	#endif
 }
 
 //-----------------------------------------------------------------------------
