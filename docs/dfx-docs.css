@@ -27,6 +27,7 @@ p.declaration { text-align: center }
 p.label { font-weight: bold }
 p.desc { text-align: justify }
 p.footer { font-size: smaller ; text-align: center }
+p.footer_fineprint { font-size: xx-small ; text-align: center }
 
 a { text-decoration: none ; font-weight: bold }
 a:link { color: #750927 }
