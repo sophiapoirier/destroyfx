@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2009  Sophia Poirier
+Copyright (C) 2003-2011  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -42,6 +42,9 @@ kDfxPluginProperty_StartID = 64000,
 	kDfxPluginProperty_ParameterValue = kDfxPluginProperty_StartID,	// get/set parameter values (current, min, max, etc.) using specific variable types
 	kDfxPluginProperty_ParameterValueConversion,	// expand or contract a parameter value
 	kDfxPluginProperty_ParameterValueString,		// get/set parameter value strings
+	kDfxPluginProperty_ParameterUnitLabel,			// get parameter unit label
+	kDfxPluginProperty_ParameterValueType,			// get parameter value type
+	kDfxPluginProperty_ParameterUnit,				// get parameter unit
 	kDfxPluginProperty_RandomizeParameter,			// randomize a parameter
 	kDfxPluginProperty_MidiLearn,					// get/set the MIDI learn state
 	kDfxPluginProperty_ResetMidiLearn,				// clear MIDI parameter assignments

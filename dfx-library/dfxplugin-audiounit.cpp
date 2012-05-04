@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2012  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -245,6 +245,16 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 
 	switch (inPropertyID)
 	{
+		case kAudioUnitProperty_CocoaUI:
+#if DFXGUI_USE_COCOA_AU_VIEW
+			outDataSize = sizeof(AudioUnitCocoaViewInfo);
+			outWritable = false;
+			status = noErr;
+#else
+			status = kAudioUnitErr_PropertyNotInUse;
+#endif
+			break;
+
 		case kAudioUnitProperty_AUHostIdentifier:
 			outDataSize = sizeof(AUHostIdentifier);	// XXX update to AUHostVersionIdentifier
 			outWritable = true;
@@ -278,6 +288,24 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 		// get/set parameter value strings
 		case kDfxPluginProperty_ParameterValueString:
 			outDataSize = sizeof(DfxParameterValueStringRequest);
+			outWritable = true;
+			break;
+
+		// get parameter unit label
+		case kDfxPluginProperty_ParameterUnitLabel:
+			outDataSize = DFX_PARAM_MAX_UNIT_STRING_LENGTH;
+			outWritable = false;
+			break;
+
+		// get parameter value type
+		case kDfxPluginProperty_ParameterValueType:
+			outDataSize = sizeof(DfxParamValueType);
+			outWritable = false;
+			break;
+
+		// get parameter unit
+		case kDfxPluginProperty_ParameterUnit:
+			outDataSize = sizeof(DfxParamUnit);
 			outWritable = false;
 			break;
 
@@ -354,6 +382,36 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 
 	switch (inPropertyID)
 	{
+#if DFXGUI_USE_COCOA_AU_VIEW
+		case kAudioUnitProperty_CocoaUI:
+			{
+				CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
+				if (pluginBundle != NULL)
+				{
+					AudioUnitCocoaViewInfo cocoaViewInfo = {0};
+					cocoaViewInfo.mCocoaAUViewBundleLocation = CFBundleCopyBundleURL(pluginBundle);
+					if (cocoaViewInfo.mCocoaAUViewBundleLocation != NULL)
+					{
+						cocoaViewInfo.mCocoaAUViewClass[0] = CFStringCreateWithCString(kCFAllocatorDefault, 
+//																"DGCocoaAUViewFactory_" PLUGIN_ENTRY_POINT, kCFStringEncodingASCII);
+																DGCocoaAUViewFactory_string, kCFStringEncodingASCII);
+						if (cocoaViewInfo.mCocoaAUViewClass[0] != NULL)
+						{
+							*((AudioUnitCocoaViewInfo*)outData) = cocoaViewInfo;
+							status = noErr;
+						}
+						else
+							status = coreFoundationUnknownErr;
+					}
+					else
+						status = fnfErr;
+				}
+				else
+					status = fnfErr;
+			}
+			break;
+#endif
+
 		case kAudioUnitMigrateProperty_FromPlugin:
 			{
 				// VST counterpart description
@@ -532,6 +590,30 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 
+		// get parameter unit label
+		case kDfxPluginProperty_ParameterUnitLabel:
+			if ( !parameterisvalid(inElement) )
+				status = kAudioUnitErr_InvalidParameter;
+			else
+				getparameterunitstring(inElement, (char*)outData);
+			break;
+
+		// get parameter value type
+		case kDfxPluginProperty_ParameterValueType:
+			if ( !parameterisvalid(inElement) )
+				status = kAudioUnitErr_InvalidParameter;
+			else
+				*((DfxParamValueType*)outData) = getparametervaluetype(inElement);
+			break;
+
+		// get parameter unit
+		case kDfxPluginProperty_ParameterUnit:
+			if ( !parameterisvalid(inElement) )
+				status = kAudioUnitErr_InvalidParameter;
+			else
+				*((DfxParamUnit*)outData) = getparameterunit(inElement);
+			break;
+
 	#if TARGET_PLUGIN_USES_MIDI
 		// get the MIDI learn state
 		case kDfxPluginProperty_MidiLearn:
@@ -568,6 +650,11 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 							nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
 							break;
 						case kDfxPluginProperty_ParameterValueString:
+							nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+							break;
+						case kDfxPluginProperty_ParameterValueType:
+						case kDfxPluginProperty_ParameterUnit:
+							nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
 							nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
 							break;
 						case kDfxPluginProperty_MidiLearner:
@@ -635,14 +722,6 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 #endif
 				}
 			}
-			break;
-
-		case kAudioUnitMigrateProperty_FromPlugin:
-			status = kAudioUnitErr_PropertyNotWritable;
-			break;
-
-		case kAudioUnitMigrateProperty_OldAutomation:
-			status = kAudioUnitErr_PropertyNotWritable;
 			break;
 
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
@@ -759,10 +838,6 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 
-		case kDfxPluginProperty_ParameterValueConversion:
-			status = kAudioUnitErr_PropertyNotWritable;
-			break;
-
 		// set parameter value strings
 		case kDfxPluginProperty_ParameterValueString:
 			{
@@ -819,10 +894,6 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 
 		case kLogicAUProperty_NodeOperationMode:
 			setCurrentLogicNodeOperationMode( *(UInt32*)inData );
-			break;
-
-		case kLogicAUProperty_NodePropertyDescriptions:
-			status = kAudioUnitErr_PropertyNotWritable;
 			break;
 
 		default:
