@@ -1146,7 +1146,12 @@ OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode);
 		#define DFX_EFFECT_ENTRY(PluginClass)										\
 			AudioEffect * createEffectInstance(audioMasterCallback inAudioMaster)	\
 			{																		\
-				DfxPlugin * effect = new PluginClass(inAudioMaster);				\
+				DfxPlugin * effect = NULL;											\
+				try																	\
+				{																	\
+					effect = new PluginClass(inAudioMaster);						\
+				}																	\
+				catch (...) { return NULL; }										\
 				if (effect == NULL)													\
 					return NULL;													\
 				effect->dfx_PostConstructor();										\
@@ -1170,11 +1175,15 @@ OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode);
 			{																\
 				if ( !inAudioMaster(0, audioMasterVersion, 0, 0, 0, 0) )	\
 					return NULL;											\
-				DfxPlugin * effect = new PluginClass(inAudioMaster);		\
-				if (effect == NULL)											\
-					return NULL;											\
-				effect->dfx_PostConstructor();								\
-				return effect->getAeffect();								\
+				try															\
+				{															\
+					DfxPlugin * effect = new PluginClass(inAudioMaster);	\
+					if (effect == NULL)										\
+						return NULL;										\
+					effect->dfx_PostConstructor();							\
+					return effect->getAeffect();							\
+				}															\
+				catch (...) { return NULL; }								\
 			}
 
 	#endif
@@ -1191,7 +1200,11 @@ OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode);
 	#define DFX_EFFECT_ENTRY(PluginClass)		\
 		CEffectProcess * DFX_NewEffectProcess()	\
 		{										\
-			return new PluginClass(NULL);		\
+			try									\
+			{									\
+				return new PluginClass(NULL);	\
+			}									\
+			catch (...) { return NULL; }		\
 		}
 
 #endif
