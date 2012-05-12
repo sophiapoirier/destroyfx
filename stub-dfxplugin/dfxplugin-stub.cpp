@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2012  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -218,7 +218,7 @@ bool DfxStubDSP::createbuffers()
 
 	// if the sampling rate (& therefore the buffer size) has changed, 
 	// then delete & reallocate the buffers according to the sampling rate
-	bool success = createbuffer_f(&buffer, oldsize, buffersize);
+	bool success = dfx_createbuffer(&buffer, oldsize, buffersize);
 	if (!success)
 		return false;
 
@@ -237,7 +237,7 @@ bool DfxStub::createbuffers()
 	// if the sampling rate (& therefore the buffer size) has changed, 
 	// or if the number of channels to process has changed, 
 	// then delete & reallocate the buffers according to the sampling rate
-	bool success = createbufferarray_f(&buffers, oldnum, oldsize, numbuffers, buffersize);
+	bool success = dfx_createbufferarray(&buffers, oldnum, oldsize, numbuffers, buffersize);
 	if (!success)
 		return false;
 
@@ -251,13 +251,13 @@ bool DfxStub::createbuffers()
 #if TARGET_PLUGIN_USES_DSPCORE
 void DfxStubDSP::releasebuffers()
 {
-	releasebuffer_f(&buffer);
+	dfx_releasebuffer(&buffer);
 }
 
 #else
 void DfxStub::releasebuffers()
 {
-	releasebufferarray_f(&buffers, numbuffers);
+	dfx_releasebufferarray(&buffers, numbuffers);
 	numbuffers = 0;
 }
 #endif
@@ -268,13 +268,13 @@ void DfxStub::releasebuffers()
 #if TARGET_PLUGIN_USES_DSPCORE
 void DfxStubDSP::clearbuffers()
 {
-	clearbuffer_f(buffer, buffersize);
+	dfx_clearbuffer(buffer, buffersize);
 }
 
 #else
 void DfxStub::clearbuffers()
 {
-	clearbufferarray_f(buffers, numbuffers, buffersize);
+	dfx_clearbufferarray(buffers, numbuffers, buffersize);
 }
 #endif
 
