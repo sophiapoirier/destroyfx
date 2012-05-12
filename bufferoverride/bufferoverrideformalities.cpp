@@ -424,8 +424,8 @@ bool BufferOverride::createbuffers()
 	unsigned long oldnum = numBuffers;
 	numBuffers = getnumoutputs();
 
-	bool result1 = createbufferarray_f(&buffers, oldnum, oldmax, numBuffers, SUPER_MAX_BUFFER);
-	bool result2 = createbuffer_f(&outval, oldnum, numBuffers);
+	bool result1 = dfx_createbufferarray(&buffers, oldnum, oldmax, numBuffers, SUPER_MAX_BUFFER);
+	bool result2 = dfx_createbuffer(&outval, oldnum, numBuffers);
 /*
 bool result1 = true;
 if (buffers == NULL)
@@ -448,8 +448,8 @@ bool result2 = true;
 //-------------------------------------------------------------------------
 void BufferOverride::releasebuffers()
 {
-	releasebufferarray_f(&buffers, numBuffers);
-	releasebuffer_f(&outval);
+	dfx_releasebufferarray(&buffers, numBuffers);
+	dfx_releasebuffer(&outval);
 
 	numBuffers = 0;
 }

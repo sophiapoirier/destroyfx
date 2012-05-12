@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2009  Sophia Poirier
+Copyright (C) 2001-2012  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -88,10 +88,10 @@ bool EQSync::createbuffers()
 	unsigned long oldnum = numBuffers;
 	numBuffers = getnumoutputs();
 
-	bool result1 = createbuffer_f(&prevIn, oldnum, numBuffers);
-	bool result2 = createbuffer_f(&prevprevIn, oldnum, numBuffers);
-	bool result3 = createbuffer_f(&prevOut, oldnum, numBuffers);
-	bool result4 = createbuffer_f(&prevprevOut, oldnum, numBuffers);
+	bool result1 = dfx_createbuffer(&prevIn, oldnum, numBuffers);
+	bool result2 = dfx_createbuffer(&prevprevIn, oldnum, numBuffers);
+	bool result3 = dfx_createbuffer(&prevOut, oldnum, numBuffers);
+	bool result4 = dfx_createbuffer(&prevprevOut, oldnum, numBuffers);
 
 	if (result1 && result2 && result3 && result4)
 		return true;
@@ -101,19 +101,19 @@ bool EQSync::createbuffers()
 //-----------------------------------------------------------------------------
 void EQSync::releasebuffers()
 {
-	releasebuffer_f(&prevIn);
-	releasebuffer_f(&prevprevIn);
-	releasebuffer_f(&prevOut);
-	releasebuffer_f(&prevprevOut);
+	dfx_releasebuffer(&prevIn);
+	dfx_releasebuffer(&prevprevIn);
+	dfx_releasebuffer(&prevOut);
+	dfx_releasebuffer(&prevprevOut);
 }
 
 //-----------------------------------------------------------------------------
 void EQSync::clearbuffers()
 {
-	clearbuffer_f(prevIn, numBuffers);
-	clearbuffer_f(prevprevIn, numBuffers);
-	clearbuffer_f(prevOut, numBuffers);
-	clearbuffer_f(prevprevOut, numBuffers);
+	dfx_clearbuffer(prevIn, numBuffers);
+	dfx_clearbuffer(prevprevIn, numBuffers);
+	dfx_clearbuffer(prevOut, numBuffers);
+	dfx_clearbuffer(prevprevOut, numBuffers);
 }
 
 //-----------------------------------------------------------------------------
