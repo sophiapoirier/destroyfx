@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2012  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -204,13 +204,13 @@ bool Scrubby::createbuffers()
 	unsigned long oldnum = numBuffers;
 	numBuffers = getnumoutputs();
 
-	bool result1 = createbufferarray_f(&buffers, oldnum, oldmax, numBuffers, MAX_BUFFER);
-	bool result2 = createbuffer_d(&readPos, oldnum, numBuffers);
-	bool result3 = createbuffer_d(&readStep, oldnum, numBuffers);
-	bool result4 = createbuffer_d(&portamentoStep, oldnum, numBuffers);
-	bool result5 = createbuffer_i(&movecount, oldnum, numBuffers);
-	bool result6 = createbuffer_i(&seekcount, oldnum, numBuffers);
-	bool result7 = createbuffer_b(&needResync, oldnum, numBuffers);
+	bool result1 = dfx_createbufferarray(&buffers, oldnum, oldmax, numBuffers, MAX_BUFFER);
+	bool result2 = dfx_createbuffer(&readPos, oldnum, numBuffers);
+	bool result3 = dfx_createbuffer(&readStep, oldnum, numBuffers);
+	bool result4 = dfx_createbuffer(&portamentoStep, oldnum, numBuffers);
+	bool result5 = dfx_createbuffer(&movecount, oldnum, numBuffers);
+	bool result6 = dfx_createbuffer(&seekcount, oldnum, numBuffers);
+	bool result7 = dfx_createbuffer(&needResync, oldnum, numBuffers);
 
 	if (result1 && result2 && result3 && result4 && result5 && result6 && result7)
 		return true;
@@ -220,13 +220,13 @@ bool Scrubby::createbuffers()
 //-----------------------------------------------------------------------------
 void Scrubby::releasebuffers()
 {
-	releasebufferarray_f(&buffers, numBuffers);
-	releasebuffer_d(&readPos);
-	releasebuffer_d(&readStep);
-	releasebuffer_d(&portamentoStep);
-	releasebuffer_i(&movecount);
-	releasebuffer_i(&seekcount);
-	releasebuffer_b(&needResync);
+	dfx_releasebufferarray(&buffers, numBuffers);
+	dfx_releasebuffer(&readPos);
+	dfx_releasebuffer(&readStep);
+	dfx_releasebuffer(&portamentoStep);
+	dfx_releasebuffer(&movecount);
+	dfx_releasebuffer(&seekcount);
+	dfx_releasebuffer(&needResync);
 
 	numBuffers = 0;
 }
@@ -235,18 +235,18 @@ void Scrubby::releasebuffers()
 void Scrubby::clearbuffers()
 {
 	// clear out the buffers
-	clearbufferarray_f(buffers, numBuffers, MAX_BUFFER);
-	clearbuffer_d(readPos, numBuffers, 0.001);
-	clearbuffer_d(readStep, numBuffers, 1.0);
+	dfx_clearbufferarray(buffers, numBuffers, MAX_BUFFER);
+	dfx_clearbuffer(readPos, numBuffers, 0.001);
+	dfx_clearbuffer(readStep, numBuffers, 1.0);
 #if USE_LINEAR_ACCELERATION
-	clearbuffer_d(portamentoStep, numBuffers, 0.0);
+	dfx_clearbuffer(portamentoStep, numBuffers, 0.0);
 #else
-	clearbuffer_d(portamentoStep, numBuffers, 1.0);
+	dfx_clearbuffer(portamentoStep, numBuffers, 1.0);
 #endif
-	clearbuffer_i(movecount, numBuffers);
-	clearbuffer_i(seekcount, numBuffers);
+	dfx_clearbuffer(movecount, numBuffers);
+	dfx_clearbuffer(seekcount, numBuffers);
 	// some hosts may call reset when restarting playback
-	clearbuffer_b(needResync, numBuffers, true);
+	dfx_clearbuffer(needResync, numBuffers, true);
 }
 
 

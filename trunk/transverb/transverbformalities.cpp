@@ -135,8 +135,8 @@ fprintf(stderr, "calling TransverbDSP::createbuffers()\n");
   long oldmax = MAXBUF;
   MAXBUF = (int) (getparametermax_f(kBsize) * 0.001 * getsamplerate());
 
-  bool result1 = createbuffer_f(&buf1, oldmax, MAXBUF);
-  bool result2 = createbuffer_f(&buf2, oldmax, MAXBUF);
+  bool result1 = dfx_createbuffer(&buf1, oldmax, MAXBUF);
+  bool result2 = dfx_createbuffer(&buf2, oldmax, MAXBUF);
 
   if (!result1 && !result2)
     return false;
@@ -148,16 +148,16 @@ void TransverbDSP::clearbuffers() {
 #if PRINT_FUNCTION_ALERTS
 fprintf(stderr, "calling TransverbDSP::clearbuffers()\n");
 #endif
-  clearbuffer_f(buf1, MAXBUF);
-  clearbuffer_f(buf2, MAXBUF);
+  dfx_clearbuffer(buf1, MAXBUF);
+  dfx_clearbuffer(buf2, MAXBUF);
 }
 
 void TransverbDSP::releasebuffers() {
 #if PRINT_FUNCTION_ALERTS
 fprintf(stderr, "calling TransverbDSP::releasebuffers()\n");
 #endif
-  releasebuffer_f(&buf1);
-  releasebuffer_f(&buf2);
+  dfx_releasebuffer(&buf1);
+  dfx_releasebuffer(&buf2);
 }
 
 
