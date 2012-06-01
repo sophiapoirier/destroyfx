@@ -1,8 +1,7 @@
+Decimate audio plugin
 
-Decimate VST Plugin
-
-Part of the Super DestroyFX Plugin Pack
-By Tom Murphy 7 and Marc 3 Poirier
+Part of the Super Destroy FX Plugin Pack
+By Tom Murphy 7 and Sophia Poirier
 
 ----------------------------------------------------------------------
 
@@ -11,4 +10,3 @@ sample rate and bit depth, inducing Nyquist artifacts.
 
 The DESTROY parameter does something else to the samples that really
 messes 'em up.
-
