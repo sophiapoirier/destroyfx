@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2011  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -769,7 +769,7 @@ void DfxParam::getunitstring(char * outText)
 			strcpy(outText, "");
 			break;
 		case kDfxParamUnit_percent:
-			strcpy(outText, "%%");
+			strcpy(outText, "%");
 			break;
 		case kDfxParamUnit_lineargain:
 			strcpy(outText, "");

@@ -140,7 +140,8 @@ extern DfxGuiEditor * DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 
 	mIdleTimer = [NSTimer scheduledTimerWithTimeInterval:kDfxGui_IdleTimerInterval 
 							target:self selector:@selector(idle:) userInfo:nil repeats:YES];
-	[mIdleTimer retain];
+	if (mIdleTimer != nil)
+		[mIdleTimer retain];
 
 	return self;
 }

@@ -22,9 +22,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #include "dfxguieditor.h"
-
-#include "dfxplugin.h"
 #include "dfxguibutton.h"
+
+#ifdef TARGET_API_RTAS
+	#include "dfxplugin-base.h"
+#else
+	#include "dfxplugin.h"
+#endif
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include "dfx-au-utilities.h"
@@ -2106,13 +2110,13 @@ void DfxGuiEditor::HandleMidiLearnChange()
 	if (midiLearnButton != NULL)
 	{
 		long newControlValue = getmidilearning() ? 1 : 0;
-		SetControl32BitValue(midiLearnButton->getCarbonControl(), newControlValue);
+		midiLearnButton->setValue_i(newControlValue);
 	}
 }
 #endif
 
 //-----------------------------------------------------------------------------
-static void DFXGUI_MidiLearnButtonUserProcedure(SInt32 inValue, void * inUserData)
+static void DFXGUI_MidiLearnButtonUserProcedure(long inValue, void * inUserData)
 {
 	if (inUserData != NULL)
 	{
@@ -2124,7 +2128,7 @@ static void DFXGUI_MidiLearnButtonUserProcedure(SInt32 inValue, void * inUserDat
 }
 
 //-----------------------------------------------------------------------------
-static void DFXGUI_MidiResetButtonUserProcedure(SInt32 inValue, void * inUserData)
+static void DFXGUI_MidiResetButtonUserProcedure(long inValue, void * inUserData)
 {
 	if ( (inUserData != NULL) && (inValue != 0) )
 		((DfxGuiEditor*)inUserData)->resetmidilearn();

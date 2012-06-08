@@ -29,14 +29,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 
+//-----------------------------------------------------------------------------
 typedef void (*DGButtonUserProcedure) (long inValue, void * inUserData);
 
 
 #ifdef TARGET_PLUGIN_USES_VSTGUI
-
-//-----------------------------------------------------------------------------
-class DGButton;
-typedef void (*DGButtonUserProcedure) (long inValue, void * inUserData);
 
 //-----------------------------------------------------------------------------
 class DGButton : public CControl
