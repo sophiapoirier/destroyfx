@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2011  Sophia Poirier
+Copyright (C) 2009-2012  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -94,7 +94,7 @@ This file should be included by any prefix header that you use for your plugin.
 	#endif
 
 	#define TARGET_PLUGIN_USES_VSTGUI
-	#define ENABLE_VST_EXTENSION_IN_VSTGUI	1
+	#define ENABLE_VST_EXTENSION_IN_VSTGUI	0
 #endif
 
 

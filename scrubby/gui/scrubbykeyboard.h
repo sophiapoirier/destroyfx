@@ -1,6 +1,6 @@
 //=============================================================================
 //               Scrubby multiple-parameter keyboard GUI object
-//                         by Marc Poirier, May 2002
+//                        by Sophia Poirier, May 2002
 //=============================================================================
 
 #ifndef __scrubbykeyboard
