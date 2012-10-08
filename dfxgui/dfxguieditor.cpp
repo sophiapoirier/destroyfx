@@ -471,7 +471,16 @@ void DfxGuiEditor::valueChanged(CControl * inControl)
 #endif
 #ifdef TARGET_API_RTAS
 		if (m_Process != NULL)
-			m_Process->SetControlValue( DFX_ParameterID_ToRTAS(paramIndex), ConvertToDigiValue(paramValue_norm) );
+		{
+			// XXX though the model of calling SetControlValue might make more seem like 
+			// better design than calling setparameter_gen on the effect, in practice, 
+			// our DfxParam objects won't get their values updated to reflect the change until 
+			// the next call to UpdateControlInAlgorithm which be deferred until the start of 
+			// the next audio render call, which means that in the meantime getparameter_* 
+			// methods will return the previous rather than current value
+//			m_Process->SetControlValue( DFX_ParameterID_ToRTAS(paramIndex), ConvertToDigiValue(paramValue_norm) );
+			m_Process->setparameter_gen(paramIndex, paramValue_norm);
+		}
 #endif
 	}
 }
@@ -510,7 +519,7 @@ void DfxGuiEditor::idle()
 #if WINDOWS_VERSION // && defined(TARGET_API_RTAS)
 		// XXX this seems to be necessary to correct background re-drawing failure 
 		// when switching between different plugins in an open plugin editor window
-		getFrame()->setDirty();	// XXX or should I call invalid() ?
+		getFrame()->invalid();
 #endif
 	}
 
