@@ -3,85 +3,47 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 44;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		490E769E07CAE20500688A1D /* temporatetable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E769C07CAE20500688A1D /* temporatetable.cpp */; };
-		490E769F07CAE20500688A1D /* temporatetable.h in Headers */ = {isa = PBXBuildFile; fileRef = 490E769D07CAE20500688A1D /* temporatetable.h */; };
 		490E76A207CAE24800688A1D /* AUEffectBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E76A007CAE24800688A1D /* AUEffectBase.cpp */; };
-		490E76A307CAE24800688A1D /* AUEffectBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 490E76A107CAE24800688A1D /* AUEffectBase.h */; };
 		490E7C6807CAE7B100688A1D /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 490E7C6707CAE7B100688A1D /* Carbon.framework */; };
 		490E7D0407CAE8F500688A1D /* AUMIDIEffectBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E7D0207CAE8F500688A1D /* AUMIDIEffectBase.cpp */; };
-		490E7D0507CAE8F500688A1D /* AUMIDIEffectBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 490E7D0307CAE8F500688A1D /* AUMIDIEffectBase.h */; };
 		4918B60D0680FC9C0034CE15 /* dfxsettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */; };
-		4918B60E0680FC9C0034CE15 /* dfxsettings.h in Headers */ = {isa = PBXBuildFile; fileRef = 4918B60C0680FC9C0034CE15 /* dfxsettings.h */; };
-		4919537306C5398A00221230 /* CAMath.h in Headers */ = {isa = PBXBuildFile; fileRef = 4919537206C5398A00221230 /* CAMath.h */; };
 		4932F48B06800FCD006A9591 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F45D06800FCD006A9591 /* AUBase.cpp */; };
-		4932F48C06800FCD006A9591 /* AUBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F45E06800FCD006A9591 /* AUBase.h */; };
 		4932F48D06800FCD006A9591 /* AUDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F45F06800FCD006A9591 /* AUDispatch.cpp */; };
-		4932F48E06800FCD006A9591 /* AUDispatch.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F46006800FCD006A9591 /* AUDispatch.h */; };
 		4932F48F06800FCD006A9591 /* AUInputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46106800FCD006A9591 /* AUInputElement.cpp */; };
-		4932F49006800FCD006A9591 /* AUInputElement.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F46206800FCD006A9591 /* AUInputElement.h */; };
 		4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46306800FCD006A9591 /* AUOutputElement.cpp */; };
-		4932F49206800FCD006A9591 /* AUOutputElement.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F46406800FCD006A9591 /* AUOutputElement.h */; };
 		4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46606800FCD006A9591 /* AUScopeElement.cpp */; };
-		4932F49506800FCD006A9591 /* AUScopeElement.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F46706800FCD006A9591 /* AUScopeElement.h */; };
 		4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46806800FCD006A9591 /* ComponentBase.cpp */; };
-		4932F49706800FCD006A9591 /* ComponentBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F46906800FCD006A9591 /* ComponentBase.h */; };
 		4932F49806800FCD006A9591 /* AUCarbonViewBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46B06800FCD006A9591 /* AUCarbonViewBase.cpp */; };
-		4932F49906800FCD006A9591 /* AUCarbonViewBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F46C06800FCD006A9591 /* AUCarbonViewBase.h */; };
 		4932F49A06800FCD006A9591 /* AUCarbonViewControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46D06800FCD006A9591 /* AUCarbonViewControl.cpp */; };
-		4932F49B06800FCD006A9591 /* AUCarbonViewControl.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F46E06800FCD006A9591 /* AUCarbonViewControl.h */; };
 		4932F49C06800FCD006A9591 /* AUCarbonViewDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46F06800FCD006A9591 /* AUCarbonViewDispatch.cpp */; };
 		4932F49F06800FCD006A9591 /* CarbonEventHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F47206800FCD006A9591 /* CarbonEventHandler.cpp */; };
-		4932F4A006800FCD006A9591 /* CarbonEventHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F47306800FCD006A9591 /* CarbonEventHandler.h */; };
-		4932F4A106800FCD006A9591 /* AUViewLocalizedStringKeys.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F47506800FCD006A9591 /* AUViewLocalizedStringKeys.h */; };
 		4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F47B06800FCD006A9591 /* AUMIDIBase.cpp */; };
-		4932F4A706800FCD006A9591 /* AUMIDIBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F47C06800FCD006A9591 /* AUMIDIBase.h */; };
 		4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F48406800FCD006A9591 /* AUBuffer.cpp */; };
-		4932F4AF06800FCD006A9591 /* AUBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F48506800FCD006A9591 /* AUBuffer.h */; };
-		4932F4B306800FCD006A9591 /* AUSilentTimeout.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F48906800FCD006A9591 /* AUSilentTimeout.h */; };
 		4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4B8068010B2006A9591 /* CAStreamBasicDescription.cpp */; };
-		4932F4BB068010B2006A9591 /* CAStreamBasicDescription.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4B9068010B2006A9591 /* CAStreamBasicDescription.h */; };
 		4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4BC068010BE006A9591 /* CAAudioChannelLayout.cpp */; };
-		4932F4BF068010BE006A9591 /* CAAudioChannelLayout.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4BD068010BE006A9591 /* CAAudioChannelLayout.h */; };
 		4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4C0068010CA006A9591 /* CAAUParameter.cpp */; };
-		4932F4C3068010CA006A9591 /* CAAUParameter.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4C1068010CA006A9591 /* CAAUParameter.h */; };
 		4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4CA06801180006A9591 /* dfx-au-utilities.c */; };
-		4932F4D606801180006A9591 /* dfx-au-utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4CB06801180006A9591 /* dfx-au-utilities.h */; };
-		4932F4D706801180006A9591 /* dfxdefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4CC06801180006A9591 /* dfxdefines.h */; };
-		4932F4D806801180006A9591 /* dfxmath.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4CD06801180006A9591 /* dfxmath.h */; };
 		4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4CE06801180006A9591 /* dfxparameter.cpp */; };
-		4932F4DA06801180006A9591 /* dfxparameter.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4CF06801180006A9591 /* dfxparameter.h */; };
 		4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D006801180006A9591 /* dfxplugin-audiounit.cpp */; };
 		4932F4DC06801180006A9591 /* dfxplugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D106801180006A9591 /* dfxplugin.cpp */; };
-		4932F4DD06801180006A9591 /* dfxplugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4D206801180006A9591 /* dfxplugin.h */; };
-		4932F4DF06801180006A9591 /* dfxpluginproperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4D406801180006A9591 /* dfxpluginproperties.h */; };
 		4932F4EC068011C9006A9591 /* dfxguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E0068011C9006A9591 /* dfxguieditor.cpp */; };
-		4932F4ED068011C9006A9591 /* dfxguieditor.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4E1068011C9006A9591 /* dfxguieditor.h */; };
 		4932F4EE068011C9006A9591 /* dfxguibutton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E2068011C9006A9591 /* dfxguibutton.cpp */; };
-		4932F4EF068011C9006A9591 /* dfxguibutton.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4E3068011C9006A9591 /* dfxguibutton.h */; };
-		4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */; };
-		4932F4F1068011C9006A9591 /* dfxguicontrol.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4E5068011C9006A9591 /* dfxguicontrol.h */; };
 		4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */; };
-		4932F4F3068011C9006A9591 /* dfxguitextdisplay.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4E7068011C9006A9591 /* dfxguitextdisplay.h */; };
 		4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E8068011C9006A9591 /* dfxguislider.cpp */; };
-		4932F4F5068011C9006A9591 /* dfxguislider.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4E9068011C9006A9591 /* dfxguislider.h */; };
 		4932F4F6068011C9006A9591 /* dfxguimisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4EA068011C9006A9591 /* dfxguimisc.cpp */; };
-		4932F4F7068011C9006A9591 /* dfxguimisc.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F4EB068011C9006A9591 /* dfxguimisc.h */; };
 		4932F5EB0680132E006A9591 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4932F5E90680132E006A9591 /* AudioToolbox.framework */; };
 		4932F5EC0680132E006A9591 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4932F5EA0680132E006A9591 /* AudioUnit.framework */; };
 		4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F7990680E859006A9591 /* dfxmidi.cpp */; };
-		4932F79C0680E859006A9591 /* dfxmidi.h in Headers */ = {isa = PBXBuildFile; fileRef = 4932F79A0680E859006A9591 /* dfxmidi.h */; };
-		4998C0E607E5063E008EBD90 /* bufferoverride.h in Headers */ = {isa = PBXBuildFile; fileRef = 4998C0E107E5063E008EBD90 /* bufferoverride.h */; };
 		4998C0E807E5063E008EBD90 /* bufferoverrideformalities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C0E307E5063E008EBD90 /* bufferoverrideformalities.cpp */; };
 		4998C0E907E5063E008EBD90 /* bufferoverridemidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C0E407E5063E008EBD90 /* bufferoverridemidi.cpp */; };
 		4998C0EA07E5063E008EBD90 /* bufferoverrideprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C0E507E5063E008EBD90 /* bufferoverrideprocess.cpp */; };
 		4998C0ED07E50665008EBD90 /* bufferoverrideeditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C0EB07E50665008EBD90 /* bufferoverrideeditor.cpp */; };
-		4998C0EE07E50665008EBD90 /* bufferoverrideeditor.h in Headers */ = {isa = PBXBuildFile; fileRef = 4998C0EC07E50665008EBD90 /* bufferoverrideeditor.h */; };
 		4998C0F307E506A8008EBD90 /* lfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C0F107E506A8008EBD90 /* lfo.cpp */; };
-		4998C0F407E506A8008EBD90 /* lfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 4998C0F207E506A8008EBD90 /* lfo.h */; };
 		4998C11007E50746008EBD90 /* buffer-interrupt-button-corner.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0F907E50746008EBD90 /* buffer-interrupt-button-corner.png */; };
 		4998C11107E50746008EBD90 /* buffer-interrupt-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FA07E50746008EBD90 /* buffer-interrupt-button.png */; };
 		4998C11207E50746008EBD90 /* buffer-lfo-rate-label.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C0FB07E50746008EBD90 /* buffer-lfo-rate-label.png */; };
@@ -94,7 +56,6 @@
 		4998C11907E50746008EBD90 /* divisor-lfo-rate-label.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10207E50746008EBD90 /* divisor-lfo-rate-label.png */; };
 		4998C11A07E50746008EBD90 /* divisor-lfo-shape-switch.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10307E50746008EBD90 /* divisor-lfo-shape-switch.png */; };
 		4998C11B07E50746008EBD90 /* divisor-lfo-tempo-sync-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10407E50746008EBD90 /* divisor-lfo-tempo-sync-button.png */; };
-		4998C11C07E50746008EBD90 /* go-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10507E50746008EBD90 /* go-button.png */; };
 		4998C11D07E50746008EBD90 /* midi-learn-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10607E50746008EBD90 /* midi-learn-button.png */; };
 		4998C11E07E50746008EBD90 /* midi-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10707E50746008EBD90 /* midi-mode-button.png */; };
 		4998C11F07E50746008EBD90 /* midi-reset-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10807E50746008EBD90 /* midi-reset-button.png */; };
@@ -103,15 +64,24 @@
 		4998C12607E50746008EBD90 /* xy-box-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10F07E50746008EBD90 /* xy-box-handle.png */; };
 		8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
 		B025B7FD08ACFC2F00A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B7FA08ACFC2F00A9CCAE /* CAVectorUnit.cpp */; };
-		B025B7FE08ACFC2F00A9CCAE /* CAVectorUnit.h in Headers */ = {isa = PBXBuildFile; fileRef = B025B7FB08ACFC2F00A9CCAE /* CAVectorUnit.h */; };
-		B025B7FF08ACFC2F00A9CCAE /* CAVectorUnitTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = B025B7FC08ACFC2F00A9CCAE /* CAVectorUnitTypes.h */; };
 		B0A9F7E50A99542600502DE8 /* dfx-au-utilities-preset-files.c in Sources */ = {isa = PBXBuildFile; fileRef = B0A9F7E30A99542600502DE8 /* dfx-au-utilities-preset-files.c */; };
-		B0A9F7E60A99542600502DE8 /* dfx-au-utilities-private.h in Headers */ = {isa = PBXBuildFile; fileRef = B0A9F7E40A99542600502DE8 /* dfx-au-utilities-private.h */; };
 		B0AD80DC0D0F315300766C78 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0AD80DB0D0F315300766C78 /* destroyfx.icns */; };
+		EC08C7201A927F9200326647 /* host-tempo-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC08C71F1A927F9200326647 /* host-tempo-button.png */; };
 		EC1227D20FBC910300F013C8 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC1227D00FBC910300F013C8 /* dfx-au-utilities.strings */; };
 		EC1227D70FBC912800F013C8 /* au-preset-save-dialog.nib in Resources */ = {isa = PBXBuildFile; fileRef = EC1227D50FBC912800F013C8 /* au-preset-save-dialog.nib */; };
 		EC1227DC0FBC914C00F013C8 /* dfxgui.nib in Resources */ = {isa = PBXBuildFile; fileRef = EC1227DA0FBC914C00F013C8 /* dfxgui.nib */; };
+		EC25B47B1A855B7A0037D114 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC25B4791A855B7A0037D114 /* plugguieditor.cpp */; };
+		EC25B47F1A85671B0037D114 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC25B4731A8559E20037D114 /* vstgui_mac.mm */; };
+		EC25B4811A85675E0037D114 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC25B4801A85675E0037D114 /* OpenGL.framework */; };
+		EC25B4831A8567BB0037D114 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC25B4821A8567BB0037D114 /* Accelerate.framework */; };
+		EC25B4851A85681D0037D114 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC25B4841A85681D0037D114 /* QuartzCore.framework */; };
+		EC8E90DB17E60E7F0022A297 /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC8E90D917E60E7F0022A297 /* dfxenvelope.cpp */; };
 		EC983FFC1030843700FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
+		EC9D0B7118748EC300750E22 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC9D0B7018748EC300750E22 /* dfxguicontrol.cpp */; };
+		ECB4D9E9155C7E20007E5E23 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECB4D9E7155C7E20007E5E23 /* dfxmisc.cpp */; };
+		ECB4D9F6155C7E64007E5E23 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECB4D9F5155C7E64007E5E23 /* dfxgui-auviewfactory.mm */; };
+		ECB4D9F9155C7E7E007E5E23 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECB4D9F8155C7E7E007E5E23 /* Cocoa.framework */; };
+		ECDCA6CD1A61D4F80088FE7F /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECDCA6CB1A61D4F80088FE7F /* AUPlugInDispatch.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -173,7 +143,6 @@
 		4932F4E1068011C9006A9591 /* dfxguieditor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxguieditor.h; sourceTree = "<group>"; };
 		4932F4E2068011C9006A9591 /* dfxguibutton.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxguibutton.cpp; sourceTree = "<group>"; };
 		4932F4E3068011C9006A9591 /* dfxguibutton.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxguibutton.h; sourceTree = "<group>"; };
-		4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxguicontrol.cpp; sourceTree = "<group>"; };
 		4932F4E5068011C9006A9591 /* dfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxguicontrol.h; sourceTree = "<group>"; };
 		4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxguitextdisplay.cpp; sourceTree = "<group>"; };
 		4932F4E7068011C9006A9591 /* dfxguitextdisplay.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxguitextdisplay.h; sourceTree = "<group>"; };
@@ -207,7 +176,6 @@
 		4998C10207E50746008EBD90 /* divisor-lfo-rate-label.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "divisor-lfo-rate-label.png"; sourceTree = "<group>"; };
 		4998C10307E50746008EBD90 /* divisor-lfo-shape-switch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "divisor-lfo-shape-switch.png"; sourceTree = "<group>"; };
 		4998C10407E50746008EBD90 /* divisor-lfo-tempo-sync-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "divisor-lfo-tempo-sync-button.png"; sourceTree = "<group>"; };
-		4998C10507E50746008EBD90 /* go-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "go-button.png"; sourceTree = "<group>"; };
 		4998C10607E50746008EBD90 /* midi-learn-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-learn-button.png"; sourceTree = "<group>"; };
 		4998C10707E50746008EBD90 /* midi-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-mode-button.png"; sourceTree = "<group>"; };
 		4998C10807E50746008EBD90 /* midi-reset-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-reset-button.png"; sourceTree = "<group>"; };
@@ -225,15 +193,35 @@
 		B0A9F7E30A99542600502DE8 /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B0A9F7E40A99542600502DE8 /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B0AD80DB0D0F315300766C78 /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
-		EC1227D10FBC910300F013C8 /* en */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
-		EC1227D30FBC910B00F013C8 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
-		EC1227D40FBC911700F013C8 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
+		EC08C71F1A927F9200326647 /* host-tempo-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "host-tempo-button.png"; sourceTree = "<group>"; };
+		EC1227D10FBC910300F013C8 /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
+		EC1227D30FBC910B00F013C8 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
+		EC1227D40FBC911700F013C8 /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
 		EC1227D60FBC912800F013C8 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = "../../dfx-library/en.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
 		EC1227D80FBC913300F013C8 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = "../../dfx-library/fr.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
 		EC1227D90FBC913C00F013C8 /* nl */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = nl; path = "../../dfx-library/nl.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
 		EC1227DB0FBC914C00F013C8 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = ../../dfxgui/en.lproj/dfxgui.nib; sourceTree = SOURCE_ROOT; };
+		EC25B4731A8559E20037D114 /* vstgui_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = vstgui_mac.mm; sourceTree = "<group>"; };
+		EC25B4791A855B7A0037D114 /* plugguieditor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = plugguieditor.cpp; sourceTree = "<group>"; };
+		EC25B47A1A855B7A0037D114 /* plugguieditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = plugguieditor.h; sourceTree = "<group>"; };
+		EC25B4801A85675E0037D114 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/OpenGL.framework; sourceTree = DEVELOPER_DIR; };
+		EC25B4821A8567BB0037D114 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/Accelerate.framework; sourceTree = DEVELOPER_DIR; };
+		EC25B4841A85681D0037D114 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/QuartzCore.framework; sourceTree = DEVELOPER_DIR; };
+		EC8E90D917E60E7F0022A297 /* dfxenvelope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxenvelope.cpp; sourceTree = "<group>"; };
+		EC8E90DA17E60E7F0022A297 /* dfxenvelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxenvelope.h; sourceTree = "<group>"; };
+		EC9700941A634EB1007E8186 /* dfxgui-auviewfactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxgui-auviewfactory.h"; sourceTree = "<group>"; };
 		EC98418F1030C4AB00FA3B2B /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		EC9841901030C4AB00FA3B2B /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
+		EC9D0B7018748EC300750E22 /* dfxguicontrol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxguicontrol.cpp; sourceTree = "<group>"; };
+		ECB4D9E5155C7E04007E5E23 /* dfxplugin-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxplugin-base.h"; sourceTree = "<group>"; };
+		ECB4D9E7155C7E20007E5E23 /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
+		ECB4D9E8155C7E20007E5E23 /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
+		ECB4D9EB155C7E41007E5E23 /* dfxgui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxgui.h; sourceTree = "<group>"; };
+		ECB4D9F4155C7E54007E5E23 /* dfxgui-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxgui-base.h"; sourceTree = "<group>"; };
+		ECB4D9F5155C7E64007E5E23 /* dfxgui-auviewfactory.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "dfxgui-auviewfactory.mm"; sourceTree = "<group>"; };
+		ECB4D9F8155C7E7E007E5E23 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		ECDCA6CB1A61D4F80088FE7F /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
+		ECDCA6CC1A61D4F80088FE7F /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -241,9 +229,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC25B4831A8567BB0037D114 /* Accelerate.framework in Frameworks */,
 				4932F5EB0680132E006A9591 /* AudioToolbox.framework in Frameworks */,
 				4932F5EC0680132E006A9591 /* AudioUnit.framework in Frameworks */,
 				490E7C6807CAE7B100688A1D /* Carbon.framework in Frameworks */,
+				ECB4D9F9155C7E7E007E5E23 /* Cocoa.framework in Frameworks */,
+				EC25B4811A85675E0037D114 /* OpenGL.framework in Frameworks */,
+				EC25B4851A85681D0037D114 /* QuartzCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +250,7 @@
 				4932F4C906801110006A9591 /* DFX GUI */,
 				4932F45B06800F80006A9591 /* AUPublic */,
 				4932F4B70680108C006A9591 /* PublicUtility */,
+				EC25B4721A85597E0037D114 /* VSTGUI */,
 				089C167CFE841241C02AAC07 /* Resources */,
 				089C1671FE841209C02AAC07 /* External Frameworks and Libraries */,
 				19C28FB4FE9D528D11CA2CBB /* Products */,
@@ -268,9 +261,13 @@
 		089C1671FE841209C02AAC07 /* External Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				EC25B4821A8567BB0037D114 /* Accelerate.framework */,
 				4932F5EA0680132E006A9591 /* AudioUnit.framework */,
 				4932F5E90680132E006A9591 /* AudioToolbox.framework */,
 				490E7C6707CAE7B100688A1D /* Carbon.framework */,
+				ECB4D9F8155C7E7E007E5E23 /* Cocoa.framework */,
+				EC25B4801A85675E0037D114 /* OpenGL.framework */,
+				EC25B4841A85681D0037D114 /* QuartzCore.framework */,
 			);
 			name = "External Frameworks and Libraries";
 			sourceTree = "<group>";
@@ -335,9 +332,9 @@
 				4998C10307E50746008EBD90 /* divisor-lfo-shape-switch.png */,
 				4998C10407E50746008EBD90 /* divisor-lfo-tempo-sync-button.png */,
 				4998C10207E50746008EBD90 /* divisor-lfo-rate-label.png */,
+				EC08C71F1A927F9200326647 /* host-tempo-button.png */,
 				4998C10607E50746008EBD90 /* midi-learn-button.png */,
 				4998C10807E50746008EBD90 /* midi-reset-button.png */,
-				4998C10507E50746008EBD90 /* go-button.png */,
 			);
 			name = graphics;
 			path = ../gui/graphics;
@@ -353,8 +350,8 @@
 				4932F46A06800FCD006A9591 /* AUCarbonViewBase */,
 			);
 			name = AUPublic;
-			path = /Developer/Examples/CoreAudio/AudioUnits/AUPublic;
-			sourceTree = "<absolute>";
+			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/AudioUnits/AUPublic";
+			sourceTree = SOURCE_ROOT;
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
 			isa = PBXGroup;
@@ -367,6 +364,8 @@
 				4932F46106800FCD006A9591 /* AUInputElement.cpp */,
 				4932F46406800FCD006A9591 /* AUOutputElement.h */,
 				4932F46306800FCD006A9591 /* AUOutputElement.cpp */,
+				ECDCA6CC1A61D4F80088FE7F /* AUPlugInDispatch.h */,
+				ECDCA6CB1A61D4F80088FE7F /* AUPlugInDispatch.cpp */,
 				4932F46706800FCD006A9591 /* AUScopeElement.h */,
 				4932F46606800FCD006A9591 /* AUScopeElement.cpp */,
 				4932F46906800FCD006A9591 /* ComponentBase.h */,
@@ -436,24 +435,29 @@
 				B025B7FA08ACFC2F00A9CCAE /* CAVectorUnit.cpp */,
 			);
 			name = PublicUtility;
-			path = /Developer/Examples/CoreAudio/PublicUtility;
-			sourceTree = "<absolute>";
+			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/PublicUtility";
+			sourceTree = SOURCE_ROOT;
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
 			isa = PBXGroup;
 			children = (
 				4932F4CC06801180006A9591 /* dfxdefines.h */,
+				ECB4D9E5155C7E04007E5E23 /* dfxplugin-base.h */,
 				4932F4D206801180006A9591 /* dfxplugin.h */,
 				4932F4D106801180006A9591 /* dfxplugin.cpp */,
 				4932F4D406801180006A9591 /* dfxpluginproperties.h */,
 				4932F4D006801180006A9591 /* dfxplugin-audiounit.cpp */,
 				4932F4CF06801180006A9591 /* dfxparameter.h */,
 				4932F4CE06801180006A9591 /* dfxparameter.cpp */,
+				ECB4D9E8155C7E20007E5E23 /* dfxmisc.h */,
+				ECB4D9E7155C7E20007E5E23 /* dfxmisc.cpp */,
 				4932F4CD06801180006A9591 /* dfxmath.h */,
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B0A9F7E40A99542600502DE8 /* dfx-au-utilities-private.h */,
 				B0A9F7E30A99542600502DE8 /* dfx-au-utilities-preset-files.c */,
+				EC8E90DA17E60E7F0022A297 /* dfxenvelope.h */,
+				EC8E90D917E60E7F0022A297 /* dfxenvelope.cpp */,
 				4932F79A0680E859006A9591 /* dfxmidi.h */,
 				4932F7990680E859006A9591 /* dfxmidi.cpp */,
 				4918B60C0680FC9C0034CE15 /* dfxsettings.h */,
@@ -473,10 +477,12 @@
 		4932F4C906801110006A9591 /* DFX GUI */ = {
 			isa = PBXGroup;
 			children = (
+				ECB4D9EB155C7E41007E5E23 /* dfxgui.h */,
+				ECB4D9F4155C7E54007E5E23 /* dfxgui-base.h */,
 				4932F4E1068011C9006A9591 /* dfxguieditor.h */,
 				4932F4E0068011C9006A9591 /* dfxguieditor.cpp */,
 				4932F4E5068011C9006A9591 /* dfxguicontrol.h */,
-				4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */,
+				EC9D0B7018748EC300750E22 /* dfxguicontrol.cpp */,
 				4932F4EB068011C9006A9591 /* dfxguimisc.h */,
 				4932F4EA068011C9006A9591 /* dfxguimisc.cpp */,
 				4932F4E9068011C9006A9591 /* dfxguislider.h */,
@@ -485,73 +491,44 @@
 				4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */,
 				4932F4E3068011C9006A9591 /* dfxguibutton.h */,
 				4932F4E2068011C9006A9591 /* dfxguibutton.cpp */,
+				EC9700941A634EB1007E8186 /* dfxgui-auviewfactory.h */,
+				ECB4D9F5155C7E64007E5E23 /* dfxgui-auviewfactory.mm */,
 			);
 			name = "DFX GUI";
 			path = ../../dfxgui;
 			sourceTree = SOURCE_ROOT;
 		};
-/* End PBXGroup section */
-
-/* Begin PBXHeadersBuildPhase section */
-		8D01CCC70486CAD60068D4B7 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4932F48C06800FCD006A9591 /* AUBase.h in Headers */,
-				4932F48E06800FCD006A9591 /* AUDispatch.h in Headers */,
-				4932F49006800FCD006A9591 /* AUInputElement.h in Headers */,
-				4932F49206800FCD006A9591 /* AUOutputElement.h in Headers */,
-				4932F49506800FCD006A9591 /* AUScopeElement.h in Headers */,
-				4932F49706800FCD006A9591 /* ComponentBase.h in Headers */,
-				4932F49906800FCD006A9591 /* AUCarbonViewBase.h in Headers */,
-				4932F49B06800FCD006A9591 /* AUCarbonViewControl.h in Headers */,
-				4932F4A006800FCD006A9591 /* CarbonEventHandler.h in Headers */,
-				4932F4A106800FCD006A9591 /* AUViewLocalizedStringKeys.h in Headers */,
-				4932F4A706800FCD006A9591 /* AUMIDIBase.h in Headers */,
-				4932F4AF06800FCD006A9591 /* AUBuffer.h in Headers */,
-				4932F4B306800FCD006A9591 /* AUSilentTimeout.h in Headers */,
-				4932F4BB068010B2006A9591 /* CAStreamBasicDescription.h in Headers */,
-				4932F4BF068010BE006A9591 /* CAAudioChannelLayout.h in Headers */,
-				4932F4C3068010CA006A9591 /* CAAUParameter.h in Headers */,
-				4932F4D606801180006A9591 /* dfx-au-utilities.h in Headers */,
-				4932F4D706801180006A9591 /* dfxdefines.h in Headers */,
-				4932F4D806801180006A9591 /* dfxmath.h in Headers */,
-				4932F4DA06801180006A9591 /* dfxparameter.h in Headers */,
-				4932F4DD06801180006A9591 /* dfxplugin.h in Headers */,
-				4932F4DF06801180006A9591 /* dfxpluginproperties.h in Headers */,
-				4932F4ED068011C9006A9591 /* dfxguieditor.h in Headers */,
-				4932F4EF068011C9006A9591 /* dfxguibutton.h in Headers */,
-				4932F4F1068011C9006A9591 /* dfxguicontrol.h in Headers */,
-				4932F4F3068011C9006A9591 /* dfxguitextdisplay.h in Headers */,
-				4932F4F5068011C9006A9591 /* dfxguislider.h in Headers */,
-				4932F4F7068011C9006A9591 /* dfxguimisc.h in Headers */,
-				4932F79C0680E859006A9591 /* dfxmidi.h in Headers */,
-				4918B60E0680FC9C0034CE15 /* dfxsettings.h in Headers */,
-				4919537306C5398A00221230 /* CAMath.h in Headers */,
-				490E769F07CAE20500688A1D /* temporatetable.h in Headers */,
-				490E76A307CAE24800688A1D /* AUEffectBase.h in Headers */,
-				490E7D0507CAE8F500688A1D /* AUMIDIEffectBase.h in Headers */,
-				4998C0E607E5063E008EBD90 /* bufferoverride.h in Headers */,
-				4998C0EE07E50665008EBD90 /* bufferoverrideeditor.h in Headers */,
-				4998C0F407E506A8008EBD90 /* lfo.h in Headers */,
-				B025B7FE08ACFC2F00A9CCAE /* CAVectorUnit.h in Headers */,
-				B025B7FF08ACFC2F00A9CCAE /* CAVectorUnitTypes.h in Headers */,
-				B0A9F7E60A99542600502DE8 /* dfx-au-utilities-private.h in Headers */,
+		EC25B4721A85597E0037D114 /* VSTGUI */ = {
+			isa = PBXGroup;
+			children = (
+				EC25B4781A855B680037D114 /* plugin-bindings */,
+				EC25B4731A8559E20037D114 /* vstgui_mac.mm */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
+			name = VSTGUI;
+			path = ../../vst3sdk/vstgui4/vstgui;
+			sourceTree = "<group>";
 		};
-/* End PBXHeadersBuildPhase section */
+		EC25B4781A855B680037D114 /* plugin-bindings */ = {
+			isa = PBXGroup;
+			children = (
+				EC25B47A1A855B7A0037D114 /* plugguieditor.h */,
+				EC25B4791A855B7A0037D114 /* plugguieditor.cpp */,
+			);
+			path = "plugin-bindings";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
 		8D01CCC60486CAD60068D4B7 /* Buffer Override */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B0610A0C0888A7C8001FDD9A /* Build configuration list for PBXNativeTarget "Buffer Override" */;
 			buildPhases = (
-				8D01CCC70486CAD60068D4B7 /* Headers */,
 				8D01CCC90486CAD60068D4B7 /* Resources */,
 				8D01CCCB0486CAD60068D4B7 /* Sources */,
 				8D01CCCD0486CAD60068D4B7 /* Frameworks */,
 				8D01CCCF0486CAD60068D4B7 /* Rez */,
+				ECDCA6CE1A61FDD00088FE7F /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -568,8 +545,11 @@
 /* Begin PBXProject section */
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+			};
 			buildConfigurationList = B0610A100888A7C8001FDD9A /* Build configuration list for PBXProject "bufferoverride" */;
 			compatibilityVersion = "Xcode 2.4";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -607,7 +587,6 @@
 				4998C11907E50746008EBD90 /* divisor-lfo-rate-label.png in Resources */,
 				4998C11A07E50746008EBD90 /* divisor-lfo-shape-switch.png in Resources */,
 				4998C11B07E50746008EBD90 /* divisor-lfo-tempo-sync-button.png in Resources */,
-				4998C11C07E50746008EBD90 /* go-button.png in Resources */,
 				4998C11D07E50746008EBD90 /* midi-learn-button.png in Resources */,
 				4998C11E07E50746008EBD90 /* midi-mode-button.png in Resources */,
 				4998C11F07E50746008EBD90 /* midi-reset-button.png in Resources */,
@@ -617,6 +596,7 @@
 				B0AD80DC0D0F315300766C78 /* destroyfx.icns in Resources */,
 				EC1227D20FBC910300F013C8 /* dfx-au-utilities.strings in Resources */,
 				EC1227D70FBC912800F013C8 /* au-preset-save-dialog.nib in Resources */,
+				EC08C7201A927F9200326647 /* host-tempo-button.png in Resources */,
 				EC1227DC0FBC914C00F013C8 /* dfxgui.nib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -634,6 +614,22 @@
 		};
 /* End PBXRezBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		ECDCA6CE1A61FDD00088FE7F /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "../../dfx-library/xcode/dfxplugin-au-postbuild.sh";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		8D01CCCB0486CAD60068D4B7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -642,13 +638,16 @@
 				4932F48B06800FCD006A9591 /* AUBase.cpp in Sources */,
 				4932F48D06800FCD006A9591 /* AUDispatch.cpp in Sources */,
 				4932F48F06800FCD006A9591 /* AUInputElement.cpp in Sources */,
+				EC25B47F1A85671B0037D114 /* vstgui_mac.mm in Sources */,
 				4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */,
 				4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */,
 				4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */,
+				EC25B47B1A855B7A0037D114 /* plugguieditor.cpp in Sources */,
 				4932F49806800FCD006A9591 /* AUCarbonViewBase.cpp in Sources */,
 				4932F49A06800FCD006A9591 /* AUCarbonViewControl.cpp in Sources */,
 				4932F49C06800FCD006A9591 /* AUCarbonViewDispatch.cpp in Sources */,
 				4932F49F06800FCD006A9591 /* CarbonEventHandler.cpp in Sources */,
+				ECDCA6CD1A61D4F80088FE7F /* AUPlugInDispatch.cpp in Sources */,
 				4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */,
 				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
 				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
@@ -660,7 +659,6 @@
 				4932F4DC06801180006A9591 /* dfxplugin.cpp in Sources */,
 				4932F4EC068011C9006A9591 /* dfxguieditor.cpp in Sources */,
 				4932F4EE068011C9006A9591 /* dfxguibutton.cpp in Sources */,
-				4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */,
 				4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */,
 				4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */,
 				4932F4F6068011C9006A9591 /* dfxguimisc.cpp in Sources */,
@@ -676,6 +674,10 @@
 				4998C0F307E506A8008EBD90 /* lfo.cpp in Sources */,
 				B025B7FD08ACFC2F00A9CCAE /* CAVectorUnit.cpp in Sources */,
 				B0A9F7E50A99542600502DE8 /* dfx-au-utilities-preset-files.c in Sources */,
+				ECB4D9E9155C7E20007E5E23 /* dfxmisc.cpp in Sources */,
+				ECB4D9F6155C7E64007E5E23 /* dfxgui-auviewfactory.mm in Sources */,
+				EC8E90DB17E60E7F0022A297 /* dfxenvelope.cpp in Sources */,
+				EC9D0B7118748EC300750E22 /* dfxguicontrol.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -725,10 +727,12 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = EC98418F1030C4AB00FA3B2B /* dfxplugin-au-debug.xcconfig */;
 			buildSettings = {
+				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aumf;
 				DFX_PLUGIN_FULL_NAME = "Buffer Override";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = BufferOverride;
 				DFX_PLUGIN_SHORT_NAME = bufferoverride;
 				DFX_PLUGIN_VERSION_STRING = 2.1.0;
+				SDKROOT = macosx10.9;
 			};
 			name = Development;
 		};
@@ -736,22 +740,34 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = EC9841901030C4AB00FA3B2B /* dfxplugin-au-release.xcconfig */;
 			buildSettings = {
+				DFX_PLUGIN_AUDIOUNIT_TYPE_ID = aumf;
 				DFX_PLUGIN_FULL_NAME = "Buffer Override";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = BufferOverride;
 				DFX_PLUGIN_SHORT_NAME = bufferoverride;
 				DFX_PLUGIN_VERSION_STRING = 2.1.0;
+				SDKROOT = macosx10.9;
 			};
 			name = Deployment;
 		};
 		B0610A110888A7C8001FDD9A /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EC98418F1030C4AB00FA3B2B /* dfxplugin-au-debug.xcconfig */;
 			buildSettings = {
+				DFX_PLUGIN_FULL_NAME = "Buffer Override";
+				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = BufferOverride;
+				DFX_PLUGIN_ID = buff;
+				DFX_PLUGIN_SHORT_NAME = bufferoverride;
 			};
 			name = Development;
 		};
 		B0610A120888A7C8001FDD9A /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EC9841901030C4AB00FA3B2B /* dfxplugin-au-release.xcconfig */;
 			buildSettings = {
+				DFX_PLUGIN_FULL_NAME = "Buffer Override";
+				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = BufferOverride;
+				DFX_PLUGIN_ID = buff;
+				DFX_PLUGIN_SHORT_NAME = bufferoverride;
 			};
 			name = Deployment;
 		};
