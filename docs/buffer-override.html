@@ -113,11 +113,20 @@ The amount of LFO modulation can be controlled by the LFO depth sliders.  At 0%,
 <p class="label">tempo:</p>
 
 <p class="desc">
-The tempo parameter is used to tell Buffer Override what the tempo of your song is.  This parameter defaults to "auto" which means that Buffer Override tries to get the tempo from the host application.  If you move the tempo slider to the right, you exit "auto" mode and can set the tempo manually.  You can also click on the numerical value display and type your tempo in manually.
+The tempo parameter is used to tell Buffer Override what the tempo of your song is.  You can use the slider or click on the numerical value display and type your tempo in manually.
+</p>
+
+<br />
+
+
+<p class="label">sync to host tempo:</p>
+
+<p class="desc">
+When this parameter is turned on, Buffer Override tries to get the tempo from the host application (and ignores the value manually selected by the "tempo" parameter).
 </p>
 
 <p class="desc">
-"Auto" tempo only works if the host application supports sending tempo information to plugins.  If the application can't do this, then the "auto" option will not appear in Buffer Override.
+"Auto tempo" only works if the host application supports sending tempo information to plugins.  If tempo is unavailable from the host, then Buffer Override falls back to using the value set with the "tempo" parameter.
 </p>
 
 <br />
