@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -477,4 +477,41 @@ DGKeyModifiers DFXGUI_ConvertVstGuiKeyModifiers(long inButtons)
 	if (inButtons & kApple)
 		resultKeys |= kDGKeyModifier_extra;
 	return resultKeys;
+}
+
+//-----------------------------------------------------------------------------
+CFontRef DFXGUI_CreateVstGuiFont(float inFontSize, const char* inFontName)
+{
+	if (inFontName != NULL)
+	{
+		return new CFontDesc(inFontName, inFontSize);
+	}
+	else
+	{
+		CFontRef fontDesc = new CFontDesc(kSystemFont->getName(), inFontSize);
+#if TARGET_OS_MAC
+        // get the application font from the system "theme"
+        const CTFontUIFontType fontType = HIThemeGetUIFontType(kThemeApplicationFont);
+        if (fontType != kCTFontNoFontType)
+        {
+            CTFontRef fontRef = CTFontCreateUIFontForLanguage(fontType, 0.0, NULL);
+            if (fontRef)
+            {
+                CFStringRef fontCFName = CTFontCopyFullName(fontRef);
+                if (fontCFName)
+                {
+                    char * fontCName = DFX_CreateCStringFromCFString(fontCFName, kCFStringEncodingUTF8);
+                    if (fontCName)
+                    {
+                        fontDesc->setName(fontCName);
+                        free(fontCName);
+                    }
+                    CFRelease(fontCFName);
+                }
+                CFRelease(fontRef);
+            }
+        }
+#endif
+		return fontDesc;
+	}
 }

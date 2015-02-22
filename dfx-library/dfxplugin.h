@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2012  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -567,7 +567,7 @@ public:
 	#endif
 
 	// handling of AU properties specific to Logic
-	#ifdef TARGET_API_AUDIOUNIT
+	#if defined(TARGET_API_AUDIOUNIT) && LOGIC_AU_PROPERTIES_AVAILABLE
 		UInt32 getSupportedLogicNodeOperationMode()
 			{	return supportedLogicNodeOperationMode;	}
 		void setSupportedLogicNodeOperationMode(UInt32 inNewMode)
@@ -644,7 +644,9 @@ private:
 
 	#ifdef TARGET_API_AUDIOUNIT
 		void UpdateInPlaceProcessingState();
-		UInt32 supportedLogicNodeOperationMode, currentLogicNodeOperationMode;
+		#if LOGIC_AU_PROPERTIES_AVAILABLE
+			UInt32 supportedLogicNodeOperationMode, currentLogicNodeOperationMode;
+		#endif
 	#endif
 
 	#ifdef TARGET_API_RTAS
@@ -1101,7 +1103,13 @@ OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode);
 
 #ifdef TARGET_API_AUDIOUNIT
 
-	#define DFX_EFFECT_ENTRY(PluginClass)   COMPONENT_ENTRY(PluginClass)
+#if TARGET_PLUGIN_IS_INSTRUMENT
+	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMusicDeviceFactory, PluginClass)
+#elif TARGET_PLUGIN_USES_MIDI
+	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMIDIProcessFactory, PluginClass)
+#else
+	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUBaseProcessFactory, PluginClass)
+#endif
 
 	#if TARGET_PLUGIN_USES_DSPCORE
 		#define DFX_CORE_ENTRY(PluginCoreClass)						\

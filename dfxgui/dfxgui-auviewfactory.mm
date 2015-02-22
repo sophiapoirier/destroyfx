@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2011-2012  Sophia Poirier
+Copyright (C) 2011-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -24,22 +24,18 @@ To contact the author, use the contact form at http://destroyfx.org/
 #import <Cocoa/Cocoa.h>
 #import <AudioUnit/AUCocoaUIView.h>
 
+#import "dfxgui-auviewfactory.h"
 #import "dfxguieditor.h"
 
 
 
 // XXX need to uniquify the Cocoa class names for each executable
-#if 0
-	#define DGCocoaAUViewFactory	DGCocoaAUViewFactory_##PLUGIN_ENTRY_POINT_SYMBOL
-	#define DGNSViewForAU	DGNSViewForAU_##PLUGIN_ENTRY_POINT_SYMBOL
-#else
-	#ifndef DGCocoaAUViewFactory
-		#error must #define DGCocoaAUViewFactory uniquely
-	#endif
-	#ifndef DGNSViewForAU
-		#error must #define DGNSViewForAU uniquely
-	#endif
-#endif
+#define ConcatMacros1(a, b, c, d, e)	a ## _ ## b ## _ ## c ## _ ## d ## _ ## e
+#define ConcatMacros2(a, b, c, d, e)	ConcatMacros1(a, b, c, d, e)
+#define UniqueObjCClassName(baseName)	ConcatMacros2(baseName, PLUGIN_CLASS_NAME, PLUGIN_VERSION_MAJOR, PLUGIN_VERSION_MINOR, PLUGIN_VERSION_BUGFIX)
+
+#define DGCocoaAUViewFactory	UniqueObjCClassName(DGCocoaAUViewFactory)
+#define DGNSViewForAU			UniqueObjCClassName(DGNSViewForAU)
 
 
 
@@ -78,7 +74,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 - (NSString*) description
 {
-	return [NSString stringWithString:@""PLUGIN_NAME_STRING" editor"];
+	return [[[NSString alloc] initWithString:@""PLUGIN_NAME_STRING" editor"] autorelease];
 }
 
 //-----------------------------------------------------------------------------
@@ -90,6 +86,17 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 @end
 // DGCocoaAUViewFactory
+
+
+
+//-----------------------------------------------------------------------------
+CFStringRef DGCocoaAUViewFactory_CopyClassName()
+{
+	NSString* name = NSStringFromClass([DGCocoaAUViewFactory class]);
+	if (name != nil)
+		[name retain];
+	return reinterpret_cast<CFStringRef>(name);
+}
 
 
 
@@ -111,7 +118,7 @@ extern DfxGuiEditor * DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 	if (inAU == nil)
 		return nil;
 
-#if !__LP64__ && MAC_COCOA
+#if !__LP64__ && MAC_COCOA && (VSTGUI_VERSION_MAJOR == 3)
 	VSTGUI::CFrame::setCocoaMode(true);
 #endif
 
@@ -151,6 +158,7 @@ extern DfxGuiEditor * DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 - (void) setFrame:(NSRect)inNewSize
 {
 	[super setFrame:inNewSize];
+
 	if (mDfxGuiEditor != nil)
 	{
 		if (mDfxGuiEditor->getFrame() != nil)

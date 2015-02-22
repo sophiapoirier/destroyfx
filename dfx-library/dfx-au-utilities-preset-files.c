@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2010  Sophia Poirier
+	Copyright (C) 2003-2015  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -975,7 +975,7 @@ OSStatus SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef in
 OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL, CFBundleRef inBundle)
 {
 	OSStatus status = noErr;
-	CFPropertyListRef auStatePlist;
+	CFPropertyListRef auStatePlist = NULL;
 	UInt32 auStateDataSize = sizeof(auStatePlist);
 
 	if (inAUComponentInstance == NULL)
@@ -996,7 +996,6 @@ convert ClassInfo to XML/plist data
 */
 	// get the current state data for the AU
 	// if that fails, then there's no point in going any further since there is no data to save
-	auStatePlist = NULL;
 	status = AudioUnitGetProperty(inAUComponentInstance, kAudioUnitProperty_ClassInfo, 
 						kAudioUnitScope_Global, (AudioUnitElement)0, &auStatePlist, &auStateDataSize);
 	if (status != noErr)
@@ -1369,7 +1368,10 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 	// now we need to get the parent directory of where we will save this file
 	error = FindPresetsDirForAU(inAUComponent, inFileSystemDomain, kCreateFolder, &presetFileDirRef);
 	if (error != noErr)
+	{
+		CFRelease(presetFileNameString);
 		return error;
+	}
 	// and convert that into a CFURL so that we can use CoreFoundation's 
 	// PropertList and XML APIs for saving the data to a file
 	presetFileDirUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileDirRef);

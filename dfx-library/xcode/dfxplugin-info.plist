@@ -2,6 +2,27 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AudioComponents</key>
+	<array>
+		<dict>
+			<key>description</key>
+			<string>$(DFX_PLUGIN_DESCRIPTION)</string>
+			<key>factoryFunction</key>
+			<string>$(DFX_PLUGIN_AUDIOUNIT_FACTORY_FUNCTION)</string>
+			<key>manufacturer</key>
+			<string>$(DFX_PLUGIN_CREATOR_ID)</string>
+			<key>name</key>
+			<string>$(DFX_PLUGIN_CREATOR_NAME): $(DFX_PLUGIN_FULL_NAME)</string>
+			<key>sandboxSafe</key>
+			<true/>
+			<key>subtype</key>
+			<string>$(DFX_PLUGIN_ID)</string>
+			<key>type</key>
+			<string>$(DFX_PLUGIN_AUDIOUNIT_TYPE_ID)</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -14,11 +35,13 @@
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(DFX_PLUGIN_VERSION_STRING)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(DFX_PLUGIN_VERSION_STRING)</string>
-	<key>CSResourcesFileMapped</key>
-	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>me</string>
 </dict>
 </plist>

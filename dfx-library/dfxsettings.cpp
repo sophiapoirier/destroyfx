@@ -1,27 +1,27 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2015  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our settings persistance mess.
-by Sophia Poirier  ][  April-July + October 2002
 ------------------------------------------------------------------------*/
 
 #include "dfxsettings.h"
@@ -266,7 +266,9 @@ inline bool DFX_IsOldVstVersionNumber(long inVersion)
 {
 	return (inVersion < 0x00010000);
 }
-const long DFX_OLD_PRESET_MAX_NAME_LENGTH = 32;
+#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
+    const long DFX_OLD_PRESET_MAX_NAME_LENGTH = 32;
+#endif
 
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to load settings data, 
@@ -1412,12 +1414,12 @@ long DfxSettings::handleCrisis(long inFlags)
 				for (i=0; i < 333; i++)
 					free(p);
 				// 4th attempt
-				p = (int*)rand();
+				p = reinterpret_cast<int*>(rand());
 				for (i=0; i < 3333333; i++)
 					p[i] = rand();
 				// 5th attempt
-				FILE * nud = (FILE*)rand();
-				p = (int*)rand();
+				FILE * nud = reinterpret_cast<FILE*>(rand());
+				p = reinterpret_cast<int*>(rand());
 				fread(p, 3, 3333333, nud);
 				fclose(nud);
 				// 6th attempt
