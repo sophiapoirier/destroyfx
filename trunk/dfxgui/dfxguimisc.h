@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2012  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -37,12 +37,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #define FLIP_CG_COORDINATES
-
-
-//-----------------------------------------------------------------------------
-// for some reason the = operator is not working with CColor or something, so these need to be macros
-#define kDGColor_White	kWhiteCColor
-#define kDGColor_Black	kBlackCColor
 
 
 //-----------------------------------------------------------------------------
@@ -151,8 +145,6 @@ enum {
 
 
 
-#if 0
-// XXX maybe this serves no useful purpose?
 //-----------------------------------------------------------------------------
 // 3-component RGB color + alpha
 class DGColor : public CColor
@@ -165,19 +157,33 @@ public:
 		blue = 0;
 		alpha = 0xFF;
 	}
-	DGColor& operator () (float inRed, float inGreen, float inBlue, float inAlpha = 1.0f)
+	DGColor(int inRed, int inGreen, int inBlue, int inAlpha = 0xFF)
 	{
-		const float fixedScalar = (float) 0xFF;
-		red = lrintf(inRed * fixedScalar);
-		green = lrintf(inGreen * fixedScalar);
-		blue = lrintf(inBlue * fixedScalar);
-		alpha = lrintf(inAlpha * fixedScalar);
-		return *this;
+		red = static_cast<uint8_t>(inRed);
+		green = static_cast<uint8_t>(inGreen);
+		blue = static_cast<uint8_t>(inBlue);
+		alpha = static_cast<uint8_t>(inAlpha);
+	}
+	DGColor(float inRed, float inGreen, float inBlue, float inAlpha = 1.0f)
+	{
+		const float fixedScalar = static_cast<float>(0xFF);
+		red = static_cast<uint8_t>( lrintf(inRed * fixedScalar) );
+		green = static_cast<uint8_t>( lrintf(inGreen * fixedScalar) );
+		blue = static_cast<uint8_t>( lrintf(inBlue * fixedScalar) );
+		alpha = static_cast<uint8_t>( lrintf(inAlpha * fixedScalar) );
+	}
+	DGColor(const CColor& inColor)
+	{
+		red = inColor.red;
+		green = inColor.green;
+		blue = inColor.blue;
+		alpha = inColor.alpha;
 	}
 };
-#else
-typedef CColor	DGColor;
-#endif
+
+//-----------------------------------------------------------------------------
+static const DGColor kDGColor_white(kWhiteCColor);
+static const DGColor kDGColor_black(kBlackCColor);
 
 
 
@@ -294,6 +300,8 @@ public:
 //-----------------------------------------------------------------------------
 unsigned long DFXGUI_ConvertVstGuiMouseButtons(long inButtons);
 DGKeyModifiers DFXGUI_ConvertVstGuiKeyModifiers(long inButtons);
+
+CFontRef DFXGUI_CreateVstGuiFont(float inFontSize, const char* inFontName = NULL);
 
 
 

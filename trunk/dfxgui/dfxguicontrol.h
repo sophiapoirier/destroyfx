@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2011  Sophia Poirier
+Copyright (C) 2003-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -38,7 +38,36 @@ const float kDfxGui_DefaultMouseDragRange = 200.0f;	// pixels
 
 
 #ifdef TARGET_PLUGIN_USES_VSTGUI
-typedef CControl	DGControl;
+//-----------------------------------------------------------------------------
+class DGControl
+{
+public:
+	DGControl(CControl* inControl, DfxGuiEditor* inOwnerEditor);
+
+	CControl* getCControl() const
+		{	return mControl;	}
+	DfxGuiEditor* getOwnerEditor() const
+		{	return mOwnerEditor;	}
+
+	void setValue_gen(float inValue);
+	void setDefaultValue_gen(float inValue);
+	void redraw();
+	long getParameterID();
+	void setParameterID(long inParameterID);
+	bool isParameterAttached();
+
+protected:
+	bool getWraparoundValues()
+		{	return wraparoundValues;	}
+	void setWraparoundValues(bool inWraparoundPolicy)
+		{	wraparoundValues = inWraparoundPolicy;	}
+
+private:
+	CControl* mControl;
+	DfxGuiEditor* mOwnerEditor;
+
+	bool wraparoundValues;
+};
 #else
 
 
@@ -53,7 +82,6 @@ public:
 	DGControl(DfxGuiEditor * inOwnerEditor, long inParameterID, DGRect * inRegion);
 	// control with no actual parameter attached
 	DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange);
-	virtual ~DGControl();
 
 	virtual void draw(CDrawContext * inContext)
 		{ }
@@ -70,7 +98,8 @@ public:
 	bool do_mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
 	virtual bool mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
 	bool do_contextualMenuClick();
-	virtual bool contextualMenuClick();
+	virtual bool contextualMenuClick()
+		{	return false;	}
 
 	// force a redraw of the control
 	void redraw();
@@ -174,20 +203,6 @@ private:
 	bool				currentlyIgnoringMouseTracking;
 	bool				shouldWraparoundValues;
 };
-
-
-#ifdef TARGET_API_AUDIOUNIT
-//-----------------------------------------------------------------------------
-// this gives some slight tweaks to Apple's AUCarbonViewControl class
-class DGCarbonViewControl : public AUCarbonViewControl
-{
-public:
-	DGCarbonViewControl(AUCarbonViewBase * ownerView, AUParameterListenerRef listener, ControlType type, const CAAUParameter & param, ControlRef control);
-
-	virtual void ControlToParameter();
-	virtual void ParameterToControl(Float32 inNewValue);
-};
-#endif
 
 
 

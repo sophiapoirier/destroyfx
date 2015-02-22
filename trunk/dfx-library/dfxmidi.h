@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2010  Sophia Poirier
+Copyright (C) 2001-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -249,9 +249,6 @@ private:
 //	bool lazyAttackMode;
 	// sustain pedal is active
 	bool sustain;
-
-	// the offset of the most recent MIDI program change message
-	long latestMidiProgramChange;
 };
 
 

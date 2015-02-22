@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2012  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -41,6 +41,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #if (VSTGUI_VERSION_MAJOR < 4)
 	#include "ctooltipsupport.h"
 	#define CButtonState	long
+	#define VSTGUI_OVERRIDE_VMETHOD
 #endif
 
 #ifdef TARGET_API_VST
@@ -64,7 +65,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 #else
 	#include "plugguieditor.h"
 	#define TARGET_API_EDITOR_BASE_CLASS	PluginGUIEditor
-	#define TARGET_API_EDITOR_INDEX_TYPE	long
+	#if (VSTGUI_VERSION_MAJOR < 4)
+		#define TARGET_API_EDITOR_INDEX_TYPE	long
+	#else
+		#define TARGET_API_EDITOR_INDEX_TYPE	int32_t
+	#endif
 #endif
 
 
@@ -111,7 +116,6 @@ enum {
 
 //-----------------------------------------------------------------------------
 class DGButton;
-class DGSplashScreen;
 
 
 /***********************************************************************
@@ -119,22 +123,25 @@ class DGSplashScreen;
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-class DfxGuiEditor : public TARGET_API_EDITOR_BASE_CLASS, public CControlListener
+class DfxGuiEditor : public TARGET_API_EDITOR_BASE_CLASS, public CControlListener, public IMouseObserver, public CBaseObject
 {
 public:
 	DfxGuiEditor(DGEditorListenerInstance inInstance);
 	virtual ~DfxGuiEditor();
 
 	// VSTGUI overrides
-	virtual bool open(void * inWindow);
-	virtual void close();
-	virtual void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue);
-	virtual void valueChanged(CControl * inControl);
+	virtual bool open(void * inWindow) VSTGUI_OVERRIDE_VMETHOD;
+	virtual void close() VSTGUI_OVERRIDE_VMETHOD;
+	virtual void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue) VSTGUI_OVERRIDE_VMETHOD;
+	virtual void valueChanged(CControl * inControl) VSTGUI_OVERRIDE_VMETHOD;
+	virtual int32_t controlModifierClicked(CControl* inControl, CButtonState inButtons) VSTGUI_OVERRIDE_VMETHOD;
 #ifndef TARGET_API_VST
-	virtual void beginEdit(long inParameterIndex);
-	virtual void endEdit(long inParameterIndex);
+	virtual void beginEdit(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex) VSTGUI_OVERRIDE_VMETHOD;
+	virtual void endEdit(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex) VSTGUI_OVERRIDE_VMETHOD;
 #endif
-	virtual void idle();
+	virtual void idle() VSTGUI_OVERRIDE_VMETHOD;
+	// CBaseObject
+	virtual CMessageResult notify(CBaseObject* inSender, IdStringPtr inMessage) VSTGUI_OVERRIDE_VMETHOD;
 
 	// *** this one is for the child class of DfxGuiEditor to override
 	virtual long OpenEditor() = 0;
@@ -160,6 +167,8 @@ public:
 	void addControl(DGControl * inCtrl);
 	void removeControl(DGControl * inControl);
 	DGControl * getNextControlFromParameterID(long inParameterID, DGControl * inPreviousControl = NULL);
+	long GetWidth();
+	long GetHeight();
 	DGImage * GetBackgroundImage()
 		{	return backgroundImage;	}
 
@@ -193,7 +202,7 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
 #endif
-	virtual void parameterChanged(long inParameterID, float inValue)
+	virtual void parameterChanged(long inParameterID)
 		{ }
 
 	bool IsOpen();
@@ -207,6 +216,11 @@ public:
 	void setCurrentControl_mouseover(DGControl * inNewMousedOverControl);
 	// *** override this if you want your GUI to react when the mouseovered control changes
 	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse) { }
+	// IMouseObserver overrides
+	virtual void onMouseEntered(CView* inView, CFrame* inFrame) VSTGUI_OVERRIDE_VMETHOD;
+	virtual void onMouseExited(CView* inView, CFrame* inFrame) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseDown(CFrame* inFrame, const CPoint& inPos, const CButtonState& inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseMoved(CFrame* inFrame, const CPoint& inPos, const CButtonState& inButtons) VSTGUI_OVERRIDE_VMETHOD;
 
 	DGControl * getCurrentControl_clicked()
 		{	return currentControl_clicked;	}
@@ -274,8 +288,12 @@ public:
 		void setparametermidiassignment(long inParameterIndex, DfxParameterAssignment inAssignment);
 		DfxParameterAssignment getparametermidiassignment(long inParameterIndex);
 		void parametermidiunassign(long inParameterIndex);
-		DGButton * CreateMidiLearnButton(long inXpos, long inYpos, DGImage * inImage, bool inDrawMomentaryState = false);
-		DGButton * CreateMidiResetButton(long inXpos, long inYpos, DGImage * inImage);
+		DGButton* CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState = false);
+		DGButton* CreateMidiResetButton(long inXpos, long inYpos, DGImage* inImage);
+		DGButton* GetMidiLearnButton() const
+			{	return midiLearnButton;	}
+		DGButton* GetMidiResetButton() const
+			{	return midiResetButton;	}
 	#endif
 	unsigned long getNumAudioChannels();
 
@@ -299,19 +317,15 @@ protected:
 	class DGImagesList
 	{
 	public:
-		DGImage * image;
+		OwningPointer<DGImage> image;
 		DGImagesList * next;
 
 		DGImagesList(DGImage * inImage, DGImagesList * inNextList)
 			: image(inImage), next(inNextList) {}
-		~DGImagesList()
-		{
-			if (image != NULL)
-				image->forget();
-		}
 	};
 	DGImagesList * imagesList;
 
+	bool handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons);
 	long initClipboard();
 
 private:

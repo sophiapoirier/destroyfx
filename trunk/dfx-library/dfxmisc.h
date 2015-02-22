@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2012  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -36,6 +36,16 @@ These are some generally useful functions.
 
 
 
+//-------------------------------------------------------------------------
+// handy helper function for safely deallocating an array
+template <typename T>
+void dfx_releasebuffer(T ** ioBuffer)
+{
+    if (*ioBuffer != NULL)
+        free(*ioBuffer);
+    *ioBuffer = NULL;
+}
+
 //-----------------------------------------------------------------------------
 // handy helper function for creating an array
 // returns true if allocation was successful, false if allocation failed
@@ -45,7 +55,10 @@ bool dfx_createbuffer(T ** ioBuffer, long inCurrentBufferSize, long inDesiredBuf
 	// if the size of the buffer has changed, 
 	// then delete and reallocate the buffers according to the new size
 	if (inDesiredBufferSize != inCurrentBufferSize)
-		dfx_releasebuffer(ioBuffer);
+		dfx_releasebuffer<T>(ioBuffer);
+
+	if (inDesiredBufferSize <= 0)
+		return false;
 
 	if (*ioBuffer == NULL)
 		*ioBuffer = (T*) malloc(inDesiredBufferSize * sizeof(T));
@@ -53,16 +66,6 @@ bool dfx_createbuffer(T ** ioBuffer, long inCurrentBufferSize, long inDesiredBuf
 	if (*ioBuffer == NULL)
 		return false;
 	return true;
-}
-
-//-------------------------------------------------------------------------
-// handy helper function for safely deallocating an array
-template <typename T>
-void dfx_releasebuffer(T ** ioBuffer)
-{
-	if (*ioBuffer != NULL)
-		free(*ioBuffer);
-	*ioBuffer = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -78,6 +81,24 @@ void dfx_clearbuffer(T * ioBuffer, long inBufferSize, T inValue = 0)
 }
 
 
+//-------------------------------------------------------------------------
+// handy helper function for safely deallocating a 2-dimensional array
+template <typename T>
+void dfx_releasebufferarray(T *** ioBuffers, unsigned long inNumBuffers)
+{
+    if (*ioBuffers != NULL)
+    {
+        for (unsigned long i=0; i < inNumBuffers; i++)
+        {
+            if ((*ioBuffers)[i] != NULL)
+                free((*ioBuffers)[i]);
+            (*ioBuffers)[i] = NULL;
+        }
+        free(*ioBuffers);
+    }
+    *ioBuffers = NULL;
+}
+
 //-----------------------------------------------------------------------------
 // handy helper function for creating a 2-dimensional array
 // returns true if allocation was successful, false if allocation failed
@@ -88,9 +109,9 @@ bool dfx_createbufferarray(T *** ioBuffers, unsigned long inCurrentNumBuffers, l
 	// if the size of each buffer or the number of buffers have changed, 
 	// then delete and reallocate the buffers according to the new sizes
 	if ( (inDesiredBufferSize != inCurrentBufferSize) || (inDesiredNumBuffers != inCurrentNumBuffers) )
-		dfx_releasebufferarray(ioBuffers, inCurrentNumBuffers);
+		dfx_releasebufferarray<T>(ioBuffers, inCurrentNumBuffers);
 
-	if (inDesiredNumBuffers <= 0)
+	if ((inDesiredNumBuffers <= 0) || (inDesiredBufferSize <=0))
 		return false;
 
 	if (*ioBuffers == NULL)
@@ -112,24 +133,6 @@ bool dfx_createbufferarray(T *** ioBuffers, unsigned long inCurrentNumBuffers, l
 	return true;
 }
 
-//-------------------------------------------------------------------------
-// handy helper function for safely deallocating a 2-dimensional array
-template <typename T>
-void dfx_releasebufferarray(T *** ioBuffers, unsigned long inNumBuffers)
-{
-	if (*ioBuffers != NULL)
-	{
-		for (unsigned long i=0; i < inNumBuffers; i++)
-		{
-			if ((*ioBuffers)[i] != NULL)
-				free((*ioBuffers)[i]);
-			(*ioBuffers)[i] = NULL;
-		}
-		free(*ioBuffers);
-	}
-	*ioBuffers = NULL;
-}
-
 //-----------------------------------------------------------------------------
 // handy helper function for safely zeroing the contents of a 2-dimensional array's values
 template <typename T>
@@ -149,6 +152,32 @@ void dfx_clearbufferarray(T ** ioBuffers, unsigned long inNumBuffers, long inBuf
 }
 
 
+//-------------------------------------------------------------------------
+// handy helper function for safely deallocating a 3-dimensional array
+template <typename T>
+void dfx_releasebufferarrayarray(T **** ioBuffers, unsigned long inNumBufferArrays, unsigned long inNumBuffers)
+{
+    if (*ioBuffers != NULL)
+    {
+        for (unsigned long i=0; i < inNumBufferArrays; i++)
+        {
+            if ((*ioBuffers)[i] != NULL)
+            {
+                for (unsigned long j=0; j < inNumBuffers; j++)
+                {
+                    if ((*ioBuffers)[i][j] != NULL)
+                        free((*ioBuffers)[i][j]);
+                    (*ioBuffers)[i][j] = NULL;
+                }
+                free((*ioBuffers)[i]);
+            }
+            (*ioBuffers)[i] = NULL;
+        }
+        free(*ioBuffers);
+    }
+    *ioBuffers = NULL;
+}
+
 //-----------------------------------------------------------------------------
 // handy helper function for creating a 3-dimensional array
 // returns true if allocation was successful, false if allocation failed
@@ -162,9 +191,9 @@ bool dfx_createbufferarrayarray(T **** ioBuffers, unsigned long inCurrentNumBuff
 	if ( (inDesiredBufferSize != inCurrentBufferSize) 
 			|| (inDesiredNumBuffers != inCurrentNumBuffers) 
 			|| (inDesiredNumBufferArrays != inCurrentNumBufferArrays) )
-		dfx_releasebufferarrayarray(ioBuffers, inCurrentNumBufferArrays, inCurrentNumBuffers);
+		dfx_releasebufferarrayarray<T>(ioBuffers, inCurrentNumBufferArrays, inCurrentNumBuffers);
 
-	if (inDesiredNumBufferArrays <= 0)
+	if ((inDesiredNumBufferArrays <= 0) || (inDesiredNumBuffers <= 0) || (inDesiredBufferSize <= 0))
 		return false;
 
 	unsigned long i, j;
@@ -197,32 +226,6 @@ bool dfx_createbufferarrayarray(T **** ioBuffers, unsigned long inCurrentNumBuff
 	}
 
 	return true;
-}
-
-//-------------------------------------------------------------------------
-// handy helper function for safely deallocating a 3-dimensional array
-template <typename T>
-void dfx_releasebufferarrayarray(T **** ioBuffers, unsigned long inNumBufferArrays, unsigned long inNumBuffers)
-{
-	if (*ioBuffers != NULL)
-	{
-		for (unsigned long i=0; i < inNumBufferArrays; i++)
-		{
-			if ((*ioBuffers)[i] != NULL)
-			{
-				for (unsigned long j=0; j < inNumBuffers; j++)
-				{
-					if ((*ioBuffers)[i][j] != NULL)
-						free((*ioBuffers)[i][j]);
-					(*ioBuffers)[i][j] = NULL;
-				}
-				free((*ioBuffers)[i]);
-			}
-			(*ioBuffers)[i] = NULL;
-		}
-		free(*ioBuffers);
-	}
-	*ioBuffers = NULL;
 }
 
 //-----------------------------------------------------------------------------

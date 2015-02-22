@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -31,14 +31,29 @@ To contact the author, use the contact form at http://destroyfx.org/
 #ifdef TARGET_PLUGIN_USES_VSTGUI
 
 //-----------------------------------------------------------------------------
-class DGSlider : public CSlider
+class DGSlider : public CSlider, public DGControl
 {
 public:
 	DGSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
 				DGAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage = NULL);
 
 #ifdef TARGET_API_RTAS
-	virtual void draw(CDrawContext * inContext);
+	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
+#endif
+};
+
+
+
+#pragma mark -
+//-----------------------------------------------------------------------------
+class DGAnimation : public CAnimKnob, public DGControl
+{
+public:
+	DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+				DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground = NULL);
+
+#ifdef TARGET_API_RTAS
+	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
 #endif
 };
 

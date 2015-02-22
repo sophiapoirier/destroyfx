@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2012  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -33,10 +33,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 typedef void (*DGButtonUserProcedure) (long inValue, void * inUserData);
 
 
-#ifdef TARGET_PLUGIN_USES_VSTGUI
-
 //-----------------------------------------------------------------------------
-class DGButton : public CControl
+class DGButton : public CControl, public DGControl
 {
 public:
 	DGButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, DGImage * inImage, long inNumStates, 
@@ -44,11 +42,11 @@ public:
 	DGButton(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage, long inNumStates, 
 				DfxGuiBottonMode inMode, bool inDrawMomentaryState = false);
 
-	virtual void draw(CDrawContext * inContext);
-	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons);
-	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons);
-	virtual CMouseEventResult onMouseUp(CPoint & inPos, const CButtonState & inButtons);
-	virtual bool onWheel(const CPoint & inPos, const float & inDistance, const CButtonState & inButtons);
+	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseUp(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual bool onWheel(const CPoint & inPos, const float & inDistance, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
 
 
 	void setMouseIsDown(bool newMouseState);
@@ -59,12 +57,12 @@ public:
 		{	return numStates;	}
 	void setNumStates(long inNumStates)
 		{	if (inNumStates > 0) numStates = inNumStates;	}
-	void setButtonImage(DGImage * inButtonImage);
+	void setButtonImage(DGImage * inImage);
 	long getValue_i();
 	void setValue_i(long inValue);
-	void setParameterID(long inParameterID);
 
 	virtual void setUserProcedure(DGButtonUserProcedure inProc, void * inUserData);
+	virtual void setUserReleaseProcedure(DGButtonUserProcedure inProc, void * inUserData, bool inOnlyAtEndWithNoCancel = false);
 
 	void setOrientation(DGAxis inOrientation)
 		{	orientation = inOrientation;	}
@@ -72,13 +70,11 @@ public:
 	CLASS_METHODS(DGButton, CControl)
 
 protected:
-	DGRect * getBounds()
-		{	return &controlPos;	}
-	bool getWraparoundValues()
-		{	return wraparoundValues;	}
-
 	DGButtonUserProcedure userProcedure;
 	void * userProcData;
+	DGButtonUserProcedure userReleaseProcedure;
+	void * userReleaseProcData;
+	bool useReleaseProcedureOnlyAtEndWithNoCancel;
 
 	long numStates;
 	DfxGuiBottonMode mode;
@@ -87,7 +83,6 @@ protected:
 	bool mouseIsDown;
 	long entryValue, newValue;
 	DGRect controlPos;
-	bool wraparoundValues;
 
 private:
 	void init(long inNumStates, DfxGuiBottonMode inMode, bool inDrawMomentaryState);
@@ -96,19 +91,44 @@ private:
 
 
 //-----------------------------------------------------------------------------
-class DGValueSpot : public CControl
+class DGFineTuneButton : public CControl, public DGControl
+{
+public:
+	DGFineTuneButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+						DGImage * inImage, float inValueChangeAmount = 0.0001f);
+
+	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseUp(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+
+	void setValueChangeAmount(float inChangeAmount);
+
+	CLASS_METHODS(DGFineTuneButton, CControl)
+
+private:
+	float valueChangeAmount;
+	bool mouseIsDown;
+	float entryValue, newValue;
+};
+
+
+
+//-----------------------------------------------------------------------------
+class DGValueSpot : public CControl, public DGControl
 {
 public:
 	DGValueSpot(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, DGImage * inImage, double inValue);
-	virtual void draw(CDrawContext * inContext);
-	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons);
-	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons);
-	virtual CMouseEventResult onMouseUp(CPoint & inPos, const CButtonState & inButtons);
+
+	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseUp(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
 
 	CLASS_METHODS(DGValueSpot, CControl)
 
 private:
-	double valueToSet;
+	const float valueToSet;
 	CPoint oldMousePos;
 	bool buttonIsPressed;
 };
@@ -122,154 +142,28 @@ public:
 	DGWebLink(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage, const char * inURL);
 	virtual ~DGWebLink();
 
-	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons);
-	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons);
-	virtual CMouseEventResult onMouseUp(CPoint & inPos, const CButtonState & inButtons);
-	virtual bool onWheel(const CPoint & inPos, const float & inDistance, const CButtonState & inButtons)
+	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseUp(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual bool onWheel(const CPoint & inPos, const float & inDistance, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD
 		{	return false;	}
 
-private:
-	char * urlString;
-};
-
-#else
-
-
-
-//-----------------------------------------------------------------------------
-class DGButton : public DGControl
-{
-public:
-	DGButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, DGImage * inImage, 
-				long inNumStates, DfxGuiBottonMode inMode, bool inDrawMomentaryState = false);
-	DGButton(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage, 
-				long inNumStates, DfxGuiBottonMode inMode, bool inDrawMomentaryState = false);
-	virtual ~DGButton();
-	virtual void post_embed();
-
-	virtual void draw(DGGraphicsContext * inContext);
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
-	virtual bool mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
-
-	void setMouseIsDown(bool newMouseState);
-	bool getMouseIsDown()
-		{	return mouseIsDown;	}
-
-	void setNumStates(long inNumStates)
-		{	if (inNumStates > 0) numStates = inNumStates;	}
-	long getNumStates()
-		{	return numStates;	}
-
-	void setButtonImage(DGImage * inImage);
-
-	void setUserProcedure(DGButtonUserProcedure inProc, void * inUserData);
-	void setUserReleaseProcedure(DGButtonUserProcedure inProc, void * inUserData, bool inOnlyAtEndWithNoCancel = false);
-
-	void setOrientation(DGAxis inOrientation)
-		{	orientation = inOrientation;	}
-
-protected:
-	DGImage * buttonImage;
-
-	DGButtonUserProcedure userProcedure;
-	DGButtonUserProcedure userReleaseProcedure;
-	void * userProcData;
-	void * userReleaseProcData;
-	bool useReleaseProcedureOnlyAtEndWithNoCancel;
-
-	long numStates;
-	DfxGuiBottonMode mode;
-	bool drawMomentaryState;
-	DGAxis orientation;
-	bool mouseIsDown;
-	long entryValue, newValue;
-
-private:
-	void init();
-};
-
-
-//-----------------------------------------------------------------------------
-class DGFineTuneButton : public DGControl
-{
-public:
-	DGFineTuneButton(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-						DGImage * inImage, float inValueChangeAmount = 0.0001f);
-	virtual ~DGFineTuneButton();
-
-	virtual void draw(DGGraphicsContext * inContext);
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
-
-	void setValueChangeAmount(float inChangeAmount)
-		{	valueChangeAmount = inChangeAmount;	}
-
-protected:
-	DGImage * buttonImage;
-	float valueChangeAmount;
-	bool mouseIsDown;
-	long entryValue, newValue;
-};
-
-
-//-----------------------------------------------------------------------------
-class DGValueSpot : public DGControl
-{
-public:
-	DGValueSpot(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, DGImage * inImage, double inValue);
-	virtual void draw(DGGraphicsContext * inContext);
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
-
-private:
-	DGImage * buttonImage;
-	float valueToSet;
-	long mParameterID_unattached;
-};
-
-
-//-----------------------------------------------------------------------------
-class DGWebLink : public DGButton
-{
-public:
-	DGWebLink(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage, const char * inURL);
-	virtual ~DGWebLink();
-
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
+	CLASS_METHODS(DGWebLink, DGButton)
 
 private:
 	char * urlString;
 };
 
 
+
 //-----------------------------------------------------------------------------
-class DGSplashScreen : public DGControl
+class DGSplashScreen : public CSplashScreen, public DGControl
 {
 public:
-	DGSplashScreen(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inSplashImage);
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
+	DGSplashScreen(DfxGuiEditor * inOwnerEditor, DGRect * inClickRegion, DGImage * inSplashImage);
 
-	void removeSplashDisplay();
-
-private:
-	DGImage * splashImage;
-	class DGSplashScreenDisplay : public DGControl
-	{
-		public:
-			DGSplashScreenDisplay(DGSplashScreen * inParentControl, DGRect * inRegion, DGImage * inSplashImage);
-			virtual void draw(DGGraphicsContext * inContext);
-		private:
-			DGSplashScreen * parentSplashControl;
-			DGImage * splashImage;
-	};
-	DGSplashScreenDisplay * splashDisplay;
+	CLASS_METHODS(DGSplashScreen, CSplashScreen)
 };
-
-#endif	// !TARGET_PLUGIN_USES_VSTGUI
 
 
 

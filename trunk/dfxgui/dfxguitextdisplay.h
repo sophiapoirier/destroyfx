@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,73 +28,48 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguieditor.h"
 
 
-const size_t kDGTextDisplay_stringSize = 256;
+static const size_t kDGTextDisplay_stringSize = 256;
 
-
-typedef void (*DGValue2TextProcedure) (float inValue, char * outText, void * inUserData);
-
-
-#ifdef TARGET_PLUGIN_USES_VSTGUI
 
 //-----------------------------------------------------------------------------
-class DGAnimation : public CAnimKnob
-{
-public:
-	DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-				DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground = NULL);
-
-#ifdef TARGET_API_RTAS
-	virtual void draw(CDrawContext * inContext);
-#endif
-};
-
-#else
-
-
-
-#pragma mark -
-//-----------------------------------------------------------------------------
-class DGTextDisplay : public DGControl
+class DGTextDisplay : public CTextEdit, public DGControl
 {
 public:
 	DGTextDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-					DGValue2TextProcedure inTextProc, void * inUserData, DGImage * inBackground, 
+					CParamDisplayValueToStringProc inTextProc, void * inUserData, DGImage * inBackground, 
 					DGTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
 					DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
 	virtual ~DGTextDisplay();
 
-	virtual void draw(DGGraphicsContext * inContext);
-	void drawText(DGRect * inRegion, const char * inText, DGGraphicsContext * inContext);
-#if TARGET_OS_MAC
-	OSStatus drawCFText(DGRect * inRegion, CFStringRef inText, DGGraphicsContext * inContext);
-#endif
+	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
 
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
+	virtual void setValueToStringProc(CParamDisplayValueToStringProc inProc, void* inUserData = 0) VSTGUI_OVERRIDE_VMETHOD;
+	virtual void setStringToValueProc(CTextEditStringToValueProc inProc, void* inUserData = 0)VSTGUI_OVERRIDE_VMETHOD;
 
-	void setTextAlignment(DGTextAlignment newAlignment)
-		{	alignment = newAlignment;	}
-	DGTextAlignment getTextAlignment()
-		{	return alignment;	}
-	void setFontSize(float newSize)
-		{	fontSize = newSize;	}
-	void setFontColor(DGColor newColor)
-		{	fontColor = newColor;	}
-	void setAntiAliasing(bool inAntiAlias)
-		{	shouldAntiAlias = inAntiAlias;	}
+	void setTextAlignment(DGTextAlignment inTextAlignment);
+	DGTextAlignment getTextAlignment();
 	void setMouseAxis(DGAxis inMouseAxis)
 		{	mouseAxis = inMouseAxis;	}
 
 protected:
-	DGImage *				backgroundImage;
-	DGValue2TextProcedure	textProc;
-	void *					textProcUserData;
+	static bool valueToTextProcBridge(float inValue, char outTextUTF8[256], void * inUserData);
+	typedef struct
+	{
+		DGTextDisplay* mThis;
+		CParamDisplayValueToStringProc mProc;
+		void* mUserData;
+	} ValueToTextProcBridgeData;
+	ValueToTextProcBridgeData valueToTextProcBridgeData;
 
-	DGTextAlignment			alignment;
-	float					fontSize;
-	DGColor					fontColor;
-	char *					fontName;
-	bool					shouldAntiAlias;
+	static bool textToValueProcBridge(UTF8StringPtr inText, float& outValue, void* inUserData);
+	typedef struct
+	{
+		DGTextDisplay* mThis;
+		CTextEditStringToValueProc mProc;
+		void* mUserData;
+	} TextToValueProcBridgeData;
+	TextToValueProcBridgeData textToValueProcBridgeData;
 
 	DGAxis					mouseAxis;	// flags indicating which directions you can mouse to adjust the control value
 	float					lastX, lastY;
@@ -112,7 +87,7 @@ public:
 						DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
 	virtual ~DGStaticTextDisplay();
 
-	virtual void draw(DGGraphicsContext * inContext);
+	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
 
 	void setText(const char * inNewText);
 #if TARGET_OS_MAC
@@ -121,9 +96,6 @@ public:
 
 protected:
 	char * displayString;
-#if TARGET_OS_MAC
-	CFStringRef displayCFString;
-#endif
 };
 
 
@@ -137,9 +109,8 @@ public:
 						DGTextAlignment inTextAlignment = kDGTextAlign_left, DGImage * inBackground = NULL, 
 						float inFontSize = 12.0f, DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
 	virtual ~DGTextArrayDisplay();
-	virtual void post_embed();
 
-	virtual void draw(DGGraphicsContext * inContext);
+	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
 
 	void setText(long inStringNum, const char * inNewText);
 
@@ -147,25 +118,6 @@ protected:
 	long numStrings;
 	char ** displayStrings;
 };
-
-
-
-#pragma mark -
-//-----------------------------------------------------------------------------
-class DGAnimation : public DGTextDisplay
-{
-public:
-	DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-				DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground = NULL);
-
-	virtual void draw(DGGraphicsContext * inContext);
-
-protected:
-	DGImage * animationImage;
-	long numAnimationFrames;
-};
-
-#endif	// !TARGET_PLUGIN_USES_VSTGUI
 
 
 

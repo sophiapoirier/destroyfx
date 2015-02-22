@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -59,7 +59,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
 		#define TARGET_API_CORE_CLASS	AUKernelBase
 	#endif
-	#include <AudioUnit/LogicAUProperties.h>
+    #define LOGIC_AU_PROPERTIES_AVAILABLE (__MAC_OS_X_VERSION_MAX_ALLOWED <= __MAC_10_9)
+    #if LOGIC_AU_PROPERTIES_AVAILABLE
+        #include <AudioUnit/LogicAUProperties.h>
+    #endif
 
 // using Steinberg's VST API
 #elif defined(TARGET_API_VST)
