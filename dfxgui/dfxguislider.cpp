@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -32,7 +32,8 @@ DGSlider::DGSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegi
 :	CSlider(*inRegion, inOwnerEditor, inParamID, CPoint(0, 0), 
 			(inOrientation & kDGAxis_horizontal) ? inRegion->width() : inRegion->height(), 
 			inHandleImage, inBackgroundImage, CPoint(0, 0), 
-			(inOrientation & kDGAxis_horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical))
+			(inOrientation & kDGAxis_horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical)), 
+	DGControl(this, inOwnerEditor)
 {
 	setTransparency(true);
 	if (inBackgroundImage == NULL)
@@ -52,8 +53,6 @@ DGSlider::DGSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegi
 			centeredHandleOffset.h = (size.width() - inHandleImage->getWidth()) / 2;
 		setOffsetHandle(centeredHandleOffset);
 	}
-
-	inOwnerEditor->addControl(this);
 }
 
 #ifdef TARGET_API_RTAS
@@ -62,7 +61,48 @@ void DGSlider::draw(CDrawContext * inContext)
 {
 	CSlider::draw(inContext);
 
-	((DfxGuiEditor*)(getListener()))->drawControlHighlight(inContext, this);
+	getOwnerEditor()->drawControlHighlight(inContext, this);
+}
+#endif
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGAnimation
+
+//-----------------------------------------------------------------------------
+// DGAnimation
+//-----------------------------------------------------------------------------
+DGAnimation::DGAnimation(DfxGuiEditor *	inOwnerEditor, 
+							long		inParamID, 
+							DGRect *	inRegion, 
+							DGImage *	inAnimationImage, 
+							long		inNumAnimationFrames, 
+							DGImage *	inBackground)
+:	CAnimKnob(*inRegion, inOwnerEditor, inParamID, 
+			  inNumAnimationFrames, inRegion->height(), inAnimationImage), 
+	DGControl(this, inOwnerEditor)
+{
+	setTransparency(true);
+	if (inBackground == NULL)
+	{
+		CPoint backgroundOffset(inRegion->left, inRegion->top);
+		setBackOffset(backgroundOffset);
+	}
+
+	setZoomFactor(kDfxGui_DefaultFineTuneFactor);
+}
+
+#ifdef TARGET_API_RTAS
+//------------------------------------------------------------------------
+void DGAnimation::draw(CDrawContext * inContext)
+{
+	CAnimKnob::draw(inContext);
+
+	getOwnerEditor()->drawControlHighlight(inContext, this);
 }
 #endif
 

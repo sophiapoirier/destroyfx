@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2010  Sophia Poirier
+	Copyright (C) 2003-2015  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -272,7 +272,7 @@ CFStringRef CFAUPresetArrayCopyDescriptionCallBack(const void * inPreset)
 	AUPreset * preset = (AUPreset*) inPreset;
 	return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
 									CFSTR("AUPreset:\npreset number = %d\npreset name = %@"), 
-									preset->presetNumber, preset->presetName);
+									(int)preset->presetNumber, preset->presetName);
 }
 
 //-----------------------------------------------------------------------------
@@ -465,7 +465,7 @@ CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
 			pluginFormatString = CFSTR("AU");
 			break;
 		default:
-			pluginFormatString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("unknown (%lu)"), desc->format);
+			pluginFormatString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("unknown (%u)"), (unsigned int)(desc->format));
 			if (pluginFormatString != NULL)
 				releasePluginFormatString = true;
 			break;
@@ -491,8 +491,9 @@ CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
 #endif
 	{
 		descriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
-									CFSTR("AudioUnitOtherPluginDesc:\nplugin format = %@\ntype ID = %lu\nsub-type ID = %lu\nmanufacturer ID = %lu"), 
-									pluginFormatString, desc->plugin.mType, desc->plugin.mSubType, desc->plugin.mManufacturer);
+									CFSTR("AudioUnitOtherPluginDesc:\nplugin format = %@\ntype ID = %u\nsub-type ID = %u\nmanufacturer ID = %u"), 
+									pluginFormatString, (unsigned int)(desc->plugin.mType), 
+									(unsigned int)(desc->plugin.mSubType), (unsigned int)(desc->plugin.mManufacturer));
 	}
 
 	if (releasePluginFormatString)

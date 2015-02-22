@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2012  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -101,13 +101,14 @@ CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, FSVolumeR
 					// check to see if the hypothetical documentation file actually exists 
 					// (CFURLs can reference files that don't exist)
 					SInt32 urlErrorCode = 0;
-					CFBooleanRef docsFileExists = (CFBooleanRef) CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL, kCFURLFileExists, &urlErrorCode);
-					if (docsFileExists != NULL)
+					CFBooleanRef docsFileCFExists = (CFBooleanRef) CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL, kCFURLFileExists, &urlErrorCode);
+					if (docsFileCFExists != NULL)
 					{
 						// only return the file's CFURL if the file exists
-						if (docsFileExists == kCFBooleanTrue)
+						const bool docsFileExists = (docsFileCFExists == kCFBooleanTrue);
+						CFRelease(docsFileCFExists);
+						if (docsFileExists)
 							return docsFileURL;
-						CFRelease(docsFileExists);
 					}
 					CFRelease(docsFileURL);
 				}
@@ -149,10 +150,11 @@ long launch_documentation()
 		if (docsFileURL != NULL)
 		{
 // open the manual with the default application for the file type
-#if 0
+#if 1
 			OSStatus status = LSOpenCFURLRef(docsFileURL, NULL);
 // open the manual with Apple's system Help Viewer
 #else
+			// XXX I don't know why the Help Viewer code is not working anymore (Help Viewer can't load the page, since 10.6)
 		#if 1
 			// starting in Mac OS X 10.5.7, we get an error if the help book is not registered
 			// XXX please note that this also requires adding a CFBundleHelpBookFolder key/value to your Info.plist
@@ -162,14 +164,20 @@ long launch_documentation()
 				CFURLRef bundleURL = CFBundleCopyBundleURL(pluginBundleRef);
 				if (bundleURL != NULL)
 				{
-					FSRef bundleRef = {0};
-					Boolean fsrefSuccess = CFURLGetFSRef(bundleURL, &bundleRef);
-					if (fsrefSuccess)
+					OSStatus registerStatus = paramErr;
+					if (AHRegisterHelpBookWithURL != NULL)	// available starting in Mac OS X 10.6
 					{
-						OSStatus registerStatus = AHRegisterHelpBook(&bundleRef);
-						if (registerStatus == noErr)
-							helpBookRegistered = true;
+						registerStatus = AHRegisterHelpBookWithURL(bundleURL);
 					}
+					else
+					{
+						FSRef bundleRef;
+						Boolean fsrefSuccess = CFURLGetFSRef(bundleURL, &bundleRef);
+						if (fsrefSuccess)
+							registerStatus = AHRegisterHelpBook(&bundleRef);
+					}
+					if (registerStatus == noErr)
+						helpBookRegistered = true;
 					CFRelease(bundleURL);
 				}
 			}

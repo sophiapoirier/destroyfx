@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -108,8 +108,10 @@ DfxPlugin::DfxPlugin(
 	auElementsHaveBeenCreated = false;
 	inputAudioStreams_au = outputAudioStreams_au = NULL;
 
+#if LOGIC_AU_PROPERTIES_AVAILABLE
 	supportedLogicNodeOperationMode = kLogicAUNodeOperationMode_FullSupport;
 	currentLogicNodeOperationMode = 0;
+#endif
 #endif
 // end Audio Unit stuff
 

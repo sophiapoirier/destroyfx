@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2010  Sophia Poirier
+Copyright (C) 2010-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -61,7 +61,7 @@ void DfxEnvelope::setParameters(double inAttackDur, double inDecayDur, double in
 	if (mSustainLevel >= 1.0)
 	{
 		mSustainLevel = 1.0;
-		inDecayDur = 0.0;
+		mDecayDur = 0.0;
 	}
 	else if (mSustainLevel < 0.0)
 	{

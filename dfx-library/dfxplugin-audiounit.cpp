@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2012  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -27,6 +27,7 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 
 #include "dfxplugin.h"
 #include "dfx-au-utilities.h"
+#include "dfxgui-auviewfactory.h"
 #include <AudioUnit/AudioUnitCarbonView.h>
 
 
@@ -339,6 +340,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			break;
 	#endif
 
+	#if LOGIC_AU_PROPERTIES_AVAILABLE
 		case kLogicAUProperty_NodeOperationMode:
 			outDataSize = sizeof(UInt32);
 			outWritable = true;
@@ -348,6 +350,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outDataSize = sizeof(LogicAUNodePropertyDescription) * dfx_GetNumPluginProperties();
 			outWritable = false;
 			break;
+	#endif
 
 		default:
 			if (inPropertyID >= kDfxPluginProperty_StartID)
@@ -392,9 +395,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					cocoaViewInfo.mCocoaAUViewBundleLocation = CFBundleCopyBundleURL(pluginBundle);
 					if (cocoaViewInfo.mCocoaAUViewBundleLocation != NULL)
 					{
-						cocoaViewInfo.mCocoaAUViewClass[0] = CFStringCreateWithCString(kCFAllocatorDefault, 
-//																"DGCocoaAUViewFactory_" PLUGIN_ENTRY_POINT, kCFStringEncodingASCII);
-																DGCocoaAUViewFactory_string, kCFStringEncodingASCII);
+						cocoaViewInfo.mCocoaAUViewClass[0] = DGCocoaAUViewFactory_CopyClassName();
 						if (cocoaViewInfo.mCocoaAUViewClass[0] != NULL)
 						{
 							*((AudioUnitCocoaViewInfo*)outData) = cocoaViewInfo;
@@ -448,11 +449,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kDfxPluginProperty_ParameterValue:
 			{
 				DfxParameterValueRequest * request = (DfxParameterValueRequest*) outData;
+			#if LOGIC_AU_PROPERTIES_AVAILABLE
 				if ( isLogicNodeEndianReversed() )
 				{
 					request->inValueItem = CFSwapInt32(request->inValueItem);
 					request->inValueType = CFSwapInt32(request->inValueType);
 				}
+			#endif
 				DfxParamValue * value = &(request->value);
 				long paramID = inElement;
 				switch (request->inValueItem)
@@ -542,10 +545,12 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						status = paramErr;
 						break;
 				}
+			#if LOGIC_AU_PROPERTIES_AVAILABLE
 				if ( isLogicNodeEndianReversed() )
 				{
 					request->value.i = CFSwapInt64(request->value.i);
 				}
+			#endif
 			}
 			break;
 
@@ -553,11 +558,13 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kDfxPluginProperty_ParameterValueConversion:
 			{
 				DfxParameterValueConversionRequest * request = (DfxParameterValueConversionRequest*) outData;
+			#if LOGIC_AU_PROPERTIES_AVAILABLE
 				if ( isLogicNodeEndianReversed() )
 				{
 					request->inConversionType = CFSwapInt32(request->inConversionType);
 					DFX_ReverseBytes( &(request->inValue), sizeof(request->inValue) );
 				}
+			#endif
 				switch (request->inConversionType)
 				{
 					case kDfxParameterValueConversion_expand:
@@ -570,10 +577,12 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 						status = paramErr;
 						break;
 				}
+			#if LOGIC_AU_PROPERTIES_AVAILABLE
 				if ( isLogicNodeEndianReversed() )
 				{
 					DFX_ReverseBytes( &(request->outValue), sizeof(request->outValue) );
 				}
+			#endif
 			}
 			break;
 
@@ -581,10 +590,12 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kDfxPluginProperty_ParameterValueString:
 			{
 				DfxParameterValueStringRequest * request = (DfxParameterValueStringRequest*) outData;
+			#if LOGIC_AU_PROPERTIES_AVAILABLE
 				if ( isLogicNodeEndianReversed() )
 				{
 					request->inStringIndex = CFSwapInt64(request->inStringIndex);
 				}
+			#endif
 				if ( !getparametervaluestring(inElement, request->inStringIndex, request->valueString) )
 					status = paramErr;
 			}
@@ -629,6 +640,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 	#endif
 
+	#if LOGIC_AU_PROPERTIES_AVAILABLE
 		case kLogicAUProperty_NodeOperationMode:
 			*(UInt32*)outData = getSupportedLogicNodeOperationMode();
 			break;
@@ -679,6 +691,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				}
 			}
 			break;
+	#endif
 
 		default:
 			if (inPropertyID >= kDfxPluginProperty_StartID)
@@ -739,12 +752,14 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 		case kDfxPluginProperty_ParameterValue:
 			{
 				DfxParameterValueRequest * request = (DfxParameterValueRequest*) inData;
+			#if LOGIC_AU_PROPERTIES_AVAILABLE
 				if ( isLogicNodeEndianReversed() )
 				{
 					request->inValueItem = CFSwapInt32(request->inValueItem);
 					request->inValueType = CFSwapInt32(request->inValueType);
 					request->value.i = CFSwapInt64(request->value.i);
 				}
+			#endif
 				DfxParamValue * value = &(request->value);
 				long paramID = inElement;
 				switch (request->inValueItem)
@@ -842,10 +857,12 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 		case kDfxPluginProperty_ParameterValueString:
 			{
 				DfxParameterValueStringRequest * request = (DfxParameterValueStringRequest*) inData;
+			#if LOGIC_AU_PROPERTIES_AVAILABLE
 				if ( isLogicNodeEndianReversed() )
 				{
 					request->inStringIndex = CFSwapInt64(request->inStringIndex);
 				}
+			#endif
 				if ( !setparametervaluestring(inElement, request->inStringIndex, request->valueString) )
 					status = paramErr;
 			}
@@ -892,9 +909,11 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 	#endif
 
+	#if LOGIC_AU_PROPERTIES_AVAILABLE
 		case kLogicAUProperty_NodeOperationMode:
 			setCurrentLogicNodeOperationMode( *(UInt32*)inData );
 			break;
+	#endif
 
 		default:
 			if (inPropertyID >= kDfxPluginProperty_StartID)

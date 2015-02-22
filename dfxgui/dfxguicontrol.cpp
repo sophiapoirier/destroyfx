@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -31,6 +31,54 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #ifdef TARGET_PLUGIN_USES_VSTGUI
+
+//-----------------------------------------------------------------------------
+DGControl::DGControl(CControl* inControl, DfxGuiEditor* inOwnerEditor)
+:	mControl(inControl), mOwnerEditor(inOwnerEditor), 
+	wraparoundValues(false)
+{
+	inOwnerEditor->addControl(this);
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::setValue_gen(float inValue)
+{
+	getCControl()->setValue(inValue);
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::setDefaultValue_gen(float inValue)
+{
+	getCControl()->setDefaultValue(inValue);
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::redraw()
+{
+//	getCControl()->invalid(); // XXX CView::invalid calls setDirty(false), which can have undesired consequences for control value handling
+	getCControl()->invalidRect(getCControl()->getViewSize());
+}
+
+//-----------------------------------------------------------------------------
+long DGControl::getParameterID()
+{
+	return getCControl()->getTag();
+}
+
+//-----------------------------------------------------------------------------
+void DGControl::setParameterID(long inParameterID)
+{
+	getCControl()->setTag(inParameterID);
+	getCControl()->setValue( mOwnerEditor->getparameter_gen(inParameterID) );
+	getCControl()->setDirty();	// it might not happen if the new parameter value is the same as the old value, so make sure it happens
+}
+
+//-----------------------------------------------------------------------------
+bool DGControl::isParameterAttached()
+{
+	return (getParameterID() >= 0);
+}
+
 #else
 
 
@@ -53,8 +101,8 @@ const SInt32 kContinuousControlMaxValue = 0x0FFFFFFF - 1;
 //-----------------------------------------------------------------------------
 #ifdef TARGET_API_RTAS
 #if 0	// XXX do this?
-long CControl::kZoomModifier = kControl;
-long CControl::kDefaultValueModifier = kShift;
+int32_t CControl::kZoomModifier = kControl;
+int32_t CControl::kDefaultValueModifier = kShift;
 #endif
 #endif
 
@@ -108,11 +156,6 @@ void DGControl::init(DGRect * inRegion)
 	// add this control to the owner editor's list of controls
 	if (getDfxGuiEditor() != NULL)
 		getDfxGuiEditor()->addControl(this);
-}
-
-//-----------------------------------------------------------------------------
-DGControl::~DGControl()
-{
 }
 
 
@@ -253,71 +296,6 @@ ControlRef carbonControl = NULL;	// XXX just quieting errors for now
 }
 
 //-----------------------------------------------------------------------------
-enum {
-	kDfxContextualMenuItem_Global_Undo = 0,
-	kDfxContextualMenuItem_Global_SetDefaultParameterValues,
-	kDfxContextualMenuItem_Global_RandomizeParameterValues,
-	kDfxContextualMenuItem_Global_GenerateAutomationSnapshot,
-	kDfxContextualMenuItem_Global_CopyState,
-	kDfxContextualMenuItem_Global_PasteState,
-	kDfxContextualMenuItem_Global_SavePresetFile,
-	kDfxContextualMenuItem_Global_LoadPresetFile,
-//	kDfxContextualMenuItem_Global_UserPresets,	// preset files sub-menu(s)?
-//	kDfxContextualMenuItem_Global_FactoryPresets,	// factory presets sub-menu?
-#if !TARGET_PLUGIN_IS_INSTRUMENT
-//	kDfxContextualMenuItem_Global_Bypass,	// effect bypass?
-#endif
-#if TARGET_PLUGIN_USES_MIDI
-	kDfxContextualMenuItem_Global_MidiLearn,
-	kDfxContextualMenuItem_Global_MidiReset,
-#endif
-//	kDfxContextualMenuItem_Global_ResizeGUI,
-	kDfxContextualMenuItem_Global_WindowTransparency,
-	kDfxContextualMenuItem_Global_OpenWebSite,
-	kDfxContextualMenuItem_Global_NumItems
-};
-enum {
-	kDfxContextualMenuItem_Parameter_SetDefaultValue = 0,
-	kDfxContextualMenuItem_Parameter_TextEntryForValue,	// type in value
-//	kDfxContextualMenuItem_Parameter_ValueStrings,	// a sub-menu of value selections, for parameters that have them
-	kDfxContextualMenuItem_Parameter_Undo,
-	kDfxContextualMenuItem_Parameter_RandomizeParameterValue,
-	kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot,
-//	kDfxContextualMenuItem_Parameter_SnapMode,	// toggle snap mode
-#if TARGET_PLUGIN_USES_MIDI
-	kDfxContextualMenuItem_Parameter_MidiLearner,
-	kDfxContextualMenuItem_Parameter_MidiUnassign,
-	kDfxContextualMenuItem_Parameter_TextEntryForMidiCC,	// assign MIDI CC by typing in directly
-#endif
-	kDfxContextualMenuItem_Parameter_NumItems
-};
-const UInt32 kDfxMenu_MenuItemIndentAmount = 1;
-
-//-----------------------------------------------------------------------------
-OSStatus DFX_AppendSeparatorToMenu(MenuRef inMenu)
-{
-	if (inMenu == NULL)
-		return paramErr;
-	return AppendMenuItemTextWithCFString(inMenu, NULL, kMenuItemAttrSeparator, 0, NULL);
-}
-
-//-----------------------------------------------------------------------------
-OSStatus DFX_AppendSectionTitleToMenu(MenuRef inMenu, CFStringRef inMenuItemText)
-{
-	if ( (inMenu == NULL) || (inMenuItemText == NULL) )
-		return paramErr;
-
-	MenuItemIndex menuItemIndex = 0;
-	OSStatus status = AppendMenuItemTextWithCFString(inMenu, inMenuItemText, kMenuItemAttrSectionHeader, 0, &menuItemIndex);
-	if (status == noErr)
-	{
-//		status = SetMenuItemIndent(inMenu, menuItemIndex, kDfxMenu_MenuItemIndentAmount);
-		SetItemStyle(inMenu, menuItemIndex, italic | bold);// | underline);
-	}
-	return status;
-}
-
-//-----------------------------------------------------------------------------
 int DFX_CFStringScanWithFormat(CFStringRef inString, const char * inFormat, ...)
 {
 	if ( (inString == NULL) || (inFormat == NULL) )
@@ -343,409 +321,6 @@ bool DGControl::do_contextualMenuClick()
 {
 #if DFXGUI_USE_CONTEXTUAL_MENU
 	return contextualMenuClick();
-#else
-	return false;
-#endif
-}
-
-//-----------------------------------------------------------------------------
-bool DGControl::contextualMenuClick()
-{
-#if TARGET_OS_MAC && DFXGUI_USE_CONTEXTUAL_MENU
-	MenuRef contextualMenu = NULL;
-	MenuID contextualMenuID = kDfxGui_ControlContextualMenuID;
-	MenuAttributes contextualMenuAttributes = kMenuAttrCondenseSeparators;
-	OSStatus status = CreateNewMenu(contextualMenuID, contextualMenuAttributes, &contextualMenu);
-	if ( (status != noErr) || (contextualMenu == NULL) )
-		return false;
-
-
-// --------- parameter menu creation ---------
-	bool parameterMenuItemsWereAdded = false;
-	DGControl * dgControl = NULL;
-	// populate the parameter-specific section of the menu
-	if (getType() == kDGControlType_SubControl)
-	{
-		dgControl = (DGControl*)this;
-		if ( dgControl->isParameterAttached() )
-		{
-			parameterMenuItemsWereAdded = true;
-			MenuItemIndex menuItemIndex = 0;
-			long paramID = dgControl->getParameterID();
-
-			// preface the parameter-specific commands section with a header title
-			CFStringRef menuItemText = CFSTR("Parameter Options");
-			status = DFX_AppendSectionTitleToMenu(contextualMenu, menuItemText);
-			status = DFX_AppendSeparatorToMenu(contextualMenu);
-
-			for (UInt32 i=0; i < kDfxContextualMenuItem_Parameter_NumItems; i++)
-			{
-				bool showCheckmark = false;
-				bool disableItem = false;
-				bool isFirstItemOfSubgroup = false;
-				menuItemText = NULL;
-				CFStringRef menuItemText_temp = NULL;
-				switch (i)
-				{
-					case kDfxContextualMenuItem_Parameter_SetDefaultValue:
-						menuItemText = CFSTR("Set default value");
-						isFirstItemOfSubgroup = true;
-						break;
-					case kDfxContextualMenuItem_Parameter_TextEntryForValue:
-						menuItemText = CFSTR("Type in a value for this parameter...");
-						break;
-					case kDfxContextualMenuItem_Parameter_Undo:
-						if (true)	//XXX needs appropriate check for which text/function to use
-							menuItemText = CFSTR("Undo this parameter");
-						else
-							menuItemText = CFSTR("Redo this parameter");
-						break;
-					case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
-						menuItemText = CFSTR("Randomize value");
-						break;
-					case kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot:
-						menuItemText = CFSTR("Generate parameter automation snapshot");
-						break;
-#if TARGET_PLUGIN_USES_MIDI
-					case kDfxContextualMenuItem_Parameter_MidiLearner:
-						menuItemText = CFSTR("MIDI learner");
-						if ( (getDfxGuiEditor()->getmidilearning()) )
-							showCheckmark = getDfxGuiEditor()->ismidilearner(paramID);
-						else
-							disableItem = true;
-						isFirstItemOfSubgroup = true;
-						break;
-					case kDfxContextualMenuItem_Parameter_MidiUnassign:
-						{
-							menuItemText = CFSTR("Unassign MIDI");
-							DfxParameterAssignment currentParamAssignment = getDfxGuiEditor()->getparametermidiassignment(paramID);
-							// disable if not assigned
-							if (currentParamAssignment.eventType == kParamEventNone)
-								disableItem = true;
-							// append the current MIDI assignment, if there is one, to the menu item text
-							else
-							{
-								switch (currentParamAssignment.eventType)
-								{
-									case kParamEventCC:
-										menuItemText_temp = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ (CC %ld)"), menuItemText, currentParamAssignment.eventNum);
-										break;
-									case kParamEventPitchbend:
-										menuItemText_temp = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ (pitchbend)"), menuItemText);
-										break;
-									case kParamEventNote:
-										menuItemText_temp = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ (notes %s - %s)"), menuItemText, DFX_GetNameForMIDINote(currentParamAssignment.eventNum), DFX_GetNameForMIDINote(currentParamAssignment.eventNum2));
-										break;
-									default:
-										break;
-								}
-								if (menuItemText_temp != NULL)
-									menuItemText = menuItemText_temp;
-							}
-						}
-						break;
-					case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
-						menuItemText = CFSTR("Type in a MIDI CC assignment...");
-						break;
-#endif
-					default:
-						break;
-				}
-				if (isFirstItemOfSubgroup)
-					status = DFX_AppendSeparatorToMenu(contextualMenu);
-				if (menuItemText != NULL)
-				{
-					MenuItemAttributes menuItemAttributes = 0;
-					if (disableItem)
-						menuItemAttributes |= kMenuItemAttrDisabled;
-					MenuCommand menuItemCommandID = i + kDfxContextualMenuItem_Global_NumItems;
-					status = AppendMenuItemTextWithCFString(contextualMenu, menuItemText, menuItemAttributes, menuItemCommandID, &menuItemIndex);
-					if (status == noErr)
-					{
-						if (showCheckmark)
-							CheckMenuItem(contextualMenu, menuItemIndex, true);
-						status = SetMenuItemIndent(contextualMenu, menuItemIndex, kDfxMenu_MenuItemIndentAmount);
-					}
-				}
-				if (menuItemText_temp != NULL)
-					CFRelease(menuItemText_temp);
-			}
-
-			// preface the global commands section with a divider...
-			status = DFX_AppendSeparatorToMenu(contextualMenu);
-			// ... and a header title
-			menuItemText = CFSTR("General Options");
-			status = DFX_AppendSectionTitleToMenu(contextualMenu, menuItemText);
-			status = DFX_AppendSeparatorToMenu(contextualMenu);
-		}
-	}
-
-// --------- global menu creation ---------
-	// populate the global section of the menu
-	for (UInt32 i=0; i < kDfxContextualMenuItem_Global_NumItems; i++)
-	{
-		MenuItemIndex menuItemIndex = 0;
-		bool showCheckmark = false;
-		bool disableItem = false;
-		bool isFirstItemOfSubgroup = false;
-		CFStringRef menuItemText = NULL;
-		switch (i)
-		{
-			case kDfxContextualMenuItem_Global_Undo:
-				if (true)	//XXX needs appropriate check for which text/function to use
-					menuItemText = CFSTR("Undo");
-				else
-					menuItemText = CFSTR("Redo");
-				isFirstItemOfSubgroup = true;
-				break;
-			case kDfxContextualMenuItem_Global_SetDefaultParameterValues:
-				menuItemText = CFSTR("Reset all parameter values to default");
-				break;
-			case kDfxContextualMenuItem_Global_RandomizeParameterValues:
-				menuItemText = CFSTR("Randomize all parameter values");
-				break;
-			case kDfxContextualMenuItem_Global_GenerateAutomationSnapshot:
-				menuItemText = CFSTR("Generate parameter automation snapshot");
-				break;
-			case kDfxContextualMenuItem_Global_CopyState:
-				menuItemText = CFSTR("Copy settings");
-				isFirstItemOfSubgroup = true;
-				// the Pasteboard Manager API is only available in Mac OS X 10.3 or higher
-				if (PasteboardCreate == NULL)
-					disableItem = true;
-				break;
-			case kDfxContextualMenuItem_Global_PasteState:
-				menuItemText = CFSTR("Paste settings");
-				{
-					bool currentClipboardIsPastable = false;
-					getDfxGuiEditor()->pasteSettings(&currentClipboardIsPastable);
-					if (!currentClipboardIsPastable)
-						disableItem = true;
-				}
-				break;
-			case kDfxContextualMenuItem_Global_SavePresetFile:
-				menuItemText = CFSTR("Save preset file...");
-				break;
-			case kDfxContextualMenuItem_Global_LoadPresetFile:
-				menuItemText = CFSTR("Load preset file...");
-				break;
-#if TARGET_PLUGIN_USES_MIDI
-			case kDfxContextualMenuItem_Global_MidiLearn:
-				menuItemText = CFSTR("MIDI learn");
-				showCheckmark = getDfxGuiEditor()->getmidilearning();
-				isFirstItemOfSubgroup = true;
-				break;
-			case kDfxContextualMenuItem_Global_MidiReset:
-				menuItemText = CFSTR("MIDI assignments reset");
-				break;
-#endif
-			case kDfxContextualMenuItem_Global_WindowTransparency:
-				menuItemText = CFSTR("Set window transparency...");
-				isFirstItemOfSubgroup = true;
-				break;
-			case kDfxContextualMenuItem_Global_OpenWebSite:
-				menuItemText = CFSTR("Open "PLUGIN_CREATOR_NAME_STRING" web site");
-				break;
-			default:
-				break;
-		}
-		if (isFirstItemOfSubgroup)
-			status = DFX_AppendSeparatorToMenu(contextualMenu);
-		if (menuItemText != NULL)
-		{
-			MenuItemAttributes menuItemAttributes = 0;//kMenuItemAttrDisabled
-			if (disableItem)
-				menuItemAttributes |= kMenuItemAttrDisabled;
-			MenuCommand menuItemCommandID = i;
-			status = AppendMenuItemTextWithCFString(contextualMenu, menuItemText, menuItemAttributes, menuItemCommandID, &menuItemIndex);
-//			status = InsertMenuItemTextWithCFString(contextualMenu, menuItemText, MenuItemIndex inAfterItem, menuItemAttributes, menuItemCommandID);
-			if (status == noErr)
-			{
-				if (showCheckmark)
-					CheckMenuItem(contextualMenu, menuItemIndex, true);
-				if (parameterMenuItemsWereAdded)
-					status = SetMenuItemIndent(contextualMenu, menuItemIndex, kDfxMenu_MenuItemIndentAmount);
-			}
-		}
-	}
-
-
-// --------- show the contextual menu ---------
-	Point mouseLocation_global_i;
-	GetGlobalMouse(&mouseLocation_global_i);
-	UInt32 userSelectionType = kCMNothingSelected;
-	SInt16 menuID = 0;
-	MenuItemIndex menuItemIndex = 0;
-	status = ContextualMenuSelect(contextualMenu, mouseLocation_global_i, false, kCMHelpItemOtherHelp, "\p"PLUGIN_NAME_STRING" manual", NULL, &userSelectionType, &menuID, &menuItemIndex);
-
-	bool result = true;
-	// XXX this happens "if the user selects an item that requires no additional actions on your part", so report it as being handled?
-	if ( (status == userCanceledErr) && (userSelectionType == kCMNothingSelected) )
-	{
-		result = true;
-		goto cleanupMenu;
-	}
-	if (status != noErr)
-	{
-		result = false;
-		goto cleanupMenu;
-	}
-	result = true;
-
-// --------- handle the contextual menu command (global) ---------
-	if (userSelectionType == kCMShowHelpSelected)
-		launch_documentation();
-	else if (userSelectionType == kCMMenuItemSelected)
-	{
-//fprintf(stderr, "menuID = %d, menuItemIndex = %u\n", menuID, menuItemIndex);
-		MenuCommand menuCommandID = 0;
-		status = GetMenuItemCommandID(contextualMenu, menuItemIndex, &menuCommandID);
-		if (status == noErr)
-		{
-			bool tryHandlingParameterCommand = false;
-			switch (menuCommandID)
-			{
-				case kDfxContextualMenuItem_Global_Undo:
-					//XXX implement
-					break;
-				case kDfxContextualMenuItem_Global_SetDefaultParameterValues:
-					getDfxGuiEditor()->setparameters_default(true);
-					break;
-				case kDfxContextualMenuItem_Global_RandomizeParameterValues:
-					getDfxGuiEditor()->randomizeparameters(true);	// XXX "yes" to writing automation data?
-					break;
-				case kDfxContextualMenuItem_Global_GenerateAutomationSnapshot:
-					{
-						UInt32 parameterListSize = 0;
-						AudioUnitParameterID * parameterList = getDfxGuiEditor()->CreateParameterList(kAudioUnitScope_Global, &parameterListSize);
-						if (parameterList != NULL)
-						{
-							for (UInt32 i=0; i < parameterListSize; i++)
-								getDfxGuiEditor()->setparameter_f(parameterList[i], getDfxGuiEditor()->getparameter_f(parameterList[i]), true);
-							free(parameterList);
-						}
-					}
-					break;
-				case kDfxContextualMenuItem_Global_CopyState:
-					getDfxGuiEditor()->copySettings();
-					break;
-				case kDfxContextualMenuItem_Global_PasteState:
-					getDfxGuiEditor()->pasteSettings();
-					break;
-				case kDfxContextualMenuItem_Global_SavePresetFile:
-					{
-						CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
-						if (pluginBundle != NULL)
-						{
-							status = SaveAUStateToPresetFile_Bundle(getDfxGuiEditor()->GetEditAudioUnit(), NULL, NULL, pluginBundle);
-						}
-					}
-					break;
-				case kDfxContextualMenuItem_Global_LoadPresetFile:
-					status = CustomRestoreAUPresetFile( getDfxGuiEditor()->GetEditAudioUnit() );
-					break;
-#if TARGET_PLUGIN_USES_MIDI
-				case kDfxContextualMenuItem_Global_MidiLearn:
-					getDfxGuiEditor()->setmidilearning(! (getDfxGuiEditor()->getmidilearning()) );
-					break;
-				case kDfxContextualMenuItem_Global_MidiReset:
-					getDfxGuiEditor()->resetmidilearn();
-					break;
-#endif
-				case kDfxContextualMenuItem_Global_WindowTransparency:
-					status = getDfxGuiEditor()->openWindowTransparencyWindow();
-					break;
-				case kDfxContextualMenuItem_Global_OpenWebSite:
-					launch_url(PLUGIN_HOMEPAGE_URL);
-					break;
-				default:
-					tryHandlingParameterCommand = true;
-					break;
-			}
-
-// --------- handle the contextual menu command (parameter-specific) ---------
-			if (tryHandlingParameterCommand && parameterMenuItemsWereAdded)
-			{
-				long paramID = dgControl->getParameterID();
-				switch (menuCommandID - kDfxContextualMenuItem_Global_NumItems)
-				{
-					case kDfxContextualMenuItem_Parameter_SetDefaultValue:
-						getDfxGuiEditor()->setparameter_default(paramID, true);
-						break;
-					case kDfxContextualMenuItem_Parameter_TextEntryForValue:
-						{
-							// initialize the text with the current parameter value
-							CFStringRef currentValueText = dgControl->createStringFromValue();
-							// XXX consider adding the min and max values to the window display for user's sake
-							CFStringRef text = getDfxGuiEditor()->openTextEntryWindow(currentValueText);
-							if (currentValueText != NULL)
-								CFRelease(currentValueText);
-							if (text != NULL)
-							{
-//CFShow(text);
-								dgControl->setValueWithString(text);
-								CFRelease(text);
-							}
-						}
-						break;
-					case kDfxContextualMenuItem_Parameter_Undo:
-						//XXX implement
-						break;
-					case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
-						// XXX "yes" to writing automation data?
-						getDfxGuiEditor()->randomizeparameter(paramID, true);
-						break;
-					case kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot:
-						getDfxGuiEditor()->setparameter_f(paramID, getDfxGuiEditor()->getparameter_f(paramID), true);
-						break;
-#if TARGET_PLUGIN_USES_MIDI
-					case kDfxContextualMenuItem_Parameter_MidiLearner:
-						if ( getDfxGuiEditor()->getmidilearner() == paramID )
-							getDfxGuiEditor()->setmidilearner(kNoLearner);
-						else
-							getDfxGuiEditor()->setmidilearner(paramID);
-						break;
-					case kDfxContextualMenuItem_Parameter_MidiUnassign:
-						getDfxGuiEditor()->parametermidiunassign(paramID);
-						break;
-					case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
-						{
-							// initialize the text with the current CC assignment, if there is one
-							CFStringRef initialText = NULL;
-							DfxParameterAssignment currentParamAssignment = getDfxGuiEditor()->getparametermidiassignment(paramID);
-							if (currentParamAssignment.eventType == kParamEventCC)
-								initialText = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%ld"), currentParamAssignment.eventNum);
-							CFStringRef text = getDfxGuiEditor()->openTextEntryWindow(initialText);
-							if (initialText != NULL)
-								CFRelease(initialText);
-							if (text != NULL)
-							{
-								long newValue = 0;
-								int scanResult = DFX_CFStringScanWithFormat(text, "%ld", &newValue);
-								if (scanResult > 0)
-								{
-									DfxParameterAssignment newParamAssignment = {0};
-									newParamAssignment.eventType = kParamEventCC;
-									newParamAssignment.eventChannel = 0;	// XXX not currently implemented
-									newParamAssignment.eventNum = newValue;
-									getDfxGuiEditor()->setparametermidiassignment(paramID, newParamAssignment);
-								}
-								CFRelease(text);
-							}
-						}
-						break;
-#endif
-					default:
-						break;
-				}
-			}
-		}
-	}
-
-cleanupMenu:
-	DisposeMenu(contextualMenu);
-
-	return result;
 #else
 	return false;
 #endif
@@ -950,61 +525,6 @@ void DGBackgroundControl::setDragActive(bool inActiveStatus)
 		redraw();
 }
 #endif
-
-
-
-
-
-
-#pragma mark -
-#pragma mark DGCarbonViewControl
-
-#ifdef TARGET_API_AUDIOUNIT
-
-//-----------------------------------------------------------------------------
-void DGCarbonViewControl::ControlToParameter()
-{
-	if (mType == kTypeContinuous)
-	{
-		double controlValue = GetValueFract();
-		Float32 paramValue;
-		DfxParameterValueConversionRequest request;
-		UInt32 dataSize = sizeof(request);
-		request.inConversionType = kDfxParameterValueConversion_expand;
-		request.inValue = controlValue;
-		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
-								kAudioUnitScope_Global, mParam.mParameterID, &request, &dataSize) 
-								== noErr)
-			paramValue = request.outValue;
-		else
-			paramValue = AUParameterValueFromLinear(controlValue, &mParam);
-		mParam.SetValue(mListener, this, paramValue);
-	}
-	else
-		AUCarbonViewControl::ControlToParameter();
-}
-
-//-----------------------------------------------------------------------------
-void DGCarbonViewControl::ParameterToControl(Float32 inParamValue)
-{
-	if (mType == kTypeContinuous)
-	{
-		DfxParameterValueConversionRequest request;
-		UInt32 dataSize = sizeof(request);
-		request.inConversionType = kDfxParameterValueConversion_contract;
-		request.inValue = inParamValue;
-		if (AudioUnitGetProperty(GetOwnerView()->GetEditAudioUnit(), kDfxPluginProperty_ParameterValueConversion, 
-								kAudioUnitScope_Global, mParam.mParameterID, &request, &dataSize) 
-								== noErr)
-			SetValueFract(request.outValue);
-		else
-			SetValueFract(AUParameterValueToLinear(inParamValue, &mParam));
-	}
-	else
-		AUCarbonViewControl::ParameterToControl(inParamValue);
-}
-
-#endif	// TARGET_API_AUDIOUNIT
 
 
 

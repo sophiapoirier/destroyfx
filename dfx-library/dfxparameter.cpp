@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2015  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -30,6 +30,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <stdlib.h>	// for malloc and free and RAND_MAX
 #include <string.h>	// for strcpy
 #include <math.h>
+#include <algorithm>
 
 
 
@@ -418,9 +419,9 @@ double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, doub
 			// XXX is this a good way to do this?
 			return (inLiteralValue-inMinValue) / valueRange;
 		case kDfxParamCurve_sqrt:
-			return (sqrt(inLiteralValue) * valueRange) + inMinValue;
+			return (sqrt(std::max(inLiteralValue, 0.0)) * valueRange) + inMinValue;
 		case kDfxParamCurve_squared:
-			return sqrt((inLiteralValue-inMinValue) / valueRange);
+			return sqrt(std::max((inLiteralValue-inMinValue) / valueRange, 0.0));
 		case kDfxParamCurve_cubed:
 			return pow( (inLiteralValue-inMinValue) / valueRange, oneDivThree );
 		case kDfxParamCurve_pow:
@@ -582,7 +583,7 @@ double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inM
 				return (double) ((int64_t)tempval);
 			}
 		case kDfxParamCurve_sqrt:
-			return (sqrt(inGenValue) * valueRange) + inMinValue;
+			return (sqrt(std::max(inGenValue, 0.0)) * valueRange) + inMinValue;
 		case kDfxParamCurve_squared:
 			return (inGenValue*inGenValue * valueRange) + inMinValue;
 		case kDfxParamCurve_cubed:
