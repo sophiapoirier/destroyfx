@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2010  Sophia Poirier
+Copyright (C) 2002-2016  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -523,35 +523,6 @@ private:
 	#ifdef TARGET_API_AUDIOUNIT
 		CFStringRef cfname;
 	#endif
-};
-
-
-
-
-
-
-//-----------------------------------------------------------------------------
-class DfxSmoothedValue
-{
-public:
-	DfxSmoothedValue(double inSmoothingTime = 0.100);
-	void setValue(double inTargetValue);
-	void setValueNow(double inValue);
-	double getValue()
-		{	return mCurrentValue;	}
-	float getValue_f()
-		{	return static_cast<float>(mCurrentValue);	}
-	void inc();
-	void setSmoothingTime(double inSmoothingTime);
-	void setSampleRate(double inSampleRate);
-
-private:
-	double mCurrentValue, mTargetValue;
-	double mValueStep;
-	double mSmoothDur_seconds;
-	long mSmoothDur_samples, mSmoothCount;
-	double mSampleRate;
-	bool mReinit;
 };
 
 

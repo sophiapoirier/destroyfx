@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2016  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -960,85 +960,4 @@ void DfxPreset::getname(char * outText)
 const char * DfxPreset::getname_ptr()
 {
 	return name;
-}
-
-
-
-
-
-
-#pragma mark -
-#pragma mark DfxSmoothedValue
-#pragma mark -
-
-//-----------------------------------------------------------------------------
-DfxSmoothedValue::DfxSmoothedValue(double inSmoothingTime)
-{
-	mSmoothDur_seconds = inSmoothingTime;
-	mCurrentValue = mTargetValue = 0.0;
-	mValueStep = 0.0;
-	mSmoothDur_samples = 0;
-	mSmoothCount = 0;
-	mSampleRate = 1.0;
-	mReinit = false;
-}
-
-//-----------------------------------------------------------------------------
-void DfxSmoothedValue::setValue(double inTargetValue)
-{
-	if (mReinit)
-	{
-		setValueNow(inTargetValue);
-		mReinit = false;
-	}
-	else
-	{
-		if (inTargetValue == mTargetValue)
-			return;
-		mTargetValue = inTargetValue;
-		if (mSmoothDur_samples > 0)
-			mValueStep = (mTargetValue - mCurrentValue) / static_cast<double>(mSmoothDur_samples);
-		else
-			mValueStep = 0.0;
-		mSmoothCount = 0;
-	}
-}
-
-//-----------------------------------------------------------------------------
-void DfxSmoothedValue::setValueNow(double inValue)
-{
-	mCurrentValue = mTargetValue = inValue;
-	mSmoothCount = mSmoothDur_samples;
-	mReinit = false;
-}
-
-//-----------------------------------------------------------------------------
-void DfxSmoothedValue::inc()
-{
-	if (mSmoothCount < mSmoothDur_samples)
-	{
-		mCurrentValue += mValueStep;
-		mSmoothCount++;
-	}
-	else
-	{
-		mCurrentValue = mTargetValue;
-	}
-}
-
-//-----------------------------------------------------------------------------
-void DfxSmoothedValue::setSmoothingTime(double inSmoothingTime)
-{
-	mSmoothDur_seconds = inSmoothingTime;
-	mSmoothDur_samples = static_cast<long>(mSmoothDur_seconds * mSampleRate);
-}
-
-//-----------------------------------------------------------------------------
-void DfxSmoothedValue::setSampleRate(double inSampleRate)
-{
-	mSampleRate = inSampleRate;
-	setSmoothingTime(mSmoothDur_seconds);
-
-	setValueNow(mTargetValue);
-	mReinit = true;
 }
