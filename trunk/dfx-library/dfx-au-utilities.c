@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2015  Sophia Poirier
+	Copyright (C) 2003-2016  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -97,7 +97,7 @@ OSErr GetComponentVersionFromResource(Component inComponent, SInt32 * outVersion
 
 	// loop through all of the Component thng resources trying to 
 	// find one that matches this Component description
-	for (i=0; i < thngResourceCount; i++)
+	for (i = 0; i < thngResourceCount; i++)
 	{
 		ExtComponentResource * componentThng;
 
@@ -162,7 +162,7 @@ typedef struct {
 // create an instance of a CFAUPreset object
 CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName)
 {
-	CFAUPreset * newPreset = (CFAUPreset*) CFAllocatorAllocate(inAllocator, sizeof(CFAUPreset), 0);
+	CFAUPreset * const newPreset = (CFAUPreset*) CFAllocatorAllocate(inAllocator, sizeof(CFAUPreset), 0);
 	if (newPreset != NULL)
 	{
 		newPreset->auPreset.presetNumber = inPresetNumber;
@@ -184,7 +184,7 @@ CFAUPresetRef CFAUPresetRetain(CFAUPresetRef inPreset)
 {
 	if (inPreset != NULL)
 	{
-		CFAUPreset * incomingPreset = (CFAUPreset*) inPreset;
+		CFAUPreset * const incomingPreset = (CFAUPreset*) inPreset;
 		// retain the input AUPreset's name string for this reference to the preset
 		if (incomingPreset->auPreset.presetName != NULL)
 			CFRetain(incomingPreset->auPreset.presetName);
@@ -197,7 +197,7 @@ CFAUPresetRef CFAUPresetRetain(CFAUPresetRef inPreset)
 // release a reference of a CFAUPreset object
 void CFAUPresetRelease(CFAUPresetRef inPreset)
 {
-	CFAUPreset * incomingPreset = (CFAUPreset*) inPreset;
+	CFAUPreset * const incomingPreset = (CFAUPreset*) inPreset;
 	// these situations shouldn't happen
 	if (inPreset == NULL)
 		return;
@@ -253,8 +253,8 @@ void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inP
 // For our AUPresets, we will compare based on the preset number and the name string.
 Boolean CFAUPresetArrayEqualCallBack(const void * inPreset1, const void * inPreset2)
 {
-	AUPreset * preset1 = (AUPreset*) inPreset1;
-	AUPreset * preset2 = (AUPreset*) inPreset2;
+	const AUPreset * const preset1 = (AUPreset*) inPreset1;
+	const AUPreset * const preset2 = (AUPreset*) inPreset2;
 	// the two presets are only equal if they have the same preset number and 
 	// if the two name strings are the same (which we rely on the CF function to compare)
 	return (preset1->presetNumber == preset2->presetNumber) && 
@@ -269,7 +269,7 @@ Boolean CFAUPresetArrayEqualCallBack(const void * inPreset1, const void * inPres
 // the object is an AUPreset and tells the preset number and preset name.
 CFStringRef CFAUPresetArrayCopyDescriptionCallBack(const void * inPreset)
 {
-	AUPreset * preset = (AUPreset*) inPreset;
+	const AUPreset * const preset = (AUPreset*) inPreset;
 	return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
 									CFSTR("AUPreset:\npreset number = %d\npreset name = %@"), 
 									(int)preset->presetNumber, preset->presetName);
@@ -341,7 +341,7 @@ typedef struct {
 // create an instance of a CFAUOtherPluginDesc object
 CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID)
 {
-	CFAUOtherPluginDesc * newDesc = (CFAUOtherPluginDesc*) CFAllocatorAllocate(inAllocator, sizeof(CFAUOtherPluginDesc), 0);
+	CFAUOtherPluginDesc * const newDesc = (CFAUOtherPluginDesc*) CFAllocatorAllocate(inAllocator, sizeof(CFAUOtherPluginDesc), 0);
 	if (newDesc != NULL)
 	{
 		newDesc->auOtherPluginDesc.format = inFormat;
@@ -373,7 +373,7 @@ CFAUOtherPluginDescRef CFAUOtherPluginDescRetain(CFAUOtherPluginDescRef inDesc)
 {
 	if (inDesc != NULL)
 	{
-		CFAUOtherPluginDesc * incomingDesc = (CFAUOtherPluginDesc*) inDesc;
+		CFAUOtherPluginDesc * const incomingDesc = (CFAUOtherPluginDesc*) inDesc;
 		incomingDesc->retainCount += 1;
 	}
 	return inDesc;
@@ -383,7 +383,7 @@ CFAUOtherPluginDescRef CFAUOtherPluginDescRetain(CFAUOtherPluginDescRef inDesc)
 // release a reference of a CFAUOtherPluginDesc object
 void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc)
 {
-	CFAUOtherPluginDesc * incomingDesc = (CFAUOtherPluginDesc*) inDesc;
+	CFAUOtherPluginDesc * const incomingDesc = (CFAUOtherPluginDesc*) inDesc;
 	// these situations shouldn't happen
 	if (inDesc == NULL)
 		return;
@@ -445,7 +445,7 @@ Boolean CFAUOtherPluginDescArrayEqualCallBack(const void * inDesc1, const void *
 // an AudioUnitOtherPluginDesc and shows each piece of its data.
 CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
 {
-	AudioUnitOtherPluginDesc * desc = (AudioUnitOtherPluginDesc*) inDesc;
+	const AudioUnitOtherPluginDesc * const desc = (AudioUnitOtherPluginDesc*) inDesc;
 	CFStringRef descriptionString = NULL;
 
 	CFStringRef pluginFormatString = NULL;
@@ -472,11 +472,15 @@ CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
 	}
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_3
+	#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_3
 	if (UTCreateStringForOSType != NULL)
+	#else
+	if (true)
+	#endif
 	{
-		CFStringRef typeString = UTCreateStringForOSType(desc->plugin.mType);
-		CFStringRef subTypeString = UTCreateStringForOSType(desc->plugin.mSubType);
-		CFStringRef manufacturerString = UTCreateStringForOSType(desc->plugin.mManufacturer);
+		const CFStringRef typeString = UTCreateStringForOSType(desc->plugin.mType);
+		const CFStringRef subTypeString = UTCreateStringForOSType(desc->plugin.mSubType);
+		const CFStringRef manufacturerString = UTCreateStringForOSType(desc->plugin.mManufacturer);
 		descriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
 									CFSTR("AudioUnitOtherPluginDesc:\nplugin format = %@\ntype ID = %@\nsub-type ID = %@\nmanufacturer ID = %@"), 
 									pluginFormatString, typeString, subTypeString, manufacturerString);
@@ -667,7 +671,7 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 		error = nilHandleErr;
 	else
 	{
-		char * separatorByte;
+		char * separatorByte = NULL;
 		// convert the Component name Pascal string to a C string
 		char componentFullNameCString[sizeof(Str255)];
 		strncpy(componentFullNameCString, (const char*)(componentFullNamePString+1), componentFullNamePString[0]);
@@ -681,9 +685,9 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 		else
 		{
 			// point to right after the : character for the plugin name string...
-			char * pluginNameCString = separatorByte + 1;
+			const char * pluginNameCString = separatorByte + 1;
 			// this will terminate the manufacturer name string right before the : character
-			char * manufacturerNameCString = componentFullNameCString;
+			const char * const manufacturerNameCString = componentFullNameCString;
 			separatorByte[0] = 0;
 			// ...and then also skip over any white space immediately following the : delimiter
 			while ( isspace(*pluginNameCString) )
@@ -797,7 +801,7 @@ Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const Compon
 SInt32 GetMacOSVersion()
 {
 	SInt32 systemVersion = 0;
-	OSErr error = Gestalt(gestaltSystemVersion, &systemVersion);
+	const OSErr error = Gestalt(gestaltSystemVersion, &systemVersion);
 	if (error == noErr)
 	{
 		systemVersion &= 0xFFFF;	// you are supposed to ignore the higher 16 bits for this Gestalt value
@@ -812,9 +816,9 @@ SInt32 GetMacOSVersion()
 // the version value of interest to us is 0x06408000 (6.4 release)
 SInt32 GetQuickTimeVersion()
 {
-    SInt32 qtVersion = 0;
-    OSErr error = Gestalt(gestaltQuickTime, &qtVersion);
-    if (error == noErr)
+	SInt32 qtVersion = 0;
+	const OSErr error = Gestalt(gestaltQuickTime, &qtVersion);
+	if (error == noErr)
 		return qtVersion;
 	else
 		return 0;
@@ -825,10 +829,10 @@ SInt32 GetQuickTimeVersion()
 // the version value of interest to us is 0x01300000 (1.3)
 UInt32 GetAudioToolboxFrameworkVersion()
 {
-	CFBundleRef audioToolboxBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.audio.toolbox.AudioToolbox"));
+	const CFBundleRef audioToolboxBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.audio.toolbox.AudioToolbox"));
 	if (audioToolboxBundle != NULL)
 	{
-		UInt32 audioToolboxVersion = CFBundleGetVersionNumber(audioToolboxBundle);
+		const UInt32 audioToolboxVersion = CFBundleGetVersionNumber(audioToolboxBundle);
 		return audioToolboxVersion;
 	}
 	else
@@ -852,12 +856,12 @@ Boolean IsAvailable_AU2rev1()
 //--------------------------------------------------------------------------
 Boolean IsTransportStateProcSafe()
 {
-	CFBundleRef applicationBundle = CFBundleGetMainBundle();
+	const CFBundleRef applicationBundle = CFBundleGetMainBundle();
 	if (applicationBundle != NULL)
 	{
-		CFStringRef applicationBundleID = CFBundleGetIdentifier(applicationBundle);
-		UInt32 applicationVersionNumber = CFBundleGetVersionNumber(applicationBundle);
-		CFStringRef applicationVersionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(applicationBundle, kCFBundleVersionKey);
+		const CFStringRef applicationBundleID = CFBundleGetIdentifier(applicationBundle);
+		const UInt32 applicationVersionNumber = CFBundleGetVersionNumber(applicationBundle);
+		const CFStringRef applicationVersionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(applicationBundle, kCFBundleVersionKey);
 //if (applicationBundleID != NULL) CFShow(applicationBundleID);
 //fprintf(stderr, "application version number = 0x%08lX\n\n", applicationVersionNumber);
 //if (applicationVersionString != NULL) { fprintf(stderr, "application version string:  "); CFShow(applicationVersionString); }
