@@ -1,11 +1,32 @@
-/*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2016  Sophia Poirier
+
+This file is part of Buffer Override.
+
+Buffer Override is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Buffer Override is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "bufferoverride.h"
+
+#include <cmath>
 
 
 
 //-----------------------------------------------------------------------------
-inline long bufferSize_ms2samples(double inSizeMS, double inSampleRate)
+static inline long bufferSize_ms2samples(double inSizeMS, double inSampleRate)
 {
 	return (long) (inSizeMS * inSampleRate * 0.001);
 }
@@ -22,7 +43,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 
 	readPos = 0;	// reset for starting a new minibuffer
 	prevMinibufferSize = minibufferSize;
-	long prevForcedBufferSize = currentForcedBufferSize;
+	const long prevForcedBufferSize = currentForcedBufferSize;
 
 	//--------------------------PROCESS THE LFOs----------------------------
 	// update the LFOs' positions to the current position
@@ -30,7 +51,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	bufferLFO->updatePosition(prevMinibufferSize);
 	// Then get the current output values of the LFOs, which also updates their positions once more.  
 	// Scale the 0.0 - 1.0 LFO output values to 0.0 - 2.0 (oscillating around 1.0).
-	float divisorLFOvalue = divisorLFO->processLFOzero2two();
+	const float divisorLFOvalue = divisorLFO->processLFOzero2two();
 	float bufferLFOvalue = 2.0f - bufferLFO->processLFOzero2two();	// inverting it makes more pitch sense
 	// and then update the stepSize for each LFO, in case the LFO parameters have changed
 	if (divisorLFO->bTempoSync)
@@ -99,14 +120,17 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 			minibufferSize = (long) ( (float)currentForcedBufferSize / currentBufferDivisor );
 		// if it's the last minibuffer, then fill up the forced buffer to the end 
 		// by extending this last minibuffer to fill up the end of the forced buffer
-		long remainingForcedBuffer = currentForcedBufferSize - writePos;
-		if ( (minibufferSize*2) >= remainingForcedBuffer )
+		const long remainingForcedBuffer = currentForcedBufferSize - writePos;
+		if ( (minibufferSize * 2) >= remainingForcedBuffer )
 			minibufferSize = remainingForcedBuffer;
 	}
 	// this is a new forced buffer just beginning, act accordingly, do bar sync if necessary
 	else
 	{
-		long samplesToBar = timeinfo.samplesToNextBar;
+		const long samplesPerBar = lrint(static_cast<double>(timeinfo.samplesPerBeat) * timeinfo.numerator);
+		long samplesToBar = timeinfo.samplesToNextBar - samplePos;
+		while ((samplesToBar < 0) && (samplesPerBar > 0))
+			samplesToBar += samplesPerBar;
 		if (barSync)
 		{
 			// do beat sync for each LFO if it ought to be done
@@ -118,10 +142,10 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 		// because there isn't really any division (given my implementation) when the divisor is < 2
 		if (currentBufferDivisor < 2.0f)
 		{
-			if (barSync)
-				minibufferSize = currentForcedBufferSize = samplesToBar % currentForcedBufferSize;
-			else
-				minibufferSize = currentForcedBufferSize;
+			const long samplesToAlignForcedBufferToBar = samplesToBar % currentForcedBufferSize;
+			if (barSync && (samplesToAlignForcedBufferToBar > 0))
+				currentForcedBufferSize = samplesToAlignForcedBufferToBar;
+			minibufferSize = currentForcedBufferSize;
 		}
 		else
 		{
@@ -132,7 +156,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 				long countdown = samplesToBar % currentForcedBufferSize;
 				// update the forced buffer size and number of minibuffers so that 
 				// the forced buffers sync up with the musical measures of the song
-				if ( countdown < (minibufferSize*2) )	// extend the buffer if it would be too short...
+				if ( countdown < (minibufferSize * 2) )	// extend the buffer if it would be too short...
 					currentForcedBufferSize += countdown;
 				else	// ...otherwise chop it down to the length of the extra bit needed to sync with the next measure
 					currentForcedBufferSize = countdown;
@@ -149,8 +173,8 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 		smoothcount = smoothDur = 0;
 	else
 	{
-		smoothDur = (long) (smooth * (float)minibufferSize);
-		long maxSmoothDur;
+		smoothDur = static_cast<long>(smooth * static_cast<float>(minibufferSize));
+		long maxSmoothDur = 0;
 		// if we're just starting a new forced buffer, 
 		// then the samples beyond the end of the previous one are not valid
 		if (writePos <= 0)
@@ -161,16 +185,16 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 		if (smoothDur > maxSmoothDur)
 			smoothDur = maxSmoothDur;
 		smoothcount = smoothDur;
-		smoothStep = 1.0f / (float)(smoothDur+1);	// the gain increment for each smoothing step
+		smoothStep = 1.0f / static_cast<float>(smoothDur + 1);	// the gain increment for each smoothing step
 
-//		sqrtFadeIn = sqrtf(smoothStep);
-//		sqrtFadeOut = sqrtf(1.0f - smoothStep);
+//		sqrtFadeIn = std::sqrt(smoothStep);
+//		sqrtFadeOut = std::sqrt(1.0f - smoothStep);
 //		smoothFract = smoothStep;
 
-		fadeOutGain = cosf(kDFX_PI_f/(float)(4*smoothDur));
-		fadeInGain = sinf(kDFX_PI_f/(float)(4*smoothDur));
-		realFadePart = (fadeOutGain * fadeOutGain) - (fadeInGain * fadeInGain);	// cosf(3.141592/2/n)
-		imaginaryFadePart = 2.0f * fadeOutGain * fadeInGain;	// sinf(3.141592/2/n)
+		fadeOutGain = std::cos(kDFX_PI_f / static_cast<float>(4 * smoothDur));
+		fadeInGain = std::sin(kDFX_PI_f / static_cast<float>(4 * smoothDur));
+		realFadePart = (fadeOutGain * fadeOutGain) - (fadeInGain * fadeInGain);	// std::cos(3.141592/2.0/n)
+		imaginaryFadePart = 2.0f * fadeOutGain * fadeInGain;	// std::sin(3.141592/2.0/n)
 	}
 }
 
@@ -180,16 +204,16 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 //---------------------------------------------------------------------------------------------------
 void BufferOverride::processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing)
 {
-	unsigned long numChannels = getnumoutputs();
+	const unsigned long numChannels = getnumoutputs();
 	unsigned long ch;
-	float oldDivisor = divisor;
+	const float oldDivisor = divisor;
 
 //-------------------------SAFETY CHECK----------------------
 	// there must have not been available memory or something (like WaveLab goofing up), 
 	// so try to allocate buffers now
 	if (numBuffers < numChannels)
 		createbuffers();
-	for (ch=0; ch < numChannels; ch++)
+	for (ch = 0; ch < numChannels; ch++)
 	{
 		if (buffers[ch] == NULL)
 		{
@@ -197,7 +221,8 @@ void BufferOverride::processaudio(const float ** in, float ** out, unsigned long
 			if ( createbuffers() )
 				break;
 			// or abort audio processing if the creation failed
-			else return;
+			else
+				return;
 		}
 	}
 
@@ -210,8 +235,8 @@ void BufferOverride::processaudio(const float ** in, float ** out, unsigned long
 
 	// calculate this scaler value to minimize calculations later during processOutput()
 	// (square root for equal power mix)
-	float inputGain = sqrtf(1.0f - dryWetMix);
-	float outputGain = sqrtf(dryWetMix);
+	inputGain.setValue(std::sqrt(1.0f - dryWetMix));
+	outputGain.setValue(std::sqrt(dryWetMix));
 
 
 //-----------------------TEMPO STUFF---------------------------
@@ -244,31 +269,31 @@ void BufferOverride::processaudio(const float ** in, float ** out, unsigned long
 
 //-----------------------AUDIO STUFF---------------------------
 	// here we begin the audio output loop, which has two checkpoints at the beginning
-	for (unsigned long samplecount=0; samplecount < inNumFrames; samplecount++)
+	for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
 	{
 		// check if it's the end of this minibuffer
 		if (readPos >= minibufferSize)
 			updateBuffer(samplecount);
 
 		// store the latest input samples into the buffers
-		for (ch=0; ch < numChannels; ch++)
+		for (ch = 0; ch < numChannels; ch++)
 			buffers[ch][writePos] = in[ch][samplecount];
 
 		// get the current output without any smoothing
-		for (ch=0; ch < numChannels; ch++)
+		for (ch = 0; ch < numChannels; ch++)
 			outval[ch] = buffers[ch][readPos];
 
 		// and if smoothing is taking place, get the smoothed audio output
 		if (smoothcount > 0)
 		{
-			for (ch=0; ch < numChannels; ch++)
+			for (ch = 0; ch < numChannels; ch++)
 			{
 			// crossfade between the current input and its corresponding overlap sample
 //				outval[ch] *= 1.0f - (smoothStep * (float)smoothcount);	// current
-//				outval[ch] += buffers[ch][readPos+prevMinibufferSize] * smoothStep*(float)smoothcount;	// + previous
-//				float smoothfract = smoothStep * (float)smoothcount;
-//				float newgain = sqrt(1.0f - smoothfract);
-//				float oldgain = sqrt(smoothfract);
+//				outval[ch] += buffers[ch][readPos + prevMinibufferSize] * smoothStep * (float)smoothcount;	// + previous
+//				const float smoothfract = smoothStep * (float)smoothcount;
+//				const float newgain = std::sqrt(1.0f - smoothfract);
+//				const float oldgain = std::sqrt(smoothfract);
 //				outval[ch] = (outval[ch] * newgain) + (buffers[ch][readPos+prevMinibufferSize] * oldgain);
 //				outval[ch] = (outval[ch] * sqrtFadeIn) + (buffers[ch][readPos+prevMinibufferSize] * sqrtFadeOut);
 				outval[ch] = (outval[ch] * fadeInGain) + (buffers[ch][readPos+prevMinibufferSize] * fadeOutGain);
@@ -276,7 +301,7 @@ void BufferOverride::processaudio(const float ** in, float ** out, unsigned long
 			smoothcount--;
 //			smoothFract += smoothStep;
 //			sqrtFadeIn = 0.5f * (sqrtFadeIn + (smoothFract / sqrtFadeIn));
-//			sqrtFadeOut = 0.5f * (sqrtFadeOut + ((1.0f-smoothFract) / sqrtFadeOut));
+//			sqrtFadeOut = 0.5f * (sqrtFadeOut + ((1.0f - smoothFract) / sqrtFadeOut));
 			fadeInGain = (fadeOutGain * imaginaryFadePart) + (fadeInGain * realFadePart);
 			fadeOutGain = (realFadePart * fadeOutGain) - (imaginaryFadePart * fadeInGain);
 		}
@@ -286,20 +311,23 @@ void BufferOverride::processaudio(const float ** in, float ** out, unsigned long
 		if (replacing)
 		{
 	#endif
-			for (ch=0; ch < numChannels; ch++)
-				out[ch][samplecount] = (outval[ch] * outputGain) + (in[ch][samplecount] * inputGain);
+			for (ch = 0; ch < numChannels; ch++)
+				out[ch][samplecount] = (outval[ch] * outputGain.getValue()) + (in[ch][samplecount] * inputGain.getValue());
 	#ifdef TARGET_API_VST
 		}
 		else
 		{
-			for (ch=0; ch < numChannels; ch++)
-				out[ch][samplecount] += (outval[ch] * outputGain) + (in[ch][samplecount] * inputGain);
+			for (ch = 0; ch < numChannels; ch++)
+				out[ch][samplecount] += (outval[ch] * outputGain.getValue()) + (in[ch][samplecount] * inputGain.getValue());
 		}
 	#endif
 
 		// increment the position trackers
 		readPos++;
 		writePos++;
+
+		inputGain.inc();
+		outputGain.inc();
 	}
 
 
@@ -307,8 +335,7 @@ void BufferOverride::processaudio(const float ** in, float ** out, unsigned long
 	// check to see if there may be a note or pitchbend message left over that hasn't been implemented
 	if (midistuff->numBlockEvents > 0)
 	{
-		long eventcount;
-		for (eventcount = 0; eventcount < midistuff->numBlockEvents; eventcount++)
+		for (long eventcount = 0; eventcount < midistuff->numBlockEvents; eventcount++)
 		{
 			if (isNote(midistuff->blockEvents[eventcount].status))
 			{
@@ -335,7 +362,7 @@ void BufferOverride::processaudio(const float ** in, float ** out, unsigned long
 				}
 			}
 		}
-		for (eventcount = midistuff->numBlockEvents - 1; eventcount >= 0; eventcount--)
+		for (long eventcount = midistuff->numBlockEvents - 1; eventcount >= 0; eventcount--)
 		{
 			if (midistuff->blockEvents[eventcount].status == kMidiPitchbend)
 			{

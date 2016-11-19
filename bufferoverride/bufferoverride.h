@@ -1,12 +1,29 @@
-/*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2016  Sophia Poirier
 
+This file is part of Buffer Override.
 
-#ifndef __BUFFER_OVERRIDE_H
-#define __BUFFER_OVERRIDE_H
+Buffer Override is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Buffer Override is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#pragma once
 
 
 #include "dfxplugin.h"
-
+#include "dfxsmoothedvalue.h"
 #include "lfo.h"
 
 
@@ -70,7 +87,7 @@ public:
 	virtual void cleanup();
 	virtual void reset();
 
-	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
+	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing = true);
 	virtual void processparameters();
 
 	virtual bool createbuffers();
@@ -92,6 +109,8 @@ private:
 	float smooth, dryWetMix;
 	double pitchbendRange, userTempo;
 	long midiMode;
+
+	DfxSmoothedValue<float> inputGain, outputGain;  // the effective states of the dry/wet mix
 
 	long currentForcedBufferSize;	// the size of the larger, imposed buffer
 	float ** buffers;	// this stores the forced buffer
@@ -126,5 +145,3 @@ private:
 
 	float fadeOutGain, fadeInGain, realFadePart, imaginaryFadePart;	// for trig crossfading
 };
-
-#endif
