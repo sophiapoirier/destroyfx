@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2010  Sophia Poirier
+Copyright (C) 2001-2016  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -25,287 +25,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma mark _________init_________
 
 // this macro does boring entry point stuff for us
-#if 1
 DFX_EFFECT_ENTRY(BufferOverride)
-#elif 0
-extern "C" OSStatus BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj);
-extern "C" OSStatus BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj)
-{
-	struct AudioUnitSetPropertyGluePB {
-		unsigned char                  componentFlags;
-		unsigned char                  componentParamSize;
-		short                          componentWhat;
-		UInt32                         inDataSize;
-		void *                         inData;
-		AudioUnitElement               inElement;
-		AudioUnitScope                 inScope;
-		AudioUnitPropertyID            inID;
-		AudioUnit                      ci;
-	};
-
-	AudioUnitSetPropertyGluePB * sp = (AudioUnitSetPropertyGluePB*) params;
-
-	if ( (params->what == kAudioUnitSetPropertySelect) && (sp->inID == kAudioUnitProperty_CurrentPreset) )
-		printf("<BufferOverrideEntry>SetCurrentPreset ( %ld )\n", ((AUPreset*)sp->inData)->presetNumber);
-	else if ( (params->what == kAudioUnitSetPropertySelect) && (sp->inID == kAudioUnitProperty_ClassInfo) )
-		printf("<BufferOverrideEntry>SetProperty(ClassInfo)\n");
-
-	return ComponentEntryPoint<BufferOverride>::Dispatch(params, obj);
-}
-#else
-const char * GetAUPropertyName(AudioUnitPropertyID inPropertyID)
-{
-#define AUPROP_TO_STRING(propID)	\
-	if (inPropertyID == kAudioUnitProperty_##propID)	\
-		return #propID;
-	AUPROP_TO_STRING(ClassInfo)
-	AUPROP_TO_STRING(MakeConnection)
-	AUPROP_TO_STRING(SampleRate)
-	AUPROP_TO_STRING(ParameterList)
-	AUPROP_TO_STRING(ParameterInfo)
-	AUPROP_TO_STRING(FastDispatch)
-	AUPROP_TO_STRING(CPULoad)
-	AUPROP_TO_STRING(StreamFormat)
-	AUPROP_TO_STRING(SRCAlgorithm)
-	AUPROP_TO_STRING(ReverbRoomType)
-	AUPROP_TO_STRING(BusCount)
-	AUPROP_TO_STRING(Latency)
-	AUPROP_TO_STRING(SupportedNumChannels)
-	AUPROP_TO_STRING(MaximumFramesPerSlice)
-	AUPROP_TO_STRING(SetExternalBuffer)
-	AUPROP_TO_STRING(ParameterValueStrings)
-	AUPROP_TO_STRING(MIDIControlMapping)
-	AUPROP_TO_STRING(GetUIComponentList)
-	AUPROP_TO_STRING(AudioChannelLayout)
-	AUPROP_TO_STRING(TailTime)
-	AUPROP_TO_STRING(BypassEffect)
-	AUPROP_TO_STRING(LastRenderError)
-	AUPROP_TO_STRING(SetRenderCallback)
-	AUPROP_TO_STRING(FactoryPresets)
-	AUPROP_TO_STRING(ContextName)
-	AUPROP_TO_STRING(RenderQuality)
-	AUPROP_TO_STRING(HostCallbacks)
-	AUPROP_TO_STRING(CurrentPreset)
-	AUPROP_TO_STRING(InPlaceProcessing)
-	AUPROP_TO_STRING(ElementName)
-	AUPROP_TO_STRING(CocoaUI)
-	AUPROP_TO_STRING(SupportedChannelLayoutTags)
-	AUPROP_TO_STRING(ParameterValueName)
-	AUPROP_TO_STRING(ParameterIDName)
-	AUPROP_TO_STRING(ParameterClumpName)
-	AUPROP_TO_STRING(PresentPreset)
-	AUPROP_TO_STRING(UsesInternalReverb)
-	AUPROP_TO_STRING(OfflineRender)
-	AUPROP_TO_STRING(SpatializationAlgorithm)
-	AUPROP_TO_STRING(SpeakerConfiguration)
-	AUPROP_TO_STRING(DopplerShift)
-	AUPROP_TO_STRING(3DMixerRenderingFlags)
-	AUPROP_TO_STRING(3DMixerDistanceAtten)
-	AUPROP_TO_STRING(MatrixLevels)
-	AUPROP_TO_STRING(MeteringMode)
-	AUPROP_TO_STRING(PannerMode)
-	AUPROP_TO_STRING(MatrixDimensions)
-#undef AUPROP_TO_STRING
-#define AUPROP_TO_STRING(propID)	\
-	if (inPropertyID == kMusicDeviceProperty_##propID)	\
-		return #propID;
-	AUPROP_TO_STRING(InstrumentCount)
-	AUPROP_TO_STRING(InstrumentName)
-	AUPROP_TO_STRING(GroupOutputBus)
-	AUPROP_TO_STRING(SoundBankFSSpec)
-	AUPROP_TO_STRING(InstrumentNumber)
-	AUPROP_TO_STRING(MIDIXMLNames)
-	AUPROP_TO_STRING(BankName)
-	AUPROP_TO_STRING(SoundBankData)
-	AUPROP_TO_STRING(PartGroup)
-	AUPROP_TO_STRING(StreamFromDisk)
-#undef AUPROP_TO_STRING
-	static char propNum[32];
-	sprintf(propNum, "%lu", inPropertyID);
-	return propNum;
-}
-
-extern "C" OSStatus BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj);
-extern "C" OSStatus BufferOverrideEntry(ComponentParameters * params, BufferOverride * obj)
-{
-	struct AudioUnitGetPropertyInfoGluePB {
-		unsigned char			componentFlags;
-		unsigned char			componentParamSize;
-		short					componentWhat;
-		Boolean *				outWritable;
-		UInt32 *				outDataSize;
-		AudioUnitElement		inElement;
-		AudioUnitScope			inScope;
-		AudioUnitPropertyID		inID;
-		AudioUnit				ci;
-	};
-	struct AudioUnitGetPropertyGluePB {
-		unsigned char			componentFlags;
-		unsigned char			componentParamSize;
-		short					componentWhat;
-		UInt32 *				ioDataSize;
-		void *					outData;
-		AudioUnitElement		inElement;
-		AudioUnitScope			inScope;
-		AudioUnitPropertyID		inID;
-		AudioUnit				ci;
-	};
-	struct AudioUnitSetPropertyGluePB {
-		unsigned char			componentFlags;
-		unsigned char			componentParamSize;
-		short					componentWhat;
-		UInt32					inDataSize;
-		void *					inData;
-		AudioUnitElement		inElement;
-		AudioUnitScope			inScope;
-		AudioUnitPropertyID		inID;
-		AudioUnit				ci;
-	};
-
-	struct AudioUnitGetParameterGluePB {
-		unsigned char                  componentFlags;
-		unsigned char                  componentParamSize;
-		short                          componentWhat;
-		Float32*                       outValue;
-		AudioUnitElement               inElement;
-		AudioUnitScope                 inScope;
-		AudioUnitParameterID           inID;
-		AudioUnit                      ci;
-	};
-	struct AudioUnitSetParameterGluePB {
-		unsigned char                  componentFlags;
-		unsigned char                  componentParamSize;
-		short                          componentWhat;
-		UInt32                         inBufferOffsetInFrames;
-		Float32                        inValue;
-		AudioUnitElement               inElement;
-		AudioUnitScope                 inScope;
-		AudioUnitParameterID           inID;
-		AudioUnit                      ci;
-	};
-	struct AudioUnitScheduleParametersGluePB {
-		unsigned char                  componentFlags;
-		unsigned char                  componentParamSize;
-		short                          componentWhat;
-		UInt32                         inNumParamEvents;
-		const AudioUnitParameterEvent* inParameterEvent;
-		AudioUnit                      ci;
-	};
-	struct AudioUnitAddPropertyListenerGluePB {
-		unsigned char                  componentFlags;
-		unsigned char                  componentParamSize;
-		short                          componentWhat;
-		void*                          inProcRefCon;
-		AudioUnitPropertyListenerProc  inProc;
-		AudioUnitPropertyID            inID;
-		AudioUnit                      ci;
-	};
-	struct AudioUnitRemovePropertyListenerGluePB {
-		unsigned char                  componentFlags;
-		unsigned char                  componentParamSize;
-		short                          componentWhat;
-		AudioUnitPropertyListenerProc  inProc;
-		AudioUnitPropertyID            inID;
-		AudioUnit                      ci;
-	};
-
-	if (params->what == kComponentOpenSelect)
-		fprintf(stderr, "kComponentOpenSelect\n");
-	else if (params->what == kComponentCloseSelect)
-		fprintf(stderr, "kComponentCloseSelect\n");
-	else if (params->what == kAudioUnitInitializeSelect)
-		fprintf(stderr, "kAudioUnitInitializeSelect\n");
-	else if (params->what == kAudioUnitUninitializeSelect)
-		fprintf(stderr, "kAudioUnitUninitializeSelect\n");
-	else if (params->what == kAudioUnitResetSelect)
-		fprintf(stderr, "kAudioUnitResetSelect\n");
-
-	else if (params->what == kAudioUnitAddPropertyListenerSelect)
-	{
-		AudioUnitAddPropertyListenerGluePB * apl = (AudioUnitAddPropertyListenerGluePB*) params;
-		fprintf(stderr, "kAudioUnitAddPropertyListenerSelect(%s)\n", GetAUPropertyName(apl->inID));
-	}
-	else if (params->what == kAudioUnitRemovePropertyListenerSelect)
-	{
-		AudioUnitRemovePropertyListenerGluePB * rpl = (AudioUnitRemovePropertyListenerGluePB*) params;
-		fprintf(stderr, "kAudioUnitRemovePropertyListenerSelect(%s)\n", GetAUPropertyName(rpl->inID));
-	}
-	else if (params->what == kAudioUnitAddRenderNotifySelect)
-		fprintf(stderr, "kAudioUnitAddRenderNotifySelect\n");
-	else if (params->what == kAudioUnitRemoveRenderNotifySelect)
-		fprintf(stderr, "kAudioUnitRemoveRenderNotifySelect\n");
-	else if (params->what == kAudioUnitScheduleParametersSelect)
-		fprintf(stderr, "kAudioUnitScheduleParametersSelect\n");
-	else if (params->what == kAudioUnitRenderSelect)
-		fprintf(stderr, "kAudioUnitRenderSelect\n");
-
-	else if (params->what == kAudioUnitGetPropertyInfoSelect)
-	{
-		AudioUnitGetPropertyInfoGluePB * gpi = (AudioUnitGetPropertyInfoGluePB*) params;
-		fprintf(stderr, "kAudioUnitGetPropertyInfoSelect(%s)\n", GetAUPropertyName(gpi->inID));
-	}
-
-	else if (params->what == kAudioUnitGetPropertySelect)
-	{
-		AudioUnitGetPropertyGluePB * gp = (AudioUnitGetPropertyGluePB*) params;
-		fprintf(stderr, "kAudioUnitGetPropertySelect(%s)\n", GetAUPropertyName(gp->inID));
-	}
-
-	else if (params->what == kAudioUnitSetPropertySelect)
-	{
-		AudioUnitSetPropertyGluePB * sp = (AudioUnitSetPropertyGluePB*) params;
-		fprintf(stderr, "kAudioUnitSetPropertySelect(%s)\n", GetAUPropertyName(sp->inID));
-	}
-
-	else if (params->what == kAudioUnitGetParameterSelect)
-	{
-		AudioUnitGetParameterGluePB * gp = (AudioUnitGetParameterGluePB*) params;
-		fprintf(stderr, "kAudioUnitGetParameterSelect(%lu)\n", gp->inID);
-	}
-	else if (params->what == kAudioUnitSetParameterSelect)
-	{
-		AudioUnitSetParameterGluePB * sp = (AudioUnitSetParameterGluePB*) params;
-		fprintf(stderr, "kAudioUnitSetParameterSelect(%lu, %.3f, %lu)\n", sp->inID, sp->inValue, sp->inBufferOffsetInFrames);
-	}
-	else if (params->what == kAudioUnitScheduleParametersSelect)
-	{
-		AudioUnitScheduleParametersGluePB * sp = (AudioUnitScheduleParametersGluePB*) params;
-		fprintf(stderr, "kAudioUnitScheduleParametersSelect(%lu)", sp->inNumParamEvents);
-		const AudioUnitParameterEvent * pevents = sp->inParameterEvent;
-		for (UInt32 i=0; i < sp->inNumParamEvents; i++)
-		{
-			fprintf(stderr, "\t%lu:  param ID = %lu, ", i+1, pevents->parameter);
-			if (pevents->eventType == kParameterEvent_Immediate)
-			{
-				fprintf(stderr, "event type = immediate, ");
-				fprintf(stderr, "start value = %.3f, ", pevents->eventValues.ramp.startValue);
-				fprintf(stderr, "end value = %.3f, ", pevents->eventValues.ramp.endValue);
-				fprintf(stderr, "start offset = %ld, ", pevents->eventValues.ramp.startBufferOffset);
-				fprintf(stderr, "duration = %lu", pevents->eventValues.ramp.durationInFrames);
-			}
-			else if (pevents->eventType == kParameterEvent_Ramped)
-			{
-				fprintf(stderr, "event type = ramped, ");
-				fprintf(stderr, "value = %.3f, ", pevents->eventValues.immediate.value);
-				fprintf(stderr, "offset = %lu", pevents->eventValues.immediate.bufferOffset);
-			}
-			else
-				fprintf(stderr, "unknown parameter event type %lu", pevents->eventType);
-			fprintf(stderr, "\n");
-		}
-	}
-
-	else
-		fprintf(stderr, "Component selector %d\n", params->what);
-
-	return ComponentEntryPoint<BufferOverride>::Dispatch(params, obj);
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // initializations and such
 BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, kNumParameters, kNumPresets)	// 21 parameters, 16 presets
+:	DfxPlugin(inInstance, kNumParameters, kNumPresets)	// 21 parameters, 16 presets
 {
 	buffers = NULL;
 	outval = NULL;
@@ -316,8 +41,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	divisorLFO = new LFO;
 	bufferLFO = new LFO;
 
-	long numTempoRates = tempoRateTable->getNumTempoRates();
-	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
+	const long numTempoRates = tempoRateTable->getNumTempoRates();
+	const long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
 	initparameter_f(kDivisor, "buffer divisor", 1.92, 1.92, 1.92, 222.0, kDfxParamUnit_divisor, kDfxParamCurve_squared);
 	initparameter_f(kBufferSize_abs, "forced buffer size (free)", 90.0, 33.3, 1.0, 999.0, kDfxParamUnit_ms, kDfxParamCurve_squared);
 	initparameter_list(kBufferSize_sync, "forced buffer size (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
@@ -341,14 +66,14 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
 
 	// set the value strings for the LFO shape parameters
-	for (int i=0; i < numLFOshapes; i++)
+	for (int i = 0; i < numLFOshapes; i++)
 	{
 		const char * shapename = divisorLFO->getShapeNameIndexed_ptr(i);
 		setparametervaluestring(kDivisorLFOshape, i, shapename);
 		setparametervaluestring(kBufferLFOshape, i, shapename);
 	}
 	// set the value strings for the sync rate parameters
-	for (int i=0; i < tempoRateTable->getNumTempoRates(); i++)
+	for (int i = 0; i < tempoRateTable->getNumTempoRates(); i++)
 	{
 		const char * tname = tempoRateTable->getDisplay(i);
 		setparametervaluestring(kBufferSize_sync, i, tname);
@@ -381,6 +106,8 @@ BufferOverride::~BufferOverride()
 //-------------------------------------------------------------------------
 long BufferOverride::initialize()
 {
+	inputGain.setSampleRate(getsamplerate());
+	outputGain.setSampleRate(getsamplerate());
 	return kDfxErr_NoError;
 }
 
@@ -419,19 +146,19 @@ void BufferOverride::reset()
 bool BufferOverride::createbuffers()
 {
 //printf("\n(pre) sr = %.0f, super_max_buffer = %ld, numBuffers = %ld\n", getsamplerate(), SUPER_MAX_BUFFER, numBuffers);
-	long oldmax = SUPER_MAX_BUFFER;
+	const long oldmax = SUPER_MAX_BUFFER;
 	SUPER_MAX_BUFFER = (long) ( getsamplerate() / (kMinAllowableBPS * tempoRateTable->getScalar(0)) );
-	unsigned long oldnum = numBuffers;
+	const unsigned long oldnum = numBuffers;
 	numBuffers = getnumoutputs();
 
-	bool result1 = dfx_createbufferarray(&buffers, oldnum, oldmax, numBuffers, SUPER_MAX_BUFFER);
-	bool result2 = dfx_createbuffer(&outval, oldnum, numBuffers);
+	const bool result1 = dfx_createbufferarray(&buffers, oldnum, oldmax, numBuffers, SUPER_MAX_BUFFER);
+	const bool result2 = dfx_createbuffer(&outval, oldnum, numBuffers);
 /*
 bool result1 = true;
 if (buffers == NULL)
 {
 buffers = (float**) malloc(sizeof(float*) * 16);
-for (unsigned long i=0; i < 4; i++) buffers[i] = (float*) malloc(sizeof(float) * SUPER_MAX_BUFFER);
+for (unsigned long i = 0; i < 4; i++) buffers[i] = (float*) malloc(sizeof(float) * SUPER_MAX_BUFFER);
 }
 bool result2 = true;
 //if (outval == NULL) outval = (float*) malloc(sizeof(float) * 16);
@@ -603,7 +330,7 @@ void BufferOverride::initPresets()
 
 /*
 char mook[DFX_PRESET_MAX_NAME_LENGTH];
-for (i=0; i < 396; i++)
+for (i = 0; i < 396; i++)
 {
 	sprintf(mook, "%03d => %s", i, getpresetname_ptr(i));
 	setpresetname(i, mook);
