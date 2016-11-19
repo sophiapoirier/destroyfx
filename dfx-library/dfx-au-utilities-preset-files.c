@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2015  Sophia Poirier
+	Copyright (C) 2003-2016  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -42,6 +42,12 @@
 #include "dfx-au-utilities-private.h"
 
 #include <AudioToolbox/AudioUnitUtilities.h>	// for kAUParameterListener_AnyParameter
+#if __LP64__
+	#ifndef __OBJC__
+		#error "you must compile the version of this file with a .m filename extension, not this file"
+	#endif
+	#include <AppKit/NSAlert.h>
+#endif
 
 
 //--------------------------------------------------------------------------
@@ -125,7 +131,7 @@ CFStringRef CopyAUPresetNameFromCFURL(CFURLRef inAUPresetFileURL)
 	if (inAUPresetFileURL != NULL)
 	{
 		// first make a copy of the URL without the file name extension
-		CFURLRef baseNameUrl = CFURLCreateCopyDeletingPathExtension(kCFAllocatorDefault, inAUPresetFileURL);
+		const CFURLRef baseNameUrl = CFURLCreateCopyDeletingPathExtension(kCFAllocatorDefault, inAUPresetFileURL);
 		if (baseNameUrl != NULL)
 		{
 			// then chop off the parent directory path, keeping just the extensionless file name as a CFString
@@ -145,7 +151,7 @@ Boolean CFURLIsAUPreset(CFURLRef inURL)
 	Boolean result = false;
 	if (inURL != NULL)
 	{
-		CFStringRef fileNameExtension = CFURLCopyPathExtension(inURL);
+		const CFStringRef fileNameExtension = CFURLCopyPathExtension(inURL);
 		if (fileNameExtension != NULL)
 		{
 			result = (CFStringCompare(fileNameExtension, kAUPresetFileNameExtension, kCFCompareCaseInsensitive) == kCFCompareEqualTo);
@@ -165,7 +171,7 @@ Boolean FSRefIsAUPreset(const FSRef * inFileRef)
 	Boolean result = false;
 	if (inFileRef != NULL)
 	{
-		CFURLRef fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, inFileRef);
+		const CFURLRef fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, inFileRef);
 		if (fileUrl != NULL)
 		{
 			result = CFURLIsAUPreset(fileUrl);
@@ -219,41 +225,34 @@ void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * out
 	if ( (inCFString != NULL) && (outUniName != NULL) )
 	{
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
+	#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_4
 		if (FSGetHFSUniStrFromString != NULL)
+	#endif
 		{
-			OSStatus status = FSGetHFSUniStrFromString(inCFString, outUniName);
+			const OSStatus status = FSGetHFSUniStrFromString(inCFString, outUniName);
 			if (status == noErr)
 				return;
 		}
 #endif
-		UniCharCount cfNameLength = CFStringGetLength(inCFString);
-		const UniCharCount kMaxUnicodeFileNameLength = sizeof(outUniName->unicode) / sizeof(outUniName->unicode[0]);
+		const size_t maxUnicodeFileNameLength = sizeof(outUniName->unicode) / sizeof(outUniName->unicode[0]);
+		const size_t cfNameLength = (size_t)CFStringGetLength(inCFString);
 		// the length can't be more than 255 characters for an HFS file name
-		if (cfNameLength > kMaxUnicodeFileNameLength)
+		if (cfNameLength > maxUnicodeFileNameLength)
 		{
-			outUniName->length = kMaxUnicodeFileNameLength;	// in case any of the below fails, at least truncate within the array bounds
-			const UCTextBreakType breakType = kUCTextBreakClusterMask;
-			TextBreakLocatorRef textBreakLocator = NULL;
-			OSStatus status = UCCreateTextBreakLocator(NULL, (LocaleOperationVariant)0, breakType, &textBreakLocator);
-			if (status == noErr)
+			CFIndex characterIndex = 0;
+			while ((size_t)characterIndex <= maxUnicodeFileNameLength)
 			{
-				UniChar * fullUniName = (UniChar*) malloc(cfNameLength * sizeof(UniChar));
-				if (fullUniName != NULL)
-				{
-					CFStringGetCharacters(inCFString, CFRangeMake(0, cfNameLength), fullUniName);
-					UniCharArrayOffset breakOffset;
-					status = UCFindTextBreak(textBreakLocator, breakType, kUCTextBreakGoBackwardsMask, fullUniName, cfNameLength, kMaxUnicodeFileNameLength, &breakOffset);
-					if (status == noErr)
-						outUniName->length = breakOffset;
-					free(fullUniName);
-				}
-				UCDisposeTextBreakLocator(&textBreakLocator);
+				const CFRange composedCharacterRange = CFStringGetRangeOfComposedCharactersAtIndex(inCFString, characterIndex);
+				outUniName->length = (u_int16_t)characterIndex;
+				characterIndex = composedCharacterRange.location + composedCharacterRange.length;
 			}
 		}
 		else
-			outUniName->length = cfNameLength;
+		{
+			outUniName->length = (u_int16_t)cfNameLength;
+		}
 		// translate the CFString to a unicode string representation in the HFS file name string
-		CFStringGetCharacters(inCFString, CFRangeMake(0, outUniName->length), outUniName->unicode);
+		CFStringGetCharacters(inCFString, CFRangeMake(0, (CFIndex)(outUniName->length)), outUniName->unicode);
 	}
 }
 
@@ -402,7 +401,7 @@ void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree
 			// if the current item itself is a directory, then we recursively call this function on that sub-directory
 			if (itemCatalogInfo.nodeFlags & kFSNodeIsDirectoryMask)
 			{
-				CFTreeRef newSubTree = AddFileItemToTree(&itemFSRef, inParentTree);
+				const CFTreeRef newSubTree = AddFileItemToTree(&itemFSRef, inParentTree);
 				CollectAllAUPresetFilesInDir(&itemFSRef, newSubTree, inAUComponent);
 			}
 			// otherwise it's a file, so we add it (if it is an AU preset file)
@@ -416,12 +415,12 @@ void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree
 					// we only do this examination if an AU Component argument was given
 					if (inAUComponent != NULL)
 					{
-						CFURLRef itemUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &itemFSRef);
+						const CFURLRef itemUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &itemFSRef);
 						if (itemUrl != NULL)
 						{
 							// get the ComponentDescription from the AU preset file
 							ComponentDescription presetDesc;
-							OSStatus status = GetAUComponentDescriptionFromPresetFile(itemUrl, &presetDesc);
+							const OSStatus status = GetAUComponentDescriptionFromPresetFile(itemUrl, &presetDesc);
 							CFRelease(itemUrl);
 							if (status == noErr)
 							{
@@ -480,15 +479,15 @@ void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparat
 CFComparisonResult FileURLsTreeComparatorFunction(const void * inTree1, const void * inTree2, void * inContext)
 {
 //fprintf(stderr, "\tFileURLsTreeComparatorFunction:\n"); CFShow(inTree1); CFShow(inTree2); fprintf(stderr, "\n");
-	CFTreeRef tree1 = (CFTreeRef)inTree1, tree2 = (CFTreeRef)inTree2;
-	CFURLRef url1 = GetCFURLFromFileURLsTreeNode(tree1);
-	CFURLRef url2 = GetCFURLFromFileURLsTreeNode(tree2);
+	const CFTreeRef tree1 = (CFTreeRef)inTree1, tree2 = (CFTreeRef)inTree2;
+	const CFURLRef url1 = GetCFURLFromFileURLsTreeNode(tree1);
+	const CFURLRef url2 = GetCFURLFromFileURLsTreeNode(tree2);
 	CFComparisonResult result = kCFCompareEqualTo;
 	if ( (url1 != NULL) && (url2 != NULL) )
 	{
 		// we'll use the name of just the file or directory, not the whole path
-		CFStringRef fileNameString1 = CFURLCopyLastPathComponent(url1);
-		CFStringRef fileNameString2 = CFURLCopyLastPathComponent(url2);
+		const CFStringRef fileNameString1 = CFURLCopyLastPathComponent(url1);
+		const CFStringRef fileNameString2 = CFURLCopyLastPathComponent(url2);
 
 		// and just rely on CFStringCompare to do the comparison, case-insensitively
 		if ( (fileNameString1 != NULL) && (fileNameString2 != NULL) )
@@ -737,7 +736,7 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 					if (error == noErr)
 					{
 						// translate the FSRef to CFURL so that we can do the XML/plist stuff with it
-						CFURLRef presetFileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileFSRef);
+						const CFURLRef presetFileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileFSRef);
 						if (presetFileUrl != NULL)
 						{
 							// try to apply the data in the file as the AU's new state
@@ -745,7 +744,9 @@ pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 							CFRelease(presetFileUrl);
 						}
 						else
+						{
 							error = coreFoundationUnknownErr;
+						}
 					}
 				}
 				NavDisposeReply(&reply);
@@ -780,7 +781,7 @@ pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, v
 	// the only items that we are filtering are files listed in the browser area
 	if (inFilterMode == kNavFilteringBrowserList)
 	{
-		NavFileOrFolderInfo * info = (NavFileOrFolderInfo*) inInfo;
+		const NavFileOrFolderInfo * const info = (NavFileOrFolderInfo*) inInfo;
 		// only interested in filtering files, all directories are fine
 		if ( !(info->isFolder) )
 		{
@@ -800,13 +801,13 @@ pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, v
 					// validate that the Component type/subtype/manu values match the specific AU
 					if (result)
 					{
-						CFURLRef fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &fileFSRef);
+						const CFURLRef fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &fileFSRef);
 						if (fileUrl != NULL)
 						{
 							AudioUnit auInstance = (AudioUnit)inUserData;
 							// get the ComponentDescription from the AU preset file
 							ComponentDescription presetDesc;
-							OSStatus status = GetAUComponentDescriptionFromPresetFile(fileUrl, &presetDesc);
+							const OSStatus status = GetAUComponentDescriptionFromPresetFile(fileUrl, &presetDesc);
 							CFRelease(fileUrl);
 							if (status == noErr)
 								// if the preset's ComponentDescription matches the AU's, then allow this file
@@ -1133,8 +1134,8 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 		error = GetAUNameAndManufacturerCStrings(inAUComponent, auNameCString, NULL);
 		if (error == noErr)
 		{
-			CFStringRef dialogWindowTitle_firstPart = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save preset file for"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("window title of the regular (simple) save AU preset dialog.  (note:  the code will append the name of the AU after this string, so format the syntax accordingly)"));
-			CFStringRef dialogWindowTitle = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ %s"), dialogWindowTitle_firstPart, auNameCString);
+			const CFStringRef dialogWindowTitle_firstPart = CFCopyLocalizedStringFromTableInBundle(CFSTR("Save preset file for"), CFSTR("dfx-au-utilities"), gCurrentBundle, CFSTR("window title of the regular (simple) save AU preset dialog.  (note:  the code will append the name of the AU after this string, so format the syntax accordingly)"));
+			const CFStringRef dialogWindowTitle = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@ %s"), dialogWindowTitle_firstPart, auNameCString);
 			CFRelease(dialogWindowTitle_firstPart);
 			if (dialogWindowTitle != NULL)
 			{
@@ -1150,7 +1151,7 @@ OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUS
 	// set the file name text edit field as the initial focused control, for user convenience
 	{
 		ControlRef textFieldControl = NULL;
-		ControlID textFieldControlID =	{ kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_PresetNameTextControlID };
+		const ControlID textFieldControlID = { kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_PresetNameTextControlID };
 		GetControlByID(dialogWindow, &textFieldControlID, &textFieldControl);
 		if (textFieldControl != NULL)
 		{
@@ -1195,7 +1196,7 @@ pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler
 	HICommand command;
 
 	ControlRef textFieldControl = NULL;
-	ControlID textFieldControlID =	{ kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_PresetNameTextControlID };
+	const ControlID textFieldControlID =	{ kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_PresetNameTextControlID };
 	CFStringRef presetNameString = NULL;
 
 	if (GetEventClass(inEvent) != kEventClassCommand)
@@ -1229,7 +1230,7 @@ catch dialog response
 		case kHICommandSave:
 			{
 				ControlRef domainChoiceControl = NULL;
-				ControlID domainChoiceControlID = { kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_DomainChoiceControlID };
+				const ControlID domainChoiceControlID = { kAUPresetSaveDialog_ControlSignature, kAUPresetSaveDialog_DomainChoiceControlID };
 				SInt32 domainChoice;
 				FSVolumeRefNum fsDomain;
 
@@ -1323,13 +1324,13 @@ OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUSt
 {
 	OSStatus error = noErr;
 
-	HFSUniStr255 dummyuniname;
+	HFSUniStr255 dummyUniName;
 	// get the absolute maximum length that a file name can be
-	size_t maxUnicodeNameLength = sizeof(dummyuniname.unicode) / sizeof(UniChar);
+	const size_t maxUnicodeNameLength = sizeof(dummyUniName.unicode) / sizeof(UniChar);
 	// this is how much longer the file name will be after the AU preset file name extension is appended
-	CFIndex presetFileNameExtensionLength = CFStringGetLength(kAUPresetFileNameExtension) - 1;	// -1 for the . before the extension
+	const CFIndex presetFileNameExtensionLength = CFStringGetLength(kAUPresetFileNameExtension) - 1;	// -1 for the . before the extension
 	// this is the maximum allowable length of the preset file's name without the extension
-	CFIndex maxNameLength = maxUnicodeNameLength - presetFileNameExtensionLength;
+	const CFIndex maxNameLength = maxUnicodeNameLength - presetFileNameExtensionLength;
 
 	CFStringRef presetFileNameString;
 	FSRef presetFileDirRef;
@@ -1452,25 +1453,21 @@ XXX	if fails, tell user why
 // a return value of false means that the user does not want to replace the file.
 Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL)
 {
+	CFStringRef filenamestring = NULL;
+	CFStringRef dirstring = NULL;
+	CFURLRef dirurl = NULL;
+	CFStringRef titleString = NULL;
+	CFStringRef messageString = NULL;
+	CFStringRef okButtonString = NULL;
 #if __LP64__
-	return true;	// XXX implement
+	NSAlert* alert = nil;
+	NSModalResponse alertResult;
 #else
 	AlertStdCFStringAlertParamRec alertParams;
-	CFStringRef filenamestring;
-	CFStringRef dirstring;
-	CFURLRef dirurl;
-	CFStringRef titleString;
-	CFStringRef messageString;
-	DialogRef dialog;
+	DialogRef dialog = NULL;
 	OSStatus alertErr;
+#endif	// __LP64__
 
-	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
-	alertParams.defaultText = CFCopyLocalizedStringFromTableInBundle(CFSTR("Replace"), CFSTR("dfx-au-utilities"), gCurrentBundle, 
-				CFSTR("text for the button that will over-write an existing file when a save file file-already-exists conflict arises"));
-	alertParams.cancelText = (CFStringRef) kAlertDefaultCancelText;
-	alertParams.defaultButton = kAlertStdAlertCancelButton;
-//	alertParams.cancelButton = kAlertStdAlertCancelButton;
-	alertParams.cancelButton = 0;
 	// do a bunch of wacky stuff to try to come up with a nice and informative message text for the dialog
 	filenamestring = CFURLCopyLastPathComponent(inAUPresetFileURL);
 	dirstring = NULL;
@@ -1487,7 +1484,7 @@ Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL)
 	// then we can make a nice and specific dialog message
 	if ( (filenamestring != NULL) && (dirstring != NULL) )
 	{
-		CFStringRef messageOutlineString = CFCopyLocalizedStringFromTableInBundle(CFSTR("A file named \"%@\" already exists in \"%@\".  Do you want to replace it with the file that you are saving?"), CFSTR("dfx-au-utilities"), gCurrentBundle, 
+		const CFStringRef messageOutlineString = CFCopyLocalizedStringFromTableInBundle(CFSTR("A file named \"%@\" already exists in \"%@\".  Do you want to replace it with the file that you are saving?"), CFSTR("dfx-au-utilities"), gCurrentBundle,
 				CFSTR("the message in the alert, specifying file name and location, for when file name and path are available as CFStrings"));
 		messageString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, messageOutlineString, filenamestring, dirstring);
 		CFRelease(messageOutlineString);
@@ -1503,15 +1500,40 @@ Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL)
 	if (dirstring != NULL)
 		CFRelease(dirstring);
 
+	okButtonString = CFCopyLocalizedStringFromTableInBundle(CFSTR("Replace"), CFSTR("dfx-au-utilities"), gCurrentBundle, 
+															CFSTR("text for the button that will over-write an existing file when a save file file-already-exists conflict arises"));
+
 	// now that we have some message text for the user, we can create and show the dialog
+#if __LP64__
+	alert = [[NSAlert alloc] init];
+	[alert addButtonWithTitle:@"OK"];
+	[alert addButtonWithTitle:@"Cancel"];
+	[alert setMessageText:(NSString*)titleString];
+	[alert setInformativeText:(NSString*)messageString];
+	[alert setAlertStyle:NSInformationalAlertStyle];
+#else
+	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
+	alertParams.defaultText = okButtonString;
+	alertParams.cancelText = (CFStringRef) kAlertDefaultCancelText;
+	alertParams.defaultButton = kAlertStdAlertCancelButton;
+//	alertParams.cancelButton = kAlertStdAlertCancelButton;
+	alertParams.cancelButton = 0;
 	alertErr = CreateStandardAlert(kAlertNoteAlert, titleString, messageString, &alertParams, &dialog);
-	CFRelease(alertParams.defaultText);
+#endif	// __LP64__
+
 	CFRelease(titleString);
 	CFRelease(messageString);
+	CFRelease(okButtonString);
 
+#if __LP64__
+	alertResult = [alert runModal];
+	[alert release];
+	if (alertResult == NSAlertSecondButtonReturn)
+		return false;
+#else
 	if (alertErr == noErr)
 	{
-		ModalFilterUPP dialogFilterUPP = NewModalFilterUPP(ShouldReplaceExistingAUPresetFileDialogFilterProc);
+		const ModalFilterUPP dialogFilterUPP = NewModalFilterUPP(ShouldReplaceExistingAUPresetFileDialogFilterProc);
 		DialogItemIndex itemHit;
 
 		// show the alert dialog
@@ -1533,9 +1555,9 @@ Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL)
 				return false;
 		}
 	}
+#endif	// __LP64__
 
 	return true;
-#endif	// __LP64__
 }
 
 #if !__LP64__
@@ -1551,7 +1573,7 @@ pascal Boolean ShouldReplaceExistingAUPresetFileDialogFilterProc(DialogRef inDia
 	// check a keyboard event to see if it's something equivalent to a typical cancel keyboard command
 	if (inEvent->what == keyDown)
 	{
-		UInt32 charCode = inEvent->message & charCodeMask;
+		const UInt32 charCode = inEvent->message & charCodeMask;
 		// if the key event is ESC or command-. then treat it as a cancel command
 		if ( (charCode == 27) || ((charCode == '.') && (inEvent->modifiers == cmdKey)) )
 		{
@@ -1638,9 +1660,9 @@ OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl)
 const UInt32 kAUPresetSaveNavDialogKey = 'AUps';
 // global error code holder for the Navigation Services PuttFile dialog
 // we can check errors from its event handler with this, if the dialog ran modally
-OSStatus gCustomSaveAUPresetFileResult;
+OSStatus gCustomSaveAUPresetFileResult = noErr;
 // the URL of the file where the AU state data eventually gets saved to
-CFURLRef gCustomSaveAUPresetFileSavedFileUrl;
+CFURLRef gCustomSaveAUPresetFileSavedFileUrl = NULL;
 //-----------------------------------------------------------------------------
 // This is the function that you call if the user pushes the Choose Custom Location 
 // in the regular (simple) Save AU preset dialog.  Then this function will create and 
@@ -1681,8 +1703,8 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 	if (error == noErr)
 	{
 		// set the initial file name shown in the dialog's file name text edit field
-		CFStringRef defaultFileBaseName;
-		CFStringRef defaultFileName;
+		CFStringRef defaultFileBaseName = NULL;
+		CFStringRef defaultFileName = NULL;
 		if (inDefaultAUPresetName != NULL)
 		{
 			defaultFileBaseName = inDefaultAUPresetName;
@@ -1743,8 +1765,8 @@ OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUC
 // when the user requests that.
 pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData)
 {
-	CFPropertyListRef auStateData = (CFPropertyListRef) inUserData;
-	NavDialogRef dialog = inCallbackParams->context;
+	const CFPropertyListRef auStateData = (CFPropertyListRef) inUserData;
+	const NavDialogRef dialog = inCallbackParams->context;
 
 	switch (inCallbackSelector)
 	{
@@ -1771,7 +1793,7 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 			NavReplyRecord reply;
 
 			// anything other than Save, we are not interested in
-			NavUserAction userAction = NavDialogGetUserAction(dialog);
+			const NavUserAction userAction = NavDialogGetUserAction(dialog);
 			// but I guess cancel we want, too
 			if (userAction == kNavUserActionCancel)
 			{
@@ -1785,7 +1807,7 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 			error = NavDialogGetReply(dialog, &reply);
 			if (error == noErr)
 			{
-				CFStringRef saveFileName = NavDialogGetSaveFileName(dialog);
+				const CFStringRef saveFileName = NavDialogGetSaveFileName(dialog);
 				if ( (reply.validRecord) && (saveFileName != NULL) )
 				{
 					AEKeyword theKeyword;
@@ -1799,19 +1821,19 @@ pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallback
 					{
 						// now we need a CFURL version of the parent directory so that we can use the CF file APIs 
 						// for translating XML file data
-						CFURLRef parentDirUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &parentDirFSRef);
+						const CFURLRef parentDirUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &parentDirFSRef);
 						if (parentDirUrl != NULL)
 						{
 							// use the file name response value to create the URL for the file to save
-							CFURLRef presetFileUrl = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, 
-																		parentDirUrl, saveFileName, false);
+							const CFURLRef presetFileUrl = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
+																								 parentDirUrl, saveFileName, false);
 							CFRelease(parentDirUrl);
 							if (presetFileUrl != NULL)
 							{
 								// set the state data's name value to the requested name
 								if (auStateData != NULL)
 								{
-									CFStringRef presetName = CopyAUPresetNameFromCFURL(presetFileUrl);
+									const CFStringRef presetName = CopyAUPresetNameFromCFURL(presetFileUrl);
 									if (presetName != NULL)
 									{
 										SetAUPresetNameInStateData(auStateData, presetName);
