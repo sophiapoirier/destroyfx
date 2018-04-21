@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,24 +21,21 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXGUI_SLIDER_H
-#define __DFXGUI_SLIDER_H
+#pragma once
 
 
 #include "dfxguieditor.h"
 
 
-#ifdef TARGET_PLUGIN_USES_VSTGUI
-
 //-----------------------------------------------------------------------------
 class DGSlider : public CSlider, public DGControl
 {
 public:
-	DGSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-				DGAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage = NULL);
+	DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+			 DGAxis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, long inRangeMargin = 0);
 
 #ifdef TARGET_API_RTAS
-	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
+	void draw(CDrawContext* inContext) override;
 #endif
 };
 
@@ -49,42 +46,10 @@ public:
 class DGAnimation : public CAnimKnob, public DGControl
 {
 public:
-	DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-				DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground = NULL);
+	DGAnimation(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,  
+				DGImage* inAnimationImage, long inNumAnimationFrames, DGImage* inBackground = nullptr);
 
 #ifdef TARGET_API_RTAS
-	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
+	void draw(CDrawContext* inContext) override;
 #endif
 };
-
-#else
-
-//-----------------------------------------------------------------------------
-class DGSlider : public DGControl
-{
-public:
-	DGSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-				DGAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage = NULL);
-
-	virtual void draw(DGGraphicsContext * inContext);
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
-
-	void setMouseOffset(long inOffset)
-		{	mouseOffset = inOffset;	}
-
-protected:
-	DGAxis		orientation;
-	DGImage *	handleImage;
-	DGImage *	backgroundImage;
-	long		mouseOffset;	// for mouse tracking with click in the middle of the slider handle
-	float		lastX;
-	float		lastY;
-};
-
-#endif	// !TARGET_PLUGIN_USES_VSTGUI
-
-
-
-#endif

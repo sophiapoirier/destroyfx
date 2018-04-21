@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2009  Sophia Poirier
+Copyright (C) 2001-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -24,41 +24,40 @@ Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our Infinite Impulse Response filter.
 ------------------------------------------------------------------------*/
 
-#ifndef __DFX_IIR_FILTER_H
-#define __DFX_IIR_FILTER_H
+#pragma once
 
 
 #include "dfxmath.h"
 
 
-//-----------------------------------------------------------------------------
-typedef enum {
-	kDfxIIRFilterType_Lowpass,
-	kDfxIIRFilterType_Highpass,
-	kDfxIIRFilterType_Bandpass,
-	kDfxIIRFilterType_Peak,
-	kDfxIIRFilterType_Notch,
-	kDfxIIRFilterType_LowShelf,
-	kDfxIIRFilterType_HighShelf,
-	kDfxIIRFilterType_NumTypes
-} DfxIIRFilterType;
+namespace dfx
+{
 
 
 //-----------------------------------------------------------------------------
-class DfxIIRfilter
+class IIRfilter
 {
 public:
-	DfxIIRfilter();
+	enum class FilterType
+	{
+		Lowpass,
+		Highpass,
+		Bandpass,
+		Peak,
+		Notch,
+		LowShelf,
+		HighShelf
+	};
 
-	static const double kDefaultQ_LP_HP;
-	static const double kShelfStartLowpass;
+	static double const kDefaultQ_LP_HP;
+	static double const kShelfStartLowpass;
 
-	void calculateCoefficients(DfxIIRFilterType inFilterType, double inFreq, double inQ, double inGain);
-	void calculateLowpassCoefficients(double inCutoffFreq, double inQ = kDefaultQ_LP_HP);
-	void calculateHighpassCoefficients(double inCutoffFreq, double inQ = kDefaultQ_LP_HP);
-	void calculateBandpassCoefficients(double inCenterFreq, double inQ);
+	void setCoefficients(FilterType inFilterType, double inFreq, double inQ, double inGain);
+	void setLowpassCoefficients(double inCutoffFreq, double inQ = kDefaultQ_LP_HP);
+	void setHighpassCoefficients(double inCutoffFreq, double inQ = kDefaultQ_LP_HP);
+	void setBandpassCoefficients(double inCenterFreq, double inQ);
 	void setCoefficients(float inA0, float inA1, float inA2, float inB1, float inB2);
-	void copyCoefficients(DfxIIRfilter * inSourceFilter);
+	void copyCoefficients(IIRfilter const& inSourceFilter);
 	void setSampleRate(double inSampleRate);
 
 	void reset();
@@ -78,13 +77,13 @@ public:
 		mPrevOut = mCurrentOut;
 
 #ifdef USE_OPTIMIZATION_THAT_ONLY_WORKS_FOR_LP_HP_NOTCH
-		mCurrentOut = ((inSample+mPrevPrevIn)*mInCoeff) + (mPrevIn*mPrevInCoeff) 
-						- (mPrevOut*mPrevOutCoeff) - (mPrevPrevOut*mPrevPrevOutCoeff);
+		mCurrentOut = ((inSample + mPrevPrevIn) * mInCoeff) + (mPrevIn * mPrevInCoeff) 
+						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
 #else
-		mCurrentOut = (inSample*mInCoeff) + (mPrevIn*mPrevInCoeff) + (mPrevPrevIn*mPrevPrevInCoeff) 
-						- (mPrevOut*mPrevOutCoeff) - (mPrevPrevOut*mPrevPrevOutCoeff);
+		mCurrentOut = (inSample * mInCoeff) + (mPrevIn * mPrevInCoeff) + (mPrevPrevIn * mPrevPrevInCoeff) 
+						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
 #endif
-		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
 
 		mPrevPrevIn = mPrevIn;
 		mPrevIn = inSample;
@@ -105,9 +104,9 @@ public:
 		mPrevOut = mCurrentOut;
 		//
 		// XXX this uses an optimization that only works for LP, HP, and notch filters
-		mCurrentOut = ( (inSample+mPrevPrevIn) * mInCoeff ) + (mPrevIn  * mPrevInCoeff)
+		mCurrentOut = ((inSample + mPrevPrevIn) * mInCoeff) + (mPrevIn * mPrevInCoeff)
 						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
-		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
 		//
 		mPrevPrevIn = mPrevIn;
 		mPrevIn = inSample;
@@ -115,43 +114,43 @@ public:
 
 	void processH2(float * inAudio, long inPos, long inBufferSize)
 	{
-	  float in0 = inAudio[inPos];
-	  float in1 = inAudio[ (inPos + 1) % inBufferSize ];
+		auto const in0 = inAudio[inPos];
+		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
 
 		mPrevPrevPrevOut = mPrevPrevOut;
 		mPrevPrevOut = mPrevOut;
 		mPrevOut = mCurrentOut;
 		// XXX this uses an optimization that only works for LP, HP, and notch filters
-		mCurrentOut = ( (in0+mPrevPrevIn) * mInCoeff ) + (mPrevIn * mPrevInCoeff)
+		mCurrentOut = ((in0 + mPrevPrevIn) * mInCoeff) + (mPrevIn * mPrevInCoeff)
 						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
 		//
 		mPrevPrevPrevOut = mPrevPrevOut;
 		mPrevPrevOut = mPrevOut;
 		mPrevOut = mCurrentOut;
-		mCurrentOut = ( (in1+mPrevIn) * mInCoeff ) + (in0 * mPrevInCoeff)
+		mCurrentOut = ((in1 + mPrevIn) * mInCoeff) + (in0 * mPrevInCoeff)
 						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
 		//
-		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
 		mPrevPrevIn = in0;
 		mPrevIn = in1;
 	}
 
 	void processH3(float * inAudio, long inPos, long inBufferSize)
 	{
-	  float in0 = inAudio[inPos];
-	  float in1 = inAudio[ (inPos + 1) % inBufferSize ];
-	  float in2 = inAudio[ (inPos + 2) % inBufferSize ];
+		auto const in0 = inAudio[inPos];
+		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
+		auto const in2 = inAudio[(inPos + 2) % inBufferSize];
 
 		// XXX this uses an optimization that only works for LP, HP, and notch filters
-		mPrevPrevPrevOut = ( (in0+mPrevPrevIn) * mInCoeff ) + (mPrevIn * mPrevInCoeff)
+		mPrevPrevPrevOut = ((in0 + mPrevPrevIn) * mInCoeff) + (mPrevIn * mPrevInCoeff)
 							- (mCurrentOut * mPrevOutCoeff) - (mPrevOut * mPrevPrevOutCoeff);
-		mPrevPrevOut = ((in1+mPrevIn) * mInCoeff) + (in0 * mPrevInCoeff)
+		mPrevPrevOut = ((in1 + mPrevIn) * mInCoeff) + (in0 * mPrevInCoeff)
 						- (mPrevPrevPrevOut * mPrevOutCoeff) - (mCurrentOut * mPrevPrevOutCoeff);
-		mPrevOut = ((in2+in0) * mInCoeff) + (in1 * mPrevInCoeff)
+		mPrevOut = ((in2 + in0) * mInCoeff) + (in1 * mPrevInCoeff)
 					- (mPrevPrevOut * mPrevOutCoeff) - (mPrevPrevPrevOut * mPrevPrevOutCoeff);
 		//
 		mCurrentOut = mPrevOut;
-		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
 		mPrevOut = mPrevPrevOut;
 		mPrevPrevOut = mPrevPrevPrevOut;
 		mPrevPrevPrevOut = mCurrentOut;
@@ -162,21 +161,21 @@ public:
 
 	void processH4(float * inAudio, long inPos, long inBufferSize)
 	{
-	  float in0 = inAudio[inPos];
-	  float in1 = inAudio[ (inPos + 1) % inBufferSize ];
-	  float in2 = inAudio[ (inPos + 2) % inBufferSize ];
-	  float in3 = inAudio[ (inPos + 3) % inBufferSize ];
+		auto const in0 = inAudio[inPos];
+		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
+		auto const in2 = inAudio[(inPos + 2) % inBufferSize];
+		auto const in3 = inAudio[(inPos + 3) % inBufferSize];
 
 		// XXX this uses an optimization that only works for LP, HP, and notch filters
-		mPrevPrevPrevOut = ( (in0+mPrevPrevIn) * mInCoeff ) + (mPrevIn * mPrevInCoeff)
+		mPrevPrevPrevOut = ((in0 + mPrevPrevIn) * mInCoeff) + (mPrevIn * mPrevInCoeff)
 							- (mCurrentOut * mPrevOutCoeff) - (mPrevOut * mPrevPrevOutCoeff);
-		mPrevPrevOut = ((in1+mPrevIn) * mInCoeff) + (in0 * mPrevInCoeff)
+		mPrevPrevOut = ((in1 + mPrevIn) * mInCoeff) + (in0 * mPrevInCoeff)
 						- (mPrevPrevPrevOut * mPrevOutCoeff) - (mCurrentOut * mPrevPrevOutCoeff);
-		mPrevOut = ((in2+in0) * mInCoeff) + (in1 * mPrevInCoeff)
+		mPrevOut = ((in2 + in0) * mInCoeff) + (in1 * mPrevInCoeff)
 					- (mPrevPrevOut * mPrevOutCoeff) - (mPrevPrevPrevOut * mPrevPrevOutCoeff);
-		mCurrentOut = ((in3+in1) * mInCoeff) + (in2 * mPrevInCoeff)
+		mCurrentOut = ((in3 + in1) * mInCoeff) + (in2 * mPrevInCoeff)
 						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
-		mCurrentOut = DFX_ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
 		//
 		mPrevPrevIn = in2;
 		mPrevIn = in3;
@@ -185,29 +184,28 @@ public:
 	// 4-point Hermite spline interpolation for use with IIR filter output histories
 	float interpolateHermitePostFilter(double inPos)
 	{
-		float posFract = (float) (inPos - floor(inPos));	// XXX or fmod(inPos, 1.0) ?
+		auto const posFract = static_cast<float>(std::fmod(inPos, 1.0));
 
-		float a = ( (3.0f*(mPrevPrevOut-mPrevOut)) - 
-					mPrevPrevPrevOut + mCurrentOut ) * 0.5f;
-		float b = (2.0f*mPrevOut) + mPrevPrevPrevOut - 
-					(2.5f*mPrevPrevOut) - (mCurrentOut*0.5f);
-		float c = (mPrevOut - mPrevPrevPrevOut) * 0.5f;
+		float const a = ((3.0f * (mPrevPrevOut-mPrevOut)) - mPrevPrevPrevOut + mCurrentOut) * 0.5f;
+		float const b = (2.0f * mPrevOut) + mPrevPrevPrevOut - (2.5f * mPrevPrevOut) - (mCurrentOut * 0.5f);
+		float const c = (mPrevOut - mPrevPrevPrevOut) * 0.5f;
 
-		return (( ((a*posFract)+b) * posFract + c ) * posFract) + mPrevPrevOut;
+		return ((((a * posFract) + b) * posFract + c) * posFract) + mPrevPrevOut;
 	}
 
-#endif
-// end of USING_HERMITE batch of functions
+#endif  // USING_HERMITE
 
 
 private:
-	DfxIIRFilterType mFilterType;
-	double mFilterFreq, mFilterQ, mFilterGain;
-	double mSampleRate;
+	FilterType mFilterType {};
+	double mFilterFreq = 1.0;
+	double mFilterQ = 1.0;
+	double mFilterGain = 1.0;
+	double mSampleRate = 1.0;
 
-	float mPrevIn, mPrevPrevIn, mPrevOut, mPrevPrevOut, mPrevPrevPrevOut, mCurrentOut;
-	float mPrevOutCoeff, mPrevPrevOutCoeff, mPrevInCoeff, mPrevPrevInCoeff, mInCoeff;
+	float mPrevIn = 0.0f, mPrevPrevIn = 0.0f, mPrevOut = 0.0f, mPrevPrevOut = 0.0f, mPrevPrevPrevOut = 0.0f, mCurrentOut = 0.0f;
+	float mPrevOutCoeff = 0.0f, mPrevPrevOutCoeff = 0.0f, mPrevInCoeff = 0.0f, mPrevPrevInCoeff = 0.0f, mInCoeff = 0.0f;
 };
 
 
-#endif
+}  // namespace

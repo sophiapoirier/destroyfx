@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2011  Sophia Poirier
+Copyright (C) 2009-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,14 +21,12 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXGUI_H
-#define __DFXGUI_H
+#pragma once
 
 
-#include "dfxguieditor.h"
-#include "dfxguislider.h"
 #include "dfxguibutton.h"
+#include "dfxguidialog.h"
+#include "dfxguieditor.h"
+#include "dfxguimisc.h"
+#include "dfxguislider.h"
 #include "dfxguitextdisplay.h"
-
-
-#endif

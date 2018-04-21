@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2011-2015  Sophia Poirier
+Copyright (C) 2011-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,10 +21,11 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#import <Cocoa/Cocoa.h>
-#import <AudioUnit/AUCocoaUIView.h>
-
 #import "dfxgui-auviewfactory.h"
+
+#import <AudioUnit/AUCocoaUIView.h>
+#import <Cocoa/Cocoa.h>
+
 #import "dfxguieditor.h"
 
 
@@ -50,8 +51,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 @interface DGNSViewForAU : NSView
 {
-	DfxGuiEditor * mDfxGuiEditor;
-	NSTimer * mIdleTimer;
+	DfxGuiEditor* mDfxGuiEditor;
+	NSTimer* mIdleTimer;
 }
 - (id) initWithAU:(AudioUnit)inAU preferredSize:(NSSize)inSize;
 @end
@@ -74,13 +75,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 - (NSString*) description
 {
-	return [[[NSString alloc] initWithString:@""PLUGIN_NAME_STRING" editor"] autorelease];
+	return [[[NSString alloc] initWithString:@"" PLUGIN_NAME_STRING " editor"] autorelease];
 }
 
 //-----------------------------------------------------------------------------
 // this class is simply a view-factory, returning a new autoreleased view each time it's called
 - (NSView*) uiViewForAudioUnit:(AudioUnit)inAU withSize:(NSSize)inPreferredSize
 {
+	NSAssert(inAU != nil, @"null Audio Unit instance");
 	return [[[DGNSViewForAU alloc] initWithAU:inAU preferredSize:inPreferredSize] autorelease];
 }
 
@@ -94,7 +96,9 @@ CFStringRef DGCocoaAUViewFactory_CopyClassName()
 {
 	NSString* name = NSStringFromClass([DGCocoaAUViewFactory class]);
 	if (name != nil)
+	{
 		[name retain];
+	}
 	return reinterpret_cast<CFStringRef>(name);
 }
 
@@ -107,7 +111,7 @@ CFStringRef DGCocoaAUViewFactory_CopyClassName()
 @implementation DGNSViewForAU
 //-----------------------------------------------------------------------------
 
-extern DfxGuiEditor * DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
+extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 
 //-----------------------------------------------------------------------------
 - (id) initWithAU:(AudioUnit)inAU preferredSize:(NSSize)inSize
@@ -116,21 +120,23 @@ extern DfxGuiEditor * DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 	mIdleTimer = nil;
 
 	if (inAU == nil)
+	{
 		return nil;
-
-#if !__LP64__ && MAC_COCOA && (VSTGUI_VERSION_MAJOR == 3)
-	VSTGUI::CFrame::setCocoaMode(true);
-#endif
+	}
 
 	mDfxGuiEditor = DFXGUI_NewEditorInstance(inAU);
 	if (mDfxGuiEditor == nil)
+	{
 		return nil;
+	}
 
 	self = [super initWithFrame:NSMakeRect(0.0, 0.0, inSize.width, inSize.height)];
 	if (self == nil)
+	{
 		return nil;
+	}
 
-	bool success = mDfxGuiEditor->open(self);
+	auto const success = mDfxGuiEditor->open(self);
 	if (!success)
 	{
 		[self dealloc];
@@ -140,15 +146,17 @@ extern DfxGuiEditor * DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 	// set the size of the view to match the editor's size
 	if (mDfxGuiEditor->getFrame() != nil)
 	{
-		CRect frameSize = mDfxGuiEditor->getFrame()->getViewSize(frameSize);
-		NSRect newSize = NSMakeRect(0.0, 0.0, frameSize.width(), frameSize.height());
+		auto const& frameSize = mDfxGuiEditor->getFrame()->getViewSize();
+		auto const newSize = NSMakeRect(0.0, 0.0, frameSize.getWidth(), frameSize.getHeight());
 		[self setFrame:newSize];
 	}
 
-	mIdleTimer = [NSTimer scheduledTimerWithTimeInterval:kDfxGui_IdleTimerInterval 
-							target:self selector:@selector(idle:) userInfo:nil repeats:YES];
+	mIdleTimer = [NSTimer scheduledTimerWithTimeInterval:DfxGuiEditor::kIdleTimerInterval 
+												  target:self selector:@selector(idle:) userInfo:nil repeats:YES];
 	if (mIdleTimer != nil)
+	{
 		[mIdleTimer retain];
+	}
 
 	return self;
 }
@@ -162,7 +170,9 @@ extern DfxGuiEditor * DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 	if (mDfxGuiEditor != nil)
 	{
 		if (mDfxGuiEditor->getFrame() != nil)
+		{
 			mDfxGuiEditor->getFrame()->setSize(inNewSize.size.width, inNewSize.size.height);
+		}
 	}
 }
 
@@ -216,7 +226,7 @@ XXX eh do I need to implement this?  or is it only an option in VSTGUI 4?
 {
 	if (mDfxGuiEditor != nil)
 	{
-		DfxGuiEditor * editor_temp = mDfxGuiEditor;
+		auto const editor_temp = mDfxGuiEditor;
 		mDfxGuiEditor = nil;
 		editor_temp->close();
 		delete editor_temp;
@@ -226,10 +236,12 @@ XXX eh do I need to implement this?  or is it only an option in VSTGUI 4?
 }
 
 //-----------------------------------------------------------------------------
-- (void) idle:(NSTimer*) theTimer
+- (void) idle:(NSTimer*) __unused theTimer
 {
 	if (mDfxGuiEditor != nil)
+	{
 		mDfxGuiEditor->idle();
+	}
 }
 
 @end

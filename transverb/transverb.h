@@ -1,10 +1,29 @@
-#ifndef __TOM7_TRANSVERB_H
-#define __TOM7_TRANSVERB_H
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2018  Tom Murphy 7 and Sophia Poirier
 
-/* DFX Transverb plugin by Tom 7 and Sophia */
+This file is part of Transverb.
+
+Transverb is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Transverb is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#pragma once
+
+#include <vector>
 
 #include "dfxplugin.h"
-
 #include "iirfilter.h"
 
 
@@ -30,10 +49,10 @@ enum
 	kNumParameters
 };
 
-const long kNumPresets = 16;
+constexpr long kNumPresets = 16;
 
-const long kAudioSmoothingDur_samples = 42;
-const long kNumFIRTaps = 23;
+constexpr long kAudioSmoothingDur_samples = 42;
+constexpr long kNumFIRTaps = 23;
 
 
 // this stuff is for the speed parameter adjustment mode switch on the GUI
@@ -48,44 +67,43 @@ enum { kFilterMode_Nothing, kFilterMode_Highpass, kFilterMode_LowpassIIR, kFilte
 class TransverbDSP : public DfxPluginCore {
 
 public:
-  TransverbDSP(DfxPlugin * inDfxPlugin);
-  virtual ~TransverbDSP();
+  TransverbDSP(DfxPlugin* inDfxPlugin);
 
-  virtual void process(const float * in, float * out, unsigned long inNumFrames, bool replacing=true);
-  virtual void reset();
-  virtual void processparameters();
-  virtual bool createbuffers();
-  virtual void clearbuffers();
-  virtual void releasebuffers();
+  void process(float const* in, float* out, unsigned long inNumFrames, bool replacing = true) override;
+  void reset() override;
+  void processparameters() override;
+  bool createbuffers() override;
+  void clearbuffers() override;
+  void releasebuffers() override;
 
 private:
   // these get set to the parameter values
-  int bsize;
-  double speed1, speed2;
-  float drymix;
-  float mix1, feed1, dist1;
-  float mix2, feed2, dist2;
-  long quality;
-  bool tomsound;
+  int bsize = 0;
+  double speed1 = 0.0, speed2 = 0.0;
+  float drymix = 1.0f;
+  float mix1 = 0.0f, feed1 = 0.0f, dist1 = 0.0f;
+  float mix2 = 0.0f, feed2 = 0.0f, dist2 = 0.0f;
+  long quality = 0;
+  bool tomsound = false;
 
-  int writer;
-  double read1, read2;
+  int writer = 0;
+  double read1 = 0.0, read2 = 0.0;
 
-  float * buf1;
-  float * buf2;
-  int MAXBUF;	// the size of the audio buffer (dependant on sampling rate)
+  std::vector<float> buf1;
+  std::vector<float> buf2;
+  int MAXBUF = 0;  // the size of the audio buffer (dependant on sampling rate)
 
-  DfxIIRfilter filter1, filter2;
-  bool speed1hasChanged, speed2hasChanged;
+  dfx::IIRfilter filter1, filter2;
+  bool speed1hasChanged = false, speed2hasChanged = false;
 
-  int smoothcount1, smoothcount2;
-  int smoothdur1, smoothdur2;
-  float smoothstep1, smoothstep2;
-  float lastr1val, lastr2val;
+  int smoothcount1 = 0, smoothcount2 = 0;
+  int smoothdur1 = 0, smoothdur2 = 0;
+  float smoothstep1 = 0.0f, smoothstep2 = 0.0f;
+  float lastr1val = 0.0f, lastr2val = 0.0f;
 
-  float * firCoefficients1, * firCoefficients2;
+  std::vector<float> firCoefficients1, firCoefficients2;
 
-  long tomsound_sampoffset;	// essentially the core instance number
+  long tomsound_sampoffset = 0;  // essentially the core instance number
 };
 
 
@@ -94,84 +112,78 @@ class Transverb : public DfxPlugin {
 
 public:
   Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-  virtual ~Transverb();
 
-  virtual bool loadpreset(long index);	// overriden to support the random preset
-  virtual void randomizeparameters(bool writeAutomation = false);
+  void dfx_PostConstructor() override;
 
-  long addcore();	// add a DSP core instance to the counter
-  void subtractcore();	// subtract one
+  bool loadpreset(long index) override;  // overriden to support the random preset
+  void randomizeparameters(bool writeAutomation = false) override;
 
 private:
   void initPresets();
-
-  long speed1mode, speed2mode;	// these are just for the GUI
-  long numtransverbcores;	// counter for the number of DSP core instances
 };
 
 
-inline float Transverb_InterpolateHermite (float * data, double address, 
-				 int arraysize, int danger) {
-  int pos, posMinus1, posPlus1, posPlus2;
-  float posFract, a, b, c;
+inline float Transverb_InterpolateHermite(float* data, double address, 
+                                          int arraysize, int danger) {
+  int posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
 
-  pos = (long)address;
-  posFract = (float) (address - (double)pos);
+  auto const pos = (int)address;
+  auto const posFract = (float)(address - (double)pos);
 
-  // because the readers & writer are not necessarilly aligned, 
+  // because the readers and writer are not necessarily aligned, 
   // upcoming or previous samples could be discontiguous, in which case 
   // just "interpolate" with repeated samples
   switch (danger) {
-    case 0:		// the previous sample is bogus
+    case 0:  // the previous sample is bogus
       posMinus1 = pos;
-      posPlus1 = (pos+1) % arraysize;
-      posPlus2 = (pos+2) % arraysize;
+      posPlus1 = (pos + 1) % arraysize;
+      posPlus2 = (pos + 2) % arraysize;
       break;
-    case 1:		// the next 2 samples are bogus
-      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
+    case 1:  // the next 2 samples are bogus
+      posMinus1 = (pos == 0) ? (arraysize - 1) : (pos - 1);
       posPlus1 = posPlus2 = pos;
       break;
-    case 2:		// the sample 2 steps ahead is bogus
-      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
-      posPlus1 = posPlus2 = (pos+1) % arraysize;
+    case 2:  // the sample 2 steps ahead is bogus
+      posMinus1 = (pos == 0) ? (arraysize - 1) : (pos - 1);
+      posPlus1 = posPlus2 = (pos + 1) % arraysize;
       break;
-    default:	// everything's cool
-      posMinus1 = (pos == 0) ? arraysize-1 : pos-1;
-      posPlus1 = (pos+1) % arraysize;
-      posPlus2 = (pos+2) % arraysize;
+    default:  // everything's cool
+      posMinus1 = (pos == 0) ? (arraysize - 1) : (pos - 1);
+      posPlus1 = (pos + 1) % arraysize;
+      posPlus2 = (pos + 2) % arraysize;
       break;
-    }
+  }
 
-  a = ( (3.0f*(data[pos]-data[posPlus1])) - 
-	 data[posMinus1] + data[posPlus2] ) * 0.5f;
-  b = (2.0f*data[posPlus1]) + data[posMinus1] - 
-         (2.5f*data[pos]) - (data[posPlus2]*0.5f);
-  c = (data[posPlus1] - data[posMinus1]) * 0.5f;
+  float const a = ((3.0f * (data[pos] - data[posPlus1])) - 
+                   data[posMinus1] + data[posPlus2]) * 0.5f;
+  float const b = (2.0f * data[posPlus1]) + data[posMinus1] - 
+                  (2.5f * data[pos]) - (data[posPlus2] * 0.5f);
+  float const c = (data[posPlus1] - data[posMinus1]) * 0.5f;
 
-  return ( ((a*posFract)+b) * posFract + c ) * posFract + data[pos];
+  return (((a * posFract) + b) * posFract + c) * posFract + data[pos];
 }
 /*
-inline float Transverb_InterpolateHermitePostLowpass (float * data, float address) {
-  long pos;
+inline float Transverb_InterpolateHermitePostLowpass(float* data, float address) {
   float posFract, a, b, c;
 
-  pos = (long)address;
-  posFract = address - (float)pos;
+  auto const pos = (int)address;
+  float const posFract = address - (float)pos;
 
-  a = ( (3.0f*(data[1]-data[2])) - 
-	 data[0] + data[3] ) * 0.5f;
-  b = (2.0f*data[2]) + data[0] - 
-         (2.5f*data[1]) - (data[3]*0.5f);
-  c = (data[2] - data[0]) * 0.5f;
+  float const a = ((3.0f * (data[1] - data[2])) - 
+                   data[0] + data[3]) * 0.5f;
+  float const b = (2.0f * data[2]) + data[0] - 
+                  (2.5f * data[1]) - (data[3] * 0.5f);
+  float const c = (data[2] - data[0]) * 0.5f;
 
-  return ( ((a*posFract)+b) * posFract + c ) * posFract + data[1];
+  return (((a * posFract) + b) * posFract + c) * posFract + data[1];
 }
 */
 
-inline float Transverb_InterpolateLinear(float * data, double address, 
-				int arraysize, int danger) {
-	int posPlus1, pos = (long)address;
-	float posFract = (float) (address - (double)pos);
+inline float Transverb_InterpolateLinear(float* data, double address, 
+                                         int arraysize, int danger) {
+	int posPlus1 = 0;
+	auto const pos = (int)address;
+	auto const posFract = (float)(address - (double)pos);
 
 	if (danger == 1) {
 		// the upcoming sample is not contiguous because 
@@ -181,8 +193,6 @@ inline float Transverb_InterpolateLinear(float * data, double address,
 		// it's alright
 		posPlus1 = (pos + 1) % arraysize;
 	}
-	return (data[pos] * (1.0f-posFract)) + 
+	return (data[pos] * (1.0f - posFract)) + 
 			(data[posPlus1] * posFract);
 }
-
-#endif

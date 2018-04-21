@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2016  Sophia Poirier
+Copyright (C) 2009-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,10 +28,8 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include "dfxsmoothedvalue.h"
 
 #include <algorithm>
-#include <assert.h>
-#if (__cplusplus >= 201103L)
-	#include <type_traits>
-#endif
+#include <cassert>
+#include <type_traits>
 
 
 
@@ -47,16 +45,14 @@ DfxSmoothedValue<T>::DfxSmoothedValue(double inSmoothingTimeInSeconds)
 	mSampleRate(1.0),
 	mReinit(true)
 {
-#if (__cplusplus >= 201103L)
-	static_assert(std::is_floating_point<T>::value, "value type must be floating point");
-#endif
+	static_assert(std::is_floating_point<T>::value);
 
 	setSmoothingTime(inSmoothingTimeInSeconds);
 }
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void DfxSmoothedValue<T>::setValue(T inTargetValue)
+void DfxSmoothedValue<T>::setValue(T inTargetValue) noexcept
 {
 	if (mReinit)
 	{
@@ -66,7 +62,9 @@ void DfxSmoothedValue<T>::setValue(T inTargetValue)
 	else
 	{
 		if (inTargetValue == mTargetValue)
+		{
 			return;
+		}
 		mTargetValue = inTargetValue;
 		mValueStep = (mSmoothDur_samples > 0) ? ((mTargetValue - mCurrentValue) / static_cast<T>(mSmoothDur_samples)) : T(0);
 		mSmoothCount = 0;
@@ -75,7 +73,7 @@ void DfxSmoothedValue<T>::setValue(T inTargetValue)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void DfxSmoothedValue<T>::setValueNow(T inValue)
+void DfxSmoothedValue<T>::setValueNow(T inValue) noexcept
 {
 	mCurrentValue = mTargetValue = inValue;
 	mSmoothCount = mSmoothDur_samples;
@@ -84,7 +82,7 @@ void DfxSmoothedValue<T>::setValueNow(T inValue)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void DfxSmoothedValue<T>::inc()
+void DfxSmoothedValue<T>::inc() noexcept
 {
 	if (mSmoothCount < mSmoothDur_samples)
 	{

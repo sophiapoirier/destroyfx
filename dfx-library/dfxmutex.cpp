@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2016  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -181,3 +181,17 @@ int DfxMutex::release()
 
 #endif
 // platforms
+
+
+
+//------------------------------------------------------------------------
+DfxScopedMutex::DfxScopedMutex(DfxMutex& inMutex)
+:	mMutex(inMutex)
+{
+	mMutex.grab();
+}
+
+DfxScopedMutex::~DfxScopedMutex()
+{
+	mMutex.release();
+}

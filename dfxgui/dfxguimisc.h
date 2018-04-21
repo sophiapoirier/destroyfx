@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,15 +21,23 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXGUI_MISC_H
-#define __DFXGUI_MISC_H
+#pragma once
 
 
-#include "dfxgui-base.h"
-
-#include "vstgui.h"
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <limits>
+#include <string>
 
 #include "dfxdefines.h"
+#include "dfxgui-base.h"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
+#include "vstgui.h"
+#pragma clang diagnostic pop
 
 #if TARGET_OS_MAC
 	#include <ApplicationServices/ApplicationServices.h>
@@ -43,10 +51,17 @@ To contact the author, use the contact form at http://destroyfx.org/
 class DGRect : public CRect
 {
 public:
-	DGRect()
-	:	CRect() {}
+	DGRect() = default;
 	DGRect(CCoord inX, CCoord inY, CCoord inWidth, CCoord inHeight)
 	:	CRect(inX, inY, inX + inWidth, inY + inHeight)
+	{
+	}
+	DGRect(DGRect const& other)
+	:	CRect(other)
+	{
+	}
+	DGRect(CRect const& other)
+	:	CRect(other)
 	{
 	}
 	void set(CCoord inX, CCoord inY, CCoord inWidth, CCoord inHeight)
@@ -66,23 +81,14 @@ public:
 	}
 	bool isInside(CCoord inX, CCoord inY)
 	{
-		return pointInside( CPoint(inX, inY) );
+		return pointInside(CPoint(inX, inY));
 	}
-	bool isInside_zerobase(CCoord inX, CCoord inY)
+	bool isInside_local(CCoord inX, CCoord inY)
 	{
-		return pointInside( CPoint(inX + left, inY + top) );
+		return pointInside(CPoint(inX + left, inY + top));
 	}
 
-/* XXX necessary?
-	void offset(CCoord inOffsetX, CCoord inOffsetY, CCoord inWidthGrow, CCoord inHeightGrow)
-	{
-		offset(inOffsetX, inOffsetY);
-		setWidth( getWidth() + inWidthGrow );
-		setHeight( getHeight() + inHeightGrow );
-	}
-*/
-
-#if TARGET_OS_MAC
+#if TARGET_OS_MAC && 0
 	void copyToCGRect(CGRect * outDestRect, long inOutputPortHeight)
 	{
 		outDestRect->origin.x = left;
@@ -132,7 +138,8 @@ public:
 USING_NAMESPACE_VSTGUI
 
 //-----------------------------------------------------------------------------
-enum {
+enum
+{
 	eHighlight_None = -1,
 	eHighlight_Red,	// = 0, same as what Pro Tools passes in
 	eHighlight_Blue,
@@ -150,48 +157,65 @@ enum {
 class DGColor : public CColor
 {
 public:
-	DGColor()
-	{
-		red = 0;
-		green = 0;
-		blue = 0;
-		alpha = 0xFF;
-	}
+	static DGColor const kBlack;
+	static DGColor const kWhite;
+
+	DGColor() = default;
 	DGColor(int inRed, int inGreen, int inBlue, int inAlpha = 0xFF)
 	{
-		red = static_cast<uint8_t>(inRed);
-		green = static_cast<uint8_t>(inGreen);
-		blue = static_cast<uint8_t>(inBlue);
-		alpha = static_cast<uint8_t>(inAlpha);
+		red = componentFromInt(inRed);
+		green = componentFromInt(inGreen);
+		blue = componentFromInt(inBlue);
+		alpha = componentFromInt(inAlpha);
 	}
 	DGColor(float inRed, float inGreen, float inBlue, float inAlpha = 1.0f)
 	{
-		const float fixedScalar = static_cast<float>(0xFF);
-		red = static_cast<uint8_t>( lrintf(inRed * fixedScalar) );
-		green = static_cast<uint8_t>( lrintf(inGreen * fixedScalar) );
-		blue = static_cast<uint8_t>( lrintf(inBlue * fixedScalar) );
-		alpha = static_cast<uint8_t>( lrintf(inAlpha * fixedScalar) );
+		red = componentFromFloat(inRed);
+		green = componentFromFloat(inGreen);
+		blue = componentFromFloat(inBlue);
+		alpha = componentFromFloat(inAlpha);
 	}
-	DGColor(const CColor& inColor)
+	DGColor(CColor const& inColor)
 	{
 		red = inColor.red;
 		green = inColor.green;
 		blue = inColor.blue;
 		alpha = inColor.alpha;
 	}
+
+private:
+	using ComponentType = decltype(red);
+	static constexpr auto kMinValue = std::numeric_limits<ComponentType>::min();
+	static constexpr auto kMaxValue = std::numeric_limits<ComponentType>::max();
+
+	static ComponentType componentFromInt(int inValue)
+	{
+		constexpr auto inputMin = static_cast<int>(kMinValue);
+		constexpr auto inputMax = static_cast<int>(kMaxValue);
+		assert(inValue >= inputMin);
+		assert(inValue <= inputMax);
+		return static_cast<ComponentType>(std::clamp(inValue, inputMin, inputMax));
+	}
+
+	static ComponentType componentFromFloat(float inValue)
+	{
+		constexpr float inputMin = 0.0f;
+		constexpr float inputMax = 1.0f;
+		assert(inValue >= inputMin);
+		assert(inValue <= inputMax);
+		constexpr auto fixedScalar = static_cast<float>(kMaxValue);
+		return static_cast<ComponentType>(std::lround(std::clamp(inValue, inputMin, inputMax) * fixedScalar));
+	}
 };
 
-//-----------------------------------------------------------------------------
-static const DGColor kDGColor_white(kWhiteCColor);
-static const DGColor kDGColor_black(kBlackCColor);
 
 
+#if 0
 
 #if TARGET_OS_MAC
 	typedef CGContextRef TARGET_PLATFORM_GRAPHICS_CONTEXT;
 #endif
 
-#if 0
 //-----------------------------------------------------------------------------
 // XXX replace with CDrawContext
 class DGGraphicsContext
@@ -238,7 +262,7 @@ public:
 		{	return (portHeight == 0) ? true : false;	}
 	void endQDContext(CGrafPtr inPort)
 	{
-		if ( (inPort != NULL) && (context != NULL) )
+		if ( (inPort != nullptr) && (context != nullptr) )
 			QDEndCGContext(inPort, &context);
 	}
 	HIThemeOrientation getHIThemeOrientation()
@@ -270,8 +294,6 @@ private:
 	class for loading and containing images
 ***********************************************************************/
 
-class DfxGuiEditor;
-
 /* XXX should be "stacked" or "indexed" so that one bitmap might hold
    several clipped regions that can be drawn. (but we use overloading
    or default params so that it behaves like a single image when not
@@ -280,29 +302,32 @@ class DfxGuiEditor;
 class DGImage : public CBitmap
 {
 public:
-	DGImage(const char * inFileName, long inResourceID, DfxGuiEditor * inEditor = NULL);
+	using CBitmap::CBitmap;
 
-	/* probably a better type is
-	   void draw(int x, int y);
-
-	   .. and also something like
-	   void drawex(int x, int y, int xindex, int yindex) 
-	   .. for stacked images.
-	*/
-/*	virtual void draw(DGRect * inRect, DGGraphicsContext * inContext, 
-						long inXoffset = 0, long inYoffset = 0, 
-						float inXscalar = 1.0f, float inYscalar = 1.0f);
+/*	probably a better interface is:
+	void draw(CCoord x, CCoord y);
+	and also something like this for stacked images:
+	void drawex(CCoord x, CCoord y, int xIndex, int yIndex); 
+*/
+/*	virtual void draw(DGGraphicsContext& inContext, DGRect const& inRect, 
+					  CCoord inOffsetX = 0, CCoord inOffsetY = 0, 
+					  float inScalarX = 1.0f, float inScalarY = 1.0f);
 */
 };
 
 
 
 //-----------------------------------------------------------------------------
-unsigned long DFXGUI_ConvertVstGuiMouseButtons(long inButtons);
-DGKeyModifiers DFXGUI_ConvertVstGuiKeyModifiers(long inButtons);
+namespace dfx
+{
 
-CFontRef DFXGUI_CreateVstGuiFont(float inFontSize, const char* inFontName = NULL);
-
-
-
+#if 0
+unsigned long ConvertVstGuiMouseButtons(long inButtons);
+DGKeyModifiers ConvertVstGuiKeyModifiers(long inButtons);
 #endif
+
+SharedPointer<CFontDesc> CreateVstGuiFont(float inFontSize, const char* inFontName = nullptr);
+
+std::string RemoveDigitSeparators(std::string const& inText);
+
+}  // namespace dfx

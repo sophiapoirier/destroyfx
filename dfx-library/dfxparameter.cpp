@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2016  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -27,10 +27,12 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 
 #include "dfxparameter.h"
 
-#include <stdlib.h>	// for malloc and free and RAND_MAX
-#include <string.h>	// for strcpy
-#include <math.h>
 #include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <string.h>  // for strcpy
+
+#include "dfxmath.h"
 
 
 
@@ -39,121 +41,67 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-DfxParam::DfxParam()
-{
-	name = NULL;
-	#ifdef TARGET_API_AUDIOUNIT
-		cfname = NULL;
-	#endif
-
-	// these are null until it's shown that we'll actually need them
-	valueStrings = NULL;
-	#ifdef TARGET_API_AUDIOUNIT
-		valueCFStrings = NULL;
-	#endif
-	numAllocatedValueStrings = 0;
-	customUnitString = NULL;
-
-	name = (char*) malloc(DFX_PARAM_MAX_NAME_LENGTH * sizeof(*name));
-	name[0] = 0;	// empty string
-
-	// default to not using any custom value display
-	useValueStrings = false;
-
-	// default to allowing values outside of the min/max range
-	enforceValueLimits = false;
-
-	// default this stuff empty-style
-	valueType = kDfxParamValueType_float;
-	unit = kDfxParamUnit_generic;
-	curve = kDfxParamCurve_linear;
-	curvespec = 1.0;
-	changed = true;
-	touched = false;
-	attributes = 0;
-}
-
-//-----------------------------------------------------------------------------
-DfxParam::~DfxParam()
-{
-	// release the parameter value strings, if any
-	releaseValueStrings();
-
-	// release the parameter name
-	if (name != NULL)
-		free(name);
-	name = NULL;
-	#ifdef TARGET_API_AUDIOUNIT
-		if (cfname != NULL)
-			CFRelease(cfname);
-		cfname = NULL;
-	#endif
-
-	// release the custom unit name string, if there is one
-	if (customUnitString != NULL)
-		free(customUnitString);
-	customUnitString = NULL;
-}
-
-
-//-----------------------------------------------------------------------------
-void DfxParam::init(const char * inName, DfxParamValueType inType, 
-                    DfxParamValue inInitialValue, DfxParamValue inDefaultValue, 
-                    DfxParamValue inMinValue, DfxParamValue inMaxValue, 
-                    DfxParamUnit inUnit, DfxParamCurve inCurve)
+void DfxParam::init(char const* inName, ValueType inType, 
+					Value inInitialValue, Value inDefaultValue, 
+					Value inMinValue, Value inMaxValue, 
+					Unit inUnit, Curve inCurve)
 {
 	// accept all of the incoming init values
-	valueType = inType;
-	value = oldValue = inInitialValue;
-	defaultValue = inDefaultValue;
-	min = inMinValue;
-	max = inMaxValue;
-	if (inName != NULL)
+	mValueType = inType;
+	mValue = mOldValue = inInitialValue;
+	mDefaultValue = inDefaultValue;
+	mMinValue = inMinValue;
+	mMaxValue = inMaxValue;
+	if (inName)
 	{
-		strncpy(name, inName, DFX_PARAM_MAX_NAME_LENGTH);
-		name[DFX_PARAM_MAX_NAME_LENGTH-1] = 0;
-		#ifdef TARGET_API_AUDIOUNIT
-			cfname = CFStringCreateWithCString(kCFAllocatorDefault, inName, kDFX_DefaultCStringEncoding);
-		#endif
+		mName.assign(inName, 0, kDfxParameterNameMaxLength - 1);
+	#ifdef TARGET_API_AUDIOUNIT
+		mCFName.reset(CFStringCreateWithCString(kCFAllocatorDefault, inName, kDFX_DefaultCStringEncoding));
+	#endif
 	}
-	curve = inCurve;
-	unit = inUnit;
-	if (unit == kDfxParamUnit_list)
-		SetEnforceValueLimits(true);	// make sure not to go out of any array bounds
-	changed = true;
+	mCurve = inCurve;
+	mUnit = inUnit;
+	if (mUnit == Unit::List)
+	{
+		SetEnforceValueLimits(true);  // make sure not to go out of any array bounds
+	}
+	mChanged = true;
 
 
 	// do some checks to make sure that the min and max are not swapped 
 	// and that the default value is between the min and max
 	switch (inType)
 	{
-		case kDfxParamValueType_float:
-			if (min.f > max.f)
+		case ValueType::Float:
+			if (mMinValue.f > mMaxValue.f)
 			{
-				double swap = max.f;
-				max.f = min.f;
-				min.f = swap;
+				std::swap(mMinValue.f, mMaxValue.f);
 			}
-			if ( (defaultValue.f > max.f)  || (defaultValue.f < min.f) )
-				defaultValue.f = ((max.f - min.f) * 0.5) + min.f;
-			break;
-		case kDfxParamValueType_int:
-			if (min.i > max.i)
+			if ((mDefaultValue.f > mMaxValue.f) || (mDefaultValue.f < mMinValue.f))
 			{
-				int64_t swap = max.i;
-				max.i = min.i;
-				min.i = swap;
+				mDefaultValue.f = ((mMaxValue.f - mMinValue.f) * 0.5) + mMinValue.f;
 			}
-			if ( (defaultValue.i > max.i)  || (defaultValue.i < min.i) )
-				defaultValue.i = ((max.i - min.i) / 2) + min.i;
 			break;
-		case kDfxParamValueType_boolean:
-			min.b = false;
-			max.b = true;
-			if ( (defaultValue.b > max.b)  || (defaultValue.b < min.b) )
-				defaultValue.b = true;
+		case ValueType::Int:
+			if (mMinValue.i > mMaxValue.i)
+			{
+				std::swap(mMinValue.i, mMaxValue.i);
+			}
+			if ((mDefaultValue.i > mMaxValue.i) || (mDefaultValue.i < mMinValue.i))
+			{
+				mDefaultValue.i = ((mMaxValue.i - mMinValue.i) / 2) + mMinValue.i;
+			}
+			break;
+		case ValueType::Boolean:
+			mMinValue.b = false;
+			mMaxValue.b = true;
+			if ((mDefaultValue.b > mMaxValue.b) || (mDefaultValue.b < mMinValue.b))
+			{
+				mDefaultValue.b = true;
+			}
 			break;
 		default:
+			assert(false);
 			break;
 	}
 
@@ -164,140 +112,98 @@ void DfxParam::init(const char * inName, DfxParamValueType inType,
 
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with float variable type
-void DfxParam::init_f(const char * inName, double inInitialValue, double inDefaultValue, 
-							double inMinValue, double inMaxValue, 
-							DfxParamUnit inUnit, DfxParamCurve inCurve)
+void DfxParam::init_f(char const* inName, double inInitialValue, double inDefaultValue, 
+					  double inMinValue, double inMaxValue, 
+					  Unit inUnit, Curve inCurve)
 {
-	DfxParamValue val, def, mn, mx;
+	Value val, def, mn, mx;
 	val.f = inInitialValue;
 	def.f = inDefaultValue;
 	mn.f = inMinValue;
 	mx.f = inMaxValue;
-	init(inName, kDfxParamValueType_float, val, def, mn, mx, inUnit, inCurve);
+	init(inName, ValueType::Float, val, def, mn, mx, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
-void DfxParam::init_i(const char * inName, int64_t inInitialValue, int64_t inDefaultValue, 
-							int64_t inMinValue, int64_t inMaxValue, 
-							DfxParamUnit inUnit, DfxParamCurve inCurve)
+void DfxParam::init_i(char const* inName, int64_t inInitialValue, int64_t inDefaultValue, 
+					  int64_t inMinValue, int64_t inMaxValue, 
+					  Unit inUnit, Curve inCurve)
 {
-	DfxParamValue val, def, mn, mx;
+	Value val, def, mn, mx;
 	val.i = inInitialValue;
 	def.i = inDefaultValue;
 	mn.i = inMinValue;
 	mx.i = inMaxValue;
-	init(inName, kDfxParamValueType_int, val, def, mn, mx, inUnit, inCurve);
+	init(inName, ValueType::Int, val, def, mn, mx, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with boolean variable type
-void DfxParam::init_b(const char * inName, bool inInitialValue, bool inDefaultValue, 
-							DfxParamUnit inUnit)
+void DfxParam::init_b(char const* inName, bool inInitialValue, bool inDefaultValue, Unit inUnit)
 {
-	DfxParamValue val, def, mn, mx;
+	Value val, def, mn, mx;
 	val.b = inInitialValue;
 	def.b = inDefaultValue;
 	mn.b = false;
 	mx.b = true;
-	init(inName, kDfxParamValueType_boolean, val, def, mn, mx, inUnit, kDfxParamCurve_linear);
-}
-
-//-----------------------------------------------------------------------------
-void DfxParam::releaseValueStrings()
-{
-	// release the parameter value strings, if any
-	if (valueStrings != NULL)
-	{
-		for (int64_t i=0; i < numAllocatedValueStrings; i++)
-		{
-			if (valueStrings[i] != NULL)
-				free(valueStrings[i]);
-			valueStrings[i] = NULL;
-		}
-		free(valueStrings);
-	}
-	valueStrings = NULL;
-
-	#ifdef TARGET_API_AUDIOUNIT
-		// release the CFString versions of the parameter value strings, if any
-		if (valueCFStrings != NULL)
-		{
-			for (int64_t i=0; i < numAllocatedValueStrings; i++)
-			{
-				if (valueCFStrings[i] != NULL)
-					CFRelease(valueCFStrings[i]);
-				valueCFStrings[i] = NULL;
-			}
-			free(valueCFStrings);
-		}
-		valueCFStrings = NULL;
-	#endif
+	init(inName, ValueType::Boolean, val, def, mn, mx, inUnit, Curve::Linear);
 }
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-void DfxParam::setusevaluestrings(bool inNewMode)
+void DfxParam::setusevaluestrings(bool inMode)
 {
-	useValueStrings = inNewMode;
+	mValueStrings.clear();
+#ifdef TARGET_API_AUDIOUNIT
+	mValueCFStrings.clear();
+#endif
 
 	// if we're using value strings, initialize
-	if (inNewMode)
+	if (inMode)
 	{
-		// release any value strings arrays that may have previously been allocated
-		releaseValueStrings();
-
 		// determine how many items there are in the array from the parameter value range
-		numAllocatedValueStrings = getmax_i() - getmin_i() + 1;
-		valueStrings = (char**) malloc(numAllocatedValueStrings * sizeof(*valueStrings));
-		for (int64_t i=0; i < numAllocatedValueStrings; i++)
-		{
-			valueStrings[i] = (char*) malloc(DFX_PARAM_MAX_VALUE_STRING_LENGTH * sizeof(valueStrings[0][0]));
-			valueStrings[i][0] = 0;	// default to empty strings
-		}
+		auto const numAllocatedValueStrings = getmax_i() - getmin_i() + 1;
+		mValueStrings.resize(numAllocatedValueStrings);
 
-		#ifdef TARGET_API_AUDIOUNIT
-			valueCFStrings = (CFStringRef*) malloc(numAllocatedValueStrings * sizeof(*valueCFStrings));
-			for (int64_t i=0; i < numAllocatedValueStrings; i++)
-				valueCFStrings[i] = NULL;
-		#endif
+	#ifdef TARGET_API_AUDIOUNIT
+		mValueCFStrings.resize(numAllocatedValueStrings);
+	#endif
 
-		SetEnforceValueLimits(true);	// make sure not to go out of any array bounds
+		SetEnforceValueLimits(true);  // make sure not to go out of any array bounds
 	}
 }
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-bool DfxParam::setvaluestring(int64_t inIndex, const char * inText)
+bool DfxParam::setvaluestring(int64_t inIndex, char const* inText)
 {
-	if ( !ValueStringIndexIsValid(inIndex) )
-		return false;
+	assert(inText);
 
-	if (inText == NULL)
+	if (!ValueStringIndexIsValid(inIndex))
+	{
 		return false;
+	}
 
 	// the actual index of the array is the incoming index 
 	// minus the parameter's minimum value
-	int64_t arrayIndex = inIndex - getmin_i();
-	strncpy(valueStrings[arrayIndex], inText, DFX_PARAM_MAX_VALUE_STRING_LENGTH);
-	valueStrings[arrayIndex][DFX_PARAM_MAX_VALUE_STRING_LENGTH-1] = 0;
+	auto const arrayIndex = inIndex - getmin_i();
+	mValueStrings.at(arrayIndex).assign(inText, 0, kDfxParameterValueStringMaxLength - 1);
 
-	#ifdef TARGET_API_AUDIOUNIT
-		if (valueCFStrings[arrayIndex] != NULL)
-			CFRelease(valueCFStrings[arrayIndex]);
-		// convert the incoming text to a CFString
-		valueCFStrings[arrayIndex] = CFStringCreateWithCString(kCFAllocatorDefault, inText, kDFX_DefaultCStringEncoding);
-	#endif
+#ifdef TARGET_API_AUDIOUNIT
+	mValueCFStrings.at(arrayIndex).reset(CFStringCreateWithCString(kCFAllocatorDefault, inText, kDFX_DefaultCStringEncoding));
+#endif
 
 	return true;
 }
 
 //-----------------------------------------------------------------------------
 // get a copy of the contents of a specific value string
-bool DfxParam::getvaluestring(int64_t inIndex, char * outText)
+bool DfxParam::getvaluestring(int64_t inIndex, char* outText) const
 {
-	char * text = getvaluestring_ptr(inIndex);
-
-	if (text == NULL)
+	auto const text = getvaluestring_ptr(inIndex);
+	if (!text)
+	{
 		return false;
+	}
 
 	strcpy(outText, text);
 	return true;
@@ -305,28 +211,28 @@ bool DfxParam::getvaluestring(int64_t inIndex, char * outText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the pointer to a specific value string
-char * DfxParam::getvaluestring_ptr(int64_t inIndex)
+char const* DfxParam::getvaluestring_ptr(int64_t inIndex) const
 {
-	if ( !ValueStringIndexIsValid(inIndex) )
-		return NULL;
+	if (!ValueStringIndexIsValid(inIndex))
+	{
+		return nullptr;
+	}
 
-	return valueStrings[inIndex - getmin_i()];
+	return mValueStrings.at(inIndex - getmin_i()).c_str();
 }
 
 //-----------------------------------------------------------------------------
 // safety check for an index into the value strings array
-bool DfxParam::ValueStringIndexIsValid(int64_t inIndex)
+bool DfxParam::ValueStringIndexIsValid(int64_t inIndex) const
 {
-	if (!useValueStrings)
+	if (!getusevaluestrings())
+	{
 		return false;
-	if (valueStrings == NULL)
+	}
+	if ((inIndex < getmin_i()) || (inIndex > getmax_i()))
+	{
 		return false;
-	if ( (inIndex < getmin_i()) || (inIndex > getmax_i()) )
-		return false;
-	// XXX should I rethink this one?
-	if (valueStrings[inIndex - getmin_i()] == NULL)
-		return false;
-
+	}
 	return true;
 }
 
@@ -337,58 +243,58 @@ bool DfxParam::ValueStringIndexIsValid(int64_t inIndex)
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-// figure out the value of a DfxParamValue as float type value
-// perform type conversion if float is not the parameter's "native" type
-double DfxParam::derive_f(DfxParamValue inValue)
+// figure out the value of a Value as float type value
+// (perform type conversion if float is not the parameter's "native" type)
+double DfxParam::derive_f(Value inValue) const noexcept
 {
-	switch (valueType)
+	switch (mValueType)
 	{
-		case kDfxParamValueType_float:
+		case ValueType::Float:
 			return inValue.f;
-		case kDfxParamValueType_int:
-			return (double) inValue.i;
-		case kDfxParamValueType_boolean:
+		case ValueType::Int:
+			return static_cast<double>(inValue.i);
+		case ValueType::Boolean:
 			return (inValue.b != 0) ? 1.0 : 0.0;
 		default:
+			assert(false);
 			return 0.0;
 	}
 }
 
 //-----------------------------------------------------------------------------
-// figure out the value of a DfxParamValue as int type value
-// perform type conversion if int is not the parameter's "native" type
-int64_t DfxParam::derive_i(DfxParamValue inValue)
+// figure out the value of a Value as int type value
+// (perform type conversion if int is not the parameter's "native" type)
+int64_t DfxParam::derive_i(Value inValue) const
 {
-	switch (valueType)
+	switch (mValueType)
 	{
-		case kDfxParamValueType_float:
-			if (inValue.f < 0.0)
-				return (int64_t) (inValue.f - kDfxParam_IntegerPadding);
-			else
-				return (int64_t) (inValue.f + kDfxParam_IntegerPadding);
-		case kDfxParamValueType_int:
+		case ValueType::Float:
+			return static_cast<int64_t>(inValue.f + ((inValue.f < 0.0) ? -kIntegerPadding : kIntegerPadding));
+		case ValueType::Int:
 			return inValue.i;
-		case kDfxParamValueType_boolean:
+		case ValueType::Boolean:
 			return (inValue.b != 0) ? 1 : 0;
 		default:
+			assert(false);
 			return 0;
 	}
 }
 
 //-----------------------------------------------------------------------------
-// figure out the value of a DfxParamValue as boolean type value
-// perform type conversion if boolean is not the parameter's "native" type
-bool DfxParam::derive_b(DfxParamValue inValue)
+// figure out the value of a Value as boolean type value
+// (perform type conversion if boolean is not the parameter's "native" type)
+bool DfxParam::derive_b(Value inValue) const noexcept
 {
-	switch (valueType)
+	switch (mValueType)
 	{
-		case kDfxParamValueType_float:
+		case ValueType::Float:
 			return DBOOL(inValue.f);
-		case kDfxParamValueType_int:
+		case ValueType::Int:
 			return (inValue.i != 0);
-		case kDfxParamValueType_boolean:
+		case ValueType::Boolean:
 			return (inValue.b != 0);
 		default:
+			assert(false);
 			return false;
 	}
 }
@@ -397,40 +303,41 @@ bool DfxParam::derive_b(DfxParamValue inValue)
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
 // XXX this is being obsoleted by the non-class DFX_ContractParameterValue() function
-double DfxParam::contract(double inLiteralValue)
+double DfxParam::contract(double inLiteralValue) const
 {
-	return DFX_ContractParameterValue(inLiteralValue, getmin_f(), getmax_f(), curve, curvespec);
+	return DFX_ContractParameterValue(inLiteralValue, getmin_f(), getmax_f(), mCurve, mCurveSpec);
 }
 
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
-double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, double inMaxValue, DfxParamCurve inCurveType, double inCurveSpec)
+double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec)
 {
-	double valueRange = inMaxValue - inMinValue;
-	static const double oneDivThree = 1.0 / 3.0;
-	static const double logTwo = log(2.0);
+	auto const valueRange = inMaxValue - inMinValue;
+	static constexpr double oneDivThree = 1.0 / 3.0;
+	static double const logTwo = std::log(2.0);
 
 	switch (inCurveType)
 	{
-		case kDfxParamCurve_linear:
-			return (inLiteralValue-inMinValue) / valueRange;
-		case kDfxParamCurve_stepped:
+		case DfxParam::Curve::Linear:
+			return (inLiteralValue - inMinValue) / valueRange;
+		case DfxParam::Curve::Stepped:
 			// XXX is this a good way to do this?
-			return (inLiteralValue-inMinValue) / valueRange;
-		case kDfxParamCurve_sqrt:
-			return (sqrt(std::max(inLiteralValue, 0.0)) * valueRange) + inMinValue;
-		case kDfxParamCurve_squared:
-			return sqrt(std::max((inLiteralValue-inMinValue) / valueRange, 0.0));
-		case kDfxParamCurve_cubed:
-			return pow( (inLiteralValue-inMinValue) / valueRange, oneDivThree );
-		case kDfxParamCurve_pow:
-			return pow( (inLiteralValue-inMinValue) / valueRange, 1.0/inCurveSpec );
-		case kDfxParamCurve_exp:
-			return log(1.0-inMinValue+inLiteralValue) / log(1.0-inMinValue+inMaxValue);
-		case kDfxParamCurve_log:
-			return (log(inLiteralValue/inMinValue) / logTwo) / (log(inMaxValue/inMinValue) / logTwo);
+			return (inLiteralValue - inMinValue) / valueRange;
+		case DfxParam::Curve::SquareRoot:
+			return (std::sqrt(std::max(inLiteralValue, 0.0)) * valueRange) + inMinValue;
+		case DfxParam::Curve::Squared:
+			return std::sqrt(std::max((inLiteralValue - inMinValue) / valueRange, 0.0));
+		case DfxParam::Curve::Cubed:
+			return std::pow((inLiteralValue - inMinValue) / valueRange, oneDivThree);
+		case DfxParam::Curve::Pow:
+			return std::pow((inLiteralValue - inMinValue) / valueRange, 1.0 / inCurveSpec);
+		case DfxParam::Curve::Exp:
+			return std::log(1.0 - inMinValue + inLiteralValue) / std::log(1.0 - inMinValue + inMaxValue);
+		case DfxParam::Curve::Log:
+			return (std::log(inLiteralValue / inMinValue) / logTwo) / (std::log(inMaxValue / inMinValue) / logTwo);
 		default:
+			assert(false);
 			break;
 	}
 
@@ -439,9 +346,9 @@ double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, doub
 
 //-----------------------------------------------------------------------------
 // get the parameter's current value scaled into a generic 0...1 float value
-double DfxParam::get_gen()
+double DfxParam::get_gen() const
 {
-	return DFX_ContractParameterValue(get_f(), getmin_f(), getmax_f(), curve, curvespec);
+	return DFX_ContractParameterValue(get_f(), getmin_f(), getmax_f(), mCurve, mCurveSpec);
 }
 
 
@@ -451,150 +358,167 @@ double DfxParam::get_gen()
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-// set a DfxParamValue with a value of a float type
-// perform type conversion if float is not the parameter's "native" type
-bool DfxParam::accept_f(double inValue, DfxParamValue & outValue)
+// set a Value with a value of a float type
+// (perform type conversion if float is not the parameter's "native" type)
+bool DfxParam::accept_f(double inValue, Value& outValue) const
 {
-	switch (valueType)
+	switch (mValueType)
 	{
-		case kDfxParamValueType_float:
+		case ValueType::Float:
 			outValue.f = inValue;
 			break;
-		case kDfxParamValueType_int:
+		case ValueType::Int:
 			{
-				int64_t oldvalue = outValue.i;
+				auto const entryValue = outValue.i;
 				if (inValue < 0.0)
-					outValue.i = (int64_t) (inValue - kDfxParam_IntegerPadding);
+				{
+					outValue.i = static_cast<int64_t>(inValue - kIntegerPadding);
+				}
 				else
-					outValue.i = (int64_t) (inValue + kDfxParam_IntegerPadding);
-				if (outValue.i == oldvalue)
+				{
+					outValue.i = static_cast<int64_t>(inValue + kIntegerPadding);
+				}
+				if (outValue.i == entryValue)
+				{
 					return false;
+				}
 			}
 			break;
-		case kDfxParamValueType_boolean:
+		case ValueType::Boolean:
 			{
-				unsigned char oldvalue = outValue.b;
+				auto const entryValue = outValue.b;
 				outValue.b = DBOOL(inValue) ? 1 : 0;
-				if (outValue.b == oldvalue)
+				if (outValue.b == entryValue)
+				{
 					return false;
+				}
 			}
 			break;
 		default:
+			assert(false);
 			return false;
 	}
 
-	return true;	// XXX do this smarter?
+	return true;  // XXX do this smarter?
 }
 
 //-----------------------------------------------------------------------------
-// set a DfxParamValue with a value of a int type
-// perform type conversion if int is not the parameter's "native" type
-bool DfxParam::accept_i(int64_t inValue, DfxParamValue & outValue)
+// set a Value with a value of a int type
+// (perform type conversion if int is not the parameter's "native" type)
+bool DfxParam::accept_i(int64_t inValue, Value& outValue) const noexcept
 {
-	switch (valueType)
+	switch (mValueType)
 	{
-		case kDfxParamValueType_float:
-			outValue.f = (double)inValue;
+		case ValueType::Float:
+			outValue.f = static_cast<double>(inValue);
 			break;
-		case kDfxParamValueType_int:
+		case ValueType::Int:
+		{
+			auto const entryValue = outValue.i;
+			outValue.i = inValue;
+			if (outValue.i == entryValue)
 			{
-				int64_t oldvalue = outValue.i;
-				outValue.i = inValue;
-				if (outValue.i == oldvalue)
-					return false;
+				return false;
 			}
 			break;
-		case kDfxParamValueType_boolean:
+		}
+		case ValueType::Boolean:
+		{
+			auto const entryValue = outValue.b;
+			outValue.b = (inValue == 0) ? 0 : 1;
+			if (outValue.b == entryValue)
 			{
-				unsigned char oldvalue = outValue.b;
-				outValue.b = (inValue == 0) ? 0 : 1;
-				if (outValue.b == oldvalue)
-					return false;
+				return false;
 			}
 			break;
+		}
 		default:
+			assert(false);
 			return false;
 	}
 
-	return true;	// XXX do this smarter?
+	return true;  // XXX do this smarter?
 }
 
 //-----------------------------------------------------------------------------
-// set a DfxParamValue with a value of a boolean type
-// perform type conversion if boolean is not the parameter's "native" type
-bool DfxParam::accept_b(bool inValue, DfxParamValue & outValue)
+// set a Value with a value of a boolean type
+// (perform type conversion if boolean is not the parameter's "native" type)
+bool DfxParam::accept_b(bool inValue, Value& outValue) const noexcept
 {
-	switch (valueType)
+	switch (mValueType)
 	{
-		case kDfxParamValueType_float:
+		case ValueType::Float:
 			outValue.f = (inValue ? 1.0 : 0.0);
 			break;
-		case kDfxParamValueType_int:
+		case ValueType::Int:
+		{
+			auto const entryValue = outValue.i;
+			outValue.i = (inValue ? 1 : 0);
+			if (outValue.i == entryValue)
 			{
-				int64_t oldvalue = outValue.i;
-				outValue.i = (inValue ? 1 : 0);
-				if (outValue.i == oldvalue)
-					return false;
+				return false;
 			}
 			break;
-		case kDfxParamValueType_boolean:
+		}
+		case ValueType::Boolean:
+		{
+			auto const entryValue = outValue.b;
+			outValue.b = (inValue ? 1 : 0);
+			if (outValue.b == entryValue)
 			{
-				unsigned char oldvalue = outValue.b;
-				outValue.b = (inValue ? 1 : 0);
-				if (outValue.b == oldvalue)
-					return false;
+				return false;
 			}
 			break;
+		}
 		default:
+			assert(false);
 			return false;
 	}
 
-	return true;	// XXX do this smarter?
+	return true;  // XXX do this smarter?
 }
 
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double DfxParam::expand(double inGenValue)
+double DfxParam::expand(double inGenValue) const
 {
-	return DFX_ExpandParameterValue(inGenValue, getmin_f(), getmax_f(), curve, curvespec);
+	return DFX_ExpandParameterValue(inGenValue, getmin_f(), getmax_f(), mCurve, mCurveSpec);
 }
 
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inMaxValue, DfxParamCurve inCurveType, double inCurveSpec)
+double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec)
 {
-	double valueRange = inMaxValue - inMinValue;
-	static const double logTwoInv = 1.0 / log(2.0);
+	auto const valueRange = inMaxValue - inMinValue;
+	static double const logTwoInv = 1.0 / std::log(2.0);
 
 	switch (inCurveType)
 	{
-		case kDfxParamCurve_linear:
+		case DfxParam::Curve::Linear:
 			return (inGenValue * valueRange) + inMinValue;
-		case kDfxParamCurve_stepped:
-			{
-				double tempval = (inGenValue * valueRange) + inMinValue;
-				if (tempval < 0.0)
-					tempval -= kDfxParam_IntegerPadding;
-				else
-					tempval += kDfxParam_IntegerPadding;
-				// XXX is this a good way to do this?
-				return (double) ((int64_t)tempval);
-			}
-		case kDfxParamCurve_sqrt:
-			return (sqrt(std::max(inGenValue, 0.0)) * valueRange) + inMinValue;
-		case kDfxParamCurve_squared:
+		case DfxParam::Curve::Stepped:
+		{
+			double tempval = (inGenValue * valueRange) + inMinValue;
+			tempval += (tempval < 0.0) ? -DfxParam::kIntegerPadding : DfxParam::kIntegerPadding;
+			// XXX is this a good way to do this?
+			return static_cast<double>(static_cast<int64_t>(tempval));
+		}
+		case DfxParam::Curve::SquareRoot:
+			return (std::sqrt(std::max(inGenValue, 0.0)) * valueRange) + inMinValue;
+		case DfxParam::Curve::Squared:
 			return (inGenValue*inGenValue * valueRange) + inMinValue;
-		case kDfxParamCurve_cubed:
+		case DfxParam::Curve::Cubed:
 			return (inGenValue*inGenValue*inGenValue * valueRange) + inMinValue;
-		case kDfxParamCurve_pow:
-			return (pow(inGenValue, inCurveSpec) * valueRange) + inMinValue;
-		case kDfxParamCurve_exp:
-			return exp( log(valueRange+1.0) * inGenValue ) + inMinValue - 1.0;
-		case kDfxParamCurve_log:
-			return inMinValue * pow( 2.0, inGenValue * log(inMaxValue/inMinValue)*logTwoInv );
+		case DfxParam::Curve::Pow:
+			return (std::pow(inGenValue, inCurveSpec) * valueRange) + inMinValue;
+		case DfxParam::Curve::Exp:
+			return std::exp(std::log(valueRange + 1.0) * inGenValue) + inMinValue - 1.0;
+		case DfxParam::Curve::Log:
+			return inMinValue * std::pow(2.0, inGenValue * std::log(inMaxValue / inMinValue) * logTwoInv);
 		default:
+			assert(false);
 			break;
 	}
 
@@ -602,12 +526,12 @@ double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inM
 }
 
 //-----------------------------------------------------------------------------
-// set the parameter's current value using a DfxParamValue
-void DfxParam::set(DfxParamValue inNewValue)
+// set the parameter's current value using a Value
+void DfxParam::set(Value inNewValue)
 {
-	value = inNewValue;
+	mValue = inNewValue;
 	limit();
-	setchanged(true);	// XXX do this smarter?
+	setchanged(true);  // XXX do this smarter?
 	settouched(true);
 }
 
@@ -615,10 +539,12 @@ void DfxParam::set(DfxParamValue inNewValue)
 // set the current parameter value using a float type value
 void DfxParam::set_f(double inNewValue)
 {
-	bool changed_1 = accept_f(inNewValue, value);
-	bool changed_2 = limit();
-	if (changed_1 || changed_2)
+	auto const changed1 = accept_f(inNewValue, mValue);
+	auto const changed2 = limit();
+	if (changed1 || changed2)
+	{
 		setchanged(true);
+	}
 	settouched(true);
 }
 
@@ -626,10 +552,12 @@ void DfxParam::set_f(double inNewValue)
 // set the current parameter value using an int type value
 void DfxParam::set_i(int64_t inNewValue)
 {
-	bool changed_1 = accept_i(inNewValue, value);
-	bool changed_2 = limit();
-	if (changed_1 || changed_2)
+	auto const changed1 = accept_i(inNewValue, mValue);
+	auto const changed2 = limit();
+	if (changed1 || changed2)
+	{
 		setchanged(true);
+	}
 	settouched(true);
 }
 
@@ -637,10 +565,12 @@ void DfxParam::set_i(int64_t inNewValue)
 // set the current parameter value using a boolean type value
 void DfxParam::set_b(bool inNewValue)
 {
-	bool changed_1 = accept_b(inNewValue, value);
-	bool changed_2 = limit();
-	if (changed_1 || changed_2)
+	auto const changed1 = accept_b(inNewValue, mValue);
+	auto const changed2 = limit();
+	if (changed1 || changed2)
+	{
 		setchanged(true);
+	}
 	settouched(true);
 }
 
@@ -648,7 +578,7 @@ void DfxParam::set_b(bool inNewValue)
 // set the parameter's current value with a generic 0...1 float value
 void DfxParam::set_gen(double inGenValue)
 {
-	set_f( DFX_ExpandParameterValue(inGenValue, getmin_f(), getmax_f(), curve, curvespec) );
+	set_f(DFX_ExpandParameterValue(inGenValue, getmin_f(), getmax_f(), mCurve, mCurveSpec));
 }
 
 
@@ -658,31 +588,42 @@ void DfxParam::set_gen(double inGenValue)
 #pragma mark -
 
 //-----------------------------------------------------------------------------
+void DfxParam::SetEnforceValueLimits(bool inMode)
+{
+	mEnforceValueLimits = inMode;
+	if (inMode)
+	{
+		limit();
+	}
+}
+
+//-----------------------------------------------------------------------------
 // randomize the current parameter value
 // this takes into account the parameter curve
-DfxParamValue DfxParam::randomize()
+DfxParam::Value DfxParam::randomize()
 {
-	changed = true;	// XXX do this smarter?
+	mChanged = true;  // XXX do this smarter?
 	settouched(true);
 
-	switch (valueType)
+	switch (mValueType)
 	{
-		case kDfxParamValueType_float:
-			set_gen( (double)rand() / (double)RAND_MAX );
+		case ValueType::Float:
+			set_gen(dfx::math::Rand<double>());
 			break;
-		case kDfxParamValueType_int:
-			value.i = (rand() % ((max.i-min.i)+1)) + min.i;
+		case ValueType::Int:
+			mValue.i = (rand() % ((mMaxValue.i - mMinValue.i) + 1)) + mMinValue.i;
 			break;
-		case kDfxParamValueType_boolean:
+		case ValueType::Boolean:
 			// but we don't really need to worry about the curve for boolean values
-			value.b = (rand() % 2) ? true : false;
+			mValue.b = (rand() % 2) ? true : false;
 			break;
 		default:
+			assert(false);
 			break;
 	}
 
 	// just in case this ever expedites things
-	return value;
+	return mValue;
 }
 
 //-----------------------------------------------------------------------------
@@ -690,38 +631,50 @@ DfxParamValue DfxParam::randomize()
 // returns true if the value was altered, false if not
 bool DfxParam::limit()
 {
-	if (!enforceValueLimits)
-		return false;
-
-	switch (valueType)
+	if (!mEnforceValueLimits)
 	{
-		case kDfxParamValueType_float:
-			if (value.f > max.f)
-				value.f = max.f;
-			else if (value.f < min.f)
-				value.f = min.f;
-			else return false;
+		return false;
+	}
+
+	switch (mValueType)
+	{
+		case ValueType::Float:
+		{
+			auto const entryValue = mValue.f;
+			mValue.f = std::clamp(mValue.f, mMinValue.f, mMaxValue.f);
+			if (mValue.f == entryValue)
+			{
+				return false;
+			}
 			break;
-		case kDfxParamValueType_int:
-			if (value.i > max.i)
-				value.i = max.i;
-			else if (value.i < min.i)
-				value.i = min.i;
-			else return false;
+		}
+		case ValueType::Int:
+		{
+			auto const entryValue = mValue.i;
+			mValue.i = std::clamp(mValue.i, mMinValue.i, mMaxValue.i);
+			if (mValue.i == entryValue)
+			{
+				return false;
+			}
 			break;
-		case kDfxParamValueType_boolean:
-			if (value.b > max.b)
-				value.b = max.b;
-			else if (value.b < min.b)
-				value.b = min.b;
-			else return false;
+		}
+		case ValueType::Boolean:
+		{
+			auto const entryValue = mValue.b;
+			mValue.b = std::clamp(mValue.b, mMinValue.b, mMaxValue.b);
+			if (mValue.b == entryValue)
+			{
+				return false;
+			}
 			break;
+		}
 		default:
+			assert(false);
 			return false;
 	}
 
 	// if we reach this point, then the value was changed, so return true
-	changed = true;
+	mChanged = true;
 	settouched(true);
 	return true;
 }
@@ -734,13 +687,15 @@ bool DfxParam::limit()
 
 //-----------------------------------------------------------------------------
 // set the property indicating whether the parameter value has changed
-void DfxParam::setchanged(bool inChanged)
+void DfxParam::setchanged(bool inChanged) noexcept
 {
 	// XXX this is when we stuff the current value away as the old value (?)
 	if (!inChanged)
-		oldValue = value;
+	{
+		mOldValue = mValue;
+	}
 
-	changed = inChanged;
+	mChanged = inChanged;
 }
 
 
@@ -751,105 +706,95 @@ void DfxParam::setchanged(bool inChanged)
 
 //-----------------------------------------------------------------------------
 // get a copy of the text of the parameter name
-void DfxParam::getname(char * outText)
+void DfxParam::getname(char* outText) const
 {
-	if ( (name != NULL) && (outText != NULL) )
-		strcpy(outText, name);
+	assert(outText);
+	strcpy(outText, mName.c_str());
 }
 
 //-----------------------------------------------------------------------------
 // get a text string of the unit type
-void DfxParam::getunitstring(char * outText)
+void DfxParam::getunitstring(char* outText) const
 {
-	if (outText == NULL)
-		return;
+	assert(outText);
 
-	switch (unit)
+	switch (mUnit)
 	{
-		case kDfxParamUnit_generic:
+		case Unit::Generic:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_percent:
+		case Unit::Percent:
 			strcpy(outText, "%");
 			break;
-		case kDfxParamUnit_lineargain:
+		case Unit::LinearGain:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_decibles:
+		case Unit::Decibles:
 			strcpy(outText, "dB");
 			break;
-		case kDfxParamUnit_drywetmix:
+		case Unit::DryWetMix:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_hz:
+		case Unit::Hz:
 			strcpy(outText, "Hz");
 			break;
-		case kDfxParamUnit_seconds:
+		case Unit::Seconds:
 			strcpy(outText, "seconds");
 			break;
-		case kDfxParamUnit_ms:
+		case Unit::MS:
 			strcpy(outText, "ms");
 			break;
-		case kDfxParamUnit_samples:
+		case Unit::Samples:
 			strcpy(outText, "samples");
 			break;
-		case kDfxParamUnit_scalar:
+		case Unit::Scalar:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_divisor:
+		case Unit::Divisor:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_exponent:
+		case Unit::Exponent:
 			strcpy(outText, "exponent");
 			break;
-		case kDfxParamUnit_semitones:
+		case Unit::Semitones:
 			strcpy(outText, "semitones");
 			break;
-		case kDfxParamUnit_octaves:
+		case Unit::Octaves:
 			strcpy(outText, "octaves");
 			break;
-		case kDfxParamUnit_cents:
+		case Unit::Cents:
 			strcpy(outText, "cents");
 			break;
-		case kDfxParamUnit_notes:
+		case Unit::Notes:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_pan:
+		case Unit::Pan:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_bpm:
+		case Unit::BPM:
 			strcpy(outText, "bpm");
 			break;
-		case kDfxParamUnit_beats:
+		case Unit::Beats:
 			strcpy(outText, "per beat");
 			break;
-		case kDfxParamUnit_list:
+		case Unit::List:
 			strcpy(outText, "");
 			break;
-		case kDfxParamUnit_custom:
-			if (customUnitString == NULL)
-				strcpy(outText, "");
-			else
-				strcpy(outText, customUnitString);
+		case Unit::Custom:
+			strcpy(outText, mCustomUnitString.c_str());
 			break;
 		default:
+			assert(false);
 			break;
 	}
 }
 
 //-----------------------------------------------------------------------------
 // set the text for a custom unit type display
-void DfxParam::setcustomunitstring(const char * inText)
+void DfxParam::setcustomunitstring(char const* inText)
 {
-	if (inText == NULL)
-		return;
-
-	// allocate for the custom unit type string if we haven't yet
-	if (customUnitString == NULL)
-		customUnitString = (char*) malloc(DFX_PARAM_MAX_UNIT_STRING_LENGTH * sizeof(*customUnitString));
-
-	strncpy(customUnitString, inText, DFX_PARAM_MAX_UNIT_STRING_LENGTH);
-	customUnitString[DFX_PARAM_MAX_UNIT_STRING_LENGTH-1] = 0;
+	assert(inText);
+	mCustomUnitString.assign(inText, 0, kDfxParameterUnitStringMaxLength - 1);
 }
 
 
@@ -862,102 +807,56 @@ void DfxParam::setcustomunitstring(const char * inText)
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-DfxPreset::DfxPreset()
+DfxPreset::DfxPreset(long inNumParameters)
 {
-	// use PostConstructor to allocate parameters
-	name = NULL;
-	values = NULL;
-	numParameters = 0;
-
-	name = (char*) malloc(DFX_PRESET_MAX_NAME_LENGTH * sizeof(*name));
-	name[0] = 0;
-
-	#ifdef TARGET_API_AUDIOUNIT
-		cfname = NULL;
-	#endif
+	DfxParam::Value const emptyValue = {0};
+	mValues.assign(inNumParameters, emptyValue);
 }
 
 //-----------------------------------------------------------------------------
-DfxPreset::~DfxPreset()
+void DfxPreset::setvalue(long inParameterIndex, DfxParam::Value inNewValue)
 {
-	if (values != NULL)
-		free(values);
-	values = NULL;
-	if (name != NULL)
-		free(name);
-	name = NULL;
-
-	#ifdef TARGET_API_AUDIOUNIT
-		if (cfname != NULL)
-			CFRelease(cfname);
-		cfname = NULL;
-	#endif
-}
-
-//-----------------------------------------------------------------------------
-// call this immediately after the constructor (because new[] can't take arguments)
-void DfxPreset::PostConstructor(long inNumParameters)
-{
-	numParameters = inNumParameters;
-	if (values != NULL)
-		free(values);
-	values = (DfxParamValue*) malloc(numParameters * sizeof(*values));
-	if (values != NULL)
+	if ((inParameterIndex >= 0) && (inParameterIndex < static_cast<long>(mValues.size())))
 	{
-		for (long i=0; i < numParameters; i++)
-			values[i].i = 0;
+		mValues[inParameterIndex] = inNewValue;
 	}
 }
 
-/*
 //-----------------------------------------------------------------------------
-void setvalue(long inParameterIndex, DfxParamValue inNewValue)
+DfxParam::Value DfxPreset::getvalue(long inParameterIndex) const
 {
-	if ( (values != NULL) && ((inParameterIndex >= 0) && (inParameterIndex < numParameters)) )
-		values[inParameterIndex] = inNewValue;
-}
-
-//-----------------------------------------------------------------------------
-DfxParamValue getvalue(long inParameterIndex)
-{
-	if ( (values != NULL) && ((inParameterIndex >= 0) && (inParameterIndex < numParameters)) )
-		return values[inParameterIndex];
+	if ((inParameterIndex >= 0) && (inParameterIndex < static_cast<long>(mValues.size())))
+	{
+		return mValues[inParameterIndex];
+	}
 	else
 	{
-		DfxParamValue dummy = {0};
+		DfxParam::Value dummy = {0};
 		return dummy;
 	}
 }
-*/
 
 //-----------------------------------------------------------------------------
-void DfxPreset::setname(const char * inText)
+void DfxPreset::setname(char const* inText)
 {
-	if (inText == NULL)
-		return;
+	assert(inText);
 
-	strncpy(name, inText, DFX_PRESET_MAX_NAME_LENGTH);
-	name[DFX_PRESET_MAX_NAME_LENGTH-1] = 0;
+	mName.assign(inText, 0, kDfxPresetNameMaxLength - 1);
 
-	#ifdef TARGET_API_AUDIOUNIT
-		if (strlen(inText) > 0)
-		{
-			if (cfname != NULL)
-				CFRelease(cfname);
-			cfname = CFStringCreateWithCString(kCFAllocatorDefault, inText, kDFX_DefaultCStringEncoding);
-		}
-	#endif
+#ifdef TARGET_API_AUDIOUNIT
+	mCFName.reset(CFStringCreateWithCString(kCFAllocatorDefault, inText, kDFX_DefaultCStringEncoding));
+#endif
 }
 
 //-----------------------------------------------------------------------------
-void DfxPreset::getname(char * outText)
+void DfxPreset::getname(char* outText) const
 {
-	if (outText != NULL)
-		strcpy(outText, name);
+	assert(outText);
+	strcpy(outText, mName.c_str());
 }
 
 //-----------------------------------------------------------------------------
-const char * DfxPreset::getname_ptr()
+char const* DfxPreset::getname_ptr() const noexcept
 {
-	return name;
+	return mName.c_str();
 }

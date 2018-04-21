@@ -1,107 +1,113 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2018  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
-Welcome to our FIR filter.
-by Sophia Poirier  ][  January 2002
+Welcome to our Finite Impulse Response filter.
 ------------------------------------------------------------------------*/
 
 #include "firfilter.h"
+
+#include <cassert>
 
 #include "dfxmath.h"
 
 
 
 //-----------------------------------------------------------------------------
-// you're supposed to use use an odd number of taps
-void calculateFIRidealLowpassCoefficients(double inCutoff, double inSampleRate, 
-											long inNumTaps, float * inCoefficients)
-{
-	// get the cutoff as a ratio of cutoff to Nyquist, scaled from 0 to Pi
-	double corner = (inCutoff / (inSampleRate*0.5)) * kDFX_PI_d;
+float besselIZero(float input);
+float besselIZero2(float input);
 
-	long middleCoeff;
+
+//-----------------------------------------------------------------------------
+// you're supposed to use use an odd number of taps
+void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
+													   long inNumTaps, float* outCoefficients)
+{
+	assert(inNumTaps % 2);
+
+	// get the cutoff as a ratio of cutoff to Nyquist, scaled from 0 to Pi
+	double const corner = (inCutoff / (inSampleRate * 0.5)) * dfx::math::kPi<double>;
+
+	long middleCoeff {};
 	if (inNumTaps % 2)
 	{
-		middleCoeff = (inNumTaps-1) / 2;
-		inCoefficients[middleCoeff] = corner / kDFX_PI_d;
+		middleCoeff = (inNumTaps - 1) / 2;
+		outCoefficients[middleCoeff] = corner / dfx::math::kPi<double>;
 	}
 	else
-		middleCoeff = inNumTaps / 2;
-
-	for (long n=0; n < middleCoeff; n++)
 	{
-		double value = (double)n - ((double)(inNumTaps-1) * 0.5);
-		inCoefficients[n] = sin(value * corner) / (value * kDFX_PI_d);
-		inCoefficients[inNumTaps - 1 - n] = inCoefficients[n];
+		middleCoeff = inNumTaps / 2;
+	}
+
+	for (long n = 0; n < middleCoeff; n++)
+	{
+		double const value = static_cast<double>(n) - (static_cast<double>(inNumTaps - 1) * 0.5);
+		outCoefficients[n] = std::sin(value * corner) / (value * dfx::math::kPi<double>);
+		outCoefficients[inNumTaps - 1 - n] = outCoefficients[n];
 	}
 }
 
 //-----------------------------------------------------------------------------
-void applyKaiserWindow(long inNumTaps, float * inCoefficients, float inAttenuation)
+void dfx::FIRFilter::applyKaiserWindow(long inNumTaps, float* outCoefficients, float inAttenuation)
 {
 	// beta is 0 if the attenuation is less than 21 dB
 	float beta = 0.0f;
 	if (inAttenuation >= 50.0f)
-		beta = 0.1102f * (inAttenuation - 8.71f);
-	else if ( (inAttenuation < 50.0f) && (inAttenuation >= 21.0f) )
 	{
-		beta = 0.5842f * powf( (inAttenuation - 21.0f), 0.4f);
+		beta = 0.1102f * (inAttenuation - 8.71f);
+	}
+	else if ((inAttenuation < 50.0f) && (inAttenuation >= 21.0f))
+	{
+		beta = 0.5842f * std::pow((inAttenuation - 21.0f), 0.4f);
 		beta += 0.07886f * (inAttenuation - 21.0f);
 	}
 
-	long halfLength;
-	if (inNumTaps % 2)
-		halfLength = (inNumTaps + 1) / 2;
-	else
-		halfLength = inNumTaps / 2;
-
-	for (long n=0; n < halfLength; n++)
+	long const halfLength = (inNumTaps + 1) / 2;
+	for (long n = 0; n < halfLength; n++)
 	{
-		inCoefficients[n] *= besselIzero(beta * 
-					sqrtf(1.0f - powf( (1.0f-((2.0f*n)/((float)(inNumTaps-1)))), 2.0f ))) 
-				/ besselIzero(beta);
-		inCoefficients[inNumTaps-1-n] = inCoefficients[n];
+		outCoefficients[n] *= besselIZero(beta * std::sqrt(1.0f - std::pow((1.0f - ((2.0f * n) / (static_cast<float>(inNumTaps - 1)))), 2.0f))) / besselIZero(beta);
+		outCoefficients[inNumTaps - 1 - n] = outCoefficients[n];
 	}
 } 
 
 //-----------------------------------------------------------------------------
-float besselIzero(float input)
+float besselIZero(float input)
 {
 	float sum = 1.0f;
-	float halfIn = input * 0.5f;
+	float const halfIn = input * 0.5f;
 	float denominator = 1.0f;
 	float numerator = 1.0f;
-	for (int m=1; m <= 32; m++)
+	for (int m = 1; m <= 32; m++)
 	{
 		numerator *= halfIn;
-		denominator *= (float)m;
-		float term = numerator / denominator;
+		denominator *= static_cast<float>(m);
+		float const term = numerator / denominator;
 		sum += term * term;
 	}
 	return sum;
 }
 
 //-----------------------------------------------------------------------------
-float besselIzero2(float input)
+float besselIZero2(float input)
 {
 	float sum = 1.0f;
 	float ds = 1.0f;
@@ -113,7 +119,7 @@ float besselIzero2(float input)
 		ds *= (input * input) / (d * d);
 		sum += ds;
 	}
-	while ( ds > (1E-7f * sum) );
+	while (ds > (1E-7f * sum));
 
 	return sum;
 }

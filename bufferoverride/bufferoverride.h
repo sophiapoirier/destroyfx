@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2016  Sophia Poirier
+Copyright (C) 2001-2018  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -22,9 +22,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
+#include <vector>
+
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "lfo.h"
+#include "temporatetable.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -32,21 +35,21 @@ To contact the author, use the contact form at http://destroyfx.org/
 enum
 {
 	kDivisor,
-	kBufferSize_abs,
-	kBufferSize_sync,
+	kBufferSize_MS,
+	kBufferSize_Sync,
 	kBufferTempoSync,
 	kBufferInterrupt,
 
-	kDivisorLFOrate_abs,
-	kDivisorLFOrate_sync,
-	kDivisorLFOdepth,
-	kDivisorLFOshape,
-	kDivisorLFOtempoSync,
-	kBufferLFOrate_abs,
-	kBufferLFOrate_sync,
-	kBufferLFOdepth,
-	kBufferLFOshape,
-	kBufferLFOtempoSync,
+	kDivisorLFORate_Hz,
+	kDivisorLFORate_Sync,
+	kDivisorLFODepth,
+	kDivisorLFOShape,
+	kDivisorLFOTempoSync,
+	kBufferLFORate_Hz,
+	kBufferLFORate_Sync,
+	kBufferLFODepth,
+	kBufferLFOShape,
+	kBufferLFOTempoSync,
 
 	kSmooth,
 	kDryWetMix,
@@ -61,40 +64,34 @@ enum
 };
 
 //----------------------------------------------------------------------------- 
-// constants
-
-const long kNumPresets = 16;
-
-// We need this stuff to get some maximum buffer size and allocate for that.
-// This is 42 bpm, which should be sufficient.
-const double kMinAllowableBPS = 0.7;
-
-enum {
-	kMidiMode_nudge,
-	kMidiMode_trigger,
-	kNumMidiModes
-};
-
-
-//----------------------------------------------------------------------------- 
 class BufferOverride : public DfxPlugin
 {
 public:
+	enum
+	{
+		kMidiMode_Nudge,
+		kMidiMode_Trigger,
+		kNumMidiModes
+	};
+
 	BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual ~BufferOverride();
 
-	virtual long initialize();
-	virtual void cleanup();
-	virtual void reset();
+	long initialize() override;
+	void cleanup() override;
+	void reset() override;
 
-	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing = true);
-	virtual void processparameters();
+	void processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing = true) override;
+	void processparameters() override;
 
-	virtual bool createbuffers();
-	virtual void releasebuffers();
+	bool createbuffers() override;
+	void releasebuffers() override;
 
 
 private:
+	// We need this stuff to get some maximum buffer size and allocate for that.
+	// This is 42 bpm, which should be sufficient.
+	static constexpr double kMinAllowableBPS = 0.7;
+
 	void updateBuffer(unsigned long samplePos);
 
 	void heedBufferOverrideEvents(unsigned long samplePos);
@@ -104,44 +101,44 @@ private:
 	void initPresets();
 
 	// the parameters
-	float divisor, bufferSizeMs, bufferSizeSync;
-	bool bufferTempoSync, bufferInterrupt, useHostTempo;
-	float smooth, dryWetMix;
-	double pitchbendRange, userTempo;
-	long midiMode;
+	float mDivisor = 1.0f, mBufferSizeMS = 0.0f, mBufferSizeSync = 0.0f;
+	bool mBufferTempoSync = false, mBufferInterrupt = false, mUseHostTempo = false;
+	float mSmoothPortion = 0.0f;
+	double mPitchbendRange = 0.0, mUserTempoBPM = 0.0;
+	long mMidiMode = 0;
+	bool mDivisorLFOTempoSync = false, mBufferLFOTempoSync = false;
+	float mDivisorLFORateHz = 0.0f, mBufferLFORateHz = 0.0f;  // LFO rate (in Hz)
+	float mDivisorLFOTempoRate = 0.0f, mBufferLFOTempoRate = 0.0f;  // LFO rate (in cycles per beat)
 
-	DfxSmoothedValue<float> inputGain, outputGain;  // the effective states of the dry/wet mix
+	DfxSmoothedValue<float> mInputGain, mOutputGain;  // the effective states of the dry/wet mix
 
-	long currentForcedBufferSize;	// the size of the larger, imposed buffer
-	float ** buffers;	// this stores the forced buffer
-	float * outval;	// array of current audio output values (1 for each channel)
-	unsigned long numBuffers;	// how many buffers we have allocated at the moment
-	long writePos;	// the current sample position within the forced buffer
+	long mCurrentForcedBufferSize = 0;  // the size of the larger, imposed buffer
+	std::vector<std::vector<float>> mBuffers;  // this stores the forced buffer
+	std::vector<float> mAudioOutputValues;  // array of current audio output values (1 for each channel)
+	long mWritePos = 0;  // the current sample position within the forced buffer
 
-	long minibufferSize;	// the current size of the divided "mini" buffer
-	long prevMinibufferSize;	// the previous size
-	long readPos;	// the current sample position within the minibuffer
-	float currentBufferDivisor;	// the current value of the divisor with LFO possibly applied
+	long mMinibufferSize = 0;  // the current size of the divided "mini" buffer
+	long mPrevMinibufferSize = 0;  // the previous size
+	long mReadPos = 0;  // the current sample position within the minibuffer
 
-	float numLFOpointsDivSR;	// the number of LFO table points divided by the sampling rate
+	float mNumLFOpointsDivSR = 0.0f;  // the number of LFO table points divided by the sampling rate
 
-	double currentTempoBPS;	// tempo in beats per second
-	bool needResync;
+	double mCurrentTempoBPS = 0.0;  // tempo in beats per second
+	bool mNeedResync = false;
+	dfx::TempoRateTable const mTempoRateTable;
 
-	long SUPER_MAX_BUFFER;
+	long mSmoothDur = 0, mSmoothCount = 0;  // total duration and sample counter for the minibuffer transition smoothing period
+	float mSmoothStep = 0.0f;  // the gain increment for each sample "step" during the smoothing period
+	float mSqrtFadeIn = 0.0f, mSqrtFadeOut = 0.0f;  // square root of the smoothing gains, for equal power crossfading
+//	float mSmoothFract = 0.0f;
 
-	long smoothDur, smoothcount;	// total duration and sample counter for the minibuffer transition smoothing period
-	float smoothStep;	// the gain increment for each sample "step" during the smoothing period
-	float sqrtFadeIn, sqrtFadeOut;	// square root of the smoothing gains, for equal power crossfading
-	float smoothFract;
+	double mPitchBend = 0.0, mOldPitchBend = 0.0;  // pitchbending scalar values
+	bool mOldNote = false;  // says if there was an old, unnatended note-on or note-off from a previous block
+	int mLastNoteOn = 0, mLastPitchbend = 0;  // these carry over the last events from a previous processing block
+	bool mDivisorWasChangedByHand = false;  // for MIDI trigger mode - tells us to respect the fDivisor value
+	bool mDivisorWasChangedByMIDI = false;  // tells the GUI that the divisor displays need updating
 
-	double pitchbend, oldPitchbend;	// pitchbending scalar values
-	bool oldNote;	// says if there was an old, unnatended note-on or note-off from a previous block
-	int lastNoteOn, lastPitchbend;	// these carry over the last events from a previous processing block
-	bool divisorWasChangedByHand;	// for MIDI trigger mode - tells us to respect the fDivisor value
-	bool divisorWasChangedByMIDI;	// tells the GUI that the divisor displays need updating
+	dfx::LFO mDivisorLFO, mBufferLFO;
 
-	LFO * divisorLFO, * bufferLFO;
-
-	float fadeOutGain, fadeInGain, realFadePart, imaginaryFadePart;	// for trig crossfading
+	float mFadeOutGain = 0.0f, mFadeInGain = 0.0f, mRealFadePart = 0.0f, mImaginaryFadePart = 0.0f;  // for trig crossfading
 };

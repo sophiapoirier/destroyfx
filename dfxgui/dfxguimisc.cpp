@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -22,7 +22,19 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #include "dfxguimisc.h"
-#include "dfxguieditor.h"
+
+#include <algorithm>
+
+#include "dfxmisc.h"
+
+#if TARGET_OS_MAC
+	#include <Carbon/Carbon.h>
+#endif
+
+
+//-----------------------------------------------------------------------------
+DGColor const DGColor::kBlack(kBlackCColor);
+DGColor const DGColor::kWhite(kWhiteCColor);
 
 
 #if 0
@@ -45,7 +57,7 @@ void DGGraphicsContext::setAlpha(float inAlpha)
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextSetAlpha(context, inAlpha);
 #endif
 }
@@ -55,7 +67,7 @@ void DGGraphicsContext::setAntialias(bool inShouldAntialias)
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 	{
 		CGContextSetShouldAntialias(context, inShouldAntialias);
 		CGContextSetShouldSmoothFonts(context, inShouldAntialias);
@@ -70,7 +82,7 @@ void DGGraphicsContext::setAntialiasQuality(DGAntialiasQuality inQualityLevel)
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 	{
 		CGInterpolationQuality cgQuality;
 		switch (inQualityLevel)
@@ -106,7 +118,7 @@ void DGGraphicsContext::setFillColor(DGColor inColor)
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextSetRGBFillColor(context, inColor.r, inColor.g, inColor.b, inColor.a);
 #endif
 }
@@ -116,7 +128,7 @@ void DGGraphicsContext::setStrokeColor(DGColor inColor)
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextSetRGBStrokeColor(context, inColor.r, inColor.g, inColor.b, inColor.a);
 #endif
 }
@@ -126,7 +138,7 @@ void DGGraphicsContext::setLineWidth(float inLineWidth)
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextSetLineWidth(context, inLineWidth);
 #endif
 }
@@ -136,7 +148,7 @@ void DGGraphicsContext::beginPath()
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextBeginPath(context);
 #endif
 }
@@ -147,7 +159,7 @@ void DGGraphicsContext::endPath()
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextClosePath(context);
 #endif
 }
@@ -157,7 +169,7 @@ void DGGraphicsContext::fillPath()
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextFillPath(context);
 #endif
 }
@@ -167,7 +179,7 @@ void DGGraphicsContext::strokePath()
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextStrokePath(context);
 #endif
 }
@@ -175,12 +187,12 @@ void DGGraphicsContext::strokePath()
 //-----------------------------------------------------------------------------
 void DGGraphicsContext::fillRect(DGRect * inRect)
 {
-	if (inRect == NULL)
+	if (inRect == nullptr)
 		return;
 
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 	{
 		CGRect cgRect = inRect->convertToCGRect(portHeight);
 		CGContextFillRect(context, cgRect);
@@ -191,12 +203,12 @@ void DGGraphicsContext::fillRect(DGRect * inRect)
 //-----------------------------------------------------------------------------
 void DGGraphicsContext::strokeRect(DGRect * inRect, float inLineWidth)
 {
-	if (inRect == NULL)
+	if (inRect == nullptr)
 		return;
 
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 	{
 		CGRect cgRect = inRect->convertToCGRect(portHeight);
 		const float halfLineWidth = inLineWidth / 2.0f;
@@ -216,7 +228,7 @@ void DGGraphicsContext::moveToPoint(float inX, float inY)
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 	{
 		beginPath();
 		CGContextMoveToPoint(context, inX, inY);
@@ -229,7 +241,7 @@ void DGGraphicsContext::addLineToPoint(float inX, float inY)
 {
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 		CGContextAddLineToPoint(context, inX, inY);
 #endif
 }
@@ -263,7 +275,7 @@ void DGGraphicsContext::drawLine(float inStartX, float inStartY, float inEndX, f
 //-----------------------------------------------------------------------------
 void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
 {
-	if (inFontName == NULL)
+	if (inFontName == nullptr)
 		return;
 
 	fontSize = inFontSize;	// remember the value
@@ -272,15 +284,15 @@ void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
 
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context != NULL)
+	if (context != nullptr)
 	{
 		CGContextSelectFont(context, inFontName, inFontSize, kCGEncodingMacRoman);
 
 #if 0
-		CFStringRef fontCFName = CFStringCreateWithCString(kCFAllocatorDefault, inFontName, kCFStringEncodingUTF8);
-		if (fontCFName != NULL)
+		const dfx::UniqueCFType<CFStringRef> fontCFName(CFStringCreateWithCString(kCFAllocatorDefault, inFontName, kCFStringEncodingUTF8));
+		if (fontCFName)
 		{
-			ATSFontRef atsFont = ATSFontFindFromName(fontCFName, kATSOptionFlagsDefault);
+			ATSFontRef atsFont = ATSFontFindFromName(fontCFName.get(), kATSOptionFlagsDefault);
 			ATSFontMetrics verticalMetrics = {0};
 			status = ATSFontGetVerticalMetrics(atsFont, kATSOptionFlagsDefault, &verticalMetrics);
 			if (status == noErr)
@@ -294,7 +306,6 @@ printf("caps height = %.3f\n", verticalMetrics.capHeight);
 printf("littles height = %.3f\n", verticalMetrics.xHeight);
 */
 			}
-			CFRelease(fontCFName);
 		}
 #endif
 	}
@@ -304,12 +315,12 @@ printf("littles height = %.3f\n", verticalMetrics.xHeight);
 //-----------------------------------------------------------------------------
 void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, DGTextAlignment inAlignment)
 {
-	if ( (inText == NULL) || (inRegion == NULL) )
+	if ( (inText == nullptr) || (inRegion == nullptr) )
 		return;
 
 // XXX use VSTGUI implementation
 #if TARGET_OS_MAC && 0
-	if (context == NULL)
+	if (context == nullptr)
 		return;
 
 	CGRect bounds = inRegion->convertToCGRect( getPortHeight() );
@@ -368,10 +379,10 @@ void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, DGTextA
 //-----------------------------------------------------------------------------
 OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, DGTextAlignment inAlignment)
 {
-	if ( (inText == NULL) || (inRegion == NULL) )
+	if ( (inText == nullptr) || (inRegion == nullptr) )
 		return paramErr;
 
-	if (context == NULL)
+	if (context == nullptr)
 		return coreFoundationUnknownErr;	// XXX what error makes sense here?
 
 // XXX do something to actually allow you to set the font ID and the font size and the font color
@@ -379,7 +390,7 @@ OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, DG
 //kThemeSystemFont kThemeSystemFontDetail kThemeMiniSystemFont kThemeLabelFont
 
 	// this function is only available in Mac OS X 10.3 or higher
-	if (HIThemeDrawTextBox != NULL)
+	if (HIThemeDrawTextBox != nullptr)
 	{
 		HIRect bounds = inRegion->convertToCGRect( getPortHeight() );
 
@@ -415,11 +426,11 @@ OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, DG
 
 		// XXX center the text vertically (yah?)
 		Point heightPoint;
-		OSStatus status = GetThemeTextDimensions(inText, themeFontID, themDrawState, false, &heightPoint, NULL);
+		OSStatus status = GetThemeTextDimensions(inText, themeFontID, themDrawState, false, &heightPoint, nullptr);
 		if (status == noErr)
 			InsetRect( &bounds, 0, ((bounds.bottom-bounds.top) - heightPoint.v) / 2 );
 
-		return DrawThemeTextBox(inText, themeFontID, themDrawState, false, &bounds, justification, NULL);
+		return DrawThemeTextBox(inText, themeFontID, themDrawState, false, &bounds, justification, nullptr);
 	}
 }
 #endif
@@ -432,40 +443,16 @@ OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, DG
 
 
 #pragma mark -
-#pragma mark DGImage
 
-/***********************************************************************
-	DGImage
-	class for loading and containing images
-***********************************************************************/
-
+#if 0
 //-----------------------------------------------------------------------------
-DGImage::DGImage(const char * inFileName, long inResourceID, DfxGuiEditor * inEditor)
-#if TARGET_OS_MAC
-:	CBitmap( CResourceDescription(inFileName) )
-#else
-:	CBitmap( CResourceDescription(inResourceID) )	// XXX is it now possible to also use filename for Windows?
-#endif
+unsigned long dfx::ConvertVstGuiMouseButtons(long inButtons)
 {
-	if (inEditor != NULL)
-		inEditor->addImage(this);
-}
-
-
-
-
-
-
-#pragma mark -
-
-//-----------------------------------------------------------------------------
-unsigned long DFXGUI_ConvertVstGuiMouseButtons(long inButtons)
-{
-	return (unsigned) ( inButtons & (kLButton | kMButton | kRButton) );
+	return static_cast<unsigned long>(inButtons & (kLButton | kMButton | kRButton));
 }
 
 //-----------------------------------------------------------------------------
-DGKeyModifiers DFXGUI_ConvertVstGuiKeyModifiers(long inButtons)
+DGKeyModifiers dfx::ConvertVstGuiKeyModifiers(long inButtons)
 {
 	DGKeyModifiers resultKeys = 0;
 	if (inButtons & kShift)
@@ -478,40 +465,47 @@ DGKeyModifiers DFXGUI_ConvertVstGuiKeyModifiers(long inButtons)
 		resultKeys |= kDGKeyModifier_extra;
 	return resultKeys;
 }
+#endif
 
 //-----------------------------------------------------------------------------
-CFontRef DFXGUI_CreateVstGuiFont(float inFontSize, const char* inFontName)
+SharedPointer<CFontDesc> dfx::CreateVstGuiFont(float inFontSize, char const* inFontName)
 {
-	if (inFontName != NULL)
+	if (inFontName)
 	{
-		return new CFontDesc(inFontName, inFontSize);
+		return makeOwned<CFontDesc>(inFontName, inFontSize);
 	}
 	else
 	{
-		CFontRef fontDesc = new CFontDesc(kSystemFont->getName(), inFontSize);
+		auto fontDesc = makeOwned<CFontDesc>(kSystemFont->getName(), inFontSize);
 #if TARGET_OS_MAC
-        // get the application font from the system "theme"
-        const CTFontUIFontType fontType = HIThemeGetUIFontType(kThemeApplicationFont);
-        if (fontType != kCTFontNoFontType)
-        {
-            CTFontRef fontRef = CTFontCreateUIFontForLanguage(fontType, 0.0, NULL);
-            if (fontRef)
-            {
-                CFStringRef fontCFName = CTFontCopyFullName(fontRef);
-                if (fontCFName)
-                {
-                    char * fontCName = DFX_CreateCStringFromCFString(fontCFName, kCFStringEncodingUTF8);
-                    if (fontCName)
-                    {
-                        fontDesc->setName(fontCName);
-                        free(fontCName);
-                    }
-                    CFRelease(fontCFName);
-                }
-                CFRelease(fontRef);
-            }
-        }
+		// get the application font from the system "theme"
+		auto const fontType = HIThemeGetUIFontType(kThemeApplicationFont);
+		if (fontType != kCTFontNoFontType)
+		{
+			dfx::UniqueCFType<CTFontRef> const fontRef(CTFontCreateUIFontForLanguage(fontType, 0.0, nullptr));
+			if (fontRef)
+			{
+				dfx::UniqueCFType<CFStringRef> const fontCFName(CTFontCopyFullName(fontRef.get()));
+				if (fontCFName)
+				{
+					auto const fontCName = dfx::CreateCStringFromCFString(fontCFName.get(), kCFStringEncodingUTF8);
+					if (fontCName)
+					{
+						fontDesc->setName(fontCName.get());
+					}
+				}
+			}
+		}
 #endif
 		return fontDesc;
 	}
+}
+
+//-----------------------------------------------------------------------------
+// XXX TODO: this doesn't support locale, assumes comma
+std::string dfx::RemoveDigitSeparators(std::string const& inText)
+{
+	std::string resultText(inText.size(), '\0');
+	resultText.erase(std::remove_copy(inText.cbegin(), inText.cend(), resultText.begin(), ','), resultText.end());
+	return resultText;
 }

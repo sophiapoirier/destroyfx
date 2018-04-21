@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -22,11 +22,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #include "dfxguicontrol.h"
-#include "dfxguieditor.h"
 
-#include "dfxpluginproperties.h"
-#include "dfxmath.h"
-#include "dfxplugin.h"	// XXX for launch_url(), but should move that elsewhere?
+#include "dfxguieditor.h"
 
 
 
@@ -34,10 +31,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 //-----------------------------------------------------------------------------
 DGControl::DGControl(CControl* inControl, DfxGuiEditor* inOwnerEditor)
-:	mControl(inControl), mOwnerEditor(inOwnerEditor), 
-	wraparoundValues(false)
+:	mControl(inControl),
+	mOwnerEditor(inOwnerEditor) 
 {
-	inOwnerEditor->addControl(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -60,7 +56,7 @@ void DGControl::redraw()
 }
 
 //-----------------------------------------------------------------------------
-long DGControl::getParameterID()
+long DGControl::getParameterID() const
 {
 	return getCControl()->getTag();
 }
@@ -69,17 +65,17 @@ long DGControl::getParameterID()
 void DGControl::setParameterID(long inParameterID)
 {
 	getCControl()->setTag(inParameterID);
-	getCControl()->setValue( mOwnerEditor->getparameter_gen(inParameterID) );
-	getCControl()->setDirty();	// it might not happen if the new parameter value is the same as the old value, so make sure it happens
+	getCControl()->setValue(mOwnerEditor->getparameter_gen(inParameterID));
+	getCControl()->setDirty();  // it might not happen if the new parameter value is the same as the old value, so make sure it happens
 }
 
 //-----------------------------------------------------------------------------
-bool DGControl::isParameterAttached()
+bool DGControl::isParameterAttached() const
 {
 	return (getParameterID() >= 0);
 }
 
-#else
+#else  // !TARGET_PLUGIN_USES_VSTGUI
 
 
 
@@ -143,8 +139,8 @@ void DGControl::init(DGRect * inRegion)
 	vizArea = *inRegion;
 
 	isContinuous = false;
-	fineTuneFactor = kDfxGui_DefaultFineTuneFactor;
-	mouseDragRange = kDfxGui_DefaultMouseDragRange;
+	fineTuneFactor = kDefaultFineTuneFactor;
+	mouseDragRange = kDefaultMouseDragRange;
 
 	shouldRespondToMouse = true;
 	shouldRespondToMouseWheel = true;
@@ -303,14 +299,13 @@ int DFX_CFStringScanWithFormat(CFStringRef inString, const char * inFormat, ...)
 
 	int scanCount = 0;
 
-	char * cString = DFX_CreateCStringFromCFString(inString, kCFStringEncodingUTF8);
-	if (cString != NULL)
+	const auto cString = dfx::CreateCStringFromCFString(inString, kCFStringEncodingUTF8);
+	if (cString)
 	{
 		va_list variableArgumentList;
 		va_start(variableArgumentList, inFormat);
-		scanCount = vsscanf(cString, inFormat, variableArgumentList);
+		scanCount = vsscanf(cString.get(), inFormat, variableArgumentList);
 		va_end(variableArgumentList);
-		free(cString);
 	}
 
 	return scanCount;

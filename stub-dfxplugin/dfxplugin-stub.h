@@ -1,14 +1,34 @@
 /*------------------------------------------------------------------------
-Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
-This is our unexciting, but informative, demonstration DfxPlugin.
-written by Sophia Poirier, October 2002
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2018  Sophia Poirier
+
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Destroy FX Library is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+
+This is a template for making a DfxPlugin.
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXPLUGIN_STUB_H
-#define __DFXPLUGIN_STUB_H
+#pragma once
 
 
 #include "dfxplugin.h"
+
+#include <vector>
 
 
 //----------------------------------------------------------------------------- 
@@ -27,18 +47,14 @@ enum
 //----------------------------------------------------------------------------- 
 // constants and helpfuls
 
-const long kNumPresets = 16;
+constexpr long kNumPresets = 16;
 
 // audio buffer size in seconds
-const double kBufferSize_seconds = 3.0;
-// function for getting samples from seconds
-long buffersize_sec2samples(float inSeconds)
-{
-	return (long) (inSeconds * getsamplerate_f());
-}
+constexpr double kBufferSize_Seconds = 3.0;
 
 // the different states of the indexed parameter
-enum {
+enum
+{
 	kIndexParamState1,
 	kIndexParamState2,
 	kIndexParamState3,
@@ -53,17 +69,18 @@ public:
 	DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 	virtual ~DfxStub();
 
-	virtual long initialize();
-	virtual void cleanup();
-	virtual void reset();
+	void dfx_PostConstructor() override;
+	long initialize() override;
+	void cleanup() override;
+	void reset() override;
 
 #if !TARGET_PLUGIN_USES_DSPCORE
-	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
-	virtual void processparameters();
+	void processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing = true) override;
+	void processparameters() override;
 
-	virtual bool createbuffers();
-	virtual void releasebuffers();
-	virtual void clearbuffers();
+	bool createbuffers() override;
+	void releasebuffers() override;
+	void clearbuffers() override;
 #endif
 
 private:
@@ -71,15 +88,13 @@ private:
 
 #if !TARGET_PLUGIN_USES_DSPCORE
 	// handy usable copies of the parameters
-	float floatParam;
-	long intParam, indexParam;
-	bool booleanParam;
+	float floatParam = 0.0f;
+	long intParam = 0, indexParam = 0;
+	bool booleanParam = false;
 
 	// stuff needed for audio processing
-	float ** buffers;	// a 2-dimensional array of audio buffers
-	unsigned long numbuffers;	// number of buffers allocated in the 2D buffer array
-	long buffersize;	// size of each buffer in the audio buffers array
-	long bufferpos;	// position in the buffer
+	std::vector<std::vector<float>> buffers;  // a two-dimensional array of audio buffers
+	long bufferpos = 0;  // position in the buffer
 #endif
 
 };
@@ -91,31 +106,25 @@ private:
 class DfxStubDSP : public DfxPluginCore
 {
 public:
-	DfxStubDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance);
+	DfxStubDSP(DfxPlugin* inInstance);
 	virtual ~DfxStubDSP();
 
-	virtual void reset();
-	virtual bool createbuffers();
-	virtual void releasebuffers();
-	virtual void clearbuffers();
+	void reset() override;
+	bool createbuffers() override;
+	void releasebuffers() override;
+	void clearbuffers() override;
 
-	virtual void processparameters();
-	virtual void process(const float * in, float * out, unsigned long inNumFrames, bool replacing=true);
+	void processparameters() override;
+	void process(float const* inStream, float* outStream, unsigned long inNumFrames, bool replacing = true) override;
 
 private:
 	// handy usable copies of the parameters
-	float floatParam;
-	long intParam, indexParam;
-	bool booleanParam;
+	float floatParam = 0.0f;
+	long intParam = 0, indexParam = 0;
+	bool booleanParam = false;
 
 	// stuff needed for audio processing
-	float * buffer;	// an audio buffer
-	long buffersize;	// size of the audio buffer
-	long bufferpos;	// position in the buffer
+	std::vector<float> buffer;  // an audio buffer
+	long bufferpos = 0;  // position in the buffer
 };
-#endif
-// end TARGET_PLUGIN_USES_DSPCORE
-
-
-#endif
-// defining __DFXPLUGIN_STUB
+#endif  // TARGET_PLUGIN_USES_DSPCORE
