@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2012  Sophia Poirier
+Copyright (C) 2009-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -26,6 +26,8 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 ------------------------------------------------------------------------*/
 
 #include "dfxplugin.h"
+
+#include <algorithm>
 
 #include "CEffectTypeRTAS.h"
 #include "CEffectTypeAS.h"
@@ -60,6 +62,11 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 
 
 
+//-----------------------------------------------------------------------------
+static OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode);
+
+
+
 #pragma mark -
 #pragma mark init
 #pragma mark -
@@ -71,17 +78,10 @@ void DfxPlugin::EffectInit()
 
 	AddParametersToList();
 
-	if ( IsAS() )
+	if (IsAS())
 	{
-		inputAudioStreams_as = (float**) malloc(GetNumOutputs() * sizeof(*inputAudioStreams_as));
-		outputAudioStreams_as = (float**) malloc(GetNumOutputs() * sizeof(*outputAudioStreams_as));
-		for (SInt32 ch=0; ch < GetNumOutputs(); ch++)
-		{
-			if (inputAudioStreams_as != NULL)
-				inputAudioStreams_as[ch] = NULL;
-			if (outputAudioStreams_as != NULL)
-				outputAudioStreams_as[ch] = NULL;
-		}
+		mInputAudioStreams_as.assign(GetNumOutputs(), nullptr);
+		mOutputAudioStreams_as.assign(GetNumOutputs(), nullptr);
 	}
 
 	do_initialize();
@@ -126,7 +126,7 @@ void DfxPlugin::DoTokenIdle()
 	CEffectProcess::DoTokenIdle();
 
 #ifdef TARGET_PLUGIN_USES_VSTGUI
-	if (mCustomUI_p != NULL)
+	if (mCustomUI_p)
 	{
 //		if ( !IsAS() || (IsAS() && (GetASPreviewState() == previewState_Off)) )
 		mCustomUI_p->Idle();
@@ -145,14 +145,16 @@ void DfxPlugin::AddParametersToList()
 {
 	const OSType masterBypassFourCharID = 'bypa';
 
-	AddControl( new CPluginControl_OnOff(masterBypassFourCharID, "Master Bypass\nM Bypass\nMByp\nByp", false, true) );
+	AddControl(new CPluginControl_OnOff(masterBypassFourCharID, "Master Bypass\nM Bypass\nMByp\nByp", false, true));
 	DefineMasterBypassControlIndex(kDFXParameterID_RTASMasterBypass);
 
 	OSType paramFourCharID = 0;
-	for (long i=0; i < numParameters; i++)
+	for (long i = 0; i < getnumparameters(); i++)
 	{
-		if (! parameterisvalid(i) )
+		if (!parameterisvalid(i))
+		{
 			continue;	// XXX eh actually maybe we need to add a parameter for every index?
+		}
 
 		const double paramMin_f = getparametermin_f(i), paramMax_f = getparametermax_f(i), paramDefault_f = getparameterdefault_f(i);
 		const int64_t paramMin_i = getparametermin_i(i), paramMax_i = getparametermax_i(i), paramDefault_i = getparameterdefault_i(i);
@@ -442,7 +444,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
 	if (! IsAS() )
 		return 0;
 
-	long totalInputSamples = 0;	// total number of input samples in one input buffer
+	long totalInputSamples = 0;  // total number of input samples in one input buffer
 
 	// use the mono channel input sample number (guaranteed to be connected)
 	if (GetInputConnection(0) != NULL)
@@ -451,39 +453,32 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
 	for (SInt32 ch=0; ch < GetNumOutputs(); ch++)
 	{
 		// XXX what to do if there are no valid connections for the channel?
-		inputAudioStreams_as[ch] = NULL;
-		outputAudioStreams_as[ch] = NULL;
+		mInputAudioStreams_as[ch] = NULL;
+		mOutputAudioStreams_as[ch] = NULL;
 
 		DAEConnectionPtr outputConnection = GetOutputConnection(ch);
 		if (outputConnection != NULL)	// if no valid connection, don't do anything
 		{
-			outputAudioStreams_as[ch] = (float*)(outputConnection->mBuffer);
+			mOutputAudioStreams_as[ch] = (float*)(outputConnection->mBuffer);
 
 			DAEConnectionPtr inputConnection = GetInputConnection(ch);
 			if (inputConnection != NULL)	// have a valid input connection
-				inputAudioStreams_as[ch] = (float*)(inputConnection->mBuffer);
+				mInputAudioStreams_as[ch] = (float*)(inputConnection->mBuffer);
 			else	// no input connection; use default value of zero
 			{
 				// (re)allocate the zero audio buffer if it is not currently large enough for this rendering slice
-				if (numZeroAudioBufferSamples < totalInputSamples)
+				if (static_cast<long>(mZeroAudioBuffer.size()) < totalInputSamples)
 				{
-					if (zeroAudioBuffer != NULL)
-						free(zeroAudioBuffer);
-					numZeroAudioBufferSamples = totalInputSamples;
-					zeroAudioBuffer = (float*) malloc(numZeroAudioBufferSamples * sizeof(*zeroAudioBuffer));
-					if (zeroAudioBuffer != NULL)
-					{
-						for (long i=0; i < numZeroAudioBufferSamples; i++)
-							zeroAudioBuffer[i] = 0.0f;
-					}
+					mZeroAudioBuffer.resize(totalInputSamples);
+					std::fill(mZeroAudioBuffer.begin(), mZeroAudioBuffer.end(), 0.0f);
 				}
-				inputAudioStreams_as[ch] = zeroAudioBuffer;
+				mInputAudioStreams_as[ch] = mZeroAudioBuffer.data();
 			}
 			
 			if (inIsMasterBypassed)
 			{
 				for (long i=0; i < totalInputSamples; i++)
-					outputAudioStreams_as[ch][i] = inputAudioStreams_as[ch][i];
+					mOutputAudioStreams_as[ch][i] = mInputAudioStreams_as[ch][i];
 			}
 			// do the sample number adjustment
 			outputConnection->mNumSamplesInBuf = totalInputSamples;
@@ -493,7 +488,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
 	}
 
 	if (!inIsMasterBypassed)
-		RenderAudio(inputAudioStreams_as, outputAudioStreams_as, totalInputSamples);
+		RenderAudio(mInputAudioStreams_as.data(), mOutputAudioStreams_as.data(), totalInputSamples);
 
 	// Get the current number of samples analyzed and pass this info 
 	// back to the DAE application so it knows how much we've processed.  
@@ -540,8 +535,10 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 		else
 		{
 #if TARGET_PLUGIN_USES_DSPCORE
-			if (dspcores[channel] != NULL)
-				dspcores[channel]->do_process(inAudioStreams[channel], outAudioStreams[channel], (unsigned)inNumFramesToProcess, true);
+			if (mDSPCores[channel])
+			{
+				mDSPCores[channel]->do_process(inAudioStreams[channel], outAudioStreams[channel], (unsigned)inNumFramesToProcess, true);
+			}
 #endif
 		}
 	}
@@ -593,9 +590,9 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 	CNoResourceView * ui = NULL;
 	try
 	{
-		if (mCustomUI_p == NULL)
+		if (!mCustomUI_p)
 		{
-			mCustomUI_p = CreateCTemplateCustomUI(this);
+			mCustomUI_p.reset(CreateCTemplateCustomUI(this));
 			mCustomUI_p->GetRect( &(mPIWinRect.left), &(mPIWinRect.top), &(mPIWinRect.right), &(mPIWinRect.bottom) );
 		}
 
@@ -610,13 +607,11 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 		mNoUIView_p = (CTemplateNoUIView *) ui->AddView2("!NoUIView[('NoID')]", 0, 0, mPIWinRect.right, mPIWinRect.bottom, false);
 
 		if (mNoUIView_p != NULL)
-			mNoUIView_p->SetCustomUI(mCustomUI_p);
+			mNoUIView_p->SetCustomUI(mCustomUI_p.get());
 	}
 	catch (...)
 	{
-		if (mCustomUI_p != NULL)
-			delete mCustomUI_p;
-		mCustomUI_p = NULL;
+		mCustomUI_p.reset();
 		if (ui != NULL)
 			delete ui;
 		ui = NULL;
@@ -649,8 +644,8 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 //-----------------------------------------------------------------------------
 void DfxPlugin::GetViewRect(Rect * outViewRect)
 {
-	if (mCustomUI_p == NULL)
-		mCustomUI_p = CreateCTemplateCustomUI(this);
+	if (!mCustomUI_p)
+		mCustomUI_p.reset(CreateCTemplateCustomUI(this));
 	if (outViewRect == NULL)
 		return;
 
@@ -669,7 +664,7 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 
 	if (mMainPort != NULL)
 	{
-		if (mCustomUI_p != NULL)
+		if (mCustomUI_p)
 		{
 #if WINDOWS_VERSION
 			Rect aRect;
@@ -699,7 +694,7 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 	}
 	else
 	{
-		if (mCustomUI_p != NULL)
+		if (mCustomUI_p)
 			mCustomUI_p->Close();
 		if (mNoUIView_p != NULL)
 			mNoUIView_p->SetEnable(false);
@@ -728,7 +723,7 @@ long DfxPlugin::GetControlDefaultValue(long inControlIndex, long * outValue)
 //-----------------------------------------------------------------------------
 ComponentResult DfxPlugin::UpdateControlGraphic(long inControlIndex, long inValue)
 {
-	if (mCustomUI_p != NULL)
+	if (mCustomUI_p)
 		return mCustomUI_p->UpdateGraphicControl(inControlIndex, inValue);
 	else
 		return noErr;
@@ -760,7 +755,7 @@ ComponentResult DfxPlugin::SetControlHighliteInfo(long inControlIndex, short inI
 	if (inControlIndex == kDFXParameterID_RTASMasterBypass)
 		CProcess::SetControlHighliteInfo(inControlIndex, inIsHighlighted, inColor);
 
-	if (mCustomUI_p != NULL)
+	if (mCustomUI_p)
 		mCustomUI_p->SetControlHighlight(inControlIndex, inIsHighlighted, inColor);
 
 	return noErr;
@@ -772,7 +767,7 @@ ComponentResult DfxPlugin::ChooseControl(Point inLocalCoord, long * outControlIn
 	if (outControlIndex != NULL)
 	{
 		*outControlIndex = 0;
-		if (mCustomUI_p != NULL)
+		if (mCustomUI_p)
 			mCustomUI_p->GetControlIndexFromPoint(inLocalCoord.h, inLocalCoord.v, outControlIndex);
 		return noErr;
 	}
@@ -942,7 +937,7 @@ void DfxEffectGroup::dfx_AddEffectType(CEffectType * inEffectType)
 // chokes on them and fails to CreateMinimalGUI() (and possibly other things).  
 // note:  This can only generate 14,776,336 values (about 1/290 the full 32-bit value range).
 // also note:  If that maximum range of output values is exceeded, output values will wrap back around.
-OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode)
+static OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode)
 {
 	if (inPreviousCode)
 	{

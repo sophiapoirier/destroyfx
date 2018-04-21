@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2015  Sophia Poirier
+Copyright (C) 2003-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,8 +21,7 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXGUI_CONTROL_H
-#define __DFXGUI_CONTROL_H
+#pragma once
 
 
 #include "dfxguimisc.h"
@@ -30,49 +29,59 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-const float kDfxGui_DefaultFineTuneFactor = 10.0f;
-const float kDfxGui_DefaultMouseDragRange = 200.0f;	// pixels
-//const float kDfxGui_DefaultMouseDragValueIncrement = 0.1f;
-//const float kDfxGui_DefaultMouseDragValueIncrement_descrete = 15.0f;
+class DfxGuiEditor;
 
 
 
 #ifdef TARGET_PLUGIN_USES_VSTGUI
+
 //-----------------------------------------------------------------------------
 class DGControl
 {
 public:
 	DGControl(CControl* inControl, DfxGuiEditor* inOwnerEditor);
 
-	CControl* getCControl() const
-		{	return mControl;	}
-	DfxGuiEditor* getOwnerEditor() const
-		{	return mOwnerEditor;	}
+	CControl* getCControl() const noexcept
+	{
+		return mControl;
+	}
+	DfxGuiEditor* getOwnerEditor() const noexcept
+	{
+		return mOwnerEditor;
+	}
 
 	void setValue_gen(float inValue);
 	void setDefaultValue_gen(float inValue);
 	void redraw();
-	long getParameterID();
+	long getParameterID() const;
 	void setParameterID(long inParameterID);
-	bool isParameterAttached();
+	bool isParameterAttached() const;
 
 protected:
-	bool getWraparoundValues()
-		{	return wraparoundValues;	}
-	void setWraparoundValues(bool inWraparoundPolicy)
-		{	wraparoundValues = inWraparoundPolicy;	}
+	static constexpr float kDefaultFineTuneFactor = 10.0f;
+	//static constexpr float kDefaultMouseDragRange = 200.0f;  // pixels
+	//static constexpr float kDefaultMouseDragValueIncrement = 0.1f;
+	//static constexpr float kDefaultMouseDragValueIncrement_descrete = 15.0f;
+
+	bool getWraparoundValues() const noexcept
+	{
+		return wraparoundValues;
+	}
+	void setWraparoundValues(bool inWraparoundPolicy) noexcept
+	{
+		wraparoundValues = inWraparoundPolicy;
+	}
 
 private:
-	CControl* mControl;
-	DfxGuiEditor* mOwnerEditor;
+	CControl* const mControl;
+	DfxGuiEditor* const mOwnerEditor;
 
-	bool wraparoundValues;
+	bool wraparoundValues = false;
 };
-#else
+
+#else  // !TARGET_PLUGIN_USES_VSTGUI
 
 
-
-class DfxGuiEditor;
 
 //-----------------------------------------------------------------------------
 class DGControl : public CControl
@@ -207,7 +216,3 @@ private:
 
 
 #endif	// !TARGET_PLUGIN_USES_VSTGUI
-
-
-#endif
-// __DFXGUI_CONTROL_H

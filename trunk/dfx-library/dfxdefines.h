@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -76,14 +76,6 @@ somewhere in the include tree for every file for a DfxPlugin.
 
 /*-----------------------------------------------------------------------------*/
 #ifdef __STDC__
-	/* to indicate "not a real parameter" or something like that */
-	const long DFX_PARAM_INVALID_ID = -1;
-
-	const long DFX_PARAM_MAX_NAME_LENGTH = 64;
-	const long DFX_PRESET_MAX_NAME_LENGTH = 64;
-	const long DFX_PARAM_MAX_VALUE_STRING_LENGTH = 256;
-	const long DFX_PARAM_MAX_UNIT_STRING_LENGTH = 256;
-
 	#if _WIN32 && !defined(TARGET_API_RTAS)
 		#include <windows.h>
 	#endif
@@ -98,14 +90,6 @@ somewhere in the include tree for every file for a DfxPlugin.
 			typedef INT64	int64_t;
 			typedef UINT64	uint64_t;
 		#endif
-		#define isnan	_isnan
-		inline long lrint(double inValue)
-		{
-			if (inValue < 0.0)
-				return (long) (inValue - 0.5);
-			else
-				return (long) (inValue + 0.5);
-		}
 	#else
 		#include <stdint.h>
 	#endif
@@ -122,21 +106,27 @@ somewhere in the include tree for every file for a DfxPlugin.
 	#endif
 	inline bool FBOOL(float inValue)
 	{
-		return ( (inValue) != 0.0f );
+		return (inValue != 0.0f);
 	}
 	inline bool DBOOL(double inValue)
 	{
-		return ( (inValue) != 0.0 );
+		return (inValue != 0.0);
 	}
 #endif
 
 
 
 /*-----------------------------------------------------------------------------*/
-/* class declarations */
 #ifdef __cplusplus
-	class DfxPlugin;
-	class DfxPluginCore;
+	#include <stddef.h>
+
+	// to indicate "not a real parameter" or something like that 
+	constexpr long kDfxParameterID_Invalid = -1;
+
+	constexpr size_t kDfxParameterNameMaxLength = 64;
+	constexpr size_t kDfxPresetNameMaxLength = 64;
+	constexpr size_t kDfxParameterValueStringMaxLength = 256;
+	constexpr size_t kDfxParameterUnitStringMaxLength = 256;
 #endif
 
 

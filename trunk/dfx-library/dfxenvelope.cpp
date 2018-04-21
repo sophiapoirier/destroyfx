@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2010-2015  Sophia Poirier
+Copyright (C) 2010-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -23,41 +23,21 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #include "dfxenvelope.h"
-#include <math.h>
 
+#include <algorithm>
+#include <cmath>
 
-//-----------------------------------------------------------------------------
-DfxEnvelope::DfxEnvelope()
-{
-	mAttackDur = mDecayDur = mReleaseDur = 0.0;
-	mSustainLevel = 1.0;
-	mCurveType = kDfxEnvCurveType_Cubed;
-	mResumedAttackMode = false;
-	mSampleRate = 1.0;
+#include "dfxmath.h"
 
-	mState = kDfxEnvState_Attack;
-	mLastValue = 0.0;
-	mStartValue = 0.0;
-	mTargetValue = 1.0;
-	mSectionPos = 0;
-	mSectionLength = 0;
-	mSectionLength_inv = 1.0;
-}
 
 //-----------------------------------------------------------------------------
 void DfxEnvelope::setParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur)
 {
-	mAttackDur = inAttackDur;
-	mDecayDur = inDecayDur;
+	mAttackDur = std::max(inAttackDur, 0.0);
+	mDecayDur = std::max(inDecayDur, 0.0);
 	mSustainLevel = inSustainLevel;
-	mReleaseDur = inReleaseDur;
+	mReleaseDur = std::max(inReleaseDur, 0.0);
 
-	if (mAttackDur < 0.0)
-		mAttackDur = 0.0;
-	if (mDecayDur < 0.0)
-		mDecayDur = 0.0;
-	if (mReleaseDur < 0.0)
-		mReleaseDur = 0.0;
 	if (mSustainLevel >= 1.0)
 	{
 		mSustainLevel = 1.0;
@@ -73,69 +53,68 @@ void DfxEnvelope::setParameters(double inAttackDur, double inDecayDur, double in
 //-----------------------------------------------------------------------------
 void DfxEnvelope::setSampleRate(double inSampleRate)
 {
-	double prevSampleRate = mSampleRate;
+	auto const prevSampleRate = mSampleRate;
 	mSampleRate = inSampleRate;
-	if ( (prevSampleRate != inSampleRate) && (prevSampleRate != 0.0) )
+	if ((prevSampleRate != inSampleRate) && (prevSampleRate != 0.0))
 	{
-		double srScalar = inSampleRate / prevSampleRate;
-		mSectionPos = lround((double)mSectionPos * srScalar);
-		mSectionLength = lround((double)mSectionLength * srScalar);
-		if (mSectionLength > 0)
-			mSectionLength_inv = 1.0 / (double)mSectionLength;
+		auto const srScalar = inSampleRate / prevSampleRate;
+		mSectionPos = dfx::math::RoundToIndex(static_cast<double>(mSectionPos) * srScalar);
+		mSectionLength = dfx::math::RoundToIndex(static_cast<double>(mSectionLength) * srScalar);
+		mSectionLength_inv = 1.0 / static_cast<double>(std::max(mSectionLength, size_t(1)));
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxEnvelope::setInactive()
+void DfxEnvelope::setInactive() noexcept
 {
-	mState = kDfxEnvState_Dormant;
+	mState = State::Dormant;
 }
 
 //-----------------------------------------------------------------------------
-bool DfxEnvelope::isInactive()
+bool DfxEnvelope::isInactive() const noexcept
 {
-	return (getState() == kDfxEnvState_Dormant);
+	return (getState() == State::Dormant);
 }
 
 //-----------------------------------------------------------------------------
 void DfxEnvelope::beginAttack()
 {
-	DfxEnvState prevState = mState;
-	mState = kDfxEnvState_Attack;
+	auto const prevState = mState;
+	mState = State::Attack;
 	mSectionPos = 0;
-	mSectionLength = lround(mAttackDur * mSampleRate);
+	mSectionLength = dfx::math::RoundToIndex(mAttackDur * mSampleRate);
 	if (mSectionLength > 0)
 	{
-		mSectionLength_inv = 1.0 / (double)mSectionLength;
+		mSectionLength_inv = 1.0 / static_cast<double>(mSectionLength);
 		mStartValue = 0.0;
 		mTargetValue = 1.0;
-		if ( mResumedAttackMode && (prevState == kDfxEnvState_Release) )
+		if (mResumedAttackMode && (prevState == State::Release))
 		{
-			mSectionPos = lround(deriveAttackPosFromEnvValue(mLastValue) * (double)mSectionLength);
+			mSectionPos = dfx::math::RoundToIndex(deriveAttackPosFromEnvValue(mLastValue) * static_cast<double>(mSectionLength));
 		}
 	}
 	else
 	{
 		mSectionLength_inv = 1.0;
-		process();	// do this to move ahead to the next envelope segment, since there is no attack
+		process();  // do this to move ahead to the next envelope segment, since there is no attack
 	}
 }
 
 //-----------------------------------------------------------------------------
 void DfxEnvelope::beginRelease()
 {
-	mState = kDfxEnvState_Release;
+	mState = State::Release;
 	mSectionPos = 0;
-	mSectionLength = lround(mReleaseDur * mSampleRate);
+	mSectionLength = dfx::math::RoundToIndex(mReleaseDur * mSampleRate);
 	if (mSectionLength > 0)
 	{
-		mSectionLength_inv = 1.0 / (double)mSectionLength;
+		mSectionLength_inv = 1.0 / static_cast<double>(mSectionLength);
 		mStartValue = mLastValue;
 		mTargetValue = 0.0;
 	}
 	else
 	{
-		mState = kDfxEnvState_Dormant;
+		mState = State::Dormant;
 	}
 }
 
@@ -146,52 +125,52 @@ double DfxEnvelope::process()
 
 	switch (mState)
 	{
-		case kDfxEnvState_Attack:
-			outputValue = calculateRise( (double)(mSectionPos+1) * mSectionLength_inv );
+		case State::Attack:
+			outputValue = calculateRise(static_cast<double>(mSectionPos + 1) * mSectionLength_inv);
 			mSectionPos++;
 			if (mSectionPos >= mSectionLength)
 			{
 				mSectionPos = 0;
-				mState = kDfxEnvState_Decay;
-				mSectionLength = lround(mDecayDur * mSampleRate);
+				mState = State::Decay;
+				mSectionLength = dfx::math::RoundToIndex(mDecayDur * mSampleRate);
 				if (mSectionLength > 0)
 				{
-					mSectionLength_inv = 1.0 / (double)mSectionLength;
+					mSectionLength_inv = 1.0 / static_cast<double>(mSectionLength);
 					mStartValue = 1.0;
 					mTargetValue = mSustainLevel;
 				}
 				else
 				{
-					mState = kDfxEnvState_Sustain;
+					mState = State::Sustain;
 				}
 			}
 			break;
 
-		case kDfxEnvState_Decay:
-			outputValue = calculateFall( (double)(mSectionPos+1) * mSectionLength_inv );
+		case State::Decay:
+			outputValue = calculateFall(static_cast<double>(mSectionPos + 1) * mSectionLength_inv);
 			mSectionPos++;
 			if (mSectionPos >= mSectionLength)
 			{
 				mSectionPos = 0;
-				mState = kDfxEnvState_Sustain;
+				mState = State::Sustain;
 			}
 			break;
 
-		case kDfxEnvState_Sustain:
+		case State::Sustain:
 			outputValue = mSustainLevel;
 			break;
 
-		case kDfxEnvState_Release:
-			outputValue = calculateFall( (double)(mSectionPos+1) * mSectionLength_inv );
+		case State::Release:
+			outputValue = calculateFall(static_cast<double>(mSectionPos + 1) * mSectionLength_inv);
 			mSectionPos++;
 			if (mSectionPos >= mSectionLength)
 			{
 				mSectionPos = 0;
-				mState = kDfxEnvState_Dormant;
+				mState = State::Dormant;
 			}
 			break;
 
-		case kDfxEnvState_Dormant:
+		case State::Dormant:
 		default:
 			outputValue = 0.0;
 			break;
@@ -202,19 +181,21 @@ double DfxEnvelope::process()
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::calculateRise(unsigned long inPos, unsigned long inLength)
+double DfxEnvelope::calculateRise(size_t inPos, size_t inLength) const
 {
 	if (inLength <= 0)
+	{
 		return 0.0;
-	return calculateRise( (double)(inPos+1) / (double)inLength );
+	}
+	return calculateRise(static_cast<double>(inPos + 1) / static_cast<double>(inLength));
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::calculateRise(double inPosNormalized)
+double DfxEnvelope::calculateRise(double inPosNormalized) const
 {
 	double outputValue = inPosNormalized;
 
-	if (mCurveType == kDfxEnvCurveType_Cubed)
+	if (mCurveType == CurveType::Cubed)
 	{
 		outputValue = 1.0 - outputValue;
 		outputValue = outputValue * outputValue * outputValue;
@@ -222,7 +203,7 @@ double DfxEnvelope::calculateRise(double inPosNormalized)
 	}
 
 	// sine fade (stupendously inefficient)
-//	outputValue = ( sin((outputValue*kDFX_PI_d)-(kDFX_PI_d*0.5)) + 1.0 ) * 0.5;
+//	outputValue = (std::sin((outputValue * dfx::kPi<double>) - (dfx::kPi<double> * 0.5)) + 1.0) * 0.5;
 
 //	outputValue = (outputValue * (mTargetValue - mStartValue)) + mStartValue;
 
@@ -230,19 +211,21 @@ double DfxEnvelope::calculateRise(double inPosNormalized)
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::calculateFall(unsigned long inPos, unsigned long inLength)
+double DfxEnvelope::calculateFall(size_t inPos, size_t inLength) const
 {
 	if (inLength <= 0)
+	{
 		return 0.0;
-	return calculateFall( (double)(inPos+1) / (double)inLength );
+	}
+	return calculateFall(static_cast<double>(inPos + 1) / static_cast<double>(inLength));
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::calculateFall(double inPosNormalized)
+double DfxEnvelope::calculateFall(double inPosNormalized) const
 {
 	double outputValue = 1.0 - inPosNormalized;
 
-	if (mCurveType == kDfxEnvCurveType_Cubed)
+	if (mCurveType == CurveType::Cubed)
 	{
 		outputValue = outputValue * outputValue * outputValue;
 	}
@@ -253,15 +236,17 @@ double DfxEnvelope::calculateFall(double inPosNormalized)
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::deriveAttackPosFromEnvValue(double inValue)
+double DfxEnvelope::deriveAttackPosFromEnvValue(double inValue) const
 {
-	if (mCurveType == kDfxEnvCurveType_Cubed)
+	if (mCurveType == CurveType::Cubed)
 	{
 		double outputValue = 1.0 - inValue;
-		outputValue = cbrt(outputValue);
+		outputValue = std::cbrt(outputValue);
 		outputValue = 1.0 - outputValue;
 		return outputValue;
 	}
 	else
+	{
 		return inValue;
+	}
 }

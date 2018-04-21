@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2012  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,7 +28,10 @@ This is a template for making a DfxPlugin.
 // You wouldn't use all of that stuff in a single plugin.  
 // In this example, it's just in order to show you all of the options.
 
-#include "dfxplugin-stub.hpp"
+#include "dfxplugin-stub.h"
+
+#include <algorithm>
+#include <cmath>
 
 
 #pragma mark _________base_initializations_________
@@ -40,7 +43,7 @@ DFX_EFFECT_ENTRY(DfxStub);
 #endif
 
 //-----------------------------------------------------------------------------
-// initializations & such
+// initializations and such
 // create and initialize everything that is needed for accessing/using 
 // properties of the plugin here
 // this is not the place to create or initialize stuff that is only needed 
@@ -48,20 +51,14 @@ DFX_EFFECT_ENTRY(DfxStub);
 DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, kNumParameters, kNumPresets)
 {
-// first, null any audio buffer pointers that you have
-	buffers = NULL;
-	numbuffers = 0;
-	buffersize = 0;
-
-
 // next, initialize your parameters
 // note that, when you initialize a parameter using the initparameter 
 // routines, every preset will automatically be set to those initial settings 
 // that way you know that they are all starting off from the default settings
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
-	initparameter_f(kFloatParam, "decimal parameter", 90.0f, 33.3f, 1.0f, 999.0f, kDfxParamUnit_generic, kDfxParamCurve_linear);
+	initparameter_f(kFloatParam, "decimal parameter", 90.0f, 33.3f, 1.0f, 999.0f, DfxParam::Unit::Generic, DfxParam::Curve::Linear);
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
-	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, kDfxParamUnit_generic);
+	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, DfxParam::Unit::Generic);
 	// parameter ID, parameter name, init value, default value, number of values
 	initparameter_list(kIndexParam, "list of items parameter", kIndexParamState3, kIndexParamState1, kNumIndexParamStates);
 	// parameter ID, parameter name, init value, default value
@@ -92,32 +89,37 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// the same number of inputs as there are outputs
 //	addchannelconfig(number_of_inputs, number_of_outputs);
 
-	#if TARGET_PLUGIN_USES_MIDI
-		// if you don't use notes or pithbend for any specialized control 
-		// of your plugin, your can allow those types of events to be 
-		// assigned to control parameters via MIDI learn
-		dfxsettings->setAllowPitchbendEvents(true);
-		dfxsettings->setAllowNoteEvents(true);
-	#endif
-
 
 // now initialize the presets
-	setpresetname(0, "default setting");	// default preset name, preset index 0
+	setpresetname(0, "default setting");  // default preset name, preset index 0
 	// create the other built-in presets, if any
 	// (optional, and not a virtual method, so call it whatever you want)
 	initPresets();
 
 
 // API-specific stuff below
-	##if TARGET_PLUGIN_USES_DSPCORE
-		DFX_INIT_CORE(DfxStubDSP);
+#if TARGET_PLUGIN_USES_DSPCORE
+	DFX_INIT_CORE(DfxStubDSP);
+#endif
+#ifdef TARGET_API_VST
+	#if TARGET_PLUGIN_HAS_GUI
+	editor = new DfxStubEditor(this);
 	#endif
-	#ifdef TARGET_API_VST
-		#if TARGET_PLUGIN_HAS_GUI
-			editor = new DfxStubEditor(this);
-		#endif
-	#endif
+#endif
 
+}
+
+void DfxStub::dfx_PostConstructor()
+{
+#if TARGET_PLUGIN_USES_MIDI
+	// if you don't use notes or pithbend for any specialized control 
+	// of your plugin, your can allow those types of events to be 
+	// assigned to control parameters via MIDI learn
+	// NOTE: configuration of the settings object must occur in 
+	// this method override, the constructor is too early
+	getsettings().setAllowPitchbendEvents(true);
+	getsettings().setAllowNoteEvents(true);
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -152,7 +154,7 @@ void DfxStub::cleanup()
 #if TARGET_PLUGIN_USES_DSPCORE
 
 //-------------------------------------------------------------------------
-DfxStubDSP::DfxStubDSP(TARGET_API_CORE_INSTANCE_TYPE *inInstance)
+DfxStubDSP::DfxStubDSP(DfxPlugin* inInstance)
 	: DfxPluginCore(inInstance)
 {
 }
@@ -193,9 +195,9 @@ void DfxStub::reset()
 	bufferpos = 0;
 
 	// you can confidently access and use any of these values here
-	long number_of_inputs = getnuminputs();
-	long number_of_outputs = getnumoutputs();
-	double audio_sampling_rate = getsamplerate();
+	auto const number_of_inputs = getnuminputs();
+	auto const number_of_outputs = getnumoutputs();
+	auto const audio_sampling_rate = getsamplerate();
 }
 #endif
 
@@ -213,35 +215,32 @@ void DfxStub::reset()
 #if TARGET_PLUGIN_USES_DSPCORE
 bool DfxStubDSP::createbuffers()
 {
-	long oldsize = buffersize;
-	buffersize = (long) (getsamplerate() * kBufferSize_seconds);
+	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
 
-	// if the sampling rate (& therefore the buffer size) has changed, 
-	// then delete & reallocate the buffers according to the sampling rate
-	bool success = dfx_createbuffer(&buffer, oldsize, buffersize);
-	if (!success)
-		return false;
+	// if the sampling rate (and therefore the buffer size) has changed, 
+	// then delete and reallocate the buffers according to the sampling rate
+	buffer.assign(bufferSize, 0.0f);
 
-	// we were successful if we reached this point
+	// we were successful
 	return true;
 }
 
 #else
 bool DfxStub::createbuffers()
 {
-	long oldsize = buffersize;
-	buffersize = (long) (getsamplerate() * kBufferSize_seconds);
-	unsigned long oldnum = numbuffers;
-	numbuffers = getnumoutputs();
+	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
+	auto const numChannels = getnumoutputs();
 
-	// if the sampling rate (& therefore the buffer size) has changed, 
+	// if the sampling rate (and therefore the buffer size) has changed, 
 	// or if the number of channels to process has changed, 
-	// then delete & reallocate the buffers according to the sampling rate
-	bool success = dfx_createbufferarray(&buffers, oldnum, oldsize, numbuffers, buffersize);
-	if (!success)
-		return false;
+	// then delete and reallocate the buffers according to the sampling rate
+	buffers.assign(numChannels);
+	for (auto& buffer : buffers)
+	{
+		buffer.assign(bufferSize, 0.0f);
+	}
 
-	// we were successful if we reached this point
+	// we were successful
 	return true;
 }
 
@@ -251,14 +250,13 @@ bool DfxStub::createbuffers()
 #if TARGET_PLUGIN_USES_DSPCORE
 void DfxStubDSP::releasebuffers()
 {
-	dfx_releasebuffer(&buffer);
+	buffer.clear();
 }
 
 #else
 void DfxStub::releasebuffers()
 {
-	dfx_releasebufferarray(&buffers, numbuffers);
-	numbuffers = 0;
+	buffers.clear();
 }
 #endif
 
@@ -268,13 +266,16 @@ void DfxStub::releasebuffers()
 #if TARGET_PLUGIN_USES_DSPCORE
 void DfxStubDSP::clearbuffers()
 {
-	dfx_clearbuffer(buffer, buffersize);
+	std::fill(buffer.begin(), buffer.end(), 0.0f);
 }
 
 #else
 void DfxStub::clearbuffers()
 {
-	dfx_clearbufferarray(buffers, numbuffers, buffersize);
+	for (auto& buffer : buffers)
+	{
+		std::fill(buffer.begin(), buffer.end(), 0.0f);
+	}
 }
 #endif
 
@@ -288,7 +289,7 @@ void DfxStub::clearbuffers()
 // you have initialized the parameters with the initparameter routines
 void DfxStub::initPresets()
 {
-	int i = 1;
+	long i = 1;
 
 	setpresetname(i, "fancy preset 1");
 	setpresetparameter_f(i, kFloatParam, 3.0f);
@@ -343,19 +344,8 @@ void DfxStub::processparameters()
 // the number of sample frames in each stream, and whether to accumulate 
 // output into the output stream (replacing=false) or replace output (replacing=true)
 // (replacing is basically for VST)
-void DfxStubDSP::process(const float *in, float *out, unsigned long numSampleFrames, bool replacing) {
+void DfxStubDSP::process(float const* inStream, float* outStream, unsigned long inNumFrames, bool replacing)
 {
-	// you might want to do this sort of pointer safety check 
-	// if your plugin has audio buffers
-	if (buffer == NULL)
-	{
-		// exit the loop if creation succeeded
-		if ( createbuffers() )
-			break;
-		// or abort audio processing if the creation failed
-		else return;
-	}
-
 	// do your audio processing here
 }
 
@@ -363,39 +353,19 @@ void DfxStubDSP::process(const float *in, float *out, unsigned long numSampleFra
 //-----------------------------------------------------------------------------
 // passes an array of input streams, an array of output streams, 
 // the number of sample frames in each stream, and whether to accumulate 
-// output into the output stream (replacing=false) or replace output (replacing=true)
+// output into the output stream (replacing==false) or replace output (replacing==true)
 // (replacing is basically for VST)
-void DfxStub::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
+void DfxStub::processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing)
 {
-	long numchannels = getnumoutputs();
-
-	// you might want to do these sorts of pointer safety checks 
-	// if your plugin has audio buffers
-	if (numbuffers < numchannels)
-		// there must have not been available memory or something (like WaveLab goofing up), 
-		// so try to allocate buffers now
-		createbuffers();
-	for (long ch=0; ch < numchannels; ch++)
-	{
-		if (buffers[ch] == NULL)
-		{
-			// exit the loop if creation succeeded
-			if ( createbuffers() )
-				break;
-			// or abort audio processing if the creation failed
-			else return;
-		}
-	}
-
 	// do your audio processing here
 
 	// you can access all kinds of host time/tempo/location info 
-	// from the timeinfo struct, which is automatically set before processing
+	// from gettimeinfo(), which is automatically set before processing
 
-	#if TARGET_PLUGIN_USES_MIDI
-		// you can access MIDI events for this processing buffer from the 
-		// midistuff->blockEvents array, using midistuff->numBlockEvents 
-		// to see how many events there are for this processing block
-	#endif
+#if TARGET_PLUGIN_USES_MIDI
+	// you can access MIDI events for this processing buffer with 
+	// getmidistate().getBlockEvent(), using getmidistate().getBlockEventCount() 
+	// to see how many events there are for this processing block
+#endif
 }
 #endif

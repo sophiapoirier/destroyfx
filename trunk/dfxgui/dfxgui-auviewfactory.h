@@ -25,7 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
-#import <CoreFoundation/CFBase.h>
+#include <CoreFoundation/CFString.h>
 
 
 CFStringRef DGCocoaAUViewFactory_CopyClassName();

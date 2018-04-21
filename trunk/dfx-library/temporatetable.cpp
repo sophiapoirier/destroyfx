@@ -1,131 +1,103 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2018  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 Welcome to our tempo rate table.
-by Sophia Poirier  ][  January 2002
 ------------------------------------------------------------------------*/
 
 #include "temporatetable.h"
 
-#include <string.h>
-#include <math.h>	// for fabs
+#include <cassert>
+#include <cmath>
 
 
 //-----------------------------------------------------------------------------
-TempoRateTable::TempoRateTable(long inTypeOfTable)
-:	typeOfTable(inTypeOfTable)
+dfx::TempoRateTable::TempoRateTable(Rates inRates)
 {
-	switch (typeOfTable)
+	auto const addTempoRate = [this](int numerator, int denominator = 1)
 	{
-		case kSlowTempoRates:
-			numTempoRates = 25;
-			break;
-		case kNoExtremeTempoRates:
-			numTempoRates = 21;
-			break;
-		default:
-			numTempoRates = 24;
-			break;
+		mScalars.push_back(static_cast<float>(numerator));
+		mDisplays.push_back(std::to_string(numerator));
+		if (denominator > 1)
+		{
+			mScalars.back() /= static_cast<float>(denominator);
+			mDisplays.back().append("/").append(std::to_string(denominator));
+		}
+	};
+
+	if (inRates == Rates::Slow)
+	{
+		addTempoRate(1, 12);
+		addTempoRate(1, 8);
+		addTempoRate(1, 7);
+	}
+	if (inRates != Rates::NoExtreme)
+	{
+		addTempoRate(1, 6);
+		addTempoRate(1, 5);
+	}
+	addTempoRate(1, 4);
+	addTempoRate(1, 3);
+	addTempoRate(1, 2);
+	addTempoRate(2, 3);
+	addTempoRate(3, 4);
+	addTempoRate(1);
+	addTempoRate(2);
+	addTempoRate(3);
+	addTempoRate(4);
+	addTempoRate(5);
+	addTempoRate(6);
+	addTempoRate(7);
+	addTempoRate(8);
+	addTempoRate(12);
+	addTempoRate(16);
+	addTempoRate(24);
+	addTempoRate(32);
+	addTempoRate(48);
+	addTempoRate(64);
+	addTempoRate(96);
+	if (inRates != Rates::Slow)
+	{
+		addTempoRate(333);
+	}
+	if ((inRates != Rates::Slow) && (inRates != Rates::NoExtreme))
+	{
+		mScalars.push_back(3000.0f);
+		mDisplays.push_back("infinity");
 	}
 
-	scalars = (float*) malloc(sizeof(float) * numTempoRates);
-	displays = (char**) malloc(sizeof(char*) * numTempoRates);
-	long i;
-	for (i = 0; i < numTempoRates; i++)
-		displays[i] = (char*) malloc(sizeof(char) * 16);
-
-	i = 0;
-	if (typeOfTable == kSlowTempoRates)
-	{
-		scalars[i] = 1.f/12.f;	strcpy(displays[i++], "1/12");
-		scalars[i] = 1.f/8.f;	strcpy(displays[i++], "1/8");
-		scalars[i] = 1.f/7.f;	strcpy(displays[i++], "1/7");
-	}
-	if (typeOfTable != kNoExtremeTempoRates)
-	{
-		scalars[i] = 1.f/6.f;	strcpy(displays[i++], "1/6");
-		scalars[i] = 1.f/5.f;	strcpy(displays[i++], "1/5");
-	}
-	scalars[i] = 1.f/4.f;	strcpy(displays[i++], "1/4");
-	scalars[i] = 1.f/3.f;	strcpy(displays[i++], "1/3");
-	scalars[i] = 1.f/2.f;	strcpy(displays[i++], "1/2");
-	scalars[i] = 2.f/3.f;	strcpy(displays[i++], "2/3");
-	scalars[i] = 3.f/4.f;	strcpy(displays[i++], "3/4");
-	scalars[i] = 1.0f;		strcpy(displays[i++], "1");
-	scalars[i] = 2.0f;		strcpy(displays[i++], "2");
-	scalars[i] = 3.0f;		strcpy(displays[i++], "3");
-	scalars[i] = 4.0f;		strcpy(displays[i++], "4");
-	scalars[i] = 5.0f;		strcpy(displays[i++], "5");
-	scalars[i] = 6.0f;		strcpy(displays[i++], "6");
-	scalars[i] = 7.0f;		strcpy(displays[i++], "7");
-	scalars[i] = 8.0f;		strcpy(displays[i++], "8");
-	scalars[i] = 12.0f;		strcpy(displays[i++], "12");
-	scalars[i] = 16.0f;		strcpy(displays[i++], "16");
-	scalars[i] = 24.0f;		strcpy(displays[i++], "24");
-	scalars[i] = 32.0f;		strcpy(displays[i++], "32");
-	scalars[i] = 48.0f;		strcpy(displays[i++], "48");
-	scalars[i] = 64.0f;		strcpy(displays[i++], "64");
-	scalars[i] = 96.0f;		strcpy(displays[i++], "96");
-	if (typeOfTable != kSlowTempoRates)
-	{
-		scalars[i] = 333.0f;		strcpy(displays[i++], "333");
-	}
-	if ( (typeOfTable != kSlowTempoRates) && (typeOfTable != kNoExtremeTempoRates) )
-	{
-		scalars[i] = 3000.0f;	strcpy(displays[i++], "infinity");
-	}
+	assert(mScalars.size() == mDisplays.size());
 }
-
-//-----------------------------------------------------------------------------
-/*
-// moved to header so that the implementation is seen by DfxPlugin::DfxPlugin
-TempoRateTable::~TempoRateTable()
-{
-	if (scalars != NULL)
-		free(scalars);
-	scalars = NULL;
-	for (int i=0; i < numTempoRates; i++)
-	{
-		if (displays[i] != NULL)
-			free(displays[i]);
-		displays[i] = NULL;
-	}
-	if (displays != NULL)
-		free(displays);
-	displays = NULL;
-}
-*/
-
 
 //-----------------------------------------------------------------------------
 // given a tempo rate value, return the index of the tempo rate 
 // that is closest to that requested value
-long TempoRateTable::getNearestTempoRateIndex(float inTempoRateValue)
+long dfx::TempoRateTable::getNearestTempoRateIndex(float inTempoRateValue) const
 {
-	float bestDiff = scalars[numTempoRates-1];
+	auto bestDiff = mScalars.back();
 	long bestIndex = 0;
-	for (long i=0; i < numTempoRates; i++)
+	for (long i = 0; i < getNumTempoRates(); i++)
 	{
-		float diff = fabsf(inTempoRateValue - scalars[i]);
+		auto const diff = std::fabs(inTempoRateValue - mScalars[i]);
 		if (diff < bestDiff)
 		{
 			bestDiff = diff;

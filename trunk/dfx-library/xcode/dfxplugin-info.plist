@@ -30,7 +30,7 @@
 	<key>CFBundleHelpBookFolder</key>
 	<string>$(DFX_PLUGIN_DOCUMENTATION_DIRECTORY)</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(DFX_PLUGIN_BUNDLE_IDENTIFIER)</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>

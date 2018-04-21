@@ -121,8 +121,24 @@ extern Boolean IsTransportStateProcSafe();
 
 #ifdef __cplusplus
 }
-#endif
 /* end of extern "C" */
+
+#if (__cplusplus >= 201103L)
+#include <memory>
+namespace dfx
+{
+	class UniqueCFAUPreset : public std::unique_ptr<CFAUPreset const, void(*)(CFAUPresetRef)>
+	{
+	public:
+		UniqueCFAUPreset(CFAUPresetRef object = nullptr) noexcept
+		:	std::unique_ptr<CFAUPreset const, void(*)(CFAUPresetRef)>(object, ::CFAUPresetRelease)
+		{
+		}
+	};
+}
+#endif
+
+#endif
 
 
 
