@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -24,8 +24,12 @@ Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 This is our mutex shit.
 ------------------------------------------------------------------------*/
 
-#ifndef __DFX_MUTEX_H
-#define __DFX_MUTEX_H
+#pragma once
+
+
+#if (__cplusplus >= 201103L)
+	#error "just use std::mutex"
+#endif
 
 
 #if _WIN32 && !defined(PLUGIN_SDK_BUILD)
@@ -66,4 +70,11 @@ private:
 };
 
 
-#endif
+class DfxScopedMutex
+{
+public:
+	explicit DfxScopedMutex(DfxMutex& inMutex);
+	~DfxScopedMutex();
+private:
+	DfxMutex& mMutex;
+};

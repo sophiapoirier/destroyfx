@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2011  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -68,10 +68,14 @@ void DfxPlugin::resume()
 
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this here
-	if (!isinitialized)
+	if (!mIsInitialized)
+	{
 		do_initialize();
+	}
 	else
+	{
 		do_reset();	// else because do_initialize calls do_reset
+	}
 
 	// do these after calling do_reset, 
 	// because the value for latency could change there
@@ -288,11 +292,14 @@ bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, cha
 #if TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-// note:  don't ever return 0 or Logic crashes
 VstInt32 DfxPlugin::getChunk(void ** data, bool isPreset)
 {
-	VstInt32 outsize = (VstInt32) dfxsettings->save(data, isPreset);
-	return (outsize < 1) ? 1 : outsize;
+	auto const dfxdata = mDfxSettings->save(isPreset);
+	if (data)
+	{
+		*data = dfxdata.data();
+	}
+	return static_cast<VstInt32>(dfxdata.size());
 }
 
 //-----------------------------------------------------------------------------
@@ -303,7 +310,7 @@ VstInt32 DfxPlugin::getChunk(void ** data, bool isPreset)
 // you may want to check the bytesize, and certainly should maintain a version."
 VstInt32 DfxPlugin::setChunk(void * data, VstInt32 byteSize, bool isPreset)
 {
-	return dfxsettings->restore(data, (unsigned)byteSize, isPreset);
+	return mDfxSettings->restore(data, (unsigned)byteSize, isPreset);
 }
 
 #endif
@@ -387,10 +394,12 @@ void DfxPlugin::processReplacing(float ** inputs, float ** outputs, VstInt32 sam
 	preprocessaudio();
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	for (unsigned long i=0; i < getnumoutputs(); i++)
+	for (unsigned long i = 0; i < getnumoutputs(); i++)
 	{
-		if (dspcores[i] != NULL)
-			dspcores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, true);
+		if (mDSPCores[i])
+		{
+			mDSPCores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, true);
+		}
 	}
 #else
 	processaudio((const float**)inputs, outputs, (unsigned)sampleFrames, true);
@@ -406,10 +415,12 @@ void DfxPlugin::process(float ** inputs, float ** outputs, VstInt32 sampleFrames
 	preprocessaudio();
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	for (unsigned long i=0; i < getnumoutputs(); i++)
+	for (unsigned long i = 0; i < getnumoutputs(); i++)
 	{
-		if (dspcores[i] != NULL)
-			dspcores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, false);
+		if (mDSPCores[i])
+		{
+			mDSPCores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, false);
+		}
 	}
 #else
 	processaudio((const float**)inputs, outputs, (unsigned)sampleFrames, false);

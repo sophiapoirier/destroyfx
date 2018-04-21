@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2016  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -48,12 +48,12 @@ multiple variable types:
 This parameter system allows a parameter to operate using whichever 
 variable type is most appropriate:  integer, float, boolean, etc.  
 The variable type that the parameter uses "natively" is stored in a 
-DfxParamValueType type member called valueType.  
-The actual storage of parameter values is done in a struct (DfxParamValue) 
+DfxParam::ValueType type member called mValueType.  
+The actual storage of parameter values is done in a union (DfxParam::Value) 
 that includes fields for each supported variable type.
 
-You can get and set parameter values using entire DfxParamValue structs 
-(in which case only the field of the struct for the native valueType 
+You can get and set parameter values using entire DfxParam::Value unions 
+(in which case only the field of the union for the native value type 
 actually affects the value) or using individual values of a particular 
 variable type.  Rather than being restricted to setting and getting a 
 parameter's value only in its native variable type, you can actually use 
@@ -89,9 +89,9 @@ parameter values:  current, previous, default, min, max:
 Every parameter stores multiple values.  There is the current value, 
 the previous value, the default value, the minimum value, and the 
 maximum value.  The minimum and maximum are stored in the member 
-variables min and max.  The default is stored in defaultValue.  The 
+variables min and max.  The default is stored in mDefaultValue.  The 
 current value is stored in value and the previous value is stored in 
-oldValue.  The current value is what the parameter value is right now 
+mOldValue.  The current value is what the parameter value is right now 
 and the previous value is what the value was during the previous 
 audio processing buffer.  The min and max specify the recommended 
 range of values for the parameter.  The default is what the parameter 
@@ -106,7 +106,7 @@ initial value and default values.
 The recommended value range defined by min and max is not necessarily 
 strictly enforced.  The SetEnforceValueLimits routine can be used to 
 specify whether values should be strictly constrained to be within 
-the min/max range.  The default behaviour is to not restrict values, 
+the min/max range.  The default behavior is to not restrict values, 
 with the exception of index unit types where it is assumed that out 
 of range values would be a bad thing (going into unallocated memory 
 of an array).  (more on parameter unit types below)
@@ -115,7 +115,7 @@ of an array).  (more on parameter unit types below)
 value distribution curves:
 
 A parameter has a value distributation curve, specified by the 
-member variable called curve which is of type DfxParamCurve.  
+member variable called mCurve which is of type DfxParam::Curve.  
 The curve is a recommendation for how to distribute values along 
 a parameter control (like a slider on a plugin's graphical interface).  
 It indicates whether or not certain parts of the value range should 
@@ -152,25 +152,25 @@ generic values are used in the expand and contract routines.
 
 For certain curve types, it might be necessary to provide extra 
 curve specification information, and that's what the member variable 
-called curvespec is for (for example, the value of the exponent 
-for kDfxParamCurve_pow).  The routines getcurvespec and setcurvespec 
-can be used to get and set the value of a parameter's curvespec.
+called mCurveSpec is for (for example, the value of the exponent 
+for DfxParam::Curve::Pow).  The routines getcurvespec and setcurvespec 
+can be used to get and set the value of a parameter's curve-spec.
 
 
 unit types:
 
 A parameter has a unit type, specified by the member variable called 
-unit which is of type DfxParamUnit.  DfxParamUnit is an enum of common 
+mUnit which is of type DfxParam::Unit.  DfxParam::Unit is an enum of common 
 parameter unit types (Hz, ms, gain, percent, etc.).
 
-There are a couple of special unit types.  kDfxParamUnit_list indicates 
+There are a couple of special unit types.  DfxParam::Unit::List indicates 
 that the parameter values represent integer index values for an array.  
-kDfxParamUnit_custom indicates that there is a custom text string with 
+DfxParam::Unit::Custom indicates that there is a custom text string with 
 a name for the unit type.  setcustomunitstring is used to set the 
 text for the custom unit name, and getunitstring will get it (as well 
 as text names for any other non-custom unit types).
 
-Settings useValueStrings true indicates that there is an array of text 
+setusevaluestrings(true) indicates that there is an array of text 
 strings that should be used for displaying the parameter's value for a 
 given index value.  There are routines for getting and setting the text 
 for these value strings (setvaluestring, getvaluestring, 
@@ -179,99 +179,19 @@ property.  When setusevaluestrings(true) is called, memory is allocated
 for the value strings.
 ------------------------------------------------------------------------*/
 
-#ifndef __DFX_PARAMETER_H
-#define __DFX_PARAMETER_H
+#pragma once
 
+
+#include <string>
+#include <vector>
 
 #include "dfxdefines.h"
+#include "dfxmisc.h"
 
 #ifdef TARGET_API_AUDIOUNIT
-	#include <CoreFoundation/CFString.h>	// for CFString stuff
-	const CFStringEncoding kDFX_DefaultCStringEncoding = kCFStringEncodingMacRoman;
+	#include <CoreFoundation/CFString.h>
+	static constexpr CFStringEncoding kDFX_DefaultCStringEncoding = kCFStringEncodingMacRoman;
 #endif
-
-
-
-// the DfxParamValue struct holds every type of supported value variable type
-// all values (current, min, max, default) are stored in these
-typedef union {
-	double f;
-	int64_t i;
-	int64_t b;	// would be bool, but bool can vary in byte size depending on the compiler
-} DfxParamValue;
-
-// this is a structure for when a DfxParamValue needs to be archived for later use; 
-// it includes a tag specifying the value type that is valid in the DfxParamValue union
-typedef struct {
-	int64_t type;
-	DfxParamValue v;
-} DfxParamValueArchive;
-
-
-// these are the different variable types that a parameter can 
-// declare as its "native" type
-enum {
-	kDfxParamValueType_float = 0,
-	kDfxParamValueType_int,
-	kDfxParamValueType_boolean
-};
-typedef uint32_t	DfxParamValueType;
-
-
-// these are the different value unit types that a parameter can have
-enum {
-	kDfxParamUnit_generic = 0,
-	kDfxParamUnit_percent,	// typically 0-100
-	kDfxParamUnit_lineargain,
-	kDfxParamUnit_decibles,
-	kDfxParamUnit_drywetmix,	// typically 0-100
-	kDfxParamUnit_hz,
-	kDfxParamUnit_seconds,
-	kDfxParamUnit_ms,
-	kDfxParamUnit_samples,
-	kDfxParamUnit_scalar,
-	kDfxParamUnit_divisor,
-	kDfxParamUnit_exponent,
-	kDfxParamUnit_semitones,
-	kDfxParamUnit_octaves,
-	kDfxParamUnit_cents,
-	kDfxParamUnit_notes,
-	kDfxParamUnit_pan,	// typically -1 - +1
-	kDfxParamUnit_bpm,
-	kDfxParamUnit_beats,
-	kDfxParamUnit_list,	// this indicates that the parameter value is an index into some array
-//	kDfxParamUnit_strings,	// index, using array of custom text strings for modes/states/etc.
-	kDfxParamUnit_custom	// with a text string lable for custom display
-};
-typedef uint32_t	DfxParamUnit;
-
-
-// these are the different value distribution curves that a parameter can have
-// this is useful if you need to give greater emphasis to some parts of the value range
-enum {
-	kDfxParamCurve_linear = 0,
-	kDfxParamCurve_stepped,
-	kDfxParamCurve_sqrt,
-	kDfxParamCurve_squared,
-	kDfxParamCurve_cubed,
-	kDfxParamCurve_pow,	// requires curvespec to be defined as the value of the exponent
-	kDfxParamCurve_exp,
-	kDfxParamCurve_log
-};
-typedef uint32_t	DfxParamCurve;
-
-
-// some miscellaneous parameter attributes
-// they are stored as flags in a bit-mask thingy
-enum {
-	kDfxParamAttribute_hidden = 1,	// should not be revealed to the user
-	kDfxParamAttribute_unused = 1 << 1	// isn't being used at all (a place-holder?); don't reveal to the host or anyone
-};
-typedef uint32_t	DfxParamAttribute;
-
-
-// this is a twiddly value for when casting with decimal types
-const double kDfxParam_IntegerPadding = 0.001;
 
 
 
@@ -279,49 +199,121 @@ const double kDfxParam_IntegerPadding = 0.001;
 class DfxParam
 {
 public:
-	DfxParam();
-	virtual ~DfxParam();
-	
-	// initialize a parameter with values, value types, curve types, etc.
-	void init(const char * inName, DfxParamValueType inType, 
-					DfxParamValue inInitialValue, DfxParamValue inDefaultValue, 
-					DfxParamValue inMinValue, DfxParamValue inMaxValue, 
-					DfxParamUnit inUnit = kDfxParamUnit_generic, 
-					DfxParamCurve inCurve = kDfxParamCurve_linear);
-	// the rest of these are just convenience wrappers for initializing with a certain variable type
-	void init_f(const char * inName, double inInitialValue, double inDefaultValue, 
-					double inMinValue, double inMaxValue, 
-					DfxParamUnit inUnit = kDfxParamUnit_generic, 
-					DfxParamCurve inCurve = kDfxParamCurve_linear);
-	void init_i(const char * inName, int64_t inInitialValue, int64_t inDefaultValue, 
-					int64_t inMinValue, int64_t inMaxValue, 
-					DfxParamUnit inUnit = kDfxParamUnit_generic, 
-					DfxParamCurve inCurve = kDfxParamCurve_stepped);
-	void init_b(const char * inName, bool inInitialValue, bool inDefaultValue, 
-					DfxParamUnit inUnit = kDfxParamUnit_generic);
+	// this is a twiddly value for when casting with decimal types
+	static constexpr double kIntegerPadding = 0.001;
 
-	// release memory for the value strings arrays
-	void releaseValueStrings();
+	// the Value union holds every type of supported value variable type
+	// all values (current, min, max, default) are stored in these
+	typedef union
+	{
+		double f;
+		int64_t i;
+		int64_t b;  // would be bool, but bool can vary in byte size depending on the compiler
+	} Value;
+
+	// these are the different variable types that a parameter can 
+	// declare as its "native" type
+	enum class ValueType : uint32_t
+	{
+		Float,
+		Int,
+		Boolean
+	};
+
+	// these are the different value unit types that a parameter can have
+	enum class Unit : uint32_t
+	{
+		Generic,
+		Percent,  // typically 0-100
+		LinearGain,
+		Decibles,
+		DryWetMix,  // typically 0-100
+		Hz,
+		Seconds,
+		MS,
+		Samples,
+		Scalar,
+		Divisor,
+		Exponent,
+		Semitones,
+		Octaves,
+		Cents,
+		Notes,
+		Pan,  // typically -1 - +1
+		BPM,
+		Beats,
+		List,  // this indicates that the parameter value is an index into some array
+//		Strings,  // index, using array of custom text strings for modes/states/etc.
+		Custom  // with a text string lable for custom display
+	};
+
+	// these are the different value distribution curves that a parameter can have
+	// this is useful if you need to give greater emphasis to some parts of the value range
+	enum class Curve
+	{
+		Linear,
+		Stepped,
+		SquareRoot,
+		Squared,
+		Cubed,
+		Pow,  // requires curve-spec to be defined as the value of the exponent
+		Exp,
+		Log
+	};
+
+	// some miscellaneous parameter attributes
+	// they are stored as flags in a bit-mask thingy
+	enum : uint32_t
+	{
+		kAttribute_Hidden = 1,  // should not be revealed to the user
+		kAttribute_Unused = 1 << 1  // isn't being used at all (a place-holder?); don't reveal to the host or anyone
+	};
+	typedef uint32_t Attribute; 
+
+
+	DfxParam() = default;
+	virtual ~DfxParam() = default;
+
+	// initialize a parameter with values, value types, curve types, etc.
+	void init(char const* inName, ValueType inType, 
+			  Value inInitialValue, Value inDefaultValue, 
+			  Value inMinValue, Value inMaxValue, 
+			  Unit inUnit = Unit::Generic, 
+			  Curve inCurve = Curve::Linear);
+	// the rest of these are just convenience wrappers for initializing with a certain variable type
+	void init_f(char const* inName, double inInitialValue, double inDefaultValue, 
+				double inMinValue, double inMaxValue, 
+				Unit inUnit = Unit::Generic, 
+				Curve inCurve = Curve::Linear);
+	void init_i(char const* inName, int64_t inInitialValue, int64_t inDefaultValue, 
+				int64_t inMinValue, int64_t inMaxValue, 
+				Unit inUnit = Unit::Generic, 
+				Curve inCurve = Curve::Stepped);
+	void init_b(char const* inName, bool inInitialValue, bool inDefaultValue, 
+				Unit inUnit = Unit::Generic);
+
 	// set/get whether or not to use an array of strings for custom value display
-	void setusevaluestrings(bool inNewMode = true);
-	bool getusevaluestrings()
-		{	return useValueStrings;	}
-	// safety check for an index into the value strings array
-	bool ValueStringIndexIsValid(int64_t inIndex);
+	void setusevaluestrings(bool inMode = true);
+	bool getusevaluestrings() const noexcept
+	{
+		return !mValueStrings.empty();
+	}
 	// set a value string's text contents
-	bool setvaluestring(int64_t inIndex, const char * inText);
+	bool setvaluestring(int64_t inIndex, char const* inText);
 	// get a copy of the contents of a specific value string...
-	bool getvaluestring(int64_t inIndex, char * outText);
+	bool getvaluestring(int64_t inIndex, char* outText) const;
 	// ...or get a copy of the pointer to the value string
-	char * getvaluestring_ptr(int64_t inIndex);
+	char const* getvaluestring_ptr(int64_t inIndex) const;
 #ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the array of CFString value strings
-	CFStringRef * getvaluecfstrings()
-		{	return valueCFStrings;	}
+	CFStringRef getvaluecfstring(int64_t inIndex) const
+	{
+		return mValueCFStrings.at(inIndex).get();
+	}
 #endif
 
 	// set the parameter's current value
-	void set(DfxParamValue inNewValue);
+	void set(Value inNewValue);
 	void set_f(double inNewValue);
 	void set_i(int64_t inNewValue);
 	void set_b(bool inNewValue);
@@ -329,156 +321,216 @@ public:
 	void set_gen(double inGenValue);
 
 	// get the parameter's current value
-	DfxParamValue get()
-		{	return value;	}
-	double get_f()
-		{	return derive_f(value);	}
-	int64_t get_i()
-		{	return derive_i(value);	}
-	bool get_b()
-		{	return derive_b(value);	}
+	Value get() const noexcept
+	{
+		return mValue;
+	}
+	double get_f() const noexcept
+	{
+		return derive_f(mValue);
+	}
+	int64_t get_i() const
+	{
+		return derive_i(mValue);
+	}
+	bool get_b() const noexcept
+	{
+		return derive_b(mValue);
+	}
 	// get the current value scaled into a generic 0...1 float value
-	double get_gen();
+	double get_gen() const;
 
 	// get the parameter's minimum value
-	DfxParamValue getmin()
-		{	return min;	}
-	double getmin_f()
-		{	return derive_f(min);	}
-	int64_t getmin_i()
-		{	return derive_i(min);	}
-	bool getmin_b()
-		{	return derive_b(min);	}
+	Value getmin() const noexcept
+	{
+		return mMinValue;
+	}
+	double getmin_f() const noexcept
+	{
+		return derive_f(mMinValue);
+	}
+	int64_t getmin_i() const
+	{
+		return derive_i(mMinValue);
+	}
+	bool getmin_b() const noexcept
+	{
+		return derive_b(mMinValue);
+	}
 
 	// get the parameter's maximum value
-	DfxParamValue getmax()
-		{	return max;	}
-	double getmax_f()
-		{	return derive_f(max);	}
-	int64_t getmax_i()
-		{	return derive_i(max);	}
-	bool getmax_b()
-		{	return derive_b(max);	}
+	Value getmax() const noexcept
+	{
+		return mMaxValue;
+	}
+	double getmax_f() const noexcept
+	{
+		return derive_f(mMaxValue);
+	}
+	int64_t getmax_i() const
+	{
+		return derive_i(mMaxValue);
+	}
+	bool getmax_b() const noexcept
+	{
+		return derive_b(mMaxValue);
+	}
 
 	// get the parameter's default value
-	DfxParamValue getdefault()
-		{	return defaultValue;	}
-	double getdefault_f()
-		{	return derive_f(defaultValue);	}
-	int64_t getdefault_i()
-		{	return derive_i(defaultValue);	}
-	bool getdefault_b()
-		{	return derive_b(defaultValue);	}
+	Value getdefault() const noexcept
+	{
+		return mDefaultValue;
+	}
+	double getdefault_f() const noexcept
+	{
+		return derive_f(mDefaultValue);
+	}
+	int64_t getdefault_i() const
+	{
+		return derive_i(mDefaultValue);
+	}
+	bool getdefault_b() const noexcept
+	{
+		return derive_b(mDefaultValue);
+	}
 
-	// figure out the value of a DfxParamValue as a certain variable type
-	// perform type conversion if the desired variable type is not "native"
-	double derive_f(DfxParamValue inValue);
-	int64_t derive_i(DfxParamValue inValue);
-	bool derive_b(DfxParamValue inValue);
+	// figure out the value of a Value as a certain variable type
+	// (perform type conversion if the desired variable type is not "native")
+	double derive_f(Value inValue) const noexcept;
+	int64_t derive_i(Value inValue) const;
+	bool derive_b(Value inValue) const noexcept;
 
-	// set a DfxParamValue with a value of a specific type
-	// perform type conversion if the incoming variable type is not "native"
-	bool accept_f(double inValue, DfxParamValue & outValue);
-	bool accept_i(int64_t inValue, DfxParamValue & outValue);
-	bool accept_b(bool inValue, DfxParamValue & outValue);
+	// set a Value with a value of a specific type
+	// (perform type conversion if the incoming variable type is not "native")
+	bool accept_f(double inValue, Value& outValue) const;
+	bool accept_i(int64_t inValue, Value& outValue) const noexcept;
+	bool accept_b(bool inValue, Value& outValue) const noexcept;
 
 	// expand and contract routines for setting and getting values generically
 	// these take into account the parameter curve
-	double expand(double inGenValue);
-	double contract(double inLiteralValue);
+	double expand(double inGenValue) const;
+	double contract(double inLiteralValue) const;
 
-	// clip the current parameter value to the min/max range
-	// returns true if the value was altered, false otherwise
-	bool limit();
 	// set/get the property stating whether or not to automatically clip values into range
-	void SetEnforceValueLimits(bool inNewMode)
-		{	enforceValueLimits = inNewMode;	if (inNewMode) limit();	}
-	bool GetEnforceValueLimits()
-		{	return enforceValueLimits;	}
+	void SetEnforceValueLimits(bool inMode);
+	bool GetEnforceValueLimits() const noexcept
+	{
+		return mEnforceValueLimits;
+	}
 
 	// get a copy of the text of the parameter name
-	void getname(char * outText);
+	void getname(char* outText) const;
 #ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the CFString version of the parameter name
-	CFStringRef getcfname()
-		{	return cfname;	}
+	CFStringRef getcfname() const noexcept
+	{
+		return mCFName.get();
+	}
 #endif
 
 	// set/get the variable type of the parameter values
-	void setvaluetype(DfxParamValueType inNewType);
-	DfxParamValueType getvaluetype()
-		{	return valueType;	}
+	//void setvaluetype(ValueType inNewType);
+	ValueType getvaluetype() const noexcept
+	{
+		return mValueType;
+	}
 
 	// set/get the unit type of the parameter
-	void setunit(DfxParamUnit inNewUnit);
-	DfxParamUnit getunit()
-		{	return unit;	}
-	void getunitstring(char * outText);
-	void setcustomunitstring(const char * inText);
+	//void setunit(Unit inNewUnit);
+	Unit getunit() const noexcept
+	{
+		return mUnit;
+	}
+	void getunitstring(char* outText) const;
+	void setcustomunitstring(char const* inText);
 
 	// set/get the value distribution curve
-	void setcurve(DfxParamCurve inNewCurve)
-		{	curve = inNewCurve;	}
-	DfxParamCurve getcurve()
-		{	return curve;	}
+	void setcurve(Curve inNewCurve) noexcept
+	{
+		mCurve = inNewCurve;
+	}
+	Curve getcurve() const noexcept
+	{
+		return mCurve;
+	}
 	// set/get possibly-necessary extra specification about the value distribution curve
-	void setcurvespec(double inNewCurveSpec)
-		{	curvespec = inNewCurveSpec;	}
-	double getcurvespec()
-		{	return curvespec;	}
+	void setcurvespec(double inNewCurveSpec) noexcept
+	{
+		mCurveSpec = inNewCurveSpec;
+	}
+	double getcurvespec() const noexcept
+	{
+		return mCurveSpec;
+	}
 
 	// set/get various parameter attribute bits
-	void setattributes(unsigned long inFlags)
-		{	attributes = inFlags;	}
-	unsigned long getattributes()
-		{	return attributes;	}
-	void addattributes(unsigned long inFlags)
-		{	attributes |= inFlags;	}
-	void removeattributes(unsigned long inFlags)
-		{	attributes &= ~inFlags;	}
+	void setattributes(Attribute inFlags) noexcept
+	{
+		mAttributes = inFlags;
+	}
+	Attribute getattributes() const noexcept
+	{
+		return mAttributes;
+	}
+	void addattributes(Attribute inFlags) noexcept
+	{
+		mAttributes |= inFlags;
+	}
+	void removeattributes(Attribute inFlags) noexcept
+	{
+		mAttributes &= ~inFlags;
+	}
 
 	// set/get the property indicating whether the parameter value has changed
-	void setchanged(bool inChanged = true);
-	bool getchanged()
-		{	return changed;	}
+	void setchanged(bool inChanged = true) noexcept;
+	bool getchanged() const noexcept
+	{
+		return mChanged;
+	}
 	// set/get the property indicating whether the parameter value has been set for any reason (regardless of whether the new value differed)
-	void settouched(bool inTouched = true)
-		{	touched = inTouched;	}
-	bool gettouched()
-		{	return touched;	}
+	void settouched(bool inTouched = true) noexcept
+	{
+		mTouched = inTouched;
+	}
+	bool gettouched() const noexcept
+	{
+		return mTouched;
+	}
 
 	// randomize the current value of the parameter
-	virtual DfxParamValue randomize();
-
+	virtual Value randomize();
 
 
 private:
+	// clip the current parameter value to the min/max range
+	// returns true if the value was altered, false otherwise
+	bool limit();
+
+	// safety check for an index into the value strings array
+	bool ValueStringIndexIsValid(int64_t inIndex) const;
 
 	// when this is enabled, out of range values are "bounced" into range
-	bool enforceValueLimits;
-	char * name;
-	DfxParamValue value, defaultValue, min, max, oldValue;
-	DfxParamValueType valueType;	// the variable type of the parameter values
-	DfxParamUnit unit;	// the unit type of the parameter
-	DfxParamCurve curve;	// the shape of the distribution of parameter values
-	double curvespec;	// special specification, like the exponent in kDfxParamCurve_pow
-	bool useValueStrings;	// whether or not to use an array of custom strings to display the parameter's value
-	char ** valueStrings;	// an array of strings for when useValueStrings is true
-	int64_t numAllocatedValueStrings;	// just to remember how many we allocated
-	char * customUnitString;	// a text string display for parameters using custom unit types
-	bool changed;	// indicates if the value has changed
-	bool touched;	// indicates if the value has been newly set
-	unsigned long attributes;	// a bit-mask of various parameter attributes
+	bool mEnforceValueLimits = false;  // default to allowing values outside of the min/max range
+	std::string mName;
+	Value mValue {}, mDefaultValue {}, mMinValue {}, mMaxValue {}, mOldValue {};
+	ValueType mValueType = ValueType::Float;  // the variable type of the parameter values
+	Unit mUnit = Unit::Generic;  // the unit type of the parameter
+	Curve mCurve = Curve::Linear;  // the shape of the distribution of parameter values
+	double mCurveSpec = 1.0;  // special specification, like the exponent in Curve::Pow
+	std::vector<std::string> mValueStrings;  // an array of value strings
+	std::string mCustomUnitString;  // a text string display for parameters using custom unit types
+	bool mChanged = true;  // indicates if the value has changed
+	bool mTouched = false;  // indicates if the value has been newly set
+	Attribute mAttributes = 0;  // a bit-mask of various parameter attributes
 
-	#ifdef TARGET_API_AUDIOUNIT
-		// CoreFoundation string version of the parameter's name
-		CFStringRef cfname;
-		// array of CoreFoundation-style versions of the indexed value strings
-		CFStringRef * valueCFStrings;
-	#endif
-
+#ifdef TARGET_API_AUDIOUNIT
+	// CoreFoundation string version of the parameter's name
+	dfx::UniqueCFType<CFStringRef> mCFName;
+	// array of CoreFoundation-style versions of the indexed value strings
+	std::vector<dfx::UniqueCFType<CFStringRef>> mValueCFStrings;
+#endif
 };
-// end of DfxParam class definition
+// end of DfxParam
 
 
 
@@ -486,8 +538,8 @@ private:
 
 
 // prototypes for parameter value mapping utility functions
-double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inMaxValue, DfxParamCurve inCurveType, double inCurveSpec = 1.0);
-double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, double inMaxValue, DfxParamCurve inCurveType, double inCurveSpec = 1.0);
+double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.0);
+double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.0);
 
 
 
@@ -500,31 +552,24 @@ double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, doub
 class DfxPreset
 {
 public:
-	DfxPreset();
-	~DfxPreset();
-	// call this immediately after the constructor (because new[] can't take arguments)
-	void PostConstructor(long inNumParameters);
+	explicit DfxPreset(long inNumParameters);
 
-//	void setvalue(long inParameterIndex, DfxParamValue inNewValue);
-//	DfxParamValue getvalue(long inParameterIndex);
-	void setname(const char * inText);
-	void getname(char * outText);
-	const char * getname_ptr();
-	#ifdef TARGET_API_AUDIOUNIT
-		CFStringRef getcfname()
-			{	return cfname;	}
-	#endif
-
-	DfxParamValue * values;
+	void setvalue(long inParameterIndex, DfxParam::Value inNewValue);
+	DfxParam::Value getvalue(long inParameterIndex) const;
+	void setname(char const* inText);
+	void getname(char* outText) const;
+	char const* getname_ptr() const noexcept;
+#ifdef TARGET_API_AUDIOUNIT
+	CFStringRef getcfname() const noexcept
+	{
+		return mCFName.get();
+	}
+#endif
 
 private:
-	char * name;
-	long numParameters;
-	#ifdef TARGET_API_AUDIOUNIT
-		CFStringRef cfname;
-	#endif
-};
-
-
-
+	std::string mName;
+	std::vector<DfxParam::Value> mValues;
+#ifdef TARGET_API_AUDIOUNIT
+	dfx::UniqueCFType<CFStringRef> mCFName;
 #endif
+};

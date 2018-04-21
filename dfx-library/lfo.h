@@ -1,104 +1,77 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2018  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
-Welcome to our LFO.
-by Sophia Poirier  ][  January 2002
+Welcome to our Low Frequency Oscillator.
 ------------------------------------------------------------------------*/
 
-#ifndef __DFX_LFO_H
-#define __DFX_LFO_H
+#pragma once
 
-#include <math.h>
-#include <stdlib.h>
+#include <algorithm>
+#include <array>
+#include <string>
+
+#include "dfxmath.h"
 
 
-//-------------------------------------------------------------------------------------
-// these are the 8 LFO waveforms:
-enum
+namespace dfx
 {
-	kLFOshape_sine,
-	kLFOshape_triangle,
-	kLFOshape_square,
-	kLFOshape_saw,
-	kLFOshape_reversesaw,
-	kLFOshape_thorn,
-	kLFOshape_random,
-	kLFOshape_randominterpolating,
-
-	numLFOshapes
-};
-
-//-------------------------------------------------------------------------------------
-// constants and macros
-
-//#define LFOshapeScaled(value)   ( (long)((value) * ((float)numLFOshapes-0.01f)) )
-//#define LFOshapeUnscaled(step)   ( (float)(step) / ((float)(numLFOshapes-1)) )
-
-const long NUM_LFO_POINTS = 512;
-const float NUM_LFO_POINTS_FLOAT = (float)NUM_LFO_POINTS;	// to reduce casting later on
-const float LFO_TABLE_STEP = 1.0f / (float)NUM_LFO_POINTS;	// to reduce division and encourage multiplication
-const long SQUARE_HALF_POINT = NUM_LFO_POINTS / 2;	// the point in the table when the square waveform drops to zero
-
-const long LFO_SMOOTH_DUR = 48;
-const float LFO_SMOOTH_STEP = 1.0f / (float)LFO_SMOOTH_DUR;
 
 
 //----------------------------------------------------------------------------- 
 class LFO
 {
 public:
+	enum
+	{
+		kShape_Sine,
+		kShape_Triangle,
+		kShape_Square,
+		kShape_Saw,
+		kShape_ReverseSaw,
+		kShape_Thorn,
+		kShape_Random,
+		kShape_RandomInterpolating,
+		kNumShapes
+	};
+	typedef int Shape;
+
+	static constexpr long kNumPoints = 512;
+	static constexpr auto kNumPoints_f = static_cast<float>(kNumPoints);  // to reduce casting later on
+	static constexpr float kTableStep = 1.0f / kNumPoints_f;  // to reduce division and encourage multiplication
+	static constexpr long kSmoothDur = 48;
+
 	LFO();
-	~LFO();
 
 	void reset();
-	void fillLFOtables();
 
-	void pickTheLFOwaveform();
-	void getShapeName(char * outNameString);
-	void getShapeNameIndexed(long inIndex, char * outNameString);
-	const char * getShapeNameIndexed_ptr(long inIndex);
+	void pickTheWaveform();  // TODO: omigoddess please remove this horrid method and handle state changes automatically
+	std::string getShapeName(Shape inShape) const;
 
+	void setDepth(float inDepth);
+	void setShape(Shape inShape);
+
+	void setStepSize(float inStepSize);
 	void syncToTheBeat(long inSamplesToBar);
-
-	// the LFO waveform tables
-	float * sineTable, * triangleTable, * squareTable, * sawTable, * reverseSawTable, * thornTable;
-
-	// the following are intended to be used as 0.0 - 1.0 VST parameter values:
-	bool bOnOff;	// parameter value for turning the LFO on or off
-	bool bTempoSync;	// parameter value for toggling tempo sync
-	float fRate;	// parameter value for LFO rate (in Hz)
-	float fTempoRate;	// parameter value for LFO rate (in cycles per beat)
-	float fDepth;	// parameter value LFO depth
-	long iShape;	// parameter value for LFO shape
-
-	float position;	// this tracks the position in the LFO table
-	float stepSize;	// size of the steps through the LFO table
-	float * table;	// pointer to the LFO table
-	float randomNumber;	// this stores random values for the random LFO waveforms
-	float oldRandomNumber;	// this stores previous random values for the random interpolating LFO waveform
-	float cycleRate;	// the rate in Hz of the LFO (only used for first layer LFOs)
-	long smoothSamples;	// a counter for the position during a smoothing fade
-	long granularityCounter;	// a counter for implementing LFO processing on a block basis
-	long granularity;	// the number of samples to wait before processing
 
 
 	//--------------------------------------------------------------------------------------
@@ -107,71 +80,95 @@ public:
 	void updatePosition(long inNumSteps = 1)
 	{
 		// increment the LFO position tracker
-		position += (stepSize * (float)inNumSteps);
+		mPosition += mStepSize * static_cast<float>(inNumSteps);
 
-		if (position >= NUM_LFO_POINTS_FLOAT)
+		if (mPosition >= kNumPoints_f)
 		{
 			// wrap around the position tracker if it has made it past the end of the LFO table
-			position = fmodf(position, NUM_LFO_POINTS_FLOAT);
+			mPosition = std::fmod(mPosition, kNumPoints_f);
 			// get new random LFO values, too
-			oldRandomNumber = randomNumber;
-			randomNumber = (float)rand() / (float)RAND_MAX;
+			mPrevRandomNumber = mRandomNumber;
+			mRandomNumber = dfx::math::Rand<decltype(mRandomNumber)>();
 			// set up the sample smoothing if a discontiguous waveform's cycle just ended
-			switch (iShape)
+			switch (mShape)
 			{
-				case kLFOshape_square     :
-				case kLFOshape_saw        :
-				case kLFOshape_reversesaw :
-				case kLFOshape_random     :
-					smoothSamples = LFO_SMOOTH_DUR;
+				case kShape_Square:
+				case kShape_Saw:
+				case kShape_ReverseSaw:
+				case kShape_Random:
+					mSmoothSamples = kSmoothDur;
+					break;
 				default:
 					break;
 			}
 		}
-		else if (position < 0.0f)
-			position = 0.0f;
-
+		else if (mPosition < 0.0f)
+		{
+			mPosition = 0.0f;
+		}
 		// special check for the square waveform - it also needs smoothing at the half point
-		else if (iShape == kLFOshape_square)
+		else if (mShape == kShape_Square)
 		{
 			// check to see if it has just passed the halfway point
-			if ( ((long)position >= SQUARE_HALF_POINT) && 
-				 ((long)(position - stepSize) < SQUARE_HALF_POINT) )
-				smoothSamples = LFO_SMOOTH_DUR;
+			constexpr long squareHalfPoint = kNumPoints / 2;  // the point in the table when the square waveform drops to zero
+			if ((static_cast<long>(mPosition) >= squareHalfPoint) && 
+				(static_cast<long>(mPosition - mStepSize) < squareHalfPoint))
+			{
+				mSmoothSamples = kSmoothDur;
+			}
 		}
 	}
 
 	//--------------------------------------------------------------------------------------
-	// this function gets the current 0.0 - 1.0 output value of the LFO and increments its position
-	float processLFO()
+	// gets the current 0.0 - 1.0 output value of the LFO and increments its position
+	float process() const
 	{
-	  float randiScalar, outValue;
+		float outValue {};
 
-		if (iShape == kLFOshape_randominterpolating)
+		if (mShape == kShape_RandomInterpolating)
 		{
 			// calculate how far into this LFO cycle we are so far, scaled from 0.0 to 1.0
-			randiScalar = position * LFO_TABLE_STEP;
+			float const randiScalar = mPosition * kTableStep;
 			// interpolate between the previous random number and the new one
-			outValue = (randomNumber * randiScalar) + (oldRandomNumber * (1.0f-randiScalar));
+			outValue = (mRandomNumber * randiScalar) + (mPrevRandomNumber * (1.0f - randiScalar));
 		}
-		//
-		else if (iShape == kLFOshape_random)
-			outValue = randomNumber;
-		//
+		else if (mShape == kShape_Random)
+		{
+			outValue = mRandomNumber;
+		}
 		else
-			outValue = table[(long)position];
+		{
+			outValue = mTable[static_cast<long>(mPosition)];
+		}
 
-		return (outValue * fDepth);
+		return outValue * mDepth;
 	}
 
 	//--------------------------------------------------------------------------------------
-	// this scales the return of processLFO() from 0.0 - 1.0 output to 0.0 - 2.0 (oscillating around 1.0)
-	float processLFOzero2two()
+	// scales the output of process from 0.0 - 1.0 output to 0.0 - 2.0 (oscillating around 1.0)
+	float processZeroToTwo() const
 	{
-		return ( (processLFO() * 2.0f) - fDepth + 1.0f );
+		return (process() * 2.0f) - mDepth + 1.0f;
 	}
 
+
+private:
+	void fillLFOtables();
+
+	// LFO waveform tables
+	std::array<float, kNumPoints> mSineTable, mTriangleTable, mSquareTable, mSawTable, mReverseSawTable, mThornTable;
+	float const* mTable = nullptr;  // pointer to the LFO table
+
+	float mPosition = 0.0f;  // the position in the LFO table
+	float mStepSize = 0.0f;  // size of the steps through the LFO table
+	float mRandomNumber = 0.0f;  // random values for the random LFO waveforms
+	float mPrevRandomNumber = 0.0f;  // previous random values for the random interpolating LFO waveform
+//	float mCycleRate = 0.0f;  // the rate in Hz of the LFO (only used for first layer LFOs)
+	long mSmoothSamples = 0.0f;  // a counter for the position during a smoothing fade
+
+	float mDepth = 0.0f;
+	Shape mShape {};
 };
 
 
-#endif
+}  // namespace

@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2010  Sophia Poirier
+Copyright (C) 2001-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -25,58 +25,15 @@ Sophia's Destroy FX MIDI stuff
 
 #include "dfxmidi.h"
 
-#include <stdlib.h>
-#include <math.h>
+#include <algorithm>
+#include <cmath>
 
+#include "dfxmath.h"
 
-//------------------------------------------------------------------------
-DfxMusicNote::DfxMusicNote()
-{
-	mTail1 = (float*) malloc(sizeof(float) * STOLEN_NOTE_FADE_DUR);
-	mTail2 = (float*) malloc(sizeof(float) * STOLEN_NOTE_FADE_DUR);
-	clearTail();
-
-	mVelocity = 0;
-	mNoteAmp = 0.0f;
-	mSmoothSamples = 0;
-}
-
-//------------------------------------------------------------------------
-DfxMusicNote::~DfxMusicNote()
-{
-	if (mTail1 != NULL)
-		free(mTail1);
-	mTail1 = NULL;
-
-	if (mTail2 != NULL)
-		free(mTail2);
-	mTail2 = NULL;
-}
-
-//------------------------------------------------------------------------
-void DfxMusicNote::clearTail()
-{
-	for (int i=0; i < STOLEN_NOTE_FADE_DUR; i++)
-	{
-		mTail1[i] = 0.0f;
-		mTail2[i] = 0.0f;
-	}
-}
-
-
-
-#pragma mark -
 
 //------------------------------------------------------------------------
 DfxMidi::DfxMidi()
 {
-	// allocate memory for these arrays
-	noteTable = new DfxMusicNote[NUM_NOTES];
-	noteQueue = (int*) malloc(sizeof(int) * NUM_NOTES);
-	sustainQueue = (bool*) malloc(sizeof(bool) * NUM_NOTES);
-	freqTable = (double*) malloc(sizeof(double) * NUM_NOTES);
-	blockEvents = (DfxMidiEvent*) malloc(sizeof(DfxMidiEvent) * EVENTS_QUEUE_SIZE);
-
 	fillFrequencyTable();
 
 	setResumedAttackMode(false);
@@ -85,127 +42,95 @@ DfxMidi::DfxMidi()
 }
 
 //------------------------------------------------------------------------
-DfxMidi::~DfxMidi()
-{
-	// deallocate the memory from these arrays
-	if (noteTable != NULL)
-		delete[] noteTable;
-	noteTable = NULL;
-	if (noteQueue != NULL)
-		free(noteQueue);
-	noteQueue = NULL;
-	if (sustainQueue != NULL)
-		free(sustainQueue);
-	sustainQueue = NULL;
-	if (freqTable != NULL)
-		free(freqTable);
-	freqTable = NULL;
-	if (blockEvents != NULL)
-		free(blockEvents);
-	blockEvents = NULL;
-}
-
-//------------------------------------------------------------------------
 void DfxMidi::reset()
 {
 	// zero out the note table, or what's important at least
-	for (int i=0; i < NUM_NOTES; i++)
+	for (auto& note : mNoteTable)
 	{
-		noteTable[i].mVelocity = 0;
-		noteTable[i].mEnvelope.setInactive();
-		noteTable[i].mLastOutValue = 0.0f;
-		noteTable[i].mSmoothSamples = 0;
-		noteTable[i].clearTail();
-		sustainQueue[i] = false;
+		note.mVelocity = 0;
+		note.mEnvelope.setInactive();
+		note.mLastOutValue = 0.0f;
+		note.mSmoothSamples = 0;
+		note.clearTail();
 	}
+	mSustainQueue.fill(false);
 
 	// clear the ordered note queue
 	removeAllNotes();
 
 	// reset this counter since processEvents may not be called during the first block
-	numBlockEvents = 0;
+	mNumBlockEvents = 0;
 	// reset the pitchbend value to no bend
-	pitchbend = 1.0;
+	mPitchBend = 1.0;
 	// turn sustain pedal off
-	sustain = false;
+	mSustain = false;
 }
 
 //------------------------------------------------------------------------
 void DfxMidi::setSampleRate(double inSampleRate)
 {
-	for (int i=0; i < NUM_NOTES; i++)
-		noteTable[i].mEnvelope.setSampleRate(inSampleRate);
+	for (auto& note : mNoteTable)
+	{
+		note.mEnvelope.setSampleRate(inSampleRate);
+	}
 }
 
 //------------------------------------------------------------------------
 void DfxMidi::setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur)
 {
-	for (int i=0; i < NUM_NOTES; i++)
-		noteTable[i].mEnvelope.setParameters(inAttackDur, inDecayDur, inSustainLevel, inReleaseDur);
+	for (auto& note : mNoteTable)
+	{
+		note.mEnvelope.setParameters(inAttackDur, inDecayDur, inSustainLevel, inReleaseDur);
+	}
 }
 
 //------------------------------------------------------------------------
-void DfxMidi::setEnvCurveType(DfxEnvCurveType inCurveType)
+void DfxMidi::setEnvCurveType(DfxEnvelope::CurveType inCurveType)
 {
-	for (int i=0; i < NUM_NOTES; i++)
-		noteTable[i].mEnvelope.setCurveType(inCurveType);
+	for (auto& note : mNoteTable)
+	{
+		note.mEnvelope.setCurveType(inCurveType);
+	}
 }
 
 //------------------------------------------------------------------------
 void DfxMidi::setResumedAttackMode(bool inNewMode)
 {
-	for (int i=0; i < NUM_NOTES; i++)
-		noteTable[i].mEnvelope.setResumedAttackMode(inNewMode);
+	for (auto& note : mNoteTable)
+	{
+		note.mEnvelope.setResumedAttackMode(inNewMode);
+	}
 }
 
 //------------------------------------------------------------------------
 void DfxMidi::preprocessEvents()
 {
-	// Sort the events in our queue so that their in chronological order.  (bubble sort)
+	// Sort the events in our queue so that they are in chronological order.
 	// The host is supposed to send them in order, but just in case...
-	for (long i=0; i < (numBlockEvents-1); i++)
-	{
-		// default it to true and change it to false if the next loop finds unsorted items
-		bool sorted = true;
-		//
-		for (long j=0; j < (numBlockEvents-1-i); j++)
-		{
-			// swap the neighbors if they're out of order
-			if (blockEvents[j+1].delta < blockEvents[j].delta)
-			{
-				DfxMidiEvent tempEvent = blockEvents[j];
-				blockEvents[j] = blockEvents[j+1];
-				blockEvents[j+1] = tempEvent;
-				sorted = false;
-			}
-		}
-		//
-		// no need to go through all (numBlockEvents-1)! iterations if the array is fully sorted already
-		if (sorted)
-			break;
-	}
+	std::stable_sort(mBlockEvents.begin(), std::next(mBlockEvents.begin(), mNumBlockEvents), [](auto const& a, auto const& b)
+					 {
+						 return a.mDelta < b.mDelta;
+					 });
 }
 
 //------------------------------------------------------------------------
-// zeroing numBlockEvents must be done at the end of each audio processing block 
+// zeroing mNumBlockEvents must be done at the end of each audio processing block 
 // so that events are not reused in the next block(s) if no new events arrive
 void DfxMidi::postprocessEvents()
 {
-	numBlockEvents = 0;
+	mNumBlockEvents = 0;
 }
 
 //-----------------------------------------------------------------------------------------
 // this function fills a table with the correct frequency for every MIDI note
 void DfxMidi::fillFrequencyTable()
 {
-	double baseNote = 6.875;	// A
-	baseNote *= NOTE_UP_SCALAR;	// A#
-	baseNote *= NOTE_UP_SCALAR;	// B
-	baseNote *= NOTE_UP_SCALAR;	// C, frequency of MIDI note 0
-	for (int i = 0; i < NUM_NOTES; i++)
+	constexpr double standardConcertA = 440.0;
+	int semitonesFromA = -69;
+	for (auto& freq : mFreqTable)
 	{
-		freqTable[i] = baseNote;
-		baseNote *= NOTE_UP_SCALAR;
+		freq = standardConcertA * dfx::math::FrequencyScalarBySemitones(static_cast<double>(semitonesFromA));
+		semitonesFromA++;
 	}
 }
 
@@ -215,117 +140,92 @@ void DfxMidi::fillFrequencyTable()
 void DfxMidi::insertNote(int inCurrentNote)
 {
 	// first check whether this note is already active (could happen in weird sequencers, like Max for example)
-	for (int notecount = 0; notecount < NUM_NOTES; notecount++)
+	auto const nonmatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inCurrentNote](auto const& note)
+													   {
+														   return note == inCurrentNote;
+													   });
+	// if the note is not already active, shift every note up a position (normal scenario)
+	if (nonmatchPortion == mNoteQueue.begin())
 	{
-		// we've looked at all active notes and didn't find the current one, so escape this for loop...
-		if (noteQueue[notecount] < 0)
-			break;
-		// the current note is already active ...
-		if (noteQueue[notecount] == inCurrentNote)
-		{
-			// ... so shift all of the notes before it up one position ...
-			while (notecount > 0)
-			{
-				noteQueue[notecount] = noteQueue[notecount-1];
-				notecount--;
-			}
-			// ... and then re-insert the current note as the first note
-			noteQueue[0] = inCurrentNote;
-			return;
-		}
+		std::rotate(mNoteQueue.begin(), std::prev(mNoteQueue.end()), mNoteQueue.end());
+		// then place the new note into the first position
+		mNoteQueue.front() = inCurrentNote;
 	}
-
-	// shift every note up a position   (normal scenario)
-	for (int nc = NUM_NOTES - 1; nc > 0; nc--)
-		noteQueue[nc] = noteQueue[nc - 1];
-	// then place the new note into the first position
-	noteQueue[0] = inCurrentNote;
 }
 
 //-----------------------------------------------------------------------------
 // this function removes a note from the active notes queue
 void DfxMidi::removeNote(int inCurrentNote)
 {
-	bool doShift = false;
-	for (int notecount = 0; notecount < (NUM_NOTES-1); notecount++)
-	{
-		// don't do anything until the note to delete is found
-		if (noteQueue[notecount] == inCurrentNote)
-			doShift = true;
-		// start shifting notes down past the point of the deleted note
-		if (doShift)
-			noteQueue[notecount] = noteQueue[notecount+1];
-		// we've reached the last active note in the table, so there's no need to shift notes down anymore
-		if (noteQueue[notecount] < 0)
-			break;
-	}
-
-	// this much must be true if we've just deleted a note, and it can't happen in the previous loop
-	noteQueue[NUM_NOTES-1] = kInvalidMidi;
+	auto const nonmatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inCurrentNote](auto const& note)
+													   {
+														   return note != inCurrentNote;
+													   });
+	std::fill(nonmatchPortion, mNoteQueue.end(), kInvalidValue);
 }
 
 //-----------------------------------------------------------------------------
 // this function cancels all of the notes in the active notes queue
 void DfxMidi::removeAllNotes()
 {
-	for (int notecount = 0; notecount < NUM_NOTES; notecount++)
-		noteQueue[notecount] = kInvalidMidi;
+	mNoteQueue.fill(kInvalidValue);
 }
 
 
 //-----------------------------------------------------------------------------
 bool DfxMidi::incNumEvents()
 {
-	numBlockEvents++;
+	mNumBlockEvents++;
 	// don't go past the allocated space for the events queue
-	if (numBlockEvents >= EVENTS_QUEUE_SIZE)
+	// TODO: actually truncating capacity by one event because of the way that events are added, could be fixed
+	if (mNumBlockEvents >= static_cast<long>(mBlockEvents.size()))
 	{
-		numBlockEvents = EVENTS_QUEUE_SIZE - 1;
-		return false;	// ! abort !
+		mNumBlockEvents = static_cast<long>(mBlockEvents.size()) - 1;
+		return false;  // ! abort !
 	}
-	return true;	// successful increment
+	return true;  // successful increment
 }
 
 //-----------------------------------------------------------------------------
 void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
 {
-	blockEvents[numBlockEvents].status = kMidiNoteOn;
-	blockEvents[numBlockEvents].channel = inMidiChannel;
-	blockEvents[numBlockEvents].byte1 = inNoteNumber;
-	blockEvents[numBlockEvents].byte2 = inVelocity;
-	blockEvents[numBlockEvents].delta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mStatus = kStatus_NoteOn;
+	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
+	mBlockEvents[mNumBlockEvents].mByte1 = inNoteNumber;
+	mBlockEvents[mNumBlockEvents].mByte2 = inVelocity;
+	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
 void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
 {
-	blockEvents[numBlockEvents].status = kMidiNoteOff;
-	blockEvents[numBlockEvents].channel = inMidiChannel;
-	blockEvents[numBlockEvents].byte1 = inNoteNumber;
-	blockEvents[numBlockEvents].byte2 = inVelocity;
-	blockEvents[numBlockEvents].delta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mStatus = kStatus_NoteOff;
+	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
+	mBlockEvents[mNumBlockEvents].mByte1 = inNoteNumber;
+	mBlockEvents[mNumBlockEvents].mByte2 = inVelocity;
+	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
 void DfxMidi::handleAllNotesOff(int inMidiChannel, long inBufferOffset)
 {
-	blockEvents[numBlockEvents].status = kMidiCC;
-	blockEvents[numBlockEvents].byte1 = kMidiCC_AllNotesOff;
-	blockEvents[numBlockEvents].channel = inMidiChannel;
-	blockEvents[numBlockEvents].delta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mStatus = kStatus_MidiCC;
+	mBlockEvents[mNumBlockEvents].mByte1 = kCC_AllNotesOff;
+	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
+	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
 void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset)
 {
-	blockEvents[numBlockEvents].status = kMidiPitchbend;
-	blockEvents[numBlockEvents].channel = inMidiChannel;
-	blockEvents[numBlockEvents].byte1 = inValueLSB;
-	blockEvents[numBlockEvents].byte2 = inValueMSB;
-	blockEvents[numBlockEvents].delta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mStatus = kStatus_PitchBend;
+	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
+	mBlockEvents[mNumBlockEvents].mByte1 = inValueLSB;
+	mBlockEvents[mNumBlockEvents].mByte2 = inValueMSB;
+	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
 	incNumEvents();
 }
 
@@ -333,13 +233,13 @@ void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB,
 void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset)
 {
 	// only handling sustain pedal for now...
-	if (inControllerNumber == kMidiCC_SustainPedalOnOff)
+	if (inControllerNumber == kCC_SustainPedalOnOff)
 	{
-		blockEvents[numBlockEvents].status = kMidiCC;
-		blockEvents[numBlockEvents].byte1 = inControllerNumber;
-		blockEvents[numBlockEvents].channel = inMidiChannel;
-		blockEvents[numBlockEvents].byte2 = inValue;	// <= 63 is off, >= 64 is on
-		blockEvents[numBlockEvents].delta = inBufferOffset;
+		mBlockEvents[mNumBlockEvents].mStatus = kStatus_MidiCC;
+		mBlockEvents[mNumBlockEvents].mByte1 = inControllerNumber;
+		mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
+		mBlockEvents[mNumBlockEvents].mByte2 = inValue;
+		mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
 		incNumEvents();
 	}
 }
@@ -347,161 +247,168 @@ void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, l
 //-----------------------------------------------------------------------------
 void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, long inBufferOffset)
 {
-	blockEvents[numBlockEvents].status = kMidiProgramChange;
-	blockEvents[numBlockEvents].channel = inMidiChannel;
-	blockEvents[numBlockEvents].byte1 = inProgramNumber;
-	blockEvents[numBlockEvents].delta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mStatus = kStatus_ProgramChange;
+	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
+	mBlockEvents[mNumBlockEvents].mByte1 = inProgramNumber;
+	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
 	incNumEvents();
 }
 
 
 //-----------------------------------------------------------------------------------------
 // this function is called during process() when MIDI events need to be attended to
-void DfxMidi::heedEvents(long inEventNum, double inPitchbendRange, bool inLegato, 
-							float inVelocityCurve, float inVelocityInfluence)
+void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato, 
+						 float inVelocityCurve, float inVelocityInfluence)
 {
-	switch (blockEvents[inEventNum].status)
+	switch (mBlockEvents[inEventNum].mStatus)
 	{
 
 // --- NOTE-ON RECEIVED ---
-		case kMidiNoteOn:
+		case kStatus_NoteOn:
+		{
+			auto const currentNote = mBlockEvents[inEventNum].mByte1;
+			mNoteTable[currentNote].mVelocity = mBlockEvents[inEventNum].mByte2;
+			mNoteTable[currentNote].mNoteAmp = (std::pow(kMidiScalar * static_cast<float>(mNoteTable[currentNote].mVelocity), inVelocityCurve) * 
+												inVelocityInfluence) + (1.0f - inVelocityInfluence);
+			//
+			if (inLegato)  // legato is on, fade out the last note and fade in the new one, supershort
 			{
-				int currentNote = blockEvents[inEventNum].byte1;
-				noteTable[currentNote].mVelocity = blockEvents[inEventNum].byte2;
-				noteTable[currentNote].mNoteAmp = ( (float)pow(MIDI_SCALAR * (float)(noteTable[currentNote].mVelocity), inVelocityCurve) * 
-													inVelocityInfluence ) + (1.0f - inVelocityInfluence);
-				//
-				if (inLegato)	// legato is on, fade out the last note and fade in the new one, supershort
+/* XXX TODO: implement real legato
+				// this is false until we find some already active note
+				bool legatoNoteFound = false;
+				// find the previous note and set it to fade out
+				for (int notecount = 0; notecount < kNumNotes; notecount++)
 				{
-/* XXX implement real legato
-					// this is false until we find some already active note
-					bool legatoNoteFound = false;
-					// find the previous note and set it to fade out
-					for (int notecount=0; notecount < NUM_NOTES; notecount++)
+					// we want to find the active note, but not this new one
+					if ((mNoteTable[notecount].mVelocity) && (notecount != currentNote) && (mNoteTable[notecount].mEnvelope.isInactive()))
 					{
-						// we want to find the active note, but not this new one
-						if ( (noteTable[notecount].mVelocity) && (notecount != currentNote) && (noteTable[notecount].mEnvelope.isInactive()) )
+						// if the note is currently fading in, pick up where it left off
+						if (mNoteTable[notecount].mEnvelope.getState() == DfxEnvelope::State::Attack)
 						{
-							// if the note is currently fading in, pick up where it left off
-							if (noteTable[notecount].mEnvelope.getState() == kDfxEnvState_Attack)
-								noteTable[notecount].releaseSamples = noteTable[notecount].attackSamples;
-							// otherwise do the full fade out duration, if the note is not already fading out
-							else if (noteTable[notecount].mEnvelope.getState() == kDfxEnvState_Release)
-								noteTable[notecount].releaseSamples = LEGATO_FADE_DUR;
-							noteTable[notecount].releaseDur = LEGATO_FADE_DUR;
-							// we found an active note (that's the same as the new incoming note)
-							legatoNoteFound = true;
+							mNoteTable[notecount].releaseSamples = mNoteTable[notecount].attackSamples;
 						}
+						// otherwise do the full fade out duration, if the note is not already fading out
+						else if (mNoteTable[notecount].mEnvelope.getState() == DfxEnvelope::State::Release)
+						{
+							mNoteTable[notecount].releaseSamples = kLegatoFadeDur;
+						}
+						mNoteTable[notecount].releaseDur = kLegatoFadeDur;
+						// we found an active note (that's the same as the new incoming note)
+						legatoNoteFound = true;
 					}
-					// don't start a new note fade-in if the currently active note is the same as this new note
-					if (! ((!legatoNoteFound) && (noteTable[currentNote].mVelocity)) )
-					{
-						// legato mode always uses this short fade
-						noteTable[currentNote].attackDur = LEGATO_FADE_DUR;
-						// attackSamples starts counting from zero, so set it to zero
-						noteTable[currentNote].attackSamples = 0;
-						// calculate how far this fade must "step" through at each sample.
-						// Since legato mode overrides the fades parameter and only does cheap fades, this 
-						// isn't really necessary, but since I don't trust that everything will work right...
-						noteTable[currentNote].linearFadeStep = LEGATO_FADE_STEP;
-					}
-*/
 				}
-				//
-				else	// legato is off, so set up for the attack envelope
+				// don't start a new note fade-in if the currently active note is the same as this new note
+				if (!(!legatoNoteFound && mNoteTable[currentNote].mVelocity))
 				{
-					noteTable[currentNote].mEnvelope.beginAttack();
-					// if the note is still sounding and in release, then smooth the end of that last note
-					if ( !(noteTable[currentNote].mEnvelope.getResumedAttackMode()) && (noteTable[currentNote].mEnvelope.getState() == kDfxEnvState_Release) )
-						noteTable[currentNote].mSmoothSamples = STOLEN_NOTE_FADE_DUR;
+					// legato mode always uses this short fade
+					mNoteTable[currentNote].attackDur = kLegatoFadeDur;
+					// attackSamples starts counting from zero, so set it to zero
+					mNoteTable[currentNote].attackSamples = 0;
+					// calculate how far this fade must "step" through at each sample.
+					// Since legato mode overrides the fades parameter and only does cheap fades, this 
+					// isn't really necessary, but since I don't trust that everything will work right...
+					mNoteTable[currentNote].linearFadeStep = kLegatoFadeStep;
+				}
+*/
+			}
+			//
+			else  // legato is off, so set up for the attack envelope
+			{
+				mNoteTable[currentNote].mEnvelope.beginAttack();
+				// if the note is still sounding and in release, then smooth the end of that last note
+				if (!(mNoteTable[currentNote].mEnvelope.isResumedAttackMode()) && (mNoteTable[currentNote].mEnvelope.getState() == DfxEnvelope::State::Release))
+				{
+					mNoteTable[currentNote].mSmoothSamples = kStolenNoteFadeDur;
 				}
 			}
 			break;
+		}
 
 
 
 // --- NOTE-OFF RECEIVED ---
-		case kMidiNoteOff:
+		case kStatus_NoteOff:
+		{
+			auto const currentNote = mBlockEvents[inEventNum].mByte1;
+			// don't process this note off, but do remember it, if the sustain pedal is on
+			if (mSustain)
 			{
-				int currentNote = blockEvents[inEventNum].byte1;
-				// don't process this note off, but do remember it, if the sustain pedal is on
-				if (sustain)
-					sustainQueue[currentNote] = true;
-				else
-					turnOffNote(currentNote, inLegato);
+				mSustainQueue[currentNote] = true;
+			}
+			else
+			{
+				turnOffNote(currentNote, inLegato);
 			}
 			break;
+		}
 
 
 
 // --- PITCHBEND RECEIVED ---
-		case kMidiPitchbend:
+		case kStatus_PitchBend:
+		{
+			constexpr auto upperRange = static_cast<double>(kPitchBendMaxValue - kPitchBendMidpointValue);
+			constexpr auto lowerRange = static_cast<double>(kPitchBendMidpointValue);
+			int const pitchbend14bit = (mBlockEvents[inEventNum].mByte2 * (kMaxValue + 1)) + mBlockEvents[inEventNum].mByte1;
+			// bend pitch up
+			if (pitchbend14bit >= kPitchBendMidpointValue)
 			{
-				long pitchbend14bit = (blockEvents[inEventNum].byte2 * 0x80) + blockEvents[inEventNum].byte1;
-				// no bend
-				if (pitchbend14bit == kDfxMidi_PitchbendMiddleValue)
-				{
-					pitchbend = 1.0;
-				}
-				// bend pitch up
-				else if (pitchbend14bit > kDfxMidi_PitchbendMiddleValue)
-				{
-					// scale the MIDI value from 0.0 to 1.0
-					pitchbend = (double)(pitchbend14bit - kDfxMidi_PitchbendMiddleValue) / (double)(kDfxMidi_PitchbendMiddleValue - 1);
-					// then scale it according to tonal steps and the user defined range
-					pitchbend = pow(NOTE_UP_SCALAR, pitchbend*inPitchbendRange);
-				}
-				// bend pitch down
-				else
-				{
-					// scale the MIDI value from 1.0 to 0.0
-					pitchbend = (double)(-(pitchbend14bit - kDfxMidi_PitchbendMiddleValue)) / (double)kDfxMidi_PitchbendMiddleValue;
-					// then scale it according to tonal steps and the user defined range
-					pitchbend = pow(NOTE_DOWN_SCALAR, pitchbend*inPitchbendRange);
-				}
+				// scale the MIDI value from 0.0 to 1.0
+				mPitchBend = static_cast<double>(pitchbend14bit - kPitchBendMidpointValue) / upperRange;
 			}
+			// bend pitch down
+			else
+			{
+				// scale the MIDI value from -1.0 to 0.0
+				mPitchBend = static_cast<double>(pitchbend14bit - kPitchBendMidpointValue) / lowerRange;
+			}
+			// then scale it according to tonal steps and the user defined range
+			mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBend * inPitchBendRange);
 			break;
+		}
 
 
 
 // --- CONTROLLER CHANGE RECEIVED ---
-		case kMidiCC:
+		case kStatus_MidiCC:
 		{
-			switch (blockEvents[inEventNum].byte1)
+			switch (mBlockEvents[inEventNum].mByte1)
 			{
 	// --- SUSTAIN PEDAL RECEIVED ---
-				case kMidiCC_SustainPedalOnOff:
-					if ( sustain && (blockEvents[inEventNum].byte2 <= 63) )
+				case kCC_SustainPedalOnOff:
+					if (mSustain && (mBlockEvents[inEventNum].mByte2 <= 63))
 					{
-						for (int i=0; i < NUM_NOTES; i++)
+						for (int i = 0; i < static_cast<int>(mSustainQueue.size()); i++)
 						{
-							if (sustainQueue[i])
+							if (mSustainQueue[i])
 							{
 								turnOffNote(i, inLegato);
-								sustainQueue[i] = false;
+								mSustainQueue[i] = false;
 							}
 						}
 					}
-					sustain = (blockEvents[inEventNum].byte2 >= 64);
+					mSustain = (mBlockEvents[inEventNum].mByte2 >= kMidpointValue);
 					break;
 
 	// --- ALL-NOTES-OFF RECEIVED ---
 				// all sound off, so call suspend() to wipe out all of the notes and buffers
-				case kMidiCC_AllNotesOff:
+				case kCC_AllNotesOff:
+				{
+					// and zero out the note table, or what's important at least
+					for (auto& note : mNoteTable)
 					{
-						// and zero out the note table, or what's important at least
-						for (int i=0; i < NUM_NOTES; i++)
-						{
-							noteTable[i].mVelocity = 0;
-							noteTable[i].mEnvelope.setInactive();
-						}
+						note.mVelocity = 0;
+						note.mEnvelope.setInactive();
 					}
 					break;
+				}
+
+				default:
+					break;
 			}
-			break;	// kMidiCC
+			break;  // kStatus_MidiCC
 		}
 
-// --- nothingness ---
 		default:
 			break;
 	}
@@ -513,12 +420,14 @@ void DfxMidi::turnOffNote(int inCurrentNote, bool inLegato)
 {
 	// legato is off (note-offs are ignored when it's on)
 	// go into the note release if legato is off and the note isn't already off
-	if ( !inLegato && (noteTable[inCurrentNote].mVelocity > 0) )
+	if (!inLegato && (mNoteTable[inCurrentNote].mVelocity > 0))
 	{
-		noteTable[inCurrentNote].mEnvelope.beginRelease();
+		mNoteTable[inCurrentNote].mEnvelope.beginRelease();
 		// make sure to turn the note off now if there is no release
-		if ( noteTable[inCurrentNote].mEnvelope.isInactive() )
-			noteTable[inCurrentNote].mVelocity = 0;
+		if (mNoteTable[inCurrentNote].mEnvelope.isInactive())
+		{
+			mNoteTable[inCurrentNote].mVelocity = 0;
+		}
 	}
 }
 
@@ -543,17 +452,17 @@ the SDK) and then start examining it.  I only want to deal with it if is
 one of 3 types of MIDI events:  a note, a pitchbend message, or a panic 
 message.  That is what each of the next three "if"s are all about.  If the 
 event is any one of those 3 things, then it gets worked on.
-	You are right that the struct array blockEvents[] is my queue.  I fill 
+	You are right that the struct array mBlockEvents[] is my queue.  I fill 
 up one item in that array for each interesting event that I receive during 
 that processing block.  I store the status in my own way (using an enum 
-that's in my header) as either kMidiNoteOn, kMidiNoteOff, kMidiPitchbend, 
-or kMidiCC_AllNotesOff.  This is what goes in the blockEvents.status field.  
-Then I take MIDI bytes 1 and 2 and put them into blockEvents.byte1 and .byte2.  
-If it's a note off message, then I put 0 into byte2 (velocity).  By the 
+that's in my header) as either kStatus_NoteOn, kStatus_NoteOff, kStatus_PitchBend, 
+or kCC_AllNotesOff.  This is what goes in the mBlockEvents.mStatus field.  
+Then I take MIDI bytes 1 and 2 and put them into mBlockEvents.mByte1 and .mByte2.  
+If it's a note off message, then I put 0 into mByte2 (velocity).  By the 
 way, with pitchbend, byte 1 is the LSB, but since LSB is, so far as I know, 
 inconsistantly implemented by different MIDI devices, my plugin doesn't 
 actually use that value in any way.  At the end of each of these "if"s, I 
-update numBlockEvents because that is my counter that I look at during 
+update mNumBlockEvents because that is my counter that I look at during 
 process() to see how many events I have to deal with during that block.
 	And for each event, I store the deltaFrames value.  deltaFrames is the 
 number of samples into that processing block that the event occurs.  This 
@@ -585,7 +494,7 @@ checks to see if there are any more upcoming events in the queue.  If not,
 then the current chunk processes to the end of the processing block, if 
 yes, then the current sub-chunk position is subtracted from the upcoming 
 event's deltaFrames value.  I move up inputs and outputs accordingly, etc.
-	Next comes a "for" loop that goes through my noteTable[] struct array 
+	Next comes a "for" loop that goes through my mNoteTable struct array 
 and looks for any active notes (i.e. notes with a non-zero velocity value).  
 All that I do during this loop is check the velocity of each note and then 
 process the audio for that note if it has a non-zero velocity.
@@ -604,10 +513,10 @@ parts of it you want to figure out.  I don't think that it is very
 complicated (just many steps), but I could be wrong and if you can't figure 
 out any parts of it, let me know and I'll explain.
 	There is one more really important thing in process().  At the of the 
-whole function, I reset numBlockEvents (the global events counter) to 0.  
+whole function, I reset mNumBlockEvents (the global events counter) to 0.  
 This is extremely important because processEvents() only gets called if 
 new events are received during a processing block.  If not, then 
-processEvents() does not get called, numBlockEvents does not get zeroed 
+processEvents() does not get called, mNumBlockEvents does not get zeroed 
 at the beginning of processEvents(), and process() will process the same 
 MIDI events over and over and over for every processing block until a new 
 MIDI event is received.  This fact about processEvents() is not explained 

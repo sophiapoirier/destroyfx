@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -23,22 +23,82 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguitextdisplay.h"
 
+#include <cassert>
 #include <stdio.h>
+#include <string.h>
 
 
 //-----------------------------------------------------------------------------
-static bool DFXGUI_GenericValueToTextProc(float inValue, char outTextUTF8[], void* inUserData);
-static bool DFXGUI_GenericValueToTextProc(float inValue, char outTextUTF8[], void* inUserData)
+static bool DFXGUI_GenericValueToTextProc(float inValue, char outTextUTF8[], void* /*inUserData*/)
 {
-	sprintf(outTextUTF8, "%.2f", inValue);
+	snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.2f", inValue);
 	return true;
 }
 
-static bool DFXGUI_GenericTextToValueProc(UTF8StringPtr inText, float& outValue, void* inUserData);
-static bool DFXGUI_GenericTextToValueProc(UTF8StringPtr inText, float& outValue, void* inUserData)
+//-----------------------------------------------------------------------------
+static bool DFXGUI_GenericTextToValueProc(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)
 {
-	const int readCount = sscanf(inText, "%f", &outValue);
-	return (readCount >= 1);
+	auto const paramID = textDisplay->getParameterID();
+	double value_d {};
+	auto const success = textDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(paramID, inText, value_d);
+	if (success)
+	{
+		outValue = static_cast<float>(value_d);
+	}
+	return success;
+}
+
+//-----------------------------------------------------------------------------
+static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(DGTextAlignment inTextAlignment)
+{
+	switch (inTextAlignment)
+	{
+		case DGTextAlignment::Left:
+			return kLeftText;
+		case DGTextAlignment::Center:
+			return kCenterText;
+		case DGTextAlignment::Right:
+			return kRightText;
+		default:
+			assert(false);
+			return {};
+	}
+}
+
+//-----------------------------------------------------------------------------
+static void DFXGUI_ConfigureTextDisplay(CTextLabel* inTextDisplay, 
+										DGRect const& inRegion, DGImage* inBackgroundImage, 
+										DGTextAlignment inTextAlignment, 
+										float inFontSize, DGColor inFontColor, char const* inFontName)
+{
+	inTextDisplay->setTransparency(true);
+	if (!inBackgroundImage)
+	{
+		inTextDisplay->setBackOffset(inRegion.getTopLeft());
+	}
+
+	inTextDisplay->setHoriAlign(DFXGUI_TextAlignmentToVSTGUI(inTextAlignment));
+	inTextDisplay->setFontColor(inFontColor);
+	
+	if (auto const fontDesc = dfx::CreateVstGuiFont(inFontSize, inFontName))
+	{
+		inTextDisplay->setFont(fontDesc);
+	}
+
+	bool const isSnootPixel10 = (strcmp(inFontName, kDGFontName_SnootPixel10) == 0);
+	if (isSnootPixel10)
+	{
+		// XXX a hack for this font
+		if (inTextAlignment == DGTextAlignment::Left)
+		{
+			inTextDisplay->setTextInset(CPoint(-1.0, 0.0));
+		}
+		else if (inTextAlignment == DGTextAlignment::Right)
+		{
+			inTextDisplay->setTextInset(CPoint(-2.0, 0.0));
+		}
+	}
+	inTextDisplay->setAntialias(!isSnootPixel10);
 }
 
 
@@ -49,85 +109,62 @@ static bool DFXGUI_GenericTextToValueProc(UTF8StringPtr inText, float& outValue,
 //-----------------------------------------------------------------------------
 // Text Display
 //-----------------------------------------------------------------------------
-DGTextDisplay::DGTextDisplay(DfxGuiEditor *					inOwnerEditor,
+DGTextDisplay::DGTextDisplay(DfxGuiEditor*					inOwnerEditor,
 							long							inParamID, 
-							DGRect *						inRegion,
+							DGRect const&					inRegion,
 							CParamDisplayValueToStringProc	inTextProc, 
-							void *							inUserData,
-							DGImage *						inBackgroundImage, 
+							void*							inUserData,
+							DGImage*						inBackgroundImage, 
 							DGTextAlignment					inTextAlignment, 
 							float							inFontSize, 
 							DGColor							inFontColor, 
-							const char *					inFontName)
-:	CTextEdit(*inRegion, inOwnerEditor, inParamID, NULL, inBackgroundImage), 
+							char const*						inFontName)
+:	CTextEdit(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage), 
 	DGControl(this, inOwnerEditor)
 {
-	valueToTextProcBridgeData.mThis = this;
-	valueToTextProcBridgeData.mProc = NULL;
-	valueToTextProcBridgeData.mUserData = NULL;
+	DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
 
-	textToValueProcBridgeData.mThis = this;
-	textToValueProcBridgeData.mProc = NULL;
-	textToValueProcBridgeData.mUserData = NULL;
-
-	setTransparency(true);
-	if (inBackgroundImage == NULL)
+	if (!inTextProc)
 	{
-		const CPoint backgroundOffset(inRegion->left, inRegion->top);
-		setBackOffset(backgroundOffset);
-	}
-
-	setTextAlignment(inTextAlignment);
-	setFontColor(inFontColor);
-
-	CFontRef fontDesc = DFXGUI_CreateVstGuiFont(inFontSize, inFontName);
-	if (fontDesc != NULL)
-	{
-		setFont(fontDesc);
-		fontDesc->forget();
-	}
-
-	if (inTextProc == NULL)
 		inTextProc = DFXGUI_GenericValueToTextProc;
-	if (inUserData == NULL)
+	}
+	if (!inUserData)
+	{
 		inUserData = this;
-	setValueToStringProc(inTextProc, inUserData);
+	}
+	mValueToTextProc = inTextProc;
+	mValueToTextUserData = inUserData;
+	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this, 
+									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	refreshText();  // trigger an initial value->text conversion
 
-	setStringToValueProc(DFXGUI_GenericTextToValueProc, this);
-
-	mouseAxis = kDGAxis_vertical;
-	setAntialias(true);
+	mTextToValueProc = DFXGUI_GenericTextToValueProc;
+	setStringToValueFunction(std::bind(&DGTextDisplay::textToValueProcBridge, this, 
+									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
-//-----------------------------------------------------------------------------
-DGTextDisplay::~DGTextDisplay()
-{
-}
-
-//-----------------------------------------------------------------------------
-CMouseEventResult DGTextDisplay::onMouseDown(CPoint & inPos, const CButtonState & inButtons)
-{
 #if 0
-	lastX = inPos.x;
-	lastY = inPos.y;
-#endif
+//-----------------------------------------------------------------------------
+CMouseEventResult DGTextDisplay::onMouseDown(CPoint& inPos, const CButtonState& inButtons)
+{
+	mLastX = inPos.x;
+	mLastY = inPos.y;
 	return CTextEdit::onMouseDown(inPos, inButtons);
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGTextDisplay::onMouseMoved(CPoint & inPos, const CButtonState & inButtons)
+CMouseEventResult DGTextDisplay::onMouseMoved(CPoint& inPos, const CButtonState& inButtons)
 {
-#if 0
 	const long min = GetControl32BitMinimum(carbonControl);
 	const long max = GetControl32BitMaximum(carbonControl);
 	long val = GetControl32BitValue(carbonControl);
 	const long oldval = val;
 
 	float diff = 0.0f;
-	if (mouseAxis & kDGAxis_horizontal)
-		diff += inPos.x - lastX;
-	if (mouseAxis & kDGAxis_vertical)
-		diff += lastY - inPos.y;
+	if (mMouseAxis & kDGAxis_Horizontal)
+		diff += inPos.x - mLastX;
+	if (mMouseAxis & kDGAxis_Vertical)
+		diff += mLastY - inPos.y;
 	if (inButtons.getModifierState() & kZoomModifier)	// slo-mo
 		diff /= getFineTuneFactor();
 	val += (long) (diff * (float)(max-min) / getMouseDragRange());
@@ -139,88 +176,77 @@ CMouseEventResult DGTextDisplay::onMouseMoved(CPoint & inPos, const CButtonState
 	if (val != oldval)
 		SetControl32BitValue(carbonControl, val);
 
-	lastX = inPos.x;
-	lastY = inPos.y;
-#endif
+	mLastX = inPos.x;
+	mLastY = inPos.y;
 	return CTextEdit::onMouseMoved(inPos, inButtons);
 }
-
-//-----------------------------------------------------------------------------
-void DGTextDisplay::setValueToStringProc(CParamDisplayValueToStringProc inProc, void* inUserData)
-{
-	valueToTextProcBridgeData.mProc = inProc;
-	valueToTextProcBridgeData.mUserData = inUserData;
-	CTextEdit::setValueToStringProc(valueToTextProcBridge, &valueToTextProcBridgeData);
-
-	setValue( getValue() );	// trigger an initial value->text conversion
-}
-
-//-----------------------------------------------------------------------------
-void DGTextDisplay::setStringToValueProc(CTextEditStringToValueProc inProc, void* inUserData)
-{
-	textToValueProcBridgeData.mProc = inProc;
-	textToValueProcBridgeData.mUserData = inUserData;
-	CTextEdit::setStringToValueProc(textToValueProcBridge, &textToValueProcBridgeData);
-}
+#endif
 
 //-----------------------------------------------------------------------------
 void DGTextDisplay::setTextAlignment(DGTextAlignment inTextAlignment)
 {
-	switch (inTextAlignment)
-	{
-		case kDGTextAlign_left:
-			setHoriAlign(kLeftText);
-			break;
-		case kDGTextAlign_center:
-			setHoriAlign(kCenterText);
-			break;
-		case kDGTextAlign_right:
-			setHoriAlign(kRightText);
-			break;
-		default:
-			break;
-	}
+	setHoriAlign(DFXGUI_TextAlignmentToVSTGUI(inTextAlignment));
 }
 
 //-----------------------------------------------------------------------------
-DGTextAlignment DGTextDisplay::getTextAlignment()
+DGTextAlignment DGTextDisplay::getTextAlignment() const noexcept
 {
-	switch ( getHoriAlign() )
+	switch (getHoriAlign())
 	{
 		case kRightText:
-			return kDGTextAlign_right;
+			return DGTextAlignment::Right;
 		case kCenterText:
-			return kDGTextAlign_center;
+			return DGTextAlignment::Center;
 		case kLeftText:
+			return DGTextAlignment::Left;
 		default:
-			return kDGTextAlign_left;
+			assert(false);
+			return {};
 	}
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::valueToTextProcBridge(float inValue, char outTextUTF8[256], void * inUserData)
+void DGTextDisplay::setTextToValueProc(const TextToValueProc& textToValueProc)
 {
-	if (inUserData == NULL)
-		return false;
-
-	const ValueToTextProcBridgeData* data = reinterpret_cast<ValueToTextProcBridgeData*>(inUserData);
-	if (data->mThis->isParameterAttached())
-		inValue = data->mThis->getOwnerEditor()->dfxgui_ExpandParameterValue(data->mThis->getParameterID(), inValue);
-	return data->mProc(inValue, outTextUTF8, data->mUserData);
+	mTextToValueProc = textToValueProc;
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::textToValueProcBridge(UTF8StringPtr inText, float& outValue, void* inUserData)
+void DGTextDisplay::setTextToValueProc(TextToValueProc&& textToValueProc)
 {
-	if ((inText == NULL) || (inUserData == NULL))
-		return false;
+	mTextToValueProc = std::move(textToValueProc);
+}
 
-	const TextToValueProcBridgeData* data = reinterpret_cast<TextToValueProcBridgeData*>(inUserData);
-	const bool success = data->mProc(inText, outValue, data->mUserData);
-	if (success)
+//-----------------------------------------------------------------------------
+void DGTextDisplay::refreshText()
+{
+	setValue(getValue());
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextDisplay::valueToTextProcBridge(float inValue, char outTextUTF8[256], CParamDisplay* /*inUserData*/)
+{
+	if (isParameterAttached())
 	{
-		if (data->mThis->isParameterAttached())
-			outValue = data->mThis->getOwnerEditor()->dfxgui_ContractParameterValue(data->mThis->getParameterID(), outValue);
+		inValue = getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), inValue);
+	}
+	return mValueToTextProc(inValue, outTextUTF8, mValueToTextUserData);
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextDisplay::textToValueProcBridge(UTF8StringPtr inText, float& outValue, CTextEdit* textEdit)
+{
+	assert(inText);
+	assert(dynamic_cast<DGTextDisplay*>(textEdit) == this);
+	if (!inText)
+	{
+		return false;
+	}
+
+	auto const success = mTextToValueProc(dfx::RemoveDigitSeparators(inText).c_str(), outValue, dynamic_cast<DGTextDisplay*>(textEdit));
+	if (success && isParameterAttached())
+	{
+		outValue = getOwnerEditor()->dfxgui_ContractParameterValue(getParameterID(), outValue);
 	}
 
 	return success;
@@ -235,61 +261,35 @@ bool DGTextDisplay::textToValueProcBridge(UTF8StringPtr inText, float& outValue,
 #pragma mark DGStaticTextDisplay
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
-										DGTextAlignment inTextAlignment, float inFontSize, 
-										DGColor inFontColor, const char * inFontName)
-:	DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
-					inTextAlignment, inFontSize, inFontColor, inFontName), 
-	displayString(NULL)
+DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
+										 DGTextAlignment inTextAlignment, float inFontSize, 
+										 DGColor inFontColor, char const* inFontName)
+:	CTextLabel(inRegion, nullptr, inBackgroundImage), 
+	DGControl(this, inOwnerEditor)
+
 {
-	displayString = (char*) malloc(kDGTextDisplay_stringSize);
-	displayString[0] = 0;
+	DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
+
 	setMouseEnabled(false);
-}
-
-//-----------------------------------------------------------------------------
-DGStaticTextDisplay::~DGStaticTextDisplay()
-{
-	if (displayString != NULL)
-		free(displayString);
-	displayString = NULL;
-}
-
-//-----------------------------------------------------------------------------
-void DGStaticTextDisplay::setText(const char * inNewText)
-{
-	if (inNewText == NULL)
-		strcpy(displayString, "");
-	else
-		strcpy(displayString, inNewText);
-	redraw();
 }
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-void DGStaticTextDisplay::setCFText(CFStringRef inNewText)
+void DGStaticTextDisplay::setCFText(CFStringRef inText)
 {
-	if (inNewText == NULL)
+	if (inText)
 	{
-		setText(NULL);
-		return;
+		if (auto const cString = dfx::CreateCStringFromCFString(inText))
+		{
+			setText(cString.get());
+		}
 	}
-
-	const Boolean success = CFStringGetCString(inNewText, displayString, kDGTextDisplay_stringSize, kCFStringEncodingUTF8);
-	if (success)
-		redraw();
+	else
+	{
+		setText(nullptr);
+	}
 }
 #endif
-
-//-----------------------------------------------------------------------------
-void DGStaticTextDisplay::draw(CDrawContext * inContext)
-{
-	if (getBackground() != NULL)
-		getBackground()->draw(inContext, size);
-
-	drawText(inContext, displayString);
-	setDirty(false);
-}
 
 
 
@@ -302,73 +302,44 @@ void DGStaticTextDisplay::draw(CDrawContext * inContext)
 //-----------------------------------------------------------------------------
 // Static Text Display
 //-----------------------------------------------------------------------------
-DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-						long inNumStrings, DGTextAlignment inTextAlignment, DGImage * inBackground, 
-						float inFontSize, DGColor inFontColor, const char * inFontName)
-:	DGTextDisplay(inOwnerEditor, inParamID, inRegion, NULL, NULL, inBackground, 
-					inTextAlignment, inFontSize, inFontColor, inFontName), 
-	numStrings(inNumStrings), 
-	displayStrings(NULL)
+DGTextArrayDisplay::DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+									   long inNumStrings, DGTextAlignment inTextAlignment, DGImage* inBackground, 
+									   float inFontSize, DGColor inFontColor, char const* inFontName)
+:	DGTextDisplay(inOwnerEditor, inParamID, inRegion, nullptr, nullptr, inBackground, 
+				  inTextAlignment, inFontSize, inFontColor, inFontName), 
+	mDisplayStrings(std::max(inNumStrings, 1L))
 {
-	if (numStrings <= 0)
-		numStrings = 1;
-	displayStrings = (char**) malloc(numStrings * sizeof(char*));
-	for (long i=0; i < numStrings; i++)
-	{
-		displayStrings[i] = (char*) malloc(kDGTextDisplay_stringSize);
-		displayStrings[i][0] = 0;
-	}
-
 	setMouseEnabled(false);
 }
 
 //-----------------------------------------------------------------------------
-DGTextArrayDisplay::~DGTextArrayDisplay()
+void DGTextArrayDisplay::setText(long inStringNum, char const* inText)
 {
-	if (displayStrings != NULL)
+	assert(inText);
+	if ((inStringNum < 0) || (inStringNum >= static_cast<long>(mDisplayStrings.size())))
 	{
-		for (long i=0; i < numStrings; i++)
-		{
-			if (displayStrings[i] != NULL)
-				free(displayStrings[i]);
-			displayStrings[i] = NULL;
-		}
-		free(displayStrings);
+		return;
 	}
-	displayStrings = NULL;
-}
 
-#if 0
-//-----------------------------------------------------------------------------
-void DGTextArrayDisplay::post_embed()
-{
-	if ( isParameterAttached() && (carbonControl != NULL) )
-		SetControl32BitMaximum( carbonControl, numStrings - 1 + GetControl32BitMinimum(carbonControl) );
-}
-#endif
-
-//-----------------------------------------------------------------------------
-void DGTextArrayDisplay::setText(long inStringNum, const char * inNewText)
-{
-	if ( (inStringNum < 0) || (inStringNum >= numStrings) )
-		return;
-	if (inNewText == NULL)
-		return;
-
-	strcpy(displayStrings[inStringNum], inNewText);
+	mDisplayStrings[inStringNum].assign(inText);
 //	redraw();
 }
 
 //-----------------------------------------------------------------------------
-void DGTextArrayDisplay::draw(CDrawContext * inContext)
+void DGTextArrayDisplay::draw(CDrawContext* inContext)
 {
-	if (getBackground() != NULL)
-		getBackground()->draw(inContext, size);
+	if (getBackground())
+	{
+		getBackground()->draw(inContext, getViewSize());
+	}
 
+	assert(false);  // TODO: implement
 #if 0
-	const long stringIndex = GetControl32BitValue(carbonControl) - GetControl32BitMinimum(carbonControl);
-	if ( (stringIndex >= 0) && (stringIndex < numStrings) )
-		drawText(inContext, displayStrings[stringIndex]);
+	long const stringIndex = GetControl32BitValue(carbonControl) - GetControl32BitMinimum(carbonControl);
+	if ((stringIndex >= 0) && (stringIndex < mNumStrings))
+	{
+		drawText(inContext, mDisplayStrings[stringIndex].c_str());
+	}
 #endif
 
 	setDirty(false);

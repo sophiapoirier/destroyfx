@@ -1,3 +1,24 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2002-2018  Sophia Poirier
+
+This file is part of Buffer Override.
+
+Buffer Override is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Buffer Override is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
 #ifndef __BUFFER_OVERRIDE_DEF_H
 #define __BUFFER_OVERRIDE_DEF_H
 
@@ -27,7 +48,7 @@
 
 
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "BufferOverride" DFX_BUNDLE_ID_SUFFIX
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2015"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2018"
 
 
 #endif

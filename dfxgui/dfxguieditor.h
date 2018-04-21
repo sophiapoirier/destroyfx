@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,96 +21,74 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXGUI_EDITOR_H
-#define __DFXGUI_EDITOR_H
+#pragma once
 
 
+#include <list>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <type_traits>
+#include <vector>
+
+#include "dfxdefines.h"
 #include "dfxgui-base.h"
-
-#include "dfxguimisc.h"
 #include "dfxguicontrol.h"
-
-#include "dfxpluginproperties.h"
+#include "dfxguidialog.h"
+#include "dfxguimisc.h"
 #include "dfxmisc.h"
+#include "dfxplugin-base.h"
+#include "dfxpluginproperties.h"
 
-#if TARGET_PLUGIN_USES_MIDI
-	#include "dfxsettings.h"	// for DfxParameterAssignment
-#endif
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
 
 #include "vstgui.h"
-#if (VSTGUI_VERSION_MAJOR < 4)
-	#include "ctooltipsupport.h"
-	#define CButtonState	long
-	#define VSTGUI_OVERRIDE_VMETHOD
-#endif
 
+#ifdef TARGET_API_AUDIOUNIT
+	#if !__LP64__
+	#include "AUCarbonViewBase.h"
+	#endif
+	using DGEditorListenerInstance = AudioUnit;
+#endif
 #ifdef TARGET_API_VST
-	#include "dfxplugin.h"
-	typedef DfxPlugin *	DGEditorListenerInstance;
+	using DGEditorListenerInstance = class DfxPlugin*;
 #endif
 #ifdef TARGET_API_RTAS
-	#include "dfxplugin-base.h"
-	typedef ITemplateProcess * DGEditorListenerInstance;
-#endif
-#ifdef TARGET_API_AUDIOUNIT
-	#include "AUCarbonViewBase.h"
-	typedef AudioUnit	DGEditorListenerInstance;
-	typedef AUCarbonViewBase	TARGET_API_EDITOR_BASE_CLASS;
+	using DGEditorListenerInstance = ITemplateProcess*;
 #endif
 
 #ifdef TARGET_API_VST
 	#include "aeffguieditor.h"
-	#define TARGET_API_EDITOR_BASE_CLASS	AEffGUIEditor
-	#define TARGET_API_EDITOR_INDEX_TYPE	VstInt32
+	using TARGET_API_EDITOR_BASE_CLASS = AEffGUIEditor;
+	using TARGET_API_EDITOR_INDEX_TYPE = VstInt32;
 #else
 	#include "plugguieditor.h"
-	#define TARGET_API_EDITOR_BASE_CLASS	PluginGUIEditor
-	#if (VSTGUI_VERSION_MAJOR < 4)
-		#define TARGET_API_EDITOR_INDEX_TYPE	long
-	#else
-		#define TARGET_API_EDITOR_INDEX_TYPE	int32_t
-	#endif
+	using TARGET_API_EDITOR_BASE_CLASS = PluginGUIEditor;
+	using TARGET_API_EDITOR_INDEX_TYPE = int32_t;
 #endif
+
+#pragma clang diagnostic pop
 
 
 
 //-----------------------------------------------------------------------------
 #if defined(TARGET_API_AUDIOUNIT) || defined(TARGET_API_RTAS)
 	#define DFX_EDITOR_ENTRY(PluginEditorClass)												\
-		DfxGuiEditor * DFXGUI_NewEditorInstance(DGEditorListenerInstance inProcessInstance)	\
+		DfxGuiEditor* DFXGUI_NewEditorInstance(DGEditorListenerInstance inProcessInstance)	\
 		{																					\
 			return new PluginEditorClass(inProcessInstance);								\
 		}
 #endif
 
 #ifdef TARGET_API_VST
-	#define DFX_EDITOR_ENTRY(PluginEditorClass)												\
-		AEffEditor * DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance)	\
-		{																					\
-			return new PluginEditorClass(inEffectInstance);									\
+	#define DFX_EDITOR_ENTRY(PluginEditorClass)											\
+		AEffEditor* DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance)	\
+		{																				\
+			return new PluginEditorClass(inEffectInstance);								\
 		}
 #endif
-
-
-
-//-----------------------------------------------------------------------------
-#ifdef TARGET_API_AUDIOUNIT
-	const Float32 kDfxGui_NotificationInterval = 42.0 * kEventDurationMillisecond;	// 24 fps
-	const EventTimerInterval kDfxGui_IdleTimerInterval = kDfxGui_NotificationInterval;
-#endif
-
-enum {
-#ifdef TARGET_API_RTAS
-	kKeyModifier_DefaultValue = kAlt,
-	kKeyModifier_FineControl = kControl
-#else
-	kKeyModifier_DefaultValue = kControl,
-	kKeyModifier_FineControl = kShift
-#endif
-};
-
-
-
 
 
 
@@ -118,62 +96,88 @@ enum {
 class DGButton;
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
+
 /***********************************************************************
 	DfxGuiEditor
 ***********************************************************************/
 
 //-----------------------------------------------------------------------------
-class DfxGuiEditor : public TARGET_API_EDITOR_BASE_CLASS, public CControlListener, public IMouseObserver, public CBaseObject
+class DfxGuiEditor :	public TARGET_API_EDITOR_BASE_CLASS, 
+						public IControlListener, 
+						public IMouseObserver, 
+						public CBaseObject,
+						public DGDialog::Listener
 {
 public:
+#ifdef TARGET_API_AUDIOUNIT
+	static constexpr double kIdleTimerInterval = 1.0f / 24.0f;  // 24 fps
+	static constexpr Float32 kNotificationInterval = kIdleTimerInterval;
+#endif
+
 	DfxGuiEditor(DGEditorListenerInstance inInstance);
 	virtual ~DfxGuiEditor();
 
 	// VSTGUI overrides
-	virtual bool open(void * inWindow) VSTGUI_OVERRIDE_VMETHOD;
-	virtual void close() VSTGUI_OVERRIDE_VMETHOD;
-	virtual void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue) VSTGUI_OVERRIDE_VMETHOD;
-	virtual void valueChanged(CControl * inControl) VSTGUI_OVERRIDE_VMETHOD;
-	virtual int32_t controlModifierClicked(CControl* inControl, CButtonState inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	bool open(void* inWindow) override;
+	void close() override;
+	void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue) override;
+	void valueChanged(CControl* inControl) override;
+	int32_t controlModifierClicked(CControl* inControl, CButtonState inButtons) override;
 #ifndef TARGET_API_VST
-	virtual void beginEdit(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex) VSTGUI_OVERRIDE_VMETHOD;
-	virtual void endEdit(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex) VSTGUI_OVERRIDE_VMETHOD;
+	void beginEdit(int32_t inParameterIndex) override;
+	void endEdit(int32_t inParameterIndex) override;
 #endif
-	virtual void idle() VSTGUI_OVERRIDE_VMETHOD;
+	void idle() override;
 	// CBaseObject
-	virtual CMessageResult notify(CBaseObject* inSender, IdStringPtr inMessage) VSTGUI_OVERRIDE_VMETHOD;
+	CMessageResult notify(CBaseObject* inSender, IdStringPtr inMessage) override;
 
-	// *** this one is for the child class of DfxGuiEditor to override
+	// DGDialog::Listener override
+	void dialogChoiceSelected(DGDialog* inDialog, DGDialog::Selection inSelection) override;
+
+	// these are for the child class of DfxGuiEditor to override
 	virtual long OpenEditor() = 0;
-	virtual void CloseEditor() { }
-	virtual void post_open() { }
-	virtual void dfxgui_EditorShown() { }
+	virtual void CloseEditor() {}
+	virtual void post_open() {}
+	virtual void dfxgui_EditorShown() {}
 
 #ifdef TARGET_API_AUDIOUNIT
-	long dfxgui_GetParameterInfo(AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo);
-	AUEventListenerRef getAUEventListener()
-		{	return auEventListener;	}
-	virtual void HandleAUPropertyChange(void * inObject, AudioUnitProperty inAUProperty, UInt64 inEventHostTime)
-		{ }
-#if !__LP64__
-	void SetOwnerAUCarbonView(AUCarbonViewBase * inAUCarbonView)
-		{	mOwnerAUCarbonView = inAUCarbonView;	}
-	AUCarbonViewBase * GetOwnerAUCarbonView()
-		{	return mOwnerAUCarbonView;	}
-#endif
+	long dfxgui_GetParameterInfo(AudioUnitParameterID inParameterID, AudioUnitParameterInfo& outParameterInfo);
+	auto getAUEventListener() const noexcept
+	{
+		return mAUEventListener.get();
+	}
+	virtual void HandleAUPropertyChange(void* inObject, AudioUnitProperty inAUProperty, UInt64 inEventHostTime) {}
+	#if !__LP64__
+	void SetOwnerAUCarbonView(AUCarbonViewBase* inAUCarbonView) noexcept
+	{
+		mOwnerAUCarbonView = inAUCarbonView;
+	}
+	#endif
 #endif
 
-	void addImage(DGImage * inImage);
-	void addControl(DGControl * inCtrl);
-	void removeControl(DGControl * inControl);
-	DGControl * getNextControlFromParameterID(long inParameterID, DGControl * inPreviousControl = NULL);
+	void addControl(DGControl* inCtrl);
+	// in-place constructor variant that instantiates the control in addition to adding it
+	template <typename T, typename... Args>
+	T* emplaceControl(Args&&... args)
+	{
+		static_assert(std::is_base_of<DGControl, T>::value);
+		auto const control = new T(std::forward<Args>(args)...);
+		addControl(control);
+		return control;
+	}
+	void removeControl(DGControl* inControl);
 	long GetWidth();
 	long GetHeight();
-	DGImage * GetBackgroundImage()
-		{	return backgroundImage;	}
+	auto GetBackgroundImage() const noexcept
+	{
+		return mBackgroundImage.get();
+	}
 
 	void do_idle();
-	virtual void dfxgui_Idle() { }
+	virtual void dfxgui_Idle() {}
 
 #ifdef TARGET_API_AUDIOUNIT
 	void HandleStreamFormatChange();
@@ -182,18 +186,14 @@ public:
 	void HandleMidiLearnChange();
 	#endif
 #endif
-	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels)
-		{ }
+	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels) {}
 
 #if TARGET_OS_MAC
 #if defined(TARGET_API_AUDIOUNIT) && 0
 	virtual bool HandleMouseEvent(EventRef inEvent);
-	virtual bool HandleKeyboardEvent(EventRef inEvent);
-	virtual bool HandleCommandEvent(EventRef inEvent);
-	virtual bool HandleControlEvent(EventRef inEvent);
 #endif
 
-	CFStringRef openTextEntryWindow(CFStringRef inInitialText = NULL);
+	CFStringRef openTextEntryWindow(CFStringRef inInitialText = nullptr);
 	bool handleTextEntryCommand(UInt32 inCommandID);
 #endif
 
@@ -202,43 +202,50 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	OSStatus SendAUParameterEvent(AudioUnitParameterID inParameterID, AudioUnitEventType inEventType);
 #endif
-	virtual void parameterChanged(long inParameterID)
-		{ }
+	virtual void parameterChanged(long inParameterID) {}
 
 	bool IsOpen();
 	DGEditorListenerInstance dfxgui_GetEffectInstance();
-	long dfxgui_GetEditorOpenErrorCode()
-		{	return mEditorOpenErr;	}
+	auto dfxgui_GetEditorOpenErrorCode() const noexcept
+	{
+		return mEditorOpenErr;
+	}
 
-	// get/set the control that is currently under the mouse pointer, if any (returns NULL if none)
-	DGControl * getCurrentControl_mouseover()
-		{	return currentControl_mouseover;	}
-	void setCurrentControl_mouseover(DGControl * inNewMousedOverControl);
-	// *** override this if you want your GUI to react when the mouseovered control changes
-	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse) { }
+	// get/set the control that is currently under the mouse pointer, if any (returns nullptr if none)
+	auto getCurrentControl_mouseover() const noexcept
+	{
+		return mCurrentControl_mouseover;
+	}
+	void setCurrentControl_mouseover(DGControl* inNewMousedOverControl);
+	// override this if you want your GUI to react when the mouseovered control changes
+	virtual void mouseovercontrolchanged(DGControl* currentControlUnderMouse) {}
 	// IMouseObserver overrides
-	virtual void onMouseEntered(CView* inView, CFrame* inFrame) VSTGUI_OVERRIDE_VMETHOD;
-	virtual void onMouseExited(CView* inView, CFrame* inFrame) VSTGUI_OVERRIDE_VMETHOD;
-	virtual CMouseEventResult onMouseDown(CFrame* inFrame, const CPoint& inPos, const CButtonState& inButtons) VSTGUI_OVERRIDE_VMETHOD;
-	virtual CMouseEventResult onMouseMoved(CFrame* inFrame, const CPoint& inPos, const CButtonState& inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	void onMouseEntered(CView* inView, CFrame* inFrame) override;
+	void onMouseExited(CView* inView, CFrame* inFrame) override;
+	CMouseEventResult onMouseDown(CFrame* inFrame, CPoint const& inPos, CButtonState const& inButtons) override;
+	CMouseEventResult onMouseMoved(CFrame* inFrame, CPoint const& inPos, CButtonState const& inButtons) override;
 
-	DGControl * getCurrentControl_clicked()
-		{	return currentControl_clicked;	}
+	auto getCurrentControl_clicked() const noexcept
+	{
+		return mCurrentControl_clicked;
+	}
 
 #ifdef TARGET_API_RTAS
-	void GetBackgroundRect(sRect * outRect);
-	void SetBackgroundRect(sRect * inRect);
-	void GetControlIndexFromPoint(long inXpos, long inYpos, long * outControlIndex);	// Called by CProcess::ChooseControl
+	void GetBackgroundRect(sRect* outRect);
+	void SetBackgroundRect(sRect* inRect);
+	void GetControlIndexFromPoint(long inXpos, long inYpos, long* outControlIndex);  // Called by CProcess::ChooseControl
 	void SetControlHighlight(long inControlIndex, short inIsHighlighted, short inColor);
-	void drawControlHighlight(CDrawContext * inContext, CControl * inControl);
+	void drawControlHighlight(CDrawContext* inContext, CControl* inControl);
 
 	// VSTGUI: needed the following so that the algorithm is updated while the mouse is down
-	virtual void doIdleStuff();
+	void doIdleStuff() override;
 #endif
 
 #if PLUGGUI
-	bool isOpen()
-		{	return (systemWindow != NULL);	}
+	bool isOpen() const noexcept
+	{
+		return (systemWindow != nullptr);
+	}
 #endif
 
 	// VST/RTAS abstraction methods
@@ -249,8 +256,8 @@ public:
 	float GetParameter_minValue(long inParameterIndex);
 	float GetParameter_maxValue(long inParameterIndex);
 	float GetParameter_defaultValue(long inParameterIndex);
-	DfxParamValueType GetParameterValueType(long inParameterIndex);
-	DfxParamUnit GetParameterUnit(long inParameterIndex);
+	DfxParam::ValueType GetParameterValueType(long inParameterIndex);
+	DfxParam::Unit GetParameterUnit(long inParameterIndex);
 
 	// the below methods all handle communication between the GUI component and the audio component
 	double getparameter_f(long inParameterID);
@@ -262,133 +269,108 @@ public:
 	void setparameter_b(long inParameterID, bool inValue, bool inWrapWithAutomationGesture = false);
 	void setparameter_default(long inParameterID, bool inWrapWithAutomationGesture = false);
 	void setparameters_default(bool inWrapWithAutomationGesture = false);
-	bool getparametervaluestring(long inParameterID, char * outText);
-	char * getparameterunitstring(long inParameterIndex);
-	char * getparametername(long inParameterID);
+	bool getparametervaluestring(long inParameterID, char* outText);
+	std::string getparameterunitstring(long inParameterIndex);
+	std::string getparametername(long inParameterID);
 	void randomizeparameter(long inParameterID, bool inWriteAutomation = false);
 	void randomizeparameters(bool inWriteAutomation = false);
-	bool dfxgui_IsValidParamID(long inParameterID);
+	virtual bool dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText, double& outValue);
+	virtual bool dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText, long& outValue);
+	bool dfxgui_SetParameterValueWithString(long inParameterID, std::string const& inText);
+	bool dfxgui_IsValidParamID(long inParameterID) const;
 #ifdef TARGET_API_AUDIOUNIT
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
-	AudioUnitParameterID * CreateParameterList(AudioUnitScope inScope, UInt32 * outNumParameters);
+	std::vector<AudioUnitParameterID> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
 #endif
 	long dfxgui_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
-								size_t & outDataSize, DfxPropertyFlags & outFlags);
+								size_t& outDataSize, DfxPropertyFlags& outFlags);
 	long dfxgui_GetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
-							void * outData, size_t & ioDataSize);
+							void* outData, size_t& ioDataSize);
 	long dfxgui_SetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
-							const void * inData, size_t inDataSize);
-	#if TARGET_PLUGIN_USES_MIDI
-		void setmidilearning(bool inNewLearnMode);
-		bool getmidilearning();
-		void resetmidilearn();
-		void setmidilearner(long inParameterIndex);
-		long getmidilearner();
-		bool ismidilearner(long inParameterIndex);
-		void setparametermidiassignment(long inParameterIndex, DfxParameterAssignment inAssignment);
-		DfxParameterAssignment getparametermidiassignment(long inParameterIndex);
-		void parametermidiunassign(long inParameterIndex);
-		DGButton* CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState = false);
-		DGButton* CreateMidiResetButton(long inXpos, long inYpos, DGImage* inImage);
-		DGButton* GetMidiLearnButton() const
-			{	return midiLearnButton;	}
-		DGButton* GetMidiResetButton() const
-			{	return midiResetButton;	}
-	#endif
+							void const* inData, size_t inDataSize);
+#if TARGET_PLUGIN_USES_MIDI
+	void setmidilearning(bool inNewLearnMode);
+	bool getmidilearning();
+	void resetmidilearn();
+	void setmidilearner(long inParameterIndex);
+	long getmidilearner();
+	bool ismidilearner(long inParameterIndex);
+	void setparametermidiassignment(long inParameterIndex, DfxParameterAssignment const& inAssignment);
+	DfxParameterAssignment getparametermidiassignment(long inParameterIndex);
+	void parametermidiunassign(long inParameterIndex);
+	DGButton* CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState = false);
+	DGButton* CreateMidiResetButton(long inXpos, long inYpos, DGImage* inImage);
+	auto GetMidiLearnButton() const noexcept
+	{
+		return mMidiLearnButton;
+	}
+	auto GetMidiResetButton() const noexcept
+	{
+		return mMidiResetButton;
+	}
+#endif
 	unsigned long getNumAudioChannels();
 
-	long copySettings();
-	long pasteSettings(bool * inQueryPastabilityOnly = NULL);
-
 protected:
-	void SetBackgroundImage(DGImage * inBackgroundImage);
-
-	class DGControlsList
-	{
-	public:
-		DGControl * control;
-		DGControlsList * next;
-
-		DGControlsList(DGControl * inControl, DGControlsList * inNextList)
-			: control(inControl), next(inNextList) {}
-	};
-	DGControlsList * controlsList;
-
-	class DGImagesList
-	{
-	public:
-		OwningPointer<DGImage> image;
-		DGImagesList * next;
-
-		DGImagesList(DGImage * inImage, DGImagesList * inNextList)
-			: image(inImage), next(inNextList) {}
-	};
-	DGImagesList * imagesList;
-
-	bool handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons);
-	long initClipboard();
+	std::vector<DGControl*> mControlsList;
 
 private:
-	DGControl *	currentControl_clicked;
-	DGControl *	currentControl_mouseover;
+	bool handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons);
+	long initClipboard();
+	long copySettings();
+	long pasteSettings(bool* inQueryPastabilityOnly = nullptr);
 
-	class DGMousedOverControlsList
-	{
-	public:
-		DGMousedOverControlsList(DGControl * inControl, DGMousedOverControlsList * inNextList)
-			: control(inControl), next(inNextList) {}
-		DGControl * control;
-		DGMousedOverControlsList * next;
-	};
-	DGMousedOverControlsList * mousedOverControlsList;
-	void addMousedOverControl(DGControl * inMousedOverControl);
-	void removeMousedOverControl(DGControl * inMousedOverControl);
+	void addMousedOverControl(DGControl* inMousedOverControl);
+	void removeMousedOverControl(DGControl* inMousedOverControl);
 
-	DGImage * backgroundImage;
+	DGControl* mCurrentControl_clicked = nullptr;
+	DGControl* mCurrentControl_mouseover = nullptr;
 
-	bool mJustOpened;
-	long mEditorOpenErr;
-	unsigned long numAudioChannels;
+	std::list<DGControl*> mMousedOverControlsList;
 
-	CTooltipSupport * mTooltipSupport;
+	SharedPointer<DGImage> mBackgroundImage;
 
-	#if TARGET_PLUGIN_USES_MIDI
-		DGButton * midiLearnButton;
-		DGButton * midiResetButton;
-	#endif
+	bool mJustOpened = false;
+	long mEditorOpenErr = kDfxErr_NoError;
+	unsigned long mNumAudioChannels = 0;
+
+	SharedPointer<CTooltipSupport> mTooltipSupport;
+
+	SharedPointer<DGTextEntryDialog> mTextEntryDialog;
+
+#if TARGET_PLUGIN_USES_MIDI
+	DGButton* mMidiLearnButton = nullptr;
+	DGButton* mMidiResetButton = nullptr;
+#endif
 
 #if TARGET_OS_MAC
-	ATSFontContainerRef	fontsATSContainer;	// the ATS font container for the fonts in the bundle's Resources directory
-	bool		fontsWereActivated;	// memory of whether or not bundled fonts were loaded successfully
+	dfx::UniqueCFType<PasteboardRef> mClipboardRef;
 
-	PasteboardRef	clipboardRef;
-
-#if !__LP64__
-	WindowRef	textEntryWindow;
-	ControlRef	textEntryControl;
-	CFStringRef	textEntryResultString;
-#endif
+	#if !__LP64__
+	WindowRef mTextEntryWindow = nullptr;
+	ControlRef mTextEntryControl = nullptr;
+	CFStringRef mTextEntryResultString = nullptr;
+	#endif
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-#if !__LP64__
-	AUCarbonViewBase * mOwnerAUCarbonView;
-#endif
-	AudioUnitParameterID * auParameterList;
-	UInt32 auParameterListSize;
-	AudioUnitParameterID auMaxParameterID;
-	AUEventListenerRef auEventListener;
-	AudioUnitEvent streamFormatPropertyAUEvent;
-	AudioUnitEvent parameterListPropertyAUEvent;
-	AudioUnitEvent midiLearnPropertyAUEvent;
+	#if !__LP64__
+	AUCarbonViewBase* mOwnerAUCarbonView = nullptr;
+	#endif
+	std::vector<AudioUnitParameterID> mAUParameterList;
+	std::mutex mAUParameterListLock;
+	AudioUnitParameterID mAUMaxParameterID = 0;
+	std::unique_ptr<typename std::remove_pointer<AUEventListenerRef>::type, OSStatus(*)(AUParameterListenerRef)> mAUEventListener {nullptr, AUListenerDispose};
+	AudioUnitEvent mStreamFormatPropertyAUEvent {};
+	AudioUnitEvent mParameterListPropertyAUEvent {};
+	AudioUnitEvent mMidiLearnPropertyAUEvent {};
 #endif
 
 #ifdef TARGET_API_RTAS
-	ITemplateProcess * m_Process;
-	long * parameterHighlightColors;
+	ITemplateProcess* m_Process = nullptr;
+	std::vector<long> mParameterHighlightColors;
 #endif
 };
 
 
-
-#endif
+#pragma clang diagnostic pop

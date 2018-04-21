@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,48 +21,49 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXPLUGIN_BASE_H
-#define __DFXPLUGIN_BASE_H
+#pragma once
 
 
 // should be pretty much implied:  
 // if the plugin is an instrument, then it uses MIDI
 #if TARGET_PLUGIN_IS_INSTRUMENT
 	#ifndef TARGET_PLUGIN_USES_MIDI
-	#define TARGET_PLUGIN_USES_MIDI 1
+		#define TARGET_PLUGIN_USES_MIDI 1
 	#endif
 #endif
 
 // handle base header includes and class names for the target plugin API
 
 #if (defined(TARGET_API_AUDIOUNIT) + defined(TARGET_API_VST) + defined(TARGET_API_RTAS)) != 1
-
    #error "you must define exactly one of TARGET_API_AUDIOUNIT, TARGET_API_VST, TARGET_API_RTAS"
-
 #endif
 
 // using Apple's Audio Unit API
 #if defined(TARGET_API_AUDIOUNIT)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wunused-parameter"
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 		#include "MusicDeviceBase.h"
-		typedef MusicDeviceBase TARGET_API_BASE_CLASS;
-		typedef AudioComponentInstance TARGET_API_BASE_INSTANCE_TYPE;
+		using TARGET_API_BASE_CLASS = MusicDeviceBase;
+		using TARGET_API_BASE_INSTANCE_TYPE = AudioComponentInstance;
 	#elif TARGET_PLUGIN_USES_MIDI
 		#include "AUMIDIEffectBase.h"
-		typedef AUMIDIEffectBase TARGET_API_BASE_CLASS;
-		typedef AudioComponentInstance TARGET_API_BASE_INSTANCE_TYPE;
+		using TARGET_API_BASE_CLASS = AUMIDIEffectBase;
+		using TARGET_API_BASE_INSTANCE_TYPE = AudioComponentInstance;
 	#else
 		#include "AUEffectBase.h"
-		typedef AUEffectBase TARGET_API_BASE_CLASS;
-		typedef AudioComponentInstance TARGET_API_BASE_INSTANCE_TYPE;
+		using TARGET_API_BASE_CLASS = AUEffectBase;
+		using TARGET_API_BASE_INSTANCE_TYPE = AudioComponentInstance;
 	#endif
+	#pragma clang diagnostic pop
+
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
 		#define TARGET_API_CORE_CLASS	AUKernelBase
 	#endif
-    #define LOGIC_AU_PROPERTIES_AVAILABLE (__MAC_OS_X_VERSION_MAX_ALLOWED <= __MAC_10_9)
-    #if LOGIC_AU_PROPERTIES_AVAILABLE
-        #include <AudioUnit/LogicAUProperties.h>
-    #endif
+	#define LOGIC_AU_PROPERTIES_AVAILABLE (__MAC_OS_X_VERSION_MAX_ALLOWED <= __MAC_10_9)
+	#if LOGIC_AU_PROPERTIES_AVAILABLE
+		#include <AudioUnit/LogicAUProperties.h>
+	#endif
 
 // using Steinberg's VST API
 #elif defined(TARGET_API_VST)
@@ -71,12 +72,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#endif
 
 	#include "audioeffectx.h"
-//	#include <stdio.h>
-//	#include <stdlib.h>
-//	#include <math.h>
-	typedef AudioEffectX	TARGET_API_BASE_CLASS;
-	typedef audioMasterCallback	TARGET_API_BASE_INSTANCE_TYPE;
-	typedef AudioEffect *	TARGET_API_EDITOR_PARENT_INSTANCE_TYPE;
+	using TARGET_API_BASE_CLASS = AudioEffectX;
+	using TARGET_API_BASE_INSTANCE_TYPE = audioMasterCallback;
+	using TARGET_API_EDITOR_PARENT_INSTANCE_TYPE = AudioEffect*;
 	// set numinputs and numoutputs if numchannels is defined
 	#ifdef VST_NUM_CHANNELS
 		#ifndef VST_NUM_INPUTS
@@ -86,11 +84,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 			#define VST_NUM_OUTPUTS	VST_NUM_CHANNELS
 		#endif
 	#endif
-	// XXX for when we may still need to build with pre-2.4 VST SDKs
-	#if !VST_2_4_EXTENSIONS
-		#define VstInt32	long
-		#define VstIntPtr	long
-	#endif
 	#ifdef __MACH__
 		#include <CoreFoundation/CoreFoundation.h>
 	#endif
@@ -99,14 +92,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 #elif defined(TARGET_API_RTAS)
 	#ifdef TARGET_PLUGIN_USES_VSTGUI
 		#include "ITemplateProcess.h"
-	#endif
-	#ifdef TARGET_PLUGIN_USES_VSTGUI
-		typedef ITemplateProcess *	TARGET_API_EDITOR_PARENT_INSTANCE_TYPE;
+		using TARGET_API_EDITOR_PARENT_INSTANCE_TYPE = ITemplateProcess*;
 	#else
 		#ifdef TARGET_API_AUDIOSUITE
-			typedef CEffectProcessAS *	TARGET_API_EDITOR_PARENT_INSTANCE_TYPE;
+			using TARGET_API_EDITOR_PARENT_INSTANCE_TYPE = CEffectProcessAS*;
 		#else
-			typedef CEffectProcessRTAS *	TARGET_API_EDITOR_PARENT_INSTANCE_TYPE;
+			using TARGET_API_EDITOR_PARENT_INSTANCE_TYPE = CEffectProcessRTAS*;
 		#endif
 	#endif
 
@@ -116,14 +107,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-//class DfxPluginCore;
-#ifndef TARGET_API_AUDIOUNIT
-//	class AUKernelBase;
-#endif
-//class DfxPreset;
-
 #ifdef TARGET_API_AUDIOUNIT
-	enum {
+	enum
+	{
 		kDfxErr_NoError = noErr,
 		kDfxErr_ParamError = paramErr,
 		kDfxErr_InitializationFailed = kAudioUnitErr_FailedInitialization,
@@ -133,7 +119,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 		kDfxErr_CannotDoInCurrentContext = kAudioUnitErr_CannotDoInCurrentContext
 	};
 #else
-	enum {
+	enum
+	{
 		kDfxErr_NoError = 0,
 		kDfxErr_ParamError = -50,
 		kDfxErr_InitializationFailed = -10875,
@@ -149,28 +136,24 @@ To contact the author, use the contact form at http://destroyfx.org/
 #ifdef TARGET_API_RTAS
 
 //-----------------------------------------------------------------------------
-const long kParameterShortNameMax_rtas = 4;	// XXX hack (this just happens to be what I've been doing)
-const long kParameterValueShortNameMax_rtas = 6;	// XXX hack
+constexpr long kParameterShortNameMax_rtas = 4;  // XXX hack (this just happens to be what I've been doing)
+constexpr long kParameterValueShortNameMax_rtas = 6;  // XXX hack
 
-const long kDFXParameterID_RTASMasterBypass = 1;
-const long kDFXParameterID_RTASOffset = kDFXParameterID_RTASMasterBypass + 1;
+constexpr long kDFXParameterID_RTASMasterBypass = 1;
+constexpr long kDFXParameterID_RTASOffset = kDFXParameterID_RTASMasterBypass + 1;
 //-----------------------------------------------------------------------------
-inline long DFX_ParameterID_ToRTAS(long inParameterID)
+constexpr long DFX_ParameterID_ToRTAS(long inParameterID)
 {
 	return inParameterID + kDFXParameterID_RTASOffset;
 }
 //-----------------------------------------------------------------------------
-inline long DFX_ParameterID_FromRTAS(long inParameterIndex_rtas)
+constexpr long DFX_ParameterID_FromRTAS(long inParameterIndex_rtas)
 {
 	return inParameterIndex_rtas - kDFXParameterID_RTASOffset;
 }
 
 // XXX a hack to handle the fact that CPluginControl_Percent (annoyingly) 
 // automatically converts to and from internal 0-1 values and external 0-100 values
-const double kDFX_RTASPercentScalar = 0.01;
-
-#endif
-
-
+constexpr double kDFX_RTASPercentScalar = 0.01;
 
 #endif

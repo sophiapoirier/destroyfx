@@ -1,69 +1,54 @@
 /*------------------------------------------------------------------------
-Destroy FX Library (version 1.0) is a collection of foundation code 
-for creating audio software plug-ins.  
-Copyright (C) 2009  Sophia Poirier
+Destroy FX Library is a collection of foundation code 
+for creating audio processing plug-ins.  
+Copyright (C) 2002-2018  Sophia Poirier
 
-This program is free software:  you can redistribute it and/or modify 
+This file is part of the Destroy FX Library (version 1.0).
+
+Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, 
+Destroy FX Library is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 
-To contact the author, please visit http://destroyfx.org/ 
-and use the contact form.
+To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXGUI_BASE_H
-#define __DFXGUI_BASE_H
-
+#pragma once
 
 
 //-----------------------------------------------------------------------------
-enum {
-	kDGKeyModifier_accel = 1,	// command on Macs, control on PCs
-	kDGKeyModifier_alt = 1 << 1,	// option on Macs, alt on PCs
-	kDGKeyModifier_shift = 1 << 2,
-	kDGKeyModifier_extra = 1 << 3	// control on Macs
+#if 0
+enum : unsigned int
+{
+	kDGKeyModifier_Accel = 1,  // command on Macs, control on PCs
+	kDGKeyModifier_Alt = 1 << 1,  // option on Macs, alt on PCs
+	kDGKeyModifier_Shift = 1 << 2,
+	kDGKeyModifier_Extra = 1 << 3  // control on Macs
 };
-typedef unsigned long	DGKeyModifiers;
+typedef unsigned int	DGKeyModifiers;
+#endif
 
-typedef enum {
-	kDGAxis_horizontal = 1,
-	kDGAxis_vertical = 1 << 1,
-	kDGAxis_omni = (kDGAxis_horizontal | kDGAxis_vertical)
+typedef enum
+{
+	kDGAxis_Horizontal = 1,
+	kDGAxis_Vertical = 1 << 1,
+	kDGAxis_Omni = (kDGAxis_Horizontal | kDGAxis_Vertical)
 } DGAxis;
 
-typedef enum {
-	kDGAntialiasQuality_default = 0,
-	kDGAntialiasQuality_none,
-	kDGAntialiasQuality_low,
-	kDGAntialiasQuality_high
-} DGAntialiasQuality;
+enum class DGTextAlignment
+{
+	Left,
+	Center,
+	Right
+};
 
-typedef enum {
-	kDGTextAlign_left = 0,
-	kDGTextAlign_center,
-	kDGTextAlign_right
-} DGTextAlignment;
-
-typedef enum {
-	kDGButtonType_pushbutton = 0,
-	kDGButtonType_incbutton,
-	kDGButtonType_decbutton,
-	kDGButtonType_radiobutton, 
-	kDGButtonType_picturereel
-} DfxGuiBottonMode;
-
-#define kDGFontName_SnootPixel10	"snoot.org pixel10"
-const float kDGFontSize_SnootPixel10 = 14.0f;
-
-
-
-#endif
+static char const* const kDGFontName_SnootPixel10 = "snoot.org pixel10";
+static constexpr float kDGFontSize_SnootPixel10 = 14.0f;

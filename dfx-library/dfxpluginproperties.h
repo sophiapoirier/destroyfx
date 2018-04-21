@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2011  Sophia Poirier
+Copyright (C) 2003-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -24,8 +24,7 @@ Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 These are our extended Audio Unit property IDs and types.  
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXPLUGIN_PROPERTIES_H
-#define __DFXPLUGIN_PROPERTIES_H
+#pragma once
 
 #include "dfxparameter.h"
 
@@ -37,7 +36,8 @@ These are our extended Audio Unit property IDs and types.
 
 //-----------------------------------------------------------------------------
 // property IDs for Audio Unit property stuff
-enum {
+enum : uint32_t
+{
 kDfxPluginProperty_StartID = 64000,
 	kDfxPluginProperty_ParameterValue = kDfxPluginProperty_StartID,	// get/set parameter values (current, min, max, etc.) using specific variable types
 	kDfxPluginProperty_ParameterValueConversion,	// expand or contract a parameter value
@@ -53,74 +53,140 @@ kDfxPluginProperty_StartID = 64000,
 kDfxPluginProperty_EndOfList,
 	kDfxPluginProperty_NumProperties = kDfxPluginProperty_EndOfList - kDfxPluginProperty_StartID
 };
-typedef uint32_t	DfxPropertyID;
+typedef uint32_t DfxPropertyID;
 
 
 //-----------------------------------------------------------------------------
-enum {
+enum : uint32_t
+{
 	kDfxPropertyFlag_Readable = 1,
 	kDfxPropertyFlag_Writable = 1 << 1,
 	kDfxPropertyFlag_BiDirectional = 1 << 2
 };
-typedef uint32_t	DfxPropertyFlags;
+typedef uint32_t DfxPropertyFlags;
 
 #ifdef TARGET_API_AUDIOUNIT
-	enum {
-		kDfxScope_Global = kAudioUnitScope_Global,
-		kDfxScope_Input = kAudioUnitScope_Input,
-		kDfxScope_Output = kAudioUnitScope_Output
-	};
-	typedef AudioUnitScope	DfxScope;
+enum : AudioUnitScope
+{
+	kDfxScope_Global = kAudioUnitScope_Global,
+	kDfxScope_Input = kAudioUnitScope_Input,
+	kDfxScope_Output = kAudioUnitScope_Output
+};
+typedef AudioUnitScope DfxScope;
 #else
-	enum {
-		kDfxScope_Global = 0,
-		kDfxScope_Input = 1,
-		kDfxScope_Output = 2
-	};
-typedef uint32_t	DfxScope;
+typedef enum : uint32_t
+{
+	kDfxScope_Global = 0,
+	kDfxScope_Input = 1,
+	kDfxScope_Output = 2
+} DfxScope;
 #endif
 
 
 //-----------------------------------------------------------------------------
 // for kDfxPluginProperty_ParameterValue
-enum {
-	kDfxParameterValueItem_current = 0, 
-	kDfxParameterValueItem_previous, 
-	kDfxParameterValueItem_default, 
-	kDfxParameterValueItem_min, 
-	kDfxParameterValueItem_max
+enum class DfxParameterValueItem : uint32_t 
+{
+	Current, 
+	Previous, 
+	Default, 
+	Min, 
+	Max
 };
-typedef uint32_t	DfxParameterValueItem;
 
-typedef struct {
-	DfxParameterValueItem inValueItem;
-	DfxParamValueType inValueType;
-	DfxParamValue value;
+typedef struct
+{
+	DfxParameterValueItem inValueItem {};
+	DfxParam::ValueType inValueType {};
+	DfxParam::Value value {};
 } DfxParameterValueRequest;
 
 
 //-----------------------------------------------------------------------------
 // for kDfxPluginProperty_ParameterValueConversion
-enum {
-	kDfxParameterValueConversion_expand = 0, 
-	kDfxParameterValueConversion_contract
+enum class DfxParameterValueConversionType : uint32_t
+{
+	Expand, 
+	Contract
 };
-typedef uint32_t	DfxParameterValueConversionType;
 
-typedef struct {
-	DfxParameterValueConversionType inConversionType;
-	double inValue;
-	double outValue;
+typedef struct
+{
+	DfxParameterValueConversionType inConversionType {};
+	double inValue = 0.0;
+	double outValue = 0.0;
 } DfxParameterValueConversionRequest;
 
 
 //-----------------------------------------------------------------------------
 // for kDfxPluginProperty_ParameterValueString
-typedef struct {
-	int64_t inStringIndex;
-	char valueString[DFX_PARAM_MAX_VALUE_STRING_LENGTH];
+typedef struct
+{
+	int64_t inStringIndex = 0;
+	char valueString[kDfxParameterValueStringMaxLength];
 } DfxParameterValueStringRequest;
 
 
+#if TARGET_PLUGIN_USES_MIDI
 
-#endif
+//------------------------------------------------------
+enum class DfxMidiEventType : uint32_t
+{
+	None,
+	CC,
+	PitchBend,
+	Note
+};
+
+typedef enum : int32_t
+{
+	// parameter automation behavior mode flags
+	//
+	kDfxMidiEventBehaviorFlag_None = 0,
+	// use MIDI events to toggle the associated parameter between 0.0 and 1.0 
+	// if no mDataInt1 value was specified, 
+	// (good for controlling on/off buttons)
+	// but if mDataInt1 is greater than 2, then MIDI events will toggle between 
+	// paramater's states.  note-ons will cycle through the values and 
+	// continuous MIDI events will move through the values in steps
+	// (good for switches)
+	// (if using notes events and this flag is not set, and neither is NoteHold, 
+	// then note ranges are used to control associated parameters)
+	kDfxMidiEventBehaviorFlag_Toggle = 1,
+	// send 1.0 on note on and 0.0 on note off if this flag is on, 
+	// otherwise toggle 1.0 and 0.0 at each note on
+	// (only relevent when using notes events)
+	// (overrides Toggle setting for notes events, but not other events)
+	kDfxMidiEventBehaviorFlag_NoteHold = 1 << 1,
+	// use a range other than 0.0 to 1.0 
+	// the range is defined by mDataFloat1 and mDataFloat2
+	kDfxMidiEventBehaviorFlag_Range = 1 << 2  // TODO: currently unused/unimplemented
+} DfxMidiEventBehaviorFlags;
+
+typedef struct
+{
+	DfxMidiEventType mEventType = DfxMidiEventType::None;
+	// the MIDI channel of the MIDI event assignment
+	//    (so far, I'm not using channel information for anything)
+	int32_t mEventChannel = 0;
+	// the number of the MIDI event assigned to the parameter 
+	//    (CC number, note number, etc.)
+	int32_t mEventNum = 0;
+	// a second MIDI event number for double-value assignments 
+	//    (like 2 notes defining a note range)
+	int32_t mEventNum2 = 0;
+	// indicating the behavior of the event, i.e. toggle vs. hold for notes, etc.
+	DfxMidiEventBehaviorFlags mEventBehaviorFlags = kDfxMidiEventBehaviorFlag_None;
+	// bonus data slots
+	// (context-specific)
+	// (like for the number of steps in an indexed toggle assignment)
+	int32_t mDataInt1 = 0;
+	// (or the maximum step, within that range, to cycle up to)
+	int32_t mDataInt2 = 0;
+	// (or the minimum point in a float range)
+	float mDataFloat1 = 0.0f;
+	// (or the maximum point in a float range)
+	float mDataFloat2 = 0.0f;
+} DfxParameterAssignment;
+
+#endif  // TARGET_PLUGIN_USES_MIDI

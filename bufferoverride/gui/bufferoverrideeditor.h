@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2015  Sophia Poirier
+Copyright (C) 2001-2018  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -19,8 +19,7 @@ along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __BUFFER_OVERRIDE_EDITOR_H
-#define __BUFFER_OVERRIDE_EDITOR_H
+#pragma once
 
 
 #include "dfxgui.h"
@@ -32,20 +31,17 @@ class BufferOverrideEditor : public DfxGuiEditor
 public:
 	BufferOverrideEditor(DGEditorListenerInstance inInstance);
 
-	virtual long OpenEditor();
-	virtual void parameterChanged(long inParameterID);
-	virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse);
+	long OpenEditor() override;
+	void parameterChanged(long inParameterID) override;
+	void mouseovercontrolchanged(DGControl* currentControlUnderMouse) override;
 
 private:
-	DGSlider * bufferSizeSlider;
-	DGSlider * divisorLFOrateSlider;
-	DGSlider * bufferLFOrateSlider;
-	DGTextDisplay * bufferSizeDisplay;
-	DGTextDisplay * divisorLFOrateDisplay;
-	DGTextDisplay * bufferLFOrateDisplay;
+	DGSlider* mBufferSizeSlider = nullptr;
+	DGSlider* mDivisorLFORateSlider = nullptr;
+	DGSlider* mBufferLFORateSlider = nullptr;
+	DGTextDisplay* mBufferSizeDisplay = nullptr;
+	DGTextDisplay* mDivisorLFORateDisplay = nullptr;
+	DGTextDisplay* mBufferLFORateDisplay = nullptr;
 
-	DGStaticTextDisplay * helpDisplay;
+	DGStaticTextDisplay* mHelpDisplay = nullptr;
 };
-
-
-#endif

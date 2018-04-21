@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,81 +21,75 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXGUI_TEXT_DISPLAY_H
-#define __DFXGUI_TEXT_DISPLAY_H
+#pragma once
 
+
+#include <functional>
+#include <string>
+#include <vector>
 
 #include "dfxguieditor.h"
-
-
-static const size_t kDGTextDisplay_stringSize = 256;
 
 
 //-----------------------------------------------------------------------------
 class DGTextDisplay : public CTextEdit, public DGControl
 {
 public:
-	DGTextDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-					CParamDisplayValueToStringProc inTextProc, void * inUserData, DGImage * inBackground, 
-					DGTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
-					DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
-	virtual ~DGTextDisplay();
+	static constexpr size_t kTextMaxLength = 256;
 
-	virtual CMouseEventResult onMouseDown(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
-	virtual CMouseEventResult onMouseMoved(CPoint & inPos, const CButtonState & inButtons) VSTGUI_OVERRIDE_VMETHOD;
+	DGTextDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+				  CParamDisplayValueToStringProc inTextProc, void* inUserData, DGImage* inBackgroundImage, 
+				  DGTextAlignment inTextAlignment = DGTextAlignment::Left, float inFontSize = 12.0f, 
+				  DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
 
-	virtual void setValueToStringProc(CParamDisplayValueToStringProc inProc, void* inUserData = 0) VSTGUI_OVERRIDE_VMETHOD;
-	virtual void setStringToValueProc(CTextEditStringToValueProc inProc, void* inUserData = 0)VSTGUI_OVERRIDE_VMETHOD;
+#if 0
+	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
+	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
+#endif
 
 	void setTextAlignment(DGTextAlignment inTextAlignment);
-	DGTextAlignment getTextAlignment();
-	void setMouseAxis(DGAxis inMouseAxis)
-		{	mouseAxis = inMouseAxis;	}
+	DGTextAlignment getTextAlignment() const noexcept;
+#if 0
+	void setMouseAxis(DGAxis inMouseAxis) noexcept
+	{
+		mMouseAxis = inMouseAxis;
+	}
+#endif
+
+	using TextToValueProc = std::function<bool(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)>;
+	void setTextToValueProc(const TextToValueProc& textToValueProc);
+	void setTextToValueProc(TextToValueProc&& textToValueProc);
+
+	void refreshText();  // trigger a re-conversion of the numerical value to text
 
 protected:
-	static bool valueToTextProcBridge(float inValue, char outTextUTF8[256], void * inUserData);
-	typedef struct
-	{
-		DGTextDisplay* mThis;
-		CParamDisplayValueToStringProc mProc;
-		void* mUserData;
-	} ValueToTextProcBridgeData;
-	ValueToTextProcBridgeData valueToTextProcBridgeData;
+	bool valueToTextProcBridge(float inValue, char outTextUTF8[kTextMaxLength], CParamDisplay* inUserData);
+	bool textToValueProcBridge(UTF8StringPtr inText, float& outValue, CTextEdit* textEdit);
 
-	static bool textToValueProcBridge(UTF8StringPtr inText, float& outValue, void* inUserData);
-	typedef struct
-	{
-		DGTextDisplay* mThis;
-		CTextEditStringToValueProc mProc;
-		void* mUserData;
-	} TextToValueProcBridgeData;
-	TextToValueProcBridgeData textToValueProcBridgeData;
+	CParamDisplayValueToStringProc mValueToTextProc = nullptr;
+	void* mValueToTextUserData = nullptr;
+	TextToValueProc mTextToValueProc;
 
-	DGAxis					mouseAxis;	// flags indicating which directions you can mouse to adjust the control value
-	float					lastX, lastY;
+#if 0
+	DGAxis mMouseAxis = kDGAxis_Vertical;  // indicates which directions you can mouse to adjust the control's value
+	float mLastX = 0.0f, mLastY = 0.0f;
+#endif
 };
 
 
 
 #pragma mark -
 //-----------------------------------------------------------------------------
-class DGStaticTextDisplay : public DGTextDisplay
+class DGStaticTextDisplay : public CTextLabel, public DGControl
 {
 public:
-	DGStaticTextDisplay(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground, 
-						DGTextAlignment inTextAlignment = kDGTextAlign_left, float inFontSize = 12.0f, 
-						DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
-	virtual ~DGStaticTextDisplay();
+	DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
+						DGTextAlignment inTextAlignment = DGTextAlignment::Left, float inFontSize = 12.0f, 
+						DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
 
-	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
-
-	void setText(const char * inNewText);
 #if TARGET_OS_MAC
-	void setCFText(CFStringRef inNewText);
+	void setCFText(CFStringRef inText);
 #endif
-
-protected:
-	char * displayString;
 };
 
 
@@ -105,21 +99,15 @@ protected:
 class DGTextArrayDisplay : public DGTextDisplay
 {
 public:
-	DGTextArrayDisplay(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, long inNumStrings, 
-						DGTextAlignment inTextAlignment = kDGTextAlign_left, DGImage * inBackground = NULL, 
-						float inFontSize = 12.0f, DGColor inFontColor = kBlackCColor, const char * inFontName = NULL);
-	virtual ~DGTextArrayDisplay();
+	DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, long inNumStrings, 
+					   DGTextAlignment inTextAlignment = DGTextAlignment::Left, DGImage* inBackground = nullptr, 
+					   float inFontSize = 12.0f, DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
 
-	virtual void draw(CDrawContext * inContext) VSTGUI_OVERRIDE_VMETHOD;
+	void draw(CDrawContext* inContext) override;
 
-	void setText(long inStringNum, const char * inNewText);
+	using CTextEdit::setText;
+	void setText(long inStringNum, char const* inText);
 
 protected:
-	long numStrings;
-	char ** displayStrings;
+	std::vector<std::string> mDisplayStrings;
 };
-
-
-
-
-#endif

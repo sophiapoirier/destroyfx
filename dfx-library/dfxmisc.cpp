@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2015  Sophia Poirier
+Copyright (C) 2002-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,6 +28,8 @@ These are some generally useful functions.
 
 #include <stdio.h>
 
+#include "dfxdefines.h"
+
 #if TARGET_OS_MAC
 	#include <Carbon/Carbon.h>
 #endif
@@ -40,32 +42,62 @@ These are some generally useful functions.
 #endif
 
 
+namespace dfx
+{
+
+
+//------------------------------------------------------
+long CompositePluginVersionNumberValue()
+{
+	return (PLUGIN_VERSION_MAJOR << 16) | (PLUGIN_VERSION_MINOR << 8) | PLUGIN_VERSION_BUGFIX;
+}
+
+//------------------------------------------------------
+// this reverses the bytes in a stream of data, for correcting endian difference
+void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
+{
+	size_t const half = (inItemSize / 2) + (inItemSize % 2);
+	auto dataBytes = static_cast<char*>(ioData);
+
+	for (size_t c = 0; c < inItemCount; c++)
+	{
+		for (size_t i = 0; i < half; i++)
+		{
+			auto const temp = dataBytes[i];
+			size_t const complementIndex = (inItemSize - 1) - i;
+			dataBytes[i] = dataBytes[complementIndex];
+			dataBytes[complementIndex] = temp;
+		}
+		dataBytes += inItemSize;
+	}
+}
 
 //-----------------------------------------------------------------------------
 // handy function to open up an URL in the user's default web browser
-//  * Mac OS
+//  * macOS
 // returns noErr (0) if successful, otherwise a non-zero error code is returned
 //  * Windows
 // returns a meaningless value greater than 32 if successful, 
 // otherwise an error code ranging from 0 to 32 is returned
-long launch_url(const char * inUrlString)
+long LaunchURL(char const* inUrlString)
 {
-	if (inUrlString == NULL)
+	if (!inUrlString)
+	{
 		return 3;
+	}
 
 #if TARGET_OS_MAC
-	CFURLRef urlcfurl = CFURLCreateWithBytes(kCFAllocatorDefault, (const UInt8*)inUrlString, (CFIndex)strlen(inUrlString), kCFStringEncodingASCII, NULL);
-	if (urlcfurl != NULL)
+	UniqueCFType<CFURLRef> const cfURL(CFURLCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inUrlString), static_cast<CFIndex>(strlen(inUrlString)), kCFStringEncodingASCII, nullptr));
+	if (cfURL)
 	{
-		OSStatus status = LSOpenCFURLRef(urlcfurl, NULL);	// try to launch the URL
-		CFRelease(urlcfurl);
+		auto const status = LSOpenCFURLRef(cfURL.get(), nullptr);  // try to launch the URL
 		return status;
 	}
-	return paramErr;	// couldn't create the CFURL, so return some error code
+	return paramErr;  // couldn't create the CFURL, so return some error code
 #endif
 
 #if _WIN32
-	return (long) ShellExecute(NULL, "open", inUrlString, NULL, NULL, SW_SHOWNORMAL);
+	return static_cast<long>(ShellExecute(nullptr, "open", inUrlString, nullptr, nullptr, SW_SHOWNORMAL));
 #endif
 }
 
@@ -73,85 +105,91 @@ long launch_url(const char * inUrlString)
 //-----------------------------------------------------------------------------
 // this function looks for the plugin's documentation file in the appropriate system location, 
 // within a given file system domain, and returns a CFURLRef for the file if it is found, 
-// and NULL otherwise (or if some error is encountered along the way)
-CFURLRef DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, FSVolumeRefNum inDomain)
+// and null otherwise (or if some error is encountered along the way)
+UniqueCFType<CFURLRef> DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, FSVolumeRefNum inDomain)
 {
-	if (inDocsFileName == NULL)
-		return NULL;
+	if (!inDocsFileName)
+	{
+		return {};
+	}
 
 	// first find the base directory for the system documentation directory
 	FSRef docsDirRef;
-	OSErr error = FSFindFolder(inDomain, kDocumentationFolderType, kDontCreateFolder, &docsDirRef);
+	auto const error = FSFindFolder(inDomain, kDocumentationFolderType, kDontCreateFolder, &docsDirRef);
 	if (error == noErr)
 	{
 		// convert the FSRef of the documentation directory to a CFURLRef (for use in the next steps)
-		CFURLRef docsDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &docsDirRef);
-		if (docsDirURL != NULL)
+		UniqueCFType<CFURLRef> const docsDirURL(CFURLCreateFromFSRef(kCFAllocatorDefault, &docsDirRef));
+		if (docsDirURL)
 		{
 			// create a CFURL for the "manufacturer name" directory within the documentation directory
-			CFURLRef dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL, CFSTR(PLUGIN_CREATOR_NAME_STRING), true);
-			CFRelease(docsDirURL);
-			if (dfxDocsDirURL != NULL)
+			UniqueCFType<CFURLRef> const dfxDocsDirURL(CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL.get(), CFSTR(PLUGIN_CREATOR_NAME_STRING), true));
+			if (dfxDocsDirURL)
 			{
 				// create a CFURL for the documentation file within the "manufacturer name" directory
-				CFURLRef docsFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL, inDocsFileName, false);
-				CFRelease(dfxDocsDirURL);
-				if (docsFileURL != NULL)
+				UniqueCFType<CFURLRef> docsFileURL(CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL.get(), inDocsFileName, false));
+				if (docsFileURL)
 				{
 					// check to see if the hypothetical documentation file actually exists 
 					// (CFURLs can reference files that don't exist)
 					SInt32 urlErrorCode = 0;
-					CFBooleanRef docsFileCFExists = (CFBooleanRef) CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL, kCFURLFileExists, &urlErrorCode);
-					if (docsFileCFExists != NULL)
+					UniqueCFType<CFBooleanRef> const docsFileCFExists(static_cast<CFBooleanRef>(CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL.get(), kCFURLFileExists, &urlErrorCode)));
+					if (docsFileCFExists)
 					{
 						// only return the file's CFURL if the file exists
-						const bool docsFileExists = (docsFileCFExists == kCFBooleanTrue);
-						CFRelease(docsFileCFExists);
+						bool const docsFileExists = (docsFileCFExists.get() == kCFBooleanTrue);
 						if (docsFileExists)
+						{
 							return docsFileURL;
+						}
 					}
-					CFRelease(docsFileURL);
 				}
 			}
 		}
 	}
 
-	return NULL;
+	return {};
 }
 #endif
 
 //-----------------------------------------------------------------------------
 // XXX this function should really go somewhere else, like in that promised DFX utilities file or something like that
-long launch_documentation()
+long LaunchDocumentation()
 {
 
 #if TARGET_OS_MAC
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
-	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier( CFSTR(PLUGIN_BUNDLE_IDENTIFIER) );
-	if (pluginBundleRef != NULL)
+	auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	if (pluginBundleRef)
 	{
-		CFStringRef docsFileName = CFSTR( PLUGIN_NAME_STRING" manual.html" );
+		CFStringRef const docsFileName = CFSTR(PLUGIN_NAME_STRING " manual.html");
 	#ifdef PLUGIN_DOCUMENTATION_FILE_NAME
 		docsFileName = CFSTR(PLUGIN_DOCUMENTATION_FILE_NAME);
 	#endif
-		CFStringRef docsSubdirName = NULL;
+		CFStringRef docsSubdirName = nullptr;
 	#ifdef PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME
 		docsSubdirName = CFSTR(PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME);
 	#endif
-		CFURLRef docsFileURL = CFBundleCopyResourceURL(pluginBundleRef, docsFileName, NULL, docsSubdirName);
+		UniqueCFType<CFURLRef> docsFileURL(CFBundleCopyResourceURL(pluginBundleRef, docsFileName, nullptr, docsSubdirName));
 		// if the documentation file is not found in the bundle, then search in appropriate system locations
-		if (docsFileURL == NULL)
+		if (!docsFileURL)
+		{
 			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kUserDomain);
-		if (docsFileURL == NULL)
+		}
+		if (!docsFileURL)
+		{
 			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kLocalDomain);
-		if (docsFileURL == NULL)
+		}
+		if (!docsFileURL)
+		{
 			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kNetworkDomain);
-		if (docsFileURL != NULL)
+		}
+		if (docsFileURL)
 		{
 // open the manual with the default application for the file type
 #if 1
-			OSStatus status = LSOpenCFURLRef(docsFileURL, NULL);
+			auto const status = LSOpenCFURLRef(docsFileURL.get(), nullptr);
 // open the manual with Apple's system Help Viewer
 #else
 			// XXX I don't know why the Help Viewer code is not working anymore (Help Viewer can't load the page, since 10.6)
@@ -161,95 +199,103 @@ long launch_documentation()
 			static bool helpBookRegistered = false;
 			if (!helpBookRegistered)
 			{
-				CFURLRef bundleURL = CFBundleCopyBundleURL(pluginBundleRef);
-				if (bundleURL != NULL)
+				UniqueCFType<CFURLRef> const bundleURL(CFBundleCopyBundleURL(pluginBundleRef));
+				if (bundleURL)
 				{
 					OSStatus registerStatus = paramErr;
-					if (AHRegisterHelpBookWithURL != NULL)	// available starting in Mac OS X 10.6
+					if (AHRegisterHelpBookWithURL)  // available starting in Mac OS X 10.6
 					{
-						registerStatus = AHRegisterHelpBookWithURL(bundleURL);
+						registerStatus = AHRegisterHelpBookWithURL(bundleURL.get());
 					}
 					else
 					{
 						FSRef bundleRef;
-						Boolean fsrefSuccess = CFURLGetFSRef(bundleURL, &bundleRef);
-						if (fsrefSuccess)
+						if (CFURLGetFSRef(bundleURL.get(), &bundleRef))
+						{
 							registerStatus = AHRegisterHelpBook(&bundleRef);
+						}
 					}
 					if (registerStatus == noErr)
+					{
 						helpBookRegistered = true;
-					CFRelease(bundleURL);
+					}
 				}
 			}
 		#endif
 			OSStatus status = coreFoundationUnknownErr;
-			CFStringRef docsFileUrlString = CFURLGetString(docsFileURL);
-			if (docsFileUrlString != NULL)
+			if (auto const docsFileUrlString = CFURLGetString(docsFileURL.get()))
 			{
-				status = AHGotoPage(NULL, docsFileUrlString, NULL);
+				status = AHGotoPage(nullptr, docsFileUrlString, nullptr);
 			}
 #endif
-			CFRelease(docsFileURL);
 			return status;
 		}
 	}
 
-	return fnfErr;	// file not found error
+	return fnfErr;  // file not found error
 #endif
 
 	return 0;
 }
 
 //-----------------------------------------------------------------------------
-const char * DFX_GetNameForMIDINote(long inMidiNote)
+char const* GetNameForMIDINote(long inMidiNote)
 {
 	static char midiNoteName[16] = {0};
-	const long kNumNotesInOctave = 12;
-	const char * keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-	const long keyNameIndex = inMidiNote % kNumNotesInOctave;
-	const long octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
-	sprintf(midiNoteName, "%s %ld", keyNames[keyNameIndex], octaveNumber);
+	constexpr long kNumNotesInOctave = 12;
+	static char const* const keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+	long const keyNameIndex = inMidiNote % kNumNotesInOctave;
+	long const octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
+	snprintf(midiNoteName, sizeof(midiNoteName), "%s %ld", keyNames[keyNameIndex], octaveNumber);
 	return midiNoteName;
 }
 
 //-----------------------------------------------------------------------------
-uint64_t DFX_GetMillisecondCount()
+uint64_t GetMillisecondCount()
 {
 #if TARGET_OS_MAC
 	// convert from 1/60 second to millisecond values
-	return (uint64_t)TickCount() * 100 / 6;
+	return static_cast<uint64_t>(TickCount()) * 100 / 6;
 #endif
 
 #if _WIN32
-	#if (_WIN32_WINNT >= 0x0600) && 0	// XXX how to runtime check without symbol error if unavailable?
+	#if (_WIN32_WINNT >= 0x0600) && 0  // XXX how to runtime check without symbol error if unavailable?
 	OSVERSIONINFO versionInfo = {0};
 	versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
-	if ( GetVersionEx(&versionInfo) && (versionInfo.dwMajorVersion >= 6) )
+	if (GetVersionEx(&versionInfo) && (versionInfo.dwMajorVersion >= 6))
+	{
 		return GetTickCount64();
+	}
 	else
 	#endif
-	return (UINT64) GetTickCount();
+	{
+		return static_cast<UINT64>(GetTickCount());
+	}
 #endif
 }
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-char * DFX_CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding)
+std::unique_ptr<char[]> CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding)
 {
-	CFIndex stringBufferSize = CFStringGetMaximumSizeForEncoding(CFStringGetLength(inCFString) + 1, inCStringEncoding);
+	auto const stringBufferSize = CFStringGetMaximumSizeForEncoding(CFStringGetLength(inCFString) + 1, inCStringEncoding);
 	if (stringBufferSize <= 0)
-		return NULL;
-	char * outputString = (char*) malloc(stringBufferSize);
-	if (outputString == NULL)
-		return NULL;
-	memset(outputString, 0, stringBufferSize);
-	Boolean stringSuccess = CFStringGetCString(inCFString, outputString, stringBufferSize, inCStringEncoding);
-	if (!stringSuccess)
 	{
-		free(outputString);
-		outputString = NULL;
+		return {};
 	}
-
+	auto outputString = std::make_unique<char[]>(stringBufferSize);
+	if (outputString)
+	{
+		memset(outputString.get(), 0, stringBufferSize);
+		auto const stringSuccess = CFStringGetCString(inCFString, outputString.get(), stringBufferSize, inCStringEncoding);
+		if (!stringSuccess)
+		{
+			outputString.reset();
+		}
+	}
 	return outputString;
 }
 #endif
+
+
+}  // namespace
