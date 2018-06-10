@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2010  Sophia Poirier
+	Copyright (C) 2003-2018  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -38,12 +38,12 @@
 */
 
 
-#ifndef __DFX_AU_UTILITIES_PRIVATE_H
-#define __DFX_AU_UTILITIES_PRIVATE_H
+#ifndef DFX_AU_UTILITIES_PRIVATE_H
+#define DFX_AU_UTILITIES_PRIVATE_H
 
 
-#include <Carbon/Carbon.h>
 #include <AudioUnit/AudioUnit.h>
+#include <CoreServices/CoreServices.h>
 
 
 #ifdef __cplusplus
@@ -53,47 +53,26 @@ extern "C" {
 
 
 // handling files and directories
-OSStatus MakeFSRefInDir(const FSRef * inParentDirRef, CFStringRef inItemNameString, Boolean inCreateItem, FSRef * outItemRef);
-void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255 * outUniName);
+OSStatus MakeDirectoryFSRef(FSRef const* inParentDirRef, CFStringRef inItemNameString, Boolean inCreateItem, FSRef* outItemRef);
+void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255* outUniName);
 
 // preset file trees
-CFTreeRef CreateFileURLsTreeNode(const FSRef * inItemRef, CFAllocatorRef inAllocator);
-CFTreeRef AddFileItemToTree(const FSRef * inItemRef, CFTreeRef inParentTree);
-void CollectAllAUPresetFilesInDir(const FSRef * inDirRef, CFTreeRef inParentTree, Component inAUComponent);
-void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparatorFunction, void * inContext);
-CFComparisonResult FileURLsTreeComparatorFunction(const void * inTree1, const void * inTree2, void * inContext);
-void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext * outTreeContext);
+CFTreeRef CreateFileURLsTreeNode(FSRef const* inItemRef, CFAllocatorRef inAllocator);
+CFTreeRef AddFileItemToTree(FSRef const* inItemRef, CFTreeRef inParentTree);
+void CollectAllAUPresetFilesInDir(FSRef const* inDirRef, CFTreeRef inParentTree, Component inAUComponent);
+void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparatorFunction, void* inContext);
+CFComparisonResult FileURLsTreeComparatorFunction(void const* inTree1, void const* inTree2, void* inContext);
+void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext* outTreeContext);
 
 // restoring preset files
-CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32 * outErrorCode);
-#if !__LP64__
-pascal void CustomOpenAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
-pascal Boolean CustomOpenAUPresetNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode);
-OSStatus SetNavDialogAUPresetStartLocation(NavDialogRef inDialog, Component inAUComponent, Boolean inShouldCreateFolder);
-#endif
+CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32* outErrorCode);
 
 // saving preset files
+OSStatus CopyAUStatePropertyList(AudioUnit inAUComponentInstance, CFPropertyListRef* outAUStatePlist);
 OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef inXMLFileURL);
-OSStatus CreateSavePresetDialog(Component inAUComponent, CFPropertyListRef inAUStatePlist, 
-								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
-#if !__LP64__
-pascal OSStatus SaveAUPresetFileDialogEventHandler(EventHandlerCallRef myHandler, EventRef inEvent, void * inUserData);
-#endif
-OSStatus TryToSaveAUPresetFile(Component inAUComponent, CFPropertyListRef inAUStateData, 
-								CFStringRef inPresetNameString, FSVolumeRefNum inFileSystemDomain, 
-								CFURLRef * outSavedAUPresetFileURL);
-Boolean ShouldReplaceExistingAUPresetFile(CFURLRef inAUPresetFileURL);
-#if !__LP64__
-pascal Boolean ShouldReplaceExistingAUPresetFileDialogFilterProc(DialogRef inDialog, EventRecord * inEvent, DialogItemIndex * outItemHit);
-#endif
-Boolean IsFileAccessError(OSStatus inErrorCode);
-OSStatus HandleSaveAUPresetFileAccessError(ControlRef inDomainChoiceControl);
-OSStatus CustomSaveAUPresetFile(CFPropertyListRef inAUStateData, Component inAUComponent, 
-								CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
-#if !__LP64__
-pascal void CustomSaveAUPresetNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData);
-#endif
-void SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inPresetName);
+OSStatus TryToSaveAUPresetFile(AudioUnit inAUComponentInstance, CFPropertyListRef inAUStateData, CFURLRef* ioAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
+Boolean ShouldReplaceExistingAUPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, CFBundleRef inBundle);
+CFPropertyListRef SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inPresetName);
 
 
 
@@ -105,4 +84,4 @@ void SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inP
 
 
 #endif
-// __DFX_AU_UTILITIES_PRIVATE_H
+// DFX_AU_UTILITIES_PRIVATE_H
