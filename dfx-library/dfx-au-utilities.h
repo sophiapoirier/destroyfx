@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2010  Sophia Poirier
+	Copyright (C) 2003-2018  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -38,12 +38,12 @@
 */
 
 
-#ifndef __DFX_AU_UTILITIES_H
-#define __DFX_AU_UTILITIES_H
+#ifndef DFX_AU_UTILITIES_H
+#define DFX_AU_UTILITIES_H
 
 
-#include <Carbon/Carbon.h>
 #include <AudioUnit/AudioUnit.h>
+#include <CoreServices/CoreServices.h>
 
 
 #ifdef __cplusplus
@@ -52,63 +52,58 @@ extern "C" {
 
 
 
-/* this is for getting a Component's version from the Component's resource cache */
-extern OSErr GetComponentVersionFromResource(Component inComponent, SInt32 * outVersion);
-
 /* these handle a CoreFoundation-like container object for AUPreset called CFAUPreset */
-typedef const struct CFAUPreset * CFAUPresetRef;
+typedef struct CFAUPreset const* CFAUPresetRef;
 extern CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName);
 extern CFAUPresetRef CFAUPresetRetain(CFAUPresetRef inPreset);
 extern void CFAUPresetRelease(CFAUPresetRef inPreset);
-extern const CFArrayCallBacks kCFAUPresetArrayCallBacks;
+extern CFArrayCallBacks const kCFAUPresetArrayCallBacks;
 
 /* these handle a CoreFoundation-like container object for AudioUnitOtherPluginDesc called CFAUOtherPluginDesc */
-typedef const struct CFAUOtherPluginDesc * CFAUOtherPluginDescRef;
+typedef struct CFAUOtherPluginDesc const* CFAUOtherPluginDescRef;
 extern CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID);
 extern CFAUOtherPluginDescRef CFAUOtherPluginDescCreateVST(CFAllocatorRef inAllocator, OSType inUniqueID);
 extern CFAUOtherPluginDescRef CFAUOtherPluginDescCreateMAS(CFAllocatorRef inAllocator, OSType inEffectID, OSType inVariantID, OSType inManufacturerID);
 extern CFAUOtherPluginDescRef CFAUOtherPluginDescRetain(CFAUOtherPluginDescRef inDesc);
 extern void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc);
-extern const CFArrayCallBacks kCFAUOtherPluginDescArrayCallBacks;
+extern CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks;
 
 /* these are convenience functions for sending parameter change notifications to all parameter listeners */
 extern void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
-									AudioUnitScope inScope, AudioUnitElement inElement);
+														 AudioUnitScope inScope, AudioUnitElement inElement);
 /* this one defaults to using global scope and element 0 */
 extern void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID);
 
-/* these are for getting the individual AU plugin name and manufacturer name strings (so you don't have to fetch and parse yourself) */
-/* get yourself some CFStrings */
-extern OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef * outNameString, CFStringRef * outManufacturerString);
-/* get yourself some C strings */
-extern OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNameString, char * outManufacturerString);
+/* this is for getting the individual AU plugin name and manufacturer name strings (so you don't have to fetch and parse yourself) */
+extern OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef* outNameString, CFStringRef* outManufacturerString);
 
 /* comparing ComponentDescriptions */
-/* determine if 2 ComponentDescriptions are basically equal */
-extern Boolean ComponentDescriptionsMatch(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2);
-/* determine if 2 ComponentDescriptions have matching manufacturer and sub-type codes */
-extern Boolean ComponentDescriptionsMatch_Loosely(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2);
+/* determine if two ComponentDescriptions are basically equal */
+extern Boolean ComponentDescriptionsMatch(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2);
+/* determine if two ComponentDescriptions have matching manufacturer and sub-type codes */
+extern Boolean ComponentDescriptionsMatch_Loosely(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2);
 /* determine if a ComponentDescription basically matches that of a particular Component */
-extern Boolean ComponentAndDescriptionMatch(Component inComponent, const ComponentDescription * inComponentDescription);
+extern Boolean ComponentAndDescriptionMatch(Component inComponent, ComponentDescription const* inComponentDescription);
 /* determine if a ComponentDescription matches only the sub-type manufacturer codes of a particular Component */
-extern Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const ComponentDescription * inComponentDescription);
+extern Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, ComponentDescription const* inComponentDescription);
 
 /* stuff for handling AU preset files... */
 /* main */
-extern OSStatus SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL);
-extern OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL, CFBundleRef inBundle);
+extern OSStatus SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile);
+extern OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
+extern OSStatus CustomSaveAUPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile);
+extern OSStatus CustomSaveAUPresetFile_Bundle(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
 extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, FSVolumeRefNum inFileSystemDomain);
 extern OSStatus RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL);
-extern OSStatus CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance);
-extern OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription * outComponentDescription);
-extern OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription);
+extern OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription* outComponentDescription);
+extern OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription* outComponentDescription);
 /* access */
 extern CFURLRef GetCFURLFromFileURLsTreeNode(CFTreeRef inTree);
 /* handies */
 extern CFStringRef CopyAUPresetNameFromCFURL(CFURLRef inAUPresetFileURL);
 extern Boolean CFURLIsAUPreset(CFURLRef inURL);
-extern Boolean FSRefIsAUPreset(const FSRef * inFileRef);
-extern OSStatus FindPresetsDirForAU(Component inAUComponent, FSVolumeRefNum inFileSystemDomain, Boolean inCreateDir, FSRef * outDirRef);
+extern Boolean FSRefIsAUPreset(FSRef const* inFileRef);
+extern OSStatus FindPresetsDirForAU(Component inAUComponent, FSVolumeRefNum inFileSystemDomain, Boolean inCreateDir, FSRef* outDirRef);
 
 /* system services availability / version-checking stuff */
 extern SInt32 GetMacOSVersion();
@@ -134,6 +129,23 @@ namespace dfx
 		:	std::unique_ptr<CFAUPreset const, void(*)(CFAUPresetRef)>(object, ::CFAUPresetRelease)
 		{
 		}
+		UniqueCFAUPreset(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName) noexcept
+		:	UniqueCFAUPreset(CFAUPresetCreate(inAllocator, inPresetNumber, inPresetName))
+		{
+		}
+	};
+
+	class UniqueCFAUOtherPluginDesc : public std::unique_ptr<CFAUOtherPluginDesc const, void(*)(CFAUOtherPluginDescRef)>
+	{
+	public:
+		UniqueCFAUOtherPluginDesc(CFAUOtherPluginDescRef object = nullptr) noexcept
+		:	std::unique_ptr<CFAUOtherPluginDesc const, void(*)(CFAUOtherPluginDescRef)>(object, ::CFAUOtherPluginDescRelease)
+		{
+		}
+		UniqueCFAUOtherPluginDesc(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID) noexcept
+		:	UniqueCFAUOtherPluginDesc(CFAUOtherPluginDescCreate(inAllocator, inFormat, inTypeID, inSubTypeID, inManufacturerID))
+		{
+		}
 	};
 }
 #endif
@@ -143,4 +155,4 @@ namespace dfx
 
 
 #endif
-/* __DFX_AU_UTILITIES_H */
+/* DFX_AU_UTILITIES_H */
