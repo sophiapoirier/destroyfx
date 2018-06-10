@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2016  Sophia Poirier
+	Copyright (C) 2003-2018  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -40,105 +40,7 @@
 
 #include "dfx-au-utilities.h"
 
-#include <AudioToolbox/AudioUnitUtilities.h>	// for AUEventListenerNotify and AUParameterListenerNotify
-
-
-#pragma mark Component Version
-
-//-----------------------------------------------------------------------------
-// This function will get the version of a Component from its 'thng' resource 
-// rather than from opening it and using the kComponentVersionSelect selector.  
-// This allows you to get the version without opening the component, which can 
-// be much more efficient.  Note that, unlike GetComponentVersion or 
-// CallComponentVersion, the first argument of this function is a Component, 
-// not a ComponentInstance.  You can, however, cast a ComponentInstance to 
-// Component for this function, if you want to do that for any reason.
-OSErr GetComponentVersionFromResource(Component inComponent, SInt32 * outVersion)
-{
-	OSErr error;
-	ComponentDescription desc;
-	ResFileRefNum curRes, componentResFileID;
-	ResFileRefNum thngResourceCount, i;
-	Boolean versionFound = false;
-
-	if ( (inComponent == NULL) || (outVersion == NULL) )
-		return paramErr;
-
-	// first we need to get the ComponentDescription so that we know 
-	// what the Component's type, sub-type, and manufacturer codes are
-	error = GetComponentInfo(inComponent, &desc, NULL, NULL, NULL);
-	if (error != noErr)
-		return error;
-
-	// remember the current resource file (because we will change it)
-	curRes = CurResFile();
-	componentResFileID = kResFileNotOpened;
-	error = OpenAComponentResFile(inComponent, &componentResFileID);
-	// error or invalid resource ID, abort
-	if (error != noErr)
-		return error;
-	// this shouldn't happen without an error, but...
-	if (componentResFileID <= 0)
-		return resFNotFound;
-	UseResFile(componentResFileID);
-
-	thngResourceCount = Count1Resources(kComponentResourceType);
-	error = ResError();	// catch any error from Count1Resources
-	// only go on if we successfully found at least 1 thng resource
-	// (again, this shouldn't happen without an error, but just in case...)
-	if ( (thngResourceCount <= 0) && (error == noErr) )
-		error = resNotFound;
-	if (error != noErr)
-	{
-		UseResFile(curRes);	// revert
-		CloseComponentResFile(componentResFileID);
-		return error;
-	}
-
-	// loop through all of the Component thng resources trying to 
-	// find one that matches this Component description
-	for (i = 0; i < thngResourceCount; i++)
-	{
-		ExtComponentResource * componentThng;
-
-		// try to get a handle to this code resource
-		Handle thngResourceHandle = Get1IndResource(kComponentResourceType, i+1);
-		if (thngResourceHandle == NULL)
-			continue;
-		componentThng = (ExtComponentResource*) (*thngResourceHandle);
-		if (componentThng == NULL)
-			goto cleanupRes;
-		// it's not a v2 extended resource, probably just v1, so it won't have the version value
-		if (GetHandleSize(thngResourceHandle) < (Size)sizeof(ExtComponentResource))
-			goto cleanupRes;
-
-		// check to see if this is the thng resource for the particular Component that we are looking at
-		// (there often is more than one Component described in the resource)
-		if ( (componentThng->cd.componentType == desc.componentType) 
-				&& (componentThng->cd.componentSubType == desc.componentSubType) 
-				&& (componentThng->cd.componentManufacturer == desc.componentManufacturer) )
-		{
-			// the version was successfully retrieved; output it and break out of this loop
-			*outVersion = componentThng->componentVersion;
-			versionFound = true;
-		}
-	cleanupRes:
-		ReleaseResource(thngResourceHandle);
-		if (versionFound)
-			break;
-	}
-
-	UseResFile(curRes);	// revert
-	CloseComponentResFile(componentResFileID);
-
-	if (!versionFound)
-		return resNotFound;
-	return noErr;
-}
-
-
-
-
+#include <AudioToolbox/AudioUnitUtilities.h>  // for AUEventListenerNotify and AUParameterListenerNotify
 
 
 #pragma mark -
@@ -149,9 +51,10 @@ OSErr GetComponentVersionFromResource(Component inComponent, SInt32 * outVersion
 // an AUPreset container object:  CFAUPreset
 //-----------------------------------------------------------------------------
 
-const UInt32 kCFAUPreset_CurrentVersion = 0;
+UInt32 const kCFAUPreset_CurrentVersion = 0;
 
-typedef struct {
+typedef struct
+{
 	AUPreset auPreset;
 	UInt32 version;
 	CFAllocatorRef allocator;
@@ -162,7 +65,7 @@ typedef struct {
 // create an instance of a CFAUPreset object
 CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName)
 {
-	CFAUPreset * const newPreset = (CFAUPreset*) CFAllocatorAllocate(inAllocator, sizeof(CFAUPreset), 0);
+	CFAUPreset* const newPreset = (CFAUPreset*)CFAllocatorAllocate(inAllocator, sizeof(CFAUPreset), 0);
 	if (newPreset != NULL)
 	{
 		newPreset->auPreset.presetNumber = inPresetNumber;
@@ -170,7 +73,9 @@ CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber
 		// create our own a copy rather than retain the string, in case the input string is mutable, 
 		// this will keep it from changing under our feet
 		if (inPresetName != NULL)
+		{
 			newPreset->auPreset.presetName = CFStringCreateCopy(inAllocator, inPresetName);
+		}
 		newPreset->version = kCFAUPreset_CurrentVersion;
 		newPreset->allocator = inAllocator;
 		newPreset->retainCount = 1;
@@ -184,10 +89,12 @@ CFAUPresetRef CFAUPresetRetain(CFAUPresetRef inPreset)
 {
 	if (inPreset != NULL)
 	{
-		CFAUPreset * const incomingPreset = (CFAUPreset*) inPreset;
+		CFAUPreset* const incomingPreset = (CFAUPreset*)inPreset;
 		// retain the input AUPreset's name string for this reference to the preset
 		if (incomingPreset->auPreset.presetName != NULL)
+		{
 			CFRetain(incomingPreset->auPreset.presetName);
+		}
 		incomingPreset->retainCount += 1;
 	}
 	return inPreset;
@@ -197,16 +104,22 @@ CFAUPresetRef CFAUPresetRetain(CFAUPresetRef inPreset)
 // release a reference of a CFAUPreset object
 void CFAUPresetRelease(CFAUPresetRef inPreset)
 {
-	CFAUPreset * const incomingPreset = (CFAUPreset*) inPreset;
+	CFAUPreset* const incomingPreset = (CFAUPreset*)inPreset;
 	// these situations shouldn't happen
 	if (inPreset == NULL)
+	{
 		return;
+	}
 	if (incomingPreset->retainCount <= 0)
+	{
 		return;
+	}
 
 	// first release the name string, CF-style, since it's a CFString
 	if (incomingPreset->auPreset.presetName != NULL)
+	{
 		CFRelease(incomingPreset->auPreset.presetName);
+	}
 	incomingPreset->retainCount -= 1;
 	// check if this is the end of this instance's life
 	if (incomingPreset->retainCount == 0)
@@ -224,16 +137,16 @@ void CFAUPresetRelease(CFAUPresetRef inPreset)
 // an AU's factory presets array to support kAudioUnitProperty_FactoryPresets.
 //-----------------------------------------------------------------------------
 
-const void * CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, const void * inPreset);
-void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inPreset);
-Boolean CFAUPresetArrayEqualCallBack(const void * inPreset1, const void * inPreset2);
-CFStringRef CFAUPresetArrayCopyDescriptionCallBack(const void * inPreset);
-void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks);
+void const* CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, void const* inPreset);
+void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, void const* inPreset);
+Boolean CFAUPresetArrayEqualCallBack(void const* inPreset1, void const* inPreset2);
+CFStringRef CFAUPresetArrayCopyDescriptionCallBack(void const* inPreset);
+void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks);
 
 //-----------------------------------------------------------------------------
 // This function is called when an item (an AUPreset) is added to the CFArray, 
 // or when a CFArray containing an AUPreset is retained.  
-const void * CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, const void * inPreset)
+void const* CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, void const* inPreset)
 {
 	return CFAUPresetRetain(inPreset);
 }
@@ -242,7 +155,7 @@ const void * CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, const voi
 // This function is called when an item (an AUPreset) is removed from the CFArray 
 // or when the array is released.
 // Since a reference to the data belongs to the array, we need to release that here.
-void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inPreset)
+void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, void const* inPreset)
 {
 	CFAUPresetRelease(inPreset);
 }
@@ -251,10 +164,10 @@ void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inP
 // This function is called when someone wants to compare to items (AUPresets) 
 // in the CFArray to see if they are equal or not.
 // For our AUPresets, we will compare based on the preset number and the name string.
-Boolean CFAUPresetArrayEqualCallBack(const void * inPreset1, const void * inPreset2)
+Boolean CFAUPresetArrayEqualCallBack(void const* inPreset1, void const* inPreset2)
 {
-	const AUPreset * const preset1 = (AUPreset*) inPreset1;
-	const AUPreset * const preset2 = (AUPreset*) inPreset2;
+	AUPreset const* const preset1 = (AUPreset const*)inPreset1;
+	AUPreset const* const preset2 = (AUPreset const*)inPreset2;
 	// the two presets are only equal if they have the same preset number and 
 	// if the two name strings are the same (which we rely on the CF function to compare)
 	return (preset1->presetNumber == preset2->presetNumber) && 
@@ -267,9 +180,9 @@ Boolean CFAUPresetArrayEqualCallBack(const void * inPreset1, const void * inPres
 // That happens, for example, when using CFShow().  
 // This will create and return a CFString that indicates that 
 // the object is an AUPreset and tells the preset number and preset name.
-CFStringRef CFAUPresetArrayCopyDescriptionCallBack(const void * inPreset)
+CFStringRef CFAUPresetArrayCopyDescriptionCallBack(void const* inPreset)
 {
-	const AUPreset * const preset = (AUPreset*) inPreset;
+	AUPreset const* const preset = (AUPreset const*)inPreset;
 	return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
 									CFSTR("AUPreset:\npreset number = %d\npreset name = %@"), 
 									(int)preset->presetNumber, preset->presetName);
@@ -277,14 +190,16 @@ CFStringRef CFAUPresetArrayCopyDescriptionCallBack(const void * inPreset)
 
 //-----------------------------------------------------------------------------
 // this will initialize a CFArray callbacks structure to use the above callback functions
-void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks)
+void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
 {
 	if (outArrayCallBacks == NULL)
+	{
 		return;
+	}
 	// wipe the struct clean
 	memset(outArrayCallBacks, 0, sizeof(*outArrayCallBacks));
 	// set all of the values and function pointers in the callbacks struct
-	outArrayCallBacks->version = 0;	// currently, 0 is the only valid version value for this
+	outArrayCallBacks->version = 0;  // currently, 0 is the only valid version value for this
 	outArrayCallBacks->retain = CFAUPresetArrayRetainCallBack;
 	outArrayCallBacks->release = CFAUPresetArrayReleaseCallBack;
 	outArrayCallBacks->copyDescription = CFAUPresetArrayCopyDescriptionCallBack;
@@ -293,16 +208,17 @@ void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks)
 
 //-----------------------------------------------------------------------------
 #ifdef __GNUC__
-const CFArrayCallBacks kCFAUPresetArrayCallBacks;
+CFArrayCallBacks const kCFAUPresetArrayCallBacks;
 static void kCFAUPresetArrayCallBacks_constructor() __attribute__((constructor));
 static void kCFAUPresetArrayCallBacks_constructor()
 {
-	CFAUPresetArrayCallBacks_Init( (CFArrayCallBacks*) &kCFAUPresetArrayCallBacks );
+	CFAUPresetArrayCallBacks_Init((CFArrayCallBacks*)&kCFAUPresetArrayCallBacks);
 }
 #else
 // XXX I'll use this for other compilers, even though I hate initializing structs with all arguments at once 
 // (cuz what if you ever decide to change the order of the struct members or something like that?)
-const CFArrayCallBacks kCFAUPresetArrayCallBacks = {
+CFArrayCallBacks const kCFAUPresetArrayCallBacks = 
+{
 	0, 
 	CFAUPresetArrayRetainCallBack, 
 	CFAUPresetArrayReleaseCallBack, 
@@ -324,9 +240,10 @@ const CFArrayCallBacks kCFAUPresetArrayCallBacks = {
 // an AudioUnitOtherPluginDesc container object:  CFAUOtherPluginDesc
 //-----------------------------------------------------------------------------
 
-const UInt32 kCFAUOtherPluginDesc_CurrentVersion = 0;
+UInt32 const kCFAUOtherPluginDesc_CurrentVersion = 0;
 
-typedef struct {
+typedef struct
+{
 	AudioUnitOtherPluginDesc auOtherPluginDesc;
 	UInt32 version;
 	CFAllocatorRef allocator;
@@ -341,7 +258,7 @@ typedef struct {
 // create an instance of a CFAUOtherPluginDesc object
 CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID)
 {
-	CFAUOtherPluginDesc * const newDesc = (CFAUOtherPluginDesc*) CFAllocatorAllocate(inAllocator, sizeof(CFAUOtherPluginDesc), 0);
+	CFAUOtherPluginDesc* const newDesc = (CFAUOtherPluginDesc*)CFAllocatorAllocate(inAllocator, sizeof(CFAUOtherPluginDesc), 0);
 	if (newDesc != NULL)
 	{
 		newDesc->auOtherPluginDesc.format = inFormat;
@@ -373,7 +290,7 @@ CFAUOtherPluginDescRef CFAUOtherPluginDescRetain(CFAUOtherPluginDescRef inDesc)
 {
 	if (inDesc != NULL)
 	{
-		CFAUOtherPluginDesc * const incomingDesc = (CFAUOtherPluginDesc*) inDesc;
+		CFAUOtherPluginDesc* const incomingDesc = (CFAUOtherPluginDesc*)inDesc;
 		incomingDesc->retainCount += 1;
 	}
 	return inDesc;
@@ -383,12 +300,16 @@ CFAUOtherPluginDescRef CFAUOtherPluginDescRetain(CFAUOtherPluginDescRef inDesc)
 // release a reference of a CFAUOtherPluginDesc object
 void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc)
 {
-	CFAUOtherPluginDesc * const incomingDesc = (CFAUOtherPluginDesc*) inDesc;
+	CFAUOtherPluginDesc* const incomingDesc = (CFAUOtherPluginDesc*)inDesc;
 	// these situations shouldn't happen
 	if (inDesc == NULL)
+	{
 		return;
+	}
 	if (incomingDesc->retainCount <= 0)
+	{
 		return;
+	}
 
 	incomingDesc->retainCount -= 1;
 	// check if this is the end of this instance's life
@@ -406,16 +327,16 @@ void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc)
 // other plugin descriptions array to support kAudioUnitMigrateProperty_FromPlugin.
 //-----------------------------------------------------------------------------
 
-const void * CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, const void * inDesc);
-void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inDesc);
-Boolean CFAUOtherPluginDescArrayEqualCallBack(const void * inDesc1, const void * inDesc2);
-CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc);
-void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks);
+void const* CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, void const* inDesc);
+void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, void const* inDesc);
+Boolean CFAUOtherPluginDescArrayEqualCallBack(void const* inDesc1, void const* inDesc2);
+CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(void const* inDesc);
+void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks);
 
 //-----------------------------------------------------------------------------
 // This function is called when an item (an AudioUnitOtherPluginDesc) is added to the CFArray, 
 // or when a CFArray containing an AudioUnitOtherPluginDesc is retained.  
-const void * CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, const void * inDesc)
+void const* CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, void const* inDesc)
 {
 	return CFAUOtherPluginDescRetain(inDesc);
 }
@@ -424,7 +345,7 @@ const void * CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, 
 // This function is called when an item (an AudioUnitOtherPluginDesc) is removed from 
 // the CFArray or when the array is released.
 // Since a reference to the data belongs to the array, we need to release that here.
-void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, const void * inDesc)
+void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, void const* inDesc)
 {
 	CFAUOtherPluginDescRelease(inDesc);
 }
@@ -432,7 +353,7 @@ void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, const v
 //-----------------------------------------------------------------------------
 // This function is called when someone wants to compare to items (AudioUnitOtherPluginDescs) 
 // in the CFArray to see if they are equal or not.
-Boolean CFAUOtherPluginDescArrayEqualCallBack(const void * inDesc1, const void * inDesc2)
+Boolean CFAUOtherPluginDescArrayEqualCallBack(void const* inDesc1, void const* inDesc2)
 {
 	return (memcmp(inDesc1, inDesc2, sizeof(AudioUnitOtherPluginDesc)) == 0);
 }
@@ -443,9 +364,9 @@ Boolean CFAUOtherPluginDescArrayEqualCallBack(const void * inDesc1, const void *
 // That happens, for example, when using CFShow().  
 // This will create and return a CFString that indicates that the object is 
 // an AudioUnitOtherPluginDesc and shows each piece of its data.
-CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
+CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(void const* inDesc)
 {
-	const AudioUnitOtherPluginDesc * const desc = (AudioUnitOtherPluginDesc*) inDesc;
+	AudioUnitOtherPluginDesc const* const desc = (AudioUnitOtherPluginDesc const*)inDesc;
 	CFStringRef descriptionString = NULL;
 
 	CFStringRef pluginFormatString = NULL;
@@ -467,7 +388,9 @@ CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
 		default:
 			pluginFormatString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("unknown (%u)"), (unsigned int)(desc->format));
 			if (pluginFormatString != NULL)
+			{
 				releasePluginFormatString = true;
+			}
 			break;
 	}
 
@@ -478,18 +401,24 @@ CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
 	if (true)
 	#endif
 	{
-		const CFStringRef typeString = UTCreateStringForOSType(desc->plugin.mType);
-		const CFStringRef subTypeString = UTCreateStringForOSType(desc->plugin.mSubType);
-		const CFStringRef manufacturerString = UTCreateStringForOSType(desc->plugin.mManufacturer);
+		CFStringRef const typeString = UTCreateStringForOSType(desc->plugin.mType);
+		CFStringRef const subTypeString = UTCreateStringForOSType(desc->plugin.mSubType);
+		CFStringRef const manufacturerString = UTCreateStringForOSType(desc->plugin.mManufacturer);
 		descriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
 									CFSTR("AudioUnitOtherPluginDesc:\nplugin format = %@\ntype ID = %@\nsub-type ID = %@\nmanufacturer ID = %@"), 
 									pluginFormatString, typeString, subTypeString, manufacturerString);
 		if (typeString != NULL)
+		{
 			CFRelease(typeString);
+		}
 		if (subTypeString != NULL)
+		{
 			CFRelease(subTypeString);
+		}
 		if (manufacturerString != NULL)
+		{
 			CFRelease(manufacturerString);
+		}
 	}
 	else
 #endif
@@ -501,21 +430,25 @@ CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(const void * inDesc)
 	}
 
 	if (releasePluginFormatString)
+	{
 		CFRelease(pluginFormatString);
+	}
 
 	return descriptionString;
 }
 
 //-----------------------------------------------------------------------------
 // this will initialize a CFArray callbacks structure to use the above callback functions
-void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks)
+void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
 {
 	if (outArrayCallBacks == NULL)
+	{
 		return;
+	}
 	// wipe the struct clean
 	memset(outArrayCallBacks, 0, sizeof(*outArrayCallBacks));
 	// set all of the values and function pointers in the callbacks struct
-	outArrayCallBacks->version = 0;	// currently, 0 is the only valid version value for this
+	outArrayCallBacks->version = 0;  // currently, 0 is the only valid version value for this
 	outArrayCallBacks->retain = CFAUOtherPluginDescArrayRetainCallBack;
 	outArrayCallBacks->release = CFAUOtherPluginDescArrayReleaseCallBack;
 	outArrayCallBacks->copyDescription = CFAUOtherPluginDescArrayCopyDescriptionCallBack;
@@ -524,16 +457,17 @@ void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks * outArrayCallBacks
 
 //-----------------------------------------------------------------------------
 #ifdef __GNUC__
-const CFArrayCallBacks kCFAUOtherPluginDescArrayCallBacks;
+CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks;
 static void kCFAUOtherPluginDescArrayCallBacks_constructor() __attribute__((constructor));
 static void kCFAUOtherPluginDescArrayCallBacks_constructor()
 {
-	CFAUOtherPluginDescArrayCallBacks_Init( (CFArrayCallBacks*) &kCFAUOtherPluginDescArrayCallBacks );
+	CFAUOtherPluginDescArrayCallBacks_Init((CFArrayCallBacks*)&kCFAUOtherPluginDescArrayCallBacks);
 }
 #else
 // XXX I'll use this for other compilers, even though I hate initializing structs with all arguments at once 
 // (cuz what if you ever decide to change the order of the struct members or something like that?)
-const CFArrayCallBacks kCFAUOtherPluginDescArrayCallBacks = {
+CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks = 
+{
 	0, 
 	CFAUOtherPluginDescArrayRetainCallBack, 
 	CFAUOtherPluginDescArrayReleaseCallBack, 
@@ -556,7 +490,7 @@ const CFArrayCallBacks kCFAUOtherPluginDescArrayCallBacks = {
 // Use this when a parameter value in an AU changes and you need to make 
 // other entities (like the host, a GUI, etc.) aware of the change.
 void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
-									AudioUnitScope inScope, AudioUnitElement inElement)
+												  AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	// set up an AudioUnitParameter structure with all of the necessary values
 	AudioUnitParameter dirtyParam = {0};
@@ -580,7 +514,9 @@ void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstanc
 	// if that's unavailable, then send notification the old way
 	else
 */
+	{
 		AUParameterListenerNotify(NULL, NULL, &dirtyParam);
+	}
 }
 
 //--------------------------------------------------------------------------
@@ -600,109 +536,87 @@ void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitP
 #pragma mark AU Plugin Name And Manufacturer Name
 
 //-----------------------------------------------------------------------------
-//Tthis is a wrapper function for GetAUNameAndManufacturerCStrings, 
-// since often it's handier to have CFStrings than C strings.
-// One of the string arguments can be NULL, if you are not interested in that string.
-OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef * outNameString, CFStringRef * outManufacturerString)
-{
-	OSStatus error;
-	char pluginNameCString[sizeof(Str255)], manufacturerNameCString[sizeof(Str255)];
-
-	// one input string or the other can be null, but not both
-	if ( (inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)) )
-		return paramErr;
-
-	// initialize some C string buffers for storing the C string versions of the AU name strings
-	memset(pluginNameCString, 0, sizeof(pluginNameCString));
-	memset(manufacturerNameCString, 0, sizeof(manufacturerNameCString));
-	// this will get us C string versions of the AU name strings
-	error = GetAUNameAndManufacturerCStrings(inAUComponent, pluginNameCString, manufacturerNameCString);
-	if (error != noErr)
-		return error;
-
-	// for each input CFString that is not null, we want to provide a CFString representation of the C string
-	if (outNameString != NULL)
-		*outNameString = CFStringCreateWithCString(kCFAllocatorDefault, pluginNameCString, kCFStringEncodingMacRoman);
-	if (outManufacturerString != NULL)
-		*outManufacturerString = CFStringCreateWithCString(kCFAllocatorDefault, manufacturerNameCString, kCFStringEncodingMacRoman);
-	// if there was any problem creating any of the requested CFStrings, return an error
-	// XXX but what if one was created and not the other?  we will be giving a misleading error code, and potentially leaking memory...
-	if (outNameString != NULL)
-	{
-		if (*outNameString == NULL)
-			return coreFoundationUnknownErr;
-	}
-	if (outManufacturerString != NULL)
-	{
-		if (*outManufacturerString == NULL)
-			return coreFoundationUnknownErr;
-	}
-
-	return noErr;
-}
-
-//-----------------------------------------------------------------------------
 // This function will get an AU's plugin name and manufacturer name strings for you 
-// as separate strings.  In an AU's Component resource, these are stored as one Pascal string, 
-// delimited by a colon, so this function just does the work of fetching the Pascal string, 
-// parsing the plugin name and manufacturer name, and translating those to individual C strings.
+// as separate strings.  In an AU's Component resource, these are stored as one string, 
+// delimited by a colon, so this function just does the work of fetching the string, 
+// parsing the plugin name and manufacturer name, and translating those to individual strings.
 // One of the string arguments can be NULL, if you are not interested in that string.
-OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNameString, char * outManufacturerString)
+OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef* outNameString, CFStringRef* outManufacturerString)
 {
-	OSStatus error = noErr;
-	Handle componentNameHandle;
-	ConstStr255Param componentFullNamePString;
-	ComponentDescription dummydesc;
+	OSStatus status = noErr;
+	CFStringRef componentFullNameString = NULL;
+	CFArrayRef namesArray = NULL;
 
 	// one input string or the other can be null, but not both
-	if ( (inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)) )
-		return paramErr;
-
-	// first we need to create a handle and then try to fetch the Component name string resource into that handle
-	componentNameHandle = NewHandle(sizeof(void*));
-	if (componentNameHandle == NULL)
-		return nilHandleErr;
-	error = GetComponentInfo(inAUComponent, &dummydesc, componentNameHandle, NULL, NULL);
-	if (error != noErr)
-		return error;
-	// dereferencing the name resource handle gives us a Pascal string pointer
-	componentFullNamePString = (ConstStr255Param) (*componentNameHandle);
-	if (componentFullNamePString == NULL)
-		error = nilHandleErr;
-	else
+	if ((inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)))
 	{
-		char * separatorByte = NULL;
-		// convert the Component name Pascal string to a C string
-		char componentFullNameCString[sizeof(Str255)];
-		strncpy(componentFullNameCString, (const char*)(componentFullNamePString+1), componentFullNamePString[0]);
-		componentFullNameCString[componentFullNamePString[0]] = 0;
-		// the manufacturer string is everything before the first : character, 
-		// and everything after that and any immediately following white space 
-		// is the plugin name string
-		separatorByte = strchr(componentFullNameCString, ':');
-		if (separatorByte == NULL)
-			error = internalComponentErr;
-		else
-		{
-			// point to right after the : character for the plugin name string...
-			const char * pluginNameCString = separatorByte + 1;
-			// this will terminate the manufacturer name string right before the : character
-			const char * const manufacturerNameCString = componentFullNameCString;
-			separatorByte[0] = 0;
-			// ...and then also skip over any white space immediately following the : delimiter
-			while ( isspace(*pluginNameCString) )
-				pluginNameCString++;
+		return paramErr;
+	}
 
-			// copy any of the requested strings for output
-			if (outNameString != NULL)
-				strcpy(outNameString, pluginNameCString);
+	// first we need to fetch the Component name string
+	status = AudioComponentCopyName((AudioComponent)inAUComponent, &componentFullNameString);
+	if (status != noErr)
+	{
+		return status;
+	}
+	if (componentFullNameString == NULL)
+	{
+		return coreFoundationUnknownErr;
+	}
+
+	// the manufacturer string is everything before the first : character, 
+	// and everything after that and any immediately following white space 
+	// is the plugin name string
+	namesArray = CFStringCreateArrayBySeparatingStrings(kCFAllocatorDefault, componentFullNameString, CFSTR(":"));
+	CFRelease(componentFullNameString);
+	if (namesArray == NULL)
+	{
+		return coreFoundationUnknownErr;
+	}
+	if (CFArrayGetCount(namesArray) < 2)
+	{
+		CFRelease(namesArray);
+		return internalComponentErr;
+	}
+
+	// copy any of the requested strings for output
+	if (outManufacturerString != NULL)
+	{
+		*outManufacturerString = (CFStringRef)CFArrayGetValueAtIndex(namesArray, 0);
+		if (*outManufacturerString == NULL)
+		{
+			CFRelease(namesArray);
+			return coreFoundationUnknownErr;
+		}
+		CFRetain(*outManufacturerString);
+	}
+	if (outNameString != NULL)
+	{
+		*outNameString = NULL;
+		CFStringRef nameString = (CFStringRef)CFArrayGetValueAtIndex(namesArray, 1);
+		if (nameString != NULL)
+		{
+			CFMutableStringRef mutableNameString = CFStringCreateMutableCopy(kCFAllocatorDefault, CFStringGetLength(nameString), nameString);
+			if (mutableNameString != NULL)
+			{
+				CFStringTrimWhitespace(mutableNameString);
+				*outNameString = mutableNameString;
+			}
+		}
+		if (*outNameString == NULL)
+		{
+			CFRelease(namesArray);
 			if (outManufacturerString != NULL)
-				strcpy(outManufacturerString, manufacturerNameCString);
+			{
+				CFRelease(*outManufacturerString);
+			}
+			return coreFoundationUnknownErr;
 		}
 	}
-	DisposeHandle(componentNameHandle);
 
-	return error;
+	CFRelease(namesArray);
+
+	return status;
 }
 
 
@@ -716,42 +630,52 @@ OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNam
 //--------------------------------------------------------------------------
 // general implementation for ComponentDescriptionsMatch() and ComponentDescriptionsMatch_Loosely()
 // if inIgnoreType is true, then the type code is ignored in the ComponentDescriptions
-Boolean ComponentDescriptionsMatch_General(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2, Boolean inIgnoreType);
-Boolean ComponentDescriptionsMatch_General(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2, Boolean inIgnoreType)
+Boolean ComponentDescriptionsMatch_General(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2, Boolean inIgnoreType);
+Boolean ComponentDescriptionsMatch_General(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2, Boolean inIgnoreType)
 {
-	if ( (inComponentDescription1 == NULL) || (inComponentDescription2 == NULL) )
-		return FALSE;
+	if ((inComponentDescription1 == NULL) || (inComponentDescription2 == NULL))
+	{
+		return false;
+	}
 
-	if ( (inComponentDescription1->componentSubType == inComponentDescription2->componentSubType) 
-			&& (inComponentDescription1->componentManufacturer == inComponentDescription2->componentManufacturer) )
+	if ((inComponentDescription1->componentSubType == inComponentDescription2->componentSubType) 
+		&& (inComponentDescription1->componentManufacturer == inComponentDescription2->componentManufacturer))
 	{
 		// only sub-type and manufacturer IDs need to be equal
 		if (inIgnoreType)
-			return TRUE;
+		{
+			return true;
+		}
 		// type, sub-type, and manufacturer IDs all need to be equal in order to call this a match
 		else if (inComponentDescription1->componentType == inComponentDescription2->componentType)
-			return TRUE;
+		{
+			return true;
+		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 //--------------------------------------------------------------------------
 // general implementation for ComponentAndDescriptionMatch() and ComponentAndDescriptionMatch_Loosely()
 // if inIgnoreType is true, then the type code is ignored in the ComponentDescriptions
-Boolean ComponentAndDescriptionMatch_General(Component inComponent, const ComponentDescription * inComponentDescription, Boolean inIgnoreType);
-Boolean ComponentAndDescriptionMatch_General(Component inComponent, const ComponentDescription * inComponentDescription, Boolean inIgnoreType)
+Boolean ComponentAndDescriptionMatch_General(Component inComponent, ComponentDescription const* inComponentDescription, Boolean inIgnoreType);
+Boolean ComponentAndDescriptionMatch_General(Component inComponent, ComponentDescription const* inComponentDescription, Boolean inIgnoreType)
 {
-	OSErr status;
+	OSErr status = noErr;
 	ComponentDescription desc;
 
-	if ( (inComponent == NULL) || (inComponentDescription == NULL) )
-		return FALSE;
+	if ((inComponent == NULL) || (inComponentDescription == NULL))
+	{
+		return false;
+	}
 
 	// get the ComponentDescription of the input Component
 	status = GetComponentInfo(inComponent, &desc, NULL, NULL, NULL);
 	if (status != noErr)
-		return FALSE;
+	{
+		return false;
+	}
 
 	// check if the Component's ComponentDescription matches the input ComponentDescription
 	return ComponentDescriptionsMatch_General(&desc, inComponentDescription, inIgnoreType);
@@ -761,30 +685,30 @@ Boolean ComponentAndDescriptionMatch_General(Component inComponent, const Compon
 // determine if 2 ComponentDescriptions are basically equal
 // (by that, I mean that the important identifying values are compared, 
 // but not the ComponentDescription flags)
-Boolean ComponentDescriptionsMatch(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2)
+Boolean ComponentDescriptionsMatch(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2)
 {
-	return ComponentDescriptionsMatch_General(inComponentDescription1, inComponentDescription2, FALSE);
+	return ComponentDescriptionsMatch_General(inComponentDescription1, inComponentDescription2, false);
 }
 
 //--------------------------------------------------------------------------
 // determine if 2 ComponentDescriptions have matching sub-type and manufacturer codes
-Boolean ComponentDescriptionsMatch_Loose(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2)
+Boolean ComponentDescriptionsMatch_Loose(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2)
 {
-	return ComponentDescriptionsMatch_General(inComponentDescription1, inComponentDescription2, TRUE);
+	return ComponentDescriptionsMatch_General(inComponentDescription1, inComponentDescription2, true);
 }
 
 //--------------------------------------------------------------------------
 // determine if a ComponentDescription basically matches that of a particular Component
-Boolean ComponentAndDescriptionMatch(Component inComponent, const ComponentDescription * inComponentDescription)
+Boolean ComponentAndDescriptionMatch(Component inComponent, ComponentDescription const* inComponentDescription)
 {
-	return ComponentAndDescriptionMatch_General(inComponent, inComponentDescription, FALSE);
+	return ComponentAndDescriptionMatch_General(inComponent, inComponentDescription, false);
 }
 
 //--------------------------------------------------------------------------
 // determine if a ComponentDescription matches only the sub-type and manufacturer codes of a particular Component
-Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const ComponentDescription * inComponentDescription)
+Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, ComponentDescription const* inComponentDescription)
 {
-	return ComponentAndDescriptionMatch_General(inComponent, inComponentDescription, TRUE);
+	return ComponentAndDescriptionMatch_General(inComponent, inComponentDescription, true);
 }
 
 
@@ -796,19 +720,18 @@ Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const Compon
 #pragma mark System Services Availability
 
 //--------------------------------------------------------------------------
-// check the version of Mac OS installed
+// check the version of macOS installed
 // the version value of interest to us is 0x1030 for Panther
 SInt32 GetMacOSVersion()
 {
 	SInt32 systemVersion = 0;
-	const OSErr error = Gestalt(gestaltSystemVersion, &systemVersion);
+	OSErr const error = Gestalt(gestaltSystemVersion, &systemVersion);
 	if (error == noErr)
 	{
-		systemVersion &= 0xFFFF;	// you are supposed to ignore the higher 16 bits for this Gestalt value
+		systemVersion &= 0xFFFF;  // you are supposed to ignore the higher 16 bits for this Gestalt value
 		return systemVersion;
 	}
-	else
-		return 0;
+	return 0;
 }
 
 //--------------------------------------------------------------------------
@@ -817,11 +740,12 @@ SInt32 GetMacOSVersion()
 SInt32 GetQuickTimeVersion()
 {
 	SInt32 qtVersion = 0;
-	const OSErr error = Gestalt(gestaltQuickTime, &qtVersion);
+	OSErr const error = Gestalt(gestaltQuickTime, &qtVersion);
 	if (error == noErr)
+	{
 		return qtVersion;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 //--------------------------------------------------------------------------
@@ -829,14 +753,13 @@ SInt32 GetQuickTimeVersion()
 // the version value of interest to us is 0x01300000 (1.3)
 UInt32 GetAudioToolboxFrameworkVersion()
 {
-	const CFBundleRef audioToolboxBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.audio.toolbox.AudioToolbox"));
+	CFBundleRef const audioToolboxBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.audio.toolbox.AudioToolbox"));
 	if (audioToolboxBundle != NULL)
 	{
-		const UInt32 audioToolboxVersion = CFBundleGetVersionNumber(audioToolboxBundle);
+		UInt32 const audioToolboxVersion = CFBundleGetVersionNumber(audioToolboxBundle);
 		return audioToolboxVersion;
 	}
-	else
-		return 0;
+	return 0;
 }
 
 //--------------------------------------------------------------------------
@@ -846,52 +769,59 @@ Boolean IsAvailable_AU2rev1()
 	// the Audio Unit 2.0 rev 1 frameworks are available with Mac OS X 10.3 
 	// or QuickTime 6.4 for Mac OS X 10.2, or more specifically, AudioToolbox.framework 1.3
 	if (GetAudioToolboxFrameworkVersion() >= 0x01300000)
+	{
 		return true;
+	}
 	// in case that fails (possibly due to error, not wrong version value), try checking these
-	if ( (GetMacOSVersion() >= 0x1030) || (GetQuickTimeVersion() >= 0x06408000) )
+	if ((GetMacOSVersion() >= 0x1030) || (GetQuickTimeVersion() >= 0x06408000))
+	{
 		return true;
+	}
 	return false;
 }
 
 //--------------------------------------------------------------------------
 Boolean IsTransportStateProcSafe()
 {
-	const CFBundleRef applicationBundle = CFBundleGetMainBundle();
+	CFBundleRef const applicationBundle = CFBundleGetMainBundle();
 	if (applicationBundle != NULL)
 	{
-		const CFStringRef applicationBundleID = CFBundleGetIdentifier(applicationBundle);
-		const UInt32 applicationVersionNumber = CFBundleGetVersionNumber(applicationBundle);
-		const CFStringRef applicationVersionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(applicationBundle, kCFBundleVersionKey);
-//if (applicationBundleID != NULL) CFShow(applicationBundleID);
-//fprintf(stderr, "application version number = 0x%08lX\n\n", applicationVersionNumber);
-//if (applicationVersionString != NULL) { fprintf(stderr, "application version string:  "); CFShow(applicationVersionString); }
+		CFStringRef const applicationBundleID = CFBundleGetIdentifier(applicationBundle);
+		UInt32 const applicationVersionNumber = CFBundleGetVersionNumber(applicationBundle);
+		CFStringRef const applicationVersionString = (CFStringRef)CFBundleGetValueForInfoDictionaryKey(applicationBundle, kCFBundleVersionKey);
 		if (applicationBundleID != NULL)
 		{
-			const CFOptionFlags compareOptions = kCFCompareCaseInsensitive;
-			if ( (CFStringCompare(applicationBundleID, CFSTR("info.emagic.Logic"), compareOptions) == kCFCompareEqualTo) 
-				|| (CFStringCompare(applicationBundleID, CFSTR("de.emagic.Logic"), compareOptions) == kCFCompareEqualTo) )
+			CFOptionFlags const compareOptions = kCFCompareCaseInsensitive;
+			if ((CFStringCompare(applicationBundleID, CFSTR("info.emagic.Logic"), compareOptions) == kCFCompareEqualTo) 
+				|| (CFStringCompare(applicationBundleID, CFSTR("de.emagic.Logic"), compareOptions) == kCFCompareEqualTo))
 			{
 				if (applicationVersionNumber > 0)
 				{
 					if (applicationVersionNumber < 0x06428000)
+					{
 						return false;
+					}
 				}
 				else if (applicationVersionString != NULL)
 				{
-					const CFStringRef logicFirstGoodVersionString = CFSTR("6.4.2");
-					if ( CFStringCompareWithOptions(applicationVersionString, logicFirstGoodVersionString, 
-							CFRangeMake(0, CFStringGetLength(logicFirstGoodVersionString)), 0) == kCFCompareLessThan )
+					CFStringRef const logicFirstGoodVersionString = CFSTR("6.4.2");
+					if (CFStringCompareWithOptions(applicationVersionString, logicFirstGoodVersionString, 
+						CFRangeMake(0, CFStringGetLength(logicFirstGoodVersionString)), 0) == kCFCompareLessThan)
+					{
 						return false;
+					}
 				}
 			}
-			else if ( CFStringCompare(applicationBundleID, CFSTR("com.apple.garageband"), compareOptions) == kCFCompareEqualTo )
+			else if (CFStringCompare(applicationBundleID, CFSTR("com.apple.garageband"), compareOptions) == kCFCompareEqualTo)
 			{
-				const CFStringRef garageBandBadMajorVersionString = CFSTR("1.0");
+				CFStringRef const garageBandBadMajorVersionString = CFSTR("1.0");
 				if (applicationVersionString != NULL)
 				{
-					if ( CFStringCompareWithOptions(applicationVersionString, garageBandBadMajorVersionString, 
-							CFRangeMake(0, CFStringGetLength(garageBandBadMajorVersionString)), 0) == kCFCompareEqualTo )
+					if (CFStringCompareWithOptions(applicationVersionString, garageBandBadMajorVersionString, 
+						CFRangeMake(0, CFStringGetLength(garageBandBadMajorVersionString)), 0) == kCFCompareEqualTo)
+					{
 						return false;
+					}
 				}
 			}
 		}
