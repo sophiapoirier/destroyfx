@@ -34,33 +34,33 @@ To contact the author, use the contact form at http://destroyfx.org/
 class DGDialog : public CViewContainer, public IControlListener
 {
 public:
-	typedef enum
-	{
-		kSelection_ok,
-		kSelection_cancel,
-		kSelection_other,
-	} Selection;
+	typedef unsigned int Buttons;
+	static const Buttons kButtons_OK;
+	static const Buttons kButtons_OKCancel;
+	static const Buttons kButtons_OKCancelOther;
 
-	typedef enum
+	enum Selection
 	{
-		kButtons_okBit = 1 << kSelection_ok,
-		kButtons_cancelBit = 1 << kSelection_cancel,
-		kButtons_otherBit = 1 << kSelection_other,
+		kSelection_OK,
+		kSelection_Cancel,
+		kSelection_Other,
+	};
 
-		kButtons_ok = kButtons_okBit,
-		kButtons_okCancel = kButtons_okBit | kButtons_cancelBit,
-		kButtons_okCancelOther = kButtons_okBit | kButtons_cancelBit | kButtons_otherBit,
-	} Buttons;
+	using DialogChoiceSelectedCallback = std::function<bool(DGDialog*, Selection)>;
 
 	class Listener
 	{
 	public:
 		virtual ~Listener() = default;
-		virtual void dialogChoiceSelected(DGDialog* inDialog, Selection inSelection) = 0;
+		virtual bool dialogChoiceSelected(DGDialog* inDialog, Selection inSelection) = 0;
 	};
 
-	DGDialog(Listener* inListener, DGRect const& inRegion, std::string const& inMessage, Buttons inButtons = kButtons_ok, 
+	DGDialog(DGRect const& inRegion, std::string const& inMessage, Buttons inButtons = kButtons_OK, 
 			 char const* inOkButtonTitle = nullptr, char const* inCancelButtonTitle = nullptr, char const* inOtherButtonTitle = nullptr);
+
+	// CView override
+	int32_t onKeyDown(VstKeyCode& inKeyCode) override;
+	int32_t onKeyUp(VstKeyCode& inKeyCode) override;
 
 	// CViewContainer overrides
 	void drawBackgroundRect(CDrawContext* inContext, CRect const& inUpdateRect) override;
@@ -69,12 +69,27 @@ public:
 	// IControlListener override
 	void valueChanged(CControl* inControl) override;
 
+	bool runModal(CFrame* inFrame, Listener* inListener);
+	bool runModal(CFrame* inFrame, DialogChoiceSelectedCallback&& inCallback);
 	void close();
+
+	CTextButton* getButton(Selection inSelection) const;
 
 	CLASS_METHODS(DGDialog, CViewContainer)
 
 private:
-	Listener* const mListener;
+	enum : Buttons
+	{
+		kButtons_OKBit = 1 << kSelection_OK,
+		kButtons_CancelBit = 1 << kSelection_Cancel,
+		kButtons_OtherBit = 1 << kSelection_Other,
+	};
+
+	bool runModal(CFrame* inFrame);
+	bool handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed);
+
+	Listener* mListener = nullptr;
+	DialogChoiceSelectedCallback mDialogChoiceSelectedCallback;
 };
 
 
@@ -82,16 +97,22 @@ private:
 class DGTextEntryDialog : public DGDialog
 {
 public:
-	DGTextEntryDialog(Listener* inListener, std::string const& inMessage, 
-					  char const* inTextEntryLabel = nullptr, Buttons inButtons = kButtons_okCancel);
+	DGTextEntryDialog(long inParamID, std::string const& inMessage, 
+					  char const* inTextEntryLabel = nullptr, Buttons inButtons = kButtons_OKCancel, 
+					  char const* inOkButtonTitle = nullptr, char const* inCancelButtonTitle = nullptr, char const* inOtherButtonTitle = nullptr);
+	explicit DGTextEntryDialog(std::string const& inMessage, 
+							   char const* inTextEntryLabel = nullptr, Buttons inButtons = kButtons_OKCancel, 
+							   char const* inOkButtonTitle = nullptr, char const* inCancelButtonTitle = nullptr, char const* inOtherButtonTitle = nullptr);
+
+	// CBaseObject override
+	CMessageResult notify(CBaseObject* inSender, IdStringPtr inMessage) override;
 
 	void setText(std::string const& inText);
 	std::string getText() const;
 
-	void setParameterID(long inParameterID) noexcept;
 	long getParameterID() const noexcept;
 
 private:
+	long const mParameterID;
 	CTextEdit* mTextEdit = nullptr;
-	long mParameterID = kDfxParameterID_Invalid;
 };

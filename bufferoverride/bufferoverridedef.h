@@ -19,8 +19,8 @@ along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __BUFFER_OVERRIDE_DEF_H
-#define __BUFFER_OVERRIDE_DEF_H
+#ifndef DFX_BUFFER_OVERRIDE_DEF_H
+#define DFX_BUFFER_OVERRIDE_DEF_H
 
 
 #include "dfxplugin-prefix.h"
@@ -38,17 +38,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
 #define TARGET_PLUGIN_USES_DSPCORE	0
 #define TARGET_PLUGIN_HAS_GUI	1
-
-// only necessary if using a custom GUI
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"buffer-override-background.png"
+#define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "BufferOverride" DFX_BUNDLE_ID_SUFFIX
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2018"
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"overcome your audio processing buffer size and then (unsuccessfully) override that new buffer size to be a smaller buffer size"
-#define PLUGIN_EDITOR_DESCRIPTION_STRING	"pretty pink interface for DFX Buffer Override"
-
-
-#define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "BufferOverride" DFX_BUNDLE_ID_SUFFIX
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2018"
 
 
 #endif

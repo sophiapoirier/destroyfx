@@ -195,7 +195,7 @@ double DfxEnvelope::calculateRise(double inPosNormalized) const
 {
 	double outputValue = inPosNormalized;
 
-	if (mCurveType == CurveType::Cubed)
+	if (mCurveType == kCurveType_Cubed)
 	{
 		outputValue = 1.0 - outputValue;
 		outputValue = outputValue * outputValue * outputValue;
@@ -225,7 +225,7 @@ double DfxEnvelope::calculateFall(double inPosNormalized) const
 {
 	double outputValue = 1.0 - inPosNormalized;
 
-	if (mCurveType == CurveType::Cubed)
+	if (mCurveType == kCurveType_Cubed)
 	{
 		outputValue = outputValue * outputValue * outputValue;
 	}
@@ -238,7 +238,7 @@ double DfxEnvelope::calculateFall(double inPosNormalized) const
 //-----------------------------------------------------------------------------
 double DfxEnvelope::deriveAttackPosFromEnvValue(double inValue) const
 {
-	if (mCurveType == CurveType::Cubed)
+	if (mCurveType == kCurveType_Cubed)
 	{
 		double outputValue = 1.0 - inValue;
 		outputValue = std::cbrt(outputValue);

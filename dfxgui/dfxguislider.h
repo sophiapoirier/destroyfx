@@ -32,11 +32,13 @@ class DGSlider : public CSlider, public DGControl
 {
 public:
 	DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
-			 DGAxis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, long inRangeMargin = 0);
+			 dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, long inRangeMargin = 0);
 
 #ifdef TARGET_API_RTAS
 	void draw(CDrawContext* inContext) override;
 #endif
+
+	CLASS_METHODS(DGSlider, CSlider)
 };
 
 
@@ -52,4 +54,20 @@ public:
 #ifdef TARGET_API_RTAS
 	void draw(CDrawContext* inContext) override;
 #endif
+	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
+	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
+	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
+
+	void setMouseAxis(dfx::Axis inMouseAxis) noexcept
+	{
+		mMouseAxis = inMouseAxis;
+	}
+
+	CLASS_METHODS(DGAnimation, CAnimKnob)
+
+private:
+	CPoint constrainMousePosition(CPoint const& inPos) const;
+
+	dfx::Axis mMouseAxis = dfx::kAxis_Omni;
+	CPoint mEntryMousePos;
 };

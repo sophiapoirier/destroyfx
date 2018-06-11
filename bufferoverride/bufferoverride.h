@@ -80,7 +80,7 @@ public:
 	void cleanup() override;
 	void reset() override;
 
-	void processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing = true) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
 	void processparameters() override;
 
 	bool createbuffers() override;
@@ -88,6 +88,7 @@ public:
 
 
 private:
+	static constexpr long kNumPresets = 16;
 	// We need this stuff to get some maximum buffer size and allocate for that.
 	// This is 42 bpm, which should be sufficient.
 	static constexpr double kMinAllowableBPS = 0.7;

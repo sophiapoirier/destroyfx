@@ -121,45 +121,31 @@ void DfxMidi::postprocessEvents()
 	mNumBlockEvents = 0;
 }
 
-//-----------------------------------------------------------------------------------------
-// this function fills a table with the correct frequency for every MIDI note
-void DfxMidi::fillFrequencyTable()
-{
-	constexpr double standardConcertA = 440.0;
-	int semitonesFromA = -69;
-	for (auto& freq : mFreqTable)
-	{
-		freq = standardConcertA * dfx::math::FrequencyScalarBySemitones(static_cast<double>(semitonesFromA));
-		semitonesFromA++;
-	}
-}
-
-
 //-----------------------------------------------------------------------------
 // this function inserts a new note into the beginning of the active notes queue
-void DfxMidi::insertNote(int inCurrentNote)
+void DfxMidi::insertNote(int inMidiNote)
 {
 	// first check whether this note is already active (could happen in weird sequencers, like Max for example)
-	auto const nonmatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inCurrentNote](auto const& note)
+	auto const nonmatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inMidiNote](auto const& note)
 													   {
-														   return note == inCurrentNote;
+														   return note == inMidiNote;
 													   });
 	// if the note is not already active, shift every note up a position (normal scenario)
 	if (nonmatchPortion == mNoteQueue.begin())
 	{
 		std::rotate(mNoteQueue.begin(), std::prev(mNoteQueue.end()), mNoteQueue.end());
 		// then place the new note into the first position
-		mNoteQueue.front() = inCurrentNote;
+		mNoteQueue.front() = inMidiNote;
 	}
 }
 
 //-----------------------------------------------------------------------------
 // this function removes a note from the active notes queue
-void DfxMidi::removeNote(int inCurrentNote)
+void DfxMidi::removeNote(int inMidiNote)
 {
-	auto const nonmatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inCurrentNote](auto const& note)
+	auto const nonmatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inMidiNote](auto const& note)
 													   {
-														   return note != inCurrentNote;
+														   return note != inMidiNote;
 													   });
 	std::fill(nonmatchPortion, mNoteQueue.end(), kInvalidValue);
 }
@@ -169,21 +155,6 @@ void DfxMidi::removeNote(int inCurrentNote)
 void DfxMidi::removeAllNotes()
 {
 	mNoteQueue.fill(kInvalidValue);
-}
-
-
-//-----------------------------------------------------------------------------
-bool DfxMidi::incNumEvents()
-{
-	mNumBlockEvents++;
-	// don't go past the allocated space for the events queue
-	// TODO: actually truncating capacity by one event because of the way that events are added, could be fixed
-	if (mNumBlockEvents >= static_cast<long>(mBlockEvents.size()))
-	{
-		mNumBlockEvents = static_cast<long>(mBlockEvents.size()) - 1;
-		return false;  // ! abort !
-	}
-	return true;  // successful increment
 }
 
 //-----------------------------------------------------------------------------
@@ -211,7 +182,7 @@ void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity,
 //-----------------------------------------------------------------------------
 void DfxMidi::handleAllNotesOff(int inMidiChannel, long inBufferOffset)
 {
-	mBlockEvents[mNumBlockEvents].mStatus = kStatus_MidiCC;
+	mBlockEvents[mNumBlockEvents].mStatus = kStatus_CC;
 	mBlockEvents[mNumBlockEvents].mByte1 = kCC_AllNotesOff;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
 	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
@@ -235,7 +206,7 @@ void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, l
 	// only handling sustain pedal for now...
 	if (inControllerNumber == kCC_SustainPedalOnOff)
 	{
-		mBlockEvents[mNumBlockEvents].mStatus = kStatus_MidiCC;
+		mBlockEvents[mNumBlockEvents].mStatus = kStatus_CC;
 		mBlockEvents[mNumBlockEvents].mByte1 = inControllerNumber;
 		mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
 		mBlockEvents[mNumBlockEvents].mByte2 = inValue;
@@ -268,7 +239,7 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 		{
 			auto const currentNote = mBlockEvents[inEventNum].mByte1;
 			mNoteTable[currentNote].mVelocity = mBlockEvents[inEventNum].mByte2;
-			mNoteTable[currentNote].mNoteAmp = (std::pow(kMidiScalar * static_cast<float>(mNoteTable[currentNote].mVelocity), inVelocityCurve) * 
+			mNoteTable[currentNote].mNoteAmp = (std::pow(kValueScalar * static_cast<float>(mNoteTable[currentNote].mVelocity), inVelocityCurve) * 
 												inVelocityInfluence) + (1.0f - inVelocityInfluence);
 			//
 			if (inLegato)  // legato is on, fade out the last note and fade in the new one, supershort
@@ -370,7 +341,7 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 
 
 // --- CONTROLLER CHANGE RECEIVED ---
-		case kStatus_MidiCC:
+		case kStatus_CC:
 		{
 			switch (mBlockEvents[inEventNum].mByte1)
 			{
@@ -406,7 +377,7 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 				default:
 					break;
 			}
-			break;  // kStatus_MidiCC
+			break;  // kStatus_CC
 		}
 
 		default:
@@ -414,19 +385,93 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 	}
 }
 
+//-------------------------------------------------------------------------
+float DfxMidi::processEnvelope(int inMidiNote)
+{
+	auto const outputAmp = mNoteTable[inMidiNote].mEnvelope.process();
+	if (mNoteTable[inMidiNote].mEnvelope.getState() == DfxEnvelope::State::Dormant)
+	{
+		mNoteTable[inMidiNote].mVelocity = 0;
+	}
+
+	return outputAmp;
+}
+
+//-------------------------------------------------------------------------
+// this function writes the audio output for smoothing the tips of cut-off notes
+// by sloping down from the last sample outputted by the note
+void DfxMidi::processSmoothingOutputSample(float* outAudio, long inNumSamples, int inMidiNote)
+{
+	for (long sampleIndex = 0; sampleIndex < inNumSamples; sampleIndex++)
+	{
+		// add the latest sample to the output collection, scaled by the note envelope and user gain
+		float outputFadeScalar = static_cast<float>(mNoteTable[inMidiNote].mSmoothSamples * kStolenNoteFadeStep);
+		outputFadeScalar = outputFadeScalar * outputFadeScalar * outputFadeScalar;
+		outAudio[sampleIndex] += mNoteTable[inMidiNote].mLastOutValue * outputFadeScalar;
+		// decrement the smoothing counter
+		(mNoteTable[inMidiNote].mSmoothSamples)--;
+		// exit this function if we've done all of the smoothing necessary
+		if (mNoteTable[inMidiNote].mSmoothSamples <= 0)
+		{
+			return;
+		}
+	}
+}
+
+//-------------------------------------------------------------------------
+// this function writes the audio output for smoothing the tips of cut-off notes
+// by fading out the samples stored in the tail buffers
+void DfxMidi::processSmoothingOutputBuffer(float* outAudio, long inNumSamples, int inMidiNote, int inMidiChannel)
+{
+	auto& smoothsamples = mNoteTable[inMidiNote].mSmoothSamples;
+	auto const& tail = (inMidiChannel == 1) ? mNoteTable[inMidiNote].mTail1 : mNoteTable[inMidiNote].mTail2;
+
+	for (long sampleIndex = 0; (sampleIndex < inNumSamples) && (smoothsamples > 0); sampleIndex++, smoothsamples--)
+	{
+		outAudio[sampleIndex] += tail[kStolenNoteFadeDur - smoothsamples] * 
+		static_cast<float>(smoothsamples) * kStolenNoteFadeStep;
+	}
+}
 
 //-----------------------------------------------------------------------------------------
-void DfxMidi::turnOffNote(int inCurrentNote, bool inLegato)
+// this function fills a table with the correct frequency for every MIDI note
+void DfxMidi::fillFrequencyTable()
+{
+	constexpr double standardConcertA = 440.0;
+	int semitonesFromA = -69;
+	for (auto& freq : mNoteFrequencyTable)
+	{
+		freq = standardConcertA * dfx::math::FrequencyScalarBySemitones(static_cast<double>(semitonesFromA));
+		semitonesFromA++;
+	}
+}
+
+//-----------------------------------------------------------------------------
+bool DfxMidi::incNumEvents()
+{
+	mNumBlockEvents++;
+	// don't go past the allocated space for the events queue
+	// TODO: actually truncating capacity by one event because of the way that events are added, could be fixed
+	if (mNumBlockEvents >= static_cast<long>(mBlockEvents.size()))
+	{
+		mNumBlockEvents = static_cast<long>(mBlockEvents.size()) - 1;
+		return false;  // ! abort !
+	}
+	return true;  // successful increment
+}
+
+//-----------------------------------------------------------------------------------------
+void DfxMidi::turnOffNote(int inMidiNote, bool inLegato)
 {
 	// legato is off (note-offs are ignored when it's on)
 	// go into the note release if legato is off and the note isn't already off
-	if (!inLegato && (mNoteTable[inCurrentNote].mVelocity > 0))
+	if (!inLegato && (mNoteTable[inMidiNote].mVelocity > 0))
 	{
-		mNoteTable[inCurrentNote].mEnvelope.beginRelease();
+		mNoteTable[inMidiNote].mEnvelope.beginRelease();
 		// make sure to turn the note off now if there is no release
-		if (mNoteTable[inCurrentNote].mEnvelope.isInactive())
+		if (mNoteTable[inMidiNote].mEnvelope.isInactive())
 		{
-			mNoteTable[inCurrentNote].mVelocity = 0;
+			mNoteTable[inMidiNote].mVelocity = 0;
 		}
 	}
 }

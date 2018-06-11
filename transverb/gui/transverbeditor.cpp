@@ -71,9 +71,9 @@ enum
 };
 
 
-static char const* const kDisplayFont = kDGFontName_SnootPixel10;
+static auto const kDisplayFont = dfx::kFontName_SnootPixel10;
 static DGColor const kDisplayTextColor(103, 161, 215);
-constexpr float kDisplayTextSize = kDGFontSize_SnootPixel10;
+constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
 constexpr float kFineTuneInc = 0.0001f;
 constexpr float kSemitonesPerOctave = 12.0f;
 
@@ -105,7 +105,7 @@ bool bsizeDisplayProcedure(float value, char* outText, void*)
 	{
 		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value);
 	}
-	strcat(outText, " ms");
+	strncat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
 	return true;
 }
@@ -228,7 +228,7 @@ bool distDisplayProcedure(float value, char* outText, void* editor)
 	{
 		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", distance);
 	}
-	strcat(outText, " ms");
+	strncat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
 	return true;
 }
@@ -346,11 +346,11 @@ long TransverbEditor::OpenEditor()
 {
 	// slider handles
 	auto const horizontalSliderHandleImage = makeOwned<DGImage>("purple-wide-fader-handle.png");
-	auto const greyHorizontalSliderHandleImage = makeOwned<DGImage>("grey-wide-fader-handle.png");
+	auto const grayHorizontalSliderHandleImage = makeOwned<DGImage>("grey-wide-fader-handle.png");
 	auto const verticalSliderHandleImage = makeOwned<DGImage>("tall-fader-handle.png");
 	// slider backgrounds
 	auto const horizontalSliderBackgroundImage = makeOwned<DGImage>("purple-wide-fader-slide.png");
-	auto const greyHorizontalSliderBackgroundImage = makeOwned<DGImage>("grey-wide-fader-slide.png");
+	auto const grayHorizontalSliderBackgroundImage = makeOwned<DGImage>("grey-wide-fader-slide.png");
 	auto const verticalSliderBackgroundImage = makeOwned<DGImage>("tall-fader-slide.png");
 	// buttons
 	auto const qualityButtonImage = makeOwned<DGImage>("quality-button.png");
@@ -392,10 +392,10 @@ long TransverbEditor::OpenEditor()
 			displayProc = distDisplayProcedure;
 			userData = this;
 		}
-		emplaceControl<DGSlider>(this, tag, pos, kDGAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin);
+		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin);
 
 		auto const textDisplay = emplaceControl<DGTextDisplay>(this, tag, textDisplayPos, displayProc, userData, nullptr, 
-															   DGTextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
+															   dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
 		if (tag == kSpeed1)
 		{
@@ -436,10 +436,10 @@ long TransverbEditor::OpenEditor()
 		tuneUpButtonPos.offset(0, yoff);
 	}
 
-	emplaceControl<DGSlider>(this, kBsize, pos, kDGAxis_Horizontal, greyHorizontalSliderHandleImage, greyHorizontalSliderBackgroundImage, sliderRangeMargin);
+	emplaceControl<DGSlider>(this, kBsize, pos, dfx::kAxis_Horizontal, grayHorizontalSliderHandleImage, grayHorizontalSliderBackgroundImage, sliderRangeMargin);
 
 	emplaceControl<DGTextDisplay>(this, kBsize, textDisplayPos, bsizeDisplayProcedure, nullptr, nullptr, 
-								  DGTextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
+								  dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
 
 	emplaceControl<DGFineTuneButton>(this, kBsize, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
 	emplaceControl<DGFineTuneButton>(this, kBsize, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
@@ -449,7 +449,7 @@ long TransverbEditor::OpenEditor()
 	pos.set(kTallFaderX, kTallFaderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
 	for (long tag = kDrymix; tag <= kMix2; tag++)
 	{
-		emplaceControl<DGSlider>(this, tag, pos, kDGAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage, sliderRangeMargin);
+		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage, sliderRangeMargin);
 		pos.offset(kTallFaderInc, 0);
 	}
 
@@ -494,7 +494,7 @@ long TransverbEditor::OpenEditor()
 	emplaceControl<DGWebLink>(this, pos, smartElectronixLinkButtonImage, SMARTELECTRONIX_URL);
 
 
-	return kDfxErr_NoError;
+	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------

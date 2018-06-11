@@ -100,7 +100,7 @@ can't remember...
 
 Also immediately before audio processing, MIDI events are collected and
 sorted for you and useful tempo/time/location info is stuffed into a
-DfxTimeInfo struct mTimeInfo.
+DfxPlugin::TimeInfo struct mTimeInfo.
 
 So the core routines are: constructor, destructor, processparameters, and
 processaudio (or process for DSP core).  You might need initialize and
@@ -182,52 +182,12 @@ PLUGIN_EDITOR_RES_ID
 #include "dfxparameter.h"
 #include "dfxplugin-base.h"
 #include "dfxpluginproperties.h"
-#include "dfxsettings.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxmidi.h"
+	#include "dfxsettings.h"
 #endif
 
-
-
-
-//-----------------------------------------------------------------------------
-// types
-
-typedef struct
-{
-	double mTempo = 0.0, mTempo_bps = 0.0;
-	long mSamplesPerBeat = 0;
-	bool mTempoIsValid = false;
-
-	double mBeatPos = 0.0;
-	bool mBeatPosIsValid = false;
-
-	double mBarPos = 0.0;
-	bool mBarPosIsValid = false;
-
-	double mDenominator = 0.0, mNumerator = 0.0;
-	bool mTimeSignatureIsValid = false;
-
-	long mSamplesToNextBar = 0;
-	bool mSamplesToNextBarIsValid = false;
-
-	bool mPlaybackChanged = false;  // whether or not the playback state or position just changed
-	bool mPlaybackIsOccurring = false;
-} DfxTimeInfo;
-
-
-#ifdef TARGET_API_AUDIOUNIT
-// the Audio Unit API already has an i/o configurations structure
-using DfxChannelConfig = AUChannelInfo;
-#else
-// immitate AUChannelInfo from the Audio Unit API for other APIs
-typedef struct
-{
-	short inChannels = 0;
-	short outChannels = 0;
-} DfxChannelConfig;
-#endif
 
 
 
@@ -243,19 +203,45 @@ class DfxPlugin : public TARGET_API_BASE_CLASS
 #endif
 {
 public:
+	struct TimeInfo
+	{
+		double mTempo = 0.0, mTempo_BPS = 0.0;
+		long mSamplesPerBeat = 0;
+		bool mTempoIsValid = false;
+
+		double mBeatPos = 0.0;
+		bool mBeatPosIsValid = false;
+
+		double mBarPos = 0.0;
+		bool mBarPosIsValid = false;
+
+		double mDenominator = 0.0, mNumerator = 0.0;
+		bool mTimeSignatureIsValid = false;
+
+		long mSamplesToNextBar = 0;
+		bool mSamplesToNextBarIsValid = false;
+
+		bool mPlaybackChanged = false;  // whether or not the playback state or position just changed
+		bool mPlaybackIsOccurring = false;
+	};
+
 	// ***
 	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long inNumParameters, long inNumPresets = 1);
 	// ***
 	virtual ~DfxPlugin() = default;
 
-	virtual void dfx_PostConstructor();
-	virtual void dfx_PreDestructor();
+	void do_PostConstructor();
+	// ***
+	virtual void dfx_PostConstructor() {}
+	void do_PreDestructor();
+	// ***
+	virtual void dfx_PreDestructor() {}
 
 	long do_initialize();
 	// ***
 	virtual long initialize()
 	{
-		return kDfxErr_NoError;
+		return dfx::kStatus_NoError;
 	}
 	void do_cleanup();
 	// ***
@@ -303,8 +289,8 @@ public:
 	// do the audio processing (override with real stuff)
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
 	// 
-	virtual void processaudio(float const* const* inStreams, float** outStreams, unsigned long inNumFrames, 
-						bool replacing = true) {}
+	virtual void processaudio(float const* const* inStreams, float* const* outStreams, unsigned long inNumFrames, 
+							  bool replacing = true) {}
 
 	auto getnumparameters() const noexcept
 	{
@@ -537,24 +523,24 @@ public:
 	double getpresetparameter_f(long inPresetIndex, long inParameterIndex) const;
 
 
-	virtual long dfx_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
-										size_t& outDataSize, DfxPropertyFlags& outFlags)
+	virtual long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+									 size_t& outDataSize, dfx::PropertyFlags& outFlags)
 	{
-		return kDfxErr_InvalidProperty;
+		return dfx::kStatus_InvalidProperty;
 	}
-	virtual long dfx_GetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+	virtual long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 								 void* outData)
 	{
-		return kDfxErr_InvalidProperty;
+		return dfx::kStatus_InvalidProperty;
 	}
-	virtual long dfx_SetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+	virtual long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 								 void const* inData, size_t inDataSize)
 	{
-		return kDfxErr_InvalidProperty;
+		return dfx::kStatus_InvalidProperty;
 	}
 	long dfx_GetNumPluginProperties()
 	{
-		return kDfxPluginProperty_NumProperties + dfx_GetNumAdditionalPluginProperties();
+		return dfx::kPluginProperty_NumProperties + dfx_GetNumAdditionalPluginProperties();
 	}
 	virtual long dfx_GetNumAdditionalPluginProperties()
 	{
@@ -584,8 +570,8 @@ public:
 	// return the number of audio outputs
 	unsigned long getnumoutputs();
 
-	// get the DfxTimeInfo struct with the latest time info values
-	DfxTimeInfo const& gettimeinfo() const noexcept
+	// get the TimeInfo struct with the latest time info values
+	TimeInfo const& gettimeinfo() const noexcept
 	{
 		return mTimeInfo;
 	}
@@ -644,9 +630,9 @@ public:
 	virtual void settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum = -1) {}
 	//
 	// these can be overridden to do something and extend the MIDI event processing
-	virtual void settings_doLearningAssignStuff(long tag, DfxMidiEventType eventType, long eventChannel, 
+	virtual void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, 
 												long eventNum, long delta, long eventNum2 = 0, 
-												DfxMidiEventBehaviorFlags eventBehaviorFlags = kDfxMidiEventBehaviorFlag_None, 
+												dfx::MidiEventBehaviorFlags eventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
 												long data1 = 0, long data2 = 0, 
 												float fdata1 = 0.0f, float fdata2 = 0.0f) {}
 	virtual void settings_doMidiAutomatedSetParameterStuff(long tag, float value, long delta) {}
@@ -679,13 +665,27 @@ public:
 
 
 protected:
-	DfxMidi& getmidistate()
+#if TARGET_PLUGIN_USES_MIDI
+	DfxMidi& getmidistate() noexcept
+	{
+		return mMidiState;
+	}
+	DfxMidi const& getmidistate() const noexcept
 	{
 		return mMidiState;
 	}
 	DfxSettings& getsettings()
 	{
 		return *mDfxSettings;
+	}
+	DfxSettings const& getsettings() const
+	{
+		return *mDfxSettings;
+	}
+#endif
+	auto sampleRateChanged() const noexcept
+	{
+		return mSampleRateChanged;
 	}
 	auto hostCanDoTempo() const noexcept
 	{
@@ -694,12 +694,24 @@ protected:
 
 
 private:
+#ifdef TARGET_API_AUDIOUNIT
+	// the Audio Unit API already has an i/o configurations structure
+	using ChannelConfig = AUChannelInfo;
+#else
+	// immitate AUChannelInfo from the Audio Unit API for other APIs
+	struct ChannelConfig
+	{
+		short inChannels = 0;
+		short outChannels = 0;
+	};
+#endif
+
 	std::vector<DfxParam> mParameters;
 	std::vector<DfxPreset> mPresets;
 
-	std::vector<DfxChannelConfig> mChannelconfigs;
+	std::vector<ChannelConfig> mChannelconfigs;
 
-	DfxTimeInfo mTimeInfo;
+	TimeInfo mTimeInfo;
 	bool mHostCanDoTempo = false;
 
 	double mSampleRate = 0.0;
@@ -872,6 +884,10 @@ public:
 	{
 		return IsInitialized() ? false : true;
 	}
+	bool CanScheduleParameters() const override
+	{
+		return true;
+	}
 	#endif
 	#if TARGET_PLUGIN_HAS_GUI
 	int GetNumCustomUIComponents() override;
@@ -1022,6 +1038,7 @@ protected:
 
 #pragma mark _________DfxPluginCore_________
 
+#if TARGET_PLUGIN_USES_DSPCORE
 //-----------------------------------------------------------------------------
 // Audio Unit must override NewKernel() to implement this
 class DfxPluginCore
@@ -1071,6 +1088,10 @@ public:
 	// ***
 	virtual void releasebuffers() {}
 
+	auto const getplugin() const noexcept
+	{
+		return mDfxPlugin;
+	}
 	double getsamplerate() const noexcept
 	{
 		return mDfxPlugin->getsamplerate();
@@ -1126,7 +1147,7 @@ public:
 	}
 
 
-protected:
+private:
 	DfxPlugin* const mDfxPlugin;
 
 
@@ -1145,6 +1166,7 @@ public:
 #endif
 
 };
+#endif  // TARGET_PLUGIN_USES_DSPCORE
 
 
 #pragma clang diagnostic pop
@@ -1195,7 +1217,7 @@ public:
 	// CPluginControl_Continuous overrides
 	long ConvertContinuousToControl(double continuous) const override;
 	double ConvertControlToContinuous(long control) const override;
-	
+
 private:
 	DfxParam::Curve const mCurve;
 	double const mCurveSpec;
@@ -1239,9 +1261,9 @@ private:
 #if TARGET_PLUGIN_IS_INSTRUMENT
 	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMusicDeviceFactory, PluginClass)
 #elif TARGET_PLUGIN_USES_MIDI
-	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMIDIProcessFactory, PluginClass)
+	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMIDIEffectFactory, PluginClass)
 #else
-	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUBaseProcessFactory, PluginClass)
+	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUBaseFactory, PluginClass)
 #endif
 
 	#if TARGET_PLUGIN_USES_DSPCORE
@@ -1299,7 +1321,7 @@ private:
 			}																	\
 			if (effect)															\
 			{																	\
-				effect->dfx_PostConstructor();									\
+				effect->do_PostConstructor();									\
 			}																	\
 			return effect;														\
 		}

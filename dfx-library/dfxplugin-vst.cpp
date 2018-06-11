@@ -37,10 +37,10 @@ This is where we connect the VST API to our DfxPlugin system.
 
 //-----------------------------------------------------------------------------
 // this is called right before our plugin instance is destroyed
-// XXX test and make sure that this is working in various hosts!
+// XXX TODO: test and make sure that this is working in various hosts!
 void DfxPlugin::close()
 {
-	dfx_PreDestructor();
+	do_PreDestructor();
 }
 
 //-----------------------------------------------------------------------------
@@ -158,7 +158,7 @@ bool DfxPlugin::getEffectName(char * outText)
 	if (outText == NULL)
 		return false;
 	// get the name into a temp string buffer that we know is large enough
-	char tempname[DFX_PARAM_MAX_NAME_LENGTH];
+	char tempname[dfx::kParameterNameMaxLength];
 	getpluginname(tempname);
 	// then make sure to only copy as much as the name C string can hold
 	vst_strncpy(outText, tempname, kVstMaxEffectNameLen);
@@ -259,7 +259,7 @@ void DfxPlugin::getProgramName(char * outText)
 	{
 		if ( presetnameisvalid(vstpresetnum) )
 		{
-			char tempname[DFX_PRESET_MAX_NAME_LENGTH];
+			char tempname[dfx::kPresetNameMaxLength];
 			getpresetname(vstpresetnum, tempname);
 			vst_strncpy(outText, tempname, kVstMaxProgNameLen);
 		}
@@ -278,7 +278,7 @@ bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, cha
 	{
 		if ( presetnameisvalid(inIndex) )
 		{
-			char tempname[DFX_PRESET_MAX_NAME_LENGTH];
+			char tempname[dfx::kPresetNameMaxLength];
 			getpresetname(inIndex, tempname);
 			vst_strncpy(outText, tempname, kVstMaxProgNameLen);
 		}
@@ -357,13 +357,13 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char * text)
 
 	switch (getparametervaluetype(index))
 	{
-		case kDfxParamValueType_float:
+		case DfxParam::ValueType::Float:
 			sprintf(text, "%.3f", getparameter_f(index));
 			break;
-		case kDfxParamValueType_int:
+		case DfxParam::ValueType::Int:
 			sprintf(text, "%ld", getparameter_i(index));
 			break;
-		case kDfxParamValueType_boolean:
+		case DfxParam::ValueType::Boolean:
 			if (getparameter_b(index))
 				strcpy(text, "on");
 			else
@@ -438,14 +438,11 @@ void DfxPlugin::process(float ** inputs, float ** outputs, VstInt32 sampleFrames
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------------------
+// note:  it is prossible and allowable for this method to be called more than once per audio processing block
 VstInt32 DfxPlugin::processEvents(VstEvents* events)
 {
 	long newProgramNum, newProgramOffset = -1;
 
-
-// note:  This function depends on the base plugin class to zero numBlockEvents 
-// at the end of each processing block & does not do that itself because it is both 
-// prossible & allowable for processEvents() to be called more than once per block.
 
 	for (long i = 0; i < events->numEvents; i++)
 	{
@@ -467,32 +464,42 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 		long frameOffset = midiEvent->deltaFrames;	// timing offset
 
 		// looking at notes   (0x9* is Note On status ~ 0x8* is Note Off status)
-		if ( (status == kMidiNoteOn) || (status == kMidiNoteOff) )
+		if ((status == DfxMidi::kStatus_NoteOn) || (status == DfxMidi::kStatus_NoteOff))
 		{
 			// note-off received
-			if ( (status == kMidiNoteOff) || (byte2 == 0) )
+			if ((status == DfxMidi::kStatus_NoteOff) || (byte2 == 0))
+			{
 				handlemidi_noteoff(channel, byte1, byte2, frameOffset);
+			}
 			// note-on received
 			else
+			{
 				handlemidi_noteon(channel, byte1, byte2, frameOffset);
+			}
 		}
 
 		// looking at pitchbend   (0xE* is pitchbend status)
-		else if (status == kMidiPitchbend)
+		else if (status == DfxMidi::kStatus_Pitchbend)
+		{
 			handlemidi_pitchbend(channel, byte1, byte2, frameOffset);
+		}
 
 		// continuous controller
-		else if (status == kMidiCC)
+		else if (status == DfxMidi::kStatus_CC)
 		{
 			// all notes off
-			if (byte1 == kMidiCC_AllNotesOff)
+			if (byte1 == DfxMidi::kCC_AllNotesOff)
+			{
 				handlemidi_allnotesoff(channel, frameOffset);
+			}
 			else
+			{
 				handlemidi_cc(channel, byte1, byte2, frameOffset);
+			}
 		}
 
 		// program change
-		else if (status == kMidiProgramChange)
+		else if (status == DfxMidi::kStatus_ProgramChange)
 		{
 //			handlemidi_programchange(channel, byte1, frameOffset);
 			// XXX maybe this is really what we want to do with these?

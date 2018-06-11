@@ -26,12 +26,17 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 //-----------------------------------------------------------------------------
 DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
-				   DGAxis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage, long inRangeMargin)
-:	CSlider(inRegion, inOwnerEditor, inParamID, 
-			CPoint((inOrientation & kDGAxis_Horizontal) ? inRangeMargin : 0, (inOrientation & kDGAxis_Vertical) ? inRangeMargin : 0), 
-			(inOrientation & kDGAxis_Horizontal) ? (inRegion.getWidth() - (inRangeMargin * 2)) : (inRegion.getHeight() - (inRangeMargin * 2)), 
-			inHandleImage, inBackgroundImage, CPoint(0, 0), 
-			(inOrientation & kDGAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical)), 
+				   dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage, long inRangeMargin)
+:	CSlider(inRegion, 
+			inOwnerEditor, 
+			inParamID, 
+			CPoint((inOrientation & dfx::kAxis_Horizontal) ? inRangeMargin : 0, 
+				   (inOrientation & dfx::kAxis_Vertical) ? inRangeMargin : 0), 
+			(inOrientation & dfx::kAxis_Horizontal) ? (inRegion.getWidth() - (inRangeMargin * 2)) : (inRegion.getHeight() - (inRangeMargin * 2)), 
+			inHandleImage, 
+			inBackgroundImage, 
+			CPoint(0, 0), 
+			(inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical)), 
 	DGControl(this, inOwnerEditor)
 {
 	setTransparency(true);
@@ -106,3 +111,39 @@ void DGAnimation::draw(CDrawContext * inContext)
 	getOwnerEditor()->drawControlHighlight(inContext, this);
 }
 #endif
+
+//------------------------------------------------------------------------
+CMouseEventResult DGAnimation::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+{
+	mEntryMousePos = inPos;
+	return CAnimKnob::onMouseDown(inPos, inButtons);
+}
+
+//------------------------------------------------------------------------
+CMouseEventResult DGAnimation::onMouseMoved(CPoint& inPos, CButtonState const& inButtons)
+{
+	inPos = constrainMousePosition(inPos);
+	return CAnimKnob::onMouseMoved(inPos, inButtons);
+}
+
+//------------------------------------------------------------------------
+CMouseEventResult DGAnimation::onMouseUp(CPoint& inPos, CButtonState const& inButtons)
+{
+	inPos = constrainMousePosition(inPos);
+	return CAnimKnob::onMouseUp(inPos, inButtons);
+}
+
+//------------------------------------------------------------------------
+CPoint DGAnimation::constrainMousePosition(CPoint const& inPos) const
+{
+	CPoint resultPos(mEntryMousePos);
+	if (mMouseAxis & dfx::kAxis_Horizontal)
+	{
+		resultPos.x = inPos.x;
+	}
+	if (mMouseAxis & dfx::kAxis_Vertical)
+	{
+		resultPos.y = inPos.y;
+	}
+	return resultPos;
+}

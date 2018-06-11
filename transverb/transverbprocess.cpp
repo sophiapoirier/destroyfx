@@ -27,14 +27,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 
-void TransverbDSP::process(float const* in, float* out, unsigned long numSampleFrames, bool replacing) {
+void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames, bool replacing) {
 
   // int versions of these float values, for reducing casting operations
   int speed1int, speed2int, read1int, read2int;
   int lowpass1pos, lowpass2pos;  // position trackers for the lowpass filters
   float r1val, r2val;  // delay buffer output values
   auto const bsize_float = (double)bsize;  // cut down on casting
-  int filterMode1, filterMode2;  // the type of filtering to use in ultra hi-fi mode
+  FilterMode filterMode1 = FilterMode::Nothing, filterMode2 = FilterMode::Nothing;  // the type of filtering to use in ultra hi-fi mode
   float mug1 = 1.0f, mug2 = 1.0f;  // make-up gain for lowpass filtering
   auto const samplerate = getsamplerate();
   tomsound_sampoffset = GetChannelNum();
@@ -46,18 +46,18 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
 
     /// filter setup stuff ///
 
-    filterMode1 = filterMode2 = kFilterMode_Nothing;  // reset these for now
+    filterMode1 = filterMode2 = FilterMode::Nothing;  // reset these for now
     if (quality == kQualityMode_UltraHiFi)
     {
       // check to see if we need to lowpass the first delay head and init coefficients if so
       if (speed1 > 1.0)
       {
-        filterMode1 = kFilterMode_LowpassIIR;
+        filterMode1 = FilterMode::LowpassIIR;
         speed1int = (int)speed1;
         // it becomes too costly to try to IIR at > 5x speeds, so switch to FIR filtering
         if (speed1int >= 5)
         {
-          filterMode1 = kFilterMode_LowpassFIR;
+          filterMode1 = FilterMode::LowpassFIR;
          mug1 = (float) std::pow(speed1 * 0.2, 0.78);  // compensate for gain lost from filtering
           // update the coefficients only if necessary
           if (speed1hasChanged)
@@ -77,7 +77,7 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
       // we need to highpass the delay head to remove mega sub bass
       else
       {
-        filterMode1 = kFilterMode_Highpass;
+        filterMode1 = FilterMode::Highpass;
         if (speed1hasChanged)
         {
           filter1.setHighpassCoefficients(33.3 / speed1);
@@ -88,11 +88,11 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
       // check to see if we need to lowpass the second delay head and init coefficients if so
       if (speed2 > 1.0)
       {
-        filterMode2 = kFilterMode_LowpassIIR;
+        filterMode2 = FilterMode::LowpassIIR;
         speed2int = (int)speed2;
         if (speed2int >= 5)
         {
-          filterMode2 = kFilterMode_LowpassFIR;
+          filterMode2 = FilterMode::LowpassFIR;
           mug2 = (float) std::pow(speed2 * 0.2, 0.78);  // compensate for gain lost from filtering
           if (speed2hasChanged)
           {
@@ -111,7 +111,7 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
       // we need to highpass the delay head to remove mega sub bass
       else
       {
-        filterMode2 = kFilterMode_Highpass;
+        filterMode2 = FilterMode::Highpass;
         if (speed2hasChanged)
         {
           filter2.setHighpassCoefficients(33.3 / speed2);
@@ -151,12 +151,12 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
           float lp1, lp2;
           switch (filterMode1)
           {
-            case kFilterMode_Highpass:
-            case kFilterMode_LowpassIIR:
+            case FilterMode::Highpass:
+            case FilterMode::LowpassIIR:
               // interpolate the values in the IIR output history
               r1val = filter1.interpolateHermitePostFilter(read1);
               break;
-            case kFilterMode_LowpassFIR:
+            case FilterMode::LowpassFIR:
               // get 2 consecutive FIR output values for linear interpolation
               lp1 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(), 
                                             (read1int - kNumFIRTaps + bsize) % bsize, bsize);
@@ -171,12 +171,12 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
           }
           switch (filterMode2)
           {
-            case kFilterMode_Highpass:
-            case kFilterMode_LowpassIIR:
+            case FilterMode::Highpass:
+            case FilterMode::LowpassIIR:
               // interpolate the values in the IIR output history
               r2val = filter2.interpolateHermitePostFilter(read2);
               break;
-            case kFilterMode_LowpassFIR:
+            case FilterMode::LowpassFIR:
               // get 2 consecutive FIR output values for linear interpolation
               lp1 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(), 
                                             (read2int - kNumFIRTaps + bsize) % bsize, bsize);
@@ -212,17 +212,17 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
       
       /* then write into buffer (w/ feedback) */
 
-      buf1[writer] = in[i] + (r1val * feed1 * mix1);
-      buf2[writer] = in[i] + (r2val * feed2 * mix2);
+      buf1[writer] = inAudio[i] + (r1val * feed1 * mix1);
+      buf2[writer] = inAudio[i] + (r2val * feed2 * mix2);
 
       /* make output */
     #ifdef TARGET_API_VST
       if (replacing)
     #endif
-        out[i] = (in[i]*drymix) + (r1val*mix1) + (r2val*mix2);
+        outAudio[i] = (inAudio[i]*drymix) + (r1val*mix1) + (r2val*mix2);
     #ifdef TARGET_API_VST
       else
-        out[i] += (in[i]*drymix) + (r1val*mix1) + (r2val*mix2);
+        outAudio[i] += (inAudio[i]*drymix) + (r1val*mix1) + (r2val*mix2);
     #endif
 
       /* start smoothing stuff if the writer has 
@@ -281,7 +281,7 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
       // then we probably need to process a few consecutive samples in order 
       // to get the continuous impulse (or whatever you call that), 
       // probably whatever the speed multiplier is, that's how many samples
-      if (filterMode1 == kFilterMode_LowpassIIR)
+      if (filterMode1 == FilterMode::LowpassIIR)
       {
         int lowpasscount = 0;
         while (lowpasscount < speed1int)
@@ -321,7 +321,7 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
       }
       // it's simpler for highpassing; 
       // we may not even need to process anything for this sample
-      else if (filterMode1 == kFilterMode_Highpass)
+      else if (filterMode1 == FilterMode::Highpass)
       {
         // only if we've traversed to a new integer sample position
         if ((int)read1 != read1int)
@@ -329,7 +329,7 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
       }
 
       // head 2 filtering stuff
-      if (filterMode2 == kFilterMode_LowpassIIR)
+      if (filterMode2 == FilterMode::LowpassIIR)
       {
         int lowpasscount = 0;
         while (lowpasscount < speed2int)
@@ -366,7 +366,7 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
           lowpass2pos = (lowpass2pos + 1) % bsize;
         }
       }
-      else if (filterMode2 == kFilterMode_Highpass)
+      else if (filterMode2 == FilterMode::Highpass)
       {
         if ((int)read2 != read2int)
           filter2.process(buf2[read2int]);
@@ -405,7 +405,7 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
     /* then write into buffer (w/ feedback) */
 
     buf1[writer] = 
-      in[j] + 
+      inAudio[j] + 
       feed1 * r1val + 
       feed2 * r2val;
       
@@ -434,10 +434,10 @@ void TransverbDSP::process(float const* in, float* out, unsigned long numSampleF
   #ifdef TARGET_API_VST
     if (replacing)
   #endif
-      out[j] = in[j] * drymix + r1val + r2val;
+      outAudio[j] = inAudio[j] * drymix + r1val + r2val;
   #ifdef TARGET_API_VST
     else
-      out[j] += in[j] * drymix + r1val + r2val;
+      outAudio[j] += inAudio[j] * drymix + r1val + r2val;
   #endif
 //      }
     }

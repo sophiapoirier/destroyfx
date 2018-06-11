@@ -106,29 +106,33 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 
+namespace dfx
+{
+
+
 //-----------------------------------------------------------------------------
 #ifdef TARGET_API_AUDIOUNIT
-	enum
-	{
-		kDfxErr_NoError = noErr,
-		kDfxErr_ParamError = paramErr,
-		kDfxErr_InitializationFailed = kAudioUnitErr_FailedInitialization,
-		kDfxErr_InvalidParameter = kAudioUnitErr_InvalidParameter,
-		kDfxErr_InvalidProperty = kAudioUnitErr_InvalidProperty,
-		kDfxErr_InvalidPropertyValue = kAudioUnitErr_InvalidPropertyValue,
-		kDfxErr_CannotDoInCurrentContext = kAudioUnitErr_CannotDoInCurrentContext
-	};
+enum
+{
+	kStatus_NoError = noErr,
+	kStatus_ParamError = paramErr,
+	kStatus_InitializationFailed = kAudioUnitErr_FailedInitialization,
+	kStatus_InvalidParameter = kAudioUnitErr_InvalidParameter,
+	kStatus_InvalidProperty = kAudioUnitErr_InvalidProperty,
+	kStatus_InvalidPropertyValue = kAudioUnitErr_InvalidPropertyValue,
+	kStatus_CannotDoInCurrentContext = kAudioUnitErr_CannotDoInCurrentContext
+};
 #else
-	enum
-	{
-		kDfxErr_NoError = 0,
-		kDfxErr_ParamError = -50,
-		kDfxErr_InitializationFailed = -10875,
-		kDfxErr_InvalidParameter = -10878,
-		kDfxErr_InvalidProperty = -10879,
-		kDfxErr_InvalidPropertyValue = -10851,
-		kDfxErr_CannotDoInCurrentContext = -10863
-	};
+enum
+{
+	kStatus_NoError = 0,
+	kStatus_ParamError = -50,
+	kStatus_InitializationFailed = -10875,
+	kStatus_InvalidParameter = -10878,
+	kStatus_InvalidProperty = -10879,
+	kStatus_InvalidPropertyValue = -10851,
+	kStatus_CannotDoInCurrentContext = -10863
+};
 #endif
 
 
@@ -136,24 +140,27 @@ To contact the author, use the contact form at http://destroyfx.org/
 #ifdef TARGET_API_RTAS
 
 //-----------------------------------------------------------------------------
-constexpr long kParameterShortNameMax_rtas = 4;  // XXX hack (this just happens to be what I've been doing)
-constexpr long kParameterValueShortNameMax_rtas = 6;  // XXX hack
+constexpr long kParameterShortNameMax_RTAS = 4;  // XXX hack (this just happens to be what I've been doing)
+constexpr long kParameterValueShortNameMax_RTAS = 6;  // XXX hack
 
-constexpr long kDFXParameterID_RTASMasterBypass = 1;
-constexpr long kDFXParameterID_RTASOffset = kDFXParameterID_RTASMasterBypass + 1;
+constexpr long kParameterID_RTASMasterBypass = 1;
+constexpr long kParameterID_RTASOffset = kParameterID_RTASMasterBypass + 1;
 //-----------------------------------------------------------------------------
-constexpr long DFX_ParameterID_ToRTAS(long inParameterID)
+constexpr long ParameterID_ToRTAS(long inParameterID)
 {
-	return inParameterID + kDFXParameterID_RTASOffset;
+	return inParameterID + kParameterID_RTASOffset;
 }
 //-----------------------------------------------------------------------------
-constexpr long DFX_ParameterID_FromRTAS(long inParameterIndex_rtas)
+constexpr long ParameterID_FromRTAS(long inParameterIndex_RTAS)
 {
-	return inParameterIndex_rtas - kDFXParameterID_RTASOffset;
+	return inParameterIndex_RTAS - kParameterID_RTASOffset;
 }
 
 // XXX a hack to handle the fact that CPluginControl_Percent (annoyingly) 
 // automatically converts to and from internal 0-1 values and external 0-100 values
-constexpr double kDFX_RTASPercentScalar = 0.01;
+constexpr double kRTASPercentScalar = 0.01;
 
 #endif
+
+
+}  // namespace dfx

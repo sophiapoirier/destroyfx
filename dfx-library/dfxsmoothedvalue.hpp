@@ -30,6 +30,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <algorithm>
 #include <cassert>
 #include <type_traits>
+#include <utility>
 
 
 
@@ -54,10 +55,9 @@ DfxSmoothedValue<T>::DfxSmoothedValue(double inSmoothingTimeInSeconds)
 template <typename T>
 void DfxSmoothedValue<T>::setValue(T inTargetValue) noexcept
 {
-	if (mReinit)
+	if (std::exchange(mReinit, false))
 	{
 		setValueNow(inTargetValue);
-		mReinit = false;
 	}
 	else
 	{

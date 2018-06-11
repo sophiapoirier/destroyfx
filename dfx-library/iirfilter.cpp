@@ -55,7 +55,7 @@ void dfx::IIRfilter::setCoefficients(FilterType inFilterType, double inFreq, dou
 	auto const cs = std::cos(omega);
 	double const alpha = std::sin(omega) / (2.0 * mFilterQ);
 // XXX from http://musicdsp.org/showone.php?id=64
-//alpha = std::sin(omega) * std::sinh(kDFX_LN2_d / 2.0 * mFilterQ * omega / std::sin(omega));
+//alpha = std::sin(omega) * std::sinh(dfx::math::kLn2<double> / 2.0 * mFilterQ * omega / std::sin(omega));
 	auto const A = std::sqrt(mFilterGain);
 	double beta = (((A * A) + 1.0) / mFilterQ) - ((A - 1.0) * (A - 1.0));
 	beta = std::max(beta, 0.0);

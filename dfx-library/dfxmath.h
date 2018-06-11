@@ -51,7 +51,7 @@ constexpr T kLn2(M_LN2);
 
 
 //-----------------------------------------------------------------------------
-// inline functions
+// functions
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ T MagnitudeMax(T inValue1, T inValue2)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-inline T ClampDenormalValue(T inValue)
+T ClampDenormalValue(T inValue)
 {
 	static_assert(std::is_floating_point<T>::value);
 #ifndef TARGET_API_AUDIOUNIT  // the AU SDK handles denormals for us

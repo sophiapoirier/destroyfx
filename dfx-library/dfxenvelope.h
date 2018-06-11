@@ -40,11 +40,11 @@ public:
 		Dormant
 	};
 
-	enum class CurveType
+	enum CurveType
 	{
-		Linear,
-		Cubed,
-		NumTypes
+		kCurveType_Linear,
+		kCurveType_Cubed,
+		kCurveType_NumTypes
 	};
 
 	void setParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);
@@ -84,7 +84,7 @@ private:
 	double deriveAttackPosFromEnvValue(double inValue) const;
 
 	double mAttackDur = 0.0, mDecayDur = 0.0, mSustainLevel = 1.0, mReleaseDur = 0.0;
-	CurveType mCurveType = CurveType::Cubed;
+	CurveType mCurveType = kCurveType_Cubed;
 	bool mResumedAttackMode = false;
 	double mSampleRate = 1.0;
 

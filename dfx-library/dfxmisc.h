@@ -28,6 +28,7 @@ These are some generally useful functions.
 
 
 #include <memory>
+#include <string>
 #include <type_traits>
 
 #ifdef __MACH__
@@ -68,7 +69,7 @@ public:
 //-----------------------------------------------------------------------------
 long CompositePluginVersionNumberValue();
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount = 1);
-long LaunchURL(char const* inUrlString);
+long LaunchURL(std::string const& inURL);
 long LaunchDocumentation();
 char const* GetNameForMIDINote(long inMidiNote);
 uint64_t GetMillisecondCount();

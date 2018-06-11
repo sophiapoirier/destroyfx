@@ -41,12 +41,12 @@ DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 	mDrawMomentaryState(inDrawMomentaryState)
 {
 	assert(inNumStates > 0);
-	
+
 	if (mMode == Mode::PictureReel)
 	{
 		setMouseEnabled(false);
 	}
-	
+
 	if ((mMode == Mode::Increment) || (mMode == Mode::Decrement))
 	{
 		setWraparoundValues(true);
@@ -56,7 +56,7 @@ DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, 
 				   long inNumStates, Mode inMode, bool inDrawMomentaryState)
-:	DGButton(inOwnerEditor, kDfxParameterID_Invalid, inRegion, inImage, inNumStates, inMode, inDrawMomentaryState)
+:	DGButton(inOwnerEditor, dfx::kParameterID_Invalid, inRegion, inImage, inNumStates, inMode, inDrawMomentaryState)
 {
 }
 
@@ -108,7 +108,7 @@ CMouseEventResult DGButton::onMouseDown(CPoint& inPos, CButtonState const& inBut
 			mNewValue = mEntryValue + (isDirectionReversed ? 1 : -1);
 			break;
 		case Mode::Radio:
-			if (mOrientation & kDGAxis_Horizontal)
+			if (mOrientation & dfx::kAxis_Horizontal)
 			{
 				mNewValue = std::lround(inPos.x - getViewSize().left) / (std::lround(getWidth()) / mNumStates);
 			}
@@ -171,13 +171,13 @@ CMouseEventResult DGButton::onMouseMoved(CPoint& inPos, CButtonState const& inBu
 
 	auto const currentValue = getValue_i();
 
-	if (getViewSize().pointInside(inPos))
+	if (hitTest(inPos))
 	{
 		setMouseIsDown(true);
 
 		if (mMode == Mode::Radio)
 		{
-			if (mOrientation & kDGAxis_Horizontal)
+			if (mOrientation & dfx::kAxis_Horizontal)
 			{
 				mNewValue = std::lround(inPos.x - getViewSize().left) / (std::lround(getWidth()) / mNumStates);
 			}
@@ -242,7 +242,7 @@ CMouseEventResult DGButton::onMouseUp(CPoint& inPos, CButtonState const& /*inBut
 		valueChanged();
 	}
 
-	if (getViewSize().pointInside(inPos))
+	if (hitTest(inPos))
 	{
 		if (mUserReleaseProcedure)
 		{
@@ -294,9 +294,8 @@ bool DGButton::onWheel(CPoint const& inPos, float const& inDistance, CButtonStat
 //-----------------------------------------------------------------------------
 void DGButton::setMouseIsDown(bool newMouseState)
 {
-	auto const oldstate = mMouseIsDown;
-	mMouseIsDown = newMouseState;
-	if ((!oldstate != !newMouseState) && mDrawMomentaryState)
+	auto const oldState = std::exchange(mMouseIsDown, newMouseState);
+	if ((oldState != newMouseState) && mDrawMomentaryState)
 	{
 		redraw();
 	}
@@ -326,7 +325,7 @@ long DGButton::getValue_i()
 {
 	if (isParameterAttached())
 	{
-		return getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValue());
+		return std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValue()));
 	}
 	else
 	{
@@ -442,7 +441,7 @@ CMouseEventResult DGFineTuneButton::onMouseMoved(CPoint& inPos, CButtonState con
 	}
 
 	auto const oldMouseDown = mMouseIsDown;
-	mMouseIsDown = getViewSize().pointInside(inPos);
+	mMouseIsDown = hitTest(inPos);
 
 	if (mMouseIsDown && !oldMouseDown)
 	{
@@ -479,9 +478,8 @@ CMouseEventResult DGFineTuneButton::onMouseMoved(CPoint& inPos, CButtonState con
 //-----------------------------------------------------------------------------
 CMouseEventResult DGFineTuneButton::onMouseUp(CPoint& /*inPos*/, CButtonState const& /*inButtons*/)
 {
-	if (mMouseIsDown)
+	if (std::exchange(mMouseIsDown, false))
 	{
-		mMouseIsDown = false;
 		redraw();
 	}
 
@@ -558,12 +556,12 @@ CMouseEventResult DGValueSpot::onMouseMoved(CPoint& inPos, CButtonState const& i
 	if (inButtons.isLeftButton())
 	{
 		auto const oldButtonIsPressed = mButtonIsPressed;
-		if (getViewSize().pointInside(inPos) && !(getViewSize().pointInside(mLastMousePos)))
+		if (hitTest(inPos) && !hitTest(mLastMousePos))
 		{
 			setValue(mValueToSet);
 			mButtonIsPressed = true;
 		}
-		else if (!(getViewSize().pointInside(inPos)) && getViewSize().pointInside(mLastMousePos))
+		else if (!hitTest(inPos) && hitTest(mLastMousePos))
 		{
 			mButtonIsPressed = false;
 		}
@@ -573,7 +571,7 @@ CMouseEventResult DGValueSpot::onMouseMoved(CPoint& inPos, CButtonState const& i
 		{
 			valueChanged();
 		}
-		if (!oldButtonIsPressed != !mButtonIsPressed)
+		if (oldButtonIsPressed != mButtonIsPressed)
 		{
 			redraw();
 		}
@@ -613,19 +611,28 @@ DGWebLink::DGWebLink(DfxGuiEditor*	inOwnerEditor,
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGWebLink::onMouseDown(CPoint& /*inPos*/, CButtonState const& inButtons)
+CMouseEventResult DGWebLink::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
 {
 	if (!inButtons.isLeftButton())
 	{
 		return kMouseEventNotHandled;
 	}
 
-	return kMouseEventHandled;
+	beginEdit();
+
+	return onMouseMoved(inPos, inButtons);
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGWebLink::onMouseMoved(CPoint& /*inPos*/, CButtonState const& /*inButtons*/)
+CMouseEventResult DGWebLink::onMouseMoved(CPoint& inPos, CButtonState const& /*inButtons*/)
 {
+	if (!isEditing())
+	{
+		return kMouseEventNotHandled;
+	}
+
+	setValue(hitTest(inPos) ? getMax() : getMin());
+
 	return kMouseEventHandled;
 }
 
@@ -638,11 +645,15 @@ CMouseEventResult DGWebLink::onMouseMoved(CPoint& /*inPos*/, CButtonState const&
 // before releasing the mouse button.
 CMouseEventResult DGWebLink::onMouseUp(CPoint& inPos, CButtonState const& /*inButtons*/)
 {
-	// only launch the URL if the mouse pointer is still in the button's area
-	if (getViewSize().pointInside(inPos) && !mURL.empty())
+	setValue(getMin());
+
+	// only launch the URL if the mouse pointer is still in the button's region
+	if (hitTest(inPos) && !mURL.empty())
 	{
-		dfx::LaunchURL(mURL.c_str());
+		dfx::LaunchURL(mURL);
 	}
+
+	endEdit();
 
 	return kMouseEventHandled;
 }
@@ -661,7 +672,7 @@ CMouseEventResult DGWebLink::onMouseUp(CPoint& inPos, CButtonState const& /*inBu
 DGSplashScreen::DGSplashScreen(DfxGuiEditor*	inOwnerEditor,
 							   DGRect const&	inClickRegion, 
 							   DGImage*			inSplashImage)
-:	CSplashScreen(inClickRegion, inOwnerEditor, kDfxParameterID_Invalid, inSplashImage, inClickRegion), 
+:	CSplashScreen(inClickRegion, inOwnerEditor, dfx::kParameterID_Invalid, inSplashImage, inClickRegion), 
 	DGControl(this, inOwnerEditor)
 {
 	setTransparency(true);

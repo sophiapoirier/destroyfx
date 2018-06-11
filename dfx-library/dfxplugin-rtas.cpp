@@ -29,34 +29,34 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 
 #include <algorithm>
 
-#include "CEffectTypeRTAS.h"
 #include "CEffectTypeAS.h"
+#include "CEffectTypeRTAS.h"
+#include "CPluginControl_LinearBoostCut.h"
+#include "CPluginControl_LinearGain.h"
+#include "CPluginControl_LinearPercent.h"
+#include "CPluginControl_LinearQ.h"
+#include "CPluginControl_LinearThld.h"
+#include "CPluginControl_LinearTime.h"
+#include "CPluginControl_List.h"
+#include "CPluginControl_LogFrequency.h"
+#include "CPluginControl_LogGain.h"
+#include "CPluginControl_LogPercent.h"
+#include "CPluginControl_LogQ.h"
+#include "CPluginControl_LogTime.h"
+#include "CPluginControl_LogTimeS.h"
+#include "CPluginControl_OnOff.h"
+#include "dfxmisc.h"
 //#include "FicPluginEnums.h"
 #include "PlugInUtils.h"
 
-#include "CPluginControl_List.h"
-#include "CPluginControl_OnOff.h"
-#include "CPluginControl_LinearPercent.h"
-#include "CPluginControl_LogPercent.h"
-#include "CPluginControl_LinearTime.h"
-#include "CPluginControl_LogTime.h"
-#include "CPluginControl_LogTimeS.h"
-#include "CPluginControl_LogFrequency.h"
-#include "CPluginControl_LinearGain.h"
-#include "CPluginControl_LogGain.h"
-#include "CPluginControl_LinearBoostCut.h"
-#include "CPluginControl_LinearThld.h"
-#include "CPluginControl_LogQ.h"
-#include "CPluginControl_LinearQ.h"
-
 #ifndef TARGET_PLUGIN_USES_VSTGUI
-	#include "CNoResourceView.h"
-	#include "CStaticCustomText.h"
-	#include "CGainMeterView.h"
 	#include "CClippingView.h"
+	#include "CGainMeterView.h"
+	#include "CNoResourceView.h"
 	#include "CPictBackgroundTextEditor.h"
 	#include "CSliderControlEditor.h"
 	#include "CStateTextControlEditor.h"
+	#include "CStaticCustomText.h"
 	#include "CTextCustomPopupEditor.h"
 #endif
 
@@ -74,7 +74,7 @@ static OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode);
 //-----------------------------------------------------------------------------
 void DfxPlugin::EffectInit()
 {
-	dfx_PostConstructor();
+	do_PostConstructor();
 
 	AddParametersToList();
 
@@ -100,7 +100,7 @@ fprintf(stderr, "%s IsAutomatable() = %s (error = %ld)\n", bypassName, bypassCon
 void DfxPlugin::Free()
 {
 	do_cleanup();
-	dfx_PreDestructor();
+	do_PreDestructor();
 
 	TARGET_API_BASE_CLASS::Free();
 }
@@ -143,10 +143,10 @@ void DfxPlugin::DoTokenIdle()
 //-----------------------------------------------------------------------------
 void DfxPlugin::AddParametersToList()
 {
-	const OSType masterBypassFourCharID = 'bypa';
+	constexpr OSType masterBypassFourCharID = 'bypa';
 
 	AddControl(new CPluginControl_OnOff(masterBypassFourCharID, "Master Bypass\nM Bypass\nMByp\nByp", false, true));
-	DefineMasterBypassControlIndex(kDFXParameterID_RTASMasterBypass);
+	DefineMasterBypassControlIndex(dfx::kParameterID_RTASMasterBypass);
 
 	OSType paramFourCharID = 0;
 	for (long i = 0; i < getnumparameters(); i++)
@@ -156,9 +156,9 @@ void DfxPlugin::AddParametersToList()
 			continue;	// XXX eh actually maybe we need to add a parameter for every index?
 		}
 
-		const double paramMin_f = getparametermin_f(i), paramMax_f = getparametermax_f(i), paramDefault_f = getparameterdefault_f(i);
-		const int64_t paramMin_i = getparametermin_i(i), paramMax_i = getparametermax_i(i), paramDefault_i = getparameterdefault_i(i);
-		char paramName[DFX_PARAM_MAX_NAME_LENGTH];
+		auto const paramMin_f = getparametermin_f(i), paramMax_f = getparametermax_f(i), paramDefault_f = getparameterdefault_f(i);
+		auto const paramMin_i = getparametermin_i(i), paramMax_i = getparametermax_i(i), paramDefault_i = getparameterdefault_i(i);
+		char paramName[dfx::kParameterNameMaxLength];
 		paramName[0] = 0;
 		getparametername(i, paramName);
 
@@ -166,31 +166,31 @@ void DfxPlugin::AddParametersToList()
 		// make sure to skip over the ID already used for master bypass
 		if (paramFourCharID == masterBypassFourCharID)
 			paramFourCharID = DFX_IterateAlphaNumericFourCharCode(paramFourCharID);
-		const bool paramAutomatable = (getparameterattributes(i) & (kDfxParamAttribute_hidden|kDfxParamAttribute_unused)) ? false : true;
-		const int numCurvedSteps = 1000;
-		const double stepSize_default = (paramMax_f - paramMin_f) / (double)numCurvedSteps;
-		const DfxParamCurve paramCurve = getparametercurve(i);
-		const double paramCurveSpec = getparametercurvespec(i);
-		const bool paramIsLog = (paramCurve == kDfxParamCurve_log) || (paramCurve == kDfxParamCurve_exp);
+		bool const paramAutomatable = (getparameterattributes(i) & (DfxParam::kAttribute_Hidden | DfxParam::kAttribute_Unused)) ? false : true;
+		constexpr int numCurvedSteps = 1000;
+		double const stepSize_default = (paramMax_f - paramMin_f) / (double)numCurvedSteps;
+		auto const paramCurve = getparametercurve(i);
+		auto const paramCurveSpec = getparametercurvespec(i);
+		bool const paramIsLog = (paramCurve == DfxParam::Curve::Log) || (paramCurve == DfxParam::Curve::Exp);
 
 		if ( getparameterusevaluestrings(i) )
 		{
 			std::vector<std::string> valueStringsVector;
 			for (int64_t stringIndex=paramMin_i; stringIndex <= paramMax_i; stringIndex++)
 			{
-				const char * valueString = getparametervaluestring_ptr(i, stringIndex);
+				auto const valueString = getparametervaluestring_ptr(i, stringIndex);
 				if (valueString != NULL)
 					valueStringsVector.push_back( std::string(valueString) );
 			}
 			AddControl( new CPluginControl_List(paramFourCharID, paramName, valueStringsVector, paramDefault_i - paramMin_i, paramAutomatable) );
 		}
 
-		else if (getparametervaluetype(i) == kDfxParamValueType_int)
+		else if (getparametervaluetype(i) == DfxParam::ValueType::Int)
 		{
 			AddControl( new CPluginControl_Discrete(paramFourCharID, paramName, paramMin_i, paramMax_i, paramDefault_i, paramAutomatable) );
 		}
 
-		else if (getparametervaluetype(i) == kDfxParamValueType_boolean)
+		else if (getparametervaluetype(i) == DfxParam::ValueType::Boolean)
 		{
 			AddControl( new CPluginControl_OnOff(paramFourCharID, paramName, getparameterdefault_b(i), paramAutomatable) );
 		}
@@ -199,39 +199,39 @@ void DfxPlugin::AddParametersToList()
 		{
 			switch ( getparameterunit(i) )
 			{
-				case kDfxParamUnit_percent:
-				case kDfxParamUnit_drywetmix:
+				case DfxParam::Unit::Percent:
+				case DfxParam::Unit::DryWetMix:
 					if (paramIsLog)
-						AddControl( new CPluginControl_LogPercent(paramFourCharID, paramName, paramMin_f*kDFX_RTASPercentScalar, paramMax_f*kDFX_RTASPercentScalar, numCurvedSteps, paramDefault_f*kDFX_RTASPercentScalar, paramAutomatable) );
+						AddControl( new CPluginControl_LogPercent(paramFourCharID, paramName, paramMin_f * dfx::kRTASPercentScalar, paramMax_f * dfx::kRTASPercentScalar, numCurvedSteps, paramDefault_f * dfx::kRTASPercentScalar, paramAutomatable) );
 					else
-						AddControl( new CPluginControl_LinearPercent(paramFourCharID, paramName, paramMin_f*kDFX_RTASPercentScalar, paramMax_f*kDFX_RTASPercentScalar, stepSize_default*kDFX_RTASPercentScalar, paramDefault_f*kDFX_RTASPercentScalar, paramAutomatable) );
+						AddControl( new CPluginControl_LinearPercent(paramFourCharID, paramName, paramMin_f * dfx::kRTASPercentScalar, paramMax_f * dfx::kRTASPercentScalar, stepSize_default * dfx::kRTASPercentScalar, paramDefault_f * dfx::kRTASPercentScalar, paramAutomatable) );
 					break;
 
-				case kDfxParamUnit_ms:
+				case DfxParam::Unit::MS:
 					if (paramIsLog)
 						AddControl( new CPluginControl_LogTime(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 					else
 						AddControl( new CPluginControl_LinearTime(paramFourCharID, paramName, paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
 					break;
 
-				case kDfxParamUnit_seconds:
+				case DfxParam::Unit::Seconds:
 					// XXX not actually really sure whether CPluginControl_TimeS is for seconds? or maybe samples?
 					AddControl( new CPluginControl_LogTimeS(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 					break;
 
-				case kDfxParamUnit_hz:
-					if (paramCurve == kDfxParamCurve_log)
+				case DfxParam::Unit::Hz:
+					if (paramCurve == DfxParam::Curve::Log)
 						AddControl( new CPluginControl_LogFrequency(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 					else
 						AddControl( new CPluginControl_DfxCurvedFrequency(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable, paramCurve, paramCurveSpec) );
 					break;
 
-				case kDfxParamUnit_decibles:
+				case DfxParam::Unit::Decibles:
 					// XXX or perhaps use CPluginControl_Level, or split the two out from each other?
 					AddControl( new CPluginControl_LinearBoostCut(paramFourCharID, paramName, paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
 					break;
 
-				case kDfxParamUnit_lineargain:
+				case DfxParam::Unit::LinearGain:
 					if (paramIsLog)
 						AddControl( new CPluginControl_LogGain(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 					else
@@ -259,13 +259,13 @@ ComponentResult DfxPlugin::GetControlNameOfLength(long inParameterIndex, char * 
 		return paramErr;
 
 /*
-	if (inNameLength <= kParameterShortNameMax_rtas)
+	if (inNameLength <= dfx::kParameterShortNameMax_RTAS)
 	{
 		char * shortNameString = NULL;
-		if (inParameterIndex == kDFXParameterID_RTASMasterBypass)
+		if (inParameterIndex == dfx::kParameterID_RTASMasterBypass)
 			shortNameString = "Bypass";	// any shortened version of this is fine
 		else
-			shortNameString = GetParameterShortName( DFX_ParameterID_FromRTAS(inParameterIndex) );
+			shortNameString = GetParameterShortName( dfx::ParameterID_FromRTAS(inParameterIndex) );
 		if (shortNameString != NULL)
 		{
 			strncpy(outName, shortNameString, inNameLength);
@@ -288,12 +288,12 @@ ComponentResult DfxPlugin::GetValueString(long inParameterIndex, long inValue, S
 		return paramErr;
 
 /*
-	if (inMaxLength <= kParameterValueShortNameMax_rtas)
+	if (inMaxLength <= dfx::kParameterValueShortNameMax_rtas)
 	{
-		const char * shortValueString = GetParameterValueShortString(DFX_ParameterID_FromRTAS(inParameterIndex), inValue);
+		auto const shortValueString = GetParameterValueShortString(dfx::ParameterID_FromRTAS(inParameterIndex), inValue);
 		if (shortValueString != NULL)
 		{
-			strncpy((char*)(outValueString+1), shortValueString, inMaxLength);
+			strncpy((char*)(outValueString + 1), shortValueString, inMaxLength);
 			outValueString[0] = ((signed)strlen(shortValueString) > inMaxLength) ? inMaxLength : strlen(shortValueString);
 			return noErr;
 		}
@@ -306,25 +306,25 @@ ComponentResult DfxPlugin::GetValueString(long inParameterIndex, long inValue, S
 //-----------------------------------------------------------------------------
 void DfxPlugin::UpdateControlValueInAlgorithm(long inParameterIndex)
 {
-	if (inParameterIndex == kDFXParameterID_RTASMasterBypass)
+	if (inParameterIndex == dfx::kParameterID_RTASMasterBypass)
 	{
 		mMasterBypass_rtas = dynamic_cast<CPluginControl_Discrete*>(GetControl(inParameterIndex))->GetDiscrete();
 		return;
 	}
 
-	inParameterIndex = DFX_ParameterID_FromRTAS(inParameterIndex);
+	inParameterIndex = dfx::ParameterID_FromRTAS(inParameterIndex);
 	if (! parameterisvalid(inParameterIndex) )
 		return;
 
 	switch ( getparametervaluetype(inParameterIndex) )
 	{
-		case kDfxParamValueType_float:
+		case DfxParam::ValueType::Float:
 			parameters[inParameterIndex].set_f( GetParameter_f_FromRTAS(inParameterIndex) );
 			break;
-		case kDfxParamValueType_int:
+		case DfxParam::ValueType::Int:
 			parameters[inParameterIndex].set_i( GetParameter_i_FromRTAS(inParameterIndex) );
 			break;
-		case kDfxParamValueType_boolean:
+		case DfxParam::ValueType::Boolean:
 			parameters[inParameterIndex].set_b( GetParameter_b_FromRTAS(inParameterIndex) );
 			break;
 		default:
@@ -335,16 +335,16 @@ void DfxPlugin::UpdateControlValueInAlgorithm(long inParameterIndex)
 //-----------------------------------------------------------------------------
 double DfxPlugin::GetParameter_f_FromRTAS(long inParameterID)
 {
-	double resultValue = dynamic_cast<CPluginControl_Continuous*>(GetControl(DFX_ParameterID_ToRTAS(inParameterID)))->GetContinuous();
-	if ( (getparameterunit(inParameterID) == kDfxParamUnit_percent) || (getparameterunit(inParameterID) == kDfxParamUnit_drywetmix) )
-		resultValue /= kDFX_RTASPercentScalar;
+	double resultValue = dynamic_cast<CPluginControl_Continuous*>(GetControl(dfx::ParameterID_ToRTAS(inParameterID)))->GetContinuous();
+	if ( (getparameterunit(inParameterID) == DfxParam::Unit::Percent) || (getparameterunit(inParameterID) == DfxParam::Unit::DryWetMix) )
+		resultValue /= dfx::kRTASPercentScalar;
 	return resultValue;
 }
 
 //-----------------------------------------------------------------------------
 int64_t DfxPlugin::GetParameter_i_FromRTAS(long inParameterID)
 {
-	int64_t resultValue = dynamic_cast<CPluginControl_Discrete*>(GetControl(DFX_ParameterID_ToRTAS(inParameterID)))->GetDiscrete();
+	int64_t resultValue = dynamic_cast<CPluginControl_Discrete*>(GetControl(dfx::ParameterID_ToRTAS(inParameterID)))->GetDiscrete();
 	if ( getparameterusevaluestrings(inParameterID) )
 		resultValue += getparametermin_i(inParameterID);
 	return resultValue;
@@ -362,18 +362,18 @@ ComponentResult DfxPlugin::IsControlAutomatable(long inControlIndex, short * out
 	if (outItIs == NULL)
 		return paramErr;
 
-	// XXX test this first, since DFX_ParameterID_FromRTAS() makes it an invalid ID
-	if (inControlIndex == kDFXParameterID_RTASMasterBypass)
+	// XXX test this first, since dfx::ParameterID_FromRTAS() makes it an invalid ID
+	if (inControlIndex == dfx::kParameterID_RTASMasterBypass)
 	{
 		*outItIs = 1;
 		return noErr;
 	}
 
-	inControlIndex = DFX_ParameterID_FromRTAS(inControlIndex);
+	inControlIndex = dfx::ParameterID_FromRTAS(inControlIndex);
 	if (! parameterisvalid(inControlIndex) )
 		return paramErr;
 
-	if ( getparameterattributes(inControlIndex) & (kDfxParamAttribute_unused|kDfxParamAttribute_hidden) )
+	if ( getparameterattributes(inControlIndex) & (DfxParam::kAttribute_Unused | DfxParam::kAttribute_Hidden) )
 		*outItIs = 0;
 	else
 		*outItIs = 1;
@@ -386,10 +386,10 @@ ComponentResult DfxPlugin::IsControlAutomatable(long inControlIndex, short * out
 #include "PlugInAssert.h"
 
 //-----------------------------------------------------------------------------
-CPluginControl_DfxCurved::CPluginControl_DfxCurved(OSType id, const char * name, double min, double max, 
+CPluginControl_DfxCurved::CPluginControl_DfxCurved(OSType id, char const* name, double min, double max, 
 		int numSteps, double defaultValue, bool isAutomatable, 
-		DfxParamCurve inCurve, double inCurveSpec, 
-		const PrefixDictionaryEntry * begin, const PrefixDictionaryEntry * end)
+		DfxParam::Curve inCurve, double inCurveSpec, 
+		PrefixDictionaryEntry const* begin, PrefixDictionaryEntry const* end)
 :	CPluginControl_Continuous(id, name, min, max, defaultValue, isAutomatable, begin, end),
 	mCurve(inCurve), mCurveSpec(inCurveSpec), mNumSteps(numSteps)
 {
@@ -406,7 +406,7 @@ long CPluginControl_DfxCurved::GetNumSteps() const
 //-----------------------------------------------------------------------------
 long CPluginControl_DfxCurved::ConvertContinuousToControl(double continuous) const
 {
-	continuous = DFX_ContractParameterValue(continuous, GetMin(), GetMax(), mCurve, mCurveSpec);
+	continuous = DfxParam::contract(continuous, GetMin(), GetMax(), mCurve, mCurveSpec);
 	return DoubleToLongControl(continuous, 0.0, 1.0);
 }
 
@@ -414,7 +414,7 @@ long CPluginControl_DfxCurved::ConvertContinuousToControl(double continuous) con
 double CPluginControl_DfxCurved::ConvertControlToContinuous(long control) const
 {
 	double continous = LongControlToDouble(control, 0.0, 1.0);
-	return DFX_ExpandParameterValue(continous, GetMin(), GetMax(), mCurve, mCurveSpec);
+	return DfxParam::expand(continous, GetMin(), GetMax(), mCurve, mCurveSpec);
 }
 
 #endif	// !TARGET_API_AUDIOSUITE
@@ -441,16 +441,20 @@ ComponentResult DfxPlugin::SetChunk(OSType inChunkID, SFicPlugInChunk * chunk)
 //-----------------------------------------------------------------------------
 UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
 {
-	if (! IsAS() )
+	if (!IsAS())
+	{
 		return 0;
+	}
 
 	long totalInputSamples = 0;  // total number of input samples in one input buffer
 
 	// use the mono channel input sample number (guaranteed to be connected)
 	if (GetInputConnection(0) != NULL)
+	{
 		totalInputSamples = GetInputConnection(0)->mNumSamplesInBuf;
+	}
 
-	for (SInt32 ch=0; ch < GetNumOutputs(); ch++)
+	for (SInt32 ch = 0; ch < GetNumOutputs(); ch++)
 	{
 		// XXX what to do if there are no valid connections for the channel?
 		mInputAudioStreams_as[ch] = NULL;
@@ -477,7 +481,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
 			
 			if (inIsMasterBypassed)
 			{
-				for (long i=0; i < totalInputSamples; i++)
+				for (long i = 0; i < totalInputSamples; i++)
 					mOutputAudioStreams_as[ch][i] = mInputAudioStreams_as[ch][i];
 			}
 			// do the sample number adjustment
@@ -508,11 +512,11 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 	long samp;
 
 	// RTAS clip monitoring
-	for (channel=0; (channel < GetNumInputs()) && !fClipped; channel++)
+	for (channel = 0; (channel < GetNumInputs()) && !fClipped; channel++)
 	{
 		if (inAudioStreams[channel] == NULL)	// XXX possible in AudioSuite
 			continue;
-		for (samp=0; samp < inNumFramesToProcess; samp++)
+		for (samp = 0; samp < inNumFramesToProcess; samp++)
 		{
 			if (fabsf(inAudioStreams[channel][samp]) > 1.0f)
 			{
@@ -522,14 +526,14 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 		}
 	}
 
-	for (channel=0; channel < GetNumOutputs(); channel++)
+	for (channel = 0; channel < GetNumOutputs(); channel++)
 	{
-		if ( (inAudioStreams[channel] == NULL) || (outAudioStreams[channel] == NULL) )	// XXX possible in AudioSuite
+		if ((inAudioStreams[channel] == NULL) || (outAudioStreams[channel] == NULL))  // XXX possible in AudioSuite
 			continue;
 		if (mMasterBypass_rtas)
 		{
 			SInt32 inputChannelIndex = (GetNumInputs() < GetNumOutputs()) ? (GetNumInputs() - 1) : channel;
-			for (samp=0; samp < inNumFramesToProcess; samp++)
+			for (samp = 0; samp < inNumFramesToProcess; samp++)
 				outAudioStreams[channel][samp] = inAudioStreams[inputChannelIndex][samp];
 		}
 		else
@@ -544,15 +548,15 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 	}
 #if !TARGET_PLUGIN_USES_DSPCORE
 	if (!mMasterBypass_rtas)
-		processaudio((const float**)inAudioStreams, outAudioStreams, (unsigned)inNumFramesToProcess, true);
+		processaudio(const_cast<float const* const*>(inAudioStreams), const_cast<float* const*>(outAudioStreams), (unsigned)inNumFramesToProcess, true);
 #endif
 
 	// RTAS clip monitoring
-	for (channel=0; (channel < GetNumOutputs()) && !fClipped; channel++)
+	for (channel = 0; (channel < GetNumOutputs()) && !fClipped; channel++)
 	{
-		if (outAudioStreams[channel] == NULL)	// XXX possible in AudioSuite
+		if (outAudioStreams[channel] == NULL)  // XXX possible in AudioSuite
 			continue;
-		for (samp=0; samp < inNumFramesToProcess; samp++)
+		for (samp = 0; samp < inNumFramesToProcess; samp++)
 		{
 			if (fabsf(outAudioStreams[channel][samp]) > 1.0f)
 			{
@@ -598,9 +602,9 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 
 		ui = new CNoResourceView;
 #if PT_SDK_VERSION < 0x08000000
-		const long viewSizeOffset = 1;	// XXX +1 because of a bug where CNoResourceView::SetSize() subtracts 1 from width and height
+		constexpr long viewSizeOffset = 1;	// XXX +1 because of a bug where CNoResourceView::SetSize() subtracts 1 from width and height
 #else
-		const long viewSizeOffset = 0;	// the bug is fixed in the Pro Tools 8 SDK
+		constexpr long viewSizeOffset = 0;	// the bug is fixed in the Pro Tools 8 SDK
 #endif
 		ui->SetSize(mPIWinRect.right+viewSizeOffset, mPIWinRect.bottom+viewSizeOffset);
 
@@ -622,14 +626,14 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 #else
 	OSType meterFourCharID = 0;
 	OSType meterIDs[EffectLayerDef::MAX_NUM_CONNECTIONS];
-	for (UInt32 i=0; i < EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
+	for (UInt32 i = 0; i < EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
 	{
 		meterFourCharID = DFX_IterateAlphaNumericFourCharCode(meterFourCharID);
 		meterIDs[i] = meterFourCharID;
 	}
 
 	OSType clipIDs[EffectLayerDef::MAX_NUM_CONNECTIONS];
-	for (UInt32 i=0; i < EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
+	for (UInt32 i = 0; i < EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
 	{
 		meterFourCharID = DFX_IterateAlphaNumericFourCharCode(meterFourCharID);
 		clipIDs[i] = meterFourCharID;
@@ -752,7 +756,7 @@ void DfxPlugin::ProcessDoIdle()
 //-----------------------------------------------------------------------------
 ComponentResult DfxPlugin::SetControlHighliteInfo(long inControlIndex, short inIsHighlighted, short inColor)
 {
-	if (inControlIndex == kDFXParameterID_RTASMasterBypass)
+	if (inControlIndex == dfx::kParameterID_RTASMasterBypass)
 		CProcess::SetControlHighliteInfo(inControlIndex, inIsHighlighted, inColor);
 
 	if (mCustomUI_p)
@@ -801,11 +805,12 @@ void DfxPlugin::SetViewOrigin(Point anOrigin)
 
 #ifndef TARGET_API_AUDIOSUITE
 
-extern CEffectProcess * DFX_NewEffectProcess();
-extern CEffectProcess * DFX_NewEffectProcessAS();
+extern CEffectProcess* DFX_NewEffectProcess();
+extern CEffectProcess* DFX_NewEffectProcessAS();
 
 #if PT_SDK_VERSION < 0x08000000
-enum {
+enum
+{
 	plugInGestalt_SupportsRTElastic = pluginGestalt_WantsLoadSettingsFileCallback + 1,
 	plugInGestalt_RequiresPitchData,
 	pluginGestalt_WantsStateReset,
@@ -824,7 +829,7 @@ CProcessGroupInterface * CProcessGroup::CreateProcessGroup()
 DfxEffectGroup::DfxEffectGroup()
 {
 	DefineManufacturerNamesAndID(PLUGIN_CREATOR_NAME_STRING"\n", PLUGIN_CREATOR_ID);
-	DefinePlugInNamesAndVersion(PLUGIN_NAME_STRING, DFX_CompositePluginVersionNumberValue());
+	DefinePlugInNamesAndVersion(PLUGIN_NAME_STRING, dfx::CompositePluginVersionNumberValue());
 
 	AddGestalt(pluginGestalt_IsCacheable);
 #if PT_SDK_VERSION >= 0x08000000	// XXX otherwise compiling with earlier SDK (stupidly) results in an assert
@@ -942,11 +947,11 @@ static OSType DFX_IterateAlphaNumericFourCharCode(OSType inPreviousCode)
 	if (inPreviousCode)
 	{
 		OSType resultValue = inPreviousCode + 1;
-		const char * bytesPointer = (char*)(&resultValue);
+		auto const bytesPointer = reinterpret_cast<char*>(&resultValue);
 		while (true)
 		{
 			bool isValidCode = true;
-			for (size_t i=0; i < sizeof(resultValue); i++)
+			for (size_t i = 0; i < sizeof(resultValue); i++)
 			{
 				if (! isalnum(bytesPointer[i]) )
 				{
