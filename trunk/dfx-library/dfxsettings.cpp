@@ -54,7 +54,7 @@ DfxSettings::DfxSettings(long inMagic, DfxPlugin* inPlugin, size_t inSizeofExten
 	mNumParameters(std::max(inPlugin->getnumparameters(), 1L)),	// we need at least 1 parameter
 	mNumPresets(std::max(inPlugin->getnumpresets(), 1L)),	// we need at least 1 set of parameters
 	mSizeOfExtendedData(inSizeofExtendedData),
-	mParameterIDs(mNumParameters, kDfxParameterID_Invalid),
+	mParameterIDs(mNumParameters, dfx::kParameterID_Invalid),
 	mParameterAssignments(mNumParameters)
 {
 	assert(inPlugin);
@@ -68,12 +68,12 @@ DfxSettings::DfxSettings(long inMagic, DfxPlugin* inPlugin, size_t inSizeofExten
 	mSizeOfPresetChunk = mSizeOfPreset 				// 1 preset
 						 + sizeof(SettingsInfo) 	// the special data header info
 						 + mSizeOfParameterIDs		// the table of parameter IDs
-						 + (sizeof(DfxParameterAssignment) * mNumParameters)  // the MIDI events assignment array
+						 + (sizeof(dfx::ParameterAssignment) * mNumParameters)  // the MIDI events assignment array
 						 + inSizeofExtendedData;
 	mSizeOfChunk = (mSizeOfPreset * mNumPresets)	// all of the presets
 					+ sizeof(SettingsInfo)			// the special data header info
 					+ mSizeOfParameterIDs			// the table of parameter IDs
-					+ (sizeof(DfxParameterAssignment) * mNumParameters)  // the MIDI events assignment array
+					+ (sizeof(dfx::ParameterAssignment) * mNumParameters)  // the MIDI events assignment array
 					+ inSizeofExtendedData;
 
 	// set all of the header infos
@@ -83,7 +83,7 @@ DfxSettings::DfxSettings(long inMagic, DfxPlugin* inPlugin, size_t inSizeofExten
 	mSettingsInfo.mStoredHeaderSize = sizeof(SettingsInfo);
 	mSettingsInfo.mNumStoredParameters = mNumParameters;
 	mSettingsInfo.mNumStoredPresets = mNumPresets;
-	mSettingsInfo.mStoredParameterAssignmentSize = sizeof(DfxParameterAssignment);
+	mSettingsInfo.mStoredParameterAssignmentSize = sizeof(dfx::ParameterAssignment);
 	mSettingsInfo.mStoredExtendedDataSize = inSizeofExtendedData;
 
 	clearAssignments();  // initialize all of the parameters to have no MIDI event assignments
@@ -157,7 +157,7 @@ std::vector<uint8_t> DfxSettings::save(bool inIsPreset)
 	// and a few pointers to elements within that data, just for ease of use
 	auto const firstSharedParameterID = reinterpret_cast<int32_t*>(data.data() + sizeof(SettingsInfo));
 	auto const firstSharedPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(firstSharedParameterID) + mSizeOfParameterIDs);
-	auto const firstSharedParameterAssignment = reinterpret_cast<DfxParameterAssignment*>(reinterpret_cast<char*>(firstSharedPreset) + (mSizeOfPreset * mNumPresets));
+	auto const firstSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<char*>(firstSharedPreset) + (mSizeOfPreset * mNumPresets));
 
 	// first store the special chunk infos
 	sharedChunk->mMagic = mSettingsInfo.mMagic;
@@ -185,7 +185,7 @@ std::vector<uint8_t> DfxSettings::save(bool inIsPreset)
 			firstSharedPreset->mParameterValues[i] = mPlugin->getparameter_f(i);
 		}
 
-		auto const tempSharedParameterAssignment = reinterpret_cast<DfxParameterAssignment*>(reinterpret_cast<char*>(firstSharedPreset) + mSizeOfPreset);
+		auto const tempSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<char*>(firstSharedPreset) + mSizeOfPreset);
 		// store the parameters' MIDI event assignments
 		for (long i = 0; i < mNumParameters; i++)
 		{
@@ -291,7 +291,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 	// figure out how many presets we should try to load 
 	// if the incoming chunk doesn't match what we're expecting
 	long const copyPresets = inIsPreset ? 1 : std::min(static_cast<long>(numStoredPresets), mNumPresets);
-	// figure out how much of the DfxParameterAssignment structure we can import
+	// figure out how much of the dfx::ParameterAssignment structure we can import
 	auto const copyParameterAssignmentSize = std::min(newSettingsInfo->mStoredParameterAssignmentSize, mSettingsInfo.mStoredParameterAssignmentSize);
 
 	// check for conflicts and keep track of them
@@ -354,7 +354,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 	// destination parameters (in case the parameter IDs don't all match up)
 	//  [ the index of paramMap is the same as our parameter tag/index and the value 
 	//    is the tag/index of the incoming parameter that corresponds, if any ]
-	std::vector<long> paramMap(mNumParameters, kDfxParameterID_Invalid);
+	std::vector<long> paramMap(mNumParameters, dfx::kParameterID_Invalid);
 	for (size_t tag = 0; tag < mParameterIDs.size(); tag++)
 	{
 		paramMap[tag] = getParameterTagFromID(mParameterIDs[tag], numStoredParameters, newParameterIDs);
@@ -379,14 +379,14 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 		// back up the pointer to account for shorter preset names
 		if (oldVST)
 		{
-			newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newPreset) + kDfxOldPresetNameMaxLength - kDfxPresetNameMaxLength);
+			newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
 		}
 	#endif
 		// copy all of the parameters that we can for this preset from the chunk
 		for (long i = 0; i < static_cast<long>(paramMap.size()); i++)
 		{
 			auto const mappedTag = paramMap[i];
-			if (mappedTag != kDfxParameterID_Invalid)
+			if (mappedTag != dfx::kParameterID_Invalid)
 			{
 			#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 				// handle old-style generic VST 0.0 to 1.0 parameter values
@@ -420,14 +420,14 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 			// back up the pointer to account for shorter preset names
 			if (oldVST)
 			{
-				newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newPreset) + kDfxOldPresetNameMaxLength - kDfxPresetNameMaxLength);
+				newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
 			}
 		#endif
 			// copy all of the parameters that we can for this preset from the chunk
 			for (long i = 0; i < static_cast<long>(paramMap.size()); i++)
 			{
 				auto const mappedTag = paramMap[i];
-				if (mappedTag != kDfxParameterID_Invalid)
+				if (mappedTag != dfx::kParameterID_Invalid)
 				{
 				#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 					// handle old-style generic VST 0.0 to 1.0 parameter values
@@ -458,21 +458,21 @@ if (!(oldVST && inIsPreset))
 	clearAssignments();
 	// then point to the last chunk data element, the MIDI event assignment array
 	// (offset by the number of stored presets that were skipped, if any)
-	DfxParameterAssignment* newParameterAssignments = nullptr;
+	dfx::ParameterAssignment* newParameterAssignments = nullptr;
 //	if (inIsPreset)
 	{
-//		newParameterAssignments = reinterpret_cast<DfxParameterAssignment*>(reinterpret_cast<char*>(newPreset) + sizeofStoredPreset);
+//		newParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<char*>(newPreset) + sizeofStoredPreset);
 	}
 //	else
 	{
-		newParameterAssignments = reinterpret_cast<DfxParameterAssignment*>(reinterpret_cast<char*>(newPreset) + 
+		newParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<char*>(newPreset) + 
 								  ((numStoredPresets - copyPresets) * sizeofStoredPreset));
 	}
 	// and load up as many of them as we can
 	for (long i = 0; i < mNumParameters; i++)
 	{
 		auto const mappedTag = paramMap[i];
-		if (mappedTag != kDfxParameterID_Invalid)
+		if (mappedTag != dfx::kParameterID_Invalid)
 		{
 			memcpy(mParameterAssignments.data() + i, 
 				   reinterpret_cast<char*>(newParameterAssignments) + (mappedTag * newSettingsInfo->mStoredParameterAssignmentSize), 
@@ -489,24 +489,6 @@ if (!(oldVST && inIsPreset))
 										 newSettingsInfo->mStoredExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
 
 	return true;
-}
-
-//-----------------------------------------------------------------------------
-// XXX temporary (for testing)
-void DFX_DEBUG_ALERT_CORRUPT_DATA(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize)
-{
-#if 1
-#if TARGET_OS_MAC
-	CFStringRef title = CFSTR("settings data fuct");
-	dfx::UniqueCFType<CFStringRef> const message(CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, 
-																		  CFSTR("This should never happen.  Please inform the developers at " DESTROYFX_URL " if you see this message.  Please tell them: \r\rdata item name = %s \rdata item size = %lu \rtotal data size = %lu"),
-																		  inDataItemName, inDataItemSize, inDataTotalSize));
-	if (message)
-	{
-		CFUserNotificationDisplayNotice(0.0, kCFUserNotificationPlainAlertLevel, nullptr, nullptr, nullptr, title, message.get(), nullptr);
-	}
-#endif
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -558,7 +540,7 @@ void blah(long long x)
 	// reverse the order of bytes of the header values
 	if ((reinterpret_cast<char*>(dataHeader) + storedHeaderSize) > dataEndAddress)  // the data is somehow corrupt
 	{
-		DFX_DEBUG_ALERT_CORRUPT_DATA("header", storedHeaderSize, inDataSize);
+		debugAlertCorruptData("header", storedHeaderSize, inDataSize);
 		return false;
 	}
 	dfx::ReverseBytes(dataHeader, sizeof(dataHeader->mMagic), storedHeaderSize / sizeof(dataHeader->mMagic));
@@ -567,7 +549,7 @@ void blah(long long x)
 	auto const dataParameterIDs = reinterpret_cast<int32_t*>(static_cast<char*>(ioData) + storedHeaderSize);
 	if ((reinterpret_cast<char*>(dataParameterIDs) + (sizeof(*dataParameterIDs) * numStoredParameters)) > dataEndAddress)  // the data is somehow corrupt
 	{
-		DFX_DEBUG_ALERT_CORRUPT_DATA("parameter IDs", sizeof(*dataParameterIDs) * numStoredParameters, inDataSize);
+		debugAlertCorruptData("parameter IDs", sizeof(*dataParameterIDs) * numStoredParameters, inDataSize);
 		return false;
 	}
 	dfx::ReverseBytes(dataParameterIDs, sizeof(*dataParameterIDs), static_cast<size_t>(numStoredParameters));
@@ -580,15 +562,15 @@ void blah(long long x)
 	if (DFX_IsOldVstVersionNumber(storedVersion))
 	{
 		// back up the pointer to account for shorter preset names
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(dataPresets) - kDfxPresetNameMaxLength + kDfxOldPresetNameMaxLength);
+		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(dataPresets) - dfx::kPresetNameMaxLength + kDfxOldPresetNameMaxLength);
 		// and shrink the size to account for shorter preset names
-		sizeofStoredPreset -= kDfxPresetNameMaxLength;
+		sizeofStoredPreset -= dfx::kPresetNameMaxLength;
 		sizeofStoredPreset += kDfxOldPresetNameMaxLength;
 	}
 #endif
 	if ((reinterpret_cast<char*>(dataPresets) + (sizeofStoredPreset * numStoredPresets)) > dataEndAddress)  // the data is somehow corrupt
 	{
-		DFX_DEBUG_ALERT_CORRUPT_DATA("presets", sizeofStoredPreset * numStoredPresets, inDataSize);
+		debugAlertCorruptData("presets", sizeofStoredPreset * numStoredPresets, inDataSize);
 		return false;
 	}
 	for (long i = 0; i < numStoredPresets; i++)
@@ -601,7 +583,7 @@ void blah(long long x)
 	if (DFX_IsOldVstVersionNumber(storedVersion))
 	{
 		// advance the pointer to compensate for backing up earlier
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(dataPresets) + kDfxPresetNameMaxLength - kDfxOldPresetNameMaxLength);
+		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(dataPresets) + dfx::kPresetNameMaxLength - kDfxOldPresetNameMaxLength);
 	}
 #endif
 
@@ -610,10 +592,10 @@ if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 {
 #endif
 	// and reverse the byte order of each event assignment
-	auto const dataParameterAssignments = reinterpret_cast<DfxParameterAssignment*>(dataPresets);
+	auto const dataParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(dataPresets);
 	if ((reinterpret_cast<char*>(dataParameterAssignments) + (sizeof(*dataParameterAssignments) * numStoredParameters)) > dataEndAddress)  // the data is somehow corrupt
 	{
-		DFX_DEBUG_ALERT_CORRUPT_DATA("parameter assignments", sizeof(*dataParameterAssignments) * numStoredParameters, inDataSize);
+		debugAlertCorruptData("parameter assignments", sizeof(*dataParameterAssignments) * numStoredParameters, inDataSize);
 		return false;
 	}
 	for (long i = 0; i < numStoredParameters; i++)
@@ -670,7 +652,7 @@ bool DFX_AddNumberToCFDictionary(void const* inNumber, CFNumberType inType, CFMu
 		return false;
 	}
 
-	dfx::UniqueCFType<CFNumberRef> const cfNumber(CFNumberCreate(kCFAllocatorDefault, inType, inNumber));
+	dfx::UniqueCFType const cfNumber = CFNumberCreate(kCFAllocatorDefault, inType, inNumber);
 	if (cfNumber)
 	{
 		CFDictionarySetValue(inDictionary, inDictionaryKey, cfNumber.get());
@@ -755,7 +737,7 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 	bool assignmentsFound = false;
 	for (long i = 0; i < mNumParameters; i++)
 	{
-		if (getParameterAssignmentType(i) != DfxMidiEventType::None)
+		if (getParameterAssignmentType(i) != dfx::MidiEventType::None)
 		{
 			assignmentsFound = true;
 		}
@@ -763,15 +745,15 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 
 	if (assignmentsFound)
 	{
-		dfx::UniqueCFType<CFMutableArrayRef> const assignmentsCFArray(CFArrayCreateMutable(kCFAllocatorDefault, mNumParameters, &kCFTypeArrayCallBacks));
+		dfx::UniqueCFType const assignmentsCFArray = CFArrayCreateMutable(kCFAllocatorDefault, mNumParameters, &kCFTypeArrayCallBacks);
 		if (assignmentsCFArray)
 		{
 			for (long i = 0; i < mNumParameters; i++)
 			{
-				dfx::UniqueCFType<CFMutableDictionaryRef> const assignmentCFDictionary(CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
+				dfx::UniqueCFType const assignmentCFDictionary = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 				if (assignmentCFDictionary)
 				{
-					if (getParameterID(i) == kDfxParameterID_Invalid)
+					if (getParameterID(i) == dfx::kParameterID_Invalid)
 					{
 						continue;
 					}
@@ -826,8 +808,8 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 				{
 					continue;
 				}
-				auto const paramID = getParameterTagFromID(paramID_optional.value_or(kDfxParameterID_Invalid));
-				if (paramID == kDfxParameterID_Invalid)
+				auto const paramID = getParameterTagFromID(paramID_optional.value_or(dfx::kParameterID_Invalid));
+				if (paramID == dfx::kParameterID_Invalid)
 				{
 					continue;
 				}
@@ -883,8 +865,8 @@ void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValu
 		return;
 	}
 
-	handleMidi_assignParam(DfxMidiEventType::CC, inMidiChannel, inControllerNumber, inBufferOffset);
-	handleMidi_automateParams(DfxMidiEventType::CC, inMidiChannel, inControllerNumber, inValue, inBufferOffset);
+	handleMidi_assignParam(dfx::MidiEventType::CC, inMidiChannel, inControllerNumber, inBufferOffset);
+	handleMidi_automateParams(dfx::MidiEventType::CC, inMidiChannel, inControllerNumber, inValue, inBufferOffset);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -902,10 +884,10 @@ void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValue
 	int realLSB = inValueLSB;
 	inValueLSB = 0;  // <- XXX this is stoopid
 
-	handleMidi_assignParam(DfxMidiEventType::PitchBend, inMidiChannel, inValueLSB, inBufferOffset);
+	handleMidi_assignParam(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inBufferOffset);
 
 	inValueLSB = realLSB;  // restore it   <- XXX ugh stupid hackz...
-	handleMidi_automateParams(DfxMidiEventType::PitchBend, inMidiChannel, inValueLSB, inValueMSB, inBufferOffset);
+	handleMidi_automateParams(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inValueMSB, inBufferOffset);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -916,8 +898,8 @@ void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVeloci
 		return;
 	}
 
-	handleMidi_assignParam(DfxMidiEventType::Note, inMidiChannel, inNoteNumber, inBufferOffset);
-	handleMidi_automateParams(DfxMidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inBufferOffset, false);
+	handleMidi_assignParam(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inBufferOffset);
+	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inBufferOffset, false);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -930,22 +912,22 @@ void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVeloc
 
 	bool allowAssignment = true;
 	// don't use note-offs if we're using note toggle control, but not note-hold style
-	if ((mLearnerEventBehaviorFlags & kDfxMidiEventBehaviorFlag_Toggle) && 
-		!(mLearnerEventBehaviorFlags & kDfxMidiEventBehaviorFlag_NoteHold))
+	if ((mLearnerEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle) && 
+		!(mLearnerEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_NoteHold))
 	{
 		allowAssignment = false;
 	}
 	// don't use note-offs if we're using note ranges, not note toggle control
-	if (!(mLearnerEventBehaviorFlags & kDfxMidiEventBehaviorFlag_Toggle))
+	if (!(mLearnerEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle))
 	{
 		allowAssignment = false;
 	}
 
 	if (allowAssignment)
 	{
-		handleMidi_assignParam(DfxMidiEventType::Note, inMidiChannel, inNoteNumber, inBufferOffset);
+		handleMidi_assignParam(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inBufferOffset);
 	}
-	handleMidi_automateParams(DfxMidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inBufferOffset, true);
+	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inBufferOffset, true);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -958,13 +940,13 @@ void DfxSettings::handleAllNotesOff(int inMidiChannel, long inBufferOffset)
 
 	for (long i = 0; i < DfxMidi::kNumNotes; i++)
 	{
-		handleMidi_automateParams(DfxMidiEventType::Note, inMidiChannel, i, 0, inBufferOffset, true);
+		handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, i, 0, inBufferOffset, true);
 	}
 }
 
 //-----------------------------------------------------------------------------------------
 // assign an incoming MIDI event to the learner parameter
-void DfxSettings::handleMidi_assignParam(DfxMidiEventType inEventType, long inMidiChannel, long inByte1, long inBufferOffset)
+void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inBufferOffset)
 {
 	// we don't need to make an assignment to a parameter if MIDI learning is off
 	if (!mMidiLearn || !paramTagIsValid(mLearner))
@@ -973,7 +955,7 @@ void DfxSettings::handleMidi_assignParam(DfxMidiEventType inEventType, long inMi
 	}
 
 	// see whether we are setting up a note range for parameter control 
-	if ((inEventType == DfxMidiEventType::Note) && !(mLearnerEventBehaviorFlags & kDfxMidiEventBehaviorFlag_Toggle))
+	if ((inEventType == dfx::MidiEventType::Note) && !(mLearnerEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle))
 	{
 		if (mNoteRangeHalfwayDone)
 		{
@@ -1028,11 +1010,11 @@ void DfxSettings::handleMidi_assignParam(DfxMidiEventType inEventType, long inMi
 
 //-----------------------------------------------------------------------------------------
 // automate assigned parameters in response to a MIDI event
-void DfxSettings::handleMidi_automateParams(DfxMidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff)
+void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff)
 {
 	float fValue = static_cast<float>(inByte2) / 127.0f;
 
-	if (inEventType == DfxMidiEventType::PitchBend)
+	if (inEventType == dfx::MidiEventType::PitchBend)
 	{
 		if (inByte2 < 127)  // stay in the 0.0 to 1.0 range
 		{
@@ -1064,11 +1046,11 @@ void DfxSettings::handleMidi_automateParams(DfxMidiEventType inEventType, long i
 			continue;
 		}
 
-		if (inEventType == DfxMidiEventType::Note)
+		if (inEventType == dfx::MidiEventType::Note)
 		{
 			// toggle the parameter on or off
 			// (when using notes, this flag overrides Toggle)
-			if (pa->mEventBehaviorFlags & kDfxMidiEventBehaviorFlag_NoteHold)
+			if (pa->mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_NoteHold)
 			{
 				// don't automate this parameter if the note does not match its assignment
 				if (pa->mEventNum != inByte1)
@@ -1078,7 +1060,7 @@ void DfxSettings::handleMidi_automateParams(DfxMidiEventType inEventType, long i
 				fValue = inIsNoteOff ? 0.0f : 1.0f;
 			}
 			// toggle the parameter's states
-			else if (pa->mEventBehaviorFlags & kDfxMidiEventBehaviorFlag_Toggle)
+			else if (pa->mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle)
 			{
 				// don't automate this parameter if the note does not match its assignment
 				if (pa->mEventNum != inByte1)
@@ -1126,7 +1108,7 @@ void DfxSettings::handleMidi_automateParams(DfxMidiEventType inEventType, long i
 			}
 
 			// recalculate fValue to toggle the parameter's states
-			if (pa->mEventBehaviorFlags & kDfxMidiEventBehaviorFlag_Toggle)
+			if (pa->mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle)
 			{
 				auto const numSteps = std::max(pa->mDataInt1, 2);  // we need at least 2 states to toggle with
 				auto maxSteps = pa->mDataInt2;
@@ -1150,7 +1132,7 @@ void DfxSettings::handleMidi_automateParams(DfxMidiEventType inEventType, long i
 		// this is an invitation to do something more, if necessary
 		mPlugin->settings_doMidiAutomatedSetParameterStuff(tag, fValue, inBufferOffset);
 
-	}	// end of parameters loop (for automation)
+	}  // end of parameters loop (for automation)
 }
 
 
@@ -1167,9 +1149,9 @@ void DfxSettings::clearAssignments()
 
 //-----------------------------------------------------------------------------
 // assign a CC to a parameter
-void DfxSettings::assignParam(long inParamTag, DfxMidiEventType inEventType, long inEventChannel, long inEventNum, 
-							long inEventNum2, DfxMidiEventBehaviorFlags inEventBehaviorFlags, 
-							long inData1, long inData2, float inFloatData1, float inFloatData2)
+void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, long inEventChannel, long inEventNum, 
+							  long inEventNum2, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
+							  long inData1, long inData2, float inFloatData1, float inFloatData2)
 {
 	// abort if the parameter index is not valid
 	if (!paramTagIsValid(inParamTag))
@@ -1183,7 +1165,7 @@ void DfxSettings::assignParam(long inParamTag, DfxMidiEventType inEventType, lon
 	}
 
 	// if we're note-toggling, set up a bogus "range" for comparing with note range assignments
-	if ((inEventType == DfxMidiEventType::Note) && (inEventBehaviorFlags & kDfxMidiEventBehaviorFlag_Toggle))
+	if ((inEventType == dfx::MidiEventType::Note) && (inEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle))
 	{
 		inEventNum2 = inEventNum;
 	}
@@ -1208,7 +1190,7 @@ void DfxSettings::assignParam(long inParamTag, DfxMidiEventType inEventType, lon
 			}
 
 			// it's a note, so we have to do complicated stuff
-			if (inEventType == DfxMidiEventType::Note)
+			if (inEventType == dfx::MidiEventType::Note)
 			{
 				// lower note overlaps with existing note assignment
 				if ((pa->mEventNum >= inEventNum) && (pa->mEventNum <= inEventNum2))
@@ -1259,11 +1241,11 @@ void DfxSettings::unassignParam(long inParamTag)
 	}
 
 	// clear the MIDI event assignment for this parameter
-	mParameterAssignments[inParamTag].mEventType = DfxMidiEventType::None;
+	mParameterAssignments[inParamTag].mEventType = dfx::MidiEventType::None;
 	mParameterAssignments[inParamTag].mEventChannel = 0;
 	mParameterAssignments[inParamTag].mEventNum = 0;
 	mParameterAssignments[inParamTag].mEventNum2 = 0;
-	mParameterAssignments[inParamTag].mEventBehaviorFlags = kDfxMidiEventBehaviorFlag_None;
+	mParameterAssignments[inParamTag].mEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
 	mParameterAssignments[inParamTag].mDataInt1 = 0;
 	mParameterAssignments[inParamTag].mDataInt2 = 0;
 	mParameterAssignments[inParamTag].mDataFloat1 = 0.0f;
@@ -1288,7 +1270,7 @@ void DfxSettings::setLearning(bool inLearnMode)
 	mMidiLearn = inLearnMode;
 
 #ifdef TARGET_API_AUDIOUNIT
-	mPlugin->PropertyChanged(kDfxPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
+	mPlugin->PropertyChanged(dfx::kPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
 #endif
 }
 
@@ -1301,8 +1283,8 @@ bool DfxSettings::isLearner(long inParamTag) const noexcept
 
 //-----------------------------------------------------------------------------
 // define the actively learning parameter during MIDI learn mode
-void DfxSettings::setLearner(long inParamTag, DfxMidiEventBehaviorFlags inEventBehaviorFlags, 
-							long inData1, long inData2, float inFloatData1, float inFloatData2)
+void DfxSettings::setLearner(long inParamTag, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
+							 long inData1, long inData2, float inFloatData1, float inFloatData2)
 {
 	// allow this invalid parameter tag, and then exit
 	if (inParamTag == kNoLearner)
@@ -1336,7 +1318,7 @@ void DfxSettings::setLearner(long inParamTag, DfxMidiEventBehaviorFlags inEventB
 	else if (inParamTag == kNoLearner)
 	{
 		mLearner = inParamTag;
-		mLearnerEventBehaviorFlags = kDfxMidiEventBehaviorFlag_None;
+		mLearnerEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
 	}
 }
 
@@ -1378,7 +1360,7 @@ void DfxSettings::setParameterMidiReset(bool inValue)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
-DfxParameterAssignment DfxSettings::getParameterAssignment(long inParamTag) const
+dfx::ParameterAssignment DfxSettings::getParameterAssignment(long inParamTag) const
 {
 	// return a no-assignment structure if what we got is not a valid parameter index
 	if (!paramTagIsValid(inParamTag))
@@ -1390,12 +1372,12 @@ DfxParameterAssignment DfxSettings::getParameterAssignment(long inParamTag) cons
 }
 
 //-----------------------------------------------------------------------------
-DfxMidiEventType DfxSettings::getParameterAssignmentType(long inParamTag) const
+dfx::MidiEventType DfxSettings::getParameterAssignmentType(long inParamTag) const
 {
 	// return no-assignment if what we got is not a valid parameter index
 	if (!paramTagIsValid(inParamTag))
 	{
-		return DfxMidiEventType::None;
+		return dfx::MidiEventType::None;
 	}
 
 	return mParameterAssignments[inParamTag].mEventType;
@@ -1437,7 +1419,7 @@ long DfxSettings::getParameterTagFromID(long inParamID, long inNumSearchIDs, int
 	}
 
 	// if nothing was found, then return the error ID
-	return kDfxParameterID_Invalid;
+	return dfx::kParameterID_Invalid;
 }
 
 
@@ -1507,4 +1489,21 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
 		default:
 			return CrisisError::NoError;
 	}
+}
+
+//-----------------------------------------------------------------------------
+// XXX temporary (for testing)
+void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize)
+{
+#if TARGET_OS_MAC
+	CFStringRef const title = CFSTR("settings data fuct");
+	dfx::UniqueCFType const message = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, 
+															   CFSTR("This should never happen.  Please inform the computerists at " DESTROYFX_URL " if you see this message.  Please tell them: \n\ndata item name = %s \ndata item size = %zu \ntotal data size = %zu"),
+															   inDataItemName, inDataItemSize, inDataTotalSize);
+	if (message)
+	{
+		dfx::UniqueCFType const iconURL = mPlugin->CopyIconLocation();
+		CFUserNotificationDisplayNotice(0.0, kCFUserNotificationStopAlertLevel, iconURL.get(), nullptr, nullptr, title, message.get(), nullptr);
+	}
+#endif
 }

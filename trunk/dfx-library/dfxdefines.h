@@ -93,40 +93,27 @@ somewhere in the include tree for every file for a DfxPlugin.
 	#else
 		#include <stdint.h>
 	#endif
-
-	/* interpret fractional numbers as booleans (for plugin parameters) */
-	#ifndef __cplusplus
-		#ifdef _MSC_VER
-			#ifndef bool
-				#define bool	int
-			#endif
-		#else
-			#include <stdbool.h>
-		#endif
-	#endif
-	inline bool FBOOL(float inValue)
-	{
-		return (inValue != 0.0f);
-	}
-	inline bool DBOOL(double inValue)
-	{
-		return (inValue != 0.0);
-	}
 #endif
 
 
 
 /*-----------------------------------------------------------------------------*/
 #ifdef __cplusplus
-	#include <stddef.h>
 
+#include <stddef.h>
+
+namespace dfx
+{
 	// to indicate "not a real parameter" or something like that 
-	constexpr long kDfxParameterID_Invalid = -1;
+	constexpr long kParameterID_Invalid = -1;
 
-	constexpr size_t kDfxParameterNameMaxLength = 64;
-	constexpr size_t kDfxPresetNameMaxLength = 64;
-	constexpr size_t kDfxParameterValueStringMaxLength = 256;
-	constexpr size_t kDfxParameterUnitStringMaxLength = 256;
+	constexpr size_t kParameterNameMaxLength = 64;
+	constexpr size_t kPresetNameMaxLength = 64;
+	constexpr size_t kParameterValueStringMaxLength = 256;
+	constexpr size_t kParameterUnitStringMaxLength = 256;
+
+}
+
 #endif
 
 

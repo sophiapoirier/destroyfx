@@ -39,7 +39,7 @@ public:
 
 	DGTextDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
 				  CParamDisplayValueToStringProc inTextProc, void* inUserData, DGImage* inBackgroundImage, 
-				  DGTextAlignment inTextAlignment = DGTextAlignment::Left, float inFontSize = 12.0f, 
+				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
 				  DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
 
 #if 0
@@ -47,10 +47,10 @@ public:
 	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
 #endif
 
-	void setTextAlignment(DGTextAlignment inTextAlignment);
-	DGTextAlignment getTextAlignment() const noexcept;
+	void setTextAlignment(dfx::TextAlignment inTextAlignment);
+	dfx::TextAlignment getTextAlignment() const noexcept;
 #if 0
-	void setMouseAxis(DGAxis inMouseAxis) noexcept
+	void setMouseAxis(dfx::Axis inMouseAxis) noexcept
 	{
 		mMouseAxis = inMouseAxis;
 	}
@@ -62,7 +62,11 @@ public:
 
 	void refreshText();  // trigger a re-conversion of the numerical value to text
 
+	CLASS_METHODS(DGTextDisplay, CTextEdit)
+
 protected:
+	void drawPlatformText(CDrawContext* inContext, IPlatformString* inString, CRect const& inRegion) override;
+
 	bool valueToTextProcBridge(float inValue, char outTextUTF8[kTextMaxLength], CParamDisplay* inUserData);
 	bool textToValueProcBridge(UTF8StringPtr inText, float& outValue, CTextEdit* textEdit);
 
@@ -71,7 +75,7 @@ protected:
 	TextToValueProc mTextToValueProc;
 
 #if 0
-	DGAxis mMouseAxis = kDGAxis_Vertical;  // indicates which directions you can mouse to adjust the control's value
+	dfx::Axis mMouseAxis = dfx::kAxis_Vertical;  // indicates which directions you can mouse to adjust the control's value
 	float mLastX = 0.0f, mLastY = 0.0f;
 #endif
 };
@@ -84,12 +88,17 @@ class DGStaticTextDisplay : public CTextLabel, public DGControl
 {
 public:
 	DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
-						DGTextAlignment inTextAlignment = DGTextAlignment::Left, float inFontSize = 12.0f, 
+						dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
 						DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
 
 #if TARGET_OS_MAC
 	void setCFText(CFStringRef inText);
 #endif
+
+	CLASS_METHODS(DGStaticTextDisplay, CTextLabel)
+
+protected:
+	void drawPlatformText(CDrawContext* inContext, IPlatformString* inString, CRect const& inRegion) override;
 };
 
 
@@ -100,7 +109,7 @@ class DGTextArrayDisplay : public DGTextDisplay
 {
 public:
 	DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, long inNumStrings, 
-					   DGTextAlignment inTextAlignment = DGTextAlignment::Left, DGImage* inBackground = nullptr, 
+					   dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, DGImage* inBackground = nullptr, 
 					   float inFontSize = 12.0f, DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
 
 	void draw(CDrawContext* inContext) override;

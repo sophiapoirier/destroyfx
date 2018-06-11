@@ -311,68 +311,68 @@ long BufferOverrideEditor::OpenEditor()
 
 	auto const divisorLFORateTag = getparameter_b(kDivisorLFOTempoSync) ? kDivisorLFORate_Sync : kDivisorLFORate_Hz;
 	pos.set(kDivisorLFORateSliderX, kDivisorLFORateSliderY, kSliderWidth, kLFOSliderHeight);
-	mDivisorLFORateSlider = emplaceControl<DGSlider>(this, divisorLFORateTag, pos, kDGAxis_Horizontal, sliderHandleImage);
+	mDivisorLFORateSlider = emplaceControl<DGSlider>(this, divisorLFORateTag, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	pos.set(kDivisorLFODepthSliderX, kDivisorLFODepthSliderY, kSliderWidth, kLFOSliderHeight);
-	emplaceControl<DGSlider>(this, kDivisorLFODepth, pos, kDGAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kDivisorLFODepth, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	auto const bufferLFORateTag = getparameter_b(kBufferLFOTempoSync) ? kBufferLFORate_Sync : kBufferLFORate_Hz;
 	pos.set(kBufferLFORateSliderX, kBufferLFORateSliderY, kSliderWidth, kLFOSliderHeight);
-	mBufferLFORateSlider = emplaceControl<DGSlider>(this, bufferLFORateTag, pos, kDGAxis_Horizontal, sliderHandleImage);
+	mBufferLFORateSlider = emplaceControl<DGSlider>(this, bufferLFORateTag, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	pos.set(kBufferLFODepthSliderX, kBufferLFODepthSliderY, kSliderWidth, kLFOSliderHeight);
-	emplaceControl<DGSlider>(this, kBufferLFODepth, pos, kDGAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kBufferLFODepth, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	pos.set(kSmoothSliderX, kSmoothSliderY, kSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kSmooth, pos, kDGAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kSmooth, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	pos.set(kDryWetMixSliderX, kDryWetMixSliderY, kSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kDryWetMix, pos, kDGAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kDryWetMix, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	pos.set(kPitchbendSliderX, kPitchbendSliderY, kSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kPitchbend, pos, kDGAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kPitchbend, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kTempo, pos, kDGAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage);
 
 	pos.set(kDivisorBufferBoxX + 3, kDivisorBufferBoxY + 27, kDivisorBufferBoxWidth - 6, kSliderHeight);
-	emplaceControl<DGSlider>(this, kDivisor, pos, kDGAxis_Horizontal, xyBoxHandleImage);
+	emplaceControl<DGSlider>(this, kDivisor, pos, dfx::kAxis_Horizontal, xyBoxHandleImage);
 
 	auto const bufferSizeTag = getparameter_b(kBufferTempoSync) ? kBufferSize_Sync : kBufferSize_MS;
 	pos.offset(0, 57);
-	mBufferSizeSlider = emplaceControl<DGSlider>(this, bufferSizeTag, pos, kDGAxis_Horizontal, xyBoxHandleImage);
+	mBufferSizeSlider = emplaceControl<DGSlider>(this, bufferSizeTag, pos, dfx::kAxis_Horizontal, xyBoxHandleImage);
 
 
 
 	pos.set(kDivisorDisplayX, kDivisorDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kDivisor, pos, divisorDisplayProc, nullptr, nullptr, DGTextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kDivisor, pos, divisorDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kBufferDisplayX, kBufferDisplayY, kDisplayWidth, kDisplayHeight);
-	mBufferSizeDisplay = emplaceControl<DGTextDisplay>(this, bufferSizeTag, pos, bufferSizeDisplayProc, this, nullptr, DGTextAlignment::Center, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
+	mBufferSizeDisplay = emplaceControl<DGTextDisplay>(this, bufferSizeTag, pos, bufferSizeDisplayProc, this, nullptr, dfx::TextAlignment::Center, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kDivisorLFORateDisplayX, kDivisorLFORateDisplayY, kLFORateDisplayWidth, kDisplayHeight);
-	mDivisorLFORateDisplay = emplaceControl<DGTextDisplay>(this, divisorLFORateTag, pos, divisorLFORateDisplayProc, this, nullptr, DGTextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
+	mDivisorLFORateDisplay = emplaceControl<DGTextDisplay>(this, divisorLFORateTag, pos, divisorLFORateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kDivisorLFODepthDisplayX, kDivisorLFODepthDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kDivisorLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, DGTextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kDivisorLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kBufferLFORateDisplayX, kBufferLFORateDisplayY, kLFORateDisplayWidth, kDisplayHeight);
-	mBufferLFORateDisplay = emplaceControl<DGTextDisplay>(this, bufferLFORateTag, pos, bufferLFORateDisplayProc, this, nullptr, DGTextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
+	mBufferLFORateDisplay = emplaceControl<DGTextDisplay>(this, bufferLFORateTag, pos, bufferLFORateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kBufferLFODepthDisplayX, kBufferLFODepthDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kBufferLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, DGTextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kBufferLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kSmoothDisplayX, kSmoothDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSmooth, pos, smoothDisplayProc, nullptr, nullptr, DGTextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSmooth, pos, smoothDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kDryWetMixDisplayX, kDryWetMixDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kDryWetMix, pos, dryWetMixDisplayProc, nullptr, nullptr, DGTextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kDryWetMix, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kPitchbendDisplayX, kPitchbendDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kPitchbend, pos, pitchbendDisplayProc, nullptr, nullptr, DGTextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kPitchbend, pos, pitchbendDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kTempoDisplayX, kTempoDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, DGTextAlignment::Left, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
 
 
 	// forced buffer size tempo sync button
@@ -446,10 +446,10 @@ long BufferOverrideEditor::OpenEditor()
 
 	// the help mouseover hint thingy
 	pos.set(kHelpDisplayX, kHelpDisplayY, GetBackgroundImage()->getWidth(), kDisplayHeight);
-	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, DGTextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
+	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
 
 
-	return kDfxErr_NoError;
+	return dfx::kStatus_NoError;
 }
 
 
@@ -460,7 +460,7 @@ void BufferOverrideEditor::parameterChanged(long inParameterID)
 	DGTextDisplay* textDisplay = nullptr;
 	auto const useSyncParam = getparameter_b(inParameterID);
 
-	auto newParameterID = kDfxParameterID_Invalid;
+	auto newParameterID = dfx::kParameterID_Invalid;
 	switch (inParameterID)
 	{
 		case kBufferTempoSync:
@@ -501,7 +501,7 @@ void BufferOverrideEditor::mouseovercontrolchanged(DGControl* currentControlUnde
 		return;
 	}
 
-	auto currentcontrolparam = kDfxParameterID_Invalid;
+	auto currentcontrolparam = dfx::kParameterID_Invalid;
 	if (currentControlUnderMouse && currentControlUnderMouse->isParameterAttached())
 	{
 		currentcontrolparam = currentControlUnderMouse->getParameterID();

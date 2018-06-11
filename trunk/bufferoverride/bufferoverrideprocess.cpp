@@ -231,7 +231,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
-void BufferOverride::processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing)
+void BufferOverride::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
 {
 	auto const numChannels = getnumoutputs();
 	auto const oldDivisor = mDivisor;
@@ -251,7 +251,7 @@ void BufferOverride::processaudio(float const* const* in, float** out, unsigned 
 		// calculate the tempo at the current processing buffer
 		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
 		{
-			mCurrentTempoBPS = gettimeinfo().mTempo_bps;
+			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
 			if (gettimeinfo().mPlaybackChanged)
 			{
@@ -284,7 +284,7 @@ void BufferOverride::processaudio(float const* const* in, float** out, unsigned 
 		// store the latest input samples into the buffers
 		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
-			mBuffers[ch][mWritePos] = in[ch][sampleIndex];
+			mBuffers[ch][mWritePos] = inAudio[ch][sampleIndex];
 		}
 
 		// get the current output without any smoothing
@@ -323,7 +323,7 @@ void BufferOverride::processaudio(float const* const* in, float** out, unsigned 
 	#endif
 			for (unsigned long ch = 0; ch < numChannels; ch++)
 			{
-				out[ch][sampleIndex] = (mAudioOutputValues[ch] * mOutputGain.getValue()) + (in[ch][sampleIndex] * mInputGain.getValue());
+				outAudio[ch][sampleIndex] = (mAudioOutputValues[ch] * mOutputGain.getValue()) + (inAudio[ch][sampleIndex] * mInputGain.getValue());
 			}
 	#ifdef TARGET_API_VST
 		}
@@ -331,7 +331,7 @@ void BufferOverride::processaudio(float const* const* in, float** out, unsigned 
 		{
 			for (unsigned long ch = 0; ch < numChannels; ch++)
 			{
-				out[ch][sampleIndex] += (mAudioOutputValues[ch] * mOutputGain.getValue()) + (in[ch][sampleIndex] * mInputGain.getValue());
+				outAudio[ch][sampleIndex] += (mAudioOutputValues[ch] * mOutputGain.getValue()) + (inAudio[ch][sampleIndex] * mInputGain.getValue());
 			}
 		}
 	#endif
@@ -370,7 +370,7 @@ void BufferOverride::processaudio(float const* const* in, float** out, unsigned 
 					midiState.removeNote(midiState.getBlockEvent(eventIndex).mByte1);
 				}
 			}
-			else if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_MidiCC)
+			else if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_CC)
 			{
 				if (midiState.getBlockEvent(eventIndex).mByte1 == DfxMidi::kCC_AllNotesOff)
 				{

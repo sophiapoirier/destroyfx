@@ -142,16 +142,16 @@ public:
 	// remove MIDI event assignments from all parameters
 	void clearAssignments();
 	// assign a MIDI event to a parameter
-	void assignParam(long inParamTag, DfxMidiEventType inEventType, long inEventChannel, 
-						long inEventNum, long inEventNum2 = 0, 
-						DfxMidiEventBehaviorFlags inEventBehaviorFlags = kDfxMidiEventBehaviorFlag_None, 
-						long inData1 = 0, long inData2 = 0, 
-						float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
+	void assignParam(long inParamTag, dfx::MidiEventType inEventType, long inEventChannel, 
+					 long inEventNum, long inEventNum2 = 0, 
+					 dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
+					 long inData1 = 0, long inData2 = 0, 
+					 float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
 	// remove a parameter's MIDI event assignment
 	void unassignParam(long inParamTag);
 
 	// define or report the actively learning parameter during MIDI learn mode
-	void setLearner(long inParamTag, DfxMidiEventBehaviorFlags inEventBehaviorFlags = kDfxMidiEventBehaviorFlag_None, 
+	void setLearner(long inParamTag, dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
 					long inData1 = 0, long inData2 = 0, 
 					float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
 	auto getLearner() const noexcept
@@ -173,8 +173,8 @@ public:
 	void setParameterMidiReset(bool inValue = true);
 
 	// potentially useful accessors
-	DfxParameterAssignment getParameterAssignment(long inParamTag) const;
-	DfxMidiEventType getParameterAssignmentType(long inParamTag) const;
+	dfx::ParameterAssignment getParameterAssignment(long inParamTag) const;
+	dfx::MidiEventType getParameterAssignmentType(long inParamTag) const;
 	long getParameterAssignmentNum(long inParamTag) const;
 
 
@@ -316,7 +316,7 @@ protected:
 	// (everything up through mNumStoredPresets) will not change, 
 	// so if you alter this header structure at all, keep the 
 	// first six items in there and add anything else AFTER those.
-	typedef struct
+	struct SettingsInfo
 	{
 		// this is a value that you should look at to check for authenticity 
 		// of the data and as an identifier of the data's creator 
@@ -340,17 +340,17 @@ protected:
 		uint32_t mStoredParameterAssignmentSize = 0;
 		// the size (in bytes) of the extra settings data (if any)
 		uint32_t mStoredExtendedDataSize = 0;
-	} SettingsInfo;
+	};
 
 	// structure of an API-generic preset
-	typedef struct
+	struct GenPreset
 	{
-		char mName[kDfxPresetNameMaxLength];
+		char mName[dfx::kPresetNameMaxLength];
 		float mParameterValues[1];  // can of course be more...
-	} GenPreset;
+	};
 
 	// reverse the byte order of data
-	static bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset = false);
+	bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset = false);
 
 	// investigates what to do when a data is received in 
 	// restore() that doesn't match what we are expecting
@@ -359,14 +359,16 @@ protected:
 	// if CrisisBehavior::LoadButComplain crisis behavior is being used
 	virtual void crisisAlert(CrisisReasonFlags /*inFlags*/) {}
 
+	void debugAlertCorruptData(char const* inDataItemName, size_t inDataItemSize, size_t inDataTotalSize);
+
 	// a simple but handy check to see if a parameter tag is valid
 	bool paramTagIsValid(long inParamTag) const noexcept
 	{
 		return (inParamTag >= 0) && (inParamTag < mNumParameters);
 	}
 
-	void handleMidi_assignParam(DfxMidiEventType inEventType, long inMidiChannel, long inByte1, long inBufferOffset);
-	void handleMidi_automateParams(DfxMidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff = false);
+	void handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inBufferOffset);
+	void handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff = false);
 
 
 	DfxPlugin* const mPlugin;
@@ -396,7 +398,7 @@ protected:
 	// settings and know which stored parameters correspond to theirs)
 	std::vector<int32_t> mParameterIDs;
 	// the array of which MIDI event, if any, is assigned to each parameter
-	std::vector<DfxParameterAssignment> mParameterAssignments;
+	std::vector<dfx::ParameterAssignment> mParameterAssignments;
 
 	// whether to allow only one parameter assignment per MIDI event, or steal them
 	bool mStealAssignments = false;
@@ -412,7 +414,7 @@ protected:
 
 	// this lets the plugin specify any MIDI control behavior characterists 
 	// for the current MIDI-learning parameter
-	DfxMidiEventBehaviorFlags mLearnerEventBehaviorFlags = kDfxMidiEventBehaviorFlag_None;
+	dfx::MidiEventBehaviorFlags mLearnerEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
 	// lets the plugin pass along an extra context-specific data bytes
 	long mLearnerDataInt1 = 0, mLearnerDataInt2 = 0;
 	float mLearnerDataFloat1 = 0.0f, mLearnerDataFloat2 = 0.0f;

@@ -67,7 +67,6 @@
 		ECC0F376200BC5F100B1B463 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F375200BC5F100B1B463 /* AudioToolbox.framework */; };
 		ECC0F378200BC5F900B1B463 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F377200BC5F800B1B463 /* AudioUnit.framework */; };
 		ECC0F37A200BC62200B1B463 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F379200BC62100B1B463 /* Carbon.framework */; };
-		ECDCF1CA0FB88B5D005F739E /* au-preset-save-dialog.nib in Resources */ = {isa = PBXBuildFile; fileRef = ECDCF1C80FB88B5D005F739E /* au-preset-save-dialog.nib */; };
 		ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECDCF1CD0FB88B87005F739E /* dfx-au-utilities.strings */; };
 		ECF7D8C42002AA3A00DCE42E /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8C22002AA3A00DCE42E /* AUPlugInDispatch.cpp */; };
 		ECF7D8CE2002AB5800DCE42E /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8CA2002AB5700DCE42E /* dfxgui-auviewfactory.mm */; };
@@ -188,17 +187,16 @@
 		B025B99408AD320900A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
 		B025B99508AD320900A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
 		B028C2D10D0F325900ADA1DA /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
+		EC50A03B20CA266100718651 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC9841831030C43500FA3B2B /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		EC9841841030C43500FA3B2B /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
 		ECC0F375200BC5F100B1B463 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		ECC0F377200BC5F800B1B463 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		ECC0F379200BC62100B1B463 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
-		ECDCF1C90FB88B5D005F739E /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = "../../dfx-library/en.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
-		ECDCF1CB0FB88B68005F739E /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = "../../dfx-library/fr.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
-		ECDCF1CC0FB88B74005F739E /* nl */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = nl; path = "../../dfx-library/nl.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
-		ECDCF1CE0FB88B87005F739E /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
-		ECDCF1D00FB88B92005F739E /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
-		ECDCF1D10FB88B9C005F739E /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
+		ECDCF1CE0FB88B87005F739E /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECDCF1D00FB88B92005F739E /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECDCF1D10FB88B9C005F739E /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECF3B50A20CCA88800842E94 /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECF7D8C12002AA3A00DCE42E /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
 		ECF7D8C22002AA3A00DCE42E /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
 		ECF7D8C52002AAD700DCE42E /* dfxgui-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxgui-base.h"; sourceTree = "<group>"; };
@@ -265,7 +263,6 @@
 				490E76A607CAE29600688A1D /* px10.ttf */,
 				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 				B028C2D10D0F325900ADA1DA /* destroyfx.icns */,
-				ECDCF1C80FB88B5D005F739E /* au-preset-save-dialog.nib */,
 				ECDCF1CD0FB88B87005F739E /* dfx-au-utilities.strings */,
 			);
 			name = Resources;
@@ -333,7 +330,7 @@
 			);
 			name = AUPublic;
 			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/AudioUnits/AUPublic";
-			sourceTree = SOURCE_ROOT;
+			sourceTree = "<group>";
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
 			isa = PBXGroup;
@@ -418,7 +415,7 @@
 			);
 			name = PublicUtility;
 			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/PublicUtility";
-			sourceTree = SOURCE_ROOT;
+			sourceTree = "<group>";
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
 			isa = PBXGroup;
@@ -560,6 +557,8 @@
 				en,
 				fr,
 				nl,
+				de,
+				es,
 			);
 			mainGroup = 089C166AFE841209C02AAC07 /* turntablist */;
 			projectDirPath = "";
@@ -596,7 +595,6 @@
 				49BB47C507E53DEF00861708 /* tomsound-button.png in Resources */,
 				49BB47C607E53DEF00861708 /* transverb-background.png in Resources */,
 				B028C2D20D0F325900ADA1DA /* destroyfx.icns in Resources */,
-				ECDCF1CA0FB88B5D005F739E /* au-preset-save-dialog.nib in Resources */,
 				ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -692,22 +690,14 @@
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
-		ECDCF1C80FB88B5D005F739E /* au-preset-save-dialog.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				ECDCF1C90FB88B5D005F739E /* en */,
-				ECDCF1CB0FB88B68005F739E /* fr */,
-				ECDCF1CC0FB88B74005F739E /* nl */,
-			);
-			name = "au-preset-save-dialog.nib";
-			sourceTree = "<group>";
-		};
 		ECDCF1CD0FB88B87005F739E /* dfx-au-utilities.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
 				ECDCF1CE0FB88B87005F739E /* en */,
 				ECDCF1D00FB88B92005F739E /* fr */,
 				ECDCF1D10FB88B9C005F739E /* nl */,
+				EC50A03B20CA266100718651 /* de */,
+				ECF3B50A20CCA88800842E94 /* es */,
 			);
 			name = "dfx-au-utilities.strings";
 			sourceTree = "<group>";

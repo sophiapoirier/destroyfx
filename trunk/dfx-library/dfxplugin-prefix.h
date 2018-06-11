@@ -71,7 +71,7 @@ This file should be included by any prefix header that you use for your plugin.
 /*-----------------------------------------------------------------------------*/
 /* Audio Unit stuff */
 #ifdef TARGET_API_AUDIOUNIT
-	#define DFXGUI_USE_COCOA_AU_VIEW	__LP64__
+	#define DFXGUI_USE_COCOA_AU_VIEW	TARGET_PLUGIN_HAS_GUI && __LP64__
 	#define TARGET_PLUGIN_USES_VSTGUI
 	#ifdef TARGET_PLUGIN_USES_VSTGUI
 		#define PLUGGUI	1

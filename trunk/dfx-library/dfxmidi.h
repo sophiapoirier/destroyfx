@@ -38,7 +38,10 @@ public:
 	static constexpr long kNumNotes = 128;
 	static constexpr int kMaxValue = 0x7F;
 	static constexpr int kMidpointValue = 64;
+	static constexpr float kValueScalar = 1.0f / static_cast<float>(kMaxValue);
 	static constexpr int kInvalidValue = -3;  // for whatever
+	static constexpr int kPitchBendMidpointValue = 0x2000;
+	static constexpr int kPitchBendMaxValue = 0x3FFF;
 	static constexpr double kPitchBendSemitonesMax = 36.0;
 	static constexpr long kStolenNoteFadeDur = 48;
 
@@ -48,9 +51,9 @@ public:
 		kStatus_NoteOff = 0x80,
 		kStatus_NoteOn = 0x90,
 		kStatus_PolyphonicAftertouch = 0xA0,
-		kStatus_MidiCC = 0xB0,
+		kStatus_CC = 0xB0,
 		kStatus_ProgramChange = 0xC0,
-		kStatus_MidiChannelAftertouch = 0xD0,
+		kStatus_ChannelAftertouch = 0xD0,
 		kStatus_PitchBend = 0xE0,
 
 		kStatus_SysEx = 0xF0,
@@ -66,7 +69,7 @@ public:
 		kStatus_ActiveSensing = 0xFE,
 		kStatus_SystemReset = 0xFF
 	};
-	
+
 	// these are the MIDI continuous controller messages (CCs)
 	enum
 	{
@@ -131,98 +134,14 @@ public:
 
 	//----------------------------------------------------------------------------- 
 	// this holds MIDI event information
-	typedef struct
+	struct Event
 	{
 		int mStatus;  // the event status MIDI byte
 		int mByte1;  // the first MIDI data byte
 		int mByte2;  // the second MIDI data byte
 		long mDelta;  // the delta offset (the sample position in the current block where the event occurs)
 		int mChannel;  // the MIDI channel
-	} MidiEvent;
-
-	DfxMidi();
-
-	void reset();  // resets the variables
-	void setSampleRate(double inSampleRate);
-	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);
-	void setEnvCurveType(DfxEnvelope::CurveType inCurveType);
-	void setResumedAttackMode(bool inNewMode);
-
-	bool incNumEvents();  // increment the block events counter, safely
-
-	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
-	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
-	void handleAllNotesOff(int inMidiChannel, long inBufferOffset);
-	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset);
-	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset);
-	void handleProgramChange(int inMidiChannel, int inProgramNumber, long inBufferOffset);
-
-	void preprocessEvents();
-	void postprocessEvents();
-
-	// this is where new MIDI events are reckoned with during audio processing
-	void heedEvents(long inEventNum, double inPitchBendRange, bool inLegato, 
-					float inVelocityCurve, float inVelocityInfluence);
-
-	auto getBlockEventCount() const
-	{
-		return mNumBlockEvents;
-	}
-	auto const& getBlockEvent(long inIndex) const
-	{
-		return mBlockEvents.at(inIndex);
-	}
-	// XXX this is a hack just for Buffer Override, maybe should rethink
-	void invalidateBlockEvent(long inIndex)
-	{
-		mBlockEvents.at(inIndex).mStatus = kInvalidValue;
-	}
-
-	// manage the ordered queue of active MIDI notes
-	void insertNote(int inCurrentNote);
-	void removeNote(int inCurrentNote);
-	void removeAllNotes();
-	// query the ordered queue of active MIDI notes
-	bool isNoteActive() const
-	{
-		return mNoteQueue.front() >= 0;
-	}
-	auto getLatestNote() const
-	{
-		return mNoteQueue.front();
-	}
-
-	static constexpr bool isNote(int inMidiStatus)
-	{
-		return (inMidiStatus == kStatus_NoteOn) || (inMidiStatus == kStatus_NoteOff);
-	}
-
-	auto getNoteFrequency(int inNote) const
-	{
-		return mFreqTable.at(inNote);
-	}
-
-	// this function calculates fade scalars if attack, decay, or release are happening
-	float processEnvelope(int inCurrentNote);
-
-	// this function writes the audio output for smoothing the tips of cut-off notes
-	// by sloping down from the last sample outputted by the note
-	void processSmoothingOutputSample(float* outAudio, long inNumSamples, int inCurrentNote);
-
-	// this function writes the audio output for smoothing the tips of cut-off notes
-	// by fading out the samples stored in the tail buffers
-	void processSmoothingOutputBuffer(float* outAudio, long inNumSamples, int inCurrentNote, int inMidiChannel);
-
-
-private:
-	static constexpr float kMidiScalar = 1.0f / static_cast<float>(kNumNotes - 1);
-	static constexpr int kPitchBendMidpointValue = 0x2000;
-	static constexpr int kPitchBendMaxValue = 0x3FFF;
-	static constexpr size_t kEventQueueSize = 12000;
-	static constexpr float kStolenNoteFadeStep = 1.0f / static_cast<float>(kStolenNoteFadeDur);
-	static constexpr long kLegatoFadeDur = 39;
-	static constexpr float kLegatoFadeStep = 1.0f / static_cast<float>(kLegatoFadeDur);
+	};
 
 	//-----------------------------------------------------------------------------
 	// this holds information for each MIDI note
@@ -248,16 +167,111 @@ private:
 		std::array<float, kStolenNoteFadeDur> mTail2;  // (right channel) XXX wow this stereo assumption is such a bad idea
 	};
 
-	// initializations
+	DfxMidi();
+
+	void reset();  // resets the variables
+	void setSampleRate(double inSampleRate);
+	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);
+	void setEnvCurveType(DfxEnvelope::CurveType inCurveType);
+	void setResumedAttackMode(bool inNewMode);
+
+	// handlers for the types of MIDI events that we support
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
+	void handleAllNotesOff(int inMidiChannel, long inBufferOffset);
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset);
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset);
+	void handleProgramChange(int inMidiChannel, int inProgramNumber, long inBufferOffset);
+
+	void preprocessEvents();
+	void postprocessEvents();
+
+	// this is where new MIDI events are reckoned with during audio processing
+	void heedEvents(long inEventNum, double inPitchBendRange, bool inLegato, 
+					float inVelocityCurve, float inVelocityInfluence);
+
+	auto getBlockEventCount() const noexcept
+	{
+		return mNumBlockEvents;
+	}
+	auto const& getBlockEvent(long inIndex) const
+	{
+		return mBlockEvents.at(inIndex);
+	}
+	// XXX TODO: this is a hack just for Buffer Override, maybe should rethink
+	void invalidateBlockEvent(long inIndex)
+	{
+		mBlockEvents.at(inIndex).mStatus = kInvalidValue;
+	}
+
+	auto const& getNoteState(int inMidiNote) const
+	{
+		return mNoteTable.at(inMidiNote);
+	}
+	// XXX TODO: this is a hack just for Rez Synth, maybe should rethink
+	void setNoteState(int inMidiNote, MusicNote const& inNoteState)
+	{
+		mNoteTable.at(inMidiNote) = inNoteState;
+	}
+
+	// manage the ordered queue of active MIDI notes
+	void insertNote(int inMidiNote);
+	void removeNote(int inMidiNote);
+	void removeAllNotes();
+	// query the ordered queue of active MIDI notes
+	bool isNoteActive() const
+	{
+		return mNoteQueue.front() >= 0;
+	}
+	auto getLatestNote() const
+	{
+		return mNoteQueue.front();
+	}
+
+	static constexpr bool isNote(int inMidiStatus)
+	{
+		return (inMidiStatus == kStatus_NoteOn) || (inMidiStatus == kStatus_NoteOff);
+	}
+
+	auto getNoteFrequency(int inNote) const
+	{
+		return mNoteFrequencyTable.at(inNote);
+	}
+
+	auto getPitchBend() const noexcept
+	{
+		return mPitchBend;
+	}
+
+	// this calculates fade scalars if attack, decay, or release are happening
+	float processEnvelope(int inMidiNote);
+
+	// this writes the audio output for smoothing the tips of cut-off notes
+	// by sloping down from the last sample outputted by the note
+	void processSmoothingOutputSample(float* outAudio, long inNumSamples, int inMidiNote);
+
+	// this writes the audio output for smoothing the tips of cut-off notes
+	// by fading out the samples stored in the tail buffers
+	void processSmoothingOutputBuffer(float* outAudio, long inNumSamples, int inMidiNote, int inMidiChannel);
+
+
+private:
+	static constexpr size_t kEventQueueSize = 12000;
+	static constexpr float kStolenNoteFadeStep = 1.0f / static_cast<float>(kStolenNoteFadeDur);
+	static constexpr long kLegatoFadeDur = 39;
+	static constexpr float kLegatoFadeStep = 1.0f / static_cast<float>(kLegatoFadeDur);
+
 	void fillFrequencyTable();
 
-	void turnOffNote(int inCurrentNote, bool inLegato);
+	bool incNumEvents();  // increment the block events counter, safely
+
+	void turnOffNote(int inMidiNote, bool inLegato);
 
 	std::array<MusicNote, kNumNotes> mNoteTable;  // a table with important data about each note
-	std::array<double, kNumNotes> mFreqTable;  // a table of the frequency corresponding to each MIDI note
+	std::array<double, kNumNotes> mNoteFrequencyTable;  // a table of the frequency corresponding to each MIDI note
 
 	std::array<int, kNumNotes> mNoteQueue;  // a chronologically ordered queue of all active notes
-	std::array<MidiEvent, kEventQueueSize> mBlockEvents;  // the new MIDI events for a given processing block
+	std::array<Event, kEventQueueSize> mBlockEvents;  // the new MIDI events for a given processing block
 	long mNumBlockEvents = 0;  // the number of new MIDI events in a given processing block
 
 	double mPitchBend = 1.0;  // a frequency scalar value for the current pitchbend setting
@@ -269,56 +283,3 @@ private:
 	// sustain pedal is active
 	bool mSustain = false;
 };
-
-
-
-//-------------------------------------------------------------------------
-// this function calculates fade scalars if attack, decay, or release are happening
-inline float DfxMidi::processEnvelope(int inCurrentNote)
-{
-	auto const outputAmp = mNoteTable[inCurrentNote].mEnvelope.process();
-	if (mNoteTable[inCurrentNote].mEnvelope.getState() == DfxEnvelope::State::Dormant)
-	{
-		mNoteTable[inCurrentNote].mVelocity = 0;
-	}
-
-	return outputAmp;
-}
-
-
-//-------------------------------------------------------------------------
-// this function writes the audio output for smoothing the tips of cut-off notes
-// by sloping down from the last sample outputted by the note
-inline void DfxMidi::processSmoothingOutputSample(float* outAudio, long inNumSamples, int inCurrentNote)
-{
-	for (long sampleIndex = 0; sampleIndex < inNumSamples; sampleIndex++)
-	{
-		// add the latest sample to the output collection, scaled by the note envelope and user gain
-		float outputFadeScalar = static_cast<float>(mNoteTable[inCurrentNote].mSmoothSamples * kStolenNoteFadeStep);
-		outputFadeScalar = outputFadeScalar * outputFadeScalar * outputFadeScalar;
-		outAudio[sampleIndex] += mNoteTable[inCurrentNote].mLastOutValue * outputFadeScalar;
-		// decrement the smoothing counter
-		(mNoteTable[inCurrentNote].mSmoothSamples)--;
-		// exit this function if we've done all of the smoothing necessary
-		if (mNoteTable[inCurrentNote].mSmoothSamples <= 0)
-		{
-			return;
-		}
-	}
-}
-
-
-//-------------------------------------------------------------------------
-// this function writes the audio output for smoothing the tips of cut-off notes
-// by fading out the samples stored in the tail buffers
-inline void DfxMidi::processSmoothingOutputBuffer(float* outAudio, long inNumSamples, int inCurrentNote, int inMidiChannel)
-{
-	auto& smoothsamples = mNoteTable[inCurrentNote].mSmoothSamples;
-	auto const& tail = (inMidiChannel == 1) ? mNoteTable[inCurrentNote].mTail1 : mNoteTable[inCurrentNote].mTail2;
-
-	for (long sampleIndex = 0; (sampleIndex < inNumSamples) && (smoothsamples > 0); sampleIndex++, smoothsamples--)
-	{
-		outAudio[sampleIndex] += tail[kStolenNoteFadeDur - smoothsamples] * 
-								 static_cast<float>(smoothsamples) * kStolenNoteFadeStep;
-	}
-}

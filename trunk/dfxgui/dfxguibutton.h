@@ -63,9 +63,9 @@ public:
 	bool getMouseIsDown() const noexcept
 	{
 		return mMouseIsDown;
-		
 	}
 
+	// TODO: move these discrete control methods into DGControl?
 	long getNumStates() const noexcept
 	{
 		return mNumStates;
@@ -78,7 +78,7 @@ public:
 	virtual void setUserProcedure(DGButtonUserProcedure inProc, void* inUserData);
 	virtual void setUserReleaseProcedure(DGButtonUserProcedure inProc, void* inUserData, bool inOnlyAtEndWithNoCancel = false);
 
-	void setOrientation(DGAxis inOrientation) noexcept
+	void setOrientation(dfx::Axis inOrientation) noexcept
 	{
 		mOrientation = inOrientation;
 	}
@@ -95,7 +95,7 @@ protected:
 	long mNumStates = 1;
 	Mode mMode {};
 	bool const mDrawMomentaryState;
-	DGAxis mOrientation = kDGAxis_Horizontal;
+	dfx::Axis mOrientation = dfx::kAxis_Horizontal;
 	bool mMouseIsDown = false;
 	long mEntryValue = 0, mNewValue = 0;
 };

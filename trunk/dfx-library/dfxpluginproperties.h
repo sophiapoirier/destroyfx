@@ -34,58 +34,64 @@ These are our extended Audio Unit property IDs and types.
 
 
 
+namespace dfx
+{
+
+
 //-----------------------------------------------------------------------------
 // property IDs for Audio Unit property stuff
 enum : uint32_t
 {
-kDfxPluginProperty_StartID = 64000,
-	kDfxPluginProperty_ParameterValue = kDfxPluginProperty_StartID,	// get/set parameter values (current, min, max, etc.) using specific variable types
-	kDfxPluginProperty_ParameterValueConversion,	// expand or contract a parameter value
-	kDfxPluginProperty_ParameterValueString,		// get/set parameter value strings
-	kDfxPluginProperty_ParameterUnitLabel,			// get parameter unit label
-	kDfxPluginProperty_ParameterValueType,			// get parameter value type
-	kDfxPluginProperty_ParameterUnit,				// get parameter unit
-	kDfxPluginProperty_RandomizeParameter,			// randomize a parameter
-	kDfxPluginProperty_MidiLearn,					// get/set the MIDI learn state
-	kDfxPluginProperty_ResetMidiLearn,				// clear MIDI parameter assignments
-	kDfxPluginProperty_MidiLearner,					// get/set the current MIDI learner parameter
-	kDfxPluginProperty_ParameterMidiAssignment,		// get/set the MIDI assignment for a parameter
-kDfxPluginProperty_EndOfList,
-	kDfxPluginProperty_NumProperties = kDfxPluginProperty_EndOfList - kDfxPluginProperty_StartID
+	kPluginProperty_StartID = 64000,
+
+	kPluginProperty_ParameterValue = kPluginProperty_StartID,	// get/set parameter values (current, min, max, etc.) using specific variable types
+	kPluginProperty_ParameterValueConversion,	// expand or contract a parameter value
+	kPluginProperty_ParameterValueString,		// get/set parameter value strings
+	kPluginProperty_ParameterUnitLabel,			// get parameter unit label
+	kPluginProperty_ParameterValueType,			// get parameter value type
+	kPluginProperty_ParameterUnit,				// get parameter unit
+	kPluginProperty_RandomizeParameter,			// randomize a parameter
+	kPluginProperty_MidiLearn,					// get/set the MIDI learn state
+	kPluginProperty_ResetMidiLearn,				// clear MIDI parameter assignments
+	kPluginProperty_MidiLearner,					// get/set the current MIDI learner parameter
+	kPluginProperty_ParameterMidiAssignment,		// get/set the MIDI assignment for a parameter
+
+	kPluginProperty_EndOfList,
+	kPluginProperty_NumProperties = kPluginProperty_EndOfList - kPluginProperty_StartID
 };
-typedef uint32_t DfxPropertyID;
+typedef uint32_t PropertyID;
 
 
 //-----------------------------------------------------------------------------
 enum : uint32_t
 {
-	kDfxPropertyFlag_Readable = 1,
-	kDfxPropertyFlag_Writable = 1 << 1,
-	kDfxPropertyFlag_BiDirectional = 1 << 2
+	kPropertyFlag_Readable = 1,
+	kPropertyFlag_Writable = 1 << 1,
+	kPropertyFlag_BiDirectional = 1 << 2
 };
-typedef uint32_t DfxPropertyFlags;
+typedef uint32_t PropertyFlags;
 
 #ifdef TARGET_API_AUDIOUNIT
 enum : AudioUnitScope
 {
-	kDfxScope_Global = kAudioUnitScope_Global,
-	kDfxScope_Input = kAudioUnitScope_Input,
-	kDfxScope_Output = kAudioUnitScope_Output
+	kScope_Global = kAudioUnitScope_Global,
+	kScope_Input = kAudioUnitScope_Input,
+	kScope_Output = kAudioUnitScope_Output
 };
-typedef AudioUnitScope DfxScope;
+typedef ::AudioUnitScope Scope;
 #else
-typedef enum : uint32_t
+enum Scope : uint32_t
 {
-	kDfxScope_Global = 0,
-	kDfxScope_Input = 1,
-	kDfxScope_Output = 2
-} DfxScope;
+	kScope_Global = 0,
+	kScope_Input = 1,
+	kScope_Output = 2
+};
 #endif
 
 
 //-----------------------------------------------------------------------------
-// for kDfxPluginProperty_ParameterValue
-enum class DfxParameterValueItem : uint32_t 
+// for kPluginProperty_ParameterValue
+enum class ParameterValueItem : uint32_t 
 {
 	Current, 
 	Previous, 
@@ -94,43 +100,43 @@ enum class DfxParameterValueItem : uint32_t
 	Max
 };
 
-typedef struct
+struct ParameterValueRequest
 {
-	DfxParameterValueItem inValueItem {};
+	ParameterValueItem inValueItem {};
 	DfxParam::ValueType inValueType {};
 	DfxParam::Value value {};
-} DfxParameterValueRequest;
+};
 
 
 //-----------------------------------------------------------------------------
-// for kDfxPluginProperty_ParameterValueConversion
-enum class DfxParameterValueConversionType : uint32_t
+// for kPluginProperty_ParameterValueConversion
+enum class ParameterValueConversionType : uint32_t
 {
 	Expand, 
 	Contract
 };
 
-typedef struct
+struct ParameterValueConversionRequest
 {
-	DfxParameterValueConversionType inConversionType {};
+	ParameterValueConversionType inConversionType {};
 	double inValue = 0.0;
 	double outValue = 0.0;
-} DfxParameterValueConversionRequest;
+};
 
 
 //-----------------------------------------------------------------------------
-// for kDfxPluginProperty_ParameterValueString
-typedef struct
+// for kPluginProperty_ParameterValueString
+struct ParameterValueStringRequest
 {
 	int64_t inStringIndex = 0;
-	char valueString[kDfxParameterValueStringMaxLength];
-} DfxParameterValueStringRequest;
+	char valueString[dfx::kParameterValueStringMaxLength];
+};
 
 
 #if TARGET_PLUGIN_USES_MIDI
 
 //------------------------------------------------------
-enum class DfxMidiEventType : uint32_t
+enum class MidiEventType : uint32_t
 {
 	None,
 	CC,
@@ -138,11 +144,11 @@ enum class DfxMidiEventType : uint32_t
 	Note
 };
 
-typedef enum : int32_t
+enum MidiEventBehaviorFlags : int32_t
 {
 	// parameter automation behavior mode flags
 	//
-	kDfxMidiEventBehaviorFlag_None = 0,
+	kMidiEventBehaviorFlag_None = 0,
 	// use MIDI events to toggle the associated parameter between 0.0 and 1.0 
 	// if no mDataInt1 value was specified, 
 	// (good for controlling on/off buttons)
@@ -152,20 +158,20 @@ typedef enum : int32_t
 	// (good for switches)
 	// (if using notes events and this flag is not set, and neither is NoteHold, 
 	// then note ranges are used to control associated parameters)
-	kDfxMidiEventBehaviorFlag_Toggle = 1,
+	kMidiEventBehaviorFlag_Toggle = 1,
 	// send 1.0 on note on and 0.0 on note off if this flag is on, 
 	// otherwise toggle 1.0 and 0.0 at each note on
 	// (only relevent when using notes events)
 	// (overrides Toggle setting for notes events, but not other events)
-	kDfxMidiEventBehaviorFlag_NoteHold = 1 << 1,
+	kMidiEventBehaviorFlag_NoteHold = 1 << 1,
 	// use a range other than 0.0 to 1.0 
 	// the range is defined by mDataFloat1 and mDataFloat2
-	kDfxMidiEventBehaviorFlag_Range = 1 << 2  // TODO: currently unused/unimplemented
-} DfxMidiEventBehaviorFlags;
+	kMidiEventBehaviorFlag_Range = 1 << 2  // TODO: currently unused/unimplemented
+};
 
-typedef struct
+struct ParameterAssignment
 {
-	DfxMidiEventType mEventType = DfxMidiEventType::None;
+	MidiEventType mEventType = MidiEventType::None;
 	// the MIDI channel of the MIDI event assignment
 	//    (so far, I'm not using channel information for anything)
 	int32_t mEventChannel = 0;
@@ -176,7 +182,7 @@ typedef struct
 	//    (like 2 notes defining a note range)
 	int32_t mEventNum2 = 0;
 	// indicating the behavior of the event, i.e. toggle vs. hold for notes, etc.
-	DfxMidiEventBehaviorFlags mEventBehaviorFlags = kDfxMidiEventBehaviorFlag_None;
+	MidiEventBehaviorFlags mEventBehaviorFlags = kMidiEventBehaviorFlag_None;
 	// bonus data slots
 	// (context-specific)
 	// (like for the number of steps in an indexed toggle assignment)
@@ -187,6 +193,9 @@ typedef struct
 	float mDataFloat1 = 0.0f;
 	// (or the maximum point in a float range)
 	float mDataFloat2 = 0.0f;
-} DfxParameterAssignment;
+};
 
 #endif  // TARGET_PLUGIN_USES_MIDI
+
+
+}  // namespace dfx

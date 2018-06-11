@@ -79,6 +79,10 @@ public:
 	{
 		moveTo(left, inY);
 	}
+	void setSize(CCoord inWidth, CCoord inHeight)
+	{
+		CRect::setSize(CPoint(inWidth, inHeight));
+	}
 	bool isInside(CCoord inX, CCoord inY)
 	{
 		return pointInside(CPoint(inX, inY));
@@ -159,6 +163,7 @@ class DGColor : public CColor
 public:
 	static DGColor const kBlack;
 	static DGColor const kWhite;
+	static DGColor const kFocusHighlight;
 
 	DGColor() = default;
 	DGColor(int inRed, int inGreen, int inBlue, int inAlpha = 0xFF)
@@ -248,9 +253,9 @@ public:
 	void drawLine(float inStartX, float inStartY, float inEndX, float inEndY, float inLineWidth = -1.0f);
 
 	void setFont(const char * inFontName, float inFontSize);
-	void drawText(DGRect * inRegion, const char * inText, DGTextAlignment inAlignment = kDGTextAlign_left);
+	void drawText(DGRect * inRegion, const char * inText, dfx::TextAlignment inAlignment = kDGTextAlign_left);
 #if TARGET_OS_MAC
-	OSStatus drawCFText(DGRect * inRegion, CFStringRef inText, DGTextAlignment inAlignment);
+	OSStatus drawCFText(DGRect * inRegion, CFStringRef inText, dfx::TextAlignment inAlignment);
 #endif
 
 #if TARGET_OS_MAC
@@ -321,9 +326,11 @@ public:
 namespace dfx
 {
 
+static std::string const kInfinityUTF8(u8"\U0000221E");
+
 #if 0
 unsigned long ConvertVstGuiMouseButtons(long inButtons);
-DGKeyModifiers ConvertVstGuiKeyModifiers(long inButtons);
+dfx::KeyModifiers ConvertVstGuiKeyModifiers(long inButtons);
 #endif
 
 SharedPointer<CFontDesc> CreateVstGuiFont(float inFontSize, const char* inFontName = nullptr);

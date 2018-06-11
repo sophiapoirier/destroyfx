@@ -24,9 +24,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 
 
-constexpr long kNumPresets = 16;
-
-
 #pragma mark _________init_________
 
 // this macro does boring entry point stuff for us
@@ -38,7 +35,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, kNumPresets),
 	mTempoRateTable(dfx::TempoRateTable::Rates::NoExtreme)
 {
-	auto const numTempoRates = mTempoRateTable.getNumTempoRates();
+	auto const numTempoRates = mTempoRateTable.getNumRates();
 	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
 	initparameter_f(kDivisor, "buffer divisor", 1.92, 1.92, 1.92, 222.0, DfxParam::Unit::Divisor, DfxParam::Curve::Squared);
 	initparameter_f(kBufferSize_MS, "forced buffer size (free)", 90.0, 33.3, 1.0, 999.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
@@ -70,7 +67,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		setparametervaluestring(kBufferLFOShape, i, shapeName.c_str());
 	}
 	// set the value strings for the sync rate parameters
-	for (int i = 0; i < mTempoRateTable.getNumTempoRates(); i++)
+	for (int i = 0; i < mTempoRateTable.getNumRates(); i++)
 	{
 		auto const& tempoRateName = mTempoRateTable.getDisplay(i);
 		setparametervaluestring(kBufferSize_Sync, i, tempoRateName.c_str());
@@ -96,7 +93,7 @@ long BufferOverride::initialize()
 {
 	mInputGain.setSampleRate(getsamplerate());
 	mOutputGain.setSampleRate(getsamplerate());
-	return kDfxErr_NoError;
+	return dfx::kStatus_NoError;
 }
 
 //-------------------------------------------------------------------------

@@ -19,8 +19,8 @@ along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __TOM7_TRANSVERB_DEF_H
-#define __TOM7_TRANSVERB_DEF_H
+#ifndef TOM7_TRANSVERB_DEF_H
+#define TOM7_TRANSVERB_DEF_H
 
 
 #include "dfxplugin-prefix.h"
@@ -38,13 +38,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
 #define TARGET_PLUGIN_USES_DSPCORE	1
 #define TARGET_PLUGIN_HAS_GUI	1
-
-// only necessary if using a custom GUI
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"transverb-background.png"
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"like a delay that can play back the delay buffer at different speeds"
-#define PLUGIN_EDITOR_DESCRIPTION_STRING	"pretty blue interface for DFX TRANSVERB"
 
 
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2018"

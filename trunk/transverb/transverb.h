@@ -49,18 +49,11 @@ enum
 	kNumParameters
 };
 
-constexpr long kNumPresets = 16;
-
-constexpr long kAudioSmoothingDur_samples = 42;
-constexpr long kNumFIRTaps = 23;
-
 
 // this stuff is for the speed parameter adjustment mode switch on the GUI
 enum { kSpeedMode_Fine, kSpeedMode_Semitone, kSpeedMode_Octave, kSpeedMode_NumModes };
 
 enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes };
-
-enum { kFilterMode_Nothing, kFilterMode_Highpass, kFilterMode_LowpassIIR, kFilterMode_LowpassFIR };
 
 
 
@@ -69,7 +62,7 @@ class TransverbDSP : public DfxPluginCore {
 public:
   TransverbDSP(DfxPlugin* inDfxPlugin);
 
-  void process(float const* in, float* out, unsigned long inNumFrames, bool replacing = true) override;
+  void process(float const* inAudio, float* outAudio, unsigned long inNumFrames, bool replacing = true) override;
   void reset() override;
   void processparameters() override;
   bool createbuffers() override;
@@ -77,6 +70,11 @@ public:
   void releasebuffers() override;
 
 private:
+  static constexpr long kAudioSmoothingDur_samples = 42;
+  static constexpr long kNumFIRTaps = 23;
+
+  enum class FilterMode { Nothing, Highpass, LowpassIIR, LowpassFIR };
+
   // these get set to the parameter values
   int bsize = 0;
   double speed1 = 0.0, speed2 = 0.0;
@@ -119,6 +117,8 @@ public:
   void randomizeparameters(bool writeAutomation = false) override;
 
 private:
+  static constexpr long kNumPresets = 16;
+
   void initPresets();
 };
 

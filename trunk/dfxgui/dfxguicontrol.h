@@ -57,6 +57,14 @@ public:
 	void setParameterID(long inParameterID);
 	bool isParameterAttached() const;
 
+	void setDrawAlpha(float inAlpha);
+	float getDrawAlpha() const;
+
+	bool setHelpText(char const* inText);
+#if TARGET_OS_MAC
+	bool setHelpText(CFStringRef inText);
+#endif
+
 protected:
 	static constexpr float kDefaultFineTuneFactor = 10.0f;
 	//static constexpr float kDefaultMouseDragRange = 200.0f;  // pixels
@@ -79,6 +87,19 @@ private:
 	bool wraparoundValues = false;
 };
 
+
+
+//-----------------------------------------------------------------------------
+class DGNullControl : public CControl, public DGControl
+{
+public:
+	DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage = nullptr);
+
+	void draw(CDrawContext* inContext) override;
+
+	CLASS_METHODS(DGNullControl, CControl);
+};
+
 #else  // !TARGET_PLUGIN_USES_VSTGUI
 
 
@@ -95,17 +116,17 @@ public:
 	virtual void draw(CDrawContext * inContext)
 		{ }
 	// mouse position is relative to the control's bounds for ultra convenience
-	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick);
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
+	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick);
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick)
 		{ }
-	void do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+	void do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers);
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers)
 		{ }
-	void do_mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers);
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
+	void do_mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers);
+	virtual void mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers)
 		{ }
-	bool do_mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
-	virtual bool mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers);
+	bool do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
+	virtual bool mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
 	bool do_contextualMenuClick();
 	virtual bool contextualMenuClick()
 		{	return false;	}

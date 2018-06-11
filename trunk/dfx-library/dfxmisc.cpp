@@ -79,15 +79,15 @@ void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
 //  * Windows
 // returns a meaningless value greater than 32 if successful, 
 // otherwise an error code ranging from 0 to 32 is returned
-long LaunchURL(char const* inUrlString)
+long LaunchURL(std::string const& inURL)
 {
-	if (!inUrlString)
+	if (inURL.empty())
 	{
 		return 3;
 	}
 
 #if TARGET_OS_MAC
-	UniqueCFType<CFURLRef> const cfURL(CFURLCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inUrlString), static_cast<CFIndex>(strlen(inUrlString)), kCFStringEncodingASCII, nullptr));
+	UniqueCFType const cfURL = CFURLCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inURL.data()), static_cast<CFIndex>(inURL.length()), kCFStringEncodingASCII, nullptr);
 	if (cfURL)
 	{
 		auto const status = LSOpenCFURLRef(cfURL.get(), nullptr);  // try to launch the URL
@@ -97,7 +97,7 @@ long LaunchURL(char const* inUrlString)
 #endif
 
 #if _WIN32
-	return static_cast<long>(ShellExecute(nullptr, "open", inUrlString, nullptr, nullptr, SW_SHOWNORMAL));
+	return static_cast<long>(ShellExecute(nullptr, "open", inURL.c_str(), nullptr, nullptr, SW_SHOWNORMAL));
 #endif
 }
 
@@ -119,21 +119,21 @@ UniqueCFType<CFURLRef> DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileN
 	if (error == noErr)
 	{
 		// convert the FSRef of the documentation directory to a CFURLRef (for use in the next steps)
-		UniqueCFType<CFURLRef> const docsDirURL(CFURLCreateFromFSRef(kCFAllocatorDefault, &docsDirRef));
+		UniqueCFType const docsDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &docsDirRef);
 		if (docsDirURL)
 		{
 			// create a CFURL for the "manufacturer name" directory within the documentation directory
-			UniqueCFType<CFURLRef> const dfxDocsDirURL(CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL.get(), CFSTR(PLUGIN_CREATOR_NAME_STRING), true));
+			UniqueCFType const dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL.get(), CFSTR(PLUGIN_CREATOR_NAME_STRING), true);
 			if (dfxDocsDirURL)
 			{
 				// create a CFURL for the documentation file within the "manufacturer name" directory
-				UniqueCFType<CFURLRef> docsFileURL(CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL.get(), inDocsFileName, false));
+				UniqueCFType docsFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL.get(), inDocsFileName, false);
 				if (docsFileURL)
 				{
 					// check to see if the hypothetical documentation file actually exists 
 					// (CFURLs can reference files that don't exist)
 					SInt32 urlErrorCode = 0;
-					UniqueCFType<CFBooleanRef> const docsFileCFExists(static_cast<CFBooleanRef>(CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL.get(), kCFURLFileExists, &urlErrorCode)));
+					UniqueCFType const docsFileCFExists = static_cast<CFBooleanRef>(CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL.get(), kCFURLFileExists, &urlErrorCode));
 					if (docsFileCFExists)
 					{
 						// only return the file's CFURL if the file exists
@@ -171,7 +171,7 @@ long LaunchDocumentation()
 	#ifdef PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME
 		docsSubdirName = CFSTR(PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME);
 	#endif
-		UniqueCFType<CFURLRef> docsFileURL(CFBundleCopyResourceURL(pluginBundleRef, docsFileName, nullptr, docsSubdirName));
+		UniqueCFType docsFileURL = CFBundleCopyResourceURL(pluginBundleRef, docsFileName, nullptr, docsSubdirName);
 		// if the documentation file is not found in the bundle, then search in appropriate system locations
 		if (!docsFileURL)
 		{
@@ -199,7 +199,7 @@ long LaunchDocumentation()
 			static bool helpBookRegistered = false;
 			if (!helpBookRegistered)
 			{
-				UniqueCFType<CFURLRef> const bundleURL(CFBundleCopyBundleURL(pluginBundleRef));
+				UniqueCFType const bundleURL = CFBundleCopyBundleURL(pluginBundleRef);
 				if (bundleURL)
 				{
 					OSStatus registerStatus = paramErr;
