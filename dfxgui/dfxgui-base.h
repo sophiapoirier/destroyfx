@@ -24,31 +24,44 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
+#include <stdint.h>
+
+
+namespace dfx
+{
+
+
 //-----------------------------------------------------------------------------
 #if 0
-enum : unsigned int
+enum KeyModifiers : unsigned int
 {
-	kDGKeyModifier_Accel = 1,  // command on Macs, control on PCs
-	kDGKeyModifier_Alt = 1 << 1,  // option on Macs, alt on PCs
-	kDGKeyModifier_Shift = 1 << 2,
-	kDGKeyModifier_Extra = 1 << 3  // control on Macs
+	kKeyModifier_Accel = 1,  // command on Macs, control on PCs
+	kKeyModifier_Alt = 1 << 1,  // option on Macs, alt on PCs
+	kKeyModifier_Shift = 1 << 2,
+	kKeyModifier_Extra = 1 << 3  // control on Macs
 };
-typedef unsigned int	DGKeyModifiers;
 #endif
 
-typedef enum
+enum Axis
 {
-	kDGAxis_Horizontal = 1,
-	kDGAxis_Vertical = 1 << 1,
-	kDGAxis_Omni = (kDGAxis_Horizontal | kDGAxis_Vertical)
-} DGAxis;
+	kAxis_Horizontal = 1,
+	kAxis_Vertical = 1 << 1,
+	kAxis_Omni = (kAxis_Horizontal | kAxis_Vertical)
+};
 
-enum class DGTextAlignment
+enum class TextAlignment
 {
 	Left,
 	Center,
 	Right
 };
 
-static char const* const kDGFontName_SnootPixel10 = "snoot.org pixel10";
-static constexpr float kDGFontSize_SnootPixel10 = 14.0f;
+static char const* const kFontName_SnootPixel10 = "snoot.org pixel10";
+static constexpr float kFontSize_SnootPixel10 = 14.0f;
+
+// VSTGUI does not define named constants for these onKeyDown and onKeyUp result values
+static constexpr int32_t kKeyEventHandled = 1;
+static constexpr int32_t kKeyEventNotHandled = -1;
+
+
+}  // namespace dfx

@@ -35,6 +35,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 DGColor const DGColor::kBlack(kBlackCColor);
 DGColor const DGColor::kWhite(kWhiteCColor);
+DGColor const DGColor::kFocusHighlight(0.231372549f, 0.6f, 0.988235294f);
 
 
 #if 0
@@ -279,7 +280,7 @@ void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
 		return;
 
 	fontSize = inFontSize;	// remember the value
-	if (strcmp(inFontName, kDGFontName_SnootPixel10) == 0)
+	if (strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0)
 		isSnootPixel10 = true;
 
 // XXX use VSTGUI implementation
@@ -289,7 +290,7 @@ void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
 		CGContextSelectFont(context, inFontName, inFontSize, kCGEncodingMacRoman);
 
 #if 0
-		const dfx::UniqueCFType<CFStringRef> fontCFName(CFStringCreateWithCString(kCFAllocatorDefault, inFontName, kCFStringEncodingUTF8));
+		dfx::UniqueCFType const fontCFName = CFStringCreateWithCString(kCFAllocatorDefault, inFontName, kCFStringEncodingUTF8);
 		if (fontCFName)
 		{
 			ATSFontRef atsFont = ATSFontFindFromName(fontCFName.get(), kATSOptionFlagsDefault);
@@ -313,7 +314,7 @@ printf("littles height = %.3f\n", verticalMetrics.xHeight);
 }
 
 //-----------------------------------------------------------------------------
-void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, DGTextAlignment inAlignment)
+void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, dfx::TextAlignment inAlignment)
 {
 	if ( (inText == nullptr) || (inRegion == nullptr) )
 		return;
@@ -377,7 +378,7 @@ void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, DGTextA
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, DGTextAlignment inAlignment)
+OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, dfx::TextAlignment inAlignment)
 {
 	if ( (inText == nullptr) || (inRegion == nullptr) )
 		return paramErr;
@@ -452,17 +453,17 @@ unsigned long dfx::ConvertVstGuiMouseButtons(long inButtons)
 }
 
 //-----------------------------------------------------------------------------
-DGKeyModifiers dfx::ConvertVstGuiKeyModifiers(long inButtons)
+dfx::KeyModifiers dfx::ConvertVstGuiKeyModifiers(long inButtons)
 {
-	DGKeyModifiers resultKeys = 0;
+	dfx::KeyModifiers resultKeys = 0;
 	if (inButtons & kShift)
-		resultKeys |= kDGKeyModifier_shift;
+		resultKeys |= dfx::kKeyModifier_Shift;
 	if (inButtons & kControl)
-		resultKeys |= kDGKeyModifier_accel;
+		resultKeys |= dfx::kKeyModifier_Accel;
 	if (inButtons & kAlt)
-		resultKeys |= kDGKeyModifier_alt;
+		resultKeys |= dfx::kKeyModifier_Alt;
 	if (inButtons & kApple)
-		resultKeys |= kDGKeyModifier_extra;
+		resultKeys |= dfx::kKeyModifier_Extra;
 	return resultKeys;
 }
 #endif
@@ -482,10 +483,10 @@ SharedPointer<CFontDesc> dfx::CreateVstGuiFont(float inFontSize, char const* inF
 		auto const fontType = HIThemeGetUIFontType(kThemeApplicationFont);
 		if (fontType != kCTFontNoFontType)
 		{
-			dfx::UniqueCFType<CTFontRef> const fontRef(CTFontCreateUIFontForLanguage(fontType, 0.0, nullptr));
+			dfx::UniqueCFType const fontRef = CTFontCreateUIFontForLanguage(fontType, 0.0, nullptr);
 			if (fontRef)
 			{
-				dfx::UniqueCFType<CFStringRef> const fontCFName(CTFontCopyFullName(fontRef.get()));
+				dfx::UniqueCFType const fontCFName = CTFontCopyFullName(fontRef.get());
 				if (fontCFName)
 				{
 					auto const fontCName = dfx::CreateCStringFromCFString(fontCFName.get(), kCFStringEncodingUTF8);

@@ -47,9 +47,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "vstgui.h"
 
 #ifdef TARGET_API_AUDIOUNIT
-	#if !__LP64__
-	#include "AUCarbonViewBase.h"
-	#endif
 	using DGEditorListenerInstance = AudioUnit;
 #endif
 #ifdef TARGET_API_VST
@@ -107,9 +104,7 @@ class DGButton;
 //-----------------------------------------------------------------------------
 class DfxGuiEditor :	public TARGET_API_EDITOR_BASE_CLASS, 
 						public IControlListener, 
-						public IMouseObserver, 
-						public CBaseObject,
-						public DGDialog::Listener
+						public IMouseObserver
 {
 public:
 #ifdef TARGET_API_AUDIOUNIT
@@ -131,11 +126,6 @@ public:
 	void endEdit(int32_t inParameterIndex) override;
 #endif
 	void idle() override;
-	// CBaseObject
-	CMessageResult notify(CBaseObject* inSender, IdStringPtr inMessage) override;
-
-	// DGDialog::Listener override
-	void dialogChoiceSelected(DGDialog* inDialog, DGDialog::Selection inSelection) override;
 
 	// these are for the child class of DfxGuiEditor to override
 	virtual long OpenEditor() = 0;
@@ -150,12 +140,6 @@ public:
 		return mAUEventListener.get();
 	}
 	virtual void HandleAUPropertyChange(void* inObject, AudioUnitProperty inAUProperty, UInt64 inEventHostTime) {}
-	#if !__LP64__
-	void SetOwnerAUCarbonView(AUCarbonViewBase* inAUCarbonView) noexcept
-	{
-		mOwnerAUCarbonView = inAUCarbonView;
-	}
-	#endif
 #endif
 
 	void addControl(DGControl* inCtrl);
@@ -187,15 +171,6 @@ public:
 	#endif
 #endif
 	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels) {}
-
-#if TARGET_OS_MAC
-#if defined(TARGET_API_AUDIOUNIT) && 0
-	virtual bool HandleMouseEvent(EventRef inEvent);
-#endif
-
-	CFStringRef openTextEntryWindow(CFStringRef inInitialText = nullptr);
-	bool handleTextEntryCommand(UInt32 inCommandID);
-#endif
 
 	void automationgesture_begin(long inParameterID);
 	void automationgesture_end(long inParameterID);
@@ -282,11 +257,11 @@ public:
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
 	std::vector<AudioUnitParameterID> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
 #endif
-	long dfxgui_GetPropertyInfo(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
-								size_t& outDataSize, DfxPropertyFlags& outFlags);
-	long dfxgui_GetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+	long dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+								size_t& outDataSize, dfx::PropertyFlags& outFlags);
+	long dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 							void* outData, size_t& ioDataSize);
-	long dfxgui_SetProperty(DfxPropertyID inPropertyID, DfxScope inScope, unsigned long inItemIndex, 
+	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 							void const* inData, size_t inDataSize);
 #if TARGET_PLUGIN_USES_MIDI
 	void setmidilearning(bool inNewLearnMode);
@@ -295,8 +270,8 @@ public:
 	void setmidilearner(long inParameterIndex);
 	long getmidilearner();
 	bool ismidilearner(long inParameterIndex);
-	void setparametermidiassignment(long inParameterIndex, DfxParameterAssignment const& inAssignment);
-	DfxParameterAssignment getparametermidiassignment(long inParameterIndex);
+	void setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment);
+	dfx::ParameterAssignment getparametermidiassignment(long inParameterIndex);
 	void parametermidiunassign(long inParameterIndex);
 	DGButton* CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState = false);
 	DGButton* CreateMidiResetButton(long inXpos, long inYpos, DGImage* inImage);
@@ -331,12 +306,8 @@ private:
 	SharedPointer<DGImage> mBackgroundImage;
 
 	bool mJustOpened = false;
-	long mEditorOpenErr = kDfxErr_NoError;
+	long mEditorOpenErr = dfx::kStatus_NoError;
 	unsigned long mNumAudioChannels = 0;
-
-	SharedPointer<CTooltipSupport> mTooltipSupport;
-
-	SharedPointer<DGTextEntryDialog> mTextEntryDialog;
 
 #if TARGET_PLUGIN_USES_MIDI
 	DGButton* mMidiLearnButton = nullptr;
@@ -345,18 +316,9 @@ private:
 
 #if TARGET_OS_MAC
 	dfx::UniqueCFType<PasteboardRef> mClipboardRef;
-
-	#if !__LP64__
-	WindowRef mTextEntryWindow = nullptr;
-	ControlRef mTextEntryControl = nullptr;
-	CFStringRef mTextEntryResultString = nullptr;
-	#endif
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-	#if !__LP64__
-	AUCarbonViewBase* mOwnerAUCarbonView = nullptr;
-	#endif
 	std::vector<AudioUnitParameterID> mAUParameterList;
 	std::mutex mAUParameterListLock;
 	AudioUnitParameterID mAUMaxParameterID = 0;

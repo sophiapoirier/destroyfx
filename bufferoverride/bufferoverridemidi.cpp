@@ -126,7 +126,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 				midiState.invalidateBlockEvent(eventIndex);
 			}
 
-			else if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_MidiCC)
+			else if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_CC)
 			{
 				if (midiState.getBlockEvent(eventIndex).mByte1 == DfxMidi::kCC_AllNotesOff)
 				{

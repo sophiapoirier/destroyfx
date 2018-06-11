@@ -95,7 +95,7 @@ long dfx::TempoRateTable::getNearestTempoRateIndex(float inTempoRateValue) const
 {
 	auto bestDiff = mScalars.back();
 	long bestIndex = 0;
-	for (long i = 0; i < getNumTempoRates(); i++)
+	for (long i = 0; i < getNumRates(); i++)
 	{
 		auto const diff = std::fabs(inTempoRateValue - mScalars[i]);
 		if (diff < bestDiff)

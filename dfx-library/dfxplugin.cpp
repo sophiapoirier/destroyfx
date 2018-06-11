@@ -147,7 +147,7 @@ DfxPlugin::DfxPlugin(
 
 //-----------------------------------------------------------------------------
 // this is called immediately after all constructors (DfxPlugin and any derived classes) complete
-void DfxPlugin::dfx_PostConstructor()
+void DfxPlugin::do_PostConstructor()
 {
 	// set up a name for the default preset if none was set
 	if (!presetnameisvalid(0))
@@ -163,13 +163,17 @@ void DfxPlugin::dfx_PostConstructor()
 #if TARGET_PLUGIN_USES_MIDI
 	mDfxSettings = std::make_unique<DfxSettings>(PLUGIN_ID, this);
 #endif
+
+	dfx_PostConstructor();
 }
 
 
 //-----------------------------------------------------------------------------
 // this is called immediately before all destructors (DfxPlugin and any derived classes) occur
-void DfxPlugin::dfx_PreDestructor()
+void DfxPlugin::do_PreDestructor()
 {
+	dfx_PreDestructor();
+
 #ifdef TARGET_API_VST
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
@@ -186,7 +190,7 @@ long DfxPlugin::do_initialize()
 	updatenumchannels();
 
 	auto const result = initialize();
-	if (result != kDfxErr_NoError)
+	if (result != dfx::kStatus_NoError)
 	{
 		return result;
 	}
@@ -198,12 +202,12 @@ long DfxPlugin::do_initialize()
 	auto const buffersCreated = createbuffers();
 	if (!buffersCreated)
 	{
-		return kDfxErr_InitializationFailed;
+		return dfx::kStatus_InitializationFailed;
 	}
 
 	do_reset();
 
-	return kDfxErr_NoError;  // no error
+	return dfx::kStatus_NoError;  // no error
 }
 
 //-----------------------------------------------------------------------------
@@ -449,7 +453,7 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 #endif
 
 #ifdef TARGET_API_RTAS
-	SetControlValue(DFX_ParameterID_ToRTAS(inParameterIndex), ConvertToDigiValue(getparameter_gen(inParameterIndex)));  // XXX yeah do this?
+	SetControlValue(dfx::ParameterID_ToRTAS(inParameterIndex), ConvertToDigiValue(getparameter_gen(inParameterIndex)));  // XXX yeah do this?
 #endif
 }
 
@@ -497,7 +501,6 @@ double DfxPlugin::getparameter_scalar(long inParameterIndex) const
 				return mParameters[inParameterIndex].get_f();
 			// XXX should we not just use contractparametervalue() here?
 			default:
-				assert(false);
 				return mParameters[inParameterIndex].get_f() / mParameters[inParameterIndex].getmax_f();
 		}
 	}
@@ -1024,10 +1027,10 @@ unsigned long DfxPlugin::getnumoutputs()
 // add an audio input/output configuration to the array of i/o configurations
 void DfxPlugin::addchannelconfig(short inNumInputChannels, short inNumOutputChannels)
 {
-	DfxChannelConfig channelconfig;
-	channelconfig.inChannels = inNumInputChannels;
-	channelconfig.outChannels = inNumOutputChannels;
-	mChannelconfigs.push_back(channelconfig);
+	ChannelConfig channelConfig;
+	channelConfig.inChannels = inNumInputChannels;
+	channelConfig.outChannels = inNumOutputChannels;
+	mChannelconfigs.push_back(channelConfig);
 }
 
 //-----------------------------------------------------------------------------
@@ -1277,30 +1280,25 @@ fprintf(stderr, "time sig = %.0f/%lu\nmeasure beat = %.2f\n", timeSigNumerator, 
 else fprintf(stderr, "CallHostMusicalTimeLocation() error %ld\n", status);
 #endif
 
-	// check if the host is a buggy one that will crash TransportStateProc
-	static bool const auTransportStateIsSafe = IsTransportStateProcSafe();
-	if (auTransportStateIsSafe)
+	Boolean isPlaying = true;
+	Boolean transportStateChanged = false;
+//	Float64 currentSampleInTimeLine = 0.0;
+//	Boolean isCycling = false;
+//	Float64 cycleStartBeat = 0.0, cycleEndBeat = 0.0;
+//	status = CallHostTransportState(&isPlaying, &transportStateChanged, &currentSampleInTimeLine, &isCycling, &cycleStartBeat, &cycleEndBeat);
+	status = CallHostTransportState(&isPlaying, &transportStateChanged, nullptr, nullptr, nullptr, nullptr);
+	// determine whether the playback position or state has just changed
+	if (status == noErr)
 	{
-		Boolean isPlaying = true;
-		Boolean transportStateChanged = false;
-//		Float64 currentSampleInTimeLine = 0.0;
-//		Boolean isCycling = false;
-//		Float64 cycleStartBeat = 0.0, cycleEndBeat = 0.0;
-//		status = CallHostTransportState(&isPlaying, &transportStateChanged, &currentSampleInTimeLine, &isCycling, &cycleStartBeat, &cycleEndBeat);
-		status = CallHostTransportState(&isPlaying, &transportStateChanged, nullptr, nullptr, nullptr, nullptr);
-		// determine whether the playback position or state has just changed
-		if (status == noErr)
-		{
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 fprintf(stderr, "is playing = %s\ntransport changed = %s\n", isPlaying ? "true" : "false", transportStateChanged ? "true" : "false");
 #endif
-			mTimeInfo.mPlaybackChanged = transportStateChanged;
-			mTimeInfo.mPlaybackIsOccurring = isPlaying;
-		}
+		mTimeInfo.mPlaybackChanged = transportStateChanged;
+		mTimeInfo.mPlaybackIsOccurring = isPlaying;
+	}
 #ifdef DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 #endif
-	}
 #endif
 // TARGET_API_AUDIOUNIT
  
@@ -1359,8 +1357,8 @@ else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 	{
 		mTimeInfo.mTempo = 120.0;
 	}
-	mTimeInfo.mTempo_bps = mTimeInfo.mTempo / 60.0;
-	mTimeInfo.mSamplesPerBeat = std::lround(getsamplerate() / mTimeInfo.mTempo_bps);
+	mTimeInfo.mTempo_BPS = mTimeInfo.mTempo / 60.0;
+	mTimeInfo.mSamplesPerBeat = std::lround(getsamplerate() / mTimeInfo.mTempo_BPS);
 
 	if (mTimeInfo.mTempoIsValid && mTimeInfo.mBeatPosIsValid && mTimeInfo.mBarPosIsValid && mTimeInfo.mTimeSignatureIsValid)
 	{
@@ -1399,9 +1397,9 @@ else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 				numBeatsToBar -= mTimeInfo.mNumerator;
 			}
 		}
-	
+
 		// convert the value for the distance to the next measure from beats to samples
-		mTimeInfo.mSamplesToNextBar = std::lround(numBeatsToBar * getsamplerate() / mTimeInfo.mTempo_bps);
+		mTimeInfo.mSamplesToNextBar = std::lround(numBeatsToBar * getsamplerate() / mTimeInfo.mTempo_BPS);
 		// protect against wacky values
 		mTimeInfo.mSamplesToNextBar = std::max(mTimeInfo.mSamplesToNextBar, 0L);
 	}

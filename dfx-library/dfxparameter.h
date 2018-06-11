@@ -190,7 +190,6 @@ for the value strings.
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include <CoreFoundation/CFString.h>
-	static constexpr CFStringEncoding kDFX_DefaultCStringEncoding = kCFStringEncodingMacRoman;
 #endif
 
 
@@ -202,14 +201,18 @@ public:
 	// this is a twiddly value for when casting with decimal types
 	static constexpr double kIntegerPadding = 0.001;
 
+#ifdef TARGET_API_AUDIOUNIT
+	static constexpr CFStringEncoding kDefaultCStringEncoding = kCFStringEncodingMacRoman;
+#endif
+
 	// the Value union holds every type of supported value variable type
 	// all values (current, min, max, default) are stored in these
-	typedef union
+	union Value
 	{
 		double f;
 		int64_t i;
 		int64_t b;  // would be bool, but bool can vary in byte size depending on the compiler
-	} Value;
+	};
 
 	// these are the different variable types that a parameter can 
 	// declare as its "native" type
@@ -409,7 +412,9 @@ public:
 	// expand and contract routines for setting and getting values generically
 	// these take into account the parameter curve
 	double expand(double inGenValue) const;
+	static double expand(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.0);
 	double contract(double inLiteralValue) const;
+	static double contract(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.0);
 
 	// set/get the property stating whether or not to automatically clip values into range
 	void SetEnforceValueLimits(bool inMode);
@@ -531,15 +536,6 @@ private:
 #endif
 };
 // end of DfxParam
-
-
-
-
-
-
-// prototypes for parameter value mapping utility functions
-double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.0);
-double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec = 1.0);
 
 
 

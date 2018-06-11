@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguicontrol.h"
 
 #include "dfxguieditor.h"
+#include "dfxmisc.h"
 
 
 
@@ -75,6 +76,61 @@ bool DGControl::isParameterAttached() const
 	return (getParameterID() >= 0);
 }
 
+//-----------------------------------------------------------------------------
+void DGControl::setDrawAlpha(float inAlpha)
+{
+	getCControl()->setAlphaValue(inAlpha);
+}
+
+//-----------------------------------------------------------------------------
+float DGControl::getDrawAlpha() const
+{
+	return getCControl()->getAlphaValue();
+}
+
+//-----------------------------------------------------------------------------
+bool DGControl::setHelpText(char const* inText)
+{
+	assert(inText);
+	return getCControl()->setAttribute(kCViewTooltipAttribute, strlen(inText) + 1, inText);
+}
+
+#if TARGET_OS_MAC
+//-----------------------------------------------------------------------------
+bool DGControl::setHelpText(CFStringRef inText)
+{
+	assert(inText);
+	if (auto const cString = dfx::CreateCStringFromCFString(inText))
+	{
+		return setHelpText(cString.get());
+	}
+	return false;
+}
+#endif
+
+
+
+#pragma mark -
+#pragma mark DGNullControl
+
+//-----------------------------------------------------------------------------
+DGNullControl::DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage)
+:	CControl(inRegion, inOwnerEditor, dfx::kParameterID_Invalid, inBackgroundImage), 
+	DGControl(this, inOwnerEditor)
+{
+	setMouseEnabled(false);
+}
+
+//-----------------------------------------------------------------------------
+void DGNullControl::draw(CDrawContext* inContext)
+{
+	if (getBackground())
+	{
+		getBackground()->draw(inContext, getViewSize());
+	}
+	setDirty(false);
+}
+
 #else  // !TARGET_PLUGIN_USES_VSTGUI
 
 
@@ -113,7 +169,7 @@ DGControl::DGControl(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRe
 #else
 	valueRange = 1.0f;	// XXX implement
 #endif
-	
+
 	init(inRegion);
 }
 
@@ -174,7 +230,7 @@ void DGControl::setControlContinuous(bool inContinuity)
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
+void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
 	if (! getRespondToMouse() )
 		return;
@@ -192,7 +248,7 @@ void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseBu
 	#endif
 
 	// set the default value of the parameter
-	if ( (inKeyModifiers & kDGKeyModifier_accel) && isParameterAttached() )
+	if ( (inKeyModifiers & dfx::kKeyModifier_Accel) && isParameterAttached() )
 	{
 		getDfxGuiEditor()->setparameter_default( getParameterID() );
 		currentlyIgnoringMouseTracking = true;
@@ -203,7 +259,7 @@ void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseBu
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
+void DGControl::do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers)
 {
 	if (! getRespondToMouse() )
 		return;
@@ -213,7 +269,7 @@ void DGControl::do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseB
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::do_mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
+void DGControl::do_mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers)
 {
 	if (! getRespondToMouse() )
 		return;
@@ -229,7 +285,7 @@ void DGControl::do_mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModif
 }
 
 //-----------------------------------------------------------------------------
-bool DGControl::do_mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers)
+bool DGControl::do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers)
 {
 	if (! getRespondToMouseWheel() )
 		return false;
@@ -249,7 +305,7 @@ bool DGControl::do_mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyM
 
 //-----------------------------------------------------------------------------
 // a default implementation of mouse wheel handling that should work for most controls
-bool DGControl::mouseWheel(long inDelta, DGAxis inAxis, DGKeyModifiers inKeyModifiers)
+bool DGControl::mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers)
 {
 ControlRef carbonControl = NULL;	// XXX just quieting errors for now
 	SInt32 min = GetControl32BitMinimum(carbonControl);
@@ -260,7 +316,7 @@ ControlRef carbonControl = NULL;	// XXX just quieting errors for now
 	if ( isContinuousControl() )
 	{
 		float diff = (float)inDelta;
-		if (inKeyModifiers & kDGKeyModifier_shift)	// slo-mo
+		if (inKeyModifiers & dfx::kKeyModifier_Shift)	// slo-mo
 			diff /= getFineTuneFactor();
 		newValue = oldValue + (SInt32)(diff * (float)(max-min) / getMouseDragRange());
 	}

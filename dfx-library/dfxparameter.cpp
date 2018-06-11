@@ -54,9 +54,9 @@ void DfxParam::init(char const* inName, ValueType inType,
 	mMaxValue = inMaxValue;
 	if (inName)
 	{
-		mName.assign(inName, 0, kDfxParameterNameMaxLength - 1);
+		mName.assign(inName, 0, dfx::kParameterNameMaxLength - 1);
 	#ifdef TARGET_API_AUDIOUNIT
-		mCFName.reset(CFStringCreateWithCString(kCFAllocatorDefault, inName, kDFX_DefaultCStringEncoding));
+		mCFName.reset(CFStringCreateWithCString(kCFAllocatorDefault, inName, kDefaultCStringEncoding));
 	#endif
 	}
 	mCurve = inCurve;
@@ -186,10 +186,10 @@ bool DfxParam::setvaluestring(int64_t inIndex, char const* inText)
 	// the actual index of the array is the incoming index 
 	// minus the parameter's minimum value
 	auto const arrayIndex = inIndex - getmin_i();
-	mValueStrings.at(arrayIndex).assign(inText, 0, kDfxParameterValueStringMaxLength - 1);
+	mValueStrings.at(arrayIndex).assign(inText, 0, dfx::kParameterValueStringMaxLength - 1);
 
 #ifdef TARGET_API_AUDIOUNIT
-	mValueCFStrings.at(arrayIndex).reset(CFStringCreateWithCString(kCFAllocatorDefault, inText, kDFX_DefaultCStringEncoding));
+	mValueCFStrings.at(arrayIndex).reset(CFStringCreateWithCString(kCFAllocatorDefault, inText, kDefaultCStringEncoding));
 #endif
 
 	return true;
@@ -243,6 +243,13 @@ bool DfxParam::ValueStringIndexIsValid(int64_t inIndex) const
 #pragma mark -
 
 //-----------------------------------------------------------------------------
+// interpret fractional numbers as booleans
+static bool Float2Boolean(double inValue)
+{
+	return (inValue != 0.0);
+}
+
+//-----------------------------------------------------------------------------
 // figure out the value of a Value as float type value
 // (perform type conversion if float is not the parameter's "native" type)
 double DfxParam::derive_f(Value inValue) const noexcept
@@ -288,7 +295,7 @@ bool DfxParam::derive_b(Value inValue) const noexcept
 	switch (mValueType)
 	{
 		case ValueType::Float:
-			return DBOOL(inValue.f);
+			return Float2Boolean(inValue.f);
 		case ValueType::Int:
 			return (inValue.i != 0);
 		case ValueType::Boolean:
@@ -302,16 +309,15 @@ bool DfxParam::derive_b(Value inValue) const noexcept
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
-// XXX this is being obsoleted by the non-class DFX_ContractParameterValue() function
 double DfxParam::contract(double inLiteralValue) const
 {
-	return DFX_ContractParameterValue(inLiteralValue, getmin_f(), getmax_f(), mCurve, mCurveSpec);
+	return contract(inLiteralValue, getmin_f(), getmax_f(), mCurve, mCurveSpec);
 }
 
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
-double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec)
+double DfxParam::contract(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec)
 {
 	auto const valueRange = inMaxValue - inMinValue;
 	static constexpr double oneDivThree = 1.0 / 3.0;
@@ -348,7 +354,7 @@ double DFX_ContractParameterValue(double inLiteralValue, double inMinValue, doub
 // get the parameter's current value scaled into a generic 0...1 float value
 double DfxParam::get_gen() const
 {
-	return DFX_ContractParameterValue(get_f(), getmin_f(), getmax_f(), mCurve, mCurveSpec);
+	return contract(get_f());
 }
 
 
@@ -387,7 +393,7 @@ bool DfxParam::accept_f(double inValue, Value& outValue) const
 		case ValueType::Boolean:
 			{
 				auto const entryValue = outValue.b;
-				outValue.b = DBOOL(inValue) ? 1 : 0;
+				outValue.b = Float2Boolean(inValue) ? 1 : 0;
 				if (outValue.b == entryValue)
 				{
 					return false;
@@ -483,13 +489,13 @@ bool DfxParam::accept_b(bool inValue, Value& outValue) const noexcept
 // this takes into account the parameter curve
 double DfxParam::expand(double inGenValue) const
 {
-	return DFX_ExpandParameterValue(inGenValue, getmin_f(), getmax_f(), mCurve, mCurveSpec);
+	return expand(inGenValue, getmin_f(), getmax_f(), mCurve, mCurveSpec);
 }
 
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double DFX_ExpandParameterValue(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec)
+double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec)
 {
 	auto const valueRange = inMaxValue - inMinValue;
 	static double const logTwoInv = 1.0 / std::log(2.0);
@@ -578,7 +584,7 @@ void DfxParam::set_b(bool inNewValue)
 // set the parameter's current value with a generic 0...1 float value
 void DfxParam::set_gen(double inGenValue)
 {
-	set_f(DFX_ExpandParameterValue(inGenValue, getmin_f(), getmax_f(), mCurve, mCurveSpec));
+	set_f(expand(inGenValue));
 }
 
 
@@ -794,7 +800,7 @@ void DfxParam::getunitstring(char* outText) const
 void DfxParam::setcustomunitstring(char const* inText)
 {
 	assert(inText);
-	mCustomUnitString.assign(inText, 0, kDfxParameterUnitStringMaxLength - 1);
+	mCustomUnitString.assign(inText, 0, dfx::kParameterUnitStringMaxLength - 1);
 }
 
 
@@ -841,10 +847,10 @@ void DfxPreset::setname(char const* inText)
 {
 	assert(inText);
 
-	mName.assign(inText, 0, kDfxPresetNameMaxLength - 1);
+	mName.assign(inText, 0, dfx::kPresetNameMaxLength - 1);
 
 #ifdef TARGET_API_AUDIOUNIT
-	mCFName.reset(CFStringCreateWithCString(kCFAllocatorDefault, inText, kDFX_DefaultCStringEncoding));
+	mCFName.reset(CFStringCreateWithCString(kCFAllocatorDefault, inText, DfxParam::kDefaultCStringEncoding));
 #endif
 }
 

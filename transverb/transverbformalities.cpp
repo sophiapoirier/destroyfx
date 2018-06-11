@@ -79,7 +79,6 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 }
 
 void Transverb::dfx_PostConstructor() {
-  DfxPlugin::dfx_PostConstructor();
 
 #if TARGET_PLUGIN_USES_MIDI
   // since we don't use notes for any specialized control of Transverb, 
