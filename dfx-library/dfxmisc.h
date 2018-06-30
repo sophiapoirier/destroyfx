@@ -51,14 +51,22 @@ public:
 	}
 };
 
+//-----------------------------------------------------------------------------
+template <typename T, typename DeleterReturnType = void>
+class UniqueOpaqueType : public std::unique_ptr<typename std::remove_pointer_t<T>, DeleterReturnType(*)(T)>
+{
+public:
+	using std::unique_ptr<typename std::remove_pointer_t<T>, DeleterReturnType(*)(T)>::unique_ptr;
+};
+
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 template <typename T, typename D = void(*)(CFTypeRef)>
-class UniqueCFType : public std::unique_ptr<typename std::remove_pointer<T>::type, D>
+class UniqueCFType : public std::unique_ptr<typename std::remove_pointer_t<T>, D>
 {
 public:
 	UniqueCFType(T object = nullptr) noexcept
-	:	std::unique_ptr<typename std::remove_pointer<T>::type, D>(object, CFRelease)
+	:	std::unique_ptr<typename std::remove_pointer_t<T>, D>(object, CFRelease)
 	{
 	}
 };

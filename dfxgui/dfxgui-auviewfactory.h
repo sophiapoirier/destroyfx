@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015  Sophia Poirier
+Copyright (C) 2015-2018  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,4 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <CoreFoundation/CFString.h>
 
 
+namespace dfx
+{
 CFStringRef DGCocoaAUViewFactory_CopyClassName();
+}

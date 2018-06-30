@@ -35,9 +35,12 @@ constexpr CCoord kButtonSpacing = 12.0;
 constexpr CCoord kButtonHeight = 20.0;
 constexpr CCoord kTextLabelHeight = 14.0;
 constexpr CCoord kTextEditHeight = 20.0;
+constexpr CCoord kFocusIndicatorThickness = 2.4;
 
 
 //-----------------------------------------------------------------------------
+namespace
+{
 static bool DFXGUI_PressButton(CTextButton* inButton, bool inState)
 {
 	if (inButton)
@@ -55,6 +58,7 @@ static bool DFXGUI_PressButton(CTextButton* inButton, bool inState)
 	}
 	return false;
 }
+}  // namespace
 
 
 //-----------------------------------------------------------------------------
@@ -64,25 +68,42 @@ class DGDialogButton : public CTextButton
 {
 public:
 	DGDialogButton(IControlListener* inListener, DGRect const& inRegion, DGDialog::Selection inSelection, UTF8StringPtr inTitle)
-	:	CTextButton(inRegion, inListener, inSelection, inTitle, CTextButton::kKickStyle)
+	:	CTextButton(inRegion, inListener, inSelection, inTitle, CTextButton::kKickStyle),
+		mIsDefaultButton(inSelection == DGDialog::kSelection_OK)
 	{
 		sizeToFit();
 		auto fitSize = getViewSize();
 		fitSize.right = std::round(fitSize.right + 0.5);  // round up
 		setViewSize(fitSize);
 		setMouseableArea(fitSize);
+
+		auto const textColor = DGColor::getSystem(mIsDefaultButton ? DGColor::System::AccentControlText : DGColor::System::ControlText);
+		setTextColor(textColor);
+		setTextColorHighlighted(DGColor::getSystem(DGColor::System::AccentControlText));
+		setFrameColorHighlighted(DGColor::getSystem(DGColor::System::AccentPressed));
+
+		constexpr float gradientDarkAmount = 0.6f;
+		constexpr float accentFillAlpha = 0.72f;
+		constexpr double gradientStart = 0.3, gradientEnd = 1.0;
+		auto const fillColor = mIsDefaultButton ? DGColor::getSystem(DGColor::System::Accent).withAlpha(accentFillAlpha) : DGColor::getSystem(DGColor::System::Control);
+		auto const fillColorTail = mIsDefaultButton ? fillColor.darker(gradientDarkAmount) : fillColor;
+		setGradient(owned(CGradient::create(gradientStart, gradientEnd, fillColor, fillColorTail)));
+		auto const fillColorHighlighted = DGColor::getSystem(DGColor::System::AccentPressed).withAlpha(accentFillAlpha);
+		setGradientHighlighted(owned(CGradient::create(gradientStart, gradientEnd, fillColorHighlighted, fillColorHighlighted.darker(gradientDarkAmount))));
+
+		looseFocus();  // HACK: trigger remaining frame styling
 	}
 
 	void takeFocus() override
 	{
-		setFrameColor(DGColor::kFocusHighlight);
-		setFrameColorHighlighted(DGColor::kFocusHighlight);
+		setFrameColor(DGColor::getSystem(DGColor::System::FocusIndicator));
+		setFrameWidth(kFocusIndicatorThickness);
 	}
 
 	void looseFocus() override
 	{
-		setFrameColor(kBlackCColor);
-		setFrameColorHighlighted(kBlackCColor);
+		setFrameColor(DGColor::getSystem(mIsDefaultButton ? DGColor::System::Accent : DGColor::System::WindowFrame));
+		setFrameWidth(1.0);
 	}
 
 	int32_t onKeyDown(VstKeyCode& inKeyCode) override
@@ -141,6 +162,8 @@ private:
 		}
 		return {};
 	}
+
+	bool const mIsDefaultButton;
 };
 
 
@@ -160,9 +183,9 @@ public:
 	DGDialogTextEdit(CRect const& inRegion, IControlListener* inListener)
 	:	CTextEdit(inRegion, inListener, dfx::kParameterID_Invalid)
 	{
-		setFontColor(kBlackCColor);
-		setBackColor(kWhiteCColor);
-		setFrameColor(kBlackCColor);
+		setFontColor(DGColor::getSystem(DGColor::System::Text));
+		setBackColor(DGColor::getSystem(DGColor::System::TextBackground));
+		setFrameColor(DGColor::getSystem(DGColor::System::WindowFrame));
 		setHoriAlign(kCenterText);
 		setStyle(kRoundRectStyle);
 		setRoundRectRadius(3.0);
@@ -175,15 +198,13 @@ public:
 		// add a thicker control-focus highlight (mimic macOS native text input field)
 		if (getPlatformTextEdit())
 		{
-			CCoord const highlightThickness = getFrameWidth() * 2.0;
 			auto highlightRect = getViewSize();
-			highlightRect.inset(highlightThickness / 2.0, highlightThickness / 2.0);
-			auto const path = owned(inContext->createRoundRectGraphicsPath(highlightRect, getRoundRectRadius()));
-			if (path)
+			highlightRect.inset(kFocusIndicatorThickness / 2.0, kFocusIndicatorThickness / 2.0);
+			if (auto const path = owned(inContext->createRoundRectGraphicsPath(highlightRect, getRoundRectRadius())))
 			{
 				inContext->setLineStyle(kLineSolid);
-				inContext->setLineWidth(highlightThickness);
-				inContext->setFrameColor(DGColor::kFocusHighlight);
+				inContext->setLineWidth(kFocusIndicatorThickness);
+				inContext->setFrameColor(DGColor::getSystem(DGColor::System::FocusIndicator));
 				inContext->drawGraphicsPath(path, CDrawContext::kPathStroked);
 			}
 		}
@@ -222,7 +243,7 @@ DGDialog::DGDialog(DGRect const& inRegion,
 		DGRect const pos(kContentMargin, kContentMargin, getWidth() - (kContentMargin * 2.0), kTextLabelHeight);
 		if (auto const label = new CTextLabel(pos, UTF8String(inMessage)))
 		{
-			label->setFontColor(kBlackCColor);
+			label->setFontColor(DGColor::getSystem(DGColor::System::WindowTitle));
 			label->setBackColor(kTransparentCColor);
 			label->setFrameColor(kTransparentCColor);
 			label->setHoriAlign(kLeftText);
@@ -271,7 +292,6 @@ DGDialog::DGDialog(DGRect const& inRegion,
 	if (inButtons & kButtons_OKBit)
 	{
 		okButton = new DGDialogButton(this, buttonPos, kSelection_OK, inOkButtonTitle);
-		okButton->setFrameWidth(okButton->getFrameWidth() * 1.5);  // bolder outline
 		addView(okButton, getView(0));
 		buttons.push_back(okButton);
 	}
@@ -360,8 +380,8 @@ bool DGDialog::handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed)
 //-----------------------------------------------------------------------------
 void DGDialog::drawBackgroundRect(CDrawContext* inContext, CRect const& inUpdateRect)
 {
-	inContext->setFillColor(MakeCColor(180, 180, 180, 210));
-	inContext->setFrameColor(kBlackCColor);
+	inContext->setFillColor(DGColor::getSystem(DGColor::System::WindowBackground));
+	inContext->setFrameColor(DGColor::getSystem(DGColor::System::WindowFrame));
 	inContext->setDrawMode(kAliasing);
 	inContext->setLineWidth(1.0);
 	inContext->setLineStyle(kLineSolid);
@@ -508,7 +528,7 @@ DGTextEntryDialog::DGTextEntryDialog(long inParamID, std::string const& inMessag
 	CTextLabel* label = inTextEntryLabel ? new CTextLabel(pos, inTextEntryLabel) : nullptr;
 	if (label)
 	{
-		label->setFontColor(kBlackCColor);
+		label->setFontColor(DGColor::getSystem(DGColor::System::Label));
 		label->setBackColor(kTransparentCColor);
 		label->setFrameColor(kTransparentCColor);
 		label->setHoriAlign(kLeftText);

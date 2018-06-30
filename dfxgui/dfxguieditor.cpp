@@ -57,10 +57,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, UInt64 inEventHostTime, Float32 inParameterValue);
 #endif
 
-#ifndef DFXGUI_USE_CONTEXTUAL_MENU
-	#define DFXGUI_USE_CONTEXTUAL_MENU	1
-#endif
-
 #ifdef TARGET_API_AUDIOUNIT
 //	#define kDfxGui_AUPresetFileUTI "org.destroyfx.aupreset"
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
@@ -273,7 +269,7 @@ void DfxGuiEditor::close()
 
 	frame->unregisterMouseObserver(this);
 	// zero the member frame before we delete it so that other asynchronous calls don't crash
-	auto frame_temp = frame;
+	auto const frame_temp = frame;
 	frame = nullptr;
 
 	mControlsList.clear();
@@ -282,7 +278,6 @@ void DfxGuiEditor::close()
 	{
 		frame_temp->forget();
 	}
-	frame_temp = nullptr;
 
 	TARGET_API_EDITOR_BASE_CLASS::close();
 }
@@ -401,28 +396,10 @@ void DfxGuiEditor::idle()
 #endif
 	}
 
-	do_idle();
-}
-
-
-//-----------------------------------------------------------------------------
-void DfxGuiEditor::do_idle()
-{
-	if (!IsOpen())
-	{
-		return;
-	}
-
-	// call any child class implementation of the virtual idle method
+	// call any child class implementation
 	dfxgui_Idle();
-
-	// call every controls' implementation of its idle method
-//	for (auto& control : mControlsList)
-	{
-//		control->idle();  // XXX missing from CControl, reimplement?
-	}
-	// XXX call background control idle as well?
 }
+
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::addControl(DGControl* inControl)
@@ -1531,26 +1508,8 @@ enum
 	kDfxContextualMenuItem_Parameter_NumItems
 };
 
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-int DFX_CFStringScanWithFormat(CFStringRef inString, char const* inFormat, ...)
+namespace
 {
-	assert(inString);
-	assert(inFormat);
-
-	int scanCount = 0;
-
-	if (auto const cString = dfx::CreateCStringFromCFString(inString, kCFStringEncodingUTF8))
-	{
-		va_list variableArgumentList;
-		va_start(variableArgumentList, inFormat);
-		scanCount = vsscanf(cString.get(), inFormat, variableArgumentList);
-		va_end(variableArgumentList);
-	}
-
-	return scanCount;
-}
-#endif
 
 //-----------------------------------------------------------------------------
 bool DFX_AppendSeparatorToMenu(COptionMenu& inMenu)
@@ -1584,6 +1543,8 @@ CMenuItem* DFX_AppendCommandItemToMenu(COptionMenu& inMenu, UTF8StringPtr inMenu
 	return nullptr;
 }
 
+}  // namespace
+
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons)
 {
@@ -1599,7 +1560,6 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 		return false;
 	}
 
-#if DFXGUI_USE_CONTEXTUAL_MENU
 	if (!getFrame())
 	{
 		return false;
@@ -2033,7 +1993,6 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 					textEntryDialog = makeOwned<DGTextEntryDialog>(paramID, getparametername(paramID), "enter value:");
 					if (textEntryDialog)
 					{
-//						textEntryDialog->setText(dgControl->createStringFromValue());
 						std::array<char, dfx::kParameterValueStringMaxLength> textValue;
 						textValue.fill(0);
 						if (GetParameterValueType(paramID) == DfxParam::ValueType::Float)
@@ -2128,9 +2087,6 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 	}
 
 	return handled;
-#else
-	return false;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2401,6 +2357,9 @@ void DfxGuiEditor::HandleMidiLearnChange()
 }
 #endif
 
+namespace
+{
+
 //-----------------------------------------------------------------------------
 static void DFXGUI_MidiLearnButtonUserProcedure(long inValue, void* inUserData)
 {
@@ -2417,6 +2376,8 @@ static void DFXGUI_MidiResetButtonUserProcedure(long inValue, void* inUserData)
 		static_cast<DfxGuiEditor*>(inUserData)->resetmidilearn();
 	}
 }
+
+}  // namespace
 
 //-----------------------------------------------------------------------------
 DGButton* DfxGuiEditor::CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState)
@@ -2623,12 +2584,7 @@ DGVstGuiAUView::~DGVstGuiAUView()
 {
 	if (mDfxGuiEditor)
 	{
-		// the idle timer gets disposed in the parent class destructor, 
-		// so make sure that the mDfxGuiEditor pointer is zeroed so that it 
-		// can't be accessed asynchronously by the idle timer while being deleted
-		auto const editor_temp = std::move(mDfxGuiEditor);
-
-		editor_temp->close();
+		mDfxGuiEditor->close();
 	}
 }
 
