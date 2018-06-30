@@ -54,6 +54,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 #ifdef TARGET_API_RTAS
 	using DGEditorListenerInstance = ITemplateProcess*;
+	#if WINDOWS_VERSION
+		using sRect = RECT;
+	#elif MAC_VERSION
+		using sRect = Rect;
+	#endif
 #endif
 
 #ifdef TARGET_API_VST
@@ -125,7 +130,7 @@ public:
 	void beginEdit(int32_t inParameterIndex) override;
 	void endEdit(int32_t inParameterIndex) override;
 #endif
-	void idle() override;
+	void idle() override final;
 
 	// these are for the child class of DfxGuiEditor to override
 	virtual long OpenEditor() = 0;
@@ -160,7 +165,6 @@ public:
 		return mBackgroundImage.get();
 	}
 
-	void do_idle();
 	virtual void dfxgui_Idle() {}
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -322,7 +326,7 @@ private:
 	std::vector<AudioUnitParameterID> mAUParameterList;
 	std::mutex mAUParameterListLock;
 	AudioUnitParameterID mAUMaxParameterID = 0;
-	std::unique_ptr<typename std::remove_pointer<AUEventListenerRef>::type, OSStatus(*)(AUParameterListenerRef)> mAUEventListener {nullptr, AUListenerDispose};
+	dfx::UniqueOpaqueType<AUEventListenerRef, OSStatus> mAUEventListener {nullptr, AUListenerDispose};
 	AudioUnitEvent mStreamFormatPropertyAUEvent {};
 	AudioUnitEvent mParameterListPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnPropertyAUEvent {};

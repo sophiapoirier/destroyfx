@@ -24,10 +24,17 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguimisc.h"
 
 #include <algorithm>
+#include <cmath>
+#include <experimental/optional>
 
 #include "dfxmisc.h"
 
 #if TARGET_OS_MAC
+	#if !__OBJC__
+		#error "you must compile the version of this file with a .mm filename extension, not this file"
+	#endif
+	#import <AppKit/NSColor.h>
+	#import <AppKit/NSColorSpace.h>
 	#include <Carbon/Carbon.h>
 #endif
 
@@ -35,7 +42,162 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 DGColor const DGColor::kBlack(kBlackCColor);
 DGColor const DGColor::kWhite(kWhiteCColor);
-DGColor const DGColor::kFocusHighlight(0.231372549f, 0.6f, 0.988235294f);
+
+//-----------------------------------------------------------------------------
+DGColor DGColor::withAlpha(int inAlpha) const
+{
+	DGColor color(*this);
+	color.alpha = componentFromInt(inAlpha);
+	return color;
+}
+
+//-----------------------------------------------------------------------------
+DGColor DGColor::withAlpha(float inAlpha) const
+{
+	DGColor color(*this);
+	color.alpha = componentFromFloat(inAlpha);
+	return color;
+}
+
+//-----------------------------------------------------------------------------
+DGColor DGColor::darker(float inAmount) const
+{
+	if (inAmount < 0.0f)  // circumvent possible division by zero
+	{
+		return brighter(std::fabs(inAmount));
+	}
+	inAmount = kMaxValue_f / (kMaxValue_f + inAmount);
+
+	auto const darken = [inAmount](auto component)
+	{
+		return componentFromFloat(inAmount * componentToFloat(component));
+	};
+	return DGColor(darken(red), darken(green), darken(blue), alpha);
+}
+
+//-----------------------------------------------------------------------------
+DGColor DGColor::brighter(float inAmount) const
+{
+	if (inAmount < 0.0f)  // circumvent possible division by zero
+	{
+		return darker(std::fabs(inAmount));
+	}
+	inAmount = kMaxValue_f / (kMaxValue_f + inAmount);
+
+	auto const brighten = [inAmount](auto component)
+	{
+		return componentFromFloat(kMaxValue - (inAmount * (kMaxValue_f - componentToFloat(component))));
+	};
+	return DGColor(brighten(red), brighten(green), brighten(blue), alpha);
+}
+
+//-----------------------------------------------------------------------------
+DGColor DGColor::getSystem(System inSystemColorID)
+{
+	using OptionalColor = std::experimental::optional<DGColor>;
+
+#if TARGET_OS_MAC
+	auto const fromNSColor = [](NSColor* inColor) -> OptionalColor
+	{
+		if (inColor)
+		{
+			auto const rgbColor = [inColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+			if (rgbColor)
+			{
+//printf("%lf %lf %lf %lf\n", rgbColor.redComponent * 255.0, rgbColor.greenComponent * 255.0, rgbColor.blueComponent * 255.0, rgbColor.alphaComponent);
+				return DGColor(static_cast<float>(rgbColor.redComponent), static_cast<float>(rgbColor.greenComponent), 
+							   static_cast<float>(rgbColor.blueComponent), static_cast<float>(rgbColor.alphaComponent));
+			}
+			else if ([inColor respondsToSelector:@selector(CGColor)])
+			{
+				// failure workaround: fill a bitmap context with the color to snoop it
+				dfx::UniqueOpaqueType<CGColorSpaceRef> const colorSpace(CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB), CGColorSpaceRelease);
+				if (colorSpace)
+				{
+					constexpr size_t width = 1, height = 1;
+					dfx::UniqueOpaqueType<CGContextRef> const bitmapContext(CGBitmapContextCreate(nullptr, width, height, 8, 0, colorSpace.get(), kCGImageAlphaPremultipliedLast), CGContextRelease);
+					if (bitmapContext)
+					{
+						CGContextSetFillColorWithColor(bitmapContext.get(), inColor.CGColor);
+						CGContextFillRect(bitmapContext.get(), CGRectMake(0, 0, width, height));
+						if (auto const bitmapData = static_cast<uint8_t*>(CGBitmapContextGetData(bitmapContext.get())))
+						{
+							return DGColor(bitmapData[0], bitmapData[1], bitmapData[2], bitmapData[3]);
+						}
+					}
+				}
+			}
+		}
+		return {};
+	};
+	auto const fromNSColorProperty = [&fromNSColor](SEL inSelector) -> OptionalColor
+	{
+//NSLog(@"%@: ", NSStringFromSelector(inSelector));
+		if (inSelector && [NSColor respondsToSelector:inSelector])
+		{
+			return fromNSColor([NSColor performSelector:inSelector]);
+		}
+		return {};
+	};
+	#define DFX_SELECTOR(x) @selector(x)
+#else
+	auto const fromNSColorProperty = []()
+	{
+		return OptionalColor();
+	};
+	#define DFX_SELECTOR(x)
+#endif  // TARGET_OS_MAC
+
+	// NOTE: these fallback colors are based on those of macOS 10.13.5
+	switch (inSystemColorID)
+	{
+		case System::WindowBackground:
+			// TODO: why does converting this to components fail?
+			return fromNSColorProperty(DFX_SELECTOR(windowBackgroundColor)).value_or(DGColor(239, 239, 239));
+		case System::WindowFrame:
+			return fromNSColorProperty(DFX_SELECTOR(windowFrameColor)).value_or(DGColor(170, 170, 170));
+		case System::WindowTitle:
+			return fromNSColorProperty(DFX_SELECTOR(windowFrameTextColor)).value_or(DGColor(0, 0, 0));
+		case System::Label:
+			return fromNSColorProperty(DFX_SELECTOR(labelColor)).value_or(DGColor(0.0f, 0.0f, 0.0f, 0.85f));
+		case System::Control:
+			return fromNSColorProperty(DFX_SELECTOR(controlColor)).value_or(DGColor(255, 255, 255));  // controlBackgroundColor?
+		case System::ControlText:
+			return fromNSColorProperty(DFX_SELECTOR(controlTextColor)).value_or(DGColor(0, 0, 0));
+		case System::Text:
+			return fromNSColorProperty(DFX_SELECTOR(textColor)).value_or(DGColor(0, 0, 0));
+		case System::TextBackground:
+			return fromNSColorProperty(DFX_SELECTOR(textBackgroundColor)).value_or(DGColor(255, 255, 255));
+		case System::Accent:
+			return fromNSColorProperty(DFX_SELECTOR(controlAccentColor)).value_or(DGColor(0, 122, 255));
+		case System::AccentPressed:
+#if TARGET_OS_MAC
+			if ([NSColor respondsToSelector:@selector(controlAccentColor)] && [NSColor instancesRespondToSelector:@selector(colorWithSystemEffect:)])
+			{
+				#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_13_4)
+				constexpr NSInteger NSColorSystemEffectPressed = 1;
+				#endif
+				#pragma clang diagnostic push
+				#pragma clang diagnostic ignored "-Wobjc-method-access"
+				auto const color = fromNSColor([[NSColor controlAccentColor] colorWithSystemEffect:NSColorSystemEffectPressed]);
+				#pragma clang diagnostic pop
+				if (color)
+				{
+					return *color;
+				}
+			}
+#endif
+			return DGColor(0.000000179f, 0.437901825f, 0.919842184f);
+		case System::AccentControlText:
+			// TODO: what is the correct system color?
+			return fromNSColorProperty(DFX_SELECTOR(alternateSelectedControlTextColor)).value_or(DGColor(0, 0, 0));
+		case System::FocusIndicator:
+			return fromNSColorProperty(DFX_SELECTOR(keyboardFocusIndicatorColor)).value_or(DGColor(59, 153, 252));
+	}
+#undef DFX_SELECTOR
+
+	assert(false);
+}
 
 
 #if 0
@@ -53,225 +215,6 @@ DGGraphicsContext::DGGraphicsContext(TARGET_PLATFORM_GRAPHICS_CONTEXT inContext)
 #endif
 }
 
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::setAlpha(float inAlpha)
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextSetAlpha(context, inAlpha);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::setAntialias(bool inShouldAntialias)
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-	{
-		CGContextSetShouldAntialias(context, inShouldAntialias);
-		CGContextSetShouldSmoothFonts(context, inShouldAntialias);
-		if (inShouldAntialias)
-			CGContextSetAllowsAntialiasing(context, inShouldAntialias);
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::setAntialiasQuality(DGAntialiasQuality inQualityLevel)
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-	{
-		CGInterpolationQuality cgQuality;
-		switch (inQualityLevel)
-		{
-			case kDGAntialiasQuality_none:
-				cgQuality = kCGInterpolationNone;
-				break;
-			case kDGAntialiasQuality_low:
-				cgQuality = kCGInterpolationLow;
-				break;
-			case kDGAntialiasQuality_high:
-				cgQuality = kCGInterpolationHigh;
-				break;
-			case kDGAntialiasQuality_default:
-			default:
-				cgQuality = kCGInterpolationDefault;
-				break;
-		}
-		CGContextSetInterpolationQuality(context, cgQuality);
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::setColor(DGColor inColor)
-{
-	setFillColor(inColor);
-	setStrokeColor(inColor);
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::setFillColor(DGColor inColor)
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextSetRGBFillColor(context, inColor.r, inColor.g, inColor.b, inColor.a);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::setStrokeColor(DGColor inColor)
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextSetRGBStrokeColor(context, inColor.r, inColor.g, inColor.b, inColor.a);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::setLineWidth(float inLineWidth)
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextSetLineWidth(context, inLineWidth);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::beginPath()
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextBeginPath(context);
-#endif
-}
-
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::endPath()
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextClosePath(context);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::fillPath()
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextFillPath(context);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::strokePath()
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextStrokePath(context);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::fillRect(DGRect * inRect)
-{
-	if (inRect == nullptr)
-		return;
-
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-	{
-		CGRect cgRect = inRect->convertToCGRect(portHeight);
-		CGContextFillRect(context, cgRect);
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::strokeRect(DGRect * inRect, float inLineWidth)
-{
-	if (inRect == nullptr)
-		return;
-
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-	{
-		CGRect cgRect = inRect->convertToCGRect(portHeight);
-		const float halfLineWidth = inLineWidth / 2.0f;
-		cgRect = CGRectInset(cgRect, halfLineWidth, halfLineWidth);	// CoreGraphics lines are positioned between pixels rather than on them
-		// use the currently-set line width
-		if (inLineWidth < 0.0f)
-			CGContextStrokeRect(context, cgRect);
-		// specify the line width
-		else
-			CGContextStrokeRectWithWidth(context, cgRect, inLineWidth);
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::moveToPoint(float inX, float inY)
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-	{
-		beginPath();
-		CGContextMoveToPoint(context, inX, inY);
-	}
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::addLineToPoint(float inX, float inY)
-{
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
-	if (context != nullptr)
-		CGContextAddLineToPoint(context, inX, inY);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::strokeLine(float inLineWidth)
-{
-// XXX use VSTGUI implementation
-	// (re)set the line width
-	if (inLineWidth >= 0.0f)
-		setLineWidth(inLineWidth);
-	endPath();
-	strokePath();
-}
-
-//-----------------------------------------------------------------------------
-void DGGraphicsContext::drawLine(float inStartX, float inStartY, float inEndX, float inEndY, float inLineWidth)
-{
-// XXX use VSTGUI implementation
-	beginPath();
-	// (re)set the line width
-	if (inLineWidth >= 0.0f)
-		setLineWidth(inLineWidth);
-	moveToPoint(inStartX, inStartY);
-	addLineToPoint(inEndX, inEndY);
-	endPath();
-	strokePath();
-}
-
 
 //-----------------------------------------------------------------------------
 void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
@@ -283,8 +226,7 @@ void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
 	if (strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0)
 		isSnootPixel10 = true;
 
-// XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
+#if TARGET_OS_MAC
 	if (context != nullptr)
 	{
 		CGContextSelectFont(context, inFontName, inFontSize, kCGEncodingMacRoman);
@@ -320,7 +262,7 @@ void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, dfx::Te
 		return;
 
 // XXX use VSTGUI implementation
-#if TARGET_OS_MAC && 0
+#if TARGET_OS_MAC
 	if (context == nullptr)
 		return;
 
@@ -390,49 +332,24 @@ OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, df
 	const ThemeFontID themeFontID = kThemeLabelFont;
 //kThemeSystemFont kThemeSystemFontDetail kThemeMiniSystemFont kThemeLabelFont
 
-	// this function is only available in Mac OS X 10.3 or higher
-	if (HIThemeDrawTextBox != nullptr)
-	{
-		HIRect bounds = inRegion->convertToCGRect( getPortHeight() );
+	HIRect bounds = inRegion->convertToCGRect( getPortHeight() );
 
-		HIThemeTextInfo textInfo = {0};
-		textInfo.version = 0;
-		textInfo.state = kThemeStateActive;
-		textInfo.fontID = themeFontID;
-		textInfo.truncationPosition = kHIThemeTextTruncationEnd;
-		textInfo.truncationMaxLines = 1;
-		textInfo.verticalFlushness = kHIThemeTextVerticalFlushCenter;
-		textInfo.options = 0;
+	HIThemeTextInfo textInfo = {0};
+	textInfo.version = 0;
+	textInfo.state = kThemeStateActive;
+	textInfo.fontID = themeFontID;
+	textInfo.truncationPosition = kHIThemeTextTruncationEnd;
+	textInfo.truncationMaxLines = 1;
+	textInfo.verticalFlushness = kHIThemeTextVerticalFlushCenter;
+	textInfo.options = 0;
 
-		textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushLeft;
-		if (inAlignment == kDGTextAlign_center)
-			textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushCenter;
-		else if (inAlignment == kDGTextAlign_right)
-			textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushRight;
+	textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushLeft;
+	if (inAlignment == kDGTextAlign_center)
+		textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushCenter;
+	else if (inAlignment == kDGTextAlign_right)
+		textInfo.horizontalFlushness = kHIThemeTextHorizontalFlushRight;
 
-		return HIThemeDrawTextBox(inText, &bounds, &textInfo, getPlatformGraphicsContext(), getHIThemeOrientation());
-	}
-	else
-	{
-		Rect bounds = inRegion->convertToMacRect();
-
-		SetThemeTextColor(kThemeTextColorWhite, 32, true);	// XXX eh, is there a real way to get the graphics device bit-depth value?
-
-		const ThemeDrawState themDrawState = kThemeStateActive;
-		SInt16 justification = teFlushLeft;
-		if (inAlignment == kDGTextAlign_center)
-			justification = teCenter;
-		else if (inAlignment == kDGTextAlign_right)
-			justification = teFlushRight;
-
-		// XXX center the text vertically (yah?)
-		Point heightPoint;
-		OSStatus status = GetThemeTextDimensions(inText, themeFontID, themDrawState, false, &heightPoint, nullptr);
-		if (status == noErr)
-			InsetRect( &bounds, 0, ((bounds.bottom-bounds.top) - heightPoint.v) / 2 );
-
-		return DrawThemeTextBox(inText, themeFontID, themDrawState, false, &bounds, justification, nullptr);
-	}
+	return HIThemeDrawTextBox(inText, &bounds, &textInfo, getPlatformGraphicsContext(), getHIThemeOrientation());
 }
 #endif
 // TARGET_OS_MAC
@@ -444,29 +361,6 @@ OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, df
 
 
 #pragma mark -
-
-#if 0
-//-----------------------------------------------------------------------------
-unsigned long dfx::ConvertVstGuiMouseButtons(long inButtons)
-{
-	return static_cast<unsigned long>(inButtons & (kLButton | kMButton | kRButton));
-}
-
-//-----------------------------------------------------------------------------
-dfx::KeyModifiers dfx::ConvertVstGuiKeyModifiers(long inButtons)
-{
-	dfx::KeyModifiers resultKeys = 0;
-	if (inButtons & kShift)
-		resultKeys |= dfx::kKeyModifier_Shift;
-	if (inButtons & kControl)
-		resultKeys |= dfx::kKeyModifier_Accel;
-	if (inButtons & kAlt)
-		resultKeys |= dfx::kKeyModifier_Alt;
-	if (inButtons & kApple)
-		resultKeys |= dfx::kKeyModifier_Extra;
-	return resultKeys;
-}
-#endif
 
 //-----------------------------------------------------------------------------
 SharedPointer<CFontDesc> dfx::CreateVstGuiFont(float inFontSize, char const* inFontName)

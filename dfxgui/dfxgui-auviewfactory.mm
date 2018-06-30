@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #import <AudioUnit/AUCocoaUIView.h>
 #import <Cocoa/Cocoa.h>
+#import <memory>
 
 #import "dfxguieditor.h"
 
@@ -51,7 +52,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 @interface DGNSViewForAU : NSView
 {
-	DfxGuiEditor* mDfxGuiEditor;
+	std::unique_ptr<DfxGuiEditor> mDfxGuiEditor;
 	NSTimer* mIdleTimer;
 }
 - (id) initWithAU:(AudioUnit)inAU preferredSize:(NSSize)inSize;
@@ -75,7 +76,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 - (NSString*) description
 {
-	return [[[NSString alloc] initWithString:@"" PLUGIN_NAME_STRING " editor"] autorelease];
+	return [NSString stringWithCString:PLUGIN_NAME_STRING " editor" encoding:NSUTF8StringEncoding];
 }
 
 //-----------------------------------------------------------------------------
@@ -83,23 +84,28 @@ To contact the author, use the contact form at http://destroyfx.org/
 - (NSView*) uiViewForAudioUnit:(AudioUnit)inAU withSize:(NSSize)inPreferredSize
 {
 	NSAssert(inAU != nil, @"null Audio Unit instance");
+#if __has_feature(objc_arc)
+	// TODO: is this implementation actually okay either way?
+	NSView* __autoreleasing view = [[DGNSViewForAU alloc] initWithAU:inAU preferredSize:inPreferredSize];
+	return view;
+#else
 	return [[[DGNSViewForAU alloc] initWithAU:inAU preferredSize:inPreferredSize] autorelease];
+#endif
 }
 
-@end
-// DGCocoaAUViewFactory
+@end  // DGCocoaAUViewFactory
 
 
 
 //-----------------------------------------------------------------------------
-CFStringRef DGCocoaAUViewFactory_CopyClassName()
+CFStringRef dfx::DGCocoaAUViewFactory_CopyClassName()
 {
-	NSString* name = NSStringFromClass([DGCocoaAUViewFactory class]);
+	auto const name = NSStringFromClass([DGCocoaAUViewFactory class]);
 	if (name != nil)
 	{
-		[name retain];
+		return reinterpret_cast<CFStringRef>(CFBridgingRetain(name));
 	}
-	return reinterpret_cast<CFStringRef>(name);
+	return nil;
 }
 
 
@@ -116,7 +122,6 @@ extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 //-----------------------------------------------------------------------------
 - (id) initWithAU:(AudioUnit)inAU preferredSize:(NSSize)inSize
 {
-	mDfxGuiEditor = nil;
 	mIdleTimer = nil;
 
 	if (inAU == nil)
@@ -124,8 +129,8 @@ extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 		return nil;
 	}
 
-	mDfxGuiEditor = DFXGUI_NewEditorInstance(inAU);
-	if (mDfxGuiEditor == nil)
+	mDfxGuiEditor.reset(DFXGUI_NewEditorInstance(inAU));
+	if (!mDfxGuiEditor)
 	{
 		return nil;
 	}
@@ -136,10 +141,12 @@ extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 		return nil;
 	}
 
-	auto const success = mDfxGuiEditor->open(self);
+	auto const success = mDfxGuiEditor->open((__bridge void*)self);
 	if (!success)
 	{
-		[self dealloc];
+#if !__has_feature(objc_arc)
+		[self release];
+#endif
 		return nil;
 	}
 
@@ -153,10 +160,6 @@ extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 
 	mIdleTimer = [NSTimer scheduledTimerWithTimeInterval:DfxGuiEditor::kIdleTimerInterval 
 												  target:self selector:@selector(idle:) userInfo:nil repeats:YES];
-	if (mIdleTimer != nil)
-	{
-		[mIdleTimer retain];
-	}
 
 	return self;
 }
@@ -167,7 +170,7 @@ extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 {
 	[super setFrame:inNewSize];
 
-	if (mDfxGuiEditor != nil)
+	if (mDfxGuiEditor)
 	{
 		if (mDfxGuiEditor->getFrame() != nil)
 		{
@@ -188,7 +191,6 @@ extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 	if (mIdleTimer != nil)
 	{
 		[mIdleTimer invalidate];
-		[mIdleTimer release];
 	}
 	mIdleTimer = nil;
 
@@ -196,7 +198,7 @@ extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 }
 
 /*
-XXX eh do I need to implement this?  or is it only an option in VSTGUI 4?
+TODO: eh do I need to implement this?
 //-----------------------------------------------------------------------------
 - (void) viewDidMoveToSuperview
 {
@@ -224,25 +226,24 @@ XXX eh do I need to implement this?  or is it only an option in VSTGUI 4?
 //-----------------------------------------------------------------------------
 - (void) dealloc
 {
-	if (mDfxGuiEditor != nil)
+	if (mDfxGuiEditor)
 	{
-		auto const editor_temp = mDfxGuiEditor;
-		mDfxGuiEditor = nil;
-		editor_temp->close();
-		delete editor_temp;
+		mDfxGuiEditor->close();
+		mDfxGuiEditor.reset();
 	}
 
+#if !__has_feature(objc_arc)
 	[super dealloc];
+#endif
 }
 
 //-----------------------------------------------------------------------------
 - (void) idle:(NSTimer*) __unused theTimer
 {
-	if (mDfxGuiEditor != nil)
+	if (mDfxGuiEditor)
 	{
 		mDfxGuiEditor->idle();
 	}
 }
 
-@end
-// DGNSViewForAU
+@end  // DGNSViewForAU

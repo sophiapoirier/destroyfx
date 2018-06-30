@@ -32,16 +32,6 @@ namespace dfx
 
 
 //-----------------------------------------------------------------------------
-#if 0
-enum KeyModifiers : unsigned int
-{
-	kKeyModifier_Accel = 1,  // command on Macs, control on PCs
-	kKeyModifier_Alt = 1 << 1,  // option on Macs, alt on PCs
-	kKeyModifier_Shift = 1 << 2,
-	kKeyModifier_Extra = 1 << 3  // control on Macs
-};
-#endif
-
 enum Axis
 {
 	kAxis_Horizontal = 1,

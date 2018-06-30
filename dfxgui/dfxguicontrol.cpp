@@ -135,20 +135,8 @@ void DGNullControl::draw(CDrawContext* inContext)
 
 
 
-const SInt32 kContinuousControlMaxValue = 0x0FFFFFFF - 1;
-#if TARGET_OS_MAC
-	const MenuID kDfxGui_ControlContextualMenuID = 3;	// XXX eh?  how am I supposed to come up with a meaningful 16-bit value for this?
-#endif
-
-
-#ifndef DFXGUI_USE_CONTEXTUAL_MENU
-	#define DFXGUI_USE_CONTEXTUAL_MENU	1
-#endif
-
-
-
 #pragma mark -
-#pragma mark DGControl
+#pragma mark DGControl old
 
 //-----------------------------------------------------------------------------
 #ifdef TARGET_API_RTAS
@@ -179,9 +167,7 @@ DGControl::DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRa
 	valueRange(inRange)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	auvp = CAAUParameter();	// an empty CAAUParameter
 	parameterAttached = false;
-#else
 #endif
 
 	init(inRegion);
@@ -242,10 +228,10 @@ void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseBu
 	if ( isParameterAttached() )//&& (inEventKind == kEventControlContextualMenuClick) )
 		getDfxGuiEditor()->automationgesture_begin( getParameterID() );
 
-	#if TARGET_PLUGIN_USES_MIDI
-		if ( isParameterAttached() )
-			getDfxGuiEditor()->setmidilearner( getParameterID() );
-	#endif
+#if TARGET_PLUGIN_USES_MIDI
+	if (isParameterAttached())
+		getDfxGuiEditor()->setmidilearner( getParameterID() );
+#endif
 
 	// set the default value of the parameter
 	if ( (inKeyModifiers & dfx::kKeyModifier_Accel) && isParameterAttached() )
@@ -348,36 +334,6 @@ ControlRef carbonControl = NULL;	// XXX just quieting errors for now
 }
 
 //-----------------------------------------------------------------------------
-int DFX_CFStringScanWithFormat(CFStringRef inString, const char * inFormat, ...)
-{
-	if ( (inString == NULL) || (inFormat == NULL) )
-		return 0;
-
-	int scanCount = 0;
-
-	const auto cString = dfx::CreateCStringFromCFString(inString, kCFStringEncodingUTF8);
-	if (cString)
-	{
-		va_list variableArgumentList;
-		va_start(variableArgumentList, inFormat);
-		scanCount = vsscanf(cString.get(), inFormat, variableArgumentList);
-		va_end(variableArgumentList);
-	}
-
-	return scanCount;
-}
-
-//-----------------------------------------------------------------------------
-bool DGControl::do_contextualMenuClick()
-{
-#if DFXGUI_USE_CONTEXTUAL_MENU
-	return contextualMenuClick();
-#else
-	return false;
-#endif
-}
-
-//-----------------------------------------------------------------------------
 void DGControl::setParameterID(long inParameterID)
 {
 	if (inParameterID == DFX_PARAM_INVALID_ID)
@@ -411,89 +367,10 @@ long DGControl::getParameterID()
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::setValue_i(long inValue)
-{
-	// XXX implement
-}
-
-//-----------------------------------------------------------------------------
-long DGControl::getValue_i()
-{
-	// XXX implement
-	return 0;
-}
-
-//-----------------------------------------------------------------------------
-CFStringRef DGControl::createStringFromValue()
-{
-	if ( isContinuousControl() )	// XXX need a better check
-	{
-		double currentValue;
-		if ( isParameterAttached() )
-			currentValue = getDfxGuiEditor()->getparameter_f( getParameterID() );
-		else
-			currentValue = 0.0f;	// XXX implement
-		return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%.6f"), currentValue);
-	}
-	else
-	{
-		long currentValue;
-		if ( isParameterAttached() )
-			currentValue = getDfxGuiEditor()->getparameter_i( getParameterID() );
-		else
-			currentValue = getValue_i();
-		return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%ld"), currentValue);
-	}
-}
-
-//-----------------------------------------------------------------------------
-bool DGControl::setValueWithString(CFStringRef inString)
-{
-	bool success = false;
-
-	if ( isParameterAttached() )
-	{
-		if ( isContinuousControl() )	// XXX need a better check
-		{
-//			double newValue = CFStringGetDoubleValue(inString);
-			double newValue = 0.0;
-			int scanResult = DFX_CFStringScanWithFormat(inString, "%lf", &newValue);
-			if (scanResult > 0)
-			{
-				getDfxGuiEditor()->setparameter_f(getParameterID(), newValue, true);
-				success = true;
-			}
-		}
-		else
-		{
-			long newValue = 0;
-			int scanResult = DFX_CFStringScanWithFormat(inString, "%ld", &newValue);
-			if (scanResult > 0)
-			{
-				getDfxGuiEditor()->setparameter_i(getParameterID(), newValue, true);
-				success = true;
-			}
-		}
-	}
-
-	return success;
-}
-
-//-----------------------------------------------------------------------------
 void DGControl::setOffset(long x, long y)
 {
 	controlPos.offset(x, y);
 	vizArea.offset(x, y);
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::setDrawAlpha(float inAlpha)
-{
-	float oldalpha = drawAlpha;
-	drawAlpha = inAlpha;
-	if (oldalpha != inAlpha)
-		redraw();
-// XXX use CBitmap::drawAlphaBlend()
 }
 
 //-----------------------------------------------------------------------------
@@ -510,26 +387,17 @@ void DGControl::shrinkForeBounds(long inXoffset, long inYoffset, long inWidthShr
 	vizArea.setHeight( getHeight() - inHeightShrink );
 }
 
-//-----------------------------------------------------------------------------
-bool DGControl::setHelpText(const char * inHelpText)
-{
-	if (inHelpText == NULL)
-		return false;
-
-	return setAttribute(kCViewTooltipAttribute, strlen(inHelpText)+1, inHelpText);
-}
-
 
 
 
 
 
 #pragma mark -
+#pragma mark DGBackgroundControl old
 //-----------------------------------------------------------------------------
-#if 0
 void DGBackgroundControl::draw(CDrawContext * inContext)
 {
-	DGRect drawRect( (long)(getDfxGuiEditor()->GetXOffset()), (long)(getDfxGuiEditor()->GetYOffset()), getWidth(), getHeight() );
+	DGRect drawRect((long)(getDfxGuiEditor()->GetXOffset()), (long)(getDfxGuiEditor()->GetYOffset()), getWidth(), getHeight());
 
 	// draw the background image, if there is one
 	if (backgroundImage != NULL)
@@ -542,8 +410,8 @@ void DGBackgroundControl::draw(CDrawContext * inContext)
 		const float dragHiliteThickness = 2.0f;	// XXX is there a proper way to query this?
 		if (HIThemeSetStroke != NULL)
 		{
-//OSStatus status = HIThemeBrushCreateCGColor(kThemeBrushDragHilite, CGColorRef * outColor);
-			OSStatus status = HIThemeSetStroke(kThemeBrushDragHilite, NULL, inContext->getPlatformGraphicsContext(), inContext->getHIThemeOrientation());
+//auto const status = HIThemeBrushCreateCGColor(kThemeBrushDragHilite, CGColorRef * outColor);
+			auto const status = HIThemeSetStroke(kThemeBrushDragHilite, NULL, inContext->getPlatformGraphicsContext(), inContext->getHIThemeOrientation());
 			if (status == noErr)
 			{
 				CGRect cgRect = drawRect.convertToCGRect( inContext->getPortHeight() );
@@ -555,7 +423,7 @@ void DGBackgroundControl::draw(CDrawContext * inContext)
 		else
 		{
 			RGBColor dragHiliteColor;
-			OSErr error = GetDragHiliteColor(getDfxGuiEditor()->GetCarbonWindow(), &dragHiliteColor);
+			auto const error = GetDragHiliteColor(getDfxGuiEditor()->GetCarbonWindow(), &dragHiliteColor);
 			if (error == noErr)
 			{
 				const float rgbScalar = 1.0f / (float)0xFFFF;
@@ -575,7 +443,6 @@ void DGBackgroundControl::setDragActive(bool inActiveStatus)
 	if (oldStatus != inActiveStatus)
 		redraw();
 }
-#endif
 
 
 
