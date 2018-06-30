@@ -35,7 +35,6 @@
 		4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */; };
 		4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */; };
 		4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E8068011C9006A9591 /* dfxguislider.cpp */; };
-		4932F4F6068011C9006A9591 /* dfxguimisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4EA068011C9006A9591 /* dfxguimisc.cpp */; };
 		4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F7990680E859006A9591 /* dfxmidi.cpp */; };
 		49BB478C07E53D2500861708 /* transverbformalities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB478807E53D2500861708 /* transverbformalities.cpp */; };
 		49BB478D07E53D2500861708 /* transverbprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB478907E53D2500861708 /* transverbprocess.cpp */; };
@@ -68,6 +67,7 @@
 		ECC0F378200BC5F900B1B463 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F377200BC5F800B1B463 /* AudioUnit.framework */; };
 		ECC0F37A200BC62200B1B463 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F379200BC62100B1B463 /* Carbon.framework */; };
 		ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECDCF1CD0FB88B87005F739E /* dfx-au-utilities.strings */; };
+		ECE4CBE720D0CB380026E215 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE4CBE620D0CB380026E215 /* dfxguimisc.mm */; };
 		ECF7D8C42002AA3A00DCE42E /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8C22002AA3A00DCE42E /* AUPlugInDispatch.cpp */; };
 		ECF7D8CE2002AB5800DCE42E /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8CA2002AB5700DCE42E /* dfxgui-auviewfactory.mm */; };
 		ECF7D8D02002AB5800DCE42E /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8CC2002AB5700DCE42E /* dfxguidialog.cpp */; };
@@ -196,6 +196,7 @@
 		ECDCF1CE0FB88B87005F739E /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECDCF1D00FB88B92005F739E /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECDCF1D10FB88B9C005F739E /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECE4CBE620D0CB380026E215 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
 		ECF3B50A20CCA88800842E94 /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECF7D8C12002AA3A00DCE42E /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
 		ECF7D8C22002AA3A00DCE42E /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
@@ -469,6 +470,7 @@
 				ECF7D8CC2002AB5700DCE42E /* dfxguidialog.cpp */,
 				4932F4EB068011C9006A9591 /* dfxguimisc.h */,
 				4932F4EA068011C9006A9591 /* dfxguimisc.cpp */,
+				ECE4CBE620D0CB380026E215 /* dfxguimisc.mm */,
 				4932F4E3068011C9006A9591 /* dfxguibutton.h */,
 				4932F4E2068011C9006A9591 /* dfxguibutton.cpp */,
 				4932F4E9068011C9006A9591 /* dfxguislider.h */,
@@ -657,12 +659,12 @@
 				4932F4EC068011C9006A9591 /* dfxguieditor.cpp in Sources */,
 				ECF7D8CE2002AB5800DCE42E /* dfxgui-auviewfactory.mm in Sources */,
 				4932F4EE068011C9006A9591 /* dfxguibutton.cpp in Sources */,
+				ECE4CBE720D0CB380026E215 /* dfxguimisc.mm in Sources */,
 				4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */,
 				ECF7D8D42002AC5D00DCE42E /* dfx-au-utilities-preset-files.m in Sources */,
 				ECF7D9092002D42E00DCE42E /* dfxmisc.cpp in Sources */,
 				4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */,
 				4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */,
-				4932F4F6068011C9006A9591 /* dfxguimisc.cpp in Sources */,
 				4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */,
 				4918B60D0680FC9C0034CE15 /* dfxsettings.cpp in Sources */,
 				490E76A207CAE24800688A1D /* AUEffectBase.cpp in Sources */,

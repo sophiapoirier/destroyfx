@@ -92,7 +92,7 @@ public:
 		return pointInside(CPoint(inX + left, inY + top));
 	}
 
-#if TARGET_OS_MAC && 0
+#if 0 && TARGET_OS_MAC
 	void copyToCGRect(CGRect * outDestRect, long inOutputPortHeight)
 	{
 		outDestRect->origin.x = left;
@@ -113,31 +113,12 @@ public:
 		copyToCGRect(&outputRect, inOutputPortHeight);
 		return outputRect;
 	}
-	void copyToMacRect(Rect * outDestRect)
-	{
-		outDestRect->left = left;
-		outDestRect->top = top;
-		outDestRect->right = left + getWidth();
-		outDestRect->bottom = top + getHeight();
-	}
-	Rect convertToMacRect()
-	{
-		Rect outputRect;
-		copyToMacRect(&outputRect);
-		return outputRect;
-	}
 #endif	// TARGET_OS_MAC
 };
 
 
 
 #ifdef TARGET_API_RTAS
-
-#if WINDOWS_VERSION
-	#define sRect RECT
-#elif MAC_VERSION
-	#define sRect Rect
-#endif
 
 USING_NAMESPACE_VSTGUI
 
@@ -163,7 +144,22 @@ class DGColor : public CColor
 public:
 	static DGColor const kBlack;
 	static DGColor const kWhite;
-	static DGColor const kFocusHighlight;
+
+	enum class System
+	{
+		WindowBackground,
+		WindowFrame,
+		WindowTitle,
+		Label,
+		Control,
+		ControlText,
+		Text,
+		TextBackground,
+		Accent,
+		AccentPressed,
+		AccentControlText,
+		FocusIndicator
+	};
 
 	DGColor() = default;
 	DGColor(int inRed, int inGreen, int inBlue, int inAlpha = 0xFF)
@@ -188,10 +184,20 @@ public:
 		alpha = inColor.alpha;
 	}
 
+	DGColor withAlpha(int inAlpha) const;
+	DGColor withAlpha(float inAlpha) const;
+
+	DGColor darker(float inAmount) const;
+	DGColor brighter(float inAmount) const;
+
+	static DGColor getSystem(System inSystemColorID);
+
 private:
 	using ComponentType = decltype(red);
 	static constexpr auto kMinValue = std::numeric_limits<ComponentType>::min();
 	static constexpr auto kMaxValue = std::numeric_limits<ComponentType>::max();
+	static constexpr float kMinValue_f = 0.0f;
+	static constexpr float kMaxValue_f = 1.0f;
 
 	static ComponentType componentFromInt(int inValue)
 	{
@@ -204,12 +210,17 @@ private:
 
 	static ComponentType componentFromFloat(float inValue)
 	{
-		constexpr float inputMin = 0.0f;
-		constexpr float inputMax = 1.0f;
+		constexpr auto inputMin = kMinValue_f;
+		constexpr auto inputMax = kMaxValue_f;
 		assert(inValue >= inputMin);
 		assert(inValue <= inputMax);
 		constexpr auto fixedScalar = static_cast<float>(kMaxValue);
 		return static_cast<ComponentType>(std::lround(std::clamp(inValue, inputMin, inputMax) * fixedScalar));
+	}
+
+	static float componentToFloat(ComponentType inValue)
+	{
+		return static_cast<float>(inValue) / static_cast<float>(kMaxValue);
 	}
 };
 
@@ -231,27 +242,6 @@ public:
 	TARGET_PLATFORM_GRAPHICS_CONTEXT getPlatformGraphicsContext()
 		{	return context;	}
 
-	void setAlpha(float inAlpha);
-	void setAntialias(bool inShouldAntialias);
-	void setAntialiasQuality(DGAntialiasQuality inQualityLevel);
-	void setColor(DGColor inColor);
-	void setFillColor(DGColor inColor);
-	void setStrokeColor(DGColor inColor);
-	void setLineWidth(float inLineWidth);
-
-	void beginPath();
-	void endPath();
-	void fillPath();
-	void strokePath();
-
-	void fillRect(DGRect * inRect);
-	void strokeRect(DGRect * inRect, float inLineWidth = -1.0f);
-
-	void moveToPoint(float inX, float inY);
-	void addLineToPoint(float inX, float inY);
-	void strokeLine(float inLineWidth = -1.0f);
-	void drawLine(float inStartX, float inStartY, float inEndX, float inEndY, float inLineWidth = -1.0f);
-
 	void setFont(const char * inFontName, float inFontSize);
 	void drawText(DGRect * inRegion, const char * inText, dfx::TextAlignment inAlignment = kDGTextAlign_left);
 #if TARGET_OS_MAC
@@ -265,11 +255,6 @@ public:
 		{	portHeight = inPortHeight;	}
 	bool isCompositWindow()
 		{	return (portHeight == 0) ? true : false;	}
-	void endQDContext(CGrafPtr inPort)
-	{
-		if ( (inPort != nullptr) && (context != nullptr) )
-			QDEndCGContext(inPort, &context);
-	}
 	HIThemeOrientation getHIThemeOrientation()
 	{
 	#ifndef FLIP_CG_COORDINATES
@@ -314,10 +299,6 @@ public:
 	and also something like this for stacked images:
 	void drawex(CCoord x, CCoord y, int xIndex, int yIndex); 
 */
-/*	virtual void draw(DGGraphicsContext& inContext, DGRect const& inRect, 
-					  CCoord inOffsetX = 0, CCoord inOffsetY = 0, 
-					  float inScalarX = 1.0f, float inScalarY = 1.0f);
-*/
 };
 
 
@@ -327,11 +308,6 @@ namespace dfx
 {
 
 static std::string const kInfinityUTF8(u8"\U0000221E");
-
-#if 0
-unsigned long ConvertVstGuiMouseButtons(long inButtons);
-dfx::KeyModifiers ConvertVstGuiKeyModifiers(long inButtons);
-#endif
 
 SharedPointer<CFontDesc> CreateVstGuiFont(float inFontSize, const char* inFontName = nullptr);
 

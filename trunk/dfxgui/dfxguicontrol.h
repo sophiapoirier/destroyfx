@@ -108,6 +108,14 @@ public:
 class DGControl : public CControl
 {
 public:
+	enum KeyModifiers : unsigned int
+	{
+		kKeyModifier_Accel = 1,  // command on Macs, control on PCs
+		kKeyModifier_Alt = 1 << 1,  // option on Macs, alt on PCs
+		kKeyModifier_Shift = 1 << 2,
+		kKeyModifier_Extra = 1 << 3  // control on Macs
+	};
+
 	// control for a parameter
 	DGControl(DfxGuiEditor * inOwnerEditor, long inParameterID, DGRect * inRegion);
 	// control with no actual parameter attached
@@ -127,16 +135,9 @@ public:
 		{ }
 	bool do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
 	virtual bool mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
-	bool do_contextualMenuClick();
-	virtual bool contextualMenuClick()
-		{	return false;	}
 
 	// force a redraw of the control
 	void redraw();
-
-	// this will get called regularly by an idle timer
-	virtual void idle()
-		{ }
 
 	void setRespondToMouse(bool inMousePolicy)
 		{	shouldRespondToMouse = inMousePolicy;	}
@@ -177,10 +178,6 @@ public:
 		{	return parameterAttached;	}
 	long getParameterID();
 	void setParameterID(long inParameterID);
-	void setValue_i(long inValue);
-	long getValue_i();
-	virtual CFStringRef createStringFromValue();
-	virtual bool setValueWithString(CFStringRef inString);
 #ifdef TARGET_API_AUDIOUNIT
 	CAAUParameter & getAUVP()
 		{	return auvp;	}
@@ -202,14 +199,6 @@ public:
 	void setForeBounds(long x, long y, long w, long h);
 	void shrinkForeBounds(long x, long y, long w, long h);
 
-	void setDrawAlpha(float inAlpha);
-	float getDrawAlpha()
-		{	return drawAlpha;	}
-
-#if TARGET_OS_MAC
-	bool setHelpText(const char * inHelpText);
-#endif
-
 protected:
 	DfxGuiEditor *		ownerEditor;
 
@@ -219,7 +208,6 @@ protected:
 
 	DGRect				controlPos;	// the control's area
 	DGRect				vizArea; 	// where the foreground displays
-	float				drawAlpha;	// level of overall transparency to draw with (0.0 to 1.0)
 
 private:
 	// common constructor stuff

@@ -405,7 +405,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				cocoaViewInfo.mCocoaAUViewBundleLocation = CFBundleCopyBundleURL(pluginBundle);
 				if (cocoaViewInfo.mCocoaAUViewBundleLocation)
 				{
-					cocoaViewInfo.mCocoaAUViewClass[0] = DGCocoaAUViewFactory_CopyClassName();
+					cocoaViewInfo.mCocoaAUViewClass[0] = dfx::DGCocoaAUViewFactory_CopyClassName();
 					if (cocoaViewInfo.mCocoaAUViewClass[0])
 					{
 						*static_cast<AudioUnitCocoaViewInfo*>(outData) = cocoaViewInfo;
