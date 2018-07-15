@@ -109,7 +109,7 @@ void DfxMidi::preprocessEvents()
 	// The host is supposed to send them in order, but just in case...
 	std::stable_sort(mBlockEvents.begin(), std::next(mBlockEvents.begin(), mNumBlockEvents), [](auto const& a, auto const& b)
 					 {
-						 return a.mDelta < b.mDelta;
+						 return a.mOffsetFrames < b.mOffsetFrames;
 					 });
 }
 
@@ -158,50 +158,50 @@ void DfxMidi::removeAllNotes()
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
+void DfxMidi::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_NoteOn;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
 	mBlockEvents[mNumBlockEvents].mByte1 = inNoteNumber;
 	mBlockEvents[mNumBlockEvents].mByte2 = inVelocity;
-	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mOffsetFrames = inOffsetFrames;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
+void DfxMidi::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_NoteOff;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
 	mBlockEvents[mNumBlockEvents].mByte1 = inNoteNumber;
 	mBlockEvents[mNumBlockEvents].mByte2 = inVelocity;
-	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mOffsetFrames = inOffsetFrames;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleAllNotesOff(int inMidiChannel, long inBufferOffset)
+void DfxMidi::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_CC;
 	mBlockEvents[mNumBlockEvents].mByte1 = kCC_AllNotesOff;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
-	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mOffsetFrames = inOffsetFrames;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset)
+void DfxMidi::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_PitchBend;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
 	mBlockEvents[mNumBlockEvents].mByte1 = inValueLSB;
 	mBlockEvents[mNumBlockEvents].mByte2 = inValueMSB;
-	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mOffsetFrames = inOffsetFrames;
 	incNumEvents();
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset)
+void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames)
 {
 	// only handling sustain pedal for now...
 	if (inControllerNumber == kCC_SustainPedalOnOff)
@@ -210,18 +210,18 @@ void DfxMidi::handleCC(int inMidiChannel, int inControllerNumber, int inValue, l
 		mBlockEvents[mNumBlockEvents].mByte1 = inControllerNumber;
 		mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
 		mBlockEvents[mNumBlockEvents].mByte2 = inValue;
-		mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
+		mBlockEvents[mNumBlockEvents].mOffsetFrames = inOffsetFrames;
 		incNumEvents();
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, long inBufferOffset)
+void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, unsigned long inOffsetFrames)
 {
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_ProgramChange;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
 	mBlockEvents[mNumBlockEvents].mByte1 = inProgramNumber;
-	mBlockEvents[mNumBlockEvents].mDelta = inBufferOffset;
+	mBlockEvents[mNumBlockEvents].mOffsetFrames = inOffsetFrames;
 	incNumEvents();
 }
 

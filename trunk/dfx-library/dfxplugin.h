@@ -598,12 +598,12 @@ public:
 
 #if TARGET_PLUGIN_USES_MIDI
 	// handlers for the types of MIDI events that we support
-	virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, long inFrameOffset);
-	virtual void handlemidi_noteoff(int inChannel, int inNote, int inVelocity, long inFrameOffset);
-	virtual void handlemidi_allnotesoff(int inChannel, long inFrameOffset);
-	virtual void handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, long inFrameOffset);
-	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, long inFrameOffset);
-	virtual void handlemidi_programchange(int inChannel, int inProgramNum, long inFrameOffset);
+	virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames);
+	virtual void handlemidi_noteoff(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames);
+	virtual void handlemidi_allnotesoff(int inChannel, unsigned long inOffsetFrames);
+	virtual void handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
+	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, unsigned long inOffsetFrames);
+	virtual void handlemidi_programchange(int inChannel, int inProgramNum, unsigned long inOffsetFrames);
 
 	/* - - - - - - - - - hooks for DfxSettings - - - - - - - - - */
 	//
@@ -631,11 +631,11 @@ public:
 	//
 	// these can be overridden to do something and extend the MIDI event processing
 	virtual void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, 
-												long eventNum, long delta, long eventNum2 = 0, 
+												long eventNum, unsigned long offsetFrames, long eventNum2 = 0, 
 												dfx::MidiEventBehaviorFlags eventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
 												long data1 = 0, long data2 = 0, 
 												float fdata1 = 0.0f, float fdata2 = 0.0f) {}
-	virtual void settings_doMidiAutomatedSetParameterStuff(long tag, float value, long delta) {}
+	virtual void settings_doMidiAutomatedSetParameterStuff(long tag, float value, unsigned long offsetFrames) {}
 #endif
 
 	// handling of AU properties specific to Logic

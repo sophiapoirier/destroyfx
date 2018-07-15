@@ -52,10 +52,6 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 	#endif
 #endif
 
-#if TARGET_OS_MAC
-	#include <Carbon/Carbon.h>
-#endif
-
 //#define DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 //#define DFX_DEBUG_PRINT_MUSIC_EVENTS
 
@@ -980,7 +976,7 @@ unsigned long DfxPlugin::getnuminputs()
 			DAEConnectionPtr inputConnection = GetInputConnection(ch);
 			if (!inputConnection)
 			{
-				return static_cast<unsigned int>(ch);
+				return static_cast<unsigned long>(ch);
 			}
 		}
 	}
@@ -1015,7 +1011,7 @@ unsigned long DfxPlugin::getnumoutputs()
 			DAEConnectionPtr outputConnection = GetOutputConnection(ch);
 			if (!outputConnection)
 			{
-				return static_cast<unsigned int>(ch);
+				return static_cast<unsigned long>(ch);
 			}
 		}
 	}
@@ -1455,77 +1451,77 @@ void DfxPlugin::do_processparameters()
 #if TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, long inFrameOffset)
+void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n", inNote, inVelocity, inChannel, inFrameOffset);
+fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %lu\n", inNote, inVelocity, inChannel, inOffsetFrames);
 #endif
-	mMidiState.handleNoteOn(inChannel, inNote, inVelocity, inFrameOffset);
+	mMidiState.handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
 	if (mDfxSettings)
 	{
-		mDfxSettings->handleNoteOn(inChannel, inNote, inVelocity, inFrameOffset);
+		mDfxSettings->handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, long inFrameOffset)
+void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %ld\n", inNote, inVelocity, inChannel, inFrameOffset);
+fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %lu\n", inNote, inVelocity, inChannel, inOffsetFrames);
 #endif
-	mMidiState.handleNoteOff(inChannel, inNote, inVelocity, inFrameOffset);
+	mMidiState.handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
 	if (mDfxSettings)
 	{
-		mDfxSettings->handleNoteOff(inChannel, inNote, inVelocity, inFrameOffset);
+		mDfxSettings->handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_allnotesoff(int inChannel, long inFrameOffset)
+void DfxPlugin::handlemidi_allnotesoff(int inChannel, unsigned long inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "all notes off:  channel = %d, sample offset = %ld\n", inChannel, inFrameOffset);
+fprintf(stderr, "all notes off:  channel = %d, sample offset = %lu\n", inChannel, inOffsetFrames);
 #endif
-	mMidiState.handleAllNotesOff(inChannel, inFrameOffset);
+	mMidiState.handleAllNotesOff(inChannel, inOffsetFrames);
 	if (mDfxSettings)
 	{
-		mDfxSettings->handleAllNotesOff(inChannel, inFrameOffset);
+		mDfxSettings->handleAllNotesOff(inChannel, inOffsetFrames);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, long inFrameOffset)
+void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %ld\n", inValueLSB, inValueMSB, inChannel, inFrameOffset);
+fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %lu\n", inValueLSB, inValueMSB, inChannel, inOffsetFrames);
 #endif
-	mMidiState.handlePitchBend(inChannel, inValueLSB, inValueMSB, inFrameOffset);
+	mMidiState.handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
 	if (mDfxSettings)
 	{
-		mDfxSettings->handlePitchBend(inChannel, inValueLSB, inValueMSB, inFrameOffset);
+		mDfxSettings->handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, long inFrameOffset)
+void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, unsigned long inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %ld\n", inControllerNum, inValue, inChannel, inFrameOffset);
+fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %lu\n", inControllerNum, inValue, inChannel, inOffsetFrames);
 #endif
-	mMidiState.handleCC(inChannel, inControllerNum, inValue, inFrameOffset);
+	mMidiState.handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
 	if (mDfxSettings)
 	{
-		mDfxSettings->handleCC(inChannel, inControllerNum, inValue, inFrameOffset);
+		mDfxSettings->handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, long inFrameOffset)
+void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, unsigned long inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
-fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %ld\n", inProgramNum, inChannel, inFrameOffset);
+fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %lu\n", inProgramNum, inChannel, inOffsetFrames);
 #endif
-	mMidiState.handleProgramChange(inChannel, inProgramNum, inFrameOffset);
+	mMidiState.handleProgramChange(inChannel, inProgramNum, inOffsetFrames);
 }
 
 #endif

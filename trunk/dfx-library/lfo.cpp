@@ -28,9 +28,6 @@ Welcome to our Low Frequency Oscillator.
 
 #include <algorithm>
 #include <cassert>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
 
 #include "dfxmath.h"
 
@@ -40,8 +37,6 @@ dfx::LFO::LFO()
 {
 	fillLFOtables();
 	mTable = mSineTable.data();  // just to have it pointing to something at least
-
-	srand(static_cast<unsigned int>(time(nullptr)));  // sets a seed value for rand() from the system clock
 
 	reset();
 }

@@ -124,11 +124,11 @@ public:
 #endif
 
 	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
-	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
-	void handleAllNotesOff(int inMidiChannel, long inBufferOffset);
-	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset);
-	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset);
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
+	void handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames);
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames);
 
 
 	// - - - - - - - - - MIDI learn - - - - - - - - -
@@ -367,8 +367,8 @@ protected:
 		return (inParamTag >= 0) && (inParamTag < mNumParameters);
 	}
 
-	void handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inBufferOffset);
-	void handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff = false);
+	void handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, unsigned long inOffsetFrames);
+	void handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOff = false);
 
 
 	DfxPlugin* const mPlugin;
