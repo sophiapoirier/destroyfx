@@ -73,7 +73,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 		// else there will be and this chunk goes up to the next delta position
 		else
 		{
-			numFramesToProcess = getmidistate().getBlockEvent(eventcount + 1).mDelta - currentBlockPosition;
+			numFramesToProcess = getmidistate().getBlockEvent(eventcount + 1).mOffsetFrames - currentBlockPosition;
 		}
 
 		// this means that 2 (or more) events occur simultaneously, 
@@ -147,7 +147,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 		}
 
 		// jump our position value forward
-		currentBlockPosition = getmidistate().getBlockEvent(eventcount).mDelta;
+		currentBlockPosition = getmidistate().getBlockEvent(eventcount).mOffsetFrames;
 
 		checkForNewNote(eventcount, numChannels);  // and attend to related issues if necessary
 		// take in the effects of the next event

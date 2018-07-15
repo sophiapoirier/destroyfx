@@ -139,7 +139,7 @@ public:
 		int mStatus;  // the event status MIDI byte
 		int mByte1;  // the first MIDI data byte
 		int mByte2;  // the second MIDI data byte
-		long mDelta;  // the delta offset (the sample position in the current block where the event occurs)
+		unsigned long mOffsetFrames;  // the delta offset (the sample position in the current block where the event occurs)
 		int mChannel;  // the MIDI channel
 	};
 
@@ -176,12 +176,12 @@ public:
 	void setResumedAttackMode(bool inNewMode);
 
 	// handlers for the types of MIDI events that we support
-	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
-	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset);
-	void handleAllNotesOff(int inMidiChannel, long inBufferOffset);
-	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset);
-	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset);
-	void handleProgramChange(int inMidiChannel, int inProgramNumber, long inBufferOffset);
+	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
+	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
+	void handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames);
+	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
+	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames);
+	void handleProgramChange(int inMidiChannel, int inProgramNumber, unsigned long inOffsetFrames);
 
 	void preprocessEvents();
 	void postprocessEvents();

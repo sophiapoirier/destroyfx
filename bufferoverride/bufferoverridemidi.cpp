@@ -103,7 +103,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 		for (long eventIndex = 0; eventIndex < midiState.getBlockEventCount(); eventIndex++)
 		{
 			// don't search past the current processing block position
-			if (midiState.getBlockEvent(eventIndex).mDelta > static_cast<long>(samplePos))
+			if (midiState.getBlockEvent(eventIndex).mOffsetFrames > samplePos)
 			{
 				break;
 			}
@@ -166,7 +166,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 		for (long eventIndex = midiState.getBlockEventCount() - 1; eventIndex >= 0; eventIndex--)
 		{
 			// once we're below the current block position, pitchbend messages can be considered
-			if ((midiState.getBlockEvent(eventIndex).mDelta <= static_cast<long>(samplePos)) 
+			if ((midiState.getBlockEvent(eventIndex).mOffsetFrames <= samplePos) 
 				&& (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_PitchBend))
 			{
 				// update the divisor parameter value

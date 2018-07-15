@@ -632,17 +632,20 @@ if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #ifdef TARGET_API_AUDIOUNIT
-	static CFStringRef const kDfxSettings_ParameterIDKey = CFSTR("parameter ID");
+static CFStringRef const kDfxSettings_ParameterIDKey = CFSTR("parameter ID");
 static CFStringRef const kDfxSettings_MidiAssignmentsKey = CFSTR("DFX! MIDI assignments");
-	static CFStringRef const kDfxSettings_MidiAssignment_mEventTypeKey = CFSTR("event type");
-	static CFStringRef const kDfxSettings_MidiAssignment_mEventChannelKey = CFSTR("event channel");
-	static CFStringRef const kDfxSettings_MidiAssignment_mEventNumKey = CFSTR("event number");
-	static CFStringRef const kDfxSettings_MidiAssignment_mEventNum2Key = CFSTR("event number 2");
-	static CFStringRef const kDfxSettings_MidiAssignment_mEventBehaviorFlagsKey = CFSTR("event behavior flags");
-	static CFStringRef const kDfxSettings_MidiAssignment_mDataInt1Key = CFSTR("integer data 1");
-	static CFStringRef const kDfxSettings_MidiAssignment_mDataInt2Key = CFSTR("integer data 2");
-	static CFStringRef const kDfxSettings_MidiAssignment_mDataFloat1Key = CFSTR("float data 1");
-	static CFStringRef const kDfxSettings_MidiAssignment_mDataFloat2Key = CFSTR("float data 2");
+static CFStringRef const kDfxSettings_MidiAssignment_mEventTypeKey = CFSTR("event type");
+static CFStringRef const kDfxSettings_MidiAssignment_mEventChannelKey = CFSTR("event channel");
+static CFStringRef const kDfxSettings_MidiAssignment_mEventNumKey = CFSTR("event number");
+static CFStringRef const kDfxSettings_MidiAssignment_mEventNum2Key = CFSTR("event number 2");
+static CFStringRef const kDfxSettings_MidiAssignment_mEventBehaviorFlagsKey = CFSTR("event behavior flags");
+static CFStringRef const kDfxSettings_MidiAssignment_mDataInt1Key = CFSTR("integer data 1");
+static CFStringRef const kDfxSettings_MidiAssignment_mDataInt2Key = CFSTR("integer data 2");
+static CFStringRef const kDfxSettings_MidiAssignment_mDataFloat1Key = CFSTR("float data 1");
+static CFStringRef const kDfxSettings_MidiAssignment_mDataFloat2Key = CFSTR("float data 2");
+
+namespace
+{
 
 //-----------------------------------------------------------------------------------------
 bool DFX_AddNumberToCFDictionary(void const* inNumber, CFNumberType inType, CFMutableDictionaryRef inDictionary, void const* inDictionaryKey)
@@ -673,6 +676,8 @@ bool DFX_AddNumberToCFDictionary_f(Float64 inNumber, CFMutableDictionaryRef inDi
 {
 	return DFX_AddNumberToCFDictionary(&inNumber, kCFNumberFloat64Type, inDictionary, inDictionaryKey);
 }
+
+}  // namespace
 
 //-----------------------------------------------------------------------------------------
 std::experimental::optional<SInt64> DFX_GetNumberFromCFDictionary_i(CFDictionaryRef inDictionary, void const* inDictionaryKey)
@@ -857,7 +862,7 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValue, long inBufferOffset)
+void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames)
 {
 	// don't allow the "all notes off" CC because almost every sequencer uses that when playback stops
 	if (inControllerNumber == DfxMidi::kCC_AllNotesOff)
@@ -865,12 +870,12 @@ void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValu
 		return;
 	}
 
-	handleMidi_assignParam(dfx::MidiEventType::CC, inMidiChannel, inControllerNumber, inBufferOffset);
-	handleMidi_automateParams(dfx::MidiEventType::CC, inMidiChannel, inControllerNumber, inValue, inBufferOffset);
+	handleMidi_assignParam(dfx::MidiEventType::CC, inMidiChannel, inControllerNumber, inOffsetFrames);
+	handleMidi_automateParams(dfx::MidiEventType::CC, inMidiChannel, inControllerNumber, inValue, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, long inBufferOffset)
+void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames)
 {
 	if (!mAllowPitchbendEvents)
 	{
@@ -884,26 +889,26 @@ void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValue
 	int realLSB = inValueLSB;
 	inValueLSB = 0;  // <- XXX this is stoopid
 
-	handleMidi_assignParam(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inBufferOffset);
+	handleMidi_assignParam(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inOffsetFrames);
 
 	inValueLSB = realLSB;  // restore it   <- XXX ugh stupid hackz...
-	handleMidi_automateParams(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inValueMSB, inBufferOffset);
+	handleMidi_automateParams(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inValueMSB, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
+void DfxSettings::handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames)
 {
 	if (!mAllowNoteEvents)
 	{
 		return;
 	}
 
-	handleMidi_assignParam(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inBufferOffset);
-	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inBufferOffset, false);
+	handleMidi_assignParam(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inOffsetFrames);
+	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inOffsetFrames, false);
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, long inBufferOffset)
+void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames)
 {
 	if (!mAllowNoteEvents)
 	{
@@ -925,13 +930,13 @@ void DfxSettings::handleNoteOff(int inMidiChannel, int inNoteNumber, int inVeloc
 
 	if (allowAssignment)
 	{
-		handleMidi_assignParam(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inBufferOffset);
+		handleMidi_assignParam(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inOffsetFrames);
 	}
-	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inBufferOffset, true);
+	handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, inNoteNumber, inVelocity, inOffsetFrames, true);
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxSettings::handleAllNotesOff(int inMidiChannel, long inBufferOffset)
+void DfxSettings::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames)
 {
 	if (!mAllowNoteEvents)
 	{
@@ -940,13 +945,13 @@ void DfxSettings::handleAllNotesOff(int inMidiChannel, long inBufferOffset)
 
 	for (long i = 0; i < DfxMidi::kNumNotes; i++)
 	{
-		handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, i, 0, inBufferOffset, true);
+		handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, i, 0, inOffsetFrames, true);
 	}
 }
 
 //-----------------------------------------------------------------------------------------
 // assign an incoming MIDI event to the learner parameter
-void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inBufferOffset)
+void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, unsigned long inOffsetFrames)
 {
 	// we don't need to make an assignment to a parameter if MIDI learning is off
 	if (!mMidiLearn || !paramTagIsValid(mLearner))
@@ -980,9 +985,9 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 							mLearnerDataFloat1, mLearnerDataFloat2);
 				// this is an invitation to do something more, if necessary
 				mPlugin->settings_doLearningAssignStuff(mLearner, inEventType, inMidiChannel, note1, 
-										inBufferOffset, note2, 
-										mLearnerEventBehaviorFlags, mLearnerDataInt1, 
-										mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
+														inOffsetFrames, note2, 
+														mLearnerEventBehaviorFlags, mLearnerDataInt1, 
+														mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
 				// and then deactivate the current learner, the learning is complete
 				setLearner(kNoLearner);
 			}
@@ -1001,7 +1006,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 					mLearnerDataFloat1, mLearnerDataFloat2);
 		// this is an invitation to do something more, if necessary
 		mPlugin->settings_doLearningAssignStuff(mLearner, inEventType, inMidiChannel, inByte1, 
-												inBufferOffset, 0, mLearnerEventBehaviorFlags, 
+												inOffsetFrames, 0, mLearnerEventBehaviorFlags, 
 												mLearnerDataInt1, mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
 		// and then deactivate the current learner, the learning is complete
 		setLearner(kNoLearner);
@@ -1010,7 +1015,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 
 //-----------------------------------------------------------------------------------------
 // automate assigned parameters in response to a MIDI event
-void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, long inBufferOffset, bool inIsNoteOff)
+void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOff)
 {
 	float fValue = static_cast<float>(inByte2) / 127.0f;
 
@@ -1130,7 +1135,7 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 		mPlugin->setparameter_gen(tag, fValue);
 		mPlugin->postupdate_parameter(tag);  // notify listeners of internal parameter change
 		// this is an invitation to do something more, if necessary
-		mPlugin->settings_doMidiAutomatedSetParameterStuff(tag, fValue, inBufferOffset);
+		mPlugin->settings_doMidiAutomatedSetParameterStuff(tag, fValue, inOffsetFrames);
 
 	}  // end of parameters loop (for automation)
 }

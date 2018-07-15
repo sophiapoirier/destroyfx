@@ -28,6 +28,7 @@ This is our math shit.
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <stdlib.h>  // for RAND_MAX
@@ -58,7 +59,7 @@ constexpr T kLn2(M_LN2);
 template <typename T>
 T Rand()
 {
-	static_assert(std::is_floating_point<T>::value);
+	static_assert(std::is_floating_point_v<T>);
 	static constexpr T oneDivRandMax = T(1) / T(RAND_MAX);  // reduces wasteful casting and division
 	return static_cast<T>(rand()) * oneDivRandMax;
 }
@@ -67,9 +68,30 @@ T Rand()
 template <typename OutputT = size_t, typename InputT>
 OutputT RoundToIndex(InputT inValue)
 {
-	static_assert(std::is_floating_point<InputT>::value);
-	static_assert(std::is_unsigned<OutputT>::value);
+	static_assert(std::is_floating_point_v<InputT>);
+	static_assert(std::is_unsigned_v<OutputT>);
 	return static_cast<OutputT>(std::max(std::lround(inValue), 0L));
+}
+
+template <typename T>
+auto ToSigned(T inValue)
+{
+	static_assert(std::is_integral_v<T>);
+	static_assert(std::is_unsigned_v<T>);
+	using DecayedT = std::decay_t<T>;
+	using SignedT = std::make_signed_t<DecayedT>;
+	assert(inValue <= static_cast<DecayedT>(std::numeric_limits<SignedT>::max()));
+	return static_cast<SignedT>(inValue);
+}
+
+template <typename T>
+auto ToUnsigned(T inValue)
+{
+	static_assert(std::is_integral_v<T>);
+	static_assert(std::is_signed_v<T>);
+	using DecayedT = std::decay_t<T>;
+	assert(inValue >= DecayedT(0));
+	return static_cast<std::make_unsigned_t<DecayedT>>(inValue);
 }
 
 //-----------------------------------------------------------------------------
@@ -77,7 +99,7 @@ OutputT RoundToIndex(InputT inValue)
 template <typename T>
 T MagnitudeMax(T inValue1, T inValue2)
 {
-	static_assert(std::is_floating_point<T>::value);
+	static_assert(std::is_floating_point_v<T>);
 	return (std::fabs(inValue1) > std::fabs(inValue2)) ? inValue1 : inValue2;
 }
 
@@ -89,7 +111,7 @@ T MagnitudeMax(T inValue1, T inValue2)
 template <typename T>
 T ClampDenormalValue(T inValue)
 {
-	static_assert(std::is_floating_point<T>::value);
+	static_assert(std::is_floating_point_v<T>);
 #ifndef TARGET_API_AUDIOUNIT  // the AU SDK handles denormals for us
 	// clamp down any very small values (below -300 dB) to zero to hopefully avoid any denormal values
 	static constexpr T verySmallButNotDenormalValue = std::numeric_limits<T>::min() * T(1.0e20);
@@ -105,7 +127,7 @@ T ClampDenormalValue(T inValue)
 template <typename T>
 T Linear2dB(T inLinearValue)
 {
-	static_assert(std::is_floating_point<T>::value);
+	static_assert(std::is_floating_point_v<T>);
 	return T(20) * std::log10(inLinearValue);
 }
 
@@ -113,7 +135,7 @@ T Linear2dB(T inLinearValue)
 template <typename T>
 T Db2Linear(T inDecibalValue)
 {
-	static_assert(std::is_floating_point<T>::value);
+	static_assert(std::is_floating_point_v<T>);
 	return std::pow(T(10), inDecibalValue / T(20));
 }
 
@@ -121,7 +143,7 @@ T Db2Linear(T inDecibalValue)
 template <typename T>
 T FrequencyScalarBySemitones(T inSemitones)
 {
-	static_assert(std::is_floating_point<T>::value);
+	static_assert(std::is_floating_point_v<T>);
 	return std::exp2(inSemitones / T(12));
 }
 
