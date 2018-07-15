@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2010  Sophia Poirier
+Copyright (C) 2001-2018  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -21,45 +21,44 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "rezsynth.h"
 
+#include <cmath>
 
-void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFrames, bool replacing)
+#include "dfxmath.h"
+
+
+void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
 {
-	unsigned long numChannels = getnumoutputs();
-	long numFramesToProcess = (signed)inNumFrames, totalSampleFrames = (signed)inNumFrames;	// for dividing up the block accoring to events
-	float SAMPLERATE = getsamplerate_f();
-	float dryGain = 1.0f - dryWetMix;	// the gain of the input audio in the dry/wet mix
-	wetGain = dryWetMix;
-	if (dryWetMixMode == kDryWetMixMode_equalpower)
+	auto const numChannels = getnumoutputs();
+	auto numFramesToProcess = inNumFrames;  // for dividing up the block accoring to events
+	float dryGain = 1.0f - mDryWetMix;  // the gain of the input audio in the dry/wet mix
+	mWetGain = mDryWetMix;
+	if (mDryWetMixMode == kDryWetMixMode_EqualPower)
 	{
 		// sqare root for equal power blending of non-correlated signals
-		dryGain = sqrtf(dryGain);
-		wetGain = sqrtf(wetGain);
+		dryGain = std::sqrt(dryGain);
+		mWetGain = std::sqrt(mWetGain);
 	}
-	unsigned long ch;
 
 
+#ifndef TARGET_API_AUDIOUNIT
 	// mix very quiet noise (-300 dB) into the input signal to hopefully avoid any denormal values
 	float quietNoise = 1.0e-15f;
-	for (ch=0; ch < numChannels; ch++)
+	for (unsigned long ch = 0; ch < numChannels; ch++)
 	{
-		float *volatileIn = (float*) in[ch];
-		for (long samplecount = 0; samplecount < totalSampleFrames; samplecount++)
+		auto const volatileIn = const_cast<float*>(inAudio[ch]);
+		for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
 		{
 			volatileIn[samplecount] += quietNoise;
 			quietNoise = -quietNoise;
 		}
 	}
+#endif
 
-
-	// these are values that are always needed during calculateCoefficients
-	piDivSR = kDFX_PI_d / getsamplerate();
-	twoPiDivSR = piDivSR * 2.0;
-	nyquist = (getsamplerate()-bandwidth) / 2.0;	// adjusted for bandwidth to accomodate the filter's frequency range
 
 	// counter for the number of MIDI events this block
 	// start at -1 because the beginning stuff has to happen
 	long eventcount = -1;
-	long currentBlockPosition = 0;	// we are at sample 0
+	unsigned long currentBlockPosition = 0;  // we are at sample 0
 
 
 	// now we're ready to start looking at MIDI messages and processing sound and such
@@ -67,106 +66,104 @@ void RezSynth::processaudio(const float **in, float **out, unsigned long inNumFr
 	{
 		// check for an upcoming event and decrease this block chunk size accordingly 
 		// if there won't be another event, go all the way to the end of the block
-		if ( (eventcount+1) >= midistuff->numBlockEvents )
-			numFramesToProcess = totalSampleFrames - currentBlockPosition;
+		if ((eventcount + 1) >= getmidistate().getBlockEventCount())
+		{
+			numFramesToProcess = inNumFrames - currentBlockPosition;
+		}
 		// else there will be and this chunk goes up to the next delta position
 		else
-			numFramesToProcess = midistuff->blockEvents[eventcount+1].delta - currentBlockPosition;
+		{
+			numFramesToProcess = getmidistate().getBlockEvent(eventcount + 1).mDelta - currentBlockPosition;
+		}
 
 		// this means that 2 (or more) events occur simultaneously, 
 		// so there's no need to do calculations during this round
 		if (numFramesToProcess == 0)
 		{
 			eventcount++;
-			checkForNewNote(eventcount, numChannels);	// and attend to related issues if necessary
+			checkForNewNote(eventcount, numChannels);  // and attend to related issues if necessary
 			// take in the effects of the next event
-			midistuff->heedEvents(eventcount, SAMPLERATE, pitchbendRange, attack, release, legato, velCurve, velInfluence);
+			getmidistate().heedEvents(eventcount, mPitchBendRange, mLegato, mVelocityCurve, mVelocityInfluence);
 			continue;
 		}
 
 		// test for whether or not all notes are off and unprocessed audio can be outputted
-		bool noNotes = true;	// none yet for this chunk
+		bool noNotes = true;  // none yet for this chunk
 
-		for (int notecount=0; notecount < NUM_NOTES; notecount++)
+		for (int notecount = 0; notecount < DfxMidi::kNumNotes; notecount++)
 		{
 			// only go into the output processing cycle if a note is happening
-			if (midistuff->noteTable[notecount].velocity)
+			if (getmidistate().getNoteState(notecount).mVelocity)
 			{
-				noNotes = false;	// we have a note
+				noNotes = false;  // we have a note
 
-				double ampEvener = 1.0;	// a scalar for balancing outputs from the 3 normalizing modes
-				// do the smart gain control thing if the user says so
-				if (wiseAmp)
-					ampEvener = calculateAmpEvener(numBands, notecount);
+				double const ampEvener = mWiseAmp ? calculateAmpEvener(notecount) : 1.0;  // a scalar for balancing outputs from the 3 normalizing modes
 
-				// store before processing the note's coefficients
-				int tempNumBands = numBands;
 				// this is the resonator stuff
-				calculateCoefficients(&numBands, notecount);
+				auto const activeNumBands = calculateCoefficients(notecount);
 
 				// most of the note values are liable to change during processFilterOuts,
-				// so we back them up to allow multi-band repetition
-				NoteTable noteTemp = midistuff->noteTable[notecount];
+				// so we back them up to allow multi-channel repetition
+				DfxMidi::MusicNote const noteState_temp = getmidistate().getNoteState(notecount);
 				// render the filtered audio output for the note for each audio channel
-				for (ch=0; ch < numChannels; ch++)
+				for (unsigned long ch = 0; ch < numChannels; ch++)
 				{
 					// restore the note values before doing processFilterOuts for the next channel
-					midistuff->noteTable[notecount] = noteTemp;
-					processFilterOuts(&(in[ch][currentBlockPosition]), &(out[ch][currentBlockPosition]), 
-								numFramesToProcess, ampEvener, notecount, numBands, 
-								prevInValue[ch][notecount], prevprevInValue[ch][notecount], 
-								prevOutValue[ch][notecount], prevprevOutValue[ch][notecount]);
-				}
+					getmidistate().setNoteState(notecount, noteState_temp);
 
-				// restore the number of bands before moving on to the next note
-				numBands = tempNumBands;
+					processFilterOuts(&(inAudio[ch][currentBlockPosition]), &(outAudio[ch][currentBlockPosition]), 
+									  numFramesToProcess, ampEvener, notecount, activeNumBands, 
+									  mPrevInValue[ch][notecount], mPrevPrevInValue[ch][notecount], 
+									  mPrevOutValue[ch][notecount].data(), mPrevPrevOutValue[ch][notecount].data());
+				}
 			}
-		}	// end of notes loop
+		}  // end of notes loop
 
 		// we had notes this chunk, but the unaffected processing hasn't faded out, so change its state to fade-out
-		if ( (!noNotes) && (unaffectedState == kUnaffectedState_Flat) )
-			unaffectedState = kUnaffectedState_FadeOut;
+		if (!noNotes && (mUnaffectedState == UnaffectedState::Flat))
+		{
+			mUnaffectedState = UnaffectedState::FadeOut;
+		}
 
 		// we can output unprocessed audio if no notes happened during this block chunk
 		// or if the unaffected fade-out still needs to be finished
-		if ( noNotes || (unaffectedState == kUnaffectedState_FadeOut) )
+		if (noNotes || (mUnaffectedState == UnaffectedState::FadeOut))
 		{
-			int tempUnState = unaffectedState;
-			int tempUnSamples = unaffectedFadeSamples;
-			for (ch=0; ch < numChannels; ch++)
+			auto const entryUnaffectedState = mUnaffectedState;
+			auto const entryUnaffectedFadeSamples = mUnaffectedFadeSamples;
+			for (unsigned long ch = 0; ch < numChannels; ch++)
 			{
-				unaffectedState = tempUnState;
-				unaffectedFadeSamples = tempUnSamples;
-				processUnaffected(&(in[ch][currentBlockPosition]), &(out[ch][currentBlockPosition]), numFramesToProcess);
+				mUnaffectedState = entryUnaffectedState;
+				mUnaffectedFadeSamples = entryUnaffectedFadeSamples;
+				processUnaffected(&(inAudio[ch][currentBlockPosition]), &(outAudio[ch][currentBlockPosition]), numFramesToProcess);
 			}
 		}
 
 		eventcount++;
 		// don't do the event processing below if there are no more events
-		if (eventcount >= midistuff->numBlockEvents)
+		if (eventcount >= getmidistate().getBlockEventCount())
+		{
 			continue;
+		}
 
 		// jump our position value forward
-		currentBlockPosition = midistuff->blockEvents[eventcount].delta;
+		currentBlockPosition = getmidistate().getBlockEvent(eventcount).mDelta;
 
-		checkForNewNote(eventcount, numChannels);	// and attend to related issues if necessary
+		checkForNewNote(eventcount, numChannels);  // and attend to related issues if necessary
 		// take in the effects of the next event
-		midistuff->heedEvents(eventcount, SAMPLERATE, pitchbendRange, attack, release, legato, velCurve, velInfluence);
+		getmidistate().heedEvents(eventcount, mPitchBendRange, mLegato, mVelocityCurve, mVelocityInfluence);
 
-	} while (eventcount < midistuff->numBlockEvents);
-
-	// processEvents() is only called when new VstEvents are sent,
-	// so zeroing numBlockEvents right here is critical
-	midistuff->numBlockEvents = 0;
+	} while (eventcount < getmidistate().getBlockEventCount());
 
 	// mix in the dry input (only if there is supposed to be some dry; let's not waste calculations)
-	if (dryWetMix < 1.0f)
+	if (mDryWetMix < 1.0f)
 	{
-		for (ch=0; ch < numChannels; ch++)
+		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
-			for (long samplecount=0; samplecount < totalSampleFrames; samplecount++)
-				out[ch][samplecount] += in[ch][samplecount] * dryGain;
+			for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
+			{
+				outAudio[ch][samplecount] += inAudio[ch][samplecount] * dryGain;
+			}
 		}
 	}
 }
-
