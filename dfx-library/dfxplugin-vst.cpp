@@ -27,6 +27,7 @@ This is where we connect the VST API to our DfxPlugin system.
 
 #include "dfxplugin.h"
 
+#include <algorithm>
 #include <stdio.h>
 
 
@@ -49,22 +50,21 @@ void DfxPlugin::suspend()
 {
 }
 
-
 //-----------------------------------------------------------------------------
 // this gets called when the plugin is activated
 void DfxPlugin::resume()
 {
-	#if !VST_FORCE_DEPRECATED
+#if !VST_FORCE_DEPRECATED
 	needIdle();
-	#endif
+#endif
 
 	updatesamplerate();
 
-	#if TARGET_PLUGIN_USES_MIDI
-		#if !VST_FORCE_DEPRECATED
-		wantEvents();
-		#endif
+#if TARGET_PLUGIN_USES_MIDI
+	#if !VST_FORCE_DEPRECATED
+	wantEvents();
 	#endif
+#endif
 
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this here
@@ -74,13 +74,13 @@ void DfxPlugin::resume()
 	}
 	else
 	{
-		do_reset();	// else because do_initialize calls do_reset
+		do_reset();  // else because do_initialize calls do_reset
 	}
 
 	// do these after calling do_reset, 
 	// because the value for latency could change there
 	setInitialDelay(getlatency_samples());
-	setlatencychanged(false);	// reset this state
+	setlatencychanged(false);  // reset this state
 }
 
 #if !VST_FORCE_DEPRECATED
@@ -89,8 +89,10 @@ VstInt32 DfxPlugin::fxIdle()
 {
 	// I'm moving calls to ioChanged into the idle thread 
 	// because it seems like it freaks out Fruity Loops
-	if ( getlatencychanged() )
+	if (getlatencychanged())
+	{
 		ioChanged();
+	}
 	setlatencychanged(false);
 
 	return 1;
@@ -120,30 +122,34 @@ VstInt32 DfxPlugin::getTailSize()
 
 
 //------------------------------------------------------------------------
-bool DfxPlugin::getInputProperties(VstInt32 index, VstPinProperties * properties)
+bool DfxPlugin::getInputProperties(VstInt32 index, VstPinProperties* properties)
 {
-	if ( (index >= 0) && ((unsigned long)index < getnuminputs()) && (properties != NULL) )
+	if ((index >= 0) && (static_cast<unsigned long>(index) < getnuminputs()) && properties)
 	{
-		sprintf(properties->label, "%s input %d", PLUGIN_NAME_STRING, index+1);
-		sprintf(properties->shortLabel, "in %d", index+1);
+		snprintf(properties->label, kVstMaxLabelLen, "%s input %d", PLUGIN_NAME_STRING, index + 1);
+		snprintf(properties->shortLabel, kVstMaxShortLabelLen, "in %d", index + 1);
 		properties->flags = kVstPinIsActive;
 		if (getnuminputs() == 2)
+		{
 			properties->flags |= kVstPinIsStereo;
+		}
 		return true;
 	}
 	return false;
 }
 
 //------------------------------------------------------------------------
-bool DfxPlugin::getOutputProperties(VstInt32 index, VstPinProperties * properties)
+bool DfxPlugin::getOutputProperties(VstInt32 index, VstPinProperties* properties)
 {
-	if ( (index >= 0) && ((unsigned long)index < getnumoutputs()) && (properties != NULL) )
+	if ((index >= 0) && (static_cast<unsigned long>(index) < getnumoutputs()) && properties)
 	{
-		sprintf (properties->label, "%s output %d", PLUGIN_NAME_STRING, index+1);
-		sprintf (properties->shortLabel, "out %d", index+1);
+		snprintf(properties->label, kVstMaxLabelLen, "%s output %d", PLUGIN_NAME_STRING, index + 1);
+		snprintf(properties->shortLabel, kVstMaxShortLabelLen, "out %d", index + 1);
 		properties->flags = kVstPinIsActive;
 		if (getnumoutputs() == 2)
+		{
 			properties->flags |= kVstPinIsStereo;
+		}
 		return true;
 	}
 	return false;
@@ -153,15 +159,17 @@ bool DfxPlugin::getOutputProperties(VstInt32 index, VstPinProperties * propertie
 //-----------------------------------------------------------------------------
 // plugin identifying infos
 
-bool DfxPlugin::getEffectName(char * outText)
+bool DfxPlugin::getEffectName(char* outText)
 {
-	if (outText == NULL)
+	if (!outText)
+	{
 		return false;
+	}
 	// get the name into a temp string buffer that we know is large enough
-	char tempname[dfx::kParameterNameMaxLength];
-	getpluginname(tempname);
+	char tempName[dfx::kParameterNameMaxLength];
+	getpluginname(tempName);
 	// then make sure to only copy as much as the name C string can hold
-	vst_strncpy(outText, tempname, kVstMaxEffectNameLen);
+	vst_strncpy(outText, tempName, kVstMaxEffectNameLen);
 	return true;
 }
 
@@ -170,63 +178,89 @@ VstInt32 DfxPlugin::getVendorVersion()
 	return getpluginversion();
 }
 
-bool DfxPlugin::getVendorString(char * outText)
+bool DfxPlugin::getVendorString(char* outText)
 {
-	if (outText == NULL)
+	if (!outText)
+	{
 		return false;
+	}
 	vst_strncpy(outText, PLUGIN_CREATOR_NAME_STRING, kVstMaxVendorStrLen);
 	return true;
 }
 
-bool DfxPlugin::getProductString(char * outText)
+bool DfxPlugin::getProductString(char* outText)
 {
-	if (outText == NULL)
+	if (!outText)
+	{
 		return false;
+	}
 	vst_strncpy(outText, PLUGIN_COLLECTION_NAME, kVstMaxProductStrLen);
 	return true;
 }
 
 //-----------------------------------------------------------------------------
 // this just tells the host what this plugin can do
-VstInt32 DfxPlugin::canDo(char * text)
+VstInt32 DfxPlugin::canDo(char* text)
 {
-	if (text == NULL)
+	if (!text)
+	{
 		return -1;
+	}
 
 	if (strcmp(text, "plugAsChannelInsert") == 0)
+	{
 		return 1;
+	}
 	if (strcmp(text, "plugAsSend") == 0)
+	{
 		return 1;
+	}
 	if (strcmp(text, "mixDryWet") == 0)
+	{
 		return 1;
+	}
 	if (strcmp(text, "fuctsoundz") == 0)
+	{
 		return 1;
+	}
 	if (strcmp(text, "receiveVstTimeInfo") == 0)
+	{
 		return 1;
+	}
 	// XXX this channels canDo stuff could be improved...
 	if (getnumoutputs() > 1)
 	{
 		if (strcmp(text, "1in2out") == 0)
+		{
 			return 1;
+		}
 		if (getnuminputs() > 1)
 		{
 			if (strcmp(text, "2in2out") == 0)
+			{
 				return 1;
+			}
 		}
 	}
 	else
 	{
 		if (strcmp(text, "1in1out") == 0)
+		{
 			return 1;
+		}
 	}
 	#if TARGET_PLUGIN_USES_MIDI
 		if (strcmp(text, "receiveVstEvents") == 0)
+		{
 			return 1;
+		}
 		if (strcmp(text, "receiveVstMidiEvent") == 0)
+		{
 			return 1;
+		}
 	#endif
 
-	return -1;	// explicitly can't do; 0 => don't know
+	return -1;  // explicitly can't do; 0 => don't know
 }
 
 
@@ -241,58 +275,68 @@ void DfxPlugin::setProgram(VstInt32 inProgramNum)
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setProgramName(char * inName)
+void DfxPlugin::setProgramName(char* inName)
 {
-	if (inName != NULL)
-		setpresetname(TARGET_API_BASE_CLASS::getProgram(), inName);
-}
-
-//-----------------------------------------------------------------------------
-void DfxPlugin::getProgramName(char * outText)
-{
-	if (outText == NULL)
-		return;
-
-	long vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
-
-	if ( presetisvalid(vstpresetnum) )
+	if (inName)
 	{
-		if ( presetnameisvalid(vstpresetnum) )
-		{
-			char tempname[dfx::kPresetNameMaxLength];
-			getpresetname(vstpresetnum, tempname);
-			vst_strncpy(outText, tempname, kVstMaxProgNameLen);
-		}
-		else
-			sprintf(outText, "default %ld", vstpresetnum+1);
+		setpresetname(TARGET_API_BASE_CLASS::getProgram(), inName);
 	}
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, char * outText)
+void DfxPlugin::getProgramName(char* outText)
 {
-	if (outText == NULL)
-		return false;
-
-	if ( presetisvalid(inIndex) )
+	if (!outText)
 	{
-		if ( presetnameisvalid(inIndex) )
+		return;
+	}
+
+	auto const vstPresetIndex = TARGET_API_BASE_CLASS::getProgram();
+
+	if (presetisvalid(vstPresetIndex))
+	{
+		if (presetnameisvalid(vstPresetIndex))
 		{
-			char tempname[dfx::kPresetNameMaxLength];
-			getpresetname(inIndex, tempname);
-			vst_strncpy(outText, tempname, kVstMaxProgNameLen);
+			char tempName[dfx::kPresetNameMaxLength];
+			getpresetname(vstPresetIndex, tempName);
+			vst_strncpy(outText, tempName, kVstMaxProgNameLen);
 		}
 		else
-			sprintf(outText, "default %d", inIndex+1);
+		{
+			snprintf(outText, kVstMaxProgNameLen, "default %ld", vstPresetIndex + 1);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, char* outText)
+{
+	if (!outText)
+	{
+		return false;
+	}
+
+	if (presetisvalid(inIndex))
+	{
+		if (presetnameisvalid(inIndex))
+		{
+			char tempName[dfx::kPresetNameMaxLength];
+			getpresetname(inIndex, tempName);
+			vst_strncpy(outText, tempName, kVstMaxProgNameLen);
+		}
+		else
+		{
+			snprintf(outText, kVstMaxProgNameLen, "default %d", inIndex+1);
+		}
 		return true;
 	}
-	else return false;
+	return false;
 }
 
 #if TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-VstInt32 DfxPlugin::getChunk(void ** data, bool isPreset)
+VstInt32 DfxPlugin::getChunk(void** data, bool isPreset)
 {
 	auto const dfxdata = mDfxSettings->save(isPreset);
 	if (data)
@@ -308,9 +352,9 @@ VstInt32 DfxPlugin::getChunk(void ** data, bool isPreset)
 // back then, when it saved it).
 // <data> is only valid during this call.
 // you may want to check the bytesize, and certainly should maintain a version."
-VstInt32 DfxPlugin::setChunk(void * data, VstInt32 byteSize, bool isPreset)
+VstInt32 DfxPlugin::setChunk(void* data, VstInt32 byteSize, bool isPreset)
 {
-	return mDfxSettings->restore(data, (unsigned)byteSize, isPreset);
+	return mDfxSettings->restore(data, static_cast<size_t>(byteSize), isPreset);
 }
 
 #endif
@@ -336,38 +380,41 @@ float DfxPlugin::getParameter(VstInt32 index)
 
 //-----------------------------------------------------------------------------
 // titles of each parameter
-void DfxPlugin::getParameterName(VstInt32 index, char * name)
+void DfxPlugin::getParameterName(VstInt32 index, char* name)
 {
-	if (name != NULL)
-		getparametername(index, name);	// XXX kVstMaxParamStrLen
+	if (name)
+	{
+		getparametername(index, name);  // XXX kVstMaxParamStrLen
+	}
 }
 
 //-----------------------------------------------------------------------------
 // numerical display of each parameter's gradiations
-void DfxPlugin::getParameterDisplay(VstInt32 index, char * text)
+void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 {
-	if (text == NULL)
+	if (!text)
+	{
 		return;
+	}
 
 	if (getparameterusevaluestrings(index))
 	{
-		getparametervaluestring(index, getparameter_i(index), text);	// XXX kVstMaxParamStrLen
+		char tempValueString[dfx::kParameterValueStringMaxLength];
+		getparametervaluestring(index, getparameter_i(index), tempValueString);
+		vst_strncpy(text, tempValueString, kVstMaxParamStrLen);
 		return;
 	}
 
 	switch (getparametervaluetype(index))
 	{
 		case DfxParam::ValueType::Float:
-			sprintf(text, "%.3f", getparameter_f(index));
+			snprintf(text, kVstMaxParamStrLen, "%.3f", getparameter_f(index));
 			break;
 		case DfxParam::ValueType::Int:
-			sprintf(text, "%ld", getparameter_i(index));
+			snprintf(text, kVstMaxParamStrLen, "%ld", getparameter_i(index));
 			break;
 		case DfxParam::ValueType::Boolean:
-			if (getparameter_b(index))
-				strcpy(text, "on");
-			else
-				strcpy(text, "off");
+			vst_strncpy(text, getparameter_b(index) ? "on" : "off", kVstMaxParamStrLen);
 			break;
 		default:
 			break;
@@ -376,10 +423,14 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char * text)
 
 //-----------------------------------------------------------------------------
 // unit of measure for each parameter
-void DfxPlugin::getParameterLabel(VstInt32 index, char * label)
+void DfxPlugin::getParameterLabel(VstInt32 index, char* label)
 {
-	if (label != NULL)
-		getparameterunitstring(index, label);	// XXX kVstMaxParamStrLen
+	if (label)
+	{
+		char tempLabel[dfx::kParameterUnitStringMaxLength];
+		getparameterunitstring(index, tempLabel);
+		vst_strncpy(label, tempLabel, kVstMaxParamStrLen);
+	}
 }
 
 
@@ -389,7 +440,7 @@ void DfxPlugin::getParameterLabel(VstInt32 index, char * label)
 #pragma mark -
 
 //-----------------------------------------------------------------------------------------
-void DfxPlugin::processReplacing(float ** inputs, float ** outputs, VstInt32 sampleFrames)
+void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampleFrames)
 {
 	preprocessaudio();
 
@@ -398,11 +449,11 @@ void DfxPlugin::processReplacing(float ** inputs, float ** outputs, VstInt32 sam
 	{
 		if (mDSPCores[i])
 		{
-			mDSPCores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, true);
+			mDSPCores[i]->do_process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames), true);
 		}
 	}
 #else
-	processaudio((const float**)inputs, outputs, (unsigned)sampleFrames, true);
+	processaudio(const_cast<float const**>(inputs), outputs, static_cast<unsigned long>(sampleFrames), true);
 #endif
 
 	postprocessaudio();
@@ -410,7 +461,7 @@ void DfxPlugin::processReplacing(float ** inputs, float ** outputs, VstInt32 sam
 
 #if !VST_FORCE_DEPRECATED
 //-----------------------------------------------------------------------------------------
-void DfxPlugin::process(float ** inputs, float ** outputs, VstInt32 sampleFrames)
+void DfxPlugin::process(float** inputs, float** outputs, VstInt32 sampleFrames)
 {
 	preprocessaudio();
 
@@ -419,11 +470,11 @@ void DfxPlugin::process(float ** inputs, float ** outputs, VstInt32 sampleFrames
 	{
 		if (mDSPCores[i])
 		{
-			mDSPCores[i]->do_process(inputs[i], outputs[i], (unsigned)sampleFrames, false);
+			mDSPCores[i]->do_process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames), false);
 		}
 	}
 #else
-	processaudio((const float**)inputs, outputs, (unsigned)sampleFrames, false);
+	processaudio(const_cast<float const**>(inputs), outputs, static_cast<unsigned long>(sampleFrames), false);
 #endif
 
 	postprocessaudio();
@@ -441,27 +492,28 @@ void DfxPlugin::process(float ** inputs, float ** outputs, VstInt32 sampleFrames
 // note:  it is prossible and allowable for this method to be called more than once per audio processing block
 VstInt32 DfxPlugin::processEvents(VstEvents* events)
 {
-	long newProgramNum, newProgramOffset = -1;
+	long newProgramNum {}, newProgramOffset = -1;
 
-
-	for (long i = 0; i < events->numEvents; i++)
+	for (VstInt32 i = 0; i < events->numEvents; i++)
 	{
 		// check to see if this event is MIDI; if no, then we try the for-loop again
-		if ( ((events->events[i])->type) != kVstMidiType )
+		if (events->events[i]->type != kVstMidiType)
+		{
 			continue;
+		}
 
 		// cast the incoming event as a VstMidiEvent
-		VstMidiEvent * midiEvent = (VstMidiEvent*)events->events[i];
+		auto const midiEvent = reinterpret_cast<VstMidiEvent*>(events->events[i]);
 		// address the midiData[4] string from the event to this temp data pointer
-		char * midiData = midiEvent->midiData;
+		auto const midiData = midiEvent->midiData;
 
 		// save the channel number ...
-		int channel = midiData[0] & 0x0F;
-		// ... & then wipe out the channel (lower 4 bits) for simplicity
-		int status = midiData[0] & 0xF0;
-		int byte1 = midiData[1] & 0x7F;
-		int byte2 = midiData[2] & 0x7F;
-		long frameOffset = midiEvent->deltaFrames;	// timing offset
+		int const channel = midiData[0] & 0x0F;
+		// ... and then wipe out the channel (lower 4 bits) for simplicity
+		int const status = midiData[0] & 0xF0;
+		int const byte1 = midiData[1] & 0x7F;
+		int const byte2 = midiData[2] & 0x7F;
+		auto const offsetFrames = static_cast<unsigned long>(std::max(midiEvent->deltaFrames, VstInt32(0)));  // timing offset
 
 		// looking at notes   (0x9* is Note On status ~ 0x8* is Note Off status)
 		if ((status == DfxMidi::kStatus_NoteOn) || (status == DfxMidi::kStatus_NoteOff))
@@ -469,19 +521,19 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 			// note-off received
 			if ((status == DfxMidi::kStatus_NoteOff) || (byte2 == 0))
 			{
-				handlemidi_noteoff(channel, byte1, byte2, frameOffset);
+				handlemidi_noteoff(channel, byte1, byte2, offsetFrames);
 			}
 			// note-on received
 			else
 			{
-				handlemidi_noteon(channel, byte1, byte2, frameOffset);
+				handlemidi_noteon(channel, byte1, byte2, offsetFrames);
 			}
 		}
 
 		// looking at pitchbend   (0xE* is pitchbend status)
 		else if (status == DfxMidi::kStatus_Pitchbend)
 		{
-			handlemidi_pitchbend(channel, byte1, byte2, frameOffset);
+			handlemidi_pitchbend(channel, byte1, byte2, offsetFrames);
 		}
 
 		// continuous controller
@@ -490,32 +542,33 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 			// all notes off
 			if (byte1 == DfxMidi::kCC_AllNotesOff)
 			{
-				handlemidi_allnotesoff(channel, frameOffset);
+				handlemidi_allnotesoff(channel, offsetFrames);
 			}
 			else
 			{
-				handlemidi_cc(channel, byte1, byte2, frameOffset);
+				handlemidi_cc(channel, byte1, byte2, offsetFrames);
 			}
 		}
 
 		// program change
 		else if (status == DfxMidi::kStatus_ProgramChange)
 		{
-//			handlemidi_programchange(channel, byte1, frameOffset);
+//			handlemidi_programchange(channel, byte1, offsetFrames);
 			// XXX maybe this is really what we want to do with these?
-			if (frameOffset >= newProgramOffset)
+			if (midiEvent->deltaFrames >= newProgramOffset)
 			{
 				newProgramNum = byte1;
-				newProgramOffset = frameOffset;
+				newProgramOffset = midiEvent->deltaFrames;
 			}
 //			loadpreset(byte1);
 		}
-
 	}
 
 	// change the plugin's program if a program change message was received
 	if (newProgramOffset >= 0)
+	{
 		loadpreset(newProgramNum);
+	}
 
 
 	// tells the host to keep calling this function in the future; 0 means stop
@@ -523,26 +576,3 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 }
 #endif
 // TARGET_PLUGIN_USES_MIDI
-
-
-
-
-/// this is handled in vstplugmain.cpp in the VST 2.4 SDK and higher
-#if !VST_2_4_EXTENSIONS
-/* entry point for Windows. All we need to do is set the global
-   instance pointers. We save two copies because vstgui stupidly wants
-   it to be a "void *", where our own GUI stuff avoids downcasts by
-   using the right type, HINSTANCE. */
-#if _WIN32
-
-/* vstgui needs void *, not HINSTANCE */
-void * hInstance;
-HINSTANCE instance;
-
-BOOL WINAPI DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpvReserved) {
-  hInstance = instance = hInst;
-  return 1;
-}
-
-#endif
-#endif

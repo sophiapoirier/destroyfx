@@ -26,8 +26,8 @@ Welcome to our Low Frequency Oscillator.
 
 #pragma once
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <string>
 
 #include "dfxmath.h"
@@ -138,7 +138,7 @@ public:
 		}
 		else
 		{
-			outValue = mTable[static_cast<long>(mPosition)];
+			outValue = mTable[static_cast<size_t>(mPosition)];
 		}
 
 		return outValue * mDepth;
