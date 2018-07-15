@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2010  Sophia Poirier
+Copyright (C) 2001-2018  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -19,9 +19,11 @@ along with Rez Synth.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __REZ_SYNTH_H
-#define __REZ_SYNTH_H
+#pragma once
 
+
+#include <array>
+#include <vector>
 
 #include "dfxplugin.h"
 
@@ -32,85 +34,80 @@ To contact the author, use the contact form at http://destroyfx.org/
 // these are the plugin parameters:
 enum
 {
-	kBandwidth,
+	kBandwidthAmount_Hz,
+	kBandwidthAmount_Q,
+	kBandwidthMode,
+	kResonAlgorithm,
 	kNumBands,
-	kSepAmount_octaval,
-	kSepAmount_linear,
+	kSepAmount_Octaval,
+	kSepAmount_Linear,
 	kSepMode,
 	kFoldover,
-	kAttack,
-	kRelease,
-	kFades,
+	kEnvAttack,
+	kEnvDecay,
+	kEnvSustain,
+	kEnvRelease,
+	kFadeType,
 	kLegato,
-	kVelInfluence,
-	kVelCurve,
-	kPitchbendRange,
+	kVelocityInfluence,
+	kVelocityCurve,
+	kPitchBendRange,
 	kScaleMode,
-	kGain,
+	kWiseAmp,
+	kFilterOutputGain,
 	kBetweenGain,
 	kDryWetMix,
 	kDryWetMixMode,
-	kWiseAmp,
-	kResonAlgorithm,
 
 	kNumParameters
-};
-
-// these are the input gain scaling modes
-enum
-{
-	kScaleMode_none,
-	kScaleMode_rms,
-	kScaleMode_peak,
-
-	kNumScaleModes
 };
 
 // algorithm options for the resonant filter
 enum
 {
-	kResonAlg_2poleNoZero,
-	kResonAlg_2pole2zeroR,
-	kResonAlg_2pole2zero1,
+	kResonAlg_2PoleNoZero,
+	kResonAlg_2Pole2ZeroR,
+	kResonAlg_2Pole2Zero1,
 
 	kNumResonAlgs
+};
+
+// bandwidth modes
+enum
+{
+	kBandwidthMode_Hz,
+	kBandwidthMode_Q,
+
+	kNumBandwidthModes
+};
+
+// these are the input gain scaling modes
+enum
+{
+	kScaleMode_None,
+	kScaleMode_RMS,
+	kScaleMode_Peak,
+
+	kNumScaleModes
 };
 
 // these are the filter bank band separation modes
 enum
 {
-	kSepMode_octaval,
-	kSepMode_linear,
+	kSeparationMode_Octaval,
+	kSeparationMode_Linear,
 
-	kNumSepModes
+	kNumSeparationModes
 };
 
 // these are the dry/wet mixing modes
 enum
 {
-	kDryWetMixMode_linear,
-	kDryWetMixMode_equalpower,
+	kDryWetMixMode_Linear,
+	kDryWetMixMode_EqualPower,
 
 	kNumDryWetMixModes
 };
-
-// these are the 3 states of the unaffected audio input between notes
-enum
-{
-	kUnaffectedState_FadeIn,
-	kUnaffectedState_Flat,
-	kUnaffectedState_FadeOut
-};
-
-//----------------------------------------------------------------------------- 
-// constants and macros
-
-const int kMaxBands = 30;	// the maximum number of resonant bands
-
-const long kUnaffectedFadeDur = 18;
-const float kUnaffectedFadeStep = 1.0f / (float)kUnaffectedFadeDur;
-
-const long kNumPresets = 16;
 
 
 //----------------------------------------------------------------------------- 
@@ -118,46 +115,71 @@ class RezSynth : public DfxPlugin
 {
 public:
 	RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual ~RezSynth();
 
-	virtual long initialize();
-	virtual void cleanup();
-	virtual void reset();
+	long initialize() override;
+	void reset() override;
 
-	virtual bool createbuffers();
-	virtual void releasebuffers();
-	virtual void clearbuffers();
+	bool createbuffers() override;
+	void releasebuffers() override;
+	void clearbuffers() override;
 
-	virtual void processparameters();
-	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
-
+	void processparameters() override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
 
 private:
-	double calculateAmpEvener(int numBands, int currentNote);
-	void calculateCoefficients(int * numbands, int currentNote);
-	void processFilterOuts(const float * in, float * out, long sampleFrames, double ampEvener, 
-						int currentNote, int numBands, double & prevIn, double & prevprevIn, 
-						double * prevOut, double * prevprevOut);
-	void processUnaffected(const float * in, float * out, long sampleFrames);
+	static constexpr int64_t kMaxBands = 30;  // the maximum number of resonant bands
+	static constexpr long kUnaffectedFadeDur = 18;
+	static constexpr float kUnaffectedFadeStep = 1.0f / static_cast<float>(kUnaffectedFadeDur);
+	static constexpr long kNumPresets = 16;
+
+	// these are the 3 states of the unaffected audio input between notes
+	enum class UnaffectedState
+	{
+		FadeIn,
+		Flat,
+		FadeOut
+	};
+
+	using ChannelsOfNotesOfBands = std::vector<std::array<std::array<double, kMaxBands>, DfxMidi::kNumNotes>>;
+	void clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands)
+	{
+		for (auto& notesOfBands : channelsOfNotesOfBands)
+		{
+			for (auto& bands : notesOfBands)
+			{
+				bands.fill(0.0);
+			}
+		}
+	}
+
+	double calculateAmpEvener(int currentNote) const;
+	[[nodiscard]] int calculateCoefficients(int currentNote);
+	void processFilterOuts(float const* inAudio, float* outAudio, unsigned long sampleFrames, double ampEvener, 
+						   int currentNote, int numBands, double& prevIn, double& prevprevIn, 
+						   double* prevOut, double* prevprevOut);
+	void processUnaffected(float const* inAudio, float* outAudio, unsigned long sampleFrames);
+	double getBandwidthForFreq(double inFreq) const;
 	void checkForNewNote(long currentEvent, unsigned long numChannels);
 
 	// parameters
-	double bandwidth, sepAmount_octaval, sepAmount_linear, pitchbendRange;
-	float attack, release, velCurve, velInfluence, gain, betweenGain, wetGain, dryWetMix;
-	int numBands, sepMode, scaleMode, resonAlgorithm, dryWetMixMode;
-	bool legato, fades, foldover, wiseAmp;
+	double mBandwidthAmount_Hz = 1.0, mBandwidthAmount_Q = 1.0, mSepAmount_Octaval = 0.0, mSepAmount_Linear = 0.0;
+	double mPitchBendRange = 0.0;
+	float mAttack_Seconds = 0.0f, mDecay_Seconds = 0.0f, mSustain = 0.0f, mRelease_Seconds = 0.0f;
+	float mVelocityCurve = 0.0f, mVelocityInfluence = 0.0f;
+	float mOutputGain = 0.0f, mBetweenGain = 0.0f, mWetGain = 0.0f, mDryWetMix = 0.0f;
+	int mBandwidthMode {}, mNumBands = 1, mSepMode {}, mScaleMode {}, mResonAlgorithm {}, mDryWetMixMode {};
+	DfxEnvelope::CurveType mFadeType {};
+	bool mLegato = false, mFoldover = false, mWiseAmp = false;
 
-	double * inputAmp;	// gains for the current sample input, for each band
-	double * prevOutCoeff;	// coefficients for the 1-sample delayed ouput, for each band
-	double * prevprevOutCoeff;	// coefficients for the 2-sample delayed ouput, for each band
-	double * prevprevInCoeff;	// coefficients for the 2-sample delayed input, for each band
-	double *** prevOutValue, *** prevprevOutValue;	// arrays of previous resonator output values
-	double ** prevInValue, ** prevprevInValue;	// arrays of previous audio input values
-	unsigned long numBuffers;
+	std::array<double, kMaxBands> mInputAmp;  // gains for the current sample input, for each band
+	std::array<double, kMaxBands> mPrevOutCoeff;  // coefficients for the 1-sample delayed ouput, for each band
+	std::array<double, kMaxBands> mPrevPrevOutCoeff;  // coefficients for the 2-sample delayed ouput, for each band
+	std::array<double, kMaxBands> mPrevPrevInCoeff;  // coefficients for the 2-sample delayed input, for each band
+	ChannelsOfNotesOfBands mPrevOutValue, mPrevPrevOutValue;  // arrays of previous resonator output values
+	std::vector<std::array<double, DfxMidi::kNumNotes>> mPrevInValue, mPrevPrevInValue;  // arrays of previous audio input values
 
-	double piDivSR, twoPiDivSR, nyquist;	// values that are needed when calculating coefficients
+	double mPiDivSR = 0.0, mTwoPiDivSR = 0.0, mNyquist = 0.0;  // values that are needed when calculating coefficients
 
-	int unaffectedState, unaffectedFadeSamples;
+	UnaffectedState mUnaffectedState = UnaffectedState::FadeIn;
+	int mUnaffectedFadeSamples = 0;
 };
-
-#endif

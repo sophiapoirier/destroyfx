@@ -30,7 +30,16 @@ Rez Synth allows you to "play" bandpass resonant filter banks that are applied t
 <p class="label">bandwidth:</p>
 
 <p class="desc">
-The bandwidth parameter controls the bandwidth of each resonant filter, in Hz.
+The bandwidth parameter controls the bandwidth of each resonant filter, in Hz or Q (depending on the "bandwidth mode").
+</p>
+
+<br />
+
+
+<p class="label">bandwidth mode:</p>
+
+<p class="desc">
+The bandwidth mode defines how the bandwidth parameter operates.  The options are "Hz" or "Q".  Hz (Hertz) defines absolute bandwidth and therefore perceptually the filters sound wider at lower frequencies and narrowing at higher frequencies.  Q defines relative bandwidth and therefore perceptually the filters sound the same width across all frequencies.
 </p>
 
 <br />
@@ -70,7 +79,7 @@ In addition to using the slider to adjust this parameter, you can also click on 
 <p class="label">separation mode:</p>
 
 <p class="desc">
-The band separation mode defines how the band sep. parameter operates.  Separation mode can be set to "linear" or "octaval" (logarithmic separation).  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics for fractional values) and "octaval" makes the other bands spread like notes in a chord.
+The band separation mode defines how the band separation parameter operates.  Separation mode can be set to "linear" or "octaval" (logarithmic separation).  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics for fractional values) and "octaval" makes the other bands spread like notes in a chord.
 </p>
 
 <br />
@@ -85,28 +94,28 @@ Because you are playing banks of resonant filters that ascend in center frequenc
 <br />
 
 
-<p class="label">attack &amp; release:</p>
+<p class="label">attack, decay, sustain, release:</p>
 
 <p class="desc">
-These adjust the attack and release durations for each note, in milliseconds.
+These adjust the values for each note's ADSR-style amplitude envelopes.  Attack sets the duration for the initial volume fade-in period.  Decay sets the partial fade-down period that follows attack.  Sustain sets the amount of full note volume that is used for the note after the decay period (note that a sustain value of 100% effectively means no decay).  And release sets sets the duration of the final fade-out period (after the note stops being played).
 </p>
 
 <br />
 
 
-<p class="label">fades:</p>
+<p class="label">envelope fades:</p>
 
 <p class="desc">
-Calculating the fades for attack and release takes a little extra processing power.  With this parameter, you can choose between "nicer" (exponentially curved) and "cheap" (linear) fades.  On my G3, the difference between cheap fades and nicer fades is approximately 1% extra CPU vs. 2%, but for some reason on my Pentium II, cheap fades use about 2% extra CPU during attacks and releases and nicer fades use about 25% extra.  The nicer fades sound smoother, but if you are only using really short attack and release times or you need to conserve processing power, you might want to use cheap fades.
+This selects whether the attack, decay, and release segments of notes are linear fades or exponential curves.  Exponential usually sounds better, but you may prefer linear in some cases.  Also exponential curves use a little more processing power than linear.
 </p>
 
 <br />
 
 
-<p class="label">pitchbend range:</p>
+<p class="label">pitch bend range:</p>
 
 <p class="desc">
-This lets you adjust your MIDI pitchbend wheel's range in semitones.
+This lets you adjust your MIDI pitch bend wheel's range in semitones.
 </p>
 
 <br />
@@ -212,7 +221,7 @@ Destroy FX #8
 <br />
 <a href="http://destroyfx.org/">http://destroyfx.org/</a>
 <br /><br />
-Rez Synth is Copyright &copy; 2001-2010 Sophia Poirier
+Rez Synth is Copyright &copy; 2001-2018 Sophia Poirier
 <br />
 <br />
 This software comes with absolutely no warranty, express or implied.  
