@@ -124,9 +124,9 @@ DGNullControl::DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion
 //-----------------------------------------------------------------------------
 void DGNullControl::draw(CDrawContext* inContext)
 {
-	if (getBackground())
+	if (getDrawBackground())
 	{
-		getBackground()->draw(inContext, getViewSize());
+		getDrawBackground()->draw(inContext, getViewSize());
 	}
 	setDirty(false);
 }
@@ -147,62 +147,17 @@ int32_t CControl::kDefaultValueModifier = kShift;
 #endif
 
 //-----------------------------------------------------------------------------
-DGControl::DGControl(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion)
-:	CControl(*inRegion, inOwnerEditor, inParamID)
+DGControl::DGControl(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion)
+:	CControl(inRegion, inOwnerEditor, inParamID)
 {
-#ifdef TARGET_API_AUDIOUNIT
-	auvp = CAAUParameter(ownerEditor->GetEditAudioUnit(), (AudioUnitParameterID)inParamID, kAudioUnitScope_Global, (AudioUnitElement)0);
-	parameterAttached = true;
-	valueRange = auvp.ParamInfo().maxValue - auvp.ParamInfo().minValue;
-#else
-	valueRange = 1.0f;	// XXX implement
-#endif
-
-	init(inRegion);
 }
 
 //-----------------------------------------------------------------------------
-DGControl::DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange)
-:	CControl(*inRegion, inOwnerEditor, DFX_PARAM_INVALID_ID), 
-	valueRange(inRange)
+DGControl::DGControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, float inRange)
+:	CControl(inRegion, inOwnerEditor, DFX_PARAM_INVALID_ID)
 {
-#ifdef TARGET_API_AUDIOUNIT
-	parameterAttached = false;
-#endif
-
-	init(inRegion);
 }
 
-//-----------------------------------------------------------------------------
-// common constructor stuff
-void DGControl::init(DGRect * inRegion)
-{
-	controlPos = *inRegion;
-	vizArea = *inRegion;
-
-	isContinuous = false;
-	fineTuneFactor = kDefaultFineTuneFactor;
-	mouseDragRange = kDefaultMouseDragRange;
-
-	shouldRespondToMouse = true;
-	shouldRespondToMouseWheel = true;
-	currentlyIgnoringMouseTracking = false;
-	shouldWraparoundValues = false;
-
-	drawAlpha = 1.0f;
-
-	// add this control to the owner editor's list of controls
-	if (getDfxGuiEditor() != NULL)
-		getDfxGuiEditor()->addControl(this);
-}
-
-
-//-----------------------------------------------------------------------------
-// force a redraw
-void DGControl::redraw()
-{
-	invalid();
-}
 
 //-----------------------------------------------------------------------------
 void DGControl::setControlContinuous(bool inContinuity)
@@ -216,9 +171,9 @@ void DGControl::setControlContinuous(bool inContinuity)
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick)
+void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, KeyModifiers inKeyModifiers, bool inIsDoubleClick)
 {
-	if (! getRespondToMouse() )
+	if (!getMouseEnabled())
 		return;
 
 	currentlyIgnoringMouseTracking = false;
@@ -245,9 +200,9 @@ void DGControl::do_mouseDown(float inXpos, float inYpos, unsigned long inMouseBu
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers)
+void DGControl::do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, KeyModifiers inKeyModifiers)
 {
-	if (! getRespondToMouse() )
+	if (!getMouseEnabled())
 		return;
 
 	if (!currentlyIgnoringMouseTracking)
@@ -255,9 +210,9 @@ void DGControl::do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseB
 }
 
 //-----------------------------------------------------------------------------
-void DGControl::do_mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers)
+void DGControl::do_mouseUp(float inXpos, float inYpos, KeyModifiers inKeyModifiers)
 {
-	if (! getRespondToMouse() )
+	if (!getMouseEnabled())
 		return;
 
 	if (!currentlyIgnoringMouseTracking)
@@ -271,11 +226,11 @@ void DGControl::do_mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyMo
 }
 
 //-----------------------------------------------------------------------------
-bool DGControl::do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers)
+bool DGControl::do_mouseWheel(long inDelta, dfx::Axis inAxis, KeyModifiers inKeyModifiers)
 {
-	if (! getRespondToMouseWheel() )
+	if (!getRespondToMouseWheel())
 		return false;
-	if (! getRespondToMouse() )
+	if (!getMouseEnabled())
 		return false;
 
 	if ( isParameterAttached() )
@@ -291,7 +246,7 @@ bool DGControl::do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers 
 
 //-----------------------------------------------------------------------------
 // a default implementation of mouse wheel handling that should work for most controls
-bool DGControl::mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers)
+bool DGControl::mouseWheel(long inDelta, dfx::Axis inAxis, KeyModifiers inKeyModifiers)
 {
 ControlRef carbonControl = NULL;	// XXX just quieting errors for now
 	SInt32 min = GetControl32BitMinimum(carbonControl);
@@ -303,7 +258,7 @@ ControlRef carbonControl = NULL;	// XXX just quieting errors for now
 	{
 		float diff = (float)inDelta;
 		if (inKeyModifiers & dfx::kKeyModifier_Shift)	// slo-mo
-			diff /= getFineTuneFactor();
+			diff /= kDefaultFineTuneFactor;
 		newValue = oldValue + (SInt32)(diff * (float)(max-min) / getMouseDragRange());
 	}
 	else
@@ -333,60 +288,6 @@ ControlRef carbonControl = NULL;	// XXX just quieting errors for now
 	return true;
 }
 
-//-----------------------------------------------------------------------------
-void DGControl::setParameterID(long inParameterID)
-{
-	if (inParameterID == DFX_PARAM_INVALID_ID)
-	{
-		parameterAttached = false;
-#ifdef TARGET_API_AUDIOUNIT
-		if (auv_control != NULL)
-			delete auv_control;
-		auv_control = NULL;
-#endif
-	}
-	else if ( !parameterAttached || (inParameterID != getParameterID()) )	// only do this if it's a change
-	{
-		parameterAttached = true;
-#ifdef TARGET_API_AUDIOUNIT
-		auvp = CAAUParameter(getDfxGuiEditor()->GetEditAudioUnit(), (AudioUnitParameterID)inParameterID, 
-							kAudioUnitScope_Global, (AudioUnitElement)0);
-		createAUVcontrol();
-#endif
-		redraw();	// it might not happen if the new parameter value is the same as the old value, so make sure it happens
-	}
-}
-
-//-----------------------------------------------------------------------------
-long DGControl::getParameterID()
-{
-	if ( isParameterAttached() )	// XXX necessary check?
-		return getTag();
-	else
-		return DFX_PARAM_INVALID_ID;
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::setOffset(long x, long y)
-{
-	controlPos.offset(x, y);
-	vizArea.offset(x, y);
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::setForeBounds(long x, long y, long w, long h)
-{
-	vizArea.set(x, y, w, h);
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::shrinkForeBounds(long inXoffset, long inYoffset, long inWidthShrink, long inHeightShrink)
-{
-	vizArea.offset(inXoffset, inYoffset);
-	vizArea.setWidth( getWidth() - inWidthShrink );
-	vizArea.setHeight( getHeight() - inHeightShrink );
-}
-
 
 
 
@@ -395,7 +296,7 @@ void DGControl::shrinkForeBounds(long inXoffset, long inYoffset, long inWidthShr
 #pragma mark -
 #pragma mark DGBackgroundControl old
 //-----------------------------------------------------------------------------
-void DGBackgroundControl::draw(CDrawContext * inContext)
+void DGBackgroundControl::draw(CDrawContext* inContext)
 {
 	DGRect drawRect((long)(getDfxGuiEditor()->GetXOffset()), (long)(getDfxGuiEditor()->GetYOffset()), getWidth(), getHeight());
 
@@ -410,7 +311,7 @@ void DGBackgroundControl::draw(CDrawContext * inContext)
 		const float dragHiliteThickness = 2.0f;	// XXX is there a proper way to query this?
 		if (HIThemeSetStroke != NULL)
 		{
-//auto const status = HIThemeBrushCreateCGColor(kThemeBrushDragHilite, CGColorRef * outColor);
+//auto const status = HIThemeBrushCreateCGColor(kThemeBrushDragHilite, CGColorRef* outColor);
 			auto const status = HIThemeSetStroke(kThemeBrushDragHilite, NULL, inContext->getPlatformGraphicsContext(), inContext->getHIThemeOrientation());
 			if (status == noErr)
 			{
@@ -433,6 +334,8 @@ void DGBackgroundControl::draw(CDrawContext * inContext)
 			}
 		}
 	}
+
+	setDirty(false);
 }
 
 //-----------------------------------------------------------------------------

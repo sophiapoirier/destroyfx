@@ -139,39 +139,18 @@ enum
 
 
 //-----------------------------------------------------------------------------
-// callbacks for button-triggered action
-
-void linkKickButtonsDownProc(long, void* otherButton)
-{
-	if (auto const otherDGButton = static_cast<DGButton*>(otherButton))
-	{
-		otherDGButton->setMouseIsDown(true);
-	}
-}
-
-void linkKickButtonsUpProc(long, void* otherButton)
-{
-	if (auto const otherDGButton = static_cast<DGButton*>(otherButton))
-	{
-		otherDGButton->setMouseIsDown(false);
-	}
-}
-
-
-//-----------------------------------------------------------------------------
 // value text display procedures
 
 bool divisorDisplayProc(float value, char* outText, void*)
 {
 	if (value < 2.0f)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", 1.0f);
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", 1.0f) > 0;
 	}
 	else
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value);
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value) > 0;
 	}
-	return true;
 }
 
 bool bufferSizeDisplayProc(float value, char* outText, void* editor)
@@ -179,13 +158,12 @@ bool bufferSizeDisplayProc(float value, char* outText, void* editor)
 	auto const dfxEditor = static_cast<DfxGuiEditor*>(editor);
 	if (dfxEditor->getparameter_b(kBufferTempoSync))
 	{
-		dfxEditor->getparametervaluestring(kBufferSize_Sync, outText);
+		return dfxEditor->getparametervaluestring(kBufferSize_Sync, outText);
 	}
 	else
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value);
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
 	}
-	return true;
 }
 
 bool divisorLFORateDisplayProc(float value, char* outText, void* editor)
@@ -193,20 +171,19 @@ bool divisorLFORateDisplayProc(float value, char* outText, void* editor)
 	auto const dfxEditor = static_cast<DfxGuiEditor*>(editor);
 	if (dfxEditor->getparameter_b(kDivisorLFOTempoSync))
 	{
-		dfxEditor->getparametervaluestring(kDivisorLFORate_Sync, outText);
+		return dfxEditor->getparametervaluestring(kDivisorLFORate_Sync, outText);
 	}
 	else
 	{
 		if (value < 10.0f)
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value);
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value) > 0;
 		}
 		else
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value);
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
 		}
 	}
-	return true;
 }
 
 bool bufferLFORateDisplayProc(float value, char* outText, void* editor)
@@ -214,50 +191,44 @@ bool bufferLFORateDisplayProc(float value, char* outText, void* editor)
 	auto const dfxEditor = static_cast<DfxGuiEditor*>(editor);
 	if (dfxEditor->getparameter_b(kBufferLFOTempoSync))
 	{
-		dfxEditor->getparametervaluestring(kBufferLFORate_Sync, outText);
+		return dfxEditor->getparametervaluestring(kBufferLFORate_Sync, outText);
 	}
 	else
 	{
 		if (value < 10.0f)
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value);
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value) > 0;
 		}
 		else
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value);
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
 		}
 	}
-	return true;
 }
 
 bool lfoDepthDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", (long)value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value) > 0;
 }
 
 bool smoothDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", value) > 0;
 }
 
 bool dryWetMixDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", (long)value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value) > 0;
 }
 
 bool pitchbendDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "\xC2\xB1 %.2f", value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "\xC2\xB1 %.2f", value) > 0;
 }
 
 bool tempoDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value) > 0;
 }
 
 
@@ -374,6 +345,22 @@ long BufferOverrideEditor::OpenEditor()
 	pos.set(kTempoDisplayX, kTempoDisplayY, kDisplayWidth, kDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
 
+
+	// callbacks for button-triggered action
+	auto const linkKickButtonsDownProc = [](long, void* otherButton)
+	{
+		if (auto const otherDGButton = static_cast<DGButton*>(otherButton))
+		{
+			otherDGButton->setMouseIsDown(true);
+		}
+	};
+	auto const linkKickButtonsUpProc = [](long, void* otherButton)
+	{
+		if (auto const otherDGButton = static_cast<DGButton*>(otherButton))
+		{
+			otherDGButton->setMouseIsDown(false);
+		}
+	};
 
 	// forced buffer size tempo sync button
 	pos.set(kBufferTempoSyncButtonX, kBufferTempoSyncButtonY, bufferTempoSyncButtonImage->getWidth() / 2, bufferTempoSyncButtonImage->getHeight() / 2);

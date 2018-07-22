@@ -1,68 +1,77 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2002-2018  Tom Murphy 7 and Sophia Poirier
 
-/* Geometer,
-   Featuring the Super Destroy FX Windowing System! */
+This file is part of Geometer.
+
+Geometer is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Geometer is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+
+Geometer,
+Featuring the Super Destroy FX Windowing System!
+------------------------------------------------------------------------*/
 
 #include "geometer.h"
 
-int intcompare(const void * a, const void * b);
-int intcompare(const void * a, const void * b) {
-  return (*(int*)a - *(int*)b);
-}
+#if TARGET_OS_MAC
+  #include <Accelerate/Accelerate.h>
+#endif
+#include <algorithm>
+#include <cmath>
+
+#include "dfxmath.h"
 
 /* this macro does boring entry point stuff for us */
-#if 1
 DFX_EFFECT_ENTRY(Geometer)
-#else
-extern "C" OSStatus GeometerEntry(ComponentParameters * params, Geometer * obj);
-extern "C" OSStatus GeometerEntry(ComponentParameters * params, Geometer * obj)
-{
-	if (params->what == kAudioUnitResetSelect)
-		printf("Geometer kAudioUnitResetSelect\n");
-	return ComponentEntryPoint<Geometer>::Dispatch(params, obj);
-}
-#endif
 #if TARGET_PLUGIN_USES_DSPCORE
-  DFX_CORE_ENTRY(GeometerDSP)
+  DFX_CORE_ENTRY(PLUGINCORE)
 #endif
 
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
-#if !TARGET_PLUGIN_USES_DSPCORE
-  cs = NULL;
-#endif
-
-  initparameter_list(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
+  initparameter_list(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, DfxParam::Unit::Samples);
   initparameter_list(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
   initparameter_list(P_POINTSTYLE, "points where", POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
 
-  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "magn");
-  initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08, 0.08, 0.0, 1.0, kDfxParamUnit_scalar);
-  initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20, 0.20, 0.0, 1.0, kDfxParamUnit_scalar);
-  initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20, 0.20, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
-  initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50, 0.50, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "gap");
-  initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50, 0.50, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "level");
+  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "magn");
+  initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08, 0.08, 0.0, 1.0, DfxParam::Unit::Scalar);
+  initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20, 0.20, 0.0, 1.0, DfxParam::Unit::Scalar);
+  initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20, 0.20, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "width");
+  initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "gap");
+  initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "level");
 
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
-    initparameter_f(P_POINTPARAMS + pp, "pointparam:unused", 0.04, 0.04, 0.0, 1.0, kDfxParamUnit_generic);
-    setparameterattributes(P_POINTPARAMS + pp, kDfxParamAttribute_unused);	/* don't display as an available parameter */
+    initparameter_f(P_POINTPARAMS + pp, "pointparam:unused", 0.04, 0.04, 0.0, 1.0, DfxParam::Unit::Generic);
+    setparameterattributes(P_POINTPARAMS + pp, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
   }
 
   initparameter_list(P_INTERPSTYLE, "interpolate how", INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
 
-  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
-  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "angle");
-  initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, "interp:smoothie", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_exponent);
-  initparameter_f(P_INTERPARAMS + INTERP_REVERSI, "interp:reversie", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_generic);
-  initparameter_f(P_INTERPARAMS + INTERP_PULSE, "interp:pulse", 0.05, 0.05, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "pulse");
-  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, "interp:friends", 1.0, 1.0, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "width");
-  initparameter_f(P_INTERPARAMS + INTERP_SING, "interp:sing", 0.8, 0.8, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "mod");
-  initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, "interp:shuffle", 0.3, 0.3, 0.0, 1.0, kDfxParamUnit_generic);
+  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "angle");
+  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "angle");
+  initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, "interp:smoothie", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Exponent);
+  initparameter_f(P_INTERPARAMS + INTERP_REVERSI, "interp:reversie", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
+  initparameter_f(P_INTERPARAMS + INTERP_PULSE, "interp:pulse", 0.05, 0.05, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "pulse");
+  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, "interp:friends", 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "width");
+  initparameter_f(P_INTERPARAMS + INTERP_SING, "interp:sing", 0.8, 0.8, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "mod");
+  initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, "interp:shuffle", 0.3, 0.3, 0.0, 1.0, DfxParam::Unit::Generic);
 
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
-    initparameter_f(P_INTERPARAMS + ip, "inter:unused", 0.0, 0.0, 0.0, 1.0, kDfxParamUnit_generic);
-    setparameterattributes(P_INTERPARAMS + ip, kDfxParamAttribute_unused);	/* don't display as an available parameter */
+    initparameter_f(P_INTERPARAMS + ip, "inter:unused", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
+    setparameterattributes(P_INTERPARAMS + ip, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
   }
 
   initparameter_list(P_POINTOP1, "pointop1", OP_NONE, OP_NONE, MAX_OPS);
@@ -71,45 +80,44 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 #define ALLOP(n, str, def, unit, unitstr) \
   do { \
-    initparameter_f(P_OPPAR1S + n, "op1:" str, def, def, 0.0, 1.0, unit, kDfxParamCurve_linear, unitstr); \
-    initparameter_f(P_OPPAR2S + n, "op2:" str, def, def, 0.0, 1.0, unit, kDfxParamCurve_linear, unitstr); \
-    initparameter_f(P_OPPAR3S + n, "op3:" str, def, def, 0.0, 1.0, unit, kDfxParamCurve_linear, unitstr); \
+    initparameter_f(P_OPPAR1S + n, "op1:" str, def, def, 0.0, 1.0, unit, DfxParam::Curve::Linear, unitstr); \
+    initparameter_f(P_OPPAR2S + n, "op2:" str, def, def, 0.0, 1.0, unit, DfxParam::Curve::Linear, unitstr); \
+    initparameter_f(P_OPPAR3S + n, "op3:" str, def, def, 0.0, 1.0, unit, DfxParam::Curve::Linear, unitstr); \
   } while (0)
 
-  ALLOP(OP_DOUBLE, "double", 0.5, kDfxParamUnit_lineargain, NULL);
-  ALLOP(OP_HALF, "half", 0.0, kDfxParamUnit_generic, NULL);
-  ALLOP(OP_QUARTER, "quarter", 0.0, kDfxParamUnit_generic, NULL);
-  ALLOP(OP_LONGPASS, "longpass", 0.15, kDfxParamUnit_custom, "length");
-  ALLOP(OP_SHORTPASS, "shortpass", 0.5, kDfxParamUnit_custom, "length");
-  ALLOP(OP_SLOW, "slow", 0.25, kDfxParamUnit_scalar, NULL);	// "factor"
-  ALLOP(OP_FAST, "fast", 0.5, kDfxParamUnit_scalar, NULL);	// "factor"
-  ALLOP(OP_NONE, "none", 0.0, kDfxParamUnit_generic, NULL);
+  ALLOP(OP_DOUBLE, "double", 0.5, DfxParam::Unit::LinearGain, nullptr);
+  ALLOP(OP_HALF, "half", 0.0, DfxParam::Unit::Generic, nullptr);
+  ALLOP(OP_QUARTER, "quarter", 0.0, DfxParam::Unit::Generic, nullptr);
+  ALLOP(OP_LONGPASS, "longpass", 0.15, DfxParam::Unit::Custom, "length");
+  ALLOP(OP_SHORTPASS, "shortpass", 0.5, DfxParam::Unit::Custom, "length");
+  ALLOP(OP_SLOW, "slow", 0.25, DfxParam::Unit::Scalar, nullptr);	// "factor"
+  ALLOP(OP_FAST, "fast", 0.5, DfxParam::Unit::Scalar, nullptr);	// "factor"
+  ALLOP(OP_NONE, "none", 0.0, DfxParam::Unit::Generic, nullptr);
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
-    ALLOP(op, "unused", 0.5, kDfxParamUnit_generic, NULL);
-    setparameterattributes(P_OPPAR1S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
-    setparameterattributes(P_OPPAR2S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
-    setparameterattributes(P_OPPAR3S + op, kDfxParamAttribute_unused);	/* don't display as an available parameter */
+    ALLOP(op, "unused", 0.5, DfxParam::Unit::Generic, nullptr);
+    setparameterattributes(P_OPPAR1S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
+    setparameterattributes(P_OPPAR2S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
+    setparameterattributes(P_OPPAR3S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
   }
 #undef ALLOP
 
-  long i;
   /* windowing */
-  char * bufstr = (char*) malloc(256);
-  for (i=0; i < BUFFERSIZESSIZE; i++)
+  for (size_t i=0; i < buffersizes.size(); i++)
   {
-    if (buffersizes[i] > 1000)
-      sprintf(bufstr, "%ld,%03ld", buffersizes[i]/1000, buffersizes[i]%1000);
+    std::array<char, dfx::kParameterValueStringMaxLength> bufstr;
+    constexpr long thousand = 1000;
+    if (buffersizes[i] >= thousand)
+      snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i] / thousand, buffersizes[i] % thousand);
     else
-      sprintf(bufstr, "%ld", buffersizes[i]);
-    setparametervaluestring(P_BUFSIZE, i, bufstr);
+      snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
+    setparametervaluestring(P_BUFSIZE, static_cast<long>(i), bufstr.data());
   }
-  free(bufstr);
   setparametervaluestring(P_SHAPE, WINDOW_TRIANGLE, "linear");
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
   setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
-  for (i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
+  for (long i=NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
   /* geometer */
   setparametervaluestring(P_POINTSTYLE, POINT_EXTNCROSS, "ext 'n cross");
@@ -118,7 +126,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_POINTSTYLE, POINT_RANDOM, "randomly");
   setparametervaluestring(P_POINTSTYLE, POINT_SPAN, "span");
   setparametervaluestring(P_POINTSTYLE, POINT_DYDX, "dy/dx");
-  for (i=NUM_POINTSTYLES; i < MAX_POINTSTYLES; i++)
+  for (long i=NUM_POINTSTYLES; i < MAX_POINTSTYLES; i++)
     setparametervaluestring(P_POINTSTYLE, i, "unsup");
   setparametervaluestring(P_INTERPSTYLE, INTERP_POLYGON, "polygon");
   setparametervaluestring(P_INTERPSTYLE, INTERP_WRONGYGON, "wrongygon");
@@ -128,7 +136,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_INTERPSTYLE, INTERP_FRIENDS, "friends");
   setparametervaluestring(P_INTERPSTYLE, INTERP_SING, "sing");
   setparametervaluestring(P_INTERPSTYLE, INTERP_SHUFFLE, "shuffle");
-  for (i=NUM_INTERPSTYLES; i < MAX_INTERPSTYLES; i++)
+  for (long i=NUM_INTERPSTYLES; i < MAX_INTERPSTYLES; i++)
     setparametervaluestring(P_INTERPSTYLE, i, "unsup");
 #define ALLOPSTR(n, str) \
   do { \
@@ -144,38 +152,32 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   ALLOPSTR(OP_SLOW, "slow");
   ALLOPSTR(OP_FAST, "fast");
   ALLOPSTR(OP_NONE, "none");
-  for (i=NUM_OPS; i < MAX_OPS; i++)
+  for (long i=NUM_OPS; i < MAX_OPS; i++)
     ALLOPSTR(i, "unsup");
 #undef ALLOPSTR
 
-  long delay_samples = buffersizes[getparameter_i(P_BUFSIZE)];
+  auto const delay_samples = buffersizes.at(getparameter_i(P_BUFSIZE));
   setlatency_samples(delay_samples);
   settailsize_samples(delay_samples);
 
   setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();
 
-  /* since we don't use notes for any specialized control of Geometer, 
-     allow them to be assigned to control parameters via MIDI learn */
-  dfxsettings->setAllowPitchbendEvents(true);
-  dfxsettings->setAllowNoteEvents(true);
-
 #if !TARGET_PLUGIN_USES_DSPCORE
   addchannelconfig(1, 1);	/* mono */
-  cs = new dfxmutex();
 #endif
 
-##if TARGET_PLUGIN_USES_DSPCORE
-  DFX_INIT_CORE(GeometerDSP);
+#if TARGET_PLUGIN_USES_DSPCORE
+  DFX_INIT_CORE(PLUGINCORE);
 #endif
 }
 
-PLUGIN::~PLUGIN() {
-#if !TARGET_PLUGIN_USES_DSPCORE
-  if (cs != NULL)
-    delete cs;
-  cs = NULL;
-#endif
+void PLUGIN::dfx_PostConstructor()
+{
+  /* since we don't use notes for any specialized control of Geometer, 
+     allow them to be assigned to control parameters via MIDI learn */
+  getsettings().setAllowPitchbendEvents(true);
+  getsettings().setAllowNoteEvents(true);
 }
 
 void PLUGIN::randomizeparameter(long inParameterIndex)
@@ -203,7 +205,7 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
 	  return;
   }
 
-  int64_t newValue = rand() % maxValue;
+  int64_t const newValue = rand() % maxValue;
   setparameter_i(inParameterIndex, newValue);
 
   update_parameter(inParameterIndex);	// make the host aware of the parameter change
@@ -211,85 +213,65 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
 }
 
 #if TARGET_PLUGIN_USES_DSPCORE
-PLUGINCORE::PLUGINCORE(DfxPlugin * inDfxPlugin)
-  : DfxPluginCore(inDfxPlugin), cs(NULL)
-{
-  cs = new DfxMutex();
+PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
+  : DfxPluginCore(inDfxPlugin)
 #else
 long PLUGIN::initialize()
-{
 #endif
+{
   /* determine the size of the largest window size */
-  long maxframe = 0;
-  for (int i=0; i< BUFFERSIZESSIZE; i++)
-    maxframe = (buffersizes[i] > maxframe) ? buffersizes[i] : maxframe;
+  constexpr auto maxframe = *std::max_element(PLUGIN::buffersizes.begin(), PLUGIN::buffersizes.end());
 
   /* add some leeway? */
-  in0 = (float*)calloc(maxframe, sizeof (float));
-  out0 = (float*)calloc(maxframe * 2, sizeof (float));
+  in0.assign(maxframe, 0.0f);
+  out0.assign(maxframe * 2, 0.0f);
 
   /* prevmix is only a single third long */
-  prevmix = (float*)calloc((maxframe / 2), sizeof (float));
+  prevmix.assign(maxframe / 2, 0.0f);
 
   /* geometer buffers */
-  pointx = (int*)calloc((maxframe * 2 + 3), sizeof (int));
-  storex = (int*)calloc((maxframe * 2 + 3), sizeof (int));
+  pointx.assign(maxframe * 2 + 3, 0);
+  storex.assign(maxframe * 2 + 3, 0);
 
-  pointy = (float*)calloc((maxframe * 2 + 3), sizeof (float));
-  storey = (float*)calloc((maxframe * 2 + 3), sizeof (float));
+  pointy.assign(maxframe * 2 + 3, 0.0f);
+  storey.assign(maxframe * 2 + 3, 0.0f);
 
-  windowbuf = (float*)calloc(maxframe, sizeof(float));
+  windowbuf.assign(maxframe, 0.0f);
 #if !TARGET_PLUGIN_USES_DSPCORE
-  return kDfxErr_NoError;
+  return dfx::kStatus_NoError;
 #endif
 }
 
-#if TARGET_PLUGIN_USES_DSPCORE
-PLUGINCORE::~PLUGINCORE()
-{
-  if (cs != NULL)
-    delete cs;
-  cs = NULL;
-#else
+#if !TARGET_PLUGIN_USES_DSPCORE
 void PLUGIN::cleanup()
 {
-#endif
-free(windowbuf);
+  windowbuf.clear();
   /* windowing buffers */
-  free (in0);
-  free (out0);
+  in0.clear();
+  out0.clear();
 
-  free (prevmix);
+  prevmix.clear();
 
   /* geometer buffers */
-  free(pointx);
-  free(pointy);
-  free(storex);
-  free(storey);
+  pointx.clear();
+  pointy.clear();
+  storex.clear();
+  storey.clear();
 }
+#endif
 
 void PLUGINCORE::reset() {
 
-  framesize = buffersizes[getparameter_i(P_BUFSIZE)];
+  framesize = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
   third = framesize / 2;
   bufsize = third * 3;
 
-  /* set up buffers. Prevmix and first frame of output are always 
+  /* set up buffers. prevmix and first frame of output are always 
      filled with zeros. */
 
-  if (prevmix != NULL)
-  {
-    for (int i = 0; i < third; i ++) {
-      prevmix[i] = 0.0f;
-    }
-  }
+  std::fill(prevmix.begin(), prevmix.end(), 0.0f);
 
-  if (out0 != NULL)
-  {
-    for (int j = 0; j < framesize; j ++) {
-      out0[j] = 0.0f;
-    }
-  }
+  std::fill(out0.begin(), out0.end(), 0.0f);
   
   /* start input at beginning. Output has a frame of silence. */
   insize = 0;
@@ -297,9 +279,9 @@ void PLUGINCORE::reset() {
   outsize = framesize;
 
 #if TARGET_PLUGIN_USES_DSPCORE
-  dfxplugin->setlatency_samples(framesize);
+  getplugin()->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
-  dfxplugin->settailsize_samples(framesize);
+  getplugin()->settailsize_samples(framesize);
 #else
   setlatency_samples(framesize);
   /* tail is the same as delay, of course */
@@ -307,41 +289,37 @@ void PLUGINCORE::reset() {
 #endif
 
   shape = getparameter_i(P_SHAPE);
-  long z;
-  const float oneDivThird = 1.0f / (float)third;
-  if (windowbuf != NULL)
-  {
-    switch(shape) {
-      case WINDOW_TRIANGLE:
-        for(z = 0; z < third; z++) {
-          windowbuf[z] = ((float)z * oneDivThird);
-          windowbuf[z+third] = (1.0f - ((float)z * oneDivThird));
-        }
-        break;
-      case WINDOW_ARROW:
-        for(z = 0; z < third; z++) {
-          float p = (float)z * oneDivThird;
-          p *= p;
-          windowbuf[z] = p;
-          windowbuf[z+third] = (1.0f - p);
-        }
-        break;
-      case WINDOW_WEDGE:
-        for(z = 0; z < third; z++) {
-          float p = sqrtf((float)z * oneDivThird);
-          windowbuf[z] = p;
-          windowbuf[z+third] = (1.0f - p);
-        }
-        break;
-      case WINDOW_COS:
-        for(z = 0; z < third; z ++) {
-          // XXX what about Eulor's law for cosine?
-          float p = 0.5f * (-cosf(kDFX_PI_f * ((float)z * oneDivThird)) + 1.0f);
-          windowbuf[z] = p;
-          windowbuf[z+third] = (1.0f - p);
-        }
-        break;
-    }
+  float const oneDivThird = 1.0f / (float)third;
+  switch(shape) {
+    case WINDOW_TRIANGLE:
+      for(long z = 0; z < third; z++) {
+        windowbuf[z] = ((float)z * oneDivThird);
+        windowbuf[z+third] = (1.0f - ((float)z * oneDivThird));
+      }
+      break;
+    case WINDOW_ARROW:
+      for(long z = 0; z < third; z++) {
+        float p = (float)z * oneDivThird;
+        p *= p;
+        windowbuf[z] = p;
+        windowbuf[z+third] = (1.0f - p);
+      }
+      break;
+    case WINDOW_WEDGE:
+      for(long z = 0; z < third; z++) {
+        float const p = std::sqrt((float)z * oneDivThird);
+        windowbuf[z] = p;
+        windowbuf[z+third] = (1.0f - p);
+      }
+      break;
+    case WINDOW_COS:
+      for(long z = 0; z < third; z++) {
+        // XXX what about Eulor's law for cosine?
+        float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * ((float)z * oneDivThird)) + 1.0f);
+        windowbuf[z] = p;
+        windowbuf[z+third] = (1.0f - p);
+      }
+      break;
   }
 }
 
@@ -365,7 +343,7 @@ void PLUGINCORE::processparameters() {
     /* this tells the host to call a suspend()-resume() pair, 
       which updates initialDelay value */
     #if TARGET_PLUGIN_USES_DSPCORE
-    dfxplugin->setlatencychanged(true);
+    getplugin()->setlatencychanged(true);
     #else
     setlatencychanged(true);
     #endif
@@ -382,13 +360,11 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
                      int * tempx, float * tempy) {
   /* pointops. */
 
-  int times = 2;
   switch(pop) {
   case OP_DOUBLE: {
     /* x2 points */
-    int i = 0;
-    int t;
-    for(t = 0; i < (npts - 1) && t < (maxpts-4); i++) {
+    int t = 0;
+    for(int i = 0; i < (npts - 1) && t < (maxpts - 4); i++) {
       /* always include the actual point */
       tempx[t] = px[i];
       tempy[t] = py[i];
@@ -422,13 +398,12 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
   }
   case OP_HALF:
   case OP_QUARTER: {
-    times = 1;
-    if (pop == OP_QUARTER) times = 2;
+    int const times = (pop == OP_QUARTER) ? 2 : 1;
     for(int t = 0; t < times; t++) {
-      int i;
       /* cut points in half. never touch first or last. */
       int q = 1;
-      for(i=1; q < (npts - 1); i++) {
+      int i = 1;
+      for(; q < (npts - 1); i++) {
         px[i] = px[q];
         py[i] = py[q];
         q += 2;
@@ -446,10 +421,10 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
     tempx[0] = px[0];
     tempy[0] = py[0];
 
-    int stretch = (op_param * op_param) * samples;
+    int const stretch = (op_param * op_param) * samples;
     int np = 1;
 
-    for(int i=1; i < (npts-1); i ++) {
+    for(int i=1; i < (npts-1); i++) {
       if (px[i] - tempx[np-1] > stretch) {
         tempx[np] = px[i];
         tempy[np] = py[i];
@@ -476,9 +451,9 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
        specified amount, zero the 2nd endpoint.
     */
 
-    int stretch = (op_param * op_param) * samples;
+    int const stretch = (op_param * op_param) * samples;
 
-    for (int i=1; i < npts; i ++) {
+    for (int i=1; i < npts; i++) {
       if (px[i] - px[i-1] > stretch) py[i] = 0.0f;
     }
 
@@ -488,17 +463,17 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
     /* slow points down. stretches the points out so that
        the tail is lost, but preserves their y values. */
     
-    float factor = 1.0f + op_param;
+    float const factor = 1.0f + op_param;
 
     /* We don't need to worry about maxpoints, since
        we will just be moving existing samples (and
        truncating)... */
-    int i;
-    for(i = 0; i < (npts-1); i ++) {
+    int i = 0;
+    for(; i < (npts-1); i++) {
       px[i] *= factor;
       if (px[i] > samples) {
         /* this sample can't stay. */
-        i --;
+        i--;
         break;
       }
     }
@@ -512,19 +487,19 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
   }
   case OP_FAST: {
 
-    float factor = 1.0f + (op_param * 3.0f);
-    float onedivfactor = 1.0f / factor;
+    float const factor = 1.0f + (op_param * 3.0f);
+    float const onedivfactor = 1.0f / factor;
 
     /* number of times we need to loop through samples */
-    int times = (int)(factor + 1.0);
+    int const times = (int)(factor + 1.0f);
 
     int outi = 0;
-    for(int rep = 0; rep < times; rep ++) {
+    for(int rep = 0; rep < times; rep++) {
       /* where this copy of the points begins */
-      int offset = rep * (onedivfactor * samples);
-      for (int s = 0; s < npts; s ++) {
+      int const offset = rep * (onedivfactor * samples);
+      for (int s = 0; s < npts; s++) {
         /* XXX is destx in range? */
-        int destx = offset + (px[s] * onedivfactor);
+        int const destx = offset + (px[s] * onedivfactor);
 
         if (destx >= samples) goto op_fast_out_of_points;
 
@@ -535,7 +510,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
         if (!(outi > 0 && tempx[outi-1] == destx)) {
           tempx[outi] = destx;
           tempy[outi] = py[s];
-          outi ++;
+          outi++;
         } 
 
         if (outi > (maxpts - 2)) goto op_fast_out_of_points;
@@ -584,27 +559,22 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
   py[0] = in[0];
   int numpts = 1;
 
-  /* MS Visual C++ is super retarded, so we have to define 
-     and initialize all of these before the switch statement */
-  int i = 0, extx = 0, nth = 0, ctr = 0, n = 0, sd = 0;
-  float ext = 0.0f;
-
   switch(pointstyle) {
 
-  case POINT_EXTNCROSS:
+  case POINT_EXTNCROSS: {
     /* extremities and crossings 
        XXX: Can this generate points out of order? Don't think so...
     */
 
-    ext = 0.0f;
-    extx = 0;
+    float ext = 0.0f;
+    int extx = 0;
 
     enum {SZ, SZC, SA, SB};
     int state;
 
     state = SZ;
 
-    for(i = 0 ; i < samples ; i ++) {
+    for(int i = 0; i < samples; i++) {
       switch(state) {
       case SZ: {
         /* just output a zero. */
@@ -616,13 +586,13 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
       case SZC: {
         /* continuing zeros */
         if (in[i] <= pointparam && in[i] >= -pointparam) break;
-  
+
         /* push zero for last spot (we know it was a zero and not pushed). */
         if (numpts < (maxpts-1)) {
           px[numpts] = (i>0)?(i - 1):0;
           py[numpts] = 0.0f;
           numpts++;
-        } 
+        }
 
         if (in[i] < 0.0f) { 
           state = SB;
@@ -643,14 +613,14 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
             px[numpts] = extx;
             py[numpts] = ext;
             numpts++;
-          } 
+          }
           /* and decide state */
           if (in[i] >= -pointparam) {
             if (numpts < (maxpts-1)) {
               px[numpts] = i;
               py[numpts] = 0.0f;
               numpts++;
-            } 
+            }
             state = SZ;
           } else {
             state = SB;
@@ -674,14 +644,14 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
             px[numpts] = extx;
             py[numpts] = ext;
             numpts++;
-          } 
+          }
           /* and decide state */
           if (in[i] <= pointparam) {
             if (numpts < (maxpts-1)) {
               px[numpts] = i;
               py[numpts] = 0.0f;
               numpts++;
-            } 
+            }
             state = SZ;
           } else {
             state = SA;
@@ -702,6 +672,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     }
 
     break;
+  }
 
   case POINT_LEVEL: {
 
@@ -714,20 +685,20 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     px[0] = 0;
     py[0] = in[0];
 
-    for(i = 0; i < samples; i ++) {
+    for(int i = 0; i < samples; i++) {
 
       if (in[i] > pointparam) {
         if (state != ABOVE) {
           px[numpts] = i;
           py[numpts] = in[i];
-          numpts ++;
+          numpts++;
           state = ABOVE;
         }
       } else if (in[i] < -pointparam) {
         if (state != BELOW) {
           px[numpts] = i;
           py[numpts] = in[i];
-          numpts ++;
+          numpts++;
           state = BELOW;
         }
       } else {
@@ -740,24 +711,23 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
       }
 
       if (numpts > samples - 2) break;
-
     }
 
     px[numpts] = samples - 1;
     py[numpts] = in[samples - 1];
 
-    numpts ++;
+    numpts++;
 
     break;
   }
-  case POINT_FREQ:
+  case POINT_FREQ: {
     /* at frequency */
 
     /* XXX let the user choose hz, do conversion */
-    nth = (pointparam * pointparam) * samples;
-    ctr = nth;
+    int const nth = (pointparam * pointparam) * samples;
+    int ctr = nth;
   
-    for(i = 0; i < samples; i ++) {
+    for(int i = 0; i < samples; i++) {
       ctr--;
       if (ctr <= 0) {
         if (numpts < (maxpts-1)) {
@@ -770,14 +740,14 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     }
 
     break;
-
+  }
 
   case POINT_RANDOM: {
     /* randomly */
 
-    n = (1.0f - pointparam) * samples;
+    int n = (int)(1.0f - pointparam) * samples;
 
-    for(;n --;) {
+    for(;n--;) {
       if (numpts < (maxpts-1)) {
         px[numpts++] = rand() % samples;
       } else break;
@@ -785,9 +755,9 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
 
     /* sort them */
 
-    qsort(px, numpts, sizeof (int), intcompare);
+    std::sort(px, px + numpts);
 
-    for (sd = 0; sd < numpts; sd++) {
+    for (int sd = 0; sd < numpts; sd++) {
       py[sd] = in[px[sd]];
     }
 
@@ -800,9 +770,9 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     suggested by bram.
     */
 
-    int span = (pointparam * pointparam) * samples;
+    int const span = (pointparam * pointparam) * samples;
 
-    i = abs((int)(py[0] * span)) + 1;
+    int i = abs((int)(py[0] * span)) + 1;
 
     while (i < samples) {
       px[numpts] = i;
@@ -812,33 +782,32 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     }
 
     break;
-
   }
   
   case POINT_DYDX: {
     /* dy/dx */
-    int lastsign = 0;
+    bool lastsign = false;
     float lasts = in[0];
-    int sign;
 
     px[0] = 0;
     py[0] = in[0];
     numpts = 1;
 
-    float pp;
-    int above;
+    float pp {};
+    bool above {};
     if (pointparam > 0.5f) {
       pp = pointparam - 0.5f;
-      above = 1;
+      above = true;
     } else {
       pp = 0.5f - pointparam;
-      above = 0;
+      above = false;
     }
 
-    pp = powf(pp, 2.7f);
+    pp = std::pow(pp, 2.7f);
 
-    for(i = 1; i < samples; i++) {
+    for (int i = 1; i < samples; i++) {
       
+      bool sign {};
       if (above)
         sign = (in[i] - lasts) > pp;
       else
@@ -882,7 +851,6 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
   numpts = pointops(pointop3, numpts, oppar3, samples, 
                     px, py, maxpts, tempx, tempy);
 
-  int u=1, z=0;
   switch(interpstyle) {
 
   case INTERP_SHUFFLE: {
@@ -900,7 +868,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
        preserve invariants */
     px[numpts-1] = samples - 1;
 
-    int intervals = numpts - 1;
+    int const intervals = numpts - 1;
 
     /* generate table */
     for(int a = 0; a < intervals; a++) {
@@ -908,29 +876,22 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
     }
 
     for(int z = 0; z < intervals; z++) {
-      if (DFX_Rand_f() < interparam) {
-        int t;
+      if (dfx::math::Rand<float>() < interparam) {
         int dest = z + ((interparam * 
                          interparam * (float)intervals)
-                        * DFX_Rand_f()) - (interparam *
-                                          interparam *
-                                          0.5f * (float)intervals);
-        if (dest < 0) dest = 0;
-        if (dest >= intervals) dest = intervals - 1;
+                        * dfx::math::Rand<float>()) - (interparam *
+                                                       interparam *
+                                                       0.5f * (float)intervals);
+        dest = std::clamp(dest, 0, intervals - 1);
 
-        t = tempx[z];
-        tempx[z] = tempx[dest];
-        tempx[dest] = t;
+        std::swap(tempx[z], tempx[dest]);
       }
     }
 
     /* generate output */
-    int c = 0;
-    for(int u = 0; u < intervals; u++) {
-      int size = px[tempx[u]+1] - px[tempx[u]];
-      memcpy(out + c,
-             in + px[tempx[u]],
-             size * sizeof (float));
+    for(int u = 0, c = 0; u < intervals; u++) {
+      int const size = px[tempx[u]+1] - px[tempx[u]];
+      std::copy_n(in + px[tempx[u]], size, out + c);
       c += size;
     }
 
@@ -950,14 +911,13 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
         out[s] = in[s];
 
     /* steady state */
-    int x = numpts - 2;
-    for(; x > 0; x--) {
+    for(int x = numpts - 2; x > 0; x--) {
       /* x points at the beginning of the segment we'll be bleeding
          into. */
-      int sizeright = px[x+1] - px[x];
-      int sizeleft = px[x] - px[x-1];
+      int const sizeright = px[x+1] - px[x];
+      int const sizeleft = px[x] - px[x-1];
 
-      int tgtlen = sizeleft + (sizeright * interparam);
+      int const tgtlen = sizeleft + (sizeright * interparam);
 
       if (tgtlen > 0) {
         /* to avoid using temporary storage, copy from end of target
@@ -973,14 +933,14 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
              j--) {
 
           /* XXX. use interpolated sampling for this */
-          float wet = in[(int)(px[x-1] + sizeleft * 
-                               (j/(float)tgtlen))];
+          float const wet = in[(int)(px[x-1] + sizeleft * 
+                                     (j/(float)tgtlen))];
 
           if ((j + px[x-1]) > px[x]) {
             /* after p[x] -- mix */
 
             /* linear fade-out */
-            float pct = (j - sizeleft) / (float)(tgtlen - sizeleft);
+            float const pct = (j - sizeleft) / (float)(tgtlen - sizeleft);
 
             out[j + px[x-1]] =
               wet * (1.0f - pct) +
@@ -1002,14 +962,12 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
        straight lines at the median.
     */
 
-    for(u=1; u < numpts; u ++) {
-      float denom = (px[u] - px[u-1]);
-      float minterparam = interparam * (py[u-1] + py[u]) * 
-        0.5f;
-      for(z=px[u-1]; z < px[u]; z++) {
-        float pct = (float)(z-px[u-1]) / denom;
-        float s = py[u-1] * (1.0f - pct) +
-          py[u]   * pct;
+    for(int u=1; u < numpts; u++) {
+      float const denom = (px[u] - px[u-1]);
+      float const minterparam = interparam * (py[u-1] + py[u]) * 0.5f;
+      for(int z=px[u-1]; z < px[u]; z++) {
+        float const pct = (float)(z-px[u-1]) / denom;
+        float const s = py[u-1] * (1.0f - pct) + py[u] * pct;
         out[z] = minterparam + (1.0f - interparam) * s;
       }
     }
@@ -1024,14 +982,12 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
        same dimming effect from polygon.
     */
 
-    for(u=1; u < numpts; u ++) {
-      float denom = (px[u] - px[u-1]);
-      float minterparam = interparam * (py[u-1] + py[u]) 
-        * 0.5f;
-      for(z=px[u-1]; z < px[u]; z++) {
-        float pct = (float)(z-px[u-1]) / denom;
-        float s = py[u-1] * pct +
-          py[u]   * (1.0f - pct);
+    for(int u=1; u < numpts; u++) {
+      float const denom = (px[u] - px[u-1]);
+      float const minterparam = interparam * (py[u-1] + py[u]) * 0.5f;
+      for(int z=px[u-1]; z < px[u]; z++) {
+        float const pct = (float)(z-px[u-1]) / denom;
+        float const s = py[u-1] * pct + py[u] * (1.0f - pct);
         out[z] = minterparam + (1.0f - interparam) * s;
       }
     }
@@ -1044,20 +1000,20 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
   case INTERP_SMOOTHIE:
     /* cosine up or down - "smoothie" */
 
-    for(u=1; u < numpts; u ++) {
-      float denom = (px[u] - px[u-1]);
-      for(z=px[u-1]; z < px[u]; z++) {
-        float pct = (float)(z-px[u-1]) / denom;
+    for(int u=1; u < numpts; u++) {
+      float const denom = (px[u] - px[u-1]);
+      for(int z=px[u-1]; z < px[u]; z++) {
+        float const pct = (float)(z-px[u-1]) / denom;
         
-        float p = 0.5f * (-cosf(kDFX_PI_f * pct) + 1.0f);
+        float p = 0.5f * (-std::cos(dfx::math::kPi<float> * pct) + 1.0f);
         
         if (interparam > 0.5f) {
-          p = powf(p, (interparam - 0.16666667f) * 3.0f);
+          p = std::pow(p, (interparam - 0.16666667f) * 3.0f);
         } else {
-          p = powf(p, interparam * 2.0f);
+          p = std::pow(p, interparam * 2.0f);
         }
 
-        float s = py[u-1] * (1.0f - p) + py[u]   * p;
+        float const s = py[u-1] * (1.0f - p) + py[u] * p;
 
         out[z] = s;
       }
@@ -1071,11 +1027,11 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
   case INTERP_REVERSI:
     /* x-reverse input samples for each waveform - "reversi" */
 
-    for(u=1; u < numpts; u ++) {
+    for(int u=1; u < numpts; u++) {
       if (px[u-1] < px[u])
-        for(z = px[u-1]; z < px[u]; z++) {
-          int s = (px[u] - (z + 1)) + px[u - 1];
-          out[z] = in[(s>0)?s:0];
+        for(int z = px[u-1]; z < px[u]; z++) {
+          int const s = (px[u] - (z + 1)) + px[u - 1];
+          out[z] = in[std::max(s, 0)];
         }
     }
 
@@ -1084,18 +1040,18 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
 
   case INTERP_PULSE: {
 
-    int wid = (int)(100.0 * interparam);
+    int const wid = (int)(100.0f * interparam);
     
-    for(i = 0; i < samples; i++) out[i] = 0.0f;
+    for(int i = 0; i < samples; i++) out[i] = 0.0f;
 
-    for(z = 0; z < numpts; z ++) { 
-      out[px[z]] = DFX_MagnitudeMax(out[px[z]], py[z]);
+    for(int z = 0; z < numpts; z++) { 
+      out[px[z]] = dfx::math::MagnitudeMax(out[px[z]], py[z]);
 
       if (wid > 0) {
         /* put w samples on the left, stopping if we hit a sample
            greater than what we're placing */
         int w = wid;
-        float onedivwid = 1.0f / (float)(wid + 1);
+        float const onedivwid = 1.0f / (float)(wid + 1);
         for(int i=px[z]-1; i >= 0 && w > 0; i--, w--) {
           float sam = py[z] * (w * onedivwid);
           if ((out[i] + sam) * (out[i] + sam) > (sam * sam)) out[i] = sam;
@@ -1104,10 +1060,9 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
 
         w = wid;
         for(int ii=px[z]+1; ii < samples && w > 0; ii++, w--) {
-          float sam = py[z] * (w * onedivwid);
+          float const sam = py[z] * (w * onedivwid);
           out[ii] = sam;
         }
-
       }
     }
 
@@ -1116,13 +1071,13 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
   }
   case INTERP_SING:
 
-    for(u=1; u < numpts; u ++) {
-      float oodenom = 1.0f / (px[u] - px[u-1]);
+    for(int u=1; u < numpts; u++) {
+      float const oodenom = 1.0f / (px[u] - px[u-1]);
 
-      for(z=px[u-1]; z < px[u]; z++) {
-        float pct = (float)(z-px[u-1]) * oodenom;
+      for(int z=px[u-1]; z < px[u]; z++) {
+        float const pct = (float)(z-px[u-1]) * oodenom;
         
-        float wand = sinf(2.0f * kDFX_PI_f * pct);
+        float const wand = sinf(2.0f * dfx::math::kPi<float> * pct);
         out[z] = wand * 
           interparam + 
           ((1.0f-interparam) * 
@@ -1145,7 +1100,6 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
   } /* end of interpstyle cases */
 
   return numpts;
-
 }
 
 
@@ -1186,50 +1140,50 @@ XXX Sophia's ideas:
    - it would also be nice to make this windowing stuff into a reusable class so that we don't find ourselves maintaining the same code accross so many different plugins
 */
 
-#include <vecLib/vDSP.h>
 #if TARGET_PLUGIN_USES_DSPCORE
-void PLUGINCORE::process(const float * tin, float * tout, unsigned long samples, bool replacing) {
+void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples, bool replacing) {
 #else
-void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsigned long samples, 
+void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutputs, unsigned long samples, 
                       bool replacing) {
-  const float * tin  = *trueinputs;
-  float * tout = *trueoutputs;
+  float const * const tin = *trueinputs;
+  float * const tout = *trueoutputs;
 #endif
 
   for (unsigned long ii = 0; ii < samples; ii++) {
 
     /* copy sample in */
     in0[insize] = tin[ii];
-    insize ++;
+    insize++;
  
     if (insize == framesize) {
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      if (cs != NULL)
-        cs->grab();
-      processw(in0, out0+outstart+outsize, framesize,
-               pointx, pointy, framesize * 2,
-               storex, storey);
-      if (cs != NULL)
-        cs->release();
+      {
+      std::lock_guard const guard(cs);
+      processw(in0.data(), out0.data()+outstart+outsize, framesize,
+               pointx.data(), pointy.data(), framesize * 2,
+               storex.data(), storey.data());
+      }
 
-#if 0
-      const float oneDivThird = 1.0f / (float)third;
-      int z = 0;
+#if TARGET_OS_MAC
+      vDSP_vmul(out0.data()+outstart+outsize, 1, windowbuf.data(), 1, out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));
+//for (int z=0; z < framesize; z++) out0[z+outstart+outsize] *= windowbuf[z];
+#else
+      float const oneDivThird = 1.0f / (float)third;
       /* apply envelope */
 
       switch(shape) {
 
         // XXX it might be more efficient to do z+=oneDivThird each iteration (and then negativize oneDivThird for the second half)
         case WINDOW_TRIANGLE:
-          for(z = 0; z < third; z++) {
+          for(int z = 0; z < third; z++) {
             out0[z+outstart+outsize] *= ((float)z * oneDivThird);
             out0[z+outstart+outsize+third] *= (1.0f - ((float)z * oneDivThird));
           }
           break;
         case WINDOW_ARROW:
-          for(z = 0; z < third; z++) {
+          for(int z = 0; z < third; z++) {
             float p = (float)z * oneDivThird;
             p *= p;
             out0[z+outstart+outsize] *= p;
@@ -1237,36 +1191,33 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
           }
           break;
         case WINDOW_WEDGE:
-          for(z = 0; z < third; z++) {
-            float p = sqrtf((float)z * oneDivThird);
+          for(int z = 0; z < third; z++) {
+            float auto p = std::sqrt((float)z * oneDivThird);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
           break;
         case WINDOW_COS:
-          for(z = 0; z < third; z ++) {
+          for(int z = 0; z < third; z++) {
             // XXX what about Eulor's law for cosine?
-            float p = 0.5f * (-cosf(kDFX_PI_f * ((float)z * oneDivThird)) + 1.0f);
+            float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * ((float)z * oneDivThird)) + 1.0f);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
           break;
       }
-#else
-      vmul(out0+outstart+outsize, 1, windowbuf, 1, out0+outstart+outsize, 1, (UInt32)framesize);
-//for (int z=0; z < framesize; z++) out0[z+outstart+outsize] *= windowbuf[z];
 #endif
 
       /* mix in prevmix */
-      for(int u = 0; u < third; u ++)
+      for(int u = 0; u < third; u++)
         out0[u+outstart+outsize] += prevmix[u];
 
       /* prevmix becomes out1 */
-      memcpy(prevmix, out0 + outstart + outsize + third, third * sizeof (float));
+      std::copy_n(std::next(out0.begin(), outstart + outsize + third), third, prevmix.begin());
 
       /* copy 2nd third of input over in0 (need to re-use it for next frame), 
          now insize = third */
-      memcpy(in0, in0 + third, third * sizeof (float));
+      std::copy_n(std::next(in0.begin(), third), third, in0.begin());
 
       insize = third;
       
@@ -1281,12 +1232,12 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
   #endif
       tout[ii] = out0[outstart];
 
-    outstart ++;
-    outsize --;
+    outstart++;
+    outsize--;
 
     /* make sure there is always enough room for a frame in out buffer */
     if (outstart == third) {
-      memmove(out0, out0 + outstart, outsize * sizeof (float));
+      memmove(out0.data(), out0.data() + outstart, outsize * sizeof (out0.front()));
       outstart = 0;
     }
   }
@@ -1294,7 +1245,7 @@ void PLUGIN::processaudio(const float ** trueinputs, float ** trueoutputs, unsig
 
 
 void PLUGIN::makepresets() {
-  int i = 1;
+  long i = 1;
 
   setpresetname(i, "atonal singing");
   setpresetparameter_i(i, P_BUFSIZE, 9);	// XXX is that 2^11 ?
@@ -1398,5 +1349,4 @@ void PLUGIN::makepresets() {
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SHUFFLE);
   setpresetparameter_f(i, P_INTERPARAMS + INTERP_SHUFFLE, 0.84);
   i++;
-
 }

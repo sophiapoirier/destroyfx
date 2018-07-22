@@ -85,6 +85,7 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 		rect.bottom = rect.top + std::lround(mBackgroundImage->getHeight());
 	}
 
+	VSTGUI::CView::kDirtyCallAlwaysOnMainThread = true;
 	setKnobMode(kLinearMode);
 }
 
@@ -305,7 +306,7 @@ void DfxGuiEditor::setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, f
 		if (control->getParameterID() == inParameterIndex)
 		{
 			control->setValue_gen(inValue);
-			control->redraw();  // XXX this seems to be necessary for 64-bit AU to update from outside parameter value changes?
+			control->getCControl()->setDirty();  // XXX this seems to be necessary for 64-bit AU to update from outside parameter value changes?
 		}
 	}
 
@@ -628,7 +629,7 @@ bool DfxGuiEditor::dfxgui_GetParameterValueFromString_i(long inParameterID, std:
 		if (success)
 		{
 			DfxParam param;
-			param.init_f(" ", 0.0, 0.0, -1.0, 1.0);
+			param.init_f("", 0.0, 0.0, -1.0, 1.0);
 			DfxParam::Value paramValue;
 			paramValue.f = newValue_f;
 			outValue = param.derive_i(paramValue);
@@ -700,10 +701,8 @@ bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID) const
 // set the control that is currently idly under the mouse pointer, if any (nullptr if none)
 void DfxGuiEditor::setCurrentControl_mouseover(DGControl* inNewMousedOverControl)
 {
-	auto const oldControl = mCurrentControl_mouseover;
-	mCurrentControl_mouseover = inNewMousedOverControl;
 	// post notification if the mouse-overed control has changed
-	if (oldControl != inNewMousedOverControl)
+	if (std::exchange(mCurrentControl_mouseover, inNewMousedOverControl) != inNewMousedOverControl)
 	{
 		mouseovercontrolchanged(inNewMousedOverControl);
 	}
@@ -1460,7 +1459,7 @@ unsigned long DfxGuiEditor::getNumAudioChannels()
 	return static_cast<unsigned long>(getEffect()->getAeffect()->numOutputs);
 #endif
 #ifdef TARGET_API_RTAS
-	return static_cast<unsigned long>(m_Process->getnumoutputs());
+	return m_Process->getnumoutputs();
 #endif
 }
 
@@ -2357,28 +2356,6 @@ void DfxGuiEditor::HandleMidiLearnChange()
 }
 #endif
 
-namespace
-{
-
-//-----------------------------------------------------------------------------
-static void DFXGUI_MidiLearnButtonUserProcedure(long inValue, void* inUserData)
-{
-	assert(inUserData);
-	static_cast<DfxGuiEditor*>(inUserData)->setmidilearning(inValue != 0);
-}
-
-//-----------------------------------------------------------------------------
-static void DFXGUI_MidiResetButtonUserProcedure(long inValue, void* inUserData)
-{
-	assert(inUserData);
-	if (inValue != 0)
-	{
-		static_cast<DfxGuiEditor*>(inUserData)->resetmidilearn();
-	}
-}
-
-}  // namespace
-
 //-----------------------------------------------------------------------------
 DGButton* DfxGuiEditor::CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState)
 {
@@ -2392,7 +2369,11 @@ DGButton* DfxGuiEditor::CreateMidiLearnButton(long inXpos, long inYpos, DGImage*
 
 	DGRect const pos(inXpos, inYpos, controlWidth, controlHeight);
 	mMidiLearnButton = emplaceControl<DGButton>(this, pos, inImage, numButtonStates, DGButton::Mode::Increment, inDrawMomentaryState);
-	mMidiLearnButton->setUserProcedure(DFXGUI_MidiLearnButtonUserProcedure, this);
+	mMidiLearnButton->setUserProcedure([](long inValue, void* inUserData)
+	{
+		assert(inUserData);
+		static_cast<DfxGuiEditor*>(inUserData)->setmidilearning(inValue != 0);
+	}, this);
 	return mMidiLearnButton;
 }
 
@@ -2401,7 +2382,14 @@ DGButton* DfxGuiEditor::CreateMidiResetButton(long inXpos, long inYpos, DGImage*
 {
 	DGRect const pos(inXpos, inYpos, inImage->getWidth(), inImage->getHeight() / 2);
 	mMidiResetButton = emplaceControl<DGButton>(this, pos, inImage, 2, DGButton::Mode::Momentary);
-	mMidiResetButton->setUserProcedure(DFXGUI_MidiResetButtonUserProcedure, this);
+	mMidiResetButton->setUserProcedure([](long inValue, void* inUserData)
+	{
+		assert(inUserData);
+		if (inValue != 0)
+		{
+			static_cast<DfxGuiEditor*>(inUserData)->resetmidilearn();
+		}
+	}, this);
 	return mMidiResetButton;
 }
 
@@ -2440,6 +2428,7 @@ void DfxGuiEditor::SetBackgroundRect(sRect* inRect)
 //-----------------------------------------------------------------------------
 // Called by GUI when idle time available; NO_UI: Call process' DoIdle() method.  
 // Keeps other processes from starving during certain events (like mouse down).
+// XXX TODO: is this actually ever called by anything? seemingly not for AU
 void DfxGuiEditor::doIdleStuff()
 {
 	TARGET_API_EDITOR_BASE_CLASS::doIdleStuff();  // XXX do this?

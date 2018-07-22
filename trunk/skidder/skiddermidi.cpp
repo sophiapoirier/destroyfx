@@ -1,56 +1,71 @@
-/*-------------- by Sophia Poirier  ][  December 2000 -------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2000-2018  Sophia Poirier
+
+This file is part of Skidder.
+
+Skidder is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Skidder is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "skidder.h"
+
+#include <algorithm>
+#include <cmath>
+
+#include "dfxmath.h"
 
 
 //-----------------------------------------------------------------------------
 void Skidder::resetMidi()
 {
-	// zero out the whole note table
-	if (noteTable != NULL)
-	{
-		for (int i=0; i < NUM_NOTES; i++)
-			noteTable[i] = 0;
-	}
-
-	waitSamples = 0;
-	MIDIin = MIDIout = false;
-	mostRecentVelocity = 127;
+	mNoteTable.fill(0);  // zero out the whole note table
+	mWaitSamples = 0;
+	mMidiIn = mMidiOut = false;
+	mMostRecentVelocity = DfxMidi::kMaxValue;
 }
 
 //-----------------------------------------------------------------------------
 void Skidder::processMidiNotes()
 {
-	bool noteIsOn = false;
-
-	for (long i=0; i < midistuff->numBlockEvents; i++)
+	for (long i = 0; i < getmidistate().getBlockEventCount(); i++)
 	{
-		int currentNote = midistuff->blockEvents[i].byte1;
-		int velocity = midistuff->blockEvents[i].byte2;
+		auto const currentNote = getmidistate().getBlockEvent(i).mByte1;
+		auto const velocity = getmidistate().getBlockEvent(i).mByte2;
 
-		switch (midistuff->blockEvents[i].status)
+		switch (getmidistate().getBlockEvent(i).mStatus)
 		{
 			// note-on status was received
-			case kMidiNoteOn:
-				noteTable[currentNote] = mostRecentVelocity = velocity;
+			case DfxMidi::kStatus_NoteOn:
+				mNoteTable[currentNote] = mMostRecentVelocity = velocity;
 				// This is not very accurate.
 				// If more than one note-on happens this block, only the last one is effective.
 				// This is good enough for this effect, though.
-				noteOn(midistuff->blockEvents[i].delta);
+				noteOn(getmidistate().getBlockEvent(i).mOffsetFrames);
 				break;
 
 			// note-off status was received
-			case kMidiNoteOff:
-				noteTable[currentNote] = 0;	// turn off the note
+			case DfxMidi::kStatus_NoteOff:
+				mNoteTable[currentNote] = 0;  // turn off the note
 				break;
 
 			// all notes off
-			case kMidiCC:
-				if (midistuff->blockEvents[i].byte1 == kMidiCC_AllNotesOff)
+			case DfxMidi::kStatus_CC:
+				if (getmidistate().getBlockEvent(i).mByte1 == DfxMidi::kCC_AllNotesOff)
 				{
-					for (currentNote = 0; currentNote < NUM_NOTES; currentNote++)
-						noteTable[currentNote] = 0;	// turn off all notes
-					noteOff();	// do the notes off Skidder stuff
+					mNoteTable.fill(0);  // turn off all notes
+					noteOff();  // do the notes off Skidder stuff
 				}
 				break;
 
@@ -60,33 +75,31 @@ void Skidder::processMidiNotes()
 	}
 
 	// check every note to see any are still on or if they all got turned off during this block...
-	for (int currentNote=0; currentNote < NUM_NOTES; currentNote++)
-	{
-		if (noteTable[currentNote])
-			noteIsOn = true;
-	}
+	auto const noteIsOn = std::any_of(mNoteTable.begin(), mNoteTable.end(), [](auto const& velocity){ return (velocity > 0); });
 	// ...and do the Skidder notes-off stuff if we have no notes remaining on
 	if (!noteIsOn)
-			noteOff();
+	{
+		noteOff();
+	}
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::noteOn(long delta)
+void Skidder::noteOn(unsigned long offsetFrames)
 {
-	switch (midiMode)
+	switch (mMidiMode)
 	{
-		case kMidiMode_trigger:
-			waitSamples = delta;
-			state = kSkidState_Valley;
-			valleySamples = 0;
-			MIDIin = true;
+		case kMidiMode_Trigger:
+			mWaitSamples = dfx::math::ToSigned(offsetFrames);
+			mState = SkidState::Valley;
+			mValleySamples = 0;
+			mMidiIn = true;
 			break;
 
-		case kMidiMode_apply:
-			waitSamples = delta;
-			state = kSkidState_Valley;
-			valleySamples = 0;
-			MIDIin = true;
+		case kMidiMode_Apply:
+			mWaitSamples = dfx::math::ToSigned(offsetFrames);
+			mState = SkidState::Valley;
+			mValleySamples = 0;
+			mMidiIn = true;
 			break;
 
 		default:
@@ -97,84 +110,86 @@ void Skidder::noteOn(long delta)
 //-----------------------------------------------------------------------------------------
 void Skidder::noteOff()
 {
-	switch (midiMode)
+	switch (mMidiMode)
 	{
-		case kMidiMode_trigger:
-			switch (state)
+		case kMidiMode_Trigger:
+			switch (mState)
 			{
-				case kSkidState_SlopeIn:
-					state = kSkidState_SlopeOut;
-					slopeSamples = slopeDur - slopeSamples;
-					waitSamples = slopeSamples;
+				case SkidState::SlopeIn:
+					mState = SkidState::SlopeOut;
+					mSlopeSamples = mSlopeDur - mSlopeSamples;
+					mWaitSamples = mSlopeSamples;
 					break;
 
-				case kSkidState_Plateau:
-					plateauSamples = 1;
-					waitSamples = slopeDur + 1;
+				case SkidState::Plateau:
+					mPlateauSamples = 1;
+					mWaitSamples = mSlopeDur + 1;
 					break;
 
-				case kSkidState_SlopeOut:
-					waitSamples = slopeSamples;
+				case SkidState::SlopeOut:
+					mWaitSamples = mSlopeSamples;
 					break;
 
-				case kSkidState_Valley:
-					waitSamples = 0;
+				case SkidState::Valley:
+					mWaitSamples = 0;
 					break;
 
 				default:
 					break;
 			}
 
-			MIDIout = true;
+			mMidiOut = true;
 			// in case we're still in a MIDI-in phase; it won't get falsed otherwise
-			if (MIDIin)
-				MIDIin = false;
-			// if we're in a slope-out and there's a raised floor, the slope position needs to be rescaled
-			else if ( (state == kSkidState_SlopeOut) && (floor > 0.0f) )
+			if (mMidiIn)
 			{
-				slopeSamples = (long) ( (((float)slopeSamples*slopeStep*gainRange)+floor) * (float)slopeDur );
-				waitSamples = slopeSamples;
+				mMidiIn = false;
+			}
+			// if we're in a slope-out and there's a raised floor, the slope position needs to be rescaled
+			else if ((mState == SkidState::SlopeOut) && (mFloor > 0.0f))
+			{
+				mSlopeSamples = std::lround(((static_cast<float>(mSlopeSamples) * mSlopeStep * mGainRange) + mFloor) * static_cast<float>(mSlopeDur));
+				mWaitSamples = mSlopeSamples;
 			}
 
 			// just to prevent anything really stupid from happening
-			if (waitSamples < 0)
-				waitSamples = 0;
+			mWaitSamples = std::max(mWaitSamples, 0L);
 
 			break;
 
-		case kMidiMode_apply:
-			switch (state)
+		case kMidiMode_Apply:
+			switch (mState)
 			{
-				case kSkidState_SlopeIn:
-					waitSamples = slopeSamples;
+				case SkidState::SlopeIn:
+					mWaitSamples = mSlopeSamples;
 					break;
 
-				case kSkidState_Plateau:
-					waitSamples = 0;
+				case SkidState::Plateau:
+					mWaitSamples = 0;
 					break;
 
-				case kSkidState_SlopeOut:
-					state = kSkidState_SlopeIn;
-					slopeSamples = slopeDur - slopeSamples;
-					waitSamples = slopeSamples;
+				case SkidState::SlopeOut:
+					mState = SkidState::SlopeIn;
+					mSlopeSamples = mSlopeDur - mSlopeSamples;
+					mWaitSamples = mSlopeSamples;
 					break;
 
-				case kSkidState_Valley:
-					valleySamples = 1;
-					waitSamples = slopeDur + 1;
+				case SkidState::Valley:
+					mValleySamples = 1;
+					mWaitSamples = mSlopeDur + 1;
 					break;
 
 				default:
 					break;
 			}
 
-			MIDIout = true;
+			mMidiOut = true;
 			// in case we're still in a MIDI-in phase; it won't get falsed otherwise
-			if (MIDIin)
-				MIDIin = false;
+			if (mMidiIn)
+			{
+				mMidiIn = false;
+			}
 			// just to prevent anything really stupid from happening
-			if (waitSamples < 0)
-				waitSamples = 0;
+			mWaitSamples = std::max(mWaitSamples, 0L);
 
 			break;
 
@@ -187,34 +202,44 @@ void Skidder::noteOff()
 //----------------------------------------------------------------------------- 
 // this gets called when Skidder automates a parameter from CC messages.
 // this is where we can link parameter automation for rangeslider points.
-void Skidder::settings_doLearningAssignStuff(long tag, long eventType, long eventChannel, long eventNum, 
-										long delta, long eventNum2, long eventBehaviourFlags, 
-										long data1, long data2, float fdata1, float fdata2)
+void Skidder::settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, long eventNum, 
+											 unsigned long /*offsetFrames*/, long eventNum2, dfx::MidiEventBehaviorFlags eventBehaviourFlags, 
+											 long data1, long data2, float fdata1, float fdata2)
 {
-	if ( dfxsettings->getSteal() )
+	if (getsettings().getSteal())
+	{
 		return;
+	}
 
 	switch (tag)
 	{
 		case kPulsewidth:
-			if (pulsewidthDoubleAutomate)
-				dfxsettings->assignParam(kPulsewidthRandMin, eventType, eventChannel, eventNum, eventNum2, 
-							eventBehaviourFlags, data1, data2, fdata1, fdata2);
+			if (mPulsewidthDoubleAutomate)
+			{
+				getsettings().assignParam(kPulsewidthRandMin, eventType, eventChannel, eventNum, eventNum2, 
+										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
+			}
 			break;
 		case kPulsewidthRandMin:
-			if (pulsewidthDoubleAutomate)
-				dfxsettings->assignParam(kPulsewidth, eventType, eventChannel, eventNum, eventNum2, 
-							eventBehaviourFlags, data1, data2, fdata1, fdata2);
+			if (mPulsewidthDoubleAutomate)
+			{
+				getsettings().assignParam(kPulsewidth, eventType, eventChannel, eventNum, eventNum2, 
+										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
+			}
 			break;
 		case kFloor:
-			if (floorDoubleAutomate)
-				dfxsettings->assignParam(kFloorRandMin, eventType, eventChannel, eventNum, eventNum2, 
-							eventBehaviourFlags, data1, data2, fdata1, fdata2);
+			if (mFloorDoubleAutomate)
+			{
+				getsettings().assignParam(kFloorRandMin, eventType, eventChannel, eventNum, eventNum2, 
+										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
+			}
 			break;
 		case kFloorRandMin:
-			if (floorDoubleAutomate)
-				dfxsettings->assignParam(kFloor, eventType, eventChannel, eventNum, eventNum2, 
-							eventBehaviourFlags, data1, data2, fdata1, fdata2);
+			if (mFloorDoubleAutomate)
+			{
+				getsettings().assignParam(kFloor, eventType, eventChannel, eventNum, eventNum2, 
+										  eventBehaviourFlags, data1, data2, fdata1, fdata2);
+			}
 			break;
 		default:
 			break;
@@ -230,20 +255,28 @@ void Skidder::settings_unassignParam(long tag)
 	switch (tag)
 	{
 		case kPulsewidth:
-			if (pulsewidthDoubleAutomate)
+			if (mPulsewidthDoubleAutomate)
+			{
 				VstChunk::unassignParam(kPulsewidthRandMin);
+			}
 			break;
 		case kPulsewidthRandMin:
-			if (pulsewidthDoubleAutomate)
+			if (mPulsewidthDoubleAutomate)
+			{
 				VstChunk::unassignParam(kPulsewidth);
+			}
 			break;
 		case kFloor:
-			if (floorDoubleAutomate)
+			if (mFloorDoubleAutomate)
+			{
 				VstChunk::unassignParam(kFloorRandMin);
+			}
 			break;
 		case kFloorRandMin:
-			if (floorDoubleAutomate)
+			if (mFloorDoubleAutomate)
+			{
 				VstChunk::unassignParam(kFloor);
+			}
 			break;
 		default:
 			break;
