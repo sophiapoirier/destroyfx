@@ -1,4 +1,26 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2018  Sophia Poirier
+
+This file is part of Polarizer.
+
+Polarizer is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Polarizer is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Polarizer.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
 #include "polarizereditor.h"
+
 #include "polarizer.h"
 
 
@@ -18,31 +40,35 @@ enum {
 	kImplodeButtonX = kSliderX + (kSliderInc*2),
 	kImplodeButtonY = kSliderY,
 
-	kDestroyFXlinkX = 40,
-	kDestroyFXlinkY = 322
+	kDestroyFXLinkX = 40,
+	kDestroyFXLinkY = 322
 };
 
 
-const char * kValueTextFont = "Boring Boron";
-//const float kValueTextSize = 20.0f;
-const float kValueTextSize = 16.8f;
+static char const* const kValueTextFont = "Boring Boron";
+//constexpr float kValueTextSize = 20.0f;
+constexpr float kValueTextSize = 16.8f;
 
 
 
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-void leapDisplayProc(float value, char * outText, void *)
+bool leapDisplayProc(float value, char* outText, void*)
 {
-	sprintf(outText, "%ld sample", (long)value);
-	if (abs((long)value) > 1)
-		strcat(outText, "s");
+	auto const value_i = static_cast<long>(value);
+	bool const success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld sample", value_i) > 0;
+	if (success && (abs(value_i) > 1))
+	{
+		strncat(outText, "s", DGTextDisplay::kTextMaxLength);
+	}
+	return success;
 }
 
-void amountDisplayProc(float value, char * outText, void *)
+bool amountDisplayProc(float value, char* outText, void*)
 {
-//	sprintf(outText, "%.3f", value);
-	sprintf(outText, "%ld%%", (long)(value*10.0f));
+//	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value * 10.0f) > 0;
 }
 
 
@@ -50,42 +76,39 @@ void amountDisplayProc(float value, char * outText, void *)
 class PolarizerSlider : public DGSlider
 {
 public:
-	PolarizerSlider(DfxGuiEditor * inOwnerEditor, AudioUnitParameterID inParamID, DGRect * inRegion, 
-					DGAxis inOrientation, DGImage * inHandleImage, DGImage * inBackgroundImage)
-	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandleImage, inBackgroundImage)
+	PolarizerSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+					DGImage* inHandleImage, DGImage* inBackgroundImage)
+	:	DGSlider(inOwnerEditor, inParamID, inRegion, dfx::kAxis_Vertical, nullptr, inBackgroundImage), 
+		mHandleImage(inHandleImage)  // store handle image independently so that CSlider does not base control range on it
 	{
-		DGRect * fb = getBounds();
-		setForeBounds(fb->x, fb->y + kSliderFrameThickness, fb->w, fb->h - (kSliderFrameThickness*2));
-		setMouseOffset(0);
+		setOffsetHandle(CPoint(0, kSliderFrameThickness));
+		setViewSize(inRegion, false);  // HACK to trigger a recalculation of the slider range based on new handle offset
 	}
-	virtual void draw(DGGraphicsContext * inContext)
+
+	void draw(CDrawContext* inContext) override
 	{
-		if (backgroundImage != NULL)
-			backgroundImage->draw(getBounds(), inContext);
-
-		ControlRef carbonControl = getCarbonControl();
-		SInt32 max = GetControl32BitMaximum(carbonControl);
-		SInt32 min = GetControl32BitMinimum(carbonControl);
-		SInt32 val = GetControl32BitValue(carbonControl);
-		float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
-
-		CGImageRef handleCGImage = NULL;
-		if (handleImage != NULL)
-			handleCGImage = handleImage->getCGImage();
-		if (handleCGImage != NULL)
+		if (auto const image = getDrawBackground())
 		{
-			long yoff = (long)round( (float)(handleImage->getHeight()) * (1.0f-valNorm) ) + kSliderFrameThickness;
-			handleImage->draw(getBounds(), inContext, -kSliderFrameThickness, -yoff);
-
-			DGRect bottomBorderRect( getBounds() );
-			bottomBorderRect.h = kSliderFrameThickness;
-			bottomBorderRect.y += getBounds()->h - kSliderFrameThickness;
-			bottomBorderRect.w = handleImage->getWidth();
-			bottomBorderRect.x += kSliderFrameThickness;
-			inContext->setFillColor(kDGColor_black);
-			inContext->fillRect(&bottomBorderRect);
+			image->draw(inContext, getViewSize());
 		}
+
+		if (mHandleImage)
+		{
+			auto const yoff = std::round(static_cast<float>(mHandleImage->getHeight()) * (1.0f - getValue())) + kSliderFrameThickness;
+			mHandleImage->draw(inContext, getViewSize(), CPoint(-kSliderFrameThickness, -yoff));
+
+			DGRect bottomBorderRect(getViewSize());
+			bottomBorderRect.setSize(mHandleImage->getWidth(), kSliderFrameThickness);
+			bottomBorderRect.offset(kSliderFrameThickness, getViewSize().getHeight() - kSliderFrameThickness);
+			inContext->setFillColor(DGColor::kBlack);
+			inContext->drawRect(bottomBorderRect, kDrawFilled);
+		}
+
+		setDirty(false);
 	}
+
+private:
+	VSTGUI::SharedPointer<DGImage> const mHandleImage;
 };
 
 
@@ -93,7 +116,7 @@ public:
 DFX_EDITOR_ENTRY(PolarizerEditor)
 
 //-----------------------------------------------------------------------------
-PolarizerEditor::PolarizerEditor(AudioUnitCarbonView inInstance)
+PolarizerEditor::PolarizerEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
 }
@@ -103,55 +126,49 @@ long PolarizerEditor::OpenEditor()
 {
 	// load some graphics
 
-	// background image
-	DGImage * gBackground = new DGImage("polarizer-background.png", 0, this);
-	SetBackgroundImage(gBackground);
+	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
+	auto const sliderBackgroundImage = VSTGUI::makeOwned<DGImage>("slider-background.png");
 
-	DGImage * gSliderHandle = new DGImage("slider-handle.png", 0, this);
-	DGImage * gSliderBackground = new DGImage("slider-background.png", 0, this);
-
-	DGImage * gImplodeButton = new DGImage("implode-button.png", 0, this);
-	DGImage * gDestroyFXlinkButton = new DGImage("destroy-fx-link.png", 0, this);
+	auto const implodeButtonImage = VSTGUI::makeOwned<DGImage>("implode-button.png");
+	auto const destroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
 
 
 	DGRect pos;
 
 	//--create the sliders---------------------------------
-	PolarizerSlider * slider;
 
 	// leap size
-	pos.set(kSliderX, kSliderY, gSliderBackground->getWidth(), gSliderBackground->getHeight());
-	slider = new PolarizerSlider(this, kSkip, &pos, kDGAxis_vertical, gSliderHandle, gSliderBackground);
+	pos.set(kSliderX, kSliderY, sliderBackgroundImage->getWidth(), sliderBackgroundImage->getHeight());
+	emplaceControl<PolarizerSlider>(this, kSkip, pos, sliderHandleImage, sliderBackgroundImage);
 
 	// polarization amount
 	pos.offset(kSliderInc, 0);
-	slider = new PolarizerSlider(this, kAmount, &pos, kDGAxis_vertical, gSliderHandle, gSliderBackground);
+	emplaceControl<PolarizerSlider>(this, kAmount, pos, sliderHandleImage, sliderBackgroundImage);
 
 
 	//--create the displays---------------------------------------------
-	DGTextDisplay * display;
 
 	// leap size read-out
 	pos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	display = new DGTextDisplay(this, kSkip, &pos, leapDisplayProc, NULL, NULL, kDGTextAlign_center, 
-								kValueTextSize, kDGColor_black, kValueTextFont);
+	emplaceControl<DGTextDisplay>(this, kSkip, pos, leapDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, 
+								  kValueTextSize, DGColor::kBlack, kValueTextFont);
 
 	// polarization amount read-out
 	pos.offset(kSliderInc, 0);
-	display = new DGTextDisplay(this, kAmount, &pos, amountDisplayProc, NULL, NULL, kDGTextAlign_center, 
-								kValueTextSize, kDGColor_black, kValueTextFont);
+	emplaceControl<DGTextDisplay>(this, kAmount, pos, amountDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, 
+								  kValueTextSize, DGColor::kBlack, kValueTextFont);
 
 
 	//--create the buttons----------------------------------------------
 
 	// IMPLODE
-	pos.set(kImplodeButtonX, kImplodeButtonY, gImplodeButton->getWidth() / 2, gImplodeButton->getHeight() / 2);
-	DGButton * implodeButton = new DGButton(this, kImplode, &pos, gImplodeButton, 2, kDGButtonType_incbutton, true);
+	pos.set(kImplodeButtonX, kImplodeButtonY, implodeButtonImage->getWidth() / 2, implodeButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kImplode, pos, implodeButtonImage, 2, DGButton::Mode::Increment, true);
 
 	// Destroy FX web page link
-	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, gDestroyFXlinkButton->getWidth(), gDestroyFXlinkButton->getHeight()/2);
-	DGWebLink * dfxLinkButton = new DGWebLink(this, &pos, gDestroyFXlinkButton, DESTROYFX_URL);
+	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);
+	emplaceControl<DGWebLink>(this, pos, destroyFXLinkButtonImage, DESTROYFX_URL);
 
 
-	return noErr;
+	return dfx::kStatus_NoError;
 }

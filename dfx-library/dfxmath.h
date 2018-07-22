@@ -21,7 +21,7 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
-This is our math shit.
+This is our math and numerics shit.
 ------------------------------------------------------------------------*/
 
 
@@ -66,15 +66,16 @@ T Rand()
 
 //-----------------------------------------------------------------------------
 template <typename OutputT = size_t, typename InputT>
-OutputT RoundToIndex(InputT inValue)
+constexpr OutputT RoundToIndex(InputT inValue)
 {
 	static_assert(std::is_floating_point_v<InputT>);
 	static_assert(std::is_unsigned_v<OutputT>);
 	return static_cast<OutputT>(std::max(std::lround(inValue), 0L));
 }
 
+//-----------------------------------------------------------------------------
 template <typename T>
-auto ToSigned(T inValue)
+constexpr auto ToSigned(T inValue)
 {
 	static_assert(std::is_integral_v<T>);
 	static_assert(std::is_unsigned_v<T>);
@@ -84,8 +85,9 @@ auto ToSigned(T inValue)
 	return static_cast<SignedT>(inValue);
 }
 
+//-----------------------------------------------------------------------------
 template <typename T>
-auto ToUnsigned(T inValue)
+constexpr auto ToUnsigned(T inValue)
 {
 	static_assert(std::is_integral_v<T>);
 	static_assert(std::is_signed_v<T>);
@@ -97,7 +99,7 @@ auto ToUnsigned(T inValue)
 //-----------------------------------------------------------------------------
 // return the parameter with larger magnitude
 template <typename T>
-T MagnitudeMax(T inValue1, T inValue2)
+constexpr T MagnitudeMax(T inValue1, T inValue2)
 {
 	static_assert(std::is_floating_point_v<T>);
 	return (std::fabs(inValue1) > std::fabs(inValue2)) ? inValue1 : inValue2;
@@ -109,12 +111,12 @@ T MagnitudeMax(T inValue1, T inValue2)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-T ClampDenormalValue(T inValue)
+constexpr T ClampDenormalValue(T inValue)
 {
 	static_assert(std::is_floating_point_v<T>);
 #ifndef TARGET_API_AUDIOUNIT  // the AU SDK handles denormals for us
 	// clamp down any very small values (below -300 dB) to zero to hopefully avoid any denormal values
-	static constexpr T verySmallButNotDenormalValue = std::numeric_limits<T>::min() * T(1.0e20);
+	constexpr T verySmallButNotDenormalValue = std::numeric_limits<T>::min() * T(1.0e20);
 	if (std::fabs(inValue) < verySmallButNotDenormalValue)
 	{
 		return T(0);
@@ -125,7 +127,7 @@ T ClampDenormalValue(T inValue)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-T Linear2dB(T inLinearValue)
+constexpr T Linear2dB(T inLinearValue)
 {
 	static_assert(std::is_floating_point_v<T>);
 	return T(20) * std::log10(inLinearValue);
@@ -133,7 +135,7 @@ T Linear2dB(T inLinearValue)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-T Db2Linear(T inDecibalValue)
+constexpr T Db2Linear(T inDecibalValue)
 {
 	static_assert(std::is_floating_point_v<T>);
 	return std::pow(T(10), inDecibalValue / T(20));
@@ -141,14 +143,14 @@ T Db2Linear(T inDecibalValue)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-T FrequencyScalarBySemitones(T inSemitones)
+constexpr T FrequencyScalarBySemitones(T inSemitones)
 {
 	static_assert(std::is_floating_point_v<T>);
 	return std::exp2(inSemitones / T(12));
 }
 
 //-----------------------------------------------------------------------------
-inline float InterpolateHermite(float const* inData, double inAddress, long inBufferSize)
+constexpr float InterpolateHermite(float const* inData, double inAddress, long inBufferSize)
 {
 	auto const pos = static_cast<long>(inAddress);
 	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));
@@ -187,7 +189,7 @@ inline float InterpolateHermite(float const* inData, double inAddress, long inBu
 }
 
 //-----------------------------------------------------------------------------
-inline float InterpolateHermite_NoWrap(float* inData, double inAddress, long inBufferSize)
+constexpr float InterpolateHermite_NoWrap(float* inData, double inAddress, long inBufferSize)
 {
 	auto const pos = static_cast<long>(inAddress);
 	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));
@@ -204,7 +206,7 @@ inline float InterpolateHermite_NoWrap(float* inData, double inAddress, long inB
 }
 
 //-----------------------------------------------------------------------------
-inline float InterpolateLinear(float* inData, double inAddress, long inBufferSize)
+constexpr float InterpolateLinear(float* inData, double inAddress, long inBufferSize)
 {
 	auto const pos = static_cast<long>(inAddress);
 	auto const posFract = static_cast<float>(inAddress - static_cast<double>(pos));
@@ -212,16 +214,18 @@ inline float InterpolateLinear(float* inData, double inAddress, long inBufferSiz
 }
 
 //-----------------------------------------------------------------------------
-inline float InterpolateLinear(float inValue1, float inValue2, double inAddress)
+constexpr float InterpolateLinear(float inValue1, float inValue2, double inAddress)
 {
 	auto const posFract = static_cast<float>(inAddress - static_cast<double>(static_cast<long>(inAddress)));
 	return (inValue1 * (1.0f - posFract)) + (inValue2 * posFract);
 }
 
 //-----------------------------------------------------------------------------
-inline float InterpolateRandom(float inMinValue, float inMaxValue)
+template <typename T>
+inline T InterpolateRandom(T inMinValue, T inMaxValue)
 {
-	return ((inMaxValue - inMinValue) * Rand<float>()) + inMinValue;
+	static_assert(std::is_floating_point_v<T>);
+	return ((inMaxValue - inMinValue) * Rand<T>()) + inMinValue;
 }
 
 //-----------------------------------------------------------------------------

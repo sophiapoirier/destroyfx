@@ -1,76 +1,112 @@
-/*-------------- by Sophia Poirier  ][  December 2000 -------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2000-2018  Sophia Poirier
+
+This file is part of Skidder.
+
+Skidder is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Skidder is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "skidder.h"
+
+#include <algorithm>
+#include <cmath>
+
+#include "dfxmath.h"
 
 
 //-----------------------------------------------------------------------------------------
 void Skidder::processSlopeIn()
 {
-	float baseSlopeAmp = ((float)(slopeDur-slopeSamples)) * slopeStep;
-	baseSlopeAmp *= baseSlopeAmp;	// square-scale the gain scalar
+	float baseSlopeAmp = static_cast<float>(mSlopeDur - mSlopeSamples) * mSlopeStep;
+	baseSlopeAmp *= baseSlopeAmp;  // square-scale the gain scalar
 
-	// dividing the growing slopeDur-slopeSamples by slopeDur makes ascending values
-	if (MIDIin)
+	// dividing the growing mSlopeDur-mSlopeSamples by mSlopeDur makes ascending values
+	if (mMidiIn)
 	{
-		if (midiMode == kMidiMode_trigger)
+		if (mMidiMode == kMidiMode_Trigger)
+		{
 			// start from a 0.0 floor if we are coming in from silence
-			sampleAmp = baseSlopeAmp;
-		else if (midiMode == kMidiMode_apply)
+			mSampleAmp = baseSlopeAmp;
+		}
+		else if (mMidiMode == kMidiMode_Apply)
+		{
 			// no fade-in for the first entry of MIDI apply
-			sampleAmp = 1.0f;
+			mSampleAmp = 1.0f;
+		}
 	}
-	else if (useRandomFloor)
-		sampleAmp = (baseSlopeAmp * randomGainRange) + randomFloor;
-	else
-		sampleAmp = (baseSlopeAmp * gainRange) + floor;
-
-	slopeSamples--;
-
-	if (slopeSamples <= 0)
+	else if (mUseRandomFloor)
 	{
-		state = kSkidState_Plateau;
-		MIDIin = false;	// make sure it doesn't happen again
+		mSampleAmp = (baseSlopeAmp * mRandomGainRange) + mRandomFloor;
+	}
+	else
+	{
+		mSampleAmp = (baseSlopeAmp * mGainRange) + mFloor;
+	}
+
+	mSlopeSamples--;
+
+	if (mSlopeSamples <= 0)
+	{
+		mState = SkidState::Plateau;
+		mMidiIn = false;  // make sure it doesn't happen again
 	}
 }
 
 //-----------------------------------------------------------------------------------------
 void Skidder::processPlateau()
 {
-	MIDIin = false;	// in case there was no slope-in
+	mMidiIn = false;  // in case there was no slope-in
 
-	// sampleAmp in the plateau is 1.0, i.e. this sample is unaffected
-	sampleAmp = 1.0f;
+	// mSampleAmp in the plateau is 1.0, i.e. this sample is unaffected
+	mSampleAmp = 1.0f;
 
-	plateauSamples--;
+	mPlateauSamples--;
 
-	if (plateauSamples <= 0)
+	if (mPlateauSamples <= 0)
 	{
 #ifdef USE_BACKWARDS_RMS
 		// average and then sqare the sample squareroots for the RMS value
-		rms = pow( (rms/(double)rmscount), 2.0 );
+		mRMS = std::pow(mRMS / static_cast<double>(mRMSCount), 2.0);
 #else
-		// average and then get the sqare root of the squared samples for the RMS value
-		rms = sqrt( rms / (double)rmscount );
+		// average and then get the sqare root of the squared samples for the mRMS value
+		mRMS = std::sqrt(mRMS / static_cast<double>(mRMSCount));
 #endif
 		// because RMS tends to be < 0.5, thus unfairly limiting rupture's range
-		rms *= 2.0;
+		mRMS *= 2.0;
 		// avoids clipping or illegit values (like from wraparound)
-		if ( (rms > 1.0) || (rms < 0.0) )
-			rms = 1.0;
-		rmscount = 0;	// reset the RMS counter
+		if ((mRMS > 1.0) || (mRMS < 0.0))
+		{
+			mRMS = 1.0;
+		}
+		mRMSCount = 0;  // reset the RMS counter
 		//
 		// set up the random floor values
-		randomFloor = (float) expandparametervalue(kFloor, DFX_InterpolateRandom(floorRandMin_gen, floor_gen));
-		randomGainRange = 1.0f - randomFloor;	// the range of the skidding on/off gain
+		mRandomFloor = static_cast<float>(expandparametervalue(kFloor, dfx::math::InterpolateRandom(mFloorRandMin_gen, mFloor_gen)));
+		mRandomGainRange = 1.0f - mRandomFloor;  // the range of the skidding on/off gain
 		//
-		if (slopeDur > 0)
+		if (mSlopeDur > 0)
 		{
-			state = kSkidState_SlopeOut;
-			slopeSamples = slopeDur;	// refill slopeSamples
-			slopeStep = 1.0f / (float)slopeDur;	// calculate the fade increment scalar
+			mState = SkidState::SlopeOut;
+			mSlopeSamples = mSlopeDur;  // refill mSlopeSamples
+			mSlopeStep = 1.0f / static_cast<float>(mSlopeDur);  // calculate the fade increment scalar
 		}
 		else
-			state = kSkidState_Valley;
+		{
+			mState = SkidState::Valley;
+		}
 	}
 }
 
@@ -78,308 +114,333 @@ void Skidder::processPlateau()
 //-----------------------------------------------------------------------------------------
 void Skidder::processSlopeOut()
 {
-	float baseSlopeAmp = (float)slopeSamples * slopeStep;
-	baseSlopeAmp *= baseSlopeAmp;	// square-scale the gain scalar
+	float baseSlopeAmp = static_cast<float>(mSlopeSamples) * mSlopeStep;
+	baseSlopeAmp *= baseSlopeAmp;  // square-scale the gain scalar
 
-	// dividing the decrementing slopeSamples by slopeDur makes descending values
-	if ( MIDIout && (midiMode == kMidiMode_trigger) )
-		// start from a 0.0 floor if we are coming in from silence
-		sampleAmp = baseSlopeAmp;
-	else if (useRandomFloor)
-		sampleAmp = (baseSlopeAmp * randomGainRange) + randomFloor;
-	else
-		sampleAmp = (baseSlopeAmp * gainRange) + floor;
-
-	slopeSamples--;
-
-	if (slopeSamples <= 0)
+	// dividing the decrementing mSlopeSamples by mSlopeDur makes descending values
+	if (mMidiOut && (mMidiMode == kMidiMode_Trigger))
 	{
-		state = kSkidState_Valley;
-		MIDIout = false;	// make sure it doesn't happen again
+		// start from a 0.0 floor if we are coming in from silence
+		mSampleAmp = baseSlopeAmp;
+	}
+	else if (mUseRandomFloor)
+	{
+		mSampleAmp = (baseSlopeAmp * mRandomGainRange) + mRandomFloor;
+	}
+	else
+	{
+		mSampleAmp = (baseSlopeAmp * mGainRange) + mFloor;
+	}
+
+	mSlopeSamples--;
+
+	if (mSlopeSamples <= 0)
+	{
+		mState = SkidState::Valley;
+		mMidiOut = false;  // make sure it doesn't happen again
 	}
 }
 
 //-----------------------------------------------------------------------------------------
 void Skidder::processValley()
 {
-	float cycleRate;	// the base current skid rate value
-	bool barSync = false;	// true if we need to sync up with the next bar start
-
-
-	if (MIDIin)
+	if (mMidiIn)
 	{
-		if (midiMode == kMidiMode_trigger)
+		if (mMidiMode == kMidiMode_Trigger)
+		{
 			// there's one sample of valley when trigger mode begins, so silence that one
-			sampleAmp = 0.0f;
-		else if (midiMode == kMidiMode_apply)
+			mSampleAmp = 0.0f;
+		}
+		else if (mMidiMode == kMidiMode_Apply)
+		{
 			// there's one sample of valley when apply mode begins, so keep it at full gain
-			sampleAmp = 1.0f;
+			mSampleAmp = 1.0f;
+		}
 	}
-	// otherwise sampleAmp in the valley is whatever the floor gain is, the lowest gain value
-	else if (useRandomFloor)
-		sampleAmp = randomFloor;
-	else
-		sampleAmp = floor;
-
-	valleySamples--;
-
-	if (valleySamples <= 0)
+	// otherwise mSampleAmp in the valley is whatever the floor gain is, the lowest gain value
+	else if (mUseRandomFloor)
 	{
-		rms = 0.0;	// reset rms now because valley is over
+		mSampleAmp = mRandomFloor;
+	}
+	else
+	{
+		mSampleAmp = mFloor;
+	}
+
+	mValleySamples--;
+
+	if (mValleySamples <= 0)
+	{
+		float cycleRate = 0.0f;  // the base current skid rate value
+		bool barSync = false;  // true if we need to sync up with the next bar start
+		mRMS = 0.0;  // reset mRMS now because valley is over
 		//
 		// This is where we figure out how many samples long each 
 		// envelope section is for the next skid cycle.
 		//
-		if (tempoSync)	// the user wants to do tempo sync / beat division rate
+		if (mTempoSync)  // the user wants to do tempo sync / beat division rate
 		{
 			// randomize the tempo rate if the random min scalar is lower than the upper bound
-			if (useRandomRate)
+			if (mUseRandomRate)
 			{
-				long randomizedTempoRateIndex = (long) DFX_InterpolateRandom((float)rateRandMinIndex, (float)rateIndex+0.99f);
-				cycleRate = tempoRateTable->getScalar(randomizedTempoRateIndex);
+				auto const randomizedTempoRateIndex = static_cast<long>(dfx::math::InterpolateRandom(static_cast<float>(mRateRandMinIndex), static_cast<float>(mRateIndex) + 0.99f));
+				cycleRate = mTempoRateTable.getScalar(randomizedTempoRateIndex);
 				// we can't do the bar sync if the skids durations are random
-				needResync = false;
+				mNeedResync = false;
 			}
 			else
-				cycleRate = rateSync;
+			{
+				cycleRate = mRate_Sync;
+			}
 			// convert the tempo rate into rate in terms of Hz
-			cycleRate *= currentTempoBPS;
+			cycleRate *= mCurrentTempoBPS;
 			// set this true so that we make sure to do the measure syncronisation later on
-			if ( needResync && (midiMode == kMidiMode_none) )
+			if (mNeedResync && (mMidiMode == kMidiMode_None))
+			{
 				barSync = true;
+			}
 		}
 		else
 		{
-			if (useRandomRate)
-				cycleRate = (float) expandparametervalue(kRate_abs, DFX_InterpolateRandom(rateRandMinHz_gen, rateHz_gen));
-			else
-				cycleRate = rateHz;
+			cycleRate = mUseRandomRate ? static_cast<float>(expandparametervalue(kRate_Hz, dfx::math::InterpolateRandom(mRateRandMinHz_gen, mRateHz_gen))) : mRate_Hz;
 		}
-		needResync = false;	// reset this so that we don't have any trouble
-		cycleSamples = (long) (getsamplerate_f() / cycleRate);
+		mNeedResync = false;  // reset this so that we don't have any trouble
+		mCycleSamples = std::lround(getsamplerate_f() / cycleRate);
 		//
-		if (useRandomPulsewidth)
-			pulseSamples = (long) ( (float)cycleSamples * DFX_InterpolateRandom(pulsewidthRandMin, pulsewidth) );
-		else
-			pulseSamples = (long) ( (float)cycleSamples * pulsewidth );
-		valleySamples = cycleSamples - pulseSamples;
-		slopeSamples = (long) (getsamplerate() * slopeSeconds);
-		slopeDur = slopeSamples;
-		slopeStep = 1.0f / (float)slopeDur;	// calculate the fade increment scalar
-		plateauSamples = pulseSamples - (slopeSamples * 2);
-		if (plateauSamples < 1)	// this shrinks the slope to 1/3 of the pulse if the user sets slope too high
+		auto const pulsewidth = mUseRandomPulsewidth ? dfx::math::InterpolateRandom(mPulsewidthRandMin, mPulsewidth) : mPulsewidth;
+		mPulseSamples = std::lround(static_cast<float>(mCycleSamples) * pulsewidth);
+		mValleySamples = mCycleSamples - mPulseSamples;
+		mSlopeSamples = std::lround(getsamplerate() * mSlopeSeconds);
+		mSlopeDur = mSlopeSamples;
+		mSlopeStep = 1.0f / static_cast<float>(mSlopeDur);  // calculate the fade increment scalar
+		mPlateauSamples = mPulseSamples - (mSlopeSamples * 2);
+		if (mPlateauSamples < 1)  // this shrinks the slope to 1/3 of the pulse if the user sets slope too high
 		{
-			slopeSamples = (long) (((float)pulseSamples) / 3.0f);
-			slopeDur = slopeSamples;
-			slopeStep = 1.0f / (float)slopeDur;	// calculate the fade increment scalar
-			plateauSamples = pulseSamples - (slopeSamples * 2);
+			mSlopeSamples = std::lround(static_cast<float>(mPulseSamples) / 3.0f);
+			mSlopeDur = mSlopeSamples;
+			mSlopeStep = 1.0f / static_cast<float>(mSlopeDur);  // calculate the fade increment scalar
+			mPlateauSamples = mPulseSamples - (mSlopeSamples * 2);
 		}
 
 		// go to slopeIn next if slope is not 0.0, otherwise go to plateau
-		if (slopeDur > 0)
-			state = kSkidState_SlopeIn;
-		else
-			state = kSkidState_Plateau;
+		mState = (mSlopeDur > 0) ? SkidState::SlopeIn : SkidState::Plateau;
 
-		if (barSync)	// we need to adjust this cycle so that a skid syncs with the next bar
+		if (barSync)  // we need to adjust this cycle so that a skid syncs with the next bar
 		{
 			// calculate how long this skid cycle needs to be
-			long countdown = timeinfo.samplesToNextBar % cycleSamples;
+			long const countdown = gettimeinfo().mSamplesToNextBar % mCycleSamples;
 			// skip straight to the valley and adjust its length
-			if ( countdown <= (valleySamples+(slopeSamples*2)) )
+			if (countdown <= (mValleySamples + (mSlopeSamples * 2)))
 			{
-				valleySamples = countdown;
-				state = kSkidState_Valley;
+				mValleySamples = countdown;
+				mState = SkidState::Valley;
 			}
 			// otherwise adjust the plateau if the shortened skid is still long enough for one
 			else
-				plateauSamples -= cycleSamples - countdown;
+			{
+				mPlateauSamples -= mCycleSamples - countdown;
+			}
 		}
 
 		// if MIDI apply mode is just beginning, make things smooth with no panning
-		if ( (MIDIin) && (midiMode == kMidiMode_apply) )
-			panGainL = panGainR = 1.0f;
+		if (mMidiIn && (mMidiMode == kMidiMode_Apply))
+		{
+			mPanGainL = mPanGainR = 1.0f;
+		}
 		else
 		{
 			// this calculates a random float value from -1.0 to 1.0
-			float panRander = (DFX_Rand_f() * 2.0f) - 1.0f;
-			// ((panRander*panWidth)+1.0) ranges from 0.0 to 2.0
-			panGainL = (panRander*panWidth) + 1.0f;
-			panGainR = 2.0f - ((panRander*panWidth) + 1.0f);
+			float const panRander = (dfx::math::Rand<float>() * 2.0f) - 1.0f;
+			// ((panRander * mPanWidth) + 1.0) ranges from 0.0 to 2.0
+			mPanGainL = (panRander * mPanWidth) + 1.0f;
+			mPanGainR = 2.0f - ((panRander * mPanWidth) + 1.0f);
 		}
-
-	}	// end of the "valley is over" if-statement
+	}  // end of the "valley is over" if-statement
 }
 
 //-----------------------------------------------------------------------------------------
 float Skidder::processOutput(float in1, float in2, float panGain)
 {
 	// output noise
-	if ( (state == kSkidState_Valley) && (noise != 0.0f) )
+	if ((mState == SkidState::Valley) && (mNoise != 0.0f))
 	{
 		// out gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
-		return ((DFX_Rand_f()*2.0f)-1.0f) * panGain * noise * (float)rms;
+		return ((dfx::math::Rand<float>() * 2.0f) - 1.0f) * panGain * mNoise * static_cast<float>(mRMS);
 	}
 	// do regular skidding output
 	else
 	{
 		// only output a bit of the first input
 		if (panGain <= 1.0f)
-			return in1 * panGain * sampleAmp;
+		{
+			return in1 * panGain * mSampleAmp;
+		}
 		// output all of the first input and a bit of the second input
 		else
-			return ( in1 + (in2*(panGain-1.0f)) ) * sampleAmp;
+		{
+			return (in1 + (in2 * (panGain - 1.0f))) * mSampleAmp;
+		}
 	}
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsigned long inNumFrames, bool replacing)
+void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
 {
-	unsigned long numInputs = getnuminputs(), numOutputs = getnumoutputs();
-	unsigned long samplecount, ch;
-	const float channelScalar = 1.0f / (float)numOutputs;
+	auto const numInputs = getnuminputs();
+	auto const numOutputs = getnumoutputs();
+	float const channelScalar = 1.0f / static_cast<float>(numOutputs);
 
-	// handle the special case of mismatched input/output channel counts that we allow 
-	// by repeating the mono-input to multiple (faked) input channels
-	const float * doubledInputStreams[2];
-	if ( (numInputs == 1) && (numOutputs == 2) )
+	for (unsigned long ch = 0; ch < numOutputs; ch++)
 	{
-		for (ch=0; ch < numOutputs; ch++)
-			doubledInputStreams[ch] = inStreams[0];
-		inStreams = doubledInputStreams;
+		// handle the special case of mismatched input/output channel counts that we allow 
+		// by repeating the mono-input to multiple (faked) input channels
+		mInputAudio[ch] = inAudio[std::min(ch, numInputs - 1)];
+		mOutputAudio[ch] = outAudio[ch];
 	}
 
 
 // ---------- begin MIDI stuff --------------
 	processMidiNotes();
-	bool noteIsOn = false;
 
-	for (int notecount=0; notecount < NUM_NOTES; notecount++)
-	{
-		if (noteTable[notecount])
-		{
-			noteIsOn = true;
-			break;	// we only need to find one active note
-		}
-	}
+	auto const noteIsOn = std::any_of(mNoteTable.begin(), mNoteTable.end(), [](auto const& velocity){ return (velocity > 0); });
 
-	switch (midiMode)
+	switch (mMidiMode)
 	{
-		case kMidiMode_trigger:
-			// check waitSamples also because, if it's zero, we can just move ahead normally
-			if ( noteIsOn && (waitSamples != 0) )
+		case kMidiMode_Trigger:
+			// check mWaitSamples also because, if it's zero, we can just move ahead normally
+			if (noteIsOn && (mWaitSamples != 0))
 			{
 				// need to make sure that the skipped part is silent if we're processing in-place
 				if (replacing)
 				{
-					for (ch=0; ch < numOutputs; ch++)
+					for (unsigned long ch = 0; ch < numOutputs; ch++)
 					{
-						for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-							outStreams[ch][samplecount] = 0.0f;
+						for (unsigned long samp = 0; samp < dfx::math::ToUnsigned(mWaitSamples); samp++)
+						{
+							mOutputAudio[ch][samp] = 0.0f;
+						}
 
 						// jump ahead accordingly in the i/o streams
-						outStreams[ch] += waitSamples;
-						inStreams[ch] += waitSamples;
+						mOutputAudio[ch] += mWaitSamples;
+						mInputAudio[ch] += mWaitSamples;
 					}
 				}
 
 				// cut back the number of samples outputted
-				inNumFrames -= (unsigned)waitSamples;
+				inNumFrames -= dfx::math::ToUnsigned(mWaitSamples);
 
 				// reset
-				waitSamples = 0;
+				mWaitSamples = 0;
 			}
 
 			else if (!noteIsOn)
 			{
 				// if Skidder currently is in the plateau and has a slow cycle, this could happen
-				if ((unsigned)waitSamples > inNumFrames)
-					waitSamples -= (signed)inNumFrames;
+				if (dfx::math::ToUnsigned(mWaitSamples) > inNumFrames)
+				{
+					mWaitSamples -= dfx::math::ToSigned(inNumFrames);
+				}
 				else
 				{
 					if (replacing)
 					{
-						for (ch=0; ch < numOutputs; ch++)
+						for (unsigned long ch = 0; ch < numOutputs; ch++)
 						{
-							for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-								outStreams[ch][samplecount] = 0.0f;
+							for (unsigned long samp = dfx::math::ToUnsigned(mWaitSamples); samp < inNumFrames; samp++)
+							{
+								mOutputAudio[ch][samp] = 0.0f;
+							}
 						}
 					}
-					inNumFrames = (unsigned)waitSamples;
-					waitSamples = 0;
+					inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
+					mWaitSamples = 0;
 				}
 			}
 
 			// adjust the floor according to note velocity if velocity mode is on
-			if (useVelocity)
+			if (mUseVelocity)
 			{
-				floor = (float) expandparametervalue(kFloor, (float)(127-mostRecentVelocity)/127.0f);
-				gainRange = 1.0f - floor;	// the range of the skidding on/off gain
-				useRandomFloor = false;
+				mFloor = static_cast<float>(expandparametervalue(kFloor, static_cast<float>(DfxMidi::kMaxValue - mMostRecentVelocity) * DfxMidi::kValueScalar));
+				mGainRange = 1.0f - mFloor;  // the range of the skidding on/off gain
+				mUseRandomFloor = false;
 			}
 
 			break;
 
-		case kMidiMode_apply:
-			// check waitSamples also because, if it's zero, we can just move ahead normally
-			if ( noteIsOn && (waitSamples != 0) )
+		case kMidiMode_Apply:
+			// check mWaitSamples also because, if it's zero, we can just move ahead normally
+			if (noteIsOn && (mWaitSamples != 0))
 			{
 				// need to make sure that the skipped part is unprocessed audio
-				for (ch=0; ch < numOutputs; ch++)
+				for (unsigned long ch = 0; ch < numOutputs; ch++)
 				{
 					if (replacing)
-						memcpy(outStreams[ch], inStreams[ch], waitSamples * sizeof(outStreams[0][0]));
+					{
+						std::copy_n(mInputAudio[ch], mWaitSamples, mOutputAudio[ch]);
+					}
 					else
 					{
-						for (samplecount = 0; samplecount < (unsigned)waitSamples; samplecount++)
-							outStreams[ch][samplecount] += inStreams[ch][samplecount];
+						for (unsigned long samp = 0; samp < dfx::math::ToUnsigned(mWaitSamples); samp++)
+						{
+							mOutputAudio[ch][samp] += mInputAudio[ch][samp];
+						}
 					}
 
 					// jump ahead accordingly in the i/o streams
-					inStreams[ch] += waitSamples;
-					outStreams[ch] += waitSamples;
+					mInputAudio[ch] += mWaitSamples;
+					mOutputAudio[ch] += mWaitSamples;
 				}
 
 				// cut back the number of samples outputted
-				inNumFrames -= (unsigned)waitSamples;
+				inNumFrames -= dfx::math::ToUnsigned(mWaitSamples);
 
 				// reset
-				waitSamples = 0;
+				mWaitSamples = 0;
 			}
 
 			else if (!noteIsOn)
 			{
 				// if Skidder currently is in the plateau and has a slow cycle, this could happen
-				if (waitSamples != 0)
+				if (mWaitSamples != 0)
 				{
-					if ((unsigned)waitSamples > inNumFrames)
-						waitSamples -= (signed)inNumFrames;
+					if (dfx::math::ToUnsigned(mWaitSamples) > inNumFrames)
+					{
+						mWaitSamples -= dfx::math::ToSigned(inNumFrames);
+					}
 					else
 					{
-						for (ch=0; ch < numOutputs; ch++)
+						for (unsigned long ch = 0; ch < numOutputs; ch++)
 						{
 							if (replacing)
-								memcpy( &(outStreams[ch][waitSamples]), &(inStreams[ch][waitSamples]), (inNumFrames - (unsigned)waitSamples) * sizeof(outStreams[0][0]) );
+							{
+								std::copy_n(mInputAudio[ch] + mWaitSamples, inNumFrames - dfx::math::ToUnsigned(mWaitSamples), mOutputAudio[ch] + mWaitSamples);
+							}
 							else
 							{
-								for (samplecount = (unsigned)waitSamples; samplecount < inNumFrames; samplecount++)
-									outStreams[ch][samplecount] += inStreams[ch][samplecount];
+								for (unsigned long samp = dfx::math::ToUnsigned(mWaitSamples); samp < inNumFrames; samp++)
+								{
+									mOutputAudio[ch][samp] += mInputAudio[ch][samp];
+								}
 							}
 						}
-						inNumFrames = (unsigned)waitSamples;
-						waitSamples = 0;
+						inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
+						mWaitSamples = 0;
 					}
 				}
 				else
 				{
-					for (ch=0; ch < numOutputs; ch++)
+					for (unsigned long ch = 0; ch < numOutputs; ch++)
 					{
 						if (replacing)
-							memcpy(outStreams[ch], inStreams[ch], inNumFrames * sizeof(outStreams[0][0]));
+						{
+							std::copy_n(mInputAudio[ch], inNumFrames, mOutputAudio[ch]);
+						}
 						else
 						{
-							for (samplecount = 0; samplecount < inNumFrames; samplecount++)
-								outStreams[ch][samplecount] += inStreams[ch][samplecount];
+							for (unsigned long samp = 0; samp < inNumFrames; samp++)
+							{
+								mOutputAudio[ch][samp] += mInputAudio[ch][samp];
+							}
 						}
 					}
 					// that's all we need to do if there are no notes, 
@@ -389,11 +450,11 @@ void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsign
 			}
 
 			// adjust the floor according to note velocity if velocity mode is on
-			if (useVelocity)
+			if (mUseVelocity)
 			{
-				floor = (float) expandparametervalue(kFloor, (float)(127-mostRecentVelocity)/127.0f);
-				gainRange = 1.0f - floor;	// the range of the skidding on/off gain
-				useRandomFloor = false;
+				mFloor = static_cast<float>(expandparametervalue(kFloor, static_cast<float>(DfxMidi::kMaxValue - mMostRecentVelocity) * DfxMidi::kValueScalar));
+				mGainRange = 1.0f - mFloor;  // the range of the skidding on/off gain
+				mUseRandomFloor = false;
 			}
 
 			break;
@@ -405,62 +466,65 @@ void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsign
 
 
 	// figure out the current tempo if we're doing tempo sync
-	if (tempoSync)
+	if (mTempoSync)
 	{
 		// calculate the tempo at the current processing buffer
-		if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
+		if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
 		{
-			currentTempoBPS = timeinfo.tempo_bps;
+			mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
 			// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
-			if (timeinfo.playbackChanged)
+			if (gettimeinfo().mPlaybackChanged)
 			{
-				needResync = true;
-				state = kSkidState_Valley;
-				valleySamples = 0;
+				mNeedResync = true;
+				mState = SkidState::Valley;
+				mValleySamples = 0;
 			}
 		}
-		else	// get the tempo from the user parameter
+		else  // get the tempo from the user parameter
 		{
-			currentTempoBPS = userTempo / 60.0;
-			needResync = false;	// we don't want it true if we're not syncing to host tempo
+			mCurrentTempoBPS = mUserTempo / 60.0;
+			mNeedResync = false;  // we don't want it true if we're not syncing to host tempo
 		}
-		oldTempoBPS = currentTempoBPS;
+		mOldTempoBPS = mCurrentTempoBPS;
 	}
 	else
-		needResync = false;	// we don't want it true if we're not syncing to host tempo
+	{
+		mNeedResync = false;  // we don't want it true if we're not syncing to host tempo
+	}
 
 
 	// stereo processing
 	if (numOutputs == 2)
 	{
 		// this is the per-sample audio processing loop
-		for (samplecount=0; samplecount < inNumFrames; samplecount++)
+		for (unsigned long samp = 0; samp < inNumFrames; samp++)
 		{
-			const float inputValueL = inStreams[0][samplecount], inputValueR = inStreams[1][samplecount];
+			auto const inputValueL = mInputAudio[0][samp];
+			auto const inputValueR = mInputAudio[1][samp];
 
 			// get the average sqare root of the current input samples
-			if ( (state == kSkidState_SlopeIn) || (state == kSkidState_Plateau) )
+			if ((mState == SkidState::SlopeIn) || (mState == SkidState::Plateau))
 			{
 #ifdef USE_BACKWARDS_RMS
-				rms += sqrt( (fabsf(inputValueL)+fabsf(inputValueR)) * channelScalar );
+				mRMS += std::sqrt((std::fabs(inputValueL) + std::fabs(inputValueR)) * channelScalar);
 #else
-				rms += ((inputValueL*inputValueL) + (inputValueR*inputValueR)) * channelScalar;
+				mRMS += ((inputValueL * inputValueL) + (inputValueR * inputValueR)) * channelScalar;
 #endif
-				rmscount++;	// this counter is later used for getting the mean
+				mRMSCount++;  // this counter is later used for getting the mean
 			}
 
-			switch (state)
+			switch (mState)
 			{
-				case kSkidState_SlopeIn:
+				case SkidState::SlopeIn:
 					processSlopeIn();
 					break;
-				case kSkidState_Plateau:
+				case SkidState::Plateau:
 					processPlateau();
 					break;
-				case kSkidState_SlopeOut:
+				case SkidState::SlopeOut:
 					processSlopeOut();
 					break;
-				case kSkidState_Valley:
+				case SkidState::Valley:
 				default:
 					processValley();
 					break;
@@ -470,14 +534,14 @@ void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsign
 			if (replacing)
 			{
 		#endif
-				outStreams[0][samplecount] = processOutput(inputValueL, inputValueR, panGainL);
-				outStreams[1][samplecount] = processOutput(inputValueR, inputValueL, panGainR);
+				mOutputAudio[0][samp] = processOutput(inputValueL, inputValueR, mPanGainL);
+				mOutputAudio[1][samp] = processOutput(inputValueR, inputValueL, mPanGainR);
 		#ifdef TARGET_API_VST
 			}
 			else
 			{
-				outStreams[0][samplecount] += processOutput(inputValueL, inputValueR, panGainL);
-				outStreams[1][samplecount] += processOutput(inputValueR, inputValueL, panGainR);
+				mOutputAudio[0][samp] += processOutput(inputValueL, inputValueR, mPanGainL);
+				mOutputAudio[1][samp] += processOutput(inputValueR, inputValueL, mPanGainR);
 			}
 		#endif
 		}
@@ -487,49 +551,57 @@ void Skidder::processaudio(const float ** inStreams, float ** outStreams, unsign
 	else
 	{
 		// this is the per-sample audio processing loop
-		for (samplecount=0; samplecount < inNumFrames; samplecount++)
+		for (unsigned long samp = 0; samp < inNumFrames; samp++)
 		{
 			// get the average sqare root of the current input samples
-			if ( (state == kSkidState_SlopeIn) || (state == kSkidState_Plateau) )
+			if ((mState == SkidState::SlopeIn) || (mState == SkidState::Plateau))
 			{
 #ifdef USE_BACKWARDS_RMS
 				float tempSum = 0.0f;
-				for (ch=0; ch < numOutputs; ch++)
-					tempSum += fabsf(inStreams[ch][samplecount]);
-				rms += sqrt(tempSum * channelScalar);
+				for (unsigned long ch = 0; ch < numOutputs; ch++)
+				{
+					tempSum += std::fabs(mInputAudio[ch][samp]);
+				}
+				mRMS += std::sqrt(tempSum * channelScalar);
 #else
-				for (ch=0; ch < numOutputs; ch++)
-					rms += inStreams[ch][samplecount] * inStreams[ch][samplecount] * channelScalar;
+				for (unsigned long ch = 0; ch < numOutputs; ch++)
+				{
+					mRMS += mInputAudio[ch][samp] * mInputAudio[ch][samp] * channelScalar;
+				}
 #endif
-				rmscount++;	// this counter is later used for getting the mean
+				mRMSCount++;  // this counter is later used for getting the mean
 			}
 
-			switch (state)
+			switch (mState)
 			{
-				case kSkidState_SlopeIn:
+				case SkidState::SlopeIn:
 					processSlopeIn();
 					break;
-				case kSkidState_Plateau:
+				case SkidState::Plateau:
 					processPlateau();
 					break;
-				case kSkidState_SlopeOut:
+				case SkidState::SlopeOut:
 					processSlopeOut();
 					break;
-				case kSkidState_Valley:
+				case SkidState::Valley:
 				default:
 					processValley();
 					break;
 			}
 	
-			for (ch=0; ch < numOutputs; ch++)
+			for (unsigned long ch = 0; ch < numOutputs; ch++)
 			{
 		#ifdef TARGET_API_VST
 				if (replacing)
 		#endif
-					outStreams[ch][samplecount] = processOutput(inStreams[ch][samplecount], inStreams[ch][samplecount], 1.0f);
+				{
+					mOutputAudio[ch][samp] = processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
+				}
 		#ifdef TARGET_API_VST
 				else
-					outStreams[ch][samplecount] += processOutput(inStreams[ch][samplecount], inStreams[ch][samplecount], 1.0f);
+				{
+					mOutputAudio[ch][samp] += processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
+				}
 		#endif
 			}
 		}

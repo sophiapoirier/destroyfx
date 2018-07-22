@@ -63,12 +63,12 @@ DGButton::DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage*
 //-----------------------------------------------------------------------------
 void DGButton::draw(CDrawContext* inContext)
 {
-	if (getBackground())
+	if (auto const image = getDrawBackground())
 	{
-		long const xoff = (mDrawMomentaryState && mMouseIsDown) ? (std::lround(getBackground()->getWidth()) / 2) : 0;
-		long const yoff = getValue_i() * (std::lround(getBackground()->getHeight()) / mNumStates);
+		long const xoff = (mDrawMomentaryState && mMouseIsDown) ? (std::lround(image->getWidth()) / 2) : 0;
+		long const yoff = getValue_i() * (std::lround(image->getHeight()) / mNumStates);
 
-		getBackground()->draw(inContext, getViewSize(), CPoint(xoff, yoff));
+		image->draw(inContext, getViewSize(), CPoint(xoff, yoff));
 	}
 
 #ifdef TARGET_API_RTAS
@@ -307,6 +307,7 @@ void DGButton::setNumStates(long inNumStates)
 	if (inNumStates > 0)
 	{
 		mNumStates = inNumStates;
+		setDirty();
 	}
 	else
 	{
@@ -318,6 +319,7 @@ void DGButton::setNumStates(long inNumStates)
 void DGButton::setButtonImage(DGImage* inImage)
 {
 	setBackground(inImage);
+	setDirty();  // parent implementation does not do this if mouse control is disabled
 }
 
 //-----------------------------------------------------------------------------
@@ -405,10 +407,10 @@ DGFineTuneButton::DGFineTuneButton(DfxGuiEditor*	inOwnerEditor,
 //-----------------------------------------------------------------------------
 void DGFineTuneButton::draw(CDrawContext* inContext)
 {
-	if (getBackground())
+	if (auto const image = getDrawBackground())
 	{
 		CCoord const yoff = mMouseIsDown ? getHeight() : 0;
-		getBackground()->draw(inContext, getViewSize(), CPoint(0, yoff));
+		image->draw(inContext, getViewSize(), CPoint(0, yoff));
 	}
 
 	setDirty(false);
@@ -517,10 +519,10 @@ DGValueSpot::DGValueSpot(DfxGuiEditor*	inOwnerEditor,
 //------------------------------------------------------------------------
 void DGValueSpot::draw(CDrawContext* inContext)
 {
-	if (getBackground())
+	if (auto const image = getDrawBackground())
 	{
 		CCoord const yoff = mButtonIsPressed ? getHeight() : 0;
-		getBackground()->draw(inContext, getViewSize(), CPoint(0, yoff));
+		image->draw(inContext, getViewSize(), CPoint(0, yoff));
 	}
 
 #ifdef TARGET_API_RTAS

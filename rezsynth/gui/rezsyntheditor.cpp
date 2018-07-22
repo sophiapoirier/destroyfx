@@ -119,21 +119,19 @@ bool bandwidthAmountDisplayProc(float value, char* outText, void* inEditor)
 
 bool numBandsDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f", value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f", value) > 0;
 }
 
 bool sepAmountDisplayProc(float value, char* outText, void* inEditor)
 {
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kSepMode) == kSeparationMode_Octaval)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f semitones", value);
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f semitones", value) > 0;
 	}
 	else  // linear values
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f x", value);
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f x", value) > 0;
 	}
-	return true;
 }
 
 bool attackDecayReleaseDisplayProc(float value, char* outText, void*)
@@ -156,20 +154,17 @@ bool attackDecayReleaseDisplayProc(float value, char* outText, void*)
 
 bool percentDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value) > 0;
 }
 
 bool velocityCurveDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value) > 0;
 }
 
 bool pitchBendDisplayProc(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "\xB1 %.2f semitones", value);
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "\xB1 %.2f semitones", value) > 0;
 }
 
 bool gainDisplayProc(float value, char* outText, void*)

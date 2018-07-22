@@ -1,20 +1,42 @@
-/*-------------- by Sophia Poirier  ][  December 2000 -------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2000-2018  Sophia Poirier
 
-#ifndef __SKIDDER_H
-#define __SKIDDER_H
+This file is part of Skidder.
 
+Skidder is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Skidder is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#pragma once
+
+
+#include <array>
+#include <vector>
 
 #include "dfxplugin.h"
+#include "temporatetable.h"
 
 
 //----------------------------------------------------------------------------- 
 // these are the plugin parameters:
 enum
 {
-	kRate_abs,
-	kRate_sync,
-	kRateRandMin_abs,
-	kRateRandMin_sync,
+	kRate_Hz,
+	kRate_Sync,
+	kRateRandMin_Hz,
+	kRateRandMin_Sync,
 	kTempoSync,
 	kPulsewidth,
 	kPulsewidthRandMin,
@@ -35,26 +57,12 @@ enum
 // these are the 3 MIDI note control modes:
 enum
 {
-	kMidiMode_none,
-	kMidiMode_trigger,
-	kMidiMode_apply,
+	kMidiMode_None,
+	kMidiMode_Trigger,
+	kMidiMode_Apply,
 	kNumMidiModes
 };
 
-//----------------------------------------------------------------------------- 
-// these are the 4 states of the process:
-enum
-{
-	kSkidState_SlopeIn,
-	kSkidState_Plateau,
-	kSkidState_SlopeOut,
-	kSkidState_Valley
-};
-
-//----------------------------------------------------------------------------- 
-// constants
-
-const long kNumPresets = 16;
 
 
 //----------------------------------------------------------------------------- 
@@ -62,23 +70,39 @@ class Skidder : public DfxPlugin
 {
 public:
 	Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual ~Skidder();
 
-	virtual void reset();
-	virtual void processparameters();
-	virtual void processaudio(const float ** inStreams, float ** outStreams, unsigned long inNumFrames, bool replacing=true);
+	void dfx_PostConstructor() override;
+
+	bool createbuffers() override;
+	void releasebuffers() override;
+
+	void reset() override;
+	void processparameters() override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
 
 	// stuff for extending DfxSettings
-	virtual void settings_doLearningAssignStuff(long tag, long eventType, long eventChannel, 
-										long eventNum, long delta, long eventNum2 = 0, 
-										long eventBehaviourFlags = 0, long data1 = 0, 
-										long data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f);
-//	virtual void settings_unassignParam(long tag);
+	void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, 
+										long eventNum, unsigned long offsetFrames, long eventNum2 = 0, 
+										dfx::MidiEventBehaviorFlags eventBehaviourFlags = dfx::kMidiEventBehaviorFlag_None, 
+										long data1 = 0, long data2 = 0, float fdata1 = 0.0f, float fdata2 = 0.0f) override;
+//	void settings_unassignParam(long tag) override;
+
 	// true for unified single-point automation of both parameter range values
-	bool rateDoubleAutomate, pulsewidthDoubleAutomate, floorDoubleAutomate;
+	bool mRateDoubleAutomate = false, mPulsewidthDoubleAutomate = false, mFloorDoubleAutomate = false;  // TODO: not public
 
 
 private:
+	static constexpr long kNumPresets = 16;
+
+	// these are the states of the process:
+	enum class SkidState
+	{
+		SlopeIn,
+		Plateau,
+		SlopeOut,
+		Valley
+	};
+
 	void processSlopeIn();
 	void processPlateau();
 	void processSlopeOut();
@@ -86,40 +110,43 @@ private:
 	float processOutput(float in1, float in2, float panGain);
 	void processMidiNotes();
 
-	// the parameters
-	float rateHz, rateSync, rateRandMinHz, rateRandMinSync, pulsewidth, pulsewidthRandMin;
-	long rateIndex, rateRandMinIndex;
-	float panWidth, floor, floorRandMin, noise;
-	double slopeSeconds, userTempo;
-	long midiMode;
-	bool tempoSync, useHostTempo, useVelocity;
-
-	float gainRange;	// a scaled version of fFloor and the difference between that and 1.0
-	float randomFloor, randomGainRange;
-	// generic versions of these parameters for curved randomization
-	float rateHz_gen, rateRandMinHz_gen, floor_gen, floorRandMin_gen;
-	bool useRandomRate, useRandomPulsewidth, useRandomFloor;
-	float sampleAmp; // output sample scalar
-	long cycleSamples, pulseSamples, slopeSamples, slopeDur, plateauSamples, valleySamples;	// sample counters
-	float slopeStep;	// the scalar for each step of the fade during a slope in or out
-	float panGainL, panGainR;	// the actual pan gain values for each stereo channel during each cycle
-	int state;	// the state of the process
-	double rms;
-	long rmscount;
-
-	double currentTempoBPS;	// tempo in beats per second
-	double oldTempoBPS;	// holds the previous value of currentTempoBPS for comparison
-	bool needResync;	// true when playback has just started up again
-
-	float fMidiMode;	// the MIDI note control mode parameter
-	float fVelocity;	// the use-note-velocity parameter
-	int mostRecentVelocity;	// the velocity of the most recently played note
-	void noteOn(long delta);
+	void noteOn(unsigned long offsetFrames);
 	void noteOff();
 	void resetMidi();
-	int * noteTable;
-	long waitSamples;
-	bool MIDIin, MIDIout;	// set when notes start or stop so that the floor goes to 0.0
-};
 
-#endif
+	// the parameters
+	float mRate_Hz = 1.0f, mRate_Sync = 1.0f, mPulsewidth = 0.0f, mPulsewidthRandMin = 0.0f;
+	long mRateIndex = 0, mRateRandMinIndex = 0;
+	float mPanWidth = 0.0f, mFloor = 0.0f, mNoise = 0.0f;
+	double mSlopeSeconds = 0.0, mUserTempo = 1.0;
+	long mMidiMode {};
+	bool mTempoSync = false, mUseHostTempo = false, mUseVelocity = false;
+
+	float mGainRange = 0.0f;  // a scaled version of mFloor and the difference between that and 1.0
+	float mRandomFloor = 0.0f, mRandomGainRange = 0.0f;
+	// generic versions of these parameters for curved randomization
+	float mRateHz_gen = 0.0f, mRateRandMinHz_gen = 0.0f, mFloor_gen = 0.0f, mFloorRandMin_gen = 0.0f;
+	bool mUseRandomRate = false, mUseRandomPulsewidth = false, mUseRandomFloor = false;
+	float mSampleAmp = 0.0f;  // output sample scalar
+	long mCycleSamples = 1, mPulseSamples = 1, mSlopeSamples = 1, mSlopeDur = 1, mPlateauSamples = 1, mValleySamples = 0;  // sample counters
+	float mSlopeStep = 0.0f;  // the scalar for each step of the fade during a slope in or out
+	float mPanGainL = 0.0f, mPanGainR = 0.0f;  // the actual pan gain values for each stereo channel during each cycle
+	SkidState mState {};  // the state of the process
+	double mRMS = 0.0;
+	long mRMSCount = 0;
+
+	double mCurrentTempoBPS = 1.0;  // tempo in beats per second
+	double mOldTempoBPS = 1.0;  // holds the previous value of currentTempoBPS for comparison (TODO: unused?)
+	bool mNeedResync = false;  // true when playback has just started up again
+	dfx::TempoRateTable const mTempoRateTable;
+
+	float mMidiMode_f;  // the MIDI note control mode parameter (TODO: unused?)
+	float mVelocity_f;  // the use-note-velocity parameter (TODO: unused?)
+	int mMostRecentVelocity = 0;  // the velocity of the most recently played note
+	std::array<int, DfxMidi::kNumNotes> mNoteTable;
+	long mWaitSamples = 0;
+	bool mMidiIn = false, mMidiOut = false;  // set when notes start or stop so that the floor goes to 0.0
+
+	std::vector<float const*> mInputAudio;
+	std::vector<float*> mOutputAudio;
+};

@@ -80,16 +80,6 @@ constexpr float kSemitonesPerOctave = 12.0f;
 
 
 //-----------------------------------------------------------------------------
-// callbacks for button-triggered action
-
-void randomizeTransverb(long /*value*/, void* editor)
-{
-	static_cast<DfxGuiEditor*>(editor)->randomizeparameters(true);
-}
-
-
-
-//-----------------------------------------------------------------------------
 // value text display procedures
 
 bool bsizeDisplayProcedure(float value, char* outText, void*)
@@ -210,8 +200,7 @@ bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTex
 
 bool feedbackDisplayProcedure(float value, char* outText, void*)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", static_cast<long>(value));
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", static_cast<long>(value)) > 0;
 }
 
 bool distDisplayProcedure(float value, char* outText, void* editor)
@@ -465,7 +454,10 @@ long TransverbEditor::OpenEditor()
 	// randomize button
 	pos.set(kRandomButtonX, kButtonY, randomizeButtonImage->getWidth(), randomizeButtonImage->getHeight() / 2);
 	auto const button = emplaceControl<DGButton>(this, pos, randomizeButtonImage, 2, DGButton::Mode::Momentary);
-	button->setUserProcedure(randomizeTransverb, this);
+	button->setUserProcedure([](long, void* editor)
+	{
+		static_cast<DfxGuiEditor*>(editor)->randomizeparameters(true);
+	}, this);
 
 	// speed 1 mode button
 	pos.set(kSpeedModeButtonX, kSpeedModeButtonY, speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight()/kSpeedMode_NumModes);

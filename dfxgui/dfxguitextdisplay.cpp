@@ -28,6 +28,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <string.h>
 
 
+namespace
+{
+
 //-----------------------------------------------------------------------------
 static bool DFXGUI_GenericValueToTextProc(float inValue, char outTextUTF8[], void* /*inUserData*/)
 {
@@ -112,6 +115,8 @@ static DGRect DFXGUI_GetTextDrawRegion(CTextLabel* inTextDisplay, DGRect const& 
 	}
 	return textArea;
 }
+
+}  // namespace
 
 
 
@@ -348,15 +353,15 @@ void DGTextArrayDisplay::setText(long inStringNum, char const* inText)
 	}
 
 	mDisplayStrings[inStringNum].assign(inText);
-	redraw();
+	setDirty();
 }
 
 //-----------------------------------------------------------------------------
 void DGTextArrayDisplay::draw(CDrawContext* inContext)
 {
-	if (getBackground())
+	if (auto const image = getDrawBackground())
 	{
-		getBackground()->draw(inContext, getViewSize());
+		image->draw(inContext, getViewSize());
 	}
 
 	// TODO: consolidate this logic and DGButton::getValue_i into DGControl?
@@ -373,8 +378,7 @@ void DGTextArrayDisplay::draw(CDrawContext* inContext)
 
 	if ((stringIndex >= 0) && (static_cast<size_t>(stringIndex) < mDisplayStrings.size()))
 	{
-		auto const textArea = DFXGUI_GetTextDrawRegion(this, getViewSize());
-		drawPlatformText(inContext, UTF8String(mDisplayStrings[stringIndex]).getPlatformString(), textArea);
+		drawPlatformText(inContext, UTF8String(mDisplayStrings[stringIndex]).getPlatformString(), getViewSize());
 	}
 
 	setDirty(false);

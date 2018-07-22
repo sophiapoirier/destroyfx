@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2009  Sophia Poirier
+Copyright (C) 2001-2018  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -21,6 +21,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "monomaker.h"
 
+#include <cmath>
+
 
 // this macro does boring entry point stuff for us
 DFX_EFFECT_ENTRY(Monomaker)
@@ -28,27 +30,27 @@ DFX_EFFECT_ENTRY(Monomaker)
 //-----------------------------------------------------------------------------
 // initializations and such
 Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, kNumParameters, 1)	// 2 parameters, 1 preset
+:	DfxPlugin(inInstance, kNumParameters, 1)
 {
 	// initialize the parameters
-	initparameter_list(kInputSelection, "input selection", kInputSelection_stereo, kInputSelection_stereo, kNumInputSelections);
-	initparameter_f(kMonomerge, "monomix", 0.0, 100.0, 0.0, 100.0, kDfxParamUnit_percent);
-	initparameter_list(kMonomergeMode, "monomix mode", kMonomergeMode_equalpower, kMonomergeMode_linear, kNumMonomergeModes);
-	initparameter_f(kPan, "pan", 0.0, 0.0, -1.0, 1.0, kDfxParamUnit_pan);
-	initparameter_list(kPanMode, "pan mode", kPanMode_recenter, kPanMode_recenter, kNumPanModes);
+	initparameter_list(kInputSelection, "input selection", kInputSelection_Stereo, kInputSelection_Stereo, kNumInputSelections);
+	initparameter_f(kMonomerge, "monomix", 0.0, 100.0, 0.0, 100.0, DfxParam::Unit::Percent);
+	initparameter_list(kMonomergeMode, "monomix mode", kMonomergeMode_EqualPower, kMonomergeMode_Linear, kNumMonomergeModes);
+	initparameter_f(kPan, "pan", 0.0, 0.0, -1.0, 1.0, DfxParam::Unit::Pan);
+	initparameter_list(kPanMode, "pan mode", kPanMode_Recenter, kPanMode_Recenter, kNumPanModes);
 //	initparameter_list(kPanLaw, "pan law", kPanLaw_, kPanLaw_, kNumPanLaws);
 
 	// set the parameter value display strings
-	setparametervaluestring(kInputSelection, kInputSelection_stereo, "left-right");
-	setparametervaluestring(kInputSelection, kInputSelection_swap, "right-left");
-	setparametervaluestring(kInputSelection, kInputSelection_left, "left-left");
-	setparametervaluestring(kInputSelection, kInputSelection_right, "right-right");
+	setparametervaluestring(kInputSelection, kInputSelection_Stereo, "left-right");
+	setparametervaluestring(kInputSelection, kInputSelection_Swap, "right-left");
+	setparametervaluestring(kInputSelection, kInputSelection_Left, "left-left");
+	setparametervaluestring(kInputSelection, kInputSelection_Right, "right-right");
 	//
-	setparametervaluestring(kMonomergeMode, kMonomergeMode_linear, "linear");
-	setparametervaluestring(kMonomergeMode, kMonomergeMode_equalpower, "equal power");
+	setparametervaluestring(kMonomergeMode, kMonomergeMode_Linear, "linear");
+	setparametervaluestring(kMonomergeMode, kMonomergeMode_EqualPower, "equal power");
 	//
-	setparametervaluestring(kPanMode, kPanMode_recenter, "recenter");
-	setparametervaluestring(kPanMode, kPanMode_balance, "balance");
+	setparametervaluestring(kPanMode, kPanMode_Recenter, "recenter");
+	setparametervaluestring(kPanMode, kPanMode_Balance, "balance");
 	//
 //	setparametervaluestring(kPanLaw, kPanLaw_, "-3 dB");
 //	setparametervaluestring(kPanLaw, kPanLaw_, "-6 dB");
@@ -68,57 +70,57 @@ The -3 dB setting uses a constant power curve based on sin/cos, while other two 
 //	setparametervaluestring(kPanLaw, kPanLaw_, "square root");
 //	setparametervaluestring(kPanLaw, kPanLaw_, "0 dB");
 
-	setpresetname(0, "let's merge");	// default preset name
+	setpresetname(0, "let's merge");  // default preset name
 
-	addchannelconfig(2, 2);	// 2-in/2-out
-	addchannelconfig(1, 2);	// 1-in/2-out
+	addchannelconfig(2, 2);  // 2-in/2-out
+	addchannelconfig(1, 2);  // 1-in/2-out
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::processaudio(const float ** inputs, float ** outputs, unsigned long inNumFrames, bool replacing)
+void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
 {
 	// fetch the current parameter values
-	long inputselection = getparameter_i(kInputSelection);
-	float monomerge = getparameter_scalar(kMonomerge);
-	long monomergemode = getparameter_i(kMonomergeMode);
-	float pan = getparameter_f(kPan);
-	long panmode = getparameter_i(kPanMode);
-//	long panlaw = getparameter_i(kPanLaw);
+	auto const inputSelection = getparameter_i(kInputSelection);
+	auto const monomerge = static_cast<float>(getparameter_scalar(kMonomerge));
+	auto const monomergeMode = getparameter_i(kMonomergeMode);
+	auto const pan = static_cast<float>(getparameter_f(kPan));
+	auto const panMode = getparameter_i(kPanMode);
+//	auto const panLaw = getparameter_i(kPanLaw);
 
 	// point the input signal pointers to the correct input streams, 
 	// according to the input selection (or dual-left if we only have 1 input)
-	const float * input1, * input2;
-	if ( (inputselection == kInputSelection_left) || (getnuminputs() == 1) )
+	float const* input1 {}, * input2 {};
+	if ((inputSelection == kInputSelection_Left) || (getnuminputs() == 1))
 	{
-		input1 = input2 = inputs[0];
+		input1 = input2 = inAudio[0];
 	}
-	else if (inputselection == kInputSelection_right)
+	else if (inputSelection == kInputSelection_Right)
 	{
-		input1 = input2 = inputs[1];
+		input1 = input2 = inAudio[1];
 	}
-	else if (inputselection == kInputSelection_swap)
+	else if (inputSelection == kInputSelection_Swap)
 	{
-		input1 = inputs[1];
-		input2 = inputs[0];
+		input1 = inAudio[1];
+		input2 = inAudio[0];
 	}
 	else
 	{
-		input1 = inputs[0];
-		input2 = inputs[1];
+		input1 = inAudio[0];
+		input2 = inAudio[1];
 	}
 
 	// calculate monomerge gain scalars
 	float monomerge_main = 1.0f - (monomerge * 0.5f);
 	float monomerge_other = monomerge * 0.5f;
 	// square root for equal power blending
-	if (monomergemode == kMonomergeMode_equalpower)
+	if (monomergeMode == kMonomergeMode_EqualPower)
 	{
-		monomerge_main = sqrtf(monomerge_main);
-		monomerge_other = sqrtf(monomerge_other);
+		monomerge_main = std::sqrt(monomerge_main);
+		monomerge_other = std::sqrt(monomerge_other);
 	}
 
 	// calculate pan gain scalars
-	float pan_left1, pan_left2, pan_right1, pan_right2;
+	float pan_left1 {}, pan_left2 {}, pan_right1 {}, pan_right2 {};
 	// when pan > 0.0, then we are panning to the right...
 	if (pan > 0.0f)
 	{
@@ -136,7 +138,7 @@ void Monomaker::processaudio(const float ** inputs, float ** outputs, unsigned l
 		pan_right2 = pan + 1.0f;
 	}
 	// no mixing of channels in balance mode
-	if (panmode == kPanMode_balance)
+	if (panMode == kPanMode_Balance)
 	{
 		pan_left1 += pan_left2;
 		pan_left2 = 0.0f;
@@ -145,25 +147,25 @@ void Monomaker::processaudio(const float ** inputs, float ** outputs, unsigned l
 	}
 
 	// process the audio streams
-	for (unsigned long i=0; i < inNumFrames; i++)
+	for (unsigned long i = 0; i < inNumFrames; i++)
 	{
 		// do monomerging
-		const float out1 = (input1[i] * monomerge_main) + (input2[i] * monomerge_other);
-		const float out2 = (input2[i] * monomerge_main) + (input1[i] * monomerge_other);
+		float const out1 = (input1[i] * monomerge_main) + (input2[i] * monomerge_other);
+		float const out2 = (input2[i] * monomerge_main) + (input1[i] * monomerge_other);
 
 		// do panning into the output stream
 	#ifdef TARGET_API_VST
 		if (replacing)
 		{
 	#endif
-			outputs[0][i] = (out1 * pan_left1) + (out2 * pan_left2);
-			outputs[1][i] = (out2 * pan_right2) + (out1 * pan_right1);
+			outAudio[0][i] = (out1 * pan_left1) + (out2 * pan_left2);
+			outAudio[1][i] = (out2 * pan_right2) + (out1 * pan_right1);
 	#ifdef TARGET_API_VST
 		}
 		else
 		{
-			outputs[0][i] += (out1 * pan_left1) + (out2 * pan_left2);
-			outputs[1][i] += (out2 * pan_right2) + (out1 * pan_right1);
+			outAudio[0][i] += (out1 * pan_left1) + (out2 * pan_left2);
+			outAudio[1][i] += (out2 * pan_right2) + (out1 * pan_right1);
 		}
 	#endif
 	}
