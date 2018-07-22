@@ -1,7 +1,25 @@
-/*------------------- by Sophia Poirier  ][  March 2001 -------------------*/
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2018  Sophia Poirier
 
-#ifndef __MONOMAKER_H
-#define __MONOMAKER_H
+This file is part of Monomaker.
+
+Monomaker is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Monomaker is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Monomaker.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#pragma once
 
 
 #include "dfxplugin.h"
@@ -9,7 +27,8 @@
 
 //----------------------------------------------------------------------------- 
 // these are the plugin parameters:
-enum {
+enum
+{
 	kInputSelection,
 	kMonomerge,
 	kMonomergeMode,
@@ -20,23 +39,26 @@ enum {
 	kNumParameters
 };
 
-enum {
-	kInputSelection_stereo,
-	kInputSelection_swap,
-	kInputSelection_left,
-	kInputSelection_right,
+enum
+{
+	kInputSelection_Stereo,
+	kInputSelection_Swap,
+	kInputSelection_Left,
+	kInputSelection_Right,
 	kNumInputSelections
 };
 
-enum {
-	kMonomergeMode_linear,
-	kMonomergeMode_equalpower,
+enum
+{
+	kMonomergeMode_Linear,
+	kMonomergeMode_EqualPower,
 	kNumMonomergeModes
 };
 
-enum {
-	kPanMode_recenter,
-	kPanMode_balance,
+enum
+{
+	kPanMode_Recenter,
+	kPanMode_Balance,
 	kNumPanModes
 };
 
@@ -46,7 +68,5 @@ class Monomaker : public DfxPlugin
 {
 public:
 	Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
 };
-
-#endif

@@ -1,22 +1,45 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2001-2018  Sophia Poirier
+
+This file is part of EQ Sync.
+
+EQ Sync is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+EQ Sync is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with EQ Sync.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
 #include "eqsynceditor.h"
-#include "eqsync.h"
 
 #include "dfx-au-utilities.h"
+#include "dfxmisc.h"
+#include "eqsync.h"
 
 
 //-----------------------------------------------------------------------------
-enum {
+enum
+{
 	// positions
 	kWideFaderX = 138 - 2,
 	kWideFaderY = 68 - 7,
-	kWideFaderX_panther = 141 - 2,
-	kWideFaderY_panther = 64 - 7,
+	kWideFaderX_Panther = 141 - 2,
+	kWideFaderY_Panther = 64 - 7,
 	kWideFaderInc = 40,
 
 	kTallFaderX = 138 - 7,
 	kTallFaderY = 196 - 2,
-	kTallFaderX_panther = 141 - 7,
-	kTallFaderY_panther = 192 - 2,
+	kTallFaderX_Panther = 141 - 7,
+	kTallFaderY_Panther = 192 - 2,
 	kTallFaderInc = 48,
 
 	kDisplayOffsetX = 212,
@@ -26,52 +49,23 @@ enum {
 
 	kHostSyncButtonX = 53,
 	kHostSyncButtonY = 164,
-	kHostSyncButtonX_panther = 56,
-	kHostSyncButtonY_panther = 160,
+	kHostSyncButtonX_Panther = 56,
+	kHostSyncButtonY_Panther = 160,
 	
-	kDestroyFXlinkX = 158,
-	kDestroyFXlinkY = 12,
-	kDestroyFXlinkX_panther = 159,
-	kDestroyFXlinkY_panther = 11,
+	kDestroyFXLinkX = 158,
+	kDestroyFXLinkY = 12,
+	kDestroyFXLinkX_Panther = 159,
+	kDestroyFXLinkY_Panther = 11,
 
 	kHelpButtonX = 419,
 	kHelpButtonY = 293,
-	kHelpButtonX_panther = 422,
-	kHelpButtonY_panther = 289
+	kHelpButtonX_Panther = 422,
+	kHelpButtonY_Panther = 289
 };
 
 
-const char * kValueTextFont = "Lucida Grande";
-const float kValueTextSize = 13.0f;
-
-
-
-//-----------------------------------------------------------------------------
-// parameter value string display conversion functions
-
-void tempoRateDisplayProc(float inValue, char * outText, void * inEditor);
-void tempoRateDisplayProc(float inValue, char * outText, void * inEditor)
-{
-	((DfxGuiEditor*)inEditor)->getparametervaluestring(kRate_sync, outText);
-}
-
-void smoothDisplayProc(float inValue, char * outText, void *);
-void smoothDisplayProc(float inValue, char * outText, void *)
-{
-	sprintf(outText, "%.1f%%", inValue);
-}
-
-void tempoDisplayProc(float inValue, char * outText, void *);
-void tempoDisplayProc(float inValue, char * outText, void *)
-{
-	sprintf(outText, "%.3f", inValue);
-}
-
-//-----------------------------------------------------------------------------
-void helpButtonProc(long, void *)
-{
-	launch_documentation();
-}
+static char const* const kValueTextFont = "Lucida Grande";
+constexpr float kValueTextSize = 13.0f;
 
 
 
@@ -79,112 +73,31 @@ void helpButtonProc(long, void *)
 class EQSyncSlider : public DGSlider
 {
 public:
-	EQSyncSlider(DfxGuiEditor * inOwnerEditor, AudioUnitParameterID inParamID, DGRect * inRegion, 
-					DGAxis inOrientation, DGImage * inHandle, DGImage * inHandleClicked, DGImage * inBackground)
+	EQSyncSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+				 dfx::Axis inOrientation, DGImage* inHandle, DGImage* inHandleClicked, DGImage* inBackground)
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandle, inBackground), 
-		regularHandle(inHandle), clickedHandle(inHandleClicked)
+		mRegularHandle(inHandle), mClickedHandle(inHandleClicked)
 	{
-	}
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
-	{
-		handleImage = clickedHandle;	// switch to the click-styled handle
-		DGSlider::mouseDown(inXpos, inYpos, inMouseButtons, inKeyModifiers, inIsDoubleClick);
-		lastPX = inXpos;
-		lastPY = inYpos;
-		lastXchange = lastYchange = 0;
-	}
-#if 0
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
-	{
-		if (orientation & kDGAxis_vertical)
-		{
-			long xchange = (long)(inXpos - lastPX) + lastXchange;
-			long ychange = (long)(inYpos - lastPY) + lastYchange;
-			Rect cbounds;
-			GetControlBounds(getCarbonControl(), &cbounds);
-			MoveControl(getCarbonControl(), cbounds.left + xchange, cbounds.top + ychange);
-			getBounds()->offset(xchange, ychange);
-			getForeBounds()->offset(xchange, ychange);
-			redraw();
-			lastPX = inXpos;
-			lastPY = inYpos;
-			lastXchange = xchange;
-			lastYchange = ychange;
-		}
-		else
-			DGSlider::mouseTrack(inXpos, inYpos, inMouseButtons, inKeyModifiers);
-	}
-#endif
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
-	{
-		handleImage = regularHandle;	// switch back to the non-click-styled handle
-		DGSlider::mouseUp(inXpos, inYpos, inKeyModifiers);
-		redraw();	// make sure that the change in slider handle is reflected
-	}
-private:
-	DGImage * regularHandle;
-	DGImage * clickedHandle;
-	float lastPX, lastPY;
-	long lastXchange, lastYchange;
-};
-
-
-//-----------------------------------------------------------------------------
-class EQSyncWebLink : public DGControl
-{
-public:
-	EQSyncWebLink(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inImage)
-	:	DGControl(inOwnerEditor, inRegion, 1.0f), 
-		buttonImage(inImage)
-	{
-		setControlContinuous(false);
 	}
 
-	virtual void draw(DGGraphicsContext * inContext)
+	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override
 	{
-		if (buttonImage != NULL)
-		{
-			long yoff = (GetControl32BitValue(getCarbonControl()) == 0) ? 0 : (buttonImage->getHeight() / 2);
-			buttonImage->draw(getBounds(), inContext, 0, yoff);
-		}
+		setHandle(mClickedHandle);
+		auto const result = DGSlider::onMouseDown(inPos, inButtons);
+		redraw();  // ensure that the change in slider handle is reflected
+		return result;
 	}
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers, bool inIsDoubleClick)
+
+	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override
 	{
-		if ( (long)inXpos > ((getBounds()->w / 2) - 6) )
-			SetControl32BitValue(getCarbonControl(), 1);
-		lastX = inXpos;
-		lastY = inYpos;
-		lastXchange = lastYchange = 0;
-	}
-#if 0
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, DGKeyModifiers inKeyModifiers)
-	{
-		long xchange = (long)(inXpos - lastX) + lastXchange;
-		long ychange = (long)(inYpos - lastY) + lastYchange;
-		Rect cbounds;
-		GetControlBounds(getCarbonControl(), &cbounds);
-		MoveControl(getCarbonControl(), cbounds.left + xchange, cbounds.top + ychange);
-		getBounds()->offset(xchange, ychange);
+		setHandle(mRegularHandle);
+		auto const result = DGSlider::onMouseUp(inPos, inButtons);
 		redraw();
-		lastX = inXpos;
-		lastY = inYpos;
-		lastXchange = xchange;
-		lastYchange = ychange;
+		return result;
 	}
-#endif
-	virtual void mouseUp(float inXpos, float inYpos, DGKeyModifiers inKeyModifiers)
-	{
-		if (GetControl32BitValue(getCarbonControl()) != 0)
-		{
-			launch_url(DESTROYFX_URL);
-			SetControl32BitValue(getCarbonControl(), 0);
-		}
-	}
-
 private:
-	DGImage * buttonImage;
-	float lastX, lastY;
-	long lastXchange, lastYchange;
+	SharedPointer<DGImage> const mRegularHandle;
+	SharedPointer<DGImage> const mClickedHandle;
 };
 
 
@@ -193,7 +106,7 @@ private:
 DFX_EDITOR_ENTRY(EQSyncEditor)
 
 //-----------------------------------------------------------------------------
-EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
+EQSyncEditor::EQSyncEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
 }
@@ -201,26 +114,25 @@ EQSyncEditor::EQSyncEditor(AudioUnitCarbonView inInstance)
 //-----------------------------------------------------------------------------
 long EQSyncEditor::OpenEditor()
 {
-	long wideFaderX = kWideFaderX_panther;
-	long wideFaderY = kWideFaderY_panther;
-	long tallFaderX = kTallFaderX_panther;
-	long tallFaderY = kTallFaderY_panther;
-	long hostSyncButtonX = kHostSyncButtonX_panther;
-	long hostSyncButtonY = kHostSyncButtonY_panther;
-	long destroyFXlinkX = kDestroyFXlinkX_panther;
-	long destroyFXlinkY = kDestroyFXlinkY_panther;
-	long helpButtonX = kHelpButtonX_panther;
-	long helpButtonY = kHelpButtonY_panther;
+	auto wideFaderX = kWideFaderX_Panther;
+	auto wideFaderY = kWideFaderY_Panther;
+	auto tallFaderX = kTallFaderX_Panther;
+	auto tallFaderY = kTallFaderY_Panther;
+	auto hostSyncButtonX = kHostSyncButtonX_Panther;
+	auto hostSyncButtonY = kHostSyncButtonY_Panther;
+	auto destroyFXLinkX = kDestroyFXLinkX_Panther;
+	auto destroyFXLinkY = kDestroyFXLinkY_Panther;
+	auto helpButtonX = kHelpButtonX_Panther;
+	auto helpButtonY = kHelpButtonY_Panther;
 
-	DGImage * gBackground = NULL;
-	DGImage * gHorizontalSliderBackground = NULL;
-	DGImage * gVerticalSliderBackground = NULL;
-	DGImage * gSliderHandle = NULL;
-	DGImage * gSliderHandleClicked = NULL;
-	DGImage * gHostSyncButton = NULL;
-	DGImage * gDestroyFXlinkTab = NULL;
+	SharedPointer<DGImage> horizontalSliderBackgroundImage;
+	SharedPointer<DGImage> verticalSliderBackgroundImage;
+	SharedPointer<DGImage> sliderHandleImage;
+	SharedPointer<DGImage> sliderHandleClickedImage;
+	SharedPointer<DGImage> hostSyncButtonImage;
+	SharedPointer<DGImage> destroyFXLinkTabImage;
 
-	long macOS = GetMacOSVersion() & 0xFFF0;
+	auto const macOS = GetMacOSVersion() & 0xFFF0;
 	switch (macOS)
 	{
 		// Jaguar (Mac OS X 10.2)
@@ -231,77 +143,98 @@ long EQSyncEditor::OpenEditor()
 			tallFaderY = kTallFaderY;
 			hostSyncButtonX = kHostSyncButtonX;
 			hostSyncButtonY = kHostSyncButtonY;
-			destroyFXlinkX = kDestroyFXlinkX;
-			destroyFXlinkY = kDestroyFXlinkY;
+			destroyFXLinkX = kDestroyFXLinkX;
+			destroyFXLinkY = kDestroyFXLinkY;
 			helpButtonX = kHelpButtonX;
 			helpButtonY = kHelpButtonY;
-			gBackground = new DGImage("eq-sync-background.png", 0, this);
-			gHorizontalSliderBackground = new DGImage("horizontal-slider-background.png", 0, this);
-			gVerticalSliderBackground = new DGImage("vertical-slider-background.png", 0, this);
-			gSliderHandle = new DGImage("slider-handle.png", 0, this);
-			gSliderHandleClicked = new DGImage("slider-handle-clicked.png", 0, this);
-			gHostSyncButton = new DGImage("host-sync-button-panther.png", 0, this);	// it's the same widget image in Panther and Jaguar
-			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab.png", 0, this);
+//			backgroundImage = VSTGUI::makeOwned<DGImage>("eq-sync-background.png");
+			horizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("horizontal-slider-background.png");
+			verticalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("vertical-slider-background.png");
+			sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
+			sliderHandleClickedImage = VSTGUI::makeOwned<DGImage>("slider-handle-clicked.png");
+			hostSyncButtonImage = VSTGUI::makeOwned<DGImage>("host-sync-button-panther.png");  // it's the same widget image in Panther and Jaguar
+			destroyFXLinkTabImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link-tab.png");
 			break;
 		// Panther (Mac OS X 10.3)
 		case 0x1030:
 		default:
-			gBackground = new DGImage("eq-sync-background-panther.png", 0, this);
-			gHorizontalSliderBackground = new DGImage("horizontal-slider-background-panther.png", 0, this);
-			gVerticalSliderBackground = new DGImage("vertical-slider-background-panther.png", 0, this);
-			gSliderHandle = new DGImage("slider-handle-panther.png", 0, this);
-			gSliderHandleClicked = new DGImage("slider-handle-clicked-panther.png", 0, this);
-			gHostSyncButton = new DGImage("host-sync-button-panther.png", 0, this);
-			gDestroyFXlinkTab = new DGImage("destroy-fx-link-tab-panther.png", 0, this);
+//			backgroundImage = VSTGUI::makeOwned<DGImage>("eq-sync-background-panther.png");
+			horizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("horizontal-slider-background-panther.png");
+			verticalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("vertical-slider-background-panther.png");
+			sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-panther.png");
+			sliderHandleClickedImage = VSTGUI::makeOwned<DGImage>("slider-handle-clicked-panther.png");
+			hostSyncButtonImage = VSTGUI::makeOwned<DGImage>("host-sync-button-panther.png");
+			destroyFXLinkTabImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link-tab-panther.png");
 			break;
 	}
 
-	DGImage * gHelpButton = new DGImage("help-button.png", 0, this);
-
-	SetBackgroundImage(gBackground);
+	auto const helpButtonImage = VSTGUI::makeOwned<DGImage>("help-button.png");
 
 
 	DGRect pos;
 
-	for (long i=kRate_sync; i <= kTempo; i++)
+	for (long i = kRate_Sync; i <= kTempo; i++)
 	{
 		// create the horizontal sliders
-		pos.set(wideFaderX, wideFaderY + (kWideFaderInc * i), gHorizontalSliderBackground->getWidth(), gHorizontalSliderBackground->getHeight());
-		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGAxis_horizontal, gSliderHandle, gSliderHandleClicked, gHorizontalSliderBackground);
+		pos.set(wideFaderX, wideFaderY + (kWideFaderInc * i), horizontalSliderBackgroundImage->getWidth(), horizontalSliderBackgroundImage->getHeight());
+		emplaceControl<EQSyncSlider>(this, i, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderHandleClickedImage, horizontalSliderBackgroundImage);
 
 		// create the displays
-		DGValue2TextProcedure textproc = NULL;
-		if (i == kRate_sync)
-			textproc = tempoRateDisplayProc;
+		CParamDisplayValueToStringProc textProc = nullptr;
+		if (i == kRate_Sync)
+		{
+			textProc = [](float inValue, char* outText, void* inEditor)
+			{
+				return static_cast<DfxGuiEditor*>(inEditor)->getparametervaluestring(kRate_Sync, outText);
+			};
+		}
 		else if (i == kSmooth)
-			textproc = smoothDisplayProc;
+		{
+			textProc = [](float inValue, char* outText, void*)
+			{
+				return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue) > 0;
+			};
+		}
 		else if (i == kTempo)
-			textproc = tempoDisplayProc;
+		{
+			textProc = [](float inValue, char* outText, void*)
+			{
+				return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
+			};
+		}
 		pos.set(wideFaderX + kDisplayOffsetX, wideFaderY + kDisplayOffsetY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);
-		DGTextDisplay * display = new DGTextDisplay(this, i, &pos, textproc, this, NULL, kDGTextAlign_left, kValueTextSize, kDGColor_black, kValueTextFont);
+		emplaceControl<DGTextDisplay>(this, i, pos, textProc, this, nullptr, dfx::TextAlignment::Left, kValueTextSize, DGColor::kBlack, kValueTextFont);
 	}
 
 	// create the vertical sliders
-	for (long i=ka0; i <= kb2; i++)
+	for (long i = kA0; i <= kB2; i++)
 	{
-		pos.set(tallFaderX + (kTallFaderInc * (i-ka0)), tallFaderY, gVerticalSliderBackground->getWidth(), gVerticalSliderBackground->getHeight());
-		EQSyncSlider * slider = new EQSyncSlider(this, i, &pos, kDGAxis_vertical, gSliderHandle, gSliderHandleClicked, gVerticalSliderBackground);
+		pos.set(tallFaderX + (kTallFaderInc * (i - kA0)), tallFaderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
+		emplaceControl<EQSyncSlider>(this, i, pos, dfx::kAxis_Vertical, sliderHandleImage, sliderHandleClickedImage, verticalSliderBackgroundImage);
 	}
 
 
 	// create the host sync button
-	pos.set(hostSyncButtonX, hostSyncButtonY, gHostSyncButton->getWidth()/2, gHostSyncButton->getHeight()/2);
-	DGButton * hostSyncButton = new DGButton(this, kTempoAuto, &pos, gHostSyncButton, 2, kDGButtonType_incbutton, true);
+	pos.set(hostSyncButtonX, hostSyncButtonY, hostSyncButtonImage->getWidth() / 2, hostSyncButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kTempoAuto, pos, hostSyncButtonImage, 2, DGButton::Mode::Increment, true);
 
 	// create the Destroy FX web page link tab
-	pos.set(destroyFXlinkX, destroyFXlinkY, gDestroyFXlinkTab->getWidth(), gDestroyFXlinkTab->getHeight()/2);
-	EQSyncWebLink * dfxLinkButton = new EQSyncWebLink(this, &pos, gDestroyFXlinkTab);
+	pos.set(destroyFXLinkX, destroyFXLinkY, destroyFXLinkTabImage->getWidth(), destroyFXLinkTabImage->getHeight() / 2);
+	auto const dfxWebLink = emplaceControl<DGWebLink>(this, pos, destroyFXLinkTabImage, DESTROYFX_URL);
+	auto const dfxWebLinkTruncation = (pos.getWidth() / 2) - 9;
+	auto dfxWebLinkMouseableRegion = pos;
+	dfxWebLinkMouseableRegion.setWidth(dfxWebLinkMouseableRegion.getWidth() - dfxWebLinkTruncation);
+	dfxWebLinkMouseableRegion.offset(dfxWebLinkTruncation, 0);
+	dfxWebLink->setMouseableArea(dfxWebLinkMouseableRegion);
 
 	// create the help button
-	pos.set(helpButtonX, helpButtonY, gHelpButton->getWidth(), gHelpButton->getHeight()/2);
-	DGButton * helpButton = new DGButton(this, &pos, gHelpButton, 2, kDGButtonType_pushbutton);
-	helpButton->setUserReleaseProcedure(helpButtonProc, this, true);
+	pos.set(helpButtonX, helpButtonY, helpButtonImage->getWidth(), helpButtonImage->getHeight() / 2);
+	auto const helpButton = emplaceControl<DGButton>(this, pos, helpButtonImage, 2, DGButton::Mode::Momentary);
+	helpButton->setUserReleaseProcedure([](long, void*)
+	{
+		dfx::LaunchDocumentation();
+	}, this, true);
 
 
-	return noErr;
+	return dfx::kStatus_NoError;
 }

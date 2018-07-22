@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2012  Sophia Poirier
+Copyright (C) 2001-2018  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -21,230 +21,229 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "eqsync.h"
 
+#include <algorithm>
+#include <cmath>
+
+#include "dfxmath.h"
+
 
 // this macro does boring entry point stuff for us
 DFX_EFFECT_ENTRY(EQSync)
 
 //-----------------------------------------------------------------------------
 EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, kNumParameters, 1)	// 9 parameters, 1 preset
+:	DfxPlugin(inInstance, kNumParameters, 1)
 {
-	prevIn = NULL;
-	prevprevIn = NULL;
-	prevOut = NULL;
-	prevprevOut = NULL;
-	numBuffers = 0;
-
-	tempoRateTable = new TempoRateTable();
-
-
-	long numTempoRates = tempoRateTable->getNumTempoRates();
-	long unitTempoRateIndex = tempoRateTable->getNearestTempoRateIndex(1.0f);
-	initparameter_list(kRate_sync, "rate", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, kDfxParamUnit_beats);
-	initparameter_f(kSmooth, "smooth", 3.0, 33.333, 0.0, 100.0, kDfxParamUnit_percent);	// % of cycle
-	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, kDfxParamUnit_bpm);
+	auto const numTempoRates = mTempoRateTable.getNumRates();
+	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
+	initparameter_list(kRate_Sync, "rate", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
+	initparameter_f(kSmooth, "smooth", 3.0, 33.333, 0.0, 100.0, DfxParam::Unit::Percent);  // % of cycle
+	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
-//	for (long i=ka0; i <= kb2; i++)
-//		initparameter_f(i, " ", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
+//	for (long i = kA0; i <= kB2; i++)
+	{
+//		initparameter_f(i, "", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	}
 	// okay, giving in and providing actual parameter names because Final Cut Pro folks say that it was causing problems...
-	initparameter_f(ka0, "a0", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
-	initparameter_f(ka1, "a1", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
-	initparameter_f(ka2, "a2", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
-	initparameter_f(kb1, "b1", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
-	initparameter_f(kb2, "b2", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);
+	initparameter_f(kA0, "a0", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kA1, "a1", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kA2, "a2", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kB1, "b1", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kB2, "b2", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
 
 	// set the value strings for the sync rate parameters
-	for (long i=0; i < numTempoRates; i++)
-		setparametervaluestring(kRate_sync, i, tempoRateTable->getDisplay(i));
+	for (long i = 0; i < numTempoRates; i++)
+	{
+		setparametervaluestring(kRate_Sync, i, mTempoRateTable.getDisplay(i).c_str());
+	}
 
 
-	setpresetname(0, "with motors");	// default preset name
+	setpresetname(0, "with motors");  // default preset name
 
-	// give currentTempoBPS a value in case that's useful for a freshly opened GUI
-	currentTempoBPS = getparameter_f(kTempo) / 60.0;
-}
-
-//-----------------------------------------------------------------------------------------
-EQSync::~EQSync()
-{
+	// give mCurrentTempoBPS a value in case that's useful for a freshly opened GUI
+	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 }
 
 //-----------------------------------------------------------------------------------------
 void EQSync::reset()
 {
-	cycleSamples = 1;
-	smoothSamples = 1;
-	smoothDur = 1;
+	mCycleSamples = 1;
+	mSmoothSamples = 1;
+	mSmoothDur = 1;
 
-	preva0 = preva1 = preva2 = prevb1 = prevb2 = 0.0f;
-	cura0 = cura1 = cura2 = curb1 = curb2 = 0.0f;
+	mPrevA0 = mPrevA1 = mPrevA2 = mPrevB1 = mPrevB2 = 0.0f;
+	mCurA0 = mCurA1 = mCurA2 = mCurB1 = mCurB2 = 0.0f;
 
-	needResync = true;	// some hosts may call resume when restarting playback
+	mNeedResync = true;  // some hosts may call resume when restarting playback
 }
 
 //-----------------------------------------------------------------------------
 bool EQSync::createbuffers()
 {
-	unsigned long oldnum = numBuffers;
-	numBuffers = getnumoutputs();
+	auto const numChannels = getnumoutputs();
 
-	bool result1 = dfx_createbuffer(&prevIn, oldnum, numBuffers);
-	bool result2 = dfx_createbuffer(&prevprevIn, oldnum, numBuffers);
-	bool result3 = dfx_createbuffer(&prevOut, oldnum, numBuffers);
-	bool result4 = dfx_createbuffer(&prevprevOut, oldnum, numBuffers);
+	mPrevIn.assign(numChannels, 0.0f);
+	mPrevPrevIn.assign(numChannels, 0.0f);
+	mPrevOut.assign(numChannels, 0.0f);
+	prevprevOut.assign(numChannels, 0.0f);
 
-	if (result1 && result2 && result3 && result4)
-		return true;
-	return false;
+	return true;
 }
 
 //-----------------------------------------------------------------------------
 void EQSync::releasebuffers()
 {
-	dfx_releasebuffer(&prevIn);
-	dfx_releasebuffer(&prevprevIn);
-	dfx_releasebuffer(&prevOut);
-	dfx_releasebuffer(&prevprevOut);
+	mPrevIn.clear();
+	mPrevPrevIn.clear();
+	mPrevOut.clear();
+	prevprevOut.clear();
 }
 
 //-----------------------------------------------------------------------------
 void EQSync::clearbuffers()
 {
-	dfx_clearbuffer(prevIn, numBuffers);
-	dfx_clearbuffer(prevprevIn, numBuffers);
-	dfx_clearbuffer(prevOut, numBuffers);
-	dfx_clearbuffer(prevprevOut, numBuffers);
+	std::fill(mPrevIn.begin(), mPrevIn.end(), 0.0f);
+	std::fill(mPrevPrevIn.begin(), mPrevPrevIn.end(), 0.0f);
+	std::fill(mPrevOut.begin(), mPrevOut.end(), 0.0f);
+	std::fill(prevprevOut.begin(), prevprevOut.end(), 0.0f);
 }
 
 //-----------------------------------------------------------------------------
 void EQSync::processparameters()
 {
-	rate = tempoRateTable->getScalar(getparameter_i(kRate_sync));
-	smooth = getparameter_scalar(kSmooth);
-	userTempo = getparameter_f(kTempo);
-	useHostTempo = getparameter_b(kTempoAuto);
-	a0 = getparameter_f(ka0);
-	a1 = getparameter_f(ka1);
-	a2 = getparameter_f(ka2);
-	b1 = getparameter_f(kb1);
-	b2 = getparameter_f(kb2);
+	mRate = mTempoRateTable.getScalar(getparameter_i(kRate_Sync));
+	mSmooth = getparameter_scalar(kSmooth);
+	mUserTempo = getparameter_f(kTempo);
+	mUseHostTempo = getparameter_b(kTempoAuto);
+	mA0 = getparameter_f(kA0);
+	mA1 = getparameter_f(kA1);
+	mA2 = getparameter_f(kA2);
+	mB1 = getparameter_f(kB1);
+	mB2 = getparameter_f(kB2);
 
-	if (getparameterchanged(kRate_sync))
-		needResync = true;	// make sure the cycles match up if the tempo rate has changed
+	if (getparameterchanged(kRate_Sync))
+	{
+		mNeedResync = true;  // make sure the cycles match up if the tempo rate has changed
+	}
 }
 
 
 //-----------------------------------------------------------------------------
-void EQSync::processaudio(const float ** inputs, float ** outputs, unsigned long inNumFrames, bool replacing)
+void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
 {
-	unsigned long numChannels = getnumoutputs();
-	bool eqchanged = false;
+	auto const numChannels = getnumoutputs();
+	bool eqChanged = false;
 
 	// . . . . . . . . . . . tempo stuff . . . . . . . . . . . . .
 	// calculate the tempo at the current processing buffer
-	if ( useHostTempo && hostCanDoTempo && timeinfo.tempoIsValid )	// get the tempo from the host
+	if (mUseHostTempo && hostCanDoTempo() && gettimeinfo().mTempoIsValid)  // get the tempo from the host
 	{
-		currentTempoBPS = timeinfo.tempo_bps;
+		mCurrentTempoBPS = gettimeinfo().mTempo_BPS;
 		// check if audio playback has just restarted and reset buffer stuff if it has (for measure sync)
-		if (timeinfo.playbackChanged)
+		if (gettimeinfo().mPlaybackChanged)
 		{
-			needResync = true;
-			cycleSamples = 0;
+			mNeedResync = true;
+			mCycleSamples = 0;
 		}
 	}
-	else	// get the tempo from the user parameter
+	else  // get the tempo from the user parameter
 	{
-		currentTempoBPS = userTempo / 60.0;
-		needResync = false;	// we don't want it true if we're not syncing to host tempo
+		mCurrentTempoBPS = mUserTempo / 60.0;
+		mNeedResync = false;  // we don't want it true if we're not syncing to host tempo
 	}
-	long latestCycleDur = (long) ( (getsamplerate()/currentTempoBPS) / rate );
+	auto const latestCycleDur = std::lround((getsamplerate() / mCurrentTempoBPS) / mRate);
 
 
-	for (unsigned long samplecount=0; samplecount < inNumFrames; samplecount++)
+	for (unsigned long sampleCount = 0; sampleCount < inNumFrames; sampleCount++)
 	{
-		cycleSamples--;	// decrement our EQ cycle counter
-		if (cycleSamples <= 0)
+		mCycleSamples--;  // decrement our EQ cycle counter
+		if (mCycleSamples <= 0)
 		{
 			// calculate the lengths of the next cycle and smooth portion
-			cycleSamples = latestCycleDur;
+			mCycleSamples = latestCycleDur;
 			// see if we need to adjust this cycle so that an EQ change syncs with the next measure
-			if (needResync)
-				cycleSamples = timeinfo.samplesToNextBar % cycleSamples;
-			needResync = false;	// set it false now that we're done with it
+			if (std::exchange(mNeedResync, false))
+			{
+				mCycleSamples = gettimeinfo().mSamplesToNextBar % mCycleSamples;
+			}
 			
-			smoothSamples = (long) ((double)cycleSamples*smooth);
-			// if smoothSamples is 0, make smoothDur = 1 to avoid dividing by zero later on
-			smoothDur = (smoothSamples <= 0) ? 1 : smoothSamples;
+			mSmoothSamples = std::lround(static_cast<double>(mCycleSamples) * mSmooth);
+			// if mSmoothSamples is 0, make mSmoothDur = 1 to avoid dividing by zero later on
+			mSmoothDur = std::max(mSmoothSamples, 1L);
 
 			// refill the "previous" filter parameter containers
-			preva0 = a0;
-			preva1 = a1;
-			preva2 = a2;
-			prevb1 = b1;
-			prevb2 = b2;
+			mPrevA0 = mA0;
+			mPrevA1 = mA1;
+			mPrevA2 = mA2;
+			mPrevB1 = mB1;
+			mPrevB2 = mB2;
 
 			// generate "current" filter parameter values
-			cura0 = DFX_Rand_f();
-			cura1 = DFX_Rand_f();
-			cura2 = DFX_Rand_f();
-			curb1 = DFX_Rand_f();
-			curb2 = DFX_Rand_f();
+			mCurA0 = dfx::math::Rand<float>();
+			mCurA1 = dfx::math::Rand<float>();
+			mCurA2 = dfx::math::Rand<float>();
+			mCurB1 = dfx::math::Rand<float>();
+			mCurB2 = dfx::math::Rand<float>();
 
-			eqchanged = true;
+			eqChanged = true;
 		}
 
 		// fade from the previous filter parameter values to the current ones
-		if (smoothSamples >= 0)
+		if (mSmoothSamples >= 0)
 		{
 			//calculate the changing scalars for the two EQ settings
-			float smoothIn = ((float)(smoothDur-smoothSamples)) / ((float)smoothDur);
-			float smoothOut = ((float)smoothSamples) / ((float)smoothDur);
+			float const smoothIn = static_cast<float>(mSmoothDur - mSmoothSamples) / static_cast<float>(mSmoothDur);
+			float const smoothOut = static_cast<float>(mSmoothSamples) / static_cast<float>(mSmoothDur);
 
-			a0 = (cura0*smoothIn) + (preva0*smoothOut);
-			a1 = (cura1*smoothIn) + (preva1*smoothOut);
-			a2 = (cura2*smoothIn) + (preva2*smoothOut);
-			b1 = (curb1*smoothIn) + (prevb1*smoothOut);
-			b2 = (curb2*smoothIn) + (prevb2*smoothOut);
+			mA0 = (mCurA0 * smoothIn) + (mPrevA0 * smoothOut);
+			mA1 = (mCurA1 * smoothIn) + (mPrevA1 * smoothOut);
+			mA2 = (mCurA2 * smoothIn) + (mPrevA2 * smoothOut);
+			mB1 = (mCurB1 * smoothIn) + (mPrevB1 * smoothOut);
+			mB2 = (mCurB2 * smoothIn) + (mPrevB2 * smoothOut);
 
-			smoothSamples--;	// and decrement the counter
-			eqchanged = true;
+			mSmoothSamples--;  // and decrement the counter
+			eqChanged = true;
 		}
 
 //.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 
-		for (unsigned long ch=0; ch < numChannels; ch++)
+		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
 			// audio output section -- outputs the latest sample
-			float inval = inputs[ch][samplecount];	// because Cubase inserts are goofy
-			float outval = ( (inval*a0) + (prevIn[ch]*a1) + (prevprevIn[ch]*a2) 
-							- (prevOut[ch]*b1) - (prevprevOut[ch]*b2) );
-			outval = DFX_ClampDenormalValue(outval);
+			auto const inputValue = inAudio[ch][sampleCount];  // because Cubase inserts are goofy
+			float outputValue = (inputValue * mA0) + (mPrevIn[ch] * mA1) + (mPrevPrevIn[ch] * mA2) - (mPrevOut[ch] * mB1) - (prevprevOut[ch] * mB2);
+			outputValue = dfx::math::ClampDenormalValue(outputValue);
 
 		#ifdef TARGET_API_VST
 			if (!replacing)
-				outval += outputs[ch][samplecount];
+			{
+				outputValue += outAudio[ch][sampleCount];
+			}
 		#endif
 			// ...doing the complex filter thing here
-			outputs[ch][samplecount] = outval;
+			outAudio[ch][sampleCount] = outputValue;
 
 			// update the previous sample holders and increment the i/o streams
-			prevprevIn[ch] = prevIn[ch];
-			prevIn[ch] = inval;
-			prevprevOut[ch] = prevOut[ch];
-			prevOut[ch] = outval;
+			mPrevPrevIn[ch] = mPrevIn[ch];
+			mPrevIn[ch] = inputValue;
+			prevprevOut[ch] = mPrevOut[ch];
+			mPrevOut[ch] = outputValue;
 		}
 
-	} //end main while loop
+	}  // end per-sample loop
 
 
-	if (eqchanged)
+	if (eqChanged)
 	{
-		setparameter_f(ka0, a0);
-		setparameter_f(ka1, a1);
-		setparameter_f(ka2, a2);
-		setparameter_f(kb1, b1);
-		setparameter_f(kb2, b2);
-		for (long i=ka0; i <= kb2; i++)
-			postupdate_parameter(i);	// inform listeners of change
+		auto const setAndNotify = [this](auto parameterID, auto parameterValue)
+		{
+			setparameter_f(parameterID, parameterValue);
+			postupdate_parameter(parameterID);  // inform listeners of change
+		};
+		setAndNotify(kA0, mA0);
+		setAndNotify(kA1, mA1);
+		setAndNotify(kA2, mA2);
+		setAndNotify(kB1, mB1);
+		setAndNotify(kB2, mB2);
 	}
 }

@@ -117,109 +117,47 @@ public:
 	};
 
 	// control for a parameter
-	DGControl(DfxGuiEditor * inOwnerEditor, long inParameterID, DGRect * inRegion);
+	DGControl(DfxGuiEditor* inOwnerEditor, long inParameterID, DGRect const& inRegion);
 	// control with no actual parameter attached
-	DGControl(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, float inRange);
+	DGControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, float inRange);
 
-	virtual void draw(CDrawContext * inContext)
-		{ }
 	// mouse position is relative to the control's bounds for ultra convenience
 	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick);
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick)
-		{ }
+	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick) {}
 	void do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers)
-		{ }
+	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers) {}
 	void do_mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers);
-	virtual void mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers)
-		{ }
+	virtual void mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers) {}
 	bool do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
 	virtual bool mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
 
-	// force a redraw of the control
-	void redraw();
-
-	void setRespondToMouse(bool inMousePolicy)
-		{	shouldRespondToMouse = inMousePolicy;	}
-	bool getRespondToMouse()
-		{	return shouldRespondToMouse;	}
 	void setRespondToMouseWheel(bool inMouseWheelPolicy)
-		{	shouldRespondToMouseWheel = inMouseWheelPolicy;	}
-	bool getRespondToMouseWheel()
-		{	return shouldRespondToMouseWheel;	}
+	{	shouldRespondToMouseWheel = inMouseWheelPolicy;	}
+	bool getRespondToMouseWheel() const
+	{	return shouldRespondToMouseWheel;	}
 	void setWraparoundValues(bool inWraparoundPolicy)
-		{	shouldWraparoundValues = inWraparoundPolicy;	}
-	bool getWraparoundValues()
-		{	return shouldWraparoundValues;	}
+	{	shouldWraparoundValues = inWraparoundPolicy;	}
+	bool getWraparoundValues() const
+	{	return shouldWraparoundValues;	}
 
-	DfxGuiEditor * getDfxGuiEditor()
-		{	return ownerEditor;	}
-
-	bool isContinuousControl()
-		{	return isContinuous;	}
+	bool isContinuousControl() const
+	{	return isContinuous;	}
 	void setControlContinuous(bool inContinuity);
 
-	void setFineTuneFactor(float inFineTuneFactor)
-	{
-		if (inFineTuneFactor != 0.0f)	// to prevent division by zero
-			fineTuneFactor = inFineTuneFactor;
-	}
-	float getFineTuneFactor()
-		{	return fineTuneFactor;	}
 	void setMouseDragRange(float inMouseDragRange)
 	{
 		if (inMouseDragRange != 0.0f)	// to prevent division by zero
 			mouseDragRange = inMouseDragRange;
 	}
-	float getMouseDragRange()
-		{	return mouseDragRange;	}
-
-	bool isParameterAttached()
-		{	return parameterAttached;	}
-	long getParameterID();
-	void setParameterID(long inParameterID);
-#ifdef TARGET_API_AUDIOUNIT
-	CAAUParameter & getAUVP()
-		{	return auvp;	}
-	void createAUVcontrol();
-	AUCarbonViewControl * getAUVcontrol()
-		{	return auv_control;	}
-#endif
-	float getRange()
-		{	return valueRange;	}
-	DGRect * getBounds()
-		{	return &controlPos;	}
-	DGRect * getForeBounds()
-		{	return &vizArea;	}
-
-	void setOffset(long x, long y);
-
-	void setBounds(DGRect * r)
-		{	controlPos = *r;	}
-	void setForeBounds(long x, long y, long w, long h);
-	void shrinkForeBounds(long x, long y, long w, long h);
-
-protected:
-	DfxGuiEditor *		ownerEditor;
-
-	float				valueRange;
-	bool				parameterAttached;
-	bool				isContinuous;
-
-	DGRect				controlPos;	// the control's area
-	DGRect				vizArea; 	// where the foreground displays
+	float getMouseDragRange() const
+	{	return mouseDragRange;	}
 
 private:
-	// common constructor stuff
-	void init(DGRect * inRegion);
-
-	float				fineTuneFactor;	// slow-down factor for fine-tune control (if the control supports that)
-	float				mouseDragRange;	// the range of pixels over which you can drag the mouse to adjust the control value
-
-	bool				shouldRespondToMouse;
-	bool				shouldRespondToMouseWheel;
-	bool				currentlyIgnoringMouseTracking;
-	bool				shouldWraparoundValues;
+	bool				isContinuous = false;
+	float				mouseDragRange = kDefaultMouseDragRange;  // the range of pixels over which you can drag the mouse to adjust the control value
+	bool				shouldRespondToMouseWheel = true;
+	bool				currentlyIgnoringMouseTracking = false;
+	bool				shouldWraparoundValues = false;
 };
 
 

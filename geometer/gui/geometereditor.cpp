@@ -1,24 +1,47 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2002-2018  Tom Murphy 7 and Sophia Poirier
+
+This file is part of Geometer.
+
+Geometer is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Geometer is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 
 #include "geometereditor.h"
+
+#include <algorithm>
+#include <cassert>
+#include <sstream>
+
 #include "geometer.h"
 #include "geometerhelp.h"
 
-#include <c.h>  // for sizeofA
 
+constexpr size_t NUM_SLIDERS = 5;
 
-const long NUM_SLIDERS = 5;
+DGColor const fontcolor_values(75, 151, 71);
+DGColor const fontcolor_labels = DGColor::kWhite;
 
-const DGColor fontcolor_values(75.0f/255.0f, 151.0f/255.0f, 71.0f/255.0f);
-const DGColor fontcolor_labels = kDGColor_white;
+constexpr float finetuneinc = 0.0001f;
 
-const float finetuneinc = 0.0001f;
-
-const char * landmarks_labelstrings[NUM_POINTSTYLES] = 
-  { "zero", "freq", "num", "span", "size", "level" };
-const char * ops_labelstrings[NUM_OPS] = 
-  { "jump", "????", "????", "size", "size", "times", "times", " " };
-const char * recreate_labelstrings[NUM_INTERPSTYLES] = 
-  { "dim", "dim", "exp", "????", "size", "o'lap", "mod", "dist" };
+static std::vector<char const * const> const landmarks_labelstrings
+  {{ "zero", "freq", "num", "span", "size", "level" }};
+static std::vector<char const * const> const ops_labelstrings
+  {{ "jump", "????", "????", "size", "size", "times", "times", " " }};
+static std::vector<char const * const> const recreate_labelstrings
+  {{ "dim", "dim", "exp", "????", "size", "o'lap", "mod", "dist" }};
 
 
 
@@ -29,16 +52,16 @@ enum {
 
   // positions
   pos_sliderX = 59,
-  pos_sliderY = 255,
+  pos_sliderY = 254,
   pos_sliderwidth = 196,
   pos_sliderheight = 16,
   pos_sliderincX = 245,
   pos_sliderincY = 35,
 
   pos_sliderlabelX = 19,
-  pos_sliderlabelY = 250 + 3,
+  pos_sliderlabelY = pos_sliderY - 1,
   pos_sliderlabelwidth = 32,
-  pos_sliderlabelheight = 13 - 3,
+  pos_sliderlabelheight = 10,
 
   pos_finedownX = 27,
   pos_finedownY = 263,
@@ -47,10 +70,10 @@ enum {
   pos_finebuttonincX = 240,
   pos_finebuttonincY = pos_sliderincY,
 
-  pos_displayX = 180,
-  pos_displayY = pos_sliderY - 10,
-  pos_displaywidth = pos_sliderX + pos_sliderwidth - pos_displayX - 2,
   pos_displayheight = 10,
+  pos_displayX = 180,
+  pos_displayY = pos_sliderY - pos_displayheight - 1,
+  pos_displaywidth = pos_sliderX + pos_sliderwidth - pos_displayX - 2,
 
   pos_windowshapemenuX = 19,
   pos_windowshapemenuY = 155,
@@ -88,143 +111,75 @@ enum {
 };
 
 
-#include "dfx-au-utilities.h"
-void showtree(CFTreeRef inTree)
-{
-//	fprintf(stderr, "\n\ttree parent:\n");
-//	CFShow(inTree);
-
-	if (inTree == NULL)
-		fprintf(stderr, "tree is null\n");
-	else
-	{
-		CFShow(inTree);
-		CFTreeRef child = CFTreeGetFirstChild(inTree);
-		if (child != NULL)
-			showtree(child);
-		CFTreeRef next = CFTreeGetNextSibling(inTree);
-		if (next != NULL)
-			showtree(next);
-	}
-}
-//-----------------------------------------------------------------------------
-// callbacks for button-triggered action
-
-void buttonswitched(long value, void * button) {
-  // XXX note that this still won't catch a change under your mouse caused by parameter automation
-  DGButton * gbutton = (DGButton*) button;
-  if (button != NULL)
-    ((GeometerEditor*)(gbutton->getDfxGuiEditor()))->changehelp(gbutton);
-
-/*
-CFTreeRef basetree = CFTreeCreateFromAUPresetFilesInDomain((Component) (((AUCarbonViewBase*)editor)->GetEditAudioUnit()), kUserDomain);
-if (basetree != NULL)
-{
-showtree(basetree);
-CFRelease(basetree);
-}
-*/
-}
-
-//-----------------------------------------------------------------------------
-// parameter value string display conversion functions
-
-void geometerDisplayProc(float value, char * outText, void *) {
-  sprintf(outText, "%.7f", value);
-}
-
-
-//-----------------------------------------------------------------------------
-// parameter listener procedure
-static void baseParamsListenerProc(void * inUserData, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue) {
-  if ( (inObject == NULL) || (inParameter == NULL) )
-    return;
-
-  DGControl * control = (DGControl*) inObject;
-  GeometerEditor * geditor = (GeometerEditor*) inUserData;
-
-  long newParameterID = geditor->choose_multiparam(inParameter->mParameterID);
-  control->setParameterID(newParameterID);
-}
-
-
 
 #pragma mark -
 
 //--------------------------------------------------------------------------
-GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground)
- : DGTextDisplay(inOwnerEditor, DFX_PARAM_INVALID_ID, inRegion, NULL, NULL, inBackground, 
-                 kDGTextAlign_left, kDGFontSize_SnootPixel10, kDGColor_black, kDGFontName_SnootPixel10), 
+GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const& inRegion, DGImage * inBackground)
+ : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
+                       dfx::kFontSize_SnootPixel10, DGColor::kBlack, dfx::kFontName_SnootPixel10), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
-  setRespondToMouse(false);
 }
 
 //--------------------------------------------------------------------------
-void GeometerHelpBox::draw(DGGraphicsContext * inContext) {
+void GeometerHelpBox::draw(CDrawContext * inContext) {
 
-  if ( (helpCategory == HELP_CATEGORY_GENERAL) && (itemNum == HELP_EMPTY) )
-    return;
   if (itemNum < 0)
     return;
+  if ((helpCategory == HELP_CATEGORY_GENERAL) && (itemNum == HELP_EMPTY))
+    return;
 
-  if (backgroundImage != NULL)
-    backgroundImage->draw(getBounds(), inContext);
+  if (auto const image = getDrawBackground())
+    image->draw(inContext, getViewSize());
 
-  DGRect textpos(getBounds());
-  textpos.h = 10;
-  textpos.w -= 5;
+  DGRect textpos(getViewSize());
+  textpos.setSize(textpos.getWidth() - 5, 10);
   textpos.offset(4, 3);
 
-  for (int i=0; i < NUM_HELP_TEXT_LINES; i++) {
-
-#define SAFE_GET_HELPSTRING(string)	( (itemNum < (long)sizeofA(string)) ? string[itemNum] : NULL )
-    const char ** helpstrings = NULL;
+  auto const helpstrings = [this]() -> char const * {
     switch (helpCategory) {
       case HELP_CATEGORY_GENERAL:
-        helpstrings = SAFE_GET_HELPSTRING(general_helpstrings);
-        break;
+        return general_helpstrings.at(itemNum);
       case HELP_CATEGORY_WINDOWSHAPE:
-        helpstrings = SAFE_GET_HELPSTRING(windowshape_helpstrings);
-        break;
+        return windowshape_helpstrings.at(itemNum);
       case HELP_CATEGORY_LANDMARKS:
-        helpstrings = SAFE_GET_HELPSTRING(landmarks_helpstrings);
-        break;
+        return landmarks_helpstrings.at(itemNum);
       case HELP_CATEGORY_OPS:
-        helpstrings = SAFE_GET_HELPSTRING(ops_helpstrings);
-        break;
+        return ops_helpstrings.at(itemNum);
       case HELP_CATEGORY_RECREATE:
-        helpstrings = SAFE_GET_HELPSTRING(recreate_helpstrings);
-        break;
+        return recreate_helpstrings.at(itemNum);
       default:
-        helpstrings = NULL;
-        break;
+        return nullptr;
     }
-    if (helpstrings == NULL)
-      break;
-#undef SAFE_GET_HELPSTRING
+  }();
 
-    if (i == 0) {
-      fontColor = kDGColor_black;
-      drawText(&textpos, helpstrings[0], inContext);
-      textpos.offset(-1, 0);
-      drawText(&textpos, helpstrings[0], inContext);
-      textpos.offset(1, 16);
-      fontColor = kDGColor_white;
-    } else {
-      drawText(&textpos, helpstrings[i], inContext);
-      textpos.offset(0, 12);
+  if (helpstrings) {
+    std::istringstream stream(helpstrings);
+    std::string line;
+    bool headerDrawn = false;
+    while (std::getline(stream, line)) {
+      if (!std::exchange(headerDrawn, true)) {
+        setFontColor(DGColor::kBlack);
+        drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+        textpos.offset(-1, 0);
+        drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+        textpos.offset(1, 16);
+        setFontColor(DGColor::kWhite);
+      } else {
+        drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+        textpos.offset(0, 12);
+      }
     }
   }
 
+  setDirty(false);
 }
 
 //--------------------------------------------------------------------------
-void GeometerHelpBox::setDisplayItem(long inHelpCategory, long inItemNum) {
+void GeometerHelpBox::setDisplayItem(int inHelpCategory, int inItemNum) {
 
-  bool changed = false;
-  if ( (helpCategory != inHelpCategory) || (itemNum != inItemNum) )
-    changed = true;
+  bool const changed = ((helpCategory != inHelpCategory) || (itemNum != inItemNum));
 
   helpCategory = inHelpCategory;
   itemNum = inItemNum;
@@ -244,234 +199,160 @@ void GeometerHelpBox::setDisplayItem(long inHelpCategory, long inItemNum) {
 DFX_EDITOR_ENTRY(GeometerEditor)
 
 //-----------------------------------------------------------------------------
-GeometerEditor::GeometerEditor(AudioUnitCarbonView inInstance)
- : DfxGuiEditor(inInstance) {
+GeometerEditor::GeometerEditor(DGEditorListenerInstance inInstance)
+ : DfxGuiEditor(inInstance),
+   sliders(NUM_SLIDERS, nullptr),
+   displays(NUM_SLIDERS, nullptr),
+   finedownbuttons(NUM_SLIDERS, nullptr),
+   fineupbuttons(NUM_SLIDERS, nullptr),
+   genhelpitemcontrols(NUM_GEN_HELP_ITEMS, nullptr),
+   g_helpicons(NUM_HELP_CATEGORIES) {
 
-  helpicon = NULL;
-  helpbox = NULL;
-
-  sliders = (DGSlider**) malloc(NUM_SLIDERS * sizeof(DGSlider*));
-  displays = (DGTextDisplay**) malloc(NUM_SLIDERS * sizeof(DGTextDisplay*));
-  finedownbuttons = (DGFineTuneButton**) malloc(NUM_SLIDERS * sizeof(DGFineTuneButton*));
-  fineupbuttons = (DGFineTuneButton**) malloc(NUM_SLIDERS * sizeof(DGFineTuneButton*));
-  sliderAUPs = (AudioUnitParameter*) malloc(NUM_SLIDERS * sizeof(AudioUnitParameter));
-  for (int i=0; i < NUM_SLIDERS; i++) {
-    sliders[i] = NULL;
-    displays[i] = NULL;
-    finedownbuttons[i] = NULL;
-    fineupbuttons[i] = NULL;
-  }
-
-  genhelpitemcontrols = (DGControl**) malloc(NUM_GEN_HELP_ITEMS * sizeof(DGControl*));
-  for (int i=0; i < NUM_GEN_HELP_ITEMS; i++)
-    genhelpitemcontrols[i] = NULL;
-
-  g_helpicons = (DGImage**) malloc(NUM_HELP_CATEGORIES * sizeof(DGImage*));
-  for (int i=0; i < NUM_HELP_CATEGORIES; i++)
-    g_helpicons[i] = NULL;
-
-  parameterListener = NULL;
-  OSStatus status = AUListenerCreate(baseParamsListenerProc, this,
-      CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
-      &parameterListener);
-  if (status != noErr)
-    parameterListener = NULL;
-}
-
-//-----------------------------------------------------------------------------
-GeometerEditor::~GeometerEditor() {
-
-  if (parameterListener != NULL) {
-
-    for (int i=0; i < NUM_SLIDERS; i++) {
-      if (sliders[i] != NULL)
-        AUListenerRemoveParameter(parameterListener, sliders[i], &(sliderAUPs[i]));
-      if (displays[i] != NULL)
-        AUListenerRemoveParameter(parameterListener, displays[i], &(sliderAUPs[i]));
-      if (finedownbuttons[i] != NULL)
-        AUListenerRemoveParameter(parameterListener, finedownbuttons[i], &(sliderAUPs[i]));
-      if (fineupbuttons[i] != NULL)
-        AUListenerRemoveParameter(parameterListener, fineupbuttons[i], &(sliderAUPs[i]));
-    }
-
-    AUListenerDispose(parameterListener);
-  }
-
-  free(sliders);
-  free(displays);
-  free(sliderAUPs);
-  free(genhelpitemcontrols);
-  free(g_helpicons);
-  free(finedownbuttons);
-  free(fineupbuttons);
+  assert(landmarks_labelstrings.size() == NUM_POINTSTYLES);
+  assert(ops_labelstrings.size() == NUM_OPS);
+  assert(recreate_labelstrings.size() == NUM_INTERPSTYLES);
 }
 
 //-----------------------------------------------------------------------------
 long GeometerEditor::OpenEditor() {
 
   /* ---load some images--- */
-  // background image
-//  DGImage * g_background = new DGImage("geometer-background.png", 0, this);
-  DGImage * g_background = new DGImage("geometer-background-short.png", 0, this);
-  SetBackgroundImage(g_background);
   // slider and fine tune controls
-  DGImage * g_sliderbackground = new DGImage("slider-background.png", 0, this);
-  DGImage * g_sliderhandle = new DGImage("slider-handle.png", 0, this);
-//  DGImage * g_sliderhandle_glowing = new DGImage("slider-handle-glowing.png", 0, this);
-  DGImage * g_finedownbutton = new DGImage("fine-tune-down-button.png", 0, this);
-  DGImage * g_fineupbutton = new DGImage("fine-tune-up-button.png", 0, this);
+  auto const g_sliderbackground = VSTGUI::makeOwned<DGImage>("slider-background.png");
+  auto const g_sliderhandle = VSTGUI::makeOwned<DGImage>("slider-handle.png");
+//  auto const g_sliderhandle_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-glowing.png");
+  auto const g_finedownbutton = VSTGUI::makeOwned<DGImage>("fine-tune-down-button.png");
+  auto const g_fineupbutton = VSTGUI::makeOwned<DGImage>("fine-tune-up-button.png");
   // option menus
-  DGImage * g_windowshapemenu = new DGImage("window-shape-button.png", 0, this);
-  DGImage * g_windowsizemenu = new DGImage("window-size-button.png", 0, this);
-  DGImage * g_landmarksmenu = new DGImage("landmarks-button.png", 0, this);
-  DGImage * g_opsmenu = new DGImage("ops-button.png", 0, this);
-  DGImage * g_recreatemenu = new DGImage("recreate-button.png", 0, this);
+  auto const g_windowshapemenu = VSTGUI::makeOwned<DGImage>("window-shape-button.png");
+  auto const g_windowsizemenu = VSTGUI::makeOwned<DGImage>("window-size-button.png");
+  auto const g_landmarksmenu = VSTGUI::makeOwned<DGImage>("landmarks-button.png");
+  auto const g_opsmenu = VSTGUI::makeOwned<DGImage>("ops-button.png");
+  auto const g_recreatemenu = VSTGUI::makeOwned<DGImage>("recreate-button.png");
   // help displays
-  DGImage * g_helpbackground = new DGImage("help-background.png", 0, this);
-  g_helpicons[HELP_CATEGORY_GENERAL] = new DGImage("help-general.png", 0, this);
-  g_helpicons[HELP_CATEGORY_WINDOWSHAPE] = new DGImage("help-window-shape.png", 0, this);
-  g_helpicons[HELP_CATEGORY_LANDMARKS] = new DGImage("help-landmarks.png", 0, this);
-  g_helpicons[HELP_CATEGORY_OPS] = new DGImage("help-ops.png", 0, this);
-  g_helpicons[HELP_CATEGORY_RECREATE] = new DGImage("help-recreate.png", 0, this);
+  auto const g_helpbackground = VSTGUI::makeOwned<DGImage>("help-background.png");
+  g_helpicons[HELP_CATEGORY_GENERAL] = VSTGUI::makeOwned<DGImage>("help-general.png");
+  g_helpicons[HELP_CATEGORY_WINDOWSHAPE] = VSTGUI::makeOwned<DGImage>("help-window-shape.png");
+  g_helpicons[HELP_CATEGORY_LANDMARKS] = VSTGUI::makeOwned<DGImage>("help-landmarks.png");
+  g_helpicons[HELP_CATEGORY_OPS] = VSTGUI::makeOwned<DGImage>("help-ops.png");
+  g_helpicons[HELP_CATEGORY_RECREATE] = VSTGUI::makeOwned<DGImage>("help-recreate.png");
   // MIDI learn/reset buttons
-  DGImage * g_midilearnbutton = new DGImage("midi-learn-button.png", 0, this);
-  DGImage * g_midiresetbutton = new DGImage("midi-reset-button.png", 0, this);
+  auto const g_midilearnbutton = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
+  auto const g_midiresetbutton = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
 
   // web links
-  DGImage * g_destroyfxlink = new DGImage("destroy-fx-link.png", 0, this);
-  DGImage * g_smartelectronixlink = new DGImage("smart-electronix-link.png", 0, this);
+  auto const g_destroyfxlink = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
+  auto const g_smartelectronixlink = VSTGUI::makeOwned<DGImage>("smart-electronix-link.png");
 
 
 
   DGRect pos;
 
   //--initialize the options menus----------------------------------------
-  DGButton * button;
 
   // window shape menu
   pos.set(pos_windowshapemenuX, pos_windowshapemenuY, stdsize, stdsize);
-  button = new DGButton(this, P_SHAPE, &pos, g_windowshapemenu, 
-                        NUM_WINDOWSHAPES, kDGButtonType_incbutton, true);
-  button->setUserProcedure(buttonswitched, button);
+  emplaceControl<DGButton>(this, P_SHAPE, pos, g_windowshapemenu, 
+                           NUM_WINDOWSHAPES, DGButton::Mode::Increment, true);
   pos.set(51, 164, 119, 16);
-  genhelpitemcontrols[HELP_WINDOWSHAPE] = new DGControl(this, &pos, 0.0f);
+  genhelpitemcontrols[HELP_WINDOWSHAPE] = emplaceControl<DGNullControl>(this, pos);
 
   // window size menu
   pos.set(pos_windowsizemenuX, pos_windowsizemenuY, stdsize, stdsize);
-  button = new DGButton(this, P_BUFSIZE, &pos, g_windowsizemenu, 
-                        BUFFERSIZESSIZE, kDGButtonType_incbutton, true);
+  emplaceControl<DGButton>(this, P_BUFSIZE, pos, g_windowsizemenu, 
+                           PLUGIN::BUFFERSIZESSIZE, DGButton::Mode::Increment, true);
   pos.set(290, 164, 102, 14);
-  genhelpitemcontrols[HELP_WINDOWSIZE] = new DGControl(this, &pos, 0.0f);
+  genhelpitemcontrols[HELP_WINDOWSIZE] = emplaceControl<DGNullControl>(this, pos);
 
   // how to generate landmarks menu
   pos.set(pos_landmarksmenuX, pos_landmarksmenuY,  stdsize, stdsize);
-  button = new DGButton(this, P_POINTSTYLE, &pos, g_landmarksmenu, 
-                        NUM_POINTSTYLES, kDGButtonType_incbutton, true);
-  button->setUserProcedure(buttonswitched, button);
+  emplaceControl<DGButton>(this, P_POINTSTYLE, pos, g_landmarksmenu, 
+                           NUM_POINTSTYLES, DGButton::Mode::Increment, true);
   pos.set(51, 208, 165, 32);
-  genhelpitemcontrols[HELP_LANDMARKS] = new DGControl(this, &pos, 0.0f);
+  genhelpitemcontrols[HELP_LANDMARKS] = emplaceControl<DGNullControl>(this, pos);
 
   // how to recreate them menu
   pos.set(pos_recreatemenuX, pos_recreatemenuY, stdsize, stdsize);
-  button = new DGButton(this, P_INTERPSTYLE, &pos, g_recreatemenu, 
-                        NUM_INTERPSTYLES, kDGButtonType_incbutton, true);
-  button->setUserProcedure(buttonswitched, button);
+  emplaceControl<DGButton>(this, P_INTERPSTYLE, pos, g_recreatemenu, 
+                           NUM_INTERPSTYLES, DGButton::Mode::Increment, true);
   pos.set(51, 323, 131, 31);
-  genhelpitemcontrols[HELP_RECREATE] = new DGControl(this, &pos, 0.0f);
+  genhelpitemcontrols[HELP_RECREATE] = emplaceControl<DGNullControl>(this, pos);
 
   // op 1 menu
   pos.set(pos_op1menuX, pos_op1menuY, stdsize, stdsize);
-  button = new DGButton(this, P_POINTOP1, &pos, g_opsmenu, 
-                        NUM_OPS, kDGButtonType_incbutton, true);
-  button->setUserProcedure(buttonswitched, button);
+  emplaceControl<DGButton>(this, P_POINTOP1, pos, g_opsmenu, 
+                           NUM_OPS, DGButton::Mode::Increment, true);
 
   // op 2 menu
   pos.offset(pos_opmenuinc, 0);
-  button = new DGButton(this, P_POINTOP2, &pos, g_opsmenu, 
-                        NUM_OPS, kDGButtonType_incbutton, true);
-  button->setUserProcedure(buttonswitched, button);
+  emplaceControl<DGButton>(this, P_POINTOP2, pos, g_opsmenu, 
+                           NUM_OPS, DGButton::Mode::Increment, true);
 
   // op 3 menu
   pos.offset(pos_opmenuinc, 0);
-  button = new DGButton(this, P_POINTOP3, &pos, g_opsmenu, 
-                        NUM_OPS, kDGButtonType_incbutton, true);
-  button->setUserProcedure(buttonswitched, button);
+  emplaceControl<DGButton>(this, P_POINTOP3, pos, g_opsmenu, 
+                           NUM_OPS, DGButton::Mode::Increment, true);
 
   pos.set(378, 208, 118, 32);
-  genhelpitemcontrols[HELP_OPS] = new DGControl(this, &pos, 0.0f);
+  genhelpitemcontrols[HELP_OPS] = emplaceControl<DGNullControl>(this, pos);
 
 
   pos.set(pos_sliderX, pos_sliderY, g_sliderbackground->getWidth(), g_sliderbackground->getHeight());
-  DGRect fdpos(pos_finedownX, pos_finedownY, g_finedownbutton->getWidth(), g_finedownbutton->getHeight()/2);
-  DGRect fupos(pos_fineupX, pos_fineupY, g_fineupbutton->getWidth(), g_fineupbutton->getHeight()/2);
+  DGRect fdpos(pos_finedownX, pos_finedownY, g_finedownbutton->getWidth(), g_finedownbutton->getHeight() / 2);
+  DGRect fupos(pos_fineupX, pos_fineupY, g_fineupbutton->getWidth(), g_fineupbutton->getHeight() / 2);
   DGRect dpos(pos_displayX, pos_displayY, pos_displaywidth, pos_displayheight);
   DGRect lpos(pos_sliderlabelX, pos_sliderlabelY, pos_sliderlabelwidth, pos_sliderlabelheight);
-  for (int i=0; i < NUM_SLIDERS; i++)
-  {
-    long baseparam;
-    const char ** labelstrings = ops_labelstrings;
-    long numlabelstrings = NUM_OPS;
+  for (size_t i=0; i < NUM_SLIDERS; i++) {
+    auto const baseparam = get_base_param_for_slider(i);
+    auto labelstrings = &ops_labelstrings;
     long xoff = 0, yoff = 0;
     // how to generate landmarks
-    if (i == 0) {
-      baseparam = P_POINTSTYLE;
-      labelstrings = landmarks_labelstrings;
-      numlabelstrings = NUM_POINTSTYLES;
+    if (baseparam == P_POINTSTYLE) {
+      labelstrings = &landmarks_labelstrings;
       yoff = pos_sliderincY;
     }
     // how to recreate the waveform
-    else if (i == 1) {
-      baseparam = P_INTERPSTYLE;
-      labelstrings = recreate_labelstrings;
-      numlabelstrings = NUM_INTERPSTYLES;
+    else if (baseparam == P_INTERPSTYLE) {
+      labelstrings = &recreate_labelstrings;
       xoff = pos_sliderincX;
       yoff = -pos_sliderincY;
     }
     // op 1
-    else if (i == 2) {
-      baseparam = P_POINTOP1;
+    else if (baseparam == P_POINTOP1) {
       yoff = pos_sliderincY;
     }
     // op 2
-    else if (i == 3) {
-      baseparam = P_POINTOP2;
+    else if (baseparam == P_POINTOP2) {
       yoff = pos_sliderincY;
     }
     // op 3
     else {
-      baseparam = P_POINTOP3;
     }
-    long param = choose_multiparam(baseparam);
+    auto const param = choose_multiparam(baseparam);
 
-    sliders[i] = new DGSlider(this, param, &pos, kDGAxis_horizontal, 
-                                     g_sliderhandle, g_sliderbackground);
+    constexpr long sliderRangeMargin = 1;
+    sliders[i] = emplaceControl<DGSlider>(this, param, pos, dfx::kAxis_Horizontal, 
+                                          g_sliderhandle, g_sliderbackground, sliderRangeMargin);
 
     // fine tune down button
-    finedownbuttons[i] = new DGFineTuneButton(this, param, &fdpos, g_finedownbutton, -finetuneinc);
+    finedownbuttons[i] = emplaceControl<DGFineTuneButton>(this, param, fdpos, g_finedownbutton, -finetuneinc);
     // fine tune up button
-    fineupbuttons[i] = new DGFineTuneButton(this, param, &fupos, g_fineupbutton, finetuneinc);
+    fineupbuttons[i] = emplaceControl<DGFineTuneButton>(this, param, fupos, g_fineupbutton, finetuneinc);
 
     // value display
-    displays[i] = new DGTextDisplay(this, param, &dpos, geometerDisplayProc, 
-                                    NULL, NULL, kDGTextAlign_right, kDGFontSize_SnootPixel10, 
-                                    fontcolor_values, kDGFontName_SnootPixel10);
+    auto const geometerDisplayProc = [](float value, char * outText, void *) -> bool {
+      return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.7f", value) > 0;
+    };
+    displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, geometerDisplayProc, 
+                                                nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_SnootPixel10, 
+                                                fontcolor_values, dfx::kFontName_SnootPixel10);
     // units label
-    DGTextArrayDisplay * label = new DGTextArrayDisplay(this, baseparam, &lpos, numlabelstrings, 
-             kDGTextAlign_center, NULL, kDGFontSize_SnootPixel10, fontcolor_labels, kDGFontName_SnootPixel10);
-    for (long j=0; j < numlabelstrings; j++)
-      label->setText(j, labelstrings[j]);
-
-    if (parameterListener != NULL) {
-      sliderAUPs[i].mAudioUnit = GetEditAudioUnit();
-      sliderAUPs[i].mScope = kAudioUnitScope_Global;
-      sliderAUPs[i].mElement = (AudioUnitElement)0;
-      sliderAUPs[i].mParameterID = baseparam;
-
-      AUListenerAddParameter(parameterListener, sliders[i], &(sliderAUPs[i]));
-      AUListenerAddParameter(parameterListener, displays[i], &(sliderAUPs[i]));
-      AUListenerAddParameter(parameterListener, finedownbuttons[i], &(sliderAUPs[i]));
-      AUListenerAddParameter(parameterListener, fineupbuttons[i], &(sliderAUPs[i]));
-    }
+    auto const label = emplaceControl<DGTextArrayDisplay>(this, baseparam, lpos, labelstrings->size(), 
+                                                          dfx::TextAlignment::Center, nullptr, 
+                                                          dfx::kFontSize_SnootPixel10, fontcolor_labels, 
+                                                          dfx::kFontName_SnootPixel10);
+    for (size_t j=0; j < labelstrings->size(); j++)
+      label->setText(j, labelstrings->at(j));
 
     pos.offset(xoff, yoff);
     fdpos.offset(xoff, yoff);
@@ -489,42 +370,62 @@ long GeometerEditor::OpenEditor() {
   // MIDI reset button
   genhelpitemcontrols[HELP_MIDIRESET] = CreateMidiResetButton(pos_midiresetbuttonX, pos_midiresetbuttonY, g_midiresetbutton);
 
-  DGWebLink * weblink;
   // Destroy FX web page link
   pos.set(pos_destroyfxlinkX, pos_destroyfxlinkY, 
-        g_destroyfxlink->getWidth(), g_destroyfxlink->getHeight()/2);
-  weblink = new DGWebLink(this, &pos, g_destroyfxlink, DESTROYFX_URL);
+          g_destroyfxlink->getWidth(), g_destroyfxlink->getHeight() / 2);
+  emplaceControl<DGWebLink>(this, pos, g_destroyfxlink, DESTROYFX_URL);
 
   // Smart Electronix web page link
   pos.set(pos_smartelectronixlinkX, pos_smartelectronixlinkY, 
-        g_smartelectronixlink->getWidth(), g_smartelectronixlink->getHeight()/2);
-  weblink = new DGWebLink(this, &pos, g_smartelectronixlink, SMARTELECTRONIX_URL);
+          g_smartelectronixlink->getWidth(), g_smartelectronixlink->getHeight() / 2);
+  emplaceControl<DGWebLink>(this, pos, g_smartelectronixlink, SMARTELECTRONIX_URL);
 
 
   //--initialize the help displays-----------------------------------------
 
-  long initcat = HELP_CATEGORY_GENERAL;
-  pos.set(pos_helpiconX, pos_helpiconY, g_helpicons[initcat]->getWidth(), g_helpicons[initcat]->getHeight()/NUM_GEN_HELP_ITEMS);
-  helpicon = new DGButton(this, &pos, g_helpicons[initcat], NUM_GEN_HELP_ITEMS, kDGButtonType_picturereel);
+  constexpr auto initcat = HELP_CATEGORY_GENERAL;
+  pos.set(pos_helpiconX, pos_helpiconY, g_helpicons[initcat]->getWidth(), g_helpicons[initcat]->getHeight() / NUM_GEN_HELP_ITEMS);
+  helpicon = emplaceControl<DGButton>(this, pos, g_helpicons[initcat], NUM_GEN_HELP_ITEMS, DGButton::Mode::PictureReel);
+  helpicon->setMouseEnabled(false);
   helpicon->setValue_i(HELP_EMPTY);
 
   pos.set(pos_helpboxX, pos_helpboxY, g_helpbackground->getWidth(), g_helpbackground->getHeight());
-  helpbox = new GeometerHelpBox(this, &pos, g_helpbackground);
+  helpbox = emplaceControl<GeometerHelpBox>(this, pos, g_helpbackground);
 
 
 
 // XXX hack for Geometer missing waveform display (shift all controls up 136 pixels)
-DGControlsList * tempcl = controlsList;
-while (tempcl != NULL) {
-  tempcl->control->setOffset(0, -136);
-  tempcl = tempcl->next;
+/*for (auto& control : mControlsList) {
+  auto const cControl = control->getCControl();
+  auto region = cControl->getViewSize();
+  region.offset(0, -136);
+  cControl->setViewSize(region);
+}*/
+
+
+
+  return dfx::kStatus_NoError;
 }
 
 
+//-----------------------------------------------------------------------------
+void GeometerEditor::parameterChanged(long inParameterID) {
 
-  return noErr;
+  for (size_t i=0; i < NUM_SLIDERS; i++) {
+    auto const baseparam = get_base_param_for_slider(i);
+    if (inParameterID == baseparam) {
+      auto const newParameterID = choose_multiparam(inParameterID);
+      sliders[i]->setParameterID(newParameterID);
+      displays[i]->setParameterID(newParameterID);
+      finedownbuttons[i]->setParameterID(newParameterID);
+      fineupbuttons[i]->setParameterID(newParameterID);
+    }
+  }
+
+  if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Int) {
+    changehelp(getCurrentControl_mouseover());
+  }
 }
-
 
 //-----------------------------------------------------------------------------
 void GeometerEditor::mouseovercontrolchanged(DGControl * currentControlUnderMouse) {
@@ -535,69 +436,64 @@ void GeometerEditor::mouseovercontrolchanged(DGControl * currentControlUnderMous
 //-----------------------------------------------------------------------------
 void GeometerEditor::changehelp(DGControl * currentControlUnderMouse) {
 
-  long helpcategory = HELP_CATEGORY_GENERAL;
-  long helpitem = HELP_EMPTY;
-  long helpnumitems = NUM_GEN_HELP_ITEMS;
-  long paramID = DFX_PARAM_INVALID_ID;
-
-  if (genhelpitemcontrols != NULL) {
-    for (int i=0; i < NUM_GEN_HELP_ITEMS; i++) {
-      if (currentControlUnderMouse == genhelpitemcontrols[i]) {
-        helpcategory = HELP_CATEGORY_GENERAL;
-        helpitem = i;
-        helpnumitems = NUM_GEN_HELP_ITEMS;
-        goto updatehelp;
-      }
+  auto const updatehelp = [this](int category, int item, long numitems) {
+    if (helpicon) {
+      helpicon->setNumStates(numitems);
+      helpicon->setButtonImage(g_helpicons[category]);
+      helpicon->setValue_i(item);
     }
-  }
+    if (helpbox)
+      helpbox->setDisplayItem(category, item);
+  };
 
-  if (currentControlUnderMouse != NULL) {
-    if ( currentControlUnderMouse->isParameterAttached() )
-      paramID = currentControlUnderMouse->getParameterID();
-  }
+  auto paramID = dfx::kParameterID_Invalid;
+  if (currentControlUnderMouse && currentControlUnderMouse->isParameterAttached())
+    paramID = currentControlUnderMouse->getParameterID();
 
-  if (paramID == P_BUFSIZE) {
-    helpcategory = HELP_CATEGORY_GENERAL;
-    helpitem = HELP_WINDOWSIZE;
-    helpnumitems = NUM_GEN_HELP_ITEMS;
+  if (auto const matchedGenHelp = std::find(genhelpitemcontrols.begin(), genhelpitemcontrols.end(), currentControlUnderMouse);
+      matchedGenHelp != genhelpitemcontrols.end()) {
+    auto const index = std::distance(genhelpitemcontrols.begin(), matchedGenHelp);
+    updatehelp(HELP_CATEGORY_GENERAL, index, NUM_GEN_HELP_ITEMS);
+  }
+  else if (paramID == P_BUFSIZE) {
+    updatehelp(HELP_CATEGORY_GENERAL, HELP_WINDOWSIZE, NUM_GEN_HELP_ITEMS);
   }
   else if (paramID == P_SHAPE) {
-    helpcategory = HELP_CATEGORY_WINDOWSHAPE;
-    helpitem = getparameter_i(P_SHAPE);
-    helpnumitems = NUM_WINDOWSHAPES;
+    updatehelp(HELP_CATEGORY_WINDOWSHAPE, getparameter_i(P_SHAPE), NUM_WINDOWSHAPES);
   }
-  else if ( (paramID >= P_POINTSTYLE) && (paramID < (P_POINTPARAMS+MAX_POINTSTYLES)) ) {
-    helpcategory = HELP_CATEGORY_LANDMARKS;
-    helpitem = getparameter_i(P_POINTSTYLE);
-    helpnumitems = NUM_POINTSTYLES;
+  else if ((paramID >= P_POINTSTYLE) && (paramID < (P_POINTPARAMS + MAX_POINTSTYLES))) {
+    updatehelp(HELP_CATEGORY_LANDMARKS, getparameter_i(P_POINTSTYLE), NUM_POINTSTYLES);
   }
-  else if ( (paramID >= P_INTERPSTYLE) && (paramID < (P_INTERPARAMS+MAX_INTERPSTYLES)) ) {
-    helpcategory = HELP_CATEGORY_RECREATE;
-    helpitem = getparameter_i(P_INTERPSTYLE);
-    helpnumitems = NUM_INTERPSTYLES;
+  else if ((paramID >= P_INTERPSTYLE) && (paramID < (P_INTERPARAMS + MAX_INTERPSTYLES))) {
+    updatehelp(HELP_CATEGORY_RECREATE, getparameter_i(P_INTERPSTYLE), NUM_INTERPSTYLES);
   }
-  else if ( (paramID >= P_POINTOP1) && (paramID < (P_OPPAR1S+MAX_OPS)) ) {
-    helpcategory = HELP_CATEGORY_OPS;
-    helpitem = getparameter_i(P_POINTOP1);
-    helpnumitems = NUM_OPS;
+  else if ((paramID >= P_POINTOP1) && (paramID < (P_OPPAR1S + MAX_OPS))) {
+    updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP1), NUM_OPS);
   }
-  else if ( (paramID >= P_POINTOP2) && (paramID < (P_OPPAR2S+MAX_OPS)) ) {
-    helpcategory = HELP_CATEGORY_OPS;
-    helpitem = getparameter_i(P_POINTOP2);
-    helpnumitems = NUM_OPS;
+  else if ((paramID >= P_POINTOP2) && (paramID < (P_OPPAR2S + MAX_OPS))) {
+    updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP2), NUM_OPS);
   }
-  else if ( (paramID >= P_POINTOP3) && (paramID < (P_OPPAR3S+MAX_OPS)) ) {
-    helpcategory = HELP_CATEGORY_OPS;
-    helpitem = getparameter_i(P_POINTOP3);
-    helpnumitems = NUM_OPS;
+  else if ((paramID >= P_POINTOP3) && (paramID < (P_OPPAR3S + MAX_OPS))) {
+    updatehelp(HELP_CATEGORY_OPS, getparameter_i(P_POINTOP3), NUM_OPS);
   }
+  else {
+    updatehelp(HELP_CATEGORY_GENERAL, HELP_EMPTY, NUM_GEN_HELP_ITEMS);
+  }
+}
 
-updatehelp:
-  if (helpicon != NULL) {
-    helpicon->setNumStates(helpnumitems);
-    helpicon->setButtonImage(g_helpicons[helpcategory]);
-    helpicon->setValue_i(helpitem);
+//-----------------------------------------------------------------------------
+long GeometerEditor::get_base_param_for_slider(size_t sliderIndex) noexcept {
+
+  switch (sliderIndex) {
+    case 0:
+      return P_POINTSTYLE;
+    case 1:
+      return P_INTERPSTYLE;
+    case 2:
+      return P_POINTOP1;
+    case 3:
+      return P_POINTOP2;
+    default:
+      return P_POINTOP3;
   }
-  if (helpbox != NULL)
-    helpbox->setDisplayItem(helpcategory, helpitem);
 }

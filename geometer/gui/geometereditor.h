@@ -1,51 +1,70 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2002-2018  Tom Murphy 7 and Sophia Poirier
 
-#ifndef __DFX_GEOMETER_EDITOR_H
-#define __DFX_GEOMETER_EDITOR_H
+This file is part of Geometer.
+
+Geometer is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Geometer is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#pragma once
+
+#include <vector>
 
 #include "dfxgui.h"
 
 
 //--------------------------------------------------------------------------
-class GeometerHelpBox : public DGTextDisplay {
+class GeometerHelpBox : public DGStaticTextDisplay {
 public:
-  GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect * inRegion, DGImage * inBackground);
+  GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const& inRegion, DGImage * inBackground);
 
-  virtual void draw(DGGraphicsContext * inContext);
+  void draw(CDrawContext * inContext) override;
 
-  void setDisplayItem(long inHelpCategory, long inItemNum);
+  void setDisplayItem(int inHelpCategory, int inItemNum);
 
 private:
-  long helpCategory;
-  long itemNum;
+  int helpCategory;
+  int itemNum;
 };
 
 
 //--------------------------------------------------------------------------
 class GeometerEditor : public DfxGuiEditor {
 public:
-  GeometerEditor(AudioUnitCarbonView inInstance);
-  virtual ~GeometerEditor();
+  GeometerEditor(DGEditorListenerInstance inInstance);
 
-  virtual long OpenEditor();
-  virtual void mouseovercontrolchanged(DGControl * currentControlUnderMouse);
+  long OpenEditor() override;
+  void parameterChanged(long inParameterID) override;
+  void mouseovercontrolchanged(DGControl * currentControlUnderMouse) override;
 
-  long choose_multiparam(long baseParamID) {
-    return getparameter_i(baseParamID) + baseParamID + 1;
-  }
   void changehelp(DGControl * currentControlUnderMouse);
 
 private:
-  AUParameterListenerRef parameterListener;
-  AudioUnitParameter * sliderAUPs;
-  DGSlider ** sliders;
-  DGTextDisplay ** displays;
-  DGFineTuneButton ** finedownbuttons;
-  DGFineTuneButton ** fineupbuttons;
+  long choose_multiparam(long baseParamID) {
+    return getparameter_i(baseParamID) + baseParamID + 1;
+  }
+  static long get_base_param_for_slider(size_t sliderIndex) noexcept;
 
-  DGControl ** genhelpitemcontrols;
-  DGImage ** g_helpicons;
-  DGButton * helpicon;
-  GeometerHelpBox * helpbox;
+  std::vector<DGSlider *> sliders;
+  std::vector<DGTextDisplay *> displays;
+  std::vector<DGFineTuneButton *> finedownbuttons;
+  std::vector<DGFineTuneButton *> fineupbuttons;
+
+  std::vector<DGControl *> genhelpitemcontrols;
+  std::vector<VSTGUI::SharedPointer<DGImage>> g_helpicons;
+  DGButton * helpicon = nullptr;
+  GeometerHelpBox * helpbox = nullptr;
 };
-
-#endif
