@@ -107,6 +107,8 @@ public:
 		setDirty(false);
 	}
 
+	CLASS_METHODS(PolarizerSlider, DGSlider)
+
 private:
 	VSTGUI::SharedPointer<DGImage> const mHandleImage;
 };

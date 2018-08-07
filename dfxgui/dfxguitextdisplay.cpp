@@ -27,6 +27,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <stdio.h>
 #include <string.h>
 
+#include "dfxguieditor.h"
+
 
 namespace
 {
@@ -136,8 +138,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*					inOwnerEditor,
 							float							inFontSize, 
 							DGColor							inFontColor, 
 							char const*						inFontName)
-:	CTextEdit(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage), 
-	DGControl(this, inOwnerEditor)
+:	DGControl<CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage)
 {
 	DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
 
@@ -285,12 +286,10 @@ bool DGTextDisplay::textToValueProcBridge(UTF8StringPtr inText, float& outValue,
 #pragma mark DGStaticTextDisplay
 
 //-----------------------------------------------------------------------------
-DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
+DGStaticTextDisplay::DGStaticTextDisplay(DGRect const& inRegion, DGImage* inBackgroundImage, 
 										 dfx::TextAlignment inTextAlignment, float inFontSize, 
 										 DGColor inFontColor, char const* inFontName)
-:	CTextLabel(inRegion, nullptr, inBackgroundImage), 
-	DGControl(this, inOwnerEditor)
-
+:	DGControl<CTextLabel>(inRegion, nullptr, inBackgroundImage)
 {
 	DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
 

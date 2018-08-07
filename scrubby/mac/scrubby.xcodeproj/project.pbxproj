@@ -223,6 +223,8 @@
 		EC48270C0F492C2B006126CD /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC48270E0F492C36006126CD /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC48270F0F492C40006126CD /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		EC5CC738210EE08F007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
+		EC5CC739210EE08F007CCD6B /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
 		EC89B31C208D29C600E15129 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC89B31D208D29C700E15129 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC89B31E208D29C700E15129 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -514,7 +516,9 @@
 				EC89B451208D331300E15129 /* dfxgui-base.h */,
 				4932F4E1068011C9006A9591 /* dfxguieditor.h */,
 				4932F4E0068011C9006A9591 /* dfxguieditor.cpp */,
+				EC5CC738210EE08F007CCD6B /* idfxguicontrol.h */,
 				4932F4E5068011C9006A9591 /* dfxguicontrol.h */,
+				EC5CC739210EE08F007CCD6B /* dfxguicontrol.hpp */,
 				4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */,
 				EC89B452208D331300E15129 /* dfxguidialog.h */,
 				EC89B450208D331300E15129 /* dfxguidialog.cpp */,

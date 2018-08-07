@@ -24,11 +24,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
-#include "dfxguieditor.h"
+#include "dfxguicontrol.h"
 
 
 //-----------------------------------------------------------------------------
-class DGSlider : public CSlider, public DGControl
+class DGSlider : public DGControl<CSlider>
 {
 public:
 	DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
@@ -45,7 +45,7 @@ public:
 
 #pragma mark -
 //-----------------------------------------------------------------------------
-class DGAnimation : public CAnimKnob, public DGControl
+class DGAnimation : public DGControl<CAnimKnob>
 {
 public:
 	DGAnimation(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,  

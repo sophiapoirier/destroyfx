@@ -29,7 +29,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 
 #include "dfxguibutton.h"
+#include "dfxguidialog.h"
 #include "dfxmisc.h"
+#include "idfxguicontrol.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxsettings.h"
@@ -306,7 +308,7 @@ void DfxGuiEditor::setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, f
 		if (control->getParameterID() == inParameterIndex)
 		{
 			control->setValue_gen(inValue);
-			control->getCControl()->setDirty();  // XXX this seems to be necessary for 64-bit AU to update from outside parameter value changes?
+			control->asCControl()->setDirty();  // XXX this seems to be necessary for 64-bit AU to update from outside parameter value changes?
 		}
 	}
 
@@ -403,7 +405,7 @@ void DfxGuiEditor::idle()
 
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::addControl(DGControl* inControl)
+void DfxGuiEditor::addControl(IDGControl* inControl)
 {
 	assert(inControl);
 
@@ -438,14 +440,14 @@ void DfxGuiEditor::addControl(DGControl* inControl)
 		inControl->setValue_gen(0.0f);
 	}
 
-	inControl->getCControl()->setOldValue(inControl->getCControl()->getValue());
+	inControl->asCControl()->setOldValue(inControl->asCControl()->getValue());
 
-	[[maybe_unused]] auto const success = getFrame()->addView(inControl->getCControl());
+	[[maybe_unused]] auto const success = getFrame()->addView(inControl->asCControl());
 	assert(success);
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::removeControl(DGControl* inControl)
+void DfxGuiEditor::removeControl(IDGControl* inControl)
 {
 	assert(false);  // TODO: test or remove this method? (it currently is not used anywhere)
 
@@ -455,7 +457,7 @@ void DfxGuiEditor::removeControl(DGControl* inControl)
 		mControlsList.erase(foundControl);
 	}
 
-	[[maybe_unused]] auto const success = getFrame()->removeView(inControl->getCControl());
+	[[maybe_unused]] auto const success = getFrame()->removeView(inControl->asCControl());
 	assert(success);
 }
 
@@ -699,7 +701,7 @@ bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID) const
 
 //-----------------------------------------------------------------------------
 // set the control that is currently idly under the mouse pointer, if any (nullptr if none)
-void DfxGuiEditor::setCurrentControl_mouseover(DGControl* inNewMousedOverControl)
+void DfxGuiEditor::setCurrentControl_mouseover(IDGControl* inNewMousedOverControl)
 {
 	// post notification if the mouse-overed control has changed
 	if (std::exchange(mCurrentControl_mouseover, inNewMousedOverControl) != inNewMousedOverControl)
@@ -709,7 +711,7 @@ void DfxGuiEditor::setCurrentControl_mouseover(DGControl* inNewMousedOverControl
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::addMousedOverControl(DGControl* inMousedOverControl)
+void DfxGuiEditor::addMousedOverControl(IDGControl* inMousedOverControl)
 {
 	if (!inMousedOverControl)
 	{
@@ -720,7 +722,7 @@ void DfxGuiEditor::addMousedOverControl(DGControl* inMousedOverControl)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::removeMousedOverControl(DGControl* inMousedOverControl)
+void DfxGuiEditor::removeMousedOverControl(IDGControl* inMousedOverControl)
 {
 	mMousedOverControlsList.remove(inMousedOverControl);
 	if (mMousedOverControlsList.empty())
@@ -736,7 +738,7 @@ void DfxGuiEditor::removeMousedOverControl(DGControl* inMousedOverControl)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::onMouseEntered(CView* inView, CFrame* /*inFrame*/)
 {
-	if (auto const dgControl = dynamic_cast<DGControl*>(inView))
+	if (auto const dgControl = dynamic_cast<IDGControl*>(inView))
 	{
 		addMousedOverControl(dgControl);
 	}
@@ -745,7 +747,7 @@ void DfxGuiEditor::onMouseEntered(CView* inView, CFrame* /*inFrame*/)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::onMouseExited(CView* inView, CFrame* /*inFrame*/)
 {
-	if (auto const dgControl = dynamic_cast<DGControl*>(inView))
+	if (auto const dgControl = dynamic_cast<IDGControl*>(inView))
 	{
 		removeMousedOverControl(dgControl);
 	}
@@ -758,7 +760,7 @@ CMouseEventResult DfxGuiEditor::onMouseDown(CFrame* inFrame, CPoint const& inPos
 	// even when the mouse is still over the control, so fake a mouse-over here
 	if (auto const currentView = inFrame->getViewAt(inPos, GetViewOptions(GetViewOptions::kDeep)))
 	{
-		if (auto const dgControl = dynamic_cast<DGControl*>(currentView))
+		if (auto const dgControl = dynamic_cast<IDGControl*>(currentView))
 		{
 			setCurrentControl_mouseover(dgControl);
 		}
@@ -779,10 +781,10 @@ CMouseEventResult DfxGuiEditor::onMouseDown(CFrame* inFrame, CPoint const& inPos
 CMouseEventResult DfxGuiEditor::onMouseMoved(CFrame* inFrame, CPoint const& inPos, CButtonState const& /*inButtons*/)
 {
 	auto const currentView = inFrame->getViewAt(inPos, GetViewOptions(GetViewOptions::kDeep));
-	DGControl* currentControl = nullptr;
+	IDGControl* currentControl = nullptr;
 	if (currentView)
 	{
-		if (auto const dgControl = dynamic_cast<DGControl*>(currentView))
+		if (auto const dgControl = dynamic_cast<IDGControl*>(currentView))
 		{
 			currentControl = dgControl;
 		}
@@ -1570,7 +1572,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 	popupMenu.setStyle(menuStyle);
 
 // --------- parameter menu creation ---------
-	auto const dgControl = dynamic_cast<DGControl*>(inControl);
+	auto const dgControl = dynamic_cast<IDGControl*>(inControl);
 	bool parameterMenuItemsWereAdded = false;
 	SharedPointer<COptionMenu> parameterSubMenu;
 	// populate the parameter-specific section of the menu
@@ -1591,8 +1593,8 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 			bool disableItem = false;
 			bool isFirstItemOfSubgroup = false;
 			UTF8StringPtr menuItemText = nullptr;
-			char menuItemText_temp[256];
-			memset(menuItemText_temp, 0, sizeof(menuItemText_temp));
+			std::array<char, 256> menuItemText_temp;
+			menuItemText_temp.fill(0);
 			switch (i)
 			{
 				case kDfxContextualMenuItem_Parameter_SetDefaultValue:
@@ -1645,24 +1647,24 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 					// append the current MIDI assignment, if there is one, to the menu item text
 					else
 					{
-						constexpr auto maxTextLength = sizeof(menuItemText_temp);
+						constexpr auto maxTextLength = menuItemText_temp.size();
 						switch (currentParameterAssignment.mEventType)
 						{
 							case dfx::MidiEventType::CC:
-								snprintf(menuItemText_temp, maxTextLength, "%s (CC %d)", menuItemText, currentParameterAssignment.mEventNum);
+								snprintf(menuItemText_temp.data(), maxTextLength, "%s (CC %d)", menuItemText, currentParameterAssignment.mEventNum);
 								break;
 							case dfx::MidiEventType::PitchBend:
-								snprintf(menuItemText_temp, maxTextLength, "%s (pitchbend)", menuItemText);
+								snprintf(menuItemText_temp.data(), maxTextLength, "%s (pitchbend)", menuItemText);
 								break;
 							case dfx::MidiEventType::Note:
-								snprintf(menuItemText_temp, maxTextLength, "%s (notes %s - %s)", menuItemText, dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum), dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2));
+								snprintf(menuItemText_temp.data(), maxTextLength, "%s (notes %s - %s)", menuItemText, dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum), dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2));
 								break;
 							default:
 								break;
 						}
-						if (strlen(menuItemText_temp) > 0)
+						if (strlen(menuItemText_temp.data()) > 0)
 						{
-							menuItemText = menuItemText_temp;
+							menuItemText = menuItemText_temp.data();
 						}
 					}
 					break;
@@ -1672,6 +1674,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 					break;
 #endif
 				default:
+					assert(false);
 					break;
 			}
 			if (isFirstItemOfSubgroup)
@@ -1762,6 +1765,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 				menuItemText = "Open " PLUGIN_CREATOR_NAME_STRING " web site";
 				break;
 			default:
+				assert(false);
 				break;
 		}
 		if (isFirstItemOfSubgroup)
@@ -2081,6 +2085,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 				break;
 #endif
 			default:
+				assert(false);
 				break;
 		}
 	}
@@ -2452,7 +2457,7 @@ void DfxGuiEditor::GetControlIndexFromPoint(long inXpos, long inYpos, long* outC
 	CPoint const point(inXpos, inYpos);
 	for (auto const& control : mControlsList)
 	{
-		auto const& controlBounds = control->getCControl()->getViewSize();
+		auto const& controlBounds = control->asCControl()->getViewSize();
 		if (point.isInside(controlBounds))
 		{
 			*outControlIndex = dfx::ParameterID_ToRTAS(control->getParameterID());
@@ -2511,7 +2516,7 @@ void DfxGuiEditor::drawControlHighlight(CDrawContext* inContext, CControl* inCon
 			highlightColor = MakeCColor(255, 204, 0);
 			break;
 		default:
-			assert(false)
+			assert(false);
 			return;
 	}
 

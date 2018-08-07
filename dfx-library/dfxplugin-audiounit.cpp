@@ -566,6 +566,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					break;
 				}
 				default:
+					assert(false);
 					status = paramErr;
 					break;
 			}
@@ -907,6 +908,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 					break;
 				}
 				default:
+					assert(false);
 					status = paramErr;
 					break;
 			}

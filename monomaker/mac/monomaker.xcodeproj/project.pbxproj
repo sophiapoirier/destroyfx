@@ -144,6 +144,8 @@
 		B04621ED08C4E7F200C3D95E /* pan-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pan-mode-button.png"; sourceTree = "<group>"; };
 		EC390FF420CCAA8400A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC40EDB120DB4B9C00F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
+		EC63C981210EE619006279D2 /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
+		EC63C982210EE619006279D2 /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
 		EC89B2E4208D289E00E15129 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC89B2E5208D289F00E15129 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC89B2E6208D289F00E15129 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -361,7 +363,9 @@
 				EC89B42E208D321E00E15129 /* dfxgui-base.h */,
 				B04620A908C4B42100C3D95E /* dfxguieditor.h */,
 				B04620A808C4B42100C3D95E /* dfxguieditor.cpp */,
+				EC63C981210EE619006279D2 /* idfxguicontrol.h */,
 				B04620AD08C4B42100C3D95E /* dfxguicontrol.h */,
+				EC63C982210EE619006279D2 /* dfxguicontrol.hpp */,
 				B04620AC08C4B42100C3D95E /* dfxguicontrol.cpp */,
 				EC89B42F208D321E00E15129 /* dfxguidialog.h */,
 				EC89B42D208D321D00E15129 /* dfxguidialog.cpp */,

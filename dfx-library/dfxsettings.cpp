@@ -178,7 +178,7 @@ std::vector<uint8_t> DfxSettings::save(bool inIsPreset)
 	// store only one preset setting if inIsPreset is true
 	if (inIsPreset)
 	{
-		memset(firstSharedPreset->mName, 0, sizeof(firstSharedPreset->mName));
+		std::fill_n(firstSharedPreset->mName, std::size(firstSharedPreset->mName), 0);
 		mPlugin->getpresetname(mPlugin->getcurrentpresetnum(), firstSharedPreset->mName);
 		for (long i = 0; i < mNumParameters; i++)
 		{

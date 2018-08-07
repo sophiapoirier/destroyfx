@@ -159,6 +159,8 @@
 		B0AD80E10D0F316F00766C78 /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
 		EC390FF620CCAAFB00A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC40EDB520DB4BD500F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
+		EC63C983210EE62D006279D2 /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
+		EC63C984210EE62D006279D2 /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
 		EC89B2F2208D28E600E15129 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC89B2F3208D28E600E15129 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC89B2F4208D28E600E15129 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -422,7 +424,9 @@
 				EC89B47B208D33D500E15129 /* dfxgui-base.h */,
 				4932F4E1068011C9006A9591 /* dfxguieditor.h */,
 				4932F4E0068011C9006A9591 /* dfxguieditor.cpp */,
+				EC63C983210EE62D006279D2 /* idfxguicontrol.h */,
 				4932F4E5068011C9006A9591 /* dfxguicontrol.h */,
+				EC63C984210EE62D006279D2 /* dfxguicontrol.hpp */,
 				4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */,
 				EC89B47C208D33D500E15129 /* dfxguidialog.h */,
 				EC89B47A208D33D400E15129 /* dfxguidialog.cpp */,

@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxenvelope.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 #include "dfxmath.h"
@@ -171,8 +172,11 @@ double DfxEnvelope::process()
 			break;
 
 		case State::Dormant:
-		default:
 			outputValue = 0.0;
+			break;
+
+		default:
+			assert(false);
 			break;
 	}
 

@@ -83,7 +83,7 @@ public:
 		mCurrentOut = (inSample * mInCoeff) + (mPrevIn * mPrevInCoeff) + (mPrevPrevIn * mPrevPrevInCoeff) 
 						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
 #endif
-		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
 
 		mPrevPrevIn = mPrevIn;
 		mPrevIn = inSample;
@@ -106,7 +106,7 @@ public:
 		// XXX this uses an optimization that only works for LP, HP, and notch filters
 		mCurrentOut = ((inSample + mPrevPrevIn) * mInCoeff) + (mPrevIn * mPrevInCoeff)
 						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
-		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
 		//
 		mPrevPrevIn = mPrevIn;
 		mPrevIn = inSample;
@@ -130,7 +130,7 @@ public:
 		mCurrentOut = ((in1 + mPrevIn) * mInCoeff) + (in0 * mPrevInCoeff)
 						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
 		//
-		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
 		mPrevPrevIn = in0;
 		mPrevIn = in1;
 	}
@@ -150,7 +150,7 @@ public:
 					- (mPrevPrevOut * mPrevOutCoeff) - (mPrevPrevPrevOut * mPrevPrevOutCoeff);
 		//
 		mCurrentOut = mPrevOut;
-		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
 		mPrevOut = mPrevPrevOut;
 		mPrevPrevOut = mPrevPrevPrevOut;
 		mPrevPrevPrevOut = mCurrentOut;
@@ -175,7 +175,7 @@ public:
 					- (mPrevPrevOut * mPrevOutCoeff) - (mPrevPrevPrevOut * mPrevPrevOutCoeff);
 		mCurrentOut = ((in3 + in1) * mInCoeff) + (in2 * mPrevInCoeff)
 						- (mPrevOut * mPrevOutCoeff) - (mPrevPrevOut * mPrevPrevOutCoeff);
-		mCurrentOut = dfx::math::ClampDenormalValue(mCurrentOut);
+		mCurrentOut = dfx::math::ClampDenormal(mCurrentOut);
 		//
 		mPrevPrevIn = in2;
 		mPrevIn = in3;
