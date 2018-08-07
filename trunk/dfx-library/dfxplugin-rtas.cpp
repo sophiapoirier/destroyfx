@@ -709,19 +709,19 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 //-----------------------------------------------------------------------------
 long DfxPlugin::SetControlValue(long inControlIndex, long inValue)
 {
-	return (long)CProcess::SetControlValue(inControlIndex, inValue);
+	return static_cast<long>(CProcess::SetControlValue(inControlIndex, inValue));
 }
 
 //-----------------------------------------------------------------------------
 long DfxPlugin::GetControlValue(long inControlIndex, long * outValue)
 {
-	return (long)CProcess::GetControlValue(inControlIndex, outValue);
+	return static_cast<long>(CProcess::GetControlValue(inControlIndex, outValue));
 }
 
 //-----------------------------------------------------------------------------
 long DfxPlugin::GetControlDefaultValue(long inControlIndex, long * outValue)
 {
-	return (long)CProcess::GetControlDefaultValue(inControlIndex, outValue);
+	return static_cast<long>(CProcess::GetControlDefaultValue(inControlIndex, outValue));
 }
 
 //-----------------------------------------------------------------------------
@@ -736,13 +736,13 @@ ComponentResult DfxPlugin::UpdateControlGraphic(long inControlIndex, long inValu
 //-----------------------------------------------------------------------------
 int DfxPlugin::ProcessTouchControl(long inControlIndex)
 {
-	return (int)CProcess::TouchControl(inControlIndex);
+	return static_cast<int>(CProcess::TouchControl(inControlIndex));
 }
 
 //-----------------------------------------------------------------------------
 int DfxPlugin::ProcessReleaseControl(long inControlIndex)
 {
-	return (int)CProcess::ReleaseControl(inControlIndex);
+	return static_cast<int>(CProcess::ReleaseControl(inControlIndex));
 }
 
 //-----------------------------------------------------------------------------
@@ -845,11 +845,11 @@ void DfxEffectGroup::CreateEffectTypes()
 //	for (UInt32 i=1; i <= EffectLayerDef::MAX_NUM_CONNECTIONS; i++)
 //	int maxNumChannels = SurroundFormatToNumChannels(ePlugIn_StemFormat_LastExplicitChoice);
 //	for (int i=1; i <= maxNumChannels; i++)
-	for (int i=(int)ePlugIn_StemFormat_FirstExplicitChoice-1; i <= (int)ePlugIn_StemFormat_LastExplicitChoice; i++)
+	for (int i = static_cast<int>(ePlugIn_StemFormat_FirstExplicitChoice) - 1; i <= static_cast<int>(ePlugIn_StemFormat_LastExplicitChoice); i++)
 	{
 		effectTypeFourCharID = DFX_IterateAlphaNumericFourCharCode(effectTypeFourCharID);
 		CEffectType * effectType;
-		if (i < (int)ePlugIn_StemFormat_FirstExplicitChoice)
+		if (i < static_cast<int>(ePlugIn_StemFormat_FirstExplicitChoice))
 		{
 			effectType = new CEffectTypeAS(effectTypeFourCharID, PLUGIN_ID, PLUGIN_CATEGORY_RTAS);
 //			effectType->AddGestalt(pluginGestalt_MultiInputModeOnly);	// XXX I see no reason to require this?

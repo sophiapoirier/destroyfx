@@ -33,7 +33,7 @@ public:
 
 	long OpenEditor() override;
 	void parameterChanged(long inParameterID) override;
-	void mouseovercontrolchanged(DGControl* currentControlUnderMouse) override;
+	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:
 	DGSlider* mBufferSizeSlider = nullptr;

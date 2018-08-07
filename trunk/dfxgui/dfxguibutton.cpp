@@ -34,8 +34,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
 				   long inNumStates, Mode inMode, bool inDrawMomentaryState)
-:	CControl(inRegion, inOwnerEditor, inParamID, inImage), 
-	DGControl(this, inOwnerEditor), 
+:	DGControl<CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
 	mNumStates(std::max(inNumStates, 1L)), 
 	mMode(inMode), 
 	mDrawMomentaryState(inDrawMomentaryState)
@@ -398,8 +397,7 @@ DGFineTuneButton::DGFineTuneButton(DfxGuiEditor*	inOwnerEditor,
 									DGRect const&	inRegion,
 									DGImage*		inImage, 
 									float			inValueChangeAmount)
-:	CControl(inRegion, inOwnerEditor, inParameterID, inImage), 
-	DGControl(this, inOwnerEditor), 
+:	DGControl<CControl>(inRegion, inOwnerEditor, inParameterID, inImage), 
 	mValueChangeAmount(inValueChangeAmount)
 {
 }
@@ -505,8 +503,7 @@ DGValueSpot::DGValueSpot(DfxGuiEditor*	inOwnerEditor,
 						 DGRect const&	inRegion, 
 						 DGImage*		inImage, 
 						 double			inValue)
-:	CControl(inRegion, inOwnerEditor, inParamID, inImage), 
-	DGControl(this, inOwnerEditor), 
+:	DGControl<CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
 	mValueToSet(inOwnerEditor->dfxgui_ContractParameterValue(inParamID, inValue))
 {
 	setTransparency(true);
@@ -674,8 +671,7 @@ CMouseEventResult DGWebLink::onMouseUp(CPoint& inPos, CButtonState const& /*inBu
 DGSplashScreen::DGSplashScreen(DfxGuiEditor*	inOwnerEditor,
 							   DGRect const&	inClickRegion, 
 							   DGImage*			inSplashImage)
-:	CSplashScreen(inClickRegion, inOwnerEditor, dfx::kParameterID_Invalid, inSplashImage, inClickRegion), 
-	DGControl(this, inOwnerEditor)
+:	DGControl<CSplashScreen>(inClickRegion, inOwnerEditor, dfx::kParameterID_Invalid, inSplashImage, inClickRegion)
 {
 	setTransparency(true);
 	setBackOffset(inClickRegion.getTopLeft());

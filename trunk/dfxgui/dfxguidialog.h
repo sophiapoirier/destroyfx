@@ -112,6 +112,8 @@ public:
 
 	long getParameterID() const noexcept;
 
+	CLASS_METHODS(DGTextEntryDialog, DGDialog)
+
 private:
 	long const mParameterID;
 	CTextEdit* mTextEdit = nullptr;

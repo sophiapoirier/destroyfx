@@ -35,7 +35,7 @@ typedef void (*DGButtonUserProcedure) (long inValue, void* inUserData);
 
 
 //-----------------------------------------------------------------------------
-class DGButton : public CControl, public DGControl
+class DGButton : public DGControl<CControl>
 {
 public:
 	enum class Mode
@@ -103,7 +103,7 @@ protected:
 
 
 //-----------------------------------------------------------------------------
-class DGFineTuneButton : public CControl, public DGControl
+class DGFineTuneButton : public DGControl<CControl>
 {
 public:
 	DGFineTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
@@ -125,7 +125,7 @@ protected:
 
 
 //-----------------------------------------------------------------------------
-class DGValueSpot : public CControl, public DGControl
+class DGValueSpot : public DGControl<CControl>
 {
 public:
 	DGValueSpot(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, double inValue);
@@ -168,7 +168,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-class DGSplashScreen : public CSplashScreen, public DGControl
+class DGSplashScreen : public DGControl<CSplashScreen>
 {
 public:
 	DGSplashScreen(DfxGuiEditor* inOwnerEditor, DGRect const& inClickRegion, DGImage* inSplashImage);

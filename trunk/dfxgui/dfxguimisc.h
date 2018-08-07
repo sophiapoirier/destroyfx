@@ -34,9 +34,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxgui-base.h"
 
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
-#include "vstgui.h"
+	#pragma clang diagnostic ignored "-Wunused-parameter"
+	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
+	#include "vstgui.h"
 #pragma clang diagnostic pop
 
 #if TARGET_OS_MAC

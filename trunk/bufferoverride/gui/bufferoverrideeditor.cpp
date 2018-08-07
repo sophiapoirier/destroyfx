@@ -433,7 +433,7 @@ long BufferOverrideEditor::OpenEditor()
 
 	// the help mouseover hint thingy
 	pos.set(kHelpDisplayX, kHelpDisplayY, GetBackgroundImage()->getWidth(), kDisplayHeight);
-	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
+	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
 
 
 	return dfx::kStatus_NoError;
@@ -481,7 +481,7 @@ void BufferOverrideEditor::parameterChanged(long inParameterID)
 
 
 //-----------------------------------------------------------------------------
-void BufferOverrideEditor::mouseovercontrolchanged(DGControl* currentControlUnderMouse)
+void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse)
 {
 	if (!mHelpDisplay)
 	{
