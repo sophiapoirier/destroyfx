@@ -24,43 +24,47 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
+#include <type_traits>
+
 #include "dfxguimisc.h"
+#include "idfxguicontrol.h"
 
 
 
 //-----------------------------------------------------------------------------
-class DfxGuiEditor;
-
-
-
-#ifdef TARGET_PLUGIN_USES_VSTGUI
-
-//-----------------------------------------------------------------------------
-class DGControl
+template <class T>
+class DGControl : public IDGControl, public T
 {
-public:
-	DGControl(CControl* inControl, DfxGuiEditor* inOwnerEditor);
+	static_assert(std::is_base_of<CControl, T>::value);
 
-	CControl* getCControl() const noexcept
+public:
+	template <typename... Args>
+	DGControl(Args&&... args);
+
+	VSTGUI::CControl* asCControl() final
 	{
-		return mControl;
+		return dynamic_cast<VSTGUI::CControl*>(this);
 	}
-	DfxGuiEditor* getOwnerEditor() const noexcept
+	VSTGUI::CControl const* asCControl() const final
+	{
+		return dynamic_cast<VSTGUI::CControl const*>(this);
+	}
+	DfxGuiEditor* getOwnerEditor() const noexcept final
 	{
 		return mOwnerEditor;
 	}
 
-	void setValue_gen(float inValue);
-	void setDefaultValue_gen(float inValue);
-	void redraw();
-	long getParameterID() const;
-	void setParameterID(long inParameterID);
-	bool isParameterAttached() const;
+	void setValue_gen(float inValue) final;
+	void setDefaultValue_gen(float inValue) final;
+	void redraw() final;
+	long getParameterID() const final;
+	void setParameterID(long inParameterID) final;
+	bool isParameterAttached() const final;
 
-	void setDrawAlpha(float inAlpha);
-	float getDrawAlpha() const;
+	void setDrawAlpha(float inAlpha) final;
+	float getDrawAlpha() const final;
 
-	bool setHelpText(char const* inText);
+	bool setHelpText(char const* inText) final;
 #if TARGET_OS_MAC
 	bool setHelpText(CFStringRef inText);
 #endif
@@ -81,28 +85,29 @@ protected:
 	}
 
 private:
-	CControl* const mControl;
 	DfxGuiEditor* const mOwnerEditor;
 
 	bool wraparoundValues = false;
 };
 
+#include "dfxguicontrol.hpp"
+
 
 
 //-----------------------------------------------------------------------------
-class DGNullControl : public CControl, public DGControl
+class DGNullControl : public DGControl<VSTGUI::CControl>
 {
 public:
 	DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage = nullptr);
 
 	void draw(CDrawContext* inContext) override;
 
-	CLASS_METHODS(DGNullControl, CControl);
+	CLASS_METHODS(DGNullControl, VSTGUI::CControl)
 };
 
-#else  // !TARGET_PLUGIN_USES_VSTGUI
 
 
+#if 0
 
 //-----------------------------------------------------------------------------
 class DGControl : public CControl
@@ -131,10 +136,6 @@ public:
 	bool do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
 	virtual bool mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
 
-	void setRespondToMouseWheel(bool inMouseWheelPolicy)
-	{	shouldRespondToMouseWheel = inMouseWheelPolicy;	}
-	bool getRespondToMouseWheel() const
-	{	return shouldRespondToMouseWheel;	}
 	void setWraparoundValues(bool inWraparoundPolicy)
 	{	shouldWraparoundValues = inWraparoundPolicy;	}
 	bool getWraparoundValues() const
@@ -155,11 +156,8 @@ public:
 private:
 	bool				isContinuous = false;
 	float				mouseDragRange = kDefaultMouseDragRange;  // the range of pixels over which you can drag the mouse to adjust the control value
-	bool				shouldRespondToMouseWheel = true;
 	bool				currentlyIgnoringMouseTracking = false;
 	bool				shouldWraparoundValues = false;
 };
 
-
-
-#endif	// !TARGET_PLUGIN_USES_VSTGUI
+#endif

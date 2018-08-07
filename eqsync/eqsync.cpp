@@ -212,7 +212,7 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 			// audio output section -- outputs the latest sample
 			auto const inputValue = inAudio[ch][sampleCount];  // because Cubase inserts are goofy
 			float outputValue = (inputValue * mA0) + (mPrevIn[ch] * mA1) + (mPrevPrevIn[ch] * mA2) - (mPrevOut[ch] * mB1) - (prevprevOut[ch] * mB2);
-			outputValue = dfx::math::ClampDenormalValue(outputValue);
+			outputValue = dfx::math::ClampDenormal(outputValue);
 
 		#ifdef TARGET_API_VST
 			if (!replacing)

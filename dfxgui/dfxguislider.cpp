@@ -23,21 +23,22 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguislider.h"
 
+#include "dfxguieditor.h"
+
 
 //-----------------------------------------------------------------------------
 DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
 				   dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage, long inRangeMargin)
-:	CSlider(inRegion, 
-			inOwnerEditor, 
-			inParamID, 
-			CPoint((inOrientation & dfx::kAxis_Horizontal) ? inRangeMargin : 0, 
-				   (inOrientation & dfx::kAxis_Vertical) ? inRangeMargin : 0), 
-			(inOrientation & dfx::kAxis_Horizontal) ? (inRegion.getWidth() - (inRangeMargin * 2)) : (inRegion.getHeight() - (inRangeMargin * 2)), 
-			inHandleImage, 
-			inBackgroundImage, 
-			CPoint(0, 0), 
-			(inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical)), 
-	DGControl(this, inOwnerEditor)
+:	DGControl<CSlider>(inRegion, 
+					   inOwnerEditor, 
+					   inParamID, 
+					   CPoint((inOrientation & dfx::kAxis_Horizontal) ? inRangeMargin : 0, 
+							  (inOrientation & dfx::kAxis_Vertical) ? inRangeMargin : 0), 
+					   (inOrientation & dfx::kAxis_Horizontal) ? (inRegion.getWidth() - (inRangeMargin * 2)) : (inRegion.getHeight() - (inRangeMargin * 2)), 
+					   inHandleImage, 
+					   inBackgroundImage, 
+					   CPoint(0, 0), 
+					   (inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical))
 {
 	setTransparency(true);
 	if (!inBackgroundImage)
@@ -89,9 +90,8 @@ DGAnimation::DGAnimation(DfxGuiEditor*	inOwnerEditor,
 						 DGImage*		inAnimationImage, 
 						 long			inNumAnimationFrames, 
 						 DGImage*		inBackground)
-:	CAnimKnob(inRegion, inOwnerEditor, inParamID, 
-			  inNumAnimationFrames, inRegion.getHeight(), inAnimationImage), 
-	DGControl(this, inOwnerEditor)
+:	DGControl<CAnimKnob>(inRegion, inOwnerEditor, inParamID, 
+						 inNumAnimationFrames, inRegion.getHeight(), inAnimationImage)
 {
 	setTransparency(true);
 	if (!inBackground)

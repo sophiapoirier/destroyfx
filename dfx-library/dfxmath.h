@@ -106,12 +106,12 @@ constexpr T MagnitudeMax(T inValue1, T inValue2)
 }
 
 //-----------------------------------------------------------------------------
-//inline void Undenormalize(float& ioValue) { if (std::fabs(ioValue) < 1.0e-15f) ioValue = 0.0f; }
-//inline void Undenormalize(float& ioValue) { if (((*reinterpret_cast<unsigned int*>(&ioValue)) & 0x7f800000) == 0) ioValue = 0.0f; }
+//static inline void Undenormalize(float& ioValue) { if (std::fabs(ioValue) < 1.0e-15f) ioValue = 0.0f; }
+//static inline void Undenormalize(float& ioValue) { if (((*reinterpret_cast<unsigned int*>(&ioValue)) & 0x7f800000) == 0) ioValue = 0.0f; }
 
 //-----------------------------------------------------------------------------
 template <typename T>
-constexpr T ClampDenormalValue(T inValue)
+constexpr T ClampDenormal(T inValue)
 {
 	static_assert(std::is_floating_point_v<T>);
 #ifndef TARGET_API_AUDIOUNIT  // the AU SDK handles denormals for us
@@ -222,7 +222,7 @@ constexpr float InterpolateLinear(float inValue1, float inValue2, double inAddre
 
 //-----------------------------------------------------------------------------
 template <typename T>
-inline T InterpolateRandom(T inMinValue, T inMaxValue)
+T InterpolateRandom(T inMinValue, T inMaxValue)
 {
 	static_assert(std::is_floating_point_v<T>);
 	return ((inMaxValue - inMinValue) * Rand<T>()) + inMinValue;
@@ -231,7 +231,7 @@ inline T InterpolateRandom(T inMinValue, T inMaxValue)
 //-----------------------------------------------------------------------------
 // computes the principle branch of the Lambert W function
 // { LambertW(x) = W(x), where W(x) * exp(W(x)) = x }
-inline double LambertW(double inValue)
+static inline double LambertW(double inValue)
 {
 	auto const x = std::fabs(inValue);
 	if (x <= 500.0)

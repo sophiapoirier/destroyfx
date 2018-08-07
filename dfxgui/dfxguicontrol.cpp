@@ -23,100 +23,15 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguicontrol.h"
 
-#include "dfxguieditor.h"
 #include "dfxmisc.h"
 
 
 
-#ifdef TARGET_PLUGIN_USES_VSTGUI
-
-//-----------------------------------------------------------------------------
-DGControl::DGControl(CControl* inControl, DfxGuiEditor* inOwnerEditor)
-:	mControl(inControl),
-	mOwnerEditor(inOwnerEditor) 
-{
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::setValue_gen(float inValue)
-{
-	getCControl()->setValue(inValue);
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::setDefaultValue_gen(float inValue)
-{
-	getCControl()->setDefaultValue(inValue);
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::redraw()
-{
-//	getCControl()->invalid(); // XXX CView::invalid calls setDirty(false), which can have undesired consequences for control value handling
-	getCControl()->invalidRect(getCControl()->getViewSize());
-}
-
-//-----------------------------------------------------------------------------
-long DGControl::getParameterID() const
-{
-	return getCControl()->getTag();
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::setParameterID(long inParameterID)
-{
-	getCControl()->setTag(inParameterID);
-	getCControl()->setValue(mOwnerEditor->getparameter_gen(inParameterID));
-	getCControl()->setDirty();  // it might not happen if the new parameter value is the same as the old value, so make sure it happens
-}
-
-//-----------------------------------------------------------------------------
-bool DGControl::isParameterAttached() const
-{
-	return (getParameterID() >= 0);
-}
-
-//-----------------------------------------------------------------------------
-void DGControl::setDrawAlpha(float inAlpha)
-{
-	getCControl()->setAlphaValue(inAlpha);
-}
-
-//-----------------------------------------------------------------------------
-float DGControl::getDrawAlpha() const
-{
-	return getCControl()->getAlphaValue();
-}
-
-//-----------------------------------------------------------------------------
-bool DGControl::setHelpText(char const* inText)
-{
-	assert(inText);
-	return getCControl()->setAttribute(kCViewTooltipAttribute, strlen(inText) + 1, inText);
-}
-
-#if TARGET_OS_MAC
-//-----------------------------------------------------------------------------
-bool DGControl::setHelpText(CFStringRef inText)
-{
-	assert(inText);
-	if (auto const cString = dfx::CreateCStringFromCFString(inText))
-	{
-		return setHelpText(cString.get());
-	}
-	return false;
-}
-#endif
-
-
-
-#pragma mark -
 #pragma mark DGNullControl
 
 //-----------------------------------------------------------------------------
 DGNullControl::DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage)
-:	CControl(inRegion, inOwnerEditor, dfx::kParameterID_Invalid, inBackgroundImage), 
-	DGControl(this, inOwnerEditor)
+:	DGControl<CControl>(inRegion, inOwnerEditor, dfx::kParameterID_Invalid, inBackgroundImage)
 {
 	setMouseEnabled(false);
 }
@@ -124,16 +39,16 @@ DGNullControl::DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion
 //-----------------------------------------------------------------------------
 void DGNullControl::draw(CDrawContext* inContext)
 {
-	if (getDrawBackground())
+	if (auto const image = getDrawBackground())
 	{
-		getDrawBackground()->draw(inContext, getViewSize());
+		image->draw(inContext, getViewSize());
 	}
 	setDirty(false);
 }
 
-#else  // !TARGET_PLUGIN_USES_VSTGUI
 
 
+#if 0
 
 #pragma mark -
 #pragma mark DGControl old
@@ -228,8 +143,6 @@ void DGControl::do_mouseUp(float inXpos, float inYpos, KeyModifiers inKeyModifie
 //-----------------------------------------------------------------------------
 bool DGControl::do_mouseWheel(long inDelta, dfx::Axis inAxis, KeyModifiers inKeyModifiers)
 {
-	if (!getRespondToMouseWheel())
-		return false;
 	if (!getMouseEnabled())
 		return false;
 
@@ -347,6 +260,4 @@ void DGBackgroundControl::setDragActive(bool inActiveStatus)
 		redraw();
 }
 
-
-
-#endif	// !TARGET_PLUGIN_USES_VSTGUI
+#endif

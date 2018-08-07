@@ -26,6 +26,7 @@ These are some generally useful functions.
 
 #include "dfxmisc.h"
 
+#include <algorithm>
 #include <stdio.h>
 
 #include "dfxdefines.h"
@@ -286,7 +287,7 @@ std::unique_ptr<char[]> CreateCStringFromCFString(CFStringRef inCFString, CFStri
 	auto outputString = std::make_unique<char[]>(stringBufferSize);
 	if (outputString)
 	{
-		memset(outputString.get(), 0, stringBufferSize);
+		std::fill_n(outputString.get(), stringBufferSize, 0);
 		auto const stringSuccess = CFStringGetCString(inCFString, outputString.get(), stringBufferSize, inCStringEncoding);
 		if (!stringSuccess)
 		{

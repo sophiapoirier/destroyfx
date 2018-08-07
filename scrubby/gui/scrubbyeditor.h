@@ -31,11 +31,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 class ScrubbyHelpBox : public DGStaticTextDisplay
 {
 public:
-	ScrubbyHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackground);
+	ScrubbyHelpBox(DGRect const& inRegion, DGImage* inBackground);
 
 	void draw(CDrawContext* inContext) override;
 
 	void setDisplayItem(long inItemNum);
+
+	CLASS_METHODS(ScrubbyHelpBox, DGStaticTextDisplay)
 
 private:
 	long mItemNum;
@@ -50,7 +52,7 @@ public:
 
 	long OpenEditor() override;
 	void parameterChanged(long inParameterID) override;
-	void mouseovercontrolchanged(DGControl* currentControlUnderMouse) override;
+	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 	void numAudioChannelsChanged(unsigned long inNewNumChannels) override;
 
 	void HandleNotesButton(long inNotesButtonType);
@@ -65,5 +67,5 @@ private:
 	ScrubbyHelpBox* mHelpBox = nullptr;
 	std::vector<DGButton*> mNotesButtons;
 	DGButton* mMidiLearnButton = nullptr, * mMidiResetButton = nullptr;
-	DGControl* mTitleArea = nullptr;
+	IDGControl* mTitleArea = nullptr;
 };

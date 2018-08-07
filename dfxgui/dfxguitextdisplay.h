@@ -28,11 +28,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <string>
 #include <vector>
 
-#include "dfxguieditor.h"
+#include "dfxguicontrol.h"
 
 
 //-----------------------------------------------------------------------------
-class DGTextDisplay : public CTextEdit, public DGControl
+class DGTextDisplay : public DGControl<CTextEdit>
 {
 public:
 	static constexpr size_t kTextMaxLength = 256;
@@ -84,10 +84,10 @@ protected:
 
 #pragma mark -
 //-----------------------------------------------------------------------------
-class DGStaticTextDisplay : public CTextLabel, public DGControl
+class DGStaticTextDisplay : public DGControl<CTextLabel>
 {
 public:
-	DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
+	DGStaticTextDisplay(DGRect const& inRegion, DGImage* inBackgroundImage, 
 						dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
 						DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
 
@@ -116,6 +116,8 @@ public:
 
 	using CTextEdit::setText;
 	void setText(long inStringNum, char const* inText);
+
+	CLASS_METHODS(DGTextArrayDisplay, DGTextDisplay)
 
 protected:
 	std::vector<std::string> mDisplayStrings;

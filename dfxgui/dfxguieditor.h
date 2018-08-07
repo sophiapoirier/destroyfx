@@ -33,8 +33,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxdefines.h"
 #include "dfxgui-base.h"
-#include "dfxguicontrol.h"
-#include "dfxguidialog.h"
 #include "dfxguimisc.h"
 #include "dfxmisc.h"
 #include "dfxplugin-base.h"
@@ -95,6 +93,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
+class IDGControl;
 class DGButton;
 
 
@@ -147,17 +146,18 @@ public:
 	virtual void HandleAUPropertyChange(void* inObject, AudioUnitProperty inAUProperty, UInt64 inEventHostTime) {}
 #endif
 
-	void addControl(DGControl* inCtrl);
+	void addControl(IDGControl* inCtrl);
 	// in-place constructor variant that instantiates the control in addition to adding it
 	template <typename T, typename... Args>
 	T* emplaceControl(Args&&... args)
 	{
-		static_assert(std::is_base_of<DGControl, T>::value);
+		static_assert(std::is_base_of<IDGControl, T>::value);
+		static_assert(std::is_base_of<CControl, T>::value);
 		auto const control = new T(std::forward<Args>(args)...);
 		addControl(control);
 		return control;
 	}
-	void removeControl(DGControl* inControl);
+	void removeControl(IDGControl* inControl);
 	long GetWidth();
 	long GetHeight();
 	auto GetBackgroundImage() const noexcept
@@ -195,9 +195,9 @@ public:
 	{
 		return mCurrentControl_mouseover;
 	}
-	void setCurrentControl_mouseover(DGControl* inNewMousedOverControl);
+	void setCurrentControl_mouseover(IDGControl* inNewMousedOverControl);
 	// override this if you want your GUI to react when the mouseovered control changes
-	virtual void mouseovercontrolchanged(DGControl* currentControlUnderMouse) {}
+	virtual void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) {}
 	// IMouseObserver overrides
 	void onMouseEntered(CView* inView, CFrame* inFrame) override;
 	void onMouseExited(CView* inView, CFrame* inFrame) override;
@@ -291,7 +291,7 @@ public:
 	unsigned long getNumAudioChannels();
 
 protected:
-	std::vector<DGControl*> mControlsList;
+	std::vector<IDGControl*> mControlsList;
 
 private:
 	bool handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons);
@@ -299,13 +299,13 @@ private:
 	long copySettings();
 	long pasteSettings(bool* inQueryPastabilityOnly = nullptr);
 
-	void addMousedOverControl(DGControl* inMousedOverControl);
-	void removeMousedOverControl(DGControl* inMousedOverControl);
+	void addMousedOverControl(IDGControl* inMousedOverControl);
+	void removeMousedOverControl(IDGControl* inMousedOverControl);
 
-	DGControl* mCurrentControl_clicked = nullptr;
-	DGControl* mCurrentControl_mouseover = nullptr;
+	IDGControl* mCurrentControl_clicked = nullptr;
+	IDGControl* mCurrentControl_mouseover = nullptr;
 
-	std::list<DGControl*> mMousedOverControlsList;
+	std::list<IDGControl*> mMousedOverControlsList;
 
 	SharedPointer<DGImage> mBackgroundImage;
 
