@@ -52,21 +52,27 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-template <typename T, typename DeleterReturnType = void>
-class UniqueOpaqueType : public std::unique_ptr<typename std::remove_pointer_t<T>, DeleterReturnType(*)(T)>
+namespace detail
 {
-public:
-	using std::unique_ptr<typename std::remove_pointer_t<T>, DeleterReturnType(*)(T)>::unique_ptr;
-};
+	template <typename T, auto D>
+	struct UniqueOpaqueTypeDeleter
+	{
+		static_assert(std::is_pointer_v<T>);
+		static_assert(std::is_invocable_v<decltype(D), T>);
+		void operator()(T object) { D(object); }
+	};
+}
+template <typename T, auto D>
+using UniqueOpaqueType = std::unique_ptr<typename std::remove_pointer_t<T>, detail::UniqueOpaqueTypeDeleter<T, D>>;
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-template <typename T, typename D = void(*)(CFTypeRef)>
+template <typename T, typename D = detail::UniqueOpaqueTypeDeleter<T, CFRelease>>
 class UniqueCFType : public std::unique_ptr<typename std::remove_pointer_t<T>, D>
 {
 public:
 	UniqueCFType(T object = nullptr) noexcept
-	:	std::unique_ptr<typename std::remove_pointer_t<T>, D>(object, CFRelease)
+	:	std::unique_ptr<typename std::remove_pointer_t<T>, D>(object, D())
 	{
 	}
 };

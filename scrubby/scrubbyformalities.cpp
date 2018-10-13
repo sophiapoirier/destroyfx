@@ -147,7 +147,7 @@ mSineCount = 0;
 }
 
 //-----------------------------------------------------------------------------
-bool Scrubby::createbuffers()
+void Scrubby::createbuffers()
 {
 	// the number of samples in the maximum seek range, 
 	// dividing by the minimum seek rate for extra leeway while moving
@@ -166,8 +166,6 @@ bool Scrubby::createbuffers()
 	mMoveCount.assign(numChannels, 0);
 	mSeekCount.assign(numChannels, 0);
 	mNeedResync.assign(numChannels, false);
-
-	return true;
 }
 
 //-----------------------------------------------------------------------------

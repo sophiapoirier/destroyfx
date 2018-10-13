@@ -268,7 +268,7 @@ ComponentResult DfxPlugin::GetControlNameOfLength(long inParameterIndex, char * 
 			shortNameString = GetParameterShortName( dfx::ParameterID_FromRTAS(inParameterIndex) );
 		if (shortNameString != NULL)
 		{
-			strncpy(outName, shortNameString, inNameLength);
+			strlcpy(outName, shortNameString, inNameLength + 1);
 			outName[inNameLength] = 0;
 			if (outReverseHighlight != NULL)
 				*outReverseHighlight = false;	// XXX assume control is not to be highlighted
@@ -293,7 +293,7 @@ ComponentResult DfxPlugin::GetValueString(long inParameterIndex, long inValue, S
 		auto const shortValueString = GetParameterValueShortString(dfx::ParameterID_FromRTAS(inParameterIndex), inValue);
 		if (shortValueString != NULL)
 		{
-			strncpy((char*)(outValueString + 1), shortValueString, inMaxLength);
+			strlcpy((char*)(outValueString + 1), shortValueString, inMaxLength + 1);
 			outValueString[0] = ((signed)strlen(shortValueString) > inMaxLength) ? inMaxLength : strlen(shortValueString);
 			return noErr;
 		}

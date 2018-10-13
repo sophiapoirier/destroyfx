@@ -65,7 +65,7 @@ public:
   void process(float const* inAudio, float* outAudio, unsigned long inNumFrames, bool replacing = true) override;
   void reset() override;
   void processparameters() override;
-  bool createbuffers() override;
+  void createbuffers() override;
   void clearbuffers() override;
   void releasebuffers() override;
 

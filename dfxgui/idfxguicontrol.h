@@ -46,6 +46,8 @@ public:
 
 	virtual void setValue_gen(float inValue) = 0;
 	virtual void setDefaultValue_gen(float inValue) = 0;
+	virtual long getValue_i() = 0;
+	virtual void setValue_i(long inValue) = 0;
 	virtual void redraw() = 0;
 	virtual long getParameterID() const = 0;
 	virtual void setParameterID(long inParameterID) = 0;

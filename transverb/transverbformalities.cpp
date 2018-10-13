@@ -112,14 +112,12 @@ void TransverbDSP::reset() {
   filter2.setSampleRate(getsamplerate());
 }
 
-bool TransverbDSP::createbuffers() {
+void TransverbDSP::createbuffers() {
 
   MAXBUF = (int) (getparametermax_f(kBsize) * 0.001 * getsamplerate());
 
   buf1.assign(MAXBUF, 0.0f);
   buf2.assign(MAXBUF, 0.0f);
-
-  return true;
 }
 
 void TransverbDSP::clearbuffers() {

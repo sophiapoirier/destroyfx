@@ -241,26 +241,24 @@ bool DfxGuiEditor::open(void* inWindow)
 
 
 	mEditorOpenErr = OpenEditor();
-	if (mEditorOpenErr == dfx::kStatus_NoError)
-	{
-		mJustOpened = true;
-
-		// embed/activate every control
-		// XXX do this?
-//		for (auto& control : mControlsList)
-		{
-//			control->embed();  // XXX I removed this method, so any need to do this iteration?
-		}
-
-		// allow for anything that might need to happen after the above post-opening stuff is finished
-		post_open();
-
-		return true;
-	}
-	else
+	if (mEditorOpenErr != dfx::kStatus_NoError)
 	{
 		return false;
 	}
+
+	mJustOpened = true;
+
+	// embed/activate every control
+	// XXX do this?
+//	for (auto& control : mControlsList)
+	{
+//		control->embed();  // XXX I removed this method, so any need to do this iteration?
+	}
+
+	// allow for anything that might need to happen after the above post-opening stuff is finished
+	post_open();
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -286,13 +284,9 @@ void DfxGuiEditor::close()
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::IsOpen()
+bool DfxGuiEditor::IsOpen() const noexcept
 {
-	if (!frame)
-	{
-		return false;
-	}
-	return isOpen();
+	return (getFrame() && isOpen());
 }
 
 //-----------------------------------------------------------------------------
@@ -421,7 +415,7 @@ void DfxGuiEditor::addControl(IDGControl* inControl)
 			auto const parameterIndex_rtas = dfx::ParameterID_ToRTAS(parameterIndex);
 			long value_rtas {};
 			m_Process->GetControlValue(parameterIndex_rtas, &value_rtas);
-			inControl->setValue(ConvertToVSTValue(value_rtas));
+			inControl->setValue_gen(ConvertToVSTValue(value_rtas));
 			long defaultValue_rtas {};
 			m_Process->GetControlDefaultValue(parameterIndex_rtas, &defaultValue_rtas);  // VSTGUI: necessary for Alt+Click behavior
 			inControl->setDefaultValue_gen(ConvertToVSTValue(defaultValue_rtas));  // VSTGUI: necessary for Alt+Click behavior

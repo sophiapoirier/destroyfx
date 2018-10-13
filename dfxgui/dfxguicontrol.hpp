@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #include <cassert>
+#include <cmath>
 
 #include "dfxguieditor.h"
 #include "dfxmisc.h"
@@ -35,48 +36,104 @@ DGControl<T>::DGControl(Args&&... args)
 :	T(std::forward<Args>(args)...),
 	mOwnerEditor(dynamic_cast<DfxGuiEditor*>(T::getListener()))
 {
-	assert(asCControl()->getListener() ? (mOwnerEditor != nullptr) : true);
+	assert(T::getListener() ? (mOwnerEditor != nullptr) : true);
+	assert(isParameterAttached() ? (mOwnerEditor != nullptr) : true);
+
+	pullNumStatesFromParameter();
 }
 
 //-----------------------------------------------------------------------------
 template <class T>
 void DGControl<T>::setValue_gen(float inValue)
 {
-	asCControl()->setValue(inValue);
+	T::setValueNormalized(inValue);
 }
 
 //-----------------------------------------------------------------------------
 template <class T>
 void DGControl<T>::setDefaultValue_gen(float inValue)
 {
-	asCControl()->setDefaultValue(inValue);
+	T::setDefaultValue((inValue * T::getRange()) + T::getMin());
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+long DGControl<T>::getValue_i()
+{
+	assert(getNumStates() > 0);
+
+	auto const valueNormalized = T::getValueNormalized();
+	if (isParameterAttached())
+	{
+		return std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), valueNormalized));
+	}
+
+	auto const maxValue_f = static_cast<float>(getNumStates() - 1);
+	return static_cast<long>((valueNormalized * maxValue_f) + DfxParam::kIntegerPadding);
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGControl<T>::setValue_i(long inValue)
+{
+	assert(getNumStates() > 0);
+
+	float newValue_f = 0.0f;
+	if (isParameterAttached())
+	{
+		newValue_f = getOwnerEditor()->dfxgui_ContractParameterValue(getParameterID(), static_cast<float>(inValue));
+	}
+	else
+	{
+		auto const maxValue = getNumStates() - 1;
+		if (inValue >= maxValue)
+		{
+			newValue_f = 1.0f;
+		}
+		else if (inValue <= 0)
+		{
+			newValue_f = 0.0f;
+		}
+		else
+		{
+			float const maxValue_f = static_cast<float>(maxValue) + DfxParam::kIntegerPadding;
+			if (maxValue_f > 0.0f)  // avoid division by zero
+			{
+				newValue_f = static_cast<float>(inValue) / maxValue_f;
+			}
+		}
+	}
+
+	T::setValueNormalized(newValue_f);
+	T::bounceValue();
 }
 
 //-----------------------------------------------------------------------------
 template <class T>
 void DGControl<T>::redraw()
 {
-//	asCControl()->invalid(); // XXX CView::invalid calls setDirty(false), which can have undesired consequences for control value handling
-	asCControl()->invalidRect(asCControl()->getViewSize());
+//	T::invalid();  // XXX CView::invalid calls setDirty(false), which can have undesired consequences for control value handling
+	T::invalidRect(T::getViewSize());
 }
 
 //-----------------------------------------------------------------------------
 template <class T>
 long DGControl<T>::getParameterID() const
 {
-	return asCControl()->getTag();
+	return T::getTag();
 }
 
 //-----------------------------------------------------------------------------
 template <class T>
 void DGControl<T>::setParameterID(long inParameterID)
 {
-	asCControl()->setTag(inParameterID);
+	T::setTag(inParameterID);
+	pullNumStatesFromParameter();
 	if (mOwnerEditor)
 	{
-		asCControl()->setValue(mOwnerEditor->getparameter_gen(inParameterID));
+		setValue_gen(mOwnerEditor->getparameter_gen(inParameterID));
 	}
-	asCControl()->setDirty();
+	T::setDirty();
 }
 
 //-----------------------------------------------------------------------------
@@ -88,16 +145,31 @@ bool DGControl<T>::isParameterAttached() const
 
 //-----------------------------------------------------------------------------
 template <class T>
+void DGControl<T>::setNumStates(long inNumStates)
+{
+	if (inNumStates >= 0)
+	{
+		mNumStates = inNumStates;
+		T::setDirty();
+	}
+	else
+	{
+		assert(false);
+	}
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
 void DGControl<T>::setDrawAlpha(float inAlpha)
 {
-	asCControl()->setAlphaValue(inAlpha);
+	T::setAlphaValue(inAlpha);
 }
 
 //-----------------------------------------------------------------------------
 template <class T>
 float DGControl<T>::getDrawAlpha() const
 {
-	return asCControl()->getAlphaValue();
+	return T::getAlphaValue();
 }
 
 //-----------------------------------------------------------------------------
@@ -105,7 +177,7 @@ template <class T>
 bool DGControl<T>::setHelpText(char const* inText)
 {
 	assert(inText);
-	return asCControl()->setAttribute(kCViewTooltipAttribute, strlen(inText) + 1, inText);
+	return T::setAttribute(kCViewTooltipAttribute, strlen(inText) + 1, inText);
 }
 
 #if TARGET_OS_MAC
@@ -121,3 +193,20 @@ bool DGControl<T>::setHelpText(CFStringRef inText)
 	return false;
 }
 #endif
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGControl<T>::pullNumStatesFromParameter()
+{
+	if (isParameterAttached() && mOwnerEditor)
+	{
+		long numStates = 0;
+		auto const paramID = getParameterID();
+		if (mOwnerEditor->GetParameterValueType(paramID) != DfxParam::ValueType::Float)
+		{
+			auto const valueRange = mOwnerEditor->GetParameter_maxValue(paramID) - mOwnerEditor->GetParameter_minValue(paramID);
+			numStates = std::lround(valueRange) + 1;
+		}
+		setNumStates(numStates);
+	}
+}
