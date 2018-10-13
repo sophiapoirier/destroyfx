@@ -195,12 +195,7 @@ long DfxPlugin::do_initialize()
 	mIsInitialized = true;
 #endif
 
-	auto const buffersCreated = createbuffers();
-	if (!buffersCreated)
-	{
-		return dfx::kStatus_InitializationFailed;
-	}
-
+	createbuffers();
 	do_reset();
 
 	return dfx::kStatus_NoError;  // no error

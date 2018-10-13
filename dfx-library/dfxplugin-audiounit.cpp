@@ -1116,7 +1116,7 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	char tempname[dfx::kParameterNameMaxLength];
 	getparametername(inParameterID, tempname);
 	// then make sure to only copy as much as the ParameterInfo name C string can hold
-	strncpy(outParameterInfo.name, tempname, sizeof(outParameterInfo.name));
+	strlcpy(outParameterInfo.name, tempname, sizeof(outParameterInfo.name));
 	// in case the parameter name was dfx::kParameterNameMaxLength or longer, 
 	// make sure that the ParameterInfo name string is terminated
 	outParameterInfo.name[sizeof(outParameterInfo.name) - 1] = 0;

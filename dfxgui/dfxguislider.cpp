@@ -27,6 +27,21 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
+static CButtonState ConstrainButtons(CButtonState const& inButtons, long inNumStates)
+{
+	if (inNumStates > 0)
+	{
+		return inButtons & ~CControl::kZoomModifier;
+	}
+	return inButtons;
+}
+
+
+
+#pragma mark -
+#pragma mark DGSlider
+
+//-----------------------------------------------------------------------------
 DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
 				   dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage, long inRangeMargin)
 :	DGControl<CSlider>(inRegion, 
@@ -65,13 +80,34 @@ DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 
 #ifdef TARGET_API_RTAS
 //-----------------------------------------------------------------------------
-void DGSlider::draw(CDrawContext * inContext)
+void DGSlider::draw(CDrawContext* inContext)
 {
-	CSlider::draw(inContext);
+	Parent::draw(inContext);
 
 	getOwnerEditor()->drawControlHighlight(inContext, this);
 }
 #endif
+
+//-----------------------------------------------------------------------------
+CMouseEventResult DGSlider::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+{
+	DiscreteValueConstrainer const dvc(this);
+	return Parent::onMouseDown(inPos, ConstrainButtons(inButtons, getNumStates()));
+}
+
+//-----------------------------------------------------------------------------
+CMouseEventResult DGSlider::onMouseMoved(CPoint& inPos, CButtonState const& inButtons)
+{
+	DiscreteValueConstrainer const dvc(isEditing() ? this : nullptr);
+	return Parent::onMouseMoved(inPos, ConstrainButtons(inButtons, getNumStates()));
+}
+
+//-----------------------------------------------------------------------------
+CMouseEventResult DGSlider::onMouseUp(CPoint& inPos, CButtonState const& inButtons)
+{
+	DiscreteValueConstrainer const dvc(this);
+	return Parent::onMouseUp(inPos, ConstrainButtons(inButtons, getNumStates()));
+}
 
 
 
@@ -104,9 +140,9 @@ DGAnimation::DGAnimation(DfxGuiEditor*	inOwnerEditor,
 
 #ifdef TARGET_API_RTAS
 //------------------------------------------------------------------------
-void DGAnimation::draw(CDrawContext * inContext)
+void DGAnimation::draw(CDrawContext* inContext)
 {
-	CAnimKnob::draw(inContext);
+	Parent::draw(inContext);
 
 	getOwnerEditor()->drawControlHighlight(inContext, this);
 }
@@ -115,22 +151,25 @@ void DGAnimation::draw(CDrawContext * inContext)
 //------------------------------------------------------------------------
 CMouseEventResult DGAnimation::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
 {
+	DiscreteValueConstrainer const dvc(this);
 	mEntryMousePos = inPos;
-	return CAnimKnob::onMouseDown(inPos, inButtons);
+	return Parent::onMouseDown(inPos, ConstrainButtons(inButtons, getNumStates()));
 }
 
 //------------------------------------------------------------------------
 CMouseEventResult DGAnimation::onMouseMoved(CPoint& inPos, CButtonState const& inButtons)
 {
+	DiscreteValueConstrainer const dvc(isEditing() ? this : nullptr);
 	inPos = constrainMousePosition(inPos);
-	return CAnimKnob::onMouseMoved(inPos, inButtons);
+	return Parent::onMouseMoved(inPos, ConstrainButtons(inButtons, getNumStates()));
 }
 
 //------------------------------------------------------------------------
 CMouseEventResult DGAnimation::onMouseUp(CPoint& inPos, CButtonState const& inButtons)
 {
+	DiscreteValueConstrainer const dvc(this);
 	inPos = constrainMousePosition(inPos);
-	return CAnimKnob::onMouseUp(inPos, inButtons);
+	return Parent::onMouseUp(inPos, ConstrainButtons(inButtons, getNumStates()));
 }
 
 //------------------------------------------------------------------------

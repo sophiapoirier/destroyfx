@@ -111,11 +111,11 @@ DGColor DGColor::getSystem(System inSystemColorID)
 			else if ([inColor respondsToSelector:@selector(CGColor)])
 			{
 				// failure workaround: fill a bitmap context with the color to snoop it
-				dfx::UniqueOpaqueType<CGColorSpaceRef> const colorSpace(CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB), CGColorSpaceRelease);
+				dfx::UniqueOpaqueType<CGColorSpaceRef, CGColorSpaceRelease> const colorSpace(CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB));
 				if (colorSpace)
 				{
 					constexpr size_t width = 1, height = 1;
-					dfx::UniqueOpaqueType<CGContextRef> const bitmapContext(CGBitmapContextCreate(nullptr, width, height, 8, 0, colorSpace.get(), kCGImageAlphaPremultipliedLast), CGContextRelease);
+					dfx::UniqueOpaqueType<CGContextRef, CGContextRelease> const bitmapContext(CGBitmapContextCreate(nullptr, width, height, 8, 0, colorSpace.get(), kCGImageAlphaPremultipliedLast));
 					if (bitmapContext)
 					{
 						CGContextSetFillColorWithColor(bitmapContext.get(), inColor.CGColor);
@@ -172,16 +172,12 @@ DGColor DGColor::getSystem(System inSystemColorID)
 			return fromNSColorProperty(DFX_SELECTOR(controlAccentColor)).value_or(DGColor(0, 122, 255));
 		case System::AccentPressed:
 #if TARGET_OS_MAC
-			if ([NSColor respondsToSelector:@selector(controlAccentColor)] && [NSColor instancesRespondToSelector:@selector(colorWithSystemEffect:)])
+			if (@available(macOS 10_14, *))
 			{
 				#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_13_4)
 				constexpr NSInteger NSColorSystemEffectPressed = 1;
 				#endif
-				#pragma clang diagnostic push
-				#pragma clang diagnostic ignored "-Wobjc-method-access"
-				auto const color = fromNSColor([[NSColor controlAccentColor] colorWithSystemEffect:NSColorSystemEffectPressed]);
-				#pragma clang diagnostic pop
-				if (color)
+				if (auto const color = fromNSColor([[NSColor controlAccentColor] colorWithSystemEffect:NSColorSystemEffectPressed]))
 				{
 					return *color;
 				}

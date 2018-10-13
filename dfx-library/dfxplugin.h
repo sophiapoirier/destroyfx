@@ -258,10 +258,7 @@ public:
 	// the implementation will check to see whether or not the 
 	// buffers are already allocated and whether or not they need to 
 	// be destroyed and reallocated in a different size
-	virtual bool createbuffers()
-	{
-		return true;
-	}
+	virtual void createbuffers() {}
 	// ***
 	// override this if the plugin uses audio buffers and 
 	// ever requires the buffer contents to be zeroed 
@@ -1079,10 +1076,7 @@ public:
 	virtual void processparameters() {}
 
 	// ***
-	virtual bool createbuffers()
-	{
-		return true;
-	}
+	virtual void createbuffers() {}
 	// ***
 	virtual void clearbuffers() {}
 	// ***

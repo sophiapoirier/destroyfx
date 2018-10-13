@@ -251,7 +251,7 @@ bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, Df
 	{
 		if (editor->getparametervaluestring(inParameterID, outText)) //&& (strlen(outText) <= 3)
 		{
-			strncat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
+			strlcat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
 			return true;
 		}
 	}
@@ -282,13 +282,9 @@ bool octaveMinDisplayProc(float value, char* outText, void*)
 	auto const octaves = static_cast<long>(value);
 	if (octaves <= kOctave_MinValue)
 	{
-		strncpy(outText, "no min", DGTextDisplay::kTextMaxLength);
+		return strlcpy(outText, "no min", DGTextDisplay::kTextMaxLength) > 0;
 	}
-	else
-	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld", octaves) > 0;
-	}
-	return true;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld", octaves) > 0;
 }
 
 bool octaveMaxDisplayProc(float value, char* outText, void*)
@@ -296,17 +292,13 @@ bool octaveMaxDisplayProc(float value, char* outText, void*)
 	auto const octaves = static_cast<long>(value);
 	if (octaves >= kOctave_MaxValue)
 	{
-		strncpy(outText, "no max", DGTextDisplay::kTextMaxLength);
-		return true;
+		return strlcpy(outText, "no max", DGTextDisplay::kTextMaxLength) > 0;
 	}
-	else if (octaves == 0)
+	if (octaves == 0)
 	{
 		return snprintf(outText, DGTextDisplay::kTextMaxLength, "0") > 0;
 	}
-	else
-	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%+ld", octaves) > 0;
-	}
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%+ld", octaves) > 0;
 }
 
 bool tempoDisplayProc(float value, char* outText, void*)

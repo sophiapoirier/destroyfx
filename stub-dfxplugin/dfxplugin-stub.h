@@ -45,24 +45,6 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-// constants and helpfuls
-
-constexpr long kNumPresets = 16;
-
-// audio buffer size in seconds
-constexpr double kBufferSize_Seconds = 3.0;
-
-// the different states of the indexed parameter
-enum
-{
-	kIndexParamState1,
-	kIndexParamState2,
-	kIndexParamState3,
-	kNumIndexParamStates
-};
-
-
-//----------------------------------------------------------------------------- 
 class DfxStub : public DfxPlugin
 {
 public:
@@ -78,12 +60,24 @@ public:
 	void processaudio(float const* const* in, float** out, unsigned long inNumFrames, bool replacing = true) override;
 	void processparameters() override;
 
-	bool createbuffers() override;
+	void createbuffers() override;
 	void releasebuffers() override;
 	void clearbuffers() override;
 #endif
 
 private:
+	constexpr long kNumPresets = 16;
+	constexpr double kBufferSize_Seconds = 3.0;  // audio buffer size in seconds
+
+	// the different states of the indexed parameter
+	enum : long
+	{
+		kIndexParamState1,
+		kIndexParamState2,
+		kIndexParamState3,
+		kNumIndexParamStates
+	};
+
 	void initPresets();
 
 #if !TARGET_PLUGIN_USES_DSPCORE
@@ -96,7 +90,6 @@ private:
 	std::vector<std::vector<float>> buffers;  // a two-dimensional array of audio buffers
 	long bufferpos = 0;  // position in the buffer
 #endif
-
 };
 
 
@@ -110,7 +103,7 @@ public:
 	virtual ~DfxStubDSP();
 
 	void reset() override;
-	bool createbuffers() override;
+	void createbuffers() override;
 	void releasebuffers() override;
 	void clearbuffers() override;
 

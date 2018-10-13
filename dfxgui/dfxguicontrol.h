@@ -38,6 +38,8 @@ class DGControl : public IDGControl, public T
 	static_assert(std::is_base_of<CControl, T>::value);
 
 public:
+	using Parent = T;
+
 	template <typename... Args>
 	DGControl(Args&&... args);
 
@@ -49,6 +51,7 @@ public:
 	{
 		return dynamic_cast<VSTGUI::CControl const*>(this);
 	}
+
 	DfxGuiEditor* getOwnerEditor() const noexcept final
 	{
 		return mOwnerEditor;
@@ -56,10 +59,20 @@ public:
 
 	void setValue_gen(float inValue) final;
 	void setDefaultValue_gen(float inValue) final;
+	long getValue_i() final;
+	void setValue_i(long inValue) final;
+
 	void redraw() final;
+
 	long getParameterID() const final;
 	void setParameterID(long inParameterID) final;
 	bool isParameterAttached() const final;
+
+	long getNumStates() const noexcept
+	{
+		return mNumStates;
+	}
+	void setNumStates(long inNumStates);
 
 	void setDrawAlpha(float inAlpha) final;
 	float getDrawAlpha() const final;
@@ -75,19 +88,47 @@ protected:
 	//static constexpr float kDefaultMouseDragValueIncrement = 0.1f;
 	//static constexpr float kDefaultMouseDragValueIncrement_descrete = 15.0f;
 
+	class DiscreteValueConstrainer
+	{
+	public:
+		explicit DiscreteValueConstrainer(DGControl<T>* inControl)
+		:	mControl(inControl),
+			mEntryValue(inControl ? inControl->getValue() : 0.0f)
+		{
+		}
+		~DiscreteValueConstrainer()
+		{
+			if (mControl && (mControl->getNumStates() > 0) && (mControl->getValue() != mEntryValue))
+			{
+				mControl->setValue_i(mControl->getValue_i());
+				if (mControl->isDirty())
+				{
+					mControl->valueChanged();
+					mControl->invalid();
+				}
+			}
+		}
+	private:
+		DGControl<T>* const mControl;
+		float const mEntryValue;
+	};
+
 	bool getWraparoundValues() const noexcept
 	{
-		return wraparoundValues;
+		return mWraparoundValues;
 	}
 	void setWraparoundValues(bool inWraparoundPolicy) noexcept
 	{
-		wraparoundValues = inWraparoundPolicy;
+		mWraparoundValues = inWraparoundPolicy;
 	}
 
 private:
+	void pullNumStatesFromParameter();
+
 	DfxGuiEditor* const mOwnerEditor;
 
-	bool wraparoundValues = false;
+	long mNumStates = 0;
+	bool mWraparoundValues = false;
 };
 
 #include "dfxguicontrol.hpp"

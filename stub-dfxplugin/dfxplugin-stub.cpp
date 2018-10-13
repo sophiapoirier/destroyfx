@@ -49,7 +49,7 @@ DFX_EFFECT_ENTRY(DfxStub);
 // this is not the place to create or initialize stuff that is only needed 
 // for audio processing (i.e. audio buffers, state variables)
 DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, kNumParameters, kNumPresets)
+:	DfxPlugin(inInstance, kNumParameters, kNumPresets)
 {
 // next, initialize your parameters
 // note that, when you initialize a parameter using the initparameter 
@@ -155,7 +155,7 @@ void DfxStub::cleanup()
 
 //-------------------------------------------------------------------------
 DfxStubDSP::DfxStubDSP(DfxPlugin* inInstance)
-	: DfxPluginCore(inInstance)
+:	DfxPluginCore(inInstance)
 {
 }
 
@@ -213,20 +213,17 @@ void DfxStub::reset()
 // buffers are already allocated and whether or not they need to 
 // be destroyed and reallocated in a different size
 #if TARGET_PLUGIN_USES_DSPCORE
-bool DfxStubDSP::createbuffers()
+void DfxStubDSP::createbuffers()
 {
 	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
 
 	// if the sampling rate (and therefore the buffer size) has changed, 
 	// then delete and reallocate the buffers according to the sampling rate
 	buffer.assign(bufferSize, 0.0f);
-
-	// we were successful
-	return true;
 }
 
 #else
-bool DfxStub::createbuffers()
+void DfxStub::createbuffers()
 {
 	auto const bufferSize = std::lround(getsamplerate() * kBufferSize_Seconds);
 	auto const numChannels = getnumoutputs();
@@ -239,9 +236,6 @@ bool DfxStub::createbuffers()
 	{
 		buffer.assign(bufferSize, 0.0f);
 	}
-
-	// we were successful
-	return true;
 }
 
 //-------------------------------------------------------------------------

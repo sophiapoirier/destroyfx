@@ -121,7 +121,7 @@ public:
 	void processparameters() override;
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
 
-	bool createbuffers() override;
+	void createbuffers() override;
 	void releasebuffers() override;
 	void clearbuffers() override;
 

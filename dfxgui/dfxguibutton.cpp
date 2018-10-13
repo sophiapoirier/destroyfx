@@ -35,21 +35,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
 				   long inNumStates, Mode inMode, bool inDrawMomentaryState)
 :	DGControl<CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
-	mNumStates(std::max(inNumStates, 1L)), 
 	mMode(inMode), 
 	mDrawMomentaryState(inDrawMomentaryState)
 {
-	assert(inNumStates > 0);
-
-	if (mMode == Mode::PictureReel)
-	{
-		setMouseEnabled(false);
-	}
-
-	if ((mMode == Mode::Increment) || (mMode == Mode::Decrement))
-	{
-		setWraparoundValues(true);
-	}
+	// XXX TODO: don't require inNumStates for parameter-linked controls?
+	setMouseEnabled(mMode != Mode::PictureReel);
+	setWraparoundValues((mMode == Mode::Increment) || (mMode == Mode::Decrement));
 }
 
 //-----------------------------------------------------------------------------
@@ -57,6 +48,9 @@ DGButton::DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage*
 				   long inNumStates, Mode inMode, bool inDrawMomentaryState)
 :	DGButton(inOwnerEditor, dfx::kParameterID_Invalid, inRegion, inImage, inNumStates, inMode, inDrawMomentaryState)
 {
+	constexpr long minNumStates = 2;
+	assert(inNumStates >= minNumStates);
+	setNumStates(std::max(inNumStates, minNumStates));
 }
 
 //-----------------------------------------------------------------------------
@@ -65,7 +59,7 @@ void DGButton::draw(CDrawContext* inContext)
 	if (auto const image = getDrawBackground())
 	{
 		long const xoff = (mDrawMomentaryState && mMouseIsDown) ? (std::lround(image->getWidth()) / 2) : 0;
-		long const yoff = getValue_i() * (std::lround(image->getHeight()) / mNumStates);
+		long const yoff = getValue_i() * (std::lround(image->getHeight()) / getNumStates());
 
 		image->draw(inContext, getViewSize(), CPoint(xoff, yoff));
 	}
@@ -89,7 +83,7 @@ CMouseEventResult DGButton::onMouseDown(CPoint& inPos, CButtonState const& inBut
 
 	mEntryValue = mNewValue = getValue_i();
 	long const min = 0;
-	long const max = mNumStates - 1;
+	long const max = getNumStates() - 1;
 	bool const isDirectionReversed = inButtons.getModifierState() & kAlt;
 
 	setMouseIsDown(true);
@@ -109,11 +103,11 @@ CMouseEventResult DGButton::onMouseDown(CPoint& inPos, CButtonState const& inBut
 		case Mode::Radio:
 			if (mOrientation & dfx::kAxis_Horizontal)
 			{
-				mNewValue = std::lround(inPos.x - getViewSize().left) / (std::lround(getWidth()) / mNumStates);
+				mNewValue = std::lround(inPos.x - getViewSize().left) / (std::lround(getWidth()) / getNumStates());
 			}
 			else
 			{
-				mNewValue = std::lround(inPos.y - getViewSize().top) / (std::lround(getHeight()) / mNumStates);
+				mNewValue = std::lround(inPos.y - getViewSize().top) / (std::lround(getHeight()) / getNumStates());
 			}
 			mNewValue += min;  // offset
 			break;
@@ -178,13 +172,13 @@ CMouseEventResult DGButton::onMouseMoved(CPoint& inPos, CButtonState const& inBu
 		{
 			if (mOrientation & dfx::kAxis_Horizontal)
 			{
-				mNewValue = std::lround(inPos.x - getViewSize().left) / (std::lround(getWidth()) / mNumStates);
+				mNewValue = std::lround(inPos.x - getViewSize().left) / (std::lround(getWidth()) / getNumStates());
 			}
 			else
 			{
-				mNewValue = std::lround(inPos.y - getViewSize().top) / (std::lround(getHeight()) / mNumStates);
+				mNewValue = std::lround(inPos.y - getViewSize().top) / (std::lround(getHeight()) / getNumStates());
 			}
-			mNewValue = std::clamp(mNewValue, 0L, mNumStates - 1);
+			mNewValue = std::clamp(mNewValue, 0L, getNumStates() - 1);
 		}
 		else
 		{
@@ -286,7 +280,7 @@ bool DGButton::onWheel(CPoint const& inPos, float const& inDistance, CButtonStat
 		return true;
 
 		default:
-			return CControl::onWheel(inPos, inDistance, inButtons);  // XXX need an actual default implementation
+			return Parent::onWheel(inPos, inDistance, inButtons);  // XXX need an actual default implementation
 	}
 }
 
@@ -301,69 +295,10 @@ void DGButton::setMouseIsDown(bool newMouseState)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setNumStates(long inNumStates)
-{
-	if (inNumStates > 0)
-	{
-		mNumStates = inNumStates;
-		setDirty();
-	}
-	else
-	{
-		assert(false);
-	}
-}
-
-//-----------------------------------------------------------------------------
 void DGButton::setButtonImage(DGImage* inImage)
 {
 	setBackground(inImage);
 	setDirty();  // parent implementation does not do this if mouse control is disabled
-}
-
-//-----------------------------------------------------------------------------
-long DGButton::getValue_i()
-{
-	if (isParameterAttached())
-	{
-		return std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValue()));
-	}
-	else
-	{
-		auto const maxValue_f = static_cast<float>(mNumStates - 1);
-		return static_cast<long>((getValue() * maxValue_f) + DfxParam::kIntegerPadding);
-	}
-}
-
-//-----------------------------------------------------------------------------
-void DGButton::setValue_i(long inValue)
-{
-	float newValue_f = 0.0f;
-	if (isParameterAttached())
-	{
-		newValue_f = getOwnerEditor()->dfxgui_ContractParameterValue(getParameterID(), static_cast<float>(inValue));
-	}
-	else
-	{
-		long const maxValue = mNumStates - 1;
-		if (inValue >= maxValue)
-		{
-			newValue_f = 1.0f;
-		}
-		else if (inValue <= 0)
-		{
-			newValue_f = 0.0f;
-		}
-		else
-		{
-			float const maxValue_f = static_cast<float>(maxValue) + DfxParam::kIntegerPadding;
-			if (maxValue_f > 0.0f)  // avoid division by zero
-			{
-				newValue_f = static_cast<float>(inValue) / maxValue_f;
-			}
-		}
-	}
-	setValue(newValue_f);
 }
 
 //-----------------------------------------------------------------------------

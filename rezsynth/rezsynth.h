@@ -119,7 +119,7 @@ public:
 	long initialize() override;
 	void reset() override;
 
-	bool createbuffers() override;
+	void createbuffers() override;
 	void releasebuffers() override;
 	void clearbuffers() override;
 

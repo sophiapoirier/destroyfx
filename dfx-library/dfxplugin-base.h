@@ -60,7 +60,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
 		#define TARGET_API_CORE_CLASS	AUKernelBase
 	#endif
-	#define LOGIC_AU_PROPERTIES_AVAILABLE (__MAC_OS_X_VERSION_MAX_ALLOWED <= __MAC_10_9)
+	#define LOGIC_AU_PROPERTIES_AVAILABLE (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9)
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
 		#include <AudioUnit/LogicAUProperties.h>
 	#endif

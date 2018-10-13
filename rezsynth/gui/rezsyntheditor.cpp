@@ -105,16 +105,16 @@ DGColor const kRSVeryLightGrayColor(233, 242, 237);
 
 bool bandwidthAmountDisplayProc(float value, char* outText, void* inEditor)
 {
-	snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value);
+	const auto success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value) > 0;
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthAmount_Hz)
 	{
-		strncat(outText, " Hz", DGTextDisplay::kTextMaxLength);
+		strlcat(outText, " Hz", DGTextDisplay::kTextMaxLength);
 	}
 	else
 	{
-		strncat(outText, " Q", DGTextDisplay::kTextMaxLength);
+		strlcat(outText, " Q", DGTextDisplay::kTextMaxLength);
 	}
-	return true;
+	return success;
 }
 
 bool numBandsDisplayProc(float value, char* outText, void*)
@@ -139,17 +139,18 @@ bool attackDecayReleaseDisplayProc(float value, char* outText, void*)
 	long const thousands = static_cast<long>(value) / 1000;
 	float const remainder = std::fmod(value, 1000.0f);
 
+	bool success = false;
 	if (thousands > 0)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
 	}
-	strncat(outText, " ms", DGTextDisplay::kTextMaxLength);
+	strlcat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
-	return true;
+	return success;
 }
 
 bool percentDisplayProc(float value, char* outText, void*)
@@ -169,20 +170,21 @@ bool pitchBendDisplayProc(float value, char* outText, void*)
 
 bool gainDisplayProc(float value, char* outText, void*)
 {
+	bool success = false;
 	if (value <= 0.0f)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, u8"-%s", dfx::kInfinityUTF8.c_str());
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, u8"-%s", dfx::kInfinityUTF8.c_str()) > 0;
 	}
 	else if (value > 1.0001f)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "+%.1f", dfx::math::Linear2dB(value));
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "+%.1f", dfx::math::Linear2dB(value)) > 0;
 	}
 	else
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", dfx::math::Linear2dB(value));
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", dfx::math::Linear2dB(value)) > 0;
 	}
-	strncat(outText, " dB", DGTextDisplay::kTextMaxLength);
-	return true;
+	strlcat(outText, " dB", DGTextDisplay::kTextMaxLength);
+	return success;
 }
 
 
@@ -244,7 +246,7 @@ long RezSynthEditor::OpenEditor()
 		// parameter name label
 		auto const label = emplaceControl<DGStaticTextDisplay>(labelDisplayPos, nullptr, dfx::TextAlignment::Left, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
 		std::array<char, dfx::kParameterNameMaxLength> paramName;
-		strncpy(paramName.data(), getparametername(inParamID).c_str(), paramName.size());
+		strlcpy(paramName.data(), getparametername(inParamID).c_str(), paramName.size());
 		// check if it's a separation amount parameter and, if it is, truncate the "(blah)" qualifying part
 		auto const breakpoint = strrchr(paramName.data(), '(');
 		if (breakpoint && (breakpoint != paramName.data()))

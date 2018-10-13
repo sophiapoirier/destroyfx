@@ -36,8 +36,7 @@ namespace
 //-----------------------------------------------------------------------------
 static bool DFXGUI_GenericValueToTextProc(float inValue, char outTextUTF8[], void* /*inUserData*/)
 {
-	snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.2f", inValue);
-	return true;
+	return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -167,7 +166,7 @@ CMouseEventResult DGTextDisplay::onMouseDown(CPoint& inPos, const CButtonState& 
 {
 	mLastX = inPos.x;
 	mLastY = inPos.y;
-	return CTextEdit::onMouseDown(inPos, inButtons);
+	return Parent::onMouseDown(inPos, inButtons);
 }
 
 //-----------------------------------------------------------------------------
@@ -196,7 +195,7 @@ CMouseEventResult DGTextDisplay::onMouseMoved(CPoint& inPos, const CButtonState&
 
 	mLastX = inPos.x;
 	mLastY = inPos.y;
-	return CTextEdit::onMouseMoved(inPos, inButtons);
+	return Parent::onMouseMoved(inPos, inButtons);
 }
 #endif
 
@@ -245,7 +244,7 @@ void DGTextDisplay::refreshText()
 void DGTextDisplay::drawPlatformText(CDrawContext* inContext, IPlatformString* inString, CRect const& inRegion)
 {
 	auto const textArea = DFXGUI_GetTextDrawRegion(this, inRegion);
-	CTextEdit::drawPlatformText(inContext, inString, textArea);
+	Parent::drawPlatformText(inContext, inString, textArea);
 }
 
 //-----------------------------------------------------------------------------
@@ -318,7 +317,7 @@ void DGStaticTextDisplay::setCFText(CFStringRef inText)
 void DGStaticTextDisplay::drawPlatformText(CDrawContext* inContext, IPlatformString* inString, CRect const& inRegion)
 {
 	auto const textArea = DFXGUI_GetTextDrawRegion(this, inRegion);
-	CTextLabel::drawPlatformText(inContext, inString, textArea);
+	Parent::drawPlatformText(inContext, inString, textArea);
 }
 
 
