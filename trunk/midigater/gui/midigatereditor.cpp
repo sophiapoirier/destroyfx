@@ -67,16 +67,19 @@ bool slopeDisplayProc(float inValue, char* outText, void*)
 {
 	long const thousands = static_cast<long>(inValue) / 1000;
 	auto const remainder = std::fmod(inValue, 1000.0f);
+
+	bool success = false;
 	if (thousands > 0)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
-	strncat(outText, " ms", DGTextDisplay::kTextMaxLength);
-	return true;
+	strlcat(outText, " ms", DGTextDisplay::kTextMaxLength);
+
+	return success;
 }
 
 bool velocityInfluenceDisplayProc(float inValue, char* outText, void*);

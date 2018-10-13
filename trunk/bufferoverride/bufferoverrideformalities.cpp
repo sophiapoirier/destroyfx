@@ -126,7 +126,7 @@ void BufferOverride::reset()
 }
 
 //-------------------------------------------------------------------------
-bool BufferOverride::createbuffers()
+void BufferOverride::createbuffers()
 {
 	auto const numChannels = getnumoutputs();
 	auto const maxAudioBufferSize = static_cast<size_t>(getsamplerate() / (kMinAllowableBPS * mTempoRateTable.getScalar(0)));
@@ -134,11 +134,9 @@ bool BufferOverride::createbuffers()
 	mBuffers.resize(numChannels);
 	for (auto& buffer : mBuffers)
 	{
-		buffer = std::vector<float>(maxAudioBufferSize, 0.0f);
+		buffer.assign(maxAudioBufferSize, 0.0f);
 	}
 	mAudioOutputValues.assign(numChannels, 0.0f);
-
-	return true;
 }
 
 //-------------------------------------------------------------------------

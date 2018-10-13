@@ -73,7 +73,7 @@ public:
 
 	void dfx_PostConstructor() override;
 
-	bool createbuffers() override;
+	void createbuffers() override;
 	void releasebuffers() override;
 
 	void reset() override;

@@ -110,7 +110,7 @@ void RezSynth::reset()
 }
 
 //-----------------------------------------------------------------------------------------
-bool RezSynth::createbuffers()
+void RezSynth::createbuffers()
 {
 	auto const numChannels = getnumoutputs();
 
@@ -118,8 +118,6 @@ bool RezSynth::createbuffers()
 	mPrevPrevOutValue.assign(numChannels, {});
 	mPrevInValue.assign(numChannels, {});
 	mPrevPrevInValue.assign(numChannels, {});
-
-	return true;
 }
 
 //-----------------------------------------------------------------------------------------

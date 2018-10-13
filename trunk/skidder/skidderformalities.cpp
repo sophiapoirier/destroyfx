@@ -86,11 +86,10 @@ void Skidder::dfx_PostConstructor()
 }
 
 //-----------------------------------------------------------------------------------------
-bool Skidder::createbuffers()
+void Skidder::createbuffers()
 {
 	mInputAudio.assign(getnumoutputs(), nullptr);  // allocating output channel count is intentional, for mono fan-out
 	mOutputAudio.assign(getnumoutputs(), nullptr);
-	return true;
 }
 
 //-----------------------------------------------------------------------------------------

@@ -87,17 +87,18 @@ bool bsizeDisplayProcedure(float value, char* outText, void*)
 	long const thousands = static_cast<long>(value) / 1000;
 	auto const remainder = std::fmod(value, 1000.0f);
 
+	bool success = false;
 	if (thousands > 0)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%05.1f", thousands, remainder) > 0;
 	}
 	else
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
 	}
-	strncat(outText, " ms", DGTextDisplay::kTextMaxLength);
+	strlcat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
-	return true;
+	return success;
 }
 
 bool speedDisplayProcedure(float value, char* outText, void*)
@@ -123,38 +124,39 @@ bool speedDisplayProcedure(float value, char* outText, void*)
 	}
 	auto const octaves = static_cast<int>(speed);
 
+	bool success = false;
 	if (speed > 0.0f)
 	{
 		if (octaves == 0)
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones);
+			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones) > 0;
 		}
 		else if (octaves == 1)
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octave & %.2f semitones", octaves, semitones);
+			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octave & %.2f semitones", octaves, semitones) > 0;
 		}
 		else
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octaves & %.2f semitones", octaves, semitones);
+			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octaves & %.2f semitones", octaves, semitones) > 0;
 		}
 	}
 	else if (octaves == 0)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "-%.2f semitones", semitones);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "-%.2f semitones", semitones) > 0;
 	}
 	else
 	{
 		if (octaves == -1)
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octave & %.2f semitones", octaves, semitones);
+			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octave & %.2f semitones", octaves, semitones) > 0;
 		}
 		else
 		{
-			snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octaves & %.2f semitones", octaves, semitones);
+			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octaves & %.2f semitones", octaves, semitones) > 0;
 		}
 	}
 
-	return true;
+	return success;
 }
 
 bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTextDisplay* /*textDisplay*/)
@@ -168,7 +170,8 @@ bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTex
 
 	float octaves = 0.0f, semitones = 0.0f;
 	auto const scanCount = sscanf(filteredText.c_str(), "%f%f", &octaves, &semitones);
-	if ((scanCount > 0) && (scanCount != EOF))
+	bool const success = (scanCount > 0) && (scanCount != EOF);
+	if (success)
 	{
 		// the user only entered one number, which is for octaves, 
 		// so convert any fractional part of the octaves value into semitones
@@ -193,9 +196,8 @@ bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTex
 			auto const negative = std::signbit(octaves) || ((std::fabs(octaves) < 1.0f) && std::signbit(semitones));
 			outValue = (std::floor(std::fabs(octaves)) + (std::fabs(semitones) / kSemitonesPerOctave)) * (negative ? -1.0f : 1.0f);
 		}
-		return true;
 	}
-	return false;
+	return success;
 }
 
 bool feedbackDisplayProcedure(float value, char* outText, void*)
@@ -209,32 +211,33 @@ bool distDisplayProcedure(float value, char* outText, void* editor)
 	long const thousands = static_cast<long>(distance) / 1000;
 	auto const remainder = std::fmod(distance, 1000.0f);
 
+	bool success = false;
 	if (thousands > 0)
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%06.2f", thousands, remainder);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld,%06.2f", thousands, remainder) > 0;
 	}
 	else
 	{
-		snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", distance);
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", distance) > 0;
 	}
-	strncat(outText, " ms", DGTextDisplay::kTextMaxLength);
+	strlcat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
-	return true;
+	return success;
 }
 
 bool distTextConvertProcedure(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)
 {
 	auto const scanCount = sscanf(inText.c_str(), "%f", &outValue);
-	if ((scanCount > 0) && (scanCount != EOF))
+	bool const success = (scanCount > 0) && (scanCount != EOF);
+	if (success)
 	{
 		auto const bsize = static_cast<float>(textDisplay->getOwnerEditor()->getparameter_f(kBsize));
 		if (bsize != 0.0f)
 		{
 			outValue /= bsize;
 		}
-		return true;
 	}
-	return false;
+	return success;
 }
 
 

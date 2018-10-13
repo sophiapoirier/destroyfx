@@ -37,6 +37,9 @@ public:
 #ifdef TARGET_API_RTAS
 	void draw(CDrawContext* inContext) override;
 #endif
+	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
+	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
+	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
 
 	CLASS_METHODS(DGSlider, CSlider)
 };

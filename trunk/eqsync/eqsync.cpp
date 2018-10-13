@@ -78,7 +78,7 @@ void EQSync::reset()
 }
 
 //-----------------------------------------------------------------------------
-bool EQSync::createbuffers()
+void EQSync::createbuffers()
 {
 	auto const numChannels = getnumoutputs();
 
@@ -86,8 +86,6 @@ bool EQSync::createbuffers()
 	mPrevPrevIn.assign(numChannels, 0.0f);
 	mPrevOut.assign(numChannels, 0.0f);
 	prevprevOut.assign(numChannels, 0.0f);
-
-	return true;
 }
 
 //-----------------------------------------------------------------------------

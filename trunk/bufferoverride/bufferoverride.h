@@ -83,7 +83,7 @@ public:
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
 	void processparameters() override;
 
-	bool createbuffers() override;
+	void createbuffers() override;
 	void releasebuffers() override;
 
 

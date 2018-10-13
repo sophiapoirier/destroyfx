@@ -60,7 +60,7 @@ bool leapDisplayProc(float value, char* outText, void*)
 	bool const success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld sample", value_i) > 0;
 	if (success && (abs(value_i) > 1))
 	{
-		strncat(outText, "s", DGTextDisplay::kTextMaxLength);
+		strlcat(outText, "s", DGTextDisplay::kTextMaxLength);
 	}
 	return success;
 }
@@ -94,7 +94,7 @@ public:
 
 		if (mHandleImage)
 		{
-			auto const yoff = std::round(static_cast<float>(mHandleImage->getHeight()) * (1.0f - getValue())) + kSliderFrameThickness;
+			auto const yoff = std::round(static_cast<float>(mHandleImage->getHeight()) * (1.0f - getValueNormalized())) + kSliderFrameThickness;
 			mHandleImage->draw(inContext, getViewSize(), CPoint(-kSliderFrameThickness, -yoff));
 
 			DGRect bottomBorderRect(getViewSize());

@@ -183,7 +183,7 @@ public:
 #endif
 	virtual void parameterChanged(long inParameterID) {}
 
-	bool IsOpen();
+	bool IsOpen() const noexcept;
 	DGEditorListenerInstance dfxgui_GetEffectInstance();
 	auto dfxgui_GetEditorOpenErrorCode() const noexcept
 	{
@@ -326,7 +326,7 @@ private:
 	std::vector<AudioUnitParameterID> mAUParameterList;
 	std::mutex mAUParameterListLock;
 	AudioUnitParameterID mAUMaxParameterID = 0;
-	dfx::UniqueOpaqueType<AUEventListenerRef, OSStatus> mAUEventListener {nullptr, AUListenerDispose};
+	dfx::UniqueOpaqueType<AUEventListenerRef, AUListenerDispose> mAUEventListener;
 	AudioUnitEvent mStreamFormatPropertyAUEvent {};
 	AudioUnitEvent mParameterListPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnPropertyAUEvent {};
