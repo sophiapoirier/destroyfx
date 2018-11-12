@@ -77,9 +77,9 @@ public:
 	void setDrawAlpha(float inAlpha) final;
 	float getDrawAlpha() const final;
 
-	bool setHelpText(char const* inText) final;
+	void setHelpText(char const* inText) final;
 #if TARGET_OS_MAC
-	bool setHelpText(CFStringRef inText);
+	void setHelpText(CFStringRef inText);
 #endif
 
 protected:
@@ -162,43 +162,22 @@ public:
 		kKeyModifier_Extra = 1 << 3  // control on Macs
 	};
 
-	// control for a parameter
-	DGControl(DfxGuiEditor* inOwnerEditor, long inParameterID, DGRect const& inRegion);
-	// control with no actual parameter attached
-	DGControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, float inRange);
-
-	// mouse position is relative to the control's bounds for ultra convenience
-	void do_mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick);
-	virtual void mouseDown(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers, bool inIsDoubleClick) {}
-	void do_mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers);
-	virtual void mouseTrack(float inXpos, float inYpos, unsigned long inMouseButtons, dfx::KeyModifiers inKeyModifiers) {}
-	void do_mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers);
-	virtual void mouseUp(float inXpos, float inYpos, dfx::KeyModifiers inKeyModifiers) {}
 	bool do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
 	virtual bool mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
 
-	void setWraparoundValues(bool inWraparoundPolicy)
-	{	shouldWraparoundValues = inWraparoundPolicy;	}
-	bool getWraparoundValues() const
-	{	return shouldWraparoundValues;	}
-
-	bool isContinuousControl() const
-	{	return isContinuous;	}
-	void setControlContinuous(bool inContinuity);
-
 	void setMouseDragRange(float inMouseDragRange)
 	{
-		if (inMouseDragRange != 0.0f)	// to prevent division by zero
+		if (inMouseDragRange != 0.0f)  // to prevent division by zero
 			mouseDragRange = inMouseDragRange;
 	}
-	float getMouseDragRange() const
-	{	return mouseDragRange;	}
+	float getMouseDragRange() const noexcept
+	{
+		return mouseDragRange;
+	}
 
 private:
-	bool				isContinuous = false;
-	float				mouseDragRange = kDefaultMouseDragRange;  // the range of pixels over which you can drag the mouse to adjust the control value
-	bool				currentlyIgnoringMouseTracking = false;
-	bool				shouldWraparoundValues = false;
+	bool	isContinuous = false;
+	float	mouseDragRange = kDefaultMouseDragRange;  // the range of pixels over which you can drag the mouse to adjust the control value
 };
 
 #endif

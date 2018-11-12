@@ -470,11 +470,7 @@ DfxParam::Value DfxPlugin::getparameter(long inParameterIndex) const
 	{
 		return mParameters[inParameterIndex].get();
 	}
-	else
-	{
-		DfxParam::Value dummy = {0};
-		return dummy;
-	}
+	return {};
 }
 
 //-----------------------------------------------------------------------------
@@ -693,7 +689,7 @@ void DfxPlugin::update_preset(long inPresetIndex)
 	mCurrentPresetNum = inPresetIndex;
 
 #ifdef TARGET_API_AUDIOUNIT
-	AUPreset au_preset = {0};
+	AUPreset au_preset {};
 	au_preset.presetNumber = inPresetIndex;
 	au_preset.presetName = getpresetcfname(inPresetIndex);
 	SetAFactoryPresetAsCurrent(au_preset);
@@ -737,11 +733,7 @@ DfxParam::Value DfxPlugin::getpresetparameter(long inPresetIndex, long inParamet
 	{
 		return mPresets[inPresetIndex].getvalue(inParameterIndex);
 	}
-	else
-	{
-		DfxParam::Value dummy = {0};
-		return dummy;
-	}
+	return {};
 }
 
 //-----------------------------------------------------------------------------
@@ -751,10 +743,7 @@ double DfxPlugin::getpresetparameter_f(long inPresetIndex, long inParameterIndex
 	{
 		return mParameters[inParameterIndex].derive_f(mPresets[inPresetIndex].getvalue(inParameterIndex));
 	}
-	else
-	{
-		return 0.0;
-	}
+	return 0.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -771,7 +760,7 @@ void DfxPlugin::setpresetparameter_f(long inPresetIndex, long inParameterIndex, 
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
-		DfxParam::Value paramValue = {0};
+		DfxParam::Value paramValue {};
 		mParameters[inParameterIndex].accept_f(inValue, paramValue);
 		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
 	}
@@ -782,7 +771,7 @@ void DfxPlugin::setpresetparameter_i(long inPresetIndex, long inParameterIndex, 
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
-		DfxParam::Value paramValue = {0};
+		DfxParam::Value paramValue {};
 		mParameters[inParameterIndex].accept_i(inValue, paramValue);
 		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
 	}
@@ -793,7 +782,7 @@ void DfxPlugin::setpresetparameter_b(long inPresetIndex, long inParameterIndex, 
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
-		DfxParam::Value paramValue = {0};
+		DfxParam::Value paramValue {};
 		mParameters[inParameterIndex].accept_b(inValue, paramValue);
 		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
 	}
@@ -804,7 +793,7 @@ void DfxPlugin::setpresetparameter_gen(long inPresetIndex, long inParameterIndex
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
-		DfxParam::Value paramValue = {0};
+		DfxParam::Value paramValue {};
 		mParameters[inParameterIndex].accept_f(expandparametervalue(inParameterIndex, inValue), paramValue);
 		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
 	}

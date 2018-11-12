@@ -57,7 +57,6 @@
 		49BB477E07E53B4B00861708 /* vertical-slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476A07E53B4B00861708 /* vertical-slider-handle.png */; };
 		49BB477F07E53B4B00861708 /* vertical-value-display-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476B07E53B4B00861708 /* vertical-value-display-background.png */; };
 		49BB478007E53B4B00861708 /* wise-amp-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476C07E53B4B00861708 /* wise-amp-button.png */; };
-		8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
 		B025B9ED08AD348400A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B9EA08AD348400A9CCAE /* CAVectorUnit.cpp */; };
 		B028C2BC0D0F323700ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C2BB0D0F323700ADA1DA /* destroyfx.icns */; };
 		EC40EDAE20DB4B7100F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDAD20DB4B7100F5C0A7 /* dfxguimisc.mm */; };
@@ -72,7 +71,7 @@
 		EC89B437208D326E00E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B436208D326E00E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B43E208D328D00E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B438208D328B00E15129 /* dfxguidialog.cpp */; };
 		EC89B43F208D328D00E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B43B208D328C00E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B4C3208D35D600E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4C2208D35D500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-shadow -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations"; }; };
+		EC89B4C3208D35D600E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4C2208D35D500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-shadow -Wno-sign-compare -Wno-exit-time-destructors"; }; };
 		EC89B4D2208D35DA00E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4CB208D35DA00E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
 		EC9840041030853200FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
 		ECC3B5D112A60A6300BA11D5 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC3B5CF12A60A6300BA11D5 /* dfxmisc.cpp */; };
@@ -83,7 +82,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		490E76A007CAE24800688A1D /* AUEffectBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUEffectBase.cpp; sourceTree = "<group>"; };
 		490E76A107CAE24800688A1D /* AUEffectBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUEffectBase.h; sourceTree = "<group>"; };
 		490E7D0207CAE8F500688A1D /* AUMIDIEffectBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUMIDIEffectBase.cpp; sourceTree = "<group>"; };
@@ -273,7 +271,6 @@
 			isa = PBXGroup;
 			children = (
 				4905A972067F716E00000F0C /* graphics */,
-				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 				B028C2BB0D0F323700ADA1DA /* destroyfx.icns */,
 				ECC43125102F5208000B05A1 /* dfx-au-utilities.strings */,
 			);
@@ -572,7 +569,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */,
 				49BB476D07E53B4B00861708 /* destroy-fx-link.png in Resources */,
 				49BB476E07E53B4B00861708 /* dry-wet-mix-mode-button.png in Resources */,
 				49BB476F07E53B4B00861708 /* fades-button.png in Resources */,
@@ -680,14 +676,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				089C167EFE841241C02AAC07 /* English */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
 		ECC43125102F5208000B05A1 /* dfx-au-utilities.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cmath>
 #include <stdio.h>
+#include <string_view>
 
 #include "transverb.h"
 
@@ -72,7 +73,7 @@ enum
 
 
 static auto const kDisplayFont = dfx::kFontName_SnootPixel10;
-static DGColor const kDisplayTextColor(103, 161, 215);
+constexpr DGColor kDisplayTextColor(103, 161, 215);
 constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
 constexpr float kFineTuneInc = 0.0001f;
 constexpr float kSemitonesPerOctave = 12.0f;
@@ -180,8 +181,8 @@ bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTex
 			// unless we find the one number labeled as semitones, in which case treat as those
 			std::vector<char> word(inText.size() + 1, 0);
 			auto const wordScanCount = sscanf(inText.c_str(), "%*f%s", word.data());
-			static std::string const wordCompare("semi");
-			if ((wordScanCount > 0) && (wordScanCount != EOF) && !strncasecmp(word.data(), wordCompare.c_str(), wordCompare.size()))
+			constexpr std::string_view wordCompare("semi");
+			if ((wordScanCount > 0) && (wordScanCount != EOF) && !strncasecmp(word.data(), wordCompare.data(), wordCompare.size()))
 			{
 				outValue = octaves / kSemitonesPerOctave;
 			}
@@ -315,6 +316,7 @@ CMouseEventResult TransverbSpeedTuneButton::onMouseDown(CPoint& inPos, CButtonSt
 	{
 		setValue(mNewValue);
 		valueChanged();
+		invalid();
 	}
 
 	return kMouseEventHandled;
@@ -448,11 +450,11 @@ long TransverbEditor::OpenEditor()
 
 	// quality mode button
 	pos.set(kQualityButtonX, kButtonY, qualityButtonImage->getWidth() / 2, qualityButtonImage->getHeight()/kQualityMode_NumModes);
-	emplaceControl<DGButton>(this, kQuality, pos, qualityButtonImage, kQualityMode_NumModes, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kQuality, pos, qualityButtonImage, DGButton::Mode::Increment, true);
 
 	// TOMSOUND button
 	pos.set(kTomsoundButtonX, kButtonY, tomsoundButtonImage->getWidth() / 2, tomsoundButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTomsound, pos, tomsoundButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kTomsound, pos, tomsoundButtonImage, DGButton::Mode::Increment, true);
 
 	// randomize button
 	pos.set(kRandomButtonX, kButtonY, randomizeButtonImage->getWidth(), randomizeButtonImage->getHeight() / 2);
@@ -464,11 +466,11 @@ long TransverbEditor::OpenEditor()
 
 	// speed 1 mode button
 	pos.set(kSpeedModeButtonX, kSpeedModeButtonY, speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight()/kSpeedMode_NumModes);
-	emplaceControl<DGButton>(this, kSpeed1mode, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kSpeed1mode, pos, speedModeButtonImage, DGButton::Mode::Increment, true);
 	//
 	// speed 2 mode button
 	pos.offset(0, (kWideFaderInc * 2) + kWideFaderMoreInc);
-	emplaceControl<DGButton>(this, kSpeed2mode, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kSpeed2mode, pos, speedModeButtonImage, DGButton::Mode::Increment, true);
 
 	// MIDI learn button
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);

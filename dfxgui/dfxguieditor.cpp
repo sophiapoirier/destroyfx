@@ -89,6 +89,12 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 
 	VSTGUI::CView::kDirtyCallAlwaysOnMainThread = true;
 	setKnobMode(kLinearMode);
+
+#ifdef TARGET_API_RTAS
+	// XXX do these?
+//	VSTGUI::CControl::kZoomModifier = kControl;
+//	VSTGUI::CControl::kDefaultValueModifier = kShift;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -96,7 +102,7 @@ DfxGuiEditor::~DfxGuiEditor()
 {
 	if (IsOpen())
 	{
-		CloseEditor();
+		close();
 	}
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -273,6 +279,10 @@ void DfxGuiEditor::close()
 	auto const frame_temp = frame;
 	frame = nullptr;
 
+	for (auto& control : mControlsList)
+	{
+		control->asCControl()->unregisterViewMouseListener(this);
+	}
 	mControlsList.clear();
 
 	if (frame_temp)
@@ -408,6 +418,7 @@ void DfxGuiEditor::addControl(IDGControl* inControl)
 	if (dfxgui_IsValidParamID(parameterIndex))
 	{
 		mControlsList.push_back(inControl);
+		inControl->asCControl()->registerViewMouseListener(this);
 
 #ifdef TARGET_API_RTAS
 		if (m_Process)
@@ -750,16 +761,7 @@ void DfxGuiEditor::onMouseExited(CView* inView, CFrame* /*inFrame*/)
 //-----------------------------------------------------------------------------
 CMouseEventResult DfxGuiEditor::onMouseDown(CFrame* inFrame, CPoint const& inPos, CButtonState const& inButtons)
 {
-	// oddly VSTGUI sends an exited notification upon mouse down notification, 
-	// even when the mouse is still over the control, so fake a mouse-over here
-	if (auto const currentView = inFrame->getViewAt(inPos, GetViewOptions(GetViewOptions::kDeep)))
-	{
-		if (auto const dgControl = dynamic_cast<IDGControl*>(currentView))
-		{
-			setCurrentControl_mouseover(dgControl);
-		}
-	}
-	else
+	if (!inFrame->getViewAt(inPos, GetViewOptions().deep()))
 	{
 		auto const handled = handleContextualMenuClick(nullptr, inButtons);
 		if (handled)
@@ -772,11 +774,11 @@ CMouseEventResult DfxGuiEditor::onMouseDown(CFrame* inFrame, CPoint const& inPos
 }
 
 //-----------------------------------------------------------------------------
+// entered and exited is not enough because they stop notifying when mouse buttons are pressed
 CMouseEventResult DfxGuiEditor::onMouseMoved(CFrame* inFrame, CPoint const& inPos, CButtonState const& /*inButtons*/)
 {
-	auto const currentView = inFrame->getViewAt(inPos, GetViewOptions(GetViewOptions::kDeep));
 	IDGControl* currentControl = nullptr;
-	if (currentView)
+	if (auto const currentView = inFrame->getViewAt(inPos, GetViewOptions().deep()))
 	{
 		if (auto const dgControl = dynamic_cast<IDGControl*>(currentView))
 		{
@@ -786,6 +788,19 @@ CMouseEventResult DfxGuiEditor::onMouseMoved(CFrame* inFrame, CPoint const& inPo
 	setCurrentControl_mouseover(currentControl);
 
 	return kMouseEventNotHandled;
+}
+
+//-----------------------------------------------------------------------------
+CMouseEventResult DfxGuiEditor::viewOnMouseDown(CView* inView, CPoint inPos, CButtonState inButtons)
+{
+#if TARGET_PLUGIN_USES_MIDI
+	auto const dgControl = dynamic_cast<IDGControl*>(inView);
+	if (dgControl && dgControl->isParameterAttached() && getmidilearning() && inButtons.isLeftButton())
+	{
+		setmidilearner(dgControl->getParameterID());
+	}
+#endif
+	return ViewMouseListenerAdapter::viewOnMouseDown(inView, inPos, inButtons);
 }
 
 //-----------------------------------------------------------------------------
@@ -1237,7 +1252,7 @@ long DfxGuiEditor::GetNumParameters()
 //-----------------------------------------------------------------------------
 AudioUnitParameter DfxGuiEditor::dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement)
 {
-	AudioUnitParameter outParam = {0};
+	AudioUnitParameter outParam {};
 	outParam.mAudioUnit = dfxgui_GetEffectInstance();
 	outParam.mParameterID = inParameterID;
 	outParam.mScope = inScope;
@@ -1507,26 +1522,6 @@ namespace
 {
 
 //-----------------------------------------------------------------------------
-bool DFX_AppendSeparatorToMenu(COptionMenu& inMenu)
-{
-	auto const numMenuItems = inMenu.getNbEntries();
-	// don't allow a separator at the beginning of a menu
-	if (numMenuItems <= 0)
-	{
-		return false;
-	}
-
-	// don't allow more than one consecutive separator
-	auto const lastMenuItem = inMenu.getEntry(numMenuItems - 1);
-	if (lastMenuItem && lastMenuItem->isSeparator())
-	{
-		return false;
-	}
-
-	return (inMenu.addSeparator() != nullptr);
-}
-
-//-----------------------------------------------------------------------------
 CMenuItem* DFX_AppendCommandItemToMenu(COptionMenu& inMenu, UTF8StringPtr inMenuItemText, int32_t inCommandID, bool inEnabled, bool inChecked)
 {
 	if (auto const menuItem = new CMenuItem(inMenuItemText, inCommandID))
@@ -1545,7 +1540,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 {
 	auto isContextualMenuClick = inButtons.isRightButton();
 #if TARGET_OS_MAC
-	if (inButtons.isLeftButton() && (inButtons.getModifierState() & kApple))
+	if (inButtons.isLeftButton() && inButtons.isAppleSet())
 	{
 		isContextualMenuClick = true;
 	}
@@ -1562,7 +1557,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 	CPoint mousePos;
 	getFrame()->getCurrentMouseLocation(mousePos);
 	COptionMenu popupMenu;
-	constexpr int32_t menuStyle = kMultipleCheckStyle;  // this is necessary for menu entry checkmarks to show up
+	constexpr int32_t menuStyle = COptionMenu::kMultipleCheckStyle;  // this is necessary for menu entry checkmarks to show up
 	popupMenu.setStyle(menuStyle);
 
 // --------- parameter menu creation ---------
@@ -1651,7 +1646,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 								snprintf(menuItemText_temp.data(), maxTextLength, "%s (pitchbend)", menuItemText);
 								break;
 							case dfx::MidiEventType::Note:
-								snprintf(menuItemText_temp.data(), maxTextLength, "%s (notes %s - %s)", menuItemText, dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum), dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2));
+								snprintf(menuItemText_temp.data(), maxTextLength, "%s (notes %s - %s)", menuItemText, dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum).c_str(), dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2).c_str());
 								break;
 							default:
 								break;
@@ -1673,7 +1668,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 			}
 			if (isFirstItemOfSubgroup)
 			{
-				DFX_AppendSeparatorToMenu(*parameterSubMenu);
+				parameterSubMenu->addSeparator();
 			}
 			if (menuItemText)
 			{
@@ -1683,7 +1678,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 		}
 
 		// preface the global commands section with a divider
-		DFX_AppendSeparatorToMenu(popupMenu);
+		popupMenu.addSeparator();
 	}
 
 // --------- global menu creation ---------
@@ -1764,7 +1759,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 		}
 		if (isFirstItemOfSubgroup)
 		{
-			DFX_AppendSeparatorToMenu(popupMenu);
+			popupMenu.addSeparator();
 		}
 		if (menuItemText)
 		{
@@ -1772,6 +1767,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 			DFX_AppendCommandItemToMenu(popupMenu, menuItemText, menuItemCommandID, !disableItem, showCheckmark);
 		}
 	}
+	popupMenu.cleanupSeparators(true);
 
 
 // --------- show the contextual menu ---------
@@ -1797,7 +1793,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 // --------- handle the contextual menu command (global) ---------
 	bool tryHandlingParameterCommand = false;
 #ifdef TARGET_API_AUDIOUNIT
-	static CFileExtension const auPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
+	CFileExtension const auPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
 #endif
 	switch (menuSelectionCommandID)
 	{
@@ -1831,17 +1827,17 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 			if (getFrame())
 			{
 #ifdef TARGET_API_AUDIOUNIT
-				static SharedPointer<DGTextEntryDialog> textEntryDialog;
-				textEntryDialog = makeOwned<DGTextEntryDialog>("Save preset file", "save as:", DGDialog::kButtons_OKCancelOther, 
-															   "Save", nullptr, "Choose custom location...");
-				if (textEntryDialog)
+				mTextEntryDialog = makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
+																DGDialog::kButtons_OKCancelOther, 
+																"Save", nullptr, "Choose custom location...");
+				if (mTextEntryDialog)
 				{
-					if (auto const button = textEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
+					if (auto const button = mTextEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
 					{
 						char const* const helpText = "choose a specific location to save in rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
-						button->setAttribute(kCViewTooltipAttribute, strlen(helpText) + 1, helpText);
+						button->setTooltipText(helpText);
 					}
-					auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+					auto const textEntryCallback = [this, auPresetFileExtension](DGDialog* inDialog, DGDialog::Selection inSelection)
 					{
 						if (auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog))
 						{
@@ -1896,7 +1892,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 						}
 						return true;
 					};
-					[[maybe_unused]] auto const success = textEntryDialog->runModal(getFrame(), textEntryCallback);
+					[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
 					assert(success);
 				}
 #endif
@@ -1986,9 +1982,8 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 			case kDfxContextualMenuItem_Parameter_TextEntryForValue:
 				if (getFrame())
 				{
-					static SharedPointer<DGTextEntryDialog> textEntryDialog;
-					textEntryDialog = makeOwned<DGTextEntryDialog>(paramID, getparametername(paramID), "enter value:");
-					if (textEntryDialog)
+					mTextEntryDialog = makeOwned<DGTextEntryDialog>(paramID, getparametername(paramID), "enter value:");
+					if (mTextEntryDialog)
 					{
 						std::array<char, dfx::kParameterValueStringMaxLength> textValue;
 						textValue.fill(0);
@@ -2000,7 +1995,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 						{
 							snprintf(textValue.data(), textValue.size(), "%ld", getparameter_i(paramID));
 						}
-						textEntryDialog->setText(textValue.data());
+						mTextEntryDialog->setText(textValue.data());
 
 						auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
 						{
@@ -2011,7 +2006,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 							}
 							return true;
 						};
-						[[maybe_unused]] auto const success = textEntryDialog->runModal(getFrame(), textEntryCallback);
+						[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
 						assert(success);
 					}
 				}
@@ -2038,9 +2033,8 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 			case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
 				if (getFrame())
 				{
-					static SharedPointer<DGTextEntryDialog> textEntryDialog;
-					textEntryDialog = makeOwned<DGTextEntryDialog>(paramID, getparametername(paramID), "enter value:");
-					if (textEntryDialog)
+					mTextEntryDialog = makeOwned<DGTextEntryDialog>(paramID, getparametername(paramID), "enter value:");
+					if (mTextEntryDialog)
 					{
 						// initialize the text with the current CC assignment, if there is one
 						std::array<char, dfx::kParameterValueStringMaxLength> initialText;
@@ -2050,7 +2044,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 						{
 							snprintf(initialText.data(), initialText.size(), "%d", currentParameterAssignment.mEventNum);
 						}
-						textEntryDialog->setText(initialText.data());
+						mTextEntryDialog->setText(initialText.data());
 						
 						auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
 						{
@@ -2072,7 +2066,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 							}
 							return true;
 						};
-						[[maybe_unused]] auto const success = textEntryDialog->runModal(getFrame(), textEntryCallback);
+						[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
 						assert(success);
 					}
 				}

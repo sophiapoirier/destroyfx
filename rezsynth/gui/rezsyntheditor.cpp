@@ -93,10 +93,10 @@ enum
 
 static char const* const kValueTextFont = "Arial";
 constexpr float kValueTextFontSize = 10.0f;
-DGColor const kBackgroundColor(43, 93, 63);
-DGColor const kRSGrayColor(111, 111, 111);
-DGColor const kRSLightGrayColor(230, 230, 228);
-DGColor const kRSVeryLightGrayColor(233, 242, 237);
+//constexpr DGColor kBackgroundColor(43, 93, 63);
+//constexpr DGColor kRSGrayColor(111, 111, 111);
+constexpr DGColor kRSLightGrayColor(230, 230, 228);
+constexpr DGColor kRSVeryLightGrayColor(233, 242, 237);
 
 
 
@@ -173,7 +173,7 @@ bool gainDisplayProc(float value, char* outText, void*)
 	bool success = false;
 	if (value <= 0.0f)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, u8"-%s", dfx::kInfinityUTF8.c_str()) > 0;
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "-%s", dfx::kInfinityUTF8) > 0;
 	}
 	else if (value > 1.0001f)
 	{
@@ -331,7 +331,7 @@ long RezSynthEditor::OpenEditor()
 
 	// filter response scaling
 	pos.set(kScaleButtonX, kScaleButtonY, scaleModeButtonImage->getWidth(), scaleModeButtonImage->getHeight() / kNumScaleModes);
-	emplaceControl<DGButton>(this, kScaleMode, pos, scaleModeButtonImage, kNumScaleModes, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kScaleMode, pos, scaleModeButtonImage, DGButton::Mode::Radio);
 	// parameter name label
 	pos.set(kScaleButtonX, kScaleButtonY - kDisplayHeight - 6, scaleModeButtonImage->getWidth(), kDisplayHeight);
 	auto label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
@@ -339,23 +339,23 @@ long RezSynthEditor::OpenEditor()
 
 	// bandwidth mode
 	pos.set(kBandwidthModeButtonX, kBandwidthModeButtonY, bandwidthModeButtonImage->getWidth(), bandwidthModeButtonImage->getHeight() / kNumBandwidthModes);
-	emplaceControl<DGButton>(this, kBandwidthMode, pos, bandwidthModeButtonImage, kNumBandwidthModes, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kBandwidthMode, pos, bandwidthModeButtonImage, DGButton::Mode::Increment);
 
 	// separation mode (logarithmic or linear)
 	pos.set(kSepModeButtonX, kSepModeButtonY, sepModeButtonImage->getWidth(), sepModeButtonImage->getHeight() / kNumSeparationModes);
-	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, kNumSeparationModes, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, DGButton::Mode::Increment);
 
 	// legato
 	pos.set(kLegatoButtonX, kLegatoButtonY, legatoButtonImage->getWidth(), legatoButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kLegato, pos, legatoButtonImage, 2, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kLegato, pos, legatoButtonImage, DGButton::Mode::Increment);
 
 	// attack and release fade mode
 	pos.set(kFadeTypeButtonX, kFadeTypeButtonY, fadesButtonImage->getWidth(), fadesButtonImage->getHeight() /DfxEnvelope::kCurveType_NumTypes);
-	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DfxEnvelope::kCurveType_NumTypes, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DGButton::Mode::Increment);
 
 	// resonance algorithm
 	pos.set(kResonAlgButtonX, kResonAlgButtonY, resonAlgButtonImage->getWidth(), resonAlgButtonImage->getHeight() / kNumResonAlgs);
-	emplaceControl<DGButton>(this, kResonAlgorithm, pos, resonAlgButtonImage, kNumResonAlgs, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kResonAlgorithm, pos, resonAlgButtonImage, DGButton::Mode::Radio);
 	// parameter name label
 	pos.set(kResonAlgButtonX, kResonAlgButtonY - kDisplayHeight - 6, resonAlgButtonImage->getWidth(), kDisplayHeight);
 	label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
@@ -363,15 +363,15 @@ long RezSynthEditor::OpenEditor()
 
 	// allow Nyquist foldover or no
 	pos.set(kFoldoverButtonX, kFoldoverButtonY, foldoverButtonImage->getWidth(), foldoverButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kFoldover, pos, foldoverButtonImage, 2, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kFoldover, pos, foldoverButtonImage, DGButton::Mode::Increment);
 
 	// wisely lower the output gain to accomodate for resonance or no
 	pos.set(kWiseAmpButtonX, kWiseAmpButtonY, wiseAmpButtonImage->getWidth(), wiseAmpButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kWiseAmp, pos, wiseAmpButtonImage, 2, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kWiseAmp, pos, wiseAmpButtonImage, DGButton::Mode::Increment);
 
 	// dry/wet mix mode (linear or equal power)
 	pos.set(kDryWetMixModeButtonX, kDryWetMixModeButtonY, dryWetMixModeButtonImage->getWidth(), dryWetMixModeButtonImage->getHeight() / kNumDryWetMixModes);
-	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, kNumDryWetMixModes, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, DGButton::Mode::Increment);
 
 	// turn on/off MIDI learn mode for CC parameter automation
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);

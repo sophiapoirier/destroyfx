@@ -25,7 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <cassert>
 #include <cmath>
-#include <experimental/optional>
+#include <optional>
 #include <vector>
 
 
@@ -148,7 +148,7 @@ public:
 	CLASS_METHODS(DGDialogButton, CTextButton)
 
 private:
-	std::experimental::optional<int32_t> handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed)
+	std::optional<int32_t> handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed)
 	{
 		// let the parent dialog handle this key
 		if (inVirtualKey == VKEY_RETURN)
@@ -469,7 +469,13 @@ bool DGDialog::runModal(CFrame* inFrame, DialogChoiceSelectedCallback&& inCallba
 bool DGDialog::runModal(CFrame* inFrame)
 {
 	assert(inFrame);
-	return inFrame->setModalView(this);
+	mModalViewSession = inFrame->beginModalViewSession(this);
+	bool const success = (mModalViewSession != nullptr);
+	if (success)
+	{
+		remember();  // for retain balance, because ending the modal view session will forget this during view removal
+	}
+	return success;
 }
 
 //-----------------------------------------------------------------------------
@@ -478,17 +484,18 @@ void DGDialog::close()
 	mListener = nullptr;
 	mDialogChoiceSelectedCallback = nullptr;
 
-	if (getFrame() && (getFrame()->getModalView() == this))
+	if (getFrame() && mModalViewSession)
 	{
-		getFrame()->setModalView(nullptr);
+		[[maybe_unused]] auto const success = getFrame()->endModalViewSession(mModalViewSession);
+		assert(success);
 	}
+	mModalViewSession = nullptr;
 }
 
 //-----------------------------------------------------------------------------
 CTextButton* DGDialog::getButton(Selection inSelection) const
 {
-	auto const& children = getChildren();
-	for (auto const& child : children)
+	for (auto const& child : getChildren())
 	{
 		if (auto const button = dynamic_cast<DGDialogButton*>(child.get()))
 		{

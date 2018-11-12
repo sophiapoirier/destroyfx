@@ -95,6 +95,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 class IDGControl;
 class DGButton;
+class DGTextEntryDialog;
 
 
 #pragma clang diagnostic push
@@ -108,7 +109,8 @@ class DGButton;
 //-----------------------------------------------------------------------------
 class DfxGuiEditor :	public TARGET_API_EDITOR_BASE_CLASS, 
 						public IControlListener, 
-						public IMouseObserver
+						public IMouseObserver,
+						public ViewMouseListenerAdapter
 {
 public:
 #ifdef TARGET_API_AUDIOUNIT
@@ -203,6 +205,8 @@ public:
 	void onMouseExited(CView* inView, CFrame* inFrame) override;
 	CMouseEventResult onMouseDown(CFrame* inFrame, CPoint const& inPos, CButtonState const& inButtons) override;
 	CMouseEventResult onMouseMoved(CFrame* inFrame, CPoint const& inPos, CButtonState const& inButtons) override;
+	// ViewMouseListenerAdapter overrides
+	CMouseEventResult viewOnMouseDown(CView* inView, CPoint inPos, CButtonState inButtons) override;
 
 	auto getCurrentControl_clicked() const noexcept
 	{
@@ -312,6 +316,8 @@ private:
 	bool mJustOpened = false;
 	long mEditorOpenErr = dfx::kStatus_NoError;
 	unsigned long mNumAudioChannels = 0;
+
+	SharedPointer<DGTextEntryDialog> mTextEntryDialog;
 
 #if TARGET_PLUGIN_USES_MIDI
 	DGButton* mMidiLearnButton = nullptr;

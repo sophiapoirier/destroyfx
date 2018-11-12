@@ -27,9 +27,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 static char const* const kValueDisplayFont = "Helvetica";
 constexpr float kValueDisplayRegularFontSize = 10.8f;
 constexpr float kValueDisplayTinyFontSize = 10.2f;
+
 static char const* const kHelpDisplayFont = "Helvetica";
 constexpr float kHelpDisplayFontSize = 9.6f;
-static DGColor const kHelpDisplayTextColor(201, 201, 201);
+
+constexpr DGColor kHelpDisplayTextColor(201, 201, 201);
 
 
 //-----------------------------------------------------------------------------
@@ -364,10 +366,10 @@ long BufferOverrideEditor::OpenEditor()
 
 	// forced buffer size tempo sync button
 	pos.set(kBufferTempoSyncButtonX, kBufferTempoSyncButtonY, bufferTempoSyncButtonImage->getWidth() / 2, bufferTempoSyncButtonImage->getHeight() / 2);
-	auto const bufferTempoSyncButton = emplaceControl<DGButton>(this, kBufferTempoSync, pos, bufferTempoSyncButtonImage, 2, DGButton::Mode::Increment, true);
+	auto const bufferTempoSyncButton = emplaceControl<DGButton>(this, kBufferTempoSync, pos, bufferTempoSyncButtonImage, DGButton::Mode::Increment, true);
 	//
 	pos.set(kBufferTempoSyncButtonCornerX, kBufferTempoSyncButtonCornerY, bufferTempoSyncButtonCornerImage->getWidth() / 2, bufferTempoSyncButtonCornerImage->getHeight() / 2);
-	auto const bufferTempoSyncButtonCorner = emplaceControl<DGButton>(this, kBufferTempoSync, pos, bufferTempoSyncButtonCornerImage, 2, DGButton::Mode::Increment, true);
+	auto const bufferTempoSyncButtonCorner = emplaceControl<DGButton>(this, kBufferTempoSync, pos, bufferTempoSyncButtonCornerImage, DGButton::Mode::Increment, true);
 	//
 	bufferTempoSyncButton->setUserProcedure(linkKickButtonsDownProc, bufferTempoSyncButtonCorner);
 	bufferTempoSyncButtonCorner->setUserProcedure(linkKickButtonsDownProc, bufferTempoSyncButton);
@@ -376,10 +378,10 @@ long BufferOverrideEditor::OpenEditor()
 
 	// buffer interrupt button
 	pos.set(kBufferInterruptButtonX, kBufferInterruptButtonY, bufferInterruptButtonImage->getWidth() / 2, bufferInterruptButtonImage->getHeight() / 2);
-	auto const bufferInterruptButton = emplaceControl<DGButton>(this, kBufferInterrupt, pos, bufferInterruptButtonImage, 2, DGButton::Mode::Increment, true);
+	auto const bufferInterruptButton = emplaceControl<DGButton>(this, kBufferInterrupt, pos, bufferInterruptButtonImage, DGButton::Mode::Increment, true);
 	//
 	pos.set(kBufferInterruptButtonCornerX, kBufferInterruptButtonCornerY, bufferInterruptButtonCornerImage->getWidth() / 2, bufferInterruptButtonCornerImage->getHeight() / 2);
-	auto const bufferInterruptButtonCorner = emplaceControl<DGButton>(this, kBufferInterrupt, pos, bufferInterruptButtonCornerImage, 2, DGButton::Mode::Increment, true);
+	auto const bufferInterruptButtonCorner = emplaceControl<DGButton>(this, kBufferInterrupt, pos, bufferInterruptButtonCornerImage, DGButton::Mode::Increment, true);
 	//
 	bufferInterruptButtonCorner->setUserProcedure(linkKickButtonsDownProc, bufferInterruptButton);
 	bufferInterruptButton->setUserProcedure(linkKickButtonsDownProc, bufferInterruptButtonCorner);
@@ -388,19 +390,19 @@ long BufferOverrideEditor::OpenEditor()
 
 	// forced buffer size LFO tempo sync button
 	pos.set(kBufferLFOTempoSyncButtonX, kBufferLFOTempoSyncButtonY, bufferLFOTempoSyncButtonImage->getWidth() / 2, bufferLFOTempoSyncButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kBufferLFOTempoSync, pos, bufferLFOTempoSyncButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kBufferLFOTempoSync, pos, bufferLFOTempoSyncButtonImage, DGButton::Mode::Increment, true);
 
 	// divisor LFO tempo sync button
 	pos.set(kDivisorLFOTempoSyncButtonX, kDivisorLFOTempoSyncButtonY, divisorLFOTempoSyncButtonImage->getWidth() / 2, divisorLFOTempoSyncButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kDivisorLFOTempoSync, pos, divisorLFOTempoSyncButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kDivisorLFOTempoSync, pos, divisorLFOTempoSyncButtonImage, DGButton::Mode::Increment, true);
 
 	// MIDI mode button
 	pos.set(kMidiModeButtonX, kMidiModeButtonY, midiModeButtonImage->getWidth() / 2, midiModeButtonImage->getHeight() / BufferOverride::kNumMidiModes);
-	emplaceControl<DGButton>(this, kMidiMode, pos, midiModeButtonImage, BufferOverride::kNumMidiModes, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kMidiMode, pos, midiModeButtonImage, DGButton::Mode::Increment, true);
 
 	// sync to host tempo button
 	pos.set(kHostTempoButtonX, kHostTempoButtonY, hostTempoButtonImage->getWidth(), hostTempoButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoAuto, pos, hostTempoButtonImage, 2, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kTempoAuto, pos, hostTempoButtonImage, DGButton::Mode::Increment);
 
 	// MIDI learn button
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
@@ -411,24 +413,24 @@ long BufferOverrideEditor::OpenEditor()
 
 	// forced buffer size LFO shape switch
 	pos.set(kBufferLFOShapeSwitchX, kBufferLFOShapeSwitchY, bufferLFOShapeSwitchImage->getWidth(), bufferLFOShapeSwitchImage->getHeight() / dfx::LFO::kNumShapes);
-	emplaceControl<DGButton>(this, kBufferLFOShape, pos, bufferLFOShapeSwitchImage, dfx::LFO::kNumShapes, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kBufferLFOShape, pos, bufferLFOShapeSwitchImage, DGButton::Mode::Radio);
 
 	// divisor LFO shape switch
 	pos.set(kDivisorLFOShapeSwitchX, kDivisorLFOShapeSwitchY, divisorLFOShapeSwitchImage->getWidth(), divisorLFOShapeSwitchImage->getHeight() / dfx::LFO::kNumShapes);
-	emplaceControl<DGButton>(this, kDivisorLFOShape, pos, divisorLFOShapeSwitchImage, dfx::LFO::kNumShapes, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kDivisorLFOShape, pos, divisorLFOShapeSwitchImage, DGButton::Mode::Radio);
 
 
 	// forced buffer size label
 	pos.set(kBufferSizeLabelX, kBufferSizeLabelY, bufferSizeLabelImage->getWidth(), bufferSizeLabelImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kBufferTempoSync, pos, bufferSizeLabelImage, 2, DGButton::Mode::PictureReel);
+	emplaceControl<DGButton>(this, kBufferTempoSync, pos, bufferSizeLabelImage, DGButton::Mode::PictureReel);
 
 	// forced buffer size LFO rate label
 	pos.set(kBufferLFORateLabelX, kBufferLFORateLabelY, bufferLFORateLabelImage->getWidth(), bufferLFORateLabelImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kBufferLFOTempoSync, pos, bufferLFORateLabelImage, 2, DGButton::Mode::PictureReel);
+	emplaceControl<DGButton>(this, kBufferLFOTempoSync, pos, bufferLFORateLabelImage, DGButton::Mode::PictureReel);
 
 	// divisor LFO rate label
 	pos.set(kDivisorLFORateLabelX, kDivisorLFORateLabelY, divisorLFORateLabelImage->getHeight(), divisorLFORateLabelImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kDivisorLFOTempoSync, pos, divisorLFORateLabelImage, 2, DGButton::Mode::PictureReel);
+	emplaceControl<DGButton>(this, kDivisorLFOTempoSync, pos, divisorLFORateLabelImage, DGButton::Mode::PictureReel);
 
 
 	// the help mouseover hint thingy

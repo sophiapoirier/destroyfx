@@ -240,15 +240,13 @@ long LaunchDocumentation()
 }
 
 //-----------------------------------------------------------------------------
-char const* GetNameForMIDINote(long inMidiNote)
+std::string GetNameForMIDINote(long inMidiNote)
 {
-	static char midiNoteName[16] = {0};
 	constexpr long kNumNotesInOctave = 12;
-	static char const* const keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+	constexpr char const* const keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 	long const keyNameIndex = inMidiNote % kNumNotesInOctave;
 	long const octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
-	snprintf(midiNoteName, sizeof(midiNoteName), "%s %ld", keyNames[keyNameIndex], octaveNumber);
-	return midiNoteName;
+	return std::string(keyNames[keyNameIndex]) + " " + std::to_string(octaveNumber);
 }
 
 //-----------------------------------------------------------------------------
@@ -261,7 +259,7 @@ uint64_t GetMillisecondCount()
 
 #if _WIN32
 	#if (_WIN32_WINNT >= 0x0600) && 0  // XXX how to runtime check without symbol error if unavailable?
-	OSVERSIONINFO versionInfo = {0};
+	OSVERSIONINFO versionInfo {};
 	versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
 	if (GetVersionEx(&versionInfo) && (versionInfo.dwMajorVersion >= 6))
 	{

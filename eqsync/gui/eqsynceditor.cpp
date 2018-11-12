@@ -216,7 +216,7 @@ long EQSyncEditor::OpenEditor()
 
 	// create the host sync button
 	pos.set(hostSyncButtonX, hostSyncButtonY, hostSyncButtonImage->getWidth() / 2, hostSyncButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoAuto, pos, hostSyncButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kTempoAuto, pos, hostSyncButtonImage, DGButton::Mode::Increment, true);
 
 	// create the Destroy FX web page link tab
 	pos.set(destroyFXLinkX, destroyFXLinkY, destroyFXLinkTabImage->getWidth(), destroyFXLinkTabImage->getHeight() / 2);

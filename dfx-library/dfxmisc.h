@@ -41,33 +41,38 @@ namespace dfx
 
 
 //-----------------------------------------------------------------------------
-template <typename T, typename D = void(*)(void*)>
+namespace detail
+{
+	template <typename T, auto D>
+	struct UniqueTypeDeleter
+	{
+		static_assert(std::is_pointer_v<T>);
+		static_assert(std::is_invocable_v<decltype(D), T>);
+		void operator()(T object)
+		{
+			D(object);
+		}
+	};
+}
+
+//-----------------------------------------------------------------------------
+template <typename T, typename D = detail::UniqueTypeDeleter<T*, std::free>>
 class UniqueMemoryBlock : public std::unique_ptr<T, D>
 {
 public:
-	explicit UniqueMemoryBlock(size_t size, D deleter = std::free)
-	:	std::unique_ptr<T, D>(static_cast<T*>(std::malloc(size)), deleter)
+	explicit UniqueMemoryBlock(size_t size)
+	:	std::unique_ptr<T, D>(static_cast<T*>(std::malloc(size)), D())
 	{
 	}
 };
 
 //-----------------------------------------------------------------------------
-namespace detail
-{
-	template <typename T, auto D>
-	struct UniqueOpaqueTypeDeleter
-	{
-		static_assert(std::is_pointer_v<T>);
-		static_assert(std::is_invocable_v<decltype(D), T>);
-		void operator()(T object) { D(object); }
-	};
-}
 template <typename T, auto D>
-using UniqueOpaqueType = std::unique_ptr<typename std::remove_pointer_t<T>, detail::UniqueOpaqueTypeDeleter<T, D>>;
+using UniqueOpaqueType = std::unique_ptr<typename std::remove_pointer_t<T>, detail::UniqueTypeDeleter<T, D>>;
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-template <typename T, typename D = detail::UniqueOpaqueTypeDeleter<T, CFRelease>>
+template <typename T, typename D = detail::UniqueTypeDeleter<T, CFRelease>>
 class UniqueCFType : public std::unique_ptr<typename std::remove_pointer_t<T>, D>
 {
 public:
@@ -85,7 +90,7 @@ long CompositePluginVersionNumberValue();
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount = 1);
 long LaunchURL(std::string const& inURL);
 long LaunchDocumentation();
-char const* GetNameForMIDINote(long inMidiNote);
+std::string GetNameForMIDINote(long inMidiNote);
 uint64_t GetMillisecondCount();
 
 #if TARGET_OS_MAC

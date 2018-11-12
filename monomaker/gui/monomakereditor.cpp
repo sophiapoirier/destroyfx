@@ -50,8 +50,8 @@ enum
 	kDestroyFXlinkY = 3
 };
 
-//static DGColor const kBackgroundColor(64, 54, 40);
-static DGColor const kBackgroundColor(42, 34, 22);
+//constexpr DGColor kBackgroundColor(64, 54, 40);
+//constexpr DGColor kBackgroundColor(42, 34, 22);
 static char const* const kValueTextFont = "Arial";
 constexpr float kValueTextSize = 11.0f;
 
@@ -143,17 +143,17 @@ long MonomakerEditor::OpenEditor()
 
 	// input selection button
 	pos.set(kButtonX, kButtonY, inputSelectionButtonImage->getWidth(), inputSelectionButtonImage->getHeight() / kNumInputSelections);
-	emplaceControl<DGButton>(this, kInputSelection, pos, inputSelectionButtonImage, kNumInputSelections, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kInputSelection, pos, inputSelectionButtonImage, DGButton::Mode::Increment);
 
 	// monomerge mode button
 	pos.offset(kButtonInc, 0);
 	pos.setSize(monomergeModeButtonImage->getWidth(), monomergeModeButtonImage->getHeight() / kNumMonomergeModes);
-	emplaceControl<DGButton>(this, kMonomergeMode, pos, monomergeModeButtonImage, kNumMonomergeModes, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kMonomergeMode, pos, monomergeModeButtonImage, DGButton::Mode::Increment);
 
 	// pan mode button
 	pos.offset(kButtonInc, 0);
 	pos.setSize(panModeButtonImage->getWidth(), panModeButtonImage->getHeight() / kNumPanModes);
-	emplaceControl<DGButton>(this, kPanMode, pos, panModeButtonImage, kNumPanModes, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kPanMode, pos, panModeButtonImage, DGButton::Mode::Increment);
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);

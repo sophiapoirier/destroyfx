@@ -56,5 +56,5 @@ public:
 	virtual void setDrawAlpha(float inAlpha) = 0;
 	virtual float getDrawAlpha() const = 0;
 
-	virtual bool setHelpText(char const* inText) = 0;
+	virtual void setHelpText(char const* inText) = 0;
 };
