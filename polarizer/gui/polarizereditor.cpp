@@ -165,7 +165,7 @@ long PolarizerEditor::OpenEditor()
 
 	// IMPLODE
 	pos.set(kImplodeButtonX, kImplodeButtonY, implodeButtonImage->getWidth() / 2, implodeButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kImplode, pos, implodeButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kImplode, pos, implodeButtonImage, DGButton::Mode::Increment, true);
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);

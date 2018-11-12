@@ -76,10 +76,6 @@ static void DFXGUI_ConfigureTextDisplay(CTextLabel* inTextDisplay,
 										float inFontSize, DGColor inFontColor, char const* inFontName)
 {
 	inTextDisplay->setTransparency(true);
-	if (!inBackgroundImage)
-	{
-		inTextDisplay->setBackOffset(inRegion.getTopLeft());
-	}
 
 	inTextDisplay->setHoriAlign(DFXGUI_TextAlignmentToVSTGUI(inTextAlignment));
 	inTextDisplay->setFontColor(inFontColor);

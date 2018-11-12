@@ -29,7 +29,7 @@ Welcome to our settings persistance mess.
 #include <algorithm>
 #include <cassert>
 #include <numeric>
-#include <experimental/optional>
+#include <optional>
 #include <stdio.h>  // for FILE stuff
 #include <vector>
 
@@ -680,7 +680,7 @@ bool DFX_AddNumberToCFDictionary_f(Float64 inNumber, CFMutableDictionaryRef inDi
 }  // namespace
 
 //-----------------------------------------------------------------------------------------
-std::experimental::optional<SInt64> DFX_GetNumberFromCFDictionary_i(CFDictionaryRef inDictionary, void const* inDictionaryKey)
+std::optional<SInt64> DFX_GetNumberFromCFDictionary_i(CFDictionaryRef inDictionary, void const* inDictionaryKey)
 {
 	constexpr CFNumberType numberType = kCFNumberSInt64Type;
 
@@ -706,7 +706,7 @@ std::experimental::optional<SInt64> DFX_GetNumberFromCFDictionary_i(CFDictionary
 }
 
 //-----------------------------------------------------------------------------------------
-std::experimental::optional<Float64> DFX_GetNumberFromCFDictionary_f(CFDictionaryRef inDictionary, void const* inDictionaryKey)
+std::optional<Float64> DFX_GetNumberFromCFDictionary_f(CFDictionaryRef inDictionary, void const* inDictionaryKey)
 {
 	constexpr CFNumberType numberType = kCFNumberFloat64Type;
 
@@ -813,22 +813,22 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 				{
 					continue;
 				}
-				auto const paramID = getParameterTagFromID(paramID_optional.value_or(dfx::kParameterID_Invalid));
-				if (paramID == dfx::kParameterID_Invalid)
+				auto const paramTag = getParameterTagFromID(*paramID_optional);
+				if (!paramTagIsValid(paramTag))
 				{
 					continue;
 				}
 #define GET_ASSIGNMENT_VALUE_FROM_DICT(inMember, inTypeSuffix)	\
 				{	\
 					auto const optionalValue = DFX_GetNumberFromCFDictionary_##inTypeSuffix(assignmentCFDictionary, kDfxSettings_MidiAssignment_##inMember##Key);	\
-					mParameterAssignments[paramID].inMember = static_cast<decltype(mParameterAssignments[paramID].inMember)>(optionalValue.value_or(0));	\
+					mParameterAssignments[paramTag].inMember = static_cast<decltype(mParameterAssignments[paramTag].inMember)>(optionalValue.value_or(0));	\
 					numberSuccess = optionalValue ? true : false;	\
 				}
 				bool numberSuccess = false;
 				GET_ASSIGNMENT_VALUE_FROM_DICT(mEventType, i)
 				if (!numberSuccess)
 				{
-					unassignParam(paramID);
+					unassignParam(paramTag);
 					continue;
 				}
 				GET_ASSIGNMENT_VALUE_FROM_DICT(mEventChannel, i)

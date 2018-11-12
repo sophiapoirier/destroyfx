@@ -90,6 +90,8 @@ private:
 
 	Listener* mListener = nullptr;
 	DialogChoiceSelectedCallback mDialogChoiceSelectedCallback;
+
+	ModalViewSession* mModalViewSession = nullptr;
 };
 
 

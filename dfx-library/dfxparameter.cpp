@@ -815,7 +815,7 @@ void DfxParam::setcustomunitstring(char const* inText)
 //-----------------------------------------------------------------------------
 DfxPreset::DfxPreset(long inNumParameters)
 {
-	DfxParam::Value const emptyValue = {0};
+	constexpr DfxParam::Value emptyValue {};
 	mValues.assign(inNumParameters, emptyValue);
 }
 
@@ -835,11 +835,7 @@ DfxParam::Value DfxPreset::getvalue(long inParameterIndex) const
 	{
 		return mValues[inParameterIndex];
 	}
-	else
-	{
-		DfxParam::Value dummy = {0};
-		return dummy;
-	}
+	return {};
 }
 
 //-----------------------------------------------------------------------------

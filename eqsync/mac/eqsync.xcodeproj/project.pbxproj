@@ -48,7 +48,6 @@
 		4998C17807E50BC0008EBD90 /* vertical-slider-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C16707E50BC0008EBD90 /* vertical-slider-background.png */; };
 		4998C19107E50D4E008EBD90 /* eqsync.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C18E07E50D4E008EBD90 /* eqsync.cpp */; };
 		4998C19607E50D65008EBD90 /* eqsynceditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C19407E50D65008EBD90 /* eqsynceditor.cpp */; };
-		8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
 		B025B92308AD2D3400A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B92008AD2D3400A9CCAE /* CAVectorUnit.cpp */; };
 		B0AD80E20D0F316F00766C78 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0AD80E10D0F316F00766C78 /* destroyfx.icns */; };
 		EC40EDB620DB4BD500F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDB520DB4BD500F5C0A7 /* dfxguimisc.mm */; };
@@ -64,14 +63,13 @@
 		EC89B479208D33BF00E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B477208D33BF00E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B480208D33D700E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B47A208D33D400E15129 /* dfxguidialog.cpp */; };
 		EC89B481208D33D700E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B47D208D33D500E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B488208D34AE00E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B487208D34AD00E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-shadow -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations"; }; };
+		EC89B488208D34AE00E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B487208D34AD00E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-shadow -Wno-sign-compare -Wno-exit-time-destructors"; }; };
 		EC89B497208D34B600E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B490208D34B500E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
 		EC983FFD1030846300FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
 		ECC4311A102F5111000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC43118102F5111000B05A1 /* dfx-au-utilities.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		490E769C07CAE20500688A1D /* temporatetable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = temporatetable.cpp; sourceTree = "<group>"; };
 		490E769D07CAE20500688A1D /* temporatetable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = temporatetable.h; sourceTree = "<group>"; };
 		490E76A007CAE24800688A1D /* AUEffectBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUEffectBase.cpp; sourceTree = "<group>"; };
@@ -243,7 +241,6 @@
 			isa = PBXGroup;
 			children = (
 				4905A972067F716E00000F0C /* graphics */,
-				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 				B0AD80E10D0F316F00766C78 /* destroyfx.icns */,
 				ECC43118102F5111000B05A1 /* dfx-au-utilities.strings */,
 			);
@@ -524,7 +521,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */,
 				4998C16907E50BC0008EBD90 /* destroy-fx-link-tab-panther.png in Resources */,
 				4998C16A07E50BC0008EBD90 /* destroy-fx-link-tab.png in Resources */,
 				4998C16B07E50BC0008EBD90 /* eq-sync-background-panther.png in Resources */,
@@ -620,14 +616,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				089C167EFE841241C02AAC07 /* English */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
 		ECC43118102F5111000B05A1 /* dfx-au-utilities.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

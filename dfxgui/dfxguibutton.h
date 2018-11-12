@@ -48,7 +48,7 @@ public:
 	};
 
 	DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
-			 long inNumStates, Mode inMode, bool inDrawMomentaryState = false);
+			 Mode inMode, bool inDrawMomentaryState = false);
 	DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, 
 			 long inNumStates, Mode inMode, bool inDrawMomentaryState = false);
 

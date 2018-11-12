@@ -31,17 +31,17 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 constexpr size_t NUM_SLIDERS = 5;
 
-DGColor const fontcolor_values(75, 151, 71);
-DGColor const fontcolor_labels = DGColor::kWhite;
+constexpr DGColor fontcolor_values(75, 151, 71);
+constexpr DGColor fontcolor_labels = DGColor::kWhite;
 
 constexpr float finetuneinc = 0.0001f;
 
-static std::vector<char const * const> const landmarks_labelstrings
-  {{ "zero", "freq", "num", "span", "size", "level" }};
-static std::vector<char const * const> const ops_labelstrings
-  {{ "jump", "????", "????", "size", "size", "times", "times", " " }};
-static std::vector<char const * const> const recreate_labelstrings
-  {{ "dim", "dim", "exp", "????", "size", "o'lap", "mod", "dist" }};
+static constexpr std::initializer_list<char const * const> landmarks_labelstrings =
+  { "zero", "freq", "num", "span", "size", "level" };
+static constexpr std::initializer_list<char const * const> ops_labelstrings =
+  { "jump", "????", "????", "size", "size", "times", "times", " " };
+static constexpr std::initializer_list<char const * const> recreate_labelstrings =
+  { "dim", "dim", "exp", "????", "size", "o'lap", "mod", "dist" };
 
 
 
@@ -253,45 +253,45 @@ long GeometerEditor::OpenEditor() {
   // window shape menu
   pos.set(pos_windowshapemenuX, pos_windowshapemenuY, stdsize, stdsize);
   emplaceControl<DGButton>(this, P_SHAPE, pos, g_windowshapemenu, 
-                           NUM_WINDOWSHAPES, DGButton::Mode::Increment, true);
+                           DGButton::Mode::Increment, true)->setNumStates(NUM_WINDOWSHAPES);
   pos.set(51, 164, 119, 16);
   genhelpitemcontrols[HELP_WINDOWSHAPE] = emplaceControl<DGNullControl>(this, pos);
 
   // window size menu
   pos.set(pos_windowsizemenuX, pos_windowsizemenuY, stdsize, stdsize);
   emplaceControl<DGButton>(this, P_BUFSIZE, pos, g_windowsizemenu, 
-                           PLUGIN::BUFFERSIZESSIZE, DGButton::Mode::Increment, true);
+                           DGButton::Mode::Increment, true);
   pos.set(290, 164, 102, 14);
   genhelpitemcontrols[HELP_WINDOWSIZE] = emplaceControl<DGNullControl>(this, pos);
 
   // how to generate landmarks menu
   pos.set(pos_landmarksmenuX, pos_landmarksmenuY,  stdsize, stdsize);
   emplaceControl<DGButton>(this, P_POINTSTYLE, pos, g_landmarksmenu, 
-                           NUM_POINTSTYLES, DGButton::Mode::Increment, true);
+                           DGButton::Mode::Increment, true)->setNumStates(NUM_POINTSTYLES);
   pos.set(51, 208, 165, 32);
   genhelpitemcontrols[HELP_LANDMARKS] = emplaceControl<DGNullControl>(this, pos);
 
   // how to recreate them menu
   pos.set(pos_recreatemenuX, pos_recreatemenuY, stdsize, stdsize);
   emplaceControl<DGButton>(this, P_INTERPSTYLE, pos, g_recreatemenu, 
-                           NUM_INTERPSTYLES, DGButton::Mode::Increment, true);
+                           DGButton::Mode::Increment, true)->setNumStates(NUM_INTERPSTYLES);
   pos.set(51, 323, 131, 31);
   genhelpitemcontrols[HELP_RECREATE] = emplaceControl<DGNullControl>(this, pos);
 
   // op 1 menu
   pos.set(pos_op1menuX, pos_op1menuY, stdsize, stdsize);
   emplaceControl<DGButton>(this, P_POINTOP1, pos, g_opsmenu, 
-                           NUM_OPS, DGButton::Mode::Increment, true);
+                           DGButton::Mode::Increment, true)->setNumStates(NUM_OPS);
 
   // op 2 menu
   pos.offset(pos_opmenuinc, 0);
   emplaceControl<DGButton>(this, P_POINTOP2, pos, g_opsmenu, 
-                           NUM_OPS, DGButton::Mode::Increment, true);
+                           DGButton::Mode::Increment, true)->setNumStates(NUM_OPS);
 
   // op 3 menu
   pos.offset(pos_opmenuinc, 0);
   emplaceControl<DGButton>(this, P_POINTOP3, pos, g_opsmenu, 
-                           NUM_OPS, DGButton::Mode::Increment, true);
+                           DGButton::Mode::Increment, true)->setNumStates(NUM_OPS);
 
   pos.set(378, 208, 118, 32);
   genhelpitemcontrols[HELP_OPS] = emplaceControl<DGNullControl>(this, pos);
@@ -351,8 +351,11 @@ long GeometerEditor::OpenEditor() {
                                                           dfx::TextAlignment::Center, nullptr, 
                                                           dfx::kFontSize_SnootPixel10, fontcolor_labels, 
                                                           dfx::kFontName_SnootPixel10);
-    for (size_t j=0; j < labelstrings->size(); j++)
-      label->setText(j, labelstrings->at(j));
+    long j = 0;
+    for (auto const& labelstring : *labelstrings) {
+      label->setText(j, labelstring);
+      j++;
+    }
 
     pos.offset(xoff, yoff);
     fdpos.offset(xoff, yoff);

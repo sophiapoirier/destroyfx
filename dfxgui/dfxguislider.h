@@ -69,7 +69,7 @@ public:
 	CLASS_METHODS(DGAnimation, CAnimKnob)
 
 private:
-	CPoint constrainMousePosition(CPoint const& inPos) const;
+	CPoint constrainMousePosition(CPoint const& inPos) const noexcept;
 
 	dfx::Axis mMouseAxis = dfx::kAxis_Omni;
 	CPoint mEntryMousePos;

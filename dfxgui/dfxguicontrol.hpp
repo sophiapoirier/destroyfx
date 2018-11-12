@@ -174,23 +174,22 @@ float DGControl<T>::getDrawAlpha() const
 
 //-----------------------------------------------------------------------------
 template <class T>
-bool DGControl<T>::setHelpText(char const* inText)
+void DGControl<T>::setHelpText(char const* inText)
 {
 	assert(inText);
-	return T::setAttribute(kCViewTooltipAttribute, strlen(inText) + 1, inText);
+	T::setTooltipText(inText);
 }
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 template <class T>
-bool DGControl<T>::setHelpText(CFStringRef inText)
+void DGControl<T>::setHelpText(CFStringRef inText)
 {
 	assert(inText);
 	if (auto const cString = dfx::CreateCStringFromCFString(inText))
 	{
-		return setHelpText(cString.get());
+		setHelpText(cString.get());
 	}
-	return false;
 }
 #endif
 
