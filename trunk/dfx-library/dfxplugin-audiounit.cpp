@@ -401,7 +401,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 			if (pluginBundle)
 			{
-				AudioUnitCocoaViewInfo cocoaViewInfo = {0};
+				AudioUnitCocoaViewInfo cocoaViewInfo {};
 				cocoaViewInfo.mCocoaAUViewBundleLocation = CFBundleCopyBundleURL(pluginBundle);
 				if (cocoaViewInfo.mCocoaAUViewBundleLocation)
 				{
@@ -432,7 +432,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kAudioUnitMigrateProperty_FromPlugin:
 		{
 			// VST counterpart description
-			static AudioUnitOtherPluginDesc vstPluginMigrationDesc = {0};
+			static AudioUnitOtherPluginDesc vstPluginMigrationDesc {};
 			vstPluginMigrationDesc.format = kOtherPluginFormat_kVST;
 			vstPluginMigrationDesc.plugin.mSubType = PLUGIN_ID;
 			// create a CFArray of the VST counterpart description

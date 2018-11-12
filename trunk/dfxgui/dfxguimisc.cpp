@@ -25,7 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <algorithm>
 #include <cmath>
-#include <experimental/optional>
+#include <optional>
 
 #include "dfxmisc.h"
 
@@ -38,18 +38,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include <Carbon/Carbon.h>
 #endif
 
-
-//-----------------------------------------------------------------------------
-DGColor const DGColor::kBlack(kBlackCColor);
-DGColor const DGColor::kWhite(kWhiteCColor);
-
-//-----------------------------------------------------------------------------
-DGColor DGColor::withAlpha(int inAlpha) const
-{
-	DGColor color(*this);
-	color.alpha = componentFromInt(inAlpha);
-	return color;
-}
 
 //-----------------------------------------------------------------------------
 DGColor DGColor::withAlpha(float inAlpha) const
@@ -94,7 +82,7 @@ DGColor DGColor::brighter(float inAmount) const
 //-----------------------------------------------------------------------------
 DGColor DGColor::getSystem(System inSystemColorID)
 {
-	using OptionalColor = std::experimental::optional<DGColor>;
+	using OptionalColor = std::optional<DGColor>;
 
 #if TARGET_OS_MAC
 	auto const fromNSColor = [](NSColor* inColor) -> OptionalColor
@@ -232,7 +220,7 @@ void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
 		if (fontCFName)
 		{
 			ATSFontRef atsFont = ATSFontFindFromName(fontCFName.get(), kATSOptionFlagsDefault);
-			ATSFontMetrics verticalMetrics = {0};
+			ATSFontMetrics verticalMetrics {};
 			status = ATSFontGetVerticalMetrics(atsFont, kATSOptionFlagsDefault, &verticalMetrics);
 			if (status == noErr)
 			{
@@ -330,7 +318,7 @@ OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, df
 
 	HIRect bounds = inRegion->convertToCGRect( getPortHeight() );
 
-	HIThemeTextInfo textInfo = {0};
+	HIThemeTextInfo textInfo {};
 	textInfo.version = 0;
 	textInfo.state = kThemeStateActive;
 	textInfo.fontID = themeFontID;

@@ -41,7 +41,6 @@
 		4998C2A307E52EF3008EBD90 /* slider-handle-floor.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C29C07E52EF3008EBD90 /* slider-handle-floor.png */; };
 		4998C2A407E52EF3008EBD90 /* slider-handle-slope.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C29D07E52EF3008EBD90 /* slider-handle-slope.png */; };
 		4998C2A507E52EF3008EBD90 /* slider-handle-velocity-influence.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C29E07E52EF3008EBD90 /* slider-handle-velocity-influence.png */; };
-		8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
 		B025BA0908AD353E00A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025BA0608AD353E00A9CCAE /* CAVectorUnit.cpp */; };
 		B028C29B0D0F31F900ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C29A0D0F31F900ADA1DA /* destroyfx.icns */; };
 		EC40EDB420DB4BB600F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDB320DB4BB600F5C0A7 /* dfxguimisc.mm */; };
@@ -57,7 +56,7 @@
 		EC89B420208D310700E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B41F208D310600E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B425208D319600E15129 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B421208D319500E15129 /* dfxguicontrol.cpp */; };
 		EC89B426208D319600E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B424208D319600E15129 /* dfxguidialog.cpp */; };
-		EC89B49B208D352500E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B49A208D352500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-shadow -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations"; }; };
+		EC89B49B208D352500E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B49A208D352500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-shadow -Wno-sign-compare -Wno-exit-time-destructors"; }; };
 		EC984002103084C700FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
 		ECC430AC102F46F0000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC430AA102F46F0000B05A1 /* dfx-au-utilities.strings */; };
 		ECE44FC21563647400637833 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FC01563647400637833 /* dfxmisc.cpp */; };
@@ -66,7 +65,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		490E76A007CAE24800688A1D /* AUEffectBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUEffectBase.cpp; sourceTree = "<group>"; };
 		490E76A107CAE24800688A1D /* AUEffectBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUEffectBase.h; sourceTree = "<group>"; };
 		490E7D0207CAE8F500688A1D /* AUMIDIEffectBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUMIDIEffectBase.cpp; sourceTree = "<group>"; };
@@ -237,7 +235,6 @@
 			isa = PBXGroup;
 			children = (
 				4905A972067F716E00000F0C /* graphics */,
-				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 				B028C29A0D0F31F900ADA1DA /* destroyfx.icns */,
 				ECC430AA102F46F0000B05A1 /* dfx-au-utilities.strings */,
 			);
@@ -517,7 +514,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */,
 				4998C29F07E52EF3008EBD90 /* destroy-fx-link-button.png in Resources */,
 				4998C2A207E52EF3008EBD90 /* midi-gater-background.png in Resources */,
 				4998C2A307E52EF3008EBD90 /* slider-handle-floor.png in Resources */,
@@ -608,14 +604,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				089C167EFE841241C02AAC07 /* English */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
 		ECC430AA102F46F0000B05A1 /* dfx-au-utilities.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

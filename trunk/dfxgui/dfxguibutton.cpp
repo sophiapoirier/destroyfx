@@ -33,12 +33,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 // DGButton
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
-				   long inNumStates, Mode inMode, bool inDrawMomentaryState)
+				   Mode inMode, bool inDrawMomentaryState)
 :	DGControl<CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
 	mMode(inMode), 
 	mDrawMomentaryState(inDrawMomentaryState)
 {
-	// XXX TODO: don't require inNumStates for parameter-linked controls?
 	setMouseEnabled(mMode != Mode::PictureReel);
 	setWraparoundValues((mMode == Mode::Increment) || (mMode == Mode::Decrement));
 }
@@ -46,7 +45,7 @@ DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, 
 				   long inNumStates, Mode inMode, bool inDrawMomentaryState)
-:	DGButton(inOwnerEditor, dfx::kParameterID_Invalid, inRegion, inImage, inNumStates, inMode, inDrawMomentaryState)
+:	DGButton(inOwnerEditor, dfx::kParameterID_Invalid, inRegion, inImage, inMode, inDrawMomentaryState)
 {
 	constexpr long minNumStates = 2;
 	assert(inNumStates >= minNumStates);
@@ -84,7 +83,7 @@ CMouseEventResult DGButton::onMouseDown(CPoint& inPos, CButtonState const& inBut
 	mEntryValue = mNewValue = getValue_i();
 	long const min = 0;
 	long const max = getNumStates() - 1;
-	bool const isDirectionReversed = inButtons.getModifierState() & kAlt;
+	auto const isDirectionReversed = inButtons.isAltSet();
 
 	setMouseIsDown(true);
 
@@ -138,12 +137,12 @@ CMouseEventResult DGButton::onMouseDown(CPoint& inPos, CButtonState const& inBut
 		if (isDirty())
 		{
 			valueChanged();
+			invalid();
 		}
-	}
-
-	if (mUserProcedure)
-	{
-		mUserProcedure(mNewValue, mUserProcData);
+		if (mUserProcedure)
+		{
+			mUserProcedure(mNewValue, mUserProcData);
+		}
 	}
 
 	return kMouseEventHandled;
@@ -180,16 +179,13 @@ CMouseEventResult DGButton::onMouseMoved(CPoint& inPos, CButtonState const& inBu
 			}
 			mNewValue = std::clamp(mNewValue, 0L, getNumStates() - 1);
 		}
-		else
+		if (mNewValue != currentValue)
 		{
+			setValue_i(mNewValue);
 			if (mUserProcedure && (mNewValue != currentValue))
 			{
 				mUserProcedure(mNewValue, mUserProcData);
 			}
-		}
-		if (mNewValue != currentValue)
-		{
-			setValue_i(mNewValue);
 		}
 	}
 
@@ -215,6 +211,7 @@ CMouseEventResult DGButton::onMouseMoved(CPoint& inPos, CButtonState const& inBu
 	if (isDirty())
 	{
 		valueChanged();
+		invalid();
 	}
 
 	return kMouseEventHandled;
@@ -233,6 +230,7 @@ CMouseEventResult DGButton::onMouseUp(CPoint& inPos, CButtonState const& /*inBut
 	if (isDirty())
 	{
 		valueChanged();
+		invalid();
 	}
 
 	if (hitTest(inPos))
@@ -405,6 +403,7 @@ CMouseEventResult DGFineTuneButton::onMouseMoved(CPoint& inPos, CButtonState con
 	if (isDirty())
 	{
 		valueChanged();
+		invalid();
 	}
 
 	return kMouseEventHandled;
@@ -442,10 +441,6 @@ DGValueSpot::DGValueSpot(DfxGuiEditor*	inOwnerEditor,
 	mValueToSet(inOwnerEditor->dfxgui_ContractParameterValue(inParamID, inValue))
 {
 	setTransparency(true);
-	if (!inImage)
-	{
-		setBackOffset(inRegion.getTopLeft());
-	}
 }
 
 //------------------------------------------------------------------------
@@ -504,6 +499,7 @@ CMouseEventResult DGValueSpot::onMouseMoved(CPoint& inPos, CButtonState const& i
 		if (isDirty())
 		{
 			valueChanged();
+			invalid();
 		}
 		if (oldButtonIsPressed != mButtonIsPressed)
 		{
@@ -566,6 +562,10 @@ CMouseEventResult DGWebLink::onMouseMoved(CPoint& inPos, CButtonState const& /*i
 	}
 
 	setValue(hitTest(inPos) ? getMax() : getMin());
+	if (isDirty())
+	{
+		invalid();
+	}
 
 	return kMouseEventHandled;
 }
@@ -580,6 +580,10 @@ CMouseEventResult DGWebLink::onMouseMoved(CPoint& inPos, CButtonState const& /*i
 CMouseEventResult DGWebLink::onMouseUp(CPoint& inPos, CButtonState const& /*inButtons*/)
 {
 	setValue(getMin());
+	if (isDirty())
+	{
+		invalid();
+	}
 
 	// only launch the URL if the mouse pointer is still in the button's region
 	if (hitTest(inPos) && !mURL.empty())
@@ -609,7 +613,6 @@ DGSplashScreen::DGSplashScreen(DfxGuiEditor*	inOwnerEditor,
 :	DGControl<CSplashScreen>(inClickRegion, inOwnerEditor, dfx::kParameterID_Invalid, inSplashImage, inClickRegion)
 {
 	setTransparency(true);
-	setBackOffset(inClickRegion.getTopLeft());
 
 	if (inSplashImage)
 	{

@@ -51,16 +51,16 @@ To contact the author, use the contact form at http://destroyfx.org/
 class DGRect : public CRect
 {
 public:
-	DGRect() = default;
-	DGRect(CCoord inX, CCoord inY, CCoord inWidth, CCoord inHeight)
+	constexpr DGRect() = default;
+	constexpr DGRect(CCoord inX, CCoord inY, CCoord inWidth, CCoord inHeight)
 	:	CRect(inX, inY, inX + inWidth, inY + inHeight)
 	{
 	}
-	DGRect(DGRect const& other)
+	constexpr DGRect(DGRect const& other)
 	:	CRect(other)
 	{
 	}
-	DGRect(CRect const& other)
+	constexpr DGRect(CRect const& other)
 	:	CRect(other)
 	{
 	}
@@ -83,11 +83,11 @@ public:
 	{
 		CRect::setSize(CPoint(inWidth, inHeight));
 	}
-	bool isInside(CCoord inX, CCoord inY)
+	constexpr bool isInside(CCoord inX, CCoord inY)
 	{
 		return pointInside(CPoint(inX, inY));
 	}
-	bool isInside_local(CCoord inX, CCoord inY)
+	constexpr bool isInside_local(CCoord inX, CCoord inY)
 	{
 		return pointInside(CPoint(inX + left, inY + top));
 	}
@@ -142,8 +142,8 @@ enum
 class DGColor : public CColor
 {
 public:
-	static DGColor const kBlack;
-	static DGColor const kWhite;
+	static constexpr auto kBlack = kBlackCColor;
+	static constexpr auto kWhite = kWhiteCColor;
 
 	enum class System
 	{
@@ -161,8 +161,8 @@ public:
 		FocusIndicator
 	};
 
-	DGColor() = default;
-	DGColor(int inRed, int inGreen, int inBlue, int inAlpha = 0xFF)
+	constexpr DGColor() = default;
+	constexpr DGColor(int inRed, int inGreen, int inBlue, int inAlpha = 0xFF)
 	{
 		red = componentFromInt(inRed);
 		green = componentFromInt(inGreen);
@@ -176,7 +176,7 @@ public:
 		blue = componentFromFloat(inBlue);
 		alpha = componentFromFloat(inAlpha);
 	}
-	DGColor(CColor const& inColor)
+	constexpr DGColor(CColor const& inColor)
 	{
 		red = inColor.red;
 		green = inColor.green;
@@ -184,7 +184,10 @@ public:
 		alpha = inColor.alpha;
 	}
 
-	DGColor withAlpha(int inAlpha) const;
+	constexpr DGColor withAlpha(int inAlpha) const noexcept
+	{
+		return DGColor(red, green, blue, componentFromInt(inAlpha));
+	}
 	DGColor withAlpha(float inAlpha) const;
 
 	DGColor darker(float inAmount) const;
@@ -199,7 +202,7 @@ private:
 	static constexpr float kMinValue_f = 0.0f;
 	static constexpr float kMaxValue_f = 1.0f;
 
-	static ComponentType componentFromInt(int inValue)
+	static constexpr ComponentType componentFromInt(int inValue) noexcept
 	{
 		constexpr auto inputMin = static_cast<int>(kMinValue);
 		constexpr auto inputMax = static_cast<int>(kMaxValue);
@@ -218,7 +221,7 @@ private:
 		return static_cast<ComponentType>(std::lround(std::clamp(inValue, inputMin, inputMax) * fixedScalar));
 	}
 
-	static float componentToFloat(ComponentType inValue)
+	static constexpr float componentToFloat(ComponentType inValue)
 	{
 		return static_cast<float>(inValue) / static_cast<float>(kMaxValue);
 	}
@@ -307,7 +310,7 @@ public:
 namespace dfx
 {
 
-static std::string const kInfinityUTF8(u8"\U0000221E");
+static constexpr char const* const kInfinityUTF8 = u8"\U0000221E";
 
 SharedPointer<CFontDesc> CreateVstGuiFont(float inFontSize, const char* inFontName = nullptr);
 

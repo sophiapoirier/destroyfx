@@ -31,14 +31,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 static auto const kDisplayFont = dfx::kFontName_SnootPixel10;
 constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
-DGColor const kBrownTextColor(187, 173, 131);
+constexpr DGColor kBrownTextColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
 
 constexpr long kOctavesSliderWidth = 226 - 2;
-const long kOctaveMaxSliderWidth = static_cast<long>((static_cast<float>(kOctave_MaxValue) / static_cast<float>((std::abs(kOctave_MinValue) + kOctave_MaxValue))) * static_cast<float>(kOctavesSliderWidth));
-const long kOctaveMinSliderWidth = kOctavesSliderWidth - kOctaveMaxSliderWidth;
+static long const kOctaveMaxSliderWidth = static_cast<long>((static_cast<float>(kOctave_MaxValue) / static_cast<float>((std::abs(kOctave_MinValue) + kOctave_MaxValue))) * static_cast<float>(kOctavesSliderWidth));
+static long const kOctaveMinSliderWidth = kOctavesSliderWidth - kOctaveMaxSliderWidth;
 constexpr long kOctaveMinSliderX = 33 + 1;
-const long kOctaveMaxSliderX = kOctaveMinSliderX + kOctaveMinSliderWidth;
+static long const kOctaveMaxSliderX = kOctaveMinSliderX + kOctaveMinSliderWidth;
 
 //-----------------------------------------------------------------------------
 enum
@@ -542,14 +542,37 @@ long ScrubbyEditor::OpenEditor()
 	{
 		long const paramID = kPitchStep0 + i;
 
+		// this visually syncs the top and bottom button images upon mouse clicks
+		auto const keyboardButtonProc = [](long value, void* button)
+		{
+			auto const keyboardButton = static_cast<DGButton*>(button);
+			auto const editor = keyboardButton->getOwnerEditor();
+			editor->getFrame()->forEachChild([originalButton = keyboardButton->asCControl()](CView* child)
+			{
+				auto const paramID = originalButton->getTag();
+				auto const control = dynamic_cast<CControl*>(child);
+				if (control && (control->getTag() == paramID) && (control != originalButton))
+				{
+					control->setValue(originalButton->getValue());
+					if (control->isDirty())
+					{
+						control->invalid();
+					}
+				}
+			});
+		};
+
 		pos.setWidth(keyboardTopKeyImages[i]->getWidth());
-		emplaceControl<DGButton>(this, paramID, pos, keyboardTopKeyImages[i], 2, DGButton::Mode::Increment);
+		auto button = emplaceControl<DGButton>(this, paramID, pos, keyboardTopKeyImages[i], DGButton::Mode::Increment);
 		pos.offset(pos.getWidth(), 0);
 
 		if (keyboardBottomKeyImages[i] != nullptr)
 		{
+			button->setUserProcedure(keyboardButtonProc, button);
+
 			keyboardBottomKeyPos.setWidth(keyboardBottomKeyImages[i]->getWidth());
-			emplaceControl<DGButton>(this, paramID, keyboardBottomKeyPos, keyboardBottomKeyImages[i], 2, DGButton::Mode::Increment);
+			button = emplaceControl<DGButton>(this, paramID, keyboardBottomKeyPos, keyboardBottomKeyImages[i], DGButton::Mode::Increment);
+			button->setUserProcedure(keyboardButtonProc, button);
 			keyboardBottomKeyPos.offset(keyboardBottomKeyPos.getWidth(), 0);
 		}
 	}
@@ -562,27 +585,27 @@ long ScrubbyEditor::OpenEditor()
 
 	// choose the speed mode (robot or DJ)
 	pos.set(kSpeedModeButtonX, kSpeedModeButtonY, speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kNumSpeedModes);
-	emplaceControl<DGButton>(this, kSpeedMode, pos, speedModeButtonImage, kNumSpeedModes, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kSpeedMode, pos, speedModeButtonImage, DGButton::Mode::Increment, true);
 
 	// freeze the input stream
 	pos.set(kFreezeButtonX, kFreezeButtonY, freezeButtonImage->getWidth() / 2, freezeButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kFreeze, pos, freezeButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kFreeze, pos, freezeButtonImage, DGButton::Mode::Increment, true);
 
 	// choose the channels mode (linked or split)
 	pos.set(kSplitChannelsButtonX, kSplitChannelsButtonY, splitChannelsButtonImage->getWidth() / 2, splitChannelsButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kSplitChannels, pos, splitChannelsButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kSplitChannels, pos, splitChannelsButtonImage, DGButton::Mode::Increment, true);
 
 	// choose the seek rate type ("free" or synced)
 	pos.set(kTempoSyncButtonX, kTempoSyncButtonY, tempoSyncButtonImage->getWidth() / 2, tempoSyncButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage, DGButton::Mode::Increment, true);
 
 	// toggle pitch constraint
 	pos.set(kPitchConstraintButtonX, kPitchConstraintButtonY, pitchConstraintButtonImage->getWidth() / 2, pitchConstraintButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kPitchConstraint, pos, pitchConstraintButtonImage, 2, DGButton::Mode::Increment, true);
+	emplaceControl<DGButton>(this, kPitchConstraint, pos, pitchConstraintButtonImage, DGButton::Mode::Increment, true);
 
 	// choose the seek rate type ("free" or synced)
 	pos.set(kLittleTempoSyncButtonX, kLittleTempoSyncButtonY, tempoSyncButtonImage_little->getWidth(), tempoSyncButtonImage_little->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage_little, 2, DGButton::Mode::Increment, false);
+	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage_little, DGButton::Mode::Increment, false);
 
 
 	// ...............PITCH CONSTRAINT....................

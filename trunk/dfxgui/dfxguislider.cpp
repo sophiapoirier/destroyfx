@@ -56,10 +56,6 @@ DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 					   (inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical))
 {
 	setTransparency(true);
-	if (!inBackgroundImage)
-	{
-		setBackOffset(inRegion.getTopLeft());
-	}
 
 	setZoomFactor(kDefaultFineTuneFactor);
 
@@ -130,10 +126,6 @@ DGAnimation::DGAnimation(DfxGuiEditor*	inOwnerEditor,
 						 inNumAnimationFrames, inRegion.getHeight(), inAnimationImage)
 {
 	setTransparency(true);
-	if (!inBackground)
-	{
-		setBackOffset(inRegion.getTopLeft());
-	}
 
 	setZoomFactor(kDefaultFineTuneFactor);
 }
@@ -173,7 +165,7 @@ CMouseEventResult DGAnimation::onMouseUp(CPoint& inPos, CButtonState const& inBu
 }
 
 //------------------------------------------------------------------------
-CPoint DGAnimation::constrainMousePosition(CPoint const& inPos) const
+CPoint DGAnimation::constrainMousePosition(CPoint const& inPos) const noexcept
 {
 	CPoint resultPos(mEntryMousePos);
 	if (mMouseAxis & dfx::kAxis_Horizontal)

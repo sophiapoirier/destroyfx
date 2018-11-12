@@ -30,7 +30,6 @@
 		49BB46D207E5366200861708 /* skidderformalities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB46CD07E5366200861708 /* skidderformalities.cpp */; };
 		49BB46D307E5366200861708 /* skiddermidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB46CE07E5366200861708 /* skiddermidi.cpp */; };
 		49BB46D407E5366200861708 /* skidderprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB46CF07E5366200861708 /* skidderprocess.cpp */; };
-		8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
 		B025B9A708AD328F00A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B9A408AD328F00A9CCAE /* CAVectorUnit.cpp */; };
 		B028C2C70D0F324A00ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C2C60D0F324A00ADA1DA /* destroyfx.icns */; };
 		EC89B2E1208D286200E15129 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2DE208D286200E15129 /* Carbon.framework */; };
@@ -43,7 +42,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		490E769C07CAE20500688A1D /* temporatetable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = temporatetable.cpp; sourceTree = "<group>"; };
 		490E769D07CAE20500688A1D /* temporatetable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = temporatetable.h; sourceTree = "<group>"; };
 		490E76A007CAE24800688A1D /* AUEffectBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUEffectBase.cpp; sourceTree = "<group>"; };
@@ -157,7 +155,6 @@
 			isa = PBXGroup;
 			children = (
 				B028C2C60D0F324A00ADA1DA /* destroyfx.icns */,
-				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -344,7 +341,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */,
 				B028C2C70D0F324A00ADA1DA /* destroyfx.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -414,17 +410,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXVariantGroup section */
-		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				089C167EFE841241C02AAC07 /* English */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		B025B9AB08AD328F00A9CCAE /* Development */ = {
