@@ -532,8 +532,7 @@ DGTextEntryDialog::DGTextEntryDialog(long inParamID, std::string const& inMessag
 	pos.inset(kContentMargin, kContentMargin);
 	pos.setHeight(kTextLabelHeight);
 	pos.setY(getHeight() - pos.getHeight() - labelEditHeightOffset - kButtonHeight - (kContentMargin * 2.0));
-	CTextLabel* label = inTextEntryLabel ? new CTextLabel(pos, inTextEntryLabel) : nullptr;
-	if (label)
+	if (CTextLabel* const label = inTextEntryLabel ? new CTextLabel(pos, inTextEntryLabel) : nullptr)
 	{
 		label->setFontColor(DGColor::getSystem(DGColor::System::Label));
 		label->setBackColor(kTransparentCColor);
@@ -541,13 +540,11 @@ DGTextEntryDialog::DGTextEntryDialog(long inParamID, std::string const& inMessag
 		label->setHoriAlign(kLeftText);
 		label->sizeToFit();
 		addView(label);
-	}
 
-	if (label)
-	{
 		pos.left = std::round(label->getViewSize().right + kButtonSpacing);
 		pos.right = getWidth() - kContentMargin;
 	}
+
 	pos.setHeight(kTextEditHeight);
 	pos.offset(0.0, -labelEditHeightOffset);
 	mTextEdit = new DGDialogTextEdit(pos, this);

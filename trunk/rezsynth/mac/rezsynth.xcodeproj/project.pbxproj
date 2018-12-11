@@ -79,6 +79,8 @@
 		ECC3B67312A7FAAF00BA11D5 /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC3B67212A7FAAF00BA11D5 /* dfxenvelope.cpp */; };
 		ECC3B6E412B0276200BA11D5 /* bandwidth-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECC3B6E312B0276200BA11D5 /* bandwidth-mode-button.png */; };
 		ECC43127102F5208000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC43125102F5208000B05A1 /* dfx-au-utilities.strings */; };
+		ECDB2A6E21BA02AF00938F5C /* horizontal-slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB475F07E53B4B00861708 /* horizontal-slider-handle-glowing.png */; };
+		ECDB2A6F21BA02B200938F5C /* vertical-slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476907E53B4B00861708 /* vertical-slider-handle-glowing.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -576,6 +578,7 @@
 				49BB477107E53B4B00861708 /* go-button.png in Resources */,
 				49BB477207E53B4B00861708 /* horizontal-slider-background.png in Resources */,
 				49BB477407E53B4B00861708 /* horizontal-slider-handle.png in Resources */,
+				ECDB2A6E21BA02AF00938F5C /* horizontal-slider-handle-glowing.png in Resources */,
 				49BB477507E53B4B00861708 /* legato-button.png in Resources */,
 				49BB477607E53B4B00861708 /* midi-learn-button.png in Resources */,
 				49BB477707E53B4B00861708 /* midi-reset-button.png in Resources */,
@@ -585,6 +588,7 @@
 				49BB477B07E53B4B00861708 /* smart-electronix-link.png in Resources */,
 				49BB477C07E53B4B00861708 /* vertical-slider-background.png in Resources */,
 				49BB477E07E53B4B00861708 /* vertical-slider-handle.png in Resources */,
+				ECDB2A6F21BA02B200938F5C /* vertical-slider-handle-glowing.png in Resources */,
 				49BB477F07E53B4B00861708 /* vertical-value-display-background.png in Resources */,
 				49BB478007E53B4B00861708 /* wise-amp-button.png in Resources */,
 				B028C2BC0D0F323700ADA1DA /* destroyfx.icns in Resources */,

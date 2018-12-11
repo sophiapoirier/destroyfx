@@ -41,7 +41,19 @@ public:
 	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
 	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
 
+	void setHandle(CBitmap* inHandle) override;
+	void setAlternateHandle(CBitmap* inHandle);
+	void setUseAlternateHandle(bool inEnable);
+
+#if TARGET_PLUGIN_USES_MIDI
+	void setMidiLearner(bool inEnable) override;
+#endif
+
 	CLASS_METHODS(DGSlider, CSlider)
+
+private:
+	SharedPointer<CBitmap> mMainHandleImage;
+	SharedPointer<CBitmap> mAlternateHandleImage;
 };
 
 

@@ -251,7 +251,12 @@ long BufferOverrideEditor::OpenEditor()
 
 	// slider handles
 	auto const sliderHandleImage = makeOwned<DGImage>("slider-handle.png");
+	auto const sliderHandleImage_glowing = makeOwned<DGImage>("slider-handle-glowing.png");
+	auto const sliderHandleImage_pitchbend = makeOwned<DGImage>("slider-handle-pitchbend.png");
+	auto const sliderHandleImage_pitchbend_glowing = makeOwned<DGImage>("slider-handle-pitchbend-glowing.png");
 	auto const xyBoxHandleImage = makeOwned<DGImage>("xy-box-handle.png");
+	auto const xyBoxHandleImage_divisor_glowing = makeOwned<DGImage>("xy-box-handle-divisor-glow.png");
+	auto const xyBoxHandleImage_buffer_glowing = makeOwned<DGImage>("xy-box-handle-buffer-glow.png");
 
 	// buttons
 	auto const bufferTempoSyncButtonImage = makeOwned<DGImage>("buffer-tempo-sync-button.png");
@@ -285,35 +290,38 @@ long BufferOverrideEditor::OpenEditor()
 	auto const divisorLFORateTag = getparameter_b(kDivisorLFOTempoSync) ? kDivisorLFORate_Sync : kDivisorLFORate_Hz;
 	pos.set(kDivisorLFORateSliderX, kDivisorLFORateSliderY, kSliderWidth, kLFOSliderHeight);
 	mDivisorLFORateSlider = emplaceControl<DGSlider>(this, divisorLFORateTag, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	mDivisorLFORateSlider->setAlternateHandle(sliderHandleImage_glowing);
 
 	pos.set(kDivisorLFODepthSliderX, kDivisorLFODepthSliderY, kSliderWidth, kLFOSliderHeight);
-	emplaceControl<DGSlider>(this, kDivisorLFODepth, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kDivisorLFODepth, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
 	auto const bufferLFORateTag = getparameter_b(kBufferLFOTempoSync) ? kBufferLFORate_Sync : kBufferLFORate_Hz;
 	pos.set(kBufferLFORateSliderX, kBufferLFORateSliderY, kSliderWidth, kLFOSliderHeight);
 	mBufferLFORateSlider = emplaceControl<DGSlider>(this, bufferLFORateTag, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	mBufferLFORateSlider->setAlternateHandle(sliderHandleImage_glowing);
 
 	pos.set(kBufferLFODepthSliderX, kBufferLFODepthSliderY, kSliderWidth, kLFOSliderHeight);
-	emplaceControl<DGSlider>(this, kBufferLFODepth, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kBufferLFODepth, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
 	pos.set(kSmoothSliderX, kSmoothSliderY, kSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kSmooth, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kSmooth, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
 	pos.set(kDryWetMixSliderX, kDryWetMixSliderY, kSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kDryWetMix, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kDryWetMix, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
 	pos.set(kPitchbendSliderX, kPitchbendSliderY, kSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kPitchbend, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kPitchbend, pos, dfx::kAxis_Horizontal, sliderHandleImage_pitchbend)->setAlternateHandle(sliderHandleImage_pitchbend_glowing);
 
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
 	pos.set(kDivisorBufferBoxX + 3, kDivisorBufferBoxY + 27, kDivisorBufferBoxWidth - 6, kSliderHeight);
-	emplaceControl<DGSlider>(this, kDivisor, pos, dfx::kAxis_Horizontal, xyBoxHandleImage);
+	emplaceControl<DGSlider>(this, kDivisor, pos, dfx::kAxis_Horizontal, xyBoxHandleImage)->setAlternateHandle(xyBoxHandleImage_divisor_glowing);
 
 	auto const bufferSizeTag = getparameter_b(kBufferTempoSync) ? kBufferSize_Sync : kBufferSize_MS;
 	pos.offset(0, 57);
 	mBufferSizeSlider = emplaceControl<DGSlider>(this, bufferSizeTag, pos, dfx::kAxis_Horizontal, xyBoxHandleImage);
+	mBufferSizeSlider->setAlternateHandle(xyBoxHandleImage_buffer_glowing);
 
 
 
