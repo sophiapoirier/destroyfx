@@ -118,8 +118,11 @@ long MIDIGaterEditor::OpenEditor()
 	//--load the images-------------------------------------
 
 	auto const slopeSliderHandleImage = makeOwned<DGImage>("slider-handle-slope.png");
+	auto const slopeSliderHandleImage_glowing = makeOwned<DGImage>("slider-handle-slope-glowing.png");
 	auto const floorSliderHandleImage = makeOwned<DGImage>("slider-handle-floor.png");
+	auto const floorSliderHandleImage_glowing = makeOwned<DGImage>("slider-handle-floor-glowing.png");
 	auto const velocityInfluenceSliderHandleImage = makeOwned<DGImage>("slider-handle-velocity-influence.png");
+	auto const velocityInfluenceSliderHandleImage_glowing = makeOwned<DGImage>("slider-handle-velocity-influence-glowing.png");
 	auto const destroyFXLinkButtonImage = makeOwned<DGImage>("destroy-fx-link-button.png");
 
 
@@ -130,19 +133,19 @@ long MIDIGaterEditor::OpenEditor()
 
 	// attack slope
 	pos.set(kSliderX, kAttackSlopeSliderY, kSliderWidth, slopeSliderHandleImage->getHeight());
-	emplaceControl<DGSlider>(this, kAttackSlope, pos, dfx::kAxis_Horizontal, slopeSliderHandleImage);
+	emplaceControl<DGSlider>(this, kAttackSlope, pos, dfx::kAxis_Horizontal, slopeSliderHandleImage)->setAlternateHandle(slopeSliderHandleImage_glowing);
 
 	// release slope
 	pos.set(kSliderX, kReleaseSlopeSliderY, kSliderWidth, slopeSliderHandleImage->getHeight());
-	emplaceControl<DGSlider>(this, kReleaseSlope, pos, dfx::kAxis_Horizontal, slopeSliderHandleImage);
+	emplaceControl<DGSlider>(this, kReleaseSlope, pos, dfx::kAxis_Horizontal, slopeSliderHandleImage)->setAlternateHandle(slopeSliderHandleImage_glowing);
 
 	// velocity influence
 	pos.set(kSliderX, kVelocityInfluenceSliderY, kSliderWidth, velocityInfluenceSliderHandleImage->getHeight());
-	emplaceControl<DGSlider>(this, kVelocityInfluence, pos, dfx::kAxis_Horizontal, velocityInfluenceSliderHandleImage);
+	emplaceControl<DGSlider>(this, kVelocityInfluence, pos, dfx::kAxis_Horizontal, velocityInfluenceSliderHandleImage)->setAlternateHandle(velocityInfluenceSliderHandleImage_glowing);
 
 	// floor
 	pos.set(kSliderX, kFloorSliderY, kSliderWidth, floorSliderHandleImage->getHeight());
-	emplaceControl<DGSlider>(this, kFloor, pos, dfx::kAxis_Horizontal, floorSliderHandleImage);
+	emplaceControl<DGSlider>(this, kFloor, pos, dfx::kAxis_Horizontal, floorSliderHandleImage)->setAlternateHandle(floorSliderHandleImage_glowing);
 
 
 	// --- text displays ---

@@ -406,8 +406,11 @@ long ScrubbyEditor::OpenEditor()
 
 	// sliders
 	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
+	auto const sliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-glowing.png");
 	auto const rangeSliderHandleLeftImage = VSTGUI::makeOwned<DGImage>("range-slider-handle-left.png");
+	auto const rangeSliderHandleLeftImage_glowing = VSTGUI::makeOwned<DGImage>("range-slider-handle-left-glowing.png");
 	auto const rangeSliderHandleRightImage = VSTGUI::makeOwned<DGImage>("range-slider-handle-right.png");
+	auto const rangeSliderHandleRightImage_glowing = VSTGUI::makeOwned<DGImage>("range-slider-handle-right-glowing.png");
 
 	// mode buttons
 	auto const speedModeButtonImage = VSTGUI::makeOwned<DGImage>("speed-mode-button.png");
@@ -462,34 +465,33 @@ long ScrubbyEditor::OpenEditor()
 	// seek rate
 	pos.set(kSeekRateSliderX, kSeekRateSliderY, kSeekRateSliderWidth, kSliderHeight);
 	mSeekRateSlider = emplaceControl<DGSlider>(this, seekRateParamID, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	mSeekRateSlider->setAlternateHandle(sliderHandleImage_glowing);
 //	mSeekRateSlider->setOvershoot(3);
 
 	// seek range
 	pos.set(kSeekRangeSliderX, kSeekRangeSliderY, kSeekRangeSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kSeekRange, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kSeekRange, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
 	// seek duration
 	pos.set(kSeekDurSliderX, kSeekDurSliderY, kSeekDurSliderWidth, kSliderHeight);
-	auto slider = emplaceControl<DGSlider>(this, kSeekDur, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kSeekDur, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 //	slider->setOvershoot(3);
 
 	// octave minimum
 	pos.set(kOctaveMinSliderX, kOctaveMinSliderY, kOctaveMinSliderWidth, kSliderHeight);
-	slider = emplaceControl<DGSlider>(this, kOctaveMin, pos, dfx::kAxis_Horizontal, rangeSliderHandleLeftImage);
-//	slider->setControlContinuous(false);
+	emplaceControl<DGSlider>(this, kOctaveMin, pos, dfx::kAxis_Horizontal, rangeSliderHandleLeftImage)->setAlternateHandle(rangeSliderHandleLeftImage_glowing);
 
 	// octave maximum
 	pos.set(kOctaveMaxSliderX, kOctaveMaxSliderY, kOctaveMaxSliderWidth, kSliderHeight);
-	slider = emplaceControl<DGSlider>(this, kOctaveMax, pos, dfx::kAxis_Horizontal, rangeSliderHandleRightImage);
-//	slider->setControlContinuous(false);
+	emplaceControl<DGSlider>(this, kOctaveMax, pos, dfx::kAxis_Horizontal, rangeSliderHandleRightImage)->setAlternateHandle(rangeSliderHandleRightImage_glowing);
 
 	// tempo
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
 	// predelay
 	pos.set(kPredelaySliderX, kPredelaySliderY, kPredelaySliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kPredelay, pos, dfx::kAxis_Horizontal, sliderHandleImage);
+	emplaceControl<DGSlider>(this, kPredelay, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
 
 
@@ -835,7 +837,6 @@ void ScrubbyEditor::parameterChanged(long inParameterID)
 				newParamID = useSyncParam ? kSeekRate_Sync : kSeekRate_Hz;
 			}
 			inControl->setParameterID(newParamID);
-//			inControl->setControlContinuous(!useSyncParam);
 		};
 		updateControlParameterID(mSeekRateSlider);
 		updateControlParameterID(mSeekRateDisplay);
@@ -934,9 +935,9 @@ void ScrubbyEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse
 }
 
 //-----------------------------------------------------------------------------
-void ScrubbyEditor::numAudioChannelsChanged(unsigned long inNewNumChannels)
+void ScrubbyEditor::numAudioChannelsChanged(unsigned long inNumChannels)
 {
-	float const alpha = (inNewNumChannels > 1) ? 1.0f : kUnusedControlAlpha;
+	float const alpha = (inNumChannels > 1) ? 1.0f : kUnusedControlAlpha;
 
 	for (auto& control : mControlsList)
 	{

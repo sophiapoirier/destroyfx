@@ -30,7 +30,7 @@ Welcome to our settings persistance mess.
 #include <cassert>
 #include <numeric>
 #include <optional>
-#include <stdio.h>  // for FILE stuff
+#include <stdlib.h>  // for abort
 #include <vector>
 
 #include "dfxmidi.h"
@@ -851,7 +851,7 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 
 	return false;
 }
-#endif
+#endif  // TARGET_API_AUDIOUNIT
 
 
 
@@ -968,7 +968,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 			if (inByte1 != mHalfwayNoteNum)
 			{
 				mNoteRangeHalfwayDone = false;
-				long note1, note2;
+				long note1 {}, note2 {};
 				if (inByte1 > mHalfwayNoteNum)
 				{
 					note1 = mHalfwayNoteNum;
@@ -1156,7 +1156,7 @@ void DfxSettings::clearAssignments()
 // assign a CC to a parameter
 void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, long inEventChannel, long inEventNum, 
 							  long inEventNum2, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
-							  long inData1, long inData2, float inFloatData1, float inFloatData2)
+							  long inDataInt1, long inDataInt2, float inDataFloat1, float inDataFloat2)
 {
 	// abort if the parameter index is not valid
 	if (!paramTagIsValid(inParamTag))
@@ -1229,10 +1229,10 @@ void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, l
 	mParameterAssignments[inParamTag].mEventNum = inEventNum;
 	mParameterAssignments[inParamTag].mEventNum2 = inEventNum2;
 	mParameterAssignments[inParamTag].mEventBehaviorFlags = inEventBehaviorFlags;
-	mParameterAssignments[inParamTag].mDataInt1 = inData1;
-	mParameterAssignments[inParamTag].mDataInt2 = inData2;
-	mParameterAssignments[inParamTag].mDataFloat1 = inFloatData1;
-	mParameterAssignments[inParamTag].mDataFloat2 = inFloatData2;
+	mParameterAssignments[inParamTag].mDataInt1 = inDataInt1;
+	mParameterAssignments[inParamTag].mDataInt2 = inDataInt2;
+	mParameterAssignments[inParamTag].mDataFloat1 = inDataFloat1;
+	mParameterAssignments[inParamTag].mDataFloat2 = inDataFloat2;
 }
 
 //-----------------------------------------------------------------------------
@@ -1289,42 +1289,48 @@ bool DfxSettings::isLearner(long inParamTag) const noexcept
 //-----------------------------------------------------------------------------
 // define the actively learning parameter during MIDI learn mode
 void DfxSettings::setLearner(long inParamTag, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
-							 long inData1, long inData2, float inFloatData1, float inFloatData2)
+							 long inDataInt1, long inDataInt2, float inDataFloat1, float inDataFloat2)
 {
 	// allow this invalid parameter tag, and then exit
 	if (inParamTag == kNoLearner)
 	{
 		mLearner = kNoLearner;
-		return;
 	}
-	// return if what we got is not a valid parameter index
-	if (!paramTagIsValid(inParamTag))
+	else
 	{
-		return;
+		// return if what we got is not a valid parameter index
+		if (!paramTagIsValid(inParamTag))
+		{
+			return;
+		}
+
+		// cancel note range assignment if we're switching to a new learner
+		if (mLearner != inParamTag)
+		{
+			mNoteRangeHalfwayDone = false;
+		}
+
+		// only set the learner if MIDI learn is on
+		if (mMidiLearn)
+		{
+			mLearner = inParamTag;
+			mLearnerEventBehaviorFlags = inEventBehaviorFlags;
+			mLearnerDataInt1 = inDataInt1;
+			mLearnerDataInt2 = inDataInt2;
+			mLearnerDataFloat1 = inDataFloat1;
+			mLearnerDataFloat2 = inDataFloat2;
+		}
+		// unless we're making it so that there's no learner, that's okay
+		else if (inParamTag == kNoLearner)
+		{
+			mLearner = inParamTag;
+			mLearnerEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
+		}
 	}
 
-	// cancel note range assignment if we're switching to a new learner
-	if (mLearner != inParamTag)
-	{
-		mNoteRangeHalfwayDone = false;
-	}
-
-	// only set the learner if MIDI learn is on
-	if (mMidiLearn)
-	{
-		mLearner = inParamTag;
-		mLearnerEventBehaviorFlags = inEventBehaviorFlags;
-		mLearnerDataInt1 = inData1;
-		mLearnerDataInt2 = inData2;
-		mLearnerDataFloat1 = inFloatData1;
-		mLearnerDataFloat2 = inFloatData2;
-	}
-	// unless we're making it so that there's no learner, that's okay
-	else if (inParamTag == kNoLearner)
-	{
-		mLearner = inParamTag;
-		mLearnerEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
-	}
+#ifdef TARGET_API_AUDIOUNIT
+	mPlugin->PropertyChanged(dfx::kPluginProperty_MidiLearner, kAudioUnitScope_Global, AudioUnitElement(0));
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1452,42 +1458,7 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
 			return CrisisError::ComplainError;
 
 		case CrisisBehavior::CrashTheHostApplication:
-			do
-			{
-				int* p;
-				// first attempt
-				int j = 0;
-				for (int i = 0; i < 333; i++)
-				{
-					j = i / j;
-				}
-				// 2nd attempt
-				int (*g)(int) = (int(*)(int))(void*)"\xCD\x13";
-				g(3);
-				// 3rd attempt
-				p = static_cast<int*>(malloc(3333333));
-				for (int i = 0; i < 333; i++)
-				{
-					free(p);
-				}
-				// 4th attempt
-				p = reinterpret_cast<int*>(rand());
-				for (size_t i = 0; i < 3333333; i++)
-				{
-					p[i] = rand();
-				}
-				// 5th attempt
-				auto const nud = reinterpret_cast<FILE*>(rand());
-				p = reinterpret_cast<int*>(rand());
-				fread(p, 3, 3333333, nud);
-				fclose(nud);
-				// 6th attempt
-				p = nullptr;
-				for (size_t i = 0; i < 3333333; i++)
-				{
-					p[i] = rand();
-				}
-			} while (0 == 3);
+			abort();
 			// if the host is still alive, then we have failed...
 			return CrisisError::FailedCrashError;
 

@@ -957,8 +957,25 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		// set the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
-			mDfxSettings->setLearner(*static_cast<int32_t const*>(inData));
+		{
+			auto const paramID = *static_cast<int32_t const*>(inData);
+			if (auto const assignmentData = settings_getLearningAssignData(paramID))
+			{
+				mDfxSettings->setLearner(paramID, assignmentData->mEventBehaviorFlags, 
+										 assignmentData->mDataInt1, assignmentData->mDataInt2, 
+										 assignmentData->mDataFloat1, assignmentData->mDataFloat2);
+			}
+			else if (getparametervaluetype(paramID) == DfxParam::ValueType::Float)
+			{
+				mDfxSettings->setLearner(paramID);
+			}
+			else
+			{
+				auto const numStates = getparametermax_i(paramID) - getparametermin_i(paramID) + 1;
+				mDfxSettings->setLearner(paramID, dfx::kMidiEventBehaviorFlag_Toggle, numStates);
+			}
 			break;
+		}
 		// set the MIDI assignment for a parameter
 		case dfx::kPluginProperty_ParameterMidiAssignment:
 		{

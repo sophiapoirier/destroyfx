@@ -220,7 +220,7 @@ long GeometerEditor::OpenEditor() {
   // slider and fine tune controls
   auto const g_sliderbackground = VSTGUI::makeOwned<DGImage>("slider-background.png");
   auto const g_sliderhandle = VSTGUI::makeOwned<DGImage>("slider-handle.png");
-//  auto const g_sliderhandle_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-glowing.png");
+  auto const g_sliderhandle_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-glowing.png");
   auto const g_finedownbutton = VSTGUI::makeOwned<DGImage>("fine-tune-down-button.png");
   auto const g_fineupbutton = VSTGUI::makeOwned<DGImage>("fine-tune-up-button.png");
   // option menus
@@ -333,6 +333,7 @@ long GeometerEditor::OpenEditor() {
     constexpr long sliderRangeMargin = 1;
     sliders[i] = emplaceControl<DGSlider>(this, param, pos, dfx::kAxis_Horizontal, 
                                           g_sliderhandle, g_sliderbackground, sliderRangeMargin);
+    sliders[i]->setAlternateHandle(g_sliderhandle_glowing);
 
     // fine tune down button
     finedownbuttons[i] = emplaceControl<DGFineTuneButton>(this, param, fdpos, g_finedownbutton, -finetuneinc);

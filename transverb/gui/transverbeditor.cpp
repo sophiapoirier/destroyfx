@@ -341,7 +341,9 @@ long TransverbEditor::OpenEditor()
 	// slider handles
 	auto const horizontalSliderHandleImage = makeOwned<DGImage>("purple-wide-fader-handle.png");
 	auto const grayHorizontalSliderHandleImage = makeOwned<DGImage>("grey-wide-fader-handle.png");
+	auto const horizontalSliderHandleImage_glowing = makeOwned<DGImage>("wide-fader-handle-glowing.png");
 	auto const verticalSliderHandleImage = makeOwned<DGImage>("tall-fader-handle.png");
+	auto const verticalSliderHandleImage_glowing = makeOwned<DGImage>("tall-fader-handle-glowing.png");
 	// slider backgrounds
 	auto const horizontalSliderBackgroundImage = makeOwned<DGImage>("purple-wide-fader-slide.png");
 	auto const grayHorizontalSliderBackgroundImage = makeOwned<DGImage>("grey-wide-fader-slide.png");
@@ -386,7 +388,7 @@ long TransverbEditor::OpenEditor()
 			displayProc = distDisplayProcedure;
 			userData = this;
 		}
-		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin);
+		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
 		auto const textDisplay = emplaceControl<DGTextDisplay>(this, tag, textDisplayPos, displayProc, userData, nullptr, 
 															   dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
@@ -430,7 +432,7 @@ long TransverbEditor::OpenEditor()
 		tuneUpButtonPos.offset(0, yoff);
 	}
 
-	emplaceControl<DGSlider>(this, kBsize, pos, dfx::kAxis_Horizontal, grayHorizontalSliderHandleImage, grayHorizontalSliderBackgroundImage, sliderRangeMargin);
+	emplaceControl<DGSlider>(this, kBsize, pos, dfx::kAxis_Horizontal, grayHorizontalSliderHandleImage, grayHorizontalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
 	emplaceControl<DGTextDisplay>(this, kBsize, textDisplayPos, bsizeDisplayProcedure, nullptr, nullptr, 
 								  dfx::TextAlignment::Right, kDisplayTextSize, kDisplayTextColor, kDisplayFont);
@@ -443,7 +445,7 @@ long TransverbEditor::OpenEditor()
 	pos.set(kTallFaderX, kTallFaderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
 	for (long tag = kDrymix; tag <= kMix2; tag++)
 	{
-		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage, sliderRangeMargin);
+		emplaceControl<DGSlider>(this, tag, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage, sliderRangeMargin)->setAlternateHandle(verticalSliderHandleImage_glowing);
 		pos.offset(kTallFaderInc, 0);
 	}
 

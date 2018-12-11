@@ -43,6 +43,9 @@
 		4998C2A507E52EF3008EBD90 /* slider-handle-velocity-influence.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C29E07E52EF3008EBD90 /* slider-handle-velocity-influence.png */; };
 		B025BA0908AD353E00A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025BA0608AD353E00A9CCAE /* CAVectorUnit.cpp */; };
 		B028C29B0D0F31F900ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C29A0D0F31F900ADA1DA /* destroyfx.icns */; };
+		EC1195A021BC92A800909132 /* slider-handle-velocity-influence-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = EC11959D21BC92A800909132 /* slider-handle-velocity-influence-glowing.png */; };
+		EC1195A121BC92A800909132 /* slider-handle-floor-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = EC11959E21BC92A800909132 /* slider-handle-floor-glowing.png */; };
+		EC1195A221BC92A800909132 /* slider-handle-slope-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = EC11959F21BC92A800909132 /* slider-handle-slope-glowing.png */; };
 		EC40EDB420DB4BB600F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDB320DB4BB600F5C0A7 /* dfxguimisc.mm */; };
 		EC4FFDD5209B9693000F2A30 /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FFDD4209B9692000F2A30 /* dfxenvelope.cpp */; };
 		EC89B307208D291900E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B300208D291700E15129 /* Accelerate.framework */; };
@@ -146,6 +149,9 @@
 		B028C29A0D0F31F900ADA1DA /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
 		B06E60FA097ACA2200AC582C /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B06E60FB097ACA2200AC582C /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
+		EC11959D21BC92A800909132 /* slider-handle-velocity-influence-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-velocity-influence-glowing.png"; sourceTree = "<group>"; };
+		EC11959E21BC92A800909132 /* slider-handle-floor-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-floor-glowing.png"; sourceTree = "<group>"; };
+		EC11959F21BC92A800909132 /* slider-handle-slope-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-slope-glowing.png"; sourceTree = "<group>"; };
 		EC390FF520CCAAC300A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC40EDB320DB4BB600F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
 		EC4FFDD3209B9692000F2A30 /* dfxenvelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxenvelope.h; sourceTree = "<group>"; };
@@ -268,8 +274,11 @@
 			children = (
 				4998C29B07E52EF3008EBD90 /* midi-gater-background.png */,
 				4998C29D07E52EF3008EBD90 /* slider-handle-slope.png */,
+				EC11959F21BC92A800909132 /* slider-handle-slope-glowing.png */,
 				4998C29E07E52EF3008EBD90 /* slider-handle-velocity-influence.png */,
+				EC11959D21BC92A800909132 /* slider-handle-velocity-influence-glowing.png */,
 				4998C29C07E52EF3008EBD90 /* slider-handle-floor.png */,
+				EC11959E21BC92A800909132 /* slider-handle-floor-glowing.png */,
 				4998C29807E52EF3008EBD90 /* destroy-fx-link-button.png */,
 			);
 			name = graphics;
@@ -517,8 +526,11 @@
 				4998C29F07E52EF3008EBD90 /* destroy-fx-link-button.png in Resources */,
 				4998C2A207E52EF3008EBD90 /* midi-gater-background.png in Resources */,
 				4998C2A307E52EF3008EBD90 /* slider-handle-floor.png in Resources */,
+				EC1195A121BC92A800909132 /* slider-handle-floor-glowing.png in Resources */,
 				4998C2A407E52EF3008EBD90 /* slider-handle-slope.png in Resources */,
+				EC1195A221BC92A800909132 /* slider-handle-slope-glowing.png in Resources */,
 				4998C2A507E52EF3008EBD90 /* slider-handle-velocity-influence.png in Resources */,
+				EC1195A021BC92A800909132 /* slider-handle-velocity-influence-glowing.png in Resources */,
 				B028C29B0D0F31F900ADA1DA /* destroyfx.icns in Resources */,
 				ECC430AC102F46F0000B05A1 /* dfx-au-utilities.strings in Resources */,
 			);

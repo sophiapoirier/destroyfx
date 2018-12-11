@@ -153,6 +153,7 @@ PLUGIN_EDITOR_RES_ID
 
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 
@@ -633,6 +634,11 @@ public:
 												long data1 = 0, long data2 = 0, 
 												float fdata1 = 0.0f, float fdata2 = 0.0f) {}
 	virtual void settings_doMidiAutomatedSetParameterStuff(long tag, float value, unsigned long offsetFrames) {}
+	// HACK: the return type is overloaded for this purpose, contains more data than used in this context
+	virtual std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(long inParameterIndex) const
+	{
+		return {};
+	}
 #endif
 
 	// handling of AU properties specific to Logic

@@ -206,8 +206,10 @@ long RezSynthEditor::OpenEditor()
 	// sliders
 	auto const horizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("horizontal-slider-background.png");
 	auto const horizontalSliderHandleImage = VSTGUI::makeOwned<DGImage>("horizontal-slider-handle.png");
+	auto const horizontalSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("horizontal-slider-handle-glowing.png");
 	auto const verticalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("vertical-slider-background.png");
 	auto const verticalSliderHandleImage = VSTGUI::makeOwned<DGImage>("vertical-slider-handle.png");
+	auto const verticalSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("vertical-slider-handle-glowing.png");
 
 	// buttons
 	auto const resonAlgButtonImage = VSTGUI::makeOwned<DGImage>("reson-algorithm-button.png");
@@ -242,6 +244,7 @@ long RezSynthEditor::OpenEditor()
 	{
 		// slider control
 		auto const slider = emplaceControl<DGSlider>(this, inParamID, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage);
+		slider->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
 		// parameter name label
 		auto const label = emplaceControl<DGStaticTextDisplay>(labelDisplayPos, nullptr, dfx::TextAlignment::Left, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
@@ -305,7 +308,7 @@ long RezSynthEditor::OpenEditor()
 			displayProc = percentDisplayProc;
 		}
 		// slider control
-		emplaceControl<DGSlider>(this, paramID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage);
+		emplaceControl<DGSlider>(this, paramID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage)->setAlternateHandle(verticalSliderHandleImage_glowing);
 
 		// value display
 		emplaceControl<DGTextDisplay>(this, paramID, valueDisplayPos, displayProc, nullptr, verticalValueDisplayBackgroundImage, dfx::TextAlignment::Center, kValueTextFontSize, kRSLightGrayColor, kValueTextFont);

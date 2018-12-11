@@ -212,6 +212,34 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
   postupdate_parameter(inParameterIndex);	// inform any parameter listeners of the changes
 }
 
+std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(long inParameterIndex) const
+{
+  auto const getConstrainedToggleAssignment = [](long inNumStates, long inNumUsableStates)
+  {
+    dfx::ParameterAssignment result;
+    result.mEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_Toggle;
+    result.mDataInt1 = inNumStates;
+    result.mDataInt2 = inNumUsableStates;
+    return result;
+  };
+
+  switch (inParameterIndex)
+  {
+    case P_SHAPE:
+      return getConstrainedToggleAssignment(MAX_WINDOWSHAPES, NUM_WINDOWSHAPES);
+    case P_POINTSTYLE:
+      return getConstrainedToggleAssignment(MAX_POINTSTYLES, NUM_POINTSTYLES);
+    case P_INTERPSTYLE:
+      return getConstrainedToggleAssignment(MAX_INTERPSTYLES, NUM_INTERPSTYLES);
+    case P_POINTOP1:
+    case P_POINTOP2:
+    case P_POINTOP3:
+      return getConstrainedToggleAssignment(MAX_OPS, NUM_OPS);
+    default:
+      return {};
+  }
+}
+
 #if TARGET_PLUGIN_USES_DSPCORE
 PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
   : DfxPluginCore(inDfxPlugin)

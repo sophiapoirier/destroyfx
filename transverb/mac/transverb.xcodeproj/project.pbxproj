@@ -65,6 +65,8 @@
 		ECC0F376200BC5F100B1B463 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F375200BC5F100B1B463 /* AudioToolbox.framework */; };
 		ECC0F378200BC5F900B1B463 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F377200BC5F800B1B463 /* AudioUnit.framework */; };
 		ECC0F37A200BC62200B1B463 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F379200BC62100B1B463 /* Carbon.framework */; };
+		ECDB2A7021BA03EE00938F5C /* wide-fader-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47B307E53DEF00861708 /* wide-fader-handle-glowing.png */; };
+		ECDB2A7121BA03F900938F5C /* tall-fader-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AE07E53DEF00861708 /* tall-fader-handle-glowing.png */; };
 		ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECDCF1CD0FB88B87005F739E /* dfx-au-utilities.strings */; };
 		ECE4CBE720D0CB380026E215 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE4CBE620D0CB380026E215 /* dfxguimisc.mm */; };
 		ECF7D8C42002AA3A00DCE42E /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D8C22002AA3A00DCE42E /* AUPlugInDispatch.cpp */; };
@@ -593,9 +595,11 @@
 				49BB47C007E53DEF00861708 /* speed-mode-button.png in Resources */,
 				49BB47C107E53DEF00861708 /* super-destroy-fx-link.png in Resources */,
 				49BB47C307E53DEF00861708 /* tall-fader-handle.png in Resources */,
+				ECDB2A7121BA03F900938F5C /* tall-fader-handle-glowing.png in Resources */,
 				49BB47C407E53DEF00861708 /* tall-fader-slide.png in Resources */,
 				49BB47C507E53DEF00861708 /* tomsound-button.png in Resources */,
 				49BB47C607E53DEF00861708 /* transverb-background.png in Resources */,
+				ECDB2A7021BA03EE00938F5C /* wide-fader-handle-glowing.png in Resources */,
 				B028C2D20D0F325900ADA1DA /* destroyfx.icns in Resources */,
 				ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */,
 			);
