@@ -82,6 +82,10 @@ public:
 	void setHelpText(CFStringRef inText);
 #endif
 
+#if TARGET_PLUGIN_USES_MIDI
+	void setMidiLearner(bool inEnable) override {}
+#endif
+
 protected:
 	static constexpr float kDefaultFineTuneFactor = 10.0f;
 	//static constexpr float kDefaultMouseDragRange = 200.0f;  // pixels

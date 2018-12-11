@@ -57,4 +57,8 @@ public:
 	virtual float getDrawAlpha() const = 0;
 
 	virtual void setHelpText(char const* inText) = 0;
+
+#if TARGET_PLUGIN_USES_MIDI
+	virtual void setMidiLearner(bool inEnable) = 0;
+#endif
 };

@@ -53,8 +53,8 @@ enum : uint32_t
 	kPluginProperty_RandomizeParameter,			// randomize a parameter
 	kPluginProperty_MidiLearn,					// get/set the MIDI learn state
 	kPluginProperty_ResetMidiLearn,				// clear MIDI parameter assignments
-	kPluginProperty_MidiLearner,					// get/set the current MIDI learner parameter
-	kPluginProperty_ParameterMidiAssignment,		// get/set the MIDI assignment for a parameter
+	kPluginProperty_MidiLearner,				// get/set the current MIDI learner parameter
+	kPluginProperty_ParameterMidiAssignment,	// get/set the MIDI assignment for a parameter
 
 	kPluginProperty_EndOfList,
 	kPluginProperty_NumProperties = kPluginProperty_EndOfList - kPluginProperty_StartID

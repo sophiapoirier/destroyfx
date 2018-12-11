@@ -79,6 +79,10 @@
 		EC9D0B7118748EC300750E22 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC9D0B7018748EC300750E22 /* dfxguicontrol.cpp */; };
 		ECB4D9E9155C7E20007E5E23 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECB4D9E7155C7E20007E5E23 /* dfxmisc.cpp */; };
 		ECB4D9F6155C7E64007E5E23 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECB4D9F5155C7E64007E5E23 /* dfxgui-auviewfactory.mm */; };
+		ECDB2A6A21BA002800938F5C /* slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10907E50746008EBD90 /* slider-handle-glowing.png */; };
+		ECDB2A6B21BA005900938F5C /* xy-box-handle-buffer-glow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10D07E50746008EBD90 /* xy-box-handle-buffer-glow.png */; };
+		ECDB2A6C21BA005B00938F5C /* xy-box-handle-divisor-glow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10E07E50746008EBD90 /* xy-box-handle-divisor-glow.png */; };
+		ECDB2A6D21BA009300938F5C /* slider-handle-pitchbend-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10A07E50746008EBD90 /* slider-handle-pitchbend-glowing.png */; };
 		ECDCA6CD1A61D4F80088FE7F /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECDCA6CB1A61D4F80088FE7F /* AUPlugInDispatch.cpp */; };
 /* End PBXBuildFile section */
 
@@ -600,9 +604,13 @@
 				4998C11D07E50746008EBD90 /* midi-learn-button.png in Resources */,
 				4998C11E07E50746008EBD90 /* midi-mode-button.png in Resources */,
 				4998C11F07E50746008EBD90 /* midi-reset-button.png in Resources */,
-				4998C12207E50746008EBD90 /* slider-handle-pitchbend.png in Resources */,
 				4998C12307E50746008EBD90 /* slider-handle.png in Resources */,
+				ECDB2A6A21BA002800938F5C /* slider-handle-glowing.png in Resources */,
+				4998C12207E50746008EBD90 /* slider-handle-pitchbend.png in Resources */,
+				ECDB2A6D21BA009300938F5C /* slider-handle-pitchbend-glowing.png in Resources */,
 				4998C12607E50746008EBD90 /* xy-box-handle.png in Resources */,
+				ECDB2A6B21BA005900938F5C /* xy-box-handle-buffer-glow.png in Resources */,
+				ECDB2A6C21BA005B00938F5C /* xy-box-handle-divisor-glow.png in Resources */,
 				B0AD80DC0D0F315300766C78 /* destroyfx.icns in Resources */,
 				EC1227D20FBC910300F013C8 /* dfx-au-utilities.strings in Resources */,
 				EC08C7201A927F9200326647 /* host-tempo-button.png in Resources */,

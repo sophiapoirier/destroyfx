@@ -76,6 +76,9 @@
 		EC3E06B411E528F400F28EB8 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC3E06B111E528F400F28EB8 /* dfxmisc.cpp */; };
 		EC40EDAC20DB4B4E00F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDAB20DB4B4E00F5C0A7 /* dfxguimisc.mm */; };
 		EC48270D0F492C2B006126CD /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC48270B0F492C2B006126CD /* dfx-au-utilities.strings */; };
+		EC7C0E6621B97F18005A379E /* slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 490E793707CAE4E700688A1D /* slider-handle-glowing.png */; };
+		EC7C0E6721B97F27005A379E /* range-slider-handle-left-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 490E793007CAE4E700688A1D /* range-slider-handle-left-glowing.png */; };
+		EC7C0E6821B97F2B005A379E /* range-slider-handle-right-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 490E793207CAE4E700688A1D /* range-slider-handle-right-glowing.png */; };
 		EC89B323208D29C800E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B31C208D29C600E15129 /* Accelerate.framework */; };
 		EC89B324208D29C800E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B31D208D29C700E15129 /* OpenGL.framework */; };
 		EC89B325208D29C800E15129 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B31E208D29C700E15129 /* QuartzCore.framework */; };
@@ -635,9 +638,12 @@
 				490E795407CAE4E700688A1D /* none-notes-button.png in Resources */,
 				490E795507CAE4E700688A1D /* pitch-constraint-button.png in Resources */,
 				490E795707CAE4E700688A1D /* range-slider-handle-left.png in Resources */,
+				EC7C0E6721B97F27005A379E /* range-slider-handle-left-glowing.png in Resources */,
 				490E795907CAE4E700688A1D /* range-slider-handle-right.png in Resources */,
+				EC7C0E6821B97F2B005A379E /* range-slider-handle-right-glowing.png in Resources */,
 				490E795C07CAE4E700688A1D /* scrubby-background.png in Resources */,
 				490E795E07CAE4E700688A1D /* slider-handle.png in Resources */,
+				EC7C0E6621B97F18005A379E /* slider-handle-glowing.png in Resources */,
 				490E795F07CAE4E700688A1D /* smart-electronix-link.png in Resources */,
 				490E796007CAE4E700688A1D /* speed-mode-button.png in Resources */,
 				490E796107CAE4E700688A1D /* stereo-button.png in Resources */,

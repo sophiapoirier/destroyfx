@@ -77,6 +77,7 @@
 		ECA1AA3C20DB1C8E00419783 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECA1AA3B20DB1C8E00419783 /* dfxguimisc.mm */; };
 		ECBE1AA220B2067000B45853 /* geometer-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C24E07E524F4008EBD90 /* geometer-background.png */; };
 		ECC430D7102F4A56000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC430D5102F4A56000B05A1 /* dfx-au-utilities.strings */; };
+		ECDB2A6921B9F91900938F5C /* slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C25C07E524F4008EBD90 /* slider-handle-glowing.png */; };
 		ECFE6DC020B119110026202C /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECFE6DBF20B119110026202C /* dfxenvelope.cpp */; };
 /* End PBXBuildFile section */
 
@@ -586,6 +587,7 @@
 				4998C27107E524F4008EBD90 /* recreate-button.png in Resources */,
 				4998C27207E524F4008EBD90 /* slider-background.png in Resources */,
 				4998C27407E524F4008EBD90 /* slider-handle.png in Resources */,
+				ECDB2A6921B9F91900938F5C /* slider-handle-glowing.png in Resources */,
 				4998C27507E524F4008EBD90 /* smart-electronix-link.png in Resources */,
 				4998C27607E524F4008EBD90 /* window-shape-button.png in Resources */,
 				4998C27707E524F4008EBD90 /* window-size-button.png in Resources */,

@@ -122,6 +122,7 @@ DfxGuiEditor::~DfxGuiEditor()
 		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mParameterListPropertyAUEvent);
 	#if TARGET_PLUGIN_USES_MIDI
 		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnPropertyAUEvent);
+		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
 	#endif
 	}
 #endif
@@ -139,10 +140,6 @@ bool DfxGuiEditor::open(void* inWindow)
 	}
 
 	mControlsList.clear();
-
-#if TARGET_PLUGIN_USES_MIDI
-	setmidilearning(false);
-#endif
 
 	frame = new CFrame(CRect(rect.left, rect.top, rect.right, rect.bottom), this);
 	if (!frame)
@@ -204,6 +201,11 @@ bool DfxGuiEditor::open(void* inWindow)
 		mMidiLearnPropertyAUEvent.mArgument.mProperty.mPropertyID = dfx::kPluginProperty_MidiLearn;
 		mMidiLearnPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
 		AUEventListenerAddEventType(mAUEventListener.get(), this, &mMidiLearnPropertyAUEvent);
+
+		mMidiLearnerPropertyAUEvent = mStreamFormatPropertyAUEvent;
+		mMidiLearnerPropertyAUEvent.mArgument.mProperty.mPropertyID = dfx::kPluginProperty_MidiLearner;
+		mMidiLearnerPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
+		AUEventListenerAddEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
 	#endif
 	}
 #endif
@@ -254,15 +256,13 @@ bool DfxGuiEditor::open(void* inWindow)
 
 	mJustOpened = true;
 
-	// embed/activate every control
-	// XXX do this?
-//	for (auto& control : mControlsList)
-	{
-//		control->embed();  // XXX I removed this method, so any need to do this iteration?
-	}
-
 	// allow for anything that might need to happen after the above post-opening stuff is finished
 	post_open();
+
+#if TARGET_PLUGIN_USES_MIDI
+	HandleMidiLearnChange();
+	HandleMidiLearnerChange();
+#endif
 
 	return true;
 }
@@ -706,12 +706,12 @@ bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID) const
 
 //-----------------------------------------------------------------------------
 // set the control that is currently idly under the mouse pointer, if any (nullptr if none)
-void DfxGuiEditor::setCurrentControl_mouseover(IDGControl* inNewMousedOverControl)
+void DfxGuiEditor::setCurrentControl_mouseover(IDGControl* inMousedOverControl)
 {
 	// post notification if the mouse-overed control has changed
-	if (std::exchange(mCurrentControl_mouseover, inNewMousedOverControl) != inNewMousedOverControl)
+	if (std::exchange(mCurrentControl_mouseover, inMousedOverControl) != inMousedOverControl)
 	{
-		mouseovercontrolchanged(inNewMousedOverControl);
+		mouseovercontrolchanged(inMousedOverControl);
 	}
 }
 
@@ -1373,9 +1373,9 @@ DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setmidilearning(bool inNewLearnMode)
+void DfxGuiEditor::setmidilearning(bool inLearnMode)
 {
-	Boolean newLearnMode_fixedSize = inNewLearnMode;
+	Boolean newLearnMode_fixedSize = inLearnMode;
 	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearn, dfx::kScope_Global, 0, 
 					   &newLearnMode_fixedSize, sizeof(newLearnMode_fixedSize));
 }
@@ -2285,6 +2285,9 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 				case dfx::kPluginProperty_MidiLearn:
 					ourOwnerEditor->HandleMidiLearnChange();
 					break;
+				case dfx::kPluginProperty_MidiLearner:
+					ourOwnerEditor->HandleMidiLearnerChange();
+					break;
 			#endif
 				default:
 					ourOwnerEditor->HandleAUPropertyChange(inObject, inEvent->mArgument.mProperty, inEventHostTime);
@@ -2337,17 +2340,37 @@ void DfxGuiEditor::HandleParameterListChange()
 
 #if TARGET_PLUGIN_USES_MIDI
 
-#ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::HandleMidiLearnChange()
 {
+	auto const midiLearning = getmidilearning();
+
 	if (mMidiLearnButton)
 	{
-		long const newControlValue = getmidilearning() ? 1 : 0;
-		mMidiLearnButton->setValue_i(newControlValue);
+		long const controlValue = midiLearning ? 1 : 0;
+		mMidiLearnButton->setValue_i(controlValue);
+		if (mMidiLearnButton->isDirty())
+		{
+			mMidiLearnButton->valueChanged();
+			mMidiLearnButton->invalid();
+		}
 	}
+
+	midiLearningChanged(midiLearning);
 }
-#endif
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::HandleMidiLearnerChange()
+{
+	auto const midiLearner = getmidilearner();
+
+	for (auto& control : mControlsList)
+	{
+		control->setMidiLearner(control->getParameterID() == midiLearner);
+	}
+
+	midiLearnerChanged(midiLearner);
+}
 
 //-----------------------------------------------------------------------------
 DGButton* DfxGuiEditor::CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState)

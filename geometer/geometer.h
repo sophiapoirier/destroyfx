@@ -120,6 +120,7 @@ public:
   void dfx_PostConstructor() override;
 
   void randomizeparameter(long inParameterIndex) override;
+  std::optional<dfx::ParameterAssignment> settings_getLearningAssignData(long inParameterIndex) const override;
 
 #if !TARGET_PLUGIN_USES_DSPCORE
   long initialize() override;

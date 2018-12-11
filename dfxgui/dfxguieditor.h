@@ -172,11 +172,8 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	void HandleStreamFormatChange();
 	void HandleParameterListChange();
-	#if TARGET_PLUGIN_USES_MIDI
-	void HandleMidiLearnChange();
-	#endif
 #endif
-	virtual void numAudioChannelsChanged(unsigned long inNewNumChannels) {}
+	virtual void numAudioChannelsChanged(unsigned long inNumChannels) {}
 
 	void automationgesture_begin(long inParameterID);
 	void automationgesture_end(long inParameterID);
@@ -197,7 +194,7 @@ public:
 	{
 		return mCurrentControl_mouseover;
 	}
-	void setCurrentControl_mouseover(IDGControl* inNewMousedOverControl);
+	void setCurrentControl_mouseover(IDGControl* inMousedOverControl);
 	// override this if you want your GUI to react when the mouseovered control changes
 	virtual void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) {}
 	// IMouseObserver overrides
@@ -272,7 +269,7 @@ public:
 	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 							void const* inData, size_t inDataSize);
 #if TARGET_PLUGIN_USES_MIDI
-	void setmidilearning(bool inNewLearnMode);
+	void setmidilearning(bool inLearnMode);
 	bool getmidilearning();
 	void resetmidilearn();
 	void setmidilearner(long inParameterIndex);
@@ -281,6 +278,10 @@ public:
 	void setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment);
 	dfx::ParameterAssignment getparametermidiassignment(long inParameterIndex);
 	void parametermidiunassign(long inParameterIndex);
+	void HandleMidiLearnChange();
+	void HandleMidiLearnerChange();
+	virtual void midiLearningChanged(bool inLearnMode) {}
+	virtual void midiLearnerChanged(long inParameterIndex) {}
 	DGButton* CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState = false);
 	DGButton* CreateMidiResetButton(long inXpos, long inYpos, DGImage* inImage);
 	auto GetMidiLearnButton() const noexcept
@@ -336,6 +337,7 @@ private:
 	AudioUnitEvent mStreamFormatPropertyAUEvent {};
 	AudioUnitEvent mParameterListPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnPropertyAUEvent {};
+	AudioUnitEvent mMidiLearnerPropertyAUEvent {};
 #endif
 
 #ifdef TARGET_API_RTAS

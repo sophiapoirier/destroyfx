@@ -53,7 +53,7 @@ public:
 	long OpenEditor() override;
 	void parameterChanged(long inParameterID) override;
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
-	void numAudioChannelsChanged(unsigned long inNewNumChannels) override;
+	void numAudioChannelsChanged(unsigned long inNumChannels) override;
 
 	void HandleNotesButton(long inNotesButtonType);
 	void HandlePitchConstraintChange();

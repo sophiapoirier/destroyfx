@@ -145,15 +145,15 @@ public:
 	void assignParam(long inParamTag, dfx::MidiEventType inEventType, long inEventChannel, 
 					 long inEventNum, long inEventNum2 = 0, 
 					 dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
-					 long inData1 = 0, long inData2 = 0, 
-					 float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
+					 long inDataInt1 = 0, long inDataInt2 = 0, 
+					 float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
 	// remove a parameter's MIDI event assignment
 	void unassignParam(long inParamTag);
 
 	// define or report the actively learning parameter during MIDI learn mode
 	void setLearner(long inParamTag, dfx::MidiEventBehaviorFlags inEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None, 
-					long inData1 = 0, long inData2 = 0, 
-					float inFloatData1 = 0.0f, float inFloatData2 = 0.0f);
+					long inDataInt1 = 0, long inDataInt2 = 0, 
+					float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
 	auto getLearner() const noexcept
 	{
 		return mLearner;
@@ -417,7 +417,7 @@ protected:
 	dfx::MidiEventBehaviorFlags mLearnerEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
 	// lets the plugin pass along an extra context-specific data bytes
 	long mLearnerDataInt1 = 0, mLearnerDataInt2 = 0;
-	float mLearnerDataFloat1 = 0.0f, mLearnerDataFloat2 = 0.0f;
+	float mLearnerDataFloat1 = 0.0f, mLearnerDataFloat2 = 0.0f;  // TODO: unused, remove? (but serialized data compatibility)
 
 	// if a note range is being learned for a parameter, this will be true
 	bool mNoteRangeHalfwayDone = false;

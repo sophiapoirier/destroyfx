@@ -23,6 +23,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguislider.h"
 
+#include <cassert>
+
 #include "dfxguieditor.h"
 
 
@@ -53,7 +55,8 @@ DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 					   inHandleImage, 
 					   inBackgroundImage, 
 					   CPoint(0, 0), 
-					   (inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical))
+					   (inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical)),
+	mMainHandleImage(inHandleImage)
 {
 	setTransparency(true);
 
@@ -104,6 +107,41 @@ CMouseEventResult DGSlider::onMouseUp(CPoint& inPos, CButtonState const& inButto
 	DiscreteValueConstrainer const dvc(this);
 	return Parent::onMouseUp(inPos, ConstrainButtons(inButtons, getNumStates()));
 }
+
+//-----------------------------------------------------------------------------
+void DGSlider::setHandle(CBitmap* inHandle)
+{
+	Parent::setHandle(inHandle);
+	mMainHandleImage = inHandle;
+}
+
+//-----------------------------------------------------------------------------
+void DGSlider::setAlternateHandle(CBitmap* inHandle)
+{
+	mAlternateHandleImage = inHandle;
+}
+
+//-----------------------------------------------------------------------------
+void DGSlider::setUseAlternateHandle(bool inEnable)
+{
+	if (auto const handle = inEnable ? mAlternateHandleImage.get() : mMainHandleImage.get())
+	{
+		bool const changed = (getHandle() != handle);
+		Parent::setHandle(handle);
+		if (changed)
+		{
+			redraw();
+		}
+	}
+}
+
+#if TARGET_PLUGIN_USES_MIDI
+//-----------------------------------------------------------------------------
+void DGSlider::setMidiLearner(bool inEnable)
+{
+	setUseAlternateHandle(inEnable);
+}
+#endif
 
 
 
