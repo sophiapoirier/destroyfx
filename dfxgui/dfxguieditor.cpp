@@ -27,6 +27,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <functional>
+#include <map>
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
@@ -62,6 +64,7 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 #ifdef TARGET_API_AUDIOUNIT
 //	#define kDfxGui_AUPresetFileUTI "org.destroyfx.aupreset"
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
+	/*__attribute__((no_destroy))*/ static auto const kDfxGui_AUPresetFileExtension = new CFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
 #endif
 
 
@@ -600,6 +603,22 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 }
 
 //-----------------------------------------------------------------------------
+void DfxGuiEditor::GenerateParameterAutomationSnapshot(long inParameterID)
+{
+	setparameter_f(inParameterID, getparameter_f(inParameterID), true);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::GenerateParametersAutomationSnapshot()
+{
+	std::lock_guard const guard(mAUParameterListLock);
+	for (auto const& parameterID : mAUParameterList)
+	{
+		GenerateParameterAutomationSnapshot(parameterID);
+	}
+}
+
+//-----------------------------------------------------------------------------
 bool DfxGuiEditor::dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText, double& outValue)
 {
 	outValue = 0.0;
@@ -702,6 +721,43 @@ bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID) const
 #endif
 
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::TextEntryForParameterValue(long inParameterID)
+{
+	if (!getFrame())
+	{
+		return;
+	}
+
+	mTextEntryDialog = makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
+	if (mTextEntryDialog)
+	{
+		std::array<char, dfx::kParameterValueStringMaxLength> textValue;
+		textValue.fill(0);
+		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
+		{
+			snprintf(textValue.data(), textValue.size(), "%.6lf", getparameter_f(inParameterID));
+		}
+		else
+		{
+			snprintf(textValue.data(), textValue.size(), "%ld", getparameter_i(inParameterID));
+		}
+		mTextEntryDialog->setText(textValue.data());
+
+		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		{
+			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
+			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
+			{
+				return dfxgui_SetParameterValueWithString(textEntryDialog->getParameterID(), textEntryDialog->getText());
+			}
+			return true;
+		};
+		[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
+		assert(success);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1358,6 +1414,138 @@ long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 }
 
 //-----------------------------------------------------------------------------
+void DfxGuiEditor::LoadPresetFile()
+{
+	SharedPointer<CNewFileSelector> fileSelector(CNewFileSelector::create(getFrame(), CNewFileSelector::kSelectFile), false);
+	if (fileSelector)
+	{
+		fileSelector->setTitle("Open");
+#ifdef TARGET_API_AUDIOUNIT
+		fileSelector->addFileExtension(*kDfxGui_AUPresetFileExtension);
+		FSRef presetFileDirRef;
+		auto const status = FindPresetsDirForAU(reinterpret_cast<Component>(dfxgui_GetEffectInstance()), kUserDomain, kDontCreateFolder, &presetFileDirRef);
+		if (status == noErr)
+		{
+			dfx::UniqueCFType const presetFileDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileDirRef);
+			if (presetFileDirURL)
+			{
+				dfx::UniqueCFType const presetFileDirPathCF = CFURLCopyFileSystemPath(presetFileDirURL.get(), kCFURLPOSIXPathStyle);
+				if (presetFileDirPathCF)
+				{
+					auto const presetFileDirPathC = dfx::CreateCStringFromCFString(presetFileDirPathCF.get());
+					if (presetFileDirPathC)
+					{
+						fileSelector->setInitialDirectory(reinterpret_cast<UTF8StringPtr>(presetFileDirPathC.get()));
+					}
+				}
+			}
+		}
+#endif
+#ifdef TARGET_API_VST
+		fileSelector->addFileExtension(CFileExtension("VST preset", "fxp"));
+		fileSelector->addFileExtension(CFileExtension("VST bank", "fxb"));
+#endif
+		fileSelector->run([effect = dfxgui_GetEffectInstance()](CNewFileSelector* inFileSelector)
+						  {
+							  if (auto const filePath = inFileSelector->getSelectedFile(0))
+							  {
+#ifdef TARGET_API_AUDIOUNIT
+								  dfx::UniqueCFType const fileUrl = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+								  if (fileUrl)
+								  {
+									  RestoreAUStateFromPresetFile(effect, fileUrl.get());
+								  }
+#endif
+#ifdef TARGET_API_VST
+								  assert(false);  // TODO: implement
+#endif
+							  }
+						  });
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::SavePresetFile()
+{
+	if (getFrame())
+	{
+#ifdef TARGET_API_AUDIOUNIT
+		mTextEntryDialog = makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
+														DGDialog::kButtons_OKCancelOther, 
+														"Save", nullptr, "Choose custom location...");
+		if (mTextEntryDialog)
+		{
+			if (auto const button = mTextEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
+			{
+				char const* const helpText = "choose a specific location to save in rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
+				button->setTooltipText(helpText);
+			}
+			auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+			{
+				if (auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog))
+				{
+					switch (inSelection)
+					{
+						case DGDialog::kSelection_OK:
+							if (!textEntryDialog->getText().empty())
+							{
+								dfx::UniqueCFType const cfText = CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8);
+								if (cfText)
+								{
+									auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+									assert(pluginBundle);
+									auto const saveFileStatus = SaveAUStateToPresetFile_Bundle(dfxgui_GetEffectInstance(), cfText.get(), nullptr, true, pluginBundle);
+									if (saveFileStatus == userCanceledErr)
+									{
+										return false;
+									}
+								}
+							}
+							return true;
+						case DGDialog::kSelection_Other:
+						{
+							SharedPointer<CNewFileSelector> fileSelector(CNewFileSelector::create(getFrame(), CNewFileSelector::kSelectSaveFile), false);
+							if (fileSelector)
+							{
+								fileSelector->setTitle("Save");
+								fileSelector->setDefaultExtension(*kDfxGui_AUPresetFileExtension);
+								if (!textEntryDialog->getText().empty())
+								{
+									fileSelector->setDefaultSaveName(textEntryDialog->getText());
+								}
+								fileSelector->run([effect = dfxgui_GetEffectInstance()](CNewFileSelector* inFileSelector)
+												  {
+													  if (auto const filePath = inFileSelector->getSelectedFile(0))
+													  {
+														  dfx::UniqueCFType const fileUrl = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+														  if (fileUrl)
+														  {
+															  auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+															  assert(pluginBundle);
+															  CustomSaveAUPresetFile_Bundle(effect, fileUrl.get(), false, pluginBundle);
+														  }
+													  }
+												  });
+							}
+							return true;
+						}
+						default:
+							break;
+					}
+				}
+				return true;
+			};
+			[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
+			assert(success);
+		}
+#endif
+#ifdef TARGET_API_VST
+		assert(false);  // TODO: implement with a file selector, no text entry dialog
+#endif
+	}
+}
+
+//-----------------------------------------------------------------------------
 DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 {
 #ifdef TARGET_API_AUDIOUNIT
@@ -1454,6 +1642,52 @@ void DfxGuiEditor::parametermidiunassign(long inParameterIndex)
 	setparametermidiassignment(inParameterIndex, parameterAssignment);
 }
 
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
+{
+	if (!getFrame())
+	{
+		return;
+	}
+
+	mTextEntryDialog = makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
+	if (mTextEntryDialog)
+	{
+		// initialize the text with the current CC assignment, if there is one
+		std::array<char, dfx::kParameterValueStringMaxLength> initialText;
+		initialText.fill(0);
+		auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
+		if (currentParameterAssignment.mEventType == dfx::MidiEventType::CC)
+		{
+			snprintf(initialText.data(), initialText.size(), "%d", currentParameterAssignment.mEventNum);
+		}
+		mTextEntryDialog->setText(initialText.data());
+
+		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		{
+			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
+			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
+			{
+				int newValue {};
+				auto const scanCount = sscanf(textEntryDialog->getText().c_str(), "%d", &newValue);
+				if ((scanCount > 0) && (scanCount != EOF))
+				{
+					dfx::ParameterAssignment newParameterAssignment;
+					newParameterAssignment.mEventType = dfx::MidiEventType::CC;
+					newParameterAssignment.mEventChannel = 0;  // XXX not currently implemented
+					newParameterAssignment.mEventNum = newValue;
+					setparametermidiassignment(textEntryDialog->getParameterID(), newParameterAssignment);
+					return true;
+				}
+				return false;
+			}
+			return true;
+		};
+		[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
+		assert(success);
+	}
+}
+
 #endif
 // TARGET_PLUGIN_USES_MIDI
 
@@ -1518,6 +1752,8 @@ enum
 	kDfxContextualMenuItem_Parameter_NumItems
 };
 
+static constexpr int32_t kDfxGui_ContextualMenuStyle = COptionMenu::kMultipleCheckStyle;  // this is necessary for menu entry checkmarks to show up
+
 namespace
 {
 
@@ -1554,134 +1790,110 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 	{
 		return false;
 	}
-	CPoint mousePos;
-	getFrame()->getCurrentMouseLocation(mousePos);
-	COptionMenu popupMenu;
-	constexpr int32_t menuStyle = COptionMenu::kMultipleCheckStyle;  // this is necessary for menu entry checkmarks to show up
-	popupMenu.setStyle(menuStyle);
 
-// --------- parameter menu creation ---------
 	auto const dgControl = dynamic_cast<IDGControl*>(inControl);
-	bool parameterMenuItemsWereAdded = false;
-	SharedPointer<COptionMenu> parameterSubMenu;
-	// populate the parameter-specific section of the menu
-	if (dgControl && dgControl->isParameterAttached())
-	{
-		parameterSubMenu = makeOwned<COptionMenu>();
-	}
-	if (parameterSubMenu)
-	{
-		parameterMenuItemsWereAdded = true;
-		parameterSubMenu->setStyle(menuStyle);
-		auto const paramID = dgControl->getParameterID();
-		popupMenu.addEntry(parameterSubMenu, getparametername(paramID));
+	auto popupMenu = createContextualMenu(dgControl);
 
-		for (UInt32 i = 0; i < kDfxContextualMenuItem_Parameter_NumItems; i++)
-		{
-			bool showCheckmark = false;
-			bool disableItem = false;
-			bool isFirstItemOfSubgroup = false;
-			UTF8StringPtr menuItemText = nullptr;
-			std::array<char, 256> menuItemText_temp;
-			menuItemText_temp.fill(0);
-			switch (i)
-			{
-				case kDfxContextualMenuItem_Parameter_SetDefaultValue:
-					menuItemText = "Set to default value";
-					isFirstItemOfSubgroup = true;
-					break;
-				case kDfxContextualMenuItem_Parameter_TextEntryForValue:
-					menuItemText = "Type in a value...";
-					break;
+	// --------- show the contextual menu ---------
+	CPoint mousePos;
+	[[maybe_unused]] auto const mousePosSuccess = getFrame()->getCurrentMouseLocation(mousePos);
+	assert(mousePosSuccess);
+	auto const handled = popupMenu.popup(getFrame(), mousePos);
+	if (!handled)
+	{
+		return handled;
+	}
+
+	int32_t resultIndex = -1;
+	auto const resultMenu = popupMenu.getLastItemMenu(resultIndex);
+	if (!resultMenu)
+	{
+		return false;
+	}
+	auto const resultMenuItem = resultMenu->getEntry(resultIndex);
+	if (!resultMenuItem)
+	{
+		return false;
+	}
+	auto const menuSelectionCommandID = resultMenuItem->getTag();
+
+// --------- handle the contextual menu command (global) ---------
+	std::map<int, std::function<void()>> const globalActionMap
+	{
+		{ kDfxContextualMenuItem_Global_SetDefaultParameterValues, [this](){ setparameters_default(true); } },
 #if 0
-				case kDfxContextualMenuItem_Parameter_Undo:
-					if (true)  // XXX needs appropriate check for which text/function to use
-					{
-						menuItemText = "Undo";
-					}
-					else
-					{
-						menuItemText = "Redo";
-					}
-					break;
+		{ kDfxContextualMenuItem_Global_Undo, },  //XXX TODO: implement
 #endif
-				case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
-					menuItemText = "Randomize value";
-					break;
-				case kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot:
-					menuItemText = "Generate parameter automation snapshot";
-					break;
+		{ kDfxContextualMenuItem_Global_RandomizeParameterValues, [this](){ randomizeparameters(true); } },  // XXX "yes" to writing automation data?
+		{ kDfxContextualMenuItem_Global_GenerateAutomationSnapshot, std::bind(&DfxGuiEditor::GenerateParametersAutomationSnapshot, this) },
+		{ kDfxContextualMenuItem_Global_CopyState, [this](){ copySettings(); } },
+		{ kDfxContextualMenuItem_Global_PasteState, [this](){ pasteSettings(); } },
+		{ kDfxContextualMenuItem_Global_SavePresetFile, std::bind(&DfxGuiEditor::SavePresetFile, this) },
+		{ kDfxContextualMenuItem_Global_LoadPresetFile, std::bind(&DfxGuiEditor::LoadPresetFile, this) },
 #if TARGET_PLUGIN_USES_MIDI
-				case kDfxContextualMenuItem_Parameter_MidiLearner:
-					menuItemText = "MIDI learner";
-					if (getmidilearning())
-					{
-						showCheckmark = ismidilearner(paramID);
-					}
-					else
-					{
-						disableItem = true;
-					}
-					isFirstItemOfSubgroup = true;
-					break;
-				case kDfxContextualMenuItem_Parameter_MidiUnassign:
-				{
-					menuItemText = "Unassign MIDI";
-					auto const currentParameterAssignment = getparametermidiassignment(paramID);
-					// disable if not assigned
-					if (currentParameterAssignment.mEventType == dfx::MidiEventType::None)
-					{
-						disableItem = true;
-					}
-					// append the current MIDI assignment, if there is one, to the menu item text
-					else
-					{
-						constexpr auto maxTextLength = menuItemText_temp.size();
-						switch (currentParameterAssignment.mEventType)
-						{
-							case dfx::MidiEventType::CC:
-								snprintf(menuItemText_temp.data(), maxTextLength, "%s (CC %d)", menuItemText, currentParameterAssignment.mEventNum);
-								break;
-							case dfx::MidiEventType::PitchBend:
-								snprintf(menuItemText_temp.data(), maxTextLength, "%s (pitchbend)", menuItemText);
-								break;
-							case dfx::MidiEventType::Note:
-								snprintf(menuItemText_temp.data(), maxTextLength, "%s (notes %s - %s)", menuItemText, dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum).c_str(), dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2).c_str());
-								break;
-							default:
-								break;
-						}
-						if (strlen(menuItemText_temp.data()) > 0)
-						{
-							menuItemText = menuItemText_temp.data();
-						}
-					}
-					break;
-				}
-				case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
-					menuItemText = "Type in a MIDI CC assignment...";
-					break;
+		{ kDfxContextualMenuItem_Global_MidiLearn, std::bind(&DfxGuiEditor::setmidilearning, this, !getmidilearning()) },
+		{ kDfxContextualMenuItem_Global_MidiReset, std::bind(&DfxGuiEditor::resetmidilearn, this) },
 #endif
-				default:
-					assert(false);
-					break;
-			}
-			if (isFirstItemOfSubgroup)
-			{
-				parameterSubMenu->addSeparator();
-			}
-			if (menuItemText)
-			{
-				int32_t const menuItemCommandID = i + kDfxContextualMenuItem_Global_NumItems;
-				DFX_AppendCommandItemToMenu(*parameterSubMenu, menuItemText, menuItemCommandID, !disableItem, showCheckmark);
-			}
+		{ kDfxContextualMenuItem_Global_OpenDocumentation, [](){ dfx::LaunchDocumentation(); } },
+		{ kDfxContextualMenuItem_Global_OpenWebSite, [](){ dfx::LaunchURL(PLUGIN_HOMEPAGE_URL); } },
+	};
+	if (auto const action = globalActionMap.find(menuSelectionCommandID); action != globalActionMap.end())
+	{
+		action->second();
+	}
+// --------- handle the contextual menu command (parameter-specific) ---------
+	else if (dgControl && dgControl->isParameterAttached())
+	{
+		using std::placeholders::_1;
+		std::map<int, std::function<void(long)>> const parameterActionMap
+		{
+			{ kDfxContextualMenuItem_Parameter_SetDefaultValue, std::bind(&DfxGuiEditor::setparameter_default, this, _1, true) },
+			{ kDfxContextualMenuItem_Parameter_TextEntryForValue, std::bind(&DfxGuiEditor::TextEntryForParameterValue, this, _1) },
+#if 0
+			{ kDfxContextualMenuItem_Parameter_Undo, },  //XXX TODO: implement
+#endif
+			{ kDfxContextualMenuItem_Parameter_RandomizeParameterValue, std::bind(&DfxGuiEditor::randomizeparameter, this, _1, true) },  // XXX "yes" to writing automation data?
+			{ kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot, std::bind(&DfxGuiEditor::GenerateParameterAutomationSnapshot, this, _1) },
+#if TARGET_PLUGIN_USES_MIDI
+			{ kDfxContextualMenuItem_Parameter_MidiLearner, [this](long inParameterID){ setmidilearner((getmidilearner() == inParameterID) ? DfxSettings::kNoLearner : inParameterID); } },
+			{ kDfxContextualMenuItem_Parameter_MidiUnassign, std::bind(&DfxGuiEditor::parametermidiunassign, this, _1) },
+			{ kDfxContextualMenuItem_Parameter_TextEntryForMidiCC, std::bind(&DfxGuiEditor::TextEntryForParameterMidiCC, this, _1) },
+#endif
+		};
+		if (auto const parameterAction = parameterActionMap.find(menuSelectionCommandID - kDfxContextualMenuItem_Global_NumItems); parameterAction != parameterActionMap.end())
+		{
+			parameterAction->second(dgControl->getParameterID());
 		}
-
-		// preface the global commands section with a divider
-		popupMenu.addSeparator();
+		else
+		{
+			assert(false);
+		}
+	}
+	else
+	{
+		assert(false);
 	}
 
-// --------- global menu creation ---------
+	return handled;
+}
+
+//-----------------------------------------------------------------------------
+COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
+{
+	COptionMenu resultMenu;
+	resultMenu.setStyle(kDfxGui_ContextualMenuStyle);
+
+	// populate the parameter-specific section of the menu
+	if (inControl && inControl->isParameterAttached())
+	{
+		auto const paramID = inControl->getParameterID();
+		if (auto const parameterSubMenu = createParameterContextualMenu(paramID))
+		{
+			resultMenu.addEntry(parameterSubMenu, getparametername(paramID));
+			resultMenu.addSeparator();  // preface the global commands section with a divider
+		}
+	}
+
 	// populate the global section of the menu
 	for (UInt32 i = 0; i < kDfxContextualMenuItem_Global_NumItems; i++)
 	{
@@ -1759,326 +1971,127 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 		}
 		if (isFirstItemOfSubgroup)
 		{
-			popupMenu.addSeparator();
+			resultMenu.addSeparator();
 		}
 		if (menuItemText)
 		{
 			int32_t const menuItemCommandID = i;
-			DFX_AppendCommandItemToMenu(popupMenu, menuItemText, menuItemCommandID, !disableItem, showCheckmark);
+			DFX_AppendCommandItemToMenu(resultMenu, menuItemText, menuItemCommandID, !disableItem, showCheckmark);
 		}
 	}
-	popupMenu.cleanupSeparators(true);
+	resultMenu.cleanupSeparators(true);
 
+	return resultMenu;
+}
 
-// --------- show the contextual menu ---------
-	auto const handled = popupMenu.popup(getFrame(), mousePos);
-	if (!handled)
-	{
-		return handled;
-	}
+//-----------------------------------------------------------------------------
+SharedPointer<COptionMenu> DfxGuiEditor::createParameterContextualMenu(long inParameterID)
+{
+	auto resultMenu = makeOwned<COptionMenu>();
+	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 
-	int32_t resultIndex = -1;
-	auto const resultMenu = popupMenu.getLastItemMenu(resultIndex);
-	if (!resultMenu)
+	for (UInt32 i = 0; i < kDfxContextualMenuItem_Parameter_NumItems; i++)
 	{
-		return false;
-	}
-	auto const resultMenuItem = resultMenu->getEntry(resultIndex);
-	if (!resultMenuItem)
-	{
-		return false;
-	}
-	int32_t const menuSelectionCommandID = resultMenuItem->getTag();
-
-// --------- handle the contextual menu command (global) ---------
-	bool tryHandlingParameterCommand = false;
-#ifdef TARGET_API_AUDIOUNIT
-	CFileExtension const auPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
-#endif
-	switch (menuSelectionCommandID)
-	{
-		case kDfxContextualMenuItem_Global_SetDefaultParameterValues:
-			setparameters_default(true);
-			break;
-#if 0
-		case kDfxContextualMenuItem_Global_Undo:
-			//XXX TODO: implement
-			break;
-#endif
-		case kDfxContextualMenuItem_Global_RandomizeParameterValues:
-			randomizeparameters(true);  // XXX "yes" to writing automation data?
-			break;
-		case kDfxContextualMenuItem_Global_GenerateAutomationSnapshot:
-		{
-			std::lock_guard const guard(mAUParameterListLock);
-			for (auto const& parameterID : mAUParameterList)
-			{
-				setparameter_f(parameterID, getparameter_f(parameterID), true);
-			}
-			break;
-		}
-		case kDfxContextualMenuItem_Global_CopyState:
-			copySettings();
-			break;
-		case kDfxContextualMenuItem_Global_PasteState:
-			pasteSettings();
-			break;
-		case kDfxContextualMenuItem_Global_SavePresetFile:
-			if (getFrame())
-			{
-#ifdef TARGET_API_AUDIOUNIT
-				mTextEntryDialog = makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
-																DGDialog::kButtons_OKCancelOther, 
-																"Save", nullptr, "Choose custom location...");
-				if (mTextEntryDialog)
-				{
-					if (auto const button = mTextEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
-					{
-						char const* const helpText = "choose a specific location to save in rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
-						button->setTooltipText(helpText);
-					}
-					auto const textEntryCallback = [this, auPresetFileExtension](DGDialog* inDialog, DGDialog::Selection inSelection)
-					{
-						if (auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog))
-						{
-							switch (inSelection)
-							{
-								case DGDialog::kSelection_OK:
-									if (!textEntryDialog->getText().empty())
-									{
-										dfx::UniqueCFType const cfText = CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8);
-										if (cfText)
-										{
-											auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-											assert(pluginBundle);
-											auto const saveFileStatus = SaveAUStateToPresetFile_Bundle(dfxgui_GetEffectInstance(), cfText.get(), nullptr, true, pluginBundle);
-											if (saveFileStatus == userCanceledErr)
-											{
-												return false;
-											}
-										}
-									}
-									return true;
-								case DGDialog::kSelection_Other:
-								{
-									SharedPointer<CNewFileSelector> fileSelector(CNewFileSelector::create(getFrame(), CNewFileSelector::kSelectSaveFile), false);
-									if (fileSelector)
-									{
-										fileSelector->setTitle("Save");
-										fileSelector->setDefaultExtension(auPresetFileExtension);
-										if (!textEntryDialog->getText().empty())
-										{
-											fileSelector->setDefaultSaveName(textEntryDialog->getText());
-										}
-										fileSelector->run([effect = dfxgui_GetEffectInstance()](CNewFileSelector* inFileSelector)
-														  {
-															  if (auto const filePath = inFileSelector->getSelectedFile(0))
-															  {
-																  dfx::UniqueCFType const fileUrl = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
-																  if (fileUrl)
-																  {
-																	  auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-																	  assert(pluginBundle);
-																	  CustomSaveAUPresetFile_Bundle(effect, fileUrl.get(), false, pluginBundle);
-																  }
-															  }
-														  });
-									}
-									return true;
-								}
-								default:
-									break;
-							}
-						}
-						return true;
-					};
-					[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
-					assert(success);
-				}
-#endif
-#ifdef TARGET_API_VST
-				assert(false);  // TODO: implement with a file selector, no text entry dialog
-#endif
-			}
-			break;
-		case kDfxContextualMenuItem_Global_LoadPresetFile:
-		{
-			SharedPointer<CNewFileSelector> fileSelector(CNewFileSelector::create(getFrame(), CNewFileSelector::kSelectFile), false);
-			if (fileSelector)
-			{
-				fileSelector->setTitle("Open");
-#ifdef TARGET_API_AUDIOUNIT
-				fileSelector->addFileExtension(auPresetFileExtension);
-				FSRef presetFileDirRef;
-				auto const status = FindPresetsDirForAU(reinterpret_cast<Component>(dfxgui_GetEffectInstance()), kUserDomain, kDontCreateFolder, &presetFileDirRef);
-				if (status == noErr)
-				{
-					dfx::UniqueCFType const presetFileDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileDirRef);
-					if (presetFileDirURL)
-					{
-						dfx::UniqueCFType const presetFileDirPathCF = CFURLCopyFileSystemPath(presetFileDirURL.get(), kCFURLPOSIXPathStyle);
-						if (presetFileDirPathCF)
-						{
-							auto const presetFileDirPathC = dfx::CreateCStringFromCFString(presetFileDirPathCF.get());
-							if (presetFileDirPathC)
-							{
-								fileSelector->setInitialDirectory(reinterpret_cast<UTF8StringPtr>(presetFileDirPathC.get()));
-							}
-						}
-					}
-				}
-#endif
-#ifdef TARGET_API_VST
-				fileSelector->addFileExtension(CFileExtension("VST preset", "fxp"));
-				fileSelector->addFileExtension(CFileExtension("VST bank", "fxb"));
-#endif
-				fileSelector->run([effect = dfxgui_GetEffectInstance()](CNewFileSelector* inFileSelector)
-								  {
-									  if (auto const filePath = inFileSelector->getSelectedFile(0))
-									  {
-#ifdef TARGET_API_AUDIOUNIT
-										  dfx::UniqueCFType const fileUrl = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
-										  if (fileUrl)
-										  {
-											  RestoreAUStateFromPresetFile(effect, fileUrl.get());
-										  }
-#endif
-#ifdef TARGET_API_VST
-										  assert(false);  // TODO: implement
-#endif
-									  }
-								  });
-			}
-			break;
-		}
-#if TARGET_PLUGIN_USES_MIDI
-		case kDfxContextualMenuItem_Global_MidiLearn:
-			setmidilearning(!getmidilearning());
-			break;
-		case kDfxContextualMenuItem_Global_MidiReset:
-			resetmidilearn();
-			break;
-#endif
-		case kDfxContextualMenuItem_Global_OpenDocumentation:
-			dfx::LaunchDocumentation();
-			break;
-		case kDfxContextualMenuItem_Global_OpenWebSite:
-			dfx::LaunchURL(PLUGIN_HOMEPAGE_URL);
-			break;
-		default:
-			tryHandlingParameterCommand = true;
-			break;
-	}
-
-// --------- handle the contextual menu command (parameter-specific) ---------
-	if (tryHandlingParameterCommand && parameterMenuItemsWereAdded)
-	{
-		auto const paramID = dgControl->getParameterID();
-		switch (menuSelectionCommandID - kDfxContextualMenuItem_Global_NumItems)
+		bool showCheckmark = false;
+		bool disableItem = false;
+		bool isFirstItemOfSubgroup = false;
+		UTF8StringPtr menuItemText = nullptr;
+		std::array<char, 256> menuItemText_temp;
+		menuItemText_temp.fill(0);
+		switch (i)
 		{
 			case kDfxContextualMenuItem_Parameter_SetDefaultValue:
-				setparameter_default(paramID, true);
+				menuItemText = "Set to default value";
+				isFirstItemOfSubgroup = true;
 				break;
 			case kDfxContextualMenuItem_Parameter_TextEntryForValue:
-				if (getFrame())
-				{
-					mTextEntryDialog = makeOwned<DGTextEntryDialog>(paramID, getparametername(paramID), "enter value:");
-					if (mTextEntryDialog)
-					{
-						std::array<char, dfx::kParameterValueStringMaxLength> textValue;
-						textValue.fill(0);
-						if (GetParameterValueType(paramID) == DfxParam::ValueType::Float)
-						{
-							snprintf(textValue.data(), textValue.size(), "%.6lf", getparameter_f(paramID));
-						}
-						else
-						{
-							snprintf(textValue.data(), textValue.size(), "%ld", getparameter_i(paramID));
-						}
-						mTextEntryDialog->setText(textValue.data());
-
-						auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
-						{
-							auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
-							if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
-							{
-								return dfxgui_SetParameterValueWithString(textEntryDialog->getParameterID(), textEntryDialog->getText());
-							}
-							return true;
-						};
-						[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
-						assert(success);
-					}
-				}
+				menuItemText = "Type in a value...";
 				break;
 #if 0
 			case kDfxContextualMenuItem_Parameter_Undo:
-				//XXX TODO: implement
+				if (true)  // XXX needs appropriate check for which text/function to use
+				{
+					menuItemText = "Undo";
+				}
+				else
+				{
+					menuItemText = "Redo";
+				}
 				break;
 #endif
 			case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
-				// XXX "yes" to writing automation data?
-				randomizeparameter(paramID, true);
+				menuItemText = "Randomize value";
 				break;
 			case kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot:
-				setparameter_f(paramID, getparameter_f(paramID), true);
+				menuItemText = "Generate parameter automation snapshot";
 				break;
 #if TARGET_PLUGIN_USES_MIDI
 			case kDfxContextualMenuItem_Parameter_MidiLearner:
-				setmidilearner((getmidilearner() == paramID) ? DfxSettings::kNoLearner : paramID);
+				menuItemText = "MIDI learner";
+				if (getmidilearning())
+				{
+					showCheckmark = ismidilearner(inParameterID);
+				}
+				else
+				{
+					disableItem = true;
+				}
+				isFirstItemOfSubgroup = true;
 				break;
 			case kDfxContextualMenuItem_Parameter_MidiUnassign:
-				parametermidiunassign(paramID);
-				break;
-			case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
-				if (getFrame())
+			{
+				menuItemText = "Unassign MIDI";
+				auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
+				// disable if not assigned
+				if (currentParameterAssignment.mEventType == dfx::MidiEventType::None)
 				{
-					mTextEntryDialog = makeOwned<DGTextEntryDialog>(paramID, getparametername(paramID), "enter value:");
-					if (mTextEntryDialog)
+					disableItem = true;
+				}
+				// append the current MIDI assignment, if there is one, to the menu item text
+				else
+				{
+					constexpr auto maxTextLength = menuItemText_temp.size();
+					switch (currentParameterAssignment.mEventType)
 					{
-						// initialize the text with the current CC assignment, if there is one
-						std::array<char, dfx::kParameterValueStringMaxLength> initialText;
-						initialText.fill(0);
-						auto const currentParameterAssignment = getparametermidiassignment(paramID);
-						if (currentParameterAssignment.mEventType == dfx::MidiEventType::CC)
-						{
-							snprintf(initialText.data(), initialText.size(), "%d", currentParameterAssignment.mEventNum);
-						}
-						mTextEntryDialog->setText(initialText.data());
-						
-						auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
-						{
-							auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
-							if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
-							{
-								int newValue {};
-								auto const scanCount = sscanf(textEntryDialog->getText().c_str(), "%d", &newValue);
-								if ((scanCount > 0) && (scanCount != EOF))
-								{
-									dfx::ParameterAssignment newParameterAssignment;
-									newParameterAssignment.mEventType = dfx::MidiEventType::CC;
-									newParameterAssignment.mEventChannel = 0;  // XXX not currently implemented
-									newParameterAssignment.mEventNum = newValue;
-									setparametermidiassignment(textEntryDialog->getParameterID(), newParameterAssignment);
-									return true;
-								}
-								return false;
-							}
-							return true;
-						};
-						[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
-						assert(success);
+						case dfx::MidiEventType::CC:
+							snprintf(menuItemText_temp.data(), maxTextLength, "%s (CC %d)", menuItemText, currentParameterAssignment.mEventNum);
+							break;
+						case dfx::MidiEventType::PitchBend:
+							snprintf(menuItemText_temp.data(), maxTextLength, "%s (pitchbend)", menuItemText);
+							break;
+						case dfx::MidiEventType::Note:
+							snprintf(menuItemText_temp.data(), maxTextLength, "%s (notes %s - %s)", menuItemText, dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum).c_str(), dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2).c_str());
+							break;
+						default:
+							break;
+					}
+					if (strlen(menuItemText_temp.data()) > 0)
+					{
+						menuItemText = menuItemText_temp.data();
 					}
 				}
+				break;
+			}
+			case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
+				menuItemText = "Type in a MIDI CC assignment...";
 				break;
 #endif
 			default:
 				assert(false);
 				break;
 		}
+		if (isFirstItemOfSubgroup)
+		{
+			resultMenu->addSeparator();
+		}
+		if (menuItemText)
+		{
+			int32_t const menuItemCommandID = i + kDfxContextualMenuItem_Global_NumItems;
+			DFX_AppendCommandItemToMenu(*resultMenu, menuItemText, menuItemCommandID, !disableItem, showCheckmark);
+		}
 	}
 
-	return handled;
+	return resultMenu;
 }
 
 //-----------------------------------------------------------------------------

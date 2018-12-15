@@ -148,7 +148,7 @@ public:
 	virtual void HandleAUPropertyChange(void* inObject, AudioUnitProperty inAUProperty, UInt64 inEventHostTime) {}
 #endif
 
-	void addControl(IDGControl* inCtrl);
+	void addControl(IDGControl* inControl);
 	// in-place constructor variant that instantiates the control in addition to adding it
 	template <typename T, typename... Args>
 	T* emplaceControl(Args&&... args)
@@ -254,10 +254,13 @@ public:
 	std::string getparametername(long inParameterID);
 	void randomizeparameter(long inParameterID, bool inWriteAutomation = false);
 	void randomizeparameters(bool inWriteAutomation = false);
+	void GenerateParameterAutomationSnapshot(long inParameterID);
+	void GenerateParametersAutomationSnapshot();
 	virtual bool dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText, double& outValue);
 	virtual bool dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText, long& outValue);
 	bool dfxgui_SetParameterValueWithString(long inParameterID, std::string const& inText);
 	bool dfxgui_IsValidParamID(long inParameterID) const;
+	void TextEntryForParameterValue(long inParameterID);
 #ifdef TARGET_API_AUDIOUNIT
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
 	std::vector<AudioUnitParameterID> CreateParameterList(AudioUnitScope inScope = kAudioUnitScope_Global);
@@ -268,6 +271,8 @@ public:
 							void* outData, size_t& ioDataSize);
 	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 							void const* inData, size_t inDataSize);
+	void LoadPresetFile();
+	void SavePresetFile();
 #if TARGET_PLUGIN_USES_MIDI
 	void setmidilearning(bool inLearnMode);
 	bool getmidilearning();
@@ -278,6 +283,7 @@ public:
 	void setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment);
 	dfx::ParameterAssignment getparametermidiassignment(long inParameterIndex);
 	void parametermidiunassign(long inParameterIndex);
+	void TextEntryForParameterMidiCC(long inParameterID);
 	void HandleMidiLearnChange();
 	void HandleMidiLearnerChange();
 	virtual void midiLearningChanged(bool inLearnMode) {}
@@ -299,7 +305,9 @@ protected:
 	std::vector<IDGControl*> mControlsList;
 
 private:
-	bool handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons);
+	[[nodiscard]] bool handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons);
+	COptionMenu createContextualMenu(IDGControl* inControl);
+	SharedPointer<COptionMenu> createParameterContextualMenu(long inParameterID);
 	long initClipboard();
 	long copySettings();
 	long pasteSettings(bool* inQueryPastabilityOnly = nullptr);
