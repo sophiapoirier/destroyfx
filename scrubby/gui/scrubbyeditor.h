@@ -56,9 +56,11 @@ public:
 	void numAudioChannelsChanged(unsigned long inNumChannels) override;
 
 	void HandleNotesButton(long inNotesButtonType);
-	void HandlePitchConstraintChange();
 
 private:
+	void HandlePitchConstraintChange();
+	void HandleTempoAutoChange();
+
 	DGSlider* mSeekRateSlider = nullptr;
 //	DGSlider* mSeekRateRandMinSlider = nullptr;
 	DGTextDisplay* mSeekRateDisplay = nullptr;

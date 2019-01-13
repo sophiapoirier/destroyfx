@@ -66,6 +66,7 @@ enum
 
 static char const* const kValueTextFont = "Lucida Grande";
 constexpr float kValueTextSize = 13.0f;
+constexpr float kUnusedControlAlpha = 0.45f;
 
 
 
@@ -236,5 +237,30 @@ long EQSyncEditor::OpenEditor()
 	}, this, true);
 
 
+	HandleTempoAutoChange();
+
+
 	return dfx::kStatus_NoError;
+}
+
+//-----------------------------------------------------------------------------
+void EQSyncEditor::parameterChanged(long inParameterID)
+{
+	if (inParameterID == kTempoAuto)
+	{
+		HandleTempoAutoChange();
+	}
+}
+
+//-----------------------------------------------------------------------------
+void EQSyncEditor::HandleTempoAutoChange()
+{
+	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.0f;
+	for (auto& control : mControlsList)
+	{
+		if (control->getParameterID() == kTempo)
+		{
+			control->setDrawAlpha(alpha);
+		}
+	}
 }

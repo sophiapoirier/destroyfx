@@ -30,4 +30,8 @@ class EQSyncEditor : public DfxGuiEditor
 public:
 	EQSyncEditor(DGEditorListenerInstance inInstance);
 	long OpenEditor() override;
+	void parameterChanged(long inParameterID) override;
+
+private:
+	void HandleTempoAutoChange();
 };
