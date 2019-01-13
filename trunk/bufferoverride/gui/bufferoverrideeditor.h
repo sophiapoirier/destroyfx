@@ -36,6 +36,8 @@ public:
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:
+	void HandleTempoAutoChange();
+
 	DGSlider* mBufferSizeSlider = nullptr;
 	DGSlider* mDivisorLFORateSlider = nullptr;
 	DGSlider* mBufferLFORateSlider = nullptr;

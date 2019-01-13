@@ -73,6 +73,7 @@
 		4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F7990680E859006A9591 /* dfxmidi.cpp */; };
 		B025B9C108AD333D00A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B9BE08AD333D00A9CCAE /* CAVectorUnit.cpp */; };
 		B0AD808D0D0F30D600766C78 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0AD808C0D0F30D600766C78 /* destroyfx.icns */; };
+		EC28F78521EAD17400C979B7 /* host-tempo-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC28F78421EAD17400C979B7 /* host-tempo-button.png */; };
 		EC3E06B411E528F400F28EB8 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC3E06B111E528F400F28EB8 /* dfxmisc.cpp */; };
 		EC40EDAC20DB4B4E00F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDAB20DB4B4E00F5C0A7 /* dfxguimisc.mm */; };
 		EC48270D0F492C2B006126CD /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC48270B0F492C2B006126CD /* dfx-au-utilities.strings */; };
@@ -216,6 +217,7 @@
 		B0AD808C0D0F30D600766C78 /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
 		B0F21BC00B694E5D00B43CA8 /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		B0F21BC10B694E5D00B43CA8 /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
+		EC28F78421EAD17400C979B7 /* host-tempo-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "host-tempo-button.png"; sourceTree = "<group>"; };
 		EC390FF120CCA9D500A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC3E06B111E528F400F28EB8 /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
 		EC3E06B211E528F400F28EB8 /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
@@ -348,6 +350,7 @@
 				490E793C07CAE4E700688A1D /* tempo-sync-button-little.png */,
 				490E793B07CAE4E700688A1D /* stereo-button.png */,
 				490E792F07CAE4E700688A1D /* pitch-constraint-button.png */,
+				EC28F78421EAD17400C979B7 /* host-tempo-button.png */,
 				490E791F07CAE4E700688A1D /* keyboard-off.png */,
 				490E792007CAE4E700688A1D /* keyboard-on.png */,
 				490E793E07CAE4E700688A1D /* transpose-down-button.png */,
@@ -633,6 +636,7 @@
 				490E794F07CAE4E700688A1D /* keyboard-white-key-top-7.png in Resources */,
 				490E795007CAE4E700688A1D /* major-chord-button.png in Resources */,
 				490E795107CAE4E700688A1D /* midi-learn-button.png in Resources */,
+				EC28F78521EAD17400C979B7 /* host-tempo-button.png in Resources */,
 				490E795207CAE4E700688A1D /* midi-reset-button.png in Resources */,
 				490E795307CAE4E700688A1D /* minor-chord-button.png in Resources */,
 				490E795407CAE4E700688A1D /* none-notes-button.png in Resources */,
