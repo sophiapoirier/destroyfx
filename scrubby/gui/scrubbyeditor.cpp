@@ -34,7 +34,7 @@ constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
 constexpr DGColor kBrownTextColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
 
-constexpr long kOctavesSliderWidth = 226 - 2;
+constexpr long kOctavesSliderWidth = 118 - 2;
 static long const kOctaveMaxSliderWidth = static_cast<long>((static_cast<float>(kOctave_MaxValue) / static_cast<float>((std::abs(kOctave_MinValue) + kOctave_MaxValue))) * static_cast<float>(kOctavesSliderWidth));
 static long const kOctaveMinSliderWidth = kOctavesSliderWidth - kOctaveMaxSliderWidth;
 constexpr long kOctaveMinSliderX = 33 + 1;
@@ -71,13 +71,13 @@ enum
 
 	kTempoSliderX = 33 + 1,
 	kTempoSliderY = 427,
-	kTempoSliderWidth = 119 - 2,
+	kTempoSliderWidth = 194 - 2,
 
-	kPredelaySliderX = 250 + 1,
-	kPredelaySliderY = 427,
-	kPredelaySliderWidth = 119 - 2,
+	kPredelaySliderX = 251 + 1,
+	kPredelaySliderY = 383,
+	kPredelaySliderWidth = 118 - 2,
 
-	kDisplayWidth =90,
+	kDisplayWidth = 90,
 	kDisplayWidth_big = 117,  // for seek rate
 	kDisplayHeight = 10,
 	kDisplayInset = 2,
@@ -95,6 +95,9 @@ enum
 
 	kLittleTempoSyncButtonX = 327,
 	kLittleTempoSyncButtonY = 303 + kMainSlidersOffsetY,
+
+	kTempoAutoButtonX = 231,
+	kTempoAutoButtonY = 432,
 
 	kKeyboardX = 33,
 	kKeyboardY = 164 + kNotesStuffOffsetY,
@@ -114,7 +117,7 @@ enum
 	kNoneNotesButtonY = kMajorChordButtonY + 61,
 
 	kMidiLearnButtonX = 433,
-	kMidiLearnButtonY = 248 + kNotesStuffOffsetY,
+	kMidiLearnButtonY = 292 + kNotesStuffOffsetY,
 	kMidiResetButtonX = kMidiLearnButtonX,
 	kMidiResetButtonY = kMidiLearnButtonY + 19,
 
@@ -158,6 +161,7 @@ enum
 	kHelp_Notes,
 	kHelp_Octaves,
 	kHelp_Tempo,
+	kHelp_TempoAuto,
 	kHelp_PreDelay,
 	kHelp_MidiLearn,
 	kHelp_MidiReset,
@@ -221,6 +225,10 @@ of octaves, or move these to their outer points if you want no limits.)DELIM",
 	R"DELIM(tempo:  sets the tempo that Scrubby uses when tempo sync is on
 If your host app doesn't send tempo info to plugins, you'll need to adjust this 
 parameter in order to specify a tempo for Scrubby to use.)DELIM", 
+	// tempo auto
+	R"DELIM(sync to host tempo:  follow the host's current tempo
+If your host app sends tempo info to plugins, you can enable this parameter 
+to lock the tempo that Scrubby uses to that of the host.)DELIM", 
 	// predelay
 	R"DELIM(predelay:  compensate for Scrubby's (possible) output delay
 Scrubby zips around in a delay buffer and therefore can create some latency.  
@@ -419,6 +427,7 @@ long ScrubbyEditor::OpenEditor()
 	auto const splitChannelsButtonImage = VSTGUI::makeOwned<DGImage>("stereo-button.png");
 	auto const pitchConstraintButtonImage = VSTGUI::makeOwned<DGImage>("pitch-constraint-button.png");
 	auto const tempoSyncButtonImage_little = VSTGUI::makeOwned<DGImage>("tempo-sync-button-little.png");
+	auto const hostTempoButtonImage = VSTGUI::makeOwned<DGImage>("host-tempo-button.png");
 
 	// pitch constraint control buttons
 //	auto const keyboardOffImage = VSTGUI::makeOwned<DGImage>("keyboard-off.png");
@@ -609,6 +618,10 @@ long ScrubbyEditor::OpenEditor()
 	pos.set(kLittleTempoSyncButtonX, kLittleTempoSyncButtonY, tempoSyncButtonImage_little->getWidth(), tempoSyncButtonImage_little->getHeight() / 2);
 	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage_little, DGButton::Mode::Increment, false);
 
+	// enable sync to host tempo
+	pos.set(kTempoAutoButtonX, kTempoAutoButtonY, hostTempoButtonImage->getWidth(), hostTempoButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kTempoAuto, pos, hostTempoButtonImage, DGButton::Mode::Increment, false);
+
 
 	// ...............PITCH CONSTRAINT....................
 
@@ -706,8 +719,9 @@ long ScrubbyEditor::OpenEditor()
 
 
 
-	// this will initialize the pitch constraint controls' initial translucency settings 
+	// this will initialize the translucency state of dependent controls 
 	HandlePitchConstraintChange();
+	HandleTempoAutoChange();
 	// and this will do the same for the channels mode control
 	numAudioChannelsChanged(getNumAudioChannels());
 
@@ -818,34 +832,56 @@ void ScrubbyEditor::HandlePitchConstraintChange()
 }
 
 //-----------------------------------------------------------------------------
+void ScrubbyEditor::HandleTempoAutoChange()
+{
+	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.0f;
+	for (auto& control : mControlsList)
+	{
+		if (control->getParameterID() == kTempo)
+		{
+			control->setDrawAlpha(alpha);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
 void ScrubbyEditor::parameterChanged(long inParameterID)
 {
-	if (inParameterID == kTempoSync)
+	switch (inParameterID)
 	{
-		auto const useSyncParam = getparameter_b(inParameterID);
-		auto const updateControlParameterID = [useSyncParam](IDGControl* inControl)
+		case kTempoSync:
 		{
-			assert(inControl);
-			auto const oldParamID = inControl->getParameterID();
-			auto newParamID = dfx::kParameterID_Invalid;
-			if ((oldParamID == kSeekRateRandMin_Hz) || (oldParamID == kSeekRateRandMin_Sync))
+			auto const useSyncParam = getparameter_b(inParameterID);
+			auto const updateControlParameterID = [useSyncParam](IDGControl* inControl)
 			{
-				newParamID = useSyncParam ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
-			}
-			else
-			{
-				newParamID = useSyncParam ? kSeekRate_Sync : kSeekRate_Hz;
-			}
-			inControl->setParameterID(newParamID);
-		};
-		updateControlParameterID(mSeekRateSlider);
-		updateControlParameterID(mSeekRateDisplay);
-//		updateControlParameterID(mSeekRateRandMinSlider);
-		updateControlParameterID(mSeekRateRandMinDisplay);
-	}
-	else if ((inParameterID == kSpeedMode) || (inParameterID == kPitchConstraint))
-	{
-		HandlePitchConstraintChange();
+				assert(inControl);
+				auto const oldParamID = inControl->getParameterID();
+				auto newParamID = dfx::kParameterID_Invalid;
+				if ((oldParamID == kSeekRateRandMin_Hz) || (oldParamID == kSeekRateRandMin_Sync))
+				{
+					newParamID = useSyncParam ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
+				}
+				else
+				{
+					newParamID = useSyncParam ? kSeekRate_Sync : kSeekRate_Hz;
+				}
+				inControl->setParameterID(newParamID);
+			};
+			updateControlParameterID(mSeekRateSlider);
+			updateControlParameterID(mSeekRateDisplay);
+//			updateControlParameterID(mSeekRateRandMinSlider);
+			updateControlParameterID(mSeekRateRandMinDisplay);
+			break;
+		}
+		case kSpeedMode:
+		case kPitchConstraint:
+			HandlePitchConstraintChange();
+			break;
+		case kTempoAuto:
+			HandleTempoAutoChange();
+			break;
+		default:
+			break;
 	}
 }
 
@@ -918,6 +954,8 @@ void ScrubbyEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse
 					return kHelp_Octaves;
 				case kTempo:
 					return kHelp_Tempo;
+				case kTempoAuto:
+					return kHelp_TempoAuto;
 				case kPredelay:
 					return kHelp_PreDelay;
 				default:

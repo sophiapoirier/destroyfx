@@ -33,6 +33,8 @@ constexpr float kHelpDisplayFontSize = 9.6f;
 
 constexpr DGColor kHelpDisplayTextColor(201, 201, 201);
 
+constexpr float kUnusedControlAlpha = 0.39f;
+
 
 //-----------------------------------------------------------------------------
 enum
@@ -446,6 +448,9 @@ long BufferOverrideEditor::OpenEditor()
 	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
 
 
+	HandleTempoAutoChange();
+
+
 	return dfx::kStatus_NoError;
 }
 
@@ -474,6 +479,9 @@ void BufferOverrideEditor::parameterChanged(long inParameterID)
 			newParameterID = useSyncParam ? kBufferLFORate_Sync : kBufferLFORate_Hz;
 			slider = mBufferLFORateSlider;
 			textDisplay = mBufferLFORateDisplay;
+			break;
+		case kTempoAuto:
+			HandleTempoAutoChange();
 			break;
 		default:
 			return;
@@ -567,10 +575,10 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 			helpstring = "nudge: MIDI notes adjust the buffer divisor.   trigger: notes also reset the divisor to 1 when they are released";
 			break;
 		case kTempo:
-			helpstring = "you can adjust the tempo that Buffer Override uses, or set this to \"auto\" to get the tempo from your sequencer";
+			helpstring = "you can adjust the tempo that Buffer Override uses, or use the \"host tempo\" button to get tempo from your host";
 			break;
 		case kTempoAuto:
-			helpstring = "enable this to get the tempo from your sequencer";
+			helpstring = "enable this to get the tempo from your host application";
 			break;
 
 		default:
@@ -589,4 +597,17 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 	}
 
 	mHelpDisplay->setText(helpstring ? helpstring : "");
+}
+
+//-----------------------------------------------------------------------------
+void BufferOverrideEditor::HandleTempoAutoChange()
+{
+	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.0f;
+	for (auto& control : mControlsList)
+	{
+		if (control->getParameterID() == kTempo)
+		{
+			control->setDrawAlpha(alpha);
+		}
+	}
 }
