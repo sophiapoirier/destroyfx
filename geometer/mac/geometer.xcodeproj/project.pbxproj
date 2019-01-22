@@ -78,6 +78,7 @@
 		ECBE1AA220B2067000B45853 /* geometer-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C24E07E524F4008EBD90 /* geometer-background.png */; };
 		ECC430D7102F4A56000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC430D5102F4A56000B05A1 /* dfx-au-utilities.strings */; };
 		ECDB2A6921B9F91900938F5C /* slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C25C07E524F4008EBD90 /* slider-handle-glowing.png */; };
+		ECDE78EF21EBABC900F27547 /* geometerview.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECDE78ED21EBABC900F27547 /* geometerview.cpp */; };
 		ECFE6DC020B119110026202C /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECFE6DBF20B119110026202C /* dfxenvelope.cpp */; };
 /* End PBXBuildFile section */
 
@@ -215,6 +216,8 @@
 		ECC430D8102F4A5E000B05A1 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECC430D9102F4A67000B05A1 /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECD0B24E20CC2F2A006CD7D1 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECDE78ED21EBABC900F27547 /* geometerview.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = geometerview.cpp; path = gui/geometerview.cpp; sourceTree = "<group>"; usesTabs = 0; };
+		ECDE78EE21EBABC900F27547 /* geometerview.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = geometerview.h; path = gui/geometerview.h; sourceTree = "<group>"; usesTabs = 0; };
 		ECFE6DBE20B119110026202C /* dfxenvelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxenvelope.h; sourceTree = "<group>"; };
 		ECFE6DBF20B119110026202C /* dfxenvelope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxenvelope.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -286,6 +289,8 @@
 				4998C24307E524B5008EBD90 /* geometereditor.h */,
 				4998C24207E524B5008EBD90 /* geometereditor.cpp */,
 				4998C24407E524B5008EBD90 /* geometerhelp.h */,
+				ECDE78EE21EBABC900F27547 /* geometerview.h */,
+				ECDE78ED21EBABC900F27547 /* geometerview.cpp */,
 				4998C23E07E52491008EBD90 /* geometerdef.h */,
 				4998C24807E524CC008EBD90 /* geometer.exp */,
 			);
@@ -669,6 +674,7 @@
 				490E7D0407CAE8F500688A1D /* AUMIDIEffectBase.cpp in Sources */,
 				4998C23F07E52491008EBD90 /* geometer.cpp in Sources */,
 				4998C24507E524B5008EBD90 /* geometereditor.cpp in Sources */,
+				ECDE78EF21EBABC900F27547 /* geometerview.cpp in Sources */,
 				B025B93E08AD2DB800A9CCAE /* CAVectorUnit.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

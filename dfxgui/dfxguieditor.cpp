@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -1558,6 +1558,20 @@ DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 	return m_Process;
 #endif
 }
+
+#if DEBUG
+//-----------------------------------------------------------------------------
+DfxPlugin* DfxGuiEditor::dfxgui_GetDfxPluginInstance()
+{
+	class DfxPlugin* pluginInstance {};
+	size_t dataSize = sizeof(pluginInstance);
+	if (dfxgui_GetProperty(dfx::kPluginProperty_DfxPluginInstance, dfx::kScope_Global, 0, &pluginInstance, dataSize) == noErr)
+	{
+		return pluginInstance;
+	}
+	return nullptr;
+}
+#endif
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------

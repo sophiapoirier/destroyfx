@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -238,6 +238,18 @@ OSStatus DfxPlugin::Reset(AudioUnitScope /*inScope*/, AudioUnitElement /*inEleme
 	return noErr;
 }
 
+#if TARGET_PLUGIN_USES_DSPCORE
+//-----------------------------------------------------------------------------
+DfxPluginCore* DfxPlugin::getplugincore(unsigned long channel) const
+{
+	if (channel >= mKernelList.size())
+	{
+		return nullptr;
+	}
+	return dynamic_cast<DfxPluginCore*>(mKernelList[channel]);
+}
+#endif
+
 
 
 #pragma mark -
@@ -326,6 +338,13 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outDataSize = sizeof(Boolean);
 			outWritable = true;
 			break;
+
+	#if DEBUG
+		case dfx::kPluginProperty_DfxPluginInstance:
+			outDataSize = sizeof(this);
+			outWritable = false;
+			break;
+	#endif
 
 	#if TARGET_PLUGIN_USES_MIDI
 		// get/set the MIDI learn state
@@ -664,6 +683,12 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				*static_cast<DfxParam::Unit*>(outData) = getparameterunit(inElement);
 			}
 			break;
+
+	#if DEBUG
+		case dfx::kPluginProperty_DfxPluginInstance:
+			*static_cast<DfxPlugin**>(outData) = this;
+			break;
+	#endif
 
 	#if TARGET_PLUGIN_USES_MIDI
 		// get the MIDI learn state

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -69,4 +69,6 @@ private:
   std::vector<VSTGUI::SharedPointer<DGImage>> g_helpicons;
   DGButton * helpicon = nullptr;
   GeometerHelpBox * helpbox = nullptr;
+
+  class GeometerView * gview = nullptr;
 };
