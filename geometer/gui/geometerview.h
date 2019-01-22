@@ -1,7 +1,31 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
 
-#include "vstgui.h"
-#include "vstcontrols.h"
-#include "geometer.hpp"
+This file is part of Geometer.
+
+Geometer is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Geometer is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#pragma once
+
+
+#include <vector>
+
+#include "dfxgui.h"
+#include "geometer.h"
 
 /* this class is for the display of the wave at the top of the plugin.
    It reads the current 'in' buffer for the plugin, runs it through
@@ -9,88 +33,41 @@
    whenever the plugin is idle.
 */
 
-#ifdef WIN32
-/* turn off warnings about default but no cases in switch, etc. */
-   #pragma warning( disable : 4065 57 4200 4244 )
-   #include <windows.h>
-#endif
-
 class GeometerView : public CView {
 
 private:
-  CRect sz;
-  int gwidth;
-  int gheight;
-  int gx;
-  int gy;
-
-  int samples;
-  int numpts;
-
-  /* active points */
-  int apts;
-
-  float * inputs;
-  int * pointsx;
-  float * pointsy;
-  float * outputs;
-
-  /* passed to processw */
-  int * tmpx;
-  float * tmpy;
-
 #if TARGET_PLUGIN_USES_DSPCORE
-  GeometerDSP * geom;
+  PLUGINCORE * const geom;
 #else
-  Geometer * geom;
+  PLUGIN * const geom;
 #endif
 
-  COffscreenContext * offc;
+  int const samples;
+  int numpts = 0;
+
+  /* active points */
+  int apts = 0;
+
+  uint32_t prevms = 0;
+
+  std::vector<float> inputs;
+  std::vector<int> pointsx;
+  std::vector<float> pointsy;
+  std::vector<float> outputs;
+
+  /* passed to processw */
+  std::vector<int> tmpx;
+  std::vector<float> tmpy;
+
+  VSTGUI::SharedPointer<COffscreenContext> offc;
 
 public:
 
-  GeometerView(const CRect & size, Geometer * listener) : CView(size) {
-    sz = size;
-  #if TARGET_PLUGIN_USES_DSPCORE
-    geom = (GeometerDSP*) (listener->getplugincore(0));
-  #else
-    geom = listener;
-  #endif
-    gwidth = size.right - size.left;
-    gheight = size.bottom - size.top;
-    gx = size.left;
-    gy = size.top;
-    samples = gwidth;
-    inputs = outputs = pointsy = tmpy = NULL;
-	pointsx = tmpx = NULL;
-    numpts = 0;
-	apts = 0;
-    offc = NULL;
-  }
+  GeometerView(CRect const & size, PLUGIN * listener);
 
-  void init ();
-
-  ~GeometerView() {
-    if (inputs != NULL)
-      free (inputs);
-    if (pointsx != NULL)
-      free (pointsx);
-    if (pointsy != NULL)
-      free (pointsy);
-    if (tmpx != NULL)
-      free (tmpx);
-    if (tmpy != NULL)
-      free (tmpy);
-    if (outputs != NULL)
-      free (outputs);
-    if (offc != NULL)
-      delete offc;
-  }
-
-  virtual void draw (CDrawContext *pContext);
-
-  virtual void update (CDrawContext *pContext);
+  bool attached(CView * parent) override;
+  void draw(CDrawContext * pContext) override;
+  void onIdle() override;
 
   void reflect();
-
 };

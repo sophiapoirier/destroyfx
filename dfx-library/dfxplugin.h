@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -194,6 +194,9 @@ PLUGIN_EDITOR_RES_ID
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
+
+
+class DfxPluginCore;
 
 
 #pragma mark _________DfxPlugin_________
@@ -803,6 +806,7 @@ public:
 	#endif
 	#if TARGET_PLUGIN_USES_DSPCORE
 	AUKernelBase* NewKernel() override;
+	DfxPluginCore* getplugincore(unsigned long channel) const;
 	#endif
 
 	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
@@ -962,7 +966,7 @@ public:
 		{
 			return nullptr;
 		}
-		return mDSPCores[channel];
+		return mDSPCores[channel].get();
 	}
 	#endif
 #endif
