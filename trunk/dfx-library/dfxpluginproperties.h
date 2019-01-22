@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2018  Sophia Poirier
+Copyright (C) 2003-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -55,6 +55,9 @@ enum : uint32_t
 	kPluginProperty_ResetMidiLearn,				// clear MIDI parameter assignments
 	kPluginProperty_MidiLearner,				// get/set the current MIDI learner parameter
 	kPluginProperty_ParameterMidiAssignment,	// get/set the MIDI assignment for a parameter
+#if DEBUG
+	kPluginProperty_DfxPluginInstance,			// get pointer to DfxPlugin instance
+#endif
 
 	kPluginProperty_EndOfList,
 	kPluginProperty_NumProperties = kPluginProperty_EndOfList - kPluginProperty_StartID

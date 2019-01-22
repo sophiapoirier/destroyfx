@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "geometer.h"
 #include "geometerhelp.h"
+#include "geometerview.h"
 
 
 constexpr size_t NUM_SLIDERS = 5;
@@ -250,6 +251,11 @@ long GeometerEditor::OpenEditor() {
 
   //--initialize the options menus----------------------------------------
 
+  /* geometer view */
+  pos.set(pos_geometerviewx, pos_geometerviewy, pos_geometervieww, pos_geometerviewh);
+  gview = new GeometerView(pos, dynamic_cast<PLUGIN*>(dfxgui_GetDfxPluginInstance()));
+  getFrame()->addView(gview);
+
   // window shape menu
   pos.set(pos_windowshapemenuX, pos_windowshapemenuY, stdsize, stdsize);
   emplaceControl<DGButton>(this, P_SHAPE, pos, g_windowshapemenu, 
@@ -395,16 +401,6 @@ long GeometerEditor::OpenEditor() {
 
   pos.set(pos_helpboxX, pos_helpboxY, g_helpbackground->getWidth(), g_helpbackground->getHeight());
   helpbox = emplaceControl<GeometerHelpBox>(pos, g_helpbackground);
-
-
-
-// XXX hack for Geometer missing waveform display (shift all controls up 136 pixels)
-/*for (auto& control : mControlsList) {
-  auto const cControl = control->getCControl();
-  auto region = cControl->getViewSize();
-  region.offset(0, -136);
-  cControl->setViewSize(region);
-}*/
 
 
 

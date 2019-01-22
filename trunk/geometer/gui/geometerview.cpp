@@ -1,109 +1,175 @@
+/*------------------------------------------------------------------------
+Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
 
-#include "geometerview.hpp"
+This file is part of Geometer.
 
-const CColor coldwave = {75, 151, 71, 0};
-const CColor cnewwave = {240, 255, 160, 0};
-const CColor cpointoutside = {0, 0, 0, 0};
-const CColor cpointinside = {220, 100, 200, 0};
-const CColor cbackground = {20, 50, 20, 0};
+Geometer is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Geometer is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#include "geometerview.h"
+
+#include <algorithm>
+#include <cmath>
+
+constexpr auto coldwave = MakeCColor(75, 151, 71);
+constexpr auto cnewwave = MakeCColor(240, 255, 160);
+constexpr auto cpointoutside = MakeCColor(0, 0, 0);
+constexpr auto cpointinside = MakeCColor(220, 100, 200);
+//constexpr auto cbackground = MakeCColor(17, 25, 16);
+constexpr auto cbackground = MakeCColor(20, 50, 20);
+constexpr auto zeroline = MakeCColor(52, 71, 49);
+
+GeometerView::GeometerView(CRect const & size, PLUGIN * listener)
+  : CView(size),
+#if TARGET_PLUGIN_USES_DSPCORE
+    geom(dynamic_cast<PLUGINCORE*>(listener->getplugincore(0))),
+#else
+    geom(listener),
+#endif
+    samples(size.getWidth()) {
+
+  assert(geom);
+
+  inputs.assign((samples + 3), 0.0f);
+  pointsx.assign((samples + 3), 0);
+  pointsy.assign((samples + 3), 0.0f);
+  tmpx.assign((samples + 3), 0);
+  tmpy.assign((samples + 3), 0.0f);
+  outputs.assign((samples + 3), 0.0f);
+
+  setWantsIdle(true);
+}
+
+
+ 
+bool GeometerView::attached(CView * parent) {
+
+  auto const success = CView::attached(parent);
+
+  if (success) {
+    offc = COffscreenContext::create(getFrame(), getWidth(), getHeight());
+
+    reflect();
+  }
+
+  return success;
+}
+
 
 void GeometerView::draw(CDrawContext * ctx) {
 
+  if (!offc || inputs.empty() || outputs.empty()) return; /* not ready yet */
 
-  if (!(offc && inputs && outputs)) return; /* not ready yet */
+  auto const signedlinear2y = [height = getHeight()](float value) -> CCoord {
+    return height * (-value + 1.0) * 0.5;
+  };
 
-  offc->setFrameColor(coldwave);
+  offc->beginDraw();
 
   offc->setFillColor(cbackground);
-  offc->fillRect(CRect(-1,-1,gwidth,gheight));
+  offc->drawRect(CRect(-1, -1, getWidth(), getHeight()), kDrawFilled);
 
-  int start = apts<gwidth?(gwidth-apts)>>1:0;
+  offc->setFrameColor(zeroline);
+  CCoord const centery = std::floor(getHeight() / 2.0);
+  offc->drawLine(CPoint(0, centery), CPoint(getWidth(), centery));
 
-  offc->moveTo (CPoint(start, gheight * ((- inputs[0])+1.0f) * 0.5f));
+  CCoord const start = (apts < getWidth()) ? ((std::lround(getWidth()) - apts) >> 1) : 0;
+  CDrawContext::LinePair line;
+//  VSTGUI::SharedPointer const path(ctx->createGraphicsPath(), false);
 
-  for(int u = 0; u < apts; u ++) {
-    offc->lineTo (CPoint(start + u, gheight * (((-inputs[u])+1.0f) * 0.5f)));
+  offc->setFrameColor(coldwave);
+  line.first = line.second = CPoint(start, signedlinear2y(inputs.front()));
+  for (int i = 1; i < apts; i ++) {
+    line.first = std::exchange(line.second, CPoint(start + i, signedlinear2y(inputs[i])));
+    offc->drawLine(line);
   }
 
   offc->setFrameColor(cnewwave);
-  offc->moveTo (CPoint(start, gheight * ((- outputs[0])+1.0f) * 0.5f));
-
-  for(int v = 0; v < apts; v ++) {
-    offc->lineTo (CPoint(start + v, gheight * (((-outputs[v])+1.0f) * 0.5f)));
+  line.first = line.second = CPoint(start, signedlinear2y(outputs.front()));
+  for (int i = 1; i < apts; i ++) {
+    line.first = std::exchange(line.second, CPoint(start + i, signedlinear2y(outputs[i])));
+    offc->drawLine(line);
   }
 
 #if 1
-  offc->setFillColor(cpointoutside);
-  for(int w = 0; w < numpts; w ++) {
-    int yy = (int)(gheight * (((-pointsy[w])+1.0f)*0.5f));
-    offc->fillRect(CRect(start + pointsx[w]-2, yy - 2,
-			 start + pointsx[w]+2, yy + 2));
-  }
+  for (int i = 0; i < numpts; i ++) {
+    constexpr int bordersize = 1;
+    constexpr int pointsize = 1;
+    auto const yy = static_cast<int>(signedlinear2y(pointsy[i]));
 
-  offc->setFrameColor(cpointinside);
-  for(int t = 0; t < numpts; t ++) {
-    offc->drawPoint(CPoint(start + pointsx[t], 
-			   (gheight * (((-pointsy[t])+1.0f)*0.5f))), cpointinside);
+    CRect box(start + pointsx[i] - bordersize, yy - bordersize,
+              start + pointsx[i] + bordersize + pointsize, yy + bordersize + pointsize);
+    offc->setFillColor(cpointoutside);
+    offc->drawRect(box, kDrawFilled);
+
+    box.inset(bordersize, bordersize);
+    offc->setFillColor(cpointinside);
+    offc->drawRect(box, kDrawFilled);
   }
 #endif
 
-  offc->copyFrom (ctx, sz, CPoint(0, 0));
+  offc->endDraw();
+  offc->copyFrom(ctx, getViewSize());
 
   setDirty(false);
 }
 
 
-void GeometerView::update(CDrawContext * ctx) {
-  /* ??? */
+void GeometerView::onIdle() {
 
-  CView::update(ctx);
+  /* XXX reevaluate when I should do this. */
+#if 1
+  /* maybe I don't need to do this every frame... */
+  auto const currentms = getFrame()->getTicks();
+  auto const windowsizems = static_cast<uint32_t>(static_cast<double>(geom->getwindowsize()) * 1000.0 / geom->getsamplerate());
+  auto const elapsedms = currentms - prevms;
+  if ((elapsedms > windowsizems) || (currentms < prevms)) {
+    reflect();
+    prevms = currentms;
+  }
+#endif
 }
 
-/* XXX use memcpy where applicable. */  
-/* XXX don't bother running processw unless 
-   the input data have changed. */
+
+/* XXX use memcpy where applicable. */
+/* XXX don't bother running processw unless the input data have changed. */
 void GeometerView::reflect() {
   /* when idle, copy points out of Geometer */
 
-  if (!inputs || !geom || !geom->in0) return; /* too soon */
+  if (inputs.empty() || !geom || geom->in0.empty()) return; /* too soon */
 
 #if 1
-  for(int j=0; j < samples; j++) {
-    inputs[j] = geom->in0[j];
+  for (int i=0; i < samples; i++) {
+    inputs[i] = geom->in0[i];
   }
 #else
-
-  for(int j=0; j < samples; j++) {
-    inputs[j] = sin((j * 10 * 3.14159) / samples);
+  for (int i=0; i < samples; i++) {
+    inputs[i] = std::sin((i * 10 * dfx::math::kPi<float>) / samples);
   }
-
 #endif
 
-  if (geom->cs != NULL)
-    geom->cs->grab();
-  apts = geom->framesize;
-  if (apts > samples) apts = samples;
+  {
+    std::lock_guard const guard(geom->cs);
 
-  int npts = geom->processw(inputs, outputs, apts,
-			    pointsx, pointsy, samples - 1,
-			    tmpx, tmpy);
-  if (geom->cs != NULL)
-    geom->cs->release();
+    apts = std::min(static_cast<int>(geom->framesize), samples);
 
-  numpts = npts;
+    numpts = geom->processw(inputs.data(), outputs.data(),
+                            apts, pointsx.data(), pointsy.data(), samples - 1,
+                            tmpx.data(), tmpy.data());
+  }
 
-  setDirty();
-  
-}
-
-void GeometerView::init() {
-  inputs = (float*)calloc((samples + 3), sizeof (float));
-  pointsx = (int*)calloc((samples + 3), sizeof (int));
-  pointsy = (float*)calloc((samples + 3), sizeof (float));
-  tmpx = (int*)calloc((samples + 3), sizeof (int));
-  tmpy = (float*)calloc((samples + 3), sizeof (float));
-  outputs = (float*)calloc((samples + 3), sizeof (float));
-  offc = new COffscreenContext (getParent (), gwidth, gheight, kBlackCColor);
-  
-  reflect();
+  invalid();
 }
