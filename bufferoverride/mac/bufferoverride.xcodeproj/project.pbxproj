@@ -562,7 +562,7 @@
 			};
 			buildConfigurationList = B0610A100888A7C8001FDD9A /* Build configuration list for PBXProject "bufferoverride" */;
 			compatibilityVersion = "Xcode 2.4";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -642,7 +642,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "../../dfx-library/xcode/dfxplugin-au-postbuild.sh";
+			shellScript = "\"${DFX_ROOT_SOURCE_PATH}\"/dfx-library/xcode/dfxplugin-au-postbuild.sh\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
