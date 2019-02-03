@@ -630,7 +630,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "../../dfx-library/xcode/dfxplugin-au-postbuild.sh";
+			shellScript = "\"${DFX_ROOT_SOURCE_PATH}\"/dfx-library/xcode/dfxplugin-au-postbuild.sh\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
