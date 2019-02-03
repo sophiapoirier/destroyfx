@@ -7,6 +7,8 @@ if (( $# < 3 )); then
 	exit 1
 fi
 
+set -e
+
 ENTRYDIR=`pwd`
 OUTPUTFILE="$1"-"$2"
 TEMPDIR=`dirname "$1"`/`basename "$1"`_temp_$$_`jot -r -n -p 20 1`
@@ -24,6 +26,8 @@ if (( $5 )); then
 	echo "   creating  Destroy FX MIDI.html  in  "`basename "${TEMPDIR}"`
 	makedocs ~/dfx/repos/trunk/docs/destroy-fx-midi.html "${TEMPDIR}"/Destroy\ FX\ MIDI.html
 fi
+echo "   copying  "$LICENSENAME"  into  "`basename "${TEMPDIR}"`
+cp ~/dfx/repos/trunk/docs/"${LICENSENAME}" "${TEMPDIR}"/
 shift 5
 while (( $# >= 1 )); do
 	echo "   copying  $1  -->  "`basename "${TEMPDIR}"`/
@@ -41,19 +45,6 @@ find -f . \( -name "pbdevelopment.plist" \) -print
 find -f . \( -name "pbdevelopment.plist" \) -delete
 find -f . \( -name ".DS_Store" \) -print
 find -f . \( -name ".DS_Store" \) -delete
-
-PLUGIN_BUNDLE_RESOURCES_DIR="${PLUGINNAME_FILE}/Contents/Resources/en.lproj"
-# if the English-localized sub-directory doesn't exist, then try the root resources directory
-if [ ! -d "${PLUGIN_BUNDLE_RESOURCES_DIR}" ]; then
-	PLUGIN_BUNDLE_RESOURCES_DIR=`basename "${PLUGIN_BUNDLE_RESOURCES_DIR}"`
-fi
-if [ -d "${PLUGIN_BUNDLE_RESOURCES_DIR}" ]; then
-	echo
-	echo "   copying  "$MANUALNAME"  into  "$PLUGINNAME_FILE
-	cp -f "${MANUALNAME}" "${PLUGIN_BUNDLE_RESOURCES_DIR}"/
-	echo "   copying  "$LICENSENAME"  into  "$PLUGINNAME_FILE
-	cp -f ~/dfx/repos/trunk/docs/"${LICENSENAME}" "${PLUGIN_BUNDLE_RESOURCES_DIR}"/"${LICENSENAME}"
-fi
 
 #OUTPUTFILE_FULLNAME="${OUTPUTFILE}".tar.gz
 OUTPUTFILE_FULLNAME="${OUTPUTFILE}".dmg
