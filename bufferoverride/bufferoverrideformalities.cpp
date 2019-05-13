@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -86,19 +86,9 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "self-determined");  // default preset name
 	initPresets();
-}
 
-//-------------------------------------------------------------------------
-long BufferOverride::initialize()
-{
-	mInputGain.setSampleRate(getsamplerate());
-	mOutputGain.setSampleRate(getsamplerate());
-	return dfx::kStatus_NoError;
-}
-
-//-------------------------------------------------------------------------
-void BufferOverride::cleanup()
-{
+	registerSmoothedAudioValue(&mInputGain);
+	registerSmoothedAudioValue(&mOutputGain);
 }
 
 //-------------------------------------------------------------------------
@@ -342,7 +332,6 @@ void BufferOverride::processparameters()
 	mBufferLFO.setShape(getparameter_i(kBufferLFOShape));
 	mBufferLFOTempoSync = getparameter_b(kBufferLFOTempoSync);
 	mSmoothPortion = getparameter_scalar(kSmooth);
-	auto const dryWetMix = static_cast<float>(getparameter_scalar(kDryWetMix));
 	mPitchbendRange = getparameter_f(kPitchbend);
 	mMidiMode = getparameter_i(kMidiMode);
 	mUserTempoBPM = getparameter_f(kTempo);
@@ -363,11 +352,12 @@ void BufferOverride::processparameters()
 		// flag if tempo sync mode has just been switched on
 		mNeedResync = true;
 	}
-	if (getparameterchanged(kDryWetMix))
+	if (auto const value = getparameterifchanged_scalar(kDryWetMix))
 	{
 		// square root for equal power mix
-		mInputGain.setValue(std::sqrt(1.0f - dryWetMix));
-		mOutputGain.setValue(std::sqrt(dryWetMix));
+		auto const dryWetMix = static_cast<float>(*value);
+		mInputGain = std::sqrt(1.0f - dryWetMix);
+		mOutputGain = std::sqrt(dryWetMix);
 	}
 	if (getparameterchanged(kMidiMode))
 	{

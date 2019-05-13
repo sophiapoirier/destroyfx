@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 #include "dfxplugin.h"
+#include "dfxsmoothedvalue.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -59,7 +60,10 @@ private:
 	void processUnaffected(float const* const* inAudio, float* const* outAudio, 
 						   unsigned long inNumFramesToProcess, unsigned long inOffsetFrames, unsigned long inNumChannels);
 
-	float mAttackSlope_Seconds = 0.0f, mReleaseSlope_Seconds = 0.0f, mVelocityInfluence = 0.0f, mFloor = 0.0f;  // parameter values
+	// parameter values
+	float mAttackSlope_Seconds = 0.0f, mReleaseSlope_Seconds = 0.0f, mVelocityInfluence = 0.0f;
+	dfx::SmoothedValue<float> mFloor;
+
 	UnaffectedState mUnaffectedState {};
 	long mUnaffectedFadeSamples = 0;
 };

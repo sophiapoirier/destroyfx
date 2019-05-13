@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -83,6 +83,11 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
 
 	setpresetname(0, "feminist synth");  // default preset name
+
+	registerSmoothedAudioValue(&mOutputGain);
+	registerSmoothedAudioValue(&mBetweenGain);
+	registerSmoothedAudioValue(&mDryGain);
+	registerSmoothedAudioValue(&mWetGain);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -168,10 +173,29 @@ void RezSynth::processparameters()
 	mPitchBendRange = getparameter_f(kPitchBendRange);
 	mScaleMode = getparameter_i(kScaleMode);
 	mResonAlgorithm = getparameter_i(kResonAlgorithm);
-	mOutputGain = getparameter_f(kFilterOutputGain);
-	mBetweenGain = getparameter_f(kBetweenGain);
-	mDryWetMix = getparameter_scalar(kDryWetMix);
-	mDryWetMixMode = getparameter_i(kDryWetMixMode);
+	if (auto const value = getparameterifchanged_f(kFilterOutputGain))
+	{
+		mOutputGain = *value;
+	}
+	if (auto const value = getparameterifchanged_f(kBetweenGain))
+	{
+		mBetweenGain = *value;
+	}
+	if (getparameterchanged(kDryWetMix) || getparameterchanged(kDryWetMixMode))
+	{
+		auto const dryWetMix = static_cast<float>(getparameter_scalar(kDryWetMix));
+		auto const dryWetMixMode = getparameter_i(kDryWetMixMode);
+		auto dryGain = 1.0f - dryWetMix;
+		auto wetGain = dryWetMix;
+		if (dryWetMixMode == kDryWetMixMode_EqualPower)
+		{
+			// sqare root for equal power blending of non-correlated signals
+			dryGain = std::sqrt(dryGain);
+			wetGain = std::sqrt(wetGain);
+		}
+		mDryGain = dryGain;
+		mWetGain = wetGain;
+	}
 	mWiseAmp = getparameter_b(kWiseAmp);
 
 	if (getparameterchanged(kNumBands))

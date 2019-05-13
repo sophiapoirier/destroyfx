@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -168,14 +168,14 @@ void RezSynth::processFilterOuts(float const* inAudio, float* outAudio,
 								 double& prevIn, double& prevprevIn, 
 								 double* prevOut, double* prevprevOut)
 {
-	double const totalAmp = ampEvener * static_cast<double>(mOutputGain * (getmidistate().getNoteState(currentNote).mNoteAmp) * mWetGain);
+	double const noteAmp = ampEvener * static_cast<double>(getmidistate().getNoteState(currentNote).mNoteAmp);
 
 	// here we do the resonant filter equation using our filter coefficients, and related stuff
 	for (unsigned long samplecount = 0; samplecount < sampleFrames; samplecount++)
 	{
 		// see whether attack or release are active and fetch the output scalar
 		auto const envAmp = getmidistate().processEnvelope(currentNote);  // the attack/release scalar
-		double const envedTotalAmp = totalAmp * static_cast<double>(envAmp);
+		double const envedTotalAmp = noteAmp * static_cast<double>(envAmp * mWetGain.getValue()) * mOutputGain.getValue();
 
 		for (int bandcount = 0; bandcount < numBands; bandcount++)
 		{
@@ -193,6 +193,8 @@ void RezSynth::processFilterOuts(float const* inAudio, float* outAudio,
 		}
 		prevprevIn = prevIn;
 		prevIn = inAudio[samplecount];
+		mOutputGain.inc();
+		mWetGain.inc();
 	}
 }
 /*
@@ -263,7 +265,10 @@ void RezSynth::processUnaffected(float const* inAudio, float* outAudio, unsigned
 			}
 		}
 
-		outAudio[samplecount] += inAudio[samplecount] * unEnvAmp * mBetweenGain * mWetGain;
+		outAudio[samplecount] += inAudio[samplecount] * unEnvAmp * mBetweenGain.getValue() * mWetGain.getValue();
+
+		mBetweenGain.inc();
+		mWetGain.inc();
 	}
 }
 

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <vector>
 
 #include "dfxplugin.h"
+#include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
 
 
@@ -78,9 +79,11 @@ private:
   // these get set to the parameter values
   int bsize = 0;
   double speed1 = 0.0, speed2 = 0.0;
-  float drymix = 1.0f;
-  float mix1 = 0.0f, feed1 = 0.0f, dist1 = 0.0f;
-  float mix2 = 0.0f, feed2 = 0.0f, dist2 = 0.0f;
+  dfx::SmoothedValue<float> drymix;
+  dfx::SmoothedValue<float> mix1, feed1;
+  float dist1 = 0.0f;
+  dfx::SmoothedValue<float> mix2, feed2;
+  float dist2 = 0.0f;
   long quality = 0;
   bool tomsound = false;
 

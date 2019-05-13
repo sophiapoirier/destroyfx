@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -30,9 +30,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames, bool replacing) {
 
   // int versions of these float values, for reducing casting operations
-  int speed1int, speed2int, read1int, read2int;
-  int lowpass1pos, lowpass2pos;  // position trackers for the lowpass filters
-  float r1val, r2val;  // delay buffer output values
+  int speed1int {}, speed2int {}, read1int {}, read2int {};
+  int lowpass1pos {}, lowpass2pos {};  // position trackers for the lowpass filters
+  float r1val {}, r2val {};  // delay buffer output values
   auto const bsize_float = (double)bsize;  // cut down on casting
   FilterMode filterMode1 = FilterMode::Nothing, filterMode2 = FilterMode::Nothing;  // the type of filtering to use in ultra hi-fi mode
   float mug1 = 1.0f, mug2 = 1.0f;  // make-up gain for lowpass filtering
@@ -148,7 +148,6 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
         // spline interpolation plus anti-aliasing lowpass filtering for high speeds 
         // or sub-bass-removing highpass filtering for low speeds
         case kQualityMode_UltraHiFi:
-          float lp1, lp2;
           switch (filterMode1)
           {
             case FilterMode::Highpass:
@@ -157,14 +156,16 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
               r1val = filter1.interpolateHermitePostFilter(read1);
               break;
             case FilterMode::LowpassFIR:
+            {
               // get 2 consecutive FIR output values for linear interpolation
-              lp1 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(), 
-                                            (read1int - kNumFIRTaps + bsize) % bsize, bsize);
-              lp2 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(), 
-                                            (read1int - kNumFIRTaps + 1 + bsize) % bsize, bsize);
+              auto const lp1 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(), 
+                                                       (read1int - kNumFIRTaps + bsize) % bsize, bsize);
+              auto const lp2 = dfx::FIRFilter::process(buf1.data(), kNumFIRTaps, firCoefficients1.data(), 
+                                                       (read1int - kNumFIRTaps + 1 + bsize) % bsize, bsize);
               // interpolate output linearly (avoid shit sound) and compensate gain
               r1val = dfx::math::InterpolateLinear(lp1, lp2, read1) * mug1;
               break;
+            }
             default:
               r1val = Transverb_InterpolateHermite(buf1.data(), read1, bsize, writer - read1int);
               break;
@@ -177,14 +178,16 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
               r2val = filter2.interpolateHermitePostFilter(read2);
               break;
             case FilterMode::LowpassFIR:
+            {
               // get 2 consecutive FIR output values for linear interpolation
-              lp1 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(), 
-                                            (read2int - kNumFIRTaps + bsize) % bsize, bsize);
-              lp2 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(), 
-                                            (read2int - kNumFIRTaps + 1 + bsize) % bsize, bsize);
+              auto const lp1 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(), 
+                                                       (read2int - kNumFIRTaps + bsize) % bsize, bsize);
+              auto const lp2 = dfx::FIRFilter::process(buf2.data(), kNumFIRTaps, firCoefficients2.data(), 
+                                                       (read2int - kNumFIRTaps + 1 + bsize) % bsize, bsize);
               // interpolate output linearly (avoid shit sound) and compensate gain
               r2val = dfx::math::InterpolateLinear(lp1, lp2, read2) * mug2;
               break;
+            }
             default:
               r2val = Transverb_InterpolateHermite(buf2.data(), read2, bsize, writer - read2int);
               break;
@@ -212,17 +215,17 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       
       /* then write into buffer (w/ feedback) */
 
-      buf1[writer] = inAudio[i] + (r1val * feed1 * mix1);
-      buf2[writer] = inAudio[i] + (r2val * feed2 * mix2);
+      buf1[writer] = inAudio[i] + (r1val * feed1.getValue() * mix1.getValue());
+      buf2[writer] = inAudio[i] + (r2val * feed2.getValue() * mix2.getValue());
 
       /* make output */
     #ifdef TARGET_API_VST
       if (replacing)
     #endif
-        outAudio[i] = (inAudio[i]*drymix) + (r1val*mix1) + (r2val*mix2);
+        outAudio[i] = (inAudio[i] * drymix.getValue()) + (r1val * mix1.getValue()) + (r2val * mix2.getValue());
     #ifdef TARGET_API_VST
       else
-        outAudio[i] += (inAudio[i]*drymix) + (r1val*mix1) + (r2val*mix2);
+        outAudio[i] += (inAudio[i] * drymix.getValue()) + (r1val * mix1.getValue()) + (r2val * mix2.getValue());
     #endif
 
       /* start smoothing stuff if the writer has 
@@ -371,10 +374,11 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
         if ((int)read2 != read2int)
           filter2.process(buf2[read2int]);
       }
+
+      incrementSmoothedAudioValues();
     }  /* end of samples loop */
 
-  }  /* end of if(!TOMSOUND) */
-
+  }  /* end of !TOMSOUND */
 
 
 
@@ -388,17 +392,17 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
 
     switch(quality) {
       case kQualityMode_DirtFi:
-        r1val = mix1 * buf1[(size_t)read1];
-        r2val = mix2 * buf1[(size_t)read2];
+        r1val = mix1.getValue() * buf1[(size_t)read1];
+        r2val = mix2.getValue() * buf1[(size_t)read2];
         break;
       case kQualityMode_HiFi:
       case kQualityMode_UltraHiFi:
-        r1val = mix1 * Transverb_InterpolateHermite(buf1.data(), read1, bsize, 333);
-        r2val = mix2 * Transverb_InterpolateHermite(buf1.data(), read2, bsize, 333);
+        r1val = mix1.getValue() * Transverb_InterpolateHermite(buf1.data(), read1, bsize, 333);
+        r2val = mix2.getValue() * Transverb_InterpolateHermite(buf1.data(), read2, bsize, 333);
         break;
       default:
-        r1val = mix1 * buf1[(size_t)read1];
-        r2val = mix2 * buf1[(size_t)read2];
+        r1val = mix1.getValue() * buf1[(size_t)read1];
+        r2val = mix2.getValue() * buf1[(size_t)read2];
         break;
       }
 
@@ -406,8 +410,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
 
     buf1[writer] = 
       inAudio[j] + 
-      feed1 * r1val + 
-      feed2 * r2val;
+      (feed1.getValue() * r1val) + 
+      (feed2.getValue() * r2val);
       
     /* update rw heads */
 //    writer++;
@@ -434,12 +438,14 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
   #ifdef TARGET_API_VST
     if (replacing)
   #endif
-      outAudio[j] = inAudio[j] * drymix + r1val + r2val;
+      outAudio[j] = (inAudio[j] * drymix.getValue()) + r1val + r2val;
   #ifdef TARGET_API_VST
     else
-      outAudio[j] += inAudio[j] * drymix + r1val + r2val;
+      outAudio[j] += (inAudio[j] * drymix.getValue()) + r1val + r2val;
   #endif
 //      }
-    }
-  }
+
+      incrementSmoothedAudioValues();
+    }  /* end of samples loop */
+  }  /* end of TOMSOUND */
 }

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 #include "dfxplugin.h"
+#include "dfxsmoothedvalue.h"
 
 
 // these are Polarizer's parameters
@@ -42,9 +43,11 @@ public:
 	PolarizerDSP(DfxPlugin* inDfxPlugin);
 	void process(float const* inAudio, float* outAudio, unsigned long inNumFrames, bool replacing = true) override;
 	void reset() override;
+	void processparameters() override;
 
 private:
 	long mUnaffectedSamples = 0;  // sample counter
+	dfx::SmoothedValue<float> mPolarizedAmp;
 };
 
 //----------------------------------------------------------------------------- 
