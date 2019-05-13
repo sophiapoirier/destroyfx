@@ -209,6 +209,9 @@
 		EC89B4CB208D35DA00E15129 /* plugguieditor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = plugguieditor.cpp; sourceTree = "<group>"; };
 		EC9841871030C46000FA3B2B /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		EC9841881030C46000FA3B2B /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
+		ECBC735A221BC7380021D296 /* idfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxsmoothedvalue.h; sourceTree = "<group>"; };
+		ECBC735B221BC7380021D296 /* dfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxsmoothedvalue.h; sourceTree = "<group>"; };
+		ECBC735C221BC7380021D296 /* dfxsmoothedvalue.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxsmoothedvalue.hpp; sourceTree = "<group>"; };
 		ECC3B5CF12A60A6300BA11D5 /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
 		ECC3B5D012A60A6300BA11D5 /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
 		ECC3B61312A6D62B00BA11D5 /* reson-algorithm-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "reson-algorithm-button.png"; sourceTree = "<group>"; };
@@ -445,6 +448,9 @@
 				ECC3B5D012A60A6300BA11D5 /* dfxmisc.h */,
 				ECC3B5CF12A60A6300BA11D5 /* dfxmisc.cpp */,
 				4932F4CD06801180006A9591 /* dfxmath.h */,
+				ECBC735A221BC7380021D296 /* idfxsmoothedvalue.h */,
+				ECBC735B221BC7380021D296 /* dfxsmoothedvalue.h */,
+				ECBC735C221BC7380021D296 /* dfxsmoothedvalue.hpp */,
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B06E6100097ACA2F00AC582C /* dfx-au-utilities-private.h */,

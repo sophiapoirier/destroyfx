@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -21,6 +21,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "monomaker.h"
 
+#include <algorithm>
+#include <cassert>
 #include <cmath>
 
 
@@ -74,99 +76,142 @@ The -3 dB setting uses a constant power curve based on sin/cos, while other two 
 
 	addchannelconfig(2, 2);  // 2-in/2-out
 	addchannelconfig(1, 2);  // 1-in/2-out
+
+	registerSmoothedAudioValue(&mInputSelection_left2left);
+	registerSmoothedAudioValue(&mInputSelection_left2right);
+	registerSmoothedAudioValue(&mInputSelection_right2left);
+	registerSmoothedAudioValue(&mInputSelection_right2right);
+	registerSmoothedAudioValue(&mMonomerge_main);
+	registerSmoothedAudioValue(&mMonomerge_other);
+	registerSmoothedAudioValue(&mPan_left1);
+	registerSmoothedAudioValue(&mPan_left2);
+	registerSmoothedAudioValue(&mPan_right1);
+	registerSmoothedAudioValue(&mPan_right2);
+}
+
+//-----------------------------------------------------------------------------------------
+void Monomaker::processparameters()
+{
+	if (auto const inputSelection = getparameterifchanged_i(kInputSelection))
+	{
+		switch (*inputSelection)
+		{
+			case kInputSelection_Stereo:
+				mInputSelection_left2left = 1.0f;
+				mInputSelection_left2right = 0.0f;
+				mInputSelection_right2left = 0.0f;
+				mInputSelection_right2right = 1.0f;
+				break;
+			case kInputSelection_Left:
+				mInputSelection_left2left = 1.0f;
+				mInputSelection_left2right = 1.0f;
+				mInputSelection_right2left = 0.0f;
+				mInputSelection_right2right = 0.0f;
+				break;
+			case kInputSelection_Right:
+				mInputSelection_left2left = 0.0f;
+				mInputSelection_left2right = 0.0f;
+				mInputSelection_right2left = 1.0f;
+				mInputSelection_right2right = 1.0f;
+				break;
+			case kInputSelection_Swap:
+				mInputSelection_left2left = 0.0f;
+				mInputSelection_left2right = 1.0f;
+				mInputSelection_right2left = 1.0f;
+				mInputSelection_right2right = 0.0f;
+				break;
+			default:
+				assert(false);
+				break;
+		}
+	}
+
+	if (getparameterchanged(kMonomerge) || getparameterchanged(kMonomergeMode))
+	{
+		auto const monomerge = static_cast<float>(getparameter_scalar(kMonomerge));
+		auto const monomergeMode = getparameter_i(kMonomergeMode);
+
+		// calculate monomerge gain scalars
+		auto const mapMonomergeMode = (monomergeMode == kMonomergeMode_EqualPower) ? sqrtf : [](float a){ return a; };
+		mMonomerge_main = mapMonomergeMode(1.0f - (monomerge * 0.5f));
+		mMonomerge_other = mapMonomergeMode(monomerge * 0.5f);
+	}
+
+	if (getparameterchanged(kPan) || getparameterchanged(kPanMode))
+	{
+		auto const pan = static_cast<float>(getparameter_f(kPan));
+		auto const panMode = getparameter_i(kPanMode);
+//		auto const panLaw = getparameter_i(kPanLaw);
+
+		// calculate pan gain scalars
+		float pan_left1 {}, pan_left2 {}, pan_right1 {}, pan_right2 {};
+		// when pan > 0.0, then we are panning to the right...
+		if (pan > 0.0f)
+		{
+			pan_left1 = 2.0f - (pan + 1.0f);
+			pan_left2 = 0.0f;
+			pan_right1 = pan;
+			pan_right2 = 1.0f;
+		}
+		// ...otherwise we are panning to the left
+		else
+		{
+			pan_left1 = 1.0f;
+			pan_left2 = 0.0f - pan;
+			pan_right1 = 0.0f;
+			pan_right2 = pan + 1.0f;
+		}
+		// no mixing of channels in balance mode
+		if (panMode == kPanMode_Balance)
+		{
+			pan_left1 += pan_left2;
+			pan_left2 = 0.0f;
+			pan_right2 += pan_right1;
+			pan_right1 = 0.0f;
+		}
+
+		mPan_left1 = pan_left1;
+		mPan_left2 = pan_left2;
+		mPan_right1 = pan_right1;
+		mPan_right2 = pan_right2;
+	}
 }
 
 //-----------------------------------------------------------------------------------------
 void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
 {
-	// fetch the current parameter values
-	auto const inputSelection = getparameter_i(kInputSelection);
-	auto const monomerge = static_cast<float>(getparameter_scalar(kMonomerge));
-	auto const monomergeMode = getparameter_i(kMonomergeMode);
-	auto const pan = static_cast<float>(getparameter_f(kPan));
-	auto const panMode = getparameter_i(kPanMode);
-//	auto const panLaw = getparameter_i(kPanLaw);
-
 	// point the input signal pointers to the correct input streams, 
 	// according to the input selection (or dual-left if we only have 1 input)
-	float const* input1 {}, * input2 {};
-	if ((inputSelection == kInputSelection_Left) || (getnuminputs() == 1))
-	{
-		input1 = input2 = inAudio[0];
-	}
-	else if (inputSelection == kInputSelection_Right)
-	{
-		input1 = input2 = inAudio[1];
-	}
-	else if (inputSelection == kInputSelection_Swap)
-	{
-		input1 = inAudio[1];
-		input2 = inAudio[0];
-	}
-	else
-	{
-		input1 = inAudio[0];
-		input2 = inAudio[1];
-	}
-
-	// calculate monomerge gain scalars
-	float monomerge_main = 1.0f - (monomerge * 0.5f);
-	float monomerge_other = monomerge * 0.5f;
-	// square root for equal power blending
-	if (monomergeMode == kMonomergeMode_EqualPower)
-	{
-		monomerge_main = std::sqrt(monomerge_main);
-		monomerge_other = std::sqrt(monomerge_other);
-	}
-
-	// calculate pan gain scalars
-	float pan_left1 {}, pan_left2 {}, pan_right1 {}, pan_right2 {};
-	// when pan > 0.0, then we are panning to the right...
-	if (pan > 0.0f)
-	{
-		pan_left1 = 2.0f - (pan + 1.0f);
-		pan_left2 = 0.0f;
-		pan_right1 = pan;
-		pan_right2 = 1.0f;
-	}
-	// ...otherwise we are panning to the left
-	else
-	{
-		pan_left1 = 1.0f;
-		pan_left2 = 0.0f - pan;
-		pan_right1 = 0.0f;
-		pan_right2 = pan + 1.0f;
-	}
-	// no mixing of channels in balance mode
-	if (panMode == kPanMode_Balance)
-	{
-		pan_left1 += pan_left2;
-		pan_left2 = 0.0f;
-		pan_right2 += pan_right1;
-		pan_right1 = 0.0f;
-	}
+	auto const inAudioL = inAudio[0];
+	auto const inAudioR = inAudio[std::min(1lu, getnuminputs() - 1)];
 
 	// process the audio streams
 	for (unsigned long i = 0; i < inNumFrames; i++)
 	{
+		// apply input selection matrix
+		float const inL = (inAudioL[i] * mInputSelection_left2left.getValue()) + (inAudioR[i] * mInputSelection_right2left.getValue());
+		float const inR = (inAudioL[i] * mInputSelection_left2right.getValue()) + (inAudioR[i] * mInputSelection_right2right.getValue());
+
 		// do monomerging
-		float const out1 = (input1[i] * monomerge_main) + (input2[i] * monomerge_other);
-		float const out2 = (input2[i] * monomerge_main) + (input1[i] * monomerge_other);
+		float const outL = (inL * mMonomerge_main.getValue()) + (inR * mMonomerge_other.getValue());
+		float const outR = (inR * mMonomerge_main.getValue()) + (inL * mMonomerge_other.getValue());
 
 		// do panning into the output stream
 	#ifdef TARGET_API_VST
 		if (replacing)
 		{
 	#endif
-			outAudio[0][i] = (out1 * pan_left1) + (out2 * pan_left2);
-			outAudio[1][i] = (out2 * pan_right2) + (out1 * pan_right1);
+			outAudio[0][i] = (outL * mPan_left1.getValue()) + (outR * mPan_left2.getValue());
+			outAudio[1][i] = (outR * mPan_right2.getValue()) + (outL * mPan_right1.getValue());
 	#ifdef TARGET_API_VST
 		}
 		else
 		{
-			outAudio[0][i] += (out1 * pan_left1) + (out2 * pan_left2);
-			outAudio[1][i] += (out2 * pan_right2) + (out1 * pan_right1);
+			outAudio[0][i] += (outL * mPan_left1.getValue()) + (outR * mPan_left2.getValue());
+			outAudio[1][i] += (outR * mPan_right2.getValue()) + (outL * mPan_right1.getValue());
 		}
 	#endif
+
+		incrementSmoothedAudioValues();
 	}
 }

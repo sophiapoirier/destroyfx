@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <vector>
 
 #include "dfxplugin.h"
+#include "dfxsmoothedvalue.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -166,7 +167,9 @@ private:
 	double mPitchBendRange = 0.0;
 	float mAttack_Seconds = 0.0f, mDecay_Seconds = 0.0f, mSustain = 0.0f, mRelease_Seconds = 0.0f;
 	float mVelocityCurve = 0.0f, mVelocityInfluence = 0.0f;
-	float mOutputGain = 0.0f, mBetweenGain = 0.0f, mWetGain = 0.0f, mDryWetMix = 0.0f;
+	dfx::SmoothedValue<double> mOutputGain;
+	dfx::SmoothedValue<float> mBetweenGain;
+	dfx::SmoothedValue<float> mDryGain, mWetGain;
 	int mBandwidthMode {}, mNumBands = 1, mSepMode {}, mScaleMode {}, mResonAlgorithm {}, mDryWetMixMode {};
 	DfxEnvelope::CurveType mFadeType {};
 	bool mLegato = false, mFoldover = false, mWiseAmp = false;

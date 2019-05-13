@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -195,10 +195,13 @@ long DfxPlugin::do_initialize()
 	mIsInitialized = true;
 #endif
 
+	std::for_each(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), 
+				  [sr = getsamplerate()](auto& value){ value.first->setSampleRate(sr); });
+
 	createbuffers();
 	do_reset();
 
-	return dfx::kStatus_NoError;  // no error
+	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------
@@ -243,6 +246,9 @@ void DfxPlugin::do_reset()
 	AUEffectBase::Reset(kAudioUnitScope_Global, AudioUnitElement(0));
 	#endif
 #endif
+
+	mIsFirstRenderSinceReset = true;
+	std::for_each(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), [](auto& value){ value.first->snap(); });
 
 #if TARGET_PLUGIN_USES_MIDI
 	mMidiState.reset();
@@ -492,6 +498,46 @@ double DfxPlugin::getparameter_scalar(long inParameterIndex) const
 		}
 	}
 	return 0.0;
+}
+
+//-----------------------------------------------------------------------------
+std::optional<double> DfxPlugin::getparameterifchanged_f(long inParameterIndex) const
+{
+	if (getparameterchanged(inParameterIndex))
+	{
+		return getparameter_f(inParameterIndex);
+	}
+	return {};
+}
+
+//-----------------------------------------------------------------------------
+std::optional<int64_t> DfxPlugin::getparameterifchanged_i(long inParameterIndex) const
+{
+	if (getparameterchanged(inParameterIndex))
+	{
+		return getparameter_i(inParameterIndex);
+	}
+	return {};
+}
+
+//-----------------------------------------------------------------------------
+std::optional<bool> DfxPlugin::getparameterifchanged_b(long inParameterIndex) const
+{
+	if (getparameterchanged(inParameterIndex))
+	{
+		return getparameter_b(inParameterIndex);
+	}
+	return {};
+}
+
+//-----------------------------------------------------------------------------
+std::optional<double> DfxPlugin::getparameterifchanged_scalar(long inParameterIndex) const
+{
+	if (getparameterchanged(inParameterIndex))
+	{
+		return getparameter_scalar(inParameterIndex);
+	}
+	return {};
 }
 
 //-----------------------------------------------------------------------------
@@ -931,6 +977,25 @@ void DfxPlugin::getpluginname(char* outText) const
 long DfxPlugin::getpluginversion() const
 {
 	return dfx::CompositePluginVersionNumberValue();
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue, DfxPluginCore* owner)
+{
+	assert(smoothedValue);
+	mSmoothedAudioValues.emplace_back(smoothedValue, owner);
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
+{
+	std::for_each(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), [owner](auto& value)
+	{
+		if (!owner || (owner == value.second))
+		{
+			value.first->inc();
+		}
+	});
 }
 
 //-----------------------------------------------------------------------------
@@ -1425,6 +1490,18 @@ void DfxPlugin::postprocessaudio()
 void DfxPlugin::do_processparameters()
 {
 	processparameters();
+
+#if TARGET_PLUGIN_USES_DSPCORE
+	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+	{
+		getplugincore(ch)->processparameters();
+	}
+#endif
+
+	if (std::exchange(mIsFirstRenderSinceReset, false))
+	{
+		std::for_each(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), [](auto& value){ value.first->snap(); });
+	}
 }
 
 

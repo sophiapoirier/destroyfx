@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2018  Sophia Poirier
+Copyright (C) 2009-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -36,7 +36,7 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 
 //-----------------------------------------------------------------------------
 template <typename T>
-DfxSmoothedValue<T>::DfxSmoothedValue(double inSmoothingTimeInSeconds)
+dfx::SmoothedValue<T>::SmoothedValue(double inSmoothingTimeInSeconds)
 :	mCurrentValue(0),
 	mTargetValue(0),
 	mValueStep(0),
@@ -44,7 +44,7 @@ DfxSmoothedValue<T>::DfxSmoothedValue(double inSmoothingTimeInSeconds)
 	mSmoothDur_samples(0),
 	mSmoothCount(0),
 	mSampleRate(1.0),
-	mReinit(true)
+	mReinitialize(true)
 {
 	static_assert(std::is_floating_point<T>::value);
 
@@ -53,9 +53,9 @@ DfxSmoothedValue<T>::DfxSmoothedValue(double inSmoothingTimeInSeconds)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void DfxSmoothedValue<T>::setValue(T inTargetValue) noexcept
+void dfx::SmoothedValue<T>::setValue(T inTargetValue) noexcept
 {
-	if (std::exchange(mReinit, false))
+	if (std::exchange(mReinitialize, false))
 	{
 		setValueNow(inTargetValue);
 	}
@@ -73,18 +73,32 @@ void DfxSmoothedValue<T>::setValue(T inTargetValue) noexcept
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void DfxSmoothedValue<T>::setValueNow(T inValue) noexcept
+void dfx::SmoothedValue<T>::setValueNow(T inValue) noexcept
 {
 	mCurrentValue = mTargetValue = inValue;
 	mSmoothCount = mSmoothDur_samples;
-	mReinit = false;
+	mReinitialize = false;
 }
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void DfxSmoothedValue<T>::inc() noexcept
+void dfx::SmoothedValue<T>::snap() noexcept
 {
-	if (mSmoothCount < mSmoothDur_samples)
+	setValueNow(mTargetValue);
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+bool dfx::SmoothedValue<T>::isSmoothing() const noexcept
+{
+	return mSmoothCount < mSmoothDur_samples;
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+void dfx::SmoothedValue<T>::inc() noexcept
+{
+	if (isSmoothing())
 	{
 		mCurrentValue += mValueStep;
 		mSmoothCount++;
@@ -97,7 +111,7 @@ void DfxSmoothedValue<T>::inc() noexcept
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void DfxSmoothedValue<T>::setSmoothingTime(double inSmoothingTimeInSeconds)
+void dfx::SmoothedValue<T>::setSmoothingTime(double inSmoothingTimeInSeconds)
 {
 	assert(inSmoothingTimeInSeconds >= 0.0);
 
@@ -107,7 +121,7 @@ void DfxSmoothedValue<T>::setSmoothingTime(double inSmoothingTimeInSeconds)
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void DfxSmoothedValue<T>::setSampleRate(double inSampleRate)
+void dfx::SmoothedValue<T>::setSampleRate(double inSampleRate)
 {
 	assert(inSampleRate > 0.0);
 
@@ -115,4 +129,12 @@ void DfxSmoothedValue<T>::setSampleRate(double inSampleRate)
 	setSmoothingTime(mSmoothDur_seconds);
 
 	setValueNow(mTargetValue);
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+dfx::SmoothedValue<T>& dfx::SmoothedValue<T>::operator=(T inValue) noexcept
+{
+	setValue(inValue);
+	return *this;
 }

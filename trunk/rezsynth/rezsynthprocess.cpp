@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -30,14 +30,6 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 {
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block accoring to events
-	float dryGain = 1.0f - mDryWetMix;  // the gain of the input audio in the dry/wet mix
-	mWetGain = mDryWetMix;
-	if (mDryWetMixMode == kDryWetMixMode_EqualPower)
-	{
-		// sqare root for equal power blending of non-correlated signals
-		dryGain = std::sqrt(dryGain);
-		mWetGain = std::sqrt(mWetGain);
-	}
 
 
 #ifndef TARGET_API_AUDIOUNIT
@@ -87,15 +79,18 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 			continue;
 		}
 
-		// test for whether or not all notes are off and unprocessed audio can be outputted
-		bool noNotes = true;  // none yet for this chunk
+		// test for whether all notes are off and unprocessed audio can be outputted
+		bool notesActive = false;  // none yet for this chunk
 
+		// these will increment for every note on every channel, so restore before iterations
+		auto const entryOutputGain = mOutputGain;
+		auto const entryWetGain = mWetGain;
 		for (int notecount = 0; notecount < DfxMidi::kNumNotes; notecount++)
 		{
 			// only go into the output processing cycle if a note is happening
 			if (getmidistate().getNoteState(notecount).mVelocity)
 			{
-				noNotes = false;  // we have a note
+				notesActive = true;
 
 				double const ampEvener = mWiseAmp ? calculateAmpEvener(notecount) : 1.0;  // a scalar for balancing outputs from the 3 normalizing modes
 
@@ -110,6 +105,8 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 				{
 					// restore the note values before doing processFilterOuts for the next channel
 					getmidistate().setNoteState(notecount, noteState_temp);
+					mOutputGain = entryOutputGain;
+					mWetGain = entryWetGain;
 
 					processFilterOuts(&(inAudio[ch][currentBlockPosition]), &(outAudio[ch][currentBlockPosition]), 
 									  numFramesToProcess, ampEvener, notecount, activeNumBands, 
@@ -119,23 +116,40 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 			}
 		}  // end of notes loop
 
+		if (!notesActive)
+		{
+			mOutputGain.snap();
+		}
+
 		// we had notes this chunk, but the unaffected processing hasn't faded out, so change its state to fade-out
-		if (!noNotes && (mUnaffectedState == UnaffectedState::Flat))
+		if (notesActive && (mUnaffectedState == UnaffectedState::Flat))
 		{
 			mUnaffectedState = UnaffectedState::FadeOut;
 		}
 
 		// we can output unprocessed audio if no notes happened during this block chunk
 		// or if the unaffected fade-out still needs to be finished
-		if (noNotes || (mUnaffectedState == UnaffectedState::FadeOut))
+		if (!notesActive || (mUnaffectedState == UnaffectedState::FadeOut))
 		{
 			auto const entryUnaffectedState = mUnaffectedState;
 			auto const entryUnaffectedFadeSamples = mUnaffectedFadeSamples;
+			auto const entryBetweenGain = mBetweenGain;
+			auto const entryUnaffectedWetGain = notesActive ? entryWetGain : mWetGain;
 			for (unsigned long ch = 0; ch < numChannels; ch++)
 			{
 				mUnaffectedState = entryUnaffectedState;
 				mUnaffectedFadeSamples = entryUnaffectedFadeSamples;
+				mBetweenGain = entryBetweenGain;
+				mWetGain = entryUnaffectedWetGain;
 				processUnaffected(&(inAudio[ch][currentBlockPosition]), &(outAudio[ch][currentBlockPosition]), numFramesToProcess);
+			}
+		}
+		else
+		{
+			mBetweenGain.snap();
+			if (!notesActive)
+			{
+				mWetGain.snap();
 			}
 		}
 
@@ -156,13 +170,16 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 	} while (eventcount < getmidistate().getBlockEventCount());
 
 	// mix in the dry input (only if there is supposed to be some dry; let's not waste calculations)
-	if (mDryWetMix < 1.0f)
+	if ((mDryGain.getValue() > 0.0f) || mDryGain.isSmoothing())
 	{
+		auto const entryDryGain = mDryGain;
 		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
+			mDryGain = entryDryGain;
 			for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
 			{
-				outAudio[ch][samplecount] += inAudio[ch][samplecount] * dryGain;
+				outAudio[ch][samplecount] += inAudio[ch][samplecount] * mDryGain.getValue();
+				mDryGain.inc();
 			}
 		}
 	}

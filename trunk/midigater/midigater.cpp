@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -49,6 +49,8 @@ MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setAudioProcessingMustAccumulate(true);  // only support accumulating output
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
 	getmidistate().setEnvCurveType(DfxEnvelope::kCurveType_Cubed);
+
+	registerSmoothedAudioValue(&mFloor);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -65,7 +67,10 @@ void MIDIGater::processparameters()
 	mAttackSlope_Seconds = getparameter_f(kAttackSlope) * 0.001;
 	mReleaseSlope_Seconds = getparameter_f(kReleaseSlope) * 0.001;
 	mVelocityInfluence = getparameter_f(kVelocityInfluence);
-	mFloor = getparameter_f(kFloor);
+	if (auto const value = getparameterifchanged_f(kFloor))
+	{
+		mFloor = *value;
+	}
 
 	constexpr float kNoDecay = 0.0f;
 	constexpr float kFullSustain = 1.0f;
@@ -170,13 +175,13 @@ void MIDIGater::processUnaffected(float const* const* inAudio, float* const* out
 	auto const endPos = inNumFramesToProcess + inOffsetFrames;
 	for (unsigned long sampleCount = inOffsetFrames; sampleCount < endPos; sampleCount++)
 	{
-		auto sampleAmp = mFloor;
+		auto sampleAmp = mFloor.getValue();
 
 		// this is the state when all notes just ended and the clean input first kicks in
 		if (mUnaffectedState == UnaffectedState::FadeIn)
 		{
 			// linear fade-in
-			sampleAmp = static_cast<float>(mUnaffectedFadeSamples) * kUnaffectedFadeStep * mFloor;
+			sampleAmp = static_cast<float>(mUnaffectedFadeSamples) * kUnaffectedFadeStep * mFloor.getValue();
 			mUnaffectedFadeSamples++;
 			// go to the no-gain state if the fade-in is done
 			if (mUnaffectedFadeSamples >= kUnaffectedFadeDur)
@@ -189,7 +194,7 @@ void MIDIGater::processUnaffected(float const* const* inAudio, float* const* out
 		{
 			mUnaffectedFadeSamples--;
 			// linear fade-out
-			sampleAmp = static_cast<float>(mUnaffectedFadeSamples) * kUnaffectedFadeStep * mFloor;
+			sampleAmp = static_cast<float>(mUnaffectedFadeSamples) * kUnaffectedFadeStep * mFloor.getValue();
 			// get ready for the next time and exit this function if the fade-out is done
 			if (mUnaffectedFadeSamples <= 0)
 			{
@@ -203,5 +208,7 @@ void MIDIGater::processUnaffected(float const* const* inAudio, float* const* out
 		{
 			outAudio[ch][sampleCount] += inAudio[ch][sampleCount] * sampleAmp;
 		}
+
+		incrementSmoothedAudioValues();
 	}
 }

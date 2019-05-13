@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -76,8 +76,6 @@ public:
 
 	BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
-	long initialize() override;
-	void cleanup() override;
 	void reset() override;
 
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
@@ -111,7 +109,7 @@ private:
 	float mDivisorLFORateHz = 0.0f, mBufferLFORateHz = 0.0f;  // LFO rate (in Hz)
 	float mDivisorLFOTempoRate = 0.0f, mBufferLFOTempoRate = 0.0f;  // LFO rate (in cycles per beat)
 
-	DfxSmoothedValue<float> mInputGain, mOutputGain;  // the effective states of the dry/wet mix
+	dfx::SmoothedValue<float> mInputGain, mOutputGain;  // the effective states of the dry/wet mix
 
 	long mCurrentForcedBufferSize = 0;  // the size of the larger, imposed buffer
 	std::vector<std::vector<float>> mBuffers;  // this stores the forced buffer

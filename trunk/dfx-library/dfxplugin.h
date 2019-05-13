@@ -183,6 +183,7 @@ PLUGIN_EDITOR_RES_ID
 #include "dfxparameter.h"
 #include "dfxplugin-base.h"
 #include "dfxpluginproperties.h"
+#include "idfxsmoothedvalue.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxmidi.h"
@@ -392,6 +393,10 @@ public:
 	}
 	// return a (hopefully) 0 to 1 scalar version of the parameter's current value
 	double getparameter_scalar(long inParameterIndex) const;
+	std::optional<double> getparameterifchanged_f(long inParameterIndex) const;
+	std::optional<int64_t> getparameterifchanged_i(long inParameterIndex) const;
+	std::optional<bool> getparameterifchanged_b(long inParameterIndex) const;
+	std::optional<double> getparameterifchanged_scalar(long inParameterIndex) const;
 
 	double getparametermin_f(long inParameterIndex) const
 	{
@@ -597,6 +602,9 @@ public:
 	void getpluginname(char* outText) const;
 	long getpluginversion() const;
 
+	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue, DfxPluginCore* owner = nullptr);
+	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr);
+
 #if TARGET_PLUGIN_USES_MIDI
 	// handlers for the types of MIDI events that we support
 	virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames);
@@ -760,6 +768,8 @@ private:
 	bool mUseTailSize_seconds = false;
 	bool mAudioProcessingAccumulatingOnly = false;
 	bool mAudioIsRendering = false;
+	std::vector<std::pair<dfx::ISmoothedValue*, DfxPluginCore*>> mSmoothedAudioValues;
+	bool mIsFirstRenderSinceReset = false;
 
 #ifdef TARGET_API_AUDIOUNIT
 	void UpdateInPlaceProcessingState();
@@ -1070,11 +1080,6 @@ public:
 		do_reset();
 	}
 
-	void do_process(float const* inStream, float* outStream, unsigned long inNumFrames, bool replacing = true)
-	{
-		processparameters();
-		process(inStream, outStream, inNumFrames, replacing);
-	}
 	virtual void process(float const* inStream, float* outStream, unsigned long inNumFrames, bool replacing = true) = 0;
 	void do_reset()
 	{
@@ -1125,6 +1130,22 @@ public:
 	{
 		return mDfxPlugin->getparameter_gen(inParameterIndex);
 	}
+	auto getparameterifchanged_f(long inParameterIndex) const
+	{
+		return mDfxPlugin->getparameterifchanged_f(inParameterIndex);
+	}
+	auto getparameterifchanged_i(long inParameterIndex) const
+	{
+		return mDfxPlugin->getparameterifchanged_i(inParameterIndex);
+	}
+	auto getparameterifchanged_b(long inParameterIndex) const
+	{
+		return mDfxPlugin->getparameterifchanged_b(inParameterIndex);
+	}
+	auto getparameterifchanged_scalar(long inParameterIndex) const
+	{
+		return mDfxPlugin->getparameterifchanged_scalar(inParameterIndex);
+	}
 	double getparametermin_f(long inParameterIndex) const
 	{
 		return mDfxPlugin->getparametermin_f(inParameterIndex);
@@ -1149,6 +1170,15 @@ public:
 	{
 		return mDfxPlugin->getparametertouched(inParameterIndex);
 	}
+	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue)
+	{
+		mDfxPlugin->registerSmoothedAudioValue(smoothedValue, this);
+		smoothedValue->setSampleRate(getsamplerate());
+	}
+	void incrementSmoothedAudioValues()
+	{
+		mDfxPlugin->incrementSmoothedAudioValues(this);
+	}
 
 
 private:
@@ -1160,7 +1190,7 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	void Process(Float32 const* in, Float32* out, UInt32 inNumFrames, UInt32 inNumChannels, bool& ioSilence) override
 	{
-		do_process(in, out, inNumFrames);
+		process(in, out, inNumFrames, true);
 		ioSilence = false;
 	}
 	void Reset() override

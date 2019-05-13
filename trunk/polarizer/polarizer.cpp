@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -45,6 +45,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 PolarizerDSP::PolarizerDSP(DfxPlugin* inDfxPlugin)
 :	DfxPluginCore(inDfxPlugin)
 {
+	registerSmoothedAudioValue(&mPolarizedAmp);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -54,11 +55,19 @@ void PolarizerDSP::reset()
 }
 
 //-----------------------------------------------------------------------------------------
+void PolarizerDSP::processparameters()
+{
+	if (auto const value = getparameterifchanged_scalar(kAmount))
+	{
+		mPolarizedAmp = (0.5f - static_cast<float>(*value)) * 2.0f;
+	}
+}
+
+//-----------------------------------------------------------------------------------------
 void PolarizerDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames, bool replacing)
 {
 	// fetch the current parameter values
 	auto const leapSize = getparameter_i(kSkip);
-	float const polarizedAmp = (0.5f - static_cast<float>(getparameter_scalar(kAmount))) * 2.0f;
 	auto const implode = getparameter_b(kImplode);
 
 	for (unsigned long sampleCount = 0; sampleCount < numSampleFrames; sampleCount++)
@@ -70,7 +79,7 @@ void PolarizerDSP::process(float const* inAudio, float* outAudio, unsigned long 
 			// figure out how long the unaffected period will last this time
 			mUnaffectedSamples = leapSize;
 			// this is the polarization scalar
-			outputValue *= polarizedAmp;
+			outputValue *= mPolarizedAmp.getValue();
 		}
 
 		// if it's on, then implode the audio signal
@@ -93,5 +102,7 @@ void PolarizerDSP::process(float const* inAudio, float* outAudio, unsigned long 
 		}
 	#endif
 		outAudio[sampleCount] = outputValue;
+
+		incrementSmoothedAudioValues();
 	}
 }
