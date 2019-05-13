@@ -152,6 +152,9 @@
 		EC11959D21BC92A800909132 /* slider-handle-velocity-influence-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-velocity-influence-glowing.png"; sourceTree = "<group>"; };
 		EC11959E21BC92A800909132 /* slider-handle-floor-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-floor-glowing.png"; sourceTree = "<group>"; };
 		EC11959F21BC92A800909132 /* slider-handle-slope-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-slope-glowing.png"; sourceTree = "<group>"; };
+		EC1D5DF0220BDB35005492F7 /* dfxsmoothedvalue.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxsmoothedvalue.hpp; sourceTree = "<group>"; };
+		EC1D5DF1220BDB36005492F7 /* dfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxsmoothedvalue.h; sourceTree = "<group>"; };
+		EC1D5DF4220BDEEC005492F7 /* idfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxsmoothedvalue.h; sourceTree = "<group>"; };
 		EC390FF520CCAAC300A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC40EDB320DB4BB600F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
 		EC4FFDD3209B9692000F2A30 /* dfxenvelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxenvelope.h; sourceTree = "<group>"; };
@@ -408,6 +411,9 @@
 				4932F7990680E859006A9591 /* dfxmidi.cpp */,
 				4918B60C0680FC9C0034CE15 /* dfxsettings.h */,
 				4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */,
+				EC1D5DF4220BDEEC005492F7 /* idfxsmoothedvalue.h */,
+				EC1D5DF1220BDB36005492F7 /* dfxsmoothedvalue.h */,
+				EC1D5DF0220BDB35005492F7 /* dfxsmoothedvalue.hpp */,
 				4932F4D306801180006A9591 /* dfxplugin-audiounit.r */,
 				EC98418B1030C47C00FA3B2B /* dfxplugin-au-debug.xcconfig */,
 				EC98418C1030C47C00FA3B2B /* dfxplugin-au-release.xcconfig */,

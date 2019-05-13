@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -449,7 +449,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 	{
 		if (mDSPCores[i])
 		{
-			mDSPCores[i]->do_process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames), true);
+			mDSPCores[i]->process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames), true);
 		}
 	}
 #else
@@ -470,7 +470,7 @@ void DfxPlugin::process(float** inputs, float** outputs, VstInt32 sampleFrames)
 	{
 		if (mDSPCores[i])
 		{
-			mDSPCores[i]->do_process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames), false);
+			mDSPCores[i]->process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames), false);
 		}
 	}
 #else

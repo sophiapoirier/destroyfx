@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -95,6 +95,12 @@ TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
 
   firCoefficients1.assign(kNumFIRTaps, 0.0f);
   firCoefficients2.assign(kNumFIRTaps, 0.0f);
+
+  registerSmoothedAudioValue(&drymix);
+  registerSmoothedAudioValue(&mix1);
+  registerSmoothedAudioValue(&feed1);
+  registerSmoothedAudioValue(&mix2);
+  registerSmoothedAudioValue(&feed2);
 }
 
 void TransverbDSP::reset() {
@@ -135,15 +141,20 @@ void TransverbDSP::releasebuffers() {
 
 void TransverbDSP::processparameters() {
 
-  drymix = getparameter_f(kDrymix);
+  if (auto const value = getparameterifchanged_f(kDrymix))
+    drymix = *value;
   bsize = std::clamp((int) (getparameter_f(kBsize) * getsamplerate() * 0.001), 1, MAXBUF);
-  mix1 = getparameter_f(kMix1);
+  if (auto const value = getparameterifchanged_f(kMix1))
+    mix1 = *value;
   speed1 = std::pow(2.0, getparameter_f(kSpeed1));
-  feed1 = getparameter_scalar(kFeed1);
+  if (auto const value = getparameterifchanged_scalar(kFeed1))
+    feed1 = *value;
   dist1 = getparameter_f(kDist1);
-  mix2 = getparameter_f(kMix2);
+  if (auto const value = getparameterifchanged_f(kMix2))
+    mix2 = *value;
   speed2 = std::pow(2.0, getparameter_f(kSpeed2));
-  feed2 = getparameter_scalar(kFeed2);
+  if (auto const value = getparameterifchanged_scalar(kFeed2))
+    feed2 = *value;
   dist2 = getparameter_f(kDist2);
   quality = getparameter_i(kQuality);
   tomsound = getparameter_b(kTomsound);

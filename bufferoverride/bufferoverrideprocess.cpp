@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -340,8 +340,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		mReadPos++;
 		mWritePos++;
 
-		mInputGain.inc();
-		mOutputGain.inc();
+		incrementSmoothedAudioValues();
 	}
 
 

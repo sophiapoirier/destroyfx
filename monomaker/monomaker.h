@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #include "dfxplugin.h"
+#include "dfxsmoothedvalue.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -68,5 +69,11 @@ class Monomaker : public DfxPlugin
 {
 public:
 	Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	void processparameters() override;
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
+
+private:
+	dfx::SmoothedValue<float> mInputSelection_left2left, mInputSelection_left2right, mInputSelection_right2left, mInputSelection_right2right;
+	dfx::SmoothedValue<float> mMonomerge_main, mMonomerge_other;
+	dfx::SmoothedValue<float> mPan_left1, mPan_left2, mPan_right1, mPan_right2;
 };

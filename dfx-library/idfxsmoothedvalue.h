@@ -27,51 +27,23 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #pragma once
 
 
-#include "idfxsmoothedvalue.h"
-
-#include <stddef.h>
-
-
 
 namespace dfx
 {
 
 
 //-----------------------------------------------------------------------------
-template <typename T>
-class SmoothedValue final : public ISmoothedValue
+class ISmoothedValue
 {
 public:
-	explicit SmoothedValue(double inSmoothingTimeInSeconds = 0.030);
+	virtual ~ISmoothedValue() = default;
 
-	void setValue(T inTargetValue) noexcept;
-	void setValueNow(T inValue) noexcept;
-	void snap() noexcept override;
-	T getValue() const noexcept
-	{
-		return mCurrentValue;
-	}
-
-	bool isSmoothing() const noexcept override;
-	void inc() noexcept override;
-
-	void setSmoothingTime(double inSmoothingTimeInSeconds) override;
-	void setSampleRate(double inSampleRate) override;
-
-	SmoothedValue<T>& operator=(T inValue) noexcept;
-
-private:
-	T mCurrentValue, mTargetValue;
-	T mValueStep;
-	double mSmoothDur_seconds;
-	size_t mSmoothDur_samples, mSmoothCount;
-	double mSampleRate;
-	bool mReinitialize;
+	virtual void setSmoothingTime(double inSmoothingTimeInSeconds) = 0;
+	virtual void setSampleRate(double inSampleRate) = 0;
+	virtual void snap() noexcept = 0;
+	virtual bool isSmoothing() const noexcept = 0;
+	virtual void inc() noexcept = 0;
 };
 
 
 }  // namespace
-
-
-
-#include "dfxsmoothedvalue.hpp"
