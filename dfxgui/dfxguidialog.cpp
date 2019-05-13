@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2018  Sophia Poirier
+Copyright (C) 2015-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -313,12 +313,12 @@ DGDialog::DGDialog(DGRect const& inRegion,
 	}
 	assert(!buttons.empty());
 
-	auto leftButtonX = kContentMargin;
+	auto leftmostButtonX = kContentMargin;
 	// arrange the buttons from right to left
 	for (size_t i = 0; i < buttons.size(); i++)
 	{
 		auto const button = buttons[i];
-		DGDialogButton* prevButton = (i == 0) ? nullptr : buttons[i - 1];
+		DGDialogButton* const prevButton = (i == 0) ? nullptr : buttons[i - 1];
 		CCoord rightPos;
 		if (prevButton)
 		{
@@ -331,11 +331,11 @@ DGDialog::DGDialog(DGRect const& inRegion,
 		}
 		button->setX(std::round(rightPos - button->getWidth()));
 		button->setAutosizeFlags(kAutosizeRight);
-		leftButtonX = button->getViewSize().left;
+		leftmostButtonX = button->getViewSize().left;
 	}
-	if (leftButtonX < kContentMargin)
+	if (leftmostButtonX < kContentMargin)
 	{
-		auto const extraWidth = std::round(kContentMargin - leftButtonX);
+		auto const extraWidth = std::round(kContentMargin - leftmostButtonX);
 		auto dialogSize = getViewSize();
 		dialogSize.setWidth(dialogSize.getWidth() + extraWidth);
 		setViewSize(dialogSize);
@@ -399,9 +399,9 @@ bool DGDialog::attached(CView* inParent)
 
 	if (result && inParent && inParent->getFrame())
 	{
-		CRect viewSize = getViewSize();
+		auto viewSize = getViewSize();
 		auto const& parentSize = inParent->getFrame()->getViewSize();
-		viewSize.centerInside(parentSize);
+		viewSize.centerInside(parentSize).makeIntegral();
 
 		// constrain to fit in the frame, if necessary
 		if (viewSize.getWidth() > parentSize.getWidth())
