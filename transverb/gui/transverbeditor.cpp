@@ -58,7 +58,7 @@ enum
 	kMidiLearnButtonX = 237,
 	kMidiLearnButtonY = kFreezeButtonY,
 	kMidiResetButtonX = 288,
-	kMidiResetButtonY = kFreezeButtonY,
+	kMidiResetButtonY = kMidiLearnButtonY,
 
 	kDFXLinkX = 107,
 	kDFXLinkY = 281,
