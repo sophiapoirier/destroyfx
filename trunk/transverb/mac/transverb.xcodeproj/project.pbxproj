@@ -81,6 +81,7 @@
 		ECF7D9062002D3F600DCE42E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D9052002D3F600DCE42E /* OpenGL.framework */; };
 		ECF7D9092002D42E00DCE42E /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECF7D9072002D42D00DCE42E /* dfxmisc.cpp */; };
 		ECF7D90C2002D45F00DCE42E /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF7D90B2002D45F00DCE42E /* QuartzCore.framework */; };
+		ECF9620B22F740170085D618 /* freeze-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECF9620A22F740170085D618 /* freeze-button.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -224,6 +225,7 @@
 		ECF7D9072002D42D00DCE42E /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
 		ECF7D9082002D42E00DCE42E /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
 		ECF7D90B2002D45F00DCE42E /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		ECF9620A22F740170085D618 /* freeze-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeze-button.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -308,6 +310,7 @@
 				49BB47AE07E53DEF00861708 /* tall-fader-handle-glowing.png */,
 				49BB47A907E53DEF00861708 /* quality-button.png */,
 				49BB47B107E53DEF00861708 /* tomsound-button.png */,
+				ECF9620A22F740170085D618 /* freeze-button.png */,
 				49BB47AA07E53DEF00861708 /* randomize-button.png */,
 				49BB47A107E53DEF00861708 /* fine-down-button.png */,
 				49BB47A207E53DEF00861708 /* fine-up-button.png */,
@@ -603,6 +606,7 @@
 				49BB47C607E53DEF00861708 /* transverb-background.png in Resources */,
 				ECDB2A7021BA03EE00938F5C /* wide-fader-handle-glowing.png in Resources */,
 				B028C2D20D0F325900ADA1DA /* destroyfx.icns in Resources */,
+				ECF9620B22F740170085D618 /* freeze-button.png in Resources */,
 				ECDCF1CF0FB88B87005F739E /* dfx-au-utilities.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -627,6 +631,7 @@
 			files = (
 			);
 			inputPaths = (
+				"$(INSTALL_PATH)/$(INFOPLIST_PATH)",
 			);
 			outputPaths = (
 			);
@@ -735,7 +740,7 @@
 				DFX_PLUGIN_FULL_NAME = Transverb;
 				DFX_PLUGIN_ID = DFtv;
 				DFX_PLUGIN_SHORT_NAME = transverb;
-				DFX_PLUGIN_VERSION_STRING = 1.5.0;
+				DFX_PLUGIN_VERSION_STRING = 1.5.1;
 			};
 			name = Development;
 		};
@@ -745,7 +750,7 @@
 				DFX_PLUGIN_FULL_NAME = Transverb;
 				DFX_PLUGIN_ID = DFtv;
 				DFX_PLUGIN_SHORT_NAME = transverb;
-				DFX_PLUGIN_VERSION_STRING = 1.5.0;
+				DFX_PLUGIN_VERSION_STRING = 1.5.1;
 			};
 			name = Deployment;
 		};

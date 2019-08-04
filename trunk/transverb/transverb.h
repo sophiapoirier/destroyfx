@@ -44,6 +44,7 @@ enum
 	kMix2,
 	kQuality,
 	kTomsound,
+	kFreeze,
 	kSpeed1mode,
 	kSpeed2mode,
 
@@ -118,6 +119,7 @@ public:
 
   bool loadpreset(long index) override;  // overriden to support the random preset
   void randomizeparameters(bool writeAutomation = false) override;
+  void settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum) override;
 
 private:
   static constexpr long kNumPresets = 16;

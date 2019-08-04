@@ -36,6 +36,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
   auto const bsize_float = (double)bsize;  // cut down on casting
   FilterMode filterMode1 = FilterMode::Nothing, filterMode2 = FilterMode::Nothing;  // the type of filtering to use in ultra hi-fi mode
   float mug1 = 1.0f, mug2 = 1.0f;  // make-up gain for lowpass filtering
+  int const writerIncrement = getparameter_b(kFreeze) ? 0 : 1;
   auto const samplerate = getsamplerate();
   tomsound_sampoffset = GetChannelNum();
 
@@ -269,7 +270,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       }
 
       /* update rw heads */
-      writer++;
+      writer += writerIncrement;
       read1 += speed1;
       read2 += speed2;
 
@@ -414,8 +415,8 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       (feed2.getValue() * r2val);
       
     /* update rw heads */
-//    writer++;
-    writer += 2;
+//    writer += writerIncrement;
+    writer += (writerIncrement * 2);
     writer %= bsize;
 
 //    read1 += speed1;

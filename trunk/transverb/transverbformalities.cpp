@@ -49,6 +49,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_f(kFeed2, "2:feedback", 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
   initparameter_list(kQuality, "quality", kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
   initparameter_b(kTomsound, "TOMSOUND", false, false);
+  initparameter_b(kFreeze, "freeze", false, false);
   initparameter_list(kSpeed1mode, "1:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
   initparameter_list(kSpeed2mode, "2:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
 
@@ -226,6 +227,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed2, 0.0);
 	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
+	setpresetparameter_b(i, kFreeze, false);
 	i++;
 
 	setpresetname(i, "phaser down");
@@ -241,6 +243,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed2, 0.0);
 	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
+	setpresetparameter_b(i, kFreeze, false);
 	i++;
 
 	setpresetname(i, "aquinas");
@@ -256,6 +259,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed2, 46.0);
 	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
+	setpresetparameter_b(i, kFreeze, false);
 	i++;
 
 	setpresetname(i, "glup drums");
@@ -271,6 +275,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kFeed2, 0.0);
 	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
+	setpresetparameter_b(i, kFreeze, false);
 	i++;
 
 	setpresetname(i, "space invaders");
@@ -286,6 +291,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kMix2, 0.1225);
 	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
 	setpresetparameter_b(i, kTomsound, false);
+	setpresetparameter_b(i, kFreeze, false);
 	i++;
 
 /*
@@ -301,6 +307,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kMix2, 0.);
 	setpresetparameter_i(i, kQuality, );
 	setpresetparameter_b(i, kTomsound, );
+	setpresetparameter_b(i, kFreeze, );
 	setpresetname(i, "");
 	i++;
 */
@@ -393,7 +400,7 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	setparameter_b(kTomsound, (bool)((rand() % 3) % 2));
 
 
-	for (long i = 0; i < kSpeed1mode; i++)
+	for (long i = 0; i < kFreeze; i++)
 	{
 		postupdate_parameter(i);  // inform any parameter listeners of the changes
 #ifdef TARGET_API_VST
@@ -402,5 +409,22 @@ void Transverb::randomizeparameters(bool writeAutomation)
 			setParameterAutomated(i, getparameter_gen(i));
 		}
 #endif
+	}
+}
+
+void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum)
+{
+	// prevent old speed mode 1 settings from applying to freeze
+	if ((dataVersion < 0x00010501) && (tag == kFreeze))
+	{
+		auto const defaultValue = getparameterdefault_b(tag);
+		if (presetisvalid(presetNum))
+		{
+			setpresetparameter_b(presetNum, tag, defaultValue);
+		}
+		else
+		{
+			setparameter_b(tag, defaultValue);
+		}
 	}
 }

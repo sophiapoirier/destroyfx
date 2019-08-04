@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -45,6 +45,8 @@ enum
 	kQualityButtonX = kWideFaderX,
 	kRandomButtonX = 185,
 	kTomsoundButtonX = 425,
+	kFreezeButtonX = kTomsoundButtonX,
+	kFreezeButtonY = 254,
 	kButtonY = 236,
 
 	kFineDownButtonX = 503,
@@ -54,9 +56,9 @@ enum
 	kSpeedModeButtonY = 22,
 
 	kMidiLearnButtonX = 237,
-	kMidiLearnButtonY = 254,
+	kMidiLearnButtonY = kFreezeButtonY,
 	kMidiResetButtonX = 288,
-	kMidiResetButtonY = 254,
+	kMidiResetButtonY = kFreezeButtonY,
 
 	kDFXLinkX = 107,
 	kDFXLinkY = 281,
@@ -351,6 +353,7 @@ long TransverbEditor::OpenEditor()
 	// buttons
 	auto const qualityButtonImage = makeOwned<DGImage>("quality-button.png");
 	auto const tomsoundButtonImage = makeOwned<DGImage>("tomsound-button.png");
+	auto const freezeButtonImage = makeOwned<DGImage>("freeze-button.png");
 	auto const randomizeButtonImage = makeOwned<DGImage>("randomize-button.png");
 	auto const fineDownButtonImage = makeOwned<DGImage>("fine-down-button.png");
 	auto const fineUpButtonImage = makeOwned<DGImage>("fine-up-button.png");
@@ -457,6 +460,10 @@ long TransverbEditor::OpenEditor()
 	// TOMSOUND button
 	pos.set(kTomsoundButtonX, kButtonY, tomsoundButtonImage->getWidth() / 2, tomsoundButtonImage->getHeight() / 2);
 	emplaceControl<DGButton>(this, kTomsound, pos, tomsoundButtonImage, DGButton::Mode::Increment, true);
+
+	// freeze button
+	pos.set(kFreezeButtonX, kFreezeButtonY, freezeButtonImage->getWidth() / 2, freezeButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kFreeze, pos, freezeButtonImage, DGButton::Mode::Increment, true);
 
 	// randomize button
 	pos.set(kRandomButtonX, kButtonY, randomizeButtonImage->getWidth(), randomizeButtonImage->getHeight() / 2);
