@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -30,8 +30,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_ID	'DFtv'
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	5
-#define PLUGIN_VERSION_BUGFIX	0
-#define PLUGIN_VERSION_STRING	"1.5.0"
+#define PLUGIN_VERSION_BUGFIX	1
+#define PLUGIN_VERSION_STRING	"1.5.1"
 #define PLUGIN_CLASS_NAME	Transverb
 #define PLUGIN_ENTRY_POINT	"TransverbEntry"
 #define TARGET_PLUGIN_USES_MIDI	1
@@ -44,7 +44,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_DESCRIPTION_STRING	"like a delay that can play back the delay buffer at different speeds"
 
 
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2018"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2019"
 
 
 #define USING_HERMITE	1
