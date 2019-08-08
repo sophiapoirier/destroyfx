@@ -42,12 +42,12 @@ enum
 	kTallFaderY = 265,
 	kTallFaderInc = 28,
 
-	kQualityButtonX = kWideFaderX,
+	kQualityButtonX = 425,
+	kTomsoundButtonX = kQualityButtonX,
+	kFreezeButtonX = kWideFaderX,
 	kRandomButtonX = 185,
-	kTomsoundButtonX = 425,
-	kFreezeButtonX = kTomsoundButtonX,
-	kFreezeButtonY = 254,
 	kButtonY = 236,
+	kButtonIncY = 18,
 
 	kFineDownButtonX = 503,
 	kFineUpButtonX = 512,
@@ -56,7 +56,7 @@ enum
 	kSpeedModeButtonY = 22,
 
 	kMidiLearnButtonX = 237,
-	kMidiLearnButtonY = kFreezeButtonY,
+	kMidiLearnButtonY = kButtonY + kButtonIncY,
 	kMidiResetButtonX = 288,
 	kMidiResetButtonY = kMidiLearnButtonY,
 
@@ -458,11 +458,11 @@ long TransverbEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kQuality, pos, qualityButtonImage, DGButton::Mode::Increment, true);
 
 	// TOMSOUND button
-	pos.set(kTomsoundButtonX, kButtonY, tomsoundButtonImage->getWidth() / 2, tomsoundButtonImage->getHeight() / 2);
+	pos.set(kTomsoundButtonX, kButtonY + kButtonIncY, tomsoundButtonImage->getWidth() / 2, tomsoundButtonImage->getHeight() / 2);
 	emplaceControl<DGButton>(this, kTomsound, pos, tomsoundButtonImage, DGButton::Mode::Increment, true);
 
 	// freeze button
-	pos.set(kFreezeButtonX, kFreezeButtonY, freezeButtonImage->getWidth() / 2, freezeButtonImage->getHeight() / 2);
+	pos.set(kFreezeButtonX, kButtonY, freezeButtonImage->getWidth() / 2, freezeButtonImage->getHeight() / 2);
 	emplaceControl<DGButton>(this, kFreeze, pos, freezeButtonImage, DGButton::Mode::Increment, true);
 
 	// randomize button
