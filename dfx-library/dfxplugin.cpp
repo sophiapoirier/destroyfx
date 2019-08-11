@@ -195,7 +195,7 @@ long DfxPlugin::do_initialize()
 	mIsInitialized = true;
 #endif
 
-	std::for_each(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), 
+	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), 
 				  [sr = getsamplerate()](auto& value){ value.first->setSampleRate(sr); });
 
 	createbuffers();
@@ -248,7 +248,7 @@ void DfxPlugin::do_reset()
 #endif
 
 	mIsFirstRenderSinceReset = true;
-	std::for_each(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), [](auto& value){ value.first->snap(); });
+	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [](auto& value){ value.first->snap(); });
 
 #if TARGET_PLUGIN_USES_MIDI
 	mMidiState.reset();
@@ -987,9 +987,18 @@ void DfxPlugin::registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue, D
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::unregisterAllSmoothedAudioValues(DfxPluginCore* owner)
+{
+	mSmoothedAudioValues.erase(std::remove_if(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), [owner](auto const& value)
+											  {
+												  return (owner == value.second);
+											  }), mSmoothedAudioValues.cend());
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
 {
-	std::for_each(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), [owner](auto& value)
+	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [owner](auto& value)
 	{
 		if (!owner || (owner == value.second))
 		{
@@ -1500,7 +1509,7 @@ void DfxPlugin::do_processparameters()
 
 	if (std::exchange(mIsFirstRenderSinceReset, false))
 	{
-		std::for_each(mSmoothedAudioValues.begin(), mSmoothedAudioValues.end(), [](auto& value){ value.first->snap(); });
+		std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [](auto& value){ value.first->snap(); });
 	}
 }
 
