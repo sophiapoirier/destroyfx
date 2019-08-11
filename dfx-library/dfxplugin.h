@@ -603,6 +603,7 @@ public:
 	long getpluginversion() const;
 
 	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue, DfxPluginCore* owner = nullptr);
+	void unregisterAllSmoothedAudioValues(DfxPluginCore* owner);
 	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr);
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -1073,7 +1074,10 @@ public:
 	{
 	}
 
-	virtual ~DfxPluginCore() = default;
+	virtual ~DfxPluginCore()
+	{
+		mDfxPlugin->unregisterAllSmoothedAudioValues(this);
+	}
 
 	void dfxplugincore_postconstructor()
 	{
