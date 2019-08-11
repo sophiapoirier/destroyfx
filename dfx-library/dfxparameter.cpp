@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -335,9 +335,9 @@ double DfxParam::contract(double inLiteralValue, double inMinValue, double inMax
 		case DfxParam::Curve::Squared:
 			return std::sqrt(std::max((inLiteralValue - inMinValue) / valueRange, 0.0));
 		case DfxParam::Curve::Cubed:
-			return std::pow((inLiteralValue - inMinValue) / valueRange, oneDivThree);
+			return std::pow(std::max((inLiteralValue - inMinValue) / valueRange, 0.0), oneDivThree);
 		case DfxParam::Curve::Pow:
-			return std::pow((inLiteralValue - inMinValue) / valueRange, 1.0 / inCurveSpec);
+			return std::pow(std::max((inLiteralValue - inMinValue) / valueRange, 0.0), 1.0 / inCurveSpec);
 		case DfxParam::Curve::Exp:
 			return std::log(1.0 - inMinValue + inLiteralValue) / std::log(1.0 - inMinValue + inMaxValue);
 		case DfxParam::Curve::Log:
@@ -518,7 +518,7 @@ double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue,
 		case DfxParam::Curve::Cubed:
 			return (inGenValue*inGenValue*inGenValue * valueRange) + inMinValue;
 		case DfxParam::Curve::Pow:
-			return (std::pow(inGenValue, inCurveSpec) * valueRange) + inMinValue;
+			return (std::pow(std::max(inGenValue, 0.0), inCurveSpec) * valueRange) + inMinValue;
 		case DfxParam::Curve::Exp:
 			return std::exp(std::log(valueRange + 1.0) * inGenValue) + inMinValue - 1.0;
 		case DfxParam::Curve::Log:
