@@ -1833,6 +1833,13 @@ OSStatus DfxPlugin::HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 in
 }
 
 //-----------------------------------------------------------------------------
+OSStatus DfxPlugin::HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame)
+{
+	handlemidi_channelaftertouch(inChannel, inValue, inStartFrame);
+	return noErr;
+}
+
+//-----------------------------------------------------------------------------
 OSStatus DfxPlugin::HandleControlChange(UInt8 inChannel, UInt8 inController, 
 						UInt8 inValue, UInt32 inStartFrame)
 {

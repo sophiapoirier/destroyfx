@@ -530,6 +530,11 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 			}
 		}
 
+		else if (status == DfxMidi::kStatus_ChannelAftertouch)
+		{
+			handlemidi_channelaftertouch(channel, byte1, offsetFrames);
+		}
+
 		// looking at pitchbend   (0xE* is pitchbend status)
 		else if (status == DfxMidi::kStatus_Pitchbend)
 		{

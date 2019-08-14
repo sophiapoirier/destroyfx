@@ -20,7 +20,7 @@
 
 
 <p class="intro">
-Most of our Destroy FX plugins can be controlled, at least to some degree, with MIDI.  There are 3 types of control:  parameter automation with CCs, program changes, and note/pitchbend control.
+Most of our Destroy FX plugins can be controlled, at least to some degree, with MIDI.  There are four types of control:  parameter automation with CCs, channel aftertouch, program changes, and note/pitchbend control.
 </p>
 
 <p class="intro">
@@ -30,7 +30,7 @@ All DFX MIDI is handled omni-style.  Being able to use MIDI with effect plugins 
 <br />
 
 
-<p class="label">control with notes &amp; pitchbend:</p>
+<p class="label">control with notes + pitchbend:</p>
 
 <p class="desc">
 Some of our plugins can be controlled with MIDI notes and pitchbend.  Rez Synth and Stuck Synth need notes, otherwise they can't do much of anything.  They both like pitchbend, too.  Some of our other plugins are enhanced with MIDI note control but don't require it.  Buffer Override is a lot more fun with notes and pitchbend.  They control the buffer divisor parameter.  Skidder can be triggered with notes.  Scrubby uses notes for turning transposition steps on or off in pitch constraint mode.
@@ -39,14 +39,18 @@ Some of our plugins can be controlled with MIDI notes and pitchbend.  Rez Synth 
 <br />
 
 
-<p class="label">automate parameters with CC messsages:</p>
+<p class="label">automate parameters with control messsages:</p>
 
 <p class="desc">
 You can automate any parameter on Destroy FX plugins with MIDI CCs (continuous controller messages).  Assigning CCs to parameters is done with a "MIDI learn" function.  What you do is press the MIDI learn button on the plugin, then click on some parameter, and it will become the "learner" (some controls will light up when you do this to make it obvious).  As soon as you produce some MIDI CC message (with a MIDI device or from your sequencer), that incoming CC assigns itself to the learner parameter.  From that point on, the parameter can be automated with messages from that CC.  If another CC was already assigned to that parameter, then the old CC gets un-assigned.  Each parameter can only have one CC assigned to it, but you can assign the same CC to more than one parameter (see the <a href="#advanced">advanced stuff</a> section below if you don't like that).  When you're done assigning CCs to parameters, you can click on the MIDI learn button again to exit MIDI learn mode.
 </p>
 
 <p class="desc">
-If you want to erase all of the CC assignments that you've made, press the MIDI reset button.  If you want to erase the assignment for only one parameter, you can turn on MIDI learn mode, click on the parameter, and then click on the MIDI reset button.  That parameter will lose its assignment but the rest of the parameters will keep theirs.
+Channel aftertouch (aka channel pressure) can be assigned to control any parameter in the same manor as CC messages.
+</p>
+
+<p class="desc">
+If you want to erase all of the control assignments that you've made, press the MIDI reset button.  If you want to erase the assignment for only one parameter, you can turn on MIDI learn mode, click on the parameter, and then click on the MIDI reset button.  That parameter will lose its assignment but the rest of the parameters will keep theirs.
 </p>
 
 <p class="desc">
@@ -54,11 +58,11 @@ By default, Destroy FX plugins don't care on which MIDI channels the events are 
 </p>
 
 <p class="desc">
-CC assignments are saved in host song files and also in exported preset files (in VST, though, only with "bank" files, not "program" files), so you don't need to reconfigure them each time you open your song or load a preset settings file.  Also, the CC assignments that you configure stay the same when you switch between presets in a plugin.
+MIDI control assignments are saved in host song files and also in exported preset files (in VST, though, only with "bank" files, not "program" files), so you don't need to reconfigure them each time you open your song or load a preset settings file.  Also, the control assignments that you configure stay the same when you switch between presets in a plugin.
 </p>
 
 <p class="desc">
-Along with CCs, some of our plugins also allow you to assign the pitchbend wheel and even notes to control parameters (see the <a href="#advanced">advanced stuff</a> section below).
+Some of our plugins also allow you to assign the pitchbend wheel and even notes to control parameters (see the <a href="#advanced">advanced stuff</a> section below).
 </p>
 
 <p class="desc">
@@ -190,7 +194,7 @@ I am told that <a href="http://www.audiomulch.com/">AudioMulch</a>, <a href="htt
 
 <br />
 <p class="footer">
-Copyright &copy; 2009  Sophia Poirier and Tom Murphy 7
+Copyright &copy; 2009-2019  Sophia Poirier and Tom Murphy 7
 <br />
 <a href="http://destroyfx.org/">http://destroyfx.org/</a>
 </p>

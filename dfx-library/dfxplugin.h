@@ -611,6 +611,7 @@ public:
 	virtual void handlemidi_noteon(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames);
 	virtual void handlemidi_noteoff(int inChannel, int inNote, int inVelocity, unsigned long inOffsetFrames);
 	virtual void handlemidi_allnotesoff(int inChannel, unsigned long inOffsetFrames);
+	virtual void handlemidi_channelaftertouch(int inChannel, int inValue, unsigned long inOffsetFrames);
 	virtual void handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
 	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, unsigned long inOffsetFrames);
 	virtual void handlemidi_programchange(int inChannel, int inProgramNum, unsigned long inOffsetFrames);
@@ -865,11 +866,8 @@ public:
 	OSStatus HandleAllNotesOff(UInt8 inChannel) override;
 	OSStatus HandleControlChange(UInt8 inChannel, UInt8 inController, UInt8 inValue, UInt32 inStartFrame) override;
 	OSStatus HandlePitchWheel(UInt8 inChannel, UInt8 inPitchLSB, UInt8 inPitchMSB, UInt32 inStartFrame) override;
+	OSStatus HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame) override;
 	OSStatus HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum) override;
-	OSStatus HandleChannelPressure(UInt8 inChannel, UInt8 inValue, UInt32 inStartFrame) override
-	{
-		return noErr;
-	}
 	OSStatus HandlePolyPressure(UInt8 inChannel, UInt8 inKey, UInt8 inValue, UInt32 inStartFrame) override
 	{
 		return noErr;
