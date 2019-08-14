@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -179,6 +179,7 @@ public:
 	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
 	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
 	void handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames);
+	void handleChannelAftertouch(int inMidiChannel, int inValue, unsigned long inOffsetFrames);
 	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
 	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames);
 	void handleProgramChange(int inMidiChannel, int inProgramNumber, unsigned long inOffsetFrames);
@@ -228,7 +229,7 @@ public:
 		return mNoteQueue.front();
 	}
 
-	static constexpr bool isNote(int inMidiStatus)
+	static constexpr bool isNote(int inMidiStatus) noexcept
 	{
 		return (inMidiStatus == kStatus_NoteOn) || (inMidiStatus == kStatus_NoteOff);
 	}
@@ -242,6 +243,9 @@ public:
 	{
 		return mPitchBend;
 	}
+
+	// returns -1.0 to 1.0 normalized value 
+	static double calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcept;
 
 	// this calculates fade scalars if attack, decay, or release are happening
 	float processEnvelope(int inMidiNote);

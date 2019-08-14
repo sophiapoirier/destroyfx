@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -875,6 +875,20 @@ void DfxSettings::handleCC(int inMidiChannel, int inControllerNumber, int inValu
 }
 
 //-----------------------------------------------------------------------------------------
+void DfxSettings::handleChannelAftertouch(int inMidiChannel, int inValue, unsigned long inOffsetFrames)
+{
+	if (!mAllowChannelAftertouchEvents)
+	{
+		return;
+	}
+
+	constexpr long fakeEventNum = 0;  // not used for this type of event
+	handleMidi_assignParam(dfx::MidiEventType::ChannelAftertouch, inMidiChannel, fakeEventNum, inOffsetFrames);
+	constexpr long fakeByte2 = 0;  // not used for this type of event
+	handleMidi_automateParams(dfx::MidiEventType::ChannelAftertouch, inMidiChannel, inValue, fakeByte2, inOffsetFrames);
+}
+
+//-----------------------------------------------------------------------------------------
 void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames)
 {
 	if (!mAllowPitchbendEvents)
@@ -882,16 +896,11 @@ void DfxSettings::handlePitchBend(int inMidiChannel, int inValueLSB, int inValue
 		return;
 	}
 
-	// do this because MIDI byte 2 is not used to indicate an 
-	// event type for pitchbend as it does for other events, 
-	// and stuff below assumes that byte 2 means that, so this 
-	// keeps byte 2 consistent for pitchbend assignments
-	int realLSB = inValueLSB;
-	inValueLSB = 0;  // <- XXX this is stoopid
-
-	handleMidi_assignParam(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inOffsetFrames);
-
-	inValueLSB = realLSB;  // restore it   <- XXX ugh stupid hackz...
+	// do this because MIDI byte 2 is not used to specify 
+	// type for pitchbend as it does for some other events, 
+	// and stuff below assumes that byte 2 means that
+	constexpr long fakeEventNum = 0;
+	handleMidi_assignParam(dfx::MidiEventType::PitchBend, inMidiChannel, fakeEventNum, inOffsetFrames);
 	handleMidi_automateParams(dfx::MidiEventType::PitchBend, inMidiChannel, inValueLSB, inValueMSB, inOffsetFrames);
 }
 
@@ -1000,13 +1009,14 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 	}
 	else
 	{
+		constexpr long fakeEventNum2 = 0;  // not used in this case
 		// assign the learner parameter to the event that sent the message
-		assignParam(mLearner, inEventType, inMidiChannel, inByte1, 0, 
+		assignParam(mLearner, inEventType, inMidiChannel, inByte1, fakeEventNum2, 
 					mLearnerEventBehaviorFlags, mLearnerDataInt1, mLearnerDataInt2, 
 					mLearnerDataFloat1, mLearnerDataFloat2);
 		// this is an invitation to do something more, if necessary
 		mPlugin->settings_doLearningAssignStuff(mLearner, inEventType, inMidiChannel, inByte1, 
-												inOffsetFrames, 0, mLearnerEventBehaviorFlags, 
+												inOffsetFrames, fakeEventNum2, mLearnerEventBehaviorFlags, 
 												mLearnerDataInt1, mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
 		// and then deactivate the current learner, the learning is complete
 		setLearner(kNoLearner);
@@ -1017,36 +1027,45 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 // automate assigned parameters in response to a MIDI event
 void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long inMidiChannel, long inByte1, long inByte2, unsigned long inOffsetFrames, bool inIsNoteOff)
 {
-	float fValue = static_cast<float>(inByte2) / 127.0f;
-
-	if (inEventType == dfx::MidiEventType::PitchBend)
+	float valueNormalized = static_cast<float>(inByte2) * DfxMidi::kValueScalar;
+	if (inEventType == dfx::MidiEventType::ChannelAftertouch)
 	{
-		if (inByte2 < 127)  // stay in the 0.0 to 1.0 range
-		{
-			fValue += static_cast<float>(inByte1) / 8192.0f;  // pitchbend LSB
-		}
-		// do this because MIDI byte 2 is not used to indicate an 
-		// event type for pitchbend as it does for other events, 
-		// and stuff below assumes that byte 2 means that, so this 
-		// keeps byte 2 consistent for pitchbend assignments
-		inByte1 = 0;
+		valueNormalized = static_cast<float>(inByte1) * DfxMidi::kValueScalar;
+	}
+	else if (inEventType == dfx::MidiEventType::PitchBend)
+	{
+		valueNormalized = static_cast<float>((DfxMidi::calculatePitchBendScalar(inByte1, inByte2) + 1.0) * 0.5);
+	}
+
+	switch (inEventType)
+	{
+		case dfx::MidiEventType::ChannelAftertouch:
+		case dfx::MidiEventType::PitchBend:
+			// do this because MIDI byte 2 is not used to indicate an 
+			// event type for these events as it does for other events, 
+			// and stuff below assumes that byte 2 means that, so this 
+			// keeps byte 2 consistent for these events' assignments
+			inByte1 = 0;
+			break;
+		default:
+			break;
 	}
 
 	// search for parameters that have this MIDI event assigned to them and, 
 	// if any are found, automate them with the event message's value
 	for (long tag = 0; tag < mNumParameters; tag++)
 	{
-		auto const pa = mParameterAssignments.data() + tag;
+		auto const& pa = mParameterAssignments.at(tag);
 
 		// if the event type doesn't match what this parameter has assigned to it, 
 		// skip to the next parameter parameter
-		if (pa->mEventType != inEventType)
+		if (pa.mEventType != inEventType)
 		{
 			continue;
 		}
 		// if the type matches but not the channel and we're using channels, 
 		// skip to the next parameter
-		if (mUseChannel && (pa->mEventChannel != inMidiChannel))
+		if (mUseChannel && (pa.mEventChannel != inMidiChannel))
 		{
 			continue;
 		}
@@ -1055,20 +1074,20 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 		{
 			// toggle the parameter on or off
 			// (when using notes, this flag overrides Toggle)
-			if (pa->mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_NoteHold)
+			if (pa.mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_NoteHold)
 			{
 				// don't automate this parameter if the note does not match its assignment
-				if (pa->mEventNum != inByte1)
+				if (pa.mEventNum != inByte1)
 				{
 					continue;
 				}
-				fValue = inIsNoteOff ? 0.0f : 1.0f;
+				valueNormalized = inIsNoteOff ? 0.0f : 1.0f;
 			}
 			// toggle the parameter's states
-			else if (pa->mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle)
+			else if (pa.mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle)
 			{
 				// don't automate this parameter if the note does not match its assignment
-				if (pa->mEventNum != inByte1)
+				if (pa.mEventNum != inByte1)
 				{
 					continue;
 				}
@@ -1078,8 +1097,8 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 					continue;
 				}
 
-				auto const numSteps = std::max(pa->mDataInt1, 2);  // we need at least 2 states to toggle with
-				auto maxSteps = pa->mDataInt2;
+				auto const numSteps = std::max(pa.mDataInt1, 2);  // we need at least 2 states to toggle with
+				auto maxSteps = pa.mDataInt2;
 				// use the total number of steps if a maximum step wasn't specified
 				if (maxSteps <= 0)
 				{
@@ -1090,33 +1109,33 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 				// cycle to the next state, wraparound if necessary (using maxSteps)
 				currentStep = (currentStep + 1) % maxSteps;
 				// get the 0.0 to 1.0 parameter value version of that state
-				fValue = static_cast<float>(currentStep) / static_cast<float>(numSteps - 1);
+				valueNormalized = static_cast<float>(currentStep) / static_cast<float>(numSteps - 1);
 			}
 			// otherwise use a note range
 			else
 			{
 				// don't automate this parameter if the note is not in its range
-				if ((inByte1 < pa->mEventNum) || (inByte1 > pa->mEventNum2))
+				if ((inByte1 < pa.mEventNum) || (inByte1 > pa.mEventNum2))
 				{
 					continue;
 				}
-				fValue = static_cast<float>(inByte1 - pa->mEventNum) / static_cast<float>(pa->mEventNum2 - pa->mEventNum);
+				valueNormalized = static_cast<float>(inByte1 - pa.mEventNum) / static_cast<float>(pa.mEventNum2 - pa.mEventNum);
 			}
 		}
 		else
 		{
 			// since it's not a note, if the event number doesn't 
 			// match this parameter's assignment, don't use it
-			if (pa->mEventNum != inByte1)
+			if (pa.mEventNum != inByte1)
 			{
 				continue;
 			}
 
-			// recalculate fValue to toggle the parameter's states
-			if (pa->mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle)
+			// recalculate valueNormalized to toggle the parameter's states
+			if (pa.mEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle)
 			{
-				auto const numSteps = std::max(pa->mDataInt1, 2);  // we need at least 2 states to toggle with
-				auto maxSteps = pa->mDataInt2;
+				auto const numSteps = std::max(pa.mDataInt1, 2);  // we need at least 2 states to toggle with
+				auto maxSteps = pa.mDataInt2;
 				// use the total number of steps if a maximum step wasn't specified
 				if (maxSteps <= 0)
 				{
@@ -1124,18 +1143,18 @@ void DfxSettings::handleMidi_automateParams(dfx::MidiEventType inEventType, long
 				}
 				// get the current state of the incoming value 
 				// (using maxSteps range to keep within allowable range, if desired)
-				auto const currentStep = static_cast<int>(fValue * (static_cast<float>(maxSteps) - 0.01f));
+				auto const currentStep = static_cast<int>(valueNormalized * (static_cast<float>(maxSteps) - 0.01f));
 				// constrain the continuous value to a stepped state value 
 				// (using numSteps to scale out to the real parameter value)
-				fValue = static_cast<float>(currentStep) / static_cast<float>(numSteps - 1);
+				valueNormalized = static_cast<float>(currentStep) / static_cast<float>(numSteps - 1);
 			}
 		}
 
 		// automate the parameter with the value if we've reached this point
-		mPlugin->setparameter_gen(tag, fValue);
+		mPlugin->setparameter_gen(tag, valueNormalized);
 		mPlugin->postupdate_parameter(tag);  // notify listeners of internal parameter change
 		// this is an invitation to do something more, if necessary
-		mPlugin->settings_doMidiAutomatedSetParameterStuff(tag, fValue, inOffsetFrames);
+		mPlugin->settings_doMidiAutomatedSetParameterStuff(tag, valueNormalized, inOffsetFrames);
 
 	}  // end of parameters loop (for automation)
 }
@@ -1164,7 +1183,7 @@ void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, l
 		return;
 	}
 	// abort if inEventNum is not a valid MIDI value
-	if ((inEventNum < 0) || (inEventNum >= DfxMidi::kNumNotes))
+	if ((inEventNum < 0) || (inEventNum > DfxMidi::kMaxValue))
 	{
 		return;
 	}
@@ -1181,15 +1200,15 @@ void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, l
 	{
 		for (long i = 0; i < mNumParameters; i++)
 		{
-			auto const pa = mParameterAssignments.data() + i;
+			auto const& pa = mParameterAssignments.at(i);
 			// skip this parameter if the event type doesn't match
-			if (pa->mEventType != inEventType)
+			if (pa.mEventType != inEventType)
 			{
 				continue;
 			}
 			// if the type matches but not the channel and we're using channels, 
 			// skip this parameter
-			if (mUseChannel && (pa->mEventChannel != inEventChannel))
+			if (mUseChannel && (pa.mEventChannel != inEventChannel))
 			{
 				continue;
 			}
@@ -1198,17 +1217,17 @@ void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, l
 			if (inEventType == dfx::MidiEventType::Note)
 			{
 				// lower note overlaps with existing note assignment
-				if ((pa->mEventNum >= inEventNum) && (pa->mEventNum <= inEventNum2))
+				if ((pa.mEventNum >= inEventNum) && (pa.mEventNum <= inEventNum2))
 				{
 					unassignParam(i);
 				}
 				// upper note overlaps with existing note assignment
-				else if ((pa->mEventNum2 >= inEventNum) && (pa->mEventNum2 <= inEventNum2))
+				else if ((pa.mEventNum2 >= inEventNum) && (pa.mEventNum2 <= inEventNum2))
 				{
 					unassignParam(i);
 				}
 				// current note range consumes the entire existing assignment
-				else if ((pa->mEventNum <= inEventNum) && (pa->mEventNum2 >= inEventNum2))
+				else if ((pa.mEventNum <= inEventNum) && (pa.mEventNum2 >= inEventNum2))
 				{
 					unassignParam(i);
 				}
@@ -1216,7 +1235,7 @@ void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, l
 
 			// not a note, so it's simple:  
 			// just delete the assignment if the event number matches
-			else if (pa->mEventNum == inEventNum)
+			else if (pa.mEventNum == inEventNum)
 			{
 				unassignParam(i);
 			}

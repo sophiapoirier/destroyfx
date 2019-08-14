@@ -420,6 +420,7 @@ void DfxGuiEditor::addControl(IDGControl* inControl)
 	// XXX only add it to our controls list if it is attached to a parameter (?)
 	if (dfxgui_IsValidParamID(parameterIndex))
 	{
+		assert(std::find(mControlsList.cbegin(), mControlsList.cend(), inControl) == mControlsList.cend());
 		mControlsList.push_back(inControl);
 		inControl->asCControl()->registerViewMouseListener(this);
 
@@ -459,8 +460,9 @@ void DfxGuiEditor::removeControl(IDGControl* inControl)
 {
 	assert(false);  // TODO: test or remove this method? (it currently is not used anywhere)
 
-	auto const foundControl = std::find(mControlsList.begin(), mControlsList.end(), inControl);
-	if (foundControl != mControlsList.end())
+	auto const foundControl = std::find(mControlsList.cbegin(), mControlsList.cend(), inControl);
+	assert(foundControl != mControlsList.cend());
+	if (foundControl != mControlsList.cend())
 	{
 		mControlsList.erase(foundControl);
 	}
@@ -1178,6 +1180,7 @@ float DfxGuiEditor::dfxgui_ContractParameterValue(long inParameterIndex, float i
 	}
 	else
 	{
+		assert(false);  // really the above should not be failing
 		auto const auParam = dfxgui_MakeAudioUnitParameter(inParameterIndex);
 		return AUParameterValueToLinear(inValue, &auParam);
 	}
@@ -1342,7 +1345,7 @@ std::vector<AudioUnitParameterID> DfxGuiEditor::CreateParameterList(AudioUnitSco
 	}
 
 	std::vector<AudioUnitParameterID> parameterList(parameterListMemoryBlock.get(), parameterListMemoryBlock.get() + numParameters);
-	mAUMaxParameterID = *std::max_element(parameterList.begin(), parameterList.end());
+	mAUMaxParameterID = *std::max_element(parameterList.cbegin(), parameterList.cend());
 	return parameterList;
 }
 #endif
@@ -2054,7 +2057,7 @@ SharedPointer<COptionMenu> DfxGuiEditor::createParameterContextualMenu(long inPa
 				break;
 			case kDfxContextualMenuItem_Parameter_MidiUnassign:
 			{
-				menuItemText = "Unassign MIDI";
+				menuItemText = "Unassign MIDI control";
 				auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
 				// disable if not assigned
 				if (currentParameterAssignment.mEventType == dfx::MidiEventType::None)
@@ -2069,6 +2072,9 @@ SharedPointer<COptionMenu> DfxGuiEditor::createParameterContextualMenu(long inPa
 					{
 						case dfx::MidiEventType::CC:
 							snprintf(menuItemText_temp.data(), maxTextLength, "%s (CC %d)", menuItemText, currentParameterAssignment.mEventNum);
+							break;
+						case dfx::MidiEventType::ChannelAftertouch:
+							snprintf(menuItemText_temp.data(), maxTextLength, "%s (channel aftertouch)", menuItemText);
 							break;
 						case dfx::MidiEventType::PitchBend:
 							snprintf(menuItemText_temp.data(), maxTextLength, "%s (pitchbend)", menuItemText);

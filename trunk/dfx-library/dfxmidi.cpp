@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -131,7 +131,7 @@ void DfxMidi::insertNote(int inMidiNote)
 														   return note == inMidiNote;
 													   });
 	// if the note is not already active, shift every note up a position (normal scenario)
-	if (nonmatchPortion == mNoteQueue.begin())
+	if (nonmatchPortion == mNoteQueue.cbegin())
 	{
 		std::rotate(mNoteQueue.begin(), std::prev(mNoteQueue.end()), mNoteQueue.end());
 		// then place the new note into the first position
@@ -185,6 +185,17 @@ void DfxMidi::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames)
 	mBlockEvents[mNumBlockEvents].mStatus = kStatus_CC;
 	mBlockEvents[mNumBlockEvents].mByte1 = kCC_AllNotesOff;
 	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
+	mBlockEvents[mNumBlockEvents].mOffsetFrames = inOffsetFrames;
+	incNumEvents();
+}
+
+//-----------------------------------------------------------------------------
+void DfxMidi::handleChannelAftertouch(int inMidiChannel, int inValue, unsigned long inOffsetFrames)
+{
+	mBlockEvents[mNumBlockEvents].mStatus = kStatus_ChannelAftertouch;
+	mBlockEvents[mNumBlockEvents].mChannel = inMidiChannel;
+	mBlockEvents[mNumBlockEvents].mByte1 = inValue;
+	mBlockEvents[mNumBlockEvents].mByte2 = 0;  // ignored for this type of event
 	mBlockEvents[mNumBlockEvents].mOffsetFrames = inOffsetFrames;
 	incNumEvents();
 }
@@ -318,21 +329,7 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 // --- PITCHBEND RECEIVED ---
 		case kStatus_PitchBend:
 		{
-			constexpr auto upperRange = static_cast<double>(kPitchBendMaxValue - kPitchBendMidpointValue);
-			constexpr auto lowerRange = static_cast<double>(kPitchBendMidpointValue);
-			int const pitchbend14bit = (mBlockEvents[inEventNum].mByte2 * (kMaxValue + 1)) + mBlockEvents[inEventNum].mByte1;
-			// bend pitch up
-			if (pitchbend14bit >= kPitchBendMidpointValue)
-			{
-				// scale the MIDI value from 0.0 to 1.0
-				mPitchBend = static_cast<double>(pitchbend14bit - kPitchBendMidpointValue) / upperRange;
-			}
-			// bend pitch down
-			else
-			{
-				// scale the MIDI value from -1.0 to 0.0
-				mPitchBend = static_cast<double>(pitchbend14bit - kPitchBendMidpointValue) / lowerRange;
-			}
+			mPitchBend = calculatePitchBendScalar(mBlockEvents[inEventNum].mByte1, mBlockEvents[inEventNum].mByte2);
 			// then scale it according to tonal steps and the user defined range
 			mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBend * inPitchBendRange);
 			break;
@@ -382,6 +379,26 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 
 		default:
 			break;
+	}
+}
+
+//-------------------------------------------------------------------------
+double DfxMidi::calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcept
+{
+	constexpr auto upperRange = static_cast<double>(kPitchBendMaxValue - kPitchBendMidpointValue);
+	constexpr auto lowerRange = static_cast<double>(kPitchBendMidpointValue);
+	int const pitchbend14bit = (inValueMSB * (kMaxValue + 1)) + inValueLSB;
+	// bend pitch up
+	if (pitchbend14bit >= kPitchBendMidpointValue)
+	{
+		// scale the MIDI value from 0.0 to 1.0
+		return static_cast<double>(pitchbend14bit - kPitchBendMidpointValue) / upperRange;
+	}
+	// bend pitch down
+	else
+	{
+		// scale the MIDI value from -1.0 nearly to 0.0
+		return static_cast<double>(pitchbend14bit - kPitchBendMidpointValue) / lowerRange;
 	}
 }
 
