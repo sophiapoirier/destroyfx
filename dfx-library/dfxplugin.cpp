@@ -1560,6 +1560,19 @@ fprintf(stderr, "all notes off:  channel = %d, sample offset = %lu\n", inChannel
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::handlemidi_channelaftertouch(int inChannel, int inValue, unsigned long inOffsetFrames)
+{
+#ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS
+fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offset = %lu\n", inValue, inChannel, inOffsetFrames);
+#endif
+	mMidiState.handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
+	if (mDfxSettings)
+	{
+		mDfxSettings->handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
+	}
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames)
 {
 #ifdef DFX_DEBUG_PRINT_MUSIC_EVENTS

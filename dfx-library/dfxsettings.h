@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -127,6 +127,7 @@ public:
 	void handleNoteOn(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
 	void handleNoteOff(int inMidiChannel, int inNoteNumber, int inVelocity, unsigned long inOffsetFrames);
 	void handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFrames);
+	void handleChannelAftertouch(int inMidiChannel, int inValue, unsigned long inOffsetFrames);
 	void handlePitchBend(int inMidiChannel, int inValueLSB, int inValueMSB, unsigned long inOffsetFrames);
 	void handleCC(int inMidiChannel, int inControllerNumber, int inValue, unsigned long inOffsetFrames);
 
@@ -231,6 +232,15 @@ public:
 	auto getSteal() const noexcept
 	{
 		return mStealAssignments;
+	}
+
+	void setAllowChannelAftertouchEvents(bool inNewMode = true) noexcept
+	{
+		mAllowChannelAftertouchEvents = inNewMode;
+	}
+	auto getAllowChannelAftertouchEvents() const noexcept
+	{
+		return mAllowChannelAftertouchEvents;
 	}
 
 	// true means that pitchbend events can be assigned to parameters and 
@@ -402,10 +412,11 @@ protected:
 
 	// whether to allow only one parameter assignment per MIDI event, or steal them
 	bool mStealAssignments = false;
-	// whether to allow MIDI note events to be assigned to control parameters
-	bool mAllowNoteEvents = false;
+	bool mAllowChannelAftertouchEvents = true;
 	// whether to allow pitchbend events to be assigned to control parameters
 	bool mAllowPitchbendEvents = false;
+	// whether to allow MIDI note events to be assigned to control parameters
+	bool mAllowNoteEvents = false;
 	// what to do if restore() sends data with a mismatched byte size
 	CrisisBehavior mCrisisBehavior = CrisisBehavior::LoadWhatYouCan;
 	// whether to differentiate events and parameter assignments based 

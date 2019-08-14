@@ -144,7 +144,8 @@ enum class MidiEventType : uint32_t
 	None,
 	CC,
 	PitchBend,
-	Note
+	Note,
+	ChannelAftertouch
 };
 
 enum MidiEventBehaviorFlags : int32_t
