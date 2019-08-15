@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -311,6 +311,7 @@ namespace dfx
 {
 
 static constexpr char const* const kInfinityUTF8 = u8"\U0000221E";
+static constexpr char const* const kPlusMinusUTF8 = u8"\U000000B1";
 
 SharedPointer<CFontDesc> CreateVstGuiFont(float inFontSize, const char* inFontName = nullptr);
 
