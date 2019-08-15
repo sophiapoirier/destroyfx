@@ -562,6 +562,7 @@
 			files = (
 			);
 			inputPaths = (
+				"$(INSTALL_PATH)/$(INFOPLIST_PATH)",
 			);
 			outputPaths = (
 			);

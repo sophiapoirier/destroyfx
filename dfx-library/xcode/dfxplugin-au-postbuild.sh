@@ -3,7 +3,7 @@
 #VERSION=`/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "${BUILT_PRODUCTS_DIR}"/"${INFOPLIST_PATH}"`
 VERSION="${DFX_PLUGIN_VERSION_STRING}"
 BUILD_NUM=`date "+%Y.%m.%d"`
-COPYRIGHT="© ${DFX_PLUGIN_COPYRIGHT_PREFIX}"`date "+%Y"`" ${DFX_PLUGIN_COPYRIGHT_NAME}"
+COPYRIGHT="©${DFX_PLUGIN_COPYRIGHT_PREFIX}"`date "+%Y"`" ${DFX_PLUGIN_COPYRIGHT_NAME}"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUM}" "${BUILT_PRODUCTS_DIR}"/"${INFOPLIST_PATH}"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" "${BUILT_PRODUCTS_DIR}"/"${INFOPLIST_PATH}"
 /usr/libexec/PlistBuddy -c "Set :NSHumanReadableCopyright ${COPYRIGHT}" "${BUILT_PRODUCTS_DIR}"/"${INFOPLIST_PATH}"
