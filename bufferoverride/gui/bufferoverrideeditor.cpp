@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -227,7 +227,7 @@ bool dryWetMixDisplayProc(float value, char* outText, void*)
 
 bool pitchbendDisplayProc(float value, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "\xC2\xB1 %.2f", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, u8"%s %.2f", dfx::kPlusMinusUTF8, value) > 0;
 }
 
 bool tempoDisplayProc(float value, char* outText, void*)

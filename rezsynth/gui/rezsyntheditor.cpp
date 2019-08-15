@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -165,7 +165,7 @@ bool velocityCurveDisplayProc(float value, char* outText, void*)
 
 bool pitchBendDisplayProc(float value, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "\xB1 %.2f semitones", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, u8"%s %.2f semitones", dfx::kPlusMinusUTF8, value) > 0;
 }
 
 bool gainDisplayProc(float value, char* outText, void*)
