@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -41,26 +41,12 @@ float BufferOverride::getDivisorParameterFromNote(int currentNote)
 }
 
 //-----------------------------------------------------------------------------
-float BufferOverride::getDivisorParameterFromPitchbend(int pitchbendByte)
+float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMSB)
 {
 	mOldPitchBend = mPitchBend;
 
-	constexpr auto upperRange = static_cast<double>(DfxMidi::kMaxValue - DfxMidi::kMidpointValue);
-	constexpr auto lowerRange = static_cast<double>(DfxMidi::kMidpointValue);
-	pitchbendByte -= DfxMidi::kMidpointValue;
-	// bend pitch up
-	if (pitchbendByte > 0)
-	{
-		// scale the MIDI value from 0.0 to 1.0
-		mPitchBend = static_cast<double>(pitchbendByte) / upperRange;
-	}
-	// bend pitch down
-	else
-	{
-		// scale the MIDI value from -1.0 to 0.0
-		mPitchBend = static_cast<double>(pitchbendByte) / lowerRange;
-	}
-	// then scale it according to tonal steps and the user defined range
+	mPitchBend = DfxMidi::calculatePitchBendScalar(valueLSB, valueMSB);
+	// scale it according to tonal steps and the user defined range
 	mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBend * mPitchbendRange);
 
 	// only update the divisor value if we're in MIDI nudge mode or trigger mode with a note currently active
@@ -170,7 +156,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 				&& (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_PitchBend))
 			{
 				// update the divisor parameter value
-				auto const tempDivisor = getDivisorParameterFromPitchbend(midiState.getBlockEvent(eventIndex).mByte2);
+				auto const tempDivisor = getDivisorParameterFromPitchbend(midiState.getBlockEvent(eventIndex).mByte1, midiState.getBlockEvent(eventIndex).mByte2);
 				// make sure that we ought to be updating divisor
 				// the function will return -3 if we're in MIDI trigger mode and no notes are active
 				if (tempDivisor > 0.0f)
@@ -178,8 +164,8 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 					mDivisor = tempDivisor;
 				}
 
-				// invalidate mLastPitchbend so it will be ignored until a new valid value is put into it
-				mLastPitchbend = DfxMidi::kInvalidValue;
+				// invalidate mLastPitchbend* so they will be ignored until new valid values are put into them
+				mLastPitchbendLSB = mLastPitchbendMSB = DfxMidi::kInvalidValue;
 
 				// invalidate this and all earlier pitchbend messages so that they are not found in a future search
 				while (eventIndex >= 0)
@@ -214,18 +200,18 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 	mLastNoteOn = DfxMidi::kInvalidValue;
 
 	// check for an unused pitchbend message leftover from a previous block
-	if (mLastPitchbend >= 0)
+	if ((mLastPitchbendLSB >= 0) && (mLastPitchbendMSB >= 0))
 	{
 		// update the divisor parameter value
-		auto const tempDivisor = getDivisorParameterFromPitchbend(mLastPitchbend);
+		auto const tempDivisor = getDivisorParameterFromPitchbend(mLastPitchbendLSB, mLastPitchbendMSB);
 		// make sure that we ought to be updating divisor
 		// the function will return -3 if we're in MIDI trigger mode and no notes are active
 		if (tempDivisor > 0.0f)
 		{
 			mDivisor = tempDivisor;
 		}
-		// invalidate mLastPitchbend so it will be ignored until a new valid value is put into it
-		mLastPitchbend = DfxMidi::kInvalidValue;
+		// invalidate mLastPitchbend* so they will be ignored until new valid values are put into them
+		mLastPitchbendLSB = mLastPitchbendMSB = DfxMidi::kInvalidValue;
 	}
 
 	// if we're in MIDI trigger mode and no notes are active and the divisor hasn't been updated 
