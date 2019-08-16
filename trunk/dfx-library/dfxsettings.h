@@ -134,12 +134,6 @@ public:
 
 	// - - - - - - - - - MIDI learn - - - - - - - - -
 
-	// deactivate MIDI learn mode
-	// call this when your editor window opens and when it closes
-	void resetLearning()
-	{
-		setLearning(false);
-	}
 	// remove MIDI event assignments from all parameters
 	void clearAssignments();
 	// assign a MIDI event to a parameter
@@ -225,18 +219,27 @@ public:
 
 	// true means allowing a given MIDI event to be assigned to only one parameter; 
 	// false means that a single event can be assigned to more than one parameter
-	void setSteal(bool inStealMode) noexcept
+	void setSteal(bool inMode) noexcept
 	{
-		mStealAssignments = inStealMode;
+		mStealAssignments = inMode;
 	}
 	auto getSteal() const noexcept
 	{
 		return mStealAssignments;
 	}
 
-	void setAllowChannelAftertouchEvents(bool inNewMode = true) noexcept
+	void setDeactivateLearningUponLearnt(bool inMode) noexcept
 	{
-		mAllowChannelAftertouchEvents = inNewMode;
+		mDeactivateLearningUponLearnt = inMode;
+	}
+	auto getDeactivateLearningUponLearnt() const noexcept
+	{
+		return mDeactivateLearningUponLearnt;
+	}
+
+	void setAllowChannelAftertouchEvents(bool inMode = true) noexcept
+	{
+		mAllowChannelAftertouchEvents = inMode;
 	}
 	auto getAllowChannelAftertouchEvents() const noexcept
 	{
@@ -245,9 +248,9 @@ public:
 
 	// true means that pitchbend events can be assigned to parameters and 
 	// used to control those parameters; false means don't use pitchbend like that
-	void setAllowPitchbendEvents(bool inNewMode = true) noexcept
+	void setAllowPitchbendEvents(bool inMode = true) noexcept
 	{
-		mAllowPitchbendEvents = inNewMode;
+		mAllowPitchbendEvents = inMode;
 	}
 	auto getAllowPitchbendEvents() const noexcept
 	{
@@ -256,9 +259,9 @@ public:
 
 	// true means that MIDI note events can be assigned to parameters and 
 	// used to control those parameters; false means don't use notes like that
-	void setAllowNoteEvents(bool inNewMode = true) noexcept
+	void setAllowNoteEvents(bool inMode = true) noexcept
 	{
-		mAllowNoteEvents = inNewMode;
+		mAllowNoteEvents = inMode;
 	}
 	auto getAllowNoteEvents() const noexcept
 	{
@@ -267,9 +270,9 @@ public:
 
 	// true means that MIDI channel in events and assignments matters; 
 	// false means operate in MIDI omni mode
-	void setUseChannel(bool inNewMode = true) noexcept
+	void setUseChannel(bool inMode = true) noexcept
 	{
-		mUseChannel = inNewMode;
+		mUseChannel = inMode;
 	}
 	auto getUseChannel() const noexcept
 	{
@@ -278,9 +281,9 @@ public:
 
 	// this tells DfxSettings what you want it to do if a non-matching 
 	// settings data is received in restore()  (see the enum options above)
-	void setCrisisBehavior(CrisisBehavior inNewMode) noexcept
+	void setCrisisBehavior(CrisisBehavior inMode) noexcept
 	{
-		mCrisisBehavior = inNewMode;
+		mCrisisBehavior = inMode;
 	}
 	auto getCrisisBehavior() const noexcept
 	{
@@ -412,6 +415,7 @@ protected:
 
 	// whether to allow only one parameter assignment per MIDI event, or steal them
 	bool mStealAssignments = false;
+	bool mDeactivateLearningUponLearnt = true;
 	bool mAllowChannelAftertouchEvents = true;
 	// whether to allow pitchbend events to be assigned to control parameters
 	bool mAllowPitchbendEvents = false;
