@@ -107,7 +107,7 @@ void BufferOverride::reset()
 
 	mOldNote = false;
 	mLastNoteOn = DfxMidi::kInvalidValue;
-	mLastPitchbend = DfxMidi::kInvalidValue;
+	mLastPitchbendLSB = mLastPitchbendMSB = DfxMidi::kInvalidValue;
 	mPitchBend = 1.0;
 	mOldPitchBend = 1.0;
 	mDivisorWasChangedByMIDI = mDivisorWasChangedByHand = false;

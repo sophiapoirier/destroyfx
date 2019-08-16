@@ -382,8 +382,8 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		{
 			if (midiState.getBlockEvent(eventIndex).mStatus == DfxMidi::kStatus_PitchBend)
 			{
-				// set this pitchbend message as mLastPitchbend
-				mLastPitchbend = midiState.getBlockEvent(eventIndex).mByte2;
+				mLastPitchbendLSB = midiState.getBlockEvent(eventIndex).mByte1;
+				mLastPitchbendMSB = midiState.getBlockEvent(eventIndex).mByte2;
 				break;  // leave this for loop
 			}
 		}

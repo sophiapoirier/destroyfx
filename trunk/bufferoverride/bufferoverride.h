@@ -95,7 +95,7 @@ private:
 
 	void heedBufferOverrideEvents(unsigned long samplePos);
 	float getDivisorParameterFromNote(int currentNote);
-	float getDivisorParameterFromPitchbend(int pitchbendByte);
+	float getDivisorParameterFromPitchbend(int valueLSB, int valueMSB);
 
 	void initPresets();
 
@@ -133,7 +133,7 @@ private:
 
 	double mPitchBend = 0.0, mOldPitchBend = 0.0;  // pitchbending scalar values
 	bool mOldNote = false;  // says if there was an old, unnatended note-on or note-off from a previous block
-	int mLastNoteOn = 0, mLastPitchbend = 0;  // these carry over the last events from a previous processing block
+	int mLastNoteOn = 0, mLastPitchbendLSB = 0, mLastPitchbendMSB = 0;  // these carry over the last events from a previous processing block
 	bool mDivisorWasChangedByHand = false;  // for MIDI trigger mode - tells us to respect the fDivisor value
 	bool mDivisorWasChangedByMIDI = false;  // tells the GUI that the divisor displays need updating
 
