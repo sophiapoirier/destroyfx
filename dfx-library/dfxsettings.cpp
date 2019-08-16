@@ -968,6 +968,24 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 		return;
 	}
 
+	auto const handleAssignment = [this, inEventType, inMidiChannel, inOffsetFrames](long eventNum, long eventNum2)
+	{
+		// assign the learner parameter to the event that sent the message
+		assignParam(mLearner, inEventType, inMidiChannel, eventNum, eventNum2, 
+					mLearnerEventBehaviorFlags, mLearnerDataInt1, mLearnerDataInt2, 
+					mLearnerDataFloat1, mLearnerDataFloat2);
+		// this is an invitation to do something more, if necessary
+		mPlugin->settings_doLearningAssignStuff(mLearner, inEventType, inMidiChannel, eventNum, 
+												inOffsetFrames, eventNum2, mLearnerEventBehaviorFlags, 
+												mLearnerDataInt1, mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
+		// and then deactivate the current learner, the learning is complete
+		setLearner(kNoLearner);
+		if (getDeactivateLearningUponLearnt())
+		{
+			setLearning(false);
+		}
+	};
+
 	// see whether we are setting up a note range for parameter control 
 	if ((inEventType == dfx::MidiEventType::Note) && !(mLearnerEventBehaviorFlags & dfx::kMidiEventBehaviorFlag_Toggle))
 	{
@@ -988,17 +1006,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 					note1 = inByte1;
 					note2 = mHalfwayNoteNum;
 				}
-				// assign the learner parameter to the event that sent the message
-				assignParam(mLearner, inEventType, inMidiChannel, note1, note2, 
-							mLearnerEventBehaviorFlags, mLearnerDataInt1, mLearnerDataInt2, 
-							mLearnerDataFloat1, mLearnerDataFloat2);
-				// this is an invitation to do something more, if necessary
-				mPlugin->settings_doLearningAssignStuff(mLearner, inEventType, inMidiChannel, note1, 
-														inOffsetFrames, note2, 
-														mLearnerEventBehaviorFlags, mLearnerDataInt1, 
-														mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
-				// and then deactivate the current learner, the learning is complete
-				setLearner(kNoLearner);
+				handleAssignment(note1, note2);
 			}
 		}
 		else
@@ -1010,16 +1018,7 @@ void DfxSettings::handleMidi_assignParam(dfx::MidiEventType inEventType, long in
 	else
 	{
 		constexpr long fakeEventNum2 = 0;  // not used in this case
-		// assign the learner parameter to the event that sent the message
-		assignParam(mLearner, inEventType, inMidiChannel, inByte1, fakeEventNum2, 
-					mLearnerEventBehaviorFlags, mLearnerDataInt1, mLearnerDataInt2, 
-					mLearnerDataFloat1, mLearnerDataFloat2);
-		// this is an invitation to do something more, if necessary
-		mPlugin->settings_doLearningAssignStuff(mLearner, inEventType, inMidiChannel, inByte1, 
-												inOffsetFrames, fakeEventNum2, mLearnerEventBehaviorFlags, 
-												mLearnerDataInt1, mLearnerDataInt2, mLearnerDataFloat1, mLearnerDataFloat2);
-		// and then deactivate the current learner, the learning is complete
-		setLearner(kNoLearner);
+		handleAssignment(inByte1, fakeEventNum2);
 	}
 }
 
