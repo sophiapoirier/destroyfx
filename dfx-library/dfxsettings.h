@@ -321,6 +321,7 @@ protected:
 	};
 	typedef int CrisisReasonFlags;
 
+#pragma pack(push, 4)
 	// header information for the storage data
 	// note:  correctEndian() assumes that the data is all of type 32-bit integer, 
 	// so if you change this structure and add different types, 
@@ -361,6 +362,7 @@ protected:
 		char mName[dfx::kPresetNameMaxLength];
 		float mParameterValues[1];  // can of course be more...
 	};
+#pragma pack(pop)
 
 	// reverse the byte order of data
 	bool correctEndian(void* ioData, size_t inDataSize, bool inIsReversed, bool inIsPreset = false);
