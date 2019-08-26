@@ -173,6 +173,7 @@ enum MidiEventBehaviorFlags : int32_t
 	kMidiEventBehaviorFlag_Range = 1 << 2  // TODO: currently unused/unimplemented
 };
 
+#pragma pack(push, 4)  // important because this data type is serialized in DfxSettings
 struct ParameterAssignment
 {
 	MidiEventType mEventType = MidiEventType::None;
@@ -198,6 +199,7 @@ struct ParameterAssignment
 	// (or the maximum point in a float range)
 	float mDataFloat2 = 0.0f;
 };
+#pragma pack(pop)
 
 #endif  // TARGET_PLUGIN_USES_MIDI
 

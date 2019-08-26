@@ -28,6 +28,7 @@ Welcome to our settings persistance mess.
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <numeric>
 #include <optional>
 #include <stdlib.h>  // for abort
@@ -156,8 +157,8 @@ std::vector<uint8_t> DfxSettings::save(bool inIsPreset)
 
 	// and a few pointers to elements within that data, just for ease of use
 	auto const firstSharedParameterID = reinterpret_cast<int32_t*>(data.data() + sizeof(SettingsInfo));
-	auto const firstSharedPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(firstSharedParameterID) + mSizeOfParameterIDs);
-	auto const firstSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<char*>(firstSharedPreset) + (mSizeOfPreset * mNumPresets));
+	auto const firstSharedPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(firstSharedParameterID) + mSizeOfParameterIDs);
+	auto const firstSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(firstSharedPreset) + (mSizeOfPreset * mNumPresets));
 
 	// first store the special chunk infos
 	sharedChunk->mMagic = mSettingsInfo.mMagic;
@@ -185,7 +186,7 @@ std::vector<uint8_t> DfxSettings::save(bool inIsPreset)
 			firstSharedPreset->mParameterValues[i] = mPlugin->getparameter_f(i);
 		}
 
-		auto const tempSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<char*>(firstSharedPreset) + mSizeOfPreset);
+		auto const tempSharedParameterAssignment = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(firstSharedPreset) + mSizeOfPreset);
 		// store the parameters' MIDI event assignments
 		for (long i = 0; i < mNumParameters; i++)
 		{
@@ -206,7 +207,7 @@ std::vector<uint8_t> DfxSettings::save(bool inIsPreset)
 				tempSharedPresets->mParameterValues[i] = mPlugin->getpresetparameter_f(j, i);
 			}
 			// point to the next preset in the data array for the host
-			tempSharedPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(tempSharedPresets) + mSizeOfPreset);
+			tempSharedPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(tempSharedPresets) + mSizeOfPreset);
 		}
 
 		// store the parameters' MIDI event assignments
@@ -349,7 +350,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 	}
 
 	// point to the next data element after the chunk header:  the first parameter ID
-	auto const newParameterIDs = reinterpret_cast<int32_t*>(reinterpret_cast<char*>(newSettingsInfo) + storedHeaderSize);
+	auto const newParameterIDs = reinterpret_cast<int32_t*>(reinterpret_cast<std::byte*>(newSettingsInfo) + storedHeaderSize);
 	// create a mapping table for corresponding the incoming parameters to the 
 	// destination parameters (in case the parameter IDs don't all match up)
 	//  [ the index of paramMap is the same as our parameter tag/index and the value 
@@ -361,7 +362,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 	}
 
 	// point to the next data element after the parameter IDs:  the first preset name
-	auto newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newParameterIDs) + (sizeof(mParameterIDs.front()) * numStoredParameters));
+	auto newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newParameterIDs) + (sizeof(mParameterIDs.front()) * numStoredParameters));
 	// handy for incrementing the data pointer
 	size_t const sizeofStoredPreset = sizeof(GenPreset) + (sizeof(*GenPreset::mParameterValues) * numStoredParameters) - sizeof(GenPreset::mParameterValues);
 
@@ -379,7 +380,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 		// back up the pointer to account for shorter preset names
 		if (oldVST)
 		{
-			newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
+			newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
 		}
 	#endif
 		// copy all of the parameters that we can for this preset from the chunk
@@ -404,7 +405,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 			}
 		}
 		// point to the next preset in the received data array
-		newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newPreset) + sizeofStoredPreset);
+		newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newPreset) + sizeofStoredPreset);
 	}
 
 	// the chunk being received has all of the presets plus the MIDI event assignments
@@ -420,7 +421,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 			// back up the pointer to account for shorter preset names
 			if (oldVST)
 			{
-				newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
+				newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newPreset) + kDfxOldPresetNameMaxLength - dfx::kPresetNameMaxLength);
 			}
 		#endif
 			// copy all of the parameters that we can for this preset from the chunk
@@ -445,7 +446,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 				}
 			}
 			// point to the next preset in the received data array
-			newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(newPreset) + sizeofStoredPreset);
+			newPreset = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(newPreset) + sizeofStoredPreset);
 		}
 	}
 
@@ -461,11 +462,11 @@ if (!(oldVST && inIsPreset))
 	dfx::ParameterAssignment* newParameterAssignments = nullptr;
 //	if (inIsPreset)
 	{
-//		newParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<char*>(newPreset) + sizeofStoredPreset);
+//		newParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(newPreset) + sizeofStoredPreset);
 	}
 //	else
 	{
-		newParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<char*>(newPreset) + 
+		newParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(reinterpret_cast<std::byte*>(newPreset) + 
 								  ((numStoredPresets - copyPresets) * sizeofStoredPreset));
 	}
 	// and load up as many of them as we can
@@ -475,7 +476,7 @@ if (!(oldVST && inIsPreset))
 		if (mappedTag != dfx::kParameterID_Invalid)
 		{
 			memcpy(mParameterAssignments.data() + i, 
-				   reinterpret_cast<char*>(newParameterAssignments) + (mappedTag * newSettingsInfo->mStoredParameterAssignmentSize), 
+				   reinterpret_cast<std::byte*>(newParameterAssignments) + (mappedTag * newSettingsInfo->mStoredParameterAssignmentSize), 
 				   copyParameterAssignmentSize);
 //			mParameterAssignments[i] = newParameterAssignments[mappedTag];
 		}
@@ -485,7 +486,7 @@ if (!(oldVST && inIsPreset))
 #endif
 
 	// allow for the retrieval of extra data
-	mPlugin->settings_restoreExtendedData(static_cast<char*>(incomingData_copy.get()) + mSizeOfChunk - newSettingsInfo->mStoredExtendedDataSize, 
+	mPlugin->settings_restoreExtendedData(static_cast<std::byte*>(incomingData_copy.get()) + mSizeOfChunk - newSettingsInfo->mStoredExtendedDataSize, 
 										 newSettingsInfo->mStoredExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
 
 	return true;
@@ -535,10 +536,10 @@ void blah(long long x)
 //	}
 
 	// use this to pre-test for out-of-bounds memory addressing, probably from corrupt data
-	void const* const dataEndAddress = static_cast<char*>(ioData) + inDataSize;
+	void const* const dataEndAddress = static_cast<std::byte*>(ioData) + inDataSize;
 
 	// reverse the order of bytes of the header values
-	if ((reinterpret_cast<char*>(dataHeader) + storedHeaderSize) > dataEndAddress)  // the data is somehow corrupt
+	if ((reinterpret_cast<std::byte*>(dataHeader) + storedHeaderSize) > dataEndAddress)  // the data is somehow corrupt
 	{
 		debugAlertCorruptData("header", storedHeaderSize, inDataSize);
 		return false;
@@ -546,8 +547,8 @@ void blah(long long x)
 	dfx::ReverseBytes(dataHeader, sizeof(dataHeader->mMagic), storedHeaderSize / sizeof(dataHeader->mMagic));
 
 	// reverse the byte order for each of the parameter IDs
-	auto const dataParameterIDs = reinterpret_cast<int32_t*>(static_cast<char*>(ioData) + storedHeaderSize);
-	if ((reinterpret_cast<char*>(dataParameterIDs) + (sizeof(*dataParameterIDs) * numStoredParameters)) > dataEndAddress)  // the data is somehow corrupt
+	auto const dataParameterIDs = reinterpret_cast<int32_t*>(static_cast<std::byte*>(ioData) + storedHeaderSize);
+	if ((reinterpret_cast<std::byte*>(dataParameterIDs) + (sizeof(*dataParameterIDs) * numStoredParameters)) > dataEndAddress)  // the data is somehow corrupt
 	{
 		debugAlertCorruptData("parameter IDs", sizeof(*dataParameterIDs) * numStoredParameters, inDataSize);
 		return false;
@@ -555,20 +556,20 @@ void blah(long long x)
 	dfx::ReverseBytes(dataParameterIDs, sizeof(*dataParameterIDs), static_cast<size_t>(numStoredParameters));
 
 	// reverse the order of bytes for each parameter value, 
-	// but no need to mess with the preset names since they are char strings
-	auto dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(dataParameterIDs) + (sizeof(*dataParameterIDs) * numStoredParameters));
+	// but no need to mess with the preset names since they are char arrays
+	auto dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataParameterIDs) + (sizeof(*dataParameterIDs) * numStoredParameters));
 	size_t sizeofStoredPreset = sizeof(*dataPresets) + (sizeof(*(dataPresets->mParameterValues)) * numStoredParameters) - sizeof(dataPresets->mParameterValues);
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (DFX_IsOldVstVersionNumber(storedVersion))
 	{
 		// back up the pointer to account for shorter preset names
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(dataPresets) - dfx::kPresetNameMaxLength + kDfxOldPresetNameMaxLength);
+		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) - dfx::kPresetNameMaxLength + kDfxOldPresetNameMaxLength);
 		// and shrink the size to account for shorter preset names
 		sizeofStoredPreset -= dfx::kPresetNameMaxLength;
 		sizeofStoredPreset += kDfxOldPresetNameMaxLength;
 	}
 #endif
-	if ((reinterpret_cast<char*>(dataPresets) + (sizeofStoredPreset * numStoredPresets)) > dataEndAddress)  // the data is somehow corrupt
+	if ((reinterpret_cast<std::byte*>(dataPresets) + (sizeofStoredPreset * numStoredPresets)) > dataEndAddress)  // the data is somehow corrupt
 	{
 		debugAlertCorruptData("presets", sizeofStoredPreset * numStoredPresets, inDataSize);
 		return false;
@@ -577,13 +578,13 @@ void blah(long long x)
 	{
 		dfx::ReverseBytes(dataPresets->mParameterValues, sizeof(*(dataPresets->mParameterValues)), static_cast<size_t>(numStoredParameters));  //XXX potential floating point machine error?
 		// point to the next preset in the data array
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(dataPresets) + sizeofStoredPreset);
+		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + sizeofStoredPreset);
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 	if (DFX_IsOldVstVersionNumber(storedVersion))
 	{
 		// advance the pointer to compensate for backing up earlier
-		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<char*>(dataPresets) + dfx::kPresetNameMaxLength - kDfxOldPresetNameMaxLength);
+		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + dfx::kPresetNameMaxLength - kDfxOldPresetNameMaxLength);
 	}
 #endif
 
@@ -593,7 +594,7 @@ if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 #endif
 	// and reverse the byte order of each event assignment
 	auto const dataParameterAssignments = reinterpret_cast<dfx::ParameterAssignment*>(dataPresets);
-	if ((reinterpret_cast<char*>(dataParameterAssignments) + (sizeof(*dataParameterAssignments) * numStoredParameters)) > dataEndAddress)  // the data is somehow corrupt
+	if ((reinterpret_cast<std::byte*>(dataParameterAssignments) + (sizeof(*dataParameterAssignments) * numStoredParameters)) > dataEndAddress)  // the data is somehow corrupt
 	{
 		debugAlertCorruptData("parameter assignments", sizeof(*dataParameterAssignments) * numStoredParameters, inDataSize);
 		return false;
