@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -381,10 +381,33 @@ SharedPointer<CFontDesc> dfx::CreateVstGuiFont(float inFontSize, char const* inF
 }
 
 //-----------------------------------------------------------------------------
-// XXX TODO: this doesn't support locale, assumes comma
-std::string dfx::RemoveDigitSeparators(std::string const& inText)
+std::string dfx::SanitizeNumericalInput(std::string const& inText)
 {
+	// remove digit separators
+	// XXX TODO: this doesn't support locale, assumes comma
 	std::string resultText(inText.size(), '\0');
-	resultText.erase(std::remove_copy(inText.cbegin(), inText.cend(), resultText.begin(), ','), resultText.end());
+	resultText.erase(std::remove_copy(inText.cbegin(), inText.cend(), resultText.begin(), ','), resultText.cend());
+
+	// trim white space and any other noise (with respect to numerical parsing)
+	while (!resultText.empty())
+	{
+		if (isspace(resultText.back()))
+		{
+			resultText.pop_back();
+		}
+		else if (isspace(resultText.front()))
+		{
+			resultText.erase(0, 1);
+		}
+		else if (resultText.find(kPlusMinusUTF8) == 0)
+		{
+			resultText.erase(0, strlen(kPlusMinusUTF8));
+		}
+		else
+		{
+			break;
+		}
+	}
+
 	return resultText;
 }

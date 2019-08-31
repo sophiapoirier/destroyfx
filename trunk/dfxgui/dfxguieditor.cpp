@@ -628,7 +628,7 @@ bool DfxGuiEditor::dfxgui_GetParameterValueFromString_f(long inParameterID, std:
 
 	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
-		auto const readCount = sscanf(dfx::RemoveDigitSeparators(inText).c_str(), "%lf", &outValue);
+		auto const readCount = sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &outValue);
 		success = (readCount >= 1) && (readCount != EOF);
 	}
 	else
@@ -665,7 +665,7 @@ bool DfxGuiEditor::dfxgui_GetParameterValueFromString_i(long inParameterID, std:
 	}
 	else
 	{
-		auto const readCount = sscanf(dfx::RemoveDigitSeparators(inText).c_str(), "%ld", &outValue);
+		auto const readCount = sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%ld", &outValue);
 		success = (readCount >= 1) && (readCount != EOF);
 	}
 
