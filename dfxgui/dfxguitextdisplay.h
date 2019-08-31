@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -70,8 +70,8 @@ protected:
 	bool valueToTextProcBridge(float inValue, char outTextUTF8[kTextMaxLength], CParamDisplay* inUserData);
 	bool textToValueProcBridge(UTF8StringPtr inText, float& outValue, CTextEdit* textEdit);
 
-	CParamDisplayValueToStringProc mValueToTextProc = nullptr;
-	void* mValueToTextUserData = nullptr;
+	CParamDisplayValueToStringProc const mValueToTextProc;
+	void* const mValueToTextUserData;
 	TextToValueProc mTextToValueProc;
 
 #if 0

@@ -315,6 +315,6 @@ static constexpr char const* const kPlusMinusUTF8 = u8"\U000000B1";
 
 SharedPointer<CFontDesc> CreateVstGuiFont(float inFontSize, const char* inFontName = nullptr);
 
-std::string RemoveDigitSeparators(std::string const& inText);
+std::string SanitizeNumericalInput(std::string const& inText);
 
 }  // namespace dfx
