@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -133,20 +133,12 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*					inOwnerEditor,
 							float							inFontSize, 
 							DGColor							inFontColor, 
 							char const*						inFontName)
-:	DGControl<CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage)
+:	DGControl<CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage),
+	mValueToTextProc(inTextProc ? inTextProc : DFXGUI_GenericValueToTextProc),
+	mValueToTextUserData(inUserData ? inUserData : this)
 {
 	DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
 
-	if (!inTextProc)
-	{
-		inTextProc = DFXGUI_GenericValueToTextProc;
-	}
-	if (!inUserData)
-	{
-		inUserData = this;
-	}
-	mValueToTextProc = inTextProc;
-	mValueToTextUserData = inUserData;
 	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this, 
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	refreshText();  // trigger an initial value->text conversion
@@ -263,7 +255,7 @@ bool DGTextDisplay::textToValueProcBridge(UTF8StringPtr inText, float& outValue,
 		return false;
 	}
 
-	auto const success = mTextToValueProc(dfx::RemoveDigitSeparators(inText).c_str(), outValue, dynamic_cast<DGTextDisplay*>(textEdit));
+	auto const success = mTextToValueProc(dfx::SanitizeNumericalInput(inText).c_str(), outValue, dynamic_cast<DGTextDisplay*>(textEdit));
 	if (success && isParameterAttached())
 	{
 		outValue = getOwnerEditor()->dfxgui_ContractParameterValue(getParameterID(), outValue);
