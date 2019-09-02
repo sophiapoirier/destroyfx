@@ -201,7 +201,7 @@ DGGraphicsContext::DGGraphicsContext(TARGET_PLATFORM_GRAPHICS_CONTEXT inContext)
 
 
 //-----------------------------------------------------------------------------
-void DGGraphicsContext::setFont(const char * inFontName, float inFontSize)
+void DGGraphicsContext::setFont(char const* inFontName, float inFontSize)
 {
 	if (inFontName == nullptr)
 		return;
@@ -240,7 +240,7 @@ printf("littles height = %.3f\n", verticalMetrics.xHeight);
 }
 
 //-----------------------------------------------------------------------------
-void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, dfx::TextAlignment inAlignment)
+void DGGraphicsContext::drawText(DGRect* inRegion, char const* inText, dfx::TextAlignment inAlignment)
 {
 	if ( (inText == nullptr) || (inRegion == nullptr) )
 		return;
@@ -304,7 +304,7 @@ void DGGraphicsContext::drawText(DGRect * inRegion, const char * inText, dfx::Te
 
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
-OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, dfx::TextAlignment inAlignment)
+OSStatus DGGraphicsContext::drawCFText(DGRect* inRegion, CFStringRef inText, dfx::TextAlignment inAlignment)
 {
 	if ( (inText == nullptr) || (inRegion == nullptr) )
 		return paramErr;
@@ -347,15 +347,15 @@ OSStatus DGGraphicsContext::drawCFText(DGRect * inRegion, CFStringRef inText, df
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-SharedPointer<CFontDesc> dfx::CreateVstGuiFont(float inFontSize, char const* inFontName)
+VSTGUI::SharedPointer<VSTGUI::CFontDesc> dfx::CreateVstGuiFont(float inFontSize, char const* inFontName)
 {
 	if (inFontName)
 	{
-		return makeOwned<CFontDesc>(inFontName, inFontSize);
+		return VSTGUI::makeOwned<VSTGUI::CFontDesc>(inFontName, inFontSize);
 	}
 	else
 	{
-		auto fontDesc = makeOwned<CFontDesc>(kSystemFont->getName(), inFontSize);
+		auto fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(VSTGUI::kSystemFont->getName(), inFontSize);
 #if TARGET_OS_MAC
 		// get the application font from the system "theme"
 		auto const fontType = HIThemeGetUIFontType(kThemeApplicationFont);

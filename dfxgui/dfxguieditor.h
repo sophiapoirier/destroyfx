@@ -61,11 +61,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #ifdef TARGET_API_VST
 	#include "aeffguieditor.h"
-	using TARGET_API_EDITOR_BASE_CLASS = AEffGUIEditor;
+	using TARGET_API_EDITOR_BASE_CLASS = VSTGUI::AEffGUIEditor;
 	using TARGET_API_EDITOR_INDEX_TYPE = VstInt32;
 #else
 	#include "plugguieditor.h"
-	using TARGET_API_EDITOR_BASE_CLASS = PluginGUIEditor;
+	using TARGET_API_EDITOR_BASE_CLASS = VSTGUI::PluginGUIEditor;
 	using TARGET_API_EDITOR_INDEX_TYPE = int32_t;
 #endif
 
@@ -108,9 +108,9 @@ class DGTextEntryDialog;
 
 //-----------------------------------------------------------------------------
 class DfxGuiEditor :	public TARGET_API_EDITOR_BASE_CLASS, 
-						public IControlListener, 
-						public IMouseObserver,
-						public ViewMouseListenerAdapter
+						public VSTGUI::IControlListener, 
+						public VSTGUI::IMouseObserver,
+						public VSTGUI::ViewMouseListenerAdapter
 {
 public:
 #ifdef TARGET_API_AUDIOUNIT
@@ -125,8 +125,8 @@ public:
 	bool open(void* inWindow) override;
 	void close() override;
 	void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue) override;
-	void valueChanged(CControl* inControl) override;
-	int32_t controlModifierClicked(CControl* inControl, CButtonState inButtons) override;
+	void valueChanged(VSTGUI::CControl* inControl) override;
+	int32_t controlModifierClicked(VSTGUI::CControl* inControl, VSTGUI::CButtonState inButtons) override;
 #ifndef TARGET_API_VST
 	void beginEdit(int32_t inParameterIndex) override;
 	void endEdit(int32_t inParameterIndex) override;
@@ -154,7 +154,7 @@ public:
 	T* emplaceControl(Args&&... args)
 	{
 		static_assert(std::is_base_of<IDGControl, T>::value);
-		static_assert(std::is_base_of<CControl, T>::value);
+		static_assert(std::is_base_of<VSTGUI::CControl, T>::value);
 		auto const control = new T(std::forward<Args>(args)...);
 		addControl(control);
 		return control;
@@ -201,12 +201,12 @@ public:
 	// override this if you want your GUI to react when the mouseovered control changes
 	virtual void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) {}
 	// IMouseObserver overrides
-	void onMouseEntered(CView* inView, CFrame* inFrame) override;
-	void onMouseExited(CView* inView, CFrame* inFrame) override;
-	CMouseEventResult onMouseDown(CFrame* inFrame, CPoint const& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseMoved(CFrame* inFrame, CPoint const& inPos, CButtonState const& inButtons) override;
+	void onMouseEntered(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) override;
+	void onMouseExited(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) override;
 	// ViewMouseListenerAdapter overrides
-	CMouseEventResult viewOnMouseDown(CView* inView, CPoint inPos, CButtonState inButtons) override;
+	VSTGUI::CMouseEventResult viewOnMouseDown(VSTGUI::CView* inView, VSTGUI::CPoint inPos, VSTGUI::CButtonState inButtons) override;
 
 	auto getCurrentControl_clicked() const noexcept
 	{
@@ -218,7 +218,7 @@ public:
 	void SetBackgroundRect(sRect* inRect);
 	void GetControlIndexFromPoint(long inXpos, long inYpos, long* outControlIndex);  // Called by CProcess::ChooseControl
 	void SetControlHighlight(long inControlIndex, short inIsHighlighted, short inColor);
-	void drawControlHighlight(CDrawContext* inContext, CControl* inControl);
+	void drawControlHighlight(VSTGUI::CDrawContext* inContext, VSTGUI::CControl* inControl);
 
 	// VSTGUI: needed the following so that the algorithm is updated while the mouse is down
 	void doIdleStuff() override;
@@ -308,9 +308,9 @@ protected:
 	std::vector<IDGControl*> mControlsList;
 
 private:
-	[[nodiscard]] bool handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons);
-	COptionMenu createContextualMenu(IDGControl* inControl);
-	SharedPointer<COptionMenu> createParameterContextualMenu(long inParameterID);
+	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);
+	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
+	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(long inParameterID);
 	long initClipboard();
 	long copySettings();
 	long pasteSettings(bool* inQueryPastabilityOnly = nullptr);
@@ -323,13 +323,13 @@ private:
 
 	std::list<IDGControl*> mMousedOverControlsList;
 
-	SharedPointer<DGImage> mBackgroundImage;
+	VSTGUI::SharedPointer<DGImage> mBackgroundImage;
 
 	bool mJustOpened = false;
 	long mEditorOpenErr = dfx::kStatus_NoError;
 	unsigned long mNumAudioChannels = 0;
 
-	SharedPointer<DGTextEntryDialog> mTextEntryDialog;
+	VSTGUI::SharedPointer<DGTextEntryDialog> mTextEntryDialog;
 
 #if TARGET_PLUGIN_USES_MIDI
 	DGButton* mMidiLearnButton = nullptr;

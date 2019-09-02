@@ -58,11 +58,11 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 	switch (inTextAlignment)
 	{
 		case dfx::TextAlignment::Left:
-			return kLeftText;
+			return VSTGUI::kLeftText;
 		case dfx::TextAlignment::Center:
-			return kCenterText;
+			return VSTGUI::kCenterText;
 		case dfx::TextAlignment::Right:
-			return kRightText;
+			return VSTGUI::kRightText;
 		default:
 			assert(false);
 			return {};
@@ -70,7 +70,7 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 }
 
 //-----------------------------------------------------------------------------
-static void DFXGUI_ConfigureTextDisplay(CTextLabel* inTextDisplay, 
+static void DFXGUI_ConfigureTextDisplay(VSTGUI::CTextLabel* inTextDisplay, 
 										DGRect const& inRegion, DGImage* inBackgroundImage, 
 										dfx::TextAlignment inTextAlignment, 
 										float inFontSize, DGColor inFontColor, char const* inFontName)
@@ -91,18 +91,18 @@ static void DFXGUI_ConfigureTextDisplay(CTextLabel* inTextDisplay,
 		// XXX a hack for this font
 		if (inTextAlignment == dfx::TextAlignment::Left)
 		{
-			inTextDisplay->setTextInset(CPoint(-1.0, 0.0));
+			inTextDisplay->setTextInset(VSTGUI::CPoint(-1.0, 0.0));
 		}
 		else if (inTextAlignment == dfx::TextAlignment::Right)
 		{
-			inTextDisplay->setTextInset(CPoint(-2.0, 0.0));
+			inTextDisplay->setTextInset(VSTGUI::CPoint(-2.0, 0.0));
 		}
 	}
 	inTextDisplay->setAntialias(!isSnootPixel10);
 }
 
 //-----------------------------------------------------------------------------
-static DGRect DFXGUI_GetTextDrawRegion(CTextLabel* inTextDisplay, DGRect const& inRegion)
+static DGRect DFXGUI_GetTextDrawRegion(VSTGUI::CTextLabel* inTextDisplay, DGRect const& inRegion)
 {
 	auto textArea = inRegion;
 	if (inTextDisplay->getFont()->getName() == dfx::kFontName_SnootPixel10)
@@ -123,17 +123,17 @@ static DGRect DFXGUI_GetTextDrawRegion(CTextLabel* inTextDisplay, DGRect const& 
 //-----------------------------------------------------------------------------
 // Text Display
 //-----------------------------------------------------------------------------
-DGTextDisplay::DGTextDisplay(DfxGuiEditor*					inOwnerEditor,
-							long							inParamID, 
-							DGRect const&					inRegion,
-							CParamDisplayValueToStringProc	inTextProc, 
-							void*							inUserData,
-							DGImage*						inBackgroundImage, 
-							dfx::TextAlignment				inTextAlignment, 
-							float							inFontSize, 
-							DGColor							inFontColor, 
-							char const*						inFontName)
-:	DGControl<CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage),
+DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
+							 long									inParamID, 
+							 DGRect const&							inRegion,
+							 VSTGUI::CParamDisplayValueToStringProc	inTextProc, 
+							 void*									inUserData,
+							 DGImage*								inBackgroundImage, 
+							 dfx::TextAlignment						inTextAlignment, 
+							 float									inFontSize, 
+							 DGColor								inFontColor, 
+							 char const*							inFontName)
+:	DGControl<VSTGUI::CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage),
 	mValueToTextProc(inTextProc ? inTextProc : DFXGUI_GenericValueToTextProc),
 	mValueToTextUserData(inUserData ? inUserData : this)
 {
@@ -150,7 +150,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*					inOwnerEditor,
 
 #if 0
 //-----------------------------------------------------------------------------
-CMouseEventResult DGTextDisplay::onMouseDown(CPoint& inPos, const CButtonState& inButtons)
+VSTGUI::CMouseEventResult DGTextDisplay::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	mLastX = inPos.x;
 	mLastY = inPos.y;
@@ -158,7 +158,7 @@ CMouseEventResult DGTextDisplay::onMouseDown(CPoint& inPos, const CButtonState& 
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGTextDisplay::onMouseMoved(CPoint& inPos, const CButtonState& inButtons)
+VSTGUI::CMouseEventResult DGTextDisplay::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	const long min = GetControl32BitMinimum(carbonControl);
 	const long max = GetControl32BitMaximum(carbonControl);
@@ -198,11 +198,11 @@ dfx::TextAlignment DGTextDisplay::getTextAlignment() const noexcept
 {
 	switch (getHoriAlign())
 	{
-		case kRightText:
+		case VSTGUI::kRightText:
 			return dfx::TextAlignment::Right;
-		case kCenterText:
+		case VSTGUI::kCenterText:
 			return dfx::TextAlignment::Center;
-		case kLeftText:
+		case VSTGUI::kLeftText:
 			return dfx::TextAlignment::Left;
 		default:
 			assert(false);
@@ -211,7 +211,7 @@ dfx::TextAlignment DGTextDisplay::getTextAlignment() const noexcept
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::setTextToValueProc(const TextToValueProc& textToValueProc)
+void DGTextDisplay::setTextToValueProc(TextToValueProc const& textToValueProc)
 {
 	mTextToValueProc = textToValueProc;
 }
@@ -229,7 +229,7 @@ void DGTextDisplay::refreshText()
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::drawPlatformText(CDrawContext* inContext, IPlatformString* inString, CRect const& inRegion)
+void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
 	auto const textArea = DFXGUI_GetTextDrawRegion(this, inRegion);
 	Parent::drawPlatformText(inContext, inString, textArea);
@@ -246,7 +246,7 @@ bool DGTextDisplay::valueToTextProcBridge(float inValue, char outTextUTF8[256], 
 }
 
 //-----------------------------------------------------------------------------
-bool DGTextDisplay::textToValueProcBridge(UTF8StringPtr inText, float& outValue, CTextEdit* textEdit)
+bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* textEdit)
 {
 	assert(inText);
 	assert(dynamic_cast<DGTextDisplay*>(textEdit) == this);
@@ -276,7 +276,7 @@ bool DGTextDisplay::textToValueProcBridge(UTF8StringPtr inText, float& outValue,
 DGStaticTextDisplay::DGStaticTextDisplay(DGRect const& inRegion, DGImage* inBackgroundImage, 
 										 dfx::TextAlignment inTextAlignment, float inFontSize, 
 										 DGColor inFontColor, char const* inFontName)
-:	DGControl<CTextLabel>(inRegion, nullptr, inBackgroundImage)
+:	DGControl<VSTGUI::CTextLabel>(inRegion, nullptr, inBackgroundImage)
 {
 	DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
 
@@ -302,7 +302,7 @@ void DGStaticTextDisplay::setCFText(CFStringRef inText)
 #endif
 
 //-----------------------------------------------------------------------------
-void DGStaticTextDisplay::drawPlatformText(CDrawContext* inContext, IPlatformString* inString, CRect const& inRegion)
+void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
 	auto const textArea = DFXGUI_GetTextDrawRegion(this, inRegion);
 	Parent::drawPlatformText(inContext, inString, textArea);
@@ -343,7 +343,7 @@ void DGTextArrayDisplay::setText(long inStringNum, char const* inText)
 }
 
 //-----------------------------------------------------------------------------
-void DGTextArrayDisplay::draw(CDrawContext* inContext)
+void DGTextArrayDisplay::draw(VSTGUI::CDrawContext* inContext)
 {
 	if (auto const image = getDrawBackground())
 	{
@@ -364,7 +364,7 @@ void DGTextArrayDisplay::draw(CDrawContext* inContext)
 
 	if ((stringIndex >= 0) && (static_cast<size_t>(stringIndex) < mDisplayStrings.size()))
 	{
-		drawPlatformText(inContext, UTF8String(mDisplayStrings[stringIndex]).getPlatformString(), getViewSize());
+		drawPlatformText(inContext, VSTGUI::UTF8String(mDisplayStrings[stringIndex]).getPlatformString(), getViewSize());
 	}
 
 	setDirty(false);

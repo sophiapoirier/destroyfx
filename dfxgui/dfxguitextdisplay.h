@@ -32,19 +32,19 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-class DGTextDisplay : public DGControl<CTextEdit>
+class DGTextDisplay : public DGControl<VSTGUI::CTextEdit>
 {
 public:
 	static constexpr size_t kTextMaxLength = 256;
 
 	DGTextDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
-				  CParamDisplayValueToStringProc inTextProc, void* inUserData, DGImage* inBackgroundImage, 
+				  VSTGUI::CParamDisplayValueToStringProc inTextProc, void* inUserData, DGImage* inBackgroundImage, 
 				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
-				  DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
+				  DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
 
 #if 0
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 #endif
 
 	void setTextAlignment(dfx::TextAlignment inTextAlignment);
@@ -57,20 +57,20 @@ public:
 #endif
 
 	using TextToValueProc = std::function<bool(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)>;
-	void setTextToValueProc(const TextToValueProc& textToValueProc);
+	void setTextToValueProc(TextToValueProc const& textToValueProc);
 	void setTextToValueProc(TextToValueProc&& textToValueProc);
 
 	void refreshText();  // trigger a re-conversion of the numerical value to text
 
-	CLASS_METHODS(DGTextDisplay, CTextEdit)
+	CLASS_METHODS(DGTextDisplay, VSTGUI::CTextEdit)
 
 protected:
-	void drawPlatformText(CDrawContext* inContext, IPlatformString* inString, CRect const& inRegion) override;
+	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
 
 	bool valueToTextProcBridge(float inValue, char outTextUTF8[kTextMaxLength], CParamDisplay* inUserData);
-	bool textToValueProcBridge(UTF8StringPtr inText, float& outValue, CTextEdit* textEdit);
+	bool textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* textEdit);
 
-	CParamDisplayValueToStringProc const mValueToTextProc;
+	VSTGUI::CParamDisplayValueToStringProc const mValueToTextProc;
 	void* const mValueToTextUserData;
 	TextToValueProc mTextToValueProc;
 
@@ -84,21 +84,21 @@ protected:
 
 #pragma mark -
 //-----------------------------------------------------------------------------
-class DGStaticTextDisplay : public DGControl<CTextLabel>
+class DGStaticTextDisplay : public DGControl<VSTGUI::CTextLabel>
 {
 public:
 	DGStaticTextDisplay(DGRect const& inRegion, DGImage* inBackgroundImage, 
 						dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
-						DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
+						DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
 
 #if TARGET_OS_MAC
 	void setCFText(CFStringRef inText);
 #endif
 
-	CLASS_METHODS(DGStaticTextDisplay, CTextLabel)
+	CLASS_METHODS(DGStaticTextDisplay, VSTGUI::CTextLabel)
 
 protected:
-	void drawPlatformText(CDrawContext* inContext, IPlatformString* inString, CRect const& inRegion) override;
+	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
 };
 
 
@@ -110,11 +110,11 @@ class DGTextArrayDisplay : public DGTextDisplay
 public:
 	DGTextArrayDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, long inNumStrings, 
 					   dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, DGImage* inBackground = nullptr, 
-					   float inFontSize = 12.0f, DGColor inFontColor = kBlackCColor, char const* inFontName = nullptr);
+					   float inFontSize = 12.0f, DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
 
-	void draw(CDrawContext* inContext) override;
+	void draw(VSTGUI::CDrawContext* inContext) override;
 
-	using CTextEdit::setText;
+	using VSTGUI::CTextEdit::setText;
 	void setText(long inStringNum, char const* inText);
 
 	CLASS_METHODS(DGTextArrayDisplay, DGTextDisplay)

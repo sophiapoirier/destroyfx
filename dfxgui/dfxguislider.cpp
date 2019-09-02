@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -29,11 +29,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-static CButtonState ConstrainButtons(CButtonState const& inButtons, long inNumStates)
+static VSTGUI::CButtonState ConstrainButtons(VSTGUI::CButtonState const& inButtons, long inNumStates)
 {
 	if (inNumStates > 0)
 	{
-		return inButtons & ~CControl::kZoomModifier;
+		return inButtons & ~VSTGUI::CControl::kZoomModifier;
 	}
 	return inButtons;
 }
@@ -46,16 +46,16 @@ static CButtonState ConstrainButtons(CButtonState const& inButtons, long inNumSt
 //-----------------------------------------------------------------------------
 DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
 				   dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage, long inRangeMargin)
-:	DGControl<CSlider>(inRegion, 
-					   inOwnerEditor, 
-					   inParamID, 
-					   CPoint((inOrientation & dfx::kAxis_Horizontal) ? inRangeMargin : 0, 
-							  (inOrientation & dfx::kAxis_Vertical) ? inRangeMargin : 0), 
-					   (inOrientation & dfx::kAxis_Horizontal) ? (inRegion.getWidth() - (inRangeMargin * 2)) : (inRegion.getHeight() - (inRangeMargin * 2)), 
-					   inHandleImage, 
-					   inBackgroundImage, 
-					   CPoint(0, 0), 
-					   (inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical)),
+:	DGControl<VSTGUI::CSlider>(inRegion, 
+							   inOwnerEditor, 
+							   inParamID, 
+							   VSTGUI::CPoint((inOrientation & dfx::kAxis_Horizontal) ? inRangeMargin : 0, 
+											  (inOrientation & dfx::kAxis_Vertical) ? inRangeMargin : 0), 
+							   (inOrientation & dfx::kAxis_Horizontal) ? (inRegion.getWidth() - (inRangeMargin * 2)) : (inRegion.getHeight() - (inRangeMargin * 2)), 
+							   inHandleImage, 
+							   inBackgroundImage, 
+							   VSTGUI::CPoint(0, 0), 
+							   (inOrientation & dfx::kAxis_Horizontal) ? (kLeft | kHorizontal) : (kBottom | kVertical)),
 	mMainHandleImage(inHandleImage)
 {
 	setTransparency(true);
@@ -79,7 +79,7 @@ DGSlider::DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 
 #ifdef TARGET_API_RTAS
 //-----------------------------------------------------------------------------
-void DGSlider::draw(CDrawContext* inContext)
+void DGSlider::draw(VSTGUI::CDrawContext* inContext)
 {
 	Parent::draw(inContext);
 
@@ -88,35 +88,35 @@ void DGSlider::draw(CDrawContext* inContext)
 #endif
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGSlider::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGSlider::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	DiscreteValueConstrainer const dvc(this);
 	return Parent::onMouseDown(inPos, ConstrainButtons(inButtons, getNumStates()));
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGSlider::onMouseMoved(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGSlider::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	DiscreteValueConstrainer const dvc(isEditing() ? this : nullptr);
 	return Parent::onMouseMoved(inPos, ConstrainButtons(inButtons, getNumStates()));
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGSlider::onMouseUp(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGSlider::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	DiscreteValueConstrainer const dvc(this);
 	return Parent::onMouseUp(inPos, ConstrainButtons(inButtons, getNumStates()));
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::setHandle(CBitmap* inHandle)
+void DGSlider::setHandle(VSTGUI::CBitmap* inHandle)
 {
 	Parent::setHandle(inHandle);
 	mMainHandleImage = inHandle;
 }
 
 //-----------------------------------------------------------------------------
-void DGSlider::setAlternateHandle(CBitmap* inHandle)
+void DGSlider::setAlternateHandle(VSTGUI::CBitmap* inHandle)
 {
 	mAlternateHandleImage = inHandle;
 }
@@ -160,8 +160,8 @@ DGAnimation::DGAnimation(DfxGuiEditor*	inOwnerEditor,
 						 DGImage*		inAnimationImage, 
 						 long			inNumAnimationFrames, 
 						 DGImage*		inBackground)
-:	DGControl<CAnimKnob>(inRegion, inOwnerEditor, inParamID, 
-						 inNumAnimationFrames, inRegion.getHeight(), inAnimationImage)
+:	DGControl<VSTGUI::CAnimKnob>(inRegion, inOwnerEditor, inParamID, 
+								 inNumAnimationFrames, inRegion.getHeight(), inAnimationImage)
 {
 	setTransparency(true);
 
@@ -170,7 +170,7 @@ DGAnimation::DGAnimation(DfxGuiEditor*	inOwnerEditor,
 
 #ifdef TARGET_API_RTAS
 //------------------------------------------------------------------------
-void DGAnimation::draw(CDrawContext* inContext)
+void DGAnimation::draw(VSTGUI::CDrawContext* inContext)
 {
 	Parent::draw(inContext);
 
@@ -179,7 +179,7 @@ void DGAnimation::draw(CDrawContext* inContext)
 #endif
 
 //------------------------------------------------------------------------
-CMouseEventResult DGAnimation::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGAnimation::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	DiscreteValueConstrainer const dvc(this);
 	mEntryMousePos = inPos;
@@ -187,7 +187,7 @@ CMouseEventResult DGAnimation::onMouseDown(CPoint& inPos, CButtonState const& in
 }
 
 //------------------------------------------------------------------------
-CMouseEventResult DGAnimation::onMouseMoved(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGAnimation::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	DiscreteValueConstrainer const dvc(isEditing() ? this : nullptr);
 	inPos = constrainMousePosition(inPos);
@@ -195,7 +195,7 @@ CMouseEventResult DGAnimation::onMouseMoved(CPoint& inPos, CButtonState const& i
 }
 
 //------------------------------------------------------------------------
-CMouseEventResult DGAnimation::onMouseUp(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGAnimation::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	DiscreteValueConstrainer const dvc(this);
 	inPos = constrainMousePosition(inPos);
@@ -203,9 +203,9 @@ CMouseEventResult DGAnimation::onMouseUp(CPoint& inPos, CButtonState const& inBu
 }
 
 //------------------------------------------------------------------------
-CPoint DGAnimation::constrainMousePosition(CPoint const& inPos) const noexcept
+VSTGUI::CPoint DGAnimation::constrainMousePosition(VSTGUI::CPoint const& inPos) const noexcept
 {
-	CPoint resultPos(mEntryMousePos);
+	VSTGUI::CPoint resultPos(mEntryMousePos);
 	if (mMouseAxis & dfx::kAxis_Horizontal)
 	{
 		resultPos.x = inPos.x;
