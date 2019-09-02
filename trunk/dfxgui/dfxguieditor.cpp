@@ -64,7 +64,7 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 #ifdef TARGET_API_AUDIOUNIT
 //	#define kDfxGui_AUPresetFileUTI "org.destroyfx.aupreset"
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
-	/*__attribute__((no_destroy))*/ static auto const kDfxGui_AUPresetFileExtension = new CFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
+	/*__attribute__((no_destroy))*/ static auto const kDfxGui_AUPresetFileExtension = new VSTGUI::CFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
 #endif
 
 
@@ -82,7 +82,7 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 	// load the background image
 	// we don't need to load all bitmaps, this could be done when open is called
 	// XXX hack
-	mBackgroundImage = makeOwned<DGImage>(PLUGIN_BACKGROUND_IMAGE_FILENAME);
+	mBackgroundImage = VSTGUI::makeOwned<DGImage>(PLUGIN_BACKGROUND_IMAGE_FILENAME);
 	if (mBackgroundImage)
 	{
 		// init the size of the plugin
@@ -91,7 +91,7 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 	}
 
 	VSTGUI::CView::kDirtyCallAlwaysOnMainThread = true;
-	setKnobMode(kLinearMode);
+	setKnobMode(VSTGUI::kLinearMode);
 
 #ifdef TARGET_API_RTAS
 	// XXX do these?
@@ -144,7 +144,7 @@ bool DfxGuiEditor::open(void* inWindow)
 
 	mControlsList.clear();
 
-	frame = new CFrame(CRect(rect.left, rect.top, rect.right, rect.bottom), this);
+	frame = new VSTGUI::CFrame(VSTGUI::CRect(rect.left, rect.top, rect.right, rect.bottom), this);
 	if (!frame)
 	{
 		return false;
@@ -323,7 +323,7 @@ void DfxGuiEditor::setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, f
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::valueChanged(CControl* inControl)
+void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 {
 	auto const paramIndex = inControl->getTag();
 	auto const paramValue_norm = inControl->getValue();
@@ -356,7 +356,7 @@ void DfxGuiEditor::valueChanged(CControl* inControl)
 }
 
 //-----------------------------------------------------------------------------
-int32_t DfxGuiEditor::controlModifierClicked(CControl* inControl, CButtonState inButtons)
+int32_t DfxGuiEditor::controlModifierClicked(VSTGUI::CControl* inControl, VSTGUI::CButtonState inButtons)
 {
 	static constexpr int32_t kNotHandled = 0;
 	static constexpr int32_t kHandled = 1;
@@ -474,7 +474,7 @@ void DfxGuiEditor::removeControl(IDGControl* inControl)
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::GetWidth()
 {
-	ERect* editorRect = nullptr;
+	VSTGUI::ERect* editorRect = nullptr;
 	if (getRect(&editorRect) && editorRect)
 	{
 		return editorRect->right - editorRect->left;
@@ -485,7 +485,7 @@ long DfxGuiEditor::GetWidth()
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::GetHeight()
 {
-	ERect* editorRect = nullptr;
+	VSTGUI::ERect* editorRect = nullptr;
 	if (getRect(&editorRect) && editorRect)
 	{
 		return editorRect->bottom - editorRect->top;
@@ -733,7 +733,7 @@ void DfxGuiEditor::TextEntryForParameterValue(long inParameterID)
 		return;
 	}
 
-	mTextEntryDialog = makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
+	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
 	if (mTextEntryDialog)
 	{
 		std::array<char, dfx::kParameterValueStringMaxLength> textValue;
@@ -799,7 +799,7 @@ void DfxGuiEditor::removeMousedOverControl(IDGControl* inMousedOverControl)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::onMouseEntered(CView* inView, CFrame* /*inFrame*/)
+void DfxGuiEditor::onMouseEntered(VSTGUI::CView* inView, VSTGUI::CFrame* /*inFrame*/)
 {
 	if (auto const dgControl = dynamic_cast<IDGControl*>(inView))
 	{
@@ -808,7 +808,7 @@ void DfxGuiEditor::onMouseEntered(CView* inView, CFrame* /*inFrame*/)
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::onMouseExited(CView* inView, CFrame* /*inFrame*/)
+void DfxGuiEditor::onMouseExited(VSTGUI::CView* inView, VSTGUI::CFrame* /*inFrame*/)
 {
 	if (auto const dgControl = dynamic_cast<IDGControl*>(inView))
 	{
@@ -817,26 +817,26 @@ void DfxGuiEditor::onMouseExited(CView* inView, CFrame* /*inFrame*/)
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DfxGuiEditor::onMouseDown(CFrame* inFrame, CPoint const& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DfxGuiEditor::onMouseDown(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons)
 {
-	if (!inFrame->getViewAt(inPos, GetViewOptions().deep()))
+	if (!inFrame->getViewAt(inPos, VSTGUI::GetViewOptions().deep()))
 	{
 		auto const handled = handleContextualMenuClick(nullptr, inButtons);
 		if (handled)
 		{
-			return kMouseDownEventHandledButDontNeedMovedOrUpEvents;
+			return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
 		}
 	}
 
-	return kMouseEventNotHandled;
+	return VSTGUI::kMouseEventNotHandled;
 }
 
 //-----------------------------------------------------------------------------
 // entered and exited is not enough because they stop notifying when mouse buttons are pressed
-CMouseEventResult DfxGuiEditor::onMouseMoved(CFrame* inFrame, CPoint const& inPos, CButtonState const& /*inButtons*/)
+VSTGUI::CMouseEventResult DfxGuiEditor::onMouseMoved(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	IDGControl* currentControl = nullptr;
-	if (auto const currentView = inFrame->getViewAt(inPos, GetViewOptions().deep()))
+	if (auto const currentView = inFrame->getViewAt(inPos, VSTGUI::GetViewOptions().deep()))
 	{
 		if (auto const dgControl = dynamic_cast<IDGControl*>(currentView))
 		{
@@ -845,11 +845,11 @@ CMouseEventResult DfxGuiEditor::onMouseMoved(CFrame* inFrame, CPoint const& inPo
 	}
 	setCurrentControl_mouseover(currentControl);
 
-	return kMouseEventNotHandled;
+	return VSTGUI::kMouseEventNotHandled;
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DfxGuiEditor::viewOnMouseDown(CView* inView, CPoint inPos, CButtonState inButtons)
+VSTGUI::CMouseEventResult DfxGuiEditor::viewOnMouseDown(VSTGUI::CView* inView, VSTGUI::CPoint inPos, VSTGUI::CButtonState inButtons)
 {
 #if TARGET_PLUGIN_USES_MIDI
 	auto const dgControl = dynamic_cast<IDGControl*>(inView);
@@ -858,7 +858,7 @@ CMouseEventResult DfxGuiEditor::viewOnMouseDown(CView* inView, CPoint inPos, CBu
 		setmidilearner(dgControl->getParameterID());
 	}
 #endif
-	return ViewMouseListenerAdapter::viewOnMouseDown(inView, inPos, inButtons);
+	return VSTGUI::ViewMouseListenerAdapter::viewOnMouseDown(inView, inPos, inButtons);
 }
 
 //-----------------------------------------------------------------------------
@@ -1419,7 +1419,7 @@ long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::LoadPresetFile()
 {
-	SharedPointer<CNewFileSelector> fileSelector(CNewFileSelector::create(getFrame(), CNewFileSelector::kSelectFile), false);
+	VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectFile), false);
 	if (fileSelector)
 	{
 		fileSelector->setTitle("Open");
@@ -1438,17 +1438,17 @@ void DfxGuiEditor::LoadPresetFile()
 					auto const presetFileDirPathC = dfx::CreateCStringFromCFString(presetFileDirPathCF.get());
 					if (presetFileDirPathC)
 					{
-						fileSelector->setInitialDirectory(reinterpret_cast<UTF8StringPtr>(presetFileDirPathC.get()));
+						fileSelector->setInitialDirectory(reinterpret_cast<VSTGUI::UTF8StringPtr>(presetFileDirPathC.get()));
 					}
 				}
 			}
 		}
 #endif
 #ifdef TARGET_API_VST
-		fileSelector->addFileExtension(CFileExtension("VST preset", "fxp"));
-		fileSelector->addFileExtension(CFileExtension("VST bank", "fxb"));
+		fileSelector->addFileExtension(VSTGUI::CFileExtension("VST preset", "fxp"));
+		fileSelector->addFileExtension(VSTGUI::CFileExtension("VST bank", "fxb"));
 #endif
-		fileSelector->run([effect = dfxgui_GetEffectInstance()](CNewFileSelector* inFileSelector)
+		fileSelector->run([effect = dfxgui_GetEffectInstance()](VSTGUI::CNewFileSelector* inFileSelector)
 						  {
 							  if (auto const filePath = inFileSelector->getSelectedFile(0))
 							  {
@@ -1473,9 +1473,9 @@ void DfxGuiEditor::SavePresetFile()
 	if (getFrame())
 	{
 #ifdef TARGET_API_AUDIOUNIT
-		mTextEntryDialog = makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
-														DGDialog::kButtons_OKCancelOther, 
-														"Save", nullptr, "Choose custom location...");
+		mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
+																DGDialog::kButtons_OKCancelOther, 
+																"Save", nullptr, "Choose custom location...");
 		if (mTextEntryDialog)
 		{
 			if (auto const button = mTextEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
@@ -1507,7 +1507,7 @@ void DfxGuiEditor::SavePresetFile()
 							return true;
 						case DGDialog::kSelection_Other:
 						{
-							SharedPointer<CNewFileSelector> fileSelector(CNewFileSelector::create(getFrame(), CNewFileSelector::kSelectSaveFile), false);
+							VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
 							if (fileSelector)
 							{
 								fileSelector->setTitle("Save");
@@ -1516,7 +1516,7 @@ void DfxGuiEditor::SavePresetFile()
 								{
 									fileSelector->setDefaultSaveName(textEntryDialog->getText());
 								}
-								fileSelector->run([effect = dfxgui_GetEffectInstance()](CNewFileSelector* inFileSelector)
+								fileSelector->run([effect = dfxgui_GetEffectInstance()](VSTGUI::CNewFileSelector* inFileSelector)
 												  {
 													  if (auto const filePath = inFileSelector->getSelectedFile(0))
 													  {
@@ -1667,7 +1667,7 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
 		return;
 	}
 
-	mTextEntryDialog = makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
+	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
 	if (mTextEntryDialog)
 	{
 		// initialize the text with the current CC assignment, if there is one
@@ -1769,15 +1769,15 @@ enum
 	kDfxContextualMenuItem_Parameter_NumItems
 };
 
-static constexpr int32_t kDfxGui_ContextualMenuStyle = COptionMenu::kMultipleCheckStyle;  // this is necessary for menu entry checkmarks to show up
+static constexpr int32_t kDfxGui_ContextualMenuStyle = VSTGUI::COptionMenu::kMultipleCheckStyle;  // this is necessary for menu entry checkmarks to show up
 
 namespace
 {
 
 //-----------------------------------------------------------------------------
-CMenuItem* DFX_AppendCommandItemToMenu(COptionMenu& inMenu, UTF8StringPtr inMenuItemText, int32_t inCommandID, bool inEnabled, bool inChecked)
+VSTGUI::CMenuItem* DFX_AppendCommandItemToMenu(VSTGUI::COptionMenu& inMenu, VSTGUI::UTF8StringPtr inMenuItemText, int32_t inCommandID, bool inEnabled, bool inChecked)
 {
-	if (auto const menuItem = new CMenuItem(inMenuItemText, inCommandID))
+	if (auto const menuItem = new VSTGUI::CMenuItem(inMenuItemText, inCommandID))
 	{
 		menuItem->setEnabled(inEnabled);
 		menuItem->setChecked(inChecked);
@@ -1789,7 +1789,7 @@ CMenuItem* DFX_AppendCommandItemToMenu(COptionMenu& inMenu, UTF8StringPtr inMenu
 }  // namespace
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState const& inButtons)
+bool DfxGuiEditor::handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons)
 {
 	auto isContextualMenuClick = inButtons.isRightButton();
 #if TARGET_OS_MAC
@@ -1812,7 +1812,7 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 	auto popupMenu = createContextualMenu(dgControl);
 
 	// --------- show the contextual menu ---------
-	CPoint mousePos;
+	VSTGUI::CPoint mousePos;
 	[[maybe_unused]] auto const mousePosSuccess = getFrame()->getCurrentMouseLocation(mousePos);
 	assert(mousePosSuccess);
 	auto const handled = popupMenu.popup(getFrame(), mousePos);
@@ -1895,9 +1895,9 @@ bool DfxGuiEditor::handleContextualMenuClick(CControl* inControl, CButtonState c
 }
 
 //-----------------------------------------------------------------------------
-COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
+VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 {
-	COptionMenu resultMenu;
+	VSTGUI::COptionMenu resultMenu;
 	resultMenu.setStyle(kDfxGui_ContextualMenuStyle);
 
 	// populate the parameter-specific section of the menu
@@ -1917,7 +1917,7 @@ COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 		bool showCheckmark = false;
 		bool disableItem = false;
 		bool isFirstItemOfSubgroup = false;
-		UTF8StringPtr menuItemText = nullptr;
+		VSTGUI::UTF8StringPtr menuItemText = nullptr;
 		switch (i)
 		{
 			case kDfxContextualMenuItem_Global_SetDefaultParameterValues:
@@ -2002,9 +2002,9 @@ COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 }
 
 //-----------------------------------------------------------------------------
-SharedPointer<COptionMenu> DfxGuiEditor::createParameterContextualMenu(long inParameterID)
+VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextualMenu(long inParameterID)
 {
-	auto resultMenu = makeOwned<COptionMenu>();
+	auto resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 
 	for (UInt32 i = 0; i < kDfxContextualMenuItem_Parameter_NumItems; i++)
@@ -2012,7 +2012,7 @@ SharedPointer<COptionMenu> DfxGuiEditor::createParameterContextualMenu(long inPa
 		bool showCheckmark = false;
 		bool disableItem = false;
 		bool isFirstItemOfSubgroup = false;
-		UTF8StringPtr menuItemText = nullptr;
+		VSTGUI::UTF8StringPtr menuItemText = nullptr;
 		std::array<char, 256> menuItemText_temp;
 		menuItemText_temp.fill(0);
 		switch (i)
@@ -2498,7 +2498,7 @@ void DfxGuiEditor::GetControlIndexFromPoint(long inXpos, long inYpos, long* outC
 	}
 
 	*outControlIndex = 0;
-	CPoint const point(inXpos, inYpos);
+	VSTGUI::CPoint const point(inXpos, inYpos);
 	for (auto const& control : mControlsList)
 	{
 		auto const& controlBounds = control->asCControl()->getViewSize();
@@ -2533,7 +2533,7 @@ void DfxGuiEditor::SetControlHighlight(long inControlIndex, short inIsHighlighte
 
 //-----------------------------------------------------------------------------
 // Called by process when a control's highlight has changed
-void DfxGuiEditor::drawControlHighlight(CDrawContext* inContext, CControl* inControl)
+void DfxGuiEditor::drawControlHighlight(VSTGUI::CDrawContext* inContext, VSTGUI::CControl* inControl)
 {
 	assert(inContext);
 	assert(inControl);
@@ -2544,28 +2544,28 @@ void DfxGuiEditor::drawControlHighlight(CDrawContext* inContext, CControl* inCon
 		return;
 	}
 
-	CColor highlightColor;
+	VSTGUI::CColor highlightColor;
 	switch (mParameterHighlightColors.at(parameterIndex))
 	{
 		case eHighlight_Red:
-			highlightColor = MakeCColor(255, 0, 0);
+			highlightColor = VSTGUI::MakeCColor(255, 0, 0);
 			break;
 		case eHighlight_Blue:
-			highlightColor = MakeCColor(0, 0, 170);
+			highlightColor = VSTGUI::MakeCColor(0, 0, 170);
 			break;
 		case eHighlight_Green:
-			highlightColor = MakeCColor(0, 221, 0);
+			highlightColor = VSTGUI::MakeCColor(0, 221, 0);
 			break;
 		case eHighlight_Yellow:
-			highlightColor = MakeCColor(255, 204, 0);
+			highlightColor = VSTGUI::MakeCColor(255, 204, 0);
 			break;
 		default:
 			assert(false);
 			return;
 	}
 
-	constexpr CCoord highlightWidth = 1;
-	CRect highlightRect = inControl->getViewSize();
+	constexpr VSTGUI::CCoord highlightWidth = 1;
+	VSTGUI::CRect highlightRect = inControl->getViewSize();
 	inContext->setFillColor(highlightColor);
 	inContext->setFrameColor(highlightColor);
 	inContext->setLineWidth(highlightWidth);

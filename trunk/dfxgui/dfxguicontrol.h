@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2003-2018  Sophia Poirier
+Copyright (C) 2003-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -35,7 +35,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 template <class T>
 class DGControl : public IDGControl, public T
 {
-	static_assert(std::is_base_of<CControl, T>::value);
+	static_assert(std::is_base_of<VSTGUI::CControl, T>::value);
 
 public:
 	using Parent = T;
@@ -145,7 +145,7 @@ class DGNullControl : public DGControl<VSTGUI::CControl>
 public:
 	DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage = nullptr);
 
-	void draw(CDrawContext* inContext) override;
+	void draw(VSTGUI::CDrawContext* inContext) override;
 
 	CLASS_METHODS(DGNullControl, VSTGUI::CControl)
 };
@@ -155,7 +155,7 @@ public:
 #if 0
 
 //-----------------------------------------------------------------------------
-class DGControl : public CControl
+class DGControl : public VSTGUI::CControl
 {
 public:
 	enum KeyModifiers : unsigned int

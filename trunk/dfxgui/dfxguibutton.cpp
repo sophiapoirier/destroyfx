@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -34,7 +34,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
 				   Mode inMode, bool inDrawMomentaryState)
-:	DGControl<CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
 	mMode(inMode), 
 	mDrawMomentaryState(inDrawMomentaryState)
 {
@@ -53,14 +53,14 @@ DGButton::DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage*
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::draw(CDrawContext* inContext)
+void DGButton::draw(VSTGUI::CDrawContext* inContext)
 {
 	if (auto const image = getDrawBackground())
 	{
 		long const xoff = (mDrawMomentaryState && mMouseIsDown) ? (std::lround(image->getWidth()) / 2) : 0;
 		long const yoff = getValue_i() * (std::lround(image->getHeight()) / getNumStates());
 
-		image->draw(inContext, getViewSize(), CPoint(xoff, yoff));
+		image->draw(inContext, getViewSize(), VSTGUI::CPoint(xoff, yoff));
 	}
 
 #ifdef TARGET_API_RTAS
@@ -71,11 +71,11 @@ void DGButton::draw(CDrawContext* inContext)
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGButton::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	if (!inButtons.isLeftButton())
 	{
-		return kMouseEventNotHandled;
+		return VSTGUI::kMouseEventNotHandled;
 	}
 
 	beginEdit();
@@ -145,20 +145,20 @@ CMouseEventResult DGButton::onMouseDown(CPoint& inPos, CButtonState const& inBut
 		}
 	}
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGButton::onMouseMoved(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	if (!isEditing())
 	{
-		return kMouseEventNotHandled;
+		return VSTGUI::kMouseEventNotHandled;
 	}
 
 	if (!inButtons.isLeftButton())
 	{
-		return kMouseEventHandled;
+		return VSTGUI::kMouseEventHandled;
 	}
 
 	auto const currentValue = getValue_i();
@@ -214,11 +214,11 @@ CMouseEventResult DGButton::onMouseMoved(CPoint& inPos, CButtonState const& inBu
 		invalid();
 	}
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGButton::onMouseUp(CPoint& inPos, CButtonState const& /*inButtons*/)
+VSTGUI::CMouseEventResult DGButton::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	setMouseIsDown(false);
 
@@ -243,11 +243,11 @@ CMouseEventResult DGButton::onMouseUp(CPoint& inPos, CButtonState const& /*inBut
 
 	endEdit();
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 //-----------------------------------------------------------------------------
-bool DGButton::onWheel(CPoint const& inPos, float const& inDistance, CButtonState const& inButtons)
+bool DGButton::onWheel(VSTGUI::CPoint const& inPos, float const& inDistance, VSTGUI::CButtonState const& inButtons)
 {
 	if (!getMouseEnabled())
 	{
@@ -265,13 +265,13 @@ bool DGButton::onWheel(CPoint const& inPos, float const& inDistance, CButtonStat
 		case Mode::Decrement:
 		case Mode::Momentary:
 		{
-			CButtonState fakeButtons = inButtons;
+			VSTGUI::CButtonState fakeButtons = inButtons;
 			// go backwards
 			if (inDistance < 0.0f)
 			{
-				fakeButtons |= kAlt;
+				fakeButtons |= VSTGUI::kAlt;
 			}
-			CPoint fakePos(0, 0);
+			VSTGUI::CPoint fakePos(0, 0);
 			onMouseDown(fakePos, fakeButtons);
 			onMouseUp(fakePos, inButtons);
 		}
@@ -330,29 +330,29 @@ DGFineTuneButton::DGFineTuneButton(DfxGuiEditor*	inOwnerEditor,
 									DGRect const&	inRegion,
 									DGImage*		inImage, 
 									float			inValueChangeAmount)
-:	DGControl<CControl>(inRegion, inOwnerEditor, inParameterID, inImage), 
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParameterID, inImage), 
 	mValueChangeAmount(inValueChangeAmount)
 {
 }
 
 //-----------------------------------------------------------------------------
-void DGFineTuneButton::draw(CDrawContext* inContext)
+void DGFineTuneButton::draw(VSTGUI::CDrawContext* inContext)
 {
 	if (auto const image = getDrawBackground())
 	{
-		CCoord const yoff = mMouseIsDown ? getHeight() : 0;
-		image->draw(inContext, getViewSize(), CPoint(0, yoff));
+		VSTGUI::CCoord const yoff = mMouseIsDown ? getHeight() : 0;
+		image->draw(inContext, getViewSize(), VSTGUI::CPoint(0, yoff));
 	}
 
 	setDirty(false);
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGFineTuneButton::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGFineTuneButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	if (!inButtons.isLeftButton())
 	{
-		return kMouseEventNotHandled;
+		return VSTGUI::kMouseEventNotHandled;
 	}
 
 	beginEdit();
@@ -366,11 +366,11 @@ CMouseEventResult DGFineTuneButton::onMouseDown(CPoint& inPos, CButtonState cons
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGFineTuneButton::onMouseMoved(CPoint& inPos, CButtonState const& /*inButtons*/)
+VSTGUI::CMouseEventResult DGFineTuneButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	if (!isEditing())
 	{
-		return kMouseEventNotHandled;
+		return VSTGUI::kMouseEventNotHandled;
 	}
 
 	auto const oldMouseDown = mMouseIsDown;
@@ -406,11 +406,11 @@ CMouseEventResult DGFineTuneButton::onMouseMoved(CPoint& inPos, CButtonState con
 		invalid();
 	}
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGFineTuneButton::onMouseUp(CPoint& /*inPos*/, CButtonState const& /*inButtons*/)
+VSTGUI::CMouseEventResult DGFineTuneButton::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	if (std::exchange(mMouseIsDown, false))
 	{
@@ -419,7 +419,7 @@ CMouseEventResult DGFineTuneButton::onMouseUp(CPoint& /*inPos*/, CButtonState co
 
 	endEdit();
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 
@@ -437,19 +437,19 @@ DGValueSpot::DGValueSpot(DfxGuiEditor*	inOwnerEditor,
 						 DGRect const&	inRegion, 
 						 DGImage*		inImage, 
 						 double			inValue)
-:	DGControl<CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
 	mValueToSet(inOwnerEditor->dfxgui_ContractParameterValue(inParamID, inValue))
 {
 	setTransparency(true);
 }
 
 //------------------------------------------------------------------------
-void DGValueSpot::draw(CDrawContext* inContext)
+void DGValueSpot::draw(VSTGUI::CDrawContext* inContext)
 {
 	if (auto const image = getDrawBackground())
 	{
-		CCoord const yoff = mButtonIsPressed ? getHeight() : 0;
-		image->draw(inContext, getViewSize(), CPoint(0, yoff));
+		VSTGUI::CCoord const yoff = mButtonIsPressed ? getHeight() : 0;
+		image->draw(inContext, getViewSize(), VSTGUI::CPoint(0, yoff));
 	}
 
 #ifdef TARGET_API_RTAS
@@ -460,11 +460,11 @@ void DGValueSpot::draw(CDrawContext* inContext)
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGValueSpot::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGValueSpot::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	if (!inButtons.isLeftButton())
 	{
-		return kMouseEventNotHandled;
+		return VSTGUI::kMouseEventNotHandled;
 	}
 
 	beginEdit();
@@ -475,11 +475,11 @@ CMouseEventResult DGValueSpot::onMouseDown(CPoint& inPos, CButtonState const& in
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGValueSpot::onMouseMoved(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGValueSpot::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	if (!isEditing())
 	{
-		return kMouseEventNotHandled;
+		return VSTGUI::kMouseEventNotHandled;
 	}
 
 	if (inButtons.isLeftButton())
@@ -507,18 +507,18 @@ CMouseEventResult DGValueSpot::onMouseMoved(CPoint& inPos, CButtonState const& i
 		}
 	}
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGValueSpot::onMouseUp(CPoint& /*inPos*/, CButtonState const& /*inButtons*/)
+VSTGUI::CMouseEventResult DGValueSpot::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	endEdit();
 
 	mButtonIsPressed = false;
 	redraw();
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 
@@ -541,11 +541,11 @@ DGWebLink::DGWebLink(DfxGuiEditor*	inOwnerEditor,
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGWebLink::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGWebLink::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	if (!inButtons.isLeftButton())
 	{
-		return kMouseEventNotHandled;
+		return VSTGUI::kMouseEventNotHandled;
 	}
 
 	beginEdit();
@@ -554,11 +554,11 @@ CMouseEventResult DGWebLink::onMouseDown(CPoint& inPos, CButtonState const& inBu
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult DGWebLink::onMouseMoved(CPoint& inPos, CButtonState const& /*inButtons*/)
+VSTGUI::CMouseEventResult DGWebLink::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	if (!isEditing())
 	{
-		return kMouseEventNotHandled;
+		return VSTGUI::kMouseEventNotHandled;
 	}
 
 	setValue(hitTest(inPos) ? getMax() : getMin());
@@ -567,7 +567,7 @@ CMouseEventResult DGWebLink::onMouseMoved(CPoint& inPos, CButtonState const& /*i
 		invalid();
 	}
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 //-----------------------------------------------------------------------------
@@ -577,7 +577,7 @@ CMouseEventResult DGWebLink::onMouseMoved(CPoint& inPos, CButtonState const& /*i
 // This allows the user to accidentally push the button, but avoid the 
 // associated action (launching an URL) by moving the mouse pointer away 
 // before releasing the mouse button.
-CMouseEventResult DGWebLink::onMouseUp(CPoint& inPos, CButtonState const& /*inButtons*/)
+VSTGUI::CMouseEventResult DGWebLink::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	setValue(getMin());
 	if (isDirty())
@@ -593,7 +593,7 @@ CMouseEventResult DGWebLink::onMouseUp(CPoint& inPos, CButtonState const& /*inBu
 
 	endEdit();
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 
@@ -610,16 +610,16 @@ CMouseEventResult DGWebLink::onMouseUp(CPoint& inPos, CButtonState const& /*inBu
 DGSplashScreen::DGSplashScreen(DfxGuiEditor*	inOwnerEditor,
 							   DGRect const&	inClickRegion, 
 							   DGImage*			inSplashImage)
-:	DGControl<CSplashScreen>(inClickRegion, inOwnerEditor, dfx::kParameterID_Invalid, inSplashImage, inClickRegion)
+:	DGControl<VSTGUI::CSplashScreen>(inClickRegion, inOwnerEditor, dfx::kParameterID_Invalid, inSplashImage, inClickRegion)
 {
 	setTransparency(true);
 
 	if (inSplashImage)
 	{
-		CCoord const splashWidth = inSplashImage->getWidth();
-		CCoord const splashHeight = inSplashImage->getHeight();
-		CCoord const splashX = (inOwnerEditor->GetWidth() - splashWidth) / 2;
-		CCoord const splashY = (inOwnerEditor->GetHeight() - splashHeight) / 2;
+		VSTGUI::CCoord const splashWidth = inSplashImage->getWidth();
+		VSTGUI::CCoord const splashHeight = inSplashImage->getHeight();
+		VSTGUI::CCoord const splashX = (inOwnerEditor->GetWidth() - splashWidth) / 2;
+		VSTGUI::CCoord const splashY = (inOwnerEditor->GetHeight() - splashHeight) / 2;
 		DGRect const splashRegion(splashX, splashY, splashWidth, splashHeight);
 		setDisplayArea(splashRegion);
 		if (modalView)
