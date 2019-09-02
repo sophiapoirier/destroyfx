@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -31,13 +31,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 //-----------------------------------------------------------------------------
 DGNullControl::DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage)
-:	DGControl<CControl>(inRegion, inOwnerEditor, dfx::kParameterID_Invalid, inBackgroundImage)
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, dfx::kParameterID_Invalid, inBackgroundImage)
 {
 	setMouseEnabled(false);
 }
 
 //-----------------------------------------------------------------------------
-void DGNullControl::draw(CDrawContext* inContext)
+void DGNullControl::draw(VSTGUI::CDrawContext* inContext)
 {
 	if (auto const image = getDrawBackground())
 	{
@@ -122,7 +122,7 @@ ControlRef carbonControl = NULL;	// XXX just quieting errors for now
 #pragma mark -
 #pragma mark DGBackgroundControl old
 //-----------------------------------------------------------------------------
-void DGBackgroundControl::draw(CDrawContext* inContext)
+void DGBackgroundControl::draw(VSTGUI::CDrawContext* inContext)
 {
 	DGRect drawRect((long)(getDfxGuiEditor()->GetXOffset()), (long)(getDfxGuiEditor()->GetYOffset()), getWidth(), getHeight());
 

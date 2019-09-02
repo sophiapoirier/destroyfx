@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -35,7 +35,7 @@ typedef void (*DGButtonUserProcedure) (long inValue, void* inUserData);
 
 
 //-----------------------------------------------------------------------------
-class DGButton : public DGControl<CControl>
+class DGButton : public DGControl<VSTGUI::CControl>
 {
 public:
 	enum class Mode
@@ -52,11 +52,11 @@ public:
 	DGButton(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, 
 			 long inNumStates, Mode inMode, bool inDrawMomentaryState = false);
 
-	void draw(CDrawContext* inContext) override;
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
-	bool onWheel(CPoint const& inPos, float const& inDistance, CButtonState const& inButtons) override;
+	void draw(VSTGUI::CDrawContext* inContext) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	bool onWheel(VSTGUI::CPoint const& inPos, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
 
 
 	void setMouseIsDown(bool newMouseState);
@@ -75,7 +75,7 @@ public:
 		mOrientation = inOrientation;
 	}
 
-	CLASS_METHODS(DGButton, CControl)
+	CLASS_METHODS(DGButton, VSTGUI::CControl)
 
 protected:
 	DGButtonUserProcedure mUserProcedure = nullptr;
@@ -94,18 +94,18 @@ protected:
 
 
 //-----------------------------------------------------------------------------
-class DGFineTuneButton : public DGControl<CControl>
+class DGFineTuneButton : public DGControl<VSTGUI::CControl>
 {
 public:
 	DGFineTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
 					 DGImage* inImage, float inValueChangeAmount = 0.0001f);
 
-	void draw(CDrawContext* inContext) override;
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
+	void draw(VSTGUI::CDrawContext* inContext) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 
-	CLASS_METHODS(DGFineTuneButton, CControl)
+	CLASS_METHODS(DGFineTuneButton, VSTGUI::CControl)
 
 protected:
 	float const mValueChangeAmount;
@@ -116,21 +116,21 @@ protected:
 
 
 //-----------------------------------------------------------------------------
-class DGValueSpot : public DGControl<CControl>
+class DGValueSpot : public DGControl<VSTGUI::CControl>
 {
 public:
 	DGValueSpot(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, double inValue);
 
-	void draw(CDrawContext* inContext) override;
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
+	void draw(VSTGUI::CDrawContext* inContext) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 
-	CLASS_METHODS(DGValueSpot, CControl)
+	CLASS_METHODS(DGValueSpot, VSTGUI::CControl)
 
 private:
 	float const mValueToSet;
-	CPoint mLastMousePos;
+	VSTGUI::CPoint mLastMousePos;
 	bool mButtonIsPressed = false;
 };
 
@@ -142,10 +142,10 @@ class DGWebLink : public DGButton
 public:
 	DGWebLink(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inImage, char const* inURL);
 
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
-	bool onWheel(CPoint const&, float const&, CButtonState const&) override
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	bool onWheel(VSTGUI::CPoint const&, float const&, VSTGUI::CButtonState const&) override
 	{
 		return false;
 	}
@@ -159,10 +159,10 @@ private:
 
 
 //-----------------------------------------------------------------------------
-class DGSplashScreen : public DGControl<CSplashScreen>
+class DGSplashScreen : public DGControl<VSTGUI::CSplashScreen>
 {
 public:
 	DGSplashScreen(DfxGuiEditor* inOwnerEditor, DGRect const& inClickRegion, DGImage* inSplashImage);
 
-	CLASS_METHODS(DGSplashScreen, CSplashScreen)
+	CLASS_METHODS(DGSplashScreen, VSTGUI::CSplashScreen)
 };

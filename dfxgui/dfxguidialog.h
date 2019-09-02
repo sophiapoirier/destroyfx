@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2018  Sophia Poirier
+Copyright (C) 2015-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -31,7 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-class DGDialog : public CViewContainer, public IControlListener
+class DGDialog : public VSTGUI::CViewContainer, public VSTGUI::IControlListener
 {
 public:
 	typedef unsigned int Buttons;
@@ -63,19 +63,19 @@ public:
 	int32_t onKeyUp(VstKeyCode& inKeyCode) override;
 
 	// CViewContainer overrides
-	void drawBackgroundRect(CDrawContext* inContext, CRect const& inUpdateRect) override;
-	bool attached(CView* inParent) override;
+	void drawBackgroundRect(VSTGUI::CDrawContext* inContext, VSTGUI::CRect const& inUpdateRect) override;
+	bool attached(VSTGUI::CView* inParent) override;
 
 	// IControlListener override
-	void valueChanged(CControl* inControl) override;
+	void valueChanged(VSTGUI::CControl* inControl) override;
 
-	bool runModal(CFrame* inFrame, Listener* inListener);
-	bool runModal(CFrame* inFrame, DialogChoiceSelectedCallback&& inCallback);
+	bool runModal(VSTGUI::CFrame* inFrame, Listener* inListener);
+	bool runModal(VSTGUI::CFrame* inFrame, DialogChoiceSelectedCallback&& inCallback);
 	void close();
 
-	CTextButton* getButton(Selection inSelection) const;
+	VSTGUI::CTextButton* getButton(Selection inSelection) const;
 
-	CLASS_METHODS(DGDialog, CViewContainer)
+	CLASS_METHODS(DGDialog, VSTGUI::CViewContainer)
 
 private:
 	enum : Buttons
@@ -85,13 +85,13 @@ private:
 		kButtons_OtherBit = 1 << kSelection_Other,
 	};
 
-	bool runModal(CFrame* inFrame);
+	bool runModal(VSTGUI::CFrame* inFrame);
 	bool handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed);
 
 	Listener* mListener = nullptr;
 	DialogChoiceSelectedCallback mDialogChoiceSelectedCallback;
 
-	ModalViewSession* mModalViewSession = nullptr;
+	VSTGUI::ModalViewSession* mModalViewSession = nullptr;
 };
 
 
@@ -107,7 +107,7 @@ public:
 							   char const* inOkButtonTitle = nullptr, char const* inCancelButtonTitle = nullptr, char const* inOtherButtonTitle = nullptr);
 
 	// CBaseObject override
-	CMessageResult notify(CBaseObject* inSender, IdStringPtr inMessage) override;
+	VSTGUI::CMessageResult notify(VSTGUI::CBaseObject* inSender, VSTGUI::IdStringPtr inMessage) override;
 
 	void setText(std::string const& inText);
 	std::string getText() const;
@@ -118,5 +118,5 @@ public:
 
 private:
 	long const mParameterID;
-	CTextEdit* mTextEdit = nullptr;
+	VSTGUI::CTextEdit* mTextEdit = nullptr;
 };

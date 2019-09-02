@@ -48,52 +48,52 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-class DGRect : public CRect
+class DGRect : public VSTGUI::CRect
 {
 public:
 	constexpr DGRect() = default;
-	constexpr DGRect(CCoord inX, CCoord inY, CCoord inWidth, CCoord inHeight)
-	:	CRect(inX, inY, inX + inWidth, inY + inHeight)
+	constexpr DGRect(VSTGUI::CCoord inX, VSTGUI::CCoord inY, VSTGUI::CCoord inWidth, VSTGUI::CCoord inHeight)
+	:	VSTGUI::CRect(inX, inY, inX + inWidth, inY + inHeight)
 	{
 	}
 	constexpr DGRect(DGRect const& other)
-	:	CRect(other)
+	:	VSTGUI::CRect(other)
 	{
 	}
-	constexpr DGRect(CRect const& other)
-	:	CRect(other)
+	constexpr DGRect(VSTGUI::CRect const& other)
+	:	VSTGUI::CRect(other)
 	{
 	}
-	void set(CCoord inX, CCoord inY, CCoord inWidth, CCoord inHeight)
+	void set(VSTGUI::CCoord inX, VSTGUI::CCoord inY, VSTGUI::CCoord inWidth, VSTGUI::CCoord inHeight)
 	{
 		left = inX;
 		top = inY;
 		right = inX + inWidth;
 		bottom = inY + inHeight;
 	}
-	void setX(CCoord inX)
+	void setX(VSTGUI::CCoord inX)
 	{
 		moveTo(inX, top);
 	}
-	void setY(CCoord inY)
+	void setY(VSTGUI::CCoord inY)
 	{
 		moveTo(left, inY);
 	}
-	void setSize(CCoord inWidth, CCoord inHeight)
+	void setSize(VSTGUI::CCoord inWidth, VSTGUI::CCoord inHeight)
 	{
-		CRect::setSize(CPoint(inWidth, inHeight));
+		VSTGUI::CRect::setSize(VSTGUI::CPoint(inWidth, inHeight));
 	}
-	constexpr bool isInside(CCoord inX, CCoord inY)
+	constexpr bool isInside(VSTGUI::CCoord inX, VSTGUI::CCoord inY)
 	{
-		return pointInside(CPoint(inX, inY));
+		return pointInside(VSTGUI::CPoint(inX, inY));
 	}
-	constexpr bool isInside_local(CCoord inX, CCoord inY)
+	constexpr bool isInside_local(VSTGUI::CCoord inX, VSTGUI::CCoord inY)
 	{
-		return pointInside(CPoint(inX + left, inY + top));
+		return pointInside(VSTGUI::CPoint(inX + left, inY + top));
 	}
 
 #if 0 && TARGET_OS_MAC
-	void copyToCGRect(CGRect * outDestRect, long inOutputPortHeight)
+	void copyToCGRect(CGRect* outDestRect, long inOutputPortHeight)
 	{
 		outDestRect->origin.x = left;
 #ifdef FLIP_CG_COORDINATES
@@ -120,8 +120,6 @@ public:
 
 #ifdef TARGET_API_RTAS
 
-USING_NAMESPACE_VSTGUI
-
 //-----------------------------------------------------------------------------
 enum
 {
@@ -139,11 +137,11 @@ enum
 
 //-----------------------------------------------------------------------------
 // 3-component RGB color + alpha
-class DGColor : public CColor
+class DGColor : public VSTGUI::CColor
 {
 public:
-	static constexpr auto kBlack = kBlackCColor;
-	static constexpr auto kWhite = kWhiteCColor;
+	static constexpr auto kBlack = VSTGUI::kBlackCColor;
+	static constexpr auto kWhite = VSTGUI::kWhiteCColor;
 
 	enum class System
 	{
@@ -176,7 +174,7 @@ public:
 		blue = componentFromFloat(inBlue);
 		alpha = componentFromFloat(inAlpha);
 	}
-	constexpr DGColor(CColor const& inColor)
+	constexpr DGColor(VSTGUI::CColor const& inColor)
 	{
 		red = inColor.red;
 		green = inColor.green;
@@ -245,10 +243,10 @@ public:
 	TARGET_PLATFORM_GRAPHICS_CONTEXT getPlatformGraphicsContext()
 		{	return context;	}
 
-	void setFont(const char * inFontName, float inFontSize);
-	void drawText(DGRect * inRegion, const char * inText, dfx::TextAlignment inAlignment = kDGTextAlign_left);
+	void setFont(char const* inFontName, float inFontSize);
+	void drawText(DGRect* inRegion, char const* inText, dfx::TextAlignment inAlignment = kDGTextAlign_left);
 #if TARGET_OS_MAC
-	OSStatus drawCFText(DGRect * inRegion, CFStringRef inText, dfx::TextAlignment inAlignment);
+	OSStatus drawCFText(DGRect* inRegion, CFStringRef inText, dfx::TextAlignment inAlignment);
 #endif
 
 #if TARGET_OS_MAC
@@ -292,15 +290,15 @@ private:
    or default params so that it behaves like a single image when not
    using those features) */
 //-----------------------------------------------------------------------------
-class DGImage : public CBitmap
+class DGImage : public VSTGUI::CBitmap
 {
 public:
-	using CBitmap::CBitmap;
+	using VSTGUI::CBitmap::CBitmap;
 
 /*	probably a better interface is:
-	void draw(CCoord x, CCoord y);
+	void draw(VSTGUI::CCoord x, VSTGUI::CCoord y);
 	and also something like this for stacked images:
-	void drawex(CCoord x, CCoord y, int xIndex, int yIndex); 
+	void drawex(VSTGUI::CCoord x, VSTGUI::CCoord y, int xIndex, int yIndex); 
 */
 };
 
@@ -313,7 +311,7 @@ namespace dfx
 static constexpr char const* const kInfinityUTF8 = u8"\U0000221E";
 static constexpr char const* const kPlusMinusUTF8 = u8"\U000000B1";
 
-SharedPointer<CFontDesc> CreateVstGuiFont(float inFontSize, const char* inFontName = nullptr);
+VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr);
 
 std::string SanitizeNumericalInput(std::string const& inText);
 

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,61 +28,61 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-class DGSlider : public DGControl<CSlider>
+class DGSlider : public DGControl<VSTGUI::CSlider>
 {
 public:
 	DGSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
 			 dfx::Axis inOrientation, DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, long inRangeMargin = 0);
 
 #ifdef TARGET_API_RTAS
-	void draw(CDrawContext* inContext) override;
+	void draw(VSTGUI::CDrawContext* inContext) override;
 #endif
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 
-	void setHandle(CBitmap* inHandle) override;
-	void setAlternateHandle(CBitmap* inHandle);
+	void setHandle(VSTGUI::CBitmap* inHandle) override;
+	void setAlternateHandle(VSTGUI::CBitmap* inHandle);
 	void setUseAlternateHandle(bool inEnable);
 
 #if TARGET_PLUGIN_USES_MIDI
 	void setMidiLearner(bool inEnable) override;
 #endif
 
-	CLASS_METHODS(DGSlider, CSlider)
+	CLASS_METHODS(DGSlider, VSTGUI::CSlider)
 
 private:
-	SharedPointer<CBitmap> mMainHandleImage;
-	SharedPointer<CBitmap> mAlternateHandleImage;
+	VSTGUI::SharedPointer<VSTGUI::CBitmap> mMainHandleImage;
+	VSTGUI::SharedPointer<VSTGUI::CBitmap> mAlternateHandleImage;
 };
 
 
 
 #pragma mark -
 //-----------------------------------------------------------------------------
-class DGAnimation : public DGControl<CAnimKnob>
+class DGAnimation : public DGControl<VSTGUI::CAnimKnob>
 {
 public:
 	DGAnimation(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion,  
 				DGImage* inAnimationImage, long inNumAnimationFrames, DGImage* inBackground = nullptr);
 
 #ifdef TARGET_API_RTAS
-	void draw(CDrawContext* inContext) override;
+	void draw(VSTGUI::CDrawContext* inContext) override;
 #endif
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseMoved(CPoint& inPos, CButtonState const& inButtons) override;
-	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 
 	void setMouseAxis(dfx::Axis inMouseAxis) noexcept
 	{
 		mMouseAxis = inMouseAxis;
 	}
 
-	CLASS_METHODS(DGAnimation, CAnimKnob)
+	CLASS_METHODS(DGAnimation, VSTGUI::CAnimKnob)
 
 private:
-	CPoint constrainMousePosition(CPoint const& inPos) const noexcept;
+	VSTGUI::CPoint constrainMousePosition(VSTGUI::CPoint const& inPos) const noexcept;
 
 	dfx::Axis mMouseAxis = dfx::kAxis_Omni;
-	CPoint mEntryMousePos;
+	VSTGUI::CPoint mEntryMousePos;
 };

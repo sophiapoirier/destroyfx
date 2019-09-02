@@ -30,29 +30,29 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-constexpr CCoord kContentMargin = 20.0;
-constexpr CCoord kButtonSpacing = 12.0;
-constexpr CCoord kButtonHeight = 20.0;
-constexpr CCoord kTextLabelHeight = 14.0;
-constexpr CCoord kTextEditHeight = 20.0;
-constexpr CCoord kFocusIndicatorThickness = 2.4;
+constexpr VSTGUI::CCoord kContentMargin = 20.0;
+constexpr VSTGUI::CCoord kButtonSpacing = 12.0;
+constexpr VSTGUI::CCoord kButtonHeight = 20.0;
+constexpr VSTGUI::CCoord kTextLabelHeight = 14.0;
+constexpr VSTGUI::CCoord kTextEditHeight = 20.0;
+constexpr VSTGUI::CCoord kFocusIndicatorThickness = 2.4;
 
 
 //-----------------------------------------------------------------------------
 namespace
 {
-static bool DFXGUI_PressButton(CTextButton* inButton, bool inState)
+static bool DFXGUI_PressButton(VSTGUI::CTextButton* inButton, bool inState)
 {
 	if (inButton)
 	{
 		auto mousePos = inButton->getMouseableArea().getCenter();
 		if (inState)
 		{
-			inButton->onMouseDown(mousePos, CButtonState(kLButton));
+			inButton->onMouseDown(mousePos, VSTGUI::CButtonState(VSTGUI::kLButton));
 		}
 		else
 		{
-			inButton->onMouseUp(mousePos, CButtonState());
+			inButton->onMouseUp(mousePos, VSTGUI::CButtonState());
 		}
 		return true;
 	}
@@ -64,11 +64,11 @@ static bool DFXGUI_PressButton(CTextButton* inButton, bool inState)
 //-----------------------------------------------------------------------------
 // Dialog Button
 //-----------------------------------------------------------------------------
-class DGDialogButton : public CTextButton
+class DGDialogButton : public VSTGUI::CTextButton
 {
 public:
-	DGDialogButton(IControlListener* inListener, DGRect const& inRegion, DGDialog::Selection inSelection, UTF8StringPtr inTitle)
-	:	CTextButton(inRegion, inListener, inSelection, inTitle, CTextButton::kKickStyle),
+	DGDialogButton(VSTGUI::IControlListener* inListener, DGRect const& inRegion, DGDialog::Selection inSelection, VSTGUI::UTF8StringPtr inTitle)
+	:	VSTGUI::CTextButton(inRegion, inListener, inSelection, inTitle, VSTGUI::CTextButton::kKickStyle),
 		mIsDefaultButton(inSelection == DGDialog::kSelection_OK)
 	{
 		sizeToFit();
@@ -87,9 +87,9 @@ public:
 		constexpr double gradientStart = 0.3, gradientEnd = 1.0;
 		auto const fillColor = mIsDefaultButton ? DGColor::getSystem(DGColor::System::Accent).withAlpha(accentFillAlpha) : DGColor::getSystem(DGColor::System::Control);
 		auto const fillColorTail = mIsDefaultButton ? fillColor.darker(gradientDarkAmount) : fillColor;
-		setGradient(owned(CGradient::create(gradientStart, gradientEnd, fillColor, fillColorTail)));
+		setGradient(VSTGUI::owned(VSTGUI::CGradient::create(gradientStart, gradientEnd, fillColor, fillColorTail)));
 		auto const fillColorHighlighted = DGColor::getSystem(DGColor::System::AccentPressed).withAlpha(accentFillAlpha);
-		setGradientHighlighted(owned(CGradient::create(gradientStart, gradientEnd, fillColorHighlighted, fillColorHighlighted.darker(gradientDarkAmount))));
+		setGradientHighlighted(VSTGUI::owned(VSTGUI::CGradient::create(gradientStart, gradientEnd, fillColorHighlighted, fillColorHighlighted.darker(gradientDarkAmount))));
 
 		looseFocus();  // HACK: trigger remaining frame styling
 	}
@@ -112,7 +112,7 @@ public:
 		{
 			return *result;
 		}
-		return CTextButton::onKeyDown(inKeyCode);
+		return VSTGUI::CTextButton::onKeyDown(inKeyCode);
 	}
 
 	int32_t onKeyUp(VstKeyCode& inKeyCode) override
@@ -121,7 +121,7 @@ public:
 		{
 			return *result;
 		}
-		return CTextButton::onKeyUp(inKeyCode);
+		return VSTGUI::CTextButton::onKeyUp(inKeyCode);
 	}
 
 	DGDialog::Selection getSelection() const
@@ -129,23 +129,23 @@ public:
 		return static_cast<DGDialog::Selection>(getTag());
 	}
 
-	void setX(CCoord inXpos)
+	void setX(VSTGUI::CCoord inXpos)
 	{
-		CRect newSize(getViewSize());
+		VSTGUI::CRect newSize(getViewSize());
 		newSize.moveTo(inXpos, newSize.top);
 		setViewSize(newSize);
 		setMouseableArea(newSize);
 	}
 
-	void setWidth(CCoord inWidth)
+	void setWidth(VSTGUI::CCoord inWidth)
 	{
-		CRect newSize(getViewSize());
+		VSTGUI::CRect newSize(getViewSize());
 		newSize.setWidth(inWidth);
 		setViewSize(newSize);
 		setMouseableArea(newSize);
 	}
 
-	CLASS_METHODS(DGDialogButton, CTextButton)
+	CLASS_METHODS(DGDialogButton, VSTGUI::CTextButton)
 
 private:
 	std::optional<int32_t> handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed)
@@ -177,40 +177,40 @@ private:
 //-----------------------------------------------------------------------------
 // Dialog Text Edit
 //-----------------------------------------------------------------------------
-class DGDialogTextEdit : public CTextEdit
+class DGDialogTextEdit : public VSTGUI::CTextEdit
 {
 public:
-	DGDialogTextEdit(CRect const& inRegion, IControlListener* inListener)
-	:	CTextEdit(inRegion, inListener, dfx::kParameterID_Invalid)
+	DGDialogTextEdit(VSTGUI::CRect const& inRegion, VSTGUI::IControlListener* inListener)
+	:	VSTGUI::CTextEdit(inRegion, inListener, dfx::kParameterID_Invalid)
 	{
 		setFontColor(DGColor::getSystem(DGColor::System::Text));
 		setBackColor(DGColor::getSystem(DGColor::System::TextBackground));
 		setFrameColor(DGColor::getSystem(DGColor::System::WindowFrame));
-		setHoriAlign(kCenterText);
+		setHoriAlign(VSTGUI::kCenterText);
 		setStyle(kRoundRectStyle);
 		setRoundRectRadius(3.0);
 	}
 
-	void draw(CDrawContext* inContext) override
+	void draw(VSTGUI::CDrawContext* inContext) override
 	{
-		CTextEdit::draw(inContext);
+		VSTGUI::CTextEdit::draw(inContext);
 
 		// add a thicker control-focus highlight (mimic macOS native text input field)
 		if (getPlatformTextEdit())
 		{
 			auto highlightRect = getViewSize();
 			highlightRect.inset(kFocusIndicatorThickness / 2.0, kFocusIndicatorThickness / 2.0);
-			if (auto const path = owned(inContext->createRoundRectGraphicsPath(highlightRect, getRoundRectRadius())))
+			if (auto const path = VSTGUI::owned(inContext->createRoundRectGraphicsPath(highlightRect, getRoundRectRadius())))
 			{
-				inContext->setLineStyle(kLineSolid);
+				inContext->setLineStyle(VSTGUI::kLineSolid);
 				inContext->setLineWidth(kFocusIndicatorThickness);
 				inContext->setFrameColor(DGColor::getSystem(DGColor::System::FocusIndicator));
-				inContext->drawGraphicsPath(path, CDrawContext::kPathStroked);
+				inContext->drawGraphicsPath(path, VSTGUI::CDrawContext::kPathStroked);
 			}
 		}
 	}
 
-	CLASS_METHODS(DGDialogTextEdit, CTextEdit)
+	CLASS_METHODS(DGDialogTextEdit, VSTGUI::CTextEdit)
 };
 
 
@@ -235,24 +235,24 @@ DGDialog::DGDialog(DGRect const& inRegion,
 				   char const* inOkButtonTitle, 
 				   char const* inCancelButtonTitle, 
 				   char const* inOtherButtonTitle)
-:	CViewContainer(inRegion)
+:	VSTGUI::CViewContainer(inRegion)
 {
 	if (!inMessage.empty())
 	{
 		// TODO: split text into multiple lines when it is too long to fit on a single line
 		DGRect const pos(kContentMargin, kContentMargin, getWidth() - (kContentMargin * 2.0), kTextLabelHeight);
-		if (auto const label = new CTextLabel(pos, UTF8String(inMessage)))
+		if (auto const label = new VSTGUI::CTextLabel(pos, VSTGUI::UTF8String(inMessage)))
 		{
 			label->setFontColor(DGColor::getSystem(DGColor::System::WindowTitle));
-			label->setBackColor(kTransparentCColor);
-			label->setFrameColor(kTransparentCColor);
-			label->setHoriAlign(kLeftText);
+			label->setBackColor(VSTGUI::kTransparentCColor);
+			label->setFrameColor(VSTGUI::kTransparentCColor);
+			label->setHoriAlign(VSTGUI::kLeftText);
 			if (auto const currentFont = label->getFont())
 			{
-				auto const newFont = makeOwned<CFontDesc>(*currentFont);
+				auto const newFont = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*currentFont);
 				if (newFont)
 				{
-					newFont->setStyle(newFont->getStyle() | kBoldFace);
+					newFont->setStyle(newFont->getStyle() | VSTGUI::kBoldFace);
 					label->setFont(newFont);
 				}
 			}
@@ -319,7 +319,7 @@ DGDialog::DGDialog(DGRect const& inRegion,
 	{
 		auto const button = buttons[i];
 		DGDialogButton* const prevButton = (i == 0) ? nullptr : buttons[i - 1];
-		CCoord rightPos;
+		VSTGUI::CCoord rightPos{};
 		if (prevButton)
 		{
 			auto const spacer = (button == otherButton) ? std::max(kContentMargin, kButtonSpacing) : kButtonSpacing;
@@ -330,7 +330,7 @@ DGDialog::DGDialog(DGRect const& inRegion,
 			rightPos = inRegion.right - kContentMargin;
 		}
 		button->setX(std::round(rightPos - button->getWidth()));
-		button->setAutosizeFlags(kAutosizeRight);
+		button->setAutosizeFlags(VSTGUI::kAutosizeRight);
 		leftmostButtonX = button->getViewSize().left;
 	}
 	if (leftmostButtonX < kContentMargin)
@@ -350,7 +350,7 @@ int32_t DGDialog::onKeyDown(VstKeyCode& inKeyCode)
 	{
 		return dfx::kKeyEventHandled;
 	}
-	return CViewContainer::onKeyDown(inKeyCode);
+	return VSTGUI::CViewContainer::onKeyDown(inKeyCode);
 }
 
 //-----------------------------------------------------------------------------
@@ -360,7 +360,7 @@ int32_t DGDialog::onKeyUp(VstKeyCode& inKeyCode)
 	{
 		return dfx::kKeyEventHandled;
 	}
-	return CViewContainer::onKeyUp(inKeyCode);
+	return VSTGUI::CViewContainer::onKeyUp(inKeyCode);
 }
 
 //-----------------------------------------------------------------------------
@@ -378,24 +378,24 @@ bool DGDialog::handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed)
 }
 
 //-----------------------------------------------------------------------------
-void DGDialog::drawBackgroundRect(CDrawContext* inContext, CRect const& inUpdateRect)
+void DGDialog::drawBackgroundRect(VSTGUI::CDrawContext* inContext, VSTGUI::CRect const& inUpdateRect)
 {
 	inContext->setFillColor(DGColor::getSystem(DGColor::System::WindowBackground));
 	inContext->setFrameColor(DGColor::getSystem(DGColor::System::WindowFrame));
-	inContext->setDrawMode(kAliasing);
+	inContext->setDrawMode(VSTGUI::kAliasing);
 	inContext->setLineWidth(1.0);
-	inContext->setLineStyle(kLineSolid);
+	inContext->setLineStyle(VSTGUI::kLineSolid);
 
 	// not sure why we should ignore supplied region argument, however this is what the base class does
-	CRect drawRect(getViewSize());
+	VSTGUI::CRect drawRect(getViewSize());
 	drawRect.moveTo(0.0, 0.0);
-	inContext->drawRect(drawRect, kDrawFilledAndStroked);
+	inContext->drawRect(drawRect, VSTGUI::kDrawFilledAndStroked);
 }
 
 //-----------------------------------------------------------------------------
-bool DGDialog::attached(CView* inParent)
+bool DGDialog::attached(VSTGUI::CView* inParent)
 {
-	auto const result = CViewContainer::attached(inParent);
+	auto const result = VSTGUI::CViewContainer::attached(inParent);
 
 	if (result && inParent && inParent->getFrame())
 	{
@@ -424,7 +424,7 @@ bool DGDialog::attached(CView* inParent)
 }
 
 //-----------------------------------------------------------------------------
-void DGDialog::valueChanged(CControl* inControl)
+void DGDialog::valueChanged(VSTGUI::CControl* inControl)
 {
 	auto const button = dynamic_cast<DGDialogButton*>(inControl);
 	if (button && (button->getValue() > button->getMin()))
@@ -450,7 +450,7 @@ void DGDialog::valueChanged(CControl* inControl)
 }
 
 //-----------------------------------------------------------------------------
-bool DGDialog::runModal(CFrame* inFrame, Listener* inListener)
+bool DGDialog::runModal(VSTGUI::CFrame* inFrame, Listener* inListener)
 {
 	assert(inListener);
 	mListener = inListener;
@@ -458,7 +458,7 @@ bool DGDialog::runModal(CFrame* inFrame, Listener* inListener)
 }
 
 //-----------------------------------------------------------------------------
-bool DGDialog::runModal(CFrame* inFrame, DialogChoiceSelectedCallback&& inCallback)
+bool DGDialog::runModal(VSTGUI::CFrame* inFrame, DialogChoiceSelectedCallback&& inCallback)
 {
 	assert(inCallback);
 	mDialogChoiceSelectedCallback = std::move(inCallback);
@@ -466,7 +466,7 @@ bool DGDialog::runModal(CFrame* inFrame, DialogChoiceSelectedCallback&& inCallba
 }
 
 //-----------------------------------------------------------------------------
-bool DGDialog::runModal(CFrame* inFrame)
+bool DGDialog::runModal(VSTGUI::CFrame* inFrame)
 {
 	assert(inFrame);
 	mModalViewSession = inFrame->beginModalViewSession(this);
@@ -493,7 +493,7 @@ void DGDialog::close()
 }
 
 //-----------------------------------------------------------------------------
-CTextButton* DGDialog::getButton(Selection inSelection) const
+VSTGUI::CTextButton* DGDialog::getButton(Selection inSelection) const
 {
 	for (auto const& child : getChildren())
 	{
@@ -525,19 +525,19 @@ DGTextEntryDialog::DGTextEntryDialog(long inParamID, std::string const& inMessag
 :	DGDialog(DGRect(0.0, 0.0, 247.0, 134.0), inMessage, inButtons, inOkButtonTitle, inCancelButtonTitle, inOtherButtonTitle), 
 	mParameterID(inParamID)
 {
-	constexpr CCoord labelEditHeightOffset = (kTextEditHeight - kTextLabelHeight) / 2.0;
+	constexpr VSTGUI::CCoord labelEditHeightOffset = (kTextEditHeight - kTextLabelHeight) / 2.0;
 
 	DGRect pos(getViewSize());
 	pos.moveTo(0.0, 0.0);
 	pos.inset(kContentMargin, kContentMargin);
 	pos.setHeight(kTextLabelHeight);
 	pos.setY(getHeight() - pos.getHeight() - labelEditHeightOffset - kButtonHeight - (kContentMargin * 2.0));
-	if (CTextLabel* const label = inTextEntryLabel ? new CTextLabel(pos, inTextEntryLabel) : nullptr)
+	if (VSTGUI::CTextLabel* const label = inTextEntryLabel ? new VSTGUI::CTextLabel(pos, inTextEntryLabel) : nullptr)
 	{
 		label->setFontColor(DGColor::getSystem(DGColor::System::Label));
-		label->setBackColor(kTransparentCColor);
-		label->setFrameColor(kTransparentCColor);
-		label->setHoriAlign(kLeftText);
+		label->setBackColor(VSTGUI::kTransparentCColor);
+		label->setFrameColor(VSTGUI::kTransparentCColor);
+		label->setHoriAlign(VSTGUI::kLeftText);
 		label->sizeToFit();
 		addView(label);
 
@@ -564,16 +564,16 @@ DGTextEntryDialog::DGTextEntryDialog(std::string const& inMessage,
 }
 
 //-----------------------------------------------------------------------------
-CMessageResult DGTextEntryDialog::notify(CBaseObject* inSender, IdStringPtr inMessage)
+VSTGUI::CMessageResult DGTextEntryDialog::notify(VSTGUI::CBaseObject* inSender, VSTGUI::IdStringPtr inMessage)
 {
 	// allow return key in the text edit to additionally trigger the default button
-	if (auto const textEdit = dynamic_cast<CTextEdit*>(inSender))
+	if (auto const textEdit = dynamic_cast<VSTGUI::CTextEdit*>(inSender))
 	{
-		if ((strcmp(inMessage, kMsgLooseFocus) == 0) && textEdit->bWasReturnPressed)
+		if ((strcmp(inMessage, VSTGUI::kMsgLooseFocus) == 0) && textEdit->bWasReturnPressed)
 		{
 			if (DFXGUI_PressButton(getButton(kSelection_OK), true))
 			{
-				return kMessageNotified;
+				return VSTGUI::kMessageNotified;
 			}
 		}
 	}
@@ -585,7 +585,7 @@ void DGTextEntryDialog::setText(std::string const& inText)
 {
 	if (mTextEdit)
 	{
-		mTextEdit->setText(UTF8String(inText));
+		mTextEdit->setText(VSTGUI::UTF8String(inText));
 	}
 }
 
