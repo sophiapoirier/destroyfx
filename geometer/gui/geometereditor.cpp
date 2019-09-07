@@ -124,7 +124,7 @@ GeometerHelpBox::GeometerHelpBox(DGRect const & inRegion, DGImage * inBackground
 }
 
 //--------------------------------------------------------------------------
-void GeometerHelpBox::draw(CDrawContext * inContext) {
+void GeometerHelpBox::draw(VSTGUI::CDrawContext * inContext) {
 
   if (itemNum < 0)
     return;
@@ -162,13 +162,13 @@ void GeometerHelpBox::draw(CDrawContext * inContext) {
     while (std::getline(stream, line)) {
       if (!std::exchange(headerDrawn, true)) {
         setFontColor(DGColor::kBlack);
-        drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+        drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
         textpos.offset(-1, 0);
-        drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+        drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
         textpos.offset(1, 16);
         setFontColor(DGColor::kWhite);
       } else {
-        drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+        drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
         textpos.offset(0, 12);
       }
     }

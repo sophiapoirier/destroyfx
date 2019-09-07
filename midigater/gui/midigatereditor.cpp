@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -117,13 +117,13 @@ long MIDIGaterEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
-	auto const slopeSliderHandleImage = makeOwned<DGImage>("slider-handle-slope.png");
-	auto const slopeSliderHandleImage_glowing = makeOwned<DGImage>("slider-handle-slope-glowing.png");
-	auto const floorSliderHandleImage = makeOwned<DGImage>("slider-handle-floor.png");
-	auto const floorSliderHandleImage_glowing = makeOwned<DGImage>("slider-handle-floor-glowing.png");
-	auto const velocityInfluenceSliderHandleImage = makeOwned<DGImage>("slider-handle-velocity-influence.png");
-	auto const velocityInfluenceSliderHandleImage_glowing = makeOwned<DGImage>("slider-handle-velocity-influence-glowing.png");
-	auto const destroyFXLinkButtonImage = makeOwned<DGImage>("destroy-fx-link-button.png");
+	auto const slopeSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-slope.png");
+	auto const slopeSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-slope-glowing.png");
+	auto const floorSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-floor.png");
+	auto const floorSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-floor-glowing.png");
+	auto const velocityInfluenceSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-velocity-influence.png");
+	auto const velocityInfluenceSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-velocity-influence-glowing.png");
+	auto const destroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link-button.png");
 
 
 	//--create the controls-------------------------------------

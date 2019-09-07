@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -89,14 +89,14 @@ long MonomakerEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
-	auto const sliderHandleImage = makeOwned<DGImage>("slider-handle.png");
-	auto const monomergeAnimationImage = makeOwned<DGImage>("monomerge-blobs.png");
-	auto const panAnimationImage = makeOwned<DGImage>("pan-blobs.png");
+	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
+	auto const monomergeAnimationImage = VSTGUI::makeOwned<DGImage>("monomerge-blobs.png");
+	auto const panAnimationImage = VSTGUI::makeOwned<DGImage>("pan-blobs.png");
 
-	auto const inputSelectionButtonImage = makeOwned<DGImage>("input-selection-button.png");
-	auto const monomergeModeButtonImage = makeOwned<DGImage>("monomerge-mode-button.png");
-	auto const panModeButtonImage = makeOwned<DGImage>("pan-mode-button.png");
-	auto const destroyFXLinkImage = makeOwned<DGImage>("destroy-fx-link.png");
+	auto const inputSelectionButtonImage = VSTGUI::makeOwned<DGImage>("input-selection-button.png");
+	auto const monomergeModeButtonImage = VSTGUI::makeOwned<DGImage>("monomerge-mode-button.png");
+	auto const panModeButtonImage = VSTGUI::makeOwned<DGImage>("pan-mode-button.png");
+	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
 
 
 

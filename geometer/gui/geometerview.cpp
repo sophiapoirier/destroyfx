@@ -24,16 +24,16 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cmath>
 
-constexpr auto coldwave = MakeCColor(75, 151, 71);
-constexpr auto cnewwave = MakeCColor(240, 255, 160);
-constexpr auto cpointoutside = MakeCColor(0, 0, 0);
-constexpr auto cpointinside = MakeCColor(220, 100, 200);
-//constexpr auto cbackground = MakeCColor(17, 25, 16);
-constexpr auto cbackground = MakeCColor(20, 50, 20);
-constexpr auto zeroline = MakeCColor(52, 71, 49);
+constexpr auto coldwave = VSTGUI::MakeCColor(75, 151, 71);
+constexpr auto cnewwave = VSTGUI::MakeCColor(240, 255, 160);
+constexpr auto cpointoutside = VSTGUI::MakeCColor(0, 0, 0);
+constexpr auto cpointinside = VSTGUI::MakeCColor(220, 100, 200);
+//constexpr auto cbackground = VSTGUI::MakeCColor(17, 25, 16);
+constexpr auto cbackground = VSTGUI::MakeCColor(20, 50, 20);
+constexpr auto zeroline = VSTGUI::MakeCColor(52, 71, 49);
 
-GeometerView::GeometerView(CRect const & size, PLUGIN * listener)
-  : CView(size),
+GeometerView::GeometerView(VSTGUI::CRect const & size, PLUGIN * listener)
+  : VSTGUI::CView(size),
 #if TARGET_PLUGIN_USES_DSPCORE
     geom(dynamic_cast<PLUGINCORE*>(listener->getplugincore(0))),
 #else
@@ -55,12 +55,12 @@ GeometerView::GeometerView(CRect const & size, PLUGIN * listener)
 
 
  
-bool GeometerView::attached(CView * parent) {
+bool GeometerView::attached(VSTGUI::CView * parent) {
 
-  auto const success = CView::attached(parent);
+  auto const success = VSTGUI::CView::attached(parent);
 
   if (success) {
-    offc = COffscreenContext::create(getFrame(), getWidth(), getHeight());
+    offc = VSTGUI::COffscreenContext::create(getFrame(), getWidth(), getHeight());
 
     reflect();
   }
@@ -69,38 +69,38 @@ bool GeometerView::attached(CView * parent) {
 }
 
 
-void GeometerView::draw(CDrawContext * ctx) {
+void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
 
   if (!offc || inputs.empty() || outputs.empty()) return; /* not ready yet */
 
-  auto const signedlinear2y = [height = getHeight()](float value) -> CCoord {
+  auto const signedlinear2y = [height = getHeight()](float value) -> VSTGUI::CCoord {
     return height * (-value + 1.0) * 0.5;
   };
 
   offc->beginDraw();
 
   offc->setFillColor(cbackground);
-  offc->drawRect(CRect(-1, -1, getWidth(), getHeight()), kDrawFilled);
+  offc->drawRect(VSTGUI::CRect(-1, -1, getWidth(), getHeight()), VSTGUI::kDrawFilled);
 
   offc->setFrameColor(zeroline);
-  CCoord const centery = std::floor(getHeight() / 2.0);
-  offc->drawLine(CPoint(0, centery), CPoint(getWidth(), centery));
+  VSTGUI::CCoord const centery = std::floor(getHeight() / 2.0);
+  offc->drawLine(VSTGUI::CPoint(0, centery), VSTGUI::CPoint(getWidth(), centery));
 
-  CCoord const start = (apts < getWidth()) ? ((std::lround(getWidth()) - apts) >> 1) : 0;
-  CDrawContext::LinePair line;
+  VSTGUI::CCoord const start = (apts < getWidth()) ? ((std::lround(getWidth()) - apts) >> 1) : 0;
+  VSTGUI::CDrawContext::LinePair line;
 //  VSTGUI::SharedPointer const path(ctx->createGraphicsPath(), false);
 
   offc->setFrameColor(coldwave);
-  line.first = line.second = CPoint(start, signedlinear2y(inputs.front()));
+  line.first = line.second = VSTGUI::CPoint(start, signedlinear2y(inputs.front()));
   for (int i = 1; i < apts; i ++) {
-    line.first = std::exchange(line.second, CPoint(start + i, signedlinear2y(inputs[i])));
+    line.first = std::exchange(line.second, VSTGUI::CPoint(start + i, signedlinear2y(inputs[i])));
     offc->drawLine(line);
   }
 
   offc->setFrameColor(cnewwave);
-  line.first = line.second = CPoint(start, signedlinear2y(outputs.front()));
+  line.first = line.second = VSTGUI::CPoint(start, signedlinear2y(outputs.front()));
   for (int i = 1; i < apts; i ++) {
-    line.first = std::exchange(line.second, CPoint(start + i, signedlinear2y(outputs[i])));
+    line.first = std::exchange(line.second, VSTGUI::CPoint(start + i, signedlinear2y(outputs[i])));
     offc->drawLine(line);
   }
 
@@ -110,14 +110,14 @@ void GeometerView::draw(CDrawContext * ctx) {
     constexpr int pointsize = 1;
     auto const yy = static_cast<int>(signedlinear2y(pointsy[i]));
 
-    CRect box(start + pointsx[i] - bordersize, yy - bordersize,
-              start + pointsx[i] + bordersize + pointsize, yy + bordersize + pointsize);
+    VSTGUI::CRect box(start + pointsx[i] - bordersize, yy - bordersize,
+                      start + pointsx[i] + bordersize + pointsize, yy + bordersize + pointsize);
     offc->setFillColor(cpointoutside);
-    offc->drawRect(box, kDrawFilled);
+    offc->drawRect(box, VSTGUI::kDrawFilled);
 
     box.inset(bordersize, bordersize);
     offc->setFillColor(cpointinside);
-    offc->drawRect(box, kDrawFilled);
+    offc->drawRect(box, VSTGUI::kDrawFilled);
   }
 #endif
 
