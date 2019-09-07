@@ -169,7 +169,7 @@ bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTex
 	filteredText.erase(std::remove_copy_if(inText.cbegin(), inText.cend(), filteredText.begin(), [](auto character)
 										   {
 											   return !(isnumber(character) || isspace(character) || (character == '-') || (character == '.'));
-										   }), filteredText.end());
+										   }), filteredText.cend());
 
 	float octaves = 0.0f, semitones = 0.0f;
 	auto const scanCount = sscanf(filteredText.c_str(), "%f%f", &octaves, &semitones);
@@ -288,7 +288,7 @@ double nearestIntegerAbove(double number)
 }
 
 //-----------------------------------------------------------------------------
-CMouseEventResult TransverbSpeedTuneButton::onMouseDown(CPoint& inPos, CButtonState const& inButtons)
+VSTGUI::CMouseEventResult TransverbSpeedTuneButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
 	if ((mTuneMode == kSpeedMode_Fine) || !inButtons.isLeftButton())
 	{
@@ -321,7 +321,7 @@ CMouseEventResult TransverbSpeedTuneButton::onMouseDown(CPoint& inPos, CButtonSt
 		invalid();
 	}
 
-	return kMouseEventHandled;
+	return VSTGUI::kMouseEventHandled;
 }
 
 
@@ -341,28 +341,28 @@ TransverbEditor::TransverbEditor(DGEditorListenerInstance inInstance)
 long TransverbEditor::OpenEditor()
 {
 	// slider handles
-	auto const horizontalSliderHandleImage = makeOwned<DGImage>("purple-wide-fader-handle.png");
-	auto const grayHorizontalSliderHandleImage = makeOwned<DGImage>("grey-wide-fader-handle.png");
-	auto const horizontalSliderHandleImage_glowing = makeOwned<DGImage>("wide-fader-handle-glowing.png");
-	auto const verticalSliderHandleImage = makeOwned<DGImage>("tall-fader-handle.png");
-	auto const verticalSliderHandleImage_glowing = makeOwned<DGImage>("tall-fader-handle-glowing.png");
+	auto const horizontalSliderHandleImage = VSTGUI::makeOwned<DGImage>("purple-wide-fader-handle.png");
+	auto const grayHorizontalSliderHandleImage = VSTGUI::makeOwned<DGImage>("grey-wide-fader-handle.png");
+	auto const horizontalSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("wide-fader-handle-glowing.png");
+	auto const verticalSliderHandleImage = VSTGUI::makeOwned<DGImage>("tall-fader-handle.png");
+	auto const verticalSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("tall-fader-handle-glowing.png");
 	// slider backgrounds
-	auto const horizontalSliderBackgroundImage = makeOwned<DGImage>("purple-wide-fader-slide.png");
-	auto const grayHorizontalSliderBackgroundImage = makeOwned<DGImage>("grey-wide-fader-slide.png");
-	auto const verticalSliderBackgroundImage = makeOwned<DGImage>("tall-fader-slide.png");
+	auto const horizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("purple-wide-fader-slide.png");
+	auto const grayHorizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("grey-wide-fader-slide.png");
+	auto const verticalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("tall-fader-slide.png");
 	// buttons
-	auto const qualityButtonImage = makeOwned<DGImage>("quality-button.png");
-	auto const tomsoundButtonImage = makeOwned<DGImage>("tomsound-button.png");
-	auto const freezeButtonImage = makeOwned<DGImage>("freeze-button.png");
-	auto const randomizeButtonImage = makeOwned<DGImage>("randomize-button.png");
-	auto const fineDownButtonImage = makeOwned<DGImage>("fine-down-button.png");
-	auto const fineUpButtonImage = makeOwned<DGImage>("fine-up-button.png");
-	auto const speedModeButtonImage = makeOwned<DGImage>("speed-mode-button.png");
-	auto const midiLearnButtonImage = makeOwned<DGImage>("midi-learn-button.png");
-	auto const midiResetButtonImage = makeOwned<DGImage>("midi-reset-button.png");
-	auto const dfxLinkButtonImage = makeOwned<DGImage>("dfx-link.png");
-	auto const superDestroyFXLinkButtonImage = makeOwned<DGImage>("super-destroy-fx-link.png");
-	auto const smartElectronixLinkButtonImage = makeOwned<DGImage>("smart-electronix-link.png");
+	auto const qualityButtonImage = VSTGUI::makeOwned<DGImage>("quality-button.png");
+	auto const tomsoundButtonImage = VSTGUI::makeOwned<DGImage>("tomsound-button.png");
+	auto const freezeButtonImage = VSTGUI::makeOwned<DGImage>("freeze-button.png");
+	auto const randomizeButtonImage = VSTGUI::makeOwned<DGImage>("randomize-button.png");
+	auto const fineDownButtonImage = VSTGUI::makeOwned<DGImage>("fine-down-button.png");
+	auto const fineUpButtonImage = VSTGUI::makeOwned<DGImage>("fine-up-button.png");
+	auto const speedModeButtonImage = VSTGUI::makeOwned<DGImage>("speed-mode-button.png");
+	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
+	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
+	auto const dfxLinkButtonImage = VSTGUI::makeOwned<DGImage>("dfx-link.png");
+	auto const superDestroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("super-destroy-fx-link.png");
+	auto const smartElectronixLinkButtonImage = VSTGUI::makeOwned<DGImage>("smart-electronix-link.png");
 
 
 
@@ -376,7 +376,7 @@ long TransverbEditor::OpenEditor()
 	tuneUpButtonPos.set(kFineUpButtonX, kFineButtonY, fineUpButtonImage->getWidth(), fineUpButtonImage->getHeight() / 2);
 	for (long tag = kSpeed1; tag <= kDist2; tag++)
 	{
-		CParamDisplayValueToStringProc displayProc = nullptr;
+		VSTGUI::CParamDisplayValueToStringProc displayProc = nullptr;
 		void* userData = nullptr;
 		if ((tag == kSpeed1) || (tag == kSpeed2))
 		{

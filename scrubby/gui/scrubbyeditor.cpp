@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -333,7 +333,7 @@ ScrubbyHelpBox::ScrubbyHelpBox(DGRect const& inRegion, DGImage* inBackground)
 }
 
 //--------------------------------------------------------------------------
-void ScrubbyHelpBox::draw(CDrawContext* inContext)
+void ScrubbyHelpBox::draw(VSTGUI::CDrawContext* inContext)
 {
 	if (mItemNum == kHelp_None)
 	{
@@ -357,15 +357,15 @@ void ScrubbyHelpBox::draw(CDrawContext* inContext)
 		if (!std::exchange(headerDrawn, true))
 		{
 			setFontColor(DGColor::kBlack);
-			drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
 			textpos.offset(1, 0);
-			drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
 			textpos.offset(-1, 13);
 			setFontColor(DGColor::kWhite);
 		}
 		else
 		{
-			drawPlatformText(inContext, UTF8String(line).getPlatformString(), textpos);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
 			textpos.offset(0, 11);
 		}
 	}
@@ -433,7 +433,7 @@ long ScrubbyEditor::OpenEditor()
 //	auto const keyboardOffImage = VSTGUI::makeOwned<DGImage>("keyboard-off.png");
 //	auto const keyboardOnImage = VSTGUI::makeOwned<DGImage>("keyboard-on.png");
 	//
-	SharedPointer<DGImage> keyboardTopKeyImages[kNumPitchSteps];
+	VSTGUI::SharedPointer<DGImage> keyboardTopKeyImages[kNumPitchSteps];
 	keyboardTopKeyImages[1] = keyboardTopKeyImages[3] = keyboardTopKeyImages[6] = keyboardTopKeyImages[8] = keyboardTopKeyImages[10] = VSTGUI::makeOwned<DGImage>("keyboard-black-key.png");
 	keyboardTopKeyImages[0] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-1.png");
 	keyboardTopKeyImages[2] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-2.png");
@@ -442,7 +442,7 @@ long ScrubbyEditor::OpenEditor()
 	keyboardTopKeyImages[7] = keyboardTopKeyImages[9] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-5-6.png");
 	keyboardTopKeyImages[11] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-7.png");
 	//
-	SharedPointer<DGImage> keyboardBottomKeyImages[kNumPitchSteps];
+	VSTGUI::SharedPointer<DGImage> keyboardBottomKeyImages[kNumPitchSteps];
 	keyboardBottomKeyImages[0] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-bottom-left.png");
 	keyboardBottomKeyImages[2] = keyboardBottomKeyImages[4] = keyboardBottomKeyImages[5] = keyboardBottomKeyImages[7] = keyboardBottomKeyImages[9] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-bottom.png");
 	keyboardBottomKeyImages[kNumPitchSteps - 1] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-bottom-right.png");
@@ -558,10 +558,10 @@ long ScrubbyEditor::OpenEditor()
 		{
 			auto const keyboardButton = static_cast<DGButton*>(button);
 			auto const editor = keyboardButton->getOwnerEditor();
-			editor->getFrame()->forEachChild([originalButton = keyboardButton->asCControl()](CView* child)
+			editor->getFrame()->forEachChild([originalButton = keyboardButton->asCControl()](VSTGUI::CView* child)
 			{
 				auto const paramID = originalButton->getTag();
-				auto const control = dynamic_cast<CControl*>(child);
+				auto const control = dynamic_cast<VSTGUI::CControl*>(child);
 				if (control && (control->getTag() == paramID) && (control != originalButton))
 				{
 					control->setValue(originalButton->getValue());

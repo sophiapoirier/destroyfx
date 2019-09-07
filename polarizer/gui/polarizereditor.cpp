@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -81,11 +81,11 @@ public:
 	:	DGSlider(inOwnerEditor, inParamID, inRegion, dfx::kAxis_Vertical, nullptr, inBackgroundImage), 
 		mHandleImage(inHandleImage)  // store handle image independently so that CSlider does not base control range on it
 	{
-		setOffsetHandle(CPoint(0, kSliderFrameThickness));
+		setOffsetHandle(VSTGUI::CPoint(0, kSliderFrameThickness));
 		setViewSize(inRegion, false);  // HACK to trigger a recalculation of the slider range based on new handle offset
 	}
 
-	void draw(CDrawContext* inContext) override
+	void draw(VSTGUI::CDrawContext* inContext) override
 	{
 		if (auto const image = getDrawBackground())
 		{
@@ -95,13 +95,13 @@ public:
 		if (mHandleImage)
 		{
 			auto const yoff = std::round(static_cast<float>(mHandleImage->getHeight()) * (1.0f - getValueNormalized())) + kSliderFrameThickness;
-			mHandleImage->draw(inContext, getViewSize(), CPoint(-kSliderFrameThickness, -yoff));
+			mHandleImage->draw(inContext, getViewSize(), VSTGUI::CPoint(-kSliderFrameThickness, -yoff));
 
 			DGRect bottomBorderRect(getViewSize());
 			bottomBorderRect.setSize(mHandleImage->getWidth(), kSliderFrameThickness);
 			bottomBorderRect.offset(kSliderFrameThickness, getViewSize().getHeight() - kSliderFrameThickness);
 			inContext->setFillColor(DGColor::kBlack);
-			inContext->drawRect(bottomBorderRect, kDrawFilled);
+			inContext->drawRect(bottomBorderRect, VSTGUI::kDrawFilled);
 		}
 
 		setDirty(false);

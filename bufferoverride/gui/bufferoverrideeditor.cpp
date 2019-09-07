@@ -252,37 +252,37 @@ long BufferOverrideEditor::OpenEditor()
 	// create images
 
 	// slider handles
-	auto const sliderHandleImage = makeOwned<DGImage>("slider-handle.png");
-	auto const sliderHandleImage_glowing = makeOwned<DGImage>("slider-handle-glowing.png");
-	auto const sliderHandleImage_pitchbend = makeOwned<DGImage>("slider-handle-pitchbend.png");
-	auto const sliderHandleImage_pitchbend_glowing = makeOwned<DGImage>("slider-handle-pitchbend-glowing.png");
-	auto const xyBoxHandleImage = makeOwned<DGImage>("xy-box-handle.png");
-	auto const xyBoxHandleImage_divisor_glowing = makeOwned<DGImage>("xy-box-handle-divisor-glow.png");
-	auto const xyBoxHandleImage_buffer_glowing = makeOwned<DGImage>("xy-box-handle-buffer-glow.png");
+	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
+	auto const sliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-glowing.png");
+	auto const sliderHandleImage_pitchbend = VSTGUI::makeOwned<DGImage>("slider-handle-pitchbend.png");
+	auto const sliderHandleImage_pitchbend_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-pitchbend-glowing.png");
+	auto const xyBoxHandleImage = VSTGUI::makeOwned<DGImage>("xy-box-handle.png");
+	auto const xyBoxHandleImage_divisor_glowing = VSTGUI::makeOwned<DGImage>("xy-box-handle-divisor-glow.png");
+	auto const xyBoxHandleImage_buffer_glowing = VSTGUI::makeOwned<DGImage>("xy-box-handle-buffer-glow.png");
 
 	// buttons
-	auto const bufferTempoSyncButtonImage = makeOwned<DGImage>("buffer-tempo-sync-button.png");
-	auto const bufferTempoSyncButtonCornerImage = makeOwned<DGImage>("buffer-tempo-sync-button-corner.png");
-	auto const bufferSizeLabelImage = makeOwned<DGImage>("buffer-size-label.png");
+	auto const bufferTempoSyncButtonImage = VSTGUI::makeOwned<DGImage>("buffer-tempo-sync-button.png");
+	auto const bufferTempoSyncButtonCornerImage = VSTGUI::makeOwned<DGImage>("buffer-tempo-sync-button-corner.png");
+	auto const bufferSizeLabelImage = VSTGUI::makeOwned<DGImage>("buffer-size-label.png");
 
-	auto const bufferInterruptButtonImage = makeOwned<DGImage>("buffer-interrupt-button.png");
-	auto const bufferInterruptButtonCornerImage = makeOwned<DGImage>("buffer-interrupt-button-corner.png");
+	auto const bufferInterruptButtonImage = VSTGUI::makeOwned<DGImage>("buffer-interrupt-button.png");
+	auto const bufferInterruptButtonCornerImage = VSTGUI::makeOwned<DGImage>("buffer-interrupt-button-corner.png");
 
-	auto const divisorLFOTempoSyncButtonImage = makeOwned<DGImage>("divisor-lfo-tempo-sync-button.png");
-	auto const divisorLFORateLabelImage = makeOwned<DGImage>("divisor-lfo-rate-label.png");
+	auto const divisorLFOTempoSyncButtonImage = VSTGUI::makeOwned<DGImage>("divisor-lfo-tempo-sync-button.png");
+	auto const divisorLFORateLabelImage = VSTGUI::makeOwned<DGImage>("divisor-lfo-rate-label.png");
 
-	auto const bufferLFOTempoSyncButtonImage = makeOwned<DGImage>("buffer-lfo-tempo-sync-button.png");
-	auto const bufferLFORateLabelImage = makeOwned<DGImage>("buffer-lfo-rate-label.png");
+	auto const bufferLFOTempoSyncButtonImage = VSTGUI::makeOwned<DGImage>("buffer-lfo-tempo-sync-button.png");
+	auto const bufferLFORateLabelImage = VSTGUI::makeOwned<DGImage>("buffer-lfo-rate-label.png");
 
-	auto const divisorLFOShapeSwitchImage = makeOwned<DGImage>("divisor-lfo-shape-switch.png");
+	auto const divisorLFOShapeSwitchImage = VSTGUI::makeOwned<DGImage>("divisor-lfo-shape-switch.png");
 
-	auto const bufferLFOShapeSwitchImage = makeOwned<DGImage>("buffer-lfo-shape-switch.png");
+	auto const bufferLFOShapeSwitchImage = VSTGUI::makeOwned<DGImage>("buffer-lfo-shape-switch.png");
 
-	auto const midiModeButtonImage = makeOwned<DGImage>("midi-mode-button.png");
-	auto const midiLearnButtonImage = makeOwned<DGImage>("midi-learn-button.png");
-	auto const midiResetButtonImage = makeOwned<DGImage>("midi-reset-button.png");
+	auto const midiModeButtonImage = VSTGUI::makeOwned<DGImage>("midi-mode-button.png");
+	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
+	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
 
-	auto const hostTempoButtonImage = makeOwned<DGImage>("host-tempo-button.png");
+	auto const hostTempoButtonImage = VSTGUI::makeOwned<DGImage>("host-tempo-button.png");
 
 
 	// create controls
