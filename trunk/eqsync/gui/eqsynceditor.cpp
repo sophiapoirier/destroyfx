@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -81,7 +81,7 @@ public:
 	{
 	}
 
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override
 	{
 		setHandle(mClickedHandle);
 		auto const result = DGSlider::onMouseDown(inPos, inButtons);
@@ -89,7 +89,7 @@ public:
 		return result;
 	}
 
-	CMouseEventResult onMouseUp(CPoint& inPos, CButtonState const& inButtons) override
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override
 	{
 		setHandle(mRegularHandle);
 		auto const result = DGSlider::onMouseUp(inPos, inButtons);
@@ -97,8 +97,8 @@ public:
 		return result;
 	}
 private:
-	SharedPointer<DGImage> const mRegularHandle;
-	SharedPointer<DGImage> const mClickedHandle;
+	VSTGUI::SharedPointer<DGImage> const mRegularHandle;
+	VSTGUI::SharedPointer<DGImage> const mClickedHandle;
 };
 
 
@@ -126,12 +126,12 @@ long EQSyncEditor::OpenEditor()
 	auto helpButtonX = kHelpButtonX_Panther;
 	auto helpButtonY = kHelpButtonY_Panther;
 
-	SharedPointer<DGImage> horizontalSliderBackgroundImage;
-	SharedPointer<DGImage> verticalSliderBackgroundImage;
-	SharedPointer<DGImage> sliderHandleImage;
-	SharedPointer<DGImage> sliderHandleClickedImage;
-	SharedPointer<DGImage> hostSyncButtonImage;
-	SharedPointer<DGImage> destroyFXLinkTabImage;
+	VSTGUI::SharedPointer<DGImage> horizontalSliderBackgroundImage;
+	VSTGUI::SharedPointer<DGImage> verticalSliderBackgroundImage;
+	VSTGUI::SharedPointer<DGImage> sliderHandleImage;
+	VSTGUI::SharedPointer<DGImage> sliderHandleClickedImage;
+	VSTGUI::SharedPointer<DGImage> hostSyncButtonImage;
+	VSTGUI::SharedPointer<DGImage> destroyFXLinkTabImage;
 
 	auto const macOS = GetMacOSVersion() & 0xFFF0;
 	switch (macOS)
@@ -181,7 +181,7 @@ long EQSyncEditor::OpenEditor()
 		emplaceControl<EQSyncSlider>(this, i, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderHandleClickedImage, horizontalSliderBackgroundImage);
 
 		// create the displays
-		CParamDisplayValueToStringProc textProc = nullptr;
+		VSTGUI::CParamDisplayValueToStringProc textProc = nullptr;
 		if (i == kRate_Sync)
 		{
 			textProc = [](float inValue, char* outText, void* inEditor)

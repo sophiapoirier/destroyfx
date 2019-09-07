@@ -31,7 +31,7 @@ class GeometerHelpBox : public DGStaticTextDisplay {
 public:
   GeometerHelpBox(DGRect const & inRegion, DGImage * inBackground);
 
-  void draw(CDrawContext * inContext) override;
+  void draw(VSTGUI::CDrawContext * inContext) override;
 
   void setDisplayItem(int inHelpCategory, int inItemNum);
 

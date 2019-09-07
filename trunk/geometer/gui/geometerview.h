@@ -33,7 +33,7 @@ To contact the author, use the contact form at http://destroyfx.org/
    whenever the plugin is idle.
 */
 
-class GeometerView : public CView {
+class GeometerView : public VSTGUI::CView {
 
 private:
 #if TARGET_PLUGIN_USES_DSPCORE
@@ -59,14 +59,14 @@ private:
   std::vector<int> tmpx;
   std::vector<float> tmpy;
 
-  VSTGUI::SharedPointer<COffscreenContext> offc;
+  VSTGUI::SharedPointer<VSTGUI::COffscreenContext> offc;
 
 public:
 
-  GeometerView(CRect const & size, PLUGIN * listener);
+  GeometerView(VSTGUI::CRect const & size, PLUGIN * listener);
 
-  bool attached(CView * parent) override;
-  void draw(CDrawContext * pContext) override;
+  bool attached(VSTGUI::CView * parent) override;
+  void draw(VSTGUI::CDrawContext * pContext) override;
   void onIdle() override;
 
   void reflect();

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -33,7 +33,7 @@ class ScrubbyHelpBox : public DGStaticTextDisplay
 public:
 	ScrubbyHelpBox(DGRect const& inRegion, DGImage* inBackground);
 
-	void draw(CDrawContext* inContext) override;
+	void draw(VSTGUI::CDrawContext* inContext) override;
 
 	void setDisplayItem(long inItemNum);
 

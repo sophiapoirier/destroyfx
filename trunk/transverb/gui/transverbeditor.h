@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -36,7 +36,7 @@ public:
 		mTuneMode(inTuneMode)
 	{}
 
-	CMouseEventResult onMouseDown(CPoint& inPos, CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 
 	void setTuneMode(long inTuneMode) noexcept
 	{
