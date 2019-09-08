@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -86,8 +86,20 @@ public:
 
 
 //-----------------------------------------------------------------------------
+void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount);
+template <typename T>
+void ReverseBytes(T* ioData, size_t inItemCount)
+{
+	static_assert(std::is_trivially_copyable_v<T>);
+	ReverseBytes(ioData, sizeof(T), inItemCount);
+}
+template <typename T>
+void ReverseBytes(T& ioData)
+{
+	ReverseBytes(&ioData, 1);
+}
+
 long CompositePluginVersionNumberValue();
-void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount = 1);
 long LaunchURL(std::string const& inURL);
 long LaunchDocumentation();
 std::string GetNameForMIDINote(long inMidiNote);

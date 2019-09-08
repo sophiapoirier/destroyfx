@@ -127,6 +127,10 @@ DfxGuiEditor::~DfxGuiEditor()
 		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnPropertyAUEvent);
 		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
 	#endif
+		std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
+					  {
+						  AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
+					  });
 	}
 #endif
 }
@@ -210,6 +214,11 @@ bool DfxGuiEditor::open(void* inWindow)
 		mMidiLearnerPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
 		AUEventListenerAddEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
 	#endif
+
+		std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
+					  {
+						  AUEventListenerAddEventType(mAUEventListener.get(), this, &propertyAUEvent);
+					  });
 	}
 #endif
 
@@ -279,8 +288,7 @@ void DfxGuiEditor::close()
 
 	frame->unregisterMouseObserver(this);
 	// zero the member frame before we delete it so that other asynchronous calls don't crash
-	auto const frame_temp = frame;
-	frame = nullptr;
+	auto const frame_temp = std::exchange(frame, nullptr);
 
 	for (auto& control : mControlsList)
 	{
@@ -408,6 +416,25 @@ void DfxGuiEditor::idle()
 
 	// call any child class implementation
 	dfxgui_Idle();
+}
+
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex)
+{
+	assert(!IsOpen());  // you need to register these all before opening a view
+
+#ifdef TARGET_API_AUDIOUNIT
+	AudioUnitEvent auEvent{};
+	auEvent.mEventType = kAudioUnitEvent_PropertyChange;
+	auEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
+	auEvent.mArgument.mProperty.mPropertyID = inPropertyID;
+	auEvent.mArgument.mProperty.mScope = inScope;
+	auEvent.mArgument.mProperty.mElement = inItemIndex;
+	mCustomPropertyAUEvents.push_back(auEvent);
+#else
+	assert(false);  // TODO: implement
+#endif
 }
 
 
@@ -1241,13 +1268,11 @@ float DfxGuiEditor::GetParameter_defaultValue(long inParameterIndex)
 DfxParam::ValueType DfxGuiEditor::GetParameterValueType(long inParameterIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	DfxParam::ValueType valueType {};
-	size_t dataSize = sizeof(valueType);
-	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterValueType, dfx::kScope_Global, 
-										   inParameterIndex, &valueType, dataSize);
-	if (status == noErr)
+	auto const valueType = dfxgui_GetProperty<DfxParam::ValueType>(dfx::kPluginProperty_ParameterValueType, 
+																   dfx::kScope_Global, inParameterIndex);
+	if (valueType)
 	{
-		return valueType;
+		return *valueType;
 	}
 #else
 	return dfxgui_GetEffectInstance()->getparametervaluetype(inParameterIndex);
@@ -1259,13 +1284,11 @@ DfxParam::ValueType DfxGuiEditor::GetParameterValueType(long inParameterIndex)
 DfxParam::Unit DfxGuiEditor::GetParameterUnit(long inParameterIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	DfxParam::Unit unitType {};
-	size_t dataSize = sizeof(unitType);
-	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterUnit, dfx::kScope_Global, 
-										   inParameterIndex, &unitType, dataSize);
-	if (status == noErr)
+	auto const unitType = dfxgui_GetProperty<DfxParam::Unit>(dfx::kPluginProperty_ParameterUnit, 
+															 dfx::kScope_Global, inParameterIndex);
+	if (unitType)
 	{
-		return unitType;
+		return *unitType;
 	}
 #else
 	return dfxgui_GetEffectInstance()->getparameterunit(inParameterIndex);
@@ -1566,11 +1589,9 @@ DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 //-----------------------------------------------------------------------------
 DfxPlugin* DfxGuiEditor::dfxgui_GetDfxPluginInstance()
 {
-	class DfxPlugin* pluginInstance {};
-	size_t dataSize = sizeof(pluginInstance);
-	if (dfxgui_GetProperty(dfx::kPluginProperty_DfxPluginInstance, dfx::kScope_Global, 0, &pluginInstance, dataSize) == noErr)
+	if (auto const pluginInstance = dfxgui_GetProperty<DfxPlugin*>(dfx::kPluginProperty_DfxPluginInstance))
 	{
-		return pluginInstance;
+		return *pluginInstance;
 	}
 	return nullptr;
 }
@@ -1588,11 +1609,9 @@ void DfxGuiEditor::setmidilearning(bool inLearnMode)
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::getmidilearning()
 {
-	Boolean learnMode;
-	size_t dataSize = sizeof(learnMode);
-	if (dfxgui_GetProperty(dfx::kPluginProperty_MidiLearn, dfx::kScope_Global, 0, &learnMode, dataSize) == noErr)
+	if (auto const learnMode = dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_MidiLearn))
 	{
-		return learnMode;
+		return *learnMode;
 	}
 	return false;
 }
@@ -1615,11 +1634,9 @@ void DfxGuiEditor::setmidilearner(long inParameterIndex)
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::getmidilearner()
 {
-	int32_t learner;
-	size_t dataSize = sizeof(learner);
-	if (dfxgui_GetProperty(dfx::kPluginProperty_MidiLearner, dfx::kScope_Global, 0, &learner, dataSize) == noErr)
+	if (auto const learner = dfxgui_GetProperty<int32_t>(dfx::kPluginProperty_MidiLearner))
 	{
-		return learner;
+		return *learner;
 	}
 	return dfx::kParameterID_Invalid;
 }
@@ -1712,10 +1729,8 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
 unsigned long DfxGuiEditor::getNumAudioChannels()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	CAStreamBasicDescription streamDesc;
-	size_t dataSize = sizeof(streamDesc);
-	auto const status = dfxgui_GetProperty(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &streamDesc, dataSize);
-	return (status == noErr) ? streamDesc.NumberChannels() : 0;
+	auto const streamDesc = dfxgui_GetProperty<CAStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output);
+	return streamDesc ? streamDesc->NumberChannels() : 0;
 #endif
 #ifdef TARGET_API_VST
 	return static_cast<unsigned long>(getEffect()->getAeffect()->numOutputs);
@@ -2292,7 +2307,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
-static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, UInt64 inEventHostTime, Float32 /*inParameterValue*/)
+static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* /*inObject*/, AudioUnitEvent const* inEvent, UInt64 /*inEventHostTime*/, Float32 /*inParameterValue*/)
 {
 	auto const ourOwnerEditor = static_cast<DfxGuiEditor*>(inCallbackRefCon);
 	if (ourOwnerEditor && inEvent)
@@ -2323,7 +2338,7 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 					break;
 			#endif
 				default:
-					ourOwnerEditor->HandleAUPropertyChange(inObject, inEvent->mArgument.mProperty, inEventHostTime);
+					ourOwnerEditor->HandlePropertyChange(inEvent->mArgument.mProperty.mPropertyID, inEvent->mArgument.mProperty.mScope, inEvent->mArgument.mProperty.mElement);
 					break;
 			}
 		}
@@ -2598,7 +2613,7 @@ extern "C" void DGVstGuiAUViewEntry() {}	// XXX workaround to quiet missing expo
 class DGVstGuiAUView : public AUCarbonViewBase 
 {
 public:
-	DGVstGuiAUView(AudioUnitCarbonView inInstance);
+	explicit DGVstGuiAUView(AudioUnitCarbonView inInstance);
 	virtual ~DGVstGuiAUView();
 
 	OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset) override;

@@ -28,10 +28,10 @@ Welcome to our settings persistance mess.
 
 #include <algorithm>
 #include <cassert>
-#include <cstddef>
 #include <numeric>
 #include <optional>
 #include <stdlib.h>  // for abort
+#include <type_traits>
 #include <vector>
 
 #include "dfxmidi.h"
@@ -150,9 +150,9 @@ static bool DFX_GetEnvBool(char const* inVarName, bool inFallbackValue)
 //-----------------------------------------------------------------------------
 // this gets called when the host wants to save settings data, 
 // like when saving a session document or preset files
-std::vector<uint8_t> DfxSettings::save(bool inIsPreset)
+std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 {
-	std::vector<uint8_t> data(inIsPreset ? mSizeOfPresetChunk : mSizeOfChunk, 0);
+	std::vector<std::byte> data(inIsPreset ? mSizeOfPresetChunk : mSizeOfChunk, std::byte{0});
 	auto const sharedChunk = reinterpret_cast<SettingsInfo*>(data.data());
 
 	// and a few pointers to elements within that data, just for ease of use
@@ -218,7 +218,7 @@ std::vector<uint8_t> DfxSettings::save(bool inIsPreset)
 	}
 
 	// reverse the order of bytes in the data being sent to the host, if necessary
-	correctEndian(data.data(), data.size(), false, inIsPreset);
+	correctEndian(data.data(), data.size() - mSizeOfExtendedData, false, inIsPreset);
 	// allow for the storage of extra data
 	mPlugin->settings_saveExtendedData(data.data() + data.size() - mSizeOfExtendedData, inIsPreset);
 
@@ -486,7 +486,7 @@ if (!(oldVST && inIsPreset))
 #endif
 
 	// allow for the retrieval of extra data
-	mPlugin->settings_restoreExtendedData(static_cast<std::byte*>(incomingData_copy.get()) + mSizeOfChunk - newSettingsInfo->mStoredExtendedDataSize, 
+	mPlugin->settings_restoreExtendedData(static_cast<std::byte*>(incomingData_copy.get()) + inBufferSize - newSettingsInfo->mStoredExtendedDataSize, 
 										 newSettingsInfo->mStoredExtendedDataSize, newSettingsInfo->mVersion, inIsPreset);
 
 	return true;
@@ -510,9 +510,11 @@ void blah(long long x)
 	}
 }
 */
-#if __BIG_ENDIAN__
-// big endian (like PowerPC) is the reference architecture, so no byte-swapping is necessary
-#else
+	if constexpr (serializationIsNativeEndian())
+	{
+		return true;
+	}
+
 	// start by looking at the header info
 	auto const dataHeader = static_cast<SettingsInfo*>(ioData);
 	// we need to know how big the header is before dealing with it
@@ -523,10 +525,10 @@ void blah(long long x)
 	// correct the values' endian byte order order if the data was received byte-swapped
 	if (inIsReversed)
 	{
-		dfx::ReverseBytes(&storedHeaderSize, sizeof(storedHeaderSize));
-		dfx::ReverseBytes(&numStoredParameters, sizeof(numStoredParameters));
-		dfx::ReverseBytes(&numStoredPresets, sizeof(numStoredPresets));
-		dfx::ReverseBytes(&storedVersion, sizeof(storedVersion));
+		dfx::ReverseBytes(storedHeaderSize);
+		dfx::ReverseBytes(numStoredParameters);
+		dfx::ReverseBytes(numStoredPresets);
+		dfx::ReverseBytes(storedVersion);
 	}
 	assert(numStoredParameters >= 0);
 	assert(numStoredPresets >= 0);
@@ -553,7 +555,7 @@ void blah(long long x)
 		debugAlertCorruptData("parameter IDs", sizeof(*dataParameterIDs) * numStoredParameters, inDataSize);
 		return false;
 	}
-	dfx::ReverseBytes(dataParameterIDs, sizeof(*dataParameterIDs), static_cast<size_t>(numStoredParameters));
+	dfx::ReverseBytes(dataParameterIDs, static_cast<size_t>(numStoredParameters));
 
 	// reverse the order of bytes for each parameter value, 
 	// but no need to mess with the preset names since they are char arrays
@@ -576,7 +578,7 @@ void blah(long long x)
 	}
 	for (long i = 0; i < numStoredPresets; i++)
 	{
-		dfx::ReverseBytes(dataPresets->mParameterValues, sizeof(*(dataPresets->mParameterValues)), static_cast<size_t>(numStoredParameters));  //XXX potential floating point machine error?
+		dfx::ReverseBytes(dataPresets->mParameterValues, static_cast<size_t>(numStoredParameters));  //XXX potential floating point machine error?
 		// point to the next preset in the data array
 		dataPresets = reinterpret_cast<GenPreset*>(reinterpret_cast<std::byte*>(dataPresets) + sizeofStoredPreset);
 	}
@@ -601,25 +603,20 @@ if (!(DFX_IsOldVstVersionNumber(storedVersion) && inIsPreset))
 	}
 	for (long i = 0; i < numStoredParameters; i++)
 	{
-#define REVERSE_BYTES_ASSIGNMENT_ITEM(inMember)	\
-		dfx::ReverseBytes(&(dataParameterAssignments[i].inMember), sizeof(dataParameterAssignments[i].inMember));
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mEventType)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mEventChannel)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mEventNum)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mEventNum2)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mEventBehaviorFlags)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mDataInt1)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mDataInt2)
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mDataFloat1)  // XXX potential floating point machine error?
-		REVERSE_BYTES_ASSIGNMENT_ITEM(mDataFloat2)  // XXX potential floating point machine error?
-#undef REVERSE_BYTES_ASSIGNMENT_ITEM
+		auto& pa = dataParameterAssignments[i];
+		dfx::ReverseBytes(pa.mEventType);
+		dfx::ReverseBytes(pa.mEventChannel);
+		dfx::ReverseBytes(pa.mEventNum);
+		dfx::ReverseBytes(pa.mEventNum2);
+		dfx::ReverseBytes(pa.mEventBehaviorFlags);
+		dfx::ReverseBytes(pa.mDataInt1);
+		dfx::ReverseBytes(pa.mDataInt2);
+		dfx::ReverseBytes(pa.mDataFloat1);  // XXX potential floating point machine error?
+		dfx::ReverseBytes(pa.mDataFloat2);  // XXX potential floating point machine error?
 	}
 #ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 }
 #endif
-
-#endif
-// __BIG_ENDIAN__ (endian check)
 
 	return true;
 }

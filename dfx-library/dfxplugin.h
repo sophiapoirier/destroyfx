@@ -618,6 +618,10 @@ public:
 
 	/* - - - - - - - - - hooks for DfxSettings - - - - - - - - - */
 	//
+	// although this method can theoretically be called multiple times,
+	// its return value must stay the same for the lifetime of a plugin instance
+	virtual size_t settings_sizeOfExtendedData() const noexcept { return 0; }
+	//
 	// these allow for additional constructor or destructor stuff, if necessary
 	virtual void settings_init() {}
 	virtual void settings_cleanup() {}
@@ -627,7 +631,7 @@ public:
 	// the data pointers point to the start of the extended data 
 	// sections of the settings data
 	virtual void settings_saveExtendedData(void* outData, bool isPreset) {}
-	virtual void settings_restoreExtendedData(void* inData, unsigned long storedExtendedDataSize, 
+	virtual void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize, 
 											  long dataVersion, bool isPreset) {}
 	//
 	// this can be overridden to react when parameter values are 
@@ -1063,7 +1067,7 @@ class DfxPluginCore
 #endif
 {
 public:
-	DfxPluginCore(DfxPlugin* inDfxPlugin)
+	explicit DfxPluginCore(DfxPlugin* inDfxPlugin)
 	:
 		#ifdef TARGET_API_CORE_CLASS
 		TARGET_API_CORE_CLASS(inDfxPlugin), 
