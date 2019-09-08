@@ -22,7 +22,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
+#include <array>
+
 #include "dfxgui.h"
+#include "transverb-base.h"
 
 
 
@@ -31,9 +34,8 @@ class TransverbSpeedTuneButton : public DGFineTuneButton
 {
 public:
 	TransverbSpeedTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
-							 float inValueChangeAmount, long inTuneMode)
-	:	DGFineTuneButton(inOwnerEditor, inParamID, inRegion, inImage, inValueChangeAmount), 
-		mTuneMode(inTuneMode)
+							 float inValueChangeAmount)
+	:	DGFineTuneButton(inOwnerEditor, inParamID, inRegion, inImage, inValueChangeAmount)
 	{}
 
 	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
@@ -44,7 +46,7 @@ public:
 	}
 
 private:
-	long mTuneMode;
+	long mTuneMode {};
 };
 
 
@@ -53,13 +55,18 @@ private:
 class TransverbEditor : public DfxGuiEditor
 {
 public:
-	TransverbEditor(DGEditorListenerInstance inInstance);
+	explicit TransverbEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
+	void post_open() override;
 	void parameterChanged(long inParameterID) override;
+	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
 
 private:
-	TransverbSpeedTuneButton* mSpeed1UpButton = nullptr, * mSpeed1DownButton = nullptr;
-	TransverbSpeedTuneButton* mSpeed2UpButton = nullptr, * mSpeed2DownButton = nullptr;
-	DGTextDisplay* mDistance1TextDisplay = nullptr, * mDistance2TextDisplay = nullptr;
+	static void HandleSpeedModeButton(size_t inIndex, long inValue, void* inEditor);
+	void HandleSpeedModeChange(size_t inIndex);
+
+	std::array<DGButton*, dfx::TV::kNumDelays> mSpeedModeButtons;
+	std::array<TransverbSpeedTuneButton*, dfx::TV::kNumDelays> mSpeedDownButtons, mSpeedUpButtons;
+	std::array<DGTextDisplay*, dfx::TV::kNumDelays> mDistanceTextDisplays;
 };

@@ -606,7 +606,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			if (isLogicNodeEndianReversed())
 			{
 				request->inConversionType = CFSwapInt32(request->inConversionType);
-				dfx::ReverseBytes(&(request->inValue), sizeof(request->inValue));
+				dfx::ReverseBytes(request->inValue);
 			}
 		#endif
 			switch (request->inConversionType)
@@ -625,7 +625,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
 			if (isLogicNodeEndianReversed())
 			{
-				dfx::ReverseBytes(&(request->outValue), sizeof(request->outValue));
+				dfx::ReverseBytes(request->outValue);
 			}
 		#endif
 			break;
@@ -1521,7 +1521,7 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 	if (auto const dfxData = mDfxSettings->save(true); !dfxData.empty())
 	{
 		// create a CF data storage thingy filled with our special data
-		dfx::UniqueCFType const cfData = CFDataCreate(kCFAllocatorDefault, dfxData.data(), static_cast<CFIndex>(dfxData.size()));
+		dfx::UniqueCFType const cfData = CFDataCreate(kCFAllocatorDefault, reinterpret_cast<const UInt8*>(dfxData.data()), static_cast<CFIndex>(dfxData.size()));
 		if (cfData)
 		{
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary
@@ -1554,7 +1554,7 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 	if (!dataFound || !cfData)
 	{
 		// failing that, try to see if old VST chunk data is being fed to us
-		dataFound = CFDictionaryGetValueIfPresent((CFDictionaryRef)inData, CFSTR(kAUPresetVSTDataKey), reinterpret_cast<void const**>(&cfData));
+		dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), CFSTR(kAUPresetVSTDataKey), reinterpret_cast<void const**>(&cfData));
 	}
 
 	bool success = false;
@@ -1568,7 +1568,7 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 			// the number of bytes of our data
 			auto const dfxDataSize = static_cast<size_t>(CFDataGetLength(cfData));
 			// try to restore the saved settings data
-			success = mDfxSettings->restore(static_cast<void const*>(dfxData), dfxDataSize, true);
+			success = mDfxSettings->restore(dfxData, dfxDataSize, true);
 
 //			if (!success)
 			{

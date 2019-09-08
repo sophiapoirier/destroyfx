@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <list>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -118,7 +119,7 @@ public:
 	static constexpr Float32 kNotificationInterval = kIdleTimerInterval;
 #endif
 
-	DfxGuiEditor(DGEditorListenerInstance inInstance);
+	explicit DfxGuiEditor(DGEditorListenerInstance inInstance);
 	virtual ~DfxGuiEditor();
 
 	// VSTGUI overrides
@@ -145,8 +146,11 @@ public:
 	{
 		return mAUEventListener.get();
 	}
-	virtual void HandleAUPropertyChange(void* inObject, AudioUnitProperty inAUProperty, UInt64 inEventHostTime) {}
 #endif
+
+	// TODO: implement plumbing to these for VST etc.
+	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
+	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
 
 	void addControl(IDGControl* inControl);
 	// in-place constructor variant that instantiates the control in addition to adding it
@@ -272,6 +276,15 @@ public:
 								size_t& outDataSize, dfx::PropertyFlags& outFlags);
 	long dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 							void* outData, size_t& ioDataSize);
+	template <typename T>
+	std::optional<T> dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0)
+	{
+		static_assert(std::is_trivially_copyable_v<T>);
+		T value {};
+		size_t dataSize = sizeof(value);
+		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
+		return ((status == noErr) && (dataSize = sizeof(value))) ? std::make_optional(value) : std::nullopt;
+	}
 	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 							void const* inData, size_t inDataSize);
 	void LoadPresetFile();
@@ -349,6 +362,7 @@ private:
 	AudioUnitEvent mParameterListPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnerPropertyAUEvent {};
+	std::vector<AudioUnitEvent> mCustomPropertyAUEvents;
 #endif
 
 #ifdef TARGET_API_RTAS

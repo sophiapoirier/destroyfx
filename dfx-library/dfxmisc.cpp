@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -48,17 +48,11 @@ namespace dfx
 
 
 //------------------------------------------------------
-long CompositePluginVersionNumberValue()
-{
-	return (PLUGIN_VERSION_MAJOR << 16) | (PLUGIN_VERSION_MINOR << 8) | PLUGIN_VERSION_BUGFIX;
-}
-
-//------------------------------------------------------
 // this reverses the bytes in a stream of data, for correcting endian difference
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
 {
 	size_t const half = (inItemSize / 2) + (inItemSize % 2);
-	auto dataBytes = static_cast<char*>(ioData);
+	auto dataBytes = static_cast<std::byte*>(ioData);
 
 	for (size_t c = 0; c < inItemCount; c++)
 	{
@@ -71,6 +65,12 @@ void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
 		}
 		dataBytes += inItemSize;
 	}
+}
+
+//------------------------------------------------------
+long CompositePluginVersionNumberValue()
+{
+	return (PLUGIN_VERSION_MAJOR << 16) | (PLUGIN_VERSION_MINOR << 8) | PLUGIN_VERSION_BUGFIX;
 }
 
 //-----------------------------------------------------------------------------

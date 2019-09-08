@@ -26,6 +26,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "firfilter.h"
 
 
+using namespace dfx::TV;
+
+
 
 void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames, bool replacing) {
 

@@ -22,11 +22,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "transverbeditor.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <stdio.h>
 #include <string_view>
 
-#include "transverb.h"
+
+using namespace dfx::TV;
 
 
 //-----------------------------------------------------------------------------
@@ -335,6 +337,15 @@ DFX_EDITOR_ENTRY(TransverbEditor)
 TransverbEditor::TransverbEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
+	mSpeedModeButtons.fill(nullptr);
+	mSpeedDownButtons.fill(nullptr);
+	mSpeedUpButtons.fill(nullptr);
+	mDistanceTextDisplays.fill(nullptr);
+
+	for (size_t i = 0; i < kNumDelays; i++)
+	{
+		RegisterPropertyChange(speedModeIndexToPropertyID(i));
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -398,16 +409,14 @@ long TransverbEditor::OpenEditor()
 
 		if (tag == kSpeed1)
 		{
-			auto const tuneMode = getparameter_i(kSpeed1mode);
-			mSpeed1DownButton = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc, tuneMode);
-			mSpeed1UpButton = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc, tuneMode);
+			mSpeedDownButtons[0] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
+			mSpeedUpButtons[0] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 			textDisplay->setTextToValueProc(speedTextConvertProcedure);
 		}
 		else if (tag == kSpeed2)
 		{
-			auto const tuneMode = getparameter_i(kSpeed2mode);
-			mSpeed2DownButton = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc, tuneMode);
-			mSpeed2UpButton = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc, tuneMode);
+			mSpeedDownButtons[1] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneDownButtonPos, fineDownButtonImage, -kFineTuneInc);
+			mSpeedUpButtons[1] = emplaceControl<TransverbSpeedTuneButton>(this, tag, tuneUpButtonPos, fineUpButtonImage, kFineTuneInc);
 			textDisplay->setTextToValueProc(speedTextConvertProcedure);
 		}
 		else
@@ -420,13 +429,13 @@ long TransverbEditor::OpenEditor()
 		if (tag == kDist1)
 		{
 			yoff = kWideFaderMoreInc;
-			mDistance1TextDisplay = textDisplay;
+			mDistanceTextDisplays[0] = textDisplay;
 			textDisplay->setTextToValueProc(distTextConvertProcedure);
 		}
 		else if (tag == kDist2)
 		{
 			yoff =  kWideFaderEvenMoreInc;
-			mDistance2TextDisplay = textDisplay;
+			mDistanceTextDisplays[1] = textDisplay;
 			textDisplay->setTextToValueProc(distTextConvertProcedure);
 		}
 		pos.offset(0, yoff);
@@ -474,12 +483,26 @@ long TransverbEditor::OpenEditor()
 	}, this);
 
 	// speed 1 mode button
-	pos.set(kSpeedModeButtonX, kSpeedModeButtonY, speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight()/kSpeedMode_NumModes);
-	emplaceControl<DGButton>(this, kSpeed1mode, pos, speedModeButtonImage, DGButton::Mode::Increment, true);
+	{
+		constexpr size_t speedModeIndex = 0;
+		pos.set(kSpeedModeButtonX, kSpeedModeButtonY, speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight()/kSpeedMode_NumModes);
+		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kQualityMode_NumModes, DGButton::Mode::Increment, true);
+		mSpeedModeButtons[speedModeIndex]->setUserProcedure([](long value, void* editor)
+		{
+			HandleSpeedModeButton(speedModeIndex, value, editor);
+		}, this);
+	}
 	//
 	// speed 2 mode button
-	pos.offset(0, (kWideFaderInc * 2) + kWideFaderMoreInc);
-	emplaceControl<DGButton>(this, kSpeed2mode, pos, speedModeButtonImage, DGButton::Mode::Increment, true);
+	{
+		constexpr size_t speedModeIndex = 1;
+		pos.offset(0, (kWideFaderInc * 2) + kWideFaderMoreInc);
+		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kQualityMode_NumModes, DGButton::Mode::Increment, true);
+		mSpeedModeButtons[speedModeIndex]->setUserProcedure([](long value, void* editor)
+		{
+			HandleSpeedModeButton(speedModeIndex, value, editor);
+		}, this);
+	}
 
 	// MIDI learn button
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
@@ -504,26 +527,60 @@ long TransverbEditor::OpenEditor()
 }
 
 //-----------------------------------------------------------------------------
+void TransverbEditor::post_open()
+{
+	for (size_t i = 0; i < kNumDelays; i++)
+	{
+		HandleSpeedModeChange(i);
+	}
+}
+
+//-----------------------------------------------------------------------------
 void TransverbEditor::parameterChanged(long inParameterID)
 {
-	auto const tuneMode = getparameter_i(inParameterID);
-
-	switch (inParameterID)
+	if (inParameterID == kBsize)
 	{
-		case kBsize:
-			// trigger re-conversion of numerical value to text
-			mDistance1TextDisplay->refreshText();
-			mDistance2TextDisplay->refreshText();
-			break;
-		case kSpeed1mode:
-			mSpeed1DownButton->setTuneMode(tuneMode);
-			mSpeed1UpButton->setTuneMode(tuneMode);
-			break;
-		case kSpeed2mode:
-			mSpeed2DownButton->setTuneMode(tuneMode);
-			mSpeed2UpButton->setTuneMode(tuneMode);
-			break;
-		default:
-			return;
+		// trigger re-conversion of numerical value to text
+		std::for_each(mDistanceTextDisplays.begin(), mDistanceTextDisplays.end(), 
+					  [](auto& display){ display->refreshText(); });
+	}
+}
+
+//-----------------------------------------------------------------------------
+void TransverbEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope /*inScope*/, unsigned long /*inItemIndex*/)
+{
+	if (isSpeedModePropertyID(inPropertyID))
+	{
+		HandleSpeedModeChange(speedModePropertyIDToIndex(inPropertyID));
+	}
+}
+
+//-----------------------------------------------------------------------------
+void TransverbEditor::HandleSpeedModeButton(size_t inIndex, long inValue, void* inEditor)
+{
+	auto const editor = static_cast<TransverbEditor*>(inEditor);
+	auto const value_fixedSize = static_cast<uint8_t>(inValue);
+	[[maybe_unused]] auto const status = editor->dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), dfx::kScope_Global, 0, 
+																	&value_fixedSize, sizeof(value_fixedSize));
+	assert(status == dfx::kStatus_NoError);
+}
+
+//-----------------------------------------------------------------------------
+void TransverbEditor::HandleSpeedModeChange(size_t inIndex)
+{
+	auto const tuneMode = dfxgui_GetProperty<uint8_t>(speedModeIndexToPropertyID(inIndex));
+	assert(tuneMode.has_value());
+	if (tuneMode)
+	{
+		auto&& speedModeButton = mSpeedModeButtons.at(inIndex);
+		assert(speedModeButton);
+		speedModeButton->setValue_i(*tuneMode);
+		if (speedModeButton->isDirty())
+		{
+			speedModeButton->invalid();
+		}
+
+		mSpeedDownButtons.at(inIndex)->setTuneMode(*tuneMode);
+		mSpeedUpButtons.at(inIndex)->setTuneMode(*tuneMode);
 	}
 }

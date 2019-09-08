@@ -157,7 +157,7 @@ void DfxPlugin::do_PostConstructor()
 #endif
 
 #if TARGET_PLUGIN_USES_MIDI
-	mDfxSettings = std::make_unique<DfxSettings>(PLUGIN_ID, this);
+	mDfxSettings = std::make_unique<DfxSettings>(PLUGIN_ID, this, settings_sizeOfExtendedData());
 #endif
 
 	dfx_PostConstructor();
@@ -441,7 +441,7 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 	#ifdef TARGET_PLUGIN_USES_VSTGUI
 	if (editor)
 	{
-		((AEffGUIEditor*)editor)->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
+		((VSTGUI::AEffGUIEditor*)editor)->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
 	}
 	#else
 	assert(false);  // XXX TODO: we will need something for our GUI class here

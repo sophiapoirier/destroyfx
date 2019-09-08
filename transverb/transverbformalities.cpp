@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "transverb.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 
@@ -31,6 +32,8 @@ DFX_EFFECT_ENTRY(Transverb)
 #if TARGET_PLUGIN_USES_DSPCORE
   DFX_CORE_ENTRY(TransverbDSP)
 #endif
+
+using namespace dfx::TV;
 
 
 
@@ -50,28 +53,18 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_list(kQuality, "quality", kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
   initparameter_b(kTomsound, "TOMSOUND", false, false);
   initparameter_b(kFreeze, "freeze", false, false);
-  initparameter_list(kSpeed1mode, "1:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
-  initparameter_list(kSpeed2mode, "2:speed mode", kSpeedMode_Fine, kSpeedMode_Fine, kSpeedMode_NumModes);
 
   setparametervaluestring(kQuality, kQualityMode_DirtFi, "dirt-fi");
   setparametervaluestring(kQuality, kQualityMode_HiFi, "hi-fi");
   setparametervaluestring(kQuality, kQualityMode_UltraHiFi, "ultra hi-fi");
-  for (int i=kSpeed1mode; i <= kSpeed2mode; i += kSpeed2mode-kSpeed1mode)
-  {
-    setparametervaluestring(i, kSpeedMode_Fine, "fine");
-    setparametervaluestring(i, kSpeedMode_Semitone, "semitone");
-    setparametervaluestring(i, kSpeedMode_Octave, "octave");
-  }
-
-  // these are only for the GUI, no need to reveal them to the user as parameters
-  addparameterattributes(kSpeed1mode, DfxParam::kAttribute_Hidden);
-  addparameterattributes(kSpeed2mode, DfxParam::kAttribute_Hidden);
 
 
   settailsize_seconds(getparametermax_f(kBsize) * 0.001);
 
   setpresetname(0, PLUGIN_NAME_STRING);  // default preset name
   initPresets();
+
+  speedModeStates.fill(kSpeedMode_Fine);
 
 
 #if TARGET_PLUGIN_USES_DSPCORE
@@ -412,6 +405,72 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	}
 }
 
+long Transverb::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+                                    size_t& outDataSize, dfx::PropertyFlags& outFlags)
+{
+  if (isSpeedModePropertyID(inPropertyID))
+  {
+    outDataSize = sizeof(uint8_t);  // single-byte representation allows for no concerns about transmission endianness
+    outFlags = dfx::kPropertyFlag_Readable | dfx::kPropertyFlag_Writable;
+    return dfx::kStatus_NoError;
+  }
+  return DfxPlugin::dfx_GetPropertyInfo(inPropertyID, inScope, inItemIndex, outDataSize, outFlags);
+}
+
+long Transverb::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+                                void* outData)
+{
+  if (isSpeedModePropertyID(inPropertyID))
+  {
+    *static_cast<uint8_t*>(outData) = static_cast<uint8_t>(speedModeStateFromPropertyID(inPropertyID));
+    return dfx::kStatus_NoError;
+  }
+  return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
+}
+
+long Transverb::dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+                                void const* inData, size_t inDataSize)
+{
+  if (isSpeedModePropertyID(inPropertyID))
+  {
+    speedModeStateFromPropertyID(inPropertyID) = *static_cast<uint8_t const*>(inData);
+#ifdef TARGET_API_AUDIOUNIT
+    PropertyChanged(inPropertyID, inScope, inItemIndex);
+#endif
+    return dfx::kStatus_NoError;
+  }
+  return DfxPlugin::dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
+}
+
+
+size_t Transverb::settings_sizeOfExtendedData() const noexcept
+{
+	return speedModeStates.size() * sizeof(speedModeStates.front());
+}
+
+void Transverb::settings_saveExtendedData(void* outData, bool /*isPreset*/)
+{
+  auto speedModeStatesSerialization = speedModeStates;
+  if constexpr (!DfxSettings::serializationIsNativeEndian())
+  {
+    dfx::ReverseBytes(speedModeStatesSerialization.data(), speedModeStatesSerialization.size());
+  }
+  memcpy(outData, speedModeStatesSerialization.data(), settings_sizeOfExtendedData());
+}
+
+void Transverb::settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize, 
+                                             long dataVersion, bool /*isPreset*/)
+{
+  if (storedExtendedDataSize >= settings_sizeOfExtendedData())
+  {
+    memcpy(speedModeStates.data(), inData, settings_sizeOfExtendedData());
+    if constexpr (!DfxSettings::serializationIsNativeEndian())
+    {
+      dfx::ReverseBytes(speedModeStates.data(), speedModeStates.size());
+    }
+  }
+}
+
 void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum)
 {
 	// prevent old speed mode 1 settings from applying to freeze
@@ -427,4 +486,24 @@ void Transverb::settings_doChunkRestoreSetParameterStuff(long tag, float value, 
 			setparameter_b(tag, defaultValue);
 		}
 	}
+}
+
+
+
+#pragma mark -
+
+dfx::PropertyID dfx::TV::speedModeIndexToPropertyID(size_t inIndex) noexcept
+{
+  return kTransverbProperty_SpeedModeBase + static_cast<dfx::PropertyID>(inIndex);
+}
+
+size_t dfx::TV::speedModePropertyIDToIndex(dfx::PropertyID inPropertyID) noexcept
+{
+  assert(inPropertyID >= kTransverbProperty_SpeedModeBase);
+  return inPropertyID - kTransverbProperty_SpeedModeBase;
+}
+
+bool dfx::TV::isSpeedModePropertyID(dfx::PropertyID inPropertyID) noexcept
+{
+  return (inPropertyID >= kTransverbProperty_SpeedModeBase) && (speedModePropertyIDToIndex(inPropertyID) < kNumDelays);
 }

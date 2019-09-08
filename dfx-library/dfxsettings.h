@@ -78,6 +78,7 @@ This is our Destroy FX plugin data storage stuff
 #pragma once
 
 
+#include <cstddef>
 #include <vector>
 
 #include "dfxdefines.h"
@@ -116,7 +117,7 @@ public:
 	// - - - - - - - - - API-connect methods - - - - - - - - -
 
 	// for adding to your base plugin class methods
-	std::vector<uint8_t> save(bool inIsPreset);
+	std::vector<std::byte> save(bool inIsPreset);
 	bool restore(void const* inData, size_t inBufferSize, bool inIsPreset);
 #ifdef TARGET_API_AUDIOUNIT
 	bool saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDictionary);
@@ -288,6 +289,15 @@ public:
 	auto getCrisisBehavior() const noexcept
 	{
 		return mCrisisBehavior;
+	}
+
+	static constexpr bool serializationIsNativeEndian() noexcept
+	{
+#if __BIG_ENDIAN__
+		return true;
+#else
+		return false;
+#endif
 	}
 
 
