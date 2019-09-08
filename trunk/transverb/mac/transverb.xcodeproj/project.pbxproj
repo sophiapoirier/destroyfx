@@ -201,6 +201,7 @@
 		ECDCF1D00FB88B92005F739E /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECDCF1D10FB88B9C005F739E /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECE4CBE620D0CB380026E215 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
+		ECEF72C52321C12D00130656 /* transverb-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "transverb-base.h"; sourceTree = "<group>"; };
 		ECF3B50A20CCA88800842E94 /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECF7D8C12002AA3A00DCE42E /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
 		ECF7D8C22002AA3A00DCE42E /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
@@ -276,6 +277,7 @@
 		08FB77ADFE841716C02AAC07 /* transverb */ = {
 			isa = PBXGroup;
 			children = (
+				ECEF72C52321C12D00130656 /* transverb-base.h */,
 				49BB478607E53D2500861708 /* transverb.h */,
 				49BB478807E53D2500861708 /* transverbformalities.cpp */,
 				49BB478907E53D2500861708 /* transverbprocess.cpp */,

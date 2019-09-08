@@ -21,48 +21,19 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
 #include "iirfilter.h"
-
-
-//-----------------------------------------------------------------------------
-// these are the plugin parameters:
-enum
-{
-	kBsize,
-	kSpeed1,
-	kFeed1,
-	kDist1,
-	kSpeed2,
-	kFeed2,
-	kDist2,
-	kDrymix,
-	kMix1,
-	kMix2,
-	kQuality,
-	kTomsound,
-	kFreeze,
-	kSpeed1mode,
-	kSpeed2mode,
-
-	kNumParameters
-};
-
-
-// this stuff is for the speed parameter adjustment mode switch on the GUI
-enum { kSpeedMode_Fine, kSpeedMode_Semitone, kSpeedMode_Octave, kSpeedMode_NumModes };
-
-enum { kQualityMode_DirtFi, kQualityMode_HiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes };
-
+#include "transverb-base.h"
 
 
 class TransverbDSP : public DfxPluginCore {
 
 public:
-  TransverbDSP(DfxPlugin* inDfxPlugin);
+  explicit TransverbDSP(DfxPlugin* inDfxPlugin);
 
   void process(float const* inAudio, float* outAudio, unsigned long inNumFrames, bool replacing = true) override;
   void reset() override;
@@ -119,12 +90,30 @@ public:
 
   bool loadpreset(long index) override;  // overriden to support the random preset
   void randomizeparameters(bool writeAutomation = false) override;
+
+  long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+                           size_t& outDataSize, dfx::PropertyFlags& outFlags) override;
+  long dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+                       void* outData) override;
+  long dfx_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+                       void const* inData, size_t inDataSize) override;
+
+protected:
+  size_t settings_sizeOfExtendedData() const noexcept override;
+  void settings_saveExtendedData(void* outData, bool isPreset) override;
+  void settings_restoreExtendedData(void const* inData, size_t storedExtendedDataSize, 
+                                    long dataVersion, bool isPreset) override;
   void settings_doChunkRestoreSetParameterStuff(long tag, float value, long dataVersion, long presetNum) override;
 
 private:
   static constexpr long kNumPresets = 16;
 
   void initPresets();
+  auto& speedModeStateFromPropertyID(dfx::PropertyID inPropertyID) {
+    return speedModeStates.at(dfx::TV::speedModePropertyIDToIndex(inPropertyID));
+  }
+
+  std::array<int32_t, dfx::TV::kNumDelays> speedModeStates;
 };
 
 
