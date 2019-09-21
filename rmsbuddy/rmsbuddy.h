@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2010  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -19,81 +19,66 @@ along with RMS Buddy.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __RMS_BUDDY_H
-#define __RMS_BUDDY_H
+#pragma once
+
+#include <optional>
+#include <utility>
+#include <vector>
 
 #include "AUEffectBase.h"
-
-
-enum {
-	kRMSBuddyParameter_AnalysisWindowSize = 0,	// the size, in ms, of the RMS and peak analysis window / refresh rate
-	kRMSBuddyParameter_ResetRMS,	// message *** reset the average RMS values
-	kRMSBuddyParameter_ResetPeak,	// message *** reset the absolute peak values
-	kRMSBuddyParameter_NumParameters,
-
-	// custom property IDs for allowing the GUI component get DSP information
-	kRMSBuddyProperty_DynamicsData = 64000	// read-only *** get the current dynamics analysis data
-};
-
-// this is the data structure passed between GUI and DSP components for kRMSBuddyProperty_DynamicsData
-typedef struct {
-	double averageRMS;
-	double continualRMS;
-	double absolutePeak;
-	double continualPeak;
-} RMSBuddyDynamicsData;
 
 
 //----------------------------------------------------------------------------- 
 class RMSBuddy : public AUEffectBase
 {
 public:
-	RMSBuddy(AudioComponentInstance inComponentInstance);
+	explicit RMSBuddy(AudioComponentInstance inComponentInstance);
 
-	virtual OSStatus Initialize();
-	virtual void Cleanup();
-	virtual OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement);
+	OSStatus Initialize() override;
+	void Cleanup() override;
+	OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement) override;
 
-	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
-						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
-						UInt32 inFramesToProcess);
+	OSStatus GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID inParameterID, 
+							  AudioUnitParameterInfo& outParameterInfo) override;
+	OSStatus SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement, 
+						  Float32 inValue, UInt32 inBufferOffsetInFrames) override;
+	OSStatus CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, UInt32 inDesiredNameLength, CFStringRef* outClumpName) override;
 
-	virtual OSStatus GetParameterInfo(AudioUnitScope inScope, 
-						AudioUnitParameterID inParameterID, AudioUnitParameterInfo & outParameterInfo);
-	virtual OSStatus SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames);
+	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
+							 UInt32& outDataSize, Boolean& outWritable) override;
+	OSStatus GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
+						 void* outData) override;
+	OSStatus SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
+						 void const* inData, UInt32 inDataSize) override;
+	bool SupportsTail() override { return true; }
 
-	virtual OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, UInt32 & outDataSize, Boolean & outWritable);
-	virtual OSStatus GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, void * outData);
-	virtual OSStatus SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, 
-						AudioUnitElement inElement, const void * inData, UInt32 inDataSize);
-	virtual int GetNumCustomUIComponents();
-	virtual void GetUIComponentDescs(ComponentDescription * inDescArray);
-	virtual OSStatus Version()
-		{	return RMS_BUDDY_VERSION;	}
-	virtual bool SupportsTail()
-		{	return true;	}
-
+	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
+								AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
+								UInt32 inFramesToProcess) override;
 
 private:
-	UInt32 numChannels;	// remember the current number of channels being analyzed
-	unsigned long totalSamples;	// the total sample count since we last started analyzing average RMS and absolute peak
-	double * averageRMS;	// array of the current average RMS values for each channel
-	double * totalSquaredCollection;	// array of the current sums of squared input sample values for each channel (used for RMS calculation)
-	float * absolutePeak;	// array of the current absolute peak values for each channel
-	void resetRMS();	// reset the average RMS-related values and restart calculation of average RMS
-	void resetPeak();	// reset the absolute peak-related values and restart calculation of absolute peak
+	using ChannelParameterDesc = std::pair<UInt32, AudioUnitParameterID>;
+
+	static AudioUnitParameterID GetParameterIDFromChannelAndID(UInt32 inChannelIndex, AudioUnitParameterID inID);
+	static std::optional<ChannelParameterDesc> GetChannelAndIDFromParameterID(AudioUnitParameterID inParameterID);
+	static float LinearToDecibels(float inLinearValue);
+
+	void HandleChannelCount();
+	void SetMeter(UInt32 inChannelIndex, AudioUnitParameterID inID, float inLinearValue);
+
+	void ResetRMS();
+	void ResetPeak();
+	void RestartAnalysisWindow();
+
+	float const mMinMeterValueDb;
+	UInt32 mChannelCount = 0;
+	uintmax_t mTotalSamples {};  // the total samples elapsed since we last started analyzing average RMS and absolute peak
+	std::vector<double> mAverageRMS;  // the current average RMS values per-channel
+	std::vector<double> mTotalSquaredCollection;  // the current sums of squared input sample values per-channel (used for RMS calculation)
+	std::vector<float> mAbsolutePeak;  // the current absolute peak values per-channel
 
 	// the below is all similar to the above stuff, but running on the update schedule of the GUI
-	unsigned long guiSamplesCounter;	// number of samples since the last GUI refresh
-	double * guiContinualRMS;	// the accumulation for continual RMS for GUI display
-	float * guiContinualPeak;	// the peak value since the last GUI refresh
-	RMSBuddyDynamicsData * guiShareDataCache;	// cache stores for the dynamics analysis data to be fetched by the GUI
-	void resetGUIcounters();	// reset the GUI-related continual values
-	void notifyGUI();	// post notification to the GUI that it's time to re-fetch data and refresh its display
+	uint64_t mAnalysisWindowSampleCounter {};  // number of samples analyzed since the last GUI refresh
+	std::vector<double> mContinualRMS;  // the accumulation for continual RMS for GUI display
+	std::vector<float> mContinualPeak;  // the absolute peak value since the last GUI refresh
 };
-
-
-#endif
