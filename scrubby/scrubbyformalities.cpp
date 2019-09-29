@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -106,6 +106,8 @@ initparameter_list(kSeekRateRandMin_Sync, "seek rate rand min (sync)", numTempoR
 		setparametervaluestring(kOctaveMax, i, octaveName.c_str());
 	}
 	setparametervaluestring(kOctaveMax, getparametermax_i(kOctaveMax), "no max");
+
+	addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
 
 
 	settailsize_seconds(getparametermax_f(kSeekRange) * 0.001 / getparametermin_f(kSeekRate_Hz));
