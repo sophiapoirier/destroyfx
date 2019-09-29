@@ -58,6 +58,12 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(kQuality, kQualityMode_HiFi, "hi-fi");
   setparametervaluestring(kQuality, kQualityMode_UltraHiFi, "ultra hi-fi");
 
+  // distance parameters only have meaningful effect at zero speed which probably will never occur randomly,
+  // and otherwise all they do is glitch a lot, so omit them
+  addparameterattributes(kDist1, DfxParam::kAttribute_OmitFromRandomizeAll);
+  addparameterattributes(kDist2, DfxParam::kAttribute_OmitFromRandomizeAll);
+  addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
+
 
   settailsize_seconds(getparametermax_f(kBsize) * 0.001);
 
@@ -331,25 +337,37 @@ bool Transverb::loadpreset(long index)
 /* this randomizes the values of all of Transverb's parameters, sometimes in smart ways */
 void Transverb::randomizeparameters(bool writeAutomation)
 {
-// randomize the first 7 parameters
+// randomize the non-mix-level parameters
 
 	for (long i = 0; i < kDrymix; i++)
 	{
+		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll))
+		{
+			continue;
+		}
 		// make slow speeds more probable (for fairer distribution)
 		if ((i == kSpeed1) || (i == kSpeed1))
 		{
 			auto temprand = dfx::math::Rand<double>();
 			if (temprand < 0.5)
+			{
 				temprand = getparametermin_f(i) * temprand * 2.0;
+			}
 			else
+			{
 				temprand = getparametermax_f(i) * ((temprand - 0.5) * 2.0);
+			}
 			setparameter_f(i, temprand);
 		}
 		// make smaller buffer sizes more probable (because they sound better)
 		else if (i == kBsize)
+		{
 			setparameter_gen(kBsize, std::pow((dfx::math::Rand<float>() * 0.93f) + 0.07f, 1.38f));
+		}
 		else
+		{
 			randomizeparameter(i);
+		}
 	}
 
 
@@ -393,8 +411,12 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	setparameter_b(kTomsound, (bool)((rand() % 3) % 2));
 
 
-	for (long i = 0; i < kFreeze; i++)
+	for (long i = 0; i < kNumParameters; i++)
 	{
+		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll))
+		{
+			continue;
+		}
 		postupdate_parameter(i);  // inform any parameter listeners of the changes
 #ifdef TARGET_API_VST
 		if (writeAutomation)

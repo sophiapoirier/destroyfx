@@ -27,6 +27,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include "dfxplugin.h"
 
 #include <algorithm>
+#include <bitset>
 #include <cassert>
 #include <cmath>
 #include <stdio.h>
@@ -283,7 +284,7 @@ void DfxPlugin::initparameter_f(long inParameterIndex, char const* initName, dou
 	{
 		mParameters[inParameterIndex].init_f(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 // XXX hmmm... maybe not here?
-		//		if (getparameterattributes(inParameterIndex) & DfxParam::kAttribute_Unused)  // XXX should we do it like this?
+//		if (hasparameterattribute(inParameterIndex, DfxParam::kAttribute_Unused))  // XXX should we do it like this?
 		{
 //			update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
 		}
@@ -411,6 +412,11 @@ void DfxPlugin::randomizeparameters(bool writeAutomation)
 {
 	for (long i = 0; i < getnumparameters(); i++)
 	{
+		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll))
+		{
+			continue;
+		}
+
 		randomizeparameter(i);
 
 #ifdef TARGET_API_VST
@@ -642,6 +648,13 @@ void DfxPlugin::setparametertouched(long inParameterIndex, bool inTouched)
 	{
 		mParameters[inParameterIndex].settouched(inTouched);
 	}
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::hasparameterattribute(long inParameterIndex, DfxParam::Attribute inFlag) const
+{
+	assert(std::bitset<sizeof(inFlag) * CHAR_BIT>(inFlag).count() == 1);
+	return getparameterattributes(inParameterIndex) & inFlag;
 }
 
 //-----------------------------------------------------------------------------

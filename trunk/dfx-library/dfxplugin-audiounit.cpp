@@ -59,7 +59,7 @@ void DfxPlugin::PostConstructor()
 	// this must happen after AUBase::PostConstructor because the elements are created there
 	for (long i = 0; i < getnumparameters(); i++)
 	{
-		if (!(getparameterattributes(i) & DfxParam::kAttribute_Unused))  // XXX should we do it like this, or override GetParameterList?
+		if (!hasparameterattribute(i, DfxParam::kAttribute_Unused))  // XXX should we do it like this, or override GetParameterList?
 		{
 			AUBase::SetParameter(i, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(i), 0);
 		}
@@ -1185,13 +1185,13 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		outParameterInfo.defaultValue = getparameterdefault_f(inParameterID);
 	}
 	// check if the parameter is used or not (stupid VST workaround)
-	if (getparameterattributes(inParameterID) & DfxParam::kAttribute_Unused)
+	if (hasparameterattribute(inParameterID, DfxParam::kAttribute_Unused))
 	{
 		outParameterInfo.flags = 0;
 //		return kAudioUnitErr_InvalidParameter;  // XXX ey?
 	}
 	// if the parameter is hidden, then indicate that it's not readable or writable...
-	else if (getparameterattributes(inParameterID) & DfxParam::kAttribute_Hidden)
+	else if (hasparameterattribute(inParameterID, DfxParam::kAttribute_Hidden))
 	{
 		outParameterInfo.flags = 0;
 	}

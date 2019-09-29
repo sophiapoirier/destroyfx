@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -269,7 +269,8 @@ public:
 	enum : uint32_t
 	{
 		kAttribute_Hidden = 1,  // should not be revealed to the user
-		kAttribute_Unused = 1 << 1  // isn't being used at all (a place-holder?); don't reveal to the host or anyone
+		kAttribute_Unused = 1 << 1,  // isn't being used at all (a place-holder?); don't reveal to the host or anyone
+		kAttribute_OmitFromRandomizeAll = 1 << 2  // should not be included when randomizing all parameters
 	};
 	typedef uint32_t Attribute; 
 
