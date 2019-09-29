@@ -477,6 +477,7 @@ public:
 	{
 		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].getattributes() : 0;
 	}
+	bool hasparameterattribute(long inParameterIndex, DfxParam::Attribute inFlag) const;
 	void setparameterattributes(long inParameterIndex, DfxParam::Attribute inFlags)
 	{
 		if (parameterisvalid(inParameterIndex))
