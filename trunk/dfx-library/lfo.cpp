@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -35,8 +35,7 @@ Welcome to our Low Frequency Oscillator.
 //------------------------------------------------------------------------
 dfx::LFO::LFO()
 {
-	fillLFOtables();
-	mTable = mSineTable.data();  // just to have it pointing to something at least
+	mGenerator = sineGenerator;  // just to have it pointing to something at least
 
 	reset();
 }
@@ -51,73 +50,8 @@ void dfx::LFO::reset()
 	mSmoothSamples = 0;
 }
 
-//-----------------------------------------------------------------------------------------
-// this function creates tables for mapping out the sine, triangle, and saw LFO shapes
-void dfx::LFO::fillLFOtables()
-{
-	long i {};
-
-
-	// fill the sine waveform table (oscillates from 0 to 1 and back to 0)
-	for (i = 0; i < kNumPoints; i++)
-	{
-		mSineTable[i] = (std::sin(((static_cast<float>(i) * kTableStep) - 0.25f) * 2.0f * dfx::math::kPi<float>) + 1.0f) * 0.5f;
-	}
-
-	// fill the triangle waveform table
-	// ramp from 0 to 1 for the first half
-	for (i = 0; i < (kNumPoints / 2); i++)
-	{
-		mTriangleTable[i] = static_cast<float>(i) / static_cast<float>(kNumPoints / 2);
-	}
-	// and ramp from 1 to 0 for the second half
-	for (long n = 0; i < kNumPoints; n++)
-	{
-		mTriangleTable[i] = 1.0f - (static_cast<float>(n) / static_cast<float>(kNumPoints / 2));
-		i++;
-	}
-
-	// fill the square waveform table
-	// stay at 1 for the first half
-	for (i = 0; i < (kNumPoints / 2); i++)
-	{
-		mSquareTable[i] = 1.0f;
-	}
-	// and 0 for the second half
-	for (long n = 0; i < kNumPoints; n++)
-	{
-		mSquareTable[i] = 0.0f;
-		i++;
-	}
-
-	// fill the sawtooth waveform table (ramps from 0 to 1)
-	for (i = 0; i < kNumPoints; i++)
-	{
-		mSawTable[i] = static_cast<float>(i) / static_cast<float>(kNumPoints - 1);
-	}
-
-	// fill the reverse sawtooth waveform table (ramps from 1 to 0)
-	for (i = 0; i < kNumPoints; i++)
-	{
-		mReverseSawTable[i] = static_cast<float>(kNumPoints - i - 1) / static_cast<float>(kNumPoints - 1);
-	}
-
-	// fill the thorn waveform table
-	// exponentially slope up from 0 to 1 for the first half
-	for (i = 0; i < (kNumPoints / 2); i++)
-	{
-		mThornTable[i] = std::pow((static_cast<float>(i) / static_cast<float>(kNumPoints / 2)), 2.0f);
-	}
-	// and exponentially slope down from 1 to 0 for the second half
-	for (long n = 0; i < kNumPoints; n++)
-	{
-		mThornTable[i] = std::pow((1.0f - (static_cast<float>(n) / static_cast<float>(kNumPoints / 2))), 2.0f);
-		i++;
-	}
-}
-
 //--------------------------------------------------------------------------------------
-std::string dfx::LFO::getShapeName(Shape inShape) const
+std::string dfx::LFO::getShapeName(Shape inShape)
 {
 	switch (inShape)
 	{
@@ -134,31 +68,31 @@ std::string dfx::LFO::getShapeName(Shape inShape) const
 }
 
 //--------------------------------------------------------------------------------------
-// this function points the LFO table pointers to the correct waveform tables
+// this function points the LFO generator function pointer to the correct waveform generator
 void dfx::LFO::pickTheWaveform()
 {
 	switch (mShape)
 	{
 		case kShape_Sine:
-			mTable = mSineTable.data();
+			mGenerator = sineGenerator;
 			break;
 		case kShape_Triangle:
-			mTable = mTriangleTable.data();
+			mGenerator = triangleGenerator;
 			break;
 		case kShape_Square:
-			mTable = mSquareTable.data();
+			mGenerator = squareGenerator;
 			break;
 		case kShape_Saw:
-			mTable = mSawTable.data();
+			mGenerator = sawGenerator;
 			break;
 		case kShape_ReverseSaw:
-			mTable = mReverseSawTable.data();
+			mGenerator = reverseSawGenerator;
 			break;
 		case kShape_Thorn:
-			mTable = mThornTable.data();
+			mGenerator = thornGenerator;
 			break;
 		default:
-			mTable = nullptr;
+			mGenerator = nullptr;
 			break;
 	}
 }
@@ -186,15 +120,128 @@ void dfx::LFO::setStepSize(float inStepSize)
 void dfx::LFO::syncToTheBeat(long inSamplesToBar)
 {
 	// calculate how many samples long the LFO cycle is
-	float const cyclesize = kNumPoints_f / mStepSize;
+	float const cycleSize = 1.0f / mStepSize;
 	// calculate many more samples it will take for this cycle to coincide with the beat
-	float const countdown = std::fmod(static_cast<float>(inSamplesToBar), cyclesize);
-	// and convert that into the correct LFO position according to its table step size
-	mPosition = (cyclesize - countdown) * mStepSize;
-	// wrap around the new position if it is beyond the end of the LFO table
-	if (mPosition >= kNumPoints_f)
-	{
-		mPosition = std::fmod(mPosition, kNumPoints_f);
-	}
+	float const countdown = std::fmod(static_cast<float>(inSamplesToBar), cycleSize);
+	// and convert that into the correct LFO position according to its step size
+	mPosition = (cycleSize - countdown) * mStepSize;
+	// wrap around the new position if it is beyond the end of the cycle
 	mPosition = std::max(mPosition, 0.0f);
+	mPosition = std::fmod(mPosition, 1.0f);
+}
+
+//-----------------------------------------------------------------------------------------
+// This function wraps around the LFO cycle position when it passes the cycle end.
+// It also sets up the smoothing counter if a discontiguous LFO waveform is being used.
+void dfx::LFO::updatePosition(long inNumSteps)
+{
+	// increment the LFO position tracker
+	mPosition += mStepSize * static_cast<float>(inNumSteps);
+
+	if (mPosition >= 1.0f)
+	{
+		// wrap around the position tracker if it has made it past the end of the LFO cycle
+		mPosition = std::fmod(mPosition, 1.0f);
+		// get new random LFO values, too
+		mPrevRandomNumber = std::exchange(mRandomNumber, dfx::math::Rand<decltype(mRandomNumber)>());
+		// set up the sample smoothing if a discontiguous waveform's cycle just ended
+		switch (mShape)
+		{
+			case kShape_Square:
+			case kShape_Saw:
+			case kShape_ReverseSaw:
+			case kShape_Random:
+				mSmoothSamples = kSmoothDur;
+				break;
+			default:
+				break;
+		}
+	}
+	else if (mPosition < 0.0f)
+	{
+		mPosition = 0.0f;
+	}
+	// special check for the square waveform - it also needs smoothing at the half point
+	else if (mShape == kShape_Square)
+	{
+		// check to see if it has just passed the halfway point, where the square waveform drops to zero
+		constexpr float squareHalfPoint = 0.5f; 
+		if ((mPosition >= squareHalfPoint) && 
+			((mPosition - mStepSize) < squareHalfPoint))
+		{
+			mSmoothSamples = kSmoothDur;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------------------
+// gets the current 0.0 - 1.0 output value of the LFO and increments its position
+float dfx::LFO::process() const
+{
+	float outValue {};
+
+	if (mShape == kShape_RandomInterpolating)
+	{
+		// interpolate between the previous random number and the new one
+		outValue = (mRandomNumber * mPosition) + (mPrevRandomNumber * (1.0f - mPosition));
+	}
+	else if (mShape == kShape_Random)
+	{
+		outValue = mRandomNumber;
+	}
+	else
+	{
+		outValue = mGenerator(mPosition);
+	}
+
+	return outValue * mDepth;
+}
+
+//-----------------------------------------------------------------------------------------
+// oscillates from 0 to 1 and back to 0
+float dfx::LFO::sineGenerator(float inPosition)
+{
+	return (std::sin((inPosition - 0.25f) * 2.0f * dfx::math::kPi<float>) + 1.0f) * 0.5f;
+}
+
+//-----------------------------------------------------------------------------------------
+// ramp from 0 to 1 for the first half and ramp from 1 to 0 for the second half
+float dfx::LFO::triangleGenerator(float inPosition)
+{
+	if (inPosition < 0.5f)
+	{
+		return inPosition * 2.0f;
+	}
+	else
+	{
+		return 1.0f - ((inPosition - 0.5f) * 2.0f);
+	}
+}
+
+//-----------------------------------------------------------------------------------------
+// stay at 1 for the first half and 0 for the second half
+float dfx::LFO::squareGenerator(float inPosition)
+{
+	return (inPosition < 0.5f) ? 1.0f : 0.0f;
+}
+
+//-----------------------------------------------------------------------------------------
+// ramps from 0 to 1
+float dfx::LFO::sawGenerator(float inPosition)
+{
+	return inPosition;
+}
+
+//-----------------------------------------------------------------------------------------
+// ramps from 1 to 0
+float dfx::LFO::reverseSawGenerator(float inPosition)
+{
+	return 1.0f - inPosition;
+}
+
+//-----------------------------------------------------------------------------------------
+// exponentially slope up from 0 to 1 for the first half and down from 1 to 0 for the second half
+float dfx::LFO::thornGenerator(float inPosition)
+{
+	return std::pow(triangleGenerator(inPosition), 2.0f);
 }
