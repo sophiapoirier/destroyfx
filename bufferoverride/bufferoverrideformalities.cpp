@@ -62,7 +62,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// set the value strings for the LFO shape parameters
 	for (dfx::LFO::Shape i = 0; i < dfx::LFO::kNumShapes; i++)
 	{
-		auto const shapeName = mDivisorLFO.getShapeName(i);
+		auto const shapeName = dfx::LFO::getShapeName(i);
 		setparametervaluestring(kDivisorLFOShape, i, shapeName.c_str());
 		setparametervaluestring(kBufferLFOShape, i, shapeName.c_str());
 	}
@@ -113,6 +113,9 @@ void BufferOverride::reset()
 	mDivisorWasChangedByMIDI = mDivisorWasChangedByHand = false;
 
 	mNeedResync = true;  // some hosts may call resume when restarting playback
+
+	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
+	mOneDivSR = 1.0f / getsamplerate_f();
 }
 
 //-------------------------------------------------------------------------

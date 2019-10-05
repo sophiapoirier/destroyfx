@@ -57,19 +57,19 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 	// and then update the step size for each LFO, in case the LFO parameters have changed
 	if (mDivisorLFOTempoSync)
 	{
-		mDivisorLFO.setStepSize(mCurrentTempoBPS * mDivisorLFOTempoRate * mNumLFOpointsDivSR);
+		mDivisorLFO.setStepSize(mCurrentTempoBPS * mDivisorLFOTempoRate * mOneDivSR);
 	}
 	else
 	{
-		mDivisorLFO.setStepSize(mDivisorLFORateHz * mNumLFOpointsDivSR);
+		mDivisorLFO.setStepSize(mDivisorLFORateHz * mOneDivSR);
 	}
 	if (mBufferLFOTempoSync)
 	{
-		mBufferLFO.setStepSize(mCurrentTempoBPS * mBufferLFOTempoRate * mNumLFOpointsDivSR);
+		mBufferLFO.setStepSize(mCurrentTempoBPS * mBufferLFOTempoRate * mOneDivSR);
 	}
 	else
 	{
-		mBufferLFO.setStepSize(mBufferLFORateHz * mNumLFOpointsDivSR);
+		mBufferLFO.setStepSize(mBufferLFORateHz * mOneDivSR);
 	}
 
 	//---------------------------CALCULATE FORCED BUFFER SIZE----------------------------
@@ -238,8 +238,6 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 
 
 //-------------------------INITIALIZATIONS----------------------
-	// this is a handy value to have during LFO calculations and wasteful to recalculate at every sample
-	mNumLFOpointsDivSR = dfx::LFO::kNumPoints_f / getsamplerate_f();
 	mDivisorLFO.pickTheWaveform();
 	mBufferLFO.pickTheWaveform();
 

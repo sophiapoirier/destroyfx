@@ -120,7 +120,7 @@ private:
 	long mPrevMinibufferSize = 0;  // the previous size
 	long mReadPos = 0;  // the current sample position within the minibuffer
 
-	float mNumLFOpointsDivSR = 0.0f;  // the number of LFO table points divided by the sampling rate
+	float mOneDivSR = 0.0f;  // the inverse of the sampling rate
 
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second
 	bool mNeedResync = false;

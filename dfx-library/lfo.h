@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -55,17 +55,12 @@ public:
 	};
 	typedef int Shape;
 
-	static constexpr long kNumPoints = 512;
-	static constexpr auto kNumPoints_f = static_cast<float>(kNumPoints);  // to reduce casting later on
-	static constexpr float kTableStep = 1.0f / kNumPoints_f;  // to reduce division and encourage multiplication
-	static constexpr long kSmoothDur = 48;
-
 	LFO();
 
 	void reset();
 
 	void pickTheWaveform();  // TODO: omigoddess please remove this horrid method and handle state changes automatically
-	std::string getShapeName(Shape inShape) const;
+	static std::string getShapeName(Shape inShape);
 
 	void setDepth(float inDepth);
 	void setShape(Shape inShape);
@@ -73,76 +68,8 @@ public:
 	void setStepSize(float inStepSize);
 	void syncToTheBeat(long inSamplesToBar);
 
-
-	//--------------------------------------------------------------------------------------
-	// This function wraps around the LFO table position when it passes the cycle end.
-	// It also sets up the smoothing counter if a discontiguous LFO waveform is being used.
-	void updatePosition(long inNumSteps = 1)
-	{
-		// increment the LFO position tracker
-		mPosition += mStepSize * static_cast<float>(inNumSteps);
-
-		if (mPosition >= kNumPoints_f)
-		{
-			// wrap around the position tracker if it has made it past the end of the LFO table
-			mPosition = std::fmod(mPosition, kNumPoints_f);
-			// get new random LFO values, too
-			mPrevRandomNumber = mRandomNumber;
-			mRandomNumber = dfx::math::Rand<decltype(mRandomNumber)>();
-			// set up the sample smoothing if a discontiguous waveform's cycle just ended
-			switch (mShape)
-			{
-				case kShape_Square:
-				case kShape_Saw:
-				case kShape_ReverseSaw:
-				case kShape_Random:
-					mSmoothSamples = kSmoothDur;
-					break;
-				default:
-					break;
-			}
-		}
-		else if (mPosition < 0.0f)
-		{
-			mPosition = 0.0f;
-		}
-		// special check for the square waveform - it also needs smoothing at the half point
-		else if (mShape == kShape_Square)
-		{
-			// check to see if it has just passed the halfway point
-			constexpr long squareHalfPoint = kNumPoints / 2;  // the point in the table when the square waveform drops to zero
-			if ((static_cast<long>(mPosition) >= squareHalfPoint) && 
-				(static_cast<long>(mPosition - mStepSize) < squareHalfPoint))
-			{
-				mSmoothSamples = kSmoothDur;
-			}
-		}
-	}
-
-	//--------------------------------------------------------------------------------------
-	// gets the current 0.0 - 1.0 output value of the LFO and increments its position
-	float process() const
-	{
-		float outValue {};
-
-		if (mShape == kShape_RandomInterpolating)
-		{
-			// calculate how far into this LFO cycle we are so far, scaled from 0.0 to 1.0
-			float const randiScalar = mPosition * kTableStep;
-			// interpolate between the previous random number and the new one
-			outValue = (mRandomNumber * randiScalar) + (mPrevRandomNumber * (1.0f - randiScalar));
-		}
-		else if (mShape == kShape_Random)
-		{
-			outValue = mRandomNumber;
-		}
-		else
-		{
-			outValue = mTable[static_cast<size_t>(mPosition)];
-		}
-
-		return outValue * mDepth;
-	}
+	void updatePosition(long inNumSteps = 1);
+	float process() const;
 
 	//--------------------------------------------------------------------------------------
 	// scales the output of process from 0.0 - 1.0 output to 0.0 - 2.0 (oscillating around 1.0)
@@ -153,18 +80,22 @@ public:
 
 
 private:
-	void fillLFOtables();
+	static constexpr long kSmoothDur = 48;
 
-	// LFO waveform tables
-	std::array<float, kNumPoints> mSineTable, mTriangleTable, mSquareTable, mSawTable, mReverseSawTable, mThornTable;
-	float const* mTable = nullptr;  // pointer to the LFO table
+	static float sineGenerator(float inPosition);
+	static float triangleGenerator(float inPosition);
+	static float squareGenerator(float inPosition);
+	static float sawGenerator(float inPosition);
+	static float reverseSawGenerator(float inPosition);
+	static float thornGenerator(float inPosition);
 
-	float mPosition = 0.0f;  // the position in the LFO table
-	float mStepSize = 0.0f;  // size of the steps through the LFO table
+
+	float(*mGenerator)(float) = nullptr;  // LFO waveform generator function pointer
+	float mPosition = 0.0f;  // the position in the LFO cycle
+	float mStepSize = 0.0f;  // size of the steps through the LFO cycle
 	float mRandomNumber = 0.0f;  // random values for the random LFO waveforms
 	float mPrevRandomNumber = 0.0f;  // previous random values for the random interpolating LFO waveform
-//	float mCycleRate = 0.0f;  // the rate in Hz of the LFO (only used for first layer LFOs)
-	long mSmoothSamples = 0.0f;  // a counter for the position during a smoothing fade
+	long mSmoothSamples = 0;  // TODO: a counter for the position during a smoothing fade
 
 	float mDepth = 0.0f;
 	Shape mShape {};
