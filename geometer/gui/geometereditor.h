@@ -69,6 +69,4 @@ private:
   std::vector<VSTGUI::SharedPointer<DGImage>> g_helpicons;
   DGButton * helpicon = nullptr;
   GeometerHelpBox * helpbox = nullptr;
-
-  class GeometerView * gview = nullptr;
 };

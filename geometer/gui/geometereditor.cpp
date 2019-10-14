@@ -25,7 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <sstream>
 
-#include "geometer.h"
+#include "geometer-base.h"
 #include "geometerhelp.h"
 #include "geometerview.h"
 
@@ -106,9 +106,8 @@ enum {
 
   pos_geometerviewx = 20,
   pos_geometerviewy = 14,
-  pos_geometervieww = 476,
+  pos_geometervieww = GeometerViewData::samples,
   pos_geometerviewh = 133
-
 };
 
 
@@ -253,8 +252,7 @@ long GeometerEditor::OpenEditor() {
 
   /* geometer view */
   pos.set(pos_geometerviewx, pos_geometerviewy, pos_geometervieww, pos_geometerviewh);
-  gview = new GeometerView(pos, dynamic_cast<PLUGIN*>(dfxgui_GetDfxPluginInstance()));
-  getFrame()->addView(gview);
+  getFrame()->addView(new GeometerView(pos));
 
   // window shape menu
   pos.set(pos_windowshapemenuX, pos_windowshapemenuY, stdsize, stdsize);
