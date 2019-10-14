@@ -21,8 +21,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "geometerview.h"
 
-#include <algorithm>
+#include <cassert>
 #include <cmath>
+#include <utility>
 
 constexpr auto coldwave = VSTGUI::MakeCColor(75, 151, 71);
 constexpr auto cnewwave = VSTGUI::MakeCColor(240, 255, 160);
@@ -32,23 +33,8 @@ constexpr auto cpointinside = VSTGUI::MakeCColor(220, 100, 200);
 constexpr auto cbackground = VSTGUI::MakeCColor(20, 50, 20);
 constexpr auto zeroline = VSTGUI::MakeCColor(52, 71, 49);
 
-GeometerView::GeometerView(VSTGUI::CRect const & size, PLUGIN * listener)
-  : VSTGUI::CView(size),
-#if TARGET_PLUGIN_USES_DSPCORE
-    geom(dynamic_cast<PLUGINCORE*>(listener->getplugincore(0))),
-#else
-    geom(listener),
-#endif
-    samples(size.getWidth()) {
-
-  assert(geom);
-
-  inputs.assign((samples + 3), 0.0f);
-  pointsx.assign((samples + 3), 0);
-  pointsy.assign((samples + 3), 0.0f);
-  tmpx.assign((samples + 3), 0);
-  tmpy.assign((samples + 3), 0.0f);
-  outputs.assign((samples + 3), 0.0f);
+GeometerView::GeometerView(VSTGUI::CRect const & size)
+  : VSTGUI::CView(size) {
 
   setWantsIdle(true);
 }
@@ -60,6 +46,7 @@ bool GeometerView::attached(VSTGUI::CView * parent) {
   auto const success = VSTGUI::CView::attached(parent);
 
   if (success) {
+    editor = dynamic_cast<DfxGuiEditor*>(getEditor());
     offc = VSTGUI::COffscreenContext::create(getFrame(), getWidth(), getHeight());
 
     reflect();
@@ -71,7 +58,7 @@ bool GeometerView::attached(VSTGUI::CView * parent) {
 
 void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
 
-  if (!offc || inputs.empty() || outputs.empty()) return; /* not ready yet */
+  assert(offc);
 
   auto const signedlinear2y = [height = getHeight()](float value) -> VSTGUI::CCoord {
     return height * (-value + 1.0) * 0.5;
@@ -86,32 +73,31 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
   VSTGUI::CCoord const centery = std::floor(getHeight() / 2.0);
   offc->drawLine(VSTGUI::CPoint(0, centery), VSTGUI::CPoint(getWidth(), centery));
 
-  VSTGUI::CCoord const start = (apts < getWidth()) ? ((std::lround(getWidth()) - apts) >> 1) : 0;
+  VSTGUI::CCoord const start = (data.apts < getWidth()) ? ((std::lround(getWidth()) - data.apts) >> 1) : 0;
   VSTGUI::CDrawContext::LinePair line;
 //  VSTGUI::SharedPointer const path(ctx->createGraphicsPath(), false);
 
   offc->setFrameColor(coldwave);
-  line.first = line.second = VSTGUI::CPoint(start, signedlinear2y(inputs.front()));
-  for (int i = 1; i < apts; i ++) {
-    line.first = std::exchange(line.second, VSTGUI::CPoint(start + i, signedlinear2y(inputs[i])));
+  line.first = line.second = VSTGUI::CPoint(start, signedlinear2y(data.inputs.front()));
+  for (int i = 1; i < data.apts; i ++) {
+    line.first = std::exchange(line.second, VSTGUI::CPoint(start + i, signedlinear2y(data.inputs[i])));
     offc->drawLine(line);
   }
 
   offc->setFrameColor(cnewwave);
-  line.first = line.second = VSTGUI::CPoint(start, signedlinear2y(outputs.front()));
-  for (int i = 1; i < apts; i ++) {
-    line.first = std::exchange(line.second, VSTGUI::CPoint(start + i, signedlinear2y(outputs[i])));
+  line.first = line.second = VSTGUI::CPoint(start, signedlinear2y(data.outputs.front()));
+  for (int i = 1; i < data.apts; i ++) {
+    line.first = std::exchange(line.second, VSTGUI::CPoint(start + i, signedlinear2y(data.outputs[i])));
     offc->drawLine(line);
   }
 
-#if 1
-  for (int i = 0; i < numpts; i ++) {
+  for (int i = 0; i < data.numpts; i ++) {
     constexpr int bordersize = 1;
     constexpr int pointsize = 1;
-    auto const yy = static_cast<int>(signedlinear2y(pointsy[i]));
+    auto const yy = static_cast<int>(signedlinear2y(data.pointsy[i]));
 
-    VSTGUI::CRect box(start + pointsx[i] - bordersize, yy - bordersize,
-                      start + pointsx[i] + bordersize + pointsize, yy + bordersize + pointsize);
+    VSTGUI::CRect box(start + data.pointsx[i] - bordersize, yy - bordersize,
+                      start + data.pointsx[i] + bordersize + pointsize, yy + bordersize + pointsize);
     offc->setFillColor(cpointoutside);
     offc->drawRect(box, VSTGUI::kDrawFilled);
 
@@ -119,7 +105,6 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
     offc->setFillColor(cpointinside);
     offc->drawRect(box, VSTGUI::kDrawFilled);
   }
-#endif
 
   offc->endDraw();
   offc->copyFrom(ctx, getViewSize());
@@ -131,16 +116,12 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
 void GeometerView::onIdle() {
 
   /* XXX reevaluate when I should do this. */
-#if 1
   /* maybe I don't need to do this every frame... */
-  auto const currentms = getFrame()->getTicks();
-  auto const windowsizems = static_cast<uint32_t>(static_cast<double>(geom->getwindowsize()) * 1000.0 / geom->getsamplerate());
-  auto const elapsedms = currentms - prevms;
-  if ((elapsedms > windowsizems) || (currentms < prevms)) {
+  assert(editor);
+  auto const timestamp = editor->dfxgui_GetProperty<uint64_t>(PROP_LAST_WINDOW_TIMESTAMP).value_or(prevtimestamp);
+  if (std::exchange(prevtimestamp, timestamp) != timestamp) {
     reflect();
-    prevms = currentms;
   }
-#endif
 }
 
 
@@ -149,27 +130,12 @@ void GeometerView::onIdle() {
 void GeometerView::reflect() {
   /* when idle, copy points out of Geometer */
 
-  if (inputs.empty() || !geom || geom->in0.empty()) return; /* too soon */
-
-#if 1
-  for (int i=0; i < samples; i++) {
-    inputs[i] = geom->in0[i];
-  }
-#else
-  for (int i=0; i < samples; i++) {
-    inputs[i] = std::sin((i * 10 * dfx::math::kPi<float>) / samples);
-  }
-#endif
-
-  {
-    std::lock_guard const guard(geom->cs);
-
-    apts = std::min(static_cast<int>(geom->framesize), samples);
-
-    numpts = geom->processw(inputs.data(), outputs.data(),
-                            apts, pointsx.data(), pointsy.data(), samples - 1,
-                            tmpx.data(), tmpy.data());
-  }
+  assert(editor);
+  size_t dataSize = sizeof(data);
+  [[maybe_unused]] auto const status = editor->dfxgui_GetProperty(PROP_WAVEFORM_DATA, dfx::kScope_Global, 0,
+                                                                  &data, dataSize);
+  assert(status == dfx::kStatus_NoError);
+  assert(dataSize == sizeof(data));
 
   invalid();
 }

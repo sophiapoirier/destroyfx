@@ -22,10 +22,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
-#include <vector>
-
 #include "dfxgui.h"
-#include "geometer.h"
+#include "geometer-base.h"
 
 /* this class is for the display of the wave at the top of the plugin.
    It reads the current 'in' buffer for the plugin, runs it through
@@ -36,34 +34,16 @@ To contact the author, use the contact form at http://destroyfx.org/
 class GeometerView : public VSTGUI::CView {
 
 private:
-#if TARGET_PLUGIN_USES_DSPCORE
-  PLUGINCORE * const geom;
-#else
-  PLUGIN * const geom;
-#endif
 
-  int const samples;
-  int numpts = 0;
+  GeometerViewData data;
+  uint64_t prevtimestamp = 0;
 
-  /* active points */
-  int apts = 0;
-
-  uint32_t prevms = 0;
-
-  std::vector<float> inputs;
-  std::vector<int> pointsx;
-  std::vector<float> pointsy;
-  std::vector<float> outputs;
-
-  /* passed to processw */
-  std::vector<int> tmpx;
-  std::vector<float> tmpy;
-
-  VSTGUI::SharedPointer<VSTGUI::COffscreenContext> offc;
+  DfxGuiEditor * editor = nullptr;
+  VSTGUI::SharedPointer<VSTGUI::COffscreenContext> offc;  // TODO: does this still serve a purpose in modern VSTGUI?
 
 public:
 
-  GeometerView(VSTGUI::CRect const & size, PLUGIN * listener);
+  explicit GeometerView(VSTGUI::CRect const & size);
 
   bool attached(VSTGUI::CView * parent) override;
   void draw(VSTGUI::CDrawContext * pContext) override;

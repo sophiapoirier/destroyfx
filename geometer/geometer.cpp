@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -28,6 +28,7 @@ Featuring the Super Destroy FX Windowing System!
   #include <Accelerate/Accelerate.h>
 #endif
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 
 #include "dfxmath.h"
@@ -167,6 +168,9 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addchannelconfig(1, 1);	/* mono */
 #endif
 
+  tmpx.fill(0);
+  tmpy.fill(0.0f);
+
 #if TARGET_PLUGIN_USES_DSPCORE
   DFX_INIT_CORE(PLUGINCORE);
 #endif
@@ -178,6 +182,42 @@ void PLUGIN::dfx_PostConstructor()
      allow them to be assigned to control parameters via MIDI learn */
   getsettings().setAllowPitchbendEvents(true);
   getsettings().setAllowNoteEvents(true);
+}
+
+long PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+                                 size_t& outDataSize, dfx::PropertyFlags& outFlags)
+{
+  switch (inPropertyID)
+  {
+    case PROP_LAST_WINDOW_TIMESTAMP:
+      outDataSize = sizeof(uint64_t);
+      outFlags = dfx::kPropertyFlag_Readable;
+      return dfx::kStatus_NoError;
+    case PROP_WAVEFORM_DATA:
+      outDataSize = sizeof(GeometerViewData);
+      outFlags = dfx::kPropertyFlag_Readable;
+      return dfx::kStatus_NoError;
+    default:
+      return DfxPlugin::dfx_GetPropertyInfo(inPropertyID, inScope, inItemIndex, outDataSize, outFlags);
+  }
+}
+
+long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+                             void* outData)
+{
+  switch (inPropertyID)
+  {
+    case PROP_LAST_WINDOW_TIMESTAMP:
+      *static_cast<uint64_t*>(outData) = lastwindowtimestamp;
+      return dfx::kStatus_NoError;
+    case PROP_WAVEFORM_DATA: {
+      std::lock_guard const guard(windowcachelock);
+      *static_cast<GeometerViewData*>(outData) = windowcache;
+      return dfx::kStatus_NoError;
+    }
+    default:
+      return DfxPlugin::dfx_GetProperty(inPropertyID, inScope, inItemIndex, outData);
+  }
 }
 
 void PLUGIN::randomizeparameter(long inParameterIndex)
@@ -212,6 +252,60 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
   postupdate_parameter(inParameterIndex);	// inform any parameter listeners of the changes
 }
 
+void PLUGIN::clearwindowcache()
+{
+  {
+    std::unique_lock const guard(windowcachelock, std::try_to_lock);
+    if (guard.owns_lock()) {
+      windowcache.clear();
+    }
+  }
+  lastwindowtimestamp = 0;
+}
+
+void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
+{
+  bool updated = false;
+  {
+    std::unique_lock const guard(windowcachelock, std::try_to_lock);
+    if ((updated = guard.owns_lock())) {
+#if 1
+      std::copy_n(geometercore->getinput(), GeometerViewData::samples, windowcache.inputs.data());
+#else
+      for (int i=0; i < GeometerViewData::samples; i++) {
+        windowcache.inputs[i] = std::sin((i * 10 * dfx::math::kPi<float>) / GeometerViewData::samples);
+      }
+#endif
+
+      windowcache.apts = std::min(static_cast<int>(geometercore->getframesize()), GeometerViewData::samples);
+
+      windowcache.numpts = geometercore->processw(windowcache.inputs.data(), windowcache.outputs.data(), windowcache.apts,
+                                                  windowcache.pointsx.data(), windowcache.pointsy.data(),
+                                                  GeometerViewData::samples - 1, tmpx.data(), tmpy.data());
+    }
+  }
+
+  if (updated) {
+    lastwindowtimestamp = std::chrono::steady_clock::now().time_since_epoch().count();
+  }
+}
+
+#if TARGET_PLUGIN_USES_DSPCORE
+void PLUGINCORE::clearwindowcache()
+{
+  if (iswaveformsource()) {
+    geometer->clearwindowcache();
+  }
+}
+
+void PLUGINCORE::updatewindowcache(PLUGINCORE const * geometercore)
+{
+  if (iswaveformsource()) {
+    geometer->updatewindowcache(geometercore);
+  }
+}
+#endif
+
 std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(long inParameterIndex) const
 {
   auto const getConstrainedToggleAssignment = [](long inNumStates, long inNumUsableStates)
@@ -242,7 +336,8 @@ std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(l
 
 #if TARGET_PLUGIN_USES_DSPCORE
 PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
-  : DfxPluginCore(inDfxPlugin)
+  : DfxPluginCore(inDfxPlugin),
+    geometer(dynamic_cast<PLUGIN*>(inDfxPlugin))
 #else
 long PLUGIN::initialize()
 #endif
@@ -307,13 +402,13 @@ void PLUGINCORE::reset() {
   outsize = framesize;
 
 #if TARGET_PLUGIN_USES_DSPCORE
-  getplugin()->setlatency_samples(framesize);
+  getplugin()->setlatency_samples(framesize);  // TODO: not realtime safe
   /* tail is the same as delay, of course */
-  getplugin()->settailsize_samples(framesize);
+  getplugin()->settailsize_samples(framesize);  // TODO: not realtime safe
 #else
-  setlatency_samples(framesize);
+  setlatency_samples(framesize);  // TODO: not realtime safe
   /* tail is the same as delay, of course */
-  settailsize_samples(framesize);
+  settailsize_samples(framesize);  // TODO: not realtime safe
 #endif
 
   shape = getparameter_i(P_SHAPE);
@@ -342,13 +437,14 @@ void PLUGINCORE::reset() {
       break;
     case WINDOW_COS:
       for(long z = 0; z < third; z++) {
-        // XXX what about Eulor's law for cosine?
         float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * ((float)z * oneDivThird)) + 1.0f);
         windowbuf[z] = p;
         windowbuf[z+third] = (1.0f - p);
       }
       break;
   }
+
+  clearwindowcache();
 }
 
 
@@ -370,6 +466,8 @@ void PLUGINCORE::processparameters() {
   if (getparameterchanged(P_BUFSIZE))
     /* this tells the host to call a suspend()-resume() pair, 
       which updates initialDelay value */
+    // TODO: no it does not for AU
+    // also the new latency has not necessarily been applied without a setlatency_samples call
     #if TARGET_PLUGIN_USES_DSPCORE
     getplugin()->setlatencychanged(true);
     #else
@@ -579,7 +677,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
 */
 int PLUGINCORE::processw(float * in, float * out, long samples,
                      int * px, float * py, int maxpts,
-                     int * tempx, float * tempy) {
+                     int * tempx, float * tempy) const {
 
   /* collect points. */
 
@@ -1131,7 +1229,7 @@ int PLUGINCORE::processw(float * in, float * out, long samples,
 }
 
 
-/* this fake processX function reads samples one at a time
+/* this fake process function reads samples one at a time
    from the true input. It simultaneously copies samples from
    the beginning of the output buffer to the true output.
    We maintain that out0 always has at least 'third' samples
@@ -1187,12 +1285,10 @@ void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutp
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      {
-      std::lock_guard const guard(cs);
       processw(in0.data(), out0.data()+outstart+outsize, framesize,
                pointx.data(), pointy.data(), framesize * 2,
                storex.data(), storey.data());
-      }
+      updatewindowcache(this);
 
 #if TARGET_OS_MAC
       vDSP_vmul(out0.data()+outstart+outsize, 1, windowbuf.data(), 1, out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));
@@ -1220,14 +1316,13 @@ void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutp
           break;
         case WINDOW_WEDGE:
           for(int z = 0; z < third; z++) {
-            float auto p = std::sqrt((float)z * oneDivThird);
+            float const p = std::sqrt((float)z * oneDivThird);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
           }
           break;
         case WINDOW_COS:
           for(int z = 0; z < third; z++) {
-            // XXX what about Eulor's law for cosine?
             float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * ((float)z * oneDivThird)) + 1.0f);
             out0[z+outstart+outsize] *= p;
             out0[z+outstart+outsize+third] *= (1.0f - p);
