@@ -108,6 +108,7 @@ initparameter_list(kSeekRateRandMin_Sync, "seek rate rand min (sync)", numTempoR
 	setparametervaluestring(kOctaveMax, getparametermax_i(kOctaveMax), "no max");
 
 	addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
+	addparameterattributes(kPredelay, DfxParam::kAttribute_OmitFromRandomizeAll);
 
 
 	settailsize_seconds(getparametermax_f(kSeekRange) * 0.001 / getparametermin_f(kSeekRate_Hz));
@@ -127,6 +128,13 @@ void Scrubby::dfx_PostConstructor()
 	getsettings().setAllowPitchbendEvents(true);
 	// can't load old VST-style settings
 	getsettings().setLowestLoadableVersion(0x00010100);
+}
+
+//-------------------------------------------------------------------------
+long Scrubby::initialize()
+{
+	setlatency_seconds((getparameter_f(kSeekRange) * 0.001) * getparameter_scalar(kPredelay));
+	return dfx::kStatus_NoError;
 }
 
 //-------------------------------------------------------------------------
@@ -468,12 +476,7 @@ void Scrubby::processparameters()
 	if (getparameterchanged(kPredelay))
 	{
 		// tell the host what the length of delay compensation should be
-		setlatency_seconds(mSeekRangeSeconds * getparameter_scalar(kPredelay));
-	#ifdef TARGET_API_VST
-		// this tells the host to call a suspend()-resume() pair, 
-		// which updates initialDelay value
-		setlatencychanged(true);
-	#endif
+		setlatency_seconds(mSeekRangeSeconds * getparameter_scalar(kPredelay), dfx::NotificationPolicy::Async);
 	}
 	for (size_t i = 0; i < mActiveNotesTable.size(); i++)
 	{

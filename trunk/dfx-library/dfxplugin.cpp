@@ -30,8 +30,11 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <bitset>
 #include <cassert>
 #include <cmath>
+#include <mutex>
 #include <stdio.h>
+#include <thread>
 #include <time.h>	// for time(), which is used to feed srand()
+#include <unordered_set>
 
 #include "dfxmisc.h"
 
@@ -56,7 +59,81 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 //#define DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 //#define DFX_DEBUG_PRINT_MUSIC_EVENTS
 
-#define DFX_PRESET_DEFAULT_NAME	"default"
+
+constexpr char const* const kPresetDefaultName = "default";
+constexpr std::chrono::milliseconds kIdleTimerInterval(99);
+
+
+namespace
+{
+
+static std::atomic<bool> sIdleThreadShouldRun {false};
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-attributes"
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+__attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;
+__attribute__((no_destroy)) static std::mutex sIdleThreadLock;
+__attribute__((no_destroy)) static std::unordered_set<DfxPlugin*> sIdleClients; 
+__attribute__((no_destroy)) static std::mutex sIdleClientsLock;
+#pragma clang diagnostic pop
+
+//-----------------------------------------------------------------------------
+static void DFX_RegisterIdleClient(DfxPlugin* const inIdleClient)
+{
+	{
+		std::lock_guard const guard(sIdleClientsLock);
+		[[maybe_unused]] auto const [element, inserted] = sIdleClients.insert(inIdleClient);
+		assert(inserted);
+	}
+
+	{
+		std::lock_guard const guard(sIdleThreadLock);
+		if (!sIdleThread)
+		{
+			sIdleThreadShouldRun = true;
+			sIdleThread = std::make_unique<std::thread>([]()
+			{
+#if TARGET_OS_MAC
+				pthread_setname_np(PLUGIN_NAME_STRING " idle timer");
+#endif
+				while (sIdleThreadShouldRun)
+				{
+					{
+						std::lock_guard const guard(sIdleClientsLock);
+						std::for_each(sIdleClients.cbegin(), sIdleClients.cend(), 
+									  [](auto&& idleClient){ idleClient->do_idle(); });
+					}
+					std::this_thread::sleep_for(kIdleTimerInterval);
+				}
+			});
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+static void DFX_UnregisterIdleClient(DfxPlugin* const inIdleClient)
+{
+	auto const allClientsCompleted = [&inIdleClient]()
+	{
+		std::lock_guard const guard(sIdleClientsLock);
+		[[maybe_unused]] auto const eraseCount = sIdleClients.erase(inIdleClient);
+		assert(eraseCount == 1);
+		return sIdleClients.empty();
+	}();
+
+	if (allClientsCompleted)
+	{
+		sIdleThreadShouldRun = false;
+		std::lock_guard const guard(sIdleThreadLock);
+		if (sIdleThread)
+		{
+			sIdleThread->join();
+			sIdleThread.reset();
+		}
+	}
+}
+
+}  // namespace
 
 
 
@@ -139,7 +216,6 @@ DfxPlugin::DfxPlugin(
 #endif
 #endif
 // end RTAS stuff
-
 }
 
 //-----------------------------------------------------------------------------
@@ -149,7 +225,7 @@ void DfxPlugin::do_PostConstructor()
 	// set up a name for the default preset if none was set
 	if (!presetnameisvalid(0))
 	{
-		setpresetname(0, DFX_PRESET_DEFAULT_NAME);
+		setpresetname(0, kPresetDefaultName);
 	}
 
 #if TARGET_PLUGIN_USES_DSPCORE && !defined(TARGET_API_AUDIOUNIT)
@@ -162,6 +238,8 @@ void DfxPlugin::do_PostConstructor()
 #endif
 
 	dfx_PostConstructor();
+
+	DFX_RegisterIdleClient(this);
 }
 
 
@@ -169,6 +247,8 @@ void DfxPlugin::do_PostConstructor()
 // this is called immediately before all destructors (DfxPlugin and any derived classes) occur
 void DfxPlugin::do_PreDestructor()
 {
+	DFX_UnregisterIdleClient(this);
+
 	dfx_PreDestructor();
 
 #ifdef TARGET_API_VST
@@ -923,9 +1003,19 @@ void DfxPlugin::setsamplerate(double inSampleRate)
 		inSampleRate = 44100.0;
 	}
 
-	if (inSampleRate != DfxPlugin::mSampleRate)
+	if ((mSampleRateChanged = (inSampleRate != DfxPlugin::mSampleRate)))
 	{
-		mSampleRateChanged = true;
+#ifdef TARGET_API_AUDIOUNIT
+		// assume that sample-specified properties change in absolute duration when sample rate changes
+		if (auto const latencySamples = std::get_if<long>(&mLatency); latencySamples && (*latencySamples != 0))
+		{
+			postupdate_latency();
+		}
+		if (auto const tailSizeSamples = std::get_if<long>(&mTailSize); tailSizeSamples && (*tailSizeSamples != 0))
+		{
+			postupdate_tailsize();
+		}
+#endif
 	}
 
 	// accept the new value into our sampling rate keeper
@@ -1021,6 +1111,21 @@ void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::do_idle()
+{
+	if (mLatencyChanged.exchange(false))
+	{
+		postupdate_latency();
+	}
+	if (mTailSizeChanged.exchange(false))
+	{
+		postupdate_tailsize();
+	}
+
+	idle();
+}
+
+//-----------------------------------------------------------------------------
 // return the number of audio inputs
 unsigned long DfxPlugin::getnuminputs()
 {
@@ -1101,155 +1206,187 @@ void DfxPlugin::addchannelconfig(short inNumInputChannels, short inNumOutputChan
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setlatency_samples(long inLatency)
+void DfxPlugin::setlatency_samples(long inSamples, dfx::NotificationPolicy inNotificationPolicy)
 {
 	bool changed = false;
-	if (mUseLatency_seconds)
+	if (std::holds_alternative<double>(mLatency))
 	{
 		changed = true;
 	}
-	else if (mLatency_samples != inLatency)
+	else if (*std::get_if<long>(&mLatency) != inSamples)
 	{
 		changed = true;
 	}
 
-	mLatency_samples = inLatency;
-	mUseLatency_seconds = false;
+	mLatency = inSamples;
 
 	if (changed)
 	{
-		update_latency();
+		switch (inNotificationPolicy)
+		{
+			case dfx::NotificationPolicy::Sync:
+				postupdate_latency();
+				break;
+			case dfx::NotificationPolicy::Async:
+				mLatencyChanged = true;
+				break;
+		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setlatency_seconds(double inLatency)
+void DfxPlugin::setlatency_seconds(double inSeconds, dfx::NotificationPolicy inNotificationPolicy)
 {
 	bool changed = false;
-	if (!mUseLatency_seconds)
+	if (std::holds_alternative<long>(mLatency))
 	{
 		changed = true;
 	}
-	else if (mLatency_seconds != inLatency)
+	else if (*std::get_if<double>(&mLatency) != inSeconds)
 	{
 		changed = true;
 	}
 
-	mLatency_seconds = inLatency;
-	mUseLatency_seconds = true;
+	mLatency = inSeconds;
 
 	if (changed)
 	{
-		update_latency();
+		switch (inNotificationPolicy)
+		{
+			case dfx::NotificationPolicy::Sync:
+				postupdate_latency();
+				break;
+			case dfx::NotificationPolicy::Async:
+				mLatencyChanged = true;
+				break;
+		}
 	}
 }
 
 //-----------------------------------------------------------------------------
 long DfxPlugin::getlatency_samples() const
 {
-	if (mUseLatency_seconds)
+	if (auto const latencySamples = std::get_if<long>(&mLatency))
 	{
-		return std::lround(mLatency_seconds * getsamplerate());
+		return *latencySamples;
 	}
 	else
 	{
-		return mLatency_samples;
+		return std::lround(*std::get_if<double>(&mLatency) * getsamplerate());
 	}
 }
 
 //-----------------------------------------------------------------------------
 double DfxPlugin::getlatency_seconds() const
 {
-	if (mUseLatency_seconds)
+	if (auto const latencySeconds = std::get_if<double>(&mLatency))
 	{
-		return mLatency_seconds;
+		return *latencySeconds;
 	}
 	else
 	{
-		return static_cast<double>(mLatency_samples) / getsamplerate();
+		return static_cast<double>(*std::get_if<long>(&mLatency)) / getsamplerate();
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::update_latency()
+void DfxPlugin::postupdate_latency()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	PropertyChanged(kAudioUnitProperty_Latency, kAudioUnitScope_Global, AudioUnitElement(0));
 #endif
+
+#ifdef TARGET_API_VST
+	ioChanged();
+#endif
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::settailsize_samples(long inSize)
+void DfxPlugin::settailsize_samples(long inSamples, dfx::NotificationPolicy inNotificationPolicy)
 {
 	bool changed = false;
-	if (mUseTailSize_seconds)
+	if (std::holds_alternative<double>(mTailSize))
 	{
 		changed = true;
 	}
-	else if (mTailSize_samples != inSize)
+	else if (*std::get_if<long>(&mTailSize) != inSamples)
 	{
 		changed = true;
 	}
 
-	mTailSize_samples = inSize;
-	mUseTailSize_seconds = false;
+	mTailSize = inSamples;
 
 	if (changed)
 	{
-		update_tailsize();
+		switch (inNotificationPolicy)
+		{
+			case dfx::NotificationPolicy::Sync:
+				postupdate_tailsize();
+				break;
+			case dfx::NotificationPolicy::Async:
+				mTailSizeChanged = true;
+				break;
+		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::settailsize_seconds(double inSize)
+void DfxPlugin::settailsize_seconds(double inSeconds, dfx::NotificationPolicy inNotificationPolicy)
 {
 	bool changed = false;
-	if (!mUseTailSize_seconds)
+	if (std::holds_alternative<long>(mTailSize))
 	{
 		changed = true;
 	}
-	else if (mTailSize_seconds != inSize)
+	else if (*std::get_if<double>(&mTailSize) != inSeconds)
 	{
 		changed = true;
 	}
 
-	mTailSize_seconds = inSize;
-	mUseTailSize_seconds = true;
+	mTailSize = inSeconds;
 
 	if (changed)
 	{
-		update_tailsize();
+		switch (inNotificationPolicy)
+		{
+			case dfx::NotificationPolicy::Sync:
+				postupdate_tailsize();
+				break;
+			case dfx::NotificationPolicy::Async:
+				mTailSizeChanged = true;
+				break;
+		}
 	}
 }
 
 //-----------------------------------------------------------------------------
 long DfxPlugin::gettailsize_samples() const
 {
-	if (mUseTailSize_seconds)
+	if (auto const tailSizeSamples = std::get_if<long>(&mTailSize))
 	{
-		return std::lround(mTailSize_seconds * getsamplerate());
+		return *tailSizeSamples;
 	}
 	else
 	{
-		return mTailSize_samples;
+		return std::lround(*std::get_if<double>(&mTailSize) * getsamplerate());
 	}
 }
 
 //-----------------------------------------------------------------------------
 double DfxPlugin::gettailsize_seconds() const
 {
-	if (mUseTailSize_seconds)
+	if (auto const tailSizeSeconds = std::get_if<double>(&mTailSize))
 	{
-		return mTailSize_seconds;
+		return *tailSizeSeconds;
 	}
 	else
 	{
-		return static_cast<double>(mTailSize_samples) / getsamplerate();
+		return static_cast<double>(*std::get_if<long>(&mTailSize)) / getsamplerate();
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::update_tailsize()
+void DfxPlugin::postupdate_tailsize()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	PropertyChanged(kAudioUnitProperty_TailTime, kAudioUnitScope_Global, AudioUnitElement(0));

@@ -152,8 +152,10 @@ PLUGIN_EDITOR_RES_ID
 #pragma once
 
 
+#include <atomic>
 #include <memory>
 #include <optional>
+#include <variant>
 #include <vector>
 
 
@@ -586,17 +588,17 @@ public:
 	// add an audio input/output configuration to the array of i/o configurations
 	void addchannelconfig(short inNumInputChannels, short inNumOutputChannels);
 
-	void setlatency_samples(long inLatency);
-	void setlatency_seconds(double inLatency);
+	void setlatency_samples(long inSamples, dfx::NotificationPolicy inNotificationPolicy = dfx::NotificationPolicy::Sync);
+	void setlatency_seconds(double inSeconds, dfx::NotificationPolicy inNotificationPolicy = dfx::NotificationPolicy::Sync);
 	long getlatency_samples() const;
 	double getlatency_seconds() const;
-	void update_latency();
+	void postupdate_latency();
 
-	void settailsize_samples(long inSize);
-	void settailsize_seconds(double inSize);
+	void settailsize_samples(long inSamples, dfx::NotificationPolicy inNotificationPolicy = dfx::NotificationPolicy::Sync);
+	void settailsize_seconds(double inSeconds, dfx::NotificationPolicy inNotificationPolicy = dfx::NotificationPolicy::Sync);
 	long gettailsize_samples() const;
 	double gettailsize_seconds() const;
-	void update_tailsize();
+	void postupdate_tailsize();
 
 	void setAudioProcessingMustAccumulate(bool inMode);
 
@@ -606,6 +608,9 @@ public:
 	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue, DfxPluginCore* owner = nullptr);
 	void unregisterAllSmoothedAudioValues(DfxPluginCore* owner);
 	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr);
+
+	void do_idle();
+	virtual void idle() {}
 
 #if TARGET_PLUGIN_USES_MIDI
 	// handlers for the types of MIDI events that we support
@@ -757,34 +762,29 @@ private:
 	// just for the sake of making processaudio(float**, float**, etc.) possible
 	std::vector<float const*> mInputAudioStreams_au;
 	std::vector<float*> mOutputAudioStreams_au;
-#endif
 
-#ifdef TARGET_API_VST
-	bool mLatencyChanged = false;
-	bool mIsInitialized = false;
-#endif
-
-	// try to get musical tempo/time/location information from the host
-	void processtimeinfo();
-
-	long mLatency_samples = 0;
-	double mLatency_seconds = 0.0;
-	bool mUseLatency_seconds = false;
-	long mTailSize_samples = 0;
-	double mTailSize_seconds = 0.0;
-	bool mUseTailSize_seconds = false;
-	bool mAudioProcessingAccumulatingOnly = false;
-	bool mAudioIsRendering = false;
-	std::vector<std::pair<dfx::ISmoothedValue*, DfxPluginCore*>> mSmoothedAudioValues;
-	bool mIsFirstRenderSinceReset = false;
-
-#ifdef TARGET_API_AUDIOUNIT
 	void UpdateInPlaceProcessingState();
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
 	UInt32 mSupportedLogicNodeOperationMode = kLogicAUNodeOperationMode_FullSupport;
 	UInt32 mCurrentLogicNodeOperationMode = 0;
 	#endif
 #endif
+
+#ifdef TARGET_API_VST
+	bool mIsInitialized = false;
+#endif
+
+	// try to get musical tempo/time/location information from the host
+	void processtimeinfo();
+
+	std::variant<long, double> mLatency {0l};
+	std::atomic<bool> mLatencyChanged {false};
+	std::variant<long, double> mTailSize {0l};
+	std::atomic<bool> mTailSizeChanged {false};
+	bool mAudioProcessingAccumulatingOnly = false;
+	bool mAudioIsRendering = false;
+	std::vector<std::pair<dfx::ISmoothedValue*, DfxPluginCore*>> mSmoothedAudioValues;
+	bool mIsFirstRenderSinceReset = false;
 
 #ifdef TARGET_API_RTAS
 	void AddParametersToList();
@@ -928,9 +928,6 @@ public:
 
 	void suspend() override;
 	void resume() override;
-	#if !VST_FORCE_DEPRECATED
-	VstInt32 fxIdle() override;
-	#endif
 	void setSampleRate(float newRate) override;
 
 	VstInt32 getTailSize() override;
@@ -965,14 +962,6 @@ public:
 	#endif
 
 	// DFX supplementary VST methods
-	void setlatencychanged(bool inStatus = true) noexcept
-	{
-		mLatencyChanged = inStatus;
-	}
-	bool getlatencychanged() const noexcept
-	{
-		return mLatencyChanged;
-	}
 	#if TARGET_PLUGIN_USES_DSPCORE
 	DfxPluginCore* getplugincore(unsigned long channel) const
 	{
@@ -1052,7 +1041,6 @@ protected:
 #endif
 	void RenderAudio(float** inAudioStreams, float** outAudioStreams, long inNumFramesToProcess) override;
 #endif
-
 };
 
 
