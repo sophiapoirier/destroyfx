@@ -54,10 +54,6 @@ void DfxPlugin::suspend()
 // this gets called when the plugin is activated
 void DfxPlugin::resume()
 {
-#if !VST_FORCE_DEPRECATED
-	needIdle();
-#endif
-
 	updatesamplerate();
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -82,22 +78,6 @@ void DfxPlugin::resume()
 	setInitialDelay(getlatency_samples());
 	setlatencychanged(false);  // reset this state
 }
-
-#if !VST_FORCE_DEPRECATED
-//-------------------------------------------------------------------------
-VstInt32 DfxPlugin::fxIdle()
-{
-	// I'm moving calls to ioChanged into the idle thread 
-	// because it seems like it freaks out Fruity Loops
-	if (getlatencychanged())
-	{
-		ioChanged();
-	}
-	setlatencychanged(false);
-
-	return 1;
-}
-#endif
 
 //-------------------------------------------------------------------------
 void DfxPlugin::setSampleRate(float newRate)

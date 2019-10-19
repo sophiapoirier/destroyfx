@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -111,12 +111,20 @@ namespace dfx
 
 
 //-----------------------------------------------------------------------------
+enum class NotificationPolicy
+{
+	Sync,
+	Async
+};
+
+//-----------------------------------------------------------------------------
 #ifdef TARGET_API_AUDIOUNIT
 enum
 {
 	kStatus_NoError = noErr,
 	kStatus_ParamError = paramErr,
 	kStatus_InitializationFailed = kAudioUnitErr_FailedInitialization,
+	kStatus_Uninitialized = kAudioUnitErr_Uninitialized,
 	kStatus_InvalidParameter = kAudioUnitErr_InvalidParameter,
 	kStatus_InvalidProperty = kAudioUnitErr_InvalidProperty,
 	kStatus_InvalidPropertyValue = kAudioUnitErr_InvalidPropertyValue,
@@ -128,6 +136,7 @@ enum
 	kStatus_NoError = 0,
 	kStatus_ParamError = -50,
 	kStatus_InitializationFailed = -10875,
+	kStatus_Uninitialized = -10867,
 	kStatus_InvalidParameter = -10878,
 	kStatus_InvalidProperty = -10879,
 	kStatus_InvalidPropertyValue = -10851,
