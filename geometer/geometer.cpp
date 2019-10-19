@@ -30,6 +30,7 @@ Featuring the Super Destroy FX Windowing System!
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <string>
 
 #include "dfxmath.h"
 
@@ -79,29 +80,28 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_list(P_POINTOP2, "pointop2", OP_NONE, OP_NONE, MAX_OPS);
   initparameter_list(P_POINTOP3, "pointop3", OP_NONE, OP_NONE, MAX_OPS);
 
-#define ALLOP(n, str, def, unit, unitstr) \
-  do { \
-    initparameter_f(P_OPPAR1S + n, "op1:" str, def, def, 0.0, 1.0, unit, DfxParam::Curve::Linear, unitstr); \
-    initparameter_f(P_OPPAR2S + n, "op2:" str, def, def, 0.0, 1.0, unit, DfxParam::Curve::Linear, unitstr); \
-    initparameter_f(P_OPPAR3S + n, "op3:" str, def, def, 0.0, 1.0, unit, DfxParam::Curve::Linear, unitstr); \
-  } while (0)
+  auto const allop = [this](auto const n, auto const str, auto const def, auto const unit, char const* const unitstr) {
+    constexpr auto curve = DfxParam::Curve::Linear;
+    initparameter_f(P_OPPAR1S + n, (std::string("op1:") + str).c_str(), def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR2S + n, (std::string("op2:") + str).c_str(), def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR3S + n, (std::string("op3:") + str).c_str(), def, def, 0.0, 1.0, unit, curve, unitstr);
+  };
 
-  ALLOP(OP_DOUBLE, "double", 0.5, DfxParam::Unit::LinearGain, nullptr);
-  ALLOP(OP_HALF, "half", 0.0, DfxParam::Unit::Generic, nullptr);
-  ALLOP(OP_QUARTER, "quarter", 0.0, DfxParam::Unit::Generic, nullptr);
-  ALLOP(OP_LONGPASS, "longpass", 0.15, DfxParam::Unit::Custom, "length");
-  ALLOP(OP_SHORTPASS, "shortpass", 0.5, DfxParam::Unit::Custom, "length");
-  ALLOP(OP_SLOW, "slow", 0.25, DfxParam::Unit::Scalar, nullptr);	// "factor"
-  ALLOP(OP_FAST, "fast", 0.5, DfxParam::Unit::Scalar, nullptr);	// "factor"
-  ALLOP(OP_NONE, "none", 0.0, DfxParam::Unit::Generic, nullptr);
+  allop(OP_DOUBLE, "double", 0.5, DfxParam::Unit::LinearGain, nullptr);
+  allop(OP_HALF, "half", 0.0, DfxParam::Unit::Generic, nullptr);
+  allop(OP_QUARTER, "quarter", 0.0, DfxParam::Unit::Generic, nullptr);
+  allop(OP_LONGPASS, "longpass", 0.15, DfxParam::Unit::Custom, "length");
+  allop(OP_SHORTPASS, "shortpass", 0.5, DfxParam::Unit::Custom, "length");
+  allop(OP_SLOW, "slow", 0.25, DfxParam::Unit::Scalar, nullptr);	// "factor"
+  allop(OP_FAST, "fast", 0.5, DfxParam::Unit::Scalar, nullptr);	// "factor"
+  allop(OP_NONE, "none", 0.0, DfxParam::Unit::Generic, nullptr);
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
-    ALLOP(op, "unused", 0.5, DfxParam::Unit::Generic, nullptr);
+    allop(op, "unused", 0.5, DfxParam::Unit::Generic, nullptr);
     setparameterattributes(P_OPPAR1S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
     setparameterattributes(P_OPPAR2S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
     setparameterattributes(P_OPPAR3S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
   }
-#undef ALLOP
 
   /* windowing */
   for (size_t i=0; i < buffersizes.size(); i++)
@@ -156,10 +156,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   for (long i=NUM_OPS; i < MAX_OPS; i++)
     ALLOPSTR(i, "unsup");
 #undef ALLOPSTR
-
-  auto const delay_samples = buffersizes.at(getparameter_i(P_BUFSIZE));
-  setlatency_samples(delay_samples);
-  settailsize_samples(delay_samples);
 
   setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();
@@ -267,6 +263,7 @@ void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
 {
   bool updated = false;
   {
+    // willing to drop window cache updates to ensure realtime-safety by not blocking here
     std::unique_lock const guard(windowcachelock, std::try_to_lock);
     if ((updated = guard.owns_lock())) {
 #if 1
@@ -343,7 +340,7 @@ long PLUGIN::initialize()
 #endif
 {
   /* determine the size of the largest window size */
-  constexpr auto maxframe = *std::max_element(PLUGIN::buffersizes.begin(), PLUGIN::buffersizes.end());
+  constexpr auto maxframe = *std::max_element(PLUGIN::buffersizes.cbegin(), PLUGIN::buffersizes.cend());
 
   /* add some leeway? */
   in0.assign(maxframe, 0.0f);
@@ -360,7 +357,16 @@ long PLUGIN::initialize()
   storey.assign(maxframe * 2 + 3, 0.0f);
 
   windowbuf.assign(maxframe, 0.0f);
-#if !TARGET_PLUGIN_USES_DSPCORE
+
+  auto const delay_samples = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
+#if TARGET_PLUGIN_USES_DSPCORE
+  if (iswaveformsource()) {  // does not matter which DSP core, but this just should happen only once
+    getplugin()->setlatency_samples(delay_samples);
+    getplugin()->settailsize_samples(delay_samples);
+  }
+#else
+  setlatency_samples(delay_samples);
+  settailsize_samples(delay_samples);
   return dfx::kStatus_NoError;
 #endif
 }
@@ -402,13 +408,13 @@ void PLUGINCORE::reset() {
   outsize = framesize;
 
 #if TARGET_PLUGIN_USES_DSPCORE
-  getplugin()->setlatency_samples(framesize);  // TODO: not realtime safe
+  getplugin()->setlatency_samples(framesize, dfx::NotificationPolicy::Async);
   /* tail is the same as delay, of course */
-  getplugin()->settailsize_samples(framesize);  // TODO: not realtime safe
+  getplugin()->settailsize_samples(framesize, dfx::NotificationPolicy::Async);
 #else
-  setlatency_samples(framesize);  // TODO: not realtime safe
+  setlatency_samples(framesize, dfx::NotificationPolicy::Async);
   /* tail is the same as delay, of course */
-  settailsize_samples(framesize);  // TODO: not realtime safe
+  settailsize_samples(framesize, dfx::NotificationPolicy::Async);
 #endif
 
   shape = getparameter_i(P_SHAPE);
@@ -469,9 +475,9 @@ void PLUGINCORE::processparameters() {
     // TODO: no it does not for AU
     // also the new latency has not necessarily been applied without a setlatency_samples call
     #if TARGET_PLUGIN_USES_DSPCORE
-    getplugin()->setlatencychanged(true);
+    getplugin()->ioChanged();
     #else
-    setlatencychanged(true);
+    ioChanged();
     #endif
   #endif
 }
@@ -1336,11 +1342,11 @@ void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutp
         out0[u+outstart+outsize] += prevmix[u];
 
       /* prevmix becomes out1 */
-      std::copy_n(std::next(out0.begin(), outstart + outsize + third), third, prevmix.begin());
+      std::copy_n(std::next(out0.cbegin(), outstart + outsize + third), third, prevmix.begin());
 
       /* copy 2nd third of input over in0 (need to re-use it for next frame), 
          now insize = third */
-      std::copy_n(std::next(in0.begin(), third), third, in0.begin());
+      std::copy_n(std::next(in0.cbegin(), third), third, in0.begin());
 
       insize = third;
       

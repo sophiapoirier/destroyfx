@@ -116,6 +116,7 @@ public:
 
 	void dfx_PostConstructor() override;
 
+	long initialize() override;
 	void reset() override;
 
 	void processparameters() override;
