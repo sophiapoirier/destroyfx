@@ -64,6 +64,10 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addparameterattributes(kDist2, DfxParam::kAttribute_OmitFromRandomizeAll);
   addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
 
+  addparametergroup("head #1", {kSpeed1, kFeed1, kDist1});
+  addparametergroup("head #2", {kSpeed2, kFeed2, kDist2});
+  addparametergroup("mix", {kDrymix, kMix1, kMix2});
+
 
   settailsize_seconds(getparametermax_f(kBsize) * 0.001);
 

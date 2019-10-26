@@ -38,6 +38,9 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 #endif
 
 
+static constexpr UInt32 kBaseClumpID = kAudioUnitClumpID_System + 1;
+
+
 
 #pragma mark -
 #pragma mark init
@@ -1333,6 +1336,11 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		}
 	}
 
+	if (auto const groupIndex = getparametergroup(inParameterID))
+	{
+		HasClump(outParameterInfo, kBaseClumpID + *groupIndex);
+	}
+
 
 	return noErr;
 }
@@ -1384,6 +1392,30 @@ OSStatus DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, AudioUnitPa
 	}
 
 	return kAudioUnitErr_InvalidPropertyValue;
+}
+
+//-----------------------------------------------------------------------------
+OSStatus DfxPlugin::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, 
+								  UInt32 inDesiredNameLength, CFStringRef* outClumpName)
+{
+	if (inClumpID < kBaseClumpID)
+	{
+		return TARGET_API_BASE_CLASS::CopyClumpName(inScope, inClumpID, inDesiredNameLength, outClumpName);
+	}
+	if (inScope != kAudioUnitScope_Global)
+	{
+		return kAudioUnitErr_InvalidScope;
+	}
+
+	try
+	{
+		*outClumpName = CFStringCreateWithCString(kCFAllocatorDefault, mParameterGroups.at(inClumpID - kBaseClumpID).first.c_str(), DfxParam::kDefaultCStringEncoding);
+		return noErr;
+	}
+	catch (...)
+	{
+		return kAudioUnitErr_InvalidPropertyValue;
+	}
 }
 
 //-----------------------------------------------------------------------------

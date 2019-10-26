@@ -155,6 +155,7 @@ PLUGIN_EDITOR_RES_ID
 #include <atomic>
 #include <memory>
 #include <optional>
+#include <set>
 #include <variant>
 #include <vector>
 
@@ -358,11 +359,8 @@ public:
 	{
 		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].getvaluecfstring(inStringIndex) : nullptr;
 	}
-	virtual CFStringRef CopyParameterGroupName(UInt32 inParameterGroupID) const
-	{
-		return nullptr;
-	}
 #endif
+	void addparametergroup(std::string const& inName, std::vector<long> const& inParameterIndices);  // TODO: C++20 use std::span
 
 	void setparameter(long inParameterIndex, DfxParam::Value inValue);
 	void setparameter_f(long inParameterIndex, double inValue);
@@ -732,8 +730,11 @@ private:
 	};
 #endif
 
+	std::optional<size_t> getparametergroup(long inParameterIndex) const;
+
 	std::vector<DfxParam> mParameters;
 	std::vector<DfxPreset> mPresets;
+	std::vector<std::pair<std::string, std::set<long>>> mParameterGroups;
 
 	std::vector<ChannelConfig> mChannelconfigs;
 
@@ -851,6 +852,8 @@ public:
 							  AudioUnitParameterInfo& outParameterInfo) override;
 	OSStatus GetParameterValueStrings(AudioUnitScope inScope, 
 									  AudioUnitParameterID inParameterID, CFArrayRef* outStrings) override;
+	OSStatus CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, 
+						   UInt32 inDesiredNameLength, CFStringRef* outClumpName) override;
 	OSStatus SetParameter(AudioUnitParameterID inParameterID, 
 						  AudioUnitScope inScope, AudioUnitElement inElement, 
 						  Float32 inValue, UInt32 inBufferOffsetInFrames) override;
