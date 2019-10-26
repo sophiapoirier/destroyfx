@@ -30,6 +30,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <bitset>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <mutex>
 #include <stdio.h>
 #include <thread>
@@ -71,7 +72,7 @@ static std::atomic<bool> sIdleThreadShouldRun {false};
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-attributes"
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
-__attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;
+__attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;  // TODO: C++20 use std::jthread
 __attribute__((no_destroy)) static std::mutex sIdleThreadLock;
 __attribute__((no_destroy)) static std::unordered_set<DfxPlugin*> sIdleClients; 
 __attribute__((no_destroy)) static std::mutex sIdleClientsLock;
@@ -324,7 +325,7 @@ void DfxPlugin::do_reset()
 	}
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
 	// resets the kernels, if any
-	AUEffectBase::Reset(kAudioUnitScope_Global, AudioUnitElement(0));
+	TARGET_API_BASE_CLASS::Reset(kAudioUnitScope_Global, AudioUnitElement(0));
 	#endif
 #endif
 
@@ -690,6 +691,37 @@ char const* DfxPlugin::getparametervaluestring_ptr(long inParameterIndex, int64_
 		return mParameters[inParameterIndex].getvaluestring_ptr(inStringIndex);
 	}
 	return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::addparametergroup(std::string const& inName, std::vector<long> const& inParameterIndices)
+{
+	assert(!inParameterIndices.empty());
+	assert(std::none_of(mParameterGroups.cbegin(), mParameterGroups.cend(), [&inName](auto const& item){ return (item.first == inName); }));
+	assert(std::none_of(inParameterIndices.cbegin(), inParameterIndices.cend(), [this](auto index){ return getparametergroup(index).has_value(); }));
+	assert(std::all_of(inParameterIndices.cbegin(), inParameterIndices.cend(), std::bind(&DfxPlugin::parameterisvalid, this, std::placeholders::_1)));
+	{
+		auto sortedParameterIndices = inParameterIndices;
+		std::sort(sortedParameterIndices.begin(), sortedParameterIndices.end());
+		assert(std::unique(sortedParameterIndices.begin(), sortedParameterIndices.end()) == sortedParameterIndices.end());
+	}
+
+	mParameterGroups.emplace_back(inName, std::set<long>(inParameterIndices.cbegin(), inParameterIndices.cend()));
+}
+
+//-----------------------------------------------------------------------------
+std::optional<size_t> DfxPlugin::getparametergroup(long inParameterIndex) const
+{
+	auto const foundGroup = std::find_if(mParameterGroups.cbegin(), mParameterGroups.cend(), [inParameterIndex](auto const& group)
+	{
+		auto const& indices = group.second;
+		return (indices.find(inParameterIndex) != indices.cend());
+	});
+	if (foundGroup != mParameterGroups.cend())
+	{
+		return static_cast<size_t>(std::distance(mParameterGroups.cbegin(), foundGroup));
+	}
+	return {};
 }
 
 //-----------------------------------------------------------------------------

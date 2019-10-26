@@ -110,6 +110,8 @@ initparameter_list(kSeekRateRandMin_Sync, "seek rate rand min (sync)", numTempoR
 	addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
 	addparameterattributes(kPredelay, DfxParam::kAttribute_OmitFromRandomizeAll);
 
+	addparametergroup("pitch control", {kPitchConstraint, kPitchStep0, kPitchStep1, kPitchStep2, kPitchStep3, kPitchStep4, kPitchStep5, kPitchStep6, kPitchStep7, kPitchStep8, kPitchStep9, kPitchStep10, kPitchStep11});
+
 
 	settailsize_seconds(getparametermax_f(kSeekRange) * 0.001 / getparametermin_f(kSeekRate_Hz));
 

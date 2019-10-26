@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -56,6 +56,8 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	{
 		setparametervaluestring(kRate_Sync, i, mTempoRateTable.getDisplay(i).c_str());
 	}
+
+	addparametergroup("coefficients", {kA0, kA1, kA2, kB1, kB2});
 
 
 	setpresetname(0, "with motors");  // default preset name
