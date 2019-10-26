@@ -28,8 +28,10 @@ Featuring the Super Destroy FX Windowing System!
   #include <Accelerate/Accelerate.h>
 #endif
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <cmath>
+#include <numeric>
 #include <string>
 
 #include "dfxmath.h"
@@ -155,6 +157,19 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   allopstr(OP_NONE, "none");
   for (long i=NUM_OPS; i < MAX_OPS; i++)
     allopstr(i, "unsup");
+
+  addparametergroup("windowing", {P_BUFSIZE, P_SHAPE});
+  auto const addparameterrangegroup = [this](auto name, long parameterIndexBegin, long parameterIndexEnd) {
+    assert(parameterIndexBegin < parameterIndexEnd);
+    std::vector<long> parameters(parameterIndexEnd - parameterIndexBegin, dfx::kParameterID_Invalid);
+    std::iota(parameters.begin(), parameters.end(), parameterIndexBegin);
+    addparametergroup(name, parameters);
+  };
+  addparameterrangegroup("points", P_POINTSTYLE, P_INTERPSTYLE);
+  addparameterrangegroup("interpolation", P_INTERPSTYLE, P_POINTOP1);
+  addparameterrangegroup("pointop1", P_POINTOP1, P_POINTOP2);
+  addparameterrangegroup("pointop2", P_POINTOP2, P_POINTOP3);
+  addparameterrangegroup("pointop3", P_POINTOP3, NUM_PARAMS);
 
   setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();

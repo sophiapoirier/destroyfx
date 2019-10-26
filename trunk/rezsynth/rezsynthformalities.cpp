@@ -77,6 +77,9 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //	setparametervaluestring(kFoldover, 0, "resist");
 //	setparametervaluestring(kFoldover, 1, "allow");
 
+	addparametergroup("envelope", {kEnvAttack, kEnvDecay, kEnvSustain, kEnvRelease, kFadeType});
+	addparametergroup("mix", {kFilterOutputGain, kBetweenGain, kDryWetMix, kDryWetMixMode});
+
 
 	settailsize_seconds(getparametermax_f(kEnvRelease) * 0.001);
 	setAudioProcessingMustAccumulate(true);  // only support accumulating output

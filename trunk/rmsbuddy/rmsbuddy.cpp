@@ -220,13 +220,13 @@ OSStatus RMSBuddy::GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID
 //-----------------------------------------------------------------------------------------
 OSStatus RMSBuddy::CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, UInt32 inDesiredNameLength, CFStringRef* outClumpName)
 {
-	if (inScope != kAudioUnitScope_Global)
-	{
-		return kAudioUnitErr_InvalidScope;
-	}
 	if (inClumpID < kBaseClumpID)
 	{
 		return AUEffectBase::CopyClumpName(inScope, inClumpID, inDesiredNameLength, outClumpName);
+	}
+	if (inScope != kAudioUnitScope_Global)
+	{
+		return kAudioUnitErr_InvalidScope;
 	}
 
 	auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(kRMSBuddyBundleID);
