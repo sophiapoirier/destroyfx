@@ -80,7 +80,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_list(P_POINTOP2, "pointop2", OP_NONE, OP_NONE, MAX_OPS);
   initparameter_list(P_POINTOP3, "pointop3", OP_NONE, OP_NONE, MAX_OPS);
 
-  auto const allop = [this](auto const n, auto const str, auto const def, auto const unit, char const* const unitstr) {
+  auto const allop = [this](auto n, auto str, auto def, auto unit, char const* const unitstr) {
     constexpr auto curve = DfxParam::Curve::Linear;
     initparameter_f(P_OPPAR1S + n, (std::string("op1:") + str).c_str(), def, def, 0.0, 1.0, unit, curve, unitstr);
     initparameter_f(P_OPPAR2S + n, (std::string("op2:") + str).c_str(), def, def, 0.0, 1.0, unit, curve, unitstr);
@@ -107,11 +107,12 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   for (size_t i=0; i < buffersizes.size(); i++)
   {
     std::array<char, dfx::kParameterValueStringMaxLength> bufstr;
-    constexpr long thousand = 1000;
-    if (buffersizes[i] >= thousand)
-      snprintf(bufstr.data(), bufstr.size(), "%ld,%03ld", buffersizes[i] / thousand, buffersizes[i] % thousand);
-    else
-      snprintf(bufstr.data(), bufstr.size(), "%ld", buffersizes[i]);
+    constexpr int thousand = 1000;
+    if (buffersizes[i] >= thousand) {
+      snprintf(bufstr.data(), bufstr.size(), "%d,%03d", buffersizes[i] / thousand, buffersizes[i] % thousand);
+    } else {
+      snprintf(bufstr.data(), bufstr.size(), "%d", buffersizes[i]);
+    }
     setparametervaluestring(P_BUFSIZE, static_cast<long>(i), bufstr.data());
   }
   setparametervaluestring(P_SHAPE, WINDOW_TRIANGLE, "linear");
@@ -139,23 +140,21 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setparametervaluestring(P_INTERPSTYLE, INTERP_SHUFFLE, "shuffle");
   for (long i=NUM_INTERPSTYLES; i < MAX_INTERPSTYLES; i++)
     setparametervaluestring(P_INTERPSTYLE, i, "unsup");
-#define ALLOPSTR(n, str) \
-  do { \
-    setparametervaluestring(P_POINTOP1, n, str); \
-    setparametervaluestring(P_POINTOP2, n, str); \
-    setparametervaluestring(P_POINTOP3, n, str); \
-  } while (0)
-  ALLOPSTR(OP_DOUBLE, "x2");
-  ALLOPSTR(OP_HALF, "1/2");
-  ALLOPSTR(OP_QUARTER, "1/4");
-  ALLOPSTR(OP_LONGPASS, "longpass");
-  ALLOPSTR(OP_SHORTPASS, "shortpass");
-  ALLOPSTR(OP_SLOW, "slow");
-  ALLOPSTR(OP_FAST, "fast");
-  ALLOPSTR(OP_NONE, "none");
+  auto const allopstr = [this](auto n, auto str) {
+    setparametervaluestring(P_POINTOP1, n, str);
+    setparametervaluestring(P_POINTOP2, n, str);
+    setparametervaluestring(P_POINTOP3, n, str);
+  };
+  allopstr(OP_DOUBLE, "x2");
+  allopstr(OP_HALF, "1/2");
+  allopstr(OP_QUARTER, "1/4");
+  allopstr(OP_LONGPASS, "longpass");
+  allopstr(OP_SHORTPASS, "shortpass");
+  allopstr(OP_SLOW, "slow");
+  allopstr(OP_FAST, "fast");
+  allopstr(OP_NONE, "none");
   for (long i=NUM_OPS; i < MAX_OPS; i++)
-    ALLOPSTR(i, "unsup");
-#undef ALLOPSTR
+    allopstr(i, "unsup");
 
   setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();
@@ -274,7 +273,7 @@ void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
       }
 #endif
 
-      windowcache.apts = std::min(static_cast<int>(geometercore->getframesize()), GeometerViewData::samples);
+      windowcache.apts = std::min(geometercore->getframesize(), GeometerViewData::samples);
 
       windowcache.numpts = geometercore->processw(windowcache.inputs.data(), windowcache.outputs.data(), windowcache.apts,
                                                   windowcache.pointsx.data(), windowcache.pointsy.data(),
@@ -356,7 +355,7 @@ long PLUGIN::initialize()
   pointy.assign(maxframe * 2 + 3, 0.0f);
   storey.assign(maxframe * 2 + 3, 0.0f);
 
-  windowbuf.assign(maxframe, 0.0f);
+  windowenvelope.assign(maxframe, 0.0f);
 
   auto const delay_samples = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
 #if TARGET_PLUGIN_USES_DSPCORE
@@ -374,7 +373,7 @@ long PLUGIN::initialize()
 #if !TARGET_PLUGIN_USES_DSPCORE
 void PLUGIN::cleanup()
 {
-  windowbuf.clear();
+  windowenvelope.clear();
   /* windowing buffers */
   in0.clear();
   out0.clear();
@@ -391,64 +390,8 @@ void PLUGIN::cleanup()
 
 void PLUGINCORE::reset() {
 
-  framesize = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
-  third = framesize / 2;
-  bufsize = third * 3;
-
-  /* set up buffers. prevmix and first frame of output are always 
-     filled with zeros. */
-
-  std::fill(prevmix.begin(), prevmix.end(), 0.0f);
-
-  std::fill(out0.begin(), out0.end(), 0.0f);
-  
-  /* start input at beginning. Output has a frame of silence. */
-  insize = 0;
-  outstart = 0;
-  outsize = framesize;
-
-#if TARGET_PLUGIN_USES_DSPCORE
-  getplugin()->setlatency_samples(framesize, dfx::NotificationPolicy::Async);
-  /* tail is the same as delay, of course */
-  getplugin()->settailsize_samples(framesize, dfx::NotificationPolicy::Async);
-#else
-  setlatency_samples(framesize, dfx::NotificationPolicy::Async);
-  /* tail is the same as delay, of course */
-  settailsize_samples(framesize, dfx::NotificationPolicy::Async);
-#endif
-
-  shape = getparameter_i(P_SHAPE);
-  float const oneDivThird = 1.0f / (float)third;
-  switch(shape) {
-    case WINDOW_TRIANGLE:
-      for(long z = 0; z < third; z++) {
-        windowbuf[z] = ((float)z * oneDivThird);
-        windowbuf[z+third] = (1.0f - ((float)z * oneDivThird));
-      }
-      break;
-    case WINDOW_ARROW:
-      for(long z = 0; z < third; z++) {
-        float p = (float)z * oneDivThird;
-        p *= p;
-        windowbuf[z] = p;
-        windowbuf[z+third] = (1.0f - p);
-      }
-      break;
-    case WINDOW_WEDGE:
-      for(long z = 0; z < third; z++) {
-        float const p = std::sqrt((float)z * oneDivThird);
-        windowbuf[z] = p;
-        windowbuf[z+third] = (1.0f - p);
-      }
-      break;
-    case WINDOW_COS:
-      for(long z = 0; z < third; z++) {
-        float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * ((float)z * oneDivThird)) + 1.0f);
-        windowbuf[z] = p;
-        windowbuf[z+third] = (1.0f - p);
-      }
-      break;
-  }
+  updatewindowsize();
+  updatewindowshape();
 
   clearwindowcache();
 }
@@ -456,7 +399,6 @@ void PLUGINCORE::reset() {
 
 void PLUGINCORE::processparameters() {
 
-  shape = getparameter_i(P_SHAPE);
   pointstyle = getparameter_i(P_POINTSTYLE);
   pointparam = getparameter_f(P_POINTPARAMS + pointstyle);
   interpstyle = getparameter_i(P_INTERPSTYLE);
@@ -468,18 +410,13 @@ void PLUGINCORE::processparameters() {
   pointop3 = getparameter_i(P_POINTOP3);
   oppar3 = getparameter_f(P_OPPAR3S + pointop3);
 
-  #ifdef TARGET_API_VST
-  if (getparameterchanged(P_BUFSIZE))
-    /* this tells the host to call a suspend()-resume() pair, 
-      which updates initialDelay value */
-    // TODO: no it does not for AU
-    // also the new latency has not necessarily been applied without a setlatency_samples call
-    #if TARGET_PLUGIN_USES_DSPCORE
-    getplugin()->ioChanged();
-    #else
-    ioChanged();
-    #endif
-  #endif
+  if (getparameterchanged(P_BUFSIZE)) {
+    updatewindowsize();
+    updatewindowshape();
+  }
+  else if (getparameterchanged(P_SHAPE)) {
+    updatewindowshape();
+  }
 }
 
 
@@ -681,7 +618,7 @@ int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
    2. do operations on points (in slots op1, op2, op3)
    3. generate waveform
 */
-int PLUGINCORE::processw(float * in, float * out, long samples,
+int PLUGINCORE::processw(float const * in, float * out, int samples,
                      int * px, float * py, int maxpts,
                      int * tempx, float * tempy) const {
 
@@ -1297,43 +1234,10 @@ void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutp
       updatewindowcache(this);
 
 #if TARGET_OS_MAC
-      vDSP_vmul(out0.data()+outstart+outsize, 1, windowbuf.data(), 1, out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));
-//for (int z=0; z < framesize; z++) out0[z+outstart+outsize] *= windowbuf[z];
+      vDSP_vmul(out0.data()+outstart+outsize, 1, windowenvelope.data(), 1, out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));
 #else
-      float const oneDivThird = 1.0f / (float)third;
-      /* apply envelope */
-
-      switch(shape) {
-
-        // XXX it might be more efficient to do z+=oneDivThird each iteration (and then negativize oneDivThird for the second half)
-        case WINDOW_TRIANGLE:
-          for(int z = 0; z < third; z++) {
-            out0[z+outstart+outsize] *= ((float)z * oneDivThird);
-            out0[z+outstart+outsize+third] *= (1.0f - ((float)z * oneDivThird));
-          }
-          break;
-        case WINDOW_ARROW:
-          for(int z = 0; z < third; z++) {
-            float p = (float)z * oneDivThird;
-            p *= p;
-            out0[z+outstart+outsize] *= p;
-            out0[z+outstart+outsize+third] *= (1.0f - p);
-          }
-          break;
-        case WINDOW_WEDGE:
-          for(int z = 0; z < third; z++) {
-            float const p = std::sqrt((float)z * oneDivThird);
-            out0[z+outstart+outsize] *= p;
-            out0[z+outstart+outsize+third] *= (1.0f - p);
-          }
-          break;
-        case WINDOW_COS:
-          for(int z = 0; z < third; z++) {
-            float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * ((float)z * oneDivThird)) + 1.0f);
-            out0[z+outstart+outsize] *= p;
-            out0[z+outstart+outsize+third] *= (1.0f - p);
-          }
-          break;
+      for (int z=0; z < framesize; z++) {
+        out0[z+outstart+outsize] *= windowenvelope[z];
       }
 #endif
 
@@ -1369,6 +1273,74 @@ void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutp
       memmove(out0.data(), out0.data() + outstart, outsize * sizeof (out0.front()));
       outstart = 0;
     }
+  }
+}
+
+
+void PLUGINCORE::updatewindowsize()
+{
+  framesize = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
+  third = framesize / 2;
+  bufsize = third * 3;
+
+  /* set up buffers. prevmix and first frame of output are always 
+     filled with zeros. */
+
+  std::fill(prevmix.begin(), prevmix.end(), 0.0f);
+
+  std::fill(out0.begin(), out0.end(), 0.0f);
+
+  /* start input at beginning. Output has a frame of silence. */
+  insize = 0;
+  outstart = 0;
+  outsize = framesize;
+
+#if TARGET_PLUGIN_USES_DSPCORE
+  getplugin()->setlatency_samples(framesize, dfx::NotificationPolicy::Async);
+  /* tail is the same as delay, of course */
+  getplugin()->settailsize_samples(framesize, dfx::NotificationPolicy::Async);
+#else
+  setlatency_samples(framesize, dfx::NotificationPolicy::Async);
+  /* tail is the same as delay, of course */
+  settailsize_samples(framesize, dfx::NotificationPolicy::Async);
+#endif
+}
+
+
+void PLUGINCORE::updatewindowshape()
+{
+  shape = getparameter_i(P_SHAPE);
+
+  float const oneDivThird = 1.0f / static_cast<float>(third);
+  switch(shape) {
+    case WINDOW_TRIANGLE:
+      for(int z = 0; z < third; z++) {
+        windowenvelope[z] = (static_cast<float>(z) * oneDivThird);
+        windowenvelope[z+third] = (1.0f - (static_cast<float>(z) * oneDivThird));
+      }
+      break;
+    case WINDOW_ARROW:
+      for(int z = 0; z < third; z++) {
+        float p = static_cast<float>(z) * oneDivThird;
+        p *= p;
+        windowenvelope[z] = p;
+        windowenvelope[z+third] = (1.0f - p);
+      }
+      break;
+    case WINDOW_WEDGE:
+      for(int z = 0; z < third; z++) {
+        float const p = std::sqrt(static_cast<float>(z) * oneDivThird);
+        windowenvelope[z] = p;
+        windowenvelope[z+third] = (1.0f - p);
+      }
+      break;
+    case WINDOW_COS:
+      for(int z = 0; z < third; z++) {
+        float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * (static_cast<float>(z) * oneDivThird)) + 1.0f);
+        windowenvelope[z] = p;
+        windowenvelope[z+third] = (1.0f - p);
+      }
+      break;
   }
 }
 
