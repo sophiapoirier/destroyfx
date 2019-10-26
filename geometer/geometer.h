@@ -45,7 +45,7 @@ class PLUGIN : public DfxPlugin {
 public:
   static constexpr long BUFFERSIZESSIZE = 14;
 
-  static constexpr std::array<long, BUFFERSIZESSIZE> buffersizes {{ 
+  static constexpr std::array<int, BUFFERSIZESSIZE> buffersizes {{ 
     4, 8, 16, 32, 64, 128, 256, 512, 
     1024, 2048, 4096, 8192, 16384, 32768, 
   }};
@@ -103,14 +103,17 @@ public:
   /* several of these are needed by geometerview. */
 public:
 
-  int processw(float * in, float * out, long samples,
+  int processw(float const * in, float * out, int samples,
 	       int * px, float * py, int maxpts,
 	       int * tx, float * ty) const;
 
-  long getframesize() const noexcept { return framesize; }
+  int getframesize() const noexcept { return framesize; }
   float const* getinput() const noexcept { return in0.data(); }
 
 private:
+
+  void updatewindowsize();
+  void updatewindowshape();
 
 #if TARGET_PLUGIN_USES_DSPCORE
   bool iswaveformsource() { return (GetChannelNum() == 0); }
@@ -128,7 +131,7 @@ private:
   /* buffersize is 3 * third, framesize is 2 * third 
      buffersize is used for outbuf.
   */
-  long bufsize = 0, framesize = 0, third = 0;
+  int bufsize = 0, framesize = 0, third = 0;
 
   /* third-sized tail of previous processed frame. already has mixing envelope
      applied.
@@ -171,5 +174,5 @@ private:
   std::vector<int> storex;
   std::vector<float> storey;
 
-  std::vector<float> windowbuf;
+  std::vector<float> windowenvelope;
 };
