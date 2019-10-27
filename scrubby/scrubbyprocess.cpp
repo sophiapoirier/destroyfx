@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -397,7 +397,7 @@ double Scrubby::processPitchConstraint(double readStep) const
 
 
 //-----------------------------------------------------------------------------------------
-void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
+void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 
@@ -439,24 +439,10 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		}
 
 		// write the output to the output streams, interpolated for smoothness
-	#ifdef TARGET_API_VST
-		if (replacing)
+		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
-	#endif
-			for (unsigned long ch = 0; ch < numChannels; ch++)
-			{
-				outAudio[ch][samplecount] = dfx::math::InterpolateHermite(mAudioBuffers[ch].data(), mReadPos[ch], mMaxAudioBufferSize);
-			}
-	#ifdef TARGET_API_VST
+			outAudio[ch][samplecount] = dfx::math::InterpolateHermite(mAudioBuffers[ch].data(), mReadPos[ch], mMaxAudioBufferSize);
 		}
-		else
-		{
-			for (unsigned long ch = 0; ch < numChannels; ch++)
-			{
-				outAudio[ch][samplecount] += dfx::math::InterpolateHermite(mAudioBuffers[ch].data(), mReadPos[ch], mMaxAudioBufferSize);
-			}
-		}
-	#endif
 
 		// increment/decrement the position trackers and counters
 		if (!mFreeze)

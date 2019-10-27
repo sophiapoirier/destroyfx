@@ -294,8 +294,7 @@ public:
 	// do the audio processing (override with real stuff)
 	// pass in arrays of float buffers for input and output ([channel][sample]), 
 	// 
-	virtual void processaudio(float const* const* inStreams, float* const* outStreams, unsigned long inNumFrames, 
-							  bool replacing = true) {}
+	virtual void processaudio(float const* const* inStreams, float* const* outStreams, unsigned long inNumFrames) {}
 
 	auto getnumparameters() const noexcept
 	{
@@ -925,9 +924,6 @@ public:
 	void close() override;
 
 	void processReplacing(float** inputs, float** outputs, VstInt32 sampleFrames) override;
-	#if !VST_FORCE_DEPRECATED
-	void process(float** inputs, float** outputs, VstInt32 sampleFrames) override;
-	#endif
 
 	void suspend() override;
 	void resume() override;
@@ -1078,7 +1074,7 @@ public:
 		do_reset();
 	}
 
-	virtual void process(float const* inStream, float* outStream, unsigned long inNumFrames, bool replacing = true) = 0;
+	virtual void process(float const* inStream, float* outStream, unsigned long inNumFrames) = 0;
 	void do_reset()
 	{
 		createbuffers();
@@ -1188,7 +1184,7 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	void Process(Float32 const* in, Float32* out, UInt32 inNumFrames, UInt32 inNumChannels, bool& ioSilence) override
 	{
-		process(in, out, inNumFrames, true);
+		process(in, out, inNumFrames);
 		ioSilence = false;
 	}
 	void Reset() override

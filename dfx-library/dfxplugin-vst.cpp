@@ -429,37 +429,15 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 	{
 		if (mDSPCores[i])
 		{
-			mDSPCores[i]->process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames), true);
+			mDSPCores[i]->process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames));
 		}
 	}
 #else
-	processaudio(const_cast<float const**>(inputs), outputs, static_cast<unsigned long>(sampleFrames), true);
+	processaudio(const_cast<float const**>(inputs), outputs, static_cast<unsigned long>(sampleFrames));
 #endif
 
 	postprocessaudio();
 }
-
-#if !VST_FORCE_DEPRECATED
-//-----------------------------------------------------------------------------------------
-void DfxPlugin::process(float** inputs, float** outputs, VstInt32 sampleFrames)
-{
-	preprocessaudio();
-
-#if TARGET_PLUGIN_USES_DSPCORE
-	for (unsigned long i = 0; i < getnumoutputs(); i++)
-	{
-		if (mDSPCores[i])
-		{
-			mDSPCores[i]->process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames), false);
-		}
-	}
-#else
-	processaudio(const_cast<float const**>(inputs), outputs, static_cast<unsigned long>(sampleFrames), false);
-#endif
-
-	postprocessaudio();
-}
-#endif
 
 
 

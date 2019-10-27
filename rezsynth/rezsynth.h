@@ -125,7 +125,7 @@ public:
 	void clearbuffers() override;
 
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 
 private:
 	static constexpr int64_t kMaxBands = 30;  // the maximum number of resonant bands

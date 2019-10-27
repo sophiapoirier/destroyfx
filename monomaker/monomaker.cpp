@@ -178,7 +178,7 @@ void Monomaker::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
+void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	// point the input signal pointers to the correct input streams, 
 	// according to the input selection (or dual-left if we only have 1 input)
@@ -197,20 +197,8 @@ void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio
 		float const outR = (inR * mMonomerge_main.getValue()) + (inL * mMonomerge_other.getValue());
 
 		// do panning into the output stream
-	#ifdef TARGET_API_VST
-		if (replacing)
-		{
-	#endif
-			outAudio[0][i] = (outL * mPan_left1.getValue()) + (outR * mPan_left2.getValue());
-			outAudio[1][i] = (outR * mPan_right2.getValue()) + (outL * mPan_right1.getValue());
-	#ifdef TARGET_API_VST
-		}
-		else
-		{
-			outAudio[0][i] += (outL * mPan_left1.getValue()) + (outR * mPan_left2.getValue());
-			outAudio[1][i] += (outR * mPan_right2.getValue()) + (outL * mPan_right1.getValue());
-		}
-	#endif
+		outAudio[0][i] = (outL * mPan_left1.getValue()) + (outR * mPan_left2.getValue());
+		outAudio[1][i] = (outR * mPan_right2.getValue()) + (outL * mPan_right1.getValue());
 
 		incrementSmoothedAudioValues();
 	}

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2018  Sophia Poirier
+Copyright (C) 2000-2019  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -78,7 +78,7 @@ public:
 
 	void reset() override;
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 
 	// stuff for extending DfxSettings
 	void settings_doLearningAssignStuff(long tag, dfx::MidiEventType eventType, long eventChannel, 
