@@ -26,7 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxmath.h"
 
 
-void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
+void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block accoring to events

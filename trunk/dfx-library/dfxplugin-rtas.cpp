@@ -541,14 +541,14 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 #if TARGET_PLUGIN_USES_DSPCORE
 			if (mDSPCores[channel])
 			{
-				mDSPCores[channel]->process(inAudioStreams[channel], outAudioStreams[channel], (unsigned)inNumFramesToProcess, true);
+				mDSPCores[channel]->process(inAudioStreams[channel], outAudioStreams[channel], (unsigned)inNumFramesToProcess);
 			}
 #endif
 		}
 	}
 #if !TARGET_PLUGIN_USES_DSPCORE
 	if (!mMasterBypass_rtas)
-		processaudio(const_cast<float const* const*>(inAudioStreams), const_cast<float* const*>(outAudioStreams), (unsigned)inNumFramesToProcess, true);
+		processaudio(const_cast<float const* const*>(inAudioStreams), const_cast<float* const*>(outAudioStreams), (unsigned)inNumFramesToProcess);
 #endif
 
 	// RTAS clip monitoring

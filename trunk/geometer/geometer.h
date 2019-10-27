@@ -67,7 +67,7 @@ public:
   void reset() override;
 
   void processparameters() override;
-  void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
+  void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 #endif
 
   void clearwindowcache();
@@ -97,7 +97,7 @@ public:
 
   void reset() override;
   void processparameters() override;
-  void process(float const* inAudio, float* outAudio, unsigned long inNumFrames, bool replacing = true) override;
+  void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
 #endif
 
   /* several of these are needed by geometerview. */

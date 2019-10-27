@@ -41,7 +41,7 @@ class PolarizerDSP : public DfxPluginCore
 {
 public:
 	PolarizerDSP(DfxPlugin* inDfxPlugin);
-	void process(float const* inAudio, float* outAudio, unsigned long inNumFrames, bool replacing = true) override;
+	void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
 	void reset() override;
 	void processparameters() override;
 

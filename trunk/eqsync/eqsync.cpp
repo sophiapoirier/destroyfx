@@ -129,7 +129,7 @@ void EQSync::processparameters()
 
 
 //-----------------------------------------------------------------------------
-void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
+void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	bool eqChanged = false;
@@ -214,12 +214,6 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 			float outputValue = (inputValue * mA0) + (mPrevIn[ch] * mA1) + (mPrevPrevIn[ch] * mA2) - (mPrevOut[ch] * mB1) - (prevprevOut[ch] * mB2);
 			outputValue = dfx::math::ClampDenormal(outputValue);
 
-		#ifdef TARGET_API_VST
-			if (!replacing)
-			{
-				outputValue += outAudio[ch][sampleCount];
-			}
-		#endif
 			// ...doing the complex filter thing here
 			outAudio[ch][sampleCount] = outputValue;
 

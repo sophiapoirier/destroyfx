@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2018  Sophia Poirier
+Copyright (C) 2000-2019  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -284,7 +284,7 @@ float Skidder::processOutput(float in1, float in2, float panGain)
 }
 
 //-----------------------------------------------------------------------------------------
-void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
+void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numInputs = getnuminputs();
 	auto const numOutputs = getnumoutputs();
@@ -310,20 +310,17 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			// check mWaitSamples also because, if it's zero, we can just move ahead normally
 			if (noteIsOn && (mWaitSamples != 0))
 			{
-				// need to make sure that the skipped part is silent if we're processing in-place
-				if (replacing)
+				// need to make sure that the skipped part is silent when processing in-place
+				for (unsigned long ch = 0; ch < numOutputs; ch++)
 				{
-					for (unsigned long ch = 0; ch < numOutputs; ch++)
+					for (unsigned long samp = 0; samp < dfx::math::ToUnsigned(mWaitSamples); samp++)
 					{
-						for (unsigned long samp = 0; samp < dfx::math::ToUnsigned(mWaitSamples); samp++)
-						{
-							mOutputAudio[ch][samp] = 0.0f;
-						}
-
-						// jump ahead accordingly in the i/o streams
-						mOutputAudio[ch] += mWaitSamples;
-						mInputAudio[ch] += mWaitSamples;
+						mOutputAudio[ch][samp] = 0.0f;
 					}
+
+					// jump ahead accordingly in the i/o streams
+					mOutputAudio[ch] += mWaitSamples;
+					mInputAudio[ch] += mWaitSamples;
 				}
 
 				// cut back the number of samples outputted
@@ -342,14 +339,11 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				}
 				else
 				{
-					if (replacing)
+					for (unsigned long ch = 0; ch < numOutputs; ch++)
 					{
-						for (unsigned long ch = 0; ch < numOutputs; ch++)
+						for (unsigned long samp = dfx::math::ToUnsigned(mWaitSamples); samp < inNumFrames; samp++)
 						{
-							for (unsigned long samp = dfx::math::ToUnsigned(mWaitSamples); samp < inNumFrames; samp++)
-							{
-								mOutputAudio[ch][samp] = 0.0f;
-							}
+							mOutputAudio[ch][samp] = 0.0f;
 						}
 					}
 					inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
@@ -374,17 +368,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				// need to make sure that the skipped part is unprocessed audio
 				for (unsigned long ch = 0; ch < numOutputs; ch++)
 				{
-					if (replacing)
-					{
-						std::copy_n(mInputAudio[ch], mWaitSamples, mOutputAudio[ch]);
-					}
-					else
-					{
-						for (unsigned long samp = 0; samp < dfx::math::ToUnsigned(mWaitSamples); samp++)
-						{
-							mOutputAudio[ch][samp] += mInputAudio[ch][samp];
-						}
-					}
+					std::copy_n(mInputAudio[ch], mWaitSamples, mOutputAudio[ch]);
 
 					// jump ahead accordingly in the i/o streams
 					mInputAudio[ch] += mWaitSamples;
@@ -411,17 +395,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					{
 						for (unsigned long ch = 0; ch < numOutputs; ch++)
 						{
-							if (replacing)
-							{
-								std::copy_n(mInputAudio[ch] + mWaitSamples, inNumFrames - dfx::math::ToUnsigned(mWaitSamples), mOutputAudio[ch] + mWaitSamples);
-							}
-							else
-							{
-								for (unsigned long samp = dfx::math::ToUnsigned(mWaitSamples); samp < inNumFrames; samp++)
-								{
-									mOutputAudio[ch][samp] += mInputAudio[ch][samp];
-								}
-							}
+							std::copy_n(mInputAudio[ch] + mWaitSamples, inNumFrames - dfx::math::ToUnsigned(mWaitSamples), mOutputAudio[ch] + mWaitSamples);
 						}
 						inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
 						mWaitSamples = 0;
@@ -431,17 +405,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				{
 					for (unsigned long ch = 0; ch < numOutputs; ch++)
 					{
-						if (replacing)
-						{
-							std::copy_n(mInputAudio[ch], inNumFrames, mOutputAudio[ch]);
-						}
-						else
-						{
-							for (unsigned long samp = 0; samp < inNumFrames; samp++)
-							{
-								mOutputAudio[ch][samp] += mInputAudio[ch][samp];
-							}
-						}
+						std::copy_n(mInputAudio[ch], inNumFrames, mOutputAudio[ch]);
 					}
 					// that's all we need to do if there are no notes, 
 					// just copy the input to the output
@@ -530,20 +494,8 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					break;
 			}
 	
-		#ifdef TARGET_API_VST
-			if (replacing)
-			{
-		#endif
-				mOutputAudio[0][samp] = processOutput(inputValueL, inputValueR, mPanGainL);
-				mOutputAudio[1][samp] = processOutput(inputValueR, inputValueL, mPanGainR);
-		#ifdef TARGET_API_VST
-			}
-			else
-			{
-				mOutputAudio[0][samp] += processOutput(inputValueL, inputValueR, mPanGainL);
-				mOutputAudio[1][samp] += processOutput(inputValueR, inputValueL, mPanGainR);
-			}
-		#endif
+			mOutputAudio[0][samp] = processOutput(inputValueL, inputValueR, mPanGainL);
+			mOutputAudio[1][samp] = processOutput(inputValueR, inputValueL, mPanGainR);
 		}
 	}
 
@@ -591,18 +543,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	
 			for (unsigned long ch = 0; ch < numOutputs; ch++)
 			{
-		#ifdef TARGET_API_VST
-				if (replacing)
-		#endif
-				{
-					mOutputAudio[ch][samp] = processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
-				}
-		#ifdef TARGET_API_VST
-				else
-				{
-					mOutputAudio[ch][samp] += processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
-				}
-		#endif
+				mOutputAudio[ch][samp] = processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
 			}
 		}
 	}

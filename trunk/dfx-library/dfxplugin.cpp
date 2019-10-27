@@ -181,7 +181,7 @@ DfxPlugin::DfxPlugin(
 
 
 #ifdef TARGET_API_VST
-	setUniqueID(PLUGIN_ID);  // identify
+	setUniqueID(PLUGIN_ID);
 	setNumInputs(VST_NUM_INPUTS);
 	setNumOutputs(VST_NUM_OUTPUTS);
 
@@ -190,7 +190,7 @@ DfxPlugin::DfxPlugin(
 	#endif
 
 	#if !VST_FORCE_DEPRECATED
-	canProcessReplacing();  // supports both accumulating and replacing output
+	canProcessReplacing();  // supports replacing audio output
 	#endif
 	TARGET_API_BASE_CLASS::setProgram(0);  // set the current preset number to 0
 
@@ -1436,8 +1436,8 @@ void DfxPlugin::setAudioProcessingMustAccumulate(bool inMode)
 		SetProcessesInPlace(false);
 	#endif
 #endif
-#if defined(TARGET_API_VST) && !VST_FORCE_DEPRECATED
-		canProcessReplacing(false);  // XXX can't depend on this anymore
+#if TARGET_API_VST
+		assert(false);  // TODO: can't depend on canProcessReplacing(false) anymore, requires intermediate buffering solution
 #endif
 	}
 }

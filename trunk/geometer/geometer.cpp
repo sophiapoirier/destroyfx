@@ -1225,10 +1225,9 @@ XXX Sophia's ideas:
 */
 
 #if TARGET_PLUGIN_USES_DSPCORE
-void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples, bool replacing) {
+void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
 #else
-void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutputs, unsigned long samples, 
-                      bool replacing) {
+void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutputs, unsigned long samples) {
   float const * const tin = *trueinputs;
   float * const tout = *trueoutputs;
 #endif
@@ -1273,12 +1272,7 @@ void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutp
     }
 
     /* send sample out */
-  #ifdef TARGET_API_VST
-    if (!replacing)
-      tout[ii] += out0[outstart];
-    else
-  #endif
-      tout[ii] = out0[outstart];
+    tout[ii] = out0[outstart];
 
     outstart++;
     outsize--;
