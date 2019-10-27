@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2018  Sophia Poirier
+Copyright (C) 2000-2019  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -75,6 +75,8 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	// start off with split CC automation of both range slider points
 	mRateDoubleAutomate = mPulsewidthDoubleAutomate = mFloorDoubleAutomate = false;
+
+	registerSmoothedAudioValue(&mNoise);
 }
 
 //-----------------------------------------------------------------------------------------
