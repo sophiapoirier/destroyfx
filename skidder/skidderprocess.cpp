@@ -262,10 +262,10 @@ void Skidder::processValley()
 float Skidder::processOutput(float in1, float in2, float panGain)
 {
 	// output noise
-	if ((mState == SkidState::Valley) && (mNoise != 0.0f))
+	if ((mState == SkidState::Valley) && (mNoise.getValue() != 0.0f))
 	{
 		// out gets random noise with samples from -1.0 to 1.0 times the random pan times rupture times the RMS scalar
-		return ((dfx::math::Rand<float>() * 2.0f) - 1.0f) * panGain * mNoise * static_cast<float>(mRMS);
+		return ((dfx::math::Rand<float>() * 2.0f) - 1.0f) * panGain * mNoise.getValue() * static_cast<float>(mRMS);
 	}
 	// do regular skidding output
 	else
@@ -496,6 +496,8 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	
 			mOutputAudio[0][samp] = processOutput(inputValueL, inputValueR, mPanGainL);
 			mOutputAudio[1][samp] = processOutput(inputValueR, inputValueL, mPanGainR);
+
+			incrementSmoothedAudioValues();
 		}
 	}
 
@@ -545,6 +547,8 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			{
 				mOutputAudio[ch][samp] = processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
 			}
+
+			incrementSmoothedAudioValues();
 		}
 	}
 }
