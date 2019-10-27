@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <vector>
 
 #include "dfxplugin.h"
+#include "dfxsmoothedvalue.h"
 #include "temporatetable.h"
 
 
@@ -117,7 +118,8 @@ private:
 	// the parameters
 	float mRate_Hz = 1.0f, mRate_Sync = 1.0f, mPulsewidth = 0.0f, mPulsewidthRandMin = 0.0f;
 	long mRateIndex = 0, mRateRandMinIndex = 0;
-	float mPanWidth = 0.0f, mFloor = 0.0f, mNoise = 0.0f;
+	float mPanWidth = 0.0f, mFloor = 0.0f;
+	dfx::SmoothedValue<float> mNoise;
 	double mSlopeSeconds = 0.0, mUserTempo = 1.0;
 	long mMidiMode {};
 	bool mTempoSync = false, mUseHostTempo = false, mUseVelocity = false;
