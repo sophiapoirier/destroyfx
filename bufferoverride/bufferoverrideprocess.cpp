@@ -24,6 +24,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cmath>
 
+#include "dfxmath.h"
+
 
 
 //-----------------------------------------------------------------------------
@@ -231,7 +233,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 
 //---------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------
-void BufferOverride::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing)
+void BufferOverride::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	auto const oldDivisor = mDivisor;
@@ -315,24 +317,10 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 		}
 
 		// write the output samples into the output stream
-	#ifdef TARGET_API_VST
-		if (replacing)
+		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
-	#endif
-			for (unsigned long ch = 0; ch < numChannels; ch++)
-			{
-				outAudio[ch][sampleIndex] = (mAudioOutputValues[ch] * mOutputGain.getValue()) + (inAudio[ch][sampleIndex] * mInputGain.getValue());
-			}
-	#ifdef TARGET_API_VST
+			outAudio[ch][sampleIndex] = (mAudioOutputValues[ch] * mOutputGain.getValue()) + (inAudio[ch][sampleIndex] * mInputGain.getValue());
 		}
-		else
-		{
-			for (unsigned long ch = 0; ch < numChannels; ch++)
-			{
-				outAudio[ch][sampleIndex] += (mAudioOutputValues[ch] * mOutputGain.getValue()) + (inAudio[ch][sampleIndex] * mInputGain.getValue());
-			}
-		}
-	#endif
 
 		// increment the position trackers
 		mReadPos++;

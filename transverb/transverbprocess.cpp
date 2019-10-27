@@ -30,7 +30,7 @@ using namespace dfx::TV;
 
 
 
-void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames, bool replacing) {
+void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames) {
 
   // int versions of these float values, for reducing casting operations
   int speed1int {}, speed2int {}, read1int {}, read2int {};
@@ -223,14 +223,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       buf2[writer] = inAudio[i] + (r2val * feed2.getValue() * mix2.getValue());
 
       /* make output */
-    #ifdef TARGET_API_VST
-      if (replacing)
-    #endif
-        outAudio[i] = (inAudio[i] * drymix.getValue()) + (r1val * mix1.getValue()) + (r2val * mix2.getValue());
-    #ifdef TARGET_API_VST
-      else
-        outAudio[i] += (inAudio[i] * drymix.getValue()) + (r1val * mix1.getValue()) + (r2val * mix2.getValue());
-    #endif
+      outAudio[i] = (inAudio[i] * drymix.getValue()) + (r1val * mix1.getValue()) + (r2val * mix2.getValue());
 
       /* start smoothing stuff if the writer has 
          passed a reader or vice versa.
@@ -439,14 +432,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       read2 = std::fmod(std::fabs(read2), bsize_float);
 
     /* make output */
-  #ifdef TARGET_API_VST
-    if (replacing)
-  #endif
-      outAudio[j] = (inAudio[j] * drymix.getValue()) + r1val + r2val;
-  #ifdef TARGET_API_VST
-    else
-      outAudio[j] += (inAudio[j] * drymix.getValue()) + r1val + r2val;
-  #endif
+    outAudio[j] = (inAudio[j] * drymix.getValue()) + r1val + r2val;
 //      }
 
       incrementSmoothedAudioValues();

@@ -70,7 +70,7 @@ class Monomaker : public DfxPlugin
 public:
 	Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 
 private:
 	dfx::SmoothedValue<float> mInputSelection_left2left, mInputSelection_left2right, mInputSelection_right2left, mInputSelection_right2right;

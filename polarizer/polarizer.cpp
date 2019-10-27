@@ -64,7 +64,7 @@ void PolarizerDSP::processparameters()
 }
 
 //-----------------------------------------------------------------------------------------
-void PolarizerDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames, bool replacing)
+void PolarizerDSP::process(float const* inAudio, float* outAudio, unsigned long numSampleFrames)
 {
 	// fetch the current parameter values
 	auto const leapSize = getparameter_i(kSkip);
@@ -95,12 +95,6 @@ void PolarizerDSP::process(float const* inAudio, float* outAudio, unsigned long 
 			}
 		}
 
-	#ifdef TARGET_API_VST
-		if (!replacing)
-		{
-			outputValue += outAudio[sampleCount];
-		}
-	#endif
 		outAudio[sampleCount] = outputValue;
 
 		incrementSmoothedAudioValues();

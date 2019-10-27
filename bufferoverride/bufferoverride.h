@@ -78,7 +78,7 @@ public:
 
 	void reset() override;
 
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool replacing = true) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 	void processparameters() override;
 
 	void createbuffers() override;

@@ -46,7 +46,7 @@ public:
 
 	void reset() override;
 	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool inReplacing = true) override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 
 private:
 	// these are the states of the unaffected audio input between notes

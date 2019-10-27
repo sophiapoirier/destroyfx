@@ -79,7 +79,7 @@ void MIDIGater::processparameters()
 
 
 //-----------------------------------------------------------------------------------------
-void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames, bool inReplacing)
+void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
