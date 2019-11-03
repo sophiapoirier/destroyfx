@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -27,6 +27,9 @@ Welcome to our Finite Impulse Response filter.
 #pragma once
 
 
+#include <vector>
+
+
 namespace dfx::FIRFilter
 {
 
@@ -34,25 +37,30 @@ static constexpr double kShelfStartLowpass = 0.333;
 
 
 //-----------------------------------------------------------------------------
+// TODO: C++20 use std::span for all pointer+size parameters
 void calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
-									   long inNumTaps, float* outCoefficients);
-void applyKaiserWindow(long inNumTaps, float* outCoefficients, float inAttenuation);
+									   size_t inNumTaps, float* outCoefficients);
+void calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
+									   size_t inNumTaps, float* outCoefficients, 
+									   float const* inCoefficientsWindow);
+void applyKaiserWindow(size_t inNumTaps, float* ioCoefficients, float inAttenuation);
+std::vector<float> generateKaiserWindow(size_t inNumTaps, float inAttenuation);
 
 //-----------------------------------------------------------------------------
-inline float process(float const* inAudio, long inNumTaps, float const* inCoefficients, 
-					 long inPos, long inBufferSize)
+inline float process(float const* inAudio, size_t inNumTaps, float const* inCoefficients, 
+					 size_t inPos, size_t inBufferSize)
 {
 	float outval = 0.0f;
 	if ((inPos + inNumTaps) > inBufferSize)
 	{
-		for (long i = 0; i < inNumTaps; i++)
+		for (size_t i = 0; i < inNumTaps; i++)
 		{
 			outval += inAudio[(inPos + i) % inBufferSize] * inCoefficients[i];
 		}
 	}
 	else
 	{
-		for (long i = 0; i < inNumTaps; i++)
+		for (size_t i = 0; i < inNumTaps; i++)
 		{
 			outval += inAudio[inPos + i] * inCoefficients[i];
 		}

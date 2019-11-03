@@ -44,13 +44,16 @@ public:
 
 private:
   static constexpr long kAudioSmoothingDur_samples = 42;
-  static constexpr long kNumFIRTaps = 23;
+  static constexpr size_t kNumFIRTaps = 23;
 
   enum class FilterMode { Nothing, Highpass, LowpassIIR, LowpassFIR };
 
+  inline float InterpolateHermite(float* data, double address, int arraysize, int danger);
+  inline float InterpolateLinear(float* data, double address, int arraysize, int danger);
+
   // these get set to the parameter values
   int bsize = 0;
-  double speed1 = 0.0, speed2 = 0.0;
+  dfx::SmoothedValue<double> speed1, speed2;
   dfx::SmoothedValue<float> drymix;
   dfx::SmoothedValue<float> mix1, feed1;
   float dist1 = 0.0f;
@@ -75,6 +78,7 @@ private:
   float lastr1val = 0.0f, lastr2val = 0.0f;
 
   std::vector<float> firCoefficients1, firCoefficients2;
+  std::vector<float> const firCoefficientsWindow;
 
   long tomsound_sampoffset = 0;  // essentially the core instance number
 };
@@ -117,8 +121,8 @@ private:
 };
 
 
-inline float Transverb_InterpolateHermite(float* data, double address, 
-                                          int arraysize, int danger) {
+inline float TransverbDSP::InterpolateHermite(float* data, double address, 
+                                              int arraysize, int danger) {
   int posMinus1 = 0, posPlus1 = 0, posPlus2 = 0;
 
   auto const pos = (int)address;
@@ -156,10 +160,9 @@ inline float Transverb_InterpolateHermite(float* data, double address,
 
   return (((a * posFract) + b) * posFract + c) * posFract + data[pos];
 }
-/*
-inline float Transverb_InterpolateHermitePostLowpass(float* data, float address) {
-  float posFract, a, b, c;
 
+/*
+inline float TransverbDSP::InterpolateHermitePostLowpass(float* data, float address) {
   auto const pos = (int)address;
   float const posFract = address - (float)pos;
 
@@ -173,8 +176,8 @@ inline float Transverb_InterpolateHermitePostLowpass(float* data, float address)
 }
 */
 
-inline float Transverb_InterpolateLinear(float* data, double address, 
-                                         int arraysize, int danger) {
+inline float TransverbDSP::InterpolateLinear(float* data, double address, 
+                                             int arraysize, int danger) {
 	int posPlus1 = 0;
 	auto const pos = (int)address;
 	auto const posFract = (float)(address - (double)pos);

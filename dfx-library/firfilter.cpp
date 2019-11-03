@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -26,7 +26,9 @@ Welcome to our Finite Impulse Response filter.
 
 #include "firfilter.h"
 
+#include <algorithm>
 #include <cassert>
+#include <functional>
 
 #include "dfxmath.h"
 
@@ -40,14 +42,15 @@ float besselIZero2(float input);
 //-----------------------------------------------------------------------------
 // you're supposed to use use an odd number of taps
 void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
-													   long inNumTaps, float* outCoefficients)
+													   size_t inNumTaps, float* outCoefficients)
 {
+	assert(inNumTaps > 0);
 	assert(inNumTaps % 2);
 
 	// get the cutoff as a ratio of cutoff to Nyquist, scaled from 0 to Pi
 	double const corner = (inCutoff / (inSampleRate * 0.5)) * dfx::math::kPi<double>;
 
-	long middleCoeff {};
+	size_t middleCoeff {};
 	if (inNumTaps % 2)
 	{
 		middleCoeff = (inNumTaps - 1) / 2;
@@ -58,7 +61,7 @@ void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double i
 		middleCoeff = inNumTaps / 2;
 	}
 
-	for (long n = 0; n < middleCoeff; n++)
+	for (size_t n = 0; n < middleCoeff; n++)
 	{
 		double const value = static_cast<double>(n) - (static_cast<double>(inNumTaps - 1) * 0.5);
 		outCoefficients[n] = std::sin(value * corner) / (value * dfx::math::kPi<double>);
@@ -67,8 +70,19 @@ void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double i
 }
 
 //-----------------------------------------------------------------------------
-void dfx::FIRFilter::applyKaiserWindow(long inNumTaps, float* outCoefficients, float inAttenuation)
+void dfx::FIRFilter::calculateIdealLowpassCoefficients(double inCutoff, double inSampleRate, 
+													   size_t inNumTaps, float* outCoefficients, 
+													   float const* inCoefficientsWindow)
 {
+	calculateIdealLowpassCoefficients(inCutoff, inSampleRate, inNumTaps, outCoefficients);
+	std::transform(outCoefficients, outCoefficients + inNumTaps, inCoefficientsWindow, outCoefficients, std::multiplies<float>());
+}
+
+//-----------------------------------------------------------------------------
+void dfx::FIRFilter::applyKaiserWindow(size_t inNumTaps, float* ioCoefficients, float inAttenuation)
+{
+	assert(inNumTaps > 0);
+
 	// beta is 0 if the attenuation is less than 21 dB
 	float beta = 0.0f;
 	if (inAttenuation >= 50.0f)
@@ -81,13 +95,22 @@ void dfx::FIRFilter::applyKaiserWindow(long inNumTaps, float* outCoefficients, f
 		beta += 0.07886f * (inAttenuation - 21.0f);
 	}
 
-	long const halfLength = (inNumTaps + 1) / 2;
-	for (long n = 0; n < halfLength; n++)
+	size_t const halfLength = (inNumTaps + 1) / 2;
+	auto const oneDivBesselIZeroOfBeta = 1.0f / besselIZero(beta);
+	for (size_t n = 0; n < halfLength; n++)
 	{
-		outCoefficients[n] *= besselIZero(beta * std::sqrt(1.0f - std::pow((1.0f - ((2.0f * n) / (static_cast<float>(inNumTaps - 1)))), 2.0f))) / besselIZero(beta);
-		outCoefficients[inNumTaps - 1 - n] = outCoefficients[n];
+		ioCoefficients[n] *= besselIZero(beta * std::sqrt(1.0f - std::pow((1.0f - ((2.0f * n) / static_cast<float>(inNumTaps - 1))), 2.0f))) * oneDivBesselIZeroOfBeta;
+		ioCoefficients[inNumTaps - 1 - n] = ioCoefficients[n];
 	}
-} 
+}
+
+//-----------------------------------------------------------------------------
+std::vector<float> dfx::FIRFilter::generateKaiserWindow(size_t inNumTaps, float inAttenuation)
+{
+	std::vector<float> coefficientsWindow(inNumTaps, 1.0f);
+	applyKaiserWindow(inNumTaps, coefficientsWindow.data(), inAttenuation);
+	return coefficientsWindow;
+}
 
 //-----------------------------------------------------------------------------
 float besselIZero(float input)
