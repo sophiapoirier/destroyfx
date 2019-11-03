@@ -25,6 +25,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <cmath>
 
+#include "firfilter.h"
+
 
 
 // these are macros that do boring entry point stuff for us
@@ -95,11 +97,14 @@ void Transverb::dfx_PostConstructor() {
 
 
 TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
-  : DfxPluginCore(inDfxPlugin) {
+  : DfxPluginCore(inDfxPlugin),
+    firCoefficientsWindow(dfx::FIRFilter::generateKaiserWindow(kNumFIRTaps, 60.0f)) {
 
   firCoefficients1.assign(kNumFIRTaps, 0.0f);
   firCoefficients2.assign(kNumFIRTaps, 0.0f);
 
+  registerSmoothedAudioValue(&speed1);
+  registerSmoothedAudioValue(&speed2);
   registerSmoothedAudioValue(&drymix);
   registerSmoothedAudioValue(&mix1);
   registerSmoothedAudioValue(&feed1);
@@ -147,38 +152,56 @@ void TransverbDSP::processparameters() {
 
   if (auto const value = getparameterifchanged_f(kDrymix))
     drymix = *value;
-  bsize = std::clamp((int) (getparameter_f(kBsize) * getsamplerate() * 0.001), 1, MAXBUF);
   if (auto const value = getparameterifchanged_f(kMix1))
     mix1 = *value;
-  speed1 = std::pow(2.0, getparameter_f(kSpeed1));
+  if (auto const value = getparameterifchanged_f(kSpeed1))
+  {
+    speed1 = std::pow(2.0, *value);
+    speed1hasChanged = true;
+  }
   if (auto const value = getparameterifchanged_scalar(kFeed1))
     feed1 = *value;
   dist1 = getparameter_f(kDist1);
   if (auto const value = getparameterifchanged_f(kMix2))
     mix2 = *value;
-  speed2 = std::pow(2.0, getparameter_f(kSpeed2));
+  if (auto const value = getparameterifchanged_f(kSpeed2))
+  {
+    speed2 = std::pow(2.0, *value);
+    speed2hasChanged = true;
+  }
   if (auto const value = getparameterifchanged_scalar(kFeed2))
     feed2 = *value;
   dist2 = getparameter_f(kDist2);
   quality = getparameter_i(kQuality);
   tomsound = getparameter_b(kTomsound);
 
-  if (getparameterchanged(kBsize))
+  if (auto const value = getparameterifchanged_f(kBsize))
   {
-    writer %= bsize;
+    auto const entryBsize = std::exchange(bsize, std::clamp((int) (*value * getsamplerate() * 0.001), 1, MAXBUF));
+    // the commented-out logic below is the beginning of an attempt to clean up the buffer states
+    // when the buffer resizes, however the tidiness maybe feels counter to the spirit of Transverb?
+    if (bsize > entryBsize)
+    {
+      //std::fill(std::next(buf1.begin(), entryBsize), std::next(buf1.begin(), bsize), 0.0f);
+      //std::fill(std::next(buf2.begin(), entryBsize), std::next(buf2.begin(), bsize), 0.0f);
+    }
+    else if (writer > bsize)
+    {
+      //auto const entryWriter = writer;
+      writer %= bsize;
+      //auto const copyCount = std::min(entryBsize - bsize, writer);
+      //std::copy_n(std::next(buf1.cbegin(), entryWriter - copyCount), copyCount, std::next(buf1.begin(), writer - copyCount));
+      //std::copy_n(std::next(buf2.cbegin(), entryWriter - copyCount), copyCount, std::next(buf2.begin(), writer - copyCount));
+    }
     read1 = std::fmod(std::fabs(read1), (double)bsize);
     read2 = std::fmod(std::fabs(read2), (double)bsize);
   }
 
   if (getparameterchanged(kDist1))
-    read1 = std::fmod(std::fabs((double)writer + (double)dist1 * (double)MAXBUF), (double)bsize);
-  if (getparameterchanged(kSpeed1))
-    speed1hasChanged = true;
+    read1 = std::fmod(std::fabs((double)writer + (double)dist1 * (double)bsize), (double)bsize);
 
   if (getparameterchanged(kDist2))
-    read2 = std::fmod(std::fabs((double)writer + (double)dist2 * (double)MAXBUF), (double)bsize);
-  if (getparameterchanged(kSpeed2))
-    speed2hasChanged = true;
+    read2 = std::fmod(std::fabs((double)writer + (double)dist2 * (double)bsize), (double)bsize);
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
     speed1hasChanged = speed2hasChanged = true;
@@ -191,8 +214,8 @@ void TransverbDSP::processparameters() {
     {
       writer += tomsound_sampoffset;
       writer %= bsize;
-      read1 += speed1 * (double)tomsound_sampoffset;
-      read2 += speed2 * (double)tomsound_sampoffset;
+      read1 += speed1.getValue() * (double)tomsound_sampoffset;
+      read2 += speed2.getValue() * (double)tomsound_sampoffset;
       read1 = std::fmod(std::fabs(read1), (double)bsize);
       read2 = std::fmod(std::fabs(read2), (double)bsize);
     }
@@ -201,8 +224,8 @@ void TransverbDSP::processparameters() {
     {
       writer -= tomsound_sampoffset;
       writer = (writer+bsize) % bsize;
-      read1 -= speed1 * (double)tomsound_sampoffset;
-      read2 -= speed2 * (double)tomsound_sampoffset;
+      read1 -= speed1.getValue() * (double)tomsound_sampoffset;
+      read2 -= speed2.getValue() * (double)tomsound_sampoffset;
       read1 = std::fmod(std::fabs(read1), (double)bsize);
       read2 = std::fmod(std::fabs(read2), (double)bsize);
     }
@@ -310,7 +333,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kMix2, 0.);
 	setpresetparameter_i(i, kQuality, );
 	setpresetparameter_b(i, kTomsound, );
-	setpresetparameter_b(i, kFreeze, );
+	setpresetparameter_b(i, kFreeze, false);
 	setpresetname(i, "");
 	i++;
 */
@@ -412,7 +435,7 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	// make higher qualities more probable (happen 4/5 of the time)
 	setparameter_i(kQuality, ((rand() % 5) + 1) % 3);
 	// make TOMSOUND less probable (only 1/3 of the time)
-	setparameter_b(kTomsound, (bool)((rand() % 3) % 2));
+	setparameter_b(kTomsound, static_cast<bool>((rand() % 3) % 2));
 
 
 	for (long i = 0; i < kNumParameters; i++)
