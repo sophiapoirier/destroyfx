@@ -166,7 +166,9 @@ DfxPlugin::DfxPlugin(
 #endif
 // end API-specific base constructors
 
-	mParameters(inNumParameters)
+	mParameters(inNumParameters),
+	mParametersChangedAsOfPreProcess(inNumParameters, false),
+	mParametersTouchedAsOfPreProcess(inNumParameters, false)
 {
 	updatesamplerate();  // XXX have it set to something here?
 
@@ -275,6 +277,14 @@ long DfxPlugin::do_initialize()
 
 #ifdef TARGET_API_VST
 	mIsInitialized = true;
+#endif
+
+#if TARGET_PLUGIN_USES_DSPCORE
+	// flag parameter changes to be picked up for DSP cores, which are all instantiated anew during plugin initialize
+	for (long i = 0; i < getnumparameters(); i++)
+	{
+		mParameters[i].setchanged(true);
+	}
 #endif
 
 	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), 
@@ -729,18 +739,9 @@ bool DfxPlugin::getparameterchanged(long inParameterIndex) const
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		return mParameters[inParameterIndex].getchanged();
+		return mParametersChangedAsOfPreProcess[inParameterIndex];
 	}
 	return false;
-}
-
-//-----------------------------------------------------------------------------
-void DfxPlugin::setparameterchanged(long inParameterIndex, bool inChanged)
-{
-	if (parameterisvalid(inParameterIndex))
-	{
-		mParameters[inParameterIndex].setchanged(inChanged);
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -748,18 +749,9 @@ bool DfxPlugin::getparametertouched(long inParameterIndex) const
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		return mParameters[inParameterIndex].gettouched();
+		return mParametersTouchedAsOfPreProcess[inParameterIndex];
 	}
 	return false;
-}
-
-//-----------------------------------------------------------------------------
-void DfxPlugin::setparametertouched(long inParameterIndex, bool inTouched)
-{
-	if (parameterisvalid(inParameterIndex))
-	{
-		mParameters[inParameterIndex].settouched(inTouched);
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1654,7 +1646,13 @@ void DfxPlugin::preprocessaudio()
 
 	// fetch the latest musical tempo/time/location inforomation from the host
 	processtimeinfo();
+
 	// deal with current parameter values for usage during audio processing
+	for (long i = 0; i < getnumparameters(); i++)
+	{
+		mParametersChangedAsOfPreProcess[i] = mParameters[i].setchanged(false);
+		mParametersTouchedAsOfPreProcess[i] = mParameters[i].settouched(false);
+	}
 	do_processparameters();
 }
 
@@ -1662,13 +1660,6 @@ void DfxPlugin::preprocessaudio()
 // this is called immediately after processing a block of audio
 void DfxPlugin::postprocessaudio()
 {
-	// XXX turn off all parameterchanged and parametertouched flags?
-	for (long i = 0; i < getnumparameters(); i++)
-	{
-		setparameterchanged(i, false);
-		setparametertouched(i, false);
-	}
-
 #if TARGET_PLUGIN_USES_MIDI
 	mMidiState.postprocessEvents();
 #endif

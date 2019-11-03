@@ -435,10 +435,8 @@ public:
 #endif
 	DfxParam::ValueType getparametervaluetype(long inParameterIndex) const;
 	DfxParam::Unit getparameterunit(long inParameterIndex) const;
-	bool getparameterchanged(long inParameterIndex) const;
-	void setparameterchanged(long inParameterIndex, bool inChanged = true);
-	bool getparametertouched(long inParameterIndex) const;
-	void setparametertouched(long inParameterIndex, bool inTouched = true);
+	bool getparameterchanged(long inParameterIndex) const;  // only reliable when called during processaudio
+	bool getparametertouched(long inParameterIndex) const;  // only reliable when called during processaudio
 	DfxParam::Curve getparametercurve(long inParameterIndex) const
 	{
 		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].getcurve() : DfxParam::Curve::Linear;
@@ -732,8 +730,9 @@ private:
 	std::optional<size_t> getparametergroup(long inParameterIndex) const;
 
 	std::vector<DfxParam> mParameters;
-	std::vector<DfxPreset> mPresets;
+	std::vector<bool> mParametersChangedAsOfPreProcess, mParametersTouchedAsOfPreProcess;
 	std::vector<std::pair<std::string, std::set<long>>> mParameterGroups;
+	std::vector<DfxPreset> mPresets;
 
 	std::vector<ChannelConfig> mChannelconfigs;
 

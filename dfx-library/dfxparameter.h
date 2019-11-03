@@ -182,6 +182,7 @@ for the value strings.
 #pragma once
 
 
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -488,15 +489,17 @@ public:
 	}
 
 	// set/get the property indicating whether the parameter value has changed
-	void setchanged(bool inChanged = true) noexcept;
+	// returns preceding state
+	bool setchanged(bool inChanged = true) noexcept;
 	bool getchanged() const noexcept
 	{
 		return mChanged;
 	}
 	// set/get the property indicating whether the parameter value has been set for any reason (regardless of whether the new value differed)
-	void settouched(bool inTouched = true) noexcept
+	// returns preceding state
+	bool settouched(bool inTouched = true) noexcept
 	{
-		mTouched = inTouched;
+		return mTouched.exchange(inTouched);
 	}
 	bool gettouched() const noexcept
 	{
@@ -525,8 +528,8 @@ private:
 	double mCurveSpec = 1.0;  // special specification, like the exponent in Curve::Pow
 	std::vector<std::string> mValueStrings;  // an array of value strings
 	std::string mCustomUnitString;  // a text string display for parameters using custom unit types
-	bool mChanged = true;  // indicates if the value has changed
-	bool mTouched = false;  // indicates if the value has been newly set
+	std::atomic<bool> mChanged {true};  // indicates if the value has changed
+	std::atomic<bool> mTouched {false};  // indicates if the value has been newly set
 	Attribute mAttributes = 0;  // a bit-mask of various parameter attributes
 
 #ifdef TARGET_API_AUDIOUNIT
