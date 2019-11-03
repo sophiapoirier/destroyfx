@@ -693,7 +693,7 @@ bool DfxParam::limit()
 
 //-----------------------------------------------------------------------------
 // set the property indicating whether the parameter value has changed
-void DfxParam::setchanged(bool inChanged) noexcept
+bool DfxParam::setchanged(bool inChanged) noexcept
 {
 	// XXX this is when we stuff the current value away as the old value (?)
 	if (!inChanged)
@@ -701,7 +701,7 @@ void DfxParam::setchanged(bool inChanged) noexcept
 		mOldValue = mValue;
 	}
 
-	mChanged = inChanged;
+	return mChanged.exchange(inChanged);
 }
 
 
