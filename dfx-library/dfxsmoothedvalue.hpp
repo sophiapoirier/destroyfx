@@ -67,6 +67,7 @@ void dfx::SmoothedValue<T>::setValue(T inTargetValue) noexcept
 		}
 		mTargetValue = inTargetValue;
 		mValueStep = (mSmoothDur_samples > 0) ? ((mTargetValue - mCurrentValue) / static_cast<T>(mSmoothDur_samples)) : T(0);
+		mCurrentValue += mValueStep;
 		mSmoothCount = 0;
 	}
 }
@@ -100,8 +101,11 @@ void dfx::SmoothedValue<T>::inc() noexcept
 {
 	if (isSmoothing())
 	{
-		mCurrentValue += mValueStep;
 		mSmoothCount++;
+	}
+	if (isSmoothing())
+	{
+		mCurrentValue += mValueStep;
 	}
 	else
 	{
