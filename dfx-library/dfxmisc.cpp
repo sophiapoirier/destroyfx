@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -32,7 +32,7 @@ These are some generally useful functions.
 #include "dfxdefines.h"
 
 #if TARGET_OS_MAC
-	#include <Carbon/Carbon.h>
+	#include <CoreServices/CoreServices.h>
 #endif
 
 #if _WIN32
@@ -234,7 +234,9 @@ long LaunchDocumentation()
 	}
 
 	return fnfErr;  // file not found error
-#endif
+#else
+	#warning "implementation missing"
+#endif  // TARGET_OS_MAC
 
 	return 0;
 }

@@ -26,11 +26,7 @@ Welcome to our Low Frequency Oscillator.
 
 #pragma once
 
-#include <array>
-#include <cmath>
 #include <string>
-
-#include "dfxmath.h"
 
 
 namespace dfx
