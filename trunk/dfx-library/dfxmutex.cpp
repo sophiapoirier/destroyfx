@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2016  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,7 +21,7 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
-This is our mutex shit.
+This is our mutually exclusive shit.
 ------------------------------------------------------------------------*/
 
 #include "dfxmutex.h"
@@ -29,112 +29,21 @@ This is our mutex shit.
 
 
 //------------------------------------------------------------------------
-#if _WIN32 && !defined(PLUGIN_SDK_BUILD)
+#ifdef __MACH__
 
-DfxMutex::DfxMutex()
+void dfx::SpinLock::lock()
 {
-	InitializeCriticalSection(&cs);
+	os_unfair_lock_lock(&mLock);
 }
 
-DfxMutex::~DfxMutex()
+bool dfx::SpinLock::try_lock()
 {
-	DeleteCriticalSection(&cs);
+	return os_unfair_lock_trylock(&mLock);
 }
 
-int DfxMutex::grab()
+void dfx::SpinLock::unlock()
 {
-	EnterCriticalSection(&cs);
-	return 0;
-}
-
-int DfxMutex::try_grab()
-{
-#if defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0400)
-	BOOL success = TryEnterCriticalSection(&cs);
-	// map the TryEnterCriticalSection result to the sort of error that every other mutex API uses
-	return (success == 0) ? -1 : 0;
-#else
-	return 0;
-#endif
-}
-
-int DfxMutex::release()
-{
-	LeaveCriticalSection(&cs);
-	return 0;
-}
-
-
-
-//------------------------------------------------------------------------
-#elif _WIN32 && defined(PLUGIN_SDK_BUILD)
-
-DfxMutex::DfxMutex()
-{
-}
-
-DfxMutex::~DfxMutex()
-{
-}
-
-int DfxMutex::grab()
-{
-	return 0;
-}
-
-int DfxMutex::try_grab()
-{
-	return 0;
-}
-
-int DfxMutex::release()
-{
-	return 0;
-}
-
-
-
-//------------------------------------------------------------------------
-#elif TARGET_OS_MAC && !defined(__MACH__)
-
-#include <MacErrors.h>
-
-DfxMutex::DfxMutex()
-{
-	if ( MPLibraryIsLoaded() )
-		createErr = MPCreateCriticalRegion(&mpcr);
-	else
-		createErr = kMPInsufficientResourcesErr;
-}
-
-DfxMutex::~DfxMutex()
-{
-	if (createErr == noErr)
-		deleteErr = MPDeleteCriticalRegion(mpcr);
-}
-
-int DfxMutex::grab()
-{
-	if (createErr == noErr) 
-		return MPEnterCriticalRegion(mpcr, kDurationForever);
-	else
-		return createErr;
-}
-
-int DfxMutex::try_grab()
-{
-	if (createErr == noErr) 
-		return MPEnterCriticalRegion(mpcr, kDurationImmediate);
-	else
-		return createErr;
-}
-
-int DfxMutex::release()
-{
-	if (createErr == noErr) 
-		return MPExitCriticalRegion(mpcr);
-	else
-		return createErr;
+	os_unfair_lock_unlock(&mLock);
 }
 
 
@@ -142,56 +51,21 @@ int DfxMutex::release()
 //------------------------------------------------------------------------
 #else
 
-DfxMutex::DfxMutex()
+void dfx::SpinLock::lock()
 {
-	pthread_mutexattr_t pmutAttr, * pmutAttrPtr = NULL;
-	int attrInitErr = pthread_mutexattr_init(&pmutAttr);
-	if (attrInitErr == 0)
-	{
-		int attrSetTypeErr = pthread_mutexattr_settype(&pmutAttr, PTHREAD_MUTEX_RECURSIVE);
-		if (attrSetTypeErr == 0)
-			pmutAttrPtr = &pmutAttr;
-	}
-	createErr = pthread_mutex_init(&pmut, pmutAttrPtr);
-	if (attrInitErr == 0)
-		pthread_mutexattr_destroy(&pmutAttr);
+	while (!try_lock());
 }
 
-DfxMutex::~DfxMutex()
+bool dfx::SpinLock::try_lock()
 {
-	deleteErr = pthread_mutex_destroy(&pmut);
+	return !mFlag.test_and_set(std::memory_order_acquire);
 }
 
-int DfxMutex::grab()
+void dfx::SpinLock::unlock()
 {
-	return pthread_mutex_lock(&pmut);
-}
-
-int DfxMutex::try_grab()
-{
-	return pthread_mutex_trylock(&pmut);
-}
-
-int DfxMutex::release()
-{
-	return pthread_mutex_unlock(&pmut);
+	mFlag.clear(std::memory_order_release);
 }
 
 
 
-#endif
-// platforms
-
-
-
-//------------------------------------------------------------------------
-DfxScopedMutex::DfxScopedMutex(DfxMutex& inMutex)
-:	mMutex(inMutex)
-{
-	mMutex.grab();
-}
-
-DfxScopedMutex::~DfxScopedMutex()
-{
-	mMutex.release();
-}
+#endif  // platform

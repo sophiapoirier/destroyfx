@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,60 +21,47 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
-This is our mutex shit.
+This is our mutually exclusive shit.
 ------------------------------------------------------------------------*/
 
 #pragma once
 
 
-#if (__cplusplus >= 201103L)
-	#error "just use std::mutex"
-#endif
-
-
-#if _WIN32 && !defined(PLUGIN_SDK_BUILD)
-	// Win32 API
-	#include <Windows.h>
-#elif _WIN32 && defined(PLUGIN_SDK_BUILD)
-#elif TARGET_OS_MAC && !defined(__MACH__)
-	// Multiprocessing Services
-	#include <Multiprocessing.h>
+#ifdef __MACH__
+	#include <os/lock.h>
 #else
-	// POSIX threads library
-	#include <pthread.h>
+	#include <atomic>
 #endif
 
 
 
-class DfxMutex
+namespace dfx
+{
+
+// A typical mutex can in some cases block during try_lock, making it unsafe to use at all
+// in realtime contexts.  A lightweight spinlock, while having some behavioral disadvantages,
+// can meet the try_lock performance requirements for such use cases.
+class SpinLock
 {
 public:
-	DfxMutex();
-	~DfxMutex();
-	int grab();
-	int try_grab();
-	int release();
+	SpinLock() noexcept = default;
+	~SpinLock() noexcept = default;
+	SpinLock(SpinLock const&) = delete;
+	SpinLock(SpinLock&&) = delete;
+	SpinLock& operator=(SpinLock const&) = delete;
+	SpinLock& operator=(SpinLock&&) = delete;
+
+	// interface matches that of std::mutex to allow usage with STL scoped lock guards
+	void lock();
+	bool try_lock();
+	void unlock();
 
 private:
-
-#if _WIN32 && !defined(PLUGIN_SDK_BUILD)
-	CRITICAL_SECTION cs;
-#elif _WIN32 && defined(PLUGIN_SDK_BUILD)
-#elif TARGET_OS_MAC && !defined(__MACH__)
-	MPCriticalRegionID mpcr;
+#ifdef __MACH__
+	os_unfair_lock mLock = OS_UNFAIR_LOCK_INIT;  // the optimal realtime synchronization primitive on Apple platforms
 #else
-	pthread_mutex_t pmut;
+	std::atomic_flag mFlag = ATOMIC_FLAG_INIT;
 #endif
-
-	int createErr, deleteErr;
 };
 
-
-class DfxScopedMutex
-{
-public:
-	explicit DfxScopedMutex(DfxMutex& inMutex);
-	~DfxScopedMutex();
-private:
-	DfxMutex& mMutex;
-};
+}  // dfx
