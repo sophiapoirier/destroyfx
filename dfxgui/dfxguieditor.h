@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -38,6 +38,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxmisc.h"
 #include "dfxplugin-base.h"
 #include "dfxpluginproperties.h"
+
+#if TARGET_OS_MAC
+	#include <ApplicationServices/ApplicationServices.h>
+#endif
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -157,8 +161,8 @@ public:
 	template <typename T, typename... Args>
 	T* emplaceControl(Args&&... args)
 	{
-		static_assert(std::is_base_of<IDGControl, T>::value);
-		static_assert(std::is_base_of<VSTGUI::CControl, T>::value);
+		static_assert(std::is_base_of_v<IDGControl, T>);
+		static_assert(std::is_base_of_v<VSTGUI::CControl, T>);
 		auto const control = new T(std::forward<Args>(args)...);
 		addControl(control);
 		return control;
@@ -283,7 +287,7 @@ public:
 		T value {};
 		size_t dataSize = sizeof(value);
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
-		return ((status == noErr) && (dataSize = sizeof(value))) ? std::make_optional(value) : std::nullopt;
+		return ((status == dfx::kStatus_NoError) && (dataSize = sizeof(value))) ? std::make_optional(value) : std::nullopt;
 	}
 	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 							void const* inData, size_t inDataSize);

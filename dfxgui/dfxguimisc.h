@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -38,13 +38,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
 	#include "vstgui.h"
 #pragma clang diagnostic pop
-
-#if TARGET_OS_MAC
-	#include <ApplicationServices/ApplicationServices.h>
-#endif
-
-
-#define FLIP_CG_COORDINATES
 
 
 //-----------------------------------------------------------------------------
@@ -91,29 +84,6 @@ public:
 	{
 		return pointInside(VSTGUI::CPoint(inX + left, inY + top));
 	}
-
-#if 0 && TARGET_OS_MAC
-	void copyToCGRect(CGRect* outDestRect, long inOutputPortHeight)
-	{
-		outDestRect->origin.x = left;
-#ifdef FLIP_CG_COORDINATES
-		outDestRect->origin.y = top;
-#else
-		if (inOutputPortHeight)
-			outDestRect->origin.y = inOutputPortHeight - (getHeight() + top);
-		else
-			outDestRect->origin.y = top;
-#endif
-		outDestRect->size.width = getWidth();
-		outDestRect->size.height = getHeight();
-	}
-	CGRect convertToCGRect(long inOutputPortHeight)
-	{
-		CGRect outputRect;
-		copyToCGRect(&outputRect, inOutputPortHeight);
-		return outputRect;
-	}
-#endif	// TARGET_OS_MAC
 };
 
 
@@ -224,59 +194,6 @@ private:
 		return static_cast<float>(inValue) / static_cast<float>(kMaxValue);
 	}
 };
-
-
-
-#if 0
-
-#if TARGET_OS_MAC
-	typedef CGContextRef TARGET_PLATFORM_GRAPHICS_CONTEXT;
-#endif
-
-//-----------------------------------------------------------------------------
-// XXX replace with CDrawContext
-class DGGraphicsContext
-{
-public:
-	DGGraphicsContext(TARGET_PLATFORM_GRAPHICS_CONTEXT inContext);
-
-	TARGET_PLATFORM_GRAPHICS_CONTEXT getPlatformGraphicsContext()
-		{	return context;	}
-
-	void setFont(char const* inFontName, float inFontSize);
-	void drawText(DGRect* inRegion, char const* inText, dfx::TextAlignment inAlignment = kDGTextAlign_left);
-#if TARGET_OS_MAC
-	OSStatus drawCFText(DGRect* inRegion, CFStringRef inText, dfx::TextAlignment inAlignment);
-#endif
-
-#if TARGET_OS_MAC
-	long getPortHeight()
-		{	return portHeight;	}
-	void setPortHeight(long inPortHeight)
-		{	portHeight = inPortHeight;	}
-	bool isCompositWindow()
-		{	return (portHeight == 0) ? true : false;	}
-	HIThemeOrientation getHIThemeOrientation()
-	{
-	#ifndef FLIP_CG_COORDINATES
-		if (! isCompositWindow() )
-			return kHIThemeOrientationInverted;
-	#endif
-		return kHIThemeOrientationNormal;
-	}
-#endif
-
-	TARGET_PLATFORM_GRAPHICS_CONTEXT context;
-
-private:
-	float fontSize, fontAscent, fontDescent;
-	bool isSnootPixel10;	// special Tom font
-
-#if TARGET_OS_MAC
-	long portHeight;
-#endif
-};
-#endif
 
 
 
