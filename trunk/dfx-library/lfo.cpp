@@ -28,6 +28,7 @@ Welcome to our Low Frequency Oscillator.
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 
 #include "dfxmath.h"
 
@@ -35,8 +36,7 @@ Welcome to our Low Frequency Oscillator.
 //------------------------------------------------------------------------
 dfx::LFO::LFO()
 {
-	mGenerator = sineGenerator;  // just to have it pointing to something at least
-
+	pickTheWaveform();
 	reset();
 }
 

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -25,6 +25,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #include <stdint.h>
+
+#ifdef __MACH__
+	#include <TargetConditionals.h>
+#endif
 
 
 namespace dfx

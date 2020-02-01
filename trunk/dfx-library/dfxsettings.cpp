@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -1497,5 +1497,7 @@ void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDat
 		dfx::UniqueCFType const iconURL = mPlugin->CopyIconLocation();
 		CFUserNotificationDisplayNotice(0.0, kCFUserNotificationStopAlertLevel, iconURL.get(), nullptr, nullptr, title, message.get(), nullptr);
 	}
+#else
+	#warning "implementation missing"
 #endif
 }

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -62,9 +62,11 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 #endif
 
 #ifdef TARGET_API_AUDIOUNIT
-//	#define kDfxGui_AUPresetFileUTI "org.destroyfx.aupreset"
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
-	/*__attribute__((no_destroy))*/ static auto const kDfxGui_AUPresetFileExtension = new VSTGUI::CFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wunknown-attributes"
+	__attribute__((no_destroy)) static auto const kDfxGui_AUPresetFileExtension = new VSTGUI::CFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
+	#pragma clang diagnostic pop
 #endif
 
 
@@ -2150,6 +2152,8 @@ long DfxGuiEditor::initClipboard()
 	}
 	mClipboardRef.reset(clipboardRef_temp);
 	return status;
+#else
+	#warning "implementation missing"
 #endif
 
 	return dfx::kStatus_NoError;  // XXX TODO: implement
@@ -2202,7 +2206,9 @@ long DfxGuiEditor::copySettings()
 	}
 	status = PasteboardPutItemFlavor(mClipboardRef.get(), (PasteboardItemID)PLUGIN_ID, CFSTR(kDfxGui_AUPresetFileUTI), auSettingsCFData.get(), kPasteboardFlavorNoFlags);
 #endif
-#endif
+#else
+	#warning "implementation missing"
+#endif  // TARGET_OS_MAC
 
 	return status;
 }
@@ -2298,6 +2304,8 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 			break;
 		}
 	}
+#else  // TARGET_OS_MAC
+	#warning "implementation missing"
 #endif
 
 	return status;
