@@ -435,6 +435,7 @@ void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Sco
 	auEvent.mArgument.mProperty.mElement = inItemIndex;
 	mCustomPropertyAUEvents.push_back(auEvent);
 #else
+	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
 }
@@ -468,9 +469,9 @@ void DfxGuiEditor::addControl(IDGControl* inControl)
 #endif
 		{
 			inControl->setValue_gen(getparameter_gen(parameterIndex));
-			auto defaultValue = GetParameter_defaultValue(parameterIndex);
-			defaultValue = dfxgui_ContractParameterValue(parameterIndex, defaultValue);
-			inControl->setDefaultValue_gen(defaultValue);
+			auto const defaultValue = GetParameter_defaultValue(parameterIndex);
+			auto const defaultValue_norm = dfxgui_ContractParameterValue(parameterIndex, defaultValue);
+			inControl->setDefaultValue_gen(defaultValue_norm);
 		}
 	}
 	else
@@ -584,23 +585,31 @@ void DfxGuiEditor::automationgesture_end(long inParameterID)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation)
 {
-#ifdef TARGET_API_AUDIOUNIT
 	if (inWriteAutomation)
 	{
 		automationgesture_begin(inParameterID);
 	}
 
+#ifdef TARGET_API_AUDIOUNIT
 	Boolean const writeAutomation_fixedSize = inWriteAutomation;
 	dfxgui_SetProperty(dfx::kPluginProperty_RandomizeParameter, dfx::kScope_Global, inParameterID, 
 					   &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
+#endif
+
+#ifdef TARGET_API_VST
+	#warning "implementation missing"
+	assert(false);  // TODO: implement
+#endif
+
+#ifdef TARGET_API_RTAS
+	#warning "implementation missing"
+	assert(false);  // TODO: implement
+#endif
 
 	if (inWriteAutomation)
 	{
 		automationgesture_end(inParameterID);
 	}
-#else
-	assert(false);  // TODO: implement
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -629,7 +638,26 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 		}
 	}
 #else
-	assert(false);  // TODO: implement
+	if (inWriteAutomation)
+	{
+		for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
+		{
+			automationgesture_begin(parameterIndex);
+		}
+	}
+
+	for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
+	{
+		randomizeparameter(parameterIndex, false);
+	}
+
+	if (inWriteAutomation)
+	{
+		for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
+		{
+			automationgesture_end(parameterIndex);
+		}
+	}
 #endif
 }
 
@@ -980,7 +1008,15 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, 
 					   &request, sizeof(request));
-#else
+#endif
+
+#ifdef TARGET_API_VST
+	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
+	getEffect()->setParameterAutomated(inParameterID, value_norm);
+#endif
+	
+#ifdef TARGET_API_RTAS
+	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
 
@@ -1006,7 +1042,15 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 					   inParameterID, &request, sizeof(request));
-#else
+#endif
+	
+#ifdef TARGET_API_VST
+	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
+	getEffect()->setParameterAutomated(inParameterID, value_norm);
+#endif
+	
+#ifdef TARGET_API_RTAS
+	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
 
@@ -1032,7 +1076,14 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
 					   inParameterID, &request, sizeof(request));
-#else
+#endif
+	
+#ifdef TARGET_API_VST
+	getEffect()->setParameterAutomated(inParameterID, inValue ? 1.0f : 0.0f);
+#endif
+	
+#ifdef TARGET_API_RTAS
+	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
 
@@ -1064,7 +1115,16 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 			automationgesture_end(inParameterID);
 		}
 	}
-#else
+#endif
+
+#ifdef TARGET_API_VST
+	auto const defaultValue = GetParameter_defaultValue(inParameterID);
+	auto const defaultValue_norm = dfxgui_ContractParameterValue(inParameterID, defaultValue);
+	getEffect()->setParameterAutomated(inParameterID, defaultValue_norm);
+#endif
+
+#ifdef TARGET_API_RTAS
+	#warning "implementation missing"
 	assert(false);  // TODO: implement
 #endif
 }
@@ -1079,7 +1139,10 @@ void DfxGuiEditor::setparameters_default(bool inWrapWithAutomationGesture)
 		setparameter_default(parameterID, inWrapWithAutomationGesture);
 	}
 #else
-	assert(false);  // TODO: implement
+	for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
+	{
+		setparameter_default(parameterIndex, inWrapWithAutomationGesture);
+	}
 #endif
 }
 
@@ -1485,6 +1548,7 @@ void DfxGuiEditor::LoadPresetFile()
 								  }
 #endif
 #ifdef TARGET_API_VST
+	#warning "implementation missing"
 								  assert(false);  // TODO: implement
 #endif
 							  }
@@ -1568,6 +1632,7 @@ void DfxGuiEditor::SavePresetFile()
 		}
 #endif
 #ifdef TARGET_API_VST
+	#warning "implementation missing"
 		assert(false);  // TODO: implement with a file selector, no text entry dialog
 #endif
 	}
@@ -2154,6 +2219,7 @@ long DfxGuiEditor::initClipboard()
 	return status;
 #else
 	#warning "implementation missing"
+	assert(false);
 #endif
 
 	return dfx::kStatus_NoError;  // XXX TODO: implement
@@ -2208,6 +2274,7 @@ long DfxGuiEditor::copySettings()
 #endif
 #else
 	#warning "implementation missing"
+	assert(false);
 #endif  // TARGET_OS_MAC
 
 	return status;
@@ -2306,6 +2373,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	}
 #else  // TARGET_OS_MAC
 	#warning "implementation missing"
+	assert(false);
 #endif
 
 	return status;
