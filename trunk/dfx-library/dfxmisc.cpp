@@ -236,6 +236,7 @@ long LaunchDocumentation()
 	return fnfErr;  // file not found error
 #else
 	#warning "implementation missing"
+	assert(false);
 #endif  // TARGET_OS_MAC
 
 	return 0;

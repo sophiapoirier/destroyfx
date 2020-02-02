@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -541,6 +541,7 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 		((VSTGUI::AEffGUIEditor*)editor)->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
 	}
 	#else
+		#warning "implementation missing"
 	assert(false);  // XXX TODO: we will need something for our GUI class here
 	#endif
 	#endif
@@ -1700,10 +1701,7 @@ void DfxPlugin::handlemidi_noteon(int inChannel, int inNote, int inVelocity, uns
 fprintf(stderr, "note on:  note = %d, velocity = %d, channel = %d, sample offset = %lu\n", inNote, inVelocity, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
-	if (mDfxSettings)
-	{
-		mDfxSettings->handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
-	}
+	mDfxSettings->handleNoteOn(inChannel, inNote, inVelocity, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
@@ -1713,10 +1711,7 @@ void DfxPlugin::handlemidi_noteoff(int inChannel, int inNote, int inVelocity, un
 fprintf(stderr, "note off:  note = %d, velocity = %d, channel = %d, sample offset = %lu\n", inNote, inVelocity, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
-	if (mDfxSettings)
-	{
-		mDfxSettings->handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
-	}
+	mDfxSettings->handleNoteOff(inChannel, inNote, inVelocity, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
@@ -1726,10 +1721,7 @@ void DfxPlugin::handlemidi_allnotesoff(int inChannel, unsigned long inOffsetFram
 fprintf(stderr, "all notes off:  channel = %d, sample offset = %lu\n", inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleAllNotesOff(inChannel, inOffsetFrames);
-	if (mDfxSettings)
-	{
-		mDfxSettings->handleAllNotesOff(inChannel, inOffsetFrames);
-	}
+	mDfxSettings->handleAllNotesOff(inChannel, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
@@ -1739,10 +1731,7 @@ void DfxPlugin::handlemidi_channelaftertouch(int inChannel, int inValue, unsigne
 fprintf(stderr, "channel aftertouch:  value = %d, channel = %d, sample offset = %lu\n", inValue, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
-	if (mDfxSettings)
-	{
-		mDfxSettings->handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
-	}
+	mDfxSettings->handleChannelAftertouch(inChannel, inValue, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
@@ -1752,10 +1741,7 @@ void DfxPlugin::handlemidi_pitchbend(int inChannel, int inValueLSB, int inValueM
 fprintf(stderr, "pitchbend:  LSB = %d, MSB = %d, channel = %d, sample offset = %lu\n", inValueLSB, inValueMSB, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
-	if (mDfxSettings)
-	{
-		mDfxSettings->handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
-	}
+	mDfxSettings->handlePitchBend(inChannel, inValueLSB, inValueMSB, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
@@ -1765,10 +1751,7 @@ void DfxPlugin::handlemidi_cc(int inChannel, int inControllerNum, int inValue, u
 fprintf(stderr, "MIDI CC:  controller = 0x%02X, value = %d, channel = %d, sample offset = %lu\n", inControllerNum, inValue, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
-	if (mDfxSettings)
-	{
-		mDfxSettings->handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
-	}
+	mDfxSettings->handleCC(inChannel, inControllerNum, inValue, inOffsetFrames);
 }
 
 //-----------------------------------------------------------------------------
