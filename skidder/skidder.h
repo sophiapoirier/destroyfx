@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2019  Sophia Poirier
+Copyright (C) 2000-2020  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -67,7 +67,7 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-class Skidder : public DfxPlugin
+class Skidder final : public DfxPlugin
 {
 public:
 	Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance);

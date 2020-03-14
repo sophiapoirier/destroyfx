@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -71,7 +71,7 @@ constexpr float kUnusedControlAlpha = 0.45f;
 
 
 //-----------------------------------------------------------------------------
-class EQSyncSlider : public DGSlider
+class EQSyncSlider final : public DGSlider
 {
 public:
 	EQSyncSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 

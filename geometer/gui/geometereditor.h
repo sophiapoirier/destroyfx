@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -27,7 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //--------------------------------------------------------------------------
-class GeometerHelpBox : public DGStaticTextDisplay {
+class GeometerHelpBox final : public DGStaticTextDisplay {
 public:
   GeometerHelpBox(DGRect const & inRegion, DGImage * inBackground);
 
@@ -44,7 +44,7 @@ private:
 
 
 //--------------------------------------------------------------------------
-class GeometerEditor : public DfxGuiEditor {
+class GeometerEditor final : public DfxGuiEditor {
 public:
   GeometerEditor(DGEditorListenerInstance inInstance);
 

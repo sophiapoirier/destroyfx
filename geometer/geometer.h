@@ -41,7 +41,7 @@ Geometer, starring the Super Destroy FX Windowing System!
 #endif
 
 
-class PLUGIN : public DfxPlugin {
+class PLUGIN final : public DfxPlugin {
 public:
   static constexpr long BUFFERSIZESSIZE = 14;
 
@@ -91,7 +91,7 @@ private:
 #if TARGET_PLUGIN_USES_DSPCORE
 };
 
-class PLUGINCORE : public DfxPluginCore {
+class PLUGINCORE final : public DfxPluginCore {
 public:
   PLUGINCORE(DfxPlugin* inDfxPlugin);
 

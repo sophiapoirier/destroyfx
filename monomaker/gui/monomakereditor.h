@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -25,7 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------
-class MonomakerEditor : public DfxGuiEditor
+class MonomakerEditor final : public DfxGuiEditor
 {
 public:
 	MonomakerEditor(DGEditorListenerInstance inInstance);

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -90,7 +90,7 @@ enum
 
 
 /*
-class ScrubbyChunk : public VstChunk
+class ScrubbyChunk final : public VstChunk
 {
 public:
 	ScrubbyChunk(long numParameters, long numPrograms, long magic, AudioEffectX* effect);
@@ -109,7 +109,7 @@ public:
 
 
 //----------------------------------------------------------------------------- 
-class Scrubby : public DfxPlugin
+class Scrubby final : public DfxPlugin
 {
 public:
 	Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance);

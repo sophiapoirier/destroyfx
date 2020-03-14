@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -39,7 +39,7 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-class MIDIGater : public DfxPlugin
+class MIDIGater final : public DfxPlugin
 {
 public:
 	MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance);

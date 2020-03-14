@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -31,7 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org/
    whenever the plugin is idle.
 */
 
-class GeometerView : public VSTGUI::CView {
+class GeometerView final : public VSTGUI::CView {
 
 private:
 

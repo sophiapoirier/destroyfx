@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -64,7 +64,7 @@ enum
 };
 
 //----------------------------------------------------------------------------- 
-class BufferOverride : public DfxPlugin
+class BufferOverride final : public DfxPlugin
 {
 public:
 	enum
