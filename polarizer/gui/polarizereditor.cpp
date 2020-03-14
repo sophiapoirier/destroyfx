@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -73,7 +73,7 @@ bool amountDisplayProc(float value, char* outText, void*)
 
 
 //-----------------------------------------------------------------------------
-class PolarizerSlider : public DGSlider
+class PolarizerSlider final : public DGSlider
 {
 public:
 	PolarizerSlider(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 

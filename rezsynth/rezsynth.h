@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -112,7 +112,7 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-class RezSynth : public DfxPlugin
+class RezSynth final : public DfxPlugin
 {
 public:
 	RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -30,7 +30,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-class TransverbSpeedTuneButton : public DGFineTuneButton
+class TransverbSpeedTuneButton final : public DGFineTuneButton
 {
 public:
 	TransverbSpeedTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, DGImage* inImage, 
@@ -52,7 +52,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-class TransverbEditor : public DfxGuiEditor
+class TransverbEditor final : public DfxGuiEditor
 {
 public:
 	explicit TransverbEditor(DGEditorListenerInstance inInstance);
