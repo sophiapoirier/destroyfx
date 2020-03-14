@@ -16,10 +16,6 @@
 		4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46306800FCD006A9591 /* AUOutputElement.cpp */; };
 		4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46606800FCD006A9591 /* AUScopeElement.cpp */; };
 		4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46806800FCD006A9591 /* ComponentBase.cpp */; };
-		4932F49806800FCD006A9591 /* AUCarbonViewBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46B06800FCD006A9591 /* AUCarbonViewBase.cpp */; };
-		4932F49A06800FCD006A9591 /* AUCarbonViewControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46D06800FCD006A9591 /* AUCarbonViewControl.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-shadow"; }; };
-		4932F49C06800FCD006A9591 /* AUCarbonViewDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46F06800FCD006A9591 /* AUCarbonViewDispatch.cpp */; };
-		4932F49F06800FCD006A9591 /* CarbonEventHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F47206800FCD006A9591 /* CarbonEventHandler.cpp */; };
 		4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F47B06800FCD006A9591 /* AUMIDIBase.cpp */; };
 		4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F48406800FCD006A9591 /* AUBuffer.cpp */; };
 		4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4B8068010B2006A9591 /* CAStreamBasicDescription.cpp */; };
@@ -104,14 +100,6 @@
 		4932F46706800FCD006A9591 /* AUScopeElement.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUScopeElement.h; sourceTree = "<group>"; };
 		4932F46806800FCD006A9591 /* ComponentBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentBase.cpp; sourceTree = "<group>"; };
 		4932F46906800FCD006A9591 /* ComponentBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ComponentBase.h; sourceTree = "<group>"; };
-		4932F46B06800FCD006A9591 /* AUCarbonViewBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUCarbonViewBase.cpp; sourceTree = "<group>"; };
-		4932F46C06800FCD006A9591 /* AUCarbonViewBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUCarbonViewBase.h; sourceTree = "<group>"; };
-		4932F46D06800FCD006A9591 /* AUCarbonViewControl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUCarbonViewControl.cpp; sourceTree = "<group>"; };
-		4932F46E06800FCD006A9591 /* AUCarbonViewControl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUCarbonViewControl.h; sourceTree = "<group>"; };
-		4932F46F06800FCD006A9591 /* AUCarbonViewDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUCarbonViewDispatch.cpp; sourceTree = "<group>"; };
-		4932F47206800FCD006A9591 /* CarbonEventHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CarbonEventHandler.cpp; sourceTree = "<group>"; };
-		4932F47306800FCD006A9591 /* CarbonEventHandler.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CarbonEventHandler.h; sourceTree = "<group>"; };
-		4932F47506800FCD006A9591 /* AUViewLocalizedStringKeys.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUViewLocalizedStringKeys.h; sourceTree = "<group>"; };
 		4932F47B06800FCD006A9591 /* AUMIDIBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUMIDIBase.cpp; sourceTree = "<group>"; };
 		4932F47C06800FCD006A9591 /* AUMIDIBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUMIDIBase.h; sourceTree = "<group>"; };
 		4932F48406800FCD006A9591 /* AUBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUBuffer.cpp; sourceTree = "<group>"; };
@@ -342,11 +330,9 @@
 				4932F45C06800FCD006A9591 /* AUBase */,
 				4932F47606800FCD006A9591 /* OtherBases */,
 				4932F48306800FCD006A9591 /* Utility */,
-				4932F47406800FCD006A9591 /* AUViewBase */,
-				4932F46A06800FCD006A9591 /* AUCarbonViewBase */,
 			);
 			name = AUPublic;
-			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/AudioUnits/AUPublic";
+			path = "../../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic";
 			sourceTree = "<group>";
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
@@ -369,28 +355,6 @@
 				4932F46506800FCD006A9591 /* AUResources.r */,
 			);
 			path = AUBase;
-			sourceTree = "<group>";
-		};
-		4932F46A06800FCD006A9591 /* AUCarbonViewBase */ = {
-			isa = PBXGroup;
-			children = (
-				4932F46C06800FCD006A9591 /* AUCarbonViewBase.h */,
-				4932F46B06800FCD006A9591 /* AUCarbonViewBase.cpp */,
-				4932F46F06800FCD006A9591 /* AUCarbonViewDispatch.cpp */,
-				4932F46E06800FCD006A9591 /* AUCarbonViewControl.h */,
-				4932F46D06800FCD006A9591 /* AUCarbonViewControl.cpp */,
-				4932F47306800FCD006A9591 /* CarbonEventHandler.h */,
-				4932F47206800FCD006A9591 /* CarbonEventHandler.cpp */,
-			);
-			path = AUCarbonViewBase;
-			sourceTree = "<group>";
-		};
-		4932F47406800FCD006A9591 /* AUViewBase */ = {
-			isa = PBXGroup;
-			children = (
-				4932F47506800FCD006A9591 /* AUViewLocalizedStringKeys.h */,
-			);
-			path = AUViewBase;
 			sourceTree = "<group>";
 		};
 		4932F47606800FCD006A9591 /* OtherBases */ = {
@@ -431,7 +395,7 @@
 				B025B9EA08AD348400A9CCAE /* CAVectorUnit.cpp */,
 			);
 			name = PublicUtility;
-			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/PublicUtility";
+			path = "../../CoreAudioUtilityClasses/CoreAudio/PublicUtility";
 			sourceTree = "<group>";
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
@@ -646,10 +610,6 @@
 				4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */,
 				4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */,
 				4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */,
-				4932F49806800FCD006A9591 /* AUCarbonViewBase.cpp in Sources */,
-				4932F49A06800FCD006A9591 /* AUCarbonViewControl.cpp in Sources */,
-				4932F49C06800FCD006A9591 /* AUCarbonViewDispatch.cpp in Sources */,
-				4932F49F06800FCD006A9591 /* CarbonEventHandler.cpp in Sources */,
 				4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */,
 				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
 				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
