@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //----------------------------------------------------------------------------- 
-class RMSBuddy : public AUEffectBase
+class RMSBuddy final : public AUEffectBase
 {
 public:
 	explicit RMSBuddy(AudioComponentInstance inComponentInstance);

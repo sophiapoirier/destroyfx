@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -30,7 +30,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "transverb-base.h"
 
 
-class TransverbDSP : public DfxPluginCore {
+class TransverbDSP final : public DfxPluginCore {
 
 public:
   explicit TransverbDSP(DfxPlugin* inDfxPlugin);
@@ -85,7 +85,7 @@ private:
 
 
 
-class Transverb : public DfxPlugin {
+class Transverb final : public DfxPlugin {
 
 public:
   Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance);

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Polarizer.
 
@@ -37,7 +37,7 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-class PolarizerDSP : public DfxPluginCore
+class PolarizerDSP final : public DfxPluginCore
 {
 public:
 	PolarizerDSP(DfxPlugin* inDfxPlugin);
@@ -51,7 +51,7 @@ private:
 };
 
 //----------------------------------------------------------------------------- 
-class Polarizer : public DfxPlugin
+class Polarizer final : public DfxPlugin
 {
 public:
 	Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance);

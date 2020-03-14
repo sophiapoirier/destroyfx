@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -28,7 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //--------------------------------------------------------------------------
-class ScrubbyHelpBox : public DGStaticTextDisplay
+class ScrubbyHelpBox final : public DGStaticTextDisplay
 {
 public:
 	ScrubbyHelpBox(DGRect const& inRegion, DGImage* inBackground);
@@ -45,7 +45,7 @@ private:
 
 
 //-----------------------------------------------------------------------
-class ScrubbyEditor : public DfxGuiEditor
+class ScrubbyEditor final : public DfxGuiEditor
 {
 public:
 	ScrubbyEditor(DGEditorListenerInstance inInstance);

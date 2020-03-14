@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -48,7 +48,7 @@ enum
 
 //----------------------------------------------------------------------------- 
 
-class EQSync : public DfxPlugin
+class EQSync final : public DfxPlugin
 {
 public:
 	EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance);

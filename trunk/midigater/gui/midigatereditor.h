@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -24,7 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxgui.h"
 
 //-----------------------------------------------------------------------
-class MIDIGaterEditor : public DfxGuiEditor
+class MIDIGaterEditor final : public DfxGuiEditor
 {
 public:
 	MIDIGaterEditor(DGEditorListenerInstance inInstance);

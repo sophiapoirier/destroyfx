@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -65,7 +65,7 @@ enum
 
 
 //----------------------------------------------------------------------------- 
-class Monomaker : public DfxPlugin
+class Monomaker final : public DfxPlugin
 {
 public:
 	Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance);
