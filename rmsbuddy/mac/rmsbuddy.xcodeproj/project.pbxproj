@@ -154,7 +154,7 @@
 				4932F48306800FCD006A9591 /* Utility */,
 			);
 			name = AUPublic;
-			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/AudioUnits/AUPublic";
+			path = ../../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic;
 			sourceTree = SOURCE_ROOT;
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
@@ -210,7 +210,7 @@
 				B025B7EE08ACFBAA00A9CCAE /* CAVectorUnit.cpp */,
 			);
 			name = PublicUtility;
-			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/PublicUtility";
+			path = ../../CoreAudioUtilityClasses/CoreAudio/PublicUtility;
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
@@ -368,12 +368,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_BUNDLE_IDENTIFIER = org.destroyfx.RMSBuddy;
 				PRODUCT_NAME = "dfx RMS Buddy";
-				REZ_SEARCH_PATHS = (
-					"../../CoreAudioUtilityClasses-1.1/CoreAudio/AudioUnits/AUPublic/AUBase",
-					/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers,
-					..,
-				);
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../CoreAudioUtilityClasses-1.1/CoreAudio/**";
+				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../CoreAudioUtilityClasses/CoreAudio/**";
 				USE_HEADERMAP = NO;
 				WARNING_CFLAGS = (
 					"-Wmost",
@@ -423,12 +418,7 @@
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = org.destroyfx.RMSBuddy;
 				PRODUCT_NAME = "dfx RMS Buddy";
-				REZ_SEARCH_PATHS = (
-					"../../CoreAudioUtilityClasses-1.1/CoreAudio/AudioUnits/AUPublic/AUBase",
-					/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers,
-					..,
-				);
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../CoreAudioUtilityClasses-1.1/CoreAudio/**";
+				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../CoreAudioUtilityClasses/CoreAudio/**";
 				USE_HEADERMAP = NO;
 				WARNING_CFLAGS = (
 					"-Wmost",

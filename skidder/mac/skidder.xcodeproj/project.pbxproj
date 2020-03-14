@@ -189,7 +189,7 @@
 				4932F48306800FCD006A9591 /* Utility */,
 			);
 			name = AUPublic;
-			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/AudioUnits/AUPublic";
+			path = "../../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic";
 			sourceTree = "<group>";
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
@@ -252,7 +252,7 @@
 				B025B9A408AD328F00A9CCAE /* CAVectorUnit.cpp */,
 			);
 			name = PublicUtility;
-			path = "../../CoreAudioUtilityClasses-1.1/CoreAudio/PublicUtility";
+			path = "../../CoreAudioUtilityClasses/CoreAudio/PublicUtility";
 			sourceTree = "<group>";
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
