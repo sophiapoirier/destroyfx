@@ -93,7 +93,7 @@ public:
 												AudioUnitElement		 	inElement,
 												const void *				inData,
 												UInt32						inDataSize);
-#if !TARGET_OS_IPHONE
+#if !CA_USE_AUDIO_PLUGIN_ONLY
 	// component dispatcher
 	/*! @method ComponentEntryDispatch */
 	static OSStatus			ComponentEntryDispatch(	ComponentParameters *			params,

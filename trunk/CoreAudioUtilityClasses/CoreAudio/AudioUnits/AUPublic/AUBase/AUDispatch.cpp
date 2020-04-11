@@ -66,7 +66,7 @@
 			_typ _name = *(_typ *)&params->params[_index];
 #endif
 
-
+#if !CA_USE_AUDIO_PLUGIN_ONLY
 OSStatus		AUBase::ComponentEntryDispatch(ComponentParameters *params, AUBase *This)
 {
 	if (This == NULL) return kAudio_ParamError;
@@ -436,3 +436,5 @@ OSStatus CMgr_AudioUnitBaseRender(			AUBase *				This,
 	
 	return result;
 }
+
+#endif // !CA_USE_AUDIO_PLUGIN_ONLY

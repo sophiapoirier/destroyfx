@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2018  Sophia Poirier
+	Copyright (C) 2003-2020  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -550,7 +550,7 @@ OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef* 
 	// one input string or the other can be null, but not both
 	if ((inAUComponent == NULL) || ((outNameString == NULL) && (outManufacturerString == NULL)))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// first we need to fetch the Component name string
