@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2018  Sophia Poirier
+	Copyright (C) 2003-2020  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -80,7 +80,7 @@ OSStatus FindPresetsDirForAU(Component inAUComponent, FSVolumeRefNum inFileSyste
 
 	if ((inAUComponent == NULL) || (outDirRef == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// get an FSRef for the Audio support directory (in Library)
@@ -201,7 +201,7 @@ OSStatus MakeDirectoryFSRef(FSRef const* inParentDirRef, CFStringRef inItemNameS
 
 	if ((inParentDirRef == NULL) || (inItemNameString == NULL) || (outItemRef == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// first we need to convert the CFString of the file name to a HFS-style unicode file name
@@ -578,7 +578,7 @@ OSStatus RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef 
 
 	if ((inAUComponentInstance == NULL) || (inAUPresetFileURL == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// the preset file's state data is stored as XML data, and so we first we need to convert it to a PropertyList
@@ -632,7 +632,7 @@ CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32* o
 
 	if (inXMLFileURL == NULL)
 	{
-		*outErrorCode = paramErr;
+		*outErrorCode = kAudio_ParamError;
 		return NULL;
 	}
 
@@ -708,7 +708,7 @@ OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData,
 
 	if ((inAUStateData == NULL) || (outComponentDescription == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// the property list for AU state data must be of the dictionary type
@@ -759,7 +759,7 @@ OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, Com
 
 	if ((inAUPresetFileURL == NULL) || (outComponentDescription == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// the preset file's state data is stored as XML data, and so we first we need to convert it to a PropertyList
@@ -822,7 +822,7 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStrin
 
 	if ((inAUComponentInstance == NULL) || (inAUPresetNameString == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// null for inBundle means that the caller is the main application, 
@@ -938,7 +938,7 @@ OSStatus CustomSaveAUPresetFile_Bundle(AudioUnit inAUComponentInstance, CFURLRef
 
 	if ((inAUComponentInstance == NULL) || (inAUPresetFileURL == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// null for inBundle means that the caller is the main application, 
@@ -987,7 +987,7 @@ OSStatus CopyAUStatePropertyList(AudioUnit inAUComponentInstance, CFPropertyList
 
 	if ((inAUComponentInstance == NULL) || (outAUStatePlist == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	*outAUStatePlist = NULL;
@@ -1023,7 +1023,7 @@ OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef i
 
 	if ((inPropertyList == NULL) || (inXMLFileURL == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// open the output file for writing
@@ -1068,7 +1068,7 @@ OSStatus TryToSaveAUPresetFile(AudioUnit inAUComponentInstance, CFPropertyListRe
 
 	if ((inAUStateData == NULL) || (ioAUPresetFileURL == NULL) || (*ioAUPresetFileURL == NULL))
 	{
-		return paramErr;
+		return kAudio_ParamError;
 	}
 
 	// the file name needs the proper AU preset extension to be appended

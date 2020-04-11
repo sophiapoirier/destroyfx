@@ -94,7 +94,7 @@ long LaunchURL(std::string const& inURL)
 		auto const status = LSOpenCFURLRef(cfURL.get(), nullptr);  // try to launch the URL
 		return status;
 	}
-	return paramErr;  // couldn't create the CFURL, so return some error code
+	return coreFoundationUnknownErr;  // couldn't create the CFURL, so return some error code
 #endif
 
 #if _WIN32
@@ -203,22 +203,17 @@ long LaunchDocumentation()
 				UniqueCFType const bundleURL = CFBundleCopyBundleURL(pluginBundleRef);
 				if (bundleURL)
 				{
-					OSStatus registerStatus = paramErr;
 					if (AHRegisterHelpBookWithURL)  // available starting in Mac OS X 10.6
 					{
-						registerStatus = AHRegisterHelpBookWithURL(bundleURL.get());
+						helpBookRegistered = (AHRegisterHelpBookWithURL(bundleURL.get()) == noErr);
 					}
 					else
 					{
-						FSRef bundleRef;
+						FSRef bundleRef {};
 						if (CFURLGetFSRef(bundleURL.get(), &bundleRef))
 						{
-							registerStatus = AHRegisterHelpBook(&bundleRef);
+							helpBookRegistered = (AHRegisterHelpBook(&bundleRef) == noErr);
 						}
-					}
-					if (registerStatus == noErr)
-					{
-						helpBookRegistered = true;
 					}
 				}
 			}

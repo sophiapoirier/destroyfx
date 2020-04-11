@@ -122,7 +122,7 @@ enum class NotificationPolicy
 enum
 {
 	kStatus_NoError = noErr,
-	kStatus_ParamError = paramErr,
+	kStatus_ParamError = kAudio_ParamError,
 	kStatus_InitializationFailed = kAudioUnitErr_FailedInitialization,
 	kStatus_Uninitialized = kAudioUnitErr_Uninitialized,
 	kStatus_InvalidParameter = kAudioUnitErr_InvalidParameter,

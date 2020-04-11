@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -835,7 +835,9 @@ public:
 						 AudioUnitScope inScope, AudioUnitElement inElement, 
 						 void const* inData, UInt32 inDataSize) override;
 
+#if !CA_USE_AUDIO_PLUGIN_ONLY
 	OSStatus Version() override;
+#endif
 	UInt32 SupportedNumChannels(AUChannelInfo const** outInfo) override;
 	Float64 GetLatency() override;
 	Float64 GetTailTime() override;
@@ -904,14 +906,14 @@ public:
 	// this is handled by AUEffectBase, but not in MusicDeviceBase
 	bool StreamFormatWritable(AudioUnitScope inScope, AudioUnitElement inElement) override
 	{
-		return IsInitialized() ? false : true;
+		return !IsInitialized();
 	}
 	bool CanScheduleParameters() const override
 	{
 		return true;
 	}
 	#endif
-	#if TARGET_PLUGIN_HAS_GUI
+	#if TARGET_PLUGIN_HAS_GUI && !CA_USE_AUDIO_PLUGIN_ONLY
 	int GetNumCustomUIComponents() override;
 	void GetUIComponentDescs(ComponentDescription* inDescArray) override;
 	#endif

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -517,7 +517,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 							break;
 						default:
 							assert(false);
-							status = paramErr;
+							status = kAudio_ParamError;
 							break;
 					}
 					break;
@@ -540,7 +540,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 							break;
 						default:
 							assert(false);
-							status = paramErr;
+							status = kAudio_ParamError;
 							break;
 					}
 					break;
@@ -561,7 +561,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 							break;
 						default:
 							assert(false);
-							status = paramErr;
+							status = kAudio_ParamError;
 							break;
 					}
 					break;
@@ -582,14 +582,14 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 							break;
 						default:
 							assert(false);
-							status = paramErr;
+							status = kAudio_ParamError;
 							break;
 					}
 					break;
 				}
 				default:
 					assert(false);
-					status = paramErr;
+					status = kAudio_ParamError;
 					break;
 			}
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
@@ -622,7 +622,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					break;
 				default:
 					assert(false);
-					status = paramErr;
+					status = kAudio_ParamError;
 					break;
 			}
 		#if LOGIC_AU_PROPERTIES_AVAILABLE
@@ -646,7 +646,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		#endif
 			if (!getparametervaluestring(inElement, request->inStringIndex, request->valueString))
 			{
-				status = paramErr;
+				status = kAudio_ParamError;
 			}
 			break;
 		}
@@ -864,7 +864,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 							break;
 						default:
 							assert(false);
-							status = paramErr;
+							status = kAudio_ParamError;
 							break;
 					}
 					break;
@@ -888,7 +888,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 							break;
 						default:
 							assert(false);
-							status = paramErr;
+							status = kAudio_ParamError;
 							break;
 					}
 					break;
@@ -909,7 +909,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 							break;
 						default:
 							assert(false);
-							status = paramErr;
+							status = kAudio_ParamError;
 							break;
 					}
 					break;
@@ -930,14 +930,14 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 							break;
 						default:
 							assert(false);
-							status = paramErr;
+							status = kAudio_ParamError;
 							break;
 					}
 					break;
 				}
 				default:
 					assert(false);
-					status = paramErr;
+					status = kAudio_ParamError;
 					break;
 			}
 			break;
@@ -955,7 +955,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 		#endif
 			if (!setparametervaluestring(inElement, request->inStringIndex, request->valueString))
 			{
-				status = paramErr;
+				status = kAudio_ParamError;
 			}
 			break;
 		}
@@ -1055,6 +1055,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	return status;
 }
 
+#if !CA_USE_AUDIO_PLUGIN_ONLY
 //-----------------------------------------------------------------------------
 // should be a version 32-bit number hex-encoded like so:  
 // 0xMMMMmmbb (M = major version, m = minor version, and b = bugfix)
@@ -1062,6 +1063,7 @@ OSStatus DfxPlugin::Version()
 {
 	return getpluginversion();
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // give the host an array of the audio input/output channel configurations 
@@ -1103,7 +1105,7 @@ CFURLRef DfxPlugin::CopyIconLocation()
 	return nullptr;
 }
 
-#if TARGET_PLUGIN_HAS_GUI
+#if TARGET_PLUGIN_HAS_GUI && !CA_USE_AUDIO_PLUGIN_ONLY
 //-----------------------------------------------------------------------------
 int DfxPlugin::GetNumCustomUIComponents()
 {
