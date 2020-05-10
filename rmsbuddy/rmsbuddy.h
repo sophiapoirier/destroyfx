@@ -38,6 +38,7 @@ public:
 	void Cleanup() override;
 	OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement) override;
 
+	OSStatus GetParameterList(AudioUnitScope inScope, AudioUnitParameterID* outParameterList, UInt32& outNumParameters) override;
 	OSStatus GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID inParameterID, 
 							  AudioUnitParameterInfo& outParameterInfo) override;
 	OSStatus SetParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement, 
@@ -51,6 +52,7 @@ public:
 	OSStatus SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
 						 void const* inData, UInt32 inDataSize) override;
 	bool SupportsTail() override { return true; }
+	CFURLRef CopyIconLocation() override;
 
 	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 								AudioBufferList const& inBuffer, AudioBufferList& outBuffer, 
