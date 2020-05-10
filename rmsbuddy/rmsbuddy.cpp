@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of RMS Buddy.
 
@@ -100,6 +100,35 @@ OSStatus RMSBuddy::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 
 	RestartAnalysisWindow();
 
+	return noErr;
+}
+
+//-----------------------------------------------------------------------------------------
+OSStatus RMSBuddy::GetParameterList(AudioUnitScope inScope, AudioUnitParameterID* outParameterList, UInt32& outNumParameters)
+{
+	if (inScope != kAudioUnitScope_Global)
+	{
+		return AUEffectBase::GetParameterList(inScope, outParameterList, outNumParameters);
+	}
+
+	outNumParameters = kParameter_BaseCount + (kChannelParameter_Count * mChannelCount);
+	if (outParameterList)
+	{
+		UInt32 totalParameterCount{};
+		auto status = AUEffectBase::GetParameterList(inScope, nullptr, totalParameterCount);
+		if (status != noErr)
+		{
+			return status;
+		}
+		assert(outNumParameters <= totalParameterCount);
+		std::vector<AudioUnitParameterID> totalParameterList(totalParameterCount);
+		status = AUEffectBase::GetParameterList(inScope, totalParameterList.data(), totalParameterCount);
+		if (status != noErr)
+		{
+			return status;
+		}
+		std::copy_n(totalParameterList.data(), outNumParameters, outParameterList);
+	}
 	return noErr;
 }
 
@@ -350,6 +379,16 @@ OSStatus RMSBuddy::SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope 
 }
 
 //-----------------------------------------------------------------------------------------
+CFURLRef RMSBuddy::CopyIconLocation()
+{
+	if (auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(kRMSBuddyBundleID))
+	{
+		return CFBundleCopyResourceURL(pluginBundleRef, CFSTR("destroyfx.icns"), nullptr, nullptr);
+	}
+	return nullptr;
+}
+
+//-----------------------------------------------------------------------------------------
 // process audio
 // In this plugin, we don't actually alter the audio stream at all.  
 // We simply look at the input values.  
@@ -472,7 +511,7 @@ void RMSBuddy::HandleChannelCount()
 		mContinualRMS.assign(mChannelCount, 0.0);
 		mContinualPeak.assign(mChannelCount, 0.0f);
 
-		for (UInt32 ch = 0; ch < mChannelCount; ch++)
+		for (UInt32 ch = previousChannelCount; ch < mChannelCount; ch++)
 		{
 			for (AudioUnitParameterID channelParamID = 0; channelParamID < kChannelParameter_Count; channelParamID++)
 			{
