@@ -67,7 +67,7 @@
 		EC89B437208D326E00E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B436208D326E00E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B43E208D328D00E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B438208D328B00E15129 /* dfxguidialog.cpp */; };
 		EC89B43F208D328D00E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B43B208D328C00E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B4C3208D35D600E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4C2208D35D500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-shadow -Wno-sign-compare -Wno-exit-time-destructors"; }; };
+		EC89B4C3208D35D600E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4C2208D35D500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough"; }; };
 		EC89B4D2208D35DA00E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4CB208D35DA00E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
 		EC9840041030853200FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
 		ECC3B5D112A60A6300BA11D5 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC3B5CF12A60A6300BA11D5 /* dfxmisc.cpp */; };
@@ -332,7 +332,7 @@
 				4932F48306800FCD006A9591 /* Utility */,
 			);
 			name = AUPublic;
-			path = "../../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic";
+			path = ../../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic;
 			sourceTree = "<group>";
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
@@ -395,7 +395,7 @@
 				B025B9EA08AD348400A9CCAE /* CAVectorUnit.cpp */,
 			);
 			name = PublicUtility;
-			path = "../../CoreAudioUtilityClasses/CoreAudio/PublicUtility";
+			path = ../../CoreAudioUtilityClasses/CoreAudio/PublicUtility;
 			sourceTree = "<group>";
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {

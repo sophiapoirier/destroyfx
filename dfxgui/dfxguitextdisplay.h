@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -42,19 +42,10 @@ public:
 				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
 				  DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
 
-#if 0
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-#endif
+	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
 
 	void setTextAlignment(dfx::TextAlignment inTextAlignment);
 	dfx::TextAlignment getTextAlignment() const noexcept;
-#if 0
-	void setMouseAxis(dfx::Axis inMouseAxis) noexcept
-	{
-		mMouseAxis = inMouseAxis;
-	}
-#endif
 
 	using TextToValueProc = std::function<bool(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)>;
 	void setTextToValueProc(TextToValueProc const& textToValueProc);
@@ -73,11 +64,6 @@ protected:
 	VSTGUI::CParamDisplayValueToStringProc const mValueToTextProc;
 	void* const mValueToTextUserData;
 	TextToValueProc mTextToValueProc;
-
-#if 0
-	dfx::Axis mMouseAxis = dfx::kAxis_Vertical;  // indicates which directions you can mouse to adjust the control's value
-	float mLastX = 0.0f, mLastY = 0.0f;
-#endif
 };
 
 

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -148,44 +148,15 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
-#if 0
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGTextDisplay::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+bool DGTextDisplay::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
 {
-	mLastX = inPos.x;
-	mLastY = inPos.y;
-	return Parent::onMouseDown(inPos, inButtons);
+	if (getFrame()->getFocusView() == this)
+	{
+		return VSTGUI::CTextEdit::onWheel(inPos, inAxis, inDistance, inButtons);
+	}
+	return DGControl<VSTGUI::CTextEdit>::onWheel(inPos, inAxis, inDistance, inButtons);
 }
-
-//-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGTextDisplay::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
-{
-	const long min = GetControl32BitMinimum(carbonControl);
-	const long max = GetControl32BitMaximum(carbonControl);
-	long val = GetControl32BitValue(carbonControl);
-	const long oldval = val;
-
-	float diff = 0.0f;
-	if (mMouseAxis & dfx::kAxis_Horizontal)
-		diff += inPos.x - mLastX;
-	if (mMouseAxis & dfx::kAxis_Vertical)
-		diff += mLastY - inPos.y;
-	if (inButtons.getModifierState() & kZoomModifier)	// slo-mo
-		diff /= getFineTuneFactor();
-	val += (long) (diff * (float)(max-min) / getMouseDragRange());
-
-	if (val > max)
-		val = max;
-	if (val < min)
-		val = min;
-	if (val != oldval)
-		SetControl32BitValue(carbonControl, val);
-
-	mLastX = inPos.x;
-	mLastY = inPos.y;
-	return Parent::onMouseMoved(inPos, inButtons);
-}
-#endif
 
 //-----------------------------------------------------------------------------
 void DGTextDisplay::setTextAlignment(dfx::TextAlignment inTextAlignment)
@@ -232,7 +203,7 @@ void DGTextDisplay::refreshText()
 void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
 	auto const textArea = DFXGUI_GetTextDrawRegion(this, inRegion);
-	Parent::drawPlatformText(inContext, inString, textArea);
+	VSTGUI::CTextEdit::drawPlatformText(inContext, inString, textArea);
 }
 
 //-----------------------------------------------------------------------------
@@ -249,7 +220,7 @@ bool DGTextDisplay::valueToTextProcBridge(float inValue, char outTextUTF8[256], 
 bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* textEdit)
 {
 	assert(inText);
-	assert(dynamic_cast<DGTextDisplay*>(textEdit) == this);
+	assert(textEdit == this);
 	if (!inText)
 	{
 		return false;
@@ -305,7 +276,7 @@ void DGStaticTextDisplay::setCFText(CFStringRef inText)
 void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
 	auto const textArea = DFXGUI_GetTextDrawRegion(this, inRegion);
-	Parent::drawPlatformText(inContext, inString, textArea);
+	VSTGUI::CTextLabel::drawPlatformText(inContext, inString, textArea);
 }
 
 
@@ -354,12 +325,12 @@ void DGTextArrayDisplay::draw(VSTGUI::CDrawContext* inContext)
 	long stringIndex = 0;
 	if (isParameterAttached())
 	{
-		stringIndex = std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValue()));
+		stringIndex = std::lround(getOwnerEditor()->dfxgui_ExpandParameterValue(getParameterID(), getValueNormalized()));
 	}
 	else
 	{
 		auto const maxValue_f = static_cast<float>(mDisplayStrings.size() - 1);
-		stringIndex = static_cast<long>((getValue() * maxValue_f) + DfxParam::kIntegerPadding);
+		stringIndex = static_cast<long>((getValueNormalized() * maxValue_f) + DfxParam::kIntegerPadding);
 	}
 
 	if ((stringIndex >= 0) && (static_cast<size_t>(stringIndex) < mDisplayStrings.size()))

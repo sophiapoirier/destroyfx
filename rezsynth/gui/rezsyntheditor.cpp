@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -91,7 +91,7 @@ enum
 };
 
 
-static char const* const kValueTextFont = "Arial";
+constexpr char const* const kValueTextFont = "Arial";
 constexpr float kValueTextFontSize = 10.0f;
 //constexpr DGColor kBackgroundColor(43, 93, 63);
 //constexpr DGColor kRSGrayColor(111, 111, 111);
@@ -173,7 +173,7 @@ bool gainDisplayProc(float value, char* outText, void*)
 	bool success = false;
 	if (value <= 0.0f)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "-%s", dfx::kInfinityUTF8) > 0;
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "-%s", VSTGUI::kInfiniteSymbol) > 0;
 	}
 	else if (value > 1.0001f)
 	{

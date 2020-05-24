@@ -225,7 +225,6 @@ public:
 namespace dfx
 {
 
-static constexpr char const* const kInfinityUTF8 = u8"\U0000221E";
 static constexpr char const* const kPlusMinusUTF8 = u8"\U000000B1";
 
 VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr);

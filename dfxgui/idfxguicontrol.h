@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2018  Sophia Poirier
+Copyright (C) 2018-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -22,6 +22,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #pragma once
+
+
+#include <vector>
 
 
 
@@ -52,11 +55,20 @@ public:
 	virtual long getParameterID() const = 0;
 	virtual void setParameterID(long inParameterID) = 0;
 	virtual bool isParameterAttached() const = 0;
+	virtual long getNumStates() const = 0;
+	virtual float getFineTuneFactor() const = 0;
+	virtual bool notifyIfChanged() = 0;
+	virtual void onMouseWheelEditing() = 0;
+	virtual void invalidateMouseWheelEditingTimer() = 0;
 
 	virtual void setDrawAlpha(float inAlpha) = 0;
 	virtual float getDrawAlpha() const = 0;
 
 	virtual void setHelpText(char const* inText) = 0;
+
+	// TODO: C++20 use std::span or std::ranges::view?
+	virtual std::vector<IDGControl*> getChildren() = 0;
+	virtual std::vector<IDGControl const*> getChildren() const = 0;
 
 #if TARGET_PLUGIN_USES_MIDI
 	virtual void setMidiLearner(bool inEnable) = 0;

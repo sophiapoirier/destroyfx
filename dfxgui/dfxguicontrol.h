@@ -25,6 +25,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #include <type_traits>
+#include <unordered_set>
+#include <vector>
 
 #include "dfxguimisc.h"
 #include "idfxguicontrol.h"
@@ -39,21 +41,19 @@ To contact the author, use the contact form at http://destroyfx.org/
 template <class T>
 class DGControl : public IDGControl, public T
 {
-	static_assert(std::is_base_of<VSTGUI::CControl, T>::value);
+	static_assert(std::is_base_of_v<VSTGUI::CControl, T>);
 
 public:
-	using Parent = T;
-
 	template <typename... Args>
-	DGControl(Args&&... args);
+	explicit DGControl(Args&&... args);
 
 	VSTGUI::CControl* asCControl() final
 	{
-		return dynamic_cast<VSTGUI::CControl*>(this);
+		return this;
 	}
 	VSTGUI::CControl const* asCControl() const final
 	{
-		return dynamic_cast<VSTGUI::CControl const*>(this);
+		return this;
 	}
 
 	DfxGuiEditor* getOwnerEditor() const noexcept final
@@ -72,11 +72,28 @@ public:
 	void setParameterID(long inParameterID) final;
 	bool isParameterAttached() const final;
 
-	long getNumStates() const noexcept
+	long getNumStates() const final
 	{
 		return mNumStates;
 	}
 	void setNumStates(long inNumStates);
+
+	float getFineTuneFactor() const override
+	{
+		return kDefaultFineTuneFactor;
+	}
+
+	bool notifyIfChanged() final;
+
+	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseWheelEditing() final
+	{
+		mMouseWheelEditingSupport.onMouseWheelEditing();
+	}
+	void invalidateMouseWheelEditingTimer() final
+	{
+		mMouseWheelEditingSupport.invalidateMouseWheelEditingTimer();
+	}
 
 	void setDrawAlpha(float inAlpha) final;
 	float getDrawAlpha() const final;
@@ -85,6 +102,9 @@ public:
 #if TARGET_OS_MAC
 	void setHelpText(CFStringRef inText);
 #endif
+
+	std::vector<IDGControl*> getChildren() override { return {}; }
+	std::vector<IDGControl const*> getChildren() const override { return {}; }
 
 #if TARGET_PLUGIN_USES_MIDI
 	void setMidiLearner(bool inEnable) override {}
@@ -99,36 +119,39 @@ protected:
 	class DiscreteValueConstrainer
 	{
 	public:
-		explicit DiscreteValueConstrainer(DGControl<T>* inControl)
+		explicit DiscreteValueConstrainer(IDGControl* inControl)
 		:	mControl(inControl),
-			mEntryValue(inControl ? inControl->getValue() : 0.0f)
+			mEntryValue(inControl ? inControl->asCControl()->getValue() : 0.0f),
+			mEntryEditing(inControl && inControl->asCControl()->isEditing())
 		{
+			// the editing state is a counter, so this is essentially us bumping the editing reference count
+			if (mEntryEditing)
+			{
+				mControl->asCControl()->beginEdit();
+			}
 		}
 		~DiscreteValueConstrainer()
 		{
-			if (mControl && (mControl->getNumStates() > 0) && (mControl->getValue() != mEntryValue))
+			if (mControl && (mControl->getNumStates() > 0) && (mControl->asCControl()->getValue() != mEntryValue))
 			{
 				mControl->setValue_i(mControl->getValue_i());
-				if (mControl->isDirty())
+				if (mControl->asCControl()->isDirty())
 				{
-					mControl->valueChanged();
-					mControl->invalid();
+					mControl->asCControl()->valueChanged();
+					mControl->asCControl()->invalid();
 				}
+			}
+			// and by bumping that reference count, here we extend the edit cycle lifespan through the preceding value change
+			if (mEntryEditing)
+			{
+				mControl->asCControl()->endEdit();
 			}
 		}
 	private:
-		DGControl<T>* const mControl;
+		IDGControl* const mControl;
 		float const mEntryValue;
+		bool const mEntryEditing;
 	};
-
-	bool getWraparoundValues() const noexcept
-	{
-		return mWraparoundValues;
-	}
-	void setWraparoundValues(bool inWraparoundPolicy) noexcept
-	{
-		mWraparoundValues = inWraparoundPolicy;
-	}
 
 private:
 	void pullNumStatesFromParameter();
@@ -136,15 +159,88 @@ private:
 	DfxGuiEditor* const mOwnerEditor;
 
 	long mNumStates = 0;
-	bool mWraparoundValues = false;
+
+	class MouseWheelEditingSupport : protected VSTGUI::CMouseWheelEditingSupport
+	{
+	public:
+		explicit MouseWheelEditingSupport(IDGControl* inControl)
+		:	mControl(inControl)
+		{
+		}
+		void onMouseWheelEditing()
+		{
+			VSTGUI::CMouseWheelEditingSupport::onMouseWheelEditing(mControl->asCControl());
+		}
+		void invalidateMouseWheelEditingTimer()
+		{
+			VSTGUI::CMouseWheelEditingSupport::invalidMouseWheelEditTimer(mControl->asCControl());
+		}
+	private:
+		IDGControl* const mControl;
+	} mMouseWheelEditingSupport;
 };
+
+
+
+//-----------------------------------------------------------------------------
+template <class T>
+class DGMultiControl : /*public IDGMultiControl,*/ public DGControl<T>
+{
+public:
+	using DGControl<T>::DGControl;
+
+	std::vector<IDGControl*> getChildren() override
+	{
+		return {mChildren.cbegin(), mChildren.cend()};
+	}
+	std::vector<IDGControl const*> getChildren() const override
+	{
+		return {mChildren.cbegin(), mChildren.cend()};
+	}
+
+	void setViewSize(VSTGUI::CRect const& inPos, bool inInvalidate = true) override;
+	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
+
+	void setDirty_all(bool inValue);
+	bool isDirty() const override;
+
+	bool checkDefaultValue_all(VSTGUI::CButtonState inButtons);
+	void beginEdit_all();
+	void endEdit_all();
+	bool isEditing_any() const;
+
+protected:
+	IDGControl* addChild(long inParameterID);
+	// TODO: C++20 use std::span
+	void addChildren(std::vector<long> const& inParameterID);
+
+	IDGControl* getControlByParameterID(long inParameterID) const;
+
+	template <typename Proc>
+	void forEachChild(Proc inProc);
+
+	void notifyIfChanged_all();
+
+private:
+	class DGMultiControlChild final : public DGControl<VSTGUI::CControl>
+	{
+	public:
+		DGMultiControlChild(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, long inParameterID);
+		void draw(VSTGUI::CDrawContext*) override {}
+		CLASS_METHODS(DGMultiControlChild, VSTGUI::CControl)
+	};
+
+	std::unordered_set<IDGControl*> mChildren;
+};
+
+
 
 #include "dfxguicontrol.hpp"
 
 
 
 //-----------------------------------------------------------------------------
-class DGNullControl : public DGControl<VSTGUI::CControl>
+class DGNullControl final : public DGControl<VSTGUI::CControl>
 {
 public:
 	DGNullControl(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage = nullptr);
@@ -153,39 +249,3 @@ public:
 
 	CLASS_METHODS(DGNullControl, VSTGUI::CControl)
 };
-
-
-
-#if 0
-
-//-----------------------------------------------------------------------------
-class DGControl : public VSTGUI::CControl
-{
-public:
-	enum KeyModifiers : unsigned int
-	{
-		kKeyModifier_Accel = 1,  // command on Macs, control on PCs
-		kKeyModifier_Alt = 1 << 1,  // option on Macs, alt on PCs
-		kKeyModifier_Shift = 1 << 2,
-		kKeyModifier_Extra = 1 << 3  // control on Macs
-	};
-
-	bool do_mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
-	virtual bool mouseWheel(long inDelta, dfx::Axis inAxis, dfx::KeyModifiers inKeyModifiers);
-
-	void setMouseDragRange(float inMouseDragRange)
-	{
-		if (inMouseDragRange != 0.0f)  // to prevent division by zero
-			mouseDragRange = inMouseDragRange;
-	}
-	float getMouseDragRange() const noexcept
-	{
-		return mouseDragRange;
-	}
-
-private:
-	bool	isContinuous = false;
-	float	mouseDragRange = kDefaultMouseDragRange;  // the range of pixels over which you can drag the mouse to adjust the control value
-};
-
-#endif

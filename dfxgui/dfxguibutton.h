@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -56,7 +56,9 @@ public:
 	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	bool onWheel(VSTGUI::CPoint const& inPos, float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseCancel() override;
+	bool onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, 
+				 float const& inDistance, VSTGUI::CButtonState const& inButtons) override;
 
 
 	void setMouseIsDown(bool newMouseState);
@@ -78,15 +80,20 @@ public:
 	CLASS_METHODS(DGButton, VSTGUI::CControl)
 
 protected:
+	long constrainValue(long inValue) const;
+
 	DGButtonUserProcedure mUserProcedure = nullptr;
 	void* mUserProcData = nullptr;
 	DGButtonUserProcedure mUserReleaseProcedure = nullptr;
 	void* mUserReleaseProcData = nullptr;
 	bool mUseReleaseProcedureOnlyAtEndWithNoCancel = false;
 
-	Mode mMode {};
+	Mode const mMode;
 	bool const mDrawMomentaryState;
+	bool const mWraparoundValues;
 	dfx::Axis mOrientation = dfx::kAxis_Horizontal;
+
+private:
 	bool mMouseIsDown = false;
 	long mEntryValue = 0, mNewValue = 0;
 };
@@ -104,6 +111,7 @@ public:
 	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseCancel() override;
 
 	CLASS_METHODS(DGFineTuneButton, VSTGUI::CControl)
 
@@ -125,11 +133,13 @@ public:
 	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseCancel() override;
 
 	CLASS_METHODS(DGValueSpot, VSTGUI::CControl)
 
 private:
 	float const mValueToSet;
+	float mEntryValue = 0.0f;
 	VSTGUI::CPoint mLastMousePos;
 	bool mButtonIsPressed = false;
 };
@@ -145,7 +155,8 @@ public:
 	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
-	bool onWheel(VSTGUI::CPoint const&, float const&, VSTGUI::CButtonState const&) override
+	VSTGUI::CMouseEventResult onMouseCancel() override;
+	bool onWheel(VSTGUI::CPoint const&, VSTGUI::CMouseWheelAxis const&, float const&, VSTGUI::CButtonState const&) override
 	{
 		return false;
 	}

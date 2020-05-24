@@ -55,7 +55,7 @@
 		EC89B420208D310700E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B41F208D310600E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B425208D319600E15129 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B421208D319500E15129 /* dfxguicontrol.cpp */; };
 		EC89B426208D319600E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B424208D319600E15129 /* dfxguidialog.cpp */; };
-		EC89B49B208D352500E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B49A208D352500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-shadow -Wno-sign-compare -Wno-exit-time-destructors"; }; };
+		EC89B49B208D352500E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B49A208D352500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough"; }; };
 		EC984002103084C700FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
 		ECC430AC102F46F0000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC430AA102F46F0000B05A1 /* dfx-au-utilities.strings */; };
 		ECE44FC21563647400637833 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FC01563647400637833 /* dfxmisc.cpp */; };
@@ -284,7 +284,7 @@
 				4932F48306800FCD006A9591 /* Utility */,
 			);
 			name = AUPublic;
-			path = "../../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic";
+			path = ../../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic;
 			sourceTree = "<group>";
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
@@ -347,7 +347,7 @@
 				B025BA0608AD353E00A9CCAE /* CAVectorUnit.cpp */,
 			);
 			name = PublicUtility;
-			path = "../../CoreAudioUtilityClasses/CoreAudio/PublicUtility";
+			path = ../../CoreAudioUtilityClasses/CoreAudio/PublicUtility;
 			sourceTree = "<group>";
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
