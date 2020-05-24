@@ -323,11 +323,9 @@ private:
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(long inParameterID);
-	void handleContextualMenuSelection(VSTGUI::CCommandMenuItem* inMenuItem);
-	void handleParameterContextualMenuSelection(long inParameterID, VSTGUI::CCommandMenuItem* inMenuItem);
 	long initClipboard();
 	long copySettings();
-	long pasteSettings(bool* inQueryPastabilityOnly = nullptr);
+	long pasteSettings(bool* inQueryPastabilityOnly);
 
 	void addMousedOverControl(IDGControl* inMousedOverControl);
 	void removeMousedOverControl(IDGControl* inMousedOverControl);

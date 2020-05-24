@@ -28,7 +28,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <cmath>
 #include <functional>
-#include <map>
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
@@ -55,9 +54,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include "ConvertUtils.h"
 #endif
 
-
-
-using std::placeholders::_1;
 
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -1812,64 +1808,22 @@ unsigned long DfxGuiEditor::getNumAudioChannels()
 }
 
 
-//-----------------------------------------------------------------------------
-enum
-{
-	kDfxContextualMenuItem_Global_SetDefaultParameterValues = 0,
-//	kDfxContextualMenuItem_Global_Undo,
-	kDfxContextualMenuItem_Global_RandomizeParameterValues,
-	kDfxContextualMenuItem_Global_GenerateAutomationSnapshot,
-	kDfxContextualMenuItem_Global_CopyState,
-	kDfxContextualMenuItem_Global_PasteState,
-	kDfxContextualMenuItem_Global_SavePresetFile,
-	kDfxContextualMenuItem_Global_LoadPresetFile,
-//	kDfxContextualMenuItem_Global_UserPresets,	// preset files sub-menu(s)?
-//	kDfxContextualMenuItem_Global_FactoryPresets,	// factory presets sub-menu?
-#if !TARGET_PLUGIN_IS_INSTRUMENT
-//	kDfxContextualMenuItem_Global_Bypass,	// effect bypass?
-#endif
-#if TARGET_PLUGIN_USES_MIDI
-	kDfxContextualMenuItem_Global_MidiLearn,
-	kDfxContextualMenuItem_Global_MidiReset,
-#endif
-	kDfxContextualMenuItem_Global_OpenDocumentation,
-//	kDfxContextualMenuItem_Global_ResizeGUI,
-	kDfxContextualMenuItem_Global_OpenWebSite,
-	kDfxContextualMenuItem_Global_NumItems
-};
-
-enum
-{
-	kDfxContextualMenuItem_Parameter_SetDefaultValue = 0,
-	kDfxContextualMenuItem_Parameter_TextEntryForValue,	// type in value
-//	kDfxContextualMenuItem_Parameter_ValueStrings,	// a sub-menu of value selections, for parameters that have them
-//	kDfxContextualMenuItem_Parameter_Undo,
-	kDfxContextualMenuItem_Parameter_RandomizeParameterValue,
-	kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot,
-//	kDfxContextualMenuItem_Parameter_SnapMode,	// toggle snap mode
-#if TARGET_PLUGIN_USES_MIDI
-	kDfxContextualMenuItem_Parameter_MidiLearner,
-	kDfxContextualMenuItem_Parameter_MidiUnassign,
-	kDfxContextualMenuItem_Parameter_TextEntryForMidiCC,	// assign MIDI CC by typing in directly
-#endif
-	kDfxContextualMenuItem_Parameter_NumItems
-};
-
-static constexpr int32_t kDfxGui_ContextualMenuStyle = VSTGUI::COptionMenu::kMultipleCheckStyle;  // this is necessary for menu entry checkmarks to show up
-
 namespace
 {
 
+static constexpr int32_t kDfxGui_ContextualMenuStyle = VSTGUI::COptionMenu::kMultipleCheckStyle;  // necessary for menu entry checkmarks to show up
+
 //-----------------------------------------------------------------------------
-VSTGUI::CMenuItem* DFX_AppendCommandItemToMenu(VSTGUI::COptionMenu& inMenu, VSTGUI::UTF8String const& inMenuItemText, VSTGUI::CCommandMenuItem::SelectedCallbackFunction&& inCommandCallback, int32_t inCommandID, bool inEnabled, bool inChecked)
+VSTGUI::CMenuItem* DFX_AppendCommandItemToMenu(VSTGUI::COptionMenu& ioMenu, VSTGUI::UTF8String const& inMenuItemText, 
+											   VSTGUI::CCommandMenuItem::SelectedCallbackFunction&& inCommandCallback, 
+											   bool inEnabled = true, bool inChecked = false)
 {
 	if (auto const menuItem = new VSTGUI::CCommandMenuItem(inMenuItemText))
 	{
 		menuItem->setActions(std::move(inCommandCallback));
-		menuItem->setTag(inCommandID);
 		menuItem->setEnabled(inEnabled);
 		menuItem->setChecked(inChecked);
-		return inMenu.addEntry(menuItem);
+		return ioMenu.addEntry(menuItem);
 	}
 	return nullptr;
 }
@@ -1932,273 +1886,103 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	}
 
 	// populate the global section of the menu
-	for (UInt32 i = 0; i < kDfxContextualMenuItem_Global_NumItems; i++)
-	{
-		bool showCheckmark = false;
-		bool disableItem = false;
-		bool isFirstItemOfSubgroup = false;
-		VSTGUI::UTF8String menuItemText;
-		switch (i)
-		{
-			case kDfxContextualMenuItem_Global_SetDefaultParameterValues:
-				menuItemText = "Reset all parameter values to default";
-				isFirstItemOfSubgroup = true;
-				break;
-#if 0
-			case kDfxContextualMenuItem_Global_Undo:
-				if (true)  // XXX needs appropriate check for which text/function to use
-				{
-					menuItemText = "Undo";
-				}
-				else
-				{
-					menuItemText = "Redo";
-				}
-				break;
-#endif
-			case kDfxContextualMenuItem_Global_RandomizeParameterValues:
-				menuItemText = "Randomize all parameter values";
-				break;
-			case kDfxContextualMenuItem_Global_GenerateAutomationSnapshot:
-				menuItemText = "Generate parameter automation snapshot";
-				break;
-			case kDfxContextualMenuItem_Global_CopyState:
-				menuItemText = "Copy settings";
-				isFirstItemOfSubgroup = true;
-				break;
-			case kDfxContextualMenuItem_Global_PasteState:
-			{
-				menuItemText = "Paste settings";
-				bool currentClipboardIsPastable {};
-				pasteSettings(&currentClipboardIsPastable);
-				if (!currentClipboardIsPastable)
-				{
-					disableItem = true;
-				}
-				break;
-			}
-#ifndef TARGET_API_RTAS  // RTAS has no API for preset files, Pro Tools handles them
-			case kDfxContextualMenuItem_Global_SavePresetFile:
-				menuItemText = "Save preset file...";
-				break;
-			case kDfxContextualMenuItem_Global_LoadPresetFile:
-				menuItemText = "Load preset file...";
-				break;
-#endif
-#if TARGET_PLUGIN_USES_MIDI
-			case kDfxContextualMenuItem_Global_MidiLearn:
-				menuItemText = "MIDI learn";
-				showCheckmark = getmidilearning();
-				isFirstItemOfSubgroup = true;
-				break;
-			case kDfxContextualMenuItem_Global_MidiReset:
-				menuItemText = "MIDI assignments reset";
-				break;
-#endif
-			case kDfxContextualMenuItem_Global_OpenDocumentation:
-				menuItemText = PLUGIN_NAME_STRING " manual";
-				isFirstItemOfSubgroup = true;
-				break;
-			case kDfxContextualMenuItem_Global_OpenWebSite:
-				menuItemText = "Open " PLUGIN_CREATOR_NAME_STRING " web site";
-				break;
-			default:
-				assert(false);
-				break;
-		}
-		if (isFirstItemOfSubgroup)
-		{
-			resultMenu.addSeparator();
-		}
-		if (!menuItemText.empty())
-		{
-			int32_t const menuItemCommandID = i;
-			DFX_AppendCommandItemToMenu(resultMenu, menuItemText, 
-										std::bind(&DfxGuiEditor::handleContextualMenuSelection, this, _1), 
-										menuItemCommandID, !disableItem, showCheckmark);
-		}
-	}
-	resultMenu.cleanupSeparators(true);
+	resultMenu.addSeparator();
+	DFX_AppendCommandItemToMenu(resultMenu, "Reset all parameter values to default", 
+								std::bind(&DfxGuiEditor::setparameters_default, this, true));
+//	DFX_AppendCommandItemToMenu(resultMenu, true ? "Undo" : "Redo", std::bind());  // TODO: implement
+	DFX_AppendCommandItemToMenu(resultMenu, "Randomize all parameter values", 
+								std::bind(&DfxGuiEditor::randomizeparameters, this, true));  // XXX yes to writing automation data?
+	DFX_AppendCommandItemToMenu(resultMenu, "Generate parameter automation snapshot", 
+								std::bind(&DfxGuiEditor::GenerateParametersAutomationSnapshot, this));
 
+	resultMenu.addSeparator();
+	DFX_AppendCommandItemToMenu(resultMenu, "Copy settings", std::bind(&DfxGuiEditor::copySettings, this));
+	{
+		bool currentClipboardIsPastable {};
+		pasteSettings(&currentClipboardIsPastable);
+		DFX_AppendCommandItemToMenu(resultMenu, "Paste settings", std::bind(&DfxGuiEditor::pasteSettings, this, nullptr), currentClipboardIsPastable);
+	}
+#ifndef TARGET_API_RTAS  // RTAS has no API for preset files, Pro Tools handles them
+	DFX_AppendCommandItemToMenu(resultMenu, "Save preset file...", std::bind(&DfxGuiEditor::SavePresetFile, this));
+	DFX_AppendCommandItemToMenu(resultMenu, "Load preset file...", std::bind(&DfxGuiEditor::LoadPresetFile, this));
+#endif
+
+#if TARGET_PLUGIN_USES_MIDI
+	resultMenu.addSeparator();
+	DFX_AppendCommandItemToMenu(resultMenu, "MIDI learn", 
+								std::bind(&DfxGuiEditor::setmidilearning, this, !getmidilearning()), 
+								true, getmidilearning());
+	DFX_AppendCommandItemToMenu(resultMenu, "MIDI assignments reset", std::bind(&DfxGuiEditor::resetmidilearn, this));
+#endif
+
+	resultMenu.addSeparator();
+	DFX_AppendCommandItemToMenu(resultMenu, PLUGIN_NAME_STRING " manual", std::bind(&dfx::LaunchDocumentation));
+	DFX_AppendCommandItemToMenu(resultMenu, "Open " PLUGIN_CREATOR_NAME_STRING " web site", 
+								std::bind(&dfx::LaunchURL, PLUGIN_HOMEPAGE_URL));
+
+	resultMenu.cleanupSeparators(true);
 	return resultMenu;
 }
 
 //-----------------------------------------------------------------------------
 VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextualMenu(long inParameterID)
 {
+	assert(dfxgui_IsValidParamID(inParameterID));
+
 	auto resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 
-	for (UInt32 i = 0; i < kDfxContextualMenuItem_Parameter_NumItems; i++)
-	{
-		bool showCheckmark = false;
-		bool disableItem = false;
-		bool isFirstItemOfSubgroup = false;
-		VSTGUI::UTF8String menuItemText;
-		switch (i)
-		{
-			case kDfxContextualMenuItem_Parameter_SetDefaultValue:
-				menuItemText = "Set to default value";
-				isFirstItemOfSubgroup = true;
-				break;
-			case kDfxContextualMenuItem_Parameter_TextEntryForValue:
-				menuItemText = "Type in a value...";
-				break;
-#if 0
-			case kDfxContextualMenuItem_Parameter_Undo:
-				if (true)  // XXX needs appropriate check for which text/function to use
-				{
-					menuItemText = "Undo";
-				}
-				else
-				{
-					menuItemText = "Redo";
-				}
-				break;
-#endif
-			case kDfxContextualMenuItem_Parameter_RandomizeParameterValue:
-				menuItemText = "Randomize value";
-				break;
-			case kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot:
-				menuItemText = "Generate parameter automation snapshot";
-				break;
+	resultMenu->addSeparator();
+	DFX_AppendCommandItemToMenu(*resultMenu, "Set to default value", 
+								std::bind(&DfxGuiEditor::setparameter_default, this, inParameterID, true));
+	DFX_AppendCommandItemToMenu(*resultMenu, "Type in a value...", 
+								std::bind(&DfxGuiEditor::TextEntryForParameterValue, this, inParameterID));
+//	DFX_AppendCommandItemToMenu(*resultMenu, true ? "Undo" : "Redo", std::bind());  // TODO: implement
+	DFX_AppendCommandItemToMenu(*resultMenu, "Randomize value", 
+								std::bind(&DfxGuiEditor::randomizeparameter, this, inParameterID, true));  // XXX yes to writing automation data?
+	DFX_AppendCommandItemToMenu(*resultMenu, "Generate parameter automation snapshot", 
+								std::bind(&DfxGuiEditor::GenerateParameterAutomationSnapshot, this, inParameterID));
+
 #if TARGET_PLUGIN_USES_MIDI
-			case kDfxContextualMenuItem_Parameter_MidiLearner:
-				menuItemText = "MIDI learner";
-				if (getmidilearning())
-				{
-					showCheckmark = ismidilearner(inParameterID);
-				}
-				else
-				{
-					disableItem = true;
-				}
-				isFirstItemOfSubgroup = true;
-				break;
-			case kDfxContextualMenuItem_Parameter_MidiUnassign:
+	resultMenu->addSeparator();
+	DFX_AppendCommandItemToMenu(*resultMenu, "MIDI learner", 
+								std::bind(&DfxGuiEditor::setmidilearner, this, 
+										  ismidilearner(inParameterID) ? DfxSettings::kNoLearner : inParameterID), 
+								getmidilearning(), ismidilearner(inParameterID));
+	{
+		VSTGUI::UTF8String menuItemText = "Unassign MIDI control";
+		auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
+		bool const enableItem = (currentParameterAssignment.mEventType != dfx::MidiEventType::None);
+		// append the current MIDI assignment, if there is one, to the menu item text
+		if (enableItem)
+		{
+			menuItemText += [currentParameterAssignment]() -> std::string
 			{
-				menuItemText = "Unassign MIDI control";
-				auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
-				// disable if not assigned
-				if (currentParameterAssignment.mEventType == dfx::MidiEventType::None)
+				switch (currentParameterAssignment.mEventType)
 				{
-					disableItem = true;
+					case dfx::MidiEventType::CC:
+						return " (CC " + std::to_string(currentParameterAssignment.mEventNum) + ")";
+					case dfx::MidiEventType::ChannelAftertouch:
+						return " (channel aftertouch)";
+					case dfx::MidiEventType::PitchBend:
+						return " (pitchbend)";
+					case dfx::MidiEventType::Note:
+						return " (notes " + dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum) + " - " + dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2) + ")";
+					default:
+						assert(false);
+						return {};
 				}
-				// append the current MIDI assignment, if there is one, to the menu item text
-				else
-				{
-					switch (currentParameterAssignment.mEventType)
-					{
-						case dfx::MidiEventType::CC:
-							menuItemText += " (CC " + std::to_string(currentParameterAssignment.mEventNum) + ")";
-							break;
-						case dfx::MidiEventType::ChannelAftertouch:
-							menuItemText += " (channel aftertouch)";
-							break;
-						case dfx::MidiEventType::PitchBend:
-							menuItemText += " (pitchbend)";
-							break;
-						case dfx::MidiEventType::Note:
-							menuItemText += " (notes " + dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum) + " - " + dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2) + ")";
-							break;
-						default:
-							break;
-					}
-				}
-				break;
-			}
-			case kDfxContextualMenuItem_Parameter_TextEntryForMidiCC:
-				menuItemText = "Type in a MIDI CC assignment...";
-				break;
-#endif
-			default:
-				assert(false);
-				break;
+			}();
 		}
-		if (isFirstItemOfSubgroup)
-		{
-			resultMenu->addSeparator();
-		}
-		if (!menuItemText.empty())
-		{
-			int32_t const menuItemCommandID = i + kDfxContextualMenuItem_Global_NumItems;
-			DFX_AppendCommandItemToMenu(*resultMenu, menuItemText, 
-										std::bind(&DfxGuiEditor::handleParameterContextualMenuSelection, this, inParameterID, _1), 
-										menuItemCommandID, !disableItem, showCheckmark);
-		}
+		DFX_AppendCommandItemToMenu(*resultMenu, menuItemText, 
+									std::bind(&DfxGuiEditor::parametermidiunassign, this, inParameterID), 
+									enableItem);
 	}
+	DFX_AppendCommandItemToMenu(*resultMenu, "Type in a MIDI CC assignment...", 
+								std::bind(&DfxGuiEditor::TextEntryForParameterMidiCC, this, inParameterID));
+#endif
 
 	return resultMenu;
-}
-
-//-----------------------------------------------------------------------------
-// handle the contextual menu command (global)
-void DfxGuiEditor::handleContextualMenuSelection(VSTGUI::CCommandMenuItem* inMenuItem)
-{
-	auto const menuSelectionCommandID = inMenuItem->getTag();
-
-	// TODO: move all of these actions directly into the CCommandMenuItem creation instead
-	std::map<int, std::function<void()>> const actionMap
-	{
-		{ kDfxContextualMenuItem_Global_SetDefaultParameterValues, [this](){ setparameters_default(true); } },
-#if 0
-		{ kDfxContextualMenuItem_Global_Undo, },  //XXX TODO: implement
-#endif
-		{ kDfxContextualMenuItem_Global_RandomizeParameterValues, [this](){ randomizeparameters(true); } },  // XXX "yes" to writing automation data?
-		{ kDfxContextualMenuItem_Global_GenerateAutomationSnapshot, std::bind(&DfxGuiEditor::GenerateParametersAutomationSnapshot, this) },
-		{ kDfxContextualMenuItem_Global_CopyState, [this](){ copySettings(); } },
-		{ kDfxContextualMenuItem_Global_PasteState, [this](){ pasteSettings(); } },
-		{ kDfxContextualMenuItem_Global_SavePresetFile, std::bind(&DfxGuiEditor::SavePresetFile, this) },
-		{ kDfxContextualMenuItem_Global_LoadPresetFile, std::bind(&DfxGuiEditor::LoadPresetFile, this) },
-#if TARGET_PLUGIN_USES_MIDI
-		{ kDfxContextualMenuItem_Global_MidiLearn, std::bind(&DfxGuiEditor::setmidilearning, this, !getmidilearning()) },
-		{ kDfxContextualMenuItem_Global_MidiReset, std::bind(&DfxGuiEditor::resetmidilearn, this) },
-#endif
-		{ kDfxContextualMenuItem_Global_OpenDocumentation, [](){ dfx::LaunchDocumentation(); } },
-		{ kDfxContextualMenuItem_Global_OpenWebSite, [](){ dfx::LaunchURL(PLUGIN_HOMEPAGE_URL); } },
-	};
-	if (auto const action = actionMap.find(menuSelectionCommandID); action != actionMap.end())
-	{
-		action->second();
-	}
-	else
-	{
-		assert(false);
-	}
-}
-
-//-----------------------------------------------------------------------------
-// handle the contextual menu command (parameter-specific)
-void DfxGuiEditor::handleParameterContextualMenuSelection(long inParameterID, VSTGUI::CCommandMenuItem* inMenuItem)
-{
-	assert(dfxgui_IsValidParamID(inParameterID));
-
-	auto const menuSelectionCommandID = inMenuItem->getTag();
-
-	// TODO: move all of these actions directly into the CCommandMenuItem creation instead
-	std::map<int, std::function<void(long)>> const actionMap
-	{
-		{ kDfxContextualMenuItem_Parameter_SetDefaultValue, std::bind(&DfxGuiEditor::setparameter_default, this, _1, true) },
-		{ kDfxContextualMenuItem_Parameter_TextEntryForValue, std::bind(&DfxGuiEditor::TextEntryForParameterValue, this, _1) },
-#if 0
-		{ kDfxContextualMenuItem_Parameter_Undo, },  //XXX TODO: implement
-#endif
-		{ kDfxContextualMenuItem_Parameter_RandomizeParameterValue, std::bind(&DfxGuiEditor::randomizeparameter, this, _1, true) },  // XXX "yes" to writing automation data?
-		{ kDfxContextualMenuItem_Parameter_GenerateAutomationSnapshot, std::bind(&DfxGuiEditor::GenerateParameterAutomationSnapshot, this, _1) },
-#if TARGET_PLUGIN_USES_MIDI
-		{ kDfxContextualMenuItem_Parameter_MidiLearner, [this](long inParameterID){ setmidilearner((getmidilearner() == inParameterID) ? DfxSettings::kNoLearner : inParameterID); } },
-		{ kDfxContextualMenuItem_Parameter_MidiUnassign, std::bind(&DfxGuiEditor::parametermidiunassign, this, _1) },
-		{ kDfxContextualMenuItem_Parameter_TextEntryForMidiCC, std::bind(&DfxGuiEditor::TextEntryForParameterMidiCC, this, _1) },
-#endif
-	};
-	if (auto const action = actionMap.find(menuSelectionCommandID - kDfxContextualMenuItem_Global_NumItems); action != actionMap.end())
-	{
-		action->second(inParameterID);
-	}
-	else
-	{
-		assert(false);
-	}
 }
 
 //-----------------------------------------------------------------------------
