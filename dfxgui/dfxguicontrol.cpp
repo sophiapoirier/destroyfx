@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -23,7 +23,30 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguicontrol.h"
 
-#include "dfxmisc.h"
+
+
+//-----------------------------------------------------------------------------
+bool detail::onWheel(IDGControl* inControl, VSTGUI::CPoint const& /*inPos*/, VSTGUI::CMouseWheelAxis const& /*inAxis*/, 
+					 float const& inDistance, VSTGUI::CButtonState const& inButtons)
+{
+	inControl->onMouseWheelEditing();
+
+	if (inControl->getNumStates() > 0)
+	{
+		long const delta = (inDistance < 0.0f) ? -1 : 1;
+		auto newValue = inControl->getValue_i() + delta;
+		inControl->setValue_i(newValue);
+	}
+	else
+	{
+		auto const cControl = inControl->asCControl();
+		auto const delta = inDistance * cControl->getWheelInc() / ((inButtons & cControl->kZoomModifier) ? inControl->getFineTuneFactor() : 1.0f);
+		cControl->setValueNormalized(cControl->getValueNormalized() + delta);
+	}
+	inControl->notifyIfChanged();
+
+	return true;
+}
 
 
 
@@ -51,114 +74,26 @@ void DGNullControl::draw(VSTGUI::CDrawContext* inContext)
 #if 0
 
 #pragma mark -
-#pragma mark DGControl old
-
-//-----------------------------------------------------------------------------
-bool DGControl::do_mouseWheel(long inDelta, dfx::Axis inAxis, KeyModifiers inKeyModifiers)
-{
-	if (!getMouseEnabled())
-		return false;
-
-	if ( isParameterAttached() )
-		getDfxGuiEditor()->automationgesture_begin( getParameterID() );
-
-	bool wheelResult = mouseWheel(inDelta, inAxis, inKeyModifiers);
-
-	if ( isParameterAttached() )
-		getDfxGuiEditor()->automationgesture_end( getParameterID() );
-
-	return wheelResult;
-}
-
-//-----------------------------------------------------------------------------
-// a default implementation of mouse wheel handling that should work for most controls
-bool DGControl::mouseWheel(long inDelta, dfx::Axis inAxis, KeyModifiers inKeyModifiers)
-{
-ControlRef carbonControl = NULL;	// XXX just quieting errors for now
-	SInt32 min = GetControl32BitMinimum(carbonControl);
-	SInt32 max = GetControl32BitMaximum(carbonControl);
-	SInt32 oldValue = GetControl32BitValue(carbonControl);
-	SInt32 newValue = oldValue;
-
-	if ( isContinuousControl() )
-	{
-		float diff = (float)inDelta;
-		if (inKeyModifiers & dfx::kKeyModifier_Shift)	// slo-mo
-			diff /= kDefaultFineTuneFactor;
-		newValue = oldValue + (SInt32)(diff * (float)(max-min) / getMouseDragRange());
-	}
-	else
-	{
-		if (inDelta > 0)
-			newValue = oldValue + 1;
-		else if (inDelta < 0)
-			newValue = oldValue - 1;
-
-		// wrap around
-		if ( getWraparoundValues() )
-		{
-			if (newValue > max)
-				newValue = min;
-			else if (newValue < min)
-				newValue = max;
-		}
-	}
-
-	if (newValue > max)
-		newValue = max;
-	if (newValue < min)
-		newValue = min;
-	if (newValue != oldValue)
-		SetControl32BitValue(carbonControl, newValue);
-
-	return true;
-}
-
-
-
-
-
-
-#pragma mark -
 #pragma mark DGBackgroundControl old
 //-----------------------------------------------------------------------------
 void DGBackgroundControl::draw(VSTGUI::CDrawContext* inContext)
 {
-	DGRect drawRect((long)(getDfxGuiEditor()->GetXOffset()), (long)(getDfxGuiEditor()->GetYOffset()), getWidth(), getHeight());
+	DGRect const drawRect(getDfxGuiEditor()->GetXOffset(), getDfxGuiEditor()->GetYOffset(), getWidth(), getHeight());
 
-	// draw the background image, if there is one
-	if (backgroundImage != NULL)
+	if (backgroundImage)
 	{
 		backgroundImage->draw(&drawRect, inContext);
 	}
 
 	if (dragIsActive)
 	{
-		const float dragHiliteThickness = 2.0f;	// XXX is there a proper way to query this?
-		if (HIThemeSetStroke != NULL)
-		{
-//auto const status = HIThemeBrushCreateCGColor(kThemeBrushDragHilite, CGColorRef* outColor);
-			auto const status = HIThemeSetStroke(kThemeBrushDragHilite, NULL, inContext->getPlatformGraphicsContext(), inContext->getHIThemeOrientation());
-			if (status == noErr)
-			{
-				CGRect cgRect = drawRect.convertToCGRect( inContext->getPortHeight() );
-				const float halfLineWidth = dragHiliteThickness / 2.0f;
-				cgRect = CGRectInset(cgRect, halfLineWidth, halfLineWidth);	// CoreGraphics lines are positioned between pixels rather than on them
-				CGContextStrokeRect(inContext->getPlatformGraphicsContext(), cgRect);
-			}
-		}
-		else
-		{
-			RGBColor dragHiliteColor;
-			auto const error = GetDragHiliteColor(getDfxGuiEditor()->GetCarbonWindow(), &dragHiliteColor);
-			if (error == noErr)
-			{
-				const float rgbScalar = 1.0f / (float)0xFFFF;
-				DGColor strokeColor((float)(dragHiliteColor.red) * rgbScalar, (float)(dragHiliteColor.green) * rgbScalar, (float)(dragHiliteColor.blue) * rgbScalar);
-				inContext->setStrokeColor(strokeColor);
-				inContext->strokeRect(&drawRect, dragHiliteThickness);
-			}
-		}
+		constexpr float dragHiliteThickness = 2.0f;	// XXX is there a proper way to query this?
+		auto const status = HIThemeSetStroke(kThemeBrushDragHilite, nullptr, inContext->getPlatformGraphicsContext(), inContext->getHIThemeOrientation());
+		assert(status == noErr);
+		CGRect cgRect {drawRect.left, drawRect.top, drawRect.getWidth(), drawRect.getHeight()};
+		constexpr float halfLineWidth = dragHiliteThickness / 2.0f;
+		cgRect = CGRectInset(cgRect, halfLineWidth, halfLineWidth);	// CoreGraphics lines are positioned between pixels rather than on them
+		CGContextStrokeRect(inContext->getPlatformGraphicsContext(), cgRect);
 	}
 
 	setDirty(false);
@@ -167,10 +102,10 @@ void DGBackgroundControl::draw(VSTGUI::CDrawContext* inContext)
 //-----------------------------------------------------------------------------
 void DGBackgroundControl::setDragActive(bool inActiveStatus)
 {
-	bool oldStatus = dragIsActive;
-	dragIsActive = inActiveStatus;
-	if (oldStatus != inActiveStatus)
+	if (std::exchange(dragIsActive, inActiveStatus) != inActiveStatus)
+	{
 		redraw();
+	}
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -54,8 +54,8 @@ enum
 
 
 constexpr DGColor kValueTextColor(152, 221, 251);
-//static char const* const kValueTextFont = "Arial";
-static char const* const kValueTextFont = "Trebuchet MS";
+//constexpr char const* const kValueTextFont = "Arial";
+constexpr char const* const kValueTextFont = "Trebuchet MS";
 constexpr float kValueTextSize = 10.5f;
 
 
@@ -93,7 +93,7 @@ bool floorDisplayProc(float inValue, char* outText, void*)
 {
 	if (inValue <= 0.0f)
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "-%s dB", dfx::kInfinityUTF8) > 0;
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "-%s dB", VSTGUI::kInfiniteSymbol) > 0;
 	}
 	else
 	{

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -21,8 +21,12 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <memory>
+#include <numeric>
+#include <type_traits>
 
 #include "dfxguieditor.h"
 #include "dfxmisc.h"
@@ -34,7 +38,8 @@ template <class T>
 template <typename... Args>
 DGControl<T>::DGControl(Args&&... args)
 :	T(std::forward<Args>(args)...),
-	mOwnerEditor(dynamic_cast<DfxGuiEditor*>(T::getListener()))
+	mOwnerEditor(dynamic_cast<DfxGuiEditor*>(T::getListener())),
+	mMouseWheelEditingSupport(this)
 {
 	assert(T::getListener() ? (mOwnerEditor != nullptr) : true);
 	assert(isParameterAttached() ? (mOwnerEditor != nullptr) : true);
@@ -160,6 +165,32 @@ void DGControl<T>::setNumStates(long inNumStates)
 
 //-----------------------------------------------------------------------------
 template <class T>
+bool DGControl<T>::notifyIfChanged()
+{
+	auto const entryDirty = T::isDirty();
+	if (entryDirty)
+	{
+		T::valueChanged();
+		T::invalid();
+	}
+	return entryDirty;
+}
+
+//-----------------------------------------------------------------------------
+namespace detail
+{
+	bool onWheel(IDGControl* inControl, VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons);
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+bool DGControl<T>::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
+{
+	return detail::onWheel(this, inPos, inAxis, inDistance, inButtons);
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
 void DGControl<T>::setDrawAlpha(float inAlpha)
 {
 	T::setAlphaValue(inAlpha);
@@ -208,4 +239,157 @@ void DGControl<T>::pullNumStatesFromParameter()
 		}
 		setNumStates(numStates);
 	}
+}
+
+
+
+#pragma mark -
+#pragma mark DGMultiControl
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGMultiControl<T>::setViewSize(VSTGUI::CRect const& inPos, bool inInvalidate)
+{
+	DGControl<T>::setViewSize(inPos, inInvalidate);
+	forEachChild([inPos, inInvalidate](auto&& child){ child->asCControl()->setViewSize(inPos, inInvalidate); });
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+bool DGMultiControl<T>::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis const& inAxis, float const& inDistance, VSTGUI::CButtonState const& inButtons)
+{
+	auto result = DGControl<T>::onWheel(inPos, inAxis, inDistance, inButtons);
+	forEachChild([inPos, inAxis, inDistance, inButtons, &result](auto&& child)
+	{
+		result |= detail::onWheel(child, inPos, inAxis, inDistance, inButtons);
+	});
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGMultiControl<T>::setDirty_all(bool inValue)
+{
+	DGControl<T>::setDirty(inValue);
+	forEachChild([inValue](auto&& child){ child->asCControl()->setDirty(inValue); });
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+bool DGMultiControl<T>::isDirty() const
+{
+	return DGControl<T>::isDirty() || std::any_of(mChildren.cbegin(), mChildren.cend(), [](auto const& child){ return child->asCControl()->isDirty(); });
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+bool DGMultiControl<T>::checkDefaultValue_all(VSTGUI::CButtonState inButtons)
+{
+	return std::reduce(mChildren.cbegin(), mChildren.cend(), DGControl<T>::checkDefaultValue(inButtons), 
+					   [inButtons](auto const anyDefaulted, auto&& child)
+	{
+		auto const defaulted = child->asCControl()->checkDefaultValue(inButtons);
+		return defaulted || anyDefaulted;
+	});
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGMultiControl<T>::beginEdit_all()
+{
+	DGControl<T>::beginEdit();
+	forEachChild([](auto&& child){ child->asCControl()->beginEdit(); });
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGMultiControl<T>::endEdit_all()
+{
+	DGControl<T>::endEdit();
+	forEachChild([](auto&& child){ child->asCControl()->endEdit(); });
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+bool DGMultiControl<T>::isEditing_any() const
+{
+	return DGControl<T>::isEditing() || std::any_of(mChildren.cbegin(), mChildren.cend(), [](auto const& child){ return child->asCControl()->isEditing(); });
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+IDGControl* DGMultiControl<T>::addChild(long inParameterID)
+{
+	assert(inParameterID >= 0);
+	assert(inParameterID != this->getParameterID());
+	auto child = std::make_unique<DGMultiControlChild>(DGControl<T>::getOwnerEditor(), DGControl<T>::getViewSize(), inParameterID);
+	[[maybe_unused]] auto const [element, inserted] = mChildren.insert(child.get());
+	assert(inserted);
+
+	child->asCControl()->setVisible(false);
+	child->asCControl()->setMouseEnabled(false);
+	child->asCControl()->setWantsFocus(false);
+
+	return DGControl<T>::getOwnerEditor()->addControl(child.release());
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGMultiControl<T>::addChildren(std::vector<long> const& inParameterIDs)
+{
+	assert(std::unordered_set<long>(inParameterIDs.cbegin(), inParameterIDs.cend()).size() == inParameterIDs.size());
+	std::for_each(inParameterIDs.cbegin(), inParameterIDs.cend(), [this](auto parameterID){ addChild(parameterID); });
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+IDGControl* DGMultiControl<T>::getControlByParameterID(long inParameterID) const
+{
+	if (DGControl<T>::getParameterID() == inParameterID)
+	{
+		return this;
+	}
+	auto const foundChild = std::find_if(mChildren.cbegin(), mChildren.cend(), 
+										 [inParameterID](auto&& child){ return child->getParameterID() == inParameterID; });
+	return (foundChild != mChildren.cend()) ? *foundChild : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+template <typename Proc>
+void DGMultiControl<T>::forEachChild(Proc inProc)
+{
+	static_assert(std::is_invocable_v<Proc, IDGControl*>);
+	for (auto&& child : getChildren())
+	{
+		inProc(child);
+	}
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGMultiControl<T>::notifyIfChanged_all()
+{
+	auto const baseChanged = DGControl<T>::notifyIfChanged();
+	bool anyChildChanged = false;
+	forEachChild([&anyChildChanged](auto&& child){ anyChildChanged |= child->notifyIfChanged(); });
+	// due to being identified as invisible, the children's invalidation will be ignored
+	if (!baseChanged && anyChildChanged)
+	{
+		DGControl<T>::redraw();
+	}
+}
+
+
+
+#pragma mark -
+#pragma mark DGMultiControlChild
+
+//-----------------------------------------------------------------------------
+template <class T>
+DGMultiControl<T>::DGMultiControlChild::DGMultiControlChild(DfxGuiEditor* inOwnerEditor,
+															DGRect const& inRegion,
+															long inParameterID)
+:	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParameterID)
+{
 }

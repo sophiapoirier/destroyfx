@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2019  Sophia Poirier
+Copyright (C) 2015-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -68,7 +68,8 @@ class DGDialogButton : public VSTGUI::CTextButton
 {
 public:
 	DGDialogButton(VSTGUI::IControlListener* inListener, DGRect const& inRegion, DGDialog::Selection inSelection, VSTGUI::UTF8StringPtr inTitle)
-	:	VSTGUI::CTextButton(inRegion, inListener, inSelection, inTitle, VSTGUI::CTextButton::kKickStyle),
+	:	VSTGUI::CTextButton(inRegion, inListener, dfx::kParameterID_Invalid, inTitle, VSTGUI::CTextButton::kKickStyle),
+		mSelection(inSelection),
 		mIsDefaultButton(inSelection == DGDialog::kSelection_OK)
 	{
 		sizeToFit();
@@ -124,9 +125,9 @@ public:
 		return VSTGUI::CTextButton::onKeyUp(inKeyCode);
 	}
 
-	DGDialog::Selection getSelection() const
+	DGDialog::Selection getSelection() const noexcept
 	{
-		return static_cast<DGDialog::Selection>(getTag());
+		return mSelection;
 	}
 
 	void setX(VSTGUI::CCoord inXpos)
@@ -163,6 +164,7 @@ private:
 		return {};
 	}
 
+	DGDialog::Selection const mSelection;
 	bool const mIsDefaultButton;
 };
 
@@ -319,7 +321,7 @@ DGDialog::DGDialog(DGRect const& inRegion,
 	{
 		auto const button = buttons[i];
 		DGDialogButton* const prevButton = (i == 0) ? nullptr : buttons[i - 1];
-		VSTGUI::CCoord rightPos{};
+		VSTGUI::CCoord rightPos {};
 		if (prevButton)
 		{
 			auto const spacer = (button == otherButton) ? std::max(kContentMargin, kButtonSpacing) : kButtonSpacing;
@@ -469,13 +471,13 @@ bool DGDialog::runModal(VSTGUI::CFrame* inFrame, DialogChoiceSelectedCallback&& 
 bool DGDialog::runModal(VSTGUI::CFrame* inFrame)
 {
 	assert(inFrame);
-	mModalViewSession = inFrame->beginModalViewSession(this);
-	bool const success = (mModalViewSession != nullptr);
-	if (success)
+	mModalViewSessionID.reset();
+	if (auto const modalViewSessionID = inFrame->beginModalViewSession(this))
 	{
+		mModalViewSessionID = *modalViewSessionID;
 		remember();  // for retain balance, because ending the modal view session will forget this during view removal
 	}
-	return success;
+	return mModalViewSessionID.has_value();
 }
 
 //-----------------------------------------------------------------------------
@@ -484,12 +486,12 @@ void DGDialog::close()
 	mListener = nullptr;
 	mDialogChoiceSelectedCallback = nullptr;
 
-	if (getFrame() && mModalViewSession)
+	if (getFrame() && mModalViewSessionID)
 	{
-		[[maybe_unused]] auto const success = getFrame()->endModalViewSession(mModalViewSession);
+		[[maybe_unused]] auto const success = getFrame()->endModalViewSession(*mModalViewSessionID);
 		assert(success);
 	}
-	mModalViewSession = nullptr;
+	mModalViewSessionID.reset();
 }
 
 //-----------------------------------------------------------------------------

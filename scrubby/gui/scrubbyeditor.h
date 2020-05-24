@@ -61,8 +61,7 @@ private:
 	void HandlePitchConstraintChange();
 	void HandleTempoAutoChange();
 
-	DGSlider* mSeekRateSlider = nullptr;
-//	DGSlider* mSeekRateRandMinSlider = nullptr;
+	DGRangeSlider* mSeekRateSlider = nullptr;
 	DGTextDisplay* mSeekRateDisplay = nullptr;
 	DGTextDisplay* mSeekRateRandMinDisplay = nullptr;
 

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -29,6 +29,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguieditor.h"
 
 
+#pragma mark DGButton
+
 //-----------------------------------------------------------------------------
 // DGButton
 //-----------------------------------------------------------------------------
@@ -36,10 +38,10 @@ DGButton::DGButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& in
 				   Mode inMode, bool inDrawMomentaryState)
 :	DGControl<VSTGUI::CControl>(inRegion, inOwnerEditor, inParamID, inImage), 
 	mMode(inMode), 
-	mDrawMomentaryState(inDrawMomentaryState)
+	mDrawMomentaryState(inDrawMomentaryState),
+	mWraparoundValues((mMode == Mode::Increment) || (mMode == Mode::Decrement))
 {
 	setMouseEnabled(mMode != Mode::PictureReel);
-	setWraparoundValues((mMode == Mode::Increment) || (mMode == Mode::Decrement));
 }
 
 //-----------------------------------------------------------------------------
@@ -81,7 +83,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::C
 	beginEdit();
 
 	mEntryValue = mNewValue = getValue_i();
-	long const min = 0;
+	constexpr long min = 0;
 	long const max = getNumStates() - 1;
 	auto const isDirectionReversed = inButtons.isAltSet();
 
@@ -114,31 +116,11 @@ VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::C
 			break;
 	}
 
-	// wrap around
-	if (getWraparoundValues())
-	{
-		if (mNewValue > max)
-		{
-			mNewValue = min;
-		}
-		else if (mNewValue < min)
-		{
-			mNewValue = max;
-		}
-	}
-	// limit
-	else
-	{
-		mNewValue = std::clamp(mNewValue, min, max);
-	}
+	mNewValue = constrainValue(mNewValue);
 	if (mNewValue != mEntryValue)
 	{
 		setValue_i(mNewValue);
-		if (isDirty())
-		{
-			valueChanged();
-			invalid();
-		}
+		notifyIfChanged();
 		if (mUserProcedure)
 		{
 			mUserProcedure(mNewValue, mUserProcData);
@@ -208,11 +190,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::
 		}
 	}
 
-	if (isDirty())
-	{
-		valueChanged();
-		invalid();
-	}
+	notifyIfChanged();
 
 	return VSTGUI::kMouseEventHandled;
 }
@@ -227,11 +205,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CBu
 		setValue_i(mEntryValue);
 	}
 
-	if (isDirty())
-	{
-		valueChanged();
-		invalid();
-	}
+	notifyIfChanged();
 
 	if (hitTest(inPos))
 	{
@@ -247,39 +221,64 @@ VSTGUI::CMouseEventResult DGButton::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CBu
 }
 
 //-----------------------------------------------------------------------------
-bool DGButton::onWheel(VSTGUI::CPoint const& inPos, float const& inDistance, VSTGUI::CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGButton::onMouseCancel()
 {
-	if (!getMouseEnabled())
+	if (isEditing())
 	{
-		return false;
+		setValue_i(mEntryValue);
+		notifyIfChanged();
+		endEdit();
 	}
+
+	return VSTGUI::kMouseEventHandled;
+}
+
+//-----------------------------------------------------------------------------
+bool DGButton::onWheel(VSTGUI::CPoint const& /*inPos*/, VSTGUI::CMouseWheelAxis const& /*inAxis*/, 
+					   float const& inDistance, VSTGUI::CButtonState const& inButtons)
+{
 	// not controlling a parameter
 	if (!isParameterAttached())
 	{
 		return false;
 	}
 
-	switch (mMode)
-	{
-		case Mode::Increment:
-		case Mode::Decrement:
-		case Mode::Momentary:
-		{
-			VSTGUI::CButtonState fakeButtons = inButtons;
-			// go backwards
-			if (inDistance < 0.0f)
-			{
-				fakeButtons |= VSTGUI::kAlt;
-			}
-			VSTGUI::CPoint fakePos(0, 0);
-			onMouseDown(fakePos, fakeButtons);
-			onMouseUp(fakePos, inButtons);
-		}
-		return true;
+	onMouseWheelEditing();
 
-		default:
-			return Parent::onWheel(inPos, inDistance, inButtons);  // XXX need an actual default implementation
+	long newValue {};
+	if (mMode == Mode::Momentary)
+	{
+		newValue = getNumStates() - 1;
+		setValue_i(newValue);
+		if (isDirty())
+		{
+			valueChanged();
+		}
+		setValue_i(0);
 	}
+	else
+	{
+		long const delta = (inDistance < 0.0f) ? -1 : 1;
+		newValue = constrainValue(getValue_i() + delta);
+		if (newValue != getValue_i())
+		{
+			setValue_i(newValue);
+		}
+	}
+
+	if (notifyIfChanged())
+	{
+		if (mUserProcedure)
+		{
+			mUserProcedure(newValue, mUserProcData);
+		}
+		if (mUserReleaseProcedure)
+		{
+			mUserReleaseProcedure(getValue_i(), mUserReleaseProcData);
+		}
+	}
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -312,6 +311,27 @@ void DGButton::setUserReleaseProcedure(DGButtonUserProcedure inProc, void* inUse
 	mUserReleaseProcedure = inProc;
 	mUserReleaseProcData = inUserData;
 	mUseReleaseProcedureOnlyAtEndWithNoCancel = inOnlyAtEndWithNoCancel;
+}
+
+//-----------------------------------------------------------------------------
+long DGButton::constrainValue(long inValue) const
+{
+	constexpr long min = 0;
+	long const max = getNumStates() - 1;
+
+	if (mWraparoundValues)
+	{
+		if (inValue > max)
+		{
+			return min;
+		}
+		else if (inValue < min)
+		{
+			return max;
+		}
+	}
+
+	return std::clamp(inValue, min, max);
 }
 
 
@@ -400,11 +420,7 @@ VSTGUI::CMouseEventResult DGFineTuneButton::onMouseMoved(VSTGUI::CPoint& inPos, 
 		}
 	}
 
-	if (isDirty())
-	{
-		valueChanged();
-		invalid();
-	}
+	notifyIfChanged();
 
 	return VSTGUI::kMouseEventHandled;
 }
@@ -422,12 +438,26 @@ VSTGUI::CMouseEventResult DGFineTuneButton::onMouseUp(VSTGUI::CPoint& /*inPos*/,
 	return VSTGUI::kMouseEventHandled;
 }
 
+//-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGFineTuneButton::onMouseCancel()
+{
+	if (isEditing())
+	{
+		setValue(mEntryValue);
+		notifyIfChanged();
+		endEdit();
+	}
+
+	return VSTGUI::kMouseEventHandled;
+}
+
 
 
 
 
 
 #pragma mark -
+#pragma mark DGValueSpot
 
 //-----------------------------------------------------------------------------
 // DGValueSpot
@@ -469,6 +499,7 @@ VSTGUI::CMouseEventResult DGValueSpot::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI
 
 	beginEdit();
 
+	mEntryValue = getValue();
 	mLastMousePos(-1, -1);
 
 	return onMouseMoved(inPos, inButtons);
@@ -496,11 +527,7 @@ VSTGUI::CMouseEventResult DGValueSpot::onMouseMoved(VSTGUI::CPoint& inPos, VSTGU
 		}
 		mLastMousePos = inPos;
 
-		if (isDirty())
-		{
-			valueChanged();
-			invalid();
-		}
+		notifyIfChanged();
 		if (oldButtonIsPressed != mButtonIsPressed)
 		{
 			redraw();
@@ -521,12 +548,26 @@ VSTGUI::CMouseEventResult DGValueSpot::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTG
 	return VSTGUI::kMouseEventHandled;
 }
 
+//-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGValueSpot::onMouseCancel()
+{
+	if (isEditing())
+	{
+		setValue(mEntryValue);
+		notifyIfChanged();
+		endEdit();
+	}
+
+	return VSTGUI::kMouseEventHandled;
+}
+
 
 
 
 
 
 #pragma mark -
+#pragma mark DGWebLink
 
 //-----------------------------------------------------------------------------
 // DGWebLink
@@ -592,6 +633,22 @@ VSTGUI::CMouseEventResult DGWebLink::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CB
 	}
 
 	endEdit();
+
+	return VSTGUI::kMouseEventHandled;
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGWebLink::onMouseCancel()
+{
+	if (isEditing())
+	{
+		setValue(getMin());
+		if (isDirty())
+		{
+			invalid();
+		}
+		endEdit();
+	}
 
 	return VSTGUI::kMouseEventHandled;
 }

@@ -156,7 +156,7 @@ public:
 	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
 	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
 
-	void addControl(IDGControl* inControl);
+	IDGControl* addControl(IDGControl* inControl);
 	// in-place constructor variant that instantiates the control in addition to adding it
 	template <typename T, typename... Args>
 	T* emplaceControl(Args&&... args)
@@ -213,13 +213,8 @@ public:
 	void onMouseExited(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) override;
 	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) override;
 	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) override;
-	// ViewMouseListenerAdapter overrides
+	// ViewMouseListenerAdapter override
 	VSTGUI::CMouseEventResult viewOnMouseDown(VSTGUI::CView* inView, VSTGUI::CPoint inPos, VSTGUI::CButtonState inButtons) override;
-
-	auto getCurrentControl_clicked() const noexcept
-	{
-		return mCurrentControl_clicked;
-	}
 
 #ifdef TARGET_API_RTAS
 	void GetBackgroundRect(sRect* outRect);
@@ -328,6 +323,8 @@ private:
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(long inParameterID);
+	void handleContextualMenuSelection(VSTGUI::CCommandMenuItem* inMenuItem);
+	void handleParameterContextualMenuSelection(long inParameterID, VSTGUI::CCommandMenuItem* inMenuItem);
 	long initClipboard();
 	long copySettings();
 	long pasteSettings(bool* inQueryPastabilityOnly = nullptr);
@@ -335,7 +332,6 @@ private:
 	void addMousedOverControl(IDGControl* inMousedOverControl);
 	void removeMousedOverControl(IDGControl* inMousedOverControl);
 
-	IDGControl* mCurrentControl_clicked = nullptr;
 	IDGControl* mCurrentControl_mouseover = nullptr;
 
 	std::list<IDGControl*> mMousedOverControlsList;
