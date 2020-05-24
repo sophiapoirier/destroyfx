@@ -64,7 +64,7 @@ enum
 };
 
 
-static char const* const kValueTextFont = "Lucida Grande";
+constexpr char const* const kValueTextFont = "Lucida Grande";
 constexpr float kValueTextSize = 13.0f;
 constexpr float kUnusedControlAlpha = 0.45f;
 
@@ -84,18 +84,24 @@ public:
 	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override
 	{
 		setHandle(mClickedHandle);
-		auto const result = DGSlider::onMouseDown(inPos, inButtons);
 		redraw();  // ensure that the change in slider handle is reflected
-		return result;
+		return DGSlider::onMouseDown(inPos, inButtons);
 	}
 
 	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override
 	{
 		setHandle(mRegularHandle);
-		auto const result = DGSlider::onMouseUp(inPos, inButtons);
 		redraw();
-		return result;
+		return DGSlider::onMouseUp(inPos, inButtons);
 	}
+
+	VSTGUI::CMouseEventResult onMouseCancel() override
+	{
+		setHandle(mRegularHandle);
+		redraw();
+		return DGSlider::onMouseCancel();
+	}
+
 private:
 	VSTGUI::SharedPointer<DGImage> const mRegularHandle;
 	VSTGUI::SharedPointer<DGImage> const mClickedHandle;

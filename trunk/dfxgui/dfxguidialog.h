@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2015-2019  Sophia Poirier
+Copyright (C) 2015-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
+#include <optional>
 #include <string>
 
 #include "dfxdefines.h"
@@ -91,7 +92,7 @@ private:
 	Listener* mListener = nullptr;
 	DialogChoiceSelectedCallback mDialogChoiceSelectedCallback;
 
-	VSTGUI::ModalViewSession* mModalViewSession = nullptr;
+	std::optional<VSTGUI::ModalViewSessionID> mModalViewSessionID;
 };
 
 

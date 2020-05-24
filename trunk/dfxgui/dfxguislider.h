@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -54,6 +54,68 @@ public:
 private:
 	VSTGUI::SharedPointer<VSTGUI::CBitmap> mMainHandleImage;
 	VSTGUI::SharedPointer<VSTGUI::CBitmap> mAlternateHandleImage;
+};
+
+
+
+#pragma mark -
+//-----------------------------------------------------------------------------
+class DGRangeSlider : public DGMultiControl<VSTGUI::CControl>
+{
+public:
+	enum class PushStyle
+	{
+		Neither,
+		Both,
+		Lower,
+		Upper
+	};
+
+	DGRangeSlider(DfxGuiEditor* inOwnerEditor, long inLowerParamID, long inUpperParamID, DGRect const& inRegion, 
+				  DGImage* inLowerHandleImage, DGImage* inUpperHandleImage, 
+				  DGImage* inBackgroundImage = nullptr, 
+				  PushStyle inPushStyle = PushStyle::Neither, 
+				  long inOvershoot = 0);
+
+	void draw(VSTGUI::CDrawContext* inContext) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseCancel() override;
+
+	void setAlternateHandles(VSTGUI::CBitmap* inLowerHandle, VSTGUI::CBitmap* inUpperHandle);
+
+#if TARGET_PLUGIN_USES_MIDI
+	void setMidiLearner(bool inEnable) override;
+#endif
+
+	CLASS_METHODS(DGRangeSlider, VSTGUI::CControl)
+
+private:
+	IDGControl* const mLowerControl;
+	IDGControl* const mUpperControl;
+
+	VSTGUI::SharedPointer<VSTGUI::CBitmap> const mLowerMainHandleImage, mUpperMainHandleImage;
+	VSTGUI::SharedPointer<VSTGUI::CBitmap> mLowerAlternateHandleImage, mUpperAlternateHandleImage;
+
+	VSTGUI::CCoord const mMinXPos;	// min X position in pixel
+	VSTGUI::CCoord const mMaxXPos;	// max X position in pixel
+	float const mEffectiveRange;
+	PushStyle const mPushStyle;
+	long const mOvershoot;	// how far (in pixel) you can click outside of being in between the points and still be close enough to be considered in between
+
+	// mouse-down state
+	bool mClickBetween = false;
+	float mClickStartValue = 0.0f;
+	float mClickOffsetInValue = 0.0f;
+	float mLowerStartValue = 0.0f, mUpperStartValue = 0.0f;
+	float mAnchorStartValue = 0.0f;
+	IDGControl* mAnchorControl = nullptr;
+
+	float mNewValue = 0.0f, mOldValue = 0.0f;
+	float mFineTuneStartValue = 0.0f;
+	VSTGUI::CCoord mOldPosY {};
+	VSTGUI::CButtonState mOldButtons;
 };
 
 

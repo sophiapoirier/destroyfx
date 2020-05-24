@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -33,6 +33,7 @@ static auto const kDisplayFont = dfx::kFontName_SnootPixel10;
 constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
 constexpr DGColor kBrownTextColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
+constexpr long kRangeSliderOvershoot = 3;
 
 constexpr long kOctavesSliderWidth = 118 - 2;
 static long const kOctaveMaxSliderWidth = static_cast<long>((static_cast<float>(kOctave_MaxValue) / static_cast<float>((std::abs(kOctave_MinValue) + kOctave_MaxValue))) * static_cast<float>(kOctavesSliderWidth));
@@ -473,9 +474,10 @@ long ScrubbyEditor::OpenEditor()
 
 	// seek rate
 	pos.set(kSeekRateSliderX, kSeekRateSliderY, kSeekRateSliderWidth, kSliderHeight);
-	mSeekRateSlider = emplaceControl<DGSlider>(this, seekRateParamID, pos, dfx::kAxis_Horizontal, sliderHandleImage);
-	mSeekRateSlider->setAlternateHandle(sliderHandleImage_glowing);
-//	mSeekRateSlider->setOvershoot(3);
+	mSeekRateSlider = emplaceControl<DGRangeSlider>(this, seekRateRandMinParamID, seekRateParamID, pos, 
+													rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr, 
+													DGRangeSlider::PushStyle::Upper, kRangeSliderOvershoot);
+	mSeekRateSlider->setAlternateHandle(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
 
 	// seek range
 	pos.set(kSeekRangeSliderX, kSeekRangeSliderY, kSeekRangeSliderWidth, kSliderHeight);
@@ -483,8 +485,11 @@ long ScrubbyEditor::OpenEditor()
 
 	// seek duration
 	pos.set(kSeekDurSliderX, kSeekDurSliderY, kSeekDurSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kSeekDur, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
-//	slider->setOvershoot(3);
+	emplaceControl<DGRangeSlider>(this, kSeekDurRandMin, kSeekDur, pos, 
+								  rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr, 
+								  DGRangeSlider::PushStyle::Upper, 
+								  kRangeSliderOvershoot)->setAlternateHandle(rangeSliderHandleLeftImage_glowing, 
+																			 rangeSliderHandleRightImage_glowing);
 
 	// octave minimum
 	pos.set(kOctaveMinSliderX, kOctaveMinSliderY, kOctaveMinSliderWidth, kSliderHeight);
@@ -868,8 +873,8 @@ void ScrubbyEditor::parameterChanged(long inParameterID)
 				inControl->setParameterID(newParamID);
 			};
 			updateControlParameterID(mSeekRateSlider);
+			updateControlParameterID(mSeekRateSlider->getChildren().front());
 			updateControlParameterID(mSeekRateDisplay);
-//			updateControlParameterID(mSeekRateRandMinSlider);
 			updateControlParameterID(mSeekRateRandMinDisplay);
 			break;
 		}
