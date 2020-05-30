@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -236,7 +236,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 void BufferOverride::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
-	auto const oldDivisor = mDivisor;
+	auto const entryDivisor = mDivisor;
 
 
 //-------------------------INITIALIZATIONS----------------------
@@ -376,9 +376,10 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 	}
 
 	// make our parameters storers and the host aware that divisor changed because of MIDI
-	if (mDivisor != oldDivisor)
+	if ((mDivisor != entryDivisor)/* || mDivisorWasChangedByMIDI*/)
 	{
 		setparameter_f(kDivisor, mDivisor);  // XXX eh?
-		postupdate_parameter(kDivisor);  // inform listeners of change
+		mDivisorChangeInProcessHasPosted.clear();  // inform listeners of change (later, off the realtime thread)
 	}
+	mDivisorWasChangedByMIDI = false;
 }
