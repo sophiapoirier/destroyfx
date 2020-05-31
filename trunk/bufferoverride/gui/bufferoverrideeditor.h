@@ -38,7 +38,7 @@ public:
 private:
 	void HandleTempoAutoChange();
 
-	DGSlider* mBufferSizeSlider = nullptr;
+	DGXYBox* mDivisorBufferBox = nullptr;
 	DGSlider* mDivisorLFORateSlider = nullptr;
 	DGSlider* mBufferLFORateSlider = nullptr;
 	DGTextDisplay* mBufferSizeDisplay = nullptr;

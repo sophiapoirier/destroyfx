@@ -153,7 +153,13 @@ protected:
 		bool const mEntryEditing;
 	};
 
+	DGRect rectLocalToFrame(DGRect rect) const
+	{
+		return rect.offset(T::getViewSize().getTopLeft());
+	}
+
 private:
+	void initValues();
 	void pullNumStatesFromParameter();
 
 	DfxGuiEditor* const mOwnerEditor;
@@ -209,12 +215,12 @@ public:
 	void endEdit_all();
 	bool isEditing_any() const;
 
+	IDGControl* getControlByParameterID(long inParameterID);
+
 protected:
 	IDGControl* addChild(long inParameterID);
 	// TODO: C++20 use std::span
 	void addChildren(std::vector<long> const& inParameterID);
-
-	IDGControl* getControlByParameterID(long inParameterID) const;
 
 	template <typename Proc>
 	void forEachChild(Proc inProc);

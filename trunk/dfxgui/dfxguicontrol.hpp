@@ -44,7 +44,8 @@ DGControl<T>::DGControl(Args&&... args)
 	assert(T::getListener() ? (mOwnerEditor != nullptr) : true);
 	assert(isParameterAttached() ? (mOwnerEditor != nullptr) : true);
 
-	pullNumStatesFromParameter();
+	initValues();
+	T::setOldValue(T::getValue());
 }
 
 //-----------------------------------------------------------------------------
@@ -110,7 +111,6 @@ void DGControl<T>::setValue_i(long inValue)
 	}
 
 	T::setValueNormalized(newValue_f);
-	T::bounceValue();
 }
 
 //-----------------------------------------------------------------------------
@@ -132,12 +132,9 @@ long DGControl<T>::getParameterID() const
 template <class T>
 void DGControl<T>::setParameterID(long inParameterID)
 {
+	assert(inParameterID != getParameterID());
 	T::setTag(inParameterID);
-	pullNumStatesFromParameter();
-	if (mOwnerEditor)
-	{
-		setValue_gen(mOwnerEditor->getparameter_gen(inParameterID));
-	}
+	initValues();
 	T::setDirty();
 }
 
@@ -223,6 +220,51 @@ void DGControl<T>::setHelpText(CFStringRef inText)
 	}
 }
 #endif
+
+//-----------------------------------------------------------------------------
+template <class T>
+void DGControl<T>::initValues()
+{
+	pullNumStatesFromParameter();
+
+	if (isParameterAttached() && mOwnerEditor)
+	{
+		auto const value_norm = [this]
+		{
+#ifdef TARGET_API_RTAS
+			if (auto const process = mOwnerEditor->dfxgui_GetEffectInstance())
+			{
+				auto const parameterIndex_rtas = dfx::ParameterID_ToRTAS(getParameterID());
+				long value_rtas {};
+				process->GetControlValue(parameterIndex_rtas, &value_rtas);
+				return ConvertToVSTValue(value_rtas);
+			}
+#endif
+			return mOwnerEditor->getparameter_gen(getParameterID());
+		}();
+		auto const defaultValue_norm = [this]
+		{
+#ifdef TARGET_API_RTAS
+			if (auto const process = mOwnerEditor->dfxgui_GetEffectInstance())
+			{
+				auto const parameterIndex_rtas = dfx::ParameterID_ToRTAS(getParameterID());
+				long defaultValue_rtas {};
+				process->GetControlDefaultValue(parameterIndex_rtas, &defaultValue_rtas);
+				return ConvertToVSTValue(defaultValue_rtas);
+			}
+#endif
+			auto const defaultValue = mOwnerEditor->GetParameter_defaultValue(getParameterID());
+			return mOwnerEditor->dfxgui_ContractParameterValue(getParameterID(), defaultValue);
+		}();
+		setValue_gen(value_norm);
+		setDefaultValue_gen(defaultValue_norm);
+	}
+	else
+	{
+		T::setValue(T::getMin());
+		T::setDefaultValue(T::getMin() + (T::getRange() / 2.0f));
+	}
+}
 
 //-----------------------------------------------------------------------------
 template <class T>
@@ -318,6 +360,19 @@ bool DGMultiControl<T>::isEditing_any() const
 
 //-----------------------------------------------------------------------------
 template <class T>
+IDGControl* DGMultiControl<T>::getControlByParameterID(long inParameterID)
+{
+	if (DGControl<T>::getParameterID() == inParameterID)
+	{
+		return this;
+	}
+	auto const foundChild = std::find_if(mChildren.cbegin(), mChildren.cend(), 
+										 [inParameterID](auto&& child){ return child->getParameterID() == inParameterID; });
+	return (foundChild != mChildren.cend()) ? *foundChild : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
 IDGControl* DGMultiControl<T>::addChild(long inParameterID)
 {
 	assert(inParameterID >= 0);
@@ -339,19 +394,6 @@ void DGMultiControl<T>::addChildren(std::vector<long> const& inParameterIDs)
 {
 	assert(std::unordered_set<long>(inParameterIDs.cbegin(), inParameterIDs.cend()).size() == inParameterIDs.size());
 	std::for_each(inParameterIDs.cbegin(), inParameterIDs.cend(), [this](auto parameterID){ addChild(parameterID); });
-}
-
-//-----------------------------------------------------------------------------
-template <class T>
-IDGControl* DGMultiControl<T>::getControlByParameterID(long inParameterID) const
-{
-	if (DGControl<T>::getParameterID() == inParameterID)
-	{
-		return this;
-	}
-	auto const foundChild = std::find_if(mChildren.cbegin(), mChildren.cend(), 
-										 [inParameterID](auto&& child){ return child->getParameterID() == inParameterID; });
-	return (foundChild != mChildren.cend()) ? *foundChild : nullptr;
 }
 
 //-----------------------------------------------------------------------------
