@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -20,15 +20,18 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #include "bufferoverrideeditor.h"
+
+#include <array>
+
 #include "bufferoverride.h"
 
 
 
-static char const* const kValueDisplayFont = "Helvetica";
+constexpr char const* const kValueDisplayFont = "Helvetica";
 constexpr float kValueDisplayRegularFontSize = 10.8f;
 constexpr float kValueDisplayTinyFontSize = 10.2f;
 
-static char const* const kHelpDisplayFont = "Helvetica";
+constexpr char const* const kHelpDisplayFont = "Helvetica";
 constexpr float kHelpDisplayFontSize = 9.6f;
 
 constexpr DGColor kHelpDisplayTextColor(201, 201, 201);
@@ -227,7 +230,7 @@ bool dryWetMixDisplayProc(float value, char* outText, void*)
 
 bool pitchbendDisplayProc(float value, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, u8"%s %.2f", dfx::kPlusMinusUTF8, value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f", dfx::kPlusMinusUTF8, value) > 0;
 }
 
 bool tempoDisplayProc(float value, char* outText, void*)
@@ -317,13 +320,11 @@ long BufferOverrideEditor::OpenEditor()
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
 	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
-	pos.set(kDivisorBufferBoxX + 3, kDivisorBufferBoxY + 27, kDivisorBufferBoxWidth - 6, kSliderHeight);
-	emplaceControl<DGSlider>(this, kDivisor, pos, dfx::kAxis_Horizontal, xyBoxHandleImage)->setAlternateHandle(xyBoxHandleImage_divisor_glowing);
-
 	auto const bufferSizeTag = getparameter_b(kBufferTempoSync) ? kBufferSize_Sync : kBufferSize_MS;
-	pos.offset(0, 57);
-	mBufferSizeSlider = emplaceControl<DGSlider>(this, bufferSizeTag, pos, dfx::kAxis_Horizontal, xyBoxHandleImage);
-	mBufferSizeSlider->setAlternateHandle(xyBoxHandleImage_buffer_glowing);
+	pos.set(kDivisorBufferBoxX, kDivisorBufferBoxY, kDivisorBufferBoxWidth, kDivisorBufferBoxHeight);
+	mDivisorBufferBox = emplaceControl<DGXYBox>(this, kDivisor, bufferSizeTag, pos, xyBoxHandleImage, nullptr, 
+												VSTGUI::CSliderBase::kLeft | VSTGUI::CSliderBase::kTop);
+	mDivisorBufferBox->setAlternateHandles(xyBoxHandleImage_divisor_glowing, xyBoxHandleImage_buffer_glowing);
 
 
 
@@ -458,7 +459,7 @@ long BufferOverrideEditor::OpenEditor()
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::parameterChanged(long inParameterID)
 {
-	DGSlider* slider = nullptr;
+	IDGControl* slider = nullptr;
 	DGTextDisplay* textDisplay = nullptr;
 	auto const useSyncParam = getparameter_b(inParameterID);
 
@@ -466,10 +467,13 @@ void BufferOverrideEditor::parameterChanged(long inParameterID)
 	switch (inParameterID)
 	{
 		case kBufferTempoSync:
-			newParameterID = useSyncParam ? kBufferSize_Sync : kBufferSize_MS;
-			slider = mBufferSizeSlider;
+		{
+			constexpr std::array<long, 2> parameterIDs = { kBufferSize_MS, kBufferSize_Sync };
+			newParameterID = parameterIDs[useSyncParam];
+			slider = mDivisorBufferBox->getControlByParameterID(parameterIDs[!useSyncParam]);
 			textDisplay = mBufferSizeDisplay;
 			break;
+		}
 		case kDivisorLFOTempoSync:
 			newParameterID = useSyncParam ? kDivisorLFORate_Sync : kDivisorLFORate_Hz;
 			slider = mDivisorLFORateSlider;
@@ -522,14 +526,6 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 		case kBufferSize_Sync:
 			helpstring = "forced buffer size is the length of the sound chunks that Buffer Override works with";
 			break;
-//		case kBufferDivisorHelpTag:
-#if TARGET_OS_MAC
-//			helpstring = "left/right is buffer divisor (the number of skips in a forced buffer, hold ctrl).   up/down is forced buffer size (hold option)";
-#else
-			// shorten display text for Windows (beware larger fonts)
-//			helpstring = "left/right is buffer divisor (number of skips in a buffer, hold ctrl).  up/down is forced buffer size (hold alt)";
-#endif
-//			break;
 		case kBufferTempoSync:
 			helpstring = "turn tempo sync on if you want the size of the forced buffers to sync to your tempo";
 			break;
@@ -594,6 +590,17 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 				}
 			}
 			break;
+	}
+
+	if (currentControlUnderMouse == mDivisorBufferBox)
+	{
+#if TARGET_OS_MAC
+	#define BO_XLOCK_KEY "option"
+#else
+	#define BO_XLOCK_KEY "alt"
+#endif
+		helpstring = "left/right is buffer divisor (number of skips in a buffer, hold ctrl).  up/down is forced buffer size (hold " BO_XLOCK_KEY ")";
+#undef BO_XLOCK_KEY
 	}
 
 	mHelpDisplay->setText(helpstring ? helpstring : "");

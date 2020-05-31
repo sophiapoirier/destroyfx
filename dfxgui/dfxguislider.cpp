@@ -24,9 +24,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguislider.h"
 
 #include <cassert>
+#include <cmath>
 
 #include "dfxguieditor.h"
 
+
+namespace
+{
 
 //-----------------------------------------------------------------------------
 static VSTGUI::CButtonState ConstrainButtons(VSTGUI::CButtonState const& inButtons, long inNumStates)
@@ -37,6 +41,28 @@ static VSTGUI::CButtonState ConstrainButtons(VSTGUI::CButtonState const& inButto
 	}
 	return inButtons;
 }
+
+//-----------------------------------------------------------------------------
+static void EndControl(IDGControl* inControl)
+{
+	if (inControl->asCControl()->isEditing())
+	{
+		inControl->asCControl()->endEdit();
+	}
+}
+
+//-----------------------------------------------------------------------------
+static void CancelControl(IDGControl* inControl, float inStartValue)
+{
+	auto const cControl = inControl->asCControl();
+	if (cControl->isEditing())
+	{
+		cControl->setValueNormalized(inStartValue);
+		cControl->endEdit();
+	}
+}
+
+}  // namespace
 
 
 
@@ -182,11 +208,18 @@ void DGRangeSlider::draw(VSTGUI::CDrawContext* inContext)
 		image->draw(inContext, getViewSize());
 	}
 
+#if TARGET_PLUGIN_USES_MIDI
 	auto const getHandleImage = [midiLearner = getOwnerEditor()->getmidilearner()](auto control, auto const& mainImage, auto const& alternateImage)
 	{
 		bool const useAlternateImage = (control->getParameterID() == midiLearner) && alternateImage;
 		return useAlternateImage ? alternateImage.get() : mainImage.get();
 	};
+#else
+	auto const getHandleImage = [](auto, auto const& mainImage, auto const&)
+	{
+		return mainImage.get();
+	};
+#endif
 	auto const lowerActiveHandleImage = getHandleImage(mLowerControl, mLowerMainHandleImage, mLowerAlternateHandleImage);
 	auto const upperActiveHandleImage = getHandleImage(mUpperControl, mUpperMainHandleImage, mUpperAlternateHandleImage);
 	if (lowerActiveHandleImage && upperActiveHandleImage)
@@ -210,10 +243,6 @@ void DGRangeSlider::draw(VSTGUI::CDrawContext* inContext)
 		DGRect const lowerRect(lowerPosX, 0, lowerActiveHandleImage->getWidth(), getHeight());
 		DGRect const upperRect(upperPosX + lowerActiveHandleImage->getWidth(), 0, upperActiveHandleImage->getWidth(), getHeight());
 
-		auto const rectLocalToFrame = [this](DGRect rect)
-		{
-			return rect.offset(getViewSize().getTopLeft());
-		};
 		lowerActiveHandleImage->draw(inContext, rectLocalToFrame(lowerRect));
 		upperActiveHandleImage->draw(inContext, rectLocalToFrame(upperRect));
 	}
@@ -237,9 +266,6 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseDown(VSTGUI::CPoint& inPos, VSTG
 	{
 		return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
 	}
-
-	DiscreteValueConstrainer const dvc1(mLowerControl);
-	DiscreteValueConstrainer const dvc2(mUpperControl);
 
 	beginEdit_all();
 
@@ -323,13 +349,13 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseDown(VSTGUI::CPoint& inPos, VSTG
 //-----------------------------------------------------------------------------
 VSTGUI::CMouseEventResult DGRangeSlider::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
-	DiscreteValueConstrainer const dvc1(mLowerControl->asCControl()->isEditing() ? mLowerControl : nullptr);
-	DiscreteValueConstrainer const dvc2(mUpperControl->asCControl()->isEditing() ? mUpperControl : nullptr);
-
 	if (!(inButtons.isLeftButton() && isEditing_any()))
 	{
 		return VSTGUI::kMouseEventNotHandled;
 	}
+
+	DiscreteValueConstrainer const dvc1(mLowerControl->asCControl()->isEditing() ? mLowerControl : nullptr);
+	DiscreteValueConstrainer const dvc2(mUpperControl->asCControl()->isEditing() ? mUpperControl : nullptr);
 
 	bool const isFineTune = (inButtons & kZoomModifier);
 	if ((mOldButtons != inButtons) && isFineTune)
@@ -438,15 +464,8 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseMoved(VSTGUI::CPoint& inPos, VST
 //-----------------------------------------------------------------------------
 VSTGUI::CMouseEventResult DGRangeSlider::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
 {
-	auto const endControl = [](IDGControl* dgControl)
-	{
-		if (dgControl->asCControl()->isEditing())
-		{
-			dgControl->asCControl()->endEdit();
-		}
-	};
-	endControl(mLowerControl);
-	endControl(mUpperControl);
+	EndControl(mLowerControl);
+	EndControl(mUpperControl);
 
 	return VSTGUI::kMouseEventHandled;
 }
@@ -454,17 +473,8 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI
 //-----------------------------------------------------------------------------
 VSTGUI::CMouseEventResult DGRangeSlider::onMouseCancel()
 {
-	auto const cancelControl = [](IDGControl* dgControl, auto startValue)
-	{
-		auto const cControl = dgControl->asCControl();
-		if (cControl->isEditing())
-		{
-			cControl->setValueNormalized(startValue);
-			cControl->endEdit();
-		}
-	};
-	cancelControl(mLowerControl, mLowerStartValue);
-	cancelControl(mUpperControl, mUpperStartValue);
+	CancelControl(mLowerControl, mLowerStartValue);
+	CancelControl(mUpperControl, mUpperStartValue);
 	notifyIfChanged_all();
 
 	return VSTGUI::kMouseEventHandled;
@@ -476,6 +486,7 @@ void DGRangeSlider::setAlternateHandles(VSTGUI::CBitmap* inLowerHandle, VSTGUI::
 	assert(!inLowerHandle == !inUpperHandle);
 	assert((inLowerHandle && inUpperHandle) ? (inLowerHandle->getSize() == inUpperHandle->getSize()) : true);
 	assert((mUpperMainHandleImage && inUpperHandle) ? (mUpperMainHandleImage->getSize() == inUpperHandle->getSize()) : true);
+
 	mLowerAlternateHandleImage = inLowerHandle;
 	mUpperAlternateHandleImage = inUpperHandle;
 }
@@ -487,6 +498,253 @@ void DGRangeSlider::setMidiLearner(bool inEnable)
 	redraw();
 }
 #endif
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGXYBox
+
+//-----------------------------------------------------------------------------
+DGXYBox::DGXYBox(DfxGuiEditor* inOwnerEditor, long inParamIDX, long inParamIDY, DGRect const& inRegion, 
+				 DGImage* inHandleImage, DGImage* inBackgroundImage, int inStyle)
+:	DGMultiControl<VSTGUI::CControl>(inRegion, 
+									 inOwnerEditor, 
+									 inParamIDX, 
+									 inBackgroundImage),
+	mControlX(this), 
+	mControlY(addChild(inParamIDY)), 
+	mMainHandleImage(inHandleImage),
+	mStyle(inStyle),
+	mHandleWidth(inHandleImage ? inHandleImage->getWidth() : 1), 
+	mHandleHeight(inHandleImage ? inHandleImage->getHeight() : 1), 
+	mMinXPos(inRegion.left), 
+	mMaxXPos(inRegion.right - mHandleWidth), 
+	mMinYPos(inRegion.top), 
+	mMaxYPos(inRegion.bottom - mHandleHeight), 
+	mMouseableOrigin(mMinXPos + (mHandleWidth / 2)/* - 1*/, mMinYPos + (mHandleHeight / 2)/* - 1*/), 
+	mEffectiveRangeX(static_cast<float>(mMaxXPos - mMinXPos)), 
+	mEffectiveRangeY(static_cast<float>(mMaxYPos - mMinYPos))
+{
+	assert((inStyle & VSTGUI::CSliderBase::kLeft) ^ (inStyle & VSTGUI::CSliderBase::kRight));
+	assert((inStyle & VSTGUI::CSliderBase::kBottom) ^ (inStyle & VSTGUI::CSliderBase::kTop));
+	assert(!(inStyle & (VSTGUI::CSliderBase::kHorizontal | VSTGUI::CSliderBase::kVertical)));
+
+	setTransparency(true);
+}
+
+//-----------------------------------------------------------------------------
+void DGXYBox::draw(VSTGUI::CDrawContext* inContext)
+{
+	if (auto const image = getDrawBackground())
+	{
+		image->draw(inContext, getViewSize());
+	}
+
+	auto const valueX = mapValueX(mControlX->asCControl()->getValueNormalized());
+	auto const valueY = mapValueY(mControlY->asCControl()->getValueNormalized());
+
+	DGRect rect(valueX * mEffectiveRangeX, valueY * mEffectiveRangeY, mHandleWidth, mHandleHeight);
+	VSTGUI::CRect const boundingRect(mMinXPos - getViewSize().left, 
+									 mMinYPos - getViewSize().top, 
+									 mMaxXPos + mHandleWidth - getViewSize().left, 
+									 mMaxYPos + mHandleHeight - getViewSize().top);
+	rect.bound(boundingRect);
+
+	auto const activeHandleImage = [this]()
+	{
+#if TARGET_PLUGIN_USES_MIDI
+		auto const midiLearner = getOwnerEditor()->getmidilearner();
+		if ((mControlX->getParameterID() == midiLearner) && mAlternateHandleImageX)
+		{
+			return mAlternateHandleImageX.get();
+		}
+		if ((mControlY->getParameterID() == midiLearner) && mAlternateHandleImageY)
+		{
+			return mAlternateHandleImageY.get();
+		}
+#endif
+		return mMainHandleImage.get();
+	}();
+	if (activeHandleImage)
+	{
+		activeHandleImage->draw(inContext, rectLocalToFrame(rect));
+	}
+
+#ifdef TARGET_API_RTAS
+	getOwnerEditor()->drawControlHighlight(inContext, this);
+#endif
+
+	setDirty_all(false);
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGXYBox::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+{
+	if (!inButtons.isLeftButton())
+	{
+		return VSTGUI::kMouseEventNotHandled;
+	}
+
+	if (checkDefaultValue_all(inButtons))
+	{
+		return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
+	}
+
+	beginEdit_all();
+
+	mStartValueX = mOldValueX = mControlX->asCControl()->getValueNormalized();
+	mStartValueY = mOldValueY = mControlY->asCControl()->getValueNormalized();
+	mOldButtons = inButtons;
+
+	// the following stuff allows you click within a handle and have the value not "jump" at all
+	auto const handleWidthInValue = static_cast<float>(mHandleWidth) / mEffectiveRangeX;
+	auto const handleHeightInValue = static_cast<float>(mHandleHeight) / mEffectiveRangeY;
+	auto const clickValueX = mapValueX(static_cast<float>(inPos.x - mMouseableOrigin.x) / mEffectiveRangeX);
+	auto const clickValueY = mapValueY(static_cast<float>(inPos.y - mMouseableOrigin.y) / mEffectiveRangeY);
+	auto const startDiffX = clickValueX - mStartValueX;
+	auto const startDiffY = clickValueY - mStartValueY;
+	mClickOffset = {};
+	if (std::fabs(startDiffX) < (handleWidthInValue * 0.5f))
+	{
+		mClickOffset.x = (startDiffX * mEffectiveRangeX) * ((mStyle & VSTGUI::CSliderBase::kLeft) ? -1 : 1);
+	}
+	if (std::fabs(startDiffY) < (handleHeightInValue * 0.5f))
+	{
+		mClickOffset.y = (startDiffY * mEffectiveRangeY) * ((mStyle & VSTGUI::CSliderBase::kTop) ? -1 : 1);
+	}
+
+#if TARGET_PLUGIN_USES_MIDI
+	if (getOwnerEditor()->getmidilearning())
+	{
+		auto const currentLearner = getOwnerEditor()->getmidilearner();
+		auto const firstLearner = mControlX->getParameterID();
+		auto const alternateLearner = mControlY->getParameterID();
+		auto const newLearner = (currentLearner == firstLearner) ? alternateLearner : firstLearner;
+		getOwnerEditor()->setmidilearner(newLearner);
+	}
+#endif
+
+	return onMouseMoved(inPos, inButtons);
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGXYBox::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+{
+	if (!(inButtons.isLeftButton() && isEditing_any()))
+	{
+		return VSTGUI::kMouseEventNotHandled;
+	}
+
+	DiscreteValueConstrainer const dvcX(mControlX->asCControl()->isEditing() ? mControlX : nullptr);
+	DiscreteValueConstrainer const dvcY(mControlY->asCControl()->isEditing() ? mControlY : nullptr);
+
+	bool const isFineTune = (inButtons & kZoomModifier);
+	if ((mOldButtons != inButtons) && isFineTune)
+	{
+		mOldValueX = mControlX->asCControl()->getValueNormalized();
+		mOldValueY = mControlY->asCControl()->getValueNormalized();
+		mOldButtons = inButtons;
+	}
+	else if (!isFineTune)
+	{
+		mOldValueX = mControlX->asCControl()->getValueNormalized();
+		mOldValueY = mControlY->asCControl()->getValueNormalized();
+	}
+
+	// option/alt locks the X axis, so only adjust the X value if option is not being pressed 
+	if (!inButtons.isAltSet())
+	{
+		auto const value = [this, inPos, isFineTune]()
+		{
+			auto const newValue = mapValueX(static_cast<float>(inPos.x - mMouseableOrigin.x + mClickOffset.x) / mEffectiveRangeX);
+			if (isFineTune)
+			{
+				return mOldValueX + ((newValue - mOldValueX) / getFineTuneFactor());
+			}
+			return newValue;
+		}();
+		mControlX->asCControl()->setValueNormalized(value);
+	}
+
+	// control locks the Y axis, so only adjust the Y value if control is not being pressed
+	auto const lockY = TARGET_OS_MAC ? !inButtons.isAppleSet() : !inButtons.isControlSet();
+	if (lockY)
+	{
+		auto const value = [this, inPos, isFineTune]()
+		{
+			auto const newValue = mapValueY(static_cast<float>(inPos.y - mMouseableOrigin.y + mClickOffset.y) / mEffectiveRangeY);
+			if (isFineTune)
+			{
+				return mOldValueY + ((newValue - mOldValueY) / getFineTuneFactor());
+			}
+			return newValue;
+		}();
+		mControlY->asCControl()->setValueNormalized(value);
+	}
+
+	notifyIfChanged_all();
+
+	return VSTGUI::kMouseEventHandled;
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGXYBox::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+{
+	EndControl(mControlX);
+	EndControl(mControlY);
+
+	return VSTGUI::kMouseEventHandled;
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGXYBox::onMouseCancel()
+{
+	CancelControl(mControlX, mStartValueX);
+	CancelControl(mControlY, mStartValueY);
+	notifyIfChanged_all();
+
+	return VSTGUI::kMouseEventHandled;
+}
+
+//-----------------------------------------------------------------------------
+void DGXYBox::setAlternateHandles(VSTGUI::CBitmap* inHandleX, VSTGUI::CBitmap* inHandleY)
+{
+	assert(!inHandleX == !inHandleY);
+	assert((inHandleX && inHandleY) ? (inHandleX->getSize() == inHandleY->getSize()) : true);
+	assert((mMainHandleImage && inHandleX) ? (mMainHandleImage->getSize() == inHandleX->getSize()) : true);
+
+	mAlternateHandleImageX = inHandleX;
+	mAlternateHandleImageY = inHandleY;
+}
+
+#if TARGET_PLUGIN_USES_MIDI
+//-----------------------------------------------------------------------------
+void DGXYBox::setMidiLearner(bool inEnable)
+{
+	redraw();
+}
+#endif
+
+//-----------------------------------------------------------------------------
+float DGXYBox::invertIfStyle(float inValue, VSTGUI::CSliderBase::Style inStyle) const
+{
+	return (mStyle & inStyle) ? (1.0f - inValue) : inValue;
+}
+
+//-----------------------------------------------------------------------------
+float DGXYBox::mapValueX(float inValue) const
+{
+	return invertIfStyle(inValue, VSTGUI::CSliderBase::kRight);
+}
+
+//-----------------------------------------------------------------------------
+float DGXYBox::mapValueY(float inValue) const
+{
+	return invertIfStyle(inValue, VSTGUI::CSliderBase::kBottom);
+}
 
 
 
