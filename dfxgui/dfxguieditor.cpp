@@ -62,10 +62,7 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 
 #ifdef TARGET_API_AUDIOUNIT
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wunknown-attributes"
-	__attribute__((no_destroy)) static auto const kDfxGui_AUPresetFileExtension = new VSTGUI::CFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);
-	#pragma clang diagnostic pop
+	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_AUPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);  // TODO: C++23 [[no_destroy]]
 #endif
 
 
@@ -444,40 +441,13 @@ IDGControl* DfxGuiEditor::addControl(IDGControl* inControl)
 {
 	assert(inControl);
 
-	auto const parameterIndex = inControl->getParameterID();
 	// XXX only add it to our controls list if it is attached to a parameter (?)
-	if (dfxgui_IsValidParamID(parameterIndex))
+	if (dfxgui_IsValidParamID(inControl->getParameterID()))
 	{
 		assert(std::find(mControlsList.cbegin(), mControlsList.cend(), inControl) == mControlsList.cend());
 		mControlsList.push_back(inControl);
 		inControl->asCControl()->registerViewMouseListener(this);
-
-#ifdef TARGET_API_RTAS
-		if (m_Process)
-		{
-			auto const parameterIndex_rtas = dfx::ParameterID_ToRTAS(parameterIndex);
-			long value_rtas {};
-			m_Process->GetControlValue(parameterIndex_rtas, &value_rtas);
-			inControl->setValue_gen(ConvertToVSTValue(value_rtas));
-			long defaultValue_rtas {};
-			m_Process->GetControlDefaultValue(parameterIndex_rtas, &defaultValue_rtas);  // VSTGUI: necessary for Alt+Click behavior
-			inControl->setDefaultValue_gen(ConvertToVSTValue(defaultValue_rtas));  // VSTGUI: necessary for Alt+Click behavior
-		}
-		else
-#endif
-		{
-			inControl->setValue_gen(getparameter_gen(parameterIndex));
-			auto const defaultValue = GetParameter_defaultValue(parameterIndex);
-			auto const defaultValue_norm = dfxgui_ContractParameterValue(parameterIndex, defaultValue);
-			inControl->setDefaultValue_gen(defaultValue_norm);
-		}
 	}
-	else
-	{
-		inControl->setValue_gen(0.0f);
-	}
-
-	inControl->asCControl()->setOldValue(inControl->asCControl()->getValue());
 
 	[[maybe_unused]] auto const success = getFrame()->addView(inControl->asCControl());
 	assert(success);
@@ -910,7 +880,8 @@ VSTGUI::CMouseEventResult DfxGuiEditor::viewOnMouseDown(VSTGUI::CView* inView, V
 	{
 		dgControl->invalidateMouseWheelEditingTimer();
 #if TARGET_PLUGIN_USES_MIDI
-		if (dgControl->isParameterAttached() && getmidilearning() && inButtons.isLeftButton())
+		auto const isMultiControl = !dgControl->getChildren().empty();  // multi-controls should self-manage learn
+		if (dgControl->isParameterAttached() && !isMultiControl && getmidilearning() && inButtons.isLeftButton())
 		{
 			setmidilearner(dgControl->getParameterID());
 		}
@@ -1513,7 +1484,7 @@ void DfxGuiEditor::LoadPresetFile()
 	{
 		fileSelector->setTitle("Open");
 #ifdef TARGET_API_AUDIOUNIT
-		fileSelector->addFileExtension(*kDfxGui_AUPresetFileExtension);
+		fileSelector->addFileExtension(kDfxGui_AUPresetFileExtension);
 		FSRef presetFileDirRef;
 		auto const status = FindPresetsDirForAU(reinterpret_cast<Component>(dfxgui_GetEffectInstance()), kUserDomain, kDontCreateFolder, &presetFileDirRef);
 		if (status == noErr)
@@ -1601,7 +1572,7 @@ void DfxGuiEditor::SavePresetFile()
 							if (fileSelector)
 							{
 								fileSelector->setTitle("Save");
-								fileSelector->setDefaultExtension(*kDfxGui_AUPresetFileExtension);
+								fileSelector->setDefaultExtension(kDfxGui_AUPresetFileExtension);
 								if (!textEntryDialog->getText().empty())
 								{
 									fileSelector->setDefaultSaveName(textEntryDialog->getText());

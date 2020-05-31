@@ -122,6 +122,58 @@ private:
 
 #pragma mark -
 //-----------------------------------------------------------------------------
+class DGXYBox : public DGMultiControl<VSTGUI::CControl>
+{
+public:
+	DGXYBox(DfxGuiEditor* inOwnerEditor, long inParamIDX, long inParamIDY, DGRect const& inRegion, 
+			DGImage* inHandleImage, DGImage* inBackgroundImage = nullptr, 
+			int inStyle = VSTGUI::CSliderBase::kLeft | VSTGUI::CSliderBase::kBottom);
+
+	void draw(VSTGUI::CDrawContext* inContext) override;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	VSTGUI::CMouseEventResult onMouseCancel() override;
+	bool onWheel(VSTGUI::CPoint const&, VSTGUI::CMouseWheelAxis const&, float const&, VSTGUI::CButtonState const&) override
+	{
+		return false;
+	}
+
+	void setAlternateHandles(VSTGUI::CBitmap* inHandleX, VSTGUI::CBitmap* inHandleY);
+
+#if TARGET_PLUGIN_USES_MIDI
+	void setMidiLearner(bool inEnable) override;
+#endif
+
+	CLASS_METHODS(DGXYBox, VSTGUI::CControl)
+
+private:
+	float invertIfStyle(float inValue, VSTGUI::CSliderBase::Style inStyle) const;
+	float mapValueX(float inValue) const;
+	float mapValueY(float inValue) const;
+
+	IDGControl* const mControlX;
+	IDGControl* const mControlY;
+	VSTGUI::SharedPointer<VSTGUI::CBitmap> const mMainHandleImage;
+	/*VSTGUI::CSliderBase::Style*/int const mStyle;
+	VSTGUI::SharedPointer<VSTGUI::CBitmap> mAlternateHandleImageX, mAlternateHandleImageY;
+	VSTGUI::CCoord const mHandleWidth, mHandleHeight;
+	VSTGUI::CCoord const mMinXPos, mMaxXPos, mMinYPos, mMaxYPos;
+	VSTGUI::CPoint const mMouseableOrigin;
+	float const mEffectiveRangeX, mEffectiveRangeY;
+
+	// mouse-down state
+	float mStartValueX = 0.0f, mStartValueY = 0.0f;
+	VSTGUI::CPoint mClickOffset;
+
+	float mOldValueX = 0.0f, mOldValueY = 0.0f;
+	VSTGUI::CButtonState mOldButtons;
+};
+
+
+
+#pragma mark -
+//-----------------------------------------------------------------------------
 class DGAnimation : public DGControl<VSTGUI::CAnimKnob>
 {
 public:
