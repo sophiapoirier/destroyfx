@@ -477,7 +477,7 @@ long ScrubbyEditor::OpenEditor()
 	mSeekRateSlider = emplaceControl<DGRangeSlider>(this, seekRateRandMinParamID, seekRateParamID, pos, 
 													rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr, 
 													DGRangeSlider::PushStyle::Upper, kRangeSliderOvershoot);
-	mSeekRateSlider->setAlternateHandle(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
+	mSeekRateSlider->setAlternateHandles(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
 
 	// seek range
 	pos.set(kSeekRangeSliderX, kSeekRangeSliderY, kSeekRangeSliderWidth, kSliderHeight);
@@ -488,8 +488,8 @@ long ScrubbyEditor::OpenEditor()
 	emplaceControl<DGRangeSlider>(this, kSeekDurRandMin, kSeekDur, pos, 
 								  rangeSliderHandleLeftImage, rangeSliderHandleRightImage, nullptr, 
 								  DGRangeSlider::PushStyle::Upper, 
-								  kRangeSliderOvershoot)->setAlternateHandle(rangeSliderHandleLeftImage_glowing, 
-																			 rangeSliderHandleRightImage_glowing);
+								  kRangeSliderOvershoot)->setAlternateHandles(rangeSliderHandleLeftImage_glowing, 
+																			  rangeSliderHandleRightImage_glowing);
 
 	// octave minimum
 	pos.set(kOctaveMinSliderX, kOctaveMinSliderY, kOctaveMinSliderWidth, kSliderHeight);
@@ -554,7 +554,7 @@ long ScrubbyEditor::OpenEditor()
 //	keyboard = emplaceControl<ScrubbyKeyboard>(this, kPitchStep0, pos, keyboardOffImage, keyboardOnImage, 24, 48, 18, 56, 114, 149, 184);
 	pos.set(kKeyboardX, kKeyboardY, keyboardTopKeyImages[0]->getWidth(), keyboardTopKeyImages[0]->getHeight() / 2);
 	DGRect keyboardBottomKeyPos(kKeyboardX, kKeyboardY + pos.getHeight(), keyboardBottomKeyImages[0]->getWidth(), keyboardBottomKeyImages[0]->getHeight() / 2);
-	for (long i = 0; i < kNumPitchSteps; i++)
+	for (size_t i = 0; i < kNumPitchSteps; i++)
 	{
 		long const paramID = kPitchStep0 + i;
 

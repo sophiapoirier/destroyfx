@@ -69,8 +69,8 @@ public:
 
 	void setButtonImage(DGImage* inImage);
 
-	virtual void setUserProcedure(DGButtonUserProcedure inProc, void* inUserData);
-	virtual void setUserReleaseProcedure(DGButtonUserProcedure inProc, void* inUserData, bool inOnlyAtEndWithNoCancel = false);
+	void setUserProcedure(DGButtonUserProcedure inProc, void* inUserData);
+	void setUserReleaseProcedure(DGButtonUserProcedure inProc, void* inUserData, bool inOnlyAtEndWithNoCancel = false);
 
 	void setOrientation(dfx::Axis inOrientation) noexcept
 	{

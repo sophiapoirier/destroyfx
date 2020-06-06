@@ -2442,7 +2442,7 @@ extern "C" void DGVstGuiAUViewEntry() {}	// XXX workaround to quiet missing expo
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-class DGVstGuiAUView : public AUCarbonViewBase 
+class DGVstGuiAUView final : public AUCarbonViewBase 
 {
 public:
 	explicit DGVstGuiAUView(AudioUnitCarbonView inInstance);
