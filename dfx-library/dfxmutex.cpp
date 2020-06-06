@@ -29,27 +29,6 @@ This is our mutually exclusive shit.
 
 
 //------------------------------------------------------------------------
-#ifdef __MACH__
-
-void dfx::SpinLock::lock()
-{
-	os_unfair_lock_lock(&mLock);
-}
-
-bool dfx::SpinLock::try_lock()
-{
-	return os_unfair_lock_trylock(&mLock);
-}
-
-void dfx::SpinLock::unlock()
-{
-	os_unfair_lock_unlock(&mLock);
-}
-
-
-
-//------------------------------------------------------------------------
-#else
 
 void dfx::SpinLock::lock()
 {
@@ -65,7 +44,3 @@ void dfx::SpinLock::unlock()
 {
 	mFlag.clear(std::memory_order_release);
 }
-
-
-
-#endif  // platform

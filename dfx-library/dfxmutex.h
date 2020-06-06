@@ -27,20 +27,18 @@ This is our mutually exclusive shit.
 #pragma once
 
 
-#ifdef __MACH__
-	#include <os/lock.h>
-#else
-	#include <atomic>
-#endif
+#include <atomic>
 
 
 
 namespace dfx
 {
 
-// A typical mutex can in some cases block during try_lock, making it unsafe to use at all
-// in realtime contexts.  A lightweight spinlock, while having some behavioral disadvantages,
-// can meet the try_lock performance requirements for such use cases.
+// A typical mutex can block when unlocking if another thread is waiting to acquire the lock, 
+// because the kernel must wake up the waiting thread, making it unsafe to use in realtime contexts, 
+// even if the realtime thread avoids waiting when acquiring the lock (e.g. using try_lock).  
+// A lightweight spinlock, while having some behavioral disadvantages if waiting to lock, 
+// can meet the wait-free / try_lock performance requirements for such use cases.
 class SpinLock
 {
 public:
@@ -57,11 +55,7 @@ public:
 	void unlock();
 
 private:
-#ifdef __MACH__
-	os_unfair_lock mLock = OS_UNFAIR_LOCK_INIT;  // the optimal realtime synchronization primitive on Apple platforms
-#else
 	std::atomic_flag mFlag = ATOMIC_FLAG_INIT;
-#endif
 };
 
 }  // dfx
