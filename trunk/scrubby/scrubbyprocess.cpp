@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -522,7 +522,7 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 //-----------------------------------------------------------------------------------------
 void Scrubby::processMidiNotes()
 {
-	std::array<bool, kNumPitchSteps> oldNotes;
+	std::array<bool, kNumPitchSteps> oldNotes {};
 	for (size_t i = 0; i < oldNotes.size(); i++)
 	{
 		oldNotes[i] = getparameter_b(i + kPitchStep0);
@@ -545,7 +545,7 @@ void Scrubby::processMidiNotes()
 					setparameter_b(currentNote + kPitchStep0, true);
 				}
 				// increment the active notes table for this note
-				mActiveNotesTable[currentNote] += 1;
+				mActiveNotesTable[currentNote]++;
 				break;
 
 			case DfxMidi::kStatus_NoteOff:
@@ -556,14 +556,7 @@ void Scrubby::processMidiNotes()
 					setparameter_b(currentNote + kPitchStep0, false);
 				}
 				// decrement the active notes table for this note, but don't go below 0
-				if (mActiveNotesTable[currentNote] > 0)
-				{
-					mActiveNotesTable[currentNote]--;
-				}
-				else
-				{
-					mActiveNotesTable[currentNote] = 0;
-				}
+				mActiveNotesTable[currentNote] = std::max(mActiveNotesTable[currentNote] - 1, 0L);
 				break;
 
 			case DfxMidi::kStatus_CC:

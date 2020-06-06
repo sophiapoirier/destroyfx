@@ -77,7 +77,7 @@ constexpr long kOctave_MinValue = -5;
 constexpr long kOctave_MaxValue = 7;
 
 // the number of semitones in an octave
-constexpr long kNumPitchSteps = 12;
+constexpr size_t kNumPitchSteps = 12;
 
 #define USE_LINEAR_ACCELERATION 0
 
@@ -87,25 +87,6 @@ enum
 	kSpeedMode_DJ,
 	kNumSpeedModes
 };
-
-
-/*
-class ScrubbyChunk final : public VstChunk
-{
-public:
-	ScrubbyChunk(long numParameters, long numPrograms, long magic, AudioEffectX* effect);
-	void doLearningAssignStuff(long tag, long eventType, long eventChannel, 
-							   long eventNum, long delta, 
-							   long eventNum2 = 0, 
-							   long eventBehaviourFlags = 0, 
-							   long data1 = 0, long data2 = 0, 
-							   float fdata1 = 0.0f, float fdata2 = 0.0f) override;
-	void unassignParam(long tag) override;
-
-	// true for unified single-point automation of both parameter range values
-	bool seekRateDoubleAutomate, seekDurDoubleAutomate;
-};
-*/
 
 
 //----------------------------------------------------------------------------- 
@@ -144,7 +125,7 @@ private:
 	double mUserTempo = 0.0;
 	long mSpeedMode = kSpeedMode_Robot, mOctaveMin = 0, mOctaveMax = 0;
 	bool mFreeze = false, mSplitChannels = false, mPitchConstraint = false, mTempoSync = false, mUseHostTempo = false;
-	std::array<bool, kNumPitchSteps> mPitchSteps;
+	std::array<bool, kNumPitchSteps> mPitchSteps {};
 
 	// generic versions of these parameters for curved randomization
 	double mSeekRateHz_gen = 0.0, mSeekRateRandMinHz_gen = 0.0;
@@ -166,7 +147,7 @@ private:
 	dfx::TempoRateTable const mTempoRateTable;
 
 	// MIDI note control stuff
-	std::array<long, kNumPitchSteps> mActiveNotesTable;  // how many voices of each note in the octave are being played
+	std::array<long, kNumPitchSteps> mActiveNotesTable {};  // how many voices of each note in the octave are being played
 	bool mNotesWereAlreadyActive = false;  // says whether any notes were active in the previous block
 
 long mSineCount = 0;
