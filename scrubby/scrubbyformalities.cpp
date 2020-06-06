@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of Scrubby.
 
@@ -36,9 +36,6 @@ DFX_EFFECT_ENTRY(Scrubby)
 Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, kNumPresets)
 {
-	mActiveNotesTable.fill(0);
-	mPitchSteps.fill(false);
-
 	// initialize the parameters
 	auto const numTempoRates = mTempoRateTable.getNumRates();
 	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
@@ -216,101 +213,6 @@ void Scrubby::clearbuffers()
 
 #pragma mark presets
 
-/*
-//----------------------------------------------------------------------------- 
-ScrubbyChunk::ScrubbyChunk(long numParameters, long numPrograms, long magic, AudioEffectX* effect)
-:	VstChunk(numParameters, numPrograms, magic, effect)
-{
-	// start off with split CC automation of both range slider points
-	seekRateDoubleAutomate = seekDurDoubleAutomate = false;
-}
-
-//----------------------------------------------------------------------------- 
-// this gets called when Scrubby automates a parameter from CC messages.
-// this is where we can link parameter automation for range slider points.
-void ScrubbyChunk::doLearningAssignStuff(long tag, long eventType, long eventChannel, 
-										 long eventNum, long delta, long eventNum2, 
-										 long eventBehaviourFlags, 
-										 long data1, long data2, float fdata1, float fdata2)
-{
-	if (getSteal())
-	{
-		return;
-	}
-
-	switch (tag)
-	{
-		case kSeekRate:
-			if (seekRateDoubleAutomate)
-			{
-				assignParam(kSeekRateRandMin, eventType, eventChannel, eventNum, eventNum2, 
-							eventBehaviourFlags, data1, data2, fdata1, fdata2);
-			}
-			break;
-		case kSeekRateRandMin:
-			if (seekRateDoubleAutomate)
-			{
-				assignParam(kSeekRate, eventType, eventChannel, eventNum, eventNum2, 
-							eventBehaviourFlags, data1, data2, fdata1, fdata2);
-			}
-			break;
-		case kSeekDur:
-			if (seekDurDoubleAutomate)
-			{
-				assignParam(kSeekDurRandMin, eventType, eventChannel, eventNum, eventNum2, 
-							eventBehaviourFlags, data1, data2, fdata1, fdata2);
-			}
-			break;
-		case kSeekDurRandMin:
-			if (seekDurDoubleAutomate)
-			{
-				assignParam(kSeekDur, eventType, eventChannel, eventNum, eventNum2, 
-							eventBehaviourFlags, data1, data2, fdata1, fdata2);
-			}
-			break;
-		default:
-			break;
-	}
-}
-
-//----------------------------------------------------------------------------- 
-void ScrubbyChunk::unassignParam(long tag)
-{
-	VstChunk::unassignParam(tag);
-
-	switch (tag)
-	{
-		case kSeekRate:
-			if (seekRateDoubleAutomate)
-			{
-				VstChunk::unassignParam(kSeekRateRandMin);
-			}
-			break;
-		case kSeekRateRandMin:
-			if (seekRateDoubleAutomate)
-			{
-				VstChunk::unassignParam(kSeekRate);
-			}
-			break;
-		case kSeekDur:
-			if (seekDurDoubleAutomate)
-			{
-				VstChunk::unassignParam(kSeekDurRandMin);
-			}
-			break;
-		case kSeekDurRandMin:
-			if (seekDurDoubleAutomate)
-			{
-				VstChunk::unassignParam(kSeekDur);
-			}
-			break;
-		default:
-			break;
-	}
-}
-*/
-
-
 //-------------------------------------------------------------------------
 void Scrubby::initPresets()
 {
@@ -455,40 +357,35 @@ void Scrubby::processparameters()
 	mOctaveMax = getparameter_i(kOctaveMax);
 	mUserTempo = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);
-	for (size_t i = 0; i < mPitchSteps.size(); i++)
+	for (size_t i = 0; i < kNumPitchSteps; i++)
 	{
-		mPitchSteps[i] = getparameter_b(i + kPitchStep0);
+		if (auto const value = getparameterifchanged_b(i + kPitchStep0))
+		{
+			mPitchSteps[i] = *value;
+			// reset the associated note in the notes table; manual changes override MIDI
+			// TODO: this is fraught because MIDI note control itself flags these parameters as "changed"
+			// but limiting this override only to turning notes off seems to avert the unwanted side effect 
+			if (!(*value))
+			{
+				mActiveNotesTable[i] = 0;
+			}
+		}
 	}
 
 	// get the "generic" values of these parameters for randomization
 	mSeekRateHz_gen = getparameter_gen(kSeekRate_Hz);
 	mSeekRateRandMinHz_gen = getparameter_gen(kSeekRateRandMin_Hz);
 
-	bool tempNeedResync = false;
-	if (getparameterchanged(kSeekRate_Sync))
-	{
-		// make sure the cycles match up if the tempo rate has changed
-		tempNeedResync = true;
-	}
-	if (getparameterchanged(kTempoSync) && mTempoSync)
-	{
-		// set needResync true if tempo sync mode has just been switched on
-		tempNeedResync = true;
-	}
+	// make sure the cycles match up if the tempo rate has changed
+	// or if tempo sync mode has just been switched on
+	bool const needResync = getparameterchanged(kSeekRate_Sync) || (getparameterchanged(kTempoSync) && mTempoSync);
+	std::fill(mNeedResync.begin(), mNeedResync.end(), needResync);
+
 	if (getparameterchanged(kPredelay))
 	{
 		// tell the host what the length of delay compensation should be
 		setlatency_seconds(mSeekRangeSeconds * getparameter_scalar(kPredelay), dfx::NotificationPolicy::Async);
 	}
-	for (size_t i = 0; i < mActiveNotesTable.size(); i++)
-	{
-		if (getparameterchanged(i + kPitchStep0))
-		{
-			// reset the associated note in the notes table; manual changes override MIDI
-			mActiveNotesTable[i] = 0;
-		}
-	}
-	std::fill(mNeedResync.begin(), mNeedResync.end(), tempNeedResync);
 
 	mUseSeekRateRandMin = mTempoSync ? (seekRateRandMinSync < mSeekRateSync) : (seekRateRandMinHz < mSeekRateHz);
 	mUseSeekDurRandMin = (mSeekDurRandMin < mSeekDur);
