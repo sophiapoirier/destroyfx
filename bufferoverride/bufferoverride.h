@@ -22,7 +22,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
-#include <atomic>
 #include <vector>
 
 #include "dfxplugin.h"
@@ -85,8 +84,6 @@ public:
 	void createbuffers() override;
 	void releasebuffers() override;
 
-	void idle() override;
-
 
 private:
 	static constexpr long kNumPresets = 16;
@@ -139,7 +136,6 @@ private:
 	int mLastNoteOn = 0, mLastPitchbendLSB = 0, mLastPitchbendMSB = 0;  // these carry over the last events from a previous processing block
 	bool mDivisorWasChangedByHand = false;  // for MIDI trigger mode - tells us to respect the fDivisor value
 	bool mDivisorWasChangedByMIDI = false;  // tells the GUI that the divisor displays need updating
-	std::atomic_flag mDivisorChangeInProcessHasPosted = ATOMIC_FLAG_INIT;
 
 	dfx::LFO mDivisorLFO, mBufferLFO;
 

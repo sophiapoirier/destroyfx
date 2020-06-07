@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -218,7 +218,7 @@ long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, u
   switch (inPropertyID)
   {
     case PROP_LAST_WINDOW_TIMESTAMP:
-      *static_cast<uint64_t*>(outData) = lastwindowtimestamp;
+      *static_cast<uint64_t*>(outData) = lastwindowtimestamp.load(std::memory_order_relaxed);
       return dfx::kStatus_NoError;
     case PROP_WAVEFORM_DATA: {
       std::lock_guard const guard(windowcachelock);
@@ -270,7 +270,7 @@ void PLUGIN::clearwindowcache()
       windowcache.clear();
     }
   }
-  lastwindowtimestamp = 0;
+  lastwindowtimestamp.store(0, std::memory_order_relaxed);
 }
 
 void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
@@ -297,7 +297,7 @@ void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
   }
 
   if (updated) {
-    lastwindowtimestamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    lastwindowtimestamp.store(std::chrono::steady_clock::now().time_since_epoch().count(), std::memory_order_relaxed);
   }
 }
 
@@ -1305,13 +1305,13 @@ void PLUGINCORE::updatewindowsize()
   outsize = framesize;
 
 #if TARGET_PLUGIN_USES_DSPCORE
-  getplugin()->setlatency_samples(framesize, dfx::NotificationPolicy::Async);
+  getplugin()->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
-  getplugin()->settailsize_samples(framesize, dfx::NotificationPolicy::Async);
+  getplugin()->settailsize_samples(framesize);
 #else
-  setlatency_samples(framesize, dfx::NotificationPolicy::Async);
+  setlatency_samples(framesize);
   /* tail is the same as delay, of course */
-  settailsize_samples(framesize, dfx::NotificationPolicy::Async);
+  settailsize_samples(framesize);
 #endif
 }
 

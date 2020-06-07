@@ -156,6 +156,7 @@ PLUGIN_EDITOR_RES_ID
 #include <memory>
 #include <optional>
 #include <set>
+#include <thread>
 #include <variant>
 #include <vector>
 
@@ -522,7 +523,7 @@ public:
 	void setpresetparameter_i(long inPresetIndex, long inParameterIndex, int64_t inValue);
 	void setpresetparameter_b(long inPresetIndex, long inParameterIndex, bool inValue);
 	void setpresetparameter_gen(long inPresetIndex, long inParameterIndex, double inValue);
-	void update_preset(long inPresetIndex);
+	void postupdate_preset();
 	DfxParam::Value getpresetparameter(long inPresetIndex, long inParameterIndex) const;
 	double getpresetparameter_f(long inPresetIndex, long inParameterIndex) const;
 
@@ -583,14 +584,14 @@ public:
 	// add an audio input/output configuration to the array of i/o configurations
 	void addchannelconfig(short inNumInputChannels, short inNumOutputChannels);
 
-	void setlatency_samples(long inSamples, dfx::NotificationPolicy inNotificationPolicy = dfx::NotificationPolicy::Sync);
-	void setlatency_seconds(double inSeconds, dfx::NotificationPolicy inNotificationPolicy = dfx::NotificationPolicy::Sync);
+	void setlatency_samples(long inSamples);
+	void setlatency_seconds(double inSeconds);
 	long getlatency_samples() const;
 	double getlatency_seconds() const;
 	void postupdate_latency();
 
-	void settailsize_samples(long inSamples, dfx::NotificationPolicy inNotificationPolicy = dfx::NotificationPolicy::Sync);
-	void settailsize_seconds(double inSeconds, dfx::NotificationPolicy inNotificationPolicy = dfx::NotificationPolicy::Sync);
+	void settailsize_samples(long inSamples);
+	void settailsize_seconds(double inSeconds);
 	long gettailsize_samples() const;
 	double gettailsize_seconds() const;
 	void postupdate_tailsize();
@@ -731,8 +732,10 @@ private:
 
 	std::vector<DfxParam> mParameters;
 	std::vector<bool> mParametersChangedAsOfPreProcess, mParametersTouchedAsOfPreProcess;
+	std::vector<std::atomic_flag> mParametersChangedInProcessHavePosted;
 	std::vector<std::pair<std::string, std::set<long>>> mParameterGroups;
 	std::vector<DfxPreset> mPresets;
+	std::atomic_flag mPresetChangedInProcessHasPosted;
 
 	std::vector<ChannelConfig> mChannelconfigs;
 
@@ -747,6 +750,8 @@ private:
 #if TARGET_PLUGIN_USES_MIDI
 	DfxMidi mMidiState;
 	std::unique_ptr<DfxSettings> mDfxSettings;
+	std::atomic_flag mMidiLearnChangedInProcessHasPosted;
+	std::atomic_flag mMidiLearnerChangedInProcessHasPosted;
 #endif
 
 	long mCurrentPresetNum = 0;
@@ -777,13 +782,14 @@ private:
 	void processtimeinfo();
 
 	std::variant<long, double> mLatency {0l};
-	std::atomic<bool> mLatencyChanged {false};
+	std::atomic_flag mLatencyChangeHasPosted;
 	std::variant<long, double> mTailSize {0l};
-	std::atomic<bool> mTailSizeChanged {false};
+	std::atomic_flag mTailSizeChangeHasPosted;
 	bool mAudioProcessingAccumulatingOnly = false;
 	bool mAudioIsRendering = false;
 	std::vector<std::pair<dfx::ISmoothedValue*, DfxPluginCore*>> mSmoothedAudioValues;
 	bool mIsFirstRenderSinceReset = false;
+	std::thread::id mAudioRenderThreadID {};
 
 #ifdef TARGET_API_RTAS
 	void AddParametersToList();
@@ -834,6 +840,8 @@ public:
 	OSStatus SetProperty(AudioUnitPropertyID inPropertyID, 
 						 AudioUnitScope inScope, AudioUnitElement inElement, 
 						 void const* inData, UInt32 inDataSize) override;
+	void PropertyChanged(AudioUnitPropertyID inPropertyID, 
+						 AudioUnitScope inScope, AudioUnitElement inElement) override;
 
 #if !CA_USE_AUDIO_PLUGIN_ONLY
 	OSStatus Version() override;

@@ -62,21 +62,17 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 
 
 constexpr char const* const kPresetDefaultName = "default";
-constexpr std::chrono::milliseconds kIdleTimerInterval(99);
+constexpr std::chrono::milliseconds kIdleTimerInterval(30);
 
 
 namespace
 {
 
 static std::atomic<bool> sIdleThreadShouldRun {false};
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-attributes"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-__attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;  // TODO: C++20 use std::jthread
+__attribute__((no_destroy)) static std::unique_ptr<std::thread> sIdleThread;  // TODO: C++20 use std::jthread, C++23 [[no_destroy]]
 __attribute__((no_destroy)) static std::mutex sIdleThreadLock;
 __attribute__((no_destroy)) static std::unordered_set<DfxPlugin*> sIdleClients; 
 __attribute__((no_destroy)) static std::mutex sIdleClientsLock;
-#pragma clang diagnostic pop
 
 //-----------------------------------------------------------------------------
 static void DFX_RegisterIdleClient(DfxPlugin* const inIdleClient)
@@ -168,7 +164,8 @@ DfxPlugin::DfxPlugin(
 
 	mParameters(inNumParameters),
 	mParametersChangedAsOfPreProcess(inNumParameters, false),
-	mParametersTouchedAsOfPreProcess(inNumParameters, false)
+	mParametersTouchedAsOfPreProcess(inNumParameters, false),
+	mParametersChangedInProcessHavePosted(inNumParameters)
 {
 	updatesamplerate();  // XXX have it set to something here?
 
@@ -181,15 +178,23 @@ DfxPlugin::DfxPlugin(
 		mPresets.emplace_back(inNumParameters);
 	}
 
+	// reset pending notifications
+	std::for_each(mParametersChangedInProcessHavePosted.begin(), mParametersChangedInProcessHavePosted.end(), 
+				  [](auto& flag){ flag.test_and_set(); });
+	mPresetChangedInProcessHasPosted.test_and_set();
+	mLatencyChangeHasPosted.test_and_set();
+	mTailSizeChangeHasPosted.test_and_set();
+
+#if TARGET_PLUGIN_USES_MIDI
+	mMidiLearnChangedInProcessHasPosted.test_and_set();
+	mMidiLearnerChangedInProcessHasPosted.test_and_set();
+#endif
+
 
 #ifdef TARGET_API_VST
 	setUniqueID(PLUGIN_ID);
 	setNumInputs(VST_NUM_INPUTS);
 	setNumOutputs(VST_NUM_OUTPUTS);
-
-	#if TARGET_PLUGIN_IS_INSTRUMENT
-	isSynth();
-	#endif
 
 	#if !VST_FORCE_DEPRECATED
 	canProcessReplacing();  // supports replacing audio output
@@ -202,6 +207,10 @@ DfxPlugin::DfxPlugin(
 	#if TARGET_PLUGIN_USES_MIDI
 	// tell host that we want to use special data chunks for settings storage
 	programsAreChunks();
+	#endif
+
+	#if TARGET_PLUGIN_IS_INSTRUMENT
+	isSynth();
 	#endif
 
 	#if TARGET_PLUGIN_HAS_GUI
@@ -315,6 +324,8 @@ void DfxPlugin::do_cleanup()
 #endif
 
 	cleanup();
+
+	mAudioRenderThreadID = {};
 
 #ifdef TARGET_API_VST
 	mIsInitialized = false;
@@ -525,7 +536,7 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
 	// make the global-scope element aware of the parameter's value
-	AUBase::SetParameter(inParameterIndex, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(inParameterIndex), 0);
+	TARGET_API_BASE_CLASS::SetParameter(inParameterIndex, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(inParameterIndex), 0);
 #endif
 
 #ifdef TARGET_API_VST
@@ -534,17 +545,6 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 	{
 		setpresetparameter(vstpresetnum, inParameterIndex, getparameter(inParameterIndex));
 	}
-	#if TARGET_PLUGIN_HAS_GUI
-	#ifdef TARGET_PLUGIN_USES_VSTGUI
-	if (editor)
-	{
-		((VSTGUI::AEffGUIEditor*)editor)->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
-	}
-	#else
-		#warning "implementation missing"
-	assert(false);  // XXX TODO: we will need something for our GUI class here
-	#endif
-	#endif
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -562,8 +562,34 @@ void DfxPlugin::postupdate_parameter(long inParameterIndex)
 		return;
 	}
 
+	// defer the notification because it is not realtime-safe
+	if (std::this_thread::get_id() == mAudioRenderThreadID)
+	{
+		// defer listener notification to later, off the realtime thread
+		mParametersChangedInProcessHavePosted[inParameterIndex].clear(std::memory_order_relaxed);
+		return;
+	}
+
 #ifdef TARGET_API_AUDIOUNIT
 	AUParameterChange_TellListeners(GetComponentInstance(), inParameterIndex);
+#endif
+
+#ifdef TARGET_API_VST
+	#if TARGET_PLUGIN_HAS_GUI
+	#ifdef TARGET_PLUGIN_USES_VSTGUI
+	if (auto const guiEditor = dynamic_cast<VSTGUI::AEffGUIEditor*>(getEditor()))
+	{
+		guiEditor->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
+	}
+	#else
+		#warning "implementation missing"
+	assert(false);  // XXX TODO: we will need something for our GUI class here
+	#endif
+	#endif
+#endif
+
+#ifdef TARGET_API_RTAS
+	#warning "implementation required?"
 #endif
 }
 
@@ -711,11 +737,7 @@ void DfxPlugin::addparametergroup(std::string const& inName, std::vector<long> c
 	assert(std::none_of(mParameterGroups.cbegin(), mParameterGroups.cend(), [&inName](auto const& item){ return (item.first == inName); }));
 	assert(std::none_of(inParameterIndices.cbegin(), inParameterIndices.cend(), [this](auto index){ return getparametergroup(index).has_value(); }));
 	assert(std::all_of(inParameterIndices.cbegin(), inParameterIndices.cend(), std::bind(&DfxPlugin::parameterisvalid, this, std::placeholders::_1)));
-	{
-		auto sortedParameterIndices = inParameterIndices;
-		std::sort(sortedParameterIndices.begin(), sortedParameterIndices.end());
-		assert(std::unique(sortedParameterIndices.begin(), sortedParameterIndices.end()) == sortedParameterIndices.end());
-	}
+	assert(std::unordered_set<long>(inParameterIndices.cbegin(), inParameterIndices.cend()).size() == inParameterIndices.size());
 
 	mParameterGroups.emplace_back(inName, std::set<long>(inParameterIndices.cbegin(), inParameterIndices.cend()));
 }
@@ -840,29 +862,37 @@ bool DfxPlugin::loadpreset(long inPresetIndex)
 		postupdate_parameter(i);  // inform any parameter listeners of the changes
 	}
 
+	mCurrentPresetNum = inPresetIndex;
+
 	// do stuff necessary to inform the host of changes, etc.
 	// XXX in AU, if this resulted from a call to NewFactoryPresetSet, then PropertyChanged will be called twice
-	update_preset(inPresetIndex);
+	postupdate_preset();
 	return true;
 }
 
 //-----------------------------------------------------------------------------
 // do stuff necessary to inform the host of changes, etc.
-void DfxPlugin::update_preset(long inPresetIndex)
+void DfxPlugin::postupdate_preset()
 {
-	mCurrentPresetNum = inPresetIndex;
+	assert(presetisvalid(getcurrentpresetnum()));
+
+	if (std::this_thread::get_id() == mAudioRenderThreadID)
+	{
+		mPresetChangedInProcessHasPosted.clear(std::memory_order_relaxed);
+		return;
+	}
 
 #ifdef TARGET_API_AUDIOUNIT
 	AUPreset au_preset {};
-	au_preset.presetNumber = inPresetIndex;
-	au_preset.presetName = getpresetcfname(inPresetIndex);
+	au_preset.presetNumber = getcurrentpresetnum();
+	au_preset.presetName = getpresetcfname(getcurrentpresetnum());
 	SetAFactoryPresetAsCurrent(au_preset);
 	PropertyChanged(kAudioUnitProperty_PresentPreset, kAudioUnitScope_Global, AudioUnitElement(0));
 	PropertyChanged(kAudioUnitProperty_CurrentPreset, kAudioUnitScope_Global, AudioUnitElement(0));
 #endif
 
 #ifdef TARGET_API_VST
-	TARGET_API_BASE_CLASS::setProgram(inPresetIndex);
+	TARGET_API_BASE_CLASS::setProgram(getcurrentpresetnum());
 	// XXX Cubase SX will crash if custom-GUI plugs call updateDisplay 
 	// while the editor is closed, so as a workaround, only do it 
 	// if the plugin has no custom GUI
@@ -1138,14 +1168,36 @@ void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
 //-----------------------------------------------------------------------------
 void DfxPlugin::do_idle()
 {
-	if (mLatencyChanged.exchange(false))
+	for (size_t parameterIndex = 0; parameterIndex < mParametersChangedInProcessHavePosted.size(); parameterIndex++)
+	{
+		if (!mParametersChangedInProcessHavePosted[parameterIndex].test_and_set(std::memory_order_relaxed))
+		{
+			postupdate_parameter(parameterIndex);
+		}
+	}
+	if (!mPresetChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
+	{
+		postupdate_preset();
+	}
+	if (!mLatencyChangeHasPosted.test_and_set(std::memory_order_relaxed))
 	{
 		postupdate_latency();
 	}
-	if (mTailSizeChanged.exchange(false))
+	if (!mTailSizeChangeHasPosted.test_and_set(std::memory_order_relaxed))
 	{
 		postupdate_tailsize();
 	}
+
+#if TARGET_PLUGIN_USES_MIDI
+	if (!mMidiLearnChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
+	{
+		PropertyChanged(dfx::kPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
+	}
+	if (!mMidiLearnerChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
+	{
+		PropertyChanged(dfx::kPluginProperty_MidiLearner, kAudioUnitScope_Global, AudioUnitElement(0));
+	}
+#endif
 
 	idle();
 }
@@ -1231,7 +1283,7 @@ void DfxPlugin::addchannelconfig(short inNumInputChannels, short inNumOutputChan
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setlatency_samples(long inSamples, dfx::NotificationPolicy inNotificationPolicy)
+void DfxPlugin::setlatency_samples(long inSamples)
 {
 	bool changed = false;
 	if (std::holds_alternative<double>(mLatency))
@@ -1247,20 +1299,20 @@ void DfxPlugin::setlatency_samples(long inSamples, dfx::NotificationPolicy inNot
 
 	if (changed)
 	{
-		switch (inNotificationPolicy)
+		// defer the notification because it is not realtime-safe
+		if (std::this_thread::get_id() == mAudioRenderThreadID)
 		{
-			case dfx::NotificationPolicy::Sync:
-				postupdate_latency();
-				break;
-			case dfx::NotificationPolicy::Async:
-				mLatencyChanged = true;
-				break;
+			mLatencyChangeHasPosted.clear(std::memory_order_relaxed);
+		}
+		else
+		{
+			postupdate_latency();
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setlatency_seconds(double inSeconds, dfx::NotificationPolicy inNotificationPolicy)
+void DfxPlugin::setlatency_seconds(double inSeconds)
 {
 	bool changed = false;
 	if (std::holds_alternative<long>(mLatency))
@@ -1276,14 +1328,14 @@ void DfxPlugin::setlatency_seconds(double inSeconds, dfx::NotificationPolicy inN
 
 	if (changed)
 	{
-		switch (inNotificationPolicy)
+		// defer the notification because it is not realtime-safe
+		if (std::this_thread::get_id() == mAudioRenderThreadID)
 		{
-			case dfx::NotificationPolicy::Sync:
-				postupdate_latency();
-				break;
-			case dfx::NotificationPolicy::Async:
-				mLatencyChanged = true;
-				break;
+			mLatencyChangeHasPosted.clear(std::memory_order_relaxed);
+		}
+		else
+		{
+			postupdate_latency();
 		}
 	}
 }
@@ -1327,7 +1379,7 @@ void DfxPlugin::postupdate_latency()
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::settailsize_samples(long inSamples, dfx::NotificationPolicy inNotificationPolicy)
+void DfxPlugin::settailsize_samples(long inSamples)
 {
 	bool changed = false;
 	if (std::holds_alternative<double>(mTailSize))
@@ -1343,20 +1395,20 @@ void DfxPlugin::settailsize_samples(long inSamples, dfx::NotificationPolicy inNo
 
 	if (changed)
 	{
-		switch (inNotificationPolicy)
+		// defer the notification because it is not realtime-safe
+		if (std::this_thread::get_id() == mAudioRenderThreadID)
 		{
-			case dfx::NotificationPolicy::Sync:
-				postupdate_tailsize();
-				break;
-			case dfx::NotificationPolicy::Async:
-				mTailSizeChanged = true;
-				break;
+			mTailSizeChangeHasPosted.clear(std::memory_order_relaxed);
+		}
+		else
+		{
+			postupdate_tailsize();
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::settailsize_seconds(double inSeconds, dfx::NotificationPolicy inNotificationPolicy)
+void DfxPlugin::settailsize_seconds(double inSeconds)
 {
 	bool changed = false;
 	if (std::holds_alternative<long>(mTailSize))
@@ -1372,14 +1424,14 @@ void DfxPlugin::settailsize_seconds(double inSeconds, dfx::NotificationPolicy in
 
 	if (changed)
 	{
-		switch (inNotificationPolicy)
+		// defer the notification because it is not realtime-safe
+		if (std::this_thread::get_id() == mAudioRenderThreadID)
 		{
-			case dfx::NotificationPolicy::Sync:
-				postupdate_tailsize();
-				break;
-			case dfx::NotificationPolicy::Async:
-				mTailSizeChanged = true;
-				break;
+			mTailSizeChangeHasPosted.clear(std::memory_order_relaxed);
+		}
+		else
+		{
+			postupdate_tailsize();
 		}
 	}
 }
@@ -1640,6 +1692,7 @@ else fprintf(stderr, "CallHostTransportState() error %ld\n", status);
 void DfxPlugin::preprocessaudio()
 {
 	mAudioIsRendering = true;
+	mAudioRenderThreadID = std::this_thread::get_id();
 
 #if TARGET_PLUGIN_USES_MIDI
 	mMidiState.preprocessEvents();

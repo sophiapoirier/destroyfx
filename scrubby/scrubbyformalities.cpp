@@ -384,7 +384,7 @@ void Scrubby::processparameters()
 	if (getparameterchanged(kPredelay))
 	{
 		// tell the host what the length of delay compensation should be
-		setlatency_seconds(mSeekRangeSeconds * getparameter_scalar(kPredelay), dfx::NotificationPolicy::Async);
+		setlatency_seconds(mSeekRangeSeconds * getparameter_scalar(kPredelay));
 	}
 
 	mUseSeekRateRandMin = mTempoSync ? (seekRateRandMinSync < mSeekRateSync) : (seekRateRandMinHz < mSeekRateHz);

@@ -379,7 +379,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 	if ((mDivisor != entryDivisor)/* || mDivisorWasChangedByMIDI*/)
 	{
 		setparameter_f(kDivisor, mDivisor);  // XXX eh?
-		mDivisorChangeInProcessHasPosted.clear();  // inform listeners of change (later, off the realtime thread)
+		postupdate_parameter(kDivisor);  // inform listeners of change
 	}
 	mDivisorWasChangedByMIDI = false;
 }
