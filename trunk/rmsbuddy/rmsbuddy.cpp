@@ -52,6 +52,7 @@ RMSBuddy::RMSBuddy(AudioComponentInstance inComponentInstance)
 		AudioUnitParameterInfo paramInfo {};
 		if (GetParameterInfo(kAudioUnitScope_Global, paramID, paramInfo) == noErr)
 		{
+			CFRelease(paramInfo.cfNameString);
 			AUBase::SetParameter(paramID, kAudioUnitScope_Global, AudioUnitElement{0}, paramInfo.defaultValue, 0);
 		}
 	}
