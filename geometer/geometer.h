@@ -88,6 +88,7 @@ private:
   std::array<float, GeometerViewData::arraysize> tmpy;
   dfx::SpinLock windowcachelock;
   std::atomic<uint64_t> lastwindowtimestamp {0};
+  static_assert(decltype(lastwindowtimestamp)::is_always_lock_free);
 #if TARGET_PLUGIN_USES_DSPCORE
 };
 

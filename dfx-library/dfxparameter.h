@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -277,7 +277,6 @@ public:
 
 
 	DfxParam() = default;
-	virtual ~DfxParam() = default;
 
 	// initialize a parameter with values, value types, curve types, etc.
 	void init(char const* inName, ValueType inType, 
@@ -490,14 +489,14 @@ public:
 
 	// set/get the property indicating whether the parameter value has changed
 	// returns preceding state
-	bool setchanged(bool inChanged = true) noexcept;
+	bool setchanged(bool inChanged) noexcept;
 	bool getchanged() const noexcept
 	{
 		return mChanged;
 	}
 	// set/get the property indicating whether the parameter value has been set for any reason (regardless of whether the new value differed)
 	// returns preceding state
-	bool settouched(bool inTouched = true) noexcept
+	bool settouched(bool inTouched) noexcept
 	{
 		return mTouched.exchange(inTouched);
 	}
@@ -507,7 +506,7 @@ public:
 	}
 
 	// randomize the current value of the parameter
-	virtual Value randomize();
+	Value randomize();
 
 
 private:
@@ -529,7 +528,9 @@ private:
 	std::vector<std::string> mValueStrings;  // an array of value strings
 	std::string mCustomUnitString;  // a text string display for parameters using custom unit types
 	std::atomic<bool> mChanged {true};  // indicates if the value has changed
+	static_assert(decltype(mChanged)::is_always_lock_free);
 	std::atomic<bool> mTouched {false};  // indicates if the value has been newly set
+	static_assert(decltype(mTouched)::is_always_lock_free);
 	Attribute mAttributes = 0;  // a bit-mask of various parameter attributes
 
 #ifdef TARGET_API_AUDIOUNIT

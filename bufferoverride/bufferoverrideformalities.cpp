@@ -92,8 +92,6 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	registerSmoothedAudioValue(&mInputGain);
 	registerSmoothedAudioValue(&mOutputGain);
-
-	mDivisorChangeInProcessHasPosted.test_and_set();  // reset pending notification
 }
 
 //-------------------------------------------------------------------------
@@ -142,15 +140,6 @@ void BufferOverride::releasebuffers()
 {
 	mBuffers.clear();
 	mAudioOutputValues.clear();
-}
-
-//-------------------------------------------------------------------------
-void BufferOverride::idle()
-{
-	if (!mDivisorChangeInProcessHasPosted.test_and_set())
-	{
-		postupdate_parameter(kDivisor);
-	}
 }
 
 
