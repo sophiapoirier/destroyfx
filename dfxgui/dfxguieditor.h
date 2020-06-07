@@ -121,6 +121,20 @@ public:
 #ifdef TARGET_API_AUDIOUNIT
 	static constexpr double kIdleTimerInterval = 1.0f / 24.0f;  // 24 fps
 	static constexpr Float32 kNotificationInterval = kIdleTimerInterval;
+
+	class AUParameterInfo : public AudioUnitParameterInfo
+	{
+	public:
+		explicit AUParameterInfo(AudioUnitParameterInfo const& inParameterInfo)
+		:	AudioUnitParameterInfo(inParameterInfo), 
+			mNameOwner(((flags & kAudioUnitParameterFlag_HasCFNameString) && (flags & kAudioUnitParameterFlag_CFNameRelease)) ? cfNameString : nullptr), 
+			mUnitNameOwner((unit == kAudioUnitParameterUnit_CustomUnit) ? unitName : nullptr)
+		{
+		}
+	private:
+		dfx::UniqueCFType<CFStringRef> mNameOwner;
+		dfx::UniqueCFType<CFStringRef> mUnitNameOwner;
+	};
 #endif
 
 	explicit DfxGuiEditor(DGEditorListenerInstance inInstance);
@@ -145,7 +159,7 @@ public:
 	virtual void dfxgui_EditorShown() {}
 
 #ifdef TARGET_API_AUDIOUNIT
-	long dfxgui_GetParameterInfo(AudioUnitParameterID inParameterID, AudioUnitParameterInfo& outParameterInfo);
+	std::optional<AUParameterInfo> dfxgui_GetParameterInfo(AudioUnitParameterID inParameterID);
 	auto getAUEventListener() const noexcept
 	{
 		return mAUEventListener.get();

@@ -1069,9 +1069,7 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutomationGesture)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	AudioUnitParameterInfo paramInfo;
-	auto status = dfxgui_GetParameterInfo(inParameterID, paramInfo);
-	if (status == noErr)
+	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterID))
 	{
 		if (inWrapWithAutomationGesture)
 		{
@@ -1079,7 +1077,7 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 		}
 
 		auto const auParam = dfxgui_MakeAudioUnitParameter(inParameterID);
-		status = AUParameterSet(nullptr, nullptr, &auParam, paramInfo.defaultValue, 0);
+		[[maybe_unused]] auto const status = AUParameterSet(nullptr, nullptr, &auParam, parameterInfo->defaultValue, 0);
 		assert(status == noErr);
 
 		if (inWrapWithAutomationGesture)
@@ -1172,25 +1170,19 @@ std::string DfxGuiEditor::getparametername(long inParameterID)
 	std::string resultString;
 
 #ifdef TARGET_API_AUDIOUNIT
-	AudioUnitParameterInfo auParamInfo;
-	auto const status = dfxgui_GetParameterInfo(inParameterID, auParamInfo);
-	if (status == noErr)
+	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterID))
 	{
-		if ((auParamInfo.flags & kAudioUnitParameterFlag_HasCFNameString) && auParamInfo.cfNameString)
+		if ((parameterInfo->flags & kAudioUnitParameterFlag_HasCFNameString) && parameterInfo->cfNameString)
 		{
-			auto const tempString = dfx::CreateCStringFromCFString(auParamInfo.cfNameString);
+			auto const tempString = dfx::CreateCStringFromCFString(parameterInfo->cfNameString);
 			if (tempString)
 			{
 				resultString.assign(tempString.get());
 			}
-			if (auParamInfo.flags & kAudioUnitParameterFlag_CFNameRelease)
-			{
-				CFRelease(auParamInfo.cfNameString);
-			}
 		}
 		if (resultString.empty())
 		{
-			resultString.assign(auParamInfo.name);
+			resultString.assign(parameterInfo->name);
 		}
 	}
 
@@ -1257,11 +1249,9 @@ float DfxGuiEditor::dfxgui_ContractParameterValue(long inParameterIndex, float i
 float DfxGuiEditor::GetParameter_minValue(long inParameterIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	AudioUnitParameterInfo paramInfo;
-	auto const status = dfxgui_GetParameterInfo(inParameterIndex, paramInfo);
-	if (status == noErr)
+	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterIndex))
 	{
-		return paramInfo.minValue;
+		return parameterInfo->minValue;
 	}
 #else
 	return dfxgui_GetEffectInstance()->getparametermin_f(inParameterIndex);
@@ -1273,11 +1263,9 @@ float DfxGuiEditor::GetParameter_minValue(long inParameterIndex)
 float DfxGuiEditor::GetParameter_maxValue(long inParameterIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	AudioUnitParameterInfo paramInfo;
-	auto const status = dfxgui_GetParameterInfo(inParameterIndex, paramInfo);
-	if (status == noErr)
+	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterIndex))
 	{
-		return paramInfo.maxValue;
+		return parameterInfo->maxValue;
 	}
 #else
 	return dfxgui_GetEffectInstance()->getparametermax_f(inParameterIndex);
@@ -1289,11 +1277,9 @@ float DfxGuiEditor::GetParameter_maxValue(long inParameterIndex)
 float DfxGuiEditor::GetParameter_defaultValue(long inParameterIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	AudioUnitParameterInfo paramInfo;
-	auto const status = dfxgui_GetParameterInfo(inParameterIndex, paramInfo);
-	if (status == noErr)
+	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterIndex))
 	{
-		return paramInfo.defaultValue;
+		return parameterInfo->defaultValue;
 	}
 #else
 	return dfxgui_GetEffectInstance()->getparameterdefault_f(inParameterIndex);
@@ -1335,13 +1321,11 @@ DfxParam::Unit DfxGuiEditor::GetParameterUnit(long inParameterIndex)
 
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
-long DfxGuiEditor::dfxgui_GetParameterInfo(AudioUnitParameterID inParameterID, AudioUnitParameterInfo& outParameterInfo)
+std::optional<DfxGuiEditor::AUParameterInfo> DfxGuiEditor::dfxgui_GetParameterInfo(AudioUnitParameterID inParameterID)
 {
-	memset(&outParameterInfo, 0, sizeof(outParameterInfo));
-	size_t dataSize = sizeof(outParameterInfo);
-
-	return dfxgui_GetProperty(kAudioUnitProperty_ParameterInfo, kAudioUnitScope_Global, inParameterID, 
-							  &outParameterInfo, dataSize);
+	auto const parameterInfo = dfxgui_GetProperty<AudioUnitParameterInfo>(kAudioUnitProperty_ParameterInfo, 
+																		  kAudioUnitScope_Global, inParameterID);
+	return parameterInfo ? std::make_optional(AUParameterInfo(*parameterInfo)) : std::nullopt;
 }
 #endif
 
