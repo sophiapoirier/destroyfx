@@ -55,8 +55,8 @@ void DfxPlugin::PostConstructor()
 
 	do_PostConstructor();
 
-	// make host see that current preset is 0
-	update_preset(0);
+	// make host see that default preset is in effect
+	postupdate_preset();
 
 	// make the global-scope element aware of the parameters' values
 	// this must happen after AUBase::PostConstructor because the elements are created there
@@ -64,7 +64,7 @@ void DfxPlugin::PostConstructor()
 	{
 		if (!hasparameterattribute(i, DfxParam::kAttribute_Unused))  // XXX should we do it like this, or override GetParameterList?
 		{
-			AUBase::SetParameter(i, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(i), 0);
+			TARGET_API_BASE_CLASS::SetParameter(i, kAudioUnitScope_Global, AudioUnitElement(0), getparameter_f(i), 0);
 		}
 	}
 
@@ -109,13 +109,13 @@ void DfxPlugin::PostConstructor()
 			newStreamFormat.ChangeNumberChannels(newNumChannels, newStreamFormat.IsInterleaved());
 			if (Inputs().GetNumberOfElements() > 0)
 			{
-				AUBase::ChangeStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0), curInStreamFormat, newStreamFormat);
+				TARGET_API_BASE_CLASS::ChangeStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0), curInStreamFormat, newStreamFormat);
 			}
 			// change the output channel count to the first supported one listed
 			newNumChannels = (mChannelconfigs.front().outChannels < 0) ? defaultNumChannels : static_cast<UInt32>(mChannelconfigs.front().outChannels);
 			newStreamFormat = CAStreamBasicDescription(curOutStreamFormat);
 			newStreamFormat.ChangeNumberChannels(newNumChannels, newStreamFormat.IsInterleaved());
-			AUBase::ChangeStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0), curOutStreamFormat, newStreamFormat);
+			TARGET_API_BASE_CLASS::ChangeStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0), curOutStreamFormat, newStreamFormat);
 		}
 		UpdateInPlaceProcessingState();
 	}
@@ -1055,6 +1055,31 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	return status;
 }
 
+//-----------------------------------------------------------------------------
+void DfxPlugin::PropertyChanged(AudioUnitPropertyID inPropertyID, 
+								AudioUnitScope inScope, AudioUnitElement inElement)
+{
+#if TARGET_PLUGIN_USES_MIDI
+	if (std::this_thread::get_id() == mAudioRenderThreadID)
+	{
+		if (inPropertyID == dfx::kPluginProperty_MidiLearn)
+		{
+			mMidiLearnChangedInProcessHasPosted.clear(std::memory_order_relaxed);
+			return;
+		}
+		if (inPropertyID == dfx::kPluginProperty_MidiLearner)
+		{
+			mMidiLearnerChangedInProcessHasPosted.clear(std::memory_order_relaxed);
+			return;
+		}
+	}
+#endif
+
+	assert(std::this_thread::get_id() != mAudioRenderThreadID);  // this method is not realtime-safe
+
+	return TARGET_API_BASE_CLASS::PropertyChanged(inPropertyID, inScope, inElement);
+}
+
 #if !CA_USE_AUDIO_PLUGIN_ONLY
 //-----------------------------------------------------------------------------
 // should be a version 32-bit number hex-encoded like so:  
@@ -1440,7 +1465,7 @@ OSStatus DfxPlugin::SetParameter(AudioUnitParameterID inParameterID,
 
 	setparameter_f(inParameterID, inValue);
 	return noErr;
-//	return AUBase::SetParameter(inParameterID, inScope, inElement, inValue, inBufferOffsetInFrames);
+//	return TARGET_API_BASE_CLASS::SetParameter(inParameterID, inScope, inElement, inValue, inBufferOffsetInFrames);
 }
 
 
