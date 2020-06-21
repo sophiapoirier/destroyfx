@@ -89,7 +89,7 @@ public:
 //	void settings_unassignParam(long tag) override;
 
 	// true for unified single-point automation of both parameter range values
-	bool mRateDoubleAutomate = false, mPulsewidthDoubleAutomate = false, mFloorDoubleAutomate = false;  // TODO: not public
+	bool mRateDoubleAutomate = false, mPulsewidthDoubleAutomate = false, mFloorDoubleAutomate = false;  // TODO: not public, or DELETE?
 
 
 private:

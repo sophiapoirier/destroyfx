@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfx-au-utilities.h"
 #include "dfxmisc.h"
 #include "eqsync.h"
+#include "temporatetable.h"
 
 
 //-----------------------------------------------------------------------------
@@ -192,7 +193,13 @@ long EQSyncEditor::OpenEditor()
 		{
 			textProc = [](float inValue, char* outText, void* inEditor)
 			{
-				return static_cast<DfxGuiEditor*>(inEditor)->getparametervaluestring(kRate_Sync, outText);
+				auto const success = static_cast<DfxGuiEditor*>(inEditor)->getparametervaluestring(kRate_Sync, outText);
+				dfx::TempoRateTable const tempoRateTable;
+				if (success && (outText == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1)))
+				{
+					strlcpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength);
+				}
+				return success;
 			};
 		}
 		else if (i == kSmooth)

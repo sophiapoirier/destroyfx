@@ -1,99 +1,48 @@
-#ifndef __SKIDDEREDITOR_H
-#define __SKIDDEREDITOR_H
+/*------------------------------------------------------------------------
+Copyright (C) 2000-2020  Sophia Poirier
+
+This file is part of Skidder.
+
+Skidder is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+Skidder is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License 
+along with Skidder.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the author, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
+
+#pragma once
 
 #include "dfxgui.h"
-#include "dfxguimulticontrols.h"
 
-#ifndef __SKIDDER_H
-#include "skidder.hpp"
-#endif
-
-
-const CColor kBackgroundCColor = {59, 73, 114, 0};
-//const CColor kMyLighBlueCColor = {91, 102, 137};
-const CColor kMyPaleGreenCColor = {108, 156, 132};
-const CColor kMyDarkBlueCColor = {45, 57, 90};
 
 //-----------------------------------------------------------------------
-class SkidderEditor : public AEffGUIEditor, public CControlListener
+class SkidderEditor final : public DfxGuiEditor
 {
 public:
-	SkidderEditor(AudioEffect *effect);
-	virtual ~SkidderEditor();
+	SkidderEditor(DGEditorListenerInstance inInstance);
 
-protected:
-	virtual long getRect(ERect **rect);
-	virtual long open(void *ptr);
-	virtual void close();
-
-	virtual void setParameter(long index, float value);
-	virtual void valueChanged(CDrawContext* context, CControl* control);
-
-    virtual void idle();
+	long OpenEditor() override;
+	void parameterChanged(long inParameterID) override;
+	void numAudioChannelsChanged(unsigned long inNumChannels) override;
 
 private:
+	std::pair<long, long> GetActiveRateParameterIDs();
+	void UpdateRandomMinimumDisplays();
+	void HandleTempoAutoChange();
+
 	// controls
-	CHorizontalSlider *rateFader;
-	CHorizontalSlider *tempoFader;
-	CHorizontalRangeSlider *pulsewidthFader;
-	CHorizontalSlider *slopeFader;
-	CHorizontalRangeSlider *floorFader;
-	CHorizontalSlider *panFader;
-	CHorizontalSlider *noiseFader;
-	COnOffButton *tempoSyncButton;
-	COnOffButton *midiLearnButton;
-	CKickButton *midiResetButton;
-	CWebLink *goButton;
-	CWebLink *DestroyFXlink;
-	CWebLink *SmartElectronixLink;
-
-	// parameter value display boxes
-	CParamDisplay *rateDisplay;
-	CTextEdit *tempoTextEdit;
-	CNumberBox *pulsewidthDisplay;
-	CParamDisplay *pulsewidthRandMinDisplay;
-	CParamDisplay *randomMinimumDisplay;
-	CParamDisplay *slopeDisplay;
-	CParamDisplay *floorDisplay;
-	CParamDisplay *floorRandMinDisplay;
-	CParamDisplay *randomMinimum2Display;
-	CParamDisplay *panDisplay;
-	CParamDisplay *noiseDisplay;
-	CParamDisplay *goDisplay;
-
-	char *tempoString;
-
-	// graphics
-	CBitmap *gBackground;
-	CBitmap *gFaderSlide;
-	CBitmap *gFaderHandle;
-	CBitmap *gGlowingFaderHandle;
-	CBitmap *gFaderHandleLeft;
-	CBitmap *gGlowingFaderHandleLeft;
-	CBitmap *gFaderHandleRight;
-	CBitmap *gGlowingFaderHandleRight;
-	CBitmap *gTempoSyncButton;
-	CBitmap *gMidiLearnButton;
-	CBitmap *gMidiResetButton;
-	CBitmap *gGoButton;
-	CBitmap *gDestroyFXlink;
-	CBitmap *gSmartElectronixLink;
-
-#ifdef MSKIDDER
-	CMultiToggle *midiModeButton;
-	COnOffButton *velocityButton;
-	CBitmap *gMidiModeButton;
-	CBitmap *gVelocityButton;
-#endif
-
-	bool isOpen;
-
-	static void rateDisplayConvert(float value, char *string, void *temporatestring);
-	static float theTempoSync;
-	char *tempoRateString;
-	DfxSettings *chunk;
-	long goError;
-	CHorizontalSlider **faders;
+	DGRangeSlider* mRateSlider = nullptr;
+	DGTextDisplay* mRateDisplay = nullptr;
+	DGTextDisplay* mRateRandMinDisplay = nullptr;
+	DGTextDisplay* mPulsewidthRandMinDisplay = nullptr;
+	DGTextDisplay* mFloorRandMinDisplay = nullptr;
 };
-
-#endif

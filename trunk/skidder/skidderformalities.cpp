@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2019  Sophia Poirier
+Copyright (C) 2000-2020  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -20,6 +20,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 #include "skidder.h"
+
+#include <cmath>
 
 
 // this macro does boring entry point stuff for us
@@ -44,7 +46,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kPan, "stereo spread", 0.0, 0.6, 0.0, 1.0, DfxParam::Unit::Scalar);
 	initparameter_f(kFloor, "floor", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 	initparameter_f(kFloorRandMin, "floor random min", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
-	initparameter_f(kNoise, "rupture", 0.0, 18732.0, 0.0, 18732.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
+	initparameter_f(kNoise, "rupture", 0.0, std::pow(0.5, 2.0), 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
 	initparameter_list(kMidiMode, "MIDI mode", kMidiMode_None, kMidiMode_None, kNumMidiModes);
 	initparameter_b(kVelocity, "velocity", false, false);
 	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
