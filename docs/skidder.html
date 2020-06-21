@@ -21,11 +21,11 @@
 
 
 <p class="intro">
-Skidder turns the sound on and off.  You could also call it an auto-muter.  Except that it also can randomly pan your choppy chunks of sound all about, which is why it's a skidder, like how a rock skids across a frozen lake when you throw it out there, bouncing here and there lopsided-style.
+Skidder turns the sound on and off.  You could also call it an auto-gate.  Except that it also can randomly pan your choppy chunks of sound all about, which is why it's a skidder, like how a rock skids across a frozen lake when you throw it out there, bouncing here and there lopsided-style.
 </p>
 
 <p class="intro">
-There is also a MIDI trigger mode for Skidder.  When this is on, the effect is triggered by MIDI notes.  This mode will only work in host applications that support sending MIDI notes to plugins.
+There is also a MIDI trigger mode for Skidder.  When this is on, the effect is triggered by MIDI notes.  This mode will only work in host applications that support sending MIDI notes to effect plugins.
 </p>
 
 <br />
@@ -34,7 +34,11 @@ There is also a MIDI trigger mode for Skidder.  When this is on, the effect is t
 <p class="label">rate:</p>
 
 <p class="desc">
-The rate parameter controls the speed at which the sound goes on and off.  The values are in cycles per second (Hertz).  When tempo sync is on, you can control Skidder's rate according to the tempo of your song instead of Hz.  The values are in cycles per beat (note:  I mean per single beat, not per measure, so this is independent of time signature).
+The rate parameter controls the speed at which the sound goes on and off.  The values are in cycles per second (Hertz).  When <b>tempo sync</b> is on, you can control Skidder's rate according to the tempo of your song instead of Hz.  The values are in cycles per beat (note:  I mean per single beat, not per measure, so this is independent of time signature).
+</p>
+
+<p class="desc">
+This parameter can be set to use a randomized range.  If the two slider handles are not right next to each other, then Skidder will, for each cycle, randomly choose a value for the rate that is within the range of the minimum and maximum points.
 </p>
 
 <br />
@@ -49,36 +53,14 @@ This switches between the "free" rate control and the tempo-synced rate control.
 <br />
 
 
-<p class="label">rate random factor:</p>
-
-<p class="desc">
-This parameter lets you randomize the rate.  The random factor is a divisor and multiplier to whatever rate you have already defined (tempo-synced or free).  The defined rate divided by the random factor is the lower limit for possible random rates.  The defined rate times the random factor is the upper limit.  Skidder's actual rate will randomly change between these limits at every cycle.  For example, if you have a defined rate of 12 cps and a random factor of 3, then each cycle will have a rate somewhere between 4 cps and 36 cps.
-</p>
-
-<br />
-
-
-<p class="label">tempo:</p>
-
-<p class="desc">
-The tempo parameter is used to tell Skidder what the tempo of your song is.  This parameter defaults to "auto" which means that Skidder tries to get the tempo from the host application.  If you move the tempo slider to the right, you exit "auto" mode and can set the tempo manually.  You can also click on the numerical value display and type your tempo in manually.
-</p>
-
-<p class="desc">
-"Auto" tempo only works if the host application supports sending tempo information to plugins.  If the application can't do this, then the "auto" option will not appear in Skidder.
-</p>
-
-<br />
-
-
 <p class="label">pulsewidth:</p>
 
 <p class="desc">
-The pulsewidth parameter controls how much of each cycle is "on."  If you set it to 0.9, then your source sound will be output during the first 90% of each cycle and the last 10% of each cycle will be silent.
+The pulsewidth parameter controls how much of each cycle is "on."  If you set it to 90%, then your source sound will be output during the first 90% of each cycle and the last 10% of each cycle will be silent.
 </p>
 
 <p class="desc">
-This parameter can be set to use a randomized range.  If the 2 slider handles are not right next to each other, then Skidder will, for each cycle, randomly choose a value for the pulsewidth that is within the range of the minimum and maximum points.
+This parameter can be set to use a randomized range.  If the two slider handles are not right next to each other, then Skidder will, for each cycle, randomly choose a value for the pulsewidth that is within the range of the minimum and maximum points.
 </p>
 
 <br />
@@ -91,7 +73,7 @@ The slope parameter sets the length of the volume-smoothing slopes that are at t
 </p>
 
 <p class="desc">
-Slope can be set to 0 ms if you want, but you are likely to get irritating popping sounds at the start and end of each pulse if you do that.  If you screw up and set the slopes to be longer than the pulse, then your slope setting gets overridden to be one 3rd of the pulse length.
+Slope can be set to 0 ms if you want, but you are likely to get irritating popping sounds at the start and end of each pulse if you do that.  If you set the slopes to be longer than the pulse, then your slope setting gets overridden to be one third of the pulse length.
 </p>
 
 <br />
@@ -104,7 +86,7 @@ This controls how quiet the sound gets between skids, i.e. during the "off" peri
 </p>
 
 <p class="desc">
-This parameter can be set to use a randomized range.  If the 2 slider handles are not right next to each other, then Skidder will, for each cycle, randomly choose a value for the floor that is within the range of the minimum and maximum points.
+This parameter can be set to use a randomized range.  If the two slider handles are not right next to each other, then Skidder will, for each cycle, randomly choose a value for the floor that is within the range of the minimum and maximum points.
 </p>
 
 <br />
@@ -113,7 +95,7 @@ This parameter can be set to use a randomized range.  If the 2 slider handles ar
 <p class="label">stereo spread:</p>
 
 <p class="desc">
-The stereo spread parameter controls the amount of random panning that your outputted sound chunks will be subjected to.  When it's set to 0, all of your audio will come out centered.  When it's set to 1, each pulse will be randomly panned to a different place in the stereo field.  Lowering the stereo spread value will limit how far from center the random panning is allowed to stray.
+The stereo spread parameter controls the amount of random panning that your outputted sound chunks will be subjected to.  When it's set to 0%, all of your audio will come out centered.  When it's set to 100%, each pulse will be randomly panned to a different place in the stereo field.  Lowering the stereo spread value will limit how far from center the random panning is allowed to stray.
 </p>
 
 <p class="desc">
@@ -126,6 +108,33 @@ Skidder pans to the left by moving some of the right signal into the left channe
 
 <p class="desc">
 <i>note:</i>  The stereo spread parameter is only functional when Skidder is processing stereo output.  When Skidder is processing mono output or more than two channels of output, the parameter is ineffectual.
+</p>
+
+<br />
+
+
+<p class="label">rupture:</p>
+
+<p class="desc">
+blurps of noise betwixt your skids
+</p>
+
+<br />
+
+
+<p class="label">tempo:</p>
+
+<p class="desc">
+The tempo parameter is used to tell Skidder what the tempo of your song is, unless syncing to <b>host tempo</b>.
+</p>
+
+<br />
+
+
+<p class="label">host tempo:</p>
+
+<p class="desc">
+When enabled, Skidder tries to get the tempo and beat positions from the host application.  This is only possible if the host application supports sending tempo information to plugins, otherwise Skidder falls back to its <b>tempo</b> parameter.
 </p>
 
 <br />
@@ -166,7 +175,7 @@ Destroy FX #2
 <br />
 <a href="http://destroyfx.org/">http://destroyfx.org/</a>
 <br /><br />
-Skidder is Copyright &copy; 2000-2009 Sophia Poirier
+Skidder is Copyright &copy; 2000-2020 Sophia Poirier
 <br />
 <br />
 This software comes with absolutely no warranty, express or implied.  
