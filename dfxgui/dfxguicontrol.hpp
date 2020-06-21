@@ -132,10 +132,12 @@ long DGControl<T>::getParameterID() const
 template <class T>
 void DGControl<T>::setParameterID(long inParameterID)
 {
-	assert(inParameterID != getParameterID());
-	T::setTag(inParameterID);
-	initValues();
-	T::setDirty();
+	if (inParameterID != getParameterID())
+	{
+		T::setTag(inParameterID);
+		initValues();
+		T::setDirty();
+	}
 }
 
 //-----------------------------------------------------------------------------
