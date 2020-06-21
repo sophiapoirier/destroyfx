@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -163,8 +163,8 @@ public:
 		DfxEnvelope mEnvelope;
 		float mLastOutValue = 0.0f;  // capture the most recent output value for smoothing, if necessary   XXX mono assumption
 		long mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
-		std::array<float, kStolenNoteFadeDur> mTail1;  // a little buffer of output samples for smoothing a cut-off note (left channel)
-		std::array<float, kStolenNoteFadeDur> mTail2;  // (right channel) XXX wow this stereo assumption is such a bad idea
+		std::array<float, kStolenNoteFadeDur> mTail1 {};  // a little buffer of output samples for smoothing a cut-off note (left channel)
+		std::array<float, kStolenNoteFadeDur> mTail2 {};  // (right channel) XXX wow this stereo assumption is such a bad idea
 	};
 
 	DfxMidi();
@@ -271,16 +271,16 @@ private:
 
 	void turnOffNote(int inMidiNote, bool inLegato);
 
-	std::array<MusicNote, kNumNotes> mNoteTable;  // a table with important data about each note
-	std::array<double, kNumNotes> mNoteFrequencyTable;  // a table of the frequency corresponding to each MIDI note
+	std::array<MusicNote, kNumNotes> mNoteTable {};  // a table with important data about each note
+	std::array<double, kNumNotes> mNoteFrequencyTable {};  // a table of the frequency corresponding to each MIDI note
 
-	std::array<int, kNumNotes> mNoteQueue;  // a chronologically ordered queue of all active notes
-	std::array<Event, kEventQueueSize> mBlockEvents;  // the new MIDI events for a given processing block
+	std::array<int, kNumNotes> mNoteQueue {};  // a chronologically ordered queue of all active notes
+	std::array<Event, kEventQueueSize> mBlockEvents {};  // the new MIDI events for a given processing block
 	long mNumBlockEvents = 0;  // the number of new MIDI events in a given processing block
 
 	double mPitchBend = 1.0;  // a frequency scalar value for the current pitchbend setting
 
-	std::array<bool, kNumNotes> mSustainQueue;  // a queue of note-offs for when the sustain pedal is active
+	std::array<bool, kNumNotes> mSustainQueue {};  // a queue of note-offs for when the sustain pedal is active
 
 	// pick up where the release left off, if it's still releasing
 //	bool mLazyAttackMode;

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -52,7 +52,7 @@ enum
 
 //constexpr DGColor kBackgroundColor(64, 54, 40);
 //constexpr DGColor kBackgroundColor(42, 34, 22);
-static char const* const kValueTextFont = "Arial";
+constexpr char const* const kValueTextFont = "Arial";
 constexpr float kValueTextSize = 11.0f;
 
 

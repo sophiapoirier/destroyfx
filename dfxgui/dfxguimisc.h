@@ -74,15 +74,15 @@ public:
 	}
 	void setSize(VSTGUI::CCoord inWidth, VSTGUI::CCoord inHeight)
 	{
-		VSTGUI::CRect::setSize(VSTGUI::CPoint(inWidth, inHeight));
+		VSTGUI::CRect::setSize({inWidth, inHeight});
 	}
 	constexpr bool isInside(VSTGUI::CCoord inX, VSTGUI::CCoord inY)
 	{
-		return pointInside(VSTGUI::CPoint(inX, inY));
+		return pointInside({inX, inY});
 	}
 	constexpr bool isInside_local(VSTGUI::CCoord inX, VSTGUI::CCoord inY)
 	{
-		return pointInside(VSTGUI::CPoint(inX + left, inY + top));
+		return pointInside({inX + left, inY + top});
 	}
 };
 
@@ -225,7 +225,7 @@ public:
 namespace dfx
 {
 
-static constexpr char const* const kPlusMinusUTF8 = u8"\U000000B1";
+extern char const* const kPlusMinusUTF8;
 
 VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr);
 

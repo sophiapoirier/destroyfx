@@ -45,7 +45,7 @@ enum {
 };
 
 
-static char const* const kValueTextFont = "Boring Boron";
+constexpr char const* const kValueTextFont = "Boring Boron";
 //constexpr float kValueTextSize = 20.0f;
 constexpr float kValueTextSize = 16.8f;
 
@@ -103,6 +103,10 @@ public:
 			inContext->setFillColor(DGColor::kBlack);
 			inContext->drawRect(bottomBorderRect, VSTGUI::kDrawFilled);
 		}
+
+#ifdef TARGET_API_RTAS
+		getOwnerEditor()->drawControlHighlight(inContext, this);
+#endif
 
 		setDirty(false);
 	}
