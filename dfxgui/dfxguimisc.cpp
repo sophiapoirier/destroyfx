@@ -35,8 +35,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#endif
 	#import <AppKit/NSColor.h>
 	#import <AppKit/NSColorSpace.h>
-	#include <Carbon/Carbon.h>
+	#import <AppKit/NSFont.h>
 #endif
+
+
+
+char const* const dfx::kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
 
 
 //-----------------------------------------------------------------------------
@@ -201,23 +205,9 @@ VSTGUI::SharedPointer<VSTGUI::CFontDesc> dfx::CreateVstGuiFont(float inFontSize,
 	{
 		auto fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(VSTGUI::kSystemFont->getName(), inFontSize);
 #if TARGET_OS_MAC
-		// get the application font from the system "theme"
-		auto const fontType = HIThemeGetUIFontType(kThemeApplicationFont);
-		if (fontType != kCTFontNoFontType)
+		if (auto const fontName = [NSFont systemFontOfSize:NSFont.systemFontSize].displayName)
 		{
-			dfx::UniqueCFType const fontRef = CTFontCreateUIFontForLanguage(fontType, 0.0, nullptr);
-			if (fontRef)
-			{
-				dfx::UniqueCFType const fontCFName = CTFontCopyFullName(fontRef.get());
-				if (fontCFName)
-				{
-					auto const fontCName = dfx::CreateCStringFromCFString(fontCFName.get(), kCFStringEncodingUTF8);
-					if (fontCName)
-					{
-						fontDesc->setName(fontCName.get());
-					}
-				}
-			}
+			fontDesc->setName(fontName.UTF8String);
 		}
 #endif
 		return fontDesc;

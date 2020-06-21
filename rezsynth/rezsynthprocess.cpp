@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
-	auto numFramesToProcess = inNumFrames;  // for dividing up the block accoring to events
+	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
 
 
 #ifndef TARGET_API_AUDIOUNIT

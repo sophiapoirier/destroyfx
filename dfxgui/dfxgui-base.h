@@ -50,7 +50,7 @@ enum class TextAlignment
 	Right
 };
 
-static char const* const kFontName_SnootPixel10 = "snoot.org pixel10";
+static constexpr char const* const kFontName_SnootPixel10 = "snoot.org pixel10";
 static constexpr float kFontSize_SnootPixel10 = 14.0f;
 
 // VSTGUI does not define named constants for these onKeyDown and onKeyUp result values

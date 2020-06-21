@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2018  Sophia Poirier
+Copyright (C) 2001-2019  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -43,10 +43,10 @@ namespace dfx::math
 // constants
 //-----------------------------------------------------------------------------
 
-template <typename T, typename = std::enable_if_t<std::is_floating_point<T>::value>>
+template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
 constexpr T kPi(M_PI);
 
-template <typename T, typename = std::enable_if_t<std::is_floating_point<T>::value>>
+template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
 constexpr T kLn2(M_LN2);
 
 
