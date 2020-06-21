@@ -28,9 +28,9 @@ Welcome to our settings persistance mess.
 
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 #include <numeric>
 #include <optional>
-#include <stdlib.h>  // for abort
 #include <type_traits>
 #include <vector>
 
@@ -1474,7 +1474,7 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
 			return CrisisError::ComplainError;
 
 		case CrisisBehavior::CrashTheHostApplication:
-			abort();
+			std::abort();
 			// if the host is still alive, then we have failed...
 			return CrisisError::FailedCrashError;
 
@@ -1494,7 +1494,11 @@ void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDat
 															   inDataItemName, inDataItemSize, inDataTotalSize);
 	if (message)
 	{
+#ifdef TARGET_API_AUDIOUNIT
 		dfx::UniqueCFType const iconURL = mPlugin->CopyIconLocation();
+#else
+		dfx::UniqueCFType<CFURLRef> const iconURL;
+#endif
 		CFUserNotificationDisplayNotice(0.0, kCFUserNotificationStopAlertLevel, iconURL.get(), nullptr, nullptr, title, message.get(), nullptr);
 	}
 #else

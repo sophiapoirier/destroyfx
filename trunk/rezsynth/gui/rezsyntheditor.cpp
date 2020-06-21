@@ -165,7 +165,7 @@ bool velocityCurveDisplayProc(float value, char* outText, void*)
 
 bool pitchBendDisplayProc(float value, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, u8"%s %.2f semitones", dfx::kPlusMinusUTF8, value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f semitones", dfx::kPlusMinusUTF8, value) > 0;
 }
 
 bool gainDisplayProc(float value, char* outText, void*)

@@ -46,7 +46,7 @@ dfx::SmoothedValue<T>::SmoothedValue(double inSmoothingTimeInSeconds)
 	mSampleRate(1.0),
 	mReinitialize(true)
 {
-	static_assert(std::is_floating_point<T>::value);
+	static_assert(std::is_floating_point_v<T>);
 
 	setSmoothingTime(inSmoothingTimeInSeconds);
 }

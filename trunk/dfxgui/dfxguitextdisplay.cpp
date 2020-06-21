@@ -91,11 +91,11 @@ static void DFXGUI_ConfigureTextDisplay(VSTGUI::CTextLabel* inTextDisplay,
 		// XXX a hack for this font
 		if (inTextAlignment == dfx::TextAlignment::Left)
 		{
-			inTextDisplay->setTextInset(VSTGUI::CPoint(-1.0, 0.0));
+			inTextDisplay->setTextInset({-1.0, 0.0});
 		}
 		else if (inTextAlignment == dfx::TextAlignment::Right)
 		{
-			inTextDisplay->setTextInset(VSTGUI::CPoint(-2.0, 0.0));
+			inTextDisplay->setTextInset({-2.0, 0.0});
 		}
 	}
 	inTextDisplay->setAntialias(!isSnootPixel10);
@@ -109,6 +109,7 @@ static DGRect DFXGUI_GetTextDrawRegion(VSTGUI::CTextLabel* inTextDisplay, DGRect
 	{
 		textArea.offset(0, -2);
 		textArea.setHeight(textArea.getHeight() + 2);
+		textArea.makeIntegral();
 	}
 	return textArea;
 }
