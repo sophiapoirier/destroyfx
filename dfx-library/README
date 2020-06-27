@@ -1,6 +1,6 @@
 This is the Destroy FX Library, a collection of useful source code
 material for writing audio processing plugins.  Our base library code
-is comprised of the dfxplugin and dfxparameter files, plus dfxmidi and
+is composed of the dfxplugin and dfxparameter files, plus dfxmidi and
 dfxsettings for plugins that use MIDI.  And there is oodles of other
 stuff too.
 
