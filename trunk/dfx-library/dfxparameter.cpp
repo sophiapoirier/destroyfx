@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -116,12 +116,12 @@ void DfxParam::init_f(char const* inName, double inInitialValue, double inDefaul
 					  double inMinValue, double inMaxValue, 
 					  Unit inUnit, Curve inCurve)
 {
-	Value val, def, mn, mx;
+	Value val {}, def {}, min {}, max {};
 	val.f = inInitialValue;
 	def.f = inDefaultValue;
-	mn.f = inMinValue;
-	mx.f = inMaxValue;
-	init(inName, ValueType::Float, val, def, mn, mx, inUnit, inCurve);
+	min.f = inMinValue;
+	max.f = inMaxValue;
+	init(inName, ValueType::Float, val, def, min, max, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
@@ -129,23 +129,23 @@ void DfxParam::init_i(char const* inName, int64_t inInitialValue, int64_t inDefa
 					  int64_t inMinValue, int64_t inMaxValue, 
 					  Unit inUnit, Curve inCurve)
 {
-	Value val, def, mn, mx;
+	Value val {}, def {}, min {}, max {};
 	val.i = inInitialValue;
 	def.i = inDefaultValue;
-	mn.i = inMinValue;
-	mx.i = inMaxValue;
-	init(inName, ValueType::Int, val, def, mn, mx, inUnit, inCurve);
+	min.i = inMinValue;
+	max.i = inMaxValue;
+	init(inName, ValueType::Int, val, def, min, max, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with boolean variable type
 void DfxParam::init_b(char const* inName, bool inInitialValue, bool inDefaultValue, Unit inUnit)
 {
-	Value val, def, mn, mx;
+	Value val {}, def {}, min {}, max {};
 	val.b = inInitialValue;
 	def.b = inDefaultValue;
-	mn.b = false;
-	mx.b = true;
-	init(inName, ValueType::Boolean, val, def, mn, mx, inUnit, Curve::Linear);
+	min.b = false;
+	max.b = true;
+	init(inName, ValueType::Boolean, val, def, min, max, inUnit, Curve::Linear);
 }
 
 //-----------------------------------------------------------------------------
@@ -366,25 +366,25 @@ double DfxParam::get_gen() const
 //-----------------------------------------------------------------------------
 // set a Value with a value of a float type
 // (perform type conversion if float is not the parameter's "native" type)
-bool DfxParam::accept_f(double inValue, Value& outValue) const
+bool DfxParam::accept_f(double inValue, Value& ioValue) const
 {
 	switch (mValueType)
 	{
 		case ValueType::Float:
-			outValue.f = inValue;
+			ioValue.f = inValue;
 			break;
 		case ValueType::Int:
 			{
-				auto const entryValue = outValue.i;
+				auto const entryValue = ioValue.i;
 				if (inValue < 0.0)
 				{
-					outValue.i = static_cast<int64_t>(inValue - kIntegerPadding);
+					ioValue.i = static_cast<int64_t>(inValue - kIntegerPadding);
 				}
 				else
 				{
-					outValue.i = static_cast<int64_t>(inValue + kIntegerPadding);
+					ioValue.i = static_cast<int64_t>(inValue + kIntegerPadding);
 				}
-				if (outValue.i == entryValue)
+				if (ioValue.i == entryValue)
 				{
 					return false;
 				}
@@ -392,9 +392,9 @@ bool DfxParam::accept_f(double inValue, Value& outValue) const
 			break;
 		case ValueType::Boolean:
 			{
-				auto const entryValue = outValue.b;
-				outValue.b = Float2Boolean(inValue) ? 1 : 0;
-				if (outValue.b == entryValue)
+				auto const entryValue = ioValue.b;
+				ioValue.b = Float2Boolean(inValue) ? 1 : 0;
+				if (ioValue.b == entryValue)
 				{
 					return false;
 				}
@@ -411,18 +411,18 @@ bool DfxParam::accept_f(double inValue, Value& outValue) const
 //-----------------------------------------------------------------------------
 // set a Value with a value of a int type
 // (perform type conversion if int is not the parameter's "native" type)
-bool DfxParam::accept_i(int64_t inValue, Value& outValue) const noexcept
+bool DfxParam::accept_i(int64_t inValue, Value& ioValue) const noexcept
 {
 	switch (mValueType)
 	{
 		case ValueType::Float:
-			outValue.f = static_cast<double>(inValue);
+			ioValue.f = static_cast<double>(inValue);
 			break;
 		case ValueType::Int:
 		{
-			auto const entryValue = outValue.i;
-			outValue.i = inValue;
-			if (outValue.i == entryValue)
+			auto const entryValue = ioValue.i;
+			ioValue.i = inValue;
+			if (ioValue.i == entryValue)
 			{
 				return false;
 			}
@@ -430,9 +430,9 @@ bool DfxParam::accept_i(int64_t inValue, Value& outValue) const noexcept
 		}
 		case ValueType::Boolean:
 		{
-			auto const entryValue = outValue.b;
-			outValue.b = (inValue == 0) ? 0 : 1;
-			if (outValue.b == entryValue)
+			auto const entryValue = ioValue.b;
+			ioValue.b = (inValue == 0) ? 0 : 1;
+			if (ioValue.b == entryValue)
 			{
 				return false;
 			}
@@ -449,18 +449,18 @@ bool DfxParam::accept_i(int64_t inValue, Value& outValue) const noexcept
 //-----------------------------------------------------------------------------
 // set a Value with a value of a boolean type
 // (perform type conversion if boolean is not the parameter's "native" type)
-bool DfxParam::accept_b(bool inValue, Value& outValue) const noexcept
+bool DfxParam::accept_b(bool inValue, Value& ioValue) const noexcept
 {
 	switch (mValueType)
 	{
 		case ValueType::Float:
-			outValue.f = (inValue ? 1.0 : 0.0);
+			ioValue.f = (inValue ? 1.0 : 0.0);
 			break;
 		case ValueType::Int:
 		{
-			auto const entryValue = outValue.i;
-			outValue.i = (inValue ? 1 : 0);
-			if (outValue.i == entryValue)
+			auto const entryValue = ioValue.i;
+			ioValue.i = (inValue ? 1 : 0);
+			if (ioValue.i == entryValue)
 			{
 				return false;
 			}
@@ -468,9 +468,9 @@ bool DfxParam::accept_b(bool inValue, Value& outValue) const noexcept
 		}
 		case ValueType::Boolean:
 		{
-			auto const entryValue = outValue.b;
-			outValue.b = (inValue ? 1 : 0);
-			if (outValue.b == entryValue)
+			auto const entryValue = ioValue.b;
+			ioValue.b = (inValue ? 1 : 0);
+			if (ioValue.b == entryValue)
 			{
 				return false;
 			}
@@ -482,6 +482,30 @@ bool DfxParam::accept_b(bool inValue, Value& outValue) const noexcept
 	}
 
 	return true;  // XXX do this smarter?
+}
+
+//-----------------------------------------------------------------------------
+DfxParam::Value DfxParam::pack_f(double inValue) const
+{
+	Value resultValue {};
+	accept_f(inValue, resultValue);
+	return resultValue;
+}
+
+//-----------------------------------------------------------------------------
+DfxParam::Value DfxParam::pack_i(int64_t inValue) const noexcept
+{
+	Value resultValue {};
+	accept_i(inValue, resultValue);
+	return resultValue;
+}
+
+//-----------------------------------------------------------------------------
+DfxParam::Value DfxParam::pack_b(bool inValue) const noexcept
+{
+	Value resultValue {};
+	accept_b(inValue, resultValue);
+	return resultValue;
 }
 
 //-----------------------------------------------------------------------------

@@ -404,11 +404,11 @@ public:
 	int64_t derive_i(Value inValue) const;
 	bool derive_b(Value inValue) const noexcept;
 
-	// set a Value with a value of a specific type
+	// produce a Value with a value of a specific type
 	// (perform type conversion if the incoming variable type is not "native")
-	bool accept_f(double inValue, Value& outValue) const;
-	bool accept_i(int64_t inValue, Value& outValue) const noexcept;
-	bool accept_b(bool inValue, Value& outValue) const noexcept;
+	Value pack_f(double inValue) const;
+	Value pack_i(int64_t inValue) const noexcept;
+	Value pack_b(bool inValue) const noexcept;
 
 	// expand and contract routines for setting and getting values generically
 	// these take into account the parameter curve
@@ -510,6 +510,13 @@ public:
 
 
 private:
+	// set a Value with a value of a specific type
+	// (perform type conversion if the incoming variable type is not "native")
+	// returns whether the provided Value changed upon accepting the scalar value
+	bool accept_f(double inValue, Value& ioValue) const;
+	bool accept_i(int64_t inValue, Value& ioValue) const noexcept;
+	bool accept_b(bool inValue, Value& ioValue) const noexcept;
+
 	// clip the current parameter value to the min/max range
 	// returns true if the value was altered, false otherwise
 	bool limit();

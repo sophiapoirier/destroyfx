@@ -954,8 +954,7 @@ void DfxPlugin::setpresetparameter_f(long inPresetIndex, long inParameterIndex, 
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
-		DfxParam::Value paramValue {};
-		mParameters[inParameterIndex].accept_f(inValue, paramValue);
+		auto const paramValue = mParameters[inParameterIndex].pack_f(inValue);
 		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
 	}
 }
@@ -965,8 +964,7 @@ void DfxPlugin::setpresetparameter_i(long inPresetIndex, long inParameterIndex, 
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
-		DfxParam::Value paramValue {};
-		mParameters[inParameterIndex].accept_i(inValue, paramValue);
+		auto const paramValue = mParameters[inParameterIndex].pack_i(inValue);
 		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
 	}
 }
@@ -976,8 +974,7 @@ void DfxPlugin::setpresetparameter_b(long inPresetIndex, long inParameterIndex, 
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
-		DfxParam::Value paramValue {};
-		mParameters[inParameterIndex].accept_b(inValue, paramValue);
+		auto const paramValue = mParameters[inParameterIndex].pack_b(inValue);
 		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
 	}
 }
@@ -987,8 +984,7 @@ void DfxPlugin::setpresetparameter_gen(long inPresetIndex, long inParameterIndex
 {
 	if (parameterisvalid(inParameterIndex) && presetisvalid(inPresetIndex))
 	{
-		DfxParam::Value paramValue {};
-		mParameters[inParameterIndex].accept_f(expandparametervalue(inParameterIndex, inValue), paramValue);
+		auto const paramValue = mParameters[inParameterIndex].pack_f(expandparametervalue(inParameterIndex, inValue));
 		mPresets[inPresetIndex].setvalue(inParameterIndex, paramValue);
 	}
 }

@@ -619,7 +619,7 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 
 	for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
 	{
-		randomizeparameter(parameterIndex, false);
+		randomizeparameter(parameterIndex, false);  // TODO: false? not inWriteAutomation? though that would double begin/end?
 	}
 
 	if (inWriteAutomation)
@@ -649,55 +649,53 @@ void DfxGuiEditor::GenerateParametersAutomationSnapshot()
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText, double& outValue)
+std::optional<double> DfxGuiEditor::dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText)
 {
-	outValue = 0.0;
-	bool success = false;
-
 	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
-		auto const readCount = sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &outValue);
-		success = (readCount >= 1) && (readCount != EOF);
+		double value {};
+		auto const readCount = sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%lf", &value);
+		if ((readCount >= 1) && (readCount != EOF))
+		{
+			return value;
+		}
 	}
 	else
 	{
-		long newValue_i {};
-		success = dfxgui_GetParameterValueFromString_i(inParameterID, inText, newValue_i);
-		if (success)
+		if (auto const newValue_i = dfxgui_GetParameterValueFromString_i(inParameterID, inText))
 		{
-			outValue = static_cast<double>(newValue_i);
+			return static_cast<double>(*newValue_i);
 		}
 	}
 
-	return success;
+	return {};
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText, long& outValue)
+std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText)
 {
-	outValue = 0;
-	bool success = false;
-
 	if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 	{
-		double newValue_f = 0.0;
-		success = dfxgui_GetParameterValueFromString_f(inParameterID, inText, newValue_f);
-		if (success)
+		if (auto const newValue_f = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 		{
 			DfxParam param;
 			param.init_f("", 0.0, 0.0, -1.0, 1.0);
-			DfxParam::Value paramValue;
-			paramValue.f = newValue_f;
-			outValue = param.derive_i(paramValue);
+			DfxParam::Value paramValue {};
+			paramValue.f = *newValue_f;
+			return param.derive_i(paramValue);
 		}
 	}
 	else
 	{
-		auto const readCount = sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%ld", &outValue);
-		success = (readCount >= 1) && (readCount != EOF);
+		long value {};
+		auto const readCount = sscanf(dfx::SanitizeNumericalInput(inText).c_str(), "%ld", &value);
+		if ((readCount >= 1) && (readCount != EOF))
+		{
+			return value;
+		}
 	}
 
-	return success;
+	return {};
 }
 
 //-----------------------------------------------------------------------------
@@ -709,20 +707,16 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::s
 	{
 		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
 		{
-			double newValue = 0.0;
-			success = dfxgui_GetParameterValueFromString_f(inParameterID, inText, newValue);
-			if (success)
+			if (auto const newValue = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 			{
-				setparameter_f(inParameterID, newValue, true);
+				setparameter_f(inParameterID, *newValue, true);
 			}
 		}
 		else
 		{
-			long newValue {};
-			success = dfxgui_GetParameterValueFromString_i(inParameterID, inText, newValue);
-			if (success)
+			if (auto const newValue = dfxgui_GetParameterValueFromString_i(inParameterID, inText))
 			{
-				setparameter_i(inParameterID, newValue, true);
+				setparameter_i(inParameterID, *newValue, true);
 			}
 		}
 	}
