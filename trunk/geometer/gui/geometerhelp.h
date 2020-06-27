@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2003-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2003-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -117,7 +117,7 @@ constexpr std::array<char const * const, NUM_POINTSTYLES> landmarks_helpstrings
 {{
   R"(ext'n cross: place points at extremities and crossings
 Place points at zero-crossings, as well as the peaks and 
-valleys between them.  The slider controls teh tolerance for 
+valleys between them.  The slider controls the tolerance for 
 what is considered 'zero'.)", 
   R"(at freq: places points at specified frequency
 Places points at the frequency specified by the slider.)", 
