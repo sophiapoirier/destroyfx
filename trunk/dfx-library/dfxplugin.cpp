@@ -158,7 +158,6 @@ DfxPlugin::DfxPlugin(
 
 #ifdef TARGET_API_VST
 	TARGET_API_BASE_CLASS(inInstance, inNumPresets, inNumParameters), 
-	mNumInputs(VST_NUM_INPUTS), mNumOutputs(VST_NUM_OUTPUTS), 
 #endif
 // end API-specific base constructors
 
@@ -167,6 +166,10 @@ DfxPlugin::DfxPlugin(
 	mParametersTouchedAsOfPreProcess(inNumParameters, false),
 	mParametersChangedInProcessHavePosted(inNumParameters)
 {
+#ifdef TARGET_API_VST
+	mNumInputs = VST_NUM_INPUTS;
+	mNumOutputs = VST_NUM_OUTPUTS;
+#endif
 	updatesamplerate();  // XXX have it set to something here?
 
 	// set a seed value for rand() from the system clock
@@ -202,7 +205,10 @@ DfxPlugin::DfxPlugin(
 	TARGET_API_BASE_CLASS::setProgram(0);  // set the current preset number to 0
 
 	// check to see if the host supports sending tempo and time information to VST plugins
-	mHostCanDoTempo = (canHostDo("sendVstTimeInfo") == 1);
+	// Note that the VST2 SDK (probably erroneously) wants a non-const string here,
+	// so we don't pass a string literal.
+	char timeinfo[] = "sendVstTimeInfo";
+	mHostCanDoTempo = canHostDo(timeinfo) == 1;
 
 	#if TARGET_PLUGIN_USES_MIDI
 	// tell host that we want to use special data chunks for settings storage
@@ -1185,6 +1191,9 @@ void DfxPlugin::do_idle()
 	}
 
 #if TARGET_PLUGIN_USES_MIDI
+#ifdef TARGET_API_AUDIOUNIT
+	// XXX unclear to me what (if anything) this should be doing if not AU?
+	// (kAudioUnitScope is AU-specific I assume) -tom7
 	if (!mMidiLearnChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
 	{
 		PropertyChanged(dfx::kPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
@@ -1193,6 +1202,7 @@ void DfxPlugin::do_idle()
 	{
 		PropertyChanged(dfx::kPluginProperty_MidiLearner, kAudioUnitScope_Global, AudioUnitElement(0));
 	}
+#endif
 #endif
 
 	idle();
