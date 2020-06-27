@@ -108,7 +108,7 @@ cleanup, and maybe the buffer routines if you use buffers, but that's it.
 ------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------
- when impelementing plugins derived from this stuff, you must define the following:
+ when implementing plugins derived from this stuff, you must define the following:
 PLUGIN_NAME_STRING
 	a C string of the name of the plugin
 PLUGIN_ID
@@ -159,7 +159,7 @@ PLUGIN_EDITOR_RES_ID
 #include <thread>
 #include <variant>
 #include <vector>
-
+#include <cstdint>
 
 #ifdef TARGET_API_RTAS
 	#include "CEffectGroup.h"
@@ -720,7 +720,7 @@ private:
 	// the Audio Unit API already has an i/o configurations structure
 	using ChannelConfig = AUChannelInfo;
 #else
-	// immitate AUChannelInfo from the Audio Unit API for other APIs
+	// imitate AUChannelInfo from the Audio Unit API for other APIs
 	struct ChannelConfig
 	{
 		short inChannels = 0;
@@ -759,7 +759,12 @@ private:
 #if TARGET_PLUGIN_USES_DSPCORE && !defined(TARGET_API_AUDIOUNIT)
 	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to handle this ourselves because VST can't
 #endif
-
+protected:
+	// Call this during initialization (e.g. at the end of the constructor of
+	// the derived class, giving the derived DSPCORE class as the template argument.
+	template<class DSP> void initCores();
+private:
+  
 #ifdef TARGET_API_AUDIOUNIT
 	bool mAUElementsHaveBeenCreated = false;
 	// array of float pointers to input and output audio buffers, 
@@ -938,10 +943,8 @@ public:
 	void resume() override;
 	void setSampleRate(float newRate) override;
 
-	VstInt32 getTailSize() override;
-	// XXX there is a typo in the VST SDK header files, so in case it gets corrected, 
-	// make this call the properly-named version
-	VstInt32 getGetTailSize() override { return getTailSize(); }
+	// Note typo (getGet) from VST SDK.
+	VstInt32 getGetTailSize() override;
 	bool getInputProperties(VstInt32 index, VstPinProperties* properties) override;
 	bool getOutputProperties(VstInt32 index, VstPinProperties* properties) override;
 
@@ -1184,6 +1187,17 @@ public:
 	}
 
 
+#ifndef TARGET_API_AUDIOUNIT
+	// Mimic what AUKernelBase does here. The channel is just the index
+	// in the mDSPCores vector.
+private:
+	unsigned long mChannelNumber = 0;
+public:
+	void SetChannelNum(uint32_t inChan) { mChannelNumber = inChan; }
+	uint32_t GetChannelNum() { return mChannelNumber; }
+#endif
+
+
 private:
 	DfxPlugin* const mDfxPlugin;
 
@@ -1317,7 +1331,6 @@ private:
 //	#else
 //		AUKernelBase* DfxPlugin::NewKernel()
 //		{	return TARGET_API_BASE_CLASS::NewKernel();	}
-		#define DFX_INIT_CORE(PluginCoreClass)
 	#endif
 
 #else
@@ -1327,15 +1340,6 @@ private:
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// DFX_CORE_ENTRY is not useful for APIs other than AU, so it is defined as nothing
 		#define DFX_CORE_ENTRY(PluginCoreClass)
-		#define DFX_INIT_CORE(PluginCoreClass)   										\
-			for (unsigned long corecount = 0; corecount < getnumoutputs(); corecount++)	\
-			{																			\
-				mDSPCores[corecount] = std::make_unique<PluginCoreClass>(this);			\
-				if (mDSPCores[corecount])												\
-				{																		\
-					mDSPCores[corecount]->dfxplugincore_postconstructor();				\
-				}																		\
-			}
 	#endif
 
 #endif
@@ -1386,3 +1390,24 @@ private:
 		}
 
 #endif
+
+
+// template implementations follow
+
+
+#if TARGET_PLUGIN_USES_DSPCORE
+template<class DSP>
+void DfxPlugin::initCores() {
+  #ifndef TARGET_API_AUDIOUNIT
+  for (unsigned long coreidx = 0; coreidx < getnumoutputs(); coreidx++)	
+    {									
+      mDSPCores[coreidx] = std::make_unique<DSP>(this);
+      if (mDSPCores[coreidx])												
+	{
+	  mDSPCores[coreidx]->SetChannelNum(coreidx);				
+	  mDSPCores[coreidx]->dfxplugincore_postconstructor();				
+	}
+    }
+#endif
+}
+#endif  // TARGET_PLUGIN_USES_DSPCORE
