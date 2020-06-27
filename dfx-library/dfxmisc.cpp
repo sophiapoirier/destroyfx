@@ -78,8 +78,7 @@ long CompositePluginVersionNumberValue()
 //  * macOS
 // returns noErr (0) if successful, otherwise a non-zero error code is returned
 //  * Windows
-// returns a meaningless value greater than 32 if successful, 
-// otherwise an error code ranging from 0 to 32 is returned
+// returns 0 if successful, or 1 if any error occurs.
 long LaunchURL(std::string const& inURL)
 {
 	if (inURL.empty())
@@ -98,7 +97,13 @@ long LaunchURL(std::string const& inURL)
 #endif
 
 #if _WIN32
-	return static_cast<long>(ShellExecute(nullptr, "open", inURL.c_str(), nullptr, nullptr, SW_SHOWNORMAL));
+
+	// Return value is a fake HINSTANCE that will be >32 (if successful) or some error code
+	// otherwise. If we care about error handling, should update to ShellExecuteEx.
+	const long ret = static_cast<long>(
+	    reinterpret_cast<intptr_t>(ShellExecute(nullptr, "open", inURL.c_str(),
+						    nullptr, nullptr, SW_SHOWNORMAL)));
+	return ret > 32 ? 0 : 1;
 #endif
 }
 
@@ -231,7 +236,8 @@ long LaunchDocumentation()
 	return fnfErr;  // file not found error
 #else
 	#warning "implementation missing"
-	assert(false);
+	// "assert" also missing :)
+	// assert(false);
 #endif  // TARGET_OS_MAC
 
 	return 0;
