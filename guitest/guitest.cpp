@@ -54,15 +54,16 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addchannelconfig(1, 1);	/* mono */
 #endif
 
-  #ifdef TARGET_API_VST
-    #if TARGET_PLUGIN_USES_DSPCORE
-      DFX_INIT_CORE(GuitestDSP);	/* we need to manage DSP cores manually in VST */
-    #endif
-    /* if you have a GUI, need an Editor class... */
-    #if TARGET_PLUGIN_HAS_GUI
-      editor = new GuitestEditor(this);
-    #endif
+#if TARGET_PLUGIN_USES_DSPCORE
+  initCores<GuitestDSP>();
+#endif
+  
+#ifdef TARGET_API_VST
+  /* if you have a GUI, need an Editor class... */
+  #if TARGET_PLUGIN_HAS_GUI
+    editor = new GuitestEditor(this);
   #endif
+#endif
 }
 
 PLUGIN::~PLUGIN() {

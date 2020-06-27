@@ -178,12 +178,12 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addchannelconfig(1, 1);	/* mono */
 #endif
 
+#if TARGET_PLUGIN_USES_DSPCORE
+  initCores<PLUGINCORE>();
+#endif
+  
   tmpx.fill(0);
   tmpy.fill(0.0f);
-
-#if TARGET_PLUGIN_USES_DSPCORE
-  DFX_INIT_CORE(PLUGINCORE);
-#endif
 }
 
 void PLUGIN::dfx_PostConstructor()

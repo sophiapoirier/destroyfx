@@ -80,7 +80,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 #if TARGET_PLUGIN_USES_DSPCORE
-  DFX_INIT_CORE(TransverbDSP);
+  initCores<TransverbDSP>();
 #endif
 }
 
