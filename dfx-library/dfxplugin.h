@@ -1397,17 +1397,18 @@ private:
 
 #if TARGET_PLUGIN_USES_DSPCORE
 template<class DSP>
-void DfxPlugin::initCores() {
-  #ifndef TARGET_API_AUDIOUNIT
-  for (unsigned long coreidx = 0; coreidx < getnumoutputs(); coreidx++)	
-    {									
-      mDSPCores[coreidx] = std::make_unique<DSP>(this);
-      if (mDSPCores[coreidx])												
-	{
-	  mDSPCores[coreidx]->SetChannelNum(coreidx);				
-	  mDSPCores[coreidx]->dfxplugincore_postconstructor();				
+void DfxPlugin::initCores()
+{
+#ifndef TARGET_API_AUDIOUNIT
+	for (unsigned long coreidx = 0; coreidx < getnumoutputs(); coreidx++)	
+	{									
+		mDSPCores[coreidx] = std::make_unique<DSP>(this);
+		if (mDSPCores[coreidx])
+		{
+			mDSPCores[coreidx]->SetChannelNum(coreidx);				
+			mDSPCores[coreidx]->dfxplugincore_postconstructor();				
+		}
 	}
-    }
 #endif
 }
 #endif  // TARGET_PLUGIN_USES_DSPCORE
