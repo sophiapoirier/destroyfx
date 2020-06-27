@@ -44,10 +44,10 @@ namespace dfx::math
 //-----------------------------------------------------------------------------
 
 template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
-constexpr T kPi(M_PI);
+constexpr T kPi(3.14159265358979323846264338327950288);
 
 template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
-constexpr T kLn2(M_LN2);
+constexpr T kLn2(0.6931471805599453094172321214581766);
 
 
 
