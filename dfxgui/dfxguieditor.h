@@ -272,12 +272,12 @@ public:
 	bool getparametervaluestring(long inParameterID, char* outText);
 	std::string getparameterunitstring(long inParameterIndex);
 	std::string getparametername(long inParameterID);
-	void randomizeparameter(long inParameterID, bool inWriteAutomation = false);
-	void randomizeparameters(bool inWriteAutomation = false);
+	void randomizeparameter(long inParameterID, bool inWriteAutomation);
+	void randomizeparameters(bool inWriteAutomation);
 	void GenerateParameterAutomationSnapshot(long inParameterID);
 	void GenerateParametersAutomationSnapshot();
-	virtual bool dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText, double& outValue);
-	virtual bool dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText, long& outValue);
+	virtual std::optional<double> dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText);
+	virtual std::optional<long> dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText);
 	bool dfxgui_SetParameterValueWithString(long inParameterID, std::string const& inText);
 	bool dfxgui_IsValidParamID(long inParameterID) const;
 	void TextEntryForParameterValue(long inParameterID);

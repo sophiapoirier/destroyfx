@@ -43,13 +43,12 @@ static bool DFXGUI_GenericValueToTextProc(float inValue, char outTextUTF8[], voi
 static bool DFXGUI_GenericTextToValueProc(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)
 {
 	auto const paramID = textDisplay->getParameterID();
-	double value_d {};
-	auto const success = textDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(paramID, inText, value_d);
-	if (success)
+	auto const value_d = textDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(paramID, inText);
+	if (value_d)
 	{
-		outValue = static_cast<float>(value_d);
+		outValue = static_cast<float>(*value_d);
 	}
-	return success;
+	return value_d.has_value();
 }
 
 //-----------------------------------------------------------------------------

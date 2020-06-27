@@ -370,7 +370,7 @@ public:
 	// ***
 	virtual void randomizeparameter(long inParameterIndex);
 	// ***
-	virtual void randomizeparameters(bool writeAutomation = false);  // randomize all parameters at once
+	virtual void randomizeparameters(bool writeAutomation);  // randomize all parameters at once
 	void update_parameter(long inParameterIndex);
 	void postupdate_parameter(long inParameterIndex);
 
