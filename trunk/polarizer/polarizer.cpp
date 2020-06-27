@@ -38,7 +38,7 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "twicky");  // default preset name
 
-	DFX_INIT_CORE(PolarizerDSP);
+	initCores<PolarizerDSP>();
 }
 
 //-----------------------------------------------------------------------------------------
