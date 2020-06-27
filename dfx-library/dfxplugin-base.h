@@ -71,11 +71,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 		#include <windows.h>
 	#endif
 
-        using VstInt32 = int32_t;
-        using VstInt16 = int16_t;
-        using VstIntPtr = intptr_t;  // XXX??
-
-	#include "pluginterfaces/vst2.x/audioeffectx.h"
+	#include "audioeffectx.h"
 	using TARGET_API_BASE_CLASS = AudioEffectX;
 	using TARGET_API_BASE_INSTANCE_TYPE = audioMasterCallback;
 	using TARGET_API_EDITOR_PARENT_INSTANCE_TYPE = AudioEffect*;
