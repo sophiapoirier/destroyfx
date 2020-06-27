@@ -95,7 +95,7 @@ void DfxPlugin::setSampleRate(float newRate)
 //-----------------------------------------------------------------------------
 // this tells the host to keep calling process() for the duration of one buffer 
 // even if the audio input has ended
-VstInt32 DfxPlugin::getTailSize()
+VstInt32 DfxPlugin::getGetTailSize()
 {
 	return gettailsize_samples();
 }
@@ -447,7 +447,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------------------
-// note:  it is prossible and allowable for this method to be called more than once per audio processing block
+// note:  it is possible and allowable for this method to be called more than once per audio processing block
 VstInt32 DfxPlugin::processEvents(VstEvents* events)
 {
 	long newProgramNum {}, newProgramOffset = -1;

@@ -246,11 +246,6 @@ void DfxPlugin::do_PostConstructor()
 		setpresetname(0, kPresetDefaultName);
 	}
 
-#if TARGET_PLUGIN_USES_DSPCORE && !defined(TARGET_API_AUDIOUNIT)
-	// need to save instantiating the cores for the inheriting plugin class constructor
-	mDSPCores.assign(getnumoutputs(), nullptr);
-#endif
-
 #if TARGET_PLUGIN_USES_MIDI
 	mDfxSettings = std::make_unique<DfxSettings>(PLUGIN_ID, this, settings_sizeOfExtendedData());
 #endif
