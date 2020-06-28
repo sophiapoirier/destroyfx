@@ -10,4 +10,9 @@ It's not part of destroyfx and can be safely deleted if it's not being used.
 
 
 # - means output to stdout
-./gendef.exe - ../transverb/win32/dfx-transverb-64.dll
+./gendef.exe ../transverb/win32/dfx-transverb-64.dll
+
+
+BTW:
+x86_64-w64-mingw32-objdump -x file.dll
+... looks to be at least as good as this program.
