@@ -779,6 +779,9 @@ private:
 
 #ifdef TARGET_API_VST
 	bool mIsInitialized = false;
+	// VST getChunk() requires that the plugin own the buffer; this contains
+	// the chunk data from the last call to getChunk.
+	std::vector<std::byte> mLastChunk;
 #endif
 
 	// try to get musical tempo/time/location information from the host
