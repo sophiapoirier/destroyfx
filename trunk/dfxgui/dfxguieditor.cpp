@@ -40,10 +40,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #ifdef TARGET_API_AUDIOUNIT
 	#include "dfx-au-utilities.h"
-	#if !__LP64__
-		#include "AUCarbonViewBase.h"
-		#include "lib/platform/iplatformframe.h"
-	#endif
 #endif
 
 #ifdef TARGET_API_VST
@@ -321,6 +317,7 @@ void DfxGuiEditor::setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, f
 		if (control->getParameterID() == inParameterIndex)
 		{
 			control->setValue_gen(inValue);
+			control->redraw();  // TODO: why is this also necessary? redraws are sometimes dropped without it
 		}
 	}
 
@@ -1463,21 +1460,14 @@ void DfxGuiEditor::LoadPresetFile()
 		fileSelector->setTitle("Open");
 #ifdef TARGET_API_AUDIOUNIT
 		fileSelector->addFileExtension(kDfxGui_AUPresetFileExtension);
-		FSRef presetFileDirRef;
-		auto const status = FindPresetsDirForAU(reinterpret_cast<Component>(dfxgui_GetEffectInstance()), kUserDomain, kDontCreateFolder, &presetFileDirRef);
-		if (status == noErr)
+		dfx::UniqueCFType const presetsDirURL = FindPresetsDirForAU(AudioComponentInstanceGetComponent(dfxgui_GetEffectInstance()), kDFXFileSystemDomain_User, false);
+		if (presetsDirURL)
 		{
-			dfx::UniqueCFType const presetFileDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileDirRef);
-			if (presetFileDirURL)
+			if (dfx::UniqueCFType const presetsDirPathCF = CFURLCopyFileSystemPath(presetsDirURL.get(), kCFURLPOSIXPathStyle))
 			{
-				dfx::UniqueCFType const presetFileDirPathCF = CFURLCopyFileSystemPath(presetFileDirURL.get(), kCFURLPOSIXPathStyle);
-				if (presetFileDirPathCF)
+				if (auto const presetsDirPathC = dfx::CreateCStringFromCFString(presetsDirPathCF.get()))
 				{
-					auto const presetFileDirPathC = dfx::CreateCStringFromCFString(presetFileDirPathCF.get());
-					if (presetFileDirPathC)
-					{
-						fileSelector->setInitialDirectory(reinterpret_cast<VSTGUI::UTF8StringPtr>(presetFileDirPathC.get()));
-					}
+					fileSelector->setInitialDirectory(presetsDirPathC.get());
 				}
 			}
 		}
@@ -1491,10 +1481,10 @@ void DfxGuiEditor::LoadPresetFile()
 							  if (auto const filePath = inFileSelector->getSelectedFile(0))
 							  {
 #ifdef TARGET_API_AUDIOUNIT
-								  dfx::UniqueCFType const fileUrl = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
-								  if (fileUrl)
+								  dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+								  if (fileURL)
 								  {
-									  RestoreAUStateFromPresetFile(effect, fileUrl.get());
+									  RestoreAUStateFromPresetFile(effect, fileURL.get());
 								  }
 #endif
 #ifdef TARGET_API_VST
@@ -1559,12 +1549,12 @@ void DfxGuiEditor::SavePresetFile()
 												  {
 													  if (auto const filePath = inFileSelector->getSelectedFile(0))
 													  {
-														  dfx::UniqueCFType const fileUrl = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
-														  if (fileUrl)
+														  dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+														  if (fileURL)
 														  {
 															  auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 															  assert(pluginBundle);
-															  CustomSaveAUPresetFile_Bundle(effect, fileUrl.get(), false, pluginBundle);
+															  CustomSaveAUPresetFile_Bundle(effect, fileURL.get(), false, pluginBundle);
 														  }
 													  }
 												  });
@@ -1591,14 +1581,10 @@ void DfxGuiEditor::SavePresetFile()
 //-----------------------------------------------------------------------------
 DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 {
-#ifdef TARGET_API_AUDIOUNIT
-	return static_cast<AudioUnit>(getEffect());
-#endif
-#ifdef TARGET_API_VST
-	return static_cast<DfxPlugin*>(getEffect());
-#endif
 #ifdef TARGET_API_RTAS
 	return m_Process;
+#else
+	return static_cast<DGEditorListenerInstance>(getEffect());
 #endif
 }
 
@@ -2003,12 +1989,12 @@ long DfxGuiEditor::copySettings()
 		return coreFoundationUnknownErr;
 	}
 
-	dfx::UniqueCFType const auSettingsCFData = CFPropertyListCreateXMLData(kCFAllocatorDefault, auSettingsPropertyList);
+	dfx::UniqueCFType const auSettingsCFData = CFPropertyListCreateData(kCFAllocatorDefault, auSettingsPropertyList, kCFPropertyListXMLFormat_v1_0, 0, nullptr);
 	if (!auSettingsCFData)
 	{
 		return coreFoundationUnknownErr;
 	}
-	status = PasteboardPutItemFlavor(mClipboardRef.get(), (PasteboardItemID)PLUGIN_ID, CFSTR(kDfxGui_AUPresetFileUTI), auSettingsCFData.get(), kPasteboardFlavorNoFlags);
+	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), CFSTR(kDfxGui_AUPresetFileUTI), auSettingsCFData.get(), kPasteboardFlavorNoFlags);
 #endif
 #else
 	#warning "implementation missing"
@@ -2050,7 +2036,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 		{
 			continue;
 		}
-		if (reinterpret_cast<unsigned long>(itemID) != PLUGIN_ID)  // XXX hacky?
+		if (reinterpret_cast<std::intptr_t>(itemID) != PLUGIN_ID)  // XXX hacky?
 		{
 			continue;
 		}
@@ -2083,7 +2069,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 					if ((status == noErr) && flavorData_temp)
 					{
 						dfx::UniqueCFType const flavorData = flavorData_temp;
-						dfx::UniqueCFType const auSettingsPropertyList = CFPropertyListCreateFromXMLData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr);
+						dfx::UniqueCFType const auSettingsPropertyList = CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr);
 						if (auSettingsPropertyList)
 						{
 							auto const auSettingsPropertyList_temp = auSettingsPropertyList.get();
@@ -2405,105 +2391,3 @@ void DfxGuiEditor::drawControlHighlight(VSTGUI::CDrawContext* inContext, VSTGUI:
 
 #endif
 // TARGET_API_RTAS
-
-
-
-
-
-
-#ifdef TARGET_API_AUDIOUNIT
-
-#if __LP64__
-extern "C" void DGVstGuiAUViewEntry() {}	// XXX workaround to quiet missing exported symbol error
-#else
-
-#pragma mark -
-
-//-----------------------------------------------------------------------------
-class DGVstGuiAUView final : public AUCarbonViewBase 
-{
-public:
-	explicit DGVstGuiAUView(AudioUnitCarbonView inInstance);
-	virtual ~DGVstGuiAUView();
-
-	OSStatus CreateUI(Float32 inXOffset, Float32 inYOffset) override;
-	void RespondToEventTimer(EventLoopTimerRef inTimer) override;
-	OSStatus Version() override;
-
-private:
-	std::unique_ptr<DfxGuiEditor> mDfxGuiEditor;
-};
-
-VIEW_COMPONENT_ENTRY(DGVstGuiAUView)
-
-//-----------------------------------------------------------------------------
-DGVstGuiAUView::DGVstGuiAUView(AudioUnitCarbonView inInstance)
-:	AUCarbonViewBase(inInstance, DfxGuiEditor::kNotificationInterval)
-{
-}
-
-//-----------------------------------------------------------------------------
-DGVstGuiAUView::~DGVstGuiAUView()
-{
-	if (mDfxGuiEditor)
-	{
-		mDfxGuiEditor->close();
-	}
-}
-
-//-----------------------------------------------------------------------------
-void DGVstGuiAUView::RespondToEventTimer(EventLoopTimerRef inTimer)
-{
-	if (mDfxGuiEditor)
-	{
-		mDfxGuiEditor->idle();
-	}
-}
-
-extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
-
-//-----------------------------------------------------------------------------
-OSStatus DGVstGuiAUView::CreateUI(Float32 inXOffset, Float32 inYOffset)
-{
-	if (!GetEditAudioUnit())
-	{
-		return kAudioUnitErr_Uninitialized;
-	}
-
-	mDfxGuiEditor.reset(DFXGUI_NewEditorInstance(GetEditAudioUnit()));
-	if (!mDfxGuiEditor)
-	{
-		return memFullErr;
-	}
-	auto const success = mDfxGuiEditor->open(GetCarbonWindow());
-	if (!success)
-	{
-		return mDfxGuiEditor->dfxgui_GetEditorOpenErrorCode();
-	}
-
-	assert(mDfxGuiEditor->getFrame()->getPlatformFrame()->getPlatformType() == kWindowRef);
-	auto const editorHIView = static_cast<HIViewRef>(mDfxGuiEditor->getFrame()->getPlatformFrame()->getPlatformRepresentation());
-	HIViewMoveBy(editorHIView, inXOffset, inYOffset);
-	EmbedControl(editorHIView);
-
-	// set the size of the embedding pane
-	auto const& frameSize = mDfxGuiEditor->getFrame()->getViewSize();
-	SizeControl(GetCarbonPane(), frameSize.getWidth(), frameSize.getHeight());
-
-	CreateEventLoopTimer(kEventDurationMillisecond * 5.0, DfxGuiEditor::kIdleTimerInterval);
-
-	HIViewSetVisible(editorHIView, true);
-	HIViewSetNeedsDisplay(editorHIView, true);
-
-	return noErr;
-}
-
-//-----------------------------------------------------------------------------
-OSStatus DGVstGuiAUView::Version()
-{
-	return dfx::CompositePluginVersionNumberValue();
-}
-
-#endif	// !__LP64__
-
-#endif	// TARGET_API_AUDIOUNIT

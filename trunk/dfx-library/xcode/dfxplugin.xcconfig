@@ -9,8 +9,7 @@ SKIP_INSTALL = NO
 GCC_C_LANGUAGE_STANDARD = c99
 CLANG_CXX_LANGUAGE_STANDARD = c++17
 CLANG_CXX_LIBRARY = libc++
-// VSTGUI as of 4.9 is not yet compatible with ARC
-CLANG_ENABLE_OBJC_ARC = NO
+CLANG_ENABLE_OBJC_ARC = YES
 // VSTGUI as of 4.9 is not yet compatible with strict checking of objc_msgSend calls
 ENABLE_STRICT_OBJC_MSGSEND = NO
 OTHER_CFLAGS = -fno-constant-cfstrings

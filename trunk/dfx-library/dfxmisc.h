@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -103,7 +103,6 @@ long CompositePluginVersionNumberValue();
 long LaunchURL(std::string const& inURL);
 long LaunchDocumentation();
 std::string GetNameForMIDINote(long inMidiNote);
-uint64_t GetMillisecondCount();
 
 #if TARGET_OS_MAC
 std::unique_ptr<char[]> CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding = kCFStringEncodingUTF8);

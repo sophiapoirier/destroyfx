@@ -40,6 +40,8 @@
 
 #ifndef __OBJC__
 	#error "you must compile the version of this file with a .m filename extension, not this file"
+#elif !__has_feature(objc_arc)
+	#error "you must compile this file with Automatic Reference Counting (ARC) enabled"
 #endif
 
 #include "dfx-au-utilities.h"
@@ -48,6 +50,7 @@
 #import <AppKit/NSButton.h>
 #import <AppKit/NSImage.h>
 #include <AudioToolbox/AudioUnitUtilities.h>  // for kAUParameterListener_AnyParameter
+#import <Foundation/NSFileManager.h>
 
 #include "dfx-au-utilities-private.h"
 
@@ -56,7 +59,9 @@
 // the file name extension that identifies a file as being an AU preset file
 #define kAUPresetFileNameExtension	CFSTR("aupreset")
 // the name of the directory in Library/Audio for AU preset files
-#define kAUPresetsDirName	CFSTR("Presets")
+static NSString* const kAUPresetsDirName = @"Presets";
+// this is defined in the Carbon header MacErrors.h
+static OSStatus const kDFX_coreFoundationUnknownErr = -4960;
 
 
 
@@ -64,62 +69,76 @@
 #pragma mark Handling Files And Directories
 
 //-----------------------------------------------------------------------------
-// This function provides an FSRef for an AU Component's centralized preset files directory.
+// This function provides a CFURLRef for an AudioComponent's centralized preset files directory.
 // 
-// inAUComponent - The Component (must be an Audio Unit Component) whose preset directory you want.
-//		You can cast a ComponentInstance or AudioUnit to Component for this argument.
+// inAUComponent - The AudioComponent whose preset directory you want.
 // inFileSystemDomain - The file system domain of the presets directory (there can be one in every valid domain).
 // inCreateDir - If true, then create directories in the path to the location if they do not already exist.  
 //		Otherwise, this function will fail if all of the directories in the complete path do not already exist.
-// outDirRef - On successful return, this will point to a valid FSRef of the AU's presets directory.
-OSStatus FindPresetsDirForAU(Component inAUComponent, FSVolumeRefNum inFileSystemDomain, Boolean inCreateDir, FSRef* outDirRef)
+// The result is null if something went wrong, otherwise it's a CFURL to which the caller owns a reference.
+CFURLRef FindPresetsDirForAU(AudioComponent inAUComponent, DFXFileSystemDomain inFileSystemDomain, Boolean inCreateDir)
 {
+	NSSearchPathDomainMask const domainNS = (inFileSystemDomain == kDFXFileSystemDomain_Local) ? NSLocalDomainMask : NSUserDomainMask;
 	OSStatus status = noErr;
-	FSRef audioDirRef, presetsDirRef, manufacturerPresetsDirRef;
+	NSURL* url = nil;
 	CFStringRef pluginNameCFString = NULL, manufacturerNameCFString = NULL;
 
-	if ((inAUComponent == NULL) || (outDirRef == NULL))
+	if (inAUComponent == NULL)
 	{
-		return kAudio_ParamError;
+		return NULL;
 	}
 
-	// get an FSRef for the Audio support directory (in Library)
-	status = FSFindFolder(inFileSystemDomain, kAudioSupportFolderType, inCreateDir, &audioDirRef);
-	if (status != noErr)
+	// get an URL for the Library directory
+	url = [NSFileManager.defaultManager URLForDirectory:NSLibraryDirectory inDomain:domainNS appropriateForURL:nil create:inCreateDir error:nil];
+	if (url == nil)
 	{
-		return status;
+		return NULL;
 	}
 
-	// get an FSRef to the Presets directory in the Audio directory
-	status = MakeDirectoryFSRef(&audioDirRef, kAUPresetsDirName, inCreateDir, &presetsDirRef);
-	if (status != noErr)
+	// Audio directory in the Library directory
+	url = [url URLByAppendingPathComponent:@"Audio" isDirectory:YES];
+	if (url == nil)
 	{
-		return status;
+		return NULL;
+	}
+
+	// Presets directory in the Audio directory
+	url = [url URLByAppendingPathComponent:kAUPresetsDirName isDirectory:YES];
+	if (url == nil)
+	{
+		return NULL;
 	}
 
 	// determine the name of the AU and the AU manufacturer so that we know the names of the presets sub-directories
-	pluginNameCFString = manufacturerNameCFString = NULL;
 	status = CopyAUNameAndManufacturerStrings(inAUComponent, &pluginNameCFString, &manufacturerNameCFString);
-	if (status != noErr)
+	if ((status != noErr) || (manufacturerNameCFString == NULL) || (pluginNameCFString == NULL))
 	{
-		return status;
-	}
-	if ((manufacturerNameCFString == NULL) || (pluginNameCFString == NULL))
-	{
-		return coreFoundationUnknownErr;
+		return NULL;
 	}
 
-	// get an FSRef to the AU manufacturer directory in the Presets directory
-	status = MakeDirectoryFSRef(&presetsDirRef, manufacturerNameCFString, inCreateDir, &manufacturerPresetsDirRef);
-	if (status == noErr)
+	// AU manufacturer directory in the Presets directory
+	url = [url URLByAppendingPathComponent:(__bridge NSString*)manufacturerNameCFString isDirectory:YES];
+	if (url != nil)
 	{
-		// get an FSRef to the particular plugin's directory in the manufacturer directory
-		status = MakeDirectoryFSRef(&manufacturerPresetsDirRef, pluginNameCFString, inCreateDir, outDirRef);
+		// the particular plugin's directory in the manufacturer directory
+		url = [url URLByAppendingPathComponent:(__bridge NSString*)pluginNameCFString isDirectory:YES];
 	}
 	CFRelease(manufacturerNameCFString);
 	CFRelease(pluginNameCFString);
+	if (url == nil)
+	{
+		return NULL;
+	}
 
-	return status;
+	if (inCreateDir)
+	{
+		if (![NSFileManager.defaultManager createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:nil])
+		{
+			return NULL;
+		}
+	}
+
+	return CFBridgingRetain(url);
 }
 
 //--------------------------------------------------------------------------
@@ -133,12 +152,12 @@ CFStringRef CopyAUPresetNameFromCFURL(CFURLRef inAUPresetFileURL)
 	if (inAUPresetFileURL != NULL)
 	{
 		// first make a copy of the URL without the file name extension
-		CFURLRef const baseNameUrl = CFURLCreateCopyDeletingPathExtension(kCFAllocatorDefault, inAUPresetFileURL);
-		if (baseNameUrl != NULL)
+		CFURLRef const baseNameURL = CFURLCreateCopyDeletingPathExtension(kCFAllocatorDefault, inAUPresetFileURL);
+		if (baseNameURL != NULL)
 		{
 			// then chop off the parent directory path, keeping just the extensionless file name as a CFString
-			baseFileNameString = CFURLCopyLastPathComponent(baseNameUrl);
-			CFRelease(baseNameUrl);
+			baseFileNameString = CFURLCopyLastPathComponent(baseNameURL);
+			CFRelease(baseNameURL);
 		}
 	}
 	return baseFileNameString;
@@ -163,111 +182,15 @@ Boolean CFURLIsAUPreset(CFURLRef inURL)
 	return result;
 }
 
-//--------------------------------------------------------------------------
-// This function tells you if a file represented by an FSRef is an AU preset file.
-// The result is true if the file is an AU preset, false otherwise.
-// This function is a convenience wrapper that just converts the FSRef to a CFURL 
-// and then calls CFURLIsAUPreset.
-Boolean FSRefIsAUPreset(FSRef const* inFileRef)
-{
-	Boolean result = false;
-	if (inFileRef != NULL)
-	{
-		CFURLRef const fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, inFileRef);
-		if (fileUrl != NULL)
-		{
-			result = CFURLIsAUPreset(fileUrl);
-			CFRelease(fileUrl);
-		}
-	}
-	return result;
-}
-
-//-----------------------------------------------------------------------------
-// This function will, given a reference to a parent directory and a name for 
-// a child file or directory item, create a reference for that child item 
-// in the parent directory.
-// If the child item does not already exist and inCreateItem is true, 
-// then this function will attempt to create the item.  
-// If the child item does not already exist and inCreateItem is false, 
-// then this function will fail.  
-// Upon successful return, outItemRef points to a valid FSRef of the requested 
-// child item and noErr is returned.  Otherwise, an error code is returned and 
-// the FSRef pointed to by outItemRef is not altered.
-OSStatus MakeDirectoryFSRef(FSRef const* inParentDirRef, CFStringRef inItemNameString, Boolean inCreateItem, FSRef* outItemRef)
-{
-	OSStatus status = noErr;
-	HFSUniStr255 itemUniName = {0};
-
-	if ((inParentDirRef == NULL) || (inItemNameString == NULL) || (outItemRef == NULL))
-	{
-		return kAudio_ParamError;
-	}
-
-	// first we need to convert the CFString of the file name to a HFS-style unicode file name
-	TranslateCFStringToUnicodeString(inItemNameString, &itemUniName);
-	// then we try to create an FSRef for the file
-	status = FSMakeFSRefUnicode(inParentDirRef, itemUniName.length, itemUniName.unicode, kTextEncodingUnknown, outItemRef);
-	// FSRefs can only be created for existing files or directories.  So making the FSRef failed 
-	// and if creating missing items is desired, then try to create the child item.
-	if ((status != noErr) && inCreateItem)
-	{
-		status = FSCreateDirectoryUnicode(inParentDirRef, itemUniName.length, itemUniName.unicode, kFSCatInfoNone, NULL, outItemRef, NULL, NULL);
-	}
-
-	return status;
-}
-
-//-----------------------------------------------------------------------------
-// convert a CFString to a unicode HFS file name string
-void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255* outUniName)
-{
-	if ((inCFString != NULL) && (outUniName != NULL))
-	{
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-	#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_4
-		if (FSGetHFSUniStrFromString != NULL)
-	#endif
-		{
-			OSStatus const status = FSGetHFSUniStrFromString(inCFString, outUniName);
-			if (status == noErr)
-			{
-				return;
-			}
-		}
-#endif
-		size_t const maxUnicodeFileNameLength = sizeof(outUniName->unicode) / sizeof(outUniName->unicode[0]);
-		size_t const cfNameLength = (size_t)CFStringGetLength(inCFString);
-		// the length can't be more than 255 characters for an HFS file name
-		if (cfNameLength > maxUnicodeFileNameLength)
-		{
-			CFIndex characterIndex = 0;
-			while ((size_t)characterIndex <= maxUnicodeFileNameLength)
-			{
-				CFRange const composedCharacterRange = CFStringGetRangeOfComposedCharactersAtIndex(inCFString, characterIndex);
-				outUniName->length = (u_int16_t)characterIndex;
-				characterIndex = composedCharacterRange.location + composedCharacterRange.length;
-			}
-		}
-		else
-		{
-			outUniName->length = (u_int16_t)cfNameLength;
-		}
-		// translate the CFString to a unicode string representation in the HFS file name string
-		CFStringGetCharacters(inCFString, CFRangeMake(0, (CFIndex)(outUniName->length)), outUniName->unicode);
-	}
-}
-
 
 
 #pragma mark -
 #pragma mark Preset Files Tree
 
 //-----------------------------------------------------------------------------
-CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, FSVolumeRefNum inFileSystemDomain)
+CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(AudioComponent inAUComponent, DFXFileSystemDomain inFileSystemDomain)
 {
-	OSStatus status = noErr;
-	FSRef presetsDirRef;
+	CFURLRef presetsDirURL = NULL;
 	CFTreeRef tree = NULL;
 
 	if (inAUComponent == NULL)
@@ -276,19 +199,19 @@ CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, FSVolum
 	}
 
 	// first we need to find the directory for the AU's preset files in this domain
-	status = FindPresetsDirForAU(inAUComponent, inFileSystemDomain, kDontCreateFolder, &presetsDirRef);
-	if (status != noErr)
+	presetsDirURL = FindPresetsDirForAU(inAUComponent, inFileSystemDomain, kDontCreateFolder);
+	if (presetsDirURL == NULL)
 	{
 		return NULL;
 	}
 
 	// we start with a root tree that represents the parent directory of all AU preset files for this AU
-	tree = CreateFileURLsTreeNode(&presetsDirRef, kCFAllocatorDefault);
+	tree = CreateFileURLsTreeNode(presetsDirURL, kCFAllocatorDefault);
 	if (tree != NULL)
 	{
 		// this will recursively traverse the preset files directory and all subdirectories and 
 		// add tree nodes for all of those to the root tree
-		CollectAllAUPresetFilesInDir(&presetsDirRef, tree, inAUComponent);
+		CollectAllAUPresetFilesInDir(presetsDirURL, tree, inAUComponent);
 		// it's nice to alphabetize the tree nodes in each level of the tree, don't you think?
 //		CFTreeSortChildren(tree, FileURLsTreeComparatorFunction, NULL);
 		SortCFTreeRecursively(tree, FileURLsTreeComparatorFunction, NULL);
@@ -302,6 +225,8 @@ CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, FSVolum
 		}
 	}
 
+	CFRelease(presetsDirURL);
+
 	return tree;
 }
 
@@ -310,7 +235,7 @@ CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, FSVolum
 // which in the case of our CFURLs trees, is a CFURLRef
 CFURLRef GetCFURLFromFileURLsTreeNode(CFTreeRef inTree)
 {
-	CFTreeContext treeContext;
+	CFTreeContext treeContext = {0};
 	if (inTree == NULL)
 	{
 		return NULL;
@@ -323,25 +248,17 @@ CFURLRef GetCFURLFromFileURLsTreeNode(CFTreeRef inTree)
 }
 
 //-----------------------------------------------------------------------------
-// given an FSRef to a file or directory and a CFAllocatorRef, this function will 
-// initialize a CFTreeContext appropriately for our file URLs trees, create a CFURL 
-// out of the FSRef for the tree node, and then create and return the new tree node, 
-// or null if anything went wrong.
-CFTreeRef CreateFileURLsTreeNode(FSRef const* inItemRef, CFAllocatorRef inAllocator)
+// given an URL to a file or directory and a CFAllocatorRef, this function will 
+// initialize a CFTreeContext appropriately for our file URLs trees and then 
+// create and return the new tree node, or null if anything went wrong.
+CFTreeRef CreateFileURLsTreeNode(CFURLRef inItemURL, CFAllocatorRef inAllocator)
 {
 	CFTreeRef newNode = NULL;
-	if (inItemRef != NULL)
+	if (inItemURL != NULL)
 	{
-		// we'll need a CFURL representation of the file or directory for the tree
-		CFURLRef itemUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, inItemRef);
-		if (itemUrl != NULL)
-		{
-			CFTreeContext treeContext;
-			FileURLsCFTreeContext_Init(itemUrl, &treeContext);
-			newNode = CFTreeCreate(inAllocator, &treeContext);
-			// the CFURL that we created got retained when the tree node was created, so we can release it now
-			CFRelease(itemUrl);
-		}
+		CFTreeContext treeContext = {0};
+		FileURLsCFTreeContext_Init(inItemURL, &treeContext);
+		newNode = CFTreeCreate(inAllocator, &treeContext);
 	}
 	return newNode;
 }
@@ -349,12 +266,12 @@ CFTreeRef CreateFileURLsTreeNode(FSRef const* inItemRef, CFAllocatorRef inAlloca
 //-----------------------------------------------------------------------------
 // This function does CreateFileURLsTreeNode and then also adds the new tree node 
 // as a child to a parent tree, and if successful, returns a reference to the new tree node.
-CFTreeRef AddFileItemToTree(FSRef const* inItemRef, CFTreeRef inParentTree)
+CFTreeRef AddFileItemToTree(CFURLRef inItemURL, CFTreeRef inParentTree)
 {
 	CFTreeRef newNode = NULL;
-	if ((inItemRef != NULL) && (inParentTree != NULL))
+	if ((inItemURL != NULL) && (inParentTree != NULL))
 	{
-		newNode = CreateFileURLsTreeNode(inItemRef, CFGetAllocator(inParentTree));
+		newNode = CreateFileURLsTreeNode(inItemURL, CFGetAllocator(inParentTree));
 		if (newNode != NULL)
 		{
 			CFTreeAppendChild(inParentTree, newNode);
@@ -372,88 +289,57 @@ CFTreeRef AddFileItemToTree(FSRef const* inItemRef, CFTreeRef inParentTree)
 // If any child sub-directories don't wind up having any AU preset files, then 
 // they get removed from the tree.
 // If the inAUComponent argument is not null, then AU preset files will be examined 
-// to see if their ComponentDescription data matches that of the AU Component, and 
+// to see if their ComponentDescription data matches that of the AudioComponent, and 
 // if not, then those preset files will be excluded from the tree.
-void CollectAllAUPresetFilesInDir(FSRef const* inDirRef, CFTreeRef inParentTree, Component inAUComponent)
+void CollectAllAUPresetFilesInDir(CFURLRef inDirURL, CFTreeRef inParentTree, AudioComponent inAUComponent)
 {
-	OSErr error = noErr;
-	FSIterator dirIterator = NULL;
+	NSArray<NSURLResourceKey>* const resourceKeys = [NSArray arrayWithObjects:NSURLIsDirectoryKey, nil];
 
-	if ((inDirRef == NULL) || (inParentTree == NULL))
+	if ((inDirURL == NULL) || (inParentTree == NULL))
 	{
 		return;
 	}
 
-	// first, we create a directory iterator
-	// in order for iterating a non-root-volume's directory contents to 
-	// work with FSGetCatalogInfoBulk, we need to use the "flat" option, 
-	// which means that sub-directories will not automatically be recursed, 
-	// so we will need to do that ourselves
-	error = FSOpenIterator(inDirRef, kFSIterateFlat, &dirIterator);
-	// there's nothing for us to do if that failed
-	if (error != noErr)
+	// first, we query the directory's contents
+	NSArray<NSURL*>* dirContents = [NSFileManager.defaultManager contentsOfDirectoryAtURL:(__bridge NSURL*)inDirURL includingPropertiesForKeys:resourceKeys options:NSDirectoryEnumerationSkipsHiddenFiles error:nil];
+	if (dirContents == nil)
 	{
 		goto checkEmptyTree;
 	}
 
-	// this is the main loop through each directory item using the FS iterator
-	do
+	// this is the main loop through each directory item using the array of contents
+	for (NSURL* url in dirContents)
 	{
-		// this will be set to the actual number of items returned by FSGetCatalogInfoBulk
-		ItemCount actualNumItems = 0;
-		// the info that we want:  node flags to check if the item is a directory, and finder info to get the HFS file type code
-		FSCatalogInfoBitmap const infoRequestFlags = kFSCatInfoNodeFlags;
-		// use FSGetCatalogInfoBulk to get those bits of FS catalog info and the FSRef for the current item
-		FSCatalogInfo itemCatalogInfo;
-		FSRef itemFSRef;
-		error = FSGetCatalogInfoBulk(dirIterator, 1, &actualNumItems, NULL, infoRequestFlags, &itemCatalogInfo, &itemFSRef, NULL, NULL);
-		// we need to have no error and to have retrieved an item's info
-		if ((error == noErr) && (actualNumItems > 0))
+		CFURLRef const urlCF = (__bridge CFURLRef)url;
+		NSNumber* isDirectory = nil;
+		BOOL const success = [url getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:nil];
+		// if the current item itself is a directory, then we recursively call this function on that sub-directory
+		if (success && (isDirectory != nil) && isDirectory.boolValue)
 		{
-			// if the current item itself is a directory, then we recursively call this function on that sub-directory
-			if (itemCatalogInfo.nodeFlags & kFSNodeIsDirectoryMask)
-			{
-				CFTreeRef const newSubTree = AddFileItemToTree(&itemFSRef, inParentTree);
-				CollectAllAUPresetFilesInDir(&itemFSRef, newSubTree, inAUComponent);
-			}
-			// otherwise it's a file, so we add it (if it is an AU preset file)
-			else
-			{
-				// only add this file if file name extension indicates that this is an AU preset file
-				if (FSRefIsAUPreset(&itemFSRef))
-				{
-					// XXX should I also open and examine each file and make sure that it's a valid dictionary for the particular AU?
+			CFTreeRef const newSubTree = AddFileItemToTree(urlCF, inParentTree);
+			CollectAllAUPresetFilesInDir(urlCF, newSubTree, inAUComponent);
+		}
+		// otherwise it's a file, so we add it (if it is an AU preset file)
+		else if (CFURLIsAUPreset(urlCF))
+		{
+			// XXX should I also open and examine each file and make sure that it's a valid dictionary for the particular AU?
 #if 1
-					// we only do this examination if an AU Component argument was given
-					if (inAUComponent != NULL)
-					{
-						CFURLRef const itemUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &itemFSRef);
-						if (itemUrl != NULL)
-						{
-							// get the ComponentDescription from the AU preset file
-							ComponentDescription presetDesc;
-							OSStatus const status = GetAUComponentDescriptionFromPresetFile(itemUrl, &presetDesc);
-							CFRelease(itemUrl);
-							if (status == noErr)
-							{
-								// if the preset's ComponentDescription doesn't match the AU's, then don't add this preset file
-								if (!ComponentAndDescriptionMatch_Loosely(inAUComponent, &presetDesc))
-								{
-									continue;
-								}
-							}
-						}
-					}
-#endif
-					AddFileItemToTree(&itemFSRef, inParentTree);
+			// we only do this examination if an AudioComponent argument was given
+			if (inAUComponent != NULL)
+			{
+				// get the ComponentDescription from the AU preset file
+				AudioComponentDescription presetDesc = {0};
+				OSStatus const status = GetAUComponentDescriptionFromPresetFile(urlCF, &presetDesc);
+				// if the preset's ComponentDescription doesn't match the AU's, then don't add this preset file
+				if ((status == noErr) && !ComponentAndDescriptionMatch_Loosely(inAUComponent, &presetDesc))
+				{
+					continue;
 				}
 			}
+#endif
+			AddFileItemToTree(urlCF, inParentTree);
 		}
-	// the iteration loop keeps going until an error is returned (probably meaning "no more items")
-	} while (error == noErr);
-
-	// clean up
-	FSCloseIterator(dirIterator);
+	}
 
 checkEmptyTree:
 	// if no items got added to the parent, then there's no point in keeping the parent tree, since it's empty...
@@ -570,7 +456,7 @@ void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext* outTreeContext)
 // output:  OSStatus error code
 // Given an AU instance and an AU preset file, this function will try to restore the data 
 // from the preset file as the new state of the AU.
-OSStatus RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL)
+OSStatus RestoreAUStateFromPresetFile(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL)
 {
 	SInt32 plistError = 0;
 	OSStatus auError = noErr;
@@ -586,7 +472,7 @@ OSStatus RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef 
 	auStatePlist = CreatePropertyListFromXMLFile(inAUPresetFileURL, &plistError);
 	if (auStatePlist == NULL)
 	{
-		return (plistError != 0) ? plistError : coreFoundationUnknownErr;
+		return (plistError != 0) ? plistError : kDFX_coreFoundationUnknownErr;
 	}
 
 	// attempt to apply the state data from the file to the AU
@@ -640,13 +526,13 @@ CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32* o
 	fileStream = CFReadStreamCreateWithFile(kCFAllocatorDefault, inXMLFileURL);
 	if (fileStream == NULL)
 	{
-		*outErrorCode = coreFoundationUnknownErr;
+		*outErrorCode = kDFX_coreFoundationUnknownErr;
 		return NULL;
 	}
 	success = CFReadStreamOpen(fileStream);
 	if (!success)
 	{
-		*outErrorCode = coreFoundationUnknownErr;
+		*outErrorCode = kDFX_coreFoundationUnknownErr;
 		CFRelease(fileStream);
 		return NULL;
 	}
@@ -699,10 +585,10 @@ SInt32 GetDictionarySInt32Value(CFDictionaryRef inAUStateDictionary, CFStringRef
 }
 
 //-----------------------------------------------------------------------------
-OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription* outComponentDescription)
+OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, AudioComponentDescription* outComponentDescription)
 {
 	CFDictionaryRef auStateDictionary = NULL;
-	ComponentDescription tempDesc = {0};
+	AudioComponentDescription tempDesc = {0};
 	SInt32 versionValue = 0;
 	Boolean gotValue = false;
 
@@ -750,12 +636,12 @@ OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData,
 // output:  Audio Unit ComponentDescription, OSStatus error code
 // Given an AU preset file, this function will try to copy the preset's 
 // creator AU's ComponentDescription info from the preset file.
-OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription* outComponentDescription)
+OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, AudioComponentDescription* outComponentDescription)
 {
 	SInt32 plistError = 0;
 	OSStatus status = noErr;
 	CFPropertyListRef auStatePlist = NULL;
-	ComponentDescription tempDesc = {0};
+	AudioComponentDescription tempDesc = {0};
 
 	if ((inAUPresetFileURL == NULL) || (outComponentDescription == NULL))
 	{
@@ -767,7 +653,7 @@ OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, Com
 	auStatePlist = CreatePropertyListFromXMLFile(inAUPresetFileURL, &plistError);
 	if (auStatePlist == NULL)
 	{
-		return (plistError != 0) ? plistError : coreFoundationUnknownErr;
+		return (plistError != 0) ? plistError : kDFX_coreFoundationUnknownErr;
 	}
 
 	status = GetAUComponentDescriptionFromStateData(auStatePlist, &tempDesc);
@@ -789,7 +675,7 @@ OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, Com
 //-----------------------------------------------------------------------------
 // This is a convenience wrapper for SaveAUStateToPresetFile_Bundle for when 
 // the caller is the main application.
-OSStatus SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile)
+OSStatus SaveAUStateToPresetFile(AudioComponentInstance inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile)
 {
 	return SaveAUStateToPresetFile_Bundle(inAUComponentInstance, inAUPresetNameString, outSavedAUPresetFileURL, inPromptToReplaceFile, NULL);
 }
@@ -802,7 +688,7 @@ OSStatus SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef in
 // inPromptToReplaceFile specifies whether you want to display dialog prompt about replacing an existing file
 // inBundle can be NULL, in which case the main application bundle is used
 // output:  OSStatus error code
-OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle)
+OSStatus SaveAUStateToPresetFile_Bundle(AudioComponentInstance inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle)
 {
 	OSStatus status = noErr;
 
@@ -810,15 +696,14 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStrin
 	// get the absolute maximum length that a file name can be
 	size_t const maxUnicodeNameLength = sizeof(dummyUniName.unicode) / sizeof(UniChar);
 	// this is how much longer the file name will be after the AU preset file name extension is appended
-	CFIndex const presetFileNameExtensionLength = CFStringGetLength(kAUPresetFileNameExtension) - 1;  // -1 for the . before the extension
+	CFIndex const presetFileNameExtensionLength = CFStringGetLength(kAUPresetFileNameExtension) + 1;  // +1 for the period before the extension
 	// this is the maximum allowable length of the preset file's name without the extension
 	CFIndex const maxNameLength = maxUnicodeNameLength - presetFileNameExtensionLength;
 
 	CFPropertyListRef auStatePlist = NULL;
 	CFStringRef presetFileNameString = NULL;
-	FSRef presetFileDirRef;
-	CFURLRef presetFileDirUrl = NULL;
-	CFURLRef presetFileUrl = NULL;
+	CFURLRef presetFileDirURL = NULL;
+	CFURLRef presetFileURL = NULL;
 
 	if ((inAUComponentInstance == NULL) || (inAUPresetNameString == NULL))
 	{
@@ -835,7 +720,7 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStrin
 	// no file name text (probably the user just accidentally hit Save)
 	if (CFStringGetLength(inAUPresetNameString) <= 0)
 	{
-		return errFSMissingName;
+		return kAudio_ParamError;
 	}
 
 	status = CopyAUStatePropertyList(inAUComponentInstance, &auStatePlist);
@@ -845,11 +730,11 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStrin
 	}
 	if (auStatePlist == NULL)
 	{
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 	// set the state data's name value to the requested name
 	// do this before we mess around with the file name string (truncating, adding extension, etc.)
-	auStatePlist = SetAUPresetNameInStateData(auStatePlist, inAUPresetNameString);
+	SetAUPresetNameInStateData(&auStatePlist, inAUPresetNameString);
 
 	// if the requested file name is too long, truncate it
 	if (CFStringGetLength(inAUPresetNameString) > maxNameLength)
@@ -865,58 +750,47 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStrin
 	if (presetFileNameString == NULL)
 	{
 		CFRelease(auStatePlist);
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 
 	// now we need to get the parent directory of where we will save this file
-	status = FindPresetsDirForAU((Component)inAUComponentInstance, kUserDomain, kCreateFolder, &presetFileDirRef);
-	if (status != noErr)
+	presetFileDirURL = FindPresetsDirForAU(AudioComponentInstanceGetComponent(inAUComponentInstance), kUserDomain, kCreateFolder);
+	if (presetFileDirURL == NULL)
 	{
 		CFRelease(auStatePlist);
 		CFRelease(presetFileNameString);
-		return status;
-	}
-	// and convert that into a CFURL so that we can use CoreFoundation's 
-	// PropertList and XML APIs for saving the data to a file
-	presetFileDirUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &presetFileDirRef);
-	if (presetFileDirUrl == NULL)
-	{
-		CFRelease(auStatePlist);
-		CFRelease(presetFileNameString);
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 	// create a CFURL of the requested file name in the proper AU presets directory
-	presetFileUrl = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, presetFileDirUrl, presetFileNameString, false);
+	presetFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, presetFileDirURL, presetFileNameString, false);
 	CFRelease(presetFileNameString);
-	CFRelease(presetFileDirUrl);
-	if (presetFileUrl == NULL)
+	CFRelease(presetFileDirURL);
+	if (presetFileURL == NULL)
 	{
 		CFRelease(auStatePlist);
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 
 	// save the preset data to a file
-	status = TryToSaveAUPresetFile(inAUComponentInstance, auStatePlist, &presetFileUrl, inPromptToReplaceFile, inBundle);
+	status = TryToSaveAUPresetFile(inAUComponentInstance, auStatePlist, &presetFileURL, inPromptToReplaceFile, inBundle);
 	CFRelease(auStatePlist);
 	if (status != noErr)
 	{
-		if (presetFileUrl != NULL)
+		if (presetFileURL != NULL)
 		{
-			CFRelease(presetFileUrl);
+			CFRelease(presetFileURL);
 		}
 		return status;
 	}
 
 	if (outSavedAUPresetFileURL != NULL)
 	{
-		*outSavedAUPresetFileURL = presetFileUrl;
+		*outSavedAUPresetFileURL = presetFileURL;
 	}
-	else if (presetFileUrl != NULL)
+	else if (presetFileURL != NULL)
 	{
-		CFRelease(presetFileUrl);
+		CFRelease(presetFileURL);
 	}
-
-
 
 	return status;
 }
@@ -924,13 +798,13 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStrin
 //-----------------------------------------------------------------------------
 // This is a convenience wrapper for CustomSaveAUPresetFile_Bundle for when 
 // the caller is the main application.
-OSStatus CustomSaveAUPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile)
+OSStatus CustomSaveAUPresetFile(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile)
 {
 	return CustomSaveAUPresetFile_Bundle(inAUComponentInstance, inAUPresetFileURL, inPromptToReplaceFile, NULL);
 }
 
 //-----------------------------------------------------------------------------
-OSStatus CustomSaveAUPresetFile_Bundle(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle)
+OSStatus CustomSaveAUPresetFile_Bundle(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle)
 {
 	OSStatus status = noErr;
 	CFPropertyListRef auStatePlist = NULL;
@@ -955,14 +829,14 @@ OSStatus CustomSaveAUPresetFile_Bundle(AudioUnit inAUComponentInstance, CFURLRef
 	}
 	if (auStatePlist == NULL)
 	{
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 
 	// set the state data's name value to the requested file name
 	auPresetNameString = CopyAUPresetNameFromCFURL(inAUPresetFileURL);
 	if (auPresetNameString != NULL)
 	{
-		auStatePlist = SetAUPresetNameInStateData(auStatePlist, auPresetNameString);
+		SetAUPresetNameInStateData(&auStatePlist, auPresetNameString);
 		CFRelease(auPresetNameString);
 	}
 
@@ -980,7 +854,7 @@ OSStatus CustomSaveAUPresetFile_Bundle(AudioUnit inAUComponentInstance, CFURLRef
 }
 
 //-----------------------------------------------------------------------------
-OSStatus CopyAUStatePropertyList(AudioUnit inAUComponentInstance, CFPropertyListRef* outAUStatePlist)
+OSStatus CopyAUStatePropertyList(AudioComponentInstance inAUComponentInstance, CFPropertyListRef* outAUStatePlist)
 {
 	OSStatus status = noErr;
 	UInt32 auStateDataSize = sizeof(*outAUStatePlist);
@@ -999,11 +873,11 @@ OSStatus CopyAUStatePropertyList(AudioUnit inAUComponentInstance, CFPropertyList
 	}
 	if (*outAUStatePlist == NULL)
 	{
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 	if (auStateDataSize != sizeof(*outAUStatePlist))
 	{
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 
 	return status;
@@ -1030,13 +904,13 @@ OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef i
 	fileStream = CFWriteStreamCreateWithFile(kCFAllocatorDefault, inXMLFileURL);
 	if (fileStream == NULL)
 	{
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 	success = CFWriteStreamOpen(fileStream);
 	if (!success)
 	{
 		CFRelease(fileStream);
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 
 	// write the property list to the file
@@ -1051,7 +925,7 @@ OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef i
 			CFRelease(errorRef);
 			return errorCode;
 		}
-		return coreFoundationUnknownErr;
+		return kDFX_coreFoundationUnknownErr;
 	}
 
 	return errorCode;
@@ -1060,10 +934,9 @@ OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef i
 //-----------------------------------------------------------------------------
 // This function takes an AU's state data, an URL to which to save the preset file, 
 // and a CFBundle and then tries to save the AU's state data to the desired path.
-OSStatus TryToSaveAUPresetFile(AudioUnit inAUComponentInstance, CFPropertyListRef inAUStateData, CFURLRef* ioAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle)
+OSStatus TryToSaveAUPresetFile(AudioComponentInstance inAUComponentInstance, CFPropertyListRef inAUStateData, CFURLRef* ioAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle)
 {
-	OSStatus status = noErr;
-	FSRef dummyFSRef;
+	OSStatus const userCanceledErr = -128;  // this is defined in the Carbon header MacErrors.h
 	Boolean fileAlreadyExists = false;
 
 	if ((inAUStateData == NULL) || (ioAUPresetFileURL == NULL) || (*ioAUPresetFileURL == NULL))
@@ -1074,19 +947,17 @@ OSStatus TryToSaveAUPresetFile(AudioUnit inAUComponentInstance, CFPropertyListRe
 	// the file name needs the proper AU preset extension to be appended
 	if (!CFURLIsAUPreset(*ioAUPresetFileURL))
 	{
-		CFURLRef const presetFullFileUrl = CFURLCreateCopyAppendingPathExtension(kCFAllocatorDefault, *ioAUPresetFileURL, kAUPresetFileNameExtension);
-		if (presetFullFileUrl == NULL)
+		CFURLRef const presetFullFileURL = CFURLCreateCopyAppendingPathExtension(kCFAllocatorDefault, *ioAUPresetFileURL, kAUPresetFileNameExtension);
+		if (presetFullFileURL == NULL)
 		{
-			return coreFoundationUnknownErr;
+			return kDFX_coreFoundationUnknownErr;
 		}
 		CFRelease(*ioAUPresetFileURL);
-		*ioAUPresetFileURL = presetFullFileUrl;
+		*ioAUPresetFileURL = presetFullFileURL;
 	}
 
 	// check whether or not the file already exists
-	// note that, since an FSRef cannot be created for a file that doesn't yet exist, 
-	// if this succeeds, then that means that a file with this path and name already exists
-	fileAlreadyExists = CFURLGetFSRef(*ioAUPresetFileURL, &dummyFSRef);
+	fileAlreadyExists = CFURLResourceIsReachable(*ioAUPresetFileURL, NULL);
 	if (fileAlreadyExists && inPromptToReplaceFile)
 	{
 		// present the user with a dialog asking whether or not they want to replace an already existing file
@@ -1099,9 +970,7 @@ OSStatus TryToSaveAUPresetFile(AudioUnit inAUComponentInstance, CFPropertyListRe
 
 	// if we've made it this far, then it's time to try to 
 	// write the AU state data out to the file as XML data
-	status = WritePropertyListToXMLFile(inAUStateData, *ioAUPresetFileURL);
-
-	return status;
+	return WritePropertyListToXMLFile(inAUStateData, *ioAUPresetFileURL);
 }
 
 //-----------------------------------------------------------------------------
@@ -1110,11 +979,11 @@ OSStatus TryToSaveAUPresetFile(AudioUnit inAUComponentInstance, CFPropertyListRe
 // file already exists and asking the user if she really wants to replace that old file.
 // A return value of true means that the user wants to replace the file, and 
 // a return value of false means that the user does not want to replace the file.
-Boolean ShouldReplaceExistingAUPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, CFBundleRef inBundle)
+Boolean ShouldReplaceExistingAUPresetFile(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL, CFBundleRef inBundle)
 {
 	CFStringRef fileNameString = NULL;
 	CFStringRef dirString = NULL;
-	CFURLRef dirUrl = NULL;
+	CFURLRef dirURL = NULL;
 	CFStringRef titleString = NULL;
 	CFStringRef messageString = NULL;
 	CFStringRef replaceButtonString = NULL;
@@ -1144,11 +1013,11 @@ Boolean ShouldReplaceExistingAUPresetFile(AudioUnit inAUComponentInstance, CFURL
 															 CFSTR("title of the alert, general, for when file name is not available"));
 	}
 
-	dirUrl = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault, inAUPresetFileURL);
-	if (dirUrl != NULL)
+	dirURL = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault, inAUPresetFileURL);
+	if (dirURL != NULL)
 	{
-		dirString = CFURLCopyLastPathComponent(dirUrl);
-		CFRelease(dirUrl);
+		dirString = CFURLCopyLastPathComponent(dirURL);
+		CFRelease(dirURL);
 	}
 	if (dirString != NULL)
 	{
@@ -1188,21 +1057,18 @@ Boolean ShouldReplaceExistingAUPresetFile(AudioUnit inAUComponentInstance, CFURL
 	// get the AU's icon with which to badge the alert, if available
 	if (inAUComponentInstance != NULL)
 	{
-		CFURLRef alertIconUrl = NULL;
-		UInt32 propertyDataSize = sizeof(alertIconUrl);
+		CFURLRef alertIconURL = NULL;
+		UInt32 propertyDataSize = sizeof(alertIconURL);
 		OSStatus const status = AudioUnitGetProperty(inAUComponentInstance, kAudioUnitProperty_IconLocation, 
 													 kAudioUnitScope_Global, (AudioUnitElement)0, 
-													 &alertIconUrl, &propertyDataSize);
-		if ((status == noErr) && (alertIconUrl != NULL) && (propertyDataSize == sizeof(alertIconUrl)))
+													 &alertIconURL, &propertyDataSize);
+		if ((status == noErr) && (alertIconURL != NULL) && (propertyDataSize == sizeof(alertIconURL)))
 		{
-			NSImage* const iconImage = [[NSImage alloc] initWithContentsOfURL:(__bridge NSURL*)alertIconUrl];
-			CFRelease(alertIconUrl);
+			NSImage* const iconImage = [[NSImage alloc] initWithContentsOfURL:(__bridge NSURL*)alertIconURL];
+			CFRelease(alertIconURL);
 			if (iconImage != nil)
 			{
 				alert.icon = iconImage;
-#if !__has_feature(objc_arc)
-				[iconImage release];
-#endif
 			}
 		}
 	}
@@ -1210,9 +1076,6 @@ Boolean ShouldReplaceExistingAUPresetFile(AudioUnit inAUComponentInstance, CFURL
 	// XXX ideally this would run as a sheet attached to the AU view's window, 
 	// but handling the result asynchronously seems overly complicated for this
 	alertResult = [alert runModal];
-#if !__has_feature(objc_arc)
-	[alert release];
-#endif
 
 	CFRelease(titleString);
 	CFRelease(messageString);
@@ -1223,23 +1086,18 @@ Boolean ShouldReplaceExistingAUPresetFile(AudioUnit inAUComponentInstance, CFURL
 }
 
 //-----------------------------------------------------------------------------
-CFPropertyListRef SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inPresetName)
+void SetAUPresetNameInStateData(CFPropertyListRef* ioAUStateData, CFStringRef inPresetName)
 {
-	if ((inAUStateData == NULL) || (inPresetName == NULL))
+	if ((ioAUStateData == NULL) || (*ioAUStateData == NULL) || (inPresetName == NULL) || (CFGetTypeID(*ioAUStateData) != CFDictionaryGetTypeID()))
 	{
-		return inAUStateData;
+		return;
 	}
 
-	if (CFGetTypeID(inAUStateData) == CFDictionaryGetTypeID())
+	CFMutableDictionaryRef const auStateDataMutableCopy = CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 0, (CFDictionaryRef)*ioAUStateData);
+	if (auStateDataMutableCopy != NULL)
 	{
-		CFMutableDictionaryRef const auStateDataMutableCopy = CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 0, (CFDictionaryRef)inAUStateData);
-		if (auStateDataMutableCopy != NULL)
-		{
-			CFDictionarySetValue(auStateDataMutableCopy, CFSTR(kAUPresetNameKey), inPresetName);
-			CFRelease(inAUStateData);
-			return (CFPropertyListRef)auStateDataMutableCopy;
-		}
+		CFDictionarySetValue(auStateDataMutableCopy, CFSTR(kAUPresetNameKey), inPresetName);
+		CFRelease(*ioAUStateData);
+		*ioAUStateData = (CFPropertyListRef)auStateDataMutableCopy;
 	}
-
-	return inAUStateData;
 }
