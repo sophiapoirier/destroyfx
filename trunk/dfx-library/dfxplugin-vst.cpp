@@ -29,7 +29,7 @@ This is where we connect the VST API to our DfxPlugin system.
 
 #include <algorithm>
 #include <stdio.h>
-
+#include <cinttypes>
 
 
 #pragma mark -
@@ -240,6 +240,7 @@ VstInt32 DfxPlugin::canDo(char* text)
 		}
 	#endif
 
+	// (shouldn't we be returning 0 by default? -tom7)
 	return -1;  // explicitly can't do; 0 => don't know
 }
 
@@ -271,7 +272,7 @@ void DfxPlugin::getProgramName(char* outText)
 		return;
 	}
 
-	auto const vstPresetIndex = TARGET_API_BASE_CLASS::getProgram();
+	const VstInt32 vstPresetIndex = TARGET_API_BASE_CLASS::getProgram();
 
 	if (presetisvalid(vstPresetIndex))
 	{
@@ -283,7 +284,7 @@ void DfxPlugin::getProgramName(char* outText)
 		}
 		else
 		{
-			snprintf(outText, kVstMaxProgNameLen, "default %ld", vstPresetIndex + 1);
+			snprintf(outText, kVstMaxProgNameLen, "default %" PRIi32, vstPresetIndex + 1);
 		}
 	}
 }
@@ -321,6 +322,10 @@ VstInt32 DfxPlugin::getChunk(void** data, bool isPreset)
 	auto const dfxdata = mDfxSettings->save(isPreset);
 	if (data)
 	{
+		// XXX this looks very bogus because dfxdata is a std::vector; the
+		// data() is invalid once we return. also here data() is const, so
+		// it doesn't compile. (Maybe settings::save needs to be returning
+		// a reference to internal storage, or something)
 		*data = dfxdata.data();
 	}
 	return static_cast<VstInt32>(dfxdata.size());
@@ -391,7 +396,7 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 			snprintf(text, kVstMaxParamStrLen, "%.3f", getparameter_f(index));
 			break;
 		case DfxParam::ValueType::Int:
-			snprintf(text, kVstMaxParamStrLen, "%ld", getparameter_i(index));
+			snprintf(text, kVstMaxParamStrLen, "%" PRIi64, getparameter_i(index));
 			break;
 		case DfxParam::ValueType::Boolean:
 			vst_strncpy(text, getparameter_b(index) ? "on" : "off", kVstMaxParamStrLen);
@@ -494,7 +499,7 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 		}
 
 		// looking at pitchbend   (0xE* is pitchbend status)
-		else if (status == DfxMidi::kStatus_Pitchbend)
+		else if (status == DfxMidi::kStatus_PitchBend)
 		{
 			handlemidi_pitchbend(channel, byte1, byte2, offsetFrames);
 		}
