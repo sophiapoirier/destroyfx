@@ -27,12 +27,19 @@ These are some generally useful functions.
 #include "dfxmisc.h"
 
 #include <algorithm>
+#include <cassert>
 #include <stdio.h>
 
 #include "dfxdefines.h"
 
 #if TARGET_OS_MAC
 	#include <CoreServices/CoreServices.h>
+	#import <Foundation/NSFileManager.h>
+	#if !__OBJC__
+		#error "you must compile the version of this file with a .mm filename extension, not this file"
+	#elif !__has_feature(objc_arc)
+		#error "you must compile this file with Automatic Reference Counting (ARC) enabled"
+	#endif
 #endif
 
 #if _WIN32
@@ -112,43 +119,28 @@ long LaunchURL(std::string const& inURL)
 // this function looks for the plugin's documentation file in the appropriate system location, 
 // within a given file system domain, and returns a CFURLRef for the file if it is found, 
 // and null otherwise (or if some error is encountered along the way)
-UniqueCFType<CFURLRef> DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, FSVolumeRefNum inDomain)
+UniqueCFType<CFURLRef> DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileName, NSSearchPathDomainMask inDomain)
 {
-	if (!inDocsFileName)
-	{
-		return {};
-	}
+	assert(inDocsFileName);
 
 	// first find the base directory for the system documentation directory
-	FSRef docsDirRef;
-	auto const error = FSFindFolder(inDomain, kDocumentationFolderType, kDontCreateFolder, &docsDirRef);
-	if (error == noErr)
+	auto const docsDirURL = [NSFileManager.defaultManager URLForDirectory:NSDocumentationDirectory inDomain:inDomain appropriateForURL:nil create:NO error:nil];
+	if (docsDirURL)
 	{
-		// convert the FSRef of the documentation directory to a CFURLRef (for use in the next steps)
-		UniqueCFType const docsDirURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &docsDirRef);
-		if (docsDirURL)
+		// create a CFURL for the "manufacturer name" directory within the documentation directory
+		UniqueCFType const dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, (__bridge CFURLRef)docsDirURL, CFSTR(PLUGIN_CREATOR_NAME_STRING), true);
+		if (dfxDocsDirURL)
 		{
-			// create a CFURL for the "manufacturer name" directory within the documentation directory
-			UniqueCFType const dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, docsDirURL.get(), CFSTR(PLUGIN_CREATOR_NAME_STRING), true);
-			if (dfxDocsDirURL)
+			// create a CFURL for the documentation file within the "manufacturer name" directory
+			UniqueCFType docsFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL.get(), inDocsFileName, false);
+			if (docsFileURL)
 			{
-				// create a CFURL for the documentation file within the "manufacturer name" directory
-				UniqueCFType docsFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL.get(), inDocsFileName, false);
-				if (docsFileURL)
+				// check to see if the hypothetical documentation file actually exists 
+				// (CFURLs can reference files that don't exist)
+				// and only return the CFURL if the file does exists
+				if (CFURLResourceIsReachable(docsFileURL.get(), nullptr))
 				{
-					// check to see if the hypothetical documentation file actually exists 
-					// (CFURLs can reference files that don't exist)
-					SInt32 urlErrorCode = 0;
-					UniqueCFType const docsFileCFExists = static_cast<CFBooleanRef>(CFURLCreatePropertyFromResource(kCFAllocatorDefault, docsFileURL.get(), kCFURLFileExists, &urlErrorCode));
-					if (docsFileCFExists)
-					{
-						// only return the file's CFURL if the file exists
-						bool const docsFileExists = (docsFileCFExists.get() == kCFBooleanTrue);
-						if (docsFileExists)
-						{
-							return docsFileURL;
-						}
-					}
+					return docsFileURL;
 				}
 			}
 		}
@@ -181,15 +173,15 @@ long LaunchDocumentation()
 		// if the documentation file is not found in the bundle, then search in appropriate system locations
 		if (!docsFileURL)
 		{
-			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kUserDomain);
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, NSUserDomainMask);
 		}
 		if (!docsFileURL)
 		{
-			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kLocalDomain);
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, NSLocalDomainMask);
 		}
 		if (!docsFileURL)
 		{
-			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, kNetworkDomain);
+			docsFileURL = DFX_FindDocumentationFileInDomain(docsFileName, NSNetworkDomainMask);
 		}
 		if (docsFileURL)
 		{
@@ -251,30 +243,6 @@ std::string GetNameForMIDINote(long inMidiNote)
 	long const keyNameIndex = inMidiNote % kNumNotesInOctave;
 	long const octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
 	return std::string(keyNames[keyNameIndex]) + " " + std::to_string(octaveNumber);
-}
-
-//-----------------------------------------------------------------------------
-uint64_t GetMillisecondCount()
-{
-#if TARGET_OS_MAC
-	// convert from 1/60 second to millisecond values
-	return static_cast<uint64_t>(TickCount()) * 100 / 6;
-#endif
-
-#if _WIN32
-	#if (_WIN32_WINNT >= 0x0600) && 0  // XXX how to runtime check without symbol error if unavailable?
-	OSVERSIONINFO versionInfo {};
-	versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
-	if (GetVersionEx(&versionInfo) && (versionInfo.dwMajorVersion >= 6))
-	{
-		return GetTickCount64();
-	}
-	else
-	#endif
-	{
-		return static_cast<UINT64>(GetTickCount());
-	}
-#endif
 }
 
 #if TARGET_OS_MAC

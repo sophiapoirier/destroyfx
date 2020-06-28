@@ -143,8 +143,6 @@ PLUGIN_RES_ID
 	component resource ID of the base plugin
 PLUGIN_EDITOR_DESCRIPTION_STRING
 	a C string description of the plugin editor
-PLUGIN_EDITOR_ID
-	4-byte ID for the plugin (will PLUGIN_ID if not defined)
 PLUGIN_EDITOR_RES_ID
 	component resource ID of the base plugin
 ------------------------------------------------------------------------*/
@@ -925,10 +923,6 @@ public:
 	{
 		return true;
 	}
-	#endif
-	#if TARGET_PLUGIN_HAS_GUI && !CA_USE_AUDIO_PLUGIN_ONLY
-	int GetNumCustomUIComponents() override;
-	void GetUIComponentDescs(ComponentDescription* inDescArray) override;
 	#endif
 #endif
 // end of Audio Unit API methods

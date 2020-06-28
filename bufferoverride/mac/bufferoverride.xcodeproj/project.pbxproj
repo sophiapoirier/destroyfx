@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 45;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -59,8 +59,9 @@
 		EC08C7201A927F9200326647 /* host-tempo-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC08C71F1A927F9200326647 /* host-tempo-button.png */; };
 		EC1227D20FBC910300F013C8 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC1227D00FBC910300F013C8 /* dfx-au-utilities.strings */; };
 		EC25B47B1A855B7A0037D114 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC25B4791A855B7A0037D114 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
-		EC25B47F1A85671B0037D114 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC25B4731A8559E20037D114 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough"; }; };
+		EC25B47F1A85671B0037D114 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC25B4731A8559E20037D114 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -fno-objc-arc"; }; };
 		EC2739371ABD0301001F82A7 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC2739351ABD0301001F82A7 /* dfxguidialog.cpp */; };
+		EC2F844024A7C33000F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843F24A7C33000F29321 /* dfxmisc.mm */; };
 		EC3F0C9A20D2A89F00902FF1 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC3F0C9920D2A89E00902FF1 /* dfxguimisc.mm */; };
 		EC89B33F208D2AFB00E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B338208D2AF800E15129 /* Accelerate.framework */; };
 		EC89B340208D2AFB00E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B339208D2AF800E15129 /* OpenGL.framework */; };
@@ -73,7 +74,6 @@
 		EC983FFC1030843700FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
 		EC9B57101B1406D800C7950A /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC9B570F1B1406D800C7950A /* dfx-au-utilities-preset-files.m */; };
 		EC9D0B7118748EC300750E22 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC9D0B7018748EC300750E22 /* dfxguicontrol.cpp */; };
-		ECB4D9E9155C7E20007E5E23 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECB4D9E7155C7E20007E5E23 /* dfxmisc.cpp */; };
 		ECB4D9F6155C7E64007E5E23 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECB4D9F5155C7E64007E5E23 /* dfxgui-auviewfactory.mm */; };
 		ECDB2A6A21BA002800938F5C /* slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10907E50746008EBD90 /* slider-handle-glowing.png */; };
 		ECDB2A6B21BA005900938F5C /* xy-box-handle-buffer-glow.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C10D07E50746008EBD90 /* xy-box-handle-buffer-glow.png */; };
@@ -188,6 +188,7 @@
 		EC25B47A1A855B7A0037D114 /* plugguieditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = plugguieditor.h; sourceTree = "<group>"; };
 		EC2739351ABD0301001F82A7 /* dfxguidialog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxguidialog.cpp; sourceTree = "<group>"; };
 		EC2739361ABD0301001F82A7 /* dfxguidialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxguidialog.h; sourceTree = "<group>"; };
+		EC2F843F24A7C33000F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
 		EC3F0C9920D2A89E00902FF1 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
 		EC50A03A20CA258700718651 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC5CC734210EDF41007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
@@ -421,6 +422,7 @@
 				4932F4CD06801180006A9591 /* dfxmath.h */,
 				ECB4D9E8155C7E20007E5E23 /* dfxmisc.h */,
 				ECB4D9E7155C7E20007E5E23 /* dfxmisc.cpp */,
+				EC2F843F24A7C33000F29321 /* dfxmisc.mm */,
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B0A9F7E40A99542600502DE8 /* dfx-au-utilities-private.h */,
@@ -634,6 +636,7 @@
 				4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */,
 				4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */,
 				EC3F0C9A20D2A89F00902FF1 /* dfxguimisc.mm in Sources */,
+				EC2F844024A7C33000F29321 /* dfxmisc.mm in Sources */,
 				4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */,
 				4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */,
 				4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */,
@@ -654,7 +657,6 @@
 				4998C0F307E506A8008EBD90 /* lfo.cpp in Sources */,
 				B025B7FD08ACFC2F00A9CCAE /* CAVectorUnit.cpp in Sources */,
 				EC9B57101B1406D800C7950A /* dfx-au-utilities-preset-files.m in Sources */,
-				ECB4D9E9155C7E20007E5E23 /* dfxmisc.cpp in Sources */,
 				ECB4D9F6155C7E64007E5E23 /* dfxgui-auviewfactory.mm in Sources */,
 				EC8E90DB17E60E7F0022A297 /* dfxenvelope.cpp in Sources */,
 				EC9D0B7118748EC300750E22 /* dfxguicontrol.cpp in Sources */,

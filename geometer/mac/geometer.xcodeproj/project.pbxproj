@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 45;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -55,6 +55,7 @@
 		4998C27707E524F4008EBD90 /* window-size-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C26007E524F4008EBD90 /* window-size-button.png */; };
 		B025B93E08AD2DB800A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B93B08AD2DB800A9CCAE /* CAVectorUnit.cpp */; };
 		B0D672C00D0F31DF0079BD4E /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0D672BF0D0F31DF0079BD4E /* destroyfx.icns */; };
+		EC2F843C24A7C2F100F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843B24A7C2F100F29321 /* dfxmisc.mm */; };
 		EC89B331208D2A0A00E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B32A208D2A0800E15129 /* Accelerate.framework */; };
 		EC89B332208D2A0A00E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B32B208D2A0900E15129 /* OpenGL.framework */; };
 		EC89B333208D2A0A00E15129 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B32C208D2A0900E15129 /* QuartzCore.framework */; };
@@ -63,11 +64,10 @@
 		EC89B336208D2A0A00E15129 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B32F208D2A0A00E15129 /* AudioToolbox.framework */; };
 		EC89B337208D2A0A00E15129 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B330208D2A0A00E15129 /* Carbon.framework */; };
 		EC89B368208D2E4700E15129 /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B367208D2E4600E15129 /* AUPlugInDispatch.cpp */; };
-		EC89B45C208D334000E15129 /* dfxmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B458208D333F00E15129 /* dfxmisc.cpp */; };
 		EC89B45D208D334000E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B45B208D334000E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B464208D335900E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B45E208D335700E15129 /* dfxguidialog.cpp */; };
 		EC89B465208D335900E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B461208D335800E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B513208D373A00E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B512208D373A00E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough"; }; };
+		EC89B513208D373A00E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B512208D373A00E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -fno-objc-arc"; }; };
 		EC89B522208D374800E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B51B208D374700E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
 		EC983FFE1030848900FA3B2B /* dfxplugin-audiounit.r in Rez */ = {isa = PBXBuildFile; fileRef = 4932F4D306801180006A9591 /* dfxplugin-audiounit.r */; };
 		ECA1AA3C20DB1C8E00419783 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECA1AA3B20DB1C8E00419783 /* dfxguimisc.mm */; };
@@ -173,6 +173,7 @@
 		B06E6104097ACA4200AC582C /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B06E6105097ACA4200AC582C /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B0D672BF0D0F31DF0079BD4E /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
+		EC2F843B24A7C2F100F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
 		EC390FF020CCA99600A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC5CC736210EE07F007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC5CC737210EE080007CCD6B /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
@@ -417,6 +418,7 @@
 				4932F4CD06801180006A9591 /* dfxmath.h */,
 				EC89B45A208D333F00E15129 /* dfxmisc.h */,
 				EC89B458208D333F00E15129 /* dfxmisc.cpp */,
+				EC2F843B24A7C2F100F29321 /* dfxmisc.mm */,
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B06E6105097ACA4200AC582C /* dfx-au-utilities-private.h */,
@@ -621,13 +623,13 @@
 				EC89B522208D374800E15129 /* plugguieditor.cpp in Sources */,
 				ECA1AA3C20DB1C8E00419783 /* dfxguimisc.mm in Sources */,
 				EC89B45D208D334000E15129 /* dfx-au-utilities-preset-files.m in Sources */,
-				EC89B45C208D334000E15129 /* dfxmisc.cpp in Sources */,
 				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
 				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
 				4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */,
 				4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */,
 				4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */,
 				EC89B465208D335900E15129 /* dfxgui-auviewfactory.mm in Sources */,
+				EC2F843C24A7C2F100F29321 /* dfxmisc.mm in Sources */,
 				4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */,
 				4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */,
 				4932F4DC06801180006A9591 /* dfxplugin.cpp in Sources */,

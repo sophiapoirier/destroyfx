@@ -72,6 +72,18 @@ constexpr float kUnusedControlAlpha = 0.45f;
 
 
 //-----------------------------------------------------------------------------
+int GetMacOSVersion()
+{
+#if TARGET_OS_MAC
+	// TODO: use [[NSProcessInfo processInfo] operatingSystemVersion]
+	// except does it matter when the all but one of the resources we have scraped are for unsupported OS versions?
+#endif
+	return 0;
+}
+
+
+
+//-----------------------------------------------------------------------------
 class EQSyncSlider final : public DGSlider
 {
 public:
@@ -140,7 +152,7 @@ long EQSyncEditor::OpenEditor()
 	VSTGUI::SharedPointer<DGImage> hostSyncButtonImage;
 	VSTGUI::SharedPointer<DGImage> destroyFXLinkTabImage;
 
-	auto const macOS = GetMacOSVersion() & 0xFFF0;
+	auto const macOS = GetMacOSVersion();
 	switch (macOS)
 	{
 		// Jaguar (Mac OS X 10.2)

@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2018  Sophia Poirier
+	Copyright (C) 2003-2020  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -42,8 +42,8 @@
 #define DFX_AU_UTILITIES_PRIVATE_H
 
 
-#include <AudioUnit/AudioUnit.h>
-#include <CoreServices/CoreServices.h>
+#include <AudioToolbox/AudioComponent.h>
+#include <CoreFoundation/CoreFoundation.h>
 
 
 #ifdef __cplusplus
@@ -52,14 +52,10 @@ extern "C" {
 
 
 
-// handling files and directories
-OSStatus MakeDirectoryFSRef(FSRef const* inParentDirRef, CFStringRef inItemNameString, Boolean inCreateItem, FSRef* outItemRef);
-void TranslateCFStringToUnicodeString(CFStringRef inCFString, HFSUniStr255* outUniName);
-
 // preset file trees
-CFTreeRef CreateFileURLsTreeNode(FSRef const* inItemRef, CFAllocatorRef inAllocator);
-CFTreeRef AddFileItemToTree(FSRef const* inItemRef, CFTreeRef inParentTree);
-void CollectAllAUPresetFilesInDir(FSRef const* inDirRef, CFTreeRef inParentTree, Component inAUComponent);
+CFTreeRef CreateFileURLsTreeNode(CFURLRef inItemURL, CFAllocatorRef inAllocator);
+CFTreeRef AddFileItemToTree(CFURLRef inItemURL, CFTreeRef inParentTree);
+void CollectAllAUPresetFilesInDir(CFURLRef inDirURL, CFTreeRef inParentTree, AudioComponent inAUComponent);
 void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparatorFunction, void* inContext);
 CFComparisonResult FileURLsTreeComparatorFunction(void const* inTree1, void const* inTree2, void* inContext);
 void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext* outTreeContext);
@@ -68,11 +64,11 @@ void FileURLsCFTreeContext_Init(CFURLRef inURL, CFTreeContext* outTreeContext);
 CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32* outErrorCode);
 
 // saving preset files
-OSStatus CopyAUStatePropertyList(AudioUnit inAUComponentInstance, CFPropertyListRef* outAUStatePlist);
+OSStatus CopyAUStatePropertyList(AudioComponentInstance inAUComponentInstance, CFPropertyListRef* outAUStatePlist);
 OSStatus WritePropertyListToXMLFile(CFPropertyListRef inPropertyList, CFURLRef inXMLFileURL);
-OSStatus TryToSaveAUPresetFile(AudioUnit inAUComponentInstance, CFPropertyListRef inAUStateData, CFURLRef* ioAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
-Boolean ShouldReplaceExistingAUPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, CFBundleRef inBundle);
-CFPropertyListRef SetAUPresetNameInStateData(CFPropertyListRef inAUStateData, CFStringRef inPresetName);
+OSStatus TryToSaveAUPresetFile(AudioComponentInstance inAUComponentInstance, CFPropertyListRef inAUStateData, CFURLRef* ioAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
+Boolean ShouldReplaceExistingAUPresetFile(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL, CFBundleRef inBundle);
+void SetAUPresetNameInStateData(CFPropertyListRef* ioAUStateData, CFStringRef inPresetName);
 
 
 

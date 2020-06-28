@@ -1130,37 +1130,6 @@ CFURLRef DfxPlugin::CopyIconLocation()
 	return nullptr;
 }
 
-#if TARGET_PLUGIN_HAS_GUI && !CA_USE_AUDIO_PLUGIN_ONLY
-//-----------------------------------------------------------------------------
-int DfxPlugin::GetNumCustomUIComponents()
-{
-#if __LP64__
-	return 0;
-#else
-	return 1;
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DfxPlugin::GetUIComponentDescs(ComponentDescription* inDescArray)
-{
-	if (!inDescArray)
-	{
-		return;
-	}
-
-	inDescArray->componentType = kAudioUnitCarbonViewComponentType;
-#ifdef PLUGIN_EDITOR_ID
-	inDescArray->componentSubType = PLUGIN_EDITOR_ID;
-#else
-	inDescArray->componentSubType = PLUGIN_ID;
-#endif
-	inDescArray->componentManufacturer = PLUGIN_CREATOR_ID;
-	inDescArray->componentFlags = 0;
-	inDescArray->componentFlagsMask = 0;
-}
-#endif
-
 
 
 #pragma mark -
