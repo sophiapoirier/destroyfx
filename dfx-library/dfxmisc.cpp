@@ -82,15 +82,12 @@ long CompositePluginVersionNumberValue()
 
 //-----------------------------------------------------------------------------
 // handy function to open up an URL in the user's default web browser
-//  * macOS
-// returns noErr (0) if successful, otherwise a non-zero error code is returned
-//  * Windows
-// returns 0 if successful, or 1 if any error occurs.
-long LaunchURL(std::string const& inURL)
+// returns whether it was successful
+bool LaunchURL(std::string const& inURL)
 {
 	if (inURL.empty())
 	{
-		return 3;
+		return false;
 	}
 
 #if TARGET_OS_MAC
@@ -98,20 +95,19 @@ long LaunchURL(std::string const& inURL)
 	if (cfURL)
 	{
 		auto const status = LSOpenCFURLRef(cfURL.get(), nullptr);  // try to launch the URL
-		return status;
+		return status == noErr;
 	}
-	return coreFoundationUnknownErr;  // couldn't create the CFURL, so return some error code
 #endif
 
 #if _WIN32
-
 	// Return value is a fake HINSTANCE that will be >32 (if successful) or some error code
 	// otherwise. If we care about error handling, should update to ShellExecuteEx.
-	const long ret = static_cast<long>(
-	    reinterpret_cast<intptr_t>(ShellExecute(nullptr, "open", inURL.c_str(),
-						    nullptr, nullptr, SW_SHOWNORMAL)));
-	return ret > 32 ? 0 : 1;
+	auto const ret = reinterpret_cast<intptr_t>(ShellExecute(nullptr, "open", inURL.c_str(), 
+															 nullptr, nullptr, SW_SHOWNORMAL));
+	return ret > 32;
 #endif
+
+	return false;
 }
 
 #if TARGET_OS_MAC
@@ -152,9 +148,8 @@ UniqueCFType<CFURLRef> DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileN
 
 //-----------------------------------------------------------------------------
 // XXX this function should really go somewhere else, like in that promised DFX utilities file or something like that
-long LaunchDocumentation()
+bool LaunchDocumentation()
 {
-
 #if TARGET_OS_MAC
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
@@ -221,18 +216,14 @@ long LaunchDocumentation()
 				status = AHGotoPage(nullptr, docsFileUrlString, nullptr);
 			}
 #endif
-			return status;
+			return status == noErr;
 		}
 	}
-
-	return fnfErr;  // file not found error
 #else
 	#warning "implementation missing"
-	// "assert" also missing :)
-	// assert(false);
 #endif  // TARGET_OS_MAC
 
-	return 0;
+	return false;
 }
 
 //-----------------------------------------------------------------------------
