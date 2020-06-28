@@ -617,6 +617,9 @@ public:
 	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, unsigned long inOffsetFrames);
 	virtual void handlemidi_programchange(int inChannel, int inProgramNum, unsigned long inOffsetFrames);
 
+	void postupdate_midilearn();
+	void postupdate_midilearner();
+
 	/* - - - - - - - - - hooks for DfxSettings - - - - - - - - - */
 	//
 	// although this method can theoretically be called multiple times,
