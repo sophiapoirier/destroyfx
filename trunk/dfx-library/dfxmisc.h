@@ -100,8 +100,8 @@ void ReverseBytes(T& ioData)
 }
 
 long CompositePluginVersionNumberValue();
-long LaunchURL(std::string const& inURL);
-long LaunchDocumentation();
+bool LaunchURL(std::string const& inURL);
+bool LaunchDocumentation();
 std::string GetNameForMIDINote(long inMidiNote);
 
 #if TARGET_OS_MAC
