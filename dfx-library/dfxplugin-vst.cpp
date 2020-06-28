@@ -76,7 +76,12 @@ void DfxPlugin::resume()
 	// do these after calling do_reset, 
 	// because the value for latency could change there
 	setInitialDelay(getlatency_samples());
-	setlatencychanged(false);  // reset this state
+
+	// This function was removed in r1157.
+	// setlatencychanged(false);  // reset this state
+	// ... but it sure seems like we need to call ioChanged since we just
+	// called setInitialDelay(). -tom7
+	ioChanged();
 }
 
 //-------------------------------------------------------------------------
