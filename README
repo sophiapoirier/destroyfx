@@ -6,15 +6,17 @@ source-portable to any platform which supports that. We also support
 Audio Unit, the newer plugin format for Mac OS X. Some advanced
 features may not work on all platforms or in all hosts.
 
-Unfortunately, C++ is currently the only appropriate language for
-creating audio plugins. Thus, all of these are written in C++. You'll
-need a C++ compiler for your platform in order to compile them. You'll
-also need an appropriate version of the VST SDK (for VST) or CoreAudio 
-SDK (for Audio Unit). Right now, this means that you'll be able to 
-easily compile with Visual C++ for Windows and with Xcode for Mac, and 
-that it may be more difficult for any other platform. Warning: Our 
-source code repository often drifts out of date so that builds do not 
-work; sorry about this.
+C++ is currently the only appropriate language for creating audio
+plugins, so all of these are written in C++. You'll need a C++
+compiler for your platform in order to compile them. You'll also need
+an appropriate version of the VST SDK (for VST) or CoreAudio SDK (for
+Audio Unit). Right now, this means that you'll be able to easily
+compile with Visual C++ for Windows and with Xcode for Mac, and that
+it may be more difficult for any other platform. Warning: Our source
+code repository often drifts out of date so that builds do not work;
+sorry about this. The windows builds are especially old. Tom doesn't
+use Visual Studio anymore and is half-heartedly attempting to make
+this stuff compile with the free mingw toolchain (GCC).
 
 These plugins are Copyright (c) Tom Murphy 7 and Sophia Poirier. You
 can use them in your music however you like, without royalties. You
@@ -27,9 +29,8 @@ This software comes with no warranty (see the file COPYING). In fact,
 it is likely that some of these crazy effects could crash hosts (by
 sending out-of-range samples or taking too much time to process), so
 you should be careful to save your work when using them in important
-songs. Tom uses Wavelab and Cubase on the PC, and Sophia uses Logic on
-the Mac, so the plugins are likely work properly in those programs, at
-least.
+songs. Tom uses Cakewalk on the PC, and Sophia uses Logic on the Mac,
+so the plugins are likely work properly in those programs, at least.
 
 Pre-packaged versions of (some of) these with fancy GUIs are available
 at the Super Destroy FX web page:
@@ -47,16 +48,15 @@ are pretty thoroughly tested:
 
 transverb/
 
-        Fun simple plugin; sort of like a tape-loop with
-        independently-moving read/write heads. Lots of great effects
-        in this one.
+        Sort of like a tape-loop with independently-moving read/write
+        heads. Creates reverb-like effects with more variation over time.
+        Enable Tomsound for extra glitches!
 
 scrubby/
 
-        A nice plugin that zips around the audio buffer like a
-        DJ (or robot DJ) scratching a record. Has the ability
-        to constrain the scratch speeds using a MIDI keyboard,
-        among other advanced features.
+        Zips around the audio buffer like a DJ (or robot DJ)
+        scratching a record. Has the ability to constrain the scratch
+        speeds using a MIDI keyboard, among other advanced features.
 
 bufferoverride/
 
@@ -249,9 +249,10 @@ ann/
 
 vstsdk/
 
-        SDK from Steinberg for creating VST plugins. There is no code
-        in this directory; you should get the headers and class stubs
-        from Steinberg's site.
+        SDK from Steinberg for creating VST plugins. Required to build
+        VST versions of the DFX plugins. There is no code in this
+        directory; you should get the headers and class stubs from
+        Steinberg's site.
 
 stub-plugin/
 

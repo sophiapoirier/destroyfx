@@ -1,0 +1,29 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+128                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\transverb-background.png"
+129                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\purple-wide-fader-slide.png"
+130                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\grey-wide-fader-slide.png"
+131                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\tall-fader-slide.png"
+132                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\purple-wide-fader-handle.png"
+133                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\wide-fader-handle-glowing.png"
+134                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\grey-wide-fader-handle.png"
+135                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\wide-fader-handle-glowing.png"
+136                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\tall-fader-handle.png"
+137                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\tall-fader-handle-glowing.png"
+138                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\fine-down-button.png"
+139                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\fine-up-button.png"
+140                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\speed-mode-button.png"
+141                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\quality-button.png"
+142                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\tomsound-button.png"
+143                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\randomize-button.png"
+144                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\midi-learn-button.png"
+145                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\midi-reset-button.png"
+146                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\dfx-link.png"
+147                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\super-destroy-fx-link.png"
+148                     BITMAP  DISCARDABLE     "..\\gui\\graphics\\smart-electronix-link.png"
+
+
