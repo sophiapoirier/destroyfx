@@ -151,13 +151,14 @@ PLUGIN_EDITOR_RES_ID
 
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <set>
 #include <thread>
 #include <variant>
 #include <vector>
-#include <cstdint>
+
 
 #ifdef TARGET_API_RTAS
 	#include "CEffectGroup.h"
@@ -762,7 +763,7 @@ protected:
 	// the derived class, giving the derived DSPCORE class as the template argument.
 	template<class DSP> void initCores();
 private:
-  
+
 #ifdef TARGET_API_AUDIOUNIT
 	bool mAUElementsHaveBeenCreated = false;
 	// array of float pointers to input and output audio buffers, 
@@ -1190,8 +1191,8 @@ public:
 private:
 	unsigned long mChannelNumber = 0;
 public:
-	void SetChannelNum(uint32_t inChan) { mChannelNumber = inChan; }
-	uint32_t GetChannelNum() { return mChannelNumber; }
+	void SetChannelNum(uint32_t inChan) noexcept { mChannelNumber = inChan; }
+	uint32_t GetChannelNum() const noexcept { return mChannelNumber; }
 #endif
 
 
@@ -1396,15 +1397,14 @@ private:
 template<class DSP>
 void DfxPlugin::initCores()
 {
+	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;
 #ifndef TARGET_API_AUDIOUNIT
-	for (unsigned long coreidx = 0; coreidx < getnumoutputs(); coreidx++)	
-	{									
-		mDSPCores[coreidx] = std::make_unique<DSP>(this);
-		if (mDSPCores[coreidx])
-		{
-			mDSPCores[coreidx]->SetChannelNum(coreidx);				
-			mDSPCores[coreidx]->dfxplugincore_postconstructor();				
-		}
+	mDSPCores.clear();
+	for (unsigned long coreidx = 0; coreidx < getnumoutputs(); coreidx++)
+	{
+		auto& core = mDSPCores.emplace_back(std::make_unique<DSP>(this));
+		core->SetChannelNum(coreidx);
+		core->dfxplugincore_postconstructor();
 	}
 #endif
 }
