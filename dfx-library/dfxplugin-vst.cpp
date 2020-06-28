@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -28,8 +28,8 @@ This is where we connect the VST API to our DfxPlugin system.
 #include "dfxplugin.h"
 
 #include <algorithm>
-#include <stdio.h>
 #include <cinttypes>
+#include <stdio.h>
 
 
 #pragma mark -
@@ -77,9 +77,7 @@ void DfxPlugin::resume()
 	// because the value for latency could change there
 	setInitialDelay(getlatency_samples());
 
-	// This function was removed in r1157.
-	// setlatencychanged(false);  // reset this state
-	// ... but it sure seems like we need to call ioChanged since we just
+	// it sure seems like we need to call ioChanged since we just
 	// called setInitialDelay(). -tom7
 	ioChanged();
 }
@@ -245,7 +243,6 @@ VstInt32 DfxPlugin::canDo(char* text)
 		}
 	#endif
 
-	// (shouldn't we be returning 0 by default? -tom7)
 	return -1;  // explicitly can't do; 0 => don't know
 }
 
