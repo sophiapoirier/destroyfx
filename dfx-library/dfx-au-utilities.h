@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2018  Sophia Poirier
+	Copyright (C) 2003-2020  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -42,8 +42,9 @@
 #define DFX_AU_UTILITIES_H
 
 
-#include <AudioUnit/AudioUnit.h>
-#include <CoreServices/CoreServices.h>
+#include <AudioToolbox/AUComponent.h>
+#include <AudioToolbox/AudioComponent.h>
+#include <CoreFoundation/CoreFoundation.h>
 
 
 #ifdef __cplusplus
@@ -69,48 +70,46 @@ extern void CFAUOtherPluginDescRelease(CFAUOtherPluginDescRef inDesc);
 extern CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks;
 
 /* these are convenience functions for sending parameter change notifications to all parameter listeners */
-extern void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
+extern void AUParameterChange_TellListeners_ScopeElement(AudioComponentInstance inAUComponentInstance, 
+														 AudioUnitParameterID inParameterID, 
 														 AudioUnitScope inScope, AudioUnitElement inElement);
 /* this one defaults to using global scope and element 0 */
-extern void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID);
+extern void AUParameterChange_TellListeners(AudioComponentInstance inAUComponentInstance, AudioUnitParameterID inParameterID);
 
 /* this is for getting the individual AU plugin name and manufacturer name strings (so you don't have to fetch and parse yourself) */
-extern OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef* outNameString, CFStringRef* outManufacturerString);
+extern OSStatus CopyAUNameAndManufacturerStrings(AudioComponent inAUComponent, CFStringRef* outNameString, CFStringRef* outManufacturerString);
 
 /* comparing ComponentDescriptions */
 /* determine if two ComponentDescriptions are basically equal */
-extern Boolean ComponentDescriptionsMatch(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2);
+extern Boolean ComponentDescriptionsMatch(AudioComponentDescription const* inComponentDescription1, AudioComponentDescription const* inComponentDescription2);
 /* determine if two ComponentDescriptions have matching manufacturer and sub-type codes */
-extern Boolean ComponentDescriptionsMatch_Loosely(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2);
-/* determine if a ComponentDescription basically matches that of a particular Component */
-extern Boolean ComponentAndDescriptionMatch(Component inComponent, ComponentDescription const* inComponentDescription);
-/* determine if a ComponentDescription matches only the sub-type manufacturer codes of a particular Component */
-extern Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, ComponentDescription const* inComponentDescription);
+extern Boolean ComponentDescriptionsMatch_Loosely(AudioComponentDescription const* inComponentDescription1, AudioComponentDescription const* inComponentDescription2);
+/* determine if an AudioComponentDescription basically matches that of a particular AudioComponent */
+extern Boolean ComponentAndDescriptionMatch(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription);
+/* determine if an AudioComponentDescription matches only the sub-type manufacturer codes of a particular AudioComponent */
+extern Boolean ComponentAndDescriptionMatch_Loosely(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription);
 
 /* stuff for handling AU preset files... */
+typedef enum
+{
+	kDFXFileSystemDomain_Local,
+	kDFXFileSystemDomain_User
+} DFXFileSystemDomain;
 /* main */
-extern OSStatus SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile);
-extern OSStatus SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
-extern OSStatus CustomSaveAUPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile);
-extern OSStatus CustomSaveAUPresetFile_Bundle(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
-extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, FSVolumeRefNum inFileSystemDomain);
-extern OSStatus RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL);
-extern OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription* outComponentDescription);
-extern OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription* outComponentDescription);
+extern OSStatus SaveAUStateToPresetFile(AudioComponentInstance inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile);
+extern OSStatus SaveAUStateToPresetFile_Bundle(AudioComponentInstance inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
+extern OSStatus CustomSaveAUPresetFile(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile);
+extern OSStatus CustomSaveAUPresetFile_Bundle(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle);
+extern CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(AudioComponent inAUComponent, DFXFileSystemDomain inFileSystemDomain);
+extern OSStatus RestoreAUStateFromPresetFile(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL);
+extern OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, AudioComponentDescription* outComponentDescription);
+extern OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, AudioComponentDescription* outComponentDescription);
 /* access */
 extern CFURLRef GetCFURLFromFileURLsTreeNode(CFTreeRef inTree);
 /* handies */
 extern CFStringRef CopyAUPresetNameFromCFURL(CFURLRef inAUPresetFileURL);
 extern Boolean CFURLIsAUPreset(CFURLRef inURL);
-extern Boolean FSRefIsAUPreset(FSRef const* inFileRef);
-extern OSStatus FindPresetsDirForAU(Component inAUComponent, FSVolumeRefNum inFileSystemDomain, Boolean inCreateDir, FSRef* outDirRef);
-
-/* system services availability / version-checking stuff */
-extern SInt32 GetMacOSVersion();
-extern SInt32 GetQuickTimeVersion();
-extern UInt32 GetAudioToolboxFrameworkVersion();
-extern Boolean IsAvailable_AU2rev1();
-extern Boolean IsTransportStateProcSafe();
+extern CFURLRef FindPresetsDirForAU(AudioComponent inAUComponent, DFXFileSystemDomain inFileSystemDomain, Boolean inCreateDir);
 
 
 

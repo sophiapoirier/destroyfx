@@ -32,6 +32,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #if TARGET_OS_MAC
 	#if !__OBJC__
 		#error "you must compile the version of this file with a .mm filename extension, not this file"
+	#elif !__has_feature(objc_arc)
+		#error "you must compile this file with Automatic Reference Counting (ARC) enabled"
 	#endif
 	#import <AppKit/NSColor.h>
 	#import <AppKit/NSColorSpace.h>

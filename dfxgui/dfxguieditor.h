@@ -50,7 +50,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "vstgui.h"
 
 #ifdef TARGET_API_AUDIOUNIT
-	using DGEditorListenerInstance = AudioUnit;
+	using DGEditorListenerInstance = AudioComponentInstance;
 #endif
 #ifdef TARGET_API_VST
 	using DGEditorListenerInstance = class DfxPlugin*;

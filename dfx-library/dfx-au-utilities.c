@@ -41,6 +41,7 @@
 #include "dfx-au-utilities.h"
 
 #include <AudioToolbox/AudioUnitUtilities.h>  // for AUEventListenerNotify and AUParameterListenerNotify
+#include <CoreServices/CoreServices.h>  // for UTCreateStringForOSType
 
 
 #pragma mark -
@@ -250,10 +251,6 @@ typedef struct
 	CFIndex retainCount;
 } CFAUOtherPluginDesc;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_3
-	#define kOtherPluginFormat_AU	3
-#endif
-
 //-----------------------------------------------------------------------------
 // create an instance of a CFAUOtherPluginDesc object
 CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID)
@@ -394,39 +391,23 @@ CFStringRef CFAUOtherPluginDescArrayCopyDescriptionCallBack(void const* inDesc)
 			break;
 	}
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_3
-	#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_3
-	if (UTCreateStringForOSType != NULL)
-	#else
-	if (true)
-	#endif
+	CFStringRef const typeString = UTCreateStringForOSType(desc->plugin.mType);
+	CFStringRef const subTypeString = UTCreateStringForOSType(desc->plugin.mSubType);
+	CFStringRef const manufacturerString = UTCreateStringForOSType(desc->plugin.mManufacturer);
+	descriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
+												 CFSTR("AudioUnitOtherPluginDesc:\nplugin format = %@\ntype ID = %@\nsub-type ID = %@\nmanufacturer ID = %@"), 
+												 pluginFormatString, typeString, subTypeString, manufacturerString);
+	if (typeString != NULL)
 	{
-		CFStringRef const typeString = UTCreateStringForOSType(desc->plugin.mType);
-		CFStringRef const subTypeString = UTCreateStringForOSType(desc->plugin.mSubType);
-		CFStringRef const manufacturerString = UTCreateStringForOSType(desc->plugin.mManufacturer);
-		descriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
-									CFSTR("AudioUnitOtherPluginDesc:\nplugin format = %@\ntype ID = %@\nsub-type ID = %@\nmanufacturer ID = %@"), 
-									pluginFormatString, typeString, subTypeString, manufacturerString);
-		if (typeString != NULL)
-		{
-			CFRelease(typeString);
-		}
-		if (subTypeString != NULL)
-		{
-			CFRelease(subTypeString);
-		}
-		if (manufacturerString != NULL)
-		{
-			CFRelease(manufacturerString);
-		}
+		CFRelease(typeString);
 	}
-	else
-#endif
+	if (subTypeString != NULL)
 	{
-		descriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, 
-									CFSTR("AudioUnitOtherPluginDesc:\nplugin format = %@\ntype ID = %u\nsub-type ID = %u\nmanufacturer ID = %u"), 
-									pluginFormatString, (unsigned int)(desc->plugin.mType), 
-									(unsigned int)(desc->plugin.mSubType), (unsigned int)(desc->plugin.mManufacturer));
+		CFRelease(subTypeString);
+	}
+	if (manufacturerString != NULL)
+	{
+		CFRelease(manufacturerString);
 	}
 
 	if (releasePluginFormatString)
@@ -489,7 +470,7 @@ CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks =
 // to all parameter listeners.  
 // Use this when a parameter value in an AU changes and you need to make 
 // other entities (like the host, a GUI, etc.) aware of the change.
-void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, 
+void AUParameterChange_TellListeners_ScopeElement(AudioComponentInstance inAUComponentInstance, AudioUnitParameterID inParameterID, 
 												  AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	// set up an AudioUnitParameter structure with all of the necessary values
@@ -522,7 +503,7 @@ void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstanc
 //--------------------------------------------------------------------------
 // this one defaults to using global scope and element 0 
 // (which are what most effects use for all of their parameters)
-void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID)
+void AUParameterChange_TellListeners(AudioComponentInstance inAUComponentInstance, AudioUnitParameterID inParameterID)
 {
 	AUParameterChange_TellListeners_ScopeElement(inAUComponentInstance, inParameterID, kAudioUnitScope_Global, (AudioUnitElement)0);
 }
@@ -537,12 +518,16 @@ void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitP
 
 //-----------------------------------------------------------------------------
 // This function will get an AU's plugin name and manufacturer name strings for you 
-// as separate strings.  In an AU's Component resource, these are stored as one string, 
+// as separate strings.  In an AU's AudioComponent resource, these are stored as one string, 
 // delimited by a colon, so this function just does the work of fetching the string, 
 // parsing the plugin name and manufacturer name, and translating those to individual strings.
 // One of the string arguments can be NULL, if you are not interested in that string.
-OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef* outNameString, CFStringRef* outManufacturerString)
+OSStatus CopyAUNameAndManufacturerStrings(AudioComponent inAUComponent, CFStringRef* outNameString, CFStringRef* outManufacturerString)
 {
+	// these are defined in the Carbon header MacErrors.h
+	OSStatus const coreFoundationUnknownErr = -4960;
+	OSStatus const internalComponentErr = -2070;
+
 	OSStatus status = noErr;
 	CFStringRef componentFullNameString = NULL;
 	CFArrayRef namesArray = NULL;
@@ -553,8 +538,8 @@ OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef* 
 		return kAudio_ParamError;
 	}
 
-	// first we need to fetch the Component name string
-	status = AudioComponentCopyName((AudioComponent)inAUComponent, &componentFullNameString);
+	// first we need to fetch the AudioComponent name string
+	status = AudioComponentCopyName(inAUComponent, &componentFullNameString);
 	if (status != noErr)
 	{
 		return status;
@@ -630,8 +615,8 @@ OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef* 
 //--------------------------------------------------------------------------
 // general implementation for ComponentDescriptionsMatch() and ComponentDescriptionsMatch_Loosely()
 // if inIgnoreType is true, then the type code is ignored in the ComponentDescriptions
-Boolean ComponentDescriptionsMatch_General(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2, Boolean inIgnoreType);
-Boolean ComponentDescriptionsMatch_General(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2, Boolean inIgnoreType)
+Boolean ComponentDescriptionsMatch_General(AudioComponentDescription const* inComponentDescription1, AudioComponentDescription const* inComponentDescription2, Boolean inIgnoreType);
+Boolean ComponentDescriptionsMatch_General(AudioComponentDescription const* inComponentDescription1, AudioComponentDescription const* inComponentDescription2, Boolean inIgnoreType)
 {
 	if ((inComponentDescription1 == NULL) || (inComponentDescription2 == NULL))
 	{
@@ -659,173 +644,54 @@ Boolean ComponentDescriptionsMatch_General(ComponentDescription const* inCompone
 //--------------------------------------------------------------------------
 // general implementation for ComponentAndDescriptionMatch() and ComponentAndDescriptionMatch_Loosely()
 // if inIgnoreType is true, then the type code is ignored in the ComponentDescriptions
-Boolean ComponentAndDescriptionMatch_General(Component inComponent, ComponentDescription const* inComponentDescription, Boolean inIgnoreType);
-Boolean ComponentAndDescriptionMatch_General(Component inComponent, ComponentDescription const* inComponentDescription, Boolean inIgnoreType)
+Boolean ComponentAndDescriptionMatch_General(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription, Boolean inIgnoreType);
+Boolean ComponentAndDescriptionMatch_General(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription, Boolean inIgnoreType)
 {
 	OSErr status = noErr;
-	ComponentDescription desc;
+	AudioComponentDescription desc = {0};
 
 	if ((inComponent == NULL) || (inComponentDescription == NULL))
 	{
 		return false;
 	}
 
-	// get the ComponentDescription of the input Component
-	status = GetComponentInfo(inComponent, &desc, NULL, NULL, NULL);
+	// get the AudioComponentDescription of the input AudioComponent
+	status = AudioComponentGetDescription(inComponent, &desc);
 	if (status != noErr)
 	{
 		return false;
 	}
 
-	// check if the Component's ComponentDescription matches the input ComponentDescription
+	// check if the AudioComponent's AudioComponentDescription matches the input AudioComponentDescription
 	return ComponentDescriptionsMatch_General(&desc, inComponentDescription, inIgnoreType);
 }
 
 //--------------------------------------------------------------------------
 // determine if 2 ComponentDescriptions are basically equal
 // (by that, I mean that the important identifying values are compared, 
-// but not the ComponentDescription flags)
-Boolean ComponentDescriptionsMatch(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2)
+// but not the AudioComponentDescription flags)
+Boolean ComponentDescriptionsMatch(AudioComponentDescription const* inComponentDescription1, AudioComponentDescription const* inComponentDescription2)
 {
 	return ComponentDescriptionsMatch_General(inComponentDescription1, inComponentDescription2, false);
 }
 
 //--------------------------------------------------------------------------
 // determine if 2 ComponentDescriptions have matching sub-type and manufacturer codes
-Boolean ComponentDescriptionsMatch_Loose(ComponentDescription const* inComponentDescription1, ComponentDescription const* inComponentDescription2)
+Boolean ComponentDescriptionsMatch_Loose(AudioComponentDescription const* inComponentDescription1, AudioComponentDescription const* inComponentDescription2)
 {
 	return ComponentDescriptionsMatch_General(inComponentDescription1, inComponentDescription2, true);
 }
 
 //--------------------------------------------------------------------------
-// determine if a ComponentDescription basically matches that of a particular Component
-Boolean ComponentAndDescriptionMatch(Component inComponent, ComponentDescription const* inComponentDescription)
+// determine if a AudioComponentDescription basically matches that of a particular AudioComponent
+Boolean ComponentAndDescriptionMatch(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription)
 {
 	return ComponentAndDescriptionMatch_General(inComponent, inComponentDescription, false);
 }
 
 //--------------------------------------------------------------------------
-// determine if a ComponentDescription matches only the sub-type and manufacturer codes of a particular Component
-Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, ComponentDescription const* inComponentDescription)
+// determine if a AudioComponentDescription matches only the sub-type and manufacturer codes of a particular AudioComponent
+Boolean ComponentAndDescriptionMatch_Loosely(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription)
 {
 	return ComponentAndDescriptionMatch_General(inComponent, inComponentDescription, true);
-}
-
-
-
-
-
-
-#pragma mark -
-#pragma mark System Services Availability
-
-//--------------------------------------------------------------------------
-// check the version of macOS installed
-// the version value of interest to us is 0x1030 for Panther
-SInt32 GetMacOSVersion()
-{
-	SInt32 systemVersion = 0;
-	OSErr const error = Gestalt(gestaltSystemVersion, &systemVersion);
-	if (error == noErr)
-	{
-		systemVersion &= 0xFFFF;  // you are supposed to ignore the higher 16 bits for this Gestalt value
-		return systemVersion;
-	}
-	return 0;
-}
-
-//--------------------------------------------------------------------------
-// check the version of QuickTime installed
-// the version value of interest to us is 0x06408000 (6.4 release)
-SInt32 GetQuickTimeVersion()
-{
-	SInt32 qtVersion = 0;
-	OSErr const error = Gestalt(gestaltQuickTime, &qtVersion);
-	if (error == noErr)
-	{
-		return qtVersion;
-	}
-	return 0;
-}
-
-//--------------------------------------------------------------------------
-// check the version of the AudioToolbox.framework installed
-// the version value of interest to us is 0x01300000 (1.3)
-UInt32 GetAudioToolboxFrameworkVersion()
-{
-	CFBundleRef const audioToolboxBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.audio.toolbox.AudioToolbox"));
-	if (audioToolboxBundle != NULL)
-	{
-		UInt32 const audioToolboxVersion = CFBundleGetVersionNumber(audioToolboxBundle);
-		return audioToolboxVersion;
-	}
-	return 0;
-}
-
-//--------------------------------------------------------------------------
-// check for the availability of AU 2.0 rev 1 system frameworks
-Boolean IsAvailable_AU2rev1()
-{
-	// the Audio Unit 2.0 rev 1 frameworks are available with Mac OS X 10.3 
-	// or QuickTime 6.4 for Mac OS X 10.2, or more specifically, AudioToolbox.framework 1.3
-	if (GetAudioToolboxFrameworkVersion() >= 0x01300000)
-	{
-		return true;
-	}
-	// in case that fails (possibly due to error, not wrong version value), try checking these
-	if ((GetMacOSVersion() >= 0x1030) || (GetQuickTimeVersion() >= 0x06408000))
-	{
-		return true;
-	}
-	return false;
-}
-
-//--------------------------------------------------------------------------
-Boolean IsTransportStateProcSafe()
-{
-	CFBundleRef const applicationBundle = CFBundleGetMainBundle();
-	if (applicationBundle != NULL)
-	{
-		CFStringRef const applicationBundleID = CFBundleGetIdentifier(applicationBundle);
-		UInt32 const applicationVersionNumber = CFBundleGetVersionNumber(applicationBundle);
-		CFStringRef const applicationVersionString = (CFStringRef)CFBundleGetValueForInfoDictionaryKey(applicationBundle, kCFBundleVersionKey);
-		if (applicationBundleID != NULL)
-		{
-			CFOptionFlags const compareOptions = kCFCompareCaseInsensitive;
-			if ((CFStringCompare(applicationBundleID, CFSTR("info.emagic.Logic"), compareOptions) == kCFCompareEqualTo) 
-				|| (CFStringCompare(applicationBundleID, CFSTR("de.emagic.Logic"), compareOptions) == kCFCompareEqualTo))
-			{
-				if (applicationVersionNumber > 0)
-				{
-					if (applicationVersionNumber < 0x06428000)
-					{
-						return false;
-					}
-				}
-				else if (applicationVersionString != NULL)
-				{
-					CFStringRef const logicFirstGoodVersionString = CFSTR("6.4.2");
-					if (CFStringCompareWithOptions(applicationVersionString, logicFirstGoodVersionString, 
-						CFRangeMake(0, CFStringGetLength(logicFirstGoodVersionString)), 0) == kCFCompareLessThan)
-					{
-						return false;
-					}
-				}
-			}
-			else if (CFStringCompare(applicationBundleID, CFSTR("com.apple.garageband"), compareOptions) == kCFCompareEqualTo)
-			{
-				CFStringRef const garageBandBadMajorVersionString = CFSTR("1.0");
-				if (applicationVersionString != NULL)
-				{
-					if (CFStringCompareWithOptions(applicationVersionString, garageBandBadMajorVersionString, 
-						CFRangeMake(0, CFStringGetLength(garageBandBadMajorVersionString)), 0) == kCFCompareEqualTo)
-					{
-						return false;
-					}
-				}
-			}
-		}
-	}
-
-	return true;
 }
