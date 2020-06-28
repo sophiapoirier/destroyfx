@@ -324,16 +324,18 @@ bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, cha
 //-----------------------------------------------------------------------------
 VstInt32 DfxPlugin::getChunk(void** data, bool isPreset)
 {
-	auto const dfxdata = mDfxSettings->save(isPreset);
-	if (data)
+	// The VST API awkwardly makes the plugin allocate this buffer and
+	// maintain it, but the lifetime isn't totally clear ("You can
+	// savely release it in next suspend/resume call." -audioeffect.cpp.
+	// But can there be multiple calls to getChunk in the meantime?) We
+	// assume not, and just keep a buffer (mLastChunk) with the last
+	// saved chunk.
+	mLastChunk = mDfxSettings->save(isPreset);
+	if (data != nullptr)
 	{
-		// XXX this looks very bogus because dfxdata is a std::vector; the
-		// data() is invalid once we return. also here data() is const, so
-		// it doesn't compile. (Maybe settings::save needs to be returning
-		// a reference to internal storage, or something)
-		*data = dfxdata.data();
+		*data = mLastChunk.data();
 	}
-	return static_cast<VstInt32>(dfxdata.size());
+	return static_cast<VstInt32>(mLastChunk.size());
 }
 
 //-----------------------------------------------------------------------------
