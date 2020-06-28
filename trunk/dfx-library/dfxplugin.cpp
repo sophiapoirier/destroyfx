@@ -47,6 +47,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 	// If using the VST GUI interface, we need the class definition
 	// for AEffGUIEditor so that we can send it parameter changes.
 	#include "aeffguieditor.h"
+	#include "dfxguieditor.h"
 	extern AEffEditor* DFXGUI_NewEditorInstance(DfxPlugin* inEffectInstance);
 #endif
 
@@ -166,10 +167,6 @@ DfxPlugin::DfxPlugin(
 	mParametersTouchedAsOfPreProcess(inNumParameters, false),
 	mParametersChangedInProcessHavePosted(inNumParameters)
 {
-#ifdef TARGET_API_VST
-	mNumInputs = VST_NUM_INPUTS;
-	mNumOutputs = VST_NUM_OUTPUTS;
-#endif
 	updatesamplerate();  // XXX have it set to something here?
 
 	// set a seed value for rand() from the system clock
@@ -195,6 +192,9 @@ DfxPlugin::DfxPlugin(
 
 
 #ifdef TARGET_API_VST
+	mNumInputs = VST_NUM_INPUTS;
+	mNumOutputs = VST_NUM_OUTPUTS;
+
 	setUniqueID(PLUGIN_ID);
 	setNumInputs(VST_NUM_INPUTS);
 	setNumOutputs(VST_NUM_OUTPUTS);
@@ -1186,18 +1186,14 @@ void DfxPlugin::do_idle()
 	}
 
 #if TARGET_PLUGIN_USES_MIDI
-#ifdef TARGET_API_AUDIOUNIT
-	// XXX unclear to me what (if anything) this should be doing if not AU?
-	// (kAudioUnitScope is AU-specific I assume) -tom7
 	if (!mMidiLearnChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
 	{
-		PropertyChanged(dfx::kPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
+		postupdate_midilearn();
 	}
 	if (!mMidiLearnerChangedInProcessHasPosted.test_and_set(std::memory_order_relaxed))
 	{
-		PropertyChanged(dfx::kPluginProperty_MidiLearner, kAudioUnitScope_Global, AudioUnitElement(0));
+		postupdate_midilearner();
 	}
-#endif
 #endif
 
 	idle();
@@ -1815,6 +1811,36 @@ void DfxPlugin::handlemidi_programchange(int inChannel, int inProgramNum, unsign
 fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset = %lu\n", inProgramNum, inChannel, inOffsetFrames);
 #endif
 	mMidiState.handleProgramChange(inChannel, inProgramNum, inOffsetFrames);
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::postupdate_midilearn()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	PropertyChanged(dfx::kPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
+#endif
+
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
+	if (auto const guiEditor = dynamic_cast<DfxGuiEditor*>(getEditor()))
+	{
+		guiEditor->HandleMidiLearnChange();
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::postupdate_midilearner()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	PropertyChanged(dfx::kPluginProperty_MidiLearner, kAudioUnitScope_Global, AudioUnitElement(0));
+#endif
+
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
+	if (auto const guiEditor = dynamic_cast<DfxGuiEditor*>(getEditor()))
+	{
+		guiEditor->HandleMidiLearnerChange();
+	}
+#endif
 }
 
 #endif
