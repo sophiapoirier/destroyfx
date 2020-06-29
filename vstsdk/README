@@ -1,12 +1,10 @@
 
-These files are not part of the repository, because they
-are not free software. You can get them for $0, though,
-from steinberg's website. This is what they look like.
-(You'll want the documentation and the rest of the SDK
-if you want to do plugin development, anyway!)
+This directory contains the VST 2 SDK, but it's not
+part of the repository because the SDK is not free
+software.
 
-For some plugins, you'll need the headers for VST GUI. You 
-can get these from Yvan Grabit's site.
+
+Here's what the contents looked like in 2001 or so:
 
 07.04.2000  17:32             6,841 AEffect.h
 06.08.2001  11:43            28,487 aeffectx.h
@@ -18,3 +16,46 @@ can get these from Yvan Grabit's site.
 08.09.2001  19:44               811 README
 05.11.2001  13:15            23,420 vstcontrols.h
 05.23.2001  10:10            24,037 vstgui.h
+
+
+Here's what it looks like in 2020. Getting this to compile
+again on Windows (64-bit) is still a work in progress...
+
+
+drwxr-xr-x+ 1 Tom None   0 Jun 29 00:05  .
+drwxr-xr-x+ 1 Tom None   0 Jun 28 11:07  ..
+drwxr-xr-x+ 1 Tom None   0 Jun 27 15:07  2001
+drwxr-xr-x+ 1 Tom None   0 Jun 27 15:08  pluginterfaces
+-rw-r--r--  1 Tom None 862 Jun 27 22:34  README
+
+$ ls -alR pluginterfaces
+pluginterfaces:
+total 8
+drwxr-xr-x+ 1 Tom None 0 Jun 27 15:08 .
+drwxr-xr-x+ 1 Tom None 0 Jun 29 00:05 ..
+drwxr-xr-x+ 1 Tom None 0 Jun 28 23:50 vst2.x
+
+pluginterfaces/vst2.x:
+total 372
+drwxr-xr-x+ 1 Tom None     0 Jun 28 23:50 .
+drwxr-xr-x+ 1 Tom None     0 Jun 27 15:08 ..
+-rwxr-xr-x  1 Tom None 16961 Jun 27 15:54 aeffect.h
+-rwxr-xr-x  1 Tom None 64725 Jun 27 15:53 aeffectx.h
+-rwxr-xr-x  1 Tom None  4435 Dec  2  2019 aeffeditor.h
+-rwxr-xr-x  1 Tom None 25542 Dec  2  2019 audioeffect.cpp
+-rwxr-xr-x  1 Tom None 12743 Dec  2  2019 audioeffect.h
+-rwxr-xr-x  1 Tom None 56469 Dec  2  2019 audioeffectx.cpp
+-rwxr-xr-x  1 Tom None 18477 Dec  2  2019 audioeffectx.h
+-rwxr-xr-x  1 Tom None  4123 Jun 28 15:27 vstplugmain.cpp
+
+
+VST2 is definitely deprecated and it's harder and harder to
+find these files. You can maybe find them in the VST3 SDK,
+which for some time contained the VST2 headers as well.
+
+In vstplugmain.cpp I added
+"__declspec(dllexport)" (before the return type)
+on both VSTPluginMain and DllMain.
+
+
+
