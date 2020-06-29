@@ -2,10 +2,10 @@
 /* You need to redefine this stuff in order to make your plugin.
    see dfxplugin.h for details. */
 
-#define PLUGIN_NAME_STRING	"WINDOWINGSTUB"
-#define PLUGIN_ID	'DFws'
+#define PLUGIN_NAME_STRING	"SLOWFT"
+#define PLUGIN_ID		FOURCC('D', 'F', 's', 'f')
 #define PLUGIN_VERSION	0x00010100
-#define PLUGIN_ENTRY_POINT	"WindowingstubEntry"
+#define PLUGIN_ENTRY_POINT	"SlowftEntry"
 
 #define TARGET_PLUGIN_USES_MIDI	1
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
@@ -16,7 +16,7 @@
 #endif
 
 /* only necessary if using a custom GUI */
-#define PLUGIN_EDITOR_ENTRY_POINT	"WindowingstubEditorEntry"
+#define PLUGIN_EDITOR_ENTRY_POINT	"SlowftEditorEntry"
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"i forgot to change the description"

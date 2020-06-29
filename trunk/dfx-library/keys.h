@@ -1,6 +1,6 @@
 
-#ifndef __KEYS_H
-#define __KEYS_H
+#ifndef _KEYS_H
+#define _KEYS_H
 
 /* These are keys for the abstract GUI layer. */
 

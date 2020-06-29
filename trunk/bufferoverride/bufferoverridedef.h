@@ -27,7 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #define PLUGIN_NAME_STRING	"Buffer Override"
-#define PLUGIN_ID	'buff'
+#define PLUGIN_ID		FOURCC('b', 'u', 'f', 'f')
 #define PLUGIN_VERSION_MAJOR	2
 #define PLUGIN_VERSION_MINOR	1
 #define PLUGIN_VERSION_BUGFIX	0

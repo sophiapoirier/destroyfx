@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #ifndef __DFX_WINDOWINGSTUBEDITOR_H
+  #ifndef _DFX_WINDOWINGSTUBEDITOR_H
   #include "windowingstubeditor.hpp"
   #endif
 #endif

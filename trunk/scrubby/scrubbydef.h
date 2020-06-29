@@ -27,7 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #define PLUGIN_NAME_STRING	"Scrubby"
-#define PLUGIN_ID	'scub'
+#define PLUGIN_ID		FOURCC('s', 'c', 'u', 'b')
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	1
 #define PLUGIN_VERSION_BUGFIX	0

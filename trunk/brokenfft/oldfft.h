@@ -1,9 +1,9 @@
 
 
-/* broken fft: $Id: oldfft.h,v 1.1 2002-03-25 03:14:12 tom7 Exp $ */
+/* broken fft: $Id: oldfft.h,v 1.02 2020/06/29 00:45:26 tom7 Exp $ */
 
-#ifndef __AGAIN_H
-#define __AGAIN_H
+#ifndef _AGAIN_H
+#define _AGAIN_H
 
 #include <audioeffectx.h>
 

@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #ifndef __DFX_SLOWFTEDITOR_H
+  #ifndef _DFX_SLOWFTEDITOR_H
   #include "slowfteditor.hpp"
   #endif
 #endif

@@ -24,9 +24,18 @@ Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.
 This file should be included by any prefix header that you use for your plugin.
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXPLUGIN_PREFIX_H
-#define __DFXPLUGIN_PREFIX_H
+#ifndef _DFXPLUGIN_PREFIX_H
+#define _DFXPLUGIN_PREFIX_H
 
+/*-----------------------------------------------------------------------------*/
+/* General stuff */
+
+/* Give a plugin ID using character constants, like
+   FOURCC('D', 'F', 'x', 'p')
+   The result always in big-endian order (FOURCC(1, 2, 3, 4) == 0x01020304).
+*/
+#define FOURCC(a, b, c, d) (((unsigned int)(a) << 24) | ((unsigned int)(b) << 16) | \
+                            ((unsigned int)(c) << 8) | ((unsigned int)(d)))
 
 /*-----------------------------------------------------------------------------*/
 /* Mac stuff */

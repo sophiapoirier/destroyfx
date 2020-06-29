@@ -3,7 +3,7 @@
    see dfxplugin.h for details. */
 
 #define PLUGIN_NAME_STRING	"DFX EXEMPLAR"
-#define PLUGIN_ID	'DFex'
+#define PLUGIN_ID		FOURCC('D', 'F', 'e', 'x')
 #define PLUGIN_VERSION	0x00010100
 #define PLUGIN_ENTRY_POINT	"ExemplarEntry"
 

@@ -1,8 +1,8 @@
 
 /* Windowingstub, starring the Super Destroy FX Windowing System! */
 
-#ifndef __DFX_EXEMPLAR_H
-#define __DFX_EXEMPLAR_H
+#ifndef _DFX_EXEMPLAR_H
+#define _DFX_EXEMPLAR_H
 
 #include <dfxplugin.h>
 #include "ANN/ANN.h"
