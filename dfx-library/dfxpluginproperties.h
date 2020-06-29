@@ -199,6 +199,8 @@ struct ParameterAssignment
 	// (or the maximum point in a float range)
 	float mDataFloat2 = 0.0f;
 };
+static_assert(sizeof (ParameterAssignment) == 9 * 4,
+	      "expected a packed struct of 9 32-bit fields");
 #pragma pack(pop)
 
 #endif  // TARGET_PLUGIN_USES_MIDI
