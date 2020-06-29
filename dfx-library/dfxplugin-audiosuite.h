@@ -25,8 +25,8 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 This is where we connect the AudioSuite API to our DfxPlugin system.
 ------------------------------------------------------------------------*/
 
-#ifndef __DFXPLUGIN_AUDIOSUITE_H
-#define __DFXPLUGIN_AUDIOSUITE_H
+#ifndef _DFXPLUGIN_AUDIOSUITE_H
+#define _DFXPLUGIN_AUDIOSUITE_H
 
 
 /* XXX this file is a hack for AudioSuite support with a separate class hierarchy */

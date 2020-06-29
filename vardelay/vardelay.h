@@ -2,8 +2,8 @@
 /* Super Destroy FX Windowing System! */
 
 
-#ifndef __DFX_VARDELAY_H
-#define __DFX_VARDELAY_H
+#ifndef _DFX_VARDELAY_H
+#define _DFX_VARDELAY_H
 
 #include <audioeffectx.h>
 #include <vstgui.h>
@@ -17,9 +17,12 @@
 #define fsign(f) ((f<0.0)?-1.0:1.0)
 #define pi (3.1415926535)
 
+#define FOURCC(a, b, c, d) (((unsigned int)(a) << 24) | ((unsigned int)(b) << 16) | \
+                            ((unsigned int)(c) << 8) | ((unsigned int)(d)))
+
 /* change these for your plugins */
 #define PLUGIN Vardelay
-#define PLUGINID 'DFvd'
+#define PLUGINID FOURCC('D', 'F', 'v', 'd')
 #define PLUGINNAME "DFX VARDELAY"
 #define PLUGINPROGRAM VardelayProgram
 

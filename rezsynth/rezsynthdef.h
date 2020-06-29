@@ -27,7 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #define PLUGIN_NAME_STRING	"Rez Synth"
-#define PLUGIN_ID	'RezS'
+#define PLUGIN_ID		FOURCC('R', 'e', 'z', 'S')
 #define PLUGIN_VERSION_MAJOR	2
 #define PLUGIN_VERSION_MINOR	0
 #define PLUGIN_VERSION_BUGFIX	0

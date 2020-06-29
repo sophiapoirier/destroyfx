@@ -1,6 +1,6 @@
 
-#ifndef __DFX_GUITESTEDITOR_H
-#define __DFX_GUITESTEDITOR_H
+#ifndef _DFX_GUITESTEDITOR_H
+#define _DFX_GUITESTEDITOR_H
 
 #include <audioeffectx.h>
 #include <aeffeditor.hpp>

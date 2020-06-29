@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -27,7 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #define PLUGIN_NAME_STRING	"Geometer"
-#define PLUGIN_ID	'DFgr'
+#define PLUGIN_ID		FOURCC('D', 'F', 'g', 'r')
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	2
 #define PLUGIN_VERSION_BUGFIX	0
@@ -41,7 +41,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"geometer-background.png"
 //#define PLUGIN_BACKGROUND_IMAGE_FILENAME	"geometer-background-short.png"
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX PLUGIN_NAME_STRING DFX_BUNDLE_ID_SUFFIX
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2018"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2020"
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"visually oriented waveform geometry"

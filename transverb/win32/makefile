@@ -48,6 +48,11 @@ dfx-transverb-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS)
 load.exe : load.o
 	$(CXX) -o $@ $^
 
+# XXX just for Tom's testing
+install : dfx-transverb-64.dll
+	rm -f /d/cakewalk_bandlab/vst/dfx-transverb-64.dll
+	cp dfx-transverb-64.dll /d/cakewalk_bandlab/vst/
+
 # 
 # rc transverb.rc
 # 

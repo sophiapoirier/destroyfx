@@ -19,8 +19,8 @@ along with RMS Buddy.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef __RMS_BUDDY_EDITOR_H
-#define __RMS_BUDDY_EDITOR_H
+#ifndef _DFX_RMS_BUDDY_EDITOR_H
+#define _DFX_RMS_BUDDY_EDITOR_H
 
 
 #include "AUCarbonViewBase.h"

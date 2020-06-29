@@ -3,8 +3,8 @@
 //                        by Sophia Poirier, May 2002
 //=============================================================================
 
-#ifndef __scrubbykeyboard
-#define __scrubbykeyboard
+#ifndef _DFX_SCRUBBYKEYBOARD
+#define _DFX_SCRUBBYKEYBOARD
 
 #include "dfxguimulticontrols.h"
 

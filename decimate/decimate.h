@@ -1,6 +1,6 @@
 
-#ifndef __DECIMATE_H
-#define __DECIMATE_H
+#ifndef _DFX_DECIMATE_H
+#define _DFX_DECIMATE_H
 
 #include "audioeffectx.h"
 
