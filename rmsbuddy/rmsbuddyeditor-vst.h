@@ -1,7 +1,7 @@
 /*----------------------- by Sophia Poirier  ][  June 2001 ----------------------*/
 
-#ifndef __RMSBUDDYEDITOR_VST_H
-#define __RMSBUDDYEDITOR_VST_H
+#ifndef _DFX_RMSBUDDYEDITOR_VST_H
+#define _DFX_RMSBUDDYEDITOR_VST_H
 
 #include "vstgui.h"
 
@@ -20,7 +20,7 @@ protected:
 
 	virtual void valueChanged(CDrawContext* context, CControl* control);
 
-    virtual void idle();
+	virtual void idle();
 
 private:
 	// controls

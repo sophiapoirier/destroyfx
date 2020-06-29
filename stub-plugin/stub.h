@@ -1,5 +1,5 @@
-#ifndef __TOM7_STUB_H
-#define __TOM7_STUB_H
+#ifndef _DFX_STUB_PLUGIN_H
+#define _DFX_STUB_PLUGIN_H
 
 #include <audioeffectx.h>
 
@@ -13,7 +13,7 @@
 #define pi (3.1415926535)
 
 #define PLUGIN Stub
-#define PLUGINID 'STUB'
+#define PLUGINID 0xAABBCCDD
 #define PLUGINNAME "DFX STUBPLUG"
 
 #define NUM_PARAMS 0

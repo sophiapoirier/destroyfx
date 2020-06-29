@@ -27,7 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #define PLUGIN_NAME_STRING	"Polarizer"
-#define PLUGIN_ID	'pola'
+#define PLUGIN_ID	FOURCC('p', 'o', 'l', 'a')
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	1
 #define PLUGIN_VERSION_BUGFIX	0

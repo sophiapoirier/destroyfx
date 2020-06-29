@@ -15,7 +15,7 @@
 #define STRIDE 128
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-  #ifndef __DFX_EXEMPLAREDITOR_H
+  #ifndef _DFX_EXEMPLAREDITOR_H
   #include "exemplareditor.hpp"
   #endif
 #endif

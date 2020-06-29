@@ -1,8 +1,8 @@
 
 /* BrokenFFT 2, featuring the Super Destroy FX Windowing System! */
 
-#ifndef __DFX_BROKENFFT_H
-#define __DFX_BROKENFFT_H
+#ifndef _DFX_BROKENFFT_H
+#define _DFX_BROKENFFT_H
 
 #include <audioeffectx.h>
 #include "rfftw.h"
@@ -18,9 +18,12 @@
 
 #define MAXECHO 8192
 
+#define FOURCC(a, b, c, d) (((unsigned int)(a) << 24) | ((unsigned int)(b) << 16) | \
+                            ((unsigned int)(c) << 8) | ((unsigned int)(d)))
+
 /* change these for your plugins */
 #define PLUGIN BrokenFFT
-#define PLUGINID 'DFbf'
+#define PLUGINID FOURCC('D', 'F', 'b', 'f')
 #define PLUGINNAME "DFX BROKENFFT"
 #define PLUGINPROGRAM BrokenFFTProgram
 

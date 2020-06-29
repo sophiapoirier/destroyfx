@@ -1,8 +1,8 @@
 
 /* DFX Firefly : Universal FIR filter; EXTREME style. */
 
-#ifndef __DFX_FIREFLY_H
-#define __DFX_FIREFLY_H
+#ifndef _DFX_FIREFLY_H
+#define _DFX_FIREFLY_H
 
 #include <audioeffectx.h>
 
@@ -18,9 +18,12 @@
 #define fsign(f) ((f<0.0)?-1.0:1.0)
 #define pi (3.1415926535)
 
+#define FOURCC(a, b, c, d) (((unsigned int)(a) << 24) | ((unsigned int)(b) << 16) | \
+                            ((unsigned int)(c) << 8) | ((unsigned int)(d)))
+
 /* change these for your plugins */
 #define PLUGIN FireFly
-#define PLUGINID 'DFff'
+#define PLUGINID FOURCC('D', 'F', 'f', 'f')
 #define PLUGINNAME "DFX Firefly"
 #define DEFPROGRAMNAME "Lampyridae"
 #define PLUGINPROGRAM FireFlyProgram

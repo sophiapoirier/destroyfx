@@ -27,7 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #define PLUGIN_NAME_STRING	"MIDI Gater"
-#define PLUGIN_ID	'Mgat'
+#define PLUGIN_ID		FOURCC('M', 'g', 'a', 't')
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	1
 #define PLUGIN_VERSION_BUGFIX	0

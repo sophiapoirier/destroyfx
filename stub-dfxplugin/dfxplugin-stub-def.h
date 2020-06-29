@@ -26,8 +26,8 @@ or somehow define this stuff another way (in compiler settings, or whatever).
 ------------------------------------------------------------------------*/
 
 
-#ifndef __DFXPLUGIN_STUB_DEF_H
-#define __DFXPLUGIN_STUB_DEF_H
+#ifndef _DFXPLUGIN_STUB_DEF_H
+#define _DFXPLUGIN_STUB_DEF_H
 
 
 #include "dfxplugin-prefix.h"
@@ -36,7 +36,7 @@ or somehow define this stuff another way (in compiler settings, or whatever).
 // the name of the plugin
 #define PLUGIN_NAME_STRING	"DfxPlugin stub"
 // a four-byte ID for the plugin
-#define PLUGIN_ID	'stub'
+#define PLUGIN_ID		FOURCC('s', 't', 'u', 'b')
 // the version
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	0

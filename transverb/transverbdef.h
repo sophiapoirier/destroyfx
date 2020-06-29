@@ -19,15 +19,16 @@ along with Transverb.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#ifndef TOM7_TRANSVERB_DEF_H
-#define TOM7_TRANSVERB_DEF_H
+#ifndef DFX_TRANSVERBDEF_H
+#define DFX_TRANSVERBDEF_H
 
 
 #include "dfxplugin-prefix.h"
 
 
 #define PLUGIN_NAME_STRING	"Transverb"
-#define PLUGIN_ID	'DFtv'
+#define PLUGIN_ID		FOURCC('D', 'F', 't', 'v')
+
 #define PLUGIN_VERSION_MAJOR	1
 #define PLUGIN_VERSION_MINOR	5
 #define PLUGIN_VERSION_BUGFIX	1
@@ -44,8 +45,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_DESCRIPTION_STRING	"like a delay that can play back the delay buffer at different speeds"
 
 
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2019"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2020"
 
+#define VST_NUM_CHANNELS 2
 
 #define USING_HERMITE	1
 #define DFX_SUPPORT_OLD_VST_SETTINGS

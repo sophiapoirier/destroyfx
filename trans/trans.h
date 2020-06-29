@@ -1,8 +1,11 @@
-#ifndef __TOM7_TRANS_H
-#define __TOM7_TRANS_H
+#ifndef _TOM7_TRANS_H
+#define _TOM7_TRANS_H
 
 #include "audioeffectx.h"
 #include "rfftw.h"
+
+// TODO: Port to DfxPlugin
+#include "dfxplugin-prefix.h"
 
 #ifdef WIN32
 /* turn off warnings about default but no cases in switch, etc. */
@@ -13,7 +16,7 @@
 #define pi (3.1415926535)
 
 #define PLUGIN Trans
-#define PLUGINID 'T7tr'
+#define PLUGIN_ID FOURCC('D', 'F', 't', 'f')
 #define PLUGINNAME "DFX Trans"
 
 #define NUM_PARAMS 2
@@ -43,7 +46,7 @@ struct PLUGIN : public AudioEffectX {
   void setup() {
     setNumInputs(1);		/* mono in/out */
     setNumOutputs(1);
-    setUniqueID(PLUGINID);
+    setUniqueID(PLUGIN_ID);
 
     canProcessReplacing();
     strcpy(programName, PLUGINNAME);

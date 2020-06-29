@@ -1,8 +1,8 @@
 
 /* Windowingstub, starring the Super Destroy FX Windowing System! */
 
-#ifndef __DFX_WINDOWINGSTUB_H
-#define __DFX_WINDOWINGSTUB_H
+#ifndef _DFX_WINDOWINGSTUB_H
+#define _DFX_WINDOWINGSTUB_H
 
 #include "dfxplugin.h"
 

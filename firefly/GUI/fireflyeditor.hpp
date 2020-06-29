@@ -1,6 +1,6 @@
 
-#ifndef __DFX_FIREFLYEDITOR_H
-#define __DFX_FIREFLYEDITOR_H
+#ifndef _DFX_FIREFLYEDITOR_H
+#define _DFX_FIREFLYEDITOR_H
 
 #include "dfxgui.h"
 #include "multikick.hpp"

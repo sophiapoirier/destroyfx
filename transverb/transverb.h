@@ -67,7 +67,7 @@ private:
 
   std::vector<float> buf1;
   std::vector<float> buf2;
-  int MAXBUF = 0;  // the size of the audio buffer (dependant on sampling rate)
+  int MAXBUF = 0;  // the size of the audio buffer (dependent on sampling rate)
 
   dfx::IIRfilter filter1, filter2;
   bool speed1hasChanged = false, speed2hasChanged = false;

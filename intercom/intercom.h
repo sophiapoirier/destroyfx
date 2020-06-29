@@ -5,8 +5,8 @@
 
 ---------------------------------------------------------------*/
 
-#ifndef __DFX_INTERCOM_H
-#define __DFX_INTERCOM_H
+#ifndef _DFX_INTERCOM_H
+#define _DFX_INTERCOM_H
 
 #include "audioeffectx.h"
 

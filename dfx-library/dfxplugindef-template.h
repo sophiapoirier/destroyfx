@@ -22,8 +22,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
 
-#ifndef __DFXPLUGIN_DEF_TEMPLATE_H
-#define __DFXPLUGIN_DEF_TEMPLATE_H
+#ifndef _DFXPLUGIN_DEF_TEMPLATE_H
+#define _DFXPLUGIN_DEF_TEMPLATE_H
 
 
 #include "dfxplugin-prefix.h"
@@ -31,11 +31,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 // required
 #define PLUGIN_NAME_STRING	""
-#define PLUGIN_ID	''
-#define PLUGIN_VERSION_MAJOR	
-#define PLUGIN_VERSION_MINOR	
-#define PLUGIN_VERSION_BUGFIX	
-#define PLUGIN_VERSION_STRING	
+// should be unique among all plugins (!) Official Destroy FX plugins use 'D' 'F'
+// for the first two characters
+#define PLUGIN_ID		FOURCC('A', 'B', 'C', 'D')
+#define PLUGIN_VERSION_MAJOR	1
+#define PLUGIN_VERSION_MINOR	0
+#define PLUGIN_VERSION_BUGFIX	0
+#define PLUGIN_VERSION_STRING	"1.0.0"
 #define PLUGIN_CLASS_NAME	
 #define PLUGIN_ENTRY_POINT	"Entry"
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "" DFX_BUNDLE_ID_SUFFIX

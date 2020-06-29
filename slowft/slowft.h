@@ -1,8 +1,8 @@
 
 /* Slowft, starring the Super Destroy FX Windowing System! */
 
-#ifndef __DFX_SLOWFT_H
-#define __DFX_SLOWFT_H
+#ifndef _DFX_SLOWFT_H
+#define _DFX_SLOWFT_H
 
 #include "dfxplugin.h"
 
