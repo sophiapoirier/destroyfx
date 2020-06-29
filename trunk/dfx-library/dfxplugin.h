@@ -1400,9 +1400,9 @@ private:
 template<class DSP>
 void DfxPlugin::initCores()
 {
-	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;
 #ifndef TARGET_API_AUDIOUNIT
 	mDSPCores.clear();
+	mDSPCores.reserve(getnumoutputs());
 	for (unsigned long coreidx = 0; coreidx < getnumoutputs(); coreidx++)
 	{
 		auto& core = mDSPCores.emplace_back(std::make_unique<DSP>(this));
