@@ -119,7 +119,7 @@ class DfxGuiEditor :	public TARGET_API_EDITOR_BASE_CLASS,
 {
 public:
 #ifdef TARGET_API_AUDIOUNIT
-	static constexpr double kIdleTimerInterval = 1.0f / 24.0f;  // 24 fps
+	static constexpr double kIdleTimerInterval = 1.0 / 24.0;  // 24 fps
 	static constexpr Float32 kNotificationInterval = kIdleTimerInterval;
 
 	class AUParameterInfo : public AudioUnitParameterInfo

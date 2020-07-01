@@ -26,7 +26,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 #include <stdio.h>
 #include <string_view>
+#include <cctype>
 
+#include "dfxmisc.h"
 
 using namespace dfx::TV;
 
@@ -82,8 +84,6 @@ constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
 constexpr float kFineTuneInc = 0.0001f;
 constexpr float kSemitonesPerOctave = 12.0f;
 
-
-
 //-----------------------------------------------------------------------------
 // value text display procedures
 
@@ -101,7 +101,7 @@ bool bsizeDisplayProcedure(float value, char* outText, void*)
 	{
 		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
 	}
-	strlcat(outText, " ms", DGTextDisplay::kTextMaxLength);
+	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
 	return success;
 }
@@ -170,7 +170,7 @@ bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTex
 	// TODO: does not support locale for number format, and ignores minus and periods that are not part of fractional numbers
 	filteredText.erase(std::remove_copy_if(inText.cbegin(), inText.cend(), filteredText.begin(), [](auto character)
 										   {
-											   return !(isnumber(character) || isspace(character) || (character == '-') || (character == '.'));
+										     return !(std::isdigit(character) || isspace(character) || (character == '-') || (character == '.'));
 										   }), filteredText.cend());
 
 	float octaves = 0.0f, semitones = 0.0f;
@@ -225,7 +225,7 @@ bool distDisplayProcedure(float value, char* outText, void* editor)
 	{
 		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", distance) > 0;
 	}
-	strlcat(outText, " ms", DGTextDisplay::kTextMaxLength);
+	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
 	return success;
 }
