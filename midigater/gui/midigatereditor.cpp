@@ -25,7 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxmath.h"
 #include "midigater.h"
-
+#include "dfxmisc.h"
 
 //-----------------------------------------------------------------------------
 enum
@@ -77,7 +77,7 @@ bool slopeDisplayProc(float inValue, char* outText, void*)
 	{
 		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
-	strlcat(outText, " ms", DGTextDisplay::kTextMaxLength);
+	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
 	return success;
 }

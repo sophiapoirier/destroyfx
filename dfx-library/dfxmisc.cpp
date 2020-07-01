@@ -29,6 +29,9 @@ These are some generally useful functions.
 #include <algorithm>
 #include <cassert>
 #include <stdio.h>
+#include <string.h>
+#include <string_view>
+#include <string>
 
 #include "dfxdefines.h"
 
@@ -73,6 +76,24 @@ void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
 		dataBytes += inItemSize;
 	}
 }
+
+//------------------------------------------------------
+size_t StrlCat(char* buf, std::string_view appendme, size_t maxlen)
+{
+	const size_t appendlen = appendme.size();
+	const size_t buflen = strnlen(buf, maxlen);
+	// no more space
+	if (buflen >= maxlen) return maxlen + appendlen;
+	const size_t remaining = maxlen - buflen;
+	// remaining > 1
+	// Bytes to copy, not including terminating nul.
+	const size_t copylen =
+		appendlen < remaining ? appendlen : maxlen - 1;
+	memcpy(&buf[buflen], appendme.data(), copylen);
+	buf[buflen + copylen] = '\0';
+	return buflen + appendlen;
+}
+
 
 //------------------------------------------------------
 long CompositePluginVersionNumberValue()
