@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cstdlib>
 #include <sstream>
 
+#include "dfxmisc.h"
 #include "scrubby.h"
 
 
@@ -260,7 +261,7 @@ bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, Df
 	{
 		if (editor->getparametervaluestring(inParameterID, outText)) //&& (strlen(outText) <= 3)
 		{
-			strlcat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
+			dfx::StrlCat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
 			return true;
 		}
 	}

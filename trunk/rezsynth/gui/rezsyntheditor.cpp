@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 
 #include "dfxmath.h"
+#include "dfxmisc.h"
 #include "rezsynth.h"
 
 
@@ -108,11 +109,11 @@ bool bandwidthAmountDisplayProc(float value, char* outText, void* inEditor)
 	const auto success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value) > 0;
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthAmount_Hz)
 	{
-		strlcat(outText, " Hz", DGTextDisplay::kTextMaxLength);
+		dfx::StrlCat(outText, " Hz", DGTextDisplay::kTextMaxLength);
 	}
 	else
 	{
-		strlcat(outText, " Q", DGTextDisplay::kTextMaxLength);
+		dfx::StrlCat(outText, " Q", DGTextDisplay::kTextMaxLength);
 	}
 	return success;
 }
@@ -148,7 +149,7 @@ bool attackDecayReleaseDisplayProc(float value, char* outText, void*)
 	{
 		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
 	}
-	strlcat(outText, " ms", DGTextDisplay::kTextMaxLength);
+	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
 	return success;
 }
@@ -183,7 +184,7 @@ bool gainDisplayProc(float value, char* outText, void*)
 	{
 		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", dfx::math::Linear2dB(value)) > 0;
 	}
-	strlcat(outText, " dB", DGTextDisplay::kTextMaxLength);
+	dfx::StrlCat(outText, " dB", DGTextDisplay::kTextMaxLength);
 	return success;
 }
 

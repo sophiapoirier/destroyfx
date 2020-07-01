@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "polarizer.h"
 
+#include "dfxmisc.h"
 
 //-----------------------------------------------------------------------------
 enum {
@@ -60,7 +61,7 @@ bool leapDisplayProc(float value, char* outText, void*)
 	bool const success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld sample", value_i) > 0;
 	if (success && (abs(value_i) > 1))
 	{
-		strlcat(outText, "s", DGTextDisplay::kTextMaxLength);
+		dfx::StrlCat(outText, "s", DGTextDisplay::kTextMaxLength);
 	}
 	return success;
 }

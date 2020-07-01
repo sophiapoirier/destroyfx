@@ -30,6 +30,7 @@ These are some generally useful functions.
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <string_view>
 
 #ifdef __MACH__
 	#include <CoreFoundation/CoreFoundation.h>
@@ -98,6 +99,14 @@ void ReverseBytes(T& ioData)
 {
 	ReverseBytes(&ioData, 1);
 }
+
+// Same as the nonstandard strlcat() function.
+// Appends 'appendme' to the nul-terminated string in buf, assuming that
+// buf has at least maxlen bytes allocated. If the input buffer is nul-
+// terminated, then the output buffer always will be too.
+size_t StrlCat(char* buf, std::string_view appendme, size_t maxlen);
+
+// TODO: Will probably also need strlcpy port.
 
 long CompositePluginVersionNumberValue();
 bool LaunchURL(std::string const& inURL);

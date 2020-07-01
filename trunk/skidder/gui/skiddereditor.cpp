@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 
 #include "dfxmath.h"
+#include "dfxmisc.h"
 #include "skidder.h"
 #include "temporatetable.h"
 
@@ -100,7 +101,7 @@ bool rateGenDisplayProc(float inValue, long inSyncParameterID, char* outText, Df
 			}
 			if (inShowUnits)
 			{
-				strlcat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
+				dfx::StrlCat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
 			}
 			return true;
 		}
