@@ -50,7 +50,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define VST_NUM_CHANNELS 2
 
 #define USING_HERMITE	1
-#define DFX_SUPPORT_OLD_VST_SETTINGS
+#define DFX_SUPPORT_OLD_VST_SETTINGS  1
 
 
 #endif

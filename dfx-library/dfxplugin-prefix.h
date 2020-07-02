@@ -81,7 +81,7 @@ This file should be included by any prefix header that you use for your plugin.
 /* Audio Unit stuff */
 #ifdef TARGET_API_AUDIOUNIT
 	#define DFXGUI_USE_COCOA_AU_VIEW	TARGET_PLUGIN_HAS_GUI && __LP64__
-	#define TARGET_PLUGIN_USES_VSTGUI
+	#define TARGET_PLUGIN_USES_VSTGUI	1
 	#ifdef TARGET_PLUGIN_USES_VSTGUI
 		#define PLUGGUI	1
 		#define AU	1
@@ -102,7 +102,7 @@ This file should be included by any prefix header that you use for your plugin.
 		#endif
 	#endif
 
-	#define TARGET_PLUGIN_USES_VSTGUI
+	#define TARGET_PLUGIN_USES_VSTGUI	1
 	#define ENABLE_VST_EXTENSION_IN_VSTGUI	0
 #endif
 
@@ -114,7 +114,7 @@ This file should be included by any prefix header that you use for your plugin.
 		#include "../ProToolsSDK/AlturaPorts/TDMPlugIns/common/Mac/CommonPlugInHeaders.pch"
 	#endif
 
-	#define TARGET_PLUGIN_USES_VSTGUI
+	#define TARGET_PLUGIN_USES_VSTGUI	1
 	#define PLUGGUI	1
 #endif
 
@@ -122,12 +122,10 @@ This file should be included by any prefix header that you use for your plugin.
 /*-----------------------------------------------------------------------------*/
 /* VSTGUI stuff */
 #ifdef TARGET_PLUGIN_USES_VSTGUI
-	#ifdef _WIN32
 	#if _WIN32
 		#define VSTGUI_USES_UTF8	0
 		#define USE_LIBPNG	1
 		#define WINDOWS	1
-	#endif
 	#endif
 #endif
 
