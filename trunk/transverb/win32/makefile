@@ -11,9 +11,12 @@ WINDRES=x86_64-w64-mingw32-windres
 DFXLIB=../../dfx-library
 VSTSDK=../../vstsdk
 DFXGUI=../../dfxgui
+# git repository is called "vstgui" and contains a toplevel directory "vstgui"
+VSTGUI=../../../vstgui/vstgui
 
-DEFINES=-DWIN32 -DTARGET_API_VST
-INCLUDES=-I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -include "../transverbdef.h"
+# WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
+DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_API_VST
+INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../transverbdef.h"
 CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # mwindows to select the GUI subsystem (not console)
 # -s to strip symbols (that aren't exported). This causes 'file' to say something
@@ -26,22 +29,38 @@ DFXLIB_OBJECTS=$(DFXLIB)/dfxmisc.o  $(DFXLIB)/dfxmidi.o $(DFXLIB)/firfilter.o $(
 
 VSTSDK_OBJECTS=$(VSTSDK)/pluginterfaces/vst2.x/audioeffect.o $(VSTSDK)/pluginterfaces/vst2.x/audioeffectx.o $(VSTSDK)/pluginterfaces/vst2.x/vstplugmain.o
 
-OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) resources.o ../transverbprocess.o ../transverbformalities.o # ../gui/transverbeditor.o
+# The vstgui_win32 object #includes all the .cpp files in the library (!)
+# It would be better for compile times to compile them individually, but including them all together usually
+# permits more optimization, and it's certainly simpler...
+VSTGUI_OBJECTS=$(VSTGUI)/vstgui_win32.o $(VSTGUI)/plugin-bindings/aeffguieditor.o
 
-PTHREAD_OBJECTS=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libwinpthread.a
+DFXGUI_OBJECTS=$(DFXGUI)/dfxguitextdisplay.o $(DFXGUI)/dfxguieditor.o $(DFXGUI)/dfxguibutton.o $(DFXGUI)/dfxguislider.o $(DFXGUI)/dfxguicontrol.o $(DFXGUI)/dfxguidialog.o $(DFXGUI)/dfxguimisc.o
+
+OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) resources.o ../transverbprocess.o ../transverbformalities.o ../gui/transverbeditor.o
+
+MINGWLIB=/usr/x86_64-w64-mingw32/sys-root/mingw/lib
+
+PTHREAD_OBJECTS=$(MINGWLIB)/libwinpthread.a
+# These are needed by vstgui. We link against the .a files so that the
+# resulting dll doesn't try (and fail) to find these as DLLs. (TODO: These standard
+# windows ones might work with the import libs?)
+VSTGUI_DEP_OBJECTS=$(MINGWLIB)/libopengl32.a $(MINGWLIB)/libole32.a $(MINGWLIB)/libd2d1.a $(MINGWLIB)/libdwrite.a $(MINGWLIB)/libshlwapi.a $(MINGWLIB)/libwindowscodecs.a $(MINGWLIB)/libuuid.a $(MINGWLIB)/libdwmapi.a
+
 
 # embed png files. XXX this is an untested port from the old msvc code, and they used to be bmps.
 # might need to do something custom?
 resources.o : resources.rc ../gui/graphics/*
 	$(WINDRES) -i resources.rc -o $@
 
-# XXX -Wl stuff may be unnecessary. I think perhaps the .lib is only
+# XXX -Wl stuff may be unnecessary. I think the .lib is only
 # needed if we want to build something (e.g. host) that is linking against
 # this DLL. And anyway mingw g++ can allegedly just get that same info
 # from the DLL itself.
-dfx-transverb-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS)
+dfx-transverb-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS) $(VSTGUI_DEP_OBJECTS)
 	$(CXX) $(LFLAGS) -o $@ $^ -Wl,--out-implib,libdfx-transverb-64.a
 
+$(VSTGUI)/vstgui_win32.o : $(VSTGUI)/*.cpp $(VSTGUI)/lib/*.cpp $(VSTGUI)/lib/controls/*.cpp $(VSTGUI)/lib/animation/*.cpp $(VSTGUI)/lib/platform/common/*.cpp
+	$(CXX) $(CXXFLAGS) $(VSTGUI)/vstgui_win32.cpp -c -o $@
 
 # Testing crap!
 # don't use lflags here; we want a console executable...
