@@ -38,20 +38,21 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_VERSION_MINOR	0
 #define PLUGIN_VERSION_BUGFIX	0
 #define PLUGIN_VERSION_STRING	"1.0.0"
-#define PLUGIN_CLASS_NAME	
+#define PLUGIN_CLASS_NAME	CoolPlugin
 #define PLUGIN_ENTRY_POINT	"Entry"
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "" DFX_BUNDLE_ID_SUFFIX
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"20XX"
-#define TARGET_PLUGIN_USES_MIDI	
-#define TARGET_PLUGIN_IS_INSTRUMENT	
-#define TARGET_PLUGIN_USES_DSPCORE	
-#define TARGET_PLUGIN_HAS_GUI	
+// Define to 1 or 0
+#define TARGET_PLUGIN_USES_MIDI	0
+#define TARGET_PLUGIN_IS_INSTRUMENT 0
+#define TARGET_PLUGIN_USES_DSPCORE 0	
+#define TARGET_PLUGIN_HAS_GUI 0
 
 // only necessary for VST
-#define VST_NUM_INPUTS	
-#define VST_NUM_OUTPUTS	
+// #define VST_NUM_INPUTS	2
+// #define VST_NUM_OUTPUTS	2
 // or you can just define this if numinputs and numoutputs match
-#define VST_NUM_CHANNELS
+#define VST_NUM_CHANNELS 2
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	""
@@ -60,8 +61,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#define PLUGIN_BACKGROUND_IMAGE_FILENAME	".png"
 	#define PLUGIN_EDITOR_DESCRIPTION_STRING	""
 #endif
+
 // if relevant
-#define DFX_SUPPORT_OLD_VST_SETTINGS 
+#define DFX_SUPPORT_OLD_VST_SETTINGS 1
 
 
 #endif

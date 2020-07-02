@@ -47,7 +47,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_DESCRIPTION_STRING	"visually oriented waveform geometry"
 
 
-#define DFX_SUPPORT_OLD_VST_SETTINGS
+#define DFX_SUPPORT_OLD_VST_SETTINGS 1
 
 
 #endif
