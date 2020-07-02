@@ -647,7 +647,7 @@ void DfxGuiEditor::GenerateParametersAutomationSnapshot()
 #else
 	// XXX Untested, but this looks like how we normally loop over the parameters. -tom7
 	// (Or perhaps we could be keeping a list of parameter ids for all plugin formats?)
-	for (long parameterID; parameterID < GetNumParameters(); parameterID++)
+	for (long parameterID = 0; parameterID < GetNumParameters(); parameterID++)
 		GenerateParameterAutomationSnapshot(parameterID);
 #endif
 }
@@ -1611,26 +1611,40 @@ DfxPlugin* DfxGuiEditor::dfxgui_GetDfxPluginInstance()
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setmidilearning(bool inLearnMode)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	Boolean newLearnMode_fixedSize = inLearnMode;
 	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearn, dfx::kScope_Global, 0, 
 					   &newLearnMode_fixedSize, sizeof(newLearnMode_fixedSize));
+#else
+	// Note: Boolean type not standard
+	#warning "implementation missing"
+#endif
 }
 
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::getmidilearning()
 {
+#ifdef TARGET_API_AUDIOUNIT
 	if (auto const learnMode = dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_MidiLearn))
 	{
 		return *learnMode;
 	}
 	return false;
+#else
+	#warning "implementation missing"
+	return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::resetmidilearn()
 {
+#ifdef TARGET_API_AUDIOUNIT  
 	Boolean nud;  // irrelevant
 	dfxgui_SetProperty(dfx::kPluginProperty_ResetMidiLearn, dfx::kScope_Global, 0, &nud, sizeof(nud));
+#else
+	#warning "implementation missing"
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1667,15 +1681,14 @@ void DfxGuiEditor::setparametermidiassignment(long inParameterIndex, dfx::Parame
 //-----------------------------------------------------------------------------
 dfx::ParameterAssignment DfxGuiEditor::getparametermidiassignment(long inParameterIndex)
 {
-	dfx::ParameterAssignment parameterAssignment;
-	size_t dataSize = sizeof(parameterAssignment);
-	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterMidiAssignment, dfx::kScope_Global, 
-										   inParameterIndex, &parameterAssignment, dataSize); 
-	if (status != noErr)
-	{
-		parameterAssignment.mEventType = dfx::MidiEventType::None;
-	}
-	return parameterAssignment;
+	auto const opt = dfxgui_GetProperty<dfx::ParameterAssignment>(dfx::kPluginProperty_ParameterMidiAssignment,
+								      dfx::kScope_Global,
+								      inParameterIndex);
+	if (opt.has_value()) return opt.value();
+	
+	dfx::ParameterAssignment none;
+	none.mEventType = dfx::MidiEventType::None;
+	return none;
 }
 
 //-----------------------------------------------------------------------------
