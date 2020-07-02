@@ -187,6 +187,7 @@ DGColor DGColor::getSystem(System inSystemColorID)
 #undef DFX_SELECTOR
 
 	assert(false);
+	return kBlack;
 }
 
 

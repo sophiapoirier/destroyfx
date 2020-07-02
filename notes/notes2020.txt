@@ -263,3 +263,32 @@ address nonzero:zero:00000000...00065
 
 c0000005 is an access violation, so it's probably just crashing due to some busted vst code
 (which I have some chance of debugging now...!)
+
+
+(it was just a silly bug, works now!)
+
+---
+
+vstgui
+
+vstgui is open source. maybe we should just be including it in dfx repository.
+looks like the current version still has hooks for targeting vst2.
+I think dfxgui is using vstgui even when the plugin target is not VST, actually. At least it is including some of those types...
+
+hint: mingw windows headers are in /usr/x86_64-w64-mingw32/sys-root/mingw/include
+
+
+
+dfx "properties"
+... this seems to be an AU concept, since in AU mode it directly calls AudioUnitGetProperty (at least dfxgui_GetProperty does).
+But also we add new properties in e.g. geometer:
+enum : dfx::PropertyID { PROP_LAST_WINDOW_TIMESTAMP = dfx::kPluginProperty_EndOfList,
+                         PROP_WAVEFORM_DATA
+};
+... seems like this thing could be made typesafe (e.g. the property knows its type and so we can deduce the size) if we wanted,
+at least the dfx parts. But I don't really get why geometerview can't like getPlugin() and then downcast to Geometer* and
+call GetWaveform rather than go through an enumeration of properties and void*s? We don't want the editor to have the
+definition of the plugin class?
+
+
+
