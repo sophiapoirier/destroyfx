@@ -329,12 +329,11 @@ bool DGMultiControl<T>::isDirty() const
 template <class T>
 bool DGMultiControl<T>::checkDefaultValue_all(VSTGUI::CButtonState inButtons)
 {
-	return std::reduce(mChildren.cbegin(), mChildren.cend(), DGControl<T>::checkDefaultValue(inButtons), 
-					   [inButtons](auto const anyDefaulted, auto&& child)
-	{
-		auto const defaulted = child->asCControl()->checkDefaultValue(inButtons);
-		return defaulted || anyDefaulted;
-	});
+	if (DGControl<T>::checkDefaultValue(inButtons)) return true;
+	for (IDGControl *child : mChildren)
+		if (child->asCControl()->checkDefaultValue(inButtons))
+			return true;
+	return false;
 }
 
 //-----------------------------------------------------------------------------

@@ -33,6 +33,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxdefines.h"
 #include "dfxgui-base.h"
 
+// XXX probably not right to do this here, but vstgui needs aeffectx.h to
+// be included before it when targeting vst, because it looks for __aeffectx__
+// include guards to avoid redefining symbols (ugh)
+#include "dfxplugin-base.h"
+
 #pragma clang diagnostic push
 	#pragma clang diagnostic ignored "-Wunused-parameter"
 	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
