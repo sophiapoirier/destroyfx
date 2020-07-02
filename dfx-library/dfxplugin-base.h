@@ -109,6 +109,79 @@ To contact the author, use the contact form at http://destroyfx.org/
 // end of target API check
 
 
+// Now, sanity check defines. 
+
+// Some preprocessor defines are meant to be used with "ifdef" (TARGET_API_*)
+// and others are meant to be defined to 1/0. Test that these are configured
+// as expected to avoid weirder errors down the line. Note that in GCC,
+// defining -DTARGET_API_VST is the same as -DTARGET_API_VST=1, which is
+// not the same as #define TARGET_API_VST inside a source file!
+//
+// The main failure mode is here is doing something like
+// #ifdef TARGET_PLUGIN_IS_INSTRUMENT
+// after
+// #define TARGET_PLUGIN_IS_INSTRUMENT 0
+// and unfortunately we can't protect against this except by searching for
+// such mistakes. But we can at least be clear about how the macros should
+// be used by enforcing it here.
+
+// Macros that we test with #ifdef or #if defined(), so it is not okay to
+// #define them to 0.
+
+#if defined(TARGET_API_VST) && TARGET_API_VST - 0 != 1
+#error TARGET_API_VST should be defined to 1, if defined
+#endif
+
+#if defined(TARGET_API_AUDIOUNIT) && TARGET_API_AUDIOUNIT - 0 != 1
+#error TARGET_API_AUDIOUNIT should be defined to 1, if defined
+#endif
+
+#if defined(TARGET_API_RTAS) && TARGET_API_RTAS - 0 != 1
+#error TARGET_API_RTAS should be defined to 1, if defined
+#endif
+
+#if defined(TARGET_API_AUDIOSUITE) && TARGET_API_AUDIOSUITE - 0 != 1
+#error TARGET_API_AUDIOSUITE should be defined to 1, if defined
+#endif
+
+#if defined(TARGET_OS_MAC) && TARGET_OS_MAC - 0 != 1
+#error TARGET_OS_MAC should be defined to 1, if defined
+#endif
+
+#if defined(WINDOWS) && WINDOWS - 0 != 1
+#error WINDOWS should be defined to 1, if defined
+#endif
+
+#if defined(WIN32) && WIN32 - 0 != 1
+#error WIN32 should be defined to 1, if defined
+#endif
+
+#if defined(DFX_SUPPORT_OLD_VST_SETTINGS) && DFX_SUPPORT_OLD_VST_SETTINGS - 0 != 1
+#error DFX_SUPPORT_OLD_VST_SETTINGS should be defined to 1, if defined
+#endif
+
+#if defined(TARGET_PLUGIN_USES_VSTGUI) && TARGET_PLUGIN_USES_VSTGUI - 0 != 1
+#error TARGET_PLUGIN_USES_VSTGUI should be defined to 1, if defined
+#endif
+
+
+// Macros that we test with #if, and so should be defined to 1 or 0.
+
+#if defined(TARGET_PLUGIN_USES_MIDI) && (0 - TARGET_PLUGIN_USES_MIDI - 1) == 1 
+#error TARGET_PLUGIN_USES_MIDI should be defined to 0 or 1
+#endif
+
+#if defined(TARGET_PLUGIN_IS_INSTRUMENT) && (0 - TARGET_PLUGIN_IS_INSTRUMENT - 1) == 1 
+#error TARGET_PLUGIN_IS_INSTRUMENT should be defined to 0 or 1
+#endif
+
+#if defined(TARGET_PLUGIN_USES_DSPCORE) && (0 - TARGET_PLUGIN_USES_DSPCORE - 1) == 1 
+#error TARGET_PLUGIN_USES_DSPCORE should be defined to 0 or 1
+#endif
+
+#if defined(TARGET_PLUGIN_HAS_GUI) && (0 - TARGET_PLUGIN_HAS_GUI - 1) == 1 
+#error TARGET_PLUGIN_HAS_GUI should be defined to 0 or 1
+#endif
 
 namespace dfx
 {

@@ -158,6 +158,16 @@ protected:
 		return rect.offset(T::getViewSize().getTopLeft());
 	}
 
+	// Apple on Mac, Control on others.
+	static bool isPlatformMetaSet(const VSTGUI::CButtonState &button)
+	{
+		#if TARGET_OS_MAC
+		return button.isAppleSet();
+		#else
+		return button.isControlSet();
+		#endif
+	}
+
 private:
 	void initValues();
 	void pullNumStatesFromParameter();
