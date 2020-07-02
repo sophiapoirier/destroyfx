@@ -1,0 +1,11 @@
+This directory should contain a symlink to the directory vst2.x.
+This is needed because vstgui wants to include paths like
+public.sdk/source/vst2.x/
+but the legacy VST2 headers what to include paths like
+pluginterfaces/vst2.x/
+
+In this directory, just type:
+ln -s ../../pluginterfaces/vst2.x
+
+
+(The symlink is not added to the repository because allegedly subversion has trouble dealing with this on windows.)
