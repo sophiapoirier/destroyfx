@@ -299,7 +299,7 @@ void DfxGuiEditor::close()
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::IsOpen() const noexcept
+bool DfxGuiEditor::IsOpen()
 {
 	return (getFrame() && isOpen());
 }
@@ -472,7 +472,7 @@ void DfxGuiEditor::removeControl(IDGControl* inControl)
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::GetWidth()
 {
-	VSTGUI::ERect* editorRect = nullptr;
+	ERect* editorRect = nullptr;
 	if (getRect(&editorRect) && editorRect)
 	{
 		return editorRect->right - editorRect->left;
@@ -483,7 +483,7 @@ long DfxGuiEditor::GetWidth()
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::GetHeight()
 {
-	VSTGUI::ERect* editorRect = nullptr;
+	ERect* editorRect = nullptr;
 	if (getRect(&editorRect) && editorRect)
 	{
 		return editorRect->bottom - editorRect->top;
@@ -638,11 +638,18 @@ void DfxGuiEditor::GenerateParameterAutomationSnapshot(long inParameterID)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::GenerateParametersAutomationSnapshot()
 {
+#ifdef TARGET_API_AUDIOUNIT
 	std::lock_guard const guard(mAUParameterListLock);
 	for (auto const& parameterID : mAUParameterList)
 	{
 		GenerateParameterAutomationSnapshot(parameterID);
 	}
+#else
+	// XXX Untested, but this looks like how we normally loop over the parameters. -tom7
+	// (Or perhaps we could be keeping a list of parameter ids for all plugin formats?)
+	for (long parameterID; parameterID < GetNumParameters(); parameterID++)
+		GenerateParameterAutomationSnapshot(parameterID);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -722,7 +729,7 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::s
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID) const
+bool DfxGuiEditor::dfxgui_IsValidParamID(long inParameterID)
 {
 	if ((inParameterID == dfx::kParameterID_Invalid) || (inParameterID < 0))
 	{
