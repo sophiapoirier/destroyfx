@@ -68,10 +68,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include "aeffguieditor.h"
 	using TARGET_API_EDITOR_BASE_CLASS = VSTGUI::AEffGUIEditor;
 	using TARGET_API_EDITOR_INDEX_TYPE = VstInt32;
+	using ERect = ::ERect;
 #else
 	#include "plugguieditor.h"
 	using TARGET_API_EDITOR_BASE_CLASS = VSTGUI::PluginGUIEditor;
 	using TARGET_API_EDITOR_INDEX_TYPE = int32_t;
+	using ERect = VSTGUI::ERect;
 #endif
 
 #pragma clang diagnostic pop
@@ -204,7 +206,7 @@ public:
 #endif
 	virtual void parameterChanged(long inParameterID) {}
 
-	bool IsOpen() const noexcept;
+	bool IsOpen();
 	DGEditorListenerInstance dfxgui_GetEffectInstance();
 #if DEBUG
 	class DfxPlugin* dfxgui_GetDfxPluginInstance();
@@ -279,7 +281,7 @@ public:
 	virtual std::optional<double> dfxgui_GetParameterValueFromString_f(long inParameterID, std::string const& inText);
 	virtual std::optional<long> dfxgui_GetParameterValueFromString_i(long inParameterID, std::string const& inText);
 	bool dfxgui_SetParameterValueWithString(long inParameterID, std::string const& inText);
-	bool dfxgui_IsValidParamID(long inParameterID) const;
+	bool dfxgui_IsValidParamID(long inParameterID);
 	void TextEntryForParameterValue(long inParameterID);
 #ifdef TARGET_API_AUDIOUNIT
 	AudioUnitParameter dfxgui_MakeAudioUnitParameter(AudioUnitParameterID inParameterID, AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
