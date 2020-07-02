@@ -296,7 +296,7 @@ public:
 		T value {};
 		size_t dataSize = sizeof(value);
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
-		return ((status == dfx::kStatus_NoError) && (dataSize = sizeof(value))) ? std::make_optional(value) : std::nullopt;
+		return ((status == dfx::kStatus_NoError) && (dataSize == sizeof(value))) ? std::make_optional(value) : std::nullopt;
 	}
 	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
 							void const* inData, size_t inDataSize);
