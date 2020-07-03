@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -23,10 +23,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <cmath>
 #include <stdio.h>
 #include <string_view>
-#include <cctype>
 
 #include "dfxmisc.h"
 
@@ -170,7 +170,7 @@ bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTex
 	// TODO: does not support locale for number format, and ignores minus and periods that are not part of fractional numbers
 	filteredText.erase(std::remove_copy_if(inText.cbegin(), inText.cend(), filteredText.begin(), [](auto character)
 										   {
-										     return !(std::isdigit(character) || isspace(character) || (character == '-') || (character == '.'));
+										     return !(std::isdigit(character) || std::isspace(character) || (character == '-') || (character == '.'));
 										   }), filteredText.cend());
 
 	float octaves = 0.0f, semitones = 0.0f;

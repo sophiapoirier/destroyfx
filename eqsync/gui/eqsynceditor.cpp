@@ -209,7 +209,7 @@ long EQSyncEditor::OpenEditor()
 				dfx::TempoRateTable const tempoRateTable;
 				if (success && (outText == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1)))
 				{
-					strlcpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength);
+					dfx::StrLCpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength);
 				}
 				return success;
 			};
