@@ -97,7 +97,7 @@ bool rateGenDisplayProc(float inValue, long inSyncParameterID, char* outText, Df
 			dfx::TempoRateTable const tempoRateTable;
 			if (outText == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1))
 			{
-				strlcpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength);
+				dfx::StrLCpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength);
 			}
 			if (inShowUnits)
 			{
@@ -323,7 +323,7 @@ long SkidderEditor::OpenEditor()
 		DGRect const pos(kParameterNameDisplayX, kParameterNameDisplayY + (kSliderInc * sliderIndex), kDisplayWidth, kDisplayHeight);
 		auto const label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 		std::array<char, dfx::kParameterNameMaxLength> parameterName;
-		strlcpy(parameterName.data(), getparametername(inParameterID).c_str(), parameterName.size());
+		dfx::StrLCpy(parameterName.data(), getparametername(inParameterID), parameterName.size());
 		// check if it's a separation amount parameter and, if it is, truncate the "(blah)" qualifying part
 		auto const breakpoint = strrchr(parameterName.data(), '(');
 		if (breakpoint && (breakpoint != parameterName.data()))

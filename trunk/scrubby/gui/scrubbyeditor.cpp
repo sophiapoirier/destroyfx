@@ -292,7 +292,7 @@ bool octaveMinDisplayProc(float value, char* outText, void*)
 	auto const octaves = static_cast<long>(value);
 	if (octaves <= kOctave_MinValue)
 	{
-		return strlcpy(outText, "no min", DGTextDisplay::kTextMaxLength) > 0;
+		return dfx::StrLCpy(outText, "no min", DGTextDisplay::kTextMaxLength) > 0;
 	}
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld", octaves) > 0;
 }
@@ -302,7 +302,7 @@ bool octaveMaxDisplayProc(float value, char* outText, void*)
 	auto const octaves = static_cast<long>(value);
 	if (octaves >= kOctave_MaxValue)
 	{
-		return strlcpy(outText, "no max", DGTextDisplay::kTextMaxLength) > 0;
+		return dfx::StrLCpy(outText, "no max", DGTextDisplay::kTextMaxLength) > 0;
 	}
 	if (octaves == 0)
 	{

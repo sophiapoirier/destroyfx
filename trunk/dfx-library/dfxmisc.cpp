@@ -94,6 +94,23 @@ size_t StrlCat(char* buf, std::string_view appendme, size_t maxlen)
 	return buflen + appendlen;
 }
 
+//------------------------------------------------------
+// adapted from Darwin https://github.com/apple/darwin-xnu/blob/master/osfmk/arm/strlcpy.c
+size_t StrLCpy(char* dst, std::string_view src, size_t maxlen)
+{
+	if ((src.size() + 1) < maxlen)
+	{
+		memcpy(dst, src.data(), src.size());
+		dst[src.size()] = '\0';
+	}
+	else if (maxlen != 0)
+	{
+		memcpy(dst, src.data(), maxlen - 1);
+		dst[maxlen - 1] = '\0';
+	}
+	return src.size();
+}
+
 
 //------------------------------------------------------
 long CompositePluginVersionNumberValue()
