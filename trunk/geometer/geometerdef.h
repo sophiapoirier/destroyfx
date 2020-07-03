@@ -39,9 +39,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define TARGET_PLUGIN_USES_DSPCORE	1
 #define TARGET_PLUGIN_HAS_GUI	1
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"geometer-background.png"
-//#define PLUGIN_BACKGROUND_IMAGE_FILENAME	"geometer-background-short.png"
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX PLUGIN_NAME_STRING DFX_BUNDLE_ID_SUFFIX
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2020"
+#define VST_NUM_CHANNELS	1
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"visually oriented waveform geometry"
