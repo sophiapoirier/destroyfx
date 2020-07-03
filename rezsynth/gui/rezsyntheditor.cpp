@@ -250,7 +250,7 @@ long RezSynthEditor::OpenEditor()
 		// parameter name label
 		auto const label = emplaceControl<DGStaticTextDisplay>(labelDisplayPos, nullptr, dfx::TextAlignment::Left, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
 		std::array<char, dfx::kParameterNameMaxLength> paramName;
-		strlcpy(paramName.data(), getparametername(inParamID).c_str(), paramName.size());
+		dfx::StrLCpy(paramName.data(), getparametername(inParamID), paramName.size());
 		// check if it's a separation amount parameter and, if it is, truncate the "(blah)" qualifying part
 		auto const breakpoint = strrchr(paramName.data(), '(');
 		if (breakpoint && (breakpoint != paramName.data()))

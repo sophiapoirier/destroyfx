@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguimisc.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <optional>
 
@@ -228,11 +229,11 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 	// trim white space and any other noise (with respect to numerical parsing)
 	while (!resultText.empty())
 	{
-		if (isspace(resultText.back()))
+		if (std::isspace(resultText.back()))
 		{
 			resultText.pop_back();
 		}
-		else if (isspace(resultText.front()))
+		else if (std::isspace(resultText.front()))
 		{
 			resultText.erase(0, 1);
 		}
