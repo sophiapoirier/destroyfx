@@ -121,9 +121,9 @@ DfxGuiEditor::~DfxGuiEditor()
 		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
 	#endif
 		std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
-					  {
-						  AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
-					  });
+		{
+			AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
+		});
 	}
 #endif
 }
@@ -1595,7 +1595,7 @@ DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 #endif
 }
 
-#if DEBUG
+#if defined(TARGET_API_AUDIOUNIT) && DEBUG
 //-----------------------------------------------------------------------------
 DfxPlugin* DfxGuiEditor::dfxgui_GetDfxPluginInstance()
 {
