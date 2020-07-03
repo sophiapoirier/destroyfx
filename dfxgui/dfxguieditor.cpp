@@ -1616,8 +1616,7 @@ void DfxGuiEditor::setmidilearning(bool inLearnMode)
 	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearn, dfx::kScope_Global, 0, 
 					   &newLearnMode_fixedSize, sizeof(newLearnMode_fixedSize));
 #else
-	// Note: Boolean type not standard
-	#warning "implementation missing"
+	dfxgui_GetEffectInstance()->setmidilearning(inLearnMode);
 #endif
 }
 
@@ -1631,8 +1630,7 @@ bool DfxGuiEditor::getmidilearning()
 	}
 	return false;
 #else
-	#warning "implementation missing"
-	return false;
+	return dfxgui_GetEffectInstance()->getmidilearning();
 #endif
 }
 
@@ -1643,7 +1641,7 @@ void DfxGuiEditor::resetmidilearn()
 	Boolean nud;  // irrelevant
 	dfxgui_SetProperty(dfx::kPluginProperty_ResetMidiLearn, dfx::kScope_Global, 0, &nud, sizeof(nud));
 #else
-	#warning "implementation missing"
+	dfxgui_GetEffectInstance()->resetmidilearn();
 #endif
 }
 
