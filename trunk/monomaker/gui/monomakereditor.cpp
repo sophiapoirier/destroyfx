@@ -50,8 +50,6 @@ enum
 	kDestroyFXlinkY = 3
 };
 
-//constexpr DGColor kBackgroundColor(64, 54, 40);
-//constexpr DGColor kBackgroundColor(42, 34, 22);
 constexpr char const* const kValueTextFont = "Arial";
 constexpr float kValueTextSize = 11.0f;
 
@@ -60,17 +58,15 @@ constexpr float kValueTextSize = 11.0f;
 //-----------------------------------------------------------------------------
 // parameter value display text conversion functions
 
-bool monomergeDisplayProc(float inValue, char* outText, void*);
 bool monomergeDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, " %.1f %%", inValue) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, " %.1f%%", inValue) > 0;
 }
 
-bool panDisplayProc(float inValue, char* outText, void*);
 bool panDisplayProc(float inValue, char* outText, void*)
 {
-	char const* const prefix = (inValue >= 0.0005f) ? " +" : " ";
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.3f", prefix, inValue) > 0;
+	char const* const prefix = (inValue >= 0.0005f) ? "+" : "";
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, " %s%.1f%%", prefix, inValue * 100.0f) > 0;
 }
 
 
