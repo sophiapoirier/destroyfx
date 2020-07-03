@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -27,7 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #define PLUGIN_NAME_STRING	"Rez Synth"
-#define PLUGIN_ID		FOURCC('R', 'e', 'z', 'S')
+#define PLUGIN_ID	FOURCC('R', 'e', 'z', 'S')
 #define PLUGIN_VERSION_MAJOR	2
 #define PLUGIN_VERSION_MINOR	0
 #define PLUGIN_VERSION_BUGFIX	0
@@ -40,7 +40,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define TARGET_PLUGIN_HAS_GUI	1
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"rez-synth-background.png"
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "RezSynth" DFX_BUNDLE_ID_SUFFIX
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2018"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2020"
+#define VST_NUM_CHANNELS	2
 
 // optional
 #define PLUGIN_DESCRIPTION_STRING	PLUGIN_NAME_STRING " allows you to \"play\" resonant bandpass filter banks with MIDI notes"
