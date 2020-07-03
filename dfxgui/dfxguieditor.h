@@ -208,7 +208,7 @@ public:
 
 	bool IsOpen();
 	DGEditorListenerInstance dfxgui_GetEffectInstance();
-#if DEBUG
+#if defined(TARGET_API_AUDIOUNIT) && DEBUG
 	class DfxPlugin* dfxgui_GetDfxPluginInstance();
 #endif
 	auto dfxgui_GetEditorOpenErrorCode() const noexcept
