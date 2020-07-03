@@ -1290,9 +1290,7 @@ void DfxSettings::setLearning(bool inLearnMode)
 
 	mMidiLearn = inLearnMode;
 
-#ifdef TARGET_API_AUDIOUNIT
-	mPlugin->PropertyChanged(dfx::kPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
-#endif
+	mPlugin->postupdate_midilearn();
 }
 
 //-----------------------------------------------------------------------------
@@ -1344,9 +1342,7 @@ void DfxSettings::setLearner(long inParamTag, dfx::MidiEventBehaviorFlags inEven
 		}
 	}
 
-#ifdef TARGET_API_AUDIOUNIT
-	mPlugin->PropertyChanged(dfx::kPluginProperty_MidiLearner, kAudioUnitScope_Global, AudioUnitElement(0));
-#endif
+	mPlugin->postupdate_midilearner();
 }
 
 //-----------------------------------------------------------------------------

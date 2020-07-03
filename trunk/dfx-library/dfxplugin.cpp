@@ -1814,6 +1814,24 @@ fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset 
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::setmidilearning(bool inLearnMode)
+{
+	mDfxSettings->setParameterMidiLearn(inLearnMode);
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::getmidilearning() const
+{
+	return mDfxSettings->isLearning();
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::resetmidilearn()
+{
+	mDfxSettings->setParameterMidiReset();
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::postupdate_midilearn()
 {
 #ifdef TARGET_API_AUDIOUNIT

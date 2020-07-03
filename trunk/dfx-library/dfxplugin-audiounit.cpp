@@ -696,7 +696,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 	#if TARGET_PLUGIN_USES_MIDI
 		// get the MIDI learn state
 		case dfx::kPluginProperty_MidiLearn:
-			*static_cast<Boolean*>(outData) = mDfxSettings->isLearning();
+			*static_cast<Boolean*>(outData) = getmidilearning();
 			break;
 		// get the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
@@ -976,12 +976,12 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	#if TARGET_PLUGIN_USES_MIDI
 		// set the MIDI learn state
 		case dfx::kPluginProperty_MidiLearn:
-			mDfxSettings->setParameterMidiLearn(*static_cast<Boolean const*>(inData));
+			setmidilearning(*static_cast<Boolean const*>(inData));
 			break;
 		// clear MIDI parameter assignments
 		case dfx::kPluginProperty_ResetMidiLearn:
 			// you don't need an input value for this property
-			mDfxSettings->setParameterMidiReset();
+			resetmidilearn();
 			break;
 		// set the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
