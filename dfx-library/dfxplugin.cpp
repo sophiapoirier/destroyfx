@@ -220,6 +220,9 @@ DfxPlugin::DfxPlugin(
 	#endif
 
 	#if TARGET_PLUGIN_HAS_GUI
+	// XXX AEffGUIEditor registers itself, so we probably don't need to assign this
+	// to the member variable here (and probably should be using AEffect::setEditor?).
+	// Instead we can probably just call getEditor() if we need it.
 	editor = DFXGUI_NewEditorInstance(this);
 	#endif
 #endif
