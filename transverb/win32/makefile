@@ -15,7 +15,7 @@ DFXGUI=../../dfxgui
 VSTGUI=../../../vstgui/vstgui
 
 # WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
-DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_API_VST
+DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_API_VST -DENABLE_TRACE=1
 INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../transverbdef.h"
 CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # mwindows to select the GUI subsystem (not console)
@@ -64,8 +64,8 @@ $(VSTGUI)/vstgui_win32.o : $(VSTGUI)/*.cpp $(VSTGUI)/lib/*.cpp $(VSTGUI)/lib/con
 
 # Testing crap!
 # don't use lflags here; we want a console executable...
-load.exe : load.o
-	$(CXX) -o $@ $^
+load.exe : load.o $(PTHREAD_OBJECTS)
+	$(CXX) -static -static-libgcc -static-libstdc++ -o $@ $^
 
 # XXX just for Tom's testing
 install : dfx-transverb-64.dll

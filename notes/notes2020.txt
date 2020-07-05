@@ -289,6 +289,62 @@ enum : dfx::PropertyID { PROP_LAST_WINDOW_TIMESTAMP = dfx::kPluginProperty_EndOf
 at least the dfx parts. But I don't really get why geometerview can't like getPlugin() and then downcast to Geometer* and
 call GetWaveform rather than go through an enumeration of properties and void*s? We don't want the editor to have the
 definition of the plugin class?
+(According to Sophia, in AU you can't even assume the editor and effect are part of the same *process*, so it makes
+sense...)
 
 
+---
+
+In load.exe, building a minimal "host" to understand what the startup
+sequence should be (and why the gui doesn't show).
+"Flags" are an old aeffect concept. "has editor" gets set if you setEditor and stuff like "uses chunks" is
+set by calling methods of the audioeffect class during startup, like programsAreChunks(true). This is
+done by dfxplugin.cpp in its constructor.
+
+(We can probably get rid of VST_FORCE_DEPRECATED as part of this? looks like the mac vst
+build is using 2.4.)
+
+(Can probably also make TARGET_PLUGIN_HAS_GUI imply TARGET_PLUGIN_USES_VSTGUI?)
+
+The "has effect" flag is set (expected) but the dfx library ctor only sets the editor member (of base class AEffect)
+rather than calling setEditor. How did that happen? Well it turns out that vstgui's AEffGUIEditor constructor
+(plugin-bindings/aeffguieditor.cpp) calls setEditor(this). Probably we should not manually assign editor, but
+wait unil I have a working build before mucking with such things.
+
+
+Here's why the editor doesn't open:
+	auto const baseSuccess = TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
+	if (!baseSuccess)
+
+Base class is VSTGUI::AEffGUIEditor whose open just forwards the pointer to AEffEditor::open (one of its base
+classes). On my platform at least, this is
+
+	virtual bool open (void* ptr)		{ systemWindow = ptr; return 0; }
+
+it's not a virtual call so this always fails?
+(I "fixed" this by ignoring the failure in vst; other fixes would require changing vstgui or vst sdk)
+
+
+in vstgui, makeOwned is basically std::make_shared.
+DGImage is really just vstgui's CBitmap, which is constructed from a CResourceDescription (utf8 string or number).
+So this should actually already work (!) on windows, except that the resources file gives them numbers,
+not names.
+
+and, aha, it was failing to find them by number. Would be maybe nice if the DGImage wrapper gave some feedback
+in this case instead of just
+
+problems still:
+ - fonts in some labels are cut off. also this probably only works because the font is installed on my machine already
+ - dragging sliders does do stuff but does not update ui
+ - randomize button doesn't seem to do anything
+ - sometimes multiple copies of the plugin ui open up? And some are blank
+      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
+       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
+       second click opens another plugin window. I can actually get as many as I want this way. This
+       would presumably not be a real issue without the modals.)
+ - fine adjustment doesn't seem to do anything? or maybe it's just too fine
+ - [ ] tomsound does work though, so it's not just like all buttons don't work
+ - editing the labels directly does seem to take effect
+ - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
+ - probably more problems 
 
