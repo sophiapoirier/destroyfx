@@ -1,17 +1,5 @@
 <?php
 
-// XXX this is a crummy hack
-$weblibPath = "../weblib/weblib-utilities.php";
-if ( file_exists($weblibPath) )
-	include_once($weblibPath);
-else
-	include_once("../" . $weblibPath);
-
-//-------------------------------------------------------------------
-define("DFX_PAGE_TITLE_PREFIX", "Destroy FX : ");
-$gResourcesRootPath = "";
-define("VST_URL", "http://www.steinberg.net/");
-define("AUDIOUNIT_URL", "http://www.apple.com/");
 
 //-------------------------------------------------------------------
 function PrintPageHeader($inTitle, $inBackgroundColor, $inBackgroundImage = NULL, $inIncludeKeywords = FALSE, $inIncludeJavascript = FALSE, $inRootPath = "")
