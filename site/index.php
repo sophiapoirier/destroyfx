@@ -228,7 +228,7 @@ Outdated versions of our software are archived in our <a href="museum.php">museu
 <p class="quicklinks">
 <a href="news.php">news &amp; release infos</a> | 
 <a href="faq.html">FAQ</a> | 
-<a href="docs.php">documentation</a>
+<a href="docs.html">documentation</a>
 <br />
 <a href="extras/">Extras</a> | 
 <a href="museum.php">Museum</a> | 
