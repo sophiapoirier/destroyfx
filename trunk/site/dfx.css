@@ -1,0 +1,34 @@
+
+/* Global CSS for the Destroy FX site. */
+
+body {
+  font: 13px Verdana, Arial, Helvetica, "Sans Serif", sans-serif;
+}
+
+a {
+  font-weight: bold;
+  color: #99F;
+}
+
+div.infobox {
+  width: 375px;
+  border: 3px solid black;
+  padding: 10px;
+  background: #fff;
+  margin-bottom: 10px;
+}
+img.infoheader {
+  float: right;
+}
+
+/* header usually contains image; inline-block so that it can
+   be right aligned. */
+div.infobox h1 {
+  display: inline-block;
+  width: 100%;
+  margin: 0;
+}
+
+div.infobox h1 img {
+  float: right;
+}
