@@ -70,8 +70,8 @@ function PrintCurrentSoftwareDownloads($inSoftwareName, $inShowAULink = TRUE, $i
 	global $SHOW_DONATE_LINKS;
 
 	$softwareFileName = NameToAnchor($inSoftwareName);
-	$softwareImage_thumbnail = "{$softwareFileName}-small.gif";
-	$softwareImage_full = "{$softwareFileName}.gif";
+	$softwareImage_thumbnail = "{$softwareFileName}-small.png";
+	$softwareImage_full = "{$softwareFileName}.png";
 	if (! file_exists($softwareImage_full) )
 		$softwareImage_full = "{$softwareFileName}.jpg";
 
@@ -152,7 +152,7 @@ function PrintCurrentSoftwareDownloads($inSoftwareName, $inShowAULink = TRUE, $i
 	if ( !($releaseVersionAU) && ($inShowAULink) )
 	{
 		echo "	<td class=\"icons\"><a href=\"{$gResourcesRootPath}audiounits.html#{$softwareFileName}\">";
-		echo GetImageTag($gResourcesRootPath . "x-au.gif", "download {$inSoftwareName} for Mac OS X (AU)", NULL, "download Mac OS X - AU");
+		echo GetImageTag($gResourcesRootPath . "x-au.png", "download {$inSoftwareName} for Mac OS X (AU)", NULL, "download Mac OS X - AU");
 		echo "</a></td>
 ";
 	}
@@ -178,7 +178,7 @@ function PrintCurrentSoftwareDownloads($inSoftwareName, $inShowAULink = TRUE, $i
 	{
 		echo "<br /><table class=\"filler\"><tr><td class=\"icons\">
 	<a href=\"{$softwareFilePath}\">";
-		echo GetImageTag($gResourcesRootPath . "docs.gif", "manual", NULL, "view documentation for {$inSoftwareName}");
+		echo GetImageTag($gResourcesRootPath . "docs.png", "manual", NULL, "view documentation for {$inSoftwareName}");
 		echo "</a>
 </td></tr></table>
 
@@ -191,7 +191,7 @@ function PrintCurrentSoftwareDownloads($inSoftwareName, $inShowAULink = TRUE, $i
 	{
 		echo "<br /><table class=\"filler\"><tr><td class=\"icons\">
 	<a href=\"{$gResourcesRootPath}donate.php\">";
-		echo GetImageTag($gResourcesRootPath . "donate-button.gif", "donate");
+		echo GetImageTag($gResourcesRootPath . "donate-button.png", "donate");
 		echo "</a>
 </td></tr></table>
 
@@ -249,16 +249,16 @@ function PrintAudioSample($inDemoTitle, $inDryFile, $inWetFile)
 	if ($inDryFile)
 	{
 		echo "<a href=\"{$inDryFile}\">";
-		echo GetImageTag("dry.gif", "dry audio sample", NULL, GetNicelyFormatedFileSize($inDryFile));
+		echo GetImageTag("dry.png", "dry audio sample", NULL, GetNicelyFormatedFileSize($inDryFile));
 		echo "</a>";
 	}
 	else
-		echo GetImageTag("dry-no.gif", "no dry audio sample available");
+		echo GetImageTag("dry-no.png", "no dry audio sample available");
 	echo "</td>
 ";
 
 	echo "	<td class=\"icons\"><a href=\"{$inWetFile}\">";
-	echo GetImageTag("wet.gif", "wet audio sample", NULL, GetNicelyFormatedFileSize($inDryFile));
+	echo GetImageTag("wet.png", "wet audio sample", NULL, GetNicelyFormatedFileSize($inDryFile));
 	echo "</a></td>
 ";
 
