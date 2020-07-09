@@ -3,6 +3,8 @@
 
 body {
   font: 13px Verdana, Arial, Helvetica, "Sans Serif", sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 a {

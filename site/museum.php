@@ -257,7 +257,7 @@ PrintSoftwareVersion("1.0", "2001-09-12", NULL, NULL, $MISSING_FILE_SYMBOL, $MIS
 
 
 </td></tr></table>
-<a href="./"><?php echo GetImageTag("keep-on-downloading.gif", "&lt; &lt; keep on downloading", "right"); ?></a>
+<a href="./"><?php echo GetImageTag("keep-on-downloading.png", "&lt; &lt; keep on downloading", "right"); ?></a>
 <br /><p><br /></p>
 </td><td style="width: 4px">&nbsp;</td></tr>
 </table>

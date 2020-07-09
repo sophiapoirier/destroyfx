@@ -1,50 +1,62 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE html 
-	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
+<!doctype html>
 <head>
-	<title>Destroy FX : donate / thanks!</title>
-	<link rel="Stylesheet" type="text/css" href="dfx.css" />
-	<meta name="author" content="Tom 7 and Sophia" />
+  <title>Destroy FX : donate / thanks!</title>
+  <link rel="Stylesheet" type="text/css" href="dfx.css" />
+  <meta name="author" content="Tom 7 and Sophia" />
 </head>
 
-<body style="background-color: #1E581F ; background-image: url(green.gif)">
+<head>
+  <title>Destroy FX: Donate</title>
+  <link rel="stylesheet" type="text/css" href="dfx.css" />    
+  <style>
+   body {
+     background-color: #1b501c;
+   }
+   .maincolumn {
+     background-color: #1e581f;
+     width: 600px;
+     margin-left: 15%;
+     margin-right: auto;
+     padding: 0 12px;
+     /* at least as tall as the viewport */
+     min-height: 100vh;
+   }
+   /* Wider than the default */
+   div.infobox {
+     width: 575px;
+   }
+   div.center-image {
+     margin-left: auto;
+     margin-right: auto;
+   }
+   div.bottom {
+     width: 100%;
+     display: flex;
+     flex-direction: row;
+   }
+   div.bottom .hfill {
+     flex-grow: 1;
+   }
+  </style>
+</head>
 
-<table class="container" style="width: 640px">
-<tr>
-<td style="width: 36px">&nbsp;</td>
-<td valign="top">
-<img src="donatetitle.gif" alt="Destroy FX donate!" width="600" height="99" />
-<br class="left" /><br class="right" />
+<body>
+  
+  <div class="maincolumn">
+    <img src="donatetitle.png" width="600" height="99" alt="Destroy FX: donate!" />
 
-<!-- photograph -->
+      <!-- photograph -->
 
-<p class="center_image"><img src="thanks-cereal.gif" width="600" height="475" alt="Thank you so much!!" /></p>
+    <div class="center-image">
+      <img src="thanks-cereal.png" width="600" height="475" alt="Thank you so much!!" />
+    </div>
 
-<!-- nav on bottom -->
-<table class="container" style="width: 100%">
-	<tr>
-		<td style="width: 235px">
-			<a href="donate.php"><img alt="Send More Cash" src="send-more-cash.gif" width="235" height="38" /></a>
-		</td>
-		<td>&nbsp;</td>
-		<td style="width: 306px">
-			<a href="./"><img alt="Keep On Downloading" src="keep-on-downloading.gif" width="306" height="33" /></a>
-		</td>
-	</tr>
-</table>
-
-<!-- a little space on bottom of page -->
-
-<br /><p><br /></p>
-
-</td>
-<td style="width: 4px">&nbsp;</td>
-</tr>
-</table>
+    <div class="bottom">
+      <a href="donate.html"><img alt="Send More Cash" src="send-more-cash.png" width="235" height="34" /></a>
+      <div class="hfill"></div>
+      <a href="index.html"><img alt="Keep On Downloading" src="keep-on-downloading.png" width="306" height="33" /></a>
+    </div>
+  </div>
 
 </body>
 </html>
