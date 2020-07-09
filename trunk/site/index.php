@@ -3,13 +3,13 @@
 	define("PAGE_TITLE", "Destroy FX : free VST plugins, free Audio Units");
 	include("dfx-common.php");
 	include("dfx-software.php");
-	PrintPageHeader(PAGE_TITLE, "#E88331", "orange.gif", TRUE, TRUE);
+	PrintPageHeader(PAGE_TITLE, "#E88331", "orange.png", TRUE, TRUE);
 ?>
 
 <table class="container" style="width: 550px">
 <tr><td style="width: 28px">&nbsp;</td>
 <td style="width: 375px" valign="top">
-<?php echo GetImageTag("title.gif", "Super Destroy FX", "right") . "\n"; ?>
+<?php echo GetImageTag("title.png", "Super Destroy FX", "right") . "\n"; ?>
 <br class="left" /><br class="right" />
 
 
@@ -180,7 +180,7 @@ if ( isset($_POST['sendemail']) )
 
 <!-- informations -->
 
-<?php BeginInfoBox("introducing Destroy FX", "dfx-info.gif"); ?>
+<?php BeginInfoBox("introducing Destroy FX", "dfx-info.png"); ?>
 
 <p class="intro">
 <b>Hello.</b>  Super Destroy FX is a collection of 
@@ -252,9 +252,9 @@ Outdated versions of our software are archived in our <a href="museum.php">museu
 
 <!-- Audio Units -->
 
-<?php BeginInfoBox("Audio Units", "dfx-audio-units.gif", NULL, TRUE); ?>
+<?php BeginInfoBox("Audio Units", "dfx-audio-units.png", NULL, TRUE); ?>
 
-<a href="audiounits.html"><?php echo GetImageTag("au-logo.gif", "Destroy FX Audio Units web page", "center"); ?></a>
+<a href="audiounits.html"><?php echo GetImageTag("au-logo.png", "Destroy FX Audio Units web page", "center"); ?></a>
 </td>
 
 <td valign="top">
@@ -270,7 +270,7 @@ We have Audio Unit versions of our plugins at our <a href="audiounits.html">Audi
 
 
 <?php	// Geometer
-BeginInfoBox("Geometer", "dfx-geometer.gif", "geometer", TRUE);
+BeginInfoBox("Geometer", "dfx-geometer.png", "geometer", TRUE);
 PrintCurrentSoftwareDownloads("Geometer");
 PrintCurrentSoftwareVersion("1.1.1", "2005-09-09", "Windows");
 PrintCurrentSoftwareVersion("1.1", "2003-01-08", "Mac");
@@ -288,7 +288,7 @@ EndInfoBox();
 
 
 <?php	// Scrubby
-BeginInfoBox("Scrubby", "dfx-scrubby.gif", "scrubby", TRUE);
+BeginInfoBox("Scrubby", "dfx-scrubby.png", "scrubby", TRUE);
 PrintCurrentSoftwareDownloads("Scrubby");
 PrintCurrentSoftwareVersion("1.0", "2002-07-08");
 
@@ -305,7 +305,7 @@ EndInfoBox();
 
 
 <?php	// Buffer Override
-BeginInfoBox("Buffer Override", "dfx-bufferoverride.gif", "bufferoverride", TRUE);
+BeginInfoBox("Buffer Override", "dfx-bufferoverride.png", "bufferoverride", TRUE);
 PrintCurrentSoftwareDownloads("Buffer Override");
 PrintCurrentSoftwareVersion("2.0", "2002-07-08");
 
@@ -323,7 +323,7 @@ EndInfoBox();
 
 
 <?php	// Transverb
-BeginInfoBox("Transverb", "dfx-transverb.gif", "transverb", TRUE);
+BeginInfoBox("Transverb", "dfx-transverb.png", "transverb", TRUE);
 PrintCurrentSoftwareDownloads("Transverb");
 PrintCurrentSoftwareVersion("1.4", "2002-07-08");
 
@@ -341,7 +341,7 @@ EndInfoBox();
 
 
 <?php	// Rez Synth
-BeginInfoBox("Rez Synth", "dfx-rezsynth.gif", "rezsynth", TRUE);
+BeginInfoBox("Rez Synth", "dfx-rezsynth.png", "rezsynth", TRUE);
 PrintCurrentSoftwareDownloads("Rez Synth");
 PrintCurrentSoftwareVersion("1.2", "2002-07-08");
 
@@ -357,7 +357,7 @@ EndInfoBox();
 
 
 <?php	// Skidder
-BeginInfoBox("Skidder", "dfx-skidder.gif", "skidder", TRUE);
+BeginInfoBox("Skidder", "dfx-skidder.png", "skidder", TRUE);
 PrintCurrentSoftwareDownloads("Skidder");
 PrintCurrentSoftwareVersion("1.4", "2002-07-08");
 
@@ -375,7 +375,7 @@ EndInfoBox();
 <!-- Extras -->
 
 <br class="left" />
-<?php BeginInfoBox("Extras", "dfx-extras.gif", "extras"); ?>
+<?php BeginInfoBox("Extras", "dfx-extras.png", "extras"); ?>
 
 <p class="desc">We also have more plugins.  They're on 
 <a href="extras/">another page</a>.  They're not as exciting as the stuff here on our main page.  They're for people looking for <a href="extras/">extra stuff</a> 
@@ -389,7 +389,7 @@ EndInfoBox();
 <!-- biz -->
 
 <br class="left" />
-<?php BeginInfoBox("consulting", "consulting.gif", "biz"); ?>
+<?php BeginInfoBox("consulting", "consulting.png", "biz"); ?>
 
 <!--
 <p align="center" class="tidbit"><b>$ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $</b></p>
@@ -408,7 +408,7 @@ The Destroy FX team is not currently available for hire, but here are projects t
 <table class="fullwidth">
 <tr>
 <td class="iconcolumn" valign="top">
-<a href="http://sfxmachine.com/"><?php echo GetImageTag("sfx-small.gif", "SFX Machine RT"); ?></a>
+<a href="http://sfxmachine.com/"><?php echo GetImageTag("sfx-small.png", "SFX Machine RT"); ?></a>
 </td>
 <td valign="top">
 <p class="plain">
@@ -447,7 +447,7 @@ The Destroy FX team is not currently available for hire, but here are projects t
 <table class="fullwidth">
 <tr>
 <td class="iconcolumn" valign="top">
-<a href="http://abbeyroadplugins.com/"><?php echo GetImageTag("abbeyroad.gif", "Abbey Road"); ?></a>
+<a href="http://abbeyroadplugins.com/"><?php echo GetImageTag("abbeyroad.png", "Abbey Road"); ?></a>
 </td>
 <td valign="top">
 <p class="plain">
@@ -460,7 +460,7 @@ The Destroy FX team is not currently available for hire, but here are projects t
 <table class="fullwidth">
 <tr>
 <td class="iconcolumn" valign="top">
-<a href="http://refusesoftware.com/"><?php echo GetImageTag("refuse-logo.gif", "reFuse Software"); ?></a>
+<a href="http://refusesoftware.com/"><?php echo GetImageTag("refuse-logo.png", "reFuse Software"); ?></a>
 </td>
 <td valign="top">
 <p class="plain">
@@ -486,7 +486,7 @@ The Destroy FX team is not currently available for hire, but here are projects t
 <!-- contact form -->
 
 <br class="left" />
-<?php BeginInfoBox("contact us", "dfx-contact.gif", "contact"); ?>
+<?php BeginInfoBox("contact us", "dfx-contact.png", "contact"); ?>
 
 <p class="desc">
 You can use this form to send us an email.
@@ -529,7 +529,7 @@ Please consider looking at our <a href="faq.html">Frequently Asked Questions</a>
 
 <!-- email list subscribe -->
 
-<?php BeginInfoBox("email list", "dfx-list.gif", "join"); ?>
+<?php BeginInfoBox("email list", "dfx-list.png", "join"); ?>
 
 <form class="small" action="http://spacebar.org/f/a/list/add" method="post">
 <p class="plain">
@@ -586,7 +586,7 @@ Say hello to the other <a href="http://smartelectronix.com/">Smartelectronix</a>
 <tr>
 <td>&nbsp;</td>
 <td style="width: 250px">
-<?php echo GetImageTag("smel1.gif", "Destroy FX: a "); ?><a href="http://smartelectronix.com/"><?php echo GetImageTag("smel2.gif", "Smartelectronix"); ?></a><?php echo GetImageTag("smel3.gif", " member"); ?>
+<?php echo GetImageTag("smel1.png", "Destroy FX: a "); ?><a href="http://smartelectronix.com/"><?php echo GetImageTag("smel2.png", "Smartelectronix"); ?></a><?php echo GetImageTag("smel3.png", " member"); ?>
 </td>
 </tr>
 </table>
