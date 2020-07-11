@@ -34,3 +34,9 @@ div.infobox h1 {
 div.infobox h1 img {
   float: right;
 }
+
+img.centered {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
