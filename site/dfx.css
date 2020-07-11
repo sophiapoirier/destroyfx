@@ -12,8 +12,25 @@ a {
   color: #99F;
 }
 
+/* Basic "vertical stripe" layout. Probably want to set
+   background-color. */
+.maincolumn {
+  width: 600px;
+  margin-left: 15%;
+  margin-right: auto;
+  padding: 0 12px 12px;
+  /* at least as tall as the viewport */
+  min-height: 100vh;
+}
+.maincolumn img.title {
+  display: block;
+  margin-left: auto;
+}
+
+
+/* Standard stacked infobox. Might need to override width for
+   different maincolumn sizes. */
 div.infobox {
-  width: 375px;
   border: 3px solid black;
   padding: 10px;
   background: #fff;
@@ -40,3 +57,4 @@ img.centered {
   margin-left: auto;
   margin-right: auto;
 }
+
