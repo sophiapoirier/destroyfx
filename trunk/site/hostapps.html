@@ -1,7 +1,8 @@
 <!doctype html>
 <head>
   <title>Destroy FX : Music plugin host softwares</title>
-  <link rel="stylesheet" type="text/css" href="dfx.css" />    
+  <link rel="stylesheet" type="text/css" href="dfx.css" />
+  <script src="dfx.js"></script>
   <style>
    tr.odd {
      background-color: #F0FFF0;
@@ -23,7 +24,7 @@
      color: #000;
      background-color: #FF0;
    }
-   
+
    a {
      color: #77F;
    }
@@ -36,7 +37,7 @@
      text-align: center;
      color: #AAA;
    }
-   
+
    div.reset {
      color: #A33;
      cursor: pointer;
@@ -72,7 +73,7 @@
      width: 600px;
      margin: 6px auto;
    }
-   
+
   </style>
 </head>
 
@@ -90,88 +91,66 @@
  const UNSURE = '?';
 
  const hosts = [
-   {'name': 'Logic', 'url': 'http://www.apple.com/logic/', 'au': '5.4', 'vst': null, 'tempo': '4.7', 'midi': '5.0', 'inst': '4.2', 'osx': '5.3', 'win': null},
-   {'name': 'Digital Performer', 'url': 'http://www.motu.com/', 'au': '4.1', 'vst': '8.0', 'tempo': YES, 'midi': '4.5', 'inst': YES, 'osx': '4.0', 'win': '8.?'},
-   {'name': 'Ableton Live', 'url': 'http://www.ableton.com/', 'au': '4.0', 'vst': YES, 'tempo': '2.0', 'midi': '4.0', 'inst': '4.0', 'osx': YES, 'win': YES},
-   {'name': 'Max/MSP', 'url': 'http://www.cycling74.com/', 'au': null, 'vst': YES, 'tempo': null, 'midi': YES, 'inst': YES, 'osx': '4.2', 'win': '4.3'},
-   {'name': 'Plogue Bidule', 'url': 'http://www.plogue.com/', 'au': YES, 'vst': YES, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': YES, 'win': YES},
-   {'name': 'Wave Editor', 'url': 'http://audiofile-engineering.com/', 'au': YES, 'vst': '1.4', 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'Peak', 'url': 'http://www.bias-inc.com/', 'au': '4.0', 'vst': '2.5', 'tempo': '5.0', 'midi': '5.0', 'inst': '5.0', 'osx': '3.0', 'win': null},
-   {'name': 'Deck', 'url': 'http://www.bias-inc.com/', 'au': null, 'vst': '3.0', 'tempo': null, 'midi': null, 'inst': null, 'osx': '3.5', 'win': null},
-   {'name': 'Cubase', 'url': 'http://www.steinberg.net/', 'au': null, 'vst': YES, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': YES, 'win': YES},
-   {'name': 'Nuendo', 'url': 'http://www.steinberg.net/', 'au': null, 'vst': YES, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': '2.0', 'win': YES},
-   {'name': 'WaveLab', 'url': 'http://www.steinberg.net/', 'au': null, 'vst': YES, 'tempo': null, 'midi': null, 'inst': null, 'osx': '7.0', 'win': YES},
-   {'name': 'Final Cut Pro', 'url': 'http://www.apple.com/finalcutpro/', 'au': '4.0', 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': '3.0', 'win': null},
-   {'name': 'Final Cut Express', 'url': 'http://www.apple.com/finalcutexpress/', 'au': '2.0', 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'Soundtrack', 'url': 'http://www.apple.com/soundtrack/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'GarageBand', 'url': 'http://www.apple.com/ilife/garageband/', 'au': YES, 'vst': null, 'tempo': YES, 'midi': null, 'inst': YES, 'osx': YES, 'win': null},
-   {'name': 'Ardour', 'url': 'http://ardour.org/', 'au': '2.2', 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': '2.2', 'win': null, 'free': YES},
-   {'name': 'Melodyne', 'url': 'http://www.celemony.com/', 'au': '2.0', 'vst': '2.0', 'tempo': null, 'midi': null, 'inst': YES, 'osx': YES, 'win': YES},
-   {'name': 'Metro', 'url': 'http://www.sagantech.biz/', 'au': '5.8', 'vst': '4.0', 'tempo': YES, 'midi': YES, 'inst': '6.0', 'osx': '5.8', 'win': null},
-   {'name': 'WaveBurner', 'url': 'http://www.apple.com/logicstudio/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'Studio One', 'url': 'http://www.presonus.com/', 'au': YES, 'vst': YES, 'tempo': YES, 'midi': null, 'inst': YES, 'osx': YES, 'win': YES},
-   {'name': 'Impromptu', 'url': 'http://impromptu.moso.com.au/', 'au': YES, 'vst': null, 'tempo': UNSURE, 'midi': YES, 'inst': YES, 'osx': YES, 'win': null, 'free': YES},
-   {'name': 'Sound Studio', 'url': 'http://felttip.com/ss/', 'au': '3.0', 'vst': null, 'tempo': UNSURE, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'Intuem', 'url': 'http://www.intuem.com/', 'au': '2.0', 'vst': null, 'tempo': null, 'midi': null, 'inst': YES, 'osx': YES, 'win': null},
-   {'name': 'SONASPHERE', 'url': 'http://www.sonasphere.com/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null, 'free': YES},
-   {'name': 'Numerology', 'url': 'http://www.five12.com/', 'au': '1.2', 'vst': null, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': YES, 'win': null},
-   {'name': 'DSP-Quattro', 'url': 'http://www.dsp-quattro.com/', 'au': '1.2', 'vst': '3.1', 'tempo': null, 'midi': null, 'inst': YES, 'osx': YES, 'win': null},
-   {'name': 'Amadeus Pro', 'url': 'http://www.hairersoft.com/', 'au': YES, 'vst': YES, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'Amadeus II', 'url': 'http://www.hairersoft.com/', 'au': '3.7.2', 'vst': '3.2', 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'Audacity', 'url': 'http://audacity.sourceforge.net/', 'au': '1.3', 'vst': YES, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': YES, 'free': YES},
-   {'name': 'Toast', 'url': 'http://www.roxio.com/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'TwistedWave', 'url': 'http://twistedwave.com/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'soundBlade', 'url': 'http://www.sonicstudio.com/', 'au': YES, 'vst': YES, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'XO Wave', 'url': 'http://www.xowave.com/', 'au': YES, 'vst': null, 'tempo': UNSURE, 'midi': UNSURE, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'AU Lab', 'url': 'http://developer.apple.com/audio/', 'au': YES, 'vst': null, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': YES, 'win': null},
-   {'name': 'SonicBirth', 'url': 'http://sonicbirth.sourceforge.net/', 'au': YES, 'vst': null, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': YES, 'win': null, 'free': YES},
-   {'name': 'Sample Manager', 'url': 'http://audiofile-engineering.com/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'WireTap Studio', 'url': 'http://www.ambrosiasw.com/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'CPS', 'url': 'http://cps.bonneville.nl/', 'au': FORTHCOMING, 'vst': '1.3 (Windows)', 'tempo': null, 'midi': YES, 'inst': YES, 'osx': '1.4', 'win': YES, 'free': YES},
-   {'name': 'Critters', 'url': 'http://www.grain-brain.com/critters.html', 'au': '2.0', 'vst': null, 'tempo': YES, 'midi': null, 'inst': YES, 'osx': YES, 'win': null, 'free': YES},
-   {'name': 'djay', 'url': 'http://www.algoriddim.net/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null, 'free': YES},
-   {'name': 'Neutrino', 'url': 'http://machinecodex.com/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null},
-   {'name': 'AudioMulch', 'url': 'http://audiomulch.com/', 'au': '2.1', 'vst': YES, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': '2.0', 'win': YES},
-   {'name': 'Audiohive', 'url': 'http://openstudionetworks.com/', 'au': YES, 'vst': null, 'tempo': UNSURE, 'midi': UNSURE, 'inst': UNSURE, 'osx': YES, 'win': null},
-   {'name': 'Rax', 'url': 'http://audiofile-engineering.com/rax/', 'au': YES, 'vst': null, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': YES, 'win': null},
-   {'name': 'SynthTest', 'url': 'http://www.manyetas.com/creed/synthtest.html', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': YES, 'osx': YES, 'win': null, 'free': YES},
-   {'name': 'Audio Hijack Pro', 'url': 'http://www.rogueamoeba.com/audiohijack/', 'au': YES, 'vst': YES, 'tempo': null, 'midi': YES, 'inst': YES, 'osx': YES, 'win': null},
-   {'name': 'AudioXplorer', 'url': 'http://www.arizona-software.ch/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null, 'free': YES},
-   {'name': 'Ouroboros', 'url': 'http://illposed.com/', 'au': YES, 'vst': null, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null, 'free': YES},
-   {'name': 'Sound Forge', 'url': 'http://www.sonycreativesoftware.com/', 'au': null, 'vst': '8.0', 'tempo': UNSURE, 'midi': null, 'inst': null, 'osx': null, 'win': YES},
-   {'name': 'ACID Pro', 'url': 'http://www.sonycreativesoftware.com/', 'au': null, 'vst': YES, 'tempo': YES, 'midi': UNSURE, 'inst': '4.0', 'osx': null, 'win': YES},
-   {'name': 'Vegas', 'url': 'http://www.sonycreativesoftware.com/', 'au': null, 'vst': '6.0', 'tempo': UNSURE, 'midi': null, 'inst': null, 'osx': null, 'win': YES},
-   {'name': 'Reaper', 'url': 'http://reaper.fm/', 'au': YES, 'vst': YES, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': YES, 'win': YES},
-   {'name': 'BUZZ', 'url': 'http://www.buzzmachines.com/', 'au': null, 'vst': YES, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': null, 'win': YES, 'free': YES},
-   {'name': 'FL Studio', 'url': 'http://www.flstudio.com/', 'au': null, 'vst': '3.0', 'tempo': null, 'midi': YES, 'inst': YES, 'osx': null, 'win': YES},
-   {'name': 'Tracktion', 'url': 'http://www.rawmaterialsoftware.com/', 'au': null, 'vst': YES, 'tempo': YES, 'midi': YES, 'inst': YES, 'osx': '1.4', 'win': YES},
-   {'name': 'SynthEdit', 'url': 'http://www.synthedit.com/', 'au': null, 'vst': YES, 'tempo': null, 'midi': YES, 'inst': YES, 'osx': null, 'win': YES},
-   {'name': 'Orion', 'url': 'http://www.synapse-audio.com/', 'au': null, 'vst': YES, 'tempo': '2.7', 'midi': '2.7', 'inst': YES, 'osx': null, 'win': YES},
-   {'name': 'Spark', 'url': 'http://www.tcelectronic.com/', 'au': '2.8', 'vst': YES, 'tempo': '2.8', 'midi': '2.0', 'inst': '2.0', 'osx': '2.1', 'win': null},
-   {'name': 'Spark ME', 'url': 'http://www.tcelectronic.com/', 'au': '2.8', 'vst': YES, 'tempo': null, 'midi': null, 'inst': null, 'osx': YES, 'win': null, 'free': YES},
- ];  
-
- function makeElement(what, cssclass, elt) {
-   var e = document.createElement(what);
-   if (cssclass)
-     e.setAttribute('class', cssclass);
-   if (elt)
-     elt.appendChild(e);
-   return e;
- }
- function IMG(cssclass, elt) { return makeElement('IMG', cssclass, elt); }
- function DIV(cssclass, elt) { return makeElement('DIV', cssclass, elt); }
- function SPAN(cssclass, elt) { return makeElement('SPAN', cssclass, elt); }
- function A(cssclass, elt) { return makeElement('A', cssclass, elt); }
- function TABLE(cssclass, elt) { return makeElement('TABLE', cssclass, elt); }
- function TR(cssclass, elt) { return makeElement('TR', cssclass, elt); }
- function TD(cssclass, elt) { return makeElement('TD', cssclass, elt); }
- function TEXT(contents, elt) {
-   var e = document.createTextNode(contents);
-   if (elt)
-     elt.appendChild(e);
-   return e;
- }
+   {name: 'Logic', url: 'http://www.apple.com/logic/', au: '5.4', vst: null, tempo: '4.7', midi: '5.0', inst: '4.2', osx: '5.3', win: null},
+   {name: 'Digital Performer', url: 'http://www.motu.com/', au: '4.1', vst: '8.0', tempo: YES, midi: '4.5', inst: YES, osx: '4.0', win: '8.?'},
+   {name: 'Ableton Live', url: 'http://www.ableton.com/', au: '4.0', vst: YES, tempo: '2.0', midi: '4.0', inst: '4.0', osx: YES, win: YES},
+   {name: 'Max/MSP', url: 'http://www.cycling74.com/', au: null, vst: YES, tempo: null, midi: YES, inst: YES, osx: '4.2', win: '4.3'},
+   {name: 'Plogue Bidule', url: 'http://www.plogue.com/', au: YES, vst: YES, tempo: YES, midi: YES, inst: YES, osx: YES, win: YES},
+   {name: 'Wave Editor', url: 'http://audiofile-engineering.com/', au: YES, vst: '1.4', tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'Peak', url: 'http://www.bias-inc.com/', au: '4.0', vst: '2.5', tempo: '5.0', midi: '5.0', inst: '5.0', osx: '3.0', win: null},
+   {name: 'Deck', url: 'http://www.bias-inc.com/', au: null, vst: '3.0', tempo: null, midi: null, inst: null, osx: '3.5', win: null},
+   {name: 'Cubase', url: 'http://www.steinberg.net/', au: null, vst: YES, tempo: YES, midi: YES, inst: YES, osx: YES, win: YES},
+   {name: 'Nuendo', url: 'http://www.steinberg.net/', au: null, vst: YES, tempo: YES, midi: YES, inst: YES, osx: '2.0', win: YES},
+   {name: 'WaveLab', url: 'http://www.steinberg.net/', au: null, vst: YES, tempo: null, midi: null, inst: null, osx: '7.0', win: YES},
+   {name: 'Final Cut Pro', url: 'http://www.apple.com/finalcutpro/', au: '4.0', vst: null, tempo: null, midi: null, inst: null, osx: '3.0', win: null},
+   {name: 'Final Cut Express', url: 'http://www.apple.com/finalcutexpress/', au: '2.0', vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'Soundtrack', url: 'http://www.apple.com/soundtrack/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'GarageBand', url: 'http://www.apple.com/ilife/garageband/', au: YES, vst: null, tempo: YES, midi: null, inst: YES, osx: YES, win: null},
+   {name: 'Ardour', url: 'http://ardour.org/', au: '2.2', vst: null, tempo: null, midi: null, inst: null, osx: '2.2', win: null, free: YES},
+   {name: 'Melodyne', url: 'http://www.celemony.com/', au: '2.0', vst: '2.0', tempo: null, midi: null, inst: YES, osx: YES, win: YES},
+   {name: 'Metro', url: 'http://www.sagantech.biz/', au: '5.8', vst: '4.0', tempo: YES, midi: YES, inst: '6.0', osx: '5.8', win: null},
+   {name: 'WaveBurner', url: 'http://www.apple.com/logicstudio/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'Studio One', url: 'http://www.presonus.com/', au: YES, vst: YES, tempo: YES, midi: null, inst: YES, osx: YES, win: YES},
+   {name: 'Impromptu', url: 'http://impromptu.moso.com.au/', au: YES, vst: null, tempo: UNSURE, midi: YES, inst: YES, osx: YES, win: null, free: YES},
+   {name: 'Sound Studio', url: 'http://felttip.com/ss/', au: '3.0', vst: null, tempo: UNSURE, midi: null, inst: null, osx: YES, win: null},
+   {name: 'Intuem', url: 'http://www.intuem.com/', au: '2.0', vst: null, tempo: null, midi: null, inst: YES, osx: YES, win: null},
+   {name: 'SONASPHERE', url: 'http://www.sonasphere.com/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null, free: YES},
+   {name: 'Numerology', url: 'http://www.five12.com/', au: '1.2', vst: null, tempo: YES, midi: YES, inst: YES, osx: YES, win: null},
+   {name: 'DSP-Quattro', url: 'http://www.dsp-quattro.com/', au: '1.2', vst: '3.1', tempo: null, midi: null, inst: YES, osx: YES, win: null},
+   {name: 'Amadeus Pro', url: 'http://www.hairersoft.com/', au: YES, vst: YES, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'Amadeus II', url: 'http://www.hairersoft.com/', au: '3.7.2', vst: '3.2', tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'Audacity', url: 'http://audacity.sourceforge.net/', au: '1.3', vst: YES, tempo: null, midi: null, inst: null, osx: YES, win: YES, free: YES},
+   {name: 'Toast', url: 'http://www.roxio.com/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'TwistedWave', url: 'http://twistedwave.com/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'soundBlade', url: 'http://www.sonicstudio.com/', au: YES, vst: YES, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'XO Wave', url: 'http://www.xowave.com/', au: YES, vst: null, tempo: UNSURE, midi: UNSURE, inst: null, osx: YES, win: null},
+   {name: 'AU Lab', url: 'http://developer.apple.com/audio/', au: YES, vst: null, tempo: YES, midi: YES, inst: YES, osx: YES, win: null},
+   {name: 'SonicBirth', url: 'http://sonicbirth.sourceforge.net/', au: YES, vst: null, tempo: YES, midi: YES, inst: YES, osx: YES, win: null, free: YES},
+   {name: 'Sample Manager', url: 'http://audiofile-engineering.com/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'WireTap Studio', url: 'http://www.ambrosiasw.com/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'CPS', url: 'http://cps.bonneville.nl/', au: FORTHCOMING, vst: '1.3 (Windows)', tempo: null, midi: YES, inst: YES, osx: '1.4', win: YES, free: YES},
+   {name: 'Critters', url: 'http://www.grain-brain.com/critters.html', au: '2.0', vst: null, tempo: YES, midi: null, inst: YES, osx: YES, win: null, free: YES},
+   {name: 'djay', url: 'http://www.algoriddim.net/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null, free: YES},
+   {name: 'Neutrino', url: 'http://machinecodex.com/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null},
+   {name: 'AudioMulch', url: 'http://audiomulch.com/', au: '2.1', vst: YES, tempo: YES, midi: YES, inst: YES, osx: '2.0', win: YES},
+   {name: 'Audiohive', url: 'http://openstudionetworks.com/', au: YES, vst: null, tempo: UNSURE, midi: UNSURE, inst: UNSURE, osx: YES, win: null},
+   {name: 'Rax', url: 'http://audiofile-engineering.com/rax/', au: YES, vst: null, tempo: YES, midi: YES, inst: YES, osx: YES, win: null},
+   {name: 'SynthTest', url: 'http://www.manyetas.com/creed/synthtest.html', au: YES, vst: null, tempo: null, midi: null, inst: YES, osx: YES, win: null, free: YES},
+   {name: 'Audio Hijack Pro', url: 'http://www.rogueamoeba.com/audiohijack/', au: YES, vst: YES, tempo: null, midi: YES, inst: YES, osx: YES, win: null},
+   {name: 'AudioXplorer', url: 'http://www.arizona-software.ch/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null, free: YES},
+   {name: 'Ouroboros', url: 'http://illposed.com/', au: YES, vst: null, tempo: null, midi: null, inst: null, osx: YES, win: null, free: YES},
+   {name: 'Sound Forge', url: 'http://www.sonycreativesoftware.com/', au: null, vst: '8.0', tempo: UNSURE, midi: null, inst: null, osx: null, win: YES},
+   {name: 'ACID Pro', url: 'http://www.sonycreativesoftware.com/', au: null, vst: YES, tempo: YES, midi: UNSURE, inst: '4.0', osx: null, win: YES},
+   {name: 'Vegas', url: 'http://www.sonycreativesoftware.com/', au: null, vst: '6.0', tempo: UNSURE, midi: null, inst: null, osx: null, win: YES},
+   {name: 'Reaper', url: 'http://reaper.fm/', au: YES, vst: YES, tempo: YES, midi: YES, inst: YES, osx: YES, win: YES},
+   {name: 'BUZZ', url: 'http://www.buzzmachines.com/', au: null, vst: YES, tempo: YES, midi: YES, inst: YES, osx: null, win: YES, free: YES},
+   {name: 'FL Studio', url: 'http://www.flstudio.com/', au: null, vst: '3.0', tempo: null, midi: YES, inst: YES, osx: null, win: YES},
+   {name: 'Tracktion', url: 'http://www.rawmaterialsoftware.com/', au: null, vst: YES, tempo: YES, midi: YES, inst: YES, osx: '1.4', win: YES},
+   {name: 'SynthEdit', url: 'http://www.synthedit.com/', au: null, vst: YES, tempo: null, midi: YES, inst: YES, osx: null, win: YES},
+   {name: 'Orion', url: 'http://www.synapse-audio.com/', au: null, vst: YES, tempo: '2.7', midi: '2.7', inst: YES, osx: null, win: YES},
+   {name: 'Spark', url: 'http://www.tcelectronic.com/', au: '2.8', vst: YES, tempo: '2.8', midi: '2.0', inst: '2.0', osx: '2.1', win: null},
+   {name: 'Spark ME', url: 'http://www.tcelectronic.com/', au: '2.8', 'vst': YES, tempo: null, midi: null, inst: null, osx: YES, win: null, free: YES},
+ ];
 
  function redraw() {
    // As column names, e.g. ['midi', 'mac']
@@ -184,7 +163,7 @@
      }
      return false;
    };
-   
+
    let elt = document.getElementById('hosts');
    elt.innerHTML = '';
 
@@ -200,7 +179,7 @@
        redraw();
      };
    }
-   
+
    let table = TABLE('hosts', elt);
 
    const cols = {'au': 'AU support',
