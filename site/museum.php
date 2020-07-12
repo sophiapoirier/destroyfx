@@ -24,13 +24,13 @@ new versions, or to resolve specific issues with older hosts. We
 welcome you to help yourself to the downloads, though we probably will
 not be able to help you if you experience problems with these. If by
 some mistake of fate you found yourself at this page of grimy old
-plugins rather than our <b><a href="./">regular page of shiny
+plugins rather than our <b><a href="index.html">regular page of shiny
 new plugins</a></b>, by all means, head there instead!
 </p>
 <p class="museum">
 attention:  If you see something listed here that says <b>missing</b> 
 and you happen to have that file archived in your own personal stash, 
-please <a href="./#contact">let us know</a> and share it with us 
+please <a href="index.html#contact">let us know</a> and share it with us 
 so that we can complete our archive.  Thanks!
 </p>
 
@@ -257,7 +257,7 @@ PrintSoftwareVersion("1.0", "2001-09-12", NULL, NULL, $MISSING_FILE_SYMBOL, $MIS
 
 
 </td></tr></table>
-<a href="./"><?php echo GetImageTag("keep-on-downloading.png", "&lt; &lt; keep on downloading", "right"); ?></a>
+<a href="index.html"><?php echo GetImageTag("keep-on-downloading.png", "&lt; &lt; keep on downloading", "right"); ?></a>
 <br /><p><br /></p>
 </td><td style="width: 4px">&nbsp;</td></tr>
 </table>
