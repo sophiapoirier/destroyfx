@@ -1,0 +1,587 @@
+<!doctype html>
+<head>
+  <title>Destroy FX: Free VST plugins, Free Audio Units</title>
+  <link rel="stylesheet" type="text/css" href="dfx.css">
+  <style>
+   body {
+     background-color: #e88311;
+   }
+   .maincolumn {
+     background-color: #ff9036;
+     width: 420px;
+   }
+
+   div.infobox > p:last-child {
+     margin-bottom: 0;
+   }
+   
+   div.quicklinks {
+     text-align: center;
+   }
+
+   /* Two-column layout for e.g. plugin */
+   div.twocolumn {
+     display: flex;
+   }
+   div.twocolumn > div:first-child {
+     min-width: 110px;
+     width: 110px;
+   }
+
+   div.plugin img.thumb {
+     cursor: pointer;
+     width: 100px;
+     border: 0;
+     margin-bottom: 4px;
+   }
+
+   /* plugin icons as a flex row that
+      wraps to multiple lines. */
+   div.plugin div.downloads {
+     width: 104px;
+     display: flex;
+     flex-direction: row;
+     flex-wrap: wrap;
+   }
+   div.downloads a {
+     display: inline-block;
+     width: 32px;
+     height: 40px;
+     background-position: center;
+     background-repeat: no-repeat;
+     flex-grow: 1;
+   }
+
+   div.downloads a.mac {
+     background-image: url(x.png);
+   }
+   div.downloads a.win {
+     background-image: url(win32.png);
+   }
+   div.downloads a.oldmac {
+     background-image: url(mac.png);
+   }
+   div.downloads a.au {
+     background-image: url(x-au.png);
+   }
+   div.downloads a.source {
+     background-image: url(source.png);
+     width: 64px;
+     min-height: 36px;
+   }
+   div.downloads a.docs {
+     background-image: url(docs.png);
+     width: 55px;
+     height: 57px;
+   }
+   
+   table.samples {
+     margin-top: 8px;
+     border-collapse: collapse;
+   }
+   table.samples th {
+     font-weight: bold;
+     text-align: left;
+   }
+   table.samples td:nth-child(1) {
+     width: 215px;
+   }
+   table.samples td:nth-child(2) {
+     min-width: 24px;
+   }
+   table.samples td:nth-child(3) {
+     min-width: 24px;
+   }
+   table.samples a.dry {
+     display: inline-block;
+     width: 20px;
+     height: 16px;
+     background: url(dry.png) center no-repeat;
+   }
+   table.samples a.wet {
+     display: inline-block;
+     width: 20px;
+     height: 16px;
+     background: url(wet.png) center no-repeat;
+   }
+
+   div.infobox input,textarea {
+     margin-top: 4px;
+     border: solid 2px #000;
+   }
+  </style>
+
+  <script>
+   function FullImage(f) {
+     // XXX improve!
+     window.location = f;
+   }
+  </script>
+
+</head>
+
+<div class="maincolumn">
+  <img class="title" src="title.png" alt="Super Destroy FX Plugins!">
+
+  <div class="infobox intro">
+    <h1><img alt="introducing Destroy FX" src="dfx-info.png"></h1>
+
+    <p>
+      <b>Hello.</b>  Super Destroy FX is a collection of
+      <a href="https://en.wikipedia.org/wiki/Audio_Units">Audio Units</a> and
+      <a href="https://en.wikipedia.org/wiki/Virtual_Studio_Technology">VST plugins</a>
+      by Sophia and
+      <a href="http://tom7.org/">Tom 7</a>.
+    </p>
+
+    <p>
+      These plugins are free for you and your friends to use. You can
+      use them for whatever you like, but we'd appreciate it if you:
+    </p>
+    <ul>
+      <li><a href="http://msg.spacebar.org/f/a/s/msg/disp/10">tell us</a> if you use them in a song
+	that you release</li>
+      <li>let others know where they can find this website</li>
+      <!-- <li><a href="donate.php">make a donation</a>, if you feel like these plugins are worth
+	   something to you</li>-->
+    </ul>
+
+    <p>
+      The <a href="source.php">source code</a> for some of these plugins (and many unfinished plugins) is available
+      for your perusal and modification.  You can also download complete project archives on this page.
+    </p>
+
+    <p>
+      Please direct your comments, suggestions, and questions to the
+      <a href="http://msg.spacebar.org/f/a/s/msg/disp/10">guestbook / message board</a>,
+      or <a href="#contact">email us</a>.
+    </p>
+
+    <p>
+      News and release infos are <a href="news.php">here</a>.
+      Installation instructions are <a href="faq.html#installation">here</a> (in our FAQ).
+      Answers to recurring questions can be found at our <a href="faq.html">FAQ</a> page.
+      Outdated versions of our software are archived in our <a href="museum.php">museum</a>.
+    </p>
+  </div>
+
+
+
+  <!-- quick links -->
+
+  <div class="infobox quicklinks">
+    <a href="news.php">news &amp; release infos</a> |
+    <a href="faq.html">FAQ</a> |
+    <a href="docs.php">documentation</a>
+    <br>
+    <a href="extras/">Extras</a> |
+    <a href="museum.php">Museum</a> |
+    <!--<a href="donate.php">donate</a> | -->
+    <a href="source.php">source code</a>
+    <br>
+    <a href="#contact">contact</a> |
+    <a href="http://msg.spacebar.org/f/a/s/msg/disp/10">message board</a> |
+    <a href="audiounits.html">Audio Units</a>
+    <br>
+    <a href="faq.html#installation">installation instructions</a> |
+    <a href="sysreq.php">system requirements</a>
+    <br>
+    <a href="#biz">for hire</a> |
+    <a href="http://smartelectronix.com/">Smartelectronix</a>
+  </div>
+
+  <!-- Audio Units -->
+
+  <div class="infobox">
+    <h1><img alt="Audio Units" src="dfx-audio-units.png"></h1>
+
+    <div class="twocolumn">
+      <div>
+	<a href="audiounits.html"><img src="au-logo.png" alt="AU Logo"></a>
+      </div>
+      <div>
+	We have Audio Unit versions of our plugins at our <a href="audiounits.html">Audio Units web page</a>.
+	They are mostly complete, but until they are 100% complete, we're going to keep them on a separate web
+	page.  They are universal binaries.
+      </div>
+    </div>
+  </div>
+
+  <style>
+
+  </style>
+
+  <div class="infobox plugin">
+    <h1><img alt="Geometer" src="dfx-geometer.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Geometer screenshot" src="geometer-small.png" onclick="FullImage('geometer.png')">
+	<div class="downloads">
+	  <a class="mac" href="software/geometer-mac.dmg" title="Geometer for mac"></a>
+	  <a class="win" href="software/geometer-win.zip" title="Geometer for windows"></a>
+	  <a class="oldmac" href="software/geometer-oldmac.sit" title="Geometer for old mac"></a>
+	  <a class="au" href="audiounits.html#geometer" title="Geometer Audio Unit"></a>
+	  <a class="source" href="software/geometer-source.tar.gz" title="Geometer source code"></a>
+	  <a class="docs" href="docs/geometer.html" title="Geometer docs"></a>
+	</div>
+      </div>
+      <div>
+	Geometer is a visually oriented waveform geometry plugin. It works by generating some "points" or
+	"landmarks" on the waveform, moving them around and messing them up, and then reassembling the wave from
+	the points. Each of these three stages can be done in a variety of ways, combining to make millions of
+	different effects. However, Geometer has a real-time display of what your settings are doing to the
+	sound, and a prominent built-in help system to explain what each setting does.
+
+	<table class="samples">
+	  <tr><th>Audio samples</th><th>dry</th><th>wet</th></tr>
+	  <tr>
+	    <td>Theme from shaskell</td>
+	    <td><a class="dry" href="audio/tom7=shaskell.mp3"></a></td>
+	    <td><a class="wet" href="audio/tom7=shaskellgeometer-8-10-02.mp3"></a></td>
+	  </tr>
+	  <tr>
+	    <td>Mainframes</td>
+	    <td><a class="dry" href="audio/mainframes-dry.mp3"></a></td>
+	    <td><a class="wet" href="audio/mainframes-excerpt.mp3"></a></td>
+	  </tr>
+	</table>
+      </div>
+    </div>
+  </div>
+
+  <div class="infobox plugin">
+    <h1><img alt="Scrubby" src="dfx-scrubby.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Scrubby screenshot" src="scrubby-small.png" onclick="FullImage('scrubby.png')">
+	<div class="downloads">
+	  <a class="mac" href="software/scrubby-mac.dmg" title="Scrubby for mac"></a>
+	  <a class="win" href="software/scrubby-win.zip" title="Scrubby for windows"></a>
+	  <a class="oldmac" href="software/scrubby-oldmac.sit" title="Scrubby for old mac"></a>
+	  <a class="au" href="audiounits.html#scrubby" title="Scrubby Audio Unit"></a>
+	  <a class="source" href="software/scrubby-source.tar.gz" title="Scrubby source code"></a>
+	  <a class="docs" href="docs/scrubby.html" title="Scrubby docs"></a>
+	</div>
+      </div>
+      <div>
+	<!--      PrintCurrentSoftwareVersion("1.0", "2002-07-08"); -->
+	Scrubby goes zipping around through time. Speeding up or slowing down playback, moving
+	backwards or forwards, Scrubby does whatever it takes to reach its destinations on
+	time. If necessary, you can discipline Scrubby by using pitch constraint control, and
+	of course you have a choice between robot mode and DJ mode.
+
+	<table class="samples">
+	  <tr><th>Audio samples</th><th>dry</th><th>wet</th></tr>
+	  <tr>
+	    <td>nighttime</td>
+	    <td><a class="dry" href="audio/nighttime-clean-sounds.mp3"></a></td>
+	    <td><a class="wet" href="audio/nighttime-excerpt.mp3"></a></td>
+	  </tr>
+	  <tr>
+	    <td>Bigger Or Not</td>
+	    <td><a class="dry" href="audio/bigger-or-not-dry.mp3"></a></td>
+	    <td><a class="wet" href="audio/bigger-or-not-excerpt.mp3"></a></td>
+	  </tr>
+	</table>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="infobox plugin">
+    <h1><img alt="Buffer Override" src="dfx-bufferoverride.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Buffer Override screenshot" src="bufferoverride-small.png" onclick="FullImage('bufferoverride.png')">
+	<div class="downloads">
+	  <a class="mac" href="software/bufferoverride-mac.dmg" title="Buffer Override for mac"></a>
+	  <a class="win" href="software/bufferoverride-win.zip" title="Buffer Override for windows"></a>
+	  <a class="oldmac" href="software/bufferoverride-oldmac.sit" title="Buffer Override for old mac"></a>
+	  <a class="au" href="audiounits.html#bufferoverride" title="Buffer Override Audio Unit"></a>
+	  <a class="source" href="software/bufferoverride-source.tar.gz" title="Buffer Override source code"></a>
+	  <a class="docs" href="docs/bufferoverride.html" title="Buffer Override docs"></a>
+	</div>
+      </div>
+      <div>
+	<!--      PrintCurrentSoftwareVersion("2.0", "2002-07-08"); -->
+	Buffer Override can overcome your host app's audio processing buffer size and then
+	(unsuccessfully) override that new buffer size to be a smaller buffer size. It makes a
+	lot more sense if you just try it out and hear what it does. It can sound like a
+	stuttery vocoder or a stuck beat shuffler or many other delightful things. In certain
+	hosts, you can also "play" Buffer Override via MIDI notes and even sync it to song
+	tempo.
+
+	<table class="samples">
+	  <tr><th>Audio samples</th><th>dry</th><th>wet</th></tr>
+	  <tr>
+	    <td>The Ballad of Buffer Override</td>
+	    <td>&nbsp;</td>
+	    <td><a class="wet" href="audio/ballad-of-buffer-override.mp3"></a></td>
+	  </tr>
+
+	  <tr>
+	    <td>Skeletor Pro|24</td>
+	    <td><a class="dry" href="audio/skeletor-pro24-dry.mp3"></a></td>
+	    <td><a class="wet" href="audio/skeletor-pro24-bo.mp3"></a></td>
+	  </tr>
+	  <tr>
+	    <td>BO beat sync</td>
+	    <td><a class="dry" href="audio/bo-beat-sync-example-dry.mp3"></a></td>
+	    <td><a class="wet" href="audio/bo-beat-sync-example-wet.mp3"></a></td>
+	  </tr>
+	</table>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="infobox plugin">
+    <h1><img alt="Transverb" src="dfx-transverb.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Transverb screenshot" src="transverb-small.png" onclick="FullImage('transverb.png')">
+	<div class="downloads">
+	  <a class="mac" href="software/transverb-mac.dmg" title="Transverb for mac"></a>
+	  <a class="win" href="software/transverb-win.zip" title="Transverb for windows"></a>
+	  <a class="oldmac" href="software/transverb-oldmac.sit" title="Transverb for old mac"></a>
+	  <a class="au" href="audiounits.html#transverb" title="Transverb Audio Unit"></a>
+	  <a class="source" href="software/transverb-source.tar.gz" title="Transverb source code"></a>
+	  <a class="docs" href="docs/transverb.html" title="Transverb docs"></a>
+	</div>
+      </div>
+      <div>
+	<!-- PrintCurrentSoftwareVersion("1.4", "2002-07-08");-->
+
+	Transverb is like a delay plugin, but it can play back the delay buffer at different
+	speeds. Think of it like a tape loop with two independently-moving read heads that go
+	this way and that. There are lots of parameters to control and a parameter randomizer
+	for the impatient. Enable TOMSOUND for an instant sonic upgrade (audiophiles only!).
+
+	<table class="samples">
+	  <tr><th>Audio samples</th><th>dry</th><th>wet</th></tr>
+	  <tr>
+	    <td>Glup Drums</td>
+	    <td><a class="dry" href="audio/unglup-beat.mp3"></a></td>
+	    <td><a class="wet" href="audio/glup-beat.mp3"></a></td>
+	  </tr>
+
+	  <tr>
+	    <td>SSt. Thomas Aquinas</td>
+	    <td><a class="dry" href="audio/aquinas-dry.mp3"></a></td>
+	    <td><a class="wet" href="audio/transverb-demo-aquinas.mp3"></a></td>
+	  </tr>
+	  <tr>
+	    <td>I, Transverb</td>
+	    <td><a class="dry" href="audio/i-resign.mp3"></a></td>
+	    <td><a class="wet" href="audio/tom7=09-02-01-i-transverb.mp3"></a></td>
+	  </tr>
+	</table>
+      </div>
+    </div>
+  </div>
+
+  <div class="infobox plugin">
+    <h1><img alt="Rez Synth" src="dfx-rezsynth.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Rez Synth screenshot" src="rezsynth-small.png" onclick="FullImage('rezsynth.png')">
+	<div class="downloads">
+	  <a class="mac" href="software/rezsynth-mac.dmg" title="Rez Synth for mac"></a>
+	  <a class="win" href="software/rezsynth-win.zip" title="Rez Synth for windows"></a>
+	  <a class="oldmac" href="software/rezsynth-oldmac.sit" title="Rez Synth for old mac"></a>
+	  <a class="au" href="audiounits.html#rezsynth" title="Rez Synth Audio Unit"></a>
+	  <a class="source" href="software/rezsynth-source.tar.gz" title="Rez Synth source code"></a>
+	  <a class="docs" href="docs/rezsynth.html" title="Rez Synth docs"></a>
+	</div>
+      </div>
+      <div>
+	<!-- PrintCurrentSoftwareVersion("1.2", "2002-07-08");--> 
+
+	Rez Synth allows you to "play" resonant bandpass filter banks that process your sound.
+	In the right hosts, MIDI notes can trigger individual filters or banks of filters (up
+	to 30 per note) with controllable frequency separation.
+
+	<table class="samples">
+	  <tr><th>Audio samples</th><th>dry</th><th>wet</th></tr>
+	  <tr>
+	    <td>Hrvatski Break</td>
+	    <td><a class="dry" href="audio/hrvatski.break.original.mp3"></a></td>
+	    <td><a class="wet" href="audio/hrvatski.break.rezsynth.mp3"></a></td>
+	  </tr>
+	</table>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="infobox plugin">
+    <h1><img alt="Skidder" src="dfx-skidder.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Skidder screenshot" src="skidder-small.png" onclick="FullImage('skidder.png')">
+	<div class="downloads">
+	  <a class="mac" href="software/skidder-mac.dmg" title="Skidder for mac"></a>
+	  <a class="win" href="software/skidder-win.zip" title="Skidder for windows"></a>
+	  <a class="oldmac" href="software/skidder-oldmac.sit" title="Skidder for old mac"></a>
+	  <a class="au" href="audiounits.html#skidder" title="Skidder Audio Unit"></a>
+	  <a class="source" href="software/skidder-source.tar.gz" title="Skidder source code"></a>
+	  <a class="docs" href="docs/skidder.html" title="Skidder docs"></a>
+	</div>
+      </div>
+      <div>
+	<!--      PrintCurrentSoftwareVersion("1.4", "2002-07-08"); -->
+	
+	Skidder turns your sound on and off. While that may not sound very rewarding, you have
+	a great deal of control over the rate, pulsewidth, on/off slope, panning width, etc.
+	You can also relinquish some control to randomization. Skidder can also sync with your
+	song's tempo and can be triggered by MIDI notes.
+
+	<table class="samples">
+	  <tr><th>Audio samples</th><th>dry</th><th>wet</th></tr>
+	  <tr>
+	    <td>Ultra-Corrosion</td>
+	    <td><a class="dry" href="audio/ulra-corrosion-excerpt.mp3"></a></td>
+	    <td><a class="wet" href="audio/ultra-corrosion-skidded.mp3"></a></td>
+	  </tr>
+	</table>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="infobox">
+    <h1><img alt="Extras" src="dfx-extras.png"></h1>
+   
+    We also have more plugins. They're on <a href="extras/">another page</a>.  They're not as
+    exciting as the stuff here on our main page.  They're for <a href="extras/">extra stuff</a> 
+    aficionados (people looking for handy little things, stupid gimmicks, etc.).
+  </div>
+
+  <div class="infobox">
+    <h1><img alt="Consulting" src="dfx-consulting.png"></h1>
+
+    The Destroy FX team is not currently available for hire, but here are projects that we have done:
+    
+    <div class="twocolumn gig">
+      <div><a href="http://sfxmachine.com/"><img src="sfx-small.png" alt="SFX Machine RT"></a></div>
+      <div>
+	<a href="http://sfxmachine.com/">SFX Machine RT</a> - A cool multi-effects audio suite
+	capable of very unique, bizarre, and wonderful sound mangling. Sophia did the real-time
+	update of this plugin for Audio Unit and VST formats. Sophia also developed the
+	Backwards Machine plugin.
+      </div>
+    </div>
+
+    <div class="twocolumn gig">
+      <div><a href="http://cycling74.com/"><img src="pluggo-small.jpg" alt="Pluggo"></a></div>
+      <div>
+	<a href="http://cycling74.com/">Pluggo</a> - The never ending plugin. Pluggo is a
+	collection of 100+ unusual and great effects and instruments. Plus, it also lets you
+	turn your Max/MSP creations into plugins that you can use in other apps. Sophia did the
+	Audio Unit update for Pluggo (plus a bit of work on Max/MSP).
+      </div>
+    </div>
+
+    <div class="twocolumn gig">
+      <div>
+
+      </div>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="twocolumn gig">
+      <div>
+
+      </div>
+      <div>
+
+      </div>
+    </div>
+
+    <div class="twocolumn gig">
+      <div><a href="http://ursplugins.com/"><img src="urs-logo-small.jpg" alt="URS"></a></div>
+      <div>
+	<a href="http://ursplugins.com/">URS Classic Console Plug-Ins</a> - These are faithful,
+	high-end models of classic hardware equalizers and compressors. Sophia did the Audio
+	Unit and VST versions of all of their plugins as well as the RTAS/AudioSuite versions
+	of a some of them.
+      </div>
+    </div>
+
+    <div class="twocolumn gig">
+      <div><a href="http://abbeyroadplugins.com/"><img src="abbeyroad.png" alt="Abbey Road"></a></div>
+      <div>
+	<a href="http://abbeyroadplugins.com/">Abbey Road Plug-Ins</a> - These are authentic
+	recreations of Abbey Road Studios equipment. Sophia did the Audio Unit and VST versions
+	of most of their plugins.
+      </div>
+    </div>
+    
+    <div class="twocolumn gig">
+      <div><a href="http://refusesoftware.com/"><img src="refuse-logo.png" alt="reFuse Software"></a></div>
+      <div>
+	<a href="http://refusesoftware.com/">reFuse Software</a> - Sophia did the native Audio
+	Unit, VST, and RTAS versions of their Lowender subharmonic bass synthesizer plugin.
+      </div>
+    </div>
+  </div>
+
+  <!--
+  <div class="infobox">
+    <h1><img src="dfx-contact.png" alt="Contact"></h1>
+
+    You can use this form to send us an email.
+    Please consider looking at our <a href="faq.html">Frequently Asked Questions</a> page first, though.
+
+    <form action="unimplemented">
+      <input type="hidden" name="sendemail" value="1">
+      <table class="fullwidth">
+	<tr><td><input class="singleline" type="text" name="emailsendername"></td><th>name</th></tr>
+	<tr><td><input class="singleline" type="text" name="emailsenderaddress"></td><th>email</th></tr>
+	<tr><td><input class="singleline" type="text" name="emailsubject"></td><th>subject</th></tr>
+	<tr><td><input class="singleline" type="text" name="emailsenderurl"></td><th>url</th></tr>
+	<tr><td colspan="2"><textarea style="width:321px" name="emailmessage" rows="15" cols="22"></textarea></td><th>&nbsp;</th></tr>
+	<tr><td><input type="submit" style="width:100px ; height:22px" value="Send"></td><th>send</th></tr>
+      </table>
+    </form>
+  </div>
+  -->
+  
+  <div class="infobox">
+    <h1><img src="dfx-list.png" alt="E-mail list"></h1>
+
+    <form action="http://spacebar.org/f/a/list/add" method="post">
+      <input type="hidden" name="list" value="1">
+      <br><input type="text" name="name" maxlength="128"> &larr; your name
+      <br><input type="text" name="email" maxlength="128"> &larr; your e-mail
+      <br><input type="submit" value="Join!">
+    </form>
+    
+    <p>Join the Destroy FX mailing list to be alerted of new plugin releases. It's low traffic,
+      easy to sign up, and we'll never give your name or email address out to anyone, for any
+      reason.</p>
+  </div>
+
+  <div class="infobox" id="smexlinks">
+    Although it is mostly defunct today, Destroy FX was part of the <a href="http://smartelectronix.com/">Smartelectronix</a> 
+    collective during its heyday. Say hello to the other members or their 404 pages:
+    <a href="http://alex.smartelectronix.com/">Alex</a>,
+    <a href="http://antti.smartelectronix.com/">Antti</a>,
+    <a href="http://bram.smartelectronix.com/">Bram</a>,
+    <a href="http://dmi.smartelectronix.com/">dmi</a>,
+    <a href="http://dunk.smartelectronix.com/">dunk</a>,
+    <a href="http://andreas.smartelectronix.com/">ioplong</a>,
+    <a href="http://jaha.smartelectronix.com/">Jaha</a>,
+    <a href="http://koen.smartelectronix.com/">Koen</a>,
+    <a href="http://magnus.smartelectronix.com/">Magnus</a>,
+    <a href="http://mda.smartelectronix.com/">mda</a>,
+    <a href="http://mdsp.smartelectronix.com/">mdsp</a>,
+    <a href="http://deadskinboy.com/">Sean</a>
+  </div>
+
+  <!-- main column -->
+</div>
+
+</body>
