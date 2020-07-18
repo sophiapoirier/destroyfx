@@ -29,9 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguieditor.h"
 
-
-namespace
-{
+using DGFontTweaks = internal::DGFontTweaks;
 
 //-----------------------------------------------------------------------------
 static bool DFXGUI_GenericValueToTextProc(float inValue, char outTextUTF8[], void* /*inUserData*/)
@@ -69,7 +67,8 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 }
 
 //-----------------------------------------------------------------------------
-static void DFXGUI_ConfigureTextDisplay(VSTGUI::CTextLabel* inTextDisplay, 
+// Constructor-time setup. Returns computed font tweaks enum to be saved for draw-time tweaking.
+static DGFontTweaks DFXGUI_ConfigureTextDisplay(VSTGUI::CTextLabel* inTextDisplay, 
 										DGRect const& inRegion, DGImage* inBackgroundImage, 
 										dfx::TextAlignment inTextAlignment, 
 										float inFontSize, DGColor inFontColor, char const* inFontName)
@@ -84,10 +83,17 @@ static void DFXGUI_ConfigureTextDisplay(VSTGUI::CTextLabel* inTextDisplay,
 		inTextDisplay->setFont(fontDesc);
 	}
 
-	bool const isSnootPixel10 = inFontName && (strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0);
-	if (isSnootPixel10)
+	const DGFontTweaks fontTweaks = inFontName && strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0 ?
+	  DGFontTweaks::SNOOTORGPX10 : DGFontTweaks::NONE;
+
+	switch (fontTweaks)
 	{
-		// XXX a hack for this font
+	case DGFontTweaks::NONE:
+		inTextDisplay->setAntialias(true);
+		break;
+	case DGFontTweaks::SNOOTORGPX10:
+		inTextDisplay->setAntialias(false);	  
+		#if TARGET_OS_MAC
 		if (inTextAlignment == dfx::TextAlignment::Left)
 		{
 			inTextDisplay->setTextInset({-1.0, 0.0});
@@ -96,25 +102,29 @@ static void DFXGUI_ConfigureTextDisplay(VSTGUI::CTextLabel* inTextDisplay,
 		{
 			inTextDisplay->setTextInset({-2.0, 0.0});
 		}
+		#endif
 	}
-	inTextDisplay->setAntialias(!isSnootPixel10);
+	return fontTweaks;
 }
 
 //-----------------------------------------------------------------------------
-static DGRect DFXGUI_GetTextDrawRegion(VSTGUI::CTextLabel* inTextDisplay, DGRect const& inRegion)
+static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks fontTweaks, DGRect const& inRegion)
 {
 	auto textArea = inRegion;
-	if (inTextDisplay->getFont()->getName() == dfx::kFontName_SnootPixel10)
+	switch (fontTweaks)
 	{
-		textArea.offset(0, -2);
+	case DGFontTweaks::SNOOTORGPX10:
+		#if TARGET_OS_MAC
+	  	textArea.offset(0, -2);
+		#endif
 		textArea.setHeight(textArea.getHeight() + 2);
 		textArea.makeIntegral();
+		break;
+	default:
+		break;
 	}
 	return textArea;
 }
-
-}  // namespace
-
 
 
 #pragma mark -
@@ -137,7 +147,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 	mValueToTextProc(inTextProc ? inTextProc : DFXGUI_GenericValueToTextProc),
 	mValueToTextUserData(inUserData ? inUserData : this)
 {
-	DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
+	mFontTweaks = DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
 
 	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this, 
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -202,7 +212,7 @@ void DGTextDisplay::refreshText()
 //-----------------------------------------------------------------------------
 void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
-	auto const textArea = DFXGUI_GetTextDrawRegion(this, inRegion);
+	auto const textArea = DFXGUI_GetTextDrawRegion(mFontTweaks, inRegion);
 	VSTGUI::CTextEdit::drawPlatformText(inContext, inString, textArea);
 }
 
@@ -235,7 +245,23 @@ bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& o
 	return success;
 }
 
-
+//-----------------------------------------------------------------------------
+// This is called by VSTGUI when the text display transitions to the platform's text
+// editor. On windows, we move the text editor up so that it lands where the text
+// label was. (XXX presumably there is a less hacky way to do this??)
+VSTGUI::CRect DGTextDisplay::platformGetSize() const {
+	VSTGUI::CRect rect = DGControl<VSTGUI::CTextEdit>::platformGetSize();
+	switch (mFontTweaks) {
+	case DGFontTweaks::SNOOTORGPX10:
+		#if TARGET_OS_WIN32
+		rect.top -= 3;
+		#endif
+		break;
+	default:
+		break;
+	}
+	return rect;
+};
 
 
 
@@ -249,7 +275,7 @@ DGStaticTextDisplay::DGStaticTextDisplay(DGRect const& inRegion, DGImage* inBack
 										 DGColor inFontColor, char const* inFontName)
 :	DGControl<VSTGUI::CTextLabel>(inRegion, nullptr, inBackgroundImage)
 {
-	DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
+	mFontTweaks = DFXGUI_ConfigureTextDisplay(this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
 
 	setMouseEnabled(false);
 }
@@ -275,11 +301,11 @@ void DGStaticTextDisplay::setCFText(CFStringRef inText)
 //-----------------------------------------------------------------------------
 void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
-	auto const textArea = DFXGUI_GetTextDrawRegion(this, inRegion);
+	auto const textArea = DFXGUI_GetTextDrawRegion(mFontTweaks, inRegion);
 	VSTGUI::CTextLabel::drawPlatformText(inContext, inString, textArea);
 }
 
-
+  
 
 
 
