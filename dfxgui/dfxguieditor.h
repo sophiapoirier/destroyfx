@@ -172,8 +172,12 @@ public:
 	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
 	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
 
+	// Adds the control to mControlsList, only if attached to a parameter (why?).
+	// Always returns its argument.
 	IDGControl* addControl(IDGControl* inControl);
-	// in-place constructor variant that instantiates the control in addition to adding it
+	// In-place constructor variant that instantiates the control in addition to adding it.
+	// XXX Note that DFXGuiEditor does not delete these (might be an oversight?) so the
+	// pointer is owned by the caller?
 	template <typename T, typename... Args>
 	T* emplaceControl(Args&&... args)
 	{

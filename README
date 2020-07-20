@@ -11,12 +11,12 @@ plugins, so all of these are written in C++. You'll need a C++
 compiler for your platform in order to compile them. You'll also need
 an appropriate version of the VST SDK (for VST) or CoreAudio SDK (for
 Audio Unit). Right now, this means that you'll be able to easily
-compile with Visual C++ for Windows and with Xcode for Mac, and that
-it may be more difficult for any other platform. Warning: Our source
-code repository often drifts out of date so that builds do not work;
-sorry about this. The windows builds are especially old. Tom doesn't
-use Visual Studio anymore and is half-heartedly attempting to make
-this stuff compile with the free mingw toolchain (GCC).
+compile Xcode for Mac, and that it may be more difficult for any other
+platform. Warning: Our source code repository often drifts out of date
+so that builds do not work; sorry about this. The windows builds are
+especially old. Tom doesn't use Visual Studio anymore and is
+attempting to make this stuff compile with the free mingw toolchain
+(GCC).
 
 These plugins are Copyright (c) Tom Murphy 7 and Sophia Poirier. You
 can use them in your music however you like, without royalties. You
@@ -193,6 +193,35 @@ the places where the Developer Tools installer puts them.  If you've
 moved those files, you'll need to change the paths in the project 
 settings.
 
+for building 64-bit Windows DLLs:
+(Note: This is in progress as of summer 2020, and doesn't completely
+work yet.)
+Tom is using mingw-x86_64 now, which is GCC targeting windows 64. It's
+free software. I use it installed through cygwin (64), which is a
+compatibility shim between unix and windows APIs. I recommend against
+the cygwin compilers (e.g. "g++") unless you're trying to compile
+software written for unix (Destroy FX plugins are not). mingw-x86_64
+instead uses the native windows api (#include "windows.h" etc.) and
+generates native windows binaries that don't depend on cygwin. Cygwin
+here just helps us install and update mingw-x86_64, and also provides
+useful unix tools like bash, make, etc.
+
+From bash, you should be able to just run 'make' from e.g.
+transverb/win32 (or I run 'make -j 30' to run 30 parallel processes)
+and produce dfx-transverb-64.dll.
+
+It may also be possible to cross-compile windows DLLs from other
+platforms. I think it is possible to install mingw on say, linux, and
+the build process shouldn't need to run anything other than the
+compiler, resource compiler, and linker. I haven't tried it, though.
+
+We are using C++17 features in DFX now, so you might need a pretty
+new compiler. This is known to work:
+
+$ x86_64-w64-mingw32-g++ --version
+x86_64-w64-mingw32-g++ (GCC) 9.2.0
+
+
 for building VST Mac CFM versions:
 (note:  This section is legacy cuz we don't use CodeWarrior or build 
 CFM versions anymore and therefore don't maintain those associated 
@@ -215,6 +244,12 @@ defines.  With our prefix files, those that end in def.h are for
 "Classic" (InterfaceLib) builds and defcarbon.h are for Carbon CFM
 builds.
 
+
+You will also need the vstgui library to compile the UIs for these
+plugins. We put this in a directory called "vstgui" next to the
+destroyfx repository (it then contains another directory called
+"vstgui"). VSTGUI is free and open source; you can just check it
+out from github: https://github.com/steinbergmedia/vstgui
 
 
 Here is a description of each of the remaining directories in the

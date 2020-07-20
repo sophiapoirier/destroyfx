@@ -236,7 +236,7 @@ public:
 	// ***
 	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long inNumParameters, long inNumPresets = 1);
 	// ***
-	virtual ~DfxPlugin() = default;
+	~DfxPlugin() override;
 
 	void do_PostConstructor();
 	// ***
@@ -600,8 +600,13 @@ public:
 	void getpluginname(char* outText) const;
 	long getpluginversion() const;
 
+	// Register a smoothed value with the given owner. Values can be updated en masse
+	// by incrementSmoothedAudioValues, and are automatically snapped to their target values
+	// after a reset.
 	void registerSmoothedAudioValue(dfx::ISmoothedValue* smoothedValue, DfxPluginCore* owner = nullptr);
+	// Here, nullptr means "the ones with owner == nullptr".
 	void unregisterAllSmoothedAudioValues(DfxPluginCore* owner);
+	// Here, nullptr means "all of them".
 	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr);
 
 	void do_idle();

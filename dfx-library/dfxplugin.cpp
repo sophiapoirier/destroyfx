@@ -272,6 +272,24 @@ void DfxPlugin::do_PreDestructor()
 	// so we need to call this manually here
 	do_cleanup();
 #endif
+
+#ifdef TARGET_API_VST
+#if TARGET_PLUGIN_HAS_GUI
+	// The destructor of AudioEffect will delete editor if it's non-null, but
+	// it looks like DfxGuiEditor wants to be able to still access the effect
+	// during its own destructor. Maybe it's just wong that it's doing that,
+	// but if not, then we should destroy the editor now before the effect
+	// instance becomes invalid.
+	if (auto *e = editor) {
+		setEditor(nullptr);
+		delete e;
+	}
+#endif
+#endif
+}
+
+
+DfxPlugin::~DfxPlugin() {
 }
 
 
@@ -316,6 +334,9 @@ void DfxPlugin::do_cleanup()
 #ifdef TARGET_API_VST
 	if (!mIsInitialized)
 	{
+		// This is normal if resume() is never called (because
+		// we initialize on the first resume()), which happens
+		// e.g. in Cakewalk when it probes plugins on startup.
 		return;
 	}
 #endif
