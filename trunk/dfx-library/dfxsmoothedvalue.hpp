@@ -21,7 +21,7 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
-This is our class for doing all kinds of fancy plugin parameter stuff.
+This is our class for doing interpolation of values over time.
 ------------------------------------------------------------------------*/
 
 
@@ -67,6 +67,9 @@ void dfx::SmoothedValue<T>::setValue(T inTargetValue) noexcept
 		}
 		mTargetValue = inTargetValue;
 		mValueStep = (mSmoothDur_samples > 0) ? ((mTargetValue - mCurrentValue) / static_cast<T>(mSmoothDur_samples)) : T(0);
+		// XXX if mSmoothDur_samples is 0, shouldn't we set mCurrentValue
+		// right now? This would need another call to inc(), but the next line
+		// suggests that setValue also includes one "inc" for free.
 		mCurrentValue += mValueStep;
 		mSmoothCount = 0;
 	}
@@ -105,6 +108,9 @@ void dfx::SmoothedValue<T>::inc() noexcept
 	}
 	if (isSmoothing())
 	{
+		// XXX For long smoothing times this could be accumulating significant
+		// error (and then jumping once we hit mSmoothDur_samples. Would be
+		// better (but slower) to compute this as like ((1 - f) * old) + (f * new).
 		mCurrentValue += mValueStep;
 	}
 	else
