@@ -15,16 +15,15 @@ DFXGUI=../../dfxgui
 VSTGUI=../../../vstgui/vstgui
 
 # WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
-DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_API_VST -DENABLE_TRACE=1
+#  -DENABLE_TRACE=1
+DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32 -DTARGET_API_VST
 INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../transverbdef.h"
 CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
-# mwindows to select the GUI subsystem (not console)
-# -s to strip symbols (that aren't exported). This causes 'file' to say something
-# different than my working reference dll, so left off for now.
+# -mwindows to select the GUI subsystem (not console)
+# -s (strip unexported symbols) for release! 18mb DLL unstripped, 2.5mb stripped.
 # -static-libgcc and -static-libstdc++ avoid having the output depend on these mingw DLLs.
-LFLAGS=-m64 -shared -mwindows -static-libgcc -static-libstdc++
+LFLAGS=-m64 -shared -mwindows -static-libgcc -static-libstdc++ -s
 
-# $(DFXLIB)/multikick.o  $(DFXLIB)/vstchunk.o $(DFXLIB)/dfxguimulticontrols.o
 DFXLIB_OBJECTS=$(DFXLIB)/dfxmisc.o  $(DFXLIB)/dfxmidi.o $(DFXLIB)/firfilter.o $(DFXLIB)/iirfilter.o $(DFXLIB)/dfxenvelope.o $(DFXLIB)/dfxplugin.o $(DFXLIB)/dfxparameter.o $(DFXLIB)/dfxplugin-vst.o $(DFXLIB)/dfxsettings.o
 
 VSTSDK_OBJECTS=$(VSTSDK)/pluginterfaces/vst2.x/audioeffect.o $(VSTSDK)/pluginterfaces/vst2.x/audioeffectx.o $(VSTSDK)/pluginterfaces/vst2.x/vstplugmain.o
@@ -47,8 +46,7 @@ PTHREAD_OBJECTS=$(MINGWLIB)/libwinpthread.a
 VSTGUI_DEP_OBJECTS=$(MINGWLIB)/libopengl32.a $(MINGWLIB)/libole32.a $(MINGWLIB)/libd2d1.a $(MINGWLIB)/libdwrite.a $(MINGWLIB)/libshlwapi.a $(MINGWLIB)/libwindowscodecs.a $(MINGWLIB)/libuuid.a $(MINGWLIB)/libdwmapi.a
 
 
-# embed png files. XXX this is an untested port from the old msvc code, and they used to be bmps.
-# might need to do something custom?
+# embed png files.
 resources.o : resources.rc ../gui/graphics/*
 	$(WINDRES) -i resources.rc -o $@
 
@@ -71,18 +69,6 @@ load.exe : load.o $(PTHREAD_OBJECTS)
 install : dfx-transverb-64.dll
 	rm -f /d/cakewalk_bandlab/vst/dfx-transverb-64.dll
 	cp dfx-transverb-64.dll /d/cakewalk_bandlab/vst/
-
-# 
-# rc transverb.rc
-# 
-# cl  /FD  /MD  /O2 /Ot /Og /Oi /Oy /Gs /GD /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "USING_HERMITE" /I..\transverb\gui\ /I..\transverb\ /I..\vstsdk\ /I..\dfx-library\ /LD /D "TRANSVERB_EXPORTS" ..\transverb\transverbformalities.cpp ..\transverb\transverbprocess.cpp ..\transverb\GUI\transverbedit.cpp ..\transverb\GUI\transverbeditor.cpp ..\transverb\GUI\transverbeditmain.cpp   /c
-# 
-# link kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"transverb.pdb" /machine:I386 /def:".\transverb.def" /out:"C:\Progra~1\Steinberg\VstPlugIns\DFX Transverb.dll" /implib:"transverb.lib" transverbformalities.obj transverbprocess.obj transverbedit.obj transverbeditmain.obj transverbeditor.obj dfxgui.obj dfxmisc.obj multikick.obj vstchunk.obj vstmidi.obj dfxguimulticontrols.obj audioeffect.obj audioeffectx.obj iirfilter.obj firfilter.obj transverb.res ..\vstsdk_win32\vstgui.lib
-# 
-# del *.obj
-# 
-
-
 
 clean :
 	rm -f $(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(OBJECTS)
