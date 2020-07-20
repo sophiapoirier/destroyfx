@@ -28,7 +28,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "firfilter.h"
 
 
-
 // these are macros that do boring entry point stuff for us
 DFX_EFFECT_ENTRY(Transverb)
 #if TARGET_PLUGIN_USES_DSPCORE
@@ -77,8 +76,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initPresets();
 
   speedModeStates.fill(kSpeedMode_Fine);
-
-
+  
 #if TARGET_PLUGIN_USES_DSPCORE
   initCores<TransverbDSP>();
 #endif
@@ -92,6 +90,7 @@ void Transverb::dfx_PostConstructor() {
   getsettings().setAllowPitchbendEvents(true);
   getsettings().setAllowNoteEvents(true);
 #endif
+
 }
 
 
@@ -111,6 +110,7 @@ TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
   registerSmoothedAudioValue(&mix2);
   registerSmoothedAudioValue(&feed2);
 }
+
 
 void TransverbDSP::reset() {
 
@@ -143,6 +143,7 @@ void TransverbDSP::clearbuffers() {
 
 void TransverbDSP::releasebuffers() {
 
+  MAXBUF = 0;
   buf1.clear();
   buf2.clear();
 }
