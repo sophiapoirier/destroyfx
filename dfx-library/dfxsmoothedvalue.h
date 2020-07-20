@@ -21,7 +21,7 @@ along with Destroy FX Library.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 
 Destroy FX is a sovereign entity comprised of Sophia Poirier and Tom Murphy 7.  
-This is our class for doing all kinds of fancy plugin parameter stuff.
+This is our class for doing interpolation of values over time.
 ------------------------------------------------------------------------*/
 
 #pragma once
@@ -38,6 +38,9 @@ namespace dfx
 
 
 //-----------------------------------------------------------------------------
+// A smoothed floating point value (T = float or double).
+// The value is linearly interpolated for the given number of seconds.
+// Client indicates the passage of time manually by calling inc() each sample.
 template <typename T>
 class SmoothedValue final : public ISmoothedValue
 {
@@ -46,6 +49,7 @@ public:
 
 	void setValue(T inTargetValue) noexcept;
 	void setValueNow(T inValue) noexcept;
+	// Immediately snap to the target value.
 	void snap() noexcept override;
 	T getValue() const noexcept
 	{
@@ -53,6 +57,7 @@ public:
 	}
 
 	bool isSmoothing() const noexcept override;
+	// Advance one sample.
 	void inc() noexcept override;
 
 	void setSmoothingTime(double inSmoothingTimeInSeconds) override;
@@ -61,12 +66,15 @@ public:
 	SmoothedValue<T>& operator=(T inValue) noexcept;
 
 private:
-	T mCurrentValue, mTargetValue;
-	T mValueStep;
-	double mSmoothDur_seconds;
-	size_t mSmoothDur_samples, mSmoothCount;
-	double mSampleRate;
-	bool mReinitialize;
+	T mCurrentValue{}, mTargetValue{};
+	T mValueStep{};
+  	// PERF: Probably the smoothing parameters should be type T, so
+	// that we do float operations on float? Note we have to accept
+	// double arguments to implement ISmoothedValue.
+	double mSmoothDur_seconds = 0.0;
+	size_t mSmoothDur_samples = 0, mSmoothCount = 0;
+	double mSampleRate = 0.0;
+	bool mReinitialize = false;
 };
 
 
