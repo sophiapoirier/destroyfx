@@ -51,7 +51,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 
 
-
 #ifdef TARGET_API_AUDIOUNIT
 static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, UInt64 inEventHostTime, Float32 inParameterValue);
 #endif
@@ -102,6 +101,11 @@ DfxGuiEditor::~DfxGuiEditor()
 	}
 
 #if TARGET_PLUGIN_USES_MIDI
+	// XXX: This is possibly bogus, because it's accessing the effect
+	// instance, but in VST the effect's destructor calls the editor's
+	// destructor, so if we got here that way, the effect is already
+	// ill-defined. (DfxPlugin now explicitly deletes the editor before its
+	// destructor runs, so we don't use the problematic destructor order.)
 	setmidilearning(false);
 #endif
 
@@ -133,12 +137,17 @@ DfxGuiEditor::~DfxGuiEditor()
 bool DfxGuiEditor::open(void* inWindow)
 {
 	// !!! always call this !!!
-	auto const baseSuccess = TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
-	if (!baseSuccess)
+	// In VST, this always returns false (not clear whether that is
+	// intended), so don't treat that as an error.
+#ifdef TARGET_API_VST
+	(void)TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
+#else
+	if (!TARGET_API_EDITOR_BASE_CLASS::open(inWindow))
 	{
 		return baseSuccess;
 	}
-
+#endif
+	
 	mControlsList.clear();
 
 	frame = new VSTGUI::CFrame(VSTGUI::CRect(rect.left, rect.top, rect.right, rect.bottom), this);
@@ -252,7 +261,6 @@ bool DfxGuiEditor::open(void* inWindow)
 	// it will steal the mouse observer role (we can still forward to it)
 	// (though that no longer seems to apply with VSTGUI 4)
 	frame->registerMouseObserver(this);
-
 
 	mEditorOpenErr = OpenEditor();
 	if (mEditorOpenErr != dfx::kStatus_NoError)
