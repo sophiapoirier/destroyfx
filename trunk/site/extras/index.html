@@ -1,0 +1,325 @@
+
+<!doctype html>
+<head>
+  <title>Destroy FX Extras: Handies &amp; Stupids</title>
+  <link rel="stylesheet" type="text/css" href="../dfx.css">
+  <style>
+   body {
+     background-color: #60418e;
+   }
+   .maincolumn {
+     background-color: #6a479c;
+     width: 420px;
+   }
+   
+   /* XXX maybe this should be shared with ../index.html, though
+      note that image URLs would need to be absolute (or inlined) */
+   
+   /* Two-column layout for e.g. plugin */
+   div.twocolumn {
+     display: flex;
+   }
+   div.twocolumn > div:first-child {
+     min-width: 110px;
+     width: 110px;
+   }
+
+   div.plugin img.thumb {
+     cursor: pointer;
+     width: 100px;
+     border: 0;
+     margin-bottom: 4px;
+   }
+
+   /* plugin icons as a flex row that
+      wraps to multiple lines. */
+   div.plugin div.downloads {
+     width: 104px;
+     display: flex;
+     flex-direction: row;
+     flex-wrap: wrap;
+   }
+   div.downloads a {
+     display: inline-block;
+     width: 32px;
+     height: 40px;
+     background-position: center;
+     background-repeat: no-repeat;
+     flex-grow: 1;
+   }
+
+   div.downloads a.mac {
+     background-image: url(../x.png);
+   }
+   div.downloads a.win {
+     background-image: url(../win32.png);
+   }
+   div.downloads a.oldmac {
+     background-image: url(../mac.png);
+   }
+   div.downloads a.au {
+     background-image: url(../x-au.png);
+   }
+   div.downloads a.source {
+     background-image: url(../source.png);
+     width: 64px;
+     min-height: 36px;
+   }
+   div.downloads a.docs {
+     background-image: url(../docs.png);
+     width: 55px;
+     height: 57px;
+   }
+
+   sup {
+     font-size: 9px;
+   }
+  </style>
+
+  <script>
+   // XXX probably should be shared with ../index.html
+   function FullImage(f) {
+     // XXX improve!
+     window.location = f;
+   }
+  </script>
+
+</head>
+
+<div class="maincolumn">
+  <img class="title" src="handy-title.png" alt="Super Destroy FX Handies!">
+
+  <div class="infobox">
+    <h1><img alt="DFX Extras" src="dfx-extras.png"></h1>
+
+    <p>Hi. This web page has more stuff by Sophia and <a href="http://tom7.org/">Tom 7</a>.
+      This stuff is not at our <a href="../index.html">main web page</a> because it is not as exciting
+      as that stuff.  We like to keep this stuff a little more tucked away because it's not
+      our really good work.  Here you'll find <a href="https://en.wikipedia.org/wiki/Audio_Units">Audio Units</a>
+      and <a href="https://en.wikipedia.org/wiki/Virtual_Studio_Technology">VST plugins</a> that
+      are either <a href="#handies">useful for musicians</a>, <a href="#devtoolz">useful for plugin
+      developers</a>, or just <a href="#stupids">stupid and gimmicky</a>.</p>
+
+    <p>These plugins are free for you and your friends to use. You can use them for whatever
+      you like, but we'd appreciate it if you:</p>
+
+    <ul>
+      <li><a href="http://msg.spacebar.org/f/a/s/msg/disp?n=10">tell us</a> if you use them in a song that you release</li>
+      <li>let others know where they can find this website</li>
+    </ul>
+
+    <p>More information and better plugins are available at <a href="../index.html">our main page</a>.</p>
+  </div>
+
+  <a href="../index.html"><img class="right" src="please-see.png" alt="please see our real plugins" /></a>
+
+
+  <div class="infobox plugin">
+    <h1><img alt="RMS Buddy" src="dfx-rmsbuddy.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="RMS Buddy screenshot" src="rmsbuddy-small.png" onclick="FullImage('rmsbuddy.png')">
+	<div class="downloads">
+	  <a class="au" href="../software/rmsbuddy-mac.dmg" title="RMS Buddy for mac"></a>
+	  <a class="win" href="../software/rmsbuddy-win.zip" title="RMS Buddy for windows"></a>
+	  <a class="oldmac" href="../software/rmsbuddy-mac.sit" title="RMS Buddy for old mac"></a>
+	  <a class="source" href="../software/rmsbuddy-source.tar.gz" title="Rmsbuddy source code"></a>
+	  <a class="docs" href="../docs/rmsbuddy.html" title="Rmsbuddy docs"></a>
+	</div>
+      </div>
+      <div>
+	<!--
+	     PrintCurrentSoftwareVersion("1.1.5", "2007-12-07", "AU");
+	     PrintCurrentSoftwareVersion("1.1", "2003-02-25", "VST");
+	-->
+	RMS Buddy is a handy tool for tracking RMS and peak volume information. It provides
+	a cumulative, running average RMS of the audio signal, momentary RMS values, and it
+	keeps track of the peak volume levels. I find it very useful when I'm mastering
+	stuff.
+      </div>
+    </div>
+  </div>
+  
+  <div class="infobox plugin">
+    <h1><img alt="Monomaker" src="dfx-monomaker.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Monomaker screenshot" src="monomaker-small.png" onclick="FullImage('monomaker.png')">
+	<div class="downloads">
+	  <a class="mac" href="../software/monomaker-carbon.sit" title="Monomaker for mac"></a>
+	  <a class="win" href="../software/monomaker-win.zip" title="Monomaker for windows"></a>
+	  <a class="oldmac" href="../software/monomaker-mac.sit" title="Monomaker for old mac"></a>
+	  <a class="au" href="../audiounits.html#monomaker" title="Monomaker Audio Unit"></a>	  
+	  <a class="source" href="../software/monomaker-source.sit" title="Monomaker source code"></a>
+	  <a class="docs" href="../docs/monomaker.html" title="Monomaker docs"></a>
+	</div>
+      </div>
+      <div>
+	<!--
+	     PrintCurrentSoftwareVersion("1.0.1", "2002-01-01");
+	-->
+	Monomaker is a simple mono-merging and stereo-recentering utility. You can use it to
+	progressively mix down a stereo signal to mono and you can use it for equal power,
+	center-shifting pans.
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="infobox plugin">
+    <h1><img alt="MIDI Gater" src="dfx-midigater.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="MIDI Gater screenshot" src="midigater-small.png" onclick="FullImage('midigater.png')">
+	<div class="downloads">
+	  <a class="mac" href="../software/midigater-carbon.sit" title="MIDI Gater for mac"></a>
+	  <a class="win" href="../software/midigater-win.zip" title="MIDI Gater for windows"></a>
+	  <a class="oldmac" href="../software/midigater-mac.sit" title="MIDI Gater for old mac"></a>
+	  <a class="au" href="../audiounits.html#midigater" title="MIDI Gater Audio Unit"></a>	  
+	  <a class="source" href="../software/midigater-source.sit" title="MIDI Gater source code"></a>
+	  <a class="docs" href="../docs/midigater.html" title="MIDI Gater docs"></a>
+	</div>
+      </div>
+      <div>
+	<!-- PrintCurrentSoftwareVersion("1.0", "2001-11-19"); -->
+	MIDI Gater is a simple, handy, MIDI-controlled gate.  
+	When you play a MIDI note, audio turns on.  
+	When you release the note, audio turns off.
+
+	<p>MIDI Gater is a little unusual, though, because it is "polyphonic." What that
+	  means is that a copy of the audio signal is created for every MIDI note, and the
+	  volume of each copy is sensitive to note velocity. The level of sensitivity is
+	  adjustable. The volume between notes is also adjustable, in case you don't want your
+	  audio signal turning off completely.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="infobox plugin">
+    <h1><img alt="EQ Sync" src="dfx-eqsync.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="EQ Sync screenshot" src="eqsync-small.png" onclick="FullImage('eqsync.png')">
+	<div class="downloads">
+	  <a class="mac" href="../software/eqsync-carbon.sit" title="EQ Sync for mac"></a>
+	  <a class="win" href="../software/eqsync-win.zip" title="EQ Sync for windows"></a>
+	  <a class="oldmac" href="../software/eqsync-mac.sit" title="EQ Sync for old mac"></a>
+	  <a class="au" href="../audiounits.html#eqsync" title="EQ Sync Audio Unit"></a>	  
+	  <a class="source" href="../software/eqsync-source.sit" title="EQ Sync source code"></a>
+	  <a class="docs" href="../docs/eqsync.html" title="EQ Sync docs"></a>
+	</div>
+      </div>
+      <div>
+	<!-- PrintCurrentSoftwareVersion("1.0.1", "2002-05-02"); -->
+	EQ Sync is a ridiculous equalizer. You have no control over the EQ curve, if you try
+	to adjust the faders they will escape, and the EQ parameters don't make any sense
+	anyway. The EQ setting changes on its own according to your song's tempo.
+      </div>
+    </div>
+  </div>
+
+  <div class="infobox plugin">
+    <h1><img alt="Polarizer" src="dfx-polarizer.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Polarizer screenshot" src="polarizer-small.png" onclick="FullImage('polarizer.png')">
+	<div class="downloads">
+	  <a class="mac" href="../software/polarizer-carbon.sit" title="Polarizer for mac"></a>
+	  <a class="win" href="../software/polarizer-win.zip" title="Polarizer for windows"></a>
+	  <a class="oldmac" href="../software/polarizer-mac.sit" title="Polarizer for old mac"></a>
+	  <a class="au" href="../audiounits.html#polarizer" title="Polarizer Audio Unit"></a>	  
+	  <a class="source" href="../software/polarizer-source.sit" title="Polarizer source code"></a>
+	  <a class="docs" href="../docs/polarizer.html" title="Polarizer docs"></a>
+	</div>
+      </div>
+      <div>
+	<!-- PrintCurrentSoftwareVersion("1.0.1", "2002-08-05"); -->
+	Polarizer takes every n<sup>th</sup> sample and polarizes it. The number of samples
+	skipped and the strength of the polarization are adjustable. You can also implode
+	your sound.
+      </div>
+    </div>
+  </div>
+
+  <div class="infobox plugin">
+    <h1><img alt="Block Test" src="dfx-blocktest.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="Block Test screenshot" src="blocktest-small.png" onclick="FullImage('blocktest.png')">
+	<div class="downloads">
+	  <a class="mac" href="../software/blocktest-carbon.sit" title="Block Test for mac"></a>
+	  <a class="win" href="../software/blocktest-win.zip" title="Block Test for windows"></a>
+	  <a class="oldmac" href="../software/blocktest-mac.sit" title="Block Test for old mac"></a>
+	  <a class="au" href="../audiounits.html#blocktest" title="Block Test Audio Unit"></a>	  
+	  <a class="source" href="../software/blocktest-source.sit" title="Block Test source code"></a>
+	  <a class="docs" href="../docs/blocktest.html" title="Block Test docs"></a>
+	</div>
+      </div>
+      <div>
+	<!-- PrintCurrentSoftwareVersion("1.0.1", "2002-02-13"); -->
+	Block test is a pair of VST plugins: block test effect and block test synth. They
+	provide useful information for VST plugin developers. Both of them display the
+	current processing block size and responses to a couple of hostCanDos. Block test
+	effect also writes a file that logs all of the host's responses to hostCanDos and
+	product inquiries. It logs VstTimeInfo to a file, too. Block test synth logs
+	VstMidiEvents.
+      </div>
+    </div>
+  </div>
+
+  <div class="infobox plugin">
+    <h1><img alt="VST MIDI" src="dfx-vstmidi.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="VST MIDI screenshot" src="vstmidi-small.png" onclick="FullImage('vstmidi.png')">
+	<div class="downloads">
+	  <a class="oldmac" href="../software/vstmidi-mac.sit" title="VST MIDI for old mac"></a>
+	  <a class="source" href="../software/vstmidi-patch.sit" title="VST MIDI source code"></a>
+	</div>
+      </div>
+      <div>
+	<!-- PrintCurrentSoftwareVersion("1.1.1", "2001-10-06"); -->
+	VST MIDI is a little program that lets you explore the wonders of MIDI-controlled
+	effects. Unfortunately, most VST softwares do not support sending MIDI notes and
+	such to effects plugins, so this is an easy way for you to use our fancy,
+	MIDI-hungry effects if your software can't handle that kind of thing. With VST MIDI,
+	you can play a sound file, load a VST effect, control the effect with a MIDI
+	instrument or the on-screen keyboard, and save the results to a sound file.
+	
+	<p>VST MIDI was built with <a href="http://www.cycling74.com">Max/MSP</a>.
+	The uncompiled patch is also available here if you'd like to play with that.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="infobox plugin">
+    <h1><img alt="VST GUI Tester" src="dfx-vstguitester.png"></h1>
+    <div class="twocolumn">
+      <div>
+	<img class="thumb" alt="VST GUI Tester screenshot" src="vstguitester-small.png" onclick="FullImage('vstguitester.png')">
+	<div class="downloads">
+	  <a class="oldmac" href="../software/vstguitester-mac.sit" title="VST GUI Tester for old mac"></a>
+	  <a class="source" href="../software/vstguitester-patch.sit" title="VST GUI Tester source code"></a>
+	</div>
+      </div>
+      <div>
+	<!-- PrintCurrentSoftwareVersion("1.0", "2001-11-19"); -->
+
+	VST GUI Tester handy little program for VST plugin developers who are working on
+	  designing the graphical interfaces for their plugins. It makes testing out new
+	  builds very, very easy. You don't need to quit and restart the app, just close your
+	  plugin's editor window and then re-open by hitting any key. Easy.
+	
+	<p>VST GUI Tester was built with <a href="http://www.cycling74.com">Max/MSP</a>.  The
+	  uncompiled patch is also available here if you'd like to play with that.</p>
+
+      </div>
+    </div>
+  </div>
+
+  
+  <a href="../index.html"><img class="right" src="please-see.png" alt="please see our real plugins" /></a>
+</div>
+
+
