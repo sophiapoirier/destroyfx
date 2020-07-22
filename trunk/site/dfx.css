@@ -52,9 +52,22 @@ div.infobox h1 img {
   float: right;
 }
 
+/* infobox has inner padding, so prevent excessive space after
+   last paragraph */
+div.infobox > p:last-child {
+  margin-bottom: 0;
+}
+
+
 img.centered {
   display: block;
   margin-left: auto;
   margin-right: auto;
+}
+
+img.right {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
 }
 
