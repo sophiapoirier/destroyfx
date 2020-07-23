@@ -425,7 +425,10 @@ Custom font loading:
        even uninstall it, so testing that this is working may require some rebooting)
  - Also would be easy to just embed this font as a bitmap, which would also sidestep the
    finnicky cross-platform rendering. I think VSTGui wants to handle the text drawing, though;
-   we'd have to like implement our own IPlatformFont?
+   we'd have to like implement our own IPlatformFont? (It actually looks pretty doable.
+   CFontDesc is all virtual, and you basically just have to return the metrics and
+   draw a string using CDrawContext, which would be easy for bitmaps. With this approach we might
+   have to give up on Boring Boron, though.)
 
 (Did this in CreateVstGuiFont. Maybe it would be better if this function took an enum
 value for the fonts we support?)
@@ -435,3 +438,9 @@ it leaves the font not enumerable, and so when we try to load it by
 name, that fails (like, we'd have to use the handle). Why is there no
 option? Well, I guess we can write it to a temp file and load it with AddFontResourceExA... :/
 
+Well, that also has problems, but I think I can make it basically work if
+I maintain some data for the lifetime of the font (so I can pair RemoveFontResourceExA and
+also delete the temp font file). Should be doable by moving this code from global functions in
+dfxmisc to DfxGuiEditor members (we have this object wherever we need to create fonts).
+Might be slightly overkill that we write a file and install a font every time the editor
+opens and closes, but I think this is kinda par for the course on windows.
