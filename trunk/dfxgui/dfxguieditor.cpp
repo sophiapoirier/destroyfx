@@ -64,6 +64,9 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
   :	TARGET_API_EDITOR_BASE_CLASS(inInstance),
+	// This installs embedded font resources. We do this as early as
+	// possible (e.g. not in open()) because on Windows it seems to
+	// take a few milliseconds for the font to actually become available.
 	mFontFactory(dfx::FontFactory::Create())
 {
 #ifdef TARGET_API_RTAS
@@ -223,8 +226,6 @@ bool DfxGuiEditor::open(void* inWindow)
 					  });
 	}
 #endif
-
-	mFontFactory->InstallAllFonts();
 
 	// HACK: must do this after creating the tooltip support because 
 	// it will steal the mouse observer role (we can still forward to it)

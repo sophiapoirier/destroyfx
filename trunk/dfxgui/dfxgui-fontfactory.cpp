@@ -52,8 +52,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxplugin.h"
 #endif
 
-#include "dfxtrace.h"
-
 #if TARGET_OS_WIN32
 // Must use the same flags to register and unregister.
 // Would be nice if FR_PRIVATE worked (then other apps don't see the
@@ -71,21 +69,18 @@ namespace {
 std::optional<std::string> InstallFontWin32(const char *resource_name) {
   HRSRC rsrc = FindResourceA(VSTGUI::GetInstance(), resource_name, FONT_RESOURCE_TYPE);
   if (rsrc == nullptr) {
-    TRACE("FindResourceA failed");
     return {};
   }
 
   DWORD rsize = SizeofResource(VSTGUI::GetInstance(), rsrc);
   HGLOBAL data_load = LoadResource(VSTGUI::GetInstance(), rsrc);
   if (data_load == nullptr) {
-    TRACE("LoadResource failed?");
     return {};
   }
   // (Note that this is not really a "lock" and there is no corresponding
   // unlock.)
   HGLOBAL data = LockResource(data_load);
   if (data == nullptr) {
-    TRACE("LockResource failed??");
     return {};
   }
 
@@ -100,7 +95,6 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
   
   char temp_path[MAX_PATH + 1] = {};
   if (!GetTempPathA(MAX_PATH, temp_path)) {
-    TRACE("GetTempPathA failed");
     return {};
   }
 
@@ -109,7 +103,6 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
   // can definitely fail.
   char temp_filename[MAX_PATH + 15] = {};
   if (!GetTempFileNameA(temp_path, "dfx_font_", 0, temp_filename)) {
-    TRACE("GetTempFileName failed");
     return {};
   }
   
@@ -121,24 +114,20 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
                                FILE_ATTRIBUTE_NORMAL,
                                nullptr);
   if (temp_fh == INVALID_HANDLE_VALUE) {
-    TRACE("CreateFile failed for temp file");
     return {};
   }
 
   // Write the data to the temp file.
   DWORD bytes_written = 0;
   if (!WriteFile(temp_fh, data, rsize, &bytes_written, nullptr)) {
-    TRACE("WriteFile failed");
     return {};
   }
   if (bytes_written != rsize) {
     // (Sanity checking; WriteFile should have returned false.)
-    TRACE("Incomplete WriteFile");
     return {};
   }
 
   if (!CloseHandle(temp_fh)) {
-    TRACE("Couldn't close the temp file handle??");
     return {};
   }
 
@@ -146,14 +135,12 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
 			  FONT_RESOURCE_FLAGS,
                           /* Reserved, must be zero */
                           0)) {
-    TRACE("AddFontResourceEx failed");
     // If we didn't actually install the font, then try to remove the
     // temp file, as we won't try to clean up the resource later.
     (void)DeleteFileA(temp_filename);
     return {};
   }
   
-  TRACE("Font successfully installed");
   return {(std::string)temp_filename};
 }
 #endif
@@ -176,9 +163,7 @@ public:
   InstalledFontResource(const std::string &tempfile) : tempfile(tempfile) {}
   ~InstalledFontResource() {
     if (!RemoveFontResourceExA(tempfile.c_str(), FONT_RESOURCE_FLAGS, 0)) {
-      TRACE("Failed to remove resource");
-    } else {
-      TRACE("Removed resource");
+      // Failed, but still try to remove the temp file...
     }
 
     // Either way, also try removing the temp file.
@@ -191,9 +176,7 @@ public:
     // directory is not the end of the world. Is there an equivalent
     // of "unlinked" files for windows, perhaps?)
     if (!DeleteFileA(tempfile.c_str())) {
-      TRACE("Couldn't delete temp file");
-    } else {
-      TRACE("Deleted temp font file!");
+      // Failed, but not much we can do...
     }
   }
   
@@ -206,7 +189,7 @@ using InstalledFontResource = int;
 class FFImpl : public FontFactory {
 public:
   FFImpl() {
-
+    InstallAllFonts();
   }
   
   ~FFImpl() override {
@@ -224,19 +207,14 @@ public:
     if (tempfile.has_value()) {
       installed.emplace_back(
 	  std::make_unique<InstalledFontResource>(tempfile.value()));
-    } else {
-      TRACE("InstallFontWin32 failed?");
     }
 #else
     // (Impossible)
 #endif
   }
-  
-  void InstallAllFonts() override {
-    const std::lock_guard<std::mutex> ml(m);
-    if (did_installation) return;
-    did_installation = true;
-    
+
+  // Called during constructor.
+  void InstallAllFonts() {    
 #if TARGET_OS_MAC
     // load any fonts from our bundle resources to be accessible
     // locally within our component instance
@@ -289,9 +267,8 @@ public:
 				return true;
 			      },
 			    (LONG_PTR)this)) {
-      // Note: this also fails if no resources are found, which would
-      // be normal for plugins without embedded fonts.
-      TRACE("EnumResourceNamesA failed (or no DFX_TTF)");
+      // Note: this also "fails" if no resources of type DFX_TTF are found,
+      // which would be normal for plugins without embedded fonts.
       return;
     }
     
@@ -304,17 +281,14 @@ public:
   }
 
   // Two ideas behind having this here:
-  //  - Allows us to make sure the fonts are initialized (although it's
-  //    somewhat redundant given that we can easily call InstallAllFonts
-  //    in the editor's open() function)
+  //  - Allows us to make sure the fonts are initialized before we
+  //    try creating any.
   //  - Clarifies the lifetime of CFontDesc for custom fonts (shouldn't
-  //    try to delete the font resource while the font is being used)
+  //    try to delete the font resource while the font is being used).
   //  - Allows us to extend to custom fonts that manage resources, like
   //    a bitmap font that has its own allocated storage.
   VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(
       float inFontSize, char const* inFontName) override {
-    TRACE("CreateVstGuiFont");
-    InstallAllFonts();
     return ::dfx::CreateVstGuiFontInternal(inFontSize, inFontName);
   }
 

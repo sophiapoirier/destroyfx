@@ -40,22 +40,26 @@ namespace dfx {
 
 class FontFactory {
 public:
-  static std::unique_ptr<FontFactory> Create();
-  virtual ~FontFactory() {}
-
-  // Install all fonts found in the embedded resources. On mac,
-  // anything that can be installed as a font is installed. On
+  // Creates a font factory instance, which installs all the fonts
+  // found in embedded resources.
+  //
+  // On mac, anything that can be installed as a font is installed. On
   // Windows, resources of type DFX_TTF are installed. Note that on
   // windows, this is somewhat expensive (writes temporary files).
-  // Thread-safe; OK to call this multiple times per FontFactory
-  // instance.
-  virtual void InstallAllFonts() = 0;
+  //
+  // Note that on Windows, it seems to take a few milliseconds for
+  // installed fonts to actually become available (or maybe it needs
+  // to run an event loop or something). So calling CreateVstGuiFont
+  // immediately after constructing the FontFactory may not actually
+  // work. :( TODO: Is there some way to wait until the fonts are all
+  // found before returning?
+  static std::unique_ptr<FontFactory> Create();
+  virtual ~FontFactory() {}
   
   // Create a VSTGUI font descriptor. If the font name is null, uses
   // the "system font."
   // 
-  // Installs all fonts if that hasn't been done yet. FontFactory must
-  // outlive the font instance.
+  // FontFactory must outlive the returned font instance.
   virtual VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(
       float inFontSize, char const* inFontName = nullptr) = 0;
 
