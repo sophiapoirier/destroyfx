@@ -27,8 +27,16 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cctype>
 #include <cmath>
 #include <optional>
+#include <string_view>
 
 #include "dfxmisc.h"
+#include "dfxgui-base.h"
+
+#if TARGET_OS_WIN32
+#include <windows.h>
+// Some platform-specific vstgui peeking in order to load custom fonts.
+#include "lib/platform/win32/win32support.h"
+#endif
 
 #if TARGET_OS_MAC
 	#if !__OBJC__
@@ -42,6 +50,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 
 
+// XXX
+#include "dfxtrace.h"
 
 char const* const dfx::kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
 
@@ -198,11 +208,66 @@ DGColor DGColor::getSystem(System inSystemColorID)
 
 #pragma mark -
 
+#if TARGET_OS_WIN32
+static bool InstallFontResource(const char *resource_name) {
+  HRSRC rsrc = FindResourceA(VSTGUI::GetInstance(), resource_name, "TTF");
+  if (rsrc == nullptr) {
+    TRACE("FindResourceA failed");
+    return false;
+  }
+
+  DWORD rsize = SizeofResource(VSTGUI::GetInstance(), rsrc);
+  HGLOBAL data_load = LoadResource(VSTGUI::GetInstance(), rsrc);
+  if (data_load == nullptr) {
+    TRACE("LoadResource failed?");
+    return false;
+  }
+  // (Note that this is not really a "lock" and there is no corresponding
+  // unlock.)
+  HGLOBAL data = LockResource(data_load);
+  if (data == nullptr) {
+    TRACE("LockResource failed??");
+    return false;
+  }
+    
+  DWORD num_loaded = 0;
+  HANDLE fh = AddFontMemResourceEx(data, rsize, 0, &num_loaded);
+  if (fh == 0) {
+    TRACE("AddFontMemResourceEX failed");
+    return false;
+  }
+
+  if (num_loaded != 1) {
+    TRACE("Didn't get exactly one font, as expected?");
+    return false;
+  }
+
+  TRACE("Font successfully installed");
+  return true;
+}
+
+static void InstallFontOnce(const std::string_view inFontName) {
+  // Here, 'static' is just used for thread-safe one-time initialization. We
+  // don't bother checking the return value because there's nothing to do
+  // about failure (GUI will fall back to some system font, which is fine).
+  if (inFontName == dfx::kFontName_SnootPixel10) {
+    [[maybe_unused]] static auto once = InstallFontResource("px10.ttf");
+  } else if (inFontName == dfx::kFontName_BoringBoron) {
+    [[maybe_unused]] static auto once = InstallFontResource("bboron.ttf");
+  }
+}
+#endif
+
 //-----------------------------------------------------------------------------
 VSTGUI::SharedPointer<VSTGUI::CFontDesc> dfx::CreateVstGuiFont(float inFontSize, char const* inFontName)
 {
+  TRACE("CreateVstGuiFont");
+  
 	if (inFontName)
 	{
+#if TARGET_OS_WIN32
+		InstallFontOnce(inFontName);
+#endif
 		return VSTGUI::makeOwned<VSTGUI::CFontDesc>(inFontName, inFontSize);
 	}
 	else

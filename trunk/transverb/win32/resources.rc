@@ -23,3 +23,4 @@ tomsound-button.png             PNG  DISCARDABLE     "..\\gui\\graphics\\tomsoun
 transverb-background.png        PNG  DISCARDABLE     "..\\gui\\graphics\\transverb-background.png"
 wide-fader-handle-glowing.png   PNG  DISCARDABLE     "..\\gui\\graphics\\wide-fader-handle-glowing.png"
 
+px10.ttf                        TTF  DISCARDABLE     "..\\..\\fonts\\px10.ttf"

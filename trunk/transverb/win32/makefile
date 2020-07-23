@@ -16,7 +16,7 @@ VSTGUI=../../../vstgui/vstgui
 
 # WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
 #  -DENABLE_TRACE=1
-DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32 -DTARGET_API_VST
+DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32 -DTARGET_API_VST -DENABLE_TRACE=1
 INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../transverbdef.h"
 CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # -mwindows to select the GUI subsystem (not console)
