@@ -232,15 +232,8 @@ namespace dfx
 
 extern char const* const kPlusMinusUTF8;
 
-// Create a font descriptor. If the font name is null, uses the "system font."
-// On windows, fonts with special support are installed from memory the first time;
-// there must be a resource in the DLL of type "TTF" with the expected name:
-//   font name                     resource name
-//   kFontName_SnootPixel10        px10.ttf
-//   kFontName_BoringBoron         bboron.ttf
-// On mac it looks like these are magically installed if they are part of the
-// pbxproj (?).
-VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr);
+// Use dfx::FontFactory::CreateVstGuiFont.
+VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFontInternal(float inFontSize, char const* inFontName = nullptr);
 
 std::string SanitizeNumericalInput(std::string const& inText);
 

@@ -152,7 +152,7 @@ long MIDIGaterEditor::OpenEditor()
 
 	// attack slope
 	pos.set(kDisplayX, kAttackSlopeDisplayY, kDisplayWidthHalf, kDisplayHeight);
-	auto label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Left, kValueTextSize, kValueTextColor, kValueTextFont);
+	auto label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueTextSize, kValueTextColor, kValueTextFont);
 	label->setText(getparametername(kAttackSlope));
 	//
 	pos.offset(kDisplayWidthHalf, 0);
@@ -161,7 +161,7 @@ long MIDIGaterEditor::OpenEditor()
 
 	// release slope
 	pos.set(kDisplayX, kReleaseSlopeDisplayY, kDisplayWidthHalf, kDisplayHeight);
-	label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Left, kValueTextSize, kValueTextColor, kValueTextFont);
+	label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueTextSize, kValueTextColor, kValueTextFont);
 	label->setText(getparametername(kReleaseSlope));
 	//
 	pos.offset(kDisplayWidthHalf, 0);
@@ -170,7 +170,7 @@ long MIDIGaterEditor::OpenEditor()
 
 	// velocity influence
 	pos.set(kDisplayX - 1, kVelocityInfluenceDisplayY, kVelocityInfluenceLabelWidth + 1, kDisplayHeight);
-	label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Left, kValueTextSize - 0.48f, kValueTextColor, kValueTextFont);
+	label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueTextSize - 0.48f, kValueTextColor, kValueTextFont);
 	label->setText(getparametername(kVelocityInfluence));
 	//
 	pos.set(kDisplayX + kVelocityInfluenceLabelWidth, kVelocityInfluenceDisplayY, kDisplayWidth - kVelocityInfluenceLabelWidth, kDisplayHeight);
@@ -179,7 +179,7 @@ long MIDIGaterEditor::OpenEditor()
 
 	// floor
 	pos.set(kDisplayX, kFloorDisplayY, kDisplayWidthHalf, kDisplayHeight);
-	label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Left, kValueTextSize, kValueTextColor, kValueTextFont);
+	label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueTextSize, kValueTextColor, kValueTextFont);
 	label->setText(getparametername(kFloor));
 	//
 	pos.offset(kDisplayWidthHalf, 0);

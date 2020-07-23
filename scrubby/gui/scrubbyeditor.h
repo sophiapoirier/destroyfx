@@ -31,7 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 class ScrubbyHelpBox final : public DGStaticTextDisplay
 {
 public:
-	ScrubbyHelpBox(DGRect const& inRegion, DGImage* inBackground);
+	ScrubbyHelpBox(DfxGuiEditor *inOwnerEditor, DGRect const& inRegion, DGImage* inBackground);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
 

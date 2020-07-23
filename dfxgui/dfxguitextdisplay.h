@@ -86,7 +86,7 @@ private:
 class DGStaticTextDisplay : public DGControl<VSTGUI::CTextLabel>
 {
 public:
-	DGStaticTextDisplay(DGRect const& inRegion, DGImage* inBackgroundImage, 
+	DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
 						dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
 						DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
 
