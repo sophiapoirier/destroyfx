@@ -393,21 +393,6 @@ so if we do want the editor to be deleted first, we need to do it ourselves.
 We can do this in do_PreDestructor. ~DfxPlugin is not right because subclasses
 would have already had their destructors run, and the editor could do
 virtual dispatch to them while they're in this invalid state.
-
-
-problems still:
- - dragging sliders does do stuff but does not update ui
- - randomize button doesn't seem to do anything
- - sometimes multiple copies of the plugin ui open up? And some are blank
-      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
-       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
-       second click opens another plugin window. I can actually get as many as I want this way. This
-       would presumably not be a practical issue without the modals.)
- - fine adjustment doesn't seem to do anything? or maybe it's just too fine
- - editing the labels directly does seem to take effect
- - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
- - probably more problems 
- - does picking presets work properly? Like "glup drums" did not sound gluppy.
  
 
 Custom font loading:
@@ -448,3 +433,28 @@ OK, so this is done, with (aside from being gross) has the remaining problem
 that it sometimes leaves around the temp file. Unless this is due to a
 CFontDesc lifetime bug, it's not clear how we would fix this, but it's
 probably livable. On to the next!
+
+
+problems still:
+ - custom fonts still don't show the first time?!
+ - dragging sliders does do stuff but does not update ui
+ - randomize button doesn't seem to do anything
+ - sometimes multiple copies of the plugin ui open up? And some are blank
+      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
+       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
+       second click opens another plugin window. I can actually get as many as I want this way. This
+       would presumably not be a practical issue without the modals.)
+ - fine adjustment doesn't seem to do anything? or maybe it's just too fine
+ - editing the labels directly does seem to take effect
+ - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
+ - probably more problems 
+ - does picking presets work properly? Like "glup drums" did not sound gluppy.
+
+
+Ugh, looks like there is some time between the font being registered
+and VSTGUI being able to find it, like AddFontResource is not synchronous. :(
+I didn't see this because the tracing message boxes inserted enough of
+a delay.
+I guess we could register the font much earlier (in editor constructor
+rather than open()) which would "usually" work?
+Is there some way to explicitly wait for the font to be available?
