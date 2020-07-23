@@ -16,7 +16,7 @@ VSTGUI=../../../vstgui/vstgui
 
 # WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
 #  -DENABLE_TRACE=1
-DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32 -DTARGET_API_VST -DENABLE_TRACE=1
+DEFINES=-DWIN32 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32 -DTARGET_API_VST
 INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../transverbdef.h"
 CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # -mwindows to select the GUI subsystem (not console)
@@ -33,7 +33,7 @@ VSTSDK_OBJECTS=$(VSTSDK)/pluginterfaces/vst2.x/audioeffect.o $(VSTSDK)/pluginter
 # permits more optimization, and it's certainly simpler...
 VSTGUI_OBJECTS=$(VSTGUI)/vstgui_win32.o $(VSTGUI)/plugin-bindings/aeffguieditor.o
 
-DFXGUI_OBJECTS=$(DFXGUI)/dfxguitextdisplay.o $(DFXGUI)/dfxguieditor.o $(DFXGUI)/dfxguibutton.o $(DFXGUI)/dfxguislider.o $(DFXGUI)/dfxguicontrol.o $(DFXGUI)/dfxguidialog.o $(DFXGUI)/dfxguimisc.o
+DFXGUI_OBJECTS=$(DFXGUI)/dfxguitextdisplay.o $(DFXGUI)/dfxguieditor.o $(DFXGUI)/dfxgui-fontfactory.o $(DFXGUI)/dfxguibutton.o $(DFXGUI)/dfxguislider.o $(DFXGUI)/dfxguicontrol.o $(DFXGUI)/dfxguidialog.o $(DFXGUI)/dfxguimisc.o
 
 OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) resources.o ../transverbprocess.o ../transverbformalities.o ../gui/transverbeditor.o
 

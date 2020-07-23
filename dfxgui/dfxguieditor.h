@@ -38,6 +38,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxmisc.h"
 #include "dfxplugin-base.h"
 #include "dfxpluginproperties.h"
+#include "dfxgui-fontfactory.h"
 
 #if TARGET_OS_MAC
 	#include <ApplicationServices/ApplicationServices.h>
@@ -336,9 +337,16 @@ public:
 #endif
 	unsigned long getNumAudioChannels();
 
+	// Create a VSTGUI font via the editor's font factory.
+	VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(
+	    float inFontSize, char const* inFontName = nullptr) {
+	  return mFontFactory->CreateVstGuiFont(inFontSize, inFontName);
+	}
+  
 protected:
 	std::vector<IDGControl*> mControlsList;
-
+	std::unique_ptr<dfx::FontFactory> mFontFactory;
+  
 private:
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);

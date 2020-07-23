@@ -327,8 +327,8 @@ bool predelayDisplayProc(float value, char* outText, void*)
 
 //--------------------------------------------------------------------------
 // this is a display for Scrubby's built-in help
-ScrubbyHelpBox::ScrubbyHelpBox(DGRect const& inRegion, DGImage* inBackground)
-:	DGStaticTextDisplay(inRegion, inBackground, dfx::TextAlignment::Left, 
+ScrubbyHelpBox::ScrubbyHelpBox(DfxGuiEditor *inOwnerEditor, DGRect const& inRegion, DGImage* inBackground)
+  :	DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
 						kDisplayTextSize, DGColor::kBlack, kDisplayFont), 
 	mItemNum(kHelp_None)
 {
@@ -721,7 +721,7 @@ long ScrubbyEditor::OpenEditor()
 
 	//--create the help display-----------------------------------------
 	pos.set(kHelpX, kHelpY, helpBackgroundImage->getWidth(), helpBackgroundImage->getHeight());
-	mHelpBox = emplaceControl<ScrubbyHelpBox>(pos, helpBackgroundImage);
+	mHelpBox = emplaceControl<ScrubbyHelpBox>(this, pos, helpBackgroundImage);
 
 
 
