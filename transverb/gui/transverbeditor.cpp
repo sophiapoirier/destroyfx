@@ -30,6 +30,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxmisc.h"
 
+#include "dfxtrace.h"
+
 using namespace dfx::TV;
 
 
@@ -346,6 +348,22 @@ TransverbEditor::TransverbEditor(DGEditorListenerInstance inInstance)
 	{
 		RegisterPropertyChange(speedModeIndexToPropertyID(i));
 	}
+
+
+	// XXX test installing fonts DO NOT SUBMIT
+#if TARGET_OS_WIN32
+	#if 0
+	int afr_res = AddFontResourceEx("c:\\code\\destroyfx\\fonts\\px10.ttf",
+					0, // FR_PRIVATE
+					/* Reserved, must be zero */
+					0);
+	if (afr_res > 0) {
+	  TRACE("fonts installed");
+	} else {
+	  TRACE("font install failed");
+	}
+#endif
+#endif
 }
 
 //-----------------------------------------------------------------------------
