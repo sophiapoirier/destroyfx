@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "polarizer.h"
 
 #include "dfxmisc.h"
+#include "dfxgui-base.h"
 
 //-----------------------------------------------------------------------------
 enum {
@@ -46,7 +47,7 @@ enum {
 };
 
 
-constexpr char const* const kValueTextFont = "Boring Boron";
+constexpr char const* const kValueTextFont = kFontName_BoringBoron;
 //constexpr float kValueTextSize = 20.0f;
 constexpr float kValueTextSize = 16.8f;
 

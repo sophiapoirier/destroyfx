@@ -51,7 +51,11 @@ enum class TextAlignment
 };
 
 static constexpr char const* const kFontName_SnootPixel10 = "snoot.org pixel10";
+// This is the one size where snoot.org pixel10 looks good (it's a bitmap font).
 static constexpr float kFontSize_SnootPixel10 = 14.0f;
+
+static constexpr char const* const kFontName_BoringBoron = "Boring Boron";
+
 
 // VSTGUI does not define named constants for these onKeyDown and onKeyUp result values
 static constexpr int32_t kKeyEventHandled = 1;

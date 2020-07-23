@@ -331,25 +331,7 @@ So this should actually already work (!) on windows, except that the resources f
 not names.
 
 and, aha, it was failing to find them by number. Would be maybe nice if the DGImage wrapper gave some feedback
-in this case instead of just
-
-problems still:
- - snoot.org pixel10 probably only works because it's already installed on my machine. Figure out how
-   to embed it in the DLL. (Or just embed a bitmap and blit directly. Cross-platform font rendering
-   is inherently finnicky and there are hax in there for mac too.)
- - dragging sliders does do stuff but does not update ui
- - randomize button doesn't seem to do anything
- - sometimes multiple copies of the plugin ui open up? And some are blank
-      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
-       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
-       second click opens another plugin window. I can actually get as many as I want this way. This
-       would presumably not be a practical issue without the modals.)
- - fine adjustment doesn't seem to do anything? or maybe it's just too fine
- - [ ] tomsound does work though, so it's not just like all buttons don't work
- - editing the labels directly does seem to take effect
- - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
- - probably more problems 
- - plugin crashes when it closes
+in this case instead of just having blank images.
 
 -------
 Striping DLL. Pass -s to linker.
@@ -411,3 +393,45 @@ so if we do want the editor to be deleted first, we need to do it ourselves.
 We can do this in do_PreDestructor. ~DfxPlugin is not right because subclasses
 would have already had their destructors run, and the editor could do
 virtual dispatch to them while they're in this invalid state.
+
+
+problems still:
+ - snoot.org pixel10 only works because it's already installed on my machine.
+ - dragging sliders does do stuff but does not update ui
+ - randomize button doesn't seem to do anything
+ - sometimes multiple copies of the plugin ui open up? And some are blank
+      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
+       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
+       second click opens another plugin window. I can actually get as many as I want this way. This
+       would presumably not be a practical issue without the modals.)
+ - fine adjustment doesn't seem to do anything? or maybe it's just too fine
+ - editing the labels directly does seem to take effect
+ - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
+ - probably more problems 
+ - does picking presets work properly? Like "glup drums" did not sound gluppy.
+ 
+
+Custom font loading:
+ - Should be possible to embed this in the DLL. VSTGUI has support for this; CFontDesc calls
+   IPlatformFont::Create, which (win32support.cpp) calls the D2DFont constructor. D2DFont
+   is a direct2d thing that was reworked in Windows 10 1703, which came out in 2017.
+   So we could just use that and require newish windows 10? Seems a little aggressive, but
+   it would only get better over time?
+ - I think there are very old APIs for registering fonts that should be pretty easy, though?
+    - PrivateFontCollection::AddMemoryFont in GDI+ (mingw32 support?)
+    - AddFontResourceExA is the underlying GDI function, or I guess AddFontMemResourceEx.
+    - Wow yes, AddFontResourceExA worked the first time... let's just do this.
+      (One annoyance for debugging is that it installs the font until reboot, and you can't
+       even uninstall it, so testing that this is working may require some rebooting)
+ - Also would be easy to just embed this font as a bitmap, which would also sidestep the
+   finnicky cross-platform rendering. I think VSTGui wants to handle the text drawing, though;
+   we'd have to like implement our own IPlatformFont?
+
+(Did this in CreateVstGuiFont. Maybe it would be better if this function took an enum
+value for the fonts we support?)
+
+Agh! It doesn't work. AddFontMemResourceEx succeeds but it looks like
+it leaves the font not enumerable, and so when we try to load it by
+name, that fails (like, we'd have to use the handle). Why is there no
+option? Well, I guess we can write it to a temp file and load it with AddFontResourceExA... :/
+
