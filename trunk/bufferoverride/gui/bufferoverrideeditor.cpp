@@ -446,7 +446,7 @@ long BufferOverrideEditor::OpenEditor()
 
 	// the help mouseover hint thingy
 	pos.set(kHelpDisplayX, kHelpDisplayY, GetBackgroundImage()->getWidth(), kDisplayHeight);
-	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
+	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
 
 
 	HandleTempoAutoChange();

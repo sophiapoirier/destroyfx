@@ -115,9 +115,9 @@ enum {
 #pragma mark -
 
 //--------------------------------------------------------------------------
-GeometerHelpBox::GeometerHelpBox(DGRect const & inRegion, DGImage * inBackground)
- : DGStaticTextDisplay(inRegion, inBackground, dfx::TextAlignment::Left, 
-                       dfx::kFontSize_SnootPixel10, DGColor::kBlack, dfx::kFontName_SnootPixel10), 
+GeometerHelpBox::GeometerHelpBox(DfxguiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
+  : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
+			dfx::kFontSize_SnootPixel10, DGColor::kBlack, dfx::kFontName_SnootPixel10), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
 }
@@ -398,7 +398,7 @@ long GeometerEditor::OpenEditor() {
   helpicon->setValue_i(HELP_EMPTY);
 
   pos.set(pos_helpboxX, pos_helpboxY, g_helpbackground->getWidth(), g_helpbackground->getHeight());
-  helpbox = emplaceControl<GeometerHelpBox>(pos, g_helpbackground);
+  helpbox = emplaceControl<GeometerHelpBox>(this, pos, g_helpbackground);
 
 
 

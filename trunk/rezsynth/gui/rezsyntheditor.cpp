@@ -248,7 +248,7 @@ long RezSynthEditor::OpenEditor()
 		slider->setAlternateHandle(horizontalSliderHandleImage_glowing);
 
 		// parameter name label
-		auto const label = emplaceControl<DGStaticTextDisplay>(labelDisplayPos, nullptr, dfx::TextAlignment::Left, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
+		auto const label = emplaceControl<DGStaticTextDisplay>(this, labelDisplayPos, nullptr, dfx::TextAlignment::Left, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
 		std::array<char, dfx::kParameterNameMaxLength> paramName;
 		dfx::StrLCpy(paramName.data(), getparametername(inParamID), paramName.size());
 		// check if it's a separation amount parameter and, if it is, truncate the "(blah)" qualifying part
@@ -317,10 +317,10 @@ long RezSynthEditor::OpenEditor()
 //		display->setFrameColor(kBlackColor);
 
 		// parameter name label
-		auto label = emplaceControl<DGStaticTextDisplay>(labelDisplayPos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
+		auto label = emplaceControl<DGStaticTextDisplay>(this, labelDisplayPos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
 		label->setText(label1);
 		labelDisplayPos.offset(0, kTallLabelInc);
-		label = emplaceControl<DGStaticTextDisplay>(labelDisplayPos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
+		label = emplaceControl<DGStaticTextDisplay>(this, labelDisplayPos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
 		label->setText(label2);
 		labelDisplayPos.offset(0, -kTallLabelInc);
 
@@ -338,7 +338,7 @@ long RezSynthEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kScaleMode, pos, scaleModeButtonImage, DGButton::Mode::Radio);
 	// parameter name label
 	pos.set(kScaleButtonX, kScaleButtonY - kDisplayHeight - 6, scaleModeButtonImage->getWidth(), kDisplayHeight);
-	auto label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
+	auto label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
 	label->setText("filter scaling");
 
 	// bandwidth mode
@@ -362,7 +362,7 @@ long RezSynthEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kResonAlgorithm, pos, resonAlgButtonImage, DGButton::Mode::Radio);
 	// parameter name label
 	pos.set(kResonAlgButtonX, kResonAlgButtonY - kDisplayHeight - 6, resonAlgButtonImage->getWidth(), kDisplayHeight);
-	label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
+	label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
 	label->setText("resonance algorithm");
 
 	// allow Nyquist foldover or no

@@ -63,7 +63,8 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
-:	TARGET_API_EDITOR_BASE_CLASS(inInstance)
+  :	TARGET_API_EDITOR_BASE_CLASS(inInstance),
+	mFontFactory(dfx::FontFactory::Create())
 {
 #ifdef TARGET_API_RTAS
 	m_Process = inInstance;
@@ -223,39 +224,7 @@ bool DfxGuiEditor::open(void* inWindow)
 	}
 #endif
 
-
-#if TARGET_OS_MAC
-// load any fonts from our bundle resources to be accessible locally within our component instance
-	auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-	if (pluginBundle)
-	{
-		dfx::UniqueCFType const bundleResourcesDirURL = CFBundleCopyResourcesDirectoryURL(pluginBundle);
-		if (bundleResourcesDirURL)
-		{
-			constexpr CFURLEnumeratorOptions options = kCFURLEnumeratorSkipInvisibles | kCFURLEnumeratorSkipPackageContents | kCFURLEnumeratorDescendRecursively;
-			dfx::UniqueCFType const dirEnumerator = CFURLEnumeratorCreateForDirectoryURL(kCFAllocatorDefault, bundleResourcesDirURL.get(), options, nullptr);
-			if (dirEnumerator)
-			{
-				CFURLRef fileURL = nullptr;
-				while (CFURLEnumeratorGetNextURL(dirEnumerator.get(), &fileURL, nullptr) == kCFURLEnumeratorSuccess)
-				{
-					if (fileURL)
-					{
-						if (CFURLHasDirectoryPath(fileURL))
-						{
-							continue;
-						}
-						// XXX TODO: optimize to skip non-font files?
-						[[maybe_unused]] auto const success = CTFontManagerRegisterFontsForURL(fileURL, kCTFontManagerScopeProcess, nullptr);
-					}
-				}
-			}
-		}
-	}
-#else
-	#warning "implementation missing (maybe VSTGUI::IPlatformFont::getAllPlatformFontFamilies can assist?)"
-#endif
-
+	mFontFactory->InstallAllFonts();
 
 	// HACK: must do this after creating the tooltip support because 
 	// it will steal the mouse observer role (we can still forward to it)

@@ -396,7 +396,6 @@ virtual dispatch to them while they're in this invalid state.
 
 
 problems still:
- - snoot.org pixel10 only works because it's already installed on my machine.
  - dragging sliders does do stuff but does not update ui
  - randomize button doesn't seem to do anything
  - sometimes multiple copies of the plugin ui open up? And some are blank
@@ -444,3 +443,8 @@ also delete the temp font file). Should be doable by moving this code from globa
 dfxmisc to DfxGuiEditor members (we have this object wherever we need to create fonts).
 Might be slightly overkill that we write a file and install a font every time the editor
 opens and closes, but I think this is kinda par for the course on windows.
+
+OK, so this is done, with (aside from being gross) has the remaining problem
+that it sometimes leaves around the temp file. Unless this is due to a
+CFontDesc lifetime bug, it's not clear how we would fix this, but it's
+probably livable. On to the next!
