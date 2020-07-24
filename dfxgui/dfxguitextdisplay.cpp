@@ -210,6 +210,20 @@ void DGTextDisplay::refreshText()
 	setValue(getValue());
 }
 
+void DGTextDisplay::takeFocus() {
+  #if TARGET_OS_WIN32
+  // XXX For unknown reasons on Windows, interacting with a text edit
+  // control for the second time in a row causes the rest of the plugin window
+  // to go blank. "Fix" this by invalidating the whole plugin UI when a text
+  // edit takes focus. If we fix something else about invalidating the display,
+  // might be worth revisiting whether this is needed.
+  if (auto *frame = getFrame()) {
+    frame->invalid();
+  }
+  #endif
+  VSTGUI::CTextEdit::takeFocus();
+}
+
 //-----------------------------------------------------------------------------
 void DGTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion)
 {
