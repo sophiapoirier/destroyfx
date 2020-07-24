@@ -33,7 +33,7 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 
 #include "dfxparameter.h"
 
-#if WINDOWS_VERSION
+#if TARGET_OS_WIN32
 	#pragma warning( disable : 4250 ) // function being inherited through dominance
 #endif
 

@@ -435,21 +435,6 @@ CFontDesc lifetime bug, it's not clear how we would fix this, but it's
 probably livable. On to the next!
 
 
-problems still:
- - custom fonts still don't show the first time?!
- - dragging sliders does do stuff but does not update ui
- - randomize button doesn't seem to do anything
- - sometimes multiple copies of the plugin ui open up? And some are blank
-      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
-       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
-       second click opens another plugin window. I can actually get as many as I want this way. This
-       would presumably not be a practical issue without the modals.)
- - fine adjustment doesn't seem to do anything? or maybe it's just too fine
- - editing the labels directly does seem to take effect
- - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
- - probably more problems 
- - does picking presets work properly? Like "glup drums" did not sound gluppy.
-
 
 Ugh, looks like there is some time between the font being registered
 and VSTGUI being able to find it, like AddFontResource is not synchronous. :(
@@ -458,3 +443,58 @@ a delay.
 I guess we could register the font much earlier (in editor constructor
 rather than open()) which would "usually" work?
 Is there some way to explicitly wait for the font to be available?
+
+
+problems still:
+ - dragging sliders does do stuff but does not update ui
+ - randomize button doesn't seem to do anything
+   (see DfxGuiEditor::randomizeparameter(s) "missing implementations")
+ - sometimes multiple copies of the plugin ui open up? And some are blank
+      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
+       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
+       second click opens another plugin window. I can actually get as many as I want this way. This
+       would presumably not be a practical issue without the modals.)
+ - fine adjustment doesn't seem to do anything? or maybe it's just too fine
+ - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
+ - does picking presets work properly? Like "glup drums" did not sound gluppy.
+
+
+"plugin turns black" problem
+
+Some reference to this in DfxGuiEditor::idle maybe? That code actually
+wasn't running because WINDOWS_VERSION is not defined (switched to
+TARGET_OS_WIN32), but it didn't fix it.
+
+I think this actually *only* happens after editing a parameter via
+the textbox. So it could be a failure with that. But also note that this
+is also currently the only kind of parameter change that seems to actually
+be reflected in the UI, so it could also be a consequence of that problem?
+
+.. in fact, this is very reproducible:
+ - click a text param to edit it
+ - click outside to cancel
+ - click in it again. background disappears
+
+switching directly between fields works fine. But once you cancel out, clicking on
+the next text param loses the background.
+
+BUT, if after clicking to cancel you drag a slider, then clicking on a text param is ok.
+
+so the sequence required is
+ - have an text param in edit mode
+   - Exit via any of these of these:
+      - click on background
+      - click outside window
+      - enter to confirm edit
+   - But not these:
+      - tab to drop focus (note that this seems to actually select the next control, which
+        will always be a slider (try tab when the bg is black). so this exception is explained
+        by the fact that slider interactions fix the state.
+   - And then do NOT touch any other type of control
+ - click on a text param
+
+I think this is some kind of "dirty rectangles" thing where some code is not correctly
+marking the background as dirty even though it got cleared. As you interact with other
+controls (e.g. the sliders) you can start rebuilding the UI, as long as you don't
+reactivate the bug. And exiting the text controls does repaint part of the background,
+so it suggests that the background is repainted by tracking dirty regions.

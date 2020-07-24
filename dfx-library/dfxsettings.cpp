@@ -1497,6 +1497,12 @@ void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDat
 #endif
 		CFUserNotificationDisplayNotice(0.0, kCFUserNotificationStopAlertLevel, iconURL.get(), nullptr, nullptr, title, message.get(), nullptr);
 	}
+#elif TARGET_OS_WIN32
+	char msg[512] = {};
+	snprintf(msg, 511, "Something is wrong with the settings data! "
+		"Info for bug reports: name: %s size: %zu total: %zu",
+		inDataItemName, inDataItemSize, inDataTotalSize);
+	MessageBoxA(nullptr, msg, "DFX Error!", 0);
 #else
 	#warning "implementation missing"
 #endif

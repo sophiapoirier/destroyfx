@@ -231,7 +231,7 @@ DfxPlugin::DfxPlugin(
 #ifdef TARGET_API_RTAS
 #ifdef TARGET_PLUGIN_USES_VSTGUI
 	mPIWinRect.top = mPIWinRect.left = mPIWinRect.bottom = mPIWinRect.right = 0;
-	#if WINDOWS_VERSION
+	#if TARGET_OS_WIN32
 	mModuleHandle_p = gThisModule;  // extern from DLLMain.cpp; HINSTANCE of the DLL
 	#endif
 #endif
