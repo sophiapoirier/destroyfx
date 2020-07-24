@@ -670,7 +670,7 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 	{
 		if (mCustomUI_p)
 		{
-#if WINDOWS_VERSION
+#if TARGET_OS_WIN32
 			Rect aRect;
 			GetPortBounds(inPort, &aRect);
 			if ( ((aRect.left <= 0) && (aRect.top <= 0)) && ((mLeftOffset == 0) && (mTopOffset == 0)) )
@@ -681,9 +681,9 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 #endif
 
 			void * windowPtr = NULL;
-			#if WINDOWS_VERSION
+			#if TARGET_OS_WIN32
 				windowPtr = (void*) ASI_GethWnd((WindowPtr)mMainPort);
-			#elif MAC_VERSION
+			#elif TARGET_OS_MAC
 				windowPtr = (void*) GetWindowFromPort(mMainPort);
 			#endif
 			mCustomUI_p->Open(windowPtr, mLeftOffset, mTopOffset);
@@ -691,7 +691,7 @@ void DfxPlugin::SetViewPort(GrafPtr inPort)
 			if (mNoUIView_p != NULL)
 				mNoUIView_p->SetEnable(true);
 
-#if WINDOWS_VERSION
+#if TARGET_OS_WIN32
 			mCustomUI_p->Draw(mPIWinRect.left, mPIWinRect.top, mPIWinRect.right, mPIWinRect.bottom);
 #endif
 		}

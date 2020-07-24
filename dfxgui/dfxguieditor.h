@@ -58,9 +58,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 #ifdef TARGET_API_RTAS
 	using DGEditorListenerInstance = ITemplateProcess*;
-	#if WINDOWS_VERSION
+	#if TARGET_OS_WIN32
 		using sRect = RECT;
-	#elif MAC_VERSION
+	#elif TARGET_OS_MAC
 		using sRect = Rect;
 	#endif
 #endif

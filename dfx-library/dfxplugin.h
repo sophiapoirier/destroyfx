@@ -174,7 +174,7 @@ PLUGIN_EDITOR_RES_ID
 		#include "CProcessType.h"
 		#include "CTemplateNoUIView.h"
 	#endif
-	#if WINDOWS_VERSION
+	#if TARGET_OS_WIN32
 		#include "Mac2Win.h"
 	#endif
 #endif
@@ -1256,7 +1256,7 @@ private:
 #include "CPluginControl_Continuous.h"
 #include "CPluginControl_Frequency.h"
 
-#if WINDOWS_VERSION
+#if TAREGT_OS_WIN32
 	#pragma warning( disable : 4250 ) // function being inherited through dominance
 #endif
 

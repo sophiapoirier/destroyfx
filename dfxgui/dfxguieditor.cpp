@@ -379,7 +379,7 @@ void DfxGuiEditor::idle()
 	if (std::exchange(mJustOpened, false))
 	{
 		dfxgui_EditorShown();
-#if WINDOWS_VERSION // && defined(TARGET_API_RTAS)
+#if TARGET_OS_WIN32 // && defined(TARGET_API_RTAS)
 		// XXX this seems to be necessary to correct background re-drawing failure 
 		// when switching between different plugins in an open plugin editor window
 		getFrame()->invalid();
