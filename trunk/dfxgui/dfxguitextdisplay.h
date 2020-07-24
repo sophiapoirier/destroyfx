@@ -65,6 +65,8 @@ public:
 	CLASS_METHODS(DGTextDisplay, VSTGUI::CTextEdit)
 
 protected:
+
+	void takeFocus () override;
 	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
 	VSTGUI::CRect platformGetSize () const override;
   

@@ -446,7 +446,7 @@ Is there some way to explicitly wait for the font to be available?
 
 
 problems still:
- - dragging sliders does do stuff but does not update ui
+ - dragging sliders and fine adjustments does do stuff to audio, but does not update ui
  - randomize button doesn't seem to do anything
    (see DfxGuiEditor::randomizeparameter(s) "missing implementations")
  - sometimes multiple copies of the plugin ui open up? And some are blank
@@ -454,7 +454,6 @@ problems still:
        of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
        second click opens another plugin window. I can actually get as many as I want this way. This
        would presumably not be a practical issue without the modals.)
- - fine adjustment doesn't seem to do anything? or maybe it's just too fine
  - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
  - does picking presets work properly? Like "glup drums" did not sound gluppy.
 
@@ -498,3 +497,37 @@ marking the background as dirty even though it got cleared. As you interact with
 controls (e.g. the sliders) you can start rebuilding the UI, as long as you don't
 reactivate the bug. And exiting the text controls does repaint part of the background,
 so it suggests that the background is repainted by tracking dirty regions.
+
+indeed, there is some dirty rectangle tracking. note how CTextEdit calls invalid() in some
+places, and then all the way up in CView we see
+
+	/** check if view is dirty */
+	virtual bool isDirty () const { return hasViewFlag (kDirty); }
+	/** set the view to dirty so that it is redrawn in the next idle. Thread Safe ! */
+	virtual void setDirty (bool val = true);
+	/** if this is true, setting a view dirty will call invalid() instead of checking it in idle. Default value is false. */
+	static bool kDirtyCallAlwaysOnMainThread;
+
+	/** mark rect as invalid */
+	virtual void invalidRect (const CRect& rect);
+	/** mark whole view as invalid */
+	virtual void invalid () { setDirty (false); invalidRect (getViewSize ()); }
+
+so perhaps one way to "fix" this is to mark the whole frame as dirty in the problematic situation (i.e. whenever we take
+focus). Perhaps CTextEdit is not calling invalid all the times that it should, but I can't figure out the theory of that
+code.
+
+Also suspicious is some of the DGControl wrapping. See for example:
+
+void DGControl<T>::redraw()
+{
+//	T::invalid();  // XXX CView::invalid calls setDirty(false), which can have undesired consequences for control value handling
+	T::invalidRect(T::getViewSize());
+}
+
+perhaps there are places where we should also be calling some base class method in our override, or some other
+thing we're trying to do that's interfering with vstgui.
+
+But in any case, marking the whole frame as dirty in a takeFocus override does solidly fix it (don't even get any
+momentary flashing or anything), so I guess that's good enough for now. Should be harmless to redraw anyway,
+as long as we're not like doing it every frame.
