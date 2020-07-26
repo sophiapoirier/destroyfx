@@ -321,7 +321,7 @@ long SkidderEditor::OpenEditor()
 	auto const addParameterName = [this](int sliderIndex, long inParameterID)
 	{
 		DGRect const pos(kParameterNameDisplayX, kParameterNameDisplayY + (kSliderInc * sliderIndex), kDisplayWidth, kDisplayHeight);
-		auto const label = emplaceControl<DGStaticTextDisplay>(pos, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+		auto const label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 		std::array<char, dfx::kParameterNameMaxLength> parameterName;
 		dfx::StrLCpy(parameterName.data(), getparametername(inParameterID), parameterName.size());
 		// check if it's a separation amount parameter and, if it is, truncate the "(blah)" qualifying part

@@ -56,6 +56,7 @@
 		EC89B425208D319600E15129 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B421208D319500E15129 /* dfxguicontrol.cpp */; };
 		EC89B426208D319600E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B424208D319600E15129 /* dfxguidialog.cpp */; };
 		EC89B49B208D352500E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B49A208D352500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -fno-objc-arc"; }; };
+		EC8AB24824CDF5C3000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB24624CDF5C3000504F0 /* dfxgui-fontfactory.mm */; };
 		ECC430AC102F46F0000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC430AA102F46F0000B05A1 /* dfx-au-utilities.strings */; };
 		ECE44FC6156364E700637833 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FC5156364E700637833 /* dfxgui-auviewfactory.mm */; };
 		ECE44FE21563667D00637833 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FE01563667D00637833 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
@@ -159,6 +160,9 @@
 		EC89B423208D319500E15129 /* dfxgui-auviewfactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxgui-auviewfactory.h"; sourceTree = "<group>"; };
 		EC89B424208D319600E15129 /* dfxguidialog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxguidialog.cpp; sourceTree = "<group>"; };
 		EC89B49A208D352500E15129 /* vstgui_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = vstgui_mac.mm; sourceTree = "<group>"; };
+		EC8AB24524CDF5C3000504F0 /* dfxgui-fontfactory.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = "dfxgui-fontfactory.h"; sourceTree = "<group>"; usesTabs = 0; };
+		EC8AB24624CDF5C3000504F0 /* dfxgui-fontfactory.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "dfxgui-fontfactory.mm"; sourceTree = "<group>"; };
+		EC8AB24724CDF5C3000504F0 /* dfxgui-fontfactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = "dfxgui-fontfactory.cpp"; sourceTree = "<group>"; usesTabs = 0; };
 		EC98418B1030C47C00FA3B2B /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		EC98418C1030C47C00FA3B2B /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
 		ECC430AB102F46F0000B05A1 /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
@@ -400,6 +404,9 @@
 				4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */,
 				4932F4E3068011C9006A9591 /* dfxguibutton.h */,
 				4932F4E2068011C9006A9591 /* dfxguibutton.cpp */,
+				EC8AB24524CDF5C3000504F0 /* dfxgui-fontfactory.h */,
+				EC8AB24724CDF5C3000504F0 /* dfxgui-fontfactory.cpp */,
+				EC8AB24624CDF5C3000504F0 /* dfxgui-fontfactory.mm */,
 				EC89B423208D319500E15129 /* dfxgui-auviewfactory.h */,
 				ECE44FC5156364E700637833 /* dfxgui-auviewfactory.mm */,
 			);
@@ -548,6 +555,7 @@
 				EC89B425208D319600E15129 /* dfxguicontrol.cpp in Sources */,
 				4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */,
 				EC89B426208D319600E15129 /* dfxguidialog.cpp in Sources */,
+				EC8AB24824CDF5C3000504F0 /* dfxgui-fontfactory.mm in Sources */,
 				4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */,
 				4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */,
 				4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */,

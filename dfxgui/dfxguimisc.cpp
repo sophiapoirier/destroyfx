@@ -27,15 +27,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cctype>
 #include <cmath>
 #include <optional>
-#include <string_view>
 
 #include "dfxmisc.h"
-#include "dfxgui-base.h"
-
-// XXX probably not right to do this here, but vstgui needs aeffectx.h to
-// be included before it when targeting vst, because it looks for __aeffectx__
-// include guards to avoid redefining symbols (ugh)
-#include "dfxplugin-base.h"
 
 #if TARGET_OS_MAC
 	#if !__OBJC__
@@ -45,7 +38,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#endif
 	#import <AppKit/NSColor.h>
 	#import <AppKit/NSColorSpace.h>
-	#import <AppKit/NSFont.h>
 #endif
 
 char const* const dfx::kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
@@ -202,28 +194,6 @@ DGColor DGColor::getSystem(System inSystemColorID)
 
 
 #pragma mark -
-
-//-----------------------------------------------------------------------------
-// XXX Probably this can just be in dfxgui-fontfactory.cpp, but I didn't understand
-// the .mm stuff and don't have a way to test it.
-VSTGUI::SharedPointer<VSTGUI::CFontDesc> dfx::CreateVstGuiFontInternal(float inFontSize, char const* inFontName)
-{
-	if (inFontName)
-	{
-		return VSTGUI::makeOwned<VSTGUI::CFontDesc>(inFontName, inFontSize);
-	}
-	else
-	{
-		auto fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(VSTGUI::kSystemFont->getName(), inFontSize);
-#if TARGET_OS_MAC
-		if (auto const fontName = [NSFont systemFontOfSize:NSFont.systemFontSize].displayName)
-		{
-			fontDesc->setName(fontName.UTF8String);
-		}
-#endif
-		return fontDesc;
-	}
-}
 
 //-----------------------------------------------------------------------------
 std::string dfx::SanitizeNumericalInput(std::string const& inText)

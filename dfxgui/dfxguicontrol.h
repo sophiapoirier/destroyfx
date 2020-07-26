@@ -28,6 +28,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <unordered_set>
 #include <vector>
 
+#include "dfxgui-base.h"
 #include "dfxguimisc.h"
 #include "idfxguicontrol.h"
 
