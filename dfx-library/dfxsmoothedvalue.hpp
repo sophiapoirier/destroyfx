@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2019  Sophia Poirier
+Copyright (C) 2009-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -37,14 +37,6 @@ This is our class for doing interpolation of values over time.
 //-----------------------------------------------------------------------------
 template <typename T>
 dfx::SmoothedValue<T>::SmoothedValue(double inSmoothingTimeInSeconds)
-:	mCurrentValue(0),
-	mTargetValue(0),
-	mValueStep(0),
-	mSmoothDur_seconds(0),
-	mSmoothDur_samples(0),
-	mSmoothCount(0),
-	mSampleRate(1.0),
-	mReinitialize(true)
 {
 	static_assert(std::is_floating_point_v<T>);
 
@@ -66,11 +58,16 @@ void dfx::SmoothedValue<T>::setValue(T inTargetValue) noexcept
 			return;
 		}
 		mTargetValue = inTargetValue;
-		mValueStep = (mSmoothDur_samples > 0) ? ((mTargetValue - mCurrentValue) / static_cast<T>(mSmoothDur_samples)) : T(0);
-		// XXX if mSmoothDur_samples is 0, shouldn't we set mCurrentValue
-		// right now? This would need another call to inc(), but the next line
-		// suggests that setValue also includes one "inc" for free.
-		mCurrentValue += mValueStep;
+		if (mSmoothDur_samples > 0)
+		{
+			mValueStep = (mTargetValue - mCurrentValue) / static_cast<T>(mSmoothDur_samples);
+			mCurrentValue += mValueStep;
+		}
+		else
+		{
+			mValueStep = T(0);
+			mCurrentValue = inTargetValue;
+		}
 		mSmoothCount = 0;
 	}
 }
