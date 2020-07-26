@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2019  Sophia Poirier
+Copyright (C) 2009-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -49,7 +49,7 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 //#include "FicPluginEnums.h"
 #include "PlugInUtils.h"
 
-#ifndef TARGET_PLUGIN_USES_VSTGUI
+#if !TARGET_PLUGIN_HAS_GUI
 	#include "CClippingView.h"
 	#include "CGainMeterView.h"
 	#include "CNoResourceView.h"
@@ -125,7 +125,7 @@ void DfxPlugin::DoTokenIdle()
 {
 	CEffectProcess::DoTokenIdle();
 
-#ifdef TARGET_PLUGIN_USES_VSTGUI
+#if TARGET_PLUGIN_HAS_GUI
 	if (mCustomUI_p)
 	{
 //		if ( !IsAS() || (IsAS() && (GetASPreviewState() == previewState_Off)) )
@@ -590,7 +590,7 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 //-----------------------------------------------------------------------------
 CPlugInView * DfxPlugin::CreateCPlugInView()
 {
-#ifdef TARGET_PLUGIN_USES_VSTGUI
+#if TARGET_PLUGIN_HAS_GUI
 	CNoResourceView * ui = NULL;
 	try
 	{
@@ -643,7 +643,7 @@ CPlugInView * DfxPlugin::CreateCPlugInView()
 #endif
 }
 
-#ifdef TARGET_PLUGIN_USES_VSTGUI
+#if TARGET_PLUGIN_HAS_GUI
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::GetViewRect(Rect * outViewRect)
@@ -794,8 +794,7 @@ void DfxPlugin::SetViewOrigin(Point anOrigin)
 }
 #endif
 
-#endif
-// TARGET_PLUGIN_USES_VSTGUI
+#endif  // TARGET_PLUGIN_HAS_GUI
 
 
 
@@ -872,7 +871,7 @@ void DfxEffectGroup::Initialize()
 {
 	CEffectGroup::Initialize();
 
-#ifdef TARGET_PLUGIN_USES_VSTGUI
+#if TARGET_PLUGIN_HAS_GUI
 	CCustomView::AddNewViewProc("NoUIView", CreateCTemplateNoUIView);
 #else
 	// CGainMeterView doesn't have a RegisterView() method, so we have to do this stuff instead:
@@ -896,7 +895,7 @@ void DfxEffectGroup::dfx_AddEffectType(CEffectType * inEffectType)
 	inEffectType->DefineSampleRateSupport(eSupports48kAnd96kAnd192k);
 	inEffectType->AddGestalt(pluginGestalt_CanBypass);
 	inEffectType->AddGestalt(pluginGestalt_SupportsClipMeter);
-#ifdef TARGET_PLUGIN_USES_VSTGUI
+#if TARGET_PLUGIN_HAS_GUI
 	inEffectType->AddGestalt(pluginGestalt_DoesNotUseDigiUI);
 #endif
 

@@ -16,9 +16,6 @@
 #define TARGET_PLUGIN_HAS_GUI	0
 #endif
 
-/* only necessary if using a custom GUI */
-#define PLUGIN_EDITOR_ENTRY_POINT	"WindowingstubEditorEntry"
-
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"i forgot to change the description"
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"i forgot to change the gui description too"

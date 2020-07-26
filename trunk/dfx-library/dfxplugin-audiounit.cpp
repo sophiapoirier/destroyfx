@@ -33,7 +33,7 @@ This is where we connect the Audio Unit API to our DfxPlugin system.
 #include "dfx-au-utilities.h"
 #include "dfxmisc.h"
 
-#if DFXGUI_USE_COCOA_AU_VIEW
+#if TARGET_PLUGIN_HAS_GUI
 	#include "dfxgui-auviewfactory.h"
 #endif
 
@@ -272,7 +272,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 	switch (inPropertyID)
 	{
 		case kAudioUnitProperty_CocoaUI:
-#if DFXGUI_USE_COCOA_AU_VIEW
+#if TARGET_PLUGIN_HAS_GUI
 			outDataSize = sizeof(AudioUnitCocoaViewInfo);
 			outWritable = false;
 			status = noErr;
@@ -417,7 +417,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 
 	switch (inPropertyID)
 	{
-#if DFXGUI_USE_COCOA_AU_VIEW
+#if TARGET_PLUGIN_HAS_GUI
 		case kAudioUnitProperty_CocoaUI:
 		{
 			auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));

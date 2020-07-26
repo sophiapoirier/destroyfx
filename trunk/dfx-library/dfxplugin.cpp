@@ -43,7 +43,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 	#include "dfx-au-utilities.h"
 #endif
 
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	// If using the VST GUI interface, we need the class definition
 	// for AEffGUIEditor so that we can send it parameter changes.
 	#include "aeffguieditor.h"
@@ -53,7 +53,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 
 #ifdef TARGET_API_RTAS
 	#include "ConvertUtils.h"
-	#if TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
+	#if TARGET_PLUGIN_HAS_GUI
 		extern void* gThisModule;
 	#endif
 #endif
@@ -199,9 +199,6 @@ DfxPlugin::DfxPlugin(
 	setNumInputs(VST_NUM_INPUTS);
 	setNumOutputs(VST_NUM_OUTPUTS);
 
-	#if !VST_FORCE_DEPRECATED
-	canProcessReplacing();  // supports replacing audio output
-	#endif
 	TARGET_API_BASE_CLASS::setProgram(0);  // set the current preset number to 0
 
 	// check to see if the host supports sending tempo and time information to VST plugins
@@ -229,12 +226,12 @@ DfxPlugin::DfxPlugin(
 // end VST stuff
 
 #ifdef TARGET_API_RTAS
-#ifdef TARGET_PLUGIN_USES_VSTGUI
+	#if TARGET_PLUGIN_HAS_GUI
 	mPIWinRect.top = mPIWinRect.left = mPIWinRect.bottom = mPIWinRect.right = 0;
 	#if TARGET_OS_WIN32
 	mModuleHandle_p = gThisModule;  // extern from DLLMain.cpp; HINSTANCE of the DLL
 	#endif
-#endif
+	#endif
 #endif
 // end RTAS stuff
 }
@@ -271,25 +268,20 @@ void DfxPlugin::do_PreDestructor()
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
 	do_cleanup();
-#endif
 
-#ifdef TARGET_API_VST
 #if TARGET_PLUGIN_HAS_GUI
 	// The destructor of AudioEffect will delete editor if it's non-null, but
 	// it looks like DfxGuiEditor wants to be able to still access the effect
 	// during its own destructor. Maybe it's just wong that it's doing that,
 	// but if not, then we should destroy the editor now before the effect
 	// instance becomes invalid.
-	if (auto *e = editor) {
+	if (auto* e = editor)
+	{
 		setEditor(nullptr);
 		delete e;
 	}
 #endif
 #endif
-}
-
-
-DfxPlugin::~DfxPlugin() {
 }
 
 
@@ -601,7 +593,6 @@ void DfxPlugin::postupdate_parameter(long inParameterIndex)
 
 #ifdef TARGET_API_VST
 	#if TARGET_PLUGIN_HAS_GUI
-	#ifdef TARGET_PLUGIN_USES_VSTGUI
 	if (auto const guiEditor = dynamic_cast<VSTGUI::AEffGUIEditor*>(getEditor()))
 	{
 		guiEditor->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
@@ -609,7 +600,6 @@ void DfxPlugin::postupdate_parameter(long inParameterIndex)
 	#else
 		#warning "implementation missing"
 	assert(false);  // XXX TODO: we will need something for our GUI class here
-	#endif
 	#endif
 #endif
 
@@ -1179,6 +1169,8 @@ void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
 {
 	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [owner](auto& value)
 	{
+		// TODO: is the !owner test vestigial? and now confusing, per the comment in the header declaration?
+		// (very careful testing required if changed because incorrect managed smoothing stuff has insidious consequences)
 		if (!owner || (owner == value.second))
 		{
 			value.first->inc();
@@ -1862,7 +1854,7 @@ void DfxPlugin::postupdate_midilearn()
 	PropertyChanged(dfx::kPluginProperty_MidiLearn, kAudioUnitScope_Global, AudioUnitElement(0));
 #endif
 
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	if (auto const guiEditor = dynamic_cast<DfxGuiEditor*>(getEditor()))
 	{
 		guiEditor->HandleMidiLearnChange();
@@ -1877,7 +1869,7 @@ void DfxPlugin::postupdate_midilearner()
 	PropertyChanged(dfx::kPluginProperty_MidiLearner, kAudioUnitScope_Global, AudioUnitElement(0));
 #endif
 
-#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI && defined(TARGET_PLUGIN_USES_VSTGUI)
+#if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	if (auto const guiEditor = dynamic_cast<DfxGuiEditor*>(getEditor()))
 	{
 		guiEditor->HandleMidiLearnerChange();

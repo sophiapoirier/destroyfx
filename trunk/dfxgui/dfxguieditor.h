@@ -241,13 +241,6 @@ public:
 	void doIdleStuff() override;
 #endif
 
-#if PLUGGUI
-	bool isOpen() const noexcept
-	{
-		return (systemWindow != nullptr);
-	}
-#endif
-
 	// VST/RTAS abstraction methods
 	long GetNumParameters();
 	long GetNumAudioOutputs();
@@ -349,6 +342,14 @@ private:
 
 	void addMousedOverControl(IDGControl* inMousedOverControl);
 	void removeMousedOverControl(IDGControl* inMousedOverControl);
+
+#ifndef TARGET_API_VST
+	// in VST2, this method is provided by AEffEditor
+	bool isOpen() const noexcept
+	{
+		return (systemWindow != nullptr);
+	}
+#endif
 
 	IDGControl* mCurrentControl_mouseover = nullptr;
 

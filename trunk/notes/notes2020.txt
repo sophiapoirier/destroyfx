@@ -301,11 +301,6 @@ sequence should be (and why the gui doesn't show).
 set by calling methods of the audioeffect class during startup, like programsAreChunks(true). This is
 done by dfxplugin.cpp in its constructor.
 
-(We can probably get rid of VST_FORCE_DEPRECATED as part of this? looks like the mac vst
-build is using 2.4.)
-
-(Can probably also make TARGET_PLUGIN_HAS_GUI imply TARGET_PLUGIN_USES_VSTGUI?)
-
 The "has effect" flag is set (expected) but the dfx library ctor only sets the editor member (of base class AEffect)
 rather than calling setEditor. How did that happen? Well it turns out that vstgui's AEffGUIEditor constructor
 (plugin-bindings/aeffguieditor.cpp) calls setEditor(this). Probably we should not manually assign editor, but
