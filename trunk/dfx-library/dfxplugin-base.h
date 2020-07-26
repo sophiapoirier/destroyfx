@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2020  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier and Tom Murphy 7
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -144,18 +144,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #error TARGET_API_AUDIOSUITE should be defined to 1, if defined
 #endif
 
-#if defined(TARGET_OS_MAC) && TARGET_OS_MAC - 0 != 1
-#error TARGET_OS_MAC should be defined to 1, if defined
-#endif
-
-#if defined(WINDOWS) && WINDOWS - 0 != 1
-#error WINDOWS should be defined to 1, if defined
-#endif
-
-#if defined(WIN32) && WIN32 - 0 != 1
-#error WIN32 should be defined to 1, if defined
-#endif
-
 #if defined(DFX_SUPPORT_OLD_VST_SETTINGS) && DFX_SUPPORT_OLD_VST_SETTINGS - 0 != 1
 #error DFX_SUPPORT_OLD_VST_SETTINGS should be defined to 1, if defined
 #endif
@@ -181,6 +169,18 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #if defined(TARGET_PLUGIN_HAS_GUI) && (0 - TARGET_PLUGIN_HAS_GUI - 1) == 1 
 #error TARGET_PLUGIN_HAS_GUI should be defined to 0 or 1
+#endif
+
+#if defined(TARGET_OS_MAC) && (0 - TARGET_OS_MAC - 1) == 1
+#error TARGET_OS_MAC should be defined to 0 or 1
+#endif
+
+#if defined(TARGET_OS_WIN32) && (0 - TARGET_OS_WIN32 - 1) == 1 
+#error TARGET_OS_WIN32 should be defined to 0 or 1
+#endif
+
+#if defined(WINDOWS) && (0 - WINDOWS - 1) == 1 
+#error WINDOWS should be defined to 0 or 1
 #endif
 
 namespace dfx
