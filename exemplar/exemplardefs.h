@@ -15,9 +15,6 @@
 #define TARGET_PLUGIN_HAS_GUI	0
 #endif
 
-/* only necessary if using a custom GUI */
-#define PLUGIN_EDITOR_ENTRY_POINT	"ExemplarEditorEntry"
-
 // optional
 #define PLUGIN_DESCRIPTION_STRING	"the cow says..."
 #define PLUGIN_EDITOR_DESCRIPTION_STRING	"the cow says..."

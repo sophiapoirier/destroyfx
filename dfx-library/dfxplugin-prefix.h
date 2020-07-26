@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2012  Sophia Poirier
+Copyright (C) 2009-2020  Sophia Poirier and Tom Murphy 7
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -78,32 +78,10 @@ This file should be included by any prefix header that you use for your plugin.
 
 
 /*-----------------------------------------------------------------------------*/
-/* Audio Unit stuff */
-#ifdef TARGET_API_AUDIOUNIT
-	#define DFXGUI_USE_COCOA_AU_VIEW	TARGET_PLUGIN_HAS_GUI && __LP64__
-	#define TARGET_PLUGIN_USES_VSTGUI	1
-	#ifdef TARGET_PLUGIN_USES_VSTGUI
-		#define PLUGGUI	1
-		#define AU	1
-		#define PLUGIN_EDITOR_ENTRY_POINT	"DGVstGuiAUViewEntry"
-	#endif
-#endif
-
-
-/*-----------------------------------------------------------------------------*/
 /* VST stuff */
 #ifdef TARGET_API_VST
-	/* the Mac x86 baseline VST API version is VST 2.4 */
-	#ifndef VST_FORCE_DEPRECATED
-		#if defined(__MACH__) && !__ppc__
-			#define VST_FORCE_DEPRECATED	1
-		#else
-			#define VST_FORCE_DEPRECATED	0
-		#endif
-	#endif
-
-	#define TARGET_PLUGIN_USES_VSTGUI	1
-	#define ENABLE_VST_EXTENSION_IN_VSTGUI	0
+	/* require VST 2.4 (the first version with 64-bit executable support) */
+	#define VST_FORCE_DEPRECATED	1
 #endif
 
 
@@ -112,20 +90,6 @@ This file should be included by any prefix header that you use for your plugin.
 #ifdef TARGET_API_RTAS
 	#ifdef __MACH__
 		#include "../ProToolsSDK/AlturaPorts/TDMPlugIns/common/Mac/CommonPlugInHeaders.pch"
-	#endif
-
-	#define TARGET_PLUGIN_USES_VSTGUI	1
-	#define PLUGGUI	1
-#endif
-
-
-/*-----------------------------------------------------------------------------*/
-/* VSTGUI stuff */
-#ifdef TARGET_PLUGIN_USES_VSTGUI
-	#if _WIN32
-		#define VSTGUI_USES_UTF8	0
-		#define USE_LIBPNG	1
-		#define WINDOWS	1
 	#endif
 #endif
 

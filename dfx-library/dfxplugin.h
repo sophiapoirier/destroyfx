@@ -151,6 +151,7 @@ PLUGIN_EDITOR_RES_ID
 
 
 #include <atomic>
+#include <cassert>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -170,7 +171,7 @@ PLUGIN_EDITOR_RES_ID
 		using TARGET_API_BASE_CLASS = CEffectProcessRTAS;
 	#endif
 	using TARGET_API_BASE_INSTANCE_TYPE = void*;
-	#ifdef TARGET_PLUGIN_USES_VSTGUI
+	#if TARGET_PLUGIN_HAS_GUI
 		#include "CProcessType.h"
 		#include "CTemplateNoUIView.h"
 	#endif
@@ -206,7 +207,7 @@ class DfxPluginCore;
 #pragma mark _________DfxPlugin_________
 //-----------------------------------------------------------------------------
 class DfxPlugin : public TARGET_API_BASE_CLASS
-#if defined(TARGET_API_RTAS) && defined(TARGET_PLUGIN_USES_VSTGUI)
+#if defined(TARGET_API_RTAS) && TARGET_PLUGIN_HAS_GUI
 , public ITemplateProcess
 #endif
 {
@@ -236,7 +237,7 @@ public:
 	// ***
 	DfxPlugin(TARGET_API_BASE_INSTANCE_TYPE inInstance, long inNumParameters, long inNumPresets = 1);
 	// ***
-	~DfxPlugin() override;
+	virtual ~DfxPlugin() = default;
 
 	void do_PostConstructor();
 	// ***
@@ -815,7 +816,7 @@ private:
 	std::vector<float*> mInputAudioStreams_as;
 	std::vector<float*> mOutputAudioStreams_as;
 	std::vector<float> mZeroAudioBuffer;
-#ifdef TARGET_PLUGIN_USES_VSTGUI
+#if TARGET_PLUGIN_HAS_GUI
 	GrafPtr mMainPort = nullptr;
 	std::unique_ptr<ITemplateCustomUI> mCustomUI_p;
 	Rect mPIWinRect;
@@ -1016,7 +1017,7 @@ public:
 	int64_t GetParameter_i_FromRTAS(long inParameterID);
 	bool GetParameter_b_FromRTAS(long inParameterID);
 
-	#ifdef TARGET_PLUGIN_USES_VSTGUI
+	#if TARGET_PLUGIN_HAS_GUI
 	void SetViewPort(GrafPtr inPort) override;
 	void GetViewRect(Rect* outViewRect) override;
 	long SetControlValue(long inControlIndex, long inValue) override;
@@ -1048,7 +1049,7 @@ public:
 
 	// silliness needing for RTAS<->VSTGUI connecting
 //	virtual float GetParameter_f(long inParameterID) const { return GetParameter(inParameterID); }
-	#endif
+	#endif  // TARGET_PLUGIN_HAS_GUI
 #endif
 // end of RTAS/AudioSuite API methods
 
@@ -1256,7 +1257,7 @@ private:
 #include "CPluginControl_Continuous.h"
 #include "CPluginControl_Frequency.h"
 
-#if TAREGT_OS_WIN32
+#if TARGET_OS_WIN32
 	#pragma warning( disable : 4250 ) // function being inherited through dominance
 #endif
 
@@ -1409,6 +1410,7 @@ template<class DSP>
 void DfxPlugin::initCores()
 {
 #ifndef TARGET_API_AUDIOUNIT
+	assert(mDSPCores.empty());	// this method should only be called once
 	mDSPCores.clear();
 	mDSPCores.reserve(getnumoutputs());
 	for (unsigned long coreidx = 0; coreidx < getnumoutputs(); coreidx++)

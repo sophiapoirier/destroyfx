@@ -56,12 +56,6 @@ void DfxPlugin::resume()
 {
 	updatesamplerate();
 
-#if TARGET_PLUGIN_USES_MIDI
-	#if !VST_FORCE_DEPRECATED
-	wantEvents();
-	#endif
-#endif
-
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this here
 	if (!mIsInitialized)
