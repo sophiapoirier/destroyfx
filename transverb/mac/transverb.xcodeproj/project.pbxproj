@@ -57,6 +57,7 @@
 		B025B99608AD320900A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B99308AD320900A9CCAE /* CAVectorUnit.cpp */; };
 		B028C2D20D0F325900ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C2D10D0F325900ADA1DA /* destroyfx.icns */; };
 		EC2F843024A7C21D00F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F842F24A7C21D00F29321 /* dfxmisc.mm */; };
+		EC65038B24CDE4AE003C93EA /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC65038924CDE4AE003C93EA /* dfxgui-fontfactory.mm */; };
 		ECC0F376200BC5F100B1B463 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F375200BC5F100B1B463 /* AudioToolbox.framework */; };
 		ECC0F378200BC5F900B1B463 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F377200BC5F800B1B463 /* AudioUnit.framework */; };
 		ECC0F37A200BC62200B1B463 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECC0F379200BC62100B1B463 /* Carbon.framework */; };
@@ -174,6 +175,9 @@
 		EC50A03B20CA266100718651 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC63C97F210EE605006279D2 /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC63C980210EE605006279D2 /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
+		EC65038724CDE4AE003C93EA /* dfxgui-fontfactory.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = "dfxgui-fontfactory.h"; sourceTree = "<group>"; usesTabs = 0; };
+		EC65038824CDE4AE003C93EA /* dfxgui-fontfactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = "dfxgui-fontfactory.cpp"; sourceTree = "<group>"; usesTabs = 0; };
+		EC65038924CDE4AE003C93EA /* dfxgui-fontfactory.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "dfxgui-fontfactory.mm"; sourceTree = "<group>"; };
 		EC94769E221B669E00F25BB9 /* idfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxsmoothedvalue.h; sourceTree = "<group>"; };
 		EC9841831030C43500FA3B2B /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		EC9841841030C43500FA3B2B /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
@@ -443,6 +447,9 @@
 				4932F4E8068011C9006A9591 /* dfxguislider.cpp */,
 				4932F4E7068011C9006A9591 /* dfxguitextdisplay.h */,
 				4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */,
+				EC65038724CDE4AE003C93EA /* dfxgui-fontfactory.h */,
+				EC65038824CDE4AE003C93EA /* dfxgui-fontfactory.cpp */,
+				EC65038924CDE4AE003C93EA /* dfxgui-fontfactory.mm */,
 				ECF7D8CB2002AB5700DCE42E /* dfxgui-auviewfactory.h */,
 				ECF7D8CA2002AB5700DCE42E /* dfxgui-auviewfactory.mm */,
 			);
@@ -611,6 +618,7 @@
 				4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */,
 				4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */,
 				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
+				EC65038B24CDE4AE003C93EA /* dfxgui-fontfactory.mm in Sources */,
 				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
 				ECF7D8EF2002B7D300DCE42E /* plugguieditor.cpp in Sources */,
 				4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */,

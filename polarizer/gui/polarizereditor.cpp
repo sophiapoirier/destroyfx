@@ -21,10 +21,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "polarizereditor.h"
 
+#include "dfxmisc.h"
 #include "polarizer.h"
 
-#include "dfxmisc.h"
-#include "dfxgui-base.h"
 
 //-----------------------------------------------------------------------------
 enum {
@@ -47,8 +46,7 @@ enum {
 };
 
 
-constexpr char const* const kValueTextFont = kFontName_BoringBoron;
-//constexpr float kValueTextSize = 20.0f;
+constexpr auto kValueTextFont = dfx::kFontName_BoringBoron;
 constexpr float kValueTextSize = 16.8f;
 
 
@@ -69,7 +67,6 @@ bool leapDisplayProc(float value, char* outText, void*)
 
 bool amountDisplayProc(float value, char* outText, void*)
 {
-//	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value) > 0;
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value * 10.0f) > 0;
 }
 

@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //--------------------------------------------------------------------------
 class GeometerHelpBox final : public DGStaticTextDisplay {
 public:
-  GeometerHelpBox(DfxguiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground);
+  GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground);
 
   void draw(VSTGUI::CDrawContext * inContext) override;
 

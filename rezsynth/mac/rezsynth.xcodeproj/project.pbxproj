@@ -56,6 +56,7 @@
 		B028C2BC0D0F323700ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C2BB0D0F323700ADA1DA /* destroyfx.icns */; };
 		EC2F843424A7C27400F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843324A7C27400F29321 /* dfxmisc.mm */; };
 		EC40EDAE20DB4B7100F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDAD20DB4B7100F5C0A7 /* dfxguimisc.mm */; };
+		EC65038624CDCFE5003C93EA /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC65038524CDCFE5003C93EA /* dfxgui-fontfactory.mm */; };
 		EC89B315208D298000E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B30E208D297E00E15129 /* Accelerate.framework */; };
 		EC89B316208D298000E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B30F208D297F00E15129 /* OpenGL.framework */; };
 		EC89B317208D298000E15129 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B310208D297F00E15129 /* QuartzCore.framework */; };
@@ -170,6 +171,9 @@
 		EC40EDAD20DB4B7100F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
 		EC5CC730210EDED6007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC5CC731210EDED6007CCD6B /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
+		EC65038224CD261C003C93EA /* dfxgui-fontfactory.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = "dfxgui-fontfactory.h"; sourceTree = "<group>"; usesTabs = 0; };
+		EC65038324CD261C003C93EA /* dfxgui-fontfactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = "dfxgui-fontfactory.cpp"; sourceTree = "<group>"; usesTabs = 0; };
+		EC65038524CDCFE5003C93EA /* dfxgui-fontfactory.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "dfxgui-fontfactory.mm"; sourceTree = "<group>"; };
 		EC89B30E208D297E00E15129 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC89B30F208D297F00E15129 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC89B310208D297F00E15129 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -448,6 +452,9 @@
 				4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */,
 				4932F4E3068011C9006A9591 /* dfxguibutton.h */,
 				4932F4E2068011C9006A9591 /* dfxguibutton.cpp */,
+				EC65038224CD261C003C93EA /* dfxgui-fontfactory.h */,
+				EC65038324CD261C003C93EA /* dfxgui-fontfactory.cpp */,
+				EC65038524CDCFE5003C93EA /* dfxgui-fontfactory.mm */,
 				EC89B43C208D328C00E15129 /* dfxgui-auviewfactory.h */,
 				EC89B43B208D328C00E15129 /* dfxgui-auviewfactory.mm */,
 			);
@@ -604,6 +611,7 @@
 				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
 				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
 				4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */,
+				EC65038624CDCFE5003C93EA /* dfxgui-fontfactory.mm in Sources */,
 				4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */,
 				4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */,
 				4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */,

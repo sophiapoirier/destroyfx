@@ -33,17 +33,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxdefines.h"
 #include "dfxgui-base.h"
 
-// XXX probably not right to do this here, but vstgui needs aeffectx.h to
-// be included before it when targeting vst, because it looks for __aeffectx__
-// include guards to avoid redefining symbols (ugh)
-#include "dfxplugin-base.h"
-
-#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wunused-parameter"
-	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
-	#include "vstgui.h"
-#pragma clang diagnostic pop
-
 
 //-----------------------------------------------------------------------------
 class DGRect : public VSTGUI::CRect
@@ -231,9 +220,6 @@ namespace dfx
 {
 
 extern char const* const kPlusMinusUTF8;
-
-// Use dfx::FontFactory::CreateVstGuiFont.
-VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFontInternal(float inFontSize, char const* inFontName = nullptr);
 
 std::string SanitizeNumericalInput(std::string const& inText);
 

@@ -26,15 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <memory>
 
-#include "dfxdefines.h"
 #include "dfxgui-base.h"
-
-// XXX probably not right to do this here, but vstgui needs aeffectx.h to
-// be included before it when targeting vst, because it looks for __aeffectx__
-// include guards to avoid redefining symbols (ugh)
-#include "dfxplugin-base.h"
-
-#include "vstgui.h"
 
 namespace dfx {
 
@@ -43,9 +35,10 @@ public:
   // Creates a font factory instance, which installs all the fonts
   // found in embedded resources.
   //
-  // On mac, anything that can be installed as a font is installed. On
-  // Windows, resources of type DFX_TTF are installed. Note that on
-  // windows, this is somewhat expensive (writes temporary files).
+  // On macOS, any font contained within the plugin bundle resources
+  // will be registered for the host process. On Windows, resources
+  // of type DFX_TTF are installed. Note that on Windows, this is
+  // somewhat expensive (writes temporary files).
   //
   // Note that on Windows, it seems to take a few milliseconds for
   // installed fonts to actually become available (or maybe it needs

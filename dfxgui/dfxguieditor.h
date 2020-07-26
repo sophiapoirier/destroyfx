@@ -34,21 +34,15 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxdefines.h"
 #include "dfxgui-base.h"
+#include "dfxgui-fontfactory.h"
 #include "dfxguimisc.h"
 #include "dfxmisc.h"
 #include "dfxplugin-base.h"
 #include "dfxpluginproperties.h"
-#include "dfxgui-fontfactory.h"
 
 #if TARGET_OS_MAC
 	#include <ApplicationServices/ApplicationServices.h>
 #endif
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
-
-#include "vstgui.h"
 
 #ifdef TARGET_API_AUDIOUNIT
 	using DGEditorListenerInstance = AudioComponentInstance;
@@ -76,8 +70,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 	using TARGET_API_EDITOR_INDEX_TYPE = int32_t;
 	using ERect = VSTGUI::ERect;
 #endif
-
-#pragma clang diagnostic pop
 
 
 
@@ -173,12 +165,13 @@ public:
 	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
 	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
 
-	// Adds the control to mControlsList, only if attached to a parameter (why?).
+	// Adds the control to mControlsList, only if attached to a parameter, 
+	// since those are the only controls for which we manage extra functionality.
 	// Always returns its argument.
 	IDGControl* addControl(IDGControl* inControl);
 	// In-place constructor variant that instantiates the control in addition to adding it.
-	// XXX Note that DFXGuiEditor does not delete these (might be an oversight?) so the
-	// pointer is owned by the caller?
+	// Note that DFXGuiEditor observes but does not own these.  
+	// They are added to the VSTGUI frame which owns and manages their lifetime.
 	template <typename T, typename... Args>
 	T* emplaceControl(Args&&... args)
 	{
@@ -338,15 +331,14 @@ public:
 	unsigned long getNumAudioChannels();
 
 	// Create a VSTGUI font via the editor's font factory.
-	VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(
-	    float inFontSize, char const* inFontName = nullptr) {
-	  return mFontFactory->CreateVstGuiFont(inFontSize, inFontName);
+	VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr)
+	{
+		return mFontFactory->CreateVstGuiFont(inFontSize, inFontName);
 	}
-  
+
 protected:
 	std::vector<IDGControl*> mControlsList;
-	std::unique_ptr<dfx::FontFactory> mFontFactory;
-  
+
 private:
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
@@ -369,6 +361,8 @@ private:
 	unsigned long mNumAudioChannels = 0;
 
 	VSTGUI::SharedPointer<DGTextEntryDialog> mTextEntryDialog;
+
+	std::unique_ptr<dfx::FontFactory> mFontFactory;
 
 #if TARGET_PLUGIN_USES_MIDI
 	DGButton* mMidiLearnButton = nullptr;

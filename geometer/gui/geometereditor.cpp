@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -115,7 +115,7 @@ enum {
 #pragma mark -
 
 //--------------------------------------------------------------------------
-GeometerHelpBox::GeometerHelpBox(DfxguiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
+GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
   : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
 			dfx::kFontSize_SnootPixel10, DGColor::kBlack, dfx::kFontName_SnootPixel10), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)

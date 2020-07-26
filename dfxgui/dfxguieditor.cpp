@@ -63,8 +63,8 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
-  :	TARGET_API_EDITOR_BASE_CLASS(inInstance),
-	// This installs embedded font resources. We do this as early as
+:	TARGET_API_EDITOR_BASE_CLASS(inInstance),
+	// This activates embedded font resources. We do this as early as
 	// possible (e.g. not in open()) because on Windows it seems to
 	// take a few milliseconds for the font to actually become available.
 	mFontFactory(dfx::FontFactory::Create())
@@ -141,17 +141,18 @@ DfxGuiEditor::~DfxGuiEditor()
 bool DfxGuiEditor::open(void* inWindow)
 {
 	// !!! always call this !!!
+#ifdef TARGET_API_VST
 	// In VST, this always returns false (not clear whether that is
 	// intended), so don't treat that as an error.
-#ifdef TARGET_API_VST
 	(void)TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
 #else
-	if (!TARGET_API_EDITOR_BASE_CLASS::open(inWindow))
+	auto const baseSuccess = TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
+	if (!baseSuccess)
 	{
 		return baseSuccess;
 	}
 #endif
-	
+
 	mControlsList.clear();
 
 	frame = new VSTGUI::CFrame(VSTGUI::CRect(rect.left, rect.top, rect.right, rect.bottom), this);
