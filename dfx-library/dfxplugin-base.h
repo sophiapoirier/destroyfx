@@ -94,7 +94,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 // using Digidesign's RTAS/AudioSuite API
 #elif defined(TARGET_API_RTAS)
-	#ifdef TARGET_PLUGIN_USES_VSTGUI
+	#if TARGET_PLUGIN_HAS_GUI
 		#include "ITemplateProcess.h"
 		using TARGET_API_EDITOR_PARENT_INSTANCE_TYPE = ITemplateProcess*;
 	#else
@@ -146,10 +146,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #if defined(DFX_SUPPORT_OLD_VST_SETTINGS) && DFX_SUPPORT_OLD_VST_SETTINGS - 0 != 1
 #error DFX_SUPPORT_OLD_VST_SETTINGS should be defined to 1, if defined
-#endif
-
-#if defined(TARGET_PLUGIN_USES_VSTGUI) && TARGET_PLUGIN_USES_VSTGUI - 0 != 1
-#error TARGET_PLUGIN_USES_VSTGUI should be defined to 1, if defined
 #endif
 
 

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2009  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -106,7 +106,7 @@ This is our Audio Unit resource stuff.
 	#define DESCRIPTION	PLUGIN_CREATOR_NAME_STRING" "PLUGIN_NAME_STRING" picturesque yet functional interface"
 #endif
 
-#define ENTRY_POINT	PLUGIN_EDITOR_ENTRY_POINT
+#define ENTRY_POINT	"DGVstGuiAUViewEntry"
 
 #include "AUResources.r"
 
