@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2019  Sophia Poirier
+Copyright (C) 2009-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -66,15 +66,12 @@ public:
 	SmoothedValue<T>& operator=(T inValue) noexcept;
 
 private:
-	T mCurrentValue{}, mTargetValue{};
-	T mValueStep{};
-  	// PERF: Probably the smoothing parameters should be type T, so
-	// that we do float operations on float? Note we have to accept
-	// double arguments to implement ISmoothedValue.
+	T mCurrentValue {}, mTargetValue {};
+	T mValueStep {};
 	double mSmoothDur_seconds = 0.0;
 	size_t mSmoothDur_samples = 0, mSmoothCount = 0;
-	double mSampleRate = 0.0;
-	bool mReinitialize = false;
+	double mSampleRate = 1.0;
+	bool mReinitialize = true;
 };
 
 
