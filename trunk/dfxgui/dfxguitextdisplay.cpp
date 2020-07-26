@@ -68,11 +68,13 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 
 //-----------------------------------------------------------------------------
 // Constructor-time setup. Returns computed font tweaks enum to be saved for draw-time tweaking.
-static DGFontTweaks DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor,
-										VSTGUI::CTextLabel* inTextDisplay, 
-										DGRect const& inRegion, DGImage* inBackgroundImage, 
-										dfx::TextAlignment inTextAlignment, 
-										float inFontSize, DGColor inFontColor, char const* inFontName)
+static DGFontTweaks DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor, 
+												VSTGUI::CTextLabel* inTextDisplay, 
+												DGRect const& inRegion, 
+												DGImage* inBackgroundImage, 
+												dfx::TextAlignment inTextAlignment, 
+												float inFontSize, DGColor inFontColor, 
+												char const* inFontName)
 {
 	inTextDisplay->setTransparency(true);
 
@@ -210,18 +212,21 @@ void DGTextDisplay::refreshText()
 	setValue(getValue());
 }
 
-void DGTextDisplay::takeFocus() {
-  #if TARGET_OS_WIN32
-  // XXX For unknown reasons on Windows, interacting with a text edit
-  // control for the second time in a row causes the rest of the plugin window
-  // to go blank. "Fix" this by invalidating the whole plugin UI when a text
-  // edit takes focus. If we fix something else about invalidating the display,
-  // might be worth revisiting whether this is needed.
-  if (auto *frame = getFrame()) {
-    frame->invalid();
-  }
-  #endif
-  VSTGUI::CTextEdit::takeFocus();
+//-----------------------------------------------------------------------------
+void DGTextDisplay::takeFocus()
+{
+#if TARGET_OS_WIN32
+	// XXX For unknown reasons on Windows, interacting with a text edit
+	// control for the second time in a row causes the rest of the plugin window
+	// to go blank. "Fix" this by invalidating the whole plugin UI when a text
+	// edit takes focus. If we fix something else about invalidating the display,
+	// might be worth revisiting whether this is needed.
+	if (auto* frame = getFrame())
+	{
+		frame->invalid();
+	}
+#endif
+	DGControl<VSTGUI::CTextEdit>::takeFocus();
 }
 
 //-----------------------------------------------------------------------------
@@ -264,19 +269,21 @@ bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& o
 // This is called by VSTGUI when the text display transitions to the platform's text
 // editor. On windows, we move the text editor up so that it lands where the text
 // label was. (XXX presumably there is a less hacky way to do this??)
-VSTGUI::CRect DGTextDisplay::platformGetSize() const {
+VSTGUI::CRect DGTextDisplay::platformGetSize() const
+{
 	VSTGUI::CRect rect = DGControl<VSTGUI::CTextEdit>::platformGetSize();
-	switch (mFontTweaks) {
-	case DGFontTweaks::SNOOTORGPX10:
-		#if TARGET_OS_WIN32
-		rect.top -= 3;
-		#endif
-		break;
-	default:
-		break;
+	switch (mFontTweaks)
+	{
+		case DGFontTweaks::SNOOTORGPX10:
+#if TARGET_OS_WIN32
+			rect.top -= 3;
+#endif
+			break;
+		default:
+			break;
 	}
 	return rect;
-};
+}
 
 
 
@@ -320,7 +327,7 @@ void DGStaticTextDisplay::drawPlatformText(VSTGUI::CDrawContext* inContext, VSTG
 	VSTGUI::CTextLabel::drawPlatformText(inContext, inString, textArea);
 }
 
-  
+
 
 
 

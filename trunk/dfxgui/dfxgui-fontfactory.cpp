@@ -31,9 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxdefines.h"
 #include "dfxgui-base.h"
-#include "dfxguimisc.h"
-
-#include "vstgui.h"
+#include "dfxmisc.h"
 
 #if TARGET_OS_WIN32
 #include <windows.h>
@@ -43,13 +41,15 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "lib/platform/win32/win32support.h"
 #endif
 
-// XXX might be unnecessary; moved some code from dfxguiedtior
-#ifdef TARGET_API_AUDIOUNIT
-#include "dfx-au-utilities.h"
+#if TARGET_OS_MAC
+#if !__OBJC__
+  #error "you must compile the version of this file with a .mm filename extension, not this file"
+#elif !__has_feature(objc_arc)
+  #error "you must compile this file with Automatic Reference Counting (ARC) enabled"
 #endif
-
-#ifdef TARGET_API_VST
-#include "dfxplugin.h"
+#import <AppKit/NSFont.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreText/CTFontManager.h>
 #endif
 
 #if TARGET_OS_WIN32
@@ -132,7 +132,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
   }
 
   if (!AddFontResourceExA(temp_filename,
-			  FONT_RESOURCE_FLAGS,
+                          FONT_RESOURCE_FLAGS,
                           /* Reserved, must be zero */
                           0)) {
     // If we didn't actually install the font, then try to remove the
@@ -143,10 +143,10 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
   
   return {(std::string)temp_filename};
 }
-#endif
+#endif  // TARGET_OS_WIN32
 
 // Platform-specific name of an embedded resource.
-#ifdef TARGET_OS_MAC
+#if TARGET_OS_MAC
   using ResourceRef = CFURLRef;
 #elif TARGET_OS_WIN32
   using ResourceRef = const char *;
@@ -157,7 +157,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
 
 // For cleaning up resources when the font factory is destroyed.
 // Currently trivial on platforms other than Windows.
-#ifdef TARGET_OS_WIN32
+#if TARGET_OS_WIN32
 struct InstalledFontResource {
 public:
   InstalledFontResource(const std::string &tempfile) : tempfile(tempfile) {}
@@ -200,13 +200,13 @@ public:
   void RegisterFont(ResourceRef ref) {
 #if TARGET_OS_MAC
     [[maybe_unused]] auto const success =
-      CTFontManagerRegisterFontsForURL(fileURL, kCTFontManagerScopeProcess,
-				       nullptr);
+      CTFontManagerRegisterFontsForURL(ref, kCTFontManagerScopeProcess,
+                                       nullptr);
 #elif TARGET_OS_WIN32
     std::optional<std::string> tempfile = InstallFontWin32(ref);
     if (tempfile.has_value()) {
       installed.emplace_back(
-	  std::make_unique<InstalledFontResource>(tempfile.value()));
+          std::make_unique<InstalledFontResource>(tempfile.value()));
     }
 #else
     // (Impossible)
@@ -216,38 +216,45 @@ public:
   // Called during constructor.
   void InstallAllFonts() {    
 #if TARGET_OS_MAC
-    // load any fonts from our bundle resources to be accessible
-    // locally within our component instance
-    auto const pluginBundle =
-      CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-    if (pluginBundle) {
-      dfx::UniqueCFType const bundleResourcesDirURL =
-        CFBundleCopyResourcesDirectoryURL(pluginBundle);
-      if (bundleResourcesDirURL) {
-        constexpr CFURLEnumeratorOptions options =
-          kCFURLEnumeratorSkipInvisibles |
-	  kCFURLEnumeratorSkipPackageContents |
-          kCFURLEnumeratorDescendRecursively;
-        dfx::UniqueCFType const dirEnumerator =
-          CFURLEnumeratorCreateForDirectoryURL(kCFAllocatorDefault,
-					       bundleResourcesDirURL.get(),
-                                               options, nullptr);
-        if (dirEnumerator) {
-          CFURLRef fileURL = nullptr;
-          while (CFURLEnumeratorGetNextURL(dirEnumerator.get(), &fileURL,
-					   nullptr) ==
-		 kCFURLEnumeratorSuccess) {
-            if (fileURL) {
-              if (CFURLHasDirectoryPath(fileURL)) {
-                continue;
+    // Register any fonts located within our plugin bundle resources.
+    // The registration occurs locally for the process, and thus need
+    // only occur once and requires no clean up, as that will happen
+    // automatically upon process termination.  All current and future
+    // instances of the plugin in that process will have access to the
+    // fonts registered here.
+    static std::once_flag once;
+    std::call_once(once, [this]() {
+      auto const pluginBundle =
+        CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+      if (pluginBundle) {
+        dfx::UniqueCFType const bundleResourcesDirURL =
+          CFBundleCopyResourcesDirectoryURL(pluginBundle);
+        if (bundleResourcesDirURL) {
+          constexpr CFURLEnumeratorOptions options =
+            kCFURLEnumeratorSkipInvisibles |
+            kCFURLEnumeratorSkipPackageContents |
+            kCFURLEnumeratorDescendRecursively;
+          dfx::UniqueCFType const dirEnumerator =
+            CFURLEnumeratorCreateForDirectoryURL(kCFAllocatorDefault,
+                                                 bundleResourcesDirURL.get(),
+                                                 options, nullptr);
+          if (dirEnumerator) {
+            CFURLRef fileURL = nullptr;
+            while (CFURLEnumeratorGetNextURL(dirEnumerator.get(), &fileURL,
+                                             nullptr) ==
+                   kCFURLEnumeratorSuccess) {
+              if (fileURL) {
+                if (CFURLHasDirectoryPath(fileURL)) {
+                  continue;
+                }
+                // XXX TODO: only call this for font files!
+                RegisterFont(fileURL);
               }
-              // XXX TODO: only call this for font files!
-              RegisterFont(fileURL);
             }
           }
         }
       }
-    }
+    });
 #elif TARGET_OS_WIN32
 
     // TODO: VSTGUI does have direct support for this, but it uses
@@ -256,17 +263,17 @@ public:
     // hack, but currently some 35% of users are on Windows 8 or
     // earlier!
     if (!EnumResourceNamesA(VSTGUI::GetInstance(),
-			    FONT_RESOURCE_TYPE,
-			    +[](HMODULE hModule,
-				LPCTSTR type,
-				char *name,
-				LONG_PTR param) -> int {
-				// MessageBoxA(nullptr, name, name, 0);
-				((FFImpl*)param)->RegisterFont(name);
-				// Continue enumeration.
-				return true;
-			      },
-			    (LONG_PTR)this)) {
+                            FONT_RESOURCE_TYPE,
+                            +[](HMODULE hModule,
+                                LPCTSTR type,
+                                char *name,
+                                LONG_PTR param) -> int {
+                                // MessageBoxA(nullptr, name, name, 0);
+                                ((FFImpl*)param)->RegisterFont(name);
+                                // Continue enumeration.
+                                return true;
+                              },
+                            (LONG_PTR)this)) {
       // Note: this also "fails" if no resources of type DFX_TTF are found,
       // which would be normal for plugins without embedded fonts.
       return;
@@ -274,7 +281,6 @@ public:
     
 #else
 
-    // (maybe VSTGUI::IPlatformFont::getAllPlatformFontFamilies can assist?)
     #warning "implementation missing"
 
 #endif
@@ -289,7 +295,17 @@ public:
   //    a bitmap font that has its own allocated storage.
   VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(
       float inFontSize, char const* inFontName) override {
-    return ::dfx::CreateVstGuiFontInternal(inFontSize, inFontName);
+    if (inFontName) {
+      return VSTGUI::makeOwned<VSTGUI::CFontDesc>(inFontName, inFontSize);
+    } else {
+      auto fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(VSTGUI::kSystemFont->getName(), inFontSize);
+#if TARGET_OS_MAC
+      if (auto const fontName = [NSFont systemFontOfSize:NSFont.systemFontSize].displayName) {
+        fontDesc->setName(fontName.UTF8String);
+      }
+#endif
+      return fontDesc;
+    }
   }
 
   std::mutex m;
@@ -305,4 +321,3 @@ std::unique_ptr<FontFactory> FontFactory::Create() {
 }
 
 }  // namespace dfx
-

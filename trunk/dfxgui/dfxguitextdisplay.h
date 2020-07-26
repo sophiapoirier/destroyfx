@@ -27,16 +27,17 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <functional>
 #include <string>
 #include <vector>
-#include <optional>
 
 #include "dfxguicontrol.h"
 
-namespace internal {
+namespace internal
+{
 // Some fonts have tweaks that we apply on a platform-by-platform basis
 // to get pixel-perfect alignment.
-enum class DGFontTweaks {
-  NONE,
-  SNOOTORGPX10,
+enum class DGFontTweaks
+{
+	NONE,
+	SNOOTORGPX10
 };
 }  // namespace internal
 
@@ -61,15 +62,14 @@ public:
 	void setTextToValueProc(TextToValueProc&& textToValueProc);
 
 	void refreshText();  // trigger a re-conversion of the numerical value to text
-  
+
 	CLASS_METHODS(DGTextDisplay, VSTGUI::CTextEdit)
 
 protected:
-
-	void takeFocus () override;
+	void takeFocus() override;
 	void drawPlatformText(VSTGUI::CDrawContext* inContext, VSTGUI::IPlatformString* inString, VSTGUI::CRect const& inRegion) override;
-	VSTGUI::CRect platformGetSize () const override;
-  
+	VSTGUI::CRect platformGetSize() const override;
+
 	bool valueToTextProcBridge(float inValue, char outTextUTF8[kTextMaxLength], CParamDisplay* inUserData);
 	bool textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& outValue, VSTGUI::CTextEdit* textEdit);
 

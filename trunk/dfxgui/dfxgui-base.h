@@ -24,11 +24,24 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef __MACH__
 	#include <TargetConditionals.h>
 #endif
+
+#ifdef TARGET_API_VST
+	// XXX probably not right to do this here, but vstgui needs aeffectx.h to
+	// be included before it when targeting vst, because it looks for __aeffectx__
+	// include guards to avoid redefining symbols (ugh)
+	#include "dfxplugin-base.h"
+#endif
+
+#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wunused-parameter"
+	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
+	#include "vstgui.h"
+#pragma clang diagnostic pop
 
 
 namespace dfx
