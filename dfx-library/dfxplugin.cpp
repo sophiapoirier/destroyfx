@@ -597,9 +597,6 @@ void DfxPlugin::postupdate_parameter(long inParameterIndex)
 	{
 		guiEditor->setParameter(inParameterIndex, getparameter_gen(inParameterIndex));
 	}
-	#else
-		#warning "implementation missing"
-	assert(false);  // XXX TODO: we will need something for our GUI class here
 	#endif
 #endif
 
