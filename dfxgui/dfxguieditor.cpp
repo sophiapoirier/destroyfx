@@ -52,10 +52,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #ifdef TARGET_API_AUDIOUNIT
-static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, UInt64 inEventHostTime, Float32 inParameterValue);
-#endif
-
-#ifdef TARGET_API_AUDIOUNIT
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
 	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_AUPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);  // TODO: C++23 [[no_destroy]]
 #endif
@@ -99,6 +95,10 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 //-----------------------------------------------------------------------------
 DfxGuiEditor::~DfxGuiEditor()
 {
+#ifdef TARGET_API_AUDIOUNIT
+	RemoveAUEventListeners();
+#endif
+
 	if (IsOpen())
 	{
 		close();
@@ -112,28 +112,6 @@ DfxGuiEditor::~DfxGuiEditor()
 	// destructor runs, so we don't use the problematic destructor order.)
 	setmidilearning(false);
 #endif
-
-#ifdef TARGET_API_AUDIOUNIT
-	// remove and dispose the event listener, if we created it
-	if (mAUEventListener)
-	{
-		for (auto const& parameterID : mAUParameterList)
-		{
-			auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
-			AUListenerRemoveParameter(mAUEventListener.get(), this, &auParam);
-		}
-		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mStreamFormatPropertyAUEvent);
-		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mParameterListPropertyAUEvent);
-	#if TARGET_PLUGIN_USES_MIDI
-		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnPropertyAUEvent);
-		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
-	#endif
-		std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
-		{
-			AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
-		});
-	}
-#endif
 }
 
 
@@ -141,12 +119,10 @@ DfxGuiEditor::~DfxGuiEditor()
 bool DfxGuiEditor::open(void* inWindow)
 {
 	// !!! always call this !!!
-#ifdef TARGET_API_VST
+	[[maybe_unused]] auto const baseSuccess = TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
+#ifndef TARGET_API_VST
 	// In VST, this always returns false (not clear whether that is
 	// intended), so don't treat that as an error.
-	(void)TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
-#else
-	auto const baseSuccess = TARGET_API_EDITOR_BASE_CLASS::open(inWindow);
 	if (!baseSuccess)
 	{
 		return baseSuccess;
@@ -164,67 +140,17 @@ bool DfxGuiEditor::open(void* inWindow)
 	frame->setBackground(GetBackgroundImage());
 	frame->enableTooltips(true);
 
-
 	mMousedOverControlsList.clear();
 	setCurrentControl_mouseover(nullptr);
 
-
-// determine the number of audio channels currently configured for the AU
+	// determine the number of audio channels currently configured for the AU
 	mNumAudioChannels = getNumAudioChannels();
 
-
 #ifdef TARGET_API_AUDIOUNIT
-// install an event listener for the parameters and necessary properties
+	// create a cache of the parameter list before creating controls as the process depends on that information
 	{
 		std::lock_guard const guard(mAUParameterListLock);
 		mAUParameterList = CreateParameterList();
-	}
-	// XXX should I use kCFRunLoopCommonModes instead, like AUCarbonViewBase does?
-	AUEventListenerRef auEventListener_temp = nullptr; 
-	auto const status = AUEventListenerCreate(DFXGUI_AudioUnitEventListenerProc, this, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode,
-											  kNotificationInterval, kNotificationInterval, &auEventListener_temp);
-	if ((status == noErr) && auEventListener_temp)
-	{
-		mAUEventListener.reset(auEventListener_temp);
-
-		{
-			std::lock_guard const guard(mAUParameterListLock);
-			for (auto const& parameterID : mAUParameterList)
-			{
-				auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
-				AUListenerAddParameter(mAUEventListener.get(), this, &auParam);
-			}
-		}
-
-		memset(&mStreamFormatPropertyAUEvent, 0, sizeof(mStreamFormatPropertyAUEvent));
-		mStreamFormatPropertyAUEvent.mEventType = kAudioUnitEvent_PropertyChange;
-		mStreamFormatPropertyAUEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
-		mStreamFormatPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_StreamFormat;
-		mStreamFormatPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Output;
-		mStreamFormatPropertyAUEvent.mArgument.mProperty.mElement = 0;
-		AUEventListenerAddEventType(mAUEventListener.get(), this, &mStreamFormatPropertyAUEvent);
-
-		mParameterListPropertyAUEvent = mStreamFormatPropertyAUEvent;
-		mParameterListPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_ParameterList;
-		mParameterListPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
-		AUEventListenerAddEventType(mAUEventListener.get(), this, &mParameterListPropertyAUEvent);
-
-	#if TARGET_PLUGIN_USES_MIDI
-		mMidiLearnPropertyAUEvent = mStreamFormatPropertyAUEvent;
-		mMidiLearnPropertyAUEvent.mArgument.mProperty.mPropertyID = dfx::kPluginProperty_MidiLearn;
-		mMidiLearnPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
-		AUEventListenerAddEventType(mAUEventListener.get(), this, &mMidiLearnPropertyAUEvent);
-
-		mMidiLearnerPropertyAUEvent = mStreamFormatPropertyAUEvent;
-		mMidiLearnerPropertyAUEvent.mArgument.mProperty.mPropertyID = dfx::kPluginProperty_MidiLearner;
-		mMidiLearnerPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
-		AUEventListenerAddEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
-	#endif
-
-		std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
-					  {
-						  AUEventListenerAddEventType(mAUEventListener.get(), this, &propertyAUEvent);
-					  });
 	}
 #endif
 
@@ -238,7 +164,6 @@ bool DfxGuiEditor::open(void* inWindow)
 	{
 		return false;
 	}
-
 	mJustOpened = true;
 
 	// allow for anything that might need to happen after the above post-opening stuff is finished
@@ -247,6 +172,11 @@ bool DfxGuiEditor::open(void* inWindow)
 #if TARGET_PLUGIN_USES_MIDI
 	HandleMidiLearnChange();
 	HandleMidiLearnerChange();
+#endif
+
+#ifdef TARGET_API_AUDIOUNIT
+	// once all GUI elements are created, install an event listener for the parameters and necessary properties
+	InstallAUEventListeners();
 #endif
 
 	return true;
@@ -291,9 +221,15 @@ void DfxGuiEditor::setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, f
 		return;
 	}
 
+	updateParameterControls(inParameterIndex, inValue);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::updateParameterControls(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl)
+{
 	for (auto& control : mControlsList)
 	{
-		if (control->getParameterID() == inParameterIndex)
+		if ((control->getParameterID() == inParameterIndex) && (control->asCControl() != inSendingControl))
 		{
 			control->setValue_gen(inValue);
 			control->redraw();  // TODO: why is this also necessary? redraws are sometimes dropped without it
@@ -315,10 +251,10 @@ void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 		auto const paramValue_literal = dfxgui_ExpandParameterValue(paramIndex, paramValue_norm);
 		// XXX or should I call setparameter_f()?
 		auto const auParam = dfxgui_MakeAudioUnitParameter(paramIndex);
-		AUParameterSet(nullptr, inControl, &auParam, paramValue_literal, 0);
+		AUParameterSet(mAUEventListener.get(), inControl, &auParam, paramValue_literal, 0);
 #endif
 #ifdef TARGET_API_VST
-		getEffect()->setParameterAutomated(paramIndex, paramValue_norm);
+		setParameterAndPostUpdate(paramIndex, paramValue_norm, inControl);
 #endif
 #ifdef TARGET_API_RTAS
 		if (m_Process)
@@ -961,7 +897,7 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 
 #ifdef TARGET_API_VST
 	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
-	getEffect()->setParameterAutomated(inParameterID, value_norm);
+	setParameterAndPostUpdate(inParameterID, value_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -995,7 +931,7 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 
 #ifdef TARGET_API_VST
 	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
-	getEffect()->setParameterAutomated(inParameterID, value_norm);
+	setParameterAndPostUpdate(inParameterID, value_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -1028,7 +964,7 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 #endif
 
 #ifdef TARGET_API_VST
-	getEffect()->setParameterAutomated(inParameterID, inValue ? 1.0f : 0.0f);
+	setParameterAndPostUpdate(inParameterID, inValue ? 1.0f : 0.0f);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -1067,7 +1003,7 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 #ifdef TARGET_API_VST
 	auto const defaultValue = GetParameter_defaultValue(inParameterID);
 	auto const defaultValue_norm = dfxgui_ContractParameterValue(inParameterID, defaultValue);
-	getEffect()->setParameterAutomated(inParameterID, defaultValue_norm);
+	setParameterAndPostUpdate(inParameterID, defaultValue_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -2103,17 +2039,105 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 
 
 #ifdef TARGET_API_AUDIOUNIT
+
 //-----------------------------------------------------------------------------
-static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* /*inObject*/, AudioUnitEvent const* inEvent, UInt64 /*inEventHostTime*/, Float32 /*inParameterValue*/)
+void DfxGuiEditor::InstallAUEventListeners()
 {
+	// TODO: should I use kCFRunLoopCommonModes instead, like AUCarbonViewBase does?
+	AUEventListenerRef auEventListener_temp = nullptr; 
+	auto const status = AUEventListenerCreate(AudioUnitEventListenerProc, this, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 
+											  kNotificationInterval, kNotificationInterval, &auEventListener_temp);
+	if ((status != noErr) || !auEventListener_temp)
+	{
+		assert(false);	// should never happen
+		return;
+	}
+
+	mAUEventListener.reset(auEventListener_temp);
+
+	{
+		std::lock_guard const guard(mAUParameterListLock);
+		for (auto const& parameterID : mAUParameterList)
+		{
+			auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
+			AUListenerAddParameter(mAUEventListener.get(), this, &auParam);
+		}
+	}
+
+	memset(&mStreamFormatPropertyAUEvent, 0, sizeof(mStreamFormatPropertyAUEvent));
+	mStreamFormatPropertyAUEvent.mEventType = kAudioUnitEvent_PropertyChange;
+	mStreamFormatPropertyAUEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
+	mStreamFormatPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_StreamFormat;
+	mStreamFormatPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Output;
+	mStreamFormatPropertyAUEvent.mArgument.mProperty.mElement = 0;
+	AUEventListenerAddEventType(mAUEventListener.get(), this, &mStreamFormatPropertyAUEvent);
+
+	mParameterListPropertyAUEvent = mStreamFormatPropertyAUEvent;
+	mParameterListPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_ParameterList;
+	mParameterListPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
+	AUEventListenerAddEventType(mAUEventListener.get(), this, &mParameterListPropertyAUEvent);
+
+#if TARGET_PLUGIN_USES_MIDI
+	mMidiLearnPropertyAUEvent = mStreamFormatPropertyAUEvent;
+	mMidiLearnPropertyAUEvent.mArgument.mProperty.mPropertyID = dfx::kPluginProperty_MidiLearn;
+	mMidiLearnPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
+	AUEventListenerAddEventType(mAUEventListener.get(), this, &mMidiLearnPropertyAUEvent);
+
+	mMidiLearnerPropertyAUEvent = mStreamFormatPropertyAUEvent;
+	mMidiLearnerPropertyAUEvent.mArgument.mProperty.mPropertyID = dfx::kPluginProperty_MidiLearner;
+	mMidiLearnerPropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
+	AUEventListenerAddEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
+#endif
+
+	std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
+				  {
+					  AUEventListenerAddEventType(mAUEventListener.get(), this, &propertyAUEvent);
+				  });
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::RemoveAUEventListeners()
+{
+	if (!mAUEventListener)
+	{
+		return;
+	}
+
+	{
+		std::lock_guard const guard(mAUParameterListLock);
+		for (auto const& parameterID : mAUParameterList)
+		{
+			auto const auParam = dfxgui_MakeAudioUnitParameter(parameterID);
+			AUListenerRemoveParameter(mAUEventListener.get(), this, &auParam);
+		}
+	}
+
+	AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mStreamFormatPropertyAUEvent);
+	AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mParameterListPropertyAUEvent);
+#if TARGET_PLUGIN_USES_MIDI
+	AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnPropertyAUEvent);
+	AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
+#endif
+
+	std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
+	{
+		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
+	});
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, 
+											  UInt64 /*inEventHostTime*/, Float32 inParameterValue)
+{
+	// TODO: why in macOS 10.15.5 is inObject equal to inCallbackRefCon and not the sending CControl?
 	auto const ourOwnerEditor = static_cast<DfxGuiEditor*>(inCallbackRefCon);
 	if (ourOwnerEditor && inEvent)
 	{
 		if (inEvent->mEventType == kAudioUnitEvent_ParameterValueChange)
 		{
-			auto const paramID = inEvent->mArgument.mParameter.mParameterID;
-			auto const paramCurrentValue_norm = ourOwnerEditor->getparameter_gen(paramID);
-			ourOwnerEditor->setParameter(paramID, paramCurrentValue_norm);
+			auto const parameterID = inEvent->mArgument.mParameter.mParameterID;
+			auto const parameterValue_norm = ourOwnerEditor->dfxgui_ContractParameterValue(parameterID, inParameterValue);
+			ourOwnerEditor->updateParameterControls(parameterID, parameterValue_norm, static_cast<VSTGUI::CControl*>(inObject));
 		}
 
 		if (inEvent->mEventType == kAudioUnitEvent_PropertyChange)
@@ -2141,9 +2165,6 @@ static void DFXGUI_AudioUnitEventListenerProc(void* inCallbackRefCon, void* /*in
 		}
 	}
 }
-#endif
-
-#ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::HandleStreamFormatChange()
 {
@@ -2180,7 +2201,8 @@ void DfxGuiEditor::HandleParameterListChange()
 		}
 	}
 }
-#endif
+
+#endif  // TARGET_API_AUDIOUNIT
 
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -2252,6 +2274,24 @@ DGButton* DfxGuiEditor::CreateMidiResetButton(long inXpos, long inYpos, DGImage*
 
 #endif
 // TARGET_PLUGIN_USES_MIDI
+
+
+
+
+
+
+#pragma mark -
+
+#ifdef TARGET_API_VST
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setParameterAndPostUpdate(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl)
+{
+	getEffect()->setParameterAutomated(inParameterIndex, inValue);
+	updateParameterControls(inParameterIndex, inValue, inSendingControl);
+}
+
+#endif  // TARGET_API_VST
 
 
 
