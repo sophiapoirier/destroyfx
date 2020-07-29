@@ -74,21 +74,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-#if defined(TARGET_API_AUDIOUNIT) || defined(TARGET_API_RTAS)
-	#define DFX_EDITOR_ENTRY(PluginEditorClass)												\
-		DfxGuiEditor* DFXGUI_NewEditorInstance(DGEditorListenerInstance inProcessInstance)	\
-		{																					\
-			return new PluginEditorClass(inProcessInstance);								\
-		}
-#endif
-
-#ifdef TARGET_API_VST
-	#define DFX_EDITOR_ENTRY(PluginEditorClass)											\
-		AEffEditor* DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance)	\
-		{																				\
-			return new PluginEditorClass(inEffectInstance);								\
-		}
-#endif
+#define DFX_EDITOR_ENTRY(PluginEditorClass)												\
+	DfxGuiEditor* DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance)	\
+	{																					\
+		return new PluginEditorClass(inEffectInstance);									\
+	}
 
 
 
@@ -333,6 +323,10 @@ protected:
 	std::vector<IDGControl*> mControlsList;
 
 private:
+	// update affected controls of a parameter value change
+	// optional: inSendingControl can specify the originating control to omit it from circular notification 
+	void updateParameterControls(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
+
 	[[nodiscard]] bool handleContextualMenuClick(VSTGUI::CControl* inControl, VSTGUI::CButtonState const& inButtons);
 	VSTGUI::COptionMenu createContextualMenu(IDGControl* inControl);
 	VSTGUI::SharedPointer<VSTGUI::COptionMenu> createParameterContextualMenu(long inParameterID);
@@ -349,6 +343,18 @@ private:
 	{
 		return (systemWindow != nullptr);
 	}
+#endif
+
+#ifdef TARGET_API_AUDIOUNIT
+	void InstallAUEventListeners();
+	void RemoveAUEventListeners();
+	static void AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, UInt64 inEventHostTime, Float32 inParameterValue);
+#endif
+
+#ifdef TARGET_API_VST
+	// set parameter on the effect (also notifying the host) and update all affected controls of the change
+	// optional: inSendingControl can specify the originating control to omit it from circular notification 
+	void setParameterAndPostUpdate(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
 #endif
 
 	IDGControl* mCurrentControl_mouseover = nullptr;

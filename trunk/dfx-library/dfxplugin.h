@@ -371,7 +371,7 @@ public:
 	virtual void randomizeparameter(long inParameterIndex);
 	// ***
 	virtual void randomizeparameters(bool writeAutomation);  // randomize all parameters at once
-	void update_parameter(long inParameterIndex);
+	// broadcast changes to listeners (like GUI)
 	void postupdate_parameter(long inParameterIndex);
 
 	DfxParam::Value getparameter(long inParameterIndex) const;
@@ -738,6 +738,9 @@ private:
 		short outChannels = 0;
 	};
 #endif
+
+	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin 
+	void update_parameter(long inParameterIndex);
 
 	std::optional<size_t> getparametergroup(long inParameterIndex) const;
 
