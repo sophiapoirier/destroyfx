@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -49,9 +49,12 @@ void DfxMidi::reset()
 	{
 		note.mVelocity = 0;
 		note.mEnvelope.setInactive();
-		note.mLastOutValue = 0.0f;
-		note.mSmoothSamples = 0;
-		note.clearTail();
+	}
+	for (auto& noteAudio : mNoteAudioTable)
+	{
+		std::fill(noteAudio.mLastOutValue.begin(), noteAudio.mLastOutValue.end(), 0.0f);
+		noteAudio.mSmoothSamples = 0;
+		std::for_each(noteAudio.mTails.begin(), noteAudio.mTails.end(), [](auto& tail){ tail.fill(0.0f); });
 	}
 	mSustainQueue.fill(false);
 
@@ -72,6 +75,16 @@ void DfxMidi::setSampleRate(double inSampleRate)
 	for (auto& note : mNoteTable)
 	{
 		note.mEnvelope.setSampleRate(inSampleRate);
+	}
+}
+
+//------------------------------------------------------------------------
+void DfxMidi::setChannelCount(unsigned long inChannelCount)
+{
+	for (auto& noteAudio : mNoteAudioTable)
+	{
+		noteAudio.mLastOutValue.assign(inChannelCount, 0.0f);
+		noteAudio.mTails.assign(inChannelCount, {});
 	}
 }
 
@@ -300,7 +313,7 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 				// if the note is still sounding and in release, then smooth the end of that last note
 				if (!(mNoteTable[currentNote].mEnvelope.isResumedAttackMode()) && (mNoteTable[currentNote].mEnvelope.getState() == DfxEnvelope::State::Release))
 				{
-					mNoteTable[currentNote].mSmoothSamples = kStolenNoteFadeDur;
+					mNoteAudioTable[currentNote].mSmoothSamples = kStolenNoteFadeDur;
 				}
 			}
 			break;
@@ -417,20 +430,22 @@ float DfxMidi::processEnvelope(int inMidiNote)
 //-------------------------------------------------------------------------
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by sloping down from the last sample outputted by the note
-void DfxMidi::processSmoothingOutputSample(float* outAudio, long inNumSamples, int inMidiNote)
+void DfxMidi::processSmoothingOutputSample(float* const* outAudio, unsigned long inNumFrames, int inMidiNote)
 {
-	for (long sampleIndex = 0; sampleIndex < inNumSamples; sampleIndex++)
+	auto& noteAudio = mNoteAudioTable[inMidiNote];
+	auto& smoothSamples = noteAudio.mSmoothSamples;
+	auto const entrySmoothSamples = smoothSamples;
+	for (size_t channelIndex = 0; channelIndex < noteAudio.mLastOutValue.size(); channelIndex++)
 	{
-		// add the latest sample to the output collection, scaled by the note envelope and user gain
-		float outputFadeScalar = static_cast<float>(mNoteTable[inMidiNote].mSmoothSamples * kStolenNoteFadeStep);
-		outputFadeScalar = outputFadeScalar * outputFadeScalar * outputFadeScalar;
-		outAudio[sampleIndex] += mNoteTable[inMidiNote].mLastOutValue * outputFadeScalar;
-		// decrement the smoothing counter
-		(mNoteTable[inMidiNote].mSmoothSamples)--;
-		// exit this function if we've done all of the smoothing necessary
-		if (mNoteTable[inMidiNote].mSmoothSamples <= 0)
+		smoothSamples = entrySmoothSamples;
+		auto const lastOutValue = noteAudio.mLastOutValue[channelIndex];
+		for (unsigned long sampleIndex = 0; (sampleIndex < inNumFrames) && (smoothSamples > 0); sampleIndex++)
 		{
-			return;
+			// add the latest sample to the output collection, scaled by the note envelope and user gain
+			auto outputFadeScalar = static_cast<float>(smoothSamples * kStolenNoteFadeStep);
+			outputFadeScalar = outputFadeScalar * outputFadeScalar * outputFadeScalar;
+			outAudio[channelIndex][sampleIndex] += lastOutValue * outputFadeScalar;
+			smoothSamples--;
 		}
 	}
 }
@@ -438,15 +453,20 @@ void DfxMidi::processSmoothingOutputSample(float* outAudio, long inNumSamples, i
 //-------------------------------------------------------------------------
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by fading out the samples stored in the tail buffers
-void DfxMidi::processSmoothingOutputBuffer(float* outAudio, long inNumSamples, int inMidiNote, int inMidiChannel)
+void DfxMidi::processSmoothingOutputBuffer(float* const* outAudio, unsigned long inNumFrames, int inMidiNote)
 {
-	auto& smoothsamples = mNoteTable[inMidiNote].mSmoothSamples;
-	auto const& tail = (inMidiChannel == 1) ? mNoteTable[inMidiNote].mTail1 : mNoteTable[inMidiNote].mTail2;
-
-	for (long sampleIndex = 0; (sampleIndex < inNumSamples) && (smoothsamples > 0); sampleIndex++, smoothsamples--)
+	auto& noteAudio = mNoteAudioTable[inMidiNote];
+	auto& smoothSamples = noteAudio.mSmoothSamples;
+	auto const entrySmoothSamples = smoothSamples;
+	for (size_t channelIndex = 0; channelIndex < noteAudio.mTails.size(); channelIndex++)
 	{
-		outAudio[sampleIndex] += tail[kStolenNoteFadeDur - smoothsamples] * 
-		static_cast<float>(smoothsamples) * kStolenNoteFadeStep;
+		smoothSamples = entrySmoothSamples;
+		auto const& tail = noteAudio.mTails[channelIndex];
+		for (unsigned long sampleIndex = 0; (sampleIndex < inNumFrames) && (smoothSamples > 0); sampleIndex++, smoothSamples--)
+		{
+			outAudio[channelIndex][sampleIndex] += tail[kStolenNoteFadeDur - smoothSamples] * 
+			static_cast<float>(smoothSamples) * kStolenNoteFadeStep;
+		}
 	}
 }
 
