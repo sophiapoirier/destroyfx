@@ -27,6 +27,7 @@ Sophia's Destroy FX MIDI stuff
 
 
 #include <array>
+#include <vector>
 
 #include "dfxenvelope.h"
 
@@ -43,7 +44,7 @@ public:
 	static constexpr int kPitchBendMidpointValue = 0x2000;
 	static constexpr int kPitchBendMaxValue = 0x3FFF;
 	static constexpr double kPitchBendSemitonesMax = 36.0;
-	static constexpr long kStolenNoteFadeDur = 48;
+	static constexpr unsigned long kStolenNoteFadeDur = 48;
 
 	// these are the MIDI event status types
 	enum
@@ -147,30 +148,31 @@ public:
 	// this holds information for each MIDI note
 	struct MusicNote
 	{
-		MusicNote()
-		{
-			clearTail();
-		}
-
-		void clearTail()  // zero out a note's tail buffers
-		{
-			mTail1.fill(0.0f);
-			mTail2.fill(0.0f);
-		}
-
 		int mVelocity = 0;  // note velocity (7-bit MIDI value)
 		float mNoteAmp = 0.0f;  // the gain for the note, scaled with velocity, curve, and influence
 		DfxEnvelope mEnvelope;
-		float mLastOutValue = 0.0f;  // capture the most recent output value for smoothing, if necessary   XXX mono assumption
-		long mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
-		std::array<float, kStolenNoteFadeDur> mTail1 {};  // a little buffer of output samples for smoothing a cut-off note (left channel)
-		std::array<float, kStolenNoteFadeDur> mTail2 {};  // (right channel) XXX wow this stereo assumption is such a bad idea
+	};
+
+	struct MusicNoteAudio
+	{
+		MusicNoteAudio() = default;
+		~MusicNoteAudio() = default;
+		// deleting copy assignment and construction to prevent accidental dynamic allocation in realtime context
+		MusicNoteAudio(MusicNoteAudio const&) = delete;
+		MusicNoteAudio& operator=(MusicNoteAudio const&) = delete;
+		MusicNoteAudio(MusicNoteAudio&&) = default;
+		MusicNoteAudio& operator=(MusicNoteAudio&&) = default;
+
+		std::vector<float> mLastOutValue;  // capture the most recent output value of each audio channel for smoothing, if necessary
+		unsigned long mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
+		std::vector<std::array<float, kStolenNoteFadeDur>> mTails;  // per-channel little buffer of output samples for smoothing a cut-off note
 	};
 
 	DfxMidi();
 
 	void reset();  // resets the variables
 	void setSampleRate(double inSampleRate);
+	void setChannelCount(unsigned long inChannelCount);
 	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);
 	void setEnvCurveType(DfxEnvelope::CurveType inCurveType);
 	void setResumedAttackMode(bool inNewMode);
@@ -252,17 +254,17 @@ public:
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note
-	void processSmoothingOutputSample(float* outAudio, long inNumSamples, int inMidiNote);
+	void processSmoothingOutputSample(float* const* outAudio, unsigned long inNumFrames, int inMidiNote);
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by fading out the samples stored in the tail buffers
-	void processSmoothingOutputBuffer(float* outAudio, long inNumSamples, int inMidiNote, int inMidiChannel);
+	void processSmoothingOutputBuffer(float* const* outAudio, unsigned long inNumFrames, int inMidiNote);
 
 
 private:
 	static constexpr size_t kEventQueueSize = 12000;
 	static constexpr float kStolenNoteFadeStep = 1.0f / static_cast<float>(kStolenNoteFadeDur);
-	static constexpr long kLegatoFadeDur = 39;
+	static constexpr unsigned long kLegatoFadeDur = 39;
 	static constexpr float kLegatoFadeStep = 1.0f / static_cast<float>(kLegatoFadeDur);
 
 	void fillFrequencyTable();
@@ -272,6 +274,7 @@ private:
 	void turnOffNote(int inMidiNote, bool inLegato);
 
 	std::array<MusicNote, kNumNotes> mNoteTable {};  // a table with important data about each note
+	std::array<MusicNoteAudio, kNumNotes> mNoteAudioTable {};
 	std::array<double, kNumNotes> mNoteFrequencyTable {};  // a table of the frequency corresponding to each MIDI note
 
 	std::array<int, kNumNotes> mNoteQueue {};  // a chronologically ordered queue of all active notes
