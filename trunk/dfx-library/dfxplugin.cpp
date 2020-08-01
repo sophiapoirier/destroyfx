@@ -1115,6 +1115,10 @@ void DfxPlugin::updatesamplerate()
 // called when the number of audio channels has changed
 void DfxPlugin::updatenumchannels()
 {
+#if TARGET_PLUGIN_USES_MIDI
+	mMidiState.setChannelCount(getnumoutputs());
+#endif
+
 #ifdef TARGET_API_AUDIOUNIT
 	// the number of inputs or outputs may have changed
 	mNumInputs = getnuminputs();
