@@ -15,17 +15,14 @@ if (( $# < 1 )); then
 fi
 
 # the first argument should be the full proper name of the plugin
-PLUGINNAME="$1"
+PLUGINNAME="${1}"
 # this is the plugin file name
 PLUGINNAME_FILE="dfx ${PLUGINNAME}.component"
-# this is the name mapped to all lowercase letters
-PLUGINNAME_LC="`echo "${PLUGINNAME}\c" | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/"`"
-# this is the base of the docs file name 
-# (lowercase with spaces turned to hyphens)
-DOCSNAME=`echo "${PLUGINNAME_LC}\c" | sed "y/ /-/"`
 # this is the base of the output archive file name 
 # (lower case with non-alphanumeric characters removed)
-PLUGINNAME_STRIPPED=`echo "${DOCSNAME}\c" | sed "s/\([^0-9A-Za-z]\)//g"`
+PLUGINNAME_STRIPPED=`echo -n "${PLUGINNAME}" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]'`
+# this is the base of the docs file name 
+DOCSNAME="${PLUGINNAME_STRIPPED}"
 
 MIDIPLUGIN=0
 if (( $# >= 2 ))
