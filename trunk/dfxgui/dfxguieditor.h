@@ -152,12 +152,11 @@ public:
 	}
 #endif
 
-	// TODO: implement plumbing to these for VST etc.
 	// Register the editor as a listener for changes to inPropertyID. Must be called before
 	// the editor is opened.
 	// HandlePropertyChange will be called for the registered properties when they change.
-	// inScope is...? (always global in our code)
-	// inItemIndex is...?
+	// inScope is global-only for many properties, but some require more granular scope to be specified.
+	// inItemIndex is optionally used for some properties and its meaning is contextual to that property.
 	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
 	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
 
@@ -297,10 +296,6 @@ public:
 		return dfx::kStatus_NoError == dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, (void*)&data, sizeof data);
 	}
 
-	// Inform listeners (i.e. by calling HandlePropertyChange at some point) that a property
-	// changed. Not necessary if changed through dfxgui_SetProperty.
-	void NotePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
-  
 	void LoadPresetFile();
 	void SavePresetFile();
 #if TARGET_PLUGIN_USES_MIDI
