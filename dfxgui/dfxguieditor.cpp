@@ -336,23 +336,6 @@ void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Sco
 	mRegisteredProperties.emplace_back(inPropertyID, inScope, inItemIndex);
 }
 
-#ifdef TARGET_API_AUDIOUNIT
-void DfxGuiEditor::ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)> f)
-{
-	for (const auto &[propertyID, scope, itemIndex] : mRegisteredProperties)
-	{
-		AudioUnitEvent auEvent {};
-		auEvent.mEventType = kAudioUnitEvent_PropertyChange;
-		auEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
-		auEvent.mArgument.mProperty.mPropertyID = propertyID;
-		auEvent.mArgument.mProperty.mScope = scope;
-		auEvent.mArgument.mProperty.mElement = itemIndex;
-
-		f(auEvent);
-	}
-}
-#endif
-
 //-----------------------------------------------------------------------------
 IDGControl* DfxGuiEditor::addControl(IDGControl* inControl)
 {
@@ -1375,25 +1358,12 @@ long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 	return AudioUnitSetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, inData, inDataSize);
 #else
 	const long res = dfxgui_GetEffectInstance()->dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
-	// Framework handles this notification in AU, but VST needs to manage it manually.
+	// AU system framework handles this notification in AU, but VST needs to manage it manually.
 	if (res == dfx::kStatus_NoError)
 	{
-		NotePropertyChange(inPropertyID, inScope, inItemIndex);
+		HandlePropertyChange(inPropertyID, inScope, inItemIndex);
 	}
 	return res;
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void DfxGuiEditor::NotePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex)
-{
-#ifdef TARGET_API_AUDIOUNIT
-	// Can we force a notification if clients call this? Is there any reason for them to?
-#else
-	// PERF Of course could use an ordered data structure here, although these are very short in our current uses.
-	for (const auto &[propertyID, scope, itemIndex] : mRegisteredProperties)
-		if (propertyID == inPropertyID)
-			HandlePropertyChange(propertyID, scope, itemIndex);
 #endif
 }
 
@@ -2190,6 +2160,23 @@ void DfxGuiEditor::AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 		}
 	}
 }
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)> f)
+{
+	for (auto const& [propertyID, scope, itemIndex] : mRegisteredProperties)
+	{
+		AudioUnitEvent auEvent {};
+		auEvent.mEventType = kAudioUnitEvent_PropertyChange;
+		auEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
+		auEvent.mArgument.mProperty.mPropertyID = propertyID;
+		auEvent.mArgument.mProperty.mScope = scope;
+		auEvent.mArgument.mProperty.mElement = itemIndex;
+
+		f(auEvent);
+	}
+}
+
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::HandleStreamFormatChange()
 {
