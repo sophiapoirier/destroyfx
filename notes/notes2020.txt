@@ -440,20 +440,8 @@ rather than open()) which would "usually" work?
 Is there some way to explicitly wait for the font to be available?
 
 
-problems still:
- - dragging sliders and fine adjustments does do stuff to audio, but does not update ui
- - randomize button doesn't seem to do anything
-   (see DfxGuiEditor::randomizeparameter(s) "missing implementations")
- - sometimes multiple copies of the plugin ui open up? And some are blank
-      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
-       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
-       second click opens another plugin window. I can actually get as many as I want this way. This
-       would presumably not be a practical issue without the modals.)
- - sometimes everything just goes black, though the controls keep working (it's like we're not doing redraw() after the window gets obscured and then unconvered or something)
- - does picking presets work properly? Like "glup drums" did not sound gluppy.
 
-
-"plugin turns black" problem
+== "plugin turns black" problem ==
 
 Some reference to this in DfxGuiEditor::idle maybe? That code actually
 wasn't running because WINDOWS_VERSION is not defined (switched to
@@ -526,3 +514,80 @@ thing we're trying to do that's interfering with vstgui.
 But in any case, marking the whole frame as dirty in a takeFocus override does solidly fix it (don't even get any
 momentary flashing or anything), so I guess that's good enough for now. Should be harmless to redraw anyway,
 as long as we're not like doing it every frame.
+
+
+Looks like Sophia's r1258 mostly fixed the dragging sliders issue!
+
+problems still:
+ - fine adjustments always do semitone, even if they are in 8ve mode?
+    ... this is probably due to "Transverb's custom property data is for the fine tune button modes."
+ - randomize button doesn't seem to do anything
+   (see DfxGuiEditor::randomizeparameter(s) "missing implementations")
+ - sometimes multiple copies of the plugin ui open up? And some are blank
+      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
+       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
+       second click opens another plugin window. I can actually get as many as I want this way. This
+       would presumably not be a practical issue without the modals.)
+ - does picking presets work properly? Like "glup drums" did not sound gluppy.
+
+
+== fine tune buttons problem ==
+
+
+Looking into custom properties for Transverb.
+Indeed the "speed mode" is a custom property, so it makes sense that this alone would have a problem.
+
+Fishy:
+ - We read/write the custom property as uint8, but it in an array<> as int32. Since only 0-255 will work,
+   why not store it as uint8 then? Maybe not a safe change for compatibility with saved settings.
+ - Speaking of saved settings... instead of manually serializing state, can we use getProperty and
+   setProperty to serialize everything automatically? Maybe we just need to enumerate the list of
+   properties (and their sizes) as configuration data? Doing something like this with some compile-time
+   data could also allow the get/setProperty interface to be type-safe and reduce some of the burden
+   of casting on the clients (you pass some kind of 'traits' class that knows its size and target type).
+
+HandlePropertyChange() seems to be where the SpeedUp and SpeedDown buttons have their speed changed
+when the SpeedMode button is used. And so presumably the gap is just this from dfxplugin:
+
+	// TODO: implement plumbing to these for VST etc.
+	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
+	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
+
+... HandlePropertyChange is only called in AudioUnitEventListenerProc.
+Probably this can be quite simple for VST... just call HandlePropertyChange for the editor whenever SetProperty happens?
+I don't think we need the full generality of listeners?
+
+I go back and forth on this, but I think RegisterPropertyChange means "add a listener for this property" (I guess, request that
+HandlePropertyChange be called?)... as opposed to e.g. "Notify any listeners that the property has changed". The AU implementation
+queues up some AudioUnitEvents (which sounds more like the latter) but then processes this list with AUEventListenerAddEventType,
+which sure sounds like it's registering listeners.
+(As an aside, why doesn't this crash in windows? there's an assert(false) in RegisterPropertyChange and we call this in
+Transverb. Maybe assert() is off unless enabled by some debugg macro or something.
+Yeah, confirmed. In InstallAUEventListeners we are registering mAUEventListener as the listener, which was created
+with AudioUnitEventListenerProc as the processor (inUserData will be 'this').
+(Note: Might be better to just pass a lambda and immediately call a member function?)
+
+in AudioUnitEventListenerProc,
+   we handle some au stuff like changes to the stream format or parameter list
+   we handle some dfx parameters like midi learn
+   otherwise we forward to HandlePropertyChange
+
+
+question is, where? the actual setting happens in subclasses (e.g. Transverb::dfx_SetProperty) which doesn't necessarily
+call anything in the base class. Looks like maybe the solution is to make PropertyChanged a cross-platform concept and
+ask that everyone call that when they override dfx_SetProperty (I guess they already need to do that for AU so this
+is just simplifying over the current state)
+
+
+I don't know what "Scope" is for properties, but only kScope_Global is used. Maybe it's not even needed in VST.
+Defined here: dfx-library/dfxpluginproperties.h
+The item index in AU is the mElement field (uint32) of the AudioUnitEvent;
+see: https://developer.apple.com/documentation/audiotoolbox/audiounitelement
+Since "The Global scope always has exactly one element--element 0." I guess this will always be zero too.
+
+So first, I made these registered properties not use AU data types. We can convert on the fly when doing AU stuff
+because AudioUnitEvent is just a little struct. Note we change the lifetime of the AudioUnitEvent passed to
+AUEventListenerAddEventType (a pointer, ah), but this seems to be ok; the example on
+http://mirror.informatimago.com/next/developer.apple.com/technotes/tn2002/tn2104.html
+does for a static-allocated local.
+

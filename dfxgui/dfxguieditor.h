@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
+#include <functional>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -152,6 +153,11 @@ public:
 #endif
 
 	// TODO: implement plumbing to these for VST etc.
+	// Register the editor as a listener for changes to inPropertyID. Must be called before
+	// the editor is opened.
+	// HandlePropertyChange will be called for the registered properties when they change.
+	// inScope is...? (always global in our code)
+	// inItemIndex is...?
 	void RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
 	virtual void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) {}
 
@@ -281,7 +287,7 @@ public:
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
 		return ((status == dfx::kStatus_NoError) && (dataSize == sizeof(value))) ? std::make_optional(value) : std::nullopt;
 	}
-	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 
+	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
 							void const* inData, size_t inDataSize);
 	void LoadPresetFile();
 	void SavePresetFile();
@@ -349,6 +355,8 @@ private:
 	void InstallAUEventListeners();
 	void RemoveAUEventListeners();
 	static void AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, UInt64 inEventHostTime, Float32 inParameterValue);
+	// Convert each element of mRegisteredProperties to an AudioUnitEvent and call argument function on it.
+	void ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)> f);
 #endif
 
 #ifdef TARGET_API_VST
@@ -389,8 +397,10 @@ private:
 	AudioUnitEvent mParameterListPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnerPropertyAUEvent {};
-	std::vector<AudioUnitEvent> mCustomPropertyAUEvents;
 #endif
+
+	// Custom properties that have been registered for HandlePropertyChange calls.
+	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned long>> mRegisteredProperties;
 
 #ifdef TARGET_API_RTAS
 	ITemplateProcess* m_Process = nullptr;
