@@ -289,6 +289,18 @@ public:
 	}
 	long dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
 							void const* inData, size_t inDataSize);
+	// Assumes the data's size is sizeof(T). Returns true if successful.
+	template <typename T>
+	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, T const &data, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0)
+	{
+		static_assert(std::is_trivially_copyable_v<T>);
+		return dfx::kStatus_NoError == dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, (void*)&data, sizeof data);
+	}
+
+	// Inform listeners (i.e. by calling HandlePropertyChange at some point) that a property
+	// changed. Not necessary if changed through dfxgui_SetProperty.
+	void NotePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0);
+  
 	void LoadPresetFile();
 	void SavePresetFile();
 #if TARGET_PLUGIN_USES_MIDI
