@@ -518,18 +518,6 @@ as long as we're not like doing it every frame.
 
 Looks like Sophia's r1258 mostly fixed the dragging sliders issue!
 
-problems still:
- - fine adjustments always do semitone, even if they are in 8ve mode?
-    ... this is probably due to "Transverb's custom property data is for the fine tune button modes."
- - randomize button doesn't seem to do anything
-   (see DfxGuiEditor::randomizeparameter(s) "missing implementations")
- - sometimes multiple copies of the plugin ui open up? And some are blank
-      (This might just be a cakewalk bug! It happens if I double-click the plugin, I think because
-       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
-       second click opens another plugin window. I can actually get as many as I want this way. This
-       would presumably not be a practical issue without the modals.)
- - does picking presets work properly? Like "glup drums" did not sound gluppy.
-
 
 == fine tune buttons problem ==
 
@@ -591,3 +579,24 @@ AUEventListenerAddEventType (a pointer, ah), but this seems to be ok; the exampl
 http://mirror.informatimago.com/next/developer.apple.com/technotes/tn2002/tn2104.html
 does for a static-allocated local.
 
+The solution I came to here was to support the DFX GUI Editor as a listener for property changes, only when made
+through the editor. We could go further and introduce dfx_PropertyChanged to DfxPlugin, and call that instead of
+PropertyChanged (#if AUDIOUNIT). PropertyChanged is some AU builtin, so we'd call that in AU mode, and in VST
+mode I guess we could get the editor instance and call its NotePropertyChange method (at least for custom
+props). But I can't tell if this is a perversion of the property notification concept, and it looks like we
+only call PropertyChanged from inside dfx_SetProperty, so it shouldn't matter (or rather, worse, it would result
+in two notifications...)
+
+Anyway, this fixes the fine tune buttons!
+
+
+
+problems still:
+ - randomize button doesn't seem to do anything
+   (see DfxGuiEditor::randomizeparameter(s) "missing implementations")
+ - sometimes multiple copies of the plugin ui open up? And some are blank
+      (I think this is just a cakewalk bug! It happens if I double-click the plugin, I think because
+       of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
+       second click opens another plugin window. I can actually get as many as I want this way. Doesn't
+       seem like a practical issue without the modals, but maybe we should prevent it from happening?)
+ - does picking presets work properly? Like "glup drums" did not sound gluppy.
