@@ -562,9 +562,8 @@ void TransverbEditor::HandleSpeedModeButton(size_t inIndex, long inValue, void* 
 {
 	auto const editor = static_cast<TransverbEditor*>(inEditor);
 	auto const value_fixedSize = static_cast<uint8_t>(inValue);
-	[[maybe_unused]] auto const status = editor->dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), dfx::kScope_Global, 0, 
-																	&value_fixedSize, sizeof(value_fixedSize));
-	assert(status == dfx::kStatus_NoError);
+	[[maybe_unused]] bool const ok = editor->dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), value_fixedSize); 
+	assert(ok);
 }
 
 //-----------------------------------------------------------------------------
