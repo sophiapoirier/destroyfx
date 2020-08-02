@@ -333,20 +333,25 @@ void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Sco
 {
 	assert(!IsOpen());  // you need to register these all before opening a view
 
-#ifdef TARGET_API_AUDIOUNIT
-	AudioUnitEvent auEvent {};
-	auEvent.mEventType = kAudioUnitEvent_PropertyChange;
-	auEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
-	auEvent.mArgument.mProperty.mPropertyID = inPropertyID;
-	auEvent.mArgument.mProperty.mScope = inScope;
-	auEvent.mArgument.mProperty.mElement = inItemIndex;
-	mCustomPropertyAUEvents.push_back(auEvent);
-#else
-	#warning "implementation missing"
-	assert(false);  // TODO: implement
-#endif
+	mRegisteredProperties.emplace_back(inPropertyID, inScope, inItemIndex);
 }
 
+#ifdef TARGET_API_AUDIOUNIT
+void DfxGuiEditor::ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)> f)
+{
+	for (const auto &[propertyId, scope, itemIndex] : mRegisteredProperties)
+	{
+		AudioUnitEvent auEvent {};
+		auEvent.mEventType = kAudioUnitEvent_PropertyChange;
+		auEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
+		auEvent.mArgument.mProperty.mPropertyID = inPropertyID;
+		auEvent.mArgument.mProperty.mScope = inScope;
+		auEvent.mArgument.mProperty.mElement = inItemIndex;
+
+		f(auEvent);
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 IDGControl* DfxGuiEditor::addControl(IDGControl* inControl)
@@ -2089,10 +2094,10 @@ void DfxGuiEditor::InstallAUEventListeners()
 	AUEventListenerAddEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
 #endif
 
-	std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
-				  {
-					  AUEventListenerAddEventType(mAUEventListener.get(), this, &propertyAUEvent);
-				  });
+	ForEachRegisteredAudioUnitEvent([this](AudioUnitEvent const& propertyAUEvent)
+		{
+			AUEventListenerAddEventType(mAUEventListener.get(), this, &propertyAUEvent);
+		});
 }
 
 //-----------------------------------------------------------------------------
@@ -2119,10 +2124,11 @@ void DfxGuiEditor::RemoveAUEventListeners()
 	AUEventListenerRemoveEventType(mAUEventListener.get(), this, &mMidiLearnerPropertyAUEvent);
 #endif
 
-	std::for_each(mCustomPropertyAUEvents.cbegin(), mCustomPropertyAUEvents.cend(), [this](auto const& propertyAUEvent)
-	{
-		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
-	});
+
+	ForEachRegisteredAudioUnitEvent([this](AudioUnitEvent const& propertyAUEvent)
+		{
+			AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
+		});
 }
 
 //-----------------------------------------------------------------------------
