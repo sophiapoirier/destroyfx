@@ -136,7 +136,7 @@ void DGControl<T>::setParameterID(long inParameterID)
 	{
 		T::setTag(inParameterID);
 		initValues();
-		T::setDirty();
+		T::invalid();
 	}
 }
 
@@ -330,8 +330,12 @@ template <class T>
 bool DGMultiControl<T>::checkDefaultValue_all(VSTGUI::CButtonState inButtons)
 {
 	bool any = DGControl<T>::checkDefaultValue(inButtons);
-	for (IDGControl *child : mChildren)
+	for (IDGControl* child : mChildren)
+	{
+		// checkDefaultValue has desired side effects, so always execute it prior to testing the existing result, 
+		// so that execution cannot be skipped during the logical OR operation
 		any = child->asCControl()->checkDefaultValue(inButtons) || any;
+	}
 	return any;
 }
 
