@@ -258,7 +258,6 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
   int64_t const newValue = rand() % maxValue;
   setparameter_i(inParameterIndex, newValue);
 
-  update_parameter(inParameterIndex);	// make the host aware of the parameter change
   postupdate_parameter(inParameterIndex);	// inform any parameter listeners of the changes
 }
 
