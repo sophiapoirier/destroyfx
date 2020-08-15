@@ -229,7 +229,11 @@ long EQSyncEditor::OpenEditor()
 			};
 		}
 		pos.set(wideFaderX + kDisplayOffsetX, wideFaderY + kDisplayOffsetY + (kWideFaderInc * i), kDisplayWidth, kDisplayHeight);
-		emplaceControl<DGTextDisplay>(this, i, pos, textProc, this, nullptr, dfx::TextAlignment::Left, kValueTextSize, DGColor::kBlack, kValueTextFont);
+		auto const textDisplay = emplaceControl<DGTextDisplay>(this, i, pos, textProc, this, nullptr, dfx::TextAlignment::Left, kValueTextSize, DGColor::kBlack, kValueTextFont);
+		if (i == kRate_Sync)
+		{
+			textDisplay->setMouseEnabled(false);
+		}
 	}
 
 	// create the vertical sliders
