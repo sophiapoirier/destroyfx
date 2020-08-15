@@ -36,6 +36,7 @@ public:
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:
+	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();
 
 	DGXYBox* mDivisorBufferBox = nullptr;

@@ -37,6 +37,7 @@ public:
 private:
 	std::pair<long, long> GetActiveRateParameterIDs();
 	void UpdateRandomMinimumDisplays();
+	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();
 
 	// controls
