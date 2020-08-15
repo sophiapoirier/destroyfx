@@ -148,94 +148,94 @@ enum
 //-----------------------------------------------------------------------------
 // value text display procedures
 
-bool divisorDisplayProc(float value, char* outText, void*)
+bool divisorDisplayProc(float inValue, char* outText, void*)
 {
-	if (value < 2.0f)
+	if (inValue < 2.0f)
 	{
 		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", 1.0f) > 0;
 	}
 	else
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value) > 0;
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
 	}
 }
 
-bool bufferSizeDisplayProc(float value, char* outText, void* editor)
+bool bufferSizeDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	auto const dfxEditor = static_cast<DfxGuiEditor*>(editor);
-	if (dfxEditor->getparameter_b(kBufferTempoSync))
+	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
+	if (dgEditor->getparameter_b(kBufferTempoSync))
 	{
-		return dfxEditor->getparametervaluestring(kBufferSize_Sync, outText);
+		return dgEditor->getparametervaluestring(kBufferSize_Sync, outText);
 	}
 	else
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
 }
 
-bool divisorLFORateDisplayProc(float value, char* outText, void* editor)
+bool divisorLFORateDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	auto const dfxEditor = static_cast<DfxGuiEditor*>(editor);
-	if (dfxEditor->getparameter_b(kDivisorLFOTempoSync))
+	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
+	if (dgEditor->getparameter_b(kDivisorLFOTempoSync))
 	{
-		return dfxEditor->getparametervaluestring(kDivisorLFORate_Sync, outText);
+		return dgEditor->getparametervaluestring(kDivisorLFORate_Sync, outText);
 	}
 	else
 	{
-		if (value < 10.0f)
+		if (inValue < 10.0f)
 		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value) > 0;
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
 		}
 		else
 		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 		}
 	}
 }
 
-bool bufferLFORateDisplayProc(float value, char* outText, void* editor)
+bool bufferLFORateDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	auto const dfxEditor = static_cast<DfxGuiEditor*>(editor);
-	if (dfxEditor->getparameter_b(kBufferLFOTempoSync))
+	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
+	if (dgEditor->getparameter_b(kBufferLFOTempoSync))
 	{
-		return dfxEditor->getparametervaluestring(kBufferLFORate_Sync, outText);
+		return dgEditor->getparametervaluestring(kBufferLFORate_Sync, outText);
 	}
 	else
 	{
-		if (value < 10.0f)
+		if (inValue < 10.0f)
 		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value) > 0;
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
 		}
 		else
 		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 		}
 	}
 }
 
-bool lfoDepthDisplayProc(float value, char* outText, void*)
+bool lfoDepthDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
 
-bool smoothDisplayProc(float value, char* outText, void*)
+bool smoothDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue) > 0;
 }
 
-bool dryWetMixDisplayProc(float value, char* outText, void*)
+bool dryWetMixDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
 
-bool pitchbendDisplayProc(float value, char* outText, void*)
+bool pitchbendDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f", dfx::kPlusMinusUTF8, value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f", dfx::kPlusMinusUTF8, inValue) > 0;
 }
 
-bool tempoDisplayProc(float value, char* outText, void*)
+bool tempoDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
 }
 
 
@@ -449,6 +449,7 @@ long BufferOverrideEditor::OpenEditor()
 	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
 
 
+	HandleTempoSyncChange();
 	HandleTempoAutoChange();
 
 
@@ -468,6 +469,7 @@ void BufferOverrideEditor::parameterChanged(long inParameterID)
 	{
 		case kBufferTempoSync:
 		{
+			HandleTempoSyncChange();
 			constexpr std::array<long, 2> parameterIDs = { kBufferSize_MS, kBufferSize_Sync };
 			newParameterID = parameterIDs[useSyncParam];
 			slider = mDivisorBufferBox->getControlByParameterID(parameterIDs[!useSyncParam]);
@@ -475,11 +477,13 @@ void BufferOverrideEditor::parameterChanged(long inParameterID)
 			break;
 		}
 		case kDivisorLFOTempoSync:
+			HandleTempoSyncChange();
 			newParameterID = useSyncParam ? kDivisorLFORate_Sync : kDivisorLFORate_Hz;
 			slider = mDivisorLFORateSlider;
 			textDisplay = mDivisorLFORateDisplay;
 			break;
 		case kBufferLFOTempoSync:
+			HandleTempoSyncChange();
 			newParameterID = useSyncParam ? kBufferLFORate_Sync : kBufferLFORate_Hz;
 			slider = mBufferLFORateSlider;
 			textDisplay = mBufferLFORateDisplay;
@@ -604,6 +608,19 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 	}
 
 	mHelpDisplay->setText(helpstring ? helpstring : "");
+}
+
+//-----------------------------------------------------------------------------
+void BufferOverrideEditor::HandleTempoSyncChange()
+{
+	auto const updateTextDisplay = [this](VSTGUI::CControl* control, long tempoSyncParameterID)
+	{
+		auto const allowTextEdit = !getparameter_b(tempoSyncParameterID);
+		control->setMouseEnabled(allowTextEdit);
+	};
+	updateTextDisplay(mBufferSizeDisplay, kBufferTempoSync);
+	updateTextDisplay(mDivisorLFORateDisplay, kDivisorLFOTempoSync);
+	updateTextDisplay(mBufferLFORateDisplay, kBufferLFOTempoSync);
 }
 
 //-----------------------------------------------------------------------------

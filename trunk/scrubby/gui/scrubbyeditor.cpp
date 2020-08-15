@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "scrubbyeditor.h"
 
 #include <array>
+#include <cassert>
 #include <cstdlib>
 #include <sstream>
 
@@ -250,16 +251,16 @@ Then CCs won't affect any parameters and you can start over if you want.)DELIM"
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-bool seekRangeDisplayProc(float value, char* outText, void*)
+bool seekRangeDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f ms", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f ms", inValue) > 0;
 }
 
-bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, DfxGuiEditor* editor)
+bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, DfxGuiEditor* inEditor)
 {
-	if (editor->getparameter_b(kTempoSync))
+	if (inEditor->getparameter_b(kTempoSync))
 	{
-		if (editor->getparametervaluestring(inParameterID, outText)) //&& (strlen(outText) <= 3)
+		if (inEditor->getparametervaluestring(inParameterID, outText)) //&& (strlen(outText) <= 3)
 		{
 			dfx::StrlCat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
 			return true;
@@ -272,24 +273,24 @@ bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, Df
 	return false;
 }
 
-bool seekRateDisplayProc(float value, char* outText, void* editor)
+bool seekRateDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	return seekRateGenDisplayProc(value, kSeekRate_Sync, outText, static_cast<DfxGuiEditor*>(editor));
+	return seekRateGenDisplayProc(inValue, kSeekRate_Sync, outText, static_cast<DfxGuiEditor*>(inEditor));
 }
 
-bool seekRateRandMinDisplayProc(float value, char* outText, void* editor)
+bool seekRateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	return seekRateGenDisplayProc(value, kSeekRateRandMin_Sync, outText, static_cast<DfxGuiEditor*>(editor));
+	return seekRateGenDisplayProc(inValue, kSeekRateRandMin_Sync, outText, static_cast<DfxGuiEditor*>(inEditor));
 }
 
-bool seekDurDisplayProc(float value, char* outText, void*)
+bool seekDurDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue) > 0;
 }
 
-bool octaveMinDisplayProc(float value, char* outText, void*)
+bool octaveMinDisplayProc(float inValue, char* outText, void*)
 {
-	auto const octaves = static_cast<long>(value);
+	auto const octaves = static_cast<long>(inValue);
 	if (octaves <= kOctave_MinValue)
 	{
 		return dfx::StrLCpy(outText, "no min", DGTextDisplay::kTextMaxLength) > 0;
@@ -297,9 +298,9 @@ bool octaveMinDisplayProc(float value, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld", octaves) > 0;
 }
 
-bool octaveMaxDisplayProc(float value, char* outText, void*)
+bool octaveMaxDisplayProc(float inValue, char* outText, void*)
 {
-	auto const octaves = static_cast<long>(value);
+	auto const octaves = static_cast<long>(inValue);
 	if (octaves >= kOctave_MaxValue)
 	{
 		return dfx::StrLCpy(outText, "no max", DGTextDisplay::kTextMaxLength) > 0;
@@ -311,14 +312,14 @@ bool octaveMaxDisplayProc(float value, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%+ld", octaves) > 0;
 }
 
-bool tempoDisplayProc(float value, char* outText, void*)
+bool tempoDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f bpm", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f bpm", inValue) > 0;
 }
 
-bool predelayDisplayProc(float value, char* outText, void*)
+bool predelayDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
 
 
@@ -727,6 +728,7 @@ long ScrubbyEditor::OpenEditor()
 
 	// this will initialize the translucency state of dependent controls 
 	HandlePitchConstraintChange();
+	HandleTempoSyncChange();
 	HandleTempoAutoChange();
 	// and this will do the same for the channels mode control
 	numAudioChannelsChanged(getNumAudioChannels());
@@ -838,6 +840,14 @@ void ScrubbyEditor::HandlePitchConstraintChange()
 }
 
 //-----------------------------------------------------------------------------
+void ScrubbyEditor::HandleTempoSyncChange()
+{
+	auto const allowTextEdit = !getparameter_b(kTempoSync);
+	mSeekRateDisplay->setMouseEnabled(allowTextEdit);
+	mSeekRateRandMinDisplay->setMouseEnabled(allowTextEdit);
+}
+
+//-----------------------------------------------------------------------------
 void ScrubbyEditor::HandleTempoAutoChange()
 {
 	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.0f;
@@ -857,26 +867,26 @@ void ScrubbyEditor::parameterChanged(long inParameterID)
 	{
 		case kTempoSync:
 		{
-			auto const useSyncParam = getparameter_b(inParameterID);
-			auto const updateControlParameterID = [useSyncParam](IDGControl* inControl)
+			HandleTempoSyncChange();
+			auto const updateParameterID = [useSync = getparameter_b(inParameterID)](IDGControl* control)
 			{
-				assert(inControl);
-				auto const oldParamID = inControl->getParameterID();
-				auto newParamID = dfx::kParameterID_Invalid;
-				if ((oldParamID == kSeekRateRandMin_Hz) || (oldParamID == kSeekRateRandMin_Sync))
+				assert(control);
+				auto const entryParameterID = control->getParameterID();
+				auto newParameterID = dfx::kParameterID_Invalid;
+				if ((entryParameterID == kSeekRateRandMin_Hz) || (entryParameterID == kSeekRateRandMin_Sync))
 				{
-					newParamID = useSyncParam ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
+					newParameterID = useSync ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
 				}
 				else
 				{
-					newParamID = useSyncParam ? kSeekRate_Sync : kSeekRate_Hz;
+					newParameterID = useSync ? kSeekRate_Sync : kSeekRate_Hz;
 				}
-				inControl->setParameterID(newParamID);
+				control->setParameterID(newParameterID);
 			};
-			updateControlParameterID(mSeekRateSlider);
-			updateControlParameterID(mSeekRateSlider->getChildren().front());
-			updateControlParameterID(mSeekRateDisplay);
-			updateControlParameterID(mSeekRateRandMinDisplay);
+			updateParameterID(mSeekRateSlider);
+			updateParameterID(mSeekRateSlider->getChildren().front());
+			updateParameterID(mSeekRateDisplay);
+			updateParameterID(mSeekRateRandMinDisplay);
 			break;
 		}
 		case kSpeedMode:

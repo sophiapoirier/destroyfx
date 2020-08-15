@@ -342,6 +342,7 @@ long SkidderEditor::OpenEditor()
 
 
 	UpdateRandomMinimumDisplays();
+	HandleTempoSyncChange();
 	HandleTempoAutoChange();
 	numAudioChannelsChanged(getNumAudioChannels());
 
@@ -361,6 +362,7 @@ void SkidderEditor::parameterChanged(long inParameterID)
 			mRateSlider->getChildren().front()->setParameterID(rateParameterIDs.first);
 			mRateDisplay->setParameterID(rateParameterIDs.second);
 			mRateRandMinDisplay->setParameterID(rateParameterIDs.first);
+			HandleTempoSyncChange();
 			UpdateRandomMinimumDisplays();
 			break;
 		}
@@ -421,6 +423,14 @@ void SkidderEditor::UpdateRandomMinimumDisplays()
 	updateRandomMinimumVisibility(rateParameterIDs.second, rateParameterIDs.first, mRateRandMinDisplay);
 	updateRandomMinimumVisibility(kPulsewidth, kPulsewidthRandMin, mPulsewidthRandMinDisplay);
 	updateRandomMinimumVisibility(kFloor, kFloorRandMin, mFloorRandMinDisplay);
+}
+
+//-----------------------------------------------------------------------------
+void SkidderEditor::HandleTempoSyncChange()
+{
+	auto const allowTextEdit = !getparameter_b(kTempoSync);
+	mRateDisplay->setMouseEnabled(allowTextEdit);
+	mRateRandMinDisplay->setMouseEnabled(allowTextEdit);
 }
 
 //-----------------------------------------------------------------------------

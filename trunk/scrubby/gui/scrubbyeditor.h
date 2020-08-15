@@ -59,6 +59,7 @@ public:
 
 private:
 	void HandlePitchConstraintChange();
+	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();
 
 	DGRangeSlider* mSeekRateSlider = nullptr;
