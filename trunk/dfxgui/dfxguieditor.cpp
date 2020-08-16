@@ -1357,9 +1357,12 @@ long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 
 	return AudioUnitSetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, inData, inDataSize);
 #else
-	const long res = dfxgui_GetEffectInstance()->dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
+	long const res = dfxgui_GetEffectInstance()->dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
+	bool const registered = std::find(mRegisteredProperties.cbegin(), mRegisteredProperties.cend(), 
+									  std::make_tuple(inPropertyID, inScope, inItemIndex)) != mRegisteredProperties.cend();
 	// AU system framework handles this notification in AU, but VST needs to manage it manually.
-	if (res == dfx::kStatus_NoError)
+	// Only propagate notification if the specific property has been registered.
+	if ((res == dfx::kStatus_NoError) && registered)
 	{
 		HandlePropertyChange(inPropertyID, inScope, inItemIndex);
 	}
