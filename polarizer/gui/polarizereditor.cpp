@@ -21,12 +21,15 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "polarizereditor.h"
 
+#include <cmath>
+
 #include "dfxmisc.h"
 #include "polarizer.h"
 
 
 //-----------------------------------------------------------------------------
-enum {
+enum
+{
 	// positions
 	kSliderFrameThickness = 4,
 	kSliderX = 67 - kSliderFrameThickness,
@@ -54,20 +57,25 @@ constexpr float kValueTextSize = 16.8f;
 //-----------------------------------------------------------------------------
 // parameter value string display conversion functions
 
-bool leapDisplayProc(float value, char* outText, void*)
+bool leapDisplayProc(float inValue, char* outText, void*)
 {
-	auto const value_i = static_cast<long>(value);
+	auto const value_i = static_cast<long>(inValue);
 	bool const success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld sample", value_i) > 0;
-	if (success && (abs(value_i) > 1))
+	if (success && (std::abs(value_i) > 1))
 	{
 		dfx::StrlCat(outText, "s", DGTextDisplay::kTextMaxLength);
 	}
 	return success;
 }
 
-bool amountDisplayProc(float value, char* outText, void*)
+bool amountDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value * 10.0f) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue * 10.0f) > 0;
+}
+
+float amountValueFromTextConvertProc(float inValue, DGTextDisplay*)
+{
+	return inValue / 10.0f;
 }
 
 
@@ -160,8 +168,10 @@ long PolarizerEditor::OpenEditor()
 
 	// polarization amount read-out
 	pos.offset(kSliderInc, 0);
-	emplaceControl<DGTextDisplay>(this, kAmount, pos, amountDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, 
-								  kValueTextSize, DGColor::kBlack, kValueTextFont);
+	auto const amountDisplay = emplaceControl<DGTextDisplay>(this, kAmount, pos, amountDisplayProc, nullptr, nullptr, 
+															 dfx::TextAlignment::Center, kValueTextSize, 
+															 DGColor::kBlack, kValueTextFont);
+	amountDisplay->setValueFromTextConvertProc(amountValueFromTextConvertProc);
 
 
 	//--create the buttons----------------------------------------------

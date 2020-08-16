@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "transverbeditor.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cctype>
 #include <cmath>
@@ -29,8 +30,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <string_view>
 
 #include "dfxmisc.h"
-
-#include "dfxtrace.h"
 
 using namespace dfx::TV;
 
@@ -89,10 +88,10 @@ constexpr float kSemitonesPerOctave = 12.0f;
 //-----------------------------------------------------------------------------
 // value text display procedures
 
-bool bsizeDisplayProcedure(float value, char* outText, void*)
+bool bsizeDisplayProcedure(float inValue, char* outText, void*)
 {
-	long const thousands = static_cast<long>(value) / 1000;
-	auto const remainder = std::fmod(value, 1000.0f);
+	long const thousands = static_cast<long>(inValue) / 1000;
+	auto const remainder = std::fmod(inValue, 1000.0f);
 
 	bool success = false;
 	if (thousands > 0)
@@ -101,23 +100,23 @@ bool bsizeDisplayProcedure(float value, char* outText, void*)
 	}
 	else
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
 	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
 	return success;
 }
 
-bool speedDisplayProcedure(float value, char* outText, void*)
+bool speedDisplayProcedure(float inValue, char* outText, void*)
 {
-	char semitonesString[16];
-	auto speed = value;
+	std::array<char, 16> semitonesString {};
+	auto speed = inValue;
 	auto const remainder = std::fmod(std::fabs(speed), 1.0f);
 	float semitones = remainder * kSemitonesPerOctave;
 	// make sure that these float crap doesn't result in wacky stuff 
 	// like displays that say "-1 octave & 12.00 semitones"
-	snprintf(semitonesString, sizeof(semitonesString), "%.3f", semitones);
-	if ((strcmp(semitonesString, "12.000") == 0) || (strcmp(semitonesString, "-12.000") == 0))
+	snprintf(semitonesString.data(), semitonesString.size(), "%.3f", semitones);
+	if ((strcmp(semitonesString.data(), "12.000") == 0) || (strcmp(semitonesString.data(), "-12.000") == 0))
 	{
 		semitones = 0.0f;
 		if (speed < 0.0f)
@@ -131,42 +130,27 @@ bool speedDisplayProcedure(float value, char* outText, void*)
 	}
 	auto const octaves = static_cast<int>(speed);
 
-	bool success = false;
 	if (speed > 0.0f)
 	{
 		if (octaves == 0)
 		{
-			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones) > 0;
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", (semitones < 0.000003f) ? "" : "+", semitones) > 0;
 		}
-		else if (octaves == 1)
-		{
-			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octave & %.2f semitones", octaves, semitones) > 0;
-		}
-		else
-		{
-			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octaves & %.2f semitones", octaves, semitones) > 0;
-		}
+		auto const octavesSuffix = (octaves == 1) ? "" : "s";
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "+%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
 	}
 	else if (octaves == 0)
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "-%.2f semitones", semitones) > 0;
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "-%.2f semitones", semitones) > 0;
 	}
 	else
 	{
-		if (octaves == -1)
-		{
-			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octave & %.2f semitones", octaves, semitones) > 0;
-		}
-		else
-		{
-			success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octaves & %.2f semitones", octaves, semitones) > 0;
-		}
+		auto const octavesSuffix = (octaves == -1) ? "" : "s";
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%d octave%s & %.2f semitones", octaves, octavesSuffix, semitones) > 0;
 	}
-
-	return success;
 }
 
-bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTextDisplay* /*textDisplay*/)
+std::optional<float> speedTextConvertProcedure(std::string const& inText, DGTextDisplay*)
 {
 	std::string filteredText(inText.size(), '\0');
 	// TODO: does not support locale for number format, and ignores minus and periods that are not part of fractional numbers
@@ -177,44 +161,38 @@ bool speedTextConvertProcedure(std::string const& inText, float& outValue, DGTex
 
 	float octaves = 0.0f, semitones = 0.0f;
 	auto const scanCount = sscanf(filteredText.c_str(), "%f%f", &octaves, &semitones);
-	bool const success = (scanCount > 0) && (scanCount != EOF);
-	if (success)
+	if ((scanCount > 0) && (scanCount != EOF))
 	{
 		// the user only entered one number, which is for octaves, 
 		// so convert any fractional part of the octaves value into semitones
 		if (scanCount == 1)
 		{
 			// unless we find the one number labeled as semitones, in which case treat as those
-			std::vector<char> word(inText.size() + 1, 0);
+			std::vector<char> word(inText.size() + 1, '\0');
 			auto const wordScanCount = sscanf(inText.c_str(), "%*f%s", word.data());
 			constexpr std::string_view wordCompare("semi");
 			if ((wordScanCount > 0) && (wordScanCount != EOF) && !strncasecmp(word.data(), wordCompare.data(), wordCompare.size()))
 			{
-				outValue = octaves / kSemitonesPerOctave;
+				return octaves / kSemitonesPerOctave;
 			}
-			else
-			{
-				outValue = octaves;
-			}
+			return octaves;
 		}
-		else
-		{
-			// ignore the sign for the semitones unless the octaves value was in the zero range
-			auto const negative = std::signbit(octaves) || ((std::fabs(octaves) < 1.0f) && std::signbit(semitones));
-			outValue = (std::floor(std::fabs(octaves)) + (std::fabs(semitones) / kSemitonesPerOctave)) * (negative ? -1.0f : 1.0f);
-		}
+
+		// ignore the sign for the semitones unless the octaves value was in the zero range
+		auto const negative = std::signbit(octaves) || ((std::fabs(octaves) < 1.0f) && std::signbit(semitones));
+		return (std::floor(std::fabs(octaves)) + (std::fabs(semitones) / kSemitonesPerOctave)) * (negative ? -1.0f : 1.0f);
 	}
-	return success;
+	return {};
 }
 
-bool feedbackDisplayProcedure(float value, char* outText, void*)
+bool feedbackDisplayProcedure(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", static_cast<long>(value)) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%ld%%", static_cast<long>(inValue)) > 0;
 }
 
-bool distDisplayProcedure(float value, char* outText, void* editor)
+bool distDisplayProcedure(float inValue, char* outText, void* inEditor)
 {
-	float const distance = value * static_cast<DfxGuiEditor*>(editor)->getparameter_f(kBsize);
+	float const distance = inValue * static_cast<DfxGuiEditor*>(inEditor)->getparameter_f(kBsize);
 	long const thousands = static_cast<long>(distance) / 1000;
 	auto const remainder = std::fmod(distance, 1000.0f);
 
@@ -232,19 +210,10 @@ bool distDisplayProcedure(float value, char* outText, void* editor)
 	return success;
 }
 
-bool distTextConvertProcedure(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)
+float distValueFromTextConvertProcedure(float inValue, DGTextDisplay* inTextDisplay)
 {
-	auto const scanCount = sscanf(inText.c_str(), "%f", &outValue);
-	bool const success = (scanCount > 0) && (scanCount != EOF);
-	if (success)
-	{
-		auto const bsize = static_cast<float>(textDisplay->getOwnerEditor()->getparameter_f(kBsize));
-		if (bsize != 0.0f)
-		{
-			outValue /= bsize;
-		}
-	}
-	return success;
+	auto const bsize = static_cast<float>(inTextDisplay->getOwnerEditor()->getparameter_f(kBsize));
+	return (bsize != 0.0f) ? (inValue / bsize) : inValue;
 }
 
 
@@ -432,13 +401,13 @@ long TransverbEditor::OpenEditor()
 		{
 			yoff = kWideFaderMoreInc;
 			mDistanceTextDisplays[0] = textDisplay;
-			textDisplay->setTextToValueProc(distTextConvertProcedure);
+			textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
 		}
 		else if (tag == kDist2)
 		{
 			yoff =  kWideFaderEvenMoreInc;
 			mDistanceTextDisplays[1] = textDisplay;
-			textDisplay->setTextToValueProc(distTextConvertProcedure);
+			textDisplay->setValueFromTextConvertProc(distValueFromTextConvertProcedure);
 		}
 		pos.offset(0, yoff);
 		textDisplayPos.offset(0, yoff);
@@ -560,9 +529,9 @@ void TransverbEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Sc
 //-----------------------------------------------------------------------------
 void TransverbEditor::HandleSpeedModeButton(size_t inIndex, long inValue, void* inEditor)
 {
-	auto const editor = static_cast<TransverbEditor*>(inEditor);
+	auto const tvEditor = static_cast<TransverbEditor*>(inEditor);
 	auto const value_fixedSize = static_cast<uint8_t>(inValue);
-	[[maybe_unused]] bool const ok = editor->dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), value_fixedSize); 
+	[[maybe_unused]] bool const ok = tvEditor->dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), value_fixedSize);
 	assert(ok);
 }
 
