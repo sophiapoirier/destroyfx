@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -57,11 +58,23 @@ public:
 	void setTextAlignment(dfx::TextAlignment inTextAlignment);
 	dfx::TextAlignment getTextAlignment() const noexcept;
 
-	using TextToValueProc = std::function<bool(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)>;
-	void setTextToValueProc(TextToValueProc const& textToValueProc);
-	void setTextToValueProc(TextToValueProc&& textToValueProc);
+	// customization point to override the default text entry numerical value parsing with your own
+	using TextToValueProc = std::function<std::optional<float>(std::string const& inText, DGTextDisplay* inTextDisplay)>;
+	void setTextToValueProc(TextToValueProc const& inTextToValueProc);
+	void setTextToValueProc(TextToValueProc&& inTextToValueProc);
+
+	// if you don't need to parse actual text input, but you want to be able to transform the value parsed, 
+	// specify this to hook in your transformation
+	using ValueFromTextConvertProc = std::function<float(float inValue, DGTextDisplay* inTextDisplay)>;
+	void setValueFromTextConvertProc(ValueFromTextConvertProc const& inValueFromTextConvertProc);
+	void setValueFromTextConvertProc(ValueFromTextConvertProc&& inValueFromTextConvertProc);
 
 	void refreshText();  // trigger a re-conversion of the numerical value to text
+
+	// some common text<->value translation routines for reuse
+	static bool valueToTextProc_LinearToDb(float inValue, char outTextUTF8[], void* inUserData);
+	static std::optional<float> textToValueProc_DbToLinear(std::string const& inText, DGTextDisplay* inTextDisplay);
+	static float valueFromTextConvertProc_PercentToLinear(float inValue, DGTextDisplay* inTextDisplay);
 
 	CLASS_METHODS(DGTextDisplay, VSTGUI::CTextEdit)
 
@@ -76,8 +89,12 @@ protected:
 	VSTGUI::CParamDisplayValueToStringProc const mValueToTextProc;
 	void* const mValueToTextUserData;
 	TextToValueProc mTextToValueProc;
+	ValueFromTextConvertProc mValueFromTextConvertProc;
 
 private:
+	static bool valueToTextProc_Generic(float inValue, char outTextUTF8[], void* inUserData);
+	static std::optional<float> textToValueProc_Generic(std::string const& inText, DGTextDisplay* inTextDisplay);
+
 	internal::DGFontTweaks mFontTweaks = internal::DGFontTweaks::NONE;
 };
 

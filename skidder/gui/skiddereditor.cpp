@@ -21,7 +21,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "skiddereditor.h"
 
+#include <algorithm>
 #include <cmath>
+#include <cctype>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -133,26 +135,18 @@ bool slopeDisplayProc(float inValue, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f ms", inValue) > 0;
 }
 
-bool gainGenDisplayProc(float inValue, char* outText, bool inShowUnits)
+bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserData)
 {
-	auto const units = inShowUnits ? " dB" : "";
-	if (inValue <= 0.0f)
+	auto const success = DGTextDisplay::valueToTextProc_LinearToDb(inValue, outText, inUserData);
+	if (success)
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "-%s%s", VSTGUI::kInfiniteSymbol, units) > 0;
+		// truncate units or any suffix beyond the numerical value
+		std::transform(outText, outText + strlen(outText), outText, [](auto character)
+		{
+			return std::isspace(character) ? '\0' : character;
+		});
 	}
-	auto const decibelValue = dfx::math::Linear2dB(inValue);
-	int const precision = (std::fabs(decibelValue) >= 10.0f) ? 1 : 2;
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f%s", precision, decibelValue, units) > 0;
-}
-
-bool gainDisplayProc(float inValue, char* outText, void*)
-{
-	return gainGenDisplayProc(inValue, outText, true);
-}
-
-bool gainRandMinDisplayProc(float inValue, char* outText, void*)
-{
-	return gainGenDisplayProc(inValue, outText, false);
+	return success;
 }
 
 bool panDisplayProc(float inValue, char* outText, void*)
@@ -287,11 +281,13 @@ long SkidderEditor::OpenEditor()
 
 	// pulsewidth
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 1), kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kPulsewidth, pos, pulsewidthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kPulsewidth, pos, pulsewidthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 	// pulsewidth random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY + (kSliderInc * 1), kRandMinDisplayWidth, kRandMinDisplayHeight);
 	mPulsewidthRandMinDisplay = emplaceControl<DGTextDisplay>(this, kPulsewidthRandMin, pos, pulsewidthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplaySmallerFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mPulsewidthRandMinDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 	// slope
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 2), kDisplayWidth, kDisplayHeight);
@@ -299,19 +295,23 @@ long SkidderEditor::OpenEditor()
 
 	// floor
 	pos.offset(0, kSliderInc);
-	emplaceControl<DGTextDisplay>(this, kFloor, pos, gainDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kFloor, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 	// floor random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY + (kSliderInc * 3), kRandMinDisplayWidth, kRandMinDisplayHeight);
 	mFloorRandMinDisplay = emplaceControl<DGTextDisplay>(this, kFloorRandMin, pos, gainRandMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplaySmallerFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mFloorRandMinDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 	// pan
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 4), kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kPan, pos, panDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kPan, pos, panDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 	// noise
 	pos.offset(0, kSliderInc);
-	emplaceControl<DGTextDisplay>(this, kNoise, pos, gainDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kNoise, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 	// tempo (in bpm)
 	pos.offset(0, kSliderInc);

@@ -24,30 +24,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguitextdisplay.h"
 
 #include <cassert>
+#include <cmath>
 #include <stdio.h>
 #include <string.h>
 
 #include "dfxguieditor.h"
+#include "dfxmath.h"
 
 using DGFontTweaks = internal::DGFontTweaks;
-
-//-----------------------------------------------------------------------------
-static bool DFXGUI_GenericValueToTextProc(float inValue, char outTextUTF8[], void* /*inUserData*/)
-{
-	return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
-}
-
-//-----------------------------------------------------------------------------
-static bool DFXGUI_GenericTextToValueProc(std::string const& inText, float& outValue, DGTextDisplay* textDisplay)
-{
-	auto const paramID = textDisplay->getParameterID();
-	auto const value_d = textDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(paramID, inText);
-	if (value_d)
-	{
-		outValue = static_cast<float>(*value_d);
-	}
-	return value_d.has_value();
-}
 
 //-----------------------------------------------------------------------------
 static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inTextAlignment)
@@ -68,13 +52,13 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 
 //-----------------------------------------------------------------------------
 // Constructor-time setup. Returns computed font tweaks enum to be saved for draw-time tweaking.
-static DGFontTweaks DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor, 
-												VSTGUI::CTextLabel* inTextDisplay, 
-												DGRect const& inRegion, 
-												DGImage* inBackgroundImage, 
-												dfx::TextAlignment inTextAlignment, 
-												float inFontSize, DGColor inFontColor, 
-												char const* inFontName)
+[[nodiscard]] static DGFontTweaks DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor, 
+															  VSTGUI::CTextLabel* inTextDisplay, 
+															  DGRect const& inRegion, 
+															  DGImage* inBackgroundImage, 
+															  dfx::TextAlignment inTextAlignment, 
+															  float inFontSize, DGColor inFontColor, 
+															  char const* inFontName)
 {
 	inTextDisplay->setTransparency(true);
 
@@ -86,7 +70,7 @@ static DGFontTweaks DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor,
 		inTextDisplay->setFont(fontDesc);
 	}
 
-	const DGFontTweaks fontTweaks = inFontName && strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0 ?
+	DGFontTweaks const fontTweaks = inFontName && strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0 ?
 	  DGFontTweaks::SNOOTORGPX10 : DGFontTweaks::NONE;
 
 	switch (fontTweaks)
@@ -112,10 +96,10 @@ static DGFontTweaks DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor,
 }
 
 //-----------------------------------------------------------------------------
-static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks fontTweaks, DGRect const& inRegion)
+static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks inFontTweaks, DGRect const& inRegion)
 {
 	auto textArea = inRegion;
-	switch (fontTweaks)
+	switch (inFontTweaks)
 	{
 		case DGFontTweaks::SNOOTORGPX10:
 #if TARGET_OS_WIN32
@@ -148,7 +132,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 							 DGColor								inFontColor, 
 							 char const*							inFontName)
 :	DGControl<VSTGUI::CTextEdit>(inRegion, inOwnerEditor, inParamID, nullptr, inBackgroundImage),
-	mValueToTextProc(inTextProc ? inTextProc : DFXGUI_GenericValueToTextProc),
+	mValueToTextProc(inTextProc ? inTextProc : valueToTextProc_Generic),
 	mValueToTextUserData(inUserData ? inUserData : this)
 {
 	mFontTweaks = DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
@@ -157,7 +141,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	refreshText();  // trigger an initial value->text conversion
 
-	mTextToValueProc = DFXGUI_GenericTextToValueProc;
+	mTextToValueProc = textToValueProc_Generic;
 	setStringToValueFunction(std::bind(&DGTextDisplay::textToValueProcBridge, this, 
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
@@ -196,21 +180,97 @@ dfx::TextAlignment DGTextDisplay::getTextAlignment() const noexcept
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::setTextToValueProc(TextToValueProc const& textToValueProc)
+void DGTextDisplay::setTextToValueProc(TextToValueProc const& inTextToValueProc)
 {
-	mTextToValueProc = textToValueProc;
+	assert(inTextToValueProc);
+	mTextToValueProc = inTextToValueProc;
 }
 
 //-----------------------------------------------------------------------------
-void DGTextDisplay::setTextToValueProc(TextToValueProc&& textToValueProc)
+void DGTextDisplay::setTextToValueProc(TextToValueProc&& inTextToValueProc)
 {
-	mTextToValueProc = std::move(textToValueProc);
+	assert(inTextToValueProc);
+	mTextToValueProc = std::move(inTextToValueProc);
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::setValueFromTextConvertProc(ValueFromTextConvertProc const& inValueFromTextConvertProc)
+{
+	mValueFromTextConvertProc = inValueFromTextConvertProc;
+}
+
+//-----------------------------------------------------------------------------
+void DGTextDisplay::setValueFromTextConvertProc(ValueFromTextConvertProc&& inValueFromTextConvertProc)
+{
+	mValueFromTextConvertProc = std::move(inValueFromTextConvertProc);
 }
 
 //-----------------------------------------------------------------------------
 void DGTextDisplay::refreshText()
 {
 	setValue(getValue());
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextDisplay::valueToTextProc_Generic(float inValue, char outTextUTF8[], void* /*inUserData*/)
+{
+	return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextDisplay::valueToTextProc_LinearToDb(float inValue, char outTextUTF8[], void* /*inUserData*/)
+{
+	constexpr auto units = "dB";
+	if (inValue <= 0.0f)
+	{
+		return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "-%s %s", VSTGUI::kInfiniteSymbol, units) > 0;
+	}
+
+	auto const decibelValue = dfx::math::Linear2dB(inValue);
+	auto const prefix = (decibelValue >= 0.01f) ? "+" : "";
+	int const precision = (std::fabs(decibelValue) >= 100.0f) ? 0 : ((std::fabs(decibelValue) >= 10.0f) ? 1 : 2);
+	return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%s%.*f %s", prefix, precision, decibelValue, units) > 0;
+}
+
+//-----------------------------------------------------------------------------
+std::optional<float> DGTextDisplay::textToValueProc_Generic(std::string const& inText, DGTextDisplay* inTextDisplay)
+{
+	auto const paramID = inTextDisplay->getParameterID();
+	auto const value_d = inTextDisplay->getOwnerEditor()->dfxgui_GetParameterValueFromString_f(paramID, inText);
+	return value_d ? std::make_optional(static_cast<float>(*value_d)) : std::nullopt;
+}
+
+//-----------------------------------------------------------------------------
+std::optional<float> DGTextDisplay::textToValueProc_DbToLinear(std::string const& inText, DGTextDisplay* inTextDisplay)
+{
+	if (inText.empty())
+	{
+		return {};
+	}
+	if (inText.front() == '-')
+	{
+		auto const beginsWith = [&inText](auto const& matchText)
+		{
+			constexpr size_t offset = 1;
+			return (inText.length() >= (strlen(matchText) + offset)) && (inText.compare(offset, strlen(matchText), matchText) == 0);
+		};
+		if (beginsWith(VSTGUI::kInfiniteSymbol) || beginsWith("inf") || beginsWith("Inf") || beginsWith("INF"))
+		{
+			return 0.0f;
+		}
+	}
+
+	if (auto const value = textToValueProc_Generic(inText, inTextDisplay))
+	{
+		return dfx::math::Db2Linear(*value);
+	}
+	return {};
+}
+
+//-----------------------------------------------------------------------------
+float DGTextDisplay::valueFromTextConvertProc_PercentToLinear(float inValue, DGTextDisplay* /*inTextDisplay*/)
+{
+	return inValue / 100.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -257,19 +317,26 @@ bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& o
 		return false;
 	}
 
-	auto const success = mTextToValueProc(dfx::SanitizeNumericalInput(inText).c_str(), outValue, dynamic_cast<DGTextDisplay*>(textEdit));
-	if (success && isParameterAttached())
+	auto const dgTextEdit = dynamic_cast<DGTextDisplay*>(textEdit);
+	assert(dgTextEdit);
+	auto const valueFromText = mTextToValueProc(dfx::SanitizeNumericalInput(inText), dgTextEdit);
+	outValue = valueFromText.value_or(0.0f);
+	if (valueFromText && isParameterAttached())
 	{
+		if (mValueFromTextConvertProc)
+		{
+			outValue = mValueFromTextConvertProc(outValue, dgTextEdit);
+		}
 		outValue = getOwnerEditor()->dfxgui_ContractParameterValue(getParameterID(), outValue);
 	}
 
-	return success;
+	return valueFromText.has_value();
 }
 
 //-----------------------------------------------------------------------------
 // This is called by VSTGUI when the text display transitions to the platform's text
-// editor. On windows, we move the text editor up so that it lands where the text
-// label was. (XXX presumably there is a less hacky way to do this??)
+// editor. We move the text editor up so that it lands where the text label was.
+// (XXX presumably there is a less hacky way to do this??)
 VSTGUI::CRect DGTextDisplay::platformGetSize() const
 {
 	VSTGUI::CRect rect = DGControl<VSTGUI::CTextEdit>::platformGetSize();

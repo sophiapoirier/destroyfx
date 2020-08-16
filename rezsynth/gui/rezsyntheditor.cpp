@@ -104,9 +104,9 @@ constexpr DGColor kRSVeryLightGrayColor(233, 242, 237);
 //-----------------------------------------------------------------------------
 // value text display procedures
 
-bool bandwidthAmountDisplayProc(float value, char* outText, void* inEditor)
+bool bandwidthAmountDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	const auto success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value) > 0;
+	const auto success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kBandwidthMode) == kBandwidthAmount_Hz)
 	{
 		dfx::StrlCat(outText, " Hz", DGTextDisplay::kTextMaxLength);
@@ -118,27 +118,27 @@ bool bandwidthAmountDisplayProc(float value, char* outText, void* inEditor)
 	return success;
 }
 
-bool numBandsDisplayProc(float value, char* outText, void*)
+bool numBandsDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f", inValue) > 0;
 }
 
-bool sepAmountDisplayProc(float value, char* outText, void* inEditor)
+bool sepAmountDisplayProc(float inValue, char* outText, void* inEditor)
 {
 	if (static_cast<DfxGuiEditor*>(inEditor)->getparameter_i(kSepMode) == kSeparationMode_Octaval)
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f semitones", value) > 0;
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f semitones", inValue) > 0;
 	}
 	else  // linear values
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f x", value) > 0;
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f x", inValue) > 0;
 	}
 }
 
-bool attackDecayReleaseDisplayProc(float value, char* outText, void*)
+bool attackDecayReleaseDisplayProc(float inValue, char* outText, void*)
 {
-	long const thousands = static_cast<long>(value) / 1000;
-	float const remainder = std::fmod(value, 1000.0f);
+	long const thousands = static_cast<long>(inValue) / 1000;
+	float const remainder = std::fmod(inValue, 1000.0f);
 
 	bool success = false;
 	if (thousands > 0)
@@ -147,45 +147,38 @@ bool attackDecayReleaseDisplayProc(float value, char* outText, void*)
 	}
 	else
 	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", value) > 0;
+		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
 	}
 	dfx::StrlCat(outText, " ms", DGTextDisplay::kTextMaxLength);
 
 	return success;
 }
 
-bool percentDisplayProc(float value, char* outText, void*)
+bool percentGenDisplayProc(float inValue, char* outText, int inPrecision)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", value) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f%%", inPrecision, inValue) > 0;
 }
 
-bool velocityCurveDisplayProc(float value, char* outText, void*)
+bool percentDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", value) > 0;
+	return percentGenDisplayProc(inValue, outText, 0);
 }
 
-bool pitchBendDisplayProc(float value, char* outText, void*)
+bool sustainDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f semitones", dfx::kPlusMinusUTF8, value) > 0;
+	// the parameter is scaled and has a lot more resolution at low values, so add display precision
+	int const precision = (inValue <= 0.9f) ? 1 : 0;
+	return percentGenDisplayProc(inValue, outText, precision);
 }
 
-bool gainDisplayProc(float value, char* outText, void*)
+bool velocityCurveDisplayProc(float inValue, char* outText, void*)
 {
-	bool success = false;
-	if (value <= 0.0f)
-	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "-%s", VSTGUI::kInfiniteSymbol) > 0;
-	}
-	else if (value > 1.0001f)
-	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "+%.1f", dfx::math::Linear2dB(value)) > 0;
-	}
-	else
-	{
-		success = snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", dfx::math::Linear2dB(value)) > 0;
-	}
-	dfx::StrlCat(outText, " dB", DGTextDisplay::kTextMaxLength);
-	return success;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f", inValue) > 0;
+}
+
+bool pitchBendDisplayProc(float inValue, char* outText, void*)
+{
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f semitones", dfx::kPlusMinusUTF8, inValue) > 0;
 }
 
 
@@ -283,7 +276,7 @@ long RezSynthEditor::OpenEditor()
 	addSliderComponents((getparameter_i(kSepMode) == kSeparationMode_Octaval) ? kSepAmount_Octaval : kSepAmount_Linear, sepAmountDisplayProc);
 	addSliderComponents(kEnvAttack, attackDecayReleaseDisplayProc);
 	addSliderComponents(kEnvDecay, attackDecayReleaseDisplayProc);
-	addSliderComponents(kEnvSustain, percentDisplayProc);
+	addSliderComponents(kEnvSustain, sustainDisplayProc);
 	addSliderComponents(kEnvRelease, attackDecayReleaseDisplayProc);
 	addSliderComponents(kVelocityInfluence, percentDisplayProc);
 	addSliderComponents(kVelocityCurve, velocityCurveDisplayProc);
@@ -295,7 +288,8 @@ long RezSynthEditor::OpenEditor()
 	labelDisplayPos.set(kTallLabelX, kTallLabelY, kTallLabelWidth, kTallLabelHeight);
 	for (long paramID = kFilterOutputGain; paramID <= kDryWetMix; paramID++)
 	{
-		auto displayProc = gainDisplayProc;
+		auto displayProc = DGTextDisplay::valueToTextProc_LinearToDb;
+		auto textToValueProc = DGTextDisplay::textToValueProc_DbToLinear;
 		char const* label1 = "filtered";
 		char const* label2 = "gain";
 		if (paramID == kBetweenGain)
@@ -307,14 +301,19 @@ long RezSynthEditor::OpenEditor()
 			label1 = "dry/wet";
 			label2 = "mix";
 			displayProc = percentDisplayProc;
+			textToValueProc = nullptr;
 		}
 		// slider control
 		emplaceControl<DGSlider>(this, paramID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage)->setAlternateHandle(verticalSliderHandleImage_glowing);
 
 		// value display
-		emplaceControl<DGTextDisplay>(this, paramID, valueDisplayPos, displayProc, nullptr, verticalValueDisplayBackgroundImage, dfx::TextAlignment::Center, kValueTextFontSize, kRSLightGrayColor, kValueTextFont);
-//		display->setBackgroundColor(kRSGrayColor);
-//		display->setFrameColor(kBlackColor);
+		auto const textDisplay = emplaceControl<DGTextDisplay>(this, paramID, valueDisplayPos, displayProc, nullptr, verticalValueDisplayBackgroundImage, dfx::TextAlignment::Center, kValueTextFontSize, kRSLightGrayColor, kValueTextFont);
+//		textDisplay->setBackgroundColor(kRSGrayColor);
+//		textDisplay->setFrameColor(kBlackColor);
+		if (textToValueProc)
+		{
+			textDisplay->setTextToValueProc(textToValueProc);
+		}
 
 		// parameter name label
 		auto label = emplaceControl<DGStaticTextDisplay>(this, labelDisplayPos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
