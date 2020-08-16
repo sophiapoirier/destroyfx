@@ -131,8 +131,10 @@ long MonomakerEditor::OpenEditor()
 
 	// pan
 	pos.offset(0, kSliderInc - 1);
-	emplaceControl<DGTextDisplay>(this, kPan, pos, panDisplayProc, nullptr, nullptr, dfx::TextAlignment::Center, 
-								  kValueTextSize, DGColor::kBlack, kValueTextFont);
+	auto const panDisplay = emplaceControl<DGTextDisplay>(this, kPan, pos, panDisplayProc, nullptr, nullptr, 
+														  dfx::TextAlignment::Center, kValueTextSize, 
+														  DGColor::kBlack, kValueTextFont);
+	panDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 
 	// --- buttons ---
