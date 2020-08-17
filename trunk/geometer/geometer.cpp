@@ -82,24 +82,24 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initparameter_list(P_POINTOP2, "pointop2", OP_NONE, OP_NONE, MAX_OPS);
   initparameter_list(P_POINTOP3, "pointop3", OP_NONE, OP_NONE, MAX_OPS);
 
-  auto const allop = [this](auto n, auto str, auto def, auto unit, char const* const unitstr) {
+  auto const allop = [this](auto n, auto str, auto def, auto unit, std::string_view unitstr) {
     constexpr auto curve = DfxParam::Curve::Linear;
-    initparameter_f(P_OPPAR1S + n, (std::string("op1:") + str).c_str(), def, def, 0.0, 1.0, unit, curve, unitstr);
-    initparameter_f(P_OPPAR2S + n, (std::string("op2:") + str).c_str(), def, def, 0.0, 1.0, unit, curve, unitstr);
-    initparameter_f(P_OPPAR3S + n, (std::string("op3:") + str).c_str(), def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR1S + n, std::string("op1:") + str, def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR2S + n, std::string("op2:") + str, def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR3S + n, std::string("op3:") + str, def, def, 0.0, 1.0, unit, curve, unitstr);
   };
 
-  allop(OP_DOUBLE, "double", 0.5, DfxParam::Unit::LinearGain, nullptr);
-  allop(OP_HALF, "half", 0.0, DfxParam::Unit::Generic, nullptr);
-  allop(OP_QUARTER, "quarter", 0.0, DfxParam::Unit::Generic, nullptr);
+  allop(OP_DOUBLE, "double", 0.5, DfxParam::Unit::LinearGain, {});
+  allop(OP_HALF, "half", 0.0, DfxParam::Unit::Generic, {});
+  allop(OP_QUARTER, "quarter", 0.0, DfxParam::Unit::Generic, {});
   allop(OP_LONGPASS, "longpass", 0.15, DfxParam::Unit::Custom, "length");
   allop(OP_SHORTPASS, "shortpass", 0.5, DfxParam::Unit::Custom, "length");
-  allop(OP_SLOW, "slow", 0.25, DfxParam::Unit::Scalar, nullptr);	// "factor"
-  allop(OP_FAST, "fast", 0.5, DfxParam::Unit::Scalar, nullptr);	// "factor"
-  allop(OP_NONE, "none", 0.0, DfxParam::Unit::Generic, nullptr);
+  allop(OP_SLOW, "slow", 0.25, DfxParam::Unit::Scalar, {});	// "factor"
+  allop(OP_FAST, "fast", 0.5, DfxParam::Unit::Scalar, {});	// "factor"
+  allop(OP_NONE, "none", 0.0, DfxParam::Unit::Generic, {});
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
-    allop(op, "unused", 0.5, DfxParam::Unit::Generic, nullptr);
+    allop(op, "unused", 0.5, DfxParam::Unit::Generic, {});
     setparameterattributes(P_OPPAR1S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
     setparameterattributes(P_OPPAR2S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
     setparameterattributes(P_OPPAR3S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
