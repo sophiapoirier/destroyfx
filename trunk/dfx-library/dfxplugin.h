@@ -156,6 +156,8 @@ PLUGIN_EDITOR_RES_ID
 #include <memory>
 #include <optional>
 #include <set>
+#include <string>
+#include <string_view>
 #include <thread>
 #include <variant>
 #include <vector>
@@ -310,21 +312,21 @@ public:
 		return (inParameterIndex >= 0) && (inParameterIndex < getnumparameters());
 	}
 
-	void initparameter_f(long inParameterIndex, char const* initName, double initValue, double initDefaultValue, 
+	void initparameter_f(long inParameterIndex, std::string_view initName, double initValue, double initDefaultValue, 
 						 double initMin, double initMax, 
 						 DfxParam::Unit initUnit = DfxParam::Unit::Generic, 
 						 DfxParam::Curve initCurve = DfxParam::Curve::Linear, 
-						 char const* initCustomUnitString = nullptr);
-	void initparameter_i(long inParameterIndex, char const* initName, int64_t initValue, int64_t initDefaultValue, 
+						 std::string_view initCustomUnitString = {});
+	void initparameter_i(long inParameterIndex, std::string_view initName, int64_t initValue, int64_t initDefaultValue, 
 						 int64_t initMin, int64_t initMax, 
 						 DfxParam::Unit initUnit = DfxParam::Unit::Generic, 
 						 DfxParam::Curve initCurve = DfxParam::Curve::Stepped, 
-						 char const* initCustomUnitString = nullptr);
-	void initparameter_b(long inParameterIndex, char const* initName, bool initValue, bool initDefaultValue, 
+						 std::string_view initCustomUnitString = {});
+	void initparameter_b(long inParameterIndex, std::string_view initName, bool initValue, bool initDefaultValue, 
 						 DfxParam::Unit initUnit = DfxParam::Unit::Generic);
-	void initparameter_list(long inParameterIndex, char const* initName, int64_t initValue, int64_t initDefaultValue, 
+	void initparameter_list(long inParameterIndex, std::string_view initName, int64_t initValue, int64_t initDefaultValue, 
 							int64_t initNumItems, DfxParam::Unit initUnit = DfxParam::Unit::List, 
-							char const* initCustomUnitString = nullptr);
+							std::string_view initCustomUnitString = {});
 
 	void setparameterusevaluestrings(long inParameterIndex, bool inMode = true)
 	{
@@ -337,23 +339,19 @@ public:
 	{
 		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].getusevaluestrings() : false;
 	}
-	bool setparametervaluestring(long inParameterIndex, int64_t inStringIndex, char const* inText);
-	bool getparametervaluestring(long inParameterIndex, int64_t inStringIndex, char* outText) const;
-	void getparameterunitstring(long inParameterIndex, char* outText) const
+	bool setparametervaluestring(long inParameterIndex, int64_t inStringIndex, std::string_view inText);
+	std::optional<std::string> getparametervaluestring(long inParameterIndex, int64_t inStringIndex) const;
+	std::string getparameterunitstring(long inParameterIndex) const
 	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].getunitstring(outText);
-		}
+		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].getunitstring() : std::string{};
 	}
-	void setparametercustomunitstring(long inParameterIndex, char const* inText)
+	void setparametercustomunitstring(long inParameterIndex, std::string_view inText)
 	{
 		if (parameterisvalid(inParameterIndex))
 		{
 			mParameters[inParameterIndex].setcustomunitstring(inText);
 		}
 	}
-	char const* getparametervaluestring_ptr(long inParameterIndex, int64_t inStringIndex) const;
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getparametervaluecfstring(long inParameterIndex, int64_t inStringIndex) const
 	{
@@ -429,7 +427,7 @@ public:
 		return parameterisvalid(inParameterIndex) ? mParameters[inParameterIndex].getdefault_b() : false;
 	}
 
-	void getparametername(long inParameterIndex, char* outText) const;
+	std::string getparametername(long inParameterIndex) const;
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getparametercfname(long inParameterIndex) const
 	{
@@ -508,11 +506,9 @@ public:
 	// to the current value of that parameter
 	void initpresetsparameter(long inParameterIndex);
 	// set the text of a preset name
-	void setpresetname(long inPresetIndex, char const* inText);
+	void setpresetname(long inPresetIndex, std::string_view inText);
 	// get a copy of the text of a preset name
-	void getpresetname(long inPresetIndex, char* outText) const;
-	// get a pointer to the text of a preset name
-	char const* getpresetname_ptr(long inPresetIndex) const;
+	std::string getpresetname(long inPresetIndex) const;
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getpresetcfname(long inPresetIndex) const;
 #endif
@@ -601,7 +597,7 @@ public:
 
 	void setAudioProcessingMustAccumulate(bool inMode);
 
-	void getpluginname(char* outText) const;
+	std::string getpluginname() const;
 	long getpluginversion() const;
 
 	// Register a smoothed value with the given owner. Values can be updated en masse

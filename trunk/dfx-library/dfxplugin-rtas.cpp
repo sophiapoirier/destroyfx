@@ -158,9 +158,7 @@ void DfxPlugin::AddParametersToList()
 
 		auto const paramMin_f = getparametermin_f(i), paramMax_f = getparametermax_f(i), paramDefault_f = getparameterdefault_f(i);
 		auto const paramMin_i = getparametermin_i(i), paramMax_i = getparametermax_i(i), paramDefault_i = getparameterdefault_i(i);
-		char paramName[dfx::kParameterNameMaxLength];
-		paramName[0] = 0;
-		getparametername(i, paramName);
+		auto const paramName = getparametername(i);
 
 		paramFourCharID = DFX_IterateAlphaNumericFourCharCode(paramFourCharID);
 		// make sure to skip over the ID already used for master bypass
@@ -178,21 +176,22 @@ void DfxPlugin::AddParametersToList()
 			std::vector<std::string> valueStringsVector;
 			for (int64_t stringIndex=paramMin_i; stringIndex <= paramMax_i; stringIndex++)
 			{
-				auto const valueString = getparametervaluestring_ptr(i, stringIndex);
-				if (valueString != NULL)
-					valueStringsVector.push_back( std::string(valueString) );
+				if (auto const valueString = getparametervaluestring(i, stringIndex))
+				{
+					valueStringsVector.push_back(*valueString);
+				}
 			}
-			AddControl( new CPluginControl_List(paramFourCharID, paramName, valueStringsVector, paramDefault_i - paramMin_i, paramAutomatable) );
+			AddControl( new CPluginControl_List(paramFourCharID, paramName.c_str(), valueStringsVector, paramDefault_i - paramMin_i, paramAutomatable) );
 		}
 
 		else if (getparametervaluetype(i) == DfxParam::ValueType::Int)
 		{
-			AddControl( new CPluginControl_Discrete(paramFourCharID, paramName, paramMin_i, paramMax_i, paramDefault_i, paramAutomatable) );
+			AddControl( new CPluginControl_Discrete(paramFourCharID, paramName.c_str(), paramMin_i, paramMax_i, paramDefault_i, paramAutomatable) );
 		}
 
 		else if (getparametervaluetype(i) == DfxParam::ValueType::Boolean)
 		{
-			AddControl( new CPluginControl_OnOff(paramFourCharID, paramName, getparameterdefault_b(i), paramAutomatable) );
+			AddControl( new CPluginControl_OnOff(paramFourCharID, paramName.c_str(), getparameterdefault_b(i), paramAutomatable) );
 		}
 
 		else
@@ -202,48 +201,48 @@ void DfxPlugin::AddParametersToList()
 				case DfxParam::Unit::Percent:
 				case DfxParam::Unit::DryWetMix:
 					if (paramIsLog)
-						AddControl( new CPluginControl_LogPercent(paramFourCharID, paramName, paramMin_f * dfx::kRTASPercentScalar, paramMax_f * dfx::kRTASPercentScalar, numCurvedSteps, paramDefault_f * dfx::kRTASPercentScalar, paramAutomatable) );
+						AddControl( new CPluginControl_LogPercent(paramFourCharID, paramName.c_str(), paramMin_f * dfx::kRTASPercentScalar, paramMax_f * dfx::kRTASPercentScalar, numCurvedSteps, paramDefault_f * dfx::kRTASPercentScalar, paramAutomatable) );
 					else
-						AddControl( new CPluginControl_LinearPercent(paramFourCharID, paramName, paramMin_f * dfx::kRTASPercentScalar, paramMax_f * dfx::kRTASPercentScalar, stepSize_default * dfx::kRTASPercentScalar, paramDefault_f * dfx::kRTASPercentScalar, paramAutomatable) );
+						AddControl( new CPluginControl_LinearPercent(paramFourCharID, paramName.c_str(), paramMin_f * dfx::kRTASPercentScalar, paramMax_f * dfx::kRTASPercentScalar, stepSize_default * dfx::kRTASPercentScalar, paramDefault_f * dfx::kRTASPercentScalar, paramAutomatable) );
 					break;
 
 				case DfxParam::Unit::MS:
 					if (paramIsLog)
-						AddControl( new CPluginControl_LogTime(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
+						AddControl( new CPluginControl_LogTime(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 					else
-						AddControl( new CPluginControl_LinearTime(paramFourCharID, paramName, paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
+						AddControl( new CPluginControl_LinearTime(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
 					break;
 
 				case DfxParam::Unit::Seconds:
 					// XXX not actually really sure whether CPluginControl_TimeS is for seconds? or maybe samples?
-					AddControl( new CPluginControl_LogTimeS(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
+					AddControl( new CPluginControl_LogTimeS(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 					break;
 
 				case DfxParam::Unit::Hz:
 					if (paramCurve == DfxParam::Curve::Log)
-						AddControl( new CPluginControl_LogFrequency(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
+						AddControl( new CPluginControl_LogFrequency(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 					else
-						AddControl( new CPluginControl_DfxCurvedFrequency(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable, paramCurve, paramCurveSpec) );
+						AddControl( new CPluginControl_DfxCurvedFrequency(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable, paramCurve, paramCurveSpec) );
 					break;
 
 				case DfxParam::Unit::Decibles:
 					// XXX or perhaps use CPluginControl_Level, or split the two out from each other?
-					AddControl( new CPluginControl_LinearBoostCut(paramFourCharID, paramName, paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
+					AddControl( new CPluginControl_LinearBoostCut(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
 					break;
 
 				case DfxParam::Unit::LinearGain:
 					if (paramIsLog)
-						AddControl( new CPluginControl_LogGain(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
+						AddControl( new CPluginControl_LogGain(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 					else
-						AddControl( new CPluginControl_LinearGain(paramFourCharID, paramName, paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
+						AddControl( new CPluginControl_LinearGain(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
 					break;
 
 				default:
 					{
 						if (paramIsLog)
-							AddControl( new CPluginControl_Log(paramFourCharID, paramName, paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
+							AddControl( new CPluginControl_Log(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, numCurvedSteps, paramDefault_f, paramAutomatable) );
 						else
-							AddControl( new CPluginControl_Linear(paramFourCharID, paramName, paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
+							AddControl( new CPluginControl_Linear(paramFourCharID, paramName.c_str(), paramMin_f, paramMax_f, stepSize_default, paramDefault_f, paramAutomatable) );
 					}
 					break;
 			}

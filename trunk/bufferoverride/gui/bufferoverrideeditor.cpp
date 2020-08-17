@@ -165,7 +165,11 @@ bool bufferSizeDisplayProc(float inValue, char* outText, void* inEditor)
 	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
 	if (dgEditor->getparameter_b(kBufferTempoSync))
 	{
-		return dgEditor->getparametervaluestring(kBufferSize_Sync, outText);
+		if (auto const valueString = dgEditor->getparametervaluestring(kBufferSize_Sync))
+		{
+			return dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
+		}
+		return false;
 	}
 	else
 	{
@@ -178,7 +182,11 @@ bool divisorLFORateDisplayProc(float inValue, char* outText, void* inEditor)
 	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
 	if (dgEditor->getparameter_b(kDivisorLFOTempoSync))
 	{
-		return dgEditor->getparametervaluestring(kDivisorLFORate_Sync, outText);
+		if (auto const valueString = dgEditor->getparametervaluestring(kDivisorLFORate_Sync))
+		{
+			return dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
+		}
+		return false;
 	}
 	else
 	{
@@ -198,7 +206,11 @@ bool bufferLFORateDisplayProc(float inValue, char* outText, void* inEditor)
 	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
 	if (dgEditor->getparameter_b(kBufferLFOTempoSync))
 	{
-		return dgEditor->getparametervaluestring(kBufferLFORate_Sync, outText);
+		if (auto const valueString = dgEditor->getparametervaluestring(kBufferLFORate_Sync))
+		{
+			return dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
+		}
+		return false;
 	}
 	else
 	{

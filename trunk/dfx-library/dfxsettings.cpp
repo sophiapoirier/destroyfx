@@ -179,8 +179,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	// store only one preset setting if inIsPreset is true
 	if (inIsPreset)
 	{
-		std::fill_n(firstSharedPreset->mName, std::size(firstSharedPreset->mName), 0);
-		mPlugin->getpresetname(mPlugin->getcurrentpresetnum(), firstSharedPreset->mName);
+		dfx::StrLCpy(firstSharedPreset->mName, mPlugin->getpresetname(mPlugin->getcurrentpresetnum()), std::size(firstSharedPreset->mName));
 		for (long i = 0; i < mNumParameters; i++)
 		{
 			firstSharedPreset->mParameterValues[i] = mPlugin->getparameter_f(i);
@@ -200,7 +199,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 		for (long j = 0; j < mNumPresets; j++)
 		{
 			// copy the preset name to the chunk
-			mPlugin->getpresetname(j, tempSharedPresets->mName);
+			dfx::StrLCpy(tempSharedPresets->mName, mPlugin->getpresetname(j), std::size(tempSharedPresets->mName));
 			// copy all of the parameters for this preset to the chunk
 			for (long i = 0; i < mNumParameters; i++)
 			{
@@ -1500,8 +1499,8 @@ void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDat
 #elif TARGET_OS_WIN32
 	char msg[512] = {};
 	snprintf(msg, 511, "Something is wrong with the settings data! "
-		"Info for bug reports: name: %s size: %zu total: %zu",
-		inDataItemName, inDataItemSize, inDataTotalSize);
+			 "Info for bug reports: name: %s size: %zu total: %zu",
+			 inDataItemName, inDataItemSize, inDataTotalSize);
 	MessageBoxA(nullptr, msg, "DFX Error!", 0);
 #else
 	#warning "implementation missing"
