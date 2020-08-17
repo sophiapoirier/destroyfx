@@ -592,11 +592,9 @@ Anyway, this fixes the fine tune buttons!
 
 
 problems still:
- - randomize button doesn't seem to do anything
-   (see DfxGuiEditor::randomizeparameter(s) "missing implementations")
  - sometimes multiple copies of the plugin ui open up? And some are blank
       (I think this is just a cakewalk bug! It happens if I double-click the plugin, I think because
        of my MessageBoxA modals which are preventing the plugin from opening until I OK them, so my
        second click opens another plugin window. I can actually get as many as I want this way. Doesn't
        seem like a practical issue without the modals, but maybe we should prevent it from happening?)
- - does picking presets work properly? Like "glup drums" did not sound gluppy.
+

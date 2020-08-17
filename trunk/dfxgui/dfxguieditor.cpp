@@ -468,8 +468,11 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 #endif
 
 #ifdef TARGET_API_VST
-	#warning "implementation missing"
-	assert(false);  // TODO: implement
+	dfxgui_GetEffectInstance()->randomizeparameter(inParameterID);
+	if (inWriteAutomation)
+	{
+	    GenerateParameterAutomationSnapshot(inParameterID);
+	}
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -509,6 +512,8 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 		}
 	}
 #else
+	// For VST, we just call its randomizeparameters(), but wrap in beginEdit/endEdit for each
+	// parameter if automating.
 	if (inWriteAutomation)
 	{
 		for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
@@ -517,13 +522,11 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 		}
 	}
 
-	for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
-	{
-		randomizeparameter(parameterIndex, false);  // TODO: false? not inWriteAutomation? though that would double begin/end?
-	}
-
+	dfxgui_GetEffectInstance()->randomizeparameters();
+	
 	if (inWriteAutomation)
 	{
+		GenerateParametersAutomationSnapshot();	  
 		for (long parameterIndex = 0; parameterIndex < GetNumParameters(); parameterIndex++)
 		{
 			automationgesture_end(parameterIndex);

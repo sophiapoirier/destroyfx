@@ -260,7 +260,13 @@ public:
 	bool getparametervaluestring(long inParameterID, char* outText);
 	std::string getparameterunitstring(long inParameterIndex);
 	std::string getparametername(long inParameterID);
+
+	// Randomize the value of the parameter. If inWriteAutomation is true, then
+	// this saves automation inside a simulated automation gesture.
 	void randomizeparameter(long inParameterID, bool inWriteAutomation);
+	// Randomize all parameters at the same time. Note that this calls the plugin's
+	// randomizeparameters() function, which may not be the same as just looping over
+	// all the parameters and randomizing them alone.
 	void randomizeparameters(bool inWriteAutomation);
 	void GenerateParameterAutomationSnapshot(long inParameterID);
 	void GenerateParametersAutomationSnapshot();
