@@ -261,10 +261,9 @@ bool seekRateGenDisplayProc(float inValue, long inParameterID, char* outText, Df
 {
 	if (inEditor->getparameter_b(kTempoSync))
 	{
-		if (inEditor->getparametervaluestring(inParameterID, outText)) //&& (strlen(outText) <= 3)
+		if (auto const valueString = inEditor->getparametervaluestring(inParameterID)) //&& (valueString->length() <= 3)
 		{
-			dfx::StrlCat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
-			return true;
+			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s cycles/beat", valueString->c_str()) > 0;
 		}
 	}
 	else

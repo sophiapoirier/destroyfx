@@ -36,29 +36,39 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 
 
 
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+static dfx::UniqueCFType<CFStringRef> CreateCFStringWithStringView(std::string_view inText)
+{
+	return {CFStringCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inText.data()), 
+									inText.length(), DfxParam::kDefaultCStringEncoding, false)};
+}
+#endif
+
+
+
 #pragma mark -
 #pragma mark init
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-void DfxParam::init(char const* inName, ValueType inType, 
+void DfxParam::init(std::string_view inName, ValueType inType, 
 					Value inInitialValue, Value inDefaultValue, 
 					Value inMinValue, Value inMaxValue, 
 					Unit inUnit, Curve inCurve)
 {
+	assert(!inName.empty());
+
 	// accept all of the incoming init values
 	mValueType = inType;
 	mValue = mOldValue = inInitialValue;
 	mDefaultValue = inDefaultValue;
 	mMinValue = inMinValue;
 	mMaxValue = inMaxValue;
-	if (inName)
-	{
-		mName.assign(inName, 0, dfx::kParameterNameMaxLength - 1);
-	#ifdef TARGET_API_AUDIOUNIT
-		mCFName.reset(CFStringCreateWithCString(kCFAllocatorDefault, inName, kDefaultCStringEncoding));
-	#endif
-	}
+	mName.assign(inName, 0, dfx::kParameterNameMaxLength - 1);
+#ifdef TARGET_API_AUDIOUNIT
+	mCFName = CreateCFStringWithStringView(inName);
+#endif
 	mCurve = inCurve;
 	mUnit = inUnit;
 	if (mUnit == Unit::List)
@@ -112,7 +122,7 @@ void DfxParam::init(char const* inName, ValueType inType,
 
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with float variable type
-void DfxParam::init_f(char const* inName, double inInitialValue, double inDefaultValue, 
+void DfxParam::init_f(std::string_view inName, double inInitialValue, double inDefaultValue, 
 					  double inMinValue, double inMaxValue, 
 					  Unit inUnit, Curve inCurve)
 {
@@ -125,7 +135,7 @@ void DfxParam::init_f(char const* inName, double inInitialValue, double inDefaul
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
-void DfxParam::init_i(char const* inName, int64_t inInitialValue, int64_t inDefaultValue, 
+void DfxParam::init_i(std::string_view inName, int64_t inInitialValue, int64_t inDefaultValue, 
 					  int64_t inMinValue, int64_t inMaxValue, 
 					  Unit inUnit, Curve inCurve)
 {
@@ -138,7 +148,7 @@ void DfxParam::init_i(char const* inName, int64_t inInitialValue, int64_t inDefa
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with boolean variable type
-void DfxParam::init_b(char const* inName, bool inInitialValue, bool inDefaultValue, Unit inUnit)
+void DfxParam::init_b(std::string_view inName, bool inInitialValue, bool inDefaultValue, Unit inUnit)
 {
 	Value val {}, def {}, min {}, max {};
 	val.b = inInitialValue;
@@ -174,9 +184,9 @@ void DfxParam::setusevaluestrings(bool inMode)
 
 //-----------------------------------------------------------------------------
 // set a value string's text contents
-bool DfxParam::setvaluestring(int64_t inIndex, char const* inText)
+bool DfxParam::setvaluestring(int64_t inIndex, std::string_view inText)
 {
-	assert(inText);
+	assert(!inText.empty());
 
 	if (!ValueStringIndexIsValid(inIndex))
 	{
@@ -189,7 +199,7 @@ bool DfxParam::setvaluestring(int64_t inIndex, char const* inText)
 	mValueStrings.at(arrayIndex).assign(inText, 0, dfx::kParameterValueStringMaxLength - 1);
 
 #ifdef TARGET_API_AUDIOUNIT
-	mValueCFStrings.at(arrayIndex).reset(CFStringCreateWithCString(kCFAllocatorDefault, inText, kDefaultCStringEncoding));
+	mValueCFStrings.at(arrayIndex) = CreateCFStringWithStringView(inText);
 #endif
 
 	return true;
@@ -197,28 +207,13 @@ bool DfxParam::setvaluestring(int64_t inIndex, char const* inText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the contents of a specific value string
-bool DfxParam::getvaluestring(int64_t inIndex, char* outText) const
-{
-	auto const text = getvaluestring_ptr(inIndex);
-	if (!text)
-	{
-		return false;
-	}
-
-	strcpy(outText, text);
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// get a copy of the pointer to a specific value string
-char const* DfxParam::getvaluestring_ptr(int64_t inIndex) const
+std::optional<std::string> DfxParam::getvaluestring(int64_t inIndex) const
 {
 	if (!ValueStringIndexIsValid(inIndex))
 	{
-		return nullptr;
+		return {};
 	}
-
-	return mValueStrings.at(inIndex - getmin_i()).c_str();
+	return mValueStrings.at(inIndex - getmin_i());
 }
 
 //-----------------------------------------------------------------------------
@@ -735,95 +730,64 @@ bool DfxParam::setchanged(bool inChanged) noexcept
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-// get a copy of the text of the parameter name
-void DfxParam::getname(char* outText) const
-{
-	assert(outText);
-	strcpy(outText, mName.c_str());
-}
-
-//-----------------------------------------------------------------------------
 // get a text string of the unit type
-void DfxParam::getunitstring(char* outText) const
+std::string DfxParam::getunitstring() const
 {
-	assert(outText);
-
 	switch (mUnit)
 	{
 		case Unit::Generic:
-			strcpy(outText, "");
-			break;
+			return "";
 		case Unit::Percent:
-			strcpy(outText, "%");
-			break;
+			return "%";
 		case Unit::LinearGain:
-			strcpy(outText, "");
-			break;
+			return "";
 		case Unit::Decibles:
-			strcpy(outText, "dB");
-			break;
+			return "dB";
 		case Unit::DryWetMix:
-			strcpy(outText, "");
-			break;
+			return "";
 		case Unit::Hz:
-			strcpy(outText, "Hz");
-			break;
+			return "Hz";
 		case Unit::Seconds:
-			strcpy(outText, "seconds");
-			break;
+			return "seconds";
 		case Unit::MS:
-			strcpy(outText, "ms");
-			break;
+			return "ms";
 		case Unit::Samples:
-			strcpy(outText, "samples");
-			break;
+			return "samples";
 		case Unit::Scalar:
-			strcpy(outText, "");
-			break;
+			return "";
 		case Unit::Divisor:
-			strcpy(outText, "");
-			break;
+			return "";
 		case Unit::Exponent:
-			strcpy(outText, "exponent");
-			break;
+			return "exponent";
 		case Unit::Semitones:
-			strcpy(outText, "semitones");
-			break;
+			return "semitones";
 		case Unit::Octaves:
-			strcpy(outText, "octaves");
-			break;
+			return "octaves";
 		case Unit::Cents:
-			strcpy(outText, "cents");
-			break;
+			return "cents";
 		case Unit::Notes:
-			strcpy(outText, "");
-			break;
+			return "";
 		case Unit::Pan:
-			strcpy(outText, "");
-			break;
+			return "";
 		case Unit::BPM:
-			strcpy(outText, "bpm");
-			break;
+			return "bpm";
 		case Unit::Beats:
-			strcpy(outText, "per beat");
-			break;
+			return "per beat";
 		case Unit::List:
-			strcpy(outText, "");
-			break;
+			return "";
 		case Unit::Custom:
-			strcpy(outText, mCustomUnitString.c_str());
-			break;
+			return mCustomUnitString;
 		default:
 			assert(false);
-			break;
+			return "";
 	}
 }
 
 //-----------------------------------------------------------------------------
 // set the text for a custom unit type display
-void DfxParam::setcustomunitstring(char const* inText)
+void DfxParam::setcustomunitstring(std::string_view inText)
 {
-	assert(inText);
+	assert(!inText.empty());
 	mCustomUnitString.assign(inText, 0, dfx::kParameterUnitStringMaxLength - 1);
 }
 
@@ -863,26 +827,13 @@ DfxParam::Value DfxPreset::getvalue(long inParameterIndex) const
 }
 
 //-----------------------------------------------------------------------------
-void DfxPreset::setname(char const* inText)
+void DfxPreset::setname(std::string_view inText)
 {
-	assert(inText);
+	assert(!inText.empty());
 
 	mName.assign(inText, 0, dfx::kPresetNameMaxLength - 1);
 
 #ifdef TARGET_API_AUDIOUNIT
-	mCFName.reset(CFStringCreateWithCString(kCFAllocatorDefault, inText, DfxParam::kDefaultCStringEncoding));
+	mCFName = CreateCFStringWithStringView(inText);
 #endif
-}
-
-//-----------------------------------------------------------------------------
-void DfxPreset::getname(char* outText) const
-{
-	assert(outText);
-	strcpy(outText, mName.c_str());
-}
-
-//-----------------------------------------------------------------------------
-char const* DfxPreset::getname_ptr() const noexcept
-{
-	return mName.c_str();
 }

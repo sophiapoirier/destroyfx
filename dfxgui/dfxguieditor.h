@@ -257,7 +257,7 @@ public:
 	void setparameter_b(long inParameterID, bool inValue, bool inWrapWithAutomationGesture = false);
 	void setparameter_default(long inParameterID, bool inWrapWithAutomationGesture = false);
 	void setparameters_default(bool inWrapWithAutomationGesture = false);
-	bool getparametervaluestring(long inParameterID, char* outText);
+	std::optional<std::string> getparametervaluestring(long inParameterID);
 	std::string getparameterunitstring(long inParameterIndex);
 	std::string getparametername(long inParameterID);
 
@@ -388,6 +388,9 @@ private:
 	long mEditorOpenErr = dfx::kStatus_NoError;
 	unsigned long mNumAudioChannels = 0;
 
+	// Custom properties that have been registered for HandlePropertyChange calls.
+	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned long>> mRegisteredProperties;
+
 	VSTGUI::SharedPointer<DGTextEntryDialog> mTextEntryDialog;
 
 	std::unique_ptr<dfx::FontFactory> mFontFactory;
@@ -411,9 +414,6 @@ private:
 	AudioUnitEvent mMidiLearnPropertyAUEvent {};
 	AudioUnitEvent mMidiLearnerPropertyAUEvent {};
 #endif
-
-	// Custom properties that have been registered for HandlePropertyChange calls.
-	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned long>> mRegisteredProperties;
 
 #ifdef TARGET_API_RTAS
 	ITemplateProcess* m_Process = nullptr;

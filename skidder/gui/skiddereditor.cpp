@@ -94,18 +94,19 @@ bool rateGenDisplayProc(float inValue, long inSyncParameterID, char* outText, Df
 {
 	if (inEditor->getparameter_b(kTempoSync))
 	{
-		if (inEditor->getparametervaluestring(inSyncParameterID, outText))
+		if (auto const valueString = inEditor->getparametervaluestring(inSyncParameterID))
 		{
+			bool success = dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
 			dfx::TempoRateTable const tempoRateTable;
-			if (outText == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1))
+			if (*valueString == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1))
 			{
-				dfx::StrLCpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength);
+				success = dfx::StrLCpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength) > 0;
 			}
 			if (inShowUnits)
 			{
 				dfx::StrlCat(outText, " cycles/beat", DGTextDisplay::kTextMaxLength);
 			}
-			return true;
+			return success;
 		}
 	}
 	else
@@ -328,7 +329,7 @@ long SkidderEditor::OpenEditor()
 		auto const breakpoint = strrchr(parameterName.data(), '(');
 		if (breakpoint && (breakpoint != parameterName.data()))
 		{
-			breakpoint[-1] = 0;
+			breakpoint[-1] = '\0';
 		}
 		label->setText(parameterName.data());
 	};

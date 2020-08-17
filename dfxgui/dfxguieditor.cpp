@@ -332,6 +332,7 @@ void DfxGuiEditor::idle()
 void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex)
 {
 	assert(!IsOpen());  // you need to register these all before opening a view
+	assert(std::find(mRegisteredProperties.cbegin(), mRegisteredProperties.cend(), std::make_tuple(inPropertyID, inScope, inItemIndex)) == mRegisteredProperties.cend());
 
 	mRegisteredProperties.emplace_back(inPropertyID, inScope, inItemIndex);
 }
@@ -471,7 +472,7 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 	dfxgui_GetEffectInstance()->randomizeparameter(inParameterID);
 	if (inWriteAutomation)
 	{
-	    GenerateParameterAutomationSnapshot(inParameterID);
+		GenerateParameterAutomationSnapshot(inParameterID);
 	}
 #endif
 
@@ -523,7 +524,7 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 	}
 
 	dfxgui_GetEffectInstance()->randomizeparameters();
-	
+
 	if (inWriteAutomation)
 	{
 		GenerateParametersAutomationSnapshot();	  
@@ -1021,10 +1022,8 @@ void DfxGuiEditor::setparameters_default(bool inWrapWithAutomationGesture)
 }
 
 //-----------------------------------------------------------------------------
-bool DfxGuiEditor::getparametervaluestring(long inParameterID, char* outText)
+std::optional<std::string> DfxGuiEditor::getparametervaluestring(long inParameterID)
 {
-	assert(outText);
-
 	auto const stringIndex = getparameter_i(inParameterID);
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -1035,44 +1034,37 @@ bool DfxGuiEditor::getparametervaluestring(long inParameterID, char* outText)
 										   inParameterID, &request, dataSize); 
 	if (status == noErr)
 	{
-		strcpy(outText, request.valueString);
-		return true;
+		return request.valueString;
 	}
+	return {};
 
 #else
-	return dfxgui_GetEffectInstance()->getparametervaluestring(inParameterID, stringIndex, outText);
+	return dfxgui_GetEffectInstance()->getparametervaluestring(inParameterID, stringIndex);
 #endif
-
-	return false;
 }
 
 //-----------------------------------------------------------------------------
 std::string DfxGuiEditor::getparameterunitstring(long inParameterIndex)
 {
-	char unitLabel[dfx::kParameterUnitStringMaxLength];
-	unitLabel[0] = 0;
-
 #ifdef TARGET_API_AUDIOUNIT
-	size_t dataSize = sizeof(unitLabel);
+	std::array<char, dfx::kParameterUnitStringMaxLength> unitLabel {};
+	size_t dataSize = unitLabel.size() * sizeof(unitLabel.front());
 	auto const status = dfxgui_GetProperty(dfx::kPluginProperty_ParameterUnitLabel, dfx::kScope_Global, 
-										   inParameterIndex, unitLabel, dataSize);
-	if (status != noErr)
+										   inParameterIndex, unitLabel.data(), dataSize);
+	if (status == noErr)
 	{
-		unitLabel[0] = 0;
+		return unitLabel.data();
 	}
+	return {};
 
 #else
-	dfxgui_GetEffectInstance()->getparameterunitstring(inParameterIndex, unitLabel);
+	return dfxgui_GetEffectInstance()->getparameterunitstring(inParameterIndex);
 #endif
-
-	return std::string(unitLabel);
 }
 
 //-----------------------------------------------------------------------------
 std::string DfxGuiEditor::getparametername(long inParameterID)
 {
-	std::string resultString;
-
 #ifdef TARGET_API_AUDIOUNIT
 	if (auto const parameterInfo = dfxgui_GetParameterInfo(inParameterID))
 	{
@@ -1081,23 +1073,16 @@ std::string DfxGuiEditor::getparametername(long inParameterID)
 			auto const tempString = dfx::CreateCStringFromCFString(parameterInfo->cfNameString);
 			if (tempString)
 			{
-				resultString.assign(tempString.get());
+				return tempString.get();
 			}
 		}
-		if (resultString.empty())
-		{
-			resultString.assign(parameterInfo->name);
-		}
+		return parameterInfo->name;
 	}
+	return {};
 
 #else
-	char parameterCName[dfx::kParameterNameMaxLength];
-	parameterCName[0] = 0;
-	dfxgui_GetEffectInstance()->getparametername(inParameterID, parameterCName);
-	resultString.assign(parameterCName);
+	return dfxgui_GetEffectInstance()->getparametername(inParameterID);
 #endif
-
-	return resultString;
 }
 
 //-----------------------------------------------------------------------------
@@ -1595,10 +1580,13 @@ void DfxGuiEditor::setparametermidiassignment(long inParameterIndex, dfx::Parame
 dfx::ParameterAssignment DfxGuiEditor::getparametermidiassignment(long inParameterIndex)
 {
 	auto const opt = dfxgui_GetProperty<dfx::ParameterAssignment>(dfx::kPluginProperty_ParameterMidiAssignment,
-								      dfx::kScope_Global,
-								      inParameterIndex);
-	if (opt.has_value()) return opt.value();
-	
+																  dfx::kScope_Global,
+																  inParameterIndex);
+	if (opt.has_value())
+	{
+		return opt.value();
+	}
+
 	dfx::ParameterAssignment none;
 	none.mEventType = dfx::MidiEventType::None;
 	return none;
@@ -2090,9 +2078,9 @@ void DfxGuiEditor::InstallAUEventListeners()
 #endif
 
 	ForEachRegisteredAudioUnitEvent([this](AudioUnitEvent const& propertyAUEvent)
-		{
-			AUEventListenerAddEventType(mAUEventListener.get(), this, &propertyAUEvent);
-		});
+	{
+		AUEventListenerAddEventType(mAUEventListener.get(), this, &propertyAUEvent);
+	});
 }
 
 //-----------------------------------------------------------------------------
@@ -2121,9 +2109,9 @@ void DfxGuiEditor::RemoveAUEventListeners()
 
 
 	ForEachRegisteredAudioUnitEvent([this](AudioUnitEvent const& propertyAUEvent)
-		{
-			AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
-		});
+	{
+		AUEventListenerRemoveEventType(mAUEventListener.get(), this, &propertyAUEvent);
+	});
 }
 
 //-----------------------------------------------------------------------------
