@@ -102,10 +102,10 @@ static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks inFontTweaks, DGRect const& 
 	switch (inFontTweaks)
 	{
 		case DGFontTweaks::SNOOTORGPX10:
-#if TARGET_OS_WIN32
-			// it turns out this didn't help for macOS anymore, but does it still serve a purpose for Windows?
-			textArea.setHeight(textArea.getHeight() + 2);
+#if TARGET_OS_MAC
+			textArea.offset(0, -2);
 #endif
+			textArea.setHeight(textArea.getHeight() + 2);
 			textArea.makeIntegral();
 			break;
 		default:
@@ -344,7 +344,7 @@ VSTGUI::CRect DGTextDisplay::platformGetSize() const
 	{
 		case DGFontTweaks::SNOOTORGPX10:
 #if TARGET_OS_MAC
-			rect.top -= 2;
+			rect.top -= 1;
 #endif
 #if TARGET_OS_WIN32
 			rect.top -= 3;
