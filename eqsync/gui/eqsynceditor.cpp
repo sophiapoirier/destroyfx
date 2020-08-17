@@ -205,13 +205,16 @@ long EQSyncEditor::OpenEditor()
 		{
 			textProc = [](float inValue, char* outText, void* inEditor)
 			{
-				auto const success = static_cast<DfxGuiEditor*>(inEditor)->getparametervaluestring(kRate_Sync, outText);
-				dfx::TempoRateTable const tempoRateTable;
-				if (success && (outText == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1)))
+				if (auto const valueString = static_cast<DfxGuiEditor*>(inEditor)->getparametervaluestring(kRate_Sync))
 				{
-					dfx::StrLCpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength);
+					dfx::TempoRateTable const tempoRateTable;
+					if (*valueString == tempoRateTable.getDisplay(tempoRateTable.getNumRates() - 1))
+					{
+						return dfx::StrLCpy(outText, VSTGUI::kInfiniteSymbol, DGTextDisplay::kTextMaxLength) > 0;
+					}
+					return dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
 				}
-				return success;
+				return false;
 			};
 		}
 		else if (i == kSmooth)

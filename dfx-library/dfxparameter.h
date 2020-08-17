@@ -108,8 +108,8 @@ strictly enforced.  The SetEnforceValueLimits routine can be used to
 specify whether values should be strictly constrained to be within 
 the min/max range.  The default behavior is to not restrict values, 
 with the exception of index unit types where it is assumed that out 
-of range values would be a bad thing (going into unallocated memory 
-of an array).  (more on parameter unit types below)
+of range values would be a bad thing (going out of array bounds).   
+(more on parameter unit types below)
 
 
 value distribution curves:
@@ -173,17 +173,17 @@ as text names for any other non-custom unit types).
 setusevaluestrings(true) indicates that there is an array of text 
 strings that should be used for displaying the parameter's value for a 
 given index value.  There are routines for getting and setting the text 
-for these value strings (setvaluestring, getvaluestring, 
-getvaluestring_ptr, etc.), and setusevaluestrings is used to set this 
-property.  When setusevaluestrings(true) is called, memory is allocated 
-for the value strings.
+for these value strings (setvaluestring, getvaluestring, etc.), and 
+setusevaluestrings is used to set this property.
 ------------------------------------------------------------------------*/
 
 #pragma once
 
 
 #include <atomic>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "dfxdefines.h"
@@ -279,21 +279,21 @@ public:
 	DfxParam() = default;
 
 	// initialize a parameter with values, value types, curve types, etc.
-	void init(char const* inName, ValueType inType, 
+	void init(std::string_view inName, ValueType inType, 
 			  Value inInitialValue, Value inDefaultValue, 
 			  Value inMinValue, Value inMaxValue, 
 			  Unit inUnit = Unit::Generic, 
 			  Curve inCurve = Curve::Linear);
 	// the rest of these are just convenience wrappers for initializing with a certain variable type
-	void init_f(char const* inName, double inInitialValue, double inDefaultValue, 
+	void init_f(std::string_view inName, double inInitialValue, double inDefaultValue, 
 				double inMinValue, double inMaxValue, 
 				Unit inUnit = Unit::Generic, 
 				Curve inCurve = Curve::Linear);
-	void init_i(char const* inName, int64_t inInitialValue, int64_t inDefaultValue, 
+	void init_i(std::string_view inName, int64_t inInitialValue, int64_t inDefaultValue, 
 				int64_t inMinValue, int64_t inMaxValue, 
 				Unit inUnit = Unit::Generic, 
 				Curve inCurve = Curve::Stepped);
-	void init_b(char const* inName, bool inInitialValue, bool inDefaultValue, 
+	void init_b(std::string_view inName, bool inInitialValue, bool inDefaultValue, 
 				Unit inUnit = Unit::Generic);
 
 	// set/get whether or not to use an array of strings for custom value display
@@ -303,11 +303,9 @@ public:
 		return !mValueStrings.empty();
 	}
 	// set a value string's text contents
-	bool setvaluestring(int64_t inIndex, char const* inText);
-	// get a copy of the contents of a specific value string...
-	bool getvaluestring(int64_t inIndex, char* outText) const;
-	// ...or get a copy of the pointer to the value string
-	char const* getvaluestring_ptr(int64_t inIndex) const;
+	bool setvaluestring(int64_t inIndex, std::string_view inText);
+	// get a copy of the contents of a specific value string
+	std::optional<std::string> getvaluestring(int64_t inIndex) const;
 #ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the array of CFString value strings
 	CFStringRef getvaluecfstring(int64_t inIndex) const
@@ -425,7 +423,10 @@ public:
 	}
 
 	// get a copy of the text of the parameter name
-	void getname(char* outText) const;
+	std::string getname() const
+	{
+		return mName;
+	}
 #ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the CFString version of the parameter name
 	CFStringRef getcfname() const noexcept
@@ -447,8 +448,8 @@ public:
 	{
 		return mUnit;
 	}
-	void getunitstring(char* outText) const;
-	void setcustomunitstring(char const* inText);
+	std::string getunitstring() const;
+	void setcustomunitstring(std::string_view inText);
 
 	// set/get the value distribution curve
 	void setcurve(Curve inNewCurve) noexcept
@@ -564,9 +565,11 @@ public:
 
 	void setvalue(long inParameterIndex, DfxParam::Value inNewValue);
 	DfxParam::Value getvalue(long inParameterIndex) const;
-	void setname(char const* inText);
-	void getname(char* outText) const;
-	char const* getname_ptr() const noexcept;
+	void setname(std::string_view inText);
+	std::string getname() const
+	{
+		return mName;
+	}
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getcfname() const noexcept
 	{

@@ -394,10 +394,10 @@ void DfxPlugin::do_reset()
 #pragma mark parameters
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_f(long inParameterIndex, char const* initName, double initValue, 
+void DfxPlugin::initparameter_f(long inParameterIndex, std::string_view initName, double initValue, 
 								double initDefaultValue, double initMin, double initMax, 
 								DfxParam::Unit initUnit, DfxParam::Curve initCurve, 
-								char const* initCustomUnitString)
+								std::string_view initCustomUnitString)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
@@ -408,7 +408,7 @@ void DfxPlugin::initparameter_f(long inParameterIndex, char const* initName, dou
 //			update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
 		}
 		initpresetsparameter(inParameterIndex);  // default empty presets with this value
-		if (initCustomUnitString)
+		if (!initCustomUnitString.empty())
 		{
 			setparametercustomunitstring(inParameterIndex, initCustomUnitString);
 		}
@@ -416,17 +416,17 @@ void DfxPlugin::initparameter_f(long inParameterIndex, char const* initName, dou
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_i(long inParameterIndex, char const* initName, int64_t initValue, 
+void DfxPlugin::initparameter_i(long inParameterIndex, std::string_view initName, int64_t initValue, 
 								int64_t initDefaultValue, int64_t initMin, int64_t initMax, 
 								DfxParam::Unit initUnit, DfxParam::Curve initCurve, 
-								char const* initCustomUnitString)
+								std::string_view initCustomUnitString)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
 		mParameters[inParameterIndex].init_i(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 //		update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);  // default empty presets with this value
-		if (initCustomUnitString)
+		if (!initCustomUnitString.empty())
 		{
 			setparametercustomunitstring(inParameterIndex, initCustomUnitString);
 		}
@@ -434,7 +434,7 @@ void DfxPlugin::initparameter_i(long inParameterIndex, char const* initName, int
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_b(long inParameterIndex, char const* initName, bool initValue, bool initDefaultValue, 
+void DfxPlugin::initparameter_b(long inParameterIndex, std::string_view initName, bool initValue, bool initDefaultValue, 
 								DfxParam::Unit initUnit)
 {
 	if (parameterisvalid(inParameterIndex))
@@ -448,8 +448,8 @@ void DfxPlugin::initparameter_b(long inParameterIndex, char const* initName, boo
 //-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
-void DfxPlugin::initparameter_list(long inParameterIndex, char const* initName, int64_t initValue, int64_t initDefaultValue, 
-								   int64_t initNumItems, DfxParam::Unit initUnit, char const* initCustomUnitString)
+void DfxPlugin::initparameter_list(long inParameterIndex, std::string_view initName, int64_t initValue, int64_t initDefaultValue, 
+								   int64_t initNumItems, DfxParam::Unit initUnit, std::string_view initCustomUnitString)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
@@ -457,7 +457,7 @@ void DfxPlugin::initparameter_list(long inParameterIndex, char const* initName, 
 		setparameterusevaluestrings(inParameterIndex, true);  // indicate that we will use custom value display strings
 //		update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);  // default empty presets with this value
-		if (initCustomUnitString)
+		if (!initCustomUnitString.empty())
 		{
 			setparametercustomunitstring(inParameterIndex, initCustomUnitString);
 		}
@@ -535,7 +535,6 @@ void DfxPlugin::randomizeparameters()
 		{
 			randomizeparameter(i);
 		}
-
 	}
 }
 
@@ -669,19 +668,13 @@ std::optional<double> DfxPlugin::getparameterifchanged_scalar(long inParameterIn
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::getparametername(long inParameterIndex, char* outText) const
+std::string DfxPlugin::getparametername(long inParameterIndex) const
 {
-	if (outText)
+	if (parameterisvalid(inParameterIndex))
 	{
-		if (parameterisvalid(inParameterIndex))
-		{
-			mParameters[inParameterIndex].getname(outText);
-		}
-		else
-		{
-			outText[0] = 0;
-		}
+		return mParameters[inParameterIndex].getname();
 	}
+	return {};
 }
 
 //-----------------------------------------------------------------------------
@@ -705,7 +698,7 @@ DfxParam::Unit DfxPlugin::getparameterunit(long inParameterIndex) const
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::setparametervaluestring(long inParameterIndex, int64_t inStringIndex, char const* inText)
+bool DfxPlugin::setparametervaluestring(long inParameterIndex, int64_t inStringIndex, std::string_view inText)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
@@ -715,23 +708,13 @@ bool DfxPlugin::setparametervaluestring(long inParameterIndex, int64_t inStringI
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getparametervaluestring(long inParameterIndex, int64_t inStringIndex, char* outText) const
+std::optional<std::string> DfxPlugin::getparametervaluestring(long inParameterIndex, int64_t inStringIndex) const
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		return mParameters[inParameterIndex].getvaluestring(inStringIndex, outText);
+		return mParameters[inParameterIndex].getvaluestring(inStringIndex);
 	}
-	return false;
-}
-
-//-----------------------------------------------------------------------------
-char const* DfxPlugin::getparametervaluestring_ptr(long inParameterIndex, int64_t inStringIndex) const
-{
-	if (parameterisvalid(inParameterIndex))
-	{
-		return mParameters[inParameterIndex].getvaluestring_ptr(inStringIndex);
-	}
-	return nullptr;
+	return {};
 }
 
 //-----------------------------------------------------------------------------
@@ -830,11 +813,7 @@ bool DfxPlugin::presetnameisvalid(long inPresetIndex) const
 	{
 		return false;
 	}
-	if (!mPresets[inPresetIndex].getname_ptr())
-	{
-		return false;
-	}
-	if ((mPresets[inPresetIndex].getname_ptr())[0] == 0)
+	if (mPresets[inPresetIndex].getname().empty())
 	{
 		return false;
 	}
@@ -995,7 +974,7 @@ void DfxPlugin::setpresetparameter_gen(long inPresetIndex, long inParameterIndex
 
 //-----------------------------------------------------------------------------
 // set the text of a preset name
-void DfxPlugin::setpresetname(long inPresetIndex, char const* inText)
+void DfxPlugin::setpresetname(long inPresetIndex, std::string_view inText)
 {
 	if (presetisvalid(inPresetIndex))
 	{
@@ -1005,26 +984,13 @@ void DfxPlugin::setpresetname(long inPresetIndex, char const* inText)
 
 //-----------------------------------------------------------------------------
 // get a copy of the text of a preset name
-void DfxPlugin::getpresetname(long inPresetIndex, char* outText) const
+std::string DfxPlugin::getpresetname(long inPresetIndex) const
 {
 	if (presetisvalid(inPresetIndex))
 	{
-		mPresets[inPresetIndex].getname(outText);
+		return mPresets[inPresetIndex].getname();
 	}
-}
-
-//-----------------------------------------------------------------------------
-// get a pointer to the text of a preset name
-char const* DfxPlugin::getpresetname_ptr(long inPresetIndex) const
-{
-	if (presetisvalid(inPresetIndex))
-	{
-		return mPresets[inPresetIndex].getname_ptr();
-	}
-	else
-	{
-		return nullptr;
-	}
+	return {};
 }
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -1127,12 +1093,9 @@ void DfxPlugin::updatenumchannels()
 #pragma mark properties
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::getpluginname(char* outText) const
+std::string DfxPlugin::getpluginname() const
 {
-	if (outText)
-	{
-		strcpy(outText, PLUGIN_NAME_STRING);
-	}
+	return PLUGIN_NAME_STRING;
 }
 
 //-----------------------------------------------------------------------------

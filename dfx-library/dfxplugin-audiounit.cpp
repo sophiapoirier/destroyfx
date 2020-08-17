@@ -338,7 +338,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 		// randomize the parameters
 		case dfx::kPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a boolean to say whether or not to write automation data
-			// (XXX but now it is ignored...)		  
+			// (XXX but now it is ignored...)
 			outDataSize = sizeof(Boolean);
 			outWritable = true;
 			break;
@@ -645,7 +645,11 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 				request->inStringIndex = CFSwapInt64(request->inStringIndex);
 			}
 		#endif
-			if (!getparametervaluestring(inElement, request->inStringIndex, request->valueString))
+			if (auto const valueString = getparametervaluestring(inElement, request->inStringIndex))
+			{
+				strlcpy(request->valueString, valueString->c_str(), std::size(request->valueString));
+			}
+			else
 			{
 				status = kAudio_ParamError;
 			}
@@ -660,7 +664,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			else
 			{
-				getparameterunitstring(inElement, static_cast<char*>(outData));
+				strlcpy(static_cast<char*>(outData), getparameterunitstring(inElement).c_str(), dfx::kParameterUnitStringMaxLength);
 			}
 			break;
 
@@ -1155,11 +1159,8 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 		return kAudioUnitErr_InvalidParameter;
 	}
 
-	// get the name into a temp string buffer that we know is large enough
-	char tempname[dfx::kParameterNameMaxLength];
-	getparametername(inParameterID, tempname);
 	// then make sure to only copy as much as the ParameterInfo name C string can hold
-	strlcpy(outParameterInfo.name, tempname, sizeof(outParameterInfo.name));
+	strlcpy(outParameterInfo.name, getparametername(inParameterID).c_str(), std::size(outParameterInfo.name));
 	// in case the parameter name was dfx::kParameterNameMaxLength or longer, 
 	// make sure that the ParameterInfo name string is terminated
 	outParameterInfo.name[sizeof(outParameterInfo.name) - 1] = 0;
@@ -1309,10 +1310,7 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			case DfxParam::Unit::Custom:
 			{
 				outParameterInfo.unit = kAudioUnitParameterUnit_CustomUnit;
-				char customUnitString[dfx::kParameterUnitStringMaxLength];
-				customUnitString[0] = 0;
-				getparameterunitstring(inParameterID, customUnitString);
-				outParameterInfo.unitName = CFStringCreateWithCString(kCFAllocatorDefault, customUnitString, DfxParam::kDefaultCStringEncoding);
+				outParameterInfo.unitName = CFStringCreateWithCString(kCFAllocatorDefault, getparameterunitstring(inParameterID).c_str(), DfxParam::kDefaultCStringEncoding);
 				break;
 			}
 
@@ -1456,7 +1454,7 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 	for (long i = 0; i < getnumpresets(); i++)
 	{
 //		if (presetnameisvalid(i))
-		if (mPresets[i].getname_ptr() && (mPresets[i].getname_ptr()[0] != 0))
+		if (!mPresets[i].getname().empty())
 		{
 			outNumPresets++;
 		}

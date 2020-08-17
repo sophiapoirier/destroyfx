@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -76,7 +76,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   initPresets();
 
   speedModeStates.fill(kSpeedMode_Fine);
-  
+
 #if TARGET_PLUGIN_USES_DSPCORE
   initCores<TransverbDSP>();
 #endif
@@ -349,7 +349,7 @@ bool Transverb::loadpreset(long index)
 	if (!presetisvalid(index))
 		return false;
 
-	if (strcmp(getpresetname_ptr(index), "random") == 0)
+	if (getpresetname(index) == "random")
 	{
 		randomizeparameters();
 		return true;

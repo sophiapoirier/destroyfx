@@ -28,6 +28,7 @@ This is where we connect the VST API to our DfxPlugin system.
 #include "dfxplugin.h"
 
 #include <algorithm>
+#include <array>
 #include <cinttypes>
 #include <stdio.h>
 
@@ -142,11 +143,7 @@ bool DfxPlugin::getEffectName(char* outText)
 	{
 		return false;
 	}
-	// get the name into a temp string buffer that we know is large enough
-	char tempName[dfx::kParameterNameMaxLength];
-	getpluginname(tempName);
-	// then make sure to only copy as much as the name C string can hold
-	vst_strncpy(outText, tempName, kVstMaxEffectNameLen);
+	vst_strncpy(outText, getpluginname().c_str(), kVstMaxEffectNameLen);
 	return true;
 }
 
@@ -274,9 +271,7 @@ void DfxPlugin::getProgramName(char* outText)
 	{
 		if (presetnameisvalid(vstPresetIndex))
 		{
-			char tempName[dfx::kPresetNameMaxLength];
-			getpresetname(vstPresetIndex, tempName);
-			vst_strncpy(outText, tempName, kVstMaxProgNameLen);
+			vst_strncpy(outText, getpresetname(vstPresetIndex).c_str(), kVstMaxProgNameLen);
 		}
 		else
 		{
@@ -297,9 +292,7 @@ bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, cha
 	{
 		if (presetnameisvalid(inIndex))
 		{
-			char tempName[dfx::kPresetNameMaxLength];
-			getpresetname(inIndex, tempName);
-			vst_strncpy(outText, tempName, kVstMaxProgNameLen);
+			vst_strncpy(outText, getpresetname(inIndex).c_str(), kVstMaxProgNameLen);
 		}
 		else
 		{
@@ -367,7 +360,7 @@ void DfxPlugin::getParameterName(VstInt32 index, char* name)
 {
 	if (name)
 	{
-		getparametername(index, name);  // XXX kVstMaxParamStrLen
+		vst_strncpy(name, getparametername(index).c_str(), kVstMaxParamStrLen);
 	}
 }
 
@@ -382,9 +375,7 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 
 	if (getparameterusevaluestrings(index))
 	{
-		char tempValueString[dfx::kParameterValueStringMaxLength];
-		getparametervaluestring(index, getparameter_i(index), tempValueString);
-		vst_strncpy(text, tempValueString, kVstMaxParamStrLen);
+		vst_strncpy(text, getparametervaluestring(index, getparameter_i(index)).value_or("").c_str(), kVstMaxParamStrLen);
 		return;
 	}
 
@@ -410,9 +401,7 @@ void DfxPlugin::getParameterLabel(VstInt32 index, char* label)
 {
 	if (label)
 	{
-		char tempLabel[dfx::kParameterUnitStringMaxLength];
-		getparameterunitstring(index, tempLabel);
-		vst_strncpy(label, tempLabel, kVstMaxParamStrLen);
+		vst_strncpy(label, getparameterunitstring(index).c_str(), kVstMaxParamStrLen);
 	}
 }
 
