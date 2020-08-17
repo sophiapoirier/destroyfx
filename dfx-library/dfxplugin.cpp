@@ -527,23 +527,15 @@ void DfxPlugin::randomizeparameter(long inParameterIndex)
 
 //-----------------------------------------------------------------------------
 // randomize all of the parameters at once
-void DfxPlugin::randomizeparameters(bool writeAutomation)
+void DfxPlugin::randomizeparameters()
 {
 	for (long i = 0; i < getnumparameters(); i++)
 	{
-		if (hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll))
+		if (!hasparameterattribute(i, DfxParam::kAttribute_OmitFromRandomizeAll))
 		{
-			continue;
+			randomizeparameter(i);
 		}
 
-		randomizeparameter(i);
-
-#ifdef TARGET_API_VST
-		if (writeAutomation)
-		{
-			setParameterAutomated(i, getparameter_gen(i));
-		}
-#endif
 	}
 }
 
