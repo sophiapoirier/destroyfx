@@ -84,7 +84,7 @@ enum
 	kDisplayWidth_big = 117,  // for seek rate
 	kDisplayHeight = 10,
 	kDisplayInsetX = 2,
-	kDisplayInsetY = -1,
+	kDisplayInsetY = 0,
 
 	kSpeedModeButtonX = 31,
 	kSpeedModeButtonY = 60,
