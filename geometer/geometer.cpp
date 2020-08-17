@@ -238,21 +238,21 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
   {
     case P_SHAPE:
       maxValue = NUM_WINDOWSHAPES;
-	  break;
+      break;
     case P_POINTSTYLE:
       maxValue = NUM_POINTSTYLES;
-	  break;
+      break;
     case P_INTERPSTYLE:
       maxValue = NUM_INTERPSTYLES;
-	  break;
+      break;
     case P_POINTOP1:
     case P_POINTOP2:
     case P_POINTOP3:
       maxValue = NUM_OPS;
-	  break;
-	default:
-	  DfxPlugin::randomizeparameter(inParameterIndex);
-	  return;
+      break;
+    default:
+      DfxPlugin::randomizeparameter(inParameterIndex);
+      return;
   }
 
   int64_t const newValue = rand() % maxValue;

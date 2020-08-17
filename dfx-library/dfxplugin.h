@@ -369,8 +369,10 @@ public:
 	void setparameter_gen(long inParameterIndex, double inValue);
 	// ***
 	virtual void randomizeparameter(long inParameterIndex);
-	// ***
-	virtual void randomizeparameters(bool writeAutomation);  // randomize all parameters at once
+	// Randomize all parameters at once. Default implementation just loops over the
+	// eligible parameters and calls randomizeparameter(), but this could also be
+	// smarter (e.g. keeping the total output volume the same).
+	virtual void randomizeparameters();
 	// broadcast changes to listeners (like GUI)
 	void postupdate_parameter(long inParameterIndex);
 

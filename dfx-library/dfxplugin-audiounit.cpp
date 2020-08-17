@@ -338,6 +338,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 		// randomize the parameters
 		case dfx::kPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a boolean to say whether or not to write automation data
+			// (XXX but now it is ignored...)		  
 			outDataSize = sizeof(Boolean);
 			outWritable = true;
 			break;
@@ -963,9 +964,10 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 		// randomize the parameters
 		case dfx::kPluginProperty_RandomizeParameter:
 			// when you "set" this "property", you send a bool to say whether or not to write automation data
+			// (XXX but now it is ignored...)
 			if (inElement == kAUParameterListener_AnyParameter)
 			{
-				randomizeparameters(*static_cast<Boolean const*>(inData));
+				randomizeparameters();
 			}
 			else
 			{

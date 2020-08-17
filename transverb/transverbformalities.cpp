@@ -351,7 +351,7 @@ bool Transverb::loadpreset(long index)
 
 	if (strcmp(getpresetname_ptr(index), "random") == 0)
 	{
-		randomizeparameters(false);
+		randomizeparameters();
 		return true;
 	}
 
@@ -363,9 +363,9 @@ bool Transverb::loadpreset(long index)
 
 
 /* this randomizes the values of all of Transverb's parameters, sometimes in smart ways */
-void Transverb::randomizeparameters(bool writeAutomation)
+void Transverb::randomizeparameters()
 {
-// randomize the non-mix-level parameters
+	// randomize the non-mix-level parameters
 
 	for (long i = 0; i < kDrymix; i++)
 	{
@@ -399,7 +399,7 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	}
 
 
-// do fancy mix level randomization
+	// do fancy mix level randomization
 
 	// store the current total gain sum
 	auto const mixSum = getparameter_f(kDrymix) + getparameter_f(kMix1) + getparameter_f(kMix2);
@@ -431,7 +431,7 @@ void Transverb::randomizeparameters(bool writeAutomation)
 	setparameter_f(kMix2, newMix2);
 
 
-// randomize the state parameters
+	// randomize the state parameters
 
 	// make higher qualities more probable (happen 4/5 of the time)
 	setparameter_i(kQuality, ((rand() % 5) + 1) % 3);
@@ -446,12 +446,6 @@ void Transverb::randomizeparameters(bool writeAutomation)
 			continue;
 		}
 		postupdate_parameter(i);  // inform any parameter listeners of the changes
-#ifdef TARGET_API_VST
-		if (writeAutomation)
-		{
-			setParameterAutomated(i, getparameter_gen(i));
-		}
-#endif
 	}
 }
 
