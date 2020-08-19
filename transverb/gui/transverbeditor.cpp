@@ -498,7 +498,7 @@ long TransverbEditor::OpenEditor()
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::post_open()
+void TransverbEditor::PostOpenEditor()
 {
 	for (size_t i = 0; i < kNumDelays; i++)
 	{

@@ -103,15 +103,6 @@ DfxGuiEditor::~DfxGuiEditor()
 	{
 		close();
 	}
-
-#if TARGET_PLUGIN_USES_MIDI
-	// XXX: This is possibly bogus, because it's accessing the effect
-	// instance, but in VST the effect's destructor calls the editor's
-	// destructor, so if we got here that way, the effect is already
-	// ill-defined. (DfxPlugin now explicitly deletes the editor before its
-	// destructor runs, so we don't use the problematic destructor order.)
-	setmidilearning(false);
-#endif
 }
 
 
@@ -167,7 +158,7 @@ bool DfxGuiEditor::open(void* inWindow)
 	mJustOpened = true;
 
 	// allow for anything that might need to happen after the above post-opening stuff is finished
-	post_open();
+	PostOpenEditor();
 
 #if TARGET_PLUGIN_USES_MIDI
 	HandleMidiLearnChange();
@@ -203,6 +194,10 @@ void DfxGuiEditor::close()
 	{
 		frame_temp->forget();
 	}
+
+#if TARGET_PLUGIN_USES_MIDI
+	setmidilearning(false);
+#endif
 
 	TARGET_API_EDITOR_BASE_CLASS::close();
 }
@@ -332,9 +327,16 @@ void DfxGuiEditor::idle()
 void DfxGuiEditor::RegisterPropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex)
 {
 	assert(!IsOpen());  // you need to register these all before opening a view
-	assert(std::find(mRegisteredProperties.cbegin(), mRegisteredProperties.cend(), std::make_tuple(inPropertyID, inScope, inItemIndex)) == mRegisteredProperties.cend());
+	assert(!IsPropertyRegistered(inPropertyID, inScope, inItemIndex));
 
 	mRegisteredProperties.emplace_back(inPropertyID, inScope, inItemIndex);
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) const
+{
+	auto const property = std::make_tuple(inPropertyID, inScope, inItemIndex);
+	return std::find(mRegisteredProperties.cbegin(), mRegisteredProperties.cend(), property) != mRegisteredProperties.cend();
 }
 
 //-----------------------------------------------------------------------------
@@ -552,10 +554,10 @@ void DfxGuiEditor::GenerateParametersAutomationSnapshot()
 		GenerateParameterAutomationSnapshot(parameterID);
 	}
 #else
-	// XXX Untested, but this looks like how we normally loop over the parameters. -tom7
-	// (Or perhaps we could be keeping a list of parameter ids for all plugin formats?)
 	for (long parameterID = 0; parameterID < GetNumParameters(); parameterID++)
+	{
 		GenerateParameterAutomationSnapshot(parameterID);
+	}
 #endif
 }
 
@@ -1299,7 +1301,7 @@ long DfxGuiEditor::dfxgui_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Sco
 	if (status == noErr)
 	{
 		outDataSize = auDataSize;
-		outFlags = dfx::kPropertyFlag_Readable;  // XXX okay to just assume here?
+		outFlags = dfx::kPropertyFlag_Readable;
 		if (writable)
 		{
 			outFlags |= dfx::kPropertyFlag_Writable;
@@ -1346,11 +1348,9 @@ long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 	return AudioUnitSetProperty(dfxgui_GetEffectInstance(), inPropertyID, inScope, inItemIndex, inData, inDataSize);
 #else
 	long const res = dfxgui_GetEffectInstance()->dfx_SetProperty(inPropertyID, inScope, inItemIndex, inData, inDataSize);
-	bool const registered = std::find(mRegisteredProperties.cbegin(), mRegisteredProperties.cend(), 
-									  std::make_tuple(inPropertyID, inScope, inItemIndex)) != mRegisteredProperties.cend();
 	// AU system framework handles this notification in AU, but VST needs to manage it manually.
 	// Only propagate notification if the specific property has been registered.
-	if ((res == dfx::kStatus_NoError) && registered)
+	if ((res == dfx::kStatus_NoError) && IsPropertyRegistered(inPropertyID, inScope, inItemIndex))
 	{
 		HandlePropertyChange(inPropertyID, inScope, inItemIndex);
 	}
@@ -1864,10 +1864,10 @@ long DfxGuiEditor::initClipboard()
 	return status;
 #else
 	#warning "implementation missing"
-	assert(false);
+	assert(false);  // TODO: implement
 #endif
 
-	return dfx::kStatus_NoError;  // XXX TODO: implement
+	return dfx::kStatus_NoError;
 }
 
 //-----------------------------------------------------------------------------
@@ -1896,7 +1896,7 @@ long DfxGuiEditor::copySettings()
 		return notPasteboardOwnerErr;
 	}
 
-#ifdef TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 	CFPropertyListRef auSettingsPropertyList = nullptr;
 	size_t dataSize = sizeof(auSettingsPropertyList);
 	status = dfxgui_GetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
@@ -1916,7 +1916,11 @@ long DfxGuiEditor::copySettings()
 		return coreFoundationUnknownErr;
 	}
 	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), CFSTR(kDfxGui_AUPresetFileUTI), auSettingsCFData.get(), kPasteboardFlavorNoFlags);
-#endif
+	#else
+	#warning "implementation missing"
+	assert(false);
+	#endif  // TARGET_API_AUDIOUNIT
+
 #else
 	#warning "implementation missing"
 	assert(false);
@@ -1976,7 +1980,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 			{
 				continue;
 			}
-#ifdef TARGET_API_AUDIOUNIT
+	#ifdef TARGET_API_AUDIOUNIT
 			if (UTTypeConformsTo(flavorType, CFSTR(kDfxGui_AUPresetFileUTI)))
 			{
 				if (inQueryPastabilityOnly)
@@ -2005,7 +2009,10 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 					}
 				}
 			}
-#endif	// TARGET_API_AUDIOUNIT
+	#else
+			#warning "implementation missing"
+			assert(false);
+	#endif	// TARGET_API_AUDIOUNIT
 			if (pastableItemFound)
 			{
 				break;
@@ -2016,10 +2023,10 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 			break;
 		}
 	}
-#else  // TARGET_OS_MAC
+#else
 	#warning "implementation missing"
 	assert(false);
-#endif
+#endif  // TARGET_OS_MAC
 
 	return status;
 }
@@ -2052,7 +2059,7 @@ void DfxGuiEditor::InstallAUEventListeners()
 		}
 	}
 
-	memset(&mStreamFormatPropertyAUEvent, 0, sizeof(mStreamFormatPropertyAUEvent));
+	mStreamFormatPropertyAUEvent = {};
 	mStreamFormatPropertyAUEvent.mEventType = kAudioUnitEvent_PropertyChange;
 	mStreamFormatPropertyAUEvent.mArgument.mProperty.mAudioUnit = dfxgui_GetEffectInstance();
 	mStreamFormatPropertyAUEvent.mArgument.mProperty.mPropertyID = kAudioUnitProperty_StreamFormat;
