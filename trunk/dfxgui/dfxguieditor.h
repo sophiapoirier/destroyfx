@@ -141,7 +141,7 @@ public:
 	// these are for the child class of DfxGuiEditor to override
 	virtual long OpenEditor() = 0;
 	virtual void CloseEditor() {}
-	virtual void post_open() {}
+	virtual void PostOpenEditor() {}
 	virtual void dfxgui_EditorShown() {}
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -355,6 +355,8 @@ private:
 
 	void addMousedOverControl(IDGControl* inMousedOverControl);
 	void removeMousedOverControl(IDGControl* inMousedOverControl);
+
+	bool IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) const;
 
 #ifndef TARGET_API_VST
 	// in VST2, this method is provided by AEffEditor

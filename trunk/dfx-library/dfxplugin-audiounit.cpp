@@ -227,7 +227,7 @@ void DfxPlugin::Cleanup()
 {
 	do_cleanup();
 
-	TARGET_API_BASE_CLASS::Cleanup();  // XXX doesn't actually do anything now, but maybe at some point?
+	TARGET_API_BASE_CLASS::Cleanup();
 }
 
 //-----------------------------------------------------------------------------
@@ -282,7 +282,7 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			break;
 
 		case kAudioUnitProperty_AUHostIdentifier:
-			outDataSize = sizeof(AUHostIdentifier);  // XXX update to AUHostVersionIdentifier
+			outDataSize = sizeof(AUHostVersionIdentifier);
 			outWritable = true;
 			status = noErr;
 			break;
@@ -488,7 +488,6 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		}
 
 		// get parameter values (current, min, max, etc.) using specific variable types
-		// XXX finish implementing all items
 		case dfx::kPluginProperty_ParameterValue:
 		{
 			auto const request = static_cast<dfx::ParameterValueRequest*>(outData);
@@ -523,9 +522,6 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					}
 					break;
 				}
-				case dfx::ParameterValueItem::Previous:
-					assert(false);  // XXX TODO: implement this
-					break;
 				case dfx::ParameterValueItem::Default:
 				{
 					switch (request->inValueType)
@@ -804,7 +800,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	{
 		case kAudioUnitProperty_AUHostIdentifier:
 		{
-			auto const hostID = static_cast<AUHostIdentifier const*>(inData);  // XXX update to AUHostVersionIdentifier
+			auto const hostID = static_cast<AUHostVersionIdentifier const*>(inData);
 			if (!hostID->hostName)
 			{
 				status = kAudioUnitErr_InvalidPropertyValue;
@@ -814,7 +810,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 #if 0
 				fprintf(stderr, "\tSetProperty(AUHostIdentifier)\n");
 				CFShow(hostID->hostName);
-				fprintf(stderr, "version: major = %u, minor&bug = 0x%02X, stage = 0x%02X, non-released = %u\n", hostID->hostVersion.majorRev, hostID->hostVersion.minorAndBugRev, hostID->hostVersion.stage, hostID->hostVersion.nonRelRev);
+				fprintf(stderr, "version: 0x%X\n", hostID->hostVersion);
 #endif
 			}
 			break;
@@ -835,7 +831,6 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 	#endif
 
 		// set parameter values (current, min, max, etc.) using specific variable types
-		// XXX finish implementing all items
 		case dfx::kPluginProperty_ParameterValue:
 		{
 			auto const request = static_cast<dfx::ParameterValueRequest const*>(inData);
@@ -874,72 +869,12 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 					}
 					break;
 				}
-				case dfx::ParameterValueItem::Previous:
-					assert(false);  // XXX TODO: implement
-					break;
 				case dfx::ParameterValueItem::Default:
-				{
-					assert(false);  // XXX TODO: implement
-					switch (request->inValueType)
-					{
-						case DfxParam::ValueType::Float:
-//							setparameterdefault_f(paramID, value.f);
-							break;
-						case DfxParam::ValueType::Int:
-//							setparameterdefault_i(paramID, value.i);
-							break;
-						case DfxParam::ValueType::Boolean:
-//							setparameterdefault_b(paramID, value.b);
-							break;
-						default:
-							assert(false);
-							status = kAudio_ParamError;
-							break;
-					}
-					break;
-				}
 				case dfx::ParameterValueItem::Min:
-				{
-					assert(false);  // XXX TODO: implement
-					switch (request->inValueType)
-					{
-						case DfxParam::ValueType::Float:
-//							setparametermin_f(paramID, value.f);
-							break;
-						case DfxParam::ValueType::Int:
-//							setparametermin_i(paramID, value.i);
-							break;
-						case DfxParam::ValueType::Boolean:
-//							setparametermin_b(paramID, value.b);
-							break;
-						default:
-							assert(false);
-							status = kAudio_ParamError;
-							break;
-					}
-					break;
-				}
 				case dfx::ParameterValueItem::Max:
-				{
-					assert(false);  // XXX TODO: implement
-					switch (request->inValueType)
-					{
-						case DfxParam::ValueType::Float:
-//							setparametermax_f(paramID, value.f);
-							break;
-						case DfxParam::ValueType::Int:
-//							setparametermax_i(paramID, value.i);
-							break;
-						case DfxParam::ValueType::Boolean:
-//							setparametermax_b(paramID, value.b);
-							break;
-						default:
-							assert(false);
-							status = kAudio_ParamError;
-							break;
-					}
+					assert(false);
+					status = kAudioUnitErr_PropertyNotWritable;
 					break;
-				}
 				default:
 					assert(false);
 					status = kAudio_ParamError;
@@ -1519,7 +1454,7 @@ OSStatus DfxPlugin::NewFactoryPresetSet(AUPreset const& inNewFactoryPreset)
 	// try to load the preset
 	if (!loadpreset(newNumber))
 	{
-		return kAudioUnitErr_InvalidPropertyValue;  // XXX is this a good error code to return?
+		return kAudioUnitErr_InvalidPropertyValue;
 	}
 
 	return noErr;
@@ -1531,7 +1466,7 @@ OSStatus DfxPlugin::NewFactoryPresetSet(AUPreset const& inNewFactoryPreset)
 #pragma mark state
 #pragma mark -
 
-// XXX I really should change this to something more like "DFX!-settings-data"
+// XXX I really should change this to something more strongly namespaced like "DFX!-settings-data"
 static CFStringRef const kDfxDataClassInfoKeyString = CFSTR("destroyfx-data");
 
 //-----------------------------------------------------------------------------

@@ -58,7 +58,7 @@ public:
 	explicit TransverbEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
-	void post_open() override;
+	void PostOpenEditor() override;
 	void parameterChanged(long inParameterID) override;
 	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
 

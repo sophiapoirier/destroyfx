@@ -43,7 +43,7 @@ AUDIOCOMPONENT_ENTRY(AUBaseFactory, RMSBuddy)
 //-----------------------------------------------------------------------------
 RMSBuddy::RMSBuddy(AudioComponentInstance inComponentInstance)
 :	AUEffectBase(inComponentInstance, true),
-	mMinMeterValueDb(LinearToDecibels(1.0 / std::pow(2.0f, 24.0)))  // smallest 24-bit audio value
+	mMinMeterValueDb(LinearToDecibels(1.0f / std::pow(2.0f, 24.0f)))  // smallest 24-bit audio value
 {
 	// initialize our parameters
 	// (this also adds them to the parameter list that is shared when queried by a host)

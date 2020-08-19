@@ -253,35 +253,18 @@ void DfxPlugin::setProgramName(char* inName)
 {
 	if (inName)
 	{
-		setpresetname(TARGET_API_BASE_CLASS::getProgram(), inName);
+		setpresetname(getProgram(), inName);
 	}
 }
 
 //-----------------------------------------------------------------------------
 void DfxPlugin::getProgramName(char* outText)
 {
-	if (!outText)
-	{
-		return;
-	}
-
-	const VstInt32 vstPresetIndex = TARGET_API_BASE_CLASS::getProgram();
-
-	if (presetisvalid(vstPresetIndex))
-	{
-		if (presetnameisvalid(vstPresetIndex))
-		{
-			vst_strncpy(outText, getpresetname(vstPresetIndex).c_str(), kVstMaxProgNameLen);
-		}
-		else
-		{
-			snprintf(outText, kVstMaxProgNameLen, "default %" PRIi32, vstPresetIndex + 1);
-		}
-	}
+	getProgramNameIndexed({}, getProgram(), outText);
 }
 
 //-----------------------------------------------------------------------------
-bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, char* outText)
+bool DfxPlugin::getProgramNameIndexed(VstInt32 /*inCategory*/, VstInt32 inIndex, char* outText)
 {
 	if (!outText)
 	{
@@ -296,7 +279,7 @@ bool DfxPlugin::getProgramNameIndexed(VstInt32 inCategory, VstInt32 inIndex, cha
 		}
 		else
 		{
-			snprintf(outText, kVstMaxProgNameLen, "default %d", inIndex+1);
+			snprintf(outText, kVstMaxProgNameLen + 1, "default %" PRIi32, inIndex + 1);
 		}
 		return true;
 	}
@@ -382,10 +365,10 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 	switch (getparametervaluetype(index))
 	{
 		case DfxParam::ValueType::Float:
-			snprintf(text, kVstMaxParamStrLen, "%.3f", getparameter_f(index));
+			snprintf(text, kVstMaxParamStrLen + 1, "%.3f", getparameter_f(index));
 			break;
 		case DfxParam::ValueType::Int:
-			snprintf(text, kVstMaxParamStrLen, "%" PRIi64, getparameter_i(index));
+			snprintf(text, kVstMaxParamStrLen + 1, "%" PRIi64, getparameter_i(index));
 			break;
 		case DfxParam::ValueType::Boolean:
 			vst_strncpy(text, getparameter_b(index) ? "on" : "off", kVstMaxParamStrLen);
@@ -408,7 +391,7 @@ void DfxPlugin::getParameterLabel(VstInt32 index, char* label)
 
 
 #pragma mark -
-#pragma mark dsp
+#pragma mark DSP
 #pragma mark -
 
 //-----------------------------------------------------------------------------------------
