@@ -58,7 +58,7 @@
 		EC89B479208D33BF00E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B477208D33BF00E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B480208D33D700E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B47A208D33D400E15129 /* dfxguidialog.cpp */; };
 		EC89B481208D33D700E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B47D208D33D500E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B488208D34AE00E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B487208D34AD00E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -fno-objc-arc"; }; };
+		EC89B488208D34AE00E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B487208D34AD00E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
 		EC89B497208D34B600E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B490208D34B500E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
 		EC8AB25324CDF6AC000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB25124CDF6AC000504F0 /* dfxgui-fontfactory.mm */; };
 		ECC4311A102F5111000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC43118102F5111000B05A1 /* dfx-au-utilities.strings */; };
@@ -599,7 +599,6 @@
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = EQSync;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../vst3sdk/vstgui4/vstgui";
 			};
 			name = Development;
 		};
@@ -612,7 +611,6 @@
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = EQSync;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../vst3sdk/vstgui4/vstgui";
 			};
 			name = Deployment;
 		};

@@ -66,7 +66,7 @@
 		EC89B45D208D334000E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B45B208D334000E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B464208D335900E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B45E208D335700E15129 /* dfxguidialog.cpp */; };
 		EC89B465208D335900E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B461208D335800E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B513208D373A00E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B512208D373A00E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -fno-objc-arc"; }; };
+		EC89B513208D373A00E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B512208D373A00E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
 		EC89B522208D374800E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B51B208D374700E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
 		EC8AB24D24CDF61B000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB24A24CDF61A000504F0 /* dfxgui-fontfactory.mm */; };
 		ECA1AA3C20DB1C8E00419783 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECA1AA3B20DB1C8E00419783 /* dfxguimisc.mm */; };
@@ -672,7 +672,6 @@
 				DFX_PLUGIN_COPYRIGHT_NAME = "Tom Murphy 7 & Sophia Poirier [$(DFX_PLUGIN_CREATOR_NAME)]";
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2002-";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../vst3sdk/vstgui4/vstgui";
 			};
 			name = Development;
 		};
@@ -684,7 +683,6 @@
 				DFX_PLUGIN_COPYRIGHT_NAME = "Tom Murphy 7 & Sophia Poirier [$(DFX_PLUGIN_CREATOR_NAME)]";
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2002-";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../vst3sdk/vstgui4/vstgui";
 			};
 			name = Deployment;
 		};

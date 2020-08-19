@@ -58,7 +58,7 @@
 		EC08C7201A927F9200326647 /* host-tempo-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC08C71F1A927F9200326647 /* host-tempo-button.png */; };
 		EC1227D20FBC910300F013C8 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC1227D00FBC910300F013C8 /* dfx-au-utilities.strings */; };
 		EC25B47B1A855B7A0037D114 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC25B4791A855B7A0037D114 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
-		EC25B47F1A85671B0037D114 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC25B4731A8559E20037D114 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -fno-objc-arc"; }; };
+		EC25B47F1A85671B0037D114 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC25B4731A8559E20037D114 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
 		EC2739371ABD0301001F82A7 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC2739351ABD0301001F82A7 /* dfxguidialog.cpp */; };
 		EC2F844024A7C33000F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843F24A7C33000F29321 /* dfxmisc.mm */; };
 		EC3F0C9A20D2A89F00902FF1 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC3F0C9920D2A89E00902FF1 /* dfxguimisc.mm */; };
@@ -686,7 +686,6 @@
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = BufferOverride;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../vst3sdk/vstgui4/vstgui";
 			};
 			name = Development;
 		};
@@ -699,7 +698,6 @@
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = BufferOverride;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../vst3sdk/vstgui4/vstgui";
 			};
 			name = Deployment;
 		};
