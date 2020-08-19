@@ -427,8 +427,8 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 #if 0  // melody test
 			for (unsigned long ch = 0; ch < numChannels; ch++)
 			{
-				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(24.0f * dfx::kPi<float> * (static_cast<float>(samplecount) / static_cast<float>(inNumFrames)));
-				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(2.0f * dfx::kPi<float> * (static_cast<float>(mSineCount) / 169.0f));
+				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(24.0f * dfx::math::kPi<float> * (static_cast<float>(samplecount) / static_cast<float>(inNumFrames)));
+				mAudioBuffers[ch][mWritePos] = 0.69f * std::sin(2.0f * dfx::math::kPi<float> * (static_cast<float>(mSineCount) / 169.0f));
 			}
 			// produce a sine wave of C4 when using 44.1 kHz sample rate
 			if (++mSineCount > 168)

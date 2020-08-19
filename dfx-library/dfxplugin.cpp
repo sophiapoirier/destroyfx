@@ -548,7 +548,7 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 #endif
 
 #ifdef TARGET_API_VST
-	auto const vstpresetnum = TARGET_API_BASE_CLASS::getProgram();
+	auto const vstpresetnum = getProgram();
 	if (presetisvalid(vstpresetnum))
 	{
 		setpresetparameter(vstpresetnum, inParameterIndex, getparameter(inParameterIndex));
