@@ -68,7 +68,7 @@
 		EC89B437208D326E00E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B436208D326E00E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B43E208D328D00E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B438208D328B00E15129 /* dfxguidialog.cpp */; };
 		EC89B43F208D328D00E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B43B208D328C00E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B4C3208D35D600E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4C2208D35D500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -fno-objc-arc"; }; };
+		EC89B4C3208D35D600E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4C2208D35D500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
 		EC89B4D2208D35DA00E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4CB208D35DA00E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
 		ECC3B61412A6D62B00BA11D5 /* reson-algorithm-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECC3B61312A6D62B00BA11D5 /* reson-algorithm-button.png */; };
 		ECC3B67312A7FAAF00BA11D5 /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECC3B67212A7FAAF00BA11D5 /* dfxenvelope.cpp */; };
@@ -669,7 +669,6 @@
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = RezSynth;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../vst3sdk/vstgui4/vstgui";
 			};
 			name = Development;
 		};
@@ -682,7 +681,6 @@
 				DFX_PLUGIN_COPYRIGHT_PREFIX = "2001-";
 				DFX_PLUGIN_FULL_NAME_WITHOUT_BREAKS = RezSynth;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(DFX_PLUGIN_BUNDLE_IDENTIFIER)";
-				USER_HEADER_SEARCH_PATHS = "$(inherited) ../../vst3sdk/vstgui4/vstgui";
 			};
 			name = Deployment;
 		};
