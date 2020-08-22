@@ -279,21 +279,27 @@ public:
 	DfxParam() = default;
 
 	// initialize a parameter with values, value types, curve types, etc.
-	void init(std::string_view inName, ValueType inType, 
+	// the longest name in the array of names is assumed to be the full name, 
+	// and any additional are used to match for short name requests.
+	// recommended short lengths to support (common in control surfaces): 6, 4, 7
+	void init(std::vector<std::string_view> const& inNames, ValueType inType, 
 			  Value inInitialValue, Value inDefaultValue, 
 			  Value inMinValue, Value inMaxValue, 
 			  Unit inUnit = Unit::Generic, 
 			  Curve inCurve = Curve::Linear);
 	// the rest of these are just convenience wrappers for initializing with a certain variable type
-	void init_f(std::string_view inName, double inInitialValue, double inDefaultValue, 
+	void init_f(std::vector<std::string_view> const& inNames, 
+				double inInitialValue, double inDefaultValue, 
 				double inMinValue, double inMaxValue, 
 				Unit inUnit = Unit::Generic, 
 				Curve inCurve = Curve::Linear);
-	void init_i(std::string_view inName, int64_t inInitialValue, int64_t inDefaultValue, 
+	void init_i(std::vector<std::string_view> const& inNames, 
+				int64_t inInitialValue, int64_t inDefaultValue, 
 				int64_t inMinValue, int64_t inMaxValue, 
 				Unit inUnit = Unit::Generic, 
 				Curve inCurve = Curve::Stepped);
-	void init_b(std::string_view inName, bool inInitialValue, bool inDefaultValue, 
+	void init_b(std::vector<std::string_view> const& inNames, 
+				bool inInitialValue, bool inDefaultValue, 
 				Unit inUnit = Unit::Generic);
 
 	// set/get whether or not to use an array of strings for custom value display
@@ -427,6 +433,8 @@ public:
 	{
 		return mName;
 	}
+	// get a copy of the parameter name up to a desired maximum number of characters
+	std::string getname(size_t inMaxLength) const;
 #ifdef TARGET_API_AUDIOUNIT
 	// get a pointer to the CFString version of the parameter name
 	CFStringRef getcfname() const noexcept
@@ -511,6 +519,8 @@ public:
 
 
 private:
+	void initNames(std::vector<std::string_view> const& inNames);
+
 	// set a Value with a value of a specific type
 	// (perform type conversion if the incoming variable type is not "native")
 	// returns whether the provided Value changed upon accepting the scalar value
@@ -528,6 +538,7 @@ private:
 	// when this is enabled, out of range values are "bounced" into range
 	bool mEnforceValueLimits = false;  // default to allowing values outside of the min/max range
 	std::string mName;
+	std::vector<std::string> mShortNames;
 	Value mValue {}, mDefaultValue {}, mMinValue {}, mMaxValue {}, mOldValue {};
 	ValueType mValueType = ValueType::Float;  // the variable type of the parameter values
 	Unit mUnit = Unit::Generic;  // the unit type of the parameter

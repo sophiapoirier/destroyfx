@@ -312,19 +312,23 @@ public:
 		return (inParameterIndex >= 0) && (inParameterIndex < getnumparameters());
 	}
 
-	void initparameter_f(long inParameterIndex, std::string_view initName, double initValue, double initDefaultValue, 
+	void initparameter_f(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+						 double initValue, double initDefaultValue, 
 						 double initMin, double initMax, 
 						 DfxParam::Unit initUnit = DfxParam::Unit::Generic, 
 						 DfxParam::Curve initCurve = DfxParam::Curve::Linear, 
 						 std::string_view initCustomUnitString = {});
-	void initparameter_i(long inParameterIndex, std::string_view initName, int64_t initValue, int64_t initDefaultValue, 
+	void initparameter_i(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+						 int64_t initValue, int64_t initDefaultValue, 
 						 int64_t initMin, int64_t initMax, 
 						 DfxParam::Unit initUnit = DfxParam::Unit::Generic, 
 						 DfxParam::Curve initCurve = DfxParam::Curve::Stepped, 
 						 std::string_view initCustomUnitString = {});
-	void initparameter_b(long inParameterIndex, std::string_view initName, bool initValue, bool initDefaultValue, 
+	void initparameter_b(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+						 bool initValue, bool initDefaultValue, 
 						 DfxParam::Unit initUnit = DfxParam::Unit::Generic);
-	void initparameter_list(long inParameterIndex, std::string_view initName, int64_t initValue, int64_t initDefaultValue, 
+	void initparameter_list(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+							int64_t initValue, int64_t initDefaultValue, 
 							int64_t initNumItems, DfxParam::Unit initUnit = DfxParam::Unit::List, 
 							std::string_view initCustomUnitString = {});
 
@@ -428,6 +432,7 @@ public:
 	}
 
 	std::string getparametername(long inParameterIndex) const;
+	std::string getparametername(long inParameterIndex, size_t inMaxLength) const;
 #ifdef TARGET_API_AUDIOUNIT
 	CFStringRef getparametercfname(long inParameterIndex) const
 	{
@@ -970,6 +975,7 @@ public:
 	void getParameterName(VstInt32 index, char* name) override;
 	void getParameterDisplay(VstInt32 index, char* text) override;
 	void getParameterLabel(VstInt32 index, char* label) override;
+	bool getParameterProperties(VstInt32 index, VstParameterProperties* properties) override;
 
 	bool getEffectName(char* outText) override;
 	VstInt32 getVendorVersion() override;

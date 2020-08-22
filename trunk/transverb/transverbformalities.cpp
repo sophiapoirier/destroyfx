@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <cmath>
 
+#include "dfxmisc.h"
 #include "firfilter.h"
 
 
@@ -41,19 +42,19 @@ using namespace dfx::TV;
 Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, kNumParameters, kNumPresets) {
 
-  initparameter_f(kBsize, "buffer size", 2700.0, 333.0, 1.0, 3000.0, DfxParam::Unit::MS);
-  initparameter_f(kDrymix, "dry mix", 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
-  initparameter_f(kMix1, "1:mix", 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
-  initparameter_f(kDist1, "1:dist", 0.90009, 0.5, 0.0, 1.0, DfxParam::Unit::Scalar);
-  initparameter_f(kSpeed1, "1:speed", 0.0, 0.0, -3.0, 6.0, DfxParam::Unit::Octaves);
-  initparameter_f(kFeed1, "1:feedback", 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
-  initparameter_f(kMix2, "2:mix", 0.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
-  initparameter_f(kDist2, "2:dist", 0.1, 0.5, 0.0, 1.0, DfxParam::Unit::Scalar);
-  initparameter_f(kSpeed2, "2:speed", 1.0, 0.0, -3.0, 6.0, DfxParam::Unit::Octaves);
-  initparameter_f(kFeed2, "2:feedback", 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
-  initparameter_list(kQuality, "quality", kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
-  initparameter_b(kTomsound, "TOMSOUND", false, false);
-  initparameter_b(kFreeze, "freeze", false, false);
+  initparameter_f(kBsize, {"buffer size", "BufSize", "BufSiz", "BfSz"}, 2700.0, 333.0, 1.0, 3000.0, DfxParam::Unit::MS);
+  initparameter_f(kDrymix, {"dry mix", "DryMix", "Dry"}, 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
+  initparameter_f(kMix1, {"1:mix", "1mix"}, 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
+  initparameter_f(kDist1, {"1:dist", "1dst"}, 0.90009, 0.5, 0.0, 1.0, DfxParam::Unit::Scalar);
+  initparameter_f(kSpeed1, {"1:speed", "1speed", "1spd"}, 0.0, 0.0, -3.0, 6.0, DfxParam::Unit::Octaves);
+  initparameter_f(kFeed1, {"1:feedback", "1feedbk", "1fedbk", "1fdb"}, 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
+  initparameter_f(kMix2, {"2:mix", "2mix"}, 0.0, 1.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
+  initparameter_f(kDist2, {"2:dist", "2dst"}, 0.1, 0.5, 0.0, 1.0, DfxParam::Unit::Scalar);
+  initparameter_f(kSpeed2, {"2:speed", "2speed", "2spd"}, 1.0, 0.0, -3.0, 6.0, DfxParam::Unit::Octaves);
+  initparameter_f(kFeed2, {"2:feedback", "2feedbk", "2fedbk", "2fdb"}, 0.0, 33.3, 0.0, 100.0, DfxParam::Unit::Percent);
+  initparameter_list(kQuality, {"quality", "Qualty", "Qlty"}, kQualityMode_UltraHiFi, kQualityMode_UltraHiFi, kQualityMode_NumModes);
+  initparameter_b(kTomsound, {"TOMSOUND", "TomSnd", "Tom7"}, false, false);
+  initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false, false);
 
   setparametervaluestring(kQuality, kQualityMode_DirtFi, "dirt-fi");
   setparametervaluestring(kQuality, kQualityMode_HiFi, "hi-fi");

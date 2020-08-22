@@ -25,6 +25,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <array>
 #include <cmath>
 
+#include "dfxmisc.h"
+
 
 #pragma mark init
 
@@ -39,50 +41,48 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// initialize the parameters
 	auto const numTempoRates = mTempoRateTable.getNumRates();
 	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
-	initparameter_f(kSeekRange, "seek range", 333.0, 333.0, 0.3, 6000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_b(kFreeze, "freeze", false, false);
-	initparameter_f(kSeekRate_Hz, "seek rate (free)", 9.0, 3.0, 0.3, 810.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);//DfxParam::Curve::Cubed
-	initparameter_list(kSeekRate_Sync, "seek rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-//	initparameter_f(kSeekRateRandMin_Hz, "seek rate rand min (free)", 9.0, 3.0, 0.3, 810.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);//DfxParam::Curve::Cubed
-//	initparameter_list(kSeekRateRandMin_Sync, "seek rate rand min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-// XXX temporary while implementing range sliders in DFX GUI
-initparameter_f(kSeekRateRandMin_Hz, "seek rate rand min (free)", 810.0, 3.0, 0.3, 810.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
-initparameter_list(kSeekRateRandMin_Sync, "seek rate rand min (sync)", numTempoRates - 1, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kTempoSync, "tempo sync", false, false);
-	initparameter_f(kSeekDur, "seek duration", 100.0, 100.0, 3.0, 100.0, DfxParam::Unit::Percent);  // percent of range
-	initparameter_f(kSeekDurRandMin, "seek dur rand min", 100.0, 100.0, 3.0, 100.0, DfxParam::Unit::Percent);  // percent of range
-	initparameter_list(kSpeedMode, "speeds", kSpeedMode_Robot, kSpeedMode_Robot, kNumSpeedModes);
-	initparameter_b(kSplitChannels, "channels split", false, false);
-	initparameter_b(kPitchConstraint, "pitch constraint", false, false);
+	initparameter_f(kSeekRange, {"seek range", "SeekRng", "SekRng", "SkRg"}, 333.0, 333.0, 0.3, 6000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_b(kFreeze, dfx::MakeParameterNames(dfx::kParameterNames_Freeze), false, false);
+	initparameter_f(kSeekRate_Hz, {"seek rate (free)", "SekRtFr", "SkRtFr", "SkRF"}, 9.0, 3.0, 0.3, 810.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);//DfxParam::Curve::Cubed
+	initparameter_list(kSeekRate_Sync, {"seek rate (sync)", "SekRtSc", "SkRtSc", "SkRS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
+	initparameter_f(kSeekRateRandMin_Hz, {"seek rate rand min (free)", "SkRtMnF", "SkRtMF", "SRMF"}, 9.0, 3.0, 0.3, 810.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);//DfxParam::Curve::Cubed
+	initparameter_list(kSeekRateRandMin_Sync, {"seek rate rand min (sync)", "SkRtMnS", "SkRtMS", "SRMS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
+	initparameter_b(kTempoSync, dfx::MakeParameterNames(dfx::kParameterNames_TempoSync), false, false);
+	initparameter_f(kSeekDur, {"seek duration", "SeekDur", "SekDur", "SkDr"}, 100.0, 100.0, 3.0, 100.0, DfxParam::Unit::Percent);  // percent of range
+	initparameter_f(kSeekDurRandMin, {"seek dur rand min", "SekDrMn", "SekDrM", "SkDM"}, 100.0, 100.0, 3.0, 100.0, DfxParam::Unit::Percent);  // percent of range
+	initparameter_list(kSpeedMode, {"speeds", "Spee"}, kSpeedMode_Robot, kSpeedMode_Robot, kNumSpeedModes);
+	initparameter_b(kSplitChannels, {"channels split", "Channel", "Chanel", "Chan"}, false, false);
+	initparameter_b(kPitchConstraint, {"pitch constraint", "PtchCon", "PtchCn", "Ptch"}, false, false);
 	// default all notes to off (looks better on the GUI)
 	// no, I changed my mind, at least leave 1 note on so that the user isn't 
 	// confused the first time turning on pitch constraint and getting silence
-	initparameter_b(kPitchStep0, "semi0 (unity/octave)", true, false);
-	initparameter_b(kPitchStep1, "semi1 (minor 2nd)", false, false);
-	initparameter_b(kPitchStep2, "semi2 (major 2nd)", false, false);
-	initparameter_b(kPitchStep3, "semi3 (minor 3rd)", false, false);
-	initparameter_b(kPitchStep4, "semi4 (major 3rd)", false, false);
-	initparameter_b(kPitchStep5, "semi5 (perfect 4th)", false, false);
-	initparameter_b(kPitchStep6, "semi6 (augmented 4th)", false, false);
-	initparameter_b(kPitchStep7, "semi7 (perfect 5th)", false, false);
-	initparameter_b(kPitchStep8, "semi8 (minor 6th)", false, false);
-	initparameter_b(kPitchStep9, "semi9 (major 6th)", false, false);
-	initparameter_b(kPitchStep10, "semi10 (minor 7th)", false, false);
-	initparameter_b(kPitchStep11, "semi11 (major 7th)", false, false);
-	initparameter_i(kOctaveMin, "octave minimum", kOctave_MinValue, kOctave_MinValue, kOctave_MinValue, 0, DfxParam::Unit::Octaves);
+	initparameter_b(kPitchStep0, {"semi0 (unity/octave)"}, true, false);
+	initparameter_b(kPitchStep1, {"semi1 (minor 2nd)"}, false, false);
+	initparameter_b(kPitchStep2, {"semi2 (major 2nd)"}, false, false);
+	initparameter_b(kPitchStep3, {"semi3 (minor 3rd)"}, false, false);
+	initparameter_b(kPitchStep4, {"semi4 (major 3rd)"}, false, false);
+	initparameter_b(kPitchStep5, {"semi5 (perfect 4th)"}, false, false);
+	initparameter_b(kPitchStep6, {"semi6 (augmented 4th)"}, false, false);
+	initparameter_b(kPitchStep7, {"semi7 (perfect 5th)"}, false, false);
+	initparameter_b(kPitchStep8, {"semi8 (minor 6th)"}, false, false);
+	initparameter_b(kPitchStep9, {"semi9 (major 6th)"}, false, false);
+	initparameter_b(kPitchStep10, {"semi10 (minor 7th)"}, false, false);
+	initparameter_b(kPitchStep11, {"semi11 (major 7th)"}, false, false);
+	initparameter_i(kOctaveMin, {"octave minimum", "OctvMin", "OctvMn", "8va["}, kOctave_MinValue, kOctave_MinValue, kOctave_MinValue, 0, DfxParam::Unit::Octaves);
 	setparameterusevaluestrings(kOctaveMin, true);
-	initparameter_i(kOctaveMax, "octave maximum", kOctave_MaxValue, kOctave_MaxValue, 0, kOctave_MaxValue, DfxParam::Unit::Octaves);
+	initparameter_i(kOctaveMax, {"octave maximum", "OctvMax", "OctvMx", "8va]"}, kOctave_MaxValue, kOctave_MaxValue, 0, kOctave_MaxValue, DfxParam::Unit::Octaves);
 	setparameterusevaluestrings(kOctaveMax, true);
-	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
-	initparameter_f(kPredelay, "predelay", 0.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent);  // percent of range
+	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
+	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
+	initparameter_f(kPredelay, {"predelay", "PreDela", "PreDel", "PDel"}, 0.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent);  // percent of range
 
+//for (size_t i = 3; i < 12; i++) printf("%zu %s\n", i, getparametername(kSeekRange, i).c_str());
 	// set the value strings for the sync rate parameters
 	for (long i = 0; i < numTempoRates; i++)
 	{
 		auto const& tempoRateName = mTempoRateTable.getDisplay(i);
-		setparametervaluestring(kSeekRate_Sync, i, tempoRateName.c_str());
-		setparametervaluestring(kSeekRateRandMin_Sync, i, tempoRateName.c_str());
+		setparametervaluestring(kSeekRate_Sync, i, tempoRateName);
+		setparametervaluestring(kSeekRateRandMin_Sync, i, tempoRateName);
 	}
 	// set the value strings for the speed modes
 	setparametervaluestring(kSpeedMode, kSpeedMode_Robot, "robot");
@@ -90,7 +90,7 @@ initparameter_list(kSeekRateRandMin_Sync, "seek rate rand min (sync)", numTempoR
 	// set the value strings for the octave range parameters
 	for (long i = getparametermin_i(kOctaveMin) + 1; i <= getparametermax_i(kOctaveMin); i++)
 	{
-		setparametervaluestring(kOctaveMin, i, std::to_string(i).c_str());
+		setparametervaluestring(kOctaveMin, i, std::to_string(i));
 	}
 	setparametervaluestring(kOctaveMin, getparametermin_i(kOctaveMin), "no min");
 	for (long i = getparametermin_i(kOctaveMax); i < getparametermax_i(kOctaveMax); i++)
@@ -100,7 +100,7 @@ initparameter_list(kSeekRateRandMin_Sync, "seek rate rand min (sync)", numTempoR
 		{
 			octaveName.insert(octaveName.begin(), '+');
 		}
-		setparametervaluestring(kOctaveMax, i, octaveName.c_str());
+		setparametervaluestring(kOctaveMax, i, octaveName);
 	}
 	setparametervaluestring(kOctaveMax, getparametermax_i(kOctaveMax), "no max");
 
@@ -277,8 +277,8 @@ void Scrubby::initPresets()
 	setpresetparameter_f(i, kSeekRate_Hz, 420.0);
 	setpresetparameter_f(i, kSeekRateRandMin_Hz, 7.2);
 	setpresetparameter_b(i, kTempoSync, false);
-	setpresetparameter_f(i, kSeekDur, 57.0);//5700.0);
-	setpresetparameter_f(i, kSeekDurRandMin, 30.0);//3000.0);
+	setpresetparameter_f(i, kSeekDur, 57.0);
+	setpresetparameter_f(i, kSeekDurRandMin, 30.0);
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_Robot);
 	setpresetparameter_b(i, kSplitChannels, false);
 	setpresetparameter_b(i, kPitchConstraint, false);

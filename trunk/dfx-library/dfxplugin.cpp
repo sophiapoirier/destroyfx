@@ -394,14 +394,15 @@ void DfxPlugin::do_reset()
 #pragma mark parameters
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_f(long inParameterIndex, std::string_view initName, double initValue, 
-								double initDefaultValue, double initMin, double initMax, 
+void DfxPlugin::initparameter_f(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+								double initValue, double initDefaultValue, 
+								double initMin, double initMax, 
 								DfxParam::Unit initUnit, DfxParam::Curve initCurve, 
 								std::string_view initCustomUnitString)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		mParameters[inParameterIndex].init_f(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
+		mParameters[inParameterIndex].init_f(initNames, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 // XXX hmmm... maybe not here?
 //		if (hasparameterattribute(inParameterIndex, DfxParam::kAttribute_Unused))  // XXX should we do it like this?
 		{
@@ -416,14 +417,15 @@ void DfxPlugin::initparameter_f(long inParameterIndex, std::string_view initName
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_i(long inParameterIndex, std::string_view initName, int64_t initValue, 
-								int64_t initDefaultValue, int64_t initMin, int64_t initMax, 
+void DfxPlugin::initparameter_i(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+								int64_t initValue, int64_t initDefaultValue, 
+								int64_t initMin, int64_t initMax, 
 								DfxParam::Unit initUnit, DfxParam::Curve initCurve, 
 								std::string_view initCustomUnitString)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		mParameters[inParameterIndex].init_i(initName, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
+		mParameters[inParameterIndex].init_i(initNames, initValue, initDefaultValue, initMin, initMax, initUnit, initCurve);
 //		update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);  // default empty presets with this value
 		if (!initCustomUnitString.empty())
@@ -434,12 +436,13 @@ void DfxPlugin::initparameter_i(long inParameterIndex, std::string_view initName
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::initparameter_b(long inParameterIndex, std::string_view initName, bool initValue, bool initDefaultValue, 
+void DfxPlugin::initparameter_b(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+								bool initValue, bool initDefaultValue, 
 								DfxParam::Unit initUnit)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		mParameters[inParameterIndex].init_b(initName, initValue, initDefaultValue, initUnit);
+		mParameters[inParameterIndex].init_b(initNames, initValue, initDefaultValue, initUnit);
 //		update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);  // default empty presets with this value
 	}
@@ -448,12 +451,14 @@ void DfxPlugin::initparameter_b(long inParameterIndex, std::string_view initName
 //-----------------------------------------------------------------------------
 // this is a shorcut for initializing a parameter that uses integer indexes 
 // into an array, with an array of strings representing its values
-void DfxPlugin::initparameter_list(long inParameterIndex, std::string_view initName, int64_t initValue, int64_t initDefaultValue, 
-								   int64_t initNumItems, DfxParam::Unit initUnit, std::string_view initCustomUnitString)
+void DfxPlugin::initparameter_list(long inParameterIndex, std::vector<std::string_view> const& initNames, 
+								   int64_t initValue, int64_t initDefaultValue, 
+								   int64_t initNumItems, DfxParam::Unit initUnit, 
+								   std::string_view initCustomUnitString)
 {
 	if (parameterisvalid(inParameterIndex))
 	{
-		mParameters[inParameterIndex].init_i(initName, initValue, initDefaultValue, 0, initNumItems - 1, initUnit, DfxParam::Curve::Stepped);
+		mParameters[inParameterIndex].init_i(initNames, initValue, initDefaultValue, 0, initNumItems - 1, initUnit, DfxParam::Curve::Stepped);
 		setparameterusevaluestrings(inParameterIndex, true);  // indicate that we will use custom value display strings
 //		update_parameter(inParameterIndex);  // XXX make the host aware of the parameter change
 		initpresetsparameter(inParameterIndex);  // default empty presets with this value
@@ -673,6 +678,16 @@ std::string DfxPlugin::getparametername(long inParameterIndex) const
 	if (parameterisvalid(inParameterIndex))
 	{
 		return mParameters[inParameterIndex].getname();
+	}
+	return {};
+}
+
+//-----------------------------------------------------------------------------
+std::string DfxPlugin::getparametername(long inParameterIndex, size_t inMaxLength) const
+{
+	if (parameterisvalid(inParameterIndex))
+	{
+		return mParameters[inParameterIndex].getname(inMaxLength);
 	}
 	return {};
 }

@@ -592,7 +592,7 @@ std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(long inPa
 		if (auto const newValue_f = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 		{
 			DfxParam param;
-			param.init_f("", 0.0, 0.0, -1.0, 1.0);
+			param.init_f({""}, 0.0, 0.0, -1.0, 1.0);
 			DfxParam::Value paramValue {};
 			paramValue.f = *newValue_f;
 			return param.derive_i(paramValue);
