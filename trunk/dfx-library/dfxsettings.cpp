@@ -415,7 +415,7 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 		for (long j = 0; j < copyPresets; j++)
 		{
 			// copy the preset name from the chunk
-			mPlugin->setpresetname(j, newPreset->mName);
+			mPlugin->setpresetname(j, newPreset->mName[0] ? newPreset->mName : "(unnamed)");
 		#ifdef DFX_SUPPORT_OLD_VST_SETTINGS
 			// back up the pointer to account for shorter preset names
 			if (oldVST)

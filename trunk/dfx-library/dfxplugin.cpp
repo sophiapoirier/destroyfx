@@ -976,6 +976,8 @@ void DfxPlugin::setpresetparameter_gen(long inPresetIndex, long inParameterIndex
 // set the text of a preset name
 void DfxPlugin::setpresetname(long inPresetIndex, std::string_view inText)
 {
+	assert(!inText.empty());
+
 	if (presetisvalid(inPresetIndex))
 	{
 		mPresets[inPresetIndex].setname(inText);
