@@ -253,6 +253,7 @@ void DfxPlugin::setProgramName(char* inName)
 {
 	if (inName)
 	{
+		assert(inName[0] != '\0');
 		setpresetname(getProgram(), inName);
 	}
 }
