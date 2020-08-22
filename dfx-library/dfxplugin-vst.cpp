@@ -356,7 +356,7 @@ void DfxPlugin::getParameterName(VstInt32 index, char* name)
 }
 
 //-----------------------------------------------------------------------------
-// numerical display of each parameter's gradiations
+// numerical display of each parameter's gradations
 void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 {
 	if (!text)

@@ -598,3 +598,26 @@ problems still:
        second click opens another plugin window. I can actually get as many as I want this way. Doesn't
        seem like a practical issue without the modals, but maybe we should prevent it from happening?)
 
+
+== crash on plugin close ==
+
+Bisected. This was introduced in r1277 (thankfully it is not the windows update or something like that...!)
+
+Possible causes?
+ - some possibly substantive changes in DfxPlugin::getProgramName
+ - maxparamstrlen + 1 changes in getParameterDisplay could be related to fixed buffer I just noted?
+   (probably not called on close though?)
+ - there are some std::find calls etc. that I didn't verify but they didn't seem related   
+ - removed bogus call to setmidilearning(false) in ~DfxGuiEditor(). This is certainly proximal, but how
+   would *removing* this call cause problems?
+     ... aha, it was moved to the close() call, so this could be it. seems confirmed by tracing.
+     I guess this must be from some call to close() other than in the destructor, or because we need
+     to run the base class close() first.
+     And actually this is a *different* problem than before. This is not getting called during the plugin
+     destructor (after all we're just closing the editor window), it's just a normal call to close(). But
+     it looks like something earlier in close() is invalidating something (mControlsList perhaps?) that
+     setmidilearning (which kicks off a cascade of calls, including some overridable ones) is implicitly
+     relying on. Seems appropriate to just turn off midi learning as one of the first steps of closing.
+     Moving the call up fixes the issue so that's good enough for me.
+
+

@@ -178,6 +178,12 @@ void DfxGuiEditor::close()
 {
 	mJustOpened = false;
 
+#if TARGET_PLUGIN_USES_MIDI
+	// This uses the effect instance and forwards messages all around, so get this done
+	// before we invalidate anything...
+	setmidilearning(false);
+#endif
+	
 	CloseEditor();
 
 	frame->unregisterMouseObserver(this);
@@ -194,11 +200,7 @@ void DfxGuiEditor::close()
 	{
 		frame_temp->forget();
 	}
-
-#if TARGET_PLUGIN_USES_MIDI
-	setmidilearning(false);
-#endif
-
+	
 	TARGET_API_EDITOR_BASE_CLASS::close();
 }
 
