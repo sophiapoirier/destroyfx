@@ -208,7 +208,11 @@ useful unix tools like bash, make, etc.
 
 From bash, you should be able to just run 'make' from e.g.
 transverb/win32 (or I run 'make -j 30' to run 30 parallel processes)
-and produce dfx-transverb-64.dll.
+and produce dfx-transverb-64.dll. Because the build process has a
+bunch of #defines, you generally want to 'make clean' before building
+a plugin; otherwise you might end up combining something like
+"dfx-plugin.o built with Transverb flags like HAS_GUI" with
+"some-plugin.o that doesn't define HAS_GUI" and get bad results.
 
 It may also be possible to cross-compile windows DLLs from other
 platforms. I think it is possible to install mingw on say, linux, and

@@ -142,8 +142,8 @@ private:
 	bool mNeedResync = false;  // true when playback has just started up again
 	dfx::TempoRateTable const mTempoRateTable;
 
-	float mMidiMode_f;  // the MIDI note control mode parameter (TODO: unused?)
-	float mVelocity_f;  // the use-note-velocity parameter (TODO: unused?)
+	float mMidiMode_f = 0.0f;  // the MIDI note control mode parameter (TODO: unused?)
+	float mVelocity_f = 0.0f;  // the use-note-velocity parameter (TODO: unused?)
 	int mMostRecentVelocity = 0;  // the velocity of the most recently played note
 	std::array<int, DfxMidi::kNumNotes> mNoteTable;
 	long mWaitSamples = 0;
