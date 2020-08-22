@@ -1,5 +1,4 @@
-
-# (Experimental) makefile for compiling with free mingw-x86_64 toolchain (GCC 9.2.0), 2020.
+# makefile for compiling with free mingw-x86_64 toolchain (GCC 9.2.0), 2020.
 
 default: dfx-transverb-64.dll
 
@@ -50,12 +49,8 @@ VSTGUI_DEP_OBJECTS=$(MINGWLIB)/libopengl32.a $(MINGWLIB)/libole32.a $(MINGWLIB)/
 resources.o : resources.rc ../gui/graphics/*
 	$(WINDRES) -i resources.rc -o $@
 
-# XXX -Wl stuff may be unnecessary. I think the .lib is only
-# needed if we want to build something (e.g. host) that is linking against
-# this DLL. And anyway mingw g++ can allegedly just get that same info
-# from the DLL itself.
 dfx-transverb-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS) $(VSTGUI_DEP_OBJECTS)
-	$(CXX) $(LFLAGS) -o $@ $^ -Wl,--out-implib,libdfx-transverb-64.a
+	$(CXX) $(LFLAGS) -o $@ $^
 
 $(VSTGUI)/vstgui_win32.o : $(VSTGUI)/*.cpp $(VSTGUI)/lib/*.cpp $(VSTGUI)/lib/controls/*.cpp $(VSTGUI)/lib/animation/*.cpp $(VSTGUI)/lib/platform/common/*.cpp
 	$(CXX) $(CXXFLAGS) $(VSTGUI)/vstgui_win32.cpp -c -o $@
@@ -71,4 +66,4 @@ install : dfx-transverb-64.dll
 	cp dfx-transverb-64.dll /d/cakewalk_bandlab/vst/
 
 clean :
-	rm -f $(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(OBJECTS)
+	rm -f $(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(OBJECTS) load.o load.exe
