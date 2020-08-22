@@ -25,7 +25,7 @@ LFLAGS=-m64 -shared -mwindows -static-libgcc -static-libstdc++ -s
 
 DFXLIB_OBJECTS=$(DFXLIB)/dfxmisc.o  $(DFXLIB)/dfxmidi.o $(DFXLIB)/firfilter.o $(DFXLIB)/iirfilter.o $(DFXLIB)/dfxenvelope.o $(DFXLIB)/dfxplugin.o $(DFXLIB)/dfxparameter.o $(DFXLIB)/dfxplugin-vst.o $(DFXLIB)/dfxsettings.o
 
-VSTSDK_OBJECTS=$(VSTSDK)/pluginterfaces/vst2.x/audioeffect.o $(VSTSDK)/pluginterfaces/vst2.x/audioeffectx.o $(VSTSDK)/pluginterfaces/vst2.x/vstplugmain.o
+VSTSDK_OBJECTS=$(VSTSDK)/public.sdk/source/vst2.x/audioeffect.o $(VSTSDK)/public.sdk/source/vst2.x/audioeffectx.o $(VSTSDK)/public.sdk/source/vst2.x/vstplugmain.o
 
 # The vstgui_win32 object #includes all the .cpp files in the library (!)
 # It would be better for compile times to compile them individually, but including them all together usually

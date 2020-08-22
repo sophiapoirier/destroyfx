@@ -56,7 +56,3 @@ total 248
 VST2 is definitely deprecated and it's harder and harder to
 find these files. You can maybe find them in the VST3 SDK,
 which for some time contained the VST2 headers as well.
-
-In vstplugmain.cpp I added
-"__declspec(dllexport)" (before the return type)
-on both VSTPluginMain and DllMain.
