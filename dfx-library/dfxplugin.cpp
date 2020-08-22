@@ -272,7 +272,7 @@ void DfxPlugin::do_PreDestructor()
 #if TARGET_PLUGIN_HAS_GUI
 	// The destructor of AudioEffect will delete editor if it's non-null, but
 	// it looks like DfxGuiEditor wants to be able to still access the effect
-	// during its own destructor. Maybe it's just wong that it's doing that,
+	// during its own destructor. Maybe it's just wrong that it's doing that,
 	// but if not, then we should destroy the editor now before the effect
 	// instance becomes invalid.
 	if (auto* e = editor)
