@@ -281,6 +281,12 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 #endif
 			break;
 
+		case kAudioUnitProperty_ParameterIDName:
+			outDataSize = sizeof(AudioUnitParameterIDName);
+			outWritable = false;
+			status = noErr;
+			break;
+
 		case kAudioUnitProperty_AUHostIdentifier:
 			outDataSize = sizeof(AUHostVersionIdentifier);
 			outWritable = true;
@@ -451,6 +457,32 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		}
 #endif
+
+		case kAudioUnitProperty_ParameterIDName:
+		{
+			auto& parameterIDName = *static_cast<AudioUnitParameterIDName*>(outData);
+			assert(parameterIDName.inID == inElement);  // XXX the specification seems to be redundant in this regard?
+			auto const parameterID = inElement;
+			if (inScope != kAudioUnitScope_Global)
+			{
+				status = kAudioUnitErr_InvalidScope;
+			}
+			else if (parameterIDName.inDesiredLength == kAudioUnitParameterName_Full)
+			{
+				parameterIDName.outName = getparametercfname(parameterID);
+				CFRetain(parameterIDName.outName);
+			}
+			else if (parameterIDName.inDesiredLength <= 0)
+			{
+				status = kAudio_ParamError;
+			}
+			else
+			{
+				auto const shortName = getparametername(parameterID, static_cast<size_t>(parameterIDName.inDesiredLength));
+				parameterIDName.outName = CFStringCreateWithCString(kCFAllocatorDefault, shortName.c_str(), DfxParam::kDefaultCStringEncoding);
+			}
+			break;
+		}
 
 		case kAudioUnitMigrateProperty_FromPlugin:
 		{

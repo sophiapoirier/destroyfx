@@ -20,8 +20,8 @@ DFX_CORE_ENTRY(WindowingstubDSP);
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
-  initparameter_indexed(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
-  initparameter_indexed(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
+  initparameter_indexed(P_BUFSIZE, {"wsize"}, 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
+  initparameter_indexed(P_SHAPE, {"wshape"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
   long i;
   /* set up values for windowing */

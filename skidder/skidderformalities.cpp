@@ -23,6 +23,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <cmath>
 
+#include "dfxmisc.h"
+
 
 // this macro does boring entry point stuff for us
 DFX_EFFECT_ENTRY(Skidder)
@@ -35,29 +37,29 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// initialize the parameters
 	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
 	auto const numTempoRates = mTempoRateTable.getNumRates();
-	initparameter_f(kRate_Hz, "rate (free)", 3.0, 3.0, 0.3, 21.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
-	initparameter_list(kRate_Sync, "rate (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_f(kRateRandMin_Hz, "rate random min (free)", 3.0, 3.0, 0.3, 21.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
-	initparameter_list(kRateRandMin_Sync, "rate random min (sync)", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_b(kTempoSync, "tempo sync", false, false);
-	initparameter_f(kPulsewidth, "pulsewidth", 0.5, 0.5, 0.001, 0.999, DfxParam::Unit::Scalar);
-	initparameter_f(kPulsewidthRandMin, "pulsewidth random min", 0.5, 0.5, 0.001, 0.999, DfxParam::Unit::Scalar);
-	initparameter_f(kSlope, "slope", 3.0, 3.0, 0.0, 300.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kPan, "stereo spread", 0.0, 0.6, 0.0, 1.0, DfxParam::Unit::Scalar);
-	initparameter_f(kFloor, "floor", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
-	initparameter_f(kFloorRandMin, "floor random min", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
-	initparameter_f(kNoise, "rupture", 0.0, std::pow(0.5, 2.0), 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
-	initparameter_list(kMidiMode, "MIDI mode", kMidiMode_None, kMidiMode_None, kNumMidiModes);
-	initparameter_b(kVelocity, "velocity", false, false);
-	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
+	initparameter_f(kRate_Hz, {"rate (free)", "RateFre", "RateFr", "RtFr"}, 3.0, 3.0, 0.3, 21.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
+	initparameter_list(kRate_Sync, {"rate (sync)", "RateSnc", "RatSnc", "RtSc"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
+	initparameter_f(kRateRandMin_Hz, {"rate random min (free)", "RatMinF", "RatMnF", "RtMF"}, 3.0, 3.0, 0.3, 21.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
+	initparameter_list(kRateRandMin_Sync, {"rate random min (sync)", "RatMinS", "RatMnS", "RtMS"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
+	initparameter_b(kTempoSync, dfx::MakeParameterNames(dfx::kParameterNames_TempoSync), false, false);
+	initparameter_f(kPulsewidth, {"pulsewidth", "PulsWid", "PulsWd", "PlsW"}, 0.5, 0.5, 0.001, 0.999, DfxParam::Unit::Scalar);
+	initparameter_f(kPulsewidthRandMin, {"pulsewidth random min", "PlsWdMn", "PlsWdM", "PlWM"}, 0.5, 0.5, 0.001, 0.999, DfxParam::Unit::Scalar);
+	initparameter_f(kSlope, {"slope", "Slop"}, 3.0, 3.0, 0.0, 300.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kPan, {"stereo spread", "Stereo", "Ster"}, 0.0, 0.6, 0.0, 1.0, DfxParam::Unit::Scalar);
+	initparameter_f(kFloor, dfx::MakeParameterNames(dfx::kParameterNames_Floor), 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kFloorRandMin, {"floor random min", "FlorMin", "FlorMn", "FlrM"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kNoise, {"rupture", "Ruptur", "Rptr"}, 0.0, std::pow(0.5, 2.0), 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
+	initparameter_list(kMidiMode, dfx::MakeParameterNames(dfx::kParameterNames_MidiMode), kMidiMode_None, kMidiMode_None, kNumMidiModes);
+	initparameter_b(kVelocity, {"velocity", "Velocty", "Veloct", "Velo"}, false, false);
+	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
+	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
 
 	// set the value strings for the sync rate parameters
 	for (long i = 0; i < mTempoRateTable.getNumRates(); i++)
 	{
 		auto const& tempoRateName = mTempoRateTable.getDisplay(i);
-		setparametervaluestring(kRate_Sync, i, tempoRateName.c_str());
-		setparametervaluestring(kRateRandMin_Sync, i, tempoRateName.c_str());
+		setparametervaluestring(kRate_Sync, i, tempoRateName);
+		setparametervaluestring(kRateRandMin_Sync, i, tempoRateName);
 	}
 	// set the value strings for the MIDI modes
 	setparametervaluestring(kMidiMode, kMidiMode_None, "none");

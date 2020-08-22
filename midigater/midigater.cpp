@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of MIDI Gater.
 
@@ -21,6 +21,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "midigater.h"
 
+#include "dfxmisc.h"
+
 
 //----------------------------------------------------------------------------- 
 // constants
@@ -39,10 +41,10 @@ DFX_EFFECT_ENTRY(MIDIGater)
 MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, 1)
 {
-	initparameter_f(kAttackSlope, "attack", 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kReleaseSlope, "release", 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kVelocityInfluence, "velocity influence", 0.0, 1.0, 0.0, 1.0, DfxParam::Unit::Scalar);
-	initparameter_f(kFloor, "floor", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kAttackSlope, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kReleaseSlope, dfx::MakeParameterNames(dfx::kParameterNames_Release), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kVelocityInfluence, dfx::MakeParameterNames(dfx::kParameterNames_VelocityInfluence), 0.0, 1.0, 0.0, 1.0, DfxParam::Unit::Scalar);
+	initparameter_f(kFloor, dfx::MakeParameterNames(dfx::kParameterNames_Floor), 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 
 	setpresetname(0, "push the button");  // default preset name
 

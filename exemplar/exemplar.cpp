@@ -28,14 +28,14 @@ DFX_CORE_ENTRY(ExemplarDSP);
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
-  initparameter_indexed(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
-  initparameter_indexed(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
+  initparameter_indexed(P_BUFSIZE, {"wsize"}, 9, 9, BUFFERSIZESSIZE, kDfxParamUnit_samples);
+  initparameter_indexed(P_SHAPE, {"wshape"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
-  initparameter_indexed(P_MODE, "mode", MODE_CAPTURE, MODE_CAPTURE, NUM_MODES);
+  initparameter_indexed(P_MODE, {"mode"}, MODE_CAPTURE, MODE_CAPTURE, NUM_MODES);
 
-  initparameter_f(P_ERRORAMOUNT, "erroramt", 0.10, 0.10, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "error");
+  initparameter_f(P_ERRORAMOUNT, {"erroramt"}, 0.10, 0.10, 0.0, 1.0, kDfxParamUnit_custom, kDfxParamCurve_linear, "error");
 
-  initparameter_indexed(P_FFTRANGE, "fft range", FFTR_AUDIBLE, FFTR_ALL, NUM_FFTRS);
+  initparameter_indexed(P_FFTRANGE, {"fft range"}, FFTR_AUDIBLE, FFTR_ALL, NUM_FFTRS);
   
 
   /* fft ranges */

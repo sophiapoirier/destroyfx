@@ -29,7 +29,9 @@ This is where we connect the VST API to our DfxPlugin system.
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cinttypes>
+#include <limits>
 #include <stdio.h>
 
 
@@ -344,7 +346,12 @@ void DfxPlugin::getParameterName(VstInt32 index, char* name)
 {
 	if (name)
 	{
-		vst_strncpy(name, getparametername(index).c_str(), kVstMaxParamStrLen);
+		// kVstMaxParamStrLen is absurdly short for parameter names at 8-characters, 
+		// and given that exceding that length is common, hosts prepare for that, 
+		// and even the Vst2Wrapper in the VST3 SDK acknowleges as much by defining 
+		// the following "extended" constant to use instead
+		constexpr size_t kVstExtMaxParamStrLen = 32;
+		vst_strncpy(name, getparametername(index).c_str(), kVstExtMaxParamStrLen);
 	}
 }
 
@@ -387,6 +394,81 @@ void DfxPlugin::getParameterLabel(VstInt32 index, char* label)
 	{
 		vst_strncpy(label, getparameterunitstring(index).c_str(), kVstMaxParamStrLen);
 	}
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* properties)
+{
+	if (!properties)
+	{
+		return false;
+	}
+	*properties = {};
+
+	// note that kVstMax* are specified as "number of characters excluding the null terminator", 
+	// and vst_strncpy behaves accordingly and terminates at array[N], however the static arrays 
+	// in struct types (like VstParameterProperties here) size the arrays by N, meaning that 
+	// array[N] is out of range, so we call vst_strncpy in these cases passing N-1 as max length
+	vst_strncpy(properties->label, getparametername(index).c_str(), kVstMaxLabelLen - 1);
+
+	auto const shortName = getparametername(index, static_cast<size_t>(kVstMaxShortLabelLen - 1));
+	vst_strncpy(properties->shortLabel, shortName.c_str(), kVstMaxShortLabelLen - 1);
+
+	auto const isVisible = [this](long parameterID)
+	{
+		return !hasparameterattribute(parameterID, DfxParam::kAttribute_Unused) && !hasparameterattribute(parameterID, DfxParam::kAttribute_Hidden);
+	};
+	if (isVisible(index))
+	{
+		properties->displayIndex = [index, isVisible]()
+		{
+			VstInt16 result = 0;
+			for (VstInt16 parameterID = 0; parameterID <= index; parameterID++)
+			{
+				if (isVisible(parameterID))
+				{
+					assert(result < std::numeric_limits<decltype(result)>::max());
+					result++;
+				}
+			}
+			return result;
+		}();
+		properties->flags |= kVstParameterSupportsDisplayIndex;
+	}
+
+	switch (getparametervaluetype(index))
+	{
+		case DfxParam::ValueType::Boolean:
+			properties->flags |= kVstParameterIsSwitch;
+			break;
+		case DfxParam::ValueType::Int:
+			properties->minInteger = getparametermin_i(index);
+			properties->maxInteger = getparametermax_i(index);
+			properties->flags |= kVstParameterUsesIntegerMinMax;
+			break;
+		default:
+			break;
+	}
+
+	if (auto const groupIndex = getparametergroup(index))
+	{
+		auto const downcastWithValidation = [](auto& destination, auto const& source)
+		{
+			using FromT = std::decay_t<decltype(source)>;
+			using ToT = std::decay_t<decltype(destination)>;
+			assert(source <= static_cast<FromT>(std::numeric_limits<ToT>::max()));
+			destination = static_cast<ToT>(source);
+		};
+
+		constexpr size_t baseCategoryIndex = 1;
+		downcastWithValidation(properties->category, baseCategoryIndex + *groupIndex);
+		auto const& group = mParameterGroups.at(*groupIndex);
+		vst_strncpy(properties->categoryLabel, group.first.c_str(), kVstMaxCategLabelLen - 1);
+		downcastWithValidation(properties->numParametersInCategory, group.second.size());
+		properties->flags |= kVstParameterSupportsDisplayCategory;
+	}
+
+	return true;
 }
 
 

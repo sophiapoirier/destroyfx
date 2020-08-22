@@ -45,61 +45,61 @@ DFX_EFFECT_ENTRY(Geometer)
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
-  initparameter_list(P_BUFSIZE, "wsize", 9, 9, BUFFERSIZESSIZE, DfxParam::Unit::Samples);
-  initparameter_list(P_SHAPE, "wshape", WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
+  initparameter_list(P_BUFSIZE, {"wsize", "WSiz"}, 9, 9, BUFFERSIZESSIZE, DfxParam::Unit::Samples);
+  initparameter_list(P_SHAPE, {"wshape", "WShp"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
-  initparameter_list(P_POINTSTYLE, "points where", POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
+  initparameter_list(P_POINTSTYLE, {"points where", "PntWher", "PWhere", "PWhr"}, POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
 
-  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, "point:ext'n'cross", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "magn");
-  initparameter_f(P_POINTPARAMS + POINT_FREQ, "point:freq", 0.08, 0.08, 0.0, 1.0, DfxParam::Unit::Scalar);
-  initparameter_f(P_POINTPARAMS + POINT_RANDOM, "point:rand", 0.20, 0.20, 0.0, 1.0, DfxParam::Unit::Scalar);
-  initparameter_f(P_POINTPARAMS + POINT_SPAN, "point:span", 0.20, 0.20, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "width");
-  initparameter_f(P_POINTPARAMS + POINT_DYDX, "point:dydx", 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "gap");
-  initparameter_f(P_POINTPARAMS + POINT_LEVEL, "point:level", 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "level");
+  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, {"point:ext'n'cross", "PExtCrs", "PExtCr"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "magn");
+  initparameter_f(P_POINTPARAMS + POINT_FREQ, {"point:freq", "PntFreq", "PFreq", "PFrq"}, 0.08, 0.08, 0.0, 1.0, DfxParam::Unit::Scalar);
+  initparameter_f(P_POINTPARAMS + POINT_RANDOM, {"point:rand", "PntRand", "PRand", "PRnd"}, 0.20, 0.20, 0.0, 1.0, DfxParam::Unit::Scalar);
+  initparameter_f(P_POINTPARAMS + POINT_SPAN, {"point:span", "PntSpan", "PSpan", "PSpn"}, 0.20, 0.20, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "width");
+  initparameter_f(P_POINTPARAMS + POINT_DYDX, {"point:dydx", "PntDyDx", "PDyDx", "PDyx"}, 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "gap");
+  initparameter_f(P_POINTPARAMS + POINT_LEVEL, {"point:level", "PntLevl", "PLevel" "PLvl"}, 0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "level");
 
   for(int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
-    initparameter_f(P_POINTPARAMS + pp, "pointparam:unused", 0.04, 0.04, 0.0, 1.0, DfxParam::Unit::Generic);
+    initparameter_f(P_POINTPARAMS + pp, {"pointparam:unused", "PUnused", "Pxxx"}, 0.04, 0.04, 0.0, 1.0, DfxParam::Unit::Generic);
     setparameterattributes(P_POINTPARAMS + pp, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
   }
 
-  initparameter_list(P_INTERPSTYLE, "interpolate how", INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
+  initparameter_list(P_INTERPSTYLE, {"interpolate how", "IntHow", "IHow"}, INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
 
-  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, "interp:polygon", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "angle");
-  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, "interp:wrongy", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "angle");
-  initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, "interp:smoothie", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Exponent);
-  initparameter_f(P_INTERPARAMS + INTERP_REVERSI, "interp:reversie", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
-  initparameter_f(P_INTERPARAMS + INTERP_PULSE, "interp:pulse", 0.05, 0.05, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "pulse");
-  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, "interp:friends", 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "width");
-  initparameter_f(P_INTERPARAMS + INTERP_SING, "interp:sing", 0.8, 0.8, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "mod");
-  initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, "interp:shuffle", 0.3, 0.3, 0.0, 1.0, DfxParam::Unit::Generic);
+  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, {"interp:polygon", "IntPoly", "IPoly", "IPly"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "angle");
+  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, {"interp:wrongy", "IWrongy", "IWrong", "IWng"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "angle");
+  initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, {"interp:smoothie", "ISmooth", "ISmoth", "ISmt"}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Exponent);
+  initparameter_f(P_INTERPARAMS + INTERP_REVERSI, {"interp:reversie", "IRevers", "IRevrs", "IRvr"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
+  initparameter_f(P_INTERPARAMS + INTERP_PULSE, {"interp:pulse", "IPulse", "IPls"}, 0.05, 0.05, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "pulse");
+  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, {"interp:friends", "IFriend", "IFrend", "IFrn"}, 1.0, 1.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "width");
+  initparameter_f(P_INTERPARAMS + INTERP_SING, {"interp:sing", "IntSing", "ISing", "ISng"}, 0.8, 0.8, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "mod");
+  initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, {"interp:shuffle", "IShuffl", "IShufl", "IShf"}, 0.3, 0.3, 0.0, 1.0, DfxParam::Unit::Generic);
 
   for(int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
-    initparameter_f(P_INTERPARAMS + ip, "inter:unused", 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
+    initparameter_f(P_INTERPARAMS + ip, {"inter:unused", "IUnused", "Ixxx"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
     setparameterattributes(P_INTERPARAMS + ip, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
   }
 
-  initparameter_list(P_POINTOP1, "pointop1", OP_NONE, OP_NONE, MAX_OPS);
-  initparameter_list(P_POINTOP2, "pointop2", OP_NONE, OP_NONE, MAX_OPS);
-  initparameter_list(P_POINTOP3, "pointop3", OP_NONE, OP_NONE, MAX_OPS);
+  initparameter_list(P_POINTOP1, {"pointop1", "PntOp1", "POp1"}, OP_NONE, OP_NONE, MAX_OPS);
+  initparameter_list(P_POINTOP2, {"pointop2", "PntOp2", "POp2"}, OP_NONE, OP_NONE, MAX_OPS);
+  initparameter_list(P_POINTOP3, {"pointop3", "PntOp3", "POp3"}, OP_NONE, OP_NONE, MAX_OPS);
 
-  auto const allop = [this](auto n, auto str, auto def, auto unit, std::string_view unitstr) {
+  auto const allop = [this](auto n, auto str, auto shortstr, auto def, auto unit, std::string_view unitstr) {
     constexpr auto curve = DfxParam::Curve::Linear;
-    initparameter_f(P_OPPAR1S + n, std::string("op1:") + str, def, def, 0.0, 1.0, unit, curve, unitstr);
-    initparameter_f(P_OPPAR2S + n, std::string("op2:") + str, def, def, 0.0, 1.0, unit, curve, unitstr);
-    initparameter_f(P_OPPAR3S + n, std::string("op3:") + str, def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR1S + n, {std::string("op1:") + str, std::string("1") + shortstr}, def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR2S + n, {std::string("op2:") + str, std::string("2") + shortstr}, def, def, 0.0, 1.0, unit, curve, unitstr);
+    initparameter_f(P_OPPAR3S + n, {std::string("op3:") + str, std::string("3") + shortstr}, def, def, 0.0, 1.0, unit, curve, unitstr);
   };
 
-  allop(OP_DOUBLE, "double", 0.5, DfxParam::Unit::LinearGain, {});
-  allop(OP_HALF, "half", 0.0, DfxParam::Unit::Generic, {});
-  allop(OP_QUARTER, "quarter", 0.0, DfxParam::Unit::Generic, {});
-  allop(OP_LONGPASS, "longpass", 0.15, DfxParam::Unit::Custom, "length");
-  allop(OP_SHORTPASS, "shortpass", 0.5, DfxParam::Unit::Custom, "length");
-  allop(OP_SLOW, "slow", 0.25, DfxParam::Unit::Scalar, {});	// "factor"
-  allop(OP_FAST, "fast", 0.5, DfxParam::Unit::Scalar, {});	// "factor"
-  allop(OP_NONE, "none", 0.0, DfxParam::Unit::Generic, {});
+  allop(OP_DOUBLE, "double", "duble", 0.5, DfxParam::Unit::LinearGain, {});
+  allop(OP_HALF, "half", "half", 0.0, DfxParam::Unit::Generic, {});
+  allop(OP_QUARTER, "quarter", "qrtr", 0.0, DfxParam::Unit::Generic, {});
+  allop(OP_LONGPASS, "longpass", "lngps", 0.15, DfxParam::Unit::Custom, "length");
+  allop(OP_SHORTPASS, "shortpass", "srtps", 0.5, DfxParam::Unit::Custom, "length");
+  allop(OP_SLOW, "slow", "slow", 0.25, DfxParam::Unit::Scalar, {});	// "factor"
+  allop(OP_FAST, "fast", "fast", 0.5, DfxParam::Unit::Scalar, {});	// "factor"
+  allop(OP_NONE, "none", "none", 0.0, DfxParam::Unit::Generic, {});
   
   for(int op = NUM_OPS; op < MAX_OPS; op++) {
-    allop(op, "unused", 0.5, DfxParam::Unit::Generic, {});
+    allop(op, "unused", "xxx", 0.5, DfxParam::Unit::Generic, {});
     setparameterattributes(P_OPPAR1S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
     setparameterattributes(P_OPPAR2S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */
     setparameterattributes(P_OPPAR3S + op, DfxParam::kAttribute_Unused);	/* don't display as an available parameter */

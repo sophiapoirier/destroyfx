@@ -27,10 +27,12 @@ These are some generally useful functions.
 #pragma once
 
 
+#include <array>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <vector>
 
 #ifdef __MACH__
 	#include <CoreFoundation/CoreFoundation.h>
@@ -117,5 +119,24 @@ std::string GetNameForMIDINote(long inMidiNote);
 std::unique_ptr<char[]> CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding = kCFStringEncodingUTF8);
 #endif
 
+// coming up with these sets of short parameter names can be annoying, so here are some sets we use repeatedly
+// TODO: C++20 just use std::vector (and eliminate MakeParameterNames) since it gains constexpr constructors
+static constexpr std::array<std::string_view, 2> kParameterNames_Tempo = {"tempo", "Tmpo"};
+static constexpr std::array<std::string_view, 4> kParameterNames_TempoSync = {"tempo sync", "TmpoSnc", "TpoSnc", "Sync"};
+static constexpr std::array<std::string_view, 4> kParameterNames_TempoAuto = {"sync to host tempo", "HstTmpo", "HstTmp", "HTmp"};
+static constexpr std::array<std::string_view, 3> kParameterNames_DryWetMix = {"dry/wet mix", "DryWet", "DrWt"};
+static constexpr std::array<std::string_view, 2> kParameterNames_Floor = {"floor", "Flor"};
+static constexpr std::array<std::string_view, 2> kParameterNames_Freeze = {"freeze", "Frez"};
+static constexpr std::array<std::string_view, 2> kParameterNames_Attack = {"attack", "Attk"};
+static constexpr std::array<std::string_view, 3> kParameterNames_Release = {"release", "Releas", "Rles"};
+static constexpr std::array<std::string_view, 4> kParameterNames_VelocityInfluence = {"velocity influence", "VelInfl", "VelInf", "Velo"};
+static constexpr std::array<std::string_view, 4> kParameterNames_PitchBendRange = {"pitch bend range", "PtchBnd", "PtchBd", "PB"};
+static constexpr std::array<std::string_view, 4> kParameterNames_MidiMode = {"MIDI mode", "MIDIMod", "MIDIMd", "MIDI"};
+// convenience function to produce the required initparameter_* argument from the above compile-time representation
+template <auto Size>
+auto MakeParameterNames(std::array<std::string_view, Size> const& inNamesArray)
+{
+	return std::vector(inNamesArray.cbegin(), inNamesArray.cend());
+}
 
 }  // namespace

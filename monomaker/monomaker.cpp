@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Monomaker.
 
@@ -35,12 +35,12 @@ Monomaker::Monomaker(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, 1)
 {
 	// initialize the parameters
-	initparameter_list(kInputSelection, "input selection", kInputSelection_Stereo, kInputSelection_Stereo, kNumInputSelections);
-	initparameter_f(kMonomerge, "monomix", 0.0, 100.0, 0.0, 100.0, DfxParam::Unit::Percent);
-	initparameter_list(kMonomergeMode, "monomix mode", kMonomergeMode_EqualPower, kMonomergeMode_Linear, kNumMonomergeModes);
-	initparameter_f(kPan, "pan", 0.0, 0.0, -1.0, 1.0, DfxParam::Unit::Pan);
-	initparameter_list(kPanMode, "pan mode", kPanMode_Recenter, kPanMode_Recenter, kNumPanModes);
-//	initparameter_list(kPanLaw, "pan law", kPanLaw_, kPanLaw_, kNumPanLaws);
+	initparameter_list(kInputSelection, {"input selection", "Input", "Inpt"}, kInputSelection_Stereo, kInputSelection_Stereo, kNumInputSelections);
+	initparameter_f(kMonomerge, {"monomix", "MonMix", "Mix"}, 0.0, 100.0, 0.0, 100.0, DfxParam::Unit::Percent);
+	initparameter_list(kMonomergeMode, {"monomix mode", "MonoMod", "MonMod", "MMod"}, kMonomergeMode_EqualPower, kMonomergeMode_Linear, kNumMonomergeModes);
+	initparameter_f(kPan, {"pan"}, 0.0, 0.0, -1.0, 1.0, DfxParam::Unit::Pan);
+	initparameter_list(kPanMode, {"pan mode", "PanMode", "PanMod", "PMod"}, kPanMode_Recenter, kPanMode_Recenter, kNumPanModes);
+//	initparameter_list(kPanLaw, {"pan law", "PanLaw", "PLaw"}, kPanLaw_, kPanLaw_, kNumPanLaws);
 
 	// set the parameter value display strings
 	setparametervaluestring(kInputSelection, kInputSelection_Stereo, "left-right");

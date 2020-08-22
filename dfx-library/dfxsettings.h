@@ -369,9 +369,7 @@ protected:
 	// structure of an API-generic preset
 	struct GenPreset
 	{
-		// XXX seems the way we use this requires 0-termination,
-		// so does MaxLength actually include the 0 byte?
-		char mName[dfx::kPresetNameMaxLength];
+		char mName[dfx::kPresetNameMaxLength];  // must include null-terminator byte
 		float mParameterValues[1];  // can of course be more...
 	};
 #pragma pack(pop)
