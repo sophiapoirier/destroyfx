@@ -4,49 +4,53 @@ part of the repository because the SDK is not free
 software.
 
 
-Here's what the contents looked like in 2001 or so:
+Here's what the (relevant) contents looked like in
+the final version 2.4 rev2 in 2006:
 
-07.04.2000  17:32             6,841 AEffect.h
-06.08.2001  11:43            28,487 aeffectx.h
-03.20.2001  08:37             1,622 AEffEditor.hpp
-01.15.2001  09:10            10,683 AudioEffect.cpp
-01.22.1999  19:04             4,545 AudioEffect.hpp
-06.08.2001  19:37            21,716 audioeffectx.cpp
-03.27.2001  17:16            14,219 audioeffectx.h
-08.09.2001  19:44               811 README
-05.11.2001  13:15            23,420 vstcontrols.h
-05.23.2001  10:10            24,037 vstgui.h
+$ ls -lR vstsdk
+total 0
+drwxr-xr-x  4 user  group  128 Jul 26  2009 pluginterfaces/
+drwxr-xr-x  5 user  group  160 Jul 26  2009 public.sdk/
 
+vstsdk/pluginterfaces:
+total 0
+drwxr-xr-x  6 user  group  192 Aug 25  2009 vst2.x/
 
-Here's what it looks like in 2020. Getting this to compile
-again on Windows (64-bit) is still a work in progress...
+vstsdk/pluginterfaces/vst2.x:
+total 176
+-rw-r--r--  1 user  group  16961 Jun 20  2006 aeffect.h
+-rw-r--r--  1 user  group  64725 Jun 20  2006 aeffectx.h
+-rw-r--r--  1 user  group   4044 Feb 10  2006 vstfxstore.h
 
+vstsdk/public.sdk:
+total 0
+drwxr-xr-x  4 user  group  128 Jul 26  2009 samples/
+drwxr-xr-x  4 user  group  128 Jul 26  2009 source/
 
-drwxr-xr-x+ 1 Tom None   0 Jun 29 00:05  .
-drwxr-xr-x+ 1 Tom None   0 Jun 28 11:07  ..
-drwxr-xr-x+ 1 Tom None   0 Jun 27 15:07  2001
-drwxr-xr-x+ 1 Tom None   0 Jun 27 15:08  pluginterfaces
--rw-r--r--  1 Tom None 862 Jun 27 22:34  README
+vstsdk/public.sdk/samples:
+total 0
+drwxr-xr-x  4 user  group  128 Jul 26  2009 vst2.x/
 
-$ ls -alR pluginterfaces
-pluginterfaces:
+vstsdk/public.sdk/samples/vst2.x:
+total 0
+drwxr-xr-x  4 user  group  128 Jul 26  2009 win/
+
+vstsdk/public.sdk/samples/vst2.x/win:
 total 8
-drwxr-xr-x+ 1 Tom None 0 Jun 27 15:08 .
-drwxr-xr-x+ 1 Tom None 0 Jun 29 00:05 ..
-drwxr-xr-x+ 1 Tom None 0 Jun 28 23:50 vst2.x
+-rw-r--r--  1 user  group  44 Nov 17  2005 vstplug.def
 
-pluginterfaces/vst2.x:
-total 372
-drwxr-xr-x+ 1 Tom None     0 Jun 28 23:50 .
-drwxr-xr-x+ 1 Tom None     0 Jun 27 15:08 ..
--rwxr-xr-x  1 Tom None 16961 Jun 27 15:54 aeffect.h
--rwxr-xr-x  1 Tom None 64725 Jun 27 15:53 aeffectx.h
--rwxr-xr-x  1 Tom None  4435 Dec  2  2019 aeffeditor.h
--rwxr-xr-x  1 Tom None 25542 Dec  2  2019 audioeffect.cpp
--rwxr-xr-x  1 Tom None 12743 Dec  2  2019 audioeffect.h
--rwxr-xr-x  1 Tom None 56469 Dec  2  2019 audioeffectx.cpp
--rwxr-xr-x  1 Tom None 18477 Dec  2  2019 audioeffectx.h
--rwxr-xr-x  1 Tom None  4123 Jun 28 15:27 vstplugmain.cpp
+vstsdk/public.sdk/source:
+total 0
+drwxr-xr-x  8 user  group  256 Nov 13  2006 vst2.x/
+
+vstsdk/public.sdk/source/vst2.x:
+total 248
+-rw-r--r--  1 user  group   3115 Jan 16  2006 aeffeditor.h
+-rw-r--r--  1 user  group  24787 Jun  7  2006 audioeffect.cpp
+-rw-r--r--  1 user  group  11541 Jun  7  2006 audioeffect.h
+-rw-r--r--  1 user  group  56569 Oct  5  2006 audioeffectx.cpp
+-rw-r--r--  1 user  group  17371 Jun 20  2006 audioeffectx.h
+-rw-r--r--  1 user  group   2275 Sep  5  2006 vstplugmain.cpp
 
 
 VST2 is definitely deprecated and it's harder and harder to
@@ -56,6 +60,3 @@ which for some time contained the VST2 headers as well.
 In vstplugmain.cpp I added
 "__declspec(dllexport)" (before the return type)
 on both VSTPluginMain and DllMain.
-
-
-

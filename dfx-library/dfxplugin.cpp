@@ -44,9 +44,6 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #endif
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
-	// If using the VST GUI interface, we need the class definition
-	// for AEffGUIEditor so that we can send it parameter changes.
-	#include "aeffguieditor.h"
 	#include "dfxguieditor.h"
 	extern AEffEditor* DFXGUI_NewEditorInstance(DfxPlugin* inEffectInstance);
 #endif
@@ -268,19 +265,6 @@ void DfxPlugin::do_PreDestructor()
 	// VST doesn't have initialize and cleanup methods like Audio Unit does, 
 	// so we need to call this manually here
 	do_cleanup();
-
-#if TARGET_PLUGIN_HAS_GUI
-	// The destructor of AudioEffect will delete editor if it's non-null, but
-	// it looks like DfxGuiEditor wants to be able to still access the effect
-	// during its own destructor. Maybe it's just wrong that it's doing that,
-	// but if not, then we should destroy the editor now before the effect
-	// instance becomes invalid.
-	if (auto* e = editor)
-	{
-		setEditor(nullptr);
-		delete e;
-	}
-#endif
 #endif
 }
 

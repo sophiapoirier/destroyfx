@@ -65,31 +65,39 @@ To contact the author, use the contact form at http://destroyfx.org/
 		#include <AudioUnit/LogicAUProperties.h>
 	#endif
 
-// using Steinberg's VST API
+// using Steinberg's VST2 API
 #elif defined(TARGET_API_VST)
-	#if _WIN32
-		#include <windows.h>
-	#endif
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wshadow"
+	#include "public.sdk/source/vst2.x/audioeffectx.h"
+	#pragma clang diagnostic pop
 
-        using VstInt32 = int32_t;
-        using VstInt16 = int16_t;
-        using VstIntPtr = intptr_t;  // XXX??
-
-	#include "pluginterfaces/vst2.x/audioeffectx.h"
 	using TARGET_API_BASE_CLASS = AudioEffectX;
 	using TARGET_API_BASE_INSTANCE_TYPE = audioMasterCallback;
 	using TARGET_API_EDITOR_PARENT_INSTANCE_TYPE = AudioEffect*;
+
 	// set numinputs and numoutputs if numchannels is defined
 	#ifdef VST_NUM_CHANNELS
-		#ifndef VST_NUM_INPUTS
+		#ifdef VST_NUM_INPUTS
+			#error "do not #define VST_NUM_INPUTS if using VST_NUM_CHANNELS"
+		#else
 			#define VST_NUM_INPUTS	VST_NUM_CHANNELS
 		#endif
-		#ifndef VST_NUM_OUTPUTS
+		#ifdef VST_NUM_OUTPUTS
+			#error "do not #define VST_NUM_OUTPUTS if using VST_NUM_CHANNELS"
+		#else
 			#define VST_NUM_OUTPUTS	VST_NUM_CHANNELS
 		#endif
 	#endif
+	#if !defined(VST_NUM_INPUTS) || !defined(VST_NUM_OUTPUTS)
+		#error "you must either #define both VST_NUM_INPUTS and VST_NUM_OUTPUTS, or VST_NUM_CHANNELS"
+	#endif
+
 	#ifdef __MACH__
 		#include <TargetConditionals.h>
+	#endif
+	#if _WIN32
+		#include <windows.h>
 	#endif
 
 // using Digidesign's RTAS/AudioSuite API

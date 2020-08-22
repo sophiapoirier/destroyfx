@@ -61,7 +61,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 
 #ifdef TARGET_API_VST
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
 	#include "aeffguieditor.h"
+	#pragma clang diagnostic pop
 	using TARGET_API_EDITOR_BASE_CLASS = VSTGUI::AEffGUIEditor;
 	using TARGET_API_EDITOR_INDEX_TYPE = VstInt32;
 	using ERect = ::ERect;
