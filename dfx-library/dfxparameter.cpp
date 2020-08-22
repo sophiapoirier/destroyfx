@@ -30,7 +30,9 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include <string.h>  // for strcpy
+#include <unordered_set>
 
 #include "dfxmath.h"
 
@@ -52,23 +54,20 @@ static dfx::UniqueCFType<CFStringRef> CreateCFStringWithStringView(std::string_v
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-void DfxParam::init(std::string_view inName, ValueType inType, 
+void DfxParam::init(std::vector<std::string_view> const& inNames, ValueType inType, 
 					Value inInitialValue, Value inDefaultValue, 
 					Value inMinValue, Value inMaxValue, 
 					Unit inUnit, Curve inCurve)
 {
-	assert(!inName.empty());
+	assert(mName.empty());  // shortcut test ensuring init is only called once
 
 	// accept all of the incoming init values
+	initNames(inNames);
 	mValueType = inType;
 	mValue = mOldValue = inInitialValue;
 	mDefaultValue = inDefaultValue;
 	mMinValue = inMinValue;
 	mMaxValue = inMaxValue;
-	mName.assign(inName, 0, dfx::kParameterNameMaxLength - 1);
-#ifdef TARGET_API_AUDIOUNIT
-	mCFName = CreateCFStringWithStringView(inName);
-#endif
 	mCurve = inCurve;
 	mUnit = inUnit;
 	if (mUnit == Unit::List)
@@ -122,7 +121,8 @@ void DfxParam::init(std::string_view inName, ValueType inType,
 
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with float variable type
-void DfxParam::init_f(std::string_view inName, double inInitialValue, double inDefaultValue, 
+void DfxParam::init_f(std::vector<std::string_view> const& inNames, 
+					  double inInitialValue, double inDefaultValue, 
 					  double inMinValue, double inMaxValue, 
 					  Unit inUnit, Curve inCurve)
 {
@@ -131,11 +131,12 @@ void DfxParam::init_f(std::string_view inName, double inInitialValue, double inD
 	def.f = inDefaultValue;
 	min.f = inMinValue;
 	max.f = inMaxValue;
-	init(inName, ValueType::Float, val, def, min, max, inUnit, inCurve);
+	init(inNames, ValueType::Float, val, def, min, max, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with int variable type
-void DfxParam::init_i(std::string_view inName, int64_t inInitialValue, int64_t inDefaultValue, 
+void DfxParam::init_i(std::vector<std::string_view> const& inNames, 
+					  int64_t inInitialValue, int64_t inDefaultValue, 
 					  int64_t inMinValue, int64_t inMaxValue, 
 					  Unit inUnit, Curve inCurve)
 {
@@ -144,18 +145,51 @@ void DfxParam::init_i(std::string_view inName, int64_t inInitialValue, int64_t i
 	def.i = inDefaultValue;
 	min.i = inMinValue;
 	max.i = inMaxValue;
-	init(inName, ValueType::Int, val, def, min, max, inUnit, inCurve);
+	init(inNames, ValueType::Int, val, def, min, max, inUnit, inCurve);
 }
 //-----------------------------------------------------------------------------
 // convenience wrapper of init() for initializing with boolean variable type
-void DfxParam::init_b(std::string_view inName, bool inInitialValue, bool inDefaultValue, Unit inUnit)
+void DfxParam::init_b(std::vector<std::string_view> const& inNames, 
+					  bool inInitialValue, bool inDefaultValue, Unit inUnit)
 {
 	Value val {}, def {}, min {}, max {};
 	val.b = inInitialValue;
 	def.b = inDefaultValue;
 	min.b = false;
 	max.b = true;
-	init(inName, ValueType::Boolean, val, def, min, max, inUnit, Curve::Linear);
+	init(inNames, ValueType::Boolean, val, def, min, max, inUnit, Curve::Linear);
+}
+
+//-----------------------------------------------------------------------------
+void DfxParam::initNames(std::vector<std::string_view> const& inNames)
+{
+	auto const stringLength = [](auto const& string)
+	{
+		return string.length();
+	};
+
+	assert(!inNames.empty());
+	assert(std::all_of(inNames.cbegin(), inNames.cend(), [](auto const& name){ return !name.empty(); }));
+	{
+		std::vector<size_t> lengths;
+		std::transform(inNames.cbegin(), inNames.cend(), std::back_inserter(lengths), stringLength);
+		assert(std::unordered_set<size_t>(lengths.cbegin(), lengths.cend()).size() == lengths.size());
+	}
+
+	// sort the names by length (ascending)
+	mShortNames.assign(inNames.cbegin(), inNames.cend());
+	std::sort(mShortNames.begin(), mShortNames.end(), [stringLength](auto const& a, auto const& b)
+	{
+		return stringLength(a) < stringLength(b);
+	});
+
+	mName.assign(mShortNames.back(), 0, dfx::kParameterNameMaxLength - 1);
+	assert(mName == mShortNames.back());  // if not, your parameter name is too long!
+#ifdef TARGET_API_AUDIOUNIT
+	mCFName = CreateCFStringWithStringView(mShortNames.back());
+#endif
+	// done pulling out the full name, so remove it now from the list of short names
+	mShortNames.pop_back();
 }
 
 //-----------------------------------------------------------------------------
@@ -728,6 +762,41 @@ bool DfxParam::setchanged(bool inChanged) noexcept
 #pragma mark -
 #pragma mark info
 #pragma mark -
+
+//-----------------------------------------------------------------------------
+std::string DfxParam::getname(size_t inMaxLength) const
+{
+	if (mName.length() <= inMaxLength)
+	{
+		return mName;
+	}
+	if (mShortNames.empty())
+	{
+		return {mName, 0, inMaxLength};
+	}
+
+	// we want the nearest length match that is equal to or less than the requested maximum
+	auto const bestMatch = std::min_element(mShortNames.cbegin(), mShortNames.cend(), [inMaxLength](auto const& a, auto const& b)
+	{
+		auto const reduce = [inMaxLength](auto const& string)
+		{
+			return (string.length() <= inMaxLength) ? (inMaxLength - string.length()) : std::numeric_limits<size_t>::max();
+		};
+		return reduce(a) < reduce(b);
+	});
+	assert(bestMatch != mShortNames.cend());
+	// but if nothing was short enough to fully qualify, truncate the shortest of what we have
+	if (bestMatch->length() > inMaxLength)
+	{
+		auto const shortest = std::min_element(mShortNames.cbegin(), mShortNames.cend(), [](auto const& a, auto const& b)
+		{
+			return a.length() < b.length();
+		});
+		assert(shortest != mShortNames.cend());
+		return {*shortest, 0, inMaxLength};
+	}
+	return *bestMatch;
+}
 
 //-----------------------------------------------------------------------------
 // get a text string of the unit type

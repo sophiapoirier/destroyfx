@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -56,13 +56,13 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 // routines, every preset will automatically be set to those initial settings 
 // that way you know that they are all starting off from the default settings
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
-	initparameter_f(kFloatParam, "decimal parameter", 90.0f, 33.3f, 1.0f, 999.0f, DfxParam::Unit::Generic, DfxParam::Curve::Linear);
+	initparameter_f(kFloatParam, {"decimal parameter"}, 90.0f, 33.3f, 1.0f, 999.0f, DfxParam::Unit::Generic, DfxParam::Curve::Linear);
 	// parameter ID, parameter name, init value, default value, min value, max value, curve, units
-	initparameter_i(kIntParam, "int parameter", 9, 12, 3, 27, DfxParam::Unit::Generic);
+	initparameter_i(kIntParam, {"int parameter"}, 9, 12, 3, 27, DfxParam::Unit::Generic);
 	// parameter ID, parameter name, init value, default value, number of values
-	initparameter_list(kIndexParam, "list of items parameter", kIndexParamState3, kIndexParamState1, kNumIndexParamStates);
+	initparameter_list(kIndexParam, {"list of items parameter"}, kIndexParamState3, kIndexParamState1, kNumIndexParamStates);
 	// parameter ID, parameter name, init value, default value
-	initparameter_b(kBooleanParam, "forced buffer tempo sync", false, false);
+	initparameter_b(kBooleanParam, {"forced buffer tempo sync"}, false, false);
 
 // next you can set up any custom value displays for indexed parameters
 	// set the value display strings for each state of the indexed parameter

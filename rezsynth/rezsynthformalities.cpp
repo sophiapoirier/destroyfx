@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 
 #include "dfxmath.h"
+#include "dfxmisc.h"
 
 
 // this macro does boring entry point stuff for us
@@ -34,31 +35,30 @@ DFX_EFFECT_ENTRY(RezSynth)
 RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance,	kNumParameters, kNumPresets)
 {
-	initparameter_f(kBandwidthAmount_Hz, "bandwidth (Hz)", 3.0, 3.0, 0.1, 300.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
-	initparameter_f(kBandwidthAmount_Q, "bandwidth (Q)", 69.0, 30.0, 0.01, 500.0, DfxParam::Unit::Generic, DfxParam::Curve::Cubed);
-	initparameter_list(kBandwidthMode, "bandwidth mode", kBandwidthMode_Q, kBandwidthMode_Q, kNumBandwidthModes);
-	initparameter_list(kResonAlgorithm, "resonance algorithm", kResonAlg_2Pole2ZeroR, kResonAlg_2Pole2ZeroR, kNumResonAlgs);
-	initparameter_i(kNumBands, "bands per note", 1, 1, 1, kMaxBands, DfxParam::Unit::Generic);
-	initparameter_f(kSepAmount_Octaval, "band separation (octaval)", 12.0, 12.0, 0.0, 36.0, DfxParam::Unit::Semitones);
-	initparameter_f(kSepAmount_Linear, "band separation (linear)", 1.0, 1.0, 0.0, 3.0, DfxParam::Unit::Scalar);  // % of center frequency
-	initparameter_list(kSepMode, "separation mode", kSeparationMode_Octaval, kSeparationMode_Octaval, kNumSeparationModes);
-	initparameter_b(kFoldover, "filter frequency aliasing", true, false);
-	initparameter_f(kEnvAttack, "attack", 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kEnvDecay, "decay", 30.0, 30.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kEnvSustain, "sustain", 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent, DfxParam::Curve::Cubed);
-	initparameter_f(kEnvRelease, "release", 300.0, 300.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_list(kFadeType, "envelope fades", DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_NumTypes);
-	initparameter_b(kLegato, "legato", false, false);
-//	initparameter_f(kVelocityInfluence, "velocity influence", 0.6, 1.0, 0.0, 1.0, DfxParam::Unit::Scalar);
-	initparameter_f(kVelocityInfluence, "velocity influence", 60.0, 100.0, 0.0, 100.0, DfxParam::Unit::Percent);
-	initparameter_f(kVelocityCurve, "velocity curve", 2.0, 1.0, 0.3, 3.0, DfxParam::Unit::Exponent);
-	initparameter_f(kPitchBendRange, "pitch bend range", 3.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
-	initparameter_list(kScaleMode, "filter response scaling mode", kScaleMode_RMS, kScaleMode_None, kNumScaleModes);
-	initparameter_f(kFilterOutputGain, "output gain", 1.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
-	initparameter_f(kBetweenGain, "between gain", 0.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
-	initparameter_f(kDryWetMix, "dry/wet mix", 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
-	initparameter_list(kDryWetMixMode, "dry/wet mix mode", kDryWetMixMode_EqualPower, kDryWetMixMode_Linear, kNumDryWetMixModes);
-	initparameter_b(kWiseAmp, "careful", true, true);
+	initparameter_f(kBandwidthAmount_Hz, {"bandwidth (Hz)", "BW Hz", "BWHz"}, 3.0, 3.0, 0.1, 300.0, DfxParam::Unit::Hz, DfxParam::Curve::Log);
+	initparameter_f(kBandwidthAmount_Q, {"bandwidth (Q)", "BW Q"}, 69.0, 30.0, 0.01, 500.0, DfxParam::Unit::Generic, DfxParam::Curve::Cubed);
+	initparameter_list(kBandwidthMode, {"bandwidth mode", "BWMode", "BWMd"}, kBandwidthMode_Q, kBandwidthMode_Q, kNumBandwidthModes);
+	initparameter_list(kResonAlgorithm, {"resonance algorithm", "ResAlg", "ResA"}, kResonAlg_2Pole2ZeroR, kResonAlg_2Pole2ZeroR, kNumResonAlgs);
+	initparameter_i(kNumBands, {"bands per note", "Bands", "Bnds"}, 1, 1, 1, kMaxBands, DfxParam::Unit::Generic);
+	initparameter_f(kSepAmount_Octaval, {"band separation (octaval)", "BandSpO", "BndSpO", "BdSO"}, 12.0, 12.0, 0.0, 36.0, DfxParam::Unit::Semitones);
+	initparameter_f(kSepAmount_Linear, {"band separation (linear)", "BandSpL", "BndSpL", "BdSL"}, 1.0, 1.0, 0.0, 3.0, DfxParam::Unit::Scalar);  // % of center frequency
+	initparameter_list(kSepMode, {"separation mode", "SepMode", "SepMod", "SpMd"}, kSeparationMode_Octaval, kSeparationMode_Octaval, kNumSeparationModes);
+	initparameter_b(kFoldover, {"filter frequency aliasing", "Alias"}, true, false);
+	initparameter_f(kEnvAttack, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kEnvDecay, {"decay", "Deca"}, 30.0, 30.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kEnvSustain, {"sustain", "Sustan"}, 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent, DfxParam::Curve::Cubed);
+	initparameter_f(kEnvRelease, dfx::MakeParameterNames(dfx::kParameterNames_Release), 300.0, 300.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_list(kFadeType, {"envelope fades", "EnvFade", "EnvFad", "EnvF"}, DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_NumTypes);
+	initparameter_b(kLegato, {"legato", "Lgto"}, false, false);
+	initparameter_f(kVelocityInfluence, dfx::MakeParameterNames(dfx::kParameterNames_VelocityInfluence), 60.0, 100.0, 0.0, 100.0, DfxParam::Unit::Percent);
+	initparameter_f(kVelocityCurve, {"velocity curve", "VelCurv", "VelCrv", "VelC"}, 2.0, 1.0, 0.3, 3.0, DfxParam::Unit::Exponent);
+	initparameter_f(kPitchBendRange, dfx::MakeParameterNames(dfx::kParameterNames_PitchBendRange), 3.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
+	initparameter_list(kScaleMode, {"filter response scaling mode", "GainMod", "GainMd", "GnMd"}, kScaleMode_RMS, kScaleMode_None, kNumScaleModes);
+	initparameter_f(kFilterOutputGain, {"output gain", "Level", "Levl"}, 1.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kBetweenGain, {"between gain", "BtwenGn", "BtwnGn", "Btwn"}, 0.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
+	initparameter_list(kDryWetMixMode, {"dry/wet mix mode", "DW Mode", "DWMode", "DWMd"}, kDryWetMixMode_EqualPower, kDryWetMixMode_Linear, kNumDryWetMixModes);
+	initparameter_b(kWiseAmp, {"careful", "Carefl", "Crfl"}, true, true);
 
 	setparametervaluestring(kBandwidthMode, kBandwidthMode_Hz, "Hz");
 	setparametervaluestring(kBandwidthMode, kBandwidthMode_Q, "Q");

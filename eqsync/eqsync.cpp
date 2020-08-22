@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of EQ Sync.
 
@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 
 #include "dfxmath.h"
+#include "dfxmisc.h"
 
 
 // this macro does boring entry point stuff for us
@@ -36,25 +37,25 @@ EQSync::EQSync(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 {
 	auto const numTempoRates = mTempoRateTable.getNumRates();
 	auto const unitTempoRateIndex = mTempoRateTable.getNearestTempoRateIndex(1.0f);
-	initparameter_list(kRate_Sync, "rate", unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
-	initparameter_f(kSmooth, "smooth", 3.0, 33.333, 0.0, 100.0, DfxParam::Unit::Percent);  // % of cycle
-	initparameter_f(kTempo, "tempo", 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
-	initparameter_b(kTempoAuto, "sync to host tempo", true, true);
+	initparameter_list(kRate_Sync, {"rate"}, unitTempoRateIndex, unitTempoRateIndex, numTempoRates, DfxParam::Unit::Beats);
+	initparameter_f(kSmooth, {"smooth", "Smth"}, 3.0, 33.333, 0.0, 100.0, DfxParam::Unit::Percent);  // % of cycle
+	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
+	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
 //	for (long i = kA0; i <= kB2; i++)
 	{
-//		initparameter_f(i, "", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+//		initparameter_f(i, {""}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
 	}
 	// okay, giving in and providing actual parameter names because Final Cut Pro folks say that it was causing problems...
-	initparameter_f(kA0, "a0", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
-	initparameter_f(kA1, "a1", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
-	initparameter_f(kA2, "a2", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
-	initparameter_f(kB1, "b1", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
-	initparameter_f(kB2, "b2", 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kA0, {"a0"}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kA1, {"a1"}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kA2, {"a2"}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kB1, {"b1"}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
+	initparameter_f(kB2, {"b2"}, 0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Generic);
 
 	// set the value strings for the sync rate parameters
 	for (long i = 0; i < numTempoRates; i++)
 	{
-		setparametervaluestring(kRate_Sync, i, mTempoRateTable.getDisplay(i).c_str());
+		setparametervaluestring(kRate_Sync, i, mTempoRateTable.getDisplay(i));
 	}
 
 	addparametergroup("coefficients", {kA0, kA1, kA2, kB1, kB2});
