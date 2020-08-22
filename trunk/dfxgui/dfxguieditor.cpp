@@ -177,13 +177,15 @@ bool DfxGuiEditor::open(void* inWindow)
 void DfxGuiEditor::close()
 {
 	mJustOpened = false;
+	mCurrentControl_mouseover = nullptr;
 
 #if TARGET_PLUGIN_USES_MIDI
-	// This uses the effect instance and forwards messages all around, so get this done
-	// before we invalidate anything...
+	mMidiLearnButton = mMidiResetButton = nullptr;
+	// call this before closing the editor and deleting the frame's controls, 
+	// since this can loop back a notification to the editor and MIDI learning control
 	setmidilearning(false);
 #endif
-	
+
 	CloseEditor();
 
 	frame->unregisterMouseObserver(this);
@@ -200,7 +202,7 @@ void DfxGuiEditor::close()
 	{
 		frame_temp->forget();
 	}
-	
+
 	TARGET_API_EDITOR_BASE_CLASS::close();
 }
 
