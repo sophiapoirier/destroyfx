@@ -128,6 +128,7 @@ bool DfxGuiEditor::open(void* inWindow)
 		return false;
 	}
 	frame->open(inWindow);
+	dfx::FramePostOpen(*frame);
 	frame->setBackground(GetBackgroundImage());
 	frame->enableTooltips(true);
 

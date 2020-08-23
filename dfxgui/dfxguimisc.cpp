@@ -36,8 +36,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#elif !__has_feature(objc_arc)
 		#error "you must compile this file with Automatic Reference Counting (ARC) enabled"
 	#endif
-	#import <AppKit/NSColor.h>
-	#import <AppKit/NSColorSpace.h>
+	#import <AppKit/AppKit.h>
+	#import "platform_macos.h"
 #endif
 
 char const* const dfx::kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
@@ -225,4 +225,23 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 	}
 
 	return resultText;
+}
+
+//-----------------------------------------------------------------------------
+void dfx::FramePostOpen(VSTGUI::CFrame& ioFrame)
+{
+	if (auto const cocoaFrame = dynamic_cast<VSTGUI::ICocoaPlatformFrame*>(ioFrame.getPlatformFrame()))
+	{
+		auto const processInfo = [NSProcessInfo processInfo];
+		if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
+		{
+			auto const systemVersion = processInfo.operatingSystemVersion;
+			if ((systemVersion.majorVersion == 10) && (systemVersion.minorVersion == 15))
+			{
+				// workaround for macOS 10.15 bug causing aliased text to render doubled/smeared
+				// https://github.com/steinbergmedia/vstgui/issues/141
+				cocoaFrame->getNSView().layer.drawsAsynchronously = NO;
+			}
+		}
+	}
 }
