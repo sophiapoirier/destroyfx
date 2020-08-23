@@ -230,6 +230,7 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 //-----------------------------------------------------------------------------
 void dfx::FramePostOpen(VSTGUI::CFrame& ioFrame)
 {
+#if TARGET_OS_MAC
 	if (auto const cocoaFrame = dynamic_cast<VSTGUI::ICocoaPlatformFrame*>(ioFrame.getPlatformFrame()))
 	{
 		auto const processInfo = [NSProcessInfo processInfo];
@@ -244,4 +245,5 @@ void dfx::FramePostOpen(VSTGUI::CFrame& ioFrame)
 			}
 		}
 	}
+#endif
 }
