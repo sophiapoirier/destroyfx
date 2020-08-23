@@ -70,7 +70,7 @@ constexpr float kUnusedControlAlpha = 0.45f;
 
 
 //-----------------------------------------------------------------------------
-int GetMacOSVersion()
+static int GetMacOSVersion()
 {
 #if TARGET_OS_MAC
 	// TODO: use [[NSProcessInfo processInfo] operatingSystemVersion]
