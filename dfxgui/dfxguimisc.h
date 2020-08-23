@@ -223,4 +223,7 @@ extern char const* const kPlusMinusUTF8;
 
 std::string SanitizeNumericalInput(std::string const& inText);
 
+// perform some platform fixups after opening a CFrame instance
+void FramePostOpen(VSTGUI::CFrame& ioFrame);
+
 }  // namespace dfx
