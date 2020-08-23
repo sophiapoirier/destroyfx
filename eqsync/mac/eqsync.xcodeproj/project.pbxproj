@@ -28,19 +28,13 @@
 		4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */; };
 		4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E8068011C9006A9591 /* dfxguislider.cpp */; };
 		4998C16907E50BC0008EBD90 /* destroy-fx-link-tab-panther.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C15807E50BC0008EBD90 /* destroy-fx-link-tab-panther.png */; };
-		4998C16A07E50BC0008EBD90 /* destroy-fx-link-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C15907E50BC0008EBD90 /* destroy-fx-link-tab.png */; };
 		4998C16B07E50BC0008EBD90 /* eq-sync-background-panther.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C15A07E50BC0008EBD90 /* eq-sync-background-panther.png */; };
-		4998C16C07E50BC0008EBD90 /* eq-sync-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C15B07E50BC0008EBD90 /* eq-sync-background.png */; };
 		4998C16D07E50BC0008EBD90 /* help-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C15C07E50BC0008EBD90 /* help-button.png */; };
 		4998C16E07E50BC0008EBD90 /* horizontal-slider-background-panther.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C15D07E50BC0008EBD90 /* horizontal-slider-background-panther.png */; };
-		4998C16F07E50BC0008EBD90 /* horizontal-slider-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C15E07E50BC0008EBD90 /* horizontal-slider-background.png */; };
 		4998C17107E50BC0008EBD90 /* host-sync-button-panther.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C16007E50BC0008EBD90 /* host-sync-button-panther.png */; };
 		4998C17207E50BC0008EBD90 /* slider-handle-clicked-panther.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C16107E50BC0008EBD90 /* slider-handle-clicked-panther.png */; };
-		4998C17307E50BC0008EBD90 /* slider-handle-clicked.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C16207E50BC0008EBD90 /* slider-handle-clicked.png */; };
 		4998C17407E50BC0008EBD90 /* slider-handle-panther.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C16307E50BC0008EBD90 /* slider-handle-panther.png */; };
-		4998C17507E50BC0008EBD90 /* slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C16407E50BC0008EBD90 /* slider-handle.png */; };
 		4998C17707E50BC0008EBD90 /* vertical-slider-background-panther.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C16607E50BC0008EBD90 /* vertical-slider-background-panther.png */; };
-		4998C17807E50BC0008EBD90 /* vertical-slider-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C16707E50BC0008EBD90 /* vertical-slider-background.png */; };
 		4998C19107E50D4E008EBD90 /* eqsync.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C18E07E50D4E008EBD90 /* eqsync.cpp */; };
 		4998C19607E50D65008EBD90 /* eqsynceditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4998C19407E50D65008EBD90 /* eqsynceditor.cpp */; };
 		B025B92308AD2D3400A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B92008AD2D3400A9CCAE /* CAVectorUnit.cpp */; };
@@ -485,19 +479,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				4998C16907E50BC0008EBD90 /* destroy-fx-link-tab-panther.png in Resources */,
-				4998C16A07E50BC0008EBD90 /* destroy-fx-link-tab.png in Resources */,
 				4998C16B07E50BC0008EBD90 /* eq-sync-background-panther.png in Resources */,
-				4998C16C07E50BC0008EBD90 /* eq-sync-background.png in Resources */,
 				4998C16D07E50BC0008EBD90 /* help-button.png in Resources */,
 				4998C16E07E50BC0008EBD90 /* horizontal-slider-background-panther.png in Resources */,
-				4998C16F07E50BC0008EBD90 /* horizontal-slider-background.png in Resources */,
 				4998C17107E50BC0008EBD90 /* host-sync-button-panther.png in Resources */,
 				4998C17207E50BC0008EBD90 /* slider-handle-clicked-panther.png in Resources */,
-				4998C17307E50BC0008EBD90 /* slider-handle-clicked.png in Resources */,
 				4998C17407E50BC0008EBD90 /* slider-handle-panther.png in Resources */,
-				4998C17507E50BC0008EBD90 /* slider-handle.png in Resources */,
 				4998C17707E50BC0008EBD90 /* vertical-slider-background-panther.png in Resources */,
-				4998C17807E50BC0008EBD90 /* vertical-slider-background.png in Resources */,
 				B0AD80E20D0F316F00766C78 /* destroyfx.icns in Resources */,
 				ECC4311A102F5111000B05A1 /* dfx-au-utilities.strings in Resources */,
 			);
