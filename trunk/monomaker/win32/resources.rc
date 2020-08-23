@@ -1,0 +1,10 @@
+
+background.png  PNG DISCARDABLE  "..\\gui\\graphics\\background.png"
+destroy-fx-link.png  PNG DISCARDABLE  "..\\gui\\graphics\\destroy-fx-link.png"
+input-selection-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\input-selection-button.png"
+monomerge-blobs.png  PNG DISCARDABLE  "..\\gui\\graphics\\monomerge-blobs.png"
+monomerge-mode-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\monomerge-mode-button.png"
+pan-blobs.png  PNG DISCARDABLE  "..\\gui\\graphics\\pan-blobs.png"
+pan-mode-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\pan-mode-button.png"
+slider-handle.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle.png"
+
