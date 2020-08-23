@@ -33,6 +33,7 @@ Featuring the Super Destroy FX Windowing System!
 #include <cmath>
 #include <numeric>
 #include <string>
+#include <mutex>
 
 #include "dfxmath.h"
 
