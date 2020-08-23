@@ -21,11 +21,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "eqsynceditor.h"
 
-#include "dfx-au-utilities.h"
 #include "dfxmisc.h"
 #include "eqsync.h"
 #include "temporatetable.h"
 
+#ifdef TARGET_API_AUDIOUNIT
+#include "dfx-au-utilities.h"
+#endif
 
 //-----------------------------------------------------------------------------
 enum
@@ -46,7 +48,12 @@ enum
 	kDisplayOffsetX = 212,
 	kDisplayOffsetY = 2,
 	kDisplayWidth = 81,
-	kDisplayHeight = 12,
+	kDisplayHeight =
+	#if TARGET_OS_WIN32
+	16,
+	#else
+	12,
+	#endif
 
 	kHostSyncButtonX = 53,
 	kHostSyncButtonY = 164,

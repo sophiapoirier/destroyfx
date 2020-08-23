@@ -1,0 +1,17 @@
+
+// XXX Seems many of these are unused...
+
+destroy-fx-link-tab-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\destroy-fx-link-tab-panther.png"
+destroy-fx-link-tab.png  PNG DISCARDABLE  "..\\gui\\graphics\\destroy-fx-link-tab.png"
+eq-sync-background-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\eq-sync-background-panther.png"
+eq-sync-background.png  PNG DISCARDABLE  "..\\gui\\graphics\\eq-sync-background.png"
+help-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\help-button.png"
+horizontal-slider-background-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\horizontal-slider-background-panther.png"
+horizontal-slider-background.png  PNG DISCARDABLE  "..\\gui\\graphics\\horizontal-slider-background.png"
+host-sync-button-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\host-sync-button-panther.png"
+slider-handle-clicked-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-clicked-panther.png"
+slider-handle-clicked.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-clicked.png"
+slider-handle-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-panther.png"
+slider-handle.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle.png"
+vertical-slider-background-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\vertical-slider-background-panther.png"
+vertical-slider-background.png  PNG DISCARDABLE  "..\\gui\\graphics\\vertical-slider-background.png"
