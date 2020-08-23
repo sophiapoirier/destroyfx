@@ -142,7 +142,6 @@
 		4998C24A07E524F4008EBD90 /* destroy-fx-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "destroy-fx-link.png"; sourceTree = "<group>"; };
 		4998C24B07E524F4008EBD90 /* fine-tune-down-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fine-tune-down-button.png"; sourceTree = "<group>"; };
 		4998C24C07E524F4008EBD90 /* fine-tune-up-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fine-tune-up-button.png"; sourceTree = "<group>"; };
-		4998C24D07E524F4008EBD90 /* geometer-background-short.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "geometer-background-short.png"; sourceTree = "<group>"; };
 		4998C24E07E524F4008EBD90 /* geometer-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "geometer-background.png"; sourceTree = "<group>"; };
 		4998C24F07E524F4008EBD90 /* help-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "help-background.png"; sourceTree = "<group>"; };
 		4998C25007E524F4008EBD90 /* help-general.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "help-general.png"; sourceTree = "<group>"; };
@@ -322,7 +321,6 @@
 				4998C25707E524F4008EBD90 /* midi-reset-button.png */,
 				4998C24A07E524F4008EBD90 /* destroy-fx-link.png */,
 				4998C25E07E524F4008EBD90 /* smart-electronix-link.png */,
-				4998C24D07E524F4008EBD90 /* geometer-background-short.png */,
 			);
 			name = graphics;
 			path = ../gui/graphics;
