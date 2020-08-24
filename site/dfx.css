@@ -59,6 +59,25 @@ div.infobox > p:last-child {
 }
 
 
+/* begin maybe-stoopid CSS copied from old site */
+p.rel {
+  font-weight: bold;
+  text-align: right;
+}
+
+a.plain {
+  color: inherit;
+  text-decoration: inherit;
+  font-weight: inherit;
+}
+a.plain:hover {
+  text-decoration: underline;
+}
+
+.hidden {}
+/* end maybe-stoopid CSS copied from old site */
+
+
 img.centered {
   display: block;
   margin-left: auto;
