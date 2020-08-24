@@ -411,7 +411,9 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 	// array[N] is out of range, so we call vst_strncpy in these cases passing N-1 as max length
 	vst_strncpy(properties->label, getparametername(index).c_str(), kVstMaxLabelLen - 1);
 
-	auto const shortName = getparametername(index, static_cast<size_t>(kVstMaxShortLabelLen - 1));
+	constexpr size_t recommendedShortLabelLength = 6;  // per the VST header comment
+	static_assert(recommendedShortLabelLength < kVstMaxShortLabelLen);
+	auto const shortName = getparametername(index, recommendedShortLabelLength);
 	vst_strncpy(properties->shortLabel, shortName.c_str(), kVstMaxShortLabelLen - 1);
 
 	auto const isVisible = [this](long parameterID)
