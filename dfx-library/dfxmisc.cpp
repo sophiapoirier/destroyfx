@@ -28,6 +28,9 @@ These are some generally useful functions.
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>
+#include <functional>
+#include <locale>
 #include <stdio.h>
 #include <string.h>
 #include <string_view>
@@ -194,7 +197,7 @@ bool LaunchDocumentation()
 	auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 	if (pluginBundleRef)
 	{
-		CFStringRef const docsFileName = CFSTR(PLUGIN_NAME_STRING " manual.html");
+		CFStringRef docsFileName = CFSTR(PLUGIN_NAME_STRING " manual.html");
 	#ifdef PLUGIN_DOCUMENTATION_FILE_NAME
 		docsFileName = CFSTR(PLUGIN_DOCUMENTATION_FILE_NAME);
 	#endif
@@ -258,7 +261,23 @@ bool LaunchDocumentation()
 		}
 	}
 #else
-	#warning "implementation missing"
+	// XXX this will load latest docs on our website which may not match the version of the running software
+	// TODO: embed the documentation into Windows builds somehow?
+	std::string docsFileName(PLUGIN_NAME_STRING ".html");
+	using CharT = std::string::value_type;
+	auto const toLower = std::bind(std::tolower<CharT>, std::placeholders::_1, std::locale::classic());
+	std::transform(docsFileName.cbegin(), docsFileName.cend(), docsFileName.begin(), toLower);
+	while (true)
+	{
+		auto const isSpace = std::bind(std::isspace<CharT>, std::placeholders::_1, std::locale::classic());
+		auto const foundCharacter = std::find_if(docsFileName.begin(), docsFileName.end(), isSpace);
+		if (foundCharacter == docsFileName.end())
+		{
+			break;
+		}
+		docsFileName.erase(foundCharacter);
+	}
+	return LaunchURL(DESTROYFX_URL "/docs/" + docsFileName);
 #endif  // TARGET_OS_MAC
 
 	return false;
