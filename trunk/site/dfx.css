@@ -58,6 +58,15 @@ div.infobox > p:last-child {
   margin-bottom: 0;
 }
 
+/* Two-column layout for e.g. plugin */
+div.twocolumn {
+  display: flex;
+}
+div.twocolumn > div:first-child {
+  min-width: 110px;
+  width: 110px;
+}
+
 
 /* begin maybe-stoopid CSS copied from old site */
 p.rel {
