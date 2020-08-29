@@ -389,6 +389,26 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
 
   /////////////   T O M S O U N D   //////////////
   else {
+    // the essense of TOMSOUND comes from the error that Tom made 
+    // of putting the channels loop within the samples loop, 
+    // rather than the other way around; the result is that the 
+    // writer and readers get incremented for each channel on each 
+    // sample frame, i.e. doubly incremented, hence the double r/w 
+    // incrementing in this single-channel emulation of TOMSOUND
+    constexpr int tomsoundMultiple = 2;
+    constexpr auto tomsoundMultiple_float = (double)tomsoundMultiple;
+
+    // If a speed value is very near but not quite a whole number,
+    // and if the buffer size is an even number of samples,
+    // it is possible for that small variance to accumulate in the
+    // read position until the read head is consistently reading
+    // odd-number buffer samples while the write head is (due to
+    // the even-size buffer size) only writing into even-number
+    // buffer sample position, resulting in reading only silence.
+    // This workaround forces the writer to always wrap to an
+    // odd value of buffer size (rounding down, for bounds safety)
+    // regardless of the actual buffer size.
+    auto const bsizeWriteWrap = bsize - ((bsize % tomsoundMultiple) ? 0 : 1);
 
     for(unsigned long j = 0; j < numSampleFrames; j++) {
 //      for(int i = 0; i < numChannels; i++) {
@@ -418,19 +438,14 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
 
     /* update rw heads */
 //    writer += writerIncrement;
-    writer += (writerIncrement * 2);
-    writer %= bsize;
+    writer += (writerIncrement * tomsoundMultiple);
+    if (writer >= bsize)
+      writer %= bsizeWriteWrap;
 
 //    read1 += speed1.getValue();
 //    read2 += speed2.getValue();
-    // the essense of TOMSOUND comes from the error that Tom made 
-    // of putting the channels loop within the samples loop, 
-    // rather than the other way around; the result is that the 
-    // writer and readers get incremented for each channel on each 
-    // sample frame, i.e. doubly incremented, hence the double 
-    // incrementing below in this single-channel emulation of TOMSOUND
-    read1 += speed1.getValue() * 2.0;
-    read2 += speed2.getValue() * 2.0;
+    read1 += speed1.getValue() * tomsoundMultiple_float;
+    read2 += speed2.getValue() * tomsoundMultiple_float;
 
     if (read1 >= bsize_float)
       read1 = std::fmod(std::fabs(read1), bsize_float);
