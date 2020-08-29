@@ -578,15 +578,17 @@ public:
 	unsigned long getnuminputs();
 	// return the number of audio outputs
 	unsigned long getnumoutputs();
+	// whether the input and output channel counts do not match
+	bool asymmetricalchannels();
+
+	// the maximum number of audio frames to render each cycle
+	unsigned long getmaxframes();
 
 	// get the TimeInfo struct with the latest time info values
 	TimeInfo const& gettimeinfo() const noexcept
 	{
 		return mTimeInfo;
 	}
-
-	// add an audio input/output configuration to the array of i/o configurations
-	void addchannelconfig(short inNumInputChannels, short inNumOutputChannels);
 
 	void setlatency_samples(long inSamples);
 	void setlatency_seconds(double inSeconds);
@@ -702,6 +704,45 @@ public:
 
 
 protected:
+#ifdef TARGET_API_AUDIOUNIT
+	// it aids implementation of the supported channels AU API to use its existing type
+	using ChannelConfig = AUChannelInfo;
+#else
+	// imitate AUChannelInfo from the Audio Unit API for other APIs
+	struct ChannelConfig
+	{
+		short inChannels = 0;
+		short outChannels = 0;
+		bool operator==(ChannelConfig const& other) const noexcept
+		{
+			return (inChannels == other.inChannels) && (outChannels == other.outChannels);
+		}
+	};
+#endif
+	static constexpr short kChannelConfigCount_Any = -1;
+	static constexpr ChannelConfig kChannelConfig_AnyMatchedIO = {kChannelConfigCount_Any, kChannelConfigCount_Any};  // N-in/N-out
+	static constexpr ChannelConfig kChannelConfig_AnyInAnyOut = {kChannelConfigCount_Any, -2};  // M-in/N-out
+
+	// add a supported audio channel input/output configuration
+	// (must be completed during plugin constructor)
+	void addchannelconfig(short inNumInputs, short inNumOutputs);
+	void addchannelconfig(ChannelConfig inChannelConfig);
+
+	auto sampleRateChanged() const noexcept
+	{
+		return mSampleRateChanged;
+	}
+	auto hostCanDoTempo() const noexcept
+	{
+		return mHostCanDoTempo;
+	}
+
+#if TARGET_PLUGIN_USES_DSPCORE
+	// Call this during initialization (e.g. at the end of the constructor of
+	// the derived class, giving the derived DSPCORE class as the template argument.
+	template<class DSP> void initCores();
+#endif
+
 #if TARGET_PLUGIN_USES_MIDI
 	DfxMidi& getmidistate() noexcept
 	{
@@ -720,33 +761,15 @@ protected:
 		return *mDfxSettings;
 	}
 #endif
-	auto sampleRateChanged() const noexcept
-	{
-		return mSampleRateChanged;
-	}
-	auto hostCanDoTempo() const noexcept
-	{
-		return mHostCanDoTempo;
-	}
 
 
 private:
-#ifdef TARGET_API_AUDIOUNIT
-	// the Audio Unit API already has an i/o configurations structure
-	using ChannelConfig = AUChannelInfo;
-#else
-	// imitate AUChannelInfo from the Audio Unit API for other APIs
-	struct ChannelConfig
-	{
-		short inChannels = 0;
-		short outChannels = 0;
-	};
-#endif
-
 	// synchronize the underlying API/preset/etc. parameter value representation to the current value in DfxPlugin 
 	void update_parameter(long inParameterIndex);
 
 	std::optional<size_t> getparametergroup(long inParameterIndex) const;
+
+	bool ischannelcountsupported(unsigned long inNumInputs, unsigned long inNumOutputs) const;
 
 	std::vector<DfxParam> mParameters;
 	std::vector<bool> mParametersChangedAsOfPreProcess, mParametersTouchedAsOfPreProcess;
@@ -755,7 +778,7 @@ private:
 	std::vector<DfxPreset> mPresets;
 	std::atomic_flag mPresetChangedInProcessHasPosted;
 
-	std::vector<ChannelConfig> mChannelconfigs;
+	std::vector<ChannelConfig> mChannelConfigs;
 
 	TimeInfo mTimeInfo;
 	bool mHostCanDoTempo = false;
@@ -774,14 +797,14 @@ private:
 
 	long mCurrentPresetNum = 0;
 
-#if TARGET_PLUGIN_USES_DSPCORE && !defined(TARGET_API_AUDIOUNIT)
-	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to handle this ourselves because VST can't
+#if TARGET_PLUGIN_USES_DSPCORE
+#ifdef TARGET_API_AUDIOUNIT
+	AUBufferList mAsymmetricalInputBufferList;
+#else
+	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to manage this ourselves outside of the AU SDK
+	std::vector<float> mAsymmetricalInputAudioBuffer;
 #endif
-protected:
-	// Call this during initialization (e.g. at the end of the constructor of
-	// the derived class, giving the derived DSPCORE class as the template argument.
-	template<class DSP> void initCores();
-private:
+#endif
 
 #ifdef TARGET_API_AUDIOUNIT
 	bool mAUElementsHaveBeenCreated = false;
@@ -1204,24 +1227,6 @@ public:
 		mDfxPlugin->incrementSmoothedAudioValues(this);
 	}
 
-
-#ifndef TARGET_API_AUDIOUNIT
-	// Mimic what AUKernelBase does here. The channel is just the index
-	// in the mDSPCores vector.
-private:
-	unsigned long mChannelNumber = 0;
-public:
-	void SetChannelNum(uint32_t inChan) noexcept { mChannelNumber = inChan; }
-	uint32_t GetChannelNum() const noexcept { return mChannelNumber; }
-#endif
-
-
-private:
-	DfxPlugin* const mDfxPlugin;
-
-
-public:
-
 #ifdef TARGET_API_AUDIOUNIT
 	void Process(Float32 const* in, Float32* out, UInt32 inNumFrames, UInt32 inNumChannels, bool& ioSilence) override
 	{
@@ -1232,8 +1237,20 @@ public:
 	{
 		do_reset();
 	}
+#else
+	// Mimic what AUKernelBase does here. The channel is just the index
+	// in the mDSPCores vector.
+	void SetChannelNum(uint32_t inChan) noexcept { mChannelNumber = inChan; }
+	uint32_t GetChannelNum() const noexcept { return mChannelNumber; }
 #endif
 
+
+private:
+	DfxPlugin* const mDfxPlugin;
+
+#ifndef TARGET_API_AUDIOUNIT
+	unsigned long mChannelNumber = 0;
+#endif
 };
 #endif  // TARGET_PLUGIN_USES_DSPCORE
 

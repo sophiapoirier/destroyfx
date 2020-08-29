@@ -540,7 +540,16 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 #if TARGET_PLUGIN_USES_DSPCORE
 			if (mDSPCores[channel])
 			{
-				mDSPCores[channel]->process(inAudioStreams[channel], outAudioStreams[channel], (unsigned)inNumFramesToProcess);
+				auto inputAudio = inAudioStreams[channel];
+				if (asymmetricalchannels())
+				{
+					if (channel == 0)
+					{
+						std::copy_n(inAudioStreams[channel], sampleFrames, mAsymmetricalInputAudioBuffer.data());
+					}
+					inputAudio = mAsymmetricalInputAudioBuffer.data();
+				}
+				mDSPCores[channel]->process(inputAudio, outAudioStreams[channel], (unsigned)inNumFramesToProcess);
 			}
 #endif
 		}

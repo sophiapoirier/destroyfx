@@ -187,8 +187,17 @@ DfxPlugin::DfxPlugin(
 	mMidiLearnerChangedInProcessHasPosted.test_and_set();
 #endif
 
+#if defined(TARGET_API_AUDIOUNIT) && !TARGET_PLUGIN_IS_INSTRUMENT
+	SetProcessesInPlace(true);  // XXX why the default AUEffectBase constructor argument is not applied?
+#endif
 
 #ifdef TARGET_API_VST
+	#if TARGET_PLUGIN_IS_INSTRUMENT
+	static_assert(VST_NUM_INPUTS >= 0);
+	#else
+	static_assert(VST_NUM_INPUTS > 0);
+	#endif
+	static_assert(VST_NUM_OUTPUTS > 0);
 	mNumInputs = VST_NUM_INPUTS;
 	mNumOutputs = VST_NUM_OUTPUTS;
 
@@ -250,6 +259,11 @@ void DfxPlugin::do_PostConstructor()
 	dfx_PostConstructor();
 
 	DFX_RegisterIdleClient(this);
+
+#ifdef TARGET_API_VST
+	// all supported channel configurations should have been added by now
+	assert(ischannelcountsupported(getnuminputs(), getnumoutputs()));
+#endif
 }
 
 
@@ -292,6 +306,16 @@ long DfxPlugin::do_initialize()
 	{
 		mParameters[i].setchanged(true);
 	}
+
+	if (asymmetricalchannels())
+	{
+		assert(getnumoutputs() > getnuminputs());  // the only imbalance we support with DSP cores
+	#ifdef TARGET_API_AUDIOUNIT
+		mAsymmetricalInputBufferList.Allocate(GetStreamFormat(kAudioUnitScope_Output, 0), getmaxframes());
+	#else
+		mAsymmetricalInputAudioBuffer.assign(getmaxframes(), 0.0f);
+	#endif
+	}
 #endif
 
 	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), 
@@ -318,6 +342,14 @@ void DfxPlugin::do_cleanup()
 #endif
 
 	releasebuffers();
+
+#if TARGET_PLUGIN_USES_DSPCORE
+	#ifdef TARGET_API_AUDIOUNIT
+	mAsymmetricalInputBufferList.Deallocate();
+	#else
+	mAsymmetricalInputAudioBuffer.clear();
+	#endif
+#endif
 
 #ifdef TARGET_API_AUDIOUNIT
 	mInputAudioStreams_au.clear();
@@ -1243,13 +1275,104 @@ unsigned long DfxPlugin::getnumoutputs()
 }
 
 //-----------------------------------------------------------------------------
-// add an audio input/output configuration to the array of i/o configurations
-void DfxPlugin::addchannelconfig(short inNumInputChannels, short inNumOutputChannels)
+bool DfxPlugin::asymmetricalchannels()
+{
+	return getnuminputs() != getnumoutputs();
+}
+
+//-----------------------------------------------------------------------------
+unsigned long DfxPlugin::getmaxframes()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	return GetMaxFramesPerSlice();
+#endif
+
+#ifdef TARGET_API_VST
+	return static_cast<unsigned long>(getBlockSize());
+#endif
+
+#ifdef TARGET_API_RTAS
+	return static_cast<unsigned long>(GetMaximumRTASQuantum());
+#endif
+}
+
+#ifdef TARGET_API_AUDIOUNIT
+//-----------------------------------------------------------------------------
+static bool operator==(AUChannelInfo const& a, AUChannelInfo const& b) noexcept
+{
+	return (a.inChannels == b.inChannels) && (a.outChannels == b.outChannels);
+}
+#endif
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::addchannelconfig(short inNumInputs, short inNumOutputs)
 {
 	ChannelConfig channelConfig;
-	channelConfig.inChannels = inNumInputChannels;
-	channelConfig.outChannels = inNumOutputChannels;
-	mChannelconfigs.push_back(channelConfig);
+	channelConfig.inChannels = inNumInputs;
+	channelConfig.outChannels = inNumOutputs;
+	addchannelconfig(channelConfig);
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::addchannelconfig(ChannelConfig inChannelConfig)
+{
+	assert(std::find(mChannelConfigs.cbegin(), mChannelConfigs.cend(), inChannelConfig) == mChannelConfigs.cend());
+	assert((inChannelConfig == kChannelConfig_AnyInAnyOut) || ((inChannelConfig.inChannels >= kChannelConfigCount_Any) && (inChannelConfig.outChannels >= kChannelConfigCount_Any)));
+#if TARGET_PLUGIN_USES_DSPCORE
+	assert((inChannelConfig.inChannels == inChannelConfig.outChannels) || (inChannelConfig.inChannels == 1));
+#endif
+
+	mChannelConfigs.push_back(inChannelConfig);
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::ischannelcountsupported(unsigned long inNumInputs, unsigned long inNumOutputs) const
+{
+	if (mChannelConfigs.empty())
+	{
+#if TARGET_PLUGIN_IS_INSTRUMENT
+		return true;  // TODO: this had been our logic in Initialize(), but is it correct?
+#else
+		return (inNumInputs == inNumOutputs);
+#endif
+	}
+
+	for (auto const channelConfig : mChannelConfigs)
+	{
+		auto const configNumInputs = channelConfig.inChannels;
+		auto const configNumOutputs = channelConfig.outChannels;
+		// handle the special "wildcard" cases indicated by negative channel count values
+		if ((configNumInputs < 0) && (configNumOutputs < 0))
+		{
+			// test if any number of inputs and outputs is allowed
+			if (channelConfig == kChannelConfig_AnyInAnyOut)
+			{
+				return true;
+			}
+			// test if any number of ins and outs are allowed, as long as they are equal
+			if ((channelConfig == kChannelConfig_AnyMatchedIO) && (inNumInputs == inNumOutputs))
+			{
+				return true;
+			}
+			// any other pair of negative values is illegal
+			assert(channelConfig == kChannelConfig_AnyMatchedIO);
+		}
+		// handle literal channel count values (and maybe a wildcard on one of the scopes)
+		else
+		{
+			assert((configNumInputs >= 0) || (configNumInputs == kChannelConfigCount_Any));
+			assert((configNumOutputs >= 0) || (configNumOutputs == kChannelConfigCount_Any));
+			bool const inputMatch = (configNumInputs == kChannelConfigCount_Any) || (inNumInputs == static_cast<unsigned long>(configNumInputs));
+			bool const outputMatch = (configNumOutputs == kChannelConfigCount_Any) || (inNumOutputs == static_cast<unsigned long>(configNumOutputs));
+			// if input and output are both allowed in this I/O pair description, then we found a match
+			if (inputMatch && outputMatch)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
