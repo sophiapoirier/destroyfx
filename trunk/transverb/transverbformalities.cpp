@@ -120,7 +120,6 @@ void TransverbDSP::reset() {
   filter1.reset();
   filter2.reset();
   speed1hasChanged = speed2hasChanged = true;
-  tomsound_sampoffset = GetChannelNum();
 
   filter1.setSampleRate(getsamplerate());
   filter2.setSampleRate(getsamplerate());
@@ -205,31 +204,6 @@ void TransverbDSP::processparameters() {
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
     speed1hasChanged = speed2hasChanged = true;
-
-  // XXX is this necessary to get "true" TOMSOUND?
-  if (getparameterchanged(kTomsound))
-  {
-    // if TOMSOUND was just activated, set up the channel offset error
-    if (tomsound)
-    {
-      writer += tomsound_sampoffset;
-      writer %= bsize;
-      read1 += speed1.getValue() * (double)tomsound_sampoffset;
-      read2 += speed2.getValue() * (double)tomsound_sampoffset;
-      read1 = std::fmod(std::fabs(read1), (double)bsize);
-      read2 = std::fmod(std::fabs(read2), (double)bsize);
-    }
-    // otherwise remove the channel offset error (unless everything's initialized)
-    else if ((writer != 0) || (read1 != 0.0) || (read2 != 0.0))
-    {
-      writer -= tomsound_sampoffset;
-      writer = (writer+bsize) % bsize;
-      read1 -= speed1.getValue() * (double)tomsound_sampoffset;
-      read2 -= speed2.getValue() * (double)tomsound_sampoffset;
-      read1 = std::fmod(std::fabs(read1), (double)bsize);
-      read2 = std::fmod(std::fabs(read2), (double)bsize);
-    }
-  }
 }
 
 

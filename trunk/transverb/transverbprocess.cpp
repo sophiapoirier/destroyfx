@@ -37,7 +37,6 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
   auto const bsize_float = (double)bsize;  // cut down on casting
   auto const freeze = getparameter_b(kFreeze);
   int const writerIncrement = freeze ? 0 : 1;
-  tomsound_sampoffset = GetChannelNum();
 
 
   /////////////   S O P H I A S O U N D   //////////////
