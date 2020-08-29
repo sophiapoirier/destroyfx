@@ -115,8 +115,6 @@ TransverbDSP::TransverbDSP(DfxPlugin* inDfxPlugin)
 
 void TransverbDSP::reset() {
 
-  writer = 0;
-  read1 = read2 = 0.0;
   smoothcount1 = smoothcount2 = 0;
   lastr1val = lastr2val = 0.0f;
   filter1.reset();
