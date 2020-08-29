@@ -485,11 +485,20 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 	preprocessaudio();
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	for (unsigned long i = 0; i < getnumoutputs(); i++)
+	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
 	{
-		if (mDSPCores[i])
+		if (mDSPCores[ch])
 		{
-			mDSPCores[i]->process(inputs[i], outputs[i], static_cast<unsigned long>(sampleFrames));
+			auto inputAudio = inputs[ch];
+			if (asymmetricalchannels())
+			{
+				if (ch == 0)
+				{
+					std::copy_n(inputs[ch], sampleFrames, mAsymmetricalInputAudioBuffer.data());
+				}
+				inputAudio = mAsymmetricalInputAudioBuffer.data();
+			}
+			mDSPCores[ch]->process(inputAudio, outputs[ch], static_cast<unsigned long>(sampleFrames));
 		}
 	}
 #else

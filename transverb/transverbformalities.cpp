@@ -76,6 +76,9 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setpresetname(0, PLUGIN_NAME_STRING);  // default preset name
   initPresets();
 
+  addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out
+  addchannelconfig(1, kNumDelays);  // mono-input / per-head-output
+
   speedModeStates.fill(kSpeedMode_Fine);
 
 #if TARGET_PLUGIN_USES_DSPCORE
@@ -204,6 +207,15 @@ void TransverbDSP::processparameters() {
 
   if (getparameterchanged(kQuality) || getparameterchanged(kTomsound))
     speed1hasChanged = speed2hasChanged = true;
+
+  // stereo-split-heads mode (head 1 goes to left output and 2 to right)
+  if (getplugin()->asymmetricalchannels())
+  {
+    if (GetChannelNum() == 0)
+      mix2.setValueNow(getparametermin_f(kMix2));
+    else if (GetChannelNum() == 1)
+      mix1.setValueNow(getparametermin_f(kMix1));
+  }
 }
 
 
