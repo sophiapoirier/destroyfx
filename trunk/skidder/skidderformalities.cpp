@@ -71,7 +71,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	mNoteTable.fill(0);
 
-	addchannelconfig(-1, -1);  // N-in/N-out
+	addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out
 	addchannelconfig(1, 2);  // 1-in/2-out
 
 	// give mCurrentTempoBPS a value in case that's useful for a freshly opened GUI
