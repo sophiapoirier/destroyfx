@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -232,14 +232,16 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       outAudio[i] = (inAudio[i] * drymix.getValue()) + (r1val * mix1.getValue()) + (r2val * mix2.getValue());
 
       /* start smoothing stuff if the writer has 
-         passed a reader or vice versa.
+         passed a reader or vice versa, though not
+         if reader and writer move at the same speed
            (check the positions before wrapping around the heads)
       */
 
-      if (((read1int < writer) && 
-           (((int)(read1 + speed1.getValue())) >= (writer + 1))) || 
-          ((read1int >= writer) && 
-           (((int)(read1 + speed1.getValue())) <= (writer + 1)))) {
+      if ((((read1int < writer) && 
+            (((int)(read1 + speed1.getValue())) >= (writer + 1))) || 
+           ((read1int >= writer) && 
+            (((int)(read1 + speed1.getValue())) <= (writer + 1)))) &&
+          speed1.getValue() != 1.0f) {
       /* check because, at slow speeds, 
       it's possible to go into this twice or more in a row */
         if (smoothcount1 <= 0) {
@@ -255,10 +257,11 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       }
 
       // head 2 smoothing stuff
-      if (((read2int < writer) && 
-           (((int)(read2 + speed2.getValue())) >= (writer + 1))) || 
-          ((read2int >= writer) && 
-           (((int)(read2 + speed2.getValue())) <= (writer + 1)))) {
+      if ((((read2int < writer) && 
+            (((int)(read2 + speed2.getValue())) >= (writer + 1))) || 
+           ((read2int >= writer) && 
+            (((int)(read2 + speed2.getValue())) <= (writer + 1)))) &&
+          speed2.getValue() != 1.0f) {
         if (smoothcount2 <= 0) {
           // store the most recent output as the channel 2 smoothing sample
           lastr2val = r2val;
