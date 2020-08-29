@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Geometer.
 
@@ -126,4 +126,4 @@ struct GeometerViewData {
   }
 };
 
-static_assert(std::is_trivially_copyable_v<GeometerViewData>);
+static_assert(std::is_trivially_copyable_v<GeometerViewData> && std::is_standard_layout_v<GeometerViewData>);
