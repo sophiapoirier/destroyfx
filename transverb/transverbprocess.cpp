@@ -237,11 +237,10 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
            (check the positions before wrapping around the heads)
       */
 
-      if ((((read1int < writer) && 
-            (((int)(read1 + speed1.getValue())) >= (writer + 1))) || 
-           ((read1int >= writer) && 
-            (((int)(read1 + speed1.getValue())) <= (writer + 1)))) &&
-          speed1.getValue() != 1.0f) {
+      bool const read1CrossingAhead = (read1int < writer) && (((int)(read1 + speed1.getValue())) >= (writer + 1));
+      bool const read1CrossingBehind = (read1int >= writer) && (((int)(read1 + speed1.getValue())) <= (writer + 1));
+      bool const speed1IsUnity = speed1.getValue() == 1.0f;
+      if ((read1CrossingAhead || read1CrossingBehind) && !speed1IsUnity) {
       /* check because, at slow speeds, 
       it's possible to go into this twice or more in a row */
         if (smoothcount1 <= 0) {
@@ -257,11 +256,10 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       }
 
       // head 2 smoothing stuff
-      if ((((read2int < writer) && 
-            (((int)(read2 + speed2.getValue())) >= (writer + 1))) || 
-           ((read2int >= writer) && 
-            (((int)(read2 + speed2.getValue())) <= (writer + 1)))) &&
-          speed2.getValue() != 1.0f) {
+      bool const read2CrossingAhead = (read2int < writer) && (((int)(read2 + speed2.getValue())) >= (writer + 1));
+      bool const read2CrossingBehind = (read2int >= writer) && (((int)(read2 + speed2.getValue())) <= (writer + 1));
+      bool const speed2IsUnity = speed2.getValue() == 1.0f;
+      if ((read2CrossingAhead || read2CrossingBehind) && !speed2IsUnity) {
         if (smoothcount2 <= 0) {
           // store the most recent output as the channel 2 smoothing sample
           lastr2val = r2val;
