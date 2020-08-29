@@ -289,7 +289,7 @@ public:
 	template <typename T>
 	std::optional<T> dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0)
 	{
-		static_assert(std::is_trivially_copyable_v<T>);
+		static_assert(std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>);
 		T value {};
 		size_t dataSize = sizeof(value);
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
@@ -301,7 +301,7 @@ public:
 	template <typename T>
 	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, T const &data, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0)
 	{
-		static_assert(std::is_trivially_copyable_v<T>);
+		static_assert(std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>);
 		return dfx::kStatus_NoError == dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, (void*)&data, sizeof data);
 	}
 
