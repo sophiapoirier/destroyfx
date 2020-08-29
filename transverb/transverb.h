@@ -79,8 +79,6 @@ private:
 
   std::vector<float> firCoefficients1, firCoefficients2;
   std::vector<float> const firCoefficientsWindow;
-
-  long tomsound_sampoffset = 0;  // essentially the core instance number
 };
 
 
