@@ -209,6 +209,7 @@ void DGTextDisplay::setValueFromTextConvertProc(ValueFromTextConvertProc&& inVal
 void DGTextDisplay::refreshText()
 {
 	setValue(getValue());
+	redraw();
 }
 
 //-----------------------------------------------------------------------------
