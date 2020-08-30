@@ -54,6 +54,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 #ifdef TARGET_API_AUDIOUNIT
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
 	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_AUPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);  // TODO: C++23 [[no_destroy]]
+	static CFStringRef const kDfxGui_SettingsPasteboardFlavorType = CFSTR(kDfxGui_AUPresetFileUTI);
+#endif
+
+#ifdef TARGET_API_VST
+	constexpr bool kDfxGui_CopySettingsIsPreset = true;
+	#if TARGET_OS_MAC
+	static CFStringRef const kDfxGui_SettingsPasteboardFlavorType = CFSTR(PLUGIN_BUNDLE_IDENTIFIER);
+	#endif
 #endif
 
 
@@ -1900,8 +1908,9 @@ long DfxGuiEditor::copySettings()
 	{
 		return notPasteboardOwnerErr;
 	}
+#endif  // TARGET_OS_MAC
 
-	#ifdef TARGET_API_AUDIOUNIT
+#ifdef TARGET_API_AUDIOUNIT
 	CFPropertyListRef auSettingsPropertyList = nullptr;
 	size_t dataSize = sizeof(auSettingsPropertyList);
 	status = dfxgui_GetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
@@ -1920,16 +1929,33 @@ long DfxGuiEditor::copySettings()
 	{
 		return coreFoundationUnknownErr;
 	}
-	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), CFSTR(kDfxGui_AUPresetFileUTI), auSettingsCFData.get(), kPasteboardFlavorNoFlags);
+	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), kDfxGui_SettingsPasteboardFlavorType, auSettingsCFData.get(), kPasteboardFlavorNoFlags);
+
+#elif defined(TARGET_API_VST)
+	void* vstSettingsData {};
+	auto const vstSettingsDataSize = getEffect()->getChunk(&vstSettingsData, kDfxGui_CopySettingsIsPreset);
+	assert(vstSettingsDataSize > 0);
+	if (vstSettingsDataSize <= 0)
+	{
+		return dfx::kStatus_CannotDoInCurrentContext;
+	}
+
+	#if TARGET_OS_MAC
+	dfx::UniqueCFType const vstSettingsCFData = CFDataCreate(kCFAllocatorDefault, const_cast<UInt8 const*>(static_cast<UInt8*>(vstSettingsData)), static_cast<CFIndex>(vstSettingsDataSize));
+	if (!vstSettingsCFData)
+	{
+		return coreFoundationUnknownErr;
+	}
+	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), kDfxGui_SettingsPasteboardFlavorType, vstSettingsCFData.get(), kPasteboardFlavorNoFlags);
 	#else
 	#warning "implementation missing"
 	assert(false);
-	#endif  // TARGET_API_AUDIOUNIT
+	#endif  // TARGET_OS_MAC
 
 #else
 	#warning "implementation missing"
 	assert(false);
-#endif  // TARGET_OS_MAC
+#endif  // TARGET_API_AUDIOUNIT
 
 	return status;
 }
@@ -1948,6 +1974,11 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 		return status;
 	}
 
+#ifdef TARGET_API_VST
+	void* vstSettingsData {};
+	VstInt32 vstSettingsDataSize {};
+#endif
+
 #if TARGET_OS_MAC
 	PasteboardSynchronize(mClipboardRef.get());
 
@@ -1958,6 +1989,8 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	{
 		return status;
 	}
+
+	dfx::UniqueCFType<CFDataRef> flavorData;  // needs lifetime to remain in scope for VST implementation later
 	for (UInt32 itemIndex = 1; itemIndex <= itemCount; itemIndex++)
 	{
 		PasteboardItemID itemID = nullptr;
@@ -1985,39 +2018,41 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 			{
 				continue;
 			}
-	#ifdef TARGET_API_AUDIOUNIT
-			if (UTTypeConformsTo(flavorType, CFSTR(kDfxGui_AUPresetFileUTI)))
+			if (UTTypeConformsTo(flavorType, kDfxGui_SettingsPasteboardFlavorType))
 			{
 				if (inQueryPastabilityOnly)
 				{
 					*inQueryPastabilityOnly = pastableItemFound = true;
+					return dfx::kStatus_NoError;
 				}
-				else
+				CFDataRef flavorData_temp = nullptr;
+				status = PasteboardCopyItemFlavorData(mClipboardRef.get(), itemID, flavorType, &flavorData_temp);
+				if ((status == noErr) && flavorData_temp)
 				{
-					CFDataRef flavorData_temp = nullptr;
-					status = PasteboardCopyItemFlavorData(mClipboardRef.get(), itemID, flavorType, &flavorData_temp);
-					if ((status == noErr) && flavorData_temp)
+					flavorData = flavorData_temp;
+	#ifdef TARGET_API_AUDIOUNIT
+					dfx::UniqueCFType const auSettingsPropertyList = CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr);
+					if (auSettingsPropertyList)
 					{
-						dfx::UniqueCFType const flavorData = flavorData_temp;
-						dfx::UniqueCFType const auSettingsPropertyList = CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr);
-						if (auSettingsPropertyList)
+						auto const auSettingsPropertyList_temp = auSettingsPropertyList.get();
+						status = dfxgui_SetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
+													&auSettingsPropertyList_temp, sizeof(auSettingsPropertyList_temp));
+						if (status == noErr)
 						{
-							auto const auSettingsPropertyList_temp = auSettingsPropertyList.get();
-							status = dfxgui_SetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
-														&auSettingsPropertyList_temp, sizeof(auSettingsPropertyList_temp));
-							if (status == noErr)
-							{
-								pastableItemFound = true;
-								AUParameterChange_TellListeners(dfxgui_GetEffectInstance(), kAUParameterListener_AnyParameter);
-							}
+							pastableItemFound = true;
+							AUParameterChange_TellListeners(dfxgui_GetEffectInstance(), kAUParameterListener_AnyParameter);
 						}
 					}
+	#elif defined(TARGET_API_VST)
+					vstSettingsData = const_cast<UInt8*>(CFDataGetBytePtr(flavorData.get()));
+					vstSettingsDataSize = static_cast<VstInt32>(CFDataGetLength(flavorData.get()));
+					pastableItemFound = (vstSettingsData && (vstSettingsDataSize > 0));
+	#else
+					#warning "implementation missing"
+					assert(false);
+	#endif	// TARGET_API_AUDIOUNIT
 				}
 			}
-	#else
-			#warning "implementation missing"
-			assert(false);
-	#endif	// TARGET_API_AUDIOUNIT
 			if (pastableItemFound)
 			{
 				break;
@@ -2032,6 +2067,24 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	#warning "implementation missing"
 	assert(false);
 #endif  // TARGET_OS_MAC
+
+#ifdef TARGET_API_VST
+	if (!vstSettingsData || (vstSettingsDataSize <= 0))
+	{
+		return dfx::kStatus_CannotDoInCurrentContext;
+	}
+	auto const chunkSuccess = getEffect()->setChunk(vstSettingsData, vstSettingsDataSize, kDfxGui_CopySettingsIsPreset);
+	assert(chunkSuccess);
+	if (chunkSuccess == 0)
+	{
+		return dfx::kStatus_CannotDoInCurrentContext;
+	}
+#endif
+
+#ifdef TARGET_API_RTAS
+	#warning "implementation missing"
+	assert(false);
+#endif
 
 	return status;
 }
