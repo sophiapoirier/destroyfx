@@ -89,6 +89,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 //-----------------------------------------------------------------------------
 class IDGControl;
 class DGButton;
+class DGDialog;
 class DGTextEntryDialog;
 
 
@@ -361,6 +362,9 @@ private:
 
 	bool IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) const;
 
+	void ShowMessage(std::string const& inMessage);
+	static void Require(bool inCondition, char const* inFailureMessage = "");
+
 #ifndef TARGET_API_VST
 	// in VST2, this method is provided by AEffEditor
 	bool isOpen() const noexcept
@@ -381,6 +385,9 @@ private:
 	// set parameter on the effect (also notifying the host) and update all affected controls of the change
 	// optional: inSendingControl can specify the originating control to omit it from circular notification 
 	void setParameterAndPostUpdate(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
+
+	void RestoreVSTStateFromProgramFile(char const* inFilePath);
+	void SaveVSTStateToProgramFile(char const* inFilePath);
 #endif
 
 	IDGControl* mCurrentControl_mouseover = nullptr;
@@ -397,6 +404,7 @@ private:
 	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned long>> mRegisteredProperties;
 
 	VSTGUI::SharedPointer<DGTextEntryDialog> mTextEntryDialog;
+	VSTGUI::SharedPointer<DGDialog> mErrorDialog;
 
 	std::unique_ptr<dfx::FontFactory> mFontFactory;
 

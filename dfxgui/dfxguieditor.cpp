@@ -27,7 +27,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <exception>
 #include <functional>
+#include <type_traits>
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
@@ -43,7 +45,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 
 #ifdef TARGET_API_VST
+	#include "dfxmisc.h"
 	#include "dfxplugin.h"
+	#include "dfxsettings.h"
+	#include "lib/platform/common/fileresourceinputstream.h"
+	#include "pluginterfaces/vst2.x/vstfxstore.h"
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -59,6 +65,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #ifdef TARGET_API_VST
 	constexpr bool kDfxGui_CopySettingsIsPreset = true;
+	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_VSTProgramFileExtension("VST program", "fxp");
+	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_VSTBankFileExtension("VST bank", "fxb");
+	constexpr VstInt32 kDfxGui_VSTSettingsChunkMagic = FOURCC('C', 'c', 'n', 'K');
+	constexpr VstInt32 kDfxGui_VSTSettingsRegularMagic = FOURCC('F', 'x', 'C', 'k');
+	constexpr VstInt32 kDfxGui_VSTSettingsOpaqueChunkMagic = FOURCC('F', 'P', 'C', 'h');
+	constexpr VstInt32 kDfxGui_VSTSettingsVersion = 1;
 	#if TARGET_OS_MAC
 	static CFStringRef const kDfxGui_SettingsPasteboardFlavorType = CFSTR(PLUGIN_BUNDLE_IDENTIFIER);
 	#endif
@@ -1393,24 +1405,31 @@ void DfxGuiEditor::LoadPresetFile()
 		}
 #endif
 #ifdef TARGET_API_VST
-		fileSelector->addFileExtension(VSTGUI::CFileExtension("VST preset", "fxp"));
-		fileSelector->addFileExtension(VSTGUI::CFileExtension("VST bank", "fxb"));
+		fileSelector->addFileExtension(kDfxGui_VSTProgramFileExtension);
+//		fileSelector->addFileExtension(kDfxGui_VSTBankFileExtension);  // TODO: could also support banks of programs
 #endif
-		fileSelector->run([effect = dfxgui_GetEffectInstance()](VSTGUI::CNewFileSelector* inFileSelector)
+		fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
 						  {
 							  if (auto const filePath = inFileSelector->getSelectedFile(0))
 							  {
-#ifdef TARGET_API_AUDIOUNIT
-								  dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
-								  if (fileURL)
+								  try
 								  {
-									  RestoreAUStateFromPresetFile(effect, fileURL.get());
-								  }
-#endif
-#ifdef TARGET_API_VST
+#ifdef TARGET_API_AUDIOUNIT
+									  dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+									  Require(fileURL.get(), "failed to create file URL");
+									  RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
+#elif defined(TARGET_API_VST)
+									  RestoreVSTStateFromProgramFile(filePath);
+#elif
 	#warning "implementation missing"
-								  assert(false);  // TODO: implement
-#endif
+									  assert(false);  // TODO: implement
+#endif  // TARGET_API_AUDIOUNIT
+								  }
+								  catch (std::exception const& e)
+								  {
+									  auto const message = std::string("failed to load preset file:\n") + e.what();
+									  ShowMessage(message);
+								  }
 							  }
 						  });
 	}
@@ -1492,8 +1511,32 @@ void DfxGuiEditor::SavePresetFile()
 		}
 #endif
 #ifdef TARGET_API_VST
-	#warning "implementation missing"
-		assert(false);  // TODO: implement with a file selector, no text entry dialog
+		try
+		{
+			VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
+			Require(fileSelector, "could not create save file dialog");
+			fileSelector->setTitle("Save");
+			fileSelector->setDefaultExtension(kDfxGui_VSTProgramFileExtension);
+			fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
+			{
+				if (auto const filePath = inFileSelector->getSelectedFile(0))
+				{
+					try
+					{
+						SaveVSTStateToProgramFile(filePath);
+					}
+					catch (std::exception const& e)
+					{
+						auto const message = std::string("failed to save preset file:\n") + e.what();
+						ShowMessage(message);
+					}
+				}
+			});
+		}
+		catch (std::exception const& e)
+		{
+			ShowMessage(e.what());
+		}
 #endif
 	}
 }
@@ -1772,8 +1815,13 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 		DFX_AppendCommandItemToMenu(resultMenu, "Paste settings", std::bind(&DfxGuiEditor::pasteSettings, this, nullptr), currentClipboardIsPastable);
 	}
 #ifndef TARGET_API_RTAS  // RTAS has no API for preset files, Pro Tools handles them
-	DFX_AppendCommandItemToMenu(resultMenu, "Save preset file...", std::bind(&DfxGuiEditor::SavePresetFile, this));
-	DFX_AppendCommandItemToMenu(resultMenu, "Load preset file...", std::bind(&DfxGuiEditor::LoadPresetFile, this));
+	#ifdef TARGET_API_VST
+	std::string const presetFileLabel("program");
+	#else
+	std::string const presetFileLabel("preset");
+	#endif
+	DFX_AppendCommandItemToMenu(resultMenu, "Save " + presetFileLabel + " file...", std::bind(&DfxGuiEditor::SavePresetFile, this));
+	DFX_AppendCommandItemToMenu(resultMenu, "Load " + presetFileLabel + " file...", std::bind(&DfxGuiEditor::LoadPresetFile, this));
 #endif
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -2089,6 +2137,31 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	return status;
 }
 
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::ShowMessage(std::string const& inMessage)
+{
+	bool shown = false;
+	mErrorDialog = VSTGUI::makeOwned<DGDialog>(DGRect(0, 0, 300, 120), inMessage);
+	if (mErrorDialog)
+	{
+		shown = mErrorDialog->runModal(getFrame());
+		assert(shown);
+	}
+	if (!shown)
+	{
+		fprintf(stderr, "%s\n", inMessage.c_str());
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::Require(bool inCondition, char const* inFailureMessage)
+{
+	if (!inCondition)
+	{
+		throw std::runtime_error(inFailureMessage);
+	}
+}
+
 
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -2360,6 +2433,139 @@ void DfxGuiEditor::setParameterAndPostUpdate(long inParameterIndex, float inValu
 {
 	getEffect()->setParameterAutomated(inParameterIndex, inValue);
 	updateParameterControls(inParameterIndex, inValue, inSendingControl);
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+[[nodiscard]] static T DFXGUI_CorrectEndian(T inValue)
+{
+	if constexpr (!DfxSettings::serializationIsNativeEndian())  // VST program and bank files are also big-endian
+	{
+		dfx::ReverseBytes(inValue);
+	}
+	return inValue;
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::RestoreVSTStateFromProgramFile(char const* inFilePath)
+{
+	auto const fileStream = VSTGUI::FileResourceInputStream::create(inFilePath);
+	Require(fileStream.get(), "could not open file");
+	fileStream->seek(0, VSTGUI::SeekMode::End);
+	auto const fileSize = static_cast<uint32_t>(std::max(fileStream->tell(), 0ll));
+	fileStream->seek(0, VSTGUI::SeekMode::Set);
+	Require(fileStream->tell() == 0, "could not rewind file");
+
+	auto const readWithValidation = [&fileStream](void* buffer, uint32_t size)
+	{
+		auto const amountRead = fileStream->readRaw(buffer, size);
+		Require(amountRead == size, "failed to read enough file data");
+	};
+
+	fxProgram programData {};
+	constexpr uint32_t headerSize = sizeof(programData) - sizeof(programData.content);
+	Require(fileSize > headerSize, "invalid file size");
+	readWithValidation(&programData, headerSize);
+	Require(DFXGUI_CorrectEndian(programData.chunkMagic) == kDfxGui_VSTSettingsChunkMagic, 
+			"invalid file data");
+	Require(DFXGUI_CorrectEndian(programData.version) == kDfxGui_VSTSettingsVersion, "invalid data format version");
+	Require(DFXGUI_CorrectEndian(programData.fxID) == PLUGIN_ID, "file data is for a different plugin");
+	auto const expectedByteSizeValue = static_cast<VstInt32>(fileSize - sizeof(programData.chunkMagic) - sizeof(programData.byteSize));
+	Require(DFXGUI_CorrectEndian(programData.byteSize) == expectedByteSizeValue, "byte size value is incorrect");
+	if (DFXGUI_CorrectEndian(programData.fxMagic) == kDfxGui_VSTSettingsRegularMagic)
+	{
+		auto const numParameters = DFXGUI_CorrectEndian(programData.numParams);
+		Require(numParameters >= 0, "invalid negative number of parameters");
+		using ValueT = std::decay_t<decltype(*(programData.content.params))>;
+		std::vector<ValueT> parameterValues(static_cast<size_t>(numParameters), {});
+		readWithValidation(parameterValues.data(), parameterValues.size() * sizeof(ValueT));
+		Require(fileStream->tell() == fileStream->seek(0, VSTGUI::SeekMode::End), 
+				"file contains unexpected excess data");
+		for (VstInt32 parameterID = 0; parameterID < numParameters; parameterID++)
+		{
+			getEffect()->setParameter(parameterID, DFXGUI_CorrectEndian(parameterValues[parameterID]));
+			dfxgui_GetEffectInstance()->postupdate_parameter(parameterID);
+		}
+	}
+	else if (DFXGUI_CorrectEndian(programData.fxMagic) == kDfxGui_VSTSettingsOpaqueChunkMagic)
+	{
+		auto& chunkDataSize = programData.content.data.size;
+		readWithValidation(&chunkDataSize, sizeof(chunkDataSize));
+		Require(DFXGUI_CorrectEndian(chunkDataSize) >= 0, "invalid negative number of chunk bytes");
+		std::vector<std::byte> chunkData(static_cast<size_t>(DFXGUI_CorrectEndian(chunkDataSize)), {});
+		readWithValidation(chunkData.data(), chunkData.size());
+		Require(fileStream->tell() == fileStream->seek(0, VSTGUI::SeekMode::End), 
+				"file contains unexpected excess data");
+		Require(getEffect()->setChunk(chunkData.data(), chunkData.size(), true), 
+				"failed to load chunk data");
+	}
+	else
+	{
+		throw std::runtime_error("unrecognized data format");
+	}
+	getEffect()->setProgramName(programData.prgName);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::SaveVSTStateToProgramFile(char const* inFilePath)
+{
+	std::unique_ptr<FILE, decltype(&fclose)> file(fopen(inFilePath, "wb"), fclose);
+	Require(file.get(), "could not open file to write");
+
+	auto const serializedInt = [](auto value)
+	{
+		using ResultT = VstInt32;
+		static_assert(sizeof(value) == sizeof(ResultT));
+		return static_cast<ResultT>(DFXGUI_CorrectEndian(value));
+	};
+
+	fxProgram programData {};
+	programData.chunkMagic = serializedInt(kDfxGui_VSTSettingsChunkMagic);
+	programData.version = serializedInt(kDfxGui_VSTSettingsVersion);
+	programData.fxID = serializedInt(PLUGIN_ID);
+	programData.fxVersion = serializedInt(dfxgui_GetEffectInstance()->getVendorVersion());
+	auto const numParameters = getEffect()->getAeffect()->numParams;
+	programData.numParams = serializedInt(numParameters);
+	getEffect()->getProgramName(programData.prgName);
+
+	auto const writeWithValidation = [&file](void const* data, uint32_t size)
+	{
+		auto const amountWritten = fwrite(data, 1, size, file.get());
+		Require(amountWritten == size, "failed to write enough file data");
+	};
+
+	constexpr uint32_t headerSize = sizeof(programData) - sizeof(programData.content);
+	constexpr uint32_t byteSizeBase = headerSize - sizeof(programData.chunkMagic) - sizeof(programData.byteSize);
+
+	if (getEffect()->getAeffect()->flags & effFlagsProgramChunks)
+	{
+		void* chunkData {};
+		auto const chunkDataSize = getEffect()->getChunk(&chunkData, true);
+		Require(chunkData && (chunkDataSize > 0), "failed to query plugin chunk data");
+
+		programData.fxMagic = serializedInt(kDfxGui_VSTSettingsOpaqueChunkMagic);
+		programData.content.data.size = serializedInt(chunkDataSize);
+
+		constexpr uint32_t chunkHeaderSize = sizeof(programData.content.data.size);
+		programData.byteSize = serializedInt(byteSizeBase + chunkHeaderSize + chunkDataSize);
+		writeWithValidation(&programData, headerSize + chunkHeaderSize);
+		writeWithValidation(chunkData, chunkDataSize);
+	}
+	else
+	{
+		programData.fxMagic = serializedInt(kDfxGui_VSTSettingsRegularMagic);
+		using ValueT = std::decay_t<decltype(*(programData.content.params))>;
+		std::vector<ValueT> parameterValues(static_cast<size_t>(numParameters), {});
+		for (VstInt32 parameterID = 0; parameterID < numParameters; parameterID++)
+		{
+			parameterValues[parameterID] = DFXGUI_CorrectEndian(getEffect()->getParameter(parameterID));
+		}
+
+		auto const parameterValuesDataSize = static_cast<uint32_t>(parameterValues.size() * sizeof(parameterValues[0]));
+		programData.byteSize = serializedInt(byteSizeBase + parameterValuesDataSize);
+		writeWithValidation(&programData, headerSize);
+		writeWithValidation(parameterValues.data(), parameterValuesDataSize);
+	}
 }
 
 #endif  // TARGET_API_VST
