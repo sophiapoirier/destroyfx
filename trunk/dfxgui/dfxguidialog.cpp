@@ -243,12 +243,15 @@ DGDialog::DGDialog(DGRect const& inRegion,
 	{
 		// TODO: split text into multiple lines when it is too long to fit on a single line
 		DGRect const pos(kContentMargin, kContentMargin, getWidth() - (kContentMargin * 2.0), kTextLabelHeight);
-		if (auto const label = new VSTGUI::CTextLabel(pos, VSTGUI::UTF8String(inMessage)))
+		if (auto const label = new VSTGUI::CMultiLineTextLabel(pos))
 		{
+			label->setText(VSTGUI::UTF8String(inMessage));
 			label->setFontColor(DGColor::getSystem(DGColor::System::WindowTitle));
 			label->setBackColor(VSTGUI::kTransparentCColor);
 			label->setFrameColor(VSTGUI::kTransparentCColor);
 			label->setHoriAlign(VSTGUI::kLeftText);
+			label->setLineLayout(VSTGUI::CMultiLineTextLabel::LineLayout::wrap);
+//			label->setAutoHeight(true);
 			if (auto const currentFont = label->getFont())
 			{
 				auto const newFont = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*currentFont);
@@ -420,6 +423,11 @@ bool DGDialog::attached(VSTGUI::CView* inParent)
 		constexpr bool shouldInvalidate = true;
 		setViewSize(viewSize, shouldInvalidate);
 		setMouseableArea(viewSize);
+
+		// enabling auto-height annoyingly only works after the view is attached
+		std::vector<VSTGUI::CMultiLineTextLabel*> multiLineLabels;
+		getChildViewsOfType<VSTGUI::CMultiLineTextLabel>(multiLineLabels);
+		std::for_each(multiLineLabels.begin(), multiLineLabels.end(), [](auto label){ label->setAutoHeight(true); });
 	}
 
 	return result;
@@ -439,10 +447,6 @@ void DGDialog::valueChanged(VSTGUI::CControl* inControl)
 		else if (mListener)
 		{
 			completed = mListener->dialogChoiceSelected(this, button->getSelection());
-		}
-		else
-		{
-			assert(false);
 		}
 		if (completed)
 		{

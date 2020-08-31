@@ -72,6 +72,7 @@ public:
 
 	bool runModal(VSTGUI::CFrame* inFrame, Listener* inListener);
 	bool runModal(VSTGUI::CFrame* inFrame, DialogChoiceSelectedCallback&& inCallback);
+	bool runModal(VSTGUI::CFrame* inFrame);
 	void close();
 
 	VSTGUI::CTextButton* getButton(Selection inSelection) const;
@@ -86,7 +87,6 @@ private:
 		kButtons_OtherBit = 1 << kSelection_Other,
 	};
 
-	bool runModal(VSTGUI::CFrame* inFrame);
 	bool handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed);
 
 	Listener* mListener = nullptr;
