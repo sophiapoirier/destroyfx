@@ -274,7 +274,7 @@ void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 		AUParameterSet(mAUEventListener.get(), inControl, &auParam, paramValue_literal, 0);
 #endif
 #ifdef TARGET_API_VST
-		setParameterAndPostUpdate(paramIndex, paramValue_norm, inControl);
+		getEffect()->setParameterAutomated(paramIndex, paramValue_norm);
 #endif
 #ifdef TARGET_API_RTAS
 		if (m_Process)
@@ -916,7 +916,7 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 
 #ifdef TARGET_API_VST
 	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
-	setParameterAndPostUpdate(inParameterID, value_norm);
+	getEffect()->setParameterAutomated(inParameterID, value_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -950,7 +950,7 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 
 #ifdef TARGET_API_VST
 	auto const value_norm = dfxgui_ContractParameterValue(inParameterID, inValue);
-	setParameterAndPostUpdate(inParameterID, value_norm);
+	getEffect()->setParameterAutomated(inParameterID, value_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -983,7 +983,7 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 #endif
 
 #ifdef TARGET_API_VST
-	setParameterAndPostUpdate(inParameterID, inValue ? 1.0f : 0.0f);
+	getEffect()->setParameterAutomated(inParameterID, inValue ? 1.0f : 0.0f);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -1022,7 +1022,7 @@ void DfxGuiEditor::setparameter_default(long inParameterID, bool inWrapWithAutom
 #ifdef TARGET_API_VST
 	auto const defaultValue = GetParameter_defaultValue(inParameterID);
 	auto const defaultValue_norm = dfxgui_ContractParameterValue(inParameterID, defaultValue);
-	setParameterAndPostUpdate(inParameterID, defaultValue_norm);
+	getEffect()->setParameterAutomated(inParameterID, defaultValue_norm);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -2429,13 +2429,6 @@ DGButton* DfxGuiEditor::CreateMidiResetButton(long inXpos, long inYpos, DGImage*
 #ifdef TARGET_API_VST
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::setParameterAndPostUpdate(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl)
-{
-	getEffect()->setParameterAutomated(inParameterIndex, inValue);
-	updateParameterControls(inParameterIndex, inValue, inSendingControl);
-}
-
-//-----------------------------------------------------------------------------
 template <typename T>
 [[nodiscard]] static T DFXGUI_CorrectEndian(T inValue)
 {
@@ -2461,6 +2454,11 @@ void DfxGuiEditor::RestoreVSTStateFromProgramFile(char const* inFilePath)
 		auto const amountRead = fileStream->readRaw(buffer, size);
 		Require(amountRead == size, "failed to read enough file data");
 	};
+	auto const requireReadCompletion = [&fileStream]()
+	{
+		Require(fileStream->tell() == fileStream->seek(0, VSTGUI::SeekMode::End), 
+				"file contains unexpected excess data");
+	};
 
 	fxProgram programData {};
 	constexpr uint32_t headerSize = sizeof(programData) - sizeof(programData.content);
@@ -2479,12 +2477,10 @@ void DfxGuiEditor::RestoreVSTStateFromProgramFile(char const* inFilePath)
 		using ValueT = std::decay_t<decltype(*(programData.content.params))>;
 		std::vector<ValueT> parameterValues(static_cast<size_t>(numParameters), {});
 		readWithValidation(parameterValues.data(), parameterValues.size() * sizeof(ValueT));
-		Require(fileStream->tell() == fileStream->seek(0, VSTGUI::SeekMode::End), 
-				"file contains unexpected excess data");
+		requireReadCompletion();
 		for (VstInt32 parameterID = 0; parameterID < numParameters; parameterID++)
 		{
 			getEffect()->setParameter(parameterID, DFXGUI_CorrectEndian(parameterValues[parameterID]));
-			dfxgui_GetEffectInstance()->postupdate_parameter(parameterID);
 		}
 	}
 	else if (DFXGUI_CorrectEndian(programData.fxMagic) == kDfxGui_VSTSettingsOpaqueChunkMagic)
@@ -2494,8 +2490,7 @@ void DfxGuiEditor::RestoreVSTStateFromProgramFile(char const* inFilePath)
 		Require(DFXGUI_CorrectEndian(chunkDataSize) >= 0, "invalid negative number of chunk bytes");
 		std::vector<std::byte> chunkData(static_cast<size_t>(DFXGUI_CorrectEndian(chunkDataSize)), {});
 		readWithValidation(chunkData.data(), chunkData.size());
-		Require(fileStream->tell() == fileStream->seek(0, VSTGUI::SeekMode::End), 
-				"file contains unexpected excess data");
+		requireReadCompletion();
 		Require(getEffect()->setChunk(chunkData.data(), chunkData.size(), true), 
 				"failed to load chunk data");
 	}
