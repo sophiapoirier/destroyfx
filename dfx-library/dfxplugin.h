@@ -1231,7 +1231,7 @@ public:
 	void Process(Float32 const* in, Float32* out, UInt32 inNumFrames, UInt32 inNumChannels, bool& ioSilence) override
 	{
 		process(in, out, inNumFrames);
-		ioSilence = false;
+		ioSilence = false;  // TODO: allow DSP cores to communicate their output silence status
 	}
 	void Reset() override
 	{
