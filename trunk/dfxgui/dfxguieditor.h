@@ -382,10 +382,6 @@ private:
 #endif
 
 #ifdef TARGET_API_VST
-	// set parameter on the effect (also notifying the host) and update all affected controls of the change
-	// optional: inSendingControl can specify the originating control to omit it from circular notification 
-	void setParameterAndPostUpdate(long inParameterIndex, float inValue, VSTGUI::CControl* inSendingControl = nullptr);
-
 	void RestoreVSTStateFromProgramFile(char const* inFilePath);
 	void SaveVSTStateToProgramFile(char const* inFilePath);
 #endif
