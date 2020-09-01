@@ -1640,7 +1640,7 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 	// now do the processing
 	processaudio(mInputAudioStreams_au.data(), mOutputAudioStreams_au.data(), inFramesToProcess);
 
-	// I don't know what the hell this is for
+	// TODO: actually handle the silence flag
 	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
 
 	// do any post-DSP stuff
@@ -1707,12 +1707,15 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 
 	// now do the processing
 	processaudio(mInputAudioStreams_au.data(), mOutputAudioStreams_au.data(), inFramesToProcess);
-
-	// I don't know what the hell this is for
-	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
-
 #endif
 // end of if/else TARGET_PLUGIN_USES_DSPCORE
+
+	// TODO: allow effects to communicate their output silence status, or calculate time-out from tail size and latency?
+	bool const effectHasTail = !SupportsTail() || (gettailsize_samples() > 0) || (getlatency_samples() > 0); 
+	if (effectHasTail)
+	{
+		ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
+	}
 
 	// do any post-DSP stuff
 	postprocessaudio();

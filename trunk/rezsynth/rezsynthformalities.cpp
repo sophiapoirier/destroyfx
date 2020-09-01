@@ -81,7 +81,10 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	addparametergroup("mix", {kFilterOutputGain, kBetweenGain, kDryWetMix, kDryWetMixMode});
 
 
+	// this would apply if this was an instrument, but as an effect, the tail is really 
+	// more about the resonance ring-out, however I do not know how to estimate that so...
 	settailsize_seconds(getparametermax_f(kEnvRelease) * 0.001);
+
 	setAudioProcessingMustAccumulate(true);  // only support accumulating output
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
 
