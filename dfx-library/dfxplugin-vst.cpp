@@ -317,16 +317,7 @@ VstInt32 DfxPlugin::getChunk(void** data, bool isPreset)
 VstInt32 DfxPlugin::setChunk(void* data, VstInt32 byteSize, bool isPreset)
 {
 	assert(byteSize >= 0);
-	auto const success = mDfxSettings->restore(data, static_cast<size_t>(byteSize), isPreset);
-	if (success)
-	{
-		// make any listeners aware of the changes in the parameter values
-		for (long i = 0; i < getnumparameters(); i++)
-		{
-			postupdate_parameter(i);
-		}
-	}
-	return success;
+	return mDfxSettings->restore(data, static_cast<size_t>(byteSize), isPreset);
 }
 
 #endif

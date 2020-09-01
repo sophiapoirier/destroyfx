@@ -574,6 +574,11 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 	{
 		setpresetparameter(vstpresetnum, inParameterIndex, getparameter(inParameterIndex));
 	}
+	#if TARGET_PLUGIN_HAS_GUI
+	// the VST2 editor interface has no real listener mechanism for parameters and therefore 
+	// always needs notification pushed in any circumstance where a parameter value changes
+	postupdate_parameter(inParameterIndex);
+	#endif
 #endif
 
 #ifdef TARGET_API_RTAS
