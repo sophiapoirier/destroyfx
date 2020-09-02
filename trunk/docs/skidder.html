@@ -34,7 +34,7 @@ There is also a MIDI trigger mode for Skidder.  When this is on, the effect is t
 <p class="label">rate:</p>
 
 <p class="desc">
-The rate parameter controls the speed at which the sound goes on and off.  The values are in cycles per second (Hertz).  When <b>tempo sync</b> is on, you can control Skidder's rate according to the tempo of your song instead of Hz.  The values are in cycles per beat (note:  I mean per single beat, not per measure, so this is independent of time signature).
+The rate parameter controls the speed at which the sound goes on and off.  The values are in cycles per second (Hertz).  When <b>tempo sync</b> is on, you can control Skidder's rate according to the tempo of your song instead of Hz, so then the values are in cycles per beat (note:  I mean per single beat, not per measure, so this is independent of time signature).
 </p>
 
 <p class="desc">
@@ -69,7 +69,7 @@ This parameter can be set to use a randomized range.  If the two slider handles 
 <p class="label">slope:</p>
 
 <p class="desc">
-The slope parameter sets the length of the volume-smoothing slopes that are at the beginning and end of each pulse.  The values are in milliseconds and that's how long each volume fade will be.
+The slope parameter sets the length of the volume-smoothing slopes that are at the beginning (fade-in) and end (fade-out) of each pulse.  The values are in milliseconds and that's how long each volume fade will be.
 </p>
 
 <p class="desc">
@@ -82,7 +82,7 @@ Slope can be set to 0 ms if you want, but you are likely to get irritating poppi
 <p class="label">floor:</p>
 
 <p class="desc">
-This controls how quiet the sound gets between skids, i.e. during the "off" periods of each cycle.  If you set this to -&infin; dB, then Skidder turns the sound completely on and off.  If you set it to 0.0 dB, then the volume never changes.  If you set this parameter somewhere in between, then Skidder will get quieter between skids, but not completely silent.
+This controls how quiet the sound gets between skids, i.e. during the "off" periods of each cycle.  If you set this to -&infin; dB, then Skidder turns the sound completely off between skids.  If you set it to 0.0 dB, then the volume never changes.  If you set this parameter somewhere in between, then Skidder will get quieter between skids, but not completely silent.
 </p>
 
 <p class="desc">
@@ -95,11 +95,11 @@ This parameter can be set to use a randomized range.  If the two slider handles 
 <p class="label">stereo spread:</p>
 
 <p class="desc">
-The stereo spread parameter controls the amount of random panning that your outputted sound chunks will be subjected to.  When it's set to 0%, all of your audio will come out centered.  When it's set to 100%, each pulse will be randomly panned to a different place in the stereo field.  Lowering the stereo spread value will limit how far from center the random panning is allowed to stray.
+The stereo spread parameter controls the amount of random panning to which your outputted sound chunks will be subjected.  When it's set to 0%, all of your audio will come out centered.  When it's set to 100%, each pulse will be randomly panned to a different place in the stereo field.  Lowering the stereo spread value will limit how far from center the random panning is allowed to stray.
 </p>
 
 <p class="desc">
-While panning, Skidder preserves the original audio signal's total amplitude, which means that it is possible to clip when the sound is panned off-center.  If you have an input signal that never peaks above half amplitude (-6 dB), then there's no risk, but otherwise, adjust the gain in your host application to accomodate for however much panning you are going to allow.
+While panning, Skidder preserves the original audio signal's total amplitude, which means that it is possible to clip when the sound is panned off-center.  If you have an input signal that never peaks above half amplitude (-6 dB), then there's no risk, but otherwise, adjust the gain in your host application to accomodate for however much panning you are going to allow, or follow Skidder with dynamics processing.
 </p>
 
 <p class="desc">
@@ -143,7 +143,7 @@ When enabled, Skidder tries to get the tempo and beat position from the host app
 <p class="label">MIDI mode:</p>
 
 <p class="desc">
-This button lets you choose how Skidder responds to MIDI notes.  In MIDI trigger mode, Skidder gets triggered by MIDI notes.  The sound turns off when you're not playing any notes.  MIDI apply mode is similar except that the sound stays on, unprocessed, between notes.  "Nothing" mode means that notes are ignored.
+This button lets you choose how Skidder responds to MIDI notes.  In MIDI trigger mode, Skidder gets triggered by MIDI notes.  The effect is active while you play a note and sound is muted when you're not playing any notes.  MIDI apply mode is similar except that the sound stays on, unprocessed, between notes.  "Nothing" mode means that notes are ignored.
 </p>
 
 <br />
@@ -152,7 +152,7 @@ This button lets you choose how Skidder responds to MIDI notes.  In MIDI trigger
 <p class="label">velocity:</p>
 
 <p class="desc">
-If you switch this on and you are using a MIDI note control mode, then the floor value will be controlled by note velocity.
+If you enable this and you are using a MIDI note control mode, then the floor level will be controlled by note velocity.  The floor is lower when the note velocity is higher, and vice versa.
 </p>
 
 <br />
@@ -160,7 +160,7 @@ If you switch this on and you are using a MIDI note control mode, then the floor
 
 <br />
 <p class="desc">
-<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command key when clicking on it.  You can move both points of a range slider together by holding the control key.  You can move both points of a range slider, preserving their relationship, by holding the option key.  You can make the two points of a range slider converge or diverge by holding the option and control keys while dragging up or down.
+<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command&nbsp;&#8984; key (control on Windows) when clicking on it.  You can move both points of a range slider together by holding the control key.  You can move both points of a range slider, preserving their relationship, by holding the option key (alt on Windows), or clicking and dragging from a point between the two handles.  You can make the two points of a range slider converge or diverge by holding the option (alt) and control keys while dragging up or down.
 </p>
 <br />
 
@@ -173,7 +173,7 @@ December 2000
 <br /><br />
 Destroy FX #2
 <br />
-<a href="http://destroyfx.org/">http://destroyfx.org/</a>
+<a href="http://destroyfx.org">http://destroyfx.org</a>
 <br /><br />
 Skidder is Copyright &copy; 2000-2020 Sophia Poirier
 <br />

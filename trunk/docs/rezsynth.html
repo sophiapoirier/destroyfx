@@ -21,7 +21,7 @@
 
 
 <p class="intro">
-Rez Synth allows you to "play" bandpass resonant filter banks that are applied to the audio input signal.  The the center frequency of the base filter in any bank is controlled by MIDI notes.  The rest of the filters in each bank (if any) have center frequencies that ascend from the base frequency according to linear or octaval increments.  You can have up to 3,000,000 filter banks active.
+Rez Synth allows you to "play" bandpass resonant filter banks that are applied to the input audio.  The the center frequency of the base filter in any bank is controlled by MIDI notes.  The rest of the filters in each bank (if any) have center frequencies that ascend from the base frequency according to linear or octaval increments.
 </p>
 
 <br />
@@ -39,7 +39,7 @@ The bandwidth parameter controls the bandwidth of each resonant filter, in Hz or
 <p class="label">bandwidth mode:</p>
 
 <p class="desc">
-The bandwidth mode defines how the bandwidth parameter operates.  The options are "Hz" or "Q".  Hz (Hertz) defines absolute bandwidth and therefore perceptually the filters sound wider at lower frequencies and narrowing at higher frequencies.  Q defines relative bandwidth and therefore perceptually the filters sound the same width across all frequencies.
+The bandwidth mode defines how the bandwidth parameter operates.  The options are "Hz" or "Q".  Hz (Hertz) defines absolute bandwidth and therefore perceptually the filters sound wider at lower frequencies and narrow at higher frequencies.  Q defines relative bandwidth and therefore perceptually the filters sound the same width across all frequencies.
 </p>
 
 <br />
@@ -48,7 +48,7 @@ The bandwidth mode defines how the bandwidth parameter operates.  The options ar
 <p class="label">resonance algorithm:</p>
 
 <p class="desc">
-You can choose between a few different algorithms for the resonant filters:  second-order (with no zeroes), second-order with zeroes at &plusmn; the squareroot of the pole radius, and second-order with zeroes at &plusmn;1.  Those are the mathematical descriptions, which are of limited usefulness.  They each sound slightly different and some might sound better on certain audio material than other, and it's probably worth trying each out.
+You can choose between a few different algorithms for the resonant filters:  second-order (with no zeroes), second-order with zeroes at &plusmn; the squareroot of the pole radius, and second-order with zeroes at &plusmn;1.  Those are the mathematical descriptions, which are of limited usefulness.  They each sound slightly different and some might sound better on certain audio material than other, and it's probably worth trying each.
 </p>
 
 <br />
@@ -66,11 +66,7 @@ This is how many bands there will be in each filter bank.  Each MIDI note that y
 <p class="label">band separation:</p>
 
 <p class="desc">
-This controls the separation width between each band in a filter bank.  The way that it operates depends one which band separation mode you are working in.  If you are working in "octaval" separation mode, then band separation controls the separation width in semitones.  If you are in "linear" mode, then it controls the separation as a multiplier of the base frequency.
-</p>
-
-<p class="desc">
-In addition to using the slider to adjust this parameter, you can also click on this parameter's value display and type a value in manually in case you need a precise value.
+This controls the separation width between each band in a filter bank.  The way that it operates depends in which band separation mode you are working.  If you are working in "octaval" separation mode, then band separation controls the separation width in semitones.  If you are in "linear" mode, then it controls the separation as a multiplier of the base frequency.
 </p>
 
 <br />
@@ -79,7 +75,7 @@ In addition to using the slider to adjust this parameter, you can also click on 
 <p class="label">separation mode:</p>
 
 <p class="desc">
-The band separation mode defines how the band separation parameter operates.  Separation mode can be set to "linear" or "octaval" (logarithmic separation).  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics for fractional values) and "octaval" makes the other bands spread like notes in a chord.
+The band separation mode defines how the band separation parameter operates.  Separation mode can be set to "linear" (multiple) or "octaval" (logarithmic) spacing.  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics, in the case of fractional values) and "octaval" makes the other bands spread like notes in a chord.
 </p>
 
 <br />
@@ -88,7 +84,7 @@ The band separation mode defines how the band separation parameter operates.  Se
 <p class="label">mistakes:</p>
 
 <p class="desc">
-Because you are playing banks of resonant filters that ascend in center frequencies, it is possible to get filters in your bank that have center frequencies above what your digital sampling resolution can handle.  When this happens, frequencies "foldover" the maximum possible frequency and your filters start sounding rather odd.  I personally like that, so I have left the option up to the user whether or not to "allow" or "resist" these impossible bands.
+Because you are playing banks of resonant filters that ascend in center frequencies, it is possible to get filters in your bank that have center frequencies above what your digital audio sampling resolution can represent.  When this happens, frequencies "fold over" the maximum possible frequency and your filters start sounding rather odd.  I personally like that, so I have left the option up to the user whether or not to "allow" or "resist" these impossible bands.
 </p>
 
 <br />
@@ -97,7 +93,7 @@ Because you are playing banks of resonant filters that ascend in center frequenc
 <p class="label">attack, decay, sustain, release:</p>
 
 <p class="desc">
-These adjust the values for each note's ADSR-style amplitude envelopes.  Attack sets the duration for the initial volume fade-in period.  Decay sets the partial fade-down period that follows attack.  Sustain sets the amount of full note volume that is used for the note after the decay period (note that a sustain value of 100% effectively means no decay).  And release sets sets the duration of the final fade-out period (after the note stops being played).
+These adjust the values for each note's ADSR-style amplitude envelopes.  Attack sets the duration for the initial volume fade-in period.  Decay sets the partial fade-down period that immediately follows the attack.  Sustain sets the portion of full note-volume that is used for the note after the decay period.  Therefore a sustain value of 100% effectively means no decay, and a sustain value of 0% effectively stops a note after the decay, regardless of how long you hold the note.  Release sets the duration of the final fade-out period (beginning after the note play is released).
 </p>
 
 <br />
@@ -106,7 +102,7 @@ These adjust the values for each note's ADSR-style amplitude envelopes.  Attack 
 <p class="label">envelope fades:</p>
 
 <p class="desc">
-This selects whether the attack, decay, and release segments of notes are linear fades or exponential curves.  Exponential usually sounds better, but you may prefer linear in some cases.  Also exponential curves use a little more processing power than linear.
+This selects whether the attack, decay, and release segments of note envelopes are linear fades or exponential curves.  Exponential usually sounds better, but you may prefer linear in some cases.  Also exponential curves use a little more processing power than linear.
 </p>
 
 <br />
@@ -142,7 +138,7 @@ This controls how much of an influence key velocity will have on the volume of e
 <p class="label">filter response scaling mode:</p>
 
 <p class="desc">
-This parameter allows you to scale response factor of the the resonant filters.  It can be scaled according to bring the RMS of the resosonant filter response to 1, or to bring the peak of the resonant filter response to 1, or you can disable scaling.
+This parameter allows you to scale the response factor of the the resonant filters.  It can be scaled to bring the RMS of the resosonant filter response to 1, or to bring the peak of the resonant filter response to 1, or you can disable scaling.
 </p>
 
 <br />
@@ -151,7 +147,7 @@ This parameter allows you to scale response factor of the the resonant filters. 
 <p class="label">careful:</p>
 
 <p class="desc">
-The volume of the output of these resonant bandpass filters is pretty erratic (sometimes even with scaling).  With careful mode enabled, Rez Synth tries to keep a handle on this and keep your output within a narrow range.  Whether you use this mode or not, you still might want to follow Rez Synth with a limiter, and perhaps also a compressor before that.
+The volume of the output of these resonant bandpass filters is pretty erratic (sometimes even with scaling).  With careful mode enabled, Rez Synth tries to keep a handle on this and keep your output within a narrow range.  Whether you use this mode or not, you still might want to follow Rez Synth with a dynamic limiter, and perhaps also a compressor before that.
 </p>
 
 <br />
@@ -160,7 +156,7 @@ The volume of the output of these resonant bandpass filters is pretty erratic (s
 <p class="label">filtered output gain:</p>
 
 <p class="desc">
-This allows you to control the level of the output signal after all other processing has taken place.
+This allows you to control the level of the output audio after all other processing has taken place.
 </p>
 
 <br />
@@ -169,7 +165,7 @@ This allows you to control the level of the output signal after all other proces
 <p class="label">between gain:</p>
 
 <p class="desc">
-This control the volume of the unprocessed audio input when no notes are sounding.
+This controls the volume of the unprocessed audio input when no notes are sounding.
 </p>
 
 <br />
@@ -178,7 +174,7 @@ This control the volume of the unprocessed audio input when no notes are soundin
 <p class="label">dry/wet mix:</p>
 
 <p class="desc">
-This lets you adjust the balance of the input audio (unprocessed) and the output audio (processed).  100% is all processed.
+This lets you adjust the balance of the (unprocessed) input audio and the (processed) output audio.  100% is all processed.
 </p>
 
 <br />
@@ -187,7 +183,7 @@ This lets you adjust the balance of the input audio (unprocessed) and the output
 <p class="label">dry/wet mix mode:</p>
 
 <p class="desc">
-This allows you to adjust the way that the dry/wet mix combines the dry and wet signals.  You can choose linear mixing or equal power mixing.
+This allows you to adjust the way that the dry/wet mix combines the dry and wet audio.  You can choose linear mixing or equal power mixing.
 </p>
 
 <br />
@@ -198,7 +194,7 @@ This allows you to adjust the way that the dry/wet mix combines the dry and wet 
 <p class="desc">
 Turning this on puts Rez Synth into legato mode (i.e. no polyphony, no space between notes, and no note envelopes).
 <br />
-Note that, while attack and release settings are inaffectual in legato mode, the fade mode is still relevant.  There are very short fades during each note transition in legato mode.  They are too short for the fade mode to make any audible difference, so you are best off setting the fade mode to the mode that is most efficient with your particular CPU.
+Note that, while attack and release settings are ineffectual in legato mode, the fade mode is still relevant.  There are very short fades during each note transition in legato mode.  They are too short for the fade mode to make any audible difference, so you are best off setting the fade mode to the mode that is most efficient with your particular CPU.
 </p>
 
 <br />
@@ -206,7 +202,7 @@ Note that, while attack and release settings are inaffectual in legato mode, the
 
 <br />
 <p class="desc">
-<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command key when clicking on it.
+<i>parameter adjustment tricks:</i> &nbsp; You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command&nbsp;&#8984; key (control on Windows) when clicking on it.
 </p>
 <br />
 
@@ -219,7 +215,7 @@ January - February 2001
 <br /><br />
 Destroy FX #8
 <br />
-<a href="http://destroyfx.org/">http://destroyfx.org/</a>
+<a href="http://destroyfx.org">http://destroyfx.org</a>
 <br /><br />
 Rez Synth is Copyright &copy; 2001-2020 Sophia Poirier
 <br />

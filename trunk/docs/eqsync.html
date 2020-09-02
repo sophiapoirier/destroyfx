@@ -23,7 +23,16 @@
 <p class="label">rate:</p>
 
 <p class="desc">
-The rate parameter lets you control EQ Sync's rate according to the tempo of your song instead of Hz.  This defaults to being off, but if you move the tempo sync slider up, then it turns on tempo sync and overrides the rate parameter's value.  The values are in cycles per beat (note:  I mean per single beat, not per measure, so this is time signature independent).
+The rate parameter lets you control EQ Sync's rate according to the tempo of your song.  The values are in cycles per beat (note:  I mean per single beat, not per measure, so this is time signature independent).
+</p>
+
+<br />
+
+
+<p class="label">smoothing:</p>
+
+<p class="desc">
+The smoothing parameter controls what percentage of each EQ cycle is spent gradually morphing into the next EQ setting.
 </p>
 
 <br />
@@ -39,15 +48,6 @@ The tempo parameter is used to tell EQ Sync what the tempo of your song is.  You
 Please note that &quot;host sync&quot; for tempo only works if the host application supports sending tempo information to plugins.  If &quot;host sync&quot; is enabled and the host supports it, then the tempo parameter's value is ignored (since the host's tempo is being used instead).
 </p>
 
-<br />
-
-
-<p class="label">smooth:</p>
-
-<p class="desc">
-The smooth parameter controls what percentage of each EQ cycle is spent gradually changing to the next EQ setting.
-</p>
-
 
 <br />
 <p class="footer">
@@ -57,7 +57,7 @@ January 2001
 <br /><br />
 Destroy FX #7
 <br />
-<a href="http://destroyfx.org/">http://destroyfx.org/</a>
+<a href="http://destroyfx.org">http://destroyfx.org</a>
 <br /><br />
 EQ Sync is Copyright &copy; 2001-2020 Sophia Poirier
 <br />
