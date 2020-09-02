@@ -31,11 +31,11 @@ Additionally, Buffer Override's buffer divisor value can be optionally controlle
 <br />
 
 <p class="intro">
-Buffer Override's controls are organized into 5 sections.
+Buffer Override's controls are organized into five sections.
 </p>
 
 <p class="intro">
-The center is the most important part.  That is where the big black box is, which is the crux of Buffer Override.  That box is a 2-parameter "XY" control.  Left-right movements control the buffer divisor parameter.  Up-down movements control the forced buffer size parameter.  The tempo sync button above the box corresponds to the forced buffer size.
+The center is the most important part.  That is where the big black box is, which is the crux of Buffer Override.  That box is a two-parameter "XY" control.  Left-right movements control the buffer divisor parameter.  Up-down movements control the forced buffer size parameter.  The tempo sync button above the box corresponds to the forced buffer size.
 </p>
 
 <p class="intro">
@@ -52,7 +52,7 @@ The upper left corner has stuff relating to MIDI.  The upper right corner has mi
 <p class="label">forced buffer size:</p>
 
 <p class="desc">
-This is the size of Buffer Override's own buffer.  It is thrust upon the host with little regard for the real audio buffer size.  You can control it by dragging up and down in the XY box or by clicking and dragging up and down on its numerical value display (which is located underneath the XY box).
+This is the size of Buffer Override's own buffer.  It is thrust upon the host with little regard for the real audio buffer size.  You can control it by dragging up and down in the XY box.
 </p>
 
 <p class="desc">
@@ -74,7 +74,7 @@ This switches between "free" and tempo-synced forced buffer size control.  This 
 <p class="label">buffer divisor:</p>
 
 <p class="desc">
-This number is divided into the forced buffer size, resulting in the mini-buffer size.  It determines how many times each forced buffer "skips."  You can control it by dragging left and right in the XY box or by clicking and dragging up and down on its numerical value display (which is located to the left of the XY box).
+This number is divided into the forced buffer size, resulting in the mini-buffer size.  It determines how many times each forced buffer "skips."  You can control it by dragging left and right in the XY box.
 </p>
 
 <br />
@@ -162,11 +162,11 @@ This lets you adjust your MIDI pitch bend wheel's range in semitones.
 <p class="label">MIDI mode:</p>
 
 <p class="desc">
-Buffer Override has two modes for MIDI note control:  nudge and trigger.  In nudge mode, Buffer Override only pays attention to note-on messages.  Whenever you play a note, the divisor jumps to the proper value that results in the frequency of the note.  When you release the note, nothing changes.
+Buffer Override has two modes for MIDI note control:  nudge and trigger.  In nudge mode, Buffer Override only pays attention to note-on messages.  Whenever you play a note, the divisor jumps to the value that results in the mini-buffer frequency matching that of the note.  When you release the note, nothing changes.
 </p>
 
 <p class="desc">
-In trigger mode, Buffer Override pays attention to note-off as well as note-on messages.  When you stop playing notes, the divisor parameter drops down to 1, which basically turns the effect off.  Buffer Override also stops responding to pitch bend messages when no notes are being played in trigger mode.  You can still change the divisor by adjusting the slider with your mouse, host automation, etc.
+In trigger mode, Buffer Override pays attention to note-off as well as note-on messages.  When you stop playing notes, the divisor parameter drops down to 1, which basically turns the effect off.  Buffer Override also stops responding to pitch bend messages in trigger mode when no notes are being played.  You can still change the divisor by adjusting the slider with your mouse, host automation, etc.
 </p>
 
 <br />
@@ -174,7 +174,7 @@ In trigger mode, Buffer Override pays attention to note-off as well as note-on m
 
 <br />
 <p class="desc">
-<i>parameter adjustment tricks:</i> &nbsp; You can lock the forced buffer size value in the XY box by holding the control key and you can lock the buffer divisor value by holding the option key.  You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command key when clicking on it.
+<i>parameter adjustment tricks:</i> &nbsp; You can lock the forced buffer size value in the XY box by holding the control key and you can lock the buffer divisor value by holding the option key (alt on Windows).  You can make fine adjustments by holding the shift key while adjusting a parameter with your mouse.  You can also reset a parameter to its default value by holding the command&nbsp;&#8984; key (control on Windows) when clicking on it.
 </p>
 <br />
 
@@ -189,7 +189,7 @@ graphics by Justin Maxwell ~ <a href="mailto:soc@code404.com">soc@code404.com</a
 <br /><br />
 Destroy FX #14
 <br />
-<a href="http://destroyfx.org/">http://destroyfx.org/</a>
+<a href="http://destroyfx.org">http://destroyfx.org</a>
 <br /><br />
 Buffer Override is Copyright &copy; 2001-2020 Sophia Poirier
 <br />
