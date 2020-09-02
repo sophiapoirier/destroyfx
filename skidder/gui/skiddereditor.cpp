@@ -345,6 +345,7 @@ long SkidderEditor::OpenEditor()
 	UpdateRandomMinimumDisplays();
 	HandleTempoSyncChange();
 	HandleTempoAutoChange();
+	HandleMidiModeChange();
 	numAudioChannelsChanged(getNumAudioChannels());
 
 
@@ -381,6 +382,11 @@ void SkidderEditor::parameterChanged(long inParameterID)
 
 		case kTempoAuto:
 			HandleTempoAutoChange();
+			break;
+
+		case kMidiMode:
+		case kVelocity:
+			HandleMidiModeChange();
 			break;
 
 		default:
@@ -438,11 +444,30 @@ void SkidderEditor::HandleTempoSyncChange()
 void SkidderEditor::HandleTempoAutoChange()
 {
 	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.0f;
+	SetParameterAlpha(kTempo, alpha);
+}
+
+//-----------------------------------------------------------------------------
+void SkidderEditor::HandleMidiModeChange()
+{
+	bool const isMidiModeEnabled = (getparameter_i(kMidiMode) != kMidiMode_None);
+
+	float const velocityAlpha = isMidiModeEnabled ? 1.0f : kUnusedControlAlpha;
+	SetParameterAlpha(kVelocity, velocityAlpha);
+
+	float const floorAlpha = (isMidiModeEnabled && getparameter_b(kVelocity)) ? kUnusedControlAlpha : 1.0f;
+	SetParameterAlpha(kFloor, floorAlpha);
+	SetParameterAlpha(kFloorRandMin, floorAlpha);
+}
+
+//-----------------------------------------------------------------------------
+void SkidderEditor::SetParameterAlpha(long inParameterID, float inAlpha)
+{
 	for (auto& control : mControlsList)
 	{
-		if (control->getParameterID() == kTempo)
+		if (control->getParameterID() == inParameterID)
 		{
-			control->setDrawAlpha(alpha);
+			control->setDrawAlpha(inAlpha);
 		}
 	}
 }

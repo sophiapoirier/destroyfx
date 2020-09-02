@@ -39,6 +39,8 @@ private:
 	void UpdateRandomMinimumDisplays();
 	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();
+	void HandleMidiModeChange();
+	void SetParameterAlpha(long inParameterID, float inAlpha);
 
 	// controls
 	DGRangeSlider* mRateSlider = nullptr;
