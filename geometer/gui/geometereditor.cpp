@@ -34,6 +34,7 @@ constexpr size_t NUM_SLIDERS = 5;
 
 constexpr DGColor fontcolor_values(75, 151, 71);
 constexpr DGColor fontcolor_labels = DGColor::kWhite;
+constexpr float unused_control_alpha = 0.42f;
 
 constexpr float finetuneinc = 0.0001f;
 
@@ -367,6 +368,9 @@ long GeometerEditor::OpenEditor() {
     fupos.offset(xoff, yoff);
     dpos.offset(xoff, yoff);
     lpos.offset(xoff, yoff);
+
+    // HACK: shortcut to fix up the initial alpha state for any disabled slider controls
+    parameterChanged(baseparam);
   }
 
 
@@ -413,10 +417,30 @@ void GeometerEditor::parameterChanged(long inParameterID) {
     auto const baseparam = get_base_param_for_slider(i);
     if (inParameterID == baseparam) {
       auto const newParameterID = choose_multiparam(inParameterID);
-      sliders[i]->setParameterID(newParameterID);
-      displays[i]->setParameterID(newParameterID);
-      finedownbuttons[i]->setParameterID(newParameterID);
-      fineupbuttons[i]->setParameterID(newParameterID);
+
+      float const alpha = [newParameterID]() {
+        if (newParameterID == (P_INTERPARAMS + INTERP_REVERSI)) {
+          return unused_control_alpha;
+        }
+        for (auto const opparam : {OP_NONE, OP_HALF, OP_QUARTER}) {
+          switch (newParameterID - opparam) {
+            case P_OPPAR1S:
+            case P_OPPAR2S:
+            case P_OPPAR3S:
+              return unused_control_alpha;
+          }
+        }
+        return 1.0f;
+      }();
+
+      auto const update_control_parameter = [newParameterID, alpha](IDGControl* control) {
+        control->setParameterID(newParameterID);
+        control->setDrawAlpha(alpha);
+      };
+      update_control_parameter(sliders[i]);
+      update_control_parameter(displays[i]);
+      update_control_parameter(finedownbuttons[i]);
+      update_control_parameter(fineupbuttons[i]);
     }
   }
 
