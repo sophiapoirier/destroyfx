@@ -212,7 +212,7 @@ When split, each audio channel will find different destinations to seek.)DELIM",
 	// tempo sync
 	R"DELIM(tempo sync:  lock the seek rate to the tempo
 Turning this on will let you define seek rates in terms of your tempo.  
-If your host doesn't give tempo info to plugins, you'll need to define a tempo.)DELIM", 
+If your host doesn't send tempo info to plugins, you'll need to define a tempo.)DELIM", 
 	// pitch constraint
 	R"DELIM(pitch constraint:  - only for robot mode -
 With this set to "notes," the playback speeds for each seek will always be 
@@ -235,11 +235,11 @@ If your host app sends tempo info to plugins, you can enable this parameter
 to lock the tempo that Scrubby uses to that of the host.)DELIM", 
 	// predelay
 	R"DELIM(predelay:  compensate for Scrubby's (possible) output delay
-Scrubby zips around in a delay buffer and therefore can create some latency.  
-This tells your host to predelay by a % of the seek range.  (not in all hosts))DELIM", 
+Scrubby zips around a delay buffer, which can create some perceived latency.  
+This asks your host to predelay by a % of the seek range.  (not in all hosts))DELIM", 
 	// MIDI learn
 	R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
-When this is turned on, you can click on a parameter control and then the next 
+When this is enabled, you can click on a parameter control and then the next 
 MIDI CC received will be assigned to control that parameter.  (not in all hosts))DELIM", 
 	// MIDI reset
 	R"DELIM(MIDI reset:  erase CC assignments
