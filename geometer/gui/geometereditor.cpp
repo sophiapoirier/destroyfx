@@ -309,6 +309,7 @@ long GeometerEditor::OpenEditor() {
   DGRect lpos(pos_sliderlabelX, pos_sliderlabelY, pos_sliderlabelwidth, pos_sliderlabelheight);
   for (size_t i=0; i < NUM_SLIDERS; i++) {
     auto const baseparam = get_base_param_for_slider(i);
+    assert(dfxgui_IsValidParamID(baseparam));
     auto labelstrings = &ops_labelstrings;
     long xoff = 0, yoff = 0;
     // how to generate landmarks
@@ -515,7 +516,9 @@ long GeometerEditor::get_base_param_for_slider(size_t sliderIndex) noexcept {
       return P_POINTOP1;
     case 3:
       return P_POINTOP2;
-    default:
+    case 4:
       return P_POINTOP3;
+    default:
+      return dfx::kParameterID_Invalid;
   }
 }
