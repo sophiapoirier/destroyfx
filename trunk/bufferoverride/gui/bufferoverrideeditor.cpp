@@ -536,14 +536,14 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 	switch (currentcontrolparam)
 	{
 		case kDivisor:
-			helpstring = "buffer divisor is the number of times each forced buffer skips & starts over";
+			helpstring = "buffer divisor is the number of times each forced buffer skips and starts over";
 			break;
 		case kBufferSize_MS:
 		case kBufferSize_Sync:
-			helpstring = "forced buffer size is the length of the sound chunks that Buffer Override works with";
+			helpstring = "forced buffer size is the length of the sound chunks upon which " PLUGIN_NAME_STRING " operates";
 			break;
 		case kBufferTempoSync:
-			helpstring = "turn tempo sync on if you want the size of the forced buffers to sync to your tempo";
+			helpstring = "turn on tempo sync if you want the size of the forced buffers to sync to your tempo";
 			break;
 		case kBufferInterrupt:
 			helpstring = "turn this off for the old version 1 style of stubborn \"stuck\" buffers (if you really want that)";
@@ -559,7 +559,7 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 			helpstring = "choose the waveform shape of the LFO that modulates the buffer divisor";
 			break;
 		case kDivisorLFOTempoSync:
-			helpstring = "turn tempo sync on if you want the rate of the buffer divisor LFO to sync to your tempo";
+			helpstring = "turn on tempo sync if you want the rate of the buffer divisor LFO to sync to your tempo";
 			break;
 		case kBufferLFORate_Hz:
 		case kBufferLFORate_Sync:
@@ -572,22 +572,22 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 			helpstring = "choose the waveform shape of the LFO that modulates the forced buffer size";
 			break;
 		case kBufferLFOTempoSync:
-			helpstring = "turn tempo sync on if you want the rate of the forced buffer size LFO to sync to your tempo";
+			helpstring = "turn on tempo sync if you want the rate of the forced buffer size LFO to sync to your tempo";
 			break;
 		case kSmooth:
 			helpstring = "the portion of each minibuffer spent smoothly crossfading the previous one into the new one (prevents glitches)";
 			break;
 		case kDryWetMix:
-			helpstring = "the relative mix of the processed sound & the clean/original sound (100% is all processed)";
+			helpstring = "the relative mix of the processed sound and the clean/original sound (100% is all processed)";
 			break;
 		case kPitchbend:
-			helpstring = "the range, in semitones, of the MIDI pitch bend wheel's effect on the buffer divisor";
+			helpstring = "the range, in semitones, of MIDI pitch bend's effect on the buffer divisor";
 			break;
 		case kMidiMode:
 			helpstring = "nudge: MIDI notes adjust the buffer divisor.   trigger: notes also reset the divisor to 1 when they are released";
 			break;
 		case kTempo:
-			helpstring = "you can adjust the tempo that Buffer Override uses, or use the \"host tempo\" button to get tempo from your host";
+			helpstring = "you can adjust the tempo used for sync, or enable the \"host tempo\" button to get tempo from your host";
 			break;
 		case kTempoAuto:
 			helpstring = "enable this to get the tempo from your host application";
@@ -598,7 +598,7 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 			{
 				if (currentControlUnderMouse == GetMidiLearnButton())
 				{
-					helpstring = "activate or deactivate learn mode for assigning MIDI CCs to control Buffer Override's parameters";
+					helpstring = "activate or deactivate learn mode for assigning MIDI CCs to control " PLUGIN_NAME_STRING "'s parameters";
 				}
 				else if (currentControlUnderMouse == GetMidiResetButton())
 				{
