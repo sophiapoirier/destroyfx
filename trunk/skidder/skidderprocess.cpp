@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2019  Sophia Poirier
+Copyright (C) 2000-2020  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -120,7 +120,7 @@ void Skidder::processSlopeOut()
 	// dividing the decrementing mSlopeSamples by mSlopeDur makes descending values
 	if (mMidiOut && (mMidiMode == kMidiMode_Trigger))
 	{
-		// start from a 0.0 floor if we are coming in from silence
+		// move towards a 0.0 floor if we are exiting to silence
 		mSampleAmp = baseSlopeAmp;
 	}
 	else if (mUseRandomFloor)
@@ -302,7 +302,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 // ---------- begin MIDI stuff --------------
 	processMidiNotes();
 
-	auto const noteIsOn = std::any_of(mNoteTable.begin(), mNoteTable.end(), [](auto const& velocity){ return (velocity > 0); });
+	auto const noteIsOn = isAnyNoteOn();
 
 	switch (mMidiMode)
 	{
@@ -319,8 +319,8 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					}
 
 					// jump ahead accordingly in the i/o streams
-					mOutputAudio[ch] += mWaitSamples;
 					mInputAudio[ch] += mWaitSamples;
+					mOutputAudio[ch] += mWaitSamples;
 				}
 
 				// cut back the number of samples outputted
@@ -346,8 +346,16 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 							mOutputAudio[ch][samp] = 0.0f;
 						}
 					}
-					inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
-					mWaitSamples = 0;
+					if (mWaitSamples > 0)
+					{
+						inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
+						mWaitSamples = 0;
+					}
+					else
+					{
+						// that's all we need to do if there are no notes, just silence the output
+						return;
+					}
 				}
 			}
 
@@ -385,31 +393,27 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			else if (!noteIsOn)
 			{
 				// if Skidder currently is in the plateau and has a slow cycle, this could happen
-				if (mWaitSamples != 0)
+				if (dfx::math::ToUnsigned(mWaitSamples) > inNumFrames)
 				{
-					if (dfx::math::ToUnsigned(mWaitSamples) > inNumFrames)
-					{
-						mWaitSamples -= dfx::math::ToSigned(inNumFrames);
-					}
-					else
-					{
-						for (unsigned long ch = 0; ch < numOutputs; ch++)
-						{
-							std::copy_n(mInputAudio[ch] + mWaitSamples, inNumFrames - dfx::math::ToUnsigned(mWaitSamples), mOutputAudio[ch] + mWaitSamples);
-						}
-						inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
-						mWaitSamples = 0;
-					}
+					mWaitSamples -= dfx::math::ToSigned(inNumFrames);
 				}
 				else
 				{
 					for (unsigned long ch = 0; ch < numOutputs; ch++)
 					{
-						std::copy_n(mInputAudio[ch], inNumFrames, mOutputAudio[ch]);
+						std::copy_n(mInputAudio[ch] + mWaitSamples, inNumFrames - dfx::math::ToUnsigned(mWaitSamples), mOutputAudio[ch] + mWaitSamples);
 					}
-					// that's all we need to do if there are no notes, 
-					// just copy the input to the output
-					return;
+					if (mWaitSamples > 0)
+					{
+						inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
+						mWaitSamples = 0;
+					}
+					else
+					{
+						// that's all we need to do if there are no notes, 
+						// just copy the input to the output
+						return;
+					}
 				}
 			}
 

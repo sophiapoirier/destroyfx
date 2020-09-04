@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2018  Sophia Poirier
+Copyright (C) 2000-2020  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -39,6 +39,8 @@ void Skidder::resetMidi()
 //-----------------------------------------------------------------------------
 void Skidder::processMidiNotes()
 {
+	auto noteWasOn = isAnyNoteOn();
+
 	for (long i = 0; i < getmidistate().getBlockEventCount(); i++)
 	{
 		auto const currentNote = getmidistate().getBlockEvent(i).mByte1;
@@ -53,6 +55,7 @@ void Skidder::processMidiNotes()
 				// If more than one note-on happens this block, only the last one is effective.
 				// This is good enough for this effect, though.
 				noteOn(getmidistate().getBlockEvent(i).mOffsetFrames);
+				noteWasOn = true;
 				break;
 
 			// note-off status was received
@@ -66,6 +69,7 @@ void Skidder::processMidiNotes()
 				{
 					mNoteTable.fill(0);  // turn off all notes
 					noteOff();  // do the notes off Skidder stuff
+					noteWasOn = false;
 				}
 				break;
 
@@ -74,10 +78,9 @@ void Skidder::processMidiNotes()
 		}
 	}
 
-	// check every note to see any are still on or if they all got turned off during this block...
-	auto const noteIsOn = std::any_of(mNoteTable.begin(), mNoteTable.end(), [](auto const& velocity){ return (velocity > 0); });
-	// ...and do the Skidder notes-off stuff if we have no notes remaining on
-	if (!noteIsOn)
+	// check to see whether we are internally in a state of note being on but all, 
+	// and do the Skidder notes-off stuff if we have no notes remaining on
+	if (noteWasOn && !isAnyNoteOn())
 	{
 		noteOff();
 	}
@@ -89,12 +92,6 @@ void Skidder::noteOn(unsigned long offsetFrames)
 	switch (mMidiMode)
 	{
 		case kMidiMode_Trigger:
-			mWaitSamples = dfx::math::ToSigned(offsetFrames);
-			mState = SkidState::Valley;
-			mValleySamples = 0;
-			mMidiIn = true;
-			break;
-
 		case kMidiMode_Apply:
 			mWaitSamples = dfx::math::ToSigned(offsetFrames);
 			mState = SkidState::Valley;
@@ -184,10 +181,7 @@ void Skidder::noteOff()
 
 			mMidiOut = true;
 			// in case we're still in a MIDI-in phase; it won't get falsed otherwise
-			if (mMidiIn)
-			{
-				mMidiIn = false;
-			}
+			mMidiIn = false;
 			// just to prevent anything really stupid from happening
 			mWaitSamples = std::max(mWaitSamples, 0L);
 
@@ -196,6 +190,12 @@ void Skidder::noteOff()
 		default:
 			break;
 	}
+}
+
+//-----------------------------------------------------------------------------
+bool Skidder::isAnyNoteOn() const
+{
+	return std::any_of(mNoteTable.cbegin(), mNoteTable.cend(), [](auto const& velocity){ return (velocity > 0); });
 }
 
 
