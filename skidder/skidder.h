@@ -113,6 +113,7 @@ private:
 
 	void noteOn(unsigned long offsetFrames);
 	void noteOff();
+	bool isAnyNoteOn() const;
 	void resetMidi();
 
 	// the parameters
