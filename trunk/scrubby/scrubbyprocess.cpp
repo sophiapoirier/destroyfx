@@ -542,7 +542,7 @@ void Scrubby::processMidiNotes()
 				// then turn its associated pitch constraint parameter on
 				if (mActiveNotesTable[currentNote] == 0)
 				{
-					setparameter_b(currentNote + kPitchStep0, true);
+					setparameterquietly_b(currentNote + kPitchStep0, true);
 				}
 				// increment the active notes table for this note
 				mActiveNotesTable[currentNote]++;
@@ -553,7 +553,7 @@ void Scrubby::processMidiNotes()
 				// then turn its associated pitch constraint parameter off
 				if (mActiveNotesTable[currentNote] == 1)
 				{
-					setparameter_b(currentNote + kPitchStep0, false);
+					setparameterquietly_b(currentNote + kPitchStep0, false);
 				}
 				// decrement the active notes table for this note, but don't go below 0
 				mActiveNotesTable[currentNote] = std::max(mActiveNotesTable[currentNote] - 1, 0L);
@@ -569,7 +569,7 @@ void Scrubby::processMidiNotes()
 						// (and reset this note in the table)
 						if (std::exchange(mActiveNotesTable[notecount], 0) > 0)
 						{
-							setparameter_b(notecount + kPitchStep0, false);
+							setparameterquietly_b(notecount + kPitchStep0, false);
 						}
 					}
 				}

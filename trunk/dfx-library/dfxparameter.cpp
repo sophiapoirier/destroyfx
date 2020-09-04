@@ -640,6 +640,24 @@ void DfxParam::set_gen(double inGenValue)
 	set_f(expand(inGenValue));
 }
 
+//-----------------------------------------------------------------------------
+void DfxParam::setquietly_f(double inNewValue)
+{
+	accept_f(inNewValue, mValue);
+}
+
+//-----------------------------------------------------------------------------
+void DfxParam::setquietly_i(int64_t inNewValue)
+{
+	accept_i(inNewValue, mValue);
+}
+
+//-----------------------------------------------------------------------------
+void DfxParam::setquietly_b(bool inNewValue)
+{
+	accept_b(inNewValue, mValue);
+}
+
 
 
 #pragma mark -
