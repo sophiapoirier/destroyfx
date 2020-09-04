@@ -232,7 +232,7 @@ void EQSync::processaudio(float const* const* inAudio, float* const* outAudio, u
 	{
 		auto const setAndNotify = [this](auto parameterID, auto parameterValue)
 		{
-			setparameter_f(parameterID, parameterValue);
+			setparameterquietly_f(parameterID, parameterValue);
 			postupdate_parameter(parameterID);  // inform listeners of change
 		};
 		setAndNotify(kA0, mA0);

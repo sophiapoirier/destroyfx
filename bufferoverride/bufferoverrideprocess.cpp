@@ -378,7 +378,7 @@ void BufferOverride::processaudio(float const* const* inAudio, float* const* out
 	// make our parameters storers and the host aware that divisor changed because of MIDI
 	if ((mDivisor != entryDivisor)/* || mDivisorWasChangedByMIDI*/)
 	{
-		setparameter_f(kDivisor, mDivisor);  // XXX eh?
+		setparameterquietly_f(kDivisor, mDivisor);
 		postupdate_parameter(kDivisor);  // inform listeners of change
 	}
 	mDivisorWasChangedByMIDI = false;

@@ -536,6 +536,36 @@ void DfxPlugin::setparameter_gen(long inParameterIndex, double inValue)
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::setparameterquietly_f(long inParameterIndex, double inValue)
+{
+	if (parameterisvalid(inParameterIndex))
+	{
+		mParameters[inParameterIndex].setquietly_f(inValue);
+		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::setparameterquietly_i(long inParameterIndex, int64_t inValue)
+{
+	if (parameterisvalid(inParameterIndex))
+	{
+		mParameters[inParameterIndex].setquietly_i(inValue);
+		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::setparameterquietly_b(long inParameterIndex, bool inValue)
+{
+	if (parameterisvalid(inParameterIndex))
+	{
+		mParameters[inParameterIndex].setquietly_b(inValue);
+		update_parameter(inParameterIndex);  // make the host aware of the parameter change
+	}
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::randomizeparameter(long inParameterIndex)
 {
 	if (parameterisvalid(inParameterIndex))

@@ -147,7 +147,7 @@ void Scrubby::reset()
 	{
 		if (std::exchange(mActiveNotesTable[i], 0) > 0)
 		{
-			setparameter_b(i + kPitchStep0, false);
+			setparameterquietly_b(i + kPitchStep0, false);
 			postupdate_parameter(i + kPitchStep0);
 		}
 	}
@@ -359,16 +359,13 @@ void Scrubby::processparameters()
 	mUseHostTempo = getparameter_b(kTempoAuto);
 	for (size_t i = 0; i < kNumPitchSteps; i++)
 	{
-		if (auto const value = getparameterifchanged_b(i + kPitchStep0))
+		auto const parameterID = i + kPitchStep0;
+		// fetch latest value regardless of whether it "changed" since MIDI notes generate internal values "quietly"
+		mPitchSteps[i] = getparameter_b(parameterID);
+		// reset the associated note in the notes table; manual changes override MIDI
+		if (getparameterchanged(parameterID))
 		{
-			mPitchSteps[i] = *value;
-			// reset the associated note in the notes table; manual changes override MIDI
-			// TODO: this is fraught because MIDI note control itself flags these parameters as "changed"
-			// but limiting this override only to turning notes off seems to avert the unwanted side effect 
-			if (!(*value))
-			{
-				mActiveNotesTable[i] = 0;
-			}
+			mActiveNotesTable[i] = 0;
 		}
 	}
 
