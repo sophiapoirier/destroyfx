@@ -369,6 +369,9 @@ public:
 	void setparameter_i(long inParameterIndex, int64_t inValue);
 	void setparameter_b(long inParameterIndex, bool inValue);
 	void setparameter_gen(long inParameterIndex, double inValue);
+	void setparameterquietly_f(long inParameterIndex, double inValue);
+	void setparameterquietly_i(long inParameterIndex, int64_t inValue);
+	void setparameterquietly_b(long inParameterIndex, bool inValue);
 	// ***
 	virtual void randomizeparameter(long inParameterIndex);
 	// Randomize all parameters at once. Default implementation just loops over the

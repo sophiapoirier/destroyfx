@@ -327,6 +327,11 @@ public:
 	void set_b(bool inNewValue);
 	// set the current value with a generic 0...1 float value
 	void set_gen(double inGenValue);
+	// set the current value without flagging change or touch or range check
+	// (intended for when a plugin generates the change itself)
+	void setquietly_f(double inNewValue);
+	void setquietly_i(int64_t inNewValue);
+	void setquietly_b(bool inNewValue);
 
 	// get the parameter's current value
 	Value get() const noexcept
