@@ -476,7 +476,7 @@ long TransverbEditor::OpenEditor()
 	}
 
 	// MIDI learn button
-	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
+	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage, true);
 
 	// MIDI reset button
 	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
