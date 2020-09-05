@@ -101,10 +101,30 @@ private:
 
 
 //-----------------------------------------------------------------------------
+// shortcut for create an on/off button with dimensions derived from its image
+class DGToggleImageButton : public DGButton
+{
+public:
+	DGToggleImageButton(DfxGuiEditor* inOwnerEditor, long inParameterID, VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, 
+						DGImage* inImage, bool inDrawMomentaryState = false);
+	DGToggleImageButton(DfxGuiEditor* inOwnerEditor, VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, 
+						DGImage* inImage, bool inDrawMomentaryState = false);
+
+	CLASS_METHODS(DGToggleImageButton, DGButton)
+
+private:
+	static constexpr long kNumStates = 2;
+
+	static DGRect makeRegion(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState);
+};
+
+
+
+//-----------------------------------------------------------------------------
 class DGFineTuneButton : public DGControl<VSTGUI::CControl>
 {
 public:
-	DGFineTuneButton(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
+	DGFineTuneButton(DfxGuiEditor* inOwnerEditor, long inParameterID, DGRect const& inRegion, 
 					 DGImage* inImage, float inValueChangeAmount = 0.0001f);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;

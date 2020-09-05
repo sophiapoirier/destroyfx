@@ -2380,18 +2380,9 @@ void DfxGuiEditor::HandleMidiLearnerChange()
 }
 
 //-----------------------------------------------------------------------------
-DGButton* DfxGuiEditor::CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState)
+DGButton* DfxGuiEditor::CreateMidiLearnButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState)
 {
-	constexpr long numButtonStates = 2;
-	auto controlWidth = inImage->getWidth();
-	if (inDrawMomentaryState)
-	{
-		controlWidth /= 2;
-	}
-	auto const controlHeight = inImage->getHeight() / numButtonStates;
-
-	DGRect const pos(inXpos, inYpos, controlWidth, controlHeight);
-	mMidiLearnButton = emplaceControl<DGButton>(this, pos, inImage, numButtonStates, DGButton::Mode::Increment, inDrawMomentaryState);
+	mMidiLearnButton = emplaceControl<DGToggleImageButton>(this, inXpos, inYpos, inImage, inDrawMomentaryState);
 	mMidiLearnButton->setUserProcedure([](long inValue, void* inUserData)
 	{
 		assert(inUserData);
@@ -2401,7 +2392,7 @@ DGButton* DfxGuiEditor::CreateMidiLearnButton(long inXpos, long inYpos, DGImage*
 }
 
 //-----------------------------------------------------------------------------
-DGButton* DfxGuiEditor::CreateMidiResetButton(long inXpos, long inYpos, DGImage* inImage)
+DGButton* DfxGuiEditor::CreateMidiResetButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage)
 {
 	DGRect const pos(inXpos, inYpos, inImage->getWidth(), inImage->getHeight() / 2);
 	mMidiResetButton = emplaceControl<DGButton>(this, pos, inImage, 2, DGButton::Mode::Momentary);

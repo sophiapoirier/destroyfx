@@ -38,7 +38,6 @@
 		49BB476E07E53B4B00861708 /* dry-wet-mix-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB475A07E53B4B00861708 /* dry-wet-mix-mode-button.png */; };
 		49BB476F07E53B4B00861708 /* fades-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB475B07E53B4B00861708 /* fades-button.png */; };
 		49BB477007E53B4B00861708 /* foldover-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB475C07E53B4B00861708 /* foldover-button.png */; };
-		49BB477107E53B4B00861708 /* go-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB475D07E53B4B00861708 /* go-button.png */; };
 		49BB477207E53B4B00861708 /* horizontal-slider-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB475E07E53B4B00861708 /* horizontal-slider-background.png */; };
 		49BB477407E53B4B00861708 /* horizontal-slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476007E53B4B00861708 /* horizontal-slider-handle.png */; };
 		49BB477507E53B4B00861708 /* legato-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476107E53B4B00861708 /* legato-button.png */; };
@@ -143,7 +142,6 @@
 		49BB475A07E53B4B00861708 /* dry-wet-mix-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "dry-wet-mix-mode-button.png"; sourceTree = "<group>"; };
 		49BB475B07E53B4B00861708 /* fades-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "fades-button.png"; sourceTree = "<group>"; };
 		49BB475C07E53B4B00861708 /* foldover-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "foldover-button.png"; sourceTree = "<group>"; };
-		49BB475D07E53B4B00861708 /* go-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "go-button.png"; sourceTree = "<group>"; };
 		49BB475E07E53B4B00861708 /* horizontal-slider-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "horizontal-slider-background.png"; sourceTree = "<group>"; };
 		49BB475F07E53B4B00861708 /* horizontal-slider-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "horizontal-slider-handle-glowing.png"; sourceTree = "<group>"; };
 		49BB476007E53B4B00861708 /* horizontal-slider-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "horizontal-slider-handle.png"; sourceTree = "<group>"; };
@@ -314,7 +312,6 @@
 				49BB475A07E53B4B00861708 /* dry-wet-mix-mode-button.png */,
 				49BB476207E53B4B00861708 /* midi-learn-button.png */,
 				49BB476307E53B4B00861708 /* midi-reset-button.png */,
-				49BB475D07E53B4B00861708 /* go-button.png */,
 				49BB475907E53B4B00861708 /* destroy-fx-link.png */,
 				49BB476707E53B4B00861708 /* smart-electronix-link.png */,
 				49BB476B07E53B4B00861708 /* vertical-value-display-background.png */,
@@ -544,7 +541,6 @@
 				49BB476E07E53B4B00861708 /* dry-wet-mix-mode-button.png in Resources */,
 				49BB476F07E53B4B00861708 /* fades-button.png in Resources */,
 				49BB477007E53B4B00861708 /* foldover-button.png in Resources */,
-				49BB477107E53B4B00861708 /* go-button.png in Resources */,
 				49BB477207E53B4B00861708 /* horizontal-slider-background.png in Resources */,
 				49BB477407E53B4B00861708 /* horizontal-slider-handle.png in Resources */,
 				ECDB2A6E21BA02AF00938F5C /* horizontal-slider-handle-glowing.png in Resources */,

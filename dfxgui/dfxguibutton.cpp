@@ -340,6 +340,46 @@ long DGButton::constrainValue(long inValue) const
 
 
 #pragma mark -
+#pragma mark DGToggleImageButton
+
+//-----------------------------------------------------------------------------
+// Toggle Button
+//-----------------------------------------------------------------------------
+DGToggleImageButton::DGToggleImageButton(DfxGuiEditor* inOwnerEditor, 
+										 long inParameterID, 
+										 VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, 
+										 DGImage* inImage, 
+										 bool inDrawMomentaryState)
+:	DGButton(inOwnerEditor, inParameterID, makeRegion(inXpos, inYpos, inImage, inDrawMomentaryState), inImage, 
+			 Mode::Increment, inDrawMomentaryState)
+{
+	assert(inImage);
+}
+
+//-----------------------------------------------------------------------------
+DGToggleImageButton::DGToggleImageButton(DfxGuiEditor* inOwnerEditor, 
+										 VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, 
+										 DGImage* inImage, 
+										 bool inDrawMomentaryState)
+:	DGButton(inOwnerEditor, makeRegion(inXpos, inYpos, inImage, inDrawMomentaryState), inImage, 
+			 kNumStates, Mode::Increment, inDrawMomentaryState)
+{
+	assert(inImage);
+}
+
+//-----------------------------------------------------------------------------
+DGRect DGToggleImageButton::makeRegion(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState)
+{
+	auto const width = inImage->getWidth() / (inDrawMomentaryState ? 2 : 1);
+	return DGRect(inXpos, inYpos, width, inImage->getHeight() / kNumStates);
+}
+
+
+
+
+
+
+#pragma mark -
 #pragma mark DGFineTuneButton
 
 //-----------------------------------------------------------------------------

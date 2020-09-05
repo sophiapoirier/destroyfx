@@ -606,28 +606,22 @@ long ScrubbyEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kSpeedMode, pos, speedModeButtonImage, DGButton::Mode::Increment, true);
 
 	// freeze the input stream
-	pos.set(kFreezeButtonX, kFreezeButtonY, freezeButtonImage->getWidth() / 2, freezeButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kFreeze, pos, freezeButtonImage, DGButton::Mode::Increment, true);
+	emplaceControl<DGToggleImageButton>(this, kFreeze, kFreezeButtonX, kFreezeButtonY, freezeButtonImage, true);
 
 	// choose the channels mode (linked or split)
-	pos.set(kSplitChannelsButtonX, kSplitChannelsButtonY, splitChannelsButtonImage->getWidth() / 2, splitChannelsButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kSplitChannels, pos, splitChannelsButtonImage, DGButton::Mode::Increment, true);
+	emplaceControl<DGToggleImageButton>(this, kSplitChannels, kSplitChannelsButtonX, kSplitChannelsButtonY, splitChannelsButtonImage, true);
 
 	// choose the seek rate type ("free" or synced)
-	pos.set(kTempoSyncButtonX, kTempoSyncButtonY, tempoSyncButtonImage->getWidth() / 2, tempoSyncButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage, DGButton::Mode::Increment, true);
+	emplaceControl<DGToggleImageButton>(this, kTempoSync, kTempoSyncButtonX, kTempoSyncButtonY, tempoSyncButtonImage, true);
 
 	// toggle pitch constraint
-	pos.set(kPitchConstraintButtonX, kPitchConstraintButtonY, pitchConstraintButtonImage->getWidth() / 2, pitchConstraintButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kPitchConstraint, pos, pitchConstraintButtonImage, DGButton::Mode::Increment, true);
+	emplaceControl<DGToggleImageButton>(this, kPitchConstraint, kPitchConstraintButtonX, kPitchConstraintButtonY, pitchConstraintButtonImage, true);
 
 	// choose the seek rate type ("free" or synced)
-	pos.set(kLittleTempoSyncButtonX, kLittleTempoSyncButtonY, tempoSyncButtonImage_little->getWidth(), tempoSyncButtonImage_little->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage_little, DGButton::Mode::Increment, false);
+	emplaceControl<DGToggleImageButton>(this, kTempoSync, kLittleTempoSyncButtonX, kLittleTempoSyncButtonY, tempoSyncButtonImage_little, false);
 
 	// enable sync to host tempo
-	pos.set(kTempoAutoButtonX, kTempoAutoButtonY, hostTempoButtonImage->getWidth(), hostTempoButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoAuto, pos, hostTempoButtonImage, DGButton::Mode::Increment, false);
+	emplaceControl<DGToggleImageButton>(this, kTempoAuto, kTempoAutoButtonX, kTempoAutoButtonY, hostTempoButtonImage, false);
 
 
 	// ...............PITCH CONSTRAINT....................

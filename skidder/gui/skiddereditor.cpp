@@ -65,9 +65,6 @@ enum
 	kTempoAutoButtonX = kTempoSyncButtonX,
 	kTempoAutoButtonY = kTempoSyncButtonY + (kSliderInc * 6),
 
-	kGoButtonX = 18,
-	kGoButtonY = 338,
-
 	kMidiModeButtonX = 105,
 	kMidiModeButtonY = 338,
 
@@ -240,20 +237,17 @@ long SkidderEditor::OpenEditor()
 	//--initialize the buttons----------------------------------------------
 
 	// choose the rate type ("free" or synced)
-	pos.set(kTempoSyncButtonX, kTempoSyncButtonY, tempoSyncButtonImage->getWidth(), tempoSyncButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGToggleImageButton>(this, kTempoSync, kTempoSyncButtonX, kTempoSyncButtonY, tempoSyncButtonImage);
 
 	// use host tempo
-	pos.set(kTempoAutoButtonX, kTempoAutoButtonY, tempoAutoButtonImage->getWidth(), tempoAutoButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoAuto, pos, tempoAutoButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGToggleImageButton>(this, kTempoAuto, kTempoAutoButtonX, kTempoAutoButtonY, tempoAutoButtonImage);
 
 	// MIDI note control mode button
 	pos.set(kMidiModeButtonX, kMidiModeButtonY, midiModeButtonImage->getWidth(), midiModeButtonImage->getHeight() / kNumMidiModes);
 	emplaceControl<DGButton>(this, kMidiMode, pos, midiModeButtonImage, DGButton::Mode::Increment);
 
 	// use-note-velocity button
-	pos.set(kVelocityButtonX, kVelocityButtonY, velocityButtonImage->getWidth(), velocityButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kVelocity, pos, velocityButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGToggleImageButton>(this, kVelocity, kVelocityButtonX, kVelocityButtonY, velocityButtonImage);
 
 	// turn on/off MIDI learn mode for CC parameter automation
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);

@@ -323,8 +323,8 @@ public:
 	void HandleMidiLearnerChange();
 	virtual void midiLearningChanged(bool inLearnMode) {}
 	virtual void midiLearnerChanged(long inParameterIndex) {}
-	DGButton* CreateMidiLearnButton(long inXpos, long inYpos, DGImage* inImage, bool inDrawMomentaryState = false);
-	DGButton* CreateMidiResetButton(long inXpos, long inYpos, DGImage* inImage);
+	DGButton* CreateMidiLearnButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState = false);
+	DGButton* CreateMidiResetButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage);
 	auto GetMidiLearnButton() const noexcept
 	{
 		return mMidiLearnButton;
