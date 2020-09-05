@@ -82,9 +82,6 @@ enum
 	kMidiResetButtonX = kMidiLearnButtonX + 72,
 	kMidiResetButtonY = 331,
 
-	kGoButtonX = 22,
-	kGoButtonY = 331,
-
 	kDestroyFXLinkX = 453,
 	kDestroyFXLinkY = 327,
 	kSmartElectronixLinkX = 358,
@@ -217,7 +214,6 @@ long RezSynthEditor::OpenEditor()
 	auto const dryWetMixModeButtonImage = VSTGUI::makeOwned<DGImage>("dry-wet-mix-mode-button.png");
 	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
 	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
-	auto const goButtonImage = VSTGUI::makeOwned<DGImage>("go-button.png");
 	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
 	auto const smartElectronixLinkImage = VSTGUI::makeOwned<DGImage>("smart-electronix-link.png");
 
@@ -349,11 +345,10 @@ long RezSynthEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, DGButton::Mode::Increment);
 
 	// legato
-	pos.set(kLegatoButtonX, kLegatoButtonY, legatoButtonImage->getWidth(), legatoButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kLegato, pos, legatoButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGToggleImageButton>(this, kLegato, kLegatoButtonX, kLegatoButtonY, legatoButtonImage);
 
 	// attack and release fade mode
-	pos.set(kFadeTypeButtonX, kFadeTypeButtonY, fadesButtonImage->getWidth(), fadesButtonImage->getHeight() /DfxEnvelope::kCurveType_NumTypes);
+	pos.set(kFadeTypeButtonX, kFadeTypeButtonY, fadesButtonImage->getWidth(), fadesButtonImage->getHeight() / DfxEnvelope::kCurveType_NumTypes);
 	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DGButton::Mode::Increment);
 
 	// resonance algorithm
@@ -365,12 +360,10 @@ long RezSynthEditor::OpenEditor()
 	label->setText("resonance algorithm");
 
 	// allow Nyquist foldover or no
-	pos.set(kFoldoverButtonX, kFoldoverButtonY, foldoverButtonImage->getWidth(), foldoverButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kFoldover, pos, foldoverButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGToggleImageButton>(this, kFoldover, kFoldoverButtonX, kFoldoverButtonY, foldoverButtonImage);
 
 	// wisely lower the output gain to accomodate for resonance or no
-	pos.set(kWiseAmpButtonX, kWiseAmpButtonY, wiseAmpButtonImage->getWidth(), wiseAmpButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kWiseAmp, pos, wiseAmpButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGToggleImageButton>(this, kWiseAmp, kWiseAmpButtonX, kWiseAmpButtonY, wiseAmpButtonImage);
 
 	// dry/wet mix mode (linear or equal power)
 	pos.set(kDryWetMixModeButtonX, kDryWetMixModeButtonY, dryWetMixModeButtonImage->getWidth(), dryWetMixModeButtonImage->getHeight() / kNumDryWetMixModes);
@@ -381,10 +374,6 @@ long RezSynthEditor::OpenEditor()
 
 	// clear all MIDI CC assignments
 	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
-
-	// go!
-	pos.set(kGoButtonX, kGoButtonY, goButtonImage->getWidth(), goButtonImage->getHeight() / 2);
-	emplaceControl<DGWebLink>(this, pos, goButtonImage, "http://www.streetharassmentproject.org/");
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
