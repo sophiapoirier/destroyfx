@@ -388,11 +388,9 @@ long BufferOverrideEditor::OpenEditor()
 	};
 
 	// forced buffer size tempo sync button
-	pos.set(kBufferTempoSyncButtonX, kBufferTempoSyncButtonY, bufferTempoSyncButtonImage->getWidth() / 2, bufferTempoSyncButtonImage->getHeight() / 2);
-	auto const bufferTempoSyncButton = emplaceControl<DGButton>(this, kBufferTempoSync, pos, bufferTempoSyncButtonImage, DGButton::Mode::Increment, true);
+	auto const bufferTempoSyncButton = emplaceControl<DGToggleImageButton>(this, kBufferTempoSync, kBufferTempoSyncButtonX, kBufferTempoSyncButtonY, bufferTempoSyncButtonImage, true);
 	//
-	pos.set(kBufferTempoSyncButtonCornerX, kBufferTempoSyncButtonCornerY, bufferTempoSyncButtonCornerImage->getWidth() / 2, bufferTempoSyncButtonCornerImage->getHeight() / 2);
-	auto const bufferTempoSyncButtonCorner = emplaceControl<DGButton>(this, kBufferTempoSync, pos, bufferTempoSyncButtonCornerImage, DGButton::Mode::Increment, true);
+	auto const bufferTempoSyncButtonCorner = emplaceControl<DGToggleImageButton>(this, kBufferTempoSync, kBufferTempoSyncButtonCornerX, kBufferTempoSyncButtonCornerY, bufferTempoSyncButtonCornerImage, true);
 	//
 	bufferTempoSyncButton->setUserProcedure(linkKickButtonsDownProc, bufferTempoSyncButtonCorner);
 	bufferTempoSyncButtonCorner->setUserProcedure(linkKickButtonsDownProc, bufferTempoSyncButton);
@@ -400,11 +398,9 @@ long BufferOverrideEditor::OpenEditor()
 	bufferTempoSyncButtonCorner->setUserReleaseProcedure(linkKickButtonsUpProc, bufferTempoSyncButton);
 
 	// buffer interrupt button
-	pos.set(kBufferInterruptButtonX, kBufferInterruptButtonY, bufferInterruptButtonImage->getWidth() / 2, bufferInterruptButtonImage->getHeight() / 2);
-	auto const bufferInterruptButton = emplaceControl<DGButton>(this, kBufferInterrupt, pos, bufferInterruptButtonImage, DGButton::Mode::Increment, true);
+	auto const bufferInterruptButton = emplaceControl<DGToggleImageButton>(this, kBufferInterrupt, kBufferInterruptButtonX, kBufferInterruptButtonY, bufferInterruptButtonImage, true);
 	//
-	pos.set(kBufferInterruptButtonCornerX, kBufferInterruptButtonCornerY, bufferInterruptButtonCornerImage->getWidth() / 2, bufferInterruptButtonCornerImage->getHeight() / 2);
-	auto const bufferInterruptButtonCorner = emplaceControl<DGButton>(this, kBufferInterrupt, pos, bufferInterruptButtonCornerImage, DGButton::Mode::Increment, true);
+	auto const bufferInterruptButtonCorner = emplaceControl<DGToggleImageButton>(this, kBufferInterrupt, kBufferInterruptButtonCornerX, kBufferInterruptButtonCornerY, bufferInterruptButtonCornerImage, true);
 	//
 	bufferInterruptButtonCorner->setUserProcedure(linkKickButtonsDownProc, bufferInterruptButton);
 	bufferInterruptButton->setUserProcedure(linkKickButtonsDownProc, bufferInterruptButtonCorner);
@@ -412,20 +408,17 @@ long BufferOverrideEditor::OpenEditor()
 	bufferInterruptButton->setUserReleaseProcedure(linkKickButtonsUpProc, bufferInterruptButtonCorner);
 
 	// forced buffer size LFO tempo sync button
-	pos.set(kBufferLFOTempoSyncButtonX, kBufferLFOTempoSyncButtonY, bufferLFOTempoSyncButtonImage->getWidth() / 2, bufferLFOTempoSyncButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kBufferLFOTempoSync, pos, bufferLFOTempoSyncButtonImage, DGButton::Mode::Increment, true);
+	emplaceControl<DGToggleImageButton>(this, kBufferLFOTempoSync, kBufferLFOTempoSyncButtonX, kBufferLFOTempoSyncButtonY, bufferLFOTempoSyncButtonImage, true);
 
 	// divisor LFO tempo sync button
-	pos.set(kDivisorLFOTempoSyncButtonX, kDivisorLFOTempoSyncButtonY, divisorLFOTempoSyncButtonImage->getWidth() / 2, divisorLFOTempoSyncButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kDivisorLFOTempoSync, pos, divisorLFOTempoSyncButtonImage, DGButton::Mode::Increment, true);
+	emplaceControl<DGToggleImageButton>(this, kDivisorLFOTempoSync, kDivisorLFOTempoSyncButtonX, kDivisorLFOTempoSyncButtonY, divisorLFOTempoSyncButtonImage, true);
 
 	// MIDI mode button
 	pos.set(kMidiModeButtonX, kMidiModeButtonY, midiModeButtonImage->getWidth() / 2, midiModeButtonImage->getHeight() / BufferOverride::kNumMidiModes);
 	emplaceControl<DGButton>(this, kMidiMode, pos, midiModeButtonImage, DGButton::Mode::Increment, true);
 
 	// sync to host tempo button
-	pos.set(kHostTempoButtonX, kHostTempoButtonY, hostTempoButtonImage->getWidth(), hostTempoButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTempoAuto, pos, hostTempoButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGToggleImageButton>(this, kTempoAuto, kHostTempoButtonX, kHostTempoButtonY, hostTempoButtonImage);
 
 	// MIDI learn button
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);

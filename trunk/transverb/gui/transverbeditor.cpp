@@ -434,16 +434,14 @@ long TransverbEditor::OpenEditor()
 
 
 	// quality mode button
-	pos.set(kQualityButtonX, kButtonY, qualityButtonImage->getWidth() / 2, qualityButtonImage->getHeight()/kQualityMode_NumModes);
+	pos.set(kQualityButtonX, kButtonY, qualityButtonImage->getWidth() / 2, qualityButtonImage->getHeight() / kQualityMode_NumModes);
 	emplaceControl<DGButton>(this, kQuality, pos, qualityButtonImage, DGButton::Mode::Increment, true);
 
 	// TOMSOUND button
-	pos.set(kTomsoundButtonX, kButtonY + kButtonIncY, tomsoundButtonImage->getWidth() / 2, tomsoundButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kTomsound, pos, tomsoundButtonImage, DGButton::Mode::Increment, true);
+	emplaceControl<DGToggleImageButton>(this, kTomsound, kTomsoundButtonX, kButtonY + kButtonIncY, tomsoundButtonImage, true);
 
 	// freeze button
-	pos.set(kFreezeButtonX, kButtonY, freezeButtonImage->getWidth() / 2, freezeButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kFreeze, pos, freezeButtonImage, DGButton::Mode::Increment, true);
+	emplaceControl<DGToggleImageButton>(this, kFreeze, kFreezeButtonX, kButtonY, freezeButtonImage, true);
 
 	// randomize button
 	pos.set(kRandomButtonX, kButtonY, randomizeButtonImage->getWidth(), randomizeButtonImage->getHeight() / 2);
@@ -456,8 +454,8 @@ long TransverbEditor::OpenEditor()
 	// speed 1 mode button
 	{
 		constexpr size_t speedModeIndex = 0;
-		pos.set(kSpeedModeButtonX, kSpeedModeButtonY, speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight()/kSpeedMode_NumModes);
-		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kQualityMode_NumModes, DGButton::Mode::Increment, true);
+		pos.set(kSpeedModeButtonX, kSpeedModeButtonY, speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
+		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
 		mSpeedModeButtons[speedModeIndex]->setUserProcedure([](long value, void* editor)
 		{
 			HandleSpeedModeButton(speedModeIndex, value, editor);
@@ -468,7 +466,7 @@ long TransverbEditor::OpenEditor()
 	{
 		constexpr size_t speedModeIndex = 1;
 		pos.offset(0, (kWideFaderInc * 2) + kWideFaderMoreInc);
-		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kQualityMode_NumModes, DGButton::Mode::Increment, true);
+		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
 		mSpeedModeButtons[speedModeIndex]->setUserProcedure([](long value, void* editor)
 		{
 			HandleSpeedModeButton(speedModeIndex, value, editor);
