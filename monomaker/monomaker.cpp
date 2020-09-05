@@ -90,6 +90,18 @@ The -3 dB setting uses a constant power curve based on sin/cos, while other two 
 }
 
 //-----------------------------------------------------------------------------------------
+void Monomaker::createbuffers()
+{
+	mAsymmetricalInputAudioBuffer.assign(getmaxframes(), 0.0f);
+}
+
+//-----------------------------------------------------------------------------------------
+void Monomaker::releasebuffers()
+{
+	mAsymmetricalInputAudioBuffer.clear();
+}
+
+//-----------------------------------------------------------------------------------------
 void Monomaker::processparameters()
 {
 	if (auto const inputSelection = getparameterifchanged_i(kInputSelection))
@@ -182,8 +194,18 @@ void Monomaker::processaudio(float const* const* inAudio, float* const* outAudio
 {
 	// point the input signal pointers to the correct input streams, 
 	// according to the input selection (or dual-left if we only have 1 input)
-	auto const inAudioL = inAudio[0];
-	auto const inAudioR = inAudio[std::min(1lu, getnuminputs() - 1)];
+	float const* inAudioL {}, * inAudioR {};
+	if (getnuminputs() == getnumoutputs())
+	{
+		inAudioL = inAudio[0];
+		inAudioR = inAudio[1];
+	}
+	else
+	{
+		// copy to an intermediate input buffer in case processing in-place
+		std::copy_n(inAudio[0], inNumFrames, mAsymmetricalInputAudioBuffer.data());
+		inAudioL = inAudioR = mAsymmetricalInputAudioBuffer.data();
+	}
 
 	// process the audio streams
 	for (unsigned long i = 0; i < inNumFrames; i++)
