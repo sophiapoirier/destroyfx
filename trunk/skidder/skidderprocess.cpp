@@ -292,10 +292,19 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 
 	for (unsigned long ch = 0; ch < numOutputs; ch++)
 	{
-		// handle the special case of mismatched input/output channel counts that we allow 
-		// by repeating the mono-input to multiple (faked) input channels
-		mInputAudio[ch] = inAudio[std::min(ch, numInputs - 1)];
 		mOutputAudio[ch] = outAudio[ch];
+		if (numInputs == numOutputs)
+		{
+			mInputAudio[ch] = inAudio[ch];
+		}
+		else if (ch == 0)
+		{
+			// handle the special case of mismatched input/output channel counts that we allow 
+			// by repeating the mono-input to multiple (faked) input channels
+			// (copying to an intermediate input buffer in case processing in-place)
+			std::copy_n(inAudio[ch], inNumFrames, mAsymmetricalInputAudioBuffer.data());
+			std::fill(mInputAudio.begin(), mInputAudio.end(), mAsymmetricalInputAudioBuffer.data());
+		}
 	}
 
 

@@ -152,4 +152,5 @@ private:
 
 	std::vector<float const*> mInputAudio;
 	std::vector<float*> mOutputAudio;
+	std::vector<float> mAsymmetricalInputAudioBuffer;
 };
