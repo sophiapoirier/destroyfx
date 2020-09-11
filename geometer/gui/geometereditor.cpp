@@ -100,10 +100,8 @@ enum {
   pos_midiresetbuttonX = 228,
   pos_midiresetbuttonY = 343,
 
-  pos_destroyfxlinkX = 269,
+  pos_destroyfxlinkX = 395,
   pos_destroyfxlinkY = 500,
-  pos_smartelectronixlinkX = 407,
-  pos_smartelectronixlinkY = 500,
 
   pos_geometerviewx = 20,
   pos_geometerviewy = 14,
@@ -240,10 +238,8 @@ long GeometerEditor::OpenEditor() {
   // MIDI learn/reset buttons
   auto const g_midilearnbutton = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
   auto const g_midiresetbutton = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
-
   // web links
   auto const g_destroyfxlink = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
-  auto const g_smartelectronixlink = VSTGUI::makeOwned<DGImage>("smart-electronix-link.png");
 
 
 
@@ -387,11 +383,6 @@ long GeometerEditor::OpenEditor() {
   pos.set(pos_destroyfxlinkX, pos_destroyfxlinkY, 
           g_destroyfxlink->getWidth(), g_destroyfxlink->getHeight() / 2);
   emplaceControl<DGWebLink>(this, pos, g_destroyfxlink, DESTROYFX_URL);
-
-  // Smart Electronix web page link
-  pos.set(pos_smartelectronixlinkX, pos_smartelectronixlinkY, 
-          g_smartelectronixlink->getWidth(), g_smartelectronixlink->getHeight() / 2);
-  emplaceControl<DGWebLink>(this, pos, g_smartelectronixlink, SMARTELECTRONIX_URL);
 
 
   //--initialize the help displays-----------------------------------------
