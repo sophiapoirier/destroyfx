@@ -128,10 +128,8 @@ enum
 	kHelpX = 4,
 	kHelpY = 465,
 
-	kDestroyFXLinkX = 122,
+	kDestroyFXLinkX = 247,
 	kDestroyFXLinkY = 47,
-	kSmartElectronixLinkX = 260,
-	kSmartElectronixLinkY = 47,
 
 	kTitleAreaX = 125,
 	kTitleAreaY = 8,
@@ -464,7 +462,6 @@ long ScrubbyEditor::OpenEditor()
 	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
 	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
 	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
-	auto const smartElectronixLinkImage = VSTGUI::makeOwned<DGImage>("smart-electronix-link.png");
 
 
 
@@ -704,10 +701,6 @@ long ScrubbyEditor::OpenEditor()
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
-
-	// Smart Electronix web page link
-	pos.set(kSmartElectronixLinkX, kSmartElectronixLinkY, smartElectronixLinkImage->getWidth(), smartElectronixLinkImage->getHeight() / 2);
-	emplaceControl<DGWebLink>(this, pos, smartElectronixLinkImage, SMARTELECTRONIX_URL);
 
 	pos.set(kTitleAreaX, kTitleAreaY, kTitleAreaWidth, kTitleAreaHeight);
 	mTitleArea = emplaceControl<DGNullControl>(this, pos);

@@ -66,7 +66,6 @@ somewhere in the include tree for every file for a DfxPlugin.
 #endif
 
 #define DESTROYFX_URL	"http://destroyfx.org"
-#define SMARTELECTRONIX_URL	"http://smartelectronix.com"
 
 #ifndef PLUGIN_HOMEPAGE_URL
 	#define PLUGIN_HOMEPAGE_URL	DESTROYFX_URL

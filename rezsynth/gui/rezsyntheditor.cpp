@@ -80,12 +80,10 @@ enum
 	kMidiLearnButtonX = 189,
 	kMidiLearnButtonY = 331,
 	kMidiResetButtonX = kMidiLearnButtonX + 72,
-	kMidiResetButtonY = 331,
+	kMidiResetButtonY = kMidiLearnButtonY,
 
-	kDestroyFXLinkX = 453,
-	kDestroyFXLinkY = 327,
-	kSmartElectronixLinkX = 358,
-	kSmartElectronixLinkY = 345
+	kDestroyFXLinkX = 444,
+	kDestroyFXLinkY = 332
 };
 
 
@@ -215,7 +213,6 @@ long RezSynthEditor::OpenEditor()
 	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
 	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
 	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
-	auto const smartElectronixLinkImage = VSTGUI::makeOwned<DGImage>("smart-electronix-link.png");
 
 	auto const verticalValueDisplayBackgroundImage = VSTGUI::makeOwned<DGImage>("vertical-value-display-background.png");
 
@@ -378,10 +375,6 @@ long RezSynthEditor::OpenEditor()
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
-
-	// Smart Electronix web page link
-	pos.set(kSmartElectronixLinkX, kSmartElectronixLinkY, smartElectronixLinkImage->getWidth(), smartElectronixLinkImage->getHeight() / 2);
-	emplaceControl<DGWebLink>(this, pos, smartElectronixLinkImage, SMARTELECTRONIX_URL);
 
 
 
