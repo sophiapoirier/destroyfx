@@ -47,7 +47,6 @@
 		49BB47BC07E53DEF00861708 /* purple-wide-fader-slide.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A807E53DEF00861708 /* purple-wide-fader-slide.png */; };
 		49BB47BD07E53DEF00861708 /* quality-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47A907E53DEF00861708 /* quality-button.png */; };
 		49BB47BE07E53DEF00861708 /* randomize-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AA07E53DEF00861708 /* randomize-button.png */; };
-		49BB47BF07E53DEF00861708 /* smart-electronix-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AB07E53DEF00861708 /* smart-electronix-link.png */; };
 		49BB47C007E53DEF00861708 /* speed-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AC07E53DEF00861708 /* speed-mode-button.png */; };
 		49BB47C107E53DEF00861708 /* super-destroy-fx-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AD07E53DEF00861708 /* super-destroy-fx-link.png */; };
 		49BB47C307E53DEF00861708 /* tall-fader-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB47AF07E53DEF00861708 /* tall-fader-handle.png */; };
@@ -155,7 +154,6 @@
 		49BB47A807E53DEF00861708 /* purple-wide-fader-slide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "purple-wide-fader-slide.png"; sourceTree = "<group>"; };
 		49BB47A907E53DEF00861708 /* quality-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "quality-button.png"; sourceTree = "<group>"; };
 		49BB47AA07E53DEF00861708 /* randomize-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "randomize-button.png"; sourceTree = "<group>"; };
-		49BB47AB07E53DEF00861708 /* smart-electronix-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "smart-electronix-link.png"; sourceTree = "<group>"; };
 		49BB47AC07E53DEF00861708 /* speed-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "speed-mode-button.png"; sourceTree = "<group>"; };
 		49BB47AD07E53DEF00861708 /* super-destroy-fx-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "super-destroy-fx-link.png"; sourceTree = "<group>"; };
 		49BB47AE07E53DEF00861708 /* tall-fader-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tall-fader-handle-glowing.png"; sourceTree = "<group>"; };
@@ -308,7 +306,6 @@
 				49BB47A607E53DEF00861708 /* midi-reset-button.png */,
 				49BB47A007E53DEF00861708 /* dfx-link.png */,
 				49BB47AD07E53DEF00861708 /* super-destroy-fx-link.png */,
-				49BB47AB07E53DEF00861708 /* smart-electronix-link.png */,
 			);
 			name = graphics;
 			path = ../gui/graphics;
@@ -561,7 +558,6 @@
 				49BB47BC07E53DEF00861708 /* purple-wide-fader-slide.png in Resources */,
 				49BB47BD07E53DEF00861708 /* quality-button.png in Resources */,
 				49BB47BE07E53DEF00861708 /* randomize-button.png in Resources */,
-				49BB47BF07E53DEF00861708 /* smart-electronix-link.png in Resources */,
 				49BB47C007E53DEF00861708 /* speed-mode-button.png in Resources */,
 				49BB47C107E53DEF00861708 /* super-destroy-fx-link.png in Resources */,
 				49BB47C307E53DEF00861708 /* tall-fader-handle.png in Resources */,

@@ -46,7 +46,6 @@
 		49BB477807E53B4B00861708 /* rez-synth-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476407E53B4B00861708 /* rez-synth-background.png */; };
 		49BB477907E53B4B00861708 /* scale-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476507E53B4B00861708 /* scale-mode-button.png */; };
 		49BB477A07E53B4B00861708 /* separation-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476607E53B4B00861708 /* separation-mode-button.png */; };
-		49BB477B07E53B4B00861708 /* smart-electronix-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476707E53B4B00861708 /* smart-electronix-link.png */; };
 		49BB477C07E53B4B00861708 /* vertical-slider-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476807E53B4B00861708 /* vertical-slider-background.png */; };
 		49BB477E07E53B4B00861708 /* vertical-slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476A07E53B4B00861708 /* vertical-slider-handle.png */; };
 		49BB477F07E53B4B00861708 /* vertical-value-display-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 49BB476B07E53B4B00861708 /* vertical-value-display-background.png */; };
@@ -151,7 +150,6 @@
 		49BB476407E53B4B00861708 /* rez-synth-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "rez-synth-background.png"; sourceTree = "<group>"; };
 		49BB476507E53B4B00861708 /* scale-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "scale-mode-button.png"; sourceTree = "<group>"; };
 		49BB476607E53B4B00861708 /* separation-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "separation-mode-button.png"; sourceTree = "<group>"; };
-		49BB476707E53B4B00861708 /* smart-electronix-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "smart-electronix-link.png"; sourceTree = "<group>"; };
 		49BB476807E53B4B00861708 /* vertical-slider-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vertical-slider-background.png"; sourceTree = "<group>"; };
 		49BB476907E53B4B00861708 /* vertical-slider-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vertical-slider-handle-glowing.png"; sourceTree = "<group>"; };
 		49BB476A07E53B4B00861708 /* vertical-slider-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vertical-slider-handle.png"; sourceTree = "<group>"; };
@@ -313,7 +311,6 @@
 				49BB476207E53B4B00861708 /* midi-learn-button.png */,
 				49BB476307E53B4B00861708 /* midi-reset-button.png */,
 				49BB475907E53B4B00861708 /* destroy-fx-link.png */,
-				49BB476707E53B4B00861708 /* smart-electronix-link.png */,
 				49BB476B07E53B4B00861708 /* vertical-value-display-background.png */,
 			);
 			name = graphics;
@@ -550,7 +547,6 @@
 				49BB477807E53B4B00861708 /* rez-synth-background.png in Resources */,
 				49BB477907E53B4B00861708 /* scale-mode-button.png in Resources */,
 				49BB477A07E53B4B00861708 /* separation-mode-button.png in Resources */,
-				49BB477B07E53B4B00861708 /* smart-electronix-link.png in Resources */,
 				49BB477C07E53B4B00861708 /* vertical-slider-background.png in Resources */,
 				49BB477E07E53B4B00861708 /* vertical-slider-handle.png in Resources */,
 				ECDB2A6F21BA02B200938F5C /* vertical-slider-handle-glowing.png in Resources */,

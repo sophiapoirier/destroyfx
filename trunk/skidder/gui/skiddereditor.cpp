@@ -76,10 +76,8 @@ enum
 	kMidiResetButtonX = kMidiLearnButtonX,
 	kMidiResetButtonY = kMidiLearnButtonY + 20,
 
-	kDestroyFXLinkX = 286,
-	kDestroyFXLinkY = 372 - 19,
-	kSmartElectronixLinkX = 191,
-	kSmartElectronixLinkY = kDestroyFXLinkY + 18
+	kDestroyFXLinkX = 276,
+	kDestroyFXLinkY = 359
 };
 
 
@@ -192,7 +190,6 @@ long SkidderEditor::OpenEditor()
 	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
 	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
 	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
-	auto const smartElectronixLinkImage = VSTGUI::makeOwned<DGImage>("smart-electronix-link.png");
 
 
 	auto const rateParameterIDs = GetActiveRateParameterIDs();
@@ -258,10 +255,6 @@ long SkidderEditor::OpenEditor()
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
-
-	// Smart Electronix web page link
-	pos.set(kSmartElectronixLinkX, kSmartElectronixLinkY, smartElectronixLinkImage->getWidth(), smartElectronixLinkImage->getHeight() / 2);
-	emplaceControl<DGWebLink>(this, pos, smartElectronixLinkImage, SMARTELECTRONIX_URL);
 
 
 	//--initialize the displays---------------------------------------------

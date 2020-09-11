@@ -69,7 +69,6 @@
 		ECE43DF02493BF55003C7957 /* host-tempo-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE02493BF55003C7957 /* host-tempo-button.png */; };
 		ECE43DF12493BF55003C7957 /* range-slider-handle-right-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE12493BF55003C7957 /* range-slider-handle-right-glowing.png */; };
 		ECE43DF22493BF55003C7957 /* slider-background.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE22493BF55003C7957 /* slider-background.png */; };
-		ECE43DF32493BF55003C7957 /* smart-electronix-link.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE32493BF55003C7957 /* smart-electronix-link.png */; };
 		ECE43DF42493BF55003C7957 /* slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE42493BF55003C7957 /* slider-handle.png */; };
 /* End PBXBuildFile section */
 
@@ -195,7 +194,6 @@
 		ECE43DE02493BF55003C7957 /* host-tempo-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "host-tempo-button.png"; sourceTree = "<group>"; };
 		ECE43DE12493BF55003C7957 /* range-slider-handle-right-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "range-slider-handle-right-glowing.png"; sourceTree = "<group>"; };
 		ECE43DE22493BF55003C7957 /* slider-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-background.png"; sourceTree = "<group>"; };
-		ECE43DE32493BF55003C7957 /* smart-electronix-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "smart-electronix-link.png"; sourceTree = "<group>"; };
 		ECE43DE42493BF55003C7957 /* slider-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -403,7 +401,6 @@
 				ECE43DE22493BF55003C7957 /* slider-background.png */,
 				ECE43DDC2493BF55003C7957 /* slider-handle-glowing.png */,
 				ECE43DE42493BF55003C7957 /* slider-handle.png */,
-				ECE43DE32493BF55003C7957 /* smart-electronix-link.png */,
 				ECE43DD62493BF54003C7957 /* tempo-sync-button.png */,
 				ECE43DDF2493BF55003C7957 /* velocity-button.png */,
 			);
@@ -536,7 +533,6 @@
 				ECE43DF22493BF55003C7957 /* slider-background.png in Resources */,
 				ECE43DF42493BF55003C7957 /* slider-handle.png in Resources */,
 				ECE43DEC2493BF55003C7957 /* slider-handle-glowing.png in Resources */,
-				ECE43DF32493BF55003C7957 /* smart-electronix-link.png in Resources */,
 				ECE43DE62493BF55003C7957 /* tempo-sync-button.png in Resources */,
 				ECE43DEF2493BF55003C7957 /* velocity-button.png in Resources */,
 			);

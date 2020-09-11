@@ -49,7 +49,6 @@
 		4998C27107E524F4008EBD90 /* recreate-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C25A07E524F4008EBD90 /* recreate-button.png */; };
 		4998C27207E524F4008EBD90 /* slider-background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C25B07E524F4008EBD90 /* slider-background.png */; };
 		4998C27407E524F4008EBD90 /* slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C25D07E524F4008EBD90 /* slider-handle.png */; };
-		4998C27507E524F4008EBD90 /* smart-electronix-link.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C25E07E524F4008EBD90 /* smart-electronix-link.png */; };
 		4998C27607E524F4008EBD90 /* window-shape-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C25F07E524F4008EBD90 /* window-shape-button.png */; };
 		4998C27707E524F4008EBD90 /* window-size-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C26007E524F4008EBD90 /* window-size-button.png */; };
 		B025B93E08AD2DB800A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B93B08AD2DB800A9CCAE /* CAVectorUnit.cpp */; };
@@ -157,7 +156,6 @@
 		4998C25B07E524F4008EBD90 /* slider-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-background.png"; sourceTree = "<group>"; };
 		4998C25C07E524F4008EBD90 /* slider-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-glowing.png"; sourceTree = "<group>"; };
 		4998C25D07E524F4008EBD90 /* slider-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle.png"; sourceTree = "<group>"; };
-		4998C25E07E524F4008EBD90 /* smart-electronix-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "smart-electronix-link.png"; sourceTree = "<group>"; };
 		4998C25F07E524F4008EBD90 /* window-shape-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "window-shape-button.png"; sourceTree = "<group>"; };
 		4998C26007E524F4008EBD90 /* window-size-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "window-size-button.png"; sourceTree = "<group>"; };
 		8D01CCD20486CAD60068D4B7 /* dfx Geometer.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Geometer.component"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -320,7 +318,6 @@
 				4998C25607E524F4008EBD90 /* midi-learn-button.png */,
 				4998C25707E524F4008EBD90 /* midi-reset-button.png */,
 				4998C24A07E524F4008EBD90 /* destroy-fx-link.png */,
-				4998C25E07E524F4008EBD90 /* smart-electronix-link.png */,
 			);
 			name = graphics;
 			path = ../gui/graphics;
@@ -561,7 +558,6 @@
 				4998C27207E524F4008EBD90 /* slider-background.png in Resources */,
 				4998C27407E524F4008EBD90 /* slider-handle.png in Resources */,
 				ECDB2A6921B9F91900938F5C /* slider-handle-glowing.png in Resources */,
-				4998C27507E524F4008EBD90 /* smart-electronix-link.png in Resources */,
 				4998C27607E524F4008EBD90 /* window-shape-button.png in Resources */,
 				4998C27707E524F4008EBD90 /* window-size-button.png in Resources */,
 				B0D672C00D0F31DF0079BD4E /* destroyfx.icns in Resources */,

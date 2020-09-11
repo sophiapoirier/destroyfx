@@ -67,10 +67,8 @@ enum
 
 	kDFXLinkX = 107,
 	kDFXLinkY = 281,
-	kSuperDFXLinkX = 159,
-	kSuperDFXLinkY = 339,
-	kSmartElectronixLinkX = 306,
-	kSmartElectronixLinkY = kSuperDFXLinkY,
+	kDestroyFXLinkX = 351,
+	kDestroyFXLinkY = 339,
 
 	kDisplayX = 318 - 1,
 	kDisplayY = 24,
@@ -343,8 +341,7 @@ long TransverbEditor::OpenEditor()
 	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
 	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
 	auto const dfxLinkButtonImage = VSTGUI::makeOwned<DGImage>("dfx-link.png");
-	auto const superDestroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("super-destroy-fx-link.png");
-	auto const smartElectronixLinkButtonImage = VSTGUI::makeOwned<DGImage>("smart-electronix-link.png");
+	auto const destroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("super-destroy-fx-link.png");
 
 
 
@@ -484,12 +481,8 @@ long TransverbEditor::OpenEditor()
 	emplaceControl<DGWebLink>(this, pos, dfxLinkButtonImage, DESTROYFX_URL);
 
 	// Super Destroy FX web link
-	pos.set(kSuperDFXLinkX, kSuperDFXLinkY, superDestroyFXLinkButtonImage->getWidth(), superDestroyFXLinkButtonImage->getHeight() / 2);
-	emplaceControl<DGWebLink>(this, pos, superDestroyFXLinkButtonImage, DESTROYFX_URL);
-
-	// Smart Electronix web link
-	pos.set(kSmartElectronixLinkX, kSmartElectronixLinkY, smartElectronixLinkButtonImage->getWidth(), smartElectronixLinkButtonImage->getHeight() / 2);
-	emplaceControl<DGWebLink>(this, pos, smartElectronixLinkButtonImage, SMARTELECTRONIX_URL);
+	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);
+	emplaceControl<DGWebLink>(this, pos, destroyFXLinkButtonImage, DESTROYFX_URL);
 
 
 	return dfx::kStatus_NoError;
