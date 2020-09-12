@@ -49,7 +49,7 @@ namespace dfx
 
 
 //-----------------------------------------------------------------------------
-enum Axis
+enum Axis : unsigned int
 {
 	kAxis_Horizontal = 1,
 	kAxis_Vertical = 1 << 1,

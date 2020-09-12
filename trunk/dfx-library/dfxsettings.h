@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2019  Sophia Poirier
+Copyright (C) 2002-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -110,7 +110,7 @@ public:
 	};
 
 
-	DfxSettings(long inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData = 0);
+	DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData = 0);
 	virtual ~DfxSettings();
 
 
@@ -311,7 +311,8 @@ protected:
 		FailedCrashError
 	};
 
-	enum
+	using CrisisReasonFlags = unsigned int;
+	enum : CrisisReasonFlags
 	{
 		// crisis situation flags
 		kCrisisReasonFlag_None				= 0,
@@ -329,7 +330,6 @@ protected:
 		kCrisisReasonFlag_SmallerHeader		= 1 << 11,	// the incoming data's header size is smaller
 		kCrisisReasonFlag_LargerHeader		= 1 << 12	// the incoming data's header size is larger
 	};
-	typedef int CrisisReasonFlags;
 
 #pragma pack(push, 4)
 	// header information for the storage data
@@ -345,7 +345,7 @@ protected:
 		// this is a value that you should look at to check for authenticity 
 		// of the data and as an identifier of the data's creator 
 		// (the easiest thing is probably to use your plugin's ID code)
-		int32_t mMagic = 0;
+		uint32_t mMagic = 0;
 		// the version number of the plugin that is creating the data
 		int32_t mVersion = 0;
 		// this defaults to 0, but you can set it to be the earliest version 

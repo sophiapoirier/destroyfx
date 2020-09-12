@@ -147,7 +147,7 @@ enum class MidiEventType : uint32_t
 	ChannelAftertouch
 };
 
-enum MidiEventBehaviorFlags : int32_t
+enum MidiEventBehaviorFlags : uint32_t
 {
 	// parameter automation behavior mode flags
 	//
