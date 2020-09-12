@@ -37,7 +37,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 		#error "you must compile this file with Automatic Reference Counting (ARC) enabled"
 	#endif
 	#import <AppKit/AppKit.h>
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
 	#import "platform_macos.h"
+	#pragma clang diagnostic pop
 #endif
 
 char const* const dfx::kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");

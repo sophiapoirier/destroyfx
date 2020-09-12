@@ -2080,7 +2080,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 			{
 				if (inQueryPastabilityOnly)
 				{
-					*inQueryPastabilityOnly = pastableItemFound = true;
+					*inQueryPastabilityOnly = true;
 					return dfx::kStatus_NoError;
 				}
 				CFDataRef flavorData_temp = nullptr;
