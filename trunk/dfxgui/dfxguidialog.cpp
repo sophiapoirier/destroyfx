@@ -323,6 +323,7 @@ DGDialog::DGDialog(DGRect const& inRegion,
 	for (size_t i = 0; i < buttons.size(); i++)
 	{
 		auto const button = buttons[i];
+		assert(button);
 		DGDialogButton* const prevButton = (i == 0) ? nullptr : buttons[i - 1];
 		VSTGUI::CCoord rightPos {};
 		if (prevButton)
