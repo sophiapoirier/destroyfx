@@ -57,7 +57,10 @@ void DfxPlugin::PostConstructor()
 	do_PostConstructor();
 
 	// make host see that default preset is in effect
-	postupdate_preset();
+	if (getnumpresets() > 0)
+	{
+		postupdate_preset();
+	}
 
 	// make the global-scope element aware of the parameters' values
 	// this must happen after AUBase::PostConstructor because the elements are created there
@@ -343,6 +346,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kAudioUnitProperty_CocoaUI:
 		{
 			auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+			assert(pluginBundle);
 			if (pluginBundle)
 			{
 				AudioUnitCocoaViewInfo cocoaViewInfo {};
@@ -1010,6 +1014,7 @@ CFURLRef DfxPlugin::CopyIconLocation()
 {
 #ifdef PLUGIN_ICON_FILE_NAME
 	auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	assert(pluginBundle);
 	if (pluginBundle)
 	{
 		return CFBundleCopyResourceURL(pluginBundle, CFSTR(PLUGIN_ICON_FILE_NAME), nullptr, nullptr);
