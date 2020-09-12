@@ -247,7 +247,7 @@ DfxPlugin::DfxPlugin(
 void DfxPlugin::do_PostConstructor()
 {
 	// set up a name for the default preset if none was set
-	if (!presetnameisvalid(0))
+	if ((getnumpresets() > 0) && !presetnameisvalid(0))
 	{
 		setpresetname(0, kPresetDefaultName);
 	}
@@ -599,10 +599,10 @@ void DfxPlugin::update_parameter(long inParameterIndex)
 #endif
 
 #ifdef TARGET_API_VST
-	auto const vstpresetnum = getProgram();
-	if (presetisvalid(vstpresetnum))
+	auto const vstPresetIndex = getProgram();
+	if (presetisvalid(vstPresetIndex))
 	{
-		setpresetparameter(vstpresetnum, inParameterIndex, getparameter(inParameterIndex));
+		setpresetparameter(vstPresetIndex, inParameterIndex, getparameter(inParameterIndex));
 	}
 	#if TARGET_PLUGIN_HAS_GUI
 	// the VST2 editor interface has no real listener mechanism for parameters and therefore 
@@ -1070,10 +1070,7 @@ CFStringRef DfxPlugin::getpresetcfname(long inPresetIndex) const
 	{
 		return mPresets[inPresetIndex].getcfname();
 	}
-	else
-	{
-		return nullptr;
-	}
+	return nullptr;
 }
 #endif
 
