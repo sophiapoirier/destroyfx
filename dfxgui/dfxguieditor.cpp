@@ -74,6 +74,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#if TARGET_OS_MAC
 	static CFStringRef const kDfxGui_SettingsPasteboardFlavorType = CFSTR(PLUGIN_BUNDLE_IDENTIFIER);
 	#endif
+	using ERect = ::ERect;
+#else
+	using ERect = VSTGUI::ERect;
 #endif
 
 
@@ -85,12 +88,6 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 	// take a few milliseconds for the font to actually become available.
 	mFontFactory(dfx::FontFactory::Create())
 {
-#ifdef TARGET_API_RTAS
-	m_Process = inInstance;
-
-	mParameterHighlightColors.assign(GetNumParameters(), eHighlight_None);
-#endif
-
 	rect.top = rect.left = rect.bottom = rect.right = 0;
 	// load the background image
 	// we don't need to load all bitmaps, this could be done when open is called
@@ -106,6 +103,8 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 	setKnobMode(VSTGUI::kLinearMode);
 
 #ifdef TARGET_API_RTAS
+	mParameterHighlightColors.assign(GetNumParameters(), eHighlight_None);
+
 	// XXX do these?
 //	VSTGUI::CControl::kZoomModifier = kControl;
 //	VSTGUI::CControl::kDefaultValueModifier = kShift;
@@ -150,6 +149,7 @@ bool DfxGuiEditor::open(void* inWindow)
 	frame->open(inWindow);
 	dfx::FramePostOpen(*frame);
 	frame->setBackground(GetBackgroundImage());
+	frame->registerMouseObserver(this);
 	frame->enableTooltips(true);
 
 	mMousedOverControlsList.clear();
@@ -165,11 +165,6 @@ bool DfxGuiEditor::open(void* inWindow)
 		mAUParameterList = CreateParameterList();
 	}
 #endif
-
-	// HACK: must do this after creating the tooltip support because 
-	// it will steal the mouse observer role (we can still forward to it)
-	// (though that no longer seems to apply with VSTGUI 4)
-	frame->registerMouseObserver(this);
 
 	mEditorOpenErr = OpenEditor();
 	if (mEditorOpenErr != dfx::kStatus_NoError)
@@ -277,17 +272,14 @@ void DfxGuiEditor::valueChanged(VSTGUI::CControl* inControl)
 		getEffect()->setParameterAutomated(paramIndex, paramValue_norm);
 #endif
 #ifdef TARGET_API_RTAS
-		if (m_Process)
-		{
-			// XXX though the model of calling SetControlValue might make more seem like 
-			// better design than calling setparameter_gen on the effect, in practice, 
-			// our DfxParam objects won't get their values updated to reflect the change until 
-			// the next call to UpdateControlInAlgorithm which be deferred until the start of 
-			// the next audio render call, which means that in the meantime getparameter_* 
-			// methods will return the previous rather than current value
-//			m_Process->SetControlValue(dfx::ParameterID_ToRTAS(paramIndex), ConvertToDigiValue(paramValue_norm));
-			m_Process->setparameter_gen(paramIndex, paramValue_norm);
-		}
+		// XXX though the model of calling SetControlValue might make more seem like 
+		// better design than calling setparameter_gen on the effect, in practice, 
+		// our DfxParam objects won't get their values updated to reflect the change until 
+		// the next call to UpdateControlInAlgorithm which be deferred until the start of 
+		// the next audio render call, which means that in the meantime getparameter_* 
+		// methods will return the previous rather than current value
+//		dfxgui_GetEffectInstance()->SetControlValue(dfx::ParameterID_ToRTAS(paramIndex), ConvertToDigiValue(paramValue_norm));
+		dfxgui_GetEffectInstance()->setparameter_gen(paramIndex, paramValue_norm);
 #endif
 	}
 }
@@ -341,6 +333,11 @@ void DfxGuiEditor::idle()
 		// when switching between different plugins in an open plugin editor window
 		getFrame()->invalid();
 #endif
+	}
+
+	if (!mPendingErrorMessage.empty() && !getFrame()->getModalView())
+	{
+		ShowMessage(std::exchange(mPendingErrorMessage, {}));
 	}
 
 	// call any child class implementation
@@ -454,10 +451,7 @@ void DfxGuiEditor::automationgesture_begin(long inParameterID)
 #ifdef TARGET_API_RTAS
 	// called by GUI when mouse down event has occured; NO_UI: Call process' TouchControl()
 	// This and endEdit are necessary for Touch Automation to work properly
-	if (m_Process)
-	{
-		m_Process->ProcessTouchControl(dfx::ParameterID_ToRTAS(inParameterID));
-	}
+	dfxgui_GetEffectInstance()->ProcessTouchControl(dfx::ParameterID_ToRTAS(inParameterID));
 #endif
 }
 
@@ -474,10 +468,7 @@ void DfxGuiEditor::automationgesture_end(long inParameterID)
 
 #ifdef TARGET_API_RTAS
 	// called by GUI when mouse up event has occured; NO_UI: Call process' ReleaseControl()
-	if (m_Process)
-	{
-		m_Process->ProcessReleaseControl(dfx::ParameterID_ToRTAS(inParameterID));
-	}
+	dfxgui_GetEffectInstance()->ProcessReleaseControl(dfx::ParameterID_ToRTAS(inParameterID));
 #endif
 }
 
@@ -639,8 +630,6 @@ std::optional<long> DfxGuiEditor::dfxgui_GetParameterValueFromString_i(long inPa
 //-----------------------------------------------------------------------------
 bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::string const& inText)
 {
-	bool success = false;
-
 	if (dfxgui_IsValidParamID(inParameterID))
 	{
 		if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Float)
@@ -648,6 +637,7 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::s
 			if (auto const newValue = dfxgui_GetParameterValueFromString_f(inParameterID, inText))
 			{
 				setparameter_f(inParameterID, *newValue, true);
+				return true;
 			}
 		}
 		else
@@ -655,11 +645,12 @@ bool DfxGuiEditor::dfxgui_SetParameterValueWithString(long inParameterID, std::s
 			if (auto const newValue = dfxgui_GetParameterValueFromString_i(inParameterID, inText))
 			{
 				setparameter_i(inParameterID, *newValue, true);
+				return true;
 			}
 		}
 	}
 
-	return success;
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -694,6 +685,7 @@ void DfxGuiEditor::TextEntryForParameterValue(long inParameterID)
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
+	assert(mTextEntryDialog.get());
 	if (mTextEntryDialog)
 	{
 		std::array<char, dfx::kParameterValueStringMaxLength> textValue {};
@@ -710,14 +702,17 @@ void DfxGuiEditor::TextEntryForParameterValue(long inParameterID)
 		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
 		{
 			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
+			assert(textEntryDialog);
 			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
 			{
 				return dfxgui_SetParameterValueWithString(textEntryDialog->getParameterID(), textEntryDialog->getText());
 			}
 			return true;
 		};
-		[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
-		assert(success);
+		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+		{
+			ShowMessage("could not display text entry dialog");
+		}
 	}
 }
 
@@ -1097,10 +1092,9 @@ std::string DfxGuiEditor::getparametername(long inParameterID)
 	{
 		if ((parameterInfo->flags & kAudioUnitParameterFlag_HasCFNameString) && parameterInfo->cfNameString)
 		{
-			auto const tempString = dfx::CreateCStringFromCFString(parameterInfo->cfNameString);
-			if (tempString)
+			if (auto const nameC = dfx::CreateCStringFromCFString(parameterInfo->cfNameString))
 			{
-				return tempString.get();
+				return nameC.get();
 			}
 		}
 		return parameterInfo->name;
@@ -1255,14 +1249,14 @@ long DfxGuiEditor::GetNumParameters()
 	auto const status = dfxgui_GetPropertyInfo(kAudioUnitProperty_ParameterList, dfx::kScope_Global, 0, dataSize, propFlags);
 	if (status == noErr)
 	{
-		return (dataSize / sizeof(AudioUnitParameterID));
+		return dataSize / sizeof(AudioUnitParameterID);
 	}
 #endif
 #ifdef TARGET_API_VST
 	return getEffect()->getAeffect()->numParams;
 #endif
 #ifdef TARGET_API_RTAS
-	return m_Process->getnumparameters();
+	return dfxgui_GetEffectInstance()->getnumparameters();
 #endif
 	return 0;
 }
@@ -1386,9 +1380,10 @@ long DfxGuiEditor::dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope i
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::LoadPresetFile()
 {
-	VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectFile), false);
-	if (fileSelector)
+	try
 	{
+		VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectFile), false);
+		Require(fileSelector, "could not create load file dialog");
 		fileSelector->setTitle("Open");
 #ifdef TARGET_API_AUDIOUNIT
 		fileSelector->addFileExtension(kDfxGui_AUPresetFileExtension);
@@ -1409,29 +1404,33 @@ void DfxGuiEditor::LoadPresetFile()
 //		fileSelector->addFileExtension(kDfxGui_VSTBankFileExtension);  // TODO: could also support banks of programs
 #endif
 		fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
-						  {
-							  if (auto const filePath = inFileSelector->getSelectedFile(0))
-							  {
-								  try
-								  {
+		{
+			if (auto const filePath = inFileSelector->getSelectedFile(0))
+			{
+				try
+				{
 #ifdef TARGET_API_AUDIOUNIT
-									  dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
-									  Require(fileURL.get(), "failed to create file URL");
-									  RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
+					dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+					Require(fileURL.get(), "failed to create file URL");
+					RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
 #elif defined(TARGET_API_VST)
-									  RestoreVSTStateFromProgramFile(filePath);
+					RestoreVSTStateFromProgramFile(filePath);
 #elif
 	#warning "implementation missing"
-									  assert(false);  // TODO: implement
+					assert(false);  // TODO: implement
 #endif  // TARGET_API_AUDIOUNIT
-								  }
-								  catch (std::exception const& e)
-								  {
-									  auto const message = std::string("failed to load preset file:\n") + e.what();
-									  ShowMessage(message);
-								  }
-							  }
-						  });
+				}
+				catch (std::exception const& e)
+				{
+					auto const message = std::string("failed to load preset file:\n") + e.what();
+					ShowMessage(message);
+				}
+			}
+		});
+	}
+	catch (std::exception const& e)
+	{
+		ShowMessage(e.what());
 	}
 }
 
@@ -1440,79 +1439,92 @@ void DfxGuiEditor::SavePresetFile()
 {
 	if (getFrame())
 	{
-#ifdef TARGET_API_AUDIOUNIT
-		mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
-																DGDialog::kButtons_OKCancelOther, 
-																"Save", nullptr, "Choose custom location...");
-		if (mTextEntryDialog)
+		constexpr char const* const errorTitle = "failed to save preset file:\n";
+		try
 		{
+#ifdef TARGET_API_AUDIOUNIT
+			mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
+																	DGDialog::kButtons_OKCancelOther, 
+																	"Save", nullptr, "Choose custom location...");
+			Require(mTextEntryDialog, "could not create save preset dialog");
 			if (auto const button = mTextEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
 			{
-				char const* const helpText = "choose a specific location to save in rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
+				constexpr char const* const helpText = "choose a specific location in which to save rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
 				button->setTooltipText(helpText);
 			}
 			auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
 			{
-				if (auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog))
+				try
 				{
+					auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
+					assert(textEntryDialog);
 					switch (inSelection)
 					{
 						case DGDialog::kSelection_OK:
-							if (!textEntryDialog->getText().empty())
+						{
+							if (textEntryDialog->getText().empty())
 							{
-								dfx::UniqueCFType const cfText = CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8);
-								if (cfText)
-								{
-									auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-									assert(pluginBundle);
-									auto const saveFileStatus = SaveAUStateToPresetFile_Bundle(dfxgui_GetEffectInstance(), cfText.get(), nullptr, true, pluginBundle);
-									if (saveFileStatus == userCanceledErr)
-									{
-										return false;
-									}
-								}
+								return false;
 							}
+							dfx::UniqueCFType const cfText = CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8);
+							Require(cfText.get(), "could not create platform representation of text input");
+							auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+							assert(pluginBundle);
+							auto const status = SaveAUStateToPresetFile_Bundle(dfxgui_GetEffectInstance(), cfText.get(), nullptr, true, pluginBundle);
+							if (status == userCanceledErr)
+							{
+								return false;
+							}
+							Require(status == noErr, ("error code " + std::to_string(status)).c_str());
 							return true;
+						}
 						case DGDialog::kSelection_Other:
 						{
 							VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
-							if (fileSelector)
+							Require(fileSelector, "could not create save file dialog");
+							fileSelector->setTitle("Save");
+							fileSelector->setDefaultExtension(kDfxGui_AUPresetFileExtension);
+							if (!textEntryDialog->getText().empty())
 							{
-								fileSelector->setTitle("Save");
-								fileSelector->setDefaultExtension(kDfxGui_AUPresetFileExtension);
-								if (!textEntryDialog->getText().empty())
-								{
-									fileSelector->setDefaultSaveName(textEntryDialog->getText());
-								}
-								fileSelector->run([effect = dfxgui_GetEffectInstance()](VSTGUI::CNewFileSelector* inFileSelector)
-												  {
-													  if (auto const filePath = inFileSelector->getSelectedFile(0))
-													  {
-														  dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
-														  if (fileURL)
-														  {
-															  auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-															  assert(pluginBundle);
-															  CustomSaveAUPresetFile_Bundle(effect, fileURL.get(), false, pluginBundle);
-														  }
-													  }
-												  });
+								fileSelector->setDefaultSaveName(textEntryDialog->getText());
 							}
+							fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
+							{
+								if (auto const filePath = inFileSelector->getSelectedFile(0))
+								{
+									try
+									{
+										dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+										Require(fileURL.get(), "could not create platform representation of preset file location");
+										auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+										assert(pluginBundle);
+										auto const status = CustomSaveAUPresetFile_Bundle(dfxgui_GetEffectInstance(), fileURL.get(), false, pluginBundle);
+										Require((status == noErr) || (status == userCanceledErr), 
+												("error code " + std::to_string(status)).c_str());
+									}
+									catch (std::exception const& e)
+									{
+										auto const message = std::string(errorTitle) + e.what();
+										ShowMessage(message);
+									}
+								}
+							});
 							return true;
 						}
 						default:
 							break;
 					}
 				}
+				catch (std::exception const& e)
+				{
+					mPendingErrorMessage = std::string(errorTitle) + e.what();
+				}
 				return true;
 			};
-			[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
-			assert(success);
-		}
+			auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
+			Require(success, "could not display save preset dialog");
 #endif
 #ifdef TARGET_API_VST
-		try
-		{
 			VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
 			Require(fileSelector, "could not create save file dialog");
 			fileSelector->setTitle("Save");
@@ -1527,28 +1539,24 @@ void DfxGuiEditor::SavePresetFile()
 					}
 					catch (std::exception const& e)
 					{
-						auto const message = std::string("failed to save preset file:\n") + e.what();
+						auto const message = std::string(errorTitle) + e.what();
 						ShowMessage(message);
 					}
 				}
 			});
+#endif
 		}
 		catch (std::exception const& e)
 		{
 			ShowMessage(e.what());
 		}
-#endif
 	}
 }
 
 //-----------------------------------------------------------------------------
 DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 {
-#ifdef TARGET_API_RTAS
-	return m_Process;
-#else
 	return static_cast<DGEditorListenerInstance>(getEffect());
-#endif
 }
 
 #if defined(TARGET_API_AUDIOUNIT) && DEBUG
@@ -1594,7 +1602,7 @@ bool DfxGuiEditor::getmidilearning()
 void DfxGuiEditor::resetmidilearn()
 {
 #ifdef TARGET_API_AUDIOUNIT  
-	Boolean nud;  // irrelevant
+	Boolean nud {};  // irrelevant
 	dfxgui_SetProperty(dfx::kPluginProperty_ResetMidiLearn, dfx::kScope_Global, 0, &nud, sizeof(nud));
 #else
 	dfxgui_GetEffectInstance()->resetmidilearn();
@@ -1665,6 +1673,7 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
 	}
 
 	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>(inParameterID, getparametername(inParameterID), "enter value:");
+	assert(mTextEntryDialog.get());
 	if (mTextEntryDialog)
 	{
 		// initialize the text with the current CC assignment, if there is one
@@ -1679,6 +1688,7 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
 		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
 		{
 			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
+			assert(textEntryDialog);
 			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
 			{
 				int newValue {};
@@ -1696,8 +1706,10 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
 			}
 			return true;
 		};
-		[[maybe_unused]] auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
-		assert(success);
+		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+		{
+			ShowMessage("could not display text entry dialog");
+		}
 	}
 }
 
@@ -1715,7 +1727,7 @@ unsigned long DfxGuiEditor::getNumAudioChannels()
 	return static_cast<unsigned long>(getEffect()->getAeffect()->numOutputs);
 #endif
 #ifdef TARGET_API_RTAS
-	return m_Process->getnumoutputs();
+	return dfxgui_GetEffectInstance()->getnumoutputs();
 #endif
 }
 
@@ -1847,6 +1859,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	assert(dfxgui_IsValidParamID(inParameterID));
 
 	auto resultMenu = VSTGUI::makeOwned<VSTGUI::COptionMenu>();
+	assert(resultMenu.get());
 	resultMenu->setStyle(kDfxGui_ContextualMenuStyle);
 
 	resultMenu->addSeparator();
@@ -1980,6 +1993,7 @@ long DfxGuiEditor::copySettings()
 	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), kDfxGui_SettingsPasteboardFlavorType, auSettingsCFData.get(), kPasteboardFlavorNoFlags);
 
 #elif defined(TARGET_API_VST)
+	assert(getEffect()->getAeffect()->flags & effFlagsProgramChunks);  // TODO: implement non-chunk settings
 	void* vstSettingsData {};
 	auto const vstSettingsDataSize = getEffect()->getChunk(&vstSettingsData, kDfxGui_CopySettingsIsPreset);
 	assert(vstSettingsDataSize > 0);
@@ -2121,6 +2135,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	{
 		return dfx::kStatus_CannotDoInCurrentContext;
 	}
+	assert(getEffect()->getAeffect()->flags & effFlagsProgramChunks);  // TODO: implement non-chunk settings
 	auto const chunkSuccess = getEffect()->setChunk(vstSettingsData, vstSettingsDataSize, kDfxGui_CopySettingsIsPreset);
 	assert(chunkSuccess);
 	if (chunkSuccess == 0)
@@ -2142,6 +2157,7 @@ void DfxGuiEditor::ShowMessage(std::string const& inMessage)
 {
 	bool shown = false;
 	mErrorDialog = VSTGUI::makeOwned<DGDialog>(DGRect(0, 0, 300, 120), inMessage);
+	assert(mErrorDialog.get());
 	if (mErrorDialog)
 	{
 		shown = mErrorDialog->runModal(getFrame());
@@ -2256,6 +2272,8 @@ void DfxGuiEditor::RemoveAUEventListeners()
 void DfxGuiEditor::AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, 
 											  UInt64 /*inEventHostTime*/, Float32 inParameterValue)
 {
+	assert(inCallbackRefCon);
+	assert(inEvent);
 	// TODO: why in macOS 10.15.5 is inObject equal to inCallbackRefCon and not the sending CControl?
 	auto const ourOwnerEditor = static_cast<DfxGuiEditor*>(inCallbackRefCon);
 	if (ourOwnerEditor && inEvent)
@@ -2593,10 +2611,7 @@ void DfxGuiEditor::doIdleStuff()
 {
 	TARGET_API_EDITOR_BASE_CLASS::doIdleStuff();  // XXX do this?
 
-	if (m_Process)
-	{
-		m_Process->ProcessDoIdle();
-	}
+	dfxgui_GetEffectInstance()->ProcessDoIdle();
 }
 
 //-----------------------------------------------------------------------------
