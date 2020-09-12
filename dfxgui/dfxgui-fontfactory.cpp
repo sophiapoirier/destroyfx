@@ -23,10 +23,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxgui-fontfactory.h"
 
+#include <cassert>
 #include <memory>
 #include <mutex>
-#include <string>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "dfxdefines.h"
@@ -226,6 +227,7 @@ public:
     std::call_once(once, [this]() {
       auto const pluginBundle =
         CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+      assert(pluginBundle);
       if (pluginBundle) {
         dfx::UniqueCFType const bundleResourcesDirURL =
           CFBundleCopyResourcesDirectoryURL(pluginBundle);

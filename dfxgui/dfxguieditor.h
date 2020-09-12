@@ -67,12 +67,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#pragma clang diagnostic pop
 	using TARGET_API_EDITOR_BASE_CLASS = VSTGUI::AEffGUIEditor;
 	using TARGET_API_EDITOR_INDEX_TYPE = VstInt32;
-	using ERect = ::ERect;
 #else
 	#include "plugguieditor.h"
 	using TARGET_API_EDITOR_BASE_CLASS = VSTGUI::PluginGUIEditor;
 	using TARGET_API_EDITOR_INDEX_TYPE = int32_t;
-	using ERect = VSTGUI::ERect;
 #endif
 
 
@@ -117,11 +115,15 @@ public:
 	public:
 		explicit AUParameterInfo(AudioUnitParameterInfo const& inParameterInfo)
 		:	AudioUnitParameterInfo(inParameterInfo), 
-			mNameOwner(((flags & kAudioUnitParameterFlag_HasCFNameString) && (flags & kAudioUnitParameterFlag_CFNameRelease)) ? cfNameString : nullptr), 
-			mUnitNameOwner((unit == kAudioUnitParameterUnit_CustomUnit) ? unitName : nullptr)
+			mNameOwner(((flags & kAudioUnitParameterFlag_HasCFNameString) && hasCFReleaseFlag()) ? cfNameString : nullptr), 
+			mUnitNameOwner(((unit == kAudioUnitParameterUnit_CustomUnit) && hasCFReleaseFlag()) ? unitName : nullptr)
 		{
 		}
 	private:
+		bool hasCFReleaseFlag() const noexcept
+		{
+			return (flags & kAudioUnitParameterFlag_CFNameRelease);
+		}
 		dfx::UniqueCFType<CFStringRef> mNameOwner;
 		dfx::UniqueCFType<CFStringRef> mUnitNameOwner;
 	};
@@ -303,7 +305,7 @@ public:
 	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, T const &data, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0)
 	{
 		static_assert(std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>);
-		return dfx::kStatus_NoError == dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, (void*)&data, sizeof data);
+		return dfx::kStatus_NoError == dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, &data, sizeof data);
 	}
 
 	void LoadPresetFile();
@@ -401,6 +403,9 @@ private:
 
 	VSTGUI::SharedPointer<DGTextEntryDialog> mTextEntryDialog;
 	VSTGUI::SharedPointer<DGDialog> mErrorDialog;
+	// allows stashing an error from within a modal dialog handler in order to defer 
+	// displaying the message in a new modal dialog until after the first dialog closes
+	std::string mPendingErrorMessage;
 
 	std::unique_ptr<dfx::FontFactory> mFontFactory;
 
@@ -425,7 +430,6 @@ private:
 #endif
 
 #ifdef TARGET_API_RTAS
-	ITemplateProcess* m_Process = nullptr;
 	std::vector<long> mParameterHighlightColors;
 #endif
 };
