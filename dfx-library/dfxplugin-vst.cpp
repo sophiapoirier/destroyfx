@@ -34,6 +34,8 @@ This is where we connect the VST API to our DfxPlugin system.
 #include <limits>
 #include <stdio.h>
 
+#include "dfxmath.h"
+
 
 #pragma mark -
 #pragma mark init
@@ -541,7 +543,7 @@ VstInt32 DfxPlugin::processEvents(VstEvents* events)
 		int const status = midiData[0] & 0xF0;
 		int const byte1 = midiData[1] & 0x7F;
 		int const byte2 = midiData[2] & 0x7F;
-		auto const offsetFrames = static_cast<unsigned long>(std::max(midiEvent->deltaFrames, VstInt32(0)));  // timing offset
+		auto const offsetFrames = dfx::math::ToIndex<unsigned long>(midiEvent->deltaFrames);  // timing offset
 
 		// looking at notes   (0x9* is Note On status ~ 0x8* is Note Off status)
 		if ((status == DfxMidi::kStatus_NoteOn) || (status == DfxMidi::kStatus_NoteOff))

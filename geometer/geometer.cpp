@@ -31,9 +31,9 @@ Featuring the Super Destroy FX Windowing System!
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <mutex>
 #include <numeric>
 #include <string>
-#include <mutex>
 
 #include "dfxmath.h"
 
@@ -1115,7 +1115,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
       if (px[u-1] < px[u])
         for(int z = px[u-1]; z < px[u]; z++) {
           int const s = (px[u] - (z + 1)) + px[u - 1];
-          out[z] = in[std::max(s, 0)];
+          out[z] = in[dfx::math::ToIndex(s)];
         }
     }
 
