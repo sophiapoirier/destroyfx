@@ -1942,6 +1942,32 @@ fprintf(stderr, "program change:  program num = %d, channel = %d, sample offset 
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::setmidilearner(long inParameterIndex)
+{
+	if (auto const assignmentData = settings_getLearningAssignData(inParameterIndex))
+	{
+		mDfxSettings->setLearner(inParameterIndex, assignmentData->mEventBehaviorFlags, 
+								 assignmentData->mDataInt1, assignmentData->mDataInt2, 
+								 assignmentData->mDataFloat1, assignmentData->mDataFloat2);
+	}
+	else if (getparametervaluetype(inParameterIndex) == DfxParam::ValueType::Float)
+	{
+		mDfxSettings->setLearner(inParameterIndex);
+	}
+	else
+	{
+		auto const numStates = getparametermax_i(inParameterIndex) - getparametermin_i(inParameterIndex) + 1;
+		mDfxSettings->setLearner(inParameterIndex, dfx::kMidiEventBehaviorFlag_Toggle, numStates);
+	}
+}
+
+//-----------------------------------------------------------------------------
+long DfxPlugin::getmidilearner() const
+{
+	return mDfxSettings->getLearner();
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::setmidilearning(bool inLearnMode)
 {
 	mDfxSettings->setParameterMidiLearn(inLearnMode);
@@ -1957,6 +1983,29 @@ bool DfxPlugin::getmidilearning() const
 void DfxPlugin::resetmidilearn()
 {
 	mDfxSettings->setParameterMidiReset();
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment)
+{
+	if (inAssignment.mEventType == dfx::MidiEventType::None)
+	{
+		mDfxSettings->unassignParam(inParameterIndex);
+	}
+	else
+	{
+		mDfxSettings->assignParam(inParameterIndex, inAssignment.mEventType, inAssignment.mEventChannel,
+								  inAssignment.mEventNum, inAssignment.mEventNum2, 
+								  inAssignment.mEventBehaviorFlags, 
+								  inAssignment.mDataInt1, inAssignment.mDataInt2, 
+								  inAssignment.mDataFloat1, inAssignment.mDataFloat2);
+	}
+}
+
+//-----------------------------------------------------------------------------
+dfx::ParameterAssignment DfxPlugin::getparametermidiassignment(long inParameterIndex) const
+{
+	return mDfxSettings->getParameterAssignment(inParameterIndex);
 }
 
 //-----------------------------------------------------------------------------

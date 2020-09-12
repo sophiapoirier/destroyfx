@@ -632,9 +632,13 @@ public:
 	virtual void handlemidi_cc(int inChannel, int inControllerNum, int inValue, unsigned long inOffsetFrames);
 	virtual void handlemidi_programchange(int inChannel, int inProgramNum, unsigned long inOffsetFrames);
 
+	void setmidilearner(long inParameterIndex);
+	long getmidilearner() const;
 	void setmidilearning(bool inLearnMode);
 	bool getmidilearning() const;
 	void resetmidilearn();
+	void setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment);
+	dfx::ParameterAssignment getparametermidiassignment(long inParameterIndex) const;
 	void postupdate_midilearn();
 	void postupdate_midilearner();
 
