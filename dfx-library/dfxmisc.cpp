@@ -195,6 +195,7 @@ bool LaunchDocumentation()
 	// no assumptions can be made about how long the reference is valid, 
 	// and the caller should not attempt to release the CFBundleRef object
 	auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	assert(pluginBundleRef);
 	if (pluginBundleRef)
 	{
 		CFStringRef docsFileName = CFSTR(PLUGIN_NAME_STRING " manual.html");
