@@ -1201,32 +1201,24 @@ float DfxGuiEditor::GetParameter_defaultValue(long inParameterIndex)
 DfxParam::ValueType DfxGuiEditor::GetParameterValueType(long inParameterIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	auto const valueType = dfxgui_GetProperty<DfxParam::ValueType>(dfx::kPluginProperty_ParameterValueType, 
-																   dfx::kScope_Global, inParameterIndex);
-	if (valueType)
-	{
-		return *valueType;
-	}
+	return dfxgui_GetProperty<DfxParam::ValueType>(dfx::kPluginProperty_ParameterValueType, 
+												   dfx::kScope_Global, 
+												   inParameterIndex).value_or(DfxParam::ValueType::Float);
 #else
 	return dfxgui_GetEffectInstance()->getparametervaluetype(inParameterIndex);
 #endif
-	return DfxParam::ValueType::Float;
 }
 
 //-----------------------------------------------------------------------------
 DfxParam::Unit DfxGuiEditor::GetParameterUnit(long inParameterIndex)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	auto const unitType = dfxgui_GetProperty<DfxParam::Unit>(dfx::kPluginProperty_ParameterUnit, 
-															 dfx::kScope_Global, inParameterIndex);
-	if (unitType)
-	{
-		return *unitType;
-	}
+	return dfxgui_GetProperty<DfxParam::Unit>(dfx::kPluginProperty_ParameterUnit, 
+											  dfx::kScope_Global, 
+											  inParameterIndex).value_or(DfxParam::Unit::Generic);
 #else
 	return dfxgui_GetEffectInstance()->getparameterunit(inParameterIndex);
 #endif
-	return DfxParam::Unit::Generic;
 }
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -1563,11 +1555,7 @@ DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 //-----------------------------------------------------------------------------
 DfxPlugin* DfxGuiEditor::dfxgui_GetDfxPluginInstance()
 {
-	if (auto const pluginInstance = dfxgui_GetProperty<DfxPlugin*>(dfx::kPluginProperty_DfxPluginInstance))
-	{
-		return *pluginInstance;
-	}
-	return nullptr;
+	return dfxgui_GetProperty<DfxPlugin*>(dfx::kPluginProperty_DfxPluginInstance).value_or(nullptr);
 }
 #endif
 
@@ -1588,11 +1576,7 @@ void DfxGuiEditor::setmidilearning(bool inLearnMode)
 bool DfxGuiEditor::getmidilearning()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	if (auto const learnMode = dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_MidiLearn))
-	{
-		return *learnMode;
-	}
-	return false;
+	return dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_MidiLearn).value_or(false);
 #else
 	return dfxgui_GetEffectInstance()->getmidilearning();
 #endif
@@ -1612,19 +1596,23 @@ void DfxGuiEditor::resetmidilearn()
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setmidilearner(long inParameterIndex)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	int32_t parameterIndex_fixedSize = inParameterIndex;
 	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearner, dfx::kScope_Global, 0, 
 					   &parameterIndex_fixedSize, sizeof(parameterIndex_fixedSize));
+#else
+	dfxgui_GetEffectInstance()->setmidilearner(inParameterIndex);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 long DfxGuiEditor::getmidilearner()
 {
-	if (auto const learner = dfxgui_GetProperty<int32_t>(dfx::kPluginProperty_MidiLearner))
-	{
-		return *learner;
-	}
-	return dfx::kParameterID_Invalid;
+#ifdef TARGET_API_AUDIOUNIT
+	return dfxgui_GetProperty<int32_t>(dfx::kPluginProperty_MidiLearner).value_or(dfx::kParameterID_Invalid);
+#else
+	return dfxgui_GetEffectInstance()->getmidilearner();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1636,13 +1624,18 @@ bool DfxGuiEditor::ismidilearner(long inParameterIndex)
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	dfxgui_SetProperty(dfx::kPluginProperty_ParameterMidiAssignment, dfx::kScope_Global, 
 					   inParameterIndex, &inAssignment, sizeof(inAssignment));
+#else
+	dfxgui_GetEffectInstance()->setparametermidiassignment(inParameterIndex, inAssignment);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 dfx::ParameterAssignment DfxGuiEditor::getparametermidiassignment(long inParameterIndex)
 {
+#ifdef TARGET_API_AUDIOUNIT
 	auto const opt = dfxgui_GetProperty<dfx::ParameterAssignment>(dfx::kPluginProperty_ParameterMidiAssignment,
 																  dfx::kScope_Global,
 																  inParameterIndex);
@@ -1654,6 +1647,9 @@ dfx::ParameterAssignment DfxGuiEditor::getparametermidiassignment(long inParamet
 	dfx::ParameterAssignment none;
 	none.mEventType = dfx::MidiEventType::None;
 	return none;
+#else
+	return dfxgui_GetEffectInstance()->getparametermidiassignment(inParameterIndex);
+#endif
 }
 
 //-----------------------------------------------------------------------------

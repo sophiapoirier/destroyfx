@@ -652,11 +652,11 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		// get the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
-			*static_cast<int32_t*>(outData) = mDfxSettings->getLearner();
+			*static_cast<int32_t*>(outData) = getmidilearner();
 			break;
 		// get the MIDI assignment for a parameter
 		case dfx::kPluginProperty_ParameterMidiAssignment:
-			*static_cast<dfx::ParameterAssignment*>(outData) = mDfxSettings->getParameterAssignment(inElement);
+			*static_cast<dfx::ParameterAssignment*>(outData) = getparametermidiassignment(inElement);
 			break;
 	#endif
 
@@ -877,43 +877,12 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		// set the current MIDI learner parameter
 		case dfx::kPluginProperty_MidiLearner:
-		{
-			auto const paramID = *static_cast<int32_t const*>(inData);
-			if (auto const assignmentData = settings_getLearningAssignData(paramID))
-			{
-				mDfxSettings->setLearner(paramID, assignmentData->mEventBehaviorFlags, 
-										 assignmentData->mDataInt1, assignmentData->mDataInt2, 
-										 assignmentData->mDataFloat1, assignmentData->mDataFloat2);
-			}
-			else if (getparametervaluetype(paramID) == DfxParam::ValueType::Float)
-			{
-				mDfxSettings->setLearner(paramID);
-			}
-			else
-			{
-				auto const numStates = getparametermax_i(paramID) - getparametermin_i(paramID) + 1;
-				mDfxSettings->setLearner(paramID, dfx::kMidiEventBehaviorFlag_Toggle, numStates);
-			}
+			setmidilearner(*static_cast<int32_t const*>(inData));
 			break;
-		}
 		// set the MIDI assignment for a parameter
 		case dfx::kPluginProperty_ParameterMidiAssignment:
-		{
-			auto const paramAssignment = static_cast<dfx::ParameterAssignment const*>(inData);
-			if (paramAssignment->mEventType == dfx::MidiEventType::None)
-			{
-				mDfxSettings->unassignParam(inElement);
-			}
-			else
-			{
-				mDfxSettings->assignParam(inElement, paramAssignment->mEventType, paramAssignment->mEventChannel,
-										  paramAssignment->mEventNum, paramAssignment->mEventNum2, 
-										  paramAssignment->mEventBehaviorFlags, 
-										  paramAssignment->mDataInt1, paramAssignment->mDataInt2, 
-										  paramAssignment->mDataFloat1, paramAssignment->mDataFloat2);
-			}
+			setparametermidiassignment(inElement, *static_cast<dfx::ParameterAssignment const*>(inData));
 			break;
-		}
 	#endif
 
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
