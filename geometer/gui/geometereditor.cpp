@@ -74,7 +74,7 @@ enum {
 
   pos_displayheight = 10,
   pos_displayX = 180,
-  pos_displayY = pos_sliderY - pos_displayheight - 1,
+  pos_displayY = pos_sliderY - pos_displayheight,
   pos_displaywidth = pos_sliderX + pos_sliderwidth - pos_displayX - 2,
 
   pos_windowshapemenuX = 19,
