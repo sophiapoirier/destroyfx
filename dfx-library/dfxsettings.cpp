@@ -50,7 +50,7 @@ static bool DFX_GetEnvBool(char const* inVarName, bool inFallbackValue);
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //-----------------------------------------------------------------------------
-DfxSettings::DfxSettings(long inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData)
+DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData)
 :	mPlugin(inPlugin),
 	mNumParameters(std::max(inPlugin->getnumparameters(), 1L)),	// we need at least 1 parameter
 	mNumPresets(std::max(inPlugin->getnumpresets(), 1L)),	// we need at least 1 set of parameters
