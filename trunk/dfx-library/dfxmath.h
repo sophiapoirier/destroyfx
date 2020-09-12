@@ -64,11 +64,19 @@ T Rand()
 
 //-----------------------------------------------------------------------------
 template <typename OutputT = size_t, typename InputT>
+constexpr OutputT ToIndex(InputT inValue)
+{
+	static_assert(std::is_integral_v<InputT> && std::is_signed_v<InputT>);
+	static_assert(std::is_integral_v<OutputT> && std::is_unsigned_v<OutputT>);
+	return static_cast<OutputT>(std::max(inValue, InputT(0)));
+}
+
+//-----------------------------------------------------------------------------
+template <typename OutputT = size_t, typename InputT>
 constexpr OutputT RoundToIndex(InputT inValue)
 {
 	static_assert(std::is_floating_point_v<InputT>);
-	static_assert(std::is_unsigned_v<OutputT>);
-	return static_cast<OutputT>(std::max(std::lround(inValue), 0L));
+	return ToIndex<OutputT>(std::llround(inValue));
 }
 
 //-----------------------------------------------------------------------------
