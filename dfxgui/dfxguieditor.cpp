@@ -33,6 +33,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxguibutton.h"
 #include "dfxguidialog.h"
+#include "dfxmath.h"
 #include "dfxmisc.h"
 #include "idfxguicontrol.h"
 
@@ -2487,7 +2488,7 @@ void DfxGuiEditor::RestoreVSTStateFromProgramFile(char const* inFilePath)
 	auto const fileStream = VSTGUI::FileResourceInputStream::create(inFilePath);
 	Require(fileStream.get(), "could not open file");
 	fileStream->seek(0, VSTGUI::SeekMode::End);
-	auto const fileSize = static_cast<uint32_t>(std::max(fileStream->tell(), 0ll));
+	auto const fileSize = dfx::math::ToIndex<uint32_t>(fileStream->tell());
 	fileStream->seek(0, VSTGUI::SeekMode::Set);
 	Require(fileStream->tell() == 0, "could not rewind file");
 
