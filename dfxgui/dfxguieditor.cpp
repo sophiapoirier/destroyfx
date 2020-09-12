@@ -1989,9 +1989,27 @@ long DfxGuiEditor::copySettings()
 	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), kDfxGui_SettingsPasteboardFlavorType, auSettingsCFData.get(), kPasteboardFlavorNoFlags);
 
 #elif defined(TARGET_API_VST)
-	assert(getEffect()->getAeffect()->flags & effFlagsProgramChunks);  // TODO: implement non-chunk settings
 	void* vstSettingsData {};
-	auto const vstSettingsDataSize = getEffect()->getChunk(&vstSettingsData, kDfxGui_CopySettingsIsPreset);
+	CFIndex vstSettingsDataSize {};
+	std::vector<float> parameterValues;
+	if (getEffect()->getAeffect()->flags & effFlagsProgramChunks)
+	{
+		vstSettingsDataSize = getEffect()->getChunk(&vstSettingsData, kDfxGui_CopySettingsIsPreset);
+	}
+	else
+	{
+		auto const numParameters = getEffect()->getAeffect()->numParams;
+		if (numParameters <= 0)  // there is effectively no state to copy
+		{
+			return dfx::kStatus_CannotDoInCurrentContext;
+		}
+		for (VstInt32 parameterID = 0; parameterID < numParameters; parameterID++)
+		{
+			parameterValues.push_back(getEffect()->getParameter(parameterID));
+		}
+		vstSettingsData = parameterValues.data();
+		vstSettingsDataSize = parameterValues.size() * sizeof(parameterValues[0]);
+	}
 	assert(vstSettingsDataSize > 0);
 	if (vstSettingsDataSize <= 0)
 	{
@@ -1999,7 +2017,7 @@ long DfxGuiEditor::copySettings()
 	}
 
 	#if TARGET_OS_MAC
-	dfx::UniqueCFType const vstSettingsCFData = CFDataCreate(kCFAllocatorDefault, const_cast<UInt8 const*>(static_cast<UInt8*>(vstSettingsData)), static_cast<CFIndex>(vstSettingsDataSize));
+	dfx::UniqueCFType const vstSettingsCFData = CFDataCreate(kCFAllocatorDefault, const_cast<UInt8 const*>(static_cast<UInt8*>(vstSettingsData)), vstSettingsDataSize);
 	if (!vstSettingsCFData)
 	{
 		return coreFoundationUnknownErr;
@@ -2131,12 +2149,31 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 	{
 		return dfx::kStatus_CannotDoInCurrentContext;
 	}
-	assert(getEffect()->getAeffect()->flags & effFlagsProgramChunks);  // TODO: implement non-chunk settings
-	auto const chunkSuccess = getEffect()->setChunk(vstSettingsData, vstSettingsDataSize, kDfxGui_CopySettingsIsPreset);
-	assert(chunkSuccess);
-	if (chunkSuccess == 0)
+	if (getEffect()->getAeffect()->flags & effFlagsProgramChunks)
 	{
-		return dfx::kStatus_CannotDoInCurrentContext;
+		auto const chunkSuccess = getEffect()->setChunk(vstSettingsData, vstSettingsDataSize, kDfxGui_CopySettingsIsPreset);
+		assert(chunkSuccess);
+		if (chunkSuccess == 0)
+		{
+			return dfx::kStatus_CannotDoInCurrentContext;
+		}
+	}
+	else
+	{
+		auto const parameterValues = static_cast<float*>(vstSettingsData);
+		if ((vstSettingsDataSize % sizeof(*parameterValues)) != 0)
+		{
+			return dfx::kStatus_CannotDoInCurrentContext;
+		}
+		auto const numParameters = vstSettingsDataSize / static_cast<VstInt32>(sizeof(*parameterValues));
+		if (numParameters != getEffect()->getAeffect()->numParams)
+		{
+			return dfx::kStatus_CannotDoInCurrentContext;
+		}
+		for (VstInt32 parameterID = 0; parameterID < numParameters; parameterID++)
+		{
+			getEffect()->setParameter(parameterID, parameterValues[parameterID]);
+		}
 	}
 #endif
 
