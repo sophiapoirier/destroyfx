@@ -89,11 +89,15 @@ public:
 
 
 //-----------------------------------------------------------------------------
+template <typename T>
+inline constexpr bool IsTriviallySerializable = std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>;
+
+//-----------------------------------------------------------------------------
 void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount);
 template <typename T>
 void ReverseBytes(T* ioData, size_t inItemCount)
 {
-	static_assert(std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>);
+	static_assert(IsTriviallySerializable<T>);
 	ReverseBytes(ioData, sizeof(T), inItemCount);
 }
 template <typename T>

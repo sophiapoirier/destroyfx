@@ -104,15 +104,15 @@ If the plugin is already using either of those things for dedicated purposes (se
 </p>
 
 <p class="desc">
-enabling or disabling parameter assignment stealing:
+enabling or disabling omni operation:
 <br />
-When assigning MIDI stuff to control parameters, the default behaviour in Destroy FX plugins is that you can assign the same MIDI events to more than one parameter.  If you dislike that, you can turn on "stealing" mode.  In stealing mode, if you try to assign an already assigned MIDI event to a parameter, the new parameter gets the assignment and the old parameter loses it.  To do this, you need to set an environment variable <code>DFX_PARAM_STEALMIDI</code> to <code>TRUE</code>.  <strike>In macOS, you can set environment variables in the file ~/.MacOSX/environment.plist.</strike>  (That stopped being true in macOS since 10.8, so maybe search the internet for instructions for what works on your version of macOS.)
+The default behaviour in Destroy FX plugins is to ignore the MIDI channel on which events are received.  If instead you want our plugins to pay attention to MIDI channel when distinguishing between events, you can change the behavior by enabling the contextual menu option "MIDI assignments use channel".
 </p>
 
 <p class="desc">
-enabling or disabling omni operation:
+enabling or disabling parameter assignment stealing:
 <br />
-The default behaviour in Destroy FX plugins is to ignore the MIDI channel on which events are received.  If instead you want our plugins to pay attention to MIDI channel when distinguishing between events, set the environment variable <code>DFX_PARAM_USECHANNEL</code> to <code>TRUE</code> (see the above section for more info about setting environment variables).
+When assigning MIDI stuff to control parameters, the default behaviour in Destroy FX plugins is that you can assign the same MIDI events to more than one parameter.  If you dislike that, you can turn on "stealing" mode.  In stealing mode, if you try to assign an already assigned MIDI event to a parameter, the new parameter gets the assignment and the old parameter loses it.  You can toggle this behavior via the contextual menu option "Steal MIDI assignments".
 </p>
 
 <br />

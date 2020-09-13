@@ -28,6 +28,7 @@ Welcome to our settings persistance mess.
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdlib>
 #include <numeric>
 #include <optional>
@@ -37,10 +38,6 @@ Welcome to our settings persistance mess.
 #include "dfxmidi.h"
 #include "dfxmisc.h"
 #include "dfxplugin.h"
-
-
-//------------------------------------------------------
-static bool DFX_GetEnvBool(char const* inVarName, bool inFallbackValue);
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,14 +86,6 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofE
 
 	clearAssignments();  // initialize all of the parameters to have no MIDI event assignments
 
-	// default to allowing MIDI event assignment sharing instead of stealing them, 
-	// unless the user has defined the environment variable DFX_PARAM_STEALMIDI
-	mStealAssignments = DFX_GetEnvBool("DFX_PARAM_STEALMIDI", false);
-
-	// default to ignoring MIDI channel in MIDI event assignments and automation, 
-	// unless the user has defined the environment variable DFX_PARAM_USECHANNEL
-	mUseChannel = DFX_GetEnvBool("DFX_PARAM_USECHANNEL", false);
-
 	// allow for further constructor stuff, if necessary
 	mPlugin->settings_init();
 }
@@ -104,40 +93,11 @@ DfxSettings::DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofE
 //-----------------------------------------------------------------------------
 DfxSettings::~DfxSettings()
 {
-	// wipe out the signature
+	// wipe the signature from memory
 	mSettingsInfo.mMagic = 0;
 
 	// allow for further destructor stuff, if necessary
 	mPlugin->settings_cleanup();
-}
-
-//------------------------------------------------------
-// this interprets a UNIX environment variable string as a boolean
-static bool DFX_GetEnvBool(char const* inVarName, bool inFallbackValue)
-{
-	auto const env = getenv(inVarName);
-
-	// return the default value if the getenv failed
-	if (!env)
-	{
-		return inFallbackValue;
-	}
-
-	switch (env[0])
-	{
-		case 't':
-		case 'T':
-		case '1':
-			return true;
-
-		case 'f':
-		case 'F':
-		case '0':
-			return false;
-
-		default:
-			return inFallbackValue;
-	}
 }
 
 
@@ -169,6 +129,7 @@ std::vector<std::byte> DfxSettings::save(bool inIsPreset)
 	sharedChunk->mNumStoredPresets = inIsPreset ? 1 : mSettingsInfo.mNumStoredPresets;
 	sharedChunk->mStoredParameterAssignmentSize = mSettingsInfo.mStoredParameterAssignmentSize;
 	sharedChunk->mStoredExtendedDataSize = mSettingsInfo.mStoredExtendedDataSize;
+	sharedChunk->mGlobalBehaviorFlags = mSettingsInfo.mGlobalBehaviorFlags;
 
 	// store the parameters' IDs
 	for (size_t i = 0; i < mParameterIDs.size(); i++)
@@ -346,6 +307,13 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 	if (handleCrisis(crisisFlags) == CrisisError::AbortError)
 	{
 		return false;
+	}
+
+	// check for availability of later extensions to the header
+	if (storedHeaderSize >= (offsetof(SettingsInfo, mGlobalBehaviorFlags) + sizeof(mSettingsInfo.mGlobalBehaviorFlags)))
+	{
+		setUseChannel(newSettingsInfo->mGlobalBehaviorFlags & kGlobalBehaviorFlag_UseChannel);
+		setSteal(newSettingsInfo->mGlobalBehaviorFlags & kGlobalBehaviorFlag_StealAssignments);
 	}
 
 	// point to the next data element after the chunk header:  the first parameter ID
@@ -1442,6 +1410,35 @@ long DfxSettings::getParameterTagFromID(long inParamID, long inNumSearchIDs, int
 
 	// if nothing was found, then return the error ID
 	return dfx::kParameterID_Invalid;
+}
+
+
+//-----------------------------------------------------------------------------
+void DfxSettings::setSteal(bool inMode) noexcept
+{
+	mStealAssignments = inMode;
+	if (inMode)
+	{
+		mSettingsInfo.mGlobalBehaviorFlags |= kGlobalBehaviorFlag_StealAssignments;
+	}
+	else
+	{
+		mSettingsInfo.mGlobalBehaviorFlags &= ~kGlobalBehaviorFlag_StealAssignments;
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DfxSettings::setUseChannel(bool inMode) noexcept
+{
+	mUseChannel = inMode;
+	if (inMode)
+	{
+		mSettingsInfo.mGlobalBehaviorFlags |= kGlobalBehaviorFlag_UseChannel;
+	}
+	else
+	{
+		mSettingsInfo.mGlobalBehaviorFlags &= ~kGlobalBehaviorFlag_UseChannel;
+	}
 }
 
 

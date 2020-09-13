@@ -482,9 +482,8 @@ void DfxGuiEditor::randomizeparameter(long inParameterID, bool inWriteAutomation
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
-	Boolean const writeAutomation_fixedSize = inWriteAutomation;
 	dfxgui_SetProperty(dfx::kPluginProperty_RandomizeParameter, dfx::kScope_Global, inParameterID, 
-					   &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
+					   static_cast<Boolean>(inWriteAutomation));
 #endif
 
 #ifdef TARGET_API_VST
@@ -519,9 +518,9 @@ void DfxGuiEditor::randomizeparameters(bool inWriteAutomation)
 		}
 	}
 
-	Boolean const writeAutomation_fixedSize = inWriteAutomation;
-	dfxgui_SetProperty(dfx::kPluginProperty_RandomizeParameter, dfx::kScope_Global, kAUParameterListener_AnyParameter, 
-					   &writeAutomation_fixedSize, sizeof(writeAutomation_fixedSize));
+	dfxgui_SetProperty(dfx::kPluginProperty_RandomizeParameter, 
+					   dfx::kScope_Global, kAUParameterListener_AnyParameter, 
+					   static_cast<Boolean>(inWriteAutomation));
 
 	if (inWriteAutomation)
 	{
@@ -906,8 +905,7 @@ void DfxGuiEditor::setparameter_f(long inParameterID, double inValue, bool inWra
 	request.inValueType = DfxParam::ValueType::Float;
 	request.value.f = inValue;
 
-	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, 
-					   &request, sizeof(request));
+	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
 #endif
 
 #ifdef TARGET_API_VST
@@ -940,8 +938,7 @@ void DfxGuiEditor::setparameter_i(long inParameterID, long inValue, bool inWrapW
 	request.inValueType = DfxParam::ValueType::Int;
 	request.value.i = inValue;
 
-	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
-					   inParameterID, &request, sizeof(request));
+	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
 #endif
 
 #ifdef TARGET_API_VST
@@ -974,8 +971,7 @@ void DfxGuiEditor::setparameter_b(long inParameterID, bool inValue, bool inWrapW
 	request.inValueType = DfxParam::ValueType::Boolean;
 	request.value.b = inValue;
 
-	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, 
-					   inParameterID, &request, sizeof(request));
+	dfxgui_SetProperty(dfx::kPluginProperty_ParameterValue, dfx::kScope_Global, inParameterID, request);
 #endif
 
 #ifdef TARGET_API_VST
@@ -1565,9 +1561,7 @@ DfxPlugin* DfxGuiEditor::dfxgui_GetDfxPluginInstance()
 void DfxGuiEditor::setmidilearning(bool inLearnMode)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	Boolean newLearnMode_fixedSize = inLearnMode;
-	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearn, dfx::kScope_Global, 0, 
-					   &newLearnMode_fixedSize, sizeof(newLearnMode_fixedSize));
+	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearn, static_cast<Boolean>(inLearnMode));
 #else
 	dfxgui_GetEffectInstance()->setmidilearning(inLearnMode);
 #endif
@@ -1587,8 +1581,7 @@ bool DfxGuiEditor::getmidilearning()
 void DfxGuiEditor::resetmidilearn()
 {
 #ifdef TARGET_API_AUDIOUNIT  
-	Boolean nud {};  // irrelevant
-	dfxgui_SetProperty(dfx::kPluginProperty_ResetMidiLearn, dfx::kScope_Global, 0, &nud, sizeof(nud));
+	dfxgui_SetProperty(dfx::kPluginProperty_ResetMidiLearn, Boolean{} /* irrelevant */);
 #else
 	dfxgui_GetEffectInstance()->resetmidilearn();
 #endif
@@ -1597,10 +1590,12 @@ void DfxGuiEditor::resetmidilearn()
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::setmidilearner(long inParameterIndex)
 {
+	if (dfxgui_IsValidParamID(inParameterIndex) && !getmidilearning())
+	{
+		setmidilearning(true);
+	}
 #ifdef TARGET_API_AUDIOUNIT
-	int32_t parameterIndex_fixedSize = inParameterIndex;
-	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearner, dfx::kScope_Global, 0, 
-					   &parameterIndex_fixedSize, sizeof(parameterIndex_fixedSize));
+	dfxgui_SetProperty(dfx::kPluginProperty_MidiLearner, static_cast<int32_t>(inParameterIndex));
 #else
 	dfxgui_GetEffectInstance()->setmidilearner(inParameterIndex);
 #endif
@@ -1626,8 +1621,7 @@ bool DfxGuiEditor::ismidilearner(long inParameterIndex)
 void DfxGuiEditor::setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment)
 {
 #ifdef TARGET_API_AUDIOUNIT
-	dfxgui_SetProperty(dfx::kPluginProperty_ParameterMidiAssignment, dfx::kScope_Global, 
-					   inParameterIndex, &inAssignment, sizeof(inAssignment));
+	dfxgui_SetProperty(dfx::kPluginProperty_ParameterMidiAssignment, dfx::kScope_Global, inParameterIndex, inAssignment);
 #else
 	dfxgui_GetEffectInstance()->setparametermidiassignment(inParameterIndex, inAssignment);
 #endif
@@ -1659,6 +1653,46 @@ void DfxGuiEditor::parametermidiunassign(long inParameterIndex)
 	dfx::ParameterAssignment parameterAssignment;
 	parameterAssignment.mEventType = dfx::MidiEventType::None;
 	setparametermidiassignment(inParameterIndex, parameterAssignment);
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setMidiAssignmentsUseChannel(bool inEnable)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	dfxgui_SetProperty(dfx::kPluginProperty_MidiAssignmentsUseChannel, static_cast<Boolean>(inEnable));
+#else
+	dfxgui_GetEffectInstance()->setMidiAssignmentsUseChannel(inEnable);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::getMidiAssignmentsUseChannel()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	return dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_MidiAssignmentsUseChannel).value_or(false);
+#else
+	return dfxgui_GetEffectInstance()->getMidiAssignmentsUseChannel();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setMidiAssignmentsSteal(bool inEnable)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	dfxgui_SetProperty(dfx::kPluginProperty_MidiAssignmentsSteal, static_cast<Boolean>(inEnable));
+#else
+	dfxgui_GetEffectInstance()->setMidiAssignmentsSteal(inEnable);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+bool DfxGuiEditor::getMidiAssignmentsSteal()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	return dfxgui_GetProperty<Boolean>(dfx::kPluginProperty_MidiAssignmentsSteal).value_or(false);
+#else
+	return dfxgui_GetEffectInstance()->getMidiAssignmentsSteal();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1839,6 +1873,12 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 								std::bind(&DfxGuiEditor::setmidilearning, this, !getmidilearning()), 
 								true, getmidilearning());
 	DFX_AppendCommandItemToMenu(resultMenu, "MIDI assignments reset", std::bind(&DfxGuiEditor::resetmidilearn, this));
+	DFX_AppendCommandItemToMenu(resultMenu, "MIDI assignments use channel", 
+								std::bind(&DfxGuiEditor::setMidiAssignmentsUseChannel, this, !getMidiAssignmentsUseChannel()), 
+								true, getMidiAssignmentsUseChannel());
+	DFX_AppendCommandItemToMenu(resultMenu, "Steal MIDI assignments", 
+								std::bind(&DfxGuiEditor::setMidiAssignmentsSteal, this, !getMidiAssignmentsSteal()), 
+								true, getMidiAssignmentsSteal());
 #endif
 
 	resultMenu.addSeparator();
@@ -1875,7 +1915,7 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 	DFX_AppendCommandItemToMenu(*resultMenu, "MIDI learner", 
 								std::bind(&DfxGuiEditor::setmidilearner, this, 
 										  ismidilearner(inParameterID) ? DfxSettings::kNoLearner : inParameterID), 
-								getmidilearning(), ismidilearner(inParameterID));
+								true, ismidilearner(inParameterID));
 	{
 		VSTGUI::UTF8String menuItemText = "Unassign MIDI control";
 		auto const currentParameterAssignment = getparametermidiassignment(inParameterID);
@@ -1888,18 +1928,23 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 				switch (currentParameterAssignment.mEventType)
 				{
 					case dfx::MidiEventType::CC:
-						return " (CC " + std::to_string(currentParameterAssignment.mEventNum) + ")";
+						return " (CC " + std::to_string(currentParameterAssignment.mEventNum);
 					case dfx::MidiEventType::ChannelAftertouch:
-						return " (channel aftertouch)";
+						return " (channel aftertouch";
 					case dfx::MidiEventType::PitchBend:
-						return " (pitchbend)";
+						return " (pitchbend";
 					case dfx::MidiEventType::Note:
-						return " (notes " + dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum) + " - " + dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2) + ")";
+						return " (notes " + dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum) + " - " + dfx::GetNameForMIDINote(currentParameterAssignment.mEventNum2);
 					default:
 						assert(false);
 						return {};
 				}
 			}();
+			if (getMidiAssignmentsUseChannel())
+			{
+				menuItemText += ", channel " + std::to_string(currentParameterAssignment.mEventChannel + 1);
+			}
+			menuItemText += ")";
 		}
 		DFX_AppendCommandItemToMenu(*resultMenu, menuItemText, 
 									std::bind(&DfxGuiEditor::parametermidiunassign, this, inParameterID), 
@@ -2112,8 +2157,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 					if (auSettingsPropertyList)
 					{
 						auto const auSettingsPropertyList_temp = auSettingsPropertyList.get();
-						status = dfxgui_SetProperty(kAudioUnitProperty_ClassInfo, kAudioUnitScope_Global, 0, 
-													&auSettingsPropertyList_temp, sizeof(auSettingsPropertyList_temp));
+						status = dfxgui_SetProperty(kAudioUnitProperty_ClassInfo, auSettingsPropertyList_temp);
 						if (status == noErr)
 						{
 							pastableItemFound = true;

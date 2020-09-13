@@ -639,6 +639,10 @@ public:
 	void resetmidilearn();
 	void setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment);
 	dfx::ParameterAssignment getparametermidiassignment(long inParameterIndex) const;
+	void setMidiAssignmentsUseChannel(bool inEnable);
+	bool getMidiAssignmentsUseChannel() const;
+	void setMidiAssignmentsSteal(bool inEnable);
+	bool getMidiAssignmentsSteal() const;
 	void postupdate_midilearn();
 	void postupdate_midilearner();
 

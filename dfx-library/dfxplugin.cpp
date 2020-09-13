@@ -2009,6 +2009,30 @@ dfx::ParameterAssignment DfxPlugin::getparametermidiassignment(long inParameterI
 }
 
 //-----------------------------------------------------------------------------
+void DfxPlugin::setMidiAssignmentsUseChannel(bool inEnable)
+{
+	mDfxSettings->setUseChannel(inEnable);
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::getMidiAssignmentsUseChannel() const
+{
+	return mDfxSettings->getUseChannel();
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::setMidiAssignmentsSteal(bool inEnable)
+{
+	mDfxSettings->setSteal(inEnable);
+}
+
+//-----------------------------------------------------------------------------
+bool DfxPlugin::getMidiAssignmentsSteal() const
+{
+	return mDfxSettings->getSteal();
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::postupdate_midilearn()
 {
 #ifdef TARGET_API_AUDIOUNIT

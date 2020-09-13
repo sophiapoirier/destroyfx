@@ -26,6 +26,7 @@ These are our extended Audio Unit property IDs and types.
 
 #pragma once
 
+#include "dfxmisc.h"
 #include "dfxparameter.h"
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -55,6 +56,8 @@ enum : uint32_t
 	kPluginProperty_ResetMidiLearn,				// clear MIDI parameter assignments
 	kPluginProperty_MidiLearner,				// get/set the current MIDI learner parameter
 	kPluginProperty_ParameterMidiAssignment,	// get/set the MIDI assignment for a parameter
+	kPluginProperty_MidiAssignmentsUseChannel,	// get/set whether MIDI parameter assignments use MIDI channel
+	kPluginProperty_MidiAssignmentsSteal,		// get/set whether existing MIDI parameter assignments are unassigned when reused
 #if DEBUG
 	kPluginProperty_DfxPluginInstance,			// get pointer to DfxPlugin instance
 #endif
@@ -62,7 +65,7 @@ enum : uint32_t
 	kPluginProperty_EndOfList,
 	kPluginProperty_NumProperties = kPluginProperty_EndOfList - kPluginProperty_StartID
 };
-typedef uint32_t PropertyID;
+using PropertyID = uint32_t;
 
 
 //-----------------------------------------------------------------------------
@@ -72,7 +75,7 @@ enum : uint32_t
 	kPropertyFlag_Writable = 1 << 1,
 	kPropertyFlag_BiDirectional = 1 << 2
 };
-typedef uint32_t PropertyFlags;
+using PropertyFlags = uint32_t;
 
 #ifdef TARGET_API_AUDIOUNIT
 enum : AudioUnitScope
@@ -81,7 +84,7 @@ enum : AudioUnitScope
 	kScope_Input = kAudioUnitScope_Input,
 	kScope_Output = kAudioUnitScope_Output
 };
-typedef ::AudioUnitScope Scope;
+using Scope = ::AudioUnitScope;
 #else
 enum Scope : uint32_t
 {
@@ -108,6 +111,7 @@ struct ParameterValueRequest
 	DfxParam::ValueType inValueType {};
 	DfxParam::Value value {};
 };
+static_assert(IsTriviallySerializable<ParameterValueRequest>);
 
 
 //-----------------------------------------------------------------------------
@@ -124,6 +128,7 @@ struct ParameterValueConversionRequest
 	double inValue = 0.0;
 	double outValue = 0.0;
 };
+static_assert(IsTriviallySerializable<ParameterValueConversionRequest>);
 
 
 //-----------------------------------------------------------------------------
@@ -133,6 +138,7 @@ struct ParameterValueStringRequest
 	int64_t inStringIndex = 0;
 	char valueString[dfx::kParameterValueStringMaxLength];
 };
+static_assert(IsTriviallySerializable<ParameterValueStringRequest>);
 
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -177,7 +183,6 @@ struct ParameterAssignment
 {
 	MidiEventType mEventType = MidiEventType::None;
 	// the MIDI channel of the MIDI event assignment
-	//    (so far, I'm not using channel information for anything)
 	int32_t mEventChannel = 0;
 	// the number of the MIDI event assigned to the parameter 
 	//    (CC number, note number, etc.)
@@ -198,6 +203,7 @@ struct ParameterAssignment
 	// (or the maximum point in a float range)
 	float mDataFloat2 = 0.0f;
 };
+static_assert(IsTriviallySerializable<ParameterAssignment>);
 static_assert(sizeof (ParameterAssignment) == 9 * 4,
 	      "expected a packed struct of 9 32-bit fields");
 #pragma pack(pop)
