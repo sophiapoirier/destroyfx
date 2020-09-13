@@ -2036,7 +2036,7 @@ long DfxGuiEditor::copySettings()
 
 #elif defined(TARGET_API_VST)
 	void* vstSettingsData {};
-	CFIndex vstSettingsDataSize {};
+	VstInt32 vstSettingsDataSize {};
 	std::vector<float> parameterValues;
 	if (getEffect()->getAeffect()->flags & effFlagsProgramChunks)
 	{
