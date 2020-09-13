@@ -295,6 +295,14 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outDataSize = sizeof(dfx::ParameterAssignment);
 			outWritable = true;
 			break;
+		case dfx::kPluginProperty_MidiAssignmentsUseChannel:
+			outDataSize = sizeof(Boolean);
+			outWritable = true;
+			break;
+		case dfx::kPluginProperty_MidiAssignmentsSteal:
+			outDataSize = sizeof(Boolean);
+			outWritable = true;
+			break;
 	#endif
 
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
@@ -658,6 +666,12 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case dfx::kPluginProperty_ParameterMidiAssignment:
 			*static_cast<dfx::ParameterAssignment*>(outData) = getparametermidiassignment(inElement);
 			break;
+		case dfx::kPluginProperty_MidiAssignmentsUseChannel:
+			*static_cast<Boolean*>(outData) = getMidiAssignmentsUseChannel();
+			break;
+		case dfx::kPluginProperty_MidiAssignmentsSteal:
+			*static_cast<Boolean*>(outData) = getMidiAssignmentsSteal();
+			break;
 	#endif
 
 	#if LOGIC_AU_PROPERTIES_AVAILABLE
@@ -882,6 +896,12 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 		// set the MIDI assignment for a parameter
 		case dfx::kPluginProperty_ParameterMidiAssignment:
 			setparametermidiassignment(inElement, *static_cast<dfx::ParameterAssignment const*>(inData));
+			break;
+		case dfx::kPluginProperty_MidiAssignmentsUseChannel:
+			setMidiAssignmentsUseChannel(*static_cast<Boolean const*>(inData));
+			break;
+		case dfx::kPluginProperty_MidiAssignmentsSteal:
+			setMidiAssignmentsSteal(*static_cast<Boolean const*>(inData));
 			break;
 	#endif
 

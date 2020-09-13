@@ -292,7 +292,7 @@ public:
 	template <typename T>
 	std::optional<T> dfxgui_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0)
 	{
-		static_assert(std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>);
+		static_assert(dfx::IsTriviallySerializable<T>);
 		T value {};
 		size_t dataSize = sizeof(value);
 		auto const status = dfxgui_GetProperty(inPropertyID, inScope, inItemIndex, &value, dataSize);
@@ -302,10 +302,15 @@ public:
 							void const* inData, size_t inDataSize);
 	// Assumes the data's size is sizeof(T). Returns true if successful.
 	template <typename T>
-	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, T const &data, dfx::Scope inScope = dfx::kScope_Global, unsigned long inItemIndex = 0)
+	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, T const &data)
 	{
-		static_assert(std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>);
+		static_assert(dfx::IsTriviallySerializable<T>);
 		return dfx::kStatus_NoError == dfxgui_SetProperty(inPropertyID, inScope, inItemIndex, &data, sizeof data);
+	}
+	template <typename T>
+	bool dfxgui_SetProperty(dfx::PropertyID inPropertyID, T const &data)
+	{
+		return dfxgui_SetProperty<T>(inPropertyID, dfx::kScope_Global, 0, data);
 	}
 
 	void LoadPresetFile();
@@ -320,6 +325,10 @@ public:
 	void setparametermidiassignment(long inParameterIndex, dfx::ParameterAssignment const& inAssignment);
 	dfx::ParameterAssignment getparametermidiassignment(long inParameterIndex);
 	void parametermidiunassign(long inParameterIndex);
+	void setMidiAssignmentsUseChannel(bool inEnable);
+	bool getMidiAssignmentsUseChannel();
+	void setMidiAssignmentsSteal(bool inEnable);
+	bool getMidiAssignmentsSteal();
 	void TextEntryForParameterMidiCC(long inParameterID);
 	void HandleMidiLearnChange();
 	void HandleMidiLearnerChange();

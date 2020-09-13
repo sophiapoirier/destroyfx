@@ -78,7 +78,9 @@ This is our Destroy FX plugin data storage stuff
 #pragma once
 
 
+#include <atomic>
 #include <cstddef>
+#include <type_traits>
 #include <vector>
 
 #include "dfxdefines.h"
@@ -152,7 +154,7 @@ public:
 					float inDataFloat1 = 0.0f, float inDataFloat2 = 0.0f);
 	auto getLearner() const noexcept
 	{
-		return mLearner;
+		return mLearner.load();
 	}
 	bool isLearner(long inParamTag) const noexcept;
 
@@ -161,7 +163,7 @@ public:
 	// report whether or not MIDI learn mode is active
 	auto isLearning() const noexcept
 	{
-		return mMidiLearn;
+		return mMidiLearn.load();
 	}
 
 	// call these from valueChanged in the plugin editor
@@ -220,13 +222,10 @@ public:
 
 	// true means allowing a given MIDI event to be assigned to only one parameter; 
 	// false means that a single event can be assigned to more than one parameter
-	void setSteal(bool inMode) noexcept
-	{
-		mStealAssignments = inMode;
-	}
+	void setSteal(bool inMode) noexcept;
 	auto getSteal() const noexcept
 	{
-		return mStealAssignments;
+		return mStealAssignments.load();
 	}
 
 	void setDeactivateLearningUponLearnt(bool inMode) noexcept
@@ -235,7 +234,7 @@ public:
 	}
 	auto getDeactivateLearningUponLearnt() const noexcept
 	{
-		return mDeactivateLearningUponLearnt;
+		return mDeactivateLearningUponLearnt.load();
 	}
 
 	void setAllowChannelAftertouchEvents(bool inMode = true) noexcept
@@ -271,13 +270,10 @@ public:
 
 	// true means that MIDI channel in events and assignments matters; 
 	// false means operate in MIDI omni mode
-	void setUseChannel(bool inMode = true) noexcept
-	{
-		mUseChannel = inMode;
-	}
+	void setUseChannel(bool inMode) noexcept;
 	auto getUseChannel() const noexcept
 	{
-		return mUseChannel;
+		return mUseChannel.load();
 	}
 
 	// this tells DfxSettings what you want it to do if a non-matching 
@@ -331,6 +327,12 @@ protected:
 		kCrisisReasonFlag_LargerHeader		= 1 << 12	// the incoming data's header size is larger
 	};
 
+	enum GlobalBehaviorFlags : uint32_t
+	{
+		kGlobalBehaviorFlag_UseChannel = 1,
+		kGlobalBehaviorFlag_StealAssignments = 1 << 1
+	};
+
 #pragma pack(push, 4)
 	// header information for the storage data
 	// note:  correctEndian() assumes that the data is all of type 32-bit integer, 
@@ -364,7 +366,10 @@ protected:
 		uint32_t mStoredParameterAssignmentSize = 0;
 		// the size (in bytes) of the extra settings data (if any)
 		uint32_t mStoredExtendedDataSize = 0;
+		// behaviors that are global to plugin operation
+		uint32_t mGlobalBehaviorFlags = 0;
 	};
+	static_assert(dfx::IsTriviallySerializable<SettingsInfo>);
 
 	// structure of an API-generic preset
 	struct GenPreset
@@ -372,6 +377,7 @@ protected:
 		char mName[dfx::kPresetNameMaxLength];  // must include null-terminator byte
 		float mParameterValues[1];  // can of course be more...
 	};
+	static_assert(dfx::IsTriviallySerializable<GenPreset>);
 #pragma pack(pop)
 
 	// reverse the byte order of data
@@ -399,8 +405,8 @@ protected:
 	DfxPlugin* const mPlugin;
 	long const mNumParameters, mNumPresets;
 
-	bool mMidiLearn = false;  // switch value for MIDI learn mode
-	long mLearner = kNoLearner;  // the parameter currently selected for MIDI learning
+	std::atomic<bool> mMidiLearn {false};  // switch value for MIDI learn mode
+	std::atomic<long> mLearner {kNoLearner};  // the parameter currently selected for MIDI learning
 
 	// size of one preset (preset name + all parameter values)
 	size_t mSizeOfPreset = 0;
@@ -426,8 +432,8 @@ protected:
 	std::vector<dfx::ParameterAssignment> mParameterAssignments;
 
 	// whether to allow only one parameter assignment per MIDI event, or steal them
-	bool mStealAssignments = false;
-	bool mDeactivateLearningUponLearnt = true;
+	std::atomic<bool> mStealAssignments {false};
+	std::atomic<bool> mDeactivateLearningUponLearnt {true};
 	bool mAllowChannelAftertouchEvents = true;
 	// whether to allow pitchbend events to be assigned to control parameters
 	bool mAllowPitchbendEvents = false;
@@ -437,19 +443,19 @@ protected:
 	CrisisBehavior mCrisisBehavior = CrisisBehavior::LoadWhatYouCan;
 	// whether to differentiate events and parameter assignments based 
 	// on MIDI channel or whether to ignore channel (omni-style)
-	bool mUseChannel = false;
+	std::atomic<bool> mUseChannel {false};
 
 	// this lets the plugin specify any MIDI control behavior characterists 
 	// for the current MIDI-learning parameter
 	dfx::MidiEventBehaviorFlags mLearnerEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_None;
 	// lets the plugin pass along an extra context-specific data bytes
-	long mLearnerDataInt1 = 0, mLearnerDataInt2 = 0;
-	float mLearnerDataFloat1 = 0.0f, mLearnerDataFloat2 = 0.0f;  // TODO: unused, remove? (but serialized data compatibility)
+	std::atomic<long> mLearnerDataInt1 {0}, mLearnerDataInt2 {0};
+	std::atomic<float> mLearnerDataFloat1 {0.0f}, mLearnerDataFloat2 {0.0f};  // TODO: unused, remove? (but serialized data compatibility)
 
 	// if a note range is being learned for a parameter, this will be true
-	bool mNoteRangeHalfwayDone = false;
+	std::atomic<bool> mNoteRangeHalfwayDone {false};
 	// the note that is the first part of the 2-note range being learned
-	long mHalfwayNoteNum = 0;
+	std::atomic<long> mHalfwayNoteNum {0};
 };
 
 
