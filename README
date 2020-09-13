@@ -3,7 +3,7 @@
 These are some of the plugins that are part of the Destroy FX plugin
 pack. All of them use the VST plugin format, and should be (nearly)
 source-portable to any platform which supports that. We also support
-Audio Unit, the newer plugin format for Mac OS X. Some advanced
+Audio Unit, a format exclusive to macOS and iOS. Some advanced
 features may not work on all platforms or in all hosts.
 
 C++ is currently the only appropriate language for creating audio
@@ -91,7 +91,6 @@ monomaker/
 
         Monomaker is just a simple stereo utility.  It can do 
         panning and merge a stereo signal to mono.
-        The panning is equal-power / -6 dB law (sort of).
 
 midigater/
 
@@ -99,8 +98,8 @@ midigater/
 
 eqsync/
 
-        Total novelty effect that retunes biquad filter coefficents 
-        at regular intervals synchronized to tempo.
+        Total novelty effect that randomly retunes biquad filter 
+        coefficents at regular intervals synchronized to tempo.
 
 polarizer/
 
@@ -146,7 +145,7 @@ slowft/
 
 firefly/
 
-        The idea was to provide a general-purpose finite impluse response
+        The idea was to provide a general-purpose finite impulse response
         filter with a drawable model. Didn't get very far, except drawing
         a placeholder GUI.
 
@@ -169,29 +168,20 @@ intercom/
 
 
 In the source package, each plugin has a corresponding directory, as
-well as a win32 subdirectory containing MS VC++ project files. In 
-these directories, a batch file called "make.bat" can be used from 
-the command line to build the plugin, provided that the Visual Studio 
-tools are in your path. Some directories have Visual Studio project 
-files, but these are no longer supported.
+well as a win32 subdirectory containing Windows build files. In 
+these directories, a file called "makefile" can be used from the 
+command line to build the plugin.
 
 Most of these plugins have mac subdirectories with stuff for 
 building Audio Unit versions of our plugins.  The plugin.xcodeproj 
-"files" (well, they are bundles, and might appear like directories, 
-which is what they really are) are Xcode projects.  The plugin.exp 
-files are the entry point symbol files.  The InfoPlist.strings files 
-are localized values for some Info.plist values and are located in 
+"files" (well, they are bundles, thus technically directories 
+appearing as files) are Xcode projects.  The plugin.exp files are 
+the entry point symbol files.  The InfoPlist.strings files are 
+localized values for some Info.plist values and are located in 
 <language-code>.lproj subdirectories accordingly.
 
-In order to build Audio Units, you need Mac OS X 10.2 or higher and 
-you need the Apple Developer Tools installed.  The Developer Tools CD
-or DVD comes with the Mac OS X install CDs/DVDs.  Xcode (if you care
-to use that IDE) is included with the Developer Tools.  Note that the
-Xcode projects files here assume absolute paths for the Apple-provided 
-base CoreAudio SDK files; they assume that the files are located in 
-the places where the Developer Tools installer puts them.  If you've 
-moved those files, you'll need to change the paths in the project 
-settings.
+In order to build Audio Units, you need a Mac with Xcode installed.  
+Xcode is available in the Mac App Store.
 
 for building 64-bit Windows DLLs:
 (Note: This is in progress as of summer 2020, and doesn't completely
@@ -226,34 +216,11 @@ $ x86_64-w64-mingw32-g++ --version
 x86_64-w64-mingw32-g++ (GCC) 9.2.0
 
 
-for building VST Mac CFM versions:
-(note:  This section is legacy cuz we don't use CodeWarrior or build 
-CFM versions anymore and therefore don't maintain those associated 
-files anymore.)
-Some plugins have mac subdirectories with *def-vst.h "prefix" files.  
-You can use these to set various #defines in your CodeWarrior projects 
-to build the plugins in different ways.  This is because CW does not 
-allow you to specify preprocessor #defines in the project target 
-settings (this is true as of v8.2, although Metroworks say they will 
-eventually implement this long-missing feature).  In your CW project 
-target settings, you go to the C/C++ Language tab specify the 
-appropriate file in the "prefix file" field.  This means that CW will 
-preprocess this file before everything else and use the preprocessor 
-stuff globally for the whole build process.  Usually you would use 
-vstplugsmac.h (for classic Mac OS builds) or vstplugscarbon.h (for 
-carbon builds) as the prefix file.  Those files come with Steinberg's 
-VST SDK distribution and include a few basic, necessary #defines.  
-Our prefix files #include those files so that you still get those 
-defines.  With our prefix files, those that end in def.h are for 
-"Classic" (InterfaceLib) builds and defcarbon.h are for Carbon CFM
-builds.
-
-
-You will also need the vstgui library to compile the UIs for these
+You will also need the VSTGUI library to compile the UIs for these
 plugins. We put this in a directory called "vstgui" next to the
 destroyfx repository (it then contains another directory called
 "vstgui"). VSTGUI is free and open source; you can just check it
-out from github: https://github.com/steinbergmedia/vstgui
+out from GitHub: https://github.com/steinbergmedia/vstgui
 
 
 Here is a description of each of the remaining directories in the
