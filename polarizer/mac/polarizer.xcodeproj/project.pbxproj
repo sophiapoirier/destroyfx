@@ -400,7 +400,7 @@
 				EC89B4D6208D360B00E15129 /* vstgui_mac.mm */,
 			);
 			name = VSTGUI;
-			path = ../../vst3sdk/vstgui4/vstgui;
+			path = ../../vstgui/vstgui;
 			sourceTree = "<group>";
 		};
 		EC89B4D8208D361200E15129 /* plugin-bindings */ = {

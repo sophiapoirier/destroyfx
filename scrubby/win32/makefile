@@ -11,7 +11,7 @@ DFXLIB=../../dfx-library
 VSTSDK=../../vstsdk
 DFXGUI=../../dfxgui
 # git repository is called "vstgui" and contains a toplevel directory "vstgui"
-VSTGUI=../../../vstgui/vstgui
+VSTGUI=../../vstgui/vstgui
 
 # WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
 #  -DENABLE_TRACE=1
