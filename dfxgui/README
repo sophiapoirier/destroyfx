@@ -1,25 +1,13 @@
-Tom and I are currently working on making our hyper suped up graphics
-library for our Destroy FX plugins.  This new library will be one that
+# DFX GUI
+
+This is our graphics library for our Destroy FX plugins.  The library
 assumes cooperation with DfxPlugin plugins and not any specific plugin
 format, so that we can write our GUI code in a way that will work
 specifically and nicely with DfxPlugin and will work with all of the
 plugin formats that DfxPlugin supports (currently Audio Unit for Mac
 and VST for Windows).
 
-Originally the plan was that I was going to make a Mac / Audio Unit
-specific implementation and Tom was going to make a Windows / VST
-specific implementation.  The former is quite far along now, but the
-latter never really happened, so I have begun work on a VST
-implementation that is VSTGUI-based.  We originally wanted to make our
-own from scratch because of the number of bugs and unpleasantries in
-VSTGUI, but since that doesn't look like it's going to happen any time
-soon/ever, the VSTGUI compromise is being made as a shortcut.
-
-The work that I have done so far for AU graphics in Mac OS X owes a
-great deal to Urs Heckmann's wonderful CAUGui framework.  His code was
-the best example code that I could find demonstrating how to use the
-Quartz and Carbon Events APIs with AUCarbonViews, and his hard work on
-the project and generosity with sharing his code are very much
-appreciated.  Urs' excellent plugins are available at http://u-he.com/
-and the latest version of his CAUGui framework can be found at
-http://u-he.com/caugui/
+The implementation is VSTGUI-based.  This provides a foundation that
+abstracts away from platform-specific GUI APIs and handles a lot of
+the general GUI toolkit duties, enabling our layer on top of that to
+manage features and functionality particular to our plugins.

@@ -1,4 +1,3 @@
-
 This directory contains the VST 2 SDK, but it's not
 part of the repository because the SDK is not free
 software.
@@ -7,6 +6,7 @@ software.
 Here's what the (relevant) contents looked like in
 the final version 2.4 rev2 in 2006:
 
+```
 $ ls -lR vstsdk
 total 0
 drwxr-xr-x  4 user  group  128 Jul 26  2009 pluginterfaces/
@@ -51,6 +51,7 @@ total 248
 -rw-r--r--  1 user  group  56569 Oct  5  2006 audioeffectx.cpp
 -rw-r--r--  1 user  group  17371 Jun 20  2006 audioeffectx.h
 -rw-r--r--  1 user  group   2275 Sep  5  2006 vstplugmain.cpp
+```
 
 
 VST2 is definitely deprecated and it's harder and harder to

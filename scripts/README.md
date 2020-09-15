@@ -4,14 +4,14 @@ of making distribution archives for our web page downloads and others
 do some other useful stuff.
 
 
-makedist.sh:
+### makedist.sh
 
 This shell script packages up a plugin and related text files
 (documentation, license, etc.) into an archive for download at our web
 page.
 
 
-au.sh:
+### au.sh
 
 This is a shell script that feeds the makedist.sh script specifically
 for the AU builds that Sophia makes.  It makes a lot of assumptions
@@ -21,24 +21,26 @@ specific to the task, and therefore probably not too useful for anyone
 aside from Sophia.
 
 
-install-au.command:
+### install-au.command
 
 This is a general purpose Audio Unit installer script.  It expects
 that it is located in the same directory (and at the same level in
 there) as all of the files to be installed.  It looks for any
-*.component bundles and installs them as AUs and looks for any
-documentation files (*.html) and installs them into a "Destroy FX"
+\*.component bundles and installs them as AUs and looks for any
+documentation files (\*.html) and installs them into a "Destroy FX"
 sub-directory in ~/Library/Documentation
 
 Note that this file has a .command file name extension because that's
-the way to associate a shell script with Terminal in Mac OS X, making
-it so that opening the file in Finder will make it automatically run
+the way to associate a shell script with Terminal in macOS, making
+it so that opening the file in Finder will automatically run it
 in Terminal.
 
 
-fixpng.sh:
+### fixpng.sh
 
 This is a simple shell script that will remove gAMA, cHRM, iCCP, and
 sRGB chunks from PNG files and also maximize the compression of the
-files.  The script uses pngcrush which is available at:
-http://pmt.sourceforge.net/pngcrush/
+files.  The script uses pngcrush which is available at
+[http://pmt.sourceforge.net/pngcrush/](http://pmt.sourceforge.net/pngcrush/)
+and zopfli which is available at
+[https://github.com/google/zopfli](https://github.com/google/zopfli).
