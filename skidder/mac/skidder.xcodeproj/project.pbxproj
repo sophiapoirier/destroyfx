@@ -447,7 +447,7 @@
 				EC6CCD4A248A07A00048D27F /* vstgui_mac.mm */,
 			);
 			name = VSTGUI;
-			path = ../../vst3sdk/vstgui4/vstgui;
+			path = ../../vstgui/vstgui;
 			sourceTree = SOURCE_ROOT;
 		};
 		EC6CCD4C248A07A60048D27F /* plugin-bindings */ = {

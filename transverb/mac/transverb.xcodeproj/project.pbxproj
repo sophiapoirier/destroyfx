@@ -461,7 +461,7 @@
 				ECF7D8F42002B7F300DCE42E /* vstgui_mac.mm */,
 			);
 			name = VSTGUI;
-			path = ../../vst3sdk/vstgui4/vstgui;
+			path = ../../vstgui/vstgui;
 			sourceTree = "<group>";
 		};
 		ECF7D8DD2002B7D300DCE42E /* plugin-bindings */ = {
