@@ -1,12 +1,8 @@
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Bitmap
-//
-
-128                     BITMAP  DISCARDABLE     "background.bmp"
-129                     BITMAP  DISCARDABLE     "slope-fader-handle.bmp"
-130                     BITMAP  DISCARDABLE     "velocity-influence-fader-handle.bmp"
-131                     BITMAP  DISCARDABLE     "floor-fader-handle.bmp"
-132                     BITMAP  DISCARDABLE     "destroy-fx-link.bmp"
-
+destroy-fx-link-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\destroy-fx-link-button.png"
+midi-gater-background.png  PNG DISCARDABLE  "..\\gui\\graphics\\midi-gater-background.png"
+slider-handle-floor.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-floor.png"
+slider-handle-floor-glowing.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-floor-glowing.png"
+slider-handle-slope.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-slope.png"
+slider-handle-slope-glowing.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-slope-glowing.png"
+slider-handle-velocity-influence.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-velocity-influence.png"
+slider-handle-velocity-influence-glowing.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-velocity-influence-glowing.png"
