@@ -85,9 +85,7 @@
 <script>
  const YES = '&bull;';
  const NO = '&nbsp;';
- const FREE = '&loz;';
- const TEMPO = '*';
- const FORTHCOMING = "&#9734;";
+ const FREE = '*';
  const UNSURE = '?';
 
  // TODO: 'Recommended' hosts?
@@ -117,7 +115,6 @@
    {name: 'Numerology', url: 'http://www.five12.com/', au: '1.2', vst: null, tempo: YES, midi: YES, inst: YES, mac: YES, win: null},
    {name: 'Plogue Bidule', url: 'http://www.plogue.com/', au: YES, vst: YES, tempo: YES, midi: YES, inst: YES, mac: YES, win: YES},
    {name: 'REAPER', url: 'http://reaper.fm/', au: YES, vst: YES, tempo: YES, midi: YES, inst: YES, mac: YES, win: YES},
-   {name: 'SonicBirth', url: 'http://sonicbirth.sourceforge.net/', au: YES, vst: null, tempo: YES, midi: YES, inst: YES, mac: YES, win: null, free: YES},
    {name: 'Sound Forge', url: 'http://www.magix.com/', au: null, vst: '8.0', tempo: UNSURE, midi: null, inst: null, mac: null, win: YES},
    {name: 'Sound Studio', url: 'http://felttip.com/ss/', au: '3.0', vst: null, tempo: UNSURE, midi: null, inst: null, mac: YES, win: null},
    {name: 'Studio One', url: 'http://www.presonus.com/', au: YES, vst: YES, tempo: YES, midi: null, inst: YES, mac: YES, win: YES},
@@ -158,9 +155,9 @@
 
    const cols = {'au': 'AU support',
 		 'vst': 'VST support',
-		 'tempo': 'Tempo sync',
+		 'tempo': 'tempo sync &loz;',
 		 'midi': 'MIDI for effects &dagger;',
-		 'inst': 'Instruments &sect;',
+		 'inst': 'instruments &sect;',
 		 'mac': 'macOS',
 		 'win': 'Windows'};
 
@@ -203,7 +200,7 @@
        let a = A('host', hosttd);
        a.href = host.url;
        TEXT(host.name, a);
-       if (host.free != null) TEXT(' ◊', hosttd);
+       if (host.free != null) TEXT(' ' + FREE, hosttd);
 
        for (let c in cols) {
 	 if (host[c] == null) {
@@ -226,12 +223,16 @@
   </div>
 
   <div class="legend">
-    <br>* Buffer Override, EQ Sync, Scrubby, and Skidder have tempo sync features
+    <br>&loz; Buffer Override, EQ Sync, Scrubby, and Skidder have tempo sync features
     <br>&dagger; Buffer Override, Geometer, MIDI Gater, Rez Synth, Scrubby, Skidder, and Transverb are effects that process audio and MIDI
     <br>&sect; Turntablist is an "instrument" plugin
-    <br>&loz; = free
-    <br>&#9734; forthcoming version (not available yet)
+    <br>* = free
+    <p>
+      We do not maintain this list with much diligence. 
+      <br>You may find the software search tool at <a href="https://www.kvraudio.com/q.php">KVR Audio</a> to be more useful.
+    </p>
   </div>
+
 </body>
 
 </html>
