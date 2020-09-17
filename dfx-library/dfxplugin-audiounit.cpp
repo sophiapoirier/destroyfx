@@ -783,10 +783,10 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
 		case kAudioUnitProperty_InPlaceProcessing:
-			if ((mAudioProcessingAccumulatingOnly || (getnuminputs() != getnumoutputs())) 
+			if ((!mInPlaceAudioProcessingAllowed || (getnuminputs() != getnumoutputs())) 
 				&& (*static_cast<UInt32 const*>(inData) != 0))
 			{
-				status = kAudioUnitErr_InvalidPropertyValue;
+				status = kAudioUnitErr_CannotDoInCurrentContext;
 			}
 			else
 			{
@@ -1577,8 +1577,9 @@ OSStatus DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement 
 void DfxPlugin::UpdateInPlaceProcessingState()
 {
 #if !TARGET_PLUGIN_IS_INSTRUMENT
-	// we can't do in-place audio rendering if there are different numbers of audio inputs and outputs
-	if (getnuminputs() != getnumoutputs())
+	// we can't do in-place audio rendering if there are different numbers of audio inputs and outputs 
+	// or the audio rendering is summed into the output
+	if ((getnuminputs() != getnumoutputs()) || !mInPlaceAudioProcessingAllowed)
 	{
 		auto const entryProcessesInPlace = ProcessesInPlace();
 		SetProcessesInPlace(false);
@@ -1658,7 +1659,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 	preprocessaudio();
 
 	// clear the output buffer because we will accumulate output into it
-	if (mAudioProcessingAccumulatingOnly)
+	if (!mInPlaceAudioProcessingAllowed)
 	{
 		AUBufferList::ZeroBuffer(outBuffer);
 	}

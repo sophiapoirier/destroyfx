@@ -85,7 +85,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	// more about the resonance ring-out, however I do not know how to estimate that so...
 	settailsize_seconds(getparametermax_f(kEnvRelease) * 0.001);
 
-	setAudioProcessingMustAccumulate(true);  // only support accumulating output
+	setInPlaceAudioProcessingAllowed(false);
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
 
 	setpresetname(0, "feminist synth");  // default preset name

@@ -298,6 +298,16 @@ long DfxPlugin::do_initialize()
 		return result;
 	}
 
+#ifndef TARGET_API_AUDIOUNIT
+	mInputAudioStreams.assign(getnuminputs(), nullptr);
+	if (!mInPlaceAudioProcessingAllowed)
+	{
+		mInputOutOfPlaceAudioBuffers.assign(getnuminputs(), std::vector<float>(getmaxframes(), 0.0f));
+		std::transform(mInputOutOfPlaceAudioBuffers.cbegin(), mInputOutOfPlaceAudioBuffers.cend(), 
+					   mInputAudioStreams.begin(), [](auto const& buffer){ return buffer.data(); });
+	}
+#endif  // !TARGET_API_AUDIOUNIT
+
 #ifdef TARGET_API_VST
 	mIsInitialized = true;
 #endif
@@ -1601,20 +1611,19 @@ void DfxPlugin::postupdate_tailsize()
 }
 
 //-----------------------------------------------------------------------------
-void DfxPlugin::setAudioProcessingMustAccumulate(bool inMode)
+void DfxPlugin::setInPlaceAudioProcessingAllowed(bool inEnable)
 {
-	mAudioProcessingAccumulatingOnly = inMode;
-	if (inMode)
-	{
 #ifdef TARGET_API_AUDIOUNIT
-	#if !TARGET_PLUGIN_IS_INSTRUMENT
-		SetProcessesInPlace(false);
-	#endif
+	assert(!IsInitialized());
+#elif defined(TARGET_API_VST)
+	assert(!mIsInitialized);
 #endif
-#if TARGET_API_VST
-		assert(false);  // TODO: can't depend on canProcessReplacing(false) anymore, requires intermediate buffering solution
+
+	mInPlaceAudioProcessingAllowed = inEnable;
+
+#ifdef TARGET_API_AUDIOUNIT
+	UpdateInPlaceProcessingState();
 #endif
-	}
 }
 
 

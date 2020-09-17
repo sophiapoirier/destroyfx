@@ -487,17 +487,36 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 {
 	preprocessaudio();
 
+	for (unsigned long ch = 0; ch < getnuminputs(); ch++)
+	{
+		if (mInPlaceAudioProcessingAllowed)
+		{
+			mInputAudioStreams[ch] = inputs[ch];
+		}
+		else
+		{
+			std::copy_n(inputs[ch], dfx::math::ToIndex(sampleFrames), mInputOutOfPlaceAudioBuffers[ch].data());
+		}
+	}
+	if (!mInPlaceAudioProcessingAllowed)
+	{
+		for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+		{
+			std::fill_n(outputs[ch], dfx::math::ToIndex(sampleFrames), 0.0f);
+		}
+	}
+
 #if TARGET_PLUGIN_USES_DSPCORE
 	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
 	{
 		if (mDSPCores[ch])
 		{
-			auto inputAudio = inputs[ch];
+			auto inputAudio = mInputAudioStreams[ch];
 			if (asymmetricalchannels())
 			{
 				if (ch == 0)
 				{
-					std::copy_n(inputs[ch], sampleFrames, mAsymmetricalInputAudioBuffer.data());
+					std::copy_n(mInputAudioStreams[ch], sampleFrames, mAsymmetricalInputAudioBuffer.data());
 				}
 				inputAudio = mAsymmetricalInputAudioBuffer.data();
 			}
@@ -505,7 +524,7 @@ void DfxPlugin::processReplacing(float** inputs, float** outputs, VstInt32 sampl
 		}
 	}
 #else
-	processaudio(const_cast<float const**>(inputs), outputs, static_cast<unsigned long>(sampleFrames));
+	processaudio(mInputAudioStreams.data(), outputs, dfx::math::ToIndex<unsigned long>(sampleFrames));
 #endif
 
 	postprocessaudio();
