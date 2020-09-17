@@ -67,24 +67,18 @@ div.twocolumn > div:first-child {
   width: 110px;
 }
 
-
-/* begin maybe-stoopid CSS copied from old site */
-p.rel {
+a.release {
+  color: #555;
+  display: block;
+  font-size: 12px;
   font-weight: bold;
   text-align: right;
+  text-decoration: none;
+  margin-bottom: 3px;
 }
-
-a.plain {
-  color: inherit;
-  text-decoration: inherit;
-  font-weight: inherit;
-}
-a.plain:hover {
+a.release:hover {
   text-decoration: underline;
 }
-
-.hidden {}
-/* end maybe-stoopid CSS copied from old site */
 
 
 img.centered {
