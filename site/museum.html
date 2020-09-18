@@ -38,17 +38,17 @@
    //         "bufferoverride-2.0-win.zip", "bufferoverride-2.0-carbon.sit", "bufferoverride-2.0-mac.sit", "bufferoverride-2.0-source.sit"),
 
    Version("1.1.2", "2002-01-03",
-	   "bufferoverride-1.1.2-win.zip", "bufferoverride-1.1.2-carbon.sit", "bufferoverride-1.1.2-mac.sit", "bufferoverride-1.1.2-source.sit"),
+           "bufferoverride-1.1.2-win.zip", "bufferoverride-1.1.2-carbon.sit", "bufferoverride-1.1.2-mac.sit", "bufferoverride-1.1.2-source.sit"),
    Version("1.1.1", "2001-12-02",
-	   "bufferoverride-1.1.1-win.zip", "bufferoverride-1.1.1-carbon.sit", "bufferoverride-1.1.1-mac.sit", "bufferoverride-1.1.1-source.sit"),
+           "bufferoverride-1.1.1-win.zip", "bufferoverride-1.1.1-carbon.sit", "bufferoverride-1.1.1-mac.sit", "bufferoverride-1.1.1-source.sit"),
    Version("1.1", "2001-11-27",
-	   "bufferoverride-1.1-win.zip", "bufferoverride-1.1-carbon.sit", "bufferoverride-1.1-mac.sit", "bufferoverride-1.1-source.sit"),
+           "bufferoverride-1.1-win.zip", "bufferoverride-1.1-carbon.sit", "bufferoverride-1.1-mac.sit", "bufferoverride-1.1-source.sit"),
    Version("1.0.4", "2001-10-26",
-	   "bufferoverride-1.0.4-win.zip", "bufferoverride-1.0.4-carbon.sit", "bufferoverride-1.0.4-mac.sit", "bufferoverride-1.0.4-source.sit"),
+           "bufferoverride-1.0.4-win.zip", "bufferoverride-1.0.4-carbon.sit", "bufferoverride-1.0.4-mac.sit", "bufferoverride-1.0.4-source.sit"),
    Version("1.0.3", "2001-10-10",
-	   "bufferoverride-1.0.3-win.zip", "bufferoverride-1.0.3-carbon.sit", "bufferoverride-1.0.3-mac.sit", "bufferoverride-1.0.3-source.sit"),
+           "bufferoverride-1.0.3-win.zip", "bufferoverride-1.0.3-carbon.sit", "bufferoverride-1.0.3-mac.sit", "bufferoverride-1.0.3-source.sit"),
    Version("1.0.2", "2001-09-29",
-	   "bufferoverride-1.0.2-win.zip", "bufferoverride-1.0.2-carbon.sit", "bufferoverride-1.0.2-mac.sit", "bufferoverride-1.0.2-source.sit"),
+           "bufferoverride-1.0.2-win.zip", "bufferoverride-1.0.2-carbon.sit", "bufferoverride-1.0.2-mac.sit", "bufferoverride-1.0.2-source.sit"),
    Version("1.0", "2001-09-18", "bufferoverride-1.0-win.zip", null, null, null)
  ];
 
@@ -143,11 +143,11 @@
        TEXT(v.vnum + ' (' + v.date + ')', H3('', box));
        let ul = UL('', box);
        for (let os of ['win', 'osx', 'mac', 'src']) {
-	 if (v[os]) {
-	   let a = A('', LI('', ul));
-	   a.href = v[os];
-	   TEXT(os, a);
-	 }
+         if (v[os]) {
+           let a = A('', LI('', ul));
+           a.href = v[os];
+           TEXT(os, a);
+         }
        }
      }
    }

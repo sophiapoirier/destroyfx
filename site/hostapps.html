@@ -154,12 +154,12 @@
    let table = TABLE('hosts', elt);
 
    const cols = {'au': 'AU support',
-		 'vst': 'VST support',
-		 'tempo': 'tempo sync &loz;',
-		 'midi': 'MIDI for effects &dagger;',
-		 'inst': 'instruments &sect;',
-		 'mac': 'macOS',
-		 'win': 'Windows'};
+                 'vst': 'VST support',
+                 'tempo': 'tempo sync &loz;',
+                 'midi': 'MIDI for effects &dagger;',
+                 'inst': 'instruments &sect;',
+                 'mac': 'macOS',
+                 'win': 'Windows'};
 
    // Header
    let hdr = TR('header', table);
@@ -172,9 +172,9 @@
      colh.onclick = () => {
        // Toggle its presence in the list.
        if (hasKey(c)) {
-	 keys = keys.filter(k => k !== c);
+         keys = keys.filter(k => k !== c);
        } else {
-	 keys.push(c);
+         keys.push(c);
        }
        console.log(keys);
        window.location.hash = keys.join(',');
@@ -203,11 +203,11 @@
        if (host.free != null) TEXT(' ' + FREE, hosttd);
 
        for (let c in cols) {
-	 if (host[c] == null) {
-	   TD('', row).innerHTML = '&nbsp;'
-	 } else {
-	   TD('', row).innerHTML = host[c];
-	 }
+         if (host[c] == null) {
+           TD('', row).innerHTML = '&nbsp;'
+         } else {
+           TD('', row).innerHTML = host[c];
+         }
        }
        even = !even;
      }
