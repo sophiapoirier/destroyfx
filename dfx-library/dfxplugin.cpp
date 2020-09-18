@@ -207,6 +207,8 @@ DfxPlugin::DfxPlugin(
 
 	TARGET_API_BASE_CLASS::setProgram(0);  // set the current preset number to 0
 
+	noTail(true);  // until the plugin declares otherwise
+
 	// check to see if the host supports sending tempo and time information to VST plugins
 	// Note that the VST2 SDK (probably erroneously) wants a non-const string here,
 	// so we don't pass a string literal.
@@ -1592,6 +1594,9 @@ void DfxPlugin::postupdate_tailsize()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	PropertyChanged(kAudioUnitProperty_TailTime, kAudioUnitScope_Global, AudioUnitElement(0));
+#endif
+#ifdef TARGET_API_VST
+	noTail(gettailsize_samples() <= 0);
 #endif
 }
 
