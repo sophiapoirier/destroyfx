@@ -147,7 +147,9 @@
      TEXT(plug.name, H2('', box));
 
      for (let v of plug.v) {
-       TEXT(v.vnum + ' (' + v.date + ')', H3('', box));
+       let news = A('', H3('', box));
+       news.href = 'news.html#' + v.date;
+       TEXT(v.vnum + ' (' + v.date + ')', news);
        let ul = UL('', box);
        for (let os of ['win', 'osx', 'mac', 'src']) {
          if (v[os]) {
