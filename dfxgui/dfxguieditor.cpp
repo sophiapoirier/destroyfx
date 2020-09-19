@@ -1426,119 +1426,116 @@ void DfxGuiEditor::LoadPresetFile()
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::SavePresetFile()
 {
-	if (getFrame())
+	constexpr char const* const errorTitle = "failed to save preset file:\n";
+	try
 	{
-		constexpr char const* const errorTitle = "failed to save preset file:\n";
-		try
-		{
 #ifdef TARGET_API_AUDIOUNIT
-			mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
-																	DGDialog::kButtons_OKCancelOther, 
-																	"Save", nullptr, "Choose custom location...");
-			Require(mTextEntryDialog, "could not create save preset dialog");
-			if (auto const button = mTextEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
+		mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("Save preset file", "save as:", 
+																DGDialog::kButtons_OKCancelOther, 
+																"Save", nullptr, "Choose custom location...");
+		Require(mTextEntryDialog, "could not create save preset dialog");
+		if (auto const button = mTextEntryDialog->getButton(DGDialog::Selection::kSelection_Other))
+		{
+			constexpr char const* const helpText = "choose a specific location in which to save rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
+			button->setTooltipText(helpText);
+		}
+		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		{
+			try
 			{
-				constexpr char const* const helpText = "choose a specific location in which to save rather than the standard location (note:  this means that your presets will not be easily accessible in other host applications)";
-				button->setTooltipText(helpText);
+				auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
+				assert(textEntryDialog);
+				switch (inSelection)
+				{
+					case DGDialog::kSelection_OK:
+					{
+						if (textEntryDialog->getText().empty())
+						{
+							return false;
+						}
+						dfx::UniqueCFType const cfText = CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8);
+						Require(cfText.get(), "could not create platform representation of text input");
+						auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+						assert(pluginBundle);
+						auto const status = SaveAUStateToPresetFile_Bundle(dfxgui_GetEffectInstance(), cfText.get(), nullptr, true, pluginBundle);
+						if (status == userCanceledErr)
+						{
+							return false;
+						}
+						Require(status == noErr, ("error code " + std::to_string(status)).c_str());
+						return true;
+					}
+					case DGDialog::kSelection_Other:
+					{
+						VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
+						Require(fileSelector, "could not create save file dialog");
+						fileSelector->setTitle("Save");
+						fileSelector->setDefaultExtension(kDfxGui_AUPresetFileExtension);
+						if (!textEntryDialog->getText().empty())
+						{
+							fileSelector->setDefaultSaveName(textEntryDialog->getText());
+						}
+						fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
+						{
+							if (auto const filePath = inFileSelector->getSelectedFile(0))
+							{
+								try
+								{
+									dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+									Require(fileURL.get(), "could not create platform representation of preset file location");
+									auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+									assert(pluginBundle);
+									auto const status = CustomSaveAUPresetFile_Bundle(dfxgui_GetEffectInstance(), fileURL.get(), false, pluginBundle);
+									Require((status == noErr) || (status == userCanceledErr), 
+											("error code " + std::to_string(status)).c_str());
+								}
+								catch (std::exception const& e)
+								{
+									auto const message = std::string(errorTitle) + e.what();
+									ShowMessage(message);
+								}
+							}
+						});
+						return true;
+					}
+					default:
+						break;
+				}
 			}
-			auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+			catch (std::exception const& e)
+			{
+				mPendingErrorMessage = std::string(errorTitle) + e.what();
+			}
+			return true;
+		};
+		auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
+		Require(success, "could not display save preset dialog");
+#endif
+#ifdef TARGET_API_VST
+		VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
+		Require(fileSelector, "could not create save file dialog");
+		fileSelector->setTitle("Save");
+		fileSelector->setDefaultExtension(kDfxGui_VSTProgramFileExtension);
+		fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
+		{
+			if (auto const filePath = inFileSelector->getSelectedFile(0))
 			{
 				try
 				{
-					auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
-					assert(textEntryDialog);
-					switch (inSelection)
-					{
-						case DGDialog::kSelection_OK:
-						{
-							if (textEntryDialog->getText().empty())
-							{
-								return false;
-							}
-							dfx::UniqueCFType const cfText = CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8);
-							Require(cfText.get(), "could not create platform representation of text input");
-							auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-							assert(pluginBundle);
-							auto const status = SaveAUStateToPresetFile_Bundle(dfxgui_GetEffectInstance(), cfText.get(), nullptr, true, pluginBundle);
-							if (status == userCanceledErr)
-							{
-								return false;
-							}
-							Require(status == noErr, ("error code " + std::to_string(status)).c_str());
-							return true;
-						}
-						case DGDialog::kSelection_Other:
-						{
-							VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
-							Require(fileSelector, "could not create save file dialog");
-							fileSelector->setTitle("Save");
-							fileSelector->setDefaultExtension(kDfxGui_AUPresetFileExtension);
-							if (!textEntryDialog->getText().empty())
-							{
-								fileSelector->setDefaultSaveName(textEntryDialog->getText());
-							}
-							fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
-							{
-								if (auto const filePath = inFileSelector->getSelectedFile(0))
-								{
-									try
-									{
-										dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
-										Require(fileURL.get(), "could not create platform representation of preset file location");
-										auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
-										assert(pluginBundle);
-										auto const status = CustomSaveAUPresetFile_Bundle(dfxgui_GetEffectInstance(), fileURL.get(), false, pluginBundle);
-										Require((status == noErr) || (status == userCanceledErr), 
-												("error code " + std::to_string(status)).c_str());
-									}
-									catch (std::exception const& e)
-									{
-										auto const message = std::string(errorTitle) + e.what();
-										ShowMessage(message);
-									}
-								}
-							});
-							return true;
-						}
-						default:
-							break;
-					}
+					SaveVSTStateToProgramFile(filePath);
 				}
 				catch (std::exception const& e)
 				{
-					mPendingErrorMessage = std::string(errorTitle) + e.what();
+					auto const message = std::string(errorTitle) + e.what();
+					ShowMessage(message);
 				}
-				return true;
-			};
-			auto const success = mTextEntryDialog->runModal(getFrame(), textEntryCallback);
-			Require(success, "could not display save preset dialog");
+			}
+		});
 #endif
-#ifdef TARGET_API_VST
-			VSTGUI::SharedPointer<VSTGUI::CNewFileSelector> fileSelector(VSTGUI::CNewFileSelector::create(getFrame(), VSTGUI::CNewFileSelector::kSelectSaveFile), false);
-			Require(fileSelector, "could not create save file dialog");
-			fileSelector->setTitle("Save");
-			fileSelector->setDefaultExtension(kDfxGui_VSTProgramFileExtension);
-			fileSelector->run([this](VSTGUI::CNewFileSelector* inFileSelector)
-			{
-				if (auto const filePath = inFileSelector->getSelectedFile(0))
-				{
-					try
-					{
-						SaveVSTStateToProgramFile(filePath);
-					}
-					catch (std::exception const& e)
-					{
-						auto const message = std::string(errorTitle) + e.what();
-						ShowMessage(message);
-					}
-				}
-			});
-#endif
-		}
-		catch (std::exception const& e)
-		{
-			ShowMessage(e.what());
-		}
+	}
+	catch (std::exception const& e)
+	{
+		ShowMessage(e.what());
 	}
 }
 
@@ -1636,7 +1633,7 @@ dfx::ParameterAssignment DfxGuiEditor::getparametermidiassignment(long inParamet
 																  inParameterIndex);
 	if (opt.has_value())
 	{
-		return opt.value();
+		return *opt;
 	}
 
 	dfx::ParameterAssignment none;
@@ -1844,7 +1841,6 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	resultMenu.addSeparator();
 	DFX_AppendCommandItemToMenu(resultMenu, "Reset all parameter values to default", 
 								std::bind(&DfxGuiEditor::setparameters_default, this, true));
-//	DFX_AppendCommandItemToMenu(resultMenu, true ? "Undo" : "Redo", std::bind());  // TODO: implement
 	DFX_AppendCommandItemToMenu(resultMenu, "Randomize all parameter values", 
 								std::bind(&DfxGuiEditor::randomizeparameters, this, true));  // XXX yes to writing automation data?
 	DFX_AppendCommandItemToMenu(resultMenu, "Generate parameter automation snapshot", 
@@ -1904,7 +1900,6 @@ VSTGUI::SharedPointer<VSTGUI::COptionMenu> DfxGuiEditor::createParameterContextu
 								std::bind(&DfxGuiEditor::setparameter_default, this, inParameterID, true));
 	DFX_AppendCommandItemToMenu(*resultMenu, "Type in a value...", 
 								std::bind(&DfxGuiEditor::TextEntryForParameterValue, this, inParameterID));
-//	DFX_AppendCommandItemToMenu(*resultMenu, true ? "Undo" : "Redo", std::bind());  // TODO: implement
 	DFX_AppendCommandItemToMenu(*resultMenu, "Randomize value", 
 								std::bind(&DfxGuiEditor::randomizeparameter, this, inParameterID, true));  // XXX yes to writing automation data?
 	DFX_AppendCommandItemToMenu(*resultMenu, "Generate parameter automation snapshot", 
@@ -2041,6 +2036,11 @@ long DfxGuiEditor::copySettings()
 	if (getEffect()->getAeffect()->flags & effFlagsProgramChunks)
 	{
 		vstSettingsDataSize = getEffect()->getChunk(&vstSettingsData, kDfxGui_CopySettingsIsPreset);
+		assert(vstSettingsDataSize > 0);
+		if (vstSettingsDataSize <= 0)
+		{
+			return dfx::kStatus_CannotDoInCurrentContext;
+		}
 	}
 	else
 	{
@@ -2055,11 +2055,6 @@ long DfxGuiEditor::copySettings()
 		}
 		vstSettingsData = parameterValues.data();
 		vstSettingsDataSize = parameterValues.size() * sizeof(parameterValues[0]);
-	}
-	assert(vstSettingsDataSize > 0);
-	if (vstSettingsDataSize <= 0)
-	{
-		return dfx::kStatus_CannotDoInCurrentContext;
 	}
 
 	#if TARGET_OS_MAC
