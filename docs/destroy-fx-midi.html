@@ -141,6 +141,7 @@ Right now
 <a href="http://plogue.com/">Plogue Bidule</a>, 
 <a href="http://www.steinberg.de/">Cubase</a>, 
 <a href="http://www.steinberg.de/">Nuendo</a>, 
+<a href="http://reaper.fm/">REAPER</a>, 
 <a href="http://www.five12.com/">Numerology</a>, 
 <a href="http://www.audiomulch.com/">AudioMulch</a>, 
 <a href="http://www.image-line.com/">FL Studio</a> 
@@ -156,11 +157,15 @@ In <a href="http://www.steinberg.de/">Cubase</a> and <a href="http://www.steinbe
 </p>
 
 <p class="desc">
-In <a href="http://www.ableton.com/">Ableton Live</a>, insert the plugin as an effect.  Then choose or create a MIDI track, and then open the &quot;MIDI To&quot; menu on the MIDI track and select the track where the effect was inserted.  Then, if there is more than one MIDI-enabled effect inserted on that first track, you can choose to which specific effect you want the MIDI to go from another pop-up menu below the &quot;MIDI To&quot; selection, but otherwise that menu selection will be disabled.
+In <a href="http://www.ableton.com/">Ableton Live</a>, insert the plugin as an effect.  Then choose or create a MIDI track, and then open the &quot;Output&quot; menu on the MIDI track and select the audio track where the effect was inserted.  Then, if there is more than one MIDI-enabled effect inserted on that first track, you can choose to which specific effect you want the MIDI to go from another pop-up menu below the &quot;Output&quot; selection, but otherwise that menu will be disabled.
 </p>
 
 <p class="desc">
 In <a href="http://www.cycling74.com/">Max</a>, all you have to do is send the the audiounit~ or vst~ object midievent messages in the left inlet just like you would for an instrument plugin.  But unlike instruments, be sure to feed audio into the inlets as well.  Also be sure to activate your dac~ before sending any midievent messages, otherwise the messages will be ignored (this is the case with all MIDI-enabled VST plugins in Max).
+</p>
+
+<p class="desc">
+In <a href="http://reaper.fm/">REAPER</a>, create two tracks: one for audio and one for MIDI.  On the audio track, insert the plugin as an effect.  Then press the &quot;Route&quot; button on the audio track to open its &quot;Routing&quot; settings window (if you do not see the &quot;Route&quot; button, enable &quot;Routing Matrix&quot; from the application View menu).  In the &quot;Receives&quot; section of the new window, open the &quot;Add new receive...&quot; pop-up menu and select the MIDI track.  In the new &quot;Receive&quot; section added, set &quot;Audio:&quot; to &quot;None&quot; &quot;MIDI:&quot; to &quot;All&quot; or whichever specific MIDI channel you wish to route to the effect plugin.  Now MIDI from the MIDI track will be routed to the effect plugin on the audio track.
 </p>
 
 <p class="desc">
