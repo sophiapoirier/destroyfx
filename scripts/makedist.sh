@@ -52,7 +52,7 @@ echo
 echo "   creating output file  "$OUTPUTFILE_FULLNAME
 #gnutar -cv -f "${OUTPUTFILE}".tar *
 #gzip --best "${OUTPUTFILE}".tar
-hdiutil create -ov -srcfolder "${TEMPDIR}" -volname "dfx ${PLUGINNAME}" -uid 99 -gid 99 -format UDZO -imagekey zlib-level=9 "${OUTPUTFILE}"
+hdiutil create -ov -srcfolder "${TEMPDIR}" -volname "dfx ${PLUGINNAME}" -uid 99 -gid 99 -format UDBZ -imagekey zlib-level=9 "${OUTPUTFILE}"
 
 
 cd "${ENTRYDIR}"
