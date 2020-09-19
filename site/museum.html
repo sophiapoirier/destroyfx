@@ -108,10 +108,16 @@
  ];
 
  const blocktest = [
+   Version("1.0.1", "2002-02-13", "blocktest-1.0.1-win.zip", "blocktest-1.0.1-carbon.sit", "blocktest-1.0.1-mac.sit", "blocktest-1.0.1-source.sit"),
    Version("1.0", "2001-11-19", "blocktest-1.0-win.zip", "blocktest-1.0-carbon.sit", "blocktest-1.0-mac.sit", "blocktest-1.0-source.sit")
  ];
 
+ const vstguitester = [
+   Version("1.0", "2001-11-19", null, null, "vstguitester-1.0-mac.sit", "vstguitester-1.0-patch.sit")
+ ];
+
  const vstmidi = [
+   Version("1.1.1", "2001-10-06", null, null, "vstmidi-1.1.1-mac.sit", "vstmidi-1.1.1-patch.sit"),
    Version("1.1", "2001-09-20", null, null, "vstmidi-1.1-mac.sit", "vstmidi-1.1-patch.sit")
  ];
 
@@ -126,6 +132,7 @@
    {name: 'EQ Sync', v: eqsync},
    {name: 'Polarizer', v: polarizer},
    {name: 'block test', v: blocktest},
+   {name: 'VST GUI Tester', v: vstguitester},
    {name: 'VST MIDI', v: vstmidi}
  ];
 
@@ -140,7 +147,9 @@
      TEXT(plug.name, H2('', box));
 
      for (let v of plug.v) {
-       TEXT(v.vnum + ' (' + v.date + ')', H3('', box));
+       let news = A('', H3('', box));
+       news.href = 'news.html#' + v.date;
+       TEXT(v.vnum + ' (' + v.date + ')', news);
        let ul = UL('', box);
        for (let os of ['win', 'osx', 'mac', 'src']) {
          if (v[os]) {
