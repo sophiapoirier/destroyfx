@@ -28,6 +28,7 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 #include "dfxplugin.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "CEffectTypeAS.h"
 #include "CEffectTypeRTAS.h"
@@ -472,8 +473,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
 				// (re)allocate the zero audio buffer if it is not currently large enough for this rendering slice
 				if (static_cast<long>(mZeroAudioBuffer.size()) < totalInputSamples)
 				{
-					mZeroAudioBuffer.resize(totalInputSamples);
-					std::fill(mZeroAudioBuffer.begin(), mZeroAudioBuffer.end(), 0.0f);
+					mZeroAudioBuffer.assign(totalInputSamples, 0.0f);
 				}
 				mInputAudioStreams_as[ch] = mZeroAudioBuffer.data();
 			}
@@ -507,45 +507,58 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 {
 	preprocessaudio();
 
-	SInt32 channel;
-	long samp;
-
 	// RTAS clip monitoring
-	for (channel = 0; (channel < GetNumInputs()) && !fClipped; channel++)
+	for (SInt32 channel = 0; (channel < GetNumInputs()) && !fClipped; channel++)
 	{
-		if (inAudioStreams[channel] == NULL)	// XXX possible in AudioSuite
-			continue;
-		for (samp = 0; samp < inNumFramesToProcess; samp++)
+		mInputAudioStreams[[channel]] = nullptr;
+		if (!inAudioStreams[channel])	// XXX possible in AudioSuite
 		{
-			if (fabsf(inAudioStreams[channel][samp]) > 1.0f)
+			continue;
+		}
+		for (long samp = 0; (samp < inNumFramesToProcess) && !fClipped; samp++)
+		{
+			if (std::fabs(inAudioStreams[channel][samp]) > 1.0f)
 			{
 				fClipped = true;
 				break;
 			}
 		}
-	}
-
-	for (channel = 0; channel < GetNumOutputs(); channel++)
-	{
-		if ((inAudioStreams[channel] == NULL) || (outAudioStreams[channel] == NULL))  // XXX possible in AudioSuite
-			continue;
-		if (mMasterBypass_rtas)
+		if (mInPlaceAudioProcessingAllowed)
 		{
-			SInt32 inputChannelIndex = (GetNumInputs() < GetNumOutputs()) ? (GetNumInputs() - 1) : channel;
-			for (samp = 0; samp < inNumFramesToProcess; samp++)
-				outAudioStreams[channel][samp] = inAudioStreams[inputChannelIndex][samp];
+			mInputAudioStreams[channel] = inAudioStreams[channel];
 		}
 		else
 		{
+			std::copy_n(inAudioStreams[channel], dfx::math::ToIndex(inNumFramesToProcess), mInputOutOfPlaceAudioBuffers[channel].data());
+		}
+	}
+
+	for (SInt32 channel = 0; channel < GetNumOutputs(); channel++)
+	{
+		if (!inAudioStreams[channel] || !outAudioStreams[channel])  // XXX possible in AudioSuite
+		{
+			continue;
+		}
+		if (mMasterBypass_rtas)
+		{
+			SInt32 const inputChannelIndex = (GetNumInputs() < GetNumOutputs()) ? (GetNumInputs() - 1) : channel;
+			std::copy_n(mInputAudioStreams[inputChannelIndex], dfx::math::ToIndex(inNumFramesToProcess), outAudioStreams[channel]);
+		}
+		else
+		{
+			if (!mInPlaceAudioProcessingAllowed)
+			{
+				std::fill_n(outAudioStreams[channel], dfx::math::ToIndex(inNumFramesToProcess), 0.0f);
+			}
 #if TARGET_PLUGIN_USES_DSPCORE
 			if (mDSPCores[channel])
 			{
-				auto inputAudio = inAudioStreams[channel];
+				auto inputAudio = mInputAudioStreams[channel];
 				if (asymmetricalchannels())
 				{
 					if (channel == 0)
 					{
-						std::copy_n(inAudioStreams[channel], sampleFrames, mAsymmetricalInputAudioBuffer.data());
+						std::copy_n(mInputAudioStreams[channel], sampleFrames, mAsymmetricalInputAudioBuffer.data());
 					}
 					inputAudio = mAsymmetricalInputAudioBuffer.data();
 				}
@@ -556,17 +569,21 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 	}
 #if !TARGET_PLUGIN_USES_DSPCORE
 	if (!mMasterBypass_rtas)
-		processaudio(const_cast<float const* const*>(inAudioStreams), const_cast<float* const*>(outAudioStreams), (unsigned)inNumFramesToProcess);
+	{
+		processaudio(const_cast<float const* const*>(mInputAudioStreams.data()), const_cast<float* const*>(outAudioStreams), (unsigned)inNumFramesToProcess);
+	}
 #endif
 
 	// RTAS clip monitoring
-	for (channel = 0; (channel < GetNumOutputs()) && !fClipped; channel++)
+	for (SInt32 channel = 0; (channel < GetNumOutputs()) && !fClipped; channel++)
 	{
 		if (outAudioStreams[channel] == NULL)  // XXX possible in AudioSuite
-			continue;
-		for (samp = 0; samp < inNumFramesToProcess; samp++)
 		{
-			if (fabsf(outAudioStreams[channel][samp]) > 1.0f)
+			continue;
+		}
+		for (long samp = 0; samp < inNumFramesToProcess; samp++)
+		{
+			if (std::fabs(outAudioStreams[channel][samp]) > 1.0f)
 			{
 				fClipped = true;
 				break;

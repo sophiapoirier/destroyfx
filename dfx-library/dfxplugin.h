@@ -605,7 +605,13 @@ public:
 	double gettailsize_seconds() const;
 	void postupdate_tailsize();
 
-	void setAudioProcessingMustAccumulate(bool inMode);
+	// It is expected that most effects will support audio processing in-place 
+	// (meaning that the input audio buffers could be shared as the output, and 
+	// the effect is therefore expected to replace the contents with its output). 
+	// This is the default, but you can use this method to disallow that mode, 
+	// thereby requiring internal buffering to hold a copy of the host-provided 
+	// input audio distinct from the state of the host-provided output buffer.
+	void setInPlaceAudioProcessingAllowed(bool inEnable);
 
 	std::string getpluginname() const;
 	long getpluginversion() const;
@@ -829,6 +835,12 @@ private:
 	UInt32 mSupportedLogicNodeOperationMode = kLogicAUNodeOperationMode_FullSupport;
 	UInt32 mCurrentLogicNodeOperationMode = 0;
 	#endif
+#else
+	// per-channel intermediate audio buffer for duplicating the input audio 
+	// when a plugin requires summing into the output buffer, but the host might be 
+	// processing audio in-place, meaning that the input and output buffers are shared
+	std::vector<std::vector<float>> mInputOutOfPlaceAudioBuffers;
+	std::vector<float const*> mInputAudioStreams;
 #endif
 
 #ifdef TARGET_API_VST
@@ -845,7 +857,7 @@ private:
 	std::atomic_flag mLatencyChangeHasPosted;
 	std::variant<long, double> mTailSize {0l};
 	std::atomic_flag mTailSizeChangeHasPosted;
-	bool mAudioProcessingAccumulatingOnly = false;
+	bool mInPlaceAudioProcessingAllowed = true;
 	bool mAudioIsRendering = false;
 	std::vector<std::pair<dfx::ISmoothedValue*, DfxPluginCore*>> mSmoothedAudioValues;
 	bool mIsFirstRenderSinceReset = false;

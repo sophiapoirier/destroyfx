@@ -48,7 +48,7 @@ MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	setpresetname(0, "push the button");  // default preset name
 
-	setAudioProcessingMustAccumulate(true);  // only support accumulating output
+	setInPlaceAudioProcessingAllowed(false);
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
 	getmidistate().setEnvCurveType(DfxEnvelope::kCurveType_Cubed);
 
