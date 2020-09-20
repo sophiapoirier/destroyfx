@@ -4,3 +4,4 @@
 # some shell utilities in tom's directory that don't
 # need to be checked in, but git keeps bugging me about them
 /find.sh
+recompress-pngs.sh
