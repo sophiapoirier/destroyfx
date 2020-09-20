@@ -30,9 +30,9 @@ p.footer { font-size: smaller ; text-align: center }
 
 a { text-decoration: none ; font-weight: bold }
 a:link { color: #750927 }
-a:hover { color: #B00939 }
+a:hover { color: #b00939 }
 a:visited { color: #753027 }
-a:active { color: #DD4444 }
+a:active { color: #d44 }
 
 table.mainbox
 {
@@ -42,4 +42,10 @@ table.mainbox
 	border-color: black ;
 	border-style: solid ;
 	border-spacing: 0.7em ;
+}
+
+img.centered {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
 }
