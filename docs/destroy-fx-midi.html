@@ -1,10 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE html 
-	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-
+<!doctype html>
 <head>
 <title>Destroy FX MIDI</title>
 <link rel="Stylesheet" type="text/css" href="dfx-docs.css" />
@@ -82,7 +76,7 @@ In particular 123 (7B) is special.  It is the "all notes off" command, and we do
 </p>
 
 <p class="desc">
-I don't know about all of the sequencers out there, but Logic resets CC 1 (mod wheel), CC 64 (sustain pedal), and CC 123 (all notes off) to 0 when stopping and starting the sequencer, so be careful with those.  Also, Logic uses CC 7 for volume and CC 10 for pan.  It intercepts CC 7 and 10 messages and does not pass them along to plugins.
+We don't know about all of the sequencers out there, but Logic resets CC 1 (mod wheel), CC 64 (sustain pedal), and CC 123 (all notes off) to 0 when stopping and starting the sequencer, so be careful with those.  Also, Logic uses CC 7 for volume and CC 10 for pan.  It intercepts CC 7 and 10 messages and does not pass them along to plugins.
 </p>
 
 <p class="desc">
@@ -153,8 +147,24 @@ In <a href="http://www.apple.com/logic-pro/">Logic</a>, the way to make a Destro
 </p>
 
 <p class="desc">
-In <a href="http://www.steinberg.de/">Cubase</a> and <a href="http://www.steinberg.de/">Nuendo</a>, the way to make a Destroy FX plugin work with MIDI is to first insert it as an effect.  In Cubase and Nuendo, you must also &quot;activate&quot; it before doing anything else.  Now it will be included as a MIDI device/destination in the app's MIDI output devices list.  In the output device menu for the MIDI tracks, you will now see the plugin's name listed as an available option.  Select the plugin as the output device for one of your MIDI tracks and now that MIDI track's output will be fed into the plugin and allow you to send MIDI to the effect.  You can either do that with a prearranged MIDI track or live with a MIDI device when that particular MIDI track is selected.
+  In <a href="https://www.bandlab.com/products/cakewalk">Cakewalk</a>, <a href="http://www.steinberg.de/">Cubase</a>, and <a href="http://www.steinberg.de/">Nuendo</a>, the way to make a Destroy FX plugin work with MIDI is to first insert it as an effect.  In Cubase and Nuendo, you must also &quot;activate&quot; it before doing anything else.  Now it will be included as a MIDI device/destination in the app's MIDI output devices list.  In the output device menu for the MIDI tracks, you will now see the plugin's name listed as an available option.  Select the plugin as the output device for one of your MIDI tracks and now that MIDI track's output will be fed into the plugin and allow you to send MIDI to the effect.  You can either do that with a prearranged MIDI track or live with a MIDI device when that particular MIDI track is selected.
 </p>
+
+<p class="desc" style="margin-top:2em">
+  Using <b>Cakewalk</b> as an example, here we have the <b>affected audio track</b> (1) and the <b>midi control track</b> (2). Add a plugin like Rez Synth to the audio track, like you'd add a normal audio effect:</p>
+<img class="center" src="http://destroyfx.org/docs/cakewalk1.png">
+
+
+<p class="desc" style="margin-top:2em">In this host, the setting to enable the plugin for MIDI input is hidden in the "VST2" menu:</p>
+<img class="center" src="http://destroyfx.org/docs/cakewalk2.png">
+
+<p class="desc" style="margin-top:2em">
+Now the plugin instance (here, "Rez Synth 1") is available as an output for all MIDI tracks. Set this as the MIDI output for track 2, the <b>midi control track</b>:</p>
+<img class="center" src="http://destroyfx.org/docs/cakewalk3.png">
+
+<p class="desc">The sound output will be from the plugin instance on track 1, the audio track. Track 2 will not output sound directly.</p>
+
+<br/>
 
 <p class="desc">
 In <a href="http://www.ableton.com/">Ableton Live</a>, insert the plugin as an effect.  Then choose or create a MIDI track, and then open the &quot;Output&quot; menu on the MIDI track and select the audio track where the effect was inserted.  Then, if there is more than one MIDI-enabled effect inserted on that first track, you can choose to which specific effect you want the MIDI to go from another pop-up menu below the &quot;Output&quot; selection, but otherwise that menu will be disabled.
@@ -177,7 +187,7 @@ In <a href="http://www.five12.com/">Numerology</a>, make sure that you have some
 </p>
 
 <p class="desc">
-I am told that <a href="http://www.audiomulch.com/">AudioMulch</a> and <a href="http://www.image-line.com/">FL Studio</a> know how to send MIDI to plugins as well, but we have never tried them and therefore can't tell you how to set up our plugins in those applications.
+We are told that <a href="http://www.audiomulch.com/">AudioMulch</a> and <a href="http://www.image-line.com/">FL Studio</a> know how to send MIDI to plugins as well, but we have never tried them and therefore can't tell you how to set up our plugins in those applications.
 </p>
 
 <br />
