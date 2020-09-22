@@ -1,25 +1,25 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Geometer.
+This file is part of BrokenFFT.
 
-Geometer is free software:  you can redistribute it and/or modify 
+BrokenFFT is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
+BrokenFFT is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+along with BrokenFFT.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#include "geometerview.h"
+#include "brokenfftview.h"
 
 #include <cassert>
 #include <cmath>
@@ -29,11 +29,10 @@ constexpr auto coldwave = VSTGUI::MakeCColor(75, 151, 71);
 constexpr auto cnewwave = VSTGUI::MakeCColor(240, 255, 160);
 constexpr auto cpointoutside = VSTGUI::MakeCColor(0, 0, 0);
 constexpr auto cpointinside = VSTGUI::MakeCColor(220, 100, 200);
-//constexpr auto cbackground = VSTGUI::MakeCColor(17, 25, 16);
 constexpr auto cbackground = VSTGUI::MakeCColor(20, 50, 20);
 constexpr auto zeroline = VSTGUI::MakeCColor(52, 71, 49);
 
-GeometerView::GeometerView(VSTGUI::CRect const & size)
+BrokenFFTView::BrokenFFTView(VSTGUI::CRect const & size)
   : VSTGUI::CView(size) {
 
   setWantsIdle(true);
@@ -41,7 +40,7 @@ GeometerView::GeometerView(VSTGUI::CRect const & size)
 
 
  
-bool GeometerView::attached(VSTGUI::CView * parent) {
+bool BrokenFFTView::attached(VSTGUI::CView * parent) {
 
   auto const success = VSTGUI::CView::attached(parent);
 
@@ -56,7 +55,7 @@ bool GeometerView::attached(VSTGUI::CView * parent) {
 }
 
 
-void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
+void BrokenFFTView::draw(VSTGUI::CDrawContext * ctx) {
 
   assert(offc);
 
@@ -113,7 +112,7 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
 }
 
 
-void GeometerView::onIdle() {
+void BrokenFFTView::onIdle() {
 
   /* XXX reevaluate when I should do this. */
   /* maybe I don't need to do this every frame... */
@@ -127,8 +126,8 @@ void GeometerView::onIdle() {
 
 /* XXX use memcpy where applicable. */
 /* XXX don't bother running processw unless the input data have changed. */
-void GeometerView::reflect() {
-  /* when idle, copy points out of Geometer */
+void BrokenFFTView::reflect() {
+  /* when idle, copy points out of BrokenFFT */
 
   assert(editor);
   size_t dataSize = sizeof(data);

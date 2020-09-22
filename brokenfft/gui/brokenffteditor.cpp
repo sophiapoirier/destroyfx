@@ -1,33 +1,33 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Geometer.
+This file is part of BrokenFFT.
 
-Geometer is free software:  you can redistribute it and/or modify 
+BrokenFFT is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
+BrokenFFT is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+along with BrokenFFT.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#include "geometereditor.h"
+#include "brokenffteditor.h"
 
 #include <algorithm>
 #include <cassert>
 #include <sstream>
 
-#include "geometer-base.h"
-#include "geometerhelp.h"
-#include "geometerview.h"
+#include "brokenfft-base.h"
+#include "brokenffthelp.h"
+#include "brokenfftview.h"
 
 
 constexpr size_t NUM_SLIDERS = 5;
@@ -103,10 +103,10 @@ enum {
   pos_destroyfxlinkX = 395,
   pos_destroyfxlinkY = 500,
 
-  pos_geometerviewx = 20,
-  pos_geometerviewy = 14,
-  pos_geometervieww = GeometerViewData::samples,
-  pos_geometerviewh = 133
+  pos_brokenfftviewx = 20,
+  pos_brokenfftviewy = 14,
+  pos_brokenfftvieww = BrokenFFTViewData::samples,
+  pos_brokenfftviewh = 133
 };
 
 
@@ -114,7 +114,7 @@ enum {
 #pragma mark -
 
 //--------------------------------------------------------------------------
-GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
+BrokenFFTHelpBox::BrokenFFTHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
   : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
 			dfx::kFontSize_SnootPixel10, DGColor::kBlack, dfx::kFontName_SnootPixel10), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
@@ -122,7 +122,7 @@ GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & in
 }
 
 //--------------------------------------------------------------------------
-void GeometerHelpBox::draw(VSTGUI::CDrawContext * inContext) {
+void BrokenFFTHelpBox::draw(VSTGUI::CDrawContext * inContext) {
 
   if (itemNum < 0)
     return;
@@ -176,7 +176,7 @@ void GeometerHelpBox::draw(VSTGUI::CDrawContext * inContext) {
 }
 
 //--------------------------------------------------------------------------
-void GeometerHelpBox::setDisplayItem(int inHelpCategory, int inItemNum) {
+void BrokenFFTHelpBox::setDisplayItem(int inHelpCategory, int inItemNum) {
 
   bool const changed = ((helpCategory != inHelpCategory) || (itemNum != inItemNum));
 
@@ -195,10 +195,10 @@ void GeometerHelpBox::setDisplayItem(int inHelpCategory, int inItemNum) {
 #pragma mark -
 
 //-----------------------------------------------------------------------------
-DFX_EDITOR_ENTRY(GeometerEditor)
+DFX_EDITOR_ENTRY(BrokenFFTEditor)
 
 //-----------------------------------------------------------------------------
-GeometerEditor::GeometerEditor(DGEditorListenerInstance inInstance)
+BrokenFFTEditor::BrokenFFTEditor(DGEditorListenerInstance inInstance)
  : DfxGuiEditor(inInstance),
    sliders(NUM_SLIDERS, nullptr),
    displays(NUM_SLIDERS, nullptr),
@@ -213,7 +213,7 @@ GeometerEditor::GeometerEditor(DGEditorListenerInstance inInstance)
 }
 
 //-----------------------------------------------------------------------------
-long GeometerEditor::OpenEditor() {
+long BrokenFFTEditor::OpenEditor() {
 
   /* ---load some images--- */
   // slider and fine tune controls
@@ -247,9 +247,9 @@ long GeometerEditor::OpenEditor() {
 
   //--initialize the options menus----------------------------------------
 
-  /* geometer view */
-  pos.set(pos_geometerviewx, pos_geometerviewy, pos_geometervieww, pos_geometerviewh);
-  getFrame()->addView(new GeometerView(pos));
+  /* brokenfft view */
+  pos.set(pos_brokenfftviewx, pos_brokenfftviewy, pos_brokenfftvieww, pos_brokenfftviewh);
+  getFrame()->addView(new BrokenFFTView(pos));
 
   // window shape menu
   pos.set(pos_windowshapemenuX, pos_windowshapemenuY, stdsize, stdsize);
@@ -343,10 +343,10 @@ long GeometerEditor::OpenEditor() {
     fineupbuttons[i] = emplaceControl<DGFineTuneButton>(this, param, fupos, g_fineupbutton, finetuneinc);
 
     // value display
-    auto const geometerDisplayProc = [](float value, char * outText, void *) -> bool {
+    auto const brokenfftDisplayProc = [](float value, char * outText, void *) -> bool {
       return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.7f", value) > 0;
     };
-    displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, geometerDisplayProc, 
+    displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, brokenfftDisplayProc, 
                                                 nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_SnootPixel10, 
                                                 fontcolor_values, dfx::kFontName_SnootPixel10);
     // units label
@@ -394,7 +394,7 @@ long GeometerEditor::OpenEditor() {
   helpicon->setValue_i(HELP_EMPTY);
 
   pos.set(pos_helpboxX, pos_helpboxY, g_helpbackground->getWidth(), g_helpbackground->getHeight());
-  helpbox = emplaceControl<GeometerHelpBox>(this, pos, g_helpbackground);
+  helpbox = emplaceControl<BrokenFFTHelpBox>(this, pos, g_helpbackground);
 
 
 
@@ -403,7 +403,7 @@ long GeometerEditor::OpenEditor() {
 
 
 //-----------------------------------------------------------------------------
-void GeometerEditor::parameterChanged(long inParameterID) {
+void BrokenFFTEditor::parameterChanged(long inParameterID) {
 
   for (size_t i=0; i < NUM_SLIDERS; i++) {
     auto const baseparam = get_base_param_for_slider(i);
@@ -442,13 +442,13 @@ void GeometerEditor::parameterChanged(long inParameterID) {
 }
 
 //-----------------------------------------------------------------------------
-void GeometerEditor::mouseovercontrolchanged(IDGControl * currentControlUnderMouse) {
+void BrokenFFTEditor::mouseovercontrolchanged(IDGControl * currentControlUnderMouse) {
 
   changehelp(currentControlUnderMouse);
 }
 
 //-----------------------------------------------------------------------------
-void GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
+void BrokenFFTEditor::changehelp(IDGControl * currentControlUnderMouse) {
 
   auto const updatehelp = [this](int category, int item, long numitems) {
     if (helpicon) {
@@ -496,7 +496,7 @@ void GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
 }
 
 //-----------------------------------------------------------------------------
-long GeometerEditor::get_base_param_for_slider(size_t sliderIndex) noexcept {
+long BrokenFFTEditor::get_base_param_for_slider(size_t sliderIndex) noexcept {
 
   switch (sliderIndex) {
     case 0:

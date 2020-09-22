@@ -1,27 +1,26 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Geometer.
+This file is part of BrokenFFT.
 
-Geometer is free software:  you can redistribute it and/or modify 
+BrokenFFT is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
+BrokenFFT is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+along with BrokenFFT.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
-
-Geometer, starring the Super Destroy FX Windowing System!
 ------------------------------------------------------------------------*/
 
-#pragma once
+#ifndef _DFX_BROKENFFT_H
+#define _DFX_BROKENFFT_H
 
 #include <array>
 #include <atomic>
@@ -29,17 +28,11 @@ Geometer, starring the Super Destroy FX Windowing System!
 
 #include "dfxmutex.h"
 #include "dfxplugin.h"
-#include "geometer-base.h"
+#include "brokenfft-base.h"
 
-/* change these for your plugins */
+// XXX maybe we should just inline these?
 #define PLUGIN PLUGIN_CLASS_NAME
-
-#if TARGET_PLUGIN_USES_DSPCORE
-  #define PLUGINCORE GeometerDSP
-#else
-  #define PLUGINCORE PLUGIN_CLASS_NAME
-#endif
-
+#define PLUGINCORE BrokenFFTDSP
 
 class PLUGIN final : public DfxPlugin {
 public:
@@ -61,15 +54,6 @@ public:
 
   void randomizeparameter(long inParameterIndex) override;
 
-#if !TARGET_PLUGIN_USES_DSPCORE
-  long initialize() override;
-  void cleanup() override;
-  void reset() override;
-
-  void processparameters() override;
-  void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
-#endif
-
   void clearwindowcache();
   void updatewindowcache(class PLUGINCORE const * geometercore);
 
@@ -82,14 +66,13 @@ private:
   /* set up the built-in presets */
   void makepresets();
 
-  GeometerViewData windowcache;
+  BrokenFFTViewData windowcache;
   /* passed to processw for window cache */
-  std::array<int, GeometerViewData::arraysize> tmpx;
-  std::array<float, GeometerViewData::arraysize> tmpy;
+  std::array<int, BrokenFFTViewData::arraysize> tmpx;
+  std::array<float, BrokenFFTViewData::arraysize> tmpy;
   dfx::SpinLock windowcachelock;
   std::atomic<uint64_t> lastwindowtimestamp {0};
   static_assert(decltype(lastwindowtimestamp)::is_always_lock_free);
-#if TARGET_PLUGIN_USES_DSPCORE
 };
 
 class PLUGINCORE final : public DfxPluginCore {
@@ -99,7 +82,6 @@ public:
   void reset() override;
   void processparameters() override;
   void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
-#endif
 
   /* several of these are needed by geometerview. */
 public:
@@ -116,13 +98,11 @@ private:
   void updatewindowsize();
   void updatewindowshape();
 
-#if TARGET_PLUGIN_USES_DSPCORE
   bool iswaveformsource() { return (GetChannelNum() == 0); }
   void clearwindowcache();
   void updatewindowcache(PLUGINCORE const * geometercore);
 
-  PLUGIN* const geometer;
-#endif
+  PLUGIN* const brokenfft;
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
@@ -146,7 +126,7 @@ private:
   int outsize = 0;
   int outstart = 0;
 
-  /* ---------- geometer stuff ----------- */
+  /* ---------- XXX geometer stuff ----------- */
 
   static int pointops(long pop, int npts, float op_param, int samps,
 		      int * px, float * py, int maxpts,
@@ -177,3 +157,5 @@ private:
 
   std::vector<float> windowenvelope;
 };
+
+#endif

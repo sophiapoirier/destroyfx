@@ -1,6 +1,6 @@
 # makefile for compiling with free mingw-x86_64 toolchain (GCC 9.2.0), 2020.
 
-default: dfx-geometer-64.dll
+default: dfx-brokenfft-64.dll
 
 # for 64 bits on windows
 CXX=x86_64-w64-mingw32-g++
@@ -13,10 +13,12 @@ DFXGUI=../../dfxgui
 # git repository is called "vstgui" and contains a toplevel directory "vstgui"
 VSTGUI=../../vstgui/vstgui
 
+# TODO: Need a whole bunch of fft objects
+
 # WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
 #  -DENABLE_TRACE=1
 DEFINES=-DWIN32=1 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32=1 -DTARGET_API_VST=1 -DVSTGUI_ENABLE_DEPRECATED_METHODS=0 -DNDEBUG=1
-INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../geometerdef.h"
+INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../brokenfftdef.h"
 CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # -mwindows to select the GUI subsystem (not console)
 # -s (strip unexported symbols) for release! 18mb DLL unstripped, 2.5mb stripped.
@@ -34,7 +36,7 @@ VSTGUI_OBJECTS=$(VSTGUI)/vstgui_win32.o $(VSTGUI)/plugin-bindings/aeffguieditor.
 
 DFXGUI_OBJECTS=$(DFXGUI)/dfxguieditor.o $(DFXGUI)/dfxgui-fontfactory.o $(DFXGUI)/dfxguitextdisplay.o $(DFXGUI)/dfxguibutton.o $(DFXGUI)/dfxguislider.o $(DFXGUI)/dfxguidialog.o $(DFXGUI)/dfxguimisc.o $(DFXGUI)/dfxguicontrol.o  
 
-OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) resources.o ../geometer.o ../gui/geometereditor.o ../gui/geometerview.o
+OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) resources.o ../brokenfft.o ../gui/brokenffteditor.o ../gui/brokenfftview.o
 
 MINGWLIB=/usr/x86_64-w64-mingw32/sys-root/mingw/lib
 
@@ -49,16 +51,16 @@ VSTGUI_DEP_OBJECTS=$(MINGWLIB)/libopengl32.a $(MINGWLIB)/libole32.a $(MINGWLIB)/
 resources.o : resources.rc ../gui/graphics/*
 	$(WINDRES) -i resources.rc -o $@
 
-dfx-geometer-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS) $(VSTGUI_DEP_OBJECTS)
+dfx-brokenfft-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS) $(VSTGUI_DEP_OBJECTS)
 	$(CXX) $(LFLAGS) -o $@ $^
 
 $(VSTGUI)/vstgui_win32.o : $(VSTGUI)/*.cpp $(VSTGUI)/lib/*.cpp $(VSTGUI)/lib/controls/*.cpp $(VSTGUI)/lib/animation/*.cpp $(VSTGUI)/lib/platform/common/*.cpp
 	$(CXX) $(CXXFLAGS) $(VSTGUI)/vstgui_win32.cpp -c -o $@
 
 # XXX just for Tom's testing
-install : dfx-geometer-64.dll
-	rm -f /d/cakewalk_bandlab/vst/dfx-geometer-64.dll
-	cp dfx-geometer-64.dll /d/cakewalk_bandlab/vst/
+install : dfx-brokenfft-64.dll
+	rm -f /d/cakewalk_bandlab/vst/dfx-brokenfft-64.dll
+	cp dfx-brokenfft-64.dll /d/cakewalk_bandlab/vst/
 
 clean :
 	rm -f $(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(OBJECTS)

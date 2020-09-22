@@ -1,49 +1,52 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2003-2020  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Geometer.
+This file is part of BrokenFFT.
 
-Geometer is free software:  you can redistribute it and/or modify 
+BrokenFFT is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 3 of the License, or 
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
+BrokenFFT is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+along with BrokenFFT.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-
-#pragma once
+#ifndef _DFX_BROKENFFT_HELP_H
+#define _DFX_BROKENFFT_HELP_H
 
 #include <array>
 
+// XXX everything is still geometer-oriented
 
-enum { HELP_EMPTY = 0,
-       HELP_WINDOWSHAPE,
-       HELP_WINDOWSIZE,
-       HELP_LANDMARKS,
-       HELP_OPS,
-       HELP_RECREATE,
-       HELP_MIDILEARN,
-       HELP_MIDIRESET,
-
-	   NUM_GEN_HELP_ITEMS
+enum {
+  HELP_EMPTY = 0,
+  HELP_WINDOWSHAPE,
+  HELP_WINDOWSIZE,
+  HELP_LANDMARKS,
+  HELP_OPS,
+  HELP_RECREATE,
+  HELP_MIDILEARN,
+  HELP_MIDIRESET,
+  
+  NUM_GEN_HELP_ITEMS,
 };
 
-enum { HELP_CATEGORY_GENERAL = 0,
-       HELP_CATEGORY_WINDOWSHAPE,
-       HELP_CATEGORY_LANDMARKS,
-       HELP_CATEGORY_OPS,
-       HELP_CATEGORY_RECREATE,
+enum {
+  HELP_CATEGORY_GENERAL = 0,
+  HELP_CATEGORY_WINDOWSHAPE,
+  HELP_CATEGORY_LANDMARKS,
+  HELP_CATEGORY_OPS,
+  HELP_CATEGORY_RECREATE,
 
-       NUM_HELP_CATEGORIES
+  NUM_HELP_CATEGORIES,
 };
 
 
@@ -52,30 +55,30 @@ constexpr std::array<char const * const, NUM_GEN_HELP_ITEMS> general_helpstrings
 {{
   "", 
   R"(window shape: adjust the fade between windows 
-Geometer processes its input in overlapping windows, and  
+BrokenFFT processes its input in overlapping windows, and  
 then fades between them.  This parameter adjusts the  
 shape of the fade between windows.  Some effects can  
 sound different with different window shapes.)", 
   R"DELIM(window size: adjust the length of processing window
-Geometer processes its input in overlapping windows, and 
+BrokenFFT processes its input in overlapping windows, and 
 then fades between them.  This parameter determines the 
-window size (in samples).  When running Geometer on live 
+window size (in samples).  When running BrokenFFT on live 
 input, smaller windows reduce latency.  Bigger windows 
 typically result in better quality.)DELIM", 
   R"(how to generate landmarks
-Geometer works by choosing "landmarks" or "points" on the 
+BrokenFFT works by choosing "landmarks" or "points" on the 
 input waveform by various methods.  Click the button to 
 the left to choose a method of point generation.  When 
 applicable, the slider below this button adjusts some 
 parameter of landmark generation.)", 
   R"(how to mess them up
-After choosing points, Geometer can mess them up by 
+After choosing points, BrokenFFT can mess them up by 
 various means.  There are three operation slots, and three 
 parameter sliders corresponding to the slots.  Click a slot 
 to change what operation is performed, or choose empty 
 to perform no operations.)", 
   R"(how to recreate the waveform
-Finally, Geometer will re-draw a new waveform using the 
+Finally, BrokenFFT will re-draw a new waveform using the 
 landmarks as a guide.  Choose between the various 
 methods here, and use the slider above the button to 
 control the parameters of the effects.)", 
@@ -215,3 +218,5 @@ Mixes around the intervals.  Best used with a large window
 size and long intervals.  When this option is selected, the 
 slider chooses how far the intervals are shuffled.)", 
 }};
+
+#endif
