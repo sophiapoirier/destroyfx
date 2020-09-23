@@ -280,8 +280,9 @@ public:
 
 	// initialize a parameter with values, value types, curve types, etc.
 	// the longest name in the array of names is assumed to be the full name, 
-	// and any additional are used to match for short name requests.
-	// recommended short lengths to support (common in control surfaces): 6, 4, 7
+	// and any additional are used to match for short name requests. The names
+	// must all be different lengths. Recommended short lengths to support
+	// (common in control surfaces): 6, 4, 7
 	void init(std::vector<std::string_view> const& inNames, ValueType inType, 
 			  Value inInitialValue, Value inDefaultValue, 
 			  Value inMinValue, Value inMaxValue, 
