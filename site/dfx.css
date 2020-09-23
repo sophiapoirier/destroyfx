@@ -58,6 +58,49 @@ div.infobox > p:last-child {
   margin-bottom: 0;
 }
 
+div.plugin img.thumb {
+  cursor: pointer;
+  width: 100px;
+  border: 0;
+  margin-bottom: 4px;
+}
+
+/* plugin icons as a flex row that wraps to multiple lines. */
+div.plugin div.downloads {
+  width: 104px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+div.downloads a {
+  display: inline-block;
+  width: 32px;
+  height: 40px;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex-grow: 1;
+}
+
+div.downloads a.mac {
+  background-image: url(x.png);
+}
+div.downloads a.win {
+  background-image: url(win32.png);
+}
+div.downloads a.oldmac {
+  background-image: url(mac.png);
+}
+div.downloads a.source {
+  background-image: url(source.png);
+  width: 64px;
+  min-height: 36px;
+}
+div.downloads a.docs {
+   background-image: url(docs.png);
+  width: 55px;
+  height: 57px;
+}
+
 /* Two-column layout for e.g. plugin */
 div.twocolumn {
   display: flex;
