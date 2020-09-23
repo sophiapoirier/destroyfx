@@ -312,6 +312,10 @@ public:
 		return (inParameterIndex >= 0) && (inParameterIndex < getnumparameters());
 	}
 
+	// Initialize parameters of double, int64, bool, or list type. (See dfxparameter.h)
+	// initNames gives different names for the parameter (not the values); each name must
+	// be a different length and could be used in different contexts (e.g. a control surface
+	// may only have room for 4 characters). The longest one is assumed to be the best name.
 	void initparameter_f(long inParameterIndex, std::vector<std::string_view> const& initNames, 
 						 double initValue, double initDefaultValue, 
 						 double initMin, double initMax, 
