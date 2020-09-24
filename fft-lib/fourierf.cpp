@@ -26,9 +26,9 @@
 
 #define CHECKPOINTER(p)  CheckPointer(p,#p)
 
-static void CheckPointer ( void *p, char *name )
+static void CheckPointer ( const void *p, const char *name )
 {
-    if ( p == NULL )
+    if ( p == nullptr )
     {
         fprintf ( stderr, "Error in fft_float():  %s == NULL\n", name );
         exit(1);

@@ -9,10 +9,6 @@
 
 ============================================================================*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
 **   fft() computes the Fourier transform or inverse transform
 **   of the complex inputs to produce the complex outputs.
@@ -56,10 +52,6 @@ unsigned ReverseBits ( unsigned index, unsigned NumBits );
 **   Multiply return value by sampling rate to get frequency expressed in Hz.
 */
 double Index_to_frequency ( unsigned NumSamples, unsigned Index );
-
-#ifdef __cplusplus
-}
-#endif
 
 
 /*--- end of file fourier.h ---*/

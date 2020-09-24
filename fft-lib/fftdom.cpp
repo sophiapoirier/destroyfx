@@ -33,7 +33,7 @@ double FindDominantFrequency (
     // Zero out amplitudes for frequencies below 20 Hz.
     int low = int ( numSamples * 20.0 / samplingRate );
     assert ( low>=0 && low<numSamples );
-    for ( i=low; i>=0; i-- )
+    for (int i=low; i>=0; i-- )
     {
         ampl[i] = 0.0;
     }
