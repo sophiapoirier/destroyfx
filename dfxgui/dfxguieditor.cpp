@@ -2021,6 +2021,7 @@ long DfxGuiEditor::copySettings()
 	{
 		return coreFoundationUnknownErr;
 	}
+	dfx::UniqueCFType const auSettingsPropertyListOwner = auSettingsPropertyList;
 
 	dfx::UniqueCFType const auSettingsCFData = CFPropertyListCreateData(kCFAllocatorDefault, auSettingsPropertyList, kCFPropertyListXMLFormat_v1_0, 0, nullptr);
 	if (!auSettingsCFData)
