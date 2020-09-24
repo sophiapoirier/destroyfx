@@ -80,7 +80,6 @@ This is our Destroy FX plugin data storage stuff
 
 #include <atomic>
 #include <cstddef>
-#include <type_traits>
 #include <vector>
 
 #include "dfxdefines.h"
@@ -110,6 +109,10 @@ public:
 		LoadButComplain,
 		CrashTheHostApplication
 	};
+
+#if TARGET_OS_MAC
+	static CFStringRef const kDfxDataClassInfoKeyString;
+#endif
 
 
 	DfxSettings(uint32_t inMagic, DfxPlugin* inPlugin, size_t inSizeofExtendedData = 0);

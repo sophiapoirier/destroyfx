@@ -58,10 +58,14 @@ To contact the author, use the contact form at http://destroyfx.org/
 #endif
 
 
-#ifdef TARGET_API_AUDIOUNIT
+#if TARGET_OS_MAC
 	#define kDfxGui_AUPresetFileUTI "com.apple.audio-unit-preset"  // XXX implemented in Mac OS X 10.4.11 or maybe a little earlier, but no public constant published yet
+	static CFStringRef const kDfxGui_SettingsPasteboardFlavorType_AU = CFSTR(kDfxGui_AUPresetFileUTI);
+#endif
+
+#ifdef TARGET_API_AUDIOUNIT
 	__attribute__((no_destroy)) static VSTGUI::CFileExtension const kDfxGui_AUPresetFileExtension("Audio Unit preset", "aupreset", "", 0, kDfxGui_AUPresetFileUTI);  // TODO: C++23 [[no_destroy]]
-	static CFStringRef const kDfxGui_SettingsPasteboardFlavorType = CFSTR(kDfxGui_AUPresetFileUTI);
+	static auto const kDfxGui_SettingsPasteboardFlavorType = kDfxGui_SettingsPasteboardFlavorType_AU;
 #endif
 
 #ifdef TARGET_API_VST
@@ -2133,7 +2137,12 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 			{
 				continue;
 			}
-			if (UTTypeConformsTo(flavorType, kDfxGui_SettingsPasteboardFlavorType))
+			[[maybe_unused]] auto const isAUSettings = UTTypeConformsTo(flavorType, kDfxGui_SettingsPasteboardFlavorType_AU);
+			if (UTTypeConformsTo(flavorType, kDfxGui_SettingsPasteboardFlavorType)
+#ifdef TARGET_API_VST
+				|| (isAUSettings && (getEffect()->getAeffect()->flags & effFlagsProgramChunks))
+#endif
+				)
 			{
 				if (inQueryPastabilityOnly)
 				{
@@ -2158,9 +2167,26 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 						}
 					}
 	#elif defined(TARGET_API_VST)
-					vstSettingsData = const_cast<UInt8*>(CFDataGetBytePtr(flavorData.get()));
-					vstSettingsDataSize = static_cast<VstInt32>(CFDataGetLength(flavorData.get()));
-					pastableItemFound = (vstSettingsData && (vstSettingsDataSize > 0));
+					CFDataRef vstSettingsDataCF = nullptr;
+					dfx::UniqueCFType<CFPropertyListRef> auSettingsPropertyList;
+					if (isAUSettings)
+					{
+						auSettingsPropertyList = CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr);
+						if (auSettingsPropertyList)
+						{
+							vstSettingsDataCF = static_cast<CFDataRef>(CFDictionaryGetValue(reinterpret_cast<CFDictionaryRef>(auSettingsPropertyList.get()), DfxSettings::kDfxDataClassInfoKeyString));
+						}
+					}
+					else
+					{
+						vstSettingsDataCF = flavorData.get();
+					}
+					if (vstSettingsDataCF)
+					{
+						vstSettingsData = const_cast<UInt8*>(CFDataGetBytePtr(vstSettingsDataCF));
+						vstSettingsDataSize = static_cast<VstInt32>(CFDataGetLength(vstSettingsDataCF));
+						pastableItemFound = (vstSettingsData && (vstSettingsDataSize > 0));
+					}
 	#else
 					#warning "implementation missing"
 					assert(false);

@@ -1408,9 +1408,6 @@ OSStatus DfxPlugin::NewFactoryPresetSet(AUPreset const& inNewFactoryPreset)
 #pragma mark state
 #pragma mark -
 
-// XXX I really should change this to something more strongly namespaced like "DFX!-settings-data"
-static CFStringRef const kDfxDataClassInfoKeyString = CFSTR("destroyfx-data");
-
 //-----------------------------------------------------------------------------
 // stores the values of all parameters values, state info, etc. into a CFPropertyListRef
 OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
@@ -1430,7 +1427,7 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 		if (cfData)
 		{
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary
-			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), kDfxDataClassInfoKeyString, cfData.get());
+			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), DfxSettings::kDfxDataClassInfoKeyString, cfData.get());
 		}
 	}
 #endif
@@ -1452,14 +1449,15 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 #if TARGET_PLUGIN_USES_MIDI
 	// look for a data section keyed with our custom data key
 	CFDataRef cfData = nullptr;
-	auto dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), kDfxDataClassInfoKeyString, reinterpret_cast<void const**>(&cfData));
+	auto dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), DfxSettings::kDfxDataClassInfoKeyString, reinterpret_cast<void const**>(&cfData));
 
 	// there was an error in AUBas::RestoreState or trying to find "destroyfx-data", 
 	// but maybe some keys were missing and kAUPresetVSTDataKey is there...
 	if (!dataFound || !cfData)
 	{
 		// failing that, try to see if old VST chunk data is being fed to us
-		dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), CFSTR(kAUPresetVSTDataKey), reinterpret_cast<void const**>(&cfData));
+		// TODO: this implementation may be incorrect and the data may be the entire fxProgram, not just the chunk
+		dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), CFSTR(kAUPresetVSTPresetKey), reinterpret_cast<void const**>(&cfData));
 	}
 
 	bool success = false;

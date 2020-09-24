@@ -40,6 +40,13 @@ Welcome to our settings persistance mess.
 #include "dfxplugin.h"
 
 
+//-----------------------------------------------------------------------------
+#if TARGET_OS_MAC
+// TODO: I really should change this to something more strongly namespaced like "DFX!-settings-data"
+CFStringRef const DfxSettings::kDfxDataClassInfoKeyString = CFSTR("destroyfx-data");
+#endif
+
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark -
 #pragma mark init / destroy
@@ -654,7 +661,7 @@ std::optional<SInt64> DFX_GetNumberFromCFDictionary_i(CFDictionaryRef inDictiona
 		return {};
 	}
 
-	auto const cfNumber = reinterpret_cast<CFNumberRef>(CFDictionaryGetValue(inDictionary, inDictionaryKey));
+	auto const cfNumber = static_cast<CFNumberRef>(CFDictionaryGetValue(inDictionary, inDictionaryKey));
 	if (cfNumber && (CFGetTypeID(cfNumber) == CFNumberGetTypeID()))
 	{
 		if (CFNumberGetType(cfNumber) == numberType)
@@ -680,7 +687,7 @@ std::optional<Float64> DFX_GetNumberFromCFDictionary_f(CFDictionaryRef inDiction
 		return {};
 	}
 
-	auto const cfNumber = reinterpret_cast<CFNumberRef>(CFDictionaryGetValue(inDictionary, inDictionaryKey));
+	auto const cfNumber = static_cast<CFNumberRef>(CFDictionaryGetValue(inDictionary, inDictionaryKey));
 	if (cfNumber && (CFGetTypeID(cfNumber) == CFNumberGetTypeID()))
 	{
 		if (CFNumberGetType(cfNumber) == numberType)
@@ -760,7 +767,7 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 		return false;
 	}
 
-	auto const assignmentsCFArray = reinterpret_cast<CFArrayRef>(CFDictionaryGetValue(inDictionary, kDfxSettings_MidiAssignmentsKey));
+	auto const assignmentsCFArray = static_cast<CFArrayRef>(CFDictionaryGetValue(inDictionary, kDfxSettings_MidiAssignmentsKey));
 	if (assignmentsCFArray && (CFGetTypeID(assignmentsCFArray) == CFArrayGetTypeID()))
 	{
 		// completely clear our table of parameter assignments before loading the new 
@@ -770,7 +777,7 @@ bool DfxSettings::restoreMidiAssignmentsFromDictionary(CFDictionaryRef inDiction
 		auto const arraySize = CFArrayGetCount(assignmentsCFArray);
 		for (CFIndex i = 0; i < arraySize; i++)
 		{
-			auto const assignmentCFDictionary = reinterpret_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(assignmentsCFArray, i));
+			auto const assignmentCFDictionary = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(assignmentsCFArray, i));
 			if (assignmentCFDictionary)
 			{
 				auto const paramID_optional = DFX_GetNumberFromCFDictionary_i(assignmentCFDictionary, kDfxSettings_ParameterIDKey);
