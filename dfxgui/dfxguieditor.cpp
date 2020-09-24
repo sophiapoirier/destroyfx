@@ -2006,6 +2006,7 @@ long DfxGuiEditor::copySettings()
 	{
 		return notPasteboardOwnerErr;
 	}
+	static PasteboardItemID const pasteboardItemID = PasteboardItemID(&pasteboardItemID);
 #endif  // TARGET_OS_MAC
 
 #ifdef TARGET_API_AUDIOUNIT
@@ -2028,7 +2029,7 @@ long DfxGuiEditor::copySettings()
 	{
 		return coreFoundationUnknownErr;
 	}
-	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), kDfxGui_SettingsPasteboardFlavorType, auSettingsCFData.get(), kPasteboardFlavorNoFlags);
+	status = PasteboardPutItemFlavor(mClipboardRef.get(), pasteboardItemID, kDfxGui_SettingsPasteboardFlavorType, auSettingsCFData.get(), kPasteboardFlavorNoFlags);
 
 #elif defined(TARGET_API_VST)
 	void* vstSettingsData {};
@@ -2064,7 +2065,7 @@ long DfxGuiEditor::copySettings()
 	{
 		return coreFoundationUnknownErr;
 	}
-	status = PasteboardPutItemFlavor(mClipboardRef.get(), PasteboardItemID(PLUGIN_ID), kDfxGui_SettingsPasteboardFlavorType, vstSettingsCFData.get(), kPasteboardFlavorNoFlags);
+	status = PasteboardPutItemFlavor(mClipboardRef.get(), pasteboardItemID, kDfxGui_SettingsPasteboardFlavorType, vstSettingsCFData.get(), kPasteboardFlavorNoFlags);
 	#else
 	#warning "implementation missing"
 	assert(false);
@@ -2114,10 +2115,6 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 		PasteboardItemID itemID = nullptr;
 		status = PasteboardGetItemIdentifier(mClipboardRef.get(), itemIndex, &itemID);
 		if (status != noErr)
-		{
-			continue;
-		}
-		if (reinterpret_cast<std::intptr_t>(itemID) != PLUGIN_ID)  // XXX hacky?
 		{
 			continue;
 		}
