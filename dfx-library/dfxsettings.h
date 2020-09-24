@@ -111,7 +111,7 @@ public:
 	};
 
 #if TARGET_OS_MAC
-	static CFStringRef const kDfxDataClassInfoKeyString;
+	static CFStringRef const kDfxDataAUClassInfoKeyString;
 #endif
 
 

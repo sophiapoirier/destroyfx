@@ -42,8 +42,7 @@ Welcome to our settings persistance mess.
 
 //-----------------------------------------------------------------------------
 #if TARGET_OS_MAC
-// TODO: I really should change this to something more strongly namespaced like "DFX!-settings-data"
-CFStringRef const DfxSettings::kDfxDataClassInfoKeyString = CFSTR("destroyfx-data");
+CFStringRef const DfxSettings::kDfxDataAUClassInfoKeyString = CFSTR("destroyfx-data");
 #endif
 
 

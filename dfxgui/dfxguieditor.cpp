@@ -2174,7 +2174,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 						auSettingsPropertyList = CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr);
 						if (auSettingsPropertyList)
 						{
-							vstSettingsDataCF = static_cast<CFDataRef>(CFDictionaryGetValue(reinterpret_cast<CFDictionaryRef>(auSettingsPropertyList.get()), DfxSettings::kDfxDataClassInfoKeyString));
+							vstSettingsDataCF = static_cast<CFDataRef>(CFDictionaryGetValue(reinterpret_cast<CFDictionaryRef>(auSettingsPropertyList.get()), DfxSettings::kDfxDataAUClassInfoKeyString));
 						}
 					}
 					else

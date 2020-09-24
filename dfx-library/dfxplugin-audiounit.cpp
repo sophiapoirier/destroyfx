@@ -1427,7 +1427,7 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 		if (cfData)
 		{
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary
-			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), DfxSettings::kDfxDataClassInfoKeyString, cfData.get());
+			CFDictionarySetValue((CFMutableDictionaryRef)(*outData), DfxSettings::kDfxDataAUClassInfoKeyString, cfData.get());
 		}
 	}
 #endif
@@ -1449,7 +1449,7 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 #if TARGET_PLUGIN_USES_MIDI
 	// look for a data section keyed with our custom data key
 	CFDataRef cfData = nullptr;
-	auto dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), DfxSettings::kDfxDataClassInfoKeyString, reinterpret_cast<void const**>(&cfData));
+	auto dataFound = CFDictionaryGetValueIfPresent(reinterpret_cast<CFDictionaryRef>(inData), DfxSettings::kDfxDataAUClassInfoKeyString, reinterpret_cast<void const**>(&cfData));
 
 	// there was an error in AUBas::RestoreState or trying to find "destroyfx-data", 
 	// but maybe some keys were missing and kAUPresetVSTDataKey is there...
