@@ -358,8 +358,8 @@ PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
 
   windowenvelope.assign(maxframe, 0.0f);
 
-  auto const delay_samples = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
   if (iswaveformsource()) {  // does not matter which DSP core, but this just should happen only once
+    auto const delay_samples = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
     getplugin()->setlatency_samples(delay_samples);
     getplugin()->settailsize_samples(delay_samples);
   }

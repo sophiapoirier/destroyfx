@@ -86,8 +86,6 @@ public:
   void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
 
   /* several of these are needed by geometerview. */
-public:
-
   int processw(float const * in, float * out, int samples,
 	       int * px, float * py, int maxpts,
 	       int * tx, float * ty) const;

@@ -24,8 +24,8 @@ Geometer, starring the Super Destroy FX Windowing System!
 #pragma once
 
 #include <array>
-#include <type_traits>
 
+#include "dfxmisc.h"
 #include "dfxpluginproperties.h"
 
 
@@ -126,4 +126,4 @@ struct GeometerViewData {
   }
 };
 
-static_assert(std::is_trivially_copyable_v<GeometerViewData> && std::is_standard_layout_v<GeometerViewData>);
+static_assert(dfx::IsTriviallySerializable<GeometerViewData>);
