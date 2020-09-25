@@ -39,9 +39,7 @@ Featuring the Super Destroy FX Windowing System!
 
 /* this macro does boring entry point stuff for us */
 DFX_EFFECT_ENTRY(Geometer)
-#if TARGET_PLUGIN_USES_DSPCORE
-  DFX_CORE_ENTRY(PLUGINCORE)
-#endif
+DFX_CORE_ENTRY(PLUGINCORE)
 
 PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
@@ -175,13 +173,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();
 
-#if !TARGET_PLUGIN_USES_DSPCORE
-  addchannelconfig(1, 1);	/* mono */
-#endif
-
-#if TARGET_PLUGIN_USES_DSPCORE
   initCores<PLUGINCORE>();
-#endif
   
   tmpx.fill(0);
   tmpy.fill(0.0f);
@@ -301,7 +293,6 @@ void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
   }
 }
 
-#if TARGET_PLUGIN_USES_DSPCORE
 void PLUGINCORE::clearwindowcache()
 {
   if (iswaveformsource()) {
@@ -315,7 +306,6 @@ void PLUGINCORE::updatewindowcache(PLUGINCORE const * geometercore)
     geometer->updatewindowcache(geometercore);
   }
 }
-#endif
 
 std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(long inParameterIndex) const
 {
@@ -345,13 +335,9 @@ std::optional<dfx::ParameterAssignment> PLUGIN::settings_getLearningAssignData(l
   }
 }
 
-#if TARGET_PLUGIN_USES_DSPCORE
 PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
   : DfxPluginCore(inDfxPlugin),
     geometer(dynamic_cast<PLUGIN*>(inDfxPlugin))
-#else
-long PLUGIN::initialize()
-#endif
 {
   /* determine the size of the largest window size */
   constexpr auto maxframe = *std::max_element(PLUGIN::buffersizes.cbegin(), PLUGIN::buffersizes.cend());
@@ -373,35 +359,11 @@ long PLUGIN::initialize()
   windowenvelope.assign(maxframe, 0.0f);
 
   auto const delay_samples = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
-#if TARGET_PLUGIN_USES_DSPCORE
   if (iswaveformsource()) {  // does not matter which DSP core, but this just should happen only once
     getplugin()->setlatency_samples(delay_samples);
     getplugin()->settailsize_samples(delay_samples);
   }
-#else
-  setlatency_samples(delay_samples);
-  settailsize_samples(delay_samples);
-  return dfx::kStatus_NoError;
-#endif
 }
-
-#if !TARGET_PLUGIN_USES_DSPCORE
-void PLUGIN::cleanup()
-{
-  windowenvelope.clear();
-  /* windowing buffers */
-  in0.clear();
-  out0.clear();
-
-  prevmix.clear();
-
-  /* geometer buffers */
-  pointx.clear();
-  pointy.clear();
-  storex.clear();
-  storey.clear();
-}
-#endif
 
 void PLUGINCORE::reset() {
 
@@ -1224,14 +1186,7 @@ XXX Sophia's ideas:
    - it would also be nice to make this windowing stuff into a reusable class so that we don't find ourselves maintaining the same code accross so many different plugins
 */
 
-#if TARGET_PLUGIN_USES_DSPCORE
 void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
-#else
-void PLUGIN::processaudio(float const* const* trueinputs, float* const* trueoutputs, unsigned long samples) {
-  float const * const tin = *trueinputs;
-  float * const tout = *trueoutputs;
-#endif
-
   for (unsigned long ii = 0; ii < samples; ii++) {
 
     /* copy sample in */
@@ -1304,15 +1259,9 @@ void PLUGINCORE::updatewindowsize()
   outstart = 0;
   outsize = framesize;
 
-#if TARGET_PLUGIN_USES_DSPCORE
   getplugin()->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
   getplugin()->settailsize_samples(framesize);
-#else
-  setlatency_samples(framesize);
-  /* tail is the same as delay, of course */
-  settailsize_samples(framesize);
-#endif
 }
 
 
