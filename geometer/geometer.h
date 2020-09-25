@@ -34,12 +34,7 @@ Geometer, starring the Super Destroy FX Windowing System!
 /* change these for your plugins */
 #define PLUGIN PLUGIN_CLASS_NAME
 
-#if TARGET_PLUGIN_USES_DSPCORE
-  #define PLUGINCORE GeometerDSP
-#else
-  #define PLUGINCORE PLUGIN_CLASS_NAME
-#endif
-
+#define PLUGINCORE GeometerDSP
 
 class PLUGIN final : public DfxPlugin {
 public:
@@ -61,15 +56,6 @@ public:
 
   void randomizeparameter(long inParameterIndex) override;
 
-#if !TARGET_PLUGIN_USES_DSPCORE
-  long initialize() override;
-  void cleanup() override;
-  void reset() override;
-
-  void processparameters() override;
-  void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
-#endif
-
   void clearwindowcache();
   void updatewindowcache(class PLUGINCORE const * geometercore);
 
@@ -89,7 +75,6 @@ private:
   dfx::SpinLock windowcachelock;
   std::atomic<uint64_t> lastwindowtimestamp {0};
   static_assert(decltype(lastwindowtimestamp)::is_always_lock_free);
-#if TARGET_PLUGIN_USES_DSPCORE
 };
 
 class PLUGINCORE final : public DfxPluginCore {
@@ -99,7 +84,6 @@ public:
   void reset() override;
   void processparameters() override;
   void process(float const* inAudio, float* outAudio, unsigned long inNumFrames) override;
-#endif
 
   /* several of these are needed by geometerview. */
 public:
@@ -116,13 +100,11 @@ private:
   void updatewindowsize();
   void updatewindowshape();
 
-#if TARGET_PLUGIN_USES_DSPCORE
   bool iswaveformsource() { return (GetChannelNum() == 0); }
   void clearwindowcache();
   void updatewindowcache(PLUGINCORE const * geometercore);
 
   PLUGIN* const geometer;
-#endif
 
   /* input and output buffers. out is framesize*2 samples long, in is framesize
      samples long. (for maximum framesize)
