@@ -31,9 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 // these are macros that do boring entry point stuff for us
 DFX_EFFECT_ENTRY(Transverb)
-#if TARGET_PLUGIN_USES_DSPCORE
-  DFX_CORE_ENTRY(TransverbDSP)
-#endif
+DFX_CORE_ENTRY(TransverbDSP)
 
 using namespace dfx::TV;
 
@@ -81,9 +79,7 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
   speedModeStates.fill(kSpeedMode_Fine);
 
-#if TARGET_PLUGIN_USES_DSPCORE
   initCores<TransverbDSP>();
-#endif
 }
 
 void Transverb::dfx_PostConstructor() {
