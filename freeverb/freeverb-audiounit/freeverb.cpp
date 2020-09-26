@@ -2,7 +2,7 @@
 // Based on Apple Audio Unit Development Kit Examples
 //
 // Written by Jezar at Dreampoint, June 2000
-// http://www.dreampoint.co.uk
+// http://www.dreampoint.co.uk/
 // This code is public domain
 // 
 // Audio Unit implementation written by Sophia Poirier, September 2002
@@ -20,20 +20,14 @@ Freeverb::Freeverb(AudioUnit component)
 	: AUEffectBase(component, true)
 {
 	// initialize the parameters to their default values
-	for (long index=0; index < KNumParams; index++)
+	for (AudioUnitParameterID i=0; i < KNumParams; i++)
 	{
 		AudioUnitParameterInfo paramInfo;
-		if (GetParameterInfo(kAudioUnitScope_Global, index, paramInfo) == noErr)
-			AUEffectBase::SetParameter(index, paramInfo.defaultValue);
+		if (GetParameterInfo(kAudioUnitScope_Global, i, paramInfo) == noErr)
+			AUEffectBase::SetParameter(i, paramInfo.defaultValue);
 	}
 
     Reset(kAudioUnitScope_Global, (AudioUnitElement)0);
-}
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Freeverb::~Freeverb()
-{
-	// nothing here
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,13 +49,11 @@ ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitPara
 	ComponentResult result = noErr;
 
 	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
-							| kAudioUnitParameterFlag_IsWritable
-							| kAudioUnitParameterFlag_HasCFNameString;
+							| kAudioUnitParameterFlag_IsWritable;
 
-#define INIT_AU_PARAM(paramID, cstr, unitID, min, max, def, curve) \
+#define INIT_AU_PARAM(paramID, name, unitID, min, max, def, curve) \
 	case (paramID):	\
-		strcpy(outParameterInfo.name, (cstr));	\
-		outParameterInfo.cfNameString = CFSTR(cstr);	\
+		FillInParameterName(outParameterInfo, CFSTR(name), false);	\
 		outParameterInfo.unit = kAudioUnitParameterUnit_##unitID;	\
 		outParameterInfo.minValue = (min);	\
 		outParameterInfo.maxValue = (max);	\
@@ -83,9 +75,6 @@ ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitPara
 			break;
 	}
 #undef INIT_AU_PARAM
-
-	if ( (inParameterID == KWet) || (inParameterID == KDry) )
-		outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayCubed;
 
 	return result;
 }
@@ -146,8 +135,8 @@ OSStatus Freeverb::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags
 	needUpdate = false;
 
 
-	float * in1 = (float*)(inBuffer.mBuffers[0].mData);
-	float * in2 = (float*)(inBuffer.mBuffers[1].mData);
+	const float * in1 = (float*)(inBuffer.mBuffers[0].mData);
+	const float * in2 = (float*)(inBuffer.mBuffers[1].mData);
 	float * out1 = (float*)(outBuffer.mBuffers[0].mData);
 	float * out2 = (float*)(outBuffer.mBuffers[1].mData);
 

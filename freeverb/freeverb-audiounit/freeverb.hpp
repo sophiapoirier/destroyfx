@@ -2,7 +2,7 @@
 // Based on Apple Audio Unit Development Kit Examples
 //
 // Written by Jezar at Dreampoint, June 2000
-// http://www.dreampoint.co.uk
+// http://www.dreampoint.co.uk/
 // This code is public domain
 // 
 // Audio Unit implementation written by Sophia Poirier, September 2002
@@ -30,7 +30,6 @@ class Freeverb : public AUEffectBase
 {
 public:
 	Freeverb(AudioUnit component);
-	virtual ~Freeverb();
 
 	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
 								AudioUnitParameterID inParameterID, 
