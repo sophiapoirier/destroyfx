@@ -26,32 +26,35 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxgui.h"
 #include "brokenfft-base.h"
 
-/* this class is for the display of the wave at the top of the plugin.
-   It reads the current 'in' buffer for the plugin, runs it through
-   brokenfft with its current settings, and then draws it up there
-   whenever the plugin is idle.
-*/
+// This class renders BrokenFFTViewData in the GUI, which is the
+// frequency-domain data before and after FFTOps.
 
 class BrokenFFTView final : public VSTGUI::CView {
-
-private:
-
-  BrokenFFTViewData data;
-  uint64_t prevtimestamp = 0;
-
-  DfxGuiEditor * editor = nullptr;
-  // TODO: does this still serve a purpose in modern VSTGUI?  
-  VSTGUI::SharedPointer<VSTGUI::COffscreenContext> offc;
-
 public:
+  explicit BrokenFFTView(VSTGUI::CRect const &size);
 
-  explicit BrokenFFTView(VSTGUI::CRect const & size);
-
-  bool attached(VSTGUI::CView * parent) override;
-  void draw(VSTGUI::CDrawContext * pContext) override;
+  bool attached(VSTGUI::CView *parent) override;
+  void draw(VSTGUI::CDrawContext *pContext) override;
   void onIdle() override;
 
   void reflect();
+
+  // UI consists of two panels, each ONE_HEIGHT high and
+  // with a separation of SEP pixels.
+  static constexpr int WIDTH = 512;
+  static constexpr int ONE_HEIGHT = 80;
+  static constexpr int SEP = 6;
+  static constexpr int HEIGHT = ONE_HEIGHT * 2 + SEP;
+  
+private:
+  
+  BrokenFFTViewData data;
+  uint64_t prevtimestamp = 0;
+
+  DfxGuiEditor *editor = nullptr;
+  // We paint pixels directly in this work area and then blit it
+  // to the view.
+  VSTGUI::SharedPointer<VSTGUI::CBitmap> bitmap;
 };
 
 #endif

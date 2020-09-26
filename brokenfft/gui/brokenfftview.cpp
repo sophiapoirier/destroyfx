@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cassert>
 #include <cmath>
 #include <utility>
+#include <memory>
 
 constexpr auto coldwave = VSTGUI::MakeCColor(75, 151, 71);
 constexpr auto cnewwave = VSTGUI::MakeCColor(240, 255, 160);
@@ -32,7 +33,11 @@ constexpr auto cpointinside = VSTGUI::MakeCColor(220, 100, 200);
 constexpr auto cbackground = VSTGUI::MakeCColor(20, 50, 20);
 constexpr auto zeroline = VSTGUI::MakeCColor(52, 71, 49);
 
-BrokenFFTView::BrokenFFTView(VSTGUI::CRect const & size)
+using VSTGUI::CBitmapPixelAccess;
+using VSTGUI::CBitmap;
+using VSTGUI::CPoint;
+
+BrokenFFTView::BrokenFFTView(VSTGUI::CRect const &size)
   : VSTGUI::CView(size) {
 
   setWantsIdle(true);
@@ -40,13 +45,13 @@ BrokenFFTView::BrokenFFTView(VSTGUI::CRect const & size)
 
 
  
-bool BrokenFFTView::attached(VSTGUI::CView * parent) {
+bool BrokenFFTView::attached(VSTGUI::CView *parent) {
 
   auto const success = VSTGUI::CView::attached(parent);
 
   if (success) {
     editor = dynamic_cast<DfxGuiEditor*>(getEditor());
-    offc = VSTGUI::COffscreenContext::create(getFrame(), getWidth(), getHeight());
+    bitmap = new CBitmap(WIDTH, HEIGHT);
 
     reflect();
   }
@@ -55,58 +60,55 @@ bool BrokenFFTView::attached(VSTGUI::CView * parent) {
 }
 
 
-void BrokenFFTView::draw(VSTGUI::CDrawContext * ctx) {
+void BrokenFFTView::draw(VSTGUI::CDrawContext *ctx) {
+  // XXX just to test pixel drawing
+  static int timestamp = 0;
+  
+  assert(bitmap);
 
-  assert(offc);
+  {
+    // Premultiplied alpha? Probably doesn't matter since we'll just draw opaque pixels.
+    // Premultiplied should be more efficient if we don't care.
+    //
+    // Note docs say that the accessor must be "forgotten" before the changes are
+    // reflected. I think this means "deleted". (Note its destructor is private though,
+    // so instead we initialize SharedPointer... are there any docs??)
+    VSTGUI::SharedPointer<CBitmapPixelAccess> px =
+      CBitmapPixelAccess::create(bitmap.get());
 
-  auto const signedlinear2y = [height = getHeight()](float value) -> VSTGUI::CCoord {
-    return height * (-value + 1.0) * 0.5;
-  };
+    // Might not be supported on this platform.
+    // TODO: Some kind of fallback
+    if (px.get() == nullptr)
+      return;
 
-  offc->beginDraw();
+    // XXX actually use data duh
+    for (int x = 0; x < WIDTH; x++) {
 
-  offc->setFillColor(cbackground);
-  offc->drawRect(VSTGUI::CRect(-1, -1, getWidth(), getHeight()), VSTGUI::kDrawFilled);
-
-  offc->setFrameColor(zeroline);
-  VSTGUI::CCoord const centery = std::floor(getHeight() / 2.0);
-  offc->drawLine(VSTGUI::CPoint(0, centery), VSTGUI::CPoint(getWidth(), centery));
-
-  VSTGUI::CCoord const start = (data.apts < getWidth()) ? ((std::lround(getWidth()) - data.apts) >> 1) : 0;
-  VSTGUI::CDrawContext::LinePair line;
-//  VSTGUI::SharedPointer const path(ctx->createGraphicsPath(), false);
-
-  offc->setFrameColor(coldwave);
-  line.first = line.second = VSTGUI::CPoint(start, signedlinear2y(data.inputs.front()));
-  for (int i = 1; i < data.apts; i ++) {
-    line.first = std::exchange(line.second, VSTGUI::CPoint(start + i, signedlinear2y(data.inputs[i])));
-    offc->drawLine(line);
+      int h = ONE_HEIGHT * (1.0f + sin((x + timestamp) / 100.0f));
+      for (int i = 0; i < h; i++) {
+	// (XXX y=0 on top, wrong)
+	int y = h;
+	px->setPosition(x, y);
+	// XXX using setValue should be much faster here, but we need to determine
+	// byte/channel order. If the image consists of solid colors, we can probably
+	// do that by computing them up front, though.
+	px->setColor(cnewwave);
+      }
+      // And clear the rest of the column
+      for (int i = h; i < ONE_HEIGHT; i++) {
+	int y = h;
+	px->setPosition(x, y);
+	px->setColor(cbackground);
+      }
+    }
   }
+    
+  // XXX no
+  timestamp++;
+  timestamp %= 999999;
 
-  offc->setFrameColor(cnewwave);
-  line.first = line.second = VSTGUI::CPoint(start, signedlinear2y(data.outputs.front()));
-  for (int i = 1; i < data.apts; i ++) {
-    line.first = std::exchange(line.second, VSTGUI::CPoint(start + i, signedlinear2y(data.outputs[i])));
-    offc->drawLine(line);
-  }
-
-  for (int i = 0; i < data.numpts; i ++) {
-    constexpr int bordersize = 1;
-    constexpr int pointsize = 1;
-    auto const yy = static_cast<int>(signedlinear2y(data.pointsy[i]));
-
-    VSTGUI::CRect box(start + data.pointsx[i] - bordersize, yy - bordersize,
-                      start + data.pointsx[i] + bordersize + pointsize, yy + bordersize + pointsize);
-    offc->setFillColor(cpointoutside);
-    offc->drawRect(box, VSTGUI::kDrawFilled);
-
-    box.inset(bordersize, bordersize);
-    offc->setFillColor(cpointinside);
-    offc->drawRect(box, VSTGUI::kDrawFilled);
-  }
-
-  offc->endDraw();
-  offc->copyFrom(ctx, getViewSize());
+  // XXX What is the second argument here?
+  bitmap->draw(ctx, getViewSize(), CPoint (0, 0), 1.0f);
 
   setDirty(false);
 }
@@ -124,14 +126,12 @@ void BrokenFFTView::onIdle() {
 }
 
 
-/* XXX use memcpy where applicable. */
-/* XXX don't bother running processw unless the input data have changed. */
 void BrokenFFTView::reflect() {
   /* when idle, copy points out of BrokenFFT */
 
   assert(editor);
   size_t dataSize = sizeof(data);
-  [[maybe_unused]] auto const status = editor->dfxgui_GetProperty(PROP_WAVEFORM_DATA, dfx::kScope_Global, 0,
+  [[maybe_unused]] auto const status = editor->dfxgui_GetProperty(PROP_FFT_DATA, dfx::kScope_Global, 0,
                                                                   &data, dataSize);
   assert(status == dfx::kStatus_NoError);
   assert(dataSize == sizeof(data));

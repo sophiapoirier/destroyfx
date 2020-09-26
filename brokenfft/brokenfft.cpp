@@ -134,7 +134,7 @@ long BrokenFFT::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inS
       outDataSize = sizeof(uint64_t);
       outFlags = dfx::kPropertyFlag_Readable;
       return dfx::kStatus_NoError;
-    case PROP_WAVEFORM_DATA:
+    case PROP_FFT_DATA:
       outDataSize = sizeof(BrokenFFTViewData);
       outFlags = dfx::kPropertyFlag_Readable;
       return dfx::kStatus_NoError;
@@ -149,7 +149,7 @@ long BrokenFFT::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope
     case PROP_LAST_WINDOW_TIMESTAMP:
       *static_cast<uint64_t*>(outData) = lastwindowtimestamp.load(std::memory_order_relaxed);
       return dfx::kStatus_NoError;
-    case PROP_WAVEFORM_DATA: {
+    case PROP_FFT_DATA: {
       std::lock_guard const guard(windowcachelock);
       *static_cast<BrokenFFTViewData*>(outData) = windowcache;
       return dfx::kStatus_NoError;
@@ -224,13 +224,13 @@ void BrokenFFT::updatewindowcache(BrokenFFTDSP const *brokenfftcore) {
 }
 
 void BrokenFFTDSP::clearwindowcache() {
-  if (iswaveformsource()) {
+  if (IsFFTDataSource()) {
     brokenfft->clearwindowcache();
   }
 }
 
 void BrokenFFTDSP::updatewindowcache(BrokenFFTDSP const *brokenfftcore) {
-  if (iswaveformsource()) {
+  if (IsFFTDataSource()) {
     brokenfft->updatewindowcache(brokenfftcore);
   }
 }
@@ -270,7 +270,7 @@ BrokenFFTDSP::BrokenFFTDSP(DfxPlugin *inDfxPlugin)
 
   const int framesize = BrokenFFT::buffersizes.at(getparameter_i(P_BUFSIZE));
   // does not matter which DSP core, but this just should happen only once
-  if (iswaveformsource()) {
+  if (IsFFTDataSource()) {
     getplugin()->setlatency_samples(framesize);
     getplugin()->settailsize_samples(framesize);
   }

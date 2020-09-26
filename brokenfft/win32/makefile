@@ -13,11 +13,9 @@ DFXGUI=../../dfxgui
 # git repository is called "vstgui" and contains a toplevel directory "vstgui"
 VSTGUI=../../vstgui/vstgui
 FFTLIB=../../fft-lib
-# (I think this is FFT and Reverse FFT?)
+# (I forgot what rfftw is, but we use it. real fft?)
 FFTW=../../fftw/fftw
 RFFTW=../../fftw/rfftw
-
-# TODO: Need a whole bunch of fft objects
 
 # WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
 #  -DENABLE_TRACE=1
@@ -52,8 +50,8 @@ VSTGUI_OBJECTS=$(VSTGUI)/vstgui_win32.o $(VSTGUI)/plugin-bindings/aeffguieditor.
 DFXGUI_OBJECTS=$(DFXGUI)/dfxguieditor.o $(DFXGUI)/dfxgui-fontfactory.o $(DFXGUI)/dfxguitextdisplay.o $(DFXGUI)/dfxguibutton.o $(DFXGUI)/dfxguislider.o $(DFXGUI)/dfxguidialog.o $(DFXGUI)/dfxguimisc.o $(DFXGUI)/dfxguicontrol.o  
 
 # XXX add back gui: 
-# ../gui/brokenffteditor.o ../gui/brokenfftview.o
-OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) $(FFTLIB_OBJECTS) $(RFFTW_OBJECTS) $(FFTW_OBJECTS) resources.o ../brokenfft.o 
+# ../gui/brokenffteditor.o 
+OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) $(FFTLIB_OBJECTS) $(RFFTW_OBJECTS) $(FFTW_OBJECTS) resources.o ../brokenfft.o ../gui/brokenfftview.o
 
 MINGWLIB=/usr/x86_64-w64-mingw32/sys-root/mingw/lib
 

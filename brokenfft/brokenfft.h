@@ -108,7 +108,7 @@ private:
   void updatewindowsize();
   void updatewindowshape();
 
-  bool iswaveformsource() { return GetChannelNum() == 0; }
+  bool IsFFTDataSource() { return GetChannelNum() == 0; }
   void clearwindowcache();
   void updatewindowcache(BrokenFFTDSP const * brokenfftcore);
 
