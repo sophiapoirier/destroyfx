@@ -112,6 +112,11 @@ Freeverb is a public domain reverb algorithm by Jezar at Dreampoint.
 There are several VST implementations of it, but no AU, so we ported
 it, and have made some improvements to it too.
 
+### fake-app/
+
+A fake macOS application that associates icons with Audio Units and
+their preset files.  Launching the app does nothing.
+
 ### max-patches/
 
 Very very ancient [Max](https://cycling74.com) patches that we once
