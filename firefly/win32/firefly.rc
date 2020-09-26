@@ -4,4 +4,4 @@
 // Bitmap
 //
 
-128 BITMAP  DISCARDABLE     "../firefly/gui/graphics/back.bmp"
+128 BITMAP  DISCARDABLE     "../gui/graphics/back.bmp"
