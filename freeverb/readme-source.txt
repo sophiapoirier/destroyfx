@@ -70,4 +70,4 @@ http://www.dreampoint.co.uk
 
 Added note:
 ------------
-The Audio Unit code, Project Builder project, and Audio Unit build were all done by Sophia Poirier, September 2002.  This was done using the v2.0 Audio Unit API.  Sophia changed a few tiny things in revmodel.cpp, revmodel.hpp, and tuning.h to accommodate for nicer parameter handling (AU, unlike VST, does not require 0-1 value ranges for all parameters) and to support audio input and output output streams with mismatched numbers of interleaved channels.  Plugins made my Sophia and also her friend Tom 7 are available at http://destroyfx.org/
+The Audio Unit code, Xcode and Project Builder projects, and Audio Unit build were all done by Sophia Poirier, September 2002.  This was done using the v2.0 Audio Unit API.  Sophia changed a few tiny things in revmodel.cpp, revmodel.hpp, and tuning.h to accommodate for nicer parameter handling (AU, unlike VST, does not require 0-1 value ranges for all parameters) and to support audio input and output output streams with mismatched numbers of interleaved channels.  Plugins made my Sophia and also her friend Tom 7 are available at http://destroyfx.org/

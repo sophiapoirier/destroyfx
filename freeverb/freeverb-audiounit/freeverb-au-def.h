@@ -1,6 +1,6 @@
 #ifndef __FREEVERB_AU_DEF_H
 #define __FREEVERB_AU_DEF_H
 
-#define PLUGIN_VERSION 0x00010002
+#define PLUGIN_VERSION 0x00010003
 
 #endif
