@@ -58,7 +58,7 @@ ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitPara
 							| kAudioUnitParameterFlag_IsWritable
 							| kAudioUnitParameterFlag_HasCFNameString;
 
-#define INIT_AU_PARAM(paramID, cstr, unitID, min, max, def) \
+#define INIT_AU_PARAM(paramID, cstr, unitID, min, max, def, curve) \
 	case (paramID):	\
 		strcpy(outParameterInfo.name, (cstr));	\
 		outParameterInfo.cfNameString = CFSTR(cstr);	\
@@ -66,15 +66,17 @@ ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitPara
 		outParameterInfo.minValue = (min);	\
 		outParameterInfo.maxValue = (max);	\
 		outParameterInfo.defaultValue = (def);	\
+		if (curve)	\
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayCubeRoot;	\
 		break;
 	switch (inParameterID)
 	{
-		INIT_AU_PARAM(KMode, "Freeze", Boolean, 0.0f, 1.0f, initialmode);
-		INIT_AU_PARAM(KRoomSize, "Room size", Meters, offsetroom, offsetroom + scaleroom, (scaleroom * initialroom) + offsetroom);
-		INIT_AU_PARAM(KDamp, "Damping", Percent, 0.0f, 100.0f, initialdamp * 100.0f);
-		INIT_AU_PARAM(KWet, "Wet level", LinearGain, 0.0f, scalewet, initialwet);
-		INIT_AU_PARAM(KDry, "Dry level", LinearGain, 0.0f, scaledry, initialdry);
-		INIT_AU_PARAM(KWidth, "Width", Percent, 0.0f, 100.0f, initialwidth * 100.0f);
+		INIT_AU_PARAM(KMode, "Freeze", Boolean, 0.0f, 1.0f, initialmode, false);
+		INIT_AU_PARAM(KRoomSize, "Room size", Meters, offsetroom, offsetroom + scaleroom, (scaleroom * initialroom) + offsetroom, false);
+		INIT_AU_PARAM(KDamp, "Damping", Percent, 0.0f, 100.0f, initialdamp * 100.0f, false);
+		INIT_AU_PARAM(KWet, "Wet level", LinearGain, 0.0f, scalewet, initialwet, true);
+		INIT_AU_PARAM(KDry, "Dry level", LinearGain, 0.0f, scaledry, initialdry, true);
+		INIT_AU_PARAM(KWidth, "Width", Percent, 0.0f, 100.0f, initialwidth * 100.0f, false);
 
 		default:
 			result = kAudioUnitErr_InvalidParameter;

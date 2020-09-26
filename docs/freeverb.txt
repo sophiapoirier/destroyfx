@@ -54,7 +54,9 @@ I'd also like to thank the many people on the n-Track discussion forum (http://w
 
 APPENDIX D - VERSION HISTORY
 ----------------------------
-23/09/2002 Version 1.00 - First Mac OS X Audio Unit version.  Audio Unit port by Sophia Poirier (http://destroyfx.org/)
+23/09/2002 Version 1.0.0 - First Mac OS X Audio Unit version.  Audio Unit port by Sophia Poirier (http://destroyfx.org/)
+
+16/01/2006 Version 1.0.4 - First "universal binary" version (meaning that it runs natively on both PowerPC-based Macs and Intel-based Macs).
 
 These release notes written: 17/05/2000
 then amended by Sophia:  23/09/2002
