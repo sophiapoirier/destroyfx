@@ -21,7 +21,7 @@ using namespace freeverb;
 static constexpr size_t kMonoChannelCount = 1;
 static constexpr size_t kStereoChannelCount = 2;
 
-enum
+enum : AudioUnitParameterID
 {
 	kParam_FreezeMode,
 	kParam_RoomSize,

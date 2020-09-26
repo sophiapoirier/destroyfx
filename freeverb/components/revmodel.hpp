@@ -51,12 +51,12 @@ private:
     float   mWidth = kWidthDefault;
     bool    mFreezeMode = kFreezeModeDefault;
 
-    DfxSmoothedValue<float> mRoomSizeSmoothed;
-    DfxSmoothedValue<float> mDampingSmoothed;
-    DfxSmoothedValue<float> mDryLevelSmoothed;
-    DfxSmoothedValue<float> mWetLevelSmoothed;
-    DfxSmoothedValue<float> mWidthSmoothed;
-    DfxSmoothedValue<float> mInputGainSmoothed;
+	dfx::SmoothedValue<float> mRoomSizeSmoothed;
+    dfx::SmoothedValue<float> mDampingSmoothed;
+    dfx::SmoothedValue<float> mDryLevelSmoothed;
+    dfx::SmoothedValue<float> mWetLevelSmoothed;
+    dfx::SmoothedValue<float> mWidthSmoothed;
+    dfx::SmoothedValue<float> mInputGainSmoothed;
 
     std::vector<CombFilter> mCombFiltersL;
     std::vector<CombFilter> mCombFiltersR;
