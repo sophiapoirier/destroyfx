@@ -29,19 +29,19 @@ enum
 class Freeverb : public AUEffectBase
 {
 public:
-	Freeverb(AudioUnit component);
+	Freeverb(AudioComponentInstance inComponentInstance);
 
-	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
-								AudioUnitParameterID inParameterID, 
-								AudioUnitParameterInfo & outParameterInfo);
-	virtual ComponentResult SetParameter(AudioUnitParameterID inID, AudioUnitScope inScope,
-								AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames);
+	virtual OSStatus GetParameterInfo(AudioUnitScope inScope, 
+						AudioUnitParameterID inParameterID, 
+						AudioUnitParameterInfo & outParameterInfo);
+	virtual OSStatus SetParameter(AudioUnitParameterID inID, AudioUnitScope inScope,
+						AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames);
 
 	virtual UInt32 SupportedNumChannels(const AUChannelInfo ** outInfo);
-	virtual ComponentResult	Version()
+	virtual OSStatus Version()
 		{	return PLUGIN_VERSION;	}
 
-	virtual ComponentResult Reset(AudioUnitScope inScope, AudioUnitElement inElement);
+	virtual OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement);
 	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
 						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
 						UInt32 inFramesToProcess);

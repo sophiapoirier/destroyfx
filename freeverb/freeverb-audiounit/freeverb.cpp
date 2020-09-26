@@ -8,7 +8,7 @@
 // Audio Unit implementation written by Sophia Poirier, September 2002
 // http://destroyfx.org/
 
-#include "freeverb.hpp"
+#include "freeverb.h"
 
 
 
@@ -16,8 +16,8 @@
 COMPONENT_ENTRY(Freeverb)
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Freeverb::Freeverb(AudioUnit component)
-	: AUEffectBase(component, true)
+Freeverb::Freeverb(AudioComponentInstance inComponentInstance)
+	: AUEffectBase(inComponentInstance)
 {
 	// initialize the parameters to their default values
 	for (AudioUnitParameterID i=0; i < KNumParams; i++)
@@ -31,7 +31,7 @@ Freeverb::Freeverb(AudioUnit component)
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ComponentResult Freeverb::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
+OSStatus Freeverb::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	model.mute();
 	needUpdate = true;
@@ -40,13 +40,13 @@ ComponentResult Freeverb::Reset(AudioUnitScope inScope, AudioUnitElement inEleme
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID inParameterID,
-											AudioUnitParameterInfo & outParameterInfo)
+OSStatus Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID inParameterID,
+									AudioUnitParameterInfo & outParameterInfo)
 {
 	if (inScope != kAudioUnitScope_Global)
 		return kAudioUnitErr_InvalidScope;
 
-	ComponentResult result = noErr;
+	OSStatus status = noErr;
 
 	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
 							| kAudioUnitParameterFlag_IsWritable;
@@ -71,17 +71,17 @@ ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitPara
 		INIT_AU_PARAM(KWidth, "Width", Percent, 0.0f, 100.0f, initialwidth * 100.0f, false);
 
 		default:
-			result = kAudioUnitErr_InvalidParameter;
+			status = kAudioUnitErr_InvalidParameter;
 			break;
 	}
 #undef INIT_AU_PARAM
 
-	return result;
+	return status;
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ComponentResult Freeverb::SetParameter(AudioUnitParameterID inID, AudioUnitScope inScope,
-									 AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames)
+OSStatus Freeverb::SetParameter(AudioUnitParameterID inID, AudioUnitScope inScope,
+							 AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames)
 {
 	if (inScope == kAudioUnitScope_Global)
 	{
@@ -135,8 +135,8 @@ OSStatus Freeverb::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags
 	needUpdate = false;
 
 
-	const float * in1 = (float*)(inBuffer.mBuffers[0].mData);
-	const float * in2 = (float*)(inBuffer.mBuffers[1].mData);
+	float * in1 = (float*)(inBuffer.mBuffers[0].mData);
+	float * in2 = (float*)(inBuffer.mBuffers[1].mData);
 	float * out1 = (float*)(outBuffer.mBuffers[0].mData);
 	float * out2 = (float*)(outBuffer.mBuffers[1].mData);
 

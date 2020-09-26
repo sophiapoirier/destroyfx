@@ -20,7 +20,7 @@ Visit http://www.dreampoint.co.uk to make sure you have the latest version!
 HOW TO USE FREEVERB
 -------------------
 Place Freeverb.component into Library/Audio/Plug-Ins/Components/
-That can be in your user Library folder or in your root Library folder.  You may need to log out and log back in for Freeverb to show up in your host software.
+That can be in your user Library folder or in your root Library folder.
 
 
 
@@ -39,15 +39,15 @@ http://www.dreampoint.co.uk
 
 APPENDIX A - SOFTWARE LICENSE
 -----------------------------
-The Freeverb software and accompanying materials in the archive file that this readme file is packaged in, is Copyright(c) 2000 Jezar @ Dreampoint, and you have no intellectual property rights over the software. However you are hereby given a licence (at no cost) to use and distribute this software as you see fit, provided that you only distribute the original archive file which includes this readme file unaltered.
+The Freeverb software and accompanying materials in the archive file that this readme file is packaged in, is Copyright(c) 2000 Jezar @ Dreampoint, and you have no intellectual property rights over the software. However you are hereby given a license (at no cost) to use and distribute this software as you see fit, provided that you only distribute the original archive file which includes this readme file unaltered.
 
 APPENDIX B - DISCLAIMER
 -----------------------
-This software is provided "as-is" with no warrantees of any kind. The software has been checked for defects, but is not guaranteed to be error free. The software is provided at no charge, and therefore neither Jezar nor Dreampoint can accept any liablity from your use - or inability to use - this software. The software is supplied in good faith as a gift. Please treat it as such, and use it entirely at your own risk. 
+This software is provided "as-is" with no warrantees of any kind. The software has been checked for defects, but is not guaranteed to be error free. The software is provided at no charge, and therefore neither Jezar nor Dreampoint can accept any liability from your use - or inability to use - this software. The software is supplied in good faith as a gift. Please treat it as such, and use it entirely at your own risk. 
 
 APPENDIX C - Acknowledgements
 -----------------------------
-This software was produced using the Apple Audio Unit Software Development Kit version 2.0.
+This software was produced using the Apple CoreAudio Software Development Kit.
 
 I'd also like to thank the many people on the n-Track discussion forum (http://www.fasoft.com) for their help and encouragement whilst creating the original version of Freeverb.
 
@@ -57,6 +57,8 @@ APPENDIX D - VERSION HISTORY
 23/09/2002 Version 1.0.0 - First Mac OS X Audio Unit version.  Audio Unit port by Sophia Poirier (http://destroyfx.org/)
 
 16/01/2006 Version 1.0.4 - First "universal binary" version (meaning that it runs natively on both PowerPC-based Macs and Intel-based Macs).
+
+07/07/2010 Version 1.0.5 - Updated to run in 64-bit environments as well as 32-bit.
 
 These release notes written: 17/05/2000
 then amended by Sophia:  23/09/2002
