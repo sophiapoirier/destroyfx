@@ -122,6 +122,14 @@ their preset files.  Launching the app does nothing.
 Very very ancient [Max](https://cycling74.com) patches that we once
 upon a time exported and released as utility applications.
 
+### turntablist/
+
+Turntablist is a record scratching emulation instrument by
+[bioroid media development](http://www.bioroid.com/vst/),
+but has since been abondaned. The author released the source code
+after abandoning it, and we ported it to Audio Unit, and made
+several improvements along the way. We no longer maintain it.
+
 ---
 
 These plugins are somewhat mature, but are lacking GUIs and thorough
