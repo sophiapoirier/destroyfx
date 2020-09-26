@@ -48,6 +48,7 @@ class DGTextDisplay : public DGControl<VSTGUI::CTextEdit>
 public:
 	static constexpr size_t kTextMaxLength = 256;
 
+	// inBackgroundImage may be null
 	DGTextDisplay(DfxGuiEditor* inOwnerEditor, long inParamID, DGRect const& inRegion, 
 				  VSTGUI::CParamDisplayValueToStringProc inTextProc, void* inUserData, DGImage* inBackgroundImage, 
 				  dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
@@ -105,6 +106,7 @@ private:
 class DGStaticTextDisplay : public DGControl<VSTGUI::CTextLabel>
 {
 public:
+	// inBackgroundImage may be null
 	DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackgroundImage, 
 						dfx::TextAlignment inTextAlignment = dfx::TextAlignment::Left, float inFontSize = 12.0f, 
 						DGColor inFontColor = VSTGUI::kBlackCColor, char const* inFontName = nullptr);
