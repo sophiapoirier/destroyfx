@@ -51,8 +51,8 @@ enum {
 
 
 // the general help infos
-constexpr std::array<char const * const, NUM_GEN_HELP_ITEMS> general_helpstrings
-{{
+constexpr std::array general_helpstrings =
+{
   "", 
   R"(window shape: adjust the fade between windows 
 BrokenFFT processes its input in overlapping windows, and  
@@ -96,12 +96,12 @@ to erase the assignment.  First you need to activate the
 parameter as a MIDI learner (again, see the "MIDI learn" 
 help), then press this button to erase that parameter's 
 MIDI assignment.)DELIM", 
-}};
+};
 
 
 // the help infos for window shape
-constexpr std::array<char const * const, NUM_WINDOWSHAPES> windowshape_helpstrings
-{{
+constexpr std::array windowshape_helpstrings = 
+{
   R"(triangle: linear fade between windows
 Fades between windows linearly.)", 
   R"(arrow: sharp fade in, dull fade out
@@ -111,12 +111,12 @@ Favors the beginning of windows.)",
   R"(cos: smooth fades in, out
 A smooth fade-in and fade-out, emphasizing the center of 
 each window.)", 
-}};
+};
 
 
 // the help infos for "how to generate landmarks"
-constexpr std::array<char const * const, NUM_POINTSTYLES> landmarks_helpstrings
-{{
+constexpr std::array landmarks_helpstrings =
+{
   R"(ext'n cross: place points at extremities and crossings
 Place points at zero-crossings, as well as the peaks and 
 valleys between them.  The slider controls the tolerance 
@@ -140,12 +140,12 @@ valleys.)",
 Makes a point when the waveform crosses a specific level 
 (both above and below the origin).  The slider controls the 
 level at which point generation occurs.)DELIM", 
-}};
+};
 
 
 // the help infos for the point operations
-constexpr std::array<char const * const, NUM_OPS> ops_helpstrings
-{{
+constexpr std::array ops_helpstrings =
+{
   R"(x2: unscientifically double number of points
 Double the number of points.  New points are placed half-
 way between old points, with a magnitude determined by 
@@ -173,12 +173,12 @@ Compresses the points along the x-axis.  Points are
 repeated to fill the frame.  This operation tends to raise 
 the pitch of the sound without changing its speed.)", 
   "empty", 
-}};
+};
 
 
 // the help infos for "how to recreate the waveform"
-constexpr std::array<char const * const, NUM_INTERPSTYLES> recreate_helpstrings
-{{
+constexpr std::array recreate_helpstrings =
+{
   R"DELIM(polygon: recreate wave with linear interpolation
 Recreate the wave by drawing lines directly between the 
 points.  Like a lowpass filter, but introduces new high 
@@ -217,6 +217,6 @@ modulation instead, resulting in a totally different sound.)DELIM",
 Mixes around the intervals.  Best used with a large window 
 size and long intervals.  When this option is selected, the 
 slider chooses how far the intervals are shuffled.)", 
-}};
+};
 
 #endif

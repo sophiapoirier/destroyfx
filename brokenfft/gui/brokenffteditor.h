@@ -56,11 +56,6 @@ public:
   void changehelp(IDGControl * currentControlUnderMouse);
 
 private:
-  long choose_multiparam(long baseParamID) {
-    return getparameter_i(baseParamID) + baseParamID + 1;
-  }
-  static long get_base_param_for_slider(size_t sliderIndex) noexcept;
-
   std::vector<DGSlider *> sliders;
   std::vector<DGTextDisplay *> displays;
   std::vector<DGFineTuneButton *> finedownbuttons;

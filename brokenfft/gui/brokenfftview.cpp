@@ -66,6 +66,10 @@ void BrokenFFTView::draw(VSTGUI::CDrawContext *ctx) {
   
   assert(bitmap);
 
+  ctx->setFillColor(cpointoutside);
+  ctx->drawRect(VSTGUI::CRect(-1, -1, getWidth(), getHeight()), VSTGUI::kDrawFilled);
+				    
+  
   {
     // Premultiplied alpha? Probably doesn't matter since we'll just draw opaque pixels.
     // Premultiplied should be more efficient if we don't care.

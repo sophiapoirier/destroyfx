@@ -38,7 +38,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define TARGET_PLUGIN_IS_INSTRUMENT	0
 #define TARGET_PLUGIN_USES_DSPCORE	1
 // XXX yes but not yet
-#define TARGET_PLUGIN_HAS_GUI	0
+#define TARGET_PLUGIN_HAS_GUI	1
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"brokenfft-background.png"
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX PLUGIN_NAME_STRING DFX_BUNDLE_ID_SUFFIX
 #define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2020"

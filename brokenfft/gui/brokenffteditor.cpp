@@ -24,59 +24,88 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cassert>
 #include <sstream>
+#include <array>
 
 #include "brokenfft-base.h"
 #include "brokenffthelp.h"
 #include "brokenfftview.h"
 
+namespace {
+struct Param {
+  const int param;
+  const char *name;
+};
+}
+static constexpr std::array SLIDER_PARAMS = {
+  Param{P_DESTRUCT, "destruct"},
+  Param{P_PERTURB, "perturb"},
+  Param{P_QUANT, "quant"},
+  Param{P_ROTATE, "rotate"},
+  Param{P_BINQUANT, "binquant"},
+  Param{P_SPIKE, "spike"},
+  Param{P_SPIKEHOLD, "spikehold"},
+  Param{P_COMPRESS, "compress"},
+  Param{P_MUG, "mug"},
+  Param{P_ECHOMIX, "echomix"},
+  Param{P_ECHOTIME, "echotime"},
+  Param{P_ECHOMODF, "echomodf"},
+  Param{P_ECHOMODW, "echomodw"},
+  Param{P_ECHOFB, "echofb"},
+  Param{P_ECHOLOW, "echolow"},
+  Param{P_ECHOHI, "echohi"},
+  Param{P_POSTROT, "postrot"},
+  Param{P_LOWP, "lowp"},
+  Param{P_MOMENTS, "moments"},
+  Param{P_BRIDE, "bride"},
+  Param{P_BLOW, "blow"},
+  Param{P_CONV, "conv"},
+  Param{P_HARM, "harm"},
+  Param{P_ALOW, "alow"},
+  Param{P_NORM, "norm"},
+};
+constexpr int NUM_SLIDERS = SLIDER_PARAMS.size();
 
-constexpr size_t NUM_SLIDERS = 5;
 
 constexpr DGColor fontcolor_values(75, 151, 71);
+constexpr DGColor fontcolor_names = DGColor::kWhite;
 constexpr DGColor fontcolor_labels = DGColor::kWhite;
 constexpr float unused_control_alpha = 0.42f;
 
 constexpr float finetuneinc = 0.0001f;
 
-static constexpr std::initializer_list<char const * const> landmarks_labelstrings =
-  { "zero", "freq", "num", "span", "size", "level" };
-static constexpr std::initializer_list<char const * const> ops_labelstrings =
-  { "jump", "????", "????", "size", "size", "times", "times", " " };
-static constexpr std::initializer_list<char const * const> recreate_labelstrings =
-  { "dim", "dim", "exp", "????", "size", "o'lap", "mod", "dist" };
 
 
-
-//-----------------------------------------------------------------------------
 enum {
   // button sizes
   stdsize = 32,
 
-  // positions
+  // positions  
+  pos_brokenfftviewx = 20,
+  pos_brokenfftviewy = 14,
+  pos_brokenfftvieww = BrokenFFTView::WIDTH,
+  pos_brokenfftviewh = BrokenFFTView::HEIGHT,
+  
   pos_sliderX = 59,
-  pos_sliderY = 254,
+  pos_sliderY = pos_brokenfftviewy + BrokenFFTView::HEIGHT + 6,
   pos_sliderwidth = 196,
   pos_sliderheight = 16,
-  pos_sliderincX = 245,
-  pos_sliderincY = 35,
-
-  pos_sliderlabelX = 19,
-  pos_sliderlabelY = pos_sliderY - 1,
-  pos_sliderlabelwidth = 32,
-  pos_sliderlabelheight = 10,
 
   pos_finedownX = 27,
-  pos_finedownY = 263,
+  pos_finedownY = pos_sliderY + 5,
   pos_fineupX = pos_finedownX + 9,
   pos_fineupY = pos_finedownY,
-  pos_finebuttonincX = 240,
-  pos_finebuttonincY = pos_sliderincY,
 
+  // should match snoot px10 font height  
   pos_displayheight = 10,
   pos_displayX = 180,
   pos_displayY = pos_sliderY - pos_displayheight,
   pos_displaywidth = pos_sliderX + pos_sliderwidth - pos_displayX - 2,
 
+  pos_sliderlabelX = pos_sliderX,
+  pos_sliderlabelY = pos_sliderY - pos_displayheight,
+  pos_sliderlabelwidth = 128,
+  pos_sliderlabelheight = 10,
+  
   pos_windowshapemenuX = 19,
   pos_windowshapemenuY = 155,
   pos_windowsizemenuX = 258,
@@ -89,39 +118,34 @@ enum {
   pos_op1menuY = 208,
   pos_opmenuinc = 44,
 
-  pos_helpiconX = 19,
-  pos_helpiconY = 365,
+  pos_helpiconX = 365,
+  pos_helpiconY = pos_sliderY,
   pos_helpboxX = pos_helpiconX + 99,
   pos_helpboxY = pos_helpiconY + 1,
         
-  pos_midilearnbuttonX = 228,
-  pos_midilearnbuttonY = 324,
+  pos_midilearnbuttonX = 365,
+  pos_midilearnbuttonY = 424,
 
-  pos_midiresetbuttonX = 228,
-  pos_midiresetbuttonY = 343,
+  pos_midiresetbuttonX = 365,
+  pos_midiresetbuttonY = 443,
 
   pos_destroyfxlinkX = 395,
-  pos_destroyfxlinkY = 500,
+  pos_destroyfxlinkY = 600,
 
-  pos_brokenfftviewx = 20,
-  pos_brokenfftviewy = 14,
-  pos_brokenfftvieww = BrokenFFTViewData::samples,
-  pos_brokenfftviewh = 133
 };
 
 
 
 #pragma mark -
 
-//--------------------------------------------------------------------------
+
 BrokenFFTHelpBox::BrokenFFTHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
   : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
 			dfx::kFontSize_SnootPixel10, DGColor::kBlack, dfx::kFontName_SnootPixel10), 
-   helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
-{
+   helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY) {
 }
 
-//--------------------------------------------------------------------------
+
 void BrokenFFTHelpBox::draw(VSTGUI::CDrawContext * inContext) {
 
   if (itemNum < 0)
@@ -175,7 +199,7 @@ void BrokenFFTHelpBox::draw(VSTGUI::CDrawContext * inContext) {
   setDirty(false);
 }
 
-//--------------------------------------------------------------------------
+
 void BrokenFFTHelpBox::setDisplayItem(int inHelpCategory, int inItemNum) {
 
   bool const changed = ((helpCategory != inHelpCategory) || (itemNum != inItemNum));
@@ -190,14 +214,12 @@ void BrokenFFTHelpBox::setDisplayItem(int inHelpCategory, int inItemNum) {
 
 
 
-
-
 #pragma mark -
 
-//-----------------------------------------------------------------------------
+
 DFX_EDITOR_ENTRY(BrokenFFTEditor)
 
-//-----------------------------------------------------------------------------
+
 BrokenFFTEditor::BrokenFFTEditor(DGEditorListenerInstance inInstance)
  : DfxGuiEditor(inInstance),
    sliders(NUM_SLIDERS, nullptr),
@@ -206,13 +228,9 @@ BrokenFFTEditor::BrokenFFTEditor(DGEditorListenerInstance inInstance)
    fineupbuttons(NUM_SLIDERS, nullptr),
    genhelpitemcontrols(NUM_GEN_HELP_ITEMS, nullptr),
    g_helpicons(NUM_HELP_CATEGORIES) {
-
-  assert(landmarks_labelstrings.size() == NUM_POINTSTYLES);
-  assert(ops_labelstrings.size() == NUM_OPS);
-  assert(recreate_labelstrings.size() == NUM_INTERPSTYLES);
 }
 
-//-----------------------------------------------------------------------------
+
 long BrokenFFTEditor::OpenEditor() {
 
   /* ---load some images--- */
@@ -223,11 +241,13 @@ long BrokenFFTEditor::OpenEditor() {
   auto const g_finedownbutton = VSTGUI::makeOwned<DGImage>("fine-tune-down-button.png");
   auto const g_fineupbutton = VSTGUI::makeOwned<DGImage>("fine-tune-up-button.png");
   // option menus
+#if 0
   auto const g_windowshapemenu = VSTGUI::makeOwned<DGImage>("window-shape-button.png");
   auto const g_windowsizemenu = VSTGUI::makeOwned<DGImage>("window-size-button.png");
   auto const g_landmarksmenu = VSTGUI::makeOwned<DGImage>("landmarks-button.png");
   auto const g_opsmenu = VSTGUI::makeOwned<DGImage>("ops-button.png");
   auto const g_recreatemenu = VSTGUI::makeOwned<DGImage>("recreate-button.png");
+#endif
   // help displays
   auto const g_helpbackground = VSTGUI::makeOwned<DGImage>("help-background.png");
   g_helpicons[HELP_CATEGORY_GENERAL] = VSTGUI::makeOwned<DGImage>("help-general.png");
@@ -248,16 +268,18 @@ long BrokenFFTEditor::OpenEditor() {
   //--initialize the options menus----------------------------------------
 
   /* brokenfft view */
-  pos.set(pos_brokenfftviewx, pos_brokenfftviewy, pos_brokenfftvieww, pos_brokenfftviewh);
+  pos.set(pos_brokenfftviewx, pos_brokenfftviewy, BrokenFFTView::WIDTH, BrokenFFTView::HEIGHT);
   getFrame()->addView(new BrokenFFTView(pos));
 
+#if 0
   // window shape menu
   pos.set(pos_windowshapemenuX, pos_windowshapemenuY, stdsize, stdsize);
   emplaceControl<DGButton>(this, P_SHAPE, pos, g_windowshapemenu, 
                            DGButton::Mode::Increment, true)->setNumStates(NUM_WINDOWSHAPES);
   pos.set(51, 164, 119, 16);
   genhelpitemcontrols[HELP_WINDOWSHAPE] = emplaceControl<DGNullControl>(this, pos);
-
+ 
+  
   // window size menu
   pos.set(pos_windowsizemenuX, pos_windowsizemenuY, stdsize, stdsize);
   emplaceControl<DGButton>(this, P_BUFSIZE, pos, g_windowsizemenu, 
@@ -293,44 +315,22 @@ long BrokenFFTEditor::OpenEditor() {
   pos.offset(pos_opmenuinc, 0);
   emplaceControl<DGButton>(this, P_POINTOP3, pos, g_opsmenu, 
                            DGButton::Mode::Increment, true)->setNumStates(NUM_OPS);
-
+#endif
+  
   pos.set(378, 208, 118, 32);
   genhelpitemcontrols[HELP_OPS] = emplaceControl<DGNullControl>(this, pos);
 
 
   pos.set(pos_sliderX, pos_sliderY, g_sliderbackground->getWidth(), g_sliderbackground->getHeight());
+  
   DGRect fdpos(pos_finedownX, pos_finedownY, g_finedownbutton->getWidth(), g_finedownbutton->getHeight() / 2);
   DGRect fupos(pos_fineupX, pos_fineupY, g_fineupbutton->getWidth(), g_fineupbutton->getHeight() / 2);
   DGRect dpos(pos_displayX, pos_displayY, pos_displaywidth, pos_displayheight);
   DGRect lpos(pos_sliderlabelX, pos_sliderlabelY, pos_sliderlabelwidth, pos_sliderlabelheight);
-  for (size_t i=0; i < NUM_SLIDERS; i++) {
-    auto const baseparam = get_base_param_for_slider(i);
-    assert(dfxgui_IsValidParamID(baseparam));
-    auto labelstrings = &ops_labelstrings;
-    long xoff = 0, yoff = 0;
-    // how to generate landmarks
-    if (baseparam == P_POINTSTYLE) {
-      labelstrings = &landmarks_labelstrings;
-      yoff = pos_sliderincY;
-    }
-    // how to recreate the waveform
-    else if (baseparam == P_INTERPSTYLE) {
-      labelstrings = &recreate_labelstrings;
-      xoff = pos_sliderincX;
-      yoff = -pos_sliderincY;
-    }
-    // op 1
-    else if (baseparam == P_POINTOP1) {
-      yoff = pos_sliderincY;
-    }
-    // op 2
-    else if (baseparam == P_POINTOP2) {
-      yoff = pos_sliderincY;
-    }
-    // op 3
-    else {
-    }
-    auto const param = choose_multiparam(baseparam);
+
+  for (int i = 0; i < NUM_SLIDERS; i++) {
+    int param = SLIDER_PARAMS[i].param;
+    assert(dfxgui_IsValidParamID(param));
 
     constexpr long sliderRangeMargin = 1;
     sliders[i] = emplaceControl<DGSlider>(this, param, pos, dfx::kAxis_Horizontal, 
@@ -349,25 +349,32 @@ long BrokenFFTEditor::OpenEditor() {
     displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, brokenfftDisplayProc, 
                                                 nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_SnootPixel10, 
                                                 fontcolor_values, dfx::kFontName_SnootPixel10);
+
+    emplaceControl<DGStaticTextDisplay>(this, lpos, nullptr, dfx::TextAlignment::Left, dfx::kFontSize_SnootPixel10,
+					fontcolor_names, dfx::kFontName_SnootPixel10)->
+      setText(SLIDER_PARAMS[i].name);
+    
+#if 0
     // units label
     auto const label = emplaceControl<DGTextArrayDisplay>(this, baseparam, lpos, labelstrings->size(), 
                                                           dfx::TextAlignment::Center, nullptr, 
                                                           dfx::kFontSize_SnootPixel10, fontcolor_labels, 
                                                           dfx::kFontName_SnootPixel10);
+
     long j = 0;
     for (auto const& labelstring : *labelstrings) {
       label->setText(j, labelstring);
       j++;
     }
+#endif
 
+    const int xoff = 0;
+    const int yoff = 32;
     pos.offset(xoff, yoff);
     fdpos.offset(xoff, yoff);
     fupos.offset(xoff, yoff);
     dpos.offset(xoff, yoff);
     lpos.offset(xoff, yoff);
-
-    // HACK: shortcut to fix up the initial alpha state for any disabled slider controls
-    parameterChanged(baseparam);
   }
 
 
@@ -402,54 +409,21 @@ long BrokenFFTEditor::OpenEditor() {
 }
 
 
-//-----------------------------------------------------------------------------
+
 void BrokenFFTEditor::parameterChanged(long inParameterID) {
-
-  for (size_t i=0; i < NUM_SLIDERS; i++) {
-    auto const baseparam = get_base_param_for_slider(i);
-    if (inParameterID == baseparam) {
-      auto const newParameterID = choose_multiparam(inParameterID);
-
-      float const alpha = [newParameterID]() {
-        if (newParameterID == (P_INTERPARAMS + INTERP_REVERSI)) {
-          return unused_control_alpha;
-        }
-        for (auto const opparam : {OP_NONE, OP_HALF, OP_QUARTER}) {
-          switch (newParameterID - opparam) {
-            case P_OPPAR1S:
-            case P_OPPAR2S:
-            case P_OPPAR3S:
-              return unused_control_alpha;
-          }
-        }
-        return 1.0f;
-      }();
-
-      auto const update_control_parameter = [newParameterID, alpha](IDGControl* control) {
-        control->setParameterID(newParameterID);
-        control->setDrawAlpha(alpha);
-      };
-      update_control_parameter(sliders[i]);
-      update_control_parameter(displays[i]);
-      update_control_parameter(finedownbuttons[i]);
-      update_control_parameter(fineupbuttons[i]);
-    }
-  }
-
   if (GetParameterValueType(inParameterID) == DfxParam::ValueType::Int) {
     changehelp(getCurrentControl_mouseover());
   }
 }
 
-//-----------------------------------------------------------------------------
-void BrokenFFTEditor::mouseovercontrolchanged(IDGControl * currentControlUnderMouse) {
 
+void BrokenFFTEditor::mouseovercontrolchanged(IDGControl * currentControlUnderMouse) {
   changehelp(currentControlUnderMouse);
 }
 
-//-----------------------------------------------------------------------------
-void BrokenFFTEditor::changehelp(IDGControl * currentControlUnderMouse) {
 
+void BrokenFFTEditor::changehelp(IDGControl * currentControlUnderMouse) {
+#if 0
   auto const updatehelp = [this](int category, int item, long numitems) {
     if (helpicon) {
       helpicon->setNumStates(numitems);
@@ -493,23 +467,5 @@ void BrokenFFTEditor::changehelp(IDGControl * currentControlUnderMouse) {
   else {
     updatehelp(HELP_CATEGORY_GENERAL, HELP_EMPTY, NUM_GEN_HELP_ITEMS);
   }
-}
-
-//-----------------------------------------------------------------------------
-long BrokenFFTEditor::get_base_param_for_slider(size_t sliderIndex) noexcept {
-
-  switch (sliderIndex) {
-    case 0:
-      return P_POINTSTYLE;
-    case 1:
-      return P_INTERPSTYLE;
-    case 2:
-      return P_POINTOP1;
-    case 3:
-      return P_POINTOP2;
-    case 4:
-      return P_POINTOP3;
-    default:
-      return dfx::kParameterID_Invalid;
-  }
+#endif
 }

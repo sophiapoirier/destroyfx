@@ -49,9 +49,7 @@ VSTGUI_OBJECTS=$(VSTGUI)/vstgui_win32.o $(VSTGUI)/plugin-bindings/aeffguieditor.
 
 DFXGUI_OBJECTS=$(DFXGUI)/dfxguieditor.o $(DFXGUI)/dfxgui-fontfactory.o $(DFXGUI)/dfxguitextdisplay.o $(DFXGUI)/dfxguibutton.o $(DFXGUI)/dfxguislider.o $(DFXGUI)/dfxguidialog.o $(DFXGUI)/dfxguimisc.o $(DFXGUI)/dfxguicontrol.o  
 
-# XXX add back gui: 
-# ../gui/brokenffteditor.o 
-OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) $(FFTLIB_OBJECTS) $(RFFTW_OBJECTS) $(FFTW_OBJECTS) resources.o ../brokenfft.o ../gui/brokenfftview.o
+OBJECTS=$(DFXLIB_OBJECTS) $(VSTSDK_OBJECTS) $(VSTGUI_OBJECTS) $(DFXGUI_OBJECTS) $(FFTLIB_OBJECTS) $(RFFTW_OBJECTS) $(FFTW_OBJECTS) resources.o ../brokenfft.o ../gui/brokenfftview.o ../gui/brokenffteditor.o
 
 MINGWLIB=/usr/x86_64-w64-mingw32/sys-root/mingw/lib
 
