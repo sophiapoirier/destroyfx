@@ -760,7 +760,7 @@ protected:
 
 #if TARGET_PLUGIN_USES_DSPCORE
 	// Call this during initialization (e.g. at the end of the constructor of
-	// the derived class, giving the derived DSPCORE class as the template argument.
+	// the derived class), giving the derived DSPCORE class as the template argument.
 	template<class DSP> void initCores();
 #endif
 
