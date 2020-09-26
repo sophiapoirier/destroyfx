@@ -12,7 +12,7 @@ const float kTurntablistFontSize = 10.0f;
 //-----------------------------------------------------------------------------
 enum {
 	// positions
-	kPitchAmountFaderX = 31,
+	kPitchShiftFaderX = 31,
 	kScratchAmountFaderX = 166,
 	kFaderY = 249,
 	kFaderWidth = 22,
@@ -72,10 +72,11 @@ public:
 	virtual long open();
 
 	OSStatus HandleLoadButton();
-	ComponentResult LoadAudioFile(FSRef * inAudioFileRef);
+	ComponentResult LoadAudioFile(const FSRef & inAudioFileRef);
 	ComponentResult HandleAudioFileChange();
 	ComponentResult HandlePlayButton(bool inPlay);
 	ComponentResult HandlePlayChange();
+	void HandleMidiLearnButton(bool inLearn);
 	void HandleParameterChange(long inParameterID, float inValue);
 
 private:
@@ -98,10 +99,10 @@ private:
 
 
 //-----------------------------------------------------------------------------
-class TurntablistPitchSlider : public DGSlider
+class TurntablistScratchSlider : public DGSlider
 {
 public:
-	TurntablistPitchSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
+	TurntablistScratchSlider(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
 				DfxGuiSliderAxis inOrientation, DGImage * inHandleImage)
 	:   DGSlider(inOwnerEditor, inParamID, inRegion, inOrientation, inHandleImage, NULL)
 	{
@@ -114,6 +115,8 @@ public:
 		SInt32 min = GetControl32BitMinimum(carbonControl);
 		SInt32 max = GetControl32BitMaximum(carbonControl);
 		SetControl32BitValue(carbonControl, ((max - min) / 2) + min);
+
+		((ScratchaEditor*)getDfxGuiEditor())->HandleParameterChange(getParameterID(), 0.0f);
 	}
 };
 
@@ -140,13 +143,13 @@ void PlayButtonProc(long inValue, void * inTurntablistEditor)
 void MidiLearnButtonProc(long inValue, void * inTurntablistEditor)
 {
 	if (inTurntablistEditor != NULL)
-		((DfxGuiEditor*)inTurntablistEditor)->setmidilearning( (inValue == 0) ? false : true );
+		((ScratchaEditor*)inTurntablistEditor)->HandleMidiLearnButton( (inValue == 0) ? false : true );
 }
 
 //-----------------------------------------------------------------------------
 void HelpButtonProc(long inValue, void * inTurntablistEditor)
 {
-	if (inValue > 0)
+//	if (inValue > 0)
 		launch_documentation();
 }
 
@@ -155,6 +158,7 @@ void AboutButtonProc(long inValue, void * inTurntablistEditor)
 {
 	if (inValue > 0)
 	{
+		launch_url(DESTROYFX_URL);
 /*
 		CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 		if ( (pluginBundleRef != NULL) && (HIAboutBox != NULL) )
@@ -317,11 +321,11 @@ long ScratchaEditor::open()
 
 	pos.set(kColumn3, 241, gNoteModeButton->getWidth(), gNoteModeButton->getHeight()/2);
 	button = new DGButton(this, kNoteMode, &pos, gNoteModeButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("This toggles between \"reset\" and \"resume\" mode (resume means that notes trigger playback from where the audio sample last stopped, and reset means that playback starts from the beginning with each note)"));
+	button->setHelpText(CFSTR("This toggles between \"reset mode\" (notes restart playback from the beginning of the audio sample) and \"resume mode\" (notes trigger playback from where the audio sample last stopped)"));
 
 	pos.set(kColumn3, 300, gLoopButton->getWidth(), gLoopButton->getHeight()/2);
 	button = new DGButton(this, kLoop, &pos, gLoopButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("this switches looping of the audio sample playback on or off"));
+	button->setHelpText(CFSTR("if you enable this, the audio sample playback will continuously loop"));
 
 	pos.set(kColumn4, 123, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	button = new DGButton(this, kNotePowerTrack, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
@@ -333,18 +337,18 @@ long ScratchaEditor::open()
 
 	pos.set(kColumn3, 360, gScratchModeButton->getWidth(), gScratchModeButton->getHeight()/2);
 	button = new DGButton(this, kScratchMode, &pos, gScratchModeButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("this toggles between realtime mode and sequence mode, which affects the behavior of the Scratch Amount parameter"));
+	button->setHelpText(CFSTR("this toggles between scrub mode and spin mode, which affects the behavior of the Scratch Amount parameter"));
 
 	pos.set(kLoadButtonX, kLoadButtonY, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	button = new DGButton(this, &pos, gOnOffButton, 2, kDGButtonType_pushbutton);
 	button->setUserReleaseProcedure(LoadButtonProc, this);
 	button->setUseReleaseProcedureOnlyAtEndWithNoCancel(true);
-	button->setHelpText(CFSTR("push this button to find an audio file to load up onto the \"turntable\""));
+	button->setHelpText(CFSTR("find an audio file to load up onto the \"turntable\""));
 
 	pos.set(kPlayButtonX, kPlayButtonY, gOnOffButton_green->getWidth(), gOnOffButton_green->getHeight()/2);
 	playButton = new DGButton(this, &pos, gOnOffButton_green, 2, kDGButtonType_incbutton);
 	playButton->setUserProcedure(PlayButtonProc, this);
-	playButton->setHelpText(CFSTR("push this on or off to start or stop the audio sample playback"));
+	playButton->setHelpText(CFSTR("use this to start or stop the audio sample playback"));
 
 	pos.set(kMidiLearnX, kMidiLearnY, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	midiLearnButton = new DGButton(this, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
@@ -354,12 +358,21 @@ long ScratchaEditor::open()
 	pos.set(kAboutSplashX, kAboutSplashY, kAboutSplashWidth, kAboutSplashHeight);
 	button = new DGButton(this, &pos, NULL, 2, kDGButtonType_incbutton);
 	button->setUserProcedure(AboutButtonProc, this);
-//	button->setHelpText(CFSTR(""));
+	button->setHelpText(CFSTR("click here to go to the "DESTROYFX_NAME_STRING" web site"));
 
 	pos.set(kHelpX, kHelpY, gHelpButton->getWidth(), gHelpButton->getHeight()/2);
 	button = new DGButton(this, &pos, gHelpButton, 2, kDGButtonType_pushbutton);
-	button->setUserProcedure(HelpButtonProc, this);
-	button->setHelpText(CFSTR("push this button to view the full manual"));
+	button->setUserReleaseProcedure(HelpButtonProc, this);
+	button->setUseReleaseProcedureOnlyAtEndWithNoCancel(true);
+	button->setHelpText(CFSTR("view the full manual"));
+/*
+Rect buttonRect = pos.convertToRect();
+ControlButtonContentInfo buttonContentInfo;
+buttonContentInfo.contentType = kControlContentIconRef;
+OSStatus buttonStat = GetIconRef(kOnSystemDisk, kSystemIconsCreator, kHelpIcon, &(buttonContentInfo.u.iconRef));
+ControlRef buttonControl = NULL;
+buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSizeNormal, &buttonContentInfo, &buttonControl);
+*/
 
 
 	// knobs
@@ -367,12 +380,12 @@ long ScratchaEditor::open()
 
 	pos.set(26, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
 	knob = new DGAnimation(this, kPitchRange, &pos, gKnob, kKnobFrames);
-	knob->setHelpText(CFSTR("this controls the range of pitch adjustment values that the Pitch parameter offers"));
+	knob->setHelpText(CFSTR("this controls the range of pitch adjustment values that the Pitch Shift parameter offers"));
 
-	long scratchSpeedParam = (getparameter_i(kScratchMode) == kScratchMode_realtime) ? kScratchSpeed_realtime : kScratchSpeed_sequence;
+	long scratchSpeedParam = (getparameter_i(kScratchMode) == kScratchMode_scrub) ? kScratchSpeed_scrub : kScratchSpeed_spin;
 	pos.set(kColumn4, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
 	scratchSpeedKnob = new DGAnimation(this, scratchSpeedParam, &pos, gKnob, kKnobFrames);
-	scratchSpeedKnob->setHelpText(CFSTR("this sets the speed of the scratching effect that the Scratch Amount parameter produces (time in seconds for realtime mode, or playback rate for sequence mode)"));
+	scratchSpeedKnob->setHelpText(CFSTR("this sets the speed of the scratching effect that the Scratch Amount parameter produces"));
 
 	pos.set(kColumn2k, 124, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
 	knob = new DGAnimation(this, kSpinUpSpeed, &pos, gKnob, kKnobFrames);
@@ -390,16 +403,16 @@ long ScratchaEditor::open()
 	// sliders
 	DGSlider * slider;
 
-	// pitch amount
+	// pitch shift
 	pos.set(31, kFaderY, kFaderWidth, kFaderHeight);
-	slider = new DGSlider(this, kPitchAmount, &pos, kDGSliderAxis_vertical, gSliderHandle, NULL);
+	slider = new DGSlider(this, kPitchShift, &pos, kDGSliderAxis_vertical, gSliderHandle, NULL);
 //	slider->setDefaultValue(0.75f);
 	slider->setHelpText(CFSTR("changes the audio playback pitch between +/- the Pitch Range value"));
 
 	// scratch amount
 	pos.set(kScratchAmountFaderX, kFaderY, kFaderWidth, kFaderHeight);
-	slider = new TurntablistPitchSlider(this, kScratchAmount, &pos, kDGSliderAxis_vertical, gSliderHandle);
-	slider->setHelpText(CFSTR("This slider is what does the actual scratching.  In realtime mode, the slider represents time.  In sequence mode, the slider represents forward and backward speed."));
+	slider = new TurntablistScratchSlider(this, kScratchAmount, &pos, kDGSliderAxis_vertical, gSliderHandle);
+	slider->setHelpText(CFSTR("This slider is what does the actual scratching.  In scrub mode, the slider represents time.  In spin mode, the slider represents forward and backward speed."));
 
 
 	// text displays
@@ -471,9 +484,20 @@ long ScratchaEditor::open()
 #pragma mark -
 #pragma mark audio file chooser
 
+//-----------------------------------------------------------------------------
+CFStringRef CopyFileNameString(const FSRef & inFileRef)
+{
+	CFStringRef fileName = NULL;
+	OSStatus status = LSCopyDisplayNameForRef(&inFileRef, &fileName);
+	if (status == noErr)
+		return fileName;
+	else
+		return NULL;
+}
+
 #include "sndfile.h"	// for the libsndfile error code constants
 //-----------------------------------------------------------------------------
-OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode)
+OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode, const FSRef & inAudioFileRef)
 {
 	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 	if (pluginBundleRef == NULL)
@@ -483,9 +507,21 @@ OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode)
 	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
 	alertParams.movable = true;
 
-	CFStringRef titleString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The file could not be loaded."), 
+	CFStringRef titleString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The file \"%@\" could not be loaded."), 
 								CFSTR("Localizable"), pluginBundleRef, 
 								CFSTR("title for the dialog telling you that the audio file could not be loaded"));
+	CFStringRef audioFileName = CopyFileNameString(inAudioFileRef);
+	if (audioFileName != NULL)
+	{
+		CFStringRef titleStringWithFileName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, titleString, audioFileName);
+		if (titleStringWithFileName != NULL)
+		{
+			CFRelease(titleString);
+			titleString = titleStringWithFileName;
+		}
+		CFRelease(audioFileName);
+	}
+
 	CFStringRef messageString = CFCopyLocalizedStringFromTableInBundle(CFSTR("An error was encountered while trying to load audio data from the file.  %@"), 
 								CFSTR("Localizable"), pluginBundleRef, 
 								CFSTR("explanation for the dialog telling you that the audio file could not be loaded"));
@@ -516,7 +552,7 @@ OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode)
 		}
 	}
 
-	DialogRef alertDialog;
+	DialogRef alertDialog = NULL;
 	OSStatus status = CreateStandardAlert(kAlertNoteAlert, titleString, messageString, &alertParams, &alertDialog);
 	CFRelease(titleString);
 	CFRelease(messageString);
@@ -543,8 +579,8 @@ pascal void OpenAudioFileNavEventHandler(NavEventCallbackMessage inCallbackSelec
 
 		case kNavCBTerminate:
 			// XXX why does this crash Rax and SynthTest?
-//			if (dialog != NULL)
-//				NavDialogDispose(dialog);
+			if (dialog != NULL)
+				NavDialogDispose(dialog);
 			break;
 
 		// the user did something action-packed
@@ -581,9 +617,9 @@ pascal void OpenAudioFileNavEventHandler(NavEventCallbackMessage inCallbackSelec
 					{
 						if (editor != NULL)
 						{
-							status = editor->LoadAudioFile(&audioFileRef);
+							status = editor->LoadAudioFile(audioFileRef);
 							if (status != noErr)
-								NotifyAudioFileLoadError(status);
+								NotifyAudioFileLoadError(status, audioFileRef);
 						}
 						else
 							status = paramErr;
@@ -791,14 +827,11 @@ OSStatus ScratchaEditor::HandleLoadButton()
 }
 
 //-----------------------------------------------------------------------------
-ComponentResult ScratchaEditor::LoadAudioFile(FSRef * inAudioFileRef)
+ComponentResult ScratchaEditor::LoadAudioFile(const FSRef & inAudioFileRef)
 {
-	if (inAudioFileRef == NULL)
-		return paramErr;
-
 	ComponentResult result = AudioUnitSetProperty(GetEditAudioUnit(), kTurntablistProperty_AudioFile, 
 												kAudioUnitScope_Global, (AudioUnitElement)0, 
-												inAudioFileRef, sizeof(*inAudioFileRef));
+												&inAudioFileRef, sizeof(inAudioFileRef));
 
 	return result;
 }
@@ -829,17 +862,6 @@ CFStringRef CopyNameAndVersionString()
 }
 
 //-----------------------------------------------------------------------------
-CFStringRef CopyFileNameString(const FSRef & inFileRef)
-{
-	CFStringRef fileName = NULL;
-	OSStatus status = LSCopyDisplayNameForRef(&inFileRef, &fileName);
-	if (status == noErr)
-		return fileName;
-	else
-		return NULL;
-}
-
-//-----------------------------------------------------------------------------
 ComponentResult ScratchaEditor::HandleAudioFileChange()
 {
 	FSRef audioFileRef;
@@ -866,6 +888,12 @@ ComponentResult ScratchaEditor::HandleAudioFileChange()
 //-----------------------------------------------------------------------------
 ComponentResult ScratchaEditor::HandlePlayButton(bool inPlay)
 {
+	if (allParamsTextDisplay != NULL)
+	{
+		CFStringRef displayString = (inPlay) ? CFSTR("playback:  Start") : CFSTR("playback:  Stop");
+		allParamsTextDisplay->setCFText(displayString);
+	}
+
 	return AudioUnitSetProperty(GetEditAudioUnit(), kTurntablistProperty_Play, 
 				kAudioUnitScope_Global, (AudioUnitElement)0, &inPlay, sizeof(inPlay));
 }
@@ -899,6 +927,18 @@ void ScratchaEditor::SetFileNameDisplay(CFStringRef inDisplayText)
 
 	if (audioFileNameDisplay != NULL)
 		audioFileNameDisplay->setCFText(inDisplayText);
+}
+
+//-----------------------------------------------------------------------------
+void ScratchaEditor::HandleMidiLearnButton(bool inLearn)
+{
+	if (allParamsTextDisplay != NULL)
+	{
+		CFStringRef displayString = (inLearn) ? CFSTR("MIDI learn:  On") : CFSTR("MIDI learn:  Off");
+		allParamsTextDisplay->setCFText(displayString);
+	}
+
+	setmidilearning(inLearn);
 }
 
 
@@ -957,54 +997,45 @@ void ScratchaEditor::HandleParameterChange(long inParameterID, float inValue)
 
 	if ( (inParameterID == kScratchMode) && (scratchSpeedKnob != NULL) )
 	{
-		long newParamID = (value_i == kScratchMode_realtime) ? kScratchSpeed_realtime : kScratchSpeed_sequence;
+		long newParamID = (value_i == kScratchMode_scrub) ? kScratchSpeed_scrub : kScratchSpeed_spin;
 		scratchSpeedKnob->setParameterID(newParamID);
 	}
 
 	if (allParamsTextDisplay == NULL)
 		return;
 	DGControl * control = getCurrentControl_clicked();
+//	if ( (control == NULL) && (inParameterID == kScratchAmount) )
+//		goto processDisplayText;
 	if (control == NULL)
 		return;
-
-	CFStringRef universalDisplayText = NULL;
-	CFAllocatorRef cfAllocator = kCFAllocatorDefault;
-
-	if (control == playButton)
-	{
-		CFStringRef text = (value_i) ? CFSTR("playback:  Start") : CFSTR("playback:  Stop");
-		universalDisplayText = CFStringCreateCopy(cfAllocator, text);
-		goto setTheUniversalText;
-	}
-	else if (control == midiLearnButton)
-	{
-		CFStringRef text = (value_i) ? CFSTR("MIDI learn:  On") : CFSTR("MIDI learn:  Off");
-		universalDisplayText = CFStringCreateCopy(cfAllocator, text);
-		goto setTheUniversalText;
-	}
-
 	if ( !(control->isParameterAttached()) )
 		return;
 	if (control->getParameterID() != inParameterID)
 		return;
 
+//processDisplayText:
+	CFStringRef universalDisplayText = NULL;
+	CFAllocatorRef cfAllocator = kCFAllocatorDefault;
 	switch (inParameterID)
 	{
 		case kScratchAmount:
-			// float2string(m_fPlaySampleRate, text);
-			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%+.3f"), inValue);
+			{
+				// XXX float2string(m_fPlaySampleRate, text);
+				CFStringRef format = (inValue > 0.0f) ? CFSTR("%+.3f") : CFSTR("%.3f");
+				universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, format, inValue);
+			}
 			break;
-		case kScratchSpeed_realtime:
+		case kScratchSpeed_scrub:
 			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.3f  seconds"), inValue);
 			break;
-		case kScratchSpeed_sequence:
+		case kScratchSpeed_spin:
 			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.3f x"), inValue);
 			break;
 		case kSpinUpSpeed:
 		case kSpinDownSpeed:
 			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.4f"), inValue);
 			break;
-		case kPitchAmount:
+		case kPitchShift:
 			inValue = inValue * getparameter_f(kPitchRange)*0.01f / MAX_PITCH_RANGE;
 			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%+.1f %%"), inValue);
 			break;
@@ -1059,7 +1090,6 @@ void ScratchaEditor::HandleParameterChange(long inParameterID, float inValue)
 			break;
 	}
 
-setTheUniversalText:
 	if (universalDisplayText != NULL)
 	{
 		CFStringRef parameterNameString = CopyAUParameterName(GetEditAudioUnit(), inParameterID);

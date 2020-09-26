@@ -23,7 +23,7 @@ Copyright (C) 2004 Sophia Poirier
 // 1.2 TO DO:
 // 1) put midi learn back in - remove hardcoded midi cc's
 // 2) add settings (midi learn) saving/loading
-// 3) add sequence mode - sub mode 2
+// 3) add spin mode - sub mode 2
 
 
 #ifndef __SCRATCHA__
@@ -49,8 +49,8 @@ enum
 
 enum
 {
-	kScratchMode_realtime = 0,
-	kScratchMode_sequence,
+	kScratchMode_scrub = 0,
+	kScratchMode_spin,
 	kNumScratchModes
 };
 
@@ -68,8 +68,8 @@ enum
 	// scratching
 	kScratchAmount = 0,
 	kScratchMode,
-	kScratchSpeed_realtime,
-	kScratchSpeed_sequence,
+	kScratchSpeed_scrub,
+	kScratchSpeed_spin,
 
 	// turntable power
 	kPower,
@@ -78,7 +78,7 @@ enum
 	kNotePowerTrack,
 
 	// pitch
-	kPitchAmount,
+	kPitchShift,
 	kPitchRange,
 	kKeyTracking,
 
@@ -192,10 +192,10 @@ private:
 	float m_fScratchAmount;
 	float m_fLastScratchAmount;
 	bool m_bMute; // on/off
-	float m_fPitchAmount;
+	float m_fPitchShift;
 	long m_nDirection;
 //	float m_fScratchSpeed;
-	float m_fScratchSpeed_realtime, m_fScratchSpeed_sequence;
+	float m_fScratchSpeed_scrub, m_fScratchSpeed_spin;
 
 	// modifiers
 	long m_nNoteMode; // reset/resume
