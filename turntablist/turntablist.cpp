@@ -30,13 +30,12 @@ Copyright (C) 2004 Sophia Poirier
 
 const long SCRATCH_INTERVAL = 16; //24
 const long POWER_INTERVAL = 120;
-const double midiScaler = 1.0 / 127.0;
-const long ROOT_KEY = 60;
+const long ROOT_KEY = 60;   // middle C
 
-const float k_fScratchAmountMiddlePoint = 0.0f;
-const float k_fScratchAmountLaxRange = 0.000000001f;
-const float k_fScratchAmountMiddlePoint_UpperLimit = k_fScratchAmountMiddlePoint + k_fScratchAmountLaxRange;
-const float k_fScratchAmountMiddlePoint_LowerLimit = k_fScratchAmountMiddlePoint - k_fScratchAmountLaxRange;
+const double k_fScratchAmountMiddlePoint = 0.0;
+const double k_fScratchAmountLaxRange = 0.000000001;
+const double k_fScratchAmountMiddlePoint_UpperLimit = k_fScratchAmountMiddlePoint + k_fScratchAmountLaxRange;
+const double k_fScratchAmountMiddlePoint_LowerLimit = k_fScratchAmountMiddlePoint - k_fScratchAmountLaxRange;
 
 
 
@@ -57,9 +56,9 @@ DFX_ENTRY(Scratcha);
 Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, kNumParams, 0)
 {
-	initparameter_f(kPitchShift, "pitch shift", 0.0, 0.0, -50.0, 50.0, kDfxParamUnit_percent);   // (m_fPitchShift * 2.0f) * (m_fPitchRange * 100.0f)
-	initparameter_f(kPitchRange, "pitch range", MAX_PITCH_RANGE * 100.0, MAX_PITCH_RANGE * 100.0, 0.0, MAX_PITCH_RANGE * 100.0, kDfxParamUnit_percent);
-	initparameter_f(kVolume, "volume", 1.0, 0.5, 0.0, 1.0, kDfxParamUnit_lineargain);
+	initparameter_f(kPitchShift, "pitch shift", 0.0, 0.0, -100.0, 100.0, kDfxParamUnit_percent);
+	initparameter_f(kPitchRange, "pitch range", 12.0, 12.0, 0.0, 36.0, kDfxParamUnit_semitones);
+	initparameter_f(kVolume, "volume", 1.0, 0.5, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 
 	initparameter_b(kKeyTracking, "key track", false, false);
 	initparameter_b(kLoop, "loop", true, false);
@@ -70,8 +69,10 @@ Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //	initparameter_f(kScratchSpeed, "scratch speed", 0.33333333, 0.33333333, 0.0, 1.0, kDfxParamUnit_scalar);
 	initparameter_f(kScratchSpeed_scrub, "scratch speed (scrub mode)", 2.0, 2.0, 0.5, 5.0, kDfxParamUnit_seconds);
 	initparameter_f(kScratchSpeed_spin, "scratch speed (spin mode)", 3.0, 3.0, 1.0, 8.0, kDfxParamUnit_scalar);
-	initparameter_f(kSpinUpSpeed, "spin up speed", 1.0, 1.0, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
-	initparameter_f(kSpinDownSpeed, "spin down speed", 1.0, 1.0, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
+	initparameter_f(kSpinUpSpeed, "spin up speed", 0.063, 0.05, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
+	initparameter_f(kSpinDownSpeed, "spin down speed", 0.09, 0.05, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
+
+	initparameter_i(kRootKey, "root key", ROOT_KEY, ROOT_KEY, 0, 127, kDfxParamUnit_notes);
 
 	initparameter_indexed(kDirection, "playback direction", kScratchDirection_forward, kScratchDirection_forward, kNumScratchDirections);
 	setparametervaluestring(kDirection, kScratchDirection_forward, "forward");
@@ -89,9 +90,10 @@ Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //	initparameter_b(kPlay, "play", false, false);   // XXX should "play" be a parameter, in order to allow it to be automated?
 
 
-	addchannelconfig(0, 2);	// 0-in/2-out
+	addchannelconfig(0, 2);	// 0-in / 2-out
 
-	// SCRATCHA
+	m_AudioFileLock = new DfxMutex();
+
 	m_fBuffer = NULL;
 	m_fLeft = NULL;
 	m_fRight = NULL;
@@ -99,14 +101,15 @@ Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	m_nNumChannels = 0;
 	m_nNumSamples = 0;
 	m_nSampleRate = 0;
+	m_fSampleRate = 0.0;
 	
 
 	// modifiers
 	m_bPlayedReverse = false;
 
-	m_fPosition = 0.0f;
-	m_fPosOffset = 0.0f;
-	m_fNumSamples = 0.0f;
+	m_fPosition = 0.0;
+	m_fPosOffset = 0.0;
+	m_fNumSamples = 0.0;
 
 	m_fLastScratchAmount = getparameter_f(kScratchAmount);
 	m_nPitchBend = 0x2000;
@@ -114,37 +117,30 @@ Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	m_bScratching = false;
 	m_bWasScratching = false;
 	m_bPlayForward = true;
-	m_nScratchSubMode = 1; // speed based from scrub scratch mode
+	m_nScratchSubMode = 1;	// speed based from scrub scratch mode
 
 	m_nScratchDelay = 0;
 	m_bProcessing = false;
 
-	m_fPrevLeft = 0.0f;
-	m_fPrevRight = 0.0f;
+	m_nRootKey = ROOT_KEY;
 
-	setRootKey();
-
-	currentNote = (m_nRootKey - ROOT_KEY) + m_nRootKey;
+	currentNote = m_nRootKey;
 	currentVelocity = 127;
 
-	m_bDataReady = false;
+	m_bAudioFileHasBeenLoaded = false;
 	m_bScratchStop = false;
 
 	memset(&m_fsAudioFile, 0, sizeof(m_fsAudioFile));
 
-	m_fTemporary = 0.0f;
-
 	m_fScratchVolumeModifier = 0.0f;
 
 	m_bScratchAmountSet = false;
-	m_fDesiredScratchRate = 0.0f;
+	m_fDesiredScratchRate = 0.0;
 
 	m_nScratchInterval = 0;
 
-	m_fDesiredOffset = 0.0f;
-	m_fPrevDesiredOffset = 0.0f;
-	m_fDesiredPosition = 0.0f;
-	m_fPrevDesiredPosition = 0.0f;
+	m_fDesiredPosition = 0.0;
+	m_fPrevDesiredPosition = 0.0;
 
 	// XXX yah?  for now...
 	if (dfxsettings != NULL)
@@ -157,6 +153,10 @@ Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 Scratcha::~Scratcha()
 {
+	if (m_AudioFileLock != NULL)
+		delete m_AudioFileLock;
+	m_AudioFileLock = NULL;
+
 	if (m_fBuffer != NULL)
 		free(m_fBuffer);
 	m_fBuffer = NULL;
@@ -191,7 +191,7 @@ void Scratcha::processparameters()
 
 	m_fPitchShift = getparameter_scalar(kPitchShift);
 	m_fVolume = getparameter_f(kVolume);
-	m_fPitchRange = getparameter_scalar(kPitchRange);
+	m_fPitchRange = getparameter_f(kPitchRange);
 
 	m_fScratchAmount = getparameter_f(kScratchAmount);
 //	m_fScratchSpeed = getparameter_f(kScratchSpeed);
@@ -199,6 +199,8 @@ void Scratcha::processparameters()
 	m_fScratchSpeed_spin = getparameter_f(kScratchSpeed_spin);
 	m_fSpinUpSpeed = getparameter_f(kSpinUpSpeed);
 	m_fSpinDownSpeed = getparameter_f(kSpinDownSpeed);
+
+	m_nRootKey = getparameter_i(kRootKey);
 
 	m_nDirection = getparameter_i(kDirection);
 	m_nScratchMode = getparameter_i(kScratchMode);
@@ -230,7 +232,7 @@ void Scratcha::processparameters()
 		processScratch();
 	}
 
-	m_fNoteVolume = (float)(m_fVolume * (double)currentVelocity * midiScaler);
+	m_fNoteVolume = m_fVolume * (float)currentVelocity * MIDI_SCALAR;
 
 	if (getparameterchanged(kPitchRange))
 		processPitch();
@@ -501,6 +503,7 @@ ComponentResult Scratcha::GetParameterInfo(AudioUnitScope inScope,
 		case kPitchShift:
 		case kPitchRange:
 		case kKeyTracking:
+		case kRootKey:
 			outParameterInfo.clumpID = kTurntablistClump_pitch;
 			break;
 
@@ -773,19 +776,20 @@ status = AudioFileReadPackets(gSourceAudioFileID, false, &numBytesRead, NULL, 0,
 	fprintf(stderr, "     seekable:  %d\n", sfInfo.seekable);
 #endif
 
-	m_bDataReady = false;
 	sf_command(sndFile, SFC_SET_NORM_FLOAT, NULL, SF_TRUE) ;
+
+	m_AudioFileLock->grab();
 
 	m_nNumChannels = (int)sfInfo.channels;
 	m_nSampleRate = (int)sfInfo.samplerate;
 	m_nNumSamples  = (int)sfInfo.frames;
 
-	m_fPlaySampleRate = (float) m_nSampleRate;
-	m_fSampleRate = (float) m_nSampleRate;
+	m_fPlaySampleRate = (double) m_nSampleRate;
+	m_fSampleRate = (double) m_nSampleRate;
 	calculateSpinSpeeds();
-	m_fPosition = 0.0f;
-	m_fPosOffset = 0.0f;
-	m_fNumSamples = (float)m_nNumSamples;
+	m_fPosition = 0.0;
+	m_fPosOffset = 0.0;
+	m_fNumSamples = (double)m_nNumSamples;
 
 	if (m_fBuffer != NULL)
 	{
@@ -842,11 +846,13 @@ status = AudioFileReadPackets(gSourceAudioFileID, false, &numBytesRead, NULL, 0,
 	sndFile = NULL;
 #endif
 
+	processPitch();	// set up stuff
+
+	// ready to play
+	m_bAudioFileHasBeenLoaded = true;
+	m_AudioFileLock->release();
+
 	m_fsAudioFile = inFile;
-
-	processPitch(); // set up stuff
-	m_bDataReady = true;	// ready to play
-
 	PostPropertyChangeNotificationSafely(kTurntablistProperty_AudioFile);
 
 	return noErr;
@@ -855,10 +861,10 @@ status = AudioFileReadPackets(gSourceAudioFileID, false, &numBytesRead, NULL, 0,
 //-----------------------------------------------------------------------------------------
 void Scratcha::calculateSpinSpeeds()
 {
-//	m_fUsedSpinUpSpeed = (((exp(10.0*m_fSpinUpSpeed)-1.0)/(exp(10.0)-1.0)) * (double)m_nSampleRate) / (double)m_nPowerIntervalEnd;
-//	m_fUsedSpinDownSpeed = (((exp(10.0*m_fSpinDownSpeed)-1.0)/(exp(10.0)-1.0)) * (double)m_nSampleRate) / (double)m_nPowerIntervalEnd;
-	m_fUsedSpinUpSpeed = m_fSpinUpSpeed * (double)m_nSampleRate / (double)m_nPowerIntervalEnd;
-	m_fUsedSpinDownSpeed = m_fSpinDownSpeed * (double)m_nSampleRate / (double)m_nPowerIntervalEnd;
+//	m_fUsedSpinUpSpeed = (((exp(10.0*m_fSpinUpSpeed)-1.0)/(exp(10.0)-1.0)) * m_fSampleRate) / (double)m_nPowerIntervalEnd;
+//	m_fUsedSpinDownSpeed = (((exp(10.0*m_fSpinDownSpeed)-1.0)/(exp(10.0)-1.0)) * m_fSampleRate) / (double)m_nPowerIntervalEnd;
+	m_fUsedSpinUpSpeed = m_fSpinUpSpeed * m_fSampleRate / (double)m_nPowerIntervalEnd;
+	m_fUsedSpinDownSpeed = m_fSpinDownSpeed * m_fSampleRate / (double)m_nPowerIntervalEnd;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -909,7 +915,7 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 					// nudge samplerate
 					m_fPlaySampleRate += m_fTinyScratchAdjust;
 					// speed mode
-					if (m_fTinyScratchAdjust > 0.0f)	// positive
+					if (m_fTinyScratchAdjust > 0.0)	// positive
 					{
 						if (m_fPlaySampleRate > m_fDesiredScratchRate2)
 							m_fPlaySampleRate = m_fDesiredScratchRate2;
@@ -924,13 +930,13 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 		}
 		else // not scratching so just handle power
 		{
-			if (!m_bPower) // power off - spin down
+			if (!m_bPower)	// power off - spin down
 			{
-				if (m_fPlaySampleRate > 0.0f) // too high, spin down
+				if (m_fPlaySampleRate > 0.0)	// too high, spin down
 				{
-					m_fPlaySampleRate -= m_fUsedSpinDownSpeed; // adjust
-					if (m_fPlaySampleRate < 0.0f) // too low so we past it
-						m_fPlaySampleRate = 0.0f; // fix it
+					m_fPlaySampleRate -= m_fUsedSpinDownSpeed;	// adjust
+					if (m_fPlaySampleRate < 0.0)	// too low so we past it
+						m_fPlaySampleRate = 0.0;	// fix it
 				}
 			}
 			else // power on - spin up
@@ -958,42 +964,45 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 			// set pos offset based on current sample rate
 
 			// safety check
-			if (m_fPlaySampleRate <= 0.0f)
+			if (m_fPlaySampleRate <= 0.0)
 			{
-				m_fPlaySampleRate = 0.0f;
+				m_fPlaySampleRate = 0.0;
 				if (m_bNotePowerTrack)
 				{
 					if (!m_bScratching)
 					{
 						stopNote();
 						if (m_nNoteMode == kNoteMode_reset)
-							m_fPosition = 0.0f;
+							m_fPosition = 0.0;
 						m_bPlay = false;
 						m_bPlayedReverse = false;
 					}
 				}
 			}
 
-			m_fPosOffset = m_fPlaySampleRate / getsamplerate_f();   //m_fPlaySampleRate/m_fSampleRate;
+			m_fPosOffset = m_fPlaySampleRate / getsamplerate();   //m_fPlaySampleRate/m_fSampleRate;
 
-			if (m_bDataReady)
+			int lockResult = EAGAIN;
+			if (m_bAudioFileHasBeenLoaded)
+				lockResult = m_AudioFileLock->try_grab();
+			if (lockResult == 0)
 			{
 				if (noteIsOn)
 				{
 
 					if (!m_bPlayForward) // if play direction = reverse
 					{
-						if (m_fPlaySampleRate != 0.0f)
+						if (m_fPlaySampleRate != 0.0)
 						{
 							m_fPosition -= m_fPosOffset;
-							while (m_fPosition < 0) // was if
-							{									
-								if (!m_bLoop) // off
+							while (m_fPosition < 0.0)	// was if
+							{
+								if (!m_bLoop)	// off
 								{
 									if (m_bPlayedReverse)
 									{
 										stopNote();
-										m_fPosition = 0.0f;
+										m_fPosition = 0.0;
 										m_bPlayedReverse = false;
 
 									}
@@ -1018,12 +1027,12 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 #ifdef NO_INTERPOLATION
 						float fLeft = m_fLeft[(long)m_fPosition];
 						float fRight = m_fRight[(long)m_fPosition];
-						//no interpolation end
+						// no interpolation end
 #endif NO_INTERPOLATION
 
-						//linear interpolation start
+						// linear interpolation start
 #ifdef LINEAR_INTERPOLATION						
-						float floating_part = (float)(m_fPosition - (long)m_fPosition);
+						float floating_part = m_fPosition - (double)((long)m_fPosition);
 						long big_part1 = (long)m_fPosition;
 						long big_part2 = big_part1+1;
 						if (big_part2 > m_nNumSamples)
@@ -1031,12 +1040,12 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 						float fLeft = (floating_part * m_fLeft[big_part1]) + ((1.0f-floating_part) * m_fLeft[big_part2]);
 						float fRight = (floating_part * m_fRight[big_part1]) + ((1.0f-floating_part) * m_fRight[big_part2]);
 #endif LINEAR_INTERPOLATION
-						//linear interpolation end
+						// linear interpolation end
 
 #ifdef CUBIC_INTERPOLATION
-						//cubic interpolation start		
+						// cubic interpolation start
 						long inpos = (long) m_fPosition;
-						float finpos = (float)(m_fPosition - (long)(m_fPosition));
+						float finpos = m_fPosition - (double)inpos;
 						//float xm1, x0, x1, x2;
 						float a, b, c;
 						float xarray[4]; //0 = xm1, 1 = x0, 2 = x1, 3 = x2
@@ -1108,7 +1117,7 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 
 
 
-						if (m_fPlaySampleRate == 0.0f)
+						if (m_fPlaySampleRate == 0.0)
 						{
 							out1[currFrame] = out2[currFrame] = 0.0f;
 						}
@@ -1125,7 +1134,7 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 					if (m_bPlayForward)	// if play direction = forward
 					{
 						m_bPlayedReverse = false;
-						if (m_fPlaySampleRate != 0.0f)
+						if (m_fPlaySampleRate != 0.0)
 						{
 							m_fPosition += m_fPosOffset;
 
@@ -1146,7 +1155,8 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 				else
 					out1[currFrame] = out2[currFrame] = 0.0f;
 
-			}   // if (m_bDataReady)
+				m_AudioFileLock->release();
+			}   // if (lockResult == 0)
 			else
 				out1[currFrame] = out2[currFrame] = 0.0f;
 		}   // if (noteIsOn)
@@ -1166,7 +1176,7 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 void Scratcha::processScratchStop()
 {
 	m_nScratchDir = kScratchDirection_forward;
-	m_fPlaySampleRate = 0.0f;
+	m_fPlaySampleRate = 0.0;
 	if (!m_bScratchStop)
 	{
 		m_bScratchStop = true;
@@ -1177,10 +1187,10 @@ void Scratcha::processScratchStop()
 		// TO DO:
 		// 1. set the position to where it should be to adjust for errors
 
-		m_fPlaySampleRate = 0.0f;
-		m_fDesiredScratchRate = 0.0f;
-		m_fDesiredScratchRate2 = 0.0f;
-		m_fTinyScratchAdjust = 0.0f;
+		m_fPlaySampleRate = 0.0;
+		m_fDesiredScratchRate = 0.0;
+		m_fDesiredScratchRate2 = 0.0;
+		m_fTinyScratchAdjust = 0.0;
 		m_nScratchInterval = 0;
 	}
 
@@ -1191,7 +1201,7 @@ void Scratcha::processScratchStop()
 void Scratcha::processScratch(bool bSetParameter)
 {
 	int bLogSetParameter;
-	float fIntervalScaler = 0.0f;
+	double fIntervalScaler = 0.0;
 	
 	if (bSetParameter)
 		bLogSetParameter = 1;
@@ -1201,7 +1211,7 @@ void Scratcha::processScratch(bool bSetParameter)
 	if (m_bPitchBendSet)
 	{
 		// set scratch amount to scaled pitchbend
-		float fPitchBend = (float)m_nPitchBend / 16383.0f;	// was 16384
+		double fPitchBend = (double)m_nPitchBend / 16383.0;	// was 16384
 		// XXX todo fix pitchbend
 		/*
 <agoz4> i noticed that with pitch bend at maximum , value is not 1.000000
@@ -1210,10 +1220,10 @@ void Scratcha::processScratch(bool bSetParameter)
 <agoz4> ok, now that i moved the fader by mouse instead of using pitch wheel, 
 		it doesn't reset to full speed at half fader
 		*/
-		if (fPitchBend > 1.0f)
-			fPitchBend = 1.0f;
-		else if (fPitchBend < 0.0f)
-			fPitchBend = 0.0f;
+		if (fPitchBend > 1.0)
+			fPitchBend = 1.0;
+		else if (fPitchBend < 0.0)
+			fPitchBend = 0.0;
 		fPitchBend = expandparametervalue_index(kScratchAmount, fPitchBend);
 
 		if (bSetParameter)
@@ -1248,11 +1258,9 @@ void Scratcha::processScratch(bool bSetParameter)
 	// if gone below then set to target rate
 
 
-		// calculate hand size
-		float fScaler = m_fScratchSpeed_spin;
-
+		// m_fScratchSpeed_spin is the hand size
 		// set target sample rate
-		m_fDesiredScratchRate = fabsf(m_fScratchAmount * fScaler * m_fBasePitch);
+		m_fDesiredScratchRate = fabs(m_fScratchAmount * m_fScratchSpeed_spin * m_fBasePitch);
 		
 		if (m_nScratchMode == kScratchMode_spin)	// mode 2
 		{
@@ -1277,25 +1285,22 @@ void Scratcha::processScratch(bool bSetParameter)
 				{
 					m_bScratchStop = false;
 
-					fScaler = 1.0f;
-					fIntervalScaler = ((float)m_nScratchInterval/(float)m_nScratchIntervalEnd) + 1.0f;
+					fIntervalScaler = ((double)m_nScratchInterval / (double)m_nScratchIntervalEnd) + 1.0;
 
 // XXX m_fScratchAmount here is normalized?  should do contractparametervalue_index(kScratchAmount, m_fScratchAmount) ?
-					m_fDesiredPosition = m_fScratchCenter + (m_fScratchAmount * m_fScratchSpeed_scrub * m_nSampleRate);
+					m_fDesiredPosition = m_fScratchCenter + (m_fScratchAmount * m_fScratchSpeed_scrub * m_fSampleRate);
 
-					m_fTemporary = m_fDesiredPosition;
-
-					float fDesiredDelta;
+					double fDesiredDelta;
 					
 					if (m_nScratchInterval == 0)
 					{
 						m_fPosition = m_fDesiredPosition;
-						m_fTinyScratchAdjust = 0;
+						m_fTinyScratchAdjust = 0.0;
 					}
 					else
 					{
 						fDesiredDelta = (m_fDesiredPosition - m_fPosition); //m_nScratchInterval;
-						m_fTinyScratchAdjust = (fDesiredDelta - m_fPlaySampleRate)/m_nSampleRate;						
+						m_fTinyScratchAdjust = (fDesiredDelta - m_fPlaySampleRate) / m_fSampleRate;
 					}
 
 					
@@ -1308,9 +1313,9 @@ void Scratcha::processScratch(bool bSetParameter)
 					// do something with desireddelta and scratchinterval
 
 					// figure out direction
-					float fDiff = contractparametervalue_index(kScratchAmount, m_fScratchAmount) - contractparametervalue_index(kScratchAmount, m_fLastScratchAmount);
+					double fDiff = contractparametervalue_index(kScratchAmount, m_fScratchAmount) - contractparametervalue_index(kScratchAmount, m_fLastScratchAmount);
 
-					if (fDiff < 0.0f)
+					if (fDiff < 0.0)
 					{
 						fDiff = -fDiff;
 						m_nScratchDir = kScratchDirection_backward;
@@ -1318,7 +1323,7 @@ void Scratcha::processScratch(bool bSetParameter)
 					else
 						m_nScratchDir = kScratchDirection_forward;
 
-					m_fDesiredScratchRate2 = m_nSampleRate * m_fScratchSpeed_scrub * m_nScratchInterval;
+					m_fDesiredScratchRate2 = m_fSampleRate * m_fScratchSpeed_scrub * (double)m_nScratchInterval;
 
 					// figure out destination position and current position
 					// figure out distance between the two
@@ -1344,7 +1349,7 @@ void Scratcha::processScratch(bool bSetParameter)
 					
 
 
-					m_fDesiredScratchRate2 = (m_fDesiredScratchRate2+m_fPlaySampleRate)/2;
+					m_fDesiredScratchRate2 = (m_fDesiredScratchRate2 + m_fPlaySampleRate) * 0.5;
 
 					m_bScratchAmountSet = false;
 
@@ -1358,9 +1363,9 @@ void Scratcha::processScratch(bool bSetParameter)
 				{
 					m_bScratchStop = false;
 
-					float fDiff = contractparametervalue_index(kScratchAmount, m_fScratchAmount) - contractparametervalue_index(kScratchAmount, m_fLastScratchAmount);
+					double fDiff = contractparametervalue_index(kScratchAmount, m_fScratchAmount) - contractparametervalue_index(kScratchAmount, m_fLastScratchAmount);
 
-					if (fDiff < 0.0f)
+					if (fDiff < 0.0)
 					{
 						fDiff = -fDiff;
 						m_nScratchDir = kScratchDirection_backward;
@@ -1371,13 +1376,12 @@ void Scratcha::processScratch(bool bSetParameter)
 					}
 
 
-					//new
-					fScaler = 1.0f;
-					fIntervalScaler = ((float)m_nScratchInterval/(float)m_nScratchIntervalEnd) + 1.0f;
+					// new
+					fIntervalScaler = ((double)m_nScratchInterval / (double)m_nScratchIntervalEnd) + 1.0;
 
-					m_fDesiredScratchRate2 = (fDiff * (float)m_nSampleRate * m_fScratchSpeed_scrub*(float)SCRATCH_INTERVAL) / fIntervalScaler;
+					m_fDesiredScratchRate2 = (fDiff * m_fSampleRate * m_fScratchSpeed_scrub*(double)SCRATCH_INTERVAL) / fIntervalScaler;
 
-					m_fTinyScratchAdjust = (m_fDesiredScratchRate2 - m_fPlaySampleRate)/m_nScratchIntervalEnd; 
+					m_fTinyScratchAdjust = (m_fDesiredScratchRate2 - m_fPlaySampleRate)/(double)m_nScratchIntervalEnd; 
 
 
 					m_fPlaySampleRate += m_fTinyScratchAdjust;
@@ -1387,7 +1391,7 @@ void Scratcha::processScratch(bool bSetParameter)
 
 			m_fLastScratchAmount = m_fScratchAmount;
 		}
-		m_fScratchVolumeModifier = (m_fPlaySampleRate/m_fSampleRate);
+		m_fScratchVolumeModifier = m_fPlaySampleRate / m_fSampleRate;
 		if (m_fScratchVolumeModifier > 1.5f)
 			m_fScratchVolumeModifier = 1.5f;
 
@@ -1396,9 +1400,9 @@ void Scratcha::processScratch(bool bSetParameter)
 
 		if (m_bScratchStop)
 		{
-			m_fPlaySampleRate = 0.0f;
-			m_fDesiredScratchRate = 0.0f;
-			m_fDesiredScratchRate2 = 0.0f;
+			m_fPlaySampleRate = 0.0;
+			m_fDesiredScratchRate = 0.0;
+			m_fDesiredScratchRate2 = 0.0;
 		}
 
 		m_nScratchInterval = 0;
@@ -1420,23 +1424,22 @@ void Scratcha::processScratch(bool bSetParameter)
 //-----------------------------------------------------------------------------------------
 void Scratcha::processPitch()
 {
-	float temp = m_fDesiredPitch;
+	double temp = m_fDesiredPitch;
 	if (m_bKeyTracking)
 	{
 		int note2play = currentNote - m_nRootKey;
-		m_fBasePitch = ((double)m_nSampleRate) * pow(2.0, ((double)note2play)/12.0);
-		float pitchAdjust = m_fPitchShift * m_fPitchRange;
-		m_fDesiredPitch = m_fBasePitch + (m_fBasePitch * pitchAdjust);
+		m_fBasePitch = m_fSampleRate * pow(2.0, (double)note2play/12.0);
 	}
 	else
 	{
-		m_fBasePitch = (float)m_nSampleRate;
-		float pitchAdjust = m_fPitchShift * m_fPitchRange;
-		m_fDesiredPitch = m_fBasePitch + (m_fBasePitch * pitchAdjust);
+		m_fBasePitch = m_fSampleRate;
 	}
+	double fPitchAdjust = m_fPitchShift * m_fPitchRange;	// shift in semitones
+	fPitchAdjust = pow(2.0, fPitchAdjust/12.0); // shift as a scalar of the playback rate
+	m_fDesiredPitch = m_fBasePitch * fPitchAdjust;
 
 	if (temp == m_fPlaySampleRate)
-		m_fPlaySampleRate = m_fDesiredPitch; // do instant adjustment
+		m_fPlaySampleRate = m_fDesiredPitch;	// do instant adjustment
 }
 
 //-----------------------------------------------------------------------------------------
@@ -1489,7 +1492,7 @@ void Scratcha::processMidiEvent(long currEvent)
 		{
 			stopNote();
 			if (m_nNoteMode == kNoteMode_reset)
-				m_fPosition = 0.0f;
+				m_fPosition = 0.0;
 			m_bPlayedReverse = false;
 		}
 
@@ -1498,7 +1501,7 @@ void Scratcha::processMidiEvent(long currEvent)
 		{
 			long param = event.byte1 - 64;
 			long new_data = FixMidiData(param, event.byte2);
-			float value = ((float)new_data)/127.f;
+			float value = (float)new_data * MIDI_SCALAR;
 			setparameter_f(param, value);
 			postupdate_parameter(param);
 		}
@@ -1515,16 +1518,16 @@ void Scratcha::processMidiEvent(long currEvent)
 		m_nPitchBend = pb14bit;
 		m_bPitchBendSet = true;
 
-		float fPitchBend;
+		double fPitchBend;
 		if (m_nPitchBend == 0x2000)
-			fPitchBend = 0.5f;
+			fPitchBend = 0.5;
 		else
 		{
-			fPitchBend = (float)m_nPitchBend / 16383.0f;
-			if (fPitchBend > 1.0f)
-				fPitchBend = 1.0f;
-			else if (fPitchBend < 0.0f)
-				fPitchBend = 0.0f;	
+			fPitchBend = (double)m_nPitchBend / 16383.0;
+			if (fPitchBend > 1.0)
+				fPitchBend = 1.0;
+			else if (fPitchBend < 0.0)
+				fPitchBend = 0.0;
 		}
 	
 		fPitchBend = expandparametervalue_index(kScratchAmount, fPitchBend);
@@ -1532,12 +1535,6 @@ void Scratcha::processMidiEvent(long currEvent)
 		// XXX post notification?
 	}
 #endif
-}
-
-//-----------------------------------------------------------------------------------------
-void Scratcha::setRootKey()
-{
-	m_nRootKey = (int)(0.5f * 127.0f);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -1560,7 +1557,7 @@ void Scratcha::noteOn(long note, long velocity, long delta)
 			noteIsOn = false;
 			m_bPlay = false;
 			if (m_nNoteMode == kNoteMode_reset)
-				m_fPosition = 0.0f;
+				m_fPosition = 0.0;
 			m_bPlayedReverse = false;
 		}
 	}
@@ -1570,9 +1567,9 @@ void Scratcha::noteOn(long note, long velocity, long delta)
 		m_bPlay = true;
 
 		if (m_nNoteMode == kNoteMode_reset)
-			m_fPosition = 0.0f;
+			m_fPosition = 0.0;
 		// calculate note volume
-		m_fNoteVolume = (float)(m_fVolume * (double)currentVelocity * midiScaler);
+		m_fNoteVolume = m_fVolume * (float)currentVelocity * MIDI_SCALAR;
 		//44100*(2^(0/12)) = C-3
 		processPitch();
 
@@ -1600,15 +1597,15 @@ void Scratcha::stopNote()
 void Scratcha::PlayNote(bool value)
 {
 	if (!value)
-		noteOn(currentNote, 0, 0); // note off
+		noteOn(currentNote, 0, 0);	// note off
 	else
 	{
-		//currentNote - m_nRootKey = ?
+		// currentNote - m_nRootKey = ?
 		// - 64       - 0          = -64
 		// 64          - 64         = 0;
 		// 190           - 127        = 63;
-		currentNote = (m_nRootKey - ROOT_KEY) + m_nRootKey;
-		noteOn(currentNote, 127, 0); // note on
+		currentNote = m_nRootKey;
+		noteOn(currentNote, 127, 0);	// note on
 	}
 }
 

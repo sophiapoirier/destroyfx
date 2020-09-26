@@ -76,7 +76,7 @@
 			isa = PBXFileReference;
 			lastKnownFileType = text.plist.strings;
 			name = English;
-			path = English.lproj/InfoPlist.strings;
+			path = en.lproj/InfoPlist.strings;
 			refType = 4;
 			sourceTree = "<group>";
 		};
@@ -96,6 +96,7 @@
 				4932F60F0680136D006A9591,
 				4932F60E0680136D006A9591,
 				4932F60B0680136D006A9591,
+				4974CB31068B2407001404D7,
 			);
 			isa = PBXGroup;
 			name = Turntablist;
@@ -741,6 +742,8 @@
 				4932F4CB06801180006A9591,
 				4932F4CA06801180006A9591,
 				4932F4CD06801180006A9591,
+				49C61DD0069051CC001947C2,
+				49C61DD206905393001947C2,
 				4932F79A0680E859006A9591,
 				4932F7990680E859006A9591,
 				4918B60C0680FC9C0034CE15,
@@ -1379,7 +1382,7 @@
 			isa = PBXFileReference;
 			lastKnownFileType = text.plist.strings;
 			name = English;
-			path = English.lproj/Localizable.strings;
+			path = en.lproj/Localizable.strings;
 			refType = 4;
 			sourceTree = "<group>";
 		};
@@ -1397,17 +1400,10 @@
 				4949EC0A0682B26000EE0B89,
 				4949EC090682B26000EE0B89,
 				4949EC0C0682B26000EE0B89,
-				4949EC070682B26000EE0B89,
+				49E8B0540689D3D800EE145C,
 			);
 			isa = PBXGroup;
 			path = documentation;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		4949EC070682B26000EE0B89 = {
-			isa = PBXFileReference;
-			lastKnownFileType = image.jpeg;
-			path = libsndfile.jpg;
 			refType = 4;
 			sourceTree = "<group>";
 		};
@@ -1454,12 +1450,6 @@
 			refType = 4;
 			sourceTree = "<group>";
 		};
-		4949EC0E0682B26000EE0B89 = {
-			fileRef = 4949EC070682B26000EE0B89;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
 		4949EC0F0682B26000EE0B89 = {
 			fileRef = 4949EC080682B26000EE0B89;
 			isa = PBXBuildFile;
@@ -1496,6 +1486,14 @@
 			settings = {
 			};
 		};
+		4974CB31068B2407001404D7 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = text;
+			path = todo.txt;
+			refType = 4;
+			sourceTree = "<group>";
+		};
 		498765290684FE69005D81FC = {
 			isa = PBXFileReference;
 			lastKnownFileType = image.png;
@@ -1505,6 +1503,47 @@
 		};
 		4987652A0684FE69005D81FC = {
 			fileRef = 498765290684FE69005D81FC;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		49C61DD0069051CC001947C2 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = dfxmutex.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		49C61DD1069051CC001947C2 = {
+			fileRef = 49C61DD0069051CC001947C2;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		49C61DD206905393001947C2 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			path = dfxmutex.cpp;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		49C61DD306905393001947C2 = {
+			fileRef = 49C61DD206905393001947C2;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		49E8B0540689D3D800EE145C = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.gif;
+			path = "turntablist-helper.gif";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		49E8B0550689D3D800EE145C = {
+			fileRef = 49E8B0540689D3D800EE145C;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -1654,6 +1693,7 @@
 				4932F7960680CB69006A9591,
 				4932F79C0680E859006A9591,
 				4918B60E0680FC9C0034CE15,
+				49C61DD1069051CC001947C2,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1670,7 +1710,6 @@
 				4932F6280680163F006A9591,
 				4932F6290680163F006A9591,
 				4932F62B0680163F006A9591,
-				4949EC0E0682B26000EE0B89,
 				4949EC0F0682B26000EE0B89,
 				4949EC100682B26000EE0B89,
 				4949EC110682B26000EE0B89,
@@ -1680,6 +1719,7 @@
 				494990000684B6A400499D06,
 				4916867F0684F09200B50765,
 				4987652A0684FE69005D81FC,
+				49E8B0550689D3D800EE145C,
 			);
 			isa = PBXResourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1723,6 +1763,7 @@
 				4932F7950680CB69006A9591,
 				4932F79B0680E859006A9591,
 				4918B60D0680FC9C0034CE15,
+				49C61DD306905393001947C2,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

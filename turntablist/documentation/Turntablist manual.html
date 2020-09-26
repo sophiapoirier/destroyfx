@@ -5,7 +5,7 @@
 
 <head>
 
-<title>Turntablist Documentation</title>
+<title>Destroy FX: Turntablist</title>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 
 <style type="text/css">
@@ -13,14 +13,14 @@
 	{
 		color: black ;
 		background: white ;
-		font-family: Verdana, Arial, Helvetica, sans-serif ;
+		font-family: "Lucida Grande", Verdana, Arial, Helvetica, sans-serif ;
 		font-size: 100% ;
-		margin: 1.0em 15% ;
+		margin: 1.0em 9% ;
 	}
 	A:link { color: black }
 	A:hover { color: #FFFF00 }
-	A:visited { color: black }
-	A:active { color: black }
+	A:visited { color: #303030 }
+	A:active { color: red }
 	P.newstitle, 
 	H2.newstitle
 	{
@@ -31,10 +31,17 @@
 		padding-top: 1.0em ;
 		padding-bottom: 1.0em ;
 		margin: 0px ;
+		font-weight: bold ;
 	}
 	P.link
 	{
 		text-align: center ;
+	}
+	P.footer
+	{
+		font-size: smaller ;
+		text-align: center ;
+		color: #606060 ;
 	}
 	DIV.box
 	{
@@ -47,23 +54,54 @@
 	{
 		padding: 1.0em ;
 	}
+	TABLE
+	{
+		border-collapse: collapse ;
+	}
 	TABLE.innerbox
 	{
 		width: 100% ;
-		border-width: 3px ;
-		border-style: ridge ;
+		border-width: 1px ;
+		border-style: solid ;
+		border-color: black ;
+	}
+	TABLE.invisible
+	{
+		width: 100% ;
+		border-width: 0px ;
 	}
 	TD.lighter
 	{
-		background: #CCCCCC ;
+		background: #FFFFB0 ;
 	}
-	TD.darker
+	TD.parameter, TD.parameter2
 	{
-		background: #999999 ;
+		border-width: 1px ;
+		border-style: solid ;
+		border-color: #303030 ;
+		background-color: #FFFFB0 ;
+	}
+	TD.parameter2
+	{
+		background-color: #FFFFD0 ;
+	}
+	UL.parameter
+	{
+		list-style-type: none ;
+	}
+	LI
+	{
+		padding-bottom: 0.5em ;
+	}
+	OL
+	{
+		 list-style-type: decimal ;
 	}
 	IMG
 	{
-		border: 0px ;
+		border: 1px ;
+		border-style: solid ;
+		border-color: black ;
 	}
 </style>
 
@@ -82,19 +120,28 @@
 <div class=innerbox>
 <table>
 <tr>
-<td>
-<img src="turntablist.gif" width=222 height=482 alt="Turntablist">
-</td>
+
+<td><img src="turntablist.gif" width=220 height=480 alt="Turntablist"></td>
+
 <td>&nbsp;</td>
+
 <td valign=top>
 <p><strong>Welcome to Turntablist 1.1</strong></p>
+
 <p> 
-Turntablist is an Audio Unit instrument that can load an audio sample and perform turntable style effects on it. You can scratch, change pitch, and even spin the audio up and down just like on a real turntable.
+Turntablist is an Audio Unit instrument plugin that can load an audio sample and perform turntable style effects on it. You can scratch, change pitch, and even spin the audio up and down, just like with a real turntable.
 </p>
+
 <p>&nbsp;</p>
-<p>Coding by: <a href="http://bioroid.com/">Martin Robaszewski</a></p>
-<p>Graphics by: Alterex</p>
-<p>Audio Unit and 1.1+ updates by: <a href="http://destroyfx.org/">Sophia Poirier</a></p>
+
+<p>1.0 coding by: <a href="http://bioroid.com/">Martin Robaszewski</a></p>
+<p>1.1+ coding by: <a href="http://destroyfx.org/">Sophia Poirier</a></p>
+<p>graphics by: Alterex</p>
+
+<p>&nbsp;</p>
+
+<p><b>Destroy FX</b> &rarr; <a href="http://destroyfx.org/">http://destroyfx.org/</a></p>
+
 </td>
 </tr>
 </table>
@@ -106,19 +153,91 @@ Turntablist is an Audio Unit instrument that can load an audio sample and perfor
 
 <div class=box>
 
+<p class="newstitle">Using Turntablist</p>
+
+<div class=innerbox>
+
+<table class=innerbox cellpadding=10>
+<tr> 
+<td class=lighter> 
+<p><b>Getting results:</b></p>
+<ol>
+<li>Load the plugin in an Audio Unit instrument host.
+<li>Open an audio file.
+<li>Play a MIDI note <em>or</em> press the Play button.
+</ol>
+<p><b>Scratching:</b></p>
+<p>Use the mouse to quickly move the Scratch Amount slider back and forth while the sample is playing. You can also turn the Power button off, and turn Play on and scratch without the sample having to play on its own.  You can also use the pitch bend on your MIDI controller.</p>
+<p><b>Spin down effect:</b></p>
+<p>Turn Note-Power Track off, Power on and put Spin Down to around 50%.  While Play button is on, turn the Power off.</p>
+<p><b>Power effects:</b></p>
+<p>Set the Spin Up Speed and Spin Down Speed to different values.  Turn Note-Power Track on and turn Power on. Hit the Play button on and off and notice the sampling spinning up, playing and spinning down. This is a nice effect to use on beat loops.</p>
+</td>
+</tr>
+</table>
+
+<table class=innerbox cellpadding=10 style="margin-top: 1.0em">
+<tr> 
+<td class=lighter> 
+<p><b>A note about performance:</b></p>
+<p>The scrub scratch mode will vary in response depending on your host software.  The scratching is speed based (not position based) and will lose tracking after a while.  How quickly it loses tracking depends on the host.</p>
+</td>
+</tr>
+</table>
+
+</div>
+
+</div>
+
+
+
+<div class=box>
+
 <p class="newstitle">Power controls</p>
 
 <div class=innerbox>
-<table class=innerbox border="2" cellpadding="0" cellspacing="0">
+<table class=invisible cellpadding=0>
 <tr>
-<td><img src="turntablist-power.gif" width=222 height=166 alt="power controls section"></td>
-<td class=lighter valign=top> 
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-<tr><td class=darker><b>OPEN FILE</b> - use this to find an audio file to load up onto the &quot;turntable&quot;</td></tr>
-<tr><td class=lighter><b>POWER</b> - switches the turntable power on or off</td></tr>
-<tr><td class=lighter><b>SPIN UP SPEED</b> - how quickly the audio playback &quot;spins up&quot; when the turntable power turns on</td></tr>
-<tr><td class=darker><b>SPIN DOWN SPEED</b> - how quickly the audio playback &quot;spins down&quot; when the turntable power turns off</td></tr>
-<tr><td class=darker><b>NOTE-POWER TRACK</b> - enabling this will cause note-on and note-off messages to be mapped turntable power on and off for an interesting effect</td></tr>
+<td valign=top><img src="turntablist-power.gif" width=220 height=164 alt="power controls section"></td>
+<td>&nbsp;</td>
+<td valign=top>
+<table class=invisible>
+
+<tr><td class=parameter>
+<b>Open File</b>
+<ul class=parameter>
+<li>use this to find an audio file to load up onto the &quot;turntable&quot;
+</ul>
+</td></tr>
+
+<tr><td class=parameter2>
+<b>Power</b>
+<ul class=parameter>
+<li>switches the turntable power on or off
+</ul>
+</td></tr>
+
+<tr><td class=parameter>
+<b>Spin Up Speed</b>
+<ul class=parameter>
+<li>how quickly the audio playback &quot;spins up&quot; when the turntable power turns on
+</ul>
+</td></tr>
+
+<tr><td class=parameter2>
+<b>Spin Down Speed</b>
+<ul class=parameter>
+<li>how quickly the audio playback &quot;spins down&quot; when the turntable power turns off
+</ul>
+</td></tr>
+
+<tr><td class=parameter>
+<b>Note-Power Track</b>
+<ul class=parameter>
+<li>enabling this will cause note-on and note-off messages to be mapped to turntable power on and off for an interesting effect
+</ul>
+</td></tr>
+
 </table>
 </td>
 </tr>
@@ -134,24 +253,69 @@ Turntablist is an Audio Unit instrument that can load an audio sample and perfor
 <p class=newstitle>Play controls</p>
 
 <div class=innerbox>
-<table width="100%" border="2" cellspacing="0" cellpadding="0">
+<table class=invisible cellspacing=0>
 <tr> 
-<td><img src="turntablist-play.gif" width=90 height=292 alt="play controls section"></td>
-<td class=lighter valign=top> 
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-<tr><td class=darker><b>VOLUME</b> - controls the overall volume of the audio output</td></tr>
-<tr><td class=lighter><b>MUTE</b> - mutes the audio output</td></tr>
-<tr><td class=darker><b>PLAY</b> - push this on or off to start or stop the audio sample playback</td></tr>
-<tr><td class=lighter><b>NOTE MODE</b> - toggles between &quot;reset&quot; and &quot;resume&quot; mode.  When a new note begins, in resume mode, the audio sample will continue playing from where it last stopped, and in reset mode, the audio sample will start playing from the beginning.</td></tr>
-<tr><td class=darker><b>DIRECTION</b> - changes playback direction of the audio sample, regular or reverse</td></tr>
-<tr><td class=lighter><b>LOOP</b> - if you enable this, the audio sample playback will continuously loop</td></tr>
-<tr><td class=darker><b>KEY TRACK</b> - switches key tracking on or off.  When key tracking is on, the pitch and speed of the audio sample playback are transposed in relation to the pitch of the note.  When key tracking is off, note pitches are ignored.</td></tr>
-<tr><td class=lighter><b>SCRATCH MODE</b> - toggles between scrub mode and spin mode, which affects the behavior of the Scratch Amount parameter</td></tr>
-<tr><td class=darker><b>MIDI LEARN</b> - switches MIDI learn mode on or off
-<p>When MIDI learn is on, you can click on a parameter control to enable that parameter as the &quot;learner.&quot;  Then the next MIDI CC message that is received will be mapped to that parameter.  From then on, you can control that parameter with MIDI CC messages of that type.</p>
-<p>These MIDI CC &rarr; parameter assignments are saved with the plugin's settings.</p>
+
+<td valign=top><img src="turntablist-play.gif" width=90 height=236 alt="play controls section"></td>
+
+<td>&nbsp;</td>
+
+<td valign=top> 
+<table class=invisible>
+
+<tr><td class=parameter>
+<b>Volume</b>
+<ul class=parameter>
+<li>controls the overall volume of the audio output
+</ul>
 </td></tr>
-<tr><td class=lighter><b>HELP</b> - push this to view the manual that you are reading right now</td></tr>
+
+<tr><td class=parameter2>
+<b>Mute</b>
+<ul class=parameter>
+<li>mutes the audio output
+</ul>
+</td></tr>
+
+<tr><td class=parameter>
+<b>Play</b>
+<ul class=parameter>
+<li>push this on or off to start or stop the audio sample playback
+</ul>
+</td></tr>
+
+<tr><td class=parameter2>
+<b>Note Mode</b>
+<ul class=parameter>
+<li>toggles between &quot;reset&quot; and &quot;resume&quot; mode
+<li>In resume mode, new notes cause the audio sample to continue playing from where it last stopped.
+<li>In reset mode, new notes cause the audio sample to restart playback from the beginning.
+</ul>
+</td></tr>
+
+<tr><td class=parameter>
+<b>Direction</b>
+<ul class=parameter>
+<li>changes playback direction of the audio sample, regular or reverse
+</ul>
+</td></tr>
+
+<tr><td class=parameter2>
+<b>Loop</b>
+<ul class=parameter>
+<li>if you enable this, the audio sample playback will continuously loop
+</ul>
+</td></tr>
+
+<tr><td class=parameter>
+<b>Key Track</b>
+<ul class=parameter>
+<li>switches key tracking on or off
+<li>When key tracking is on, the pitch and speed of the audio sample playback are transposed in relation to the pitch of the note.  The center key (no transposition) defaults to middle C, but can be changed via the Root Key parameter.
+<li>When key tracking is off, note pitches are ignored.
+</ul>
+</td></tr>
+
 </table>
 </td>
 </tr>
@@ -167,29 +331,65 @@ Turntablist is an Audio Unit instrument that can load an audio sample and perfor
 <p class="newstitle">Pitch and Scratch controls</p>
 
 <div class=innerbox>
-<table width="100%" border="2" cellspacing="0" cellpadding="0">
-<tr> 
-<td><img src="turntablist-pitch.gif" width=52 height=291 alt="pitch and scratch controls section"></td>
-<td class=lighter valign=top>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-<tr><td class=darker><b>PITCH RANGE</b> - this controls the range of pitch adjustment values that the Pitch Shift parameter offers</td></tr>
-<tr><td class=lighter><b>PITCH SHIFT</b> - changes the audio playback pitch between +/- the Pitch Range value</td></tr>
-<tr><td class=darker><b>SCRATCH SPEED</b> - sets the speed of the scratching effect that the Scratch Amount parameter produces
-<p>In scrub mode, the range of Scratch Speed represents time from 0.5 to 5 seconds.</p>
-<p>In spin mode, the range of Scratch Speed represents the maximum rate from 1 to 8 times the playback rate.</p>
-</td>
-</tr>
-<tr> 
-<td class=lighter>
-<b>SCRATCH AMOUNT</b> - This slider is what does the actual scratching.
-<p>In scrub mode, the entire range of the slider represents time (set by the Scratch Speed knob).</p>
-<p>In spin mode, the top and bottom of the slider represent the maximum forward and backward speed (set by the Scratch Speed knob) while the center is 0.</p>
-<p>If the Power and Play buttons are on and the Scratch Amount slider is in the center, scratching is disabled.</p>
-</td>
-</tr>
+<table class=invisible cellspacing=0>
+<tr>
+
+<td valign=top><img src="turntablist-pitch.gif" width=52 height=291 alt="pitch controls section"></td>
+
+<td>&nbsp;</td>
+
+<td valign=top>
+<table class=invisible>
+
+<tr><td class=parameter>
+<b>Pitch Range</b>
+<ul class=parameter>
+<li>this controls the range of pitch adjustment values that the Pitch Shift parameter offers
+</ul>
+</td></tr>
+
+<tr><td class=parameter2>
+<b>Pitch Shift</b>
+<ul class=parameter>
+<li>changes the audio playback pitch between +/- the Pitch Range value
+</ul>
+</td></tr>
+
+<tr><td class=parameter>
+<b>Scratch Mode</b>
+<ul class=parameter>
+<li>toggles between &quot;scrub&quot; mode and &quot;spin&quot; mode, which affects the behavior of the Scratch Amount parameter
+<li>Scrub mode is like when you move a record back and forth quickly with your hand.
+<li>Spin mode is like when you speed up or slow down the record spinning with your hand.
+</ul>
+</td></tr>
+
+<tr><td class=parameter2>
+<b>Scratch Speed</b>
+<ul class=parameter>
+<li>sets the speed of the scratching effect that the Scratch Amount parameter produces
+<li>In scrub mode, the range of Scratch Speed represents time from 0.5 to 5 seconds.
+<li>In spin mode, the range of Scratch Speed represents the maximum rate from 1 to 8 times the playback rate.
+</ul>
+</td></tr>
+
+<tr><td class=parameter>
+<b>Scratch Amount</b>
+<ul class=parameter>
+<li>This slider is what does the actual scratching.
+<li>In scrub mode, the entire range of the slider represents time (set by the Scratch Speed parameter).
+<li>In spin mode, the top and bottom of the slider represent the maximum forward and backward speed (set by the Scratch Speed parameter) while the center is 0.
+<li>If the Power and Play buttons are on and the Scratch Amount slider is in the center, scratching is disabled and the audio sample just plays back normally.
+</ul>
+</td></tr>
+
 </table>
 </td>
-<td><img src="turntablist-scratch.gif" width=53 height=291 alt="scratch controls section"></td>
+
+<td>&nbsp;</td>
+
+<td valign=top><img src="turntablist-scratch.gif" width=97 height=290 alt="scratch controls section"></td>
+
 </tr>
 </table>
 </div>
@@ -200,30 +400,38 @@ Turntablist is an Audio Unit instrument that can load an audio sample and perfor
 
 <div class=box>
 
-<p class="newstitle">Using Turntablist</p>
+<p class="newstitle">Helper controls</p>
 
 <div class=innerbox>
-<table class=innerbox cellpadding="10" cellspacing="0">
-<tr> 
-<td class=lighter> 
-<p><b>Getting results:</b></p>
-<p>Load the plugin in an Audio Unit host and open an audio file.</p>
-<p><b>Scratching:</b></p>
-<p>Use the mouse to quickly move the Scratch Amount slider back and forth while the sample is playing. You can also turn the Power button off, and turn Play on and scratch without the sample having to play on its own.  You can also use the pitch bend on your midi controller.  Scratch mode 1 (off) is scrub, while scratch mode 2 (on) is the &quot;spin&quot; mode.</p>
-<p><b>Spin down effect:</b></p>
-<p>Turn NPTrack off, Power on and put Spin Down to around 50%.  While Play button is on, turn the Power off.</p>
-<p><b>Power effects:</b></p>
-<p>Set the Spin Up and Spin Down speed knobs to diff values.  Turn NPTrack on and turn Power on. Hit the Play button on and off and notice the sampling spinning up, playing and spinning down. This is a nice effect to use on beat loops.</p>
-</td>
-</tr>
+<table class=invisible cellspacing=0>
+<tr>
+
+<td valign=top><img src="turntablist-helper.gif" width=90 height=56 alt="helper controls section"></td>
+
+<td>&nbsp;</td>
+
+<td valign=top>
+<table class=invisible>
+
+<tr><td class=parameter>
+<b>MIDI Learn</b>
+<ul class=parameter>
+<li>switches MIDI Learn mode on or off
+<li>When MIDI Learn is on, you can click on a parameter control to enable that parameter as the &quot;learner.&quot;  Then the next MIDI CC message that is received will be mapped to that parameter.  From then on, you can control that parameter with MIDI CC messages of that type.
+<li>These MIDI CC &rarr; parameter assignments are saved with the plugin's settings.
+</ul>
+</td></tr>
+
+<tr><td class=parameter2>
+<b>Help</b>
+<ul class=parameter>
+<li>push this to view the manual that you are reading right now
+</ul>
+</td></tr>
+
 </table>
-<p>&nbsp;</p>
-<table class=innerbox cellpadding="10" cellspacing="0">
-<tr> 
-<td class=lighter> 
-<p><b>A note about performance:</b></p>
-<p>The scrub scratch mode will vary in response depending on your host. Some hosts send event updates to the plugin at a faster rate than others. Also the scratching is speed based  (not position based) and will lose tracking after a while. How quickly it loses tracking depends on the host.</p>
 </td>
+
 </tr>
 </table>
 </div>
@@ -243,41 +451,64 @@ Please use the <a href="http://destroyfx.org/#email">contact form</a> to report 
 </p>
 <p>&nbsp;</p>
 <p><strong>Version history:</strong></p>
+
+<table class=innerbox><tr><td class=lighter>
 <p><strong>1.1.0 - <em>June 18-22, 2004</em></strong></p>
 <ul>
-<li>First Audio Unit release, by Sophia Poirier.  Bioroid stopped development and released the source code, and Sophia decided to tinker with it.
+<li>First Audio Unit release, by Sophia Poirier of Destroy FX.  Bioroid stopped development and released the source code, and Sophia decided to tinker with it.
 <li>now released under the terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>
-<li>fixed:  numerous bugs in the audio file handling, which previously would not work in many cases (if files were located on non-boot volumes, if file paths were longer than 1024 bytes, if file names had Unicode characters, if file names were longer than 31 characters, etc.)
+<li>fixed numerous bugs in the audio file handling, which previously would not work in many cases (if files were located on non-boot volumes, if file paths were longer than 1024 bytes, if file names had Unicode characters, if file names were longer than 31 characters, etc.)
 <li>fixed a bug in the resampling interpolation algorithm so that the sound quality is much better now
 <li>no longer requires that you install the libsndfile.dylib library
-<li>added &quot;MIDI learn&quot; feature
+<li>added &quot;MIDI Learn&quot; feature
 <li>the manual is now built into the plugin
-<li>each control has pop-up help that appears when you hold you mouse over a control
+<li>each control has pop-up help that appears when you hold your mouse over a control
+<li>fixed a bug where the Pitch Shift parameter value used was miscalculated and smaller than what you saw (and I also vastly increased the Pitch Range maximum)
+<li>the audio file loading and audio rendering are now synchronized so as to avoid misbehavior (like crashing)
+<li>fixed rounding/resolution errors in the varispeed playback
+<li>fixed the root key off-by-2 bug and made the root key a controllable parameter
 </ul>
+</td></tr></table>
+
+<table class=innerbox><tr><td>
 <p><strong>1.0.4 - <em>March 1, 2004</em></strong></p>
 <ul>
 <li>fixed:  pitch resetting bug when playing long samples
 <li>fixed:  libsndfile loading issue in Plogue Bidule on Mac OS X
 </ul>
+</td></tr></table>
+
+<table class=innerbox><tr><td class=lighter>
 <p><strong>1.0.3 - <em>February 14, 2004</em></strong></p>
 <ul>
 <li>fixed:  libsndfile loading issue on Mac OS X
 </ul>
+</td></tr></table>
+
+<table class=innerbox><tr><td>
 <p><strong>1.0.3 <em>September 29, 2003</em></strong></p>
 <ul>
-<li>fixed: audio stopping when scratching with NPTRACK enabled
+<li>fixed: audio stopping when scratching with Note-Power Track enabled
 <li>fixed: filename display issues
 </ul>
+</td></tr></table>
+
+<table class=innerbox><tr><td class=lighter>
 <p><strong>1.0.2 - <em>September 19, 2003</em></strong></p>
 <ul>
 <li>beta release, first Mach-O build for Mac OS X
 <li>updated VST SDK &amp; VSTGUI to version 2.3
 <li>updated libsndfile to version 1.0.5
 </ul>
+</td></tr></table>
+
+<table class=innerbox><tr><td>
 <p><strong>1.0.1 - <em>April 10, 2003</em></strong></p>
 <ul>
 <li>initial release
 </ul>
+</td></tr></table>
+
 </div>
 
 </div>
@@ -289,7 +520,7 @@ Please use the <a href="http://destroyfx.org/#email">contact form</a> to report 
 <p class="newstitle">Thanks to:</p>
 
 <div class=innerbox>
-<table class=innerbox cellspacing="0" cellpadding="0">
+<table class=innerbox>
 <tr> 
 <td class=lighter>
 <p class=link><a href="http://bioroid.com/">bioroid media development</a> (R.I.P.)</p>
@@ -297,7 +528,7 @@ Please use the <a href="http://destroyfx.org/#email">contact form</a> to report 
 <p class=link><a href="http://fxpansion.com/">FXpansion</a></p>
 <p class=link><a href="http://www.funkelectric.com/">FunkElectric</a></p>
 <p class=link>#<a href="http://musicdsp.org/">musicdsp</a></p>
-<p class=link><a href="http://www.mega-nerd.com/libsndfile/"><img src="libsndfile.jpg" width=367 height=98 alt="libsndfile"></a></p>
+<p class=link><a href="http://www.mega-nerd.com/libsndfile/">libsndfile</a></p>
 <p class=link><a href="http://www.kvr-vst.com/">K-v-R</a></p>
 </td>
 </tr>
@@ -305,6 +536,15 @@ Please use the <a href="http://destroyfx.org/#email">contact form</a> to report 
 </div>
 
 </div>
+
+
+<p class=footer>
+Turntablist is Copyright &copy; 2004 bioroid media development and Copyright &copy; 2004 Sophia Poirier
+</p>
+
+<p class=footer>
+This software comes with absolutely no warranty, express or implied.  Use at your own risk.  See the file &quot;license.rtf&quot; for full license terms.
+</p>
 
 
 

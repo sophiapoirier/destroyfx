@@ -30,13 +30,8 @@ Copyright (C) 2004 Sophia Poirier
 #define __SCRATCHA__
 
 #include "dfxplugin.h"
+#include "dfxmutex.h"
 
-
-
-/////////////////////////////
-// DEFINES
-
-const float MAX_PITCH_RANGE = 0.5f; // 50%
 
 
 //////////////////////////////////////
@@ -81,6 +76,7 @@ enum
 	kPitchShift,
 	kPitchRange,
 	kKeyTracking,
+	kRootKey,
 
 	// audio sample playback
 	kLoop,
@@ -149,7 +145,6 @@ private:
 	void	processScratchStop();
 	void	processPitch();
 	void	processDirection();
-	void	setRootKey();
 	void	calculateSpinSpeeds();
 
 	void noteOn(long note, long velocity, long delta);
@@ -160,8 +155,6 @@ private:
 	OSStatus PostPropertyChangeNotificationSafely(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
 
-
-	float fScaler;
 
 	long currentNote;
 	long currentVelocity;
@@ -179,64 +172,60 @@ private:
 	int m_nNumChannels;	// 1=mono, 2=stereo, 0=yomama
 	int m_nNumSamples;	// number of samples per channel
 	int m_nSampleRate;
-	float m_fSampleRate;
+	double m_fSampleRate;
 
 	// optional
-	float m_fFreq;
-	float m_fBasePitch;
-	float m_fPlaySampleRate;
+	double m_fBasePitch;
+	double m_fPlaySampleRate;
 
 	// switches
-	bool m_bPower; // on/off
-	bool m_bNotePowerTrack; // scratch mode on/off
-	float m_fScratchAmount;
-	float m_fLastScratchAmount;
-	bool m_bMute; // on/off
-	float m_fPitchShift;
+	bool m_bPower;	// on/off
+	bool m_bNotePowerTrack;	// scratch mode on/off
+	double m_fScratchAmount;
+	double m_fLastScratchAmount;
+	bool m_bMute;	// on/off
+	double m_fPitchShift;
 	long m_nDirection;
 //	float m_fScratchSpeed;
-	float m_fScratchSpeed_scrub, m_fScratchSpeed_spin;
+	double m_fScratchSpeed_scrub, m_fScratchSpeed_spin;
 
 	// modifiers
-	long m_nNoteMode; // reset/resume
-	bool m_bLoop; // on/off
-	float m_fPitchRange;
-	float m_fSpinDownSpeed; // ADD ME
-	float m_fSpinUpSpeed;  // ADD ME
-	float m_bKeyTracking;  // ADD ME
-	float m_fRootKey;  // ADD ME
+	long m_nNoteMode;	// reset/resume
+	bool m_bLoop;	// on/off
+	double m_fPitchRange;
+	double m_fSpinDownSpeed;
+	double m_fSpinUpSpeed;
+	bool m_bKeyTracking;
 	float m_fVolume;
 
 
-	float m_fUsedSpinDownSpeed;
-	float m_fUsedSpinUpSpeed; 
+	double m_fUsedSpinDownSpeed;
+	double m_fUsedSpinUpSpeed;
 
 	bool m_bPlayedReverse;
 	long m_nRootKey;
 
 	double m_fPosition;
-	float m_fPosOffset;
-	float m_fNumSamples;
+	double m_fPosOffset;
+	double m_fNumSamples;
 
 	bool m_bPlay;
 
 	bool m_bPitchBendSet;
 	int m_nPitchBend;
 	int m_nScratchDir;
-	float m_fScratchRate;
 	bool m_bScratching;
 	bool m_bWasScratching;
 	int m_nWasScratchingDir;
-	float m_fPreScratchRate;
 	int m_nScratchDelay;
 
-	float m_fDesiredPitch;
+	double m_fDesiredPitch;
 
 	long m_nScratchMode;
 	long m_nScratchSubMode;
 
 
-	float m_fNoteVolume;  // recalculated on note on and volume changes
+	float m_fNoteVolume;	// recalculated on note on and volume changes
 
 	int m_nPowerIntervalEnd;
 
@@ -245,40 +234,32 @@ private:
 
 	bool m_bProcessing;
 
-	float m_fPrevLeft;
-	float m_fPrevRight;
-
-	float m_fDesiredScratchRate;
+	double m_fDesiredScratchRate;
 	int m_nScratchInterval;
 	int m_nScratchIntervalEnd;
 	int m_nScratchIntervalEndBase;
 	bool m_bScratchStop;
 
-	int m_nScratchCenter; // center position where scratching starts
-	float m_fScratchCenter;
-	float m_fDesiredOffset;
-	float m_fDesiredPosition;
-	float m_fPrevDesiredOffset;
-	float m_fPrevDesiredPosition;
-	float m_fPrevDesiredScratchRate2;
-
-	float m_fTemporary;
-
-	float m_fPrevScratchAmount;
+	int m_nScratchCenter;	// center position where scratching starts
+	double m_fScratchCenter;
+	double m_fDesiredPosition;
+	double m_fPrevDesiredPosition;
 
 	float m_fScratchVolumeModifier;
 
 	bool m_bScratchAmountSet;
 
-	float m_fDesiredScratchRate2;
+	double m_fDesiredScratchRate2;
 
-	bool	m_bDataReady;
+	bool m_bAudioFileHasBeenLoaded;
 
-	float m_fTinyScratchAdjust;
+	double m_fTinyScratchAdjust;
 
 	// new power variables to do sample accurate powering up/down
-	float m_fDesiredPowerRate;
-	float m_fTinyPowerAdjust;
+//	double m_fDesiredPowerRate;
+//	double m_fTinyPowerAdjust;
+
+	DfxMutex * m_AudioFileLock;
 };
 
 

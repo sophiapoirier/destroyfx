@@ -5,6 +5,8 @@
 #include "dfxguibutton.h"
 #include "dfxguidisplay.h"
 
+#include <c.h>  // for sizeofA
+
 
 
 const float kTurntablistFontSize = 10.0f;
@@ -74,6 +76,7 @@ public:
 	OSStatus HandleLoadButton();
 	ComponentResult LoadAudioFile(const FSRef & inAudioFileRef);
 	ComponentResult HandleAudioFileChange();
+	void FileOpenDialogFinished();
 	ComponentResult HandlePlayButton(bool inPlay);
 	ComponentResult HandlePlayChange();
 	void HandleMidiLearnButton(bool inLearn);
@@ -94,6 +97,8 @@ private:
 
 	AUParameterListenerRef parameterListener;
 	AudioUnitParameter allParamsAUP;
+
+	NavDialogRef audioFileOpenDialog;
 };
 
 
@@ -247,6 +252,8 @@ ScratchaEditor::ScratchaEditor(AudioUnitCarbonView inInstance)
 
 	propertyEventListener = NULL;
 	parameterListener = NULL;
+
+	audioFileOpenDialog = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -280,6 +287,10 @@ ScratchaEditor::~ScratchaEditor()
 		AUListenerDispose(parameterListener);
 	}
 	parameterListener = NULL;
+
+	if (audioFileOpenDialog != NULL)
+		NavDialogDispose(audioFileOpenDialog);
+	audioFileOpenDialog = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -302,6 +313,8 @@ long ScratchaEditor::open()
 
 	// create controls
 	DGRect pos;
+	CFStringRef helpText;
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 
 
 	// buttons
@@ -309,62 +322,102 @@ long ScratchaEditor::open()
 
 	pos.set(kColumn1, 123, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	button = new DGButton(this, kPower, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("this switches the turntable power on or off"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this switches the turntable power on or off"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Power parameter"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn3, 182, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	button = new DGButton(this, kMute, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("this mutes the audio output"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this mutes the audio output"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Mute parameter"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn2, 300, gDirectionButton->getWidth(), gDirectionButton->getHeight()/2);
 	button = new DGButton(this, kDirection, &pos, gDirectionButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("this changes playback direction of the audio sample, regular or reverse"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this changes playback direction of the audio sample, regular or reverse"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Direction parameter"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn3, 241, gNoteModeButton->getWidth(), gNoteModeButton->getHeight()/2);
 	button = new DGButton(this, kNoteMode, &pos, gNoteModeButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("This toggles between \"reset mode\" (notes restart playback from the beginning of the audio sample) and \"resume mode\" (notes trigger playback from where the audio sample last stopped)"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("This toggles between \"reset mode\" (notes restart playback from the beginning of the audio sample) and \"resume mode\" (notes trigger playback from where the audio sample last stopped)"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Note Mode parameter"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn3, 300, gLoopButton->getWidth(), gLoopButton->getHeight()/2);
 	button = new DGButton(this, kLoop, &pos, gLoopButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("if you enable this, the audio sample playback will continuously loop"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("if you enable this, the audio sample playback will continuously loop"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Loop parameter"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn4, 123, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	button = new DGButton(this, kNotePowerTrack, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("enabling this will cause note-on and note-off messages to be mapped turntable power on and off for an interesting effect"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("enabling this will cause note-on and note-off messages to be mapped to turntable power on and off for an interesting effect"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Note-Power Track parameter"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn2, 360, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	button = new DGButton(this, kKeyTracking, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("this switches key tracking on or off (key tracking means that the pitch and speed of the audio sample playback are transposed in relation to the pitch of the MIDI note)"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this switches key tracking on or off (key tracking means that the pitch and speed of the audio sample playback are transposed in relation to the pitch of the MIDI note)"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Key Tracking parameter"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn3, 360, gScratchModeButton->getWidth(), gScratchModeButton->getHeight()/2);
 	button = new DGButton(this, kScratchMode, &pos, gScratchModeButton, 2, kDGButtonType_incbutton);
-	button->setHelpText(CFSTR("this toggles between scrub mode and spin mode, which affects the behavior of the Scratch Amount parameter"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this toggles between scrub mode and spin mode, which affects the behavior of the Scratch Amount parameter"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Mode parameter"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kLoadButtonX, kLoadButtonY, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	button = new DGButton(this, &pos, gOnOffButton, 2, kDGButtonType_pushbutton);
 	button->setUserReleaseProcedure(LoadButtonProc, this);
 	button->setUseReleaseProcedureOnlyAtEndWithNoCancel(true);
-	button->setHelpText(CFSTR("find an audio file to load up onto the \"turntable\""));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("find an audio file to load up onto the \"turntable\""), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Open Audio File button"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kPlayButtonX, kPlayButtonY, gOnOffButton_green->getWidth(), gOnOffButton_green->getHeight()/2);
 	playButton = new DGButton(this, &pos, gOnOffButton_green, 2, kDGButtonType_incbutton);
 	playButton->setUserProcedure(PlayButtonProc, this);
-	playButton->setHelpText(CFSTR("use this to start or stop the audio sample playback"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("use this to start or stop the audio sample playback"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Play button"));
+	playButton->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kMidiLearnX, kMidiLearnY, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
 	midiLearnButton = new DGButton(this, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
 	midiLearnButton->setUserProcedure(MidiLearnButtonProc, this);
-	midiLearnButton->setHelpText(CFSTR("This switches MIDI learn mode on or off.  When MIDI learn is on, you can click on a parameter control to enable that parameter as the \"learner\" for incoming MIDI CC messages."));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("This switches MIDI learn mode on or off.  When MIDI learn is on, you can click on a parameter control to enable that parameter as the \"learner\" for incoming MIDI CC messages."), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the MIDI Learn button"));
+	midiLearnButton->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kAboutSplashX, kAboutSplashY, kAboutSplashWidth, kAboutSplashHeight);
 	button = new DGButton(this, &pos, NULL, 2, kDGButtonType_incbutton);
 	button->setUserProcedure(AboutButtonProc, this);
-	button->setHelpText(CFSTR("click here to go to the "DESTROYFX_NAME_STRING" web site"));
+//	button->setHelpText(CFSTR("click here to go to the "DESTROYFX_NAME_STRING" web site"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("click here to go to the Destroy FX web site"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the About hot-spot"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kHelpX, kHelpY, gHelpButton->getWidth(), gHelpButton->getHeight()/2);
 	button = new DGButton(this, &pos, gHelpButton, 2, kDGButtonType_pushbutton);
 	button->setUserReleaseProcedure(HelpButtonProc, this);
 	button->setUseReleaseProcedureOnlyAtEndWithNoCancel(true);
-	button->setHelpText(CFSTR("view the full manual"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("view the full manual"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the help button"));
+	button->setHelpText(helpText);
+	CFRelease(helpText);
 /*
 Rect buttonRect = pos.convertToRect();
 ControlButtonContentInfo buttonContentInfo;
@@ -380,24 +433,39 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 
 	pos.set(26, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
 	knob = new DGAnimation(this, kPitchRange, &pos, gKnob, kKnobFrames);
-	knob->setHelpText(CFSTR("this controls the range of pitch adjustment values that the Pitch Shift parameter offers"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the range of pitch adjustment values that the Pitch Shift parameter offers"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Pitch Range parameter"));
+	knob->setHelpText(helpText);
+	CFRelease(helpText);
 
 	long scratchSpeedParam = (getparameter_i(kScratchMode) == kScratchMode_scrub) ? kScratchSpeed_scrub : kScratchSpeed_spin;
 	pos.set(kColumn4, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
 	scratchSpeedKnob = new DGAnimation(this, scratchSpeedParam, &pos, gKnob, kKnobFrames);
-	scratchSpeedKnob->setHelpText(CFSTR("this sets the speed of the scratching effect that the Scratch Amount parameter produces"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this sets the speed of the scratching effect that the Scratch Amount parameter produces"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Speed parameter"));
+	scratchSpeedKnob->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn2k, 124, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
 	knob = new DGAnimation(this, kSpinUpSpeed, &pos, gKnob, kKnobFrames);
-	knob->setHelpText(CFSTR("this controls how quickly the audio playback \"spins up\" when the turntable power turns on"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls how quickly the audio playback \"spins up\" when the turntable power turns on"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Spin Up Speed parameter"));
+	knob->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(116, 124, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
 	knob = new DGAnimation(this, kSpinDownSpeed, &pos, gKnob, kKnobFrames);
-	knob->setHelpText(CFSTR("this controls how quickly the audio playback \"spins down\" when the turntable power turns off"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls how quickly the audio playback \"spins down\" when the turntable power turns off"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Spin Down Speed parameter"));
+	knob->setHelpText(helpText);
+	CFRelease(helpText);
 
 	pos.set(kColumn2k, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
 	knob = new DGAnimation(this, kVolume, &pos, gKnob, kKnobFrames);
-	knob->setHelpText(CFSTR("this controls the overall volume of the audio output"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the overall volume of the audio output"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Volume parameter"));
+	knob->setHelpText(helpText);
+	CFRelease(helpText);
 
 
 	// sliders
@@ -406,19 +474,27 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 	// pitch shift
 	pos.set(31, kFaderY, kFaderWidth, kFaderHeight);
 	slider = new DGSlider(this, kPitchShift, &pos, kDGSliderAxis_vertical, gSliderHandle, NULL);
-//	slider->setDefaultValue(0.75f);
-	slider->setHelpText(CFSTR("changes the audio playback pitch between +/- the Pitch Range value"));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("changes the audio playback pitch between +/- the Pitch Range value"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Pitch Shift parameter"));
+	slider->setHelpText(helpText);
+	CFRelease(helpText);
 
 	// scratch amount
 	pos.set(kScratchAmountFaderX, kFaderY, kFaderWidth, kFaderHeight);
 	slider = new TurntablistScratchSlider(this, kScratchAmount, &pos, kDGSliderAxis_vertical, gSliderHandle);
-	slider->setHelpText(CFSTR("This slider is what does the actual scratching.  In scrub mode, the slider represents time.  In spin mode, the slider represents forward and backward speed."));
+	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("This slider is what does the actual scratching.  In scrub mode, the slider represents time.  In spin mode, the slider represents forward and backward speed."), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Amount parameter"));
+	slider->setHelpText(helpText);
+	CFRelease(helpText);
 
 
 	// text displays
+
+	// universal parameter value display
 	pos.set(kDisplayX, kDisplayY, kFileNameWidth, kFileNameHeight);
 	allParamsTextDisplay = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kTurntablistFontSize, kWhiteDGColor, NULL);
 
+	// audio file name display
 	pos.set(kFileNameX, kFileNameY, kFileNameWidth, kFileNameHeight);
 	audioFileNameDisplay = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kTurntablistFontSize, kWhiteDGColor, NULL);
 	HandleAudioFileChange();
@@ -578,9 +654,11 @@ pascal void OpenAudioFileNavEventHandler(NavEventCallbackMessage inCallbackSelec
 			break;
 
 		case kNavCBTerminate:
+			if (editor != NULL)
+				editor->FileOpenDialogFinished();
 			// XXX why does this crash Rax and SynthTest?
-			if (dialog != NULL)
-				NavDialogDispose(dialog);
+//			if (dialog != NULL)
+//				NavDialogDispose(dialog);
 			break;
 
 		// the user did something action-packed
@@ -760,7 +838,7 @@ pascal Boolean OpenAudioFileNavFilterProc(AEDesc * inItem, void * inInfo, void *
 const UInt32 kTurntablistAudioFileOpenNavDialogKey = PLUGIN_ID;
 
 //-----------------------------------------------------------------------------
-OSStatus ScratchaEditor::HandleLoadButton()
+void InitializeSupportedAudioFileTypesArrays()
 {
 	OSStatus status;
 
@@ -795,11 +873,19 @@ OSStatus ScratchaEditor::HandleLoadButton()
 			}
 		}
 	}
+}
 
+//-----------------------------------------------------------------------------
+OSStatus ScratchaEditor::HandleLoadButton()
+{
+	// we already have a file open dialog running
+	if (audioFileOpenDialog != NULL)
+		return kNavWrongDialogStateErr;
 
+	InitializeSupportedAudioFileTypesArrays();
 
 	NavDialogCreationOptions dialogOptions;
-	status = NavGetDefaultDialogCreationOptions(&dialogOptions);
+	OSStatus status = NavGetDefaultDialogCreationOptions(&dialogOptions);
 	if (status != noErr)
 		return status;
 	dialogOptions.optionFlags &= ~kNavAllowMultipleFiles;	// disallow multiple file selection
@@ -812,11 +898,11 @@ OSStatus ScratchaEditor::HandleLoadButton()
 	// create and run a GetFile dialog to allow the user to find and choose an audio file to load
 	NavEventUPP eventProc = NewNavEventUPP(OpenAudioFileNavEventHandler);
 	NavObjectFilterUPP filterProc = NewNavObjectFilterUPP(OpenAudioFileNavFilterProc);
-	NavDialogRef dialog = NULL;
-	status = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)this, &dialog);
+	audioFileOpenDialog = NULL;
+	status = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)this, &audioFileOpenDialog);
 	if (status == noErr)
 	{
-		status = NavDialogRun(dialog);
+		status = NavDialogRun(audioFileOpenDialog);
 	}
 	if (eventProc != NULL)
 		DisposeRoutineDescriptor(eventProc);
@@ -834,6 +920,12 @@ ComponentResult ScratchaEditor::LoadAudioFile(const FSRef & inAudioFileRef)
 												&inAudioFileRef, sizeof(inAudioFileRef));
 
 	return result;
+}
+
+//-----------------------------------------------------------------------------
+void ScratchaEditor::FileOpenDialogFinished()
+{
+	audioFileOpenDialog = NULL;
 }
 
 
@@ -1036,18 +1128,18 @@ void ScratchaEditor::HandleParameterChange(long inParameterID, float inValue)
 			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.4f"), inValue);
 			break;
 		case kPitchShift:
-			inValue = inValue * getparameter_f(kPitchRange)*0.01f / MAX_PITCH_RANGE;
-			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%+.1f %%"), inValue);
+			inValue = inValue*0.01f * getparameter_f(kPitchRange);
+			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%+.2f  semitones"), inValue);
 			break;
 		case kPitchRange:
-			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.1f %%"), inValue);
+			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.2f  semitones"), inValue);
 			break;
 
 		case kVolume:
 			if (inValue <= 0.0f)
 			{
 				const UniChar minusInfinity[] = { '-', 0x221E, ' ', ' ', 'd', 'B' };
-				universalDisplayText = CFStringCreateWithCharacters(cfAllocator, minusInfinity, sizeof(minusInfinity)/sizeof(*minusInfinity));
+				universalDisplayText = CFStringCreateWithCharacters(cfAllocator, minusInfinity, sizeofA(minusInfinity));
 			}
 			else
 			{
