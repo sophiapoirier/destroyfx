@@ -61,7 +61,7 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
   assert(offc);
 
   auto const signedlinear2y = [height = getHeight()](float value) -> VSTGUI::CCoord {
-    return height * (-value + 1.0) * 0.5;
+    return height * (-value + 1.0f) * 0.5f;
   };
 
   offc->beginDraw();
@@ -70,7 +70,7 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
   offc->drawRect(VSTGUI::CRect(-1, -1, getWidth(), getHeight()), VSTGUI::kDrawFilled);
 
   offc->setFrameColor(zeroline);
-  VSTGUI::CCoord const centery = std::floor(getHeight() / 2.0);
+  VSTGUI::CCoord const centery = std::floor(getHeight() * 0.5);
   offc->drawLine(VSTGUI::CPoint(0, centery), VSTGUI::CPoint(getWidth(), centery));
 
   VSTGUI::CCoord const start = (data.apts < getWidth()) ? ((std::lround(getWidth()) - data.apts) >> 1) : 0;
@@ -115,8 +115,6 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
 
 void GeometerView::onIdle() {
 
-  /* XXX reevaluate when I should do this. */
-  /* maybe I don't need to do this every frame... */
   assert(editor);
   auto const timestamp = editor->dfxgui_GetProperty<uint64_t>(PROP_LAST_WINDOW_TIMESTAMP).value_or(prevtimestamp);
   if (std::exchange(prevtimestamp, timestamp) != timestamp) {
@@ -125,8 +123,6 @@ void GeometerView::onIdle() {
 }
 
 
-/* XXX use memcpy where applicable. */
-/* XXX don't bother running processw unless the input data have changed. */
 void GeometerView::reflect() {
   /* when idle, copy points out of Geometer */
 
