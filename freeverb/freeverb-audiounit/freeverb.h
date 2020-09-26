@@ -5,51 +5,41 @@
 // http://www.dreampoint.co.uk/
 // This code is public domain
 // 
-// Audio Unit implementation written by Sophia Poirier, September 2002
+// Audio Unit implementation written by Sophia Poirier, September 2002, May 2016
 // http://destroyfx.org/
 
 
-#ifndef __FREEVERB_H
-#define __FREEVERB_H
+#pragma once
 
+
+#include <memory>
 
 #include "AUEffectBase.h"
-#include "revmodel.hpp"
 #include "freeverb-au-def.h"
-
-
-enum
-{
-	KMode, KRoomSize, KDamp, KWidth, KWet, KDry,
-	KNumParams
-};
+#include "revmodel.hpp"
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-class Freeverb : public AUEffectBase
+class FreeverbAU : public AUEffectBase
 {
 public:
-	Freeverb(AudioComponentInstance inComponentInstance);
+	FreeverbAU(AudioComponentInstance inComponentInstance);
 
-	virtual OSStatus GetParameterInfo(AudioUnitScope inScope, 
-						AudioUnitParameterID inParameterID, 
-						AudioUnitParameterInfo & outParameterInfo);
-	virtual OSStatus SetParameter(AudioUnitParameterID inID, AudioUnitScope inScope,
-						AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames);
+	OSStatus Initialize() override;
+	OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement) override;
 
-	virtual UInt32 SupportedNumChannels(const AUChannelInfo ** outInfo);
-	virtual OSStatus Version()
-		{	return PLUGIN_VERSION;	}
+	OSStatus GetParameterInfo(AudioUnitScope inScope, 
+							  AudioUnitParameterID inParameterID, 
+							  AudioUnitParameterInfo& outParameterInfo) override;
 
-	virtual OSStatus Reset(AudioUnitScope inScope, AudioUnitElement inElement);
-	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
-						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
-						UInt32 inFramesToProcess);
+	UInt32 SupportedNumChannels(const AUChannelInfo** outInfo) override;
+	OSStatus Version() override { return PLUGIN_VERSION; }
+
+	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
+								const AudioBufferList& inBuffer, AudioBufferList& outBuffer, 
+								UInt32 inFramesToProcess) override;
 
 private:
-	revmodel model;
-	bool needUpdate;
+	std::unique_ptr<freeverb::ReverbModel> mModel;
+	bool mInputSilentSoFar = true;
 };
-
-
-#endif

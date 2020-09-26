@@ -18,6 +18,6 @@
 #define VERSION		PLUGIN_VERSION
 #define NAME		"Dreampoint: Freeverb3"
 #define DESCRIPTION	"reverb"
-#define ENTRY_POINT	"FreeverbEntry"
+#define ENTRY_POINT	"FreeverbAUEntry"
 
 #include "AUResources.r"

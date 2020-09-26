@@ -4,57 +4,74 @@
 // http://www.dreampoint.co.uk
 // This code is public domain
 
-#ifndef _tuning_
-#define _tuning_
 
-const int	numcombs		= 8;
-const int	numallpasses	= 4;
-const float	muted			= 0.0f;
-const float	fixedgain		= 0.015f;
-const float scalewet		= 3.0f;
-const float scaledry		= 2.0f;
-const float scaledamp		= 0.4f;
-const float scaleroom		= 0.28f;
-const float offsetroom		= 0.7f;
-const float initialroom		= 0.5f;
-const float initialdamp		= 0.5f;
-const float initialwet		= 1.0f;
-const float initialdry		= 0.0f;
-const float initialwidth	= 1.0f;
-const float initialmode		= 0.0f;
-const float freezemode		= 1.0f;
-const int	stereospread	= 23;
+#pragma once
 
-// These values assume 44.1KHz sample rate
-// they will probably be OK for 48KHz sample rate
-// but would need scaling for 96KHz (or other) sample rates.
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <stddef.h>
+
+
+namespace freeverb
+{
+
+
+static constexpr size_t kNumCombFilters     = 8;
+static constexpr size_t kNumAllPassFilters  = 4;
+static constexpr float  kAllPassFeedback    = 0.5f;
+
+static constexpr float  kInputGainScale     = 0.015f;
+static constexpr float  kDampingScale       = 0.4f;
+static constexpr float  kRoomSizeMin        = 0.7f;
+static constexpr float  kRoomSizeMax        = kRoomSizeMin + 0.28f;
+static constexpr float  kWetLevelMax        = 3.0f;
+static constexpr float  kDryLevelMax        = 2.0f;
+
+static constexpr float  kRoomSizeDefault    = ((kRoomSizeMax - kRoomSizeMin) * 0.5f) + kRoomSizeMin;
+static constexpr float  kDampingDefault     = 0.5f;
+static constexpr float  kDryLevelDefault    = 1.0f;
+static constexpr float  kWetLevelDefault    = 0.5f;
+static constexpr float  kWidthDefault       = 1.0f;
+static constexpr bool   kFreezeModeDefault  = false;
+
+
+// The original author's values assume 44.1 kHz sample rate, 
+// so translate them to seconds to adapt to any sample rate.
 // The values were obtained by listening tests.
-const int combtuningL1		= 1116;
-const int combtuningR1		= 1116+stereospread;
-const int combtuningL2		= 1188;
-const int combtuningR2		= 1188+stereospread;
-const int combtuningL3		= 1277;
-const int combtuningR3		= 1277+stereospread;
-const int combtuningL4		= 1356;
-const int combtuningR4		= 1356+stereospread;
-const int combtuningL5		= 1422;
-const int combtuningR5		= 1422+stereospread;
-const int combtuningL6		= 1491;
-const int combtuningR6		= 1491+stereospread;
-const int combtuningL7		= 1557;
-const int combtuningR7		= 1557+stereospread;
-const int combtuningL8		= 1617;
-const int combtuningR8		= 1617+stereospread;
-const int allpasstuningL1	= 556;
-const int allpasstuningR1	= 556+stereospread;
-const int allpasstuningL2	= 441;
-const int allpasstuningR2	= 441+stereospread;
-const int allpasstuningL3	= 341;
-const int allpasstuningR3	= 341+stereospread;
-const int allpasstuningL4	= 225;
-const int allpasstuningR4	= 225+stereospread;
+namespace detail
+{
+    constexpr double referenceSamplesToSeconds(size_t timeInSamples)
+    {
+        constexpr double referenceSampleRate = 44100.0;
+        return static_cast<double>(timeInSamples) / referenceSampleRate;
+    }
+    static inline size_t secondsToSamples(double timeInSeconds, double sampleRate)
+    {
+        return static_cast<size_t>( std::max(std::lrint(timeInSeconds * sampleRate), 0L) );
+    }
+}
 
-#endif//_tuning_
+static constexpr auto kStereoSpread = detail::referenceSamplesToSeconds(23);
+static constexpr std::array<double, kNumCombFilters> kCombTuningL =
+{{
+    detail::referenceSamplesToSeconds(1116),
+    detail::referenceSamplesToSeconds(1188),
+    detail::referenceSamplesToSeconds(1277),
+    detail::referenceSamplesToSeconds(1356),
+    detail::referenceSamplesToSeconds(1422),
+    detail::referenceSamplesToSeconds(1491),
+    detail::referenceSamplesToSeconds(1557),
+    detail::referenceSamplesToSeconds(1617)
+}};
+static constexpr std::array<double, kNumAllPassFilters> kAllPassTuningL =
+{{
+    detail::referenceSamplesToSeconds(556),
+    detail::referenceSamplesToSeconds(441),
+    detail::referenceSamplesToSeconds(341),
+    detail::referenceSamplesToSeconds(225)
+}};
 
-//ends
 
+}

@@ -1,36 +1,30 @@
-// Allpass filter implementation
+// all-pass filter implementation
 //
 // Written by Jezar at Dreampoint, June 2000
 // http://www.dreampoint.co.uk
 // This code is public domain
 
+
 #include "allpass.hpp"
 
-allpass::allpass()
+
+namespace freeverb
 {
-	bufidx = 0;
+
+
+AllPassFilter::AllPassFilter(double timeInSeconds, double sampleRate)
+:   mBuffer(detail::secondsToSamples(timeInSeconds, sampleRate), 0.0f)
+{
 }
 
-void allpass::setbuffer(float *buf, int size) 
+
+void AllPassFilter::clear()
 {
-	buffer = buf; 
-	bufsize = size;
+    for (auto& value : mBuffer)
+    {
+        value = 0.0f;
+    }
 }
 
-void allpass::mute()
-{
-	for (int i=0; i<bufsize; i++)
-		buffer[i]=0;
-}
 
-void allpass::setfeedback(float val) 
-{
-	feedback = val;
 }
-
-float allpass::getfeedback() 
-{
-	return feedback;
-}
-
-//ends

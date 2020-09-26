@@ -1,48 +1,51 @@
-// Allpass filter declaration
+// all-pass filter declaration
 //
 // Written by Jezar at Dreampoint, June 2000
 // http://www.dreampoint.co.uk
 // This code is public domain
 
-#ifndef _allpass_
-#define _allpass_
-#include "denormals.h"
 
-class allpass
+#pragma once
+
+
+#include <stddef.h>
+#include <vector>
+
+#include "tuning.h"
+
+
+namespace freeverb
+{
+
+
+class AllPassFilter
 {
 public:
-					allpass();
-			void	setbuffer(float *buf, int size);
-	inline  float	process(float inp);
-			void	mute();
-			void	setfeedback(float val);
-			float	getfeedback();
-// private:
-	float	feedback;
-	float	*buffer;
-	int		bufsize;
-	int		bufidx;
+                    AllPassFilter(double timeInSeconds, double sampleRate);
+
+    void            clear();
+    inline float    process(float inputAudioSample);
+
+private:
+    std::vector<float> mBuffer;
+    size_t mBufferIndex = 0;
 };
 
 
-// Big to inline - but crucial for speed
-
-inline float allpass::process(float input)
+inline float AllPassFilter::process(float inputAudioSample)
 {
-	float output;
-	float bufout;
-	
-	bufout = buffer[bufidx];
-	undenormalise(bufout);
-	
-	output = -input + bufout;
-	buffer[bufidx] = input + (bufout*feedback);
+    const auto bufferedValue = mBuffer[mBufferIndex];
 
-	if(++bufidx>=bufsize) bufidx = 0;
+    mBuffer[mBufferIndex] = inputAudioSample + (bufferedValue * kAllPassFeedback);
 
-	return output;
+    mBufferIndex++;
+    if (mBufferIndex >= mBuffer.size())
+    {
+        mBufferIndex = 0;
+    }
+
+    return bufferedValue - inputAudioSample;
 }
 
-#endif//_allpass
 
-//ends
+}

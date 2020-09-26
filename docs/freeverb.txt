@@ -60,6 +60,8 @@ APPENDIX D - VERSION HISTORY
 
 07/07/2010 Version 1.0.5 - Updated to run in 64-bit environments as well as 32-bit.
 
+14/11/2016 Version 1.0.6 - Works in mono mode now as well as stereo, supports any sample rate correctly (previously only sounded as intended at 44.1 kHz), added smoothing/"de-zippering" for parameter changes, and updated to Apple's AUPlugIn API (required for Logic Pro X).
+
 These release notes written: 17/05/2000
 then amended by Sophia:  23/09/2002
 

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -37,7 +37,6 @@
 		4946CFE40802E37F00209478 /* allpass.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4946CFDC0802E37F00209478 /* allpass.hpp */; };
 		4946CFE50802E37F00209478 /* comb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4946CFDD0802E37F00209478 /* comb.cpp */; };
 		4946CFE60802E37F00209478 /* comb.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4946CFDE0802E37F00209478 /* comb.hpp */; };
-		4946CFE70802E37F00209478 /* denormals.h in Headers */ = {isa = PBXBuildFile; fileRef = 4946CFDF0802E37F00209478 /* denormals.h */; };
 		4946CFE80802E37F00209478 /* revmodel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4946CFE00802E37F00209478 /* revmodel.cpp */; };
 		4946CFE90802E37F00209478 /* revmodel.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 4946CFE10802E37F00209478 /* revmodel.hpp */; };
 		4946CFEA0802E37F00209478 /* tuning.h in Headers */ = {isa = PBXBuildFile; fileRef = 4946CFE20802E37F00209478 /* tuning.h */; };
@@ -49,6 +48,10 @@
 		B025BA4B08AD36D700A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025BA4808AD36D700A9CCAE /* CAVectorUnit.cpp */; };
 		B025BA4C08AD36D700A9CCAE /* CAVectorUnit.h in Headers */ = {isa = PBXBuildFile; fileRef = B025BA4908AD36D700A9CCAE /* CAVectorUnit.h */; };
 		B025BA4D08AD36D700A9CCAE /* CAVectorUnitTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = B025BA4A08AD36D700A9CCAE /* CAVectorUnitTypes.h */; };
+		EC76E2381DD82B5B0025CE41 /* dfxsmoothedvalue.h in Headers */ = {isa = PBXBuildFile; fileRef = EC76E2361DD82B5B0025CE41 /* dfxsmoothedvalue.h */; };
+		ECB15D091CE2325400FC560F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECB15D081CE2325400FC560F /* AudioToolbox.framework */; };
+		ECB15D0C1CE2329100FC560F /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECB15D0A1CE2329100FC560F /* AUPlugInDispatch.cpp */; };
+		ECB15D0D1CE2329100FC560F /* AUPlugInDispatch.h in Headers */ = {isa = PBXBuildFile; fileRef = ECB15D0B1CE2329100FC560F /* AUPlugInDispatch.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -84,7 +87,6 @@
 		4946CFDC0802E37F00209478 /* allpass.hpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.h; path = allpass.hpp; sourceTree = "<group>"; };
 		4946CFDD0802E37F00209478 /* comb.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = comb.cpp; sourceTree = "<group>"; };
 		4946CFDE0802E37F00209478 /* comb.hpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.h; path = comb.hpp; sourceTree = "<group>"; };
-		4946CFDF0802E37F00209478 /* denormals.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = denormals.h; sourceTree = "<group>"; };
 		4946CFE00802E37F00209478 /* revmodel.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = revmodel.cpp; sourceTree = "<group>"; };
 		4946CFE10802E37F00209478 /* revmodel.hpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.h; path = revmodel.hpp; sourceTree = "<group>"; };
 		4946CFE20802E37F00209478 /* tuning.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tuning.h; sourceTree = "<group>"; };
@@ -98,6 +100,11 @@
 		B025BA4808AD36D700A9CCAE /* CAVectorUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAVectorUnit.cpp; sourceTree = "<group>"; };
 		B025BA4908AD36D700A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
 		B025BA4A08AD36D700A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
+		EC76E2351DD82B5B0025CE41 /* dfxsmoothedvalue.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxsmoothedvalue.hpp; sourceTree = "<group>"; };
+		EC76E2361DD82B5B0025CE41 /* dfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxsmoothedvalue.h; sourceTree = "<group>"; };
+		ECB15D081CE2325400FC560F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		ECB15D0A1CE2329100FC560F /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
+		ECB15D0B1CE2329100FC560F /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +112,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECB15D091CE2325400FC560F /* AudioToolbox.framework in Frameworks */,
 				4932F5EC0680132E006A9591 /* AudioUnit.framework in Frameworks */,
 				490E7C6807CAE7B100688A1D /* Carbon.framework in Frameworks */,
 			);
@@ -118,6 +126,7 @@
 			children = (
 				4946CFDA0802E36B00209478 /* components */,
 				4946CFA30802E07800209478 /* freeverb */,
+				EC76E2341DD82B350025CE41 /* DFX Library */,
 				4932F45B06800F80006A9591 /* AUPublic */,
 				4932F4B70680108C006A9591 /* PublicUtility */,
 				089C167CFE841241C02AAC07 /* Resources */,
@@ -130,6 +139,7 @@
 		089C1671FE841209C02AAC07 /* External Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				ECB15D081CE2325400FC560F /* AudioToolbox.framework */,
 				4932F5EA0680132E006A9591 /* AudioUnit.framework */,
 				490E7C6707CAE7B100688A1D /* Carbon.framework */,
 			);
@@ -162,8 +172,8 @@
 				4932F48306800FCD006A9591 /* Utility */,
 			);
 			name = AUPublic;
-			path = Extras/CoreAudio/AudioUnits/AUPublic;
-			sourceTree = SYSTEM_DEVELOPER_DIR;
+			path = "../../../dfx/CoreAudioUtilityClasses-1.1/CoreAudio/AudioUnits/AUPublic";
+			sourceTree = SOURCE_ROOT;
 		};
 		4932F45C06800FCD006A9591 /* AUBase */ = {
 			isa = PBXGroup;
@@ -176,6 +186,8 @@
 				4932F46106800FCD006A9591 /* AUInputElement.cpp */,
 				4932F46406800FCD006A9591 /* AUOutputElement.h */,
 				4932F46306800FCD006A9591 /* AUOutputElement.cpp */,
+				ECB15D0B1CE2329100FC560F /* AUPlugInDispatch.h */,
+				ECB15D0A1CE2329100FC560F /* AUPlugInDispatch.cpp */,
 				4932F46706800FCD006A9591 /* AUScopeElement.h */,
 				4932F46606800FCD006A9591 /* AUScopeElement.cpp */,
 				4932F46906800FCD006A9591 /* ComponentBase.h */,
@@ -219,8 +231,8 @@
 				B025BA4808AD36D700A9CCAE /* CAVectorUnit.cpp */,
 			);
 			name = PublicUtility;
-			path = Extras/CoreAudio/PublicUtility;
-			sourceTree = SYSTEM_DEVELOPER_DIR;
+			path = "../../../dfx/CoreAudioUtilityClasses-1.1/CoreAudio/PublicUtility";
+			sourceTree = SOURCE_ROOT;
 		};
 		4946CFA30802E07800209478 /* freeverb */ = {
 			isa = PBXGroup;
@@ -240,13 +252,22 @@
 				4946CFDB0802E37F00209478 /* allpass.cpp */,
 				4946CFDE0802E37F00209478 /* comb.hpp */,
 				4946CFDD0802E37F00209478 /* comb.cpp */,
-				4946CFDF0802E37F00209478 /* denormals.h */,
 				4946CFE10802E37F00209478 /* revmodel.hpp */,
 				4946CFE00802E37F00209478 /* revmodel.cpp */,
 				4946CFE20802E37F00209478 /* tuning.h */,
 			);
 			name = components;
 			path = ../components;
+			sourceTree = SOURCE_ROOT;
+		};
+		EC76E2341DD82B350025CE41 /* DFX Library */ = {
+			isa = PBXGroup;
+			children = (
+				EC76E2361DD82B5B0025CE41 /* dfxsmoothedvalue.h */,
+				EC76E2351DD82B5B0025CE41 /* dfxsmoothedvalue.hpp */,
+			);
+			name = "DFX Library";
+			path = "../../../dfx/dfx-library";
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
@@ -268,11 +289,12 @@
 				4932F4BF068010BE006A9591 /* CAAudioChannelLayout.h in Headers */,
 				4932F4C3068010CA006A9591 /* CAAUParameter.h in Headers */,
 				4919537306C5398A00221230 /* CAMath.h in Headers */,
+				ECB15D0D1CE2329100FC560F /* AUPlugInDispatch.h in Headers */,
 				490E76A307CAE24800688A1D /* AUEffectBase.h in Headers */,
 				4946CFE40802E37F00209478 /* allpass.hpp in Headers */,
 				4946CFE60802E37F00209478 /* comb.hpp in Headers */,
-				4946CFE70802E37F00209478 /* denormals.h in Headers */,
 				4946CFE90802E37F00209478 /* revmodel.hpp in Headers */,
+				EC76E2381DD82B5B0025CE41 /* dfxsmoothedvalue.h in Headers */,
 				4946CFEA0802E37F00209478 /* tuning.h in Headers */,
 				4946CFF10802E39A00209478 /* freeverb.h in Headers */,
 				4946CFF40802E3A600209478 /* freeverb-au-def.h in Headers */,
@@ -309,9 +331,19 @@
 /* Begin PBXProject section */
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0640;
+			};
 			buildConfigurationList = B025B63A08ACE20600A9CCAE /* Build configuration list for PBXProject "freeverb" */;
-			compatibilityVersion = "Xcode 2.4";
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
 			mainGroup = 089C166AFE841209C02AAC07 /* turntablist */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -350,6 +382,7 @@
 			files = (
 				4932F48B06800FCD006A9591 /* AUBase.cpp in Sources */,
 				4932F48D06800FCD006A9591 /* AUDispatch.cpp in Sources */,
+				ECB15D0C1CE2329100FC560F /* AUPlugInDispatch.cpp in Sources */,
 				4932F48F06800FCD006A9591 /* AUInputElement.cpp in Sources */,
 				4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */,
 				4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */,
@@ -384,6 +417,8 @@
 		B025B63708ACE20600A9CCAE /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LIBRARY = "libc++";
 				COPY_PHASE_STRIP = NO;
 				DEPLOYMENT_LOCATION = YES;
 				DEPLOYMENT_POSTPROCESSING = NO;
@@ -410,7 +445,7 @@
 				INFOPLIST_FILE = "freeverb-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_REZFLAGS = "-d ppc_$ppc -d i386_$i386 -d x86_64_$x86_64 -d ppc64_$ppc64";
 				PRODUCT_NAME = Freeverb;
 				REZ_SEARCH_PATHS = (
@@ -425,8 +460,9 @@
 		B025B63808ACE20600A9CCAE /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1 = "x86_64 i386 ppc";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LIBRARY = "libc++";
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEPLOYMENT_LOCATION = YES;
@@ -455,7 +491,7 @@
 				INFOPLIST_FILE = "freeverb-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_REZFLAGS = "-d ppc_$ppc -d i386_$i386 -d x86_64_$x86_64 -d ppc64_$ppc64";
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_NAME = Freeverb;
@@ -471,14 +507,12 @@
 		B025B63B08ACE20600A9CCAE /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Development;
 		};
 		B025B63C08ACE20600A9CCAE /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Deployment;
 		};

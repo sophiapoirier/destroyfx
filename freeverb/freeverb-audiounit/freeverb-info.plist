@@ -2,23 +2,42 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AudioComponents</key>
+	<array>
+		<dict>
+			<key>description</key>
+			<string>reverb</string>
+			<key>factoryFunction</key>
+			<string>FreeverbAUFactory</string>
+			<key>manufacturer</key>
+			<string>DreP</string>
+			<key>name</key>
+			<string>Dreampoint: Freeverb3</string>
+			<key>sandboxSafe</key>
+			<true/>
+			<key>subtype</key>
+			<string>JzR3</string>
+			<key>type</key>
+			<string>aufx</string>
+			<key>version</key>
+			<integer>65542</integer>
+		</dict>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>Freeverb</string>
-	<key>CFBundleIconFile</key>
-	<string></string>
+	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>uk.co.dreampoint.Freeverb</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.6</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.5</string>
-	<key>CSResourcesFileMapped</key>
-	<true/>
+	<string>1.0.6</string>
 </dict>
 </plist>

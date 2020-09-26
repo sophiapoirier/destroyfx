@@ -5,146 +5,188 @@
 // http://www.dreampoint.co.uk/
 // This code is public domain
 // 
-// Audio Unit implementation written by Sophia Poirier, September 2002
+// Audio Unit implementation written by Sophia Poirier, September 2002, May 2016
 // http://destroyfx.org/
+
 
 #include "freeverb.h"
 
+#include <array>
+
+
+using namespace freeverb;
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-COMPONENT_ENTRY(Freeverb)
+static constexpr size_t kMonoChannelCount = 1;
+static constexpr size_t kStereoChannelCount = 2;
+
+enum
+{
+	kParam_FreezeMode,
+	kParam_RoomSize,
+	kParam_Damping,
+	kParam_Width,
+	kParam_WetLevel,
+	kParam_DryLevel,
+	kNumParams
+};
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Freeverb::Freeverb(AudioComponentInstance inComponentInstance)
-	: AUEffectBase(inComponentInstance)
+AUDIOCOMPONENT_ENTRY(AUBaseProcessFactory, FreeverbAU)
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+FreeverbAU::FreeverbAU(AudioComponentInstance inComponentInstance)
+:	AUEffectBase(inComponentInstance)
 {
 	// initialize the parameters to their default values
-	for (AudioUnitParameterID i=0; i < KNumParams; i++)
+	for (AudioUnitParameterID i = 0; i < kNumParams; i++)
 	{
 		AudioUnitParameterInfo paramInfo;
 		if (GetParameterInfo(kAudioUnitScope_Global, i, paramInfo) == noErr)
-			AUEffectBase::SetParameter(i, paramInfo.defaultValue);
+		{
+			SetParameter(i, paramInfo.defaultValue);
+		}
 	}
-
-    Reset(kAudioUnitScope_Global, (AudioUnitElement)0);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-OSStatus Freeverb::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
+OSStatus FreeverbAU::Initialize()
 {
-	model.mute();
-	needUpdate = true;
+	const auto status = AUEffectBase::Initialize();
 
-	return noErr;
-}
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-OSStatus Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID inParameterID,
-									AudioUnitParameterInfo & outParameterInfo)
-{
-	if (inScope != kAudioUnitScope_Global)
-		return kAudioUnitErr_InvalidScope;
-
-	OSStatus status = noErr;
-
-	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
-							| kAudioUnitParameterFlag_IsWritable;
-
-#define INIT_AU_PARAM(paramID, name, unitID, min, max, def, curve) \
-	case (paramID):	\
-		FillInParameterName(outParameterInfo, CFSTR(name), false);	\
-		outParameterInfo.unit = kAudioUnitParameterUnit_##unitID;	\
-		outParameterInfo.minValue = (min);	\
-		outParameterInfo.maxValue = (max);	\
-		outParameterInfo.defaultValue = (def);	\
-		if (curve)	\
-			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayCubeRoot;	\
-		break;
-	switch (inParameterID)
+	if (status == noErr)
 	{
-		INIT_AU_PARAM(KMode, "Freeze", Boolean, 0.0f, 1.0f, initialmode, false);
-		INIT_AU_PARAM(KRoomSize, "Room size", Meters, offsetroom, offsetroom + scaleroom, (scaleroom * initialroom) + offsetroom, false);
-		INIT_AU_PARAM(KDamp, "Damping", Percent, 0.0f, 100.0f, initialdamp * 100.0f, false);
-		INIT_AU_PARAM(KWet, "Wet level", LinearGain, 0.0f, scalewet, initialwet, true);
-		INIT_AU_PARAM(KDry, "Dry level", LinearGain, 0.0f, scaledry, initialdry, true);
-		INIT_AU_PARAM(KWidth, "Width", Percent, 0.0f, 100.0f, initialwidth * 100.0f, false);
-
-		default:
-			status = kAudioUnitErr_InvalidParameter;
-			break;
+		mModel = std::make_unique<ReverbModel>(GetSampleRate());
+		Reset(kAudioUnitScope_Global, AudioUnitElement(0));
 	}
-#undef INIT_AU_PARAM
 
 	return status;
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-OSStatus Freeverb::SetParameter(AudioUnitParameterID inID, AudioUnitScope inScope,
-							 AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames)
+OSStatus FreeverbAU::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
-	if (inScope == kAudioUnitScope_Global)
+	if (mModel)
 	{
-		// when these parameters change, the reverb model needs to recalculate some values
-		switch (inID)
-		{
-			case KRoomSize:
-			case KDamp:
-			case KWet:
-			case KWidth:
-			case KMode:
-				needUpdate = true;
-				break;
-		}
+		mModel->clear();
 	}
 
-	return AUBase::SetParameter(inID, inScope, inElement, inValue, inBufferOffsetInFrames);
+	mInputSilentSoFar = true;
+
+	return noErr;
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// state that Freeverb supports only stereo-in/stereo-out processing
-UInt32 Freeverb::SupportedNumChannels(const AUChannelInfo ** outInfo)
+OSStatus FreeverbAU::GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID inParameterID,
+									  AudioUnitParameterInfo& outParameterInfo)
 {
-	if (outInfo != NULL)
+	if (inScope != kAudioUnitScope_Global)
 	{
-		static AUChannelInfo info;
-		info.inChannels = 2;
-		info.outChannels = 2;
-		*outInfo = &info;
+		return kAudioUnitErr_InvalidScope;
 	}
 
-	return 1;
+	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
+							| kAudioUnitParameterFlag_IsWritable;
+
+	const auto initParam = [&](CFStringRef name, AudioUnitParameterUnit unitID,
+							   AudioUnitParameterValue minValue, AudioUnitParameterValue maxValue, 
+							   AudioUnitParameterValue defaultValue, bool curveValueRange)
+	{
+		FillInParameterName(outParameterInfo, name, false);
+		outParameterInfo.unit = unitID;
+		outParameterInfo.minValue = minValue;
+		outParameterInfo.maxValue = maxValue;
+		outParameterInfo.defaultValue = defaultValue;
+		if (curveValueRange)
+		{
+			outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayCubeRoot;
+		}
+	};
+
+	switch (inParameterID)
+	{
+		case kParam_FreezeMode:
+			initParam(CFSTR("Freeze"), kAudioUnitParameterUnit_Boolean, 0.0f, 1.0f, kFreezeModeDefault ? 1.0f : 0.0f, false);
+			break;
+		case kParam_RoomSize:
+			initParam(CFSTR("Room Size"), kAudioUnitParameterUnit_Generic, kRoomSizeMin, kRoomSizeMax, kRoomSizeDefault, false);
+			break;
+		case kParam_Damping:
+			initParam(CFSTR("Damping"), kAudioUnitParameterUnit_Percent, 0.0f, 100.0f, kDampingDefault * 100.0f, false);
+			break;
+		case kParam_WetLevel:
+			initParam(CFSTR("Wet Level"), kAudioUnitParameterUnit_LinearGain, 0.0f, kWetLevelMax, kWetLevelDefault, true);
+			break;
+		case kParam_DryLevel:
+			initParam(CFSTR("Dry Level"), kAudioUnitParameterUnit_LinearGain, 0.0f, kDryLevelMax, kDryLevelDefault, true);
+			break;
+		case kParam_Width:
+			initParam(CFSTR("Width"), kAudioUnitParameterUnit_Percent, 0.0f, 100.0f, kWidthDefault * 100.0f, false);
+			break;
+		default:
+			return kAudioUnitErr_InvalidParameter;
+	}
+
+	return noErr;
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// state that Freeverb supports only mono or stereo-in/stereo-out processing
+UInt32 FreeverbAU::SupportedNumChannels(const AUChannelInfo** outInfo)
+{
+	static constexpr std::array<AUChannelInfo, 2> channelInfo = 
+	{{
+		{ kMonoChannelCount, kMonoChannelCount },
+		{ kStereoChannelCount, kStereoChannelCount }
+	}};
+
+	if (outInfo != nullptr)
+	{
+		*outInfo = channelInfo.data();
+	}
+	return channelInfo.size();
 }
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // this is where the audio processing is done
-OSStatus Freeverb::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
-								const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
-								UInt32 inFramesToProcess)
+OSStatus FreeverbAU::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
+										const AudioBufferList& inBuffer, AudioBufferList& outBuffer, 
+										UInt32 inFramesToProcess)
 {
 	// update internal parameter values
-	model.setmode(GetParameter(KMode));
-	model.setroomsize(GetParameter(KRoomSize));
-	model.setdamp(GetParameter(KDamp));
-	model.setwet(GetParameter(KWet));
-	model.setdry(GetParameter(KDry));
-	model.setwidth(GetParameter(KWidth));
-	if (needUpdate)
-		model.update();
-	needUpdate = false;
+	mModel->setFreezeMode(GetParameter(kParam_FreezeMode));
+	mModel->setRoomSize(GetParameter(kParam_RoomSize));
+	mModel->setDamping(GetParameter(kParam_Damping) * 0.01f);
+	mModel->setWetLevel(GetParameter(kParam_WetLevel));
+	mModel->setDryLevel(GetParameter(kParam_DryLevel));
+	mModel->setWidth(GetParameter(kParam_Width) * 0.01f);
 
+	if ((inBuffer.mNumberBuffers >= kStereoChannelCount) && (outBuffer.mNumberBuffers >= kStereoChannelCount))
+	{
+		const auto in1 = static_cast<const float*>(inBuffer.mBuffers[0].mData);
+		const auto in2 = static_cast<const float*>(inBuffer.mBuffers[1].mData);
+		auto out1 = static_cast<float*>(outBuffer.mBuffers[0].mData);
+		auto out2 = static_cast<float*>(outBuffer.mBuffers[1].mData);
+		mModel->process(in1, in2, out1, out2, inFramesToProcess);
+	}
+	else
+	{
+		const auto in = static_cast<const float*>(inBuffer.mBuffers[0].mData);
+		auto out = static_cast<float*>(outBuffer.mBuffers[0].mData);
+		mModel->process(in, out, inFramesToProcess);
+	}
 
-	float * in1 = (float*)(inBuffer.mBuffers[0].mData);
-	float * in2 = (float*)(inBuffer.mBuffers[1].mData);
-	float * out1 = (float*)(outBuffer.mBuffers[0].mData);
-	float * out2 = (float*)(outBuffer.mBuffers[1].mData);
-
-	// now do the processing
-	model.processreplace(in1, in2, out1, out2, inFramesToProcess, 1);
-
-	// I don't know what the hell this is for
-	ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
+	if (!(ioActionFlags & kAudioUnitRenderAction_OutputIsSilence))
+	{
+		mInputSilentSoFar = false;
+	}
+	if (!mInputSilentSoFar)
+	{
+		ioActionFlags &= ~kAudioUnitRenderAction_OutputIsSilence;
+	}
 	
 	return noErr;
 }
