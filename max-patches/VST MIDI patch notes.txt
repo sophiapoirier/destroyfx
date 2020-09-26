@@ -1,0 +1,1 @@
+VST MIDI Max/MSP patch by Sophia Poirier ( destroyfx@smartelectronix.com )This patch requires Max/MSP version 4 or higher.Trial versions & free runtime versions are available at www.cycling74.comSorry about the mess.
