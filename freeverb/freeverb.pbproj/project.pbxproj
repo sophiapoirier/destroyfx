@@ -34,7 +34,7 @@
 		089C1671FE841209C02AAC07 = {
 			children = (
 				F5B7140703326EDE01CED63A,
-				F5B7138903326E5901CED63A,
+				49F50FC005D47D99007C86F9,
 			);
 			isa = PBXGroup;
 			name = Frameworks;
@@ -50,13 +50,17 @@
 				089C1679FE841209C02AAC07,
 			);
 			buildSettings = {
+				CC = "/usr/bin/gcc-3.3";
+				CPLUSPLUS = "/usr/bin/g++-3.3";
 				DEBUGGING_SYMBOLS = NO;
-				EXPORTED_SYMBOLS_FILE = "./freeverb-audiounit/freeverb.exp";
+				EXPORTED_SYMBOLS_FILE = "freeverb-audiounit/freeverb.exp";
 				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_VERSION = 3.x;
 				GENERATE_PKGINFO_FILE = YES;
 				HEADER_SEARCH_PATHS = "";
 				INSTALL_PATH = "$(HOME)/Library/Audio/Plug-Ins/Components/";
 				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				OPTIMIZATION_CFLAGS = "-O3";
 				OTHER_CFLAGS = "-D SUPPORT_AU_VERSION_1=0";
 				OTHER_REZFLAGS = "-I /Developer/Examples/CoreAudio/AudioUnits/AUPublic/AUBase -I /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/CarbonCore.framework/Versions/A/Headers";
@@ -82,7 +86,7 @@
 	<key>CFBundleExecutable</key>
 	<string>Freeverb</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Freeverb 1.0.1; by Jezar at Dreampoint, June 2000</string>
+	<string>Freeverb 1.0.2; by Jezar at Dreampoint, June 2000; Audio Unit by Sophia Poirier, 2002-2004</string>
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
@@ -94,11 +98,11 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.1</string>
+	<string>1.0.2</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.1</string>
+	<string>1.0.2</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 </dict>
@@ -123,7 +127,9 @@
 				F5B349CC033CA1F901DDE879,
 				F5B349CD033CA1F901DDE879,
 				F5B349D4033CA20D01DDE879,
-				49AA363C0404249400A80003,
+				4919394704BDF5FD00CC8349,
+				49F50FCA05D485CC007C86F9,
+				49F50FCE05D48911007C86F9,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -146,11 +152,12 @@
 				F5809CD50176770301AE2950,
 				F5809CD60176770301AE2950,
 				F5B713780332676B01CED63A,
+				49F50FC805D485BE007C86F9,
+				49F50FCC05D485D2007C86F9,
 				F5B349C6033CA1F901DDE879,
 				F5B349C8033CA1F901DDE879,
 				F5B349CB033CA1F901DDE879,
 				F5B349D2033CA20D01DDE879,
-				49AA363B0404249400A80003,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -158,8 +165,8 @@
 		089C1677FE841209C02AAC07 = {
 			buildActionMask = 2147483647;
 			files = (
-				F5B7140603326E5901CED63A,
 				F5B7141803326EDE01CED63A,
+				49F50FC105D47D99007C86F9,
 			);
 			isa = PBXFrameworksBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -207,26 +214,80 @@
 //492
 //493
 //494
-		49AA36390404249400A80003 = {
+		4919394604BDF5FD00CC8349 = {
 			fileEncoding = 30;
 			isa = PBXFileReference;
-			path = AUInlineEffectBase.cpp;
+			path = AUSilentTimeout.h;
 			refType = 4;
 		};
-		49AA363A0404249400A80003 = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			path = AUInlineEffectBase.h;
-			refType = 4;
-		};
-		49AA363B0404249400A80003 = {
-			fileRef = 49AA36390404249400A80003;
+		4919394704BDF5FD00CC8349 = {
+			fileRef = 4919394604BDF5FD00CC8349;
 			isa = PBXBuildFile;
 			settings = {
 			};
 		};
-		49AA363C0404249400A80003 = {
-			fileRef = 49AA363A0404249400A80003;
+		4919394904BDF65800CC8349 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			path = AUResources.r;
+			refType = 4;
+		};
+		49F50FC005D47D99007C86F9 = {
+			isa = PBXFrameworkReference;
+			path = Carbon.framework;
+			refType = 4;
+		};
+		49F50FC105D47D99007C86F9 = {
+			fileRef = 49F50FC005D47D99007C86F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		49F50FC705D485BE007C86F9 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			path = CAStreamBasicDescription.cpp;
+			refType = 4;
+		};
+		49F50FC805D485BE007C86F9 = {
+			fileRef = 49F50FC705D485BE007C86F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		49F50FC905D485CC007C86F9 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			path = CAAudioChannelLayout.h;
+			refType = 4;
+		};
+		49F50FCA05D485CC007C86F9 = {
+			fileRef = 49F50FC905D485CC007C86F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		49F50FCB05D485D2007C86F9 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			path = CAAudioChannelLayout.cpp;
+			refType = 4;
+		};
+		49F50FCC05D485D2007C86F9 = {
+			fileRef = 49F50FCB05D485D2007C86F9;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		49F50FCD05D48911007C86F9 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			name = "freeverb-au-def.h";
+			path = "freeverb-audiounit/freeverb-au-def.h";
+			refType = 4;
+		};
+		49F50FCE05D48911007C86F9 = {
+			fileRef = 49F50FCD05D48911007C86F9;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -251,6 +312,7 @@
 			);
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
 				OPTIMIZATION_CFLAGS = "-O0";
 			};
 			isa = PBXBuildStyle;
@@ -261,6 +323,14 @@
 			);
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
+				DEBUGGING_SYMBOLS = NO;
+				DEPLOYMENT_LOCATION = YES;
+				DEPLOYMENT_POSTPROCESSING = YES;
+				DSTROOT = /;
+				INSTALL_MODE_FLAG = "a+rX,u+w";
+				OTHER_CFLAGS = "\U0001-D NDEBUG";
+				SEPARATE_STRIP = YES;
+				STRIPFLAGS = "-x";
 			};
 			isa = PBXBuildStyle;
 			name = Deployment;
@@ -278,18 +348,19 @@
 		};
 		F5809CAA0176770301AE2950 = {
 			children = (
-				F5809CAB0176770301AE2950,
 				F5809CAC0176770301AE2950,
-				F5809CAD0176770301AE2950,
+				F5809CAB0176770301AE2950,
 				F5809CAE0176770301AE2950,
-				F5809CAF0176770301AE2950,
-				F5809CB00176770301AE2950,
-				F5809CB10176770301AE2950,
-				F5809CB20176770301AE2950,
-				F5809CB40176770301AE2950,
+				F5809CAD0176770301AE2950,
 				F5809CB50176770301AE2950,
-				F5809CB70176770301AE2950,
+				F5809CB40176770301AE2950,
+				F5809CB00176770301AE2950,
+				F5809CAF0176770301AE2950,
+				F5809CB20176770301AE2950,
+				F5809CB10176770301AE2950,
 				F5809CB80176770301AE2950,
+				F5809CB70176770301AE2950,
+				4919394904BDF65800CC8349,
 			);
 			isa = PBXGroup;
 			name = AUBase;
@@ -370,10 +441,8 @@
 		};
 		F5809CB90176770301AE2950 = {
 			children = (
-				F5809CBA0176770301AE2950,
 				F5809CBB0176770301AE2950,
-				49AA363A0404249400A80003,
-				49AA36390404249400A80003,
+				F5809CBA0176770301AE2950,
 			);
 			isa = PBXGroup;
 			name = OtherBases;
@@ -394,8 +463,9 @@
 		};
 		F5809CBE0176770301AE2950 = {
 			children = (
-				F5B713770332676B01CED63A,
 				F5809CBF0176770301AE2950,
+				F5B713770332676B01CED63A,
+				4919394604BDF5FD00CC8349,
 			);
 			isa = PBXGroup;
 			name = Utility;
@@ -510,6 +580,7 @@
 				F5B349C5033CA1F901DDE879,
 				F5B349D0033CA20D01DDE879,
 				F5B349CE033CA20D01DDE879,
+				49F50FCD05D48911007C86F9,
 				F5B349D1033CA20D01DDE879,
 				F5B349CF033CA20D01DDE879,
 			);
@@ -683,31 +754,23 @@
 		F5B7137A0332699601CED63A = {
 			children = (
 				F5B7137B033269A701CED63A,
+				49F50FC705D485BE007C86F9,
+				49F50FC905D485CC007C86F9,
+				49F50FCB05D485D2007C86F9,
 			);
 			isa = PBXGroup;
 			name = PublicUtility;
-			refType = 4;
+			path = /Developer/Examples/CoreAudio/PublicUtility;
+			refType = 0;
 		};
 		F5B7137B033269A701CED63A = {
 			fileEncoding = 30;
 			isa = PBXFileReference;
-			name = CAStreamBasicDescription.h;
-			path = /Developer/Examples/CoreAudio/PublicUtility/CAStreamBasicDescription.h;
-			refType = 0;
+			path = CAStreamBasicDescription.h;
+			refType = 4;
 		};
 		F5B7137C033269A701CED63A = {
 			fileRef = F5B7137B033269A701CED63A;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		F5B7138903326E5901CED63A = {
-			isa = PBXFrameworkReference;
-			path = CoreServices.framework;
-			refType = 4;
-		};
-		F5B7140603326E5901CED63A = {
-			fileRef = F5B7138903326E5901CED63A;
 			isa = PBXBuildFile;
 			settings = {
 			};

@@ -7,20 +7,16 @@
 			089C1673FE841209C02AAC07,
 		);
 		perUserDictionary = {
-			PBXPerProjectTemplateStateSaveDate = 67380273;
+			PBXPerProjectTemplateStateSaveDate = 117485472;
 			PBXWorkspaceContents = (
 				{
 					LeftSlideOut = {
 						Split0 = {
 							Split0 = {
 								NavContent0 = {
-									bookmark = 49AA36CA040425FB00A80003;
+									bookmark = 497D25890700AFE5005E2421;
 									history = (
-										F554F09D0339335101BD0202,
-										49AA36C9040425FB00A80003,
-									);
-									prevStack = (
-										49BB91B503E222FB00A80003,
+										497D25880700AFE5005E2421,
 									);
 								};
 								NavCount = 1;
@@ -117,8 +113,8 @@
 								};
 							};
 							Tab3 = {
-								BuildMessageFrame = "{{0, 0}, {773, 232}}";
-								BuildTranscriptFrame = "{{0, 241}, {773, 2}}";
+								BuildMessageFrame = "{{0, 0}, {773, 91}}";
+								BuildTranscriptFrame = "{{0, 100}, {773, 143}}";
 								BuildTranscriptFrameExpanded = YES;
 								Frame = "{{0, 0}, {771, 265}}";
 							};
@@ -186,16 +182,13 @@
 					WindowLocation = "{41, 14}";
 				},
 			);
-			PBXWorkspaceStateSaveDate = 67380273;
+			PBXWorkspaceStateSaveDate = 117485472;
 		};
 		perUserProjectItems = {
-			49AA36C9040425FB00A80003 = 49AA36C9040425FB00A80003;
-			49AA36CA040425FB00A80003 = 49AA36CA040425FB00A80003;
-			49BB91B503E222FB00A80003 = 49BB91B503E222FB00A80003;
-			F554F09D0339335101BD0202 = F554F09D0339335101BD0202;
+			497D25880700AFE5005E2421 = 497D25880700AFE5005E2421;
+			497D25890700AFE5005E2421 = 497D25890700AFE5005E2421;
 		};
 		projectwideBuildSettings = {
-			SYMROOT = "~/Library/Audio/Plug-Ins/Components";
 		};
 		wantsIndex = 1;
 		wantsSCM = -1;
@@ -203,51 +196,25 @@
 	089C1673FE841209C02AAC07 = {
 		activeExec = 0;
 	};
-	49AA36C9040425FB00A80003 = {
+	497D25880700AFE5005E2421 = {
 		fRef = F5B349CE033CA20D01DDE879;
 		isa = PBXTextBookmark;
-		name = "freeverb.cpp: __cplusplus";
+		name = "freeverb.cpp: 151";
 		rLen = 0;
-		rLoc = 304;
+		rLoc = 4861;
 		rType = 0;
-		vrLen = 1357;
-		vrLoc = 0;
+		vrLen = 1518;
+		vrLoc = 3711;
 	};
-	49AA36CA040425FB00A80003 = {
+	497D25890700AFE5005E2421 = {
 		fRef = F5B349CE033CA20D01DDE879;
 		isa = PBXTextBookmark;
-		name = "freeverb.cpp: __cplusplus";
+		name = "freeverb.cpp: 151";
 		rLen = 0;
-		rLoc = 304;
+		rLoc = 4861;
 		rType = 0;
-		vrLen = 1357;
-		vrLoc = 0;
-	};
-	49BB91B503E222FB00A80003 = {
-		fRef = F5B349CE033CA20D01DDE879;
-		isa = PBXTextBookmark;
-		name = "freeverb.cpp: 63";
-		rLen = 0;
-		rLoc = 1910;
-		rType = 0;
-		vrLen = 1507;
-		vrLoc = 1076;
-	};
-	F554F09D0339335101BD0202 = {
-		fRef = F554F0A00339335101BD0202;
-		isa = PBXTextBookmark;
-		name = "AUCarbonViewControl.cpp: 14";
-		rLen = 0;
-		rLoc = 897;
-		rType = 0;
-		vrLen = 2718;
-		vrLoc = 0;
-	};
-	F554F0A00339335101BD0202 = {
-		isa = PBXFileReference;
-		name = AUCarbonViewControl.cpp;
-		path = /Developer/Examples/CoreAudio/AudioUnits/AUPublic/AUCarbonViewBase/AUCarbonViewControl.cpp;
-		refType = 0;
+		vrLen = 1460;
+		vrLoc = 3617;
 	};
 	F5809CAB0176770301AE2950 = {
 		uiCtxt = {

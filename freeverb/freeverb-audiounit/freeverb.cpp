@@ -12,14 +12,12 @@
 
 
 
-#pragma mark ___init___
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 COMPONENT_ENTRY(Freeverb)
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Freeverb::Freeverb(AudioUnit component)
-	: AUInlineEffectBase(component)
+	: AUEffectBase(component, true)
 {
 	// initialize the parameters to their default values
 	for (long index=0; index < KNumParams; index++)
@@ -49,7 +47,7 @@ ComponentResult Freeverb::Reset(AudioUnitScope inScope, AudioUnitElement inEleme
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitParameterID inParameterID,
-											AudioUnitParameterInfo &outParameterInfo)
+											AudioUnitParameterInfo & outParameterInfo)
 {
 	if (inScope != kAudioUnitScope_Global)
 		return kAudioUnitErr_InvalidScope;
@@ -57,83 +55,37 @@ ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitPara
 	ComponentResult result = noErr;
 
 	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
-							| kAudioUnitParameterFlag_IsWritable;
+							| kAudioUnitParameterFlag_IsWritable
+							| kAudioUnitParameterFlag_HasCFNameString;
 
+#define INIT_AU_PARAM(paramID, cstr, unitID, min, max, def) \
+	case (paramID):	\
+		strcpy(outParameterInfo.name, (cstr));	\
+		outParameterInfo.cfNameString = CFSTR(cstr);	\
+		outParameterInfo.unit = kAudioUnitParameterUnit_##unitID;	\
+		outParameterInfo.minValue = (min);	\
+		outParameterInfo.maxValue = (max);	\
+		outParameterInfo.defaultValue = (def);	\
+		break;
 	switch (inParameterID)
 	{
-		case KMode:
-			strcpy(outParameterInfo.name, "Mode");
-			outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
-			outParameterInfo.minValue = 0.0f;
-			outParameterInfo.maxValue = 1.0f;
-			outParameterInfo.defaultValue = initialmode;
-			break;
-
-		case KRoomSize:
-			strcpy(outParameterInfo.name, "Room size");
-			outParameterInfo.unit = kAudioUnitParameterUnit_Meters;
-			outParameterInfo.minValue = offsetroom;
-			outParameterInfo.maxValue = offsetroom + scaleroom;
-			outParameterInfo.defaultValue = (scaleroom * initialroom) + offsetroom;
-			break;
-
-		case KDamp:
-			strcpy(outParameterInfo.name, "Damping");
-			outParameterInfo.unit = kAudioUnitParameterUnit_Percent;
-			outParameterInfo.minValue = 0.0f;
-			outParameterInfo.maxValue = 100.0f;
-			outParameterInfo.defaultValue = initialdamp * 100.0f;
-			break;
-
-		case KWet:
-			strcpy(outParameterInfo.name, "Wet level");
-//			outParameterInfo.unit = kAudioUnitParameterUnit_Decibels;
-			outParameterInfo.unit = kAudioUnitParameterUnit_LinearGain;
-			outParameterInfo.minValue = 0.0f;
-			outParameterInfo.maxValue = scalewet;
-			outParameterInfo.defaultValue = initialwet;
-			break;
-
-		case KDry:
-			strcpy(outParameterInfo.name, "Dry level");
-//			outParameterInfo.unit = kAudioUnitParameterUnit_Decibels;
-			outParameterInfo.unit = kAudioUnitParameterUnit_LinearGain;
-			outParameterInfo.minValue = 0.0f;
-			outParameterInfo.maxValue = scaledry;
-			outParameterInfo.defaultValue = initialdry;
-			break;
-
-		case KWidth:
-			strcpy(outParameterInfo.name, "Width");
-			outParameterInfo.unit = kAudioUnitParameterUnit_Percent;
-			outParameterInfo.minValue = 0.0f;
-			outParameterInfo.maxValue = 100.0f;
-			outParameterInfo.defaultValue = initialwidth * 100.0f;
-			break;
+		INIT_AU_PARAM(KMode, "Freeze", Boolean, 0.0f, 1.0f, initialmode);
+		INIT_AU_PARAM(KRoomSize, "Room size", Meters, offsetroom, offsetroom + scaleroom, (scaleroom * initialroom) + offsetroom);
+		INIT_AU_PARAM(KDamp, "Damping", Percent, 0.0f, 100.0f, initialdamp * 100.0f);
+		INIT_AU_PARAM(KWet, "Wet level", LinearGain, 0.0f, scalewet, initialwet);
+		INIT_AU_PARAM(KDry, "Dry level", LinearGain, 0.0f, scaledry, initialdry);
+		INIT_AU_PARAM(KWidth, "Width", Percent, 0.0f, 100.0f, initialwidth * 100.0f);
 
 		default:
 			result = kAudioUnitErr_InvalidParameter;
 			break;
 	}
-	
+#undef INIT_AU_PARAM
+
+	if ( (inParameterID == KWet) || (inParameterID == KDry) )
+		outParameterInfo.flags |= kAudioUnitParameterFlag_DisplayCubed;
+
 	return result;
-}
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// set up text values for the 2 states of the mode parameter
-ComponentResult Freeverb::GetParameterValueStrings(AudioUnitScope inScope, AudioUnitParameterID inParameterID, 
-													CFArrayRef *outStrings)
-{
-	if (inScope != kAudioUnitScope_Global)
-		return kAudioUnitErr_InvalidScope;
-
-	if (inParameterID == KMode)
-	{
-		*outStrings = CFStringCreateArrayBySeparatingStrings( NULL, CFSTR("Normal.Freeze"), CFSTR(".") );
-		return noErr;
-	}
-
-	return kAudioUnitErr_InvalidProperty;
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -160,9 +112,9 @@ ComponentResult Freeverb::SetParameter(AudioUnitParameterID inID, AudioUnitScope
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // state that Freeverb supports only stereo-in/stereo-out processing
-UInt32 Freeverb::SupportedNumChannels(const AUChannelInfo **outInfo)
+UInt32 Freeverb::SupportedNumChannels(const AUChannelInfo ** outInfo)
 {
-	if (outInfo)
+	if (outInfo != NULL)
 	{
 		static AUChannelInfo info;
 		info.inChannels = 2;
@@ -176,8 +128,8 @@ UInt32 Freeverb::SupportedNumChannels(const AUChannelInfo **outInfo)
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // this is where the audio processing is done
-OSStatus Freeverb::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags, 
-								const AudioBufferList &inBuffer, AudioBufferList &outBuffer, 
+OSStatus Freeverb::ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
+								const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
 								UInt32 inFramesToProcess)
 {
 	// update internal parameter values
@@ -192,31 +144,10 @@ OSStatus Freeverb::ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags,
 	needUpdate = false;
 
 
-	UInt32 inNumBuffers = inBuffer.mNumberBuffers;
-	UInt32 outNumBuffers = outBuffer.mNumberBuffers;
-	float *in1, *in2, *out1, *out2;
-
-	// can't have less than 1 in or out stream (not likely to happen; that would be ridiculous)
-	if ( (inNumBuffers < 1) || (outNumBuffers < 1) )
-		return kAudioUnitErr_FormatNotSupported;
-
-	in1 = (float*)inBuffer.mBuffers[0].mData;
-	out1 = (float*)outBuffer.mBuffers[0].mData;
-
-	// set up for either stereo or "double mono" processing
-	if (inNumBuffers >= 2)
-		in2 = (float*)inBuffer.mBuffers[1].mData;
-	else
-		in2 = in1;
-
-	outBuffer.mBuffers[0].mDataByteSize = inFramesToProcess * sizeof(Float32);
-	if (outNumBuffers >= 2)
-	{
-		out2 =  (float*)outBuffer.mBuffers[1].mData;
-		outBuffer.mBuffers[1].mDataByteSize = inFramesToProcess * sizeof(Float32);
-	}
-	else
-		out2 = out1;
+	float * in1 = (float*)(inBuffer.mBuffers[0].mData);
+	float * in2 = (float*)(inBuffer.mBuffers[1].mData);
+	float * out1 = (float*)(outBuffer.mBuffers[0].mData);
+	float * out2 = (float*)(outBuffer.mBuffers[1].mData);
 
 	// now do the processing
 	model.processreplace(in1, in2, out1, out2, inFramesToProcess, 1);

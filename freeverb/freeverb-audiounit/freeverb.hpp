@@ -13,8 +13,9 @@
 #define __FREEVERB_H
 
 
-#include "AUInlineEffectBase.h"
+#include "AUEffectBase.h"
 #include "revmodel.hpp"
+#include "freeverb-au-def.h"
 
 
 enum
@@ -25,7 +26,7 @@ enum
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-class Freeverb : public AUInlineEffectBase
+class Freeverb : public AUEffectBase
 {
 public:
 	Freeverb(AudioUnit component);
@@ -33,17 +34,17 @@ public:
 
 	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
 								AudioUnitParameterID inParameterID, 
-								AudioUnitParameterInfo &outParameterInfo);
-	virtual ComponentResult GetParameterValueStrings(AudioUnitScope inScope, 
-								AudioUnitParameterID inParameterID, CFArrayRef *outStrings);
+								AudioUnitParameterInfo & outParameterInfo);
 	virtual ComponentResult SetParameter(AudioUnitParameterID inID, AudioUnitScope inScope,
 								AudioUnitElement inElement, Float32 inValue, UInt32 inBufferOffsetInFrames);
 
-	virtual UInt32 SupportedNumChannels(const AUChannelInfo **outInfo);
+	virtual UInt32 SupportedNumChannels(const AUChannelInfo ** outInfo);
+	virtual ComponentResult	Version()
+		{	return PLUGIN_VERSION;	}
 
 	virtual ComponentResult Reset(AudioUnitScope inScope, AudioUnitElement inElement);
-	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags &ioActionFlags, 
-						const AudioBufferList &inBuffer, AudioBufferList &outBuffer, 
+	virtual OSStatus ProcessBufferLists(AudioUnitRenderActionFlags & ioActionFlags, 
+						const AudioBufferList & inBuffer, AudioBufferList & outBuffer, 
 						UInt32 inFramesToProcess);
 
 private:

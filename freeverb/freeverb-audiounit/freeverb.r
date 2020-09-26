@@ -1,5 +1,7 @@
 #include "AudioUnit.r"
 
+#include "freeverb-au-def.h"
+
 // Note that resource IDs must be spaced 2 apart for the 'STR ' name and description
 #define FREEVERB_RES_ID					10000
 
@@ -13,7 +15,7 @@
 #define COMP_TYPE	kAudioUnitType_Effect
 #define COMP_SUBTYPE	'JzR3'
 #define COMP_MANUF	'DreP'
-#define VERSION		0x00010000
+#define VERSION		PLUGIN_VERSION
 #define NAME		"Dreampoint: Freeverb3"
 #define DESCRIPTION	"reverb"
 #define ENTRY_POINT	"FreeverbEntry"
