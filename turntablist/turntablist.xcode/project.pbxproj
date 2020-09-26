@@ -55,6 +55,7 @@
 				4949EC060682B26000EE0B89,
 				8D01CCD10486CAD60068D4B7,
 				089C167DFE841241C02AAC07,
+				49498FFE0684B6A400499D06,
 			);
 			isa = PBXGroup;
 			name = Resources;
@@ -140,11 +141,26 @@
 				4932F6190680163F006A9591,
 				4932F61C0680163F006A9591,
 				4932F61D0680163F006A9591,
+				4916867E0684F09200B50765,
+				498765290684FE69005D81FC,
 			);
 			isa = PBXGroup;
 			path = graphics;
 			refType = 4;
 			sourceTree = "<group>";
+		};
+		4916867E0684F09200B50765 = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			path = "scratch-mode-button.png";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		4916867F0684F09200B50765 = {
+			fileRef = 4916867E0684F09200B50765;
+			isa = PBXBuildFile;
+			settings = {
+			};
 		};
 		4918B60B0680FC9C0034CE15 = {
 			fileEncoding = 30;
@@ -1348,6 +1364,31 @@
 			settings = {
 			};
 		};
+		49498FFE0684B6A400499D06 = {
+			children = (
+				49498FFF0684B6A400499D06,
+			);
+			isa = PBXVariantGroup;
+			name = Localizable.strings;
+			path = "";
+			refType = 2;
+			sourceTree = SOURCE_ROOT;
+		};
+		49498FFF0684B6A400499D06 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = text.plist.strings;
+			name = English;
+			path = English.lproj/Localizable.strings;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		494990000684B6A400499D06 = {
+			fileRef = 49498FFE0684B6A400499D06;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		4949EC060682B26000EE0B89 = {
 			children = (
 				4949EC080682B26000EE0B89,
@@ -1451,6 +1492,19 @@
 		};
 		4949EC140682B26000EE0B89 = {
 			fileRef = 4949EC0D0682B26000EE0B89;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		498765290684FE69005D81FC = {
+			isa = PBXFileReference;
+			lastKnownFileType = image.png;
+			path = "help-button.png";
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		4987652A0684FE69005D81FC = {
+			fileRef = 498765290684FE69005D81FC;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -1623,6 +1677,9 @@
 				4949EC120682B26000EE0B89,
 				4949EC130682B26000EE0B89,
 				4949EC140682B26000EE0B89,
+				494990000684B6A400499D06,
+				4916867F0684F09200B50765,
+				4987652A0684FE69005D81FC,
 			);
 			isa = PBXResourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

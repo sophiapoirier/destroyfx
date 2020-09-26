@@ -12,33 +12,41 @@ const float kTurntablistFontSize = 10.0f;
 //-----------------------------------------------------------------------------
 enum {
 	// positions
+	kPitchAmountFaderX = 31,
+	kScratchAmountFaderX = 166,
+	kFaderY = 249,
 	kFaderWidth = 22,
-	kFaderHeight = 199,
-
-	kFaderX = 31, //20, //18,
-	kFaderY = 248, //174, //10,
-	kFaderInc = 18,
+	kFaderHeight = 197,
 
 	kFileNameX = 31,
-	kFileNameY = 23,
-	kFileNameWidth = 158,  //30,
+	kFileNameY = 23 + 3,
+	kFileNameWidth = 158,
 	kFileNameHeight = 15,
 
 	kDisplayX = 31,
 	kDisplayY = 459,
-	kDisplayWidth = 122,  //30,
+	kDisplayWidth = 122,
 	kDisplayHeight = 14,
 
-	kPlayButtonX = 70,
+	kColumn1 = 25,
+	kColumn2 = 70,
+	kColumn2k = 71,
+	kColumn3 = 115,
+	kColumn4 = 160,
+
+	kPlayButtonX = kColumn2,
 	kPlayButtonY = 241,
 
-	kLoadButtonX = 160, //115,
+	kLoadButtonX = kColumn4,
 	kLoadButtonY = 64,
 
-#ifdef _MIDI_LEARN_
-	kMidiLearnX = 71,
-	kMidiLearnY = 419,
-#endif
+	kMidiLearnX = kColumn2,
+	kMidiLearnY = 418,
+
+	kHelpX = 119,
+	kHelpY = 421,
+	kHelpWidth = 25,
+	kHelpHeight = 25,
 
 	kAboutSplashX = 13,
 	kAboutSplashY = 64,
@@ -52,6 +60,7 @@ enum {
 
 #pragma mark -
 #pragma mark class definitions
+#pragma mark -
 
 //-----------------------------------------------------------------------------
 class ScratchaEditor : public DfxGuiEditor
@@ -66,15 +75,24 @@ public:
 	ComponentResult LoadAudioFile(FSRef * inAudioFileRef);
 	ComponentResult HandleAudioFileChange();
 	ComponentResult HandlePlayButton(bool inPlay);
+	ComponentResult HandlePlayChange();
+	void HandleParameterChange(long inParameterID, float inValue);
 
 private:
 	void SetFileNameDisplay(CFStringRef inDisplayText);
-	void SetUniversalDisplayType(long index);
 
 	DGStaticTextDisplay * audioFileNameDisplay;
+	DGStaticTextDisplay * allParamsTextDisplay;
+	DGButton * playButton;
+	DGButton * midiLearnButton;
+	DGAnimation * scratchSpeedKnob;
 
 	AUEventListenerRef propertyEventListener;
 	AudioUnitEvent audioFilePropertyAUEvent;
+	AudioUnitEvent playPropertyAUEvent;
+
+	AUParameterListenerRef parameterListener;
+	AudioUnitParameter allParamsAUP;
 };
 
 
@@ -99,41 +117,6 @@ public:
 	}
 };
 
-//-----------------------------------------------------------------------------
-class DGAnimation : public DGTextDisplay
-{
-public:
-	DGAnimation(DfxGuiEditor * inOwnerEditor, long inParamID, DGRect * inRegion, 
-				DGImage * inAnimationImage, long inNumAnimationFrames, DGImage * inBackground = NULL)
-	:   DGTextDisplay(inOwnerEditor, inParamID, inRegion, NULL, NULL, inBackground), 
-		animationImage(inAnimationImage), numAnimationFrames(inNumAnimationFrames)
-	{
-		if (numAnimationFrames < 1)
-			numAnimationFrames = 1;
-		setMouseDragRange(120.0f);  // number of pixels
-	}
-
-	virtual void draw(CGContextRef inContext, long inPortHeight)
-	{
-		if (backgroundImage != NULL)
-			backgroundImage->draw(getBounds(), inContext, inPortHeight);
-		if (animationImage != NULL)
-		{
-			SInt32 min = GetControl32BitMinimum(carbonControl);
-			SInt32 max = GetControl32BitMaximum(carbonControl);
-			SInt32 val = GetControl32BitValue(carbonControl);
-			float valNorm = ((max-min) == 0) ? 0.0f : (float)(val-min) / (float)(max-min);
-			long frameIndex = (long) ( valNorm * (float)(numAnimationFrames-1) );
-			long yoff = frameIndex * (animationImage->getHeight() / numAnimationFrames);
-			animationImage->draw(getBounds(), inContext, inPortHeight, 0, yoff);
-		}
-	}
-
-protected:
-	DGImage * animationImage;
-	long numAnimationFrames;
-};
-
 
 
 #pragma mark -
@@ -154,10 +137,49 @@ void PlayButtonProc(long inValue, void * inTurntablistEditor)
 }
 
 //-----------------------------------------------------------------------------
+void MidiLearnButtonProc(long inValue, void * inTurntablistEditor)
+{
+	if (inTurntablistEditor != NULL)
+		((DfxGuiEditor*)inTurntablistEditor)->setmidilearning( (inValue == 0) ? false : true );
+}
+
+//-----------------------------------------------------------------------------
+void HelpButtonProc(long inValue, void * inTurntablistEditor)
+{
+	if (inValue > 0)
+		launch_documentation();
+}
+
+//-----------------------------------------------------------------------------
 void AboutButtonProc(long inValue, void * inTurntablistEditor)
 {
-	if ( (inTurntablistEditor != NULL) && (inValue > 0) )
-		launch_documentation();
+	if (inValue > 0)
+	{
+/*
+		CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+		if ( (pluginBundleRef != NULL) && (HIAboutBox != NULL) )
+		{
+			CFMutableDictionaryRef aboutDict = CFDictionaryCreateMutable(kCFAllocatorDefault, 3, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+			if (aboutDict != NULL)
+			{
+				CFStringRef valueString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleName"));
+				if (valueString != NULL)
+					CFDictionaryAddValue(aboutDict, (const void*)kHIAboutBoxNameKey, (const void*)valueString);
+
+				valueString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleVersion"));
+				if (valueString != NULL)
+					CFDictionaryAddValue(aboutDict, (const void*)kHIAboutBoxVersionKey, (const void*)valueString);
+
+				valueString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleGetInfoString"));
+				if (valueString != NULL)
+					CFDictionaryAddValue(aboutDict, (const void*)kHIAboutBoxCopyrightKey, (const void*)valueString);
+
+				HIAboutBox(aboutDict);
+				CFRelease(aboutDict);
+			}
+		}
+*/
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -170,135 +192,34 @@ static void TurntablistPropertyEventListenerProc(void * inCallbackRefCon, void *
 		{
 			if (inEvent->mArgument.mProperty.mPropertyID == kTurntablistProperty_AudioFile)
 				editor->HandleAudioFileChange();
+			else if (inEvent->mArgument.mProperty.mPropertyID == kTurntablistProperty_Play)
+				editor->HandlePlayChange();
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-static void TurntablistPropertyListenerProc(void * inRefCon, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement)
+static void TurntablistOldStylePropertyListenerProc(void * inRefCon, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	ScratchaEditor * editor = (ScratchaEditor*) inRefCon;
 	if (editor != NULL)
 	{
 		if (inPropertyID == kTurntablistProperty_AudioFile)
 			editor->HandleAudioFileChange();
+		else if (inPropertyID == kTurntablistProperty_Play)
+			editor->HandlePlayChange();
 	}
 }
-
-
-
-#pragma mark -
-#pragma mark string conversion callbacks
 
 //-----------------------------------------------------------------------------
-enum
+static void TurntablistParameterListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
-	kSTfloat = 0,
-	kSTdb,
-	kSTlong,
-	kSTonoff,
-	kSTdir,
-	kSTnotemode,
-	kSTpamount,
-	kSTprange
-};
-
-int giStringType;
-int giIndex;
-
-void SetUniversalType(int type)
-{
-	giStringType = type;
-}
-
-bool gbBlah = false;
-
-float counter = 0.0f;
-
-void SetDisplayIndex(long index)
-{
-	giIndex = index;
-}
-
-void float2StringConvert(float value, char *text)
-{
-	sprintf(text, "%.6f", value);
-}
-
-void db2StringConvert(float value, char* string)
-{
-	if(value <= 0)
-//		strcpy(string, "   -°   ");
-		strcpy(string, "  -oo   ");
-	else
-		float2StringConvert((float)(20. * log10(value)), string);
-}
-
-void long2StringConvert(long value, char *text)
-{
-	char string[32];
-	
-	if(value >= 100000000)
-	{
-		strcpy(text, " Huge!  ");
+	if ( (inObject == NULL) || (inParameter == NULL) )
 		return;
-	}
-	sprintf(string, "%7ld", value);
-	string[8] = 0;
-	strcpy(text, (char *)string);
+
+	((ScratchaEditor*)inObject)->HandleParameterChange((long)(inParameter->mParameterID), inValue);
 }
 
-void OffOnStringConvert(float value, char* string)
-{
-	if (value < .5)
-		strcpy (string, "OFF");
-	else
-		strcpy (string, "ON");
-}
-
-void DirectionStringConvert(float value, char* string)
-{
-	if (value < .5)
-		strcpy (string, "Forward");
-	else
-		strcpy (string, "Reverse");
-}
-
-void NoteModeStringConvert(float value, char* string)
-{
-	if (value < .5)
-		strcpy (string, "Reset");
-	else
-		strcpy (string, "Resume");
-}
-
-void PitchRangeStringConvert(float value, char* string)
-{
-	float2StringConvert ((value*MAX_PITCH_RANGE*100), string);
-}
-
-void PitchAmountStringConvert(float value, char* string)
-{
-	float2StringConvert (((value-0.5f)*2.0f), string);
-}
-
-void UniversalStringConvert(float value, char * text)
-{	
-	switch(giStringType)
-	{
-		case(kSTfloat):		float2StringConvert(value, text); break;
-		case(kSTdb):		db2StringConvert(value, text); break;
-		case(kSTlong):		long2StringConvert((long)(value*127.0f), text); break;
-		case(kSTonoff):		OffOnStringConvert(value, text); break;
-		case(kSTdir):		DirectionStringConvert(value, text); break;
-		case(kSTnotemode):	NoteModeStringConvert(value, text); break;
-		case(kSTpamount):	PitchAmountStringConvert(value, text); break;
-		case(kSTprange):	PitchRangeStringConvert(value, text); break;
-		default:
-			float2StringConvert(value, text);
-	}
-
-}
 
 
 
@@ -315,7 +236,13 @@ ScratchaEditor::ScratchaEditor(AudioUnitCarbonView inInstance)
 :	DfxGuiEditor(inInstance)
 {
 	audioFileNameDisplay = NULL;
+	allParamsTextDisplay = NULL;
+	playButton = NULL;
+	scratchSpeedKnob = NULL;
+	midiLearnButton = NULL;
+
 	propertyEventListener = NULL;
+	parameterListener = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -325,19 +252,167 @@ ScratchaEditor::~ScratchaEditor()
 	if (propertyEventListener != NULL)
 	{
 		if (AUEventListenerRemoveEventType != NULL)
+		{
 			AUEventListenerRemoveEventType(propertyEventListener, this, &audioFilePropertyAUEvent);
+			AUEventListenerRemoveEventType(propertyEventListener, this, &playPropertyAUEvent);
+		}
 		AUListenerDispose(propertyEventListener);
 	}
 	// otherwise, if the UI was opened, then we did an old style property listener
 	else if (GetEditAudioUnit() != NULL)
-		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kTurntablistProperty_AudioFile, TurntablistPropertyListenerProc);
+	{
+		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kTurntablistProperty_AudioFile, TurntablistOldStylePropertyListenerProc);
+		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kTurntablistProperty_Play, TurntablistOldStylePropertyListenerProc);
+	}
 	propertyEventListener = NULL;
+
+	if (parameterListener != NULL)
+	{
+		for (AudioUnitParameterID i=0; i < kNumParams; i++)
+		{
+			allParamsAUP.mParameterID = i;
+			AUListenerRemoveParameter(parameterListener, this, &allParamsAUP);
+		}
+		AUListenerDispose(parameterListener);
+	}
+	parameterListener = NULL;
 }
 
 //-----------------------------------------------------------------------------
 long ScratchaEditor::open()
 {
-	// install a property listener for the audio file property
+	// background image
+	DGImage * gBackground = new DGImage("background.png", this);
+	SetBackgroundImage(gBackground);
+
+	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
+	DGImage * gKnob = new DGImage("knob.png", this);
+	DGImage * gOnOffButton = new DGImage("on-off-button.png", this);
+	DGImage * gOnOffButton_green = new DGImage("on-off-button-green.png", this);
+	DGImage * gDirectionButton = new DGImage("direction-button.png", this);
+	DGImage * gLoopButton = new DGImage("loop-button.png", this);
+	DGImage * gNoteModeButton = new DGImage("note-mode-button.png", this);
+	DGImage * gScratchModeButton = new DGImage("scratch-mode-button.png", this);
+	DGImage * gHelpButton = new DGImage("help-button.png", this);
+
+
+	// create controls
+	DGRect pos;
+
+
+	// buttons
+	DGButton * button;
+
+	pos.set(kColumn1, 123, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
+	button = new DGButton(this, kPower, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
+	button->setHelpText(CFSTR("this switches the turntable power on or off"));
+
+	pos.set(kColumn3, 182, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
+	button = new DGButton(this, kMute, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
+	button->setHelpText(CFSTR("this mutes the audio output"));
+
+	pos.set(kColumn2, 300, gDirectionButton->getWidth(), gDirectionButton->getHeight()/2);
+	button = new DGButton(this, kDirection, &pos, gDirectionButton, 2, kDGButtonType_incbutton);
+	button->setHelpText(CFSTR("this changes playback direction of the audio sample, regular or reverse"));
+
+	pos.set(kColumn3, 241, gNoteModeButton->getWidth(), gNoteModeButton->getHeight()/2);
+	button = new DGButton(this, kNoteMode, &pos, gNoteModeButton, 2, kDGButtonType_incbutton);
+	button->setHelpText(CFSTR("This toggles between \"reset\" and \"resume\" mode (resume means that notes trigger playback from where the audio sample last stopped, and reset means that playback starts from the beginning with each note)"));
+
+	pos.set(kColumn3, 300, gLoopButton->getWidth(), gLoopButton->getHeight()/2);
+	button = new DGButton(this, kLoop, &pos, gLoopButton, 2, kDGButtonType_incbutton);
+	button->setHelpText(CFSTR("this switches looping of the audio sample playback on or off"));
+
+	pos.set(kColumn4, 123, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
+	button = new DGButton(this, kNotePowerTrack, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
+	button->setHelpText(CFSTR("enabling this will cause note-on and note-off messages to be mapped turntable power on and off for an interesting effect"));
+
+	pos.set(kColumn2, 360, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
+	button = new DGButton(this, kKeyTracking, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
+	button->setHelpText(CFSTR("this switches key tracking on or off (key tracking means that the pitch and speed of the audio sample playback are transposed in relation to the pitch of the MIDI note)"));
+
+	pos.set(kColumn3, 360, gScratchModeButton->getWidth(), gScratchModeButton->getHeight()/2);
+	button = new DGButton(this, kScratchMode, &pos, gScratchModeButton, 2, kDGButtonType_incbutton);
+	button->setHelpText(CFSTR("this toggles between realtime mode and sequence mode, which affects the behavior of the Scratch Amount parameter"));
+
+	pos.set(kLoadButtonX, kLoadButtonY, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
+	button = new DGButton(this, &pos, gOnOffButton, 2, kDGButtonType_pushbutton);
+	button->setUserReleaseProcedure(LoadButtonProc, this);
+	button->setUseReleaseProcedureOnlyAtEndWithNoCancel(true);
+	button->setHelpText(CFSTR("push this button to find an audio file to load up onto the \"turntable\""));
+
+	pos.set(kPlayButtonX, kPlayButtonY, gOnOffButton_green->getWidth(), gOnOffButton_green->getHeight()/2);
+	playButton = new DGButton(this, &pos, gOnOffButton_green, 2, kDGButtonType_incbutton);
+	playButton->setUserProcedure(PlayButtonProc, this);
+	playButton->setHelpText(CFSTR("push this on or off to start or stop the audio sample playback"));
+
+	pos.set(kMidiLearnX, kMidiLearnY, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
+	midiLearnButton = new DGButton(this, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
+	midiLearnButton->setUserProcedure(MidiLearnButtonProc, this);
+	midiLearnButton->setHelpText(CFSTR("This switches MIDI learn mode on or off.  When MIDI learn is on, you can click on a parameter control to enable that parameter as the \"learner\" for incoming MIDI CC messages."));
+
+	pos.set(kAboutSplashX, kAboutSplashY, kAboutSplashWidth, kAboutSplashHeight);
+	button = new DGButton(this, &pos, NULL, 2, kDGButtonType_incbutton);
+	button->setUserProcedure(AboutButtonProc, this);
+//	button->setHelpText(CFSTR(""));
+
+	pos.set(kHelpX, kHelpY, gHelpButton->getWidth(), gHelpButton->getHeight()/2);
+	button = new DGButton(this, &pos, gHelpButton, 2, kDGButtonType_pushbutton);
+	button->setUserProcedure(HelpButtonProc, this);
+	button->setHelpText(CFSTR("push this button to view the full manual"));
+
+
+	// knobs
+	DGAnimation * knob;
+
+	pos.set(26, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
+	knob = new DGAnimation(this, kPitchRange, &pos, gKnob, kKnobFrames);
+	knob->setHelpText(CFSTR("this controls the range of pitch adjustment values that the Pitch parameter offers"));
+
+	long scratchSpeedParam = (getparameter_i(kScratchMode) == kScratchMode_realtime) ? kScratchSpeed_realtime : kScratchSpeed_sequence;
+	pos.set(kColumn4, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
+	scratchSpeedKnob = new DGAnimation(this, scratchSpeedParam, &pos, gKnob, kKnobFrames);
+	scratchSpeedKnob->setHelpText(CFSTR("this sets the speed of the scratching effect that the Scratch Amount parameter produces (time in seconds for realtime mode, or playback rate for sequence mode)"));
+
+	pos.set(kColumn2k, 124, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
+	knob = new DGAnimation(this, kSpinUpSpeed, &pos, gKnob, kKnobFrames);
+	knob->setHelpText(CFSTR("this controls how quickly the audio playback \"spins up\" when the turntable power turns on"));
+
+	pos.set(116, 124, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
+	knob = new DGAnimation(this, kSpinDownSpeed, &pos, gKnob, kKnobFrames);
+	knob->setHelpText(CFSTR("this controls how quickly the audio playback \"spins down\" when the turntable power turns off"));
+
+	pos.set(kColumn2k, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
+	knob = new DGAnimation(this, kVolume, &pos, gKnob, kKnobFrames);
+	knob->setHelpText(CFSTR("this controls the overall volume of the audio output"));
+
+
+	// sliders
+	DGSlider * slider;
+
+	// pitch amount
+	pos.set(31, kFaderY, kFaderWidth, kFaderHeight);
+	slider = new DGSlider(this, kPitchAmount, &pos, kDGSliderAxis_vertical, gSliderHandle, NULL);
+//	slider->setDefaultValue(0.75f);
+	slider->setHelpText(CFSTR("changes the audio playback pitch between +/- the Pitch Range value"));
+
+	// scratch amount
+	pos.set(kScratchAmountFaderX, kFaderY, kFaderWidth, kFaderHeight);
+	slider = new TurntablistPitchSlider(this, kScratchAmount, &pos, kDGSliderAxis_vertical, gSliderHandle);
+	slider->setHelpText(CFSTR("This slider is what does the actual scratching.  In realtime mode, the slider represents time.  In sequence mode, the slider represents forward and backward speed."));
+
+
+	// text displays
+	pos.set(kDisplayX, kDisplayY, kFileNameWidth, kFileNameHeight);
+	allParamsTextDisplay = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kTurntablistFontSize, kWhiteDGColor, NULL);
+
+	pos.set(kFileNameX, kFileNameY, kFileNameWidth, kFileNameHeight);
+	audioFileNameDisplay = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kTurntablistFontSize, kWhiteDGColor, NULL);
+	HandleAudioFileChange();
+
+
+
+	// install property listeners for the "audio file" and "play" properties
 	if ( (AUEventListenerCreate != NULL) && (AUEventListenerAddEventType != NULL) )
 	{
 		OSStatus status = AUEventListenerCreate(TurntablistPropertyEventListenerProc, this, 
@@ -353,122 +428,39 @@ long ScratchaEditor::open()
 			audioFilePropertyAUEvent.mArgument.mProperty.mScope = kAudioUnitScope_Global;
 			audioFilePropertyAUEvent.mArgument.mProperty.mElement = 0;
 			status = AUEventListenerAddEventType(propertyEventListener, this, &audioFilePropertyAUEvent);
+
+			playPropertyAUEvent = audioFilePropertyAUEvent;
+			playPropertyAUEvent.mArgument.mProperty.mPropertyID = kTurntablistProperty_Play;
+			status = AUEventListenerAddEventType(propertyEventListener, this, &playPropertyAUEvent);
 		}
 	}
 	else
 	{
-		AudioUnitAddPropertyListener(GetEditAudioUnit(), kTurntablistProperty_AudioFile, TurntablistPropertyListenerProc, this);
+		AudioUnitAddPropertyListener(GetEditAudioUnit(), kTurntablistProperty_AudioFile, TurntablistOldStylePropertyListenerProc, this);
+		AudioUnitAddPropertyListener(GetEditAudioUnit(), kTurntablistProperty_Play, TurntablistOldStylePropertyListenerProc, this);
 	}
 
 
-	// background image
-	DGImage * gBackground = new DGImage("background.png", this);
-	SetBackgroundImage(gBackground);
 
-	DGImage * gSliderHandle = new DGImage("slider-handle.png", this);
-	DGImage * gKnob = new DGImage("knob.png", this);
-	DGImage * gOnOffButton = new DGImage("on-off-button.png", this);
-	DGImage * gOnOffButton_green = new DGImage("on-off-button-green.png", this);
-	DGImage * gDirectionButton = new DGImage("direction-button.png", this);
-	DGImage * gLoopButton = new DGImage("loop-button.png", this);
-	DGImage * gNoteModeButton = new DGImage("note-mode-button.png", this);
+	// install a parameter listener for every parameter
+	OSStatus status = AUListenerCreate(TurntablistParameterListenerProc, this,
+						CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 0.030f, // 30 ms
+						&parameterListener);
+	if (status != noErr)
+		parameterListener = NULL;
 
+	if (parameterListener != NULL)
+	{
+		allParamsAUP.mAudioUnit = GetEditAudioUnit();
+		allParamsAUP.mScope = kAudioUnitScope_Global;
+		allParamsAUP.mElement = (AudioUnitElement)0;
+		for (AudioUnitParameterID i=0; i < kNumParams; i++)
+		{
+			allParamsAUP.mParameterID = i;
+			AUListenerAddParameter(parameterListener, this, &allParamsAUP);
+		}
+	}
 
-	// create controls
-	DGRect pos;
-
-	// buttons
-	DGButton * button;
-
-	pos.set(25, 123, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
-	button = new DGButton(this, kPower, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-
-	pos.set(115, 182, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
-	button = new DGButton(this, kMute, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-
-	pos.set(70, 300, gDirectionButton->getWidth(), gDirectionButton->getHeight()/2);
-	button = new DGButton(this, kDirection, &pos, gDirectionButton, 2, kDGButtonType_incbutton);
-
-	pos.set(115, 241, gNoteModeButton->getWidth(), gNoteModeButton->getHeight()/2);
-	button = new DGButton(this, kNoteMode, &pos, gNoteModeButton, 2, kDGButtonType_incbutton);
-
-	pos.set(115, 300, gLoopButton->getWidth(), gLoopButton->getHeight()/2);
-	button = new DGButton(this, kLoopMode, &pos, gLoopButton, 2, kDGButtonType_incbutton);
-
-	pos.set(160, 123, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
-	button = new DGButton(this, kNPTrack, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-
-	pos.set(115, 418, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
-	button = new DGButton(this, kKeyTracking, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-
-	pos.set(71, 360, gOnOffButton->getWidth(), gOnOffButton->getHeight()/2);
-	button = new DGButton(this, kScratchMode, &pos, gOnOffButton, 2, kDGButtonType_incbutton);
-
-	pos.set(kLoadButtonX, kLoadButtonY, gOnOffButton->getWidth (), gOnOffButton->getHeight()/2);
-	button = new DGButton(this, &pos, gOnOffButton, 2, kDGButtonType_pushbutton);
-	button->setUserReleaseProcedure(LoadButtonProc, this);
-	button->setUseReleaseProcedureOnlyAtEndWithNoCancel(true);
-
-	pos.set(kPlayButtonX, kPlayButtonY, gOnOffButton_green->getWidth (), gOnOffButton_green->getHeight()/2);
-	button = new DGButton(this, &pos, gOnOffButton_green, 2, kDGButtonType_incbutton);
-	button->setUserProcedure(PlayButtonProc, this);
-
-	pos.set(kAboutSplashX, kAboutSplashY, kAboutSplashWidth, kAboutSplashHeight);
-	button = new DGButton(this, &pos, NULL, 2, kDGButtonType_incbutton);
-	button->setUserProcedure(AboutButtonProc, this);
-
-	// knobs
-	DGAnimation * knob;
-
-	pos.set(26, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
-	knob = new DGAnimation(this, kPitchRange, &pos, gKnob, kKnobFrames);
-
-	pos.set(160, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
-	knob = new DGAnimation(this, kScratchSpeed, &pos, gKnob, kKnobFrames);
-
-	pos.set(116, 124, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
-	knob = new DGAnimation(this, kSpinUpSpeed, &pos, gKnob, kKnobFrames);
-
-	pos.set(71, 124, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
-	knob = new DGAnimation(this, kSpinDownSpeed, &pos, gKnob, kKnobFrames);
-
-	pos.set(71, 183, gKnob->getWidth(), gKnob->getHeight()/kKnobFrames);
-	knob = new DGAnimation(this, kVolume, &pos, gKnob, kKnobFrames);
-
-	// sliders
-/*
-	int minPos = kFaderY + 1;
-	int maxPos = kFaderY + kFaderHeight - gSliderHandle->getHeight();
-	CPoint offset(1, 0);
-*/
-	DGSlider * slider;
-
-	// pitch amount
-	pos.set(31, 248, kFaderWidth, kFaderHeight);
-	slider = new DGSlider(this, kPitchAmount, &pos, kDGSliderAxis_vertical, gSliderHandle, NULL);
-//	vsPitchAmount->setOffsetHandle(offset);
-//	vsPitchAmount->setDefaultValue(0.75f);
-
-	// scratch amount
-	pos.set(166, 248, kFaderWidth, kFaderHeight);
-	slider = new TurntablistPitchSlider(this, kScratchAmount, &pos, kDGSliderAxis_vertical, gSliderHandle);
-//	vsScratchAmount->setOffsetHandle(offset);
-
-/*
-	// teDisplay
-	size (kDisplayX, kDisplayY, kDisplayX + kFileNameWidth, kDisplayY + kFileNameHeight);
-	teDisplay = new CTextEdit(size, this, kCenterText, 0, bmpDisplayBackground, 0); // kDoubleClickStyle); 
-	teDisplay->setFont (kNormalFontSmall);
-	teDisplay->setFontColor (kWhiteCColor);
-	teDisplay->setBackColor (kBlackCColor);
-	teDisplay->setFrameColor (kBlueCColor);
-	teDisplay->setValue (0.0f);
-	teDisplay->setTextTransparency(true); 
-*/
-
-	pos.set(kFileNameX, kFileNameY, kFileNameWidth, kFileNameHeight);
-	audioFileNameDisplay = new DGStaticTextDisplay(this, &pos, NULL, kDGTextAlign_center, kTurntablistFontSize, kWhiteDGColor, NULL);
-	HandleAudioFileChange();
 
 
 	return noErr;
@@ -478,6 +470,64 @@ long ScratchaEditor::open()
 
 #pragma mark -
 #pragma mark audio file chooser
+
+#include "sndfile.h"	// for the libsndfile error code constants
+//-----------------------------------------------------------------------------
+OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode)
+{
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+	if (pluginBundleRef == NULL)
+		return coreFoundationUnknownErr;
+
+	AlertStdCFStringAlertParamRec alertParams;
+	GetStandardAlertDefaultParams(&alertParams, kStdCFStringAlertVersionOne);
+	alertParams.movable = true;
+
+	CFStringRef titleString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The file could not be loaded."), 
+								CFSTR("Localizable"), pluginBundleRef, 
+								CFSTR("title for the dialog telling you that the audio file could not be loaded"));
+	CFStringRef messageString = CFCopyLocalizedStringFromTableInBundle(CFSTR("An error was encountered while trying to load audio data from the file.  %@"), 
+								CFSTR("Localizable"), pluginBundleRef, 
+								CFSTR("explanation for the dialog telling you that the audio file could not be loaded"));
+	CFStringRef errorDescriptionString;
+	switch (inErrorCode)
+	{
+		case SF_ERR_UNRECOGNISED_FORMAT:
+			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is in a format that could not be recognized."), 
+										CFSTR("Localizable"), pluginBundleRef, 
+										CFSTR("libsndfile SF_ERR_UNRECOGNISED_FORMAT description"));
+			break;
+		case SF_ERR_SYSTEM:
+			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR("A system error occurred while trying to read the file."), 
+										CFSTR("Localizable"), pluginBundleRef, 
+										CFSTR("libsndfile SF_ERR_SYSTEM description"));
+			break;
+		default:
+			errorDescriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("error code %ld"), inErrorCode);
+			break;
+	}
+	if (errorDescriptionString != NULL)
+	{
+		CFStringRef messageStringWithError = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, messageString, errorDescriptionString);
+		if (messageStringWithError != NULL)
+		{
+			CFRelease(messageString);
+			messageString = messageStringWithError;
+		}
+	}
+
+	DialogRef alertDialog;
+	OSStatus status = CreateStandardAlert(kAlertNoteAlert, titleString, messageString, &alertParams, &alertDialog);
+	CFRelease(titleString);
+	CFRelease(messageString);
+	if (status == noErr)
+	{
+		DialogItemIndex itemHit;
+		status = RunStandardAlert(alertDialog, NULL, &itemHit);
+	}
+
+	return status;
+}
 
 //-----------------------------------------------------------------------------
 // this is the event handler callback for the custom open audio file Nav Services dialog
@@ -492,8 +542,9 @@ pascal void OpenAudioFileNavEventHandler(NavEventCallbackMessage inCallbackSelec
 			break;
 
 		case kNavCBTerminate:
-			if (dialog != NULL)
-				NavDialogDispose(dialog);
+			// XXX why does this crash Rax and SynthTest?
+//			if (dialog != NULL)
+//				NavDialogDispose(dialog);
 			break;
 
 		// the user did something action-packed
@@ -506,7 +557,7 @@ pascal void OpenAudioFileNavEventHandler(NavEventCallbackMessage inCallbackSelec
 			// and I guess cancel, too
 			if (userAction == kNavUserActionCancel)
 			{
-//				gLoadAudioFileDialogResult = userCanceledErr;
+//				userCanceledErr;
 				break;
 			}
 			if (userAction != kNavUserActionOpen)
@@ -529,14 +580,17 @@ pascal void OpenAudioFileNavEventHandler(NavEventCallbackMessage inCallbackSelec
 					if (status == noErr)
 					{
 						if (editor != NULL)
+						{
 							status = editor->LoadAudioFile(&audioFileRef);
+							if (status != noErr)
+								NotifyAudioFileLoadError(status);
+						}
 						else
 							status = paramErr;
 					}
 				}
 				NavDisposeReply(&reply);
 			}
-//			gLoadAudioFileDialogResult = status;
 			break;
 		}
 
@@ -553,6 +607,10 @@ pascal void OpenAudioFileNavEventHandler(NavEventCallbackMessage inCallbackSelec
 
 //-----------------------------------------------------------------------------
 #include <AudioToolbox/AudioFile.h>
+static OSType * gSupportedAudioFileTypeCodes = NULL;
+static UInt32 gNumSupportedAudioFileTypeCodes = 0;
+static CFMutableArrayRef gSupportedAudioFileExtensions = NULL;
+/*
 CFStringRef gSupportedAudioFileExtensions[] = 
 {
 	CFSTR("aif"),
@@ -563,6 +621,10 @@ CFStringRef gSupportedAudioFileExtensions[] =
 	CFSTR("au"),
 	CFSTR("snd"),
 	CFSTR("mp3"),
+	CFSTR("mpeg"),
+	CFSTR("ac3"),
+	CFSTR("aac"),
+	CFSTR("adts"),
 	CFSTR("m4a")
 };
 OSType gSupportedAudioFileTypeCodes[] = 
@@ -576,6 +638,7 @@ OSType gSupportedAudioFileTypeCodes[] =
 	kAudioFileAC3Type,
 	kAudioFileAAC_ADTSType
 };
+*/
 
 //-----------------------------------------------------------------------------
 // This is the filter callback for the custom open audio file Nav Services dialog.  
@@ -615,25 +678,29 @@ pascal Boolean OpenAudioFileNavFilterProc(AEDesc * inItem, void * inInfo, void *
 						else
 						{
 							result = false;
-							bool processedExtension = false;
 							if (lsItemInfo.extension != NULL)
 							{
-								long numExtensions = sizeof(gSupportedAudioFileExtensions) / sizeof(*gSupportedAudioFileExtensions);
-								for (long i=0; i < numExtensions; i++)
+								if (gSupportedAudioFileExtensions != NULL)
 								{
-									if ( CFStringCompare(lsItemInfo.extension, gSupportedAudioFileExtensions[i], kCFCompareCaseInsensitive) == kCFCompareEqualTo )
+									CFIndex numExtensions = CFArrayGetCount(gSupportedAudioFileExtensions);
+									for (CFIndex i=0; i < numExtensions; i++)
 									{
-										result = true;
-										processedExtension = true;
-										break;
+										CFStringRef supportedAudioFileExtension = (CFStringRef) CFArrayGetValueAtIndex(gSupportedAudioFileExtensions, i);
+										if (supportedAudioFileExtension != NULL)
+										{
+											if ( CFStringCompare(lsItemInfo.extension, supportedAudioFileExtension, kCFCompareCaseInsensitive) == kCFCompareEqualTo )
+											{
+												result = true;
+												break;
+											}
+										}
 									}
 								}
 								CFRelease(lsItemInfo.extension);
 							}
-							if (!processedExtension)
+							if ( (!result) && (gSupportedAudioFileTypeCodes != NULL) )
 							{
-								long numTypeCodes = sizeof(gSupportedAudioFileTypeCodes) / sizeof(*gSupportedAudioFileTypeCodes);
-								for (long i=0; i < numTypeCodes; i++)
+								for (UInt32 i=0; i < gNumSupportedAudioFileTypeCodes; i++)
 								{
 									if (lsItemInfo.filetype == gSupportedAudioFileTypeCodes[i])
 									{
@@ -659,10 +726,46 @@ const UInt32 kTurntablistAudioFileOpenNavDialogKey = PLUGIN_ID;
 //-----------------------------------------------------------------------------
 OSStatus ScratchaEditor::HandleLoadButton()
 {
+	OSStatus status;
+
+	if (gSupportedAudioFileTypeCodes == NULL)
+	{
+		UInt32 propertySize = 0;
+		status = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_ReadableTypes, 0, NULL, &propertySize);
+		if ( (status == noErr) && (propertySize > 0) )
+		{
+			gSupportedAudioFileTypeCodes = (OSType*) malloc(propertySize);
+			status = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_ReadableTypes, 0, NULL, &propertySize, gSupportedAudioFileTypeCodes);
+			if (status == noErr)
+				gNumSupportedAudioFileTypeCodes = propertySize / sizeof(*gSupportedAudioFileTypeCodes);
+		}
+	}
+
+	if ( (gSupportedAudioFileExtensions == NULL) && (gSupportedAudioFileTypeCodes != NULL) )
+	{
+		for (UInt32 i=0; i < gNumSupportedAudioFileTypeCodes; i++)
+		{
+			CFArrayRef extensionsArray = NULL;
+			UInt32 propertySize = sizeof(extensionsArray);
+			status = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_ExtensionsForType, sizeof(*gSupportedAudioFileTypeCodes), gSupportedAudioFileTypeCodes+i, &propertySize, &extensionsArray);
+			if ( (status == noErr) && (extensionsArray != NULL) )
+			{
+				if (gSupportedAudioFileExtensions == NULL)
+					gSupportedAudioFileExtensions = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+				if (gSupportedAudioFileExtensions != NULL)
+					CFArrayAppendArray( gSupportedAudioFileExtensions, extensionsArray, CFRangeMake(0, CFArrayGetCount(extensionsArray)) );
+//fprintf(stderr, "\n\t%.4s\n", (char*)(gSupportedAudioFileTypeCodes+i));
+//for (CFIndex j=0 ; j < CFArrayGetCount(extensionsArray); j++) CFShow(CFArrayGetValueAtIndex(extensionsArray, j));
+			}
+		}
+	}
+
+
+
 	NavDialogCreationOptions dialogOptions;
-	ComponentResult result = NavGetDefaultDialogCreationOptions(&dialogOptions);
-	if (result != noErr)
-		return result;
+	status = NavGetDefaultDialogCreationOptions(&dialogOptions);
+	if (status != noErr)
+		return status;
 	dialogOptions.optionFlags &= ~kNavAllowMultipleFiles;	// disallow multiple file selection
 	// this gives this dialog a unique identifier so that it has independent remembered settings for the calling app
 	dialogOptions.preferenceKey = kTurntablistAudioFileOpenNavDialogKey;
@@ -674,17 +777,17 @@ OSStatus ScratchaEditor::HandleLoadButton()
 	NavEventUPP eventProc = NewNavEventUPP(OpenAudioFileNavEventHandler);
 	NavObjectFilterUPP filterProc = NewNavObjectFilterUPP(OpenAudioFileNavFilterProc);
 	NavDialogRef dialog = NULL;
-	result = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)this, &dialog);
-	if (result == noErr)
+	status = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)this, &dialog);
+	if (status == noErr)
 	{
-		result = NavDialogRun(dialog);
+		status = NavDialogRun(dialog);
 	}
 	if (eventProc != NULL)
 		DisposeRoutineDescriptor(eventProc);
 	if (filterProc != NULL)
 		DisposeRoutineDescriptor(filterProc);
 
-	return result;
+	return status;
 }
 
 //-----------------------------------------------------------------------------
@@ -712,20 +815,8 @@ CFStringRef CopyNameAndVersionString()
 	if (pluginBundleRef == NULL)
 		return NULL;
 
-	// find the version string in the plugin's Info.plist and show that in the window in the appropriate place
-	CFDictionaryRef infoPlistDictionary = CFBundleGetInfoDictionary(pluginBundleRef);
-	CFDictionaryRef infoPlistLocalizedDictionary = CFBundleGetLocalInfoDictionary(pluginBundleRef);
-
-	CFStringRef nameString = NULL, versionString = NULL;
-	if (infoPlistLocalizedDictionary != NULL)
-		nameString = (CFStringRef) CFDictionaryGetValue(infoPlistLocalizedDictionary, CFSTR("CFBundleName"));
-	if (infoPlistDictionary != NULL)
-	{
-		if (nameString == NULL)
-			nameString = (CFStringRef) CFDictionaryGetValue(infoPlistDictionary, CFSTR("CFBundleName"));
-		versionString = (CFStringRef) CFDictionaryGetValue(infoPlistDictionary, CFSTR("CFBundleVersion"));
-	}
-
+	CFStringRef nameString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleName"));
+	CFStringRef versionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleVersion"));
 	CFStringRef nameAndVersionString = NULL;
 	if ( (nameString != NULL) && (versionString != NULL) )
 		nameAndVersionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@  %@"), nameString, versionString);
@@ -740,13 +831,12 @@ CFStringRef CopyNameAndVersionString()
 //-----------------------------------------------------------------------------
 CFStringRef CopyFileNameString(const FSRef & inFileRef)
 {
-	CFURLRef fileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &inFileRef);
-	if (fileUrl == NULL)
+	CFStringRef fileName = NULL;
+	OSStatus status = LSCopyDisplayNameForRef(&inFileRef, &fileName);
+	if (status == noErr)
+		return fileName;
+	else
 		return NULL;
-
-	CFStringRef fileName = CFURLCopyLastPathComponent(fileUrl);
-	CFRelease(fileUrl);
-	return fileName;
 }
 
 //-----------------------------------------------------------------------------
@@ -781,6 +871,27 @@ ComponentResult ScratchaEditor::HandlePlayButton(bool inPlay)
 }
 
 //-----------------------------------------------------------------------------
+ComponentResult ScratchaEditor::HandlePlayChange()
+{
+	if (playButton == NULL)
+		return kAudioUnitErr_Uninitialized;
+
+	bool play;
+	UInt32 dataSize = sizeof(play);
+	ComponentResult result = AudioUnitGetProperty(GetEditAudioUnit(), kTurntablistProperty_Play, 
+												kAudioUnitScope_Global, (AudioUnitElement)0, 
+												&play, &dataSize);
+	if (result == noErr)
+	{
+		ControlRef carbonControl = playButton->getCarbonControl();
+		if (carbonControl != NULL)
+			SetControl32BitValue( carbonControl, (play ? 1 : 0) );
+	}
+
+	return result;
+}
+
+//-----------------------------------------------------------------------------
 void ScratchaEditor::SetFileNameDisplay(CFStringRef inDisplayText)
 {
 	if (inDisplayText == NULL)
@@ -788,66 +899,200 @@ void ScratchaEditor::SetFileNameDisplay(CFStringRef inDisplayText)
 
 	if (audioFileNameDisplay != NULL)
 		audioFileNameDisplay->setCFText(inDisplayText);
+}
 
-/*
-	// we need to the current port to the window's, otherwise DrawThemeTextBox() won't draw into our window
-	GrafPtr originalPort = NULL;
-	GetPort(&originalPort);
-	SetPortWindowPort(GetCarbonWindow());
 
-	SetThemeTextColor(kThemeTextColorWhite, 32, true);	// XXX eh, is there a real way to get the graphics device bit-depth value?
-	SInt16 justification = teCenter;
-	Rect textRect;
-	textRect.left = kFileNameX + (short) GetXOffset();
-	textRect.top = kFileNameY + (short) GetYOffset();
-	textRect.right = textRect.left + kFileNameWidth;
-	textRect.bottom = textRect.top + kFileNameHeight;
-	DrawThemeTextBox(inDisplayText, kThemeSystemFont, kThemeStateActive, false, &textRect, justification, NULL);
-//kThemeSystemFontDetail, kThemeMiniSystemFont, kThemeLabelFont
 
-	// revert to the previously active port
-	if (originalPort != NULL)
-		SetPort(originalPort);
-*/
+#pragma mark -
+#pragma mark parameter -> string conversions
+
+//-----------------------------------------------------------------------------
+CFStringRef CopyAUParameterName(AudioUnit inAUInstance, long inParameterID)
+{
+	if (inAUInstance == NULL)
+		return NULL;
+
+	AudioUnitParameterInfo parameterInfo;
+	memset(&parameterInfo, 0, sizeof(parameterInfo));
+	UInt32 dataSize = sizeof(parameterInfo);
+	ComponentResult result = AudioUnitGetProperty(inAUInstance, kAudioUnitProperty_ParameterInfo, kAudioUnitScope_Global, (AudioUnitElement)inParameterID, &parameterInfo, &dataSize);
+	if (result == noErr)
+	{
+		CFStringRef parameterName = parameterInfo.cfNameString;
+		UInt32 flags = parameterInfo.flags;
+		if ( (parameterName != NULL) && (flags & kAudioUnitParameterFlag_HasCFNameString) )
+		{
+			if (flags & kAudioUnitParameterFlag_CFNameRelease)
+				return parameterName;
+			else
+				return CFStringCreateCopy(kCFAllocatorDefault, parameterName);
+		}
+		else
+		{
+			return CFStringCreateWithCString(kCFAllocatorDefault, parameterInfo.name, kCFStringEncodingUTF8);
+		}
+	}
+
+	return NULL;
 }
 
 //-----------------------------------------------------------------------------
-void ScratchaEditor::SetUniversalDisplayType(long index)
+CFArrayRef CopyAUParameterValueStrings(AudioUnit inAUInstance, long inParameterID)
 {
-	SetDisplayIndex(index);
+	if (inAUInstance == NULL)
+		return NULL;
+	CFArrayRef strings = NULL;
+	UInt32 dataSize = sizeof(strings);
+	ComponentResult result = AudioUnitGetProperty(inAUInstance, kAudioUnitProperty_ParameterValueStrings, kAudioUnitScope_Global, (AudioUnitElement)inParameterID, &strings, &dataSize);
+	if (result == noErr)
+		return strings;
+	else
+		return NULL;
+}
 
-	switch(index)
+//-----------------------------------------------------------------------------
+void ScratchaEditor::HandleParameterChange(long inParameterID, float inValue)
+{
+	long value_i = (long) (inValue + 0.001f);
+
+	if ( (inParameterID == kScratchMode) && (scratchSpeedKnob != NULL) )
 	{
-		case kPitchAmount:
-			SetUniversalType(kSTpamount);
-			break;
-		case kPitchRange:
-			SetUniversalType(kSTprange);
-			break;
-		case kDirection:
-			SetUniversalType(kSTdir);
-			break;
-		case kNoteMode:
-			SetUniversalType(kSTnotemode);
-			break;
+		long newParamID = (value_i == kScratchMode_realtime) ? kScratchSpeed_realtime : kScratchSpeed_sequence;
+		scratchSpeedKnob->setParameterID(newParamID);
+	}
+
+	if (allParamsTextDisplay == NULL)
+		return;
+	DGControl * control = getCurrentControl_clicked();
+	if (control == NULL)
+		return;
+
+	CFStringRef universalDisplayText = NULL;
+	CFAllocatorRef cfAllocator = kCFAllocatorDefault;
+
+	if (control == playButton)
+	{
+		CFStringRef text = (value_i) ? CFSTR("playback:  Start") : CFSTR("playback:  Stop");
+		universalDisplayText = CFStringCreateCopy(cfAllocator, text);
+		goto setTheUniversalText;
+	}
+	else if (control == midiLearnButton)
+	{
+		CFStringRef text = (value_i) ? CFSTR("MIDI learn:  On") : CFSTR("MIDI learn:  Off");
+		universalDisplayText = CFStringCreateCopy(cfAllocator, text);
+		goto setTheUniversalText;
+	}
+
+	if ( !(control->isParameterAttached()) )
+		return;
+	if (control->getParameterID() != inParameterID)
+		return;
+
+	switch (inParameterID)
+	{
 		case kScratchAmount:
-		case kScratchSpeed:
+			// float2string(m_fPlaySampleRate, text);
+			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%+.3f"), inValue);
+			break;
+		case kScratchSpeed_realtime:
+			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.3f  seconds"), inValue);
+			break;
+		case kScratchSpeed_sequence:
+			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.3f x"), inValue);
+			break;
 		case kSpinUpSpeed:
 		case kSpinDownSpeed:
-			SetUniversalType(kSTfloat);
+			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.4f"), inValue);
 			break;
+		case kPitchAmount:
+			inValue = inValue * getparameter_f(kPitchRange)*0.01f / MAX_PITCH_RANGE;
+			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%+.1f %%"), inValue);
+			break;
+		case kPitchRange:
+			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.1f %%"), inValue);
+			break;
+
 		case kVolume:
-			SetUniversalType(kSTdb);
+			if (inValue <= 0.0f)
+			{
+				const UniChar minusInfinity[] = { '-', 0x221E, ' ', ' ', 'd', 'B' };
+				universalDisplayText = CFStringCreateWithCharacters(cfAllocator, minusInfinity, sizeof(minusInfinity)/sizeof(*minusInfinity));
+			}
+			else
+			{
+				#define DB_FORMAT_STRING	"%.2f  dB"
+				CFStringRef format = CFSTR(DB_FORMAT_STRING);
+				if (inValue > 1.0f)
+					format = CFSTR("+"DB_FORMAT_STRING);
+				#undef DB_FORMAT_STRING
+				universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, format, linear2dB(inValue));
+			}
 			break;
-		case kPower:
-		case kMute:
-		case kNPTrack:
-		case kLoopMode:
+
 		case kKeyTracking:
-		case kPlay:
-			SetUniversalType(kSTonoff);
+		case kLoop:
+		case kPower:
+		case kNotePowerTrack:
+		case kMute:
+			if (value_i)
+				universalDisplayText = CFStringCreateCopy(cfAllocator, CFSTR("On"));
+			else
+				universalDisplayText = CFStringCreateCopy(cfAllocator, CFSTR("Off"));
 			break;
+
+		case kDirection:
+		case kScratchMode:
+		case kNoteMode:
+			{
+				CFArrayRef valueStrings = CopyAUParameterValueStrings(GetEditAudioUnit(), inParameterID);
+				if (valueStrings != NULL)
+				{
+					universalDisplayText = (CFStringRef) CFArrayGetValueAtIndex(valueStrings, value_i);
+					if (universalDisplayText != NULL)
+						CFRetain(universalDisplayText);
+					CFRelease(valueStrings);
+				}
+			}
+			break;
+
 		default:
-			SetUniversalType(kSTfloat);
+			break;
+	}
+
+setTheUniversalText:
+	if (universalDisplayText != NULL)
+	{
+		CFStringRef parameterNameString = CopyAUParameterName(GetEditAudioUnit(), inParameterID);
+		if (parameterNameString != NULL)
+		{
+			// split the string after the first " (", if it has that, to eliminate the parameter names with sub-specifications 
+			// (e.g. the 2 scratch speed parameters)
+			CFArrayRef nameArray = CFStringCreateArrayBySeparatingStrings(cfAllocator, parameterNameString, CFSTR(" ("));
+			if (nameArray != NULL)
+			{
+				if (CFArrayGetCount(nameArray) > 1)
+				{
+					CFStringRef truncatedName = (CFStringRef) CFArrayGetValueAtIndex(nameArray, 0);
+					if (truncatedName != NULL)
+					{
+						CFRelease(parameterNameString);
+						CFRetain(truncatedName);
+						parameterNameString = truncatedName;
+					}
+				}
+				CFRelease(nameArray);
+			}
+			
+			CFStringRef fullDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%@:  %@"), parameterNameString, universalDisplayText);
+			if (fullDisplayText != NULL)
+			{
+				CFRelease(universalDisplayText);
+				universalDisplayText = fullDisplayText;
+			}
+			CFRelease(parameterNameString);
+		}
+
+		allParamsTextDisplay->setCFText(universalDisplayText);
+		CFRelease(universalDisplayText);
 	}
 }

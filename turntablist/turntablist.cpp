@@ -13,21 +13,31 @@ Copyright (C) 2004 Sophia Poirier
 
 #include "turntablist.h"
 
-#include <AudioToolbox/AudioUnitUtilities.h>	// for AUEventListenerNotify
+#include <AudioToolbox/AudioToolbox.h>	// for AUEventListenerNotify and AudioFile stuff
+//#include <CoreAudio/CoreAudio.h>
 
 
 
 /////////////////////////////
 // DEFINES
 
-// _MIDI_PITCH_BEND allows pitch bend scratching
+#define USE_LIBSNDFILE
+
+// allow pitch bend scratching
 #define _MIDI_PITCH_BEND_
-// _MIDI_CC_ allows midi cc for controls
+// allow midi cc for controls
 #define _MIDI_CC_
 
 const long SCRATCH_INTERVAL = 16; //24
+const long POWER_INTERVAL = 120;
 const double midiScaler = 1.0 / 127.0;
 const long ROOT_KEY = 60;
+
+
+
+#ifdef USE_LIBSNDFILE
+	#include "sndfile.h"
+#endif
 
 
 
@@ -36,33 +46,27 @@ const long ROOT_KEY = 60;
 //-----------------------------------------------------------------------------------------
 
 // this macro does boring entry point stuff for us
-#if 1
 DFX_ENTRY(Scratcha);
-#else
-extern "C" ComponentResult ScratchaEntry(ComponentParameters * params, Scratcha * obj);
-extern "C" ComponentResult ScratchaEntry(ComponentParameters * params, Scratcha * obj)
-{
-	return ComponentEntryPoint<Scratcha>::Dispatch(params, obj);
-}
-#endif
 
 //-----------------------------------------------------------------------------------------
 Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	: DfxPlugin(inInstance, kNumParams, 0)
 {
-	initparameter_f(kPitchAmount, "pitch amount", 0.0, 0.0, -0.5, 0.5, kDfxParamUnit_scalar);   //((m_fPitchAmount-0.5f)*2.0f) * (m_fPitchRange * MAX_PITCH_RANGE * 100.0f) "%"
-	initparameter_f(kPitchRange, "pitch range", 0.0, 0.0, 0.0, MAX_PITCH_RANGE * 100.0, kDfxParamUnit_percent);
+	initparameter_f(kPitchAmount, "pitch amount", 0.0, 0.0, -50.0, 50.0, kDfxParamUnit_percent);   // (m_fPitchAmount * 2.0f) * (m_fPitchRange * 100.0f)
+	initparameter_f(kPitchRange, "pitch range", MAX_PITCH_RANGE * 100.0, MAX_PITCH_RANGE * 100.0, 0.0, MAX_PITCH_RANGE * 100.0, kDfxParamUnit_percent);
 	initparameter_f(kVolume, "volume", 1.0, 0.5, 0.0, 1.0, kDfxParamUnit_lineargain);
 
 	initparameter_b(kKeyTracking, "key track", false, false);
-	initparameter_b(kLoopMode, "loop", false, false);
-	initparameter_b(kPower, "power", false, false);
-	initparameter_b(kNPTrack, "note-power track", false, false);
+	initparameter_b(kLoop, "loop", false, false);
+	initparameter_b(kPower, "power", true, true);
+	initparameter_b(kNotePowerTrack, "note-power track", false, false);
 
-	initparameter_f(kScratchAmount, "scratch amount", 0.5, 0.5, 0.0, 1.0, kDfxParamUnit_generic);   //float2string(m_fPlaySampleRate, text);
-	initparameter_f(kScratchSpeed, "scratch speed", 0.33333333, 0.33333333, 0.0, 1.0, kDfxParamUnit_scalar);
-	initparameter_f(kSpinUpSpeed, "spin up speed", 1.0, 1.0, 0.0, 1.0, kDfxParamUnit_scalar);
-	initparameter_f(kSpinDownSpeed, "spin down speed", 1.0, 1.0, 0.0, 1.0, kDfxParamUnit_scalar);
+	initparameter_f(kScratchAmount, "scratch amount", 0.0, 0.0, -1.0, 1.0, kDfxParamUnit_generic);   // float2string(m_fPlaySampleRate, text);
+//	initparameter_f(kScratchSpeed, "scratch speed", 0.33333333, 0.33333333, 0.0, 1.0, kDfxParamUnit_scalar);
+	initparameter_f(kScratchSpeed_realtime, "scratch speed (realtime mode)", 2.0, 2.0, 0.5, 5.0, kDfxParamUnit_seconds);
+	initparameter_f(kScratchSpeed_sequence, "scratch speed (sequence mode)", 3.0, 3.0, 1.0, 8.0, kDfxParamUnit_scalar);
+	initparameter_f(kSpinUpSpeed, "spin up speed", 1.0, 1.0, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
+	initparameter_f(kSpinDownSpeed, "spin down speed", 1.0, 1.0, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
 
 	initparameter_indexed(kDirection, "playback direction", kScratchDirection_forward, kScratchDirection_forward, kNumScratchDirections);
 	setparametervaluestring(kDirection, kScratchDirection_forward, "forward");
@@ -70,14 +74,14 @@ Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	initparameter_indexed(kScratchMode, "scratch mode", kScratchMode_realtime, kScratchMode_realtime, kNumScratchModes);
 	setparametervaluestring(kScratchMode, kScratchMode_realtime, "realtime");
-	setparametervaluestring(kScratchMode, kScratchMode_seqence, "sequence");
+	setparametervaluestring(kScratchMode, kScratchMode_sequence, "sequence");
 
 	initparameter_indexed(kNoteMode, "note mode", kNoteMode_reset, kNoteMode_reset, kNumNoteModes);
 	setparametervaluestring(kNoteMode, kNoteMode_reset, "reset");
 	setparametervaluestring(kNoteMode, kNoteMode_resume, "resume");
 
-	initparameter_b(kMute, "audio", false, false);	// XXX this should not be a parameter, right?
-//	initparameter_b(kPlay, "play", false, false);
+	initparameter_b(kMute, "mute", false, false);	// XXX this should not be a parameter, right?  or actually with MusicDevices, there is no Bypass property?
+//	initparameter_b(kPlay, "play", false, false);   // XXX should "play" be a parameter, in order to allow it to be automated?
 
 
 	addchannelconfig(0, 2);	// 0-in/2-out
@@ -99,7 +103,7 @@ Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	m_fPosOffset = 0.0f;
 	m_fNumSamples = 0.0f;
 
-	m_fLastScratchAmount = 0.5f;
+	m_fLastScratchAmount = 0.0f;
 	m_nPitchBend = 0x2000;
 	m_bPitchBendSet = false;
 	m_bScratching = false;
@@ -136,7 +140,13 @@ Scratcha::Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	m_fPrevDesiredOffset = 0.0f;
 	m_fDesiredPosition = 0.0f;
 	m_fPrevDesiredPosition = 0.0f;
-	initProcess();
+
+	// XXX yah?  for now...
+	if (dfxsettings != NULL)
+	{
+		dfxsettings->setSteal(true);
+		dfxsettings->setUseChannel(false);
+	}
 }
 
 //-----------------------------------------------------------------------------------------
@@ -153,17 +163,16 @@ long Scratcha::initialize()
 {
 	if (sampleratechanged)
 	{
-		m_nPowerIntervalEnd = (int)getsamplerate() / 120;	// set process interval to 10 times a second - should maybe update it to 60?
+		m_nPowerIntervalEnd = (int)getsamplerate() / POWER_INTERVAL;	// set process interval to 10 times a second - should maybe update it to 60?
 		m_nScratchIntervalEnd = (int)getsamplerate() / SCRATCH_INTERVAL; // set scratch interval end to 1/16 second
 		m_nScratchIntervalEndBase = m_nScratchIntervalEnd;
 	}
 
-	return kDfxErr_NoError;
-}
+	m_bPlayedReverse = false;
+	stopNote();
+	currentDelta = 0;
 
-//-----------------------------------------------------------------------------------------
-void Scratcha::cleanup()
-{
+	return kDfxErr_NoError;
 }
 
 
@@ -171,16 +180,18 @@ void Scratcha::cleanup()
 void Scratcha::processparameters()
 {
 	m_bPower = getparameter_b(kPower);
-	m_bNPTrack = getparameter_b(kNPTrack);
-	m_bLoopMode = getparameter_b(kLoopMode);
+	m_bNotePowerTrack = getparameter_b(kNotePowerTrack);
+	m_bLoop = getparameter_b(kLoop);
 	m_bKeyTracking = getparameter_b(kKeyTracking);
 
-	m_fPitchAmount = getparameter_f(kPitchAmount);
+	m_fPitchAmount = getparameter_scalar(kPitchAmount);
 	m_fVolume = getparameter_f(kVolume);
 	m_fPitchRange = getparameter_scalar(kPitchRange);
 
 	m_fScratchAmount = getparameter_f(kScratchAmount);
-	m_fScratchSpeed = getparameter_f(kScratchSpeed);
+//	m_fScratchSpeed = getparameter_f(kScratchSpeed);
+	m_fScratchSpeed_realtime = getparameter_f(kScratchSpeed_realtime);
+	m_fScratchSpeed_sequence = getparameter_f(kScratchSpeed_sequence);
 	m_fSpinUpSpeed = getparameter_f(kSpinUpSpeed);
 	m_fSpinDownSpeed = getparameter_f(kSpinDownSpeed);
 
@@ -198,7 +209,7 @@ void Scratcha::processparameters()
 	if (getparameterchanged(kScratchAmount))
 	{
 		m_bScratchAmountSet = true;
-		if (m_fScratchAmount == 0.5f)
+		if (m_fScratchAmount == 0.0f)
 			m_bScratching = false;
 		else
 		{
@@ -219,11 +230,10 @@ void Scratcha::processparameters()
 	if (getparameterchanged(kPitchRange))
 		processPitch();
 
-	m_fUsedSpinUpSpeed = (((exp(10.0f*m_fSpinUpSpeed)-1)/(exp(10.0f)-1)) * (float)m_nSampleRate)/m_nPowerIntervalEnd;
-	m_fUsedSpinDownSpeed = (((exp(10.0f*m_fSpinDownSpeed)-1)/(exp(10.0f)-1)) * (float)m_nSampleRate)/m_nPowerIntervalEnd;
-
 	if (getparameterchanged(kDirection))
 		processDirection();
+
+	calculateSpinSpeeds();
 
 //	if (getparameterchanged(kPlay))
 //		PlayNote(m_bPlay);
@@ -234,7 +244,9 @@ void Scratcha::processparameters()
 #pragma mark -
 #pragma mark plugin state
 
-const CFStringRef kTurntablistPresetAudioFileReferenceKey = CFSTR("audiofile");
+static const CFStringRef kTurntablistPresetAudioFileReferenceKey = CFSTR("audiofile");
+static const CFStringRef kTurntablistMidiAssignmentsClassInfoKey = CFSTR("DFX!-midi-assignments");
+static const UInt8 kTurntablistAssignment_None = 0xFF;
 
 //-----------------------------------------------------------------------------------------
 bool FSRefIsValid(const FSRef & inFileRef)
@@ -242,7 +254,6 @@ bool FSRefIsValid(const FSRef & inFileRef)
 	return ( FSGetCatalogInfo(&inFileRef, kFSCatInfoNone, NULL, NULL, NULL, NULL) == noErr );
 } 
 
-#define AUDIO_FILE_URL_CONVERT_TO_PATH_FOR_CLASSINFO
 //-----------------------------------------------------------------------------------------
 ComponentResult Scratcha::SaveState(CFPropertyListRef * outData)
 {
@@ -250,18 +261,15 @@ ComponentResult Scratcha::SaveState(CFPropertyListRef * outData)
 	if (result != noErr)
 		return result;
 
+	CFMutableDictionaryRef dict = (CFMutableDictionaryRef) (*outData);
+
 // save the path of the loaded audio file, if one is currently loaded
 	if ( FSRefIsValid(m_fsAudioFile) )
 	{
-		CFMutableDictionaryRef dict = (CFMutableDictionaryRef) (*outData);
 		CFURLRef audioFileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &m_fsAudioFile);
 		if (audioFileUrl != NULL)
 		{
-#ifdef AUDIO_FILE_URL_CONVERT_TO_PATH_FOR_CLASSINFO
 			CFStringRef audioFileUrlString = CFURLCopyFileSystemPath(audioFileUrl, kCFURLPOSIXPathStyle);
-#else
-			CFStringRef audioFileUrlString = CFURLGetString(audioFileUrl);
-#endif
 			if (audioFileUrlString != NULL)
 			{
 				CFDictionaryRef fileReferencesDictionary = CFDictionaryCreate(kCFAllocatorDefault, (const void **)(&kTurntablistPresetAudioFileReferenceKey), (const void **)(&audioFileUrlString), 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
@@ -270,36 +278,37 @@ ComponentResult Scratcha::SaveState(CFPropertyListRef * outData)
 					CFDictionarySetValue(dict, (const void *)CFSTR(kAUPresetExternalFileRefs), (const void *)fileReferencesDictionary);
 					CFRelease(fileReferencesDictionary);
 				}
-#ifdef AUDIO_FILE_URL_CONVERT_TO_PATH_FOR_CLASSINFO
 				CFRelease(audioFileUrlString);
-#endif
 			}
 			CFRelease(audioFileUrl);
 		}
 	}
 
-/*
 // save the MIDI CC -> parameter assignments
-	if (getsettings_ptr() != NULL)
+	if (dfxsettings != NULL)
 	{
-		DfxParameterAssignment * assignments = getsettings_ptr()->paramAssignments;
-		unsigned char assignmentsToStore[kNumParams];
-		bool assigmentsFound = false;
+		UInt8 assignmentsToStore[kNumParams];
+		bool assignmentsFound = false;
 		for (int i=0; i < kNumParams; i++)
 		{
-			if (assignments[i].eventType == kParamEventCC)
+			if (dfxsettings->getParameterAssignmentType(i) == kParamEventCC)
 			{
-				assignmentsToStore[i] = (unsigned char) (assignments[i].eventNum);
-				assigmentsFound = true;
+				assignmentsToStore[i] = (unsigned char) (dfxsettings->getParameterAssignmentNum(i));
+				assignmentsFound = true;
 			}
 			else
-				assignmentsToStore[i] = 0xFF;
+				assignmentsToStore[i] = kTurntablistAssignment_None;
 		}
-		if (assigmentsFound)
+		if (assignmentsFound)
 		{
+			CFDataRef assignmentsCFData = CFDataCreate(kCFAllocatorDefault, (const UInt8*)assignmentsToStore, (CFIndex)sizeof(assignmentsToStore));
+			if (assignmentsCFData != NULL)
+			{
+				CFDictionarySetValue(dict, kTurntablistMidiAssignmentsClassInfoKey, assignmentsCFData);
+				CFRelease(assignmentsCFData);
+			}
 		}
 	}
-*/
 
 	return noErr;
 }
@@ -312,17 +321,15 @@ ComponentResult Scratcha::RestoreState(CFPropertyListRef inData)
 		return result;
 
 	CFDictionaryRef dict = static_cast<CFDictionaryRef>(inData);
+
+// restore the previously loaded audio file
 	CFDictionaryRef fileReferencesDictionary = reinterpret_cast<CFDictionaryRef>( CFDictionaryGetValue(dict, CFSTR(kAUPresetExternalFileRefs)) );
 	if (fileReferencesDictionary != NULL)
 	{
 		CFStringRef audioFileUrlString = reinterpret_cast<CFStringRef>( CFDictionaryGetValue(fileReferencesDictionary, kTurntablistPresetAudioFileReferenceKey) );
 		if (audioFileUrlString != NULL)
 		{
-#ifdef AUDIO_FILE_URL_CONVERT_TO_PATH_FOR_CLASSINFO
 			CFURLRef audioFileUrl = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, audioFileUrlString, kCFURLPOSIXPathStyle, false);
-#else
-			CFURLRef audioFileUrl = CFURLCreateWithString(kCFAllocatorDefault, audioFileUrlString, NULL);
-#endif
 			if (audioFileUrl != NULL)
 			{
 				FSRef audioFileRef;
@@ -330,6 +337,27 @@ ComponentResult Scratcha::RestoreState(CFPropertyListRef inData)
 				CFRelease(audioFileUrl);
 				if (gotFileRef)
 					loadAudioFile(audioFileRef);
+			}
+		}
+	}
+
+// restore the MIDI CC -> parameter assignments
+	if (dfxsettings != NULL)
+	{
+		CFDataRef assignmentsCFData = reinterpret_cast<CFDataRef>( CFDictionaryGetValue(dict, kTurntablistMidiAssignmentsClassInfoKey) );
+		if (assignmentsCFData != NULL)
+		{
+			CFIndex dataSize = CFDataGetLength(assignmentsCFData);
+			const UInt8 * assignments = CFDataGetBytePtr(assignmentsCFData);
+			if ( (assignments != NULL) && (dataSize > 0) )
+			{
+				for (int i=0; (i < kNumParams) && (i < dataSize); i++)
+				{
+					if (assignments[i] == kTurntablistAssignment_None)
+						dfxsettings->unassignParam(i);
+					else
+						dfxsettings->assignParam(i, kParamEventCC, 0, assignments[i]);
+				}
 			}
 		}
 	}
@@ -346,6 +374,11 @@ ComponentResult Scratcha::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 
 	switch (inPropertyID)
 	{
+		case kAudioUnitProperty_ParameterClumpName:
+			outDataSize = sizeof(AudioUnitParameterNameInfo);
+			outWritable = false;
+			return noErr;
+
 		case kTurntablistProperty_Play:
 			outDataSize = sizeof(m_bPlay);
 			outWritable = true;
@@ -439,185 +472,101 @@ OSStatus Scratcha::PostPropertyChangeNotificationSafely(AudioUnitPropertyID inPr
 	}
 }
 
-
-
-#define USE_LIBSNDFILE
-
-#ifndef USE_LIBSNDFILE
-//This is an example of a Input Procedure from a call to AudioConverterFillComplexBuffer.
-//The total amount of data needed is "ioNumberDataPackets" when this method is first called.
-//On exit, "ioNumberDataPackets" must be set to the actual amount of data obtained.
-//Upon completion, all new input data must point to the AudioBufferList in the parameter ( "ioData" ) 
-//Note: if decoding AAC AudioStreamPacketDescriptions must be returned upon completion
-OSStatus ACComplexInputProc(AudioConverterRef inAudioConverter,
-							UInt32 * ioNumberDataPackets,
-							AudioBufferList * ioData,
-							AudioStreamPacketDescription ** outDataPacketDescription,
-							void * inUserData)
+//-----------------------------------------------------------------------------------------
+ComponentResult Scratcha::GetParameterInfo(AudioUnitScope inScope, 
+							AudioUnitParameterID inParameterID, 
+							AudioUnitParameterInfo & outParameterInfo)
 {
-	OSStatus	err = noErr;
+	ComponentResult result = DfxPlugin::GetParameterInfo(inScope, inParameterID, outParameterInfo);
+	if (result != noErr)
+		return result;
 
-	// initialize in case of failure
-	ioData->mBuffers[0].mData = NULL;			
-	ioData->mBuffers[0].mDataByteSize = 0;
-
-	// if there are not enough packets to satisfy request, then read what's left
-	if (gPacketOffset + *ioNumberDataPackets > gTotalPacketCount)
-		*ioNumberDataPackets = gTotalPacketCount - gPacketOffset;
-
-	// do nothing if there are no packets available
-	if (*ioNumberDataPackets)
+	outParameterInfo.flags |= kAudioUnitParameterFlag_HasClump;
+	switch (inParameterID)
 	{
-		if (gSourceBuffer != NULL)
-			free(gSourceBuffer);
-		gSourceBuffer = NULL;
+		case kScratchAmount:
+		case kScratchMode:
+		case kScratchSpeed_realtime:
+		case kScratchSpeed_sequence:
+			outParameterInfo.clumpID = kTurntablistClump_scratching;
+			break;
 
-		gSourceBuffer = calloc(1, *ioNumberDataPackets * gMaxPacketSize);
+		case kPower:
+		case kSpinUpSpeed:
+		case kSpinDownSpeed:
+		case kNotePowerTrack:
+			outParameterInfo.clumpID = kTurntablistClump_power;
+			break;
 
-		//read the amount of data needed (ioNumberDataPackets) from AudioFile
-		UInt32 bytesReturned = 0;
-		err = AudioFileReadPackets(*gSourceAudioFileID, false, &bytesReturned, NULL, gPacketOffset, 
-									ioNumberDataPackets, gSourceBuffer);
+		case kPitchAmount:
+		case kPitchRange:
+		case kKeyTracking:
+			outParameterInfo.clumpID = kTurntablistClump_pitch;
+			break;
 
-		if (err)
-		{
-			//end of data reached
-		}
+		case kLoop:
+		case kDirection:
+		case kNoteMode:
+			outParameterInfo.clumpID = kTurntablistClump_playback;
+			break;
 
-		gPacketOffset += *ioNumberDataPackets;	// keep track of where we want to read from next time
+		case kMute:
+		case kVolume:
+			outParameterInfo.clumpID = kTurntablistClump_output;
+			break;
 
-		ioData->mBuffers[0].mData = gSourceBuffer; // tell the Audio Converter where it's source data is
-		ioData->mBuffers[0].mDataByteSize = bytesReturned; // tell the Audio Converter how much source data there is
+		default:
+			outParameterInfo.flags &= ~kAudioUnitParameterFlag_HasClump;
+			break;
 	}
-	else
-	{
-		// there aren't any more packets to read at this time
-		ioData->mBuffers[0].mData = NULL;			
-		ioData->mBuffers[0].mDataByteSize = 0;
-	}
 
-	// it's not an error if we just read the remainder of the file
-	if (err == eofErr && *ioNumberDataPackets)
-		err = noErr;
-
-	return err;   
+	return noErr;
 }
-#endif
+
+//-----------------------------------------------------------------------------------------
+CFStringRef Scratcha::CopyClumpName(UInt32 inClumpID)
+{
+	CFStringRef clumpName = NULL;
+	switch (inClumpID)
+	{
+		case kTurntablistClump_scratching:
+			clumpName = CFSTR("scratching");
+			break;
+		case kTurntablistClump_power:
+			clumpName = CFSTR("turntable power");
+			break;
+		case kTurntablistClump_pitch:
+			clumpName = CFSTR("pitch");
+			break;
+		case kTurntablistClump_playback:
+			clumpName = CFSTR("audio sample playback");
+			break;
+		case kTurntablistClump_output:
+			clumpName = CFSTR("audio output");
+			break;
+		default:
+			break;
+	}
+
+	if (clumpName != NULL)
+		return CFStringCreateCopy(kCFAllocatorDefault, clumpName);
+	else
+		return NULL;
+}
+
+
 
 #pragma mark -
 #pragma mark audio processing
 
-#include <CoreAudio/CoreAudio.h>
-#include <AudioToolbox/AudioToolbox.h>
 //-----------------------------------------------------------------------------------------
 OSStatus Scratcha::loadAudioFile(const FSRef & inFile)
 {
-// AudioFile
-#ifndef USE_LIBSNDFILE
-	AudioConverterRef converter;
-	void * gSourceBuffer;
-
-	AudioFileID gSourceAudioFileID = 0;
-	UInt64 gTotalPacketCount = 0;
-	UInt64 gFileByteCount = 0;
-	UInt32 gMaxPacketSize = 0;
-	UInt64 gPacketOffset = 0;
-
-	// open an AudioFile and obtain AudioFileID using the file system ref
-	AudioFileID fileID = 0;
-	OSStatus status = AudioFileOpen(&inFile, fsRdPerm, 0, &gSourceAudioFileID);
-
-	//Fetch the AudioStreamBasicDescription of the audio file.  Because we already know that
-	//the property kAudioFilePropertyDataFormat is writeable and we know the data type, we can
-	//skip calling AudioFileGetPropertyInfo.
-	AudioStreamBasicDescription fileASBD;
-	UInt32 size = sizeof(fileASBD);
-	memset(&fileASBD, 0, size);
-	err = AudioFileGetProperty(gSourceAudioFileID, kAudioFilePropertyDataFormat, &size, &fileASBD); 
-  
-	//We also need to get the total packet count, byte count, and max packet size.
-	//Theses values will be used later when grabbing data from the audio file
-	//in the input callback procedure.
-	size = sizeof(gTotalPacketCount);
-	err = AudioFileGetProperty(gSourceAudioFileID, kAudioFilePropertyAudioDataPacketCount, &size, &gTotalPacketCount);
-	size = sizeof(gFileByteCount);
-	err = AudioFileGetProperty(gSourceAudioFileID, kAudioFilePropertyAudioDataByteCount, &size, &gFileByteCount);
-	size = sizeof(gMaxPacketSize);
-	err = AudioFileGetProperty(gSourceAudioFileID, kAudioFilePropertyMaximumPacketSize, &size, &gMaxPacketSize);
-
-
-
-	//To Create an Audio Converter that converts Audio data from one format to another,
-	//a call to AudioConverterNew with an input and output stream formats completely filled out, 
-	//will create this object for you.  The Input and Output stream format structures are
-	//AudioStreamBasicDescriptions.
-
-	AudioStreamBasicDescription outASBD = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
-	outASBD.mChannelsPerFrame = fileABSD.mChannelsPerFrame;
-	outASBD.mSampleRate = fileABSD.mSampleRate;
-	//To Do: Add some error checking to make sure the input and output formats are valid
-	err = AudioConverterNew(&fileASBD, &outASBD, converter);
-
-	//Get Magic Cookie info(if exists)  and pass it to converter.
-	//Some files have magic cookie information that needs to be used to
-	//decompress the audio file.  When this information is obtained, you can
-	//set this as a property in the Audio Converter so this information is included
-	//when the Audio Converter begins processing data.
-	UInt32 magicCookieSize = 0;
-	err = AudioFileGetPropertyInfo(*musicFileID, kAudioFilePropertyMagicCookieData, &magicCookieSize, NULL);
-	if (err == noErr)
-	{
-		void * magicCookie = calloc(1, magicCookieSize);
-		if (magicCookie != NULL)
-		{
-			// Get Magic Cookie data from Audio File
-			err = AudioFileGetProperty(	*musicFileID, 
-										kAudioFilePropertyMagicCookieData, 
-										&magicCookieSize, 
-										magicCookie);
-
-			// Give the AudioConverter the magic cookie decompression params if there are any
-			if (err == noErr)
-				err = AudioConverterSetProperty(*converter, kAudioConverterDecompressionMagicCookie, magicCookieSize, magicCookie);
-			err = noErr;
-			free(magicCookie);
-		}
-	}
-	else //this is OK because some audio data doesn't need magic cookie data
-		err = noErr;
-
-
-
-	//To obtain a data buffer of converted data from a compex input source(compressed files, etc.)
-	//call AudioConverterFillComplexBuffer.  The total amount of data requested is "inNumFrames" and 
-	//on return is set to the actual amount of data recieved.
-	//All converted data is returned to "ioData" (AudioBufferList).
-	AudioStreamPacketDescription * outPacketDescription = NULL;
-	AudioBufferList outData;
-	err = AudioConverterFillComplexBuffer(converter, ACComplexInputProc, this, &gTotalPacketCount, &outData, outPacketDescription);
-
-	/* Parameters for AudioConverterFillComplexBuffer()
-		inNumFrames - The amount of requested data.  On output, this number is the amount actually received.
-		ioData - Buffer of the converted data recieved on return
-		outPacketDescription - contains the format of the returned data.  Not used in this example.
-	*/
-
-
-
-// clean up
-	AudioFileClose(*fileID);  // Closes the audio file 
-	if (gSourceBuffer != NULL)
-		free(gSourceBuffer);
-	gSourceBuffer = NULL;
-	AudioConverterDispose(converter);  // deallocates the memory used by inAudioConverter
-
-
-// libsndfile
-#else
 	UInt8 file[2048];
-	OSStatus error = FSRefMakePath(&inFile, file, sizeof(file));
-	if (error != noErr)
-		return error;
+	memset(file, 0, sizeof(file));
+	OSStatus status = FSRefMakePath(&inFile, file, sizeof(file));
+	if (status != noErr)
+		return status;
 //fprintf(stderr, PLUGIN_NAME_STRING" audio file:  %s\n", file);
 
 	SF_INFO sfInfo;
@@ -632,7 +581,7 @@ OSStatus Scratcha::loadAudioFile(const FSRef & inFile)
 		char  buffer[256] ;
 		memset(buffer, 0, sizeof(buffer));
 		sf_error_str(sndFile, buffer, sizeof(buffer));
-		fprintf(stderr, "sf_error_str = '%s'\n", buffer);
+		fprintf(stderr, "\n"PLUGIN_NAME_STRING" could not open the audio file:  %s\nlibsndfile error message:  %s\n", file, buffer);
 		return sf_error(sndFile);
 	}
 
@@ -655,8 +604,7 @@ OSStatus Scratcha::loadAudioFile(const FSRef & inFile)
 
 	m_fPlaySampleRate = (float) m_nSampleRate;
 	m_fSampleRate = (float) m_nSampleRate;
-	m_fUsedSpinDownSpeed = (((exp(10.0f*m_fSpinDownSpeed)-1)/(exp(10.0f)-1)) * (float)m_nSampleRate)/m_nPowerIntervalEnd;
-	m_fUsedSpinUpSpeed = (((exp(10.0f*m_fSpinUpSpeed)-1)/(exp(10.0f)-1)) * (float)m_nSampleRate)/m_nPowerIntervalEnd;
+	calculateSpinSpeeds();
 	m_fPosition = 0.0f;
 	m_fPosOffset = 0.0f;
 	m_fNumSamples = (float)m_nNumSamples;
@@ -714,7 +662,6 @@ OSStatus Scratcha::loadAudioFile(const FSRef & inFile)
 	}
 
 	sndFile = NULL;
-#endif
 
 	m_fsAudioFile = inFile;
 
@@ -727,12 +674,12 @@ OSStatus Scratcha::loadAudioFile(const FSRef & inFile)
 }
 
 //-----------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------
-void Scratcha::initProcess()
+void Scratcha::calculateSpinSpeeds()
 {
-	m_bPlayedReverse = false;
-	noteIsOn = false;
-	currentDelta = 0;
+//	m_fUsedSpinUpSpeed = (((exp(10.0*m_fSpinUpSpeed)-1.0)/(exp(10.0)-1.0)) * (double)m_nSampleRate) / (double)m_nPowerIntervalEnd;
+//	m_fUsedSpinDownSpeed = (((exp(10.0*m_fSpinDownSpeed)-1.0)/(exp(10.0)-1.0)) * (double)m_nSampleRate) / (double)m_nPowerIntervalEnd;
+	m_fUsedSpinUpSpeed = m_fSpinUpSpeed * (double)m_nSampleRate / (double)m_nPowerIntervalEnd;
+	m_fUsedSpinDownSpeed = m_fSpinDownSpeed * (double)m_nSampleRate / (double)m_nPowerIntervalEnd;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -744,7 +691,6 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 	float * out2 = outStreams[1];
 
 	long eventFrame = -1; // -1 = no events
-	long currFrame = 0;
 	long numEvents = midistuff->numBlockEvents;
 	long currEvent = 0;
 
@@ -753,26 +699,26 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 		eventFrame = -1;
 	else
 		eventFrame = (midistuff->blockEvents[currEvent]).delta;
-	while (currFrame < (signed)inNumFrames)
+	for (long currFrame=0; currFrame < (signed)inNumFrames; currFrame++)
 	{
 		//
 		// process MIDI events if any
 		//
-		while (currFrame == eventFrame) // change this to while (eventFrame == frameCounter)
+		while (currFrame == eventFrame)
 		{
 			processMidiEvent(currEvent);
-			currEvent++; // check next event
+			currEvent++;	// check next event
 
 			if (currEvent >= numEvents)
-				eventFrame = -1; // no more events
-		} // while (eventFrame == currFrame)
+				eventFrame = -1;	// no more events
+		}
 		
-		if (m_bScratching) // handle scratching
+		if (m_bScratching)  // handle scratching
 		{
 			m_nScratchInterval++;
 			if (m_nScratchInterval > m_nScratchIntervalEnd)
 			{
-				if (m_nScratchMode == kScratchMode_seqence)
+				if (m_nScratchMode == kScratchMode_sequence)
 					processScratch();
 				else
 					processScratchStop();
@@ -784,12 +730,12 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 					// nudge samplerate
 					m_fPlaySampleRate += m_fTinyScratchAdjust;
 					// speed mode
-					if (m_fTinyScratchAdjust > 0.0f) //positive
+					if (m_fTinyScratchAdjust > 0.0f)	// positive
 					{
 						if (m_fPlaySampleRate > m_fDesiredScratchRate2)
 							m_fPlaySampleRate = m_fDesiredScratchRate2;
 					}
-					else // negative
+					else	// negative
 					{
 						if (m_fPlaySampleRate < m_fDesiredScratchRate2)
 							m_fPlaySampleRate = m_fDesiredScratchRate2;
@@ -828,7 +774,7 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 		// handle rest of processing here
 		if (noteIsOn)
 		{
-			//adjust gnPosition for new sample rate
+			// adjust gnPosition for new sample rate
 
 			// set pos offset based on current sample rate
 
@@ -836,11 +782,11 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 			if (m_fPlaySampleRate <= 0.0f)
 			{
 				m_fPlaySampleRate = 0.0f;
-				if (m_bNPTrack == true)
+				if (m_bNotePowerTrack)
 				{
 					if (!m_bScratching)
 					{
-						noteIsOn = false;
+						stopNote();
 						if (m_nNoteMode == kNoteMode_reset)
 							m_fPosition = 0.0f;
 						m_bPlay = false;
@@ -853,7 +799,7 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 
 			if (m_bDataReady)
 			{
-				if (noteIsOn == true)
+				if (noteIsOn)
 				{
 
 					if (!m_bPlayForward) // if play direction = reverse
@@ -863,11 +809,11 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 							m_fPosition -= m_fPosOffset;
 							while (m_fPosition < 0) // was if
 							{									
-								if (!m_bLoopMode) // off
+								if (!m_bLoop) // off
 								{
 									if (m_bPlayedReverse)
 									{
-										noteIsOn = false;
+										stopNote();
 										m_fPosition = 0.0f;
 										m_bPlayedReverse = false;
 
@@ -882,14 +828,14 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 									m_fPosition += m_fNumSamples; // - 1;
 							}
 						}
-					} // if(!bPlayForward)
+					}   // if (!bPlayForward)
 
-					if (!m_bMute) // if audio on
+					if (!m_bMute)   // if audio on
 					{		
 //#define _NO_INTERPOLATION_
 //#define _LINEAR_INTERPOLATION_
 #define _CUBIC_INTERPOLATION_
-						//no interpolation start
+						// no interpolation start
 #ifdef _NO_INTERPOLATION_
 						float fLeft = m_fLeft[(long)m_fPosition];
 						float fRight = m_fRight[(long)m_fPosition];
@@ -922,12 +868,12 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 						posarray[3] = inpos + 2;
 						for (int pos = 0; pos < 4; pos++)
 						{
-							if (m_bLoopMode < .5) //off - set to -1/0
+							if (!m_bLoop)   // off - set to -1/0
 							{
 								if ( (posarray[pos] < 0) || (posarray[pos] >= m_nNumSamples) )
 									posarray[pos] = -1;
 							}
-							else //on - set to new pos
+							else	// on - set to new pos
 							{
 								if (posarray[pos] < 0)
 									posarray[pos] += m_nNumSamples;
@@ -993,7 +939,9 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 							out1[currFrame] = fLeft * m_fNoteVolume;
 							out2[currFrame] = fRight * m_fNoteVolume;
 						}
-					}
+					}   // if (!m_bMute)
+					else
+						out1[currFrame] = out2[currFrame] = 0.0f;
 
 					
 					if (m_bPlayForward)	// if play direction = forward
@@ -1006,33 +954,27 @@ void Scratcha::processaudio(const float ** inStreams, float ** outStreams, unsig
 							while (m_fPosition > m_fNumSamples)
 							{
 								m_fPosition -= m_fNumSamples;
-								if (!m_bLoopMode) // off
+								if (!m_bLoop) // off
 								{
-									noteIsOn = false;
+									stopNote();
 									m_bPlayedReverse = false;
 								}
 
 							}
 						}
-					} // if (bPlayForward)
+					}   // if (bPlayForward)
 
-				} // if (noteIsOn == true)
+				}   // if (noteIsOn)
+				else
+					out1[currFrame] = out2[currFrame] = 0.0f;
 
-			}
+			}   // if (m_bDataReady)
 			else
-			{
-				out1[currFrame] = 0.0f;
-				out2[currFrame] = 0.0f;
-			}
-		}
+				out1[currFrame] = out2[currFrame] = 0.0f;
+		}   // if (noteIsOn)
 		else
-		{
-			out1[currFrame] = 0.0f;
-			out2[currFrame] = 0.0f;
-		} // if (noteIsOn)
-
-		currFrame++; // increment frame
-	} // (currFrame < inNumFrames)
+			out1[currFrame] = out2[currFrame] = 0.0f;
+	}   // (currFrame < inNumFrames)
 
 	m_bProcessing = false;
 }
@@ -1047,7 +989,7 @@ void Scratcha::processScratchStop()
 {
 	m_nScratchDir = kScratchDirection_forward;
 	m_fPlaySampleRate = 0.0f;
-	if (m_bScratchStop == false)
+	if (!m_bScratchStop)
 	{
 		m_bScratchStop = true;
 //		m_nScratchInterval = m_nScratchIntervalEnd / 2;
@@ -1083,19 +1025,16 @@ void Scratcha::processScratch(bool bSetParameter)
 	if (m_bPitchBendSet)
 	{
 		// set scratch amount to scaled pitchbend
-		float fPitchBend = (float)m_nPitchBend;
+		float fPitchBend = (float)m_nPitchBend / 16383.0f;	// was 16384
+		fPitchBend = expandparametervalue_index(kScratchAmount, fPitchBend);
 		if (bSetParameter)
-		{
-			setparameter_f(kScratchAmount, (float)(fPitchBend/16383.f));	 //was 16384
-			m_bScratchAmountSet = true;
-		}
+			setparameter_f(kScratchAmount, fPitchBend);
+			// XXX post notification?
 		else
-		{
-			m_fScratchAmount = (float)(fPitchBend/16383.f); //was 16384
-			m_bScratchAmountSet = true;
-		}
+			m_fScratchAmount = fPitchBend;
+		m_bScratchAmountSet = true;
 
-		//todo fix pithcbend
+		// XXX todo fix pitchbend
 		/*
 <agoz4> i noticed that with pitch bend at maximum , value is not 1.000000
 <agoz4> but 0.9999
@@ -1106,25 +1045,25 @@ void Scratcha::processScratch(bool bSetParameter)
 
 		if (m_fScratchAmount > 1.0f)
 			m_fScratchAmount = 1.0f;
-		if (m_fScratchAmount < 0.0f)
-			m_fScratchAmount = 0.0f;
+		if (m_fScratchAmount < -1.0f)
+			m_fScratchAmount = -1.0f;
 		m_bPitchBendSet = false;
 	}
 
 
 	if (m_bScratching) // scratching
 	{
-		if (m_nScratchMode == kScratchMode_seqence)
+		if (m_nScratchMode == kScratchMode_sequence)
 		{
-			if (m_fScratchAmount == 0.5f)
+			if (m_fScratchAmount == 0.0f)
 				m_nScratchDir = kScratchDirection_forward;
-			else if (m_fScratchAmount > 0.5f)
+			else if (m_fScratchAmount > 0.0f)
 				m_nScratchDir = kScratchDirection_forward;
 			else
 				m_nScratchDir = kScratchDirection_backward;
 		}
 
-	//todo:
+	// todo:
 	// handle scratching like power
 	// scratching will set target sample rate and system will catch up based on scratch speed parameter
 	// sort of like spin up/down speed param..
@@ -1136,18 +1075,18 @@ void Scratcha::processScratch(bool bSetParameter)
 
 
 		// calculate hand size
-		float fScaler = (m_fScratchSpeed*7.0f) + 1.0f;
+		float fScaler = m_fScratchSpeed_sequence;
 
 		// set target sample rate
-		m_fDesiredScratchRate = (float)fabs(((m_fScratchAmount-0.5f)*2.0f) * fScaler * m_fBasePitch);
+		m_fDesiredScratchRate = fabsf(m_fScratchAmount * fScaler * m_fBasePitch);
 		
-		if (m_nScratchMode == kScratchMode_seqence) // mode 2
+		if (m_nScratchMode == kScratchMode_sequence)	// mode 2
 		{
 			m_fPlaySampleRate = m_fDesiredScratchRate;
 			m_bScratchStop = false;
 			m_nScratchInterval = 0;
 		}
-		else // mode 1
+		else	// mode 1
 		{
 		//	int oldtime = timeGetTime();  //time in nanoseconds
 
@@ -1167,7 +1106,8 @@ void Scratcha::processScratch(bool bSetParameter)
 					fScaler = 1.0f;
 					fIntervalScaler = ((float)m_nScratchInterval/(float)m_nScratchIntervalEnd) + 1.0f;
 
-					m_fDesiredPosition = m_fScratchCenter + (m_fScratchAmount* (m_fScratchSpeed*4.5f + 0.5f) * m_nSampleRate);
+// XXX m_fScratchAmount here is normalized?  should do contractparametervalue_index(kScratchAmount, m_fScratchAmount) ?
+					m_fDesiredPosition = m_fScratchCenter + (m_fScratchAmount * m_fScratchSpeed_realtime * m_nSampleRate);
 
 					m_fTemporary = m_fDesiredPosition;
 
@@ -1191,7 +1131,7 @@ void Scratcha::processScratch(bool bSetParameter)
 
 
 
-					// do something wiht desireddelta and scratchinterval
+					// do something with desireddelta and scratchinterval
 
 					// figure out direction
 					float fDiff = m_fScratchAmount - m_fLastScratchAmount;
@@ -1204,7 +1144,7 @@ void Scratcha::processScratch(bool bSetParameter)
 					else
 						m_nScratchDir = kScratchDirection_forward;
 
-					m_fDesiredScratchRate2 = m_nSampleRate * (m_fScratchSpeed*4.5f + 0.5f) *m_nScratchInterval;
+					m_fDesiredScratchRate2 = m_nSampleRate * m_fScratchSpeed_realtime * m_nScratchInterval;
 
 					// figure out destination position and current position
 					// figure out distance between the two
@@ -1262,7 +1202,7 @@ void Scratcha::processScratch(bool bSetParameter)
 					fScaler = 1.0f;
 					fIntervalScaler = ((float)m_nScratchInterval/(float)m_nScratchIntervalEnd) + 1.0f;
 
-					m_fDesiredScratchRate2 = (fDiff * (float)m_nSampleRate * (m_fScratchSpeed*4.5f + 0.5f)*(float)SCRATCH_INTERVAL) / fIntervalScaler;
+					m_fDesiredScratchRate2 = (fDiff * (float)m_nSampleRate * m_fScratchSpeed_realtime*(float)SCRATCH_INTERVAL) / fIntervalScaler;
 
 					m_fTinyScratchAdjust = (m_fDesiredScratchRate2 - m_fPlaySampleRate)/m_nScratchIntervalEnd; 
 
@@ -1311,16 +1251,15 @@ void Scratcha::processPitch()
 	if (m_bKeyTracking)
 	{
 		int note2play = currentNote - m_nRootKey;
-
 		m_fBasePitch = ((double)m_nSampleRate) * pow(2.0, ((double)note2play)/12.0);
-		float m_fPitchAdjust = ((m_fPitchAmount-0.5f) * (m_fPitchRange * MAX_PITCH_RANGE));
-		m_fDesiredPitch = m_fBasePitch + (m_fBasePitch * m_fPitchAdjust);
+		float pitchAdjust = m_fPitchAmount * m_fPitchRange;
+		m_fDesiredPitch = m_fBasePitch + (m_fBasePitch * pitchAdjust);
 	}
 	else
 	{
 		m_fBasePitch = (float)m_nSampleRate;
-		float m_fPitchAdjust = ((m_fPitchAmount-0.5f) * (m_fPitchRange * MAX_PITCH_RANGE));
-		m_fDesiredPitch = m_fBasePitch + (m_fBasePitch * m_fPitchAdjust);
+		float pitchAdjust = m_fPitchAmount * m_fPitchRange;
+		m_fDesiredPitch = m_fBasePitch + (m_fBasePitch * pitchAdjust);
 	}
 
 	if (temp == m_fPlaySampleRate)
@@ -1376,7 +1315,7 @@ void Scratcha::processMidiEvent(long currEvent)
 	{
 		if (event.byte1 == kMidiCC_AllNotesOff)	// all notes off
 		{
-			noteIsOn = false;
+			stopNote();
 			if (m_nNoteMode == kNoteMode_reset)
 				m_fPosition = 0.0f;
 			m_bPlayedReverse = false;
@@ -1396,27 +1335,28 @@ void Scratcha::processMidiEvent(long currEvent)
 	else if (event.status == kMidiPitchbend) // pitch bend
 	{
 		// handle pitch bend here
-		unsigned short _14bit; 
-		_14bit = (unsigned short)event.byte2; 
-		_14bit <<= 7;
-		_14bit |= (unsigned short)event.byte1;
-		m_nPitchBend = _14bit;
+		unsigned short pb14bit;
+		pb14bit = (unsigned short)event.byte2; 
+		pb14bit <<= 7;
+		pb14bit |= (unsigned short)event.byte1;
+		m_nPitchBend = pb14bit;
 		m_bPitchBendSet = true;
-		
+
 		float fPitchBend;
-		
 		if (m_nPitchBend == 0x2000)
 			fPitchBend = 0.5f;
 		else
 		{
-			fPitchBend = (float)m_nPitchBend / 16383.f;
+			fPitchBend = (float)m_nPitchBend / 16383.0f;
 			if (fPitchBend > 1.0f)
 				fPitchBend = 1.0f;
 			else if (fPitchBend < 0.0f)
 				fPitchBend = 0.0f;	
 		}
 	
-		setparameter_f(kScratchAmount, fPitchBend);	 //was 16384				
+		fPitchBend = expandparametervalue_index(kScratchAmount, fPitchBend);
+		setparameter_f(kScratchAmount, fPitchBend);
+		// XXX post notification?
 	}
 #endif
 }
@@ -1435,9 +1375,10 @@ void Scratcha::noteOn(long note, long velocity, long delta)
 	currentDelta = delta;
 	if (velocity == 0)
 	{
-		if (m_bNPTrack == true)
+		if (m_bNotePowerTrack)
 		{
 			setparameter_b(kPower, false);
+			// XXX post notification?
 			noteIsOn = true;
 			m_bPlay = false;
 		}
@@ -1462,17 +1403,24 @@ void Scratcha::noteOn(long note, long velocity, long delta)
 		//44100*(2^(0/12)) = C-3
 		processPitch();
 
-		if (m_bNPTrack == true)
+		if (m_bNotePowerTrack)
+		{
 			setparameter_b(kPower, false);
+			// XXX post notification?
+		}
 	}
 
-/*
-// XXX do something else?
-	if (editor)
-		editor->setParameter(kPlay, m_bPlay);
-	if (editor)
-		editor->postUpdate();
-*/
+	PostPropertyChangeNotificationSafely(kTurntablistProperty_Play);
+}
+
+//-----------------------------------------------------------------------------------------
+void Scratcha::stopNote()
+{
+	bool play_old = m_bPlay;
+	m_bPlay = false;
+	noteIsOn = false;
+	if (m_bPlay != play_old)
+		PostPropertyChangeNotificationSafely(kTurntablistProperty_Play);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -1497,13 +1445,13 @@ long Scratcha::FixMidiData(long param, char value)
 	switch (param)
 	{
 		case kPower:
-		case kNPTrack:
+		case kNotePowerTrack:
 		case kMute:
 		case kPlay:
 		case kNoteMode:
 		case kDirection:
 		case kScratchMode:
-		case kLoopMode:
+		case kLoop:
 		case kKeyTracking:
 			// <64 = 0ff, >=64 = 0n
 			if (value < 64)

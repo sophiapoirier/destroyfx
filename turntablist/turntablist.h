@@ -31,13 +31,11 @@ Copyright (C) 2004 Sophia Poirier
 
 #include "dfxplugin.h"
 
-#include "sndfile.h"
 
 
 /////////////////////////////
 // DEFINES
 
-//#define _MIDI_LEARN_
 const float MAX_PITCH_RANGE = 0.5f; // 50%
 
 
@@ -52,7 +50,7 @@ enum
 enum
 {
 	kScratchMode_realtime = 0,
-	kScratchMode_seqence,
+	kScratchMode_sequence,
 	kNumScratchModes
 };
 
@@ -67,27 +65,43 @@ enum
 // parameters
 enum
 {
-	// performance parameters
-	kPower = 0,  //64
-	kMute,
-	kPitchAmount,
-	kPitchRange,
-	kDirection, // 68
-	kNPTrack,
-	kScratchAmount,
-	kScratchSpeed,
+	// scratching
+	kScratchAmount = 0,
+	kScratchMode,
+	kScratchSpeed_realtime,
+	kScratchSpeed_sequence,
 
-	// support parameters
+	// turntable power
+	kPower,
 	kSpinUpSpeed,
 	kSpinDownSpeed,
-	kNoteMode, // 75
-	kLoopMode,
-	kScratchMode,
+	kNotePowerTrack,
+
+	// pitch
+	kPitchAmount,
+	kPitchRange,
 	kKeyTracking,
+
+	// audio sample playback
+	kLoop,
+	kDirection,
+	kNoteMode,
+
+	// audio output
+	kMute,
 	kVolume,
 	kNumParams,
-	kPlay, // play/note activity
-	kLoad // load button
+
+	kPlay   // play/note activity
+};
+
+enum
+{
+	kTurntablistClump_scratching = kAudioUnitClumpID_System + 1,
+	kTurntablistClump_power,
+	kTurntablistClump_pitch,
+	kTurntablistClump_playback,
+	kTurntablistClump_output
 };
 
 enum
@@ -106,7 +120,6 @@ public:
 	virtual ~Scratcha();
 
 	virtual long initialize();
-	virtual void cleanup();
 
 	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
 	virtual void processparameters();
@@ -124,6 +137,11 @@ public:
 					AudioUnitScope inScope, AudioUnitElement inElement, 
 					const void * inData, UInt32 inDataSize);
 
+	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
+					AudioUnitParameterID inParameterID, 
+					AudioUnitParameterInfo & outParameterInfo);
+	virtual CFStringRef CopyClumpName(UInt32 inClumpID);
+
 private:
 	OSStatus loadAudioFile(const FSRef & inFile);
 	void	processMidiEvent(long currEvent);
@@ -132,14 +150,15 @@ private:
 	void	processPitch();
 	void	processDirection();
 	void	setRootKey();
+	void	calculateSpinSpeeds();
 
-	void initProcess();
 	void noteOn(long note, long velocity, long delta);
+	void stopNote();
 	void PlayNote(bool value);
 	long FixMidiData(long param, char value);
 
 	OSStatus PostPropertyChangeNotificationSafely(AudioUnitPropertyID inPropertyID, 
-							AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
+					AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
 
 
 	float fScaler;
@@ -169,17 +188,18 @@ private:
 
 	// switches
 	bool m_bPower; // on/off
-	bool m_bNPTrack; // scratch mode on/off
+	bool m_bNotePowerTrack; // scratch mode on/off
 	float m_fScratchAmount;
 	float m_fLastScratchAmount;
 	bool m_bMute; // on/off
 	float m_fPitchAmount;
 	long m_nDirection;
-	float m_fScratchSpeed;
+//	float m_fScratchSpeed;
+	float m_fScratchSpeed_realtime, m_fScratchSpeed_sequence;
 
 	// modifiers
 	long m_nNoteMode; // reset/resume
-	bool m_bLoopMode; // on/ofF	
+	bool m_bLoop; // on/off
 	float m_fPitchRange;
 	float m_fSpinDownSpeed; // ADD ME
 	float m_fSpinUpSpeed;  // ADD ME
