@@ -34,184 +34,102 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxmath.h"
 
+// DC FFT
+#include "fourier.h"
+
 /* this macro does boring entry point stuff for us */
 DFX_EFFECT_ENTRY(BrokenFFT)
-DFX_CORE_ENTRY(PLUGINCORE)
+DFX_CORE_ENTRY(BrokenFFTDSP)
 
-PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
+// XXX This is in std now right?
+#define PI 3.141592653589
+static constexpr int MAXECHO = 8192;
+
+using AmplEntry = BrokenFFTDSP::AmplEntry;
+
+BrokenFFT::BrokenFFT(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   : DfxPlugin(inInstance, NUM_PARAMS, NUM_PRESETS) {
 
-  initparameter_list(P_BUFSIZE, {"wsize", "WSiz"}, 9, 9, BUFFERSIZESSIZE, DfxParam::Unit::Samples);
-  initparameter_list(P_SHAPE, {"wshape", "WShp"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
+  initparameter_list(P_BUFSIZE, {"window size", "wsize", "WSiz"}, 9, 9, BUFFERSIZESSIZE, DfxParam::Unit::Samples);
+  initparameter_list(P_SHAPE, {"window shape", "wshape", "WShp"}, WINDOW_TRIANGLE, WINDOW_TRIANGLE, MAX_WINDOWSHAPES);
 
-  initparameter_list(P_POINTSTYLE, {"points where", "PntWher", "PWhere", "PWhr"},
-		     POINT_EXTNCROSS, POINT_EXTNCROSS, MAX_POINTSTYLES);
+  initparameter_list(P_METHOD, {"fft method", "how"}, METHOD_WEST, METHOD_WEST, MAX_METHODS);
 
-  initparameter_f(P_POINTPARAMS + POINT_EXTNCROSS, {"point:ext'n'cross", "PExtCrs", "PExtCr"},
-		  0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "magn");
-  initparameter_f(P_POINTPARAMS + POINT_FREQ, {"point:freq", "PntFreq", "PFreq", "PFrq"},
-		  0.08, 0.08, 0.0, 1.0, DfxParam::Unit::Scalar);
-  initparameter_f(P_POINTPARAMS + POINT_RANDOM, {"point:rand", "PntRand", "PRand", "PRnd"},
-		  0.20, 0.20, 0.0, 1.0, DfxParam::Unit::Scalar);
-  initparameter_f(P_POINTPARAMS + POINT_SPAN, {"point:span", "PntSpan", "PSpan", "PSpn"},
-		  0.20, 0.20, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "width");
-  initparameter_f(P_POINTPARAMS + POINT_DYDX, {"point:dydx", "PntDyDx", "PDyDx", "PDyx"},
-		  0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "gap");
-  initparameter_f(P_POINTPARAMS + POINT_LEVEL, {"point:level", "PntLevl", "PLevel" "PLvl"},
-		  0.50, 0.50, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "level");
+  using Unit = DfxParam::Unit;
+  using Curve = DfxParam::Curve;
 
-  for (int pp = NUM_POINTSTYLES; pp < MAX_POINTSTYLES; pp++) {
-    initparameter_f(P_POINTPARAMS + pp, {"pointparam:unused", "PUnused", "Pxxx"}, 0.04, 0.04, 0.0, 1.0, DfxParam::Unit::Generic);
-    setparameterattributes(P_POINTPARAMS + pp, DfxParam::kAttribute_Unused);    /* don't display as an available parameter */
-  }
+  // Placeholder to port old parameter definitions... make these nicer.
+  // Pass unit names (last param).
+#define FPARAM(p, name, def) \
+  initparameter_f(p, {"" name ""}, def, def, 0.0, 1.0f, Unit::Generic, Curve::Linear, "")
 
-  initparameter_list(P_INTERPSTYLE, {"interpolate how", "IntHow", "IHow"},
-		     INTERP_POLYGON, INTERP_POLYGON, MAX_INTERPSTYLES);
+  FPARAM(P_DESTRUCT, "very special", 1.0f);
+  FPARAM(P_PERTURB, "perturb", 0.0f);
+  FPARAM(P_QUANT, "operation q", 1.0f);
+  FPARAM(P_ROTATE, "rotate", 0.0f);
+  FPARAM(P_BINQUANT, "operation bq", 0.0f);
+  FPARAM(P_COMPRESS, "comp???", 1.f);
+  FPARAM(P_SPIKE, "spike", 1.0f);
+  FPARAM(P_MUG, "M.U.G.", 0.0f);
+  FPARAM(P_SPIKEHOLD, "spikehold", 0.0f);
+  FPARAM(P_ECHOMIX, "eo mix", 0.0f);
+  FPARAM(P_ECHOTIME, "eo time", 0.5f);
+  FPARAM(P_ECHOMODF, "eo mod f", float(2.0 * PI));
+  FPARAM(P_ECHOMODW, "eo mod w", 0.0f);
+  FPARAM(P_ECHOFB, "eo fbx", 0.50f);
+  FPARAM(P_ECHOLOW, "eo >", 0.0f);
+  FPARAM(P_ECHOHI, "eo <", 1.0f);
+  FPARAM(P_POSTROT, "postrot", 0.5f);
+  FPARAM(P_MOMENTS, "moments", 0.0f);
+  FPARAM(P_BRIDE, "bride", 1.0f);
+  FPARAM(P_BLOW, "blow", 0.0f);
+  FPARAM(P_LOWP, "lowp", 1.0f);
+  FPARAM(P_CONV, "convolve", 0.0f);
+  FPARAM(P_HARM, "harm", 0.0f);
+  FPARAM(P_ALOW, "afterlow", 1.0f);
+  FPARAM(P_NORM, "anorm", 0.0f);
 
-  initparameter_f(P_INTERPARAMS + INTERP_POLYGON, {"interp:polygon", "IntPoly", "IPoly", "IPly"},
-		  0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "angle");
-  initparameter_f(P_INTERPARAMS + INTERP_WRONGYGON, {"interp:wrongy", "IWrongy", "IWrong", "IWng"},
-		  0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "angle");
-  initparameter_f(P_INTERPARAMS + INTERP_SMOOTHIE, {"interp:smoothie", "ISmooth", "ISmoth", "ISmt"},
-		  0.5, 0.5, 0.0, 1.0, DfxParam::Unit::Exponent);
-  initparameter_f(P_INTERPARAMS + INTERP_REVERSI, {"interp:reversie", "IRevers", "IRevrs", "IRvr"},
-		  0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
-  initparameter_f(P_INTERPARAMS + INTERP_PULSE, {"interp:pulse", "IPulse", "IPls"},
-		  0.05, 0.05, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "pulse");
-  initparameter_f(P_INTERPARAMS + INTERP_FRIENDS, {"interp:friends", "IFriend", "IFrend", "IFrn"},
-		  1.0, 1.0, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "width");
-  initparameter_f(P_INTERPARAMS + INTERP_SING, {"interp:sing", "IntSing", "ISing", "ISng"},
-		  0.8, 0.8, 0.0, 1.0, DfxParam::Unit::Custom, DfxParam::Curve::Linear, "mod");
-  initparameter_f(P_INTERPARAMS + INTERP_SHUFFLE, {"interp:shuffle", "IShuffl", "IShufl", "IShf"},
-		  0.3, 0.3, 0.0, 1.0, DfxParam::Unit::Generic);
-
-  for (int ip = NUM_INTERPSTYLES; ip < MAX_INTERPSTYLES; ip++) {
-    initparameter_f(P_INTERPARAMS + ip, {"inter:unused", "IUnused", "Ixxx"},
-		    0.0, 0.0, 0.0, 1.0, DfxParam::Unit::Generic);
-    // Don't display as an available parameter
-    setparameterattributes(P_INTERPARAMS + ip, DfxParam::kAttribute_Unused);
-  }
-
-  initparameter_list(P_POINTOP1, {"pointop1", "PntOp1", "POp1"}, OP_NONE, OP_NONE, MAX_OPS);
-  initparameter_list(P_POINTOP2, {"pointop2", "PntOp2", "POp2"}, OP_NONE, OP_NONE, MAX_OPS);
-  initparameter_list(P_POINTOP3, {"pointop3", "PntOp3", "POp3"}, OP_NONE, OP_NONE, MAX_OPS);
-
-  auto const allop = [this](auto n, auto str, auto shortstr, auto def, auto unit, std::string_view unitstr) {
-    constexpr auto curve = DfxParam::Curve::Linear;
-    initparameter_f(P_OPPAR1S + n, {std::string("op1:") + str, std::string("1") + shortstr},
-		    def, def, 0.0, 1.0, unit, curve, unitstr);
-    initparameter_f(P_OPPAR2S + n, {std::string("op2:") + str, std::string("2") + shortstr},
-		    def, def, 0.0, 1.0, unit, curve, unitstr);
-    initparameter_f(P_OPPAR3S + n, {std::string("op3:") + str, std::string("3") + shortstr},
-		    def, def, 0.0, 1.0, unit, curve, unitstr);
-  };
-
-  allop(OP_DOUBLE, "double", "duble", 0.5, DfxParam::Unit::LinearGain, {});
-  allop(OP_HALF, "half", "half", 0.0, DfxParam::Unit::Generic, {});
-  allop(OP_QUARTER, "quarter", "qrtr", 0.0, DfxParam::Unit::Generic, {});
-  allop(OP_LONGPASS, "longpass", "lngps", 0.15, DfxParam::Unit::Custom, "length");
-  allop(OP_SHORTPASS, "shortpass", "srtps", 0.5, DfxParam::Unit::Custom, "length");
-  allop(OP_SLOW, "slow", "slow", 0.25, DfxParam::Unit::Scalar, {});     // "factor"
-  allop(OP_FAST, "fast", "fast", 0.5, DfxParam::Unit::Scalar, {});      // "factor"
-  allop(OP_NONE, "none", "none", 0.0, DfxParam::Unit::Generic, {});
-
-  for (int op = NUM_OPS; op < MAX_OPS; op++) {
-    allop(op, "unused", "xxx", 0.5, DfxParam::Unit::Generic, {});
-    // Don't display as available parameters
-    setparameterattributes(P_OPPAR1S + op, DfxParam::kAttribute_Unused);
-    setparameterattributes(P_OPPAR2S + op, DfxParam::kAttribute_Unused);
-    setparameterattributes(P_OPPAR3S + op, DfxParam::kAttribute_Unused);
-  }
 
   /* windowing */
-  for (size_t i=0; i < buffersizes.size(); i++)
-  {
+  for (size_t i = 0; i < buffersizes.size(); i++) {
     std::array<char, dfx::kParameterValueStringMaxLength> bufstr;
     constexpr int thousand = 1000;
     if (buffersizes[i] >= thousand) {
-      snprintf(bufstr.data(), bufstr.size(), "%d,%03d", buffersizes[i] / thousand, buffersizes[i] % thousand);
+      snprintf(bufstr.data(), bufstr.size(), "%d,%03d",
+	       buffersizes[i] / thousand, buffersizes[i] % thousand);
     } else {
       snprintf(bufstr.data(), bufstr.size(), "%d", buffersizes[i]);
     }
     setparametervaluestring(P_BUFSIZE, static_cast<long>(i), bufstr.data());
   }
+
   setparametervaluestring(P_SHAPE, WINDOW_TRIANGLE, "linear");
   setparametervaluestring(P_SHAPE, WINDOW_ARROW, "arrow");
   setparametervaluestring(P_SHAPE, WINDOW_WEDGE, "wedge");
-  setparametervaluestring(P_SHAPE, WINDOW_COS, "best");
+  setparametervaluestring(P_SHAPE, WINDOW_BEST, "best");
+  setparametervaluestring(P_SHAPE, WINDOW_COS2, "cos^2");
   for (long i = NUM_WINDOWSHAPES; i < MAX_WINDOWSHAPES; i++)
     setparametervaluestring(P_SHAPE, i, "???");
-  /* brokenfft */
-  setparametervaluestring(P_POINTSTYLE, POINT_EXTNCROSS, "ext 'n cross");
-  setparametervaluestring(P_POINTSTYLE, POINT_LEVEL, "at level");
-  setparametervaluestring(P_POINTSTYLE, POINT_FREQ, "at freq");
-  setparametervaluestring(P_POINTSTYLE, POINT_RANDOM, "randomly");
-  setparametervaluestring(P_POINTSTYLE, POINT_SPAN, "span");
-  setparametervaluestring(P_POINTSTYLE, POINT_DYDX, "dy/dx");
-  for (long i = NUM_POINTSTYLES; i < MAX_POINTSTYLES; i++)
-    setparametervaluestring(P_POINTSTYLE, i, "unsup");
-  setparametervaluestring(P_INTERPSTYLE, INTERP_POLYGON, "polygon");
-  setparametervaluestring(P_INTERPSTYLE, INTERP_WRONGYGON, "wrongygon");
-  setparametervaluestring(P_INTERPSTYLE, INTERP_SMOOTHIE, "smoothie");
-  setparametervaluestring(P_INTERPSTYLE, INTERP_REVERSI, "reversi");
-  setparametervaluestring(P_INTERPSTYLE, INTERP_PULSE, "pulse");
-  setparametervaluestring(P_INTERPSTYLE, INTERP_FRIENDS, "friends");
-  setparametervaluestring(P_INTERPSTYLE, INTERP_SING, "sing");
-  setparametervaluestring(P_INTERPSTYLE, INTERP_SHUFFLE, "shuffle");
-  for (long i = NUM_INTERPSTYLES; i < MAX_INTERPSTYLES; i++)
-    setparametervaluestring(P_INTERPSTYLE, i, "unsup");
-  auto const allopstr = [this](auto n, auto str) {
-    setparametervaluestring(P_POINTOP1, n, str);
-    setparametervaluestring(P_POINTOP2, n, str);
-    setparametervaluestring(P_POINTOP3, n, str);
-  };
-  allopstr(OP_DOUBLE, "x2");
-  allopstr(OP_HALF, "1/2");
-  allopstr(OP_QUARTER, "1/4");
-  allopstr(OP_LONGPASS, "longpass");
-  allopstr(OP_SHORTPASS, "shortpass");
-  allopstr(OP_SLOW, "slow");
-  allopstr(OP_FAST, "fast");
-  allopstr(OP_NONE, "none");
-  for (long i = NUM_OPS; i < MAX_OPS; i++)
-    allopstr(i, "unsup");
 
   addparametergroup("windowing", {P_BUFSIZE, P_SHAPE});
-  auto const addparameterrangegroup = [this](auto name, long parameterIndexBegin, long parameterIndexEnd) {
-    assert(parameterIndexBegin < parameterIndexEnd);
-    std::vector<long> parameters(parameterIndexEnd - parameterIndexBegin, dfx::kParameterID_Invalid);
-    std::iota(parameters.begin(), parameters.end(), parameterIndexBegin);
-    addparametergroup(name, parameters);
-  };
-  addparameterrangegroup("points", P_POINTSTYLE, P_INTERPSTYLE);
-  addparameterrangegroup("interpolation", P_INTERPSTYLE, P_POINTOP1);
-  addparameterrangegroup("pointop1", P_POINTOP1, P_POINTOP2);
-  addparameterrangegroup("pointop2", P_POINTOP2, P_POINTOP3);
-  addparameterrangegroup("pointop3", P_POINTOP3, NUM_PARAMS);
 
   // Default preset name
-  setpresetname(0, "BrokenFFT LoFi");
+  setpresetname(0, "Mr. Fourier");
   makepresets();
 
-  initCores<PLUGINCORE>();
-
-  tmpx.fill(0);
-  tmpy.fill(0.0f);
+  initCores<BrokenFFTDSP>();
 }
 
-void PLUGIN::dfx_PostConstructor()
-{
+void BrokenFFT::dfx_PostConstructor() {
   /* since we don't use notes for any specialized control of BrokenFFT,
      allow them to be assigned to control parameters via MIDI learn */
   getsettings().setAllowPitchbendEvents(true);
   getsettings().setAllowNoteEvents(true);
 }
 
-long PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
-                                 size_t& outDataSize, dfx::PropertyFlags& outFlags)
-{
-  switch (inPropertyID)
-  {
+long BrokenFFT::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+				    size_t& outDataSize, dfx::PropertyFlags& outFlags) {
+  switch (inPropertyID) {
     case PROP_LAST_WINDOW_TIMESTAMP:
       outDataSize = sizeof(uint64_t);
       outFlags = dfx::kPropertyFlag_Readable;
@@ -225,11 +143,9 @@ long PLUGIN::dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScop
   }
 }
 
-long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
-                             void* outData)
-{
-  switch (inPropertyID)
-  {
+long BrokenFFT::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex,
+				void* outData) {
+  switch (inPropertyID) {
     case PROP_LAST_WINDOW_TIMESTAMP:
       *static_cast<uint64_t*>(outData) = lastwindowtimestamp.load(std::memory_order_relaxed);
       return dfx::kStatus_NoError;
@@ -243,25 +159,12 @@ long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, u
   }
 }
 
-void PLUGIN::randomizeparameter(long inParameterIndex)
-{
+void BrokenFFT::randomizeparameter(long inParameterIndex) {
   // we need to constrain the range of values of the parameters that have extra (currently unused) room for future expansion
   int64_t maxValue = 0;
-  switch (inParameterIndex)
-  {
+  switch (inParameterIndex) {
     case P_SHAPE:
       maxValue = NUM_WINDOWSHAPES;
-      break;
-    case P_POINTSTYLE:
-      maxValue = NUM_POINTSTYLES;
-      break;
-    case P_INTERPSTYLE:
-      maxValue = NUM_INTERPSTYLES;
-      break;
-    case P_POINTOP1:
-    case P_POINTOP2:
-    case P_POINTOP3:
-      maxValue = NUM_OPS;
       break;
     default:
       DfxPlugin::randomizeparameter(inParameterIndex);
@@ -271,11 +174,11 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
   int64_t const newValue = rand() % maxValue;
   setparameter_i(inParameterIndex, newValue);
 
-  postupdate_parameter(inParameterIndex);       // inform any parameter listeners of the changes
+  // inform any parameter listeners of the changes
+  postupdate_parameter(inParameterIndex);
 }
 
-void PLUGIN::clearwindowcache()
-{
+void BrokenFFT::clearwindowcache() {
   {
     std::unique_lock const guard(windowcachelock, std::try_to_lock);
     if (guard.owns_lock()) {
@@ -285,7 +188,7 @@ void PLUGIN::clearwindowcache()
   lastwindowtimestamp.store(0, std::memory_order_relaxed);
 }
 
-void PLUGIN::updatewindowcache(PLUGINCORE const * brokenfftcore) {
+void BrokenFFT::updatewindowcache(BrokenFFTDSP const *brokenfftcore) {
   bool updated = false;
   {
     // willing to drop window cache updates to ensure realtime-safety by not blocking here
@@ -301,9 +204,17 @@ void PLUGIN::updatewindowcache(PLUGINCORE const * brokenfftcore) {
 
       windowcache.apts = std::min(brokenfftcore->getframesize(), BrokenFFTViewData::samples);
 
-      windowcache.numpts = brokenfftcore->processw(windowcache.inputs.data(), windowcache.outputs.data(), windowcache.apts,
-                                                  windowcache.pointsx.data(), windowcache.pointsy.data(),
-                                                  BrokenFFTViewData::samples - 1, tmpx.data(), tmpy.data());
+      // XXX I guess we actually run the process function just to produce the cache in geometer.
+      // for brokenfft I guess we could still run a baby version, but maybe it makes more sense
+      // to have the processing code occasionally save its data and only copy here?
+
+      // This used to return the number of points
+      windowcache.numpts = 0;
+      /*
+      brokenfftcore->ProcessW(windowcache.inputs.data(), windowcache.outputs.data(), windowcache.apts,
+			      windowcache.pointsx.data(), windowcache.pointsy.data(),
+			      BrokenFFTViewData::samples - 1, tmpx.data(), tmpy.data());
+      */
     }
   }
 
@@ -312,20 +223,20 @@ void PLUGIN::updatewindowcache(PLUGINCORE const * brokenfftcore) {
   }
 }
 
-void PLUGINCORE::clearwindowcache() {
+void BrokenFFTDSP::clearwindowcache() {
   if (iswaveformsource()) {
     brokenfft->clearwindowcache();
   }
 }
 
-void PLUGINCORE::updatewindowcache(PLUGINCORE const * brokenfftcore) {
+void BrokenFFTDSP::updatewindowcache(BrokenFFTDSP const *brokenfftcore) {
   if (iswaveformsource()) {
     brokenfft->updatewindowcache(brokenfftcore);
   }
 }
 
 std::optional<dfx::ParameterAssignment>
-PLUGIN::settings_getLearningAssignData(long inParameterIndex) const {
+BrokenFFT::settings_getLearningAssignData(long inParameterIndex) const {
   auto const getConstrainedToggleAssignment = [](long inNumStates, long inNumUsableStates) {
       dfx::ParameterAssignment result;
       result.mEventBehaviorFlags = dfx::kMidiEventBehaviorFlag_Toggle;
@@ -337,24 +248,16 @@ PLUGIN::settings_getLearningAssignData(long inParameterIndex) const {
   switch (inParameterIndex) {
     case P_SHAPE:
       return getConstrainedToggleAssignment(MAX_WINDOWSHAPES, NUM_WINDOWSHAPES);
-    case P_POINTSTYLE:
-      return getConstrainedToggleAssignment(MAX_POINTSTYLES, NUM_POINTSTYLES);
-    case P_INTERPSTYLE:
-      return getConstrainedToggleAssignment(MAX_INTERPSTYLES, NUM_INTERPSTYLES);
-    case P_POINTOP1:
-    case P_POINTOP2:
-    case P_POINTOP3:
-      return getConstrainedToggleAssignment(MAX_OPS, NUM_OPS);
     default:
       return {};
   }
 }
 
-PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
+BrokenFFTDSP::BrokenFFTDSP(DfxPlugin *inDfxPlugin)
   : DfxPluginCore(inDfxPlugin),
-    brokenfft(dynamic_cast<PLUGIN*>(inDfxPlugin)) {
+    brokenfft(dynamic_cast<BrokenFFT*>(inDfxPlugin)) {
   /* determine the size of the largest window size */
-  constexpr auto maxframe = *std::max_element(PLUGIN::buffersizes.cbegin(), PLUGIN::buffersizes.cend());
+  constexpr auto maxframe = *std::max_element(BrokenFFT::buffersizes.cbegin(), BrokenFFT::buffersizes.cend());
 
   /* add some leeway? */
   in0.assign(maxframe, 0.0f);
@@ -363,24 +266,31 @@ PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
   /* prevmix is only a single third long */
   prevmix.assign(maxframe / 2, 0.0f);
 
-  /* brokenfft buffers */
-  pointx.assign(maxframe * 2 + 3, 0);
-  storex.assign(maxframe * 2 + 3, 0);
-
-  pointy.assign(maxframe * 2 + 3, 0.0f);
-  storey.assign(maxframe * 2 + 3, 0.0f);
-
   windowenvelope.assign(maxframe, 0.0f);
 
-  auto const delay_samples = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
-  if (iswaveformsource()) {  // does not matter which DSP core, but this just should happen only once
-    getplugin()->setlatency_samples(delay_samples);
-    getplugin()->settailsize_samples(delay_samples);
+  const int framesize = BrokenFFT::buffersizes.at(getparameter_i(P_BUFSIZE));
+  // does not matter which DSP core, but this just should happen only once
+  if (iswaveformsource()) {
+    getplugin()->setlatency_samples(framesize);
+    getplugin()->settailsize_samples(framesize);
   }
+
+  echor = (float*)malloc(MAXECHO * sizeof(float));
+  echoc = (float*)malloc(MAXECHO * sizeof(float));
+
+  ampl = (AmplEntry*)malloc(sizeof (AmplEntry) * maxframe);
+
+  fftr = (float*)malloc(maxframe * sizeof(float));
+  ffti = (float*)malloc(maxframe * sizeof(float));
+  tmp = (float*)malloc(maxframe * sizeof(float));
+  oot = (float*)malloc(maxframe * sizeof(float));
+
+  // XXX can just call updatewindowsize (or even reset?)
+  plan = rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE);
+  rplan = rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE);
 }
 
-void PLUGINCORE::reset() {
-
+void BrokenFFTDSP::reset() {
   updatewindowsize();
   updatewindowshape();
 
@@ -388,18 +298,35 @@ void PLUGINCORE::reset() {
 }
 
 
-void PLUGINCORE::processparameters() {
+void BrokenFFTDSP::processparameters() {
+  fft_method = getparameter_i(P_METHOD);
 
-  pointstyle = getparameter_i(P_POINTSTYLE);
-  pointparam = getparameter_f(P_POINTPARAMS + pointstyle);
-  interpstyle = getparameter_i(P_INTERPSTYLE);
-  interparam = getparameter_f(P_INTERPARAMS + interpstyle);
-  pointop1 = getparameter_i(P_POINTOP1);
-  oppar1 = getparameter_f(P_OPPAR1S + pointop1);
-  pointop2 = getparameter_i(P_POINTOP2);
-  oppar2 = getparameter_f(P_OPPAR2S + pointop2);
-  pointop3 = getparameter_i(P_POINTOP3);
-  oppar3 = getparameter_f(P_OPPAR3S + pointop3);
+  destruct = getparameter_f(P_DESTRUCT);
+  perturb = getparameter_f(P_PERTURB);
+  quant = getparameter_f(P_QUANT);
+  rotate = getparameter_f(P_ROTATE);
+  binquant = getparameter_f(P_BINQUANT);
+  spike = getparameter_f(P_SPIKE);
+  spikehold = getparameter_f(P_SPIKEHOLD);
+  compress = getparameter_f(P_COMPRESS);
+  makeupgain = getparameter_f(P_MUG);
+  echomix = getparameter_f(P_ECHOMIX);
+  echotime = getparameter_f(P_ECHOTIME);
+  echomodf = getparameter_f(P_ECHOMODF);
+  echomodw = getparameter_f(P_ECHOMODW);
+  echofb = getparameter_f(P_ECHOFB);
+  echolow = getparameter_f(P_ECHOLOW);
+  echohi = getparameter_f(P_ECHOHI);
+  postrot = getparameter_f(P_POSTROT);
+  lowpass = getparameter_f(P_LOWP);
+  moments = getparameter_f(P_MOMENTS);
+  bride = getparameter_f(P_BRIDE);
+  blow = getparameter_f(P_BLOW);
+  convolve = getparameter_f(P_CONV);
+  harm = getparameter_f(P_HARM);
+  afterlow = getparameter_f(P_ALOW);
+  norm = getparameter_f(P_NORM);
+
 
   if (getparameterchanged(P_BUFSIZE)) {
     updatewindowsize();
@@ -409,756 +336,478 @@ void PLUGINCORE::processparameters() {
   }
 }
 
+static float Quantize(float q, float old) {
+  /*	if (q >= 1.0) return old;*/
+  long scale = (long)(512 * q);
+  if (scale == 0) scale = 2;
+  long X = (long)(scale * old);
 
-/* operations on points. this is a separate function
-   because it is called once for each operation slot.
-   It's static to enforce thread-safety.
-*/
-int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
-                         int * px, float * py, int maxpts,
-                         int * tempx, float * tempy) {
-  /* pointops. */
-
-  switch(pop) {
-  case OP_DOUBLE: {
-    /* x2 points */
-    int t = 0;
-    for (int i = 0; i < (npts - 1) && t < (maxpts - 4); i++) {
-      /* always include the actual point */
-      tempx[t] = px[i];
-      tempy[t] = py[i];
-      t++;
-      /* now, only if there's room... */
-      if ((i < npts) && ((px[i+1] - px[i]) > 1)) {
-        /* add an extra point, right between the old points.
-           (the idea is to double the frequency).
-           Pick its y coordinate according to the parameter.
-        */
-
-        tempy[t] = (op_param * 2.0f - 1.0f) * py[i];
-        tempx[t] = (px[i] + px[i+1]) >> 1;
-
-        t++;
-      }
-    }
-    /* include last if not different from previous */
-    if (t > 0 && npts > 0 && tempx[t-1] != px[npts-1]) {
-      tempx[t] = px[npts-1];
-      tempy[t] = py[npts-1];
-      t++;
-    }
-
-    for (int c = 0; c < t; c++) {
-      px[c] = tempx[c];
-      py[c] = tempy[c];
-    }
-    npts = t;
-    break;
-  }
-  case OP_HALF:
-  case OP_QUARTER: {
-    int const times = (pop == OP_QUARTER) ? 2 : 1;
-    for (int t = 0; t < times; t++) {
-      /* cut points in half. never touch first or last. */
-      int q = 1;
-      int i = 1;
-      for (; q < (npts - 1); i++) {
-        px[i] = px[q];
-        py[i] = py[q];
-        q += 2;
-      }
-      px[i] = px[npts - 1];
-      py[i] = py[npts - 1];
-      npts = i+1;
-    }
-    break;
-  }
-  case OP_LONGPASS: {
-    /* longpass. drop any point that's not at least param*samples
-       past the previous. */
-    /* XXX this can cut out the last point? */
-    tempx[0] = px[0];
-    tempy[0] = py[0];
-
-    int const stretch = (op_param * op_param) * samples;
-    int np = 1;
-
-    for (int i=1; i < (npts-1); i++) {
-      if (px[i] - tempx[np-1] > stretch) {
-        tempx[np] = px[i];
-        tempy[np] = py[i];
-        np++;
-        if (np == maxpts) break;
-      }
-    }
-
-    for (int c = 1; c < np; c++) {
-      px[c] = tempx[c];
-      py[c] = tempy[c];
-    }
-
-    px[np] = px[npts-1];
-    py[np] = py[npts-1];
-    np++;
-
-    npts = np;
-
-    break;
-  }
-  case OP_SHORTPASS: {
-    /* shortpass. If an interval is longer than the
-       specified amount, zero the 2nd endpoint.
-    */
-
-    int const stretch = (op_param * op_param) * samples;
-
-    for (int i=1; i < npts; i++) {
-      if (px[i] - px[i-1] > stretch) py[i] = 0.0f;
-    }
-
-    break;
-  }
-  case OP_SLOW: {
-    /* slow points down. stretches the points out so that
-       the tail is lost, but preserves their y values. */
-
-    float const factor = 1.0f + op_param;
-
-    /* We don't need to worry about maxpoints, since
-       we will just be moving existing samples (and
-       truncating)... */
-    int i = 0;
-    for (; i < (npts-1); i++) {
-      px[i] *= factor;
-      if (px[i] > samples) {
-        /* this sample can't stay. */
-        i--;
-        break;
-      }
-    }
-    /* but save last point */
-    px[i] = px[npts-1];
-    py[i] = py[npts-1];
-
-    npts = i + 1;
-
-    break;
-  }
-  case OP_FAST: {
-
-    float const factor = 1.0f + (op_param * 3.0f);
-    float const onedivfactor = 1.0f / factor;
-
-    /* number of times we need to loop through samples */
-    int const times = (int)(factor + 1.0f);
-
-    int outi = 0;
-    for (int rep = 0; rep < times; rep++) {
-      /* where this copy of the points begins */
-      int const offset = rep * (onedivfactor * samples);
-      for (int s = 0; s < npts; s++) {
-        /* XXX is destx in range? */
-        int const destx = offset + (px[s] * onedivfactor);
-
-        if (destx >= samples) goto op_fast_out_of_points;
-
-        /* check if we already have one here.
-           if not, add it and advance, otherwise ignore.
-           XXX: one possibility would be to mix...
-        */
-        if (!(outi > 0 && tempx[outi-1] == destx)) {
-          tempx[outi] = destx;
-          tempy[outi] = py[s];
-          outi++;
-        }
-
-        if (outi > (maxpts - 2)) goto op_fast_out_of_points;
-      }
-    }
-
-  op_fast_out_of_points:
-
-    /* always save last sample, as usual */
-    tempx[outi] = px[npts - 1];
-    tempy[outi] = py[npts - 1];
-
-    /* copy.. */
-
-    for (int c = 1; c < outi; c++) {
-      px[c] = tempx[c];
-      py[c] = tempy[c];
-    }
-
-    npts = outi;
-
-    break;
-  }
-  case OP_NONE:
-  default:
-    /* nothing ... */
-    break;
-
-  } /* end of main switch(op) statement */
-
-  return npts;
+  return (float)(X / (float)scale);
 }
 
-/* this processes an individual window.
-   1. generate points
-   2. do operations on points (in slots op1, op2, op3)
-   3. generate waveform
-*/
-int PLUGINCORE::processw(float const * in, float * out, int samples,
-                         int * px, float * py, int maxpts,
-                         int * tempx, float * tempy) const {
-
-  /* collect points. */
-
-  px[0] = 0;
-  py[0] = in[0];
-  int numpts = 1;
-
-  switch(pointstyle) {
-
-  case POINT_EXTNCROSS: {
-    /* extremities and crossings
-       XXX: Can this generate points out of order? Don't think so...
-    */
-
-    float ext = 0.0f;
-    int extx = 0;
-
-    enum {SZ, SZC, SA, SB};
-    int state;
-
-    state = SZ;
-
-    for (int i = 0; i < samples; i++) {
-      switch(state) {
-      case SZ: {
-        /* just output a zero. */
-        if (in[i] <= pointparam && in[i] >= -pointparam) state = SZC;
-        else if (in[i] < -pointparam) { state = SB; ext = in[i]; extx = i; }
-        else { state = SA; ext = in[i]; extx = i; }
-        break;
-      }
-      case SZC: {
-        /* continuing zeros */
-        if (in[i] <= pointparam && in[i] >= -pointparam) break;
-
-        /* push zero for last spot (we know it was a zero and not pushed). */
-        if (numpts < (maxpts-1)) {
-          px[numpts] = (i>0)?(i - 1):0;
-          py[numpts] = 0.0f;
-          numpts++;
-        }
-
-        if (in[i] < 0.0f) {
-          state = SB;
-        } else {
-          state = SA;
-        }
-
-        ext = in[i];
-        extx = i;
-        break;
-      }
-      case SA: {
-        /* above zero */
-
-        if (in[i] <= pointparam) {
-          /* no longer above 0. push the highest point I reached. */
-          if (numpts < (maxpts-1)) {
-            px[numpts] = extx;
-            py[numpts] = ext;
-            numpts++;
-          }
-          /* and decide state */
-          if (in[i] >= -pointparam) {
-            if (numpts < (maxpts-1)) {
-              px[numpts] = i;
-              py[numpts] = 0.0f;
-              numpts++;
-            }
-            state = SZ;
-          } else {
-            state = SB;
-            ext = in[i];
-            extx = i;
-          }
-        } else {
-          if (in[i] > ext) {
-            ext = in[i];
-            extx = i;
-          }
-        }
-        break;
-      }
-      case SB: {
-        /* below zero */
-
-        if (in[i] >= -pointparam) {
-          /* no longer below 0. push the lowest point I reached. */
-          if (numpts < (maxpts-1)) {
-            px[numpts] = extx;
-            py[numpts] = ext;
-            numpts++;
-          }
-          /* and decide state */
-          if (in[i] <= pointparam) {
-            if (numpts < (maxpts-1)) {
-              px[numpts] = i;
-              py[numpts] = 0.0f;
-              numpts++;
-            }
-            state = SZ;
-          } else {
-            state = SA;
-            ext = in[i];
-            extx = i;
-          }
-        } else {
-          if (in[i] < ext) {
-            ext = in[i];
-            extx = i;
-          }
-        }
-        break;
-      }
-      default:;
-
-      }
-    }
-
-    break;
+// Modifies fftr/ffti in place.
+void BrokenFFTDSP::Normalize(long samples, float much) {
+  static constexpr float MAXVALUE = 1000.0f;
+  float mar = 0.0;
+  float mai = 0.0;
+  for (int i = 0; i < samples; i ++) {
+    if (mar < fabs(fftr[i])) mar = fabs(fftr[i]);
+    if (mai < fabs(ffti[i])) mai = fabs(ffti[i]);
   }
 
-  case POINT_LEVEL: {
+  float facr = 1.0, faci = 1.0;
 
-    enum { ABOVE, BETWEEN, BELOW };
+  if (mar > 0.0001) facr = MAXVALUE / mar;
 
-    int state = BETWEEN;
-    float level = (pointparam * .9999f) + .00005f;
-    numpts = 1;
+  if (mai > 0.0001) faci = MAXVALUE / mai;
 
-    px[0] = 0;
-    py[0] = in[0];
-
-    for (int i = 0; i < samples; i++) {
-
-      if (in[i] > pointparam) {
-        if (state != ABOVE) {
-          px[numpts] = i;
-          py[numpts] = in[i];
-          numpts++;
-          state = ABOVE;
-        }
-      } else if (in[i] < -pointparam) {
-        if (state != BELOW) {
-          px[numpts] = i;
-          py[numpts] = in[i];
-          numpts++;
-          state = BELOW;
-        }
-      } else {
-        if (state != BETWEEN) {
-          px[numpts] = i;
-          py[numpts] = in[i];
-          numpts++;
-          state = BETWEEN;
-        }
-      }
-
-      if (numpts > samples - 2) break;
-    }
-
-    px[numpts] = samples - 1;
-    py[numpts] = in[samples - 1];
-
-    numpts++;
-
-    break;
+  for (int ji = 0; ji < samples; ji ++) {
+    fftr[ji] = (much * facr * fftr[ji]) + ((1.0 - much) * fftr[ji]);
+    ffti[ji] = (much * faci * ffti[ji]) + ((1.0 - much) * ffti[ji]);
   }
-  case POINT_FREQ: {
-    /* at frequency */
+}
 
-    /* XXX let the user choose hz, do conversion */
-    int const nth = (pointparam * pointparam) * samples;
-    int ctr = nth;
+// Rearranges the array (of n elements) so that the first num
+// elements are each greater than or equal to the remaining.
+//
+//    PERF: I think there are faster ways of doing this...
+//    XXX: Code can get simpler if using std::swap.
+static void PutGreatestFirst(AmplEntry *low, int size, int num) {
+  /* temporaries for swaps */
+  float t;
+  int i;
+  if (size <= 1) return;
+  if (num <= 0) return;
+  if (num >= size) return;
 
-    for (int i = 0; i < samples; i++) {
-      ctr--;
-      if (ctr <= 0) {
-        if (numpts < (maxpts-1)) {
-          px[numpts] = i;
-          py[numpts] = in[i];
-          numpts++;
-        } else break; /* no point in continuing... */
-        ctr = nth;
-      }
+  if (size == 2) {
+    if (low->a >= low[1].a) return;
+    t = low->a;
+    i = low->i;
+    low->a = low[1].a;
+    low->i = low[1].i;
+    low[1].a = t;
+    low[1].i = i;
+#if 0
+  } else if (size == 3) {
+    /* add this ... */
+#endif
+  } else {
+    // Pick a random pivot and put it at the beginning.
+    int pivot = rand() % size;
+    t = low[pivot].a;
+    i = low[pivot].i;
+    low[pivot].a = low->a;
+    low[pivot].i = low->i;
+    low->a = t;
+    low->i = i;
+
+    int l = 1, r = size - 1;
+
+    // PERF: Could just use std::partition?
+    while (l < r) {
+      /* move fingers.
+	 it's possible to run off the array if
+	 the pivot is equal to one of the last
+	 or first elements (so check that). */
+
+      while ((l < size) && low[l].a >= low->a) l++;
+      while (r && low[r].a <= low->a) r--;
+      if (l >= r) break;
+      /* swap */
+      t = low[l].a;
+      i = low[l].i;
+      low[l].a = low[r].a;
+      low[l].i = low[r].i;
+      low[r].a = t;
+      low[r].i = i;
+      // PERF why not l++, r--?
     }
 
-    break;
-  }
+    /* put the pivot back. */
 
-  case POINT_RANDOM: {
-    /* randomly */
+    t = low[l - 1].a;
+    i = low[l - 1].i;
+    low[l - 1].a = low->a;
+    low[l - 1].i = low->i;
+    low->a = t;
+    low->i = i;
 
-    int n = (int)(1.0f - pointparam) * samples;
+    /* recurse. */
 
-    for (;n--;) {
-      if (numpts < (maxpts-1)) {
-        px[numpts++] = rand() % samples;
-      } else break;
-    }
-
-    /* sort them */
-
-    std::sort(px, px + numpts);
-
-    for (int sd = 0; sd < numpts; sd++) {
-      py[sd] = in[px[sd]];
-    }
-
-    break;
-  }
-
-  case POINT_SPAN: {
-    /* next x determined by sample magnitude
-
-    suggested by bram.
-    */
-
-    int const span = (pointparam * pointparam) * samples;
-
-    int i = abs((int)(py[0] * span)) + 1;
-
-    while (i < samples) {
-      px[numpts] = i;
-      py[numpts] = in[i];
-      numpts++;
-      i = i + abs((int)(in[i] * span)) + 1;
-    }
-
-    break;
-  }
-
-  case POINT_DYDX: {
-    /* dy/dx */
-    bool lastsign = false;
-    float lasts = in[0];
-
-    px[0] = 0;
-    py[0] = in[0];
-    numpts = 1;
-
-    float pp {};
-    bool above {};
-    if (pointparam > 0.5f) {
-      pp = pointparam - 0.5f;
-      above = true;
+    if (num <= l) {
+      PutGreatestFirst(low, l - 1, num);
     } else {
-      pp = 0.5f - pointparam;
-      above = false;
+      PutGreatestFirst(low + l, size - l, num - l);
+    }
+    /* done. */
+  }
+}
+
+/* this function modifies 'samples' number of floats in
+   fftr and ffti */
+void BrokenFFTDSP::FFTOps(long samples) {
+
+  for (int li = lowpass * lowpass * samples; li < samples; li ++) {
+    fftr[li] = 0;
+    ffti[li] = 0;
+  }
+
+  // Convolve.
+  // Mysteriously, we do a linear combination of the ith sample with the ith
+  // real component (which makes no sense) and additionally multiply the
+  // imaginary component with the sample magintude for each imaginary bucket
+  // (which makes even less sense).
+  if (convolve > 0.0001f) {
+    for (int ci = 0; ci < samples; ci ++) {
+      fftr[ci] = convolve * tmp[ci] + (1.0 - convolve) * fftr[ci];
+      ffti[ci] = convolve * tmp[ci] * ffti[ci] + (1.0 - convolve) * ffti[ci];
+    }
+    Normalize(samples, 1.0f);
+  }
+
+  for (int i = 0; i < samples; i ++) {
+
+    // Operation bq is bin quantization.
+    // We copy bin values into a series of consecutive following bins.
+    if (binquant > 0.0f) {
+      if (samplesleft -- > 0) {
+	fftr[i] = sampler;
+	ffti[i] = samplei;
+      } else {
+	sampler = fftr[i];
+	samplei = ffti[i];
+	samplesleft = 1 + (int)(binquant * binquant * binquant) * (samples >> 3);
+      }
     }
 
-    pp = std::pow(pp, 2.7f);
+    if (destruct < 1.0f) {
+      /* very special */
+      // PERF rather than do division, we could store 'destruct' as an
+      // integer threshold
+      if ((rand ()/(float)RAND_MAX) > destruct) {
+	/* swap with random sample */
+	int j = (int)((rand()/(float)RAND_MAX) * (samples - 1));
+	float u = fftr[i];
+	fftr[i] = fftr[j];
+	fftr[j] = u;
 
-    for (int i = 1; i < samples; i++) {
+	u = ffti[i];
+	ffti[i] = ffti[j];
+	ffti[j] = u;
+      }
+    }
 
-      bool sign {};
-      if (above)
-        sign = (in[i] - lasts) > pp;
-      else
-        sign = (in[i] - lasts) < pp;
+    /* operation Q */
+    if (quant <= 0.9999999) {
+      fftr[i] = Quantize(fftr[i], quant);
+      ffti[i] = Quantize(ffti[i], quant);
+    }
 
-      lasts = in[i];
+    // Perturb just mixes random noise with each sample.
+    if (perturb > 0.000001) {
+      fftr[i] = (double)((rand()/(float)RAND_MAX) * perturb +
+			 fftr[i]*(1.0f-perturb));
+      ffti[i] = (double)((rand()/(float)RAND_MAX) * perturb +
+			 ffti[i]*(1.0f-perturb));
+    }
 
-      if (sign != lastsign) {
-        px[numpts] = i;
-        py[numpts] = in[i];
-        numpts++;
-        if (numpts > (maxpts-1)) break;
+    /* rotate */
+    // XXX should rotate imaginary parts, right?
+    // (Note there is also post-rotate. So this is a buggy thing
+    // that we should only keep if it's somehow interesting on
+    // its own?)
+    // (Yes it is kind of great)
+    int j = (i + (int)(rotate * samples)) % samples;
+
+    fftr[i] = fftr[j];
+    /* XXX and ffti? */
+
+    /* compress */
+
+    if (compress < 0.9999999) {
+      fftr[i] = std::copysignf(fftr[i], powf(fabsf(fftr[i]), compress));
+      ffti[i] = std::copysignf(ffti[i], powf(fabsf(ffti[i]), compress));
+    }
+
+    /* M.U.G. */
+    if (makeupgain > 0.00001) {
+      fftr[i] *= 1.0f + (3.0f * makeupgain);
+      ffti[i] *= 1.0f + (3.0f * makeupgain);
+    }
+
+  }
+
+  /* pretty expensive spike operation */
+  if (spike < 0.999999) {
+
+    double loudness = 0.0;
+
+    for ( long i=0; i<samples; i++ ) {
+      loudness += fftr[i]*fftr[i] + ffti[i]*ffti[i];
+    }
+
+    if (! -- amplhold) {
+      for ( long i=0; i<samples; i++ ) {
+	ampl[i].a = fftr[i]*fftr[i] + ffti[i]*ffti[i];
+	ampl[i].i = i;
       }
 
-      lastsign = sign;
+      /* sort the amplitude bins */
+
+      stopat = 1+(int)((spike*spike*spike)*samples);
+
+      /* consider a special case for when abs(stopat-samples) < lg samples? */
+      PutGreatestFirst(ampl, samples, stopat);
+
+      /* chop off everything after the first i */
+
+      amplhold = 1 + (int)(spikehold * (20.0));
+
     }
 
-    break;
+    double newloudness = loudness;
+    for (long iw = stopat - 1; iw < samples; iw++) {
+      newloudness -= ampl[iw].a;
+      fftr[ampl[iw].i] = 0.0f;
+      ffti[ampl[iw].i] = 0.0f;
+    }
 
+    /* boost what remains. */
+    double boostby = loudness / newloudness;
+    for (long ie = 0; ie < samples; ie ++) {
+      fftr[ie] *= boostby;
+      /* XXX ffti? */
+    }
+
+  }
+
+  /* EO FX */
+
+
+  for (long iy = 0; iy < samples; iy ++) {
+    echor[echoctr] = fftr[iy];
+    echoc[echoctr++] = ffti[iy];
+    echoctr %= MAXECHO;
+
+    /* you want somma this magic?? */
+
+    if (echomix > 0.000001) {
+
+      double warble = (echomodw * cos(echomodf * (echoctr / (float)MAXECHO)));
+      double echott = echotime + warble;
+      if (echott > 1.0) echott = 1.0;
+      int echot = (MAXECHO - (MAXECHO * echott));
+      int xx = (echoctr + echot) % MAXECHO;
+      int last = (echoctr + MAXECHO - 1) % MAXECHO;
+
+      if (echofb > 0.00001) {
+	echoc[last] += echoc[xx] * echofb;
+
+	echor[last] += echor[xx] * echofb;
+      }
+
+      if (iy >= (int)((echolow * echolow * echolow) * samples) &&
+	  iy <= (int)((echohi * echohi * echohi) * samples)) {
+	fftr[iy] = (1.0f - echomix) * fftr[iy] + echomix * echor[xx];
+
+	ffti[iy] = (1.0f - echomix) * ffti[iy] + echomix * echoc[xx];
+      }
+    }
+  }
+
+  /* bufferride */
+  if (bride < 0.999999f) {
+    int smd = 0;
+    int md = bride * samples;
+    for (int ss = 0; ss < samples; ss ++) {
+      fftr[ss] = fftr[smd];
+      ffti[ss] = ffti[smd];
+      smd++;
+      if (smd > md) smd = 0;
+    }
+  }
+
+  /* first moment */
+  /* XXX support later moments (and do what with them??) */
+  if (moments > 0.00001f) {
+    float mtr = 0.0f;
+    float mti = 0.0f;
+
+    float magr = 0.0f;
+    float magi = 0.0f;
+
+    for (int ih=0; ih < samples; ih ++) {
+      float pwr = fftr[ih] * ih;
+      float pwi = ffti[ih] * ih;
+
+      mtr += pwr;
+      mti += pwi;
+
+      magr += fftr[ih];
+      magi += ffti[ih];
+    }
+
+    mtr /= magr;
+    mti /= magi;
+
+    for (int zc = 0; zc < samples; zc++)
+      fftr[zc] = ffti[zc] = 0.0f;
+
+    /* stick it all in one spot. */
+
+    int mtrx = abs(mtr);
+    int mtix = abs(mti);
+
+    fftr[mtrx % samples] = magr;
+    ffti[mtix % samples] = magi;
+
+  }
+
+  /* XXX sounds crappy */
+  /* freq(i) = 44100.0 * i / samples */
+  if (harm > 0.000001f) {
+    for (int i = 0; i < samples; i ++) {
+      /* j = bin(freq(i)/2) */
+      int fi = 44100.0 * i /(float) samples;
+      int fj = fi / 2.0;
+      int j = (int)((fi * (float)samples) / 44100.0);
+      if (j >= 0 && j < samples) {
+	fftr[i] += fftr[j] * harm;
+	ffti[i] += ffti[j] * harm;
+      }
+    }
+  }
+
+  /* XXX I changed 2.0f to 1.0f -- old range was boring... */
+
+  // TODO: Option to have this treat the buffer cyclically?
+
+  // TODO: Since we drop buckets here, should preserve the
+  // total amplitude by distributing it among remaining
+  // buckets?
+  /* post-processing rotate-up */
+  if (postrot > 0.5f) {
+    int rotn = (postrot - 0.5f) * 1.0f * samples;
+    if (rotn != 0) {
+      for (int v = samples - 1; v >= 0; v --) {
+	if (v < rotn) fftr[v] = ffti[v] = 0.0f;
+	else {
+	  fftr[v] = fftr[v - rotn];
+	  ffti[v] = ffti[v - rotn];
+	}
+      }
+    }
+  } else if (postrot < 0.5f) {
+    int rotn = (int)((0.5f - postrot) * 1.0f * bufsize);
+    if (rotn != 0) {
+      for (int v = 0; v < samples; v++) {
+	if (v > (samples - rotn)) fftr[v] = ffti[v] = 0.0f;
+	else {
+	  fftr[v] = fftr[(samples - rotn) - v];
+	  ffti[v] = ffti[(samples - rotn) - v];
+	}
+      }
+    }
+  }
+
+
+  if (bride < 0.9999f) {
+    int low = blow * blow * samples;
+
+    int modsize = 1 + (bride * bride) * samples;
+
+    for (int ii=0; ii < samples; ii++) {
+      fftr[ii] = fftr[((ii + low) % modsize) % samples];
+      ffti[ii] = ffti[((ii + low) % modsize) % samples];
+    }
+
+  }
+
+  for (int ali = afterlow * afterlow * samples; ali < samples; ali ++) {
+    fftr[ali] = 0;
+    ffti[ali] = 0;
+  }
+
+  if (norm > 0.0001f) {
+    Normalize(samples, norm);
+  }
+}
+
+
+// This processes an individual window.
+// 1. transform into frequency domain
+// 2. do various operations (in FFTOps)
+// 3. transform back to time domain
+void BrokenFFTDSP::ProcessW(const float *in, float *out, int samples) {
+  // Geometer version is const, and instead takes all its temporary buffers
+  // as arguments, I think so that it can also be called for visualization
+  // purposes. Maybe should do that here too?
+
+  // PERF: can we just output directly into out instead of
+  // using 'oot'?
+
+  // what is this??
+  static int ss;
+  ss = !ss;
+
+
+  // XXX ded?!
+  int i = 0;
+
+  for (int c = 0; c < samples; c++) tmp[c] = in[c];
+
+  /* do the processing */
+  // TODO: More recent versions of FFTW are (a) probably much faster
+  // and (b) support a variety of real-to-real methods that are probably
+  // more suitable here (we mostly treat the complex parts as weird
+  // baggage in FFTOps). For example there is "Discrete Hartley Transform"
+  // (which is its own inverse) and various DCT/DSTs:
+  // http://www.fftw.org/fftw3_doc/Real-even_002fodd-DFTs-_0028cosine_002fsine-transforms_0029.html
+  // Maybe we could just get rid of imaginaty parts here, but either
+  // way, could add some other methods here.
+  switch (fft_method) {
+  case METHOD_DC: {
+    /* Don Cross style */
+    static constexpr int FFT_FORWARD = 0;
+    static constexpr int FFT_REVERSE = 1;
+    fft_float(samples, FFT_FORWARD, tmp, nullptr, fftr, ffti);
+    FFTOps(samples);
+    fft_float(samples, FFT_REVERSE, fftr, ffti, oot, tmp);
+    break;
   }
   default:
-    /* nothing, unsupported... */
-    numpts = 1;
-    break;
+  case METHOD_WEST: {
+    /* FFTW .. this still doesn't work. How come? */
+    rfftw_one(plan, tmp, fftr);
+    // (XXX is this actually "halfcomplex" output perhaps, where
+    // the real components are the first half and imaginary the second?)
+    memcpy(ffti, fftr, samples * sizeof(float)); /* dup? */
 
-  } /* end of pointstyle cases */
+    FFTOps(samples);
 
+    rfftw_one(rplan, fftr, oot);
 
-  /* always push final point for continuity (we saved room) */
-  px[numpts] = samples-1;
-  py[numpts] = in[samples-1];
-  numpts++;
-
-  /* modify the points according to the three slots and
-     their parameters */
-
-  numpts = pointops(pointop1, numpts, oppar1, samples,
-                    px, py, maxpts, tempx, tempy);
-  numpts = pointops(pointop2, numpts, oppar2, samples,
-                    px, py, maxpts, tempx, tempy);
-  numpts = pointops(pointop3, numpts, oppar3, samples,
-                    px, py, maxpts, tempx, tempy);
-
-  switch(interpstyle) {
-
-  case INTERP_SHUFFLE: {
-    /* mix around the intervals. The parameter determines
-       how mobile an interval is.
-
-       I build an array of interval indices (integers).
-       Then I swap elements with nearby elements (where
-       nearness is determined by the parameter). Then
-       I reconstruct the wave by reading the intervals
-       in their new order.
-    */
-
-    /* fix last point at last sample -- necessary to
-       preserve invariants */
-    px[numpts-1] = samples - 1;
-
-    int const intervals = numpts - 1;
-
-    /* generate table */
-    for (int a = 0; a < intervals; a++) {
-      tempx[a] = a;
+    // reverse(fwd(amplitudes)) actually computes
+    // |amplitudes| * amplitudes in FFTW, so normalize the result.
+    float div = 1.0 / samples;
+    for (int xa = 0; xa < samples; xa++) {
+      oot[xa] = oot[xa] * div;
     }
-
-    for (int z = 0; z < intervals; z++) {
-      if (dfx::math::Rand<float>() < interparam) {
-        int dest = z + ((interparam *
-                         interparam * (float)intervals)
-                        * dfx::math::Rand<float>()) - (interparam *
-                                                       interparam *
-                                                       0.5f * (float)intervals);
-        dest = std::clamp(dest, 0, intervals - 1);
-
-        std::swap(tempx[z], tempx[dest]);
-      }
-    }
-
-    /* generate output */
-    for (int u = 0, c = 0; u < intervals; u++) {
-      int const size = px[tempx[u]+1] - px[tempx[u]];
-      std::copy_n(in + px[tempx[u]], size, out + c);
-      c += size;
-    }
-
     break;
   }
-
-  case INTERP_FRIENDS: {
-    /* bleed each segment into next segment (its "friend").
-       interparam controls the amount of bleeding, between
-       0 samples and next-segment-size samples.
-       suggestion by jcreed (sorta).
-    */
-
-    /* copy last block verbatim. */
-    if (numpts > 2)
-      for (int s=px[numpts-2]; s < px[numpts-1]; s++)
-        out[s] = in[s];
-
-    /* steady state */
-    for (int x = numpts - 2; x > 0; x--) {
-      /* x points at the beginning of the segment we'll be bleeding
-         into. */
-      int const sizeright = px[x+1] - px[x];
-      int const sizeleft = px[x] - px[x-1];
-
-      int const tgtlen = sizeleft + (sizeright * interparam);
-
-      if (tgtlen > 0) {
-        /* to avoid using temporary storage, copy from end of target
-           towards beginning, overwriting already used source parts on
-           the way.
-
-           j is an offset from p[x-1], ranging from 0 to tgtlen-1.
-           Once we reach p[x], we have to start mixing with the
-           data that's already there.
-        */
-        for (int j = tgtlen - 1;
-             j >= 0;
-             j--) {
-
-          /* XXX. use interpolated sampling for this */
-          float const wet = in[(int)(px[x-1] + sizeleft *
-                                     (j/(float)tgtlen))];
-
-          if ((j + px[x-1]) > px[x]) {
-            /* after p[x] -- mix */
-
-            /* linear fade-out */
-            float const pct = (j - sizeleft) / (float)(tgtlen - sizeleft);
-
-            out[j + px[x-1]] =
-              wet * (1.0f - pct) +
-              out[j + px[x-1]] * pct;
-          } else {
-            /* before p[x] -- no mix */
-            out[j + px[x-1]] = wet;
-          }
-
-        }
-      }
-    }
-
+  case METHOD_WEST_BUG: {
+    // (XXX Is this a good bug to keep?)
+    /* bug -- using forward plan both ways, not normalizing */
+    rfftw_one(plan, tmp, fftr);
+    memcpy(ffti, fftr, samples * sizeof(float)); /* dup? */
+    FFTOps(samples);
+    rfftw_one(plan, fftr, oot);
     break;
   }
-  case INTERP_POLYGON:
-    /* linear interpolation - "polygon"
-       interparam causes dimming effect -- at 1.0 it just does
-       straight lines at the median.
-    */
-
-    for (int u=1; u < numpts; u++) {
-      float const denom = (px[u] - px[u-1]);
-      float const minterparam = interparam * (py[u-1] + py[u]) * 0.5f;
-      for (int z=px[u-1]; z < px[u]; z++) {
-        float const pct = (float)(z-px[u-1]) / denom;
-        float const s = py[u-1] * (1.0f - pct) + py[u] * pct;
-        out[z] = minterparam + (1.0f - interparam) * s;
-      }
-    }
-
-    out[samples-1] = in[samples-1];
-
-    break;
-
-
-  case INTERP_WRONGYGON:
-    /* linear interpolation, wrong direction - "wrongygon"
-       same dimming effect from polygon.
-    */
-
-    for (int u=1; u < numpts; u++) {
-      float const denom = (px[u] - px[u-1]);
-      float const minterparam = interparam * (py[u-1] + py[u]) * 0.5f;
-      for (int z=px[u-1]; z < px[u]; z++) {
-        float const pct = (float)(z-px[u-1]) / denom;
-        float const s = py[u-1] * pct + py[u] * (1.0f - pct);
-        out[z] = minterparam + (1.0f - interparam) * s;
-      }
-    }
-
-    out[samples-1] = in[samples-1];
-
-    break;
-
-
-  case INTERP_SMOOTHIE:
-    /* cosine up or down - "smoothie" */
-
-    for (int u=1; u < numpts; u++) {
-      float const denom = (px[u] - px[u-1]);
-      for (int z=px[u-1]; z < px[u]; z++) {
-        float const pct = (float)(z-px[u-1]) / denom;
-
-        float p = 0.5f * (-std::cos(dfx::math::kPi<float> * pct) + 1.0f);
-
-        if (interparam > 0.5f) {
-          p = std::pow(p, (interparam - 0.16666667f) * 3.0f);
-        } else {
-          p = std::pow(p, interparam * 2.0f);
-        }
-
-        float const s = py[u-1] * (1.0f - p) + py[u] * p;
-
-        out[z] = s;
-      }
-    }
-
-    out[samples-1] = in[samples-1];
-
-    break;
-
-
-  case INTERP_REVERSI:
-    /* x-reverse input samples for each waveform - "reversi" */
-
-    for (int u=1; u < numpts; u++) {
-      if (px[u-1] < px[u])
-        for (int z = px[u-1]; z < px[u]; z++) {
-          int const s = (px[u] - (z + 1)) + px[u - 1];
-          out[z] = in[dfx::math::ToIndex(s)];
-        }
-    }
-
-    break;
-
-
-  case INTERP_PULSE: {
-
-    int const wid = (int)(100.0f * interparam);
-
-    for (int i = 0; i < samples; i++) out[i] = 0.0f;
-
-    for (int z = 0; z < numpts; z++) {
-      out[px[z]] = dfx::math::MagnitudeMax(out[px[z]], py[z]);
-
-      if (wid > 0) {
-        /* put w samples on the left, stopping if we hit a sample
-           greater than what we're placing */
-        int w = wid;
-        float const onedivwid = 1.0f / (float)(wid + 1);
-        for (int i=px[z]-1; i >= 0 && w > 0; i--, w--) {
-          float sam = py[z] * (w * onedivwid);
-          if ((out[i] + sam) * (out[i] + sam) > (sam * sam)) out[i] = sam;
-          else out[i] += sam;
-        }
-
-        w = wid;
-        for (int ii=px[z]+1; ii < samples && w > 0; ii++, w--) {
-          float const sam = py[z] * (w * onedivwid);
-          out[ii] = sam;
-        }
-      }
-    }
-
-    break;
-
   }
-  case INTERP_SING:
 
-    for (int u=1; u < numpts; u++) {
-      float const oodenom = 1.0f / (px[u] - px[u-1]);
-
-      for (int z=px[u-1]; z < px[u]; z++) {
-        float const pct = (float)(z-px[u-1]) * oodenom;
-
-        float const wand = sinf(2.0f * dfx::math::kPi<float> * pct);
-        out[z] = wand *
-          interparam +
-          ((1.0f-interparam) *
-           in[z] *
-           wand);
-      }
-    }
-
-    out[samples-1] = in[samples-1];
-
-
-    break;
-  default:
-
-    /* unsupported ... ! */
-    for (int i = 0; i < samples; i++) out[i] = 0.0f;
-
-    break;
-
-  } /* end of interpstyle cases */
-
-  return numpts;
+  for (int cc = 0; cc < samples; cc++) out[cc] = oot[cc];
 }
 
 
@@ -1171,7 +820,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
    to fill the true output buffer.
 
    If the input frame is full:
-    - calls processw on this full input frame
+    - calls ProcessW on this full input frame
     - applies the windowing envelope to the tail of out0 (output frame)
     - mixes in prevmix with the first half of the output frame
     - increases outsize so that the first half of the output frame is
@@ -1185,21 +834,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
    - Reset outstart
 
 */
-
-/* to improve:
-   - can we use tail of out0 as prevmix, instead of copying?
-   - can we use circular buffers instead of memmoving a lot?
-     (probably not)
-XXX Sophia's ideas:
-   - only calculate a given window the first time that it's needed (how often to we change them anyway?)
-   - cache it and use it next time
-   - moreover, we only need one cache for the plugin, although that might be tricky with the whole DSP cores abstraction thing
-   - possibly we only need to save half since the second half is always the first half reversed
-   - this can allow for an easy way to vector-optimize the windowing
-   - it would also be nice to make this windowing stuff into a reusable class so that we don't find ourselves maintaining the same code accross so many different plugins
-*/
-
-void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
+void BrokenFFTDSP::process(float const* tin, float* tout, unsigned long samples) {
 
   for (unsigned long ii = 0; ii < samples; ii++) {
 
@@ -1211,13 +846,16 @@ void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
       /* frame is full! */
 
       /* in0 -> process -> out0(first free space) */
-      processw(in0.data(), out0.data()+outstart+outsize, framesize,
+      ProcessW(in0.data(), out0.data()+outstart+outsize, framesize);
+      /*
                pointx.data(), pointy.data(), framesize * 2,
                storex.data(), storey.data());
+      */
       updatewindowcache(this);
 
 #if TARGET_OS_MAC
-      vDSP_vmul(out0.data()+outstart+outsize, 1, windowenvelope.data(), 1, out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));
+      vDSP_vmul(out0.data()+outstart+outsize, 1, windowenvelope.data(), 1,
+		out0.data()+outstart+outsize, 1, static_cast<vDSP_Length>(framesize));
 #else
       for (int z=0; z < framesize; z++) {
         out0[z+outstart+outsize] *= windowenvelope[z];
@@ -1255,8 +893,28 @@ void PLUGINCORE::process(float const* tin, float* tout, unsigned long samples) {
 }
 
 
-void PLUGINCORE::updatewindowsize() {
-  framesize = PLUGIN::buffersizes.at(getparameter_i(P_BUFSIZE));
+void BrokenFFTDSP::updatewindowsize() {
+  // (XXX is this the right place to be clearing stuff like the echo buffer?)
+  // This was in "resume" in the oldskool implementation.
+  for (int i = 0; i < MAXECHO; i++) {
+    echor[i] = echoc[i] = 0.0f;
+  }
+  echoctr = 0;
+  
+  amplhold = 1;
+  stopat = 1;
+
+
+  // (XXX arguably these should be local to FFTOps... otherwise
+  // we get different alignments when the quantization length
+  // doesn't divide the window size?)
+  sampler = samplei = 0.0f;
+  samplesleft = 0;
+
+  
+  // Window size stuff...
+  
+  framesize = BrokenFFT::buffersizes.at(getparameter_i(P_BUFSIZE));
   third = framesize / 2;
   bufsize = third * 3;
 
@@ -1275,10 +933,14 @@ void PLUGINCORE::updatewindowsize() {
   getplugin()->setlatency_samples(framesize);
   /* tail is the same as delay, of course */
   getplugin()->settailsize_samples(framesize);
+
+  // FFT size depends on window size
+  plan = rfftw_create_plan(framesize, FFTW_FORWARD, FFTW_ESTIMATE);
+  rplan = rfftw_create_plan(framesize, FFTW_BACKWARD, FFTW_ESTIMATE);
 }
 
 
-void PLUGINCORE::updatewindowshape() {
+void BrokenFFTDSP::updatewindowshape() {
   shape = getparameter_i(P_SHAPE);
 
   float const oneDivThird = 1.0f / static_cast<float>(third);
@@ -1286,7 +948,7 @@ void PLUGINCORE::updatewindowshape() {
   case WINDOW_TRIANGLE:
     for (int z = 0; z < third; z++) {
       windowenvelope[z] = (static_cast<float>(z) * oneDivThird);
-      windowenvelope[z+third] = (1.0f - (static_cast<float>(z) * oneDivThird));
+      windowenvelope[z + third] = (1.0f - (static_cast<float>(z) * oneDivThird));
     }
     break;
   case WINDOW_ARROW:
@@ -1294,34 +956,40 @@ void PLUGINCORE::updatewindowshape() {
       float p = static_cast<float>(z) * oneDivThird;
       p *= p;
       windowenvelope[z] = p;
-      windowenvelope[z+third] = (1.0f - p);
+      windowenvelope[z + third] = 1.0f - p;
     }
     break;
   case WINDOW_WEDGE:
     for (int z = 0; z < third; z++) {
-      float const p = std::sqrt(static_cast<float>(z) * oneDivThird);
+      const float p = std::sqrt(static_cast<float>(z) * oneDivThird);
       windowenvelope[z] = p;
-      windowenvelope[z+third] = (1.0f - p);
+      windowenvelope[z + third] = 1.0f - p;
     }
     break;
-  case WINDOW_COS:
+  case WINDOW_BEST:
     for (int z = 0; z < third; z++) {
-      float const p = 0.5f * (-std::cos(dfx::math::kPi<float> * (static_cast<float>(z) * oneDivThird)) + 1.0f);
+      const float p = 0.5f * (-std::cos(dfx::math::kPi<float> * (static_cast<float>(z) * oneDivThird)) + 1.0f);
       windowenvelope[z] = p;
-      windowenvelope[z+third] = (1.0f - p);
+      windowenvelope[z + third] = 1.0f - p;
+    }
+    break;
+  case WINDOW_COS2:
+    for (int z = 0; z < third; z++) {
+      float p = 0.5f * (-std::cos(dfx::math::kPi<float> * (static_cast<float>(z) * oneDivThird)) + 1.0f);
+      p *= p;
+      windowenvelope[z] = p;
+      windowenvelope[z + third] = 1.0f - p;
     }
     break;
   }
 }
 
 
-void PLUGIN::makepresets() {
+void BrokenFFT::makepresets() {
   long i = 1;
 
-  setpresetname(i, "atonal singing");
-  setpresetparameter_i(i, P_BUFSIZE, 9);        // XXX is that 2^11 ?
-  setpresetparameter_i(i, P_POINTSTYLE, POINT_FREQ);
-  setpresetparameter_f(i, P_POINTPARAMS + POINT_FREQ, 0.10112);
-  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_REVERSI);
+  setpresetname(i, "replace this pls");
+  setpresetparameter_i(i, P_BUFSIZE, 9);
+  setpresetparameter_f(i, P_ROTATE, 0.5f);
   i++;
 }
