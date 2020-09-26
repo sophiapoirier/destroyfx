@@ -6,7 +6,7 @@
 // This code is public domain
 // 
 // Audio Unit implementation written by Sophia Poirier, September 2002
-// http://www.smartelectronix.com/~destroyfx/
+// http://destroyfx.org/
 
 #include "freeverb.hpp"
 
@@ -19,10 +19,8 @@ COMPONENT_ENTRY(Freeverb)
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Freeverb::Freeverb(AudioUnit component)
-	: AUEffectBase(component)
+	: AUInlineEffectBase(component)
 {
-//	CreateElements();	// not sure if this ought to be done in AU v2?
-
 	// initialize the parameters to their default values
 	for (long index=0; index < KNumParams; index++)
 	{
@@ -31,7 +29,7 @@ Freeverb::Freeverb(AudioUnit component)
 			AUEffectBase::SetParameter(index, paramInfo.defaultValue);
 	}
 
-    Reset();
+    Reset(kAudioUnitScope_Global, (AudioUnitElement)0);
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,10 +39,12 @@ Freeverb::~Freeverb()
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void Freeverb::Reset()
+ComponentResult Freeverb::Reset(AudioUnitScope inScope, AudioUnitElement inElement)
 {
 	model.mute();
 	needUpdate = true;
+
+	return noErr;
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,7 +58,7 @@ ComponentResult Freeverb::GetParameterInfo(AudioUnitScope inScope, AudioUnitPara
 
 	outParameterInfo.flags = kAudioUnitParameterFlag_IsReadable 
 							| kAudioUnitParameterFlag_IsWritable;
-	
+
 	switch (inParameterID)
 	{
 		case KMode:
