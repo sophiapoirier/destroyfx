@@ -106,6 +106,12 @@ at regular intervals synchronized to tempo.
 Inverts the polarity of every Nth audio sample, resulting in a
 crispy digital noisy effect.
 
+### freeverb/
+
+Freeverb is a public domain reverb algorithm by Jezar at Dreampoint.
+There are several VST implementations of it, but no AU, so we ported
+it, and have made some improvements to it too.
+
 ---
 
 These plugins are somewhat mature, but are lacking GUIs and thorough
