@@ -81,8 +81,7 @@
 			sourceTree = "<group>";
 		};
 		08EA7FFBFE8413EDC02AAC07 = {
-			fallbackIsa = PBXFileReference;
-			isa = PBXFrameworkReference;
+			isa = PBXFileReference;
 			lastKnownFileType = wrapper.framework;
 			name = Carbon.framework;
 			path = /System/Library/Frameworks/Carbon.framework;
@@ -187,6 +186,20 @@
 		};
 		4918B60E0680FC9C0034CE15 = {
 			fileRef = 4918B60C0680FC9C0034CE15;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
+		4919537206C5398A00221230 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			path = CAMath.h;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		4919537306C5398A00221230 = {
+			fileRef = 4919537206C5398A00221230;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -633,12 +646,13 @@
 		};
 		4932F4B70680108C006A9591 = {
 			children = (
-				4932F4C1068010CA006A9591,
-				4932F4C0068010CA006A9591,
-				4932F4BD068010BE006A9591,
-				4932F4BC068010BE006A9591,
 				4932F4B9068010B2006A9591,
 				4932F4B8068010B2006A9591,
+				4932F4BD068010BE006A9591,
+				4932F4BC068010BE006A9591,
+				4919537206C5398A00221230,
+				4932F4C1068010CA006A9591,
+				4932F4C0068010CA006A9591,
 			);
 			isa = PBXGroup;
 			name = PublicUtility;
@@ -739,9 +753,9 @@
 				4932F4D006801180006A9591,
 				4932F4CF06801180006A9591,
 				4932F4CE06801180006A9591,
+				4932F4CD06801180006A9591,
 				4932F4CB06801180006A9591,
 				4932F4CA06801180006A9591,
-				4932F4CD06801180006A9591,
 				49C61DD0069051CC001947C2,
 				49C61DD206905393001947C2,
 				4932F79A0680E859006A9591,
@@ -1559,8 +1573,6 @@
 //4F3
 //4F4
 		4F9091AC011F3BD104CA0E50 = {
-			buildRules = (
-			);
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				DEBUGGING_SYMBOLS = YES;
@@ -1568,6 +1580,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				OPTIMIZATION_CFLAGS = "-O0";
 				ZERO_LINK = YES;
 			};
@@ -1575,13 +1588,15 @@
 			name = Development;
 		};
 		4F9091AD011F3BD104CA0E50 = {
-			buildRules = (
-			);
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEPLOYMENT_LOCATION = YES;
+				DEPLOYMENT_POSTPROCESSING = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				OTHER_CFLAGS = "-D NDEBUG -D TARGET_API_AUDIOUNIT -D SUPPORT_AU_VERSION_1=0 -D MAC=1 -D WIN32=0 -D BEOS=0";
+				GCC_PREPROCESSOR_DEFINITIONS = "$(value) NDEBUG";
+				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				SEPARATE_STRIP = YES;
 				ZERO_LINK = NO;
 			};
@@ -1609,8 +1624,8 @@
 			buildRules = (
 			);
 			buildSettings = {
-				DEPLOYMENT_LOCATION = YES;
-				DEPLOYMENT_POSTPROCESSING = YES;
+				DEPLOYMENT_LOCATION = NO;
+				DEPLOYMENT_POSTPROCESSING = NO;
 				DSTROOT = /;
 				EXPORTED_SYMBOLS_FILE = turntablist.exp;
 				FRAMEWORK_SEARCH_PATHS = "";
@@ -1620,6 +1635,7 @@
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = turntablistdef.h;
+				GCC_PREPROCESSOR_DEFINITIONS = "SUPPORT_AU_VERSION_1=0 TARGET_API_AUDIOUNIT MAC=1 WIN32=0 BEOS=0";
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
@@ -1637,14 +1653,13 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_MODE_FLAG = "u+w,a+rX";
-				INSTALL_PATH = "$(HOME)/Library/Audio/Plug-Ins/Components";
+				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
 				LIBRARY_SEARCH_PATHS = "";
 				LIBRARY_STYLE = Bundle;
 				MACOSX_DEPLOYMENT_TARGET = 10.2;
-				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "-I /Developer/Examples/CoreAudio/AudioUnits/AUPublic/AUBase -I /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers -I ../../dfx-library";
 				PRODUCT_NAME = Turntablist;
+				REZ_SEARCH_PATHS = "/Developer/Examples/CoreAudio/AudioUnits/AUPublic/AUBase /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers ../../dfx-library";
 				SECTORDER_FLAGS = "";
 				WARNING_CFLAGS = "-Wmost -Wno-four-char-constants -Wno-unknown-pragmas";
 				WRAPPER_EXTENSION = component;
@@ -1652,7 +1667,7 @@
 			dependencies = (
 			);
 			isa = PBXNativeTarget;
-			name = turntablist;
+			name = Turntablist;
 			productInstallPath = "$(HOME)/Library/Bundles";
 			productName = turntablist;
 			productReference = 8D01CCD20486CAD60068D4B7;
@@ -1694,6 +1709,7 @@
 				4932F79C0680E859006A9591,
 				4918B60E0680FC9C0034CE15,
 				49C61DD1069051CC001947C2,
+				4919537306C5398A00221230,
 			);
 			isa = PBXHeadersBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;

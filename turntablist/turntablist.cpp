@@ -341,9 +341,11 @@ ComponentResult Scratcha::RestoreState(CFPropertyListRef inData)
 			{
 				FSRef audioFileRef;
 				Boolean gotFileRef = CFURLGetFSRef(audioFileUrl, &audioFileRef);
-				CFRelease(audioFileUrl);
 				if (gotFileRef)
 					loadAudioFile(audioFileRef);
+				else
+					PostNotification_AudioFileNotFound(audioFileUrl);
+				CFRelease(audioFileUrl);
 			}
 		}
 	}
@@ -370,6 +372,38 @@ ComponentResult Scratcha::RestoreState(CFPropertyListRef inData)
 	}
 
 	return noErr;
+}
+
+//-----------------------------------------------------------------------------
+OSStatus Scratcha::PostNotification_AudioFileNotFound(CFURLRef inFileUrl)
+{
+	if (inFileUrl == NULL)
+		return paramErr;
+	// we can't get the proper LaunchServices "display name" if the file does not exist, so do this instead
+	CFStringRef fileName = CFURLCopyLastPathComponent(inFileUrl);
+	if (fileName == NULL)
+		return coreFoundationUnknownErr;
+
+	CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
+
+	CFStringRef titleString_base = CFCopyLocalizedStringFromTableInBundle(CFSTR("%@:  Audio file not found."), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("the title of the notification dialog when an audio file referenced in stored session data cannot be found"));
+	CFStringRef identifyingNameString = (auContextName != NULL) ? auContextName : CFSTR(PLUGIN_NAME_STRING);
+	CFStringRef titleString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, titleString_base, identifyingNameString);
+	CFRelease(titleString_base);
+
+	CFStringRef messageString_base = CFCopyLocalizedStringFromTableInBundle(CFSTR("The previously used file \"%@\" could not be found."), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("the detailed message of the notification dialog when an audio file referenced in stored session data cannot be found"));
+	CFStringRef messageString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, messageString_base, fileName);
+	CFRelease(messageString_base);
+
+	OSStatus status = CFUserNotificationDisplayNotice(0.0, kCFUserNotificationPlainAlertLevel, NULL, NULL, NULL, titleString, messageString, NULL);
+	if (titleString != NULL)
+		CFRelease(titleString);
+	if (messageString != NULL)
+		CFRelease(messageString);
+
+	return status;
 }
 
 //-----------------------------------------------------------------------------
@@ -1575,7 +1609,7 @@ void Scratcha::noteOn(long note, long velocity, long delta)
 
 		if (m_bNotePowerTrack)
 		{
-			setparameter_b(kPower, false);
+			setparameter_b(kPower, true);
 			// XXX post notification?
 		}
 	}

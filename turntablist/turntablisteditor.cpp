@@ -171,11 +171,13 @@ void AboutButtonProc(long inValue, void * inTurntablistEditor)
 			CFMutableDictionaryRef aboutDict = CFDictionaryCreateMutable(kCFAllocatorDefault, 3, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 			if (aboutDict != NULL)
 			{
-				CFStringRef valueString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleName"));
+				CFStringRef valueString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, kCFBundleNameKey);
 				if (valueString != NULL)
 					CFDictionaryAddValue(aboutDict, (const void*)kHIAboutBoxNameKey, (const void*)valueString);
 
-				valueString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleVersion"));
+				valueString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleShortVersionString"));
+				if (valueString == NULL)
+					valueString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, kCFBundleVersionKey);
 				if (valueString != NULL)
 					CFDictionaryAddValue(aboutDict, (const void*)kHIAboutBoxVersionKey, (const void*)valueString);
 
@@ -643,7 +645,7 @@ OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode, const FSRef & inAudioFil
 
 //-----------------------------------------------------------------------------
 // this is the event handler callback for the custom open audio file Nav Services dialog
-pascal void OpenAudioFileNavEventHandler(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData)
+static pascal void OpenAudioFileNavEventHandlerProc(NavEventCallbackMessage inCallbackSelector, NavCBRecPtr inCallbackParams, NavCallBackUserData inUserData)
 {
 	ScratchaEditor * editor = (ScratchaEditor*) inUserData;
 	NavDialogRef dialog = inCallbackParams->context;
@@ -759,7 +761,7 @@ OSType gSupportedAudioFileTypeCodes[] =
 // It handles filtering out non-audio files from the file list display.  
 // They will still appear in the list, but can not be selected.
 // A response of true means "allow the file" and false means "disallow the file."
-pascal Boolean OpenAudioFileNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode)
+static pascal Boolean OpenAudioFileNavFilterProc(AEDesc * inItem, void * inInfo, void * inUserData, NavFilterModes inFilterMode)
 {
 	// default to allowing the item
 	// only if we determine that a file, but not an audio file, do we want to reject it
@@ -875,12 +877,20 @@ void InitializeSupportedAudioFileTypesArrays()
 	}
 }
 
+static NavEventUPP gOpenAudioFileNavEventHandlerUPP = NULL;
+static NavObjectFilterUPP gOpenAudioFileNavFilterUPP = NULL;
 //-----------------------------------------------------------------------------
 OSStatus ScratchaEditor::HandleLoadButton()
 {
 	// we already have a file open dialog running
 	if (audioFileOpenDialog != NULL)
+	{
+		// if the window is already open, then don't open a new one, just bring the existing one to the front
+		WindowRef dialogWindow = NavDialogGetWindow(audioFileOpenDialog);
+		if (dialogWindow != NULL)
+			SelectWindow(dialogWindow);
 		return kNavWrongDialogStateErr;
+	}
 
 	InitializeSupportedAudioFileTypesArrays();
 
@@ -891,23 +901,41 @@ OSStatus ScratchaEditor::HandleLoadButton()
 	dialogOptions.optionFlags &= ~kNavAllowMultipleFiles;	// disallow multiple file selection
 	// this gives this dialog a unique identifier so that it has independent remembered settings for the calling app
 	dialogOptions.preferenceKey = kTurntablistAudioFileOpenNavDialogKey;
-	dialogOptions.modality = kWindowModalityNone;
-	dialogOptions.clientName = CFSTR(PLUGIN_NAME_STRING);
-	dialogOptions.windowTitle = CFSTR("Open: "PLUGIN_NAME_STRING" Audio File");
+//	dialogOptions.modality = kWindowModalityNone;
+	// these 2 things make it a sheet dialog
+	dialogOptions.modality = kWindowModalityWindowModal;
+	dialogOptions.parentWindow = GetCarbonWindow();
+	UInt32 propertyDataSize = sizeof(dialogOptions.clientName);
+	status = AudioUnitGetProperty(GetEditAudioUnit(), kAudioUnitProperty_ContextName, kAudioUnitScope_Global, (AudioUnitElement)0, &(dialogOptions.clientName), &propertyDataSize);
+	if ( (status != noErr) || (dialogOptions.clientName == NULL) )
+		dialogOptions.clientName = CFStringCreateCopy(kCFAllocatorDefault, CFSTR(PLUGIN_NAME_STRING));
+/*
+	// XXX do I really want to set this, or better to just allow the standard titling?
+	if (dialogOptions.clientName != NULL)
+	{
+		CFStringRef windowTitle_base = CFCopyLocalizedStringFromTableInBundle(CFSTR("Open: %@ Audio File"), 
+											CFSTR("Localizable"), CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER)), 
+											CFSTR("window title for the audio file chooser dialog"));
+		dialogOptions.windowTitle = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, windowTitle_base, dialogOptions.clientName);
+		CFRelease(windowTitle_base);
+	}
+*/
 
 	// create and run a GetFile dialog to allow the user to find and choose an audio file to load
-	NavEventUPP eventProc = NewNavEventUPP(OpenAudioFileNavEventHandler);
-	NavObjectFilterUPP filterProc = NewNavObjectFilterUPP(OpenAudioFileNavFilterProc);
+	if (gOpenAudioFileNavEventHandlerUPP == NULL)
+		gOpenAudioFileNavEventHandlerUPP = NewNavEventUPP(OpenAudioFileNavEventHandlerProc);
+	if (gOpenAudioFileNavFilterUPP == NULL)
+		gOpenAudioFileNavFilterUPP = NewNavObjectFilterUPP(OpenAudioFileNavFilterProc);
 	audioFileOpenDialog = NULL;
-	status = NavCreateGetFileDialog(&dialogOptions, NULL, eventProc, NULL, filterProc, (void*)this, &audioFileOpenDialog);
+	status = NavCreateGetFileDialog(&dialogOptions, NULL, gOpenAudioFileNavEventHandlerUPP, NULL, gOpenAudioFileNavFilterUPP, (void*)this, &audioFileOpenDialog);
 	if (status == noErr)
 	{
 		status = NavDialogRun(audioFileOpenDialog);
 	}
-	if (eventProc != NULL)
-		DisposeRoutineDescriptor(eventProc);
-	if (filterProc != NULL)
-		DisposeRoutineDescriptor(filterProc);
+	if (dialogOptions.clientName != NULL)
+		CFRelease(dialogOptions.clientName);
+	if (dialogOptions.windowTitle != NULL)
+		CFRelease(dialogOptions.windowTitle);
 
 	return status;
 }
@@ -940,8 +968,10 @@ CFStringRef CopyNameAndVersionString()
 	if (pluginBundleRef == NULL)
 		return NULL;
 
-	CFStringRef nameString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleName"));
-	CFStringRef versionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleVersion"));
+	CFStringRef nameString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, kCFBundleNameKey);
+	CFStringRef versionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleShortVersionString"));
+	if (versionString == NULL)
+		versionString = (CFStringRef) CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, kCFBundleVersionKey);
 	CFStringRef nameAndVersionString = NULL;
 	if ( (nameString != NULL) && (versionString != NULL) )
 		nameAndVersionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%@  %@"), nameString, versionString);

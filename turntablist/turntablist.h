@@ -154,6 +154,7 @@ private:
 
 	OSStatus PostPropertyChangeNotificationSafely(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
+	OSStatus PostNotification_AudioFileNotFound(CFURLRef inFileUrl);
 
 
 	long currentNote;
