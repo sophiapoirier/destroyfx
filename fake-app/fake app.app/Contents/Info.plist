@@ -10,6 +10,7 @@
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>component</string>
+				<string>audiocomp</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>destroyfx.icns</string>
