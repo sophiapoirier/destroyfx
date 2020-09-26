@@ -112,6 +112,11 @@ Freeverb is a public domain reverb algorithm by Jezar at Dreampoint.
 There are several VST implementations of it, but no AU, so we ported
 it, and have made some improvements to it too.
 
+### max-patches/
+
+Very very ancient [Max](https://cycling74.com) patches that we once
+upon a time exported and released as utility applications.
+
 ---
 
 These plugins are somewhat mature, but are lacking GUIs and thorough
