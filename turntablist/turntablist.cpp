@@ -121,7 +121,6 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	m_fNumSamples = 0.0;
 
 	m_fLastScratchAmount = getparameter_f(kParam_ScratchAmount);
-	m_nPitchBend = kDfxMidi_PitchbendMiddleValue;
 	m_fPitchBend = k_fScratchAmountMiddlePoint;
 	m_bPitchBendSet = false;
 	m_bScratching = false;
@@ -224,7 +223,7 @@ void Turntablist::processparameters()
 	if (getparameterchanged(kParam_PitchShift))
 		processPitch();
 
-	if (getparameterchanged(kParam_ScratchAmount) || m_bPitchBendSet)	// XXX checking m_bPitchBendSet until I fix getparameter_changed()
+	if (getparameterchanged(kParam_ScratchAmount) || m_bPitchBendSet)	// XXX checking m_bPitchBendSet until I fix getparameterchanged()
 	{
 		m_bScratchAmountSet = true;
 		if ( (m_fScratchAmount > k_fScratchAmountMiddlePoint_LowerLimit) && (m_fScratchAmount < k_fScratchAmountMiddlePoint_UpperLimit) )
@@ -1463,7 +1462,7 @@ void Turntablist::processMidiEvent(long inCurrentEvent)
 {
 	DfxMidiEvent event = midistuff->blockEvents[inCurrentEvent];
 
-	if ( isNote(event.status) )	// we only look at notes
+	if ( isNote(event.status) )
 	{
 		long note = event.byte1;
 		long velocity = event.byte2;
@@ -1496,14 +1495,14 @@ void Turntablist::processMidiEvent(long inCurrentEvent)
 	else if (event.status == kMidiPitchbend) // pitch bend
 	{
 		// handle pitch bend here
-		m_nPitchBend = (event.byte2 << 7) | event.byte1;
+		int pitchBendValue = (event.byte2 << 7) | event.byte1;
 		m_bPitchBendSet = true;
 
-		if (m_nPitchBend == kDfxMidi_PitchbendMiddleValue)
+		if (pitchBendValue == kDfxMidi_PitchbendMiddleValue)
 			m_fPitchBend = k_fScratchAmountMiddlePoint;
 		else
 		{
-			m_fPitchBend = (double)m_nPitchBend / (double)((kDfxMidi_PitchbendMiddleValue * 2) - 1);
+			m_fPitchBend = (double)pitchBendValue / (double)((kDfxMidi_PitchbendMiddleValue * 2) - 1);
 			if (m_fPitchBend > 1.0)
 				m_fPitchBend = 1.0;
 			else if (m_fPitchBend < 0.0)
@@ -1512,7 +1511,7 @@ void Turntablist::processMidiEvent(long inCurrentEvent)
 		}
 
 		setparameter_f(kParam_ScratchAmount, m_fPitchBend);
-		// XXX post notification?
+//		postupdate_parameter(kParam_ScratchAmount);	// XXX post notification? for some reason it makes the results sound completely different
 		m_fScratchAmount = m_fPitchBend;
 	}
 #endif

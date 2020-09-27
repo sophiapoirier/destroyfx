@@ -228,7 +228,6 @@ private:
 	bool m_bPlay;
 
 	bool m_bPitchBendSet;
-	int m_nPitchBend;
 	double m_fPitchBend;
 	int m_nScratchDir;
 	bool m_bScratching;
