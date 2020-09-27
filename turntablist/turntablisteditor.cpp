@@ -215,7 +215,7 @@ void TurntablistAboutButtonProc(long inValue, void * inTurntablistEditor)
 {
 	if (inValue > 0)
 	{
-		launch_url(DESTROYFX_URL);
+		launch_url(PLUGIN_HOMEPAGE_URL);
 /*
 		CFBundleRef pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 		if ( (pluginBundleRef != NULL) && (HIAboutBox != NULL) )
@@ -582,7 +582,7 @@ long TurntablistEditor::open()
 	pos.set(kAboutSplashX, kAboutSplashY, kAboutSplashWidth, kAboutSplashHeight);
 	button = new DGButton(this, &pos, NULL, 2, kDGButtonType_incbutton);
 	button->setUserProcedure(TurntablistAboutButtonProc, this);
-//	button->setHelpText(CFSTR("click here to go to the "DESTROYFX_NAME_STRING" web site"));
+//	button->setHelpText(CFSTR("click here to go to the "PLUGIN_CREATOR_NAME_STRING" web site"));
 	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("click here to go to the Destroy FX web site"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the About hot-spot"));
 	button->setHelpText(helpText);
@@ -867,7 +867,6 @@ OSStatus DFX_NotifyAudioFileLoadError(OSStatus inErrorCode, const FSRef & inAudi
 		case kAudioFileUnsupportedFileTypeError:
 		case kAudioFilePermissionsError:
 		case kAudioFileNotOptimizedError:
-		case kAudioFileFormatNameUnavailableError:
 		// unknown
 		case kAudioFileUnspecifiedError:
 		case kAudioConverterErr_UnspecifiedError:
@@ -1191,8 +1190,9 @@ ComponentResult TurntablistEditor::HandlePlayButton(bool inPlay)
 		allParamsTextDisplay->setCFText(displayString);
 	}
 
+	Boolean play_fixedSize = inPlay;
 	return AudioUnitSetProperty(GetEditAudioUnit(), kTurntablistProperty_Play, 
-				kAudioUnitScope_Global, (AudioUnitElement)0, &inPlay, sizeof(inPlay));
+				kAudioUnitScope_Global, (AudioUnitElement)0, &play_fixedSize, sizeof(play_fixedSize));
 }
 
 //-----------------------------------------------------------------------------
@@ -1201,7 +1201,7 @@ ComponentResult TurntablistEditor::HandlePlayChange()
 	if (playButton == NULL)
 		return kAudioUnitErr_Uninitialized;
 
-	bool play;
+	Boolean play;
 	UInt32 dataSize = sizeof(play);
 	ComponentResult result = AudioUnitGetProperty(GetEditAudioUnit(), kTurntablistProperty_Play, 
 												kAudioUnitScope_Global, (AudioUnitElement)0, 
@@ -1589,13 +1589,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 			universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%.2f  semitone%s"), inValue, (fabsf(inValue) > 1.0f) ? "s" : "");
 			break;
 		case kParam_RootKey:
-			{
-				const long kNumNotesInOctave = 12;
-				const char * keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-				const long keyNameIndex = value_i % kNumNotesInOctave;
-				const long octaveNumber = (value_i / kNumNotesInOctave) - 2;
-				universalDisplayText = CFStringCreateWithFormat(cfAllocator, NULL, CFSTR("%s %ld"), keyNames[keyNameIndex], octaveNumber);
-			}
+			universalDisplayText = CFStringCreateWithCString(cfAllocator, DFX_GetNameForMIDINote(value_i), kDFX_DefaultCStringEncoding);
 			break;
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS

@@ -730,6 +730,7 @@ OSStatus Turntablist::loadAudioFile(const FSRef & inFileRef)
 // ExtAudioFile
 #ifndef USE_LIBSNDFILE
 	OSStatus status;
+	UInt32 dataSize;
 
 	if (ExtAudioFileOpen == NULL)
 		return unsupportedOSErr;
@@ -738,15 +739,15 @@ OSStatus Turntablist::loadAudioFile(const FSRef & inFileRef)
 	if (status != noErr)
 		return status;
 
-	AudioStreamBasicDescription audioFileStreamFormat;
-	UInt32 dataSize = sizeof(audioFileStreamFormat);
-	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileDataFormat, &dataSize, &audioFileStreamFormat);
-	if (status != noErr)
-		return status;
-
 	SInt64 audioFileNumFrames = 0;
 	dataSize = sizeof(audioFileNumFrames);
 	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileLengthFrames, &dataSize, &audioFileNumFrames);
+	if (status != noErr)
+		return status;
+
+	AudioStreamBasicDescription audioFileStreamFormat;
+	dataSize = sizeof(audioFileStreamFormat);
+	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileDataFormat, &dataSize, &audioFileStreamFormat);
 	if (status != noErr)
 		return status;
 
