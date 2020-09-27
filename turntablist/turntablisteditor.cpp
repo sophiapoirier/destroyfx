@@ -110,6 +110,7 @@ public:
 	virtual ~TurntablistEditor();
 
 	virtual long open();
+	virtual void post_open();
 
 	virtual bool HandleEvent(EventRef inEvent);
 
@@ -257,19 +258,6 @@ static void TurntablistPropertyEventListenerProc(void * inCallbackRefCon, void *
 }
 
 //-----------------------------------------------------------------------------
-static void TurntablistOldStylePropertyListenerProc(void * inRefCon, AudioUnit inComponentInstance, AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement)
-{
-	TurntablistEditor * editor = (TurntablistEditor*) inRefCon;
-	if (editor != NULL)
-	{
-		if (inPropertyID == kTurntablistProperty_AudioFile)
-			editor->HandleAudioFileChange();
-		else if (inPropertyID == kTurntablistProperty_Play)
-			editor->HandlePlayChange();
-	}
-}
-
-//-----------------------------------------------------------------------------
 static void TurntablistParameterListenerProc(void * inRefCon, void * inObject, const AudioUnitParameter * inParameter, Float32 inValue)
 {
 	if ( (inObject == NULL) || (inParameter == NULL) )
@@ -317,12 +305,6 @@ TurntablistEditor::~TurntablistEditor()
 		}
 		AUListenerDispose(propertyEventListener);
 	}
-	// otherwise, if the UI was opened, then we did an old style property listener
-	else if (GetEditAudioUnit() != NULL)
-	{
-		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kTurntablistProperty_AudioFile, TurntablistOldStylePropertyListenerProc);
-		AudioUnitRemovePropertyListener(GetEditAudioUnit(), kTurntablistProperty_Play, TurntablistOldStylePropertyListenerProc);
-	}
 	propertyEventListener = NULL;
 
 	if (parameterListener != NULL)
@@ -336,9 +318,7 @@ TurntablistEditor::~TurntablistEditor()
 	}
 	parameterListener = NULL;
 
-	if (audioFileOpenDialog != NULL)
-		NavDialogDispose(audioFileOpenDialog);
-	audioFileOpenDialog = NULL;
+	FileOpenDialogFinished();
 }
 
 //-----------------------------------------------------------------------------
@@ -411,7 +391,8 @@ void DFX_InitializeSupportedAudioFileTypesArrays()
 					gSupportedAudioFileExtensions = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
 				if (gSupportedAudioFileExtensions != NULL)
 					CFArrayAppendArray( gSupportedAudioFileExtensions, extensionsArray, CFRangeMake(0, CFArrayGetCount(extensionsArray)) );
-//fprintf(stderr, "\n\t%.4s\n", (char*)(gSupportedAudioFileTypeCodes+i));
+//OSType audioFileType_bigEndian = CFSwapInt32HostToBig(gSupportedAudioFileTypeCodes[i]);
+//fprintf(stderr, "\n\t%.4s\n", (char*)(&audioFileType_bigEndian));
 //for (CFIndex j=0 ; j < CFArrayGetCount(extensionsArray); j++) CFShow(CFArrayGetValueAtIndex(extensionsArray, j));
 				CFRelease(extensionsArray);	// XXX I think this should be released?  that's not documented, though
 			}
@@ -725,11 +706,6 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 			status = AUEventListenerAddEventType(propertyEventListener, this, &playPropertyAUEvent);
 		}
 	}
-	else
-	{
-		AudioUnitAddPropertyListener(GetEditAudioUnit(), kTurntablistProperty_AudioFile, TurntablistOldStylePropertyListenerProc, this);
-		AudioUnitAddPropertyListener(GetEditAudioUnit(), kTurntablistProperty_Play, TurntablistOldStylePropertyListenerProc, this);
-	}
 
 
 
@@ -770,6 +746,13 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 
 
 	return noErr;
+}
+
+//-----------------------------------------------------------------------------
+void TurntablistEditor::post_open()
+{
+	// initialize the button's current value once the button has been fully created
+	HandlePlayChange();
 }
 
 
@@ -831,6 +814,16 @@ OSStatus DFX_NotifyAudioFileLoadError(OSStatus inErrorCode, const FSRef & inAudi
 										CFSTR("Localizable"), pluginBundleRef, 
 										CFSTR("libsndfile SF_ERR_SYSTEM description"));
 			break;
+		case SF_ERR_MALFORMED_FILE:
+			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is not readable due to being malformed."), 
+										CFSTR("Localizable"), pluginBundleRef, 
+										CFSTR("libsndfile SF_ERR_MALFORMED_FILE description"));
+			break;
+		case SF_ERR_UNSUPPORTED_ENCODING:
+			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is encoded in a format that is not supported."), 
+										CFSTR("Localizable"), pluginBundleRef, 
+										CFSTR("libsndfile SF_ERR_UNSUPPORTED_ENCODING description"));
+			break;
 		default:
 			errorDescriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("error code %ld"), inErrorCode);
 			break;
@@ -874,8 +867,7 @@ static pascal void DFX_OpenAudioFileNavEventHandlerProc(NavEventCallbackMessage 
 		case kNavCBTerminate:
 			if (editor != NULL)
 				editor->FileOpenDialogFinished();
-			// XXX why does this crash Rax and SynthTest?
-			if (dialog != NULL)
+			else if (dialog != NULL)
 				NavDialogDispose(dialog);
 			break;
 
@@ -1050,7 +1042,13 @@ ComponentResult TurntablistEditor::LoadAudioFile(const FSRef & inAudioFileRef)
 //-----------------------------------------------------------------------------
 void TurntablistEditor::FileOpenDialogFinished()
 {
-	audioFileOpenDialog = NULL;
+	if (audioFileOpenDialog != NULL)
+	{
+		// circumvent recursive calls
+		NavDialogRef tempDialog = audioFileOpenDialog;
+		audioFileOpenDialog = NULL;
+		NavDialogDispose(tempDialog);
+	}
 }
 
 
@@ -1184,11 +1182,19 @@ bool TurntablistEditor::HandleEvent(EventRef inEvent)
 /*
 		if (inEventKind == kEventControlInitialize)
 		{
-			UInt32 controlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
-			if (carbonControl != NULL)
-				status = GetControlFeatures(carbonControl, &controlFeatures);
-			controlFeatures |= kControlSupportsDragAndDrop;
-			status = SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(controlFeatures), &controlFeatures);
+			if (HIViewChangeFeatures != NULL)
+			{
+				if (carbonControl != NULL)
+					status = HIViewChangeFeatures(carbonControl, kControlSupportsDragAndDrop, 0);
+			}
+			else
+			{
+				UInt32 controlFeatures = kControlHandlesTracking | kControlSupportsDataAccess | kControlSupportsGetRegion;
+				if (carbonControl != NULL)
+					status = GetControlFeatures(carbonControl, &controlFeatures);
+				controlFeatures |= kControlSupportsDragAndDrop;
+				status = SetEventParameter(inEvent, kEventParamControlFeatures, typeUInt32, sizeof(controlFeatures), &controlFeatures);
+			}
 			return true;
 		}
 */
@@ -1300,7 +1306,8 @@ bool TurntablistEditor::HandleEvent(EventRef inEvent)
 											{
 												Size dragFlavorDataSize = 0;
 												status = GetFlavorDataSize(drag, dragItem, dragFlavorType, &dragFlavorDataSize);
-fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType), dragFlavorDataSize);
+FlavorType dragFlavorType_bigEndian = CFSwapInt32HostToBig(dragFlavorType);
+fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bigEndian), dragFlavorDataSize);
 											}
 										}
 									}

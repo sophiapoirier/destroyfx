@@ -9,7 +9,7 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Additional changes since June 15th 2004 have been made by Sophia Poirier.  
-Copyright (C) 2004-2005 Sophia Poirier
+Copyright (C) 2004-2007 Sophia Poirier
 */
 
 #include "turntablist.h"
@@ -260,16 +260,16 @@ void Turntablist::processparameters()
 #pragma mark plugin state
 
 static const CFStringRef kTurntablistPreset_AudioFileReferenceKey = CFSTR("audiofile");
-static const CFStringRef kTurntablistPreset_AudioFileAliasKey = CFSTR("DFX!-audiofile-alias");
-static const CFStringRef kTurntablistPreset_MidiAssignmentsKey = CFSTR("DFX!-midi-assignments");
-static const CFNumberType kTurntablistPreset_MidiAssignmentCFNumberType = kCFNumberSInt32Type;
-typedef SInt32	TurntabistMidiAssignmentType;
-static const TurntabistMidiAssignmentType kTurntablistMidiAssignment_None = -1;
+static const CFStringRef kTurntablistPreset_AudioFileAliasKey = CFSTR("DestroyFX-audiofile-alias");
 
 //-----------------------------------------------------------------------------------------
 bool FSRefIsValid(const FSRef & inFileRef)
 {
-	return ( FSGetCatalogInfo(&inFileRef, kFSCatInfoNone, NULL, NULL, NULL, NULL) == noErr );
+	// this function only is available on Mac OS X 10.4 or higher
+	if (FSIsFSRefValid != NULL)
+		return FSIsFSRefValid(&inFileRef);
+	else
+		return ( FSGetCatalogInfo(&inFileRef, kFSCatInfoNone, NULL, NULL, NULL, NULL) == noErr );
 } 
 
 //-----------------------------------------------------------------------------------------
@@ -329,53 +329,7 @@ ComponentResult Turntablist::SaveState(CFPropertyListRef * outData)
 // save the MIDI CC -> parameter assignments
 	if (dfxsettings != NULL)
 	{
-#if 0
-		SInt8 assignmentsToStore[kNumParams];
-#else
-		TurntabistMidiAssignmentType assignmentsToStore[kNumParams];
-#endif
-		bool assignmentsFound = false;
-		for (long i=0; i < kNumParams; i++)
-		{
-			if (dfxsettings->getParameterAssignmentType(i) == kParamEventCC)
-			{
-#if 0
-				assignmentsToStore[i] = (unsigned char) (dfxsettings->getParameterAssignmentNum(i));
-#else
-				assignmentsToStore[i] = dfxsettings->getParameterAssignmentNum(i);
-#endif
-				assignmentsFound = true;
-			}
-			else
-				assignmentsToStore[i] = kTurntablistMidiAssignment_None;
-		}
-		if (assignmentsFound)
-		{
-#if 0
-			CFDataRef assignmentsCFData = CFDataCreate(kCFAllocatorDefault, (UInt8*)assignmentsToStore, (CFIndex)sizeof(assignmentsToStore));
-			if (assignmentsCFData != NULL)
-			{
-				CFDictionarySetValue(dict, kTurntablistPreset_MidiAssignmentsKey, assignmentsCFData);
-				CFRelease(assignmentsCFData);
-			}
-#else
-			CFMutableArrayRef assignmentsCFArray = CFArrayCreateMutable(kCFAllocatorDefault, kNumParams, &kCFTypeArrayCallBacks);
-			if (assignmentsCFArray != NULL)
-			{
-				for (long i=0; i < kNumParams; i++)
-				{
-					CFNumberRef assignmentCFNumber = CFNumberCreate(kCFAllocatorDefault, kTurntablistPreset_MidiAssignmentCFNumberType, &(assignmentsToStore[i]));
-					if (assignmentCFNumber != NULL)
-					{
-						CFArraySetValueAtIndex(assignmentsCFArray, i, assignmentCFNumber);
-						CFRelease(assignmentCFNumber);
-					}
-				}
-				CFDictionarySetValue(dict, kTurntablistPreset_MidiAssignmentsKey, assignmentsCFArray);
-				CFRelease(assignmentsCFArray);
-			}
-#endif
-		}
+		dfxsettings->saveMidiAssignmentsToDictionary(dict);
 	}
 
 	return noErr;
@@ -475,58 +429,7 @@ ComponentResult Turntablist::RestoreState(CFPropertyListRef inData)
 // restore the MIDI CC -> parameter assignments
 	if (dfxsettings != NULL)
 	{
-#if 0
-		CFDataRef assignmentsCFData = reinterpret_cast<CFDataRef>( CFDictionaryGetValue(dict, kTurntablistPreset_MidiAssignmentsKey) );
-		if (assignmentsCFData != NULL)
-		{
-			if ( CFGetTypeID(assignmentsCFData) == CFDataGetTypeID() )
-			{
-				CFIndex dataSize = CFDataGetLength(assignmentsCFData);
-				const SInt8 * assignments = (SInt8*) CFDataGetBytePtr(assignmentsCFData);
-				if ( (assignments != NULL) && (dataSize > 0) )
-				{
-					for (long i=0; (i < kNumParams) && (i < dataSize); i++)
-					{
-						if (assignments[i] == kTurntablistMidiAssignment_None)
-							dfxsettings->unassignParam(i);
-						else
-							dfxsettings->assignParam(i, kParamEventCC, 0, assignments[i]);
-					}
-				}
-			}
-		}
-#else
-		CFArrayRef assignmentsCFArray = reinterpret_cast<CFArrayRef>( CFDictionaryGetValue(dict, kTurntablistPreset_MidiAssignmentsKey) );
-		if (assignmentsCFArray != NULL)
-		{
-			if ( CFGetTypeID(assignmentsCFArray) == CFArrayGetTypeID() )
-			{
-				CFIndex arraySize = CFArrayGetCount(assignmentsCFArray);
-				for (long i=0; (i < kNumParams) && (i < arraySize); i++)
-				{
-					CFNumberRef assignmentCFNumber = (CFNumberRef) CFArrayGetValueAtIndex(assignmentsCFArray, i);
-					if (assignmentCFNumber != NULL)
-					{
-						if ( CFGetTypeID(assignmentCFNumber) == CFNumberGetTypeID() )
-						{
-							if (CFNumberGetType(assignmentCFNumber) == kTurntablistPreset_MidiAssignmentCFNumberType)
-							{
-								TurntabistMidiAssignmentType assignment = 0;
-								Boolean numberSuccess = CFNumberGetValue(assignmentCFNumber, kTurntablistPreset_MidiAssignmentCFNumberType, &assignment);
-								if (numberSuccess)
-								{
-									if (assignment == kTurntablistMidiAssignment_None)
-										dfxsettings->unassignParam(i);
-									else
-										dfxsettings->assignParam(i, kParamEventCC, 0, assignment);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-#endif
+		dfxsettings->restoreMidiAssignmentsFromDictionary(dict);
 	}
 
 	return noErr;
@@ -828,6 +731,66 @@ void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification)
 //-----------------------------------------------------------------------------------------
 OSStatus Turntablist::loadAudioFile(const FSRef & inFile)
 {
+#if 0
+	OSStatus status;
+
+	ExtAudioFileRef audioFileRef = NULL;
+	status = ExtAudioFileOpen(&inFile, &audioFileRef);
+	if (status != noErr)
+		return status;
+
+	AudioStreamBasicDescription audioFileABSD;
+	UInt32 dataSize = sizeof(audioFileABSD);
+	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileDataFormat, &dataSize, &audioFileABSD);
+	if (status != noErr)
+		return status;
+
+	SInt64 audioFileNumFrames = 0;
+	dataSize = sizeof(audioFileNumFrames);
+	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileLengthFrames, &dataSize, &audioFileNumFrames);
+	if (status != noErr)
+		return status;
+
+	#if 1
+	CAStreamBasicDescription clientABSD;
+	clientABSD.SetCanonical(audioFileABSD.mChannelsPerFrame, false);	// XXX should this be 2?
+	clientABSD.mSampleRate = audioFileABSD.mSampleRate;
+	#else
+	AudioStreamBasicDescription clientABSD;
+	clientABSD.mFormatID = kAudioFormatLinearPCM;
+	clientABSD.mSampleRate = audioFileABSD.mSampleRate;
+	clientABSD.mChannelsPerFrame = audioFileABSD.mChannelsPerFrame;	// XXX should this be 2?
+	CAAudioStreamBasicDescription::NormalizeLinearPCMFormat(clientABSD);
+	#endif
+	status = ExtAudioFileSetProperty(audioFileRef, kExtAudioFileProperty_ClientDataFormat, sizeof(clientABSD), &clientABSD);
+	if (status != noErr)
+		return status;
+
+	UInt32 audioFileNumFrames_temp = (UInt32)audioFileNumFrames;
+	#if 1
+	AUBufferList aubl;
+	aubl.Allocate(clientABSD, (UInt32)audioFileNumFrames);
+	AudioBufferList & abl = aubl.GetBufferList();
+	#else
+	AudioBufferList abl;
+	abl.mNumberBuffers = 1;
+	abl.mBuffers[0].mNumberChannels = clientABSD.mChannelsPerFrame;
+	abl.mBuffers[0].mDataByteSize = clientABSD.mBytesPerFrame;
+	abl.mBuffers[0].mData = m_fBuffer;
+	#endif
+	status = ExtAudioFileRead(audioFileRef, &audioFileNumFrames_temp, &abl);
+	if (status != noErr)
+	{
+		aubl.Deallocate();
+		return status;
+	}
+//	if (audioFileNumFrames_temp != (UInt32)audioFileNumFrames)	// XXX do something?
+
+//	aubl.Deallocate();	// XXX when to do this?
+
+	status = ExtAudioFileDispose(audioFileRef);
+#endif
+
 // AudioFile
 #ifndef USE_LIBSNDFILE
 	AudioFileID gSourceAudioFileID = 0;
