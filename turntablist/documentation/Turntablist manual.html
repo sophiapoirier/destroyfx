@@ -256,13 +256,14 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <table class=invisible cellspacing=0>
 <tr> 
 
-<td valign=top><img src="turntablist-play.gif" width=90 height=236 alt="play controls section"></td>
+<td valign=top><img src="turntablist-play.gif" width=90 height=177 alt="play controls section"></td>
 
 <td>&nbsp;</td>
 
 <td valign=top> 
 <table class=invisible>
 
+<!--
 <tr><td class=parameter>
 <b>Volume</b>
 <ul class=parameter>
@@ -276,6 +277,7 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <li>mutes the audio output
 </ul>
 </td></tr>
+-->
 
 <tr><td class=parameter>
 <b>Play</b>
@@ -313,6 +315,13 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <li>switches key tracking on or off
 <li>When key tracking is on, the pitch and speed of the audio sample playback are transposed in relation to the pitch of the note.  The center key (no transposition) defaults to middle C, but can be changed via the Root Key parameter.
 <li>When key tracking is off, note pitches are ignored.
+</ul>
+</td></tr>
+
+<tr><td class=parameter2>
+<b>Root Key</b>
+<ul class=parameter>
+<li>when Key Track is enabled, this controls the MIDI key around which the transposition is centered
 </ul>
 </td></tr>
 
@@ -380,6 +389,7 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <li>In scrub mode, the entire range of the slider represents time (set by the Scratch Speed parameter).
 <li>In spin mode, the top and bottom of the slider represent the maximum forward and backward speed (set by the Scratch Speed parameter) while the center is 0.
 <li>If the Power and Play buttons are on and the Scratch Amount slider is in the center, scratching is disabled and the audio sample just plays back normally.
+<li>You can optionally use MIDI pitchbend to control Scratch Amount.
 </ul>
 </td></tr>
 
@@ -406,7 +416,7 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <table class=invisible cellspacing=0>
 <tr>
 
-<td valign=top><img src="turntablist-helper.gif" width=90 height=56 alt="helper controls section"></td>
+<td valign=top><img src="turntablist-helper.gif" width=90 height=112 alt="helper controls section"></td>
 
 <td>&nbsp;</td>
 
@@ -423,6 +433,13 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 </td></tr>
 
 <tr><td class=parameter2>
+<b>MIDI Reset</b>
+<ul class=parameter>
+<li>removes all of your MIDI CC &rarr; parameter assignments
+</ul>
+</td></tr>
+
+<tr><td class=parameter>
 <b>Help</b>
 <ul class=parameter>
 <li>push this to view the manual that you are reading right now
@@ -447,26 +464,29 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <div class=innerbox>
 <p>
 For more information, please visit the <a href="http://destroyfx.org/">Destroy FX web site</a>.
-Please use the <a href="http://destroyfx.org/#email">contact form</a> to report any bugs.
+Please use the <a href="http://destroyfx.org/#contact">contact form</a> to report any bugs.
 </p>
 <p>&nbsp;</p>
 <p><strong>Version history:</strong></p>
 
 <table class=innerbox><tr><td class=lighter>
-<p><strong>1.1.0 - <em>June 18-22, 2004</em></strong></p>
+<p><strong>1.1.0 - <em>June 18, 2004 - 2005</em></strong></p>
 <ul>
 <li>First Audio Unit release, by Sophia Poirier of Destroy FX.  Bioroid stopped development and released the source code, and Sophia decided to tinker with it.
 <li>now released under the terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>
 <li>fixed numerous bugs in the audio file handling, which previously would not work in many cases (if files were located on non-boot volumes, if file paths were longer than 1024 bytes, if file names had Unicode characters, if file names were longer than 31 characters, etc.)
 <li>fixed a bug in the resampling interpolation algorithm so that the sound quality is much better now
+<li>fixed a buffer overrun bug in the audio playback that could cause audio corruption or crashing
 <li>no longer requires that you install the libsndfile.dylib library
 <li>added &quot;MIDI Learn&quot; feature
+<li>you can drag'n'drop&trade; audio files and preset files onto the plugin GUI to load them
 <li>the manual is now built into the plugin
 <li>each control has pop-up help that appears when you hold your mouse over a control
+<li>mouse wheel support added for adjusting any controls
 <li>fixed a bug where the Pitch Shift parameter value used was miscalculated and smaller than what you saw (and I also vastly increased the Pitch Range maximum)
 <li>the audio file loading and audio rendering are now synchronized so as to avoid misbehavior (like crashing)
 <li>fixed rounding/resolution errors in the varispeed playback
-<li>fixed the root key off-by-2 bug and made the root key a controllable parameter
+<li>fixed the root key off-by-2 bug, and made the root key a controllable parameter
 <li>when an audio file loaded in a previous session cannot be found, you get a message informing you of that
 </ul>
 </td></tr></table>
@@ -530,7 +550,7 @@ Please use the <a href="http://destroyfx.org/#email">contact form</a> to report 
 <p class=link><a href="http://www.funkelectric.com/">FunkElectric</a></p>
 <p class=link>#<a href="http://musicdsp.org/">musicdsp</a></p>
 <p class=link><a href="http://www.mega-nerd.com/libsndfile/">libsndfile</a></p>
-<p class=link><a href="http://www.kvr-vst.com/">K-v-R</a></p>
+<p class=link><a href="http://www.kvraudio.com/">K-v-R</a></p>
 </td>
 </tr>
 </table>
@@ -540,7 +560,7 @@ Please use the <a href="http://destroyfx.org/#email">contact form</a> to report 
 
 
 <p class=footer>
-Turntablist is Copyright &copy; 2004 bioroid media development and Copyright &copy; 2004 Sophia Poirier
+Turntablist is Copyright &copy; 2005 bioroid media development and Copyright &copy; 2005 Sophia Poirier
 </p>
 
 <p class=footer>

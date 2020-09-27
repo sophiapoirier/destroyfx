@@ -8,7 +8,7 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Additional changes since June 15th 2004 have been made by Sophia Poirier.  
-Copyright (C) 2004 Sophia Poirier
+Copyright (C) 2004-2005 Sophia Poirier
 */
 		
 	
@@ -26,8 +26,8 @@ Copyright (C) 2004 Sophia Poirier
 // 3) add spin mode - sub mode 2
 
 
-#ifndef __SCRATCHA__
-#define __SCRATCHA__
+#ifndef __TURNTABLIST_H
+#define __TURNTABLIST_H
 
 #include "dfxplugin.h"
 #include "dfxmutex.h"
@@ -84,8 +84,10 @@ enum
 	kNoteMode,
 
 	// audio output
+#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 	kMute,
 	kVolume,
+#endif
 	kNumParams,
 
 	kPlay   // play/note activity
@@ -96,8 +98,11 @@ enum
 	kTurntablistClump_scratching = kAudioUnitClumpID_System + 1,
 	kTurntablistClump_power,
 	kTurntablistClump_pitch,
-	kTurntablistClump_playback,
+	kTurntablistClump_playback
+#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
+	,
 	kTurntablistClump_output
+#endif
 };
 
 enum
@@ -109,11 +114,11 @@ enum
 
 
 //------------------------------------------------------------------------------------------
-class Scratcha : public DfxPlugin
+class Turntablist : public DfxPlugin
 {
 public:
-	Scratcha(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual ~Scratcha();
+	Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance);
+	virtual ~Turntablist();
 
 	virtual long initialize();
 
@@ -140,31 +145,30 @@ public:
 
 private:
 	OSStatus loadAudioFile(const FSRef & inFile);
-	void	processMidiEvent(long currEvent);
-	void	processScratch(bool bSetParameter = false);
+	void	processMidiEvent(long inCurrentEvent);
+	void	processScratch(bool inSetParameter = false);
 	void	processScratchStop();
 	void	processPitch();
 	void	processDirection();
 	void	calculateSpinSpeeds();
+	void	setPlay(bool inPlayState, bool inShouldSendNotification = true);
 
-	void noteOn(long note, long velocity, long delta);
-	void stopNote();
-	void PlayNote(bool value);
-	long FixMidiData(long param, char value);
+	void noteOn(long inNote, long inVelocity, long inDelta);
+	void stopNote(bool inStopPlay = false);
+	void playNote(bool inValue);
+	long fixMidiData(long inParameterID, char inValue);
 
 	OSStatus PostPropertyChangeNotificationSafely(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
-	OSStatus PostNotification_AudioFileNotFound(CFURLRef inFileUrl);
+	OSStatus PostNotification_AudioFileNotFound(CFStringRef inFileName);
 
 
-	long currentNote;
-	long currentVelocity;
-	long currentDelta;
-	bool noteIsOn;
+	long m_nCurrentNote;
+	long m_nCurrentVelocity;
+	bool m_bNoteIsOn;
 
 	FSRef m_fsAudioFile;
 
-	// SCRATCHA STUFF y0!
 	float * m_fBuffer;
 	float * m_fLeft;
 	float * m_fRight;
@@ -184,7 +188,9 @@ private:
 	bool m_bNotePowerTrack;	// scratch mode on/off
 	double m_fScratchAmount;
 	double m_fLastScratchAmount;
+#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 	bool m_bMute;	// on/off
+#endif
 	double m_fPitchShift;
 	long m_nDirection;
 //	float m_fScratchSpeed;
@@ -197,7 +203,9 @@ private:
 	double m_fSpinDownSpeed;
 	double m_fSpinUpSpeed;
 	bool m_bKeyTracking;
+#ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 	float m_fVolume;
+#endif
 
 
 	double m_fUsedSpinDownSpeed;
@@ -214,6 +222,7 @@ private:
 
 	bool m_bPitchBendSet;
 	int m_nPitchBend;
+	double m_fPitchBend;
 	int m_nScratchDir;
 	bool m_bScratching;
 	bool m_bWasScratching;
@@ -232,8 +241,6 @@ private:
 
 	bool m_bPlayForward;
 
-
-	bool m_bProcessing;
 
 	double m_fDesiredScratchRate;
 	int m_nScratchInterval;
