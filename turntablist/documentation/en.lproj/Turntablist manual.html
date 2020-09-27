@@ -123,7 +123,7 @@
 <table>
 <tr>
 
-<td><img src="turntablist.gif" width="220" height="480" alt="Turntablist" /></td>
+<td><img src="turntablist-docs-full.gif" width="220" height="480" alt="Turntablist" /></td>
 
 <td>&nbsp;</td>
 
@@ -183,6 +183,8 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <td class="fill1"> 
 <p><b>A note about performance:</b></p>
 <p>The scrub scratch mode will vary in response depending on your host software.  The scratching is speed based (not position based) and will lose tracking after a while.  How quickly it loses tracking depends on the host.</p>
+<p><b>A note about channel configurations:</b></p>
+<p>Turntablist can be configured to have any number of output audio channels.  And Turntablist can load audio files that have any number of channels of audio.  If you are using Turntablist configured for <i>more</i> audio channels than the currently loaded audio file has, then the last channel of the audio file will be repeated across all of the extra audio output channels.  If you are using Turntablist configured for <i>fewer</i> audio channels than the currently loaded audio file has, then the extra channel(s) of the audio file will be ignored.</p>
 </td>
 </tr>
 </table>
@@ -200,7 +202,7 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <div class="innerbox">
 <table class="invisible" cellpadding="0">
 <tr>
-<td valign="top"><img src="turntablist-power.gif" width="164" height="164" alt="power controls section" /></td>
+<td valign="top"><img src="turntablist-docs-power.gif" width="220" height="164" alt="power controls section" /></td>
 <td>&nbsp;</td>
 <td valign="top">
 <table class="invisible">
@@ -208,7 +210,7 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <tr><td class="parameter">
 <b>Open File</b>
 <ul class="parameter">
-<li>use this to find an audio file to load up onto the &quot;turntable&quot;</li>
+<li>use this to find an audio file to load up onto the &ldquo;turntable&rdquo;</li>
 </ul>
 </td></tr>
 
@@ -222,14 +224,14 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <tr><td class="parameter">
 <b>Spin Up Speed</b>
 <ul class="parameter">
-<li>how quickly the audio playback &quot;spins up&quot; when the turntable power turns on</li>
+<li>how quickly the audio playback &ldquo;spins up&rdquo; when the turntable power turns on</li>
 </ul>
 </td></tr>
 
 <tr><td class="parameter2">
 <b>Spin Down Speed</b>
 <ul class="parameter">
-<li>how quickly the audio playback &quot;spins down&quot; when the turntable power turns off</li>
+<li>how quickly the audio playback &ldquo;spins down&rdquo; when the turntable power turns off</li>
 </ul>
 </td></tr>
 
@@ -258,7 +260,7 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <table class="invisible" cellspacing="0">
 <tr> 
 
-<td valign="top"><img src="turntablist-play.gif" width="90" height="177" alt="play controls section" /></td>
+<td valign="top"><img src="turntablist-docs-play.gif" width="90" height="177" alt="play controls section" /></td>
 
 <td>&nbsp;</td>
 
@@ -289,11 +291,9 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 </td></tr>
 
 <tr><td class="parameter2">
-<b>Note Mode</b>
+<b>Loop</b>
 <ul class="parameter">
-<li>toggles between &quot;reset&quot; and &quot;resume&quot; mode</li>
-<li>In resume mode, new notes cause the audio sample to continue playing from where it last stopped.</li>
-<li>In reset mode, new notes cause the audio sample to restart playback from the beginning.</li>
+<li>if you enable this, the audio sample playback will continuously loop</li>
 </ul>
 </td></tr>
 
@@ -305,9 +305,11 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 </td></tr>
 
 <tr><td class="parameter2">
-<b>Loop</b>
+<b>Note Mode</b>
 <ul class="parameter">
-<li>if you enable this, the audio sample playback will continuously loop</li>
+<li>toggles between &ldquo;reset&rdquo; and &ldquo;resume&rdquo; mode</li>
+<li>In resume mode, new notes cause the audio sample to continue playing from where it last stopped.</li>
+<li>In reset mode, new notes cause the audio sample to restart playback from the beginning.</li>
 </ul>
 </td></tr>
 
@@ -339,50 +341,18 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 
 <div class="box">
 
-<p class="newstitle">Pitch and Scratch controls</p>
+<p class="newstitle">Scratch and Pitch controls</p>
 
 <div class="innerbox">
 <table class="invisible" cellspacing="0">
 <tr>
 
-<td valign="top"><img src="turntablist-pitch.gif" width="52" height="291" alt="pitch controls section" /></td>
+<td valign="top"><img src="turntablist-docs-scratch.gif" width="97" height="291" alt="scratch controls section" /></td>
 
 <td>&nbsp;</td>
 
 <td valign="top">
 <table class="invisible">
-
-<tr><td class="parameter">
-<b>Pitch Range</b>
-<ul class="parameter">
-<li>this controls the range of pitch adjustment values that the Pitch Shift parameter offers</li>
-</ul>
-</td></tr>
-
-<tr><td class="parameter2">
-<b>Pitch Shift</b>
-<ul class="parameter">
-<li>changes the audio playback pitch between +/- the Pitch Range value</li>
-</ul>
-</td></tr>
-
-<tr><td class="parameter">
-<b>Scratch Mode</b>
-<ul class="parameter">
-<li>toggles between &quot;scrub&quot; mode and &quot;spin&quot; mode, which affects the behavior of the Scratch Amount parameter</li>
-<li>Scrub mode is like when you move a record back and forth quickly with your hand.</li>
-<li>Spin mode is like when you speed up or slow down the record spinning with your hand.</li>
-</ul>
-</td></tr>
-
-<tr><td class="parameter2">
-<b>Scratch Speed</b>
-<ul class="parameter">
-<li>sets the speed of the scratching effect that the Scratch Amount parameter produces</li>
-<li>In scrub mode, the range of Scratch Speed represents time from 0.5 to 5 seconds.</li>
-<li>In spin mode, the range of Scratch Speed represents the maximum rate from 1 to 8 times the playback rate.</li>
-</ul>
-</td></tr>
 
 <tr><td class="parameter">
 <b>Scratch Amount</b>
@@ -395,12 +365,44 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 </ul>
 </td></tr>
 
+<tr><td class="parameter2">
+<b>Scratch Mode</b>
+<ul class="parameter">
+<li>toggles between &ldquo;scrub&rdquo; mode and &ldquo;spin&rdquo; mode, which affects the behavior of the Scratch Amount parameter</li>
+<li>Scrub mode is like when you move a record back and forth quickly with your hand.</li>
+<li>Spin mode is like when you speed up or slow down the record spinning with your hand.</li>
+</ul>
+</td></tr>
+
+<tr><td class="parameter">
+<b>Scratch Speed</b>
+<ul class="parameter">
+<li>sets the speed of the scratching effect that the Scratch Amount parameter produces</li>
+<li>In scrub mode, the range of Scratch Speed represents time from 0.5 to 5 seconds.</li>
+<li>In spin mode, the range of Scratch Speed represents the maximum rate from 1 to 8 times the playback rate.</li>
+</ul>
+</td></tr>
+
+<tr><td class="parameter2">
+<b>Pitch Range</b>
+<ul class="parameter">
+<li>this controls the range of pitch adjustment values that the Pitch Shift parameter offers</li>
+</ul>
+</td></tr>
+
+<tr><td class="parameter">
+<b>Pitch Shift</b>
+<ul class="parameter">
+<li>changes the audio playback pitch between +/- the Pitch Range value</li>
+</ul>
+</td></tr>
+
 </table>
 </td>
 
 <td>&nbsp;</td>
 
-<td valign="top"><img src="turntablist-scratch.gif" width="97" height="290" alt="scratch controls section" /></td>
+<td valign="top"><img src="turntablist-docs-pitch.gif" width="53" height="291" alt="pitch controls section" /></td>
 
 </tr>
 </table>
@@ -418,7 +420,7 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <table class="invisible" cellspacing="0">
 <tr>
 
-<td valign="top"><img src="turntablist-helper.gif" width="90" height="112" alt="helper controls section" /></td>
+<td valign="top"><img src="turntablist-docs-helper.gif" width="90" height="112" alt="helper controls section" /></td>
 
 <td>&nbsp;</td>
 
@@ -429,7 +431,7 @@ Turntablist is an Audio Unit instrument plugin that can load an audio sample and
 <b>MIDI Learn</b>
 <ul class="parameter">
 <li>switches MIDI Learn mode on or off</li>
-<li>When MIDI Learn is on, you can click on a parameter control to enable that parameter as the &quot;learner.&quot;  Then the next MIDI CC message that is received will be mapped to that parameter.  From then on, you can control that parameter with MIDI CC messages of that type.</li>
+<li>When MIDI Learn is on, you can click on a parameter control to enable that parameter as the &ldquo;learner.&rdquo;  Then the next MIDI CC message that is received will be mapped to that parameter.  From then on, you can control that parameter with MIDI CC messages of that type.</li>
 <li>These MIDI CC &rarr; parameter assignments are saved with the plugin's settings.</li>
 </ul>
 </td></tr>
@@ -472,16 +474,18 @@ Please use the <a href="http://destroyfx.org/#contact">contact form</a> to repor
 <p><strong>Version history:</strong></p>
 
 <table class="innerbox"><tr><td class="fill1">
-<p><strong>1.1.0 - <em>June 18, 2004 - 2007</em></strong></p>
+<p><strong>1.1.0 - <em>June 18, 2004 - 2008</em></strong></p>
 <ul>
 <li>First Audio Unit release, by Sophia Poirier of Destroy FX.  Bioroid stopped development and released the source code, and Sophia decided to tinker with it.</li>
 <li>now released under the terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a></li>
-<li>now a universal binary</li>
+<li>now a Universal Binary</li>
 <li>fixed numerous bugs in the audio file handling, which previously would not work in many cases (if files were located on non-boot volumes, if file paths were longer than 1024 bytes, if file names had Unicode characters, if file names were longer than 31 characters, etc.)</li>
 <li>fixed a bug in the resampling interpolation algorithm so that the sound quality is much better now</li>
+<li>now can be configured to have any number of output audio channels (rather than being limited to stereo)</li>
 <li>fixed a buffer overrun bug in the audio playback that could cause audio corruption or crashing</li>
-<li>no longer requires that you install the libsndfile dynamic library</li>
-<li>added &quot;MIDI Learn&quot; feature</li>
+<li>no longer requires that you install the libsndfile dynamic library (uses the Mac system ExtAudioFile API instead)</li>
+<li>supports additional audio file formats now (like MP3 and AAC)</li>
+<li>added &ldquo;MIDI Learn&rdquo; feature</li>
 <li>you can drag'n'drop&trade; audio files and preset files onto the plugin GUI to load them</li>
 <li>the manual is now built into the plugin</li>
 <li>each control has pop-up help that appears when you hold your mouse over a control</li>
@@ -540,11 +544,11 @@ Please use the <a href="http://destroyfx.org/#contact">contact form</a> to repor
 
 
 <p class="footer">
-Turntablist is Copyright &copy; 2004 bioroid media development &amp; Copyright &copy; 2007 Sophia Poirier
+Turntablist is Copyright &copy; 2004 bioroid media development &amp; Copyright &copy; 2008 Sophia Poirier
 </p>
 
 <p class="footer">
-This software comes with absolutely no warranty, express or implied.  Use at your own risk.  See the file &quot;license.rtf&quot; for full license terms.
+This software comes with absolutely no warranty, express or implied.  Use at your own risk.  See the file &ldquo;license.rtf&rdquo; for full license terms.
 </p>
 
 

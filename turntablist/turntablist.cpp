@@ -1,4 +1,3 @@
-#define USE_DFX_MATH_HERMITE_INTERPOLATION
 /*
 Copyright (c) 2004 bioroid media development
 All rights reserved.
@@ -14,14 +13,10 @@ Copyright (C) 2004-2007 Sophia Poirier
 
 #include "turntablist.h"
 
-#include <AudioToolbox/AudioToolbox.h>	// for AUEventListenerNotify and AudioFile stuff
-
 
 
 /////////////////////////////
 // DEFINES
-
-#define USE_LIBSNDFILE
 
 // allow pitch bend scratching
 #define USE_MIDI_PITCH_BEND
@@ -41,6 +36,8 @@ const double k_fScratchAmountMiddlePoint_LowerLimit = k_fScratchAmountMiddlePoin
 
 #ifdef USE_LIBSNDFILE
 	#include "sndfile.h"
+#else
+	#include <AudioToolbox/ExtendedAudioFile.h>
 #endif
 
 
@@ -53,52 +50,62 @@ DFX_ENTRY(Turntablist)
 
 //-----------------------------------------------------------------------------------------
 Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
-	: DfxPlugin(inInstance, kNumParams, 0)
+	: DfxPlugin(inInstance, kNumParameters, 0)
 {
-	initparameter_f(kScratchAmount, "scratch amount", k_fScratchAmountMiddlePoint, k_fScratchAmountMiddlePoint, -1.0, 1.0, kDfxParamUnit_generic);	// float2string(m_fPlaySampleRate, text);
+	initparameter_f(kParam_ScratchAmount, "scratch amount", k_fScratchAmountMiddlePoint, k_fScratchAmountMiddlePoint, -1.0, 1.0, kDfxParamUnit_generic);	// float2string(m_fPlaySampleRate, text);
 //	initparameter_f(kScratchSpeed, "scratch speed", 0.33333333, 0.33333333, 0.0, 1.0, kDfxParamUnit_scalar);
-	initparameter_f(kScratchSpeed_scrub, "scratch speed (scrub mode)", 2.0, 2.0, 0.5, 5.0, kDfxParamUnit_seconds);
-	initparameter_f(kScratchSpeed_spin, "scratch speed (spin mode)", 3.0, 3.0, 1.0, 8.0, kDfxParamUnit_scalar);
+	initparameter_f(kParam_ScratchSpeed_scrub, "scratch speed (scrub mode)", 2.0, 2.0, 0.5, 5.0, kDfxParamUnit_seconds);
+	initparameter_f(kParam_ScratchSpeed_spin, "scratch speed (spin mode)", 3.0, 3.0, 1.0, 8.0, kDfxParamUnit_scalar);
 
-	initparameter_b(kPower, "power", true, true);
-	initparameter_f(kSpinUpSpeed, "spin up speed", 0.063, 0.05, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
-	initparameter_f(kSpinDownSpeed, "spin down speed", 0.09, 0.05, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
-	initparameter_b(kNotePowerTrack, "note-power track", false, false);
+	initparameter_b(kParam_Power, "power", true, true);
+	initparameter_f(kParam_SpinUpSpeed, "spin up speed", 0.063, 0.05, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
+	initparameter_f(kParam_SpinDownSpeed, "spin down speed", 0.09, 0.05, 0.0001, 1.0, kDfxParamUnit_scalar, kDfxParamCurve_log);
+	initparameter_b(kParam_NotePowerTrack, "note-power track", false, false);
 
-	initparameter_f(kPitchShift, "pitch shift", 0.0, 0.0, -100.0, 100.0, kDfxParamUnit_percent);
-	initparameter_f(kPitchRange, "pitch range", 12.0, 12.0, 1.0, 36.0, kDfxParamUnit_semitones);
-	initparameter_b(kKeyTracking, "key track", false, false);
-	initparameter_i(kRootKey, "root key", k_nRootKey_default, k_nRootKey_default, 0, 0x7F, kDfxParamUnit_notes);
+	initparameter_f(kParam_PitchShift, "pitch shift", 0.0, 0.0, -100.0, 100.0, kDfxParamUnit_percent);
+	initparameter_f(kParam_PitchRange, "pitch range", 12.0, 12.0, 1.0, 36.0, kDfxParamUnit_semitones);
+	initparameter_b(kParam_KeyTracking, "key track", false, false);
+	initparameter_i(kParam_RootKey, "root key", k_nRootKey_default, k_nRootKey_default, 0, 0x7F, kDfxParamUnit_notes);
 
-	initparameter_b(kLoop, "loop", true, false);
+	initparameter_b(kParam_Loop, "loop", true, false);
 
-	initparameter_indexed(kScratchMode, "scratch mode", kScratchMode_scrub, kScratchMode_scrub, kNumScratchModes);
-	setparametervaluestring(kScratchMode, kScratchMode_scrub, "scrub");
-	setparametervaluestring(kScratchMode, kScratchMode_spin, "spin");
+	initparameter_indexed(kParam_ScratchMode, "scratch mode", kScratchMode_Scrub, kScratchMode_Scrub, kNumScratchModes);
+	setparametervaluestring(kParam_ScratchMode, kScratchMode_Scrub, "scrub");
+	setparametervaluestring(kParam_ScratchMode, kScratchMode_Spin, "spin");
 
-	initparameter_indexed(kDirection, "playback direction", kScratchDirection_forward, kScratchDirection_forward, kNumScratchDirections);
-	setparametervaluestring(kDirection, kScratchDirection_forward, "forward");
-	setparametervaluestring(kDirection, kScratchDirection_backward, "reverse");
+	initparameter_indexed(kParam_Direction, "playback direction", kScratchDirection_Forward, kScratchDirection_Forward, kNumScratchDirections);
+	setparametervaluestring(kParam_Direction, kScratchDirection_Forward, "forward");
+	setparametervaluestring(kParam_Direction, kScratchDirection_Backward, "reverse");
 
-	initparameter_indexed(kNoteMode, "note mode", kNoteMode_reset, kNoteMode_reset, kNumNoteModes);
-	setparametervaluestring(kNoteMode, kNoteMode_reset, "reset");
-	setparametervaluestring(kNoteMode, kNoteMode_resume, "resume");
+	initparameter_indexed(kParam_NoteMode, "note mode", kNoteMode_Reset, kNoteMode_Reset, kNumNoteModes);
+	setparametervaluestring(kParam_NoteMode, kNoteMode_Reset, "reset");
+	setparametervaluestring(kParam_NoteMode, kNoteMode_Resume, "resume");
+
+	initparameter_b(kParam_PlayTrigger, "playback trigger", false, false);
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	initparameter_b(kMute, "mute", false, false);
-	initparameter_f(kVolume, "volume", 1.0, 0.5, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
+	initparameter_b(kParam_Mute, "mute", false, false);
+	initparameter_f(kParam_Volume, "volume", 1.0, 0.5, 0.0, 1.0, kDfxParamUnit_lineargain, kDfxParamCurve_cubed);
 #endif
 
-//	initparameter_b(kPlay, "play", false, false);   // XXX should "play" be a parameter, in order to allow it to be automated?
 
+#ifdef USE_LIBSNDFILE
+	addchannelconfig(0, 2);	// stereo-out
+	addchannelconfig(0, 1);	// mono-out
+#else
+	addchannelconfig(0, -1);	// 0-in / N-out
+#endif
 
-	addchannelconfig(0, 2);	// 0-in / 2-out
+	// XXX This plugin doesn't support nodes because of the problem of passing a file reference 
+	// as custom property data between different machines on a network.  
+	// There is no reliable way to do that, so far as I know.
+	setSupportedLogicNodeOperationMode(0);
 
-	m_AudioFileLock = new DfxMutex();
-
+#ifdef USE_LIBSNDFILE
 	m_fBuffer = NULL;
 	m_fLeft = NULL;
 	m_fRight = NULL;
+#endif
 
 	m_nNumChannels = 0;
 	m_nNumSamples = 0;
@@ -113,7 +120,7 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	m_fPosOffset = 0.0;
 	m_fNumSamples = 0.0;
 
-	m_fLastScratchAmount = getparameter_f(kScratchAmount);
+	m_fLastScratchAmount = getparameter_f(kParam_ScratchAmount);
 	m_nPitchBend = kDfxMidi_PitchbendMiddleValue;
 	m_fPitchBend = k_fScratchAmountMiddlePoint;
 	m_bPitchBendSet = false;
@@ -124,7 +131,7 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	m_nScratchDelay = 0;
 
-	m_nRootKey = getparameter_i(kRootKey);
+	m_nRootKey = getparameter_i(kParam_RootKey);
 
 	m_nCurrentNote = m_nRootKey;
 	m_nCurrentVelocity = 0x7F;
@@ -155,13 +162,13 @@ Turntablist::Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 //-----------------------------------------------------------------------------------------
 Turntablist::~Turntablist()
 {
-	if (m_AudioFileLock != NULL)
-		delete m_AudioFileLock;
-	m_AudioFileLock = NULL;
-
+#ifdef USE_LIBSNDFILE
 	if (m_fBuffer != NULL)
 		free(m_fBuffer);
 	m_fBuffer = NULL;
+#else
+	m_auBufferList.Deallocate();
+#endif
 }
 
 
@@ -184,40 +191,40 @@ long Turntablist::initialize()
 //-----------------------------------------------------------------------------------------
 void Turntablist::processparameters()
 {
-	m_bPower = getparameter_b(kPower);
-	m_bNotePowerTrack = getparameter_b(kNotePowerTrack);
-	m_bLoop = getparameter_b(kLoop);
-	m_bKeyTracking = getparameter_b(kKeyTracking);
+	m_bPower = getparameter_b(kParam_Power);
+	m_bNotePowerTrack = getparameter_b(kParam_NotePowerTrack);
+	m_bLoop = getparameter_b(kParam_Loop);
+	m_bKeyTracking = getparameter_b(kParam_KeyTracking);
 
-	m_fPitchShift = getparameter_scalar(kPitchShift);
+	m_fPitchShift = getparameter_scalar(kParam_PitchShift);
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	m_fVolume = getparameter_f(kVolume);
+	m_fVolume = getparameter_f(kParam_Volume);
 #endif
-	m_fPitchRange = getparameter_f(kPitchRange);
+	m_fPitchRange = getparameter_f(kParam_PitchRange);
 
-	m_fScratchAmount = getparameter_f(kScratchAmount);
+	m_fScratchAmount = getparameter_f(kParam_ScratchAmount);
 //	m_fScratchSpeed = getparameter_f(kScratchSpeed);
-	m_fScratchSpeed_scrub = getparameter_f(kScratchSpeed_scrub);
-	m_fScratchSpeed_spin = getparameter_f(kScratchSpeed_spin);
-	m_fSpinUpSpeed = getparameter_f(kSpinUpSpeed);
-	m_fSpinDownSpeed = getparameter_f(kSpinDownSpeed);
+	m_fScratchSpeed_scrub = getparameter_f(kParam_ScratchSpeed_scrub);
+	m_fScratchSpeed_spin = getparameter_f(kParam_ScratchSpeed_spin);
+	m_fSpinUpSpeed = getparameter_f(kParam_SpinUpSpeed);
+	m_fSpinDownSpeed = getparameter_f(kParam_SpinDownSpeed);
 
-	m_nRootKey = getparameter_i(kRootKey);
+	m_nRootKey = getparameter_i(kParam_RootKey);
 
-	m_nDirection = getparameter_i(kDirection);
-	m_nScratchMode = getparameter_i(kScratchMode);
-	m_nNoteMode = getparameter_i(kNoteMode);
+	m_nDirection = getparameter_i(kParam_Direction);
+	m_nScratchMode = getparameter_i(kParam_ScratchMode);
+	m_nNoteMode = getparameter_i(kParam_NoteMode);
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	m_bMute = getparameter_b(kMute);
+	m_bMute = getparameter_b(kParam_Mute);
 #endif
-//	m_bPlay = getparameter_b(kPlay);
+	bool playbackTrigger = getparameter_b(kParam_PlayTrigger);
 
 
-	if (getparameterchanged(kPitchShift))
+	if (getparameterchanged(kParam_PitchShift))
 		processPitch();
 
-	if (getparameterchanged(kScratchAmount) || m_bPitchBendSet)	// XXX checking m_bPitchBendSet until I fix getparameter_changed()
+	if (getparameterchanged(kParam_ScratchAmount) || m_bPitchBendSet)	// XXX checking m_bPitchBendSet until I fix getparameter_changed()
 	{
 		m_bScratchAmountSet = true;
 		if ( (m_fScratchAmount > k_fScratchAmountMiddlePoint_LowerLimit) && (m_fScratchAmount < k_fScratchAmountMiddlePoint_UpperLimit) )
@@ -242,16 +249,16 @@ void Turntablist::processparameters()
 	m_fNoteVolume = (float)m_nCurrentVelocity * MIDI_SCALAR;
 #endif
 
-	if (getparameterchanged(kPitchRange))
+	if (getparameterchanged(kParam_PitchRange))
 		processPitch();
 
-	if (getparameterchanged(kDirection))
+	if (getparameterchanged(kParam_Direction))
 		processDirection();
 
 	calculateSpinSpeeds();
 
-//	if (getparameterchanged(kPlay))
-//		playNote(m_bPlay);
+	if ( getparametertouched(kParam_PlayTrigger) )
+		playNote(playbackTrigger);
 }
 
 
@@ -304,10 +311,10 @@ ComponentResult Turntablist::SaveState(CFPropertyListRef * outData)
 
 		// also save an alias of the loaded audio file, as a fall-back
 		AliasHandle aliasHandle = NULL;
-		OSErr aliasError = FSNewAlias(NULL, &m_fsAudioFile, &aliasHandle);
-		if ( (aliasError == noErr) && (aliasHandle != NULL) )
+		Size aliasSize = 0;
+		OSStatus aliasStatus = createAudioFileAlias(&aliasHandle, &aliasSize);
+		if (aliasStatus == noErr)
 		{
-			Size aliasSize = 0;
 			if (GetAliasSize != NULL)
 				aliasSize = GetAliasSize(aliasHandle);
 			else
@@ -473,13 +480,27 @@ ComponentResult Turntablist::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 	switch (inPropertyID)
 	{
 		case kTurntablistProperty_Play:
-			outDataSize = sizeof(m_bPlay);
+			outDataSize = sizeof(Boolean);
 			outWritable = true;
 			break;
 
 		case kTurntablistProperty_AudioFile:
-			outDataSize = sizeof(m_fsAudioFile);
-			outWritable = true;
+			if ( FSRefIsValid(m_fsAudioFile) )
+			{
+				AliasHandle alias = NULL;
+				Size aliasSize = 0;
+				result = createAudioFileAlias(&alias, &aliasSize);
+				if (result == noErr)
+				{
+					outDataSize = aliasSize;
+					outWritable = true;
+					DisposeHandle((Handle)alias);
+				}
+			}
+			else
+			{
+				result = errFSBadFSRef;
+			}
 			break;
 
 		default:
@@ -500,12 +521,21 @@ ComponentResult Turntablist::GetProperty(AudioUnitPropertyID inPropertyID,
 	switch (inPropertyID)
 	{
 		case kTurntablistProperty_Play:
-			*(bool*)outData = m_bPlay;
+			*(Boolean*)outData = m_bPlay;
 			break;
 
 		case kTurntablistProperty_AudioFile:
 			if ( FSRefIsValid(m_fsAudioFile) )
-				*(FSRef*)outData = m_fsAudioFile;
+			{
+				AliasHandle alias = NULL;
+				Size aliasSize = 0;
+				result = createAudioFileAlias(&alias, &aliasSize);
+				if (result == noErr)
+				{
+					memcpy(outData, *alias, aliasSize);
+					DisposeHandle((Handle)alias);
+				}
+			}
 			else
 				result = errFSBadFSRef;
 			break;
@@ -528,12 +558,22 @@ ComponentResult Turntablist::SetProperty(AudioUnitPropertyID inPropertyID,
 	switch (inPropertyID)
 	{
 		case kTurntablistProperty_Play:
-			m_bPlay = *(bool*)inData;
+			m_bPlay = *(Boolean*)inData;
 			playNote(m_bPlay);
 			break;
 
 		case kTurntablistProperty_AudioFile:
-			result = loadAudioFile(*(FSRef*)inData);
+			{
+				AliasHandle alias = NULL;
+				result = PtrToHand(inData, (Handle*)(&alias), inDataSize);
+				if ( (result == noErr) && (alias != NULL) )
+				{
+					result = resolveAudioFileAlias(alias);
+					DisposeHandle((Handle)alias);
+				}
+				else
+					result = memFullErr;
+			}
 			break;
 
 		default:
@@ -542,27 +582,6 @@ ComponentResult Turntablist::SetProperty(AudioUnitPropertyID inPropertyID,
 	}
 
 	return result;
-}
-
-//-----------------------------------------------------------------------------------------
-OSStatus Turntablist::PostPropertyChangeNotificationSafely(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement)
-{
-	if (AUEventListenerNotify != NULL)
-	{
-		AudioUnitEvent auEvent;
-		memset(&auEvent, 0, sizeof(auEvent));
-		auEvent.mEventType = kAudioUnitEvent_PropertyChange;
-		auEvent.mArgument.mProperty.mAudioUnit = GetComponentInstance();
-		auEvent.mArgument.mProperty.mPropertyID = inPropertyID;
-		auEvent.mArgument.mProperty.mScope = inScope;
-		auEvent.mArgument.mProperty.mElement = inElement;
-		return AUEventListenerNotify(NULL, NULL, &auEvent);
-	}
-	else
-	{
-		PropertyChanged(inPropertyID, inScope, inElement);
-		return noErr;
-	}
 }
 
 //-----------------------------------------------------------------------------------------
@@ -577,37 +596,38 @@ ComponentResult Turntablist::GetParameterInfo(AudioUnitScope inScope,
 	outParameterInfo.flags |= kAudioUnitParameterFlag_HasClump;
 	switch (inParameterID)
 	{
-		case kScratchAmount:
-		case kScratchMode:
-		case kScratchSpeed_scrub:
-		case kScratchSpeed_spin:
-			outParameterInfo.clumpID = kTurntablistClump_scratching;
+		case kParam_ScratchAmount:
+		case kParam_ScratchMode:
+		case kParam_ScratchSpeed_scrub:
+		case kParam_ScratchSpeed_spin:
+			outParameterInfo.clumpID = kParamGroup_Scratching;
 			break;
 
-		case kPower:
-		case kSpinUpSpeed:
-		case kSpinDownSpeed:
-		case kNotePowerTrack:
-			outParameterInfo.clumpID = kTurntablistClump_power;
+		case kParam_Power:
+		case kParam_SpinUpSpeed:
+		case kParam_SpinDownSpeed:
+		case kParam_NotePowerTrack:
+			outParameterInfo.clumpID = kParamGroup_Power;
 			break;
 
-		case kPitchShift:
-		case kPitchRange:
-		case kKeyTracking:
-		case kRootKey:
-			outParameterInfo.clumpID = kTurntablistClump_pitch;
+		case kParam_PitchShift:
+		case kParam_PitchRange:
+		case kParam_KeyTracking:
+		case kParam_RootKey:
+			outParameterInfo.clumpID = kParamGroup_Pitch;
 			break;
 
-		case kLoop:
-		case kDirection:
-		case kNoteMode:
-			outParameterInfo.clumpID = kTurntablistClump_playback;
+		case kParam_Loop:
+		case kParam_Direction:
+		case kParam_NoteMode:
+		case kParam_PlayTrigger:
+			outParameterInfo.clumpID = kParamGroup_Playback;
 			break;
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-		case kMute:
-		case kVolume:
-			outParameterInfo.clumpID = kTurntablistClump_output;
+		case kParam_Mute:
+		case kParam_Volume:
+			outParameterInfo.clumpID = kParamGroup_Output;
 			break;
 #endif
 
@@ -620,25 +640,25 @@ ComponentResult Turntablist::GetParameterInfo(AudioUnitScope inScope,
 }
 
 //-----------------------------------------------------------------------------------------
-CFStringRef Turntablist::CopyClumpName(UInt32 inClumpID)
+CFStringRef Turntablist::CopyParameterGroupName(UInt32 inParameterGroupID)
 {
 	CFStringRef clumpName = NULL;
-	switch (inClumpID)
+	switch (inParameterGroupID)
 	{
-		case kTurntablistClump_scratching:
+		case kParamGroup_Scratching:
 			clumpName = CFSTR("scratching");
 			break;
-		case kTurntablistClump_power:
-			clumpName = CFSTR("turntable power");
-			break;
-		case kTurntablistClump_pitch:
-			clumpName = CFSTR("pitch");
-			break;
-		case kTurntablistClump_playback:
+		case kParamGroup_Playback:
 			clumpName = CFSTR("audio sample playback");
 			break;
+		case kParamGroup_Power:
+			clumpName = CFSTR("turntable power");
+			break;
+		case kParamGroup_Pitch:
+			clumpName = CFSTR("pitch");
+			break;
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-		case kTurntablistClump_output:
+		case kParamGroup_Output:
 			clumpName = CFSTR("audio output");
 			break;
 #endif
@@ -653,74 +673,50 @@ CFStringRef Turntablist::CopyClumpName(UInt32 inClumpID)
 
 
 
-#ifndef USE_LIBSNDFILE
-//This is an example of a Input Procedure from a call to AudioConverterFillComplexBuffer.
-//The total amount of data needed is "ioNumberDataPackets" when this method is first called.
-//On exit, "ioNumberDataPackets" must be set to the actual amount of data obtained.
-//Upon completion, all new input data must point to the AudioBufferList in the parameter ( "ioData" ) 
-//Note: if decoding AAC AudioStreamPacketDescriptions must be returned upon completion
-OSStatus ACComplexInputProc(AudioConverterRef inAudioConverter,
-							UInt32 * ioNumberDataPackets,
-							AudioBufferList * ioData,
-							AudioStreamPacketDescription ** outDataPacketDescription,
-							void * inUserData)
-{
-	OSStatus status = noErr;
-
-	// initialize in case of failure
-	ioData->mBuffers[0].mData = NULL;			
-	ioData->mBuffers[0].mDataByteSize = 0;
-
-	// if there are not enough packets to satisfy request, then read what's left
-	if (gPacketOffset + *ioNumberDataPackets > gTotalPacketCount)
-		*ioNumberDataPackets = gTotalPacketCount - gPacketOffset;
-
-	// do nothing if there are no packets available
-	if (*ioNumberDataPackets)
-	{
-		if (gSourceBuffer != NULL)
-			free(gSourceBuffer);
-		gSourceBuffer = NULL;
-
-		gSourceBuffer = calloc(1, *ioNumberDataPackets * gMaxPacketSize);
-
-		//read the amount of data needed (ioNumberDataPackets) from AudioFile
-		UInt32 bytesReturned = 0;
-		status = AudioFileReadPackets(*gSourceAudioFileID, false, &bytesReturned, NULL, gPacketOffset, 
-									ioNumberDataPackets, gSourceBuffer);
-
-		if (status)
-		{
-			//end of data reached
-		}
-
-		gPacketOffset += *ioNumberDataPackets;	// keep track of where we want to read from next time
-
-		ioData->mBuffers[0].mData = gSourceBuffer; // tell the Audio Converter where it's source data is
-		ioData->mBuffers[0].mDataByteSize = bytesReturned; // tell the Audio Converter how much source data there is
-	}
-	else
-	{
-		// there aren't any more packets to read at this time
-		ioData->mBuffers[0].mData = NULL;			
-		ioData->mBuffers[0].mDataByteSize = 0;
-	}
-
-	// it's not an error if we just read the remainder of the file
-	if (status == eofErr && *ioNumberDataPackets)
-		status = noErr;
-
-	return status;   
-}
-#endif
-
 //-----------------------------------------------------------------------------------------
 void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification)
 {
 	bool play_old = m_bPlay;
 	m_bPlay = inPlayState;
 	if (m_bPlay != play_old)
-		PostPropertyChangeNotificationSafely(kTurntablistProperty_Play);
+		PropertyChanged(kTurntablistProperty_Play, kAudioUnitScope_Global, 0);
+}
+
+//-----------------------------------------------------------------------------
+OSStatus Turntablist::createAudioFileAlias(AliasHandle * outAlias, Size * outDataSize)
+{
+	if (outAlias == NULL)
+		return paramErr;
+
+	OSErr error = FSNewAlias(NULL, &m_fsAudioFile, outAlias);
+	if (error != noErr)
+		return error;
+	if (*outAlias == NULL)
+		return nilHandleErr;
+
+	if (outDataSize != NULL)
+	{
+		if (GetAliasSize != NULL)
+			*outDataSize = GetAliasSize(*outAlias);
+		else
+			*outDataSize = GetHandleSize((Handle)(*outAlias));
+	}
+
+	return error;
+}
+
+//-----------------------------------------------------------------------------
+OSStatus Turntablist::resolveAudioFileAlias(const AliasHandle inAlias)
+{
+	FSRef audioFileRef;
+	Boolean wasChanged;
+	OSStatus status = FSResolveAlias(NULL, inAlias, &audioFileRef, &wasChanged);
+	if (status == noErr)
+	{
+		status = loadAudioFile(audioFileRef);
+	}
+
+	return status;
 }
 
 
@@ -729,19 +725,22 @@ void Turntablist::setPlay(bool inPlayState, bool inShouldSendNotification)
 #pragma mark audio processing
 
 //-----------------------------------------------------------------------------------------
-OSStatus Turntablist::loadAudioFile(const FSRef & inFile)
+OSStatus Turntablist::loadAudioFile(const FSRef & inFileRef)
 {
-#if 0
+// ExtAudioFile
+#ifndef USE_LIBSNDFILE
 	OSStatus status;
 
+	if (ExtAudioFileOpen == NULL)
+		return unsupportedOSErr;
 	ExtAudioFileRef audioFileRef = NULL;
-	status = ExtAudioFileOpen(&inFile, &audioFileRef);
+	status = ExtAudioFileOpen(&inFileRef, &audioFileRef);
 	if (status != noErr)
 		return status;
 
-	AudioStreamBasicDescription audioFileABSD;
-	UInt32 dataSize = sizeof(audioFileABSD);
-	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileDataFormat, &dataSize, &audioFileABSD);
+	AudioStreamBasicDescription audioFileStreamFormat;
+	UInt32 dataSize = sizeof(audioFileStreamFormat);
+	status = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_FileDataFormat, &dataSize, &audioFileStreamFormat);
 	if (status != noErr)
 		return status;
 
@@ -751,166 +750,52 @@ OSStatus Turntablist::loadAudioFile(const FSRef & inFile)
 	if (status != noErr)
 		return status;
 
-	#if 1
-	CAStreamBasicDescription clientABSD;
-	clientABSD.SetCanonical(audioFileABSD.mChannelsPerFrame, false);	// XXX should this be 2?
-	clientABSD.mSampleRate = audioFileABSD.mSampleRate;
-	#else
-	AudioStreamBasicDescription clientABSD;
-	clientABSD.mFormatID = kAudioFormatLinearPCM;
-	clientABSD.mSampleRate = audioFileABSD.mSampleRate;
-	clientABSD.mChannelsPerFrame = audioFileABSD.mChannelsPerFrame;	// XXX should this be 2?
-	CAAudioStreamBasicDescription::NormalizeLinearPCMFormat(clientABSD);
-	#endif
-	status = ExtAudioFileSetProperty(audioFileRef, kExtAudioFileProperty_ClientDataFormat, sizeof(clientABSD), &clientABSD);
+	CAStreamBasicDescription clientStreamFormat;
+	clientStreamFormat.SetCanonical(audioFileStreamFormat.mChannelsPerFrame, false);
+	clientStreamFormat.mSampleRate = audioFileStreamFormat.mSampleRate;
+	status = ExtAudioFileSetProperty(audioFileRef, kExtAudioFileProperty_ClientDataFormat, sizeof(clientStreamFormat), &clientStreamFormat);
 	if (status != noErr)
 		return status;
 
+	m_AudioFileLock.grab();
+
+	m_bAudioFileHasBeenLoaded = false;	// XXX cuz we're about to possibly re-allocate the audio buffer and invalidate what might already be there
+
+	m_auBufferList.Allocate(clientStreamFormat, (UInt32)audioFileNumFrames);
+	AudioBufferList & abl = m_auBufferList.PrepareBuffer(clientStreamFormat, (UInt32)audioFileNumFrames);
 	UInt32 audioFileNumFrames_temp = (UInt32)audioFileNumFrames;
-	#if 1
-	AUBufferList aubl;
-	aubl.Allocate(clientABSD, (UInt32)audioFileNumFrames);
-	AudioBufferList & abl = aubl.GetBufferList();
-	#else
-	AudioBufferList abl;
-	abl.mNumberBuffers = 1;
-	abl.mBuffers[0].mNumberChannels = clientABSD.mChannelsPerFrame;
-	abl.mBuffers[0].mDataByteSize = clientABSD.mBytesPerFrame;
-	abl.mBuffers[0].mData = m_fBuffer;
-	#endif
 	status = ExtAudioFileRead(audioFileRef, &audioFileNumFrames_temp, &abl);
 	if (status != noErr)
 	{
-		aubl.Deallocate();
+		m_auBufferList.Deallocate();
 		return status;
 	}
-//	if (audioFileNumFrames_temp != (UInt32)audioFileNumFrames)	// XXX do something?
-
-//	aubl.Deallocate();	// XXX when to do this?
+	if (audioFileNumFrames_temp != (UInt32)audioFileNumFrames)	// XXX do something?
+	{
+		// XXX error?
+		fprintf(stderr, PLUGIN_NAME_STRING":  audio data size mismatch!\nsize requested: %lu, size read: %lu\n\n", (UInt32)audioFileNumFrames, audioFileNumFrames_temp);
+	}
 
 	status = ExtAudioFileDispose(audioFileRef);
-#endif
 
-// AudioFile
-#ifndef USE_LIBSNDFILE
-	AudioFileID gSourceAudioFileID = 0;
-	UInt64 gTotalPacketCount = 0;
-	UInt64 gFileByteCount = 0;
-	UInt32 gMaxPacketSize = 0;
-	UInt64 gPacketOffset = 0;
+	m_nNumChannels = clientStreamFormat.mChannelsPerFrame;
+	m_nSampleRate = clientStreamFormat.mSampleRate;
+	m_nNumSamples = (int) audioFileNumFrames;
 
-	// open an AudioFile and obtain AudioFileID using the file system ref
-	AudioFileID fileID = 0;
-	OSStatus status = AudioFileOpen(&inFile, fsRdPerm, 0, &gSourceAudioFileID);
+	m_fPlaySampleRate = (double) m_nSampleRate;
+	m_fSampleRate = (double) m_nSampleRate;
+	calculateSpinSpeeds();
+	m_fPosition = 0.0;
+	m_fPosOffset = 0.0;
+	m_fNumSamples = (double) m_nNumSamples;
 
-	//Fetch the AudioStreamBasicDescription of the audio file.  Because we already know that
-	//the property kAudioFilePropertyDataFormat is writeable and we know the data type, we can
-	//skip calling AudioFileGetPropertyInfo.
-	AudioStreamBasicDescription fileASBD;
-	UInt32 size = sizeof(fileASBD);
-	memset(&fileASBD, 0, size);
-	status = AudioFileGetProperty(gSourceAudioFileID, kAudioFilePropertyDataFormat, &size, &fileASBD); 
-  
-	//We also need to get the total packet count, byte count, and max packet size.
-	//Theses values will be used later when grabbing data from the audio file
-	//in the input callback procedure.
-	size = sizeof(gTotalPacketCount);
-	status = AudioFileGetProperty(gSourceAudioFileID, kAudioFilePropertyAudioDataPacketCount, &size, &gTotalPacketCount);
-	size = sizeof(gFileByteCount);
-	status = AudioFileGetProperty(gSourceAudioFileID, kAudioFilePropertyAudioDataByteCount, &size, &gFileByteCount);
-	size = sizeof(gMaxPacketSize);
-	status = AudioFileGetProperty(gSourceAudioFileID, kAudioFilePropertyMaximumPacketSize, &size, &gMaxPacketSize);
-
-
-
-// Call AudioFileGetProperty for kAudioFilePropertyAudioDataByteCount.
-// Allocate a buffer with the returned size.
-AUBufferList mBuffer;
-gFileByteCount
-mBuffer.Allocate(const CAStreamBasicDescription &format, gTotalPacketCount);
-UInt32 numBytesRead = 0;
-UInt32 numPackets = gTotalPacketCount;
-status = AudioFileReadPackets(gSourceAudioFileID, false, &numBytesRead, NULL, 0, &numPackets, void * outBuffer);
-// Call AudioFileReadPackets passing the newly allocated buffer.
-// Call mBuffer.Allocate() passing the number of packets read by AudioFileReadPackets.
-// Call mBuffer.PrepareBuffer()
-// Call AudioConverterFillComplexBuffer() passing &(mSampleBuffer.GetBufferList()) for the AudioBufferList.
-
-
-
-	AudioConverterRef converter;
-	void * gSourceBuffer;
-
-	//To Create an Audio Converter that converts Audio data from one format to another,
-	//a call to AudioConverterNew with an input and output stream formats completely filled out, 
-	//will create this object for you.  The Input and Output stream format structures are
-	//AudioStreamBasicDescriptions.
-
-	AudioStreamBasicDescription outASBD = GetStreamFormat(kAudioUnitScope_Output, (AudioUnitElement)0);
-	outASBD.mChannelsPerFrame = fileABSD.mChannelsPerFrame;
-	outASBD.mSampleRate = fileABSD.mSampleRate;
-	//To Do: Add some error checking to make sure the input and output formats are valid
-	status = AudioConverterNew(&fileASBD, &outASBD, converter);
-
-	//Get Magic Cookie info(if exists)  and pass it to converter.
-	//Some files have magic cookie information that needs to be used to
-	//decompress the audio file.  When this information is obtained, you can
-	//set this as a property in the Audio Converter so this information is included
-	//when the Audio Converter begins processing data.
-	UInt32 magicCookieSize = 0;
-	status = AudioFileGetPropertyInfo(*musicFileID, kAudioFilePropertyMagicCookieData, &magicCookieSize, NULL);
-	if (status == noErr)
-	{
-		void * magicCookie = calloc(1, magicCookieSize);
-		if (magicCookie != NULL)
-		{
-			// Get Magic Cookie data from Audio File
-			status = AudioFileGetProperty(	*musicFileID, 
-										kAudioFilePropertyMagicCookieData, 
-										&magicCookieSize, 
-										magicCookie);
-
-			// Give the AudioConverter the magic cookie decompression params if there are any
-			if (status == noErr)
-				status = AudioConverterSetProperty(*converter, kAudioConverterDecompressionMagicCookie, magicCookieSize, magicCookie);
-			status = noErr;
-			free(magicCookie);
-		}
-	}
-	else //this is OK because some audio data doesn't need magic cookie data
-		status = noErr;
-
-
-
-	//To obtain a data buffer of converted data from a compex input source(compressed files, etc.)
-	//call AudioConverterFillComplexBuffer.  The total amount of data requested is "inNumFrames" and 
-	//on return is set to the actual amount of data recieved.
-	//All converted data is returned to "ioData" (AudioBufferList).
-	AudioStreamPacketDescription * outPacketDescription = NULL;
-	AudioBufferList outData;
-	status = AudioConverterFillComplexBuffer(converter, ACComplexInputProc, this, &gTotalPacketCount, &outData, outPacketDescription);
-
-	/* Parameters for AudioConverterFillComplexBuffer()
-		inNumFrames - The amount of requested data.  On output, this number is the amount actually received.
-		ioData - Buffer of the converted data recieved on return
-		outPacketDescription - contains the format of the returned data.  Not used in this example.
-	*/
-
-
-
-// clean up
-	AudioFileClose(*fileID);  // Closes the audio file 
-	if (gSourceBuffer != NULL)
-		free(gSourceBuffer);
-	gSourceBuffer = NULL;
-	AudioConverterDispose(converter);  // deallocates the memory used by inAudioConverter
 
 
 // libsndfile
 #else
 	UInt8 file[2048];
 	memset(file, 0, sizeof(file));
-	OSStatus status = FSRefMakePath(&inFile, file, sizeof(file));
+	OSStatus status = FSRefMakePath(&inFileRef, file, sizeof(file));
 	if (status != noErr)
 		return status;
 //fprintf(stderr, PLUGIN_NAME_STRING" audio file:  %s\n", file);
@@ -943,7 +828,7 @@ status = AudioFileReadPackets(gSourceAudioFileID, false, &numBytesRead, NULL, 0,
 
 	sf_command(sndFile, SFC_SET_NORM_FLOAT, NULL, SF_TRUE);
 
-	m_AudioFileLock->grab();
+	m_AudioFileLock.grab();
 
 	m_nNumChannels = sfInfo.channels;
 	m_nSampleRate = sfInfo.samplerate;
@@ -954,15 +839,13 @@ status = AudioFileReadPackets(gSourceAudioFileID, false, &numBytesRead, NULL, 0,
 	calculateSpinSpeeds();
 	m_fPosition = 0.0;
 	m_fPosOffset = 0.0;
-	m_fNumSamples = (double)m_nNumSamples;
+	m_fNumSamples = (double) m_nNumSamples;
 
 	if (m_fBuffer != NULL)
-	{
 		free(m_fBuffer);
-		m_fBuffer = NULL;
-		m_fLeft = NULL;
-		m_fRight = NULL;
-	}
+	m_fBuffer = NULL;
+	m_fLeft = NULL;
+	m_fRight = NULL;
 
 	m_fBuffer = (float*) malloc(m_nNumChannels * m_nNumSamples * sizeof(float));
 
@@ -1010,14 +893,15 @@ status = AudioFileReadPackets(gSourceAudioFileID, false, &numBytesRead, NULL, 0,
 	sndFile = NULL;
 #endif
 
+
 	processPitch();	// set up stuff
 
 	// ready to play
 	m_bAudioFileHasBeenLoaded = true;
-	m_AudioFileLock->release();
+	m_AudioFileLock.release();
 
-	m_fsAudioFile = inFile;
-	PostPropertyChangeNotificationSafely(kTurntablistProperty_AudioFile);
+	m_fsAudioFile = inFileRef;
+	PropertyChanged(kTurntablistProperty_AudioFile, kAudioUnitScope_Global, 0);
 
 	return noErr;
 }
@@ -1034,12 +918,12 @@ void Turntablist::calculateSpinSpeeds()
 //-----------------------------------------------------------------------------------------
 void Turntablist::processaudio(const float ** inStreams, float ** outStreams, unsigned long inNumFrames, bool replacing)
 {
-	float * out1 = outStreams[0];
-	float * out2 = outStreams[1];
-
 	long eventFrame = -1; // -1 = no events
 	long numEvents = midistuff->numBlockEvents;
 	long currEvent = 0;
+
+	unsigned long numOutputs = getnumoutputs();
+//	float (*interpolateHermiteFunctionPtr)(float *, double, long) = m_bLoop ? DFX_InterpolateHermite : DFX_InterpolateHermite_NoWrap;
 
 
 	if (numEvents == 0)
@@ -1065,14 +949,14 @@ void Turntablist::processaudio(const float ** inStreams, float ** outStreams, un
 			m_nScratchInterval++;
 			if (m_nScratchInterval > m_nScratchIntervalEnd)
 			{
-				if (m_nScratchMode == kScratchMode_spin)
+				if (m_nScratchMode == kScratchMode_Spin)
 					processScratch();
 				else
 					processScratchStop();
 			}
 			else
 			{
-				if (m_nScratchMode == kScratchMode_scrub)
+				if (m_nScratchMode == kScratchMode_Scrub)
 				{
 					// nudge samplerate
 					m_fPlaySampleRate += m_fTinyScratchAdjust;
@@ -1134,7 +1018,7 @@ void Turntablist::processaudio(const float ** inStreams, float ** outStreams, un
 					if (!m_bScratching)
 					{
 						stopNote(true);
-						if (m_nNoteMode == kNoteMode_reset)
+						if (m_nNoteMode == kNoteMode_Reset)
 							m_fPosition = 0.0;
 					}
 				}
@@ -1144,7 +1028,7 @@ void Turntablist::processaudio(const float ** inStreams, float ** outStreams, un
 
 			int lockResult = EAGAIN;
 			if (m_bAudioFileHasBeenLoaded)
-				lockResult = m_AudioFileLock->try_grab();
+				lockResult = m_AudioFileLock.try_grab();
 			if (lockResult == 0)
 			{
 				if (m_bNoteIsOn)
@@ -1180,55 +1064,71 @@ void Turntablist::processaudio(const float ** inStreams, float ** outStreams, un
 					if (!m_bMute)   // if audio on
 					{		
 #endif
+						if (m_fPlaySampleRate == 0.0)
+						{
+							for (unsigned long ch=0; ch < numOutputs; ch++)
+								outStreams[ch][currFrame] = 0.0f;
+						}
+						else
+						{
 //#define NO_INTERPOLATION
 //#define LINEAR_INTERPOLATION
 #define CUBIC_INTERPOLATION
-						// no interpolation start
+
+							for (unsigned long ch=0; ch < numOutputs; ch++)
+							{
+							#ifdef USE_LIBSNDFILE
+								float * output = (ch == 0) ? m_fLeft : m_fRight;
+							#else
+								AudioBufferList & abl = m_auBufferList.GetBufferList();
+								unsigned long ablChannel = ch;
+								if (ch >= abl.mNumberBuffers)
+								{
+									ablChannel = abl.mNumberBuffers - 1;
+									// XXX only do the channel remapping for mono->stereo upmixing special case (?)
+									if (ch > 1)
+										break;
+								}
+								float * output = (float*) (abl.mBuffers[ablChannel].mData);
+							#endif
+
 #ifdef NO_INTERPOLATION
-						float fLeft = m_fLeft[(long)m_fPosition];
-						float fRight = m_fRight[(long)m_fPosition];
-						// no interpolation end
+								float outval = output[(long)m_fPosition];
 #endif NO_INTERPOLATION
 
-						// linear interpolation start
 #ifdef LINEAR_INTERPOLATION						
-						float floating_part = m_fPosition - (double)((long)m_fPosition);
-						long big_part1 = (long)m_fPosition;
-						long big_part2 = big_part1 + 1;
-						if (big_part2 > m_nNumSamples)
-							big_part2 = 0;
-						float fLeft = (floating_part * m_fLeft[big_part1]) + ((1.0f-floating_part) * m_fLeft[big_part2]);
-						float fRight = (floating_part * m_fRight[big_part1]) + ((1.0f-floating_part) * m_fRight[big_part2]);
+								float floating_part = m_fPosition - (double)((long)m_fPosition);
+								long big_part1 = (long)m_fPosition;
+								long big_part2 = big_part1 + 1;
+								if (big_part2 > m_nNumSamples)
+									big_part2 = 0;
+								float outval = (floating_part * output[big_part1]) + ((1.0f-floating_part) * output[big_part2]);
 #endif LINEAR_INTERPOLATION
-						// linear interpolation end
 
 #ifdef CUBIC_INTERPOLATION
-						float fLeft, fRight;
-						if (m_bLoop)
-						{
-							fLeft = interpolateHermite(m_fLeft, m_fPosition, m_nNumSamples);
-							fRight = interpolateHermite(m_fRight, m_fPosition, m_nNumSamples);
-						}
-						else
-						{
-							fLeft = interpolateHermite_noWrap(m_fLeft, m_fPosition, m_nNumSamples);
-							fRight = interpolateHermite_noWrap(m_fRight, m_fPosition, m_nNumSamples);
-						}
+								float outval;
+							#if 0
+								// XXX is this a silly optimization to avoid another branch?
+								// XXX can this even work for an inline function?
+								outval = interpolateHermiteFunctionPtr(output, m_fPosition, m_nNumSamples);
+							#else
+								if (m_bLoop)
+									outval = DFX_InterpolateHermite(output, m_fPosition, m_nNumSamples);
+								else
+									outval = DFX_InterpolateHermite_NoWrap(output, m_fPosition, m_nNumSamples);
+							#endif
 #endif CUBIC_INTERPOLATION
 
-						if (m_fPlaySampleRate == 0.0)
-						{
-							out1[currFrame] = out2[currFrame] = 0.0f;
-						}
-						else
-						{
-							out1[currFrame] = fLeft * m_fNoteVolume;
-							out2[currFrame] = fRight * m_fNoteVolume;
+								outStreams[ch][currFrame] = outval * m_fNoteVolume;
+							}
 						}
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 					}   // if (!m_bMute)
 					else
-						out1[currFrame] = out2[currFrame] = 0.0f;
+					{
+						for (unsigned long ch=0; ch < numOutputs; ch++)
+							outStreams[ch][currFrame] = 0.0f;
+					}
 #endif
 
 					
@@ -1250,15 +1150,24 @@ void Turntablist::processaudio(const float ** inStreams, float ** outStreams, un
 
 				}   // if (bNoteIsOn)
 				else
-					out1[currFrame] = out2[currFrame] = 0.0f;
+				{
+					for (unsigned long ch=0; ch < numOutputs; ch++)
+						outStreams[ch][currFrame] = 0.0f;
+				}
 
-				m_AudioFileLock->release();
+				m_AudioFileLock.release();
 			}   // if (lockResult == 0)
 			else
-				out1[currFrame] = out2[currFrame] = 0.0f;
+			{
+				for (unsigned long ch=0; ch < numOutputs; ch++)
+					outStreams[ch][currFrame] = 0.0f;
+			}
 		}   // if (bNoteIsOn)
 		else
-			out1[currFrame] = out2[currFrame] = 0.0f;
+		{
+			for (unsigned long ch=0; ch < numOutputs; ch++)
+				outStreams[ch][currFrame] = 0.0f;
+		}
 	}   // (currFrame < inNumFrames)
 }
 
@@ -1270,7 +1179,7 @@ void Turntablist::processaudio(const float ** inStreams, float ** outStreams, un
 //-----------------------------------------------------------------------------------------
 void Turntablist::processScratchStop()
 {
-	m_nScratchDir = kScratchDirection_forward;
+	m_nScratchDir = kScratchDirection_Forward;
 	m_fPlaySampleRate = 0.0;
 	if (!m_bScratchStop)
 	{
@@ -1303,7 +1212,7 @@ void Turntablist::processScratch(bool inSetParameter)
 		// set scratch amount to scaled pitchbend
 		if (inSetParameter)
 		{
-			setparameter_f(kScratchAmount, m_fPitchBend);
+			setparameter_f(kParam_ScratchAmount, m_fPitchBend);
 			// XXX post notification?  not that this ever gets called with inSetParameter true...
 			m_fScratchAmount = m_fPitchBend;
 		}
@@ -1318,12 +1227,12 @@ void Turntablist::processScratch(bool inSetParameter)
 
 	if (m_bScratching)  // scratching
 	{
-		if (m_nScratchMode == kScratchMode_spin)
+		if (m_nScratchMode == kScratchMode_Spin)
 		{
 			if (m_fScratchAmount >= k_fScratchAmountMiddlePoint)
-				m_nScratchDir = kScratchDirection_forward;
+				m_nScratchDir = kScratchDirection_Forward;
 			else
-				m_nScratchDir = kScratchDirection_backward;
+				m_nScratchDir = kScratchDirection_Backward;
 		}
 
 	// todo:
@@ -1341,7 +1250,7 @@ void Turntablist::processScratch(bool inSetParameter)
 		// set target sample rate
 		m_fDesiredScratchRate = fabs(m_fScratchAmount * m_fScratchSpeed_spin * m_fBasePitch);
 		
-		if (m_nScratchMode == kScratchMode_spin)	// mode 2
+		if (m_nScratchMode == kScratchMode_Spin)	// mode 2
 		{
 			m_fPlaySampleRate = m_fDesiredScratchRate;
 			m_bScratchStop = false;
@@ -1366,7 +1275,7 @@ void Turntablist::processScratch(bool inSetParameter)
 
 					fIntervalScaler = ((double)m_nScratchInterval / (double)m_nScratchIntervalEnd) + 1.0;
 
-					m_fDesiredPosition = m_fScratchCenter + (contractparametervalue_index(kScratchAmount, m_fScratchAmount) * m_fScratchSpeed_scrub * m_fSampleRate);
+					m_fDesiredPosition = m_fScratchCenter + (contractparametervalue_index(kParam_ScratchAmount, m_fScratchAmount) * m_fScratchSpeed_scrub * m_fSampleRate);
 
 					double fDesiredDelta;
 					
@@ -1391,15 +1300,15 @@ void Turntablist::processScratch(bool inSetParameter)
 					// do something with desireddelta and scratchinterval
 
 					// figure out direction
-					double fDiff = contractparametervalue_index(kScratchAmount, m_fScratchAmount) - contractparametervalue_index(kScratchAmount, m_fLastScratchAmount);
+					double fDiff = contractparametervalue_index(kParam_ScratchAmount, m_fScratchAmount) - contractparametervalue_index(kParam_ScratchAmount, m_fLastScratchAmount);
 
 					if (fDiff < 0.0)
 					{
 						fDiff = -fDiff;
-						m_nScratchDir = kScratchDirection_backward;
+						m_nScratchDir = kScratchDirection_Backward;
 					}
 					else
-						m_nScratchDir = kScratchDirection_forward;
+						m_nScratchDir = kScratchDirection_Forward;
 
 					m_fDesiredScratchRate2 = m_fSampleRate * m_fScratchSpeed_scrub * (double)m_nScratchInterval;
 
@@ -1441,16 +1350,16 @@ void Turntablist::processScratch(bool inSetParameter)
 				{
 					m_bScratchStop = false;
 
-					double fDiff = contractparametervalue_index(kScratchAmount, m_fScratchAmount) - contractparametervalue_index(kScratchAmount, m_fLastScratchAmount);
+					double fDiff = contractparametervalue_index(kParam_ScratchAmount, m_fScratchAmount) - contractparametervalue_index(kParam_ScratchAmount, m_fLastScratchAmount);
 
 					if (fDiff < 0.0)
 					{
 						fDiff = -fDiff;
-						m_nScratchDir = kScratchDirection_backward;
+						m_nScratchDir = kScratchDirection_Backward;
 					}
 					else
 					{
-						m_nScratchDir = kScratchDirection_forward;
+						m_nScratchDir = kScratchDirection_Forward;
 					}
 
 
@@ -1525,19 +1434,19 @@ void Turntablist::processDirection()
 
 	if (m_bScratching)
 	{
-		if (m_nScratchDir == kScratchDirection_backward)
+		if (m_nScratchDir == kScratchDirection_Backward)
 			m_bPlayForward = false;
 	}
 	else
 	{
 		if (m_bWasScratching)
 		{
-			if (m_nDirection == kScratchDirection_backward)
+			if (m_nDirection == kScratchDirection_Backward)
 				m_bPlayForward = false;
 		}
 		else
 		{
-			if (m_nDirection == kScratchDirection_backward)
+			if (m_nDirection == kScratchDirection_Backward)
 				m_bPlayForward = false;
 		}
 	}
@@ -1567,12 +1476,12 @@ void Turntablist::processMidiEvent(long inCurrentEvent)
 		if (event.byte1 == kMidiCC_AllNotesOff)	// all notes off
 		{
 			stopNote(true);
-			if (m_nNoteMode == kNoteMode_reset)
+			if (m_nNoteMode == kNoteMode_Reset)
 				m_fPosition = 0.0;
 		}
 
 #ifdef USE_MIDI_CC
-		if ( (event.byte1 >= 64) && (event.byte1 <= (64 + kNumParams - 1)) )
+		if ( (event.byte1 >= 64) && (event.byte1 <= (64 + kNumParameters - 1)) )
 		{
 			long param = event.byte1 - 64;
 			long new_data = fixMidiData(param, event.byte2);
@@ -1598,10 +1507,10 @@ void Turntablist::processMidiEvent(long inCurrentEvent)
 				m_fPitchBend = 1.0;
 			else if (m_fPitchBend < 0.0)
 				m_fPitchBend = 0.0;
-			m_fPitchBend = expandparametervalue_index(kScratchAmount, m_fPitchBend);
+			m_fPitchBend = expandparametervalue_index(kParam_ScratchAmount, m_fPitchBend);
 		}
 
-		setparameter_f(kScratchAmount, m_fPitchBend);
+		setparameter_f(kParam_ScratchAmount, m_fPitchBend);
 		// XXX post notification?
 		m_fScratchAmount = m_fPitchBend;
 	}
@@ -1619,7 +1528,7 @@ void Turntablist::noteOn(long inNote, long inVelocity, long inDelta)
 	{
 		if (m_bNotePowerTrack)
 		{
-			setparameter_b(kPower, false);
+			setparameter_b(kParam_Power, false);
 			m_bPower = false;
 			m_bNoteIsOn = true;
 			setPlay(false);
@@ -1628,7 +1537,7 @@ void Turntablist::noteOn(long inNote, long inVelocity, long inDelta)
 		{
 			m_bNoteIsOn = false;
 			setPlay(false);
-			if (m_nNoteMode == kNoteMode_reset)
+			if (m_nNoteMode == kNoteMode_Reset)
 				m_fPosition = 0.0;
 			m_bPlayedReverse = false;
 		}
@@ -1638,7 +1547,7 @@ void Turntablist::noteOn(long inNote, long inVelocity, long inDelta)
 		m_bNoteIsOn = true;
 		setPlay(true);
 
-		if (m_nNoteMode == kNoteMode_reset)
+		if (m_nNoteMode == kNoteMode_Reset)
 			m_fPosition = 0.0;
 		// calculate note volume
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
@@ -1651,14 +1560,14 @@ void Turntablist::noteOn(long inNote, long inVelocity, long inDelta)
 
 		if (m_bNotePowerTrack)
 		{
-			setparameter_b(kPower, true);
+			setparameter_b(kParam_Power, true);
 			m_bPower = true;
 		}
 	}
 
 	// XXX post notification yes?
 	if (m_bPower != power_old)
-		postupdate_parameter(kPower);
+		postupdate_parameter(kParam_Power);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -1692,17 +1601,17 @@ long Turntablist::fixMidiData(long inParameterID, char inValue)
 {
 	switch (inParameterID)
 	{
-		case kPower:
-		case kNotePowerTrack:
+		case kParam_Power:
+		case kParam_NotePowerTrack:
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-		case kMute:
+		case kParam_Mute:
 #endif
-		case kPlay:
-		case kNoteMode:
-		case kDirection:
-		case kScratchMode:
-		case kLoop:
-		case kKeyTracking:
+		case kParam_PlayTrigger:
+		case kParam_NoteMode:
+		case kParam_Direction:
+		case kParam_ScratchMode:
+		case kParam_Loop:
+		case kParam_KeyTracking:
 			// <64 = 0ff, >=64 = 0n
 			if (inValue < 64)
 				return 0;

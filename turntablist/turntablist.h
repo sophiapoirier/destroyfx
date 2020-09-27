@@ -34,74 +34,76 @@ Copyright (C) 2004-2007 Sophia Poirier
 
 
 
-//////////////////////////////////////
+//#define USE_LIBSNDFILE
+
+
+//------------------------------------------------------------------------------------------
 enum
 {
-	kScratchDirection_forward = 0,
-	kScratchDirection_backward,
+	kScratchDirection_Forward,
+	kScratchDirection_Backward,
 	kNumScratchDirections
 };
 
 enum
 {
-	kScratchMode_scrub = 0,
-	kScratchMode_spin,
+	kScratchMode_Scrub,
+	kScratchMode_Spin,
 	kNumScratchModes
 };
 
 enum
 {
-	kNoteMode_reset = 0,
-	kNoteMode_resume,
+	kNoteMode_Reset,
+	kNoteMode_Resume,
 	kNumNoteModes
 };
 
 
+//------------------------------------------------------------------------------------------
 // parameters
 enum
 {
 	// scratching
-	kScratchAmount = 0,
-	kScratchMode,
-	kScratchSpeed_scrub,
-	kScratchSpeed_spin,
+	kParam_ScratchAmount,
+	kParam_ScratchMode,
+	kParam_ScratchSpeed_scrub,
+	kParam_ScratchSpeed_spin,
 
 	// turntable power
-	kPower,
-	kSpinUpSpeed,
-	kSpinDownSpeed,
-	kNotePowerTrack,
+	kParam_Power,
+	kParam_SpinUpSpeed,
+	kParam_SpinDownSpeed,
+	kParam_NotePowerTrack,
 
 	// pitch
-	kPitchShift,
-	kPitchRange,
-	kKeyTracking,
-	kRootKey,
+	kParam_PitchShift,
+	kParam_PitchRange,
+	kParam_KeyTracking,
+	kParam_RootKey,
 
 	// audio sample playback
-	kLoop,
-	kDirection,
-	kNoteMode,
+	kParam_Loop,
+	kParam_Direction,
+	kParam_NoteMode,
+	kParam_PlayTrigger,   // play/note activity
 
-	// audio output
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	kMute,
-	kVolume,
+	// audio output
+	kParam_Mute,
+	kParam_Volume,
 #endif
-	kNumParams,
-
-	kPlay   // play/note activity
+	kNumParameters
 };
 
 enum
 {
-	kTurntablistClump_scratching = kAudioUnitClumpID_System + 1,
-	kTurntablistClump_power,
-	kTurntablistClump_pitch,
-	kTurntablistClump_playback
+	kParamGroup_Scratching = kAudioUnitClumpID_System + 1,
+	kParamGroup_Playback,
+	kParamGroup_Power,
+	kParamGroup_Pitch
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
-	,
-	kTurntablistClump_output
+	, kParamGroup_Output
 #endif
 };
 
@@ -141,25 +143,26 @@ public:
 	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
 					AudioUnitParameterID inParameterID, 
 					AudioUnitParameterInfo & outParameterInfo);
-	virtual CFStringRef CopyClumpName(UInt32 inClumpID);
+	virtual CFStringRef CopyParameterGroupName(UInt32 inParameterGroupID);
 
 private:
-	OSStatus loadAudioFile(const FSRef & inFile);
-	void	processMidiEvent(long inCurrentEvent);
-	void	processScratch(bool inSetParameter = false);
-	void	processScratchStop();
-	void	processPitch();
-	void	processDirection();
-	void	calculateSpinSpeeds();
-	void	setPlay(bool inPlayState, bool inShouldSendNotification = true);
+	OSStatus loadAudioFile(const FSRef & inFileRef);
+	OSStatus createAudioFileAlias(AliasHandle * outAlias, Size * outDataSize = NULL);
+	OSStatus resolveAudioFileAlias(const AliasHandle inAlias);
+
+	void processMidiEvent(long inCurrentEvent);
+	void processScratch(bool inSetParameter = false);
+	void processScratchStop();
+	void processPitch();
+	void processDirection();
+	void calculateSpinSpeeds();
+	void setPlay(bool inPlayState, bool inShouldSendNotification = true);
 
 	void noteOn(long inNote, long inVelocity, long inDelta);
 	void stopNote(bool inStopPlay = false);
 	void playNote(bool inValue);
 	long fixMidiData(long inParameterID, char inValue);
 
-	OSStatus PostPropertyChangeNotificationSafely(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope = kAudioUnitScope_Global, AudioUnitElement inElement = 0);
 	OSStatus PostNotification_AudioFileNotFound(CFStringRef inFileName);
 
 
@@ -169,9 +172,13 @@ private:
 
 	FSRef m_fsAudioFile;
 
+#ifdef USE_LIBSNDFILE
 	float * m_fBuffer;
 	float * m_fLeft;
 	float * m_fRight;
+#else
+	AUBufferList m_auBufferList;
+#endif
 
 	// our 32-bit floating point audio info
 	int m_nNumChannels;	// 1=mono, 2=stereo, 0=yomama
@@ -267,7 +274,7 @@ private:
 //	double m_fDesiredPowerRate;
 //	double m_fTinyPowerAdjust;
 
-	DfxMutex * m_AudioFileLock;
+	DfxMutex m_AudioFileLock;
 };
 
 

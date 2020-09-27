@@ -55,20 +55,18 @@
 		8D01CCCA0486CAD60068D4B7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
 		8D01CCCE0486CAD60068D4B7 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08EA7FFBFE8413EDC02AAC07 /* Carbon.framework */; };
 		B025B98508AD317800A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B98208AD317800A9CCAE /* CAVectorUnit.cpp */; };
-		B05E3A020B938217001E5697 /* Turntablist manual.html in Resources */ = {isa = PBXBuildFile; fileRef = B05E39F90B938217001E5697 /* Turntablist manual.html */; };
-		B05E3A030B938217001E5697 /* turntablist-helper.gif in Resources */ = {isa = PBXBuildFile; fileRef = B05E39FA0B938217001E5697 /* turntablist-helper.gif */; };
-		B05E3A040B938217001E5697 /* turntablist-pitch.gif in Resources */ = {isa = PBXBuildFile; fileRef = B05E39FB0B938217001E5697 /* turntablist-pitch.gif */; };
-		B05E3A050B938217001E5697 /* turntablist-play-old.gif in Resources */ = {isa = PBXBuildFile; fileRef = B05E39FC0B938217001E5697 /* turntablist-play-old.gif */; };
-		B05E3A060B938217001E5697 /* turntablist-play.gif in Resources */ = {isa = PBXBuildFile; fileRef = B05E39FD0B938217001E5697 /* turntablist-play.gif */; };
-		B05E3A070B938217001E5697 /* turntablist-power.gif in Resources */ = {isa = PBXBuildFile; fileRef = B05E39FE0B938217001E5697 /* turntablist-power.gif */; };
-		B05E3A080B938217001E5697 /* turntablist-scratch-old.gif in Resources */ = {isa = PBXBuildFile; fileRef = B05E39FF0B938217001E5697 /* turntablist-scratch-old.gif */; };
-		B05E3A090B938217001E5697 /* turntablist-scratch.gif in Resources */ = {isa = PBXBuildFile; fileRef = B05E3A000B938217001E5697 /* turntablist-scratch.gif */; };
-		B05E3A0A0B938217001E5697 /* turntablist.gif in Resources */ = {isa = PBXBuildFile; fileRef = B05E3A010B938217001E5697 /* turntablist.gif */; };
+		B02ABB5E0B94F67F00CB674C /* Turntablist manual.html in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB500B94F67F00CB674C /* Turntablist manual.html */; };
+		B02ABB5F0B94F67F00CB674C /* turntablist-docs-helper.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB520B94F67F00CB674C /* turntablist-docs-helper.gif */; };
+		B02ABB600B94F67F00CB674C /* turntablist-docs-pitch.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB540B94F67F00CB674C /* turntablist-docs-pitch.gif */; };
+		B02ABB610B94F67F00CB674C /* turntablist-docs-play.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB560B94F67F00CB674C /* turntablist-docs-play.gif */; };
+		B02ABB620B94F67F00CB674C /* turntablist-docs-power.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB580B94F67F00CB674C /* turntablist-docs-power.gif */; };
+		B02ABB630B94F67F00CB674C /* turntablist-docs-scratch.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB5A0B94F67F00CB674C /* turntablist-docs-scratch.gif */; };
+		B02ABB640B94F67F00CB674C /* turntablist-docs-full.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB5C0B94F67F00CB674C /* turntablist-docs-full.gif */; };
+		B05F9D2B0D36A96A00F9B816 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B05F9D2A0D36A96A00F9B816 /* destroyfx.icns */; };
 		B095A84608DA290B008F3058 /* dfx-au-utilities-preset-files.c in Sources */ = {isa = PBXBuildFile; fileRef = B095A84408DA290B008F3058 /* dfx-au-utilities-preset-files.c */; };
 		B09A20F208E50851000285F6 /* au-preset-save-dialog.nib in Resources */ = {isa = PBXBuildFile; fileRef = B09A20F008E50851000285F6 /* au-preset-save-dialog.nib */; };
 		B09A20F608E5089C000285F6 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = B09A20F408E5089C000285F6 /* dfx-au-utilities.strings */; };
 		B09A229208E6E06F000285F6 /* dfxgui.nib in Resources */ = {isa = PBXBuildFile; fileRef = B09A229008E6E06F000285F6 /* dfxgui.nib */; };
-		B0A9F8FB0A9A26CE00502DE8 /* libsndfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B0A9F8FA0A9A26CE00502DE8 /* libsndfile.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -153,35 +151,32 @@
 		4932F7940680CB69006A9591 /* MusicDeviceBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MusicDeviceBase.h; sourceTree = "<group>"; };
 		4932F7990680E859006A9591 /* dfxmidi.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmidi.cpp; sourceTree = "<group>"; };
 		4932F79A0680E859006A9591 /* dfxmidi.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxmidi.h; sourceTree = "<group>"; };
-		49498FFF0684B6A400499D06 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = English; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		49498FFF0684B6A400499D06 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4974CB31068B2407001404D7 /* todo.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = todo.txt; sourceTree = "<group>"; };
 		498765290684FE69005D81FC /* help-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "help-button.png"; sourceTree = "<group>"; };
 		49C61DD0069051CC001947C2 /* dfxmutex.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxmutex.h; sourceTree = "<group>"; };
 		49C61DD206905393001947C2 /* dfxmutex.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmutex.cpp; sourceTree = "<group>"; };
-		8D01CCD10486CAD60068D4B7 /* turntablist-info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "turntablist-info.plist"; sourceTree = "<group>"; };
 		8D01CCD20486CAD60068D4B7 /* dfx Turntablist.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Turntablist.component"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B025B98208AD317800A9CCAE /* CAVectorUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAVectorUnit.cpp; sourceTree = "<group>"; };
 		B025B98308AD317800A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
 		B025B98408AD317800A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
-		B02ABBBF08F4802000D4ED33 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = "../../dfx-library/fr.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
-		B02ABBC008F4802000D4ED33 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
-		B02ABBC108F4807300D4ED33 /* nl */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = nl; path = "../../dfx-library/nl.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
-		B02ABBC208F4807300D4ED33 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
-		B05E39F90B938217001E5697 /* Turntablist manual.html */ = {isa = PBXFileReference; explicitFileType = text.html; fileEncoding = 30; path = "Turntablist manual.html"; sourceTree = "<group>"; };
-		B05E39FA0B938217001E5697 /* turntablist-helper.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = "turntablist-helper.gif"; sourceTree = "<group>"; };
-		B05E39FB0B938217001E5697 /* turntablist-pitch.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = "turntablist-pitch.gif"; sourceTree = "<group>"; };
-		B05E39FC0B938217001E5697 /* turntablist-play-old.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = "turntablist-play-old.gif"; sourceTree = "<group>"; };
-		B05E39FD0B938217001E5697 /* turntablist-play.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = "turntablist-play.gif"; sourceTree = "<group>"; };
-		B05E39FE0B938217001E5697 /* turntablist-power.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = "turntablist-power.gif"; sourceTree = "<group>"; };
-		B05E39FF0B938217001E5697 /* turntablist-scratch-old.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = "turntablist-scratch-old.gif"; sourceTree = "<group>"; };
-		B05E3A000B938217001E5697 /* turntablist-scratch.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = "turntablist-scratch.gif"; sourceTree = "<group>"; };
-		B05E3A010B938217001E5697 /* turntablist.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = turntablist.gif; sourceTree = "<group>"; };
+		B02ABB510B94F67F00CB674C /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = English; path = "en.lproj/Turntablist manual.html"; sourceTree = "<group>"; };
+		B02ABB530B94F67F00CB674C /* English */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = English; path = "en.lproj/turntablist-docs-helper.gif"; sourceTree = "<group>"; };
+		B02ABB550B94F67F00CB674C /* English */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = English; path = "en.lproj/turntablist-docs-pitch.gif"; sourceTree = "<group>"; };
+		B02ABB570B94F67F00CB674C /* English */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = English; path = "en.lproj/turntablist-docs-play.gif"; sourceTree = "<group>"; };
+		B02ABB590B94F67F00CB674C /* English */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = English; path = "en.lproj/turntablist-docs-power.gif"; sourceTree = "<group>"; };
+		B02ABB5B0B94F67F00CB674C /* English */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = English; path = "en.lproj/turntablist-docs-scratch.gif"; sourceTree = "<group>"; };
+		B02ABB5D0B94F67F00CB674C /* English */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = English; path = "en.lproj/turntablist-docs-full.gif"; sourceTree = "<group>"; };
+		B02ABBBF08F4802000D4ED33 /* French */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = French; path = "../../dfx-library/fr.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
+		B02ABBC008F4802000D4ED33 /* French */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = French; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
+		B02ABBC108F4807300D4ED33 /* Dutch */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = Dutch; path = "../../dfx-library/nl.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
+		B02ABBC208F4807300D4ED33 /* Dutch */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Dutch; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
+		B05F9D2A0D36A96A00F9B816 /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
 		B095A84408DA290B008F3058 /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B095A84508DA290B008F3058 /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
-		B09A20F108E50851000285F6 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = "../../dfx-library/en.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
-		B09A20F508E5089C000285F6 /* en */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = en; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
-		B09A229108E6E06F000285F6 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = ../../dfxgui_mac/en.lproj/dfxgui.nib; sourceTree = SOURCE_ROOT; };
-		B0A9F8FA0A9A26CE00502DE8 /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsndfile.a; path = /usr/local/lib/libsndfile.a; sourceTree = "<absolute>"; };
+		B09A20F108E50851000285F6 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = "../../dfx-library/en.lproj/au-preset-save-dialog.nib"; sourceTree = SOURCE_ROOT; };
+		B09A20F508E5089C000285F6 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = "../../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = SOURCE_ROOT; };
+		B09A229108E6E06F000285F6 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = ../../dfxgui_mac/en.lproj/dfxgui.nib; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -192,7 +187,6 @@
 				8D01CCCE0486CAD60068D4B7 /* Carbon.framework in Frameworks */,
 				4932F5EB0680132E006A9591 /* AudioToolbox.framework in Frameworks */,
 				4932F5EC0680132E006A9591 /* AudioUnit.framework in Frameworks */,
-				B0A9F8FB0A9A26CE00502DE8 /* libsndfile.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -220,7 +214,6 @@
 				4932F5EA0680132E006A9591 /* AudioUnit.framework */,
 				4932F5E90680132E006A9591 /* AudioToolbox.framework */,
 				08EA7FFBFE8413EDC02AAC07 /* Carbon.framework */,
-				B0A9F8FA0A9A26CE00502DE8 /* libsndfile.a */,
 			);
 			name = "External Frameworks and Libraries";
 			sourceTree = "<group>";
@@ -230,10 +223,10 @@
 			children = (
 				4932F60D0680136D006A9591 /* turntablist.r */,
 				4905A972067F716E00000F0C /* graphics */,
-				B05E39F80B938217001E5697 /* documentation */,
-				8D01CCD10486CAD60068D4B7 /* turntablist-info.plist */,
+				B02ABB710B94F86E00CB674C /* documentation */,
 				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 				49498FFE0684B6A400499D06 /* Localizable.strings */,
+				B05F9D2A0D36A96A00F9B816 /* destroyfx.icns */,
 				B09A20F008E50851000285F6 /* au-preset-save-dialog.nib */,
 				B09A20F408E5089C000285F6 /* dfx-au-utilities.strings */,
 				B09A229008E6E06F000285F6 /* dfxgui.nib */,
@@ -420,18 +413,16 @@
 			path = ../../dfxgui_mac;
 			sourceTree = SOURCE_ROOT;
 		};
-		B05E39F80B938217001E5697 /* documentation */ = {
+		B02ABB710B94F86E00CB674C /* documentation */ = {
 			isa = PBXGroup;
 			children = (
-				B05E39F90B938217001E5697 /* Turntablist manual.html */,
-				B05E39FA0B938217001E5697 /* turntablist-helper.gif */,
-				B05E39FB0B938217001E5697 /* turntablist-pitch.gif */,
-				B05E39FC0B938217001E5697 /* turntablist-play-old.gif */,
-				B05E39FD0B938217001E5697 /* turntablist-play.gif */,
-				B05E39FE0B938217001E5697 /* turntablist-power.gif */,
-				B05E39FF0B938217001E5697 /* turntablist-scratch-old.gif */,
-				B05E3A000B938217001E5697 /* turntablist-scratch.gif */,
-				B05E3A010B938217001E5697 /* turntablist.gif */,
+				B02ABB500B94F67F00CB674C /* Turntablist manual.html */,
+				B02ABB520B94F67F00CB674C /* turntablist-docs-helper.gif */,
+				B02ABB540B94F67F00CB674C /* turntablist-docs-pitch.gif */,
+				B02ABB560B94F67F00CB674C /* turntablist-docs-play.gif */,
+				B02ABB580B94F67F00CB674C /* turntablist-docs-power.gif */,
+				B02ABB5A0B94F67F00CB674C /* turntablist-docs-scratch.gif */,
+				B02ABB5C0B94F67F00CB674C /* turntablist-docs-full.gif */,
 			);
 			path = documentation;
 			sourceTree = "<group>";
@@ -513,15 +504,14 @@
 				B09A20F208E50851000285F6 /* au-preset-save-dialog.nib in Resources */,
 				B09A20F608E5089C000285F6 /* dfx-au-utilities.strings in Resources */,
 				B09A229208E6E06F000285F6 /* dfxgui.nib in Resources */,
-				B05E3A020B938217001E5697 /* Turntablist manual.html in Resources */,
-				B05E3A030B938217001E5697 /* turntablist-helper.gif in Resources */,
-				B05E3A040B938217001E5697 /* turntablist-pitch.gif in Resources */,
-				B05E3A050B938217001E5697 /* turntablist-play-old.gif in Resources */,
-				B05E3A060B938217001E5697 /* turntablist-play.gif in Resources */,
-				B05E3A070B938217001E5697 /* turntablist-power.gif in Resources */,
-				B05E3A080B938217001E5697 /* turntablist-scratch-old.gif in Resources */,
-				B05E3A090B938217001E5697 /* turntablist-scratch.gif in Resources */,
-				B05E3A0A0B938217001E5697 /* turntablist.gif in Resources */,
+				B02ABB5E0B94F67F00CB674C /* Turntablist manual.html in Resources */,
+				B02ABB5F0B94F67F00CB674C /* turntablist-docs-helper.gif in Resources */,
+				B02ABB600B94F67F00CB674C /* turntablist-docs-pitch.gif in Resources */,
+				B02ABB610B94F67F00CB674C /* turntablist-docs-play.gif in Resources */,
+				B02ABB620B94F67F00CB674C /* turntablist-docs-power.gif in Resources */,
+				B02ABB630B94F67F00CB674C /* turntablist-docs-scratch.gif in Resources */,
+				B02ABB640B94F67F00CB674C /* turntablist-docs-full.gif in Resources */,
+				B05F9D2B0D36A96A00F9B816 /* destroyfx.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -598,12 +588,68 @@
 			name = Localizable.strings;
 			sourceTree = SOURCE_ROOT;
 		};
+		B02ABB500B94F67F00CB674C /* Turntablist manual.html */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B02ABB510B94F67F00CB674C /* English */,
+			);
+			name = "Turntablist manual.html";
+			sourceTree = "<group>";
+		};
+		B02ABB520B94F67F00CB674C /* turntablist-docs-helper.gif */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B02ABB530B94F67F00CB674C /* English */,
+			);
+			name = "turntablist-docs-helper.gif";
+			sourceTree = "<group>";
+		};
+		B02ABB540B94F67F00CB674C /* turntablist-docs-pitch.gif */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B02ABB550B94F67F00CB674C /* English */,
+			);
+			name = "turntablist-docs-pitch.gif";
+			sourceTree = "<group>";
+		};
+		B02ABB560B94F67F00CB674C /* turntablist-docs-play.gif */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B02ABB570B94F67F00CB674C /* English */,
+			);
+			name = "turntablist-docs-play.gif";
+			sourceTree = "<group>";
+		};
+		B02ABB580B94F67F00CB674C /* turntablist-docs-power.gif */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B02ABB590B94F67F00CB674C /* English */,
+			);
+			name = "turntablist-docs-power.gif";
+			sourceTree = "<group>";
+		};
+		B02ABB5A0B94F67F00CB674C /* turntablist-docs-scratch.gif */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B02ABB5B0B94F67F00CB674C /* English */,
+			);
+			name = "turntablist-docs-scratch.gif";
+			sourceTree = "<group>";
+		};
+		B02ABB5C0B94F67F00CB674C /* turntablist-docs-full.gif */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B02ABB5D0B94F67F00CB674C /* English */,
+			);
+			name = "turntablist-docs-full.gif";
+			sourceTree = "<group>";
+		};
 		B09A20F008E50851000285F6 /* au-preset-save-dialog.nib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				B09A20F108E50851000285F6 /* en */,
-				B02ABBBF08F4802000D4ED33 /* fr */,
-				B02ABBC108F4807300D4ED33 /* nl */,
+				B09A20F108E50851000285F6 /* English */,
+				B02ABBBF08F4802000D4ED33 /* French */,
+				B02ABBC108F4807300D4ED33 /* Dutch */,
 			);
 			name = "au-preset-save-dialog.nib";
 			sourceTree = "<group>";
@@ -611,9 +657,9 @@
 		B09A20F408E5089C000285F6 /* dfx-au-utilities.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
-				B09A20F508E5089C000285F6 /* en */,
-				B02ABBC008F4802000D4ED33 /* fr */,
-				B02ABBC208F4807300D4ED33 /* nl */,
+				B09A20F508E5089C000285F6 /* English */,
+				B02ABBC008F4802000D4ED33 /* French */,
+				B02ABBC208F4807300D4ED33 /* Dutch */,
 			);
 			name = "dfx-au-utilities.strings";
 			sourceTree = "<group>";
@@ -621,7 +667,7 @@
 		B09A229008E6E06F000285F6 /* dfxgui.nib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				B09A229108E6E06F000285F6 /* en */,
+				B09A229108E6E06F000285F6 /* English */,
 			);
 			name = dfxgui.nib;
 			sourceTree = "<group>";
@@ -661,13 +707,10 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_PKGINFO_FILE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
 				INFOPLIST_FILE = "turntablist-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				LIBRARY_STYLE = BUNDLE;
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_REZFLAGS = "-d ppc_$ppc -d i386_$i386";
 				PRODUCT_NAME = "dfx Turntablist";
 				REZ_SEARCH_PATHS = (
@@ -719,13 +762,10 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_PKGINFO_FILE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
 				INFOPLIST_FILE = "turntablist-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				LIBRARY_STYLE = BUNDLE;
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_REZFLAGS = "-d ppc_$ppc -d i386_$i386";
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_NAME = "dfx Turntablist";
@@ -738,55 +778,6 @@
 				ZERO_LINK = NO;
 			};
 			name = Deployment;
-		};
-		B025B97D08AD315300A9CCAE /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				DEPLOYMENT_LOCATION = NO;
-				DEPLOYMENT_POSTPROCESSING = NO;
-				DSTROOT = /;
-				EXPORTED_SYMBOLS_FILE = turntablist.exp;
-				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_PRECOMPILE_PREFIX_HEADER = NO;
-				GCC_PREFIX_HEADER = turntablistdef.h;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"SUPPORT_AU_VERSION_1=0",
-					TARGET_API_AUDIOUNIT,
-				);
-				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
-				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
-				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
-				GCC_WARN_PEDANTIC = YES;
-				GCC_WARN_SIGN_COMPARE = YES;
-				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				GCC_WARN_UNKNOWN_PRAGMAS = NO;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_LABEL = YES;
-				GCC_WARN_UNUSED_PARAMETER = NO;
-				GCC_WARN_UNUSED_VALUE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				GENERATE_PKGINFO_FILE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
-				INFOPLIST_FILE = "turntablist-info.plist";
-				INSTALL_MODE_FLAG = "u+w,a+rX";
-				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				LIBRARY_STYLE = BUNDLE;
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
-				OTHER_REZFLAGS = "-d ppc_$ppc -d i386_$i386";
-				PRODUCT_NAME = "dfx Turntablist";
-				REZ_SEARCH_PATHS = (
-					/Developer/Examples/CoreAudio/AudioUnits/AUPublic/AUBase,
-					/System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers,
-					"../../dfx-library",
-				);
-				WARNING_CFLAGS = "-Wmost";
-				WRAPPER_EXTENSION = component;
-			};
-			name = Default;
 		};
 		B025B97F08AD315300A9CCAE /* Development */ = {
 			isa = XCBuildConfiguration;
@@ -802,13 +793,6 @@
 			};
 			name = Deployment;
 		};
-		B025B98108AD315300A9CCAE /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
-			};
-			name = Default;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -817,20 +801,18 @@
 			buildConfigurations = (
 				B025B97B08AD315300A9CCAE /* Development */,
 				B025B97C08AD315300A9CCAE /* Deployment */,
-				B025B97D08AD315300A9CCAE /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Development;
 		};
 		B025B97E08AD315300A9CCAE /* Build configuration list for PBXProject "turntablist" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B025B97F08AD315300A9CCAE /* Development */,
 				B025B98008AD315300A9CCAE /* Deployment */,
-				B025B98108AD315300A9CCAE /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Development;
 		};
 /* End XCConfigurationList section */
 	};
