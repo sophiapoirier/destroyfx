@@ -1,5 +1,5 @@
-/*
-Copyright (c) 2004 bioroid media development
+/*------------------------------------------------------------------------
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2019 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -8,8 +8,19 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Additional changes since June 15th 2004 have been made by Sophia Poirier.  
-Copyright (C) 2004-2007 Sophia Poirier
-*/
+
+This file is part of Turntablist.
+
+Turntablist is free software:  you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.
+
+You should have received a copy of the GNU General Public License 
+along with Turntablist.  If not, see <http://www.gnu.org/licenses/>.
+
+To contact the developer, use the contact form at http://destroyfx.org/
+------------------------------------------------------------------------*/
 		
 	
 // 1.1 TO DO:
@@ -18,7 +29,7 @@ Copyright (C) 2004-2007 Sophia Poirier
 // calculate new desired speed/position
 // when processcratch gets called
 // 1) missed offset = scratch interval * tiny sample rate
-// 2) new offset = blah + missed offsef
+// 2) new offset = blah + missed offset
 
 // 1.2 TO DO:
 // 1) put midi learn back in - remove hardcoded midi cc's
@@ -26,11 +37,13 @@ Copyright (C) 2004-2007 Sophia Poirier
 // 3) add spin mode - sub mode 2
 
 
-#ifndef __TURNTABLIST_H
-#define __TURNTABLIST_H
+#pragma once
+
+#include <CoreServices/CoreServices.h>
+#include <mutex>
+#include <vector>
 
 #include "dfxplugin.h"
-#include "dfxmutex.h"
 
 
 
@@ -96,9 +109,10 @@ enum
 	kNumParameters
 };
 
-enum
+enum : UInt32
 {
-	kParamGroup_Scratching = kAudioUnitClumpID_System + 1,
+	kParamGroup_BaseID = kAudioUnitClumpID_System + 1,
+	kParamGroup_Scratching = kParamGroup_BaseID,
 	kParamGroup_Playback,
 	kParamGroup_Power,
 	kParamGroup_Pitch
@@ -107,48 +121,50 @@ enum
 #endif
 };
 
-enum
+enum : dfx::PropertyID
 {
-	kTurntablistProperty_Play = 93000,
+	kTurntablistProperty_Play = dfx::kPluginProperty_EndOfList,
 	kTurntablistProperty_AudioFile
 };
 
 
 
 //------------------------------------------------------------------------------------------
-class Turntablist : public DfxPlugin
+class Turntablist final : public DfxPlugin
 {
 public:
 	Turntablist(TARGET_API_BASE_INSTANCE_TYPE inInstance);
-	virtual ~Turntablist();
 
-	virtual long initialize();
+	void dfx_PostConstructor() override;
 
-	virtual void processaudio(const float ** in, float ** out, unsigned long inNumFrames, bool replacing=true);
-	virtual void processparameters();
+	long initialize() override;
 
-	virtual ComponentResult SaveState(CFPropertyListRef * outData);
-	virtual ComponentResult RestoreState(CFPropertyListRef inData);
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
+	void processparameters() override;
 
-	virtual ComponentResult GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					UInt32 & outDataSize, Boolean & outWritable);
-	virtual ComponentResult GetProperty(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					void * outData);
-	virtual ComponentResult SetProperty(AudioUnitPropertyID inPropertyID, 
-					AudioUnitScope inScope, AudioUnitElement inElement, 
-					const void * inData, UInt32 inDataSize);
+	OSStatus SaveState(CFPropertyListRef* outData) override;
+	OSStatus RestoreState(CFPropertyListRef inData) override;
 
-	virtual ComponentResult GetParameterInfo(AudioUnitScope inScope, 
-					AudioUnitParameterID inParameterID, 
-					AudioUnitParameterInfo & outParameterInfo);
-	virtual CFStringRef CopyParameterGroupName(UInt32 inParameterGroupID);
+	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
+							 AudioUnitScope inScope, AudioUnitElement inElement, 
+							 UInt32& outDataSize, Boolean& outWritable) override;
+	OSStatus GetProperty(AudioUnitPropertyID inPropertyID, 
+						 AudioUnitScope inScope, AudioUnitElement inElement, 
+						 void* outData) override;
+	OSStatus SetProperty(AudioUnitPropertyID inPropertyID, 
+						 AudioUnitScope inScope, AudioUnitElement inElement, 
+						 void const* inData, UInt32 inDataSize) override;
+
+	OSStatus GetParameterInfo(AudioUnitScope inScope, 
+							  AudioUnitParameterID inParameterID, 
+							  AudioUnitParameterInfo& outParameterInfo) override;
+	OSStatus CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, 
+						   UInt32 inDesiredNameLength, CFStringRef* outClumpName) override;
 
 private:
-	OSStatus loadAudioFile(const FSRef & inFileRef);
-	OSStatus createAudioFileAlias(AliasHandle * outAlias, Size * outDataSize = NULL);
-	OSStatus resolveAudioFileAlias(const AliasHandle inAlias);
+	OSStatus loadAudioFile(FSRef const& inFileRef);
+	OSStatus createAudioFileAlias(AliasHandle* outAlias, Size* outDataSize = nullptr);
+	OSStatus resolveAudioFileAlias(AliasHandle const inAlias);
 
 	void processMidiEvent(long inCurrentEvent);
 	void processScratch(bool inSetParameter = false);
@@ -158,7 +174,7 @@ private:
 	void calculateSpinSpeeds();
 	void setPlay(bool inPlayState, bool inShouldSendNotification = true);
 
-	void noteOn(long inNote, long inVelocity, long inDelta);
+	void noteOn(int inNote, int inVelocity, unsigned long inOffsetFrames);
 	void stopNote(bool inStopPlay = false);
 	void playNote(bool inValue);
 	long fixMidiData(long inParameterID, char inValue);
@@ -166,16 +182,16 @@ private:
 	OSStatus PostNotification_AudioFileNotFound(CFStringRef inFileName);
 
 
-	long m_nCurrentNote;
-	long m_nCurrentVelocity;
+	int m_nCurrentNote;
+	int m_nCurrentVelocity;
 	bool m_bNoteIsOn;
 
 	FSRef m_fsAudioFile;
 
 #ifdef USE_LIBSNDFILE
-	float * m_fBuffer;
-	float * m_fLeft;
-	float * m_fRight;
+	std::vector<float> m_fBuffer;
+	float* m_fLeft = nullptr;
+	float* m_fRight = nullptr;
 #else
 	AUBufferList m_auBufferList;
 #endif
@@ -193,6 +209,7 @@ private:
 	// switches
 	bool m_bPower;	// on/off
 	bool m_bNotePowerTrack;	// scratch mode on/off
+	// TODO: use dfx::SmoothedValue for continuous parameters
 	double m_fScratchAmount;
 	double m_fLastScratchAmount;
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
@@ -219,7 +236,7 @@ private:
 	double m_fUsedSpinUpSpeed;
 
 	bool m_bPlayedReverse;
-	long m_nRootKey;
+	int m_nRootKey;
 
 	double m_fPosition;
 	double m_fPosOffset;
@@ -273,8 +290,5 @@ private:
 //	double m_fDesiredPowerRate;
 //	double m_fTinyPowerAdjust;
 
-	DfxMutex m_AudioFileLock;
+	std::mutex m_AudioFileLock;
 };
-
-
-#endif
