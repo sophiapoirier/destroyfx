@@ -264,8 +264,6 @@ public:
 private:
 	static constexpr size_t kEventQueueSize = 12000;
 	static constexpr float kStolenNoteFadeStep = 1.0f / static_cast<float>(kStolenNoteFadeDur);
-	static constexpr unsigned long kLegatoFadeDur = 39;
-	static constexpr float kLegatoFadeStep = 1.0f / static_cast<float>(kLegatoFadeDur);
 
 	void fillFrequencyTable();
 
