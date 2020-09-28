@@ -29,8 +29,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 // these are the plugin parameters:
 enum
 {
-	kAttackSlope,
-	kReleaseSlope,
+	kAttack,
+	kRelease,
 	kVelocityInfluence,
 	kFloor,
 
@@ -61,7 +61,7 @@ private:
 						   unsigned long inNumFramesToProcess, unsigned long inOffsetFrames, unsigned long inNumChannels);
 
 	// parameter values
-	float mAttackSlope_Seconds = 0.0f, mReleaseSlope_Seconds = 0.0f, mVelocityInfluence = 0.0f;
+	float mVelocityInfluence = 0.0f;
 	dfx::SmoothedValue<float> mFloor;
 
 	UnaffectedState mUnaffectedState {};

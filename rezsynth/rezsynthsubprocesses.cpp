@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -168,11 +168,10 @@ void RezSynth::processFilterOuts(float const* inAudio, float* outAudio,
 								 double& prevIn, double& prevprevIn, 
 								 double* prevOut, double* prevprevOut)
 {
-	double const noteAmp = ampEvener * static_cast<double>(getmidistate().getNoteState(currentNote).mNoteAmp);
-
 	// here we do the resonant filter equation using our filter coefficients, and related stuff
 	for (unsigned long samplecount = 0; samplecount < sampleFrames; samplecount++)
 	{
+		double const noteAmp = ampEvener * static_cast<double>(getmidistate().getNoteState(currentNote).mNoteAmp.getValue());
 		// see whether attack or release are active and fetch the output scalar
 		auto const envAmp = getmidistate().processEnvelope(currentNote);  // the attack/release scalar
 		double const envedTotalAmp = noteAmp * static_cast<double>(envAmp * mWetGain.getValue()) * mOutputGain.getValue();

@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -50,7 +50,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMS
 	mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBend * mPitchbendRange);
 
 	// only update the divisor value if we're in MIDI nudge mode or trigger mode with a note currently active
-	if ((mMidiMode == kMidiMode_Nudge) || ((mMidiMode == kMidiMode_Trigger) && getmidistate().isNoteActive()))
+	if ((mMidiMode == kMidiMode_Nudge) || ((mMidiMode == kMidiMode_Trigger) && getmidistate().isAnyNoteActive()))
 	{
 		// tell the GUI to update the divisor parameter's slider and value display
 		mDivisorWasChangedByMIDI = true;
@@ -125,7 +125,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 		// we found a valid new note, so update the divisor value if that note is still active
 		if (foundNote)
 		{
-			if (midiState.isNoteActive() &&
+			if (midiState.isAnyNoteActive() &&
 // the || !mDivisorWasChangedByHand part has to do with the fact that the note event may have been a note off
 // which pushed an older still-playing note to be first in the queue, and so we want to use that older note
 // XXX however, it is possible that the removed note wasn't first, and so in that case maybe we shouldn't do this?
@@ -185,7 +185,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 	if (mOldNote && !mDivisorWasChangedByHand)
 	{
 		// only if a note is currently active for MIDI trigger mode
-		if (midiState.isNoteActive())
+		if (midiState.isAnyNoteActive())
 		{
 			mDivisor = getDivisorParameterFromNote(midiState.getLatestNote());
 		}
@@ -216,7 +216,7 @@ void BufferOverride::heedBufferOverrideEvents(unsigned long samplePos)
 
 	// if we're in MIDI trigger mode and no notes are active and the divisor hasn't been updated 
 	// via normal parameter changes, then set divisor to its min so that we get that effect punch-out
-	if ((mMidiMode == kMidiMode_Trigger) && !midiState.isNoteActive() && !mDivisorWasChangedByHand)
+	if ((mMidiMode == kMidiMode_Trigger) && !midiState.isAnyNoteActive() && !mDivisorWasChangedByHand)
 	{
 		mDivisor = getparametermin_f(kDivisor);
 		mDivisorWasChangedByMIDI = true;

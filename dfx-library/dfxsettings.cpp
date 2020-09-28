@@ -923,7 +923,7 @@ void DfxSettings::handleAllNotesOff(int inMidiChannel, unsigned long inOffsetFra
 		return;
 	}
 
-	for (long i = 0; i < DfxMidi::kNumNotes; i++)
+	for (int i = 0; i < DfxMidi::kNumNotes; i++)
 	{
 		handleMidi_automateParams(dfx::MidiEventType::Note, inMidiChannel, i, 0, inOffsetFrames, true);
 	}

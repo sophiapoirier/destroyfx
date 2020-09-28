@@ -37,6 +37,7 @@ DfxMidi::DfxMidi()
 	fillFrequencyTable();
 
 	setResumedAttackMode(false);
+	mLegatoVoice.mEnvelope.setResumedAttackMode(true);
 
 	reset();
 }
@@ -45,10 +46,10 @@ DfxMidi::DfxMidi()
 void DfxMidi::reset()
 {
 	// zero out the note table, or what's important at least
-	for (auto& note : mNoteTable)
+	for (int noteIndex = 0; noteIndex < kNumNotesWithLegatoVoice; noteIndex++)
 	{
-		note.mVelocity = 0;
-		note.mEnvelope.setInactive();
+		getNoteStateMutable(noteIndex).mVelocity = 0;
+		getNoteStateMutable(noteIndex).mEnvelope.setInactive();
 	}
 	for (auto& noteAudio : mNoteAudioTable)
 	{
@@ -72,9 +73,10 @@ void DfxMidi::reset()
 //------------------------------------------------------------------------
 void DfxMidi::setSampleRate(double inSampleRate)
 {
-	for (auto& note : mNoteTable)
+	for (int noteIndex = 0; noteIndex < kNumNotesWithLegatoVoice; noteIndex++)
 	{
-		note.mEnvelope.setSampleRate(inSampleRate);
+		getNoteStateMutable(noteIndex).mEnvelope.setSampleRate(inSampleRate);
+		getNoteStateMutable(noteIndex).mNoteAmp.setSampleRate(inSampleRate);
 	}
 }
 
@@ -91,18 +93,27 @@ void DfxMidi::setChannelCount(unsigned long inChannelCount)
 //------------------------------------------------------------------------
 void DfxMidi::setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur)
 {
-	for (auto& note : mNoteTable)
+	for (int noteIndex = 0; noteIndex < kNumNotesWithLegatoVoice; noteIndex++)
 	{
-		note.mEnvelope.setParameters(inAttackDur, inDecayDur, inSustainLevel, inReleaseDur);
+		getNoteStateMutable(noteIndex).mEnvelope.setParameters(inAttackDur, inDecayDur, inSustainLevel, inReleaseDur);
 	}
+	mLegatoVoice.mNoteAmp.setSmoothingTime(inAttackDur);
+}
+
+//------------------------------------------------------------------------
+void DfxMidi::setEnvParameters(double inAttackDur, double inReleaseDur)
+{
+	constexpr double noDecay = 0.0;
+	constexpr double fullSustain = 1.0;
+	setEnvParameters(inAttackDur, noDecay, fullSustain, inReleaseDur);
 }
 
 //------------------------------------------------------------------------
 void DfxMidi::setEnvCurveType(DfxEnvelope::CurveType inCurveType)
 {
-	for (auto& note : mNoteTable)
+	for (int noteIndex = 0; noteIndex < kNumNotesWithLegatoVoice; noteIndex++)
 	{
-		note.mEnvelope.setCurveType(inCurveType);
+		getNoteStateMutable(noteIndex).mEnvelope.setCurveType(inCurveType);
 	}
 }
 
@@ -135,20 +146,47 @@ void DfxMidi::postprocessEvents()
 }
 
 //-----------------------------------------------------------------------------
+DfxMidi::MusicNote const& DfxMidi::getNoteState(int inMidiNote) const
+{
+	if (inMidiNote == kLegatoVoiceNoteIndex)
+	{
+		return mLegatoVoice;
+	}
+	return mNoteTable.at(inMidiNote);
+}
+
+//-----------------------------------------------------------------------------
+DfxMidi::MusicNote& DfxMidi::getNoteStateMutable(int inMidiNote)
+{
+	if (inMidiNote == kLegatoVoiceNoteIndex)
+	{
+		return mLegatoVoice;
+	}
+	return mNoteTable.at(inMidiNote);
+}
+
+//-----------------------------------------------------------------------------
+void DfxMidi::setNoteState(int inMidiNote, MusicNote const& inNoteState)
+{
+	getNoteStateMutable(inMidiNote) = inNoteState;
+}
+
+//-----------------------------------------------------------------------------
 // this function inserts a new note into the beginning of the active notes queue
 void DfxMidi::insertNote(int inMidiNote)
 {
 	// first check whether this note is already active (could happen in weird sequencers, like Max for example)
-	auto const nonmatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inMidiNote](auto const& note)
+	auto const nonMatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inMidiNote](auto const& note)
 													   {
 														   return note == inMidiNote;
 													   });
 	// if the note is not already active, shift every note up a position (normal scenario)
-	if (nonmatchPortion == mNoteQueue.cbegin())
+	if (nonMatchPortion == mNoteQueue.cbegin())
 	{
 		std::rotate(mNoteQueue.begin(), std::prev(mNoteQueue.end()), mNoteQueue.end());
 		// then place the new note into the first position
 		mNoteQueue.front() = inMidiNote;
+		mActiveLegatoMidiNote = inMidiNote;
 	}
 }
 
@@ -156,11 +194,16 @@ void DfxMidi::insertNote(int inMidiNote)
 // this function removes a note from the active notes queue
 void DfxMidi::removeNote(int inMidiNote)
 {
-	auto const nonmatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inMidiNote](auto const& note)
+	auto const nonMatchPortion = std::stable_partition(mNoteQueue.begin(), mNoteQueue.end(), [inMidiNote](auto const& note)
 													   {
 														   return note != inMidiNote;
 													   });
-	std::fill(nonmatchPortion, mNoteQueue.end(), kInvalidValue);
+	std::fill(nonMatchPortion, mNoteQueue.end(), kInvalidValue);
+
+	if (isAnyNoteActive())
+	{
+		mActiveLegatoMidiNote = getLatestNote();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -252,8 +295,7 @@ void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, unsign
 
 //-----------------------------------------------------------------------------------------
 // this function is called during process() when MIDI events need to be attended to
-void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato, 
-						 float inVelocityCurve, float inVelocityInfluence)
+void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, float inVelocityCurve, float inVelocityInfluence)
 {
 	switch (mBlockEvents[inEventNum].mStatus)
 	{
@@ -262,53 +304,31 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 		case kStatus_NoteOn:
 		{
 			auto const currentNote = mBlockEvents[inEventNum].mByte1;
-			mNoteTable[currentNote].mVelocity = mBlockEvents[inEventNum].mByte2;
-			mNoteTable[currentNote].mNoteAmp = (std::pow(kValueScalar * static_cast<float>(mNoteTable[currentNote].mVelocity), inVelocityCurve) * 
-												inVelocityInfluence) + (1.0f - inVelocityInfluence);
-			//
-			if (inLegato)  // legato is on, fade out the last note and fade in the new one, supershort
+			insertNote(currentNote);
+
+			auto const setNoteAmp = [inVelocityCurve, inVelocityInfluence, velocity = mBlockEvents[inEventNum].mByte2](MusicNote& note)
 			{
-/* XXX TODO: implement real legato
-				// this is false until we find some already active note
-				bool legatoNoteFound = false;
-				// find the previous note and set it to fade out
-				for (int notecount = 0; notecount < kNumNotes; notecount++)
+				note.mVelocity = velocity;
+				auto const curvedAmp = std::pow(kValueScalar * static_cast<float>(velocity), inVelocityCurve);
+				note.mNoteAmp = (curvedAmp * inVelocityInfluence) + (1.0f - inVelocityInfluence);
+				if (!note.mEnvelope.isActive())
 				{
-					// we want to find the active note, but not this new one
-					if ((mNoteTable[notecount].mVelocity) && (notecount != currentNote) && (mNoteTable[notecount].mEnvelope.isInactive()))
-					{
-						// if the note is currently fading in, pick up where it left off
-						if (mNoteTable[notecount].mEnvelope.getState() == DfxEnvelope::State::Attack)
-						{
-							mNoteTable[notecount].releaseSamples = mNoteTable[notecount].attackSamples;
-						}
-						// otherwise do the full fade out duration, if the note is not already fading out
-						else if (mNoteTable[notecount].mEnvelope.getState() == DfxEnvelope::State::Release)
-						{
-							mNoteTable[notecount].releaseSamples = kLegatoFadeDur;
-						}
-						mNoteTable[notecount].releaseDur = kLegatoFadeDur;
-						// we found an active note (that's the same as the new incoming note)
-						legatoNoteFound = true;
-					}
+					note.mNoteAmp.snap();
 				}
-				// don't start a new note fade-in if the currently active note is the same as this new note
-				if (!(!legatoNoteFound && mNoteTable[currentNote].mVelocity))
+			};
+
+			if (isLegatoMode())  // legato is on, fade out the last note and fade in the new one, supershort
+			{
+				setNoteAmp(mLegatoVoice);
+				if (!mLegatoVoice.mEnvelope.isActive() || (mLegatoVoice.mEnvelope.getState() == DfxEnvelope::State::Release))
 				{
-					// legato mode always uses this short fade
-					mNoteTable[currentNote].attackDur = kLegatoFadeDur;
-					// attackSamples starts counting from zero, so set it to zero
-					mNoteTable[currentNote].attackSamples = 0;
-					// calculate how far this fade must "step" through at each sample.
-					// Since legato mode overrides the fades parameter and only does cheap fades, this 
-					// isn't really necessary, but since I don't trust that everything will work right...
-					mNoteTable[currentNote].linearFadeStep = kLegatoFadeStep;
+					mLegatoVoice.mEnvelope.beginAttack();
 				}
-*/
 			}
 			//
 			else  // legato is off, so set up for the attack envelope
 			{
+				setNoteAmp(mNoteTable[currentNote]);
 				mNoteTable[currentNote].mEnvelope.beginAttack();
 				// if the note is still sounding and in release, then smooth the end of that last note
 				if (!(mNoteTable[currentNote].mEnvelope.isResumedAttackMode()) && (mNoteTable[currentNote].mEnvelope.getState() == DfxEnvelope::State::Release))
@@ -325,14 +345,18 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 		case kStatus_NoteOff:
 		{
 			auto const currentNote = mBlockEvents[inEventNum].mByte1;
-			// don't process this note off, but do remember it, if the sustain pedal is on
-			if (mSustain)
+			removeNote(currentNote);
+			if (!isLegatoMode())
 			{
-				mSustainQueue[currentNote] = true;
-			}
-			else
-			{
-				turnOffNote(currentNote, inLegato);
+				// don't process this note off, but do remember it, if the sustain pedal is on
+				if (mSustain)
+				{
+					mSustainQueue[currentNote] = true;
+				}
+				else
+				{
+					turnOffNote(currentNote);
+				}
 			}
 			break;
 		}
@@ -357,13 +381,13 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 			{
 	// --- SUSTAIN PEDAL RECEIVED ---
 				case kCC_SustainPedalOnOff:
-					if (mSustain && (mBlockEvents[inEventNum].mByte2 <= 63))
+					if (mSustain && !isLegatoMode() && (mBlockEvents[inEventNum].mByte2 <= 63))
 					{
-						for (int i = 0; i < static_cast<int>(mSustainQueue.size()); i++)
+						for (size_t i = 0; i < mSustainQueue.size(); i++)
 						{
 							if (mSustainQueue[i])
 							{
-								turnOffNote(i, inLegato);
+								turnOffNote(static_cast<int>(i));
 								mSustainQueue[i] = false;
 							}
 						}
@@ -376,11 +400,12 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 				case kCC_AllNotesOff:
 				{
 					// and zero out the note table, or what's important at least
-					for (auto& note : mNoteTable)
+					for (int noteIndex = 0; noteIndex < kNumNotesWithLegatoVoice; noteIndex++)
 					{
-						note.mVelocity = 0;
-						note.mEnvelope.setInactive();
+						getNoteStateMutable(noteIndex).mVelocity = 0;
+						getNoteStateMutable(noteIndex).mEnvelope.setInactive();
 					}
+					removeAllNotes();
 					break;
 				}
 
@@ -393,6 +418,20 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, bool inLegato
 		default:
 			break;
 	}
+}
+
+//-----------------------------------------------------------------------------
+double DfxMidi::getNoteFrequency(int inNote) const
+{
+	if (inNote == kLegatoVoiceNoteIndex)
+	{
+		inNote = mActiveLegatoMidiNote;
+	}
+	if (inNote >= 0)
+	{
+		return mNoteFrequencyTable.at(inNote);
+	}
+	return 0.0;
 }
 
 //-------------------------------------------------------------------------
@@ -416,13 +455,40 @@ double DfxMidi::calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcep
 }
 
 //-------------------------------------------------------------------------
+void DfxMidi::setLegatoMode(bool inEnable)
+{
+	if (std::exchange(mLegatoMode, inEnable) != inEnable)
+	{
+		// if we have just entered legato mode, we must end any active notes so that 
+		// they don't hang in legato mode (which ignores note-offs)
+		if (inEnable)
+		{
+			for (int noteIndex = 0; noteIndex < kNumNotes; noteIndex++)
+			{
+				turnOffNote(noteIndex);
+			}
+		}
+		else
+		{
+			turnOffNote(kLegatoVoiceNoteIndex);
+		}
+		removeAllNotes();
+		mSustainQueue.fill(false);
+	}
+}
+
+//-------------------------------------------------------------------------
 float DfxMidi::processEnvelope(int inMidiNote)
 {
-	auto const outputAmp = mNoteTable[inMidiNote].mEnvelope.process();
-	if (mNoteTable[inMidiNote].mEnvelope.getState() == DfxEnvelope::State::Dormant)
+	auto& note = getNoteStateMutable(inMidiNote);
+	auto const outputAmp = note.mEnvelope.process();
+
+	if (!note.mEnvelope.isActive())
 	{
-		mNoteTable[inMidiNote].mVelocity = 0;
+		note.mVelocity = 0;
 	}
+
+	note.mNoteAmp.inc();
 
 	return outputAmp;
 }
@@ -430,6 +496,7 @@ float DfxMidi::processEnvelope(int inMidiNote)
 //-------------------------------------------------------------------------
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by sloping down from the last sample outputted by the note
+// TODO: should this accommodate the legato voice?
 void DfxMidi::processSmoothingOutputSample(float* const* outAudio, unsigned long inNumFrames, int inMidiNote)
 {
 	auto& noteAudio = mNoteAudioTable[inMidiNote];
@@ -453,6 +520,7 @@ void DfxMidi::processSmoothingOutputSample(float* const* outAudio, unsigned long
 //-------------------------------------------------------------------------
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by fading out the samples stored in the tail buffers
+// TODO: should this accommodate the legato voice?
 void DfxMidi::processSmoothingOutputBuffer(float* const* outAudio, unsigned long inNumFrames, int inMidiNote)
 {
 	auto& noteAudio = mNoteAudioTable[inMidiNote];
@@ -498,17 +566,17 @@ bool DfxMidi::incNumEvents()
 }
 
 //-----------------------------------------------------------------------------------------
-void DfxMidi::turnOffNote(int inMidiNote, bool inLegato)
+void DfxMidi::turnOffNote(int inMidiNote)
 {
-	// legato is off (note-offs are ignored when it's on)
-	// go into the note release if legato is off and the note isn't already off
-	if (!inLegato && (mNoteTable[inMidiNote].mVelocity > 0))
+	auto& note = getNoteStateMutable(inMidiNote);
+	// go into the note release if the note isn't already off
+	if (note.mVelocity > 0)
 	{
-		mNoteTable[inMidiNote].mEnvelope.beginRelease();
+		note.mEnvelope.beginRelease();
 		// make sure to turn the note off now if there is no release
-		if (mNoteTable[inMidiNote].mEnvelope.isInactive())
+		if (!note.mEnvelope.isActive())
 		{
-			mNoteTable[inMidiNote].mVelocity = 0;
+			note.mVelocity = 0;
 		}
 	}
 }

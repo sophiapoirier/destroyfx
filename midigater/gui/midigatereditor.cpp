@@ -33,15 +33,15 @@ enum
 {
 	// positions
 	kSliderX = 13,
-	kAttackSlopeSliderY = 37,
-	kReleaseSlopeSliderY = 77,
+	kAttackSliderY = 37,
+	kReleaseSliderY = 77,
 	kVelocityInfluenceSliderY = 117,
 	kFloorSliderY = 156,
 	kSliderWidth = 289 - kSliderX,
 
 	kDisplayX = 333+1,
-	kAttackSlopeDisplayY = kAttackSlopeSliderY + 1,
-	kReleaseSlopeDisplayY = kReleaseSlopeSliderY + 1,
+	kAttackDisplayY = kAttackSliderY + 1,
+	kReleaseDisplayY = kReleaseSliderY + 1,
 	kVelocityInfluenceDisplayY = kVelocityInfluenceSliderY + 1,
 	kFloorDisplayY = kFloorSliderY + 2,
 	kDisplayWidth = 114,
@@ -63,7 +63,7 @@ constexpr float kValueTextSize = 10.5f;
 //-----------------------------------------------------------------------------
 // parameter value display text conversion functions
 
-bool slopeDisplayProc(float inValue, char* outText, void*)
+bool envelopeDisplayProc(float inValue, char* outText, void*)
 {
 	long const thousands = static_cast<long>(inValue) / 1000;
 	auto const remainder = std::fmod(inValue, 1000.0f);
@@ -103,8 +103,8 @@ long MIDIGaterEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
-	auto const slopeSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-slope.png");
-	auto const slopeSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-slope-glowing.png");
+	auto const envelopeSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-slope.png");
+	auto const envelopeSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-slope-glowing.png");
 	auto const floorSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-floor.png");
 	auto const floorSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-floor-glowing.png");
 	auto const velocityInfluenceSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-velocity-influence.png");
@@ -117,13 +117,13 @@ long MIDIGaterEditor::OpenEditor()
 
 	// --- sliders ---
 
-	// attack slope
-	pos.set(kSliderX, kAttackSlopeSliderY, kSliderWidth, slopeSliderHandleImage->getHeight());
-	emplaceControl<DGSlider>(this, kAttackSlope, pos, dfx::kAxis_Horizontal, slopeSliderHandleImage)->setAlternateHandle(slopeSliderHandleImage_glowing);
+	// attack duration
+	pos.set(kSliderX, kAttackSliderY, kSliderWidth, envelopeSliderHandleImage->getHeight());
+	emplaceControl<DGSlider>(this, kAttack, pos, dfx::kAxis_Horizontal, envelopeSliderHandleImage)->setAlternateHandle(envelopeSliderHandleImage_glowing);
 
-	// release slope
-	pos.set(kSliderX, kReleaseSlopeSliderY, kSliderWidth, slopeSliderHandleImage->getHeight());
-	emplaceControl<DGSlider>(this, kReleaseSlope, pos, dfx::kAxis_Horizontal, slopeSliderHandleImage)->setAlternateHandle(slopeSliderHandleImage_glowing);
+	// release duration
+	pos.set(kSliderX, kReleaseSliderY, kSliderWidth, envelopeSliderHandleImage->getHeight());
+	emplaceControl<DGSlider>(this, kRelease, pos, dfx::kAxis_Horizontal, envelopeSliderHandleImage)->setAlternateHandle(envelopeSliderHandleImage_glowing);
 
 	// velocity influence
 	pos.set(kSliderX, kVelocityInfluenceSliderY, kSliderWidth, velocityInfluenceSliderHandleImage->getHeight());
@@ -136,22 +136,22 @@ long MIDIGaterEditor::OpenEditor()
 
 	// --- text displays ---
 
-	// attack slope
-	pos.set(kDisplayX, kAttackSlopeDisplayY, kDisplayWidthHalf, kDisplayHeight);
+	// attack duration
+	pos.set(kDisplayX, kAttackDisplayY, kDisplayWidthHalf, kDisplayHeight);
 	auto label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueTextSize, kValueTextColor, kValueTextFont);
-	label->setText(getparametername(kAttackSlope));
+	label->setText(getparametername(kAttack));
 	//
 	pos.offset(kDisplayWidthHalf, 0);
-	emplaceControl<DGTextDisplay>(this, kAttackSlope, pos, slopeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, 
+	emplaceControl<DGTextDisplay>(this, kAttack, pos, envelopeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, 
 								  kValueTextSize, kValueTextColor, kValueTextFont);
 
-	// release slope
-	pos.set(kDisplayX, kReleaseSlopeDisplayY, kDisplayWidthHalf, kDisplayHeight);
+	// release duration
+	pos.set(kDisplayX, kReleaseDisplayY, kDisplayWidthHalf, kDisplayHeight);
 	label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueTextSize, kValueTextColor, kValueTextFont);
-	label->setText(getparametername(kReleaseSlope));
+	label->setText(getparametername(kRelease));
 	//
 	pos.offset(kDisplayWidthHalf, 0);
-	emplaceControl<DGTextDisplay>(this, kReleaseSlope, pos, slopeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, 
+	emplaceControl<DGTextDisplay>(this, kRelease, pos, envelopeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, 
 								  kValueTextSize, kValueTextColor, kValueTextFont);
 
 	// velocity influence

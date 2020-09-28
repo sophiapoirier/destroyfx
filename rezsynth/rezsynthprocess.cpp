@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2019  Sophia Poirier
+Copyright (C) 2001-2020  Sophia Poirier
 
 This file is part of Rez Synth.
 
@@ -75,7 +75,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 			eventcount++;
 			checkForNewNote(eventcount, numChannels);  // and attend to related issues if necessary
 			// take in the effects of the next event
-			getmidistate().heedEvents(eventcount, mPitchBendRange, mLegato, mVelocityCurve, mVelocityInfluence);
+			getmidistate().heedEvents(eventcount, mPitchBendRange, mVelocityCurve, mVelocityInfluence);
 			continue;
 		}
 
@@ -85,7 +85,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 		// these will increment for every note on every channel, so restore before iterations
 		auto const entryOutputGain = mOutputGain;
 		auto const entryWetGain = mWetGain;
-		for (int notecount = 0; notecount < DfxMidi::kNumNotes; notecount++)
+		for (int notecount = 0; notecount < DfxMidi::kNumNotesWithLegatoVoice; notecount++)
 		{
 			// only go into the output processing cycle if a note is happening
 			if (getmidistate().getNoteState(notecount).mVelocity)
@@ -165,7 +165,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 
 		checkForNewNote(eventcount, numChannels);  // and attend to related issues if necessary
 		// take in the effects of the next event
-		getmidistate().heedEvents(eventcount, mPitchBendRange, mLegato, mVelocityCurve, mVelocityInfluence);
+		getmidistate().heedEvents(eventcount, mPitchBendRange, mVelocityCurve, mVelocityInfluence);
 
 	} while (eventcount < getmidistate().getBlockEventCount());
 

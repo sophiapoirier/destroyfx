@@ -30,13 +30,16 @@ Sophia's Destroy FX MIDI stuff
 #include <vector>
 
 #include "dfxenvelope.h"
+#include "dfxsmoothedvalue.h"
 
 
 //-----------------------------------------------------------------------------
 class DfxMidi
 {
 public:
-	static constexpr long kNumNotes = 128;
+	static constexpr int kNumNotes = 128;
+	static constexpr int kNumNotesWithLegatoVoice = kNumNotes + 1;
+	static constexpr int kLegatoVoiceNoteIndex = kNumNotesWithLegatoVoice - 1;
 	static constexpr int kMaxValue = 0x7F;
 	static constexpr int kMidpointValue = 64;
 	static constexpr float kValueScalar = 1.0f / static_cast<float>(kMaxValue);
@@ -137,11 +140,11 @@ public:
 	// this holds MIDI event information
 	struct Event
 	{
-		int mStatus;  // the event status MIDI byte
-		int mByte1;  // the first MIDI data byte
-		int mByte2;  // the second MIDI data byte
-		unsigned long mOffsetFrames;  // the delta offset (the sample position in the current block where the event occurs)
-		int mChannel;  // the MIDI channel
+		int mStatus = 0;  // the event status MIDI byte
+		int mByte1 = 0;  // the first MIDI data byte
+		int mByte2 = 0;  // the second MIDI data byte
+		unsigned long mOffsetFrames = 0;  // the delta offset (the sample position in the current block where the event occurs)
+		int mChannel = 0;  // the MIDI channel
 	};
 
 	//-----------------------------------------------------------------------------
@@ -149,7 +152,7 @@ public:
 	struct MusicNote
 	{
 		int mVelocity = 0;  // note velocity (7-bit MIDI value)
-		float mNoteAmp = 0.0f;  // the gain for the note, scaled with velocity, curve, and influence
+		dfx::SmoothedValue<float> mNoteAmp {0.0};  // the gain for the note, scaled with velocity, curve, and influence
 		DfxEnvelope mEnvelope;
 	};
 
@@ -157,7 +160,7 @@ public:
 	{
 		MusicNoteAudio() = default;
 		~MusicNoteAudio() = default;
-		// deleting copy assignment and construction to prevent accidental dynamic allocation in realtime context
+		// deleting copy operations to prevent accidental dynamic allocation in realtime context
 		MusicNoteAudio(MusicNoteAudio const&) = delete;
 		MusicNoteAudio& operator=(MusicNoteAudio const&) = delete;
 		MusicNoteAudio(MusicNoteAudio&&) = default;
@@ -173,7 +176,8 @@ public:
 	void reset();  // resets the variables
 	void setSampleRate(double inSampleRate);
 	void setChannelCount(unsigned long inChannelCount);
-	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);
+	void setEnvParameters(double inAttackDur, double inDecayDur, double inSustainLevel, double inReleaseDur);  // ADSR
+	void setEnvParameters(double inAttackDur, double inReleaseDur);  // AR
 	void setEnvCurveType(DfxEnvelope::CurveType inCurveType);
 	void setResumedAttackMode(bool inNewMode);
 
@@ -190,8 +194,7 @@ public:
 	void postprocessEvents();
 
 	// this is where new MIDI events are reckoned with during audio processing
-	void heedEvents(long inEventNum, double inPitchBendRange, bool inLegato, 
-					float inVelocityCurve, float inVelocityInfluence);
+	void heedEvents(long inEventNum, double inPitchBendRange, float inVelocityCurve, float inVelocityInfluence);
 
 	auto getBlockEventCount() const noexcept
 	{
@@ -207,26 +210,20 @@ public:
 		mBlockEvents.at(inIndex).mStatus = kInvalidValue;
 	}
 
-	auto const& getNoteState(int inMidiNote) const
-	{
-		return mNoteTable.at(inMidiNote);
-	}
+	MusicNote const& getNoteState(int inMidiNote) const;
 	// XXX TODO: this is a hack just for Rez Synth, maybe should rethink
-	void setNoteState(int inMidiNote, MusicNote const& inNoteState)
-	{
-		mNoteTable.at(inMidiNote) = inNoteState;
-	}
+	void setNoteState(int inMidiNote, MusicNote const& inNoteState);
 
 	// manage the ordered queue of active MIDI notes
 	void insertNote(int inMidiNote);
 	void removeNote(int inMidiNote);
 	void removeAllNotes();
 	// query the ordered queue of active MIDI notes
-	bool isNoteActive() const
+	bool isAnyNoteActive() const noexcept
 	{
 		return mNoteQueue.front() >= 0;
 	}
-	auto getLatestNote() const
+	auto getLatestNote() const noexcept
 	{
 		return mNoteQueue.front();
 	}
@@ -236,10 +233,7 @@ public:
 		return (inMidiStatus == kStatus_NoteOn) || (inMidiStatus == kStatus_NoteOff);
 	}
 
-	auto getNoteFrequency(int inNote) const
-	{
-		return mNoteFrequencyTable.at(inNote);
-	}
+	double getNoteFrequency(int inNote) const;
 
 	auto getPitchBend() const noexcept
 	{
@@ -248,6 +242,12 @@ public:
 
 	// returns -1.0 to 1.0 normalized value 
 	static double calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcept;
+
+	bool isLegatoMode() const noexcept
+	{
+		return mLegatoMode;
+	}
+	void setLegatoMode(bool inEnable);
 
 	// this calculates fade scalars if attack, decay, or release are happening
 	float processEnvelope(int inMidiNote);
@@ -271,11 +271,18 @@ private:
 
 	bool incNumEvents();  // increment the block events counter, safely
 
-	void turnOffNote(int inMidiNote, bool inLegato);
+	MusicNote& getNoteStateMutable(int inMidiNote);
+	void turnOffNote(int inMidiNote);
 
 	std::array<MusicNote, kNumNotes> mNoteTable {};  // a table with important data about each note
 	std::array<MusicNoteAudio, kNumNotes> mNoteAudioTable {};
 	std::array<double, kNumNotes> mNoteFrequencyTable {};  // a table of the frequency corresponding to each MIDI note
+
+	// legato is handled by its own voice/note instance, separate from the array MIDI note numbers
+	MusicNote mLegatoVoice;
+	// therefore the MIDI note number associated with the voice is stored independently,
+	// given that it can change with new note events, but only applies to the single voice
+	int mActiveLegatoMidiNote = kInvalidValue;
 
 	std::array<int, kNumNotes> mNoteQueue {};  // a chronologically ordered queue of all active notes
 	std::array<Event, kEventQueueSize> mBlockEvents {};  // the new MIDI events for a given processing block
@@ -285,8 +292,6 @@ private:
 
 	std::array<bool, kNumNotes> mSustainQueue {};  // a queue of note-offs for when the sustain pedal is active
 
-	// pick up where the release left off, if it's still releasing
-//	bool mLazyAttackMode;
-	// sustain pedal is active
-	bool mSustain = false;
+	bool mSustain = false;  // whether sustain pedal is active
+	bool mLegatoMode = false;
 };

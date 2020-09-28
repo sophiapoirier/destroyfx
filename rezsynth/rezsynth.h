@@ -141,8 +141,8 @@ private:
 		FadeOut
 	};
 
-	using ChannelsOfNotesOfBands = std::vector<std::array<std::array<double, kMaxBands>, DfxMidi::kNumNotes>>;
-	void clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands)
+	using ChannelsOfNotesOfBands = std::vector<std::array<std::array<double, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice>>;
+	static void clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands)
 	{
 		for (auto& notesOfBands : channelsOfNotesOfBands)
 		{
@@ -172,14 +172,14 @@ private:
 	dfx::SmoothedValue<float> mDryGain, mWetGain;
 	int mBandwidthMode {}, mNumBands = 1, mSepMode {}, mScaleMode {}, mResonAlgorithm {}, mDryWetMixMode {};
 	DfxEnvelope::CurveType mFadeType {};
-	bool mLegato = false, mFoldover = false, mWiseAmp = false;
+	bool mFoldover = false, mWiseAmp = false;
 
 	std::array<double, kMaxBands> mInputAmp;  // gains for the current sample input, for each band
 	std::array<double, kMaxBands> mPrevOutCoeff;  // coefficients for the 1-sample delayed ouput, for each band
 	std::array<double, kMaxBands> mPrevPrevOutCoeff;  // coefficients for the 2-sample delayed ouput, for each band
 	std::array<double, kMaxBands> mPrevPrevInCoeff;  // coefficients for the 2-sample delayed input, for each band
 	ChannelsOfNotesOfBands mPrevOutValue, mPrevPrevOutValue;  // arrays of previous resonator output values
-	std::vector<std::array<double, DfxMidi::kNumNotes>> mPrevInValue, mPrevPrevInValue;  // arrays of previous audio input values
+	std::vector<std::array<double, DfxMidi::kNumNotesWithLegatoVoice>> mPrevInValue, mPrevPrevInValue;  // arrays of previous audio input values
 
 	double mPiDivSR = 0.0, mTwoPiDivSR = 0.0, mNyquist = 0.0;  // values that are needed when calculating coefficients
 

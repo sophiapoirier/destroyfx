@@ -124,6 +124,8 @@ void dfx::SmoothedValue<T>::setSmoothingTime(double inSmoothingTimeInSeconds)
 
 	mSmoothDur_seconds = inSmoothingTimeInSeconds;
 	mSmoothDur_samples = static_cast<size_t>(std::max(mSmoothDur_seconds * mSampleRate, 0.0));
+
+	setValueNow(mTargetValue);
 }
 
 //-----------------------------------------------------------------------------

@@ -29,8 +29,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 constexpr long kUnaffectedFadeDur = 18;
 constexpr float kUnaffectedFadeStep = 1.0f / static_cast<float>(kUnaffectedFadeDur);
 
-constexpr bool kUseLegato = false;
-
 
 // this macro does boring entry point stuff for us
 DFX_EFFECT_ENTRY(MIDIGater)
@@ -41,8 +39,8 @@ DFX_EFFECT_ENTRY(MIDIGater)
 MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, 1)
 {
-	initparameter_f(kAttackSlope, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kReleaseSlope, dfx::MakeParameterNames(dfx::kParameterNames_Release), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kAttack, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kRelease, dfx::MakeParameterNames(dfx::kParameterNames_Release), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_f(kVelocityInfluence, dfx::MakeParameterNames(dfx::kParameterNames_VelocityInfluence), 0.0, 1.0, 0.0, 1.0, DfxParam::Unit::Scalar);
 	initparameter_f(kFloor, dfx::MakeParameterNames(dfx::kParameterNames_Floor), 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 
@@ -66,17 +64,15 @@ void MIDIGater::reset()
 //-----------------------------------------------------------------------------------------
 void MIDIGater::processparameters()
 {
-	mAttackSlope_Seconds = getparameter_f(kAttackSlope) * 0.001;
-	mReleaseSlope_Seconds = getparameter_f(kReleaseSlope) * 0.001;
+	auto const attack_seconds = getparameter_f(kAttack) * 0.001;
+	auto const release_seconds = getparameter_f(kRelease) * 0.001;
 	mVelocityInfluence = getparameter_f(kVelocityInfluence);
 	if (auto const value = getparameterifchanged_f(kFloor))
 	{
 		mFloor = *value;
 	}
 
-	constexpr float kNoDecay = 0.0f;
-	constexpr float kFullSustain = 1.0f;
-	getmidistate().setEnvParameters(mAttackSlope_Seconds, kNoDecay, kFullSustain, mReleaseSlope_Seconds);
+	getmidistate().setEnvParameters(attack_seconds, release_seconds);
 }
 
 
@@ -86,6 +82,9 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
 
+
+	constexpr double pitchBendRange = 0.0;
+	constexpr float velocityCurve = 1.0f;
 
 	// counter for the number of MIDI events this block
 	// start at -1 because the beginning stuff has to happen
@@ -113,7 +112,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 		{
 			eventCount++;
 			// take in the effects of the next event
-			getmidistate().heedEvents(eventCount, 0.0, kUseLegato, 1.0f, mVelocityInfluence);
+			getmidistate().heedEvents(eventCount, pitchBendRange, velocityCurve, mVelocityInfluence);
 			continue;
 		}
 
@@ -130,7 +129,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 				{
 					// see whether attack or release are active and fetch the output scalar
 					float envAmp = getmidistate().processEnvelope(noteCount);  // the attack/release scalar
-					envAmp *= getmidistate().getNoteState(noteCount).mNoteAmp;  // scale by key velocity
+					envAmp *= getmidistate().getNoteState(noteCount).mNoteAmp.getValue();  // scale by key velocity
 					for (unsigned long ch = 0; ch < numChannels; ch++)
 					{
 						outAudio[ch][sampleCount] += inAudio[ch][sampleCount] * envAmp;
@@ -164,7 +163,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 		currentBlockPosition = getmidistate().getBlockEvent(eventCount).mOffsetFrames;
 
 		// take in the effects of the next event
-		getmidistate().heedEvents(eventCount, 0.0, kUseLegato, 1.0f, mVelocityInfluence);
+		getmidistate().heedEvents(eventCount, pitchBendRange, velocityCurve, mVelocityInfluence);
 
 	} while (eventCount < getmidistate().getBlockEventCount());
 }

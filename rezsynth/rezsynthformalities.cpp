@@ -163,7 +163,7 @@ void RezSynth::processparameters()
 	mBandwidthAmount_Hz = getparameter_f(kBandwidthAmount_Hz);
 	mBandwidthAmount_Q = getparameter_f(kBandwidthAmount_Q);
 	mBandwidthMode = getparameter_i(kBandwidthMode);
-	mNumBands = std::min(getparameter_i(kNumBands), kMaxBands);
+	mNumBands = std::clamp(getparameter_i(kNumBands), getparametermin_i(kNumBands), kMaxBands);
 	mSepAmount_Octaval = getparameter_f(kSepAmount_Octaval) / 12.0;
 	mSepAmount_Linear = getparameter_f(kSepAmount_Linear);
 	mSepMode = getparameter_i(kSepMode);
@@ -173,7 +173,7 @@ void RezSynth::processparameters()
 	mSustain = getparameter_scalar(kEnvSustain);
 	mRelease_Seconds = getparameter_f(kEnvRelease) * 0.001;
 	mFadeType = static_cast<DfxEnvelope::CurveType>(getparameter_i(kFadeType));
-	mLegato = getparameter_b(kLegato);
+	getmidistate().setLegatoMode(getparameter_b(kLegato));
 	mVelocityInfluence = getparameter_scalar(kVelocityInfluence);
 	mVelocityCurve = getparameter_f(kVelocityCurve);
 	mPitchBendRange = getparameter_f(kPitchBendRange);
@@ -240,32 +240,4 @@ void RezSynth::processparameters()
 	{
 		getmidistate().setEnvCurveType(mFadeType);
 	}
-
-/* XXX implement real legato
-	// if we have just exited legato mode, we must end any active notes so that 
-	// they don't hang in legato mode (remember, legato mode ignores note-offs)
-	if (getparameterchanged(kLegato) && !mLegato)
-	{
-		for (int notecount = 0; notecount < DfxMidi::kNumNotes; notecount++)
-		{
-			if (getmidistate().getNoteState(notecount).mVelocity)
-			{
-				// if the note is currently fading in, pick up where it left off
-				if (getmidistate().getNoteState(notecount).attackDur)
-				{
-					getmidistate().getNoteState(notecount).releaseSamples = getmidistate().getNoteState(notecount).attackSamples;
-				}
-				// otherwise do the full fade out duration (if the note is not already fading out)
-				else if ((getmidistate().getNoteState(notecount).releaseSamples) <= 0)
-				{
-					getmidistate().noteTable[notecount].releaseSamples = DfxMidi::kLegatoFadeDur;
-				}
-				getmidistate().getNoteState(notecount).releaseDur = DfxMidi::kLegatoFadeDur;
-				getmidistate().getNoteState(notecount).attackDur = 0;
-				getmidistate().getNoteState(notecount).attackSamples = 0;
-				getmidistate().getNoteState(notecount).linearFadeStep = DfxMidi::kLegatoFadeStep;
-			}
-		}
-	}
-*/
 }
