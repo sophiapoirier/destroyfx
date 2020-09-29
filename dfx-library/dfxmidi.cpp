@@ -146,6 +146,12 @@ void DfxMidi::postprocessEvents()
 }
 
 //-----------------------------------------------------------------------------
+bool DfxMidi::isNoteActive(int inMidiNote) const
+{
+	return (getNoteState(inMidiNote).mVelocity != 0);
+}
+
+//-----------------------------------------------------------------------------
 DfxMidi::MusicNote const& DfxMidi::getNoteState(int inMidiNote) const
 {
 	if (inMidiNote == kLegatoVoiceNoteIndex)

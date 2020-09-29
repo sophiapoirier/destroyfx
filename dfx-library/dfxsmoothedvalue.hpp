@@ -99,16 +99,23 @@ bool dfx::SmoothedValue<T>::isSmoothing() const noexcept
 template <typename T>
 void dfx::SmoothedValue<T>::inc() noexcept
 {
+	inc(1);
+}
+
+//-----------------------------------------------------------------------------
+template <typename T>
+void dfx::SmoothedValue<T>::inc(size_t inCount) noexcept
+{
 	if (isSmoothing())
 	{
-		mSmoothCount++;
+		mSmoothCount += inCount;
 	}
 	if (isSmoothing())
 	{
 		// XXX For long smoothing times this could be accumulating significant
 		// error (and then jumping once we hit mSmoothDur_samples. Would be
 		// better (but slower) to compute this as like ((1 - f) * old) + (f * new).
-		mCurrentValue += mValueStep;
+		mCurrentValue += mValueStep * static_cast<T>(inCount);
 	}
 	else
 	{

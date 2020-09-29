@@ -28,6 +28,11 @@ To contact the author, use the contact form at http://destroyfx.org/
 // this function tries to even out the wildly erratic resonant amplitudes
 double RezSynth::calculateAmpEvener(int currentNote) const
 {
+	if (!mWiseAmp)
+	{
+		return 1.0;
+	}
+
 	double const baseFreq = getmidistate().getNoteFrequency(currentNote) * getmidistate().getPitchBend();
 	auto const noteBandwidth = getBandwidthForFreq(baseFreq);
 	double ampEvener = 1.0;
@@ -63,24 +68,23 @@ double RezSynth::calculateAmpEvener(int currentNote) const
 // 1 for the current sample input and 2 for the last 2 samples.
 int RezSynth::calculateCoefficients(int currentNote)
 {
-	double const baseFreq = getmidistate().getNoteFrequency(currentNote) * getmidistate().getPitchBend();
+	mBaseFreq[currentNote] = getmidistate().getNoteFrequency(currentNote) * getmidistate().getPitchBend();
+	auto const baseFreq = mBaseFreq[currentNote].getValue();
 
 	for (int bandcount = 0; bandcount < mNumBands; bandcount++)
 	{
 // GET THE CURRENT BAND'S CENTER FREQUENCY
-		double bandCenterFreq {};
-		// do logarithmic band separation, octave-style
-		if (mSepMode == kSeparationMode_Octaval)
+		mBandCenterFreq[currentNote][bandcount] = [this, baseFreq, bandcount]()
 		{
-			bandCenterFreq = baseFreq * std::pow(2.0, mSepAmount_Octaval * bandcount);
-		}
-		// do linear band separation, hertz-style
-		else
-		{
-			bandCenterFreq = baseFreq + (baseFreq * mSepAmount_Linear * bandcount);
-		}
-
-		auto const bandBandwidth = getBandwidthForFreq(bandCenterFreq);
+			// do logarithmic band separation, octave-style
+			if (mSepMode == kSeparationMode_Octaval)
+			{
+				return baseFreq * std::pow(2.0, mSepAmount_Octaval * bandcount);
+			}
+			// do linear band separation, hertz-style
+			return baseFreq + (baseFreq * mSepAmount_Linear * bandcount);
+		}();
+		auto const bandCenterFreq = mBandCenterFreq[currentNote][bandcount].getValue();
 
 // SHRINK THE NUMBER OF BANDS IF MISTAKES ARE "OFF" AND THE NEXT BAND WILL EXCEED THE NYQUIST
 		if (!mFoldover && (bandCenterFreq > mNyquist))
@@ -88,11 +92,13 @@ int RezSynth::calculateCoefficients(int currentNote)
 			return bandcount;  // there's no need to do the calculations if we won't be using this or the remaining bands
 		}
 
+		mBandBandwidth[currentNote][bandcount] = getBandwidthForFreq(bandCenterFreq);
+	
 // CALCULATE THE COEFFICIENTS FOR THE 2 DELAYED INPUTS IN THE FILTER
 // and CALCULATE THE COEFFICIENT FOR THE CURRENT INPUT SAMPLE IN THE FILTER
 		// kScaleMode_None -> no scaling; input gain = 1
 		mInputAmp[bandcount] = 1.0;
-		auto const r = std::exp(bandBandwidth * -mPiDivSR);
+		auto const r = std::exp(mBandBandwidth[currentNote][bandcount].getValue() * -mPiDivSR);
 		switch (mResonAlgorithm)
 		{
 			// based on the reson opcode in Csound
@@ -100,7 +106,7 @@ int RezSynth::calculateCoefficients(int currentNote)
 			default:
 				// this value is usually just approaching 1 from below (i.e. 0.999) but gets smaller 
 				// and perhaps approaches 0 as bandwidth and/or the center freq distance from base freq grow
-				mPrevPrevOutCoeff[bandcount] = std::exp(bandCenterFreq/baseFreq * bandBandwidth * -mTwoPiDivSR);
+				mPrevPrevOutCoeff[bandcount] = std::exp((bandCenterFreq / baseFreq) * mBandBandwidth[currentNote][bandcount].getValue() * -mTwoPiDivSR);
 				// this value, at 44.1 kHz, moves in a curve from 2 to -2 as the center frequency goes from 0 to ~20 kHz
 				mPrevOutCoeff[bandcount] = mPrevPrevOutCoeff[bandcount] * 4.0 * std::cos(bandCenterFreq * mTwoPiDivSR) / (mPrevPrevOutCoeff[bandcount] + 1.0);
 				// unused in this algorithm
@@ -163,7 +169,7 @@ int RezSynth::calculateCoefficients(int currentNote)
 //-----------------------------------------------------------------------------------------
 // This function writes the filtered audio output.
 void RezSynth::processFilterOuts(float const* inAudio, float* outAudio, 
-								 unsigned long sampleFrames, double ampEvener, 
+								 unsigned long sampleFrames, 
 								 int currentNote, int numBands, 
 								 double& prevIn, double& prevprevIn, 
 								 double* prevOut, double* prevprevOut)
@@ -171,7 +177,7 @@ void RezSynth::processFilterOuts(float const* inAudio, float* outAudio,
 	// here we do the resonant filter equation using our filter coefficients, and related stuff
 	for (unsigned long samplecount = 0; samplecount < sampleFrames; samplecount++)
 	{
-		double const noteAmp = ampEvener * static_cast<double>(getmidistate().getNoteState(currentNote).mNoteAmp.getValue());
+		double const noteAmp = mAmpEvener[currentNote].getValue() * static_cast<double>(getmidistate().getNoteState(currentNote).mNoteAmp.getValue());
 		// see whether attack or release are active and fetch the output scalar
 		auto const envAmp = getmidistate().processEnvelope(currentNote);  // the attack/release scalar
 		double const envedTotalAmp = noteAmp * static_cast<double>(envAmp * mWetGain.getValue()) * mOutputGain.getValue();
@@ -194,39 +200,9 @@ void RezSynth::processFilterOuts(float const* inAudio, float* outAudio,
 		prevIn = inAudio[samplecount];
 		mOutputGain.inc();
 		mWetGain.inc();
+		mAmpEvener[currentNote].inc();
 	}
 }
-/*
-void RezSynth::processFilterOuts(float const* inAudio, float* outAudio, unsigned long sampleFrames, double ampEvener, 
-								 int currentNote, int numBands, double* prevOut, double* prevprevOut)
-{
-	double const totalAmp = ampEvener * static_cast<double>(mOutputGain * noteTable[currentNote].mNoteAmp);
-
-	// most of the note envelope values are liable to change below,
-	// so we back them up to allow multi-band repetition
-	auto const noteTemp = noteTable[currentNote];  // backup value holder for note envelope information
-
-	// here we do the resonant filter equation using our filter coefficients, and related stuff
-	for (int bandcount = 0; bandcount < numBands; bandcount++)
-	{
-		// restore the note values before doing the next band
-		noteTable[currentNote] = noteTemp;
-
-		for (unsigned long samplecount = 0; samplecount < sampleFrames; samplecount++)
-		{
-			// filter using the input, delayed values, and their filter coefficients
-			double const curBandOutValue = (mInputAmp[bandcount] * (inAudio[samplecount] - mPrevPrevInCoeff[bandcount] * prevprevIn)) + (mPrevOutCoeff[bandcount] * prevOut[bandcount]) - (mPrevPrevOutCoeff[bandcount] * prevprevOut[bandcount]);
-
-			// add the latest resonator to the output collection, scaled by my evener and user gain
-			outAudio[samplecount] += static_cast<float>(curBandOutValue * totalAmp * static_cast<double>(processEnvelope(&noteTable[currentNote])));
-
-			// very old outValue gets old outValue and old outValue gets current outValue (no longer current)
-			prevprevOut[bandcount] = prevOut[bandcount];
-			prevOut[bandcount] = curBandOutValue;
-		}
-	}
-}
-*/
 
 //-----------------------------------------------------------------------------------------
 // this function outputs the unprocessed audio input between notes, if desired
@@ -288,7 +264,7 @@ void RezSynth::checkForNewNote(long currentEvent, unsigned long numChannels)
 	// if this latest event is a note-on and this note isn't still active 
 	// from being previously played, then clear this note's delay buffers
 	if ((getmidistate().getBlockEvent(currentEvent).mStatus == DfxMidi::kStatus_NoteOn)  // it's a note-on
-		&& (getmidistate().getNoteState(currentNote).mVelocity == 0))  // the note is currently off
+		&& !getmidistate().isNoteActive(currentNote))  // this note is currently off
 	{
 		// wipe out the feedback buffers
 		for (auto& values : mPrevOutValue)

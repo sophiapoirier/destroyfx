@@ -122,7 +122,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 		for (int noteCount = 0; noteCount < DfxMidi::kNumNotes; noteCount++)
 		{
 			// only go into the output processing cycle if a note is happening
-			if (getmidistate().getNoteState(noteCount).mVelocity)
+			if (getmidistate().isNoteActive(noteCount))
 			{
 				noteActive = true;  // we have a note
 				for (unsigned long sampleCount = currentBlockPosition; sampleCount < (numFramesToProcess + currentBlockPosition); sampleCount++)

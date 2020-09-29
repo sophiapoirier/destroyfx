@@ -210,6 +210,7 @@ public:
 		mBlockEvents.at(inIndex).mStatus = kInvalidValue;
 	}
 
+	bool isNoteActive(int inMidiNote) const;
 	MusicNote const& getNoteState(int inMidiNote) const;
 	// XXX TODO: this is a hack just for Rez Synth, maybe should rethink
 	void setNoteState(int inMidiNote, MusicNote const& inNoteState);

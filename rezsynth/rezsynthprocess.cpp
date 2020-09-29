@@ -30,6 +30,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 {
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
+	auto const freqSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
 
 
 #ifndef TARGET_API_AUDIOUNIT
@@ -68,7 +69,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 			numFramesToProcess = getmidistate().getBlockEvent(eventcount + 1).mOffsetFrames - currentBlockPosition;
 		}
 
-		// this means that 2 (or more) events occur simultaneously, 
+		// this means that two (or more) events occur simultaneously, 
 		// so there's no need to do calculations during this round
 		if (numFramesToProcess == 0)
 		{
@@ -85,35 +86,64 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 		// these will increment for every note on every channel, so restore before iterations
 		auto const entryOutputGain = mOutputGain;
 		auto const entryWetGain = mWetGain;
-		for (int notecount = 0; notecount < DfxMidi::kNumNotesWithLegatoVoice; notecount++)
+		for (int noteIndex = 0; noteIndex < DfxMidi::kNumNotesWithLegatoVoice; noteIndex++)
 		{
 			// only go into the output processing cycle if a note is happening
-			if (getmidistate().getNoteState(notecount).mVelocity)
+			if (getmidistate().isNoteActive(noteIndex))
 			{
 				notesActive = true;
 
-				double const ampEvener = mWiseAmp ? calculateAmpEvener(notecount) : 1.0;  // a scalar for balancing outputs from the 3 normalizing modes
+				mAmpEvener[noteIndex] = calculateAmpEvener(noteIndex);  // a scalar for balancing outputs from the normalizing modes
 
-				// this is the resonator stuff
-				auto const activeNumBands = calculateCoefficients(notecount);
-
-				// most of the note values are liable to change during processFilterOuts,
-				// so we back them up to allow multi-channel repetition
-				DfxMidi::MusicNote const noteState_temp = getmidistate().getNoteState(notecount);
-				// render the filtered audio output for the note for each audio channel
-				for (unsigned long ch = 0; ch < numChannels; ch++)
+				for (unsigned long subSlicePosition = 0; subSlicePosition < numFramesToProcess; )
 				{
-					// restore the note values before doing processFilterOuts for the next channel
-					getmidistate().setNoteState(notecount, noteState_temp);
-					mOutputGain = entryOutputGain;
-					mWetGain = entryWetGain;
+					auto const subSliceFrameCount = std::min(numFramesToProcess - subSlicePosition, freqSmoothingStride);
 
-					processFilterOuts(&(inAudio[ch][currentBlockPosition]), &(outAudio[ch][currentBlockPosition]), 
-									  numFramesToProcess, ampEvener, notecount, activeNumBands, 
-									  mPrevInValue[ch][notecount], mPrevPrevInValue[ch][notecount], 
-									  mPrevOutValue[ch][notecount].data(), mPrevPrevOutValue[ch][notecount].data());
+					// this is the resonator stuff
+					auto const activeNumBands = calculateCoefficients(noteIndex);
+
+					// if a note is just begin, skip smoothing for all of the per-note smoothed parameter values
+					if (!mNoteActiveLastRender[noteIndex] && (subSlicePosition == 0))
+					{
+						mAmpEvener[noteIndex].snap();
+						mBaseFreq[noteIndex].snap();
+						std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(), 
+									  [](auto& value){ value.snap(); });
+						std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(), 
+									  [](auto& value){ value.snap(); });
+					}
+
+					// most of the note values are liable to change during processFilterOuts,
+					// so we back them up to allow multi-channel repetition
+					DfxMidi::MusicNote const noteState_temp = getmidistate().getNoteState(noteIndex);
+					auto const entryAmpEvener = mAmpEvener;
+					// render the filtered audio output for the note for each audio channel
+					for (unsigned long ch = 0; ch < numChannels; ch++)
+					{
+						// restore the note values before doing processFilterOuts for the next channel
+						getmidistate().setNoteState(noteIndex, noteState_temp);
+						mOutputGain = entryOutputGain;
+						mWetGain = entryWetGain;
+						mAmpEvener = entryAmpEvener;
+
+						processFilterOuts(&(inAudio[ch][currentBlockPosition + subSlicePosition]), 
+										  &(outAudio[ch][currentBlockPosition + subSlicePosition]), 
+										  subSliceFrameCount, noteIndex, activeNumBands, 
+										  mPrevInValue[ch][noteIndex], mPrevPrevInValue[ch][noteIndex], 
+										  mPrevOutValue[ch][noteIndex].data(), mPrevPrevOutValue[ch][noteIndex].data());
+					}
+
+					mBaseFreq[noteIndex].inc(subSliceFrameCount);
+					std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(), 
+								  [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
+					std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(), 
+								  [subSliceFrameCount](auto& value){ value.inc(subSliceFrameCount); });
+
+					subSlicePosition += subSliceFrameCount;
 				}
 			}
+
+			mNoteActiveLastRender[noteIndex] = getmidistate().isNoteActive(noteIndex);
 		}  // end of notes loop
 
 		if (!notesActive)

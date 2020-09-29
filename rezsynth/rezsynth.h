@@ -155,7 +155,7 @@ private:
 
 	double calculateAmpEvener(int currentNote) const;
 	[[nodiscard]] int calculateCoefficients(int currentNote);
-	void processFilterOuts(float const* inAudio, float* outAudio, unsigned long sampleFrames, double ampEvener, 
+	void processFilterOuts(float const* inAudio, float* outAudio, unsigned long sampleFrames, 
 						   int currentNote, int numBands, double& prevIn, double& prevprevIn, 
 						   double* prevOut, double* prevprevOut);
 	void processUnaffected(float const* inAudio, float* outAudio, unsigned long sampleFrames);
@@ -173,6 +173,12 @@ private:
 	int mBandwidthMode {}, mNumBands = 1, mSepMode {}, mScaleMode {}, mResonAlgorithm {}, mDryWetMixMode {};
 	DfxEnvelope::CurveType mFadeType {};
 	bool mFoldover = false, mWiseAmp = false;
+	std::array<dfx::SmoothedValue<double>, DfxMidi::kNumNotesWithLegatoVoice> mAmpEvener;
+
+	std::array<dfx::SmoothedValue<double>, DfxMidi::kNumNotesWithLegatoVoice> mBaseFreq;
+	std::array<std::array<dfx::SmoothedValue<double>, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice> mBandCenterFreq;
+	std::array<std::array<dfx::SmoothedValue<double>, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice> mBandBandwidth;
+	std::array<bool, DfxMidi::kNumNotesWithLegatoVoice> mNoteActiveLastRender {};
 
 	std::array<double, kMaxBands> mInputAmp;  // gains for the current sample input, for each band
 	std::array<double, kMaxBands> mPrevOutCoeff;  // coefficients for the 1-sample delayed ouput, for each band

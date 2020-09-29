@@ -59,6 +59,8 @@ public:
 	bool isSmoothing() const noexcept override;
 	// Advance one sample.
 	void inc() noexcept override;
+	// advance N samples
+	void inc(size_t inCount) noexcept override;
 
 	void setSmoothingTime(double inSmoothingTimeInSeconds) override;
 	void setSampleRate(double inSampleRate) override;

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2009-2019  Sophia Poirier
+Copyright (C) 2009-2020  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -27,6 +27,9 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #pragma once
 
 
+#include <cstddef>
+
+
 
 namespace dfx
 {
@@ -43,6 +46,7 @@ public:
 	virtual void snap() noexcept = 0;
 	virtual bool isSmoothing() const noexcept = 0;
 	virtual void inc() noexcept = 0;
+	virtual void inc(size_t inCount) noexcept = 0;
 };
 
 

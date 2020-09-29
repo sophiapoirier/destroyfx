@@ -250,5 +250,13 @@ static inline double LambertW(double inValue)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// provides a good enough parameter smoothing update sample interval for frequency-based parameters;
+// this is targeting an update granularity of every 4 sample frames at a 44.1 kHz sample rate
+static inline unsigned long GetFrequencyBasedSmoothingStride(double inSamplerate)
+{
+	return std::max(static_cast<unsigned long>(inSamplerate) / 11025ul, 1ul);
+}
+
 
 }  // namespace

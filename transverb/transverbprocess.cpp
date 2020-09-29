@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cmath>
 
+#include "dfxmath.h"
 #include "firfilter.h"
 
 
@@ -54,8 +55,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
     FilterMode filterMode1 = FilterMode::Nothing, filterMode2 = FilterMode::Nothing;
     // make-up gain for lowpass filtering
     float mug1 = 1.0f, mug2 = 1.0f;
-    // this is targeting an update granularity of every 4 sample frames at a 44.1 kHz sample rate
-    auto const speedSmoothingStride = std::max(static_cast<unsigned long>(samplerate) / 11025ul, 1ul);
+    auto const speedSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(samplerate);
 
     for(unsigned long i = 0; i < numSampleFrames; i++) {  // samples loop
 
