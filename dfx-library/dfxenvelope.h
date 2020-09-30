@@ -74,7 +74,7 @@ public:
 
 	void beginAttack();
 	void beginRelease();
-	double process();
+	[[nodiscard]] double process();
 
 private:
 	double calculateRise(size_t inPos, size_t inLength) const;

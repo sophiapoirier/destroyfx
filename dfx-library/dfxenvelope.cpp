@@ -36,17 +36,15 @@ void DfxEnvelope::setParameters(double inAttackDur, double inDecayDur, double in
 {
 	mAttackDur = std::max(inAttackDur, 0.0);
 	mDecayDur = std::max(inDecayDur, 0.0);
-	mSustainLevel = inSustainLevel;
+	mSustainLevel = std::clamp(inSustainLevel, 0.0, 1.0);
 	mReleaseDur = std::max(inReleaseDur, 0.0);
 
 	if (mSustainLevel >= 1.0)
 	{
-		mSustainLevel = 1.0;
 		mDecayDur = 0.0;
 	}
-	else if (mSustainLevel < 0.0)
+	else if (mSustainLevel <= 0.0)
 	{
-		mSustainLevel = 0.0;
 		mReleaseDur = 0.0;
 	}
 }
@@ -97,7 +95,7 @@ void DfxEnvelope::beginAttack()
 	else
 	{
 		mSectionLength_inv = 1.0;
-		process();  // do this to move ahead to the next envelope segment, since there is no attack
+		(void) process();  // do this to move ahead to the next envelope segment, since there is no attack
 	}
 }
 
@@ -120,7 +118,7 @@ void DfxEnvelope::beginRelease()
 }
 
 //-----------------------------------------------------------------------------
-double DfxEnvelope::process()
+[[nodiscard]] double DfxEnvelope::process()
 {
 	double outputValue = 0.0;
 
@@ -159,6 +157,10 @@ double DfxEnvelope::process()
 
 		case State::Sustain:
 			outputValue = mSustainLevel;
+			if (mSustainLevel <= 0.0)
+			{
+				mState = State::Dormant;
+			}
 			break;
 
 		case State::Release:
@@ -187,7 +189,7 @@ double DfxEnvelope::process()
 //-----------------------------------------------------------------------------
 double DfxEnvelope::calculateRise(size_t inPos, size_t inLength) const
 {
-	if (inLength <= 0)
+	if (inLength == 0)
 	{
 		return 0.0;
 	}
@@ -197,27 +199,21 @@ double DfxEnvelope::calculateRise(size_t inPos, size_t inLength) const
 //-----------------------------------------------------------------------------
 double DfxEnvelope::calculateRise(double inPosNormalized) const
 {
-	double outputValue = inPosNormalized;
-
 	if (mCurveType == kCurveType_Cubed)
 	{
-		outputValue = 1.0 - outputValue;
-		outputValue = outputValue * outputValue * outputValue;
-		outputValue = 1.0 - outputValue;
+		return inPosNormalized * inPosNormalized * inPosNormalized;
 	}
 
 	// sine fade (stupendously inefficient)
-//	outputValue = (std::sin((outputValue * dfx::kPi<double>) - (dfx::kPi<double> * 0.5)) + 1.0) * 0.5;
+//	return (std::sin((inPosNormalized * dfx::math::kPi<double>) - (dfx::math::kPi<double> * 0.5)) + 1.0) * 0.5;
 
-//	outputValue = (outputValue * (mTargetValue - mStartValue)) + mStartValue;
-
-	return outputValue;
+	return inPosNormalized;
 }
 
 //-----------------------------------------------------------------------------
 double DfxEnvelope::calculateFall(size_t inPos, size_t inLength) const
 {
-	if (inLength <= 0)
+	if (inLength == 0)
 	{
 		return 0.0;
 	}
@@ -244,13 +240,7 @@ double DfxEnvelope::deriveAttackPosFromEnvValue(double inValue) const
 {
 	if (mCurveType == kCurveType_Cubed)
 	{
-		double outputValue = 1.0 - inValue;
-		outputValue = std::cbrt(outputValue);
-		outputValue = 1.0 - outputValue;
-		return outputValue;
+		return std::cbrt(inValue);
 	}
-	else
-	{
-		return inValue;
-	}
+	return inValue;
 }
