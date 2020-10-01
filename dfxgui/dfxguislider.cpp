@@ -462,7 +462,7 @@ VSTGUI::CMouseEventResult DGRangeSlider::onMouseMoved(VSTGUI::CPoint& inPos, VST
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGRangeSlider::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGRangeSlider::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	EndControl(mLowerControl);
 	EndControl(mUpperControl);
@@ -493,7 +493,7 @@ void DGRangeSlider::setAlternateHandles(VSTGUI::CBitmap* inLowerHandle, VSTGUI::
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------
-void DGRangeSlider::setMidiLearner(bool inEnable)
+void DGRangeSlider::setMidiLearner(bool /*inEnable*/)
 {
 	redraw();
 }
@@ -691,7 +691,7 @@ VSTGUI::CMouseEventResult DGXYBox::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::C
 }
 
 //-----------------------------------------------------------------------------
-VSTGUI::CMouseEventResult DGXYBox::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+VSTGUI::CMouseEventResult DGXYBox::onMouseUp(VSTGUI::CPoint& /*inPos*/, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	EndControl(mControlX);
 	EndControl(mControlY);
@@ -722,7 +722,7 @@ void DGXYBox::setAlternateHandles(VSTGUI::CBitmap* inHandleX, VSTGUI::CBitmap* i
 
 #if TARGET_PLUGIN_USES_MIDI
 //-----------------------------------------------------------------------------
-void DGXYBox::setMidiLearner(bool inEnable)
+void DGXYBox::setMidiLearner(bool /*inEnable*/)
 {
 	redraw();
 }
@@ -761,8 +761,7 @@ DGAnimation::DGAnimation(DfxGuiEditor*	inOwnerEditor,
 						 long			inParamID, 
 						 DGRect const&	inRegion, 
 						 DGImage*		inAnimationImage, 
-						 long			inNumAnimationFrames, 
-						 DGImage*		inBackground)
+						 long			inNumAnimationFrames)
 :	DGControl<VSTGUI::CAnimKnob>(inRegion, inOwnerEditor, inParamID, 
 								 inNumAnimationFrames, inRegion.getHeight(), inAnimationImage)
 {

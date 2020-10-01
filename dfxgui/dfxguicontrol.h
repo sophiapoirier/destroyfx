@@ -36,6 +36,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
 
 
 //-----------------------------------------------------------------------------
@@ -196,6 +199,8 @@ private:
 		IDGControl* const mControl;
 	} mMouseWheelEditingSupport;
 };
+
+#pragma clang diagnostic pop
 
 
 

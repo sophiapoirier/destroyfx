@@ -149,6 +149,7 @@ void CFAUPresetArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks);
 // or when a CFArray containing an AUPreset is retained.  
 void const* CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, void const* inPreset)
 {
+	(void)inAllocator;
 	return CFAUPresetRetain(inPreset);
 }
 
@@ -158,6 +159,7 @@ void const* CFAUPresetArrayRetainCallBack(CFAllocatorRef inAllocator, void const
 // Since a reference to the data belongs to the array, we need to release that here.
 void CFAUPresetArrayReleaseCallBack(CFAllocatorRef inAllocator, void const* inPreset)
 {
+	(void)inAllocator;
 	CFAUPresetRelease(inPreset);
 }
 
@@ -335,6 +337,7 @@ void CFAUOtherPluginDescArrayCallBacks_Init(CFArrayCallBacks* outArrayCallBacks)
 // or when a CFArray containing an AudioUnitOtherPluginDesc is retained.  
 void const* CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, void const* inDesc)
 {
+	(void)inAllocator;
 	return CFAUOtherPluginDescRetain(inDesc);
 }
 
@@ -344,6 +347,7 @@ void const* CFAUOtherPluginDescArrayRetainCallBack(CFAllocatorRef inAllocator, v
 // Since a reference to the data belongs to the array, we need to release that here.
 void CFAUOtherPluginDescArrayReleaseCallBack(CFAllocatorRef inAllocator, void const* inDesc)
 {
+	(void)inAllocator;
 	CFAUOtherPluginDescRelease(inDesc);
 }
 

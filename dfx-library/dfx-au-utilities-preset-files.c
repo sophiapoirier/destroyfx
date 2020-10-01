@@ -388,6 +388,8 @@ CFComparisonResult FileURLsTreeComparatorFunction(void const* inTree1, void cons
 	CFURLRef const url1 = GetCFURLFromFileURLsTreeNode(tree1);
 	CFURLRef const url2 = GetCFURLFromFileURLsTreeNode(tree2);
 	CFComparisonResult result = kCFCompareEqualTo;
+	(void)inContext;
+
 	if ((url1 != NULL) && (url2 != NULL))
 	{
 		// we'll use the name of just the file or directory, not the whole path

@@ -159,7 +159,7 @@ bool percentDisplayProc(float inValue, char* outText, void*)
 	return percentGenDisplayProc(inValue, outText, 0);
 }
 
-bool sustainDisplayProc(float inValue, char* outText, void* inEditor)
+bool sustainDisplayProc(float inValue, char* outText, void*)
 {
 	// the parameter is scaled and has a lot more resolution at low values, so add display precision
 	int const precision = (inValue <= 0.9f) ? 1 : 0;

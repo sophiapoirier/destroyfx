@@ -1381,7 +1381,7 @@ bool DfxPlugin::ischannelcountsupported(unsigned long inNumInputs, unsigned long
 #endif
 	}
 
-	for (auto const channelConfig : mChannelConfigs)
+	for (auto const& channelConfig : mChannelConfigs)
 	{
 		auto const configNumInputs = channelConfig.inChannels;
 		auto const configNumOutputs = channelConfig.outChannels;

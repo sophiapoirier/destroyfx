@@ -74,7 +74,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 		if (numFramesToProcess == 0)
 		{
 			eventcount++;
-			checkForNewNote(eventcount, numChannels);  // and attend to related issues if necessary
+			checkForNewNote(eventcount);  // and attend to related issues if necessary
 			// take in the effects of the next event
 			getmidistate().heedEvents(eventcount, mPitchBendRange, mVelocityCurve, mVelocityInfluence);
 			continue;
@@ -193,7 +193,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 		// jump our position value forward
 		currentBlockPosition = getmidistate().getBlockEvent(eventcount).mOffsetFrames;
 
-		checkForNewNote(eventcount, numChannels);  // and attend to related issues if necessary
+		checkForNewNote(eventcount);  // and attend to related issues if necessary
 		// take in the effects of the next event
 		getmidistate().heedEvents(eventcount, mPitchBendRange, mVelocityCurve, mVelocityInfluence);
 

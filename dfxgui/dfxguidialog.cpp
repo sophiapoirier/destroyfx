@@ -384,7 +384,7 @@ bool DGDialog::handleKeyEvent(unsigned char inVirtualKey, bool inIsPressed)
 }
 
 //-----------------------------------------------------------------------------
-void DGDialog::drawBackgroundRect(VSTGUI::CDrawContext* inContext, VSTGUI::CRect const& inUpdateRect)
+void DGDialog::drawBackgroundRect(VSTGUI::CDrawContext* inContext, VSTGUI::CRect const& /*inUpdateRect*/)
 {
 	inContext->setFillColor(DGColor::getSystem(DGColor::System::WindowBackground));
 	inContext->setFrameColor(DGColor::getSystem(DGColor::System::WindowFrame));

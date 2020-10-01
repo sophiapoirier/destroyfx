@@ -339,6 +339,7 @@ static void DFX_InitializeSupportedAudioFileTypesArrays()
 	});
 }
 
+#if DRAG_N_DROP
 //-----------------------------------------------------------------------------
 static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
 {
@@ -384,6 +385,7 @@ static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
 
 	return result;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 long TurntablistEditor::OpenEditor()

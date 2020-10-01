@@ -235,7 +235,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseCancel()
 
 //-----------------------------------------------------------------------------
 bool DGButton::onWheel(VSTGUI::CPoint const& /*inPos*/, VSTGUI::CMouseWheelAxis const& /*inAxis*/, 
-					   float const& inDistance, VSTGUI::CButtonState const& inButtons)
+					   float const& inDistance, VSTGUI::CButtonState const& /*inButtons*/)
 {
 	// not controlling a parameter
 	if (!isParameterAttached())

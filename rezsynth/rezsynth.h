@@ -160,7 +160,7 @@ private:
 						   double* prevOut, double* prevprevOut);
 	void processUnaffected(float const* inAudio, float* outAudio, unsigned long sampleFrames);
 	double getBandwidthForFreq(double inFreq) const;
-	void checkForNewNote(long currentEvent, unsigned long numChannels);
+	void checkForNewNote(long currentEvent);
 
 	// parameters
 	double mBandwidthAmount_Hz = 1.0, mBandwidthAmount_Q = 1.0, mSepAmount_Octaval = 0.0, mSepAmount_Linear = 0.0;

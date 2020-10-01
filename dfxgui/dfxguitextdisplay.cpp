@@ -54,8 +54,6 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 // Constructor-time setup. Returns computed font tweaks enum to be saved for draw-time tweaking.
 [[nodiscard]] static DGFontTweaks DFXGUI_ConfigureTextDisplay(DfxGuiEditor* inOwnerEditor, 
 															  VSTGUI::CTextLabel* inTextDisplay, 
-															  DGRect const& inRegion, 
-															  DGImage* inBackgroundImage, 
 															  dfx::TextAlignment inTextAlignment, 
 															  float inFontSize, DGColor inFontColor, 
 															  char const* inFontName)
@@ -135,7 +133,7 @@ DGTextDisplay::DGTextDisplay(DfxGuiEditor*							inOwnerEditor,
 	mValueToTextProc(inTextProc ? inTextProc : valueToTextProc_Generic),
 	mValueToTextUserData(inUserData ? inUserData : this)
 {
-	mFontTweaks = DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
+	mFontTweaks = DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
 
 	setValueToStringFunction(std::bind(&DGTextDisplay::valueToTextProcBridge, this, 
 									   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -369,7 +367,7 @@ DGStaticTextDisplay::DGStaticTextDisplay(DfxGuiEditor* inOwnerEditor, DGRect con
 										 DGColor inFontColor, char const* inFontName)
 :	DGControl<VSTGUI::CTextLabel>(inRegion, nullptr, inBackgroundImage)
 {
-	mFontTweaks = DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inRegion, inBackgroundImage, inTextAlignment, inFontSize, inFontColor, inFontName);
+	mFontTweaks = DFXGUI_ConfigureTextDisplay(inOwnerEditor, this, inTextAlignment, inFontSize, inFontColor, inFontName);
 
 	setMouseEnabled(false);
 }

@@ -256,7 +256,7 @@ double RezSynth::getBandwidthForFreq(double inFreq) const
 //-----------------------------------------------------------------------------------------
 // This function checks if the latest note message is a note-on for a note that's currently off.  
 // If it is, then that note's filter feedback buffers are cleared.
-void RezSynth::checkForNewNote(long currentEvent, unsigned long numChannels)
+void RezSynth::checkForNewNote(long currentEvent)
 {
 	// store the current note MIDI number
 	auto const currentNote = getmidistate().getBlockEvent(currentEvent).mByte1;
