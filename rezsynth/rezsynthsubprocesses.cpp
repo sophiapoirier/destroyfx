@@ -89,6 +89,7 @@ int RezSynth::calculateCoefficients(int currentNote)
 // SHRINK THE NUMBER OF BANDS IF MISTAKES ARE "OFF" AND THE NEXT BAND WILL EXCEED THE NYQUIST
 		if (!mFoldover && (bandCenterFreq > mNyquist))
 		{
+			clearFilterOutputForBands(bandcount);
 			return bandcount;  // there's no need to do the calculations if we won't be using this or the remaining bands
 		}
 
@@ -190,11 +191,22 @@ void RezSynth::processFilterOuts(float const* inAudio, float* outAudio,
 										   - (mPrevPrevOutCoeff[bandcount] * prevprevOut[bandcount]);
 
 			// add the latest resonator to the output collection, scaled by my evener and user gain
+			auto const entryOutput = outAudio[samplecount];
 			outAudio[samplecount] += static_cast<float>(curBandOutValue * envedTotalAmp);
 
 			// very old outValue gets old outValue and old outValue gets current outValue (no longer current)
 			prevprevOut[bandcount] = prevOut[bandcount];
 			prevOut[bandcount] = curBandOutValue;
+
+#if __GNUC__
+			if (__builtin_expect(std::isinf(outAudio[samplecount]), 0))  // TODO: C++20 [[unlikely]]
+#else
+			if (std::isinf(outAudio[samplecount]))
+#endif
+			{
+				outAudio[samplecount] = entryOutput;
+				prevOut[bandcount] = 0.0;
+			}
 		}
 		prevprevIn = prevIn;
 		prevIn = inAudio[samplecount];

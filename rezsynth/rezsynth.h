@@ -142,16 +142,8 @@ private:
 	};
 
 	using ChannelsOfNotesOfBands = std::vector<std::array<std::array<double, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice>>;
-	static void clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands)
-	{
-		for (auto& notesOfBands : channelsOfNotesOfBands)
-		{
-			for (auto& bands : notesOfBands)
-			{
-				bands.fill(0.0);
-			}
-		}
-	}
+	static void clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands);
+	void clearFilterOutputForBands(int bandIndexBegin);
 
 	double calculateAmpEvener(int currentNote) const;
 	[[nodiscard]] int calculateCoefficients(int currentNote);
@@ -180,10 +172,10 @@ private:
 	std::array<std::array<dfx::SmoothedValue<double>, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice> mBandBandwidth;
 	std::array<bool, DfxMidi::kNumNotesWithLegatoVoice> mNoteActiveLastRender {};
 
-	std::array<double, kMaxBands> mInputAmp;  // gains for the current sample input, for each band
-	std::array<double, kMaxBands> mPrevOutCoeff;  // coefficients for the 1-sample delayed ouput, for each band
-	std::array<double, kMaxBands> mPrevPrevOutCoeff;  // coefficients for the 2-sample delayed ouput, for each band
-	std::array<double, kMaxBands> mPrevPrevInCoeff;  // coefficients for the 2-sample delayed input, for each band
+	std::array<double, kMaxBands> mInputAmp {};  // gains for the current sample input, for each band
+	std::array<double, kMaxBands> mPrevOutCoeff {};  // coefficients for the 1-sample delayed ouput, for each band
+	std::array<double, kMaxBands> mPrevPrevOutCoeff {};  // coefficients for the 2-sample delayed ouput, for each band
+	std::array<double, kMaxBands> mPrevPrevInCoeff {};  // coefficients for the 2-sample delayed input, for each band
 	ChannelsOfNotesOfBands mPrevOutValue, mPrevPrevOutValue;  // arrays of previous resonator output values
 	std::vector<std::array<double, DfxMidi::kNumNotesWithLegatoVoice>> mPrevInValue, mPrevPrevInValue;  // arrays of previous audio input values
 

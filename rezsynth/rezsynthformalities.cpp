@@ -43,7 +43,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kSepAmount_Octaval, {"band separation (octaval)", "BandSpO", "BndSpO", "BdSO"}, 12.0, 12.0, 0.0, 36.0, DfxParam::Unit::Semitones);
 	initparameter_f(kSepAmount_Linear, {"band separation (linear)", "BandSpL", "BndSpL", "BdSL"}, 1.0, 1.0, 0.0, 3.0, DfxParam::Unit::Scalar);  // % of center frequency
 	initparameter_list(kSepMode, {"separation mode", "SepMode", "SepMod", "SpMd"}, kSeparationMode_Octaval, kSeparationMode_Octaval, kNumSeparationModes);
-	initparameter_b(kFoldover, {"filter frequency aliasing", "Alias"}, true, false);
+	initparameter_b(kFoldover, {"filter frequency aliasing", "Alias"}, false, false);
 	initparameter_f(kEnvAttack, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_f(kEnvDecay, {"decay", "Deca"}, 30.0, 30.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_f(kEnvSustain, {"sustain", "Sustan"}, 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent, DfxParam::Curve::Cubed);
@@ -132,11 +132,6 @@ void RezSynth::reset()
 	// reset the unaffected between audio stuff
 	mUnaffectedState = UnaffectedState::FadeIn;
 	mUnaffectedFadeSamples = 0;
-
-	mInputAmp.fill(0.0);
-	mPrevOutCoeff.fill(0.0);
-	mPrevPrevOutCoeff.fill(0.0);
-	mPrevPrevInCoeff.fill(0.0);
 
 	mNoteActiveLastRender.fill(false);
 }
@@ -230,17 +225,7 @@ void RezSynth::processparameters()
 		// clear the output buffers of abandoned bands when the number decreases
 		if (mNumBands < oldNumBands)
 		{
-			for (size_t ch = 0; ch < mPrevOutValue.size(); ch++)
-			{
-				for (size_t note = 0; note < mPrevOutValue[ch].size(); note++)
-				{
-					for (int band = mNumBands; band < oldNumBands; band++)
-					{
-						mPrevOutValue[ch][note][band] = 0.0;
-						mPrevPrevOutValue[ch][note][band] = 0.0;
-					}
-				}
-			}
+			clearFilterOutputForBands(mNumBands);
 		}
 	}
 
@@ -260,5 +245,30 @@ void RezSynth::processparameters()
 	if (getparameterchanged(kFadeType))
 	{
 		getmidistate().setEnvCurveType(mFadeType);
+	}
+}
+
+//-----------------------------------------------------------------------------------------
+void RezSynth::clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands)
+{
+	for (auto& notesOfBands : channelsOfNotesOfBands)
+	{
+		for (auto& bands : notesOfBands)
+		{
+			bands.fill(0.0);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------------------
+void RezSynth::clearFilterOutputForBands(int bandIndexBegin)
+{
+	for (size_t ch = 0; ch < mPrevOutValue.size(); ch++)
+	{
+		for (size_t note = 0; note < mPrevOutValue[ch].size(); note++)
+		{
+			std::fill(std::next(mPrevOutValue[ch][note].begin(), bandIndexBegin), mPrevOutValue[ch][note].end(), 0.0);
+			std::fill(std::next(mPrevPrevOutValue[ch][note].begin(), bandIndexBegin), mPrevPrevOutValue[ch][note].end(), 0.0);
+		}
 	}
 }
