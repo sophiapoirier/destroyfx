@@ -252,6 +252,7 @@ public:
 
 	// this calculates fade scalars if attack, decay, or release are happening
 	float processEnvelope(int inMidiNote);
+	dfx::IIRfilter::Coefficients processEnvelopeLowpassGate(int inMidiNote);
 
 	// this writes the audio output for smoothing the tips of cut-off notes
 	// by sloping down from the last sample outputted by the note

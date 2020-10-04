@@ -32,110 +32,126 @@ Welcome to our Infinite Impulse Response filter.
 #include "dfxmath.h"
 
 
-double const dfx::IIRfilter::kShelfStartLowpass = 0.333;
-double const dfx::IIRfilter::kDefaultQ_LP_HP = std::sqrt(2.0) / 2.0;
+static double const kDefaultQ_LP_HP = std::sqrt(2.0) / 2.0;  // C++20 constexpr 1.0 / std::numbers::sqrt2_v<double>
 
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::reset()
+dfx::IIRfilter::IIRfilter(double inSampleRate)
+:	mSampleRate(inSampleRate)
+{
+}
+
+//------------------------------------------------------------------------
+void dfx::IIRfilter::reset() noexcept
 {
 	mPrevIn = mPrevPrevIn = mPrevOut = mPrevPrevOut = mPrevPrevPrevOut = mCurrentOut = 0.0f;
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::setCoefficients(FilterType inFilterType, double inFreq, double inQ, double inGain)
+void dfx::IIRfilter::setCoefficients(Coefficients const& inCoefficients)
+{
+	mCoeff = inCoefficients;
+}
+
+//------------------------------------------------------------------------
+dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setCoefficients(FilterType inFilterType, double inFreq, double inQ, double inGain)
 {
 	mFilterType = inFilterType;
 	mFilterFreq = inFreq;
 	mFilterQ = inQ;
 	mFilterGain = inGain;
 
-	double const omega = 2.0 * dfx::math::kPi<double> * mFilterFreq / mSampleRate;
+	double const omega = 2.0 * dfx::math::kPi<double> * inFreq / mSampleRate;  // radians per sample
 	auto const sn = std::sin(omega);
 	auto const cs = std::cos(omega);
-	double const alpha = std::sin(omega) / (2.0 * mFilterQ);
+	double const alpha = std::sin(omega) / (2.0 * inQ);
 // XXX from http://musicdsp.org/showone.php?id=64
-//alpha = std::sin(omega) * std::sinh(std::numbers::ln2 / 2.0 * mFilterQ * omega / std::sin(omega));
-	auto const A = std::sqrt(mFilterGain);
-	double beta = (((A * A) + 1.0) / mFilterQ) - ((A - 1.0) * (A - 1.0));
-	beta = std::max(beta, 0.0);
-	beta = std::sqrt(beta);
+//alpha = std::sin(omega) * std::sinh(std::numbers::ln2 / 2.0 * inQ * omega / std::sin(omega));
+	auto const A = std::sqrt(inGain);
+	auto const beta = [inQ, A]()
+	{
+		double result = (((A * A) + 1.0) / inQ) - ((A - 1.0) * (A - 1.0));
+		result = std::max(result, 0.0);
+		return std::sqrt(result);
+	}();
 	double b0 {};
 
 	// calculate filter coefficients
-	switch (mFilterType)
+	switch (inFilterType)
 	{
 		case FilterType::Lowpass:
 			b0 = 1.0 + alpha;
-			mInCoeff = mPrevPrevInCoeff = (1.0 - cs) * 0.5;
-			mPrevInCoeff = 1.0 - cs;
-			mPrevOutCoeff = -2.0 * cs;
-			mPrevPrevOutCoeff = 1.0 - alpha;
+			mCoeff.mIn = mCoeff.mPrevPrevIn = (1.0 - cs) * 0.5;
+			mCoeff.mPrevIn = 1.0 - cs;
+			mCoeff.mPrevOut = -2.0 * cs;
+			mCoeff.mPrevPrevOut = 1.0 - alpha;
 			break;
 
 		case FilterType::Highpass:
 			b0 = 1.0 + alpha;
-			mInCoeff = mPrevPrevInCoeff = ((1.0 + cs) * 0.5);
-			mPrevInCoeff = -1.0 - cs;
-			mPrevOutCoeff = -2.0 * cs;
-			mPrevPrevOutCoeff = 1.0 - alpha;
+			mCoeff.mIn = mCoeff.mPrevPrevIn = ((1.0 + cs) * 0.5);
+			mCoeff.mPrevIn = -1.0 - cs;
+			mCoeff.mPrevOut = -2.0 * cs;
+			mCoeff.mPrevPrevOut = 1.0 - alpha;
 			break;
 
 		case FilterType::Bandpass:
 			b0 = 1.0 + alpha;
-			mInCoeff = alpha;
-			mPrevInCoeff = 0.0;
-			mPrevPrevInCoeff = -alpha;
-			mPrevOutCoeff = -2.0 * cs;
-			mPrevPrevOutCoeff = 1.0 - alpha;
+			mCoeff.mIn = alpha;
+			mCoeff.mPrevIn = 0.0;
+			mCoeff.mPrevPrevIn = -alpha;
+			mCoeff.mPrevOut = -2.0 * cs;
+			mCoeff.mPrevPrevOut = 1.0 - alpha;
 			break;
 
 		case FilterType::Peak:
 			b0 = 1.0 + (alpha / A);
-			mInCoeff = 1.0 + (alpha * A);
-			mPrevInCoeff = mPrevOutCoeff = -2.0 * cs;
-			mPrevPrevInCoeff = 1.0 - (alpha * A);
-			mPrevPrevOutCoeff = 1.0 - (alpha / A);
+			mCoeff.mIn = 1.0 + (alpha * A);
+			mCoeff.mPrevIn = mCoeff.mPrevOut = -2.0 * cs;
+			mCoeff.mPrevPrevIn = 1.0 - (alpha * A);
+			mCoeff.mPrevPrevOut = 1.0 - (alpha / A);
 			break;
 
 		case FilterType::Notch:
 			b0 = 1.0 + alpha;
-			mInCoeff = mPrevPrevInCoeff = 1.0;
-			mPrevInCoeff = mPrevOutCoeff = -2.0 * cs;
-			mPrevPrevOutCoeff = 1.0 - alpha;
+			mCoeff.mIn = mCoeff.mPrevPrevIn = 1.0;
+			mCoeff.mPrevIn = mCoeff.mPrevOut = -2.0 * cs;
+			mCoeff.mPrevPrevOut = 1.0 - alpha;
 			break;
 
 		case FilterType::LowShelf:
 			b0 = (A + 1.0) + ((A - 1.0) * cs) + (beta * sn);
-			mInCoeff = A * ((A + 1.0) - ((A - 1.0) * cs) + (beta * sn));
-			mPrevInCoeff = 2.0 * A * ((A - 1.0) - ((A + 1.0) * cs));
-			mPrevPrevInCoeff = A * ((A + 1.0) - ((A - 1.0) * cs) - (beta * sn));
-			mPrevOutCoeff = -2.0 * ((A - 1.0) + ((A + 1.0) * cs));
-			mPrevPrevOutCoeff = (A + 1.0) + ((A - 1.0) * cs) - (beta * sn);
+			mCoeff.mIn = A * ((A + 1.0) - ((A - 1.0) * cs) + (beta * sn));
+			mCoeff.mPrevIn = 2.0 * A * ((A - 1.0) - ((A + 1.0) * cs));
+			mCoeff.mPrevPrevIn = A * ((A + 1.0) - ((A - 1.0) * cs) - (beta * sn));
+			mCoeff.mPrevOut = -2.0 * ((A - 1.0) + ((A + 1.0) * cs));
+			mCoeff.mPrevPrevOut = (A + 1.0) + ((A - 1.0) * cs) - (beta * sn);
 			break;
 
 		case FilterType::HighShelf:
 			b0 = (A + 1.0) - ((A - 1.0) * cs) + (beta * sn);
-			mInCoeff = A * ((A + 1.0) + ((A - 1.0)) * cs + (beta * sn));
-			mPrevInCoeff = -2.0 * A * ((A - 1.0) + ((A + 1.0) * cs));
-			mPrevPrevInCoeff = A * ((A + 1.0) + ((A - 1.0) * cs) - (beta * sn));
-			mPrevOutCoeff = 2.0 * ((A - 1.0) - ((A + 1.0) * cs));
-			mPrevPrevOutCoeff = (A + 1.0) - ((A - 1.0) * cs) - (beta * sn);
+			mCoeff.mIn = A * ((A + 1.0) + ((A - 1.0)) * cs + (beta * sn));
+			mCoeff.mPrevIn = -2.0 * A * ((A - 1.0) + ((A + 1.0) * cs));
+			mCoeff.mPrevPrevIn = A * ((A + 1.0) + ((A - 1.0) * cs) - (beta * sn));
+			mCoeff.mPrevOut = 2.0 * ((A - 1.0) - ((A + 1.0) * cs));
+			mCoeff.mPrevPrevOut = (A + 1.0) - ((A - 1.0) * cs) - (beta * sn);
 			break;
 
 		default:
 			assert(false);
-			return;
+			return kZeroCoeff;
 	}
 
 	if (b0 != 0.0)
 	{
-		mInCoeff /= b0;
-		mPrevInCoeff /= b0;
-		mPrevPrevInCoeff /= b0;
-		mPrevOutCoeff /= b0;
-		mPrevPrevOutCoeff /= b0;
+		mCoeff.mIn /= b0;
+		mCoeff.mPrevIn /= b0;
+		mCoeff.mPrevPrevIn /= b0;
+		mCoeff.mPrevOut /= b0;
+		mCoeff.mPrevPrevOut /= b0;
 	}
+
+	return mCoeff;
 }
 
 //------------------------------------------------------------------------
@@ -147,39 +163,29 @@ void dfx::IIRfilter::setSampleRate(double inSampleRate)
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::setLowpassCoefficients(double inCutoffFreq, double inQ)
+dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setLowpassCoefficients(double inCutoffFreq)
 {
-	setCoefficients(FilterType::Lowpass, inCutoffFreq, inQ, 1.0);
+	return setCoefficients(FilterType::Lowpass, inCutoffFreq, kDefaultQ_LP_HP, 1.0);
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::setHighpassCoefficients(double inCutoffFreq, double inQ)
+dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setHighpassCoefficients(double inCutoffFreq)
 {
-	setCoefficients(FilterType::Highpass, inCutoffFreq, inQ, 1.0);
+	return setCoefficients(FilterType::Highpass, inCutoffFreq, kDefaultQ_LP_HP, 1.0);
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::setBandpassCoefficients(double inCenterFreq, double inQ)
+dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setBandpassCoefficients(double inCenterFreq, double inQ)
 {
-	setCoefficients(FilterType::Bandpass, inCenterFreq, inQ, 1.0);
+	return setCoefficients(FilterType::Bandpass, inCenterFreq, inQ, 1.0);
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::setCoefficients(float inA0, float inA1, float inA2, float inB1, float inB2)
+void dfx::IIRfilter::copyCoefficients(IIRfilter const& inSourceFilter) noexcept
 {
-	mInCoeff = inA0;
-	mPrevInCoeff = inA1;
-	mPrevPrevInCoeff = inA2;
-	mPrevOutCoeff = inB1;
-	mPrevPrevOutCoeff = inB2;
-}
-
-//------------------------------------------------------------------------
-void dfx::IIRfilter::copyCoefficients(IIRfilter const& inSourceFilter)
-{
-	mPrevOutCoeff = inSourceFilter.mPrevOutCoeff;
-	mPrevPrevOutCoeff = inSourceFilter.mPrevPrevOutCoeff;
-	mPrevInCoeff = inSourceFilter.mPrevInCoeff;
-	mPrevPrevInCoeff = inSourceFilter.mPrevPrevInCoeff;
-	mInCoeff = inSourceFilter.mInCoeff;
+	mCoeff.mIn = inSourceFilter.mCoeff.mIn;
+	mCoeff.mPrevIn = inSourceFilter.mCoeff.mPrevIn;
+	mCoeff.mPrevPrevIn = inSourceFilter.mCoeff.mPrevPrevIn;
+	mCoeff.mPrevOut = inSourceFilter.mCoeff.mPrevOut;
+	mCoeff.mPrevPrevOut = inSourceFilter.mCoeff.mPrevPrevOut;
 }

@@ -31,6 +31,7 @@
 		49BB46D407E5366200861708 /* skidderprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB46CF07E5366200861708 /* skidderprocess.cpp */; };
 		B025B9A708AD328F00A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B9A408AD328F00A9CCAE /* CAVectorUnit.cpp */; };
 		B028C2C70D0F324A00ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C2C60D0F324A00ADA1DA /* destroyfx.icns */; };
+		EC0EF4602524FBC400864283 /* iirfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC0EF4582524FB3F00864283 /* iirfilter.cpp */; };
 		EC27B1312497E83500C10157 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC27B1302497E83500C10157 /* AppKit.framework */; };
 		EC27B1332497E8D100C10157 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC27B1322497E8D000C10157 /* OpenGL.framework */; };
 		EC27B1382497E96500C10157 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC27B1362497E96500C10157 /* dfx-au-utilities-preset-files.m */; };
@@ -126,6 +127,8 @@
 		B025B9A508AD328F00A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
 		B025B9A608AD328F00A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
 		B028C2C60D0F324A00ADA1DA /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
+		EC0EF4572524FB3F00864283 /* iirfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iirfilter.h; sourceTree = "<group>"; };
+		EC0EF4582524FB3F00864283 /* iirfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iirfilter.cpp; sourceTree = "<group>"; };
 		EC27B1302497E83500C10157 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		EC27B1322497E8D000C10157 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC27B1342497E96500C10157 /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
@@ -376,6 +379,8 @@
 				4932F7990680E859006A9591 /* dfxmidi.cpp */,
 				4918B60C0680FC9C0034CE15 /* dfxsettings.h */,
 				4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */,
+				EC0EF4572524FB3F00864283 /* iirfilter.h */,
+				EC0EF4582524FB3F00864283 /* iirfilter.cpp */,
 				490E769D07CAE20500688A1D /* temporatetable.h */,
 				490E769C07CAE20500688A1D /* temporatetable.cpp */,
 				EC9841911030C4C000FA3B2B /* dfxplugin-au-debug.xcconfig */,
@@ -577,6 +582,7 @@
 				4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */,
 				EC6CCCFD248A05830048D27F /* dfxguislider.cpp in Sources */,
 				EC8AB23424CDF45E000504F0 /* dfxgui-fontfactory.mm in Sources */,
+				EC0EF4602524FBC400864283 /* iirfilter.cpp in Sources */,
 				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
 				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
 				EC6CCD03248A05830048D27F /* dfxguibutton.cpp in Sources */,

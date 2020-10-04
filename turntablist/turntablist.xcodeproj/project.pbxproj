@@ -52,6 +52,7 @@
 		B02ABB640B94F67F00CB674C /* turntablist-docs-full.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB5C0B94F67F00CB674C /* turntablist-docs-full.gif */; };
 		B05F9D2B0D36A96A00F9B816 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B05F9D2A0D36A96A00F9B816 /* destroyfx.icns */; };
 		B09A20F608E5089C000285F6 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = B09A20F408E5089C000285F6 /* dfx-au-utilities.strings */; };
+		EC0EF45D2524FBAC00864283 /* iirfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC0EF4522524FB0600864283 /* iirfilter.cpp */; };
 		EC0F0976208D26BA00E06672 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC0F0973208D269100E06672 /* Cocoa.framework */; };
 		EC0F0977208D26BD00E06672 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC0F0974208D269500E06672 /* OpenGL.framework */; };
 		EC0F0978208D26C000E06672 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC0F0975208D269A00E06672 /* QuartzCore.framework */; };
@@ -156,6 +157,8 @@
 		B095A84408DA290B008F3058 /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B095A84508DA290B008F3058 /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B09A20F508E5089C000285F6 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = "../dfx-library/en.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		EC0EF4522524FB0600864283 /* iirfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iirfilter.cpp; sourceTree = "<group>"; };
+		EC0EF4532524FB0600864283 /* iirfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iirfilter.h; sourceTree = "<group>"; };
 		EC0F0972208D263600E06672 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC0F0973208D269100E06672 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		EC0F0974208D269500E06672 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -386,6 +389,8 @@
 				4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */,
 				EC248F4A20B67A6A00948A0E /* dfxenvelope.h */,
 				EC248F4B20B67A6A00948A0E /* dfxenvelope.cpp */,
+				EC0EF4532524FB0600864283 /* iirfilter.h */,
+				EC0EF4522524FB0600864283 /* iirfilter.cpp */,
 				EC9841851030C44A00FA3B2B /* dfxplugin-au-debug.xcconfig */,
 				EC9841861030C44A00FA3B2B /* dfxplugin-au-release.xcconfig */,
 			);
@@ -573,6 +578,7 @@
 			files = (
 				4932F48B06800FCD006A9591 /* AUBase.cpp in Sources */,
 				EC89B50F208D371700E15129 /* plugguieditor.cpp in Sources */,
+				EC0EF45D2524FBAC00864283 /* iirfilter.cpp in Sources */,
 				4932F48F06800FCD006A9591 /* AUInputElement.cpp in Sources */,
 				4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */,
 				4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */,

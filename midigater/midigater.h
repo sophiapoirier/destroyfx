@@ -21,8 +21,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #pragma once
 
+#include <array>
+#include <vector>
+
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
+#include "iirfilter.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -33,6 +37,7 @@ enum
 	kRelease,
 	kVelocityInfluence,
 	kFloor,
+	kGateMode,
 
 	kNumParameters
 };
@@ -42,8 +47,17 @@ enum
 class MIDIGater final : public DfxPlugin
 {
 public:
+	enum
+	{
+		kGateMode_Amplitude,
+		kGateMode_Lowpass,
+		kNumGateModes
+	};
+
 	MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
+	long initialize() override;
+	void cleanup() override;
 	void reset() override;
 	void processparameters() override;
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
@@ -57,13 +71,17 @@ private:
 		FadeOut
 	};
 
+	void resetFilters();
 	void processUnaffected(float const* const* inAudio, float* const* outAudio, 
 						   unsigned long inNumFramesToProcess, unsigned long inOffsetFrames, unsigned long inNumChannels);
 
 	// parameter values
 	float mVelocityInfluence = 0.0f;
 	dfx::SmoothedValue<float> mFloor;
+	long mGateMode {};
 
 	UnaffectedState mUnaffectedState {};
 	long mUnaffectedFadeSamples = 0;
+
+	std::array<std::vector<dfx::IIRfilter>, DfxMidi::kNumNotes> mLowpassGateFilters;
 };

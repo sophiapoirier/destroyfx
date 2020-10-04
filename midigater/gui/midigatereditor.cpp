@@ -39,7 +39,7 @@ enum
 	kFloorSliderY = 156,
 	kSliderWidth = 289 - kSliderX,
 
-	kDisplayX = 333+1,
+	kDisplayX = 334,
 	kAttackDisplayY = kAttackSliderY + 1,
 	kReleaseDisplayY = kReleaseSliderY + 1,
 	kVelocityInfluenceDisplayY = kVelocityInfluenceSliderY + 1,
@@ -49,8 +49,13 @@ enum
 	kDisplayHeight = 12,
 	kVelocityInfluenceLabelWidth = kDisplayWidth - 33,
 
-	kDestroyFXlinkX = 5,
-	kDestroyFXlinkY = 7
+	kButtonY = 188,
+	kGateModeButtonX = 324,
+	kMidiLearnButtonX = kSliderX - 1,
+	kMidiResetButtonX = kMidiLearnButtonX + 125,
+
+	kDestroyFXLinkX = 5,
+	kDestroyFXLinkY = 7
 };
 
 
@@ -109,6 +114,9 @@ long MIDIGaterEditor::OpenEditor()
 	auto const floorSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-floor-glowing.png");
 	auto const velocityInfluenceSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-velocity-influence.png");
 	auto const velocityInfluenceSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-velocity-influence-glowing.png");
+	auto const gateModeButtonImage = VSTGUI::makeOwned<DGImage>("gate-mode-button.png");
+	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
+	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
 	auto const destroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link-button.png");
 
 
@@ -178,8 +186,15 @@ long MIDIGaterEditor::OpenEditor()
 
 	// --- buttons ---
 
+	pos.set(kGateModeButtonX, kButtonY, gateModeButtonImage->getWidth(), gateModeButtonImage->getHeight() / MIDIGater::kNumGateModes);
+	emplaceControl<DGButton>(this, kGateMode, pos, gateModeButtonImage, DGButton::Mode::Increment);
+
+	CreateMidiLearnButton(kMidiLearnButtonX, kButtonY, midiLearnButtonImage);
+
+	CreateMidiResetButton(kMidiResetButtonX, kButtonY, midiResetButtonImage);
+
 	// Destroy FX web page link
-	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);
+	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkButtonImage->getWidth(), destroyFXLinkButtonImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkButtonImage, DESTROYFX_URL);
 
 
