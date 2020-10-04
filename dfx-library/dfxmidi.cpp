@@ -500,6 +500,13 @@ float DfxMidi::processEnvelope(int inMidiNote)
 }
 
 //-------------------------------------------------------------------------
+dfx::IIRfilter::Coefficients DfxMidi::processEnvelopeLowpassGate(int inMidiNote)
+{
+	auto const envAmp = processEnvelope(inMidiNote);
+	return getNoteState(inMidiNote).mEnvelope.getLowpassGateCoefficients(envAmp);
+}
+
+//-------------------------------------------------------------------------
 // this function writes the audio output for smoothing the tips of cut-off notes
 // by sloping down from the last sample outputted by the note
 // TODO: should this accommodate the legato voice?

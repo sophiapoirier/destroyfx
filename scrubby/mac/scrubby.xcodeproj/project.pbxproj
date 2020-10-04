@@ -67,6 +67,7 @@
 		4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F7990680E859006A9591 /* dfxmidi.cpp */; };
 		B025B9C108AD333D00A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B9BE08AD333D00A9CCAE /* CAVectorUnit.cpp */; };
 		B0AD808D0D0F30D600766C78 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0AD808C0D0F30D600766C78 /* destroyfx.icns */; };
+		EC0EF4632524FBED00864283 /* iirfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC0EF44E2524FAE000864283 /* iirfilter.cpp */; };
 		EC28F78521EAD17400C979B7 /* host-tempo-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC28F78421EAD17400C979B7 /* host-tempo-button.png */; };
 		EC40EDAC20DB4B4E00F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDAB20DB4B4E00F5C0A7 /* dfxguimisc.mm */; };
 		EC48270D0F492C2B006126CD /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC48270B0F492C2B006126CD /* dfx-au-utilities.strings */; };
@@ -198,6 +199,8 @@
 		B0AD808C0D0F30D600766C78 /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
 		B0F21BC00B694E5D00B43CA8 /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		B0F21BC10B694E5D00B43CA8 /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
+		EC0EF44D2524FAE000864283 /* iirfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iirfilter.h; sourceTree = "<group>"; };
+		EC0EF44E2524FAE000864283 /* iirfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iirfilter.cpp; sourceTree = "<group>"; };
 		EC28F78421EAD17400C979B7 /* host-tempo-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "host-tempo-button.png"; sourceTree = "<group>"; };
 		EC390FF120CCA9D500A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC3E06B111E528F400F28EB8 /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
@@ -460,6 +463,8 @@
 				4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */,
 				ECCB14E2209A8CB10050BDEC /* dfxenvelope.h */,
 				ECCB14E3209A8CB20050BDEC /* dfxenvelope.cpp */,
+				EC0EF44D2524FAE000864283 /* iirfilter.h */,
+				EC0EF44E2524FAE000864283 /* iirfilter.cpp */,
 				490E769D07CAE20500688A1D /* temporatetable.h */,
 				490E769C07CAE20500688A1D /* temporatetable.cpp */,
 				B0F21BC00B694E5D00B43CA8 /* dfxplugin-au-debug.xcconfig */,
@@ -661,6 +666,7 @@
 				4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */,
 				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
 				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
+				EC0EF4632524FBED00864283 /* iirfilter.cpp in Sources */,
 				4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */,
 				4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */,
 				4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */,

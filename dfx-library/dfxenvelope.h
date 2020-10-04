@@ -26,6 +26,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <stddef.h>
 
+#include "iirfilter.h"
+
 
 //-----------------------------------------------------------------------------
 class DfxEnvelope
@@ -75,6 +77,8 @@ public:
 	void beginAttack();
 	void beginRelease();
 	[[nodiscard]] double process();
+	// maps the envelope amplitude returned by process to lowpass coefficients
+	[[nodiscard]] dfx::IIRfilter::Coefficients getLowpassGateCoefficients(double inAmplitude) const;
 
 private:
 	double calculateRise(size_t inPos, size_t inLength) const;

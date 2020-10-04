@@ -36,6 +36,10 @@ If you don't want the sound to turn completely off no notes are playing, then yo
 If the audio simply turned on as soon as you played a MIDI note, you would hear clicky noises every time you played or released a note.  This is caused by glitchy digital waveform discontinuities.  In order to avoid this, MIDI Gater fades the volume in when notes start and fades it out when notes stop.  You can control the duration of these fades with the <b>attack</b> and <b>release</b> parameters.  Attack controls the duration of the fade-in slope when you begin playing a note, and release controls the duration of the fade-out slope when you stop playing a note.
 </p>
 
+<p class="desc">
+The gate on/off transitions can be made by ramping volume up and down, or by opening and closing a low-pass filter (which is more like how sound naturally decays).  You can select between these options using the <b>gate mode</b> parameter.  When using low-pass gate mode, a <b>release</b> time of no less than 100 ms is recommended to avoid potential glitches at the end of a note's final decay.  Low-pass gate mode uses a little more processing power than amplitude.
+</p>
+
 <br />
 
 

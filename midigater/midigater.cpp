@@ -21,11 +21,13 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "midigater.h"
 
+#include "dfxmath.h"
 #include "dfxmisc.h"
 
 
 //----------------------------------------------------------------------------- 
 // constants
+constexpr auto kAmplitudeGateEnvelopeCurve = DfxEnvelope::kCurveType_Cubed;
 constexpr long kUnaffectedFadeDur = 18;
 constexpr float kUnaffectedFadeStep = 1.0f / static_cast<float>(kUnaffectedFadeDur);
 
@@ -40,17 +42,44 @@ MIDIGater::MIDIGater(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 :	DfxPlugin(inInstance, kNumParameters, 1)
 {
 	initparameter_f(kAttack, dfx::MakeParameterNames(dfx::kParameterNames_Attack), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_f(kRelease, dfx::MakeParameterNames(dfx::kParameterNames_Release), 3.0, 3.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
+	initparameter_f(kRelease, dfx::MakeParameterNames(dfx::kParameterNames_Release), 30.0, 30.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_f(kVelocityInfluence, dfx::MakeParameterNames(dfx::kParameterNames_VelocityInfluence), 0.0, 1.0, 0.0, 1.0, DfxParam::Unit::Scalar);
 	initparameter_f(kFloor, dfx::MakeParameterNames(dfx::kParameterNames_Floor), 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_list(kGateMode, {"gate mode", "GateMod", "GatMod", "G8Md"}, kGateMode_Amplitude, kGateMode_Amplitude, kNumGateModes);
+
+	setparametervaluestring(kGateMode, kGateMode_Amplitude, "amplitude");
+	setparametervaluestring(kGateMode, kGateMode_Lowpass, "low-pass");
 
 	setpresetname(0, "push the button");  // default preset name
 
 	setInPlaceAudioProcessingAllowed(false);
 	getmidistate().setResumedAttackMode(true);  // this enables the lazy note attack mode
-	getmidistate().setEnvCurveType(DfxEnvelope::kCurveType_Cubed);
+	getmidistate().setEnvCurveType(kAmplitudeGateEnvelopeCurve);
 
 	registerSmoothedAudioValue(&mFloor);
+}
+
+//-----------------------------------------------------------------------------------------
+long MIDIGater::initialize()
+{
+	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [this](auto& channelFilters)
+	{
+		for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+		{
+			channelFilters.emplace_back(getsamplerate());
+		}
+	});
+
+	return dfx::kStatus_NoError;
+}
+
+//-----------------------------------------------------------------------------------------
+void MIDIGater::cleanup()
+{
+	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
+	{
+		channelFilters.clear();
+	});
 }
 
 //-----------------------------------------------------------------------------------------
@@ -59,20 +88,43 @@ void MIDIGater::reset()
 	// reset the unaffected between-audio stuff
 	mUnaffectedState = UnaffectedState::FadeIn;
 	mUnaffectedFadeSamples = 0;
+
+	resetFilters();
+}
+
+//-----------------------------------------------------------------------------------------
+void MIDIGater::resetFilters()
+{
+	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
+	{
+		std::for_each(channelFilters.begin(), channelFilters.end(), [](auto& filter){ filter.reset(); });
+	});
 }
 
 //-----------------------------------------------------------------------------------------
 void MIDIGater::processparameters()
 {
-	auto const attack_seconds = getparameter_f(kAttack) * 0.001;
-	auto const release_seconds = getparameter_f(kRelease) * 0.001;
+	if (getparameterchanged(kAttack) || getparameterchanged(kRelease))
+	{
+		auto const attack_seconds = getparameter_f(kAttack) * 0.001;
+		auto const release_seconds = getparameter_f(kRelease) * 0.001;
+		getmidistate().setEnvParameters(attack_seconds, release_seconds);
+	}
 	mVelocityInfluence = getparameter_f(kVelocityInfluence);
 	if (auto const value = getparameterifchanged_f(kFloor))
 	{
 		mFloor = *value;
 	}
-
-	getmidistate().setEnvParameters(attack_seconds, release_seconds);
+	mGateMode = getparameter_i(kGateMode);
+	if (getparameterchanged(kGateMode))
+	{
+		bool const isLPG = (mGateMode == kGateMode_Lowpass);
+		getmidistate().setEnvCurveType(isLPG ? DfxEnvelope::kCurveType_Linear : kAmplitudeGateEnvelopeCurve);
+		if (!isLPG)
+		{
+			resetFilters();
+		}
+	}
 }
 
 
@@ -81,6 +133,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 {
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
+	auto const filterSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
 
 
 	constexpr double pitchBendRange = 0.0;
@@ -106,7 +159,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 			numFramesToProcess = getmidistate().getBlockEvent(eventCount + 1).mOffsetFrames - currentBlockPosition;
 		}
 
-		// this means that 2 (or more) events occur simultaneously, 
+		// this means that two (or more) events occur simultaneously, 
 		// so there's no need to do calculations during this round
 		if (numFramesToProcess == 0)
 		{
@@ -121,20 +174,49 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 
 		for (int noteCount = 0; noteCount < DfxMidi::kNumNotes; noteCount++)
 		{
+			auto& channelFilters = mLowpassGateFilters[noteCount];
 			// only go into the output processing cycle if a note is happening
 			if (getmidistate().isNoteActive(noteCount))
 			{
 				noteActive = true;  // we have a note
 				for (unsigned long sampleCount = currentBlockPosition; sampleCount < (numFramesToProcess + currentBlockPosition); sampleCount++)
 				{
-					// see whether attack or release are active and fetch the output scalar
-					float envAmp = getmidistate().processEnvelope(noteCount);  // the attack/release scalar
-					envAmp *= getmidistate().getNoteState(noteCount).mNoteAmp.getValue();  // scale by key velocity
-					for (unsigned long ch = 0; ch < numChannels; ch++)
+					float noteAmp = getmidistate().getNoteState(noteCount).mNoteAmp.getValue();  // key velocity
+					if (mGateMode == kGateMode_Lowpass)
 					{
-						outAudio[ch][sampleCount] += inAudio[ch][sampleCount] * envAmp;
+						if (((sampleCount - currentBlockPosition) % filterSmoothingStride) == 0)
+						{
+							auto const filterCoef = getmidistate().processEnvelopeLowpassGate(noteCount);
+							std::for_each(channelFilters.begin(), channelFilters.end(), [&filterCoef](auto& filter)
+							{
+								filter.setCoefficients(filterCoef);
+							});
+						}
+						else
+						{
+							getmidistate().processEnvelope(noteCount);  // to temporally progress the envelope's state
+						}
+						for (unsigned long ch = 0; ch < numChannels; ch++)
+						{
+							outAudio[ch][sampleCount] += channelFilters[ch].process(inAudio[ch][sampleCount]) * noteAmp;
+						}
+					}
+					else
+					{
+						// see whether attack or release are active and fetch the output scalar
+						noteAmp *= getmidistate().processEnvelope(noteCount);  // scale by the attack/release envelope
+						for (unsigned long ch = 0; ch < numChannels; ch++)
+						{
+							outAudio[ch][sampleCount] += inAudio[ch][sampleCount] * noteAmp;
+						}
 					}
 				}
+			}
+
+			// could be because it already was inactive, or because we just completed articulation of the note
+			if (!getmidistate().isNoteActive(noteCount))
+			{
+				std::for_each(channelFilters.begin(), channelFilters.end(), [](auto& filter){ filter.reset(); });
 			}
 		}  // end of notes loop
 

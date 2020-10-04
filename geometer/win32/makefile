@@ -23,7 +23,7 @@ CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # -static-libgcc and -static-libstdc++ avoid having the output depend on these mingw DLLs.
 LFLAGS=-m64 -shared -mwindows -static-libgcc -static-libstdc++ -s
 
-DFXLIB_OBJECTS=$(DFXLIB)/dfxplugin.o $(DFXLIB)/dfxplugin-vst.o $(DFXLIB)/dfxmisc.o $(DFXLIB)/dfxsettings.o $(DFXLIB)/dfxparameter.o $(DFXLIB)/dfxmidi.o $(DFXLIB)/dfxenvelope.o $(DFXLIB)/dfxmutex.o
+DFXLIB_OBJECTS=$(DFXLIB)/dfxplugin.o $(DFXLIB)/dfxplugin-vst.o $(DFXLIB)/dfxmisc.o $(DFXLIB)/dfxsettings.o $(DFXLIB)/dfxparameter.o $(DFXLIB)/dfxmidi.o $(DFXLIB)/dfxenvelope.o $(DFXLIB)/iirfilter.o $(DFXLIB)/dfxmutex.o
 
 VSTSDK_OBJECTS=$(VSTSDK)/public.sdk/source/vst2.x/audioeffect.o $(VSTSDK)/public.sdk/source/vst2.x/audioeffectx.o $(VSTSDK)/public.sdk/source/vst2.x/vstplugmain.o
 

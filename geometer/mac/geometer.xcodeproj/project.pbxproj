@@ -53,6 +53,7 @@
 		4998C27707E524F4008EBD90 /* window-size-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4998C26007E524F4008EBD90 /* window-size-button.png */; };
 		B025B93E08AD2DB800A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B93B08AD2DB800A9CCAE /* CAVectorUnit.cpp */; };
 		B0D672C00D0F31DF0079BD4E /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0D672BF0D0F31DF0079BD4E /* destroyfx.icns */; };
+		EC0EF4672524FC4D00864283 /* iirfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC0EF4662524FC4D00864283 /* iirfilter.cpp */; };
 		EC2F843C24A7C2F100F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843B24A7C2F100F29321 /* dfxmisc.mm */; };
 		EC89B331208D2A0A00E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B32A208D2A0800E15129 /* Accelerate.framework */; };
 		EC89B332208D2A0A00E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B32B208D2A0900E15129 /* OpenGL.framework */; };
@@ -165,6 +166,8 @@
 		B06E6104097ACA4200AC582C /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B06E6105097ACA4200AC582C /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B0D672BF0D0F31DF0079BD4E /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
+		EC0EF4652524FC4D00864283 /* iirfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iirfilter.h; sourceTree = "<group>"; };
+		EC0EF4662524FC4D00864283 /* iirfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iirfilter.cpp; sourceTree = "<group>"; };
 		EC2F843B24A7C2F100F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
 		EC390FF020CCA99600A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC5CC736210EE07F007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
@@ -422,6 +425,8 @@
 				ECFE6DBF20B119110026202C /* dfxenvelope.cpp */,
 				ECBA85D223E246970011C890 /* dfxmutex.h */,
 				ECBA85D123E246970011C890 /* dfxmutex.cpp */,
+				EC0EF4652524FC4D00864283 /* iirfilter.h */,
+				EC0EF4662524FC4D00864283 /* iirfilter.cpp */,
 				EC98418D1030C49500FA3B2B /* dfxplugin-au-debug.xcconfig */,
 				EC98418E1030C49500FA3B2B /* dfxplugin-au-release.xcconfig */,
 			);
@@ -607,6 +612,7 @@
 				EC89B464208D335900E15129 /* dfxguidialog.cpp in Sources */,
 				4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */,
 				EC8AB24D24CDF61B000504F0 /* dfxgui-fontfactory.mm in Sources */,
+				EC0EF4672524FC4D00864283 /* iirfilter.cpp in Sources */,
 				EC89B522208D374800E15129 /* plugguieditor.cpp in Sources */,
 				ECA1AA3C20DB1C8E00419783 /* dfxguimisc.mm in Sources */,
 				EC89B45D208D334000E15129 /* dfx-au-utilities-preset-files.m in Sources */,

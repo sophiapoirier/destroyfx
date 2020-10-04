@@ -29,6 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 
 #include "dfxmath.h"
+#include "dfxparameter.h"
 
 
 //-----------------------------------------------------------------------------
@@ -184,6 +185,48 @@ void DfxEnvelope::beginRelease()
 
 	mLastValue = outputValue;
 	return outputValue;
+}
+
+//-----------------------------------------------------------------------------
+dfx::IIRfilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inAmplitude) const
+{
+	constexpr double minFreq = 20.;
+	constexpr double maxFreq = 20'000.;
+	auto const cutoffFreq = DfxParam::expand(inAmplitude, minFreq, maxFreq, DfxParam::Curve::Log);
+	auto const nyquist = mSampleRate * 0.5;
+	if (cutoffFreq >= std::min(nyquist, maxFreq))
+	{
+		return dfx::IIRfilter::kUnityCoeff;
+	}
+	if (cutoffFreq <= minFreq)
+	{
+		return dfx::IIRfilter::kZeroCoeff;
+	}
+
+	double const amplitudeFadeThreshold = [this]()
+	{
+		constexpr double thresholdDefault = 0.1;
+		if ((mState == State::Release) && (mReleaseDur > 0.))
+		{
+			// during release, scale the threshold at which gain fading the filter input
+			// so that the amount of time spent meets a minimum duration, in an effort
+			// to prevent audible filter ring-out truncation glitches at the end of release
+			constexpr double minimumFadeDur = 0.100;
+			return std::min(thresholdDefault * std::max(minimumFadeDur / (thresholdDefault * mReleaseDur), 1.), 1.);
+		}
+		return thresholdDefault;
+	}();
+	double const amplitudeFadeThresholdInv = 1. / amplitudeFadeThreshold;
+
+	auto coeff = dfx::IIRfilter(mSampleRate).setLowpassCoefficients(cutoffFreq);
+	if (inAmplitude < amplitudeFadeThreshold)
+	{
+		auto const fadeAmp = static_cast<float>(inAmplitude * amplitudeFadeThresholdInv);
+		coeff.mIn *= fadeAmp;
+		coeff.mPrevIn *= fadeAmp;
+		coeff.mPrevPrevIn *= fadeAmp;
+	}
+	return coeff;
 }
 
 //-----------------------------------------------------------------------------
