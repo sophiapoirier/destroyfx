@@ -39,8 +39,6 @@ constexpr VSTGUI::CCoord kFocusIndicatorThickness = 2.4;
 
 
 //-----------------------------------------------------------------------------
-namespace
-{
 static bool DFXGUI_PressButton(VSTGUI::CTextButton* inButton, bool inState)
 {
 	if (inButton)
@@ -49,6 +47,7 @@ static bool DFXGUI_PressButton(VSTGUI::CTextButton* inButton, bool inState)
 		if (inState)
 		{
 			inButton->onMouseDown(mousePos, VSTGUI::CButtonState(VSTGUI::kLButton));
+			inButton->valueChanged();  // required to trigger the change handler upon mouse-down rather than mouse-up
 		}
 		else
 		{
@@ -58,7 +57,6 @@ static bool DFXGUI_PressButton(VSTGUI::CTextButton* inButton, bool inState)
 	}
 	return false;
 }
-}  // namespace
 
 
 //-----------------------------------------------------------------------------
@@ -210,6 +208,20 @@ public:
 				inContext->drawGraphicsPath(path, VSTGUI::CDrawContext::kPathStroked);
 			}
 		}
+	}
+
+	int32_t onKeyDown(VstKeyCode& keyCode) override
+	{
+		// Workaround for bug where pressing the dialog's OK button in Logic produces
+		// a platform text edit cancel event. This event is mapped to an ESC key event,
+		// so by discarding those, we avert the text-discarding effect of the cancellation.
+		// This is definitely a hack, but I don't think there is a good reason for this
+		// text edit object itself to be cancelable (we handle that at the dialog level).
+		if (keyCode.virt == VKEY_ESCAPE)
+		{
+			return -1;  // means not handled
+		}
+		return VSTGUI::CTextEdit::onKeyDown(keyCode);
 	}
 
 	CLASS_METHODS(DGDialogTextEdit, VSTGUI::CTextEdit)
