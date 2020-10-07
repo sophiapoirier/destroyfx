@@ -123,7 +123,6 @@
 		B025BA3508AD364900A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
 		B025BA3608AD364900A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
 		B028C2B00D0F321E00ADA1DA /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
-		B06E60F5097ACA1200AC582C /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B06E60F6097ACA1200AC582C /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		EC1A7CC8210D26040067D135 /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC1D5DF2220BDB56005492F7 /* dfxsmoothedvalue.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxsmoothedvalue.hpp; sourceTree = "<group>"; };
@@ -352,7 +351,6 @@
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B06E60F6097ACA1200AC582C /* dfx-au-utilities-private.h */,
-				B06E60F5097ACA1200AC582C /* dfx-au-utilities-preset-files.c */,
 				EC89B443208D32BA00E15129 /* dfx-au-utilities-preset-files.m */,
 				EC9841931030C4D300FA3B2B /* dfxplugin-au-debug.xcconfig */,
 				EC9841941030C4D300FA3B2B /* dfxplugin-au-release.xcconfig */,

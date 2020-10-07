@@ -191,7 +191,6 @@
 		4932F7990680E859006A9591 /* dfxmidi.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmidi.cpp; sourceTree = "<group>"; };
 		4932F79A0680E859006A9591 /* dfxmidi.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxmidi.h; sourceTree = "<group>"; };
 		8D01CCD20486CAD60068D4B7 /* dfx Scrubby.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Scrubby.component"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B008010808F1BCCA00DA7FCA /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B008010908F1BCCA00DA7FCA /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B025B9BE08AD333D00A9CCAE /* CAVectorUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAVectorUnit.cpp; sourceTree = "<group>"; };
 		B025B9BF08AD333D00A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
@@ -455,7 +454,6 @@
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B008010908F1BCCA00DA7FCA /* dfx-au-utilities-private.h */,
-				B008010808F1BCCA00DA7FCA /* dfx-au-utilities-preset-files.c */,
 				EC89B44E208D330500E15129 /* dfx-au-utilities-preset-files.m */,
 				4932F79A0680E859006A9591 /* dfxmidi.h */,
 				4932F7990680E859006A9591 /* dfxmidi.cpp */,

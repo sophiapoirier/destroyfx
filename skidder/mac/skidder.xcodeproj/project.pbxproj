@@ -132,7 +132,6 @@
 		EC27B1302497E83500C10157 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		EC27B1322497E8D000C10157 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		EC27B1342497E96500C10157 /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
-		EC27B1352497E96500C10157 /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		EC27B1362497E96500C10157 /* dfx-au-utilities-preset-files.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "dfx-au-utilities-preset-files.m"; sourceTree = "<group>"; };
 		EC27B1392497EA3900C10157 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		EC27B13B2497ECC100C10157 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -371,7 +370,6 @@
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				EC27B1342497E96500C10157 /* dfx-au-utilities-private.h */,
-				EC27B1352497E96500C10157 /* dfx-au-utilities-preset-files.c */,
 				EC27B1362497E96500C10157 /* dfx-au-utilities-preset-files.m */,
 				EC8E90C317E60DA50022A297 /* dfxenvelope.h */,
 				EC8E90C217E60DA50022A297 /* dfxenvelope.cpp */,

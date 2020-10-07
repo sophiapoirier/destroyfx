@@ -163,7 +163,6 @@
 		49BB47B207E53DEF00861708 /* transverb-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "transverb-background.png"; sourceTree = "<group>"; };
 		49BB47B307E53DEF00861708 /* wide-fader-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "wide-fader-handle-glowing.png"; sourceTree = "<group>"; };
 		8D01CCD20486CAD60068D4B7 /* dfx Transverb.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Transverb.component"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B0204311092D4B1200EDC1C0 /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B0204312092D4B1200EDC1C0 /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B025B99308AD320900A9CCAE /* CAVectorUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAVectorUnit.cpp; sourceTree = "<group>"; };
 		B025B99408AD320900A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
@@ -397,7 +396,6 @@
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B0204312092D4B1200EDC1C0 /* dfx-au-utilities-private.h */,
-				B0204311092D4B1200EDC1C0 /* dfx-au-utilities-preset-files.c */,
 				ECF7D8D32002AC5D00DCE42E /* dfx-au-utilities-preset-files.m */,
 				ECF7D8F62002D2F800DCE42E /* dfxenvelope.h */,
 				ECF7D8F72002D2F900DCE42E /* dfxenvelope.cpp */,

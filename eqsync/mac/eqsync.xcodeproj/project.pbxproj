@@ -129,7 +129,6 @@
 		B025B92008AD2D3400A9CCAE /* CAVectorUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAVectorUnit.cpp; sourceTree = "<group>"; };
 		B025B92108AD2D3400A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
 		B025B92208AD2D3400A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
-		B06E60F1097ACA0200AC582C /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B06E60F2097ACA0200AC582C /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B0AD80E10D0F316F00766C78 /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
 		EC2F843D24A7C31200F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
@@ -357,7 +356,6 @@
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B06E60F2097ACA0200AC582C /* dfx-au-utilities-private.h */,
-				B06E60F1097ACA0200AC582C /* dfx-au-utilities-preset-files.c */,
 				EC89B477208D33BF00E15129 /* dfx-au-utilities-preset-files.m */,
 				490E769D07CAE20500688A1D /* temporatetable.h */,
 				490E769C07CAE20500688A1D /* temporatetable.cpp */,

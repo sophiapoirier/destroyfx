@@ -95,7 +95,6 @@
 		49BB469307E533D000861708 /* monomakerdef.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = monomakerdef.h; sourceTree = "<group>"; };
 		49BB469907E533DD00861708 /* monomaker.exp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.exports; name = monomaker.exp; path = mac/monomaker.exp; sourceTree = "<group>"; };
 		8D01CCD20486CAD60068D4B7 /* dfx Monomaker.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Monomaker.component"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B008FC2208ECA56C00DA7FCA /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B008FC2308ECA56C00DA7FCA /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		B025BA1908AD35E100A9CCAE /* CAVectorUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAVectorUnit.cpp; sourceTree = "<group>"; };
 		B025BA1A08AD35E100A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
@@ -332,7 +331,6 @@
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B008FC2308ECA56C00DA7FCA /* dfx-au-utilities-private.h */,
-				B008FC2208ECA56C00DA7FCA /* dfx-au-utilities-preset-files.c */,
 				EC89B42A208D31E700E15129 /* dfx-au-utilities-preset-files.m */,
 				EC9841951030C4E400FA3B2B /* dfxplugin-au-debug.xcconfig */,
 				EC9841961030C4E400FA3B2B /* dfxplugin-au-release.xcconfig */,

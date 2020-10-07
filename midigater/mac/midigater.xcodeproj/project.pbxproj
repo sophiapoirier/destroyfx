@@ -134,7 +134,6 @@
 		B025BA0708AD353E00A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
 		B025BA0808AD353E00A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
 		B028C29A0D0F31F900ADA1DA /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
-		B06E60FA097ACA2200AC582C /* dfx-au-utilities-preset-files.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities-preset-files.c"; sourceTree = "<group>"; };
 		B06E60FB097ACA2200AC582C /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
 		EC0EF4482524199200864283 /* iirfilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iirfilter.cpp; sourceTree = "<group>"; };
 		EC0EF4492524199200864283 /* iirfilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iirfilter.h; sourceTree = "<group>"; };
@@ -376,7 +375,6 @@
 				4932F4CB06801180006A9591 /* dfx-au-utilities.h */,
 				4932F4CA06801180006A9591 /* dfx-au-utilities.c */,
 				B06E60FB097ACA2200AC582C /* dfx-au-utilities-private.h */,
-				B06E60FA097ACA2200AC582C /* dfx-au-utilities-preset-files.c */,
 				EC89B41F208D310600E15129 /* dfx-au-utilities-preset-files.m */,
 				EC4FFDD3209B9692000F2A30 /* dfxenvelope.h */,
 				EC4FFDD4209B9692000F2A30 /* dfxenvelope.cpp */,
