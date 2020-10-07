@@ -28,8 +28,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 //----------------------------------------------------------------------------- 
 // constants
 constexpr auto kAmplitudeGateEnvelopeCurve = DfxEnvelope::kCurveType_Cubed;
-constexpr long kUnaffectedFadeDur = 18;
-constexpr float kUnaffectedFadeStep = 1.0f / static_cast<float>(kUnaffectedFadeDur);
 
 
 // this macro does boring entry point stuff for us
@@ -85,10 +83,6 @@ void MIDIGater::cleanup()
 //-----------------------------------------------------------------------------------------
 void MIDIGater::reset()
 {
-	// reset the unaffected between-audio stuff
-	mUnaffectedState = UnaffectedState::FadeIn;
-	mUnaffectedFadeSamples = 0;
-
 	resetFilters();
 }
 
@@ -136,6 +130,22 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 	auto const filterSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
 
 
+	// add the "floor" audio input
+	if (mFloor.isSmoothing() || (mFloor.getValue() > 0.0f))
+	{
+		for (unsigned long sampleCount = 0; sampleCount < inNumFrames; sampleCount++)
+		{
+			for (unsigned long ch = 0; ch < numChannels; ch++)
+			{
+				outAudio[ch][sampleCount] = inAudio[ch][sampleCount] * mFloor.getValue();
+			}
+			mFloor.inc();
+		}
+	}
+	// this is the correct state that smoothed floor should be in upon exiting this audio render
+	auto const exitFloor = mFloor;
+
+
 	constexpr double pitchBendRange = 0.0;
 	constexpr float velocityCurve = 1.0f;
 
@@ -169,8 +179,8 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 			continue;
 		}
 
-		// test for whether or not all notes are off and unprocessed audio can be outputted
-		bool noteActive = false;  // none yet for this chunk
+		bool noteActive = false;  // test for whether any notes are are on in this chunk
+		auto const entryFloor = mFloor;
 
 		for (int noteCount = 0; noteCount < DfxMidi::kNumNotes; noteCount++)
 		{
@@ -179,9 +189,11 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 			if (getmidistate().isNoteActive(noteCount))
 			{
 				noteActive = true;  // we have a note
+				mFloor = entryFloor;
 				for (unsigned long sampleCount = currentBlockPosition; sampleCount < (numFramesToProcess + currentBlockPosition); sampleCount++)
 				{
 					float noteAmp = getmidistate().getNoteState(noteCount).mNoteAmp.getValue();  // key velocity
+					noteAmp *= 1.0f - mFloor.getValue();  // maximum note amplitude is scaled by what is above the floor
 					if (mGateMode == kGateMode_Lowpass)
 					{
 						if (((sampleCount - currentBlockPosition) % filterSmoothingStride) == 0)
@@ -210,6 +222,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 							outAudio[ch][sampleCount] += inAudio[ch][sampleCount] * noteAmp;
 						}
 					}
+					mFloor.inc();
 				}
 			}
 
@@ -220,18 +233,10 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 			}
 		}  // end of notes loop
 
-
-		// we had notes this chunk, but the unaffected processing hasn't faded out, so change its state to fade-out
-		if (noteActive && (mUnaffectedState == UnaffectedState::Flat))
+		// catch up smoothing if no notes rendered during this chunk
+		if (!noteActive)
 		{
-			mUnaffectedState = UnaffectedState::FadeOut;
-		}
-
-		// we can output unprocessed audio if no notes happened during this block chunk
-		// or if the unaffected fade-out still needs to be finished
-		if (!noteActive || (mUnaffectedState == UnaffectedState::FadeOut))
-		{
-			processUnaffected(inAudio, outAudio, numFramesToProcess, currentBlockPosition, numChannels);
+			mFloor.inc(numFramesToProcess);
 		}
 
 		eventCount++;
@@ -248,50 +253,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 		getmidistate().heedEvents(eventCount, pitchBendRange, velocityCurve, mVelocityInfluence);
 
 	} while (eventCount < getmidistate().getBlockEventCount());
-}
 
-//-----------------------------------------------------------------------------------------
-// this function outputs the unprocessed audio input between notes, if desired
-void MIDIGater::processUnaffected(float const* const* inAudio, float* const* outAudio, 
-								  unsigned long inNumFramesToProcess, unsigned long inOffsetFrames, unsigned long inNumChannels)
-{
-	auto const endPos = inNumFramesToProcess + inOffsetFrames;
-	for (unsigned long sampleCount = inOffsetFrames; sampleCount < endPos; sampleCount++)
-	{
-		auto sampleAmp = mFloor.getValue();
 
-		// this is the state when all notes just ended and the clean input first kicks in
-		if (mUnaffectedState == UnaffectedState::FadeIn)
-		{
-			// linear fade-in
-			sampleAmp = static_cast<float>(mUnaffectedFadeSamples) * kUnaffectedFadeStep * mFloor.getValue();
-			mUnaffectedFadeSamples++;
-			// go to the no-gain state if the fade-in is done
-			if (mUnaffectedFadeSamples >= kUnaffectedFadeDur)
-			{
-				mUnaffectedState = UnaffectedState::Flat;
-			}
-		}
-		// a note has just begun, so we need to hasily fade out the clean input audio
-		else if (mUnaffectedState == UnaffectedState::FadeOut)
-		{
-			mUnaffectedFadeSamples--;
-			// linear fade-out
-			sampleAmp = static_cast<float>(mUnaffectedFadeSamples) * kUnaffectedFadeStep * mFloor.getValue();
-			// get ready for the next time and exit this function if the fade-out is done
-			if (mUnaffectedFadeSamples <= 0)
-			{
-				// ready for the next time
-				mUnaffectedState = UnaffectedState::FadeIn;
-				return;  // important!  leave this function or a new fade-in will begin
-			}
-		}
-
-		for (unsigned long ch = 0; ch < inNumChannels; ch++)
-		{
-			outAudio[ch][sampleCount] += inAudio[ch][sampleCount] * sampleAmp;
-		}
-
-		incrementSmoothedAudioValues();
-	}
+	mFloor = exitFloor;
 }

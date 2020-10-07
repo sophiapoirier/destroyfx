@@ -63,25 +63,12 @@ public:
 	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 
 private:
-	// these are the states of the unaffected audio input between notes
-	enum class UnaffectedState
-	{
-		FadeIn,
-		Flat,
-		FadeOut
-	};
-
 	void resetFilters();
-	void processUnaffected(float const* const* inAudio, float* const* outAudio, 
-						   unsigned long inNumFramesToProcess, unsigned long inOffsetFrames, unsigned long inNumChannels);
 
 	// parameter values
 	float mVelocityInfluence = 0.0f;
 	dfx::SmoothedValue<float> mFloor;
 	long mGateMode {};
-
-	UnaffectedState mUnaffectedState {};
-	long mUnaffectedFadeSamples = 0;
 
 	std::array<std::vector<dfx::IIRfilter>, DfxMidi::kNumNotes> mLowpassGateFilters;
 };

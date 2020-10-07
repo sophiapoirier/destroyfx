@@ -29,11 +29,11 @@ MIDI Gater is a little bit unusual as far as MIDI controlled gates go, though, b
 </p>
 
 <p class="desc">
-If you don't want the sound to turn completely off no notes are playing, then you can adjust the <b>floor</b> parameter to control the audio volume level between notes.
+If the audio simply turned on as soon as you played a MIDI note, you would hear clicky noises every time you played or released a note.  This is caused by glitchy digital waveform discontinuities.  In order to avoid this, MIDI Gater fades the volume in when notes start and fades it out when notes stop.  You can control the duration of these fades with the <b>attack</b> and <b>release</b> parameters.  Attack controls the duration of the fade-in slope when you begin playing a note, and release controls the duration of the fade-out slope when you stop playing a note.
 </p>
 
 <p class="desc">
-If the audio simply turned on as soon as you played a MIDI note, you would hear clicky noises every time you played or released a note.  This is caused by glitchy digital waveform discontinuities.  In order to avoid this, MIDI Gater fades the volume in when notes start and fades it out when notes stop.  You can control the duration of these fades with the <b>attack</b> and <b>release</b> parameters.  Attack controls the duration of the fade-in slope when you begin playing a note, and release controls the duration of the fade-out slope when you stop playing a note.
+If you don't want the sound to turn completely off when no notes are playing, then you can adjust the <b>floor</b> parameter to control the baseline volume level of input audio that will always be present.  Any increase in the floor level subtracts from the maximum volume level of a single note; that way the sum audio level of a sustained maximum-velocity note will still be unity gain of the input audio. This also means that maximum floor will cause notes to have no effect.
 </p>
 
 <p class="desc">
