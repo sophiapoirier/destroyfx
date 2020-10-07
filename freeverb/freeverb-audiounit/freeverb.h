@@ -15,7 +15,6 @@
 #include <memory>
 
 #include "AUEffectBase.h"
-#include "freeverb-au-def.h"
 #include "revmodel.hpp"
 
 
@@ -33,9 +32,6 @@ public:
 							  AudioUnitParameterInfo& outParameterInfo) override;
 
 	UInt32 SupportedNumChannels(const AUChannelInfo** outInfo) override;
-#if !CA_USE_AUDIO_PLUGIN_ONLY
-	OSStatus Version() override { return PLUGIN_VERSION; }
-#endif
 
 	OSStatus ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags, 
 								const AudioBufferList& inBuffer, AudioBufferList& outBuffer, 

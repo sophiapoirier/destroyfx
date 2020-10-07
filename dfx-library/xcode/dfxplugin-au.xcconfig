@@ -2,9 +2,6 @@
 
 WRAPPER_EXTENSION = component
 INSTALL_PATH = $(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components
-REZ_SEARCH_PATHS = $(DFX_ROOT_SOURCE_PATH)/CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic/AUBase /System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers $(DFX_ROOT_SOURCE_PATH)/dfx-library $(DFX_PLUGIN_SOURCE_PATH)
-REZ_PREFIX_FILE = $(GCC_PREFIX_HEADER)
-REZ_PREPROCESSOR_DEFINITIONS = ppc_$ppc i386_$i386 x86_64_$x86_64 ppc64_$ppc64 TARGET_API_AUDIOUNIT
 USER_HEADER_SEARCH_PATHS = $(inherited) $(DFX_ROOT_SOURCE_PATH)/CoreAudioUtilityClasses/CoreAudio/** $(DFX_ROOT_SOURCE_PATH)/vstgui/vstgui/**
 
 DFX_PLUGIN_FORMAT_MACROS = TARGET_API_AUDIOUNIT CA_USE_AUDIO_PLUGIN_ONLY=1
