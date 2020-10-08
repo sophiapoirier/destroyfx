@@ -190,6 +190,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 			{
 				noteActive = true;  // we have a note
 				mFloor = entryFloor;
+				float postFilterAmp = 1.f;
 				for (unsigned long sampleCount = currentBlockPosition; sampleCount < (numFramesToProcess + currentBlockPosition); sampleCount++)
 				{
 					float noteAmp = getmidistate().getNoteState(noteCount).mNoteAmp.getValue();  // key velocity
@@ -198,7 +199,8 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 					{
 						if (((sampleCount - currentBlockPosition) % filterSmoothingStride) == 0)
 						{
-							auto const filterCoef = getmidistate().processEnvelopeLowpassGate(noteCount);
+							dfx::IIRfilter::Coefficients filterCoef;
+							std::tie(filterCoef, postFilterAmp) = getmidistate().processEnvelopeLowpassGate(noteCount);
 							std::for_each(channelFilters.begin(), channelFilters.end(), [&filterCoef](auto& filter)
 							{
 								filter.setCoefficients(filterCoef);
@@ -208,6 +210,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 						{
 							getmidistate().processEnvelope(noteCount);  // to temporally progress the envelope's state
 						}
+						noteAmp *= postFilterAmp;
 						for (unsigned long ch = 0; ch < numChannels; ch++)
 						{
 							outAudio[ch][sampleCount] += channelFilters[ch].process(inAudio[ch][sampleCount]) * noteAmp;

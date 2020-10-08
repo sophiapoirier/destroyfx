@@ -188,6 +188,35 @@ void DfxEnvelope::beginRelease()
 }
 
 //-----------------------------------------------------------------------------
+std::pair<dfx::IIRfilter::Coefficients, float> DfxEnvelope::processLowpassGate()
+{
+	float const postFilterGain = [this]()
+	{
+		if (mState == State::Dormant)
+		{
+			return 0.f;
+		}
+		if ((mState == State::Release) && (mReleaseDur > 0.))
+		{
+			// calculate a minimum-duration post-filter fade-out gain for the release tail
+			// to prevent audible filter ring-out truncation glitches at the end of release
+			constexpr double minimumFadeDur = 0.003;
+			double const fadeDur = std::min(mReleaseDur, minimumFadeDur);
+			auto const sectionPosReverseNormalized = 1. - (static_cast<double>(mSectionPos) * mSectionLength_inv);
+			auto const fadePortion = fadeDur / mReleaseDur;
+			if (sectionPosReverseNormalized < fadePortion)
+			{
+				return static_cast<float>(sectionPosReverseNormalized / fadePortion);
+			}
+		}
+		return 1.f;
+	}();
+
+	auto const envelopeAmplitude = process();
+	return {getLowpassGateCoefficients(envelopeAmplitude), postFilterGain};
+}
+
+//-----------------------------------------------------------------------------
 dfx::IIRfilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inAmplitude) const
 {
 	constexpr double minFreq = 20.;
@@ -198,27 +227,12 @@ dfx::IIRfilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inAm
 	{
 		return dfx::IIRfilter::kUnityCoeff;
 	}
-	if (cutoffFreq <= minFreq)
-	{
-		return dfx::IIRfilter::kZeroCoeff;
-	}
-
-	double const amplitudeFadeThreshold = [this]()
-	{
-		constexpr double thresholdDefault = 0.1;
-		if ((mState == State::Release) && (mReleaseDur > 0.))
-		{
-			// during release, scale the threshold at which gain fading the filter input
-			// so that the amount of time spent meets a minimum duration, in an effort
-			// to prevent audible filter ring-out truncation glitches at the end of release
-			constexpr double minimumFadeDur = 0.100;
-			return std::min(thresholdDefault * std::max(minimumFadeDur / (thresholdDefault * mReleaseDur), 1.), 1.);
-		}
-		return thresholdDefault;
-	}();
-	double const amplitudeFadeThresholdInv = 1. / amplitudeFadeThreshold;
 
 	auto coeff = dfx::IIRfilter(mSampleRate).setLowpassCoefficients(cutoffFreq);
+
+	// envelope amplitude level below which the low-pass gate begins gain-fading filter coefficients
+	constexpr double amplitudeFadeThreshold = 0.1;
+	constexpr double amplitudeFadeThresholdInv = 1. / amplitudeFadeThreshold;
 	if (inAmplitude < amplitudeFadeThreshold)
 	{
 		auto const fadeAmp = static_cast<float>(inAmplitude * amplitudeFadeThresholdInv);

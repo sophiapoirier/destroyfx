@@ -489,21 +489,31 @@ float DfxMidi::processEnvelope(int inMidiNote)
 	auto& note = getNoteStateMutable(inMidiNote);
 	auto const outputAmp = note.mEnvelope.process();
 
-	if (!note.mEnvelope.isActive())
-	{
-		note.mVelocity = 0;
-	}
-
-	note.mNoteAmp.inc();
+	postprocessEnvelope(note);
 
 	return outputAmp;
 }
 
 //-------------------------------------------------------------------------
-dfx::IIRfilter::Coefficients DfxMidi::processEnvelopeLowpassGate(int inMidiNote)
+std::pair<dfx::IIRfilter::Coefficients, float> DfxMidi::processEnvelopeLowpassGate(int inMidiNote)
 {
-	auto const envAmp = processEnvelope(inMidiNote);
-	return getNoteState(inMidiNote).mEnvelope.getLowpassGateCoefficients(envAmp);
+	auto& note = getNoteStateMutable(inMidiNote);
+	auto const result = note.mEnvelope.processLowpassGate();
+
+	postprocessEnvelope(note);
+
+	return result;
+}
+
+//-------------------------------------------------------------------------
+void DfxMidi::postprocessEnvelope(MusicNote& inNote)
+{
+	if (!inNote.mEnvelope.isActive())
+	{
+		inNote.mVelocity = 0;
+	}
+
+	inNote.mNoteAmp.inc();
 }
 
 //-------------------------------------------------------------------------
