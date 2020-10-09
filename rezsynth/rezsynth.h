@@ -147,9 +147,9 @@ private:
 
 	double calculateAmpEvener(int currentNote) const;
 	[[nodiscard]] int calculateCoefficients(int currentNote);
-	void processFilterOuts(float const* inAudio, float* outAudio, unsigned long sampleFrames, 
-						   int currentNote, int numBands, double& prevIn, double& prevprevIn, 
-						   double* prevOut, double* prevprevOut);
+	void processFilterOuts(float const* const* inAudio, float* const* outAudio, 
+						   unsigned long sampleFrameOffset, unsigned long sampleFrames, 
+						   int currentNote, int numBands);
 	void processUnaffected(float const* inAudio, float* outAudio, unsigned long sampleFrames);
 	double getBandwidthForFreq(double inFreq) const;
 	void checkForNewNote(long currentEvent);

@@ -169,47 +169,50 @@ int RezSynth::calculateCoefficients(int currentNote)
 
 //-----------------------------------------------------------------------------------------
 // This function writes the filtered audio output.
-void RezSynth::processFilterOuts(float const* inAudio, float* outAudio, 
-								 unsigned long sampleFrames, 
-								 int currentNote, int numBands, 
-								 double& prevIn, double& prevprevIn, 
-								 double* prevOut, double* prevprevOut)
+void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outAudio, 
+								 unsigned long sampleFrameOffset, unsigned long sampleFrames, 
+								 int currentNote, int numBands)
 {
+	auto const numChannels = getnumoutputs();
+
 	// here we do the resonant filter equation using our filter coefficients, and related stuff
-	for (unsigned long samplecount = 0; samplecount < sampleFrames; samplecount++)
+	for (unsigned long sampleIndex = sampleFrameOffset; sampleIndex < sampleFrames + sampleFrameOffset; sampleIndex++)
 	{
 		double const noteAmp = mAmpEvener[currentNote].getValue() * static_cast<double>(getmidistate().getNoteState(currentNote).mNoteAmp.getValue());
 		// see whether attack or release are active and fetch the output scalar
 		auto const envAmp = getmidistate().processEnvelope(currentNote);  // the attack/release scalar
 		double const envedTotalAmp = noteAmp * static_cast<double>(envAmp * mWetGain.getValue()) * mOutputGain.getValue();
 
-		for (int bandcount = 0; bandcount < numBands; bandcount++)
+		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
-			// filter using the input, delayed values, and their filter coefficients
-			double const curBandOutValue = (mInputAmp[bandcount] * (inAudio[samplecount] - mPrevPrevInCoeff[bandcount] * prevprevIn)) 
-										   + (mPrevOutCoeff[bandcount] * prevOut[bandcount]) 
-										   - (mPrevPrevOutCoeff[bandcount] * prevprevOut[bandcount]);
+			for (int bandIndex = 0; bandIndex < numBands; bandIndex++)
+			{
+				// filter using the input, delayed values, and their filter coefficients
+				double const curBandOutValue = (mInputAmp[bandIndex] * (inAudio[ch][sampleIndex] - mPrevPrevInCoeff[bandIndex] * mPrevPrevInValue[ch][currentNote])) 
+											   + (mPrevOutCoeff[bandIndex] * mPrevOutValue[ch][currentNote][bandIndex]) 
+											   - (mPrevPrevOutCoeff[bandIndex] * mPrevPrevOutValue[ch][currentNote][bandIndex]);
 
-			// add the latest resonator to the output collection, scaled by my evener and user gain
-			auto const entryOutput = outAudio[samplecount];
-			outAudio[samplecount] += static_cast<float>(curBandOutValue * envedTotalAmp);
+				// add the latest resonator to the output collection, scaled by my evener and user gain
+				auto const entryOutput = outAudio[ch][sampleIndex];
+				outAudio[ch][sampleIndex] += static_cast<float>(curBandOutValue * envedTotalAmp);
 
-			// very old outValue gets old outValue and old outValue gets current outValue (no longer current)
-			prevprevOut[bandcount] = prevOut[bandcount];
-			prevOut[bandcount] = curBandOutValue;
+				// very old outValue gets old outValue and old outValue gets current outValue (no longer current)
+				mPrevPrevOutValue[ch][currentNote][bandIndex] = std::exchange(mPrevOutValue[ch][currentNote][bandIndex], curBandOutValue);
 
 #if __GNUC__
-			if (__builtin_expect(std::isinf(outAudio[samplecount]), 0))  // TODO: C++20 [[unlikely]]
+				if (__builtin_expect(std::isinf(outAudio[ch][sampleIndex]), 0))  // TODO: C++20 [[unlikely]]
 #else
-			if (std::isinf(outAudio[samplecount]))
+				if (std::isinf(outAudio[ch][sampleIndex]))
 #endif
-			{
-				outAudio[samplecount] = entryOutput;
-				prevOut[bandcount] = 0.0;
+				{
+					outAudio[ch][sampleIndex] = entryOutput;
+					mPrevOutValue[ch][currentNote][bandIndex] = 0.0;
+				}
 			}
+
+			mPrevPrevInValue[ch][currentNote] = std::exchange(mPrevInValue[ch][currentNote], inAudio[ch][sampleIndex]);
 		}
-		prevprevIn = prevIn;
-		prevIn = inAudio[samplecount];
+
 		mOutputGain.inc();
 		mWetGain.inc();
 		mAmpEvener[currentNote].inc();
@@ -220,7 +223,7 @@ void RezSynth::processFilterOuts(float const* inAudio, float* outAudio,
 // this function outputs the unprocessed audio input between notes, if desired
 void RezSynth::processUnaffected(float const* inAudio, float* outAudio, unsigned long sampleFrames)
 {
-	for (unsigned long samplecount = 0; samplecount < sampleFrames; samplecount++)
+	for (unsigned long sampleIndex = 0; sampleIndex < sampleFrames; sampleIndex++)
 	{
 		float unEnvAmp = 1.0f;
 
@@ -252,7 +255,7 @@ void RezSynth::processUnaffected(float const* inAudio, float* outAudio, unsigned
 			}
 		}
 
-		outAudio[samplecount] += inAudio[samplecount] * unEnvAmp * mBetweenGain.getValue() * mWetGain.getValue();
+		outAudio[sampleIndex] += inAudio[sampleIndex] * unEnvAmp * mBetweenGain.getValue() * mWetGain.getValue();
 
 		mBetweenGain.inc();
 		mWetGain.inc();

@@ -113,25 +113,14 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 									  [](auto& value){ value.snap(); });
 					}
 
-					// most of the note values are liable to change during processFilterOuts,
-					// so we back them up to allow multi-channel repetition
-					DfxMidi::MusicNote const noteState_temp = getmidistate().getNoteState(noteIndex);
-					auto const entryAmpEvener = mAmpEvener;
-					// render the filtered audio output for the note for each audio channel
-					for (unsigned long ch = 0; ch < numChannels; ch++)
-					{
-						// restore the note values before doing processFilterOuts for the next channel
-						getmidistate().setNoteState(noteIndex, noteState_temp);
-						mOutputGain = entryOutputGain;
-						mWetGain = entryWetGain;
-						mAmpEvener = entryAmpEvener;
+					// restore values before doing processFilterOuts for the next channel
+					mOutputGain = entryOutputGain;
+					mWetGain = entryWetGain;
 
-						processFilterOuts(&(inAudio[ch][currentBlockPosition + subSlicePosition]), 
-										  &(outAudio[ch][currentBlockPosition + subSlicePosition]), 
-										  subSliceFrameCount, noteIndex, activeNumBands, 
-										  mPrevInValue[ch][noteIndex], mPrevPrevInValue[ch][noteIndex], 
-										  mPrevOutValue[ch][noteIndex].data(), mPrevPrevOutValue[ch][noteIndex].data());
-					}
+					// render the filtered audio output for the note
+					processFilterOuts(inAudio, outAudio, 
+									  currentBlockPosition + subSlicePosition, subSliceFrameCount, 
+									  noteIndex, activeNumBands);
 
 					mBaseFreq[noteIndex].inc(subSliceFrameCount);
 					std::for_each(mBandCenterFreq[noteIndex].begin(), mBandCenterFreq[noteIndex].end(), 
