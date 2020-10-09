@@ -21,6 +21,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "rezsynth.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "dfxmath.h"
@@ -97,8 +98,6 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 
 				for (unsigned long subSlicePosition = 0; subSlicePosition < numFramesToProcess; )
 				{
-					auto const subSliceFrameCount = std::min(numFramesToProcess - subSlicePosition, freqSmoothingStride);
-
 					// this is the resonator stuff
 					auto const activeNumBands = calculateCoefficients(noteIndex);
 
@@ -112,6 +111,23 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 						std::for_each(mBandBandwidth[noteIndex].begin(), mBandBandwidth[noteIndex].end(), 
 									  [](auto& value){ value.snap(); });
 					}
+
+					auto const subSliceFrameCount = [this, numFramesToProcess, freqSmoothingStride, subSlicePosition, noteIndex, activeNumBands]()
+					{
+						auto const valueIsSmoothing = [](auto const& value){ return value.isSmoothing(); };
+						auto const freqIsSmoothing = mBaseFreq[noteIndex].isSmoothing()
+						|| std::any_of(mBandCenterFreq[noteIndex].cbegin(), 
+									   std::next(mBandCenterFreq[noteIndex].cbegin(), activeNumBands), 
+									   valueIsSmoothing)
+						|| std::any_of(mBandBandwidth[noteIndex].cbegin(), 
+									   std::next(mBandBandwidth[noteIndex].cbegin(), activeNumBands), 
+									   valueIsSmoothing);
+						if (freqIsSmoothing)
+						{
+							return std::min(numFramesToProcess - subSlicePosition, freqSmoothingStride);
+						}
+						return numFramesToProcess - subSlicePosition;
+					}();
 
 					// restore values before doing processFilterOuts for the next channel
 					mOutputGain = entryOutputGain;
