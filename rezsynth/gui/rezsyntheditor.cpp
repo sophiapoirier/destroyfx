@@ -334,12 +334,12 @@ long RezSynthEditor::OpenEditor()
 	label->setText("filter scaling");
 
 	// bandwidth mode
-	pos.set(kBandwidthModeButtonX, kBandwidthModeButtonY, bandwidthModeButtonImage->getWidth(), bandwidthModeButtonImage->getHeight() / kNumBandwidthModes);
-	emplaceControl<DGButton>(this, kBandwidthMode, pos, bandwidthModeButtonImage, DGButton::Mode::Increment);
+	pos.set(kBandwidthModeButtonX, kBandwidthModeButtonY, bandwidthModeButtonImage->getWidth() / 2, bandwidthModeButtonImage->getHeight() / kNumBandwidthModes);
+	emplaceControl<DGButton>(this, kBandwidthMode, pos, bandwidthModeButtonImage, DGButton::Mode::Increment, true);
 
 	// separation mode (logarithmic or linear)
-	pos.set(kSepModeButtonX, kSepModeButtonY, sepModeButtonImage->getWidth(), sepModeButtonImage->getHeight() / kNumSeparationModes);
-	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, DGButton::Mode::Increment);
+	pos.set(kSepModeButtonX, kSepModeButtonY, sepModeButtonImage->getWidth() / 2, sepModeButtonImage->getHeight() / kNumSeparationModes);
+	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, DGButton::Mode::Increment, true);
 
 	// legato
 	emplaceControl<DGToggleImageButton>(this, kLegato, kLegatoButtonX, kLegatoButtonY, legatoButtonImage);
@@ -363,8 +363,8 @@ long RezSynthEditor::OpenEditor()
 	emplaceControl<DGToggleImageButton>(this, kWiseAmp, kWiseAmpButtonX, kWiseAmpButtonY, wiseAmpButtonImage);
 
 	// dry/wet mix mode (linear or equal power)
-	pos.set(kDryWetMixModeButtonX, kDryWetMixModeButtonY, dryWetMixModeButtonImage->getWidth(), dryWetMixModeButtonImage->getHeight() / kNumDryWetMixModes);
-	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, DGButton::Mode::Increment);
+	pos.set(kDryWetMixModeButtonX, kDryWetMixModeButtonY, dryWetMixModeButtonImage->getWidth() / 2, dryWetMixModeButtonImage->getHeight() / kNumDryWetMixModes);
+	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, DGButton::Mode::Increment, true);
 
 	// turn on/off MIDI learn mode for CC parameter automation
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
