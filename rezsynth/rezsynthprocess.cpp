@@ -22,16 +22,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "rezsynth.h"
 
 #include <algorithm>
-#include <cmath>
-
-#include "dfxmath.h"
 
 
 void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
 	auto const numChannels = getnumoutputs();
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
-	auto const freqSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
 
 
 #ifndef TARGET_API_AUDIOUNIT
@@ -112,7 +108,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 									  [](auto& value){ value.snap(); });
 					}
 
-					auto const subSliceFrameCount = [this, numFramesToProcess, freqSmoothingStride, subSlicePosition, noteIndex, activeNumBands]()
+					auto const subSliceFrameCount = [this, numFramesToProcess, subSlicePosition, noteIndex, activeNumBands]()
 					{
 						auto const valueIsSmoothing = [](auto const& value){ return value.isSmoothing(); };
 						auto const freqIsSmoothing = mBaseFreq[noteIndex].isSmoothing()
@@ -122,11 +118,8 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 						|| std::any_of(mBandBandwidth[noteIndex].cbegin(), 
 									   std::next(mBandBandwidth[noteIndex].cbegin(), activeNumBands), 
 									   valueIsSmoothing);
-						if (freqIsSmoothing)
-						{
-							return std::min(numFramesToProcess - subSlicePosition, freqSmoothingStride);
-						}
-						return numFramesToProcess - subSlicePosition;
+						auto const remainingFrames = numFramesToProcess - subSlicePosition;
+						return freqIsSmoothing ? std::min(mFreqSmoothingStride, remainingFrames) : remainingFrames;
 					}();
 
 					// restore values before doing processFilterOuts for the next channel
@@ -146,6 +139,12 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 
 					subSlicePosition += subSliceFrameCount;
 				}
+			}
+
+			// could be because it already was inactive, or because we just completed articulation of the note
+			if (!getmidistate().isNoteActive(noteIndex))
+			{
+				std::for_each(mLowpassGateFilters[noteIndex].begin(), mLowpassGateFilters[noteIndex].end(), [](auto& filter){ filter.reset(); });
 			}
 
 			mNoteActiveLastRender[noteIndex] = getmidistate().isNoteActive(noteIndex);

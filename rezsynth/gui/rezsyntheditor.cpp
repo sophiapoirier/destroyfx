@@ -345,8 +345,8 @@ long RezSynthEditor::OpenEditor()
 	emplaceControl<DGToggleImageButton>(this, kLegato, kLegatoButtonX, kLegatoButtonY, legatoButtonImage);
 
 	// attack and release fade mode
-	pos.set(kFadeTypeButtonX, kFadeTypeButtonY, fadesButtonImage->getWidth(), fadesButtonImage->getHeight() / DfxEnvelope::kCurveType_NumTypes);
-	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DGButton::Mode::Increment);
+	pos.set(kFadeTypeButtonX, kFadeTypeButtonY, fadesButtonImage->getWidth() / 2, fadesButtonImage->getHeight() / RezSynth::kCurveType_NumTypes);
+	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DGButton::Mode::Increment, true);
 
 	// resonance algorithm
 	pos.set(kResonAlgButtonX, kResonAlgButtonY, resonAlgButtonImage->getWidth(), resonAlgButtonImage->getHeight() / kNumResonAlgs);

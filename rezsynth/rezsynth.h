@@ -27,6 +27,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
+#include "iirfilter.h"
 
 
 //----------------------------------------------------------------------------- 
@@ -115,6 +116,12 @@ enum
 class RezSynth final : public DfxPlugin
 {
 public:
+	enum
+	{
+		kCurveType_Lowpass = DfxEnvelope::kCurveType_NumTypes,
+		kCurveType_NumTypes
+	};
+
 	RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance);
 
 	long initialize() override;
@@ -144,6 +151,7 @@ private:
 	using ChannelsOfNotesOfBands = std::vector<std::array<std::array<double, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice>>;
 	static void clearChannelsOfNotesOfBands(ChannelsOfNotesOfBands& channelsOfNotesOfBands);
 	void clearFilterOutputForBands(int bandIndexBegin);
+	void clearLowpassGateFilters();
 
 	double calculateAmpEvener(int currentNote) const;
 	[[nodiscard]] int calculateCoefficients(int currentNote);
@@ -159,7 +167,7 @@ private:
 	double mPitchBendRange = 0.0;
 	float mAttack_Seconds = 0.0f, mDecay_Seconds = 0.0f, mSustain = 0.0f, mRelease_Seconds = 0.0f;
 	float mVelocityCurve = 0.0f, mVelocityInfluence = 0.0f;
-	dfx::SmoothedValue<double> mOutputGain;
+	dfx::SmoothedValue<float> mOutputGain;
 	dfx::SmoothedValue<float> mBetweenGain;
 	dfx::SmoothedValue<float> mDryGain, mWetGain;
 	int mBandwidthMode {}, mNumBands = 1, mSepMode {}, mScaleMode {}, mResonAlgorithm {}, mDryWetMixMode {};
@@ -167,10 +175,13 @@ private:
 	bool mFoldover = false, mWiseAmp = false;
 	std::array<dfx::SmoothedValue<double>, DfxMidi::kNumNotesWithLegatoVoice> mAmpEvener;
 
+	std::array<std::vector<dfx::IIRfilter>, DfxMidi::kNumNotesWithLegatoVoice> mLowpassGateFilters;
+
 	std::array<dfx::SmoothedValue<double>, DfxMidi::kNumNotesWithLegatoVoice> mBaseFreq;
 	std::array<std::array<dfx::SmoothedValue<double>, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice> mBandCenterFreq;
 	std::array<std::array<dfx::SmoothedValue<double>, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice> mBandBandwidth;
 	std::array<bool, DfxMidi::kNumNotesWithLegatoVoice> mNoteActiveLastRender {};
+	unsigned long mFreqSmoothingStride = 1;
 
 	std::array<double, kMaxBands> mInputAmp {};  // gains for the current sample input, for each band
 	std::array<double, kMaxBands> mPrevOutCoeff {};  // coefficients for the 1-sample delayed ouput, for each band

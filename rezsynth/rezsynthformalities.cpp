@@ -48,7 +48,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kEnvDecay, {"decay", "Deca"}, 30.0, 30.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
 	initparameter_f(kEnvSustain, {"sustain", "Sustan"}, 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent, DfxParam::Curve::Cubed);
 	initparameter_f(kEnvRelease, dfx::MakeParameterNames(dfx::kParameterNames_Release), 300.0, 300.0, 0.0, 3000.0, DfxParam::Unit::MS, DfxParam::Curve::Squared);
-	initparameter_list(kFadeType, {"envelope fades", "EnvFade", "EnvFad", "EnvF"}, DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_NumTypes);
+	initparameter_list(kFadeType, {"envelope fades", "EnvFade", "EnvFad", "EnvF"}, DfxEnvelope::kCurveType_Cubed, DfxEnvelope::kCurveType_Cubed, kCurveType_NumTypes);
 	initparameter_b(kLegato, {"legato", "Lgto"}, false, false);
 	initparameter_f(kVelocityInfluence, dfx::MakeParameterNames(dfx::kParameterNames_VelocityInfluence), 60.0, 100.0, 0.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_f(kVelocityCurve, {"velocity curve", "VelCurv", "VelCrv", "VelC"}, 2.0, 1.0, 0.3, 3.0, DfxParam::Unit::Exponent);
@@ -74,6 +74,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kDryWetMixMode, kDryWetMixMode_EqualPower, "equal power");
 	setparametervaluestring(kFadeType, DfxEnvelope::kCurveType_Linear, "linear");
 	setparametervaluestring(kFadeType, DfxEnvelope::kCurveType_Cubed, "exponential");
+	setparametervaluestring(kFadeType, kCurveType_Lowpass, "low-pass");
 //	setparametervaluestring(kFoldover, 0, "resist");
 //	setparametervaluestring(kFoldover, 1, "allow");
 
@@ -123,6 +124,8 @@ long RezSynth::initialize()
 	mTwoPiDivSR = mPiDivSR * 2.0;
 	mNyquist = getsamplerate() / 2.0;
 
+	mFreqSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
+
 	return dfx::kStatus_NoError;
 }
 
@@ -145,6 +148,14 @@ void RezSynth::createbuffers()
 	mPrevPrevOutValue.assign(numChannels, {});
 	mPrevInValue.assign(numChannels, {});
 	mPrevPrevInValue.assign(numChannels, {});
+
+	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [this, numChannels](auto& channelFilters)
+	{
+		for (unsigned long ch = 0; ch < numChannels; ch++)
+		{
+			channelFilters.emplace_back(getsamplerate());
+		}
+	});
 }
 
 //-----------------------------------------------------------------------------------------
@@ -154,6 +165,11 @@ void RezSynth::releasebuffers()
 	mPrevPrevOutValue.clear();
 	mPrevInValue.clear();
 	mPrevPrevInValue.clear();
+
+	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
+	{
+		channelFilters.clear();
+	});
 }
 
 //-----------------------------------------------------------------------------------------
@@ -169,6 +185,8 @@ void RezSynth::clearbuffers()
 	{
 		values.fill(0.0);
 	}
+
+	clearLowpassGateFilters();
 }
 
 //-----------------------------------------------------------------------------------------
@@ -244,7 +262,12 @@ void RezSynth::processparameters()
 
 	if (getparameterchanged(kFadeType))
 	{
-		getmidistate().setEnvCurveType(mFadeType);
+		bool const isEnvLP = (mFadeType == kCurveType_Lowpass);
+		getmidistate().setEnvCurveType(isEnvLP ? DfxEnvelope::kCurveType_Linear : mFadeType);
+		if (isEnvLP)
+		{
+			clearLowpassGateFilters();
+		}
 	}
 }
 
@@ -271,4 +294,13 @@ void RezSynth::clearFilterOutputForBands(int bandIndexBegin)
 			std::fill(std::next(mPrevPrevOutValue[ch][note].begin(), bandIndexBegin), mPrevPrevOutValue[ch][note].end(), 0.0);
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------------------
+void RezSynth::clearLowpassGateFilters()
+{
+	std::for_each(mLowpassGateFilters.begin(), mLowpassGateFilters.end(), [](auto& channelFilters)
+	{
+		std::for_each(channelFilters.begin(), channelFilters.end(), [](auto& filter){ filter.reset(); });
+	});
 }

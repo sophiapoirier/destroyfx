@@ -174,17 +174,40 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 								 int currentNote, int numBands)
 {
 	auto const numChannels = getnumoutputs();
+	float envAmp = 1.f;
+	auto& channelFilters = mLowpassGateFilters[currentNote];
 
 	// here we do the resonant filter equation using our filter coefficients, and related stuff
 	for (unsigned long sampleIndex = sampleFrameOffset; sampleIndex < sampleFrames + sampleFrameOffset; sampleIndex++)
 	{
-		double const noteAmp = mAmpEvener[currentNote].getValue() * static_cast<double>(getmidistate().getNoteState(currentNote).mNoteAmp.getValue());
+		auto const noteAmp = getmidistate().getNoteState(currentNote).mNoteAmp.getValue();
+		auto const ampEvener = mAmpEvener[currentNote].getValue();
 		// see whether attack or release are active and fetch the output scalar
-		auto const envAmp = getmidistate().processEnvelope(currentNote);  // the attack/release scalar
-		double const envedTotalAmp = noteAmp * static_cast<double>(envAmp * mWetGain.getValue()) * mOutputGain.getValue();
+		if (mFadeType == kCurveType_Lowpass)
+		{
+			if (((sampleIndex - sampleFrameOffset) % mFreqSmoothingStride) == 0)
+			{
+				dfx::IIRfilter::Coefficients lpCoeff;
+				std::tie(lpCoeff, envAmp) = getmidistate().processEnvelopeLowpassGate(currentNote);
+				std::for_each(channelFilters.begin(), channelFilters.end(), [&lpCoeff](auto& filter)
+				{
+					filter.setCoefficients(lpCoeff);
+				});
+			}
+			else
+			{
+				getmidistate().processEnvelope(currentNote);  // to temporally progress the envelope's state
+			}
+		}
+		else
+		{
+			envAmp = getmidistate().processEnvelope(currentNote);
+		}
+		float const envedTotalAmp = noteAmp * envAmp * mWetGain.getValue() * mOutputGain.getValue();
 
 		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
+			double bandOutputSum = 0.;
 			for (int bandIndex = 0; bandIndex < numBands; bandIndex++)
 			{
 				// filter using the input, delayed values, and their filter coefficients
@@ -192,22 +215,30 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 											   + (mPrevOutCoeff[bandIndex] * mPrevOutValue[ch][currentNote][bandIndex]) 
 											   - (mPrevPrevOutCoeff[bandIndex] * mPrevPrevOutValue[ch][currentNote][bandIndex]);
 
-				// add the latest resonator to the output collection, scaled by my evener and user gain
-				auto const entryOutput = outAudio[ch][sampleIndex];
-				outAudio[ch][sampleIndex] += static_cast<float>(curBandOutValue * envedTotalAmp);
-
+				bandOutputSum += curBandOutValue;
 				// very old outValue gets old outValue and old outValue gets current outValue (no longer current)
 				mPrevPrevOutValue[ch][currentNote][bandIndex] = std::exchange(mPrevOutValue[ch][currentNote][bandIndex], curBandOutValue);
+			}
+			auto const scaledBandOutputSum = static_cast<float>(bandOutputSum * ampEvener);
+
+			// add the latest resonator to the output collection, scaled by my evener and user gain
+			auto const entryOutput = outAudio[ch][sampleIndex];
+			if (mFadeType == kCurveType_Lowpass)
+			{
+				outAudio[ch][sampleIndex] += channelFilters[ch].process(scaledBandOutputSum) * envedTotalAmp;
+			}
+			else
+			{
+				outAudio[ch][sampleIndex] += scaledBandOutputSum * envedTotalAmp;
+			}
 
 #if __GNUC__
-				if (__builtin_expect(std::isinf(outAudio[ch][sampleIndex]), 0))  // TODO: C++20 [[unlikely]]
+			if (__builtin_expect(std::isinf(outAudio[ch][sampleIndex]), 0))  // TODO: C++20 [[unlikely]]
 #else
-				if (std::isinf(outAudio[ch][sampleIndex]))
+			if (std::isinf(outAudio[ch][sampleIndex]))
 #endif
-				{
-					outAudio[ch][sampleIndex] = entryOutput;
-					mPrevOutValue[ch][currentNote][bandIndex] = 0.0;
-				}
+			{
+				outAudio[ch][sampleIndex] = entryOutput;
 			}
 
 			mPrevPrevInValue[ch][currentNote] = std::exchange(mPrevInValue[ch][currentNote], inAudio[ch][sampleIndex]);
