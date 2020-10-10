@@ -117,7 +117,7 @@ size_t StrLCpy(char* dst, std::string_view src, size_t maxlen);
 long CompositePluginVersionNumberValue();
 bool LaunchURL(std::string const& inURL);
 bool LaunchDocumentation();
-std::string GetNameForMIDINote(long inMidiNote);
+std::string GetNameForMIDINote(int inMidiNote);
 
 #if TARGET_OS_MAC
 std::unique_ptr<char[]> CreateCStringFromCFString(CFStringRef inCFString, CFStringEncoding inCStringEncoding = kCFStringEncodingUTF8);

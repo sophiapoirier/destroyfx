@@ -285,12 +285,12 @@ bool LaunchDocumentation()
 }
 
 //-----------------------------------------------------------------------------
-std::string GetNameForMIDINote(long inMidiNote)
+std::string GetNameForMIDINote(int inMidiNote)
 {
-	constexpr long kNumNotesInOctave = 12;
+	constexpr int kNumNotesInOctave = 12;
 	constexpr char const* const keyNames[kNumNotesInOctave] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-	long const keyNameIndex = inMidiNote % kNumNotesInOctave;
-	long const octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
+	auto const keyNameIndex = inMidiNote % kNumNotesInOctave;
+	auto const octaveNumber = (inMidiNote / kNumNotesInOctave) - 1;
 	return std::string(keyNames[keyNameIndex]) + " " + std::to_string(octaveNumber);
 }
 
