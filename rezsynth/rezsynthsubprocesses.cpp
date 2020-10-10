@@ -262,10 +262,10 @@ void RezSynth::processUnaffected(float const* inAudio, float* outAudio, unsigned
 		if (mUnaffectedState == UnaffectedState::FadeIn)
 		{
 			// linear fade-in
-			unEnvAmp = static_cast<float>(mUnaffectedFadeSamples) * kUnaffectedFadeStep;
+			unEnvAmp = static_cast<float>(mUnaffectedFadeSamples) * mUnaffectedFadeStep;
 			mUnaffectedFadeSamples++;
 			// go to the no-gain state if the fade-in is done
-			if (mUnaffectedFadeSamples >= kUnaffectedFadeDur)
+			if (mUnaffectedFadeSamples >= mUnaffectedFadeDur)
 			{
 				mUnaffectedState = UnaffectedState::Flat;
 			}
@@ -276,7 +276,7 @@ void RezSynth::processUnaffected(float const* inAudio, float* outAudio, unsigned
 		{
 			mUnaffectedFadeSamples--;
 			// linear fade-out
-			unEnvAmp = static_cast<float>(mUnaffectedFadeSamples) * kUnaffectedFadeStep;
+			unEnvAmp = static_cast<float>(mUnaffectedFadeSamples) * mUnaffectedFadeStep;
 			// get ready for the next time and exit this function if the fade-out is done
 			if (mUnaffectedFadeSamples <= 0)
 			{

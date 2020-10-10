@@ -136,8 +136,6 @@ public:
 
 private:
 	static constexpr int64_t kMaxBands = 30;  // the maximum number of resonant bands
-	static constexpr long kUnaffectedFadeDur = 18;
-	static constexpr float kUnaffectedFadeStep = 1.0f / static_cast<float>(kUnaffectedFadeDur);
 	static constexpr long kNumPresets = 16;
 
 	// these are the 3 states of the unaffected audio input between notes
@@ -193,5 +191,7 @@ private:
 	double mPiDivSR = 0.0, mTwoPiDivSR = 0.0, mNyquist = 0.0;  // values that are needed when calculating coefficients
 
 	UnaffectedState mUnaffectedState = UnaffectedState::FadeIn;
-	int mUnaffectedFadeSamples = 0;
+	long mUnaffectedFadeSamples = 0;
+	long mUnaffectedFadeDur = 0;
+	float mUnaffectedFadeStep = 0.0f;
 };

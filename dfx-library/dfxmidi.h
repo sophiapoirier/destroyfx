@@ -47,7 +47,6 @@ public:
 	static constexpr int kPitchBendMidpointValue = 0x2000;
 	static constexpr int kPitchBendMaxValue = 0x3FFF;
 	static constexpr double kPitchBendSemitonesMax = 36.0;
-	static constexpr unsigned long kStolenNoteFadeDur = 48;
 
 	// these are the MIDI event status types
 	enum
@@ -168,7 +167,7 @@ public:
 
 		std::vector<float> mLastOutValue;  // capture the most recent output value of each audio channel for smoothing, if necessary
 		unsigned long mSmoothSamples = 0;  // counter for quickly fading cut-off notes, for smoothity
-		std::vector<std::array<float, kStolenNoteFadeDur>> mTails;  // per-channel little buffer of output samples for smoothing a cut-off note
+		std::vector<std::vector<float>> mTails;  // per-channel little buffer of output samples for smoothing a cut-off note
 	};
 
 	DfxMidi();
@@ -266,7 +265,6 @@ public:
 
 private:
 	static constexpr size_t kEventQueueSize = 12000;
-	static constexpr float kStolenNoteFadeStep = 1.0f / static_cast<float>(kStolenNoteFadeDur);
 
 	void fillFrequencyTable();
 
@@ -297,4 +295,7 @@ private:
 
 	bool mSustain = false;  // whether sustain pedal is active
 	bool mLegatoMode = false;
+
+	unsigned long mStolenNoteFadeDur = 0;
+	float mStolenNoteFadeStep = 0.0f;
 };

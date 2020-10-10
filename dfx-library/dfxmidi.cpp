@@ -55,7 +55,7 @@ void DfxMidi::reset()
 	{
 		std::fill(noteAudio.mLastOutValue.begin(), noteAudio.mLastOutValue.end(), 0.0f);
 		noteAudio.mSmoothSamples = 0;
-		std::for_each(noteAudio.mTails.begin(), noteAudio.mTails.end(), [](auto& tail){ tail.fill(0.0f); });
+		std::for_each(noteAudio.mTails.begin(), noteAudio.mTails.end(), [](auto& tail){ std::fill(tail.begin(), tail.end(), 0.0f); });
 	}
 	mSustainQueue.fill(false);
 
@@ -78,6 +78,14 @@ void DfxMidi::setSampleRate(double inSampleRate)
 		getNoteStateMutable(noteIndex).mEnvelope.setSampleRate(inSampleRate);
 		getNoteStateMutable(noteIndex).mNoteAmp.setSampleRate(inSampleRate);
 	}
+
+	constexpr double stolenNoteFadeDurInSeconds = 0.001;
+	mStolenNoteFadeDur = std::max(std::lround(stolenNoteFadeDurInSeconds * inSampleRate), 1L);
+	mStolenNoteFadeStep = 1.0f / static_cast<float>(mStolenNoteFadeDur);
+	for (auto& noteAudio : mNoteAudioTable)
+	{
+		std::for_each(noteAudio.mTails.begin(), noteAudio.mTails.end(), [this](auto& tail){ tail.assign(mStolenNoteFadeDur, 0.0f); });
+	}
 }
 
 //------------------------------------------------------------------------
@@ -86,7 +94,7 @@ void DfxMidi::setChannelCount(unsigned long inChannelCount)
 	for (auto& noteAudio : mNoteAudioTable)
 	{
 		noteAudio.mLastOutValue.assign(inChannelCount, 0.0f);
-		noteAudio.mTails.assign(inChannelCount, {});
+		noteAudio.mTails.assign(inChannelCount, std::vector<float>(mStolenNoteFadeDur, 0.0f));
 	}
 }
 
@@ -339,7 +347,7 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, float inVeloc
 				// if the note is still sounding and in release, then smooth the end of that last note
 				if (!(mNoteTable[currentNote].mEnvelope.isResumedAttackMode()) && (mNoteTable[currentNote].mEnvelope.getState() == DfxEnvelope::State::Release))
 				{
-					mNoteAudioTable[currentNote].mSmoothSamples = kStolenNoteFadeDur;
+					mNoteAudioTable[currentNote].mSmoothSamples = mStolenNoteFadeDur;
 				}
 			}
 			break;
@@ -532,7 +540,7 @@ void DfxMidi::processSmoothingOutputSample(float* const* outAudio, unsigned long
 		for (unsigned long sampleIndex = 0; (sampleIndex < inNumFrames) && (smoothSamples > 0); sampleIndex++)
 		{
 			// add the latest sample to the output collection, scaled by the note envelope and user gain
-			auto outputFadeScalar = static_cast<float>(smoothSamples * kStolenNoteFadeStep);
+			auto outputFadeScalar = static_cast<float>(smoothSamples * mStolenNoteFadeStep);
 			outputFadeScalar = outputFadeScalar * outputFadeScalar * outputFadeScalar;
 			outAudio[channelIndex][sampleIndex] += lastOutValue * outputFadeScalar;
 			smoothSamples--;
@@ -555,8 +563,8 @@ void DfxMidi::processSmoothingOutputBuffer(float* const* outAudio, unsigned long
 		auto const& tail = noteAudio.mTails[channelIndex];
 		for (unsigned long sampleIndex = 0; (sampleIndex < inNumFrames) && (smoothSamples > 0); sampleIndex++, smoothSamples--)
 		{
-			outAudio[channelIndex][sampleIndex] += tail[kStolenNoteFadeDur - smoothSamples] * 
-			static_cast<float>(smoothSamples) * kStolenNoteFadeStep;
+			outAudio[channelIndex][sampleIndex] += tail[mStolenNoteFadeDur - smoothSamples] * 
+			static_cast<float>(smoothSamples) * mStolenNoteFadeStep;
 		}
 	}
 }
