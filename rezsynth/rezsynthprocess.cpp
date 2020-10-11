@@ -73,7 +73,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 			eventcount++;
 			checkForNewNote(eventcount);  // and attend to related issues if necessary
 			// take in the effects of the next event
-			getmidistate().heedEvents(eventcount, mPitchBendRange, mVelocityCurve, mVelocityInfluence);
+			getmidistate().heedEvents(eventcount, mVelocityCurve, mVelocityInfluence);
 			continue;
 		}
 
@@ -199,7 +199,7 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 
 		checkForNewNote(eventcount);  // and attend to related issues if necessary
 		// take in the effects of the next event
-		getmidistate().heedEvents(eventcount, mPitchBendRange, mVelocityCurve, mVelocityInfluence);
+		getmidistate().heedEvents(eventcount, mVelocityCurve, mVelocityInfluence);
 
 	} while (eventcount < getmidistate().getBlockEventCount());
 

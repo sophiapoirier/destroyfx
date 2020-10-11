@@ -162,7 +162,6 @@ private:
 
 	// parameters
 	double mBandwidthAmount_Hz = 1.0, mBandwidthAmount_Q = 1.0, mSepAmount_Octaval = 0.0, mSepAmount_Linear = 0.0;
-	double mPitchBendRange = 0.0;
 	float mAttack_Seconds = 0.0f, mDecay_Seconds = 0.0f, mSustain = 0.0f, mRelease_Seconds = 0.0f;
 	float mVelocityCurve = 0.0f, mVelocityInfluence = 0.0f;
 	dfx::SmoothedValue<float> mOutputGain;

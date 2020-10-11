@@ -193,7 +193,7 @@ public:
 	void postprocessEvents();
 
 	// this is where new MIDI events are reckoned with during audio processing
-	void heedEvents(long inEventNum, double inPitchBendRange, float inVelocityCurve, float inVelocityInfluence);
+	void heedEvents(long inEventNum, float inVelocityCurve, float inVelocityInfluence);
 
 	auto getBlockEventCount() const noexcept
 	{
@@ -239,6 +239,7 @@ public:
 	{
 		return mPitchBend;
 	}
+	void setPitchBendRange(double inSemitoneRange);
 
 	// returns -1.0 to 1.0 normalized value 
 	static double calculatePitchBendScalar(int inValueLSB, int inValueMSB) noexcept;
@@ -289,7 +290,9 @@ private:
 	std::array<Event, kEventQueueSize> mBlockEvents {};  // the new MIDI events for a given processing block
 	long mNumBlockEvents = 0;  // the number of new MIDI events in a given processing block
 
+	double mPitchBendNormalized = 0.0;  // bipolar normalized value of the most recent pitchbend message
 	double mPitchBend = 1.0;  // a frequency scalar value for the current pitchbend setting
+	double mPitchBendRange = 0.0;  // plus/minus range of pitchbend's effect in semitones
 
 	std::array<bool, kNumNotes> mSustainQueue {};  // a queue of note-offs for when the sustain pedal is active
 

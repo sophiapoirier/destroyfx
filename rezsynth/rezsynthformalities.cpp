@@ -214,7 +214,7 @@ void RezSynth::processparameters()
 	getmidistate().setLegatoMode(getparameter_b(kLegato));
 	mVelocityInfluence = getparameter_scalar(kVelocityInfluence);
 	mVelocityCurve = getparameter_f(kVelocityCurve);
-	mPitchBendRange = getparameter_f(kPitchBendRange);
+	getmidistate().setPitchBendRange(getparameter_f(kPitchBendRange));
 	mScaleMode = getparameter_i(kScaleMode);
 	mResonAlgorithm = getparameter_i(kResonAlgorithm);
 	if (auto const value = getparameterifchanged_f(kFilterOutputGain))

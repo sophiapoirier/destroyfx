@@ -146,7 +146,6 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 	auto const exitFloor = mFloor;
 
 
-	constexpr double pitchBendRange = 0.0;
 	constexpr float velocityCurve = 1.0f;
 
 	// counter for the number of MIDI events this block
@@ -175,7 +174,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 		{
 			eventCount++;
 			// take in the effects of the next event
-			getmidistate().heedEvents(eventCount, pitchBendRange, velocityCurve, mVelocityInfluence);
+			getmidistate().heedEvents(eventCount, velocityCurve, mVelocityInfluence);
 			continue;
 		}
 
@@ -253,7 +252,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 		currentBlockPosition = getmidistate().getBlockEvent(eventCount).mOffsetFrames;
 
 		// take in the effects of the next event
-		getmidistate().heedEvents(eventCount, pitchBendRange, velocityCurve, mVelocityInfluence);
+		getmidistate().heedEvents(eventCount, velocityCurve, mVelocityInfluence);
 
 	} while (eventCount < getmidistate().getBlockEventCount());
 

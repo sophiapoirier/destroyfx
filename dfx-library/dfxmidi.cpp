@@ -65,6 +65,7 @@ void DfxMidi::reset()
 	// reset this counter since processEvents may not be called during the first block
 	mNumBlockEvents = 0;
 	// reset the pitchbend value to no bend
+	mPitchBendNormalized = 0.0;
 	mPitchBend = 1.0;
 	// turn sustain pedal off
 	mSustain = false;
@@ -309,7 +310,7 @@ void DfxMidi::handleProgramChange(int inMidiChannel, int inProgramNumber, unsign
 
 //-----------------------------------------------------------------------------------------
 // this function is called during process() when MIDI events need to be attended to
-void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, float inVelocityCurve, float inVelocityInfluence)
+void DfxMidi::heedEvents(long inEventNum, float inVelocityCurve, float inVelocityInfluence)
 {
 	switch (mBlockEvents[inEventNum].mStatus)
 	{
@@ -380,9 +381,9 @@ void DfxMidi::heedEvents(long inEventNum, double inPitchBendRange, float inVeloc
 // --- PITCHBEND RECEIVED ---
 		case kStatus_PitchBend:
 		{
-			mPitchBend = calculatePitchBendScalar(mBlockEvents[inEventNum].mByte1, mBlockEvents[inEventNum].mByte2);
+			mPitchBendNormalized = calculatePitchBendScalar(mBlockEvents[inEventNum].mByte1, mBlockEvents[inEventNum].mByte2);
 			// then scale it according to tonal steps and the user defined range
-			mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBend * inPitchBendRange);
+			mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBendNormalized * mPitchBendRange);
 			break;
 		}
 
@@ -446,6 +447,13 @@ double DfxMidi::getNoteFrequency(int inNote) const
 		return mNoteFrequencyTable.at(inNote);
 	}
 	return 0.0;
+}
+
+//-------------------------------------------------------------------------
+void DfxMidi::setPitchBendRange(double inSemitoneRange)
+{
+	mPitchBendRange = inSemitoneRange;
+	mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBendNormalized * mPitchBendRange);
 }
 
 //-------------------------------------------------------------------------
