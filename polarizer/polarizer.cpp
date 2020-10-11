@@ -37,8 +37,6 @@ Polarizer::Polarizer(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametercurvespec(kSkip, 1.5);
 
 	setpresetname(0, "twicky");  // default preset name
-
-	initCores<PolarizerDSP>();
 }
 
 //-----------------------------------------------------------------------------------------

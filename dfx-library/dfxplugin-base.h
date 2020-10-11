@@ -45,20 +45,18 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#if TARGET_PLUGIN_IS_INSTRUMENT
 		#include "MusicDeviceBase.h"
 		using TARGET_API_BASE_CLASS = MusicDeviceBase;
-		using TARGET_API_BASE_INSTANCE_TYPE = AudioComponentInstance;
 	#elif TARGET_PLUGIN_USES_MIDI
 		#include "AUMIDIEffectBase.h"
 		using TARGET_API_BASE_CLASS = AUMIDIEffectBase;
-		using TARGET_API_BASE_INSTANCE_TYPE = AudioComponentInstance;
 	#else
 		#include "AUEffectBase.h"
 		using TARGET_API_BASE_CLASS = AUEffectBase;
-		using TARGET_API_BASE_INSTANCE_TYPE = AudioComponentInstance;
 	#endif
+	using TARGET_API_BASE_INSTANCE_TYPE = AudioComponentInstance;
 	#pragma clang diagnostic pop
 
 	#if !TARGET_PLUGIN_IS_INSTRUMENT
-		#define TARGET_API_CORE_CLASS	AUKernelBase
+		#define TARGET_API_DSPCORE_CLASS	AUKernelBase
 	#endif
 	#define LOGIC_AU_PROPERTIES_AVAILABLE (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9)
 	#if LOGIC_AU_PROPERTIES_AVAILABLE

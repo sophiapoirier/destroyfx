@@ -173,8 +173,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();
 
-  initCores<PLUGINCORE>();
-  
   tmpx.fill(0);
   tmpy.fill(0.0f);
 }

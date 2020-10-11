@@ -159,6 +159,7 @@ PLUGIN_EDITOR_RES_ID
 #include <string>
 #include <string_view>
 #include <thread>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -563,7 +564,6 @@ public:
 		return 0;
 	}
 
-
 	// get the current audio sampling rate
 	double getsamplerate() const noexcept
 	{
@@ -723,6 +723,11 @@ public:
 	}
 #endif
 
+#ifdef TARGET_API_VST
+	template <class PluginClass>
+	static AudioEffect* audioEffectFactory(audioMasterCallback inAudioMaster) noexcept;
+#endif
+
 
 protected:
 #ifdef TARGET_API_AUDIOUNIT
@@ -759,9 +764,7 @@ protected:
 	}
 
 #if TARGET_PLUGIN_USES_DSPCORE
-	// Call this during initialization (e.g. at the end of the constructor of
-	// the derived class), giving the derived DSPCORE class as the template argument.
-	template<class DSP> void initCores();
+	DfxPluginCore* getplugincore(unsigned long inChannel) const;
 #endif
 
 #if TARGET_PLUGIN_USES_MIDI
@@ -819,9 +822,12 @@ private:
 	long mCurrentPresetNum = 0;
 
 #if TARGET_PLUGIN_USES_DSPCORE
+	template <class DSPCoreClass>
+	std::unique_ptr<DSPCoreClass> dspCoreFactory();
 #ifdef TARGET_API_AUDIOUNIT
 	AUBufferList mAsymmetricalInputBufferList;
 #else
+	std::unique_ptr<DfxPluginCore> dspCoreFactory();
 	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to manage this ourselves outside of the AU SDK
 	std::vector<float> mAsymmetricalInputAudioBuffer;
 #endif
@@ -904,7 +910,6 @@ public:
 	#endif
 	#if TARGET_PLUGIN_USES_DSPCORE
 	AUKernelBase* NewKernel() override;
-	DfxPluginCore* getplugincore(unsigned long channel) const;
 	#endif
 
 	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
@@ -1039,18 +1044,6 @@ public:
 	VstInt32 setChunk(void* data, VstInt32 byteSize, bool isPreset) override;
 	VstInt32 getChunk(void** data, bool isPreset) override;
 	#endif
-
-	// DFX supplementary VST methods
-	#if TARGET_PLUGIN_USES_DSPCORE
-	DfxPluginCore* getplugincore(unsigned long channel) const
-	{
-		if (channel >= mDSPCores.size())
-		{
-			return nullptr;
-		}
-		return mDSPCores[channel].get();
-	}
-	#endif
 #endif
 // end of VST API methods
 
@@ -1130,16 +1123,16 @@ protected:
 //-----------------------------------------------------------------------------
 // Audio Unit must override NewKernel() to implement this
 class DfxPluginCore
-#ifdef TARGET_API_CORE_CLASS
-: public TARGET_API_CORE_CLASS
+#ifdef TARGET_API_DSPCORE_CLASS
+: public TARGET_API_DSPCORE_CLASS
 #endif
 {
 public:
 	explicit DfxPluginCore(DfxPlugin* inDfxPlugin)
 	:
-		#ifdef TARGET_API_CORE_CLASS
-		TARGET_API_CORE_CLASS(inDfxPlugin), 
-		#endif
+	#ifdef TARGET_API_DSPCORE_CLASS
+		TARGET_API_DSPCORE_CLASS(inDfxPlugin), 
+	#endif
 		mDfxPlugin(inDfxPlugin)
 	{
 	}
@@ -1267,8 +1260,8 @@ public:
 #else
 	// Mimic what AUKernelBase does here. The channel is just the index
 	// in the mDSPCores vector.
-	void SetChannelNum(uint32_t inChan) noexcept { mChannelNumber = inChan; }
-	uint32_t GetChannelNum() const noexcept { return mChannelNumber; }
+	void SetChannelNum(unsigned long inChan) noexcept { mChannelNumber = inChan; }
+	unsigned long GetChannelNum() const noexcept { return mChannelNumber; }
 #endif
 
 
@@ -1371,28 +1364,20 @@ private:
 
 #ifdef TARGET_API_AUDIOUNIT
 
-#if TARGET_PLUGIN_IS_INSTRUMENT
-	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMusicDeviceFactory, PluginClass)
-#elif TARGET_PLUGIN_USES_MIDI
-	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMIDIEffectFactory, PluginClass)
-#else
-	#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUBaseFactory, PluginClass)
-#endif
+	#if TARGET_PLUGIN_IS_INSTRUMENT
+		#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMusicDeviceFactory, PluginClass)
+	#elif TARGET_PLUGIN_USES_MIDI
+		#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMIDIEffectFactory, PluginClass)
+	#else
+		#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUBaseFactory, PluginClass)
+	#endif
 
 	#if TARGET_PLUGIN_USES_DSPCORE
-		#define DFX_CORE_ENTRY(PluginCoreClass)					\
-			AUKernelBase* DfxPlugin::NewKernel()				\
-			{													\
-				auto const core = new PluginCoreClass(this);	\
-				if (core)										\
-				{												\
-					core->dfxplugincore_postconstructor();		\
-				}												\
-				return core;									\
+		#define DFX_CORE_ENTRY(PluginCoreClass)						\
+			AUKernelBase* DfxPlugin::NewKernel()					\
+			{														\
+				return dspCoreFactory<PluginCoreClass>().release();	\
 			}
-//	#else
-//		AUKernelBase* DfxPlugin::NewKernel()
-//		{	return TARGET_API_BASE_CLASS::NewKernel();	}
 	#endif
 
 #else
@@ -1401,10 +1386,14 @@ private:
 	// call this in the plugin's constructor if it uses DSP cores for processing
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// DFX_CORE_ENTRY is not useful for APIs other than AU, so it is defined as nothing
-		#define DFX_CORE_ENTRY(PluginCoreClass)
+		#define DFX_CORE_ENTRY(PluginCoreClass)							\
+			std::unique_ptr<DfxPluginCore> DfxPlugin::dspCoreFactory()	\
+			{															\
+				return dspCoreFactory<PluginCoreClass>();				\
+			}
 	#endif
 
-#endif
+#endif  // TARGET_API_AUDIOUNIT
 
 
 
@@ -1413,23 +1402,10 @@ private:
 	#define DFX_EFFECT_ENTRY(PluginClass)										\
 		AudioEffect* createEffectInstance(audioMasterCallback inAudioMaster)	\
 		{																		\
-			DfxPlugin* effect = nullptr;										\
-			try																	\
-			{																	\
-				effect = new PluginClass(inAudioMaster);						\
-			}																	\
-			catch (...)															\
-			{																	\
-				return nullptr;													\
-			}																	\
-			if (effect)															\
-			{																	\
-				effect->do_PostConstructor();									\
-			}																	\
-			return effect;														\
+			return DfxPlugin::audioEffectFactory<PluginClass>(inAudioMaster);	\
 		}
 
-#endif
+#endif  // TARGET_API_VST
 
 
 
@@ -1451,26 +1427,37 @@ private:
 			}										\
 		}
 
-#endif
+#endif  // TARGET_API_RTAS
 
 
 // template implementations follow
 
-
 #if TARGET_PLUGIN_USES_DSPCORE
-template<class DSP>
-void DfxPlugin::initCores()
+template <class DSPCoreClass>
+std::unique_ptr<DSPCoreClass> DfxPlugin::dspCoreFactory()
 {
-#ifndef TARGET_API_AUDIOUNIT
-	assert(mDSPCores.empty());	// this method should only be called once
-	mDSPCores.clear();
-	mDSPCores.reserve(getnumoutputs());
-	for (unsigned long coreidx = 0; coreidx < getnumoutputs(); coreidx++)
-	{
-		auto& core = mDSPCores.emplace_back(std::make_unique<DSP>(this));
-		core->SetChannelNum(coreidx);
-		core->dfxplugincore_postconstructor();
-	}
-#endif
+	static_assert(std::is_base_of_v<DfxPluginCore, DSPCoreClass>);
+	auto core = std::make_unique<DSPCoreClass>(this);
+	core->dfxplugincore_postconstructor();
+	return core;
 }
 #endif  // TARGET_PLUGIN_USES_DSPCORE
+
+
+#ifdef TARGET_API_VST
+template <class PluginClass>
+AudioEffect* DfxPlugin::audioEffectFactory(audioMasterCallback inAudioMaster) noexcept
+{
+	static_assert(std::is_base_of_v<AudioEffect, PluginClass>);
+	try
+	{
+		auto const effect = new PluginClass(inAudioMaster);
+		effect->do_PostConstructor();
+		return effect;
+	}
+	catch (...)
+	{
+		return nullptr;
+	}
+}
+#endif  // TARGET_API_VST

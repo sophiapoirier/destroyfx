@@ -258,6 +258,15 @@ void DfxPlugin::do_PostConstructor()
 	mDfxSettings = std::make_unique<DfxSettings>(PLUGIN_ID, this, settings_sizeOfExtendedData());
 #endif
 
+#if TARGET_PLUGIN_USES_DSPCORE && !defined(TARGET_API_AUDIOUNIT)
+	mDSPCores.reserve(getnumoutputs());
+	for (unsigned long ch = 0; ch < getnumoutputs(); ch++)
+	{
+		auto& dspCore = mDSPCores.emplace_back(dspCoreFactory());
+		dspCore->SetChannelNum(ch);
+	}
+#endif
+
 	dfx_PostConstructor();
 
 	DFX_RegisterIdleClient(this);
@@ -1878,6 +1887,22 @@ void DfxPlugin::do_processparameters()
 		std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [](auto& value){ value.first->snap(); });
 	}
 }
+
+#if TARGET_PLUGIN_USES_DSPCORE
+//-----------------------------------------------------------------------------
+DfxPluginCore* DfxPlugin::getplugincore(unsigned long inChannel) const
+{
+#ifdef TARGET_API_AUDIOUNIT
+	return dynamic_cast<DfxPluginCore*>(GetKernel(inChannel));
+#else
+	if (inChannel < mDSPCores.size())
+	{
+		return mDSPCores[inChannel].get();
+	}
+	return nullptr;
+#endif
+}
+#endif
 
 
 

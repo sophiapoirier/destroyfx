@@ -98,9 +98,6 @@ DfxStub::DfxStub(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 
 // API-specific stuff below
-#if TARGET_PLUGIN_USES_DSPCORE
-	initCores<DfxStubDSP>();
-#endif
 #ifdef TARGET_API_VST
 	#if TARGET_PLUGIN_HAS_GUI
 	editor = new DfxStubEditor(this);

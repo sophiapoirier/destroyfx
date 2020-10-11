@@ -159,18 +159,6 @@ OSStatus DfxPlugin::Reset(AudioUnitScope /*inScope*/, AudioUnitElement /*inEleme
 	return noErr;
 }
 
-#if TARGET_PLUGIN_USES_DSPCORE
-//-----------------------------------------------------------------------------
-DfxPluginCore* DfxPlugin::getplugincore(unsigned long channel) const
-{
-	if (channel >= mKernelList.size())
-	{
-		return nullptr;
-	}
-	return dynamic_cast<DfxPluginCore*>(mKernelList[channel]);
-}
-#endif
-
 
 
 #pragma mark -
@@ -388,7 +376,7 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kAudioUnitProperty_ParameterIDName:
 		{
 			auto& parameterIDName = *static_cast<AudioUnitParameterIDName*>(outData);
-			assert(parameterIDName.inID == inElement);  // XXX the specification seems to be redundant in this regard?
+			//assert(parameterIDName.inID == inElement);  // XXX the specification seems to be redundant in this regard?
 			auto const parameterID = inElement;
 			if (inScope != kAudioUnitScope_Global)
 			{
@@ -1601,7 +1589,7 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 
 	// get the output element
 	auto const theOutput = GetOutput(0);  // throws if there's an error
-	UInt32 numOutputBuffers = theOutput->GetBufferList().mNumberBuffers;
+	auto const numOutputBuffers = theOutput->GetBufferList().mNumberBuffers;
 	// set up our more convenient audio stream pointers
 	for (UInt32 i = 0; i < numOutputBuffers; i++)
 	{
@@ -1685,8 +1673,8 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 	result = TARGET_API_BASE_CLASS::ProcessBufferLists(ioActionFlags, *inputBufferPtr, outBuffer, inFramesToProcess);
 
 #else
-	UInt32 numInputBuffers = inBuffer.mNumberBuffers;
-	UInt32 numOutputBuffers = outBuffer.mNumberBuffers;
+	auto const numInputBuffers = inBuffer.mNumberBuffers;
+	auto const numOutputBuffers = outBuffer.mNumberBuffers;
 
 	// set up our more convenient audio stream pointers
 	for (UInt32 i = 0; i < numInputBuffers; i++)

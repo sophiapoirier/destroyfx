@@ -78,8 +78,6 @@ Transverb::Transverb(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addchannelconfig(1, kNumDelays);  // mono-input / per-head-output
 
   speedModeStates.fill(kSpeedMode_Fine);
-
-  initCores<TransverbDSP>();
 }
 
 void Transverb::dfx_PostConstructor() {

@@ -56,10 +56,6 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   addchannelconfig(1, 1);	/* mono */
 #endif
 
-#if TARGET_PLUGIN_USES_DSPCORE
-  initCores<SlowftDSP>();	/* we need to manage DSP cores manually in VST */
-#endif
-
   #ifdef TARGET_API_VST
     /* if you have a GUI, need an Editor class... */
     #if TARGET_PLUGIN_HAS_GUI
