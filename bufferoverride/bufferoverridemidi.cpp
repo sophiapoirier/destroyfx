@@ -47,7 +47,7 @@ float BufferOverride::getDivisorParameterFromPitchbend(int valueLSB, int valueMS
 
 	mPitchBend = DfxMidi::calculatePitchBendScalar(valueLSB, valueMSB);
 	// scale it according to tonal steps and the user defined range
-	mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBend * mPitchbendRange);
+	mPitchBend = dfx::math::FrequencyScalarBySemitones(mPitchBend * mPitchBendRange);
 
 	// only update the divisor value if we're in MIDI nudge mode or trigger mode with a note currently active
 	if ((mMidiMode == kMidiMode_Nudge) || ((mMidiMode == kMidiMode_Trigger) && getmidistate().isAnyNoteActive()))

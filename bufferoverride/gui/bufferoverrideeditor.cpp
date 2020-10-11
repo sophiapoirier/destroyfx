@@ -56,8 +56,8 @@ enum
 	kBufferLFODepthSliderX = kBufferLFORateSliderX,
 	kBufferLFODepthSliderY = 199,
 	//
-	kPitchbendSliderX = 6,
-	kPitchbendSliderY = 28,
+	kPitchBendRangeSliderX = 6,
+	kPitchBendRangeSliderY = 28,
 	kSmoothSliderX = 354,
 	kSmoothSliderY = 28,
 	kDryWetMixSliderX = kSmoothSliderX,
@@ -86,8 +86,8 @@ enum
 	kBufferLFODepthDisplayX = 331 - kDisplayWidth,
 	kBufferLFODepthDisplayY = 212,
 	//
-	kPitchbendDisplayX = 101 - kDisplayWidth,
-	kPitchbendDisplayY = 42,
+	kPitchBendRangeDisplayX = 101 - kDisplayWidth,
+	kPitchBendRangeDisplayY = 42,
 	kSmoothDisplayX = 413 - kDisplayWidth,
 	kSmoothDisplayY = 42,
 	kDryWetMixDisplayX = 413 - kDisplayWidth,
@@ -240,7 +240,7 @@ bool dryWetMixDisplayProc(float inValue, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
 
-bool pitchbendDisplayProc(float inValue, char* outText, void*)
+bool pitchBendRangeDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f", dfx::kPlusMinusUTF8, inValue) > 0;
 }
@@ -326,8 +326,8 @@ long BufferOverrideEditor::OpenEditor()
 	pos.set(kDryWetMixSliderX, kDryWetMixSliderY, kSliderWidth, kSliderHeight);
 	emplaceControl<DGSlider>(this, kDryWetMix, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
-	pos.set(kPitchbendSliderX, kPitchbendSliderY, kSliderWidth, kSliderHeight);
-	emplaceControl<DGSlider>(this, kPitchbend, pos, dfx::kAxis_Horizontal, sliderHandleImage_pitchbend)->setAlternateHandle(sliderHandleImage_pitchbend_glowing);
+	pos.set(kPitchBendRangeSliderX, kPitchBendRangeSliderY, kSliderWidth, kSliderHeight);
+	emplaceControl<DGSlider>(this, kPitchBendRange, pos, dfx::kAxis_Horizontal, sliderHandleImage_pitchbend)->setAlternateHandle(sliderHandleImage_pitchbend_glowing);
 
 	pos.set(kTempoSliderX, kTempoSliderY, kTempoSliderWidth, kSliderHeight);
 	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
@@ -364,8 +364,8 @@ long BufferOverrideEditor::OpenEditor()
 	pos.set(kDryWetMixDisplayX, kDryWetMixDisplayY, kDisplayWidth, kDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kDryWetMix, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
 
-	pos.set(kPitchbendDisplayX, kPitchbendDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kPitchbend, pos, pitchbendDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
+	pos.set(kPitchBendRangeDisplayX, kPitchBendRangeDisplayY, kDisplayWidth, kDisplayHeight);
+	emplaceControl<DGTextDisplay>(this, kPitchBendRange, pos, pitchBendRangeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kTempoDisplayX, kTempoDisplayY, kDisplayWidth, kDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
@@ -573,7 +573,7 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 		case kDryWetMix:
 			helpstring = "the relative mix of the processed sound and the clean/original sound (100% is all processed)";
 			break;
-		case kPitchbend:
+		case kPitchBendRange:
 			helpstring = "the range, in semitones, of MIDI pitch bend's effect on the buffer divisor";
 			break;
 		case kMidiMode:

@@ -56,7 +56,7 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kBufferLFOTempoSync, {"buffer LFO tempo sync", "BfLFOSc", "BLFOSc", "BLSc"}, false, false);
 	initparameter_f(kSmooth, {"smooth", "Smth"}, 9.0, 3.0, 0.0, 100.0, DfxParam::Unit::Percent);
 	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
-	initparameter_f(kPitchbend, dfx::MakeParameterNames(dfx::kParameterNames_PitchBendRange), 6.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
+	initparameter_f(kPitchBendRange, dfx::MakeParameterNames(dfx::kParameterNames_PitchBendRange), 6.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
 	initparameter_list(kMidiMode, dfx::MakeParameterNames(dfx::kParameterNames_MidiMode), kMidiMode_Nudge, kMidiMode_Nudge, kNumMidiModes);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 57.0, 480.0, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
@@ -310,7 +310,7 @@ void BufferOverride::initPresets()
 	setpresetparameter_b(i, kBufferLFOTempoSync, );
 	setpresetparameter_f(i, kSmooth, );
 	setpresetparameter_f(i, kDryWetMix, );
-	setpresetparameter_d(i, kPitchbend, );
+	setpresetparameter_d(i, kPitchBendRange, );
 	setpresetparameter_i(i, kMidiMode, kMidiMode_);
 	setpresetparameter_f(i, kTempo, );
 	setpresetparameter_b(i, kTempoAuto, );
@@ -340,7 +340,7 @@ void BufferOverride::processparameters()
 	mBufferLFO.setShape(getparameter_i(kBufferLFOShape));
 	mBufferLFOTempoSync = getparameter_b(kBufferLFOTempoSync);
 	mSmoothPortion = getparameter_scalar(kSmooth);
-	mPitchbendRange = getparameter_f(kPitchbend);
+	mPitchBendRange = getparameter_f(kPitchBendRange);
 	mMidiMode = getparameter_i(kMidiMode);
 	mUserTempoBPM = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);

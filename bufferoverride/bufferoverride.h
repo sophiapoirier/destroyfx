@@ -54,7 +54,7 @@ enum
 	kSmooth,
 	kDryWetMix,
 
-	kPitchbend,
+	kPitchBendRange,
 	kMidiMode,
 
 	kTempo,
@@ -103,7 +103,7 @@ private:
 	float mDivisor = 1.0f, mBufferSizeMS = 0.0f, mBufferSizeSync = 0.0f;
 	bool mBufferTempoSync = false, mBufferInterrupt = false, mUseHostTempo = false;
 	float mSmoothPortion = 0.0f;
-	double mPitchbendRange = 0.0, mUserTempoBPM = 0.0;
+	double mPitchBendRange = 0.0, mUserTempoBPM = 0.0;
 	long mMidiMode = 0;
 	bool mDivisorLFOTempoSync = false, mBufferLFOTempoSync = false;
 	float mDivisorLFORateHz = 0.0f, mBufferLFORateHz = 0.0f;  // LFO rate (in Hz)
@@ -134,7 +134,7 @@ private:
 	double mPitchBend = 0.0, mOldPitchBend = 0.0;  // pitchbending scalar values
 	bool mOldNote = false;  // says if there was an old, unnatended note-on or note-off from a previous block
 	int mLastNoteOn = 0, mLastPitchbendLSB = 0, mLastPitchbendMSB = 0;  // these carry over the last events from a previous processing block
-	bool mDivisorWasChangedByHand = false;  // for MIDI trigger mode - tells us to respect the fDivisor value
+	bool mDivisorWasChangedByHand = false;  // for MIDI trigger mode - tells us to respect the mDivisor value
 	bool mDivisorWasChangedByMIDI = false;  // tells the GUI that the divisor displays need updating
 
 	dfx::LFO mDivisorLFO, mBufferLFO;
