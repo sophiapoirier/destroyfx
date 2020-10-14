@@ -120,7 +120,8 @@ public:
 		Accent,
 		AccentPressed,
 		AccentControlText,
-		FocusIndicator
+		FocusIndicator,
+		ScrollBarColor
 	};
 
 	constexpr DGColor() = default;

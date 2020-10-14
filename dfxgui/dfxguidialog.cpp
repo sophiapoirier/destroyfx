@@ -36,6 +36,7 @@ constexpr VSTGUI::CCoord kButtonHeight = 20.0;
 constexpr VSTGUI::CCoord kTextLabelHeight = 14.0;
 constexpr VSTGUI::CCoord kTextEditHeight = 20.0;
 constexpr VSTGUI::CCoord kFocusIndicatorThickness = 2.4;
+static auto const kFont = VSTGUI::kSystemFont;
 
 
 //-----------------------------------------------------------------------------
@@ -80,6 +81,7 @@ public:
 		setTextColor(textColor);
 		setTextColorHighlighted(DGColor::getSystem(DGColor::System::AccentControlText));
 		setFrameColorHighlighted(DGColor::getSystem(DGColor::System::AccentPressed));
+		setFont(kFont);
 
 		constexpr float gradientDarkAmount = 0.6f;
 		constexpr float accentFillAlpha = 0.72f;
@@ -189,6 +191,7 @@ public:
 		setHoriAlign(VSTGUI::kCenterText);
 		setStyle(kRoundRectStyle);
 		setRoundRectRadius(3.0);
+		setFont(kFont);
 	}
 
 	void draw(VSTGUI::CDrawContext* inContext) override
@@ -255,26 +258,18 @@ DGDialog::DGDialog(DGRect const& inRegion,
 	{
 		// TODO: split text into multiple lines when it is too long to fit on a single line
 		DGRect const pos(kContentMargin, kContentMargin, getWidth() - (kContentMargin * 2.0), kTextLabelHeight);
-		if (auto const label = new VSTGUI::CMultiLineTextLabel(pos))
-		{
-			label->setText(VSTGUI::UTF8String(inMessage));
-			label->setFontColor(DGColor::getSystem(DGColor::System::WindowTitle));
-			label->setBackColor(VSTGUI::kTransparentCColor);
-			label->setFrameColor(VSTGUI::kTransparentCColor);
-			label->setHoriAlign(VSTGUI::kLeftText);
-			label->setLineLayout(VSTGUI::CMultiLineTextLabel::LineLayout::wrap);
-//			label->setAutoHeight(true);
-			if (auto const currentFont = label->getFont())
-			{
-				auto const newFont = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*currentFont);
-				if (newFont)
-				{
-					newFont->setStyle(newFont->getStyle() | VSTGUI::kBoldFace);
-					label->setFont(newFont);
-				}
-			}
-			addView(label);
-		}
+		auto const label = new VSTGUI::CMultiLineTextLabel(pos);
+		label->setText(VSTGUI::UTF8String(inMessage));
+		label->setFontColor(DGColor::getSystem(DGColor::System::WindowTitle));
+		label->setBackColor(VSTGUI::kTransparentCColor);
+		label->setFrameColor(VSTGUI::kTransparentCColor);
+		label->setHoriAlign(VSTGUI::kLeftText);
+		label->setLineLayout(VSTGUI::CMultiLineTextLabel::LineLayout::wrap);
+//		label->setAutoHeight(true);
+		auto const font = VSTGUI::makeOwned<VSTGUI::CFontDesc>(*kFont);
+		font->setStyle(font->getStyle() | VSTGUI::kBoldFace);
+		label->setFont(font);
+		addView(label);
 	}
 
 	if (!inOkButtonTitle)
@@ -487,14 +482,7 @@ bool DGDialog::runModal(VSTGUI::CFrame* inFrame, DialogChoiceSelectedCallback&& 
 //-----------------------------------------------------------------------------
 bool DGDialog::runModal(VSTGUI::CFrame* inFrame)
 {
-	assert(inFrame);
-	mModalViewSessionID.reset();
-	if (auto const modalViewSessionID = inFrame->beginModalViewSession(this))
-	{
-		mModalViewSessionID = *modalViewSessionID;
-		remember();  // for retain balance, because ending the modal view session will forget this during view removal
-	}
-	return mModalViewSessionID.has_value();
+	return mModalSession.emplace(inFrame, this).isSessionActive();
 }
 
 //-----------------------------------------------------------------------------
@@ -503,12 +491,7 @@ void DGDialog::close()
 	mListener = nullptr;
 	mDialogChoiceSelectedCallback = nullptr;
 
-	if (getFrame() && mModalViewSessionID)
-	{
-		[[maybe_unused]] auto const success = getFrame()->endModalViewSession(*mModalViewSessionID);
-		assert(success);
-	}
-	mModalViewSessionID.reset();
+	mModalSession.reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -557,6 +540,7 @@ DGTextEntryDialog::DGTextEntryDialog(long inParamID, std::string const& inMessag
 		label->setBackColor(VSTGUI::kTransparentCColor);
 		label->setFrameColor(VSTGUI::kTransparentCColor);
 		label->setHoriAlign(VSTGUI::kLeftText);
+		label->setFont(kFont);
 		label->sizeToFit();
 		addView(label);
 
@@ -567,10 +551,7 @@ DGTextEntryDialog::DGTextEntryDialog(long inParamID, std::string const& inMessag
 	pos.setHeight(kTextEditHeight);
 	pos.offset(0.0, -labelEditHeightOffset);
 	mTextEdit = new DGDialogTextEdit(pos, this);
-	if (mTextEdit)
-	{
-		addView(mTextEdit, getView(0));
-	}
+	addView(mTextEdit, getView(0));
 }
 
 //-----------------------------------------------------------------------------
@@ -623,4 +604,132 @@ std::string DGTextEntryDialog::getText() const
 long DGTextEntryDialog::getParameterID() const noexcept
 {
 	return mParameterID;
+}
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGTextScrollDialog
+
+//-----------------------------------------------------------------------------
+// Text Scroll Dialog
+//-----------------------------------------------------------------------------
+DGTextScrollDialog::DGTextScrollDialog(DGRect const& inRegion, std::string const& inMessage)
+:	VSTGUI::CScrollView(inRegion, inRegion, 
+						VSTGUI::CScrollView::kVerticalScrollbar | VSTGUI::CScrollView::kAutoHideScrollbars | VSTGUI::CScrollView::kOverlayScrollbars, 
+						kFont->getSize())  // seems reasonable to size the scrollbar relative to the font
+{
+	assert(!inMessage.empty());
+
+	setBackgroundColor(DGColor::getSystem(DGColor::System::TextBackground));
+
+	DGRect const pos(kContentMargin, 0., getWidth() - (kContentMargin * 2.), getHeight());
+	auto const label = new VSTGUI::CMultiLineTextLabel(pos);
+	label->setText(VSTGUI::UTF8String(inMessage));
+	label->setFontColor(DGColor::getSystem(DGColor::System::Text));
+	label->setBackColor(VSTGUI::kTransparentCColor);
+	label->setFrameColor(VSTGUI::kTransparentCColor);
+	label->setHoriAlign(VSTGUI::kLeftText);
+	label->setLineLayout(VSTGUI::CMultiLineTextLabel::LineLayout::wrap);
+//	label->setAutoHeight(true);
+	label->setFont(kFont);
+	addView(label);
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::CMouseEventResult DGTextScrollDialog::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons)
+{
+	mModalSession.reset();
+	return VSTGUI::kMouseDownEventHandledButDontNeedMovedOrUpEvents;
+}
+
+//-----------------------------------------------------------------------------
+int32_t DGTextScrollDialog::onKeyDown(VstKeyCode& inKeyCode)
+{
+	switch (inKeyCode.virt)
+	{
+		case VKEY_RETURN:
+		case VKEY_ESCAPE:
+			mModalSession.reset();
+			return dfx::kKeyEventHandled;
+		default:
+			return VSTGUI::CScrollView::onKeyDown(inKeyCode);
+	}
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextScrollDialog::attached(VSTGUI::CView* inParent)
+{
+	auto const result = VSTGUI::CViewContainer::attached(inParent);
+
+	if (result && inParent && inParent->getFrame())
+	{
+		// enabling auto-height annoyingly only works after the view is attached
+		std::vector<VSTGUI::CMultiLineTextLabel*> multiLineLabels;
+		getChildViewsOfType<VSTGUI::CMultiLineTextLabel>(multiLineLabels, true);
+		std::for_each(multiLineLabels.begin(), multiLineLabels.end(), [](auto label){ label->setAutoHeight(true); });
+	}
+
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextScrollDialog::runModal(VSTGUI::CFrame* inFrame)
+{
+	return mModalSession.emplace(inFrame, this).isSessionActive();
+}
+
+//-----------------------------------------------------------------------------
+void DGTextScrollDialog::recalculateSubViews()
+{
+	VSTGUI::CScrollView::recalculateSubViews();
+
+	// the scrollbar controls are created in this method, so we need to apply our styling every time this is called
+	auto const scrollbar = getVerticalScrollbar();
+	assert(scrollbar);
+	scrollbar->setFrameColor(VSTGUI::kTransparentCColor);
+	scrollbar->setBackgroundColor(VSTGUI::kTransparentCColor);
+	scrollbar->setScrollerColor(DGColor::getSystem(DGColor::System::ScrollBarColor));
+}
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGModalSession
+
+//-----------------------------------------------------------------------------
+// Modal Session
+//-----------------------------------------------------------------------------
+detail::DGModalSession::DGModalSession(VSTGUI::CFrame* inFrame, VSTGUI::CView* inView)
+:	mView(inView)
+{
+	assert(inFrame);
+	assert(inView);
+	if (auto const modalViewSessionID = inFrame->beginModalViewSession(inView))
+	{
+		mModalViewSessionID = *modalViewSessionID;
+		inView->remember();  // for retain balance, because ending the modal view session will forget this during view removal
+	}
+}
+
+//-----------------------------------------------------------------------------
+detail::DGModalSession::~DGModalSession()
+{
+	if (mView->getFrame() && mModalViewSessionID)
+	{
+		[[maybe_unused]] auto const success = mView->getFrame()->endModalViewSession(*mModalViewSessionID);
+		assert(success);
+	}
+}
+
+//-----------------------------------------------------------------------------
+bool detail::DGModalSession::isSessionActive() const noexcept
+{
+	return mModalViewSessionID.has_value();
 }

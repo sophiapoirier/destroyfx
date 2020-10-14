@@ -32,10 +32,28 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
+namespace detail
+{
+class DGModalSession
+{
+public:
+	DGModalSession(VSTGUI::CFrame* inFrame, VSTGUI::CView* inView);
+	~DGModalSession();
+
+	bool isSessionActive() const noexcept;
+
+private:
+	VSTGUI::CView* const mView;
+	std::optional<VSTGUI::ModalViewSessionID> mModalViewSessionID;
+};
+}
+
+
+//-----------------------------------------------------------------------------
 class DGDialog : public VSTGUI::CViewContainer, public VSTGUI::IControlListener
 {
 public:
-	typedef unsigned int Buttons;
+	using Buttons = unsigned int;
 	static const Buttons kButtons_OK;
 	static const Buttons kButtons_OKCancel;
 	static const Buttons kButtons_OKCancelOther;
@@ -92,7 +110,7 @@ private:
 	Listener* mListener = nullptr;
 	DialogChoiceSelectedCallback mDialogChoiceSelectedCallback;
 
-	std::optional<VSTGUI::ModalViewSessionID> mModalViewSessionID;
+	std::optional<detail::DGModalSession> mModalSession;
 };
 
 
@@ -120,4 +138,30 @@ public:
 private:
 	long const mParameterID;
 	VSTGUI::CTextEdit* mTextEdit = nullptr;
+};
+
+
+//-----------------------------------------------------------------------------
+class DGTextScrollDialog : public VSTGUI::CScrollView
+{
+public:
+	DGTextScrollDialog(DGRect const& inRegion, std::string const& inMessage);
+
+	// CView overrides
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::CButtonState const& inButtons) override;
+	int32_t onKeyDown(VstKeyCode& inKeyCode) override;
+
+	// CViewContainer overrides
+	bool attached(VSTGUI::CView* inParent) override;
+
+	bool runModal(VSTGUI::CFrame* inFrame);
+
+	CLASS_METHODS(DGTextScrollDialog, VSTGUI::CScrollView)
+
+protected:
+	// CScrollView override
+	void recalculateSubViews() override;
+
+private:
+	std::optional<detail::DGModalSession> mModalSession;
 };

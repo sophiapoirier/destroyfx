@@ -184,6 +184,8 @@ DGColor DGColor::getSystem(System inSystemColorID)
 			return fromNSColorProperty(DFX_SELECTOR(alternateSelectedControlTextColor)).value_or(DGColor(0, 0, 0));
 		case System::FocusIndicator:
 			return fromNSColorProperty(DFX_SELECTOR(keyboardFocusIndicatorColor)).value_or(DGColor(59, 153, 252));
+		case System::ScrollBarColor:
+			return fromNSColorProperty(DFX_SELECTOR(scrollBarColor)).value_or(DGColor(170, 170, 170));
 	}
 #undef DFX_SELECTOR
 

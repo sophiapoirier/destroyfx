@@ -89,6 +89,7 @@ class IDGControl;
 class DGButton;
 class DGDialog;
 class DGTextEntryDialog;
+class DGTextScrollDialog;
 
 
 #pragma clang diagnostic push
@@ -374,6 +375,7 @@ private:
 	bool IsPropertyRegistered(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) const;
 
 	void ShowMessage(std::string const& inMessage);
+	void ShowAcknowledgements();
 	static void Require(bool inCondition, char const* inFailureMessage = "");
 
 #ifndef TARGET_API_VST
@@ -412,6 +414,7 @@ private:
 
 	VSTGUI::SharedPointer<DGTextEntryDialog> mTextEntryDialog;
 	VSTGUI::SharedPointer<DGDialog> mErrorDialog;
+	VSTGUI::SharedPointer<DGTextScrollDialog> mAcknowledgementsDialog;
 	// allows stashing an error from within a modal dialog handler in order to defer 
 	// displaying the message in a new modal dialog until after the first dialog closes
 	std::string mPendingErrorMessage;
