@@ -723,7 +723,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     enum { ABOVE, BETWEEN, BELOW };
 
     int state = BETWEEN;
-    float level = (pointparam * .9999f) + .00005f;
+    float const level = (pointparam * .9999f) + .00005f;
     numpts = 1;
 
     px[0] = 0;
@@ -731,14 +731,14 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
 
     for(int i = 0; i < samples; i++) {
 
-      if (in[i] > pointparam) {
+      if (in[i] > level) {
         if (state != ABOVE) {
           px[numpts] = i;
           py[numpts] = in[i];
           numpts++;
           state = ABOVE;
         }
-      } else if (in[i] < -pointparam) {
+      } else if (in[i] < -level) {
         if (state != BELOW) {
           px[numpts] = i;
           py[numpts] = in[i];
