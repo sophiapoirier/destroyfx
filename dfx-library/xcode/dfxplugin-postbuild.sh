@@ -9,3 +9,9 @@ COPYRIGHT="©${DFX_PLUGIN_COPYRIGHT_PREFIX}"`date "+%Y"`" ${DFX_PLUGIN_COPYRIGHT
 /usr/libexec/PlistBuddy -c "Set :NSHumanReadableCopyright ${COPYRIGHT}" "${BUILT_PRODUCTS_DIR}"/"${INFOPLIST_PATH}"
 
 "${DFX_ROOT_SOURCE_PATH}"/dfx-library/xcode/dfxplugin-copy-docs.sh
+
+# appease codesign by removing all Finder info extended attributes that seem to attach themselves to any files in use
+if [ -d "${CODESIGNING_FOLDER_PATH}" ]
+then
+	xattr -cr "${CODESIGNING_FOLDER_PATH}"
+fi
