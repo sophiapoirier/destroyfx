@@ -1406,4 +1406,19 @@ void PLUGIN::makepresets() {
   setpresetparameter_i(i, P_INTERPSTYLE, INTERP_SHUFFLE);
   setpresetparameter_f(i, P_INTERPARAMS + INTERP_SHUFFLE, 0.84);
   i++;
+
+  setpresetname(i, "stranger");
+  setpresetparameter_i(i, P_BUFSIZE, 13);
+  setpresetparameter_i(i, P_SHAPE, WINDOW_TRIANGLE);
+  setpresetparameter_i(i, P_POINTSTYLE, POINT_EXTNCROSS);
+  setpresetparameter_f(i, P_POINTPARAMS + POINT_EXTNCROSS, 0.0);
+  setpresetparameter_i(i, P_POINTOP1, OP_QUARTER);
+  setpresetparameter_f(i, P_OPPAR1S + OP_QUARTER, 0.0);
+  setpresetparameter_i(i, P_POINTOP2, OP_QUARTER);
+  setpresetparameter_f(i, P_OPPAR2S + OP_QUARTER, 0.0);  
+  setpresetparameter_i(i, P_POINTOP3, OP_QUARTER);
+  setpresetparameter_f(i, P_OPPAR3S + OP_QUARTER, 0.0);    
+  setpresetparameter_i(i, P_INTERPSTYLE, INTERP_FRIENDS);
+  setpresetparameter_f(i, P_INTERPARAMS + INTERP_FRIENDS, 0.3876404);
+  i++;
 }
