@@ -15,7 +15,9 @@ VSTGUI=../../vstgui/vstgui
 
 # WIN32_WINNT >= 0x0601 is critical (Windows 7) for compiling vstgui
 #  -DENABLE_TRACE=1
-DEFINES=-DWIN32=1 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32=1 -DTARGET_API_VST=1 -DVSTGUI_ENABLE_DEPRECATED_METHODS=0 -DNDEBUG=1
+# -DGetMatchingFonts works around an issue with mingw headers in ~September 2020; see:
+# https://sourceforge.net/p/mingw-w64/mailman/mingw-w64-public/thread/20200920130036.1e6b6508%40ext.localdomain/
+DEFINES=-DWIN32=1 -D_WIN32_WINNT=0x0601 -DTARGET_OS_WIN32=1 -DTARGET_API_VST=1 -DVSTGUI_ENABLE_DEPRECATED_METHODS=0 -DNDEBUG=1 -DGetMatchingFonts=GetMatchingFonts_
 INCLUDES=-I .. -I $(DFXLIB) -I $(VSTSDK) -I $(DFXGUI) -I $(VSTGUI) -I $(VSTGUI)/plugin-bindings -include "../geometerdef.h"
 CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -Wall -Wno-unknown-pragmas --std=c++17 -O2
 # -mwindows to select the GUI subsystem (not console)
