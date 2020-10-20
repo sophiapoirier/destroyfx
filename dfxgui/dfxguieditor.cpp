@@ -1883,6 +1883,9 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 
 	resultMenu.addSeparator();
 	DFX_AppendCommandItemToMenu(resultMenu, PLUGIN_NAME_STRING " manual", std::bind(&dfx::LaunchDocumentation));
+#if TARGET_PLUGIN_USES_MIDI
+	DFX_AppendCommandItemToMenu(resultMenu, PLUGIN_CREATOR_NAME_STRING " MIDI features manual", std::bind(&dfx::LaunchURL, DESTROYFX_URL "/docs/destroy-fx-midi.html"));
+#endif
 	DFX_AppendCommandItemToMenu(resultMenu, "Open " PLUGIN_CREATOR_NAME_STRING " web site", 
 								std::bind(&dfx::LaunchURL, PLUGIN_HOMEPAGE_URL));
 	DFX_AppendCommandItemToMenu(resultMenu, "Acknowledgements", std::bind(&DfxGuiEditor::ShowAcknowledgements, this));
