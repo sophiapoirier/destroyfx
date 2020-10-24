@@ -175,7 +175,9 @@
     <p>The plugins may appear as folders (but aren't) and have &quot;.component&quot; file name 
       extensions. If the plugins don't show up in your Audio Unit host, try logging out and then
       logging back in. If that doesn't help, then you might even need to reboot your computer,
-      or if you are handy with Terminal: <code>sudo killall AudioComponentRegistrar</code></p>
+      or if you are handy with Terminal:
+      <br />
+      <code>sudo killall -9 AudioComponentRegistrar</code></p>
 
     <p>Please note that, at least so far, you can not put Audio Units into subfolders of the
       Components folder. They must all be directly in the Components folder, otherwise they will 
@@ -250,8 +252,12 @@
       <p>In more extreme cases of problems, you can force Logic to redo its AUValidation scanning
       from scratch by trashing Logic's AUValidation results cache file. This file is located at
       <code>~/Library/Caches/AudioUnitCache/com.apple.audiounits.cache</code> (that's in your user
-      home Library). You should trash or move that file when Logic is not running, and then
-      relaunch Logic to begin a full rescan of all installed AUs.</p>
+      home Library). You should trash or move that file when Logic is not running, and also run
+      the following command in Terminal:
+      <br />
+      <code>defaults delete com.apple.audio.InfoHelper</code>
+      <br />
+      Then relaunch Logic to begin a full rescan of all installed AUs.</p>
 
       <p>In cases where you are not able to get an AU of ours to pass AUValidation, and you are
       sure that you have the latest version of the AU installed, please go into Plug-In Manager,
