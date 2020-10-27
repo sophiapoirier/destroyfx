@@ -116,8 +116,6 @@ BrokenFFT::BrokenFFT(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   // Default preset name
   setpresetname(0, "Mr. Fourier");
   makepresets();
-
-  initCores<BrokenFFTDSP>();
 }
 
 void BrokenFFT::dfx_PostConstructor() {
