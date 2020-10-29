@@ -329,14 +329,14 @@ bool DGMultiControl<T>::isDirty() const
 template <class T>
 bool DGMultiControl<T>::checkDefaultValue_all(VSTGUI::CButtonState inButtons)
 {
-	bool any = DGControl<T>::checkDefaultValue(inButtons);
-	for (IDGControl* child : mChildren)
+	return std::accumulate(mChildren.cbegin(), mChildren.cend(), DGControl<T>::checkDefaultValue(inButtons), 
+						   [inButtons](auto const anyDefaulted, auto&& child)
 	{
 		// checkDefaultValue has desired side effects, so always execute it prior to testing the existing result, 
 		// so that execution cannot be skipped during the logical OR operation
-		any = child->asCControl()->checkDefaultValue(inButtons) || any;
-	}
-	return any;
+		auto const childDefaulted = child->asCControl()->checkDefaultValue(inButtons);
+		return childDefaulted || anyDefaulted;
+	});
 }
 
 //-----------------------------------------------------------------------------
