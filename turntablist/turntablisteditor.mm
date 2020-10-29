@@ -230,7 +230,7 @@ void TurntablistAboutButtonProc(long inValue, void*)
 					CFDictionaryAddValue(aboutDict, static_cast<void const*>(kHIAboutBoxVersionKey), static_cast<void const*>(valueString));
 				}
 
-				valueString = reinterpret_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleGetInfoString")));
+				valueString = reinterpret_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("NSHumanReadableCopyright")));
 				if (valueString)
 				{
 					CFDictionaryAddValue(aboutDict, static_cast<void const*>(kHIAboutBoxCopyrightKey), static_cast<void const*>(valueString));
