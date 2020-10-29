@@ -1,69 +1,107 @@
-#!/bin/sh
+#!/bin/zsh
 
 if (( $# < 3 )); then
 	echo 
-	echo "   "`basename $0`" output suffix inmanual pluginname 0|1(uses MIDI) input1 [input2 [...]]"
+	echo "   "`basename $0`" output version manual pluginname 0|1(uses MIDI) input1 [input2 [...]]"
 	echo 
 	exit 1
 fi
 
 set -e
 
-ENTRYDIR=`pwd`
-OUTPUTFILE="$1"-"$2"
-TEMPDIR=`dirname "$1"`/`basename "$1"`_temp_$$_`jot -r -n -p 20 1`
-PLUGINNAME="$4"
-PLUGINNAME_FILE=`basename "${6}"`
+VERSION="${2}"
+OUTPUTFILE="${1}-${VERSION}-mac"
+TEMPDIR=`dirname "${1}"`/`basename "${1}"`_temp_$$_`jot -r -n -p 20 1`
+PLUGINNAME="${4}"
+BUNDLEID=org.destroyfx.`echo "${PLUGINNAME}" | tr -cd '[:alnum:]'`
 LICENSENAME="COPYING.html"
+ROOTDIR="${TEMPDIR}/root"
+AUDIR="${ROOTDIR}/Library/Audio/Plug-Ins/Components"
+DOCSDIR="${ROOTDIR}/Library/Documentation/Destroy FX"
+INSTALLERDIR="${TEMPDIR}/installer"
+IMAGEDIR="${TEMPDIR}/image"
+DFXDIR="${HOME}/dfx/destroyfx"
 
 echo
 echo "   creating temporary directory  "$TEMPDIR
 mkdir "${TEMPDIR}"
+mkdir -p "${AUDIR}"
+mkdir -p "${DOCSDIR}"
+mkdir -p "${INSTALLERDIR}"
+mkdir -p "${IMAGEDIR}"
+
 MANUALNAME="${PLUGINNAME} manual.html"
-echo "   creating  "$MANUALNAME"  in  "`basename "${TEMPDIR}"`
-makedocs "$3" "${TEMPDIR}"/"${MANUALNAME}"
+echo "   creating  "$MANUALNAME"  in  "$DOCSDIR
+makedocs "${3}" "${DOCSDIR}"/"${MANUALNAME}"
 if (( $5 )); then
-	echo "   creating  Destroy FX MIDI.html  in  "`basename "${TEMPDIR}"`
-	makedocs ~/dfx/repos/trunk/docs/destroy-fx-midi.html "${TEMPDIR}"/Destroy\ FX\ MIDI.html
+	echo "   creating  Destroy FX MIDI.html  in  "$DOCSDIR
+	makedocs "${DFXDIR}"/docs/destroy-fx-midi.html "${DOCSDIR}"/Destroy\ FX\ MIDI.html
 fi
-echo "   copying  "$LICENSENAME"  into  "`basename "${TEMPDIR}"`
-cp ~/dfx/repos/trunk/docs/"${LICENSENAME}" "${TEMPDIR}"/
+# copy documentation to image staging as well
+cp "${DOCSDIR}"/*.* "${IMAGEDIR}"
+echo "   copying  "$LICENSENAME"  into  "$DOCSDIR
+cp "${DFXDIR}"/docs/"${LICENSENAME}" "${DOCSDIR}"/
+
 shift 5
 while (( $# >= 1 )); do
-	echo "   copying  $1  -->  "`basename "${TEMPDIR}"`/
-	cp -f -R "$1" "${TEMPDIR}"
+	echo "   copying  ${1}  -->  "$AUDIR
+	cp -f -R "${1}" "${AUDIR}"
 	shift
 done
 
-#cp -f ~/dfx/repos/trunk/scripts/install-au.command "${TEMPDIR}"/"Install ${PLUGINNAME}.command"
-cp -f ~/dfx/scripts/install-au.command "${TEMPDIR}"/"Install ${PLUGINNAME}.command"
-
-cd "${TEMPDIR}"
 echo
 echo "   deleting the following files (possibly none):"
-find -f . \( -name "pbdevelopment.plist" \) -print
-find -f . \( -name "pbdevelopment.plist" \) -delete
-find -f . \( -name ".DS_Store" \) -print
-find -f . \( -name ".DS_Store" \) -delete
+find -f "${ROOTDIR}" \( -name "pbdevelopment.plist" \) -print
+find -f "${ROOTDIR}" \( -name "pbdevelopment.plist" \) -delete
+find -f "${ROOTDIR}" \( -name ".DS_Store" \) -print
+find -f "${ROOTDIR}" \( -name ".DS_Store" \) -delete
 
-#OUTPUTFILE_FULLNAME="${OUTPUTFILE}".tar.gz
+INSTALLERFILE="${IMAGEDIR}/Install ${PLUGINNAME}.pkg"
+echo
+echo "   creating installer package "$INSTALLERFILE
+COMPONENT_PLIST="${INSTALLERDIR}"/component.plist
+pkgbuild --analyze --root "${ROOTDIR}" "${COMPONENT_PLIST}"
+COMPONENT_PACKAGE="${INSTALLERDIR}/${PLUGINNAME} ${VERSION}.pkg"
+pkgbuild --root "${ROOTDIR}" --identifier "${BUNDLEID}" --version "${VERSION}" --install-location / --component-plist "${COMPONENT_PLIST}" "${COMPONENT_PACKAGE}"
+DISTRIBUTIONFILE="${INSTALLERDIR}/distribution.xml"
+DISTRIBUTIONFILE_AMENDED="${INSTALLERDIR}/distribution+.xml"
+productbuild --synthesize --product "${DFXDIR}"/dfx-library/xcode/installer-requirements.plist --package "${COMPONENT_PACKAGE}" "${DISTRIBUTIONFILE}"
+echo "   amending distribution file "$DISTRIBUTIONFILE
+while read -r LINE || [ -n "${LINE}" ]
+do
+	if (( `echo "${LINE}" | grep -c "</installer-gui-script"` )); then
+		echo "<title>Destroy FX : ${PLUGINNAME}</title>" >> "${DISTRIBUTIONFILE_AMENDED}"
+		echo "<license file=\"${LICENSENAME}\" uti=\"public.html\"/>" >> "${DISTRIBUTIONFILE_AMENDED}"
+	fi
+	echo "${LINE}" >> "${DISTRIBUTIONFILE_AMENDED}"
+done < "${DISTRIBUTIONFILE}"
+diff -wq "${DISTRIBUTIONFILE}" "${DISTRIBUTIONFILE_AMENDED}" >> /dev/null
+if (( $? == 0 )); then
+	echo
+	echo "ERROR: failed to amend distribution file!"
+	exit 1
+fi
+productbuild --distribution "${DISTRIBUTIONFILE_AMENDED}" --resources "${DFXDIR}"/docs --package-path "${INSTALLERDIR}" --component-compression auto --sign "Developer ID Installer: Sophia Poirier (N8VK88P4LV)" --timestamp "${INSTALLERFILE}"
+
 OUTPUTFILE_FULLNAME="${OUTPUTFILE}".dmg
 echo
 echo "   creating output file  "$OUTPUTFILE_FULLNAME
-#gnutar -cv -f "${OUTPUTFILE}".tar *
-#gzip --best "${OUTPUTFILE}".tar
-hdiutil create -ov -srcfolder "${TEMPDIR}" -volname "dfx ${PLUGINNAME}" -uid 99 -gid 99 -format UDBZ -imagekey zlib-level=9 "${OUTPUTFILE}"
+hdiutil create -ov -srcfolder "${IMAGEDIR}" -volname "dfx ${PLUGINNAME}" -format UDBZ -imagekey zlib-level=9 "${OUTPUTFILE}"
 
-
-cd "${ENTRYDIR}"
 echo
 echo "   removing temp directory  "$TEMPDIR
 rm -R "${TEMPDIR}"
 
+NOTARIZE="~/dfx/scripts/notarize.sh \"${OUTPUTFILE_FULLNAME}\" ${BUNDLEID}"
+echo -n $NOTARIZE | pbcopy
 echo
 echo "   done with "`basename "${OUTPUTFILE_FULLNAME}"`"!"
+echo "   but don't forget to:"
+echo
+echo
+echo
+echo $NOTARIZE
+echo
+echo "   (also copied to clipboard)"
 echo
 exit 0
-
-# $*, $@
-# All the arguments as a blank separated string.  Watch out for "$*" vs. "$@"
