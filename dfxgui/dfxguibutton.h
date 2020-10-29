@@ -31,10 +31,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-typedef void (*DGButtonUserProcedure) (long inValue, void* inUserData);
-
-
-//-----------------------------------------------------------------------------
 class DGButton : public DGControl<VSTGUI::CControl>
 {
 public:
@@ -69,8 +65,9 @@ public:
 
 	void setButtonImage(DGImage* inImage);
 
-	void setUserProcedure(DGButtonUserProcedure inProc, void* inUserData);
-	void setUserReleaseProcedure(DGButtonUserProcedure inProc, void* inUserData, bool inOnlyAtEndWithNoCancel = false);
+	using UserProcedure = void (*) (long inValue, void* inUserData);
+	void setUserProcedure(UserProcedure inProc, void* inUserData);
+	void setUserReleaseProcedure(UserProcedure inProc, void* inUserData, bool inOnlyAtEndWithNoCancel = false);
 
 	void setOrientation(dfx::Axis inOrientation) noexcept
 	{
@@ -82,9 +79,9 @@ public:
 protected:
 	long constrainValue(long inValue) const;
 
-	DGButtonUserProcedure mUserProcedure = nullptr;
+	UserProcedure mUserProcedure = nullptr;
 	void* mUserProcData = nullptr;
-	DGButtonUserProcedure mUserReleaseProcedure = nullptr;
+	UserProcedure mUserReleaseProcedure = nullptr;
 	void* mUserReleaseProcData = nullptr;
 	bool mUseReleaseProcedureOnlyAtEndWithNoCancel = false;
 

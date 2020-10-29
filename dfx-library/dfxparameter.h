@@ -273,7 +273,7 @@ public:
 		kAttribute_Unused = 1 << 1,  // isn't being used at all (a place-holder?); don't reveal to the host or anyone
 		kAttribute_OmitFromRandomizeAll = 1 << 2  // should not be included when randomizing all parameters
 	};
-	typedef uint32_t Attribute; 
+	using Attribute = uint32_t; 
 
 
 	DfxParam() = default;
