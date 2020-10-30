@@ -111,7 +111,7 @@ public:
 	};
 
 #if TARGET_OS_MAC
-	static CFStringRef const kDfxDataAUClassInfoKeyString;
+	static inline CFStringRef const kDfxDataAUClassInfoKeyString = CFSTR("destroyfx-data");
 #endif
 
 

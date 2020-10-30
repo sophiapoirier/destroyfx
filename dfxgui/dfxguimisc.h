@@ -220,7 +220,7 @@ public:
 namespace dfx
 {
 
-extern char const* const kPlusMinusUTF8;
+static inline char const* const kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
 
 std::string SanitizeNumericalInput(std::string const& inText);
 

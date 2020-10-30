@@ -40,12 +40,6 @@ Welcome to our settings persistance mess.
 #include "dfxplugin.h"
 
 
-//-----------------------------------------------------------------------------
-#if TARGET_OS_MAC
-CFStringRef const DfxSettings::kDfxDataAUClassInfoKeyString = CFSTR("destroyfx-data");
-#endif
-
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #pragma mark -
 #pragma mark init / destroy

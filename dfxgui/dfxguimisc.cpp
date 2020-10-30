@@ -43,8 +43,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#pragma clang diagnostic pop
 #endif
 
-char const* const dfx::kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
-
 
 //-----------------------------------------------------------------------------
 DGColor DGColor::withAlpha(float inAlpha) const
