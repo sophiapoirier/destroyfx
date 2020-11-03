@@ -63,7 +63,7 @@ public:
 	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
 
 private:
-	static void HandleSpeedModeButton(size_t inIndex, long inValue, void* inEditor);
+	void HandleSpeedModeButton(size_t inIndex, long inValue);
 	void HandleSpeedModeChange(size_t inIndex);
 
 	std::array<DGButton*, dfx::TV::kNumDelays> mSpeedModeButtons;

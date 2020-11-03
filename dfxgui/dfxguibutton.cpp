@@ -123,7 +123,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::C
 		notifyIfChanged();
 		if (mUserProcedure)
 		{
-			mUserProcedure(mNewValue, mUserProcData);
+			mUserProcedure(mNewValue);
 		}
 	}
 
@@ -166,7 +166,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::
 			setValue_i(mNewValue);
 			if (mUserProcedure && (mNewValue != currentValue))
 			{
-				mUserProcedure(mNewValue, mUserProcData);
+				mUserProcedure(mNewValue);
 			}
 		}
 	}
@@ -184,7 +184,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::
 				setValue_i(mEntryValue);
 				if (mUserReleaseProcedure && !mUseReleaseProcedureOnlyAtEndWithNoCancel)
 				{
-					mUserReleaseProcedure(mEntryValue, mUserReleaseProcData);
+					mUserReleaseProcedure(mEntryValue);
 				}
 			}
 		}
@@ -211,7 +211,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseUp(VSTGUI::CPoint& inPos, VSTGUI::CBu
 	{
 		if (mUserReleaseProcedure)
 		{
-			mUserReleaseProcedure(getValue_i(), mUserReleaseProcData);
+			mUserReleaseProcedure(getValue_i());
 		}
 	}
 
@@ -270,11 +270,11 @@ bool DGButton::onWheel(VSTGUI::CPoint const& /*inPos*/, VSTGUI::CMouseWheelAxis 
 	{
 		if (mUserProcedure)
 		{
-			mUserProcedure(newValue, mUserProcData);
+			mUserProcedure(newValue);
 		}
 		if (mUserReleaseProcedure)
 		{
-			mUserReleaseProcedure(getValue_i(), mUserReleaseProcData);
+			mUserReleaseProcedure(getValue_i());
 		}
 	}
 
@@ -299,17 +299,32 @@ void DGButton::setButtonImage(DGImage* inImage)
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setUserProcedure(UserProcedure inProc, void* inUserData)
+void DGButton::setUserProcedure(UserProcedure const& inProc)
 {
+	assert(inProc);
 	mUserProcedure = inProc;
-	mUserProcData = inUserData;
 }
 
 //-----------------------------------------------------------------------------
-void DGButton::setUserReleaseProcedure(UserProcedure inProc, void* inUserData, bool inOnlyAtEndWithNoCancel)
+void DGButton::setUserProcedure(UserProcedure&& inProc)
 {
+	assert(inProc);
+	mUserProcedure = std::move(inProc);
+}
+
+//-----------------------------------------------------------------------------
+void DGButton::setUserReleaseProcedure(UserProcedure const& inProc, bool inOnlyAtEndWithNoCancel)
+{
+	assert(inProc);
 	mUserReleaseProcedure = inProc;
-	mUserReleaseProcData = inUserData;
+	mUseReleaseProcedureOnlyAtEndWithNoCancel = inOnlyAtEndWithNoCancel;
+}
+
+//-----------------------------------------------------------------------------
+void DGButton::setUserReleaseProcedure(UserProcedure&& inProc, bool inOnlyAtEndWithNoCancel)
+{
+	assert(inProc);
+	mUserReleaseProcedure = std::move(inProc);
 	mUseReleaseProcedureOnlyAtEndWithNoCancel = inOnlyAtEndWithNoCancel;
 }
 

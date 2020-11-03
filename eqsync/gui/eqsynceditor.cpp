@@ -260,10 +260,7 @@ long EQSyncEditor::OpenEditor()
 	// create the help button
 	pos.set(helpButtonX, helpButtonY, helpButtonImage->getWidth(), helpButtonImage->getHeight() / 2);
 	auto const helpButton = emplaceControl<DGButton>(this, pos, helpButtonImage, 2, DGButton::Mode::Momentary);
-	helpButton->setUserReleaseProcedure([](long, void*)
-	{
-		dfx::LaunchDocumentation();
-	}, this, true);
+	helpButton->setUserReleaseProcedure(std::bind(&dfx::LaunchDocumentation), true);
 
 
 	HandleTempoAutoChange();

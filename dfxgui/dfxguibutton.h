@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #pragma once
 
 
+#include <functional>
 #include <string>
 
 #include "dfxguicontrol.h"
@@ -65,9 +66,11 @@ public:
 
 	void setButtonImage(DGImage* inImage);
 
-	using UserProcedure = void (*) (long inValue, void* inUserData);
-	void setUserProcedure(UserProcedure inProc, void* inUserData);
-	void setUserReleaseProcedure(UserProcedure inProc, void* inUserData, bool inOnlyAtEndWithNoCancel = false);
+	using UserProcedure = std::function<void(long)>;
+	void setUserProcedure(UserProcedure const& inProc);
+	void setUserProcedure(UserProcedure&& inProc);
+	void setUserReleaseProcedure(UserProcedure const& inProc, bool inOnlyAtEndWithNoCancel = false);
+	void setUserReleaseProcedure(UserProcedure&& inProc, bool inOnlyAtEndWithNoCancel = false);
 
 	void setOrientation(dfx::Axis inOrientation) noexcept
 	{
@@ -80,9 +83,7 @@ protected:
 	long constrainValue(long inValue) const;
 
 	UserProcedure mUserProcedure = nullptr;
-	void* mUserProcData = nullptr;
 	UserProcedure mUserReleaseProcedure = nullptr;
-	void* mUserReleaseProcData = nullptr;
 	bool mUseReleaseProcedureOnlyAtEndWithNoCancel = false;
 
 	Mode const mMode;

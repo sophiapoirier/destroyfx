@@ -558,11 +558,10 @@ long ScrubbyEditor::OpenEditor()
 		long const paramID = kPitchStep0 + i;
 
 		// this visually syncs the top and bottom button images upon mouse clicks
-		auto const keyboardButtonProc = [](long value, void* button)
+		auto const keyboardButtonProc = [](long value, DGButton* button)
 		{
-			auto const keyboardButton = static_cast<DGButton*>(button);
-			auto const editor = keyboardButton->getOwnerEditor();
-			editor->getFrame()->forEachChild([originalButton = keyboardButton->asCControl()](VSTGUI::CView* child)
+			auto const editor = button->getOwnerEditor();
+			editor->getFrame()->forEachChild([originalButton = button->asCControl()](VSTGUI::CView* child)
 			{
 				auto const paramID = originalButton->getTag();
 				auto const control = dynamic_cast<VSTGUI::CControl*>(child);
@@ -583,11 +582,11 @@ long ScrubbyEditor::OpenEditor()
 
 		if (keyboardBottomKeyImages[i] != nullptr)
 		{
-			button->setUserProcedure(keyboardButtonProc, button);
+			button->setUserProcedure(std::bind(keyboardButtonProc, std::placeholders::_1, button));
 
 			keyboardBottomKeyPos.setWidth(keyboardBottomKeyImages[i]->getWidth());
 			button = emplaceControl<DGButton>(this, paramID, keyboardBottomKeyPos, keyboardBottomKeyImages[i], DGButton::Mode::Increment);
-			button->setUserProcedure(keyboardButtonProc, button);
+			button->setUserProcedure(std::bind(keyboardButtonProc, std::placeholders::_1, button));
 			keyboardBottomKeyPos.offset(keyboardBottomKeyPos.getWidth(), 0);
 		}
 	}
@@ -623,71 +622,43 @@ long ScrubbyEditor::OpenEditor()
 
 	// ...............PITCH CONSTRAINT....................
 
+	auto const keyboardMacroProc = [this](long controlValue, long notesButtonType)
+	{
+		if (controlValue != 0)
+		{
+			HandleNotesButton(notesButtonType);
+		}
+	};
+
 	// transpose all of the pitch constraint notes down one semitone
 	pos.set(kTransposeDownButtonX, kTransposeDownButtonY, transposeDownButtonImage->getWidth(), transposeDownButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Down] = emplaceControl<DGButton>(this, pos, transposeDownButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Down]->setUserProcedure([](long value, void* editor)
-	{
-		if (value != 0)
-		{
-			static_cast<ScrubbyEditor*>(editor)->HandleNotesButton(kNotes_Down);
-		}
-	}, this);
+	mNotesButtons[kNotes_Down]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_Down));
 
 	// transpose all of the pitch constraint notes up one semitone
 	pos.set(kTransposeUpButtonX, kTransposeUpButtonY, transposeUpButtonImage->getWidth(), transposeUpButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Up] = emplaceControl<DGButton>(this, pos, transposeUpButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Up]->setUserProcedure([](long value, void* editor)
-	{
-		if (value != 0)
-		{
-			static_cast<ScrubbyEditor*>(editor)->HandleNotesButton(kNotes_Up);
-		}
-	}, this);
+	mNotesButtons[kNotes_Up]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_Up));
 
 	// turn on the pitch constraint notes that form a major chord
 	pos.set(kMajorChordButtonX, kMajorChordButtonY, majorChordButtonImage->getWidth(), majorChordButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Major] = emplaceControl<DGButton>(this, pos, majorChordButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Major]->setUserProcedure([](long value, void* editor)
-	{
-		if (value != 0)
-		{
-			static_cast<ScrubbyEditor*>(editor)->HandleNotesButton(kNotes_Major);
-		}
-	}, this);
+	mNotesButtons[kNotes_Major]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_Major));
 
 	// turn on the pitch constraint notes that form a minor chord
 	pos.set(kMinorChordButtonX, kMinorChordButtonY, minorChordButtonImage->getWidth(), minorChordButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Minor] = emplaceControl<DGButton>(this, pos, minorChordButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Minor]->setUserProcedure([](long value, void* editor)
-	{
-		if (value != 0)
-		{
-			static_cast<ScrubbyEditor*>(editor)->HandleNotesButton(kNotes_Minor);
-		}
-	}, this);
+	mNotesButtons[kNotes_Minor]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_Minor));
 
 	// turn on all pitch constraint notes
 	pos.set(kAllNotesButtonX, kAllNotesButtonY, allNotesButtonImage->getWidth(), allNotesButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_All] = emplaceControl<DGButton>(this, pos, allNotesButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_All]->setUserProcedure([](long value, void* editor)
-	{
-		if (value != 0)
-		{
-			static_cast<ScrubbyEditor*>(editor)->HandleNotesButton(kNotes_All);
-		}
-	}, this);
+	mNotesButtons[kNotes_All]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_All));
 
 	// turn off all pitch constraint notes
 	pos.set(kNoneNotesButtonX, kNoneNotesButtonY, noneNotesButtonImage->getWidth(), noneNotesButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_None] = emplaceControl<DGButton>(this, pos, noneNotesButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_None]->setUserProcedure([](long value, void* editor)
-	{
-		if (value != 0)
-		{
-			static_cast<ScrubbyEditor*>(editor)->HandleNotesButton(kNotes_None);
-		}
-	}, this);
+	mNotesButtons[kNotes_None]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_None));
 
 
 	// .....................MISC..........................

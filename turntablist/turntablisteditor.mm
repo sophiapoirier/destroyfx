@@ -148,8 +148,10 @@ public:
 	bool HandleEvent(EventHandlerCallRef inHandlerRef, EventRef inEvent) override;
 #endif
 
-	void HandleLoadButton();
 	OSStatus LoadAudioFile(FSRef const& inAudioFileRef);
+
+private:
+	void HandleLoadButton();
 	void HandleAudioFileChange();
 	void HandlePlayButton(bool inPlay);
 	void HandlePlayChange();
@@ -157,7 +159,6 @@ public:
 	void HandleMidiResetButton();
 	void HandleParameterChange(long inParameterID, float inValue);
 
-private:
 	void SetFileNameDisplay(CFStringRef inText);
 	OSStatus NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef const& inAudioFileRef) const;
 
@@ -202,7 +203,7 @@ public:
 #pragma mark callbacks
 
 //-----------------------------------------------------------------------------
-void TurntablistAboutButtonProc(long inValue, void*)
+void TurntablistAboutButtonProc(long inValue)
 {
 	if (inValue > 0)
 	{
@@ -472,48 +473,39 @@ long TurntablistEditor::OpenEditor()
 	};
 	pos.set(kLoadButtonX, kLoadButtonY, onOffButtonImage->getWidth(), onOffButtonImage->getHeight() / 2);
 	button = emplaceControl<TurntablistButton>(this, pos, onOffButtonImage, 2, DGButton::Mode::Momentary);
-	button->setUserReleaseProcedure([](long inValue, void* inEditor)
-	{
-		static_cast<TurntablistEditor*>(inEditor)->HandleLoadButton();
-	}, this, true);
+	button->setUserReleaseProcedure(std::bind(&TurntablistEditor::HandleLoadButton, this), true);
 	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("choose an audio file to load up onto the \"turntable\""), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Open Audio File button"));
 	button->setHelpText(helpText.get());
 
 	mPlayButton = emplaceControl<DGToggleImageButton>(this, kPlayButtonX, kPlayButtonY, playButtonImage);
-	mPlayButton->setUserProcedure([](long inValue, void* inEditor)
-	{
-		static_cast<TurntablistEditor*>(inEditor)->HandlePlayButton(inValue != 0);
-	}, this);
+	mPlayButton->setUserProcedure(std::bind(&TurntablistEditor::HandlePlayButton, this, std::placeholders::_1));
 	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("use this to start or stop the audio sample playback"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Play button"));
 	mPlayButton->setHelpText(helpText.get());
 
 	button = emplaceControl<DGToggleImageButton>(this, kMidiLearnX, kMidiLearnY, onOffButtonImage);
-	button->setUserProcedure([](long inValue, void* inEditor)
-	{
-		static_cast<TurntablistEditor*>(inEditor)->HandleMidiLearnButton(inValue != 0);
-	}, this);
+	button->setUserProcedure(std::bind(&TurntablistEditor::HandleMidiLearnButton, this, std::placeholders::_1));
 	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("This switches MIDI learn mode on or off.  When MIDI learn is on, you can click on a parameter control to enable that parameter as the \"learner\" for incoming MIDI CC messages."), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the MIDI Learn button"));
 	button->setHelpText(helpText.get());
 
 	pos.set(kMidiResetX, kMidiResetY, onOffButtonImage->getWidth(), onOffButtonImage->getHeight() / 2);
 	button = emplaceControl<DGButton>(this, pos, onOffButtonImage, 2, DGButton::Mode::Momentary);
-	button->setUserProcedure([](long inValue, void* inEditor)
+	button->setUserProcedure([this](long inValue)
 	{
 		if (inValue != 0)
 		{
-			static_cast<TurntablistEditor*>(inEditor)->HandleMidiResetButton();
+			HandleMidiResetButton();
 		}
-	}, this);
+	});
 	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this removes all of your MIDI CC -> parameter assignments"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the MIDI Reset button"));
 	button->setHelpText(helpText.get());
 
 	pos.set(kAboutSplashX, kAboutSplashY, kAboutSplashWidth, kAboutSplashHeight);
 	button = emplaceControl<DGButton>(this, pos, nullptr, 2, DGButton::Mode::Increment);
-	button->setUserProcedure(TurntablistAboutButtonProc, this);
+	button->setUserProcedure(std::bind(&TurntablistAboutButtonProc, std::placeholders::_1));
 //	button->setHelpText(CFSTR("click here to go to the "PLUGIN_CREATOR_NAME_STRING" web site"));
 	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("click here to go to the Destroy FX web site"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the About hot-spot"));
@@ -521,10 +513,7 @@ long TurntablistEditor::OpenEditor()
 
 	pos.set(kHelpX, kHelpY, helpButtonImage->getWidth(), helpButtonImage->getHeight() / 2);
 	button = emplaceControl<DGButton>(this, pos, helpButtonImage, 2, DGButton::Mode::Momentary);
-	button->setUserReleaseProcedure([](long inValue, void*)
-	{
-		dfx::LaunchDocumentation();
-	}, this, true);
+	button->setUserReleaseProcedure(std::bind(&dfx::LaunchDocumentation), true);
 	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("view the full manual"), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Help button"));
 	button->setHelpText(helpText.get());
@@ -787,7 +776,7 @@ OSStatus TurntablistEditor::NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef
 	{
 		if (auto const frame = getFrame())
 		{
-			if (auto const platformFrame = frame->getPlatformFrame(); platformFrame && (platformFrame->getPlatformType() == VSTGUI::kNSView))
+			if (auto const platformFrame = frame->getPlatformFrame(); platformFrame && (platformFrame->getPlatformType() == VSTGUI::PlatformType::kNSView))
 			{
 				if (auto const nsView = (__bridge NSView*)(platformFrame->getPlatformRepresentation()))
 				{

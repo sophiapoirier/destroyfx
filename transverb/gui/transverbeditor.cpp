@@ -443,31 +443,15 @@ long TransverbEditor::OpenEditor()
 	// randomize button
 	pos.set(kRandomButtonX, kButtonY, randomizeButtonImage->getWidth(), randomizeButtonImage->getHeight() / 2);
 	auto const button = emplaceControl<DGButton>(this, pos, randomizeButtonImage, 2, DGButton::Mode::Momentary);
-	button->setUserProcedure([](long, void* editor)
-	{
-		static_cast<DfxGuiEditor*>(editor)->randomizeparameters(true);
-	}, this);
+	button->setUserProcedure(std::bind(&TransverbEditor::randomizeparameters, this, true));
 
-	// speed 1 mode button
+	// speed mode buttons
+	for (size_t speedModeIndex = 0; speedModeIndex < kNumDelays; speedModeIndex++)
 	{
-		constexpr size_t speedModeIndex = 0;
-		pos.set(kSpeedModeButtonX, kSpeedModeButtonY, speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
+		pos.set(kSpeedModeButtonX, kSpeedModeButtonY + (((kWideFaderInc * 2) + kWideFaderMoreInc) * speedModeIndex), 
+				speedModeButtonImage->getWidth() / 2, speedModeButtonImage->getHeight() / kSpeedMode_NumModes);
 		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
-		mSpeedModeButtons[speedModeIndex]->setUserProcedure([](long value, void* editor)
-		{
-			HandleSpeedModeButton(speedModeIndex, value, editor);
-		}, this);
-	}
-	//
-	// speed 2 mode button
-	{
-		constexpr size_t speedModeIndex = 1;
-		pos.offset(0, (kWideFaderInc * 2) + kWideFaderMoreInc);
-		mSpeedModeButtons[speedModeIndex] = emplaceControl<DGButton>(this, pos, speedModeButtonImage, kSpeedMode_NumModes, DGButton::Mode::Increment, true);
-		mSpeedModeButtons[speedModeIndex]->setUserProcedure([](long value, void* editor)
-		{
-			HandleSpeedModeButton(speedModeIndex, value, editor);
-		}, this);
+		mSpeedModeButtons[speedModeIndex]->setUserProcedure(std::bind(&TransverbEditor::HandleSpeedModeButton, this, speedModeIndex, std::placeholders::_1));
 	}
 
 	// MIDI learn button
@@ -518,11 +502,10 @@ void TransverbEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Sc
 }
 
 //-----------------------------------------------------------------------------
-void TransverbEditor::HandleSpeedModeButton(size_t inIndex, long inValue, void* inEditor)
+void TransverbEditor::HandleSpeedModeButton(size_t inIndex, long inValue)
 {
-	auto const tvEditor = static_cast<TransverbEditor*>(inEditor);
 	auto const value_fixedSize = static_cast<uint8_t>(inValue);
-	[[maybe_unused]] bool const ok = tvEditor->dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), value_fixedSize);
+	[[maybe_unused]] bool const ok = dfxgui_SetProperty(speedModeIndexToPropertyID(inIndex), value_fixedSize);
 	assert(ok);
 }
 

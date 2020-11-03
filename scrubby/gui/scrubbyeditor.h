@@ -55,9 +55,8 @@ public:
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 	void numAudioChannelsChanged(unsigned long inNumChannels) override;
 
-	void HandleNotesButton(long inNotesButtonType);
-
 private:
+	void HandleNotesButton(long inNotesButtonType);
 	void HandlePitchConstraintChange();
 	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();

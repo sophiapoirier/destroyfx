@@ -2549,11 +2549,7 @@ void DfxGuiEditor::HandleMidiLearnerChange()
 DGButton* DfxGuiEditor::CreateMidiLearnButton(VSTGUI::CCoord inXpos, VSTGUI::CCoord inYpos, DGImage* inImage, bool inDrawMomentaryState)
 {
 	mMidiLearnButton = emplaceControl<DGToggleImageButton>(this, inXpos, inYpos, inImage, inDrawMomentaryState);
-	mMidiLearnButton->setUserProcedure([](long inValue, void* inUserData)
-	{
-		assert(inUserData);
-		static_cast<DfxGuiEditor*>(inUserData)->setmidilearning(inValue != 0);
-	}, this);
+	mMidiLearnButton->setUserProcedure(std::bind(&DfxGuiEditor::setmidilearning, this, std::placeholders::_1));
 	return mMidiLearnButton;
 }
 
@@ -2562,14 +2558,13 @@ DGButton* DfxGuiEditor::CreateMidiResetButton(VSTGUI::CCoord inXpos, VSTGUI::CCo
 {
 	DGRect const pos(inXpos, inYpos, inImage->getWidth(), inImage->getHeight() / 2);
 	mMidiResetButton = emplaceControl<DGButton>(this, pos, inImage, 2, DGButton::Mode::Momentary);
-	mMidiResetButton->setUserProcedure([](long inValue, void* inUserData)
+	mMidiResetButton->setUserProcedure([this](long inValue)
 	{
-		assert(inUserData);
 		if (inValue != 0)
 		{
-			static_cast<DfxGuiEditor*>(inUserData)->resetmidilearn();
+			resetmidilearn();
 		}
-	}, this);
+	});
 	return mMidiResetButton;
 }
 

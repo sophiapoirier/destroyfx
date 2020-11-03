@@ -22,6 +22,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "bufferoverrideeditor.h"
 
 #include <array>
+#include <cassert>
 
 #include "bufferoverride.h"
 
@@ -372,19 +373,15 @@ long BufferOverrideEditor::OpenEditor()
 
 
 	// callbacks for button-triggered action
-	auto const linkKickButtonsDownProc = [](long, void* otherButton)
+	auto const linkKickButtonsDownProc = [](DGButton* otherButton)
 	{
-		if (auto const otherDGButton = static_cast<DGButton*>(otherButton))
-		{
-			otherDGButton->setMouseIsDown(true);
-		}
+		assert(otherButton);
+		otherButton->setMouseIsDown(true);
 	};
-	auto const linkKickButtonsUpProc = [](long, void* otherButton)
+	auto const linkKickButtonsUpProc = [](DGButton* otherButton)
 	{
-		if (auto const otherDGButton = static_cast<DGButton*>(otherButton))
-		{
-			otherDGButton->setMouseIsDown(false);
-		}
+		assert(otherButton);
+		otherButton->setMouseIsDown(false);
 	};
 
 	// forced buffer size tempo sync button
@@ -392,20 +389,20 @@ long BufferOverrideEditor::OpenEditor()
 	//
 	auto const bufferTempoSyncButtonCorner = emplaceControl<DGToggleImageButton>(this, kBufferTempoSync, kBufferTempoSyncButtonCornerX, kBufferTempoSyncButtonCornerY, bufferTempoSyncButtonCornerImage, true);
 	//
-	bufferTempoSyncButton->setUserProcedure(linkKickButtonsDownProc, bufferTempoSyncButtonCorner);
-	bufferTempoSyncButtonCorner->setUserProcedure(linkKickButtonsDownProc, bufferTempoSyncButton);
-	bufferTempoSyncButton->setUserReleaseProcedure(linkKickButtonsUpProc, bufferTempoSyncButtonCorner);
-	bufferTempoSyncButtonCorner->setUserReleaseProcedure(linkKickButtonsUpProc, bufferTempoSyncButton);
+	bufferTempoSyncButton->setUserProcedure(std::bind(linkKickButtonsDownProc, bufferTempoSyncButtonCorner));
+	bufferTempoSyncButtonCorner->setUserProcedure(std::bind(linkKickButtonsDownProc, bufferTempoSyncButton));
+	bufferTempoSyncButton->setUserReleaseProcedure(std::bind(linkKickButtonsUpProc, bufferTempoSyncButtonCorner));
+	bufferTempoSyncButtonCorner->setUserReleaseProcedure(std::bind(linkKickButtonsUpProc, bufferTempoSyncButton));
 
 	// buffer interrupt button
 	auto const bufferInterruptButton = emplaceControl<DGToggleImageButton>(this, kBufferInterrupt, kBufferInterruptButtonX, kBufferInterruptButtonY, bufferInterruptButtonImage, true);
 	//
 	auto const bufferInterruptButtonCorner = emplaceControl<DGToggleImageButton>(this, kBufferInterrupt, kBufferInterruptButtonCornerX, kBufferInterruptButtonCornerY, bufferInterruptButtonCornerImage, true);
 	//
-	bufferInterruptButtonCorner->setUserProcedure(linkKickButtonsDownProc, bufferInterruptButton);
-	bufferInterruptButton->setUserProcedure(linkKickButtonsDownProc, bufferInterruptButtonCorner);
-	bufferInterruptButtonCorner->setUserReleaseProcedure(linkKickButtonsUpProc, bufferInterruptButton);
-	bufferInterruptButton->setUserReleaseProcedure(linkKickButtonsUpProc, bufferInterruptButtonCorner);
+	bufferInterruptButtonCorner->setUserProcedure(std::bind(linkKickButtonsDownProc, bufferInterruptButton));
+	bufferInterruptButton->setUserProcedure(std::bind(linkKickButtonsDownProc, bufferInterruptButtonCorner));
+	bufferInterruptButtonCorner->setUserReleaseProcedure(std::bind(linkKickButtonsUpProc, bufferInterruptButton));
+	bufferInterruptButton->setUserReleaseProcedure(std::bind(linkKickButtonsUpProc, bufferInterruptButtonCorner));
 
 	// forced buffer size LFO tempo sync button
 	emplaceControl<DGToggleImageButton>(this, kBufferLFOTempoSync, kBufferLFOTempoSyncButtonX, kBufferLFOTempoSyncButtonY, bufferLFOTempoSyncButtonImage, true);
