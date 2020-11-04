@@ -23,13 +23,13 @@
 		4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4CE06801180006A9591 /* dfxparameter.cpp */; };
 		4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D006801180006A9591 /* dfxplugin-audiounit.cpp */; };
 		4932F4DC06801180006A9591 /* dfxplugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D106801180006A9591 /* dfxplugin.cpp */; };
-		4932F4EC068011C9006A9591 /* dfxguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E0068011C9006A9591 /* dfxguieditor.cpp */; };
-		4932F4EE068011C9006A9591 /* dfxguibutton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E2068011C9006A9591 /* dfxguibutton.cpp */; };
-		4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */; };
-		4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */; };
-		4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E8068011C9006A9591 /* dfxguislider.cpp */; };
+		4932F4EC068011C9006A9591 /* dfxguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E0068011C9006A9591 /* dfxguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		4932F4EE068011C9006A9591 /* dfxguibutton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E2068011C9006A9591 /* dfxguibutton.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E8068011C9006A9591 /* dfxguislider.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		4932F6110680136D006A9591 /* turntablist.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F60A0680136D006A9591 /* turntablist.cpp */; };
-		4932F6160680136D006A9591 /* turntablisteditor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4932F60F0680136D006A9591 /* turntablisteditor.mm */; };
+		4932F6160680136D006A9591 /* turntablisteditor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4932F60F0680136D006A9591 /* turntablisteditor.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		4932F6220680163F006A9591 /* background.png in Resources */ = {isa = PBXBuildFile; fileRef = 4932F6180680163F006A9591 /* background.png */; };
 		4932F6230680163F006A9591 /* direction-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4932F6190680163F006A9591 /* direction-button.png */; };
 		4932F6250680163F006A9591 /* knob.png in Resources */ = {isa = PBXBuildFile; fileRef = 4932F61B0680163F006A9591 /* knob.png */; };
@@ -64,12 +64,12 @@
 		EC2F842E24A7C1F000F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F842D24A7C1F000F29321 /* dfxmisc.mm */; };
 		EC89B36B208D2EBA00E15129 /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B36A208D2EBA00E15129 /* AUPlugInDispatch.cpp */; };
 		EC89B46B208D338600E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B469208D338600E15129 /* dfx-au-utilities-preset-files.m */; };
-		EC89B472208D339C00E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B46C208D339A00E15129 /* dfxguidialog.cpp */; };
-		EC89B473208D339C00E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B46F208D339B00E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B500208D371000E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4FF208D371000E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
-		EC89B50F208D371700E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B508208D371600E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
-		EC8AB22F24CDF3F9000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB22C24CDF3F9000504F0 /* dfxgui-fontfactory.mm */; };
-		ECE4CBE520D0CA430026E215 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE4CBE420D0CA430026E215 /* dfxguimisc.mm */; };
+		EC89B472208D339C00E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B46C208D339A00E15129 /* dfxguidialog.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		EC89B473208D339C00E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B46F208D339B00E15129 /* dfxgui-auviewfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		EC89B500208D371000E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4FF208D371000E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
+		EC89B50F208D371700E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B508208D371600E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor"; }; };
+		EC8AB22F24CDF3F9000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB22C24CDF3F9000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		ECE4CBE520D0CA430026E215 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE4CBE420D0CA430026E215 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */

@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		490E768E07CAE0D200688A1D /* scrubbyformalities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E768A07CAE0D200688A1D /* scrubbyformalities.cpp */; };
 		490E768F07CAE0D200688A1D /* scrubbyprocess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E768B07CAE0D200688A1D /* scrubbyprocess.cpp */; };
-		490E769607CAE12600688A1D /* scrubbyeditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E769207CAE12600688A1D /* scrubbyeditor.cpp */; };
+		490E769607CAE12600688A1D /* scrubbyeditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E769207CAE12600688A1D /* scrubbyeditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		490E769E07CAE20500688A1D /* temporatetable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E769C07CAE20500688A1D /* temporatetable.cpp */; };
 		490E76A207CAE24800688A1D /* AUEffectBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E76A007CAE24800688A1D /* AUEffectBase.cpp */; };
 		490E76A707CAE29600688A1D /* px10.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 490E76A607CAE29600688A1D /* px10.ttf */; };
@@ -59,17 +59,17 @@
 		4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4CE06801180006A9591 /* dfxparameter.cpp */; };
 		4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D006801180006A9591 /* dfxplugin-audiounit.cpp */; };
 		4932F4DC06801180006A9591 /* dfxplugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D106801180006A9591 /* dfxplugin.cpp */; };
-		4932F4EC068011C9006A9591 /* dfxguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E0068011C9006A9591 /* dfxguieditor.cpp */; };
-		4932F4EE068011C9006A9591 /* dfxguibutton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E2068011C9006A9591 /* dfxguibutton.cpp */; };
-		4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */; };
-		4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */; };
-		4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E8068011C9006A9591 /* dfxguislider.cpp */; };
+		4932F4EC068011C9006A9591 /* dfxguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E0068011C9006A9591 /* dfxguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		4932F4EE068011C9006A9591 /* dfxguibutton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E2068011C9006A9591 /* dfxguibutton.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E4068011C9006A9591 /* dfxguicontrol.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E6068011C9006A9591 /* dfxguitextdisplay.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4E8068011C9006A9591 /* dfxguislider.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F7990680E859006A9591 /* dfxmidi.cpp */; };
 		B025B9C108AD333D00A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B9BE08AD333D00A9CCAE /* CAVectorUnit.cpp */; };
 		B0AD808D0D0F30D600766C78 /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B0AD808C0D0F30D600766C78 /* destroyfx.icns */; };
 		EC0EF4632524FBED00864283 /* iirfilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC0EF44E2524FAE000864283 /* iirfilter.cpp */; };
 		EC28F78521EAD17400C979B7 /* host-tempo-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC28F78421EAD17400C979B7 /* host-tempo-button.png */; };
-		EC40EDAC20DB4B4E00F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDAB20DB4B4E00F5C0A7 /* dfxguimisc.mm */; };
+		EC40EDAC20DB4B4E00F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDAB20DB4B4E00F5C0A7 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC48270D0F492C2B006126CD /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC48270B0F492C2B006126CD /* dfx-au-utilities.strings */; };
 		EC7C0E6621B97F18005A379E /* slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 490E793707CAE4E700688A1D /* slider-handle-glowing.png */; };
 		EC7C0E6721B97F27005A379E /* range-slider-handle-left-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = 490E793007CAE4E700688A1D /* range-slider-handle-left-glowing.png */; };
@@ -83,11 +83,11 @@
 		EC89B329208D29C800E15129 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B322208D29C800E15129 /* Carbon.framework */; };
 		EC89B365208D2E0800E15129 /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B364208D2E0800E15129 /* AUPlugInDispatch.cpp */; };
 		EC89B44F208D330600E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B44E208D330500E15129 /* dfx-au-utilities-preset-files.m */; };
-		EC89B456208D331500E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B450208D331300E15129 /* dfxguidialog.cpp */; };
-		EC89B457208D331500E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B453208D331400E15129 /* dfxgui-auviewfactory.mm */; };
-		EC89B4EB208D365900E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4EA208D365900E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
-		EC89B4FA208D365E00E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4F3208D365D00E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) -Wno-non-virtual-dtor"; }; };
-		EC8AB23A24CDF4BC000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB23824CDF4BC000504F0 /* dfxgui-fontfactory.mm */; };
+		EC89B456208D331500E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B450208D331300E15129 /* dfxguidialog.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		EC89B457208D331500E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B453208D331400E15129 /* dfxgui-auviewfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		EC89B4EB208D365900E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4EA208D365900E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
+		EC89B4FA208D365E00E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4F3208D365D00E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor"; }; };
+		EC8AB23A24CDF4BC000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB23824CDF4BC000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		ECCB14E4209A8CB20050BDEC /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECCB14E3209A8CB20050BDEC /* dfxenvelope.cpp */; };
 		ECCE0C3324A7AFAD00BF6D44 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECCE0C3224A7AFAD00BF6D44 /* dfxmisc.mm */; };
 /* End PBXBuildFile section */
