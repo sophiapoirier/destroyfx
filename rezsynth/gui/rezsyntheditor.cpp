@@ -93,6 +93,7 @@ constexpr float kValueTextFontSize = 10.0f;
 //constexpr DGColor kRSGrayColor(111, 111, 111);
 constexpr DGColor kRSLightGrayColor(230, 230, 228);
 constexpr DGColor kRSVeryLightGrayColor(233, 242, 237);
+constexpr float kUnusedControlAlpha = 0.54f;
 
 
 
@@ -378,6 +379,11 @@ long RezSynthEditor::OpenEditor()
 
 
 
+	// this will initialize the translucency state of dependent controls 
+	HandleLegatoChange();
+
+
+
 	return dfx::kStatus_NoError;
 }
 
@@ -401,6 +407,9 @@ void RezSynthEditor::parameterChanged(long inParameterID)
 			slider = mBandwidthAmountSlider;
 			display = mBandwidthAmountDisplay;
 			break;
+		case kLegato:
+			HandleLegatoChange();
+			break;
 		default:
 			return;
 	}
@@ -414,6 +423,19 @@ void RezSynthEditor::parameterChanged(long inParameterID)
 		if (display)
 		{
 			display->setParameterID(newParamID);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+void RezSynthEditor::HandleLegatoChange()
+{
+	float const alpha = getparameter_b(kLegato) ? kUnusedControlAlpha : 1.0f;
+	for (auto& control : mControlsList)
+	{
+		if (control->getParameterID() == kBetweenGain)
+		{
+			control->setDrawAlpha(alpha);
 		}
 	}
 }

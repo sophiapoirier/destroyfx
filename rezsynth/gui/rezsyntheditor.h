@@ -35,6 +35,8 @@ public:
 	void parameterChanged(long inParameterID) override;
 
 private:
+	void HandleLegatoChange();
+
 	DGSlider* mSepAmountSlider = nullptr, * mBandwidthAmountSlider = nullptr;
 	DGTextDisplay* mSepAmountDisplay = nullptr, * mBandwidthAmountDisplay = nullptr;
 };
