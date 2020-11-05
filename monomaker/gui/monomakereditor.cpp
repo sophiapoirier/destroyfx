@@ -46,12 +46,12 @@ enum
 	kButtonY = 184,
 	kButtonInc = 110,
 
-	kDestroyFXlinkX = 270,
-	kDestroyFXlinkY = 3
+	kDestroyFXLinkX = 270,
+	kDestroyFXLinkY = 3
 };
 
 constexpr char const* const kValueTextFont = "Arial";
-constexpr float kValueTextSize = 11.0f;
+constexpr float kValueTextSize = 12.0f;
 
 
 
@@ -130,7 +130,7 @@ long MonomakerEditor::OpenEditor()
 								  kValueTextSize, DGColor::kBlack, kValueTextFont);
 
 	// pan
-	pos.offset(0, kSliderInc - 1);
+	pos.offset(0, kSliderInc);
 	auto const panDisplay = emplaceControl<DGTextDisplay>(this, kPan, pos, panDisplayProc, nullptr, nullptr, 
 														  dfx::TextAlignment::Center, kValueTextSize, 
 														  DGColor::kBlack, kValueTextFont);
@@ -154,7 +154,7 @@ long MonomakerEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kPanMode, pos, panModeButtonImage, DGButton::Mode::Increment);
 
 	// Destroy FX web page link
-	pos.set(kDestroyFXlinkX, kDestroyFXlinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
+	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
 
 
