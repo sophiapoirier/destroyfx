@@ -47,7 +47,7 @@ enum
 	kDisplayWidth = 114,
 	kDisplayWidthHalf = kDisplayWidth / 2,
 	kDisplayHeight = 12,
-	kVelocityInfluenceLabelWidth = kDisplayWidth - 33,
+	kVelocityInfluenceLabelWidth = kDisplayWidth - 30,
 
 	kButtonY = 188,
 	kGateModeButtonX = 324,
@@ -62,7 +62,7 @@ enum
 constexpr DGColor kValueTextColor(152, 221, 251);
 //constexpr char const* const kValueTextFont = "Arial";
 constexpr char const* const kValueTextFont = "Trebuchet MS";
-constexpr float kValueTextSize = 10.5f;
+constexpr float kValueTextSize = 11.0f;
 
 
 //-----------------------------------------------------------------------------
@@ -89,7 +89,8 @@ bool envelopeDisplayProc(float inValue, char* outText, void*)
 
 bool velocityInfluenceDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue * 100.0f) > 0;
+	int const precision = (inValue <= 0.999f) ? 1 : 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f%%", precision, inValue * 100.0f) > 0;
 }
 
 
