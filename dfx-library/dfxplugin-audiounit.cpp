@@ -376,11 +376,14 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 		case kAudioUnitProperty_ParameterIDName:
 		{
 			auto& parameterIDName = *static_cast<AudioUnitParameterIDName*>(outData);
-			//assert(parameterIDName.inID == inElement);  // XXX the specification seems to be redundant in this regard?
-			auto const parameterID = inElement;
+			auto const parameterID = parameterIDName.inID;
 			if (inScope != kAudioUnitScope_Global)
 			{
 				status = kAudioUnitErr_InvalidScope;
+			}
+			else if (inElement != 0)
+			{
+				status = kAudioUnitErr_InvalidElement;
 			}
 			else if (parameterIDName.inDesiredLength == kAudioUnitParameterName_Full)
 			{
