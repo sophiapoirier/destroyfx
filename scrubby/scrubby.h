@@ -25,6 +25,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <array>
 
 #include "dfxplugin.h"
+#include "dfxsmoothedvalue.h"
 #include "temporatetable.h"
 
 
@@ -66,6 +67,9 @@ enum
 	kTempoAuto,
 	kPredelay,
 
+	kDryLevel,
+	kWetLevel,
+
 	kNumParameters
 };
 
@@ -100,12 +104,14 @@ public:
 	long initialize() override;
 	void reset() override;
 
-	void processparameters() override;
-	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
-
 	void createbuffers() override;
 	void releasebuffers() override;
 	void clearbuffers() override;
+
+	void randomizeparameters() override;
+
+	void processparameters() override;
+	void processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames) override;
 
 
 private:
@@ -126,6 +132,7 @@ private:
 	long mSpeedMode = kSpeedMode_Robot, mOctaveMin = 0, mOctaveMax = 0;
 	bool mFreeze = false, mSplitChannels = false, mPitchConstraint = false, mTempoSync = false, mUseHostTempo = false;
 	std::array<bool, kNumPitchSteps> mPitchSteps {};
+	dfx::SmoothedValue<float> mInputGain, mOutputGain;
 
 	// generic versions of these parameters for curved randomization
 	double mSeekRateHz_gen = 0.0, mSeekRateRandMinHz_gen = 0.0;

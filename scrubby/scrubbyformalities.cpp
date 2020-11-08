@@ -54,7 +54,7 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_b(kSplitChannels, {"channels split", "Channel", "Chanel", "Chan"}, false, false);
 	initparameter_b(kPitchConstraint, {"pitch constraint", "PtchCon", "PtchCn", "Ptch"}, false, false);
 	// default all notes to off (looks better on the GUI)
-	// no, I changed my mind, at least leave 1 note on so that the user isn't 
+	// no, I changed my mind, at least leave one note on so that the user isn't 
 	// confused the first time turning on pitch constraint and getting silence
 	initparameter_b(kPitchStep0, {"semi0 (unity/octave)"}, true, false);
 	initparameter_b(kPitchStep1, {"semi1 (minor 2nd)"}, false, false);
@@ -75,6 +75,8 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
 	initparameter_f(kPredelay, {"predelay", "PreDela", "PreDel", "PDel"}, 0.0, 50.0, 0.0, 100.0, DfxParam::Unit::Percent);  // percent of range
+	initparameter_f(kDryLevel, {"dry level", "DryLevl", "DryLvl", "Dry"}, 0., 0.5, 0., 1., DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
+	initparameter_f(kWetLevel, {"wet level", "WetLevl", "WetLvl", "Wet"}, 1., 0.5, 0., 1., DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
 
 //for (size_t i = 3; i < 12; i++) printf("%zu %s\n", i, getparametername(kSeekRange, i).c_str());
 	// set the value strings for the sync rate parameters
@@ -88,24 +90,24 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setparametervaluestring(kSpeedMode, kSpeedMode_Robot, "robot");
 	setparametervaluestring(kSpeedMode, kSpeedMode_DJ, "DJ");
 	// set the value strings for the octave range parameters
+	setparametervaluestring(kOctaveMin, getparametermin_i(kOctaveMin), "no min");
 	for (long i = getparametermin_i(kOctaveMin) + 1; i <= getparametermax_i(kOctaveMin); i++)
 	{
 		setparametervaluestring(kOctaveMin, i, std::to_string(i));
 	}
-	setparametervaluestring(kOctaveMin, getparametermin_i(kOctaveMin), "no min");
 	for (long i = getparametermin_i(kOctaveMax); i < getparametermax_i(kOctaveMax); i++)
 	{
-		auto octaveName = std::to_string(i);
-		if (i > 0)
-		{
-			octaveName.insert(octaveName.begin(), '+');
-		}
+		auto const prefix = (i > 0) ? "+" : "";
+		auto const octaveName = prefix + std::to_string(i);
 		setparametervaluestring(kOctaveMax, i, octaveName);
 	}
 	setparametervaluestring(kOctaveMax, getparametermax_i(kOctaveMax), "no max");
 
 	addparameterattributes(kFreeze, DfxParam::kAttribute_OmitFromRandomizeAll);
 	addparameterattributes(kPredelay, DfxParam::kAttribute_OmitFromRandomizeAll);
+	// the mix level parameters are "omitted" only in the sense that we manually handle their randomization
+	addparameterattributes(kDryLevel, DfxParam::kAttribute_OmitFromRandomizeAll);
+	addparameterattributes(kWetLevel, DfxParam::kAttribute_OmitFromRandomizeAll);
 
 	addparametergroup("pitch control", {kPitchConstraint, kPitchStep0, kPitchStep1, kPitchStep2, kPitchStep3, kPitchStep4, kPitchStep5, kPitchStep6, kPitchStep7, kPitchStep8, kPitchStep9, kPitchStep10, kPitchStep11});
 
@@ -117,6 +119,9 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 
 	addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out
 	addchannelconfig(1, kChannelConfigCount_Any);  // 1-in/N-out
+
+	registerSmoothedAudioValue(&mInputGain);
+	registerSmoothedAudioValue(&mOutputGain);
 
 	// give mCurrentTempoBPS a value in case that's useful for a freshly opened GUI
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
@@ -214,6 +219,7 @@ void Scrubby::clearbuffers()
 }
 
 
+#pragma mark -
 #pragma mark presets
 
 //-------------------------------------------------------------------------
@@ -246,6 +252,8 @@ void Scrubby::initPresets()
 	setpresetparameter_b(i, kPitchStep9, false);
 	setpresetparameter_b(i, kPitchStep10, false);
 	setpresetparameter_b(i, kPitchStep11, false);
+	setpresetparameter_f(i, kDryLevel, 0.);
+	setpresetparameter_f(i, kWetLevel, 1.);
 	i++;
 
 	setpresetname(i, "fake chorus");
@@ -259,6 +267,8 @@ void Scrubby::initPresets()
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_Robot);
 	setpresetparameter_b(i, kSplitChannels, true);
 	setpresetparameter_b(i, kPitchConstraint, false);
+	setpresetparameter_f(i, kDryLevel, 0.);
+	setpresetparameter_f(i, kWetLevel, 1.);
 	i++;
 
 	setpresetname(i, "broken turntable");
@@ -272,6 +282,8 @@ void Scrubby::initPresets()
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_DJ);
 	setpresetparameter_b(i, kSplitChannels, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
+	setpresetparameter_f(i, kDryLevel, 0.);
+	setpresetparameter_f(i, kWetLevel, 1.);
 	i++;
 
 	setpresetname(i, "blib");
@@ -285,6 +297,8 @@ void Scrubby::initPresets()
 	setpresetparameter_i(i, kSpeedMode, kSpeedMode_Robot);
 	setpresetparameter_b(i, kSplitChannels, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
+	setpresetparameter_f(i, kDryLevel, 0.);
+	setpresetparameter_f(i, kWetLevel, 1.);
 	i++;
 
 	setpresetname(i, "DJ staccato");
@@ -299,6 +313,8 @@ void Scrubby::initPresets()
 	setpresetparameter_b(i, kSplitChannels, false);
 	setpresetparameter_b(i, kPitchConstraint, false);
 	setpresetparameter_b(i, kTempoAuto, true);
+	setpresetparameter_f(i, kDryLevel, 0.);
+	setpresetparameter_f(i, kWetLevel, 1.);
 	i++;
 
 /*
@@ -332,12 +348,40 @@ void Scrubby::initPresets()
 	setpresetparameter_b(i, kPitchStep9, );
 	setpresetparameter_b(i, kPitchStep10, );
 	setpresetparameter_b(i, kPitchStep11, );
+	setpresetparameter_f(i, kDryLevel, );
+	setpresetparameter_f(i, kWetLevel, );
 	i++;
 */
 }
 
 
+#pragma mark -
 #pragma mark parameters
+
+//-------------------------------------------------------------------------
+void Scrubby::randomizeparameters()
+{
+	// store the current total mix gain sum
+	auto const mixSum = getparameter_f(kDryLevel) + getparameter_f(kWetLevel);
+
+	DfxPlugin::randomizeparameters();
+
+	// randomize the mix parameters
+	auto newDryLevel = expandparametervalue(kDryLevel, dfx::math::Rand<double>());
+	auto newWetLevel = expandparametervalue(kWetLevel, dfx::math::Rand<double>());
+	// calculate a scalar to make up for total gain changes
+	auto const mixDiffScalar = mixSum / (newDryLevel + newWetLevel);
+
+	// apply the scalar to the new mix parameter values
+	newDryLevel = std::min(newDryLevel * mixDiffScalar, getparametermax_f(kDryLevel));
+	newWetLevel = std::min(newWetLevel * mixDiffScalar, getparametermax_f(kWetLevel));
+
+	// set the new randomized mix parameter values as the new values
+	setparameter_f(kDryLevel, newDryLevel);
+	setparameter_f(kWetLevel, newWetLevel);
+	postupdate_parameter(kDryLevel);
+	postupdate_parameter(kWetLevel);
+}
 
 //-------------------------------------------------------------------------
 void Scrubby::processparameters()
@@ -370,6 +414,14 @@ void Scrubby::processparameters()
 		{
 			mActiveNotesTable[i] = 0;
 		}
+	}
+	if (auto const value = getparameterifchanged_f(kDryLevel))
+	{
+		mInputGain = static_cast<float>(*value);
+	}
+	if (auto const value = getparameterifchanged_f(kWetLevel))
+	{
+		mOutputGain = static_cast<float>(*value);
 	}
 
 	// get the "generic" values of these parameters for randomization

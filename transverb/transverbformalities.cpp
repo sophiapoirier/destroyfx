@@ -88,7 +88,6 @@ void Transverb::dfx_PostConstructor() {
   getsettings().setAllowPitchbendEvents(true);
   getsettings().setAllowNoteEvents(true);
 #endif
-
 }
 
 
@@ -384,25 +383,21 @@ void Transverb::randomizeparameters()
 	auto const mixSum = getparameter_f(kDrymix) + getparameter_f(kMix1) + getparameter_f(kMix2);
 
 	// randomize the mix parameters
-	auto newDrymix = dfx::math::Rand<float>();
-	auto newMix1 = dfx::math::Rand<float>();
-	auto newMix2 = dfx::math::Rand<float>();
-	// square them all for squared gain scaling
-	newDrymix *= newDrymix;
-	newMix1 *= newMix1;
-	newMix2 *= newMix2;
+	auto newDrymix = expandparametervalue(kDrymix, dfx::math::Rand<double>());
+	auto newMix1 = expandparametervalue(kMix1, dfx::math::Rand<double>());
+	auto newMix2 = expandparametervalue(kMix2, dfx::math::Rand<double>());
 	// calculate a scalar to make up for total gain changes
-	float const mixScalar = mixSum / (newDrymix + newMix1 + newMix2);
+	auto const mixDiffScalar = mixSum / (newDrymix + newMix1 + newMix2);
 
 	// apply the scalar to the new mix parameter values
-	newDrymix *= mixScalar;
-	newMix1 *= mixScalar;
-	newMix2 *= mixScalar;
+	newDrymix *= mixDiffScalar;
+	newMix1 *= mixDiffScalar;
+	newMix2 *= mixDiffScalar;
 
-	// clip the the mix values at 1.0 so that we don't get mega-feedback blasts
-	newDrymix = std::min(newDrymix, 1.0f);
-	newMix1 = std::min(newMix1, 1.0f);
-	newMix2 = std::min(newMix2, 1.0f);
+	// clip the the delay head mix values at unity gain so that we don't get mega-feedback blasts
+	newDrymix = std::min(newDrymix, getparametermax_f(kDrymix));
+	newMix1 = std::min(newMix1, 1.0);
+	newMix2 = std::min(newMix2, 1.0);
 
 	// set the new randomized mix parameter values as the new values
 	setparameter_f(kDrymix, newDrymix);

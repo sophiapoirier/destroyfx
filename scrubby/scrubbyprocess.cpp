@@ -417,6 +417,9 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 
 	for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
 	{
+		// cache first channel input audio sample so that in-place processing can overwrite it for subsequent channels
+		auto const inputValue_firstChannel = inAudio[0][samplecount];
+
 		// update the buffers with the latest samples
 		if (!mFreeze)
 		{
@@ -441,7 +444,9 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		// write the output to the output streams, interpolated for smoothness
 		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
-			outAudio[ch][samplecount] = dfx::math::InterpolateHermite(mAudioBuffers[ch].data(), mReadPos[ch], mMaxAudioBufferSize);
+			auto const inputValue = (ch < getnuminputs()) ? inAudio[ch][samplecount] : inputValue_firstChannel;
+			auto const outputValue = dfx::math::InterpolateHermite(mAudioBuffers[ch].data(), mReadPos[ch], mMaxAudioBufferSize);
+			outAudio[ch][samplecount] = (inputValue * mInputGain.getValue()) + (outputValue * mOutputGain.getValue());
 		}
 
 		// increment/decrement the position trackers and counters
@@ -516,6 +521,8 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 				}
 			}
 		}
+
+		incrementSmoothedAudioValues();
 	}
 }
 
