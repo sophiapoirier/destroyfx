@@ -115,6 +115,9 @@ Scrubby::Scrubby(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	setpresetname(0, "scub");  // default preset name
 	initPresets();
 
+	addchannelconfig(kChannelConfig_AnyMatchedIO);  // N-in/N-out
+	addchannelconfig(1, kChannelConfigCount_Any);  // 1-in/N-out
+
 	// give mCurrentTempoBPS a value in case that's useful for a freshly opened GUI
 	mCurrentTempoBPS = getparameter_f(kTempo) / 60.0;
 }

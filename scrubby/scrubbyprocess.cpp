@@ -422,7 +422,7 @@ void Scrubby::processaudio(float const* const* inAudio, float* const* outAudio, 
 		{
 			for (unsigned long ch = 0; ch < numChannels; ch++)
 			{
-				mAudioBuffers[ch][mWritePos] = inAudio[ch][samplecount];
+				mAudioBuffers[ch][mWritePos] = inAudio[std::min(ch, getnuminputs() - 1)][samplecount];
 			}
 #if 0  // melody test
 			for (unsigned long ch = 0; ch < numChannels; ch++)
