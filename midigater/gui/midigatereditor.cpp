@@ -87,12 +87,6 @@ bool envelopeDisplayProc(float inValue, char* outText, void*)
 	return success;
 }
 
-bool velocityInfluenceDisplayProc(float inValue, char* outText, void*)
-{
-	int const precision = (inValue <= 0.999f) ? 1 : 0;
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f%%", precision, inValue * 100.0f) > 0;
-}
-
 
 
 //____________________________________________________________________________
@@ -169,7 +163,8 @@ long MIDIGaterEditor::OpenEditor()
 	label->setText(getparametername(kVelocityInfluence));
 	//
 	pos.set(kDisplayX + kVelocityInfluenceLabelWidth, kVelocityInfluenceDisplayY, kDisplayWidth - kVelocityInfluenceLabelWidth, kDisplayHeight);
-	auto textDisplay = emplaceControl<DGTextDisplay>(this, kVelocityInfluence, pos, velocityInfluenceDisplayProc, nullptr, 
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kVelocityInfluence, pos, 
+													 DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, 
 													 nullptr, dfx::TextAlignment::Right, 
 													 kValueTextSize, kValueTextColor, kValueTextFont);
 	textDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);

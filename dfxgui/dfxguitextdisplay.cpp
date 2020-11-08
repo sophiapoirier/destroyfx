@@ -232,6 +232,19 @@ bool DGTextDisplay::valueToTextProc_LinearToDb(float inValue, char outTextUTF8[]
 }
 
 //-----------------------------------------------------------------------------
+bool DGTextDisplay::valueToTextProc_Percent(float inValue, char outTextUTF8[], void* /*inUserData*/)
+{
+	int const precision = ((inValue >= 0.1f) && (inValue <= 99.9f)) ? 1 : 0;
+	return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "%.*f%%", precision, inValue) > 0;
+}
+
+//-----------------------------------------------------------------------------
+bool DGTextDisplay::valueToTextProc_LinearToPercent(float inValue, char outTextUTF8[], void* inUserData)
+{
+	return valueToTextProc_Percent(inValue * 100.0f, outTextUTF8, inUserData);
+}
+
+//-----------------------------------------------------------------------------
 std::optional<float> DGTextDisplay::textToValueProc_Generic(std::string const& inText, DGTextDisplay* inTextDisplay)
 {
 	auto const paramID = inTextDisplay->getParameterID();

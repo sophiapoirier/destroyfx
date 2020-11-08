@@ -231,11 +231,6 @@ bool lfoDepthDisplayProc(float inValue, char* outText, void*)
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
 
-bool smoothDisplayProc(float inValue, char* outText, void*)
-{
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue) > 0;
-}
-
 bool dryWetMixDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
@@ -360,7 +355,7 @@ long BufferOverrideEditor::OpenEditor()
 	emplaceControl<DGTextDisplay>(this, kBufferLFODepth, pos, lfoDepthDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayTinyFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kSmoothDisplayX, kSmoothDisplayY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSmooth, pos, smoothDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSmooth, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);
 
 	pos.set(kDryWetMixDisplayX, kDryWetMixDisplayY, kDisplayWidth, kDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kDryWetMix, pos, dryWetMixDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayRegularFontSize, DGColor::kWhite, kValueDisplayFont);

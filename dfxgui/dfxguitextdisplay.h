@@ -74,6 +74,8 @@ public:
 
 	// some common text<->value translation routines for reuse
 	static bool valueToTextProc_LinearToDb(float inValue, char outTextUTF8[], void* inUserData);
+	static bool valueToTextProc_Percent(float inValue, char outTextUTF8[], void* inUserData);
+	static bool valueToTextProc_LinearToPercent(float inValue, char outTextUTF8[], void* inUserData);
 	static std::optional<float> textToValueProc_DbToLinear(std::string const& inText, DGTextDisplay* inTextDisplay);
 	static float valueFromTextConvertProc_PercentToLinear(float inValue, DGTextDisplay* inTextDisplay);
 

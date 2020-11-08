@@ -281,11 +281,6 @@ bool seekRateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
 	return seekRateGenDisplayProc(inValue, kSeekRateRandMin_Sync, outText, static_cast<DfxGuiEditor*>(inEditor));
 }
 
-bool seekDurDisplayProc(float inValue, char* outText, void*)
-{
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f%%", inValue) > 0;
-}
-
 bool octaveMinDisplayProc(float inValue, char* outText, void*)
 {
 	auto const octaves = static_cast<long>(inValue);
@@ -524,11 +519,11 @@ long ScrubbyEditor::OpenEditor()
 
 	// seek duration random minimum
 	pos.set(kSeekDurSliderX + kDisplayInsetX, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, seekDurDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
 
 	// seek duration
 	pos.set(kSeekDurSliderX + kSeekDurSliderWidth - kDisplayWidth - kDisplayInsetX, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSeekDur, pos, seekDurDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSeekDur, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
 
 	// octave mininum
 	pos.set(kOctaveMinSliderX + kDisplayInsetX, kOctaveMinSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
