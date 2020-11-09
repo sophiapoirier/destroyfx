@@ -40,7 +40,7 @@ constexpr long kRangeSliderOvershoot = 3;
 constexpr long kOctavesSliderWidth = 118 - 2;
 static long const kOctaveMaxSliderWidth = static_cast<long>((static_cast<float>(kOctave_MaxValue) / static_cast<float>((std::abs(kOctave_MinValue) + kOctave_MaxValue))) * static_cast<float>(kOctavesSliderWidth));
 static long const kOctaveMinSliderWidth = kOctavesSliderWidth - kOctaveMaxSliderWidth;
-constexpr long kOctaveMinSliderX = 33 + 1;
+constexpr long kOctaveMinSliderX = 251 + 1;
 static long const kOctaveMaxSliderX = kOctaveMinSliderX + kOctaveMinSliderWidth;
 
 //-----------------------------------------------------------------------------
@@ -49,36 +49,34 @@ enum
 	// positions
 	kSliderHeight = 28,
 
-#if 0
-	kMainSlidersOffsetY = 0,
-	kNotesStuffOffsetY = 0,
-#else
-	kMainSlidersOffsetY = -133,
-	kNotesStuffOffsetY = 128,
-#endif
-
 	kSeekRateSliderX = 33 + 1,
-	kSeekRateSliderY = 298 + kMainSlidersOffsetY,
+	kSeekRateSliderY = 165,
 	kSeekRateSliderWidth = 290 - 2,
 
 	kSeekRangeSliderX = 33 + 1,
-	kSeekRangeSliderY = 341 + kMainSlidersOffsetY,
+	kSeekRangeSliderY = 208,
 	kSeekRangeSliderWidth = 336 - 2,
 
 	kSeekDurSliderX = 33 + 1,
-	kSeekDurSliderY = 384 + kMainSlidersOffsetY,
+	kSeekDurSliderY = 251,
 	kSeekDurSliderWidth = 336 - 2,
 
-	kOctaveMinSliderY = 255 + kNotesStuffOffsetY,
+	kOctaveMinSliderY = 384,
 	kOctaveMaxSliderY = kOctaveMinSliderY,
 
+	kDryLevelSliderX = 33 + 1,
+	kDryLevelSliderY = kOctaveMinSliderY,
+	kWetLevelSliderX = kDryLevelSliderX,
+	kWetLevelSliderY = kDryLevelSliderY + 43,
+	kMixLevelSliderWidth = 150 - 2,
+
 	kTempoSliderX = 33 + 1,
-	kTempoSliderY = 427,
+	kTempoSliderY = 470,
 	kTempoSliderWidth = 194 - 2,
 
-	kPredelaySliderX = 251 + 1,
-	kPredelaySliderY = 383,
-	kPredelaySliderWidth = 118 - 2,
+	kPredelaySliderX = kOctaveMinSliderX,
+	kPredelaySliderY = kOctaveMinSliderY + 43,
+	kPredelaySliderWidth = kOctavesSliderWidth,
 
 	kDisplayWidth = 90,
 	kDisplayWidth_big = 117,  // for seek rate
@@ -98,21 +96,21 @@ enum
 	kPitchConstraintButtonY = 60,
 
 	kLittleTempoSyncButtonX = 327,
-	kLittleTempoSyncButtonY = 303 + kMainSlidersOffsetY,
+	kLittleTempoSyncButtonY = 170,
 
 	kTempoAutoButtonX = 231,
-	kTempoAutoButtonY = 432,
+	kTempoAutoButtonY = 475,
 
 	kKeyboardX = 33,
-	kKeyboardY = 164 + kNotesStuffOffsetY,
+	kKeyboardY = 292,
 
 	kTransposeDownButtonX = 263,
-	kTransposeDownButtonY = 164 + kNotesStuffOffsetY,
+	kTransposeDownButtonY = 292,
 	kTransposeUpButtonX = kTransposeDownButtonX,
 	kTransposeUpButtonY = kTransposeDownButtonY + 46,
 
 	kMajorChordButtonX = 299,
-	kMajorChordButtonY = 164 + kNotesStuffOffsetY,
+	kMajorChordButtonY = 292,
 	kMinorChordButtonX = kMajorChordButtonX,
 	kMinorChordButtonY = kMajorChordButtonY + 19,
 	kAllNotesButtonX = kMajorChordButtonX,
@@ -121,12 +119,12 @@ enum
 	kNoneNotesButtonY = kMajorChordButtonY + 61,
 
 	kMidiLearnButtonX = 433,
-	kMidiLearnButtonY = 292 + kNotesStuffOffsetY,
+	kMidiLearnButtonY = 463,
 	kMidiResetButtonX = kMidiLearnButtonX,
 	kMidiResetButtonY = kMidiLearnButtonY + 19,
 
 	kHelpX = 4,
-	kHelpY = 465,
+	kHelpY = 508,
 
 	kDestroyFXLinkX = 247,
 	kDestroyFXLinkY = 47,
@@ -165,6 +163,8 @@ enum
 	kHelp_Tempo,
 	kHelp_TempoAuto,
 	kHelp_PreDelay,
+	kHelp_DryLevel,
+	kHelp_WetLevel,
 	kHelp_MidiLearn,
 	kHelp_MidiReset,
 	kNumHelps
@@ -235,6 +235,12 @@ to lock the tempo that Scrubby uses to that of the host.)DELIM",
 	R"DELIM(predelay:  compensate for Scrubby's (possible) output delay
 Scrubby zips around a delay buffer, which can create some perceived latency.  
 This asks your host to predelay by a % of the seek range.  (not in all hosts))DELIM", 
+	// dry level
+	R"DELIM(dry level:  the mix level of the unprocessed input audio
+Mix in as much of the original, unprocessed audio as you wish.)DELIM", 
+	// wet level
+	R"DELIM(wet level:  the mix level of the processed audio
+Adjust the amount of Scrubby's zoomies that is mixed into the audio output.)DELIM", 
 	// MIDI learn
 	R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
 When this is enabled, you can click on a parameter control and then the next 
@@ -501,6 +507,14 @@ long ScrubbyEditor::OpenEditor()
 	pos.set(kPredelaySliderX, kPredelaySliderY, kPredelaySliderWidth, kSliderHeight);
 	emplaceControl<DGSlider>(this, kPredelay, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
 
+	// dry level
+	pos.set(kDryLevelSliderX, kDryLevelSliderY, kMixLevelSliderWidth, kSliderHeight);
+	emplaceControl<DGSlider>(this, kDryLevel, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
+
+	// wet level
+	pos.set(kWetLevelSliderX, kWetLevelSliderY, kMixLevelSliderWidth, kSliderHeight);
+	emplaceControl<DGSlider>(this, kWetLevel, pos, dfx::kAxis_Horizontal, sliderHandleImage)->setAlternateHandle(sliderHandleImage_glowing);
+
 
 
 	//--create the displays---------------------------------------------
@@ -540,6 +554,16 @@ long ScrubbyEditor::OpenEditor()
 	// predelay
 	pos.set(kPredelaySliderX + kPredelaySliderWidth - kDisplayWidth - kDisplayInsetX, kPredelaySliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
 	emplaceControl<DGTextDisplay>(this, kPredelay, pos, predelayDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+
+	// dry level
+	pos.set(kDryLevelSliderX + kMixLevelSliderWidth - kDisplayWidth - kDisplayInsetX, kDryLevelSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kDryLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
+
+	// wet level
+	pos.set(kWetLevelSliderX + kMixLevelSliderWidth - kDisplayWidth - kDisplayInsetX, kWetLevelSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kWetLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 
 
@@ -927,6 +951,10 @@ void ScrubbyEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse
 					return kHelp_TempoAuto;
 				case kPredelay:
 					return kHelp_PreDelay;
+				case kDryLevel:
+					return kHelp_DryLevel;
+				case kWetLevel:
+					return kHelp_WetLevel;
 				default:
 					break;
 			}
