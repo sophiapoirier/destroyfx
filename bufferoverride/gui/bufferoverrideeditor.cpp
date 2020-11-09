@@ -151,14 +151,9 @@ enum
 
 bool divisorDisplayProc(float inValue, char* outText, void*)
 {
-	if (inValue < 2.0f)
-	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", 1.0f) > 0;
-	}
-	else
-	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
-	}
+	int const precision = (inValue <= 99.99f) ? 2 : 1;
+	float const effectiveValue = (inValue < 2.0f) ? 1.0f : inValue;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f", precision, effectiveValue) > 0;
 }
 
 bool bufferSizeDisplayProc(float inValue, char* outText, void* inEditor)
@@ -178,52 +173,30 @@ bool bufferSizeDisplayProc(float inValue, char* outText, void* inEditor)
 	}
 }
 
-bool divisorLFORateDisplayProc(float inValue, char* outText, void* inEditor)
+bool lfoRateGenDisplayProc(float inValue, char* outText, void* inEditor, long rateSyncParameterID, long tempoSyncParameterID)
 {
 	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
-	if (dgEditor->getparameter_b(kDivisorLFOTempoSync))
+	if (dgEditor->getparameter_b(tempoSyncParameterID))
 	{
-		if (auto const valueString = dgEditor->getparametervaluestring(kDivisorLFORate_Sync))
+		if (auto const valueString = dgEditor->getparametervaluestring(rateSyncParameterID))
 		{
 			return dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
 		}
 		return false;
 	}
-	else
-	{
-		if (inValue < 10.0f)
-		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
-		}
-		else
-		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
-		}
-	}
+
+	int const precision = (inValue <= 9.99f) ? 2 : 1;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.*f", precision, inValue) > 0;
+}
+
+bool divisorLFORateDisplayProc(float inValue, char* outText, void* inEditor)
+{
+	return lfoRateGenDisplayProc(inValue, outText, inEditor, kDivisorLFORate_Sync, kDivisorLFOTempoSync);
 }
 
 bool bufferLFORateDisplayProc(float inValue, char* outText, void* inEditor)
 {
-	auto const dgEditor = static_cast<DfxGuiEditor*>(inEditor);
-	if (dgEditor->getparameter_b(kBufferLFOTempoSync))
-	{
-		if (auto const valueString = dgEditor->getparametervaluestring(kBufferLFORate_Sync))
-		{
-			return dfx::StrLCpy(outText, *valueString, DGTextDisplay::kTextMaxLength) > 0;
-		}
-		return false;
-	}
-	else
-	{
-		if (inValue < 10.0f)
-		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f", inValue) > 0;
-		}
-		else
-		{
-			return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.1f", inValue) > 0;
-		}
-	}
+	return lfoRateGenDisplayProc(inValue, outText, inEditor, kBufferLFORate_Sync, kBufferLFOTempoSync);
 }
 
 bool lfoDepthDisplayProc(float inValue, char* outText, void*)
@@ -238,7 +211,8 @@ bool dryWetMixDisplayProc(float inValue, char* outText, void*)
 
 bool pitchBendRangeDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f", dfx::kPlusMinusUTF8, inValue) > 0;
+	int const precision = (inValue <= 9.99f) ? 2 : 1;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.*f", dfx::kPlusMinusUTF8, precision, inValue) > 0;
 }
 
 bool tempoDisplayProc(float inValue, char* outText, void*)
