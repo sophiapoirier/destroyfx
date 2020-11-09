@@ -411,7 +411,7 @@ long BufferOverrideEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kBufferLFOTempoSync, pos, bufferLFORateLabelImage, DGButton::Mode::PictureReel);
 
 	// divisor LFO rate label
-	pos.set(kDivisorLFORateLabelX, kDivisorLFORateLabelY, divisorLFORateLabelImage->getHeight(), divisorLFORateLabelImage->getHeight() / 2);
+	pos.set(kDivisorLFORateLabelX, kDivisorLFORateLabelY, divisorLFORateLabelImage->getWidth(), divisorLFORateLabelImage->getHeight() / 2);
 	emplaceControl<DGButton>(this, kDivisorLFOTempoSync, pos, divisorLFORateLabelImage, DGButton::Mode::PictureReel);
 
 
