@@ -29,6 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <string.h>
 
 #include "dfxguieditor.h"
+#include "dfxguimisc.h"
 #include "dfxmath.h"
 
 using DGFontTweaks = internal::DGFontTweaks;
@@ -222,7 +223,7 @@ bool DGTextDisplay::valueToTextProc_LinearToDb(float inValue, char outTextUTF8[]
 	constexpr auto units = "dB";
 	if (inValue <= 0.0f)
 	{
-		return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "-%s %s", VSTGUI::kInfiniteSymbol, units) > 0;
+		return snprintf(outTextUTF8, DGTextDisplay::kTextMaxLength, "-%s %s", dfx::kInfinityUTF8, units) > 0;
 	}
 
 	auto const decibelValue = dfx::math::Linear2dB(inValue);
@@ -266,7 +267,7 @@ std::optional<float> DGTextDisplay::textToValueProc_DbToLinear(std::string const
 			constexpr size_t offset = 1;
 			return (inText.length() >= (strlen(matchText) + offset)) && (inText.compare(offset, strlen(matchText), matchText) == 0);
 		};
-		if (beginsWith(VSTGUI::kInfiniteSymbol) || beginsWith("inf") || beginsWith("Inf") || beginsWith("INF"))
+		if (beginsWith(dfx::kInfinityUTF8) || beginsWith("inf") || beginsWith("Inf") || beginsWith("INF"))
 		{
 			return 0.0f;
 		}

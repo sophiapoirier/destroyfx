@@ -221,6 +221,11 @@ namespace dfx
 {
 
 static inline char const* const kPlusMinusUTF8 = reinterpret_cast<char const*>(u8"\U000000B1");
+#if TARGET_OS_WIN32
+static constexpr char const* const kInfinityUTF8 = "oo";  // the symbol renders vertically offset with snoot.org on Windows
+#else
+static inline auto const kInfinityUTF8 = VSTGUI::kInfiniteSymbol;
+#endif
 
 std::string SanitizeNumericalInput(std::string const& inText);
 
