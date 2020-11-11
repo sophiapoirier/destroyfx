@@ -1819,7 +1819,7 @@ bool				AUBase::IsStreamFormatWritable(	AudioUnitScope					scope,
 			AUInputElement *input = GetInput(element);
 			if (input->HasConnection()) return false;	// can't write format when input comes from connection
 		}
-		// ... fall ...
+		[[fallthrough]];
 	case kAudioUnitScope_Output:
 		return StreamFormatWritable(scope, element);
 

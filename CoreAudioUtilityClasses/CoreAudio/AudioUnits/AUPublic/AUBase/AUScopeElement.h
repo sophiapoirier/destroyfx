@@ -337,6 +337,7 @@ public:
 	AudioBufferList &			GetBufferList() const { return mIOBuffer.GetBufferList(); }
 
 /*! @method GetChannelData */
+	CA_CANONICAL_DEPRECATED
 	AudioUnitSampleType *		GetChannelData(int ch) const {
 									if (mStreamFormat.IsInterleaved())
 										return static_cast<AudioUnitSampleType *>(mIOBuffer.GetBufferList().mBuffers[0].mData) + ch;

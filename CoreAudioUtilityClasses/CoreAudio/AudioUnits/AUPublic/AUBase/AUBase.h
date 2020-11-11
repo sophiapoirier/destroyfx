@@ -471,9 +471,11 @@ public:
 
 
 	/*! @method FormatIsCanonical */
+			CA_CANONICAL_DEPRECATED
 			bool				FormatIsCanonical(		const CAStreamBasicDescription &format);
 
 	/*! @method MakeCanonicalFormat */
+			CA_CANONICAL_DEPRECATED
 			void				MakeCanonicalFormat(	CAStreamBasicDescription &	outDesc,
 														int							numChannels = 2);
 
@@ -906,7 +908,7 @@ private:
 		AURenderCallback			mRenderNotify;
 		void *						mRenderNotifyRefCon;
 		
-		bool operator == (const RenderCallback &other) {
+		bool operator == (const RenderCallback &other) const {
 			return this->mRenderNotify == other.mRenderNotify &&
 					this->mRenderNotifyRefCon == other.mRenderNotifyRefCon;
 		}

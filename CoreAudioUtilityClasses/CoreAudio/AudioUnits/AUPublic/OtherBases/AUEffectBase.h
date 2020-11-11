@@ -203,7 +203,7 @@ protected:
 	/*! @var mKernelList */
 	KernelList						mKernelList;
 
-	AUKernelBase* GetKernel(UInt32 index) { return mKernelList[index]; }
+	AUKernelBase* GetKernel(UInt32 index) const { return mKernelList[index]; }
 
 	/*! @method IsInputSilent */
 	bool 							IsInputSilent (AudioUnitRenderActionFlags 	inActionFlags, UInt32 inFramesToProcess)
