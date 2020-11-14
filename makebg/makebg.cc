@@ -18,7 +18,7 @@ using uint8 = uint8_t;
 using uint32 = uint32_t;
 
 constexpr int WIDTH = 512;
-constexpr int HEIGHT = 512;
+constexpr int HEIGHT = 512 + 8 * 24;
 
 struct Blue {
   static constexpr int SIZE = 470;
@@ -61,9 +61,11 @@ int main(int argc, char **argv) {
   uint32 orange = 0xc98320ff;
   */
   // Not actually red, yellow, orange!
-  uint32 red = 0x007434ff;
-  uint32 yellow = 0x4f95d3ff;
-  uint32 orange = 0x20c2c9ff;
+
+  // uint32 red = 0x005414ff;
+  uint32 red = 0x03621aff;
+  uint32 yellow = 0x3f6593ff;
+  uint32 orange = 0x209289ff;
 
   constexpr int SQUARE = 8;
   static_assert (WIDTH % SQUARE == 0);
@@ -72,21 +74,37 @@ int main(int argc, char **argv) {
   constexpr int SQUARESW = WIDTH / SQUARE;
   constexpr int SQUARESH = HEIGHT / SQUARE;
 
-  auto Box = [&img](int x, int y, int w, int h, uint32 color) {
-      // Note this draws some corners multiple times!
+  // Pass corner_color = color for a crisp box, but setting
+  // the corners 
+  auto Box = [&img](int x, int y, int w, int h,
+		    uint32 color, uint32 corner_color) {
       // (This could be in ImageRGBA, covering these subtleties)
       const int x1 = x + w - 1;
       const int y1 = y + h - 1;
+
+      // XXX this is probably wrong for 1x1 and 2x2 boxes.
       // Top
-      img.BlendLine32(x, y, x1, y, color);
+      img.BlendLine32(x + 1, y, x1 - 1, y, color);
       // Left
-      img.BlendLine32(x, y, x, y1, color);
+      img.BlendLine32(x, y + 1, x, y1 - 1, color);
       // Right
-      img.BlendLine32(x1, y, x1, y1, color);
+      img.BlendLine32(x1, y + 1, x1, y1 - 1, color);
       // Bottom
-      img.BlendLine32(x, y1, x1, y1, color);
+      img.BlendLine32(x + 1, y1, x1 - 1, y1, color);
+
+      img.BlendPixel32(x, y, corner_color);
+      img.BlendPixel32(x1, y, corner_color);
+      img.BlendPixel32(x, y1, corner_color);
+      img.BlendPixel32(x1, y1, corner_color);      
     };
 
+  auto FilledBox = [&img, &Box](int x, int y, int w, int h,
+				uint32 color, uint32 corner_color) {
+      Box(x, y, w, h, color, corner_color);
+      img.BlendRect32(x + 1, y + 1, w - 2, h - 2, color);
+    };
+
+  
   // Maybe should make this blue-noisey; the clumps can be a little
   // visually distracting!
   // ArcFour rc("makebg");
@@ -106,16 +124,19 @@ int main(int argc, char **argv) {
 	  }
 	}();
 
+      uint32 fg_lite = (fg & 0xFFFFFF00) | 0x7F;
+      
       switch ((sample >> 4) & 1) {
       case 0:
 	img.BlendRect32(x, y, SQUARE, SQUARE, bg);
-	Box(x, y, SQUARE, SQUARE, fg);
-	Box(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg);
+	// Box(x, y, SQUARE, SQUARE, fg, fg_lite);
+	// Box(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg, fg_lite);
+	FilledBox(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg, fg_lite);
 	break;
       case 1:
 	img.BlendRect32(x, y, SQUARE, SQUARE, bg);
-	Box(x, y, SQUARE, SQUARE, fg);
-	img.BlendRect32(x + 2, y + 2, SQUARE - 4, SQUARE - 4, fg);
+	Box(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg, fg_lite);
+	// img.BlendRect32(x + 2, y + 2, SQUARE - 4, SQUARE - 4, fg);
 	break;
       default:
 	// (impossible)
