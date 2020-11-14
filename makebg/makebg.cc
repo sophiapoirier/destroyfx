@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <memory>
 
 #include "base/logging.h"
 #include "base/stringprintf.h"
@@ -19,9 +20,39 @@ using uint32 = uint32_t;
 constexpr int WIDTH = 512;
 constexpr int HEIGHT = 512;
 
-int main(int argc, char **argv) {
-  ImageRGBA img(WIDTH, HEIGHT);
+struct Blue {
+  static constexpr int SIZE = 470;
+  Blue() : noise(SIZE, SIZE) {
+    // The image is actually RGBA; convert to single-channel.
+    // This texture comes from "Free blue noise textures":
+    //   http://momentsingraphics.de/BlueNoise.html
+    std::unique_ptr<ImageRGBA> rgba(
+	ImageRGBA::Load("bluenoise470.png"));
+    CHECK(rgba.get());
+    CHECK(rgba->width == SIZE);
+    CHECK(rgba->height == SIZE);
+    for (int y = 0; y < SIZE; y++) {
+      for (int x = 0; x < SIZE; x++) {
+	uint32 p = rgba->GetPixel(x, y);
+	// Assumes all the channels are the same.
+	uint8 v = p >> 24;
+	noise.SetPixel(x, y, v);
+      }
+    }	
+  }
 
+  uint8 Get(int x, int y) const {
+    return noise.GetPixel(x, y);
+  }
+  
+ private:
+  ImageA noise;
+};
+
+int main(int argc, char **argv) {
+  Blue blue;
+  ImageRGBA img(WIDTH, HEIGHT);
+  
   img.Clear32(0x000000ff);
 
   /*
@@ -58,13 +89,16 @@ int main(int argc, char **argv) {
 
   // Maybe should make this blue-noisey; the clumps can be a little
   // visually distracting!
-  ArcFour rc("makebg");
+  // ArcFour rc("makebg");
   for (int row = 0; row < SQUARESH; row++) {
     int y = row * SQUARE;
     for (int col = 0; col < SQUARESW; col++) {
       int x = col * SQUARE;
+
+      uint8 sample = blue.Get(x, y);
+	
       const auto [fg, bg] = [&]() -> std::tuple<uint32, uint32> {
-	  switch (rc.Byte() & 3) {
+	switch ((sample >> 5) & 3) {
 	  default: return {yellow, red};
 	  case 0: return {orange, red};
 	  case 1: return {yellow, orange};
@@ -72,7 +106,7 @@ int main(int argc, char **argv) {
 	  }
 	}();
 
-      switch (rc.Byte() & 1) {
+      switch ((sample >> 4) & 1) {
       case 0:
 	img.BlendRect32(x, y, SQUARE, SQUARE, bg);
 	Box(x, y, SQUARE, SQUARE, fg);
