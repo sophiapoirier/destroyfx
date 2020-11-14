@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
+#include "iirfilter.h"
 #include "temporatetable.h"
 
 
@@ -116,6 +117,8 @@ public:
 
 private:
 	static constexpr long kNumPresets = 16;
+	static constexpr double kHighpassFilterCutoff = 39.;
+
 
 	void initPresets();
 
@@ -147,6 +150,8 @@ private:
 
 	long mMaxAudioBufferSize = 0;  // the maximum size (in samples) of the audio buffer
 	double mMaxAudioBufferSize_f = 0.0;  // for avoiding casting
+
+	std::vector<dfx::IIRfilter> mHighpassFilters;
 
 	// tempo sync stuff
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second

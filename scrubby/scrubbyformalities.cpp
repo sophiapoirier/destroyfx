@@ -147,6 +147,8 @@ long Scrubby::initialize()
 //-------------------------------------------------------------------------
 void Scrubby::reset()
 {
+	std::for_each(mHighpassFilters.begin(), mHighpassFilters.end(), [](auto& filter){ filter.reset(); });
+
 	// reset these position trackers thingies and whatnot
 	mWritePos = 0;
 
@@ -183,6 +185,13 @@ void Scrubby::createbuffers()
 	mMoveCount.assign(numChannels, 0);
 	mSeekCount.assign(numChannels, 0);
 	mNeedResync.assign(numChannels, false);
+
+	mHighpassFilters.assign(numChannels, {});
+	std::for_each(mHighpassFilters.begin(), mHighpassFilters.end(), [this](auto& filter)
+	{
+		filter.setSampleRate(getsamplerate());
+		filter.setHighpassCoefficients(kHighpassFilterCutoff);
+	});
 }
 
 //-----------------------------------------------------------------------------
@@ -195,6 +204,7 @@ void Scrubby::releasebuffers()
 	mMoveCount.clear();
 	mSeekCount.clear();
 	mNeedResync.clear();
+	mHighpassFilters.clear();
 }
 
 //-----------------------------------------------------------------------------
