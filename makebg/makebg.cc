@@ -51,21 +51,6 @@ struct Blue {
 
 int main(int argc, char **argv) {
   Blue blue;
-  ImageRGBA img(WIDTH, HEIGHT);
-  
-  img.Clear32(0x000000ff);
-
-  /*
-  uint32 red = 0x740000ff;
-  uint32 yellow = 0xd1d34fff;
-  uint32 orange = 0xc98320ff;
-  */
-  // Not actually red, yellow, orange!
-
-  // uint32 red = 0x005414ff;
-  uint32 red = 0x03621aff;
-  uint32 yellow = 0x3f6593ff;
-  uint32 orange = 0x209289ff;
 
   constexpr int SQUARE = 8;
   static_assert (WIDTH % SQUARE == 0);
@@ -74,6 +59,77 @@ int main(int argc, char **argv) {
   constexpr int SQUARESW = WIDTH / SQUARE;
   constexpr int SQUARESH = HEIGHT / SQUARE;
 
+  // First create the image abstractly.
+  // Here we're just using ImageA to store enum values.
+  enum color : uint8 {
+    ONE = 1,
+    TWO = 2,
+    THREE = 3,
+  };
+  ImageA fg(SQUARESW, SQUARESH);
+  ImageA bg(SQUARESW, SQUARESH);
+  fg.Clear(0);
+  bg.Clear(0);  
+  
+  enum fill : uint8 {
+    DOT = 1,
+    LOOP = 2,
+  };
+  ImageA fill(SQUARESW, SQUARESH);
+  fill.Clear(0);
+
+  for (int y = 0; y < SQUARESH; y++) {
+    for (int x = 0; x < SQUARESW; x++) {
+
+      uint8 sample = blue.Get(x, y);
+
+      // one = "yellow"
+      // two = "red"
+      // three = "orange"
+      
+      switch ((sample >> 5 & 3)) {
+      case 0:
+	fg.SetPixel(x, y, THREE);
+	bg.SetPixel(x, y, TWO);
+	break;
+      case 1:
+	fg.SetPixel(x, y, ONE);
+	bg.SetPixel(x, y, THREE);
+	break;
+      case 2:
+	fg.SetPixel(x, y, TWO);
+	bg.SetPixel(x, y, THREE);
+	break;
+      default:
+      case 3:
+	fg.SetPixel(x, y, ONE);
+	bg.SetPixel(x, y, TWO);
+	break;
+      }
+
+      bool f = !!((sample >> 4) & 1);
+      fill.SetPixel(x, y, f ? DOT : LOOP);
+    }
+  }
+
+  
+  // Now actually render it as colored pixels.
+  ImageRGBA img(WIDTH, HEIGHT);  
+  img.Clear32(0x000000ff);
+  
+  constexpr uint32 red = 0x03621aff;
+  constexpr uint32 yellow = 0x3f6593ff;
+  constexpr uint32 orange = 0x209289ff;
+
+  auto ToColor = [](uint8 v) {
+      switch (v) {
+      case ONE: return yellow;
+      case TWO: return red;
+      case THREE: return orange;
+      default: return 0xFF0000FF;
+      }
+    };
+  
   // Pass corner_color = color for a crisp box, but setting
   // the corners 
   auto Box = [&img](int x, int y, int w, int h,
@@ -104,49 +160,30 @@ int main(int argc, char **argv) {
       img.BlendRect32(x + 1, y + 1, w - 2, h - 2, color);
     };
 
-  
-  // Maybe should make this blue-noisey; the clumps can be a little
-  // visually distracting!
-  // ArcFour rc("makebg");
   for (int row = 0; row < SQUARESH; row++) {
     int y = row * SQUARE;
     for (int col = 0; col < SQUARESW; col++) {
       int x = col * SQUARE;
 
-      uint8 sample = blue.Get(x, y);
-	
-      const auto [fg, bg] = [&]() -> std::tuple<uint32, uint32> {
-	switch ((sample >> 5) & 3) {
-	  default: return {yellow, red};
-	  case 0: return {orange, red};
-	  case 1: return {yellow, orange};
-	  case 2: return {red, orange};
-	  }
-	}();
-
-      uint32 fg_lite = (fg & 0xFFFFFF00) | 0x7F;
+      uint32 fg_color = ToColor(fg.GetPixel(col, row));
+      uint32 bg_color = ToColor(bg.GetPixel(col, row));      
       
-      switch ((sample >> 4) & 1) {
-      case 0:
-	img.BlendRect32(x, y, SQUARE, SQUARE, bg);
-	// Box(x, y, SQUARE, SQUARE, fg, fg_lite);
-	// Box(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg, fg_lite);
-	FilledBox(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg, fg_lite);
-	break;
-      case 1:
-	img.BlendRect32(x, y, SQUARE, SQUARE, bg);
-	Box(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg, fg_lite);
-	// img.BlendRect32(x + 2, y + 2, SQUARE - 4, SQUARE - 4, fg);
+      uint32 fg_lite = (fg_color & 0xFFFFFF00) | 0x7F;
+      
+      switch (fill.GetPixel(col, row)) {
+      case DOT:
+	img.BlendRect32(x, y, SQUARE, SQUARE, bg_color);
+	FilledBox(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg_color, fg_lite);
 	break;
       default:
-	// (impossible)
-	img.BlendRect32(x, y, SQUARE, SQUARE, bg);
+      case LOOP:
+	img.BlendRect32(x, y, SQUARE, SQUARE, bg_color);
+	Box(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg_color, fg_lite);
 	break;
-
       }
     }
   }
-
+  
   img.Save("makebg.png");
   
   return 0;
