@@ -98,7 +98,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
             filterMode1 = FilterMode::Highpass;
             if (std::exchange(speed1hasChanged, false))
             {
-              filter1.setHighpassCoefficients(33.3 / speed1.getValue());
+              filter1.setHighpassCoefficients(kHighpassFilterCutoff / speed1.getValue());
             }
           }
         }
@@ -134,7 +134,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
             filterMode2 = FilterMode::Highpass;
             if (std::exchange(speed2hasChanged, false))
             {
-              filter2.setHighpassCoefficients(33.3 / speed2.getValue());
+              filter2.setHighpassCoefficients(kHighpassFilterCutoff / speed2.getValue());
             }
           }
         }

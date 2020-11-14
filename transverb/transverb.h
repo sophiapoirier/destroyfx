@@ -44,6 +44,7 @@ public:
 
 private:
   static constexpr long kAudioSmoothingDur_samples = 42;
+  static constexpr double kHighpassFilterCutoff = 39.;
   static constexpr size_t kNumFIRTaps = 23;
 
   enum class FilterMode { Nothing, Highpass, LowpassIIR, LowpassFIR };
