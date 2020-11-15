@@ -144,16 +144,24 @@ int main(int argc, char **argv) {
   ImageRGBA img(WIDTH, HEIGHT);  
   img.Clear32(0x000000ff);
   
-  constexpr uint32 red = 0x03621aff;
-  constexpr uint32 yellow = 0x3f6593ff;
-  constexpr uint32 orange = 0x209289ff;
-
-  auto ToColor = [](uint8 v) {
-      switch (v) {
-      case ONE: return yellow;
-      case TWO: return red;
-      case THREE: return orange;
-      default: return 0xFF0000FF;
+  auto ToColor = [](int x, int y, uint8 v) -> uint32 {
+      // Border squares are drawn in a different
+      // color scheme.
+      if (x == 0 || y == 0 ||
+	  x == SQUARESW - 1 || y == SQUARESH - 1) {
+	switch (v) {
+	case ONE: return 0x7400d2ff;
+	case TWO: return 0x004d65ff;
+	case THREE: return 0x000eb1ff;
+	default: return 0xFF0000FF;
+	}
+      } else {
+	switch (v) {
+	case ONE: return 0x3f6593ff;
+	case TWO: return 0x03621aff;
+	case THREE: return 0x209289ff;
+	default: return 0xFF0000FF;
+	}
       }
     };
   
@@ -193,22 +201,35 @@ int main(int argc, char **argv) {
     int y = row * SQUARE;
     for (int col = 0; col < SQUARESW; col++) {
       int x = col * SQUARE;
-      uint32 bg_color = ToColor(bg.GetPixel(col, row));      
+      uint32 bg_color = ToColor(col, row, bg.GetPixel(col, row));
       img.BlendRect32(x, y, SQUARE, SQUARE, bg_color);
     }
   }
 
   // Now, fill every cell. But allow joining a box/loop across cells
-  // that match. Do this in a random order.
+  // that match. Do this in a random order. But, do the border first
+  // so that we don't need any additional logic to prevent extensions
+  // into the border; it will all be marked done by the time we get
+  // to the general case.
   ArcFour rc("makebg");
   
   vector<std::pair<int, int>> todo;
   {
-    for (int y = 0; y < SQUARESH; y++)
-      for (int x = 0; x < SQUARESW; x++)
-	todo.emplace_back(x, y);
+    vector<std::pair<int, int>> todo_border, todo_rest;
+    for (int y = 0; y < SQUARESH; y++) {
+      for (int x = 0; x < SQUARESW; x++) {
+	if (x == 0 || y == 0 || x == SQUARESW - 1 || y == SQUARESH - 1) {
+	  todo_border.emplace_back(x, y);
+	} else {
+	  todo_rest.emplace_back(x, y);
+	}
+      }
+    }
 
-    Shuffle(&rc, &todo);
+    Shuffle(&rc, &todo_border);
+    Shuffle(&rc, &todo_rest);
+    for (auto p : todo_border) todo.push_back(p);
+    for (auto p : todo_rest) todo.push_back(p);
   }
 
   constexpr bool REQUIRE_BG_MATCH = true;  
@@ -222,8 +243,31 @@ int main(int argc, char **argv) {
 	fill.GetPixel(x0, y0) == fill.GetPixel(x1, y1);
   };
 
-  // Can't use unordered_set without custom hash...
+  // Note: Can't use unordered_set without custom hash :(
+
+  // Mark occluded regions (e.g. behind sliders) as "done" to start,
+  // so that we don't get bars going into them. This also avoids
+  // painting foreground there, which probably makes the PNG slightly
+  // smaller.
   std::set<std::pair<int, int>> done;
+
+  constexpr int SLIDER_X = 3;
+  constexpr int SLIDER_Y = 16;
+  constexpr int SLIDER_W = 25;
+  constexpr int SLIDER_H = 2;
+  constexpr int SLIDER_STRIDE = 6;
+
+  constexpr int NUM_SLIDERS = 8;
+  for (int s = 0; s < NUM_SLIDERS; s++) {
+    for (int y = 0; y < SLIDER_H; y++) {
+      int yy = SLIDER_Y + (SLIDER_STRIDE * s) + y;
+      for (int x = 0; x < SLIDER_W; x++) {
+	int xx = SLIDER_X + x;
+	done.insert({xx, yy});
+      }
+    }
+  }
+
   for (const auto [x, y] : todo) {
     if (done.find({x, y}) == done.end()) {
       // In order to join across cells, the foreground and
@@ -232,10 +276,23 @@ int main(int argc, char **argv) {
 
       // We'll find a rectangle (1xN or Nx1) that includes
       // x,y but potentially extended to neighbors. Inclusive.
-
+      // (Right now we only extend one cell, which might be
+      // the best-looking choice anyway.)
       auto Extend = [&bg, &fg, &fill, &rc, &Same, &done, x, y]() ->
 	std::tuple<int, int, int, int> {
-	  vector<Dir> dirs = {UP, DOWN, LEFT, RIGHT};
+	  vector<Dir> dirs;
+	  // Edges get special treatment.
+	  const bool left = x == 0;
+	  const bool right = x == SQUARESW - 1;
+	  const bool top = y == 0;
+	  const bool bottom = y == SQUARESH - 1;
+	  if ((top || bottom) && !left && !right) {
+	    dirs = {LEFT, RIGHT};
+	  } else if ((left || right) && !top && !bottom) {
+	    dirs = {UP, DOWN};
+	  } else {
+	    dirs = {UP, DOWN, LEFT, RIGHT};
+	  }
 	  Shuffle(&rc, &dirs);
 
 	  for (Dir dir : dirs) {
@@ -243,7 +300,7 @@ int main(int argc, char **argv) {
 	    if (neighbor.has_value() &&
 		done.find(neighbor.value()) == done.end() &&
 		Same({x, y}, neighbor.value())) {
-	      // XXX continue extending...
+	      // XXX continue extending...?
 	      int x0 = x, y0 = y;
 	      auto [x1, y1] = neighbor.value();
 	      // printf("Extended %d,%d->%d,%d\n", x0, y0, x1, y1);
@@ -259,7 +316,7 @@ int main(int argc, char **argv) {
       auto [x0, y0, x1, y1] = Extend();
 
       // Same fill for entire box, so use x0, y0;
-      const uint32 fg_color = ToColor(fg.GetPixel(x0, y0));
+      const uint32 fg_color = ToColor(x0, y0, fg.GetPixel(x0, y0));
       const uint32 fg_lite = (fg_color & 0xFFFFFF00) | 0x7F;
 
       int xx = x0 * SQUARE;
@@ -287,32 +344,6 @@ int main(int argc, char **argv) {
   }
 
   
-#if 0
-  for (int row = 0; row < SQUARESH; row++) {
-    int y = row * SQUARE;
-    for (int col = 0; col < SQUARESW; col++) {
-      int x = col * SQUARE;
-
-      uint32 fg_color = ToColor(fg.GetPixel(col, row));
-      uint32 bg_color = ToColor(bg.GetPixel(col, row));      
-      
-      uint32 fg_lite = (fg_color & 0xFFFFFF00) | 0x7F;
-      
-      switch (fill.GetPixel(col, row)) {
-      case DOT:
-	img.BlendRect32(x, y, SQUARE, SQUARE, bg_color);
-	FilledBox(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg_color, fg_lite);
-	break;
-      default:
-      case LOOP:
-	img.BlendRect32(x, y, SQUARE, SQUARE, bg_color);
-	Box(x + 1, y + 1, SQUARE - 2, SQUARE - 2, fg_color, fg_lite);
-	break;
-      }
-    }
-  }
-#endif
-
   img.Save("makebg.png");
   
   return 0;
