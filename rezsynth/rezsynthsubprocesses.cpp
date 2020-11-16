@@ -187,7 +187,7 @@ void RezSynth::processFilterOuts(float const* const* inAudio, float* const* outA
 		{
 			if (((sampleIndex - sampleFrameOffset) % mFreqSmoothingStride) == 0)
 			{
-				dfx::IIRfilter::Coefficients lpCoeff;
+				dfx::IIRFilter::Coefficients lpCoeff;
 				std::tie(lpCoeff, envAmp) = getmidistate().processEnvelopeLowpassGate(currentNote);
 				std::for_each(channelFilters.begin(), channelFilters.end(), [&lpCoeff](auto& filter)
 				{

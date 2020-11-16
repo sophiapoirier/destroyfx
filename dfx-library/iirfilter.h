@@ -35,7 +35,7 @@ namespace dfx
 
 
 //-----------------------------------------------------------------------------
-class IIRfilter
+class IIRFilter
 {
 public:
 	enum class FilterType
@@ -63,15 +63,15 @@ public:
 	static_assert(kUnityCoeff.mIn == 1.0);  // protect against possible future member reordering
 	static constexpr double kShelfStartLowpass = 0.333;
 
-	IIRfilter() = default;
-	explicit IIRfilter(double inSampleRate);
+	IIRFilter() = default;
+	explicit IIRFilter(double inSampleRate);
 
 	void setCoefficients(Coefficients const& inCoefficients);
 	Coefficients const& setCoefficients(FilterType inFilterType, double inFreq, double inQ, double inGain);
 	Coefficients const& setLowpassCoefficients(double inCutoffFreq);
 	Coefficients const& setHighpassCoefficients(double inCutoffFreq);
 	Coefficients const& setBandpassCoefficients(double inCenterFreq, double inQ);
-	void copyCoefficients(IIRfilter const& inSourceFilter) noexcept;
+	void copyCoefficients(IIRFilter const& inSourceFilter) noexcept;
 	auto getCoefficients() const noexcept { return mCoeff; }
 	void setSampleRate(double inSampleRate);
 

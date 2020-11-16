@@ -172,7 +172,7 @@ private:
 	bool mFoldover = false, mWiseAmp = false;
 	std::array<dfx::SmoothedValue<double>, DfxMidi::kNumNotesWithLegatoVoice> mAmpEvener;
 
-	std::array<std::vector<dfx::IIRfilter>, DfxMidi::kNumNotesWithLegatoVoice> mLowpassGateFilters;
+	std::array<std::vector<dfx::IIRFilter>, DfxMidi::kNumNotesWithLegatoVoice> mLowpassGateFilters;
 
 	std::array<dfx::SmoothedValue<double>, DfxMidi::kNumNotesWithLegatoVoice> mBaseFreq;
 	std::array<std::array<dfx::SmoothedValue<double>, kMaxBands>, DfxMidi::kNumNotesWithLegatoVoice> mBandCenterFreq;

@@ -79,7 +79,7 @@ public:
 	[[nodiscard]] double process();
 	// returns the filter coefficients needed for lowpass gating as well as
 	// a post-filter gain to prevent closed-filter audio leakage
-	[[nodiscard]] std::pair<dfx::IIRfilter::Coefficients, float> processLowpassGate();
+	[[nodiscard]] std::pair<dfx::IIRFilter::Coefficients, float> processLowpassGate();
 
 private:
 	double calculateRise(size_t inPos, size_t inLength) const;
@@ -88,7 +88,7 @@ private:
 	double calculateFall(double inPosNormalized) const;
 	double deriveAttackPosFromEnvValue(double inValue) const;
 	// maps the envelope amplitude returned by process to lowpass coefficients
-	[[nodiscard]] dfx::IIRfilter::Coefficients getLowpassGateCoefficients(double inAmplitude) const;
+	[[nodiscard]] dfx::IIRFilter::Coefficients getLowpassGateCoefficients(double inAmplitude) const;
 
 	double mAttackDur = 0.0, mDecayDur = 0.0, mSustainLevel = 1.0, mReleaseDur = 0.0;
 	CurveType mCurveType = kCurveType_Cubed;

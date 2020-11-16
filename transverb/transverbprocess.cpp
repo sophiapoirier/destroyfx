@@ -89,7 +89,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
             }
             else if (std::exchange(speed1hasChanged, false))
             {
-              filter1.setLowpassCoefficients((samplerate / speed1.getValue()) * dfx::IIRfilter::kShelfStartLowpass);
+              filter1.setLowpassCoefficients((samplerate / speed1.getValue()) * dfx::IIRFilter::kShelfStartLowpass);
             }
           }
           // we need to highpass the delay head to remove mega sub bass
@@ -125,7 +125,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
             }
             else if (std::exchange(speed2hasChanged, false))
             {
-              filter2.setLowpassCoefficients((samplerate / speed2.getValue()) * dfx::IIRfilter::kShelfStartLowpass);
+              filter2.setLowpassCoefficients((samplerate / speed2.getValue()) * dfx::IIRFilter::kShelfStartLowpass);
             }
           }
           // we need to highpass the delay head to remove mega sub bass

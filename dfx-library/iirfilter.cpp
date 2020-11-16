@@ -36,25 +36,25 @@ static double const kDefaultQ_LP_HP = std::sqrt(2.0) / 2.0;  // C++20 constexpr 
 
 
 //------------------------------------------------------------------------
-dfx::IIRfilter::IIRfilter(double inSampleRate)
+dfx::IIRFilter::IIRFilter(double inSampleRate)
 :	mSampleRate(inSampleRate)
 {
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::reset() noexcept
+void dfx::IIRFilter::reset() noexcept
 {
 	mPrevIn = mPrevPrevIn = mPrevOut = mPrevPrevOut = mPrevPrevPrevOut = mCurrentOut = 0.0f;
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::setCoefficients(Coefficients const& inCoefficients)
+void dfx::IIRFilter::setCoefficients(Coefficients const& inCoefficients)
 {
 	mCoeff = inCoefficients;
 }
 
 //------------------------------------------------------------------------
-dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setCoefficients(FilterType inFilterType, double inFreq, double inQ, double inGain)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFreq, double inQ, double inGain)
 {
 	mFilterType = inFilterType;
 	mFilterFreq = inFreq;
@@ -155,7 +155,7 @@ dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setCoefficients(FilterType i
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::setSampleRate(double inSampleRate)
+void dfx::IIRFilter::setSampleRate(double inSampleRate)
 {
 	mSampleRate = inSampleRate;
 	// update after a change in sample rate
@@ -163,25 +163,25 @@ void dfx::IIRfilter::setSampleRate(double inSampleRate)
 }
 
 //------------------------------------------------------------------------
-dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setLowpassCoefficients(double inCutoffFreq)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassCoefficients(double inCutoffFreq)
 {
 	return setCoefficients(FilterType::Lowpass, inCutoffFreq, kDefaultQ_LP_HP, 1.0);
 }
 
 //------------------------------------------------------------------------
-dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setHighpassCoefficients(double inCutoffFreq)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassCoefficients(double inCutoffFreq)
 {
 	return setCoefficients(FilterType::Highpass, inCutoffFreq, kDefaultQ_LP_HP, 1.0);
 }
 
 //------------------------------------------------------------------------
-dfx::IIRfilter::Coefficients const& dfx::IIRfilter::setBandpassCoefficients(double inCenterFreq, double inQ)
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setBandpassCoefficients(double inCenterFreq, double inQ)
 {
 	return setCoefficients(FilterType::Bandpass, inCenterFreq, inQ, 1.0);
 }
 
 //------------------------------------------------------------------------
-void dfx::IIRfilter::copyCoefficients(IIRfilter const& inSourceFilter) noexcept
+void dfx::IIRFilter::copyCoefficients(IIRFilter const& inSourceFilter) noexcept
 {
 	mCoeff.mIn = inSourceFilter.mCoeff.mIn;
 	mCoeff.mPrevIn = inSourceFilter.mCoeff.mPrevIn;

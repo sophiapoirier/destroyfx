@@ -511,7 +511,7 @@ float DfxMidi::processEnvelope(int inMidiNote)
 }
 
 //-------------------------------------------------------------------------
-std::pair<dfx::IIRfilter::Coefficients, float> DfxMidi::processEnvelopeLowpassGate(int inMidiNote)
+std::pair<dfx::IIRFilter::Coefficients, float> DfxMidi::processEnvelopeLowpassGate(int inMidiNote)
 {
 	auto& note = getNoteStateMutable(inMidiNote);
 	auto const result = note.mEnvelope.processLowpassGate();

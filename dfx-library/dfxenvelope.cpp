@@ -188,7 +188,7 @@ void DfxEnvelope::beginRelease()
 }
 
 //-----------------------------------------------------------------------------
-std::pair<dfx::IIRfilter::Coefficients, float> DfxEnvelope::processLowpassGate()
+std::pair<dfx::IIRFilter::Coefficients, float> DfxEnvelope::processLowpassGate()
 {
 	float const postFilterGain = [this]()
 	{
@@ -217,7 +217,7 @@ std::pair<dfx::IIRfilter::Coefficients, float> DfxEnvelope::processLowpassGate()
 }
 
 //-----------------------------------------------------------------------------
-dfx::IIRfilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inAmplitude) const
+dfx::IIRFilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inAmplitude) const
 {
 	constexpr double minFreq = 20.;
 	constexpr double maxFreq = 20'000.;
@@ -225,10 +225,10 @@ dfx::IIRfilter::Coefficients DfxEnvelope::getLowpassGateCoefficients(double inAm
 	auto const nyquist = mSampleRate * 0.5;
 	if (cutoffFreq >= std::min(nyquist, maxFreq))
 	{
-		return dfx::IIRfilter::kUnityCoeff;
+		return dfx::IIRFilter::kUnityCoeff;
 	}
 
-	auto coeff = dfx::IIRfilter(mSampleRate).setLowpassCoefficients(cutoffFreq);
+	auto coeff = dfx::IIRFilter(mSampleRate).setLowpassCoefficients(cutoffFreq);
 
 	// envelope amplitude level below which the low-pass gate begins gain-fading filter coefficients
 	constexpr double amplitudeFadeThreshold = 0.1;

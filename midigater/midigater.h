@@ -70,5 +70,5 @@ private:
 	dfx::SmoothedValue<float> mFloor;
 	long mGateMode {};
 
-	std::array<std::vector<dfx::IIRfilter>, DfxMidi::kNumNotes> mLowpassGateFilters;
+	std::array<std::vector<dfx::IIRFilter>, DfxMidi::kNumNotes> mLowpassGateFilters;
 };

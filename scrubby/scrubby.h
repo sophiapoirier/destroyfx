@@ -151,7 +151,7 @@ private:
 	long mMaxAudioBufferSize = 0;  // the maximum size (in samples) of the audio buffer
 	double mMaxAudioBufferSize_f = 0.0;  // for avoiding casting
 
-	std::vector<dfx::IIRfilter> mHighpassFilters;
+	std::vector<dfx::IIRFilter> mHighpassFilters;
 
 	// tempo sync stuff
 	double mCurrentTempoBPS = 0.0;  // tempo in beats per second

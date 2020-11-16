@@ -70,7 +70,7 @@ private:
   std::vector<float> buf2;
   int MAXBUF = 0;  // the size of the audio buffer (dependent on sampling rate)
 
-  dfx::IIRfilter filter1, filter2;
+  dfx::IIRFilter filter1, filter2;
   bool speed1hasChanged = false, speed2hasChanged = false;
 
   int smoothcount1 = 0, smoothcount2 = 0;

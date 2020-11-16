@@ -198,7 +198,7 @@ void MIDIGater::processaudio(float const* const* inAudio, float* const* outAudio
 					{
 						if (((sampleCount - currentBlockPosition) % filterSmoothingStride) == 0)
 						{
-							dfx::IIRfilter::Coefficients filterCoef;
+							dfx::IIRFilter::Coefficients filterCoef;
 							std::tie(filterCoef, postFilterAmp) = getmidistate().processEnvelopeLowpassGate(noteCount);
 							std::for_each(channelFilters.begin(), channelFilters.end(), [&filterCoef](auto& filter)
 							{
