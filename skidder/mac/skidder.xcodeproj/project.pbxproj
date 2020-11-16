@@ -49,7 +49,7 @@
 		EC6CCD08248A06860048D27F /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC6CCD06248A06860048D27F /* dfx-au-utilities.strings */; };
 		EC6CCD2C248A06E50048D27F /* skiddereditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC6CCD0E248A06E50048D27F /* skiddereditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC6CCD4B248A07A00048D27F /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC6CCD4A248A07A00048D27F /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
-		EC6CCD5A248A07A60048D27F /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC6CCD53248A07A60048D27F /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor"; }; };
+		EC6CCD5A248A07A60048D27F /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC6CCD53248A07A60048D27F /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations"; }; };
 		EC89B2E1208D286200E15129 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2DE208D286200E15129 /* Carbon.framework */; };
 		EC89B2E2208D286200E15129 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2DF208D286200E15129 /* AudioToolbox.framework */; };
 		EC89B2E3208D286200E15129 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2E0208D286200E15129 /* AudioUnit.framework */; };
