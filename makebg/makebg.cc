@@ -25,8 +25,8 @@ using uint32 = uint32_t;
 
 constexpr int SQUARE = 8;
 
-constexpr int WIDTH = 512;
-constexpr int HEIGHT = 512 + SQUARE * 24;
+constexpr int WIDTH = 512 + SQUARE;
+constexpr int HEIGHT = 512 + SQUARE * 23;
 
 static_assert (WIDTH % SQUARE == 0);
 static_assert (HEIGHT % SQUARE == 0);  
@@ -252,12 +252,12 @@ int main(int argc, char **argv) {
   std::set<std::pair<int, int>> done;
 
   constexpr int SLIDER_X = 3;
-  constexpr int SLIDER_Y = 16;
-  constexpr int SLIDER_W = 25;
+  constexpr int SLIDER_Y = 13;
+  constexpr int SLIDER_W = 32;
   constexpr int SLIDER_H = 2;
   constexpr int SLIDER_STRIDE = 6;
 
-  constexpr int NUM_SLIDERS = 8;
+  constexpr int NUM_SLIDERS = 10;
   for (int s = 0; s < NUM_SLIDERS; s++) {
     for (int y = 0; y < SLIDER_H; y++) {
       int yy = SLIDER_Y + (SLIDER_STRIDE * s) + y;
