@@ -187,9 +187,7 @@ This allows you to adjust the way that the dry/wet mix combines the dry and wet 
 <p class="label">legato:</p>
 
 <p class="desc">
-Turning this on puts Rez Synth into legato mode (i.e. no polyphony, no space between notes, and no note envelopes).
-<br />
-Note that, while attack and release settings are ineffectual in legato mode, the fade mode is still relevant.  There are very short fades during each note transition in legato mode.  They are too short for the fade mode to make any audible difference, so you are best off setting the fade mode to the mode that is most efficient with your particular CPU.
+Turning this on puts Rez Synth into legato mode (i.e. no polyphony and no gap between notes).  The first note played after enabling legato mode will remain in the sustain phase of the note's envelope, even if you release the note, and subsequent notes will change the pitch but still only sound in the sustain phase.  The note envelope's release finally occurs upon exiting legato mode.
 </p>
 
 <br />
