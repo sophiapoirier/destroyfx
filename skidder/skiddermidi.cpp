@@ -130,9 +130,6 @@ void Skidder::noteOff()
 				case SkidState::Valley:
 					mWaitSamples = 0;
 					break;
-
-				default:
-					break;
 			}
 
 			mMidiOut = true;
@@ -173,9 +170,6 @@ void Skidder::noteOff()
 				case SkidState::Valley:
 					mValleySamples = 1;
 					mWaitSamples = mSlopeDur + 1;
-					break;
-
-				default:
 					break;
 			}
 

@@ -385,6 +385,7 @@ void DfxPlugin::getParameterDisplay(VstInt32 index, char* text)
 			vst_strncpy(text, getparameter_b(index) ? "on" : "off", kVstMaxParamStrLen);
 			break;
 		default:
+			assert(false);
 			break;
 	}
 }

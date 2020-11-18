@@ -1183,18 +1183,17 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 			}
 
 			case DfxParam::Unit::Generic:
-			default:
 				// if we got to this point, try using the value type to determine the unit type
 				switch (getparametervaluetype(inParameterID))
 				{
+					case DfxParam::ValueType::Float:
+						outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
+						break;
 					case DfxParam::ValueType::Boolean:
 						outParameterInfo.unit = kAudioUnitParameterUnit_Boolean;
 						break;
 					case DfxParam::ValueType::Int:
 						outParameterInfo.unit = kAudioUnitParameterUnit_Indexed;
-						break;
-					default:
-						outParameterInfo.unit = kAudioUnitParameterUnit_Generic;
 						break;
 				}
 		}

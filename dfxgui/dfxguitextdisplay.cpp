@@ -45,10 +45,9 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 			return VSTGUI::kCenterText;
 		case dfx::TextAlignment::Right:
 			return VSTGUI::kRightText;
-		default:
-			assert(false);
-			return {};
 	}
+	assert(false);
+	return {};
 }
 
 //-----------------------------------------------------------------------------
@@ -172,10 +171,9 @@ dfx::TextAlignment DGTextDisplay::getTextAlignment() const noexcept
 			return dfx::TextAlignment::Center;
 		case VSTGUI::kLeftText:
 			return dfx::TextAlignment::Left;
-		default:
-			assert(false);
-			return {};
 	}
+	assert(false);
+	return {};
 }
 
 //-----------------------------------------------------------------------------

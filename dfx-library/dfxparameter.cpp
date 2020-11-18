@@ -291,10 +291,9 @@ double DfxParam::derive_f(Value inValue) const noexcept
 			return static_cast<double>(inValue.i);
 		case ValueType::Boolean:
 			return (inValue.b != 0) ? 1.0 : 0.0;
-		default:
-			assert(false);
-			return 0.0;
 	}
+	assert(false);
+	return 0.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -310,10 +309,9 @@ int64_t DfxParam::derive_i(Value inValue) const
 			return inValue.i;
 		case ValueType::Boolean:
 			return (inValue.b != 0) ? 1 : 0;
-		default:
-			assert(false);
-			return 0;
 	}
+	assert(false);
+	return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -329,10 +327,9 @@ bool DfxParam::derive_b(Value inValue) const noexcept
 			return (inValue.i != 0);
 		case ValueType::Boolean:
 			return (inValue.b != 0);
-		default:
-			assert(false);
-			return false;
 	}
+	assert(false);
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -371,11 +368,8 @@ double DfxParam::contract(double inLiteralValue, double inMinValue, double inMax
 			return std::log(1.0 - inMinValue + inLiteralValue) / std::log(1.0 - inMinValue + inMaxValue);
 		case DfxParam::Curve::Log:
 			return (std::log(inLiteralValue / inMinValue) / logTwo) / (std::log(inMaxValue / inMinValue) / logTwo);
-		default:
-			assert(false);
-			break;
 	}
-
+	assert(false);
 	return inLiteralValue;
 }
 
@@ -401,40 +395,29 @@ bool DfxParam::accept_f(double inValue, Value& ioValue) const
 	{
 		case ValueType::Float:
 			ioValue.f = inValue;
-			break;
+			return true;  // XXX do this smarter?
 		case ValueType::Int:
+		{
+			auto const entryValue = ioValue.i;
+			if (inValue < 0.0)
 			{
-				auto const entryValue = ioValue.i;
-				if (inValue < 0.0)
-				{
-					ioValue.i = static_cast<int64_t>(inValue - kIntegerPadding);
-				}
-				else
-				{
-					ioValue.i = static_cast<int64_t>(inValue + kIntegerPadding);
-				}
-				if (ioValue.i == entryValue)
-				{
-					return false;
-				}
+				ioValue.i = static_cast<int64_t>(inValue - kIntegerPadding);
 			}
-			break;
+			else
+			{
+				ioValue.i = static_cast<int64_t>(inValue + kIntegerPadding);
+			}
+			return (ioValue.i != entryValue);
+		}
 		case ValueType::Boolean:
-			{
-				auto const entryValue = ioValue.b;
-				ioValue.b = Float2Boolean(inValue) ? 1 : 0;
-				if (ioValue.b == entryValue)
-				{
-					return false;
-				}
-			}
-			break;
-		default:
-			assert(false);
-			return false;
+		{
+			auto const entryValue = ioValue.b;
+			ioValue.b = Float2Boolean(inValue) ? 1 : 0;
+			return (ioValue.b != entryValue);
+		}
 	}
-
-	return true;  // XXX do this smarter?
+	assert(false);
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -446,33 +429,22 @@ bool DfxParam::accept_i(int64_t inValue, Value& ioValue) const noexcept
 	{
 		case ValueType::Float:
 			ioValue.f = static_cast<double>(inValue);
-			break;
+			return true;  // XXX do this smarter?
 		case ValueType::Int:
 		{
 			auto const entryValue = ioValue.i;
 			ioValue.i = inValue;
-			if (ioValue.i == entryValue)
-			{
-				return false;
-			}
-			break;
+			return (ioValue.i != entryValue);
 		}
 		case ValueType::Boolean:
 		{
 			auto const entryValue = ioValue.b;
 			ioValue.b = (inValue == 0) ? 0 : 1;
-			if (ioValue.b == entryValue)
-			{
-				return false;
-			}
-			break;
+			return (ioValue.b != entryValue);
 		}
-		default:
-			assert(false);
-			return false;
 	}
-
-	return true;  // XXX do this smarter?
+	assert(false);
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -484,33 +456,22 @@ bool DfxParam::accept_b(bool inValue, Value& ioValue) const noexcept
 	{
 		case ValueType::Float:
 			ioValue.f = (inValue ? 1.0 : 0.0);
-			break;
+			return true;  // XXX do this smarter?
 		case ValueType::Int:
 		{
 			auto const entryValue = ioValue.i;
 			ioValue.i = (inValue ? 1 : 0);
-			if (ioValue.i == entryValue)
-			{
-				return false;
-			}
-			break;
+			return (ioValue.i != entryValue);
 		}
 		case ValueType::Boolean:
 		{
 			auto const entryValue = ioValue.b;
 			ioValue.b = (inValue ? 1 : 0);
-			if (ioValue.b == entryValue)
-			{
-				return false;
-			}
-			break;
+			return (ioValue.b != entryValue);
 		}
-		default:
-			assert(false);
-			return false;
 	}
-
-	return true;  // XXX do this smarter?
+	assert(false);
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -576,11 +537,8 @@ double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue,
 			return std::exp(std::log(valueRange + 1.0) * inGenValue) + inMinValue - 1.0;
 		case DfxParam::Curve::Log:
 			return inMinValue * std::pow(2.0, inGenValue * std::log(inMaxValue / inMinValue) * logTwoInv);
-		default:
-			assert(false);
-			break;
 	}
-
+	assert(false);
 	return inGenValue;
 }
 
@@ -864,10 +822,9 @@ std::string DfxParam::getunitstring() const
 			return "";
 		case Unit::Custom:
 			return mCustomUnitString;
-		default:
-			assert(false);
-			return "";
 	}
+	assert(false);
+	return "";
 }
 
 //-----------------------------------------------------------------------------

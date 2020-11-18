@@ -502,7 +502,6 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					processSlopeOut();
 					break;
 				case SkidState::Valley:
-				default:
 					processValley();
 					break;
 			}
@@ -551,7 +550,6 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					processSlopeOut();
 					break;
 				case SkidState::Valley:
-				default:
 					processValley();
 					break;
 			}

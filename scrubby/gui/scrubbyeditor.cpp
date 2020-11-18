@@ -782,6 +782,7 @@ void ScrubbyEditor::HandleNotesButton(long inNotesButtonType)
 			}
 			break;
 		default:
+			assert(false);
 			break;
 	}
 }

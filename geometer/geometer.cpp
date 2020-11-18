@@ -614,9 +614,7 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
     int extx = 0;
 
     enum {SZ, SZC, SA, SB};
-    int state;
-
-    state = SZ;
+    int state = SZ;
 
     for(int i = 0; i < samples; i++) {
       switch(state) {
@@ -710,8 +708,6 @@ int PLUGINCORE::processw(float const * in, float * out, int samples,
         }
         break;
       }
-      default:;
-
       }
     }
 

@@ -1469,10 +1469,9 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
 			std::abort();
 			// if the host is still alive, then we have failed...
 			return CrisisError::FailedCrashError;
-
-		default:
-			return CrisisError::NoError;
 	}
+	assert(false);  // unhandled case
+	return CrisisError::NoError;
 }
 
 //-----------------------------------------------------------------------------
