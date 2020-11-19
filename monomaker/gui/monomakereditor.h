@@ -30,4 +30,5 @@ class MonomakerEditor final : public DfxGuiEditor
 public:
 	MonomakerEditor(DGEditorListenerInstance inInstance);
 	long OpenEditor() override;
+	void inputChannelsChanged(unsigned long inChannelCount) override;
 };

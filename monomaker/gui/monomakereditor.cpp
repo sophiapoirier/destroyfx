@@ -52,6 +52,7 @@ enum
 
 constexpr char const* const kValueTextFont = "Arial";
 constexpr float kValueTextSize = 12.0f;
+constexpr float kUnusedControlAlpha = 0.36f;
 
 
 
@@ -158,6 +159,22 @@ long MonomakerEditor::OpenEditor()
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
 
 
+	inputChannelsChanged(getNumInputChannels());
+
+
 
 	return dfx::kStatus_NoError;
+}
+
+//-----------------------------------------------------------------------------
+void MonomakerEditor::inputChannelsChanged(unsigned long inChannelCount)
+{
+	float const alpha = (inChannelCount > 1) ? 1.0f : kUnusedControlAlpha;
+	for (auto& control : mControlsList)
+	{
+		if (control->getParameterID() == kInputSelection)
+		{
+			control->setDrawAlpha(alpha);
+		}
+	}
 }

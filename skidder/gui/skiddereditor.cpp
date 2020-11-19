@@ -323,7 +323,7 @@ long SkidderEditor::OpenEditor()
 	HandleTempoSyncChange();
 	HandleTempoAutoChange();
 	HandleMidiModeChange();
-	numAudioChannelsChanged(getNumAudioChannels());
+	outputChannelsChanged(getNumOutputChannels());
 
 
 	return dfx::kStatus_NoError;
@@ -372,9 +372,9 @@ void SkidderEditor::parameterChanged(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void SkidderEditor::numAudioChannelsChanged(unsigned long inNumChannels)
+void SkidderEditor::outputChannelsChanged(unsigned long inChannelCount)
 {
-	float const alpha = (inNumChannels == 2) ? 1.0f : kUnusedControlAlpha;
+	float const alpha = (inChannelCount == 2) ? 1.0f : kUnusedControlAlpha;
 	for (auto& control : mControlsList)
 	{
 		if (control->getParameterID() == kPan)

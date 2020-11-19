@@ -708,7 +708,7 @@ long ScrubbyEditor::OpenEditor()
 	HandleTempoSyncChange();
 	HandleTempoAutoChange();
 	// and this will do the same for the channels mode control
-	numAudioChannelsChanged(getNumAudioChannels());
+	outputChannelsChanged(getNumOutputChannels());
 
 
 
@@ -971,9 +971,9 @@ void ScrubbyEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse
 }
 
 //-----------------------------------------------------------------------------
-void ScrubbyEditor::numAudioChannelsChanged(unsigned long inNumChannels)
+void ScrubbyEditor::outputChannelsChanged(unsigned long inChannelCount)
 {
-	float const alpha = (inNumChannels > 1) ? 1.0f : kUnusedControlAlpha;
+	float const alpha = (inChannelCount > 1) ? 1.0f : kUnusedControlAlpha;
 
 	for (auto& control : mControlsList)
 	{

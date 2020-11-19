@@ -197,7 +197,8 @@ public:
 	void HandleStreamFormatChange();
 	void HandleParameterListChange();
 #endif
-	virtual void numAudioChannelsChanged(unsigned long inNumChannels) {}
+	virtual void inputChannelsChanged(unsigned long inChannelCount) {}
+	virtual void outputChannelsChanged(unsigned long inChannelCount) {}
 
 	void automationgesture_begin(long inParameterID);
 	void automationgesture_end(long inParameterID);
@@ -346,7 +347,8 @@ public:
 		return mMidiResetButton;
 	}
 #endif
-	unsigned long getNumAudioChannels();
+	unsigned long getNumInputChannels();
+	unsigned long getNumOutputChannels();
 
 	// Create a VSTGUI font via the editor's font factory.
 	VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr)
@@ -391,7 +393,7 @@ private:
 	void RemoveAUEventListeners();
 	static void AudioUnitEventListenerProc(void* inCallbackRefCon, void* inObject, AudioUnitEvent const* inEvent, UInt64 inEventHostTime, Float32 inParameterValue);
 	// Convert each element of mRegisteredProperties to an AudioUnitEvent and call argument function on it.
-	void ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)> f);
+	void ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)>&& f);
 #endif
 
 #ifdef TARGET_API_VST
@@ -407,7 +409,8 @@ private:
 
 	bool mJustOpened = false;
 	long mEditorOpenErr = dfx::kStatus_NoError;
-	unsigned long mNumAudioChannels = 0;
+	unsigned long mNumInputChannels = 0;
+	unsigned long mNumOutputChannels = 0;
 
 	// Custom properties that have been registered for HandlePropertyChange calls.
 	std::vector<std::tuple<dfx::PropertyID, dfx::Scope, unsigned long>> mRegisteredProperties;

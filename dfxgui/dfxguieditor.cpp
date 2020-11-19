@@ -161,7 +161,8 @@ bool DfxGuiEditor::open(void* inWindow)
 	setCurrentControl_mouseover(nullptr);
 
 	// determine the number of audio channels currently configured for the AU
-	mNumAudioChannels = getNumAudioChannels();
+	mNumInputChannels = getNumInputChannels();
+	mNumOutputChannels = getNumOutputChannels();
 
 #ifdef TARGET_API_AUDIOUNIT
 	// create a cache of the parameter list before creating controls as the process depends on that information
@@ -1749,7 +1750,22 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
 // TARGET_PLUGIN_USES_MIDI
 
 //-----------------------------------------------------------------------------
-unsigned long DfxGuiEditor::getNumAudioChannels()
+unsigned long DfxGuiEditor::getNumInputChannels()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	auto const streamDesc = dfxgui_GetProperty<CAStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input);
+	return streamDesc ? streamDesc->NumberChannels() : 0;
+#endif
+#ifdef TARGET_API_VST
+	return static_cast<unsigned long>(getEffect()->getAeffect()->numInputs);
+#endif
+#ifdef TARGET_API_RTAS
+	return dfxgui_GetEffectInstance()->getnuminputs();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+unsigned long DfxGuiEditor::getNumOutputChannels()
 {
 #ifdef TARGET_API_AUDIOUNIT
 	auto const streamDesc = dfxgui_GetProperty<CAStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output);
@@ -2460,7 +2476,7 @@ void DfxGuiEditor::AudioUnitEventListenerProc(void* inCallbackRefCon, void* inOb
 }
 
 //-----------------------------------------------------------------------------
-void DfxGuiEditor::ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)> f)
+void DfxGuiEditor::ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitEvent const&)>&& f)
 {
 	for (auto const& [propertyID, scope, itemIndex] : mRegisteredProperties)
 	{
@@ -2478,11 +2494,13 @@ void DfxGuiEditor::ForEachRegisteredAudioUnitEvent(std::function<void(AudioUnitE
 //-----------------------------------------------------------------------------
 void DfxGuiEditor::HandleStreamFormatChange()
 {
-	auto const oldNumAudioChannels = mNumAudioChannels;
-	mNumAudioChannels = getNumAudioChannels();
-	if (mNumAudioChannels != oldNumAudioChannels)
+	if (auto const count = getNumInputChannels(); std::exchange(mNumInputChannels, count) != count)
 	{
-		numAudioChannelsChanged(mNumAudioChannels);
+		inputChannelsChanged(count);
+	}
+	if (auto const count = getNumOutputChannels(); std::exchange(mNumOutputChannels, count) != count)
+	{
+		outputChannelsChanged(count);
 	}
 }
 

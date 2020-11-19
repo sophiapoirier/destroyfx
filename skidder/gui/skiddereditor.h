@@ -32,7 +32,7 @@ public:
 
 	long OpenEditor() override;
 	void parameterChanged(long inParameterID) override;
-	void numAudioChannelsChanged(unsigned long inNumChannels) override;
+	void outputChannelsChanged(unsigned long inChannelCount) override;
 
 private:
 	std::pair<long, long> GetActiveRateParameterIDs();
