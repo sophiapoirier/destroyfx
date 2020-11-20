@@ -147,7 +147,8 @@ void Monomaker::processparameters()
 		auto const monomergeMode = getparameter_i(kMonomergeMode);
 
 		// calculate monomerge gain scalars
-		auto const mapMonomergeMode = (monomergeMode == kMonomergeMode_EqualPower) ? sqrtf : [](float a){ return a; };
+		bool const useEqualPower = (monomergeMode == kMonomergeMode_EqualPower) && (getnuminputs() > 1);
+		auto const mapMonomergeMode = useEqualPower ? sqrtf : [](float a){ return a; };
 		mMonomerge_main = mapMonomergeMode(1.0f - (monomerge * 0.5f));
 		mMonomerge_other = mapMonomergeMode(monomerge * 0.5f);
 	}
@@ -179,10 +180,8 @@ void Monomaker::processparameters()
 		// no mixing of channels in balance mode
 		if (panMode == kPanMode_Balance)
 		{
-			pan_left1 += pan_left2;
-			pan_left2 = 0.0f;
-			pan_right2 += pan_right1;
-			pan_right1 = 0.0f;
+			pan_left1 += std::exchange(pan_left2, 0.0f);
+			pan_right2 += std::exchange(pan_right1, 0.0f);
 		}
 
 		mPan_left1 = pan_left1;
