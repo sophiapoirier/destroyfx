@@ -1,4 +1,4 @@
-// Generate backgrounds for plugins programmatically.
+// Generates the rezsynth (2020) background programmatically.
 
 #include <string>
 #include <vector>
@@ -502,7 +502,7 @@ int main(int argc, char **argv) {
   }
 
   
-  img.Save("makebg.png");
+  img.Save("rezsynth.png");
   
   return 0;
 }

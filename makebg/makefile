@@ -1,4 +1,4 @@
-default: makebg.exe
+default: rezsynth.exe
 
 # for 64 bits on windows
 CXX=x86_64-w64-mingw32-g++
@@ -14,13 +14,13 @@ LFLAGS=-m64 -march=native -s -static
 
 CCLIB_OBJECTS=$(CCLIB)/base/stringprintf.o $(CCLIB)/base/logging.o $(CCLIB)/util.o $(CCLIB)/image.o $(CCLIB)/stb_image.o $(CCLIB)/stb_image_write.o $(CCLIB)/color-util.o $(CCLIB)/arcfour.o
 
-OBJECTS=$(CCLIB_OBJECTS) makebg.o
+OBJECTS=$(CCLIB_OBJECTS) rezsynth.o
 
 MINGWLIB=/usr/x86_64-w64-mingw32/sys-root/mingw/lib
 
-makebg.exe : $(OBJECTS)
+rezsynth.exe : $(OBJECTS)
 	$(CXX) $(LFLAGS) -o $@ $^
 
 clean :
-	rm -f $(OBJECTS) makebg.exe
+	rm -f $(OBJECTS) rezsynth.exe
 
