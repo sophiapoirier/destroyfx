@@ -1,4 +1,4 @@
-default: rezsynth.exe
+default: rezsynth.exe skidder.exe
 
 # for 64 bits on windows
 CXX=x86_64-w64-mingw32-g++
@@ -14,13 +14,16 @@ LFLAGS=-m64 -march=native -s -static
 
 CCLIB_OBJECTS=$(CCLIB)/base/stringprintf.o $(CCLIB)/base/logging.o $(CCLIB)/util.o $(CCLIB)/image.o $(CCLIB)/stb_image.o $(CCLIB)/stb_image_write.o $(CCLIB)/color-util.o $(CCLIB)/arcfour.o
 
-OBJECTS=$(CCLIB_OBJECTS) rezsynth.o
+OBJECTS=$(CCLIB_OBJECTS)
 
 MINGWLIB=/usr/x86_64-w64-mingw32/sys-root/mingw/lib
 
-rezsynth.exe : $(OBJECTS)
+rezsynth.exe : $(OBJECTS) rezsynth.o
+	$(CXX) $(LFLAGS) -o $@ $^
+
+skidder.exe : $(OBJECTS) skidder.o
 	$(CXX) $(LFLAGS) -o $@ $^
 
 clean :
-	rm -f $(OBJECTS) rezsynth.exe
+	rm -f $(OBJECTS) rezsynth.exe skidder.exe rezsynth.png skidder.png
 
