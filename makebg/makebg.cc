@@ -177,10 +177,6 @@ int main(int argc, char **argv) {
 
       uint8 sample = blue.Get(x, y);
 
-      // one = "yellow"
-      // two = "red"
-      // three = "orange"
-      
       switch ((sample >> 5 & 3)) {
       case 0:
 	fg.SetPixel(x, y, THREE);
@@ -255,7 +251,7 @@ int main(int argc, char **argv) {
   constexpr int SLIDER_STRIDE = 6;
 
   // Yellow group.
-  ThreeColors slider_yellow = standard.Mix(0x858a003f);
+  ThreeColors slider_yellow = standard.Mix(0xa5aa004f);
 
   // Each slider is actually two rectangles (of the same color).
   // The bottom one is basically occluded by the slider itself, but
@@ -268,7 +264,8 @@ int main(int argc, char **argv) {
 			     slider_yellow);
   }
 
-  ThreeColors slider_red = standard.Mix(0x8a00003f);
+  // ThreeColors slider_red = standard.Mix(0x8a00003f);
+  ThreeColors slider_red = standard.Mix(0xca00005f);  
   for (int i = 3; i < 7; i++) {
     int yy = SLIDER_Y + (i * SLIDER_STRIDE);
     color_boxes.emplace_back(SLIDER_X, yy, SLIDER_W, 2,
@@ -341,7 +338,7 @@ int main(int argc, char **argv) {
   constexpr int VSLIDER_H = 30;
   constexpr int VSLIDER_STRIDE = 8;
   for (int i = 0; i < 3; i++) {
-    ThreeColors slider_green = standard.Mix(0x1e8a323f);
+    ThreeColors slider_green = standard.Mix(0x1e8a325f);
 
     int xx = VSLIDER_X + i * VSLIDER_STRIDE;
     color_boxes.emplace_back(xx, VSLIDER_Y, 2, VSLIDER_H,
