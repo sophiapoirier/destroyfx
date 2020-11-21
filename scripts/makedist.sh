@@ -75,12 +75,14 @@ do
 	fi
 	echo "${LINE}" >> "${DISTRIBUTIONFILE_AMENDED}"
 done < "${DISTRIBUTIONFILE}"
+set +e
 diff -wq "${DISTRIBUTIONFILE}" "${DISTRIBUTIONFILE_AMENDED}" >> /dev/null
 if (( $? == 0 )); then
 	echo
 	echo "ERROR: failed to amend distribution file!"
 	exit 1
 fi
+set -e
 productbuild --distribution "${DISTRIBUTIONFILE_AMENDED}" --resources "${DFXDIR}"/docs --package-path "${INSTALLERDIR}" --component-compression auto --sign "Developer ID Installer: Sophia Poirier (N8VK88P4LV)" --timestamp "${INSTALLERFILE}"
 
 OUTPUTFILE_FULLNAME="${OUTPUTFILE}".dmg
