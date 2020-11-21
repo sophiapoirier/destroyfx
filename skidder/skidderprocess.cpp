@@ -290,19 +290,53 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	auto const numOutputs = getnumoutputs();
 	float const channelScalar = 1.0f / static_cast<float>(numOutputs);
 
+	auto const entryCrossoverFrequency = mCrossoverFrequency;
 	for (unsigned long ch = 0; ch < numOutputs; ch++)
 	{
+		// cache and replace input with the crossover portion to be fed into the effect +
+		// render to output the crossover portion to be preserved (and add all subsequent output)
+		if (ch < numInputs)
+		{
+			// TODO: it would be more efficient to not duplicate coefficient smoothing calculations for each channel
+			mCrossoverFrequency = entryCrossoverFrequency;
+			for (unsigned long samp = 0; samp < inNumFrames; samp++)
+			{
+				auto const [persistent, effectual] = [this, inAudio, ch, samp]() -> std::pair<float, float>
+				{
+					if (mCrossoverMode == kCrossoverMode_All)
+					{
+						return { 0.f, inAudio[ch][samp] };
+					}
+					auto const [low, high] = mCrossover->process(ch, inAudio[ch][samp]);
+					return (mCrossoverMode == kCrossoverMode_Low) ? std::make_pair(high, low) : std::make_pair(low, high);
+				}();
+				mEffectualInputAudioBuffers[ch][samp] = effectual;
+				outAudio[ch][samp] = persistent;
+
+				if (mCrossoverFrequency.isSmoothing())
+				{
+					mCrossoverFrequency.inc();
+					mCrossover->setFrequency(mCrossoverFrequency.getValue());
+				}
+			}
+		}
+		else
+		{
+			// fan-out the already-rendered persistent crossover output
+			std::copy_n(outAudio[0], inNumFrames, outAudio[ch]);
+		}
+
 		mOutputAudio[ch] = outAudio[ch];
 		if (numInputs == numOutputs)
 		{
-			mInputAudio[ch] = inAudio[ch];
+			mInputAudio[ch] = mEffectualInputAudioBuffers[ch].data();
 		}
 		else if (ch == 0)
 		{
 			// handle the special case of mismatched input/output channel counts that we allow 
 			// by repeating the mono-input to multiple (faked) input channels
 			// (copying to an intermediate input buffer in case processing in-place)
-			std::copy_n(inAudio[ch], inNumFrames, mAsymmetricalInputAudioBuffer.data());
+			std::copy_n(mEffectualInputAudioBuffers[ch].data(), inNumFrames, mAsymmetricalInputAudioBuffer.data());
 			std::fill(mInputAudio.begin(), mInputAudio.end(), mAsymmetricalInputAudioBuffer.data());
 		}
 	}
@@ -319,15 +353,9 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			// check mWaitSamples also because, if it's zero, we can just move ahead normally
 			if (noteIsOn && (mWaitSamples != 0))
 			{
-				// need to make sure that the skipped part is silent when processing in-place
 				for (unsigned long ch = 0; ch < numOutputs; ch++)
 				{
-					for (unsigned long samp = 0; samp < dfx::math::ToUnsigned(mWaitSamples); samp++)
-					{
-						mOutputAudio[ch][samp] = 0.0f;
-					}
-
-					// jump ahead accordingly in the i/o streams
+					// jump ahead accordingly in the I/O streams
 					mInputAudio[ch] += mWaitSamples;
 					mOutputAudio[ch] += mWaitSamples;
 				}
@@ -348,13 +376,6 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				}
 				else
 				{
-					for (unsigned long ch = 0; ch < numOutputs; ch++)
-					{
-						for (unsigned long samp = dfx::math::ToUnsigned(mWaitSamples); samp < inNumFrames; samp++)
-						{
-							mOutputAudio[ch][samp] = 0.0f;
-						}
-					}
 					if (mWaitSamples > 0)
 					{
 						inNumFrames = dfx::math::ToUnsigned(mWaitSamples);
@@ -379,15 +400,21 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			break;
 
 		case kMidiMode_Apply:
+		{
+			auto const sumInPlace = [](float const* input, float* output, size_t count)
+			{
+				std::transform(input, input + count, output, output, std::plus<>{});
+			};
+
 			// check mWaitSamples also because, if it's zero, we can just move ahead normally
 			if (noteIsOn && (mWaitSamples != 0))
 			{
 				// need to make sure that the skipped part is unprocessed audio
 				for (unsigned long ch = 0; ch < numOutputs; ch++)
 				{
-					std::copy_n(mInputAudio[ch], mWaitSamples, mOutputAudio[ch]);
+					sumInPlace(mInputAudio[ch], mOutputAudio[ch], mWaitSamples);
 
-					// jump ahead accordingly in the i/o streams
+					// jump ahead accordingly in the I/O streams
 					mInputAudio[ch] += mWaitSamples;
 					mOutputAudio[ch] += mWaitSamples;
 				}
@@ -410,7 +437,8 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				{
 					for (unsigned long ch = 0; ch < numOutputs; ch++)
 					{
-						std::copy_n(mInputAudio[ch] + mWaitSamples, inNumFrames - dfx::math::ToUnsigned(mWaitSamples), mOutputAudio[ch] + mWaitSamples);
+						sumInPlace(mInputAudio[ch] + mWaitSamples, mOutputAudio[ch] + mWaitSamples, 
+								   inNumFrames - dfx::math::ToUnsigned(mWaitSamples));
 					}
 					if (mWaitSamples > 0)
 					{
@@ -435,6 +463,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 			}
 
 			break;
+		}
 
 		default:
 			break;
@@ -506,10 +535,10 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 					break;
 			}
 	
-			mOutputAudio[0][samp] = processOutput(inputValueL, inputValueR, mPanGainL);
-			mOutputAudio[1][samp] = processOutput(inputValueR, inputValueL, mPanGainR);
+			mOutputAudio[0][samp] += processOutput(inputValueL, inputValueR, mPanGainL);
+			mOutputAudio[1][samp] += processOutput(inputValueR, inputValueL, mPanGainR);
 
-			incrementSmoothedAudioValues();
+			mNoise.inc();
 		}
 	}
 
@@ -556,10 +585,10 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	
 			for (unsigned long ch = 0; ch < numOutputs; ch++)
 			{
-				mOutputAudio[ch][samp] = processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
+				mOutputAudio[ch][samp] += processOutput(mInputAudio[ch][samp], mInputAudio[ch][samp], 1.0f);
 			}
 
-			incrementSmoothedAudioValues();
+			mNoise.inc();
 		}
 	}
 }

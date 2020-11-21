@@ -49,6 +49,8 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kFloor, dfx::MakeParameterNames(dfx::kParameterNames_Floor), 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 	initparameter_f(kFloorRandMin, {"floor random min", "FlorMin", "FlorMn", "FlrM"}, 0.0, 0.0, 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 	initparameter_f(kNoise, {"rupture", "Ruptur", "Rptr"}, 0.0, std::pow(0.5, 2.0), 0.0, 1.0, DfxParam::Unit::LinearGain, DfxParam::Curve::Squared);
+	initparameter_f(kCrossoverFrequency, {"crossover frequency", "RateFre", "RateFr", "RtFr"}, 3'000., 3'000., 20., 20'000., DfxParam::Unit::Hz, DfxParam::Curve::Log);
+	initparameter_list(kCrossoverMode, {"crossover mode", "XovrMod", "XovrMd", "XvrM"}, kCrossoverMode_All, kCrossoverMode_All, kNumCrossoverModes);
 	initparameter_list(kMidiMode, dfx::MakeParameterNames(dfx::kParameterNames_MidiMode), kMidiMode_None, kMidiMode_None, kNumMidiModes);
 	initparameter_b(kVelocity, {"velocity", "Velocty", "Veloct", "Velo"}, false, false);
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 39.0, 480.0, DfxParam::Unit::BPM);
@@ -61,7 +63,11 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 		setparametervaluestring(kRate_Sync, i, tempoRateName);
 		setparametervaluestring(kRateRandMin_Sync, i, tempoRateName);
 	}
-	// set the value strings for the MIDI modes
+	// value strings for the crossover modes
+	setparametervaluestring(kCrossoverMode, kCrossoverMode_All, "all");
+	setparametervaluestring(kCrossoverMode, kCrossoverMode_Low, "low");
+	setparametervaluestring(kCrossoverMode, kCrossoverMode_High, "high");
+	// value strings for the MIDI modes
 	setparametervaluestring(kMidiMode, kMidiMode_None, "none");
 	setparametervaluestring(kMidiMode, kMidiMode_Trigger, "trigger");
 	setparametervaluestring(kMidiMode, kMidiMode_Apply, "apply");
@@ -81,6 +87,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	mRateDoubleAutomate = mPulsewidthDoubleAutomate = mFloorDoubleAutomate = false;
 
 	registerSmoothedAudioValue(&mNoise);
+	registerSmoothedAudioValue(&mCrossoverFrequency);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -96,10 +103,13 @@ void Skidder::createbuffers()
 {
 	mInputAudio.assign(getnumoutputs(), nullptr);  // allocating output channel count is intentional, for mono fan-out
 	mOutputAudio.assign(getnumoutputs(), nullptr);
+	mEffectualInputAudioBuffers.assign(getnuminputs(), std::vector<float>(getmaxframes()));
 	if (asymmetricalchannels())
 	{
 		mAsymmetricalInputAudioBuffer.assign(getmaxframes(), 0.0f);
 	}
+
+	mCrossover = std::make_unique<dfx::Crossover>(getnuminputs(), getsamplerate(), getparameter_f(kCrossoverFrequency));
 }
 
 //-----------------------------------------------------------------------------------------
@@ -107,12 +117,17 @@ void Skidder::releasebuffers()
 {
 	mInputAudio.clear();
 	mOutputAudio.clear();
+	mEffectualInputAudioBuffers.clear();
 	mAsymmetricalInputAudioBuffer.clear();
+
+	mCrossover.reset();
 }
 
 //-----------------------------------------------------------------------------------------
 void Skidder::reset()
 {
+	mCrossover->reset();
+
 	mState = SkidState::Valley;
 	mValleySamples = 0;
 	mPanGainL = mPanGainR = 1.0f;
@@ -141,11 +156,33 @@ void Skidder::processparameters()
 	mPulsewidthRandMin = getparameter_f(kPulsewidthRandMin);
 	mSlopeSeconds = getparameter_f(kSlope) * 0.001;
 	mPanWidth = getparameter_f(kPan);
-	mNoise = getparameter_scalar(kNoise);
+	if (auto const value = getparameterifchanged_scalar(kNoise))
+	{
+		mNoise = *value;
+	}
 	mMidiMode = getparameter_i(kMidiMode);
 	mUseVelocity = getparameter_b(kVelocity);
 	mFloor = getparameter_f(kFloor);
 	auto const floorRandMin = static_cast<float>(getparameter_f(kFloorRandMin));
+	if (auto const value = getparameterifchanged_f(kCrossoverFrequency))
+	{
+		mCrossoverFrequency = *value;
+		mCrossover->setFrequency(mCrossoverFrequency.getValue());
+	}
+	if (auto const value = getparameterifchanged_i(kCrossoverMode))
+	{
+		auto const entryCrossoverMode = std::exchange(mCrossoverMode, *value);
+		if (mCrossoverMode == kCrossoverMode_All)
+		{
+			mCrossover->reset();
+		}
+		// only if the value definitely differs (e.g. it could have changed once and then back since last audio render)
+		else if ((entryCrossoverMode == kCrossoverMode_All) && (mCrossoverMode != entryCrossoverMode))
+		{
+			mCrossoverFrequency.snap();
+			mCrossover->setFrequency(mCrossoverFrequency.getValue());
+		}
+	}
 	mUserTempo = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);
 

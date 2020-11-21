@@ -58,26 +58,30 @@ enum
 
 	kParameterNameDisplayX = 14,
 	kParameterNameDisplayY = kDisplayY - 17,
+	kParameterNameDisplayWidth = kDisplayWidth + 30,
 
 	kTempoSyncButtonX = 276,
 	kTempoSyncButtonY = kDisplayY + kDisplayHeight + 4,
 
 	kTempoAutoButtonX = kTempoSyncButtonX,
-	kTempoAutoButtonY = kTempoSyncButtonY + (kSliderInc * 6),
+	kTempoAutoButtonY = kTempoSyncButtonY + (kSliderInc * 7),
+
+	kCrossoverModeButtonX = kTempoSyncButtonX,
+	kCrossoverModeButtonY = kTempoSyncButtonY + (kSliderInc * 4),
 
 	kMidiModeButtonX = 105,
-	kMidiModeButtonY = 338,
+	kMidiModeButtonY = 378,
 
 	kVelocityButtonX = kMidiModeButtonX + 11,
 	kVelocityButtonY = kMidiModeButtonY + 23,
 
 	kMidiLearnButtonX = 24,
-	kMidiLearnButtonY = 338,
+	kMidiLearnButtonY = 378,
 	kMidiResetButtonX = kMidiLearnButtonX,
 	kMidiResetButtonY = kMidiLearnButtonY + 20,
 
 	kDestroyFXLinkX = 276,
-	kDestroyFXLinkY = 359
+	kDestroyFXLinkY = 399
 };
 
 
@@ -124,6 +128,15 @@ bool rateRandMinDisplayProc(float inValue, char* outText, void* inEditor)
 bool slopeDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f ms", inValue) > 0;
+}
+
+bool crossoverDisplayProc(float inValue, char* outText, void*)
+{
+	if (inValue >= 1000.0f)
+	{
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f kHz", inValue / 1000.0f) > 0;
+	}
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f Hz", inValue) > 0;
 }
 
 bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserData)
@@ -173,6 +186,7 @@ long SkidderEditor::OpenEditor()
 	// mode buttons
 	auto const tempoSyncButtonImage = VSTGUI::makeOwned<DGImage>("tempo-sync-button.png");
 	auto const tempoAutoButtonImage = VSTGUI::makeOwned<DGImage>("host-tempo-button.png");
+	auto const crossoverModeButtonImage = VSTGUI::makeOwned<DGImage>("crossover-mode-button.png");
 	auto const midiModeButtonImage = VSTGUI::makeOwned<DGImage>("midi-mode-button.png");
 	auto const velocityButtonImage = VSTGUI::makeOwned<DGImage>("velocity-button.png");
 
@@ -208,6 +222,10 @@ long SkidderEditor::OpenEditor()
 	rangeSlider = emplaceControl<DGRangeSlider>(this, kFloorRandMin, kFloor, pos, rangeSliderHandleLeftImage, rangeSliderHandleRightImage, sliderBackgroundImage, rangeSliderPushStyle);
 	rangeSlider->setAlternateHandles(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
 
+	// crossover
+	pos.offset(0, kSliderInc);
+	emplaceControl<DGSlider>(this, kCrossoverFrequency, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_glowing);
+
 	// pan
 	pos.offset(0, kSliderInc);
 	emplaceControl<DGSlider>(this, kPan, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_glowing);
@@ -228,6 +246,10 @@ long SkidderEditor::OpenEditor()
 
 	// use host tempo
 	emplaceControl<DGToggleImageButton>(this, kTempoAuto, kTempoAutoButtonX, kTempoAutoButtonY, tempoAutoButtonImage);
+
+	// crossover mode
+	pos.set(kCrossoverModeButtonX, kCrossoverModeButtonY, crossoverModeButtonImage->getWidth(), crossoverModeButtonImage->getHeight() / kNumCrossoverModes);
+	emplaceControl<DGButton>(this, kCrossoverMode, pos, crossoverModeButtonImage, DGButton::Mode::Increment);
 
 	// MIDI note control mode button
 	pos.set(kMidiModeButtonX, kMidiModeButtonY, midiModeButtonImage->getWidth(), midiModeButtonImage->getHeight() / kNumMidiModes);
@@ -281,8 +303,12 @@ long SkidderEditor::OpenEditor()
 	mFloorRandMinDisplay = emplaceControl<DGTextDisplay>(this, kFloorRandMin, pos, gainRandMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplaySmallerFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	mFloorRandMinDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
-	// pan
+	// crossover
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 4), kDisplayWidth, kDisplayHeight);
+	emplaceControl<DGTextDisplay>(this, kCrossoverFrequency, pos, crossoverDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+
+	// pan
+	pos.offset(0, kSliderInc);
 	textDisplay = emplaceControl<DGTextDisplay>(this, kPan, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
@@ -298,7 +324,7 @@ long SkidderEditor::OpenEditor()
 	// parameter name labels
 	auto const addParameterName = [this](int sliderIndex, long inParameterID)
 	{
-		DGRect const pos(kParameterNameDisplayX, kParameterNameDisplayY + (kSliderInc * sliderIndex), kDisplayWidth, kDisplayHeight);
+		DGRect const pos(kParameterNameDisplayX, kParameterNameDisplayY + (kSliderInc * sliderIndex), kParameterNameDisplayWidth, kDisplayHeight);
 		auto const label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 		std::array<char, dfx::kParameterNameMaxLength> parameterName;
 		dfx::StrLCpy(parameterName.data(), getparametername(inParameterID), parameterName.size());
@@ -314,14 +340,16 @@ long SkidderEditor::OpenEditor()
 	addParameterName(1, kPulsewidth);
 	addParameterName(2, kSlope);
 	addParameterName(3, kFloor);
-	addParameterName(4, kPan);
-	addParameterName(5, kNoise);
-	addParameterName(6, kTempo);
+	addParameterName(4, kCrossoverFrequency);
+	addParameterName(5, kPan);
+	addParameterName(6, kNoise);
+	addParameterName(7, kTempo);
 
 
 	UpdateRandomMinimumDisplays();
 	HandleTempoSyncChange();
 	HandleTempoAutoChange();
+	HandleCrossoverModeChange();
 	HandleMidiModeChange();
 	outputChannelsChanged(getNumOutputChannels());
 
@@ -355,6 +383,10 @@ void SkidderEditor::parameterChanged(long inParameterID)
 		case kFloor:
 		case kFloorRandMin:
 			UpdateRandomMinimumDisplays();
+			break;
+
+		case kCrossoverMode:
+			HandleCrossoverModeChange();
 			break;
 
 		case kTempoAuto:
@@ -422,6 +454,13 @@ void SkidderEditor::HandleTempoAutoChange()
 {
 	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.0f;
 	SetParameterAlpha(kTempo, alpha);
+}
+
+//-----------------------------------------------------------------------------
+void SkidderEditor::HandleCrossoverModeChange()
+{
+	float const alpha = (getparameter_i(kCrossoverMode) == kCrossoverMode_All) ? kUnusedControlAlpha : 1.0f;
+	SetParameterAlpha(kCrossoverFrequency, alpha);
 }
 
 //-----------------------------------------------------------------------------

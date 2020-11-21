@@ -56,6 +56,7 @@
 		EC89B36E208D2EE100E15129 /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B36D208D2EE000E15129 /* AUPlugInDispatch.cpp */; };
 		EC8AB23424CDF45E000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB23124CDF45E000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC8E90C417E60DA50022A297 /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC8E90C217E60DA50022A297 /* dfxenvelope.cpp */; };
+		ECD95C642562E4AB007F8558 /* crossover-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECD95C632562E4AB007F8558 /* crossover-mode-button.png */; };
 		ECE43DE52493BF55003C7957 /* destroy-fx-link.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DD52493BF54003C7957 /* destroy-fx-link.png */; };
 		ECE43DE62493BF55003C7957 /* tempo-sync-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DD62493BF54003C7957 /* tempo-sync-button.png */; };
 		ECE43DE72493BF55003C7957 /* range-slider-handle-right.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DD72493BF54003C7957 /* range-slider-handle-right.png */; };
@@ -182,6 +183,7 @@
 		EC8E90C317E60DA50022A297 /* dfxenvelope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxenvelope.h; sourceTree = "<group>"; };
 		EC9841911030C4C000FA3B2B /* dfxplugin-au-debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-debug.xcconfig"; path = "xcode/dfxplugin-au-debug.xcconfig"; sourceTree = "<group>"; };
 		EC9841921030C4C000FA3B2B /* dfxplugin-au-release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "dfxplugin-au-release.xcconfig"; path = "xcode/dfxplugin-au-release.xcconfig"; sourceTree = "<group>"; };
+		ECD95C632562E4AB007F8558 /* crossover-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "crossover-mode-button.png"; sourceTree = "<group>"; };
 		ECE43DD52493BF54003C7957 /* destroy-fx-link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "destroy-fx-link.png"; sourceTree = "<group>"; };
 		ECE43DD62493BF54003C7957 /* tempo-sync-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tempo-sync-button.png"; sourceTree = "<group>"; };
 		ECE43DD72493BF54003C7957 /* range-slider-handle-right.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "range-slider-handle-right.png"; sourceTree = "<group>"; };
@@ -391,6 +393,7 @@
 		EC11C848248C3E6B00FC4867 /* graphics */ = {
 			isa = PBXGroup;
 			children = (
+				ECD95C632562E4AB007F8558 /* crossover-mode-button.png */,
 				ECE43DD52493BF54003C7957 /* destroy-fx-link.png */,
 				ECE43DE02493BF55003C7957 /* host-tempo-button.png */,
 				ECE43DD82493BF54003C7957 /* midi-learn-button.png */,
@@ -517,6 +520,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECD95C642562E4AB007F8558 /* crossover-mode-button.png in Resources */,
 				ECE43DE52493BF55003C7957 /* destroy-fx-link.png in Resources */,
 				B028C2C70D0F324A00ADA1DA /* destroyfx.icns in Resources */,
 				EC6CCD08248A06860048D27F /* dfx-au-utilities.strings in Resources */,

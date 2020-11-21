@@ -27,7 +27,13 @@ Welcome to our Infinite Impulse Response filter.
 #pragma once
 
 
+#include <array>
+#include <vector>
+
 #include "dfxmath.h"
+
+
+#define DFX_CROSSOVER_LINKWITZ_RILEY 1
 
 
 namespace dfx
@@ -67,10 +73,10 @@ public:
 	explicit IIRFilter(double inSampleRate);
 
 	void setCoefficients(Coefficients const& inCoefficients);
-	Coefficients const& setCoefficients(FilterType inFilterType, double inFreq, double inQ, double inGain);
-	Coefficients const& setLowpassCoefficients(double inCutoffFreq);
-	Coefficients const& setHighpassCoefficients(double inCutoffFreq);
-	Coefficients const& setBandpassCoefficients(double inCenterFreq, double inQ);
+	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain);
+	Coefficients const& setLowpassCoefficients(double inCutoffFrequency);
+	Coefficients const& setHighpassCoefficients(double inCutoffFrequency);
+	Coefficients const& setBandpassCoefficients(double inCenterFrequency, double inQ);
 	void copyCoefficients(IIRFilter const& inSourceFilter) noexcept;
 	auto getCoefficients() const noexcept { return mCoeff; }
 	void setSampleRate(double inSampleRate);
@@ -213,7 +219,7 @@ public:
 
 private:
 	FilterType mFilterType {};
-	double mFilterFreq = 1.0;
+	double mFilterFrequency = 1.0;
 	double mFilterQ = 1.0;
 	double mFilterGain = 1.0;
 	double mSampleRate = 1.0;
@@ -221,6 +227,45 @@ private:
 	float mPrevIn = 0.0f, mPrevPrevIn = 0.0f;
 	float mPrevOut = 0.0f, mPrevPrevOut = 0.0f, mPrevPrevPrevOut = 0.0f, mCurrentOut = 0.0f;
 	Coefficients mCoeff;
+};
+
+
+
+//-----------------------------------------------------------------------------
+class Crossover
+{
+public:
+	Crossover(unsigned long inChannelCount, double inSampleRate, double inFrequency);
+
+	// the Linkwitz–Riley 4th-order filters are not stable with quickly changing cutoff frequency, 
+	// so if changes can be modulated, smooth the changes per-sample (no striding)
+	void setFrequency(double inFrequency);
+	void reset();
+	// result contains the low audio portion followed by the high
+	std::pair<float, float> process(unsigned long inChannel, float inSample);
+
+private:
+	double const mSampleRate;
+
+#if DFX_CROSSOVER_LINKWITZ_RILEY
+	struct InputCoeff
+	{
+		double mA0 {}, mA1 {}, mA2 {};
+	} mLowpassCoeff, mHighpassCoeff;
+	double mB1 {}, mB2 {}, mB3 {}, mB4 {};
+
+	struct History
+	{
+		double mX1 {}, mX2 {}, mX3 {}, mX4 {}, mY1 {}, mY2 {}, mY3 {}, mY4 {};
+		void reset() noexcept { mX1 = mX2 = mX3 = mX4 = mY1 = mY2 = mY3 = mY4 = 0.f; }
+	};
+	std::vector<History> mLowpassHistories, mHighpassHistories;
+#else
+	// cascade two 2nd-order Butterworth lowpass and highpass filters in series 
+	// for the low and high output (respectively) to create 4th-order filters 
+	// with flat summed output
+	std::vector<std::array<IIRFilter, 2>> mLowpassFilters, mHighpassFilters;
+#endif
 };
 
 

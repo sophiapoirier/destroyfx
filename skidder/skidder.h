@@ -23,10 +23,12 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #include <array>
+#include <memory>
 #include <vector>
 
 #include "dfxplugin.h"
 #include "dfxsmoothedvalue.h"
+#include "iirfilter.h"
 #include "temporatetable.h"
 
 
@@ -48,6 +50,8 @@ enum
 	kVelocity,
 	kFloor,
 	kFloorRandMin,
+	kCrossoverFrequency,
+	kCrossoverMode,
 	kTempo,
 	kTempoAuto,
 
@@ -55,13 +59,22 @@ enum
 };
 
 //----------------------------------------------------------------------------- 
-// these are the 3 MIDI note control modes:
+// these are the MIDI note control modes:
 enum
 {
 	kMidiMode_None,
 	kMidiMode_Trigger,
 	kMidiMode_Apply,
 	kNumMidiModes
+};
+
+//----------------------------------------------------------------------------- 
+enum
+{
+	kCrossoverMode_All,
+	kCrossoverMode_Low,
+	kCrossoverMode_High,
+	kNumCrossoverModes
 };
 
 
@@ -121,8 +134,9 @@ private:
 	long mRateIndex = 0, mRateRandMinIndex = 0;
 	float mPanWidth = 0.0f, mFloor = 0.0f;
 	dfx::SmoothedValue<float> mNoise;
-	double mSlopeSeconds = 0.0, mUserTempo = 1.0;
-	long mMidiMode {};
+	double mSlopeSeconds = 0., mUserTempo = 1.;
+	dfx::SmoothedValue<double> mCrossoverFrequency {0.090};
+	long mCrossoverMode {}, mMidiMode {};
 	bool mTempoSync = false, mUseHostTempo = false, mUseVelocity = false;
 
 	float mGainRange = 0.0f;  // a scaled version of mFloor and the difference between that and 1.0
@@ -143,13 +157,14 @@ private:
 	bool mNeedResync = false;  // true when playback has just started up again
 	dfx::TempoRateTable const mTempoRateTable;
 
-	float mMidiMode_f = 0.0f;  // the MIDI note control mode parameter (TODO: unused?)
-	float mVelocity_f = 0.0f;  // the use-note-velocity parameter (TODO: unused?)
+	std::unique_ptr<dfx::Crossover> mCrossover;
+
 	int mMostRecentVelocity = 0;  // the velocity of the most recently played note
 	std::array<int, DfxMidi::kNumNotes> mNoteTable;
 	long mWaitSamples = 0;
 	bool mMidiIn = false, mMidiOut = false;  // set when notes start or stop so that the floor goes to 0.0
 
+	std::vector<std::vector<float>> mEffectualInputAudioBuffers;
 	std::vector<float const*> mInputAudio;
 	std::vector<float*> mOutputAudio;
 	std::vector<float> mAsymmetricalInputAudioBuffer;

@@ -39,6 +39,7 @@ private:
 	void UpdateRandomMinimumDisplays();
 	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();
+	void HandleCrossoverModeChange();
 	void HandleMidiModeChange();
 	void SetParameterAlpha(long inParameterID, float inAlpha);
 
