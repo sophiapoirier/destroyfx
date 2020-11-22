@@ -194,28 +194,28 @@ long RezSynthEditor::OpenEditor()
 	// create images
 
 	// sliders
-	auto const horizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("horizontal-slider-background.png");
-	auto const horizontalSliderHandleImage = VSTGUI::makeOwned<DGImage>("horizontal-slider-handle.png");
-	auto const horizontalSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("horizontal-slider-handle-glowing.png");
-	auto const verticalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("vertical-slider-background.png");
-	auto const verticalSliderHandleImage = VSTGUI::makeOwned<DGImage>("vertical-slider-handle.png");
-	auto const verticalSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("vertical-slider-handle-glowing.png");
+	auto const horizontalSliderBackgroundImage = LoadImage("horizontal-slider-background.png");
+	auto const horizontalSliderHandleImage = LoadImage("horizontal-slider-handle.png");
+	auto const horizontalSliderHandleImage_glowing = LoadImage("horizontal-slider-handle-glowing.png");
+	auto const verticalSliderBackgroundImage = LoadImage("vertical-slider-background.png");
+	auto const verticalSliderHandleImage = LoadImage("vertical-slider-handle.png");
+	auto const verticalSliderHandleImage_glowing = LoadImage("vertical-slider-handle-glowing.png");
 
 	// buttons
-	auto const resonAlgButtonImage = VSTGUI::makeOwned<DGImage>("reson-algorithm-button.png");
-	auto const bandwidthModeButtonImage = VSTGUI::makeOwned<DGImage>("bandwidth-mode-button.png");
-	auto const sepModeButtonImage = VSTGUI::makeOwned<DGImage>("separation-mode-button.png");
-	auto const scaleModeButtonImage = VSTGUI::makeOwned<DGImage>("scale-mode-button.png");
-	auto const fadesButtonImage = VSTGUI::makeOwned<DGImage>("fades-button.png");
-	auto const legatoButtonImage = VSTGUI::makeOwned<DGImage>("legato-button.png");
-	auto const foldoverButtonImage = VSTGUI::makeOwned<DGImage>("foldover-button.png");
-	auto const wiseAmpButtonImage = VSTGUI::makeOwned<DGImage>("wise-amp-button.png");
-	auto const dryWetMixModeButtonImage = VSTGUI::makeOwned<DGImage>("dry-wet-mix-mode-button.png");
-	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
-	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
-	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
+	auto const resonAlgButtonImage = LoadImage("reson-algorithm-button.png");
+	auto const bandwidthModeButtonImage = LoadImage("bandwidth-mode-button.png");
+	auto const sepModeButtonImage = LoadImage("separation-mode-button.png");
+	auto const scaleModeButtonImage = LoadImage("scale-mode-button.png");
+	auto const fadesButtonImage = LoadImage("fades-button.png");
+	auto const legatoButtonImage = LoadImage("legato-button.png");
+	auto const foldoverButtonImage = LoadImage("foldover-button.png");
+	auto const wiseAmpButtonImage = LoadImage("wise-amp-button.png");
+	auto const dryWetMixModeButtonImage = LoadImage("dry-wet-mix-mode-button.png");
+	auto const midiLearnButtonImage = LoadImage("midi-learn-button.png");
+	auto const midiResetButtonImage = LoadImage("midi-reset-button.png");
+	auto const destroyFXLinkImage = LoadImage("destroy-fx-link.png");
 
-	auto const verticalValueDisplayBackgroundImage = VSTGUI::makeOwned<DGImage>("vertical-value-display-background.png");
+	auto const verticalValueDisplayBackgroundImage = LoadImage("vertical-value-display-background.png");
 
 
 

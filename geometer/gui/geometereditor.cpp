@@ -217,29 +217,29 @@ long GeometerEditor::OpenEditor() {
 
   /* ---load some images--- */
   // slider and fine tune controls
-  auto const g_sliderbackground = VSTGUI::makeOwned<DGImage>("slider-background.png");
-  auto const g_sliderhandle = VSTGUI::makeOwned<DGImage>("slider-handle.png");
-  auto const g_sliderhandle_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-glowing.png");
-  auto const g_finedownbutton = VSTGUI::makeOwned<DGImage>("fine-tune-down-button.png");
-  auto const g_fineupbutton = VSTGUI::makeOwned<DGImage>("fine-tune-up-button.png");
+  auto const g_sliderbackground = LoadImage("slider-background.png");
+  auto const g_sliderhandle = LoadImage("slider-handle.png");
+  auto const g_sliderhandle_glowing = LoadImage("slider-handle-glowing.png");
+  auto const g_finedownbutton = LoadImage("fine-tune-down-button.png");
+  auto const g_fineupbutton = LoadImage("fine-tune-up-button.png");
   // option menus
-  auto const g_windowshapemenu = VSTGUI::makeOwned<DGImage>("window-shape-button.png");
-  auto const g_windowsizemenu = VSTGUI::makeOwned<DGImage>("window-size-button.png");
-  auto const g_landmarksmenu = VSTGUI::makeOwned<DGImage>("landmarks-button.png");
-  auto const g_opsmenu = VSTGUI::makeOwned<DGImage>("ops-button.png");
-  auto const g_recreatemenu = VSTGUI::makeOwned<DGImage>("recreate-button.png");
+  auto const g_windowshapemenu = LoadImage("window-shape-button.png");
+  auto const g_windowsizemenu = LoadImage("window-size-button.png");
+  auto const g_landmarksmenu = LoadImage("landmarks-button.png");
+  auto const g_opsmenu = LoadImage("ops-button.png");
+  auto const g_recreatemenu = LoadImage("recreate-button.png");
   // help displays
-  auto const g_helpbackground = VSTGUI::makeOwned<DGImage>("help-background.png");
-  g_helpicons[HELP_CATEGORY_GENERAL] = VSTGUI::makeOwned<DGImage>("help-general.png");
-  g_helpicons[HELP_CATEGORY_WINDOWSHAPE] = VSTGUI::makeOwned<DGImage>("help-window-shape.png");
-  g_helpicons[HELP_CATEGORY_LANDMARKS] = VSTGUI::makeOwned<DGImage>("help-landmarks.png");
-  g_helpicons[HELP_CATEGORY_OPS] = VSTGUI::makeOwned<DGImage>("help-ops.png");
-  g_helpicons[HELP_CATEGORY_RECREATE] = VSTGUI::makeOwned<DGImage>("help-recreate.png");
+  auto const g_helpbackground = LoadImage("help-background.png");
+  g_helpicons[HELP_CATEGORY_GENERAL] = LoadImage("help-general.png");
+  g_helpicons[HELP_CATEGORY_WINDOWSHAPE] = LoadImage("help-window-shape.png");
+  g_helpicons[HELP_CATEGORY_LANDMARKS] = LoadImage("help-landmarks.png");
+  g_helpicons[HELP_CATEGORY_OPS] = LoadImage("help-ops.png");
+  g_helpicons[HELP_CATEGORY_RECREATE] = LoadImage("help-recreate.png");
   // MIDI learn/reset buttons
-  auto const g_midilearnbutton = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
-  auto const g_midiresetbutton = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
+  auto const g_midilearnbutton = LoadImage("midi-learn-button.png");
+  auto const g_midiresetbutton = LoadImage("midi-reset-button.png");
   // web links
-  auto const g_destroyfxlink = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
+  auto const g_destroyfxlink = LoadImage("destroy-fx-link.png");
 
 
 

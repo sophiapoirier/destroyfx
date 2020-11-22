@@ -415,54 +415,54 @@ long ScrubbyEditor::OpenEditor()
 	// create images
 
 	// sliders
-	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
-	auto const sliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-glowing.png");
-	auto const rangeSliderHandleLeftImage = VSTGUI::makeOwned<DGImage>("range-slider-handle-left.png");
-	auto const rangeSliderHandleLeftImage_glowing = VSTGUI::makeOwned<DGImage>("range-slider-handle-left-glowing.png");
-	auto const rangeSliderHandleRightImage = VSTGUI::makeOwned<DGImage>("range-slider-handle-right.png");
-	auto const rangeSliderHandleRightImage_glowing = VSTGUI::makeOwned<DGImage>("range-slider-handle-right-glowing.png");
+	auto const sliderHandleImage = LoadImage("slider-handle.png");
+	auto const sliderHandleImage_glowing = LoadImage("slider-handle-glowing.png");
+	auto const rangeSliderHandleLeftImage = LoadImage("range-slider-handle-left.png");
+	auto const rangeSliderHandleLeftImage_glowing = LoadImage("range-slider-handle-left-glowing.png");
+	auto const rangeSliderHandleRightImage = LoadImage("range-slider-handle-right.png");
+	auto const rangeSliderHandleRightImage_glowing = LoadImage("range-slider-handle-right-glowing.png");
 
 	// mode buttons
-	auto const speedModeButtonImage = VSTGUI::makeOwned<DGImage>("speed-mode-button.png");
-	auto const freezeButtonImage = VSTGUI::makeOwned<DGImage>("freeze-button.png");
-	auto const tempoSyncButtonImage = VSTGUI::makeOwned<DGImage>("tempo-sync-button.png");
-	auto const splitChannelsButtonImage = VSTGUI::makeOwned<DGImage>("stereo-button.png");
-	auto const pitchConstraintButtonImage = VSTGUI::makeOwned<DGImage>("pitch-constraint-button.png");
-	auto const tempoSyncButtonImage_little = VSTGUI::makeOwned<DGImage>("tempo-sync-button-little.png");
-	auto const hostTempoButtonImage = VSTGUI::makeOwned<DGImage>("host-tempo-button.png");
+	auto const speedModeButtonImage = LoadImage("speed-mode-button.png");
+	auto const freezeButtonImage = LoadImage("freeze-button.png");
+	auto const tempoSyncButtonImage = LoadImage("tempo-sync-button.png");
+	auto const splitChannelsButtonImage = LoadImage("stereo-button.png");
+	auto const pitchConstraintButtonImage = LoadImage("pitch-constraint-button.png");
+	auto const tempoSyncButtonImage_little = LoadImage("tempo-sync-button-little.png");
+	auto const hostTempoButtonImage = LoadImage("host-tempo-button.png");
 
 	// pitch constraint control buttons
-//	auto const keyboardOffImage = VSTGUI::makeOwned<DGImage>("keyboard-off.png");
-//	auto const keyboardOnImage = VSTGUI::makeOwned<DGImage>("keyboard-on.png");
+//	auto const keyboardOffImage = LoadImage("keyboard-off.png");
+//	auto const keyboardOnImage = LoadImage("keyboard-on.png");
 	//
 	VSTGUI::SharedPointer<DGImage> keyboardTopKeyImages[kNumPitchSteps];
-	keyboardTopKeyImages[1] = keyboardTopKeyImages[3] = keyboardTopKeyImages[6] = keyboardTopKeyImages[8] = keyboardTopKeyImages[10] = VSTGUI::makeOwned<DGImage>("keyboard-black-key.png");
-	keyboardTopKeyImages[0] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-1.png");
-	keyboardTopKeyImages[2] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-2.png");
-	keyboardTopKeyImages[4] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-3.png");
-	keyboardTopKeyImages[5] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-4.png");
-	keyboardTopKeyImages[7] = keyboardTopKeyImages[9] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-5-6.png");
-	keyboardTopKeyImages[11] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-top-7.png");
+	keyboardTopKeyImages[1] = keyboardTopKeyImages[3] = keyboardTopKeyImages[6] = keyboardTopKeyImages[8] = keyboardTopKeyImages[10] = LoadImage("keyboard-black-key.png");
+	keyboardTopKeyImages[0] = LoadImage("keyboard-white-key-top-1.png");
+	keyboardTopKeyImages[2] = LoadImage("keyboard-white-key-top-2.png");
+	keyboardTopKeyImages[4] = LoadImage("keyboard-white-key-top-3.png");
+	keyboardTopKeyImages[5] = LoadImage("keyboard-white-key-top-4.png");
+	keyboardTopKeyImages[7] = keyboardTopKeyImages[9] = LoadImage("keyboard-white-key-top-5-6.png");
+	keyboardTopKeyImages[11] = LoadImage("keyboard-white-key-top-7.png");
 	//
 	VSTGUI::SharedPointer<DGImage> keyboardBottomKeyImages[kNumPitchSteps];
-	keyboardBottomKeyImages[0] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-bottom-left.png");
-	keyboardBottomKeyImages[2] = keyboardBottomKeyImages[4] = keyboardBottomKeyImages[5] = keyboardBottomKeyImages[7] = keyboardBottomKeyImages[9] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-bottom.png");
-	keyboardBottomKeyImages[kNumPitchSteps - 1] = VSTGUI::makeOwned<DGImage>("keyboard-white-key-bottom-right.png");
+	keyboardBottomKeyImages[0] = LoadImage("keyboard-white-key-bottom-left.png");
+	keyboardBottomKeyImages[2] = keyboardBottomKeyImages[4] = keyboardBottomKeyImages[5] = keyboardBottomKeyImages[7] = keyboardBottomKeyImages[9] = LoadImage("keyboard-white-key-bottom.png");
+	keyboardBottomKeyImages[kNumPitchSteps - 1] = LoadImage("keyboard-white-key-bottom-right.png");
 	//
-	auto const transposeDownButtonImage = VSTGUI::makeOwned<DGImage>("transpose-down-button.png");
-	auto const transposeUpButtonImage = VSTGUI::makeOwned<DGImage>("transpose-up-button.png");
-	auto const majorChordButtonImage = VSTGUI::makeOwned<DGImage>("major-chord-button.png");
-	auto const minorChordButtonImage = VSTGUI::makeOwned<DGImage>("minor-chord-button.png");
-	auto const allNotesButtonImage = VSTGUI::makeOwned<DGImage>("all-notes-button.png");
-	auto const noneNotesButtonImage = VSTGUI::makeOwned<DGImage>("none-notes-button.png");
+	auto const transposeDownButtonImage = LoadImage("transpose-down-button.png");
+	auto const transposeUpButtonImage = LoadImage("transpose-up-button.png");
+	auto const majorChordButtonImage = LoadImage("major-chord-button.png");
+	auto const minorChordButtonImage = LoadImage("minor-chord-button.png");
+	auto const allNotesButtonImage = LoadImage("all-notes-button.png");
+	auto const noneNotesButtonImage = LoadImage("none-notes-button.png");
 
 	// help box
-	auto const helpBackgroundImage = VSTGUI::makeOwned<DGImage>("help-background.png");
+	auto const helpBackgroundImage = LoadImage("help-background.png");
 
 	// other buttons
-	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
-	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
-	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
+	auto const midiLearnButtonImage = LoadImage("midi-learn-button.png");
+	auto const midiResetButtonImage = LoadImage("midi-reset-button.png");
+	auto const destroyFXLinkImage = LoadImage("destroy-fx-link.png");
 
 
 

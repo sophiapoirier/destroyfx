@@ -139,11 +139,11 @@ long PolarizerEditor::OpenEditor()
 {
 	// load some graphics
 
-	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
-	auto const sliderBackgroundImage = VSTGUI::makeOwned<DGImage>("slider-background.png");
+	auto const sliderHandleImage = LoadImage("slider-handle.png");
+	auto const sliderBackgroundImage = LoadImage("slider-background.png");
 
-	auto const implodeButtonImage = VSTGUI::makeOwned<DGImage>("implode-button.png");
-	auto const destroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
+	auto const implodeButtonImage = LoadImage("implode-button.png");
+	auto const destroyFXLinkButtonImage = LoadImage("destroy-fx-link.png");
 
 
 	DGRect pos;

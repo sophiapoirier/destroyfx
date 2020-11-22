@@ -190,6 +190,7 @@ public:
 	{
 		return mBackgroundImage.get();
 	}
+	[[nodiscard]] VSTGUI::SharedPointer<DGImage> LoadImage(std::string const& inFileName);
 
 	virtual void dfxgui_Idle() {}
 

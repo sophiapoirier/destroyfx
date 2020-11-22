@@ -165,28 +165,28 @@ long EQSyncEditor::OpenEditor()
 			destroyFXLinkY = kDestroyFXLinkY;
 			helpButtonX = kHelpButtonX;
 			helpButtonY = kHelpButtonY;
-//			backgroundImage = VSTGUI::makeOwned<DGImage>("eq-sync-background.png");
-			horizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("horizontal-slider-background.png");
-			verticalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("vertical-slider-background.png");
-			sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
-			sliderHandleClickedImage = VSTGUI::makeOwned<DGImage>("slider-handle-clicked.png");
-			hostSyncButtonImage = VSTGUI::makeOwned<DGImage>("host-sync-button-panther.png");  // it's the same widget image in Panther and Jaguar
-			destroyFXLinkTabImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link-tab.png");
+//			backgroundImage = LoadImage("eq-sync-background.png");
+			horizontalSliderBackgroundImage = LoadImage("horizontal-slider-background.png");
+			verticalSliderBackgroundImage = LoadImage("vertical-slider-background.png");
+			sliderHandleImage = LoadImage("slider-handle.png");
+			sliderHandleClickedImage = LoadImage("slider-handle-clicked.png");
+			hostSyncButtonImage = LoadImage("host-sync-button-panther.png");  // it's the same widget image in Panther and Jaguar
+			destroyFXLinkTabImage = LoadImage("destroy-fx-link-tab.png");
 			break;
 		// Panther (Mac OS X 10.3)
 		case 0x1030:
 		default:
-//			backgroundImage = VSTGUI::makeOwned<DGImage>("eq-sync-background-panther.png");
-			horizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("horizontal-slider-background-panther.png");
-			verticalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("vertical-slider-background-panther.png");
-			sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-panther.png");
-			sliderHandleClickedImage = VSTGUI::makeOwned<DGImage>("slider-handle-clicked-panther.png");
-			hostSyncButtonImage = VSTGUI::makeOwned<DGImage>("host-sync-button-panther.png");
-			destroyFXLinkTabImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link-tab-panther.png");
+//			backgroundImage = LoadImage("eq-sync-background-panther.png");
+			horizontalSliderBackgroundImage = LoadImage("horizontal-slider-background-panther.png");
+			verticalSliderBackgroundImage = LoadImage("vertical-slider-background-panther.png");
+			sliderHandleImage = LoadImage("slider-handle-panther.png");
+			sliderHandleClickedImage = LoadImage("slider-handle-clicked-panther.png");
+			hostSyncButtonImage = LoadImage("host-sync-button-panther.png");
+			destroyFXLinkTabImage = LoadImage("destroy-fx-link-tab-panther.png");
 			break;
 	}
 
-	auto const helpButtonImage = VSTGUI::makeOwned<DGImage>("help-button.png");
+	auto const helpButtonImage = LoadImage("help-button.png");
 
 
 	DGRect pos;

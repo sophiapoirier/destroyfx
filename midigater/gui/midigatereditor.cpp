@@ -103,16 +103,16 @@ long MIDIGaterEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
-	auto const envelopeSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-slope.png");
-	auto const envelopeSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-slope-glowing.png");
-	auto const floorSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-floor.png");
-	auto const floorSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-floor-glowing.png");
-	auto const velocityInfluenceSliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle-velocity-influence.png");
-	auto const velocityInfluenceSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-velocity-influence-glowing.png");
-	auto const gateModeButtonImage = VSTGUI::makeOwned<DGImage>("gate-mode-button.png");
-	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
-	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
-	auto const destroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link-button.png");
+	auto const envelopeSliderHandleImage = LoadImage("slider-handle-slope.png");
+	auto const envelopeSliderHandleImage_glowing = LoadImage("slider-handle-slope-glowing.png");
+	auto const floorSliderHandleImage = LoadImage("slider-handle-floor.png");
+	auto const floorSliderHandleImage_glowing = LoadImage("slider-handle-floor-glowing.png");
+	auto const velocityInfluenceSliderHandleImage = LoadImage("slider-handle-velocity-influence.png");
+	auto const velocityInfluenceSliderHandleImage_glowing = LoadImage("slider-handle-velocity-influence-glowing.png");
+	auto const gateModeButtonImage = LoadImage("gate-mode-button.png");
+	auto const midiLearnButtonImage = LoadImage("midi-learn-button.png");
+	auto const midiResetButtonImage = LoadImage("midi-reset-button.png");
+	auto const destroyFXLinkButtonImage = LoadImage("destroy-fx-link-button.png");
 
 
 	//--create the controls-------------------------------------

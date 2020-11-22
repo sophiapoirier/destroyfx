@@ -175,25 +175,25 @@ long SkidderEditor::OpenEditor()
 	// create images
 
 	// sliders
-	auto const sliderBackgroundImage = VSTGUI::makeOwned<DGImage>("slider-background.png");
-	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
-	auto const sliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("slider-handle-glowing.png");
-	auto const rangeSliderHandleLeftImage = VSTGUI::makeOwned<DGImage>("range-slider-handle-left.png");
-	auto const rangeSliderHandleLeftImage_glowing = VSTGUI::makeOwned<DGImage>("range-slider-handle-left-glowing.png");
-	auto const rangeSliderHandleRightImage = VSTGUI::makeOwned<DGImage>("range-slider-handle-right.png");
-	auto const rangeSliderHandleRightImage_glowing = VSTGUI::makeOwned<DGImage>("range-slider-handle-right-glowing.png");
+	auto const sliderBackgroundImage = LoadImage("slider-background.png");
+	auto const sliderHandleImage = LoadImage("slider-handle.png");
+	auto const sliderHandleImage_glowing = LoadImage("slider-handle-glowing.png");
+	auto const rangeSliderHandleLeftImage = LoadImage("range-slider-handle-left.png");
+	auto const rangeSliderHandleLeftImage_glowing = LoadImage("range-slider-handle-left-glowing.png");
+	auto const rangeSliderHandleRightImage = LoadImage("range-slider-handle-right.png");
+	auto const rangeSliderHandleRightImage_glowing = LoadImage("range-slider-handle-right-glowing.png");
 
 	// mode buttons
-	auto const tempoSyncButtonImage = VSTGUI::makeOwned<DGImage>("tempo-sync-button.png");
-	auto const tempoAutoButtonImage = VSTGUI::makeOwned<DGImage>("host-tempo-button.png");
-	auto const crossoverModeButtonImage = VSTGUI::makeOwned<DGImage>("crossover-mode-button.png");
-	auto const midiModeButtonImage = VSTGUI::makeOwned<DGImage>("midi-mode-button.png");
-	auto const velocityButtonImage = VSTGUI::makeOwned<DGImage>("velocity-button.png");
+	auto const tempoSyncButtonImage = LoadImage("tempo-sync-button.png");
+	auto const tempoAutoButtonImage = LoadImage("host-tempo-button.png");
+	auto const crossoverModeButtonImage = LoadImage("crossover-mode-button.png");
+	auto const midiModeButtonImage = LoadImage("midi-mode-button.png");
+	auto const velocityButtonImage = LoadImage("velocity-button.png");
 
 	// other buttons
-	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
-	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
-	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
+	auto const midiLearnButtonImage = LoadImage("midi-learn-button.png");
+	auto const midiResetButtonImage = LoadImage("midi-reset-button.png");
+	auto const destroyFXLinkImage = LoadImage("destroy-fx-link.png");
 
 
 	auto const rateParameterIDs = GetActiveRateParameterIDs();

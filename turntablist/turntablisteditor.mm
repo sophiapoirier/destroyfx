@@ -391,15 +391,15 @@ static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
 //-----------------------------------------------------------------------------
 long TurntablistEditor::OpenEditor()
 {
-	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
-	auto const knobImage = VSTGUI::makeOwned<DGImage>("knob.png");
-	auto const onOffButtonImage = VSTGUI::makeOwned<DGImage>("on-off-button.png");
-	auto const playButtonImage = VSTGUI::makeOwned<DGImage>("play-button.png");
-	auto const directionButtonImage = VSTGUI::makeOwned<DGImage>("direction-button.png");
-	auto const loopButtonImage = VSTGUI::makeOwned<DGImage>("loop-button.png");
-	auto const noteModeButtonImage = VSTGUI::makeOwned<DGImage>("note-mode-button.png");
-	auto const scratchModeButtonImage = VSTGUI::makeOwned<DGImage>("scratch-mode-button.png");
-	auto const helpButtonImage = VSTGUI::makeOwned<DGImage>("help-button.png");
+	auto const sliderHandleImage = LoadImage("slider-handle.png");
+	auto const knobImage = LoadImage("knob.png");
+	auto const onOffButtonImage = LoadImage("on-off-button.png");
+	auto const playButtonImage = LoadImage("play-button.png");
+	auto const directionButtonImage = LoadImage("direction-button.png");
+	auto const loopButtonImage = LoadImage("loop-button.png");
+	auto const noteModeButtonImage = LoadImage("note-mode-button.png");
+	auto const scratchModeButtonImage = LoadImage("scratch-mode-button.png");
+	auto const helpButtonImage = LoadImage("help-button.png");
 
 
 	// create controls

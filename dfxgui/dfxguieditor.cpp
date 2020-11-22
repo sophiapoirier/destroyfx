@@ -97,7 +97,7 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 	// load the background image
 	// we don't need to load all bitmaps, this could be done when open is called
 	// XXX hack
-	mBackgroundImage = VSTGUI::makeOwned<DGImage>(PLUGIN_BACKGROUND_IMAGE_FILENAME);
+	mBackgroundImage = LoadImage(PLUGIN_BACKGROUND_IMAGE_FILENAME);
 	if (mBackgroundImage)
 	{
 		// init the size of the plugin
@@ -423,6 +423,24 @@ long DfxGuiEditor::GetHeight()
 		return editorRect->bottom - editorRect->top;
 	}
 	return 0;
+}
+
+//-----------------------------------------------------------------------------
+VSTGUI::SharedPointer<DGImage> DfxGuiEditor::LoadImage(std::string const& inFileName)
+{
+	auto const result = VSTGUI::makeOwned<DGImage>(inFileName.c_str());
+	if (!result->isLoaded())
+	{
+		// use the pending error message since typically images are loaded in series 
+		// upon opening the editor view, prior to the idle timer running, and so 
+		// a cumulative error message can be built this way if multiple images fail
+		if (mPendingErrorMessage.empty())
+		{
+			mPendingErrorMessage = "This software is C0RRVPT!\n";
+		}
+		mPendingErrorMessage += "failed to load image resource: " + inFileName + "\n";
+	}
+	return result;
 }
 
 

@@ -321,27 +321,27 @@ TransverbEditor::TransverbEditor(DGEditorListenerInstance inInstance)
 long TransverbEditor::OpenEditor()
 {
 	// slider handles
-	auto const horizontalSliderHandleImage = VSTGUI::makeOwned<DGImage>("purple-wide-fader-handle.png");
-	auto const grayHorizontalSliderHandleImage = VSTGUI::makeOwned<DGImage>("grey-wide-fader-handle.png");
-	auto const horizontalSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("wide-fader-handle-glowing.png");
-	auto const verticalSliderHandleImage = VSTGUI::makeOwned<DGImage>("tall-fader-handle.png");
-	auto const verticalSliderHandleImage_glowing = VSTGUI::makeOwned<DGImage>("tall-fader-handle-glowing.png");
+	auto const horizontalSliderHandleImage = LoadImage("purple-wide-fader-handle.png");
+	auto const grayHorizontalSliderHandleImage = LoadImage("grey-wide-fader-handle.png");
+	auto const horizontalSliderHandleImage_glowing = LoadImage("wide-fader-handle-glowing.png");
+	auto const verticalSliderHandleImage = LoadImage("tall-fader-handle.png");
+	auto const verticalSliderHandleImage_glowing = LoadImage("tall-fader-handle-glowing.png");
 	// slider backgrounds
-	auto const horizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("purple-wide-fader-slide.png");
-	auto const grayHorizontalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("grey-wide-fader-slide.png");
-	auto const verticalSliderBackgroundImage = VSTGUI::makeOwned<DGImage>("tall-fader-slide.png");
+	auto const horizontalSliderBackgroundImage = LoadImage("purple-wide-fader-slide.png");
+	auto const grayHorizontalSliderBackgroundImage = LoadImage("grey-wide-fader-slide.png");
+	auto const verticalSliderBackgroundImage = LoadImage("tall-fader-slide.png");
 	// buttons
-	auto const qualityButtonImage = VSTGUI::makeOwned<DGImage>("quality-button.png");
-	auto const tomsoundButtonImage = VSTGUI::makeOwned<DGImage>("tomsound-button.png");
-	auto const freezeButtonImage = VSTGUI::makeOwned<DGImage>("freeze-button.png");
-	auto const randomizeButtonImage = VSTGUI::makeOwned<DGImage>("randomize-button.png");
-	auto const fineDownButtonImage = VSTGUI::makeOwned<DGImage>("fine-down-button.png");
-	auto const fineUpButtonImage = VSTGUI::makeOwned<DGImage>("fine-up-button.png");
-	auto const speedModeButtonImage = VSTGUI::makeOwned<DGImage>("speed-mode-button.png");
-	auto const midiLearnButtonImage = VSTGUI::makeOwned<DGImage>("midi-learn-button.png");
-	auto const midiResetButtonImage = VSTGUI::makeOwned<DGImage>("midi-reset-button.png");
-	auto const dfxLinkButtonImage = VSTGUI::makeOwned<DGImage>("dfx-link.png");
-	auto const destroyFXLinkButtonImage = VSTGUI::makeOwned<DGImage>("super-destroy-fx-link.png");
+	auto const qualityButtonImage = LoadImage("quality-button.png");
+	auto const tomsoundButtonImage = LoadImage("tomsound-button.png");
+	auto const freezeButtonImage = LoadImage("freeze-button.png");
+	auto const randomizeButtonImage = LoadImage("randomize-button.png");
+	auto const fineDownButtonImage = LoadImage("fine-down-button.png");
+	auto const fineUpButtonImage = LoadImage("fine-up-button.png");
+	auto const speedModeButtonImage = LoadImage("speed-mode-button.png");
+	auto const midiLearnButtonImage = LoadImage("midi-learn-button.png");
+	auto const midiResetButtonImage = LoadImage("midi-reset-button.png");
+	auto const dfxLinkButtonImage = LoadImage("dfx-link.png");
+	auto const destroyFXLinkButtonImage = LoadImage("super-destroy-fx-link.png");
 
 
 

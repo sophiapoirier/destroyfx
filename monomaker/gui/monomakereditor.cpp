@@ -86,14 +86,14 @@ long MonomakerEditor::OpenEditor()
 {
 	//--load the images-------------------------------------
 
-	auto const sliderHandleImage = VSTGUI::makeOwned<DGImage>("slider-handle.png");
-	auto const monomergeAnimationImage = VSTGUI::makeOwned<DGImage>("monomerge-blobs.png");
-	auto const panAnimationImage = VSTGUI::makeOwned<DGImage>("pan-blobs.png");
+	auto const sliderHandleImage = LoadImage("slider-handle.png");
+	auto const monomergeAnimationImage = LoadImage("monomerge-blobs.png");
+	auto const panAnimationImage = LoadImage("pan-blobs.png");
 
-	auto const inputSelectionButtonImage = VSTGUI::makeOwned<DGImage>("input-selection-button.png");
-	auto const monomergeModeButtonImage = VSTGUI::makeOwned<DGImage>("monomerge-mode-button.png");
-	auto const panModeButtonImage = VSTGUI::makeOwned<DGImage>("pan-mode-button.png");
-	auto const destroyFXLinkImage = VSTGUI::makeOwned<DGImage>("destroy-fx-link.png");
+	auto const inputSelectionButtonImage = LoadImage("input-selection-button.png");
+	auto const monomergeModeButtonImage = LoadImage("monomerge-mode-button.png");
+	auto const panModeButtonImage = LoadImage("pan-mode-button.png");
+	auto const destroyFXLinkImage = LoadImage("destroy-fx-link.png");
 
 
 
