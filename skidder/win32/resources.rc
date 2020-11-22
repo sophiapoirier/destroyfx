@@ -1,4 +1,4 @@
-
+crossover-mode-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\crossover-mode-button.png"
 destroy-fx-link.png   PNG DISCARDABLE   "..\\gui\\graphics\\destroy-fx-link.png"
 host-tempo-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\host-tempo-button.png"
 midi-learn-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\midi-learn-button.png"
@@ -14,4 +14,3 @@ slider-handle-glowing.png   PNG DISCARDABLE   "..\\gui\\graphics\\slider-handle-
 slider-handle.png   PNG DISCARDABLE   "..\\gui\\graphics\\slider-handle.png"
 tempo-sync-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\tempo-sync-button.png"
 velocity-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\velocity-button.png"
-
