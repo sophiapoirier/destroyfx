@@ -5,6 +5,7 @@
 dfx-link.png                    PNG  DISCARDABLE     "..\\gui\\graphics\\dfx-link.png"
 fine-down-button.png            PNG  DISCARDABLE     "..\\gui\\graphics\\fine-down-button.png"
 fine-up-button.png              PNG  DISCARDABLE     "..\\gui\\graphics\\fine-up-button.png"
+freeze-button.png               PNG  DISCARDABLE     "..\\gui\\graphics\\freeze-button.png"
 grey-wide-fader-handle.png      PNG  DISCARDABLE     "..\\gui\\graphics\\grey-wide-fader-handle.png"
 grey-wide-fader-slide.png       PNG  DISCARDABLE     "..\\gui\\graphics\\grey-wide-fader-slide.png"
 midi-learn-button.png           PNG  DISCARDABLE     "..\\gui\\graphics\\midi-learn-button.png"
