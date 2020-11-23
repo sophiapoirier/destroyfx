@@ -289,6 +289,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	auto const numInputs = getnuminputs();
 	auto const numOutputs = getnumoutputs();
 	float const channelScalar = 1.0f / static_cast<float>(numOutputs);
+	auto const filterSmoothingStride = dfx::math::GetFrequencyBasedSmoothingStride(getsamplerate());
 
 	auto const entryCrossoverFrequency = mCrossoverFrequency_gen;
 	mCrossover->setFrequency(getCrossoverFrequency());
@@ -314,9 +315,10 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				mEffectualInputAudioBuffers[ch][samp] = effectual;
 				outAudio[ch][samp] = persistent;
 
-				if (mCrossoverFrequency_gen.isSmoothing())
+				bool const smoothingStrideHit = (((samp + 1) % filterSmoothingStride) == 0);
+				if (mCrossoverFrequency_gen.isSmoothing() && smoothingStrideHit)
 				{
-					mCrossoverFrequency_gen.inc();
+					mCrossoverFrequency_gen.inc(filterSmoothingStride);
 					mCrossover->setFrequency(getCrossoverFrequency());
 				}
 			}
