@@ -745,6 +745,16 @@ std::optional<double> DfxPlugin::getparameterifchanged_scalar(long inParameterIn
 }
 
 //-----------------------------------------------------------------------------
+std::optional<double> DfxPlugin::getparameterifchanged_gen(long inParameterIndex) const
+{
+	if (getparameterchanged(inParameterIndex))
+	{
+		return getparameter_gen(inParameterIndex);
+	}
+	return {};
+}
+
+//-----------------------------------------------------------------------------
 std::string DfxPlugin::getparametername(long inParameterIndex) const
 {
 	if (parameterisvalid(inParameterIndex))
@@ -1846,7 +1856,7 @@ void DfxPlugin::preprocessaudio()
 	mMidiState.preprocessEvents();
 #endif
 
-	// fetch the latest musical tempo/time/location inforomation from the host
+	// fetch the latest musical tempo/time/location information from the host
 	processtimeinfo();
 
 	// deal with current parameter values for usage during audio processing

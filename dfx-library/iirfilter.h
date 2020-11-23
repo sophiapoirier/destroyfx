@@ -33,7 +33,7 @@ Welcome to our Infinite Impulse Response filter.
 #include "dfxmath.h"
 
 
-#define DFX_CROSSOVER_LINKWITZ_RILEY 1
+#define DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP 0  // too unstable when crossover is modulated, but faster performance
 
 
 namespace dfx
@@ -247,7 +247,7 @@ public:
 private:
 	double const mSampleRate;
 
-#if DFX_CROSSOVER_LINKWITZ_RILEY
+#if DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
 	struct InputCoeff
 	{
 		double mA0 {}, mA1 {}, mA2 {};
@@ -261,9 +261,9 @@ private:
 	};
 	std::vector<History> mLowpassHistories, mHighpassHistories;
 #else
-	// cascade two 2nd-order Butterworth lowpass and highpass filters in series 
-	// for the low and high output (respectively) to create 4th-order filters 
-	// with flat summed output
+	// cascade two 2nd-order Butterworth lowpass and highpass filters  
+	// in series for the low and high output (respectively) to create  
+	// 4th-order Linkwitz-Riley filters with flat summed output
 	std::vector<std::array<IIRFilter, 2>> mLowpassFilters, mHighpassFilters;
 #endif
 };

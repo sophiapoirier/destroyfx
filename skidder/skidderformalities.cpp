@@ -87,7 +87,7 @@ Skidder::Skidder(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	mRateDoubleAutomate = mPulsewidthDoubleAutomate = mFloorDoubleAutomate = false;
 
 	registerSmoothedAudioValue(&mNoise);
-	registerSmoothedAudioValue(&mCrossoverFrequency);
+	registerSmoothedAudioValue(&mCrossoverFrequency_gen);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -164,10 +164,9 @@ void Skidder::processparameters()
 	mUseVelocity = getparameter_b(kVelocity);
 	mFloor = getparameter_f(kFloor);
 	auto const floorRandMin = static_cast<float>(getparameter_f(kFloorRandMin));
-	if (auto const value = getparameterifchanged_f(kCrossoverFrequency))
+	if (auto const value = getparameterifchanged_gen(kCrossoverFrequency))
 	{
-		mCrossoverFrequency = *value;
-		mCrossover->setFrequency(mCrossoverFrequency.getValue());
+		mCrossoverFrequency_gen = *value;
 	}
 	if (auto const value = getparameterifchanged_i(kCrossoverMode))
 	{
@@ -179,8 +178,7 @@ void Skidder::processparameters()
 		// only if the value definitely differs (e.g. it could have changed once and then back since last audio render)
 		else if ((entryCrossoverMode == kCrossoverMode_All) && (mCrossoverMode != entryCrossoverMode))
 		{
-			mCrossoverFrequency.snap();
-			mCrossover->setFrequency(mCrossoverFrequency.getValue());
+			mCrossoverFrequency_gen.snap();
 		}
 	}
 	mUserTempo = getparameter_f(kTempo);
@@ -216,4 +214,9 @@ void Skidder::processparameters()
 	mUseRandomRate = mTempoSync ? (rateRandMin_Sync < mRate_Sync) : (rateRandMin_Hz < mRate_Hz);
 	mUseRandomFloor = (floorRandMin < mFloor);
 	mUseRandomPulsewidth = (mPulsewidthRandMin < mPulsewidth);
+}
+
+double Skidder::getCrossoverFrequency() const
+{
+	return expandparametervalue(kCrossoverFrequency, mCrossoverFrequency_gen.getValue());
 }

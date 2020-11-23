@@ -409,6 +409,7 @@ public:
 	std::optional<int64_t> getparameterifchanged_i(long inParameterIndex) const;
 	std::optional<bool> getparameterifchanged_b(long inParameterIndex) const;
 	std::optional<double> getparameterifchanged_scalar(long inParameterIndex) const;
+	std::optional<double> getparameterifchanged_gen(long inParameterIndex) const;
 
 	double getparametermin_f(long inParameterIndex) const
 	{
@@ -1155,6 +1156,9 @@ public:
 		reset();
 	}
 	virtual void reset() {}
+	// NOTE: a weakness of the processparameters design, and then subsequent snapping of 
+	// all smoothed values if it is the first audio render since audio reset, is that you 
+	// initially miss that snap if you getValue a smoothed value within processparameters
 	virtual void processparameters() {}
 
 	// ***
@@ -1213,6 +1217,10 @@ public:
 	{
 		return mDfxPlugin->getparameterifchanged_scalar(inParameterIndex);
 	}
+	auto getparameterifchanged_gen(long inParameterIndex) const
+	{
+		return mDfxPlugin->getparameterifchanged_gen(inParameterIndex);
+	}
 	double getparametermin_f(long inParameterIndex) const
 	{
 		return mDfxPlugin->getparametermin_f(inParameterIndex);
@@ -1248,9 +1256,9 @@ public:
 	}
 
 #ifdef TARGET_API_AUDIOUNIT
-	void Process(Float32 const* in, Float32* out, UInt32 inNumFrames, UInt32 inNumChannels, bool& ioSilence) override
+	void Process(Float32 const* inStream, Float32* outStream, UInt32 inNumFrames, bool& ioSilence) override
 	{
-		process(in, out, inNumFrames);
+		process(inStream, outStream, inNumFrames);
 		ioSilence = false;  // TODO: allow DSP cores to communicate their output silence status
 	}
 	void Reset() override

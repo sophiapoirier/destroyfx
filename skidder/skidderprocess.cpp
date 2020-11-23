@@ -290,7 +290,8 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 	auto const numOutputs = getnumoutputs();
 	float const channelScalar = 1.0f / static_cast<float>(numOutputs);
 
-	auto const entryCrossoverFrequency = mCrossoverFrequency;
+	auto const entryCrossoverFrequency = mCrossoverFrequency_gen;
+	mCrossover->setFrequency(getCrossoverFrequency());
 	for (unsigned long ch = 0; ch < numOutputs; ch++)
 	{
 		// cache and replace input with the crossover portion to be fed into the effect +
@@ -298,7 +299,7 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 		if (ch < numInputs)
 		{
 			// TODO: it would be more efficient to not duplicate coefficient smoothing calculations for each channel
-			mCrossoverFrequency = entryCrossoverFrequency;
+			mCrossoverFrequency_gen = entryCrossoverFrequency;
 			for (unsigned long samp = 0; samp < inNumFrames; samp++)
 			{
 				auto const [persistent, effectual] = [this, inAudio, ch, samp]() -> std::pair<float, float>
@@ -313,10 +314,10 @@ void Skidder::processaudio(float const* const* inAudio, float* const* outAudio, 
 				mEffectualInputAudioBuffers[ch][samp] = effectual;
 				outAudio[ch][samp] = persistent;
 
-				if (mCrossoverFrequency.isSmoothing())
+				if (mCrossoverFrequency_gen.isSmoothing())
 				{
-					mCrossoverFrequency.inc();
-					mCrossover->setFrequency(mCrossoverFrequency.getValue());
+					mCrossoverFrequency_gen.inc();
+					mCrossover->setFrequency(getCrossoverFrequency());
 				}
 			}
 		}

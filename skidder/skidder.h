@@ -129,13 +129,15 @@ private:
 	bool isAnyNoteOn() const;
 	void resetMidi();
 
+	double getCrossoverFrequency() const;
+
 	// the parameters
 	float mRate_Hz = 1.0f, mRate_Sync = 1.0f, mPulsewidth = 0.0f, mPulsewidthRandMin = 0.0f;
 	long mRateIndex = 0, mRateRandMinIndex = 0;
 	float mPanWidth = 0.0f, mFloor = 0.0f;
 	dfx::SmoothedValue<float> mNoise;
 	double mSlopeSeconds = 0., mUserTempo = 1.;
-	dfx::SmoothedValue<double> mCrossoverFrequency {0.090};
+	dfx::SmoothedValue<double> mCrossoverFrequency_gen {0.060};
 	long mCrossoverMode {}, mMidiMode {};
 	bool mTempoSync = false, mUseHostTempo = false, mUseVelocity = false;
 
