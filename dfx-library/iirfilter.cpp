@@ -33,8 +33,118 @@ Welcome to our Infinite Impulse Response filter.
 #include "dfxmath.h"
 
 
+//------------------------------------------------------------------------
 static double const kDefaultQ_LP_HP = std::sqrt(2.0) / 2.0;  // C++20 constexpr 1.0 / std::numbers::sqrt2_v<double>
+constexpr double kUnityGain = 1.;
 
+//------------------------------------------------------------------------
+struct PreCoeff
+{
+	double const mOmega;  // radians per sample
+	double const mSinOmega;
+	double const mCosOmega;
+	double const mAlpha;
+	double const mA;
+	double const mBeta;
+
+	PreCoeff(double inFrequency, double inQ, double inGain, double inSampleRate)
+	:	mOmega(2. * dfx::math::kPi<double> * inFrequency / inSampleRate),
+		mSinOmega(std::sin(mOmega)),
+		mCosOmega(std::cos(mOmega)),
+		mAlpha(mSinOmega / (2. * inQ)),
+		//mAlpha(mSinOmega * std::sinh(std::numbers::ln2 / 2. * inQ * mOmega / mSinOmega))  // http://musicdsp.org/showone.php?id=64
+		mA(std::sqrt(inGain)),
+		mBeta(std::sqrt(std::max((((mA * mA) + 1.) / inQ) - ((mA - 1.) * (mA - 1.)), 0.)))
+	{
+	}
+};
+
+//------------------------------------------------------------------------
+static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::FilterType inFilterType, PreCoeff const& inPreCoeff)
+{
+	dfx::IIRFilter::Coefficients coeff;
+	double b0 {};
+
+	// calculate filter coefficients
+	switch (inFilterType)
+	{
+		case dfx::IIRFilter::FilterType::Lowpass:
+			b0 = 1. + inPreCoeff.mAlpha;
+			coeff.mIn = coeff.mPrevPrevIn = (1. - inPreCoeff.mCosOmega) * 0.5;
+			coeff.mPrevIn = 1. - inPreCoeff.mCosOmega;
+			coeff.mPrevOut = -2. * inPreCoeff.mCosOmega;
+			coeff.mPrevPrevOut = 1. - inPreCoeff.mAlpha;
+			break;
+
+		case dfx::IIRFilter::FilterType::Highpass:
+			b0 = 1. + inPreCoeff.mAlpha;
+			coeff.mIn = coeff.mPrevPrevIn = (1. + inPreCoeff.mCosOmega) * 0.5;
+			coeff.mPrevIn = -1. - inPreCoeff.mCosOmega;
+			coeff.mPrevOut = -2. * inPreCoeff.mCosOmega;
+			coeff.mPrevPrevOut = 1. - inPreCoeff.mAlpha;
+			break;
+
+		case dfx::IIRFilter::FilterType::Bandpass:
+			b0 = 1. + inPreCoeff.mAlpha;
+			coeff.mIn = inPreCoeff.mAlpha;
+			coeff.mPrevIn = 0.;
+			coeff.mPrevPrevIn = -inPreCoeff.mAlpha;
+			coeff.mPrevOut = -2. * inPreCoeff.mCosOmega;
+			coeff.mPrevPrevOut = 1. - inPreCoeff.mAlpha;
+			break;
+
+		case dfx::IIRFilter::FilterType::Peak:
+			b0 = 1. + (inPreCoeff.mAlpha / inPreCoeff.mA);
+			coeff.mIn = 1. + (inPreCoeff.mAlpha * inPreCoeff.mA);
+			coeff.mPrevIn = coeff.mPrevOut = -2. * inPreCoeff.mCosOmega;
+			coeff.mPrevPrevIn = 1. - (inPreCoeff.mAlpha * inPreCoeff.mA);
+			coeff.mPrevPrevOut = 1. - (inPreCoeff.mAlpha / inPreCoeff.mA);
+			break;
+
+		case dfx::IIRFilter::FilterType::Notch:
+			b0 = 1. + inPreCoeff.mAlpha;
+			coeff.mIn = coeff.mPrevPrevIn = 1.;
+			coeff.mPrevIn = coeff.mPrevOut = -2. * inPreCoeff.mCosOmega;
+			coeff.mPrevPrevOut = 1. - inPreCoeff.mAlpha;
+			break;
+
+		case dfx::IIRFilter::FilterType::LowShelf:
+			b0 = (inPreCoeff.mA + 1.) + ((inPreCoeff.mA - 1.) * inPreCoeff.mCosOmega) + (inPreCoeff.mBeta * inPreCoeff.mSinOmega);
+			coeff.mIn = inPreCoeff.mA * ((inPreCoeff.mA + 1.) - ((inPreCoeff.mA - 1.) * inPreCoeff.mCosOmega) + (inPreCoeff.mBeta * inPreCoeff.mSinOmega));
+			coeff.mPrevIn = 2. * inPreCoeff.mA * ((inPreCoeff.mA - 1.) - ((inPreCoeff.mA + 1.) * inPreCoeff.mCosOmega));
+			coeff.mPrevPrevIn = inPreCoeff.mA * ((inPreCoeff.mA + 1.) - ((inPreCoeff.mA - 1.) * inPreCoeff.mCosOmega) - (inPreCoeff.mBeta * inPreCoeff.mSinOmega));
+			coeff.mPrevOut = -2. * ((inPreCoeff.mA - 1.) + ((inPreCoeff.mA + 1.) * inPreCoeff.mCosOmega));
+			coeff.mPrevPrevOut = (inPreCoeff.mA + 1.) + ((inPreCoeff.mA - 1.) * inPreCoeff.mCosOmega) - (inPreCoeff.mBeta * inPreCoeff.mSinOmega);
+			break;
+
+		case dfx::IIRFilter::FilterType::HighShelf:
+			b0 = (inPreCoeff.mA + 1.) - ((inPreCoeff.mA - 1.) * inPreCoeff.mCosOmega) + (inPreCoeff.mBeta * inPreCoeff.mSinOmega);
+			coeff.mIn = inPreCoeff.mA * ((inPreCoeff.mA + 1.) + ((inPreCoeff.mA - 1.)) * inPreCoeff.mCosOmega + (inPreCoeff.mBeta * inPreCoeff.mSinOmega));
+			coeff.mPrevIn = -2. * inPreCoeff.mA * ((inPreCoeff.mA - 1.) + ((inPreCoeff.mA + 1.) * inPreCoeff.mCosOmega));
+			coeff.mPrevPrevIn = inPreCoeff.mA * ((inPreCoeff.mA + 1.) + ((inPreCoeff.mA - 1.) * inPreCoeff.mCosOmega) - (inPreCoeff.mBeta * inPreCoeff.mSinOmega));
+			coeff.mPrevOut = 2. * ((inPreCoeff.mA - 1.) - ((inPreCoeff.mA + 1.) * inPreCoeff.mCosOmega));
+			coeff.mPrevPrevOut = (inPreCoeff.mA + 1.) - ((inPreCoeff.mA - 1.) * inPreCoeff.mCosOmega) - (inPreCoeff.mBeta * inPreCoeff.mSinOmega);
+			break;
+
+		default:
+			assert(false);
+			return dfx::IIRFilter::kZeroCoeff;
+	}
+
+	if (b0 != 0.)
+	{
+		coeff.mIn /= b0;
+		coeff.mPrevIn /= b0;
+		coeff.mPrevPrevIn /= b0;
+		coeff.mPrevOut /= b0;
+		coeff.mPrevPrevOut /= b0;
+	}
+
+	return coeff;
+}
+
+
+#pragma mark -
 
 //------------------------------------------------------------------------
 dfx::IIRFilter::IIRFilter(double inSampleRate)
@@ -56,7 +166,6 @@ void dfx::IIRFilter::setCoefficients(Coefficients const& inCoefficients)
 }
 
 //------------------------------------------------------------------------
-// split out common value and filter-type-specific coefficient calculations?
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain)
 {
 	assert(inFrequency > 0.);
@@ -67,96 +176,7 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType i
 	mFilterQ = inQ;
 	mFilterGain = inGain;
 
-	double const omega = 2.0 * dfx::math::kPi<double> * inFrequency / mSampleRate;  // radians per sample
-	auto const sn = std::sin(omega);
-	auto const cs = std::cos(omega);
-	double const alpha = std::sin(omega) / (2.0 * inQ);
-// XXX from http://musicdsp.org/showone.php?id=64
-//alpha = std::sin(omega) * std::sinh(std::numbers::ln2 / 2.0 * inQ * omega / std::sin(omega));
-	auto const A = std::sqrt(inGain);
-	auto const beta = [inQ, A]()
-	{
-		double result = (((A * A) + 1.0) / inQ) - ((A - 1.0) * (A - 1.0));
-		result = std::max(result, 0.0);
-		return std::sqrt(result);
-	}();
-	double b0 {};
-
-	// calculate filter coefficients
-	switch (inFilterType)
-	{
-		case FilterType::Lowpass:
-			b0 = 1.0 + alpha;
-			mCoeff.mIn = mCoeff.mPrevPrevIn = (1.0 - cs) * 0.5;
-			mCoeff.mPrevIn = 1.0 - cs;
-			mCoeff.mPrevOut = -2.0 * cs;
-			mCoeff.mPrevPrevOut = 1.0 - alpha;
-			break;
-
-		case FilterType::Highpass:
-			b0 = 1.0 + alpha;
-			mCoeff.mIn = mCoeff.mPrevPrevIn = (1.0 + cs) * 0.5;
-			mCoeff.mPrevIn = -1.0 - cs;
-			mCoeff.mPrevOut = -2.0 * cs;
-			mCoeff.mPrevPrevOut = 1.0 - alpha;
-			break;
-
-		case FilterType::Bandpass:
-			b0 = 1.0 + alpha;
-			mCoeff.mIn = alpha;
-			mCoeff.mPrevIn = 0.0;
-			mCoeff.mPrevPrevIn = -alpha;
-			mCoeff.mPrevOut = -2.0 * cs;
-			mCoeff.mPrevPrevOut = 1.0 - alpha;
-			break;
-
-		case FilterType::Peak:
-			b0 = 1.0 + (alpha / A);
-			mCoeff.mIn = 1.0 + (alpha * A);
-			mCoeff.mPrevIn = mCoeff.mPrevOut = -2.0 * cs;
-			mCoeff.mPrevPrevIn = 1.0 - (alpha * A);
-			mCoeff.mPrevPrevOut = 1.0 - (alpha / A);
-			break;
-
-		case FilterType::Notch:
-			b0 = 1.0 + alpha;
-			mCoeff.mIn = mCoeff.mPrevPrevIn = 1.0;
-			mCoeff.mPrevIn = mCoeff.mPrevOut = -2.0 * cs;
-			mCoeff.mPrevPrevOut = 1.0 - alpha;
-			break;
-
-		case FilterType::LowShelf:
-			b0 = (A + 1.0) + ((A - 1.0) * cs) + (beta * sn);
-			mCoeff.mIn = A * ((A + 1.0) - ((A - 1.0) * cs) + (beta * sn));
-			mCoeff.mPrevIn = 2.0 * A * ((A - 1.0) - ((A + 1.0) * cs));
-			mCoeff.mPrevPrevIn = A * ((A + 1.0) - ((A - 1.0) * cs) - (beta * sn));
-			mCoeff.mPrevOut = -2.0 * ((A - 1.0) + ((A + 1.0) * cs));
-			mCoeff.mPrevPrevOut = (A + 1.0) + ((A - 1.0) * cs) - (beta * sn);
-			break;
-
-		case FilterType::HighShelf:
-			b0 = (A + 1.0) - ((A - 1.0) * cs) + (beta * sn);
-			mCoeff.mIn = A * ((A + 1.0) + ((A - 1.0)) * cs + (beta * sn));
-			mCoeff.mPrevIn = -2.0 * A * ((A - 1.0) + ((A + 1.0) * cs));
-			mCoeff.mPrevPrevIn = A * ((A + 1.0) + ((A - 1.0) * cs) - (beta * sn));
-			mCoeff.mPrevOut = 2.0 * ((A - 1.0) - ((A + 1.0) * cs));
-			mCoeff.mPrevPrevOut = (A + 1.0) - ((A - 1.0) * cs) - (beta * sn);
-			break;
-
-		default:
-			assert(false);
-			return kZeroCoeff;
-	}
-
-	if (b0 != 0.0)
-	{
-		mCoeff.mIn /= b0;
-		mCoeff.mPrevIn /= b0;
-		mCoeff.mPrevPrevIn /= b0;
-		mCoeff.mPrevOut /= b0;
-		mCoeff.mPrevPrevOut /= b0;
-	}
-
+	mCoeff = CalculateCoefficients(inFilterType, PreCoeff(inFrequency, inQ, inGain, mSampleRate));
 	return mCoeff;
 }
 
@@ -171,19 +191,19 @@ void dfx::IIRFilter::setSampleRate(double inSampleRate)
 //------------------------------------------------------------------------
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassCoefficients(double inCutoffFrequency)
 {
-	return setCoefficients(FilterType::Lowpass, inCutoffFrequency, kDefaultQ_LP_HP, 1.0);
+	return setCoefficients(FilterType::Lowpass, inCutoffFrequency, kDefaultQ_LP_HP, kUnityGain);
 }
 
 //------------------------------------------------------------------------
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassCoefficients(double inCutoffFrequency)
 {
-	return setCoefficients(FilterType::Highpass, inCutoffFrequency, kDefaultQ_LP_HP, 1.0);
+	return setCoefficients(FilterType::Highpass, inCutoffFrequency, kDefaultQ_LP_HP, kUnityGain);
 }
 
 //------------------------------------------------------------------------
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setBandpassCoefficients(double inCenterFrequency, double inQ)
 {
-	return setCoefficients(FilterType::Bandpass, inCenterFrequency, inQ, 1.0);
+	return setCoefficients(FilterType::Bandpass, inCenterFrequency, inQ, kUnityGain);
 }
 
 //------------------------------------------------------------------------
@@ -214,6 +234,7 @@ dfx::Crossover::Crossover(unsigned long inChannelCount, double inSampleRate, dou
 	assert(inSampleRate > 0.);
 	assert(inFrequency > 0.);
 	assert(inFrequency <= (inSampleRate / 2.));
+	inFrequency = std::min(inFrequency, inSampleRate / 2.);  // upper-limit to Nyquist
 
 #if !DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
 	auto const initFilters = [inSampleRate](auto& channelFilters)
@@ -276,8 +297,9 @@ void dfx::Crossover::setFrequency(double inFrequency)
 			});
 		});
 	};
-	setCoefficients(mLowpassFilters, dfx::IIRFilter(mSampleRate).setLowpassCoefficients(inFrequency));
-	setCoefficients(mHighpassFilters, dfx::IIRFilter(mSampleRate).setHighpassCoefficients(inFrequency));
+	PreCoeff const preCoeff(inFrequency, kDefaultQ_LP_HP, kUnityGain, mSampleRate);
+	setCoefficients(mLowpassFilters, CalculateCoefficients(dfx::IIRFilter::FilterType::Lowpass, preCoeff));
+	setCoefficients(mHighpassFilters, CalculateCoefficients(dfx::IIRFilter::FilterType::Highpass, preCoeff));
 #endif
 }
 
