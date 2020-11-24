@@ -40,7 +40,7 @@ public:
 		Momentary,
 		Increment,
 		Decrement,
-		Radio, 
+		Radio,
 		PictureReel
 	};
 
@@ -72,10 +72,7 @@ public:
 	void setUserReleaseProcedure(UserProcedure const& inProc, bool inOnlyAtEndWithNoCancel = false);
 	void setUserReleaseProcedure(UserProcedure&& inProc, bool inOnlyAtEndWithNoCancel = false);
 
-	void setOrientation(dfx::Axis inOrientation) noexcept
-	{
-		mOrientation = inOrientation;
-	}
+	void setOrientation(dfx::Axis inOrientation) noexcept;
 
 	CLASS_METHODS(DGButton, VSTGUI::CControl)
 

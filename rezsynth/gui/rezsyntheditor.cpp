@@ -21,7 +21,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "rezsyntheditor.h"
 
-#include <array>
+#include <cassert>
 #include <cmath>
 
 #include "dfxmath.h"
@@ -33,66 +33,62 @@ To contact the author, use the contact form at http://destroyfx.org/
 enum
 {
 	// positions
-	kSliderX = 22,
-	kSliderY = 59,
-	kSliderInc = 27,//35,
+	kHorizontalSliderX = 25,
+	kHorizontalSliderY = 101,
+	kHorizontalSliderInc = 48,
+	kHorizontalSliderWidth = 256,
+	kHorizontalSliderHeight = 23,
 
-	kDisplayWidth = 123,
-	kDisplayHeight = 11,
-	kDisplayX = kSliderX,
-	kDisplayY = kSliderY - kDisplayHeight - 2,
+	kHorizontalDisplayWidth = kHorizontalSliderWidth / 2,
+	kHorizontalDisplayHeight = 10,
+	kHorizontalDisplayX = kHorizontalSliderX + kHorizontalSliderWidth - kHorizontalDisplayWidth - 5,
+	kHorizontalDisplayY = kHorizontalSliderY - kHorizontalDisplayHeight,
 
-	kTallSliderX = 383,
-	kTallSliderY = 60,
-	kTallSliderInc = 51,
-	//
-	kTallDisplayWidener = 8,
-	kTallDisplayX = kTallSliderX - 10 - (kTallDisplayWidener / 2),
-	kTallDisplayY = kTallSliderY + 189,
-	kTallDisplayWidth = 36 + kTallDisplayWidener,
-	kTallDisplayHeight = 12,
-	//
-	kTallLabelWidth = kTallSliderInc,
-	kTallLabelHeight = kDisplayHeight,
-	kTallLabelX = kTallDisplayX - ((kTallLabelWidth - kTallDisplayWidth) / 2),
-	kTallLabelY = kTallDisplayY + 17,
-	kTallLabelInc = 12,
+	kVerticalSliderX = 325,
+	kVerticalSliderY = 281,
+	kVerticalSliderInc = 64,
+	kVerticalSliderWidth = 23,
+	kVerticalSliderHeight = 240,
 
-	kResonAlgButtonX = 69,
-	kResonAlgButtonY = 26,
-	kBandwidthModeButtonX = 274,
-	kBandwidthModeButtonY = 52,
-	kSepModeButtonX = 274,
-	kSepModeButtonY = 106,
-	kScaleButtonX = 400,
-	kScaleButtonY = 33,
-	kLegatoButtonX = 435 - 15,
-	kLegatoButtonY = 296,
-	kFadeTypeButtonX = 274,
-	kFadeTypeButtonY = 177,
-	kFoldoverButtonX = 274,
-	kFoldoverButtonY = 79,
-	kWiseAmpButtonX = 368 - 1,
-	kWiseAmpButtonY = 296,
-	kDryWetMixModeButtonX = 471,
-	kDryWetMixModeButtonY = kWiseAmpButtonY,
+	kVerticalDisplayX = kVerticalSliderX - 21,
+	kVerticalDisplayY = kVerticalSliderY + kVerticalSliderHeight + 11,
+	kVerticalDisplayWidth = 48,
+	kVerticalDisplayHeight = kHorizontalDisplayHeight,
 
-	kMidiLearnButtonX = 189,
-	kMidiLearnButtonY = 331,
-	kMidiResetButtonX = kMidiLearnButtonX + 72,
+	kButtonColumn1X = 296,
+	kButtonColumn2X = 400,
+	kResonAlgButtonX = kButtonColumn2X,
+	kResonAlgButtonY = 104,
+	kBandwidthModeButtonX = kButtonColumn1X,
+	kBandwidthModeButtonY = 104,
+	kFoldoverButtonX = kButtonColumn1X,
+	kFoldoverButtonY = kBandwidthModeButtonY + kHorizontalSliderInc,
+	kSepModeButtonX = kButtonColumn1X,
+	kSepModeButtonY = kFoldoverButtonY + kHorizontalSliderInc,
+	kScaleButtonX = kButtonColumn1X,
+	kScaleButtonY = 568,
+	kLegatoButtonX = kButtonColumn2X,
+	kLegatoButtonY = 200,
+	kFadeTypeButtonX = kButtonColumn1X,
+	kFadeTypeButtonY = kSepModeButtonY + kHorizontalSliderInc,
+	kWiseAmpButtonX = kButtonColumn2X,
+	kWiseAmpButtonY = 248,
+	kDryWetMixModeButtonX = kButtonColumn2X,
+	kDryWetMixModeButtonY = kScaleButtonY,
+
+	kMidiLearnButtonX = 24,
+	kMidiLearnButtonY = 568,
+	kMidiResetButtonX = 128,
 	kMidiResetButtonY = kMidiLearnButtonY,
 
-	kDestroyFXLinkX = 444,
-	kDestroyFXLinkY = 332
+	kDestroyFXLinkX = 400,
+	kDestroyFXLinkY = 672
 };
 
 
-constexpr char const* const kValueTextFont = "Arial";
-constexpr float kValueTextFontSize = 10.0f;
-//constexpr DGColor kBackgroundColor(43, 93, 63);
-//constexpr DGColor kRSGrayColor(111, 111, 111);
-constexpr DGColor kRSLightGrayColor(230, 230, 228);
-constexpr DGColor kRSVeryLightGrayColor(233, 242, 237);
+constexpr auto kValueTextFont = dfx::kFontName_SnootPixel10;
+constexpr auto kValueTextFontSize = dfx::kFontSize_SnootPixel10;
+constexpr auto kValueTextFontColor = DGColor::kWhite;
 constexpr float kUnusedControlAlpha = 0.54f;
 
 
@@ -174,7 +170,7 @@ bool velocityCurveDisplayProc(float inValue, char* outText, void*)
 
 bool pitchBendDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s %.2f semitones", dfx::kPlusMinusUTF8, inValue) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%s%.2f semitones", dfx::kPlusMinusUTF8, inValue) > 0;
 }
 
 
@@ -194,60 +190,72 @@ long RezSynthEditor::OpenEditor()
 	// create images
 
 	// sliders
-	auto const horizontalSliderBackgroundImage = LoadImage("horizontal-slider-background.png");
-	auto const horizontalSliderHandleImage = LoadImage("horizontal-slider-handle.png");
-	auto const horizontalSliderHandleImage_glowing = LoadImage("horizontal-slider-handle-glowing.png");
-	auto const verticalSliderBackgroundImage = LoadImage("vertical-slider-background.png");
-	auto const verticalSliderHandleImage = LoadImage("vertical-slider-handle.png");
-	auto const verticalSliderHandleImage_glowing = LoadImage("vertical-slider-handle-glowing.png");
+	auto const horizontalSliderHandleImage_bands = LoadImage("slider-handle-yellow.png");
+	auto const horizontalSliderHandleImage_envelope = LoadImage("slider-handle-red.png");
+	auto const horizontalSliderHandleImage_velocity = LoadImage("slider-handle-white.png");
+	auto const horizontalSliderHandleImage_MIDI = LoadImage("slider-handle-magenta.png");
+	auto const horizontalSliderHandleImage_learning = LoadImage("slider-handle-learn.png");
+	auto const verticalSliderHandleImage = LoadImage("vslider-handle-green.png");
+	auto const verticalSliderHandleImage_learning = LoadImage("vslider-handle-learn.png");
 
 	// buttons
-	auto const resonAlgButtonImage = LoadImage("reson-algorithm-button.png");
-	auto const bandwidthModeButtonImage = LoadImage("bandwidth-mode-button.png");
-	auto const sepModeButtonImage = LoadImage("separation-mode-button.png");
-	auto const scaleModeButtonImage = LoadImage("scale-mode-button.png");
-	auto const fadesButtonImage = LoadImage("fades-button.png");
-	auto const legatoButtonImage = LoadImage("legato-button.png");
-	auto const foldoverButtonImage = LoadImage("foldover-button.png");
-	auto const wiseAmpButtonImage = LoadImage("wise-amp-button.png");
-	auto const dryWetMixModeButtonImage = LoadImage("dry-wet-mix-mode-button.png");
-	auto const midiLearnButtonImage = LoadImage("midi-learn-button.png");
-	auto const midiResetButtonImage = LoadImage("midi-reset-button.png");
-	auto const destroyFXLinkImage = LoadImage("destroy-fx-link.png");
-
-	auto const verticalValueDisplayBackgroundImage = LoadImage("vertical-value-display-background.png");
+	auto const resonAlgButtonImage = LoadImage("button-reson-algorithm.png");
+	auto const bandwidthModeButtonImage = LoadImage("button-bandwidth-mode.png");
+	auto const sepModeButtonImage = LoadImage("button-separation-mode.png");
+	auto const scaleModeButtonImage = LoadImage("button-scaling-mode.png");
+	auto const fadesButtonImage = LoadImage("button-envelopes.png");
+	auto const legatoButtonImage = LoadImage("button-legato.png");
+	auto const foldoverButtonImage = LoadImage("button-foldover.png");
+	auto const wiseAmpButtonImage = LoadImage("button-wise-amp.png");
+	auto const dryWetMixModeButtonImage = LoadImage("button-mix-mode.png");
+	auto const midiLearnButtonImage = LoadImage("button-midi-learn.png");
+	auto const midiResetButtonImage = LoadImage("button-midi-reset.png");
+	auto const destroyFXLinkImage = LoadImage("button-destroyfx.png");
 
 
 
 	// create controls
 
-	DGRect pos, labelDisplayPos, valueDisplayPos;
+	DGRect pos, valueDisplayPos;
 
-	//--create the horizontal sliders and labels and displays---------------------------------
-	pos.set(kSliderX, kSliderY, horizontalSliderBackgroundImage->getWidth(), horizontalSliderBackgroundImage->getHeight());
-	labelDisplayPos.set(kDisplayX, kDisplayY, kDisplayWidth, kDisplayHeight);
-	valueDisplayPos.set(kDisplayX + kDisplayWidth, kDisplayY, horizontalSliderBackgroundImage->getWidth() - kDisplayWidth, kDisplayHeight);
+	//--create the horizontal sliders and displays---------------------------------
+	pos.set(kHorizontalSliderX, kHorizontalSliderY, kHorizontalSliderWidth, kHorizontalSliderHeight);
+	valueDisplayPos.set(kHorizontalDisplayX, kHorizontalDisplayY, kHorizontalDisplayWidth, kHorizontalDisplayHeight);
 
 	auto const addSliderComponents = [&](long const inParamID, auto const& inDisplayProc)
 	{
-		// slider control
-		auto const slider = emplaceControl<DGSlider>(this, inParamID, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage, horizontalSliderBackgroundImage);
-		slider->setAlternateHandle(horizontalSliderHandleImage_glowing);
-
-		// parameter name label
-		auto const label = emplaceControl<DGStaticTextDisplay>(this, labelDisplayPos, nullptr, dfx::TextAlignment::Left, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
-		std::array<char, dfx::kParameterNameMaxLength> paramName;
-		dfx::StrLCpy(paramName.data(), getparametername(inParamID), paramName.size());
-		// check if it's a separation amount parameter and, if it is, truncate the "(blah)" qualifying part
-		auto const breakpoint = strrchr(paramName.data(), '(');
-		if (breakpoint && (breakpoint != paramName.data()))
+		auto const horizontalSliderHandleImage = [&]() -> DGImage*
 		{
-			breakpoint[-1] = 0;
-		}
-		label->setText(paramName.data());
+			switch (inParamID)
+			{
+				case kBandwidthAmount_Hz:
+				case kBandwidthAmount_Q:
+				case kNumBands:
+				case kSepAmount_Octaval:
+				case kSepAmount_Linear:
+					return horizontalSliderHandleImage_bands.get();
+				case kEnvAttack:
+				case kEnvDecay:
+				case kEnvSustain:
+				case kEnvRelease:
+					return horizontalSliderHandleImage_envelope.get();
+				case kVelocityInfluence:
+				case kVelocityCurve:
+					return horizontalSliderHandleImage_velocity.get();
+				case kPitchBendRange:
+					return horizontalSliderHandleImage_MIDI.get();
+				default:
+					assert(false);
+					return {};
+			}
+		}();
+
+		// slider control
+		auto const slider = emplaceControl<DGSlider>(this, inParamID, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage);
+		slider->setAlternateHandle(horizontalSliderHandleImage_learning);
 
 		// value display
-		auto const display = emplaceControl<DGTextDisplay>(this, inParamID, valueDisplayPos, inDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
+		auto const display = emplaceControl<DGTextDisplay>(this, inParamID, valueDisplayPos, inDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
 
 		if ((inParamID == kBandwidthAmount_Hz) || (inParamID == kBandwidthAmount_Q))
 		{
@@ -260,9 +268,8 @@ long RezSynthEditor::OpenEditor()
 			mSepAmountDisplay = display;
 		}
 
-		pos.offset(0, kSliderInc);
-		labelDisplayPos.offset(0, kSliderInc);
-		valueDisplayPos.offset(0, kSliderInc);
+		pos.offset(0, kHorizontalSliderInc);
+		valueDisplayPos.offset(0, kHorizontalSliderInc);
 	};
 
 	addSliderComponents((getparameter_i(kBandwidthMode) == kBandwidthMode_Hz) ? kBandwidthAmount_Hz : kBandwidthAmount_Q, bandwidthAmountDisplayProc);
@@ -276,96 +283,68 @@ long RezSynthEditor::OpenEditor()
 	addSliderComponents(kVelocityCurve, velocityCurveDisplayProc);
 	addSliderComponents(kPitchBendRange, pitchBendDisplayProc);
 
-	//--initialize the vertical gain sliders---------------------------------
-	pos.set(kTallSliderX, kTallSliderY, verticalSliderBackgroundImage->getWidth(), verticalSliderBackgroundImage->getHeight());
-	valueDisplayPos.set(kTallDisplayX, kTallDisplayY, kTallDisplayWidth, kTallDisplayHeight);
-	labelDisplayPos.set(kTallLabelX, kTallLabelY, kTallLabelWidth, kTallLabelHeight);
+	//--create the vertical gain sliders---------------------------------
+	pos.set(kVerticalSliderX, kVerticalSliderY, kVerticalSliderWidth, kVerticalSliderHeight);
+	valueDisplayPos.set(kVerticalDisplayX, kVerticalDisplayY, kVerticalDisplayWidth, kVerticalDisplayHeight);
 	for (long paramID = kFilterOutputGain; paramID <= kDryWetMix; paramID++)
 	{
-		auto displayProc = DGTextDisplay::valueToTextProc_LinearToDb;
-		auto textToValueProc = DGTextDisplay::textToValueProc_DbToLinear;
-		char const* label1 = "filtered";
-		char const* label2 = "gain";
-		if (paramID == kBetweenGain)
-		{
-			label1 = "between";
-		}
-		else if (paramID == kDryWetMix)
-		{
-			label1 = "dry/wet";
-			label2 = "mix";
-			displayProc = percentDisplayProc;
-			textToValueProc = nullptr;
-		}
+		auto const displayProc = (paramID == kDryWetMix) ? percentDisplayProc : DGTextDisplay::valueToTextProc_LinearToDb;
+		constexpr intptr_t decibelPrecisionOffset = -1;
+		auto const displayProcUserData = (paramID == kDryWetMix) ? nullptr : reinterpret_cast<void*>(decibelPrecisionOffset);
+		auto const textToValueProc = (paramID == kDryWetMix) ? nullptr : DGTextDisplay::textToValueProc_DbToLinear;
 		// slider control
-		emplaceControl<DGSlider>(this, paramID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage, verticalSliderBackgroundImage)->setAlternateHandle(verticalSliderHandleImage_glowing);
+		emplaceControl<DGSlider>(this, paramID, pos, dfx::kAxis_Vertical, verticalSliderHandleImage)->setAlternateHandle(verticalSliderHandleImage_learning);
 
 		// value display
-		auto const textDisplay = emplaceControl<DGTextDisplay>(this, paramID, valueDisplayPos, displayProc, nullptr, verticalValueDisplayBackgroundImage, dfx::TextAlignment::Center, kValueTextFontSize, kRSLightGrayColor, kValueTextFont);
-//		textDisplay->setBackgroundColor(kRSGrayColor);
-//		textDisplay->setFrameColor(kBlackColor);
+		auto const textDisplay = emplaceControl<DGTextDisplay>(this, paramID, valueDisplayPos, displayProc, displayProcUserData, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kValueTextFontColor, kValueTextFont);
 		if (textToValueProc)
 		{
 			textDisplay->setTextToValueProc(textToValueProc);
 		}
 
-		// parameter name label
-		auto label = emplaceControl<DGStaticTextDisplay>(this, labelDisplayPos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
-		label->setText(label1);
-		labelDisplayPos.offset(0, kTallLabelInc);
-		label = emplaceControl<DGStaticTextDisplay>(this, labelDisplayPos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
-		label->setText(label2);
-		labelDisplayPos.offset(0, -kTallLabelInc);
-
-		pos.offset(kTallSliderInc, 0);
-		valueDisplayPos.offset(kTallSliderInc, 0);
-		labelDisplayPos.offset(kTallSliderInc, 0);
+		pos.offset(kVerticalSliderInc, 0);
+		valueDisplayPos.offset(kVerticalSliderInc, 0);
 	}
 
 
 
-	//--initialize the buttons----------------------------------------------
+	//--create the buttons----------------------------------------------
 
 	// filter response scaling
 	pos.set(kScaleButtonX, kScaleButtonY, scaleModeButtonImage->getWidth(), scaleModeButtonImage->getHeight() / kNumScaleModes);
 	emplaceControl<DGButton>(this, kScaleMode, pos, scaleModeButtonImage, DGButton::Mode::Radio);
-	// parameter name label
-	pos.set(kScaleButtonX, kScaleButtonY - kDisplayHeight - 6, scaleModeButtonImage->getWidth(), kDisplayHeight);
-	auto label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
-	label->setText("filter scaling");
 
 	// bandwidth mode
-	pos.set(kBandwidthModeButtonX, kBandwidthModeButtonY, bandwidthModeButtonImage->getWidth() / 2, bandwidthModeButtonImage->getHeight() / kNumBandwidthModes);
-	emplaceControl<DGButton>(this, kBandwidthMode, pos, bandwidthModeButtonImage, DGButton::Mode::Increment, true);
+	pos.set(kBandwidthModeButtonX, kBandwidthModeButtonY, bandwidthModeButtonImage->getWidth(), bandwidthModeButtonImage->getHeight() / kNumBandwidthModes);
+	emplaceControl<DGButton>(this, kBandwidthMode, pos, bandwidthModeButtonImage, DGButton::Mode::Radio);
 
 	// separation mode (logarithmic or linear)
-	pos.set(kSepModeButtonX, kSepModeButtonY, sepModeButtonImage->getWidth() / 2, sepModeButtonImage->getHeight() / kNumSeparationModes);
-	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, DGButton::Mode::Increment, true);
+	pos.set(kSepModeButtonX, kSepModeButtonY, sepModeButtonImage->getWidth(), sepModeButtonImage->getHeight() / kNumSeparationModes);
+	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, DGButton::Mode::Radio);
 
 	// legato
-	emplaceControl<DGToggleImageButton>(this, kLegato, kLegatoButtonX, kLegatoButtonY, legatoButtonImage);
+	pos.set(kLegatoButtonX, kLegatoButtonY, legatoButtonImage->getWidth(), legatoButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kLegato, pos, legatoButtonImage, DGButton::Mode::Radio);
 
 	// attack and release fade mode
-	pos.set(kFadeTypeButtonX, kFadeTypeButtonY, fadesButtonImage->getWidth() / 2, fadesButtonImage->getHeight() / RezSynth::kCurveType_NumTypes);
-	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DGButton::Mode::Increment, true);
+	pos.set(kFadeTypeButtonX, kFadeTypeButtonY, fadesButtonImage->getWidth(), fadesButtonImage->getHeight() / RezSynth::kCurveType_NumTypes);
+	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DGButton::Mode::Radio);
 
 	// resonance algorithm
 	pos.set(kResonAlgButtonX, kResonAlgButtonY, resonAlgButtonImage->getWidth(), resonAlgButtonImage->getHeight() / kNumResonAlgs);
-	emplaceControl<DGButton>(this, kResonAlgorithm, pos, resonAlgButtonImage, DGButton::Mode::Radio);
-	// parameter name label
-	pos.set(kResonAlgButtonX, kResonAlgButtonY - kDisplayHeight - 6, resonAlgButtonImage->getWidth(), kDisplayHeight);
-	label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kValueTextFontSize, kRSVeryLightGrayColor, kValueTextFont);
-	label->setText("resonance algorithm");
+	emplaceControl<DGButton>(this, kResonAlgorithm, pos, resonAlgButtonImage, DGButton::Mode::Radio)->setOrientation(dfx::kAxis_Vertical);
 
 	// allow Nyquist foldover or no
-	emplaceControl<DGToggleImageButton>(this, kFoldover, kFoldoverButtonX, kFoldoverButtonY, foldoverButtonImage);
+	pos.set(kFoldoverButtonX, kFoldoverButtonY, foldoverButtonImage->getWidth(), foldoverButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kFoldover, pos, foldoverButtonImage, DGButton::Mode::Radio);
 
 	// wisely lower the output gain to accomodate for resonance or no
-	emplaceControl<DGToggleImageButton>(this, kWiseAmp, kWiseAmpButtonX, kWiseAmpButtonY, wiseAmpButtonImage);
+	pos.set(kWiseAmpButtonX, kWiseAmpButtonY, wiseAmpButtonImage->getWidth(), wiseAmpButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kWiseAmp, pos, wiseAmpButtonImage, DGButton::Mode::Radio);
 
 	// dry/wet mix mode (linear or equal power)
-	pos.set(kDryWetMixModeButtonX, kDryWetMixModeButtonY, dryWetMixModeButtonImage->getWidth() / 2, dryWetMixModeButtonImage->getHeight() / kNumDryWetMixModes);
-	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, DGButton::Mode::Increment, true);
+	pos.set(kDryWetMixModeButtonX, kDryWetMixModeButtonY, dryWetMixModeButtonImage->getWidth(), dryWetMixModeButtonImage->getHeight() / kNumDryWetMixModes);
+	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, DGButton::Mode::Radio);
 
 	// turn on/off MIDI learn mode for CC parameter automation
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);

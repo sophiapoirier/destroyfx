@@ -73,7 +73,9 @@ public:
 	void refreshText();  // trigger a re-conversion of the numerical value to text
 
 	// some common text<->value translation routines for reuse
-	static bool valueToTextProc_LinearToDb(float inValue, char outTextUTF8[], void* inUserData);
+	// HACK: as a rather unpleasant hack, you can provide an intptr_t "user data" as a "precision offset", 
+	// a delta that will be applied to the printf-style fractional precision value
+	static bool valueToTextProc_LinearToDb(float inValue, char outTextUTF8[], void* inPrecisionOffset);
 	static bool valueToTextProc_Percent(float inValue, char outTextUTF8[], void* inUserData);
 	static bool valueToTextProc_LinearToPercent(float inValue, char outTextUTF8[], void* inUserData);
 	static std::optional<float> textToValueProc_DbToLinear(std::string const& inText, DGTextDisplay* inTextDisplay);

@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguibutton.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 #include "dfxguieditor.h"
@@ -326,6 +327,12 @@ void DGButton::setUserReleaseProcedure(UserProcedure&& inProc, bool inOnlyAtEndW
 	assert(inProc);
 	mUserReleaseProcedure = std::move(inProc);
 	mUseReleaseProcedureOnlyAtEndWithNoCancel = inOnlyAtEndWithNoCancel;
+}
+
+void DGButton::setOrientation(dfx::Axis inOrientation) noexcept
+{
+	assert(mMode == Mode::Radio);  // the only applicable mode
+	mOrientation = inOrientation;
 }
 
 //-----------------------------------------------------------------------------
