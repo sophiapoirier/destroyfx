@@ -22,8 +22,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "skiddereditor.h"
 
 #include <algorithm>
-#include <cmath>
 #include <cctype>
+#include <cmath>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -132,11 +132,21 @@ bool slopeDisplayProc(float inValue, char* outText, void*)
 
 bool crossoverDisplayProc(float inValue, char* outText, void*)
 {
-	if (inValue >= 1000.0f)
+	if (inValue >= 1'000.f)
 	{
-		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f kHz", inValue / 1000.0f) > 0;
+		return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f kHz", inValue / 1'000.f) > 0;
 	}
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f Hz", inValue) > 0;
+}
+
+std::optional<float> crossoverTextToValueProc(std::string const& inText, DGTextDisplay* inTextDisplay)
+{
+	auto const value = DGTextDisplay::textToValueProc_Generic(inText, inTextDisplay);
+	if (value && (dfx::ToLower(inText).find("khz") != std::string::npos))
+	{
+		return *value * 1'000.f;
+	}
+	return value;
 }
 
 bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserData)
@@ -305,7 +315,8 @@ long SkidderEditor::OpenEditor()
 
 	// crossover
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 4), kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kCrossoverFrequency, pos, crossoverDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kCrossoverFrequency, pos, crossoverDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	textDisplay->setTextToValueProc(crossoverTextToValueProc);
 
 	// pan
 	pos.offset(0, kSliderInc);
