@@ -50,7 +50,8 @@ struct TTFont {
   // Pass DrawPixel(int x, int y, uint8 v) which should do the pixel blending.
   template<class DP>
   void BlitString(int x, int y, int size_px,
-		  const string &text, const DP &DrawPixel) {
+		  const string &text, const DP &DrawPixel,
+		  bool subpixel = true) {
     const float scale = stbtt_ScaleForPixelHeight(&font, size_px);
 
     const int baseline = [&]() {
@@ -60,22 +61,30 @@ struct TTFont {
       }();
 
     const int ypos = y + baseline;
+    // Should stay integral if subpixel is false.
     float xpos = x;
     for (int idx = 0; idx < (int)text.size(); idx++) {
-      // XXX maybe get xpos as int here...
-      float x_shift = xpos - (float) floor(xpos);
 
       int advance = 0, left_side_bearing = 0;
       stbtt_GetCodepointHMetrics(&font, text[idx], &advance, &left_side_bearing);
 
       int bitmap_w = 0, bitmap_h = 0;
-      constexpr float y_shift = 0.0f;
       int xoff = 0, yoff = 0;
-      uint8 *bitmap = stbtt_GetCodepointBitmapSubpixel(&font, scale, scale,
-						       x_shift, y_shift,
-						       text[idx],
-						       &bitmap_w, &bitmap_h,
-						       &xoff, &yoff);
+      uint8 *bitmap = nullptr;      
+      if (subpixel) {
+	const float x_shift = xpos - (float) floor(xpos);
+	constexpr float y_shift = 0.0f;
+	bitmap = stbtt_GetCodepointBitmapSubpixel(&font, scale, scale,
+						  x_shift, y_shift,
+						  text[idx],
+						  &bitmap_w, &bitmap_h,
+						  &xoff, &yoff);
+      } else {
+	bitmap = stbtt_GetCodepointBitmap(&font, scale, scale,
+					  text[idx],
+					  &bitmap_w, &bitmap_h,
+					  &xoff, &yoff);
+      }
       if (bitmap == nullptr) continue;
       
       for (int yy = 0; yy < bitmap_h; yy++) {
@@ -90,6 +99,11 @@ struct TTFont {
       if (text[idx + 1] != '\0') {
 	xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
       }
+      
+      if (!subpixel) {
+	// Or floor?
+	xpos = roundf(xpos);
+      }
     }
   }
 
@@ -102,8 +116,8 @@ private:
 
 int main(int argc, char **argv) {
   Blue blue;
-  // TTFont snoot("../fonts/px10.ttf");
-  TTFont snoot("../fonts/bboron.ttf");
+  // Looks good with size=14, subpixel false.
+  TTFont snoot("../fonts/px10.ttf");
   
   ImageRGBA img(WIDTH, HEIGHT);
   img.Clear32(0x000000ff);
@@ -183,11 +197,14 @@ int main(int argc, char **argv) {
       // Using builtin bit7.
       // img.BlendText2x32(lx, ly, 0xFFFFFFFF, labels[i]);
 
-      snoot.BlitString(lx, ly, 64, labels[i],
+      snoot.BlitString(lx, ly, 14, labels[i],
 		       [&](int x, int y, uint8 v) {
-			 uint32 color = 0xFFFFFF00 | v;
-			 img.BlendPixel32(x, y, color);
-		       });
+			 if (v > 128) {
+			   // uint32 color = 0xFFFFFF00 | v;
+			   img.BlendPixel32(x, y, 0xFFFFFFFF);
+			 }
+		       },
+		       false);
     }
   }
   
