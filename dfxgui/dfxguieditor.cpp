@@ -1809,6 +1809,65 @@ unsigned long DfxGuiEditor::getNumOutputChannels()
 #endif
 }
 
+//-----------------------------------------------------------------------------
+std::optional<double> DfxGuiEditor::getSmoothedAudioValueTime()
+{
+#ifdef TARGET_API_AUDIOUNIT
+	return dfxgui_GetProperty<double>(dfx::kPluginProperty_SmoothedAudioValueTime);
+#else
+	return dfxgui_GetEffectInstance()->getSmoothedAudioValueTime();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::setSmoothedAudioValueTime(double inSmoothingTimeInSeconds)
+{
+#ifdef TARGET_API_AUDIOUNIT
+	dfxgui_SetProperty(dfx::kPluginProperty_SmoothedAudioValueTime, inSmoothingTimeInSeconds);
+#else
+	dfxgui_GetEffectInstance()->setSmoothedAudioValueTime(inSmoothingTimeInSeconds);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void DfxGuiEditor::TextEntryForSmoothedAudioValueTime()
+{
+	auto const currentValue = getSmoothedAudioValueTime();
+	if (!currentValue || !getFrame())
+	{
+		return;
+	}
+
+	mTextEntryDialog = VSTGUI::makeOwned<DGTextEntryDialog>("parameter value smoothing time", "enter seconds:");
+	assert(mTextEntryDialog.get());
+	if (mTextEntryDialog)
+	{
+		mTextEntryDialog->setText(std::to_string(*currentValue));
+
+		auto const textEntryCallback = [this](DGDialog* inDialog, DGDialog::Selection inSelection)
+		{
+ 			auto const textEntryDialog = dynamic_cast<DGTextEntryDialog*>(inDialog);
+			assert(textEntryDialog);
+			if (textEntryDialog && (inSelection == DGDialog::kSelection_OK))
+			{
+				double value {};
+				auto const readCount = sscanf(dfx::SanitizeNumericalInput(textEntryDialog->getText()).c_str(), "%lf", &value);
+				if ((readCount >= 1) && (readCount != EOF) && (value >= 0.))
+				{
+					setSmoothedAudioValueTime(value);
+					return true;
+				}
+				return false;
+			}
+			return true;
+		};
+		if (!mTextEntryDialog->runModal(getFrame(), textEntryCallback))
+		{
+			ShowMessage("could not display text entry dialog");
+		}
+	}
+}
+
 
 namespace
 {
@@ -1895,6 +1954,11 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 								std::bind(&DfxGuiEditor::randomizeparameters, this, true));  // XXX yes to writing automation data?
 	DFX_AppendCommandItemToMenu(resultMenu, "Generate parameter automation snapshot", 
 								std::bind(&DfxGuiEditor::GenerateParametersAutomationSnapshot, this));
+	if (getSmoothedAudioValueTime().has_value())
+	{
+		DFX_AppendCommandItemToMenu(resultMenu, "Set parameter value smoothing time...", 
+									std::bind(&DfxGuiEditor::TextEntryForSmoothedAudioValueTime, this));
+	}
 
 	resultMenu.addSeparator();
 	DFX_AppendCommandItemToMenu(resultMenu, "Copy settings", std::bind(&DfxGuiEditor::copySettings, this));

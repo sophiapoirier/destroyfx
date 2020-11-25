@@ -1231,6 +1231,22 @@ void DfxPlugin::incrementSmoothedAudioValues(DfxPluginCore* owner)
 }
 
 //-----------------------------------------------------------------------------
+std::optional<double> DfxPlugin::getSmoothedAudioValueTime() const
+{
+	// HACK: arbitrarily grabbing the first value's smoothing time, which is fine enough for our use cases
+	return mSmoothedAudioValues.empty() ? std::nullopt : std::make_optional(mSmoothedAudioValues.front().first->getSmoothingTime());
+}
+
+//-----------------------------------------------------------------------------
+void DfxPlugin::setSmoothedAudioValueTime(double inSmoothingTimeInSeconds)
+{
+	std::for_each(mSmoothedAudioValues.cbegin(), mSmoothedAudioValues.cend(), [inSmoothingTimeInSeconds](auto& value)
+	{
+		value.first->setSmoothingTime(inSmoothingTimeInSeconds);
+	});
+}
+
+//-----------------------------------------------------------------------------
 void DfxPlugin::do_idle()
 {
 	for (size_t parameterIndex = 0; parameterIndex < mParametersChangedInProcessHavePosted.size(); parameterIndex++)

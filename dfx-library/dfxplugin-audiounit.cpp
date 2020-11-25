@@ -255,6 +255,11 @@ OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID,
 			outWritable = true;
 			break;
 
+		case dfx::kPluginProperty_SmoothedAudioValueTime:
+			outDataSize = sizeof(double);
+			outWritable = true;
+			break;
+
 	#if DEBUG
 		case dfx::kPluginProperty_DfxPluginInstance:
 			outDataSize = sizeof(this);
@@ -638,6 +643,17 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 			}
 			break;
 
+		case dfx::kPluginProperty_SmoothedAudioValueTime:
+			if (auto const value = getSmoothedAudioValueTime())
+			{
+				*static_cast<double*>(outData) = *value;
+			}
+			else
+			{
+				status = kAudioUnitErr_PropertyNotInUse;
+			}
+			break;
+
 	#if DEBUG
 		case dfx::kPluginProperty_DfxPluginInstance:
 			*static_cast<DfxPlugin**>(outData) = this;
@@ -693,6 +709,9 @@ OSStatus DfxPlugin::GetProperty(AudioUnitPropertyID inPropertyID,
 					case dfx::kPluginProperty_ParameterUnit:
 						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
 						nodePropertyDescs[i].mFlags |= kLogicAUNodePropertyFlag_FullRoundTrip;
+						break;
+					case dfx::kPluginProperty_SmoothedAudioValueTime:
+						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All64Bits;
 						break;
 					case dfx::kPluginProperty_MidiLearner:
 						nodePropertyDescs[i].mEndianMode = kLogicAUNodePropertyEndianMode_All32Bits;
@@ -839,7 +858,7 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			break;
 		}
 
-		// set parameter value strings
+		// set parameter value strings (WHY???)
 		case dfx::kPluginProperty_ParameterValueString:
 		{
 			auto const request = static_cast<dfx::ParameterValueStringRequest const*>(inData);
@@ -867,6 +886,17 @@ OSStatus DfxPlugin::SetProperty(AudioUnitPropertyID inPropertyID,
 			else
 			{
 				randomizeparameter(inElement);
+			}
+			break;
+
+		case dfx::kPluginProperty_SmoothedAudioValueTime:
+			if (mSmoothedAudioValues.empty())
+			{
+				status = kAudioUnitErr_PropertyNotInUse;
+			}
+			else
+			{
+				setSmoothedAudioValueTime(*static_cast<double const*>(inData));
 			}
 			break;
 

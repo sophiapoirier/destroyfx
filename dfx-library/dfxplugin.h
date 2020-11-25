@@ -629,6 +629,8 @@ public:
 	void unregisterAllSmoothedAudioValues(DfxPluginCore* owner);
 	// Here, nullptr means "all of them".
 	void incrementSmoothedAudioValues(DfxPluginCore* owner = nullptr);
+	std::optional<double> getSmoothedAudioValueTime() const;
+	void setSmoothedAudioValueTime(double inSmoothingTimeInSeconds);
 
 	void do_idle();
 	virtual void idle() {}

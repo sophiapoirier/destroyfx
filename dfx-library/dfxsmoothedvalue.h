@@ -62,6 +62,10 @@ public:
 	// advance N samples
 	void inc(size_t inCount) noexcept override;
 
+	double getSmoothingTime() const noexcept override
+	{
+		return mSmoothDur_seconds;
+	}
 	void setSmoothingTime(double inSmoothingTimeInSeconds) override;
 	void setSampleRate(double inSampleRate) override;
 

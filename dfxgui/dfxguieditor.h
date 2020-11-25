@@ -245,7 +245,6 @@ public:
 	void doIdleStuff() override;
 #endif
 
-	// VST/RTAS abstraction methods
 	long GetNumParameters();
 	long GetNumAudioOutputs();
 	float dfxgui_ExpandParameterValue(long inParameterIndex, float inValue);
@@ -317,8 +316,20 @@ public:
 		return dfxgui_SetProperty<T>(inPropertyID, dfx::kScope_Global, 0, data);
 	}
 
+	unsigned long getNumInputChannels();
+	unsigned long getNumOutputChannels();
+	std::optional<double> getSmoothedAudioValueTime();
+	void setSmoothedAudioValueTime(double inSmoothingTimeInSeconds);
+	void TextEntryForSmoothedAudioValueTime();
 	void LoadPresetFile();
 	void SavePresetFile();
+
+	// Create a VSTGUI font via the editor's font factory.
+	VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr)
+	{
+		return mFontFactory->CreateVstGuiFont(inFontSize, inFontName);
+	}
+
 #if TARGET_PLUGIN_USES_MIDI
 	void setmidilearning(bool inLearnMode);
 	bool getmidilearning();
@@ -349,14 +360,6 @@ public:
 		return mMidiResetButton;
 	}
 #endif
-	unsigned long getNumInputChannels();
-	unsigned long getNumOutputChannels();
-
-	// Create a VSTGUI font via the editor's font factory.
-	VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr)
-	{
-		return mFontFactory->CreateVstGuiFont(inFontSize, inFontName);
-	}
 
 protected:
 	std::vector<IDGControl*> mControlsList;

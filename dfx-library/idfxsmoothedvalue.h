@@ -41,6 +41,7 @@ class ISmoothedValue
 public:
 	virtual ~ISmoothedValue() = default;
 
+	virtual double getSmoothingTime() const noexcept = 0;
 	virtual void setSmoothingTime(double inSmoothingTimeInSeconds) = 0;
 	virtual void setSampleRate(double inSampleRate) = 0;
 	virtual void snap() noexcept = 0;
