@@ -24,9 +24,7 @@ constexpr int WIDTH = 512;
 constexpr int HEIGHT = 768;
 
 struct TTFont {
-  vector<uint8> ttf_bytes;
-  stbtt_fontinfo font;
-  
+ 
   TTFont(const string &filename) {
     ttf_bytes = Util::ReadFileBytes(filename);
     CHECK(!ttf_bytes.empty()) << filename;
@@ -49,45 +47,64 @@ struct TTFont {
     return ImageA(std::move(ret), width, height);
   }
 
-};
+  // Pass DrawPixel(int x, int y, uint8 v) which should do the pixel blending.
+  template<class DP>
+  void BlitString(int x, int y, int size_px,
+		  const string &text, const DP &DrawPixel) {
+    const float scale = stbtt_ScaleForPixelHeight(&font, size_px);
 
-#if 0
-   int i,j,ascent,baseline,ch=0;
-   float scale, xpos=2; // leave a little padding in case the character extends left
+    const int baseline = [&]() {
+	int ascent = 0;
+	stbtt_GetFontVMetrics(&font, &ascent, 0, 0);
+	return (int) (ascent * scale);
+      }();
 
-   scale = stbtt_ScaleForPixelHeight(&font, 15);
-   stbtt_GetFontVMetrics(&font, &ascent,0,0);
-   baseline = (int) (ascent*scale);
-
-   while (text[ch]) {
-      int advance,lsb,x0,y0,x1,y1;
+    const int ypos = y + baseline;
+    float xpos = x;
+    for (int idx = 0; idx < (int)text.size(); idx++) {
+      // XXX maybe get xpos as int here...
       float x_shift = xpos - (float) floor(xpos);
-      stbtt_GetCodepointHMetrics(&font, text[ch], &advance, &lsb);
-      stbtt_GetCodepointBitmapBoxSubpixel(&font, text[ch], scale,scale,x_shift,0, &x0,&y0,&x1,&y1);
-      stbtt_MakeCodepointBitmapSubpixel(&font, &screen[baseline + y0][(int) xpos + x0], x1-x0,y1-y0, 79, scale,scale,x_shift,0, text[ch]);
-      // note that this stomps the old data, so where character boxes overlap (e.g. 'lj') it's wrong
-      // because this API is really for baking character bitmaps into textures. if you want to render
-      // a sequence of characters, you really need to render each bitmap to a temp buffer, then
-      // "alpha blend" that into the working buffer
-      xpos += (advance * scale);
-      if (text[ch+1])
-         xpos += scale*stbtt_GetCodepointKernAdvance(&font, text[ch],text[ch+1]);
-      ++ch;
-   }
 
-   for (j=0; j < 20; ++j) {
-      for (i=0; i < 78; ++i)
-         putchar(" .:ioVM@"[screen[j][i]>>5]);
-      putchar('\n');
-   }
-#endif
+      int advance = 0, left_side_bearing = 0;
+      stbtt_GetCodepointHMetrics(&font, text[idx], &advance, &left_side_bearing);
 
+      int bitmap_w = 0, bitmap_h = 0;
+      constexpr float y_shift = 0.0f;
+      int xoff = 0, yoff = 0;
+      uint8 *bitmap = stbtt_GetCodepointBitmapSubpixel(&font, scale, scale,
+						       x_shift, y_shift,
+						       text[idx],
+						       &bitmap_w, &bitmap_h,
+						       &xoff, &yoff);
+      if (bitmap == nullptr) continue;
+      
+      for (int yy = 0; yy < bitmap_h; yy++) {
+	for (int xx = 0; xx < bitmap_w; xx++) {
+	  DrawPixel(xpos + xx + xoff, ypos + yy + yoff, bitmap[yy * bitmap_w + xx]);
+	}
+      }
 
+      stbtt_FreeBitmap(bitmap, nullptr);
+
+      xpos += advance * scale;
+      if (text[idx + 1] != '\0') {
+	xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
+      }
+    }
+  }
+
+private:
+  vector<uint8> ttf_bytes;
+  stbtt_fontinfo font;
+
+};
 
 
 int main(int argc, char **argv) {
   Blue blue;
-
+  // TTFont snoot("../fonts/px10.ttf");
+  TTFont snoot("../fonts/bboron.ttf");
+  
   ImageRGBA img(WIDTH, HEIGHT);
   img.Clear32(0x000000ff);
 
@@ -160,10 +177,17 @@ int main(int argc, char **argv) {
     constexpr int LABEL_X = 48;
     constexpr int LABEL_Y = 2;
     for (int i = 0; i < NUM_SLIDERS; i++) {
-      img.BlendText2x32(CTRL_X + LABEL_X,
-			i * CTRL_H + CTRL_Y + LABEL_Y,
-			0xFFFFFFFF,
-			labels[i]);
+      int lx = CTRL_X + LABEL_X;
+      int ly = i * CTRL_H + CTRL_Y + LABEL_Y;
+
+      // Using builtin bit7.
+      // img.BlendText2x32(lx, ly, 0xFFFFFFFF, labels[i]);
+
+      snoot.BlitString(lx, ly, 64, labels[i],
+		       [&](int x, int y, uint8 v) {
+			 uint32 color = 0xFFFFFF00 | v;
+			 img.BlendPixel32(x, y, color);
+		       });
     }
   }
   
