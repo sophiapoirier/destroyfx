@@ -81,6 +81,15 @@ void ReverseBytes(void* ioData, size_t inItemSize, size_t inItemCount)
 }
 
 //------------------------------------------------------
+std::string ToLower(std::string_view inText)
+{
+	auto const toLower = std::bind(std::tolower<std::string::value_type>, std::placeholders::_1, std::locale::classic());
+	std::string result;
+	std::transform(inText.cbegin(), inText.cend(), std::back_inserter(result), toLower);
+	return result;
+}
+
+//------------------------------------------------------
 size_t StrlCat(char* buf, std::string_view appendme, size_t maxlen)
 {
 	const size_t appendlen = appendme.size();
@@ -264,14 +273,11 @@ bool LaunchDocumentation()
 #else
 	// XXX this will load latest docs on our website which may not match the version of the running software
 	// TODO: embed the documentation into Windows builds somehow?
-	std::string docsFileName(PLUGIN_NAME_STRING ".html");
-	using CharT = std::string::value_type;
-	auto const toLower = std::bind(std::tolower<CharT>, std::placeholders::_1, std::locale::classic());
-	std::transform(docsFileName.cbegin(), docsFileName.cend(), docsFileName.begin(), toLower);
+	auto docsFileName = ToLower(PLUGIN_NAME_STRING ".html");
 	while (true)
 	{
-		auto const isSpace = std::bind(std::isspace<CharT>, std::placeholders::_1, std::locale::classic());
-		auto const foundCharacter = std::find_if(docsFileName.begin(), docsFileName.end(), isSpace);
+		auto const isSpace = std::bind(std::isspace<std::string::value_type>, std::placeholders::_1, std::locale::classic());
+		auto const foundCharacter = std::find_if(docsFileName.cbegin(), docsFileName.cend(), isSpace);
 		if (foundCharacter == docsFileName.end())
 		{
 			break;

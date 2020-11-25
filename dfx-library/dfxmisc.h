@@ -106,6 +106,7 @@ void ReverseBytes(T& ioData)
 	ReverseBytes(&ioData, 1);
 }
 
+std::string ToLower(std::string_view inText);
 // Same as the nonstandard strlcat() function.
 // Appends 'appendme' to the nul-terminated string in buf, assuming that
 // buf has at least maxlen bytes allocated. If the input buffer is nul-
