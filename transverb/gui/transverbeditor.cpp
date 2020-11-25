@@ -77,7 +77,7 @@ enum
 };
 
 
-static auto const kDisplayFont = dfx::kFontName_SnootPixel10;
+constexpr auto kDisplayFont = dfx::kFontName_SnootPixel10;
 constexpr DGColor kDisplayTextColor(103, 161, 215);
 constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
 constexpr float kFineTuneInc = 0.0001f;

@@ -31,7 +31,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-static auto const kDisplayFont = dfx::kFontName_SnootPixel10;
+constexpr auto kDisplayFont = dfx::kFontName_SnootPixel10;
 constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
 constexpr DGColor kBrownTextColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
