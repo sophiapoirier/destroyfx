@@ -89,7 +89,7 @@ enum
 constexpr auto kValueTextFont = dfx::kFontName_SnootPixel10;
 constexpr auto kValueTextFontSize = dfx::kFontSize_SnootPixel10;
 constexpr auto kValueTextFontColor = DGColor::kWhite;
-constexpr float kUnusedControlAlpha = 0.54f;
+constexpr float kUnusedControlAlpha = 0.39f;
 
 
 
@@ -192,8 +192,8 @@ long RezSynthEditor::OpenEditor()
 	// sliders
 	auto const horizontalSliderHandleImage_bands = LoadImage("slider-handle-yellow.png");
 	auto const horizontalSliderHandleImage_envelope = LoadImage("slider-handle-red.png");
-	auto const horizontalSliderHandleImage_velocity = LoadImage("slider-handle-white.png");
-	auto const horizontalSliderHandleImage_MIDI = LoadImage("slider-handle-magenta.png");
+	auto const horizontalSliderHandleImage_midiNotes = LoadImage("slider-handle-white.png");
+	auto const horizontalSliderHandleImage_midiBends = LoadImage("slider-handle-magenta.png");
 	auto const horizontalSliderHandleImage_learning = LoadImage("slider-handle-learn.png");
 	auto const verticalSliderHandleImage = LoadImage("vslider-handle-green.png");
 	auto const verticalSliderHandleImage_learning = LoadImage("vslider-handle-learn.png");
@@ -241,9 +241,9 @@ long RezSynthEditor::OpenEditor()
 					return horizontalSliderHandleImage_envelope.get();
 				case kVelocityInfluence:
 				case kVelocityCurve:
-					return horizontalSliderHandleImage_velocity.get();
+					return horizontalSliderHandleImage_midiNotes.get();
 				case kPitchBendRange:
-					return horizontalSliderHandleImage_MIDI.get();
+					return horizontalSliderHandleImage_midiBends.get();
 				default:
 					assert(false);
 					return {};
@@ -409,12 +409,6 @@ void RezSynthEditor::parameterChanged(long inParameterID)
 //-----------------------------------------------------------------------------
 void RezSynthEditor::HandleLegatoChange()
 {
-	float const alpha = getparameter_b(kLegato) ? kUnusedControlAlpha : 1.0f;
-	for (auto& control : mControlsList)
-	{
-		if (control->getParameterID() == kBetweenGain)
-		{
-			control->setDrawAlpha(alpha);
-		}
-	}
+	float const alpha = getparameter_b(kLegato) ? kUnusedControlAlpha : 1.f;
+	SetParameterAlpha(kBetweenGain, alpha);
 }

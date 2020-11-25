@@ -169,17 +169,9 @@ long MonomakerEditor::OpenEditor()
 //-----------------------------------------------------------------------------
 void MonomakerEditor::inputChannelsChanged(unsigned long inChannelCount)
 {
-	float const alpha = (inChannelCount > 1) ? 1.0f : kUnusedControlAlpha;
-	for (auto& control : mControlsList)
-	{
-		switch (control->getParameterID())
-		{
-			case kInputSelection:
-			case kMonomerge:
-			case kMonomergeMode:
-			case kPanMode:
-				control->setDrawAlpha(alpha);
-				break;
-		}
-	}
+	float const alpha = (inChannelCount > 1) ? 1.f : kUnusedControlAlpha;
+	SetParameterAlpha(kInputSelection, alpha);
+	SetParameterAlpha(kMonomerge, alpha);
+	SetParameterAlpha(kMonomergeMode, alpha);
+	SetParameterAlpha(kPanMode, alpha);
 }

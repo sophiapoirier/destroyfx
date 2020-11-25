@@ -41,7 +41,6 @@ private:
 	void HandleTempoAutoChange();
 	void HandleCrossoverModeChange();
 	void HandleMidiModeChange();
-	void SetParameterAlpha(long inParameterID, float inAlpha);
 
 	// controls
 	DGRangeSlider* mRateSlider = nullptr;

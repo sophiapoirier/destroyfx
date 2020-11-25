@@ -192,6 +192,8 @@ bool DGControl<T>::onWheel(VSTGUI::CPoint const& inPos, VSTGUI::CMouseWheelAxis 
 template <class T>
 void DGControl<T>::setDrawAlpha(float inAlpha)
 {
+	assert(inAlpha >= 0.f);
+	assert(inAlpha <= 1.f);
 	T::setAlphaValue(inAlpha);
 }
 

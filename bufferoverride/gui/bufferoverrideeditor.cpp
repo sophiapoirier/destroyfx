@@ -597,12 +597,6 @@ void BufferOverrideEditor::HandleTempoSyncChange()
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::HandleTempoAutoChange()
 {
-	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.0f;
-	for (auto& control : mControlsList)
-	{
-		if (control->getParameterID() == kTempo)
-		{
-			control->setDrawAlpha(alpha);
-		}
-	}
+	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.f;
+	SetParameterAlpha(kTempo, alpha);
 }

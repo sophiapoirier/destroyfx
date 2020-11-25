@@ -828,14 +828,8 @@ void ScrubbyEditor::HandleTempoSyncChange()
 //-----------------------------------------------------------------------------
 void ScrubbyEditor::HandleTempoAutoChange()
 {
-	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.0f;
-	for (auto& control : mControlsList)
-	{
-		if (control->getParameterID() == kTempo)
-		{
-			control->setDrawAlpha(alpha);
-		}
-	}
+	float const alpha = getparameter_b(kTempoAuto) ? kUnusedControlAlpha : 1.f;
+	SetParameterAlpha(kTempo, alpha);
 }
 
 //-----------------------------------------------------------------------------
@@ -973,13 +967,6 @@ void ScrubbyEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse
 //-----------------------------------------------------------------------------
 void ScrubbyEditor::outputChannelsChanged(unsigned long inChannelCount)
 {
-	float const alpha = (inChannelCount > 1) ? 1.0f : kUnusedControlAlpha;
-
-	for (auto& control : mControlsList)
-	{
-		if (control->getParameterID() == kSplitChannels)
-		{
-			control->setDrawAlpha(alpha);
-		}
-	}
+	float const alpha = (inChannelCount > 1) ? 1.f : kUnusedControlAlpha;
+	SetParameterAlpha(kSplitChannels, alpha);
 }

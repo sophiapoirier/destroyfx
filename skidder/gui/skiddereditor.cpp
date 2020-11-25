@@ -417,14 +417,8 @@ void SkidderEditor::parameterChanged(long inParameterID)
 //-----------------------------------------------------------------------------
 void SkidderEditor::outputChannelsChanged(unsigned long inChannelCount)
 {
-	float const alpha = (inChannelCount == 2) ? 1.0f : kUnusedControlAlpha;
-	for (auto& control : mControlsList)
-	{
-		if (control->getParameterID() == kPan)
-		{
-			control->setDrawAlpha(alpha);
-		}
-	}
+	float const alpha = (inChannelCount == 2) ? 1.f : kUnusedControlAlpha;
+	SetParameterAlpha(kPan, alpha);
 }
 
 //-----------------------------------------------------------------------------
@@ -485,16 +479,4 @@ void SkidderEditor::HandleMidiModeChange()
 	float const floorAlpha = (isMidiModeEnabled && getparameter_b(kVelocity)) ? kUnusedControlAlpha : 1.0f;
 	SetParameterAlpha(kFloor, floorAlpha);
 	SetParameterAlpha(kFloorRandMin, floorAlpha);
-}
-
-//-----------------------------------------------------------------------------
-void SkidderEditor::SetParameterAlpha(long inParameterID, float inAlpha)
-{
-	for (auto& control : mControlsList)
-	{
-		if (control->getParameterID() == inParameterID)
-		{
-			control->setDrawAlpha(inAlpha);
-		}
-	}
 }

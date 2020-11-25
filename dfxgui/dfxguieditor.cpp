@@ -740,6 +740,18 @@ void DfxGuiEditor::TextEntryForParameterValue(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
+void DfxGuiEditor::SetParameterAlpha(long inParameterID, float inAlpha)
+{
+	for (auto& control : mControlsList)
+	{
+		if (control->getParameterID() == inParameterID)
+		{
+			control->setDrawAlpha(inAlpha);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
 // set the control that is currently idly under the mouse pointer, if any (nullptr if none)
 void DfxGuiEditor::setCurrentControl_mouseover(IDGControl* inMousedOverControl)
 {
