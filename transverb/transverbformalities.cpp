@@ -146,7 +146,12 @@ void TransverbDSP::releasebuffers() {
 void TransverbDSP::processparameters() {
 
   if (auto const value = getparameterifchanged_f(kDrymix))
-    drymix = *value;
+  {
+    // balance the audio energy when mono input is fanned out to multiple output channels
+    auto const dryGainScalar = std::sqrt(static_cast<double>(getplugin()->getnuminputs()) / 
+                                         static_cast<double>(getplugin()->getnumoutputs()));
+    drymix = *value * dryGainScalar;
+  }
   if (auto const value = getparameterifchanged_f(kMix1))
     mix1 = *value;
   if (auto const value = getparameterifchanged_f(kSpeed1))
