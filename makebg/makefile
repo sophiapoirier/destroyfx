@@ -12,7 +12,7 @@ INCLUDES=-I $(CCLIB)
 CXXFLAGS=$(DEFINES) $(INCLUDES) -m64 -march=native -Wall --std=c++17 -O2
 LFLAGS=-m64 -march=native -s -static
 
-CCLIB_OBJECTS=$(CCLIB)/base/stringprintf.o $(CCLIB)/base/logging.o $(CCLIB)/util.o $(CCLIB)/image.o $(CCLIB)/stb_image.o $(CCLIB)/stb_image_write.o $(CCLIB)/color-util.o $(CCLIB)/arcfour.o
+CCLIB_OBJECTS=$(CCLIB)/base/stringprintf.o $(CCLIB)/base/logging.o $(CCLIB)/util.o $(CCLIB)/image.o $(CCLIB)/stb_image.o $(CCLIB)/stb_image_write.o $(CCLIB)/stb_truetype.o $(CCLIB)/color-util.o $(CCLIB)/arcfour.o
 
 OBJECTS=$(CCLIB_OBJECTS)
 

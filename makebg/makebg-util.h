@@ -35,24 +35,55 @@ struct Blue {
 	uint8 v = p >> 24;
 	noise.SetPixel(x, y, v);
       }
-    }	
+    }
   }
 
   uint8 Get(int x, int y) const {
-    return noise.GetPixel(x, y);
+    // XXX should support negative values as well
+    return noise.GetPixel(x % SIZE, y % SIZE);
   }
-  
+
  private:
   ImageA noise;
 };
+
+inline uint32 Mix32(uint32 c1, uint32 c2, float f) {
+  uint32 r1 = (c1 >> 24) & 0xFF;
+  uint32 g1 = (c1 >> 16) & 0xFF;
+  uint32 b1 = (c1 >>  8) & 0xFF;
+  uint32 a1 = (c1      ) & 0xFF;
+
+  uint32 r2 = (c2 >> 24) & 0xFF;
+  uint32 g2 = (c2 >> 16) & 0xFF;
+  uint32 b2 = (c2 >>  8) & 0xFF;
+  uint32 a2 = (c2      ) & 0xFF;
+
+  // Use integer multiplication so that we can shift to
+  // divide.
+  uint32 f32 = f * 65536.0;
+  uint32 omf32 = 65536 - f32;
+  auto Mix = [f32, omf32](uint32 ch1, uint32 ch2) -> uint8 {
+      uint32 v1 = ch1 * f32;
+      uint32 v2 = ch2 * omf32;
+
+      uint32 r = v1 + v2;
+      return (r >> 16) & 0xFF;
+    };
+
+  uint8 r = Mix(r1, r2);
+  uint8 g = Mix(g1, g2);
+  uint8 b = Mix(b1, b2);
+  uint8 a = Mix(a1, a2);
+  return (r << 24) | (g << 16) | (b << 8) | a;
+}
 
 // Adapted from image.h; would make sense as a utility...
 // assumes below alpha is FF, and outputs FF alpha.
 inline uint32 Blend32(uint32 below, uint32 atop) {
   uint32 r = (atop >> 24) & 0xFF;
   uint32 g = (atop >> 16) & 0xFF;
-  uint32 b = (atop >>  8) & 0xFF;  
-  uint32 a = (atop      ) & 0xFF;  
+  uint32 b = (atop >>  8) & 0xFF;
+  uint32 a = (atop      ) & 0xFF;
 
   uint32 old_r = (below >> 24) & 0xFF;
   uint32 old_g = (below >> 16) & 0xFF;
@@ -76,7 +107,7 @@ inline uint32 Blend32(uint32 below, uint32 atop) {
 inline uint32 Grey32(uint32 c) {
   float r = ((c >> 24) & 0xFF) / (float)0xFF;
   float g = ((c >> 16) & 0xFF) / (float)0xFF;
-  float b = ((c >>  8) & 0xFF) / (float)0xFF;  
+  float b = ((c >>  8) & 0xFF) / (float)0xFF;
 
   float ll, aa, bb;
   ColorUtil::RGBToLAB(r, g, b, &ll, &aa, &bb);
@@ -95,6 +126,5 @@ inline std::pair<int, int> Move(int x, int y, Dir d) {
   case RIGHT: return {x + 1, y};
   }
 }
-
 
 #endif
