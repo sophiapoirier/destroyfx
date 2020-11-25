@@ -22,6 +22,9 @@
 
 constexpr int WIDTH = 512;
 constexpr int HEIGHT = 768;
+constexpr int BORDER = 6;
+
+constexpr bool MOCKUP = true;
 
 struct TTFont {
  
@@ -48,6 +51,7 @@ struct TTFont {
   }
 
   // Pass DrawPixel(int x, int y, uint8 v) which should do the pixel blending.
+  // XXX y position is the baseline, I think, but I have not really tested this.
   template<class DP>
   void BlitString(int x, int y, int size_px,
 		  const string &text, const DP &DrawPixel,
@@ -85,16 +89,15 @@ struct TTFont {
 					  &bitmap_w, &bitmap_h,
 					  &xoff, &yoff);
       }
-      if (bitmap == nullptr) continue;
-      
-      for (int yy = 0; yy < bitmap_h; yy++) {
-	for (int xx = 0; xx < bitmap_w; xx++) {
-	  DrawPixel(xpos + xx + xoff, ypos + yy + yoff, bitmap[yy * bitmap_w + xx]);
+      if (bitmap != nullptr) {
+	for (int yy = 0; yy < bitmap_h; yy++) {
+	  for (int xx = 0; xx < bitmap_w; xx++) {
+	    DrawPixel(xpos + xx + xoff, ypos + yy + yoff, bitmap[yy * bitmap_w + xx]);
+	  }
 	}
+	stbtt_FreeBitmap(bitmap, nullptr);
       }
-
-      stbtt_FreeBitmap(bitmap, nullptr);
-
+	
       xpos += advance * scale;
       if (text[idx + 1] != '\0') {
 	xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
@@ -107,6 +110,33 @@ struct TTFont {
     }
   }
 
+  // Measure the nominal width and height of the string using the same method as above.
+  // (This does not mean that all pixels lie within the rectangle.)
+  std::pair<int, int> MeasureString(const string &text, int size_px, bool subpixel = true) {
+    const float scale = stbtt_ScaleForPixelHeight(&font, size_px);
+
+    int ascent = 0, descent = 0, line_gap = 0;
+    stbtt_GetFontVMetrics(&font, &ascent, &descent, &line_gap);
+
+    float xpos = 0.0f;
+    for (int idx = 0; idx < (int)text.size(); idx++) {
+
+      int advance = 0, left_side_bearing = 0;
+      stbtt_GetCodepointHMetrics(&font, text[idx], &advance, &left_side_bearing);
+
+      xpos += advance * scale;
+      if (text[idx + 1] != '\0') {
+	xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
+      }
+      
+      if (!subpixel) {
+	// Or floor?
+	xpos = roundf(xpos);
+      }
+    }
+    return {xpos, ascent - descent + line_gap};
+  }
+  
 private:
   vector<uint8> ttf_bytes;
   stbtt_fontinfo font;
@@ -117,11 +147,68 @@ private:
 int main(int argc, char **argv) {
   Blue blue;
   // Looks good with size=14, subpixel false.
+  // Drawing (x,y) at (x,y) and (x+1,y) also looks
+  // good for "faux bold."
   TTFont snoot("../fonts/px10.ttf");
-  
+ 
   ImageRGBA img(WIDTH, HEIGHT);
   img.Clear32(0x000000ff);
 
+  unique_ptr<ImageRGBA> title(ImageRGBA::Load("skidder-title.png"));
+  
+  // TODO: 2x version?
+  auto DrawText = [&snoot, &img](int px, int py, uint32 color,
+				 const string &text) {
+      snoot.BlitString(px, py, 14, text,
+		       [&](int x, int y, uint8 v) {
+			 if (v > 128) {
+			   img.BlendPixel32(x, y, color);
+			 }
+		       },
+		       false);
+    };
+
+  auto TextWidth = [&snoot](const string &text) {
+      const auto [w, h] = snoot.MeasureString(text, 14, false);
+      return w;
+    };
+  
+  // Note that 'bold' versions over-draw, so alpha should be 0xFF
+  // unless you like a weird effect.
+  auto DrawBoldText = [&snoot, &img](int px, int py, uint32 color,
+				     const string &text) {
+      snoot.BlitString(px, py, 14, text,
+		       [&](int x, int y, uint8 v) {
+			 if (v > 128) {
+			   img.BlendPixel32(x, y, color);
+			   img.BlendPixel32(x + 1, y, color);			   
+			 }
+		       },
+		       false);
+    };
+
+  auto DrawBoldText2x = [&snoot, &img](int px, int py, uint32 color,
+				       const string &text) {
+      snoot.BlitString(0, 0, 14, text,
+		       [&](int x, int y, uint8 v) {
+			 if (v > 128) {
+			   int xx = px + (x * 2);
+			   int yy = py + (y * 2);
+			   auto Px2x = [&](int x, int y) {
+			       img.BlendPixel32(x, y, color);
+			       img.BlendPixel32(x + 1, y, color);
+			       img.BlendPixel32(x, y + 1, color);
+			       img.BlendPixel32(x + 1, y + 1, color);			       
+			     };
+
+			   Px2x(xx, yy);
+			   Px2x(xx + 2, yy);
+			 }
+		       },
+		       false);
+    };
+
+  
   uint32 color1 = 0x634021ff;
   uint32 color2 = 0x8d3d6cff;
 
@@ -148,6 +235,13 @@ int main(int argc, char **argv) {
 	double noise = blue.Get(x, y) / 255.0;
 	color = f < noise ? color1 : color2;
       }
+
+      // Don't allow stripes over the left and right
+      // border pinstripes; they just create distracting
+      // artifacts.
+      if (x < BORDER) color = color1;
+      if (x >= WIDTH - BORDER) color = color2;
+      
       img.SetPixel32(x, y, color);
     }
   }
@@ -174,6 +268,63 @@ int main(int argc, char **argv) {
     }
   }
 
+
+  // Pass corner_color = color for a crisp box, but setting
+  // the corners to 50% alpha makes a nice roundrect effect.
+  auto Box = [&img](int x, int y, int w, int h,
+		    uint32 color, uint32 corner_color) {
+      // (This could be in ImageRGBA, covering these subtleties)
+      const int x1 = x + w - 1;
+      const int y1 = y + h - 1;
+
+      // XXX this is probably wrong for 1x1 and 2x2 boxes.
+      // Top
+      img.BlendLine32(x + 1, y, x1 - 1, y, color);
+      // Left
+      img.BlendLine32(x, y + 1, x, y1 - 1, color);
+      // Right
+      img.BlendLine32(x1, y + 1, x1, y1 - 1, color);
+      // Bottom
+      img.BlendLine32(x + 1, y1, x1 - 1, y1, color);
+
+      img.BlendPixel32(x, y, corner_color);
+      img.BlendPixel32(x1, y, corner_color);
+      img.BlendPixel32(x, y1, corner_color);
+      img.BlendPixel32(x1, y1, corner_color);      
+    };
+
+  auto DarkNoiseRect = [&](int sx, int sy, int w, int h) {
+      for (int y = 0; y < h; y++) {
+	for (int x = 0; x < w; x++) {
+	  uint8 v = blue.Get(sx + x, sy + (y / 4));
+	  uint32 color = 0x00000000 | (128 + (v >> 1));
+	  img.BlendPixel32(sx + x, sy + y, color);
+	}
+      }
+    };
+  
+  // Slider backgrounds
+  auto DrawSlider = [&](int sx, int sy, int w, int h) {
+      Box(sx, sy, w, h, 0x000000FF, 0x0000001F);
+      Box(sx + 1, sy + 1, w - 2, h - 2, 0x000000FF, 0x000000FF);
+
+      DarkNoiseRect(sx + 2, sy + 2, w - 4, h - 4);
+
+      // just for the inner corners
+      Box(sx + 2, sy + 2, w - 4, h - 4, 0x00000000, 0x0000003F);
+    };
+
+  constexpr int SLIDER_X = 48;
+  constexpr int SLIDER_Y = 22;
+  constexpr int SLIDER_H = 28;
+  constexpr int SLIDER_W = 272;
+  for (int i = 0; i < NUM_SLIDERS; i++) {
+    DrawSlider(CTRL_X + SLIDER_X,
+	       CTRL_Y + (i * CTRL_H) + SLIDER_Y,
+	       SLIDER_W, SLIDER_H);
+  }
+  
+  
   {
     // big text labels for each row
     vector<string> labels = {
@@ -189,26 +340,72 @@ int main(int argc, char **argv) {
     CHECK(labels.size() >= NUM_SLIDERS);
     // within ctrl row
     constexpr int LABEL_X = 48;
-    constexpr int LABEL_Y = 2;
+    constexpr int LABEL_Y = -6;
     for (int i = 0; i < NUM_SLIDERS; i++) {
       int lx = CTRL_X + LABEL_X;
       int ly = i * CTRL_H + CTRL_Y + LABEL_Y;
 
       // Using builtin bit7.
       // img.BlendText2x32(lx, ly, 0xFFFFFFFF, labels[i]);
+      // Shadow?
+      DrawBoldText2x(lx + 1, ly + 1, 0x000000FF, labels[i]);
+      // Actual text
+      DrawBoldText2x(lx, ly, 0xFFFFFFFF, labels[i]);
+    }
+  }
 
-      snoot.BlitString(lx, ly, 14, labels[i],
-		       [&](int x, int y, uint8 v) {
-			 if (v > 128) {
-			   // uint32 color = 0xFFFFFF00 | v;
-			   img.BlendPixel32(x, y, 0xFFFFFFFF);
-			 }
-		       },
-		       false);
+  // Parameter values.
+  if (MOCKUP) {
+    vector<pair<string, string>> values = {
+      {"3.000", "4.476 Hz"}, // rate divisor
+      {"39.7%", "100.0%"}, // pulse width
+      {"", "16.384 ms"}, // slope
+      {"-59.2", "-25.8 dB"},  // floor
+      {"", "1.69 kHZ"}, // crossover
+      {"", "50.7%"}, // stereo spread
+      {"", "-10.7 dB"}, // rupture
+      {"", "214.046 bpm"}, // tempo
+    };
+    CHECK(values.size() >= NUM_SLIDERS);
+
+    constexpr int LVALUE_X = 8;
+    constexpr int RVALUE_X = SLIDER_X + SLIDER_W + 4;
+    constexpr int VALUE_Y = 28;
+    for (int i = 0; i < NUM_SLIDERS; i++) {
+      int lx = CTRL_X + LVALUE_X;
+      int ly = i * CTRL_H + CTRL_Y + VALUE_Y;
+      DrawText(lx, ly, 0xFFFFFFFF, values[i].first);
+
+      int rx = CTRL_X + RVALUE_X;
+      int ry = i * CTRL_H + CTRL_Y + VALUE_Y;
+      DrawText(rx, ry, 0xFFFFFFFF, values[i].second);
+    }
+  }
+
+  // border pinstripes
+  for (int b = 0; b < BORDER; b++) {
+    if (b & 1) {
+      Box(b, b, WIDTH - (b * 2), HEIGHT - (b * 2),
+	  0x000000FF, 0x000000AF);
     }
   }
   
+  // Title
+  {
+    const int TITLE_X = WIDTH - title->width - BORDER + 2;
+    const int TITLE_Y = BORDER + 2;
+    img.BlendImage(TITLE_X, TITLE_Y, *title);
+  }
   
+  // destroyfx link
+  if (MOCKUP) {
+    const string text = "destroyfx.org";
+    int lx = WIDTH - TextWidth(text) - 4 - BORDER;
+    int ly = HEIGHT - 18 - BORDER;
+    DrawBoldText(lx, ly, 0x000000FF, text);
+    DrawBoldText(lx - 1, ly - 1, 0xFFFFFFFF, text);    
+  }
+
   img.Save("skidder.png");
 
   return 0;
