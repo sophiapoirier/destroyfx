@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2019  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -49,7 +49,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #define VST_NUM_CHANNELS 2
 
-#define USING_HERMITE	1
+#define DFX_IIRFILTER_USING_HERMITE	1
 #define DFX_SUPPORT_OLD_VST_SETTINGS  1
 
 

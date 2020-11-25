@@ -33,7 +33,13 @@ Welcome to our Infinite Impulse Response filter.
 #include "dfxmath.h"
 
 
-#define DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP 0  // too unstable when crossover is modulated, but faster performance
+#ifndef DFX_IIRFILTER_USING_HERMITE
+	#define DFX_IIRFILTER_USING_HERMITE 0
+#endif
+
+// too unstable when crossover frequency is modulated, though performance is faster,
+// but the alternate Hermite IIRFilter::process method only compiles with it
+#define DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP DFX_IIRFILTER_USING_HERMITE
 
 
 namespace dfx
@@ -84,13 +90,14 @@ public:
 	void reset() noexcept;
 
 
-#ifdef USING_HERMITE
+	// TODO: this is kind of awful to munge the function return type with a macro and would be good to redesign
+#if DFX_IIRFILTER_USING_HERMITE
 	void process(float inSample)
 #else
 	float process(float inSample)
 #endif
 	{
-	#ifdef USING_HERMITE
+	#if DFX_IIRFILTER_USING_HERMITE
 		// store 4 samples of history if we're preprocessing for Hermite interpolation
 		mPrevPrevPrevOut = mPrevPrevOut;
 	#endif
@@ -109,12 +116,12 @@ public:
 		mPrevPrevIn = mPrevIn;
 		mPrevIn = inSample;
 
-	#ifndef USING_HERMITE
+	#if !DFX_IIRFILTER_USING_HERMITE
 		return mCurrentOut;
 	#endif
 	}
 
-#ifdef USING_HERMITE
+#if DFX_IIRFILTER_USING_HERMITE
 // start of pre-Hermite-specific functions
 // there are 4 versions, 3 of which unroll for loops of 2, 3, & 4 iterations
 
@@ -214,7 +221,7 @@ public:
 		return ((((a * posFract) + b) * posFract + c) * posFract) + mPrevPrevOut;
 	}
 
-#endif  // USING_HERMITE
+#endif  // DFX_IIRFILTER_USING_HERMITE
 
 
 private:
