@@ -295,22 +295,22 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
           switch (speed1int - lowpasscount)
           {
             case 1:
-              filter1.processH1(buf1[lowpass1pos]);
+              filter1.processToCacheH1(buf1[lowpass1pos]);
               lowpass1pos = (lowpass1pos + 1) % bsize;
               lowpasscount++;
               break;
             case 2:
-              filter1.processH2(buf1.data(), lowpass1pos, bsize);
+              filter1.processToCacheH2(buf1.data(), lowpass1pos, bsize);
               lowpass1pos = (lowpass1pos + 2) % bsize;
               lowpasscount += 2;
               break;
             case 3:
-              filter1.processH3(buf1.data(), lowpass1pos, bsize);
+              filter1.processToCacheH3(buf1.data(), lowpass1pos, bsize);
               lowpass1pos = (lowpass1pos + 3) % bsize;
               lowpasscount += 3;
               break;
             default:
-              filter1.processH4(buf1.data(), lowpass1pos, bsize);
+              filter1.processToCacheH4(buf1.data(), lowpass1pos, bsize);
               lowpass1pos = (lowpass1pos + 4) % bsize;
               lowpasscount += 4;
               break;
@@ -321,7 +321,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
         if (((lowpass1pos < read1int) && ((lowpass1pos + 1) == read1int)) ||
             ((lowpass1pos == (bsize - 1)) && (read1int == 0)))
         {
-          filter1.processH1(buf1[lowpass1pos]);
+          filter1.processToCacheH1(buf1[lowpass1pos]);
           lowpass1pos = (lowpass1pos + 1) % bsize;
         }
       }
@@ -331,7 +331,7 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
       {
         // only if we've traversed to a new integer sample position
         if ((int)read1 != read1int)
-          filter1.process(buf1[read1int]);
+          filter1.processToCache(buf1[read1int]);
       }
 
       // head 2 filtering stuff
@@ -343,22 +343,22 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
           switch (speed2int - lowpasscount)
           {
             case 1:
-              filter2.processH1(buf2[lowpass2pos]);
+              filter2.processToCacheH1(buf2[lowpass2pos]);
               lowpass2pos = (lowpass2pos + 1) % bsize;
               lowpasscount++;
               break;
             case 2:
-              filter2.processH2(buf2.data(), lowpass2pos, bsize);
+              filter2.processToCacheH2(buf2.data(), lowpass2pos, bsize);
               lowpass2pos = (lowpass2pos + 2) % bsize;
               lowpasscount += 2;
               break;
             case 3:
-              filter2.processH3(buf2.data(), lowpass2pos, bsize);
+              filter2.processToCacheH3(buf2.data(), lowpass2pos, bsize);
               lowpass2pos = (lowpass2pos + 3) % bsize;
               lowpasscount += 3;
               break;
             default:
-              filter2.processH4(buf2.data(), lowpass2pos, bsize);
+              filter2.processToCacheH4(buf2.data(), lowpass2pos, bsize);
               lowpass2pos = (lowpass2pos + 4) % bsize;
               lowpasscount += 4;
               break;
@@ -368,14 +368,14 @@ void TransverbDSP::process(float const* inAudio, float* outAudio, unsigned long 
         if (((lowpass2pos < read2int) && ((lowpass2pos + 1) == read2int)) ||
             ((lowpass2pos == (bsize - 1)) && (read2int == 0)))
         {
-          filter2.processH1(buf2[lowpass2pos]);
+          filter2.processToCacheH1(buf2[lowpass2pos]);
           lowpass2pos = (lowpass2pos + 1) % bsize;
         }
       }
       else if (filterMode2 == FilterMode::Highpass)
       {
         if ((int)read2 != read2int)
-          filter2.process(buf2[read2int]);
+          filter2.processToCache(buf2[read2int]);
       }
 
       speed1hasChanged |= speed1.isSmoothing();

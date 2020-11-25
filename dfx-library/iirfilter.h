@@ -33,13 +33,8 @@ Welcome to our Infinite Impulse Response filter.
 #include "dfxmath.h"
 
 
-#ifndef DFX_IIRFILTER_USING_HERMITE
-	#define DFX_IIRFILTER_USING_HERMITE 0
-#endif
-
-// too unstable when crossover frequency is modulated, though performance is faster,
-// but the alternate Hermite IIRFilter::process method only compiles with it
-#define DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP DFX_IIRFILTER_USING_HERMITE
+// too unstable when crossover frequency is modulated, though performance is faster
+#define DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP 0
 
 
 namespace dfx
@@ -90,17 +85,8 @@ public:
 	void reset() noexcept;
 
 
-	// TODO: this is kind of awful to munge the function return type with a macro and would be good to redesign
-#if DFX_IIRFILTER_USING_HERMITE
-	void process(float inSample)
-#else
-	float process(float inSample)
-#endif
+	[[nodiscard]] float process(float inSample)
 	{
-	#if DFX_IIRFILTER_USING_HERMITE
-		// store 4 samples of history if we're preprocessing for Hermite interpolation
-		mPrevPrevPrevOut = mPrevPrevOut;
-	#endif
 		mPrevPrevOut = mPrevOut;
 		mPrevOut = mCurrentOut;
 
@@ -116,16 +102,20 @@ public:
 		mPrevPrevIn = mPrevIn;
 		mPrevIn = inSample;
 
-	#if !DFX_IIRFILTER_USING_HERMITE
 		return mCurrentOut;
-	#endif
 	}
 
-#if DFX_IIRFILTER_USING_HERMITE
-// start of pre-Hermite-specific functions
-// there are 4 versions, 3 of which unroll for loops of 2, 3, & 4 iterations
+	void processToCache(float inSample)
+	{
+		// store four samples of history if we're preprocessing for Hermite interpolation
+		mPrevPrevPrevOut = mPrevPrevOut;
+		(void) process(inSample);
+	}
 
-	void processH1(float inSample)
+// start of pre-Hermite-specific functions
+// there are four versions, three of which unroll for loops of two, three, and four iterations
+
+	void processToCacheH1(float inSample)
 	{
 		mPrevPrevPrevOut = mPrevPrevOut;
 		mPrevPrevOut = mPrevOut;
@@ -140,7 +130,7 @@ public:
 		mPrevIn = inSample;
 	}
 
-	void processH2(float * inAudio, long inPos, long inBufferSize)
+	void processToCacheH2(float * inAudio, long inPos, long inBufferSize)
 	{
 		auto const in0 = inAudio[inPos];
 		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
@@ -163,7 +153,7 @@ public:
 		mPrevIn = in1;
 	}
 
-	void processH3(float * inAudio, long inPos, long inBufferSize)
+	void processToCacheH3(float * inAudio, long inPos, long inBufferSize)
 	{
 		auto const in0 = inAudio[inPos];
 		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
@@ -187,7 +177,7 @@ public:
 		mPrevIn = in2;
 	}
 
-	void processH4(float * inAudio, long inPos, long inBufferSize)
+	void processToCacheH4(float * inAudio, long inPos, long inBufferSize)
 	{
 		auto const in0 = inAudio[inPos];
 		auto const in1 = inAudio[(inPos + 1) % inBufferSize];
@@ -220,8 +210,6 @@ public:
 
 		return ((((a * posFract) + b) * posFract + c) * posFract) + mPrevPrevOut;
 	}
-
-#endif  // DFX_IIRFILTER_USING_HERMITE
 
 
 private:
