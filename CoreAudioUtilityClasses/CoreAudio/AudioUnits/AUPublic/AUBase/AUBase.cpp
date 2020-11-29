@@ -1805,7 +1805,8 @@ bool				AUBase::ValidFormat(			AudioUnitScope					inScope,
 													AudioUnitElement				inElement,
 													const CAStreamBasicDescription &		inNewFormat)
 {
-	return FormatIsCanonical(inNewFormat);
+	bool isInterleaved = false;
+	return inNewFormat.IsCommonFloat32(&isInterleaved) && !isInterleaved;
 }
 
 //_____________________________________________________________________________

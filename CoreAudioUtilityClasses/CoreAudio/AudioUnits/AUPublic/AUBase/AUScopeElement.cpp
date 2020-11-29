@@ -341,10 +341,9 @@ AUIOElement::AUIOElement(AUBase *audioUnit) :
 	AUElement(audioUnit),
 	mWillAllocate (true)
 {
-	mStreamFormat.SetAUCanonical(2,	// stereo
-		audioUnit->AudioUnitAPIVersion() == 1);
+	mStreamFormat = CAStreamBasicDescription(kAUDefaultSampleRate, 2, CAStreamBasicDescription::kPCMFormatFloat32, audioUnit->AudioUnitAPIVersion() == 1);
+		// stereo
 		// interleaved if API version 1, deinterleaved if version 2
-	mStreamFormat.mSampleRate = kAUDefaultSampleRate;
 }
 
 //_____________________________________________________________________________
