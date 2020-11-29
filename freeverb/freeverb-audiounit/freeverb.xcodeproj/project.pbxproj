@@ -395,7 +395,7 @@
 				INFOPLIST_FILE = "freeverb-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.dreampoint.Freeverb;
 				PRODUCT_NAME = Freeverb;
 				USE_HEADERMAP = NO;
@@ -449,7 +449,7 @@
 				INFOPLIST_FILE = "freeverb-info.plist";
 				INSTALL_MODE_FLAG = "u+w,a+rX";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Audio/Plug-Ins/Components";
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.dreampoint.Freeverb;
 				PRODUCT_NAME = Freeverb;

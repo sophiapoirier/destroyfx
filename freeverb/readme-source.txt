@@ -15,13 +15,13 @@ In this zip file you will find two folders of C++ source code:
 
 "components" - Contains files that should clean-compile ON ANY TYPE OF COMPUTER OR SYSTEM WHATSOEVER. It should not be necessary to make ANY changes to these files to get them to compile, except to make up for inadequacies of certain compilers. These files create three classes - a comb filter, an allpass filter, and a reverb model made up of a number of instances of the filters, with some features to control the filters at a macro level. You will need to link these classes into another program that interfaces with them. The files in the components drawer are completely independent, and can be built without dependancies on anything else. Because of the simple interface, it should be possible to interface these files to any system - Audio Unit, VST, DirectX, anything - without changing them AT ALL.
 
-"freeverb-audiounit" - Contains an Apple Audio Unit implementation of this version of Freeverb, using the components in (surprise) the components folder. It requires Mac OS X 10.2 or higher with the Developer Tools and CoreAudio SDK from http://connect.apple.com/  There is an Xcode project file included, too.  Xcode is included with those same Developer Tools.  The project is in Xcode 2.1 format and requires that version or higher.  When using this project, the output is built in ~/Library/Audio/Plug-Ins/Components/
+"freeverb-audiounit" - Contains an Apple Audio Unit implementation of this version of Freeverb, using the components in (surprise) the components folder. It requires macOS with Xcode from the App Store and the CoreAudio SDK from https://developer.apple.com/  There is an Xcode project file included, too.  When using this project, the output is built in ~/Library/Audio/Plug-Ins/Components/
 
 Note that this version of Freeverb doesn't contain predelay, or any EQ. I thought that might make it difficult to understand the "reverb" part of the code. Once you figure out how Freeverb works, you should find it trivial to add such features with little CPU overhead.
 
 Also, the code in this version of Freeverb has been optimised. This has changed the sound *slightly*, but not significantly compared to how much processing power it saves.
 
-Finally, note that there is also a built copy of this version of Freeverb called "Freeverb.component" - this is an Audio Unit plugin for Mac OS X (v10.3.9 or higher).
+Finally, note that there is also a built copy of this version of Freeverb called "Freeverb.component" - this is an Audio Unit plugin for macOS (v10.9 or higher).
 
 
 Technical Explanation
@@ -70,4 +70,4 @@ http://www.dreampoint.co.uk
 
 Added note:
 ------------
-The Audio Unit code, Xcode project, and Audio Unit build were all done by Sophia Poirier, September 2002.  This was done using the v2 Audio Unit API.  Sophia changed a few tiny things in revmodel.cpp, revmodel.hpp, and tuning.h to accommodate for nicer parameter handling (AU, unlike VST, does not require 0-1 value ranges for all parameters) and to support audio input and output output streams with mismatched numbers of interleaved channels.  In 2016, Sophia rewrote most of the core source code to be more concise, performant, and readable in C++11.  Plugins made by Sophia and also Tom 7 are available at http://destroyfx.org/
+The Audio Unit code, Xcode project, and Audio Unit build were all done by Sophia Poirier, September 2002.  This was done using the v2 Audio Unit API.  Sophia changed a few tiny things in revmodel.cpp, revmodel.hpp, and tuning.h to accommodate for nicer parameter handling (AU, unlike VST, does not require 0-1 value ranges for all parameters) and to support audio input and output output streams with mismatched numbers of interleaved channels.  In 2016, Sophia rewrote most of the core source code to be more concise, performant, and readable in C++11.  Plugins made by Sophia and also Tom 7 are available at http://destroyfx.org
