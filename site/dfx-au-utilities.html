@@ -1,9 +1,11 @@
 <!doctype html>
+
+
 <head>
 
 <title>Destroy FX Audio Unit utilities library</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 
 <style type="text/css" id="internalstyle">
 	body
@@ -37,7 +39,7 @@
 
 <meta name="description" content="A free, open source library for Audio Unit plugin development and hosting" />
 <meta name="author" content="Sophia Poirier" />
-<meta name="keywords" content="Destroy FX, DestroyFX, destroy fx, destroyfx, Audio Unit, AudioUnit, audio unit, audiounit, AU, Audio Units, AudioUnits, free, CoreAudio, coreaudio, Sophia Poirier, mac, macintosh, apple, Mac OS X, OS X, C, library, lib, CoreFoundation" />
+<meta name="keywords" content="Destroy FX, DestroyFX, destroy fx, destroyfx, Audio Unit, AudioUnit, audio unit, audiounit, AU, Audio Units, AudioUnits, free, CoreAudio, coreaudio, Sophia Poirier, mac, macintosh, apple, macOS, Mac OS X, OS X, C, library, lib, CoreFoundation" />
 
 </head>
 
@@ -52,16 +54,14 @@
 <h2>Introduction</h2>
 
 <p>
-Hello.  Here you will find information about a library of helpful functions for dealing with <a href="http://www.apple.com/macosx/features/coreaudio/">Audio Units</a> in <a href="http://www.apple.com/macosx/">Mac OS X</a>, written by Sophia Poirier of <a href="http://destroyfx.org/">Destroy FX</a>.  Currently, the library contains code that is useful for these things:
+Hello.  Here you will find information about a library of helpful functions for dealing with <a href="https://en.wikipedia.org/wiki/Audio_Units">Audio Units</a> in macOS, written by Sophia Poirier of <a href="http://destroyfx.org">Destroy FX</a>.  Currently, the library contains code that is useful for these things:
 </p>
 <ul>
 	<li><a href="#preset_files">finding, loading, and saving AU preset files</a></li>
 	<li><a href="#factory_presets_cfarray_callbacks">CFArray callbacks for Factory Presets arrays</a></li>
 	<li><a href="#au_migrate_cfarray_callbacks">CFArray callbacks for AU Migrate arrays</a></li>
-	<li><a href="#component_version_from_resource">getting an un-opened Component's version from its resource file</a></li>
 	<li><a href="#plugin_name_and_manufacturer_name">getting an AU's plugin name and manufacturer name</a></li>
-	<li><a href="#comparing_component_descriptions">Comparing ComponentDescriptions</a></li>
-	<li><a href="#system_availability">System availability / host support</a></li>
+	<li><a href="#comparing_component_descriptions">comparing ComponentDescriptions</a></li>
 	<li><a href="#parameter_change_notification">posting parameter change notifications</a></li>
 </ul>
 
@@ -75,7 +75,7 @@ This library binary and source code are released under the terms of a <a href="b
 
 <!--
 <pre id="license_text" style="border: 1px dashed black ; padding: 0.45em">
-Copyright (C) 2003-2008  Sophia Poirier
+Copyright (C) 2003-2020  Sophia Poirier
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
@@ -107,7 +107,7 @@ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
 OF THE POSSIBILITY OF SUCH DAMAGE.
 
-To contact the author, please visit <a href="http://destroyfx.org/">http://destroyfx.org/</a> 
+To contact the author, please visit <a href="http://destroyfx.org">http://destroyfx.org</a> 
 and use the contact form.
 </pre>
 -->
@@ -117,13 +117,10 @@ and use the contact form.
 <h2>How to get it</h2>
 
 <p>
-You can <a href="dfx-au-utilities-2008-05-08.tar.gz">download the packaged up distribution</a>.  It contains documentation, header files, a pre-built Mach-O library, resource files, and source files.  Since I might not always keep that perfectly up to date, you can always find the latest sources in the Destroy FX Subversion repository at <a href="http://sourceforge.net/">SourceForge</a>.  To checkout the latest stuff from our Destroy FX Library, you can run this command in a shell:
+You can <a href="http://destroyfx.org/software/dfx-au-utilities-2020-11-29.bz2">download the packaged up distribution</a>.  It contains documentation, header files, a pre-built Mach-O library, resource files, and source files.  Since I might not always keep that perfectly up to date, you can always find the latest sources in the <a href="http://destroyfx.org/source.html">Destroy FX source repository</a>.
 </p>
-<pre>
-svn checkout https://destroyfx.svn.sourceforge.net/svnroot/destroyfx/dfx-library dfx-library
-</pre>
 <p>
-Or you can browse the files via the <a href="http://destroyfx.svn.sourceforge.net/">ViewVC web interface</a>, if you prefer.  Please note that there are a lot of files in the repository, most of which are not a part of this library.  The files that comprise this library are the ones that start with dfx-au-utilities in their names and the ones in the {language-code}.lproj bundles (those are localized resource files, where {language-code} is an <a href="http://etext.lib.virginia.edu/tei/iso639.html">ISO 639 language code</a>).
+Please note that there are a lot of files in the repository, most of which are not a part of this library.  The files that comprise this library are located within the dfx-library directory and are the ones that start with dfx-au-utilities in their names and the ones in the {language-code}.lproj bundles (those are localized resource files, where {language-code} is an <a href="https://www.iso.org/iso-639-language-codes.html">ISO 639 language code</a>).
 </p>
 
 
@@ -135,19 +132,19 @@ First, you are going to want to read the <a href="#documentation">documentation<
 </p>
 
 <p>
-The simplest way to use the library is to #include "dfx-au-utilities.h" and link against the pre-built static library lib-dfx-au-utilities.a.  If you are using any of the AU preset file stuff in the library, you will also need to include the resource files that are in the localized {language-code}.lproj bundles (where {language-code} is an <a href="http://etext.lib.virginia.edu/tei/iso639.html">ISO 639 language code</a>).  Those bundles contain Interface Builder *.nib files and localized string *.strings files.  I have named them in such a way that they should hopefully not clash with the names of anyone else's existing resource files.  Note that, if you rename these resource files, the library <b>will not work</b>, unless you also modify the source code to reference the new file names.  <b>HELP WANTED</b>:  Currently, the only languages included are English, Dutch (thanks to <a href="http://koen.smartelectronix.com/">Koen Tanghe</a>), and French (thanks to <a href="http://airy.andre.online.fr/">Airy Andr&eacute;</a>).  If you make translations for any other languages, please share!  I'd love to include them in the distribution.  You can edit any nib stuff in Interface Builder and the source code files can be processed with Apple's genstrings tool.
+The simplest way to use the library is to #include "dfx-au-utilities.h" and link against the pre-built static library lib-dfx-au-utilities.a.  If you are using any of the AU preset file stuff in the library, you will also need to include the resource files that are in the localized {language-code}.lproj bundles (where {language-code} is an <a href="https://www.iso.org/iso-639-language-codes.html">ISO 639 language code</a>).  Those bundles contain localized string *.strings files.  I have named them in such a way that they should hopefully not clash with the names of anyone else's existing resource files.  Note that, if you rename these resource files, the library <b>will not work</b>, unless you also modify the source code to reference the new file names.
 </p>
 
 <p>
-If you don't want to use the pre-built library, or if you want to make modifications to the source code, then instead of linking against the pre-built library, you will want to compile and link all of the *.c source files.  There is also a header file named dfx-au-utilities-private.h that contains an interface for the functions that are used by the functions defined in the primary interface.  If you're interested, you may want to check that stuff out, and perhaps you'll find something useful for your projects, in which case you can also #include "dfx-au-utilities-private.h" in your source code to be able to access and use those functions.  I am not going to really document that stuff, though, since I don't consider it to be the important stuff, and I'd prefer to keep things simple and clean.
+If you don't want to use the pre-built library, or if you want to make modifications to the source code, then instead of linking against the pre-built library, you will want to compile and link all of the *.c and *.m source files.  There is also a header file named dfx-au-utilities-private.h that contains an interface for the functions that are used by some of the functions defined in the primary interface.  If you're interested, you may want to check that stuff out, and perhaps you'll find something useful for your projects, in which case you can also #include "dfx-au-utilities-private.h" in your source code to be able to access and use those functions.  I am not going to really document that stuff, though, since I don't consider it to be the primary library interface, and I'd prefer to keep things simple and clean.
 </p>
 
 <p>
-This library relies on some code in the AudioUnit.framework and AudioToolbox.framework system frameworks, so if your project does not already link against those, then you will need to add them to your project.
+This library relies on some code in the AudioToolbox.framework and CoreFoundation.framework system frameworks, so if your project does not already link against those, then you will need to add them to your project.
 </p>
 
 <p>
-This library presents a C API.  However, whenever possible (and sensible), transactions are done with <a href="http://developer.apple.com/documentation/CoreFoundation/">CoreFoundation</a> types.  This means that Objective C developers can easily utilize the code, since CF types are interchangeable between Carbon and Cocoa.
+This library presents a C API.  However, whenever possible (and sensible), transactions are done with <a href="https://developer.apple.com/documentation/CoreFoundation/">CoreFoundation</a> types.  This means that Objective C developers can easily utilize the code, since CF types are bridgeable between Carbon and Cocoa.
 </p>
 
 
@@ -155,7 +152,7 @@ This library presents a C API.  However, whenever possible (and sensible), trans
 <h2>Contact the author</h2>
 
 <p>
-There is a contact form at the bottom of <a href="http://destroyfx.org/">destroyfx.org</a> which you can use to contact Sophia.  If you experience any problems with the library or make any interesting modifications, please let me know!  If you have a question about any of this stuff, please feel free to ask me; that way I know what is lacking or unclear in the documentation.
+There is a contact section at the bottom of <a href="http://destroyfx.org">destroyfx.org</a> if you wish to contact Sophia.  If you experience any problems with the library or make any interesting modifications, please let me know!  If you have a question about any of this stuff, please feel free to ask me; that way I know what is lacking or unclear in the documentation.
 </p>
 
 
@@ -175,10 +172,8 @@ There is a contact form at the bottom of <a href="http://destroyfx.org/">destroy
 <p><a href="#preset_files">Finding, loading, and saving AU preset files</a></p>
 <p><a href="#factory_presets_cfarray_callbacks">CFArray callbacks for Factory Presets arrays</a></p>
 <p><a href="#au_migrate_cfarray_callbacks">CFArray callbacks for AU Migrate arrays</a></p>
-<p><a href="#component_version_from_resource">Getting an un-opened Component's version from its resource file</a></p>
 <p><a href="#plugin_name_and_manufacturer_name">Getting an AU's plugin name and manufacturer name</a></p>
 <p><a href="#comparing_component_descriptions">Comparing ComponentDescriptions</a></p>
-<p><a href="#system_availability">System availability / host support</a></p>
 <p><a href="#parameter_change_notification">Posting parameter change notifications</a></p>
 
 
@@ -203,29 +198,35 @@ There is a contact form at the bottom of <a href="http://destroyfx.org/">destroy
 <h3>Why this matters</h3>
 
 <p>
-In Mac OS X, there are standardized locations for Audio Unit preset files:
+In macOS, there are standardized locations for Audio Unit preset files:
 </p>
 <pre>
 	~/Library/Audio/Presets/{manufacturer-name}/{plugin-name}
 	/Library/Audio/Presets/{manufacturer-name}/{plugin-name}
-	/Network/Library/Audio/Presets/{manufacturer-name}/{plugin-name}
 </pre>
 <p>
-(where {manufacturer-name} is the first part of the name from the Component name string and {plugin-name} is the second part of that string)
+(where {manufacturer-name} is the first part of the name from the AudioComponent name string and {plugin-name} is the second part of that string)
 </p>
 
 <p>
-In order to best take advantage of the benefits that users get from centralized and standardized plugin settings locations, every AU host should should make it brain-dead easy for users to save to those locations and to access the preset files that are stored in those locations.  The user should not have to think about this issue; things should just work smoothly.  Otherwise, you can be sure that virtually no users will be going to the trouble of navigating to the proper standard folder, and then they will lose out.
+In order to best take advantage of the benefits that users get from centralized and standardized plugin settings locations, every AU host should should make it easy for users to save to those locations and to access the preset files that are stored in those locations.  The user should not have to think about this issue; things should just work smoothly.  Otherwise, you can be sure that virtually no users will be going to the trouble of navigating to the proper standard folder, and then they will lose out.
 </p>
 
 <p>
-Rather than simply proposing a solution and leaving it up to everyone to implement in their own way, I decided to just provide one that everyone can use.  Using this library, you can do things The Right Way&trade; without hardly having to think about it.  There is a save file dialog that gives the user an extremely simple and fool-proof interface for saving their AU preset files.  It has a text edit field for the preset name.  That's all that there is, and that's all that there needs to be.  The file then is saved in the user domain, where user-authored files should go.  But just in case the user wants to save in a weird location, there is a "Choose custom location..." button that will bring up a Navigation Services save file dialog.  For finding and opening AU preset files, there is a function that you can call that will return a CFTree of all of the preset files for a given AU in a given file system domain.  You can use this to generate a menu of preset files, or whatever other sort of interface works for your particular application.  (This side of things isn't as ready-made as the saving side of things, but that is because I don't want to pretend that I know how everyone's interface could best present a collection of preset file names to the user.)  There is also a function for reading an AU preset file's data and applying it as the new state data for an AU instance.
+Rather than simply proposing a solution and leaving it up to everyone to implement in their own way, I decided to just provide one that everyone can use.  Using this library, you can do things The Right Way&trade; with little effort.  There is a save function that provides a simple means for saving an AU's current state to a preset file in the proper location within the user domain, where user-authored files should go.  For finding and opening AU preset files, there is a function that you can call that will return a CFTree of all of the preset files for a given AU in a given file system domain.  You can use this to generate a menu of preset files, or whatever other sort of user interface works for your particular application.  (This side of things isn't as ready-made as the saving side of things, but that is because I don't want to pretend that I know how everyone's user interface could best present a collection of preset file names to the user.)  There is also a function for reading an AU preset file's data and applying it as the new state data for an AU instance.
 </p>
 
 <p>
-I really think that it would be a big improvement if every host had behavior like this.  Users want an easy way to have their plugin settings accessible in all of their plugin host apps.  This gives them that, and makes it fool-proof.  Users don't want to always worry about where their files are being saved and always be asked to choose a location.  This gives them that.  It gives a clean, simple system with advantages of great interoperability, which is what plugins are supposed to be all about.
+I really think that it would be a big improvement if every host had behavior like this.  Users want an easy way to have their plugin settings accessible in all of their plugin host apps.  This gives them that.  Users don't want to always worry about where their files are being saved and always be asked to choose a location.  This gives them that.  It gives a clean, simple system with advantages of interoperability between hosts.
 </p>
 
+
+<p><br /></p>
+<h3>Types</h3>
+
+<p>
+<a href="#DFXFileSystemDomain">DFXFileSystemDomain</a>
+</p>
 
 <p><br /></p>
 <h3>Functions</h3>
@@ -234,6 +235,10 @@ I really think that it would be a big improvement if every host had behavior lik
 <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a>
 <br />
 <a href="#SaveAUStateToPresetFile_Bundle">SaveAUStateToPresetFile_Bundle</a>
+<br />
+<a href="#CustomSaveAUPresetFile">CustomSaveAUPresetFile</a>
+<br />
+<a href="#CustomSaveAUPresetFile_Bundle">CustomSaveAUPresetFile_Bundle</a>
 <br />
 <br />
 <a href="#CFTreeCreateFromAUPresetFilesInDomain">CFTreeCreateFromAUPresetFilesInDomain</a>
@@ -244,11 +249,22 @@ I really think that it would be a big improvement if every host had behavior lik
 <br />
 <a href="#RestoreAUStateFromPresetFile">RestoreAUStateFromPresetFile</a>
 <br />
-<a href="#CustomRestoreAUPresetFile">CustomRestoreAUPresetFile</a>
-<br />
 <a href="#GetAUComponentDescriptionFromStateData">GetAUComponentDescriptionFromStateData</a>
 <br />
 <a href="#GetAUComponentDescriptionFromPresetFile">GetAUComponentDescriptionFromPresetFile</a>
+<br />
+<a href="#FindPresetsDirForAU">FindPresetsDirForAU</a>
+<br />
+<a href="#CFURLIsAUPreset">CFURLIsAUPreset</a>
+</p>
+
+<p><br /></p>
+<h3>Constants</h3>
+
+<p>
+<a href="#DFXFileSystemDomain">kDFXFileSystemDomain_Local</a>
+<br />
+<a href="#DFXFileSystemDomain">kDFXFileSystemDomain_User</a>
 </p>
 
 <p>
@@ -256,15 +272,39 @@ To give you a better understanding of the purposes of these functions, here's wh
 </p>
 
 <p>
-For each instanciated AU, the host offers a menu for preset file stuff.  The first item in the menu says &quot;Save Preset File...&quot;  When the user chooses that menu item, the host calls <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a>.
+For each instanciated AU, the host offers a menu for preset file stuff.  The first item in the menu says &quot;Save Preset File...&quot;  When the user chooses that menu item, the host presents some UI to allow the user to specify a name for the preset and then with that calls <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a>.
 </p>
 
 <p>
-The host calls <a href="#CFTreeCreateFromAUPresetFilesInDomain">CFTreeCreateFromAUPresetFilesInDomain</a> for each relevant file system domain:  kUserDomain, kLocalDomain, and kNetworkDomain.  For each one that returns a valid CFTree, the host creates a sub-menu item accordingly:  &quot;User presets&quot;, &quot;Local presets&quot;, and &quot;Network presets&quot;.  The host populates those sub-menus by walking through the respective trees.  For each node in the tree, the host uses <a href="#GetCFURLFromFileURLsTreeNode">GetCFURLFromFileURLsTreeNode</a> to get the CFURL for that tree node.  For each file CFURL in the tree, the host uses <a href="#CopyAUPresetNameFromCFURL">CopyAUPresetNameFromCFURL</a> to get a CFString to use as the text for that menu item.  For each sub-directory CFURL in the tree, the host uses CFURLCopyLastPathComponent to get a CFString to use as the text for that menu item, and makes that menu item another sub-menu for all of the children of that tree node.  Now the sub-menus are complete.  When the user chooses any one of the preset files from these sub-menus, the host uses <a href="#RestoreAUStateFromPresetFile">RestoreAUStateFromPresetFile</a> to load that file in the AU.
+The host calls <a href="#CFTreeCreateFromAUPresetFilesInDomain">CFTreeCreateFromAUPresetFilesInDomain</a> for each relevant <a href="#DFXFileSystemDomain">file system domain</a>:  kDFXFileSystemDomain_User and kDFXFileSystemDomain_Local.  For each one that returns a valid CFTree, the host creates a sub-menu item accordingly:  &quot;User presets&quot; and &quot;Local presets&quot;.  The host populates those sub-menus by walking through the respective trees.  For each node in the tree, the host uses <a href="#GetCFURLFromFileURLsTreeNode">GetCFURLFromFileURLsTreeNode</a> to get the CFURL for that tree node.  For each file CFURL in the tree, the host uses <a href="#CopyAUPresetNameFromCFURL">CopyAUPresetNameFromCFURL</a> to get a CFString to use as the text for that menu item.  For each sub-directory CFURL in the tree, the host uses CFURLCopyLastPathComponent to get a CFString to use as the text for that menu item, and makes that menu item another sub-menu for all of the children of that tree node.  Now the sub-menus are complete.  When the user chooses any one of the preset files from these sub-menus, the host uses <a href="#RestoreAUStateFromPresetFile">RestoreAUStateFromPresetFile</a> to load that file in the AU.
 </p>
 
 <p>
-Finally, there is one more item in this menu:  &quot;Load Preset File...&quot;  When the user chooses that item, the host calls <a href="#CustomRestoreAUPresetFile">CustomRestoreAUPresetFile</a>.
+Finally, there is one more item in this menu:  &quot;Load Preset File...&quot;  When the user chooses that item, the host presents a file open dialog whose initial location is set using <a href="#FindPresetsDirForAU">FindPresetsDirForAU</a>, and whose selectable file filter relies upon <a href="#CFURLIsAUPreset">CFURLIsAUPreset</a>, and then uses <a href="#RestoreAUStateFromPresetFile">RestoreAUStateFromPresetFile</a> to load that selected file in the AU.
+</p>
+
+
+
+
+<p><br /></p>
+<hr />
+
+<h2 id="DFXFileSystemDomain">DFXFileSystemDomain</h2>
+
+<pre>
+typedef enum
+{
+	kDFXFileSystemDomain_Local,
+	kDFXFileSystemDomain_User
+} DFXFileSystemDomain
+</pre>
+
+
+<p><br /></p>
+<h3>explanation</h3>
+
+<p>
+The macOS file system is split into "domains", and the two domains handled in some of this library's functions are "local" and "user".  The local domain is for non-system files that are globally shared by all users of a computer (location is relative to / the root of the system hard disk).  The user domain is for files encapsulated only within a given user account (location is relative to ~/ the root of the user account directory).
 </p>
 
 
@@ -276,17 +316,17 @@ Finally, there is one more item in this menu:  &quot;Load Preset File...&quot;  
 <h2 id="SaveAUStateToPresetFile">SaveAUStateToPresetFile</h2>
 
 <p><code>
-ComponentResult SaveAUStateToPresetFile(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL)
+OSStatus SaveAUStateToPresetFile(AudioComponentInstance inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile)
 </code></p>
 
 <p>
 <var>inAUComponentInstance</var><br />
-The AudioUnit instance whose state data (ClassInfo AU property) you want to write out to a preset file.
+The Audio Unit instance whose state data (ClassInfo AU property) you want to write out to a preset file.
 </p>
 
 <p>
-<var>inDefaultAUPresetName</var><br />
-The default AU preset name that you would like to appear as the initial text in the file name field of the Save dialog.  Can be NULL.
+<var>inAUPresetNameString</var><br />
+The name to use for the saved AU preset file.
 </p>
 
 <p>
@@ -295,50 +335,40 @@ Upon successful return, this may point to a CFURLRef that references the file to
 </p>
 
 <p>
+<var>inPromptToReplaceFile</var><br />
+Whether a dialog will be presented asking the user before replacing the existing file, if a file already exists at the save location.
+</p>
+
+<p>
 <i><b>result</b></i><br />
-A result code:  noErr if the operation was successful, otherwise some appropriate error code.  If the user changed her mind and canceled the Save dialog, then the error code will be userCanceledErr.  If the AU's state data could not be retrieved, then the error code will be whatever the AU itself or the Component Manager returned.  If there was an error writing the data to disk, then the error code will be whatever CFURL error was returned when attempting the operation.  If there was a problem finding the standard location for the AU for saving the file, then an appropriate error code will be returned.  If there was an error finding or opening the nib resource file or the dialog window information contained in it, then the error code encountered when attempting those operations will be returned.  If any necessary CoreFoundation objects could not be created, then coreFoundationUnknownErr is returned.  If the user chose "Choose custom location...", then any errors encountered when creating and running the Navigation Services PutFile dialog will be returned.
+A status code:  noErr if the operation was successful, otherwise some appropriate error code.  If the user was asked whether to replace an existing file and chose not to, then userCanceledErr is returned.  If the AU's state data could not be retrieved, then the error code will be whatever the AU itself or the OS returned.  If there was an error writing the data to disk, then the error code will be whatever CFURL error was returned when attempting the operation.  If there was a problem finding the standard location for the AU for saving the file, then an appropriate error code will be returned.  If any necessary CoreFoundation objects could not be created, then coreFoundationUnknownErr is returned.
 </p>
 
 <p><br /></p>
 <h3>explanation</h3>
 <p>
-This is the function that you use when the user wants to export a preset file for an AU to disk.  It's very simple to use and does pretty much all of the work for you.
+This is the function that you use when the user wants to export a preset file for an AU to disk.  It always saves to the "user" file system domain.
 </p>
 <p>
-The user does not need to type the preset name with the .aupreset file name extension appended.  It will be automatically appended for the output file name.  But if the user did type the name with .aupreset appended, that will be noted and nothing extra will be appended.
+You do not need to add the .aupreset file name extension to the preset name.  It will be automatically appended for the output file name.  But if the you did include the .aupreset extension, that will be noted and nothing extra will be appended.
 </p>
 <p>
 If the file name is too long, it will be truncated (before appending the .aupreset extension, so the extension is always complete).
 </p>
 <p>
-If the caller has some reason to suggest a default name for the new AU preset file (like maybe the host interface provides a means for the user to name the current AU state before exporting it), then that name can be passed in as the inDefaultAUPresetName argument.  If you are not interested in providing a default name, then pass in NULL for inDefaultAUPresetName.
-</p>
-<p>
-You should not provide inDefaultAUPresetName with the .aupreset file name extension appended to it.  That will be done automatically.
-</p>
-<p>
-The caller is responsible for releasing inDefaultAUPresetName when done with it.  <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a> does not consume a reference to inDefaultAUPresetName, nor is it retained.
+The caller is responsible for releasing inAUPresetNameString when done with it.  <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a> does not consume a reference to inAUPresetNameString, nor is it retained.
 </p>
 <p>
 This function sets the value of the kAUPresetNameKey in the saved preset dictionary to name that the user enters as the file name.  This is the expected behavior when saving AU preset files.
 </p>
 <p>
-If you are interested in knowing to which file the AU state data was saved, you can provide a valid pointer to a CFURLRef for the outSavedAUPresetFileURL argument.  If you are not interested, pass in NULL for outSavedAUPresetFileURL.  But please note that it might be the case that no valid reference is available before this function returns.  Therefore, if you do pass in a valid reference to a CFURLRef for the outSavedAUPresetFileURL argument, the you should first NULL the CFURLRef.  If the function returns successfully, you still must check to see if your CFURLRef is still null in order to determine if the CFURL was able to be provided.  If the CFURL is not null, then you own a reference to it and are responsible for releasing it when done with it.
+If you are interested in knowing to which file the AU state data was saved, you can provide a valid pointer to a CFURLRef for the outSavedAUPresetFileURL argument.  If you are not interested, pass in NULL for outSavedAUPresetFileURL.  But please note that it might be the case that no valid reference is available before this function returns.  Therefore, if you do pass in a valid reference to a CFURLRef for the outSavedAUPresetFileURL argument, the you should first null the CFURLRef.  If the function returns successfully, you still must check to see if your CFURLRef is still null in order to determine if the CFURL was able to be provided.  If the CFURL is not null, then you own a reference to it and are responsible for releasing it when done with it.
 </p>
 <p>
-Note that, because of Navigation Services modality, if the user chooses to save to a non-standard location using the Nav Services PutFile dialog, you might not see the error code result from that save operation.  If the dialog fails to run, you will get an error code for that, but not necessarily an error code indicating whether or not the write operation succeeded.  If the dialog runs modally, you will get the final result, but if it is modeless, you will not.  I might try to address this shortcoming in the future.
+Similarly, it may not be possible to get the CFURL of the saved file.  Again, if the caller passes a reference to a CFURLRef for the outSavedAUPresetFileURL argument, the caller should first null the CFURLRef, since it might be the case that no valid reference is available before this function returns.
 </p>
 <p>
-Similarly, it may not be possible to get the CFURL of the saved file.  Again, if the caller passes a reference to a CFURLRef for the outSavedAUPresetFileURL argument, the caller should first NULL the CFURLRef, since it might be the case that no valid reference is available before this function returns.
-</p>
-<p>
-The Nav Services PutFile dialog defaults to starting the off in the User domain standard preset location for the AU.  If that directory or any of its parent directories do not already exist, they will be (if possible) created.  If they could not be created, then no particular default starting location is set.
-</p>
-<p>
-When you call this function, all of the resources for the dialogs and message alerts are searched for in the main application bundle.  If you are hosting an Audio Unit but are not the running application, you need to call the <a href="#SaveAUStateToPresetFile_Bundle">SaveAUStateToPresetFile_Bundle</a> function instead so that you can specify the bundle where the resources can be found.
-</p>
-<p>
-<i>legacy note:  (The following only applies if you are using a pre-2008 version of the library nib files which included a domain-choice radio control.)</I>  If the error was a write permissions error and the user's chosen save-to file system domain was not the user domain, then a pre-made error message will be shown informing the user that there was an access privileges error and that the user should try saving in the user domain, and then the dialog will automatically change the domain selection to User.  The dialog will remain open and you (the caller) will not see this error return.  Any other errors will be returned, though, and you should do what you need to do to inform the user of the error that occurred.
+When you call this function, the resources for any dialog are searched for in the main application bundle.  If you are hosting an Audio Unit but are not the running application (or you are the Audio Unit itself), you need to call the <a href="#SaveAUStateToPresetFile_Bundle">SaveAUStateToPresetFile_Bundle</a> function instead so that you can specify the bundle where the resources can be found.
 </p>
 
 
@@ -350,17 +380,17 @@ When you call this function, all of the resources for the dialogs and message al
 <h2 id="SaveAUStateToPresetFile_Bundle">SaveAUStateToPresetFile_Bundle</h2>
 
 <p><code>
-ComponentResult SaveAUStateToPresetFile_Bundle(AudioUnit inAUComponentInstance, CFStringRef inDefaultAUPresetName, CFURLRef * outSavedAUPresetFileURL, CFBundleRef inBundle)
+OSStatus SaveAUStateToPresetFile_Bundle(AudioComponentInstance inAUComponentInstance, CFStringRef inAUPresetNameString, CFURLRef* outSavedAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle)
 </code></p>
 
 <p>
 <var>inAUComponentInstance</var><br />
-The AudioUnit instance whose state data (ClassInfo AU property) you want to write out to a preset file.
+The Audio Unit instance whose state data (ClassInfo AU property) you want to write out to a preset file.
 </p>
 
 <p>
-<var>inDefaultAUPresetName</var><br />
-The default AU preset name that you would like to appear as the initial text in the file name field of the Save dialog.  Can be NULL.
+<var>inAUPresetNameString</var><br />
+The name to use for the saved AU preset file.
 </p>
 
 <p>
@@ -369,19 +399,24 @@ Upon successful return, this may point to a CFURLRef that references the file to
 </p>
 
 <p>
+<var>inPromptToReplaceFile</var><br />
+Whether a dialog will be presented asking the user before replacing the existing file, if a file already exists at the save location.
+</p>
+
+<p>
 <var>inBundle</var><br />
-A reference to the bundle where the dialog and message resources can be found.  If NULL, then the main application bundle is used.
+A reference to the bundle where the dialog resources can be found.  If NULL, then the main application bundle is used.
 </p>
 
 <p>
 <i><b>result</b></i><br />
-A result code, the same as with <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a>.
+A status code, the same as with <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a>.
 </p>
 
 <p><br /></p>
 <h3>explanation</h3>
 <p>
-This is a variant of <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a> that allows you to specify the bundle where the dialog and message resources are located.  You should use this function if you are calling from some plugin or framework or anything other than the running application.
+This is a variant of <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile</a> that allows you to specify the bundle where the dialog resources are located.  You should use this function if you are calling from some plugin or framework or anything other than the running application.
 </p>
 
 
@@ -389,22 +424,119 @@ This is a variant of <a href="#SaveAUStateToPresetFile">SaveAUStateToPresetFile<
 <h3>programming example</h3>
 
 <p>
-Here's an example of how an AUCarbonView might use this function to load a preset file for its associated Audio Unit:
+Here's an example of how an AU View might use this function to load a preset file for its associated Audio Unit:
 </p>
 
 <pre class="codesnippet">
 CFBundleRef pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR("org.destroyfx.MegaEffect"));
 if (pluginBundle != NULL)
 {
-	CFURLRef savedFileUrl = NULL;
-	ComponentResult result = SaveAUStateToPresetFile_Bundle(GetEditAudioUnit(), NULL, &amp;savedFileUrl, pluginBundle);
-	if ( (result == noErr) &amp;&amp; (savedFileUrl != NULL) )
+	CFURLRef savedFileURL = NULL;
+	OSStatus status = SaveAUStateToPresetFile_Bundle(GetEditAudioUnit(), NULL, &amp;savedFileURL, pluginBundle);
+	if ((status == noErr) &amp;&amp; (savedFileURL != NULL))
 	{
-		CFShow(savedFileUrl);	/* print info about the saved file's URL to stderr */
-		CFRelease(savedFileUrl);
+		CFShow(savedFileURL);	/* print info about the saved file's URL to stderr */
+		CFRelease(savedFileURL);
 	}
 }
 </pre>
+
+
+
+
+<p><br /></p>
+<hr />
+
+<h2 id="CustomSaveAUPresetFile">CustomSaveAUPresetFile</h2>
+
+<p><code>
+OSStatus CustomSaveAUPresetFile(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile)
+</code></p>
+
+<p>
+<var>inAUComponentInstance</var><br />
+The Audio Unit instance whose state data (ClassInfo AU property) you want to write out to a preset file.
+</p>
+
+<p>
+<var>inAUPresetFileURL</var><br />
+The file path where you wish to save the AU preset file.
+</p>
+
+<p>
+<var>inPromptToReplaceFile</var><br />
+Whether a dialog will be presented asking the user before replacing the existing file, if a file already exists at the save location.
+</p>
+
+<p>
+<i><b>result</b></i><br />
+A status code:  noErr if the operation was successful, otherwise some appropriate error code.  If the user was asked whether to replace an existing file and chose not to, then userCanceledErr is returned.  If the AU's state data could not be retrieved, then the error code will be whatever the AU itself or the OS returned.  If there was an error writing the data to disk, then the error code will be whatever CFURL error was returned when attempting the operation.  If any necessary CoreFoundation objects could not be created, then coreFoundationUnknownErr is returned.
+</p>
+
+<p><br /></p>
+<h3>explanation</h3>
+<p>
+This function can save a preset file for an AU to a non-default location on disk.
+</p>
+<p>
+You do not need to add the .aupreset file name extension to the preset name.  It will be automatically appended for the output file name.  But if the you did include the .aupreset extension, that will be noted and nothing extra will be appended.
+</p>
+<p>
+If the file name is too long, it will be truncated (before appending the .aupreset extension, so the extension is always complete).
+</p>
+<p>
+The caller is responsible for releasing inAUPresetNameString when done with it.  <a href="#CustomSaveAUPresetFile">CustomSaveAUPresetFile</a> does not consume a reference to inAUPresetNameString, nor is it retained.
+</p>
+<p>
+This function sets the value of the kAUPresetNameKey in the saved preset dictionary to name that the user enters as the file name.  This is the expected behavior when saving AU preset files.
+</p>
+<p>
+When you call this function, the resources for any dialog are searched for in the main application bundle.  If you are hosting an Audio Unit but are not the running application (or you are the Audio Unit itself), you need to call the <a href="#CustomSaveAUPresetFile_Bundle">CustomSaveAUPresetFile_Bundle</a> function instead so that you can specify the bundle where the resources can be found.
+</p>
+
+
+
+
+<p><br /></p>
+<hr />
+
+<h2 id="CustomSaveAUPresetFile_Bundle">CustomSaveAUPresetFile_Bundle</h2>
+
+<p><code>
+OSStatus CustomSaveAUPresetFile_Bundle(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL, Boolean inPromptToReplaceFile, CFBundleRef inBundle)
+</code></p>
+
+<p>
+<var>inAUComponentInstance</var><br />
+The Audio Unit instance whose state data (ClassInfo AU property) you want to write out to a preset file.
+</p>
+
+<p>
+<var>inAUPresetFileURL</var><br />
+The file path where you wish to save the AU preset file.
+</p>
+
+<p>
+<var>inPromptToReplaceFile</var><br />
+Whether a dialog will be presented asking the user before replacing the existing file, if a file already exists at the save location.
+</p>
+
+<p>
+<var>inBundle</var><br />
+A reference to the bundle where the dialog resources can be found.  If NULL, then the main application bundle is used.
+</p>
+
+<p>
+<i><b>result</b></i><br />
+A status code, the same as with <a href="#CustomSaveAUPresetFile">CustomSaveAUPresetFile</a>.
+</p>
+
+<p><br /></p>
+<h3>explanation</h3>
+<p>
+This is a variant of <a href="#CustomSaveAUPresetFile">CustomSaveAUPresetFile</a> that allows you to specify the bundle where the dialog resources are located.  You should use this function if you are calling from some plugin or framework or anything other than the running application.
+</p>
+
 
 
 
@@ -414,17 +546,17 @@ if (pluginBundle != NULL)
 <h2 id="CFTreeCreateFromAUPresetFilesInDomain">CFTreeCreateFromAUPresetFilesInDomain</h2>
 
 <p><code>
-CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(Component inAUComponent, short inFileSystemDomain)
+CFTreeRef CFTreeCreateFromAUPresetFilesInDomain(AudioComponent inAUComponent, DFXFileSystemDomain inFileSystemDomain)
 </code></p>
 
 <p>
 <var>inAUComponent</var><br />
-The AU Component whose preset files you want to find.  Note:  you can cast a ComponentInstance or AudioUnit to Component for this.
+The AU Component whose preset files you want to find.
 </p>
 
 <p>
 <var>inFileSystemDomain</var><br />
-The file system domain FindFolder constant for the domain that you want to search in for preset files.  Valid values are kUserDomain, kLocalDomain, and kNetworkDomain.
+The <a href="#DFXFileSystemDomain">file system domain</a> constant for the domain that you want to search in for preset files.
 </p>
 
 <p>
@@ -437,7 +569,7 @@ A CFTree with the complete hierarchy of preset files and sub-directories for the
 <h3>explanation</h3>
 
 <p>
-This is the function that you use when you want to find out what AU preset files exist on the user's system.  In order to find everything in the user's presets collection, you will want to do this for each possible file system domain:  kUserDomain, kLocalDomain, and kNetworkDomain.
+This is the function that you use when you want to find out what AU preset files exist on the user's system.  In order to find everything in the user's presets collection, you will want to do this for each possible <a href="#DFXFileSystemDomain">file system domain</a>:  kDFXFileSystemDomain_User and kDFXFileSystemDomain_Local.
 </p>
 <p>
 The caller owns a reference to the CFTree.  You should CFRelease it when you are done.  When you do that, all child trees and contained CFURLs will be released.  The CFURLRef in each tree node is valid for the lifespan of the returned CFTree object.  If you are going to release the tree, you should first retain any CFURLs that you still want to be able to access.
@@ -449,7 +581,7 @@ If you want an easy way to fetch the CFURL for a given tree node, you can use <a
 If any sub-directory contains no preset files, then it gets pruned from the tree before this function returns, so you don't need to check for empty branches.
 </p>
 <p>
-If you want to know whether a given tree node is a reference to a preset file or a sub-directory of preset files, simply check to see if it has any children with CFTreeGetChildCount.  If the return count value is greater than 0, then that means that the tree node references a sub-directory; otherwise, it references a file.
+If you want to know whether a given tree node is a reference to a preset file or a sub-directory of preset files, simply check to see if it has any children with CFTreeGetChildCount.  If the return count value is greater than zero, then that means that the tree node references a sub-directory; otherwise, it references a file.
 </p>
 <p>
 If you want to get a nicely displayable name string for a given preset file CFURL (like for the text in a menu entry, without its parent directory path prefixed and without the .aupreset file name extension), you can use <a href="#CopyAUPresetNameFromCFURL">CopyAUPresetNameFromCFURL</a>.  If you want to do the same thing for a sub-directory CFURL, simply use the CFURLCopyLastPathComponent function (which is part of the regular CoreFoundation API).
@@ -458,7 +590,7 @@ If you want to get a nicely displayable name string for a given preset file CFUR
 <!--
 Note that, currently, this function only checks each file found to determine if it is an AU preset type file, based on its file name extension (.aupreset).  It does not examine the data in the file to determine whether it is valid AU state data, or if it is state data for the specified AU.  It is assumed that any AU preset files in the standard locations for the AU will be valid for that AU.  I might refine this more in the future, though.
 -->
-This function checks each file found to determine if it is an AU preset type file, based on its file name extension (.aupreset).  It also examines the data in the file to determine whether it is valid AU state data for the specified AU (i.e. the identifying values must match the AU's ComponentDescription, which is determined by using <a href="#ComponentAndDescriptionMatch_Loosely">ComponentAndDescriptionMatch_Loosely</a>).  Any files that don't pass either of these examinations are excluded from the tree.  There should not ever be preset files for the wrong AU in the standard locations, but just in case there are, they will be excluded.
+This function checks each file found to determine if it is an AU preset type file, based on its file name extension (.aupreset).  It also examines the data in the file to determine whether it is valid AU state data for the specified AU (i.e. the identifying values must match the AU's AudioComponentDescription, which is determined by using <a href="#ComponentAndDescriptionMatch_Loosely">ComponentAndDescriptionMatch_Loosely</a>).  Any files that don't pass either of these examinations are excluded from the tree.  There should not ever be preset files for the wrong AU in the standard locations, but just in case there are, they will be excluded.
 </p>
 
 
@@ -501,19 +633,13 @@ And here's an example of using the above function to find all of the AU preset f
 CFTreeRef aupresetsTree;
 
 fprintf(stderr, "\n\tlooking in the user domain for preset files...\n");
-aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kUserDomain);
+aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kDFXFileSystemDomain_User);
 showtree(aupresetsTree);
 if (aupresetsTree != NULL)
 	CFRelease(aupresetsTree);
 
 fprintf(stderr, "\n\tlooking in the local domain for preset files...\n");
-aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kLocalDomain);
-showtree(aupresetsTree);
-if (aupresetsTree != NULL)
-	CFRelease(aupresetsTree);
-
-fprintf(stderr, "\n\tlooking in the network domain for preset files...\n");
-aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kNetworkDomain);
+aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(someAUComponent, kDFXFileSystemDomain_Local);
 showtree(aupresetsTree);
 if (aupresetsTree != NULL)
 	CFRelease(aupresetsTree);
@@ -599,7 +725,7 @@ Here's an example that iterates through every sibling in one level of a preset f
 CFIndex numChildren = CFTreeGetChildCount(parentTree);
 SetControlMaximum(yourMenuControl, numChildren);
 CFTreeRef presetFileTreeNode = CFTreeGetFirstChild(parentTree);
-for (CFIndex i=0; i &lt; numChildren; i++)
+for (CFIndex i = 0; i &lt; numChildren; i++)
 {
 	CFURLRef theFile = GetCFURLFromFileURLsTreeNode(presetFileTreeNode);
 	CFStringRef itemName = NULL;
@@ -611,7 +737,7 @@ for (CFIndex i=0; i &lt; numChildren; i++)
 		itemName = CopyAUPresetNameFromCFURL(theFile);
 	if (itemName != NULL)
 	{
-		SetMenuItemTextWithCFString(yourMenu, i+1, itemName);
+		SetMenuItemTextWithCFString(yourMenu, i + 1, itemName);
 		CFRelease(itemName);
 	}
 	presetFileTreeNode = CFTreeGetNextSibling(presetFileTreeNode);
@@ -627,12 +753,12 @@ for (CFIndex i=0; i &lt; numChildren; i++)
 <h2 id="RestoreAUStateFromPresetFile">RestoreAUStateFromPresetFile</h2>
 
 <p><code>
-ComponentResult RestoreAUStateFromPresetFile(AudioUnit inAUComponentInstance, CFURLRef inAUPresetFileURL)
+OSStatus RestoreAUStateFromPresetFile(AudioComponentInstance inAUComponentInstance, CFURLRef inAUPresetFileURL)
 </code></p>
 
 <p>
 <var>inAUComponentInstance</var><br />
-The AudioUnit instance whose state data (ClassInfo AU property) you want to restore from a preset file on disk.
+The Audio Unit instance whose state data (ClassInfo AU property) you want to restore from a preset file on disk.
 </p>
 
 <p>
@@ -642,7 +768,7 @@ A CFURLRef that references the AU preset file that contains the AU state data th
 
 <p>
 <i><b>result</b></i><br />
-A result code:  noErr if the operation was successful, otherwise some appropriate error code.  If the AU's state data could not be restored, then the error code will be whatever the AU itself or the Component Manager returned.  If there was an error reading the data from disk, then the error code will be whatever CFURL error was returned when attempting the operation.  If the file's data was not valid XML data that could be translated into a CFPropertyList, then coreFoundationUnknownErr or whatever error code was encountered during that operation is returned.
+A status code:  noErr if the operation was successful, otherwise some appropriate error code.  If the AU's state data could not be restored, then the error code will be whatever the AU itself or the OS returned.  If there was an error reading the data from disk, then the error code will be whatever CFURL error was returned when attempting the operation.  If the file's data was not valid XML data that could be translated into a CFPropertyList, then coreFoundationUnknownErr or whatever error code was encountered during that operation is returned.
 </p>
 
 <p><br /></p>
@@ -661,47 +787,13 @@ The caller is responsible for releasing inAUPresetFileURL when done with it.  <a
 </p>
 
 <pre class="codesnippet">
-CFTreeRef aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain((Component)someAUInstance, kUserDomain);
+CFTreeRef aupresetsTree = CFTreeCreateFromAUPresetFilesInDomain(AudioComponentInstanceGetComponent(someAUInstance), kDFXFileSystemDomain_User);
 /* ...do something here to present the tree to the user... */
 /* ...the user chooses a file... */
 /* ...get the tree node corresponding to that file... */
 CFURLRef theFile = GetCFURLFromFileURLsTreeNode(presetTreeNode);
-ComponentResult result = RestoreAUStateFromPresetFile(someAUInstance, theFile);
+OSStatus status = RestoreAUStateFromPresetFile(someAUInstance, theFile);
 </pre>
-
-
-
-
-<p><br /></p>
-<hr />
-
-<h2 id="CustomRestoreAUPresetFile">CustomRestoreAUPresetFile</h2>
-
-<p><code>
-ComponentResult CustomRestoreAUPresetFile(AudioUnit inAUComponentInstance)
-</code></p>
-
-<p>
-<var>inAUComponentInstance</var><br />
-The AudioUnit instance whose state data (ClassInfo AU property) you want to restore from a preset file on disk.
-</p>
-
-<p>
-<i><b>result</b></i><br />
-A result code:  noErr if the operation was successful, otherwise some appropriate error code.  If any error is encountered when creating and running the Navigation Services GetFile dialog, then that will be returned.
-</p>
-
-<p><br /></p>
-<h3>explanation</h3>
-<p>
-This function will bring up a Navigation Services GetFile dialog that will allow the user to locate a preset file anywhere.  If a file is chosen, the data will be read from disk and, if that is successful, an attempt will be made to restore the data as the new state for the AU.
-</p>
-<p>
-Note that, because of Navigation Services modality, you might not see the error code result from the GetFile dialog response, file reading operations, or AU state restoring operations.  If the dialog fails to run, you will get an error code for that, but not necessarily any error codes indicating whether or not the file reading or AU state data restoring operations succeeded.  If the dialog runs modally, you will get the final result, but if it is modeless, you will not.  I might try to address this shortcoming in the future.
-</p>
-<p>
-The GetFile dialog will filter out any files that are not AU preset type files, as determined by the file name extension (.aupreset).  It will also examine AU preset files to see if their contents have AU state data with identifying values that match for the specified AU (which is determined by using <a href="#ComponentAndDescriptionMatch_Loosely">ComponentAndDescriptionMatch_Loosely</a>), and filter out any files that do not pass this examination.
-</p>
 
 
 
@@ -712,7 +804,7 @@ The GetFile dialog will filter out any files that are not AU preset type files, 
 <h2 id="GetAUComponentDescriptionFromStateData">GetAUComponentDescriptionFromStateData</h2>
 
 <p><code>
-OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, ComponentDescription * outComponentDescription)
+OSStatus GetAUComponentDescriptionFromStateData(CFPropertyListRef inAUStateData, AudioComponentDescription* outComponentDescription)
 </code></p>
 
 <p>
@@ -727,14 +819,14 @@ Upon successful return, this structure's type, sub-type, and manufacturer ID val
 
 <p>
 <i><b>result</b></i><br />
-A result code:  noErr if the operation was successful, otherwise some appropriate error code.  Possible error code is kAudioUnitErr_InvalidPropertyValue if the dictionary is not in the expected format or is missing any of the required keys, or if the dictionary's value for kAUPresetVersionKey is unrecognized.
+A status code:  noErr if the operation was successful, otherwise some appropriate error code.  Possible error code is kAudioUnitErr_InvalidPropertyValue if the dictionary is not in the expected format or is missing any of the required keys, or if the dictionary's value for kAUPresetVersionKey is unrecognized.
 </p>
 
 <p><br /></p>
 <h3>explanation</h3>
 
 <p>
-AU state data is stored in the form of a CFDictionary.  The dictionary is expected to contain values for the type, sub-type, and manufacturer IDs of the specific AU that created the data.  This is in order to specify which AU is able read the data.  This function collects those identifying values from an AU state data dictionary into a ComponentDescription, providing a simple way to identify the data's creator.
+AU state data is stored in the form of a CFDictionary.  The dictionary is expected to contain values for the type, sub-type, and manufacturer IDs of the specific AU that created the data.  This is in order to specify which AU is able read the data.  This function collects those identifying values from an AU state data dictionary into an AudioComponentDescription, providing a simple way to identify the data's creator.
 </p>
 
 <p>
@@ -750,7 +842,7 @@ This function is used internally by <a href="#GetAUComponentDescriptionFromPrese
 <h2 id="GetAUComponentDescriptionFromPresetFile">GetAUComponentDescriptionFromPresetFile</h2>
 
 <p><code>
-OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, ComponentDescription * outComponentDescription)
+OSStatus GetAUComponentDescriptionFromPresetFile(CFURLRef inAUPresetFileURL, AudioComponentDescription* outComponentDescription)
 </code></p>
 
 <p>
@@ -765,7 +857,7 @@ Upon successful return, this structure's type, sub-type, and manufacturer ID val
 
 <p>
 <i><b>result</b></i><br />
-A result code:  noErr if the operation was successful, otherwise some appropriate error code.  Possible error codes are those returned by CreatePropertyListFromXMLFile or <a href="#GetAUComponentDescriptionFromStateData">GetAUComponentDescriptionFromStateData</a>.
+A status code:  noErr if the operation was successful, otherwise some appropriate error code.  Possible error codes are those returned by CreatePropertyListFromXMLFile or <a href="#GetAUComponentDescriptionFromStateData">GetAUComponentDescriptionFromStateData</a>.
 </p>
 
 <p><br /></p>
@@ -776,7 +868,75 @@ This is a variant of <a href="#GetAUComponentDescriptionFromStateData">GetAUComp
 </p>
 
 <p>
-This function is used internally by <a href="#CFTreeCreateFromAUPresetFilesInDomain">CFTreeCreateFromAUPresetFilesInDomain</a> and <a href="#CustomRestoreAUPresetFile">CustomRestoreAUPresetFile</a> when they validate an AU preset file's data to see if its identifying values match those of the specified AU.  Since it may also be useful in other contexts, I made it one of the public functions of this library.
+This function is used internally by <a href="#CFTreeCreateFromAUPresetFilesInDomain">CFTreeCreateFromAUPresetFilesInDomain</a> when it validates an AU preset file's data to see if its identifying values match those of the specified AU.  Since it may also be useful in other contexts, I made it one of the public functions of this library.
+</p>
+
+
+
+
+<p><br /></p>
+<hr />
+
+<h2 id="FindPresetsDirForAU">FindPresetsDirForAU</h2>
+
+<p><code>
+CFURLRef FindPresetsDirForAU(AudioComponent inAUComponent, DFXFileSystemDomain inFileSystemDomain, Boolean inCreateDir)
+</code></p>
+
+<p>
+<var>inAUComponent</var><br />
+The AU Component whose preset files location you seek.
+</p>
+
+<p>
+<var>inFileSystemDomain</var><br />
+The <a href="#DFXFileSystemDomain">file system domain</a> constant for the domain that you want to search in for preset files.
+</p>
+
+<p>
+<var>inCreateDir</var><br />
+Whether any path directory components should be created if not already present.
+</p>
+
+<p>
+<i><b>result</b></i><br />
+A directory URL:  a CFURL of the correct directory for preset files for the particular AU, or null if any error occurred.
+</p>
+
+<p><br /></p>
+<h3>explanation</h3>
+
+<p>
+Based upon the specific AU component provided and the requested file system domain, this function will return the correct location for preset files for that AU within the given domain.  If that directory path does not already exist, requesting to create any directories necessary to complete the path will attempt to do that.  Without specifying creation, it is possible that the returned path does not actually fully exist.
+</p>
+
+
+
+
+<p><br /></p>
+<hr />
+
+<h2 id="CFURLIsAUPreset">CFURLIsAUPreset</h2>
+
+<p><code>
+Boolean CFURLIsAUPreset(CFURLRef inURL)
+</code></p>
+
+<p>
+<var>inURL</var><br />
+Any CFURLRef.
+</p>
+
+<p>
+<i><b>result</b></i><br />
+A boolean answer: TRUE if the CFURL is an AU preset file, otherwise FALSE.
+</p>
+
+<p><br /></p>
+<h3>explanation</h3>
+
+<p>
+This function determines whether the CFURL represents a file and has the filename extension expected of AU preset files.
 </p>
 
 
@@ -801,11 +961,11 @@ This function is used internally by <a href="#CFTreeCreateFromAUPresetFilesInDom
 <h3>Why this matters</h3>
 
 <p>
-CFArrays use a set of callbacks that define what happens to their contained data items when you retain the array, release the array, ask to compare 2 items in the array, or ask for a description of an item in the array.  When the data items that an array holds are all CF types, there are standard CF ways to handle all of these situations and a convenient pre-made global CFArray callbacks structure that gives you that behavior (kCFTypeArrayCallBacks).  In the AU API, though, you need to make CFArrays of non-CF type data when you support the kAudioUnitProperty_FactoryPresets property.  So for those arrays, you need to define custom callbacks that will properly handle pointers to AUPreset structures as their data items.  The lifespan of the array may be greater than the lifespan of the plugin and any of its AUPreset data, so you must insure proper memory management of the AUPreset data items when the CFArray is retained and released.  That's what my callbacks do, which can be used via the kCFAUPresetArrayCallBacks constant.
+CFArrays use a set of callbacks that define what happens to their contained data items when you retain the array, release the array, ask to compare two items in the array, or ask for a description of an item in the array.  When the data items that an array holds are all CF types, there are standard CF ways to handle all of these situations and a convenient pre-made global CFArray callbacks structure that gives you that behavior (kCFTypeArrayCallBacks).  In the AU API, though, you need to make CFArrays of non-CF type data when you support the kAudioUnitProperty_FactoryPresets property.  So for those arrays, you need to define custom callbacks that will properly handle pointers to AUPreset structures as their data items.  The lifespan of the array may be greater than the lifespan of the plugin and any of its AUPreset data, so you must ensure proper memory management of the AUPreset data items when the CFArray is retained and released.  That is what my callbacks do, which can be used via the kCFAUPresetArrayCallBacks constant.
 </p>
 
 <p>
-Using these callbacks also requires the use of an object that can encompass an AUPreset structure but also hold the necessary extra data to mimic CFType behavior.  That is the purpose of the CFAUPresetRef type.  It is an opaque type and so there are functions for handling it correctly.  You must only use this data type with the Factory Preset array callbacks in this library.
+Using these callbacks also requires the use of an object that can encompass an AUPreset structure but also hold the necessary extra data to mimic CFType behavior.  That is the purpose of the CFAUPresetRef type.  It is an opaque type and so there are functions for handling it correctly.  You must use the Factory Preset array callbacks in this library only with this data type.
 </p>
 
 
@@ -843,7 +1003,7 @@ Using these callbacks also requires the use of an object that can encompass an A
 <h2 id="CFAUPresetRef">CFAUPresetRef</h2>
 
 <p><code>
-typedef const struct CFAUPreset * CFAUPresetRef
+typedef struct CFAUPreset const* CFAUPresetRef
 </code></p>
 
 
@@ -912,7 +1072,7 @@ Here's an example implementation of an AUBase-derived AU's GetPresets() method:
 </p>
 
 <pre class="codesnippet">
-ComponentResult MegaEffect::GetPresets(CFArrayRef * outData) const
+OSStatus MegaEffect::GetPresets(CFArrayRef* outData) const
 {
 	if (outData == NULL)
 		return noErr;
@@ -1010,7 +1170,7 @@ See <a href="#CFAUPresetCreate">CFAUPresetCreate</a> for a relevant example.
 <h2 id="kCFAUPresetArrayCallBacks">kCFAUPresetArrayCallBacks</h2>
 
 <p><code>
-const CFArrayCallBacks kCFAUPresetArrayCallBacks
+CFArrayCallBacks const kCFAUPresetArrayCallBacks
 </code></p>
 
 
@@ -1051,11 +1211,11 @@ See <a href="#CFAUPresetCreate">CFAUPresetCreate</a> for a relevant example.
 <h3>Why this matters</h3>
 
 <p>
-CFArrays use a set of callbacks that define what happens to their contained data items when you retain the array, release the array, ask to compare 2 items in the array, or ask for a description of an item in the array.  When the data items that an array holds are all CF types, there are standard CF ways to handle all of these situations and a convenient pre-made global CFArray callbacks structure that gives you that behavior (kCFTypeArrayCallBacks).  In the AU API, though, you need to make CFArrays of non-CF type data when you support the kAudioUnitMigrateProperty_FromPlugin property.  So for those arrays, you need to define custom callbacks that will properly handle pointers to AudioUnitOtherPluginDesc structures as their data items.  The lifespan of the array may be greater than the lifespan of the plugin and any of its AudioUnitOtherPluginDesc data, so you must insure proper memory management of the AudioUnitOtherPluginDesc data items when the CFArray is retained and released.  That's what my callbacks do, which can be used via the kCFAUOtherPluginDescArrayCallBacks constant.
+CFArrays use a set of callbacks that define what happens to their contained data items when you retain the array, release the array, ask to compare two items in the array, or ask for a description of an item in the array.  When the data items that an array holds are all CF types, there are standard CF ways to handle all of these situations and a convenient pre-made global CFArray callbacks structure that gives you that behavior (kCFTypeArrayCallBacks).  In the AU API, though, you need to make CFArrays of non-CF type data when you support the kAudioUnitMigrateProperty_FromPlugin property.  So for those arrays, you need to define custom callbacks that will properly handle pointers to AudioUnitOtherPluginDesc structures as their data items.  The lifespan of the array may be greater than the lifespan of the plugin and any of its AudioUnitOtherPluginDesc data, so you must ensure proper memory management of the AudioUnitOtherPluginDesc data items when the CFArray is retained and released.  That is what my callbacks do, which can be used via the kCFAUOtherPluginDescArrayCallBacks constant.
 </p>
 
 <p>
-Using these callbacks also requires the use of an object that can encompass an AudioUnitOtherPluginDesc structure but also hold the necessary extra data to mimic CFType behavior.  That is the purpose of the CFAUOtherPluginDescRef type.  It is an opaque type and so there are functions for handling it correctly.  You must only use this data type with the AU Migrate array callbacks in this library.
+Using these callbacks also requires the use of an object that can encompass an AudioUnitOtherPluginDesc structure but also hold the necessary extra data to mimic CFType behavior.  That is the purpose of the CFAUOtherPluginDescRef type.  It is an opaque type and so there are functions for handling it correctly.  You must use the AU Migrate array callbacks in this library only with this data type.
 </p>
 
 
@@ -1097,7 +1257,7 @@ Using these callbacks also requires the use of an object that can encompass an A
 <h2 id="CFAUOtherPluginDescRef">CFAUOtherPluginDescRef</h2>
 
 <p><code>
-typedef const struct CFAUOtherPluginDesc * CFAUOtherPluginDescRef
+typedef struct CFAUOtherPluginDesc const* CFAUOtherPluginDescRef
 </code></p>
 
 
@@ -1225,9 +1385,9 @@ Here's an example implementation the GetProperty method, specifically overridden
 </p>
 
 <pre class="codesnippet">
-ComponentResult MegaEffect::GetProperty(AudioUnitPropertyID inPropertyID, 
+OSStatus MegaEffect::GetProperty(AudioUnitPropertyID inPropertyID, 
 					AudioUnitScope inScope, AudioUnitElement inElement, 
-					void * outData)
+					void* outData)
 {
 	if (inPropertyID == kAudioUnitMigrateProperty_FromPlugin)
 	{
@@ -1386,7 +1546,7 @@ See <a href="#CFAUOtherPluginDescCreateVST">CFAUOtherPluginDescCreateVST</a> for
 <h2 id="kCFAUOtherPluginDescArrayCallBacks">kCFAUOtherPluginDescArrayCallBacks</h2>
 
 <p><code>
-const CFArrayCallBacks kCFAUOtherPluginDescArrayCallBacks
+CFArrayCallBacks const kCFAUOtherPluginDescArrayCallBacks
 </code></p>
 
 
@@ -1417,83 +1577,6 @@ See <a href="#CFAUOtherPluginDescCreateVST">CFAUOtherPluginDescCreateVST</a> for
 </p>
 <hr class="bigsection" />
 <hr class="bigsection" />
-<h1 class="bigsection" id="component_version_from_resource">Getting an un-opened Component's version from its resource file</h1>
-
-
-<p><br /></p>
-<h3>Why this matters</h3>
-
-<p>
-My code is more reliable and many, many, many times faster than using GetComponentVersion.  I got thoroughly sick of waiting <i>ages</i> for certain AU host apps to finish launching, so I wrote this function for them to use.
-</p>
-<p>
-Some Audio Unit host apps like to scan through all of the available Audio Units during launch time in order to query information from each AU.  For example, it's common for multi-track audio apps that have mixer-style interfaces to query the SupportedNumChannels property for each plugin in order to determine whether a given plugin should be made available on a mono track, stereo track, etc.  Querying properties from Unitialized AUs typically is not very expensive, but when the user's AU collection is very large, the time spent opening, querying properties, and closing every AU can really add up and delay the host app's launch time considerably.
-</p>
-<p>
-I think that the best way for the host to avoid this inefficiency is to query the required info only upon the first time that it encounters a given AU, and then to cache that info for future reference.  However, if an AU's version changes, then you can expect that some of its properties may also have changed, and the cache data will then be incorrect.  Because of this, the host should also cache the version value for the AU whenever it caches other data for that AU.  Then, during launch time, the host can check the version of each already-known AU, compare it to the value in the cache data, and then, if version values differ, the host knows that it should re-query that info and update the cached data.  For this reason, getting an AU's version value quickly and accurately is important.
-</p>
-<p>
-The problem with the standard way of getting Component version values is that it is neither quick nor accurate, in the case of most AUs.  The standard way is to use GetComponentVersion or CallComponentVersion from the official Component API.  Both functions do the same thing, which is to use the kComponentVersionSelect selector to query the Component's version value.  This is not quick because it requires that you OpenAComponent instance first.  It is not accurate because, in my own surveying, I've found that the vast majority of AUs do not properly support the Version selector.  However, all of the AUs that I looked at do have proper version values in their 'thng' resources.  Since it's easy to not support the selector, but impossible to make an AU without the 'thng' resource, it's a lot easier for a developer to forget about the Version selector, or let it get out of sync with the version in the 'thng' resource.  For this reason, it's more reliable to use the version from resource.  Plus, you don't need to open a component instance to get that value, you only need a Component record (what you get from FindNextComponent), so performance-wise it is extremely inexpensive, many orders of magnitude faster than using the Version selector.  In a test that I performed on my 800 MHz G4 with 300 AUs, using GetComponentVersion took a total of 7.8 seconds, whereas using <a href="#GetComponentVersionFromResource">GetComponentVersionFromResource</a> took only 0.66 seconds.
-</p>
-
-
-<p><br /></p>
-<h3>Functions</h3>
-
-<p>
-<a href="#GetComponentVersionFromResource">GetComponentVersionFromResource</a>
-</p>
-
-
-
-<p><br /></p>
-<hr />
-
-<h2 id="GetComponentVersionFromResource">GetComponentVersionFromResource</h2>
-
-<p><code>
-OSErr GetComponentVersionFromResource(Component inComponent, SInt32 * outVersion)
-</code></p>
-
-<p>
-<var>inComponent</var><br />
-The Component whose version value you want.  Note:  you can cast a ComponentInstance or AudioUnit to Component for this.
-</p>
-
-<p>
-<var>outVersion</var><br />
-A pointer to a SInt32 which, on successful return, will be set to the value of the Component's version.
-</p>
-
-<p>
-<i><b>result</b></i><br />
-A result code:  noErr if the operation was successful, otherwise some appropriate error code.  If there was a problem locating the Component, then the error code will be the one that the Component Manager returned.  If there were any problems handling the Component's resource, then the error will be the one that the Resource Manager returned.  If no version 2 or higher 'thng' resource could be found, then resNotFound is returned.
-</p>
-
-
-<p><br /></p>
-<h3>explanation</h3>
-
-<p>
-You can call this function to get the version of a Component from its resource file, without having to load the Component.
-</p>
-
-<p>
-This function works with any type of Component, not just Audio Units, as long as the component has a version 2 or higher 'thng' resource (version 2 was the first version of the 'thng' resource format that contained the version value).  All Audio Units use version 2 'thng' resources.
-</p>
-
-
-
-
-
-
-<p>
-<br />
-<br />
-<br />
-</p>
-<hr class="bigsection" />
-<hr class="bigsection" />
 <h1 class="bigsection" id="plugin_name_and_manufacturer_name">Getting an AU's plugin name and manufacturer name</h1>
 
 
@@ -1501,7 +1584,7 @@ This function works with any type of Component, not just Audio Units, as long as
 <h3>Why this matters</h3>
 
 <p>
-Audio Unit Component names are formatted in this certain way:  "Manufacturer Name: Plugin Name".  Very often, AU hosts want to parse out just the plugin name or just the manufacturer name to display to the user.  So that's what these functions do.  It's a common thing to need to do, and a pretty simple thing, but still I see no reason why every host author should need to write their own parsing code redundantly, so I'm sharing mine.  Plus I needed to write this code for the <a href="#preset_files">AU preset file handling stuff</a> anyway.
+Audio Unit Component names are formatted in this certain way:  "Manufacturer Name: Plugin Name".  Very often, AU hosts want to parse out just the plugin name or just the manufacturer name to display to the user.  So that is what these functions do.  It's a common thing to need to do, and a pretty simple thing, but still I see no reason why every host author should need to write their own parsing code redundantly, so I'm sharing mine.  Plus I needed to write this code for the <a href="#preset_files">AU preset file handling stuff</a> anyway.
 </p>
 
 <p>
@@ -1514,8 +1597,6 @@ Please note that the "manufacturer: plugin" name format is only an Audio Unit th
 
 <p>
 <a href="#CopyAUNameAndManufacturerStrings">CopyAUNameAndManufacturerStrings</a>
-<br />
-<a href="#GetAUNameAndManufacturerCStrings">GetAUNameAndManufacturerCStrings</a>
 </p>
 
 
@@ -1526,12 +1607,12 @@ Please note that the "manufacturer: plugin" name format is only an Audio Unit th
 <h2 id="CopyAUNameAndManufacturerStrings">CopyAUNameAndManufacturerStrings</h2>
 
 <p><code>
-OSStatus CopyAUNameAndManufacturerStrings(Component inAUComponent, CFStringRef * outNameString, CFStringRef * outManufacturerString)
+OSStatus CopyAUNameAndManufacturerStrings(AudioComponent inAUComponent, CFStringRef* outNameString, CFStringRef* outManufacturerString)
 </code></p>
 
 <p>
 <var>inAUComponent</var><br />
-The AU Component whose plugin name and/or manufacturer name you want.  Note:  you can cast a ComponentInstance or AudioUnit to Component for this.
+The AU Component whose plugin name and/or manufacturer name you want.
 </p>
 
 <p>
@@ -1546,7 +1627,7 @@ Upon successful return, the CFStringRef will reference a CFString representation
 
 <p>
 <i><b>result</b></i><br />
-A result code:  noErr if the operation was successful, otherwise some appropriate error code.  If there was any problem creating the CFStrings, coreFoundationUnknownErr is returned.  Other possible error codes are the same as the ones described for <a href="#GetAUNameAndManufacturerCStrings">GetAUNameAndManufacturerCStrings</a>.
+A status code:  noErr if the operation was successful, otherwise some appropriate error code.  If there was any problem creating the CFStrings, coreFoundationUnknownErr is returned.  If getting the AudioComponent name info fails, the error code is the one returned by AudioComponentCopyName.  If the AudioComponent name string is not in the proper AU colon-delimited format, internalComponentErr is returned.
 </p>
 
 
@@ -1554,19 +1635,11 @@ A result code:  noErr if the operation was successful, otherwise some appropriat
 <h3>explanation</h3>
 
 <p>
-If you only want the plugin name or only want the manufacturer name, you can send a valid pointer to a CFStringRef for the one that you want and NULL for the other one.  You cannot, however, send NULL for both.  Doing that will result in a paramErr return value, and duh, why would you want to do that anyway?
+If you only want the plugin name or only want the manufacturer name, you can send a valid pointer to a CFStringRef for the one that you want and NULL for the other one.  You cannot, however, send NULL for both.  Doing that will result in a paramErr return value.
 </p>
 
 <p>
 The caller owns a reference to each output CFString and is responsible for releasing them when done.
-</p>
-
-<p>
-This function is a convenience wrapper for <a href="#GetAUNameAndManufacturerCStrings">GetAUNameAndManufacturerCStrings</a>.  Since often you want the strings as CFStrings, this is a handy function.  But the actual stored strings for AUs are Pascal strings, so the first step is get them char-style.
-</p>
-
-<p>
-Currently, if the caller requests both name strings and only one could be retrieved, an error code will be returned, but the string that was retrieved will be valid on return.  I'm not sure what to do about that situation.  In practice, it really shouldn't ever happen, but if it does, currently that's the behavior, and it means that you'll get a somewhat misleading result code and potentially leak memory with the CFString that was successfully created.
 </p>
 
 
@@ -1598,69 +1671,6 @@ if (error == noErr)
 
 
 
-<p><br /></p>
-<hr />
-
-<h2 id="GetAUNameAndManufacturerCStrings">GetAUNameAndManufacturerCStrings</h2>
-
-<p><code>
-OSStatus GetAUNameAndManufacturerCStrings(Component inAUComponent, char * outNameString, char * outManufacturerString)
-</code></p>
-
-<p>
-<var>inAUComponent</var><br />
-The AU Component whose plugin name and/or manufacturer name you want.  Note:  you can cast a ComponentInstance or AudioUnit to Component for this.
-</p>
-
-<p>
-<var>outNameString</var><br />
-Upon successful return, the buffer is filled with a null-terminated C string representation of the Audio Unit's specific plugin name.  Can be NULL.
-</p>
-
-<p>
-<var>outManufacturerString</var><br />
-Upon successful return, the buffer is filled with a null-terminated C string representation of the Audio Unit's manufacturer name.  Can be NULL.
-</p>
-
-<p>
-<i><b>result</b></i><br />
-A result code:  noErr if the operation was successful, otherwise some appropriate error code.  If there was any problem creating or getting the handle for the resource name data, nilHandleErr is returned.  If getting the Component name info fails, the error code is the one returned by GetComponentInfo.  If the Component name string is not in the proper AU colon-delimited format, internalComponentErr is returned.
-</p>
-
-
-<p><br /></p>
-<h3>explanation</h3>
-
-<p>
-If you only want the plugin name or only want the manufacturer name, you can send a valid char pointer for the one that you want and NULL for the other one.  You cannot, however, send NULL for both.  Doing that will result in a paramErr return value, and duh, why would you want to do that anyway?
-</p>
-
-<p>
-Both outNameString and outManufacturerString, if non-null, must be valid char buffers capable of storing as much as 256 bytes each.
-</p>
-
-
-<p><br /></p>
-<h3>programming example</h3>
-
-<p>
-Here's an example of just getting the plugin name C string for an AU and viewing it in stderr:
-</p>
-
-<pre class="codesnippet">
-char nameCString[256];
-OSStatus error = GetAUNameAndManufacturerCStrings(someAUComponent, nameCString, NULL);
-if (error == noErr)
-{
-	fprintf(stderr, "the name of this plugin is:  %s\n", nameCString);
-}
-</pre>
-
-
-
-
-
-
 
 
 
@@ -1678,7 +1688,7 @@ if (error == noErr)
 <h3>Why this matters</h3>
 
 <p>
-A ComponentDescription is a struct that contains values that together uniquely identify a Component (an Audio Unit is a type of Component).  It is what you use to programatically describe a specific Component.  The struct contains 5 values, but only 3 of them are actually used for the purposes of uniquely identifying the AU.  Occasionally it is useful to compare ComponentDescriptions to see if they match, so these are just some convenience functions that make that simple, comparing on the basis of the 3 identifying values:  the type, sub-type, and manufacturer IDs.  For example, both <a href="#CFTreeCreateFromAUPresetFilesInDomain">CFTreeCreateFromAUPresetFilesInDomain</a> and <a href="#CustomRestoreAUPresetFile">CustomRestoreAUPresetFile</a> use these functions to compare the ComponentDescription that <a href="#GetAUComponentDescriptionFromPresetFile">GetAUComponentDescriptionFromPresetFile</a> supplies to that of a particular AU Component.
+An AudioComponentDescription is a struct that contains values that together uniquely identify an AudioComponent (an Audio Unit is a type of AudioComponent).  It is what you use to programatically describe a specific AudioComponent.  The struct contains five values, but only three of them are actually used for the purposes of uniquely identifying the AU.  Occasionally it is useful to compare ComponentDescriptions to see if they match, so these are just some convenience functions that make that simple, comparing on the basis of the three identifying values:  the type, sub-type, and manufacturer IDs.  For example, <a href="#CFTreeCreateFromAUPresetFilesInDomain">CFTreeCreateFromAUPresetFilesInDomain</a> uses these functions to compare the AudioComponentDescription that <a href="#GetAUComponentDescriptionFromPresetFile">GetAUComponentDescriptionFromPresetFile</a> supplies to that of a particular AudioComponent.
 </p>
 
 <p>
@@ -1707,7 +1717,7 @@ These functions also come in &quot;loosely&quot; varieties which match only the 
 <h2 id="ComponentDescriptionsMatch">ComponentDescriptionsMatch</h2>
 
 <p><code>
-Boolean ComponentDescriptionsMatch(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2)
+Boolean ComponentDescriptionsMatch(AudioComponentDescription const* inComponentDescription1, AudioComponentDescription const* inComponentDescription2)
 </code></p>
 
 <p>
@@ -1717,7 +1727,7 @@ A pointer to one of the ComponentDescriptions that you want to compare.
 
 <p>
 <var>inComponentDescription2</var><br />
-A pointer to the ComponentDescription that you want to compare to inComponentDescription1.
+A pointer to the AudioComponentDescription that you want to compare to inComponentDescription1.
 </p>
 
 <p>
@@ -1730,7 +1740,7 @@ The result is TRUE if both ComponentDescriptions match, and FALSE otherwise.
 <h3>explanation</h3>
 
 <p>
-This function compares 2 ComponentDescriptions to see if they match based on their identifying values.
+This function compares two ComponentDescriptions to see if they match based on their identifying values.
 </p>
 
 
@@ -1741,7 +1751,7 @@ This function compares 2 ComponentDescriptions to see if they match based on the
 <h2 id="ComponentDescriptionsMatch_Loosely">ComponentDescriptionsMatch_Loosely</h2>
 
 <p><code>
-Boolean ComponentDescriptionsMatch_Loosely(const ComponentDescription * inComponentDescription1, const ComponentDescription * inComponentDescription2)
+Boolean ComponentDescriptionsMatch_Loosely(AudioComponentDescription const* inComponentDescription1, AudioComponentDescription const* inComponentDescription2)
 </code></p>
 
 <p>
@@ -1751,7 +1761,7 @@ A pointer to one of the ComponentDescriptions that you want to compare.
 
 <p>
 <var>inComponentDescription2</var><br />
-A pointer to the ComponentDescription that you want to compare to inComponentDescription1.
+A pointer to the AudioComponentDescription that you want to compare to inComponentDescription1.
 </p>
 
 <p>
@@ -1778,22 +1788,22 @@ This function is the same as <a href="#ComponentDescriptionsMatch">ComponentDesc
 <h2 id="ComponentAndDescriptionMatch">ComponentAndDescriptionMatch</h2>
 
 <p><code>
-Boolean ComponentAndDescriptionMatch(Component inComponent, const ComponentDescription * inComponentDescription)
+Boolean ComponentAndDescriptionMatch(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription))
 </code></p>
 
 <p>
 <var>inComponent</var><br />
-A Component whose ComponentDescription you want to compare to another ComponentDescription.
+An AudioComponent whose AudioComponentDescription you want to compare to another AudioComponentDescription.
 </p>
 
 <p>
 <var>inComponentDescription</var><br />
-The ComponentDescription that you want to compare to inComponent's ComponentDescription.
+The AudioComponentDescription that you want to compare to inComponent's AudioComponentDescription.
 </p>
 
 <p>
 <i><b>result</b></i><br />
-The result is TRUE if inComponent's ComponentDescription matches inComponentDescription, and FALSE otherwise.
+The result is TRUE if inComponent's AudioComponentDescription matches inComponentDescription, and FALSE otherwise.
 </p>
 
 
@@ -1801,7 +1811,7 @@ The result is TRUE if inComponent's ComponentDescription matches inComponentDesc
 <h3>explanation</h3>
 
 <p>
-If you are starting with a Component that you want to compare to some ComponentDescription, then this function will do the work of querying the Component's ComponentDescription and then comparing those 2 ComponentDescriptions to see if they match.  If querying the ComponentDescription of inComponent's fails, then the function will return FALSE.
+If you are starting with an AudioComponent that you want to compare to some AudioComponentDescription, then this function will do the work of querying the AudioComponent's AudioComponentDescription and then comparing those two ComponentDescriptions to see if they match.  If querying the AudioComponentDescription of inComponent's fails, then the function will return FALSE.
 </p>
 
 <p>
@@ -1819,17 +1829,17 @@ This function is a convenience wrapper for <a href="#ComponentDescriptionsMatch"
 <h2 id="ComponentAndDescriptionMatch_Loosely">ComponentAndDescriptionMatch_Loosely</h2>
 
 <p><code>
-Boolean ComponentAndDescriptionMatch_Loosely(Component inComponent, const ComponentDescription * inComponentDescription)
+Boolean ComponentAndDescriptionMatch_Loosely(AudioComponent inComponent, AudioComponentDescription const* inComponentDescription)
 </code></p>
 
 <p>
 <var>inComponent</var><br />
-A Component whose ComponentDescription you want to compare to another ComponentDescription.
+An AudioComponent whose AudioComponentDescription you want to compare to another AudioComponentDescription.
 </p>
 
 <p>
 <var>inComponentDescription</var><br />
-The ComponentDescription that you want to compare to inComponent's ComponentDescription.
+The AudioComponentDescription that you want to compare to inComponent's AudioComponentDescription.
 </p>
 
 <p>
@@ -1860,132 +1870,6 @@ This function is the same as <a href="#ComponentAndDescriptionMatch">ComponentAn
 </p>
 <hr class="bigsection" />
 <hr class="bigsection" />
-<h1 class="bigsection" id="system_availability">System availability / host support</h1>
-
-
-<p><br /></p>
-<h3>Why this matters</h3>
-
-<p>
-Sometimes certain versions of core system software or AU host applications are missing important features or have significant bugs, and it is useful to be able to check on the state of such things in the environment in which your AU is running.
-</p>
-
-
-<p><br /></p>
-<h3>Functions</h3>
-
-<p>
-<a href="#IsAvailable_AU2rev1">IsAvailable_AU2rev1</a>
-<br />
-<a href="#IsTransportStateProcSafe">IsTransportStateProcSafe</a>
-</p>
-
-
-
-<p><br /></p>
-<hr />
-
-<h2 id="IsAvailable_AU2rev1">IsAvailable_AU2rev1</h2>
-
-<p><code>
-Boolean IsAvailable_AU2rev1()
-</code></p>
-
-<p>
-<i><b>result</b></i><br />
-The result is TRUE if the system frameworks implement the AU API version 2 revision 1 or higher, and FALSE otherwise.
-</p>
-
-
-<p><br /></p>
-<h3>explanation</h3>
-
-<p>
-There were some new APIs introduce in AU v2 rev1, such as the AUEventListener stuff.  This function lets you check to see if this is available on the system.  It's really only useful for Mac OS X 10.2.  Systems with Mac OS X 10.3 or higher always have this available, but systems with Mac OS X 10.2 will only have it available if QuickTime 6.4 or higher (with AudioToolbox.framework 1.3 or higher) is installed.
-</p>
-
-
-
-
-
-
-
-<p><br /></p>
-<hr />
-
-<h2 id="IsTransportStateProcSafe">IsTransportStateProcSafe</h2>
-
-<p><code>
-Boolean IsTransportStateProcSafe()
-</code></p>
-
-<p>
-<i><b>result</b></i><br />
-The result is FALSE if you will definitely cause a crash by calling HostCallbackInfo.transportStateProc(), and TRUE otherwise.
-</p>
-
-
-<p><br /></p>
-<h3>explanation</h3>
-
-<p>
-There was a rather heinous bug in versions of Logic lower than 6.4.2 and versions of GarageBand lower than 1.1.0 that requires special attention if you make an AU that utilizes the transportStateProc() HostCallback.  Basically, you can't call that callback if your AU is being hosted by one of the bad versions of those applications, because doing so will cause the application to crash.
-</p>
-
-<p>
-The reason is because of a bug in the AudioUnitSetProperty() calling of those applications.  They would first call AudioUnitGetPropertyInfo() for the kAudioUnitProperty_HostCallbacks property, and then call AudioUnitSetProperty() passing the data size that they got from AudioUnitGetPropertyInfo() rather than the size of the actual data buffer that they were setting on the AU.  This problem was caught at the time when the transportStateProc() was added to the HostCallbackInfo structure, because in that period of transition, the hosts were not yet built aware of the larger size of that structure, but some AUs were.  Note that, if a host is not going to support a given HostCallback, it is supposed to set that callback function pointer to NULL when setting the property data on the AU.  In these cases, however, the callback function pointer was being set to random memory, because the host applications were telling AUs that the data buffer was larger than it actually was, and so the value of the transportStateProc() function pointer would just be set to whatever bytes came after the host's data buffer in memory, rather than being set to NULL.  So before calling the transportStateProc() callback, you want to use this function to make sure that you can call it safely.
-</p>
-
-
-<p><br /></p>
-<h3>programming example</h3>
-
-<p>
-Here's an example of calling the transportStateProc safely from an AUEffectBase-derived AU's ProcessBufferLists() method:
-</p>
-
-<pre class="codesnippet">
-/* the result of IsTransportStateProcSafe() will never change during the process' life span, 
-   so there's no need to call this more than once */
-static const bool gTransportStateProcIsSafe = IsTransportStateProcSafe();
-
-OSStatus MegaEffect::ProcessBufferLists(AudioUnitRenderActionFlags &amp; ioActionFlags, 
-                     const AudioBufferList &amp; inBuffer, AudioBufferList &amp; outBuffer, 
-                     UInt32 inFramesToProcess)
-{
-	if (gTransportStateProcIsSafe)
-	{
-		Boolean isPlaying = true;
-		Boolean transportStateChanged = false;
-		Float64 currentSampleInTimeLine = 0.0;
-		Boolean isCycling = false;
-		Float64 cycleStartBeat = 0.0, cycleEndBeat = 0.0;
-		OSStatus status = CallHostTransportState(&amp;isPlaying, &amp;transportStateChanged, 
-		                                         &amp;currentSampleInTimeLine, 
-		                                         &amp;isCycling, &amp;cycleStartBeat, &amp;cycleEndBeat);
-		if (status == noErr)
-		{
-			/* ...do what you gotta do... */
-		}
-	}
-}
-</pre>
-
-
-
-
-
-
-
-
-
-<p>
-<br />
-<br />
-<br />
-</p>
-<hr class="bigsection" />
-<hr class="bigsection" />
 <h1 class="bigsection" id="parameter_change_notification">Posting parameter change notifications</h1>
 
 
@@ -1993,7 +1877,7 @@ OSStatus MegaEffect::ProcessBufferLists(AudioUnitRenderActionFlags &amp; ioActio
 <h3>Why this matters</h3>
 
 <p>
-Sometimes a change occurs to an Audio Unit's parameter that other interested parties might not be aware of.  For example, an AU might do something in a certain context that changes a parameter value internally (like mapping a MIDI CC event to a parameter change), and maybe the GUI or some other interface might want to be notified so that it can update itself to reflect that change.  These functions provide easy ways to do that.  AU has a nice system for sending parameter change notifications to any arbitrary number of parameter listeners, and these functions are just a wrappers for that part of the AU API.  I found myself writing the same little 6 line function over and over again in every AU that I worked on, so I figured I'd just make one reusable function for them all.  So these functions are just for convenience, they don't provide any extra functionality.
+Sometimes a change occurs to an Audio Unit's parameter of which other interested parties might not be aware.  For example, an AU might do something in a certain context that changes a parameter value internally (like mapping a MIDI CC event to a parameter change), and maybe the GUI or some other user interface might want to be notified so that it can update itself to reflect that change.  These functions provide easy ways to do that.  AU has a nice system for sending parameter change notifications to any arbitrary number of parameter listeners, and these functions are just a wrappers for that part of the AU API.  I found myself writing the same little six line function over and over again in every AU that I developed, so I figured I would just make one reusable function for them all.  So these functions are just for convenience, they don't provide any extra functionality.
 </p>
 
 
@@ -2014,12 +1898,12 @@ Sometimes a change occurs to an Audio Unit's parameter that other interested par
 <h2 id="AUParameterChange_TellListeners_ScopeElement">AUParameterChange_TellListeners_ScopeElement</h2>
 
 <p><code>
-void AUParameterChange_TellListeners_ScopeElement(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement)
+void AUParameterChange_TellListeners_ScopeElement(AudioComponentInstance inAUComponentInstance, AudioUnitParameterID inParameterID, AudioUnitScope inScope, AudioUnitElement inElement)
 </code></p>
 
 <p>
 <var>inAUComponentInstance</var><br />
-The AudioUnit instance whose parameter value has changed.
+The Audio Unit instance whose parameter value has changed.
 </p>
 
 <p>
@@ -2042,7 +1926,7 @@ The element of the changed parameter.
 <h3>explanation</h3>
 
 <p>
-This function is a convenience wrapper of AUParameterListenerNotify, which is part of the regular Audio Unit API.  When you use AUParameterListenerNotify, you need to have an AudioUnitParameter structure, initialize all of its values, and then call AUParameterListenerNotify.  This function just lets you do that in 1 line rather than 6.
+This function is a convenience wrapper of AUParameterListenerNotify, which is part of the regular Audio Unit API.  When you use AUParameterListenerNotify, you need to have an AudioUnitParameter structure, initialize all of its values, and then call AUParameterListenerNotify.  This function just lets you do that in one line rather than six.
 </p>
 
 
@@ -2065,12 +1949,12 @@ See <a href="#AUParameterChange_TellListeners">AUParameterChange_TellListeners</
 <h2 id="AUParameterChange_TellListeners">AUParameterChange_TellListeners</h2>
 
 <p><code>
-void AUParameterChange_TellListeners(AudioUnit inAUComponentInstance, AudioUnitParameterID inParameterID)
+void AUParameterChange_TellListeners(AudioComponentInstance inAUComponentInstance, AudioUnitParameterID inParameterID)
 </code></p>
 
 <p>
 <var>inAUComponentInstance</var><br />
-The AudioUnit instance whose parameter value has changed.
+The Audio Unit instance whose parameter value has changed.
 </p>
 
 <p>
@@ -2095,11 +1979,11 @@ Here's an example of sending change notifications for every parameter right afte
 </p>
 
 <pre class="codesnippet">
-OSStatus MegaEffect::NewFactoryPresetSet(const AUPreset &amp; inNewFactoryPreset)
+OSStatus MegaEffect::NewFactoryPresetSet(AUPreset const&amp; inNewFactoryPreset)
 {
 	/* ...do something to change load the factory preset settings... */
 
-	for (UInt32 i=0; i &lt; yourNumParameters; i++)
+	for (UInt32 i = 0; i &lt; yourNumParameters; i++)
 		AUParameterChange_TellListeners(GetComponentInstance(), yourParameterList[i]);
 
 	return noErr;
@@ -2119,6 +2003,21 @@ OSStatus MegaEffect::NewFactoryPresetSet(const AUPreset &amp; inNewFactoryPreset
 <hr class="bigsection" />
 <hr class="bigsection" />
 <h2 id="history">Change log</h2>
+
+<p>
+November 29th 2020:
+</p>
+<ul>
+	<li>removed the function CustomRestoreAUPresetFile as part of generally removing all functionality that required custom dialog UI code (since those system APIs have become asynchronous and therefore more complicated to provide via library)</li>
+	<li>SaveAUStateToPresetFile and SaveAUStateToPresetFile_Bundle no longer present a file save user dialog but instead save only to the default user domain location, and potentially present an alert dialog if a file already exists at that path (dependent upon the value of the new inPromptToReplaceFile parameter)</li>
+	<li>added CustomSaveAUPresetFile and CustomSaveAUPresetFile_Bundle functions to allow saving AU preset files to the non-default location</li>
+	<li>removed the function GetComponentVersionFromResource since the Carbon Component Manager API is long-deprecated (and eliminated for Apple Silicon Macs)</li>
+	<li>updated many functions to take Audio Component API types rather than deprecated Component Manager types</li>
+	<li>removed the fuction GetAUNameAndManufacturerCStrings because it was redundant and lacked clear memory ownership semantics</li>
+	<li>removed the function FSRefIsAUPreset because it was redundant and FSRef is deprecated</li>
+	<li>added DFXFileSystemDomain enum rather than relying upon the deprecated Find Folder system API constants</li>
+	<li>removed all of the system version checking / availability functions GetMacOSVersion, GetQuickTimeVersion, GetAudioToolboxFrameworkVersion, IsAvailable_AU2rev1, and IsTransportStateProcSafe since the old problematic versions of things for which these existed to identify are all ancient and long-unsupported</li>
+</ul>
 
 <p>
 May 8th 2008:
@@ -2144,7 +2043,7 @@ August 18th 2006:
 September 9th 2005:
 </p>
 <ul>
-	<li>in CopyAUNameAndManufacturerStrings(), changed all calls to CFStringCreateWithCString() to use kCFStringEncodingMacRoman for the string encoding parameter, since that's the only encoding that is allowed in the old-style Pascal string <code>'STR '</code> resources</li>
+	<li>in CopyAUNameAndManufacturerStrings(), changed all calls to CFStringCreateWithCString() to use kCFStringEncodingMacRoman for the string encoding parameter, since that is the only encoding that is allowed in the old-style Pascal string <code>'STR '</code> resources</li>
 </ul>
 
 <p>
@@ -2159,7 +2058,7 @@ August 12th 2005:
 March 6th 2005:
 </p>
 <ul>
-	<li>added the ComponentDescription comparator functions ComponentDescriptionsMatch() and ComponentAndDescriptionMatch()</li>
+	<li>added the AudioComponentDescription comparator functions ComponentDescriptionsMatch() and ComponentAndDescriptionMatch()</li>
 	<li>added the function GetAUComponentDescriptionFromPresetFile()</li>
 	<li>modified the behavior of CFTreeCreateFromAUPresetFilesInDomain() and CustomRestoreAUPresetFile() so that they now open and examine the AU preset files that they encounter and evaluate whether their data is for the specified AU</li>
 	<li>added the function IsTransportStateProcSafe()</li>
@@ -2172,7 +2071,7 @@ June 14th 2004:
 </p>
 <ul>
 	<li>changed the source code and binary code's license from the GNU Lesser General Public License to a modified BSD License so that it is easier for others to incorporate this library into a closed-source software project</li>
-	<li>added 4 new system availability convenience functions:  GetMacOSVersion(), GetQuickTimeVersion(), GetAudioToolboxFrameworkVersion(), and IsAvailable_AU2rev1()</li>
+	<li>added four new system availability convenience functions:  GetMacOSVersion(), GetQuickTimeVersion(), GetAudioToolboxFrameworkVersion(), and IsAvailable_AU2rev1()</li>
 	<li>RestoreAUStateFromPresetFile() now will, upon success, post notification of changed parameter values to any AU parameter listeners</li>
 	<li>ShouldReplaceExistingAUPresetFile() now creates a StandardAlert dialog of type kAlertNoteAlert rather than kAlertCautionAlert (as per the specifications in the Apple Human Interface Guidelines for Mac OS X) when the user is to be asked whether to replace an existing file</li>
 	<li>CustomSaveAUPresetNavEventHandler() is a little safer now (checks to see whether the file name CFString is null)</li>
@@ -2203,7 +2102,7 @@ September 18th 2003:
 <hr />
 
 <p class="footer">
-Copyright &copy; 2003-2008 Sophia Poirier
+Copyright &copy; 2003-2020 Sophia Poirier
 </p>
 <p class="footer">
 Permission is granted to copy, distribute and/or modify this document under the terms of the <a href="http://www.gnu.org/licenses/fdl.html">GNU Free Documentation License</a>, Version 1.2 or any later version published by the <a href="http://www.fsf.org/">Free Software Foundation</a>.  A copy of the license is included in the file &quot;fdl.txt&quot;.
@@ -2212,5 +2111,10 @@ Permission is granted to copy, distribute and/or modify this document under the 
 The latest version of this document can be found <a href="http://destroyfx.org/dfx-au-utilities.html">here</a>.
 </p>
 
-</body>
 
+
+
+
+
+</body>
+</html>
