@@ -30,6 +30,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxguieditor.h"
 
 
+using namespace std::placeholders;
+
+
 #pragma mark DGButton
 
 //-----------------------------------------------------------------------------
@@ -103,15 +106,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseDown(VSTGUI::CPoint& inPos, VSTGUI::C
 			mNewValue = mEntryValue + (isDirectionReversed ? 1 : -1);
 			break;
 		case Mode::Radio:
-			if (mOrientation & dfx::kAxis_Horizontal)
-			{
-				mNewValue = std::lround(inPos.x - getViewSize().left) / (std::lround(getWidth()) / getNumStates());
-			}
-			else
-			{
-				mNewValue = std::lround(inPos.y - getViewSize().top) / (std::lround(getHeight()) / getNumStates());
-			}
-			mNewValue += min;  // offset
+			mNewValue = getRadioValue(inPos) + min;
 			break;
 		default:
 			break;
@@ -152,15 +147,7 @@ VSTGUI::CMouseEventResult DGButton::onMouseMoved(VSTGUI::CPoint& inPos, VSTGUI::
 
 		if (mMode == Mode::Radio)
 		{
-			if (mOrientation & dfx::kAxis_Horizontal)
-			{
-				mNewValue = std::lround(inPos.x - getViewSize().left) / (std::lround(getWidth()) / getNumStates());
-			}
-			else
-			{
-				mNewValue = std::lround(inPos.y - getViewSize().top) / (std::lround(getHeight()) / getNumStates());
-			}
-			mNewValue = std::clamp(mNewValue, 0L, getNumStates() - 1);
+			mNewValue = getRadioValue(inPos);
 		}
 		if (mNewValue != currentValue)
 		{
@@ -354,6 +341,41 @@ long DGButton::constrainValue(long inValue) const
 	}
 
 	return std::clamp(inValue, min, max);
+}
+
+//-----------------------------------------------------------------------------
+void DGButton::setRadioThresholds(std::vector<VSTGUI::CCoord> const& inThresholds)
+{
+	assert(mMode == Mode::Radio);
+	assert(static_cast<long>(inThresholds.size() + 1) == getNumStates());
+	assert(std::all_of(inThresholds.cbegin(), inThresholds.cend(), std::bind(std::less<>{}, _1, getRange())));
+	assert(std::all_of(inThresholds.cbegin(), inThresholds.cend(), std::bind(std::greater<>{}, _1, 0)));
+
+	mRadioThresholds = inThresholds;
+}
+
+//-----------------------------------------------------------------------------
+long DGButton::getRadioValue(VSTGUI::CPoint const& inPos) const
+{
+	assert(mMode == Mode::Radio);
+
+	auto const result = [inPos, this]()
+	{
+		auto const pos = (mOrientation & dfx::kAxis_Horizontal) ? (inPos.x - getViewSize().left) : (inPos.y - getViewSize().top);
+		if (!mRadioThresholds.empty())
+		{
+			return std::count_if(mRadioThresholds.cbegin(), mRadioThresholds.cend(), std::bind(std::less_equal<>{}, _1, pos));
+		}
+		return std::lround(pos) / (getRange() / getNumStates());
+	}();
+	return std::clamp(result, 0L, getNumStates() - 1);
+}
+
+//-----------------------------------------------------------------------------
+long DGButton::getRange() const
+{
+	assert(mMode == Mode::Radio);
+	return std::lround((mOrientation & dfx::kAxis_Horizontal) ? getWidth() : getHeight());
 }
 
 

@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <functional>
 #include <string>
+#include <vector>
 
 #include "dfxguicontrol.h"
 
@@ -73,6 +74,7 @@ public:
 	void setUserReleaseProcedure(UserProcedure&& inProc, bool inOnlyAtEndWithNoCancel = false);
 
 	void setOrientation(dfx::Axis inOrientation) noexcept;
+	void setRadioThresholds(std::vector<VSTGUI::CCoord> const& inThresholds);
 
 	CLASS_METHODS(DGButton, VSTGUI::CControl)
 
@@ -89,8 +91,12 @@ protected:
 	dfx::Axis mOrientation = dfx::kAxis_Horizontal;
 
 private:
+	long getRadioValue(VSTGUI::CPoint const& inPos) const;
+	long getRange() const;  // the salient view dimension per the orientation
+
 	bool mMouseIsDown = false;
 	long mEntryValue = 0, mNewValue = 0;
+	std::vector<VSTGUI::CCoord> mRadioThresholds;
 };
 
 

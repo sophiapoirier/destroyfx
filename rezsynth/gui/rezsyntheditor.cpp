@@ -312,23 +312,23 @@ long RezSynthEditor::OpenEditor()
 
 	// filter response scaling
 	pos.set(kScaleButtonX, kScaleButtonY, scaleModeButtonImage->getWidth(), scaleModeButtonImage->getHeight() / kNumScaleModes);
-	emplaceControl<DGButton>(this, kScaleMode, pos, scaleModeButtonImage, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kScaleMode, pos, scaleModeButtonImage, DGButton::Mode::Radio)->setRadioThresholds({24, 55});
 
 	// bandwidth mode
 	pos.set(kBandwidthModeButtonX, kBandwidthModeButtonY, bandwidthModeButtonImage->getWidth(), bandwidthModeButtonImage->getHeight() / kNumBandwidthModes);
-	emplaceControl<DGButton>(this, kBandwidthMode, pos, bandwidthModeButtonImage, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kBandwidthMode, pos, bandwidthModeButtonImage, DGButton::Mode::Radio)->setRadioThresholds({52});
 
 	// separation mode (logarithmic or linear)
 	pos.set(kSepModeButtonX, kSepModeButtonY, sepModeButtonImage->getWidth(), sepModeButtonImage->getHeight() / kNumSeparationModes);
-	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kSepMode, pos, sepModeButtonImage, DGButton::Mode::Radio)->setRadioThresholds({52});
 
 	// legato
 	pos.set(kLegatoButtonX, kLegatoButtonY, legatoButtonImage->getWidth(), legatoButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kLegato, pos, legatoButtonImage, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kLegato, pos, legatoButtonImage, DGButton::Mode::Radio)->setRadioThresholds({38});
 
 	// attack and release fade mode
 	pos.set(kFadeTypeButtonX, kFadeTypeButtonY, fadesButtonImage->getWidth(), fadesButtonImage->getHeight() / RezSynth::kCurveType_NumTypes);
-	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kFadeType, pos, fadesButtonImage, DGButton::Mode::Radio)->setRadioThresholds({24, 55});
 
 	// resonance algorithm
 	pos.set(kResonAlgButtonX, kResonAlgButtonY, resonAlgButtonImage->getWidth(), resonAlgButtonImage->getHeight() / kNumResonAlgs);
@@ -336,15 +336,15 @@ long RezSynthEditor::OpenEditor()
 
 	// allow Nyquist foldover or no
 	pos.set(kFoldoverButtonX, kFoldoverButtonY, foldoverButtonImage->getWidth(), foldoverButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kFoldover, pos, foldoverButtonImage, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kFoldover, pos, foldoverButtonImage, DGButton::Mode::Radio)->setRadioThresholds({52});
 
-	// wisely lower the output gain to accomodate for resonance or no
+	// wisely lower the output gain to accommodate for resonance or no
 	pos.set(kWiseAmpButtonX, kWiseAmpButtonY, wiseAmpButtonImage->getWidth(), wiseAmpButtonImage->getHeight() / 2);
-	emplaceControl<DGButton>(this, kWiseAmp, pos, wiseAmpButtonImage, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kWiseAmp, pos, wiseAmpButtonImage, DGButton::Mode::Radio)->setRadioThresholds({38});
 
 	// dry/wet mix mode (linear or equal power)
 	pos.set(kDryWetMixModeButtonX, kDryWetMixModeButtonY, dryWetMixModeButtonImage->getWidth(), dryWetMixModeButtonImage->getHeight() / kNumDryWetMixModes);
-	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, DGButton::Mode::Radio);
+	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, DGButton::Mode::Radio)->setRadioThresholds({45});
 
 	// turn on/off MIDI learn mode for CC parameter automation
 	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
