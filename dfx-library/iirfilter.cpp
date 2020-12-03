@@ -335,7 +335,7 @@ std::pair<float, float> dfx::Crossover::process(unsigned long inChannel, float i
 #if DFX_CROSSOVER_LINKWITZ_RILEY_MUSICDSP
 	auto const process = [input = inSample, this](InputCoeff const& coeff, History& history)
 	{
-		double const output = (coeff.mA0 * (input + history.mX4)) + (coeff.mA1 * (history.mX1 + history.mX3)) + (coeff.mA2 * history.mX2) - (mB1 * history.mY1) - (mB2 * history.mY2) - (mB3 * history.mY3) - (mB4 * history.mY4);
+		double const output = dfx::math::ClampDenormal((coeff.mA0 * (input + history.mX4)) + (coeff.mA1 * (history.mX1 + history.mX3)) + (coeff.mA2 * history.mX2) - (mB1 * history.mY1) - (mB2 * history.mY2) - (mB3 * history.mY3) - (mB4 * history.mY4));
 		history.mX4 = history.mX3;
 		history.mX3 = history.mX2;
 		history.mX2 = history.mX1;

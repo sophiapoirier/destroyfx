@@ -47,6 +47,14 @@ namespace dfx::math
 template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
 constexpr T kPi(3.14159265358979323846264338327950288);
 
+// the AU SDK handles denormals for us, and ARM processors don't have denormal performance issues
+constexpr bool kDenormalProblem = 
+#if defined(TARGET_API_AUDIOUNIT) || defined(__arm__) || defined(__arm64__)
+false;
+#else
+true;
+#endif
+
 
 
 //-----------------------------------------------------------------------------
@@ -113,21 +121,22 @@ constexpr T MagnitudeMax(T inValue1, T inValue2)
 
 //-----------------------------------------------------------------------------
 //static inline void Undenormalize(float& ioValue) { if (std::fabs(ioValue) < 1.0e-15f) ioValue = 0.0f; }
-//static inline void Undenormalize(float& ioValue) { if (((*reinterpret_cast<unsigned int*>(&ioValue)) & 0x7f800000) == 0) ioValue = 0.0f; }
+//static inline void Undenormalize(float& ioValue) { if ((reinterpret_cast<unsigned int&>(ioValue) & 0x7f800000) == 0) ioValue = 0.0f; }
 
 //-----------------------------------------------------------------------------
 template <typename T>
 constexpr T ClampDenormal(T inValue)
 {
 	static_assert(std::is_floating_point_v<T>);
-#ifndef TARGET_API_AUDIOUNIT  // the AU SDK handles denormals for us
-	// clamp down any very small values (below -300 dB) to zero to hopefully avoid any denormal values
-	constexpr T verySmallButNotDenormalValue = std::numeric_limits<T>::min() * T(1.0e20);
-	if (std::fabs(inValue) < verySmallButNotDenormalValue)
+	if constexpr (kDenormalProblem)
 	{
-		return T(0);
+		// clamp down any very small values (below -300 dB) to zero to hopefully avoid any denormal values
+		constexpr T verySmallButNotDenormalValue = std::numeric_limits<T>::min() * T(1.0e20);
+		if (std::fabs(inValue) < verySmallButNotDenormalValue)
+		{
+			return T(0);
+		}
 	}
-#endif
 	return inValue;
 }
 

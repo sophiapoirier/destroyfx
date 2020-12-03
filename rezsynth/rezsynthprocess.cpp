@@ -23,6 +23,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <algorithm>
 
+#include "dfxmath.h"
+
 
 void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio, unsigned long inNumFrames)
 {
@@ -30,19 +32,20 @@ void RezSynth::processaudio(float const* const* inAudio, float* const* outAudio,
 	auto numFramesToProcess = inNumFrames;  // for dividing up the block according to events
 
 
-#ifndef TARGET_API_AUDIOUNIT
-	// mix very quiet noise (-300 dB) into the input signal to hopefully avoid any denormal values
-	float quietNoise = 1.0e-15f;
-	for (unsigned long ch = 0; ch < numChannels; ch++)
+	if constexpr (dfx::math::kDenormalProblem)
 	{
-		auto const volatileIn = const_cast<float*>(inAudio[ch]);
-		for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
+		// mix very quiet noise (-300 dB) into the input signal to hopefully avoid any denormal values
+		float quietNoise = 1.0e-15f;
+		for (unsigned long ch = 0; ch < numChannels; ch++)
 		{
-			volatileIn[samplecount] += quietNoise;
-			quietNoise = -quietNoise;
+			auto const volatileIn = const_cast<float*>(inAudio[ch]);
+			for (unsigned long samplecount = 0; samplecount < inNumFrames; samplecount++)
+			{
+				volatileIn[samplecount] += quietNoise;
+				quietNoise = -quietNoise;
+			}
 		}
 	}
-#endif
 
 
 	// counter for the number of MIDI events this block
