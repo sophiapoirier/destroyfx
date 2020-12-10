@@ -44,7 +44,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define VST_NUM_CHANNELS	2
 
 // optional
-#define PLUGIN_DESCRIPTION_STRING	PLUGIN_NAME_STRING " allows you to \"play\" resonant bandpass filter banks with MIDI notes"
+#define PLUGIN_DESCRIPTION_STRING	PLUGIN_NAME_STRING " allows you to \"play\" resonant band-pass filter banks with MIDI notes"
 
 
 #endif
