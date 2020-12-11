@@ -27,23 +27,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxgui.h"
 
 
-//--------------------------------------------------------------------------
-class ScrubbyHelpBox final : public DGStaticTextDisplay
-{
-public:
-	ScrubbyHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackground);
-
-	void draw(VSTGUI::CDrawContext* inContext) override;
-
-	void setDisplayItem(long inItemNum);
-
-	CLASS_METHODS(ScrubbyHelpBox, DGStaticTextDisplay)
-
-private:
-	long mItemNum;
-};
-
-
 //-----------------------------------------------------------------------
 class ScrubbyEditor final : public DfxGuiEditor
 {
@@ -60,12 +43,13 @@ private:
 	void HandlePitchConstraintChange();
 	void HandleTempoSyncChange();
 	void HandleTempoAutoChange();
+	std::string GetHelpForControl(IDGControl* inControl) const;
 
 	DGRangeSlider* mSeekRateSlider = nullptr;
 	DGTextDisplay* mSeekRateDisplay = nullptr;
 	DGTextDisplay* mSeekRateRandMinDisplay = nullptr;
 
-	ScrubbyHelpBox* mHelpBox = nullptr;
+	DGHelpBox* mHelpBox = nullptr;
 	std::vector<DGButton*> mNotesButtons;
 	DGButton* mMidiLearnButton = nullptr, * mMidiResetButton = nullptr;
 	IDGControl* mTitleArea = nullptr;

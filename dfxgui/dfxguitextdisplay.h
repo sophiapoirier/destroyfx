@@ -149,3 +149,24 @@ public:
 protected:
 	std::vector<std::string> mDisplayStrings;
 };
+
+
+
+#pragma mark -
+//-----------------------------------------------------------------------------
+class DGHelpBox : public DGStaticTextDisplay
+{
+public:
+	using TextForControlProc = std::function<std::string(IDGControl*)>;
+
+	DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, 
+			  TextForControlProc const& inTextForControlProc, DGImage* inBackground = nullptr);
+
+	void draw(VSTGUI::CDrawContext* inContext) override;
+
+	CLASS_METHODS(DGHelpBox, DGStaticTextDisplay)
+
+private:
+	DfxGuiEditor* const mOwnerEditor;
+	TextForControlProc const mTextForControlProc;
+};

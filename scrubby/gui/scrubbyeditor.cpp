@@ -21,10 +21,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include "scrubbyeditor.h"
 
-#include <array>
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
-#include <sstream>
 
 #include "dfxmisc.h"
 #include "scrubby.h"
@@ -146,111 +145,6 @@ enum
 	kNumNotesButtons
 };
 
-enum
-{
-	kHelp_None = 0,
-	kHelp_General,
-	kHelp_SeekRate,
-	kHelp_SeekRange,
-	kHelp_SeekDur,
-	kHelp_SpeedMode,
-	kHelp_Freeze,
-	kHelp_SplitChannels,
-	kHelp_TempoSync,
-	kHelp_PitchConstraint,
-	kHelp_Notes,
-	kHelp_Octaves,
-	kHelp_Tempo,
-	kHelp_TempoAuto,
-	kHelp_PreDelay,
-	kHelp_DryLevel,
-	kHelp_WetLevel,
-	kHelp_MidiLearn,
-	kHelp_MidiReset,
-	kNumHelps
-};
-
-constexpr std::array<const char* const, kNumHelps> const kHelpStrings
-{{
-	"",
-	// general
-	R"DELIM(Scrubby randomly zips around through an audio delay buffer.
-Scrubby will, at a given seek rate, find random target destinations within a 
-certain time range and then travel to those destinations.)DELIM", 
-#if TARGET_OS_MAC
-	#define SCRUBBY_ALT_KEY_NAME "option"
-#else
-	#define SCRUBBY_ALT_KEY_NAME "alt"
-#endif
-	// seek rate
-	"seek rate:  the rate at which Scrubby finds new target destinations\n"
-	"You can define a randomized range with min and max rate limits for each seek.\n"
-	"(control+click to move both together, " SCRUBBY_ALT_KEY_NAME "+click to move both relative)", 
-#undef SCRUBBY_ALT_KEY_NAME
-	// seek range
-	R"DELIM(seek range:  define the time range in which Scrubby can zip around
-This specifies how far back in the delay buffer Scrubby can look for new 
-random target destinations.  This tends to affect playback speeds.)DELIM", 
-	// seek duration
-	R"DELIM(seek duration:  amount of a seek cycle spent moving to the target
-Scrubby finds a new target to move towards at each seek cycle.  You can 
-make it reach the target early by lowering this value.  This produces gaps.)DELIM", 
-	// speed mode
-	R"DELIM(speed mode:  are you a robot or a DJ?
-Robot mode causes Scrubby to jump to the next speed after each target seek.  
-In DJ mode, Scrubby gradually accelerates or decelerates to next speed.)DELIM", 
-	// freeze
-	R"DELIM(freeze:  freeze the delay buffer
-This causes Scrubby to stop reading from your incoming audio stream and 
-to stick with the current contents of the delay buffer.)DELIM", 
-	// channels mode
-	R"DELIM(channels mode:  toggle between linked or split seeks for each channel
-When linked, all audio channels will seek the same target destinations.  
-When split, each audio channel will find different destinations to seek.)DELIM", 
-	// tempo sync
-	R"DELIM(tempo sync:  lock the seek rate to the tempo
-Turning this on will let you define seek rates in terms of your tempo.  
-If your host doesn't send tempo info to plugins, you'll need to define a tempo.)DELIM", 
-	// pitch constraint
-	R"DELIM(pitch constraint:  - only for robot mode -
-With this set to "notes," the playback speeds for each seek will always be 
-semitone increments from the original pitch.  (see also the keyboard help))DELIM", 
-	// notes
-	R"DELIM(notes:  - only for robot mode with pitch constraint turned on -
-You can choose which semitone steps within an octave are allowable when 
-pitch constraint mode is on.  There are preset and transposition buttons, too.)DELIM", 
-	// octaves
-	R"DELIM(octave limits:  limit Scrubby's speeds within a range of octaves
-You can limit how low or how high Scrubby's playback speeds can go in terms 
-of octaves, or move these to their outer points if you want no limits.)DELIM", 
-	// tempo
-	R"DELIM(tempo:  sets the tempo that Scrubby uses when tempo sync is on
-If your host app doesn't send tempo info to plugins, you'll need to adjust this 
-parameter in order to specify a tempo for Scrubby to use.)DELIM", 
-	// tempo auto
-	R"DELIM(sync to host tempo:  follow the host's current tempo
-If your host app sends tempo info to plugins, you can enable this parameter 
-to lock the tempo that Scrubby uses to that of the host.)DELIM", 
-	// predelay
-	R"DELIM(predelay:  compensate for Scrubby's (possible) output delay
-Scrubby zips around a delay buffer, which can create some perceived latency.  
-This asks your host to predelay by a % of the seek range.  (not in all hosts))DELIM", 
-	// dry level
-	R"DELIM(dry level:  the mix level of the unprocessed input audio
-Mix in as much of the original, unprocessed audio as you wish.)DELIM", 
-	// wet level
-	R"DELIM(wet level:  the mix level of the processed audio
-Adjust the amount of Scrubby's zoomies that is mixed into the audio output.)DELIM", 
-	// MIDI learn
-	R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
-When this is enabled, you can click on a parameter control and then the next 
-MIDI CC received will be assigned to control that parameter.  (not in all hosts))DELIM", 
-	// MIDI reset
-	R"DELIM(MIDI reset:  erase CC assignments
-Push this button to erase all of your MIDI CC -> parameter assignments.  
-Then CCs won't affect any parameters and you can start over if you want.)DELIM"
-}};
-
 
 
 //-----------------------------------------------------------------------------
@@ -320,80 +214,6 @@ bool predelayDisplayProc(float inValue, char* outText, void*)
 {
 	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.0f%%", inValue) > 0;
 }
-
-
-
-#pragma mark -
-
-//--------------------------------------------------------------------------
-// this is a display for Scrubby's built-in help
-ScrubbyHelpBox::ScrubbyHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, DGImage* inBackground)
-:	DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
-						kDisplayTextSize, DGColor::kBlack, kDisplayFont), 
-	mItemNum(kHelp_None)
-{
-}
-
-//--------------------------------------------------------------------------
-void ScrubbyHelpBox::draw(VSTGUI::CDrawContext* inContext)
-{
-	if (mItemNum == kHelp_None)
-	{
-		return;
-	}
-
-	if (auto const image = getDrawBackground())
-	{
-		image->draw(inContext, getViewSize());
-	}
-
-	DGRect textpos(getViewSize());
-	textpos.setSize(textpos.getWidth() - 13, kDisplayHeight);
-	textpos.offset(12, 4);
-
-	std::istringstream stream(kHelpStrings.at(mItemNum));
-	std::string line;
-	bool headerDrawn = false;
-	while (std::getline(stream, line))
-	{
-		if (!std::exchange(headerDrawn, true))
-		{
-			setFontColor(DGColor::kBlack);
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-			textpos.offset(1, 0);
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-			textpos.offset(-1, 13);
-			setFontColor(DGColor::kWhite);
-		}
-		else
-		{
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-			textpos.offset(0, 11);
-		}
-	}
-
-	setDirty(false);
-}
-
-//--------------------------------------------------------------------------
-void ScrubbyHelpBox::setDisplayItem(long inItemNum)
-{
-	if ((inItemNum < 0) || (inItemNum >= kNumHelps))
-	{
-		return;
-	}
-
-	bool const changed = (mItemNum != inItemNum);
-
-	mItemNum = inItemNum;
-
-	if (changed)
-	{
-		redraw();
-	}
-}
-
-
 
 
 
@@ -469,6 +289,7 @@ long ScrubbyEditor::OpenEditor()
 	DGRect pos;
 	long const seekRateParamID = getparameter_b(kTempoSync) ? kSeekRate_Sync : kSeekRate_Hz;
 	long const seekRateRandMinParamID = getparameter_b(kTempoSync) ? kSeekRateRandMin_Sync : kSeekRateRandMin_Hz;
+	using namespace std::placeholders;
 
 	//--create the sliders-----------------------------------------------
 
@@ -601,11 +422,11 @@ long ScrubbyEditor::OpenEditor()
 
 		if (keyboardBottomKeyImages[i] != nullptr)
 		{
-			button->setUserProcedure(std::bind(keyboardButtonProc, std::placeholders::_1, button));
+			button->setUserProcedure(std::bind(keyboardButtonProc, _1, button));
 
 			keyboardBottomKeyPos.setWidth(keyboardBottomKeyImages[i]->getWidth());
 			button = emplaceControl<DGButton>(this, paramID, keyboardBottomKeyPos, keyboardBottomKeyImages[i], DGButton::Mode::Increment);
-			button->setUserProcedure(std::bind(keyboardButtonProc, std::placeholders::_1, button));
+			button->setUserProcedure(std::bind(keyboardButtonProc, _1, button));
 			keyboardBottomKeyPos.offset(keyboardBottomKeyPos.getWidth(), 0);
 		}
 	}
@@ -652,32 +473,32 @@ long ScrubbyEditor::OpenEditor()
 	// transpose all of the pitch constraint notes down one semitone
 	pos.set(kTransposeDownButtonX, kTransposeDownButtonY, transposeDownButtonImage->getWidth(), transposeDownButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Down] = emplaceControl<DGButton>(this, pos, transposeDownButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Down]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_Down));
+	mNotesButtons[kNotes_Down]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_Down));
 
 	// transpose all of the pitch constraint notes up one semitone
 	pos.set(kTransposeUpButtonX, kTransposeUpButtonY, transposeUpButtonImage->getWidth(), transposeUpButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Up] = emplaceControl<DGButton>(this, pos, transposeUpButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Up]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_Up));
+	mNotesButtons[kNotes_Up]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_Up));
 
 	// turn on the pitch constraint notes that form a major chord
 	pos.set(kMajorChordButtonX, kMajorChordButtonY, majorChordButtonImage->getWidth(), majorChordButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Major] = emplaceControl<DGButton>(this, pos, majorChordButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Major]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_Major));
+	mNotesButtons[kNotes_Major]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_Major));
 
 	// turn on the pitch constraint notes that form a minor chord
 	pos.set(kMinorChordButtonX, kMinorChordButtonY, minorChordButtonImage->getWidth(), minorChordButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_Minor] = emplaceControl<DGButton>(this, pos, minorChordButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_Minor]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_Minor));
+	mNotesButtons[kNotes_Minor]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_Minor));
 
 	// turn on all pitch constraint notes
 	pos.set(kAllNotesButtonX, kAllNotesButtonY, allNotesButtonImage->getWidth(), allNotesButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_All] = emplaceControl<DGButton>(this, pos, allNotesButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_All]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_All));
+	mNotesButtons[kNotes_All]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_All));
 
 	// turn off all pitch constraint notes
 	pos.set(kNoneNotesButtonX, kNoneNotesButtonY, noneNotesButtonImage->getWidth(), noneNotesButtonImage->getHeight() / 2);
 	mNotesButtons[kNotes_None] = emplaceControl<DGButton>(this, pos, noneNotesButtonImage, 2, DGButton::Mode::Momentary);
-	mNotesButtons[kNotes_None]->setUserProcedure(std::bind(keyboardMacroProc, std::placeholders::_1, kNotes_None));
+	mNotesButtons[kNotes_None]->setUserProcedure(std::bind(keyboardMacroProc, _1, kNotes_None));
 
 
 	// .....................MISC..........................
@@ -699,7 +520,7 @@ long ScrubbyEditor::OpenEditor()
 
 	//--create the help display-----------------------------------------
 	pos.set(kHelpX, kHelpY, helpBackgroundImage->getWidth(), helpBackgroundImage->getHeight());
-	mHelpBox = emplaceControl<ScrubbyHelpBox>(this, pos, helpBackgroundImage);
+	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&ScrubbyEditor::GetHelpForControl, this, _1), helpBackgroundImage);
 
 
 
@@ -874,93 +695,11 @@ void ScrubbyEditor::parameterChanged(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void ScrubbyEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse)
+void ScrubbyEditor::mouseovercontrolchanged(IDGControl* /*currentControlUnderMouse*/)
 {
-	auto const newHelpItem = [this, currentControlUnderMouse]() -> long
-	{
-
-		if (currentControlUnderMouse)
-		{
-			if (currentControlUnderMouse == mTitleArea)
-			{
-				return kHelp_General;
-			}
-			else if (currentControlUnderMouse == mMidiLearnButton)
-			{
-				return kHelp_MidiLearn;
-			}
-			else if (currentControlUnderMouse == mMidiResetButton)
-			{
-				return kHelp_MidiReset;
-			}
-
-			for (auto const& notesButton : mNotesButtons)
-			{
-				if (currentControlUnderMouse == notesButton)
-				{
-					return kHelp_Notes;
-				}
-			}
-
-			switch (currentControlUnderMouse->getParameterID())
-			{
-				case kSeekRange:
-					return kHelp_SeekRange;
-				case kFreeze:
-					return kHelp_Freeze;
-				case kSeekRate_Hz:
-				case kSeekRate_Sync:
-				case kSeekRateRandMin_Hz:
-				case kSeekRateRandMin_Sync:
-					return kHelp_SeekRate;
-				case kTempoSync:
-					return kHelp_TempoSync;
-				case kSeekDur:
-				case kSeekDurRandMin:
-					return kHelp_SeekDur;
-				case kSpeedMode:
-					return kHelp_SpeedMode;
-				case kSplitChannels:
-					return kHelp_SplitChannels;
-				case kPitchConstraint:
-					return kHelp_PitchConstraint;
-				case kPitchStep0:
-				case kPitchStep1:
-				case kPitchStep2:
-				case kPitchStep3:
-				case kPitchStep4:
-				case kPitchStep5:
-				case kPitchStep6:
-				case kPitchStep7:
-				case kPitchStep8:
-				case kPitchStep9:
-				case kPitchStep10:
-				case kPitchStep11:
-					return kHelp_Notes;
-				case kOctaveMin:
-				case kOctaveMax:
-					return kHelp_Octaves;
-				case kTempo:
-					return kHelp_Tempo;
-				case kTempoAuto:
-					return kHelp_TempoAuto;
-				case kPredelay:
-					return kHelp_PreDelay;
-				case kDryLevel:
-					return kHelp_DryLevel;
-				case kWetLevel:
-					return kHelp_WetLevel;
-				default:
-					break;
-			}
-		}
-
-		return kHelp_None;
-	}();
-
 	if (mHelpBox)
 	{
-		mHelpBox->setDisplayItem(newHelpItem);
+		mHelpBox->redraw();
 	}
 }
 
@@ -969,4 +708,124 @@ void ScrubbyEditor::outputChannelsChanged(unsigned long inChannelCount)
 {
 	float const alpha = (inChannelCount > 1) ? 1.f : kUnusedControlAlpha;
 	SetParameterAlpha(kSplitChannels, alpha);
+}
+
+//-----------------------------------------------------------------------------
+std::string ScrubbyEditor::GetHelpForControl(IDGControl* inControl) const
+{
+	if (!inControl)
+	{
+		return {};
+	}
+
+	if (inControl == mTitleArea)
+	{
+		return R"DELIM(Scrubby randomly zips around through an audio delay buffer.
+Scrubby will, at a given seek rate, find random target destinations within a 
+certain time range and then travel to those destinations.)DELIM";
+	}
+	if (inControl == mMidiLearnButton)
+	{
+		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
+When this is enabled, you can click on a parameter control and then the next 
+MIDI CC received will be assigned to control that parameter.  (not in all hosts))DELIM";
+	}
+	if (inControl == mMidiResetButton)
+	{
+		return R"DELIM(MIDI reset:  erase CC assignments
+Push this button to erase all of your MIDI CC -> parameter assignments.  
+Then CCs will not affect any parameters and you can start over if you want.)DELIM";
+	}
+
+	constexpr auto notesHelpText = R"DELIM(notes:  - only for robot mode with pitch constraint turned on -
+You can choose which semitone steps within an octave are allowable when 
+pitch constraint mode is on.  There are preset and transposition buttons, too.)DELIM";
+	if (std::find(mNotesButtons.cbegin(), mNotesButtons.cend(), inControl) != mNotesButtons.cend())
+	{
+		return notesHelpText;
+	}
+
+	switch (inControl->getParameterID())
+	{
+		case kSeekRange:
+			return R"DELIM(seek range:  define the time range in which Scrubby can zip around
+This specifies how far back in the delay buffer Scrubby can look for new 
+random target destinations.  This tends to affect playback speeds.)DELIM";
+		case kFreeze:
+			return R"DELIM(freeze:  freeze the delay buffer
+This causes Scrubby to stop reading from your incoming audio stream and 
+to stick with the current contents of the delay buffer.)DELIM";
+		case kSeekRate_Hz:
+		case kSeekRate_Sync:
+		case kSeekRateRandMin_Hz:
+		case kSeekRateRandMin_Sync:
+#if TARGET_OS_MAC
+	#define SCRUBBY_ALT_KEY_NAME "option"
+#else
+	#define SCRUBBY_ALT_KEY_NAME "alt"
+#endif
+			return "seek rate:  the rate at which Scrubby finds new target destinations\n"
+			"You can define a randomized range with min and max rate limits for each seek.\n"
+			"(control+click to move both together, " SCRUBBY_ALT_KEY_NAME "+click to move both relative)";
+#undef SCRUBBY_ALT_KEY_NAME
+		case kTempoSync:
+			return R"DELIM(tempo sync:  lock the seek rate to the tempo
+Turning this on will let you define seek rates in terms of your tempo.  
+If your host doesn't send tempo info to plugins, you'll need to define a tempo.)DELIM";
+		case kSeekDur:
+		case kSeekDurRandMin:
+			return R"DELIM(seek duration:  amount of a seek cycle spent moving to the target
+Scrubby finds a new target to move towards at each seek cycle.  You can 
+make it reach the target early by lowering this value.  This produces gaps.)DELIM";
+		case kSpeedMode:
+			return R"DELIM(speed mode:  are you a robot or a DJ?
+Robot mode causes Scrubby to jump to the next speed after each target seek.  
+In DJ mode, Scrubby gradually accelerates or decelerates to next speed.)DELIM";
+		case kSplitChannels:
+			return R"DELIM(channels mode:  toggle between linked or split seeks for each channel
+When linked, all audio channels will seek the same target destinations.  
+When split, each audio channel will find different destinations to seek.)DELIM";
+		case kPitchConstraint:
+			return R"DELIM(pitch constraint:  - only for robot mode -
+With this set to "notes," the playback speeds for each seek will always be 
+semitone increments from the original pitch.  (see also the keyboard help))DELIM";
+		case kPitchStep0:
+		case kPitchStep1:
+		case kPitchStep2:
+		case kPitchStep3:
+		case kPitchStep4:
+		case kPitchStep5:
+		case kPitchStep6:
+		case kPitchStep7:
+		case kPitchStep8:
+		case kPitchStep9:
+		case kPitchStep10:
+		case kPitchStep11:
+			return notesHelpText;
+		case kOctaveMin:
+		case kOctaveMax:
+			return R"DELIM(octave limits:  limit Scrubby's speeds within a range of octaves
+You can limit how low or how high Scrubby's playback speeds can go in terms 
+of octaves, or move these to their outer points if you want no limits.)DELIM";
+		case kTempo:
+			return R"DELIM(tempo:  sets the tempo that Scrubby uses when tempo sync is on
+If your host app doesn't send tempo info to plugins, you'll need to adjust this 
+parameter in order to specify a tempo for Scrubby to use.)DELIM";
+		case kTempoAuto:
+			return R"DELIM(sync to host tempo:  follow the host's current tempo
+If your host app sends tempo info to plugins, you can enable this parameter 
+to lock the tempo that Scrubby uses to that of the host.)DELIM";
+		case kPredelay:
+			return R"DELIM(predelay:  compensate for Scrubby's (possible) output delay
+Scrubby zips around a delay buffer, which can create some perceived latency.  
+This asks your host to predelay by a % of the seek range.  (not in all hosts))DELIM";
+		case kDryLevel:
+			return R"DELIM(dry level:  the mix level of the unprocessed input audio
+Mix in as much of the original, unprocessed audio as you wish.)DELIM";
+		case kWetLevel:
+			return R"DELIM(wet level:  the mix level of the processed audio
+Adjust the amount of Scrubby's zoomies that is mixed into the audio output.)DELIM";
+		default:
+			return {};
+	}
 }

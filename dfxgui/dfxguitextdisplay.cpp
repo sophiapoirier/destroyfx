@@ -26,6 +26,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
 
@@ -470,6 +471,72 @@ void DGTextArrayDisplay::draw(VSTGUI::CDrawContext* inContext)
 	if ((stringIndex >= 0) && (static_cast<size_t>(stringIndex) < mDisplayStrings.size()))
 	{
 		drawPlatformText(inContext, VSTGUI::UTF8String(mDisplayStrings[stringIndex]).getPlatformString(), getViewSize());
+	}
+
+	setDirty(false);
+}
+
+
+
+
+
+
+#pragma mark -
+#pragma mark DGTextArrayDisplay
+
+//-----------------------------------------------------------------------------
+// built-in help text region
+//-----------------------------------------------------------------------------
+DGHelpBox::DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, 
+					 TextForControlProc const& inTextForControlProc, DGImage* inBackground)
+:	DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
+						dfx::kFontSize_SnootPixel10, {}, dfx::kFontName_SnootPixel10), 
+	mOwnerEditor(inOwnerEditor),  // DGStaticTextDisplay does not store this
+	mTextForControlProc(inTextForControlProc)
+{
+	assert(inOwnerEditor);
+	assert(inTextForControlProc);
+}
+
+//-----------------------------------------------------------------------------
+// TODO: allow custom styling rather than hardcoding layout, font, and colors
+void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
+{
+	auto const text = mTextForControlProc(mOwnerEditor->getCurrentControl_mouseover());
+	if (text.empty())
+	{
+		setDirty(false);
+		return;
+	}
+
+	if (auto const image = getDrawBackground())
+	{
+		image->draw(inContext, getViewSize());
+	}
+
+	DGRect textpos(getViewSize());
+	textpos.setSize(textpos.getWidth() - 13, 10);
+	textpos.offset(12, 4);
+
+	std::istringstream stream(text);
+	std::string line;
+	bool headerDrawn = false;
+	while (std::getline(stream, line))
+	{
+		if (!std::exchange(headerDrawn, true))
+		{
+			setFontColor(DGColor::kBlack);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
+			textpos.offset(1, 0);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
+			textpos.offset(-1, 13);
+		}
+		else
+		{
+			setFontColor(DGColor::kWhite);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
+			textpos.offset(0, 11);
+		}
 	}
 
 	setDirty(false);

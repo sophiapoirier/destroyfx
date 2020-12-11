@@ -81,8 +81,18 @@ enum
 	kMidiResetButtonX = 128,
 	kMidiResetButtonY = kMidiLearnButtonY,
 
+	kHelpX = 24,
+	kHelpY = 600,
+	kHelpWidth = 472,
+	kHelpHeight = 72,
+
 	kDestroyFXLinkX = 400,
-	kDestroyFXLinkY = 672
+	kDestroyFXLinkY = 672,
+
+	kTitleAreaX = 131,
+	kTitleAreaY = 16,
+	kTitleAreaWidth = 364,
+	kTitleAreaHeight = 58
 };
 
 
@@ -347,14 +357,21 @@ long RezSynthEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kDryWetMixMode, pos, dryWetMixModeButtonImage, DGButton::Mode::Radio)->setRadioThresholds({45});
 
 	// turn on/off MIDI learn mode for CC parameter automation
-	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
+	mMidiLearnButton = CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
 
 	// clear all MIDI CC assignments
-	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
+	mMidiResetButton = CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
 
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
+
+	pos.set(kTitleAreaX, kTitleAreaY, kTitleAreaWidth, kTitleAreaHeight);
+	mTitleArea = emplaceControl<DGNullControl>(this, pos);
+
+	// help display
+	pos.set(kHelpX, kHelpY, kHelpWidth, kHelpHeight);
+	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&RezSynthEditor::GetHelpForControl, this, std::placeholders::_1));
 
 
 
@@ -407,8 +424,77 @@ void RezSynthEditor::parameterChanged(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
+void RezSynthEditor::mouseovercontrolchanged(IDGControl* /*currentControlUnderMouse*/)
+{
+	if (mHelpBox)
+	{
+		mHelpBox->redraw();
+	}
+}
+
+//-----------------------------------------------------------------------------
 void RezSynthEditor::HandleLegatoChange()
 {
 	float const alpha = getparameter_b(kLegato) ? kUnusedControlAlpha : 1.f;
 	SetParameterAlpha(kBetweenGain, alpha);
+}
+
+//-----------------------------------------------------------------------------
+std::string RezSynthEditor::GetHelpForControl(IDGControl* inControl) const
+{
+	if (!inControl)
+	{
+		return {};
+	}
+
+	if (inControl == mTitleArea)
+	{
+		return R"DELIM(Rez Synth allows you to "play" resonant band-pass filter banks.
+The center frequency of a bank's base filter is controlled by MIDI notes. 
+Additional filters in each bank (if any) have ascending center frequencies.)DELIM";
+	}
+	if (inControl == mMidiLearnButton)
+	{
+		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
+When enabled, you can click on a parameter control and then the next 
+MIDI CC received will be assigned to control that parameter.)DELIM";
+	}
+	if (inControl == mMidiResetButton)
+	{
+		return R"DELIM(MIDI reset:  erase CC assignments
+Push this button to erase all of your MIDI CC -> parameter assignments.  
+Then CCs will not affect any parameters and you can start over.)DELIM";
+	}
+
+	switch (inControl->getParameterID())
+	{
+		case kBandwidthAmount_Hz:
+		case kBandwidthAmount_Q:
+//			return R"DELIM()DELIM";
+		case kBandwidthMode:
+		case kResonAlgorithm:
+		case kNumBands:
+		case kSepAmount_Octaval:
+		case kSepAmount_Linear:
+		case kSepMode:
+		case kFoldover:
+		case kEnvAttack:
+		case kEnvDecay:
+		case kEnvSustain:
+		case kEnvRelease:
+		case kFadeType:
+		case kLegato:
+		case kVelocityInfluence:
+		case kVelocityCurve:
+		case kPitchBendRange:
+		case kScaleMode:
+		case kWiseAmp:
+		case kFilterOutputGain:
+		case kBetweenGain:
+		case kDryWetMix:
+		case kDryWetMixMode:
+			return "parameter " + std::to_string(inControl->getParameterID() + 1) + "\n" + const_cast<RezSynthEditor*>(this)->getparametername(inControl->getParameterID());
+		default:
+			return {};
+	}
 }
