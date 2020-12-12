@@ -134,16 +134,16 @@ public:
 	virtual ~DfxGuiEditor();
 
 	// VSTGUI overrides
-	bool open(void* inWindow) override;
-	void close() override;
-	void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue) override;
-	void valueChanged(VSTGUI::CControl* inControl) override;
-	int32_t controlModifierClicked(VSTGUI::CControl* inControl, VSTGUI::CButtonState inButtons) override;
+	bool open(void* inWindow) final;
+	void close() final;
+	void setParameter(TARGET_API_EDITOR_INDEX_TYPE inParameterIndex, float inValue) final;
+	void valueChanged(VSTGUI::CControl* inControl) final;
+	int32_t controlModifierClicked(VSTGUI::CControl* inControl, VSTGUI::CButtonState inButtons) final;
 #ifndef TARGET_API_VST
-	void beginEdit(int32_t inParameterIndex) override;
-	void endEdit(int32_t inParameterIndex) override;
+	void beginEdit(int32_t inParameterIndex) final;
+	void endEdit(int32_t inParameterIndex) final;
 #endif
-	void idle() override final;
+	void idle() final;
 
 	// these are for the child class of DfxGuiEditor to override
 	virtual long OpenEditor() = 0;
@@ -227,12 +227,12 @@ public:
 	// override this if you want your GUI to react when the mouseovered control changes
 	virtual void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) {}
 	// IMouseObserver overrides
-	void onMouseEntered(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) override;
-	void onMouseExited(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) override;
-	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) override;
-	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) override;
+	void onMouseEntered(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) final;
+	void onMouseExited(VSTGUI::CView* inView, VSTGUI::CFrame* inFrame) final;
+	VSTGUI::CMouseEventResult onMouseDown(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) final;
+	VSTGUI::CMouseEventResult onMouseMoved(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons) final;
 	// ViewMouseListenerAdapter override
-	VSTGUI::CMouseEventResult viewOnMouseDown(VSTGUI::CView* inView, VSTGUI::CPoint inPos, VSTGUI::CButtonState inButtons) override;
+	VSTGUI::CMouseEventResult viewOnMouseDown(VSTGUI::CView* inView, VSTGUI::CPoint inPos, VSTGUI::CButtonState inButtons) final;
 
 #ifdef TARGET_API_RTAS
 	void GetBackgroundRect(sRect* outRect);
@@ -242,7 +242,7 @@ public:
 	void drawControlHighlight(VSTGUI::CDrawContext* inContext, VSTGUI::CControl* inControl);
 
 	// VSTGUI: needed the following so that the algorithm is updated while the mouse is down
-	void doIdleStuff() override;
+	void doIdleStuff() final;
 #endif
 
 	long GetNumParameters();
