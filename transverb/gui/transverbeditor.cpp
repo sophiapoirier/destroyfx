@@ -306,11 +306,6 @@ DFX_EDITOR_ENTRY(TransverbEditor)
 TransverbEditor::TransverbEditor(DGEditorListenerInstance inInstance)
 :	DfxGuiEditor(inInstance)
 {
-	mSpeedModeButtons.fill(nullptr);
-	mSpeedDownButtons.fill(nullptr);
-	mSpeedUpButtons.fill(nullptr);
-	mDistanceTextDisplays.fill(nullptr);
-
 	for (size_t i = 0; i < kNumDelays; i++)
 	{
 		RegisterPropertyChange(speedModeIndexToPropertyID(i));
@@ -479,6 +474,15 @@ void TransverbEditor::PostOpenEditor()
 	{
 		HandleSpeedModeChange(i);
 	}
+}
+
+//-----------------------------------------------------------------------------
+void TransverbEditor::CloseEditor()
+{
+	mSpeedModeButtons.fill(nullptr);
+	mSpeedDownButtons.fill(nullptr);
+	mSpeedUpButtons.fill(nullptr);
+	mDistanceTextDisplays.fill(nullptr);
 }
 
 //-----------------------------------------------------------------------------

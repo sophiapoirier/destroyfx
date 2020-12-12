@@ -224,8 +224,7 @@ DFX_EDITOR_ENTRY(ScrubbyEditor)
 
 //-----------------------------------------------------------------------------
 ScrubbyEditor::ScrubbyEditor(DGEditorListenerInstance inInstance)
-:	DfxGuiEditor(inInstance),
-	mNotesButtons(kNumNotesButtons, nullptr)
+:	DfxGuiEditor(inInstance)
 {
 }
 
@@ -469,6 +468,7 @@ long ScrubbyEditor::OpenEditor()
 			HandleNotesButton(notesButtonType);
 		}
 	};
+	mNotesButtons.assign(kNumNotesButtons, nullptr);
 
 	// transpose all of the pitch constraint notes down one semitone
 	pos.set(kTransposeDownButtonX, kTransposeDownButtonY, transposeDownButtonImage->getWidth(), transposeDownButtonImage->getHeight() / 2);
@@ -534,6 +534,19 @@ long ScrubbyEditor::OpenEditor()
 
 
 	return dfx::kStatus_NoError;
+}
+
+//-----------------------------------------------------------------------------
+void ScrubbyEditor::CloseEditor()
+{
+	mSeekRateSlider = nullptr;
+	mSeekRateDisplay = nullptr;
+	mSeekRateRandMinDisplay = nullptr;
+	mHelpBox = nullptr;
+	mMidiLearnButton = nullptr;
+	mMidiResetButton = nullptr;
+	mTitleArea = nullptr;
+	mNotesButtons.clear();
 }
 
 

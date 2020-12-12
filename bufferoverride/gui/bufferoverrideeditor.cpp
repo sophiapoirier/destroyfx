@@ -427,6 +427,18 @@ long BufferOverrideEditor::OpenEditor()
 	return dfx::kStatus_NoError;
 }
 
+//-----------------------------------------------------------------------------
+void BufferOverrideEditor::CloseEditor()
+{
+	mDivisorBufferBox = nullptr;
+	mDivisorLFORateSlider = nullptr;
+	mBufferLFORateSlider = nullptr;
+	mBufferSizeDisplay = nullptr;
+	mDivisorLFORateDisplay = nullptr;
+	mBufferLFORateDisplay = nullptr;
+	mHelpDisplay = nullptr;
+}
+
 
 //-----------------------------------------------------------------------------
 void BufferOverrideEditor::parameterChanged(long inParameterID)

@@ -59,6 +59,7 @@ public:
 
 	long OpenEditor() override;
 	void PostOpenEditor() override;
+	void CloseEditor() override;
 	void parameterChanged(long inParameterID) override;
 	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
 
@@ -66,7 +67,7 @@ private:
 	void HandleSpeedModeButton(size_t inIndex, long inValue);
 	void HandleSpeedModeChange(size_t inIndex);
 
-	std::array<DGButton*, dfx::TV::kNumDelays> mSpeedModeButtons;
-	std::array<TransverbSpeedTuneButton*, dfx::TV::kNumDelays> mSpeedDownButtons, mSpeedUpButtons;
-	std::array<DGTextDisplay*, dfx::TV::kNumDelays> mDistanceTextDisplays;
+	std::array<DGButton*, dfx::TV::kNumDelays> mSpeedModeButtons {};
+	std::array<TransverbSpeedTuneButton*, dfx::TV::kNumDelays> mSpeedDownButtons {}, mSpeedUpButtons {};
+	std::array<DGTextDisplay*, dfx::TV::kNumDelays> mDistanceTextDisplays {};
 };

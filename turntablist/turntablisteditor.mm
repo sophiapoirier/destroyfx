@@ -139,6 +139,7 @@ public:
 
 	long OpenEditor() override;
 	void PostOpenEditor() override;
+	void CloseEditor() override;
 
 	void parameterChanged(long inParameterID) override;
 	void HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex) override;
@@ -626,6 +627,15 @@ void TurntablistEditor::PostOpenEditor()
 {
 	// initialize the button's current value once the button has been fully created
 	HandlePlayChange();
+}
+
+//-----------------------------------------------------------------------------
+void TurntablistEditor::CloseEditor()
+{
+	mAudioFileNameDisplay = nullptr;
+	mAllParametersTextDisplay = nullptr;
+	mPlayButton = nullptr;
+	mScratchSpeedKnob = nullptr;
 }
 
 //-----------------------------------------------------------------------------

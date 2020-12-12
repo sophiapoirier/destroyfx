@@ -384,6 +384,19 @@ long RezSynthEditor::OpenEditor()
 }
 
 //-----------------------------------------------------------------------------
+void RezSynthEditor::CloseEditor()
+{
+	mSepAmountSlider = nullptr;
+	mBandwidthAmountSlider = nullptr;
+	mSepAmountDisplay = nullptr;
+	mBandwidthAmountDisplay = nullptr;
+	mMidiLearnButton = nullptr;
+	mMidiResetButton = nullptr;
+	mHelpBox = nullptr;
+	mTitleArea = nullptr;
+}
+
+//-----------------------------------------------------------------------------
 void RezSynthEditor::parameterChanged(long inParameterID)
 {
 	auto const value_i = getparameter_i(inParameterID);

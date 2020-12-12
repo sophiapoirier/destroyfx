@@ -369,6 +369,16 @@ long SkidderEditor::OpenEditor()
 }
 
 //-----------------------------------------------------------------------------
+void SkidderEditor::CloseEditor()
+{
+	mRateSlider = nullptr;
+	mRateDisplay = nullptr;
+	mRateRandMinDisplay = nullptr;
+	mPulsewidthRandMinDisplay = nullptr;
+	mFloorRandMinDisplay = nullptr;
+}
+
+//-----------------------------------------------------------------------------
 void SkidderEditor::parameterChanged(long inParameterID)
 {
 	switch (inParameterID)

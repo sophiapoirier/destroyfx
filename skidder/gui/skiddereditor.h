@@ -31,6 +31,7 @@ public:
 	SkidderEditor(DGEditorListenerInstance inInstance);
 
 	long OpenEditor() override;
+	void CloseEditor() override;
 	void parameterChanged(long inParameterID) override;
 	void outputChannelsChanged(unsigned long inChannelCount) override;
 
@@ -42,7 +43,6 @@ private:
 	void HandleCrossoverModeChange();
 	void HandleMidiModeChange();
 
-	// controls
 	DGRangeSlider* mRateSlider = nullptr;
 	DGTextDisplay* mRateDisplay = nullptr;
 	DGTextDisplay* mRateRandMinDisplay = nullptr;

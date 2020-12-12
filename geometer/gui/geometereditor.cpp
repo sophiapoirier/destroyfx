@@ -401,6 +401,20 @@ long GeometerEditor::OpenEditor() {
   return dfx::kStatus_NoError;
 }
 
+//-----------------------------------------------------------------------------
+void GeometerEditor::CloseEditor() {
+
+  std::fill(sliders.begin(), sliders.end(), nullptr);
+  std::fill(displays.begin(), displays.end(), nullptr);
+  std::fill(finedownbuttons.begin(), finedownbuttons.end(), nullptr);
+  std::fill(fineupbuttons.begin(), fineupbuttons.end(), nullptr);
+
+  std::fill(genhelpitemcontrols.begin(), genhelpitemcontrols.end(), nullptr);
+  std::fill(g_helpicons.begin(), g_helpicons.end(), nullptr);
+  helpicon = nullptr;
+  helpbox = nullptr;
+}
+
 
 //-----------------------------------------------------------------------------
 void GeometerEditor::parameterChanged(long inParameterID) {
