@@ -25,7 +25,7 @@ Rez Synth allows you to "play" band-pass resonant filter banks that are applied 
 <p class="label">bandwidth:</p>
 
 <p class="desc">
-The bandwidth parameter controls the bandwidth of each resonant filter, in Hz or Q (depending on the "bandwidth mode").
+The bandwidth parameter controls the bandwidth of each resonant filter, in Hertz or Q (depending on the "bandwidth mode").
 </p>
 
 <br />
@@ -34,7 +34,7 @@ The bandwidth parameter controls the bandwidth of each resonant filter, in Hz or
 <p class="label">bandwidth mode:</p>
 
 <p class="desc">
-The bandwidth mode defines how the bandwidth parameter operates.  The options are "Hz" or "Q".  Hz (Hertz) defines absolute bandwidth and therefore perceptually the filters sound wider at lower frequencies and narrow at higher frequencies.  Q defines relative bandwidth and therefore perceptually the filters sound the same width across all frequencies.
+The bandwidth mode defines how the "bandwidth" parameter operates.  The options are "Hz" or "Q".  Hz (Hertz) defines absolute bandwidth and therefore perceptually the filters sound wider at lower frequencies and narrow at higher frequencies.  Q defines relative bandwidth and therefore perceptually the filters sound the same width across all frequencies.
 </p>
 
 <br />
@@ -43,7 +43,7 @@ The bandwidth mode defines how the bandwidth parameter operates.  The options ar
 <p class="label">resonance algorithm:</p>
 
 <p class="desc">
-You can choose between a few different algorithms for the resonant filters:  second-order (with no zeroes), second-order with zeroes at &plusmn; the squareroot of the pole radius, and second-order with zeroes at &plusmn;1.  Those are the mathematical descriptions, which are of limited usefulness.  They each sound slightly different and some might sound better on certain audio material than other, and it's probably worth trying each.
+You can choose between a few different algorithms for the resonant filters:  second-order (with no zeroes), second-order with zeroes at &plusmn; the square root of the pole radius, and second-order with zeroes at &plusmn;1.  Those are the mathematical descriptions, which are of limited usefulness.  They each sound slightly different and some might sound better on certain audio material than other, and it's probably worth trying each.
 </p>
 
 <br />
@@ -70,7 +70,7 @@ This controls the separation width between each band in a filter bank.  The way 
 <p class="label">separation mode:</p>
 
 <p class="desc">
-The band separation mode defines how the band separation parameter operates.  Separation mode can be set to "linear" (multiple) or "octaval" (logarithmic) spacing.  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics, in the case of fractional values) and "octaval" makes the other bands spread like notes in a chord.
+The band separation mode defines how the "band separation" parameter operates.  Separation mode can be set to "linear" (multiple) or "octaval" (logarithmic) spacing.  You can sort of think of it like this:  "linear" makes the other bands spread like harmonics (or inharmonics, in the case of fractional values) and "octaval" makes the other bands spread like notes in a chord.
 </p>
 
 <br />
@@ -88,7 +88,7 @@ Because you are playing banks of resonant filters that ascend in center frequenc
 <p class="label">attack, decay, sustain, release:</p>
 
 <p class="desc">
-These adjust the values for each note's ADSR-style amplitude envelopes.  Attack sets the duration for the initial volume fade-in period.  Decay sets the partial fade-down period that immediately follows the attack.  Sustain sets the portion of full note-volume that is used for the note after the decay period.  Therefore a sustain value of 100% effectively means no decay, and a sustain value of 0% effectively stops a note after the decay, regardless of how long you hold the note.  Release sets the duration of the final fade-out period (beginning after the note play is released).
+These adjust the values for each note's ADSR-style amplitude envelopes.  Attack sets the duration for the initial volume fade-in period.  Decay sets the duration of the partial fade-down period that immediately follows the attack.  Sustain sets the portion of full note volume that is used for the note after the decay period.  Therefore a sustain value of 100% effectively means no decay, and a sustain value of 0% effectively stops a note after the decay, regardless of how long you hold the note.  Release sets the duration of the final fade-out period (beginning after the note play is released).
 </p>
 
 <br />
@@ -106,7 +106,7 @@ This selects whether the attack, decay, and release segments of note envelopes a
 <p class="label">pitch bend range:</p>
 
 <p class="desc">
-This lets you adjust your MIDI pitch bend wheel's range in semitones.
+This lets you adjust your MIDI pitch bend control's range in semitones.
 </p>
 
 <br />
@@ -124,7 +124,7 @@ This lets you adjust the key velocity response curve of your MIDI keyboard.
 <p class="label">velocity influence:</p>
 
 <p class="desc">
-This controls how much of an influence key velocity will have on the volume of each note.  A value of 0% means that key velocity is completely ignored and a value 100% means that key velocity is fully effective.
+This controls how much of an influence key velocity will have on the volume of each note.  A value of 0% means that key velocity is completely ignored and a value 100% means that key velocity tracks the full volume range.
 </p>
 
 <br />
@@ -133,7 +133,7 @@ This controls how much of an influence key velocity will have on the volume of e
 <p class="label">filter response scaling mode:</p>
 
 <p class="desc">
-This parameter allows you to scale the response factor of the resonant filters.  It can be scaled to bring the RMS of the resosonant filter response to 1, or to bring the peak of the resonant filter response to 1, or you can disable scaling.
+This parameter allows you to scale the response factor of the resonant filters.  It can be scaled to bring the RMS of the resonant filter response to unity volume level, or to bring the peak of the resonant filter response to unity, or you can disable scaling.
 </p>
 
 <br />
@@ -142,7 +142,7 @@ This parameter allows you to scale the response factor of the resonant filters. 
 <p class="label">careful:</p>
 
 <p class="desc">
-The volume of the output of these resonant band-pass filters is pretty erratic (sometimes even with scaling).  With careful mode enabled, Rez Synth tries to keep a handle on this and keep your output within a narrow range.  Whether you use this mode or not, you still might want to follow Rez Synth with a dynamic limiter, and perhaps also a compressor before that.
+The volume of the output of these resonant band-pass filters is pretty erratic (sometimes even with scaling).  With careful mode enabled, Rez Synth tries to keep a handle on this and keep your output within a narrow range.  Whether you use this mode or not, you may still want to follow Rez Synth with a dynamic limiter, and perhaps also a compressor before that.
 </p>
 
 <br />
@@ -151,7 +151,7 @@ The volume of the output of these resonant band-pass filters is pretty erratic (
 <p class="label">filtered output gain:</p>
 
 <p class="desc">
-This allows you to control the level of the output audio after all other processing has taken place.
+This allows you to control the level of the filtered output audio after all of its processing has taken place.
 </p>
 
 <br />
@@ -160,7 +160,7 @@ This allows you to control the level of the output audio after all other process
 <p class="label">between gain:</p>
 
 <p class="desc">
-This controls the volume of the unprocessed audio input when no notes are sounding.
+This controls the volume of the unprocessed input audio when no notes are sounding.
 </p>
 
 <br />
@@ -187,7 +187,7 @@ This allows you to adjust the way that the dry/wet mix combines the dry and wet 
 <p class="label">legato:</p>
 
 <p class="desc">
-Turning this on puts Rez Synth into legato mode (i.e. no polyphony and no gap between notes).  The first note played after enabling legato mode will remain in the sustain phase of the note's envelope, even if you release the note, and subsequent notes will change the pitch but still only sound in the sustain phase.  The note envelope's release finally occurs upon exiting legato mode.
+Turning this on puts Rez Synth into legato mode (i.e. no polyphony and no gap between notes).  The first note played after enabling legato mode will remain in the sustain phase of the note's envelope, even if you release the note, and subsequent notes will alter the pitch but still only sound in the sustain phase.  The note envelope's release finally occurs upon exiting legato mode.
 </p>
 
 <br />

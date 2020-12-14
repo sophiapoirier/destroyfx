@@ -483,30 +483,111 @@ Then CCs will not affect any parameters and you can start over.)DELIM";
 	{
 		case kBandwidthAmount_Hz:
 		case kBandwidthAmount_Q:
-//			return R"DELIM()DELIM";
+			return R"DELIM(bandwidth:  the frequency width of each resonant filter
+This is expressed in Hertz or Q, depending on the "bandwidth mode"
+parameter.)DELIM";
 		case kBandwidthMode:
+			return R"DELIM(bandwidth mode:  defines how the "bandwidth" parameter operates
+Hz is absolute bandwidth and sounds wider at lower center frequencies
+and narrow at higher frequencies.  Q is relative bandwidth and sounds
+uniform width across all center frequencies.)DELIM";
 		case kResonAlgorithm:
+			return R"DELIM(resonance algorithm:  choose a resonant filter algorithm
+The options are second-order with no zeroes, second-order with zeroes
+at +/- the square root of the pole radius, and second-order with zeroes
+at +/-1.  They each sound slightly different and one might sound better
+on certain audio material than another.  It's worth trying each.)DELIM";
 		case kNumBands:
+			return R"DELIM(bands per note:  how many bands will be in each filter bank
+Each MIDI note that you play creates a new filter bank on top of any
+other banks that are already playing.)DELIM";
 		case kSepAmount_Octaval:
 		case kSepAmount_Linear:
+			return R"DELIM(band separation:  spacing between each band in a filter bank
+The way that it operates depends on the band separation mode in use.
+If you are working in "octaval" separation mode, then band separation
+controls the separation width in semitones.  If you are in "linear" mode,
+then it controls the separation as a multiplier of the base frequency.)DELIM";
 		case kSepMode:
+			return R"DELIM(separation mode:  how the "band separation" parameter operates
+Filter spacing can be "linear" (multiple) or "octaval" (logarithmic) mode.
+"Linear" makes the other bands spread like harmonics (or inharmonics,
+in the case of fractional values) and "octaval" makes the other bands
+spread like notes in a chord.)DELIM";
 		case kFoldover:
+			return R"DELIM(mistakes:  your tolerance for aliased filter frequencies
+Banks of resonant filters that ascend in center frequencies allows for
+filters in your bank that have center frequencies above what the digital
+audio sampling resolution can represent.  Choose whether to "allow" or
+"resist" these aliased fold-over bands.)DELIM";
 		case kEnvAttack:
+			return R"DELIM(attack:  ADSR note envelope generation
+Attack sets the duration for the initial volume fade-in period.)DELIM";
 		case kEnvDecay:
+			return R"DELIM(decay:  ADSR note envelope generation
+Decay sets the duration of the partial fade-down period that
+immediately follows the attack.)DELIM";
 		case kEnvSustain:
+			return R"DELIM(sustain:  ADSR note envelope generation
+Sustain sets the portion of full note volume that is used for the note
+after the decay period.  Therefore a sustain value of 100% effectively
+means no decay, and a sustain value of 0% effectively stops a note
+after the decay, regardless of how long you hold the note.)DELIM";
 		case kEnvRelease:
+			return R"DELIM(release:  ADSR note envelope generation
+Release sets the duration of the final fade-out period (beginning after
+the note play is released).)DELIM";
 		case kFadeType:
+			return R"DELIM(envelope fades:  the shape of attack, decay, and release
+This selects whether the attack, decay, and release segments of note
+envelopes are linear fades, exponential curves, or are achieved through
+a low-pass filter.  Exponential usually sounds smoother than linear,
+and low-pass can be the most natural sounding.)DELIM";
 		case kLegato:
+			return R"DELIM(legato:  tied monophony vs. polyphony
+Legato mode means no polyphony and no gap between notes.  The first
+note played after enabling it will remain in the sustain phase of the
+note's envelope, even if you release the note, and subsequent notes will
+alter the pitch but still only sound in the sustain phase.)DELIM";
 		case kVelocityInfluence:
+			return R"DELIM(velocity influence:  key velocity affect on volume
+This controls how much of an influence key velocity will have on the
+volume of each note.  0% means that key velocity is completely ignored
+and 100% means that key velocity tracks the full volume range.)DELIM";
 		case kVelocityCurve:
+			return R"DELIM(velocity curve:
+This lets you adjust the key velocity response curve of your MIDI notes.)DELIM";
 		case kPitchBendRange:
+			return R"DELIM(pitch bend range:
+This lets you adjust your MIDI pitch bend control's range in semitones.)DELIM";
 		case kScaleMode:
+			return R"DELIM(filter response scaling mode:
+This allows you to scale the response factor of the resonant filters.
+It can be scaled to bring the RMS of the resonant filter response to
+unity volume level, or to bring the peak of the resonant filter response
+to unity, or you can disable scaling.)DELIM";
 		case kWiseAmp:
+			return R"DELIM(careful: filter output limiting
+The volume of the output of the resonant band-pass filters is pretty
+erratic (sometimes even with scaling).  Careful mode attempts to keep
+your output within a narrow range.  Whether you use this mode or not,
+you may still want to follow with a dynamic limiter or compressor.)DELIM";
 		case kFilterOutputGain:
+			return R"DELIM(filtered output gain: note volume
+This allows you to control the level of the filtered output audio after
+all of its processing has taken place.)DELIM";
 		case kBetweenGain:
+			return R"DELIM(between gain: dry volume between notes
+This controls the volume of the unprocessed input audio when no notes
+are sounding.)DELIM";
 		case kDryWetMix:
+			return R"DELIM(dry/wet mix:  pre/post-filter ratio
+This lets you adjust the balance of the (unprocessed) input audio and
+the (processed) output audio.  100% is all processed.)DELIM";
 		case kDryWetMixMode:
-			return "parameter " + std::to_string(inControl->getParameterID() + 1) + "\n" + const_cast<RezSynthEditor*>(this)->getparametername(inControl->getParameterID());
+			return R"DELIM(dry/wet mix mode:
+This allows you to adjust the way that the dry/wet mix combines the
+dry and wet audio. You can choose linear mixing or equal power mixing.)DELIM";
 		default:
 			return {};
 	}

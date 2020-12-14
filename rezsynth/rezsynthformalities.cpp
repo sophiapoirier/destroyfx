@@ -54,7 +54,7 @@ RezSynth::RezSynth(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kVelocityCurve, {"velocity curve", "VelCurv", "VelCrv", "VelC"}, 2.0, 1.0, 0.3, 3.0, DfxParam::Unit::Exponent);
 	initparameter_f(kPitchBendRange, dfx::MakeParameterNames(dfx::kParameterNames_PitchBendRange), 3.0, 3.0, 0.0, DfxMidi::kPitchBendSemitonesMax, DfxParam::Unit::Semitones);
 	initparameter_list(kScaleMode, {"filter response scaling mode", "GainMod", "GainMd", "GnMd"}, kScaleMode_RMS, kScaleMode_None, kNumScaleModes);
-	initparameter_f(kFilterOutputGain, {"output gain", "Level", "Levl"}, 1.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
+	initparameter_f(kFilterOutputGain, {"filtered output gain", "Level", "Levl"}, 1.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 	initparameter_f(kBetweenGain, {"between gain", "BtwenGn", "BtwnGn", "Btwn"}, 0.0, 1.0, 0.0, dfx::math::Db2Linear(12.0), DfxParam::Unit::LinearGain, DfxParam::Curve::Cubed);
 	initparameter_f(kDryWetMix, dfx::MakeParameterNames(dfx::kParameterNames_DryWetMix), 100.0, 50.0, 0.0, 100.0, DfxParam::Unit::DryWetMix);
 	initparameter_list(kDryWetMixMode, {"dry/wet mix mode", "DW Mode", "DWMode", "DWMd"}, kDryWetMixMode_EqualPower, kDryWetMixMode_Linear, kNumDryWetMixModes);
