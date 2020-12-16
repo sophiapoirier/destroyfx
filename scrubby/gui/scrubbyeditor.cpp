@@ -520,7 +520,9 @@ long ScrubbyEditor::OpenEditor()
 
 	//--create the help display-----------------------------------------
 	pos.set(kHelpX, kHelpY, helpBackgroundImage->getWidth(), helpBackgroundImage->getHeight());
-	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&ScrubbyEditor::GetHelpForControl, this, _1), helpBackgroundImage);
+	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&ScrubbyEditor::GetHelpForControl, this, _1), helpBackgroundImage, DGColor::kWhite);
+	mHelpBox->setHeaderFontColor(DGColor::kBlack);
+	mHelpBox->setTextMargin({12, 4});
 
 
 

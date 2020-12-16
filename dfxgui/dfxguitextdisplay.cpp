@@ -488,11 +488,13 @@ void DGTextArrayDisplay::draw(VSTGUI::CDrawContext* inContext)
 // built-in help text region
 //-----------------------------------------------------------------------------
 DGHelpBox::DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, 
-					 TextForControlProc const& inTextForControlProc, DGImage* inBackground)
+					 TextForControlProc const& inTextForControlProc, 
+					 DGImage* inBackground, DGColor inFontColor)
 :	DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
-						dfx::kFontSize_SnootPixel10, {}, dfx::kFontName_SnootPixel10), 
+						dfx::kFontSize_SnootPixel10, inFontColor, dfx::kFontName_SnootPixel10), 
 	mOwnerEditor(inOwnerEditor),  // DGStaticTextDisplay does not store this
-	mTextForControlProc(inTextForControlProc)
+	mTextForControlProc(inTextForControlProc),
+	mHeaderFontColor(inFontColor)
 {
 	assert(inOwnerEditor);
 	assert(inTextForControlProc);
@@ -514,9 +516,10 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 		image->draw(inContext, getViewSize());
 	}
 
-	DGRect textpos(getViewSize());
-	textpos.setSize(textpos.getWidth() - 13, 10);
-	textpos.offset(12, 4);
+	constexpr VSTGUI::CCoord textHeight = 10;
+	DGRect textArea(getViewSize());
+	textArea.setSize(textArea.getWidth() - mTextMargin.x, textHeight);
+	textArea.offset(mTextMargin);
 
 	std::istringstream stream(text);
 	std::string line;
@@ -525,19 +528,38 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 	{
 		if (!std::exchange(headerDrawn, true))
 		{
-			setFontColor(DGColor::kBlack);
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-			textpos.offset(1, 0);
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-			textpos.offset(-1, 13);
+			auto const entryFontColor = getFontColor();
+			setFontColor(mHeaderFontColor);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
+			textArea.offset(1, 0);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
+			textArea.offset(-1, textHeight + 3);
+			setFontColor(entryFontColor);
 		}
 		else
 		{
-			setFontColor(DGColor::kWhite);
-			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textpos);
-			textpos.offset(0, 11);
+			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
+			textArea.offset(0, textHeight + 1);
 		}
 	}
 
 	setDirty(false);
+}
+
+//-----------------------------------------------------------------------------
+void DGHelpBox::setHeaderFontColor(DGColor inColor)
+{
+	if (std::exchange(mHeaderFontColor, inColor) != inColor)
+	{
+		setDirty();
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DGHelpBox::setTextMargin(VSTGUI::CPoint const& inMargin)
+{
+	if (std::exchange(mTextMargin, inMargin) != inMargin)
+	{
+		setDirty();
+	}
 }

@@ -160,13 +160,19 @@ public:
 	using TextForControlProc = std::function<std::string(IDGControl*)>;
 
 	DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion, 
-			  TextForControlProc const& inTextForControlProc, DGImage* inBackground = nullptr);
+			  TextForControlProc const& inTextForControlProc, 
+			  DGImage* inBackground = nullptr, DGColor inFontColor = VSTGUI::kBlackCColor);
 
 	void draw(VSTGUI::CDrawContext* inContext) override;
+
+	void setHeaderFontColor(DGColor inColor);
+	void setTextMargin(VSTGUI::CPoint const& inMargin);
 
 	CLASS_METHODS(DGHelpBox, DGStaticTextDisplay)
 
 private:
 	DfxGuiEditor* const mOwnerEditor;
 	TextForControlProc const mTextForControlProc;
+	DGColor mHeaderFontColor;
+	VSTGUI::CPoint mTextMargin;
 };

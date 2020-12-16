@@ -23,6 +23,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 #include <cassert>
 #include <cmath>
+#include <map>
 
 #include "dfxmath.h"
 #include "dfxmisc.h"
@@ -234,31 +235,12 @@ long RezSynthEditor::OpenEditor()
 
 	auto const addSliderComponents = [&](long const inParamID, auto const& inDisplayProc)
 	{
-		auto const horizontalSliderHandleImage = [&]() -> DGImage*
-		{
-			switch (inParamID)
-			{
-				case kBandwidthAmount_Hz:
-				case kBandwidthAmount_Q:
-				case kNumBands:
-				case kSepAmount_Octaval:
-				case kSepAmount_Linear:
-					return horizontalSliderHandleImage_bands.get();
-				case kEnvAttack:
-				case kEnvDecay:
-				case kEnvSustain:
-				case kEnvRelease:
-					return horizontalSliderHandleImage_envelope.get();
-				case kVelocityInfluence:
-				case kVelocityCurve:
-					return horizontalSliderHandleImage_midiNotes.get();
-				case kPitchBendRange:
-					return horizontalSliderHandleImage_midiBends.get();
-				default:
-					assert(false);
-					return {};
-			}
-		}();
+		auto const horizontalSliderHandleImage = std::map<Section, DGImage*>{
+			{Section::Bands, horizontalSliderHandleImage_bands},
+			{Section::Envelope, horizontalSliderHandleImage_envelope},
+			{Section::MidiNotes, horizontalSliderHandleImage_midiNotes},
+			{Section::MidiBends, horizontalSliderHandleImage_midiBends}
+		}.at(ParameterToSection(inParamID));
 
 		// slider control
 		auto const slider = emplaceControl<DGSlider>(this, inParamID, pos, dfx::kAxis_Horizontal, horizontalSliderHandleImage);
@@ -371,7 +353,8 @@ long RezSynthEditor::OpenEditor()
 
 	// help display
 	pos.set(kHelpX, kHelpY, kHelpWidth, kHelpHeight);
-	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&RezSynthEditor::GetHelpForControl, this, std::placeholders::_1));
+	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&RezSynthEditor::GetHelpForControl, this, std::placeholders::_1), nullptr, DGColor::kWhite);
+	mHelpBox->setTextMargin({11, 8});
 
 
 
@@ -437,12 +420,47 @@ void RezSynthEditor::parameterChanged(long inParameterID)
 }
 
 //-----------------------------------------------------------------------------
-void RezSynthEditor::mouseovercontrolchanged(IDGControl* /*currentControlUnderMouse*/)
+void RezSynthEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse)
 {
-	if (mHelpBox)
+	if (!mHelpBox)
 	{
-		mHelpBox->redraw();
+		return;
 	}
+
+	if (currentControlUnderMouse)
+	{
+		auto const headerColor = [this, currentControlUnderMouse]() -> DGColor
+		{
+			constexpr DGColor midiColor(246, 122, 251);
+			if (currentControlUnderMouse == mTitleArea)
+			{
+				return {0, 135, 126};
+			}
+			if ((currentControlUnderMouse == mMidiLearnButton) || (currentControlUnderMouse == mMidiResetButton))
+			{
+				return midiColor;
+			}
+			if (!currentControlUnderMouse->isParameterAttached())
+			{
+				return VSTGUI::kTransparentCColor;
+			}
+			auto const parameterID = currentControlUnderMouse->getParameterID();
+			if (parameterID == kWiseAmp)
+			{
+				return {150, 158, 251};
+			}
+			return std::map<Section, DGColor>{
+				{Section::Bands, {255, 250, 51}},
+				{Section::Envelope, {255, 72, 78}},
+				{Section::MidiNotes, DGColor::kWhite},
+				{Section::MidiBends, midiColor},
+				{Section::Mix, {132, 254, 141}}
+			}.at(ParameterToSection(parameterID));
+		}();
+		mHelpBox->setHeaderFontColor(headerColor);
+	}
+
+	mHelpBox->redraw();
 }
 
 //-----------------------------------------------------------------------------
@@ -589,6 +607,45 @@ the (processed) output audio.  100% is all processed.)DELIM";
 This allows you to adjust the way that the dry/wet mix combines the
 dry and wet audio. You can choose linear mixing or equal power mixing.)DELIM";
 		default:
+			return {};
+	}
+}
+
+RezSynthEditor::Section RezSynthEditor::ParameterToSection(long inParameterID)
+{
+	switch (inParameterID)
+	{
+		case kBandwidthAmount_Hz:
+		case kBandwidthAmount_Q:
+		case kBandwidthMode:
+		case kResonAlgorithm:
+		case kNumBands:
+		case kSepAmount_Octaval:
+		case kSepAmount_Linear:
+		case kSepMode:
+		case kFoldover:
+			return Section::Bands;
+		case kEnvAttack:
+		case kEnvDecay:
+		case kEnvSustain:
+		case kEnvRelease:
+		case kFadeType:
+			return Section::Envelope;
+		case kVelocityInfluence:
+		case kVelocityCurve:
+			return Section::MidiNotes;
+		case kPitchBendRange:
+		case kLegato:
+			return Section::MidiBends;
+		case kScaleMode:
+		case kWiseAmp:
+		case kFilterOutputGain:
+		case kBetweenGain:
+		case kDryWetMix:
+		case kDryWetMixMode:
+			return Section::Mix;
+		default:
+			assert(false);
 			return {};
 	}
 }

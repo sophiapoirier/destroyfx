@@ -37,8 +37,18 @@ public:
 	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:
+	enum class Section
+	{
+		Bands,
+		Envelope,
+		MidiNotes,
+		MidiBends,
+		Mix
+	};
+
 	void HandleLegatoChange();
 	std::string GetHelpForControl(IDGControl* inControl) const;
+	static Section ParameterToSection(long inParameterID);
 
 	DGSlider* mSepAmountSlider = nullptr, * mBandwidthAmountSlider = nullptr;
 	DGTextDisplay* mSepAmountDisplay = nullptr, * mBandwidthAmountDisplay = nullptr;
