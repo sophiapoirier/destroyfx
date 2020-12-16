@@ -217,14 +217,27 @@ public:
 	{
 		// Workaround for bug where pressing the dialog's OK button in Logic produces
 		// a platform text edit cancel event. This event is mapped to an ESC key event,
-		// so by discarding those, we avert the text-discarding effect of the cancellation.
+		// so by consuming those, we avert the text-discarding effect of the cancellation.
 		// This is definitely a hack, but I don't think there is a good reason for this
 		// text edit object itself to be cancelable (we handle that at the dialog level).
 		if (keyCode.virt == VKEY_ESCAPE)
 		{
-			return -1;  // means not handled
+			return dfx::kKeyEventHandled;
 		}
 		return VSTGUI::CTextEdit::onKeyDown(keyCode);
+	}
+
+	int32_t onKeyUp(VstKeyCode& keyCode) override
+	{
+		// unfortunately the Logic bug workaround results in failing to act on actual 
+		// ESC key presses in the text edit field, but a real key press event will also 
+		// be followed by a key-up event, and so we can work around the workaround by 
+		// taking the key-down action upon ESC key-up events
+		if (keyCode.virt == VKEY_ESCAPE)
+		{
+			return VSTGUI::CTextEdit::onKeyDown(keyCode);
+		}
+		return VSTGUI::CTextEdit::onKeyUp(keyCode);
 	}
 
 	CLASS_METHODS(DGDialogTextEdit, VSTGUI::CTextEdit)
