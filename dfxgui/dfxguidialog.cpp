@@ -215,7 +215,7 @@ public:
 
 	int32_t onKeyDown(VstKeyCode& keyCode) override
 	{
-		// Workaround for bug where pressing the dialog's OK button in Logic produces
+		// HACK: Workaround for bug where pressing the dialog's OK button in Logic produces
 		// a platform text edit cancel event. This event is mapped to an ESC key event,
 		// so by consuming those, we avert the text-discarding effect of the cancellation.
 		// This is definitely a hack, but I don't think there is a good reason for this
@@ -229,13 +229,16 @@ public:
 
 	int32_t onKeyUp(VstKeyCode& keyCode) override
 	{
-		// unfortunately the Logic bug workaround results in failing to act on actual 
-		// ESC key presses in the text edit field, but a real key press event will also 
-		// be followed by a key-up event, and so we can work around the workaround by 
-		// taking the key-down action upon ESC key-up events
+		// HACK: unfortunately the Logic bug workaround results in failing to act on 
+		// actual ESC key presses in the text edit field, but a real key press event 
+		// will also be followed by a key-up event, and so we can work around the 
+		// workaround by taking the pair of actions upon ESC key-up events
 		if (keyCode.virt == VKEY_ESCAPE)
 		{
-			return VSTGUI::CTextEdit::onKeyDown(keyCode);
+			auto const downResult = VSTGUI::CTextEdit::onKeyDown(keyCode);
+			auto const upResult = VSTGUI::CTextEdit::onKeyUp(keyCode);
+			auto const anyHandled = (downResult == dfx::kKeyEventHandled) || (upResult == dfx::kKeyEventHandled);
+			return anyHandled ? dfx::kKeyEventHandled : dfx::kKeyEventNotHandled;
 		}
 		return VSTGUI::CTextEdit::onKeyUp(keyCode);
 	}
