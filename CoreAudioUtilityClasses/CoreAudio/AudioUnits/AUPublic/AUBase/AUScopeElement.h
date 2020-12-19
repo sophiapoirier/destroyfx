@@ -245,7 +245,7 @@ public:
 	AUBase *					GetAudioUnit() const { return mAudioUnit; };
 
 /*! @method SaveState */
-	void						SaveState(CFMutableDataRef data);
+	void						SaveState(AudioUnitScope scope, CFMutableDataRef data);
 /*! @method RestoreState */
 	const UInt8 *				RestoreState(const UInt8 *state);
 /*! @method GetName */

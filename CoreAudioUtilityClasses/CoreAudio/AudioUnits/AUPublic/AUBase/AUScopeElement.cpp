@@ -252,11 +252,14 @@ void			AUElement::GetParameterList(AudioUnitParameterID *outList)
 
 //_____________________________________________________________________________
 //
-void			AUElement::SaveState(CFMutableDataRef data)
+void			AUElement::SaveState(AudioUnitScope scope, CFMutableDataRef data)
 {
+	const auto countOffset = CFDataGetLength(data);
+	UInt32 nparams = 0, nOmitted = 0;
+
 	if(mUseIndexedParameters)
 	{
-		UInt32 nparams = static_cast<UInt32>(mIndexedParameters.size());
+		nparams = static_cast<UInt32>(mIndexedParameters.size());
 		UInt32 theData = CFSwapInt32HostToBig(nparams);
 		CFDataAppendBytes(data, (UInt8 *)&theData, sizeof(nparams));
 	
@@ -267,6 +270,15 @@ void			AUElement::SaveState(CFMutableDataRef data)
 				//CFSwappedFloat32	value; crashes gcc3 PFE
 				UInt32				value;	// really a big-endian float
 			} entry;
+
+			if (AudioUnitParameterInfo paramInfo{}; mAudioUnit->GetParameterInfo(scope, i, paramInfo) == noErr) {
+				if ((paramInfo.flags & kAudioUnitParameterFlag_CFNameRelease) && paramInfo.cfNameString)
+					CFRelease(paramInfo.cfNameString);
+				if ((paramInfo.flags & kAudioUnitParameterFlag_OmitFromPresets) || (paramInfo.flags & kAudioUnitParameterFlag_MeterReadOnly)) {
+					++nOmitted;
+					continue;
+				}
+			}
 			
 			entry.paramID = CFSwapInt32HostToBig(i);
 	
@@ -278,8 +290,9 @@ void			AUElement::SaveState(CFMutableDataRef data)
 	}
 	else
 	{
-		UInt32 nparams = CFSwapInt32HostToBig(static_cast<uint32_t>(mParameters.size()));
-		CFDataAppendBytes(data, (UInt8 *)&nparams, sizeof(nparams));
+		nparams = static_cast<uint32_t>(mParameters.size());
+		const auto theData = CFSwapInt32HostToBig(nparams);
+		CFDataAppendBytes(data, reinterpret_cast<const UInt8*>(&theData), sizeof(theData));
 	
 		for (ParameterMap::iterator i = mParameters.begin(); i != mParameters.end(); ++i) {
 			struct {
@@ -288,6 +301,15 @@ void			AUElement::SaveState(CFMutableDataRef data)
 				UInt32				value;	// really a big-endian float
 			} entry;
 			
+			if (AudioUnitParameterInfo paramInfo{}; mAudioUnit->GetParameterInfo(scope, i->first, paramInfo) == noErr) {
+				if ((paramInfo.flags & kAudioUnitParameterFlag_CFNameRelease) && paramInfo.cfNameString)
+					CFRelease(paramInfo.cfNameString);
+				if ((paramInfo.flags & kAudioUnitParameterFlag_OmitFromPresets) || (paramInfo.flags & kAudioUnitParameterFlag_MeterReadOnly)) {
+					++nOmitted;
+					continue;
+				}
+			}
+
 			entry.paramID = CFSwapInt32HostToBig((*i).first);
 	
 			AudioUnitParameterValue v = (*i).second.GetValue();
@@ -295,6 +317,11 @@ void			AUElement::SaveState(CFMutableDataRef data)
 	
 			CFDataAppendBytes(data, (UInt8 *)&entry, sizeof(entry));
 		}
+	}
+
+	if (nOmitted > 0) {
+		const auto theData = CFSwapInt32HostToBig(nparams - nOmitted);
+		CFDataReplaceBytes(data, {countOffset, sizeof(theData)}, reinterpret_cast<const UInt8*>(&theData), sizeof(theData));
 	}
 }
 
@@ -538,7 +565,7 @@ void    AUScope::SaveState(CFMutableDataRef data)
             hdr.element = CFSwapInt32HostToBig(ielem);
             CFDataAppendBytes(data, (UInt8 *)&hdr, sizeof(hdr));
             
-            element->SaveState(data);
+            element->SaveState(mScope, data);
         }
     }
 }
