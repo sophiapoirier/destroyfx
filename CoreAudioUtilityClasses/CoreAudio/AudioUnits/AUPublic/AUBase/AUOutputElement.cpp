@@ -56,7 +56,7 @@ AUOutputElement::AUOutputElement(AUBase *audioUnit) :
 OSStatus	AUOutputElement::SetStreamFormat(const CAStreamBasicDescription &desc)
 {
 	OSStatus result = AUIOElement::SetStreamFormat(desc);	// inherited
-	if (result == AUBase::noErr)
+	if (result == noErr)
 		AllocateBuffer();
 	return result;
 }

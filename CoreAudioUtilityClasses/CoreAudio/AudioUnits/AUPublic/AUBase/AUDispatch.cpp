@@ -384,7 +384,7 @@ OSStatus CMgr_AudioUnitBaseGetParameter(	AUBase *				This,
 											AudioUnitElement		inElement,
 											float					*outValue)
 {
-	OSStatus result = AUBase::noErr;
+	OSStatus result = noErr;
 	
 	try {
 		if (This == NULL || outValue == NULL) return kAudio_ParamError;
@@ -402,7 +402,7 @@ OSStatus CMgr_AudioUnitBaseSetParameter(	AUBase * 				This,
 											float					inValue,
 											UInt32					inBufferOffset)
 {
-	OSStatus result = AUBase::noErr;
+	OSStatus result = noErr;
 	
 	try {
 		if (This == NULL) return kAudio_ParamError;
@@ -422,7 +422,7 @@ OSStatus CMgr_AudioUnitBaseRender(			AUBase *				This,
 {
 	if (inTimeStamp == NULL || ioData == NULL) return kAudio_ParamError;
 	
-	OSStatus result = AUBase::noErr;
+	OSStatus result = noErr;
 	AudioUnitRenderActionFlags tempFlags;
 	
 	try {

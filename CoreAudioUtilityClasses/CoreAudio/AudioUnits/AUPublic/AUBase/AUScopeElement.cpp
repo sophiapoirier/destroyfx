@@ -351,7 +351,7 @@ AUIOElement::AUIOElement(AUBase *audioUnit) :
 OSStatus		AUIOElement::SetStreamFormat(const CAStreamBasicDescription &desc)
 {
 	mStreamFormat = desc;
-	return AUBase::noErr;
+	return noErr;
 }
 
 //_____________________________________________________________________________

@@ -110,9 +110,6 @@
 /*! @class ComponentBase */
 class ComponentBase {
 public:
-	// classic MacErrors
-	enum { noErr = 0};
-
 	/*! @ctor ComponentBase */
 				ComponentBase(AudioComponentInstance inInstance);
 				

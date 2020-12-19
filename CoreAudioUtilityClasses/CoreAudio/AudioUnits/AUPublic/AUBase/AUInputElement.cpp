@@ -127,7 +127,7 @@ void	AUInputElement::SetInputCallback(AURenderCallback proc, void *refCon)
 OSStatus	AUInputElement::SetStreamFormat(const CAStreamBasicDescription &fmt)
 {
 	OSStatus err = AUIOElement::SetStreamFormat(fmt);
-	if (err == AUBase::noErr)
+	if (err == noErr)
 		AllocateBuffer();
 	return err;
 }
