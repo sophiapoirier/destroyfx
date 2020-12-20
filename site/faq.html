@@ -50,7 +50,7 @@
     <li><a href="#auval">Do your Audio Unit versions pass AUValidation in Logic?</a></li>
     <li><a href="#how2makeplugins">How can I make plugins?</a></li>
     <li><a href="#bundling">Can we put your software on a CD/DVD that we will include with our magazine?</a></li>
-    <li><a href="#otherformats">Will there be LADSPA / DirectX / MAS / AAX / RTAS / TDM / etc. versions?</a></li>
+    <li><a href="#otherformats">Will there be AAX / LADSPA / DirectX / MAS / etc. versions?</a></li>
     <li><a href="#banner">Do you have a banner that I can put on my web site?</a></li>
     <li><a href="#vstmidi">Why won't VST MIDI or VST GUI Tester run on my computer? I use Windows.</a></li>
     <li><a href="#otherpeople">Will you be updating Ambience (or other non-Destroy FX software)?</a></li>
@@ -65,9 +65,8 @@
     Currently we are trying to update our plugins to run on modern systems but our updates are
     lagging. There are a few main sources of incompatibility:
     <ul>
-      <li>In both Mac and Windows, you will find that our plugins currently only run in 32-bit
-      hosts and not 64-bit hosts (with the exception of a few of our beta AUs without custom
-      graphical interfaces that we released 64-bit versions of in July 2010).</li>
+      <li>You will find that our plugins currently only run in 32-bit hosts and not 64-bit hosts
+      (with the exception of the AU version of RMS Buddy).</li>
       <li>Some AU host applications (like Logic Pro X) are &quot;sandboxed&quot; and we haven't yet
       updated our AUs to be &quot;sandbox-safe&quot;.</li>
       <li>If you are using VST for Mac, we have discontinued development of those long ago and the
@@ -79,7 +78,7 @@
   <div class="infobox q" id="audiounits">
     <h3>Will there be Audio Unit versions of your plugins?</h3>
 
-    coming soon...
+    RMS Buddy is available, more coming soon...
   </div>
 
 
@@ -157,31 +156,16 @@
 
     <h4>Audio Units:</h4>
 
+    <p>To install one of our Audio Units on macOS, simply run its installer.</p>
+
     <p>To use Audio Unit plugins, you will need software (which we call the "host application")
     that can load them. We try to maintain a <a href="hostapps.html">list of host applications</a>.</p>
 
-    <p>Audio Units for macOS should be placed in: <code>Library/Audio/Plug-Ins/Components/</code>
-      <br />That can either be the user <code>~/Library</code> folder (then the plugin will be
-      available only to that user):
-    </p>
-
-    <img class="centered" src="user-install-au.jpg" width="242" height="195" alt="user" />
-
-    <p>... or the local root <code>/Library</code> folder (then the plugin will be available to all
-    users of the computer):</p>
-
-    <img class="centered" src="local-install-au.jpg" width="243" height="153" alt="system" />
-
-    <p>The plugins may appear as folders (but aren't) and have &quot;.component&quot; file name 
-      extensions. If the plugins don't show up in your Audio Unit host, try logging out and then
-      logging back in. If that doesn't help, then you might even need to reboot your computer,
+    <p>If the plugins don't show up in your Audio Unit host, try logging out and then logging
+      back in. If that doesn't help, then you might even need to reboot your computer,
       or if you are handy with Terminal:
       <br />
       <code>sudo killall -9 AudioComponentRegistrar</code></p>
-
-    <p>Please note that, at least so far, you can not put Audio Units into subfolders of the
-      Components folder. They must all be directly in the Components folder, otherwise they will 
-      not be found.</p>
 
     <h4>VST plugins:</h4>
 
@@ -333,7 +317,7 @@
 
     <p>The answer to that question is usually yes, with the following stipulations:</p>
     <ul>
-      <li>send us 2 complementary copies of that issue of your magazine (one to Tom and one to Sophia)</li>
+      <li>send us two complementary copies of that issue of your magazine (one to Tom and one to Sophia)</li>
       <li>include versions for all supported platforms (if it makes sense to do that; if your
       magazine focuses on a specific platform, then it might not make sense)</li>
       <li>make sure that you go to our web page at the last minute and get the most recent versions of our stuff</li>
@@ -346,7 +330,7 @@
 
 
   <div class="infobox q" id="otherformats">
-    <h3>Will there be LADSPA / DirectX / MAS / AAX / RTAS / TDM / etc. versions?</h3>
+    <h3>Will there be AAX / LADSPA / DirectX / MAS / etc. versions?</h3>
 
     <p>It's very unlikely.</p>
 
