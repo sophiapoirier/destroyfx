@@ -323,6 +323,7 @@ public:
 	void TextEntryForSmoothedAudioValueTime();
 	void LoadPresetFile();
 	void SavePresetFile();
+	std::tuple<uint8_t, uint8_t, uint8_t> getPluginVersion() const;
 
 	// Create a VSTGUI font via the editor's font factory.
 	VSTGUI::SharedPointer<VSTGUI::CFontDesc> CreateVstGuiFont(float inFontSize, char const* inFontName = nullptr)

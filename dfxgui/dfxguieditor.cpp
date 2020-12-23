@@ -1575,6 +1575,13 @@ void DfxGuiEditor::SavePresetFile()
 }
 
 //-----------------------------------------------------------------------------
+std::tuple<uint8_t, uint8_t, uint8_t> DfxGuiEditor::getPluginVersion() const
+{
+	auto const compositeVersion = static_cast<unsigned int>(dfx::CompositePluginVersionNumberValue());
+	return {(compositeVersion & 0xFFFF0000) >> 16, (compositeVersion & 0x0000FF00) >> 8, compositeVersion & 0x000000FF};
+}
+
+//-----------------------------------------------------------------------------
 DGEditorListenerInstance DfxGuiEditor::dfxgui_GetEffectInstance()
 {
 	return static_cast<DGEditorListenerInstance>(getEffect());
@@ -1999,6 +2006,11 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	DFX_AppendCommandItemToMenu(resultMenu, "Open " PLUGIN_CREATOR_NAME_STRING " web site", 
 								std::bind(&dfx::LaunchURL, PLUGIN_HOMEPAGE_URL));
 	DFX_AppendCommandItemToMenu(resultMenu, "Acknowledgements", std::bind(&DfxGuiEditor::ShowAcknowledgements, this));
+
+	resultMenu.addSeparator();
+	auto const [versionMajor, versionMinor, versionBugfix] = getPluginVersion();
+	auto const versionText = std::to_string(versionMajor) + "." + std::to_string(versionMinor) + "." + std::to_string(versionBugfix);
+	DFX_AppendCommandItemToMenu(resultMenu, "Version " + versionText, {}, false);
 
 	resultMenu.cleanupSeparators(true);
 	return resultMenu;
