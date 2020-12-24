@@ -79,7 +79,7 @@ DGColor DGColor::brighter(float inAmount) const
 
 	auto const brighten = [inAmount](auto component)
 	{
-		return componentFromFloat(kMaxValue - (inAmount * (kMaxValue_f - componentToFloat(component))));
+		return componentFromFloat(kMaxValue_f - (inAmount * (kMaxValue_f - componentToFloat(component))));
 	};
 	return DGColor(brighten(red), brighten(green), brighten(blue), alpha);
 }
