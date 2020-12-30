@@ -1968,12 +1968,14 @@ VSTGUI::COptionMenu DfxGuiEditor::createContextualMenu(IDGControl* inControl)
 	}
 
 	resultMenu.addSeparator();
+#if TARGET_OS_MAC  // hiding these menu items on Windows until implemented
 	DFX_AppendCommandItemToMenu(resultMenu, "Copy settings", std::bind(&DfxGuiEditor::copySettings, this));
 	{
 		bool currentClipboardIsPastable {};
 		pasteSettings(&currentClipboardIsPastable);
 		DFX_AppendCommandItemToMenu(resultMenu, "Paste settings", std::bind(&DfxGuiEditor::pasteSettings, this, nullptr), currentClipboardIsPastable);
 	}
+#endif
 #ifndef TARGET_API_RTAS  // RTAS has no API for preset files, Pro Tools handles them
 	#ifdef TARGET_API_VST
 	std::string const presetFileLabel("program");
