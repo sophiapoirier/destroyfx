@@ -1,4 +1,4 @@
-default: rezsynth.exe skidder.exe
+default: rezsynth.png skidder.png
 
 # for 64 bits on windows
 CXX=x86_64-w64-mingw32-g++
@@ -23,6 +23,13 @@ rezsynth.exe : $(OBJECTS) rezsynth.o
 
 skidder.exe : $(OBJECTS) skidder.o
 	$(CXX) $(LFLAGS) -o $@ $^
+
+rezsynth.png : rezsynth.exe
+	./rezsynth.exe
+
+skidder.png : skidder.exe skidder-title.png
+	./skidder.exe
+
 
 clean :
 	rm -f $(OBJECTS) rezsynth.exe skidder.exe rezsynth.png skidder.png

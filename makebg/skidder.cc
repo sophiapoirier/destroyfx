@@ -32,14 +32,16 @@ struct TTFont {
     ttf_bytes = Util::ReadFileBytes(filename);
     CHECK(!ttf_bytes.empty()) << filename;
   
-    stbtt_InitFont(&font, ttf_bytes.data(), stbtt_GetFontOffsetForIndex(ttf_bytes.data(), 0));
+    stbtt_InitFont(&font, ttf_bytes.data(),
+		   stbtt_GetFontOffsetForIndex(ttf_bytes.data(), 0));
   }
 
   // Not cached, so this does a lot more allocation than you probably want.
   ImageA GetChar(char c, int size) {
     int width, height;
-    uint8 *bitmap = stbtt_GetCodepointBitmap(&font, 0, stbtt_ScaleForPixelHeight(&font, size),
-					     c, &width, &height, 0, 0);
+    uint8 *bitmap = stbtt_GetCodepointBitmap(
+	&font, 0, stbtt_ScaleForPixelHeight(&font, size),
+	c, &width, &height, 0, 0);
     CHECK(bitmap != nullptr) << "Character " << (char)c << " size " << size;
 
     const int bytes = width * height;
@@ -92,7 +94,8 @@ struct TTFont {
       if (bitmap != nullptr) {
 	for (int yy = 0; yy < bitmap_h; yy++) {
 	  for (int xx = 0; xx < bitmap_w; xx++) {
-	    DrawPixel(xpos + xx + xoff, ypos + yy + yoff, bitmap[yy * bitmap_w + xx]);
+	    DrawPixel(xpos + xx + xoff, ypos + yy + yoff,
+		      bitmap[yy * bitmap_w + xx]);
 	  }
 	}
 	stbtt_FreeBitmap(bitmap, nullptr);
@@ -100,7 +103,8 @@ struct TTFont {
 	
       xpos += advance * scale;
       if (text[idx + 1] != '\0') {
-	xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
+	xpos += scale *
+	  stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
       }
       
       if (!subpixel) {
@@ -110,9 +114,11 @@ struct TTFont {
     }
   }
 
-  // Measure the nominal width and height of the string using the same method as above.
-  // (This does not mean that all pixels lie within the rectangle.)
-  std::pair<int, int> MeasureString(const string &text, int size_px, bool subpixel = true) {
+  // Measure the nominal width and height of the string using the same
+  // method as above. (This does not mean that all pixels lie within
+  // the rectangle.)
+  std::pair<int, int> MeasureString(const string &text,
+				    int size_px, bool subpixel = true) {
     const float scale = stbtt_ScaleForPixelHeight(&font, size_px);
 
     int ascent = 0, descent = 0, line_gap = 0;
@@ -122,11 +128,13 @@ struct TTFont {
     for (int idx = 0; idx < (int)text.size(); idx++) {
 
       int advance = 0, left_side_bearing = 0;
-      stbtt_GetCodepointHMetrics(&font, text[idx], &advance, &left_side_bearing);
+      stbtt_GetCodepointHMetrics(&font, text[idx],
+				 &advance, &left_side_bearing);
 
       xpos += advance * scale;
       if (text[idx + 1] != '\0') {
-	xpos += scale * stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
+	xpos += scale *
+	  stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
       }
       
       if (!subpixel) {
@@ -153,8 +161,6 @@ int main(int argc, char **argv) {
  
   ImageRGBA img(WIDTH, HEIGHT);
   img.Clear32(0x000000ff);
-
-  unique_ptr<ImageRGBA> title(ImageRGBA::Load("skidder-title.png"));
   
   // TODO: 2x version?
   auto DrawText = [&snoot, &img](int px, int py, uint32 color,
@@ -209,13 +215,19 @@ int main(int argc, char **argv) {
     };
 
   
-  uint32 color1 = 0x634021ff;
-  uint32 color2 = 0x8d3d6cff;
+  constexpr uint32 color1 = 0x634021ff;
+  constexpr uint32 color2 = 0x8d3d6cff;
 
   // uint32 color1 = 0xffff00ff;
   // uint32 color2 = 0x5959ffff;
 
-  // Vertical stripes
+  constexpr int HELP_W = WIDTH - (BORDER * 2) - 16;
+  constexpr int HELP_H = 64;
+  constexpr int HELP_X = (WIDTH - HELP_W) / 2;
+  constexpr int HELP_Y = HEIGHT - HELP_H - BORDER - 22;
+
+  
+  // Vertical "skid" stripes
 
   for (int x = 0; x < WIDTH; x++) {
     double f = x / (double)WIDTH;
@@ -241,7 +253,13 @@ int main(int argc, char **argv) {
       // artifacts.
       if (x < BORDER) color = color1;
       if (x >= WIDTH - BORDER) color = color2;
-      
+
+      // So too in help.
+      if (y >= HELP_Y && y < HELP_Y + HELP_H) {
+	if (x < HELP_X) color = color1;
+	if (x > HELP_X + HELP_W) color = color2;
+      }
+	
       img.SetPixel32(x, y, color);
     }
   }
@@ -256,7 +274,7 @@ int main(int argc, char **argv) {
 
   constexpr int NUM_SLIDERS = 8;
   
-  {
+  if (false) {
     // visualize the rows for "debugging"
     constexpr uint32 color1 = 0xFFFF000F;
     constexpr uint32 color2 = 0x0073FF0F;
@@ -382,6 +400,19 @@ int main(int argc, char **argv) {
     }
   }
 
+  // help zone
+  img.BlendRect32(HELP_X, HELP_Y, HELP_W, HELP_H,
+		  0x0000005F);
+
+  // help pinstripes
+  for (int b = 0; b < 5; b++) {
+    if (!(b & 1)) {
+      Box(HELP_X - b, HELP_Y - b,
+	  HELP_W + (b * 2), HELP_H + (b * 2),
+	  0x0000007F, 0x0000004F);
+    }
+  }
+  
   // border pinstripes
   for (int b = 0; b < BORDER; b++) {
     if (b & 1) {
@@ -392,16 +423,51 @@ int main(int argc, char **argv) {
   
   // Title
   {
+    unique_ptr<ImageRGBA> title(ImageRGBA::Load("skidder-title.png"));
     const int TITLE_X = WIDTH - title->width - BORDER + 2;
     const int TITLE_Y = BORDER + 2;
     img.BlendImage(TITLE_X, TITLE_Y, *title);
+  }
+
+  // MIDI button
+  {
+    const int MIDI_LABEL_X = CTRL_X + 48;
+    const int MIDI_LABEL_Y = CTRL_Y + CTRL_H * NUM_SLIDERS;
+    
+    DrawBoldText2x(MIDI_LABEL_X + 1, MIDI_LABEL_Y + 1, 0x000000FF, "MIDI mode");
+    DrawBoldText2x(MIDI_LABEL_X, MIDI_LABEL_Y, 0xFFFFFFFF, "MIDI mode");
+
+    constexpr int MIDI_BUTTON_X = MIDI_LABEL_X;
+    constexpr int MIDI_BUTTON_Y = MIDI_LABEL_Y + 18 + 12;
+    
+    if (MOCKUP) {
+      constexpr int BUTTON_HEIGHT = 22;
+      unique_ptr<ImageRGBA> modebutton_full(
+	  ImageRGBA::Load("skidder-midi-mode-button.png"));
+      ImageRGBA modebutton = 
+	modebutton_full->Crop32(0, 0, modebutton_full->width, BUTTON_HEIGHT);
+      img.BlendImage(MIDI_BUTTON_X, MIDI_BUTTON_Y, modebutton);
+
+      constexpr int VELOCITY_X = 41;
+      constexpr int VELOCITY_Y_MARGIN = 4;
+
+      unique_ptr<ImageRGBA> velbutton_full(
+	  ImageRGBA::Load("skidder-use-velocity-button.png"));
+      ImageRGBA velbutton = 
+	velbutton_full->Crop32(0, 0,
+			       velbutton_full->width,
+			       velbutton_full->height >> 1);
+      img.BlendImage(MIDI_BUTTON_X + VELOCITY_X,
+		     MIDI_BUTTON_Y + modebutton.height + VELOCITY_Y_MARGIN,
+		     velbutton);
+    }
   }
   
   // destroyfx link
   if (MOCKUP) {
     const string text = "destroyfx.org";
     int lx = WIDTH - TextWidth(text) - 4 - BORDER;
-    int ly = HEIGHT - 18 - BORDER;
+    int ly = HEIGHT - 16 - BORDER;
     DrawBoldText(lx, ly, 0x000000FF, text);
     DrawBoldText(lx - 1, ly - 1, 0xFFFFFFFF, text);    
   }
