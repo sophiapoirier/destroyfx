@@ -424,7 +424,7 @@ int main(int argc, char **argv) {
   // Title
   {
     unique_ptr<ImageRGBA> title(ImageRGBA::Load("skidder-title.png"));
-    const int TITLE_X = WIDTH - title->width - BORDER + 2;
+    const int TITLE_X = WIDTH - title->Width() - BORDER + 2;
     const int TITLE_Y = BORDER + 2;
     img.BlendImage(TITLE_X, TITLE_Y, *title);
   }
@@ -445,7 +445,7 @@ int main(int argc, char **argv) {
       unique_ptr<ImageRGBA> modebutton_full(
 	  ImageRGBA::Load("skidder-midi-mode-button.png"));
       ImageRGBA modebutton = 
-	modebutton_full->Crop32(0, 0, modebutton_full->width, BUTTON_HEIGHT);
+	modebutton_full->Crop32(0, 0, modebutton_full->Width(), BUTTON_HEIGHT);
       img.BlendImage(MIDI_BUTTON_X, MIDI_BUTTON_Y, modebutton);
 
       constexpr int VELOCITY_X = 41;
@@ -455,10 +455,10 @@ int main(int argc, char **argv) {
 	  ImageRGBA::Load("skidder-use-velocity-button.png"));
       ImageRGBA velbutton = 
 	velbutton_full->Crop32(0, 0,
-			       velbutton_full->width,
-			       velbutton_full->height >> 1);
+			       velbutton_full->Width(),
+			       velbutton_full->Height() >> 1);
       img.BlendImage(MIDI_BUTTON_X + VELOCITY_X,
-		     MIDI_BUTTON_Y + modebutton.height + VELOCITY_Y_MARGIN,
+		     MIDI_BUTTON_Y + modebutton.Height() + VELOCITY_Y_MARGIN,
 		     velbutton);
     }
   }

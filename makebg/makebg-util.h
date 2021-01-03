@@ -26,8 +26,8 @@ struct Blue {
     std::unique_ptr<ImageRGBA> rgba(
 	ImageRGBA::Load("bluenoise470.png"));
     CHECK(rgba.get());
-    CHECK(rgba->width == SIZE);
-    CHECK(rgba->height == SIZE);
+    CHECK(rgba->Width() == SIZE);
+    CHECK(rgba->Height() == SIZE);
     for (int y = 0; y < SIZE; y++) {
       for (int x = 0; x < SIZE; x++) {
 	uint32 p = rgba->GetPixel(x, y);

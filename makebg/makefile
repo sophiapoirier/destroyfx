@@ -32,5 +32,4 @@ skidder.png : skidder.exe skidder-title.png
 
 
 clean :
-	rm -f $(OBJECTS) rezsynth.exe skidder.exe rezsynth.png skidder.png
-
+	rm -f $(OBJECTS) rezsynth.exe skidder.exe rezsynth.png skidder.png *.o
