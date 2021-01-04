@@ -16,6 +16,35 @@ using namespace std;
 using uint8 = uint8_t;
 using uint32 = uint32_t;
 
+inline ImageRGBA LoadImage(const std::string &filename) {
+  // TODO: image.h should use value semantics, maybe
+  // Load returns optional<>
+  std::unique_ptr<ImageRGBA> img(ImageRGBA::Load(filename));
+  CHECK(img.get() != nullptr) << "Couldn't load " << filename;
+  ImageRGBA ret = *img;
+  return ret;
+}
+
+// Mapping should specify alpha as FF always.
+inline ImageRGBA Recolor(const std::unordered_map<uint32, uint32> &mapping,
+			 const ImageRGBA &img) {
+  ImageRGBA ret(img.Width(), img.Height());
+
+  for (int y = 0; y < img.Height(); y++) {
+    for (int x = 0; x < img.Width(); x++) {
+      uint32 color = img.GetPixel(x, y);
+      uint32 rgb = color | 0xFF;
+      uint32 alpha = color & 0xFF;
+      auto it = mapping.find(rgb);
+      if (it != mapping.end()) {
+	// Keep original alpha.
+	color = (it->second & ~0xFF) | alpha;
+      }
+      ret.SetPixel32(x, y, color);
+    }
+  }
+  return ret;
+}
 
 struct Blue {
   static constexpr int SIZE = 470;
@@ -127,4 +156,16 @@ inline std::pair<int, int> Move(int x, int y, Dir d) {
   }
 }
 
+inline ImageRGBA CroppedButton(const std::string &filename,
+			       int num_buttons,
+			       int button_idx) {
+  std::unique_ptr<ImageRGBA> full(ImageRGBA::Load(filename));
+  CHECK(full.get() != nullptr) << filename;
+
+  CHECK(full->Height() % num_buttons == 0) << "Wrong number of "
+    "buttons in " << filename << "? Got height: " << full->Height();
+  int bh = full->Height() / num_buttons;
+  return full->Crop32(0, bh * button_idx, full->Width(), bh);
+}
+			       
 #endif

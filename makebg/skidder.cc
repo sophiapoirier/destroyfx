@@ -27,11 +27,11 @@ constexpr int BORDER = 6;
 constexpr bool MOCKUP = true;
 
 struct TTFont {
- 
+
   TTFont(const string &filename) {
     ttf_bytes = Util::ReadFileBytes(filename);
     CHECK(!ttf_bytes.empty()) << filename;
-  
+
     stbtt_InitFont(&font, ttf_bytes.data(),
 		   stbtt_GetFontOffsetForIndex(ttf_bytes.data(), 0));
   }
@@ -76,7 +76,7 @@ struct TTFont {
 
       int bitmap_w = 0, bitmap_h = 0;
       int xoff = 0, yoff = 0;
-      uint8 *bitmap = nullptr;      
+      uint8 *bitmap = nullptr;
       if (subpixel) {
 	const float x_shift = xpos - (float) floor(xpos);
 	constexpr float y_shift = 0.0f;
@@ -100,13 +100,13 @@ struct TTFont {
 	}
 	stbtt_FreeBitmap(bitmap, nullptr);
       }
-	
+
       xpos += advance * scale;
       if (text[idx + 1] != '\0') {
 	xpos += scale *
 	  stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
       }
-      
+
       if (!subpixel) {
 	// Or floor?
 	xpos = roundf(xpos);
@@ -136,7 +136,7 @@ struct TTFont {
 	xpos += scale *
 	  stbtt_GetCodepointKernAdvance(&font, text[idx], text[idx + 1]);
       }
-      
+
       if (!subpixel) {
 	// Or floor?
 	xpos = roundf(xpos);
@@ -144,7 +144,7 @@ struct TTFont {
     }
     return {xpos, ascent - descent + line_gap};
   }
-  
+
 private:
   vector<uint8> ttf_bytes;
   stbtt_fontinfo font;
@@ -158,10 +158,43 @@ int main(int argc, char **argv) {
   // Drawing (x,y) at (x,y) and (x+1,y) also looks
   // good for "faux bold."
   TTFont snoot("../fonts/px10.ttf");
- 
+
+  // Color schemes.
+
+  // Native yellow.
+  const std::unordered_map<uint32, uint32> SCHEME_NATIVE = {};
+
+  // Intense!
+  const std::unordered_map<uint32, uint32> SCHEME_RED = {
+    // bright yellow
+    {0xFFFC00FF, 0xFF0000FF},
+    // yellow-brown corners
+    {0x978d08FF, 0xba0b05FF},
+    // lighter brown lines
+    {0x64560cFF, 0x7e140aFF},
+    // very dark brown outlines
+    {0x312010FF, 0x311010FF},
+  };  
+
+  // Pretty good contrast but not annoying.
+  const std::unordered_map<uint32, uint32> SCHEME_ORANGEY = {
+    // bright yellow
+    {0xFFFC00FF, 0xFF8B00FF},
+    // yellow-brown corners
+    {0x978d08FF, 0xBF6e00FF},
+    // lighter brown lines
+    {0x64560cFF, 0x885600FF},
+    // very dark brown outlines
+    {0x312010FF, 0x312410FF},
+  };  
+
+  
+  const auto SCHEME = SCHEME_RED;
+  
+  
   ImageRGBA img(WIDTH, HEIGHT);
   img.Clear32(0x000000ff);
-  
+
   // TODO: 2x version?
   auto DrawText = [&snoot, &img](int px, int py, uint32 color,
 				 const string &text) {
@@ -178,7 +211,7 @@ int main(int argc, char **argv) {
       const auto [w, h] = snoot.MeasureString(text, 14, false);
       return w;
     };
-  
+
   // Note that 'bold' versions over-draw, so alpha should be 0xFF
   // unless you like a weird effect.
   auto DrawBoldText = [&snoot, &img](int px, int py, uint32 color,
@@ -187,7 +220,7 @@ int main(int argc, char **argv) {
 		       [&](int x, int y, uint8 v) {
 			 if (v > 128) {
 			   img.BlendPixel32(x, y, color);
-			   img.BlendPixel32(x + 1, y, color);			   
+			   img.BlendPixel32(x + 1, y, color);
 			 }
 		       },
 		       false);
@@ -204,7 +237,7 @@ int main(int argc, char **argv) {
 			       img.BlendPixel32(x, y, color);
 			       img.BlendPixel32(x + 1, y, color);
 			       img.BlendPixel32(x, y + 1, color);
-			       img.BlendPixel32(x + 1, y + 1, color);			       
+			       img.BlendPixel32(x + 1, y + 1, color);
 			     };
 
 			   Px2x(xx, yy);
@@ -214,7 +247,7 @@ int main(int argc, char **argv) {
 		       false);
     };
 
-  
+
   constexpr uint32 color1 = 0x634021ff;
   constexpr uint32 color2 = 0x8d3d6cff;
 
@@ -226,7 +259,7 @@ int main(int argc, char **argv) {
   constexpr int HELP_X = (WIDTH - HELP_W) / 2;
   constexpr int HELP_Y = HEIGHT - HELP_H - BORDER - 22;
 
-  
+
   // Vertical "skid" stripes
 
   for (int x = 0; x < WIDTH; x++) {
@@ -259,7 +292,7 @@ int main(int argc, char **argv) {
 	if (x < HELP_X) color = color1;
 	if (x > HELP_X + HELP_W) color = color2;
       }
-	
+
       img.SetPixel32(x, y, color);
     }
   }
@@ -273,7 +306,7 @@ int main(int argc, char **argv) {
   constexpr int CTRL_H = 64;
 
   constexpr int NUM_SLIDERS = 8;
-  
+
   if (false) {
     // visualize the rows for "debugging"
     constexpr uint32 color1 = 0xFFFF000F;
@@ -308,7 +341,7 @@ int main(int argc, char **argv) {
       img.BlendPixel32(x, y, corner_color);
       img.BlendPixel32(x1, y, corner_color);
       img.BlendPixel32(x, y1, corner_color);
-      img.BlendPixel32(x1, y1, corner_color);      
+      img.BlendPixel32(x1, y1, corner_color);
     };
 
   auto DarkNoiseRect = [&](int sx, int sy, int w, int h) {
@@ -320,7 +353,7 @@ int main(int argc, char **argv) {
 	}
       }
     };
-  
+
   // Slider backgrounds
   auto DrawSlider = [&](int sx, int sy, int w, int h) {
       Box(sx, sy, w, h, 0x000000FF, 0x0000001F);
@@ -341,8 +374,8 @@ int main(int argc, char **argv) {
 	       CTRL_Y + (i * CTRL_H) + SLIDER_Y,
 	       SLIDER_W, SLIDER_H);
   }
-  
-  
+
+
   {
     // big text labels for each row
     vector<string> labels = {
@@ -358,7 +391,7 @@ int main(int argc, char **argv) {
     CHECK(labels.size() >= NUM_SLIDERS);
     // within ctrl row
     constexpr int LABEL_X = 48;
-    constexpr int LABEL_Y = -6;
+    constexpr int LABEL_Y = -8;
     for (int i = 0; i < NUM_SLIDERS; i++) {
       int lx = CTRL_X + LABEL_X;
       int ly = i * CTRL_H + CTRL_Y + LABEL_Y;
@@ -412,7 +445,7 @@ int main(int argc, char **argv) {
 	  0x0000007F, 0x0000004F);
     }
   }
-  
+
   // border pinstripes
   for (int b = 0; b < BORDER; b++) {
     if (b & 1) {
@@ -420,56 +453,109 @@ int main(int argc, char **argv) {
 	  0x000000FF, 0x000000AF);
     }
   }
-  
+
   // Title
   {
-    unique_ptr<ImageRGBA> title(ImageRGBA::Load("skidder-title.png"));
-    const int TITLE_X = WIDTH - title->Width() - BORDER + 2;
+    ImageRGBA title = LoadImage("skidder-title.png");
+    const int TITLE_X = WIDTH - title.Width() - BORDER + 2;
     const int TITLE_Y = BORDER + 2;
-    img.BlendImage(TITLE_X, TITLE_Y, *title);
+    img.BlendImage(TITLE_X, TITLE_Y, title);
   }
 
   // MIDI button
   {
     const int MIDI_LABEL_X = CTRL_X + 48;
     const int MIDI_LABEL_Y = CTRL_Y + CTRL_H * NUM_SLIDERS;
-    
+
     DrawBoldText2x(MIDI_LABEL_X + 1, MIDI_LABEL_Y + 1, 0x000000FF, "MIDI mode");
     DrawBoldText2x(MIDI_LABEL_X, MIDI_LABEL_Y, 0xFFFFFFFF, "MIDI mode");
 
     constexpr int MIDI_BUTTON_X = MIDI_LABEL_X;
     constexpr int MIDI_BUTTON_Y = MIDI_LABEL_Y + 18 + 12;
-    
+
     if (MOCKUP) {
-      constexpr int BUTTON_HEIGHT = 22;
-      unique_ptr<ImageRGBA> modebutton_full(
-	  ImageRGBA::Load("skidder-midi-mode-button.png"));
-      ImageRGBA modebutton = 
-	modebutton_full->Crop32(0, 0, modebutton_full->Width(), BUTTON_HEIGHT);
-      img.BlendImage(MIDI_BUTTON_X, MIDI_BUTTON_Y, modebutton);
+      // constexpr int BUTTON_HEIGHT = 22;
+      ImageRGBA mode_button =
+	Recolor(SCHEME, CroppedButton("skidder-midi-mode-button.png", 3, 0));
+      img.BlendImage(MIDI_BUTTON_X, MIDI_BUTTON_Y, mode_button);
 
       constexpr int VELOCITY_X = 41;
       constexpr int VELOCITY_Y_MARGIN = 4;
 
-      unique_ptr<ImageRGBA> velbutton_full(
-	  ImageRGBA::Load("skidder-use-velocity-button.png"));
-      ImageRGBA velbutton = 
-	velbutton_full->Crop32(0, 0,
-			       velbutton_full->Width(),
-			       velbutton_full->Height() >> 1);
+      ImageRGBA vel_button =
+	Recolor(SCHEME, CroppedButton("skidder-use-velocity-button.png", 2, 0));
       img.BlendImage(MIDI_BUTTON_X + VELOCITY_X,
-		     MIDI_BUTTON_Y + modebutton.Height() + VELOCITY_Y_MARGIN,
-		     velbutton);
+		     MIDI_BUTTON_Y + mode_button.Height() + VELOCITY_Y_MARGIN,
+		     vel_button);
+
+      constexpr int LEARN_X = 221;
+      constexpr int LEARN_Y = MIDI_BUTTON_Y;
+
+      constexpr int RESET_X = 295;
+      constexpr int RESET_Y = MIDI_BUTTON_Y;
+
+      ImageRGBA learn_button = Recolor(SCHEME, CroppedButton("skidder-midi-learn-button.png", 2, 0));
+      ImageRGBA reset_button = Recolor(SCHEME, CroppedButton("skidder-midi-reset-button.png", 2, 0));
+
+      img.BlendImage(LEARN_X, LEARN_Y, learn_button);
+      img.BlendImage(RESET_X, RESET_Y, reset_button);
+
+      ImageRGBA splittable_handle = Recolor(SCHEME, LoadImage("skidder-splittable-handle.png"));
+      CHECK(splittable_handle.Width() % 2 == 0);
+      const int SPLIT_HANDLE_WIDTH = splittable_handle.Width() / 2;
+      ImageRGBA handle_left = splittable_handle.Crop32(0, 0, SPLIT_HANDLE_WIDTH,
+						       splittable_handle.Height());
+      ImageRGBA handle_right = splittable_handle.Crop32(SPLIT_HANDLE_WIDTH, 0, SPLIT_HANDLE_WIDTH,
+							splittable_handle.Height());
+
+      ImageRGBA handle = Recolor(SCHEME, LoadImage("skidder-handle.png"));
+      const int HANDLE_WIDTH = handle.Width();
+      
+      // If second is 0, handle is not split.
+
+      constexpr int STARTX = CTRL_X + SLIDER_X;
+      vector<pair<int, int>> handles = {
+	// rate - splittable
+	{STARTX + 40, STARTX + 40 + SPLIT_HANDLE_WIDTH},
+	// pulse width - splittable
+	{STARTX + 80, STARTX + 120 + SPLIT_HANDLE_WIDTH},	
+	// slope
+	{STARTX + 20, 0},
+	// floor - splittable
+	{STARTX, STARTX + SPLIT_HANDLE_WIDTH},
+	// crossover
+	{STARTX + SLIDER_W - HANDLE_WIDTH * 3, 0},
+	// stereo
+	{STARTX, 0},
+	// rupture
+	{STARTX + SLIDER_W - HANDLE_WIDTH, 0},
+	// tempo
+	{STARTX + 75, 0},
+      };
+      
+      {
+	constexpr int HANDLE_YMARGIN = -3;
+	int ypos = CTRL_Y + SLIDER_Y;
+	for (const auto [x1, x2] : handles) {
+	  if (x2 == 0) {
+	    img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle);
+	  } else {
+	    img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle_left);
+	    img.BlendImage(x2, ypos + HANDLE_YMARGIN, handle_right);
+	  }
+	  ypos += CTRL_H;
+	}
+      }
     }
   }
-  
+
   // destroyfx link
   if (MOCKUP) {
     const string text = "destroyfx.org";
     int lx = WIDTH - TextWidth(text) - 4 - BORDER;
     int ly = HEIGHT - 16 - BORDER;
     DrawBoldText(lx, ly, 0x000000FF, text);
-    DrawBoldText(lx - 1, ly - 1, 0xFFFFFFFF, text);    
+    DrawBoldText(lx - 1, ly - 1, 0xFFFFFFFF, text);
   }
 
   img.Save("skidder.png");
