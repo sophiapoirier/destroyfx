@@ -359,7 +359,7 @@ long DGButton::getRadioValue(VSTGUI::CPoint const& inPos) const
 {
 	assert(mMode == Mode::Radio);
 
-	auto const result = [inPos, this]()
+	auto const result = [inPos, this]() -> long
 	{
 		auto const pos = (mOrientation & dfx::kAxis_Horizontal) ? (inPos.x - getViewSize().left) : (inPos.y - getViewSize().top);
 		if (!mRadioThresholds.empty())
