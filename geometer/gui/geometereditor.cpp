@@ -40,10 +40,15 @@ constexpr float finetuneinc = 0.0001f;
 
 static constexpr std::initializer_list<char const * const> landmarks_labelstrings =
   { "zero", "freq", "num", "span", "size", "level" };
+static_assert(landmarks_labelstrings.size() == NUM_POINTSTYLES);
+
 static constexpr std::initializer_list<char const * const> ops_labelstrings =
   { "jump", "????", "????", "size", "size", "times", "times", " " };
+static_assert(ops_labelstrings.size() == NUM_OPS);
+
 static constexpr std::initializer_list<char const * const> recreate_labelstrings =
   { "dim", "dim", "exp", "????", "size", "o'lap", "mod", "dist" };
+static_assert(recreate_labelstrings.size() == NUM_INTERPSTYLES);
 
 
 
@@ -207,9 +212,6 @@ GeometerEditor::GeometerEditor(DGEditorListenerInstance inInstance)
    genhelpitemcontrols(NUM_GEN_HELP_ITEMS, nullptr),
    g_helpicons(NUM_HELP_CATEGORIES) {
 
-  assert(landmarks_labelstrings.size() == NUM_POINTSTYLES);
-  assert(ops_labelstrings.size() == NUM_OPS);
-  assert(recreate_labelstrings.size() == NUM_INTERPSTYLES);
 }
 
 //-----------------------------------------------------------------------------
@@ -440,6 +442,7 @@ void GeometerEditor::parameterChanged(long inParameterID) {
       }();
 
       auto const update_control_parameter = [newParameterID, alpha](IDGControl* control) {
+        assert(control);
         control->setParameterID(newParameterID);
         control->setDrawAlpha(alpha);
       };
@@ -478,9 +481,9 @@ void GeometerEditor::changehelp(IDGControl * currentControlUnderMouse) {
   if (currentControlUnderMouse && currentControlUnderMouse->isParameterAttached())
     paramID = currentControlUnderMouse->getParameterID();
 
-  if (auto const matchedGenHelp = std::find(genhelpitemcontrols.begin(), genhelpitemcontrols.end(), currentControlUnderMouse);
-      matchedGenHelp != genhelpitemcontrols.end()) {
-    auto const index = std::distance(genhelpitemcontrols.begin(), matchedGenHelp);
+  if (auto const matchedGenHelp = std::find(genhelpitemcontrols.cbegin(), genhelpitemcontrols.cend(), currentControlUnderMouse);
+      matchedGenHelp != genhelpitemcontrols.cend()) {
+    auto const index = std::distance(genhelpitemcontrols.cbegin(), matchedGenHelp);
     updatehelp(HELP_CATEGORY_GENERAL, index, NUM_GEN_HELP_ITEMS);
   }
   else if (paramID == P_BUFSIZE) {
