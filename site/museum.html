@@ -21,8 +21,8 @@
 </head>
 
 <script>
- function Version(vnum, date, win, osx, mac, src) {
-   return {vnum, date, win, osx, mac, src};
+ function Version(vnum, date, win, mac, oldmac, src) {
+   return {vnum, date, win, mac, oldmac, src};
  }
  const geometer = [
    Version("1.1.1", "2005-09-09", "geometer-1.1.1-win.7z", null, null, "geometer-1.1.1-source.7z"),
@@ -172,7 +172,7 @@
        news.href = 'news.html#' + v.date;
        TEXT(v.vnum + ' (' + v.date + ')', news);
        let ul = UL('', box);
-       for (let os of ['win', 'osx', 'mac', 'src']) {
+       for (let os of ['win', 'mac', 'oldmac', 'src']) {
          if (v[os]) {
            let a = A('', LI('', ul));
            a.href = 'software/' + v[os];
