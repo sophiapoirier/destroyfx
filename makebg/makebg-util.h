@@ -32,7 +32,7 @@ inline ImageRGBA Recolor(const std::unordered_map<uint32, uint32> &mapping,
 
   for (int y = 0; y < img.Height(); y++) {
     for (int x = 0; x < img.Width(); x++) {
-      uint32 color = img.GetPixel(x, y);
+      uint32 color = img.GetPixel32(x, y);
       uint32 rgb = color | 0xFF;
       uint32 alpha = color & 0xFF;
       auto it = mapping.find(rgb);
@@ -59,7 +59,7 @@ struct Blue {
     CHECK(rgba->Height() == SIZE);
     for (int y = 0; y < SIZE; y++) {
       for (int x = 0; x < SIZE; x++) {
-	uint32 p = rgba->GetPixel(x, y);
+	uint32 p = rgba->GetPixel32(x, y);
 	// Assumes all the channels are the same.
 	uint8 v = p >> 24;
 	noise.SetPixel(x, y, v);
