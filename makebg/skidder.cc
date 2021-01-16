@@ -1,5 +1,12 @@
 // Playing around with programmatic background generation for skidder.
 
+// TODO:
+//  - disabled sliders
+//  - slider in 'learn' state
+//  - tempo sync button
+//  - crossover all/low/high
+//  - host tempo button
+
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -189,7 +196,7 @@ int main(int argc, char **argv) {
   };  
 
   
-  const auto SCHEME = SCHEME_RED;
+  const auto SCHEME = SCHEME_ORANGEY;
   
   
   ImageRGBA img(WIDTH, HEIGHT);
@@ -250,18 +257,42 @@ int main(int argc, char **argv) {
 
   constexpr uint32 color1 = 0x634021ff;
   constexpr uint32 color2 = 0x8d3d6cff;
+  // constexpr uint32 color1 = 0xffff00ff;
+  // constexpr uint32 color2 = 0x5959ffff;
+  
+  // Location/size of the control rows. Lots of stuff is keyed off this.
+  constexpr int CTRL_X = 12;
+  constexpr int CTRL_Y = 78;
 
-  // uint32 color1 = 0xffff00ff;
-  // uint32 color2 = 0x5959ffff;
+  constexpr int CTRL_W = 400;
+  constexpr int CTRL_H = 64;
 
+  constexpr int NUM_SLIDERS = 8;
+
+  // Position of the slider backgrounds within the control rows,
+  // which provide another key line.
+  constexpr int SLIDER_X = 48;
+  constexpr int SLIDER_Y = 22;
+  constexpr int SLIDER_H = 28;
+  constexpr int SLIDER_W = 272;
+  
+  #define FULLWIDTH_HELP false
+  
+#if FULLWIDTH_HELP  
   constexpr int HELP_W = WIDTH - (BORDER * 2) - 16;
   constexpr int HELP_H = 64;
   constexpr int HELP_X = (WIDTH - HELP_W) / 2;
   constexpr int HELP_Y = HEIGHT - HELP_H - BORDER - 22;
-
+#else
+  constexpr int HELP_LEFT_PADDING = CTRL_X + SLIDER_X;
+  constexpr int HELP_W = WIDTH - HELP_LEFT_PADDING - BORDER - 7;
+  constexpr int HELP_H = 64;
+  constexpr int HELP_X = HELP_LEFT_PADDING;
+  constexpr int HELP_Y = HEIGHT - HELP_H - BORDER - 22;
+#endif
+  
 
   // Vertical "skid" stripes
-
   for (int x = 0; x < WIDTH; x++) {
     double f = x / (double)WIDTH;
 
@@ -281,31 +312,30 @@ int main(int argc, char **argv) {
 	color = f < noise ? color1 : color2;
       }
 
+      uint32 c = color;
+      
       // Don't allow stripes over the left and right
       // border pinstripes; they just create distracting
       // artifacts.
-      if (x < BORDER) color = color1;
-      if (x >= WIDTH - BORDER) color = color2;
+      // (Maybe it would have been simpler to just draw color1
+      // and color2 boxes over the pinstripes after drawing bg..)
+      if (x < BORDER) c = color1;
+      if (x >= WIDTH - BORDER) c = color2;
 
       // So too in help.
-      if (y >= HELP_Y && y < HELP_Y + HELP_H) {
-	if (x < HELP_X) color = color1;
-	if (x > HELP_X + HELP_W) color = color2;
+      if (y > HELP_Y - BORDER && y < HELP_Y + HELP_H + BORDER - 2) {
+	// c = 0xFF0000FF;
+	
+	if (x > HELP_X - BORDER && x <= HELP_X)
+	  c = color1;
+
+	// This is just right aligned.
+	if (x >= HELP_X + HELP_W) c = color2;
       }
 
-      img.SetPixel32(x, y, color);
+      img.SetPixel32(x, y, c);
     }
   }
-
-
-  // The slider control row.
-  constexpr int CTRL_X = 27;
-  constexpr int CTRL_Y = 78;
-
-  constexpr int CTRL_W = 400;
-  constexpr int CTRL_H = 64;
-
-  constexpr int NUM_SLIDERS = 8;
 
   if (false) {
     // visualize the rows for "debugging"
@@ -365,10 +395,6 @@ int main(int argc, char **argv) {
       Box(sx + 2, sy + 2, w - 4, h - 4, 0x00000000, 0x0000003F);
     };
 
-  constexpr int SLIDER_X = 48;
-  constexpr int SLIDER_Y = 22;
-  constexpr int SLIDER_H = 28;
-  constexpr int SLIDER_W = 272;
   for (int i = 0; i < NUM_SLIDERS; i++) {
     DrawSlider(CTRL_X + SLIDER_X,
 	       CTRL_Y + (i * CTRL_H) + SLIDER_Y,
@@ -412,7 +438,7 @@ int main(int argc, char **argv) {
       {"39.7%", "100.0%"}, // pulse width
       {"", "16.384 ms"}, // slope
       {"-59.2", "-25.8 dB"},  // floor
-      {"", "1.69 kHZ"}, // crossover
+      {"", "99.99 kHZ"}, // crossover
       {"", "50.7%"}, // stereo spread
       {"", "-10.7 dB"}, // rupture
       {"", "214.046 bpm"}, // tempo
@@ -433,36 +459,76 @@ int main(int argc, char **argv) {
     }
   }
 
+  // Slider mode buttons.
+  if (MOCKUP) {
+    // Maybe should demo 'all' state and disable crossover slider
+    ImageRGBA crossover_mode_button =
+	Recolor(SCHEME, CroppedButton("skidder-crossover-mode-button.png", 3, 1));
+    std::vector<std::optional<ImageRGBA>> buttons = {
+      nullopt, // TODO rate
+      nullopt, // pulsewidth
+      nullopt, // slope
+      nullopt, // floor
+      {crossover_mode_button}, // crossover
+      nullopt, // stereo
+      nullopt, // rupture
+      nullopt, // TODO tempo
+    };
+
+    constexpr int BUTTON_Y = 24;
+    for (int i = 0; i < (int)buttons.size(); i++) {
+      if (buttons[i].has_value()) {
+	const ImageRGBA &button = buttons[i].value();
+	const int bx = WIDTH - BORDER - 3 - button.Width();
+	const int by = i * CTRL_H + CTRL_Y + BUTTON_Y;
+	img.BlendImage(bx, by, button);
+      }
+    }
+  }
+
+  
   // help zone
-  img.BlendRect32(HELP_X, HELP_Y, HELP_W, HELP_H,
-		  0x0000005F);
+  {
+    img.BlendRect32(HELP_X, HELP_Y, HELP_W, HELP_H,
+		    0x0000005F);
 
-  // help pinstripes
-  for (int b = 0; b < 5; b++) {
-    if (!(b & 1)) {
-      Box(HELP_X - b, HELP_Y - b,
-	  HELP_W + (b * 2), HELP_H + (b * 2),
-	  0x0000007F, 0x0000004F);
+    // help pinstripes
+    for (int b = 0; b < 5; b++) {
+      if (!(b & 1)) {
+	Box(HELP_X - b, HELP_Y - b,
+	    HELP_W + (b * 2), HELP_H + (b * 2),
+	    0x0000007F, 0x0000004F);
+      }
+    }
+
+    // border pinstripes
+    for (int b = 0; b < BORDER; b++) {
+      if (b & 1) {
+	Box(b, b, WIDTH - (b * 2), HEIGHT - (b * 2),
+	    0x000000FF, 0x000000AF);
+      }
+    }
+
+    if (MOCKUP) {
+      DrawText(HELP_X + 4, HELP_Y + 4,
+	       0xFFFFFFFF,
+	       "You can get some help in the help box!");
     }
   }
 
-  // border pinstripes
-  for (int b = 0; b < BORDER; b++) {
-    if (b & 1) {
-      Box(b, b, WIDTH - (b * 2), HEIGHT - (b * 2),
-	  0x000000FF, 0x000000AF);
-    }
-  }
-
+  
+  
   // Title
   {
     ImageRGBA title = LoadImage("skidder-title.png");
-    const int TITLE_X = WIDTH - title.Width() - BORDER + 2;
-    const int TITLE_Y = BORDER + 2;
+    // const int TITLE_X = WIDTH - title.Width() - BORDER + 2;
+    // hang 'd' slightly over the sliders ("optical alignment")
+    const int TITLE_X = CTRL_X + SLIDER_X - 8;
+    const int TITLE_Y = BORDER + 3;
     img.BlendImage(TITLE_X, TITLE_Y, title);
   }
 
-  // MIDI button
+  // MIDI controls at the bottom
   {
     const int MIDI_LABEL_X = CTRL_X + 48;
     const int MIDI_LABEL_Y = CTRL_Y + CTRL_H * NUM_SLIDERS;
@@ -494,61 +560,69 @@ int main(int argc, char **argv) {
       constexpr int RESET_X = 295;
       constexpr int RESET_Y = MIDI_BUTTON_Y;
 
-      ImageRGBA learn_button = Recolor(SCHEME, CroppedButton("skidder-midi-learn-button.png", 2, 0));
-      ImageRGBA reset_button = Recolor(SCHEME, CroppedButton("skidder-midi-reset-button.png", 2, 0));
+      ImageRGBA learn_button =
+	Recolor(SCHEME, CroppedButton("skidder-midi-learn-button.png", 2, 0));
+      ImageRGBA reset_button =
+	Recolor(SCHEME, CroppedButton("skidder-midi-reset-button.png", 2, 0));
 
       img.BlendImage(LEARN_X, LEARN_Y, learn_button);
       img.BlendImage(RESET_X, RESET_Y, reset_button);
-
-      ImageRGBA splittable_handle = Recolor(SCHEME, LoadImage("skidder-splittable-handle.png"));
-      CHECK(splittable_handle.Width() % 2 == 0);
-      const int SPLIT_HANDLE_WIDTH = splittable_handle.Width() / 2;
-      ImageRGBA handle_left = splittable_handle.Crop32(0, 0, SPLIT_HANDLE_WIDTH,
-						       splittable_handle.Height());
-      ImageRGBA handle_right = splittable_handle.Crop32(SPLIT_HANDLE_WIDTH, 0, SPLIT_HANDLE_WIDTH,
-							splittable_handle.Height());
-
-      ImageRGBA handle = Recolor(SCHEME, LoadImage("skidder-handle.png"));
-      const int HANDLE_WIDTH = handle.Width();
-      
-      // If second is 0, handle is not split.
-
-      constexpr int STARTX = CTRL_X + SLIDER_X;
-      vector<pair<int, int>> handles = {
-	// rate - splittable
-	{STARTX + 40, STARTX + 40 + SPLIT_HANDLE_WIDTH},
-	// pulse width - splittable
-	{STARTX + 80, STARTX + 120 + SPLIT_HANDLE_WIDTH},	
-	// slope
-	{STARTX + 20, 0},
-	// floor - splittable
-	{STARTX, STARTX + SPLIT_HANDLE_WIDTH},
-	// crossover
-	{STARTX + SLIDER_W - HANDLE_WIDTH * 3, 0},
-	// stereo
-	{STARTX, 0},
-	// rupture
-	{STARTX + SLIDER_W - HANDLE_WIDTH, 0},
-	// tempo
-	{STARTX + 75, 0},
-      };
-      
-      {
-	constexpr int HANDLE_YMARGIN = -3;
-	int ypos = CTRL_Y + SLIDER_Y;
-	for (const auto [x1, x2] : handles) {
-	  if (x2 == 0) {
-	    img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle);
-	  } else {
-	    img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle_left);
-	    img.BlendImage(x2, ypos + HANDLE_YMARGIN, handle_right);
-	  }
-	  ypos += CTRL_H;
-	}
-      }
     }
   }
 
+  // Slider handles
+  if (MOCKUP) {
+    ImageRGBA splittable_handle =
+      Recolor(SCHEME, LoadImage("skidder-splittable-handle.png"));
+    CHECK(splittable_handle.Width() % 2 == 0);
+    const int SPLIT_HANDLE_WIDTH = splittable_handle.Width() / 2;
+    ImageRGBA handle_left =
+      splittable_handle.Crop32(0, 0, SPLIT_HANDLE_WIDTH,
+			       splittable_handle.Height());
+    ImageRGBA handle_right =
+      splittable_handle.Crop32(SPLIT_HANDLE_WIDTH, 0, SPLIT_HANDLE_WIDTH,
+			       splittable_handle.Height());
+
+    ImageRGBA handle = Recolor(SCHEME, LoadImage("skidder-handle.png"));
+    const int HANDLE_WIDTH = handle.Width();
+
+    // If second is 0, handle is not split.
+
+    constexpr int STARTX = CTRL_X + SLIDER_X;
+    vector<pair<int, int>> handles = {
+      // rate - splittable
+      {STARTX + 40, STARTX + 40 + SPLIT_HANDLE_WIDTH},
+      // pulse width - splittable
+      {STARTX + 80, STARTX + 120 + SPLIT_HANDLE_WIDTH},	
+      // slope
+      {STARTX + 20, 0},
+      // floor - splittable
+      {STARTX, STARTX + SPLIT_HANDLE_WIDTH},
+      // crossover
+      {STARTX + SLIDER_W - HANDLE_WIDTH * 3, 0},
+      // stereo
+      {STARTX, 0},
+      // rupture
+      {STARTX + SLIDER_W - HANDLE_WIDTH, 0},
+      // tempo
+      {STARTX + 75, 0},
+    };
+
+    {
+      constexpr int HANDLE_YMARGIN = -3;
+      int ypos = CTRL_Y + SLIDER_Y;
+      for (const auto [x1, x2] : handles) {
+	if (x2 == 0) {
+	  img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle);
+	} else {
+	  img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle_left);
+	  img.BlendImage(x2, ypos + HANDLE_YMARGIN, handle_right);
+	}
+	ypos += CTRL_H;
+      }
+    }
+  }
+  
   // destroyfx link
   if (MOCKUP) {
     const string text = "destroyfx.org";
