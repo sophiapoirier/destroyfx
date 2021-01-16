@@ -461,11 +461,13 @@ int main(int argc, char **argv) {
 
   // Slider mode buttons.
   if (MOCKUP) {
+    ImageRGBA beat_sync_button =
+	Recolor(SCHEME, CroppedButton("skidder-beat-sync-button.png", 2, 0));
     // Maybe should demo 'all' state and disable crossover slider
     ImageRGBA crossover_mode_button =
 	Recolor(SCHEME, CroppedButton("skidder-crossover-mode-button.png", 3, 1));
     std::vector<std::optional<ImageRGBA>> buttons = {
-      nullopt, // TODO rate
+      {beat_sync_button}, // rate
       nullopt, // pulsewidth
       nullopt, // slope
       nullopt, // floor
