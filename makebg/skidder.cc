@@ -274,7 +274,7 @@ int main(int argc, char **argv) {
   constexpr int SLIDER_X = 48;
   constexpr int SLIDER_Y = 22;
   constexpr int SLIDER_H = 28;
-  constexpr int SLIDER_W = 272;
+  constexpr int SLIDER_W = 270;
   
   #define FULLWIDTH_HELP false
   
@@ -441,7 +441,7 @@ int main(int argc, char **argv) {
       {"", "99.99 kHZ"}, // crossover
       {"", "50.7%"}, // stereo spread
       {"", "-10.7 dB"}, // rupture
-      {"", "214.046 bpm"}, // tempo
+      {"", "214.04 bpm"}, // tempo
     };
     CHECK(values.size() >= NUM_SLIDERS);
 
@@ -466,6 +466,9 @@ int main(int argc, char **argv) {
     // Maybe should demo 'all' state and disable crossover slider
     ImageRGBA crossover_mode_button =
 	Recolor(SCHEME, CroppedButton("skidder-crossover-mode-button.png", 3, 1));
+    // or this one...
+    ImageRGBA tempo_sync_button =
+	Recolor(SCHEME, CroppedButton("skidder-tempo-sync-button.png", 2, 1));
     std::vector<std::optional<ImageRGBA>> buttons = {
       {beat_sync_button}, // rate
       nullopt, // pulsewidth
@@ -474,7 +477,7 @@ int main(int argc, char **argv) {
       {crossover_mode_button}, // crossover
       nullopt, // stereo
       nullopt, // rupture
-      nullopt, // TODO tempo
+      {tempo_sync_button}, // TODO tempo
     };
 
     constexpr int BUTTON_Y = 24;
