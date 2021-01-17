@@ -3,9 +3,6 @@
 // TODO:
 //  - disabled sliders
 //  - slider in 'learn' state
-//  - tempo sync button
-//  - crossover all/low/high
-//  - host tempo button
 
 #include <string>
 #include <vector>
