@@ -56,14 +56,14 @@
 		EC89B420208D310700E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B41F208D310600E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B425208D319600E15129 /* dfxguicontrol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B421208D319500E15129 /* dfxguicontrol.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC89B426208D319600E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B424208D319600E15129 /* dfxguidialog.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
-		EC89B49B208D352500E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B49A208D352500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -fno-objc-arc"; }; };
+		EC89B49B208D352500E15129 /* vstgui_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B49A208D352500E15129 /* vstgui_mac.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-sign-compare -Wno-exit-time-destructors -Wno-implicit-fallthrough -Wno-deprecated-declarations -Wno-four-char-constants -fno-objc-arc"; }; };
 		EC8AB24824CDF5C3000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB24624CDF5C3000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC8ABF882526BDF500B22CE7 /* midi-reset-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC8ABF852526BDF500B22CE7 /* midi-reset-button.png */; };
 		EC8ABF892526BDF500B22CE7 /* gate-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC8ABF862526BDF500B22CE7 /* gate-mode-button.png */; };
 		EC8ABF8A2526BDF500B22CE7 /* midi-learn-button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC8ABF872526BDF500B22CE7 /* midi-learn-button.png */; };
 		ECC430AC102F46F0000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC430AA102F46F0000B05A1 /* dfx-au-utilities.strings */; };
 		ECE44FC6156364E700637833 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FC5156364E700637833 /* dfxgui-auviewfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
-		ECE44FE21563667D00637833 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FE01563667D00637833 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations"; }; };
+		ECE44FE21563667D00637833 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECE44FE01563667D00637833 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations -Wno-four-char-constants"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
