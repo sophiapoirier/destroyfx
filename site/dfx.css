@@ -95,6 +95,9 @@ div.downloads a.source {
   width: 64px;
   min-height: 36px;
 }
+div.downloads a.preset {
+  background-image: url(preset.png);
+}
 div.downloads a.docs {
    background-image: url(docs.png);
   width: 55px;
