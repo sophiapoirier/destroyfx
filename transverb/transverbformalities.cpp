@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2020  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2001-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
@@ -229,7 +229,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kDrymix, 0.45);
 	setpresetparameter_f(i, kMix1, 0.5);
 	setpresetparameter_f(i, kDist1, 0.9);
-	setpresetparameter_f(i, kSpeed1, 0.048406605/12.0);
+	setpresetparameter_f(i, kSpeed1, 0.048406605 / 12.);
 	setpresetparameter_f(i, kFeed1, 67.0);
 	setpresetparameter_f(i, kMix2, 0.0);
 	setpresetparameter_f(i, kDist2, 0.0);
@@ -245,7 +245,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kDrymix, 0.45);
 	setpresetparameter_f(i, kMix1, 0.5);
 	setpresetparameter_f(i, kDist1, 0.0);
-	setpresetparameter_f(i, kSpeed1, -0.12/12.0);//-0.048542333f/12.0);
+	setpresetparameter_f(i, kSpeed1, -0.12 / 12.);//-0.048542333 / 12.);
 	setpresetparameter_f(i, kFeed1, 76.0);
 	setpresetparameter_f(i, kMix2, 0.0);
 	setpresetparameter_f(i, kDist2, 0.0);
@@ -277,7 +277,7 @@ void Transverb::initPresets() {
 	setpresetparameter_f(i, kDrymix, 0.157);
 	setpresetparameter_f(i, kMix1, 1.0);
 	setpresetparameter_f(i, kDist1, 0.0945);
-	setpresetparameter_f(i, kSpeed1, -8.0/12.0);
+	setpresetparameter_f(i, kSpeed1, -8. / 12.);
 	setpresetparameter_f(i, kFeed1, 97.6);
 	setpresetparameter_f(i, kMix2, 0.0);
 	setpresetparameter_f(i, kDist2, 0.197);
@@ -289,10 +289,10 @@ void Transverb::initPresets() {
 	i++;
 
 	setpresetname(i, "space invaders");
-	setpresetparameter_f(i, kSpeed1, -0.23/12.0);
+	setpresetparameter_f(i, kSpeed1, -0.23 / 12.);
 	setpresetparameter_f(i, kFeed1, 73.0);
 	setpresetparameter_f(i, kDist1, 0.1857);
-	setpresetparameter_f(i, kSpeed2, 4.3/12.0);
+	setpresetparameter_f(i, kSpeed2, 4.3 / 12.);
 	setpresetparameter_f(i, kFeed2, 41.0);
 	setpresetparameter_f(i, kDist2, 0.5994);
 	setpresetparameter_f(i, kBsize, 16.8);
@@ -304,7 +304,72 @@ void Transverb::initPresets() {
 	setpresetparameter_b(i, kFreeze, false);
 	i++;
 
+	setpresetname(i, "mudslap (by Styrofoam)");
+	setpresetparameter_f(i, kSpeed1, -0.9748);
+	setpresetparameter_f(i, kFeed1, 45.6285);
+	setpresetparameter_f(i, kDist1, 0.02345);
+	setpresetparameter_f(i, kSpeed2, -1.0252);
+	setpresetparameter_f(i, kFeed2, 46.4819);
+	setpresetparameter_f(i, kDist2, 0.0192);
+	setpresetparameter_f(i, kBsize, 122.4947);
+	setpresetparameter_f(i, kDrymix, 0.);
+	setpresetparameter_f(i, kMix1, 1.);
+	setpresetparameter_f(i, kMix2, 1.);
+	setpresetparameter_i(i, kQuality, kQualityMode_DirtFi);
+	setpresetparameter_b(i, kTomsound, false);
+	setpresetparameter_b(i, kFreeze, false);
+	i++;
+
+	setpresetname(i, "subverb (by Styrofoam)");
+	setpresetparameter_f(i, kSpeed1, -2.9232);
+	setpresetparameter_f(i, kFeed1, 49.6802);
+	setpresetparameter_f(i, kDist1, 0.05756);
+	setpresetparameter_f(i, kSpeed2, -2.90405);
+	setpresetparameter_f(i, kFeed2, 47.5475);
+	setpresetparameter_f(i, kDist2, 0.032);
+	setpresetparameter_f(i, kBsize, 2341.3708);
+	setpresetparameter_f(i, kDrymix, 0.);
+	setpresetparameter_f(i, kMix1, 1.);
+	setpresetparameter_f(i, kMix2, 1.);
+	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
+	setpresetparameter_b(i, kTomsound, true);
+	setpresetparameter_b(i, kFreeze, false);
+	i++;
+
+	setpresetname(i, "vocoder beat (by Styrofoam)");
+	setpresetparameter_f(i, kSpeed1, 2.);
+	setpresetparameter_f(i, kFeed1, 57.3561);
+	setpresetparameter_f(i, kDist1, 0.0085);
+	setpresetparameter_f(i, kSpeed2, 1.);
+	setpresetparameter_f(i, kFeed2, 27.5053);
+	setpresetparameter_f(i, kDist2, 0.0021);
+	setpresetparameter_f(i, kBsize, 64.9446);
+	setpresetparameter_f(i, kDrymix, 0.);
+	setpresetparameter_f(i, kMix1, 1.);
+	setpresetparameter_f(i, kMix2, 1.);
+	setpresetparameter_i(i, kQuality, kQualityMode_DirtFi);
+	setpresetparameter_b(i, kTomsound, false);
+	setpresetparameter_b(i, kFreeze, false);
+	i++;
+
+	setpresetname(i, "yo pitch! (by Styrofoam)");
+	setpresetparameter_f(i, kSpeed1, -2.);
+	setpresetparameter_f(i, kFeed1, 80.3769);
+	setpresetparameter_f(i, kDist1, 0.022362);
+	setpresetparameter_f(i, kSpeed2, 2.);
+	setpresetparameter_f(i, kFeed2, 29.21106);
+	setpresetparameter_f(i, kDist2, 0.010665);
+	setpresetparameter_f(i, kBsize, 1938.5203);
+	setpresetparameter_f(i, kDrymix, 0.);
+	setpresetparameter_f(i, kMix1, 1.);
+	setpresetparameter_f(i, kMix2, 0.6483);
+	setpresetparameter_i(i, kQuality, kQualityMode_UltraHiFi);
+	setpresetparameter_b(i, kTomsound, false);
+	setpresetparameter_b(i, kFreeze, false);
+	i++;
+
 /*
+	setpresetname(i, "");
 	setpresetparameter_f(i, kSpeed1, );
 	setpresetparameter_f(i, kFeed1, );
 	setpresetparameter_f(i, kDist1, 0.0);
@@ -318,7 +383,6 @@ void Transverb::initPresets() {
 	setpresetparameter_i(i, kQuality, );
 	setpresetparameter_b(i, kTomsound, );
 	setpresetparameter_b(i, kFreeze, false);
-	setpresetname(i, "");
 	i++;
 */
 
