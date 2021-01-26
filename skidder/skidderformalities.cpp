@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2020  Sophia Poirier
+Copyright (C) 2000-2021  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -126,7 +126,10 @@ void Skidder::releasebuffers()
 //-----------------------------------------------------------------------------------------
 void Skidder::reset()
 {
-	mCrossover->reset();
+	if (mCrossover)
+	{
+		mCrossover->reset();
+	}
 
 	mState = SkidState::Valley;
 	mValleySamples = 0;
