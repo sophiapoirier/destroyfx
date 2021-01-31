@@ -1,7 +1,6 @@
 // Playing around with programmatic background generation for skidder.
 
 // TODO:
-//  - disabled sliders
 //  - slider in 'learn' state
 
 #include <string>
@@ -178,7 +177,7 @@ int main(int argc, char **argv) {
     {0x64560cFF, 0x7e140aFF},
     // very dark brown outlines
     {0x312010FF, 0x311010FF},
-  };  
+  };
 
   // Pretty good contrast but not annoying.
   const std::unordered_map<uint32, uint32> SCHEME_ORANGEY = {
@@ -190,12 +189,12 @@ int main(int argc, char **argv) {
     {0x64560cFF, 0x885600FF},
     // very dark brown outlines
     {0x312010FF, 0x312410FF},
-  };  
+  };
 
-  
+
   const auto SCHEME = SCHEME_ORANGEY;
-  
-  
+
+
   ImageRGBA img(WIDTH, HEIGHT);
   img.Clear32(0x000000ff);
 
@@ -251,12 +250,22 @@ int main(int argc, char **argv) {
 		       false);
     };
 
+  constexpr bool SLIDER_DISABLED[] = {
+    false, // "rate",
+    false, // "pulse width",
+    false, // "slope",
+    false, // "floor",
+    true,  // "crossover frequency",
+    false, // "stereo spread",
+    false, // "rupture",
+    false, // "tempo",
+  };
 
   constexpr uint32 color1 = 0x634021ff;
   constexpr uint32 color2 = 0x8d3d6cff;
   // constexpr uint32 color1 = 0xffff00ff;
   // constexpr uint32 color2 = 0x5959ffff;
-  
+
   // Location/size of the control rows. Lots of stuff is keyed off this.
   constexpr int CTRL_X = 12;
   constexpr int CTRL_Y = 78;
@@ -272,10 +281,10 @@ int main(int argc, char **argv) {
   constexpr int SLIDER_Y = 22;
   constexpr int SLIDER_H = 28;
   constexpr int SLIDER_W = 270;
-  
+
   #define FULLWIDTH_HELP false
-  
-#if FULLWIDTH_HELP  
+
+#if FULLWIDTH_HELP
   constexpr int HELP_W = WIDTH - (BORDER * 2) - 16;
   constexpr int HELP_H = 64;
   constexpr int HELP_X = (WIDTH - HELP_W) / 2;
@@ -287,7 +296,7 @@ int main(int argc, char **argv) {
   constexpr int HELP_X = HELP_LEFT_PADDING;
   constexpr int HELP_Y = HEIGHT - HELP_H - BORDER - 22;
 #endif
-  
+
 
   // Vertical "skid" stripes
   for (int x = 0; x < WIDTH; x++) {
@@ -310,7 +319,7 @@ int main(int argc, char **argv) {
       }
 
       uint32 c = color;
-      
+
       // Don't allow stripes over the left and right
       // border pinstripes; they just create distracting
       // artifacts.
@@ -322,7 +331,7 @@ int main(int argc, char **argv) {
       // So too in help.
       if (y > HELP_Y - BORDER && y < HELP_Y + HELP_H + BORDER - 2) {
 	// c = 0xFF0000FF;
-	
+
 	if (x > HELP_X - BORDER && x <= HELP_X)
 	  c = color1;
 
@@ -351,51 +360,55 @@ int main(int argc, char **argv) {
   // the corners to 50% alpha makes a nice roundrect effect.
   auto Box = [&img](int x, int y, int w, int h,
 		    uint32 color, uint32 corner_color) {
-      // (This could be in ImageRGBA, covering these subtleties)
-      const int x1 = x + w - 1;
-      const int y1 = y + h - 1;
-
-      // XXX this is probably wrong for 1x1 and 2x2 boxes.
-      // Top
-      img.BlendLine32(x + 1, y, x1 - 1, y, color);
-      // Left
-      img.BlendLine32(x, y + 1, x, y1 - 1, color);
-      // Right
-      img.BlendLine32(x1, y + 1, x1, y1 - 1, color);
-      // Bottom
-      img.BlendLine32(x + 1, y1, x1 - 1, y1, color);
-
-      img.BlendPixel32(x, y, corner_color);
-      img.BlendPixel32(x1, y, corner_color);
-      img.BlendPixel32(x, y1, corner_color);
-      img.BlendPixel32(x1, y1, corner_color);
+      img.BlendBox32(x, y, w, h, color, corner_color);
     };
 
-  auto DarkNoiseRect = [&](int sx, int sy, int w, int h) {
-      for (int y = 0; y < h; y++) {
-	for (int x = 0; x < w; x++) {
-	  uint8 v = blue.Get(sx + x, sy + (y / 4));
-	  uint32 color = 0x00000000 | (128 + (v >> 1));
-	  img.BlendPixel32(sx + x, sy + y, color);
+  // Standardized on 1/3 alpha
+  auto Disable = [](const ImageRGBA &src) {
+      ImageRGBA disabled(src.Width(), src.Height());
+      for (int y = 0; y < src.Height(); y++) {
+	for (int x = 0; x < src.Width(); x++) {
+	  auto [r, g, b, a] = src.GetPixel(x, y);
+	  disabled.SetPixel(x, y, r, g, b, a * 0.3333f);
 	}
       }
+      return disabled;
     };
 
-  // Slider backgrounds
-  auto DrawSlider = [&](int sx, int sy, int w, int h) {
-      Box(sx, sy, w, h, 0x000000FF, 0x0000001F);
-      Box(sx + 1, sy + 1, w - 2, h - 2, 0x000000FF, 0x000000FF);
+  ImageRGBA slider(SLIDER_W, SLIDER_H);
 
-      DarkNoiseRect(sx + 2, sy + 2, w - 4, h - 4);
+  {
+    auto DarkNoiseRect = [&blue](ImageRGBA *img, int sx, int sy, int w, int h) {
+	for (int y = 0; y < h; y++) {
+	  for (int x = 0; x < w; x++) {
+	    uint8 v = blue.Get(sx + x, sy + (y / 4));
+	    uint32 color = 0x00000000 | (128 + (v >> 1));
+	    img->BlendPixel32(sx + x, sy + y, color);
+	  }
+	}
+      };
 
-      // just for the inner corners
-      Box(sx + 2, sy + 2, w - 4, h - 4, 0x00000000, 0x0000003F);
+    slider.Clear32(color2);
+
+    slider.BlendBox32(0, 0, SLIDER_W, SLIDER_H, 0x000000FF, 0x0000001F);
+    slider.BlendBox32(1, 1, SLIDER_W - 2, SLIDER_H - 2, 0x000000FF, 0x000000FF);
+
+    DarkNoiseRect(&slider, 2, 2, SLIDER_W - 4, SLIDER_H - 4);
+
+    // just for the inner corners
+    slider.BlendBox32(2, 2, SLIDER_W - 4, SLIDER_H - 4, 0x00000000, 0x0000003F);
+  };
+  ImageRGBA disabled_slider = Disable(slider);
+
+  auto DrawSlider = [&img, &slider, &disabled_slider](
+      int sx, int sy, bool disabled = false) {
+      img.BlendImage(sx, sy, disabled ? disabled_slider : slider);
     };
 
   for (int i = 0; i < NUM_SLIDERS; i++) {
     DrawSlider(CTRL_X + SLIDER_X,
 	       CTRL_Y + (i * CTRL_H) + SLIDER_Y,
-	       SLIDER_W, SLIDER_H);
+	       SLIDER_DISABLED[i]);
   }
 
 
@@ -446,13 +459,15 @@ int main(int argc, char **argv) {
     constexpr int RVALUE_X = SLIDER_X + SLIDER_W + 4;
     constexpr int VALUE_Y = 28;
     for (int i = 0; i < NUM_SLIDERS; i++) {
+      const uint32 color = SLIDER_DISABLED[i] ? 0xFFFFFF55 : 0xFFFFFFFF;
+
       int lx = CTRL_X + LVALUE_X;
       int ly = i * CTRL_H + CTRL_Y + VALUE_Y;
-      DrawText(lx, ly, 0xFFFFFFFF, values[i].first);
+      DrawText(lx, ly, color, values[i].first);
 
       int rx = CTRL_X + RVALUE_X;
       int ry = i * CTRL_H + CTRL_Y + VALUE_Y;
-      DrawText(rx, ry, 0xFFFFFFFF, values[i].second);
+      DrawText(rx, ry, color, values[i].second);
     }
   }
 
@@ -460,9 +475,9 @@ int main(int argc, char **argv) {
   if (MOCKUP) {
     ImageRGBA beat_sync_button =
 	Recolor(SCHEME, CroppedButton("skidder-beat-sync-button.png", 2, 0));
-    // Maybe should demo 'all' state and disable crossover slider
+    // Demo 'all' state and disable crossover slider
     ImageRGBA crossover_mode_button =
-	Recolor(SCHEME, CroppedButton("skidder-crossover-mode-button.png", 3, 1));
+	Recolor(SCHEME, CroppedButton("skidder-crossover-mode-button.png", 3, 0));
     // or this one...
     ImageRGBA tempo_sync_button =
 	Recolor(SCHEME, CroppedButton("skidder-tempo-sync-button.png", 2, 1));
@@ -488,7 +503,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  
+
   // help zone
   {
     img.BlendRect32(HELP_X, HELP_Y, HELP_W, HELP_H,
@@ -518,8 +533,8 @@ int main(int argc, char **argv) {
     }
   }
 
-  
-  
+
+
   // Title
   {
     ImageRGBA title = LoadImage("skidder-title.png");
@@ -587,6 +602,7 @@ int main(int argc, char **argv) {
 
     ImageRGBA handle = Recolor(SCHEME, LoadImage("skidder-handle.png"));
     const int HANDLE_WIDTH = handle.Width();
+    ImageRGBA handle_disabled = Disable(handle);
 
     // If second is 0, handle is not split.
 
@@ -595,7 +611,7 @@ int main(int argc, char **argv) {
       // rate - splittable
       {STARTX + 40, STARTX + 40 + SPLIT_HANDLE_WIDTH},
       // pulse width - splittable
-      {STARTX + 80, STARTX + 120 + SPLIT_HANDLE_WIDTH},	
+      {STARTX + 80, STARTX + 120 + SPLIT_HANDLE_WIDTH},
       // slope
       {STARTX + 20, 0},
       // floor - splittable
@@ -613,9 +629,11 @@ int main(int argc, char **argv) {
     {
       constexpr int HANDLE_YMARGIN = -3;
       int ypos = CTRL_Y + SLIDER_Y;
-      for (const auto [x1, x2] : handles) {
+      for (int i = 0; i < (int)handles.size(); i++) {
+	const auto [x1, x2] = handles[i];
 	if (x2 == 0) {
-	  img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle);
+	  img.BlendImage(x1, ypos + HANDLE_YMARGIN,
+			 SLIDER_DISABLED[i] ? handle_disabled : handle);
 	} else {
 	  img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle_left);
 	  img.BlendImage(x2, ypos + HANDLE_YMARGIN, handle_right);
@@ -624,7 +642,7 @@ int main(int argc, char **argv) {
       }
     }
   }
-  
+
   // destroyfx link
   if (MOCKUP) {
     const string text = "destroyfx.org";
