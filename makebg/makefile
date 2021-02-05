@@ -27,7 +27,7 @@ skidder.exe : $(OBJECTS) skidder.o
 rezsynth.png : rezsynth.exe
 	./rezsynth.exe
 
-skidder.png : skidder.exe skidder-title.png
+skidder.png : skidder.exe skidder-*.png
 	./skidder.exe
 
 

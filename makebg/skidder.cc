@@ -1,8 +1,5 @@
 // Playing around with programmatic background generation for skidder.
 
-// TODO:
-//  - slider in 'learn' state
-
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -193,7 +190,7 @@ int main(int argc, char **argv) {
 
 
   const auto SCHEME = SCHEME_ORANGEY;
-
+  const auto LEARN_SCHEME = SCHEME_NATIVE;
 
   ImageRGBA img(WIDTH, HEIGHT);
   img.Clear32(0x000000ff);
@@ -261,6 +258,17 @@ int main(int argc, char **argv) {
     false, // "tempo",
   };
 
+  constexpr bool SLIDER_LEARN[] = {
+    false, // "rate",
+    false, // "pulse width",
+    false, // "slope",
+    false, // "floor",
+    false, // "crossover frequency",
+    false, // "stereo spread",
+    true, // "rupture",
+    false, // "tempo",
+  };
+  
   constexpr uint32 color1 = 0x634021ff;
   constexpr uint32 color2 = 0x8d3d6cff;
   // constexpr uint32 color1 = 0xffff00ff;
@@ -480,7 +488,7 @@ int main(int argc, char **argv) {
 	Recolor(SCHEME, CroppedButton("skidder-crossover-mode-button.png", 3, 0));
     // or this one...
     ImageRGBA tempo_sync_button =
-	Recolor(SCHEME, CroppedButton("skidder-tempo-sync-button.png", 2, 1));
+	Recolor(SCHEME, CroppedButton("skidder-tempo-sync-button.png", 2, 0));
     std::vector<std::optional<ImageRGBA>> buttons = {
       {beat_sync_button}, // rate
       nullopt, // pulsewidth
@@ -541,7 +549,7 @@ int main(int argc, char **argv) {
     // const int TITLE_X = WIDTH - title.Width() - BORDER + 2;
     // hang 'd' slightly over the sliders ("optical alignment")
     const int TITLE_X = CTRL_X + SLIDER_X - 8;
-    const int TITLE_Y = BORDER + 3;
+    const int TITLE_Y = BORDER + 5;
     img.BlendImage(TITLE_X, TITLE_Y, title);
   }
 
@@ -601,6 +609,7 @@ int main(int argc, char **argv) {
 			       splittable_handle.Height());
 
     ImageRGBA handle = Recolor(SCHEME, LoadImage("skidder-handle.png"));
+    ImageRGBA handle_learn = Recolor(LEARN_SCHEME, LoadImage("skidder-handle-learn.png"));
     const int HANDLE_WIDTH = handle.Width();
     ImageRGBA handle_disabled = Disable(handle);
 
@@ -632,8 +641,18 @@ int main(int argc, char **argv) {
       for (int i = 0; i < (int)handles.size(); i++) {
 	const auto [x1, x2] = handles[i];
 	if (x2 == 0) {
-	  img.BlendImage(x1, ypos + HANDLE_YMARGIN,
-			 SLIDER_DISABLED[i] ? handle_disabled : handle);
+	  // special states only mocked for regular handle
+	  if (SLIDER_DISABLED[i]) {
+	    img.BlendImage(x1, ypos + HANDLE_YMARGIN,
+			   handle_disabled);
+	  } else if (SLIDER_LEARN[i]) {
+	    img.BlendImage(x1, ypos + HANDLE_YMARGIN,
+			   handle_learn);
+	  } else {
+	    img.BlendImage(x1, ypos + HANDLE_YMARGIN,
+			   handle);
+	  }
+
 	} else {
 	  img.BlendImage(x1, ypos + HANDLE_YMARGIN, handle_left);
 	  img.BlendImage(x2, ypos + HANDLE_YMARGIN, handle_right);
