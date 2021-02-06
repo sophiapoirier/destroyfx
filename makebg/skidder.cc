@@ -24,7 +24,7 @@ constexpr int WIDTH = 512;
 constexpr int HEIGHT = 768;
 constexpr int BORDER = 6;
 
-constexpr bool MOCKUP = true;
+constexpr bool MOCKUP = false;
 
 struct TTFont {
 
@@ -214,13 +214,14 @@ int main(int argc, char **argv) {
 
   // Note that 'bold' versions over-draw, so alpha should be 0xFF
   // unless you like a weird effect.
-  auto DrawBoldText = [&snoot, &img](int px, int py, uint32 color,
-				     const string &text) {
+  auto DrawBoldText = [&snoot](ImageRGBA *img,
+			       int px, int py, uint32 color,
+			       const string &text) {
       snoot.BlitString(px, py, 14, text,
 		       [&](int x, int y, uint8 v) {
 			 if (v > 128) {
-			   img.BlendPixel32(x, y, color);
-			   img.BlendPixel32(x + 1, y, color);
+			   img->BlendPixel32(x, y, color);
+			   img->BlendPixel32(x + 1, y, color);
 			 }
 		       },
 		       false);
@@ -413,10 +414,14 @@ int main(int argc, char **argv) {
       img.BlendImage(sx, sy, disabled ? disabled_slider : slider);
     };
 
-  for (int i = 0; i < NUM_SLIDERS; i++) {
-    DrawSlider(CTRL_X + SLIDER_X,
-	       CTRL_Y + (i * CTRL_H) + SLIDER_Y,
-	       SLIDER_DISABLED[i]);
+  // These are not baked into the background because we want to be able to
+  // draw them transparent for the disabled state.
+  if (MOCKUP) {
+    for (int i = 0; i < NUM_SLIDERS; i++) {
+      DrawSlider(CTRL_X + SLIDER_X,
+		 CTRL_Y + (i * CTRL_H) + SLIDER_Y,
+		 SLIDER_DISABLED[i]);
+    }
   }
 
 
@@ -663,15 +668,72 @@ int main(int argc, char **argv) {
   }
 
   // destroyfx link
+  const string dfx_text = "destroyfx.org";
+  const int DFX_WIDTH = TextWidth(dfx_text);
+  const int DFX_HEIGHT = 16;
+  ImageRGBA dfx_button(DFX_WIDTH, DFX_HEIGHT * 2);
+  // normal state
+  DrawBoldText(&dfx_button, 1, 1, 0x000000FF, dfx_text);
+  DrawBoldText(&dfx_button, 0, 0, 0xFFFFFFFF, dfx_text);
+  // pressed state
+  DrawBoldText(&dfx_button, 1, DFX_HEIGHT + 1, 0xFFFF00FF, dfx_text);
+
   if (MOCKUP) {
-    const string text = "destroyfx.org";
-    int lx = WIDTH - TextWidth(text) - 4 - BORDER;
-    int ly = HEIGHT - 16 - BORDER;
-    DrawBoldText(lx, ly, 0x000000FF, text);
-    DrawBoldText(lx - 1, ly - 1, 0xFFFFFFFF, text);
+    ImageRGBA button_normal = dfx_button.Crop32(0, 0, DFX_WIDTH, DFX_HEIGHT);
+    int lx = WIDTH - DFX_WIDTH - 4 - BORDER + 1;
+    int ly = HEIGHT - 16 - BORDER - 1;
+    img.BlendImage(lx, ly, button_normal);
   }
 
   img.Save("skidder.png");
 
+  if (!MOCKUP) {
+    string asset_dir = "skidder-assets/";
+    img.Save(asset_dir + "background.png");
+    slider.Save(asset_dir + "slider-background.png");
+
+    dfx_button.Save(asset_dir + "destroy-fx-link.png");
+    
+    ImageRGBA handle = Recolor(SCHEME, LoadImage("skidder-handle.png"));
+    ImageRGBA handle_learn = Recolor(LEARN_SCHEME, LoadImage("skidder-handle-learn.png"));
+    handle.Save(asset_dir + "slider-handle.png");
+    handle_learn.Save(asset_dir + "slider-handle-learn.png");
+
+    const ImageRGBA splittable_handle =
+      Recolor(SCHEME, LoadImage("skidder-splittable-handle.png"));
+    const int split_w = splittable_handle.Width() >> 1;
+    const int split_h = splittable_handle.Height();
+    splittable_handle.Crop32(0, 0, split_w, split_h).Save(
+	asset_dir + "range-slider-handle-left.png");
+    splittable_handle.Crop32(split_w, 0, split_w, split_h).Save(
+	asset_dir + "range-slider-handle-right.png");
+
+    const ImageRGBA splittable_handle_learn =
+      Recolor(LEARN_SCHEME, LoadImage("skidder-splittable-handle-learn.png"));
+    CHECK(splittable_handle_learn.Width() == splittable_handle.Width());
+    splittable_handle_learn.Crop32(0, 0, split_w, split_h).Save(
+	asset_dir + "range-slider-handle-left-learn.png");
+    splittable_handle_learn.Crop32(split_w, 0, split_w, split_h).Save(
+	asset_dir + "range-slider-handle-right-learn.png");
+
+    
+    Recolor(SCHEME, LoadImage("skidder-beat-sync-button.png")).Save(
+	asset_dir + "beat-sync-button.png");
+    Recolor(SCHEME, LoadImage("skidder-crossover-mode-button.png")).Save(
+	asset_dir + "crossover-mode-button.png");
+    Recolor(SCHEME, LoadImage("skidder-tempo-sync-button.png")).Save(
+	asset_dir + "tempo-sync-button.png");
+
+
+    Recolor(SCHEME, LoadImage("skidder-midi-learn-button.png")).Save(
+	asset_dir + "midi-learn-button.png");
+    Recolor(SCHEME, LoadImage("skidder-midi-mode-button.png")).Save(
+	asset_dir + "midi-mode-button.png");
+    Recolor(SCHEME, LoadImage("skidder-midi-reset-button.png")).Save(
+	asset_dir + "midi-reset-button.png");
+    Recolor(SCHEME, LoadImage("skidder-use-velocity-button.png")).Save(
+	asset_dir + "use-velocity-button.png");
+  }
+    
   return 0;
 }
