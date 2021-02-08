@@ -61,15 +61,15 @@
 		ECE43DE62493BF55003C7957 /* tempo-sync-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DD62493BF54003C7957 /* tempo-sync-button.png */; };
 		ECE43DE72493BF55003C7957 /* range-slider-handle-right.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DD72493BF54003C7957 /* range-slider-handle-right.png */; };
 		ECE43DE82493BF55003C7957 /* midi-learn-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DD82493BF54003C7957 /* midi-learn-button.png */; };
-		ECE43DE92493BF55003C7957 /* range-slider-handle-left-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DD92493BF54003C7957 /* range-slider-handle-left-glowing.png */; };
+		ECE43DE92493BF55003C7957 /* range-slider-handle-left-learn.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DD92493BF54003C7957 /* range-slider-handle-left-learn.png */; };
 		ECE43DEA2493BF55003C7957 /* midi-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DDA2493BF54003C7957 /* midi-mode-button.png */; };
-		ECE43DEB2493BF55003C7957 /* skidder-background.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DDB2493BF55003C7957 /* skidder-background.png */; };
-		ECE43DEC2493BF55003C7957 /* slider-handle-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DDC2493BF55003C7957 /* slider-handle-glowing.png */; };
+		ECE43DEB2493BF55003C7957 /* background.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DDB2493BF55003C7957 /* background.png */; };
+		ECE43DEC2493BF55003C7957 /* slider-handle-learn.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DDC2493BF55003C7957 /* slider-handle-learn.png */; };
 		ECE43DED2493BF55003C7957 /* midi-reset-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DDD2493BF55003C7957 /* midi-reset-button.png */; };
 		ECE43DEE2493BF55003C7957 /* range-slider-handle-left.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DDE2493BF55003C7957 /* range-slider-handle-left.png */; };
 		ECE43DEF2493BF55003C7957 /* velocity-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DDF2493BF55003C7957 /* velocity-button.png */; };
 		ECE43DF02493BF55003C7957 /* host-tempo-button.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE02493BF55003C7957 /* host-tempo-button.png */; };
-		ECE43DF12493BF55003C7957 /* range-slider-handle-right-glowing.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE12493BF55003C7957 /* range-slider-handle-right-glowing.png */; };
+		ECE43DF12493BF55003C7957 /* range-slider-handle-right-learn.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE12493BF55003C7957 /* range-slider-handle-right-learn.png */; };
 		ECE43DF22493BF55003C7957 /* slider-background.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE22493BF55003C7957 /* slider-background.png */; };
 		ECE43DF42493BF55003C7957 /* slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = ECE43DE42493BF55003C7957 /* slider-handle.png */; };
 /* End PBXBuildFile section */
@@ -188,15 +188,15 @@
 		ECE43DD62493BF54003C7957 /* tempo-sync-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tempo-sync-button.png"; sourceTree = "<group>"; };
 		ECE43DD72493BF54003C7957 /* range-slider-handle-right.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "range-slider-handle-right.png"; sourceTree = "<group>"; };
 		ECE43DD82493BF54003C7957 /* midi-learn-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-learn-button.png"; sourceTree = "<group>"; };
-		ECE43DD92493BF54003C7957 /* range-slider-handle-left-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "range-slider-handle-left-glowing.png"; sourceTree = "<group>"; };
+		ECE43DD92493BF54003C7957 /* range-slider-handle-left-learn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "range-slider-handle-left-learn.png"; sourceTree = "<group>"; };
 		ECE43DDA2493BF54003C7957 /* midi-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-mode-button.png"; sourceTree = "<group>"; };
-		ECE43DDB2493BF55003C7957 /* skidder-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "skidder-background.png"; sourceTree = "<group>"; };
-		ECE43DDC2493BF55003C7957 /* slider-handle-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-glowing.png"; sourceTree = "<group>"; };
+		ECE43DDB2493BF55003C7957 /* background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "background.png"; sourceTree = "<group>"; };
+		ECE43DDC2493BF55003C7957 /* slider-handle-learn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle-learn.png"; sourceTree = "<group>"; };
 		ECE43DDD2493BF55003C7957 /* midi-reset-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "midi-reset-button.png"; sourceTree = "<group>"; };
 		ECE43DDE2493BF55003C7957 /* range-slider-handle-left.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "range-slider-handle-left.png"; sourceTree = "<group>"; };
 		ECE43DDF2493BF55003C7957 /* velocity-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "velocity-button.png"; sourceTree = "<group>"; };
 		ECE43DE02493BF55003C7957 /* host-tempo-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "host-tempo-button.png"; sourceTree = "<group>"; };
-		ECE43DE12493BF55003C7957 /* range-slider-handle-right-glowing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "range-slider-handle-right-glowing.png"; sourceTree = "<group>"; };
+		ECE43DE12493BF55003C7957 /* range-slider-handle-right-learn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "range-slider-handle-right-learn.png"; sourceTree = "<group>"; };
 		ECE43DE22493BF55003C7957 /* slider-background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-background.png"; sourceTree = "<group>"; };
 		ECE43DE42493BF55003C7957 /* slider-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -393,19 +393,19 @@
 		EC11C848248C3E6B00FC4867 /* graphics */ = {
 			isa = PBXGroup;
 			children = (
+				ECE43DDB2493BF55003C7957 /* background.png */,
 				ECD95C632562E4AB007F8558 /* crossover-mode-button.png */,
 				ECE43DD52493BF54003C7957 /* destroy-fx-link.png */,
 				ECE43DE02493BF55003C7957 /* host-tempo-button.png */,
 				ECE43DD82493BF54003C7957 /* midi-learn-button.png */,
 				ECE43DDA2493BF54003C7957 /* midi-mode-button.png */,
 				ECE43DDD2493BF55003C7957 /* midi-reset-button.png */,
-				ECE43DD92493BF54003C7957 /* range-slider-handle-left-glowing.png */,
+				ECE43DD92493BF54003C7957 /* range-slider-handle-left-learn.png */,
 				ECE43DDE2493BF55003C7957 /* range-slider-handle-left.png */,
-				ECE43DE12493BF55003C7957 /* range-slider-handle-right-glowing.png */,
+				ECE43DE12493BF55003C7957 /* range-slider-handle-right-learn.png */,
 				ECE43DD72493BF54003C7957 /* range-slider-handle-right.png */,
-				ECE43DDB2493BF55003C7957 /* skidder-background.png */,
 				ECE43DE22493BF55003C7957 /* slider-background.png */,
-				ECE43DDC2493BF55003C7957 /* slider-handle-glowing.png */,
+				ECE43DDC2493BF55003C7957 /* slider-handle-learn.png */,
 				ECE43DE42493BF55003C7957 /* slider-handle.png */,
 				ECE43DD62493BF54003C7957 /* tempo-sync-button.png */,
 				ECE43DDF2493BF55003C7957 /* velocity-button.png */,
@@ -520,6 +520,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECE43DEB2493BF55003C7957 /* background.png in Resources */,
 				ECD95C642562E4AB007F8558 /* crossover-mode-button.png in Resources */,
 				ECE43DE52493BF55003C7957 /* destroy-fx-link.png in Resources */,
 				B028C2C70D0F324A00ADA1DA /* destroyfx.icns in Resources */,
@@ -529,13 +530,12 @@
 				ECE43DEA2493BF55003C7957 /* midi-mode-button.png in Resources */,
 				ECE43DED2493BF55003C7957 /* midi-reset-button.png in Resources */,
 				ECE43DEE2493BF55003C7957 /* range-slider-handle-left.png in Resources */,
-				ECE43DE92493BF55003C7957 /* range-slider-handle-left-glowing.png in Resources */,
+				ECE43DE92493BF55003C7957 /* range-slider-handle-left-learn.png in Resources */,
 				ECE43DE72493BF55003C7957 /* range-slider-handle-right.png in Resources */,
-				ECE43DF12493BF55003C7957 /* range-slider-handle-right-glowing.png in Resources */,
-				ECE43DEB2493BF55003C7957 /* skidder-background.png in Resources */,
+				ECE43DF12493BF55003C7957 /* range-slider-handle-right-learn.png in Resources */,
 				ECE43DF22493BF55003C7957 /* slider-background.png in Resources */,
 				ECE43DF42493BF55003C7957 /* slider-handle.png in Resources */,
-				ECE43DEC2493BF55003C7957 /* slider-handle-glowing.png in Resources */,
+				ECE43DEC2493BF55003C7957 /* slider-handle-learn.png in Resources */,
 				ECE43DE62493BF55003C7957 /* tempo-sync-button.png in Resources */,
 				ECE43DEF2493BF55003C7957 /* velocity-button.png in Resources */,
 			);

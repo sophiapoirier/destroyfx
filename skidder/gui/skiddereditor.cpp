@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2020  Sophia Poirier
+Copyright (C) 2000-2021  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -187,11 +187,11 @@ long SkidderEditor::OpenEditor()
 	// sliders
 	auto const sliderBackgroundImage = LoadImage("slider-background.png");
 	auto const sliderHandleImage = LoadImage("slider-handle.png");
-	auto const sliderHandleImage_glowing = LoadImage("slider-handle-glowing.png");
+	auto const sliderHandleImage_learning = LoadImage("slider-handle-learn.png");
 	auto const rangeSliderHandleLeftImage = LoadImage("range-slider-handle-left.png");
-	auto const rangeSliderHandleLeftImage_glowing = LoadImage("range-slider-handle-left-glowing.png");
+	auto const rangeSliderHandleLeftImage_learning = LoadImage("range-slider-handle-left-learn.png");
 	auto const rangeSliderHandleRightImage = LoadImage("range-slider-handle-right.png");
-	auto const rangeSliderHandleRightImage_glowing = LoadImage("range-slider-handle-right-glowing.png");
+	auto const rangeSliderHandleRightImage_learning = LoadImage("range-slider-handle-right-learn.png");
 
 	// mode buttons
 	auto const tempoSyncButtonImage = LoadImage("tempo-sync-button.png");
@@ -216,37 +216,37 @@ long SkidderEditor::OpenEditor()
 	// rate   (single slider for "free" Hz rate and tempo synced rate)
 	pos.set(kSliderX, kSliderY, sliderBackgroundImage->getWidth(), sliderBackgroundImage->getHeight());
 	mRateSlider = emplaceControl<DGRangeSlider>(this, rateParameterIDs.first, rateParameterIDs.second, pos, rangeSliderHandleLeftImage, rangeSliderHandleRightImage, sliderBackgroundImage, rangeSliderPushStyle);
-	mRateSlider->setAlternateHandles(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
+	mRateSlider->setAlternateHandles(rangeSliderHandleLeftImage_learning, rangeSliderHandleRightImage_learning);
 
 	// pulsewidth
 	pos.offset(0, kSliderInc);
 	auto rangeSlider = emplaceControl<DGRangeSlider>(this, kPulsewidthRandMin, kPulsewidth, pos, rangeSliderHandleLeftImage, rangeSliderHandleRightImage, sliderBackgroundImage, rangeSliderPushStyle);
-	rangeSlider->setAlternateHandles(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
+	rangeSlider->setAlternateHandles(rangeSliderHandleLeftImage_learning, rangeSliderHandleRightImage_learning);
 
 	// slope
 	pos.offset(0, kSliderInc);
-	emplaceControl<DGSlider>(this, kSlope, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_glowing);
+	emplaceControl<DGSlider>(this, kSlope, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_learning);
 
 	// floor
 	pos.offset(0, kSliderInc);
 	rangeSlider = emplaceControl<DGRangeSlider>(this, kFloorRandMin, kFloor, pos, rangeSliderHandleLeftImage, rangeSliderHandleRightImage, sliderBackgroundImage, rangeSliderPushStyle);
-	rangeSlider->setAlternateHandles(rangeSliderHandleLeftImage_glowing, rangeSliderHandleRightImage_glowing);
+	rangeSlider->setAlternateHandles(rangeSliderHandleLeftImage_learning, rangeSliderHandleRightImage_learning);
 
 	// crossover
 	pos.offset(0, kSliderInc);
-	emplaceControl<DGSlider>(this, kCrossoverFrequency, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_glowing);
+	emplaceControl<DGSlider>(this, kCrossoverFrequency, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_learning);
 
 	// pan
 	pos.offset(0, kSliderInc);
-	emplaceControl<DGSlider>(this, kPan, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_glowing);
+	emplaceControl<DGSlider>(this, kPan, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_learning);
 
 	// noise
 	pos.offset(0, kSliderInc);
-	emplaceControl<DGSlider>(this, kNoise, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_glowing);
+	emplaceControl<DGSlider>(this, kNoise, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_learning);
 
 	// tempo (in bpm)
 	pos.offset(0, kSliderInc);
-	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_glowing);
+	emplaceControl<DGSlider>(this, kTempo, pos, dfx::kAxis_Horizontal, sliderHandleImage, sliderBackgroundImage)->setAlternateHandle(sliderHandleImage_learning);
 
 
 	//--initialize the buttons----------------------------------------------
