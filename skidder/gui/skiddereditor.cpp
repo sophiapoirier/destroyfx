@@ -32,56 +32,57 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-constexpr char const* const kValueDisplayFont = "Arial";
+constexpr auto kValueDisplayFont = dfx::kFontName_SnootPixel10;
 constexpr auto kValueDisplayFontColor = DGColor::kWhite;
-constexpr float kValueDisplayFontSize = 10.0f;
-constexpr float kValueDisplaySmallerFontSize = 9.0f;
-constexpr float kUnusedControlAlpha = 0.3f;
+constexpr auto kValueDisplayFontSize = dfx::kFontSize_SnootPixel10;
+constexpr float kUnusedControlAlpha = 0.33333333f;
 
 //-----------------------------------------------------------------------------
 // positions
 enum
 {
-	kSliderX = 36,
-	kSliderY = 59,
-	kSliderInc = 40,
+	kSliderX = 60,
+	kSliderY = 97,
+	kSliderInc = 64,
 
-	kDisplayX = 288,
-	kDisplayY = kSliderY + 3,
-	kDisplayWidth = 360 - kDisplayX,
+	kDisplayX = 334,
+	kDisplayY = kSliderY + 11,
+	kDisplayWidth = 70,
 	kDisplayHeight = 12,
 
 	kRandMinDisplayX = 0,
 	kRandMinDisplayY = kDisplayY,
-	kRandMinDisplayWidth = kSliderX - kRandMinDisplayX - 3,
+	kRandMinDisplayWidth = kSliderX - kRandMinDisplayX - 7,
 	kRandMinDisplayHeight = kDisplayHeight,
 
 	kParameterNameDisplayX = 14,
 	kParameterNameDisplayY = kDisplayY - 17,
 	kParameterNameDisplayWidth = kDisplayWidth + 30,
 
-	kTempoSyncButtonX = 276,
-	kTempoSyncButtonY = kDisplayY + kDisplayHeight + 4,
+	kParameterButtonX = 408,
 
-	kTempoAutoButtonX = kTempoSyncButtonX,
-	kTempoAutoButtonY = kTempoSyncButtonY + (kSliderInc * 7),
+	kTempoSyncButtonX = kParameterButtonX,
+	kTempoSyncButtonY = 102,
 
-	kCrossoverModeButtonX = kTempoSyncButtonX,
-	kCrossoverModeButtonY = kTempoSyncButtonY + (kSliderInc * 4),
+	kTempoAutoButtonX = kParameterButtonX,
+	kTempoAutoButtonY = 550,
 
-	kMidiModeButtonX = 105,
-	kMidiModeButtonY = 378,
+	kCrossoverModeButtonX = kParameterButtonX,
+	kCrossoverModeButtonY = 358,
 
-	kVelocityButtonX = kMidiModeButtonX + 11,
-	kVelocityButtonY = kMidiModeButtonY + 23,
+	kMidiModeButtonX = 60,
+	kMidiModeButtonY = 620,
 
-	kMidiLearnButtonX = 24,
-	kMidiLearnButtonY = 378,
-	kMidiResetButtonX = kMidiLearnButtonX,
-	kMidiResetButtonY = kMidiLearnButtonY + 20,
+	kVelocityButtonX = 101,
+	kVelocityButtonY = 646,
 
-	kDestroyFXLinkX = 276,
-	kDestroyFXLinkY = 399
+	kMidiLearnButtonX = 221,
+	kMidiLearnButtonY = kMidiModeButtonY,
+	kMidiResetButtonX = 295,
+	kMidiResetButtonY = kMidiLearnButtonY,
+
+	kDestroyFXLinkX = 421,
+	kDestroyFXLinkY = 745
 };
 
 
@@ -165,7 +166,7 @@ bool gainRandMinDisplayProc(float inValue, char* outText, void* inUserData)
 
 bool tempoDisplayProc(float inValue, char* outText, void*)
 {
-	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.3f bpm", inValue) > 0;
+	return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.2f bpm", inValue) > 0;
 }
 
 
@@ -252,18 +253,20 @@ long SkidderEditor::OpenEditor()
 	//--initialize the buttons----------------------------------------------
 
 	// choose the rate type ("free" or synced)
-	emplaceControl<DGToggleImageButton>(this, kTempoSync, kTempoSyncButtonX, kTempoSyncButtonY, tempoSyncButtonImage);
+	pos.set(kTempoSyncButtonX, kTempoSyncButtonY, tempoSyncButtonImage->getWidth(), tempoSyncButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kTempoSync, pos, tempoSyncButtonImage, DGButton::Mode::Radio)->setRadioThresholds({28});
 
 	// use host tempo
-	emplaceControl<DGToggleImageButton>(this, kTempoAuto, kTempoAutoButtonX, kTempoAutoButtonY, tempoAutoButtonImage);
+	pos.set(kTempoAutoButtonX, kTempoAutoButtonY, tempoAutoButtonImage->getWidth(), tempoAutoButtonImage->getHeight() / 2);
+	emplaceControl<DGButton>(this, kTempoAuto, pos, tempoAutoButtonImage, DGButton::Mode::Radio)->setRadioThresholds({36});
 
 	// crossover mode
 	pos.set(kCrossoverModeButtonX, kCrossoverModeButtonY, crossoverModeButtonImage->getWidth(), crossoverModeButtonImage->getHeight() / kNumCrossoverModes);
-	emplaceControl<DGButton>(this, kCrossoverMode, pos, crossoverModeButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kCrossoverMode, pos, crossoverModeButtonImage, DGButton::Mode::Radio)->setRadioThresholds({26, 59});
 
 	// MIDI note control mode button
 	pos.set(kMidiModeButtonX, kMidiModeButtonY, midiModeButtonImage->getWidth(), midiModeButtonImage->getHeight() / kNumMidiModes);
-	emplaceControl<DGButton>(this, kMidiMode, pos, midiModeButtonImage, DGButton::Mode::Increment);
+	emplaceControl<DGButton>(this, kMidiMode, pos, midiModeButtonImage, DGButton::Mode::Radio)->setRadioThresholds({41, 95});
 
 	// use-note-velocity button
 	emplaceControl<DGToggleImageButton>(this, kVelocity, kVelocityButtonX, kVelocityButtonY, velocityButtonImage);
@@ -287,7 +290,7 @@ long SkidderEditor::OpenEditor()
 
 	// rate random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY, kRandMinDisplayWidth, kRandMinDisplayHeight);
-	mRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, rateParameterIDs.first, pos, rateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplaySmallerFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, rateParameterIDs.first, pos, rateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// pulsewidth
 	pos.set(kDisplayX, kDisplayY + (kSliderInc * 1), kDisplayWidth, kDisplayHeight);
@@ -296,7 +299,7 @@ long SkidderEditor::OpenEditor()
 
 	// pulsewidth random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY + (kSliderInc * 1), kRandMinDisplayWidth, kRandMinDisplayHeight);
-	mPulsewidthRandMinDisplay = emplaceControl<DGTextDisplay>(this, kPulsewidthRandMin, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplaySmallerFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mPulsewidthRandMinDisplay = emplaceControl<DGTextDisplay>(this, kPulsewidthRandMin, pos, DGTextDisplay::valueToTextProc_LinearToPercent, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	mPulsewidthRandMinDisplay->setValueFromTextConvertProc(DGTextDisplay::valueFromTextConvertProc_PercentToLinear);
 
 	// slope
@@ -310,7 +313,7 @@ long SkidderEditor::OpenEditor()
 
 	// floor random minimum
 	pos.set(kRandMinDisplayX, kRandMinDisplayY + (kSliderInc * 3), kRandMinDisplayWidth, kRandMinDisplayHeight);
-	mFloorRandMinDisplay = emplaceControl<DGTextDisplay>(this, kFloorRandMin, pos, gainRandMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplaySmallerFontSize, kValueDisplayFontColor, kValueDisplayFont);
+	mFloorRandMinDisplay = emplaceControl<DGTextDisplay>(this, kFloorRandMin, pos, gainRandMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	mFloorRandMinDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 	// crossover
@@ -331,30 +334,6 @@ long SkidderEditor::OpenEditor()
 	// tempo (in bpm)
 	pos.offset(0, kSliderInc);
 	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
-
-	// parameter name labels
-	auto const addParameterName = [this](int sliderIndex, long inParameterID)
-	{
-		DGRect const pos(kParameterNameDisplayX, kParameterNameDisplayY + (kSliderInc * sliderIndex), kParameterNameDisplayWidth, kDisplayHeight);
-		auto const label = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
-		std::array<char, dfx::kParameterNameMaxLength> parameterName;
-		dfx::StrLCpy(parameterName.data(), getparametername(inParameterID), parameterName.size());
-		// check if it's a separation amount parameter and, if it is, truncate the "(blah)" qualifying part
-		auto const breakpoint = strrchr(parameterName.data(), '(');
-		if (breakpoint && (breakpoint != parameterName.data()))
-		{
-			breakpoint[-1] = '\0';
-		}
-		label->setText(parameterName.data());
-	};
-	addParameterName(0, rateParameterIDs.second);
-	addParameterName(1, kPulsewidth);
-	addParameterName(2, kSlope);
-	addParameterName(3, kFloor);
-	addParameterName(4, kCrossoverFrequency);
-	addParameterName(5, kPan);
-	addParameterName(6, kNoise);
-	addParameterName(7, kTempo);
 
 
 	UpdateRandomMinimumDisplays();
