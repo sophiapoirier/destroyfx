@@ -14,3 +14,5 @@ slider-handle-learn.png   PNG DISCARDABLE   "..\\gui\\graphics\\slider-handle-le
 slider-handle.png   PNG DISCARDABLE   "..\\gui\\graphics\\slider-handle.png"
 tempo-sync-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\tempo-sync-button.png"
 velocity-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\velocity-button.png"
+
+px10.ttf   DFX_TTF DISCARDABLE   "..\\..\\fonts\\px10.ttf"
