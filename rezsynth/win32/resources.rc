@@ -18,3 +18,5 @@ slider-handle-white.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-whit
 slider-handle-yellow.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-yellow.png"
 vslider-handle-green.png  PNG DISCARDABLE  "..\\gui\\graphics\\vslider-handle-green.png"
 vslider-handle-learn.png  PNG DISCARDABLE  "..\\gui\\graphics\\vslider-handle-learn.png"
+
+px10.ttf  DFX_TTF DISCARDABLE  "..\\..\\fonts\\px10.ttf"
