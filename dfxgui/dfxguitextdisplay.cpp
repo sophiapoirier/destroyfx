@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2020  Sophia Poirier
+Copyright (C) 2002-2021  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
@@ -298,7 +298,7 @@ void DGTextDisplay::takeFocus()
 	// to go blank. "Fix" this by invalidating the whole plugin UI when a text
 	// edit takes focus. If we fix something else about invalidating the display,
 	// might be worth revisiting whether this is needed.
-	if (auto* frame = getFrame())
+	if (auto* const frame = getFrame())
 	{
 		frame->invalid();
 	}
@@ -533,13 +533,13 @@ void DGHelpBox::draw(VSTGUI::CDrawContext* inContext)
 			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
 			textArea.offset(1, 0);
 			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
-			textArea.offset(-1, textHeight + 3);
+			textArea.offset(-1, textHeight + mLineSpacing + 2);
 			setFontColor(entryFontColor);
 		}
 		else
 		{
 			drawPlatformText(inContext, VSTGUI::UTF8String(line).getPlatformString(), textArea);
-			textArea.offset(0, textHeight + 1);
+			textArea.offset(0, textHeight + mLineSpacing);
 		}
 	}
 
@@ -559,6 +559,15 @@ void DGHelpBox::setHeaderFontColor(DGColor inColor)
 void DGHelpBox::setTextMargin(VSTGUI::CPoint const& inMargin)
 {
 	if (std::exchange(mTextMargin, inMargin) != inMargin)
+	{
+		setDirty();
+	}
+}
+
+//-----------------------------------------------------------------------------
+void DGHelpBox::setLineSpacing(VSTGUI::CCoord inSpacing)
+{
+	if (std::exchange(mLineSpacing, inSpacing) != inSpacing)
 	{
 		setDirty();
 	}

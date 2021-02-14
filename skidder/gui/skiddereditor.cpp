@@ -81,8 +81,18 @@ enum
 	kMidiResetButtonX = 295,
 	kMidiResetButtonY = kMidiLearnButtonY,
 
+	kHelpX = 56,
+	kHelpY = 671,
+	kHelpWidth = 447,
+	kHelpHeight = 72,
+
 	kDestroyFXLinkX = 421,
-	kDestroyFXLinkY = 745
+	kDestroyFXLinkY = 745,
+
+	kTitleAreaX = 55,
+	kTitleAreaY = 13,
+	kTitleAreaWidth = 317,
+	kTitleAreaHeight = 48
 };
 
 
@@ -272,14 +282,23 @@ long SkidderEditor::OpenEditor()
 	emplaceControl<DGToggleImageButton>(this, kVelocity, kVelocityButtonX, kVelocityButtonY, velocityButtonImage);
 
 	// turn on/off MIDI learn mode for CC parameter automation
-	CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
+	mMidiLearnButton = CreateMidiLearnButton(kMidiLearnButtonX, kMidiLearnButtonY, midiLearnButtonImage);
 
 	// clear all MIDI CC assignments
-	CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
+	mMidiResetButton = CreateMidiResetButton(kMidiResetButtonX, kMidiResetButtonY, midiResetButtonImage);
 	
 	// Destroy FX web page link
 	pos.set(kDestroyFXLinkX, kDestroyFXLinkY, destroyFXLinkImage->getWidth(), destroyFXLinkImage->getHeight() / 2);
 	emplaceControl<DGWebLink>(this, pos, destroyFXLinkImage, DESTROYFX_URL);
+
+	pos.set(kTitleAreaX, kTitleAreaY, kTitleAreaWidth, kTitleAreaHeight);
+	mTitleArea = emplaceControl<DGNullControl>(this, pos);
+
+	// help display
+	pos.set(kHelpX, kHelpY, kHelpWidth, kHelpHeight);
+	mHelpBox = emplaceControl<DGHelpBox>(this, pos, std::bind(&SkidderEditor::GetHelpForControl, this, std::placeholders::_1), nullptr, DGColor::kWhite);
+	mHelpBox->setTextMargin({8, 12});
+	mHelpBox->setLineSpacing(3);
 
 
 	//--initialize the displays---------------------------------------------
@@ -355,6 +374,10 @@ void SkidderEditor::CloseEditor()
 	mRateRandMinDisplay = nullptr;
 	mPulsewidthRandMinDisplay = nullptr;
 	mFloorRandMinDisplay = nullptr;
+	mMidiLearnButton = nullptr;
+	mMidiResetButton = nullptr;
+	mHelpBox = nullptr;
+	mTitleArea = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -408,6 +431,15 @@ void SkidderEditor::outputChannelsChanged(unsigned long inChannelCount)
 {
 	float const alpha = (inChannelCount == 2) ? 1.f : kUnusedControlAlpha;
 	SetParameterAlpha(kPan, alpha);
+}
+
+//-----------------------------------------------------------------------------
+void SkidderEditor::mouseovercontrolchanged(IDGControl* currentControlUnderMouse)
+{
+	if (mHelpBox)
+	{
+		mHelpBox->redraw();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -468,4 +500,109 @@ void SkidderEditor::HandleMidiModeChange()
 	float const floorAlpha = (isMidiModeEnabled && getparameter_b(kVelocity)) ? kUnusedControlAlpha : 1.0f;
 	SetParameterAlpha(kFloor, floorAlpha);
 	SetParameterAlpha(kFloorRandMin, floorAlpha);
+}
+
+//-----------------------------------------------------------------------------
+std::string SkidderEditor::GetHelpForControl(IDGControl* inControl) const
+{
+	if (!inControl)
+	{
+		return {};
+	}
+
+	if (inControl == mTitleArea)
+	{
+		return R"DELIM(Skidder turns the sound on and off.
+It also can randomly pan your choppy chunks of sound all about, 
+which is why it's a skidder, like how a rock skids across a frozen
+lake when you throw it, bouncing here and there lopsided-style.)DELIM";
+	}
+	if (inControl == mMidiLearnButton)
+	{
+		return R"DELIM(MIDI learn:  toggle "MIDI learn" mode for CC control of parameters
+When enabled, you can click on a parameter control and then the next 
+MIDI CC received will be assigned to control that parameter.)DELIM";
+	}
+	if (inControl == mMidiResetButton)
+	{
+		return R"DELIM(MIDI reset:  erase CC assignments
+Push this button to erase all your MIDI CC -> parameter assignments.  
+Then CCs will not affect any parameters and you can start over.)DELIM";
+	}
+
+#if TARGET_OS_MAC
+	#define SKIDDER_ALT_KEY_NAME "option"
+#else
+	#define SKIDDER_ALT_KEY_NAME "alt"
+#endif
+	std::string const randomRangeText = "You can define a randomized range with min/max limits for each cycle.\n"
+	"(control+click to move both together, " SKIDDER_ALT_KEY_NAME "+click to move relative)";
+#undef SKIDDER_ALT_KEY_NAME
+
+	switch (inControl->getParameterID())
+	{
+		case kRate_Hz:
+		case kRate_Sync:
+		case kRateRandMin_Hz:
+		case kRateRandMin_Sync:
+			return R"DELIM(rate:  the frequency at which the sound goes on and off
+The value is cycles per second, or per beat with "beat sync" enabled.
+)DELIM" + randomRangeText;
+		case kTempoSync:
+			return R"DELIM(tempo sync:  defines how the "rate" parameter operates
+Hz mode means the "rate" parameter operates in cycles per second,
+and beat sync mode means that "rate" operates in cycles per beat,
+which itself is dependent upon the "tempo" parameter or host tempo.)DELIM";
+		case kPulsewidth:
+		case kPulsewidthRandMin:
+			return R"DELIM(pulse width:  the ratio of sound on vs off
+This controls how much of each cycle is "on" (full volume).
+)DELIM" + randomRangeText;
+		case kSlope:
+			return R"DELIM(slope:  gain smoothing duration
+This sets the length of the volume-smoothing slopes that are at
+the beginning (fade in) and end (fade out) of each pulse.)DELIM";
+		case kPan:
+			return R"DELIM(stereo spread:  width of random panning
+This controls the amount of random panning to which your outputted
+sound chunks will be subjected. Lowering the stereo spread value will
+limit how far from center the random panning is allowed to stray.)DELIM";
+		case kNoise:
+			return "rupture\nblurps of noise betwixt your skids";
+		case kFloor:
+		case kFloorRandMin:
+			return R"DELIM(floor:  level of the reduced volume period
+This controls sound level during the "off" period of each cycle.
+)DELIM" + randomRangeText;
+		case kCrossoverFrequency:
+			return R"DELIM(crossover frequency:  selective skids cutoff point
+This adjusts the crossover cutoff frequency used when operating in 
+"low" or "high" crossover mode.)DELIM";
+		case kCrossoverMode:
+			return R"DELIM(crossover mode:  which side skids
+You can limit the skidding to only part of the frequency spectrum.
+With "all", Skidder effects the full spectrum. With "low" or "high", the
+effect is only applied to audio below or above crossover frequency.)DELIM";
+		case kTempo:
+			return R"DELIM(tempo:  sets the tempo used when tempo sync is on
+If your host app doesn't send tempo info to plugins, you'll need to
+adjust this parameter in order to specify a tempo for Skidder to use.)DELIM";
+		case kTempoAuto:
+			return R"DELIM(sync to host tempo:  follow the host's current tempo
+If your host app sends tempo info to plugins, you can enable this
+parameter to lock the tempo and beat position that Skidder uses to
+follow the host.)DELIM";
+		case kMidiMode:
+			return R"DELIM(MIDI mode:  note control
+In MIDI trigger mode, the effect is active while you play a note and
+otherwise sound is muted. MIDI apply mode is similar except that the
+sound stays on, unprocessed, between notes. "None" ignores notes.)DELIM";
+		case kVelocity:
+			return R"DELIM(velocity:  effect depth control
+If you enable this and you are using a MIDI note control mode, then
+the floor level will be controlled by note velocity. The floor is lower
+when the note velocity is higher, and vice versa.)DELIM";
+		default:
+			return {};
+	}
 }

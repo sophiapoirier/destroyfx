@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2000-2020  Sophia Poirier
+Copyright (C) 2000-2021  Sophia Poirier
 
 This file is part of Skidder.
 
@@ -34,6 +34,7 @@ public:
 	void CloseEditor() override;
 	void parameterChanged(long inParameterID) override;
 	void outputChannelsChanged(unsigned long inChannelCount) override;
+	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
 
 private:
 	std::pair<long, long> GetActiveRateParameterIDs();
@@ -42,10 +43,14 @@ private:
 	void HandleTempoAutoChange();
 	void HandleCrossoverModeChange();
 	void HandleMidiModeChange();
+	std::string GetHelpForControl(IDGControl* inControl) const;
 
 	DGRangeSlider* mRateSlider = nullptr;
 	DGTextDisplay* mRateDisplay = nullptr;
 	DGTextDisplay* mRateRandMinDisplay = nullptr;
 	DGTextDisplay* mPulsewidthRandMinDisplay = nullptr;
 	DGTextDisplay* mFloorRandMinDisplay = nullptr;
+	DGButton* mMidiLearnButton = nullptr, * mMidiResetButton = nullptr;
+	DGHelpBox* mHelpBox = nullptr;
+	IDGControl* mTitleArea = nullptr;
 };
