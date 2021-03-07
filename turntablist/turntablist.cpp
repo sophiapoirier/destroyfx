@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2020 Sophia Poirier
+Copyright (c) 2004 bioroid media development & Copyright (C) 2004-2021 Sophia Poirier
 All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. 
@@ -13,7 +13,7 @@ This file is part of Turntablist.
 
 Turntablist is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+the Free Software Foundation, either version 2 of the License, or 
 (at your option) any later version.
 
 You should have received a copy of the GNU General Public License 

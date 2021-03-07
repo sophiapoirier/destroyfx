@@ -1,13 +1,13 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2020  Sophia Poirier
+Copyright (C) 2002-2021  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
 Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+the Free Software Foundation, either version 2 of the License, or 
 (at your option) any later version.
 
 Destroy FX Library is distributed in the hope that it will be useful, 
@@ -56,7 +56,7 @@ This is our Destroy FX plugin data storage stuff
 //
 // If you need to do anything special when parameter settings are restored 
 // from particular versions of your plugin (for example, remapping the 
-// value to accomodate for a change in range or scaling of the parameter 
+// value to accommodate for a change in range or scaling of the parameter 
 // in a more recent version of your plugin), I've provided a hook for 
 // extending parameter restoration during restore().  Just take care of 
 // your special cases in doChunkRestoreSetParameterStuff().

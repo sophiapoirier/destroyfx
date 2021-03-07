@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2020  Tom Murphy 7 and Sophia Poirier
+Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Transverb.
 
 Transverb is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+the Free Software Foundation, either version 2 of the License, or 
 (at your option) any later version.
 
 Transverb is distributed in the hope that it will be useful, 
@@ -45,7 +45,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define PLUGIN_DESCRIPTION_STRING	"like a delay that can play back the delay buffer at different speeds"
 
 
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2020"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2021"
 
 #define VST_NUM_CHANNELS 2
 

@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2002-2020  Sophia Poirier
+Copyright (C) 2002-2021  Sophia Poirier
 
 This file is part of Polarizer.
 
 Polarizer is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+the Free Software Foundation, either version 2 of the License, or 
 (at your option) any later version.
 
 Polarizer is distributed in the hope that it will be useful, 
@@ -40,7 +40,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #define TARGET_PLUGIN_HAS_GUI	1
 #define PLUGIN_BACKGROUND_IMAGE_FILENAME	"polarizer-background.png"
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX PLUGIN_NAME_STRING DFX_BUNDLE_ID_SUFFIX
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2020"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2001-2021"
 #define VST_NUM_CHANNELS	2
 
 // optional

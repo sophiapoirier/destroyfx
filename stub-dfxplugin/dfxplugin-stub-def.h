@@ -1,13 +1,13 @@
 /*------------------------------------------------------------------------
 Destroy FX Library is a collection of foundation code 
 for creating audio processing plug-ins.  
-Copyright (C) 2002-2018  Sophia Poirier
+Copyright (C) 2002-2021  Sophia Poirier
 
 This file is part of the Destroy FX Library (version 1.0).
 
 Destroy FX Library is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+the Free Software Foundation, either version 2 of the License, or 
 (at your option) any later version.
 
 Destroy FX Library is distributed in the hope that it will be useful, 
@@ -49,7 +49,7 @@ or somehow define this stuff another way (in compiler settings, or whatever).
 // macOS bundle identifier
 #define PLUGIN_BUNDLE_IDENTIFIER	DESTROYFX_BUNDLE_ID_PREFIX "DfxStub" DFX_BUNDLE_ID_SUFFIX
 // copyright year(s) published in versioning metadata
-#define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2018"
+#define PLUGIN_COPYRIGHT_YEAR_STRING	"2002-2021"
 // 0 or 1
 #define TARGET_PLUGIN_USES_MIDI	1
 // 0 or 1	(1 implied 1 is also true for TARGET_PLUGIN_USES_MIDI)
