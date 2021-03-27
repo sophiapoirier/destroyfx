@@ -460,7 +460,7 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 	{
 		auto const downcastWithValidation = [](auto& destination, auto const& source)
 		{
-			using FromT = std::decay_t<decltype(source)>;
+			using FromT [[maybe_unused]] = std::decay_t<decltype(source)>;
 			using ToT = std::decay_t<decltype(destination)>;
 			assert(source <= static_cast<FromT>(std::numeric_limits<ToT>::max()));
 			destination = static_cast<ToT>(source);
