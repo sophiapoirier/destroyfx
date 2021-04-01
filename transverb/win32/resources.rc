@@ -24,3 +24,6 @@ transverb-background.png        PNG  DISCARDABLE     "..\\gui\\graphics\\transve
 wide-fader-handle-glowing.png   PNG  DISCARDABLE     "..\\gui\\graphics\\wide-fader-handle-glowing.png"
 
 px10.ttf                        DFX_TTF  DISCARDABLE     "..\\..\\fonts\\px10.ttf"
+
+#include "../transverbdef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"

@@ -1,5 +1,7 @@
 #include <winver.h>
 
+#include "../dfxdefines.h"
+
 
 /*
 #ifdef _WIN32
