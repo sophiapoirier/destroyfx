@@ -47,7 +47,7 @@ VSTGUI_DEP_OBJECTS=$(MINGWLIB)/libopengl32.a $(MINGWLIB)/libole32.a $(MINGWLIB)/
 
 # embed png files.
 resources.o : midigater.rc ../gui/graphics/*
-	$(WINDRES) -i midigater.rc -o $@
+	$(WINDRES) $(DEFINES) -I $(DFXLIB) -i midigater.rc -o $@
 
 dfx-midigater-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS) $(VSTGUI_DEP_OBJECTS)
 	$(CXX) $(LFLAGS) -o $@ $^

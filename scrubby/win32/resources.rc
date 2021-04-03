@@ -36,3 +36,6 @@ transpose-down-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\transpose-down-b
 transpose-up-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\transpose-up-button.png"
 
 px10.ttf  DFX_TTF DISCARDABLE  "..\\..\\fonts\\px10.ttf"
+
+#include "../scrubbydef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"

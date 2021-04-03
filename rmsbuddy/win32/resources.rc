@@ -1,3 +1,4 @@
-
 reset-button.png   PNG DISCARDABLE     "..\\reset-button.png"
 
+#include "../rmsbuddydef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"

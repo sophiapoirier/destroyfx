@@ -16,3 +16,6 @@ tempo-sync-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\tempo-sync-button.
 velocity-button.png   PNG DISCARDABLE   "..\\gui\\graphics\\velocity-button.png"
 
 px10.ttf   DFX_TTF DISCARDABLE   "..\\..\\fonts\\px10.ttf"
+
+#include "../skidderdef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"
