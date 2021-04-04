@@ -1,4 +1,3 @@
-
 buffer-interrupt-button-corner.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-interrupt-button-corner.png"
 buffer-interrupt-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-interrupt-button.png"
 buffer-lfo-rate-label.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-lfo-rate-label.png"
@@ -24,3 +23,5 @@ xy-box-handle-buffer-glow.png  PNG DISCARDABLE  "..\\gui\\graphics\\xy-box-handl
 xy-box-handle-divisor-glow.png  PNG DISCARDABLE  "..\\gui\\graphics\\xy-box-handle-divisor-glow.png"
 xy-box-handle.png  PNG DISCARDABLE  "..\\gui\\graphics\\xy-box-handle.png"
 
+#include "../bufferoverridedef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"

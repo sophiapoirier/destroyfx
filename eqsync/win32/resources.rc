@@ -1,4 +1,3 @@
-
 // On windows, only the "-panther.png" versions are used.
 
 destroy-fx-link-tab-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\destroy-fx-link-tab-panther.png"
@@ -9,3 +8,6 @@ host-sync-button-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\host-sync-but
 slider-handle-clicked-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-clicked-panther.png"
 slider-handle-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-panther.png"
 vertical-slider-background-panther.png  PNG DISCARDABLE  "..\\gui\\graphics\\vertical-slider-background-panther.png"
+
+#include "../eqsyncdef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"

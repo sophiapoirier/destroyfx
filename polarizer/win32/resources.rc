@@ -5,3 +5,6 @@ slider-background.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-background.pn
 slider-handle.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle.png"
 
 bboron.ttf  DFX_TTF DISCARDABLE  "..\\..\\fonts\\bboron.ttf"
+
+#include "../polarizerdef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"

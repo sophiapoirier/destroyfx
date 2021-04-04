@@ -9,3 +9,6 @@ slider-handle-slope.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-slop
 slider-handle-slope-glowing.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-slope-glowing.png"
 slider-handle-velocity-influence.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-velocity-influence.png"
 slider-handle-velocity-influence-glowing.png  PNG DISCARDABLE  "..\\gui\\graphics\\slider-handle-velocity-influence-glowing.png"
+
+#include "../midigaterdef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"

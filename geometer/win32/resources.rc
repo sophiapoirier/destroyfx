@@ -20,3 +20,6 @@ window-shape-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\window-shape-butto
 window-size-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\window-size-button.png"
 
 px10.ttf  DFX_TTF DISCARDABLE  "..\\..\\fonts\\px10.ttf"
+
+#include "../geometerdef.h"
+#include "../../dfx-library/visualstudio/dfxplugin-version.rc"

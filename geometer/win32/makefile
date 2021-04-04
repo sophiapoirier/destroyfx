@@ -49,7 +49,7 @@ VSTGUI_DEP_OBJECTS=$(MINGWLIB)/libopengl32.a $(MINGWLIB)/libole32.a $(MINGWLIB)/
 
 # embed png files.
 resources.o : resources.rc ../gui/graphics/*
-	$(WINDRES) -i resources.rc -o $@
+	$(WINDRES) $(DEFINES) -I $(DFXLIB) -i resources.rc -o $@
 
 dfx-geometer-64.dll : $(OBJECTS) $(PTHREAD_OBJECTS) $(VSTGUI_DEP_OBJECTS)
 	$(CXX) $(LFLAGS) -o $@ $^
