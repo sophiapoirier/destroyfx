@@ -29,10 +29,9 @@ These are some generally useful functions.
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cstring>
 #include <functional>
 #include <locale>
-#include <stdio.h>
-#include <string.h>
 #include <string_view>
 #include <string>
 

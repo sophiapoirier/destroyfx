@@ -99,7 +99,7 @@ somewhere in the include tree for every file for a DfxPlugin.
 /*-----------------------------------------------------------------------------*/
 #ifdef __cplusplus
 
-#include <stddef.h>
+#include <cstddef>
 
 namespace dfx
 {

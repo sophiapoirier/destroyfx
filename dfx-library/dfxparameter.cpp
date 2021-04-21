@@ -31,7 +31,6 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 #include <cassert>
 #include <cmath>
 #include <limits>
-#include <string.h>  // for strcpy
 #include <unordered_set>
 
 #include "dfxmath.h"
@@ -646,11 +645,11 @@ DfxParam::Value DfxParam::randomize()
 			set_gen(dfx::math::Rand<double>());
 			break;
 		case ValueType::Int:
-			mValue.i = (rand() % ((mMaxValue.i - mMinValue.i) + 1)) + mMinValue.i;
+			mValue.i = (std::rand() % ((mMaxValue.i - mMinValue.i) + 1)) + mMinValue.i;
 			break;
 		case ValueType::Boolean:
 			// but we don't really need to worry about the curve for boolean values
-			mValue.b = (rand() % 2) ? true : false;
+			mValue.b = (std::rand() % 2) ? true : false;
 			break;
 		default:
 			assert(false);

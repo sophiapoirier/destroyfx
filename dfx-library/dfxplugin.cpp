@@ -30,11 +30,11 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 #include <bitset>
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
+#include <ctime>	// for time(), which is used to feed srand()
 #include <functional>
 #include <mutex>
-#include <stdio.h>
 #include <thread>
-#include <time.h>	// for time(), which is used to feed srand()
 #include <unordered_set>
 
 #include "dfxmisc.h"
@@ -57,6 +57,9 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 
 //#define DFX_DEBUG_PRINT_MUSICAL_TIME_INFO
 //#define DFX_DEBUG_PRINT_MUSIC_EVENTS
+#if defined(DFX_DEBUG_PRINT_MUSICAL_TIME_INFO) || defined(DFX_DEBUG_PRINT_MUSIC_EVENTS)
+	#include <cstdio>
+#endif
 
 
 constexpr char const* const kPresetDefaultName = "default";
@@ -167,7 +170,7 @@ DfxPlugin::DfxPlugin(
 	updatesamplerate();  // XXX have it set to something here?
 
 	// set a seed value for rand() from the system clock
-	srand(static_cast<unsigned int>(time(nullptr)));
+	std::srand(static_cast<unsigned int>(std::time(nullptr)));
 
 	mPresets.reserve(inNumPresets);
 	for (long i = 0; i < inNumPresets; i++)

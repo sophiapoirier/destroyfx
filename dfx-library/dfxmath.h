@@ -30,8 +30,8 @@ This is our math and numerics shit.
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdlib>  // for RAND_MAX
 #include <limits>
-#include <stdlib.h>  // for RAND_MAX
 #include <type_traits>
 
 
@@ -67,7 +67,7 @@ T Rand()
 {
 	static_assert(std::is_floating_point_v<T>);
 	static constexpr T oneDivRandMax = T(1) / T(RAND_MAX);  // reduces wasteful casting and division
-	return static_cast<T>(rand()) * oneDivRandMax;
+	return static_cast<T>(std::rand()) * oneDivRandMax;
 }
 
 //-----------------------------------------------------------------------------

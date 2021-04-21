@@ -31,7 +31,7 @@ This is where we connect the RTAS/AudioSuite API to our DfxPlugin system.
 #include "PlugInAssert.h"
 
 #include <cstdlib>
-#include <string.h>
+#include <cstring>
 #include <cstdio>
 
 

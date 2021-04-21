@@ -26,9 +26,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <sstream>
-#include <stdio.h>
-#include <string.h>
 
 #include "dfxguieditor.h"
 #include "dfxguimisc.h"

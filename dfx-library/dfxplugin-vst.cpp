@@ -31,8 +31,8 @@ This is where we connect the VST API to our DfxPlugin system.
 #include <array>
 #include <cassert>
 #include <cinttypes>
+#include <cstdio>
 #include <limits>
-#include <stdio.h>
 
 #include "dfxmath.h"
 

@@ -29,7 +29,7 @@ This is our class for doing interpolation of values over time.
 
 #include "idfxsmoothedvalue.h"
 
-#include <stddef.h>
+#include <cstddef>
 
 
 
