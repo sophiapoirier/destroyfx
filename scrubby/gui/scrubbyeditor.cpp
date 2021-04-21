@@ -30,9 +30,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-constexpr auto kDisplayFont = dfx::kFontName_SnootPixel10;
-constexpr auto kDisplayTextSize = dfx::kFontSize_SnootPixel10;
-constexpr DGColor kBrownTextColor(187, 173, 131);
+constexpr auto kValueDisplayFont = dfx::kFontName_SnootPixel10;
+constexpr auto kValueDisplayFontSize = dfx::kFontSize_SnootPixel10;
+constexpr DGColor kValueDisplayFontColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
 constexpr long kRangeSliderOvershoot = 3;
 
@@ -341,48 +341,48 @@ long ScrubbyEditor::OpenEditor()
 
 	// seek rate random minimum
 	pos.set(kSeekRateSliderX + kDisplayInsetX, kSeekRateSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth_big, kDisplayHeight);
-	mSeekRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, seekRateRandMinParamID, pos, seekRateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	mSeekRateRandMinDisplay = emplaceControl<DGTextDisplay>(this, seekRateRandMinParamID, pos, seekRateRandMinDisplayProc, this, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek rate
 	pos.set(kSeekRateSliderX + kSeekRateSliderWidth - kDisplayWidth_big - kDisplayInsetX, kSeekRateSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth_big, kDisplayHeight);
-	mSeekRateDisplay = emplaceControl<DGTextDisplay>(this, seekRateParamID, pos, seekRateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	mSeekRateDisplay = emplaceControl<DGTextDisplay>(this, seekRateParamID, pos, seekRateDisplayProc, this, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek range
 	pos.set(kSeekRangeSliderX + kSeekRangeSliderWidth - kDisplayWidth - kDisplayInsetX, kSeekRangeSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSeekRange, pos, seekRangeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSeekRange, pos, seekRangeDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek duration random minimum
 	pos.set(kSeekDurSliderX + kDisplayInsetX, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSeekDurRandMin, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// seek duration
 	pos.set(kSeekDurSliderX + kSeekDurSliderWidth - kDisplayWidth - kDisplayInsetX, kSeekDurSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kSeekDur, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kSeekDur, pos, DGTextDisplay::valueToTextProc_Percent, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// octave mininum
 	pos.set(kOctaveMinSliderX + kDisplayInsetX, kOctaveMinSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kOctaveMin, pos, octaveMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kOctaveMin, pos, octaveMinDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// octave maximum
 	pos.set(kOctaveMaxSliderX + kOctaveMaxSliderWidth - kDisplayWidth - kDisplayInsetX, kOctaveMaxSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kOctaveMax, pos, octaveMaxDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kOctaveMax, pos, octaveMaxDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// tempo
 	pos.set(kTempoSliderX + kDisplayInsetX, kTempoSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kTempo, pos, tempoDisplayProc, nullptr, nullptr, dfx::TextAlignment::Left, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// predelay
 	pos.set(kPredelaySliderX + kPredelaySliderWidth - kDisplayWidth - kDisplayInsetX, kPredelaySliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	emplaceControl<DGTextDisplay>(this, kPredelay, pos, predelayDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	emplaceControl<DGTextDisplay>(this, kPredelay, pos, predelayDisplayProc, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 
 	// dry level
 	pos.set(kDryLevelSliderX + kMixLevelSliderWidth - kDisplayWidth - kDisplayInsetX, kDryLevelSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	auto textDisplay = emplaceControl<DGTextDisplay>(this, kDryLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	auto textDisplay = emplaceControl<DGTextDisplay>(this, kDryLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 	// wet level
 	pos.set(kWetLevelSliderX + kMixLevelSliderWidth - kDisplayWidth - kDisplayInsetX, kWetLevelSliderY - kDisplayHeight + kDisplayInsetY, kDisplayWidth, kDisplayHeight);
-	textDisplay = emplaceControl<DGTextDisplay>(this, kWetLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Right, kDisplayTextSize, kBrownTextColor, kDisplayFont);
+	textDisplay = emplaceControl<DGTextDisplay>(this, kWetLevel, pos, DGTextDisplay::valueToTextProc_LinearToDb, nullptr, nullptr, dfx::TextAlignment::Right, kValueDisplayFontSize, kValueDisplayFontColor, kValueDisplayFont);
 	textDisplay->setTextToValueProc(DGTextDisplay::textToValueProc_DbToLinear);
 
 
