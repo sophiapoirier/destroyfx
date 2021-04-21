@@ -43,19 +43,24 @@ struct PreCoeff
 	double const mOmega;  // radians per sample
 	double const mSinOmega;
 	double const mCosOmega;
-	double const mAlpha;
-	double const mA;
-	double const mBeta;
+	double const mAlpha;  // HP LP BP peak notch
+	double mA {};  // peak shelf
+	double mBeta {};  // shelf
 
-	PreCoeff(double inFrequency, double inQ, double inGain, double inSampleRate)
+	PreCoeff(double inFrequency, double inQ, double inSampleRate)
 	:	mOmega(2. * dfx::math::kPi<double> * inFrequency / inSampleRate),
 		mSinOmega(std::sin(mOmega)),
 		mCosOmega(std::cos(mOmega)),
-		mAlpha(mSinOmega / (2. * inQ)),
+		mAlpha(mSinOmega / (2. * inQ))
 		//mAlpha(mSinOmega * std::sinh(std::numbers::ln2 / 2. * inQ * mOmega / mSinOmega))  // http://musicdsp.org/showone.php?id=64
-		mA(std::sqrt(inGain)),
-		mBeta(std::sqrt(std::max((((mA * mA) + 1.) / inQ) - ((mA - 1.) * (mA - 1.)), 0.)))
 	{
+	}
+
+	PreCoeff(double inFrequency, double inQ, double inGain, double inSampleRate)
+	:	PreCoeff(inFrequency, inQ, inSampleRate)
+	{
+		mA = std::sqrt(inGain);
+		mBeta = std::sqrt(std::max((((mA * mA) + 1.) / inQ) - ((mA - 1.) * (mA - 1.)), 0.));
 	}
 };
 
@@ -94,6 +99,7 @@ static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::Filter
 			break;
 
 		case dfx::IIRFilter::FilterType::Peak:
+			assert(inPreCoeff.mA != 0.);
 			b0 = 1. + (inPreCoeff.mAlpha / inPreCoeff.mA);
 			coeff.mIn = 1. + (inPreCoeff.mAlpha * inPreCoeff.mA);
 			coeff.mPrevIn = coeff.mPrevOut = -2. * inPreCoeff.mCosOmega;
@@ -139,6 +145,10 @@ static dfx::IIRFilter::Coefficients CalculateCoefficients(dfx::IIRFilter::Filter
 		coeff.mPrevOut /= b0;
 		coeff.mPrevPrevOut /= b0;
 	}
+	else
+	{
+		assert(false);
+	}
 
 	return coeff;
 }
@@ -181,6 +191,24 @@ dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType i
 }
 
 //------------------------------------------------------------------------
+dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setCoefficients(FilterType inFilterType, double inFrequency, double inQ)
+{
+	assert((inFilterType != FilterType::Peak) && 
+		   (inFilterType != FilterType::LowShelf) && 
+		   (inFilterType != FilterType::HighShelf));
+	assert(inFrequency > 0.);
+	assert(inQ > 0.);
+
+	mFilterType = inFilterType;
+	mFilterFrequency = inFrequency;
+	mFilterQ = inQ;
+	mFilterGain = kUnityGain;
+
+	mCoeff = CalculateCoefficients(inFilterType, PreCoeff(inFrequency, inQ, mSampleRate));
+	return mCoeff;
+}
+
+//------------------------------------------------------------------------
 void dfx::IIRFilter::setSampleRate(double inSampleRate)
 {
 	mSampleRate = inSampleRate;
@@ -191,19 +219,19 @@ void dfx::IIRFilter::setSampleRate(double inSampleRate)
 //------------------------------------------------------------------------
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setLowpassCoefficients(double inCutoffFrequency)
 {
-	return setCoefficients(FilterType::Lowpass, inCutoffFrequency, kDefaultQ_LP_HP, kUnityGain);
+	return setCoefficients(FilterType::Lowpass, inCutoffFrequency, kDefaultQ_LP_HP);
 }
 
 //------------------------------------------------------------------------
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setHighpassCoefficients(double inCutoffFrequency)
 {
-	return setCoefficients(FilterType::Highpass, inCutoffFrequency, kDefaultQ_LP_HP, kUnityGain);
+	return setCoefficients(FilterType::Highpass, inCutoffFrequency, kDefaultQ_LP_HP);
 }
 
 //------------------------------------------------------------------------
 dfx::IIRFilter::Coefficients const& dfx::IIRFilter::setBandpassCoefficients(double inCenterFrequency, double inQ)
 {
-	return setCoefficients(FilterType::Bandpass, inCenterFrequency, inQ, kUnityGain);
+	return setCoefficients(FilterType::Bandpass, inCenterFrequency, inQ);
 }
 
 //------------------------------------------------------------------------
@@ -297,7 +325,7 @@ void dfx::Crossover::setFrequency(double inFrequency)
 			});
 		});
 	};
-	PreCoeff const preCoeff(inFrequency, kDefaultQ_LP_HP, kUnityGain, mSampleRate);
+	PreCoeff const preCoeff(inFrequency, kDefaultQ_LP_HP, mSampleRate);
 	setCoefficients(mLowpassFilters, CalculateCoefficients(dfx::IIRFilter::FilterType::Lowpass, preCoeff));
 	setCoefficients(mHighpassFilters, CalculateCoefficients(dfx::IIRFilter::FilterType::Highpass, preCoeff));
 #endif

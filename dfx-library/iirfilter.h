@@ -75,6 +75,7 @@ public:
 
 	void setCoefficients(Coefficients const& inCoefficients);
 	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ, double inGain);
+	Coefficients const& setCoefficients(FilterType inFilterType, double inFrequency, double inQ);
 	Coefficients const& setLowpassCoefficients(double inCutoffFrequency);
 	Coefficients const& setHighpassCoefficients(double inCutoffFrequency);
 	Coefficients const& setBandpassCoefficients(double inCenterFrequency, double inQ);
