@@ -173,6 +173,8 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   setpresetname(0, "Geometer LoFi");	/* default preset name */
   makepresets();
 
+  windowcache_reader = &windowcaches.front();
+  windowcache_writer = &windowcaches.back();
   tmpx.fill(0);
   tmpy.fill(0.0f);
 }
@@ -213,7 +215,7 @@ long PLUGIN::dfx_GetProperty(dfx::PropertyID inPropertyID, dfx::Scope inScope, u
       return dfx::kStatus_NoError;
     case PROP_WAVEFORM_DATA: {
       std::lock_guard const guard(windowcachelock);
-      *static_cast<GeometerViewData*>(outData) = windowcache;
+      *static_cast<GeometerViewData*>(outData) = *windowcache_reader;
       return dfx::kStatus_NoError;
     }
     default:
@@ -254,10 +256,11 @@ void PLUGIN::randomizeparameter(long inParameterIndex)
 
 void PLUGIN::clearwindowcache()
 {
+  windowcache_writer->clear();
   {
     std::unique_lock const guard(windowcachelock, std::try_to_lock);
     if (guard.owns_lock()) {
-      windowcache.clear();
+      std::swap(windowcache_reader, windowcache_writer);
     }
   }
   lastwindowtimestamp.store(0, std::memory_order_relaxed);
@@ -266,25 +269,26 @@ void PLUGIN::clearwindowcache()
 void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
 {
 #if 1
-  std::copy_n(geometercore->getinput(), GeometerViewData::samples, tmpwindowcache.inputs.data());
+  std::copy_n(geometercore->getinput(), GeometerViewData::samples, windowcache_writer->inputs.data());
 #else
   for (int i=0; i < GeometerViewData::samples; i++) {
-    tmpwindowcache.inputs[i] = std::sin((i * 10 * dfx::math::kPi<float>) / GeometerViewData::samples);
+    windowcache_writer->inputs[i] = std::sin((i * 10 * dfx::math::kPi<float>) / GeometerViewData::samples);
   }
 #endif
 
-  tmpwindowcache.apts = std::min(geometercore->getframesize(), GeometerViewData::samples);
+  windowcache_writer->apts = std::min(geometercore->getframesize(), GeometerViewData::samples);
 
-  tmpwindowcache.numpts = geometercore->processw(tmpwindowcache.inputs.data(), tmpwindowcache.outputs.data(), tmpwindowcache.apts,
-                                                 tmpwindowcache.pointsx.data(), tmpwindowcache.pointsy.data(),
-                                                 GeometerViewData::samples - 1, tmpx.data(), tmpy.data());
+  windowcache_writer->numpts = geometercore->processw(windowcache_writer->inputs.data(), windowcache_writer->outputs.data(), 
+                                                      windowcache_writer->apts,
+                                                      windowcache_writer->pointsx.data(), windowcache_writer->pointsy.data(),
+                                                      GeometerViewData::samples - 1, tmpx.data(), tmpy.data());
 
   bool updated = false;
   {
     // willing to drop window cache updates to ensure realtime-safety by not blocking here
     std::unique_lock const guard(windowcachelock, std::try_to_lock);
     if ((updated = guard.owns_lock())) {
-      windowcache = tmpwindowcache;
+      std::swap(windowcache_reader, windowcache_writer);
     }
   }
 

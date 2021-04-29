@@ -68,9 +68,11 @@ private:
   /* set up the built-in presets */
   void makepresets();
 
-  GeometerViewData windowcache;
+  std::array<GeometerViewData, 2> windowcaches;
+  /* access via reader is protected by a lock */
+  /* access via writer is always on or serialized with the audio render thread */
+  GeometerViewData* windowcache_reader = nullptr, * windowcache_writer = nullptr;
   /* passed to processw for window cache */
-  GeometerViewData tmpwindowcache;
   std::array<int, GeometerViewData::arraysize> tmpx {};
   std::array<float, GeometerViewData::arraysize> tmpy {};
   dfx::SpinLock windowcachelock;
