@@ -70,6 +70,7 @@ private:
 
   GeometerViewData windowcache;
   /* passed to processw for window cache */
+  GeometerViewData tmpwindowcache;
   std::array<int, GeometerViewData::arraysize> tmpx {};
   std::array<float, GeometerViewData::arraysize> tmpy {};
   dfx::SpinLock windowcachelock;

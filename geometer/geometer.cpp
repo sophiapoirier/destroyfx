@@ -265,24 +265,26 @@ void PLUGIN::clearwindowcache()
 
 void PLUGIN::updatewindowcache(PLUGINCORE const * geometercore)
 {
+#if 1
+  std::copy_n(geometercore->getinput(), GeometerViewData::samples, tmpwindowcache.inputs.data());
+#else
+  for (int i=0; i < GeometerViewData::samples; i++) {
+    tmpwindowcache.inputs[i] = std::sin((i * 10 * dfx::math::kPi<float>) / GeometerViewData::samples);
+  }
+#endif
+
+  tmpwindowcache.apts = std::min(geometercore->getframesize(), GeometerViewData::samples);
+
+  tmpwindowcache.numpts = geometercore->processw(tmpwindowcache.inputs.data(), tmpwindowcache.outputs.data(), tmpwindowcache.apts,
+                                                 tmpwindowcache.pointsx.data(), tmpwindowcache.pointsy.data(),
+                                                 GeometerViewData::samples - 1, tmpx.data(), tmpy.data());
+
   bool updated = false;
   {
     // willing to drop window cache updates to ensure realtime-safety by not blocking here
     std::unique_lock const guard(windowcachelock, std::try_to_lock);
     if ((updated = guard.owns_lock())) {
-#if 1
-      std::copy_n(geometercore->getinput(), GeometerViewData::samples, windowcache.inputs.data());
-#else
-      for (int i=0; i < GeometerViewData::samples; i++) {
-        windowcache.inputs[i] = std::sin((i * 10 * dfx::math::kPi<float>) / GeometerViewData::samples);
-      }
-#endif
-
-      windowcache.apts = std::min(geometercore->getframesize(), GeometerViewData::samples);
-
-      windowcache.numpts = geometercore->processw(windowcache.inputs.data(), windowcache.outputs.data(), windowcache.apts,
-                                                  windowcache.pointsx.data(), windowcache.pointsy.data(),
-                                                  GeometerViewData::samples - 1, tmpx.data(), tmpy.data());
+      windowcache = tmpwindowcache;
     }
   }
 
@@ -339,6 +341,7 @@ PLUGINCORE::PLUGINCORE(DfxPlugin* inDfxPlugin)
 {
   /* determine the size of the largest window size */
   constexpr auto maxframe = *std::max_element(PLUGIN::buffersizes.cbegin(), PLUGIN::buffersizes.cend());
+  static_assert(maxframe >= GeometerViewData::samples);
 
   /* add some leeway? */
   in0.assign(maxframe, 0.0f);
