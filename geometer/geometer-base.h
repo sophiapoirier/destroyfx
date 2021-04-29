@@ -108,14 +108,10 @@ struct GeometerViewData {
   /* active points */
   int32_t apts = 0;
 
-  std::array<float, arraysize> inputs;
-  std::array<int32_t, arraysize> pointsx;
-  std::array<float, arraysize> pointsy;
-  std::array<float, arraysize> outputs;
-
-  GeometerViewData() {
-    clear();
-  }
+  std::array<float, arraysize> inputs {};
+  std::array<int32_t, arraysize> pointsx {};
+  std::array<float, arraysize> pointsy {};
+  std::array<float, arraysize> outputs {};
 
   void clear() {
     numpts = apts = 0;

@@ -107,7 +107,7 @@ PLUGIN::PLUGIN(TARGET_API_BASE_INSTANCE_TYPE inInstance)
   /* windowing */
   for (size_t i=0; i < buffersizes.size(); i++)
   {
-    std::array<char, dfx::kParameterValueStringMaxLength> bufstr;
+    std::array<char, dfx::kParameterValueStringMaxLength> bufstr {};
     constexpr int thousand = 1000;
     if (buffersizes[i] >= thousand) {
       snprintf(bufstr.data(), bufstr.size(), "%d,%03d", buffersizes[i] / thousand, buffersizes[i] % thousand);

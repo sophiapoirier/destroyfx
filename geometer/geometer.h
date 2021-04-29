@@ -70,8 +70,8 @@ private:
 
   GeometerViewData windowcache;
   /* passed to processw for window cache */
-  std::array<int, GeometerViewData::arraysize> tmpx;
-  std::array<float, GeometerViewData::arraysize> tmpy;
+  std::array<int, GeometerViewData::arraysize> tmpx {};
+  std::array<float, GeometerViewData::arraysize> tmpy {};
   dfx::SpinLock windowcachelock;
   std::atomic<uint64_t> lastwindowtimestamp {0};
   static_assert(decltype(lastwindowtimestamp)::is_always_lock_free);

@@ -116,7 +116,7 @@ private:
     return speedModeStates.at(dfx::TV::speedModePropertyIDToIndex(inPropertyID));
   }
 
-  std::array<int32_t, dfx::TV::kNumDelays> speedModeStates;
+  std::array<int32_t, dfx::TV::kNumDelays> speedModeStates {};
 };
 
 

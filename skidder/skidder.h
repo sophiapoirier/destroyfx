@@ -162,7 +162,7 @@ private:
 	std::unique_ptr<dfx::Crossover> mCrossover;
 
 	int mMostRecentVelocity = 0;  // the velocity of the most recently played note
-	std::array<int, DfxMidi::kNumNotes> mNoteTable;
+	std::array<int, DfxMidi::kNumNotes> mNoteTable {};
 	long mWaitSamples = 0;
 	bool mMidiIn = false, mMidiOut = false;  // set when notes start or stop so that the floor goes to 0.0
 
