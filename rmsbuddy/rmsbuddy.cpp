@@ -38,11 +38,11 @@ using namespace dfx::RMS;
 
 
 // macro for boring Component entry point stuff
-AUDIOCOMPONENT_ENTRY(AUBaseFactory, RMSBuddy)
+AUSDK_COMPONENT_ENTRY(ausdk::AUBaseFactory, RMSBuddy)
 
 //-----------------------------------------------------------------------------
 RMSBuddy::RMSBuddy(AudioComponentInstance inComponentInstance)
-:	AUEffectBase(inComponentInstance, true),
+:	ausdk::AUEffectBase(inComponentInstance, true),
 	mMinMeterValueDb(LinearToDecibels(1.0f / std::pow(2.0f, 24.0f)))  // smallest 24-bit audio value
 {
 	// initialize our parameters
@@ -318,7 +318,7 @@ OSStatus RMSBuddy::SetParameter(AudioUnitParameterID inParameterID, AudioUnitSco
 //-----------------------------------------------------------------------------------------
 // get the details about a property
 OSStatus RMSBuddy::GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
-								   UInt32& outDataSize, Boolean& outWritable)
+								   UInt32& outDataSize, bool& outWritable)
 {
 	switch (inPropertyID)
 	{
@@ -410,7 +410,7 @@ OSStatus RMSBuddy::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags,
 	// in which case we'll need to copy the audio input to output
 	if (!ProcessesInPlace())
 	{
-		GetInput(0)->CopyBufferContentsTo(outBuffer);
+		Input(0).CopyBufferContentsTo(outBuffer);
 	}
 
 	mTotalSamples += inFramesToProcess;

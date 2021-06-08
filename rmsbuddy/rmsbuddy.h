@@ -29,7 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //----------------------------------------------------------------------------- 
-class RMSBuddy final : public AUEffectBase
+class RMSBuddy final : public ausdk::AUEffectBase
 {
 public:
 	explicit RMSBuddy(AudioComponentInstance inComponentInstance);
@@ -46,7 +46,7 @@ public:
 	OSStatus CopyClumpName(AudioUnitScope inScope, UInt32 inClumpID, UInt32 inDesiredNameLength, CFStringRef* outClumpName) override;
 
 	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
-							 UInt32& outDataSize, Boolean& outWritable) override;
+							 UInt32& outDataSize, bool& outWritable) override;
 	OSStatus GetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 
 						 void* outData) override;
 	OSStatus SetProperty(AudioUnitPropertyID inPropertyID, AudioUnitScope inScope, AudioUnitElement inElement, 

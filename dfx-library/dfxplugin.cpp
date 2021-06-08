@@ -1293,7 +1293,7 @@ unsigned long DfxPlugin::getnuminputs()
 #ifdef TARGET_API_AUDIOUNIT
 	if (Inputs().GetNumberOfElements() > 0)
 	{
-		return GetStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0)).NumberChannels();
+		return GetStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0)).mChannelsPerFrame;
 	}
 	else
 	{
@@ -1328,7 +1328,7 @@ unsigned long DfxPlugin::getnumoutputs()
 #ifdef TARGET_API_AUDIOUNIT
 	if (Outputs().GetNumberOfElements() > 0)
 	{
-		return GetStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0)).NumberChannels();
+		return GetStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0)).mChannelsPerFrame;
 	}
 	else
 	{

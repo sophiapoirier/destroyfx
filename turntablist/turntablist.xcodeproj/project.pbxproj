@@ -9,16 +9,6 @@
 /* Begin PBXBuildFile section */
 		4916867F0684F09200B50765 /* scratch-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4916867E0684F09200B50765 /* scratch-mode-button.png */; };
 		4918B60D0680FC9C0034CE15 /* dfxsettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */; };
-		4932F48B06800FCD006A9591 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F45D06800FCD006A9591 /* AUBase.cpp */; };
-		4932F48F06800FCD006A9591 /* AUInputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46106800FCD006A9591 /* AUInputElement.cpp */; };
-		4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46306800FCD006A9591 /* AUOutputElement.cpp */; };
-		4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46606800FCD006A9591 /* AUScopeElement.cpp */; };
-		4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46806800FCD006A9591 /* ComponentBase.cpp */; };
-		4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F47B06800FCD006A9591 /* AUMIDIBase.cpp */; };
-		4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F48406800FCD006A9591 /* AUBuffer.cpp */; };
-		4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4B8068010B2006A9591 /* CAStreamBasicDescription.cpp */; };
-		4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4BC068010BE006A9591 /* CAAudioChannelLayout.cpp */; };
-		4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4C0068010CA006A9591 /* CAAUParameter.cpp */; };
 		4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4CA06801180006A9591 /* dfx-au-utilities.c */; };
 		4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4CE06801180006A9591 /* dfxparameter.cpp */; };
 		4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D006801180006A9591 /* dfxplugin-audiounit.cpp */; };
@@ -38,11 +28,9 @@
 		4932F6280680163F006A9591 /* play-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4932F61E0680163F006A9591 /* play-button.png */; };
 		4932F6290680163F006A9591 /* on-off-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 4932F61F0680163F006A9591 /* on-off-button.png */; };
 		4932F62B0680163F006A9591 /* slider-handle.png in Resources */ = {isa = PBXBuildFile; fileRef = 4932F6210680163F006A9591 /* slider-handle.png */; };
-		4932F7950680CB69006A9591 /* MusicDeviceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F7930680CB69006A9591 /* MusicDeviceBase.cpp */; };
 		4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F7990680E859006A9591 /* dfxmidi.cpp */; };
 		494990000684B6A400499D06 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 49498FFE0684B6A400499D06 /* Localizable.strings */; };
 		4987652A0684FE69005D81FC /* help-button.png in Resources */ = {isa = PBXBuildFile; fileRef = 498765290684FE69005D81FC /* help-button.png */; };
-		B025B98508AD317800A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025B98208AD317800A9CCAE /* CAVectorUnit.cpp */; };
 		B02ABB5E0B94F67F00CB674C /* Turntablist manual.html in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB500B94F67F00CB674C /* Turntablist manual.html */; };
 		B02ABB5F0B94F67F00CB674C /* turntablist-docs-helper.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB520B94F67F00CB674C /* turntablist-docs-helper.gif */; };
 		B02ABB600B94F67F00CB674C /* turntablist-docs-pitch.gif in Resources */ = {isa = PBXBuildFile; fileRef = B02ABB540B94F67F00CB674C /* turntablist-docs-pitch.gif */; };
@@ -62,7 +50,16 @@
 		EC0F0986208D271A00E06672 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC0F0981208D270100E06672 /* Carbon.framework */; };
 		EC248F4C20B67A6A00948A0E /* dfxenvelope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC248F4B20B67A6A00948A0E /* dfxenvelope.cpp */; };
 		EC2F842E24A7C1F000F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F842D24A7C1F000F29321 /* dfxmisc.mm */; };
-		EC89B36B208D2EBA00E15129 /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B36A208D2EBA00E15129 /* AUPlugInDispatch.cpp */; };
+		EC4FB16F256ADCDD00AFC27A /* AUBufferAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FB16E256ADCDD00AFC27A /* AUBufferAllocator.cpp */; };
+		EC53BE3525257C13005A1D50 /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE0925257C12005A1D50 /* ComponentBase.cpp */; };
+		EC53BE3625257C13005A1D50 /* MusicDeviceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE0A25257C12005A1D50 /* MusicDeviceBase.cpp */; };
+		EC53BE3725257C13005A1D50 /* AUScopeElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE0B25257C12005A1D50 /* AUScopeElement.cpp */; };
+		EC53BE3825257C13005A1D50 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE0D25257C12005A1D50 /* AUBase.cpp */; };
+		EC53BE3925257C13005A1D50 /* AUMIDIBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE1325257C12005A1D50 /* AUMIDIBase.cpp */; };
+		EC53BE3A25257C13005A1D50 /* AUOutputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE1425257C12005A1D50 /* AUOutputElement.cpp */; };
+		EC53BE3C25257C13005A1D50 /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE1825257C12005A1D50 /* AUPlugInDispatch.cpp */; };
+		EC53BE3D25257C13005A1D50 /* AUBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE1B25257C12005A1D50 /* AUBuffer.cpp */; };
+		EC53BE3F25257C13005A1D50 /* AUInputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC53BE2125257C12005A1D50 /* AUInputElement.cpp */; };
 		EC89B46B208D338600E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B469208D338600E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B472208D339C00E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B46C208D339A00E15129 /* dfxguidialog.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC89B473208D339C00E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B46F208D339B00E15129 /* dfxgui-auviewfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
@@ -76,28 +73,6 @@
 		4916867E0684F09200B50765 /* scratch-mode-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "scratch-mode-button.png"; sourceTree = "<group>"; };
 		4918B60B0680FC9C0034CE15 /* dfxsettings.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxsettings.cpp; sourceTree = "<group>"; };
 		4918B60C0680FC9C0034CE15 /* dfxsettings.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxsettings.h; sourceTree = "<group>"; };
-		4919537206C5398A00221230 /* CAMath.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAMath.h; sourceTree = "<group>"; };
-		4932F45D06800FCD006A9591 /* AUBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUBase.cpp; sourceTree = "<group>"; };
-		4932F45E06800FCD006A9591 /* AUBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUBase.h; sourceTree = "<group>"; };
-		4932F46106800FCD006A9591 /* AUInputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUInputElement.cpp; sourceTree = "<group>"; };
-		4932F46206800FCD006A9591 /* AUInputElement.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUInputElement.h; sourceTree = "<group>"; };
-		4932F46306800FCD006A9591 /* AUOutputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUOutputElement.cpp; sourceTree = "<group>"; };
-		4932F46406800FCD006A9591 /* AUOutputElement.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUOutputElement.h; sourceTree = "<group>"; };
-		4932F46606800FCD006A9591 /* AUScopeElement.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUScopeElement.cpp; sourceTree = "<group>"; };
-		4932F46706800FCD006A9591 /* AUScopeElement.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUScopeElement.h; sourceTree = "<group>"; };
-		4932F46806800FCD006A9591 /* ComponentBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentBase.cpp; sourceTree = "<group>"; };
-		4932F46906800FCD006A9591 /* ComponentBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ComponentBase.h; sourceTree = "<group>"; };
-		4932F47B06800FCD006A9591 /* AUMIDIBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUMIDIBase.cpp; sourceTree = "<group>"; };
-		4932F47C06800FCD006A9591 /* AUMIDIBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUMIDIBase.h; sourceTree = "<group>"; };
-		4932F48406800FCD006A9591 /* AUBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUBuffer.cpp; sourceTree = "<group>"; };
-		4932F48506800FCD006A9591 /* AUBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUBuffer.h; sourceTree = "<group>"; };
-		4932F48906800FCD006A9591 /* AUSilentTimeout.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUSilentTimeout.h; sourceTree = "<group>"; };
-		4932F4B8068010B2006A9591 /* CAStreamBasicDescription.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAStreamBasicDescription.cpp; sourceTree = "<group>"; };
-		4932F4B9068010B2006A9591 /* CAStreamBasicDescription.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAStreamBasicDescription.h; sourceTree = "<group>"; };
-		4932F4BC068010BE006A9591 /* CAAudioChannelLayout.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAAudioChannelLayout.cpp; sourceTree = "<group>"; };
-		4932F4BD068010BE006A9591 /* CAAudioChannelLayout.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAAudioChannelLayout.h; sourceTree = "<group>"; };
-		4932F4C0068010CA006A9591 /* CAAUParameter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAAUParameter.cpp; sourceTree = "<group>"; };
-		4932F4C1068010CA006A9591 /* CAAUParameter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAAUParameter.h; sourceTree = "<group>"; };
 		4932F4CA06801180006A9591 /* dfx-au-utilities.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities.c"; sourceTree = "<group>"; };
 		4932F4CB06801180006A9591 /* dfx-au-utilities.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities.h"; sourceTree = "<group>"; };
 		4932F4CC06801180006A9591 /* dfxdefines.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxdefines.h; sourceTree = "<group>"; };
@@ -133,17 +108,12 @@
 		4932F61E0680163F006A9591 /* play-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "play-button.png"; sourceTree = "<group>"; };
 		4932F61F0680163F006A9591 /* on-off-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "on-off-button.png"; sourceTree = "<group>"; };
 		4932F6210680163F006A9591 /* slider-handle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "slider-handle.png"; sourceTree = "<group>"; };
-		4932F7930680CB69006A9591 /* MusicDeviceBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MusicDeviceBase.cpp; sourceTree = "<group>"; };
-		4932F7940680CB69006A9591 /* MusicDeviceBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MusicDeviceBase.h; sourceTree = "<group>"; };
 		4932F7990680E859006A9591 /* dfxmidi.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmidi.cpp; sourceTree = "<group>"; };
 		4932F79A0680E859006A9591 /* dfxmidi.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxmidi.h; sourceTree = "<group>"; };
 		49498FFF0684B6A400499D06 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4974CB31068B2407001404D7 /* todo.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = todo.txt; sourceTree = "<group>"; };
 		498765290684FE69005D81FC /* help-button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "help-button.png"; sourceTree = "<group>"; };
 		8D01CCD20486CAD60068D4B7 /* dfx Turntablist.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Turntablist.component"; sourceTree = BUILT_PRODUCTS_DIR; };
-		B025B98208AD317800A9CCAE /* CAVectorUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAVectorUnit.cpp; sourceTree = "<group>"; };
-		B025B98308AD317800A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
-		B025B98408AD317800A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
 		B02ABB510B94F67F00CB674C /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = English; path = "en.lproj/Turntablist manual.html"; sourceTree = "<group>"; };
 		B02ABB530B94F67F00CB674C /* English */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = English; path = "en.lproj/turntablist-docs-helper.gif"; sourceTree = "<group>"; };
 		B02ABB550B94F67F00CB674C /* English */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = English; path = "en.lproj/turntablist-docs-pitch.gif"; sourceTree = "<group>"; };
@@ -169,10 +139,30 @@
 		EC248F4B20B67A6A00948A0E /* dfxenvelope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxenvelope.cpp; sourceTree = "<group>"; };
 		EC2F842D24A7C1F000F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
 		EC390FEF20CCA95700A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		EC4FB16E256ADCDD00AFC27A /* AUBufferAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBufferAllocator.cpp; sourceTree = "<group>"; };
+		EC53BE0925257C12005A1D50 /* ComponentBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentBase.cpp; sourceTree = "<group>"; };
+		EC53BE0A25257C12005A1D50 /* MusicDeviceBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MusicDeviceBase.cpp; sourceTree = "<group>"; };
+		EC53BE0B25257C12005A1D50 /* AUScopeElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUScopeElement.cpp; sourceTree = "<group>"; };
+		EC53BE0C25257C12005A1D50 /* ComponentBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComponentBase.h; sourceTree = "<group>"; };
+		EC53BE0D25257C12005A1D50 /* AUBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBase.cpp; sourceTree = "<group>"; };
+		EC53BE0E25257C12005A1D50 /* AUInputElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUInputElement.h; sourceTree = "<group>"; };
+		EC53BE1025257C12005A1D50 /* AUBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUBase.h; sourceTree = "<group>"; };
+		EC53BE1125257C12005A1D50 /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
+		EC53BE1225257C12005A1D50 /* AUMIDIBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUMIDIBase.h; sourceTree = "<group>"; };
+		EC53BE1325257C12005A1D50 /* AUMIDIBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUMIDIBase.cpp; sourceTree = "<group>"; };
+		EC53BE1425257C12005A1D50 /* AUOutputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUOutputElement.cpp; sourceTree = "<group>"; };
+		EC53BE1525257C12005A1D50 /* AUUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUUtility.h; sourceTree = "<group>"; };
+		EC53BE1625257C12005A1D50 /* AUSilentTimeout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUSilentTimeout.h; sourceTree = "<group>"; };
+		EC53BE1825257C12005A1D50 /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
+		EC53BE1A25257C12005A1D50 /* AUOutputElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUOutputElement.h; sourceTree = "<group>"; };
+		EC53BE1B25257C12005A1D50 /* AUBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBuffer.cpp; sourceTree = "<group>"; };
+		EC53BE1D25257C12005A1D50 /* MusicDeviceBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MusicDeviceBase.h; sourceTree = "<group>"; };
+		EC53BE1E25257C12005A1D50 /* AUBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUBuffer.h; sourceTree = "<group>"; };
+		EC53BE1F25257C12005A1D50 /* AUScopeElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUScopeElement.h; sourceTree = "<group>"; };
+		EC53BE2025257C12005A1D50 /* AudioUnitSDK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioUnitSDK.h; sourceTree = "<group>"; };
+		EC53BE2125257C12005A1D50 /* AUInputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUInputElement.cpp; sourceTree = "<group>"; };
 		EC5CC73A210EE09D007CCD6B /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC5CC73B210EE09D007CCD6B /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
-		EC89B369208D2EB900E15129 /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
-		EC89B36A208D2EBA00E15129 /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
 		EC89B466208D338500E15129 /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
 		EC89B467208D338500E15129 /* dfxplugin-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxplugin-base.h"; sourceTree = "<group>"; };
 		EC89B468208D338500E15129 /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
@@ -219,8 +209,7 @@
 				08FB77ADFE841716C02AAC07 /* Turntablist */,
 				4932F4C6068010F8006A9591 /* DFX Library */,
 				4932F4C906801110006A9591 /* DFX GUI */,
-				4932F45B06800F80006A9591 /* AUPublic */,
-				4932F4B70680108C006A9591 /* PublicUtility */,
+				EC53BDFF25257C12005A1D50 /* AudioUnitSDK */,
 				EC89B4FD208D367600E15129 /* VSTGUI */,
 				089C167CFE841241C02AAC07 /* Resources */,
 				089C1671FE841209C02AAC07 /* Frameworks */,
@@ -291,75 +280,6 @@
 				498765290684FE69005D81FC /* help-button.png */,
 			);
 			path = graphics;
-			sourceTree = "<group>";
-		};
-		4932F45B06800F80006A9591 /* AUPublic */ = {
-			isa = PBXGroup;
-			children = (
-				4932F45C06800FCD006A9591 /* AUBase */,
-				4932F47606800FCD006A9591 /* OtherBases */,
-				4932F48306800FCD006A9591 /* Utility */,
-			);
-			name = AUPublic;
-			path = ../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic;
-			sourceTree = "<group>";
-		};
-		4932F45C06800FCD006A9591 /* AUBase */ = {
-			isa = PBXGroup;
-			children = (
-				4932F45E06800FCD006A9591 /* AUBase.h */,
-				4932F45D06800FCD006A9591 /* AUBase.cpp */,
-				4932F46206800FCD006A9591 /* AUInputElement.h */,
-				4932F46106800FCD006A9591 /* AUInputElement.cpp */,
-				4932F46406800FCD006A9591 /* AUOutputElement.h */,
-				4932F46306800FCD006A9591 /* AUOutputElement.cpp */,
-				EC89B369208D2EB900E15129 /* AUPlugInDispatch.h */,
-				EC89B36A208D2EBA00E15129 /* AUPlugInDispatch.cpp */,
-				4932F46706800FCD006A9591 /* AUScopeElement.h */,
-				4932F46606800FCD006A9591 /* AUScopeElement.cpp */,
-				4932F46906800FCD006A9591 /* ComponentBase.h */,
-				4932F46806800FCD006A9591 /* ComponentBase.cpp */,
-			);
-			path = AUBase;
-			sourceTree = "<group>";
-		};
-		4932F47606800FCD006A9591 /* OtherBases */ = {
-			isa = PBXGroup;
-			children = (
-				4932F47C06800FCD006A9591 /* AUMIDIBase.h */,
-				4932F47B06800FCD006A9591 /* AUMIDIBase.cpp */,
-				4932F7940680CB69006A9591 /* MusicDeviceBase.h */,
-				4932F7930680CB69006A9591 /* MusicDeviceBase.cpp */,
-			);
-			path = OtherBases;
-			sourceTree = "<group>";
-		};
-		4932F48306800FCD006A9591 /* Utility */ = {
-			isa = PBXGroup;
-			children = (
-				4932F48506800FCD006A9591 /* AUBuffer.h */,
-				4932F48406800FCD006A9591 /* AUBuffer.cpp */,
-				4932F48906800FCD006A9591 /* AUSilentTimeout.h */,
-			);
-			path = Utility;
-			sourceTree = "<group>";
-		};
-		4932F4B70680108C006A9591 /* PublicUtility */ = {
-			isa = PBXGroup;
-			children = (
-				4932F4B9068010B2006A9591 /* CAStreamBasicDescription.h */,
-				4932F4B8068010B2006A9591 /* CAStreamBasicDescription.cpp */,
-				4932F4BD068010BE006A9591 /* CAAudioChannelLayout.h */,
-				4932F4BC068010BE006A9591 /* CAAudioChannelLayout.cpp */,
-				4919537206C5398A00221230 /* CAMath.h */,
-				4932F4C1068010CA006A9591 /* CAAUParameter.h */,
-				4932F4C0068010CA006A9591 /* CAAUParameter.cpp */,
-				B025B98408AD317800A9CCAE /* CAVectorUnitTypes.h */,
-				B025B98308AD317800A9CCAE /* CAVectorUnit.h */,
-				B025B98208AD317800A9CCAE /* CAVectorUnit.cpp */,
-			);
-			name = PublicUtility;
-			path = ../CoreAudioUtilityClasses/CoreAudio/PublicUtility;
 			sourceTree = "<group>";
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
@@ -440,6 +360,44 @@
 				B02ABB5C0B94F67F00CB674C /* turntablist-docs-full.gif */,
 			);
 			path = documentation;
+			sourceTree = "<group>";
+		};
+		EC53BDFF25257C12005A1D50 /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				EC53BE0825257C12005A1D50 /* Source */,
+			);
+			name = AudioUnitSDK;
+			path = ../AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		EC53BE0825257C12005A1D50 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				EC53BE1025257C12005A1D50 /* AUBase.h */,
+				EC53BE0D25257C12005A1D50 /* AUBase.cpp */,
+				EC53BE1E25257C12005A1D50 /* AUBuffer.h */,
+				EC53BE1B25257C12005A1D50 /* AUBuffer.cpp */,
+				EC4FB16E256ADCDD00AFC27A /* AUBufferAllocator.cpp */,
+				EC53BE2025257C12005A1D50 /* AudioUnitSDK.h */,
+				EC53BE0E25257C12005A1D50 /* AUInputElement.h */,
+				EC53BE1225257C12005A1D50 /* AUMIDIBase.h */,
+				EC53BE1325257C12005A1D50 /* AUMIDIBase.cpp */,
+				EC53BE1A25257C12005A1D50 /* AUOutputElement.h */,
+				EC53BE1425257C12005A1D50 /* AUOutputElement.cpp */,
+				EC53BE1125257C12005A1D50 /* AUPlugInDispatch.h */,
+				EC53BE1825257C12005A1D50 /* AUPlugInDispatch.cpp */,
+				EC53BE1F25257C12005A1D50 /* AUScopeElement.h */,
+				EC53BE0B25257C12005A1D50 /* AUScopeElement.cpp */,
+				EC53BE1625257C12005A1D50 /* AUSilentTimeout.h */,
+				EC53BE1525257C12005A1D50 /* AUUtility.h */,
+				EC53BE2125257C12005A1D50 /* AUInputElement.cpp */,
+				EC53BE0C25257C12005A1D50 /* ComponentBase.h */,
+				EC53BE0925257C12005A1D50 /* ComponentBase.cpp */,
+				EC53BE1D25257C12005A1D50 /* MusicDeviceBase.h */,
+				EC53BE0A25257C12005A1D50 /* MusicDeviceBase.cpp */,
+			);
+			path = Source;
 			sourceTree = "<group>";
 		};
 		EC89B4FD208D367600E15129 /* VSTGUI */ = {
@@ -563,42 +521,39 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4932F48B06800FCD006A9591 /* AUBase.cpp in Sources */,
 				EC89B50F208D371700E15129 /* plugguieditor.cpp in Sources */,
 				EC0EF45D2524FBAC00864283 /* iirfilter.cpp in Sources */,
-				4932F48F06800FCD006A9591 /* AUInputElement.cpp in Sources */,
-				4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */,
-				4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */,
-				4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */,
-				4932F4A606800FCD006A9591 /* AUMIDIBase.cpp in Sources */,
-				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
 				EC8AB22F24CDF3F9000504F0 /* dfxgui-fontfactory.mm in Sources */,
-				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
-				4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */,
-				4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */,
 				EC89B472208D339C00E15129 /* dfxguidialog.cpp in Sources */,
+				EC53BE3825257C13005A1D50 /* AUBase.cpp in Sources */,
 				4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */,
 				4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */,
+				EC53BE3925257C13005A1D50 /* AUMIDIBase.cpp in Sources */,
+				EC53BE3525257C13005A1D50 /* ComponentBase.cpp in Sources */,
 				4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */,
 				EC2F842E24A7C1F000F29321 /* dfxmisc.mm in Sources */,
 				4932F4DC06801180006A9591 /* dfxplugin.cpp in Sources */,
 				ECE4CBE520D0CA430026E215 /* dfxguimisc.mm in Sources */,
-				EC89B36B208D2EBA00E15129 /* AUPlugInDispatch.cpp in Sources */,
 				4932F4EC068011C9006A9591 /* dfxguieditor.cpp in Sources */,
+				EC53BE3D25257C13005A1D50 /* AUBuffer.cpp in Sources */,
+				EC53BE3725257C13005A1D50 /* AUScopeElement.cpp in Sources */,
+				EC4FB16F256ADCDD00AFC27A /* AUBufferAllocator.cpp in Sources */,
 				EC89B473208D339C00E15129 /* dfxgui-auviewfactory.mm in Sources */,
 				4932F4EE068011C9006A9591 /* dfxguibutton.cpp in Sources */,
 				EC248F4C20B67A6A00948A0E /* dfxenvelope.cpp in Sources */,
 				EC89B500208D371000E15129 /* vstgui_mac.mm in Sources */,
+				EC53BE3F25257C13005A1D50 /* AUInputElement.cpp in Sources */,
 				4932F4F0068011C9006A9591 /* dfxguicontrol.cpp in Sources */,
 				EC89B46B208D338600E15129 /* dfx-au-utilities-preset-files.m in Sources */,
+				EC53BE3625257C13005A1D50 /* MusicDeviceBase.cpp in Sources */,
 				4932F4F2068011C9006A9591 /* dfxguitextdisplay.cpp in Sources */,
 				4932F4F4068011C9006A9591 /* dfxguislider.cpp in Sources */,
+				EC53BE3C25257C13005A1D50 /* AUPlugInDispatch.cpp in Sources */,
 				4932F6110680136D006A9591 /* turntablist.cpp in Sources */,
 				4932F6160680136D006A9591 /* turntablisteditor.mm in Sources */,
-				4932F7950680CB69006A9591 /* MusicDeviceBase.cpp in Sources */,
+				EC53BE3A25257C13005A1D50 /* AUOutputElement.cpp in Sources */,
 				4932F79B0680E859006A9591 /* dfxmidi.cpp in Sources */,
 				4918B60D0680FC9C0034CE15 /* dfxsettings.cpp in Sources */,
-				B025B98508AD317800A9CCAE /* CAVectorUnit.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

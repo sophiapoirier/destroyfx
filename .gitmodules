@@ -2,3 +2,6 @@
 	path = vstgui
 	url = https://github.com/steinbergmedia/vstgui
 	ignore = untracked
+[submodule "AudioUnitSDK"]
+	path = AudioUnitSDK
+	url = https://github.com/apple/AudioUnitSDK

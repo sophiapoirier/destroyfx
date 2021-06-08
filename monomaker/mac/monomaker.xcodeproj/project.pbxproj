@@ -7,22 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		490E76A207CAE24800688A1D /* AUEffectBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490E76A007CAE24800688A1D /* AUEffectBase.cpp */; };
-		4932F48B06800FCD006A9591 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F45D06800FCD006A9591 /* AUBase.cpp */; };
-		4932F48F06800FCD006A9591 /* AUInputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46106800FCD006A9591 /* AUInputElement.cpp */; };
-		4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46306800FCD006A9591 /* AUOutputElement.cpp */; };
-		4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46606800FCD006A9591 /* AUScopeElement.cpp */; };
-		4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F46806800FCD006A9591 /* ComponentBase.cpp */; };
-		4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F48406800FCD006A9591 /* AUBuffer.cpp */; };
-		4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4B8068010B2006A9591 /* CAStreamBasicDescription.cpp */; };
-		4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4BC068010BE006A9591 /* CAAudioChannelLayout.cpp */; };
-		4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4C0068010CA006A9591 /* CAAUParameter.cpp */; };
 		4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4CA06801180006A9591 /* dfx-au-utilities.c */; };
 		4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4CE06801180006A9591 /* dfxparameter.cpp */; };
 		4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D006801180006A9591 /* dfxplugin-audiounit.cpp */; };
 		4932F4DC06801180006A9591 /* dfxplugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4932F4D106801180006A9591 /* dfxplugin.cpp */; };
 		49BB469407E533D000861708 /* monomaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49BB469107E533D000861708 /* monomaker.cpp */; };
-		B025BA1C08AD35E100A9CCAE /* CAVectorUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B025BA1908AD35E100A9CCAE /* CAVectorUnit.cpp */; };
 		B028C2A60D0F320A00ADA1DA /* destroyfx.icns in Resources */ = {isa = PBXBuildFile; fileRef = B028C2A50D0F320A00ADA1DA /* destroyfx.icns */; };
 		B046209B08C4B3CC00C3D95E /* monomakereditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B046209908C4B3CC00C3D95E /* monomakereditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		B04620B408C4B42100C3D95E /* dfxguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B04620A808C4B42100C3D95E /* dfxguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
@@ -40,6 +29,7 @@
 		B04621F008C4E7F200C3D95E /* pan-mode-button.png in Resources */ = {isa = PBXBuildFile; fileRef = B04621ED08C4E7F200C3D95E /* pan-mode-button.png */; };
 		EC2F843824A7C2BB00F29321 /* dfxmisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC2F843724A7C2BB00F29321 /* dfxmisc.mm */; };
 		EC40EDB220DB4B9C00F5C0A7 /* dfxguimisc.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC40EDB120DB4B9C00F5C0A7 /* dfxguimisc.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
+		EC4FB187256AE2A200AFC27A /* AUBufferAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC4FB186256AE2A200AFC27A /* AUBufferAllocator.cpp */; };
 		EC89B2EB208D28A000E15129 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2E4208D289E00E15129 /* Accelerate.framework */; };
 		EC89B2EC208D28A000E15129 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2E5208D289F00E15129 /* OpenGL.framework */; };
 		EC89B2ED208D28A000E15129 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2E6208D289F00E15129 /* QuartzCore.framework */; };
@@ -47,7 +37,6 @@
 		EC89B2EF208D28A000E15129 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2E8208D289F00E15129 /* AudioUnit.framework */; };
 		EC89B2F0208D28A000E15129 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2E9208D28A000E15129 /* AudioToolbox.framework */; };
 		EC89B2F1208D28A000E15129 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC89B2EA208D28A000E15129 /* Carbon.framework */; };
-		EC89B41B208D2F9900E15129 /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B41A208D2F9900E15129 /* AUPlugInDispatch.cpp */; };
 		EC89B42C208D31E800E15129 /* dfx-au-utilities-preset-files.m in Sources */ = {isa = PBXBuildFile; fileRef = EC89B42A208D31E700E15129 /* dfx-au-utilities-preset-files.m */; };
 		EC89B433208D321F00E15129 /* dfxguidialog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B42D208D321D00E15129 /* dfxguidialog.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		EC89B434208D321F00E15129 /* dfxgui-auviewfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC89B430208D321E00E15129 /* dfxgui-auviewfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
@@ -55,31 +44,17 @@
 		EC89B4BE208D359900E15129 /* plugguieditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EC89B4B7208D359900E15129 /* plugguieditor.cpp */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS) -Wno-non-virtual-dtor -Wno-deprecated-declarations -Wno-four-char-constants"; }; };
 		EC8AB24424CDF592000504F0 /* dfxgui-fontfactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC8AB24124CDF592000504F0 /* dfxgui-fontfactory.mm */; settings = {COMPILER_FLAGS = "$(inherited) $(DFX_GUI_COMPILER_FLAGS)"; }; };
 		ECC43141102F5518000B05A1 /* dfx-au-utilities.strings in Resources */ = {isa = PBXBuildFile; fileRef = ECC4313F102F5518000B05A1 /* dfx-au-utilities.strings */; };
+		ECD59823253DE93500ED0061 /* ComponentBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD597F7253DE93500ED0061 /* ComponentBase.cpp */; };
+		ECD59825253DE93500ED0061 /* AUScopeElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD597F9253DE93500ED0061 /* AUScopeElement.cpp */; };
+		ECD59826253DE93500ED0061 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD597FB253DE93500ED0061 /* AUBase.cpp */; };
+		ECD59828253DE93500ED0061 /* AUOutputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD59802253DE93500ED0061 /* AUOutputElement.cpp */; };
+		ECD59829253DE93500ED0061 /* AUEffectBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD59805253DE93500ED0061 /* AUEffectBase.cpp */; };
+		ECD5982A253DE93500ED0061 /* AUPlugInDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD59806253DE93500ED0061 /* AUPlugInDispatch.cpp */; };
+		ECD5982B253DE93500ED0061 /* AUBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD59809253DE93500ED0061 /* AUBuffer.cpp */; };
+		ECD5982D253DE93500ED0061 /* AUInputElement.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ECD5980F253DE93500ED0061 /* AUInputElement.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		490E76A007CAE24800688A1D /* AUEffectBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUEffectBase.cpp; sourceTree = "<group>"; };
-		490E76A107CAE24800688A1D /* AUEffectBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUEffectBase.h; sourceTree = "<group>"; };
-		4919537206C5398A00221230 /* CAMath.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAMath.h; sourceTree = "<group>"; };
-		4932F45D06800FCD006A9591 /* AUBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUBase.cpp; sourceTree = "<group>"; };
-		4932F45E06800FCD006A9591 /* AUBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUBase.h; sourceTree = "<group>"; };
-		4932F46106800FCD006A9591 /* AUInputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUInputElement.cpp; sourceTree = "<group>"; };
-		4932F46206800FCD006A9591 /* AUInputElement.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUInputElement.h; sourceTree = "<group>"; };
-		4932F46306800FCD006A9591 /* AUOutputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUOutputElement.cpp; sourceTree = "<group>"; };
-		4932F46406800FCD006A9591 /* AUOutputElement.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUOutputElement.h; sourceTree = "<group>"; };
-		4932F46606800FCD006A9591 /* AUScopeElement.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUScopeElement.cpp; sourceTree = "<group>"; };
-		4932F46706800FCD006A9591 /* AUScopeElement.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUScopeElement.h; sourceTree = "<group>"; };
-		4932F46806800FCD006A9591 /* ComponentBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentBase.cpp; sourceTree = "<group>"; };
-		4932F46906800FCD006A9591 /* ComponentBase.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ComponentBase.h; sourceTree = "<group>"; };
-		4932F48406800FCD006A9591 /* AUBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUBuffer.cpp; sourceTree = "<group>"; };
-		4932F48506800FCD006A9591 /* AUBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUBuffer.h; sourceTree = "<group>"; };
-		4932F48906800FCD006A9591 /* AUSilentTimeout.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AUSilentTimeout.h; sourceTree = "<group>"; };
-		4932F4B8068010B2006A9591 /* CAStreamBasicDescription.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAStreamBasicDescription.cpp; sourceTree = "<group>"; };
-		4932F4B9068010B2006A9591 /* CAStreamBasicDescription.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAStreamBasicDescription.h; sourceTree = "<group>"; };
-		4932F4BC068010BE006A9591 /* CAAudioChannelLayout.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAAudioChannelLayout.cpp; sourceTree = "<group>"; };
-		4932F4BD068010BE006A9591 /* CAAudioChannelLayout.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAAudioChannelLayout.h; sourceTree = "<group>"; };
-		4932F4C0068010CA006A9591 /* CAAUParameter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAAUParameter.cpp; sourceTree = "<group>"; };
-		4932F4C1068010CA006A9591 /* CAAUParameter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAAUParameter.h; sourceTree = "<group>"; };
 		4932F4CA06801180006A9591 /* dfx-au-utilities.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = "dfx-au-utilities.c"; sourceTree = "<group>"; };
 		4932F4CB06801180006A9591 /* dfx-au-utilities.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities.h"; sourceTree = "<group>"; };
 		4932F4CC06801180006A9591 /* dfxdefines.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = dfxdefines.h; sourceTree = "<group>"; };
@@ -96,9 +71,6 @@
 		49BB469907E533DD00861708 /* monomaker.exp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.exports; name = monomaker.exp; path = mac/monomaker.exp; sourceTree = "<group>"; };
 		8D01CCD20486CAD60068D4B7 /* dfx Monomaker.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "dfx Monomaker.component"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B008FC2308ECA56C00DA7FCA /* dfx-au-utilities-private.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "dfx-au-utilities-private.h"; sourceTree = "<group>"; };
-		B025BA1908AD35E100A9CCAE /* CAVectorUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAVectorUnit.cpp; sourceTree = "<group>"; };
-		B025BA1A08AD35E100A9CCAE /* CAVectorUnit.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnit.h; sourceTree = "<group>"; };
-		B025BA1B08AD35E100A9CCAE /* CAVectorUnitTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CAVectorUnitTypes.h; sourceTree = "<group>"; };
 		B028C2A50D0F320A00ADA1DA /* destroyfx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = destroyfx.icns; path = "../../dfx-library/destroyfx.icns"; sourceTree = "<group>"; };
 		B046209908C4B3CC00C3D95E /* monomakereditor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = monomakereditor.cpp; path = gui/monomakereditor.cpp; sourceTree = "<group>"; };
 		B046209A08C4B3CC00C3D95E /* monomakereditor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = monomakereditor.h; path = gui/monomakereditor.h; sourceTree = "<group>"; };
@@ -125,6 +97,7 @@
 		EC2F843724A7C2BB00F29321 /* dfxmisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxmisc.mm; sourceTree = "<group>"; };
 		EC390FF420CCAA8400A62FDE /* es */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = es; path = "../../dfx-library/es.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		EC40EDB120DB4B9C00F5C0A7 /* dfxguimisc.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dfxguimisc.mm; sourceTree = "<group>"; };
+		EC4FB186256AE2A200AFC27A /* AUBufferAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBufferAllocator.cpp; sourceTree = "<group>"; };
 		EC63C981210EE619006279D2 /* idfxguicontrol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxguicontrol.h; sourceTree = "<group>"; };
 		EC63C982210EE619006279D2 /* dfxguicontrol.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dfxguicontrol.hpp; sourceTree = "<group>"; };
 		EC7565B7220D1ACF0083D46A /* idfxsmoothedvalue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = idfxsmoothedvalue.h; sourceTree = "<group>"; };
@@ -137,8 +110,6 @@
 		EC89B2E8208D289F00E15129 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		EC89B2E9208D28A000E15129 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		EC89B2EA208D28A000E15129 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
-		EC89B419208D2F9800E15129 /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
-		EC89B41A208D2F9900E15129 /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
 		EC89B427208D31E600E15129 /* dfxmisc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dfxmisc.cpp; sourceTree = "<group>"; };
 		EC89B428208D31E600E15129 /* dfxplugin-base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "dfxplugin-base.h"; sourceTree = "<group>"; };
 		EC89B429208D31E700E15129 /* dfxmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dfxmisc.h; sourceTree = "<group>"; };
@@ -161,6 +132,25 @@
 		ECC43142102F551F000B05A1 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = "../../dfx-library/fr.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECC43143102F5527000B05A1 /* nl */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = nl; path = "../../dfx-library/nl.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
 		ECD0B25320CC2FEA006CD7D1 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = "../../dfx-library/de.lproj/dfx-au-utilities.strings"; sourceTree = "<group>"; };
+		ECD597F7253DE93500ED0061 /* ComponentBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentBase.cpp; sourceTree = "<group>"; };
+		ECD597F9253DE93500ED0061 /* AUScopeElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUScopeElement.cpp; sourceTree = "<group>"; };
+		ECD597FA253DE93500ED0061 /* ComponentBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComponentBase.h; sourceTree = "<group>"; };
+		ECD597FB253DE93500ED0061 /* AUBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBase.cpp; sourceTree = "<group>"; };
+		ECD597FC253DE93500ED0061 /* AUInputElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUInputElement.h; sourceTree = "<group>"; };
+		ECD597FE253DE93500ED0061 /* AUBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUBase.h; sourceTree = "<group>"; };
+		ECD597FF253DE93500ED0061 /* AUPlugInDispatch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUPlugInDispatch.h; sourceTree = "<group>"; };
+		ECD59802253DE93500ED0061 /* AUOutputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUOutputElement.cpp; sourceTree = "<group>"; };
+		ECD59803253DE93500ED0061 /* AUUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUUtility.h; sourceTree = "<group>"; };
+		ECD59804253DE93500ED0061 /* AUSilentTimeout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUSilentTimeout.h; sourceTree = "<group>"; };
+		ECD59805253DE93500ED0061 /* AUEffectBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUEffectBase.cpp; sourceTree = "<group>"; };
+		ECD59806253DE93500ED0061 /* AUPlugInDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUPlugInDispatch.cpp; sourceTree = "<group>"; };
+		ECD59807253DE93500ED0061 /* AUEffectBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUEffectBase.h; sourceTree = "<group>"; };
+		ECD59808253DE93500ED0061 /* AUOutputElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUOutputElement.h; sourceTree = "<group>"; };
+		ECD59809253DE93500ED0061 /* AUBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUBuffer.cpp; sourceTree = "<group>"; };
+		ECD5980C253DE93500ED0061 /* AUBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUBuffer.h; sourceTree = "<group>"; };
+		ECD5980D253DE93500ED0061 /* AUScopeElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AUScopeElement.h; sourceTree = "<group>"; };
+		ECD5980E253DE93500ED0061 /* AudioUnitSDK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioUnitSDK.h; sourceTree = "<group>"; };
+		ECD5980F253DE93500ED0061 /* AUInputElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AUInputElement.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -187,8 +177,7 @@
 				08FB77ADFE841716C02AAC07 /* Monomaker */,
 				4932F4C6068010F8006A9591 /* DFX Library */,
 				B04620A308C4B3FC00C3D95E /* DFX GUI */,
-				4932F45B06800F80006A9591 /* AUPublic */,
-				4932F4B70680108C006A9591 /* PublicUtility */,
+				ECD597ED253DE93500ED0061 /* AudioUnitSDK */,
 				EC89B4AD208D357100E15129 /* VSTGUI */,
 				089C167CFE841241C02AAC07 /* Resources */,
 				089C1671FE841209C02AAC07 /* Frameworks */,
@@ -241,73 +230,6 @@
 				8D01CCD20486CAD60068D4B7 /* dfx Monomaker.component */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		4932F45B06800F80006A9591 /* AUPublic */ = {
-			isa = PBXGroup;
-			children = (
-				4932F45C06800FCD006A9591 /* AUBase */,
-				4932F47606800FCD006A9591 /* OtherBases */,
-				4932F48306800FCD006A9591 /* Utility */,
-			);
-			name = AUPublic;
-			path = ../../CoreAudioUtilityClasses/CoreAudio/AudioUnits/AUPublic;
-			sourceTree = "<group>";
-		};
-		4932F45C06800FCD006A9591 /* AUBase */ = {
-			isa = PBXGroup;
-			children = (
-				4932F45E06800FCD006A9591 /* AUBase.h */,
-				4932F45D06800FCD006A9591 /* AUBase.cpp */,
-				4932F46206800FCD006A9591 /* AUInputElement.h */,
-				4932F46106800FCD006A9591 /* AUInputElement.cpp */,
-				4932F46406800FCD006A9591 /* AUOutputElement.h */,
-				4932F46306800FCD006A9591 /* AUOutputElement.cpp */,
-				EC89B419208D2F9800E15129 /* AUPlugInDispatch.h */,
-				EC89B41A208D2F9900E15129 /* AUPlugInDispatch.cpp */,
-				4932F46706800FCD006A9591 /* AUScopeElement.h */,
-				4932F46606800FCD006A9591 /* AUScopeElement.cpp */,
-				4932F46906800FCD006A9591 /* ComponentBase.h */,
-				4932F46806800FCD006A9591 /* ComponentBase.cpp */,
-			);
-			path = AUBase;
-			sourceTree = "<group>";
-		};
-		4932F47606800FCD006A9591 /* OtherBases */ = {
-			isa = PBXGroup;
-			children = (
-				490E76A107CAE24800688A1D /* AUEffectBase.h */,
-				490E76A007CAE24800688A1D /* AUEffectBase.cpp */,
-			);
-			path = OtherBases;
-			sourceTree = "<group>";
-		};
-		4932F48306800FCD006A9591 /* Utility */ = {
-			isa = PBXGroup;
-			children = (
-				4932F48506800FCD006A9591 /* AUBuffer.h */,
-				4932F48406800FCD006A9591 /* AUBuffer.cpp */,
-				4932F48906800FCD006A9591 /* AUSilentTimeout.h */,
-			);
-			path = Utility;
-			sourceTree = "<group>";
-		};
-		4932F4B70680108C006A9591 /* PublicUtility */ = {
-			isa = PBXGroup;
-			children = (
-				4932F4B9068010B2006A9591 /* CAStreamBasicDescription.h */,
-				4932F4B8068010B2006A9591 /* CAStreamBasicDescription.cpp */,
-				4932F4BD068010BE006A9591 /* CAAudioChannelLayout.h */,
-				4932F4BC068010BE006A9591 /* CAAudioChannelLayout.cpp */,
-				4919537206C5398A00221230 /* CAMath.h */,
-				4932F4C1068010CA006A9591 /* CAAUParameter.h */,
-				4932F4C0068010CA006A9591 /* CAAUParameter.cpp */,
-				B025BA1B08AD35E100A9CCAE /* CAVectorUnitTypes.h */,
-				B025BA1A08AD35E100A9CCAE /* CAVectorUnit.h */,
-				B025BA1908AD35E100A9CCAE /* CAVectorUnit.cpp */,
-			);
-			name = PublicUtility;
-			path = ../../CoreAudioUtilityClasses/CoreAudio/PublicUtility;
 			sourceTree = "<group>";
 		};
 		4932F4C6068010F8006A9591 /* DFX Library */ = {
@@ -406,6 +328,42 @@
 			path = "plugin-bindings";
 			sourceTree = "<group>";
 		};
+		ECD597ED253DE93500ED0061 /* AudioUnitSDK */ = {
+			isa = PBXGroup;
+			children = (
+				ECD597F6253DE93500ED0061 /* Source */,
+			);
+			name = AudioUnitSDK;
+			path = ../../AudioUnitSDK;
+			sourceTree = "<group>";
+		};
+		ECD597F6253DE93500ED0061 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				ECD597FE253DE93500ED0061 /* AUBase.h */,
+				ECD597FB253DE93500ED0061 /* AUBase.cpp */,
+				ECD5980C253DE93500ED0061 /* AUBuffer.h */,
+				ECD59809253DE93500ED0061 /* AUBuffer.cpp */,
+				EC4FB186256AE2A200AFC27A /* AUBufferAllocator.cpp */,
+				ECD5980E253DE93500ED0061 /* AudioUnitSDK.h */,
+				ECD59807253DE93500ED0061 /* AUEffectBase.h */,
+				ECD59805253DE93500ED0061 /* AUEffectBase.cpp */,
+				ECD597FC253DE93500ED0061 /* AUInputElement.h */,
+				ECD5980F253DE93500ED0061 /* AUInputElement.cpp */,
+				ECD59808253DE93500ED0061 /* AUOutputElement.h */,
+				ECD59802253DE93500ED0061 /* AUOutputElement.cpp */,
+				ECD597FF253DE93500ED0061 /* AUPlugInDispatch.h */,
+				ECD59806253DE93500ED0061 /* AUPlugInDispatch.cpp */,
+				ECD5980D253DE93500ED0061 /* AUScopeElement.h */,
+				ECD597F9253DE93500ED0061 /* AUScopeElement.cpp */,
+				ECD59804253DE93500ED0061 /* AUSilentTimeout.h */,
+				ECD59803253DE93500ED0061 /* AUUtility.h */,
+				ECD597FA253DE93500ED0061 /* ComponentBase.h */,
+				ECD597F7253DE93500ED0061 /* ComponentBase.cpp */,
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -499,34 +457,31 @@
 			buildActionMask = 2147483647;
 			files = (
 				EC8AB24424CDF592000504F0 /* dfxgui-fontfactory.mm in Sources */,
-				4932F48B06800FCD006A9591 /* AUBase.cpp in Sources */,
-				4932F48F06800FCD006A9591 /* AUInputElement.cpp in Sources */,
-				4932F49106800FCD006A9591 /* AUOutputElement.cpp in Sources */,
-				4932F49406800FCD006A9591 /* AUScopeElement.cpp in Sources */,
-				EC89B41B208D2F9900E15129 /* AUPlugInDispatch.cpp in Sources */,
 				EC89B42C208D31E800E15129 /* dfx-au-utilities-preset-files.m in Sources */,
-				4932F49606800FCD006A9591 /* ComponentBase.cpp in Sources */,
+				ECD59829253DE93500ED0061 /* AUEffectBase.cpp in Sources */,
+				EC4FB187256AE2A200AFC27A /* AUBufferAllocator.cpp in Sources */,
 				EC89B4BE208D359900E15129 /* plugguieditor.cpp in Sources */,
-				4932F4AE06800FCD006A9591 /* AUBuffer.cpp in Sources */,
-				4932F4BA068010B2006A9591 /* CAStreamBasicDescription.cpp in Sources */,
-				4932F4BE068010BE006A9591 /* CAAudioChannelLayout.cpp in Sources */,
-				4932F4C2068010CA006A9591 /* CAAUParameter.cpp in Sources */,
+				ECD59828253DE93500ED0061 /* AUOutputElement.cpp in Sources */,
 				4932F4D506801180006A9591 /* dfx-au-utilities.c in Sources */,
+				ECD59826253DE93500ED0061 /* AUBase.cpp in Sources */,
 				4932F4D906801180006A9591 /* dfxparameter.cpp in Sources */,
 				4932F4DB06801180006A9591 /* dfxplugin-audiounit.cpp in Sources */,
+				ECD5982A253DE93500ED0061 /* AUPlugInDispatch.cpp in Sources */,
 				4932F4DC06801180006A9591 /* dfxplugin.cpp in Sources */,
-				490E76A207CAE24800688A1D /* AUEffectBase.cpp in Sources */,
 				49BB469407E533D000861708 /* monomaker.cpp in Sources */,
-				B025BA1C08AD35E100A9CCAE /* CAVectorUnit.cpp in Sources */,
 				B046209B08C4B3CC00C3D95E /* monomakereditor.cpp in Sources */,
 				EC89B4AF208D359400E15129 /* vstgui_mac.mm in Sources */,
 				B04620B408C4B42100C3D95E /* dfxguieditor.cpp in Sources */,
 				B04620B608C4B42100C3D95E /* dfxguibutton.cpp in Sources */,
 				B04620B808C4B42100C3D95E /* dfxguicontrol.cpp in Sources */,
+				ECD5982B253DE93500ED0061 /* AUBuffer.cpp in Sources */,
 				EC89B433208D321F00E15129 /* dfxguidialog.cpp in Sources */,
 				B04620BA08C4B42100C3D95E /* dfxguitextdisplay.cpp in Sources */,
 				EC40EDB220DB4B9C00F5C0A7 /* dfxguimisc.mm in Sources */,
+				ECD5982D253DE93500ED0061 /* AUInputElement.cpp in Sources */,
+				ECD59823253DE93500ED0061 /* ComponentBase.cpp in Sources */,
 				EC2F843824A7C2BB00F29321 /* dfxmisc.mm in Sources */,
+				ECD59825253DE93500ED0061 /* AUScopeElement.cpp in Sources */,
 				B04620BC08C4B42100C3D95E /* dfxguislider.cpp in Sources */,
 				EC89B434208D321F00E15129 /* dfxgui-auviewfactory.mm in Sources */,
 			);

@@ -40,14 +40,14 @@ To contact the developer, use the contact form at http://destroyfx.org/
 // use hard-coded MIDI CCs for parameters
 //#define USE_MIDI_CC
 
-const long k_nScratchInterval = 16; //24
-const long k_nPowerInterval = 120;
-const long k_nRootKey_default = 60;   // middle C
+constexpr long k_nScratchInterval = 16; //24
+constexpr long k_nPowerInterval = 120;
+constexpr long k_nRootKey_default = 60;   // middle C
 
-const double k_fScratchAmountMiddlePoint = 0.0;
-const double k_fScratchAmountLaxRange = 0.000000001;
-const double k_fScratchAmountMiddlePoint_UpperLimit = k_fScratchAmountMiddlePoint + k_fScratchAmountLaxRange;
-const double k_fScratchAmountMiddlePoint_LowerLimit = k_fScratchAmountMiddlePoint - k_fScratchAmountLaxRange;
+constexpr double k_fScratchAmountMiddlePoint = 0.0;
+constexpr double k_fScratchAmountLaxRange = 0.000000001;
+constexpr double k_fScratchAmountMiddlePoint_UpperLimit = k_fScratchAmountMiddlePoint + k_fScratchAmountLaxRange;
+constexpr double k_fScratchAmountMiddlePoint_LowerLimit = k_fScratchAmountMiddlePoint - k_fScratchAmountLaxRange;
 
 
 
@@ -219,7 +219,7 @@ void Turntablist::processparameters()
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 	m_bMute = getparameter_b(kParam_Mute);
 #endif
-	bool playbackTrigger = getparameter_b(kParam_PlayTrigger);
+	auto const playbackTrigger = getparameter_b(kParam_PlayTrigger);
 
 
 	if (getparameterchanged(kParam_PitchShift))
@@ -228,8 +228,11 @@ void Turntablist::processparameters()
 	if (getparameterchanged(kParam_ScratchAmount) || m_bPitchBendSet)	// XXX checking m_bPitchBendSet until I fix getparameterchanged()
 	{
 		m_bScratchAmountSet = true;
-		if ( (m_fScratchAmount > k_fScratchAmountMiddlePoint_LowerLimit) && (m_fScratchAmount < k_fScratchAmountMiddlePoint_UpperLimit) )
+		if ((m_fScratchAmount > k_fScratchAmountMiddlePoint_LowerLimit)
+			&& (m_fScratchAmount < k_fScratchAmountMiddlePoint_UpperLimit))
+		{
 			m_bScratching = false;
+		}
 		else
 		{
 			if (!m_bScratching) // first time in so init stuff here
@@ -251,15 +254,21 @@ void Turntablist::processparameters()
 #endif
 
 	if (getparameterchanged(kParam_PitchRange))
+	{
 		processPitch();
+	}
 
 	if (getparameterchanged(kParam_Direction))
+	{
 		processDirection();
+	}
 
 	calculateSpinSpeeds();
 
-	if ( getparametertouched(kParam_PlayTrigger) )
+	if (getparametertouched(kParam_PlayTrigger))
+	{
 		playNote(playbackTrigger);
+	}
 }
 
 
@@ -437,7 +446,8 @@ OSStatus Turntablist::PostNotification_AudioFileNotFound(CFStringRef inFileName)
 
 	dfx::UniqueCFType const titleString_base = CFCopyLocalizedStringFromTableInBundle(CFSTR("%@:  Audio file not found."), 
 					CFSTR("Localizable"), pluginBundleRef, CFSTR("the title of the notification dialog when an audio file referenced in stored session data cannot be found"));
-	auto const identifyingNameString = mContextName ? mContextName : CFSTR(PLUGIN_NAME_STRING);
+	auto const contextName = GetContextName();
+	auto const identifyingNameString = contextName ? contextName : CFSTR(PLUGIN_NAME_STRING);
 	dfx::UniqueCFType const titleString = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, titleString_base.get(), identifyingNameString);
 
 	dfx::UniqueCFType const messageString_base = CFCopyLocalizedStringFromTableInBundle(CFSTR("The previously used file \"%@\" could not be found."), 
@@ -452,7 +462,7 @@ OSStatus Turntablist::PostNotification_AudioFileNotFound(CFStringRef inFileName)
 //-----------------------------------------------------------------------------
 OSStatus Turntablist::GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
 									  AudioUnitScope inScope, AudioUnitElement inElement, 
-									  UInt32& outDataSize, Boolean& outWritable)
+									  UInt32& outDataSize, bool& outWritable)
 {
 	OSStatus status = noErr;
 
@@ -516,7 +526,9 @@ OSStatus Turntablist::GetProperty(AudioUnitPropertyID inPropertyID,
 				}
 			}
 			else
+			{
 				status = errFSBadFSRef;
+			}
 			break;
 
 		default:
@@ -742,9 +754,7 @@ OSStatus Turntablist::loadAudioFile(FSRef const& inFileRef)
 		return status;
 	}
 
-	constexpr bool audioInterleaved = false;
-	CAStreamBasicDescription const clientStreamFormat(audioFileStreamFormat.mSampleRate, audioFileStreamFormat.mChannelsPerFrame, 
-													  CAStreamBasicDescription::kPCMFormatFloat32, audioInterleaved);
+	auto const clientStreamFormat = ausdk::ASBD::CreateCommonFloat32(audioFileStreamFormat.mSampleRate, audioFileStreamFormat.mChannelsPerFrame);
 	status = ExtAudioFileSetProperty(audioFileRef, kExtAudioFileProperty_ClientDataFormat, sizeof(clientStreamFormat), &clientStreamFormat);
 	if (status != noErr)
 	{
@@ -929,7 +939,9 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 			currEvent++;	// check next event
 
 			if (currEvent >= numEvents)
+			{
 				eventFrame = -1;	// no more events
+			}
 		}
 		
 		if (m_bScratching)  // handle scratching
@@ -938,9 +950,13 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 			if (m_nScratchInterval > m_nScratchIntervalEnd)
 			{
 				if (m_nScratchMode == kScratchMode_Spin)
+				{
 					processScratch();
+				}
 				else
+				{
 					processScratchStop();
+				}
 			}
 			else
 			{
@@ -952,12 +968,16 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 					if (m_fTinyScratchAdjust > 0.0)	// positive
 					{
 						if (m_fPlaySampleRate > m_fDesiredScratchRate2)
+						{
 							m_fPlaySampleRate = m_fDesiredScratchRate2;
+						}
 					}
 					else	// negative
 					{
 						if (m_fPlaySampleRate < m_fDesiredScratchRate2)
+						{
 							m_fPlaySampleRate = m_fDesiredScratchRate2;
+						}
 					}					
 				}				
 			}
@@ -970,7 +990,9 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 				{
 					m_fPlaySampleRate -= m_fUsedSpinDownSpeed;	// adjust
 					if (m_fPlaySampleRate < 0.0)	// too low so we past it
+					{
 						m_fPlaySampleRate = 0.0;	// fix it
+					}
 				}
 			}
 			else // power on - spin up
@@ -979,13 +1001,17 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 				{
 					m_fPlaySampleRate += m_fUsedSpinUpSpeed; // adjust
 					if (m_fPlaySampleRate > m_fDesiredPitch) // too high so we past it
+					{
 						m_fPlaySampleRate = m_fDesiredPitch; // fix it
+					}
 				}
 				else if (m_fPlaySampleRate > m_fDesiredPitch) // too high so bring down
 				{
 					m_fPlaySampleRate -= m_fUsedSpinUpSpeed; // adjust
 					if (m_fPlaySampleRate < m_fDesiredPitch) // too low so we past it
+					{
 						m_fPlaySampleRate = m_fDesiredPitch; // fix it
+					}
 				}
 			}
 		}
@@ -1007,7 +1033,9 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 					{
 						stopNote(true);
 						if (m_nNoteMode == kNoteMode_Reset)
+						{
 							m_fPosition = 0.0;
+						}
 					}
 				}
 			}
@@ -1057,7 +1085,9 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 						if (m_fPlaySampleRate == 0.0)
 						{
 							for (unsigned long ch=0; ch < numOutputs; ch++)
+							{
 								outAudio[ch][currFrame] = 0.0f;
+							}
 						}
 						else
 						{
@@ -1068,18 +1098,20 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 							for (unsigned long ch=0; ch < numOutputs; ch++)
 							{
 							#ifdef USE_LIBSNDFILE
-								float * output = (ch == 0) ? m_fLeft : m_fRight;
+								auto const output = (ch == 0) ? m_fLeft : m_fRight;
 							#else
-								AudioBufferList & abl = m_auBufferList.GetBufferList();
+								AudioBufferList& abl = m_auBufferList.GetBufferList();
 								unsigned long ablChannel = ch;
 								if (ch >= abl.mNumberBuffers)
 								{
 									ablChannel = abl.mNumberBuffers - 1;
 									// XXX only do the channel remapping for mono->stereo upmixing special case (?)
 									if (ch > 1)
+									{
 										break;
+									}
 								}
-								float * output = (float*) (abl.mBuffers[ablChannel].mData);
+								auto const output = static_cast<float*>(abl.mBuffers[ablChannel].mData);
 							#endif
 
 #ifdef NO_INTERPOLATION
@@ -1091,12 +1123,14 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 								long const big_part1 = static_cast<long>(m_fPosition);
 								long big_part2 = big_part1 + 1;
 								if (big_part2 > m_nNumSamples)
+								{
 									big_part2 = 0;
+								}
 								float const outval = (floating_part * output[big_part1]) + ((1.0f - floating_part) * output[big_part2]);
 #endif  // LINEAR_INTERPOLATION
 
 #ifdef CUBIC_INTERPOLATION
-								float outval;
+								float outval {};
 							#if 0
 								// XXX is this a silly optimization to avoid another branch?
 								// XXX can this even work for an inline function?
@@ -1121,7 +1155,9 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 					else
 					{
 						for (unsigned long ch=0; ch < numOutputs; ch++)
+						{
 							outAudio[ch][currFrame] = 0.0f;
+						}
 					}
 #endif
 
@@ -1137,7 +1173,9 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 							{
 								m_fPosition -= m_fNumSamples;
 								if (!m_bLoop) // off
+								{
 									stopNote(true);
+								}
 							}
 						}
 					}  // if (bPlayForward)
@@ -1146,19 +1184,25 @@ void Turntablist::processaudio(float const* const* /*inAudio*/, float* const* ou
 				else
 				{
 					for (unsigned long ch=0; ch < numOutputs; ch++)
+					{
 						outAudio[ch][currFrame] = 0.0f;
+					}
 				}
 			}  // if (owns_lock)
 			else
 			{
 				for (unsigned long ch=0; ch < numOutputs; ch++)
+				{
 					outAudio[ch][currFrame] = 0.0f;
+				}
 			}
 		}  // if (bNoteIsOn)
 		else
 		{
 			for (unsigned long ch=0; ch < numOutputs; ch++)
+			{
 				outAudio[ch][currFrame] = 0.0f;
+			}
 		}
 	}  // (currFrame < inNumFrames)
 }
@@ -1209,7 +1253,9 @@ void Turntablist::processScratch(bool inSetParameter)
 			m_fScratchAmount = m_fPitchBend;
 		}
 		else
+		{
 			m_fScratchAmount = m_fPitchBend;
+		}
 */
 		m_bScratchAmountSet = true;
 
@@ -1221,10 +1267,7 @@ void Turntablist::processScratch(bool inSetParameter)
 	{
 		if (m_nScratchMode == kScratchMode_Spin)
 		{
-			if (m_fScratchAmount >= k_fScratchAmountMiddlePoint)
-				m_nScratchDir = kScratchDirection_Forward;
-			else
-				m_nScratchDir = kScratchDirection_Backward;
+			m_nScratchDir = (m_fScratchAmount >= k_fScratchAmountMiddlePoint) ? kScratchDirection_Forward : kScratchDirection_Backward;
 		}
 
 	// todo:
@@ -1269,7 +1312,7 @@ void Turntablist::processScratch(bool inSetParameter)
 
 					m_fDesiredPosition = m_fScratchCenter + (contractparametervalue(kParam_ScratchAmount, m_fScratchAmount) * m_fScratchSpeed_scrub * m_fSampleRate);
 
-					double fDesiredDelta;
+					double fDesiredDelta {};
 					
 					if (m_nScratchInterval == 0)
 					{
@@ -1300,7 +1343,9 @@ void Turntablist::processScratch(bool inSetParameter)
 						m_nScratchDir = kScratchDirection_Backward;
 					}
 					else
+					{
 						m_nScratchDir = kScratchDirection_Forward;
+					}
 
 					m_fDesiredScratchRate2 = m_fSampleRate * m_fScratchSpeed_scrub * static_cast<double>(m_nScratchInterval);
 
@@ -1372,10 +1417,14 @@ void Turntablist::processScratch(bool inSetParameter)
 		}
 		m_fScratchVolumeModifier = m_fPlaySampleRate / m_fSampleRate;
 		if (m_fScratchVolumeModifier > 1.5f)
+		{
 			m_fScratchVolumeModifier = 1.5f;
+		}
 
 		if (!m_bScratching)
+		{
 			m_bScratching = true;
+		}
 
 		if (m_bScratchStop)
 		{
@@ -1429,19 +1478,25 @@ void Turntablist::processDirection()
 	if (m_bScratching)
 	{
 		if (m_nScratchDir == kScratchDirection_Backward)
+		{
 			m_bPlayForward = false;
+		}
 	}
 	else
 	{
 		if (m_bWasScratching)
 		{
 			if (m_nDirection == kScratchDirection_Backward)
+			{
 				m_bPlayForward = false;
+			}
 		}
 		else
 		{
 			if (m_nDirection == kScratchDirection_Backward)
+			{
 				m_bPlayForward = false;
+			}
 		}
 	}
 }
@@ -1617,8 +1672,6 @@ long Turntablist::fixMidiData(long inParameterID, char inValue)
 			// <64 = 0ff, >=64 = 0n
 			return (inValue < 64) ? 0 : 0x7F;
 		default:
-			break;
+			return inValue;
 	}
-
-	return inValue;
 }

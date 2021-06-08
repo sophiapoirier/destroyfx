@@ -84,15 +84,13 @@ void DfxPlugin::PostConstructor()
 		{
 			auto const newInNumChannels = (channelConfig.inChannels < 0) ? defaultNumChannels : static_cast<UInt32>(channelConfig.inChannels);
 			auto const& curInStreamFormat = GetStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0));
-			CAStreamBasicDescription newInStreamFormat(curInStreamFormat);
-			newInStreamFormat.ChangeNumberChannels(newInNumChannels, newInStreamFormat.IsInterleaved());
+			auto const newInStreamFormat = ausdk::ASBD::CreateCommonFloat32(curInStreamFormat.mSampleRate, newInNumChannels);
 			TARGET_API_BASE_CLASS::ChangeStreamFormat(kAudioUnitScope_Input, AudioUnitElement(0), curInStreamFormat, newInStreamFormat);
 		}
 		// change the output channel count to the first supported one listed
 		auto const newOutNumChannels = (channelConfig.outChannels < 0) ? defaultNumChannels : static_cast<UInt32>(channelConfig.outChannels);
 		auto const& curOutStreamFormat = GetStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0));
-		CAStreamBasicDescription newOutStreamFormat(curOutStreamFormat);
-		newOutStreamFormat.ChangeNumberChannels(newOutNumChannels, newOutStreamFormat.IsInterleaved());
+		auto const newOutStreamFormat = ausdk::ASBD::CreateCommonFloat32(curOutStreamFormat.mSampleRate, newOutNumChannels);
 		TARGET_API_BASE_CLASS::ChangeStreamFormat(kAudioUnitScope_Output, AudioUnitElement(0), curOutStreamFormat, newOutStreamFormat);
 	}
 
@@ -171,7 +169,7 @@ OSStatus DfxPlugin::Reset(AudioUnitScope /*inScope*/, AudioUnitElement /*inEleme
 // most properties are handled by inherited base class implementations
 OSStatus DfxPlugin::GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
 									AudioUnitScope inScope, AudioUnitElement inElement, 
-									UInt32& outDataSize, Boolean& outWritable)
+									UInt32& outDataSize, bool& outWritable)
 {
 	OSStatus status = noErr;
 
@@ -983,16 +981,6 @@ void DfxPlugin::PropertyChanged(AudioUnitPropertyID inPropertyID,
 	return TARGET_API_BASE_CLASS::PropertyChanged(inPropertyID, inScope, inElement);
 }
 
-#if !CA_USE_AUDIO_PLUGIN_ONLY
-//-----------------------------------------------------------------------------
-// should be a version 32-bit number hex-encoded like so:  
-// 0xMMMMmmbb (M = major version, m = minor version, and b = bugfix)
-OSStatus DfxPlugin::Version()
-{
-	return getpluginversion();
-}
-#endif
-
 //-----------------------------------------------------------------------------
 // give the host an array of the audio input/output channel configurations 
 // that the plugin supports
@@ -1536,15 +1524,16 @@ OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 // the host calls this to inform the plugin that it wants to start using 
 // a different audio stream format (sample rate, num channels, etc.)
 OSStatus DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement inElement, 
-									   CAStreamBasicDescription const& inPrevFormat, CAStreamBasicDescription const& inNewFormat)
+									   AudioStreamBasicDescription const& inPrevFormat, 
+									   AudioStreamBasicDescription const& inNewFormat)
 {
 //fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat, new sr = %.3lf, old sr = %.3lf\n\n", inNewFormat.mSampleRate, inPrevFormat.mSampleRate);
-//fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat, new num channels = %lu, old num channels = %lu\n\n", inNewFormat.NumberChannels(), inPrevFormat.NumberChannels());
+//fprintf(stderr, "\nDfxPlugin::ChangeStreamFormat, new num channels = %lu, old num channels = %lu\n\n", inNewFormat.mChannelsPerFrame, inPrevFormat.mChannelsPerFrame);
 	// if this AU supports only specific I/O channel count configs, 
 	// then check whether the incoming format is allowed
 	if (!mChannelConfigs.empty())
 	{
-		auto const newNumChannels = static_cast<SInt16>(inNewFormat.NumberChannels());
+		auto const newNumChannels = static_cast<SInt16>(inNewFormat.mChannelsPerFrame);
 		bool foundMatch = false;
 		for (size_t i = 0; (i < mChannelConfigs.size()) && !foundMatch; i++)
 		{
@@ -1564,7 +1553,7 @@ OSStatus DfxPlugin::ChangeStreamFormat(AudioUnitScope inScope, AudioUnitElement 
 					break;
 				// XXX input and output scopes together at once?
 				case kAudioUnitScope_Global:
-					if (ischannelcountsupported(inNewFormat.NumberChannels(), inNewFormat.NumberChannels()))
+					if (ischannelcountsupported(inNewFormat.mChannelsPerFrame, inNewFormat.mChannelsPerFrame))
 					{
 						foundMatch = true;
 					}
@@ -1620,12 +1609,12 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 	preprocessaudio();
 
 	// get the output element
-	auto const theOutput = GetOutput(0);  // throws if there's an error
-	auto const numOutputBuffers = theOutput->GetBufferList().mNumberBuffers;
+	auto& theOutput = Output(0);  // throws if there's an error
+	auto const numOutputBuffers = theOutput.GetBufferList().mNumberBuffers;
 	// set up our more convenient audio stream pointers
 	for (UInt32 i = 0; i < numOutputBuffers; i++)
 	{
-		mOutputAudioStreams_au[i] = theOutput->GetFloat32ChannelData(i);
+		mOutputAudioStreams_au[i] = theOutput.GetFloat32ChannelData(i);
 	}
 
 	// do stuff to prepare the audio inputs, if we use any
@@ -1635,18 +1624,18 @@ OSStatus DfxPlugin::Render(AudioUnitRenderActionFlags& ioActionFlags,
 		{
 			return kAudioUnitErr_NoConnection;
 		}
-		auto const theInput = GetInput(0);
-		status = theInput->PullInput(ioActionFlags, inTimeStamp, AudioUnitElement(0), inFramesToProcess);
+		auto& theInput = Input(0);
+		status = theInput.PullInput(ioActionFlags, inTimeStamp, AudioUnitElement(0), inFramesToProcess);
 		if (status != noErr)
 		{
 			return status;
 		}
 
-		auto const numInputBuffers = theInput->GetBufferList().mNumberBuffers;
+		auto const numInputBuffers = theInput.GetBufferList().mNumberBuffers;
 		// set up our more convenient audio stream pointers
 		for (UInt32 i = 0; i < numInputBuffers; i++)
 		{
-			mInputAudioStreams_au[i] = theInput->GetFloat32ChannelData(i);
+			mInputAudioStreams_au[i] = theInput.GetFloat32ChannelData(i);
 		}
 	}
 
@@ -1679,7 +1668,7 @@ OSStatus DfxPlugin::ProcessBufferLists(AudioUnitRenderActionFlags& ioActionFlags
 	// clear the output buffer because we will accumulate output into it
 	if (!mInPlaceAudioProcessingAllowed)
 	{
-		AUBufferList::ZeroBuffer(outBuffer);
+		ausdk::AUBufferList::ZeroBuffer(outBuffer);
 	}
 
 #if TARGET_PLUGIN_USES_DSPCORE
@@ -1802,18 +1791,6 @@ OSStatus DfxPlugin::HandleProgramChange(UInt8 inChannel, UInt8 inProgramNum)
 }
 
 #if TARGET_PLUGIN_IS_INSTRUMENT
-//-----------------------------------------------------------------------------
-OSStatus DfxPlugin::PrepareInstrument(MusicDeviceInstrumentID inInstrument)
-{
-	return kAudioUnitErr_PropertyNotInUse;
-}
-
-//-----------------------------------------------------------------------------
-OSStatus DfxPlugin::ReleaseInstrument(MusicDeviceInstrumentID inInstrument)
-{
-	return kAudioUnitErr_PropertyNotInUse;
-}
-
 //-----------------------------------------------------------------------------
 OSStatus DfxPlugin::StartNote(MusicDeviceInstrumentID inInstrument, 
 							  MusicDeviceGroupID inGroupID, NoteInstanceID* outNoteInstanceID, 

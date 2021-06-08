@@ -147,7 +147,7 @@ public:
 
 	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
 							 AudioUnitScope inScope, AudioUnitElement inElement, 
-							 UInt32& outDataSize, Boolean& outWritable) override;
+							 UInt32& outDataSize, bool& outWritable) override;
 	OSStatus GetProperty(AudioUnitPropertyID inPropertyID, 
 						 AudioUnitScope inScope, AudioUnitElement inElement, 
 						 void* outData) override;
@@ -193,7 +193,7 @@ private:
 	float* m_fLeft = nullptr;
 	float* m_fRight = nullptr;
 #else
-	AUBufferList m_auBufferList;
+	ausdk::AUBufferList m_auBufferList;
 #endif
 
 	// our 32-bit floating point audio info

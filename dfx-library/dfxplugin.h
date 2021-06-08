@@ -828,7 +828,7 @@ private:
 	template <class DSPCoreClass>
 	std::unique_ptr<DSPCoreClass> dspCoreFactory();
 #ifdef TARGET_API_AUDIOUNIT
-	AUBufferList mAsymmetricalInputBufferList;
+	ausdk::AUBufferList mAsymmetricalInputBufferList;
 #else
 	std::unique_ptr<DfxPluginCore> dspCoreFactory();
 	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to manage this ourselves outside of the AU SDK
@@ -912,12 +912,12 @@ public:
 								UInt32 inFramesToProcess) override;
 	#endif
 	#if TARGET_PLUGIN_USES_DSPCORE
-	AUKernelBase* NewKernel() override;
+	std::unique_ptr<ausdk::AUKernelBase> NewKernel() override;
 	#endif
 
 	OSStatus GetPropertyInfo(AudioUnitPropertyID inPropertyID, 
 							 AudioUnitScope inScope, AudioUnitElement inElement, 
-							 UInt32& outDataSize, Boolean& outWritable) override;
+							 UInt32& outDataSize, bool& outWritable) override;
 	OSStatus GetProperty(AudioUnitPropertyID inPropertyID, 
 						 AudioUnitScope inScope, AudioUnitElement inElement, 
 						 void* outData) override;
@@ -927,9 +927,6 @@ public:
 	void PropertyChanged(AudioUnitPropertyID inPropertyID, 
 						 AudioUnitScope inScope, AudioUnitElement inElement) override;
 
-#if !CA_USE_AUDIO_PLUGIN_ONLY
-	OSStatus Version() override;
-#endif
 	UInt32 SupportedNumChannels(AUChannelInfo const** outInfo) override;
 	Float64 GetLatency() override;
 	Float64 GetTailTime() override;
@@ -952,8 +949,8 @@ public:
 
 	OSStatus ChangeStreamFormat(AudioUnitScope inScope, 
 								AudioUnitElement inElement, 
-								CAStreamBasicDescription const& inPrevFormat, 
-								CAStreamBasicDescription const& inNewFormat) override;
+								AudioStreamBasicDescription const& inPrevFormat, 
+								AudioStreamBasicDescription const& inNewFormat) override;
 
 	OSStatus SaveState(CFPropertyListRef* outData) override;
 	OSStatus RestoreState(CFPropertyListRef inData) override;
@@ -982,8 +979,6 @@ public:
 	}
 	#endif
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-	OSStatus PrepareInstrument(MusicDeviceInstrumentID inInstrument) override;
-	OSStatus ReleaseInstrument(MusicDeviceInstrumentID inInstrument) override;
 	OSStatus StartNote(MusicDeviceInstrumentID inInstrument,
 					   MusicDeviceGroupID inGroupID, NoteInstanceID* outNoteInstanceID, 
 					   UInt32 inOffsetSampleFrame, MusicDeviceNoteParams const& inParams) override;
@@ -993,7 +988,7 @@ public:
 	// this is a convenience function swiped from AUEffectBase, but not included in MusicDeviceBase
 	Float64 GetSampleRate()
 	{
-		return GetOutput(0)->GetStreamFormat().mSampleRate;
+		return Output(0).GetStreamFormat().mSampleRate;
 	}
 	// this is handled by AUEffectBase, but not in MusicDeviceBase
 	bool StreamFormatWritable(AudioUnitScope inScope, AudioUnitElement inElement) override
@@ -1134,7 +1129,7 @@ public:
 	explicit DfxPluginCore(DfxPlugin* inDfxPlugin)
 	:
 	#ifdef TARGET_API_DSPCORE_CLASS
-		TARGET_API_DSPCORE_CLASS(inDfxPlugin), 
+		TARGET_API_DSPCORE_CLASS(*inDfxPlugin), 
 	#endif
 		mDfxPlugin(inDfxPlugin)
 	{
@@ -1375,18 +1370,18 @@ private:
 #ifdef TARGET_API_AUDIOUNIT
 
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-		#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMusicDeviceFactory, PluginClass)
+		#define DFX_EFFECT_ENTRY(PluginClass)   AUSDK_COMPONENT_ENTRY(ausdk::AUMusicDeviceFactory, PluginClass)
 	#elif TARGET_PLUGIN_USES_MIDI
-		#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUMIDIEffectFactory, PluginClass)
+		#define DFX_EFFECT_ENTRY(PluginClass)   AUSDK_COMPONENT_ENTRY(ausdk::AUMIDIEffectFactory, PluginClass)
 	#else
-		#define DFX_EFFECT_ENTRY(PluginClass)   AUDIOCOMPONENT_ENTRY(AUBaseFactory, PluginClass)
+		#define DFX_EFFECT_ENTRY(PluginClass)   AUSDK_COMPONENT_ENTRY(ausdk::AUBaseFactory, PluginClass)
 	#endif
 
 	#if TARGET_PLUGIN_USES_DSPCORE
-		#define DFX_CORE_ENTRY(PluginCoreClass)						\
-			AUKernelBase* DfxPlugin::NewKernel()					\
-			{														\
-				return dspCoreFactory<PluginCoreClass>().release();	\
+		#define DFX_CORE_ENTRY(PluginCoreClass)							\
+			std::unique_ptr<ausdk::AUKernelBase> DfxPlugin::NewKernel()	\
+			{															\
+				return dspCoreFactory<PluginCoreClass>();				\
 			}
 	#endif
 

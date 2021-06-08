@@ -1790,8 +1790,8 @@ void DfxGuiEditor::TextEntryForParameterMidiCC(long inParameterID)
 unsigned long DfxGuiEditor::getNumInputChannels()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	auto const streamDesc = dfxgui_GetProperty<CAStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input);
-	return streamDesc ? streamDesc->NumberChannels() : 0;
+	auto const streamDesc = dfxgui_GetProperty<AudioStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input);
+	return streamDesc ? streamDesc->mChannelsPerFrame : 0;
 #endif
 #ifdef TARGET_API_VST
 	return static_cast<unsigned long>(getEffect()->getAeffect()->numInputs);
@@ -1805,8 +1805,8 @@ unsigned long DfxGuiEditor::getNumInputChannels()
 unsigned long DfxGuiEditor::getNumOutputChannels()
 {
 #ifdef TARGET_API_AUDIOUNIT
-	auto const streamDesc = dfxgui_GetProperty<CAStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output);
-	return streamDesc ? streamDesc->NumberChannels() : 0;
+	auto const streamDesc = dfxgui_GetProperty<AudioStreamBasicDescription>(kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output);
+	return streamDesc ? streamDesc->mChannelsPerFrame : 0;
 #endif
 #ifdef TARGET_API_VST
 	return static_cast<unsigned long>(getEffect()->getAeffect()->numOutputs);
