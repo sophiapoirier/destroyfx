@@ -19,7 +19,7 @@
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-class FreeverbAU : public AUEffectBase
+class FreeverbAU final : public ausdk::AUEffectBase
 {
 public:
 	FreeverbAU(AudioComponentInstance inComponentInstance);

@@ -34,11 +34,11 @@ enum : AudioUnitParameterID
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-AUDIOCOMPONENT_ENTRY(AUBaseProcessFactory, FreeverbAU)
+AUSDK_COMPONENT_ENTRY(ausdk::AUBaseProcessFactory, FreeverbAU)
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 FreeverbAU::FreeverbAU(AudioComponentInstance inComponentInstance)
-:	AUEffectBase(inComponentInstance)
+:	ausdk::AUEffectBase(inComponentInstance)
 {
 	// initialize the parameters to their default values
 	for (AudioUnitParameterID i = 0; i < kNumParams; i++)

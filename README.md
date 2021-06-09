@@ -9,7 +9,7 @@ Some advanced features may not work on all platforms or in all hosts.
 C++ is currently the only appropriate language for creating audio
 plugins, so all of these are written in C++. You will need a C++
 compiler for your platform in order to compile them. You'll also need
-an appropriate version of the VST SDK (for VST) or CoreAudio SDK (for
+an appropriate version of the VST SDK (for VST) or Audio Unit SDK (for
 Audio Unit). Right now, this means that you'll be able to easily
 compile Xcode for Mac, and that it may be more difficult for any other
 platform. Warning: Our source code repository often drifts out of date
@@ -296,10 +296,10 @@ In addition, some effects do not fit the model well (a memory-driven
 delay plugin, for instance). If your plugin does not need this, use
 stub-plugin below instead.
 
-### CoreAudioUtilityClasses/
+### AudioUnitSDK/
 
-Apple's CoreAudio SDK that includes the Audio Unit SDK, required for
-building the AU versions of our plugins.
+Apple's Audio Unit SDK, required for building the AU versions of our
+plugins.
 
 ### vstgui/
 
