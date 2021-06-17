@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2020  Sophia Poirier
+	Copyright (C) 2003-2021  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -81,7 +81,11 @@ CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber
 		newPreset->allocator = inAllocator;
 		newPreset->retainCount = 1;
 	}
+	// clang static analyzer does not know how to introspect this custom type and warns:
+	// "Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected"
+#ifndef __clang_analyzer__
 	return (CFAUPresetRef)newPreset;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -268,7 +272,9 @@ CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UIn
 		newDesc->allocator = inAllocator;
 		newDesc->retainCount = 1;
 	}
+#ifndef __clang_analyzer__
 	return (CFAUOtherPluginDescRef)newDesc;
+#endif
 }
 
 //-----------------------------------------------------------------------------
