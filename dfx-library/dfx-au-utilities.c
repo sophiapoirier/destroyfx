@@ -66,7 +66,8 @@ typedef struct
 // create an instance of a CFAUPreset object
 CFAUPresetRef CFAUPresetCreate(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName)
 {
-	CFAUPreset* const newPreset = (CFAUPreset*)CFAllocatorAllocate(inAllocator, sizeof(CFAUPreset), 0);
+	CFIndex const preferredSize = CFAllocatorGetPreferredSizeForSize(inAllocator, sizeof(CFAUPreset), 0);
+	CFAUPreset* const newPreset = (CFAUPreset*)CFAllocatorAllocate(inAllocator, preferredSize, 0);
 	if (newPreset != NULL)
 	{
 		newPreset->auPreset.presetNumber = inPresetNumber;
@@ -261,7 +262,8 @@ typedef struct
 // create an instance of a CFAUOtherPluginDesc object
 CFAUOtherPluginDescRef CFAUOtherPluginDescCreate(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID)
 {
-	CFAUOtherPluginDesc* const newDesc = (CFAUOtherPluginDesc*)CFAllocatorAllocate(inAllocator, sizeof(CFAUOtherPluginDesc), 0);
+	CFIndex const preferredSize = CFAllocatorGetPreferredSizeForSize(inAllocator, sizeof(CFAUOtherPluginDesc), 0);
+	CFAUOtherPluginDesc* const newDesc = (CFAUOtherPluginDesc*)CFAllocatorAllocate(inAllocator, preferredSize, 0);
 	if (newDesc != NULL)
 	{
 		newDesc->auOtherPluginDesc.format = inFormat;
