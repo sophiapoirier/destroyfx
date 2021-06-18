@@ -47,7 +47,7 @@ bool GeometerView::attached(VSTGUI::CView * parent) {
 
   if (success) {
     editor = dynamic_cast<DfxGuiEditor*>(getEditor());
-    offc = VSTGUI::COffscreenContext::create(getFrame(), getWidth(), getHeight());
+    offc = VSTGUI::COffscreenContext::create({getWidth(), getHeight()});
 
     reflect();
   }

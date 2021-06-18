@@ -29,6 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <cmath>
 #include <exception>
 #include <functional>
+#include <mutex>
 #include <type_traits>
 
 #include "dfxguibutton.h"
@@ -36,6 +37,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxmath.h"
 #include "dfxmisc.h"
 #include "idfxguicontrol.h"
+#include "vstguiinit.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxsettings.h"
@@ -51,6 +53,9 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include "dfxsettings.h"
 	#include "lib/platform/common/fileresourceinputstream.h"
 	#include "pluginterfaces/vst2.x/vstfxstore.h"
+	#if TARGET_OS_WIN32
+		extern void* hInstance;
+	#endif
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -87,12 +92,26 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 //-----------------------------------------------------------------------------
 DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
-:	TARGET_API_EDITOR_BASE_CLASS(inInstance),
+:	TARGET_API_EDITOR_BASE_CLASS(inInstance)
+{
+	// ugly wart added in VSTGUI 4.10: the library must be statically "initialized" before use
+	static std::once_flag once;
+	std::call_once(once, []
+	{
+#if TARGET_OS_MAC
+		VSTGUI::init(CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER)));
+#elif TARGET_OS_WIN32 && defined(TARGET_API_VST)
+		VSTGUI::init(hInstance);
+#else
+	#error "implementation needed"
+#endif
+	});
+
 	// This activates embedded font resources. We do this as early as
 	// possible (e.g. not in open()) because on Windows it seems to
 	// take a few milliseconds for the font to actually become available.
-	mFontFactory(dfx::FontFactory::Create())
-{
+	mFontFactory = dfx::FontFactory::Create();
+
 	rect.top = rect.left = rect.bottom = rect.right = 0;
 	// load the background image
 	// we don't need to load all bitmaps, this could be done when open is called
