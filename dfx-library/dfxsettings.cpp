@@ -203,7 +203,7 @@ constexpr size_t kDfxOldPresetNameMaxLength = 32;
 bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPreset)
 {
 	// create our own copy of the data before we muck with it (e.g. reversing endianness, etc.)
-	dfx::UniqueMemoryBlock<void> const incomingData_copy(inBufferSize);
+	auto const incomingData_copy = dfx::MakeUniqueMemoryBlock<void>(inBufferSize);
 	if (!incomingData_copy)
 	{
 		return false;
@@ -620,7 +620,7 @@ bool DFX_AddNumberToCFDictionary(void const* inNumber, CFNumberType inType, CFMu
 		return false;
 	}
 
-	dfx::UniqueCFType const cfNumber = CFNumberCreate(kCFAllocatorDefault, inType, inNumber);
+	auto const cfNumber = dfx::MakeUniqueCFType(CFNumberCreate(kCFAllocatorDefault, inType, inNumber));
 	if (cfNumber)
 	{
 		CFDictionarySetValue(inDictionary, inDictionaryKey, cfNumber.get());
@@ -715,12 +715,12 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 
 	if (assignmentsFound)
 	{
-		dfx::UniqueCFType const assignmentsCFArray = CFArrayCreateMutable(kCFAllocatorDefault, mNumParameters, &kCFTypeArrayCallBacks);
+		auto const assignmentsCFArray = dfx::MakeUniqueCFType(CFArrayCreateMutable(kCFAllocatorDefault, mNumParameters, &kCFTypeArrayCallBacks));
 		if (assignmentsCFArray)
 		{
 			for (long i = 0; i < mNumParameters; i++)
 			{
-				dfx::UniqueCFType const assignmentCFDictionary = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+				auto const assignmentCFDictionary = dfx::MakeUniqueCFType(CFDictionaryCreateMutable(kCFAllocatorDefault, 10, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
 				if (assignmentCFDictionary)
 				{
 					if (getParameterID(i) == dfx::kParameterID_Invalid)
@@ -728,10 +728,10 @@ bool DfxSettings::saveMidiAssignmentsToDictionary(CFMutableDictionaryRef inDicti
 						continue;
 					}
 					DFX_AddNumberToCFDictionary_i(getParameterID(i), assignmentCFDictionary.get(), kDfxSettings_ParameterIDKey);
-#define ADD_ASSIGNMENT_VALUE_TO_DICT(inMember, inTypeSuffix)	\
-					DFX_AddNumberToCFDictionary_##inTypeSuffix(mParameterAssignments[i].inMember, assignmentCFDictionary.get(), kDfxSettings_MidiAssignment_##inMember##Key);
 					DFX_AddNumberToCFDictionary_i(static_cast<SInt64>(mParameterAssignments[i].mEventType), 
 												  assignmentCFDictionary.get(), kDfxSettings_MidiAssignment_mEventTypeKey);
+#define ADD_ASSIGNMENT_VALUE_TO_DICT(inMember, inTypeSuffix)	\
+					DFX_AddNumberToCFDictionary_##inTypeSuffix(mParameterAssignments[i].inMember, assignmentCFDictionary.get(), kDfxSettings_MidiAssignment_##inMember##Key);
 					ADD_ASSIGNMENT_VALUE_TO_DICT(mEventChannel, i)
 					ADD_ASSIGNMENT_VALUE_TO_DICT(mEventNum, i)
 					ADD_ASSIGNMENT_VALUE_TO_DICT(mEventNum2, i)
@@ -1480,13 +1480,13 @@ void DfxSettings::debugAlertCorruptData(char const* inDataItemName, size_t inDat
 {
 #if TARGET_OS_MAC
 	CFStringRef const title = CFSTR("settings data fuct");
-	dfx::UniqueCFType const message = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, 
-															   CFSTR("This should never happen.  Please inform the computerists at " DESTROYFX_URL " if you see this message.  Please tell them: \n\ndata item name = %s \ndata item size = %zu \ntotal data size = %zu"),
-															   inDataItemName, inDataItemSize, inDataTotalSize);
+	auto const message = dfx::MakeUniqueCFType(CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, 
+																		CFSTR("This should never happen.  Please inform the computerists at " DESTROYFX_URL " if you see this message.  Please tell them: \n\ndata item name = %s \ndata item size = %zu \ntotal data size = %zu"),
+																		inDataItemName, inDataItemSize, inDataTotalSize));
 	if (message)
 	{
 #ifdef TARGET_API_AUDIOUNIT
-		dfx::UniqueCFType const iconURL = mPlugin->CopyIconLocation();
+		auto const iconURL = dfx::MakeUniqueCFType(mPlugin->CopyIconLocation());
 #else
 		dfx::UniqueCFType<CFURLRef> const iconURL;
 #endif

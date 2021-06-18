@@ -229,17 +229,17 @@ public:
         CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
       assert(pluginBundle);
       if (pluginBundle) {
-        dfx::UniqueCFType const bundleResourcesDirURL =
-          CFBundleCopyResourcesDirectoryURL(pluginBundle);
+        auto const bundleResourcesDirURL =
+          dfx::MakeUniqueCFType(CFBundleCopyResourcesDirectoryURL(pluginBundle));
         if (bundleResourcesDirURL) {
           constexpr CFURLEnumeratorOptions options =
             kCFURLEnumeratorSkipInvisibles |
             kCFURLEnumeratorSkipPackageContents |
             kCFURLEnumeratorDescendRecursively;
-          dfx::UniqueCFType const dirEnumerator =
-            CFURLEnumeratorCreateForDirectoryURL(kCFAllocatorDefault,
-                                                 bundleResourcesDirURL.get(),
-                                                 options, nullptr);
+          auto const dirEnumerator =
+            dfx::MakeUniqueCFType(CFURLEnumeratorCreateForDirectoryURL(kCFAllocatorDefault,
+                                                                       bundleResourcesDirURL.get(),
+                                                                       options, nullptr));
           if (dirEnumerator) {
             CFURLRef fileURL = nullptr;
             while (CFURLEnumeratorGetNextURL(dirEnumerator.get(), &fileURL,

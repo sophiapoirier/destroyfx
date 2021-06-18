@@ -1253,7 +1253,7 @@ OSStatus DfxPlugin::GetParameterValueStrings(AudioUnitScope inScope, AudioUnitPa
 		// in case the min is not 0, get the total count of items in the array
 		long const numStrings = getparametermax_i(inParameterID) - getparametermin_i(inParameterID) + 1;
 		// create a CFArray of the strings (the host will destroy the CFArray)
-		dfx::UniqueCFType array = CFArrayCreateMutable(kCFAllocatorDefault, numStrings, &kCFTypeArrayCallBacks);
+		auto array = dfx::MakeUniqueCFType(CFArrayCreateMutable(kCFAllocatorDefault, numStrings, &kCFTypeArrayCallBacks));
 		if (!array)
 		{
 			return coreFoundationUnknownErr;
@@ -1369,8 +1369,7 @@ OSStatus DfxPlugin::GetPresets(CFArrayRef* outData) const
 	{
 		if (presetnameisvalid(i))
 		{
-			// set the data as it should be
-			dfx::UniqueCFAUPreset const aupreset(kCFAllocatorDefault, i, getpresetcfname(i));
+			auto const aupreset = dfx::MakeUniqueCFAUPreset(kCFAllocatorDefault, i, getpresetcfname(i));
 			if (aupreset)
 			{
 				// insert the AUPreset into the output array
@@ -1431,7 +1430,9 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 	if (auto const dfxData = mDfxSettings->save(true); !dfxData.empty())
 	{
 		// create a CF data storage thingy filled with our special data
-		dfx::UniqueCFType const cfData = CFDataCreate(kCFAllocatorDefault, reinterpret_cast<const UInt8*>(dfxData.data()), static_cast<CFIndex>(dfxData.size()));
+		auto const cfData = dfx::MakeUniqueCFType(CFDataCreate(kCFAllocatorDefault, 
+															   reinterpret_cast<const UInt8*>(dfxData.data()), 
+															   static_cast<CFIndex>(dfxData.size())));
 		if (cfData)
 		{
 			// put the CF data storage thingy into the dfx-data section of the CF dictionary

@@ -140,7 +140,7 @@ bool LaunchURL(std::string const& inURL)
 	}
 
 #if TARGET_OS_MAC
-	UniqueCFType const cfURL = CFURLCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inURL.data()), static_cast<CFIndex>(inURL.length()), kCFStringEncodingASCII, nullptr);
+	auto const cfURL = MakeUniqueCFType(CFURLCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inURL.data()), static_cast<CFIndex>(inURL.length()), kCFStringEncodingASCII, nullptr));
 	if (cfURL)
 	{
 		auto const status = LSOpenCFURLRef(cfURL.get(), nullptr);  // try to launch the URL
@@ -173,11 +173,11 @@ UniqueCFType<CFURLRef> DFX_FindDocumentationFileInDomain(CFStringRef inDocsFileN
 	if (docsDirURL)
 	{
 		// create a CFURL for the "manufacturer name" directory within the documentation directory
-		UniqueCFType const dfxDocsDirURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, (__bridge CFURLRef)docsDirURL, CFSTR(PLUGIN_CREATOR_NAME_STRING), true);
+		auto const dfxDocsDirURL = MakeUniqueCFType(CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, (__bridge CFURLRef)docsDirURL, CFSTR(PLUGIN_CREATOR_NAME_STRING), true));
 		if (dfxDocsDirURL)
 		{
 			// create a CFURL for the documentation file within the "manufacturer name" directory
-			UniqueCFType docsFileURL = CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL.get(), inDocsFileName, false);
+			auto docsFileURL = MakeUniqueCFType(CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault, dfxDocsDirURL.get(), inDocsFileName, false));
 			if (docsFileURL)
 			{
 				// check to see if the hypothetical documentation file actually exists 
@@ -214,7 +214,7 @@ bool LaunchDocumentation()
 	#ifdef PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME
 		docsSubdirName = CFSTR(PLUGIN_DOCUMENTATION_SUBDIRECTORY_NAME);
 	#endif
-		UniqueCFType docsFileURL = CFBundleCopyResourceURL(pluginBundleRef, docsFileName, nullptr, docsSubdirName);
+		auto docsFileURL = MakeUniqueCFType(CFBundleCopyResourceURL(pluginBundleRef, docsFileName, nullptr, docsSubdirName));
 		// if the documentation file is not found in the bundle, then search in appropriate system locations
 		if (!docsFileURL)
 		{
@@ -242,7 +242,7 @@ bool LaunchDocumentation()
 			static bool helpBookRegistered = false;
 			if (!helpBookRegistered)
 			{
-				UniqueCFType const bundleURL = CFBundleCopyBundleURL(pluginBundleRef);
+				auto const bundleURL = MakeUniqueCFType(CFBundleCopyBundleURL(pluginBundleRef));
 				if (bundleURL)
 				{
 					if (AHRegisterHelpBookWithURL)  // available starting in Mac OS X 10.6

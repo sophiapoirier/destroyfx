@@ -28,6 +28,7 @@ These are some generally useful functions.
 
 
 #include <array>
+#include <cassert>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -51,7 +52,7 @@ namespace detail
 	{
 		static_assert(std::is_pointer_v<T>);
 		static_assert(std::is_invocable_v<decltype(D), T>);
-		void operator()(T object)
+		void operator()(T object) noexcept
 		{
 			D(object);
 		}
@@ -60,14 +61,14 @@ namespace detail
 
 //-----------------------------------------------------------------------------
 template <typename T, typename D = detail::UniqueTypeDeleter<T*, std::free>>
-class UniqueMemoryBlock : public std::unique_ptr<T, D>
+auto MakeUniqueMemoryBlock(size_t size) noexcept
 {
-public:
-	explicit UniqueMemoryBlock(size_t size)
-	:	std::unique_ptr<T, D>(static_cast<T*>(std::malloc(size)), D())
+	if constexpr (!std::is_void_v<T>)
 	{
+		assert((size % sizeof(T)) == 0);
 	}
-};
+	return std::unique_ptr<T, D>(static_cast<T*>(std::malloc(size)), D());
+}
 
 //-----------------------------------------------------------------------------
 template <typename T, auto D>
@@ -76,14 +77,13 @@ using UniqueOpaqueType = std::unique_ptr<typename std::remove_pointer_t<T>, deta
 #if TARGET_OS_MAC
 //-----------------------------------------------------------------------------
 template <typename T, typename D = detail::UniqueTypeDeleter<T, CFRelease>>
-class UniqueCFType : public std::unique_ptr<typename std::remove_pointer_t<T>, D>
+using UniqueCFType = std::unique_ptr<typename std::remove_pointer_t<T>, D>;
+
+template <typename T, typename D = detail::UniqueTypeDeleter<T, CFRelease>>
+auto MakeUniqueCFType(T object) noexcept
 {
-public:
-	UniqueCFType(T object = nullptr) noexcept
-	:	std::unique_ptr<typename std::remove_pointer_t<T>, D>(object, D())
-	{
-	}
-};
+	return UniqueCFType<T, D>(object, D());
+}
 #endif
 
 

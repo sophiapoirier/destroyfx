@@ -294,14 +294,14 @@ OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 // save the path of the loaded audio file, if one is currently loaded
 	if (FSIsFSRefValid(&m_fsAudioFile))
 	{
-		dfx::UniqueCFType const audioFileUrl = CFURLCreateFromFSRef(kCFAllocatorDefault, &m_fsAudioFile);
+		auto const audioFileUrl = dfx::MakeUniqueCFType(CFURLCreateFromFSRef(kCFAllocatorDefault, &m_fsAudioFile));
 		if (audioFileUrl)
 		{
-			dfx::UniqueCFType const audioFileUrlString = CFURLCopyFileSystemPath(audioFileUrl.get(), kCFURLPOSIXPathStyle);
+			auto const audioFileUrlString = dfx::MakeUniqueCFType(CFURLCopyFileSystemPath(audioFileUrl.get(), kCFURLPOSIXPathStyle));
 			if (audioFileUrlString)
 			{
 				auto const audioFileUrlString_ptr = audioFileUrlString.get();
-				dfx::UniqueCFType const fileReferencesDictionary = CFDictionaryCreate(kCFAllocatorDefault, (void const**)(&kTurntablistPreset_AudioFileReferenceKey), (void const**)(&audioFileUrlString_ptr), 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+				auto const fileReferencesDictionary = dfx::MakeUniqueCFType(CFDictionaryCreate(kCFAllocatorDefault, (void const**)(&kTurntablistPreset_AudioFileReferenceKey), (void const**)(&audioFileUrlString_ptr), 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
 				if (fileReferencesDictionary)
 				{
 					CFDictionarySetValue(dict, CFSTR(kAUPresetExternalFileRefs), fileReferencesDictionary.get());
@@ -318,7 +318,7 @@ OSStatus Turntablist::SaveState(CFPropertyListRef* outData)
 			aliasSize = GetAliasSize(aliasHandle);
 			if (aliasSize > 0)
 			{
-				dfx::UniqueCFType const aliasCFData = CFDataCreate(kCFAllocatorDefault, (UInt8*)(*aliasHandle), (CFIndex)aliasSize);
+				auto const aliasCFData = dfx::MakeUniqueCFType(CFDataCreate(kCFAllocatorDefault, (UInt8*)(*aliasHandle), (CFIndex)aliasSize));
 				if (aliasCFData)
 				{
 					CFDictionarySetValue(dict, kTurntablistPreset_AudioFileAliasKey, aliasCFData.get());
@@ -357,7 +357,7 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 		auto const audioFileUrlString = reinterpret_cast<CFStringRef>(CFDictionaryGetValue(fileReferencesDictionary, kTurntablistPreset_AudioFileReferenceKey));
 		if (audioFileUrlString)
 		{
-			dfx::UniqueCFType const audioFileUrl = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, audioFileUrlString, kCFURLPOSIXPathStyle, false);
+			auto const audioFileUrl = dfx::MakeUniqueCFType(CFURLCreateWithFileSystemPath(kCFAllocatorDefault, audioFileUrlString, kCFURLPOSIXPathStyle, false));
 			if (audioFileUrl)
 			{
 				FSRef audioFileRef;
@@ -371,7 +371,7 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 				{
 					failedToResolveAudioFile = true;
 					// we can't get the proper LaunchServices "display name" if the file does not exist, so do this instead
-					audioFileNameString = CFURLCopyLastPathComponent(audioFileUrl.get());
+					audioFileNameString.reset(CFURLCopyLastPathComponent(audioFileUrl.get()));
 				}
 			}
 		}
@@ -411,7 +411,7 @@ OSStatus Turntablist::RestoreState(CFPropertyListRef inData)
 								auto const aliasStatus = FSCopyAliasInfo(aliasHandle, &fileNameUniString, nullptr, nullptr, nullptr, nullptr);
 								if (aliasStatus == noErr)
 								{
-									audioFileNameString = CFStringCreateWithCharacters(kCFAllocatorDefault, fileNameUniString.unicode, fileNameUniString.length);
+									audioFileNameString.reset(CFStringCreateWithCharacters(kCFAllocatorDefault, fileNameUniString.unicode, fileNameUniString.length));
 								}
 							}
 						}
@@ -444,15 +444,15 @@ OSStatus Turntablist::PostNotification_AudioFileNotFound(CFStringRef inFileName)
 
 	auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 
-	dfx::UniqueCFType const titleString_base = CFCopyLocalizedStringFromTableInBundle(CFSTR("%@:  Audio file not found."), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("the title of the notification dialog when an audio file referenced in stored session data cannot be found"));
+	auto const titleString_base = dfx::MakeUniqueCFType(CFCopyLocalizedStringFromTableInBundle(CFSTR("%@:  Audio file not found."), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("the title of the notification dialog when an audio file referenced in stored session data cannot be found")));
 	auto const contextName = GetContextName();
 	auto const identifyingNameString = contextName ? contextName : CFSTR(PLUGIN_NAME_STRING);
-	dfx::UniqueCFType const titleString = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, titleString_base.get(), identifyingNameString);
+	auto const titleString = dfx::MakeUniqueCFType(CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, titleString_base.get(), identifyingNameString));
 
-	dfx::UniqueCFType const messageString_base = CFCopyLocalizedStringFromTableInBundle(CFSTR("The previously used file \"%@\" could not be found."), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("the detailed message of the notification dialog when an audio file referenced in stored session data cannot be found"));
-	dfx::UniqueCFType const messageString = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, messageString_base.get(), inFileName);
+	auto const messageString_base = dfx::MakeUniqueCFType(CFCopyLocalizedStringFromTableInBundle(CFSTR("The previously used file \"%@\" could not be found."), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("the detailed message of the notification dialog when an audio file referenced in stored session data cannot be found")));
+	auto const messageString = dfx::MakeUniqueCFType(CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, messageString_base.get(), inFileName));
 
 	OSStatus status = CFUserNotificationDisplayNotice(0.0, kCFUserNotificationPlainAlertLevel, nullptr, nullptr, nullptr, titleString.get(), messageString.get(), nullptr);
 

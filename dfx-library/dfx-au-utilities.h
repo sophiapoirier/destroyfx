@@ -1,7 +1,7 @@
 /*
 	Destroy FX AU Utilities is a collection of helpful utility functions 
 	for creating and hosting Audio Unit plugins.
-	Copyright (C) 2003-2020  Sophia Poirier
+	Copyright (C) 2003-2021  Sophia Poirier
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without 
@@ -121,31 +121,15 @@ extern CFURLRef FindPresetsDirForAU(AudioComponent inAUComponent, DFXFileSystemD
 #include <memory>
 namespace dfx
 {
-	class UniqueCFAUPreset : public std::unique_ptr<CFAUPreset const, void(*)(CFAUPresetRef)>
+	static inline auto MakeUniqueCFAUPreset(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName) noexcept
 	{
-	public:
-		UniqueCFAUPreset(CFAUPresetRef object = nullptr) noexcept
-		:	std::unique_ptr<CFAUPreset const, void(*)(CFAUPresetRef)>(object, ::CFAUPresetRelease)
-		{
-		}
-		UniqueCFAUPreset(CFAllocatorRef inAllocator, SInt32 inPresetNumber, CFStringRef inPresetName) noexcept
-		:	UniqueCFAUPreset(CFAUPresetCreate(inAllocator, inPresetNumber, inPresetName))
-		{
-		}
-	};
+		return std::unique_ptr<CFAUPreset const, void(*)(CFAUPresetRef)>(CFAUPresetCreate(inAllocator, inPresetNumber, inPresetName), ::CFAUPresetRelease);
+	}
 
-	class UniqueCFAUOtherPluginDesc : public std::unique_ptr<CFAUOtherPluginDesc const, void(*)(CFAUOtherPluginDescRef)>
+	static inline auto MakeUniqueCFAUOtherPluginDesc(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID) noexcept
 	{
-	public:
-		UniqueCFAUOtherPluginDesc(CFAUOtherPluginDescRef object = nullptr) noexcept
-		:	std::unique_ptr<CFAUOtherPluginDesc const, void(*)(CFAUOtherPluginDescRef)>(object, ::CFAUOtherPluginDescRelease)
-		{
-		}
-		UniqueCFAUOtherPluginDesc(CFAllocatorRef inAllocator, UInt32 inFormat, OSType inTypeID, OSType inSubTypeID, OSType inManufacturerID) noexcept
-		:	UniqueCFAUOtherPluginDesc(CFAUOtherPluginDescCreate(inAllocator, inFormat, inTypeID, inSubTypeID, inManufacturerID))
-		{
-		}
-	};
+		return std::unique_ptr<CFAUOtherPluginDesc const, void(*)(CFAUOtherPluginDescRef)>(CFAUOtherPluginDescCreate(inAllocator, inFormat, inTypeID, inSubTypeID, inManufacturerID), ::CFAUOtherPluginDescRelease);
+	}
 }
 #endif
 

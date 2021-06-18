@@ -39,10 +39,10 @@ This is our class for doing all kinds of fancy plugin parameter stuff.
 
 #ifdef TARGET_API_AUDIOUNIT
 //-----------------------------------------------------------------------------
-static dfx::UniqueCFType<CFStringRef> CreateCFStringWithStringView(std::string_view inText)
+static auto CreateCFStringWithStringView(std::string_view inText) noexcept
 {
-	return {CFStringCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inText.data()), 
-									inText.length(), DfxParam::kDefaultCStringEncoding, false)};
+	return dfx::MakeUniqueCFType(CFStringCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(inText.data()), 
+									inText.length(), DfxParam::kDefaultCStringEncoding, false));
 }
 #endif
 

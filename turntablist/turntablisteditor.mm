@@ -213,13 +213,13 @@ void TurntablistAboutButtonProc(long inValue)
 #else
 		if (auto const pluginBundleRef = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER)))
 		{
-			dfx::UniqueCFType aboutDict = CFDictionaryCreateMutable(kCFAllocatorDefault, 3, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+			auto const aboutDict = dfx::MakeUniqueCFType(CFDictionaryCreateMutable(kCFAllocatorDefault, 3, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
 			if (aboutDict)
 			{
 				auto valueString = reinterpret_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, kCFBundleNameKey));
 				if (valueString)
 				{
-					CFDictionaryAddValue(aboutDict, static_cast<void const*>(kHIAboutBoxNameKey), static_cast<void const*>(valueString));
+					CFDictionaryAddValue(aboutDict.get(), static_cast<void const*>(kHIAboutBoxNameKey), static_cast<void const*>(valueString));
 				}
 
 				valueString = reinterpret_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("CFBundleShortVersionString")));
@@ -229,16 +229,16 @@ void TurntablistAboutButtonProc(long inValue)
 				}
 				if (valueString)
 				{
-					CFDictionaryAddValue(aboutDict, static_cast<void const*>(kHIAboutBoxVersionKey), static_cast<void const*>(valueString));
+					CFDictionaryAddValue(aboutDict.get(), static_cast<void const*>(kHIAboutBoxVersionKey), static_cast<void const*>(valueString));
 				}
 
 				valueString = reinterpret_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(pluginBundleRef, CFSTR("NSHumanReadableCopyright")));
 				if (valueString)
 				{
-					CFDictionaryAddValue(aboutDict, static_cast<void const*>(kHIAboutBoxCopyrightKey), static_cast<void const*>(valueString));
+					CFDictionaryAddValue(aboutDict.get(), static_cast<void const*>(kHIAboutBoxCopyrightKey), static_cast<void const*>(valueString));
 				}
 
-				HIAboutBox(aboutDict);
+				HIAboutBox(aboutDict.get());
 			}
 		}
 #endif
@@ -324,7 +324,7 @@ static void DFX_InitializeSupportedAudioFileTypesArrays()
 			assert(extensionsArray);
 			if ((status == noErr) && extensionsArray)
 			{
-				dfx::UniqueCFType const cfReleaser(extensionsArray);
+				auto const cfReleaser = dfx::MakeUniqueCFType(extensionsArray);
 //auto const audioFileType_bigEndian = CFSwapInt32HostToBig(audioFileTypeCode);
 //fprintf(stderr, "\n\t%.4s\n", reinterpret_cast<const char*>(&audioFileType_bigEndian));
 				auto const numExtensions = CFArrayGetCount(extensionsArray);
@@ -332,8 +332,8 @@ static void DFX_InitializeSupportedAudioFileTypesArrays()
 				{
 					auto const extension = static_cast<CFStringRef>(CFArrayGetValueAtIndex(extensionsArray, i));
 					assert(extension);
-					CFRetain(extension);
 					gSupportedAudioFileExtensions->push_back(extension);
+					CFRetain(extension);
 //CFShow(extension);
 				}
 			}
@@ -352,7 +352,7 @@ static bool DFX_IsSupportedAudioFileType(FSRef const& inFileRef)
 	auto const status = LSCopyItemInfoForRef(&inFileRef, lsInfoFlags, &lsItemInfo);
 	if (status == noErr)
 	{
-		dfx::UniqueCFType const cfReleaser(lsItemInfo.extension);
+		auto const cfReleaser = dfx::MakeUniqueCFType(lsItemInfo.extension);
 		if (lsItemInfo.flags & kLSItemInfoIsPackage)
 		{
 			result = false;
@@ -412,48 +412,48 @@ long TurntablistEditor::OpenEditor()
 	// buttons
 
 	DGButton* button = emplaceControl<DGToggleImageButton>(this, kParam_Power, kPowerButtonX, kPowerButtonY, onOffButtonImage);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this switches the turntable power on or off"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Power parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this switches the turntable power on or off"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Power parameter")));
 	button->setHelpText(helpText.get());
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 	button = emplaceControl<DGToggleImageButton>(this, kParam_Mute, kColumn3, kRow3, onOffButtonImage);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this mutes the audio output"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Mute parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this mutes the audio output"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Mute parameter")));
 	button->setHelpText(helpText.get());
 #endif
 
 	button = emplaceControl<DGToggleImageButton>(this, kParam_Loop, kLoopButtonX, kLoopButtonY, loopButtonImage);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("if you enable this, the audio sample playback will continuously loop"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Loop parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("if you enable this, the audio sample playback will continuously loop"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Loop parameter")));
 	button->setHelpText(helpText.get());
 
 	pos.set(kDirectionButtonX, kDirectionButtonY, directionButtonImage->getWidth(), directionButtonImage->getHeight() / kNumScratchDirections);
 	button = emplaceControl<DGButton>(this, kParam_Direction, pos, directionButtonImage, DGButton::Mode::Increment);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this changes playback direction of the audio sample, regular or reverse"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Direction parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this changes playback direction of the audio sample, regular or reverse"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Direction parameter")));
 	button->setHelpText(helpText.get());
 
 	pos.set(kNoteModeButtonX, kNoteModeButtonY, noteModeButtonImage->getWidth(), noteModeButtonImage->getHeight() / kNumNoteModes);
 	button = emplaceControl<DGButton>(this, kParam_NoteMode, pos, noteModeButtonImage, DGButton::Mode::Increment);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("This toggles between \"reset mode\" (notes restart playback from the beginning of the audio sample) and \"resume mode\" (notes trigger playback from where the audio sample last stopped)"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Note Mode parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("This toggles between \"reset mode\" (notes restart playback from the beginning of the audio sample) and \"resume mode\" (notes trigger playback from where the audio sample last stopped)"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Note Mode parameter")));
 	button->setHelpText(helpText.get());
 
 	button = emplaceControl<DGToggleImageButton>(this, kParam_NotePowerTrack, kNotePowerTrackButtonX, kNotePowerTrackButtonY, onOffButtonImage);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("enabling this will cause note-on and note-off messages to be mapped to turntable power on and off for an interesting effect"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Note-Power Track parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("enabling this will cause note-on and note-off messages to be mapped to turntable power on and off for an interesting effect"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Note-Power Track parameter")));
 	button->setHelpText(helpText.get());
 
 	button = emplaceControl<DGToggleImageButton>(this, kParam_KeyTracking, kKeyTrackButtonX, kKeyTrackButtonY, onOffButtonImage);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this switches key tracking on or off (key tracking means that the pitch and speed of the audio sample playback are transposed in relation to the pitch of the MIDI note)"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Key Tracking parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this switches key tracking on or off (key tracking means that the pitch and speed of the audio sample playback are transposed in relation to the pitch of the MIDI note)"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Key Tracking parameter")));
 	button->setHelpText(helpText.get());
 
 	pos.set(kScratchModeButtonX, kScratchModeButtonY, scratchModeButtonImage->getWidth(), scratchModeButtonImage->getHeight() / kNumScratchModes);
 	button = emplaceControl<DGButton>(this, kParam_ScratchMode, pos, scratchModeButtonImage, DGButton::Mode::Increment);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this toggles between scrub mode and spin mode, which affects the behavior of the Scratch Amount parameter"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Mode parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this toggles between scrub mode and spin mode, which affects the behavior of the Scratch Amount parameter"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Mode parameter")));
 	button->setHelpText(helpText.get());
 
 	class TurntablistButton final : public DGButton
@@ -475,20 +475,20 @@ long TurntablistEditor::OpenEditor()
 	pos.set(kLoadButtonX, kLoadButtonY, onOffButtonImage->getWidth(), onOffButtonImage->getHeight() / 2);
 	button = emplaceControl<TurntablistButton>(this, pos, onOffButtonImage, 2, DGButton::Mode::Momentary);
 	button->setUserReleaseProcedure(std::bind(&TurntablistEditor::HandleLoadButton, this), true);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("choose an audio file to load up onto the \"turntable\""), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Open Audio File button"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("choose an audio file to load up onto the \"turntable\""), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Open Audio File button")));
 	button->setHelpText(helpText.get());
 
 	mPlayButton = emplaceControl<DGToggleImageButton>(this, kPlayButtonX, kPlayButtonY, playButtonImage);
 	mPlayButton->setUserProcedure(std::bind(&TurntablistEditor::HandlePlayButton, this, std::placeholders::_1));
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("use this to start or stop the audio sample playback"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Play button"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("use this to start or stop the audio sample playback"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Play button")));
 	mPlayButton->setHelpText(helpText.get());
 
 	button = emplaceControl<DGToggleImageButton>(this, kMidiLearnX, kMidiLearnY, onOffButtonImage);
 	button->setUserProcedure(std::bind(&TurntablistEditor::HandleMidiLearnButton, this, std::placeholders::_1));
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("This switches MIDI learn mode on or off.  When MIDI learn is on, you can click on a parameter control to enable that parameter as the \"learner\" for incoming MIDI CC messages."), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the MIDI Learn button"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("This switches MIDI learn mode on or off.  When MIDI learn is on, you can click on a parameter control to enable that parameter as the \"learner\" for incoming MIDI CC messages."), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the MIDI Learn button")));
 	button->setHelpText(helpText.get());
 
 	pos.set(kMidiResetX, kMidiResetY, onOffButtonImage->getWidth(), onOffButtonImage->getHeight() / 2);
@@ -500,23 +500,23 @@ long TurntablistEditor::OpenEditor()
 			HandleMidiResetButton();
 		}
 	});
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this removes all of your MIDI CC -> parameter assignments"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the MIDI Reset button"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this removes all of your MIDI CC -> parameter assignments"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the MIDI Reset button")));
 	button->setHelpText(helpText.get());
 
 	pos.set(kAboutSplashX, kAboutSplashY, kAboutSplashWidth, kAboutSplashHeight);
 	button = emplaceControl<DGButton>(this, pos, nullptr, 2, DGButton::Mode::Increment);
 	button->setUserProcedure(std::bind(&TurntablistAboutButtonProc, std::placeholders::_1));
 //	button->setHelpText(CFSTR("click here to go to the "PLUGIN_CREATOR_NAME_STRING" web site"));
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("click here to go to the Destroy FX web site"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the About hot-spot"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("click here to go to the Destroy FX web site"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the About hot-spot")));
 	button->setHelpText(helpText.get());
 
 	pos.set(kHelpX, kHelpY, helpButtonImage->getWidth(), helpButtonImage->getHeight() / 2);
 	button = emplaceControl<DGButton>(this, pos, helpButtonImage, 2, DGButton::Mode::Momentary);
 	button->setUserReleaseProcedure(std::bind(&dfx::LaunchDocumentation), true);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("view the full manual"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Help button"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("view the full manual"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Help button")));
 	button->setHelpText(helpText.get());
 /*
 Rect buttonRect = pos.convertToRect();
@@ -534,40 +534,40 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 
 	pos.set(kPitchRangeKnobX, kPitchRangeKnobY, knobWidth, knobHeight);
 	auto knob = emplaceControl<DGAnimation>(this, kParam_PitchRange, pos, knobImage, kKnobFrames);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the range of pitch adjustment values that the Pitch Shift parameter offers"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Pitch Range parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the range of pitch adjustment values that the Pitch Shift parameter offers"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Pitch Range parameter")));
 	knob->setHelpText(helpText.get());
 
 	auto const scratchSpeedParam = (getparameter_i(kParam_ScratchMode) == kScratchMode_Scrub) ? kParam_ScratchSpeed_scrub : kParam_ScratchSpeed_spin;
 	pos.set(kScratchSpeedKnobX, kScratchSpeedKnobY, knobWidth, knobHeight);
 	mScratchSpeedKnob = emplaceControl<DGAnimation>(this, scratchSpeedParam, pos, knobImage, kKnobFrames);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this sets the speed of the scratching effect that the Scratch Amount parameter produces"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Speed parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this sets the speed of the scratching effect that the Scratch Amount parameter produces"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Speed parameter")));
 	mScratchSpeedKnob->setHelpText(helpText.get());
 
 	pos.set(kSpinUpKnobX, kSpinUpKnobY, knobWidth, knobHeight);
 	knob = emplaceControl<DGAnimation>(this, kParam_SpinUpSpeed, pos, knobImage, kKnobFrames);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls how quickly the audio playback \"spins up\" when the turntable power turns on"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Spin Up Speed parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls how quickly the audio playback \"spins up\" when the turntable power turns on"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Spin Up Speed parameter")));
 	knob->setHelpText(helpText.get());
 
 	pos.set(kSpinDownKnobX, kSpinDownKnobY, knobWidth, knobHeight);
 	knob = emplaceControl<DGAnimation>(this, kParam_SpinDownSpeed, pos, knobImage, kKnobFrames);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls how quickly the audio playback \"spins down\" when the turntable power turns off"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Spin Down Speed parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls how quickly the audio playback \"spins down\" when the turntable power turns off"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Spin Down Speed parameter")));
 	knob->setHelpText(helpText.get());
 
 	pos.set(kRootKeyKnobX, kRootKeyKnobY, knobWidth, knobHeight);
 	knob = emplaceControl<DGAnimation>(this, kParam_RootKey, pos, knobImage, kKnobFrames);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("when Key Track is enabled, this controls the MIDI key around which the transposition is centered"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Root Key parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("when Key Track is enabled, this controls the MIDI key around which the transposition is centered"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Root Key parameter")));
 	knob->setHelpText(helpText.get());
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 	pos.set(kColumn2k, kRow3 + kKnobOffsetY, knobWidth, knobHeight);
 	knob = emplaceControl<DGAnimation>(this, kParam_Volume, pos, knobImage, kKnobFrames);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the overall volume of the audio output"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Volume parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("this controls the overall volume of the audio output"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Volume parameter")));
 	knob->setHelpText(helpText.get());
 #endif
 
@@ -577,15 +577,15 @@ buttonStat = CreateRoundButtonControl(GetCarbonWindow(), &buttonRect, kControlSi
 	// scratch amount
 	pos.set(kScratchAmountSliderX, kSliderY, kSliderWidth, kSliderHeight);
 	DGSlider* slider = emplaceControl<TurntablistScratchSlider>(this, kParam_ScratchAmount, pos, dfx::kAxis_Vertical, sliderHandleImage);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("This slider is what does the actual scratching.  In scrub mode, the slider represents time.  In spin mode, the slider represents forward and backward speed."), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Amount parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("This slider is what does the actual scratching.  In scrub mode, the slider represents time.  In spin mode, the slider represents forward and backward speed."), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Scratch Amount parameter")));
 	slider->setHelpText(helpText.get());
 
 	// pitch shift
 	pos.set(kPitchShiftSliderX, kSliderY, kSliderWidth, kSliderHeight);
 	slider = emplaceControl<DGSlider>(this, kParam_PitchShift, pos, dfx::kAxis_Vertical, sliderHandleImage);
-	helpText = CFCopyLocalizedStringFromTableInBundle(CFSTR("changes the audio playback pitch between +/- the Pitch Range value"), 
-					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Pitch Shift parameter"));
+	helpText.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("changes the audio playback pitch between +/- the Pitch Range value"), 
+					CFSTR("Localizable"), pluginBundleRef, CFSTR("pop-up help text for the Pitch Shift parameter")));
 	slider->setHelpText(helpText.get());
 
 
@@ -664,11 +664,11 @@ void TurntablistEditor::HandlePropertyChange(dfx::PropertyID inPropertyID, dfx::
 #pragma mark audio file chooser
 
 //-----------------------------------------------------------------------------
-dfx::UniqueCFType<CFStringRef> DFX_CopyFileNameString(FSRef const& inFileRef)
+auto DFX_CopyFileNameString(FSRef const& inFileRef)
 {
 	CFStringRef fileName = nullptr;
 	auto const status = LSCopyDisplayNameForRef(&inFileRef, &fileName);
-	return dfx::UniqueCFType<CFStringRef>((status == noErr) ? fileName : nullptr);
+	return dfx::MakeUniqueCFType<CFStringRef>((status == noErr) ? fileName : nullptr);
 }
 
 #ifdef USE_LIBSNDFILE
@@ -685,51 +685,51 @@ OSStatus TurntablistEditor::NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef
 		return coreFoundationUnknownErr;
 	}
 
-	dfx::UniqueCFType titleString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The file \\U201C%@\\U201D could not be loaded."), 
-																		   CFSTR("Localizable"), pluginBundleRef, 
-																		   CFSTR("title for the dialog telling you that the audio file could not be loaded"));
+	auto titleString = dfx::MakeUniqueCFType(CFCopyLocalizedStringFromTableInBundle(CFSTR("The file \\U201C%@\\U201D could not be loaded."), 
+																					CFSTR("Localizable"), pluginBundleRef, 
+																					CFSTR("title for the dialog telling you that the audio file could not be loaded")));
 	auto const audioFileName = DFX_CopyFileNameString(inAudioFileRef);
 	if (audioFileName)
 	{
 		auto const titleStringWithFileName = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, titleString.get(), audioFileName.get());
 		if (titleStringWithFileName)
 		{
-			titleString = titleStringWithFileName;
+			titleString.reset(titleStringWithFileName);
 		}
 	}
 
-	dfx::UniqueCFType messageString = CFCopyLocalizedStringFromTableInBundle(CFSTR("An error was encountered while trying to load audio data from the file.  %@"), 
-																			 CFSTR("Localizable"), pluginBundleRef, 
-																			 CFSTR("explanation for the dialog telling you that the audio file could not be loaded"));
+	auto messageString = dfx::MakeUniqueCFType(CFCopyLocalizedStringFromTableInBundle(CFSTR("An error was encountered while trying to load audio data from the file.  %@"), 
+																					  CFSTR("Localizable"), pluginBundleRef, 
+																					  CFSTR("explanation for the dialog telling you that the audio file could not be loaded")));
 	dfx::UniqueCFType<CFStringRef> errorDescriptionString;
 	switch (inErrorCode)
 	{
 #ifdef USE_LIBSNDFILE
 		case SF_ERR_UNRECOGNISED_FORMAT:
-			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is in a format that could not be recognized."), 
-																			CFSTR("Localizable"), pluginBundleRef, 
-																			CFSTR("libsndfile SF_ERR_UNRECOGNISED_FORMAT description"));
+			errorDescriptionString.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is in a format that could not be recognized."), 
+																				CFSTR("Localizable"), pluginBundleRef, 
+																				CFSTR("libsndfile SF_ERR_UNRECOGNISED_FORMAT description")));
 			break;
 		case SF_ERR_SYSTEM:
-			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR("A system error occurred while trying to read the file."), 
-																			CFSTR("Localizable"), pluginBundleRef, 
-																			CFSTR("libsndfile SF_ERR_SYSTEM description"));
+			errorDescriptionString.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("A system error occurred while trying to read the file."), 
+																				CFSTR("Localizable"), pluginBundleRef, 
+																				CFSTR("libsndfile SF_ERR_SYSTEM description")));
 			break;
 		case SF_ERR_MALFORMED_FILE:
-			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is not readable due to being malformed."), 
-																			CFSTR("Localizable"), pluginBundleRef, 
-																			CFSTR("libsndfile SF_ERR_MALFORMED_FILE description"));
+			errorDescriptionString.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is not readable due to being malformed."), 
+																				CFSTR("Localizable"), pluginBundleRef, 
+																				CFSTR("libsndfile SF_ERR_MALFORMED_FILE description")));
 			break;
 		case SF_ERR_UNSUPPORTED_ENCODING:
-			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is encoded in a format that is not supported."), 
-																			CFSTR("Localizable"), pluginBundleRef, 
-																			CFSTR("libsndfile SF_ERR_UNSUPPORTED_ENCODING description"));
+			errorDescriptionString.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR("The audio data is encoded in a format that is not supported."), 
+																				CFSTR("Localizable"), pluginBundleRef, 
+																				CFSTR("libsndfile SF_ERR_UNSUPPORTED_ENCODING description")));
 			break;
 #else
 		case unsupportedOSErr:
-			errorDescriptionString = CFCopyLocalizedStringFromTableInBundle(CFSTR(PLUGIN_NAME_STRING " requires Mac OS X version 10.4 (Tiger) or higher."), 
-																			CFSTR("Localizable"), pluginBundleRef, 
-																			CFSTR("unsupportedOSErr description"));
+			errorDescriptionString.reset(CFCopyLocalizedStringFromTableInBundle(CFSTR(PLUGIN_NAME_STRING " requires Mac OS X version 10.4 (Tiger) or higher."), 
+																				CFSTR("Localizable"), pluginBundleRef, 
+																				CFSTR("unsupportedOSErr description")));
 			break;
 		// property
 		case kExtAudioFileError_InvalidProperty:
@@ -766,7 +766,7 @@ OSStatus TurntablistEditor::NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef
 		case kAudioConverterErr_UnspecifiedError:
 #endif
 		default:
-			errorDescriptionString = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, CFSTR("error code %d"), static_cast<int>(inErrorCode));
+			errorDescriptionString.reset(CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, CFSTR("error code %d"), static_cast<int>(inErrorCode)));
 			break;
 	}
 	if (errorDescriptionString)
@@ -774,7 +774,7 @@ OSStatus TurntablistEditor::NotifyAudioFileLoadError(OSStatus inErrorCode, FSRef
 		auto const messageStringWithError = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, messageString.get(), errorDescriptionString.get());
 		if (messageStringWithError)
 		{
-			messageString = messageStringWithError;
+			messageString.reset(messageStringWithError);
 		}
 	}
 
@@ -838,7 +838,7 @@ void TurntablistEditor::HandleLoadButton()
 						  {
 							  if (auto const filePath = inFileSelector->getSelectedFile(0))
 							  {
-								  dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+								  auto const fileURL = dfx::MakeUniqueCFType(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false));
 								  if (fileURL)
 								  {
 									  FSRef fileRef;
@@ -902,17 +902,19 @@ static dfx::UniqueCFType<CFStringRef> DFX_CopyNameAndVersionString()
 	dfx::UniqueCFType<CFStringRef> nameAndVersionString;
 	if (nameString && versionString)
 	{
-		nameAndVersionString = CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, CFSTR("%@  %@"), nameString, versionString);
+		nameAndVersionString.reset(CFStringCreateWithFormat(kCFAllocatorDefault, nullptr, CFSTR("%@  %@"), nameString, versionString));
 	}
 	if (!nameAndVersionString)
 	{
 		if (nameString)
 		{
-			nameAndVersionString = reinterpret_cast<CFStringRef>(CFRetain(nameString));
+			nameAndVersionString.reset(nameString);
+			CFRetain(nameString);
 		}
 		else if (versionString)
 		{
-			nameAndVersionString = reinterpret_cast<CFStringRef>(CFRetain(versionString));
+			nameAndVersionString.reset(versionString);
+			CFRetain(versionString);
 		}
 	}
 
@@ -1185,7 +1187,7 @@ fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bigEndi
 											if (status == noErr)
 											{
 //fprintf(stderr, "file URL = %.*s\n", dragFlavorDataSize, fileUrlFlavorData.get());
-												fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, fileUrlFlavorData.get(), dragFlavorDataSize, false);
+												fileURL.reset(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, fileUrlFlavorData.get(), dragFlavorDataSize, false));
 												if (fileURL)
 												{
 													auto const success = CFURLGetFSRef(fileURL.get(), &mDragAudioFileRef);
@@ -1239,11 +1241,11 @@ fprintf(stderr, "flavor = '%.4s', size = %ld\n", (char*)(&dragFlavorType_bigEndi
 										{
 											if (!fileURL)
 											{
-												fileURL = CFURLCreateFromFSRef(kCFAllocatorDefault, &mDragAudioFileRef);
+												fileURL.reset(CFURLCreateFromFSRef(kCFAllocatorDefault, &mDragAudioFileRef));
 											}
 											if (fileURL)
 											{
-												if (CFURLIsAUPreset(fileURL))
+												if (CFURLIsAUPreset(fileURL.get()))
 												{
 													status = RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
 													if (status == noErr)
@@ -1298,12 +1300,9 @@ static dfx::UniqueCFType<CFStringRef> DFX_CopyAUParameterName(AudioUnit inAUInst
 			{
 				CFRetain(parameterName);
 			}
-			return parameterName;
+			return dfx::MakeUniqueCFType(parameterName);
 		}
-		else
-		{
-			return CFStringCreateWithCString(kCFAllocatorDefault, parameterInfo.name, kCFStringEncodingUTF8);
-		}
+		return dfx::MakeUniqueCFType(CFStringCreateWithCString(kCFAllocatorDefault, parameterInfo.name, kCFStringEncodingUTF8));
 	}
 
 	return {};
@@ -1316,7 +1315,7 @@ static dfx::UniqueCFType<CFArrayRef> DFX_CopyAUParameterValueStrings(AudioUnit i
 	CFArrayRef strings = nullptr;
 	UInt32 dataSize = sizeof(strings);
 	auto const status = AudioUnitGetProperty(inAUInstance, kAudioUnitProperty_ParameterValueStrings, kAudioUnitScope_Global, static_cast<AudioUnitElement>(inParameterID), &strings, &dataSize);
-	return (status == noErr) ? strings : nullptr;
+	return (status == noErr) ? dfx::MakeUniqueCFType(strings) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -1336,7 +1335,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 	}
 	auto const getMouseDownView = [this]() -> VSTGUI::CView*  // reimplementation of protected CViewContainer method
 	{
-		if (VSTGUI::CView* view = nullptr; getFrame()->getAttribute('vcmd'/*kCViewContainerMouseDownViewAttribute*/, view))
+		if (VSTGUI::CView* view = nullptr; getFrame()->getAttribute(FOURCC('v', 'c', 'm', 'd')/*kCViewContainerMouseDownViewAttribute*/, view))
 		{
 			return view;
 		}
@@ -1362,28 +1361,28 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 			{
 				// XXX float2string(m_fPlaySampleRate, text);
 				auto const format = (inValue > 0.0f) ? CFSTR("%+.3f") : CFSTR("%.3f");
-				universalDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, format, inValue);
+				universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, format, inValue));
 			}
 			break;
 		case kParam_ScratchSpeed_scrub:
-			universalDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.3f  second%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : "");
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.3f  second%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : ""));
 			break;
 		case kParam_ScratchSpeed_spin:
-			universalDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.3f x"), inValue);
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.3f x"), inValue));
 			break;
 		case kParam_SpinUpSpeed:
 		case kParam_SpinDownSpeed:
-			universalDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.4f"), inValue);
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.4f"), inValue));
 			break;
 		case kParam_PitchShift:
 			inValue = inValue * 0.01f * getparameter_f(kParam_PitchRange);
-			universalDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%+.2f  semitone%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : "");
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%+.2f  semitone%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : ""));
 			break;
 		case kParam_PitchRange:
-			universalDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.2f  semitone%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : "");
+			universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%.2f  semitone%s"), inValue, (std::fabs(inValue) > 1.0f) ? "s" : ""));
 			break;
 		case kParam_RootKey:
-			universalDisplayText = CFStringCreateWithCString(cfAllocator, dfx::GetNameForMIDINote(value_i).c_str(), DfxParam::kDefaultCStringEncoding);
+			universalDisplayText.reset(CFStringCreateWithCString(cfAllocator, dfx::GetNameForMIDINote(value_i).c_str(), DfxParam::kDefaultCStringEncoding));
 			break;
 
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
@@ -1391,7 +1390,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 			if (inValue <= 0.0f)
 			{
 				constexpr UniChar minusInfinity[] = { '-', 0x221E, ' ', ' ', 'd', 'B' };
-				universalDisplayText = CFStringCreateWithCharacters(cfAllocator, minusInfinity, sizeof(minusInfinity) / sizeof(*minusInfinity));
+				universalDisplayText.reset(CFStringCreateWithCharacters(cfAllocator, minusInfinity, sizeof(minusInfinity) / sizeof(*minusInfinity)));
 			}
 			else
 			{
@@ -1402,7 +1401,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 					format = CFSTR("+" DB_FORMAT_STRING);
 				}
 				#undef DB_FORMAT_STRING
-				universalDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, format, linear2dB(inValue));
+				universalDisplayText.reset(CFStringCreateWithFormat(cfAllocator, nullptr, format, linear2dB(inValue)));
 			}
 			break;
 #endif
@@ -1414,7 +1413,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 #ifdef INCLUDE_SILLY_OUTPUT_PARAMETERS
 		case kParam_Mute:
 #endif
-			universalDisplayText = value_i ? CFSTR("on") : CFSTR("off");
+			universalDisplayText.reset(value_i ? CFSTR("on") : CFSTR("off"));
 			CFRetain(universalDisplayText.get());
 			break;
 
@@ -1425,7 +1424,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 				auto const valueStrings = DFX_CopyAUParameterValueStrings(dfxgui_GetEffectInstance(), inParameterID);
 				if (valueStrings)
 				{
-					universalDisplayText = static_cast<CFStringRef>(CFArrayGetValueAtIndex(valueStrings.get(), value_i));
+					universalDisplayText.reset(static_cast<CFStringRef>(CFArrayGetValueAtIndex(valueStrings.get(), value_i)));
 					if (universalDisplayText)
 					{
 						CFRetain(universalDisplayText.get());
@@ -1445,7 +1444,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 		{
 			// split the string after the first " (", if it has that, to eliminate the parameter names with sub-specifications 
 			// (e.g. the 2 scratch speed parameters)
-			dfx::UniqueCFType const nameArray = CFStringCreateArrayBySeparatingStrings(cfAllocator, parameterNameString.get(), CFSTR(" ("));
+			auto const nameArray = dfx::MakeUniqueCFType(CFStringCreateArrayBySeparatingStrings(cfAllocator, parameterNameString.get(), CFSTR(" (")));
 			if (nameArray)
 			{
 				if (CFArrayGetCount(nameArray.get()) > 1)
@@ -1453,8 +1452,8 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 					auto const truncatedName = static_cast<CFStringRef>(CFArrayGetValueAtIndex(nameArray.get(), 0));
 					if (truncatedName)
 					{
+						parameterNameString.reset(truncatedName);
 						CFRetain(truncatedName);
-						parameterNameString = truncatedName;
 					}
 				}
 			}
@@ -1462,7 +1461,7 @@ void TurntablistEditor::HandleParameterChange(long inParameterID, float inValue)
 			auto const fullDisplayText = CFStringCreateWithFormat(cfAllocator, nullptr, CFSTR("%@:  %@"), parameterNameString.get(), universalDisplayText.get());
 			if (fullDisplayText)
 			{
-				universalDisplayText = fullDisplayText;
+				universalDisplayText.reset(fullDisplayText);
 			}
 		}
 

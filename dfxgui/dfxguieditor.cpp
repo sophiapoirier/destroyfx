@@ -1303,26 +1303,30 @@ std::vector<AudioUnitParameterID> DfxGuiEditor::CreateParameterList(AudioUnitSco
 	size_t dataSize {};
 	dfx::PropertyFlags propFlags {};
 	auto status = dfxgui_GetPropertyInfo(kAudioUnitProperty_ParameterList, inScope, 0, dataSize, propFlags);
-
-	size_t const numParameters = (status == noErr) ? (dataSize / sizeof(AudioUnitParameterID)) : 0;
-	if (numParameters == 0)
-	{
-		return {};
-	}
-
-	dfx::UniqueMemoryBlock<AudioUnitParameterID> const parameterListMemoryBlock(dataSize);
-	if (!parameterListMemoryBlock)
-	{
-		return {};
-	}
-
-	status = dfxgui_GetProperty(kAudioUnitProperty_ParameterList, inScope, 0, parameterListMemoryBlock.get(), dataSize);
 	if (status != noErr)
 	{
 		return {};
 	}
 
-	std::vector<AudioUnitParameterID> parameterList(parameterListMemoryBlock.get(), parameterListMemoryBlock.get() + numParameters);
+	constexpr auto getParameterCount = [](size_t byteCount)
+	{
+		assert((byteCount % sizeof(AudioUnitParameterID)) == 0);
+		return byteCount / sizeof(AudioUnitParameterID);
+	};
+	auto const numParameters = getParameterCount(dataSize);
+	if (numParameters == 0)
+	{
+		return {};
+	}
+
+	std::vector<AudioUnitParameterID> parameterList(numParameters);
+	status = dfxgui_GetProperty(kAudioUnitProperty_ParameterList, inScope, 0, parameterList.data(), dataSize);
+	if (status != noErr)
+	{
+		return {};
+	}
+	assert(getParameterCount(dataSize) == parameterList.size());
+
 	mAUMaxParameterID = *std::max_element(parameterList.cbegin(), parameterList.cend());
 	return parameterList;
 }
@@ -1411,10 +1415,10 @@ void DfxGuiEditor::LoadPresetFile()
 		fileSelector->setTitle("Open");
 #ifdef TARGET_API_AUDIOUNIT
 		fileSelector->addFileExtension(kDfxGui_AUPresetFileExtension);
-		dfx::UniqueCFType const presetsDirURL = FindPresetsDirForAU(AudioComponentInstanceGetComponent(dfxgui_GetEffectInstance()), kDFXFileSystemDomain_User, false);
+		auto const presetsDirURL = dfx::MakeUniqueCFType(FindPresetsDirForAU(AudioComponentInstanceGetComponent(dfxgui_GetEffectInstance()), kDFXFileSystemDomain_User, false));
 		if (presetsDirURL)
 		{
-			if (dfx::UniqueCFType const presetsDirPathCF = CFURLCopyFileSystemPath(presetsDirURL.get(), kCFURLPOSIXPathStyle))
+			if (auto const presetsDirPathCF = dfx::MakeUniqueCFType(CFURLCopyFileSystemPath(presetsDirURL.get(), kCFURLPOSIXPathStyle)))
 			{
 				if (auto const presetsDirPathC = dfx::CreateCStringFromCFString(presetsDirPathCF.get()))
 				{
@@ -1434,7 +1438,7 @@ void DfxGuiEditor::LoadPresetFile()
 				try
 				{
 #ifdef TARGET_API_AUDIOUNIT
-					dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+					auto const fileURL = dfx::MakeUniqueCFType(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false));
 					Require(fileURL.get(), "failed to create file URL");
 					RestoreAUStateFromPresetFile(dfxgui_GetEffectInstance(), fileURL.get());
 #elif defined(TARGET_API_VST)
@@ -1488,7 +1492,7 @@ void DfxGuiEditor::SavePresetFile()
 						{
 							return false;
 						}
-						dfx::UniqueCFType const cfText = CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8);
+						auto const cfText = dfx::MakeUniqueCFType(CFStringCreateWithCString(kCFAllocatorDefault, textEntryDialog->getText().c_str(), kCFStringEncodingUTF8));
 						Require(cfText.get(), "could not create platform representation of text input");
 						auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 						assert(pluginBundle);
@@ -1516,7 +1520,7 @@ void DfxGuiEditor::SavePresetFile()
 							{
 								try
 								{
-									dfx::UniqueCFType const fileURL = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false);
+									auto const fileURL = dfx::MakeUniqueCFType(CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, reinterpret_cast<UInt8 const*>(filePath), static_cast<CFIndex>(strlen(filePath)), false));
 									Require(fileURL.get(), "could not create platform representation of preset file location");
 									auto const pluginBundle = CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER));
 									assert(pluginBundle);
@@ -2154,9 +2158,9 @@ long DfxGuiEditor::copySettings()
 	{
 		return coreFoundationUnknownErr;
 	}
-	dfx::UniqueCFType const auSettingsPropertyListOwner = auSettingsPropertyList;
+	auto const auSettingsPropertyListOwner = dfx::MakeUniqueCFType(auSettingsPropertyList);
 
-	dfx::UniqueCFType const auSettingsCFData = CFPropertyListCreateData(kCFAllocatorDefault, auSettingsPropertyList, kCFPropertyListXMLFormat_v1_0, 0, nullptr);
+	auto const auSettingsCFData = dfx::MakeUniqueCFType(CFPropertyListCreateData(kCFAllocatorDefault, auSettingsPropertyList, kCFPropertyListXMLFormat_v1_0, 0, nullptr));
 	if (!auSettingsCFData)
 	{
 		return coreFoundationUnknownErr;
@@ -2192,7 +2196,7 @@ long DfxGuiEditor::copySettings()
 	}
 
 	#if TARGET_OS_MAC
-	dfx::UniqueCFType const vstSettingsCFData = CFDataCreate(kCFAllocatorDefault, const_cast<UInt8 const*>(static_cast<UInt8*>(vstSettingsData)), vstSettingsDataSize);
+	auto const vstSettingsCFData = dfx::MakeUniqueCFType(CFDataCreate(kCFAllocatorDefault, const_cast<UInt8 const*>(static_cast<UInt8*>(vstSettingsData)), vstSettingsDataSize));
 	if (!vstSettingsCFData)
 	{
 		return coreFoundationUnknownErr;
@@ -2256,7 +2260,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 		{
 			continue;
 		}
-		dfx::UniqueCFType const flavorTypesArray = flavorTypesArray_temp;
+		auto const flavorTypesArray = dfx::MakeUniqueCFType(flavorTypesArray_temp);
 		auto const flavorCount = CFArrayGetCount(flavorTypesArray.get());
 		for (CFIndex flavorIndex = 0; flavorIndex < flavorCount; flavorIndex++)
 		{
@@ -2281,9 +2285,9 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 				status = PasteboardCopyItemFlavorData(mClipboardRef.get(), itemID, flavorType, &flavorData_temp);
 				if ((status == noErr) && flavorData_temp)
 				{
-					flavorData = flavorData_temp;
+					flavorData.reset(flavorData_temp);
 	#ifdef TARGET_API_AUDIOUNIT
-					dfx::UniqueCFType const auSettingsPropertyList = CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr);
+					auto const auSettingsPropertyList = dfx::MakeUniqueCFType(CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr));
 					if (auSettingsPropertyList)
 					{
 						auto const auSettingsPropertyList_temp = auSettingsPropertyList.get();
