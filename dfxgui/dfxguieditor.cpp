@@ -54,7 +54,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include "lib/platform/common/fileresourceinputstream.h"
 	#include "pluginterfaces/vst2.x/vstfxstore.h"
 	#if TARGET_OS_WIN32
-		extern HINSTANCE hInstance;
+		// From vstplugmain in VST SDK, but no include :/
+		extern void* hInstance;
 	#endif
 #endif
 
@@ -101,7 +102,7 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 #if TARGET_OS_MAC
 		VSTGUI::init(CFBundleGetBundleWithIdentifier(CFSTR(PLUGIN_BUNDLE_IDENTIFIER)));
 #elif TARGET_OS_WIN32 && defined(TARGET_API_VST)
-		VSTGUI::init(hInstance);
+		VSTGUI::init((HINSTANCE)hInstance);
 #else
 	#error "implementation needed"
 #endif
