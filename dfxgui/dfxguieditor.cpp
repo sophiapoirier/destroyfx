@@ -37,7 +37,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "dfxmath.h"
 #include "dfxmisc.h"
 #include "idfxguicontrol.h"
-#include "vstguiinit.h"
+#include "lib/vstguiinit.h"
 
 #if TARGET_PLUGIN_USES_MIDI
 	#include "dfxsettings.h"
@@ -54,7 +54,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include "lib/platform/common/fileresourceinputstream.h"
 	#include "pluginterfaces/vst2.x/vstfxstore.h"
 	#if TARGET_OS_WIN32
-		extern void* hInstance;
+		extern HINSTANCE hInstance;
 	#endif
 #endif
 
