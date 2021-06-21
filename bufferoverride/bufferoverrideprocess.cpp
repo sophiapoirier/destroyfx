@@ -216,7 +216,7 @@ void BufferOverride::updateBuffer(unsigned long samplePos)
 		}
 		mSmoothDur = std::min(mSmoothDur, maxSmoothDur);
 		mSmoothCount = mSmoothDur;
-		mSmoothStep = 1.0f / static_cast<float>(mSmoothDur + 1);  // the gain increment for each smoothing step
+//		mSmoothStep = 1.0f / static_cast<float>(mSmoothDur + 1);  // the gain increment for each smoothing step
 
 //		mSqrtFadeIn = std::sqrt(mSmoothStep);
 //		mSqrtFadeOut = std::sqrt(1.0f - mSmoothStep);

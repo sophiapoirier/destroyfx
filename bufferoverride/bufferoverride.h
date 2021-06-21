@@ -127,12 +127,12 @@ private:
 	dfx::TempoRateTable const mTempoRateTable;
 
 	long mSmoothDur = 0, mSmoothCount = 0;  // total duration and sample counter for the minibuffer transition smoothing period
-	float mSmoothStep = 0.0f;  // the gain increment for each sample "step" during the smoothing period
-	float mSqrtFadeIn = 0.0f, mSqrtFadeOut = 0.0f;  // square root of the smoothing gains, for equal power crossfading
+//	float mSmoothStep = 0.0f;  // the gain increment for each sample "step" during the smoothing period
+//	float mSqrtFadeIn = 0.0f, mSqrtFadeOut = 0.0f;  // square root of the smoothing gains, for equal power crossfading
 //	float mSmoothFract = 0.0f;
 
 	double mPitchBend = 0.0, mOldPitchBend = 0.0;  // pitchbending scalar values
-	bool mOldNote = false;  // says if there was an old, unnatended note-on or note-off from a previous block
+	bool mOldNote = false;  // says if there was an old, unattended note-on or note-off from a previous block
 	int mLastNoteOn = 0, mLastPitchbendLSB = 0, mLastPitchbendMSB = 0;  // these carry over the last events from a previous processing block
 	bool mDivisorWasChangedByHand = false;  // for MIDI trigger mode - tells us to respect the mDivisor value
 	bool mDivisorWasChangedByMIDI = false;  // tells the GUI that the divisor displays need updating
