@@ -37,10 +37,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 		#error "you must compile this file with Automatic Reference Counting (ARC) enabled"
 	#endif
 	#import <AppKit/AppKit.h>
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
-	#import "platform_macos.h"
-	#pragma clang diagnostic pop
+	#include "lib/platform/mac/macfactory.h"
 #endif
 
 
@@ -101,7 +98,7 @@ DGColor DGColor::getSystem(System inSystemColorID)
 				return DGColor(static_cast<float>(rgbColor.redComponent), static_cast<float>(rgbColor.greenComponent), 
 							   static_cast<float>(rgbColor.blueComponent), static_cast<float>(rgbColor.alphaComponent));
 			}
-			else if ([inColor respondsToSelector:@selector(CGColor)])
+			else
 			{
 				// failure workaround: fill a bitmap context with the color to snoop it
 				dfx::UniqueOpaqueType<CGColorSpaceRef, CGColorSpaceRelease> const colorSpace(CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB));
@@ -231,21 +228,18 @@ std::string dfx::SanitizeNumericalInput(std::string const& inText)
 }
 
 //-----------------------------------------------------------------------------
-void dfx::FramePostOpen(VSTGUI::CFrame& ioFrame)
+void dfx::InitGUI()
 {
 #if TARGET_OS_MAC
-	if (auto const cocoaFrame = dynamic_cast<VSTGUI::ICocoaPlatformFrame*>(ioFrame.getPlatformFrame()))
+	auto const processInfo = [NSProcessInfo processInfo];
+	if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
 	{
-		auto const processInfo = [NSProcessInfo processInfo];
-		if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
+		auto const systemVersion = processInfo.operatingSystemVersion;
+		if ((systemVersion.majorVersion == 10) && (systemVersion.minorVersion == 15))
 		{
-			auto const systemVersion = processInfo.operatingSystemVersion;
-			if ((systemVersion.majorVersion == 10) && (systemVersion.minorVersion == 15))
-			{
-				// workaround for macOS 10.15 bug causing aliased text to render doubled/smeared
-				// https://github.com/steinbergmedia/vstgui/issues/141
-				cocoaFrame->getNSView().layer.drawsAsynchronously = NO;
-			}
+			// workaround for macOS 10.15 bug causing aliased text to render doubled/smeared
+			// https://github.com/steinbergmedia/vstgui/issues/141
+			VSTGUI::getPlatformFactory().asMacFactory()->setUseAsynchronousLayerDrawing(false);
 		}
 	}
 #endif

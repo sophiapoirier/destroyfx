@@ -53,10 +53,6 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#include "dfxsettings.h"
 	#include "lib/platform/common/fileresourceinputstream.h"
 	#include "pluginterfaces/vst2.x/vstfxstore.h"
-	#if TARGET_OS_WIN32
-		// From vstplugmain in VST SDK, but no include :/
-		extern void* hInstance;
-	#endif
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -85,6 +81,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 	#if TARGET_OS_MAC
 	static CFStringRef const kDfxGui_SettingsPasteboardFlavorType = CFSTR(PLUGIN_BUNDLE_IDENTIFIER);
 	#endif
+	#if TARGET_OS_WIN32
+	// From vstplugmain in VST SDK, but no include :/
+	extern void* hInstance;
+	#endif
 	using ERect = ::ERect;
 #else
 	using ERect = VSTGUI::ERect;
@@ -106,6 +106,7 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 #else
 	#error "implementation needed"
 #endif
+		dfx::InitGUI();
 	});
 
 	// This activates embedded font resources. We do this as early as
@@ -172,7 +173,6 @@ bool DfxGuiEditor::open(void* inWindow)
 		return false;
 	}
 	frame->open(inWindow);
-	dfx::FramePostOpen(*frame);
 	frame->setBackground(GetBackgroundImage());
 	frame->registerMouseObserver(this);
 	frame->enableTooltips(true);
@@ -2323,7 +2323,7 @@ long DfxGuiEditor::pasteSettings(bool* inQueryPastabilityOnly)
 					dfx::UniqueCFType<CFPropertyListRef> auSettingsPropertyList;
 					if (isAUSettings)
 					{
-						auSettingsPropertyList = CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr);
+						auSettingsPropertyList.reset(CFPropertyListCreateWithData(kCFAllocatorDefault, flavorData.get(), kCFPropertyListImmutable, nullptr, nullptr));
 						if (auSettingsPropertyList)
 						{
 							vstSettingsDataCF = static_cast<CFDataRef>(CFDictionaryGetValue(reinterpret_cast<CFDictionaryRef>(auSettingsPropertyList.get()), DfxSettings::kDfxDataAUClassInfoKeyString));

@@ -233,7 +233,7 @@ static inline auto const kInfinityUTF8 = VSTGUI::kInfiniteSymbol;
 
 std::string SanitizeNumericalInput(std::string const& inText);
 
-// perform some platform fixups after opening a CFrame instance
-void FramePostOpen(VSTGUI::CFrame& ioFrame);
+// perform some platform fixups for the GUI library
+void InitGUI();
 
 }  // namespace dfx
