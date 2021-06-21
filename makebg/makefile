@@ -1,4 +1,4 @@
-default: rezsynth.png skidder.png
+default: rezsynth.png skidder.png dither.exe
 
 # for 64 bits on windows
 CXX=x86_64-w64-mingw32-g++
@@ -30,6 +30,8 @@ rezsynth.png : rezsynth.exe
 skidder.png : skidder.exe skidder-*.png
 	./skidder.exe
 
+dither.exe : $(OBJECTS) dither.o
+	$(CXX) $(LFLAGS) -o $@ $^
 
 clean :
 	rm -f $(OBJECTS) rezsynth.exe skidder.exe rezsynth.png skidder.png *.o
