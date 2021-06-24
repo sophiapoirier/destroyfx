@@ -94,26 +94,23 @@ DGColor DGColor::getSystem(System inSystemColorID)
 			auto const rgbColor = [inColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
 			if (rgbColor)
 			{
-//printf("%lf %lf %lf %lf\n", rgbColor.redComponent * 255.0, rgbColor.greenComponent * 255.0, rgbColor.blueComponent * 255.0, rgbColor.alphaComponent);
+//printf("%lf %lf %lf %lf\n", rgbColor.redComponent * 255., rgbColor.greenComponent * 255., rgbColor.blueComponent * 255., rgbColor.alphaComponent);
 				return DGColor(static_cast<float>(rgbColor.redComponent), static_cast<float>(rgbColor.greenComponent), 
 							   static_cast<float>(rgbColor.blueComponent), static_cast<float>(rgbColor.alphaComponent));
 			}
-			else
+			// failure workaround: fill a bitmap context with the color to snoop it
+			dfx::UniqueOpaqueType<CGColorSpaceRef, CGColorSpaceRelease> const colorSpace(CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB));
+			if (colorSpace)
 			{
-				// failure workaround: fill a bitmap context with the color to snoop it
-				dfx::UniqueOpaqueType<CGColorSpaceRef, CGColorSpaceRelease> const colorSpace(CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB));
-				if (colorSpace)
+				constexpr size_t width = 1, height = 1, bitsPerComponent = 8, bytesPerRow = 0;
+				dfx::UniqueOpaqueType<CGContextRef, CGContextRelease> const bitmapContext(CGBitmapContextCreate(nullptr, width, height, bitsPerComponent, bytesPerRow, colorSpace.get(), kCGImageAlphaPremultipliedLast));
+				if (bitmapContext)
 				{
-					constexpr size_t width = 1, height = 1;
-					dfx::UniqueOpaqueType<CGContextRef, CGContextRelease> const bitmapContext(CGBitmapContextCreate(nullptr, width, height, 8, 0, colorSpace.get(), kCGImageAlphaPremultipliedLast));
-					if (bitmapContext)
+					CGContextSetFillColorWithColor(bitmapContext.get(), inColor.CGColor);
+					CGContextFillRect(bitmapContext.get(), CGRectMake(0, 0, width, height));
+					if (auto const bitmapData = static_cast<uint8_t*>(CGBitmapContextGetData(bitmapContext.get())))
 					{
-						CGContextSetFillColorWithColor(bitmapContext.get(), inColor.CGColor);
-						CGContextFillRect(bitmapContext.get(), CGRectMake(0, 0, width, height));
-						if (auto const bitmapData = static_cast<uint8_t*>(CGBitmapContextGetData(bitmapContext.get())))
-						{
-							return DGColor(bitmapData[0], bitmapData[1], bitmapData[2], bitmapData[3]);
-						}
+						return DGColor(bitmapData[0], bitmapData[1], bitmapData[2], bitmapData[3]);
 					}
 				}
 			}

@@ -342,7 +342,7 @@ double DfxParam::contract(double inLiteralValue) const
 //-----------------------------------------------------------------------------
 // take a real parameter value and contract it to a generic 0.0 to 1.0 float value
 // this takes into account the parameter curve
-double DfxParam::contract(double inLiteralValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec)
+double DfxParam::contract(double inLiteralValue, double inMinValue, double inMaxValue, Curve inCurveType, double inCurveSpec)
 {
 	auto const valueRange = inMaxValue - inMinValue;
 	static constexpr double oneDivThree = 1.0 / 3.0;
@@ -350,22 +350,22 @@ double DfxParam::contract(double inLiteralValue, double inMinValue, double inMax
 
 	switch (inCurveType)
 	{
-		case DfxParam::Curve::Linear:
+		case Curve::Linear:
 			return (inLiteralValue - inMinValue) / valueRange;
-		case DfxParam::Curve::Stepped:
+		case Curve::Stepped:
 			// XXX is this a good way to do this?
 			return (inLiteralValue - inMinValue) / valueRange;
-		case DfxParam::Curve::SquareRoot:
+		case Curve::SquareRoot:
 			return (std::sqrt(std::max(inLiteralValue, 0.0)) * valueRange) + inMinValue;
-		case DfxParam::Curve::Squared:
+		case Curve::Squared:
 			return std::sqrt(std::max((inLiteralValue - inMinValue) / valueRange, 0.0));
-		case DfxParam::Curve::Cubed:
+		case Curve::Cubed:
 			return std::pow(std::max((inLiteralValue - inMinValue) / valueRange, 0.0), oneDivThree);
-		case DfxParam::Curve::Pow:
+		case Curve::Pow:
 			return std::pow(std::max((inLiteralValue - inMinValue) / valueRange, 0.0), 1.0 / inCurveSpec);
-		case DfxParam::Curve::Exp:
+		case Curve::Exp:
 			return std::log(1.0 - inMinValue + inLiteralValue) / std::log(1.0 - inMinValue + inMaxValue);
-		case DfxParam::Curve::Log:
+		case Curve::Log:
 			return (std::log(inLiteralValue / inMinValue) / logTwo) / (std::log(inMaxValue / inMinValue) / logTwo);
 	}
 	assert(false);
@@ -508,33 +508,33 @@ double DfxParam::expand(double inGenValue) const
 //-----------------------------------------------------------------------------
 // take a generic 0.0 to 1.0 float value and expand it to a real parameter value
 // this takes into account the parameter curve
-double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue, DfxParam::Curve inCurveType, double inCurveSpec)
+double DfxParam::expand(double inGenValue, double inMinValue, double inMaxValue, Curve inCurveType, double inCurveSpec)
 {
 	auto const valueRange = inMaxValue - inMinValue;
 	static double const logTwoInv = 1.0 / std::log(2.0);
 
 	switch (inCurveType)
 	{
-		case DfxParam::Curve::Linear:
+		case Curve::Linear:
 			return (inGenValue * valueRange) + inMinValue;
-		case DfxParam::Curve::Stepped:
+		case Curve::Stepped:
 		{
 			double tempval = (inGenValue * valueRange) + inMinValue;
 			tempval += (tempval < 0.0) ? -DfxParam::kIntegerPadding : DfxParam::kIntegerPadding;
 			// XXX is this a good way to do this?
 			return static_cast<double>(static_cast<int64_t>(tempval));
 		}
-		case DfxParam::Curve::SquareRoot:
+		case Curve::SquareRoot:
 			return (std::sqrt(std::max(inGenValue, 0.0)) * valueRange) + inMinValue;
-		case DfxParam::Curve::Squared:
+		case Curve::Squared:
 			return (inGenValue*inGenValue * valueRange) + inMinValue;
-		case DfxParam::Curve::Cubed:
+		case Curve::Cubed:
 			return (inGenValue*inGenValue*inGenValue * valueRange) + inMinValue;
-		case DfxParam::Curve::Pow:
+		case Curve::Pow:
 			return (std::pow(std::max(inGenValue, 0.0), inCurveSpec) * valueRange) + inMinValue;
-		case DfxParam::Curve::Exp:
+		case Curve::Exp:
 			return std::exp(std::log(valueRange + 1.0) * inGenValue) + inMinValue - 1.0;
-		case DfxParam::Curve::Log:
+		case Curve::Log:
 			return inMinValue * std::pow(2.0, inGenValue * std::log(inMaxValue / inMinValue) * logTwoInv);
 	}
 	assert(false);
