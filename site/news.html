@@ -41,6 +41,137 @@
   <a href="index.html"><img class="title" src="news-title.png" alt="Destroy FX: News and Changelog" /></a>
 
 
+  <div class="infobox news" id="2021-69-666">
+    <div class="date">Whatember 3th 2021</div>
+    <div class="announce">released Buffer Override 2.1, EQ Sync 1.1, Geometer 1.2, MIDI Gater 2.0, Monomaker 1.1, Polarizer 1.1, Rez Synth 2.0, Scrubby 1.1, Skidder 1.5, Transverb 1.5.1</div>
+    <p>improvements made to all:</p>
+    <ul>
+      <li>support for 64-bit systems (Windows, Apple silicon and Intel-based Macs)</li>
+      <li>contextual menus providing the features: documentation, parameter randomization, restore default parameter values, save and load preset files, copy and paste settings, generate parameter automation snapshot, MIDI learn</li>
+      <li>MIDI channel aftertouch can be assigned to control parameters</li>
+      <li>all parameter value text displays are editable</li>
+      <li>control surface support (parameter short-name variants)</li>
+      <li>fixed MIDI-controlled parameter changes causing CPU overloads, leading to audio drop-outs</li>
+      <li>many minor bug fixes</li>
+    </ul>
+
+    <p>Buffer Override:</p>
+    <ul>
+      <li>new graphics by Tom 7</li>
+      <li>more accurate LFO articulation</li>
+      <li>handles MIDI pitch bend LSB now (providing 14-bit resolution rather than 7-bit)</li>
+      <li>parameter value change smoothing/dezippering</li>
+      <li><b>tempo</b> parameter where the minimum value previously signified <b>sync to host tempo</b> is now split into two discrete parameters for each function</li>
+      <li><b>rate</b> parameters that were previously combined (for &quot;free&quot; and &quot;tempo sync&quot; modes) are now split into discrete parameters for each function</li>
+      <li>AU can process any number of audio channels</li>
+      <li>&#9760;&#65039; <span style="color:red">WARNING:</span> changed parameters in ways that cannot support settings from older versions</li>
+    </ul>
+
+    <p>EQ Sync:</p>
+    <ul>
+      <li>updated graphics to mimic Mac OS X 10.3 Panther's system graphics (yes this &quot;update&quot; is landing a little late; Sophia did in fact change it 17 years ago)</li>
+      <li><b>tempo</b> parameter where the minimum value previously signified <b>sync to host tempo</b> is now split into two discrete parameters for each function</li>
+      <li>AU can process any number of audio channels</li>
+      <li>&#9760;&#65039; <span style="color:red">WARNING:</span> changed parameters in ways that cannot support settings from older versions</li>
+    </ul>
+
+    <p>Geometer:</p>
+    <ul>
+      <li>changes to <b>window size</b> parameter now take effect immediately</li>
+      <li>performance optimizations</li>
+      <li>parameter values are rendered with Tom's own custom font, the way they were always meant to look</li>
+      <li>fixed occasional crashes</li>
+      <li>fixed occasional CPU overloads causing audio drop-outs</li>
+      <li>AU can process any number of audio channels</li>
+    </ul>
+
+    <p>MIDI Gater:</p>
+    <ul>
+      <li>added low-pass gate option with new <b>gate mode</b> parameter</li>
+      <li><b>attack</b> and <b>release</b> times are now two separate parameters</li>
+      <li><b>floor</b> parameter functions as an actual audio input floor, rather than between-note input gain</li>
+      <li>new graphics by <a href="http://www.brittnell.com">Brittnell Anderson</a></li>
+      <li>parameter value change smoothing/dezippering</li>
+      <li>AU can process any number of audio channels</li>
+      <li>&#9760;&#65039; <span style="color:red">WARNING:</span> changed parameters in ways that cannot support settings from older versions</li>
+    </ul>
+
+    <p>Monomaker:</p>
+    <ul>
+      <li>added <b>equal power mode</b> for monomix</li>
+      <li>added <b>balance mode</b> for pan</li>
+      <li>added <b>input selection</b> parameter</li>
+      <li>parameter value change smoothing/dezippering</li>
+      <li>improved legibility of text</li>
+      <li>AU added the option to use mono input, in which case only panning is operational</li>
+      <li>&#9760;&#65039; <span style="color:red">WARNING:</span> changed parameters in ways that cannot support settings from older versions</li>
+    </ul>
+
+    <p>Polarizer:</p>
+    <ul>
+      <li>parameter value change smoothing/dezippering</li>
+      <li>parameter values are rendered with Tom's own custom font, the way they were always meant to look</li>
+      <li>AU can process any number of audio channels</li>
+    </ul>
+
+    <p>Rez Synth:</p>
+    <ul>
+      <li>new graphics by Tom 7</li>
+      <li>added a <b>resonance algorithm</b> parameter to choose between the original algorithm &quot;no zero&quot; and two new algorithms: &quot;2-zero (radius)&quot; and &quot;2-zero (1)&quot;</li>
+      <li>added <b>bandwidth mode</b> mode parameter to choose using Q or Hz <b>bandwidth</b> parameters</li>
+      <li>added <b>decay</b> and <b>sustain</b> parameters, for full ADSR note envelopes</li>
+      <li><b>envelope fades</b> parameter has a new low-pass filter option</li>
+      <li>added <b>dry/wet mix mode</b> parameter allowing for a choice between &quot;equal power&quot; or a new &quot;linear&quot; mode for the <b>dry/wet mix</b></li>
+      <li>parameter value change smoothing/dezippering (excluding <b>resonance algorithm</b> and <b>filter scaling</b> parameters)</li>
+      <li>AU can process any number of audio channels</li>
+      <li>fixed a bug where changes to <b>pitch bend range</b> did not take effect until the next MIDI pitch bend event</li>
+      <li>&#9760;&#65039; <span style="color:red">WARNING:</span> changed parameters in ways that cannot support settings from older versions</li>
+    </ul>
+
+    <p>Scrubby:</p>
+    <ul>
+      <li>added <b>dry level</b> and <b>wet level</b> parameters (thank you Mark Angus for suggesting this)</li>
+      <li><b>octaves</b> limiters now work without pitch constraint and in DJ mode</li>
+      <li>effect output is high-pass filtered to remove potential sub-audio introduced by pitch down-shifting</li>
+      <li>new preset &quot;DJ staccato&quot;</li>
+      <li>parameter value change smoothing/dezippering</li>
+      <li><b>tempo</b> parameter where the minimum value previously signified <b>sync to host tempo</b> is now split into two discrete parameters for each function</li>
+      <li><b>rate</b> parameter that was previously combined (for &quot;free&quot; and &quot;tempo sync&quot; modes) is now split into discrete parameters for each function</li>
+      <li>GUI reorganized to be more logical and intuitive</li>
+      <li>parameter values are rendered with Tom's own custom font, the way they were always meant to look</li>
+      <li>AU can process any matched number of input and output audio channels, or mono input fanned out to any number of output channels</li>
+      <li>&#9760;&#65039; <span style="color:red">WARNING:</span> changed parameters in ways that cannot support settings from older versions</li>
+    </ul>
+
+    <p>Skidder:</p>
+    <ul>
+      <li>new graphics by Tom 7</li>
+      <li>added a <b>crossover mode</b> parameter that defines whether the effect applies to all audio or only the low or high portion of a crossover whose cutoff is defined by the <b>crossover frequency</b> parameter (thank you Nicolas Lefevre for suggesting this)</li>
+      <li><b>rate random factor</b> is replaced with two random range parameters for <b>rate</b></li>
+      <li>made the values of the <b>rupture</b> parameter meaningful</li>
+      <li>parameter value change smoothing/dezippering (excluding <b>floor</b> parameter)</li>
+      <li><b>tempo</b> parameter where the minimum value previously signified <b>sync to host tempo</b> is now split into two discrete parameters for each function</li>
+      <li><b>rate</b> parameter that was previously combined (for &quot;free&quot; and &quot;tempo sync&quot; modes) is now split into discrete parameters for each function</li>
+      <li>AU can process any number of audio channels, as well as mono-in/stereo-out</li>
+      <li>fixed a crash when toggling the <b>MIDI mode</b> parameter</li>
+      <li>&#9760;&#65039; <span style="color:red">WARNING:</span> changed parameters in ways that cannot support settings from older versions</li>
+    </ul>
+
+    <p>Transverb:</p>
+    <ul>
+      <li>added <b>freeze</b> parameter</li>
+      <li>slightly retuned "ultra hi-fi" quality to remove a little more sub-audio introduced by delay head playback speed down-shifting</li>
+      <li>added four presets by <a href="https://styrofoam-music.bandcamp.com">Styrofoam</a></li>
+      <li>parameter value change smoothing/dezippering</li>
+      <li>parameter values are rendered with Tom's own custom font, the way they were always meant to look</li>
+      <li>AU can process any number of audio channels</li>
+      <li>AU also has special mono-in/stereo-out mode where head #1 is routed to the left channel and head #2 is routed to the right</li>
+      <li>fixed a bug causing distortion when restarting audio processing while not in <b>TOMSOUND</b> mode and with a <b>speed</b> of zero</li>
+      <li>fixed a bug causing periods of silence while in <b>TOMSOUND</b> mode and with <b>speed</b> at or very near whole octave values</li>
+    </ul>
+  </div>
+
+
   <div class="infobox news" id="2020-12-28">
     <div class="date">December 28th 2020</div>
     <div class="announce">released Ambience 1.0.8 (Audio Unit)</div>
