@@ -7,7 +7,6 @@ buffer-override-background.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-over
 buffer-size-label.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-size-label.png"
 buffer-tempo-sync-button-corner.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-tempo-sync-button-corner.png"
 buffer-tempo-sync-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-tempo-sync-button.png"
-dither-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\dither-button.png"
 divisor-lfo-rate-label.png  PNG DISCARDABLE  "..\\gui\\graphics\\divisor-lfo-rate-label.png"
 divisor-lfo-shape-switch.png  PNG DISCARDABLE  "..\\gui\\graphics\\divisor-lfo-shape-switch.png"
 divisor-lfo-tempo-sync-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\divisor-lfo-tempo-sync-button.png"
