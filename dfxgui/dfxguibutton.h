@@ -102,7 +102,7 @@ private:
 
 
 //-----------------------------------------------------------------------------
-// shortcut for create an on/off button with dimensions derived from its image
+// shortcut for creating an on/off button with dimensions derived from its image
 class DGToggleImageButton : public DGButton
 {
 public:
