@@ -141,7 +141,10 @@ enum
 	kMidiLearnButtonX = 5,
 	kMidiLearnButtonY = 63,
 	kMidiResetButtonX = 4,
-	kMidiResetButtonY = 86
+	kMidiResetButtonY = 86,
+
+        kDitherButtonX = 340,
+        kDitherButtonY = 51,
 };
 
 
@@ -269,7 +272,8 @@ long BufferOverrideEditor::OpenEditor()
 
 	auto const hostTempoButtonImage = LoadImage("host-tempo-button.png");
 
-
+        auto const ditherButtonImage = LoadImage("dither-button.png");
+        
 	// create controls
 	
 	DGRect pos;
@@ -415,6 +419,9 @@ long BufferOverrideEditor::OpenEditor()
 	emplaceControl<DGButton>(this, kDivisorLFOTempoSync, pos, divisorLFORateLabelImage, DGButton::Mode::PictureReel);
 
 
+	// experimental dither button
+	emplaceControl<DGToggleImageButton>(this, kDither, kDitherButtonX, kDitherButtonY, ditherButtonImage, false);
+        
 	// the help mouseover hint thingy
 	pos.set(kHelpDisplayX, kHelpDisplayY, GetBackgroundImage()->getWidth(), kDisplayHeight);
 	mHelpDisplay = emplaceControl<DGStaticTextDisplay>(this, pos, nullptr, dfx::TextAlignment::Center, kHelpDisplayFontSize, kHelpDisplayTextColor, kHelpDisplayFont);
@@ -562,6 +569,9 @@ void BufferOverrideEditor::mouseovercontrolchanged(IDGControl* currentControlUnd
 			break;
 		case kTempoAuto:
 			helpstring = "enable this to get the tempo from your host application";
+			break;
+		case kDither:
+			helpstring = "toggle between smooth and dithered crossfading";
 			break;
 
 		default:

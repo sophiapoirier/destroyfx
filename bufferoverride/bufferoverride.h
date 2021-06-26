@@ -60,6 +60,8 @@ enum
 	kTempo,
 	kTempoAuto,
 
+        kDither,
+        
 	kNumParameters
 };
 
@@ -108,7 +110,8 @@ private:
 	bool mDivisorLFOTempoSync = false, mBufferLFOTempoSync = false;
 	float mDivisorLFORateHz = 0.0f, mBufferLFORateHz = 0.0f;  // LFO rate (in Hz)
 	float mDivisorLFOTempoRate = 0.0f, mBufferLFOTempoRate = 0.0f;  // LFO rate (in cycles per beat)
-
+	bool mDither = false;
+  
 	dfx::SmoothedValue<float> mInputGain, mOutputGain;  // the effective states of the dry/wet mix
 
 	long mCurrentForcedBufferSize = 0;  // the size of the larger, imposed buffer
@@ -127,6 +130,8 @@ private:
 	dfx::TempoRateTable const mTempoRateTable;
 
 	long mSmoothDur = 0, mSmoothCount = 0;  // total duration and sample counter for the minibuffer transition smoothing period
+	float mSmoothError = 0.0f;  // carry-over error when dithering-based "smoothing"
+	bool mLastNewBuffer = false;  // quantized value of last dithered sample 
 //	float mSmoothStep = 0.0f;  // the gain increment for each sample "step" during the smoothing period
 //	float mSqrtFadeIn = 0.0f, mSqrtFadeOut = 0.0f;  // square root of the smoothing gains, for equal power crossfading
 //	float mSmoothFract = 0.0f;

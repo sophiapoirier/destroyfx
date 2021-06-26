@@ -61,6 +61,8 @@ BufferOverride::BufferOverride(TARGET_API_BASE_INSTANCE_TYPE inInstance)
 	initparameter_f(kTempo, dfx::MakeParameterNames(dfx::kParameterNames_Tempo), 120.0, 120.0, 57.0, 480.0, DfxParam::Unit::BPM);
 	initparameter_b(kTempoAuto, dfx::MakeParameterNames(dfx::kParameterNames_TempoAuto), true, true);
 
+	initparameter_b(kDither, {"dither crossfade", "Dither", "Dthr"}, false, false);
+        
 	// set the value strings for the LFO shape parameters
 	for (dfx::LFO::Shape i = 0; i < dfx::LFO::kNumShapes; i++)
 	{
@@ -344,7 +346,8 @@ void BufferOverride::processparameters()
 	mMidiMode = getparameter_i(kMidiMode);
 	mUserTempoBPM = getparameter_f(kTempo);
 	mUseHostTempo = getparameter_b(kTempoAuto);
-
+        mDither = getparameter_b(kDither);
+        
 	if (getparameterchanged(kDivisor))
 	{
 		// tell MIDI trigger mode to respect this change
