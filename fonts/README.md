@@ -2,10 +2,13 @@
 
 Some of our plugins' GUIs use special fonts for text display:
 
-* Transverb uses "snoot.org pixel10"
-* Scrubby uses "snoot.org pixel10"
+* Buffer Override uses "DFX Pasement 9px"
 * Geometer uses "snoot.org pixel10"
 * Polarizer uses "Boring Boron"
+* Rez Synth uses "snoot.org pixel10"
+* Scrubby uses "snoot.org pixel10"
+* Skidder uses "snoot.org pixel10"
+* Transverb uses "snoot.org pixel10"
 
 `px10.ttf` ("snoot.org pixel10") and `bboron.ttf` ("Boring Boron") are
 included in this directory. The fonts, unlike other things in this
@@ -44,4 +47,3 @@ so:
   self-intersecting curves (this is because on the pixel grid, some
   corners will be coincident; it doesn't seem to cause any rendering
   problems).
-

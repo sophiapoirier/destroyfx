@@ -70,8 +70,21 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 		inTextDisplay->setFont(fontDesc);
 	}
 
-	DGFontTweaks const fontTweaks = inFontName && strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0 ?
-	  DGFontTweaks::SNOOTORGPX10 : DGFontTweaks::NONE;
+	DGFontTweaks const fontTweaks = [inFontName]
+	{
+		if (inFontName)
+		{
+			if (strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0)
+			{
+				return DGFontTweaks::SNOOTORGPX10;
+			}
+			if (strcmp(inFontName, dfx::kFontName_Pasement9px) == 0)
+			{
+				return DGFontTweaks::PASEMENT9PX;
+			}
+		}
+		return DGFontTweaks::NONE;
+	}();
 
 	switch (fontTweaks)
 	{
@@ -91,6 +104,9 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 			}
 #endif
 			break;
+		case DGFontTweaks::PASEMENT9PX:
+			inTextDisplay->setAntialias(false);	  
+			break;
 	}
 	return fontTweaks;
 }
@@ -106,6 +122,9 @@ static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks inFontTweaks, DGRect const& 
 			textArea.offset(0, -2);
 #endif
 			textArea.setHeight(textArea.getHeight() + 2);
+			textArea.makeIntegral();
+			break;
+		case DGFontTweaks::PASEMENT9PX:
 			textArea.makeIntegral();
 			break;
 		default:

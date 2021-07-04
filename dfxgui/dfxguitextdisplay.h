@@ -38,7 +38,8 @@ namespace internal
 enum class DGFontTweaks
 {
 	NONE,
-	SNOOTORGPX10
+	SNOOTORGPX10,
+	PASEMENT9PX
 };
 }  // namespace internal
 
