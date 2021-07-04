@@ -234,7 +234,7 @@ We are using C++17 features in DFX now, so you might need a pretty
 new compiler. This is known to work:
 
 	$ x86_64-w64-mingw32-g++ --version
-	sx86_64-w64-mingw32-g++ (GCC) 9.2.0
+	x86_64-w64-mingw32-g++ (GCC) 10.2.0
 
 
 You will also need the VSTGUI library to compile the UIs for these
