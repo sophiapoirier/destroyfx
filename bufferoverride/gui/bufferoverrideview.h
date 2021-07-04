@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
 
 This file is part of Buffer Override.
 
@@ -23,29 +23,34 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #include "dfxgui.h"
-#include "bufferoverrideview.h"
+#include "bufferoverride-base.h"
 
-//-----------------------------------------------------------------------------
-class BufferOverrideEditor final : public DfxGuiEditor
-{
-public:
-	BufferOverrideEditor(DGEditorListenerInstance inInstance);
+// Visualizes how Buffer Override overrides yer buffers.
+// This only depends on the values of parameters, but could be extended
+// to show the input/output waveforms too?
 
-	long OpenEditor() override;
-	void CloseEditor() override;
-	void parameterChanged(long inParameterID) override;
-	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
+class BufferOverrideView final : public VSTGUI::CView {
+ public:
 
-private:
-	void HandleTempoSyncChange();
-	void HandleTempoAutoChange();
+  explicit BufferOverrideView(VSTGUI::CRect const &size);
 
-	DGXYBox* mDivisorBufferBox = nullptr;
-	DGSlider* mDivisorLFORateSlider = nullptr;
-	DGSlider* mBufferLFORateSlider = nullptr;
-	DGTextDisplay* mBufferSizeDisplay = nullptr;
-	DGTextDisplay* mDivisorLFORateDisplay = nullptr;
-	DGTextDisplay* mBufferLFORateDisplay = nullptr;
+  bool attached(VSTGUI::CView *parent) override;
+  void draw(VSTGUI::CDrawContext *pContext) override;
+  void onIdle() override;
 
-	DGStaticTextDisplay* mHelpDisplay = nullptr;
+  void reflect();
+
+ private:
+
+  // uint64_t prevtimestamp = 0;
+  float divisor = 2.0f;
+  float buffer_ms = 100.0f;
+  
+  DfxGuiEditor *editor = nullptr;
+
+  // XXX temporary
+  VSTGUI::SharedPointer<VSTGUI::CFontDesc> fontDesc;
+
+  // TODO: (Copied from Geometer) Does this still serve a purpose in modern VSTGUI?
+  VSTGUI::SharedPointer<VSTGUI::COffscreenContext> offc;
 };

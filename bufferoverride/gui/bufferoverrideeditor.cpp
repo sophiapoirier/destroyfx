@@ -24,6 +24,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include <array>
 #include <cassert>
 
+#include "bufferoverride-base.h"
 #include "bufferoverride.h"
 
 
@@ -141,7 +142,14 @@ enum
 	kMidiLearnButtonX = 5,
 	kMidiLearnButtonY = 63,
 	kMidiResetButtonX = 4,
-	kMidiResetButtonY = 86
+	kMidiResetButtonY = 86,
+
+#if BO_ENABLE_VISUALIZATION
+        kVisualizationX = 480,
+        kVisualizationY = 0,
+        kVisualizationW = 230,
+        kVisualizationH = 200,
+#endif
 };
 
 
@@ -423,7 +431,12 @@ long BufferOverrideEditor::OpenEditor()
 	HandleTempoSyncChange();
 	HandleTempoAutoChange();
 
-
+#if BO_ENABLE_VISUALIZATION
+        // Visualization
+	pos.set(kVisualizationX, kVisualizationY, kVisualizationW, kVisualizationH);
+	getFrame()->addView(new BufferOverrideView(pos));
+#endif
+        
 	return dfx::kStatus_NoError;
 }
 

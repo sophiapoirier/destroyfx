@@ -19,6 +19,7 @@ along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
+#include "bufferoverride-base.h"
 #include "bufferoverride.h"
 
 #include <algorithm>

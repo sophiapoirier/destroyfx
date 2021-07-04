@@ -4,6 +4,7 @@ buffer-lfo-rate-label.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-lfo-rate-
 buffer-lfo-shape-switch.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-lfo-shape-switch.png"
 buffer-lfo-tempo-sync-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-lfo-tempo-sync-button.png"
 buffer-override-background.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-override-background.png"
+buffer-override-background-wide.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-override-background-wide.png"
 buffer-size-label.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-size-label.png"
 buffer-tempo-sync-button-corner.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-tempo-sync-button-corner.png"
 buffer-tempo-sync-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\buffer-tempo-sync-button.png"

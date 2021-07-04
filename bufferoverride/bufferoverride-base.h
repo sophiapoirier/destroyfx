@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-Copyright (C) 2001-2021  Sophia Poirier
+Copyright (C) 2001-2021  Sophia Poirier and Tom Murphy VII
 
 This file is part of Buffer Override.
 
@@ -19,33 +19,38 @@ along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
+
 #pragma once
 
-
-#include "dfxgui.h"
-#include "bufferoverrideview.h"
-
-//-----------------------------------------------------------------------------
-class BufferOverrideEditor final : public DfxGuiEditor
+//----------------------------------------------------------------------------- 
+// these are the plugin parameters:
+enum
 {
-public:
-	BufferOverrideEditor(DGEditorListenerInstance inInstance);
+	kDivisor,
+	kBufferSize_MS,
+	kBufferSize_Sync,
+	kBufferTempoSync,
+	kBufferInterrupt,
 
-	long OpenEditor() override;
-	void CloseEditor() override;
-	void parameterChanged(long inParameterID) override;
-	void mouseovercontrolchanged(IDGControl* currentControlUnderMouse) override;
+	kDivisorLFORate_Hz,
+	kDivisorLFORate_Sync,
+	kDivisorLFODepth,
+	kDivisorLFOShape,
+	kDivisorLFOTempoSync,
+	kBufferLFORate_Hz,
+	kBufferLFORate_Sync,
+	kBufferLFODepth,
+	kBufferLFOShape,
+	kBufferLFOTempoSync,
 
-private:
-	void HandleTempoSyncChange();
-	void HandleTempoAutoChange();
+	kSmooth,
+	kDryWetMix,
 
-	DGXYBox* mDivisorBufferBox = nullptr;
-	DGSlider* mDivisorLFORateSlider = nullptr;
-	DGSlider* mBufferLFORateSlider = nullptr;
-	DGTextDisplay* mBufferSizeDisplay = nullptr;
-	DGTextDisplay* mDivisorLFORateDisplay = nullptr;
-	DGTextDisplay* mBufferLFORateDisplay = nullptr;
+	kPitchBendRange,
+	kMidiMode,
 
-	DGStaticTextDisplay* mHelpDisplay = nullptr;
+	kTempo,
+	kTempoAuto,
+
+	kNumParameters
 };
