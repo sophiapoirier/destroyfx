@@ -29,39 +29,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 #include "lfo.h"
 #include "temporatetable.h"
 
-
-//----------------------------------------------------------------------------- 
-// these are the plugin parameters:
-enum
-{
-	kDivisor,
-	kBufferSize_MS,
-	kBufferSize_Sync,
-	kBufferTempoSync,
-	kBufferInterrupt,
-
-	kDivisorLFORate_Hz,
-	kDivisorLFORate_Sync,
-	kDivisorLFODepth,
-	kDivisorLFOShape,
-	kDivisorLFOTempoSync,
-	kBufferLFORate_Hz,
-	kBufferLFORate_Sync,
-	kBufferLFODepth,
-	kBufferLFOShape,
-	kBufferLFOTempoSync,
-
-	kSmooth,
-	kDryWetMix,
-
-	kPitchBendRange,
-	kMidiMode,
-
-	kTempo,
-	kTempoAuto,
-
-	kNumParameters
-};
+#include "bufferoverride-base.h"
 
 //----------------------------------------------------------------------------- 
 class BufferOverride final : public DfxPlugin

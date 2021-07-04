@@ -1,47 +1,49 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Geometer.
+This file is part of Buffer Override.
 
-Geometer is free software:  you can redistribute it and/or modify 
+Buffer Override is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 2 of the License, or 
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
+Buffer Override is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
 
-#include "geometerview.h"
+#include "bufferoverrideview.h"
 
 #include <cassert>
 #include <cmath>
 #include <utility>
 
-constexpr auto coldwave = VSTGUI::MakeCColor(75, 151, 71);
-constexpr auto cnewwave = VSTGUI::MakeCColor(240, 255, 160);
-constexpr auto cpointoutside = VSTGUI::MakeCColor(0, 0, 0);
-constexpr auto cpointinside = VSTGUI::MakeCColor(220, 100, 200);
-//constexpr auto cbackground = VSTGUI::MakeCColor(17, 25, 16);
-constexpr auto cbackground = VSTGUI::MakeCColor(20, 50, 20);
-constexpr auto zeroline = VSTGUI::MakeCColor(52, 71, 49);
+constexpr auto color_dark = VSTGUI::MakeCColor(0x6f, 0x3f, 0x00);
+constexpr auto color_med = VSTGUI::MakeCColor(0xc8, 0x91, 0x3e);
+constexpr auto color_lite = VSTGUI::MakeCColor(0xe8, 0xd0, 0xaa);
 
-GeometerView::GeometerView(VSTGUI::CRect const & size)
+using VSTGUI::CPoint;
+using VSTGUI::UTF8StringPtr;
+
+BufferOverrideView::BufferOverrideView(VSTGUI::CRect const & size)
   : VSTGUI::CView(size) {
 
+  // XXX temporary
+  fontDesc = VSTGUI::makeOwned<VSTGUI::CFontDesc>(VSTGUI::kSystemFont->getName(), 24);
+  
   setWantsIdle(true);
 }
 
 
  
-bool GeometerView::attached(VSTGUI::CView * parent) {
+bool BufferOverrideView::attached(VSTGUI::CView * parent) {
 
   auto const success = VSTGUI::CView::attached(parent);
 
@@ -56,19 +58,31 @@ bool GeometerView::attached(VSTGUI::CView * parent) {
 }
 
 
-void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
+void BufferOverrideView::draw(VSTGUI::CDrawContext *ctx) {
 
   assert(offc);
 
-  auto const signedlinear2y = [height = getHeight()](float value) -> VSTGUI::CCoord {
-    return height * (-value + 1.0) * 0.5;
-  };
+  const auto width = getWidth();
+  const auto height = getHeight();
 
   offc->beginDraw();
 
-  offc->setFillColor(cbackground);
-  offc->drawRect(VSTGUI::CRect(-1, -1, getWidth(), getHeight()), VSTGUI::kDrawFilled);
+  offc->setFillColor(color_dark);
+  offc->drawRect(VSTGUI::CRect(-1, -1, width, height), VSTGUI::kDrawFilled);
 
+  // XXX this just demonstrates that we are getting the parameters.
+  // draw something nice!
+  offc->setFont(fontDesc);
+  offc->setFontColor(color_med);
+  
+  char placeholder[128];
+  sprintf(placeholder, "%.4f %.4f", divisor, buffer_ms);
+
+
+  offc->drawString(VSTGUI::UTF8String(placeholder).getPlatformString(), CPoint(10, 50));
+
+#if 0
+  // from geometer, for reference
   offc->setFrameColor(zeroline);
   VSTGUI::CCoord const centery = std::floor(getHeight() / 2.0);
   offc->drawLine(VSTGUI::CPoint(0, centery), VSTGUI::CPoint(getWidth(), centery));
@@ -105,37 +119,34 @@ void GeometerView::draw(VSTGUI::CDrawContext * ctx) {
     offc->setFillColor(cpointinside);
     offc->drawRect(box, VSTGUI::kDrawFilled);
   }
-
+#endif
+  
   offc->endDraw();
   offc->copyFrom(ctx, getViewSize());
-
+  
   setDirty(false);
 }
 
 
-void GeometerView::onIdle() {
-
-  /* XXX reevaluate when I should do this. */
-  /* maybe I don't need to do this every frame... */
-  assert(editor);
-  auto const timestamp = editor->dfxgui_GetProperty<uint64_t>(PROP_LAST_WINDOW_TIMESTAMP).value_or(prevtimestamp);
-  if (std::exchange(prevtimestamp, timestamp) != timestamp) {
-    reflect();
-  }
+void BufferOverrideView::onIdle() {
+  reflect();
 }
 
 
-/* XXX use memcpy where applicable. */
-/* XXX don't bother running processw unless the input data have changed. */
-void GeometerView::reflect() {
-  /* when idle, copy points out of Geometer */
-
+void BufferOverrideView::reflect() {
+  // When idle, update copies of the parameters from the editor.
+  // Perhaps it's better to do this by registering listeners? But:
+  //   - want to take LFOs into account
+  //   - want to leave open the possibility of rendering some waveform data
+  
   assert(editor);
-  size_t dataSize = sizeof(data);
-  [[maybe_unused]] auto const status = editor->dfxgui_GetProperty(PROP_WAVEFORM_DATA, dfx::kScope_Global, 0,
-                                                                  &data, dataSize);
-  assert(status == dfx::kStatus_NoError);
-  assert(dataSize == sizeof(data));
 
+  // (This should compute the current effective divisor and buffer in some
+  // absolute terms. Currently ignores LFOs, and buffer_ms only works when
+  // buffer sync is off)
+  divisor = editor->getparameter_f(kDivisor);
+  buffer_ms = editor->getparameter_f(kBufferSize_MS);    
+
+  // Only if changed?
   invalid();
 }

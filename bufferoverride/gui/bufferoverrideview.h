@@ -1,20 +1,20 @@
 /*------------------------------------------------------------------------
 Copyright (C) 2002-2021  Tom Murphy 7 and Sophia Poirier
 
-This file is part of Geometer.
+This file is part of Buffer Override.
 
-Geometer is free software:  you can redistribute it and/or modify 
+Buffer Override is free software:  you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published by 
 the Free Software Foundation, either version 2 of the License, or 
 (at your option) any later version.
 
-Geometer is distributed in the hope that it will be useful, 
+Buffer Override is distributed in the hope that it will be useful, 
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License 
-along with Geometer.  If not, see <http://www.gnu.org/licenses/>.
+along with Buffer Override.  If not, see <http://www.gnu.org/licenses/>.
 
 To contact the author, use the contact form at http://destroyfx.org/
 ------------------------------------------------------------------------*/
@@ -23,31 +23,34 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 #include "dfxgui.h"
-#include "geometer-base.h"
+#include "bufferoverride-base.h"
 
-/* this class is for the display of the wave at the top of the plugin.
-   It reads the current 'in' buffer for the plugin, runs it through
-   geometer with its current settings, and then draws it up there
-   whenever the plugin is idle.
-*/
+// Visualizes how Buffer Override overrides yer buffers.
+// This only depends on the values of parameters, but could be extended
+// to show the input/output waveforms too?
 
-class GeometerView final : public VSTGUI::CView {
+class BufferOverrideView final : public VSTGUI::CView {
+ public:
 
-private:
+  explicit BufferOverrideView(VSTGUI::CRect const &size);
 
-  GeometerViewData data;
-  uint64_t prevtimestamp = 0;
-
-  DfxGuiEditor * editor = nullptr;
-  VSTGUI::SharedPointer<VSTGUI::COffscreenContext> offc;  // TODO: does this still serve a purpose in modern VSTGUI?
-
-public:
-
-  explicit GeometerView(VSTGUI::CRect const & size);
-
-  bool attached(VSTGUI::CView * parent) override;
-  void draw(VSTGUI::CDrawContext * pContext) override;
+  bool attached(VSTGUI::CView *parent) override;
+  void draw(VSTGUI::CDrawContext *pContext) override;
   void onIdle() override;
 
   void reflect();
+
+ private:
+
+  // uint64_t prevtimestamp = 0;
+  float divisor = 2.0f;
+  float buffer_ms = 100.0f;
+  
+  DfxGuiEditor *editor = nullptr;
+
+  // XXX temporary
+  VSTGUI::SharedPointer<VSTGUI::CFontDesc> fontDesc;
+
+  // TODO: (Copied from Geometer) Does this still serve a purpose in modern VSTGUI?
+  VSTGUI::SharedPointer<VSTGUI::COffscreenContext> offc;
 };
