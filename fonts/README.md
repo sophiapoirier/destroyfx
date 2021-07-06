@@ -18,10 +18,14 @@ available at [http://fonts.tom7.com/](http://fonts.tom7.com/)
 
 
 As of 2021, there are also some DFX-specific fonts, which are part of
-this project and available under the GPL. These are "fake bitmap"
-TTFs, which are actually vector data (straight lines on a grid)
-generated from bitmap files. The workflow for generating a TTF is like
-so:
+this project and available under the GPL:
+
+* DFX Pasement 9px
+* DFX Wetar 16px
+
+These are "fake bitmap" TTFs, which are actually vector data (straight
+lines on a grid) generated from bitmap files. The workflow for
+generating a TTF is like so:
 
 * The inputs are the png file (contains the character bitmaps) and
   a matching .cfg file (describes the dimensions, font's name, etc.)
