@@ -543,6 +543,8 @@ public:
 	DfxParam::Value getpresetparameter(long inPresetIndex, long inParameterIndex) const;
 	double getpresetparameter_f(long inPresetIndex, long inParameterIndex) const;
 
+	bool settingsMinimalValidate(void const* inData, size_t inBufferSize) const noexcept;
+
   	// Overrides to define custom properties. Note that calling these directly will not update listeners;
   	// only the DfxGuiEditor versions do that.
 	virtual long dfx_GetPropertyInfo(dfx::PropertyID inPropertyID, dfx::Scope inScope, unsigned long inItemIndex, 

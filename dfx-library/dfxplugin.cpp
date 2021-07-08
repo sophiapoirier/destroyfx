@@ -1121,6 +1121,16 @@ CFStringRef DfxPlugin::getpresetcfname(long inPresetIndex) const
 }
 #endif
 
+//-----------------------------------------------------------------------------
+bool DfxPlugin::settingsMinimalValidate(void const* inData, size_t inBufferSize) const noexcept
+{
+#if TARGET_PLUGIN_USES_MIDI
+	return mDfxSettings->minimalValidate(inData, inBufferSize);
+#else
+	return false;
+#endif
+}
+
 
 
 #pragma mark -

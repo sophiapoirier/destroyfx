@@ -460,6 +460,26 @@ if (!(oldVST && inIsPreset))
 }
 
 //-----------------------------------------------------------------------------
+bool DfxSettings::minimalValidate(void const* inData, size_t inBufferSize) const noexcept
+{
+	SettingsInfo settingsInfo;
+	if (!inData || (inBufferSize < sizeof(settingsInfo)))
+	{
+		return false;
+	}
+	memcpy(&settingsInfo, inData, sizeof(settingsInfo));
+
+	if constexpr (!serializationIsNativeEndian())
+	{
+		dfx::ReverseBytes(settingsInfo.mMagic);
+		dfx::ReverseBytes(settingsInfo.mVersion);
+		dfx::ReverseBytes(settingsInfo.mStoredHeaderSize);
+	}
+
+	return (settingsInfo.mMagic == mSettingsInfo.mMagic) && (settingsInfo.mVersion == mSettingsInfo.mVersion) && (settingsInfo.mStoredHeaderSize == mSettingsInfo.mStoredHeaderSize);
+}
+
+//-----------------------------------------------------------------------------
 // this function, if called for the non-reference endian architecture, 
 // will reverse the order of bytes in each variable/value of the data 
 // to correct endian differences and make a uniform data chunk
