@@ -119,6 +119,7 @@ public:
 	// for adding to your base plugin class methods
 	std::vector<std::byte> save(bool inIsPreset);
 	bool restore(void const* inData, size_t inBufferSize, bool inIsPreset);
+	bool minimalValidate(void const* inData, size_t inBufferSize) const noexcept;
 
 #if TARGET_PLUGIN_USES_MIDI
 #ifdef TARGET_API_AUDIOUNIT
