@@ -826,11 +826,11 @@ private:
 
 #if TARGET_PLUGIN_USES_DSPCORE
 	template <class DSPCoreClass>
-	std::unique_ptr<DSPCoreClass> dspCoreFactory();
+	[[nodiscard]] std::unique_ptr<DSPCoreClass> dspCoreFactory();
 #ifdef TARGET_API_AUDIOUNIT
 	ausdk::AUBufferList mAsymmetricalInputBufferList;
 #else
-	std::unique_ptr<DfxPluginCore> dspCoreFactory();
+	[[nodiscard]] std::unique_ptr<DfxPluginCore> dspCoreFactory();
 	std::vector<std::unique_ptr<DfxPluginCore>> mDSPCores;  // we have to manage this ourselves outside of the AU SDK
 	std::vector<float> mAsymmetricalInputAudioBuffer;
 #endif
@@ -1391,10 +1391,10 @@ private:
 	// call this in the plugin's constructor if it uses DSP cores for processing
 	#if TARGET_PLUGIN_USES_DSPCORE
 		// DFX_CORE_ENTRY is not useful for APIs other than AU, so it is defined as nothing
-		#define DFX_CORE_ENTRY(PluginCoreClass)							\
-			std::unique_ptr<DfxPluginCore> DfxPlugin::dspCoreFactory()	\
-			{															\
-				return dspCoreFactory<PluginCoreClass>();				\
+		#define DFX_CORE_ENTRY(PluginCoreClass)											\
+			[[nodiscard]] std::unique_ptr<DfxPluginCore> DfxPlugin::dspCoreFactory()	\
+			{																			\
+				return dspCoreFactory<PluginCoreClass>();								\
 			}
 	#endif
 
@@ -1419,17 +1419,17 @@ private:
 	#ifdef TARGET_API_AUDIOSUITE
 		#define DFX_NewEffectProcess	DFX_NewEffectProcessAS
 	#endif
-	#define DFX_EFFECT_ENTRY(PluginClass)			\
-		CEffectProcess* DFX_NewEffectProcess()		\
-		{											\
-			try										\
-			{										\
-				return new PluginClass(nullptr);	\
-			}										\
-			catch (...)								\
-			{										\
-				return nullptr;						\
-			}										\
+	#define DFX_EFFECT_ENTRY(PluginClass)						\
+		[[nodiscard]] CEffectProcess* DFX_NewEffectProcess()	\
+		{														\
+			try													\
+			{													\
+				return new PluginClass(nullptr);				\
+			}													\
+			catch (...)											\
+			{													\
+				return nullptr;									\
+			}													\
 		}
 
 #endif  // TARGET_API_RTAS
@@ -1439,7 +1439,7 @@ private:
 
 #if TARGET_PLUGIN_USES_DSPCORE
 template <class DSPCoreClass>
-std::unique_ptr<DSPCoreClass> DfxPlugin::dspCoreFactory()
+[[nodiscard]] std::unique_ptr<DSPCoreClass> DfxPlugin::dspCoreFactory()
 {
 	static_assert(std::is_base_of_v<DfxPluginCore, DSPCoreClass>);
 	auto core = std::make_unique<DSPCoreClass>(this);

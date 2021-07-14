@@ -140,14 +140,10 @@ DfxGuiEditor::DfxGuiEditor(DGEditorListenerInstance inInstance)
 //-----------------------------------------------------------------------------
 DfxGuiEditor::~DfxGuiEditor()
 {
+	assert(!IsOpen());
 #ifdef TARGET_API_AUDIOUNIT
 	RemoveAUEventListeners();
 #endif
-
-	if (IsOpen())
-	{
-		close();
-	}
 }
 
 
@@ -231,7 +227,7 @@ void DfxGuiEditor::close()
 	CloseEditor();
 
 	frame->unregisterMouseObserver(this);
-	// zero the member frame before we delete it so that other asynchronous calls don't crash
+	// zero the member frame before we release it so that other asynchronous calls don't crash
 	auto const frame_temp = std::exchange(frame, nullptr);
 
 	for (auto& control : mControlsList)
@@ -240,10 +236,7 @@ void DfxGuiEditor::close()
 	}
 	mControlsList.clear();
 
-	if (frame_temp)
-	{
-		frame_temp->forget();
-	}
+	frame_temp->forget();
 
 	TARGET_API_EDITOR_BASE_CLASS::close();
 }

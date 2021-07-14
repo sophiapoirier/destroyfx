@@ -45,7 +45,7 @@ This is our class for E-Z plugin-making and E-Z multiple-API support.
 
 #if defined(TARGET_API_VST) && TARGET_PLUGIN_HAS_GUI
 	#include "dfxguieditor.h"
-	extern AEffEditor* DFXGUI_NewEditorInstance(DfxPlugin* inEffectInstance);
+	[[nodiscard]] extern std::unique_ptr<DfxGuiEditor> DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance);
 #endif
 
 #ifdef TARGET_API_RTAS
@@ -204,13 +204,13 @@ DfxPlugin::DfxPlugin(
 	mNumInputs = VST_NUM_INPUTS;
 	mNumOutputs = VST_NUM_OUTPUTS;
 
-	setUniqueID(PLUGIN_ID);
-	setNumInputs(VST_NUM_INPUTS);
-	setNumOutputs(VST_NUM_OUTPUTS);
+	TARGET_API_BASE_CLASS::setUniqueID(PLUGIN_ID);
+	TARGET_API_BASE_CLASS::setNumInputs(VST_NUM_INPUTS);
+	TARGET_API_BASE_CLASS::setNumOutputs(VST_NUM_OUTPUTS);
 
 	TARGET_API_BASE_CLASS::setProgram(0);  // set the current preset number to 0
 
-	noTail(true);  // until the plugin declares otherwise
+	TARGET_API_BASE_CLASS::noTail(true);  // until the plugin declares otherwise
 
 	// check to see if the host supports sending tempo and time information to VST plugins
 	// Note that the VST2 SDK (probably erroneously) wants a non-const string here,
@@ -220,18 +220,15 @@ DfxPlugin::DfxPlugin(
 
 	#if TARGET_PLUGIN_USES_MIDI
 	// tell host that we want to use special data chunks for settings storage
-	programsAreChunks();
+	TARGET_API_BASE_CLASS::programsAreChunks();
 	#endif
 
 	#if TARGET_PLUGIN_IS_INSTRUMENT
-	isSynth();
+	TARGET_API_BASE_CLASS::isSynth();
 	#endif
 
 	#if TARGET_PLUGIN_HAS_GUI
-	// XXX AEffGUIEditor registers itself, so we probably don't need to assign this
-	// to the member variable here (and probably should be using AEffect::setEditor?).
-	// Instead we can probably just call getEditor() if we need it.
-	editor = DFXGUI_NewEditorInstance(this);
+	setEditor(DFXGUI_NewEditorInstance(this).release());
 	#endif
 #endif
 // end VST stuff
@@ -1126,14 +1123,17 @@ void DfxPlugin::setsamplerate(double inSampleRate)
 	if ((mSampleRateChanged = (inSampleRate != DfxPlugin::mSampleRate)))
 	{
 #ifdef TARGET_API_AUDIOUNIT
-		// assume that sample-specified properties change in absolute duration when sample rate changes
-		if (auto const latencySamples = std::get_if<long>(&mLatency); latencySamples && (*latencySamples != 0))
+		if (mAUElementsHaveBeenCreated)
 		{
-			postupdate_latency();
-		}
-		if (auto const tailSizeSamples = std::get_if<long>(&mTailSize); tailSizeSamples && (*tailSizeSamples != 0))
-		{
-			postupdate_tailsize();
+			// assume that sample-specified properties change in absolute duration when sample rate changes
+			if (auto const latencySamples = std::get_if<long>(&mLatency); latencySamples && (*latencySamples != 0))
+			{
+				postupdate_latency();
+			}
+			if (auto const tailSizeSamples = std::get_if<long>(&mTailSize); tailSizeSamples && (*tailSizeSamples != 0))
+			{
+				postupdate_tailsize();
+			}
 		}
 #endif
 	}

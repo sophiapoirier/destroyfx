@@ -76,10 +76,10 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-#define DFX_EDITOR_ENTRY(PluginEditorClass)												\
-	DfxGuiEditor* DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance)	\
-	{																					\
-		return new PluginEditorClass(inEffectInstance);									\
+#define DFX_EDITOR_ENTRY(PluginEditorClass)																			\
+	[[nodiscard]] std::unique_ptr<DfxGuiEditor> DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance)	\
+	{																												\
+		return std::make_unique<PluginEditorClass>(inEffectInstance);												\
 	}
 
 

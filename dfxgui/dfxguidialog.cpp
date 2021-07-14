@@ -63,7 +63,7 @@ static bool DFXGUI_PressButton(VSTGUI::CTextButton* inButton, bool inState)
 //-----------------------------------------------------------------------------
 // Dialog Button
 //-----------------------------------------------------------------------------
-class DGDialogButton : public VSTGUI::CTextButton
+class DGDialogButton final : public VSTGUI::CTextButton
 {
 public:
 	DGDialogButton(VSTGUI::IControlListener* inListener, DGRect const& inRegion, DGDialog::Selection inSelection, VSTGUI::UTF8StringPtr inTitle)
@@ -179,7 +179,7 @@ private:
 //-----------------------------------------------------------------------------
 // Dialog Text Edit
 //-----------------------------------------------------------------------------
-class DGDialogTextEdit : public VSTGUI::CTextEdit
+class DGDialogTextEdit final : public VSTGUI::CTextEdit
 {
 public:
 	DGDialogTextEdit(VSTGUI::CRect const& inRegion, VSTGUI::IControlListener* inListener)

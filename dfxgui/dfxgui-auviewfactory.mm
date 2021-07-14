@@ -117,7 +117,7 @@ CFStringRef dfx::DGCocoaAUViewFactory_CopyClassName()
 @implementation DGNSViewForAU
 //-----------------------------------------------------------------------------
 
-extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
+[[nodiscard]] extern std::unique_ptr<DfxGuiEditor> DFXGUI_NewEditorInstance(DGEditorListenerInstance inEffectInstance);
 
 //-----------------------------------------------------------------------------
 - (id) initWithAU:(AudioUnit)inAU preferredSize:(NSSize)inSize
@@ -129,7 +129,7 @@ extern DfxGuiEditor* DFXGUI_NewEditorInstance(AudioUnit inEffectInstance);
 		return nil;
 	}
 
-	mDfxGuiEditor.reset(DFXGUI_NewEditorInstance(inAU));
+	mDfxGuiEditor = DFXGUI_NewEditorInstance(inAU);
 	if (!mDfxGuiEditor)
 	{
 		return nil;
