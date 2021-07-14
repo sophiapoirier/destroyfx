@@ -301,23 +301,26 @@ void CollectAllAUPresetFilesInDir(CFURLRef inDirURL, CFTreeRef inParentTree, Aud
 	}
 
 	// first, we query the directory's contents
-	NSArray<NSURL*>* dirContents = [NSFileManager.defaultManager contentsOfDirectoryAtURL:(__bridge NSURL*)inDirURL includingPropertiesForKeys:resourceKeys options:NSDirectoryEnumerationSkipsHiddenFiles error:nil];
+	NSArray<NSURL*>* const dirContents = [NSFileManager.defaultManager contentsOfDirectoryAtURL:(__bridge NSURL*)inDirURL includingPropertiesForKeys:resourceKeys options:NSDirectoryEnumerationSkipsHiddenFiles error:nil];
 	if (dirContents == nil)
 	{
 		goto checkEmptyTree;
 	}
 
 	// this is the main loop through each directory item using the array of contents
-	for (NSURL* url in dirContents)
+	for (NSURL* const url in dirContents)
 	{
 		CFURLRef const urlCF = (__bridge CFURLRef)url;
 		NSNumber* isDirectory = nil;
 		BOOL const success = [url getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:nil];
 		// if the current item itself is a directory, then we recursively call this function on that sub-directory
-		if (success && (isDirectory != nil) && isDirectory.boolValue)
+		if (success && [isDirectory boolValue])
 		{
 			CFTreeRef const newSubTree = AddFileItemToTree(urlCF, inParentTree);
-			CollectAllAUPresetFilesInDir(urlCF, newSubTree, inAUComponent);
+			if (newSubTree != NULL)
+			{
+				CollectAllAUPresetFilesInDir(urlCF, newSubTree, inAUComponent);
+			}
 		}
 		// otherwise it's a file, so we add it (if it is an AU preset file)
 		else if (CFURLIsAUPreset(urlCF))
