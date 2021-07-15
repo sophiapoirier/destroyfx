@@ -54,7 +54,7 @@ extern "C" {
 
 // preset file trees
 CFTreeRef CreateFileURLsTreeNode(CFURLRef inItemURL, CFAllocatorRef inAllocator);
-CFTreeRef AddFileItemToTree(CFURLRef inItemURL, CFTreeRef inParentTree);
+void AddFileItemToTree(CFURLRef inItemURL, CFTreeRef inParentTree, CFTreeRef* outItemNode);
 void CollectAllAUPresetFilesInDir(CFURLRef inDirURL, CFTreeRef inParentTree, AudioComponent inAUComponent);
 void SortCFTreeRecursively(CFTreeRef inTreeRoot, CFComparatorFunction inComparatorFunction, void* inContext);
 CFComparisonResult FileURLsTreeComparatorFunction(void const* inTree1, void const* inTree2, void* inContext);

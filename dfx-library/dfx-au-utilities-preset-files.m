@@ -266,20 +266,26 @@ CFTreeRef CreateFileURLsTreeNode(CFURLRef inItemURL, CFAllocatorRef inAllocator)
 //-----------------------------------------------------------------------------
 // This function does CreateFileURLsTreeNode and then also adds the new tree node 
 // as a child to a parent tree, and if successful, returns a reference to the new tree node.
-CFTreeRef AddFileItemToTree(CFURLRef inItemURL, CFTreeRef inParentTree)
+void AddFileItemToTree(CFURLRef inItemURL, CFTreeRef inParentTree, CFTreeRef* outItemNode)
 {
-	CFTreeRef newNode = NULL;
-	if ((inItemURL != NULL) && (inParentTree != NULL))
+	if ((inItemURL == NULL) || (inParentTree == NULL))
 	{
-		newNode = CreateFileURLsTreeNode(inItemURL, CFGetAllocator(inParentTree));
-		if (newNode != NULL)
+		return;
+	}
+	CFTreeRef const newNode = CreateFileURLsTreeNode(inItemURL, CFGetAllocator(inParentTree));
+	if (newNode != NULL)
+	{
+		CFTreeAppendChild(inParentTree, newNode);
+		if (outItemNode)
 		{
-			CFTreeAppendChild(inParentTree, newNode);
+			*outItemNode = newNode;
+		}
+		else
+		{
 			// the new tree node was retained by the parent when it was added to the parent, so we can release it now
 			CFRelease(newNode);
 		}
 	}
-	return newNode;
 }
 
 //-----------------------------------------------------------------------------
@@ -316,10 +322,12 @@ void CollectAllAUPresetFilesInDir(CFURLRef inDirURL, CFTreeRef inParentTree, Aud
 		// if the current item itself is a directory, then we recursively call this function on that sub-directory
 		if (success && [isDirectory boolValue])
 		{
-			CFTreeRef const newSubTree = AddFileItemToTree(urlCF, inParentTree);
+			CFTreeRef newSubTree = NULL;
+			AddFileItemToTree(urlCF, inParentTree, &newSubTree);
 			if (newSubTree != NULL)
 			{
 				CollectAllAUPresetFilesInDir(urlCF, newSubTree, inAUComponent);
+				CFRelease(newSubTree);
 			}
 		}
 		// otherwise it's a file, so we add it (if it is an AU preset file)
@@ -340,7 +348,7 @@ void CollectAllAUPresetFilesInDir(CFURLRef inDirURL, CFTreeRef inParentTree, Aud
 				}
 			}
 #endif
-			AddFileItemToTree(urlCF, inParentTree);
+			AddFileItemToTree(urlCF, inParentTree, NULL);
 		}
 	}
 
