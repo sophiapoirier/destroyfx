@@ -1048,8 +1048,8 @@ OSStatus DfxPlugin::GetParameterInfo(AudioUnitScope inScope,
 	// then make sure to only copy as much as the ParameterInfo name C string can hold
 	strlcpy(outParameterInfo.name, getparametername(inParameterID).c_str(), std::size(outParameterInfo.name));
 	// in case the parameter name was dfx::kParameterNameMaxLength or longer, 
-	// make sure that the ParameterInfo name string is terminated
-	outParameterInfo.name[sizeof(outParameterInfo.name) - 1] = 0;
+	// make sure that the ParameterInfo name string is nul-terminated
+	outParameterInfo.name[sizeof(outParameterInfo.name) - 1] = '\0';
 	//
 	outParameterInfo.cfNameString = getparametercfname(inParameterID);
 	outParameterInfo.minValue = getparametermin_f(inParameterID);
@@ -1449,7 +1449,7 @@ OSStatus DfxPlugin::SaveState(CFPropertyListRef* outData)
 OSStatus DfxPlugin::RestoreState(CFPropertyListRef inData)
 {
 	auto const status = TARGET_API_BASE_CLASS::RestoreState(inData);
-	// abort if the base implementation of RestoreState failed
+	// bail if the base implementation of RestoreState failed
 	if (status != noErr)
 	{
 		return status;

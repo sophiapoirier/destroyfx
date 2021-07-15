@@ -707,7 +707,7 @@ OSStatus RMSBuddyEditor::setup()
 {
 	// first figure out how many channels of analysis data we will be displaying
 	numChannels = getAUNumChannels();
-	// there's not really anything for us to do in this situation (which is crazy and shouldn't happen anyway)
+	// there's not really anything for us to do in this situation (which shouldn't happen anyway)
 	if (numChannels == 0)
 		return kAudioUnitErr_FailedInitialization;
 
@@ -1028,7 +1028,7 @@ OSStatus InitControlDrawingContext(EventRef inEvent, CGContextRef & outContext, 
 //-----------------------------------------------------------------------------
 // inPort should be what you got from InitControlDrawingContext().  
 // It is null if inContext came with the control event (compositing window behavior) or 
-// non-null if inContext was created via QDBeginCGContext(), and hence needs to be terminated.
+// non-null if inContext was created via QDBeginCGContext(), and hence needs to be ended.
 void CleanupControlDrawingContext(CGContextRef & inContext, CGrafPtr inPort)
 {
 	if (inContext == NULL)

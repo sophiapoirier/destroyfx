@@ -144,10 +144,10 @@ void DfxPlugin::DoTokenIdle()
 //-----------------------------------------------------------------------------
 void DfxPlugin::AddParametersToList()
 {
-	constexpr OSType masterBypassFourCharID = 'bypa';
+	constexpr OSType globalBypassFourCharID = FOURCC('b', 'y', 'p', 'a');
 
-	AddControl(new CPluginControl_OnOff(masterBypassFourCharID, "Master Bypass\nM Bypass\nMByp\nByp", false, true));
-	DefineMasterBypassControlIndex(dfx::kParameterID_RTASMasterBypass);
+	AddControl(new CPluginControl_OnOff(globalBypassFourCharID, "Global Bypass\nG Bypass\nGByp\nByp", false, true));
+	DefineMasterBypassControlIndex(dfx::kParameterID_RTASGlobalBypass);
 
 	OSType paramFourCharID = 0;
 	for (long i = 0; i < getnumparameters(); i++)
@@ -162,9 +162,11 @@ void DfxPlugin::AddParametersToList()
 		auto const paramName = getparametername(i);
 
 		paramFourCharID = DFX_IterateAlphaNumericFourCharCode(paramFourCharID);
-		// make sure to skip over the ID already used for master bypass
-		if (paramFourCharID == masterBypassFourCharID)
+		// make sure to skip over the ID already used for global bypass
+		if (paramFourCharID == globalBypassFourCharID)
+		{
 			paramFourCharID = DFX_IterateAlphaNumericFourCharCode(paramFourCharID);
+		}
 		bool const paramAutomatable = (getparameterattributes(i) & (DfxParam::kAttribute_Hidden | DfxParam::kAttribute_Unused)) ? false : true;
 		constexpr int numCurvedSteps = 1000;
 		double const stepSize_default = (paramMax_f - paramMin_f) / (double)numCurvedSteps;
@@ -262,7 +264,7 @@ ComponentResult DfxPlugin::GetControlNameOfLength(long inParameterIndex, char * 
 	if (inNameLength <= dfx::kParameterShortNameMax_RTAS)
 	{
 		char * shortNameString = NULL;
-		if (inParameterIndex == dfx::kParameterID_RTASMasterBypass)
+		if (inParameterIndex == dfx::kParameterID_RTASGlobalBypass)
 			shortNameString = "Bypass";	// any shortened version of this is fine
 		else
 			shortNameString = GetParameterShortName( dfx::ParameterID_FromRTAS(inParameterIndex) );
@@ -306,9 +308,9 @@ ComponentResult DfxPlugin::GetValueString(long inParameterIndex, long inValue, S
 //-----------------------------------------------------------------------------
 void DfxPlugin::UpdateControlValueInAlgorithm(long inParameterIndex)
 {
-	if (inParameterIndex == dfx::kParameterID_RTASMasterBypass)
+	if (inParameterIndex == dfx::kParameterID_RTASGlobalBypass)
 	{
-		mMasterBypass_rtas = dynamic_cast<CPluginControl_Discrete*>(GetControl(inParameterIndex))->GetDiscrete();
+		mGlobalBypass_rtas = dynamic_cast<CPluginControl_Discrete*>(GetControl(inParameterIndex))->GetDiscrete();
 		return;
 	}
 
@@ -363,7 +365,7 @@ ComponentResult DfxPlugin::IsControlAutomatable(long inControlIndex, short * out
 		return paramErr;
 
 	// XXX test this first, since dfx::ParameterID_FromRTAS() makes it an invalid ID
-	if (inControlIndex == dfx::kParameterID_RTASMasterBypass)
+	if (inControlIndex == dfx::kParameterID_RTASGlobalBypass)
 	{
 		*outItIs = 1;
 		return noErr;
@@ -439,7 +441,7 @@ ComponentResult DfxPlugin::SetChunk(OSType inChunkID, SFicPlugInChunk * chunk)
 
 #ifdef TARGET_API_AUDIOSUITE
 //-----------------------------------------------------------------------------
-UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
+UInt32 DfxPlugin::ProcessAudio(bool inIsGlobalBypassed)
 {
 	if (!IsAS())
 	{
@@ -478,7 +480,7 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
 				mInputAudioStreams_as[ch] = mZeroAudioBuffer.data();
 			}
 			
-			if (inIsMasterBypassed)
+			if (inIsGlobalBypassed)
 			{
 				for (long i = 0; i < totalInputSamples; i++)
 					mOutputAudioStreams_as[ch][i] = mInputAudioStreams_as[ch][i];
@@ -490,8 +492,10 @@ UInt32 DfxPlugin::ProcessAudio(bool inIsMasterBypassed)
 		}
 	}
 
-	if (!inIsMasterBypassed)
+	if (!inIsGlobalBypassed)
+	{
 		RenderAudio(mInputAudioStreams_as.data(), mOutputAudioStreams_as.data(), totalInputSamples);
+	}
 
 	// Get the current number of samples analyzed and pass this info 
 	// back to the DAE application so it knows how much we've processed.  
@@ -539,7 +543,7 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 		{
 			continue;
 		}
-		if (mMasterBypass_rtas)
+		if (mGlobalBypass_rtas)
 		{
 			SInt32 const inputChannelIndex = (GetNumInputs() < GetNumOutputs()) ? (GetNumInputs() - 1) : channel;
 			std::copy_n(mInputAudioStreams[inputChannelIndex], dfx::math::ToIndex(inNumFramesToProcess), outAudioStreams[channel]);
@@ -568,7 +572,7 @@ void DfxPlugin::RenderAudio(float ** inAudioStreams, float ** outAudioStreams, l
 		}
 	}
 #if !TARGET_PLUGIN_USES_DSPCORE
-	if (!mMasterBypass_rtas)
+	if (!mGlobalBypass_rtas)
 	{
 		processaudio(const_cast<float const* const*>(mInputAudioStreams.data()), const_cast<float* const*>(outAudioStreams), (unsigned)inNumFramesToProcess);
 	}
@@ -781,11 +785,15 @@ void DfxPlugin::ProcessDoIdle()
 //-----------------------------------------------------------------------------
 ComponentResult DfxPlugin::SetControlHighliteInfo(long inControlIndex, short inIsHighlighted, short inColor)
 {
-	if (inControlIndex == dfx::kParameterID_RTASMasterBypass)
+	if (inControlIndex == dfx::kParameterID_RTASGlobalBypass)
+	{
 		CProcess::SetControlHighliteInfo(inControlIndex, inIsHighlighted, inColor);
+	}
 
 	if (mCustomUI_p)
+	{
 		mCustomUI_p->SetControlHighlight(inControlIndex, inIsHighlighted, inColor);
+	}
 
 	return noErr;
 }

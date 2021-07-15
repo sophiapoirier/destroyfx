@@ -552,7 +552,7 @@ int main(int argc, char **argv) {
   {
     ImageRGBA title = LoadImage("skidder-title.png");
     // const int TITLE_X = WIDTH - title.Width() - BORDER + 2;
-    // hang 'd' slightly over the sliders ("optical alignment")
+    // place 'd' slightly over the sliders ("optical alignment")
     const int TITLE_X = CTRL_X + SLIDER_X - 8;
     const int TITLE_Y = BORDER + 5;
     img.BlendImage(TITLE_X, TITLE_Y, title);

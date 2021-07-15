@@ -67,7 +67,9 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 {
 	// we're going to look for a CVS directory in the same 
 	// directory where the input file is located
-	const char * sourcedir = dirname(inputfilename);
+	char * inputfilename_copy = (char*) malloc(strlen(inputfilename) + 1);
+	strcpy(inputfilename_copy, inputfilename);
+	const char * sourcedir = dirname(inputfilename_copy);
 
 	// get full path and filename for the CVS Entries file
 	char * cvsentriesfilefullpath = (char*) malloc(strlen(sourcedir) + strlen(CVS_ENTRIES_FILE) + 4);
@@ -79,7 +81,8 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 	{
 		// get the filename of the input file so that we 
 		// can look for it in the CVS Entries log
-		const char * sourcefilebase = basename(inputfilename);
+		strcpy(inputfilename_copy, inputfilename);
+		const char * sourcefilebase = basename(inputfilename_copy);
 		size_t sourcefilebaselen = strlen(sourcefilebase);
 
 		// loop through reading each line of the Entries file
@@ -123,7 +126,7 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 				linepos++;
 				versionstrpos++;
 			}
-			versionstr[versionstrpos] = 0;	// terminate the string
+			versionstr[versionstrpos] = '\0';
 			linepos++;	// advance past the / delimiting character
 
 			// the next value in the line is the last file commit date and time
@@ -136,7 +139,7 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 				linepos++;
 				datestrpos++;
 			}
-			datestr[datestrpos] = 0;	// terminate the string
+			datestr[datestrpos] = '\0';
 
 
 		// Root file
@@ -144,7 +147,7 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 			char * cvsrootfilefullpath = (char*) malloc(strlen(sourcedir) + strlen(CVS_ROOT_FILE) + 4);
 			sprintf(cvsrootfilefullpath, "%s/%s", sourcedir, CVS_ROOT_FILE);
 			char cvsrootpathstr[PATH_MAX];	// for storing the Root string
-			cvsrootpathstr[0] = 0;
+			cvsrootpathstr[0] = '\0';
 			// see if we can find the CVS Root file
 			FILE * cvsrootf = fopen(cvsrootfilefullpath, "r");
 			free(cvsrootfilefullpath);
@@ -171,7 +174,7 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 					cvsrootpathstr[strpos] = got;
 					strpos++;
 				}
-				cvsrootpathstr[strpos] = 0;	// terminate the string
+				cvsrootpathstr[strpos] = '\0';
 				// if we managed to get anything, then 
 				// append the : to the root path string
 				if (strlen(cvsrootpathstr) > 0)
@@ -185,7 +188,7 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 			char * cvsrepositoryfilefullpath = (char*) malloc(strlen(sourcedir) + strlen(CVS_REPOSITORY_FILE) + 4);
 			sprintf(cvsrepositoryfilefullpath, "%s/%s", sourcedir, CVS_REPOSITORY_FILE);
 			char cvsrepositorypathstr[PATH_MAX];	// for storing the Repository string
-			cvsrepositorypathstr[0] = 0;
+			cvsrepositorypathstr[0] = '\0';
 			// see if we can find the CVS Repository file
 			FILE * cvsrepositoryf = fopen(cvsrepositoryfilefullpath, "r");
 			free(cvsrepositoryfilefullpath);
@@ -201,7 +204,7 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 					cvsrepositorypathstr[strpos] = got;
 					strpos++;
 				}
-				cvsrepositorypathstr[strpos] = 0;	// terminate the string
+				cvsrepositorypathstr[strpos] = '\0';
 				// if we managed to get anything, then 
 				// append the / to the repository path string
 				if (strlen(cvsrepositorypathstr) > 0)
@@ -233,6 +236,8 @@ void writeinfoheader(FILE * outputfile, const char * inputfilename)
 		fclose(cvsentriesf);
 	}
 	// end of if CVS Entries file is valid statement
+
+	free(inputfilename_copy);
 }
 
 
@@ -288,16 +293,16 @@ readlineloop:
 			// look for a tag
 			if (linestr[i] == '<')
 			{
-				// we need to make a copy the current line and null-terminate it 
+				// we need to make a copy the current line
 				char * linestr_copy = (char*) malloc(linesize + 1);
 				for (size_t j=0; j < linesize; j++)
 					linestr_copy[j] = linestr[j];
-				linestr_copy[linesize] = 0;
-				if (linestr[linesize-1] == '\n')
-					linestr_copy[linesize-1] = 0;	// terminate over the newline character
+				linestr_copy[linesize] = '\0';
+				if (linestr[linesize - 1] == '\n')
+					linestr_copy[linesize - 1] = '\0';	// end the string over the newline character
 				// read the first word after the tag-begin bracket (should be the tag name)
 				char firstword[linesize];
-				firstword[0] = 0;
+				firstword[0] = '\0';
 				if (sscanf(linestr_copy + i + 1, "%s", firstword) > 0)
 				{
 					// see if it is a <link> tag
@@ -312,7 +317,7 @@ readlineloop:
 							// so that it points to the attribute value
 							linksource += strlen(LINK_SOURCE);
 							char * linkfilename = (char*) malloc(linesize);
-							linkfilename[0] = 0;
+							linkfilename[0] = '\0';
 							// see if the value is wrapped in quotes (more sorry-ass HTML parsing)
 							if (linksource[0] == '"')
 							{
@@ -324,7 +329,7 @@ readlineloop:
 									linkfilename[k] = linksource[k];
 									k++;
 								}
-								linkfilename[k] = 0;	// terminate the filename string
+								linkfilename[k] = '\0';
 							}
 							// value is not wrapped in quotes
 							else
@@ -336,7 +341,7 @@ readlineloop:
 									linkfilename[k] = linksource[k];
 									k++;
 								}
-								linkfilename[k] = 0;	// terminate the filename string
+								linkfilename[k] = '\0';
 							}
 							// assume that the path of the linked file is relative to the source file 
 							// XXX I don't think that we need to deal with basehrefs or anything like that

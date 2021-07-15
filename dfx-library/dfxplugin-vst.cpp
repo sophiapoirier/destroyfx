@@ -410,7 +410,7 @@ bool DfxPlugin::getParameterProperties(VstInt32 index, VstParameterProperties* p
 	*properties = {};
 
 	// note that kVstMax* are specified as "number of characters excluding the null terminator", 
-	// and vst_strncpy behaves accordingly and terminates at array[N], however the static arrays 
+	// and vst_strncpy behaves accordingly and writes null at array[N], however the static arrays 
 	// in struct types (like VstParameterProperties here) size the arrays by N, meaning that 
 	// array[N] is out of range, so we call vst_strncpy in these cases passing N-1 as max length
 	vst_strncpy(properties->label, getparametername(index).c_str(), kVstMaxLabelLen - 1);

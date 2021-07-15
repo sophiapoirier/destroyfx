@@ -247,7 +247,7 @@ bool DGTextDisplay::valueToTextProc_LinearToDb(float inValue, char outTextUTF8[]
 
 	auto const decibelValue = dfx::math::Linear2dB(inValue);
 	auto precisionOffset = reinterpret_cast<intptr_t>(inPrecisionOffset);  // HACK :(
-	precisionOffset = (std::abs(precisionOffset) > 15) ? 0 : precisionOffset;  // sanity check to avert misuse with actual pointer
+	precisionOffset = (std::abs(precisionOffset) > 15) ? 0 : precisionOffset;  // reasonable range check to avert misuse with actual pointer
 	auto const prefix = (decibelValue >= (0.01f / std::pow(10.f, precisionOffset))) ? "+" : "";
 	int precision = (std::fabs(decibelValue) >= 100.0f) ? 0 : ((std::fabs(decibelValue) >= 10.0f) ? 1 : 2);
 	precision = std::max(precision + static_cast<int>(precisionOffset), 0);

@@ -124,7 +124,7 @@ std::optional<std::string> InstallFontWin32(const char *resource_name) {
     return {};
   }
   if (bytes_written != rsize) {
-    // (Sanity checking; WriteFile should have returned false.)
+    // (Consistency checking; WriteFile should have returned false.)
     return {};
   }
 
@@ -220,7 +220,7 @@ public:
     // Register any fonts located within our plugin bundle resources.
     // The registration occurs locally for the process, and thus need
     // only occur once and requires no clean up, as that will happen
-    // automatically upon process termination.  All current and future
+    // automatically upon process exit.  All current and future
     // instances of the plugin in that process will have access to the
     // fonts registered here.
     static std::once_flag once;

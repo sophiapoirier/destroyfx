@@ -26,7 +26,7 @@ distribute the source package in order to be in compliance with the
 license (see the file COPYING for full license terms).
 
 This software comes with no warranty (see the file COPYING). In fact,
-it is likely that some of these crazy effects could crash hosts (by
+it is likely that some of these unusual effects could crash hosts (by
 sending out-of-range samples or taking too much time to process), so
 you should be careful to save your work when using them in important
 songs. Tom uses Cakewalk on the PC, and Sophia uses Logic on the Mac,
@@ -75,7 +75,7 @@ features the possibility for extreme settings and MIDI control.
 
 ### geometer/
 
-A laboratory for waveform geometry. All sorts of crazy effects are
+A laboratory for waveform geometry. All sorts of weird effects are
 possible with this thing, and sports a neat visual display of what's
 happening to your sound.
 
@@ -138,7 +138,7 @@ testing:
 ### brokenfft/
 
 One of Tom's favorite plugins; this converts to the frequency domain
-using the FFT, and then does a number of crazy effects. It has an
+using the FFT, and then does a number of unusual effects. It has an
 almost limitless variety of sounds that will come out of it...
 
 

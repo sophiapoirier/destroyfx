@@ -514,10 +514,10 @@ CFPropertyListRef CreatePropertyListFromXMLFile(CFURLRef inXMLFileURL, SInt32* o
 	CFErrorRef error = NULL;
 
 	// allow a null input for outErrorCode, and just point it to something, for safety
-	SInt32 dummyErrorCode;
+	SInt32 ignoredErrorCode = 0;
 	if (outErrorCode == NULL)
 	{
-		outErrorCode = &dummyErrorCode;
+		outErrorCode = &ignoredErrorCode;
 	}
 	*outErrorCode = noErr;
 
@@ -569,11 +569,11 @@ SInt32 GetDictionarySInt32Value(CFDictionaryRef inAUStateDictionary, CFStringRef
 {
 	CFNumberRef cfNumber = NULL;
 	SInt32 numberValue = 0;
-	Boolean dummySuccess;
+	Boolean ignoredSuccess = false;
 
 	if (outSuccess == NULL)
 	{
-		outSuccess = &dummySuccess;
+		outSuccess = &ignoredSuccess;
 	}
 	if ((inAUStateDictionary == NULL) || (inDictionaryKey == NULL))
 	{
@@ -703,9 +703,9 @@ OSStatus SaveAUStateToPresetFile_Bundle(AudioComponentInstance inAUComponentInst
 {
 	OSStatus status = noErr;
 
-	HFSUniStr255 dummyUniName;
 	// get the absolute maximum length that a file name can be
-	size_t const maxUnicodeNameLength = sizeof(dummyUniName.unicode) / sizeof(UniChar);
+	HFSUniStr255 const placeholderUniName;
+	size_t const maxUnicodeNameLength = sizeof(placeholderUniName.unicode) / sizeof(UniChar);
 	// this is how much longer the file name will be after the AU preset file name extension is appended
 	CFIndex const presetFileNameExtensionLength = CFStringGetLength(kAUPresetFileNameExtension) + 1;  // +1 for the period before the extension
 	// this is the maximum allowable length of the preset file's name without the extension

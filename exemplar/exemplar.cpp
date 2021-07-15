@@ -239,8 +239,8 @@ void PLUGINCORE::processw(float * in, float * out, long samples) {
 
   /* XXX since this capture is done in windowing mode,
      our capture buffer would have overlapping regions
-     and also discontinuities, which is dumb. we should
-     only capture on even calls to processw.
+     and also discontinuities, which is undesirable.
+     we should only capture on even calls to processw.
      (this should be a bit more principled...) */
   static int parity = 0;
   

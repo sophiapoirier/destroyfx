@@ -182,8 +182,8 @@ public:
 	// - - - - - - - - - version compatibility management - - - - - - - - -
 
 	// if you set this to something and data is received during restore()
-	// which has a version number in its header that's lower than this, 
-	// then loading will abort
+	// which has a version number in its header that is lower than this, 
+	// then loading will fail
 	void setLowestLoadableVersion(long inVersion) noexcept
 	{
 		mSettingsInfo.mLowestLoadableVersion = inVersion;
@@ -305,7 +305,7 @@ protected:
 	{
 		// crisis-handling errors
 		NoError,
-		AbortError,
+		QuitError,
 		ComplainError,
 		FailedCrashError
 	};

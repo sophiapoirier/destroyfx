@@ -303,8 +303,8 @@ bool DfxSettings::restore(void const* inData, size_t inBufferSize, bool inIsPres
 			crisisFlags = crisisFlags | kCrisisReasonFlag_MorePresets;
 		}
 	}
-	// handle the crisis situations (if any) and abort loading if we're told to
-	if (handleCrisis(crisisFlags) == CrisisError::AbortError)
+	// handle the crisis situations (if any) and stop trying to load if we're told to
+	if (handleCrisis(crisisFlags) == CrisisError::QuitError)
 	{
 		return false;
 	}
@@ -1141,12 +1141,12 @@ void DfxSettings::assignParam(long inParamTag, dfx::MidiEventType inEventType, l
 							  long inEventNum2, dfx::MidiEventBehaviorFlags inEventBehaviorFlags, 
 							  long inDataInt1, long inDataInt2, float inDataFloat1, float inDataFloat2)
 {
-	// abort if the parameter index is not valid
+	// bail if the parameter index is not valid
 	if (!paramTagIsValid(inParamTag))
 	{
 		return;
 	}
-	// abort if inEventNum is not a valid MIDI value
+	// bail if inEventNum is not a valid MIDI value
 	if ((inEventNum < 0) || (inEventNum > DfxMidi::kMaxValue))
 	{
 		return;
@@ -1459,7 +1459,7 @@ DfxSettings::CrisisError DfxSettings::handleCrisis(CrisisReasonFlags inFlags)
 			return CrisisError::NoError;
 
 		case CrisisBehavior::DontLoad:
-			return CrisisError::AbortError;
+			return CrisisError::QuitError;
 
 		case CrisisBehavior::LoadButComplain:
 			crisisAlert(inFlags);

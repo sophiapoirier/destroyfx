@@ -106,7 +106,7 @@ size_t StrlCat(char* buf, std::string_view appendme, size_t maxlen)
 }
 
 //------------------------------------------------------
-// adapted from Darwin https://github.com/apple/darwin-xnu/blob/master/osfmk/arm/strlcpy.c
+// adapted from Darwin https://github.com/apple/darwin-xnu/blob/main/osfmk/arm/strlcpy.c
 size_t StrLCpy(char* dst, std::string_view src, size_t maxlen)
 {
 	if ((src.size() + 1) < maxlen)

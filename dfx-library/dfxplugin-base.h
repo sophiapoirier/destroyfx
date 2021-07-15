@@ -115,7 +115,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 // end of target API check
 
 
-// Now, sanity check defines. 
+// Now, consistency check defines. 
 
 // Some preprocessor defines are meant to be used with "ifdef" (TARGET_API_*)
 // and others are meant to be defined to 1/0. Test that these are configured
@@ -224,8 +224,8 @@ enum
 constexpr long kParameterShortNameMax_RTAS = 4;  // XXX hack (this just happens to be what I've been doing)
 constexpr long kParameterValueShortNameMax_RTAS = 6;  // XXX hack
 
-constexpr long kParameterID_RTASMasterBypass = 1;
-constexpr long kParameterID_RTASOffset = kParameterID_RTASMasterBypass + 1;
+constexpr long kParameterID_RTASGlobalBypass = 1;
+constexpr long kParameterID_RTASOffset = kParameterID_RTASGlobalBypass + 1;
 //-----------------------------------------------------------------------------
 constexpr long ParameterID_ToRTAS(long inParameterID)
 {

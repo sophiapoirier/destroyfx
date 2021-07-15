@@ -878,7 +878,7 @@ private:
 
 #ifdef TARGET_API_RTAS
 	void AddParametersToList();
-	bool mMasterBypass_rtas = false;
+	bool mGlobalBypass_rtas = false;
 	std::vector<float*> mInputAudioStreams_as;
 	std::vector<float*> mOutputAudioStreams_as;
 	std::vector<float> mZeroAudioBuffer;
@@ -1107,7 +1107,7 @@ protected:
 #ifdef TARGET_API_RTAS
 	void EffectInit() override;
 #ifdef TARGET_API_AUDIOSUITE
-	UInt32 ProcessAudio(bool inIsMasterBypassed) override;
+	UInt32 ProcessAudio(bool inIsGlobalBypassed) override;
 #endif
 	void RenderAudio(float** inAudioStreams, float** outAudioStreams, long inNumFramesToProcess) override;
 #endif

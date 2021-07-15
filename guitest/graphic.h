@@ -97,13 +97,13 @@ LPDIRECT3DVERTEXBUFFER8 verts;
     SrcRect.right = width; // - 1;
     SrcRect.bottom = height; // - 1;
 
-    unsigned int dummy_mip = 1;
+    unsigned int placeholder_mip = 1;
     theight = height;
     twidth = width;
     D3DXCheckTextureRequirements(device,
 				 &twidth,
 				 &theight,
-				 &dummy_mip,
+				 &placeholder_mip,
 				 0, 0, D3DPOOL_DEFAULT);
 
     D3DSURFACE_DESC surfDesc;

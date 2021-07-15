@@ -482,7 +482,7 @@ void DfxMidi::setLegatoMode(bool inEnable)
 	if (std::exchange(mLegatoMode, inEnable) != inEnable)
 	{
 		// if we have just entered legato mode, we must end any active notes so that 
-		// they don't hang in legato mode (which ignores note-offs)
+		// they don't remain stuck in legato mode (which ignores note-offs)
 		if (inEnable)
 		{
 			for (int noteIndex = 0; noteIndex < kNumNotes; noteIndex++)
@@ -598,8 +598,9 @@ bool DfxMidi::incNumEvents()
 	// TODO: actually truncating capacity by one event because of the way that events are added, could be fixed
 	if (mNumBlockEvents >= static_cast<long>(mBlockEvents.size()))
 	{
+		// revert and bail
 		mNumBlockEvents = static_cast<long>(mBlockEvents.size()) - 1;
-		return false;  // ! abort !
+		return false;
 	}
 	return true;  // successful increment
 }
