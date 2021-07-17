@@ -818,7 +818,7 @@ void DfxGuiEditor::onMouseExited(VSTGUI::CView* inView, VSTGUI::CFrame* /*inFram
 //-----------------------------------------------------------------------------
 VSTGUI::CMouseEventResult DfxGuiEditor::onMouseDown(VSTGUI::CFrame* inFrame, VSTGUI::CPoint const& inPos, VSTGUI::CButtonState const& inButtons)
 {
-	if (!inFrame->getViewAt(inPos, VSTGUI::GetViewOptions().deep()))
+	if (!inFrame->getViewAt(inPos, VSTGUI::GetViewOptions().mouseEnabled().deep()))
 	{
 		auto const handled = handleContextualMenuClick(nullptr, inButtons);
 		if (handled)
