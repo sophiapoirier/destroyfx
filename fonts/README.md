@@ -22,6 +22,7 @@ this project and available under the GPL:
 
 * DFX Pasement 9px
 * DFX Wetar 16px
+* DFX Snooty 10px
 
 These are "fake bitmap" TTFs, which are actually vector data (straight
 lines on a grid) generated from bitmap files. The workflow for
