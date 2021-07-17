@@ -30,8 +30,8 @@ To contact the author, use the contact form at http://destroyfx.org/
 
 
 //-----------------------------------------------------------------------------
-constexpr auto kValueDisplayFont = dfx::kFontName_SnootPixel10;
-constexpr auto kValueDisplayFontSize = dfx::kFontSize_SnootPixel10;
+constexpr auto kValueDisplayFont = dfx::kFontName_Snooty10px;
+constexpr auto kValueDisplayFontSize = dfx::kFontSize_Snooty10px;
 constexpr DGColor kValueDisplayFontColor(187, 173, 131);
 constexpr float kUnusedControlAlpha = 0.234f;
 constexpr long kRangeSliderOvershoot = 3;

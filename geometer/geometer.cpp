@@ -407,8 +407,8 @@ void PLUGINCORE::processparameters() {
    It's static to enforce thread-safety.
 */
 int PLUGINCORE::pointops(long pop, int npts, float op_param, int samples,
-                     int * px, float * py, int maxpts,
-                     int * tempx, float * tempy) {
+                         int * px, float * py, int maxpts,
+                         int * tempx, float * tempy) {
   /* pointops. */
 
   switch(pop) {

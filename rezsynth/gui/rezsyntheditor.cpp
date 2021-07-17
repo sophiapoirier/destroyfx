@@ -99,8 +99,8 @@ enum
 };
 
 
-constexpr auto kValueTextFont = dfx::kFontName_SnootPixel10;
-constexpr auto kValueTextFontSize = dfx::kFontSize_SnootPixel10;
+constexpr auto kValueTextFont = dfx::kFontName_Snooty10px;
+constexpr auto kValueTextFontSize = dfx::kFontSize_Snooty10px;
 constexpr auto kValueTextFontColor = DGColor::kWhite;
 constexpr float kUnusedControlAlpha = 0.39f;
 

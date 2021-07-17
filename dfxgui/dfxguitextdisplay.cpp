@@ -74,9 +74,9 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 	{
 		if (inFontName)
 		{
-			if (strcmp(inFontName, dfx::kFontName_SnootPixel10) == 0)
+			if (strcmp(inFontName, dfx::kFontName_Snooty10px) == 0)
 			{
-				return DGFontTweaks::SNOOTORGPX10;
+				return DGFontTweaks::SNOOTY10PX;
 			}
 			if (strcmp(inFontName, dfx::kFontName_Pasement9px) == 0)
 			{
@@ -91,9 +91,11 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 		case DGFontTweaks::NONE:
 			inTextDisplay->setAntialias(true);
 			break;
-		case DGFontTweaks::SNOOTORGPX10:
+		case DGFontTweaks::SNOOTY10PX:
 			inTextDisplay->setAntialias(false);	  
 #if TARGET_OS_MAC
+                        // TODO Sophia: Check that this is still what
+                        // you want with the new version of snooty?
 			if (inTextAlignment == dfx::TextAlignment::Left)
 			{
 				inTextDisplay->setTextInset({-1.0, 0.0});
@@ -117,8 +119,10 @@ static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks inFontTweaks, DGRect const& 
 	auto textArea = inRegion;
 	switch (inFontTweaks)
 	{
-		case DGFontTweaks::SNOOTORGPX10:
+		case DGFontTweaks::SNOOTY10PX:
 #if TARGET_OS_MAC
+                        // TODO Sophia: Check that this is still what
+                        // you want with the new version of snooty?
 			textArea.offset(0, -2);
 #endif
 			textArea.setHeight(textArea.getHeight() + 2);
@@ -377,7 +381,7 @@ VSTGUI::CRect DGTextDisplay::platformGetSize() const
 	VSTGUI::CRect rect = DGControl<VSTGUI::CTextEdit>::platformGetSize();
 	switch (mFontTweaks)
 	{
-		case DGFontTweaks::SNOOTORGPX10:
+		case DGFontTweaks::SNOOTY10PX:
 #if TARGET_OS_MAC
 			rect.top -= 1;
 #endif
@@ -510,7 +514,7 @@ DGHelpBox::DGHelpBox(DfxGuiEditor* inOwnerEditor, DGRect const& inRegion,
 					 TextForControlProc const& inTextForControlProc, 
 					 DGImage* inBackground, DGColor inFontColor)
 :	DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
-						dfx::kFontSize_SnootPixel10, inFontColor, dfx::kFontName_SnootPixel10), 
+						dfx::kFontSize_Snooty10px, inFontColor, dfx::kFontName_Snooty10px), 
 	mOwnerEditor(inOwnerEditor),  // DGStaticTextDisplay does not store this
 	mTextForControlProc(inTextForControlProc),
 	mHeaderFontColor(inFontColor)

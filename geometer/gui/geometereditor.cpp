@@ -121,7 +121,7 @@ enum {
 //--------------------------------------------------------------------------
 GeometerHelpBox::GeometerHelpBox(DfxGuiEditor * inOwnerEditor, DGRect const & inRegion, DGImage * inBackground)
   : DGStaticTextDisplay(inOwnerEditor, inRegion, inBackground, dfx::TextAlignment::Left, 
-			dfx::kFontSize_SnootPixel10, DGColor::kBlack, dfx::kFontName_SnootPixel10), 
+			dfx::kFontSize_Snooty10px, DGColor::kBlack, dfx::kFontName_Snooty10px), 
    helpCategory(HELP_CATEGORY_GENERAL), itemNum(HELP_EMPTY)
 {
 }
@@ -349,13 +349,13 @@ long GeometerEditor::OpenEditor() {
       return snprintf(outText, DGTextDisplay::kTextMaxLength, "%.7f", value) > 0;
     };
     displays[i] = emplaceControl<DGTextDisplay>(this, param, dpos, geometerDisplayProc, 
-                                                nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_SnootPixel10, 
-                                                fontcolor_values, dfx::kFontName_SnootPixel10);
+                                                nullptr, nullptr, dfx::TextAlignment::Right, dfx::kFontSize_Snooty10px, 
+                                                fontcolor_values, dfx::kFontName_Snooty10px);
     // units label
     auto const label = emplaceControl<DGTextArrayDisplay>(this, baseparam, lpos, labelstrings->size(), 
                                                           dfx::TextAlignment::Center, nullptr, 
-                                                          dfx::kFontSize_SnootPixel10, fontcolor_labels, 
-                                                          dfx::kFontName_SnootPixel10);
+                                                          dfx::kFontSize_Snooty10px, fontcolor_labels, 
+                                                          dfx::kFontName_Snooty10px);
     long j = 0;
     for (auto const& labelstring : *labelstrings) {
       label->setText(j, labelstring);

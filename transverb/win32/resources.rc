@@ -23,7 +23,7 @@ tomsound-button.png             PNG  DISCARDABLE     "..\\gui\\graphics\\tomsoun
 transverb-background.png        PNG  DISCARDABLE     "..\\gui\\graphics\\transverb-background.png"
 wide-fader-handle-glowing.png   PNG  DISCARDABLE     "..\\gui\\graphics\\wide-fader-handle-glowing.png"
 
-px10.ttf                        DFX_TTF  DISCARDABLE     "..\\..\\fonts\\px10.ttf"
+dfxsnooty10px.ttf                        DFX_TTF  DISCARDABLE     "..\\..\\fonts\\dfxsnooty10px.ttf"
 
 #include "../transverbdef.h"
 #include "../../dfx-library/visualstudio/dfxplugin-version.rc"

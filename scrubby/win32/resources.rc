@@ -35,7 +35,7 @@ tempo-sync-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\tempo-sync-button.pn
 transpose-down-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\transpose-down-button.png"
 transpose-up-button.png  PNG DISCARDABLE  "..\\gui\\graphics\\transpose-up-button.png"
 
-px10.ttf  DFX_TTF DISCARDABLE  "..\\..\\fonts\\px10.ttf"
+dfxsnooty10px.ttf  DFX_TTF DISCARDABLE  "..\\..\\fonts\\dfxsnooty10px.ttf"
 
 #include "../scrubbydef.h"
 #include "../../dfx-library/visualstudio/dfxplugin-version.rc"
