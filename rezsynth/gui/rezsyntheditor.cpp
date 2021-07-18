@@ -42,7 +42,7 @@ enum
 
 	kHorizontalDisplayWidth = kHorizontalSliderWidth / 2,
 	kHorizontalDisplayHeight = 10,
-	kHorizontalDisplayX = kHorizontalSliderX + kHorizontalSliderWidth - kHorizontalDisplayWidth - 5,
+	kHorizontalDisplayX = kHorizontalSliderX + kHorizontalSliderWidth - kHorizontalDisplayWidth - 3,
 	kHorizontalDisplayY = kHorizontalSliderY - kHorizontalDisplayHeight,
 
 	kVerticalSliderX = 325,
@@ -589,8 +589,8 @@ and low-pass can be the most natural sounding.)DELIM";
 			return R"DELIM(legato:  tied monophony vs. polyphony
 Legato mode means no polyphony and no gap between notes.  The first
 note played after enabling it will remain in the sustain phase of the
-note's envelope, even if you release the note, and subsequent notes will
-alter the pitch but still only sound in the sustain phase.)DELIM";
+note's envelope, even if you release the note, and subsequent notes
+will alter the pitch but still only sound in the sustain phase.)DELIM";
 		case kVelocityInfluence:
 			return R"DELIM(velocity influence:  key velocity affect on volume
 This controls how much of an influence key velocity will have on the

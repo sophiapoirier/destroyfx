@@ -37,7 +37,7 @@ To contact the author, use the contact form at http://destroyfx.org/
 using DGFontTweaks = internal::DGFontTweaks;
 
 //-----------------------------------------------------------------------------
-static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inTextAlignment)
+static constexpr VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inTextAlignment) noexcept
 {
 	switch (inTextAlignment)
 	{
@@ -50,6 +50,19 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 	}
 	assert(false);
 	return {};
+}
+
+//-----------------------------------------------------------------------------
+static constexpr bool DFXGUI_IsBitmapFont(DGFontTweaks inFontTweaks) noexcept
+{
+	switch (inFontTweaks)
+	{
+		case DGFontTweaks::SNOOTY10PX:
+		case DGFontTweaks::PASEMENT9PX:
+			return true;
+		default:
+			return false;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -85,31 +98,8 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 		}
 		return DGFontTweaks::NONE;
 	}();
+	inTextDisplay->setAntialias(!DFXGUI_IsBitmapFont(fontTweaks));
 
-	switch (fontTweaks)
-	{
-		case DGFontTweaks::NONE:
-			inTextDisplay->setAntialias(true);
-			break;
-		case DGFontTweaks::SNOOTY10PX:
-			inTextDisplay->setAntialias(false);	  
-#if TARGET_OS_MAC
-                        // TODO Sophia: Check that this is still what
-                        // you want with the new version of snooty?
-			if (inTextAlignment == dfx::TextAlignment::Left)
-			{
-				inTextDisplay->setTextInset({-1.0, 0.0});
-			}
-			else if (inTextAlignment == dfx::TextAlignment::Right)
-			{
-				inTextDisplay->setTextInset({-2.0, 0.0});
-			}
-#endif
-			break;
-		case DGFontTweaks::PASEMENT9PX:
-			inTextDisplay->setAntialias(false);	  
-			break;
-	}
 	return fontTweaks;
 }
 
@@ -117,22 +107,16 @@ static VSTGUI::CHoriTxtAlign DFXGUI_TextAlignmentToVSTGUI(dfx::TextAlignment inT
 static DGRect DFXGUI_GetTextDrawRegion(DGFontTweaks inFontTweaks, DGRect const& inRegion)
 {
 	auto textArea = inRegion;
-	switch (inFontTweaks)
+	if (DFXGUI_IsBitmapFont(inFontTweaks))
 	{
-		case DGFontTweaks::SNOOTY10PX:
+		textArea.makeIntegral();
+	}
+	if (inFontTweaks == DGFontTweaks::SNOOTY10PX)
+	{
 #if TARGET_OS_MAC
-                        // TODO Sophia: Check that this is still what
-                        // you want with the new version of snooty?
-			textArea.offset(0, -2);
+		textArea.offset(0, -2);
 #endif
-			textArea.setHeight(textArea.getHeight() + 2);
-			textArea.makeIntegral();
-			break;
-		case DGFontTweaks::PASEMENT9PX:
-			textArea.makeIntegral();
-			break;
-		default:
-			break;
+		textArea.setHeight(textArea.getHeight() + 2);
 	}
 	return textArea;
 }
@@ -379,18 +363,13 @@ bool DGTextDisplay::textToValueProcBridge(VSTGUI::UTF8StringPtr inText, float& o
 VSTGUI::CRect DGTextDisplay::platformGetSize() const
 {
 	VSTGUI::CRect rect = DGControl<VSTGUI::CTextEdit>::platformGetSize();
-	switch (mFontTweaks)
+	if (mFontTweaks == DGFontTweaks::SNOOTY10PX)
 	{
-		case DGFontTweaks::SNOOTY10PX:
 #if TARGET_OS_MAC
-			rect.top -= 1;
+		rect.top -= 2;
+#else
+		rect.top -= 3;
 #endif
-#if TARGET_OS_WIN32
-			rect.top -= 3;
-#endif
-			break;
-		default:
-			break;
 	}
 	return rect;
 }
